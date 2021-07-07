@@ -418,8 +418,10 @@ void battery_t::initialize() {
     // lifetime
     if (params->lifetime->model_choice == lifetime_params::CALCYC)
         lifetime = std::unique_ptr<lifetime_calendar_cycle_t>(new lifetime_calendar_cycle_t(params->lifetime));
-    else
+    else if (params->lifetime->model_choice == lifetime_params::NMC)
         lifetime = std::unique_ptr<lifetime_nmc_t>(new lifetime_nmc_t(params->lifetime));
+    else if (params->lifetime->model_choice == lifetime_params::LMOLTO)
+        lifetime = std::unique_ptr<lifetime_lmolto_t>(new lifetime_lmolto_t(params->lifetime));
 
     // thermal
     thermal = std::unique_ptr<thermal_t>(new thermal_t(params->thermal));

@@ -62,7 +62,7 @@ var_info vtab_battery_stateful_inputs[] = {
     { SSC_INPUT,        SSC_NUMBER,      "Qfull_flow",                                 "Fully charged flow battery capacity",                     "Ah",      "",                     "ParamsCell",       "voltage_choice=0&chem=3", "",                              "" },
 
     // lifetime inputs
-    { SSC_INPUT,		SSC_NUMBER,      "life_model",                                 "Battery life model specifier",                            "0/1",      "0=calendar/cycle,1=NMC", "ParamsCell",       "*",                                   "",                             "" },
+    { SSC_INPUT,		SSC_NUMBER,      "life_model",                                 "Battery life model specifier",                            "0/1",      "0=calendar/cycle,1=NMC,2=LMO/LTO", "ParamsCell",       "*",                                   "",                             "" },
     { SSC_INPUT,		SSC_MATRIX,      "cycling_matrix",                             "Table with DOD %, Cycle #, and Capacity % columns",       "[[%, #, %]]","",                     "ParamsCell",       "life_model=0",                        "",                             "" },
     { SSC_INPUT,        SSC_NUMBER,      "calendar_choice",                            "Calendar life degradation input option",                  "0/1/2",    "0=None,1=LithiomIonModel,2=InputLossTable",  "ParamsCell",       "life_model=0",    "",                             "" },
     { SSC_INPUT,        SSC_MATRIX,      "calendar_matrix",                            "Table with Day # and Capacity % columns",                 "[[#, %]]", "",                     "ParamsCell",       "life_model=0&calendar_choice=2",        "",                             "" },
@@ -488,6 +488,10 @@ std::shared_ptr<battery_params> create_battery_params(var_table* vt, double dt_h
     else if (lifetime->model_choice == lifetime_params::NMC) {
         if (chem != battery_params::LITHIUM_ION)
             throw exec_error("battery_stateful", "NMC life model (life_model=1) can only be used with Li-Ion chemistries (batt_chem=1).");
+    }
+    else if (lifetime->model_choice == lifetime_params::LMOLTO) {
+        if (chem != battery_params::LITHIUM_ION)
+            throw exec_error("battery_stateful", "LMO/LTO life model (life_model=2) can only be used with Li-Ion chemistries (batt_chem=2).");
     }
 
     // thermal

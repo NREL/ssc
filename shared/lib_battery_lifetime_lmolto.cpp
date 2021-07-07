@@ -33,13 +33,14 @@ void lifetime_lmolto_t::initialize() {
     state->lmo_lto->dq_relative_cyc = 0;
     state->lmo_lto->temp_avg = 0;
     state->lmo_lto->EFC = 0;
+    state->lmo_lto->EFC_dt = 0;
     state->q_relative = 100. - state->lmo_lto->dq_relative_cal - state->lmo_lto->dq_relative_cyc;
 }
 
 
 lifetime_lmolto_t::lifetime_lmolto_t(double dt_hr) {
     params = std::make_shared<lifetime_params>();
-    params->model_choice = lifetime_params::NMC;
+    params->model_choice = lifetime_params::LMOLTO;
     params->dt_hr = dt_hr;
     initialize();
 }
@@ -124,7 +125,9 @@ void lifetime_lmolto_t::integrateDegLoss() {
 }
 
 void lifetime_lmolto_t::integrateDegParams(double dt_day, double prev_DOD, double DOD, double T_battery) {
-    state->lmo_lto->EFC_dt += fabs(DOD - prev_DOD) * 0.01 * 0.5;
+    double energy_throughput = fabs(DOD - prev_DOD) * 0.01 * 0.5;
+    state->lmo_lto->EFC_dt += energy_throughput;
+    state->lmo_lto->EFC += energy_throughput;
     state->lmo_lto->temp_avg += T_battery * dt_day;
     state->cycle->cum_dt += dt_day;
 }
@@ -160,15 +163,17 @@ void lifetime_lmolto_t::runLifetimeModels(size_t lifetimeIndex, bool charge_chan
 
 void lifetime_lmolto_t::replaceBattery(double percent_to_replace) {
     state->day_age_of_battery = 0;
-    state->lmo_lto->dq_relative_cal = 0;
-    state->lmo_lto->dq_relative_cyc = 0;
+    state->lmo_lto->dq_relative_cal -= percent_to_replace;
+    state->lmo_lto->dq_relative_cyc -= percent_to_replace;
+    state->lmo_lto->dq_relative_cal = fmax(0, state->lmo_lto->dq_relative_cal);
+    state->lmo_lto->dq_relative_cyc = fmax(0, state->lmo_lto->dq_relative_cyc);
+    state->q_relative = 100. - state->lmo_lto->dq_relative_cal - state->lmo_lto->dq_relative_cyc;
     state->lmo_lto->EFC = 0;
     state->lmo_lto->EFC_dt = 0;
     state->lmo_lto->temp_avg = 0;
     cycle_model->replaceBattery(percent_to_replace);
     cycle_model->resetDailyCycles();
     state->cycle->q_relative_cycle = 0;
-    state->q_relative = 100.;
 }
 
 double lifetime_lmolto_t::estimateCycleDamage() {
