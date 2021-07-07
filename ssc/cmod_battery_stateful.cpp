@@ -423,7 +423,7 @@ std::shared_ptr<battery_params> create_battery_params(var_table* vt, double dt_h
     vt_get_number(vt, "nominal_energy", &nominal_e);
     vt_get_number(vt, "nominal_voltage", &nominal_v);
     voltage->num_cells_series = (int)std::ceil(nominal_v / voltage->Vnom_default);
-    voltage->num_strings = (int)std::round((nominal_e * 1000.) / (voltage->dynamic.Qfull * voltage->num_cells_series * voltage->Vnom_default));
+    voltage->num_strings = (int)round((nominal_e * 1000.) / (voltage->dynamic.Qfull * voltage->num_cells_series * voltage->Vnom_default));
     params->nominal_voltage = voltage->Vnom_default * voltage->num_cells_series;
     params->nominal_energy = params->nominal_voltage * voltage->num_strings * voltage->dynamic.Qfull * 1e-3;
 
