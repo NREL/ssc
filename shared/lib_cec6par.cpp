@@ -267,11 +267,12 @@ bool noct_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 }
 
 
-void SuperLac( double*** data, double test[3][100][100], int oA, int n_p, std::vector<double>& L, std::vector<double>& L_n, std::vector<double>& R, std::vector<double>& R_n, util::matrix_t<double>& Z, util::matrix_t<double>& Z_n)
+void SuperLac( double*** data, int oA, int n_p, std::vector<double>& L, std::vector<double>& L_n, std::vector<double>& R, std::vector<double>& R_n, util::matrix_t<double>& Z, util::matrix_t<double>& Z_n)
 {
     std::vector<int> s;
     int s_max;
     int dimensions = 3;
+    double** data2 = data[1];
     int x_dim = sizeof(data) / sizeof(data[0]);
     int y_dim = sizeof(data) / sizeof(data[0][0]);
     if (y_dim > x_dim) s_max = y_dim;
@@ -496,15 +497,19 @@ void SuperLac( double*** data, double test[3][100][100], int oA, int n_p, std::v
         Z.at(b, 2) = skewness;
         Z.at(b, 3) = kurtosis;
         L[b] = 1 + variance / pow(mean, 2);
+        Z_n.at(b, 0) = Z.at(b, 0) / Z.at(0, 0);
+        Z_n.at(b, 1) = Z.at(b, 1) / Z.at(0, 1);
+        Z_n.at(b, 2) = Z.at(b, 2) / Z.at(0, 2);
+        Z_n.at(b, 3) = Z.at(b, 3) / Z.at(0, 3);
+        L_n[b] = L[b] / L[0];
+        R_n[b] = (R[b] - R[0]) / (s_max - R[0]);
     }
 
 
     
 
 }
-
-util::matrix_t<int> imrotate(util::matrix_t<int> image, double degree);
-
+/*
 util::matrix_t<int> imrotate(util::matrix_t<int> image, double degree)
 {
     if (degree != 0) {
@@ -578,9 +583,40 @@ util::matrix_t<int> imrotate(util::matrix_t<int> image, double degree)
 
 
 }
+*/
+util::matrix_t<int> imrotate(util::matrix_t<int> image, double degree)
+{
+    int rows = image.nrows();
+    int cols = image.ncols();
+    double diagonal = sqrt(pow(rows, 2) + pow(cols, 2));
+    int row_pad = ceil(diagonal - rows) + 2;
+    int col_pad = ceil(diagonal - cols) + 2;
+    util::matrix_t<int> imagepad;
+    imagepad.resize_fill(rows + row_pad, cols + col_pad, 0);
+    for (int i = ceil(row_pad/2); i < ceil(row_pad / 2) + rows; i++) {
+        for (int j = ceil(col_pad/2); j < ceil(col_pad / 2) + cols; j++) {
+            imagepad.at(i, j) = image.at(i-ceil(row_pad/2), j-ceil(col_pad/2));
+        }
+    }
+    int midx = ceil((cols + col_pad + 1) / 2); //Distance along x number of columns
+    int midy = ceil((rows + row_pad + 1) / 2); //Distance along y number of rows
+    util::matrix_t<int> imagerot;
+    int x;
+    int y;
+    imagerot.resize_fill(imagepad.nrows(), imagepad.ncols(), 0);
+    for (int i = 0; i < imagerot.nrows(); i++) {
+        for (int j = 0; j < imagerot.ncols(); j++) {
+            x = round((i - midx) * cosd(degree) - (j - midy) * sind(degree)) + midx;
+            y = round((i - midx) * sind(degree) + (j - midy) * cosd(degree)) + midy;
+            if (x >= 1 && y >= 1 && x <= imagepad.ncols() && y <= imagepad.nrows())
+                imagerot.at(i, j) = imagepad.at(x, y);
+        }
+    }
+    return imagerot;
+}
 
 
-void SolArrayLog(double res, double baseheight, double GCR, double Lmod, double thick, double angle, double Depth, double row_num, bool showArray)
+double*** SolArrayLog(double res, double baseheight, double GCR, double Lmod, double thick, double angle, double Depth, double row_num, bool showArray, int &oA_out)
 {
     double H_pan = baseheight + (Lmod * sind(angle));
     double Lmod_x = Lmod * cosd(angle);
@@ -596,6 +632,7 @@ void SolArrayLog(double res, double baseheight, double GCR, double Lmod, double 
     const int y = H_pan / res;
     const int z = Depth / res;
     int oA = z;
+    oA_out = oA;
     const int const_OA = oA;
     int ones_x = floor(Lmod / res);
     int ones_y = floor(thick / res);
@@ -633,17 +670,19 @@ void SolArrayLog(double res, double baseheight, double GCR, double Lmod, double 
     int xstart;
     int ystart;
     for (int jj = 0; jj < row_num; jj++) {
-        for (int z = 0; z < oA; z++) {
+        for (int k = 0; k < oA; k++) {
             xstart = SmidInd + SInd * Pcount;
             for (int i = xstart; i < xstart + ones.nrows(); i++) {
                 ystart = BInd;
                 for (int j = ystart; j < BInd + ones.ncols(); j++) {
-                    ArrayLog[z][i][j] = Pmat[z][i][j];
+                    ArrayLog[k][i][j] = Pmat[k][i][j];
                 }
             }
         }
         Pcount++;
     }
+
+    return ArrayLog;
 
 }
 
@@ -932,6 +971,17 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
                 }
                                                                             //double Re_forced  = MAX(0.1,rho_air*V_cover*L_char/mu_air) ; //  !Reynolds number of wind moving across module
                 //double Re_forced = MAX(0.1, rho_air * V_cover * Lsc / mu_air); //  !Reynolds number of wind moving across module
+                double res = 0.025; //resolution
+                int oA_out = 0;
+                std::vector<double> L;
+                std::vector<double> L_n;
+                util::matrix_t<double> Z;
+                util::matrix_t<double> Z_n;
+                std::vector<double> R;
+                std::vector<double> R_n;
+                int n_p = 10;
+                double*** ArrayLog = SolArrayLog(res, ground_clearance_height, GCR, Length, 0.05, input.Tilt, Width, 9, false, oA_out);
+                SuperLac(ArrayLog, oA_out, n_p, L, L_n, R, R_n, Z, Z_n);
                 double Re_forced = MAX(0.1, rho_air_test * V_cover * Lsc / mu_air_test);
                 double Nu_forced  = 0.037 * pow(Re_forced,4./5.) * pow(Pr_air_test, 1./3.) ; //  !Nusselt Number (Incropera et al., 2006)
 				//double h_forced   = Nu_forced * k_air / L_char;

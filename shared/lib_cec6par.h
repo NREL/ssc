@@ -92,6 +92,7 @@ public:
     double Lsc; //Lacunarity length scale for spatial heterogeneity (m)
     double h_lacunarity; //heat transfer coefficient from lacunarity scale experiments (W/m2K)
     double ground_clearance_height; //Ground clearance height used in Calaf heat transfer coefficient h fit
+    double GCR;
 	virtual bool operator() ( pvinput_t &input, pvmodule_t &module, double opvoltage, double &Tcell );
 
 	virtual ~mcsp_celltemp_t() {};
