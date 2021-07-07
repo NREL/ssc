@@ -74,7 +74,7 @@ TEST_F(lib_battery_lifetime_nmc_test, StorageDays) {
             size_t hr = i * 24 + h;
             model->runLifetimeModels(hr, false, 50, 50, 25);
         }
-        auto pos = std::find(days.begin(), days.end(), i);
+        auto pos = std::find(days.begin(), days.end(), (double)i);
         if (pos != days.end()) {
             auto state = model->get_state();
             EXPECT_NEAR(state.nmc_li_neg->q_relative_li, expected_q_li[pos - days.begin()], 0.5);
