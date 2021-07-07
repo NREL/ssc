@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <cmath>
 #include <json/json.h>
 #include <fstream>
 
@@ -529,7 +530,7 @@ TEST_F(lib_battery_lifetime_nmc_test, TestAgainstKokamData) {
 
         std::vector<int> days_to_test;
         for (const auto & i : root["rpt_days_cum"])
-            days_to_test.push_back((int)std::round(i.asDouble()));
+            days_to_test.push_back((int)round(i.asDouble()));
 
         std::vector<double> full_soc_profile;
         for (const auto & i : root["15min_profile"])
