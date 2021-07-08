@@ -313,7 +313,7 @@ void SuperLac( util::matrix_t<int> data, int oA, int n_p, std::vector<double>& L
         A.resize_fill(x_dim, y_dim * oA , 0);
         FA.resize_fill(x_dim, y_dim * oA, 0);
         r = R[b];
-        A = data;
+        //A = data;
         if (r < x_dim) { //replace s_max with dimension 1
             F.resize_fill(x_dim, x_dim, 0);
             for (int a = 0; a < r; a++) {
@@ -327,6 +327,7 @@ void SuperLac( util::matrix_t<int> data, int oA, int n_p, std::vector<double>& L
             for (int i = 0; i < F.nrows(); i++) {
                 for (int k = 0; k < F.ncols(); k++) {
                     for (int j = 0; j < A.ncols(); j++) {
+                        A.at(k, j) = data.at(k, j);
                         FA.at(i, j) += F.at(i, k) * A.at(k, j);
                         
                     }
@@ -341,8 +342,8 @@ void SuperLac( util::matrix_t<int> data, int oA, int n_p, std::vector<double>& L
                     FA_prime.at(i, j) = FA.at(j, i);
                 }
             }
-            FA.resize(FA_prime.nrows(), FA_prime.ncols());
-            FA = FA_prime;
+            //FA.resize(FA_prime.nrows(), FA_prime.ncols());
+            //FA = FA_prime;
             
         }
         else {
@@ -350,6 +351,7 @@ void SuperLac( util::matrix_t<int> data, int oA, int n_p, std::vector<double>& L
             for (int i = 0; i < F.nrows(); i++) {
                 for (int k = 0; k < F.ncols(); k++) {
                     for (int j = 0; j < A.ncols(); j++) {
+                        A.at(k, j) = data.at(k, j);
                         FA.at(i, j) += F.at(i, k) * A.at(k, j);
 
                     }
@@ -363,8 +365,8 @@ void SuperLac( util::matrix_t<int> data, int oA, int n_p, std::vector<double>& L
                     FA_prime.at(i, j) = FA.at(j, i);
                 }
             }
-            FA.resize(FA_prime.nrows(), FA_prime.ncols());
-            FA = FA_prime;
+            //FA.resize(FA_prime.nrows(), FA_prime.ncols());
+            //FA = FA_prime;
         }
         if (r < y_dim) { //Direction 2
             F.resize_fill(y_dim, y_dim, 0);
@@ -379,6 +381,7 @@ void SuperLac( util::matrix_t<int> data, int oA, int n_p, std::vector<double>& L
             for (int i = 0; i < F.nrows(); i++) {
                 for (int k = 0; k < F.ncols(); k++) {
                     for (int j = 0; j < A.ncols(); j++) {
+                        A.at(k, j) = FA_prime.at(k, j);
                         FA.at(i, j) += F.at(i, k) * A.at(k, j);
 
                     }
@@ -394,13 +397,14 @@ void SuperLac( util::matrix_t<int> data, int oA, int n_p, std::vector<double>& L
                 }
             }
             FA.resize(FA_prime.nrows(), FA_prime.ncols());
-            FA = FA_prime;
+            //FA = FA_prime;
         }
         else {
             F.resize_fill(y_dim, y_dim, 1);
             for (int i = 0; i < F.nrows(); i++) {
                 for (int k = 0; k < F.ncols(); k++) {
                     for (int j = 0; j < A.ncols(); j++) {
+                        A.at(k, j) = FA_prime.at(k, j);
                         FA.at(i, j) += F.at(i, k) * A.at(k, j);
 
                     }
@@ -414,10 +418,10 @@ void SuperLac( util::matrix_t<int> data, int oA, int n_p, std::vector<double>& L
                     FA_prime.at(i, j) = FA.at(j, i);
                 }
             }
-            FA.resize(FA_prime.nrows(), FA_prime.ncols());
-            FA = FA_prime;
+            //FA.resize(FA_prime.nrows(), FA_prime.ncols());
+            //FA = FA_prime;
         }
-        if (r < oA) {
+        if (r < oA) { //Dimension 3
             F.resize_fill(oA, oA, 0);
             for (int a = 0; a < r; a++) {
                 count = 0;
@@ -430,6 +434,7 @@ void SuperLac( util::matrix_t<int> data, int oA, int n_p, std::vector<double>& L
             for (int i = 0; i < F.nrows(); i++) {
                 for (int k = 0; k < F.ncols(); k++) {
                     for (int j = 0; j < A.ncols(); j++) {
+                        A.at(k, j) = FA_prime.at(k, j);
                         FA.at(i, j) += F.at(i, k) * A.at(k, j);
 
                     }
@@ -445,6 +450,7 @@ void SuperLac( util::matrix_t<int> data, int oA, int n_p, std::vector<double>& L
             for (int i = 0; i < F.nrows(); i++) {
                 for (int k = 0; k < F.ncols(); k++) {
                     for (int j = 0; j < A.ncols(); j++) {
+                        A.at(k, j) = FA_prime.at(k, j);
                         FA.at(i, j) += F.at(i, k) * A.at(k, j);
 
                     }
@@ -649,10 +655,10 @@ util::matrix_t<int> SolArrayLog(double res, double baseheight, double GCR, doubl
         xstart = SmidInd + SInd * Pcount;
         for (int i = xstart; i < xstart + ones_rotated.nrows(); i++) {
             ystart = BInd;
-            for (int j = ystart; j < ystart + ones_rotated.ncols(); j++) {
-                for (int k = 0; k < z; k++) {
-                    ArrayLog.at(i, (ystart + ones_rotated.ncols()) * k + j) = Pmat.at(i - xstart, ones_rotated.ncols() * k + (j - ystart));
-                }
+            for (int j = ystart; j < ystart + Pmat.ncols(); j++) {
+               
+                ArrayLog.at(i, j) = Pmat.at(i - xstart, (j - ystart));
+                
             }
         }
         
@@ -961,7 +967,7 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
                 std::vector<double> R(n_p);
                 std::vector<double> R_n(n_p);
                
-                util::matrix_t<int> ArrayLog = SolArrayLog(res, ground_clearance_height, GCR, Length, 0.05, input.Tilt, Width, 9, false, oA_out);
+                util::matrix_t<int> ArrayLog = SolArrayLog(res, 5*ground_clearance_height, GCR, Length, 0.025, input.Tilt, Width, 9, false, oA_out);
                 SuperLac(ArrayLog, oA_out, n_p, L, L_n, R, R_n, Z, Z_n);
                 double Re_forced = MAX(0.1, rho_air_test * V_cover * Lsc / mu_air_test);
                 double Nu_forced  = 0.037 * pow(Re_forced,4./5.) * pow(Pr_air_test, 1./3.) ; //  !Nusselt Number (Incropera et al., 2006)
