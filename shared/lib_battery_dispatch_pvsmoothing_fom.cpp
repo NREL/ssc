@@ -301,13 +301,7 @@ void dispatch_pvsmoothing_front_of_meter_t::setup_pvsmoothing_ramp_interval_vect
 
     //#local variables
     ssc_number_t previous_power = 0;
-    ssc_number_t battery_soc = m_batt_dispatch_pvs_initial_SOC/ 100.0; // TODO - whatever initial SOC is set to in SAM
-    //#outputs arrays
-//    ssc_number_t* outpower = allocate("batt_dispatch_pvs_outpower", nRecordsSampled);
-//    ssc_number_t* battpower = allocate("batt_dispatch_pvs_battpower", nRecordsSampled);
-//    ssc_number_t* battsoc = allocate("batt_dispatch_pvs_battsoc", nRecordsSampled);
-//    ssc_number_t* curtail = allocate("batt_dispatch_pvs_curtail", nRecordsSampled);
-//    ssc_number_t* violation_list = allocate("batt_dispatch_pvs_violation_list", nRecordsSampled);
+    ssc_number_t battery_soc = m_batt_dispatch_pvs_initial_SOC/ 100.0; 
     m_batt_dispatch_pvs_outpower_vec.clear();
     m_batt_dispatch_pvs_battpower_vec.clear();
     m_batt_dispatch_pvs_battsoc_vec.clear();
