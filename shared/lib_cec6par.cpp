@@ -327,8 +327,8 @@ void SuperLac( util::matrix_t<int> data, int oA, int n_p, std::vector<double>& L
             for (int i = 0; i < F.nrows(); i++) {
                 for (int k = 0; k < F.ncols(); k++) {
                     for (int j = 0; j < A.ncols(); j++) {
-                        A.at(k, j) = data.at(k, j);
-                        FA.at(i, j) += F.at(i, k) * A.at(k, j);
+                        //A.at(k, j) = data.at(k, j);
+                        FA.at(i, j) += F.at(i, k) * data.at(k, j);
                         
                     }
                     
@@ -338,8 +338,10 @@ void SuperLac( util::matrix_t<int> data, int oA, int n_p, std::vector<double>& L
             FA.resize(FA.nrows() - r + 2, FA.ncols());
             FA_prime.resize(y_dim, (FA.nrows() * FA.ncols()) / y_dim);
             for (int i = 0; i < FA_prime.nrows(); i++) {
-                for (int j = 0; j < FA_prime.ncols(); j++) {
-                    FA_prime.at(i, j) = FA.at(j, i);
+                for (int j = 0; j < FA_prime.ncols()/oA; j++) {
+                    for (int k = 0; k < oA; k++) {
+                        FA_prime.at(i, FA_prime.ncols()/oA * k + j) = FA.at(j, FA_prime.nrows() * k + i);
+                    }
                 }
             }
             //FA.resize(FA_prime.nrows(), FA_prime.ncols());
@@ -351,8 +353,8 @@ void SuperLac( util::matrix_t<int> data, int oA, int n_p, std::vector<double>& L
             for (int i = 0; i < F.nrows(); i++) {
                 for (int k = 0; k < F.ncols(); k++) {
                     for (int j = 0; j < A.ncols(); j++) {
-                        A.at(k, j) = data.at(k, j);
-                        FA.at(i, j) += F.at(i, k) * A.at(k, j);
+                        //A.at(k, j) = data.at(k, j);
+                        FA.at(i, j) += F.at(i, k) * data.at(k, j);
 
                     }
 
@@ -361,8 +363,10 @@ void SuperLac( util::matrix_t<int> data, int oA, int n_p, std::vector<double>& L
             FA.resize(FA.nrows() - r + 2, FA.ncols());
             FA_prime.resize(y_dim, (FA.nrows() * FA.ncols()) / y_dim);
             for (int i = 0; i < FA_prime.nrows(); i++) {
-                for (int j = 0; j < FA_prime.ncols(); j++) {
-                    FA_prime.at(i, j) = FA.at(j, i);
+                for (int j = 0; j < FA_prime.ncols()/oA; j++) {
+                    for (int k = 0; k < oA; k++) {
+                        FA_prime.at(i, FA_prime.ncols() / oA * k + j) = FA.at(j, FA_prime.nrows() * k + i);
+                    }
                 }
             }
             //FA.resize(FA_prime.nrows(), FA_prime.ncols());
@@ -392,8 +396,10 @@ void SuperLac( util::matrix_t<int> data, int oA, int n_p, std::vector<double>& L
             FA.resize(FA.nrows() - r + 2, FA.ncols());
             FA_prime.resize(oA, (FA.nrows() * FA.ncols()) / oA);
             for (int i = 0; i < FA_prime.nrows(); i++) {
-                for (int j = 0; j < FA_prime.ncols(); j++) {
-                    FA_prime.at(i, j) = FA.at(j, i);
+                for (int j = 0; j < FA_prime.ncols()/(FA.ncols()/oA); j++) {
+                    for (int k = 0; k < FA.ncols()/oA; k++) {
+                        FA_prime.at(i, FA_prime.ncols() / (FA.ncols()/oA) * k + j) = FA.at(j, FA_prime.nrows() * k + i);
+                    }
                 }
             }
             FA.resize(FA_prime.nrows(), FA_prime.ncols());
@@ -415,7 +421,9 @@ void SuperLac( util::matrix_t<int> data, int oA, int n_p, std::vector<double>& L
             FA_prime.resize(oA, (FA.nrows() * FA.ncols()) / oA);
             for (int i = 0; i < FA_prime.nrows(); i++) {
                 for (int j = 0; j < FA_prime.ncols(); j++) {
-                    FA_prime.at(i, j) = FA.at(j, i);
+                    for (int k = 0; k < FA.ncols()/oA; k++) {
+                        FA_prime.at(i, FA_prime.ncols() / FA.nrows() * k + j) = FA.at(j, FA_prime.nrows() * k + i);
+                    }
                 }
             }
             //FA.resize(FA_prime.nrows(), FA_prime.ncols());
