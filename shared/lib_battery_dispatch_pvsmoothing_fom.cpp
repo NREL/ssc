@@ -47,7 +47,7 @@ dispatch_pvsmoothing_front_of_meter_t::dispatch_pvsmoothing_front_of_meter_t(
     double batt_dispatch_pvs_max_ramp,
     bool batt_dispatch_pvs_short_forecast_enable,
     double batt_dispatch_pvs_soc_rest,
-    size_t batt_dispatch_pvs_timestep_multiplier, // probably should be restricted to be a reasonable weather file timestep multiplier
+    size_t batt_dispatch_pvs_timestep_multiplier,
     double batt_dispatch_pvs_initial_SOC
 
 ) : dispatch_automatic_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max_kwdc, Pd_max_kwdc, Pc_max_kwac, Pd_max_kwac,
@@ -201,9 +201,7 @@ void dispatch_pvsmoothing_front_of_meter_t::update_dispatch(size_t year, size_t 
     m_batt_dispatch_pvs_P_pv_ac = _P_pv_ac[lifetimeIndex]; // testing unsmoothed pv system output.
 
 
-//    m_batteryPower->powerBatteryTarget = m_batt_dispatch_pvs_nameplate_ac > 0 ? m_batt_dispatch_pvs_nameplate_ac * m_batt_dispatch_pvs_outpower - _P_pv_ac[lifetimeIndex] : m_batt_dispatch_pvs_outpower - _P_pv_ac[lifetimeIndex];
     m_batteryPower->powerBatteryTarget = m_batt_dispatch_pvs_nameplate_ac > 0 ? m_batt_dispatch_pvs_nameplate_ac * m_batt_dispatch_pvs_battpower : m_batt_dispatch_pvs_battpower;
-//    m_batteryPower->powerBatteryTarget = m_batt_dispatch_pvs_soc_rest * m_batteryPower->powerBatteryChargeMaxAC + (m_batt_dispatch_pvs_nameplate_ac > 0 ? m_batt_dispatch_pvs_nameplate_ac * m_batt_dispatch_pvs_battpower : m_batt_dispatch_pvs_battpower);
     m_batteryPower->powerBatteryDC = m_batteryPower->powerBatteryTarget;
 }
 
@@ -237,7 +235,6 @@ void dispatch_pvsmoothing_front_of_meter_t::setup_pvsmoothing_ramp_interval_vect
     size_t timestep_multiplier = m_batt_dispatch_pvs_timestep_multiplier;
     size_t nRecords = _P_pv_ac.size();
     size_t nRecordsSampled = nRecords / timestep_multiplier;
- //   ssc_number_t* pv_power_input_sampled = allocate("batt_dispatch_pvs_pv_power_resampled", nRecordsSampled);
     m_pv_power_input_sampled_vec.clear();
     m_pv_power_input_sampled_vec.reserve(nRecordsSampled);
 
@@ -252,11 +249,9 @@ void dispatch_pvsmoothing_front_of_meter_t::setup_pvsmoothing_ramp_interval_vect
     }
 
     bool en_forecast = m_batt_dispatch_pvs_short_forecast_enable;
-//    ssc_number_t* forecast_pv_energy = allocate("batt_dispatch_pvs_pv_energy_forecast", nRecordsSampled);
     m_forecast_pv_energy_vec.clear();
     m_forecast_pv_energy_vec.reserve(nRecordsSampled);
     ssc_number_t forecast_shift_periods = m_batt_dispatch_pvs_forecast_shift_periods;
-    //if (en_forecast) { follow Python code for now.
     for (size_t ndx_sampled = 0; ndx_sampled < nRecordsSampled; ndx_sampled++) {
         ndx = 0;
         ssc_number_t sum = 0;
@@ -266,13 +261,10 @@ void dispatch_pvsmoothing_front_of_meter_t::setup_pvsmoothing_ramp_interval_vect
         }
         m_forecast_pv_energy_vec.push_back(sum * m_batt_dispatch_pvs_timestep_multiplier * _dt_hour);
     }
-    //}
-
+ 
     // main loop from ramp_rate_control.py
     //      #conversion factors
-//    ssc_number_t  power_to_energy_conversion_factor = m_batt_dispatch_pvs_ramp_interval / 60.0;
     ssc_number_t  power_to_energy_conversion_factor = m_batt_dispatch_pvs_timestep_multiplier * _dt_hour;
-
     ssc_number_t  batt_half_round_trip_eff = sqrt(m_etaDischarge * m_etaPVCharge);
 
 
@@ -289,9 +281,6 @@ void dispatch_pvsmoothing_front_of_meter_t::setup_pvsmoothing_ramp_interval_vect
     bool curtail_as_control = m_batt_dispatch_pvs_curtail_as_control;
     bool curtail_if_violation = m_batt_dispatch_pvs_curtail_if_violation;
 
-    // TODO - SAM battery model
-//    ssc_number_t battery_energy = as_number("batt_dispatch_pvs_battery_energy");
-//    ssc_number_t battery_power = as_number("batt_dispatch_pvs_battery_power");
     ssc_number_t battery_energy = _Battery->energy_nominal(); // check units in equations below 
     ssc_number_t battery_power = m_batteryPower->powerBatteryChargeMaxAC;
     // scale by nameplate per ERPI code
@@ -328,9 +317,7 @@ void dispatch_pvsmoothing_front_of_meter_t::setup_pvsmoothing_ramp_interval_vect
         ssc_number_t out_power = 0;
         ssc_number_t battery_power_terminal = 0;
         ssc_number_t forecast_power = 0;
-        //            if (en_forecast)
         forecast_power = m_forecast_pv_energy_vec[ndx_sampled];
-        //            for pv_power, forecast_power in np.nditer([PV_ramp_interval.values, forecast_pv_energy.values]) :
         //                #calculate controller error
         ssc_number_t delta_power = pv_power - previous_power; //#proportional error
         ssc_number_t soc_increment = battery_soc + (pv_power - previous_power) * power_to_energy_conversion_factor;// #integral error
@@ -360,13 +347,12 @@ void dispatch_pvsmoothing_front_of_meter_t::setup_pvsmoothing_ramp_interval_vect
 //                    #check SOC limit - reduce battery power if either soc exceeds either 0 or 100 %
 //                    #check full
         if ((battery_soc - battery_power_terminal * batt_half_round_trip_eff * power_to_energy_conversion_factor) > battery_energy)
-            battery_power_terminal = -1.0 * (battery_energy - battery_soc) / power_to_energy_conversion_factor / batt_half_round_trip_eff; // TODO - check units here - subtracting soc from battery energy???
+            battery_power_terminal = -1.0 * (battery_energy - battery_soc) / power_to_energy_conversion_factor / batt_half_round_trip_eff; 
 //            #check empty
         else if ((battery_soc - battery_power_terminal * power_to_energy_conversion_factor) < 0)
             battery_power_terminal = battery_soc / power_to_energy_conversion_factor / batt_half_round_trip_eff;
 
-        // TODO - use SAM charging and discharging limits (different)
-//            #enforce battery power limits
+ //            #enforce battery power limits
 //            #discharging too fast
         if (battery_power_terminal > battery_power)
             battery_power_terminal = battery_power;
