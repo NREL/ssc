@@ -126,25 +126,43 @@ var_info vtab_battery_state[] = {
     { SSC_INOUT,        SSC_NUMBER,     "cell_voltage",              "Cell voltage",                                             "V",         "",                     "StateCell",        "",                           "",                               ""  },
 
     // thermal
-    { SSC_INOUT,        SSC_NUMBER,     "q_relative_thermal",        "Relative capacity due to thermal effects",                 "Ah",        "",                     "StateCell",        "",                           "",                               ""  },
+    { SSC_INOUT,        SSC_NUMBER,     "q_relative_thermal",        "Relative capacity due to thermal effects",                 "%",         "",                     "StateCell",        "",                           "",                               ""  },
     { SSC_INOUT,        SSC_NUMBER,     "T_batt",                    "Battery temperature averaged over time step",              "C",         "",                     "StatePack",        "",                           "",                               ""  },
     { SSC_INOUT,        SSC_NUMBER,     "T_room",                    "Room temperature",                                         "C",         "",                     "StatePack",        "",                           "",                               ""  },
     { SSC_INOUT,        SSC_NUMBER,     "heat_dissipated",           "Heat dissipated due to flux",                              "kW",        "",                     "StatePack",        "",                           "",                               ""  },
     { SSC_INOUT,        SSC_NUMBER,     "T_batt_prev",               "Battery temperature at end of last time step",             "C",         "",                     "StateCell",        "",                           "",                               ""  },
 
     // lifetime
-    { SSC_INOUT,        SSC_NUMBER,     "q_relative",                "Overall relative capacity due to lifetime effects",        "Ah",        "",                     "StateCell",        "",                           "",                               ""  },
+    { SSC_INOUT,        SSC_NUMBER,     "q_relative",                "Overall relative capacity due to lifetime effects",        "%",         "",                     "StateCell",        "",                           "",                               ""  },
     { SSC_INOUT,        SSC_NUMBER,     "q_relative_cycle",          "Relative capacity due to cycling effects",                 "%",         "",                     "StateCell",        "",                           "",                               ""  },
     { SSC_INOUT,        SSC_NUMBER,     "n_cycles",                  "Number of cycles",                                         "",          "",                     "StateCell",        "",                           "",                               ""  },
-    { SSC_INOUT,        SSC_NUMBER,     "range",                     "Cycle range",                                              "%",         "",                     "StateCell",        "",                           "",                               ""  },
-    { SSC_INOUT,        SSC_NUMBER,     "average_range",             "Average cycle range",                                      "%",         "",                     "StateCell",        "",                           "",                               ""  },
-    { SSC_INOUT,        SSC_NUMBER,     "rainflow_Xlt",              "Rainflow range of second to last half cycle",              "%",         "",                     "StateCell",        "",                           "",                               ""  },
-    { SSC_INOUT,        SSC_NUMBER,     "rainflow_Ylt",              "Rainflow range of last half cycle",                        "%",         "",                     "StateCell",        "",                           "",                               ""  },
+    { SSC_INOUT,        SSC_NUMBER,     "cycle_range",               "Range of last cycle",                                      "%",         "",                     "StateCell",        "",                           "",                               ""  },
+    { SSC_INOUT,        SSC_NUMBER,     "cycle_DOD",                 "cycle_DOD of last cycle",                                  "%",         "",                     "StateCell",        "",                           "",                               ""  },
+    { SSC_INOUT,        SSC_NUMBER,     "average_range",             "Average cycle cycle_range",                                "%",         "",                     "StateCell",        "",                           "",                               ""  },
+    { SSC_INOUT,        SSC_NUMBER,     "rainflow_Xlt",              "Rainflow cycle_range of second to last half cycle",        "%",         "",                     "StateCell",        "",                           "",                               ""  },
+    { SSC_INOUT,        SSC_NUMBER,     "rainflow_Ylt",              "Rainflow cycle_range of last half cycle",                  "%",         "",                     "StateCell",        "",                           "",                               ""  },
     { SSC_INOUT,        SSC_NUMBER,     "rainflow_jlt",              "Rainflow number of turning points",                        "",          "",                     "StateCell",        "",                           "",                               ""  },
-    { SSC_INOUT,        SSC_ARRAY,      "rainflow_peaks",            "Rainflow peaks of DOD",                                    "[%]",       "",                     "StateCell",        "",                           "",                               ""  },
+    { SSC_INOUT,        SSC_ARRAY,      "rainflow_peaks",            "Rainflow peaks of cycle_DOD",                              "[%]",       "",                     "StateCell",        "",                           "",                               ""  },
     { SSC_INOUT,        SSC_NUMBER,     "q_relative_calendar",       "Relative capacity due to calendar effects",                "%",         "",                     "StateCell",        "",                           "",                               ""  },
     { SSC_INOUT,        SSC_NUMBER,     "day_age_of_battery",        "Day age of battery",                                       "day",       "",                     "StateCell",        "",                           "",                               ""  },
     { SSC_INOUT,        SSC_NUMBER,     "dq_relative_calendar_old",  "Change in capacity of last time step",                     "%",         "",                     "StateCell",        "",                           "",                               ""  },
+
+    { SSC_INOUT,        SSC_NUMBER,     "q_relative_li",             "Relative capacity due to loss of lithium inventory",      "%",         "NREL NMC Life Model",     "StateCell",        "",                           "",                               ""  },
+    { SSC_INOUT,        SSC_NUMBER,     "q_relative_neg",            "Relative capacity due to loss of anode material",         "%",         "NREL NMC Life Model",     "StateCell",        "",                           "",                               ""  },
+    { SSC_INOUT,        SSC_NUMBER,     "dq_relative_li1",           "Cumulative capacity change from time-dependent Li loss",  "1",         "NREL NMC Life Model",     "StateCell",        "",                           "",                               ""  },
+    { SSC_INOUT,        SSC_NUMBER,     "dq_relative_li2",           "Cumulative capacity change from cycle-dependent Li loss", "1",         "NREL NMC Life Model",     "StateCell",        "",                           "",                               ""  },
+    { SSC_INOUT,        SSC_NUMBER,     "dq_relative_li3",           "Cumulative capacity change from BOL Li loss",             "1",         "NREL NMC Life Model",     "StateCell",        "",                           "",                               ""  },
+    { SSC_INOUT,        SSC_NUMBER,     "dq_relative_neg",           "Cumulative capacity change from negative electrode",      "1",         "NREL NMC Life Model",     "StateCell",        "",                           "",                               ""  },
+    { SSC_INOUT,        SSC_NUMBER,     "DOD_max",                   "Max DOD of battery for current day",                      "%",         "NREL NMC Life Model",     "StateCell",        "",                           "",                               ""  },
+    { SSC_INOUT,        SSC_NUMBER,     "DOD_min",                   "Min DOD of battery for current day",                      "%",         "NREL NMC Life Model",     "StateCell",        "",                           "",                               ""  },
+    { SSC_INOUT,        SSC_NUMBER,     "cum_dt",                    "Elapsed time for current day",                            "day",       "NREL NMC Life Model",     "StateCell",        "",                           "",                               ""  },
+    { SSC_INOUT,        SSC_NUMBER,     "b1_dt",                     "b1 coefficient cumulated for current day",                "day^-0.5",  "NREL NMC Life Model",     "StateCell",        "",                           "",                               ""  },
+    { SSC_INOUT,        SSC_NUMBER,     "b2_dt",                     "b2 coefficient cumulated for current day",                "1/cycle",   "NREL NMC Life Model",     "StateCell",        "",                           "",                               ""  },
+    { SSC_INOUT,        SSC_NUMBER,     "b3_dt",                     "b3 coefficient cumulated for current day",                "1",         "NREL NMC Life Model",     "StateCell",        "",                           "",                               ""  },
+    { SSC_INOUT,        SSC_NUMBER,     "c0_dt",                     "c0 coefficient cumulated for current day",                "Ah",        "NREL NMC Life Model",     "StateCell",        "",                           "",                               ""  },
+    { SSC_INOUT,        SSC_NUMBER,     "c2_dt",                     "c2 coefficient cumulated for current day",                "1/cycle",   "NREL NMC Life Model",     "StateCell",        "",                           "",                               ""  },
+    { SSC_INOUT,        SSC_ARRAY,      "cycle_DOD_max",             "Max DODs of cycles concluded in current day",             "%",         "NREL NMC Life Model",     "StateCell",        "",                           "",                               ""  },
+    { SSC_INOUT,        SSC_ARRAY,      "cycle_DOD_range",           "DOD cycle_range of each cycle",                           "%",         "NREL NMC Life Model",     "StateCell",        "",                           "",                               ""  },
 
     // losses
     { SSC_INOUT,        SSC_NUMBER,     "loss_kw",                   "Ancillary power loss (kW DC for DC connected, AC for AC connected)", "kW", "",                  "StatePack",          "",                           "",                               ""  },
@@ -200,7 +218,8 @@ void write_battery_state(const battery_state& state, var_table* vt) {
     auto lifetime = state.lifetime;
     vt->assign_match_case("q_relative", lifetime->q_relative);
     vt->assign_match_case("n_cycles", lifetime->n_cycles);
-    vt->assign_match_case("range", lifetime->range);
+    vt->assign_match_case("cycle_range", lifetime->cycle_range);
+    vt->assign_match_case("cycle_DOD", lifetime->cycle_DOD);
     vt->assign_match_case("average_range", lifetime->average_range);
     vt->assign_match_case("day_age_of_battery", lifetime->day_age_of_battery);
 
@@ -208,6 +227,9 @@ void write_battery_state(const battery_state& state, var_table* vt) {
     vt->assign_match_case("q_relative_cycle", lifetime->cycle->q_relative_cycle);
     if (!lifetime->cycle->rainflow_peaks.empty()) {
         vt->assign_match_case("rainflow_peaks", lifetime->cycle->rainflow_peaks);
+    }
+    else {
+        vt->unassign("rainflow_peaks");
     }
     vt->assign_match_case("rainflow_Xlt", lifetime->cycle->rainflow_Xlt);
     vt->assign_match_case("rainflow_Ylt", lifetime->cycle->rainflow_Ylt);
@@ -219,16 +241,30 @@ void write_battery_state(const battery_state& state, var_table* vt) {
     else if (choice == lifetime_params::NMCNREL) {
         vt->assign_match_case("q_relative_li", lifetime->nmc_li_neg->q_relative_li);
         vt->assign_match_case("q_relative_neg", lifetime->nmc_li_neg->q_relative_neg);
-        vt->assign_match_case("dq_relative_li_old", lifetime->nmc_li_neg->dq_relative_li_old);
-        vt->assign_match_case("dq_relative_neg_old", lifetime->nmc_li_neg->dq_relative_neg_old);
+        vt->assign_match_case("dq_relative_li1", lifetime->nmc_li_neg->dq_relative_li1);
+        vt->assign_match_case("dq_relative_li2", lifetime->nmc_li_neg->dq_relative_li2);
+        vt->assign_match_case("dq_relative_li3", lifetime->nmc_li_neg->dq_relative_li3);
+        vt->assign_match_case("dq_relative_neg", lifetime->nmc_li_neg->dq_relative_neg);
         vt->assign_match_case("DOD_max", lifetime->nmc_li_neg->DOD_max);
-        vt->assign_match_case("n_cycles_prev_day", lifetime->nmc_li_neg->n_cycles_prev_day);
+        vt->assign_match_case("DOD_min", lifetime->nmc_li_neg->DOD_min);
         vt->assign_match_case("cum_dt", lifetime->nmc_li_neg->cum_dt);
         vt->assign_match_case("b1_dt", lifetime->nmc_li_neg->b1_dt);
         vt->assign_match_case("b2_dt", lifetime->nmc_li_neg->b2_dt);
         vt->assign_match_case("b3_dt", lifetime->nmc_li_neg->b3_dt);
         vt->assign_match_case("c0_dt", lifetime->nmc_li_neg->c0_dt);
         vt->assign_match_case("c2_dt", lifetime->nmc_li_neg->c2_dt);
+        if (!lifetime->nmc_li_neg->cycle_DOD_max.empty()) {
+            vt->assign_match_case("cycle_DOD_max", lifetime->nmc_li_neg->cycle_DOD_max);
+        }
+        else {
+            vt->unassign("cycle_DOD_max");
+        }
+        if (!lifetime->nmc_li_neg->cycle_DOD_range.empty()) {
+            vt->assign_match_case("cycle_DOD_range", lifetime->nmc_li_neg->cycle_DOD_range);
+        }
+        else {
+            vt->unassign("cycle_DOD_range");
+        }
     }
 
     vt->assign_match_case("loss_kw", state.losses->loss_kw);
@@ -283,7 +319,8 @@ void read_battery_state(battery_state& state, var_table* vt) {
     vt_get_number(vt, "q_relative", &lifetime->q_relative);
     vt_get_number(vt, "q_relative_cycle", &lifetime->cycle->q_relative_cycle);
     vt_get_int(vt, "n_cycles", &lifetime->n_cycles);
-    vt_get_number(vt, "range", &lifetime->range);
+    vt_get_number(vt, "cycle_DOD", &lifetime->cycle_DOD);
+    vt_get_number(vt, "cycle_range", &lifetime->cycle_range);
     vt_get_number(vt, "average_range", &lifetime->average_range);
     vt_get_number(vt, "day_age_of_battery", &lifetime->day_age_of_battery);
 
@@ -296,6 +333,9 @@ void read_battery_state(battery_state& state, var_table* vt) {
         // If not assigned, leave empty
         vt_get_array_vec(vt, "rainflow_peaks", lifetime->cycle->rainflow_peaks);
     }
+    else {
+        lifetime->cycle->rainflow_peaks.clear();
+    }
     if (choice == lifetime_params::CALCYC) {
         vt_get_number(vt, "q_relative_calendar", &lifetime->calendar->q_relative_calendar);
         vt_get_number(vt, "dq_relative_calendar_old", &lifetime->calendar->dq_relative_calendar_old);
@@ -303,16 +343,32 @@ void read_battery_state(battery_state& state, var_table* vt) {
     else {
         vt_get_number(vt, "q_relative_li", &lifetime->nmc_li_neg->q_relative_li);
         vt_get_number(vt, "q_relative_neg", &lifetime->nmc_li_neg->q_relative_neg);
-        vt_get_number(vt, "dq_relative_li_old", &lifetime->nmc_li_neg->dq_relative_li_old);
-        vt_get_number(vt, "dq_relative_neg_old", &lifetime->nmc_li_neg->dq_relative_neg_old);
+        vt_get_number(vt, "dq_relative_li1", &lifetime->nmc_li_neg->dq_relative_li1);
+        vt_get_number(vt, "dq_relative_li2", &lifetime->nmc_li_neg->dq_relative_li2);
+        vt_get_number(vt, "dq_relative_li3", &lifetime->nmc_li_neg->dq_relative_li3);
+        vt_get_number(vt, "dq_relative_neg", &lifetime->nmc_li_neg->dq_relative_neg);
+        vt_get_number(vt, "DOD_min", &lifetime->nmc_li_neg->DOD_min);
         vt_get_number(vt, "DOD_max", &lifetime->nmc_li_neg->DOD_max);
-        vt_get_int(vt, "n_cycles_prev_day", &lifetime->nmc_li_neg->n_cycles_prev_day);
         vt_get_number(vt, "cum_dt", &lifetime->nmc_li_neg->cum_dt);
         vt_get_number(vt, "b1_dt", &lifetime->nmc_li_neg->b1_dt);
         vt_get_number(vt, "b2_dt", &lifetime->nmc_li_neg->b2_dt);
         vt_get_number(vt, "b3_dt", &lifetime->nmc_li_neg->b3_dt);
         vt_get_number(vt, "c0_dt", &lifetime->nmc_li_neg->c0_dt);
         vt_get_number(vt, "c2_dt", &lifetime->nmc_li_neg->c2_dt);
+        if (vt->is_assigned("cycle_DOD_range"))
+        {
+            vt_get_array_vec(vt, "cycle_DOD_range", lifetime->nmc_li_neg->cycle_DOD_range);
+        }
+        else {
+            lifetime->nmc_li_neg->cycle_DOD_range.clear();
+        }
+        if (vt->is_assigned("cycle_DOD_max"))
+        {
+            vt_get_array_vec(vt, "cycle_DOD_max", lifetime->nmc_li_neg->cycle_DOD_max);
+        }
+        else {
+            lifetime->nmc_li_neg->cycle_DOD_range.clear();
+        }
     }
 
     vt_get_number(vt, "loss_kw", &state.losses->loss_kw);

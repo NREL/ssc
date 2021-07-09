@@ -40,6 +40,8 @@ var_info vtab_grid_input[] = {
 	// external compute module inputs
 	{ SSC_INOUT,        SSC_ARRAY,       "gen",								  "System power generated",                "kW",        "Lifetime system generation",          "System Output",                  "",                        "",                              "" },
 	{ SSC_INPUT,		SSC_ARRAY,	     "load",			                  "Electricity load (year 1)",             "kW",	    "",                                    "Load",	                       "",	                      "",	                           "" },
+    { SSC_INPUT,		SSC_ARRAY,	     "crit_load",			              "Critical electricity load (year 1)",    "kW",	        "",				        "Load",                             "",	                      "",	                            "" },
+    { SSC_INPUT,        SSC_ARRAY,       "grid_outage",                       "Timesteps with grid outage",            "0/1",        "0=GridAvailable,1=GridUnavailable,Length=load", "Load",    "",                       "",                               "" },
     { SSC_INPUT,        SSC_ARRAY,       "load_escalation",                   "Annual load escalation",                "%/year",    "",                                    "Load",                        "?=0",                      "",                            "" },
 
 var_info_invalid };
@@ -166,6 +168,7 @@ void cm_grid::exec()
 	    double gen = gridVars->systemGenerationLifetime_kW[i];
 		double gridNet = gen - gridVars->loadLifetime_kW[i];
 
+        // TODO - curtail if grid outage here
 
 		if (gridVars->enable_interconnection_limit){
 		    p_genPreInterconnect_kW[i] = static_cast<ssc_number_t>(gen);

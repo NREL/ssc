@@ -44,6 +44,7 @@ public:
         data.assign("crit_load", crit_load);
         data.assign("inverter_model", 0);
         data.assign("inverter_efficiency", 96);
+        data.assign("run_resiliency_calcs", 1);
     }
 };
 

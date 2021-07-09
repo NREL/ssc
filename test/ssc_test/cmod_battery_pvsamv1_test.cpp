@@ -337,6 +337,59 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialDCBatteryModelIntegr
     }
 }
 
+TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, LCOS_test_singleowner)
+{
+    pvsamv1_pv_defaults(data);
+    pvsamv1_battery_defaults(data);
+    grid_and_rate_defaults(data);
+    singleowner_defaults(data);
+
+    int pvsam_errors = run_pvsam1_battery_ppa(data);
+    EXPECT_FALSE(pvsam_errors);
+
+    ssc_number_t lcos_real;
+    ssc_data_get_number(data, "lcos_real", &lcos_real);
+    EXPECT_NEAR(lcos_real, 19, 0.1);
+
+    ssc_data_set_number(data, "en_electricity_rates", 1);
+    pvsam_errors = run_pvsam1_battery_ppa(data);
+    EXPECT_FALSE(pvsam_errors);
+
+    ssc_data_get_number(data, "lcos_real", &lcos_real);
+    EXPECT_NEAR(lcos_real, 7.3, 0.1);
+}
+
+TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, LCOS_test_levpartflip)
+{
+    pvsamv1_pv_defaults(data);
+    pvsamv1_battery_defaults(data);
+    grid_and_rate_defaults(data);
+    singleowner_defaults(data);
+
+    int pvsam_errors = run_pvsam1_battery_fom(data);
+    EXPECT_FALSE(pvsam_errors);
+
+    ssc_number_t lcos_real;
+    ssc_data_get_number(data, "lcos_real", &lcos_real);
+    EXPECT_NEAR(lcos_real, 19, 0.1);
+}
+
+TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, LCOS_test_cashloan)
+{
+    pvsamv1_pv_defaults(data);
+    pvsamv1_battery_defaults(data);
+    grid_and_rate_defaults(data);
+    ssc_data_set_number(data, "en_electricity_rates", 1);
+    commercial_multiarray_default(data);
+
+    int pvsam_errors = run_pvsam1_battery_cashloan(data);
+    EXPECT_FALSE(pvsam_errors);
+
+    ssc_number_t lcos_real;
+    ssc_data_get_number(data, "lcos_real", &lcos_real);
+    EXPECT_NEAR(lcos_real, 577.1, 0.1);
+}
+
 /// Test PVSAMv1 with all defaults and battery enabled with 3 automatic dispatch methods
 TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_ACBatteryModelIntegration)
 {
@@ -809,7 +862,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialDCBatteryModelPriceS
 
         auto batt_q_rel = data_vtab->as_vector_ssc_number_t("batt_capacity_percent");
         auto batt_cyc_avg = data_vtab->as_vector_ssc_number_t("batt_DOD_cycle_average");
-        EXPECT_NEAR(batt_q_rel.back(), 98.04, 2e-2);
-        EXPECT_NEAR(batt_cyc_avg.back(), 27.15, 1.0);
+        EXPECT_NEAR(batt_q_rel.back(), 98.034, 2e-2);
+        EXPECT_NEAR(batt_cyc_avg.back(), 27.00, 0.2);
     }
 }
