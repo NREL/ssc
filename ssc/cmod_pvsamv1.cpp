@@ -489,6 +489,8 @@ static var_info _cm_vtab_pvsamv1[] = {
 { SSC_INPUT, SSC_NUMBER,   "en_batt",                              "Enable battery storage model",                        "0/1",    "",                                                                                                                                                                                      "BatterySystem",                                               "?=0",                                "",                    "" },
 { SSC_INPUT, SSC_ARRAY,    "load",                                 "Electricity load (year 1)",                           "kW",     "",                                                                                                                                                                                      "Load",                                               "?",                                  "",                    "" },
 { SSC_INPUT, SSC_ARRAY,    "crit_load",                            "Critical Electricity load (year 1)",                  "kW",     "",                                                                                                                                                                                      "Load",                                               "",                                   "",                    "" },
+{ SSC_INPUT, SSC_ARRAY,    "grid_outage",                          "Timesteps with grid outage",                          "0/1",    "0=GridAvailable,1=GridUnavailable,Length=load", "Load",    "",                       "",                               "" },
+{ SSC_INPUT, SSC_NUMBER,   "run_resiliency_calcs",                 "Enable resilence calculations for every timestep",    "0/1",    "0=DisableCalcs,1=EnableCalcs",                  "Load",    "?=0",                    "",                               "" },
 { SSC_INPUT, SSC_ARRAY,    "load_escalation",                      "Annual load escalation",                              "%/year", "",                                                                                                                                                                                      "Load",                                               "?=0",                                "",                    "" },
 // NOTE:  other battery storage model inputs and outputs are defined in batt_common.h/batt_common.cpp
 
@@ -1094,11 +1096,17 @@ void cm_pvsamv1::exec()
         if (PVSystem->Inverter->nMpptInputs > 1 && en_batt && batt_topology == ChargeController::DC_CONNECTED)
             throw exec_error("pvsamv1", "DC-connected batteries do not work with multiple MPPT input inverters.");
 
-        if (!p_crit_load_in.empty() && *std::max_element(p_crit_load_in.begin(), p_crit_load_in.end()) > 0) {
-            resilience = std::unique_ptr<resilience_runner>(new resilience_runner(batt));
-            auto logs = resilience->get_logs();
-            if (!logs.empty()) {
-                log(logs[0], SSC_WARNING);
+        bool run_resilience = as_boolean("run_resiliency_calcs");
+        if (run_resilience) {
+            if (!p_crit_load_in.empty() && *std::max_element(p_crit_load_in.begin(), p_crit_load_in.end()) > 0) {
+                resilience = std::unique_ptr<resilience_runner>(new resilience_runner(batt));
+                auto logs = resilience->get_logs();
+                if (!logs.empty()) {
+                    log(logs[0], SSC_WARNING);
+                }
+            }
+            else {
+                throw exec_error("pvsamv1", "If run_resiliency_calcs is 1, crit_load must have length > 0 and values > 0");
             }
         }
     }
@@ -2090,7 +2098,6 @@ void cm_pvsamv1::exec()
 
     double annual_dc_loss_ond = 0, annual_ac_loss_ond = 0; // (TR)
 
-
     for (size_t iyear = 0; iyear < nyears; iyear++)
     {
         //idx is the current array index in the (possibly subhourly) year of weather data or the non-annual array
@@ -2333,10 +2340,10 @@ void cm_pvsamv1::exec()
 			if (en_batt)
 				batt->update_grid_power(*this, PVSystem->p_systemACPower[idx], p_load_full[idx], idx);
 
-            if (iyear == 0)
+            if (iyear == 0) {
                 annual_energy += (ssc_number_t)(PVSystem->p_systemACPower[idx] * ts_hour);
 
-
+            }
         }
         wdprov->rewind();
     }

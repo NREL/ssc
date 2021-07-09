@@ -45,7 +45,6 @@ static var_info _cm_vtab_singleowner[] = {
 	{ SSC_INPUT,        SSC_ARRAY,       "gen",                                         "Net power to or from the grid",                            "kW",       "",                    "System Output", "*", "", "" },
     { SSC_INPUT,        SSC_ARRAY,      "gen_without_battery",                          "Electricity to or from the renewable system, without the battery", "kW", "",                     "System Output", "", "", "" },
 
-
 	{ SSC_INPUT,        SSC_ARRAY, "degradation", "Annual energy degradation", "", "", "System Output", "*", "", "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "system_capacity",			              "System nameplate capacity",		                               "kW",                "",                        "System Output",             "*",					   "MIN=1e-3",                      "" },
     
@@ -208,6 +207,8 @@ static var_info _cm_vtab_singleowner[] = {
 
 /* salvage value */	                                                          
 	{ SSC_INPUT,        SSC_NUMBER,     "salvage_percentage",                     "Net pre-tax cash salvage value",	                               "%",	 "",					  "Financial Parameters",             "?=10",                     "MIN=0,MAX=100",      			"" },
+    //{ SSC_INPUT,        SSC_NUMBER,     "batt_salvage_percentage",                     "Net pre-tax cash battery salvage value",	                               "%",	 "",					  "Financial Parameters",             "?=0",                     "MIN=0,MAX=100",      			"" },
+
 /* market specific inputs - leveraged partnership flip */                     
 
 /* construction period */                                                     
@@ -646,8 +647,8 @@ static var_info _cm_vtab_singleowner[] = {
     { SSC_OUTPUT,       SSC_NUMBER,     "project_return_aftertax_npv",            "Net present value (after-tax)",             "$",                   "", "Metrics", "*", "", "" },
 
     { SSC_OUTPUT, SSC_ARRAY, "cf_annual_costs", "Annual costs", "$", "", "LCOE calculations", "*", "LENGTH_EQUAL=cf_length", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "npv_annual_costs", "Present value of annual costs", "$", "", "LCOE calculations", "*", "", "" },
 
+    { SSC_OUTPUT, SSC_NUMBER, "npv_annual_costs", "Present value of annual costs", "$", "", "LCOE calculations", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "adjusted_installed_cost", "Initial cost less cash incentives", "$", "", "", "*", "", "" },
 
 	{ SSC_OUTPUT, SSC_NUMBER, "min_dscr", "Minimum DSCR", "", "", "DSCR", "", "" },
@@ -669,7 +670,6 @@ static var_info _cm_vtab_singleowner[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_salvage_value",                        "Present value of salvage value",              "$",                   "", "Metrics", "*", "", "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_thermal_value",                        "Present value of thermal value",              "$",                   "", "Metrics", "*", "", "" },
 
-
 var_info_invalid };
 
 extern var_info
@@ -686,6 +686,7 @@ extern var_info
 	vtab_financial_capacity_payments[],
 	vtab_financial_grid[],
 	vtab_fuelcell_replacement_cost[],
+    vtab_lcos_inputs[],
 	vtab_battery_replacement_cost[];
 
 enum {
@@ -883,7 +884,22 @@ enum {
 
     CF_energy_without_battery,
 
-	CF_max };
+	
+
+    CF_energy_charged_grid,
+    CF_energy_charged_pv,
+    CF_energy_discharged,
+    CF_charging_cost_pv,
+    CF_charging_cost_grid,
+    CF_charging_cost_grid_month,
+    CF_om_cost_lcos,
+    CF_salvage_cost_lcos,
+    CF_investment_cost_lcos,
+    CF_annual_cost_lcos,
+    CF_util_escal_rate,
+
+    CF_max,
+ };
 
 
 
@@ -891,6 +907,7 @@ class cm_singleowner : public compute_module
 {
 private:
 	util::matrix_t<double> cf;
+    util::matrix_t<double> cf_lcos;
 	dispatch_calculations m_disp_calcs;
 	hourly_energy_calculation hourly_energy_calcs;
 
@@ -913,6 +930,7 @@ public:
 		add_var_info(vtab_fuelcell_replacement_cost);
 		add_var_info(vtab_financial_capacity_payments);
 		add_var_info(vtab_financial_grid);
+        add_var_info(vtab_lcos_inputs);
 	}
 
 	void exec( )
@@ -922,7 +940,7 @@ public:
 		// cash flow initialization
 		int nyears = as_integer("analysis_period");
 		cf.resize_fill(CF_max, nyears + 1, 0.0);
-
+        cf_lcos.resize_fill(CF_max, nyears + 1, 0.0);
 		// assign inputs
 		double inflation_rate = as_double("inflation_rate")*0.01;
 		double ppa_escalation = as_double("ppa_escalation")*0.01;
@@ -1035,20 +1053,20 @@ public:
 		int add_om_num_types = as_integer("add_om_num_types");
 		ssc_number_t nameplate1 = 0;
 		ssc_number_t nameplate2 = 0;
-
-		if (add_om_num_types > 0)
+        //throw exec_error("singleowner", "Checkpoint 1");
+		if (add_om_num_types > 0) //PV Battery
 		{
-			escal_or_annual(CF_om_fixed1_expense, nyears, "om_fixed1", inflation_rate, 1.0, false, as_double("om_fixed_escal")*0.01);
-			escal_or_annual(CF_om_production1_expense, nyears, "om_production1", inflation_rate, 0.001, false, as_double("om_production_escal")*0.01);
-			escal_or_annual(CF_om_capacity1_expense, nyears, "om_capacity1", inflation_rate, 1.0, false, as_double("om_capacity_escal")*0.01);
-			nameplate1 = as_number("om_capacity1_nameplate");
+			escal_or_annual(CF_om_fixed1_expense, nyears, "om_batt_fixed_cost", inflation_rate, 1.0, false, as_double("om_fixed_escal")*0.01);
+			escal_or_annual(CF_om_production1_expense, nyears, "om_batt_variable_cost", inflation_rate, 1.0, false, as_double("om_production_escal")*0.01);
+			escal_or_annual(CF_om_capacity1_expense, nyears, "om_batt_capacity_cost", inflation_rate, 1.0, false, as_double("om_capacity_escal")*0.01);
+			nameplate1 = as_number("ui_batt_capacity");
 		}
-		if (add_om_num_types > 1)
+		if (add_om_num_types > 1) // PV Battery Fuel Cell
 		{
-			escal_or_annual(CF_om_fixed2_expense, nyears, "om_fixed2", inflation_rate, 1.0, false, as_double("om_fixed_escal")*0.01);
-			escal_or_annual(CF_om_production2_expense, nyears, "om_production2", inflation_rate, 0.001, false, as_double("om_production_escal")*0.01);
-			escal_or_annual(CF_om_capacity2_expense, nyears, "om_capacity2", inflation_rate, 1.0, false, as_double("om_capacity_escal")*0.01);
-			nameplate2 = as_number("om_capacity2_nameplate");
+			escal_or_annual(CF_om_fixed2_expense, nyears, "om_fuelcell_fixed_cost", inflation_rate, 1.0, false, as_double("om_fixed_escal")*0.01);
+			escal_or_annual(CF_om_production2_expense, nyears, "om_fuelcell_variable_cost", inflation_rate, 0.001, false, as_double("om_production_escal")*0.01);
+			escal_or_annual(CF_om_capacity2_expense, nyears, "om_fuelcell_capacity_cost", inflation_rate, 1.0, false, as_double("om_capacity_escal")*0.01);
+			nameplate2 = as_number("ui_fuelcell_capacity");
 		}
 
 
@@ -1072,13 +1090,19 @@ public:
             }
             double batt_cap = as_double("batt_computed_bank_capacity");
             // updated 10/17/15 per 10/14/15 meeting
-            escal_or_annual(CF_battery_replacement_cost_schedule, nyears, "om_replacement_cost1", inflation_rate, batt_cap, false, as_double("om_replacement_cost_escal") * 0.01);
+            escal_or_annual(CF_battery_replacement_cost_schedule, nyears, "om_batt_replacement_cost", inflation_rate, batt_cap, false, as_double("om_replacement_cost_escal") * 0.01);
 
             for (i = 0; i < nyears && i < (int)count; i++) {
                 // batt_rep and the cash flow sheets are 1 indexed, replacement_percent is zero indexed
                 cf.at(CF_battery_replacement_cost, i + 1) = batt_rep[i+1] * replacement_percent[i] * 0.01 *
                     cf.at(CF_battery_replacement_cost_schedule, i + 1);
             }
+        }
+        else
+        {
+            double batt_cap = as_double("batt_computed_bank_capacity");
+            // updated 10/17/15 per 10/14/15 meeting
+            escal_or_annual(CF_battery_replacement_cost_schedule, nyears, "om_batt_replacement_cost", inflation_rate, batt_cap, false, as_double("om_replacement_cost_escal") * 0.01);
         }
 		
 
@@ -1090,7 +1114,7 @@ public:
 				fuelcell_rep = as_array("fuelcell_replacement", &count); // replacements per year calculated
 			else // user specified
 				fuelcell_rep = as_array("fuelcell_replacement_schedule", &count); // replacements per year user-defined
-			escal_or_annual(CF_fuelcell_replacement_cost_schedule, nyears, "om_replacement_cost2", inflation_rate, nameplate2, false, as_double("om_replacement_cost_escal")*0.01);
+			escal_or_annual(CF_fuelcell_replacement_cost_schedule, nyears, "om_fuelcell_replacement_cost", inflation_rate, nameplate2, false, as_double("om_replacement_cost_escal")*0.01);
 
 			for (i = 0; i < nyears && i < (int)count; i++) {
 				cf.at(CF_fuelcell_replacement_cost, i + 1) = fuelcell_rep[i] *
@@ -2022,7 +2046,7 @@ public:
 
 			// first year principal payment based on loan moratorium
 			ssc_number_t first_principal_payment = 0;
-
+            ssc_number_t first_principal_payment_batt = 0;
 			do
 			{
 				// first iteration - calculate debt reserve account based on initial installed cost
@@ -2828,9 +2852,9 @@ public:
 
     // Use PPA values to calculate revenue from purchases and sales
     size_t n_multipliers;
+    
     ssc_number_t* ppa_multipliers = as_array("ppa_multipliers", &n_multipliers);
-    bool ppa_purchases = !(is_assigned("en_electricity_rates") && as_number("en_electricity_rates") == 1); 
-
+    bool ppa_purchases = !(is_assigned("en_electricity_rates") && as_number("en_electricity_rates") == 1);
     if (as_integer("system_use_lifetime_output") == 1)
     {
         // hourly_enet includes all curtailment, availability
@@ -2961,6 +2985,23 @@ public:
 	assign("npv_annual_costs", var_data((ssc_number_t)npv_annual_costs));
 	save_cf(CF_Annual_Costs, nyears, "cf_annual_costs");
 
+    ///////////////////////////////////////////////////////////////////////
+    //LCOS Calculations
+    if (is_assigned("battery_total_cost_lcos") && as_double("battery_total_cost_lcos") != 0) {
+        for (int y = 0; y <= nyears; y++) {
+            cf_lcos.at(0, y) = cf.at(CF_battery_replacement_cost, y);
+            cf_lcos.at(1, y) = cf.at(CF_battery_replacement_cost_schedule, y);
+            cf_lcos.at(2, y) = cf.at(CF_ppa_price, y);
+            cf_lcos.at(6, y) = cf.at(CF_om_fixed1_expense, y); //Fixed OM Battery cost
+            cf_lcos.at(7, y) = cf.at(CF_om_production1_expense, y); //Produciton OM Battery cost
+            cf_lcos.at(8, y) = cf.at(CF_om_capacity1_expense, y); //Capacity OM Battery Cost
+        }
+        int grid_charging_cost_version = 1;
+        ssc_number_t* tod_multipliers;
+        size_t* n_tod_multipliers = 0;
+        lcos_calc(this, cf_lcos, nyears, nom_discount_rate, inflation_rate, lcoe_real, cost_prefinancing, disc_real, grid_charging_cost_version);
+    }
+    /////////////////////////////////////////////////////////////////////////////////////////
 
 	// DSCR calculations
 	for (i = 0; i <= nyears; i++)
@@ -3245,7 +3286,6 @@ public:
 		save_cf( CF_om_fixed_expense, nyears, "cf_om_fixed_expense" );
 		save_cf( CF_om_production_expense, nyears, "cf_om_production_expense" );
 		save_cf( CF_om_capacity_expense, nyears, "cf_om_capacity_expense" );
-
         if (add_om_num_types > 0) {
             save_cf(CF_om_fixed1_expense, nyears, "cf_om_fixed1_expense");
             save_cf(CF_om_production1_expense, nyears, "cf_om_production1_expense");

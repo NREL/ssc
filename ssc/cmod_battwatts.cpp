@@ -50,6 +50,8 @@ var_info vtab_battwatts[] = {
 	{ SSC_INPUT,        SSC_ARRAY,       "ac",							     "AC inverter power",                      "W",       "",                 "Battery",                           "",                           "",                              "" },
     { SSC_INPUT,		SSC_ARRAY,	     "load",			                     "Electricity load (year 1)",              "kW",	   "",		           "Battery",                           "",	                         "",	                          "" },
     { SSC_INPUT,		SSC_ARRAY,	     "crit_load",			             "Critical electricity load (year 1)",     "kW",	   "",		           "Battery",                           "",	                         "",	                          "" },
+    { SSC_INPUT,        SSC_ARRAY,       "grid_outage",                      "Timesteps with grid outage",             "0/1",     "0=GridAvailable,1=GridUnavailable,Length=load", "Load",    "",                       "",                               "" },
+    { SSC_INPUT,        SSC_NUMBER,      "run_resiliency_calcs",             "Enable resilence calculations for every timestep",           "0/1",     "0=DisableCalcs,1=EnableCalcs",                  "Load",    "?=0",                    "",                               "" },
     { SSC_INPUT,        SSC_ARRAY,       "load_escalation",                  "Annual load escalation",                 "%/year",   "",                 "Load",                              "?=0",                       "",                              "" },
     { SSC_INPUT,        SSC_NUMBER,      "inverter_efficiency",               "Inverter Efficiency",                     "%",      "",                  "Battery",                          "",                           "MIN=0,MAX=100",                               "" },
 
@@ -334,15 +336,21 @@ void cm_battwatts::exec()
 
         std::unique_ptr<resilience_runner> resilience = nullptr;
         std::vector<ssc_number_t> p_crit_load;
+        bool run_resilience = as_boolean("run_resiliency_calcs");
         if (is_assigned("crit_load")){
             p_crit_load = as_vector_ssc_number_t("crit_load");
             if (p_crit_load.size() != p_load.size())
                 throw exec_error("battwatts", "critical electric load profile must have same number of values as load");
-            if (!p_crit_load.empty() && *std::max_element(p_crit_load.begin(), p_crit_load.end()) > 0){
-                resilience = std::unique_ptr<resilience_runner>(new resilience_runner(batt));
-                auto logs = resilience->get_logs();
-                if (!logs.empty()){
-                    log(logs[0], SSC_WARNING);
+            if (run_resilience) {
+                if (!p_crit_load.empty() && *std::max_element(p_crit_load.begin(), p_crit_load.end()) > 0) {
+                    resilience = std::unique_ptr<resilience_runner>(new resilience_runner(batt));
+                    auto logs = resilience->get_logs();
+                    if (!logs.empty()) {
+                        log(logs[0], SSC_WARNING);
+                    }
+                }
+                else {
+                    throw exec_error("battwatts", "If run_resiliency_calcs is 1, crit_load must have length > 0 and values > 0");
                 }
             }
         }
