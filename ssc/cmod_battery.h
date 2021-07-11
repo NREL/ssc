@@ -121,8 +121,10 @@ struct batt_variables
 	std::vector<double> batt_losses_idle;
 	std::vector<double> batt_losses;
 
-	int batt_computed_series;
-	int batt_computed_strings;
+//    int batt_computed_series;
+//    int batt_computed_strings;
+    double batt_computed_series;
+    double batt_computed_strings;
 
 	double batt_kw;
 	double batt_kwh;
@@ -171,8 +173,9 @@ struct batt_variables
 	size_t inverter_model;
 	double inverter_efficiency;
 	double inverter_paco;
-	size_t inverter_count;
-	double batt_inverter_efficiency_cutoff;
+    //size_t inverter_count;
+    double inverter_count;
+    double batt_inverter_efficiency_cutoff;
 
 	double batt_calendar_q0;
 	double batt_calendar_a;

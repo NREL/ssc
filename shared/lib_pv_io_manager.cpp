@@ -289,7 +289,8 @@ Subarray_IO::Subarray_IO(compute_module* cm, const std::string& cmName, size_t s
 
     if (enable)
     {
-        int n = cm->as_integer(prefix + "nstrings");
+//        int n = cm->as_integer(prefix + "nstrings");
+        double n = cm->as_double(prefix + "nstrings");
         if (n < 0) {
             throw exec_error(cmName, "invalid string allocation between subarrays.  all subarrays must have zero or positive number of strings.");
         }
@@ -301,7 +302,8 @@ Subarray_IO::Subarray_IO(compute_module* cm, const std::string& cmName, size_t s
             return;
         }
 
-        nModulesPerString = cm->as_integer(prefix + "modules_per_string");
+//        nModulesPerString = cm->as_integer(prefix + "modules_per_string");
+        nModulesPerString = cm->as_double(prefix + "modules_per_string");
         mpptInput = cm->as_integer(prefix + "mppt_input");
         trackMode = cm->as_integer(prefix + "track_mode");
         tiltEqualLatitude = 0;
@@ -372,8 +374,10 @@ Subarray_IO::Subarray_IO(compute_module* cm, const std::string& cmName, size_t s
 
         shadeMode = cm->as_integer(prefix + "shade_mode");
         selfShadingInputs.mod_orient = cm->as_integer(prefix + "mod_orient"); //although these inputs are stored in self-shading structure, they are also used for snow model and bifacial model, so required for all enabled subarrays
-        selfShadingInputs.nmody = cm->as_integer(prefix + "nmody"); //same as above
-        selfShadingInputs.nmodx = cm->as_integer(prefix + "nmodx"); //same as above
+//        selfShadingInputs.nmody = cm->as_integer(prefix + "nmody"); //same as above
+//        selfShadingInputs.nmodx = cm->as_integer(prefix + "nmodx"); //same as above
+        selfShadingInputs.nmody = cm->as_double(prefix + "nmody"); //same as above
+        selfShadingInputs.nmodx = cm->as_double(prefix + "nmodx"); //same as above
         selfShadingInputs.nstrx = selfShadingInputs.nmodx / nModulesPerString;
         poa.nonlinearDCShadingDerate = 1;
         selfShadingSkyDiffTable.init(tiltDegrees, groundCoverageRatio);
@@ -612,7 +616,8 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO* 
         stringsInParallel += static_cast<int>(Subarrays[s]->nStrings);
     }
 
-    numberOfInverters = cm->as_integer("inverter_count");
+//    numberOfInverters = cm->as_integer("inverter_count");
+    numberOfInverters = cm->as_double("inverter_count");
     ratedACOutput = Inverter->ratedACOutput * numberOfInverters;
     acDerate = 1 - cm->as_double("acwiring_loss") / 100;
     acLossPercent = (1 - acDerate) * 100;
