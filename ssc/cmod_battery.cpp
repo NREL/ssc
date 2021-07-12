@@ -224,13 +224,13 @@ var_info vtab_battery_outputs[] = {
 
 
     // monthly outputs
-    { SSC_OUTPUT,        SSC_ARRAY,      "monthly_system_to_load",                     "Energy to load from system",                            "kWh",      "",                      "Battery",       "",                          "LENGTH=12",                     "" },
-    { SSC_OUTPUT,        SSC_ARRAY,      "monthly_batt_to_load",                       "Energy to load from battery",                           "kWh",      "",                      "Battery",       "",                          "LENGTH=12",                     "" },
-    { SSC_OUTPUT,        SSC_ARRAY,      "monthly_grid_to_load",                       "Energy to load from grid",                              "kWh",      "",                      "Battery",       "",                          "LENGTH=12",                     "" },
-    { SSC_OUTPUT,        SSC_ARRAY,      "monthly_system_to_grid",                     "Energy to grid from system",                            "kWh",      "",                      "Battery",       "",                          "LENGTH=12",                     "" },
-    { SSC_OUTPUT,        SSC_ARRAY,      "monthly_batt_to_grid",                       "Energy to grid from battery",                           "kWh",      "",                      "Battery",       "",                          "LENGTH=12",                     "" },
-    { SSC_OUTPUT,        SSC_ARRAY,      "monthly_system_to_batt",                     "Energy to battery from system",                         "kWh",      "",                      "Battery",       "",                          "LENGTH=12",                     "" },
-    { SSC_OUTPUT,        SSC_ARRAY,      "monthly_grid_to_batt",                       "Energy to battery from grid",                           "kWh",      "",                      "Battery",       "",                          "LENGTH=12",                     "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "monthly_system_to_load",                     "Energy to load from system (monthly)",                            "kWh",      "",                      "Battery",       "",                          "LENGTH=12",                     "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "monthly_batt_to_load",                       "Energy to load from battery (monthly)",                           "kWh",      "",                      "Battery",       "",                          "LENGTH=12",                     "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "monthly_grid_to_load",                       "Energy to load from grid (monthly)",                              "kWh",      "",                      "Battery",       "",                          "LENGTH=12",                     "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "monthly_system_to_grid",                     "Energy to grid from system (monthly)",                            "kWh",      "",                      "Battery",       "",                          "LENGTH=12",                     "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "monthly_batt_to_grid",                       "Energy to grid from battery (monthly)",                           "kWh",      "",                      "Battery",       "",                          "LENGTH=12",                     "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "monthly_system_to_batt",                     "Energy to battery from system (monthly)",                         "kWh",      "",                      "Battery",       "",                          "LENGTH=12",                     "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "monthly_grid_to_batt",                       "Energy to battery from grid (monthly)",                           "kWh",      "",                      "Battery",       "",                          "LENGTH=12",                     "" },
 
     // annual metrics
     { SSC_OUTPUT,        SSC_ARRAY,      "batt_annual_charge_from_system",                 "Battery annual energy charged from system",                 "kWh",      "",                      "Battery",       "",                           "",                               "" },
