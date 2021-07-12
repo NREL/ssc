@@ -37,7 +37,11 @@ double Const_per_total(double const_per_interest /*$*/, double const_per_princip
 
 
 void save_cf(compute_module *cm, util::matrix_t<double>& mat, int cf_line, int nyears, const std::string &name);
+void save_cf(int cf_line, int nyears, const std::string& name, util::matrix_t<double> cf, compute_module* cm); //LCOS version
 
+extern var_info vtab_lcos_inputs[]; //LCOS var table
+
+void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double nom_discount_rate, double inflation_rate, double lcoe_real, double total_cost, double real_discount_rate, int grid_charging_cost_version); //LCOS function
 
 
 class dispatch_calculations

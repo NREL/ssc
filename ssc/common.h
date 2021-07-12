@@ -61,6 +61,7 @@ void calculate_resilience_outputs(compute_module *cm, std::unique_ptr<resilience
 
 ssc_number_t* gen_heatmap(compute_module* cm, double step_per_hour);
 
+
 class adjustment_factors
 {
 	compute_module *m_cm;
