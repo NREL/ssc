@@ -490,7 +490,11 @@ void BatteryPowerFlow::calculateDCConnected()
         if (P_pv_to_load_ac > P_pv_ac) {
             P_pv_to_load_ac = P_pv_ac;
         }
-        P_grid_to_load_ac = P_load_ac - P_pv_to_load_ac;
+
+        if (!m_BatteryPower->isOutageStep)
+        {
+            P_grid_to_load_ac = P_load_ac - P_pv_to_load_ac;
+        }
         P_pv_to_grid_ac = P_pv_ac - P_pv_to_load_ac;
 
         // In this case, we have a combo of Battery DC power from the PV array, and potentially AC power from the grid

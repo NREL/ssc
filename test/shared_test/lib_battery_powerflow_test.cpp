@@ -1593,3 +1593,85 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, TestDCConnected)
     EXPECT_NEAR(m_batteryPower->powerConversionLoss, 8.65, error);
     EXPECT_NEAR(m_batteryPower->powerSystemLoss, 1.0, error);
 }
+
+// DC connected outage
+TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, DC_outage_excessPV) {
+    m_batteryPower->connectionMode = ChargeController::DC_CONNECTED;
+
+    m_batteryPower->canGridCharge = false;
+    m_batteryPower->canDischarge = true;
+    m_batteryPower->canSystemCharge = true;
+    m_batteryPower->isOutageStep = true;
+    m_batteryPower->powerSystem = 100;
+    m_batteryPower->powerLoad = 50;
+    m_batteryPower->powerCritLoad = 50;
+
+    // charging will be from PV, no export because of outage
+    m_batteryPower->powerBatteryDC = -40;
+    m_batteryPowerFlow->calculate();
+
+    EXPECT_NEAR(m_batteryPower->powerBatteryAC, -40.81, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToLoad, 50, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToBattery, 40.81, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToGrid, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToBattery, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerBatteryToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerConversionLoss, 3.74, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemLoss, 0.0, error);
+    EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 0.0, error);
+
+    check_net_flows("1st case");
+
+    // won't be able to charge at this power level, since can't pull from grid
+    m_batteryPower->powerBatteryDC = -100;
+    m_batteryPowerFlow->calculate();
+
+    EXPECT_NEAR(m_batteryPower->powerBatteryAC, -52, error); // TODO - update with final inverter eff
+    EXPECT_NEAR(m_batteryPower->powerSystemToLoad, 50, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToBattery, 100, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToGrid, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToBattery, 40.81, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerBatteryToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerConversionLoss, 2, error); // TODO - update with final inverter eff
+    EXPECT_NEAR(m_batteryPower->powerSystemLoss, 0.0, error);
+    EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 0.0, error);
+
+    check_net_flows("2nd case");
+
+    // Redo the above, with losses: charging will be from PV
+    m_batteryPower->powerSystemLoss = 1.0;
+    m_batteryPower->powerBatteryDC = -40;
+    m_batteryPowerFlow->calculate();
+
+    EXPECT_NEAR(m_batteryPower->powerBatteryAC, -40.81, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToLoad, 50, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToBattery, 40.81, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToGrid, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToBattery, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerBatteryToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerConversionLoss, 3.74, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemLoss, 1.0, error);
+    EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 0.0, error);
+
+    check_net_flows("4th case");
+
+    // won't be able to charge at this power level, since can't pull from grid
+    m_batteryPower->powerBatteryDC = -100;
+    m_batteryPowerFlow->calculate();
+
+    EXPECT_NEAR(m_batteryPower->powerBatteryAC, -52, error); // TODO - update with final inverter eff
+    EXPECT_NEAR(m_batteryPower->powerSystemToLoad, 50, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToBattery, 50, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToGrid, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToBattery, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerBatteryToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerConversionLoss, 2, error); // TODO - update with final inverter eff
+    EXPECT_NEAR(m_batteryPower->powerSystemLoss, 1.0, error);
+    EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 0.0, error);
+
+    check_net_flows("5th case");
+}
