@@ -111,7 +111,9 @@ public:
     double batt_dispatch_pvs_PV_ramp_interval() { return m_batt_dispatch_pvs_PV_ramp_interval; };
     double batt_dispatch_pvs_forecast_pv_energy() { return m_batt_dispatch_pvs_forecast_pv_energy; };
 
-    // validation outputs at ramp interval
+
+    /*
+    // validation outputs at ramp interval - use for debugging and remove for release
     double_vec batt_dispatch_pvs_outpower_vec() { return m_batt_dispatch_pvs_outpower_vec; };
     double_vec batt_dispatch_pvs_battpower_vec() { return  m_batt_dispatch_pvs_battpower_vec; };
     double_vec batt_dispatch_pvs_battsoc_vec() { return m_batt_dispatch_pvs_battsoc_vec; };
@@ -119,7 +121,7 @@ public:
     double_vec batt_dispatch_pvs_violation_list_vec() { return m_batt_dispatch_pvs_violation_list_vec; };
     double_vec batt_dispatch_pvs_PV_ramp_interval_vec() { return m_pv_power_input_sampled_vec; };
     double_vec batt_dispatch_pvs_forecast_pv_energy_vec() { return m_forecast_pv_energy_vec; };
-
+    */
 protected:
 
 	void init_with_pointer(const dispatch_pvsmoothing_front_of_meter_t* tmp);
@@ -147,6 +149,8 @@ protected:
     double m_batt_dispatch_pvs_P_pv_ac;
     double m_batt_dispatch_pvs_PV_ramp_interval;
     double m_batt_dispatch_pvs_forecast_pv_energy;
+
+
 
     // PVSmoothing inputs
     double m_batt_dispatch_pvs_nameplate_ac;
