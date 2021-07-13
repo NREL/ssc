@@ -27,12 +27,26 @@ public:
     void CreateKokamModel(double dt_hour = 1.)
     {
         params_str = "{ \"control_mode\": 0, \"input_current\" : 0.0, \"chem\" : 1, \"nominal_energy\" : 0.272, \"nominal_voltage\" : 3.6, "
-            "\"initial_SOC\" :0.66, \"maximum_SOC\" : 100.000, \"minimum_SOC\" : 0.000, \"dt_hr\" : 0.002777, \"leadacid_tn\" : 0.000,"
-            "\"leadacid_qn\" : 0.000, \"leadacid_q10\" : 0.000, \"leadacid_q20\" : 0.000, \"voltage_choice\" : 0,"
-            "\"Vnom_default\" : 3.6, \"resistance\" : 0.001155, \"Vfull\" : 4.200, \"Vexp\" : 3.529, \"Vnom\" : 3.35, \"Vcut\" : 2.702, \"Qfull\" : 75.56,"
-            "\"Qexp\" : 60.75, \"Qnom\" : 73.58, \"C_rate\" : 0.200, \"mass\" : 1.55417, \"surface_area\" : 0.1548, \"Cp\" : 980,"
-            "\"h\" : 8.066, \"cap_vs_temp\" : [[ 0,  80.200000000000003 ],[23, 100],[30, 103.09999999999999],[45, 105.40000000000001]], \"T_room_init\" : 23,"
-            "\"life_model\": 1}";
+                     "\"initial_SOC\" :0.66, \"maximum_SOC\" : 100.000, \"minimum_SOC\" : 0.000, \"dt_hr\" : 0.002777, \"voltage_choice\" : 0,"
+                     "\"Vnom_default\" : 3.6, \"resistance\" : 0.001155, \"Vfull\" : 4.200, \"Vexp\" : 3.529, \"Vnom\" : 3.35, \"Vcut\" : 2.702, \"Qfull\" : 75.56,"
+                     "\"Qexp\" : 60.75, \"Qnom\" : 73.58, \"C_rate\" : 0.200, \"mass\" : 1.55417, \"surface_area\" : 0.1548, \"Cp\" : 980,"
+                     "\"h\" : 8.066, \"T_room_init\" : 23,"
+                     "\"life_model\": 1}";
+
+        data = json_to_ssc_data(params_str.c_str());
+        ssc_data_set_number(data, "dt_hr", dt_hour);
+        mod = ssc_module_create("battery_stateful");
+        EXPECT_TRUE(ssc_stateful_module_setup(mod, data));
+    }
+
+    void CreateLMOLTOModel(double dt_hour = 1.)
+    {
+        params_str = "{ \"control_mode\": 0, \"input_current\" : 0.0, \"chem\" : 1, \"nominal_energy\" : 0.272, \"nominal_voltage\" : 3.6, "
+                     "\"initial_SOC\" :0.66, \"maximum_SOC\" : 100.000, \"minimum_SOC\" : 0.000, \"dt_hr\" : 0.002777, \"voltage_choice\" : 0,"
+                     "\"Vnom_default\" : 3.6, \"resistance\" : 0.001155, \"Vfull\" : 4.200, \"Vexp\" : 3.529, \"Vnom\" : 3.35, \"Vcut\" : 2.702, \"Qfull\" : 75.56,"
+                     "\"Qexp\" : 60.75, \"Qnom\" : 73.58, \"C_rate\" : 0.200, \"mass\" : 1.55417, \"surface_area\" : 0.1548, \"Cp\" : 980,"
+                     "\"h\" : 8.066, \"T_room_init\" : 23,"
+                     "\"life_model\": 2}";
 
         data = json_to_ssc_data(params_str.c_str());
         ssc_data_set_number(data, "dt_hr", dt_hour);

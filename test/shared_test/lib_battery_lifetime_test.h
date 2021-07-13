@@ -98,15 +98,8 @@ public:
     }
 };
 
-class lib_battery_lifetime_nmc_test : public ::testing::Test{
-protected:
-    std::unique_ptr<lifetime_nmc_t> model;
 
-    double dt_hour = 1;
-public:
-    void SetUp() override {
-        model = std::unique_ptr<lifetime_nmc_t>(new lifetime_nmc_t(dt_hour));
-    }
-};
+
+
 
 #endif //SAM_SIMULATION_CORE_LIB_BATTERY_LIFETIME_TEST_H

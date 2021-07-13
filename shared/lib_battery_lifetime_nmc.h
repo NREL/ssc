@@ -38,9 +38,9 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 // Gas Constant
-const double Rug = 8.314;       // J K mol-1
-const double T_ref = 298.15;    // K
-const double F = 96485;         // A s mol−1
+static const double Rug = 8.314;       // J K mol-1
+static const double T_ref = 298.15;    // K
+static const double F = 96485;         // A s mol−1
 
 
 struct lifetime_nmc_state {
@@ -50,19 +50,13 @@ struct lifetime_nmc_state {
     double dq_relative_li2;                 // cumulative dq from cycle-dependent Li loss, [0-1]
     double dq_relative_li3;                 // cumulative dq from BOL Li loss, [0-1]
     double dq_relative_neg;                 // cumulative dq from negative electrode, [0-1]
-    double DOD_max;                         // max DOD of battery for current day, [0-1]
-    double DOD_min;                         // min DOD of battery for current day, [0-1]
 
     // lifetime capacity updated after 24 hours elapsed using below values, which are all reset each day
-    double cum_dt;                          // day, [0-1]
     double b1_dt;
     double b2_dt;
     double b3_dt;
     double c0_dt;
     double c2_dt;
-
-    std::vector<double> cycle_DOD_max;      // max DODs of cycles concluded in current day, %
-    std::vector<double> cycle_DOD_range;    // DOD cycle_range of each cycle, %
 
     friend std::ostream& operator<<(std::ostream& os, const lifetime_nmc_state& p);
 };
@@ -144,7 +138,7 @@ protected:
     void integrateDegParams(double dt_day, double DOD, double T_battery);
 
     /// Integrate degradation from QLi and Qneg over one day, resets `x_dt` values
-    void integrateDegLoss(double DOD, double T_battery);
+    void integrateDegLoss(double T_battery);
 
     void initialize();
 };

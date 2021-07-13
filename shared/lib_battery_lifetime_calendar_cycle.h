@@ -70,6 +70,13 @@ struct cycle_state {
     int rainflow_jlt;                       // last index in Peaks, i.e, if Peaks = [0,1], then jlt = 1
     std::vector<double> rainflow_peaks;
 
+    // values for current day, refreshed end of each day; used only in analytic life models not calendar_cycle model
+    double cum_dt;                          // day, [0-1]
+    double DOD_max;                         // max DOD of battery for current day, [0-1]
+    double DOD_min;                         // min DOD of battery for current day, [0-1]
+    std::vector<double> cycle_DOD_max;      // max DODs of cycles concluded in current day, %
+    std::vector<double> cycle_DOD_range;    // DOD cycle_range of each cycle, %
+
     friend std::ostream &operator<<(std::ostream &os, const cycle_state &p);
 };
 
@@ -114,8 +121,20 @@ public:
     /// Return the depth of discharge of the last cycle
     double cycle_depth();
 
-    /// Return the average cycle range
+    /// Return the average cycle range over total cycles
     double average_range();
+
+    /// Reset cycle tracking for the day
+    void resetDailyCycles();
+
+    /// Updates the state variables for daily cycles
+    void updateDailyCycles(double &prev_DOD, double &DOD, bool charge_changed);
+
+    /// Predicts average DOD range of cycles in current eay
+    double predictDODRng();
+
+    /// Predicts average SOCs of cycles in current day
+    double predictAvgSOC(double DOD);
 
     lifetime_state get_state();
 
