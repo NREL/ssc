@@ -75,10 +75,11 @@ lifetime_t * lifetime_lmolto_t::clone() {
 
 double lifetime_lmolto_t::runQcal() {
     double SOC_avg = cycle_model->predictAvgSOC(state->cycle->DOD_max - state->cycle->DOD_min);
+
+    // trajectory eqn: qLossCal=q1*t^q2; rate eqn: dqLossCal=q1*q2*(qLossCal / q1)^((1-q2)/q2))
+    double dqLossCal = 0;
     double q1 = q1_b0 * exp(q1_b1 * (1 / pow(state->lmo_lto->temp_avg, 3.)) * sqrt(SOC_avg)) *
                       exp(q1_b2 * (1 / pow(state->lmo_lto->temp_avg, 2.)) * sqrt(SOC_avg));
-
-    double dqLossCal = 0;
     if (state->lmo_lto->dq_relative_cal == 0.) {
         if (state->day_age_of_battery > 0) {
             dqLossCal = q1;
@@ -94,9 +95,11 @@ double lifetime_lmolto_t::runQcal() {
 double lifetime_lmolto_t::runQcyc() {
     // use max DOD range regardless of if cycle has completed or not since using EFCs
     double DOD_range = state->cycle->DOD_max - state->cycle->DOD_min;
-    double q3 = q3_b0 + q3_b1 * (double)pow(state->lmo_lto->temp_avg, 4.) * (double)pow(DOD_range, 0.25);
 
+    // trajectory eqn: qLossCyc=q3*EFC^q4; rate eqn: dqLossCyc / dEFC = q3*q4*(qLossCyc / q3)^((1-q4)/q4))
+    // dEFC = EFC_dt * dt_day, and dt_day is always 1 day
     double dqLossCyc = 0;
+    double q3 = q3_b0 + q3_b1 * (double)pow(state->lmo_lto->temp_avg, 4.) * (double)pow(DOD_range, 0.25);
     if (state->lmo_lto->dq_relative_cyc == 0.) {
         if (state->lmo_lto->EFC_dt > 0) {
             dqLossCyc = q3 / state->lmo_lto->EFC_dt;
@@ -107,9 +110,9 @@ double lifetime_lmolto_t::runQcyc() {
             dqLossCyc = q3 * q4 * (double)pow(state->lmo_lto->dq_relative_cyc * 0.01 / q3, (q4 - 1) / q4);
         }
     }
-    // this NaN can happen if q3 <0 since pow with a negative base is a complex not real number.
+    // NaN can happen if q3 <0 since pow with a negative base is a complex not real number.
     // q3 < 0 when DOD_range ~0
-    if (std::isnan(dqLossCyc * state->lmo_lto->EFC_dt * 100))
+    if (std::isnan(dqLossCyc * state->lmo_lto->EFC_dt * 100) || dqLossCyc < 0)
         dqLossCyc = 0.;
     state->lmo_lto->dq_relative_cyc += dqLossCyc * state->lmo_lto->EFC_dt * 100;
     return state->lmo_lto->dq_relative_cyc;

@@ -37,13 +37,13 @@ extern const double T_ref;
 extern const double F;
 
 struct lifetime_lmolto_state {
-    double dq_relative_cal;                 // %
-    double dq_relative_cyc;                 // %
-    double EFC;                             // Equivalent Full Cycles
+    double dq_relative_cal;                 // [%]
+    double dq_relative_cyc;                 // [%]
+    double EFC;                             // [Equivalent Full Cycles]
 
     // lifetime capacity updated after 24 hours elapsed using below values, which are all reset each day
-    double EFC_dt;                          // 1
-    double temp_avg;                        // 1
+    double EFC_dt;                          // [Equivalent Full Cycles / day]
+    double temp_avg;                        // [K]
 
     friend std::ostream& operator<<(std::ostream& os, const lifetime_lmolto_state& p);
 };
@@ -74,21 +74,23 @@ protected:
     std::unique_ptr<lifetime_cycle_t> cycle_model;
 
     /// Capacity degradation due to calendar loss
-    double q1_b0 = 3.4984e-5;
-    double q1_b1 = -1.0704e9;
-    double q1_b2 = 3.7839e6;
-    double q2 = 0.6224;
+    double q1_b0 = 3.4984e-5;           // [relative capacity]
+    double q1_b1 = -1.0704e9;           // [relative capacity]
+    double q1_b2 = 3.7839e6;            // [relative capacity]
+    double q2 = 0.6224;                 // [relative capacity]
 
     /// Capacity degradation due to cycling loss
-    double q3_b0 = -7.146e-4;
-    double q3_b1 = 1.071e-13;
-    double q4 = 0.5539;
+    double q3_b0 = -7.146e-4;           // [relative capacity]
+    double q3_b1 = 1.071e-13;           // [relative capacity]
+    double q4 = 0.5539;                 // [relative capacity]
 
+    /// Update the relative capacity loss due to calendar effects
     double runQcal();
 
+    /// Update the relative capacity loss due to cycling effects
     double runQcyc();
 
-    /// compute lifetime degradation coefficients for current time step
+    /// Compute lifetime degradation coefficients for current time step
     void integrateDegParams(double dt_day, double prev_DOD, double DOD, double T_battery);
 
     /// Integrate degradation from QLi and Qneg over one day, resets `x_dt` values

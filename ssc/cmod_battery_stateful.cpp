@@ -372,7 +372,7 @@ void read_battery_state(battery_state& state, var_table* vt) {
             vt_get_array_vec(vt, "cycle_DOD_max", lifetime->cycle->cycle_DOD_max);
         }
         else {
-            lifetime->cycle->cycle_DOD_range.clear();
+            lifetime->cycle->cycle_DOD_max.clear();
         }
         if (choice == lifetime_params::NMC) {
             vt_get_number(vt, "q_relative_li", &lifetime->nmc_li_neg->q_relative_li);

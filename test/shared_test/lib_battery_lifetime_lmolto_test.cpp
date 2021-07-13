@@ -22,7 +22,7 @@ public:
 TEST_F(lib_battery_lifetime_lmolto_test, InitTest) {
     double tol = 0.001;
 
-    //check lifetime_nmc_state_initialization
+    //check lifetime_lmolto_state initialization
     auto lifetime_state = model->get_state();
     EXPECT_NEAR(lifetime_state.lmo_lto->dq_relative_cal, 0, tol);
     EXPECT_NEAR(lifetime_state.lmo_lto->dq_relative_cyc, 0, tol);
@@ -31,7 +31,7 @@ TEST_F(lib_battery_lifetime_lmolto_test, InitTest) {
 }
 
 TEST_F(lib_battery_lifetime_lmolto_test, CopyTest) {
-    // check lifetime_nmc_state get & set
+    // check lifetime_lmolto_state get & set
     auto state = model->get_state();
     state.cycle->cycle_DOD_range = {0, 1};
     state.cycle->cycle_DOD_max = {2, 3};
@@ -182,7 +182,7 @@ TEST_F(lib_battery_lifetime_lmolto_test, CyclingEveryTwoDays) {
     EXPECT_NEAR(state.day_age_of_battery, 88, 1e-3);
 }
 
-/** Test focusing on how different time steps affect the integration of a day's degradation in the NMC life model.
+/** Test focusing on how different time steps affect the integration of a day's degradation in the LMO/LTO life model.
  * The integration of degradation is done at the end of each day when the elapsed time, `cum_dt` is exactly 1.
  * Check that if a simulation step has a timestep large enough that `cum_dt` passes from <1 to >1, that the effects
  * on lifetime are the same by breaking that timestep up and accruing the degradation and `cum_dt` correctly
