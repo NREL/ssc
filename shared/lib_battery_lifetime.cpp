@@ -57,40 +57,6 @@ lifetime_state::lifetime_state(const lifetime_state &rhs) :
     operator=(rhs);
 }
 
-lifetime_state::lifetime_state(const std::shared_ptr<cycle_state>& cyc, const std::shared_ptr<calendar_state>& cal) {
-    q_relative = 0;
-    n_cycles = 0;
-    cycle_range = 0;
-    cycle_DOD = 0;
-    average_range = 0;
-    day_age_of_battery = 0;
-    cycle = cyc;
-    calendar = cal;
-    q_relative = fmin(cycle->q_relative_cycle, calendar->q_relative_calendar);
-}
-
-lifetime_state::lifetime_state(const std::shared_ptr<lifetime_nmc_state>& nmc) {
-    q_relative = 0;
-    n_cycles = 0;
-    cycle_range = 0;
-    cycle_DOD = 0;
-    average_range = 0;
-    day_age_of_battery = 0;
-    nmc_li_neg = nmc;
-    q_relative = fmin(nmc->q_relative_li, nmc->q_relative_neg);
-}
-
-lifetime_state::lifetime_state(const std::shared_ptr<lifetime_lmolto_state> &lmolto) {
-    q_relative = 0;
-    n_cycles = 0;
-    cycle_range = 0;
-    cycle_DOD = 0;
-    average_range = 0;
-    day_age_of_battery = 0;
-    lmo_lto = lmolto;
-    q_relative = 100. - lmo_lto->dq_relative_cal - lmo_lto->dq_relative_cyc;
-}
-
 lifetime_state &lifetime_state::operator=(const lifetime_state &rhs) {
     if (this != &rhs) {
         q_relative = rhs.q_relative;

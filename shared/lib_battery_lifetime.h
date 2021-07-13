@@ -74,12 +74,6 @@ struct lifetime_state {
 
     lifetime_state(const lifetime_state &rhs);
 
-    lifetime_state(const std::shared_ptr<cycle_state>& cyc, const std::shared_ptr<calendar_state>& cal);
-
-    lifetime_state(const std::shared_ptr<lifetime_nmc_state>& nmc);
-
-    lifetime_state(const std::shared_ptr<lifetime_lmolto_state>& lmolto);
-
     lifetime_state &operator=(const lifetime_state &rhs);
 
     friend std::ostream &operator<<(std::ostream &os, const lifetime_state &p);
