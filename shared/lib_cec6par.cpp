@@ -360,7 +360,7 @@ void SuperLac( util::matrix_t<int> data, int oA, int n_p, std::vector<double>& L
 
                 }
             }
-            FA.resize(FA.nrows() - r + 2, FA.ncols());
+            //FA.resize(FA.nrows() - r + 2, FA.ncols());
             FA_prime.resize(y_dim, (FA.nrows() * FA.ncols()) / y_dim);
             for (int i = 0; i < FA_prime.nrows(); i++) {
                 for (int j = 0; j < FA_prime.ncols()/oA; j++) {
@@ -420,7 +420,7 @@ void SuperLac( util::matrix_t<int> data, int oA, int n_p, std::vector<double>& L
 
                 }
             }
-            FA.resize(FA.nrows() - r + 2, FA.ncols());
+            //FA.resize(FA.nrows() - r + 2, FA.ncols());
             FA_prime.resize(oA, (FA.nrows() * FA.ncols()) / oA);
             for (int i = 0; i < FA_prime.nrows(); i++) {
                 for (int j = 0; j < FA_prime.ncols(); j++) {
