@@ -1573,6 +1573,7 @@ static var_info _cm_vtab_battery[] = {
     { SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",                 "Lifetime simulation",                                     "0/1",        "0=SingleYearRepeated,1=RunEveryYear",   "Lifetime",        "?=0",                   "BOOLEAN",                              "" },
     { SSC_INPUT,        SSC_NUMBER,      "analysis_period",                            "Lifetime analysis period",                                "years",      "The number of years in the simulation", "Lifetime",        "system_use_lifetime_output=1","",                               "" },
     { SSC_INPUT,        SSC_NUMBER,      "en_batt",                                    "Enable battery storage model",                            "0/1",        "",                     "BatterySystem",                      "?=0",                    "",                               "" },
+    { SSC_INPUT,        SSC_NUMBER,      "en_standalone_batt",                         "Enable standalone battery storage model",                 "0/1",        "",                     "BatterySystem",                      "?=0",                    "",                               "" },
     { SSC_INOUT,        SSC_ARRAY,       "gen",										   "System power generated",                                  "kW",         "",                     "System Output",                    "",                       "",                               "" },
     { SSC_INPUT,		SSC_ARRAY,	     "load",			                           "Electricity load (year 1)",                               "kW",	        "",				        "Load",                             "",	                      "",	                            "" },
     { SSC_INPUT,		SSC_ARRAY,	     "crit_load",			                       "Critical electricity load (year 1)",                      "kW",	        "",				        "Load",                             "",	                      "",	                            "" },
@@ -1605,8 +1606,13 @@ public:
     {
         if (as_boolean("en_batt"))
         {
+            std::vector<ssc_number_t> power_input_lifetime;
             // System generation output, which is lifetime (if system_lifetime_output == true);
-            std::vector<ssc_number_t> power_input_lifetime = as_vector_ssc_number_t("gen");
+            if (as_boolean("en_standalone_batt"))
+                power_input_lifetime.resize(as_vector_ssc_number_t("gen").size(), 0.0);
+            else
+                power_input_lifetime = as_vector_ssc_number_t("gen");
+
             std::vector<ssc_number_t> load_lifetime, load_year_one;
             size_t n_rec_lifetime = power_input_lifetime.size();
             bool use_lifetime = as_boolean("system_use_lifetime_output");
