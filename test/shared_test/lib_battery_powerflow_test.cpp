@@ -792,6 +792,277 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, AC_GridPVCharging_ExcessLoad)
     EXPECT_NEAR(m_batteryPower->powerLoad, 50, error);
 }
 
+TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, AC_outage_ExcessPV) {
+    m_batteryPower->connectionMode = ChargeController::AC_CONNECTED;
+
+    m_batteryPower->canGridCharge = false;
+    m_batteryPower->canDischarge = true;
+    m_batteryPower->canSystemCharge = true;
+    m_batteryPower->isOutageStep = true;
+    m_batteryPower->powerSystem = 100;
+    m_batteryPower->powerLoad = 50;
+    m_batteryPower->powerCritLoad = 50;
+
+    // charging will be from PV
+    m_batteryPower->powerBatteryDC = -40;
+    m_batteryPowerFlow->calculate();
+
+    EXPECT_NEAR(m_batteryPower->powerBatteryAC, -41.66, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToLoad, 50, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToBattery, 41.66, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToGrid, 0.0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToBattery, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerBatteryToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerConversionLoss, 1.66, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemLoss, 0.0, error);
+    EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerInterconnectionLoss, 8.33, error);
+
+    double gen = m_batteryPower->powerSystem + m_batteryPower->powerBatteryAC;
+    EXPECT_NEAR(m_batteryPower->powerGeneratedBySystem, gen, error);
+    EXPECT_NEAR(m_batteryPower->powerLoad, 50, error);
+
+    // charging will be from both PV and grid
+    m_batteryPower->powerBatteryDC = -100;
+    m_batteryPowerFlow->calculate();
+
+    EXPECT_NEAR(m_batteryPower->powerBatteryAC, -50, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToLoad, 50, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToBattery, 50, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToGrid, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToBattery, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerBatteryToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerConversionLoss, 2.0, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemLoss, 0.0, error);
+    EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerInterconnectionLoss, 0.0, error);
+
+    gen = m_batteryPower->powerSystem + m_batteryPower->powerBatteryAC;
+    EXPECT_NEAR(m_batteryPower->powerGeneratedBySystem, gen, error);
+    EXPECT_NEAR(m_batteryPower->powerLoad, 50, error);
+
+    // discharge to grid
+    m_batteryPower->powerBatteryDC = 20;
+    m_batteryPowerFlow->calculate();
+
+    EXPECT_NEAR(m_batteryPower->powerBatteryAC, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToLoad, 50, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToBattery, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToGrid, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToBattery, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerBatteryToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerBatteryToGrid, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerConversionLoss, 0.0, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemLoss, 0.0, error);
+    EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerInterconnectionLoss, 50, error);
+
+    gen = m_batteryPower->powerSystem + m_batteryPower->powerBatteryAC;
+    EXPECT_NEAR(m_batteryPower->powerGeneratedBySystem, gen, error);
+    EXPECT_NEAR(m_batteryPower->powerLoad, 50, error);
+
+    // charging will be from PV, with losses
+    m_batteryPower->powerBatteryDC = -40;
+    m_batteryPower->powerSystemLoss = 1.0;
+    m_batteryPowerFlow->calculate();
+
+    EXPECT_NEAR(m_batteryPower->powerBatteryAC, -41.66, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToLoad, 50, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToBattery, 41.66, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToGrid, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToBattery, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerBatteryToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerConversionLoss, 1.66, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemLoss, 1.0, error);
+    EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerInterconnectionLoss, 7.33, error);
+
+    gen = m_batteryPower->powerSystem + m_batteryPower->powerBatteryAC - m_batteryPower->powerSystemLoss;
+    EXPECT_NEAR(m_batteryPower->powerGeneratedBySystem, gen, error);
+    EXPECT_NEAR(m_batteryPower->powerLoad, 50, error);
+
+    // charging will be from both PV and grid
+    m_batteryPower->powerBatteryDC = -100;
+    m_batteryPowerFlow->calculate();
+
+    EXPECT_NEAR(m_batteryPower->powerBatteryAC, -49, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToLoad, 50, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToBattery, 49, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToGrid, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToBattery, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerBatteryToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerConversionLoss, 1.96, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemLoss, 1.0, error);
+    EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerInterconnectionLoss, 0.0, error);
+
+    gen = m_batteryPower->powerSystem + m_batteryPower->powerBatteryAC - m_batteryPower->powerSystemLoss;
+    EXPECT_NEAR(m_batteryPower->powerGeneratedBySystem, gen, error);
+    EXPECT_NEAR(m_batteryPower->powerLoad, 50, error);
+
+    // discharge to grid
+    m_batteryPower->powerBatteryDC = 20;
+    m_batteryPowerFlow->calculate();
+
+    // Battery covers own losses in this case - in real case dispatch should set power DC to zero so losses don't occur or PV covers
+    EXPECT_NEAR(m_batteryPower->powerBatteryAC, 1.0, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToLoad, 50, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToBattery, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToGrid, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToBattery, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerBatteryToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerBatteryToGrid, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerConversionLoss, 0.038, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemLoss, 1.0, error);
+    EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerInterconnectionLoss, 50.0, error);
+
+    gen = m_batteryPower->powerSystem + m_batteryPower->powerBatteryAC - m_batteryPower->powerSystemLoss;
+    EXPECT_NEAR(m_batteryPower->powerGeneratedBySystem, gen, error);
+    EXPECT_NEAR(m_batteryPower->powerLoad, 50, error);
+}
+
+// Not enough PV for load
+TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, AC_outage_ExcessLoad) {
+    m_batteryPower->connectionMode = ChargeController::AC_CONNECTED;
+
+    m_batteryPower->canSystemCharge = true;
+    m_batteryPower->canDischarge = true;
+    m_batteryPower->canGridCharge = false;
+    m_batteryPower->isOutageStep = true;
+    m_batteryPower->powerSystem = 25;
+    m_batteryPower->powerLoad = 50;
+    m_batteryPower->powerCritLoad = 50;
+
+    // do not discharge battery
+    m_batteryPower->powerBatteryDC = 0;
+    m_batteryPowerFlow->calculate();
+
+    EXPECT_NEAR(m_batteryPower->powerBatteryAC, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToLoad, 25, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToBattery, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToBattery, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToGrid, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerBatteryToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerConversionLoss, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemLoss, 0.0, error);
+    EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 25, error);
+    EXPECT_NEAR(m_batteryPower->powerInterconnectionLoss, 0.0, error);
+
+    double gen = m_batteryPower->powerSystem + m_batteryPower->powerBatteryAC;
+    EXPECT_NEAR(m_batteryPower->powerGeneratedBySystem, gen, error);
+    EXPECT_NEAR(m_batteryPower->powerLoad, 50, error);
+
+    // discharge battery
+    m_batteryPower->powerBatteryDC = 20;
+    m_batteryPowerFlow->calculate();
+
+    EXPECT_NEAR(m_batteryPower->powerBatteryAC, 19.19, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToLoad, 25, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToBattery, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToBattery, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToGrid, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerBatteryToLoad, 19.19, error);
+    EXPECT_NEAR(m_batteryPower->powerConversionLoss, 0.8, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemLoss, 0.0, error);
+    EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 5.8, error);
+    EXPECT_NEAR(m_batteryPower->powerInterconnectionLoss, 0.0, error);
+
+    gen = m_batteryPower->powerSystem + m_batteryPower->powerBatteryAC;
+    EXPECT_NEAR(m_batteryPower->powerGeneratedBySystem, gen, error);
+    EXPECT_NEAR(m_batteryPower->powerLoad, 50, error);
+
+    // try to charge battery from grid, not allowed
+    m_batteryPower->powerBatteryDC = -20;
+    m_batteryPowerFlow->calculate();
+
+    EXPECT_NEAR(m_batteryPower->powerBatteryAC, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToLoad, 25, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToBattery, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToBattery, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToGrid, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerBatteryToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerConversionLoss, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemLoss, 0.0, error);
+    EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 25, error);
+    EXPECT_NEAR(m_batteryPower->powerInterconnectionLoss, 0.0, error);
+
+    gen = m_batteryPower->powerSystem + m_batteryPower->powerBatteryAC;
+    EXPECT_NEAR(m_batteryPower->powerGeneratedBySystem, gen, error);
+    EXPECT_NEAR(m_batteryPower->powerLoad, 50, error);
+
+    // Redo the above tests with system losses: do not discharge battery
+    m_batteryPower->powerBatteryDC = 0;
+    m_batteryPower->powerSystemLoss = 0.5; // Idle loss
+    m_batteryPowerFlow->calculate();
+
+    EXPECT_NEAR(m_batteryPower->powerBatteryAC, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToLoad, 24.5, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToBattery, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToBattery, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToLoad, 0.0, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToGrid, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerBatteryToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerConversionLoss, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemLoss, 0.5, error);
+    EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 25.5, error);
+    EXPECT_NEAR(m_batteryPower->powerInterconnectionLoss, 0.0, error);
+
+    gen = m_batteryPower->powerSystem + m_batteryPower->powerBatteryAC - m_batteryPower->powerSystemLoss;
+    EXPECT_NEAR(m_batteryPower->powerGeneratedBySystem, gen, error);
+    EXPECT_NEAR(m_batteryPower->powerLoad, 50, error);
+
+    // discharge battery
+    m_batteryPower->powerBatteryDC = 20;
+    m_batteryPower->powerSystemLoss = 1.0; // Charging or discharging loss
+    m_batteryPowerFlow->calculate();
+
+    EXPECT_NEAR(m_batteryPower->powerBatteryAC, 19.19, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToLoad, 25, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToBattery, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToBattery, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToLoad, 0.0, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToGrid, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerBatteryToLoad, 18.19, error);
+    EXPECT_NEAR(m_batteryPower->powerConversionLoss, 0.8, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemLoss, 1.0, error);
+    EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 6.8, error);
+    EXPECT_NEAR(m_batteryPower->powerInterconnectionLoss, 0.0, error);
+
+    gen = m_batteryPower->powerSystem + m_batteryPower->powerBatteryAC - m_batteryPower->powerSystemLoss;
+    EXPECT_NEAR(m_batteryPower->powerGeneratedBySystem, gen, error);
+    EXPECT_NEAR(m_batteryPower->powerLoad, 50, error);
+
+    // try to charge battery from grid, not allowed
+    m_batteryPower->powerBatteryDC = -20;
+    m_batteryPowerFlow->calculate();
+
+    EXPECT_NEAR(m_batteryPower->powerBatteryAC, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToLoad, 24, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToBattery, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToBattery, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToLoad, 0.0, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToGrid, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerBatteryToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerConversionLoss, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemLoss, 1.0, error);
+    EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 26, error);
+    EXPECT_NEAR(m_batteryPower->powerInterconnectionLoss, 0.0, error);
+
+    gen = m_batteryPower->powerSystem + m_batteryPower->powerBatteryAC - m_batteryPower->powerSystemLoss;
+    EXPECT_NEAR(m_batteryPower->powerGeneratedBySystem, gen, error);
+    EXPECT_NEAR(m_batteryPower->powerLoad, 50, error);
+}
+
 // Excess PV production
 TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, DC_PVCharging_ExcessPV) {
     m_batteryPower->connectionMode = ChargeController::DC_CONNECTED;
