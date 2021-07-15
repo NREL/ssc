@@ -1138,6 +1138,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, DC_GridCharging_ExcessLoad)
     m_batteryPower->canGridCharge = true;
     m_batteryPower->canDischarge = true;
     m_batteryPower->canSystemCharge = false;
+    m_batteryPower->isOutageStep = false;
     m_batteryPower->powerSystem = 10;
     m_batteryPower->powerLoad = 50;
 
@@ -1620,23 +1621,25 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, DC_outage_excessPV) {
     EXPECT_NEAR(m_batteryPower->powerConversionLoss, 3.74, error);
     EXPECT_NEAR(m_batteryPower->powerSystemLoss, 0.0, error);
     EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 0.0, error);
+    EXPECT_NEAR(m_batteryPower->powerInterconnectionLoss, 6.25, error);
 
     check_net_flows("1st case");
 
-    // won't be able to charge at this power level, since can't pull from grid
+    // battery steals all of the energy and leaves critical load unmet - dispatch controller needs to avoid this situation
     m_batteryPower->powerBatteryDC = -100;
     m_batteryPowerFlow->calculate();
 
-    EXPECT_NEAR(m_batteryPower->powerBatteryAC, -52, error); // TODO - update with final inverter eff
-    EXPECT_NEAR(m_batteryPower->powerSystemToLoad, 50, error);
+    EXPECT_NEAR(m_batteryPower->powerBatteryAC, -100, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToLoad, 0.0, error);
     EXPECT_NEAR(m_batteryPower->powerSystemToBattery, 100, error);
     EXPECT_NEAR(m_batteryPower->powerSystemToGrid, 0, error);
-    EXPECT_NEAR(m_batteryPower->powerGridToBattery, 40.81, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToBattery, 0, error);
     EXPECT_NEAR(m_batteryPower->powerGridToLoad, 0, error);
     EXPECT_NEAR(m_batteryPower->powerBatteryToLoad, 0, error);
-    EXPECT_NEAR(m_batteryPower->powerConversionLoss, 2, error); // TODO - update with final inverter eff
+    EXPECT_NEAR(m_batteryPower->powerConversionLoss, 2, error);
     EXPECT_NEAR(m_batteryPower->powerSystemLoss, 0.0, error);
-    EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 0.0, error);
+    EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 50.0, error);
+    EXPECT_NEAR(m_batteryPower->powerInterconnectionLoss, 0.0, error);
 
     check_net_flows("2nd case");
 
@@ -1655,23 +1658,25 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, DC_outage_excessPV) {
     EXPECT_NEAR(m_batteryPower->powerConversionLoss, 3.74, error);
     EXPECT_NEAR(m_batteryPower->powerSystemLoss, 1.0, error);
     EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 0.0, error);
+    EXPECT_NEAR(m_batteryPower->powerInterconnectionLoss, 5.27, error);
 
-    check_net_flows("4th case");
+    check_net_flows("3th case");
 
-    // won't be able to charge at this power level, since can't pull from grid
+    // battery steals all of the energy and leaves critical load unmet - dispatch controller needs to avoid this situation
     m_batteryPower->powerBatteryDC = -100;
     m_batteryPowerFlow->calculate();
 
-    EXPECT_NEAR(m_batteryPower->powerBatteryAC, -52, error); // TODO - update with final inverter eff
-    EXPECT_NEAR(m_batteryPower->powerSystemToLoad, 50, error);
-    EXPECT_NEAR(m_batteryPower->powerSystemToBattery, 50, error);
+    EXPECT_NEAR(m_batteryPower->powerBatteryAC, -99, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToBattery, 99, error);
     EXPECT_NEAR(m_batteryPower->powerSystemToGrid, 0, error);
     EXPECT_NEAR(m_batteryPower->powerGridToBattery, 0, error);
     EXPECT_NEAR(m_batteryPower->powerGridToLoad, 0, error);
     EXPECT_NEAR(m_batteryPower->powerBatteryToLoad, 0, error);
-    EXPECT_NEAR(m_batteryPower->powerConversionLoss, 2, error); // TODO - update with final inverter eff
+    EXPECT_NEAR(m_batteryPower->powerConversionLoss, 2, error);
     EXPECT_NEAR(m_batteryPower->powerSystemLoss, 1.0, error);
-    EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 0.0, error);
+    EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 50.0, error);
+    EXPECT_NEAR(m_batteryPower->powerInterconnectionLoss, 0.0, error);
 
-    check_net_flows("5th case");
+    check_net_flows("4th case");
 }
