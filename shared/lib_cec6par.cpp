@@ -647,31 +647,35 @@ util::matrix_t<int> SolArrayLog(double res, double baseheight, double GCR, doubl
     int ones_x = floor(Lmod / res);
     int ones_y = floor(thick / res);
     util::matrix_t<int> ones;
-    ones.resize_fill(ones_x, ones_y, 1);
-    util::matrix_t<int> ones_rotated = imrotate(ones, angle);
+    util::matrix_t<int> Pmat = imrotate(ones, angle);
     util::matrix_t<int> ArrayLog;
-    util::matrix_t<int> Pmat;
+    //util::matrix_t<int> Pmat;
     ArrayLog.resize_fill(x, y * z, 0);
-    Pmat.resize_fill(ones_rotated.nrows(), ones_rotated.ncols() * oA, 0);
-
+    //Pmat.resize_fill(ones_rotated.nrows(), ones_rotated.ncols(), 0);
+    if (BInd + Pmat.ncols() > ArrayLog.ncols()/z) {
+        ArrayLog.resize_fill(ArrayLog.nrows(), ArrayLog.ncols() + (BInd + Pmat.ncols())* z, 0);
+    }
+    /*
     for (int i = 0; i < ones_rotated.nrows(); i++) {
         for (int j = 0; j < ones_rotated.ncols(); j++) {
-            for (int k = 0; k < oA; k++) {
-                Pmat.at(i, ones_rotated.ncols() * k + j) = ones_rotated.at(i, j);
-            }
+           
+           Pmat.at(i, j) = ones_rotated.at(i, j);
+            
         }
     }
-
+    */
 
     int xstart;
     int ystart;
     for (int jj = 0; jj < row_num; jj++) {
         xstart = SmidInd + SInd * Pcount;
-        for (int i = xstart; i < xstart + ones_rotated.nrows(); i++) {
+        for (int i = xstart; i < xstart + Pmat.nrows(); i++) {
             ystart = BInd;
             for (int j = ystart; j < ystart + Pmat.ncols(); j++) {
-               
-                ArrayLog.at(i, j) = Pmat.at(i - xstart, (j - ystart));
+                for (int k = 0; k < z; k++) {
+
+                    ArrayLog.at(i, k * (ystart + Pmat.ncols()) + j) = Pmat.at(i - xstart, (j - ystart));
+                }
                 
             }
         }
@@ -935,6 +939,25 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 		double app_fac  = 0.5  ; //  !Set approach factor for updating cell temp guess value
 		double app_fac_v = 0.5 ; // !Set approach factor for updating channel velocity guess value
 
+        //Lacunarity
+        double res = 0.025; //resolution
+        int oA_out = 0;
+        int n_p = 2;
+        const int n_p_const = n_p;
+        std::vector<double> L(n_p);
+        std::vector<double> L_n(n_p);
+        util::matrix_t<double> Z;
+        util::matrix_t<double> Z_n;
+        Z.resize(n_p, 4);
+        Z_n.resize(n_p, 4);
+        std::vector<double> R(n_p);
+        std::vector<double> R_n(n_p);
+
+        util::matrix_t<int> ArrayLog = SolArrayLog(res, 5 * ground_clearance_height, GCR, Length, 0.025, input.Tilt, Width, 9, false, oA_out);
+        SuperLac(ArrayLog, oA_out, 2, L, L_n, R, R_n, Z, Z_n);
+        //Do something with finding asymptote of L or L_n to get final Lacunarity value here?
+
+
 		switch( MC )
 		{
 		case 1 : // !Rack Mounting Configuration 
@@ -968,21 +991,6 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
                 }
                                                                             //double Re_forced  = MAX(0.1,rho_air*V_cover*L_char/mu_air) ; //  !Reynolds number of wind moving across module
                 //double Re_forced = MAX(0.1, rho_air * V_cover * Lsc / mu_air); //  !Reynolds number of wind moving across module
-                double res = 0.025; //resolution
-                int oA_out = 0;
-                int n_p = 10;
-                const int n_p_const = n_p;
-                std::vector<double> L(n_p);
-                std::vector<double> L_n(n_p);
-                util::matrix_t<double> Z;
-                util::matrix_t<double> Z_n;
-                Z.resize(n_p, 4);
-                Z_n.resize(n_p, 4);
-                std::vector<double> R(n_p);
-                std::vector<double> R_n(n_p);
-               
-                util::matrix_t<int> ArrayLog = SolArrayLog(res, 5*ground_clearance_height, GCR, Length, 0.025, input.Tilt, Width, 9, false, oA_out);
-                SuperLac(ArrayLog, oA_out, 2, L, L_n, R, R_n, Z, Z_n);
                 double Re_forced = MAX(0.1, rho_air_test * V_cover * Lsc / mu_air_test);
                 double Nu_forced  = 0.037 * pow(Re_forced,4./5.) * pow(Pr_air_test, 1./3.) ; //  !Nusselt Number (Incropera et al., 2006)
 				//double h_forced   = Nu_forced * k_air / L_char;
