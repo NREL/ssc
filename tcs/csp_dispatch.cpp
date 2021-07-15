@@ -68,7 +68,7 @@ void csp_dispatch_opt::init(double cycle_q_dot_des, double cycle_eta_des, double
     params.w_cycle_pump = pointers.mpc_pc->get_htf_pumping_parasitic_coef();// kWe/kWt
     params.w_cycle_standby = params.q_pb_standby * params.w_cycle_pump; //kWe
 
-    params.dt_rec_startup = pointers.col_rec->get_startup_time(); // / 3600.;
+    params.dt_rec_startup = pointers.col_rec->get_startup_time() / 3600.;
     params.e_rec_startup = pointers.col_rec->get_startup_energy() * 1000;
     params.q_rec_min = pointers.col_rec->get_min_power_delivery()*1000.;
     params.w_rec_pump = pointers.col_rec->get_pumping_parasitic_coef();
@@ -121,6 +121,17 @@ bool csp_dispatch_opt::check_setup(int nstep)
 {
     //check parameters and inputs to make sure everything has been set up correctly
     if( (int)params.sell_price.size() < nstep )   return false;
+    if ((int)params.w_lim.size() < nstep)   return false;
+
+    if ((int)params.q_sfavail_expected.size() < nstep)   return false;
+    if ((int)params.eta_pb_expected.size() < nstep)   return false;
+    if ((int)params.f_pb_op_limit.size() < nstep)   return false;
+    if ((int)params.w_condf_expected.size() < nstep)   return false;
+
+    //if ((int)params.wnet_lim_min.size() < nstep)   return false;
+    //if ((int)params.delta_rs.size() < nstep)   return false;
+    
+
     // TODO: add other checks
 
     return base_dispatch_opt::check_setup();
@@ -185,10 +196,11 @@ bool csp_dispatch_opt::predict_performance(int step_start, int ntimeints, int di
     m_nstep_opt = ntimeints;
 
     //Predict performance out nstep values.
-    outputs.clear();
-
-    if(! check_setup(m_nstep_opt) )
-        throw C_csp_exception("Dispatch optimization precheck failed.");
+    params.eta_sf_expected.clear();         //thermal efficiency
+    params.q_sfavail_expected.clear();      //predicted field energy output
+    params.eta_pb_expected.clear();         //power cycle efficiency
+    params.f_pb_op_limit.clear();           // Maximum power cycle output (normalized)
+    params.w_condf_expected.clear();        //condenser power
 
     //create the sim info
     C_csp_solver_sim_info simloc;    // = *params.siminfo;
@@ -258,13 +270,13 @@ bool csp_dispatch_opt::predict_performance(int step_start, int ntimeints, int di
         //power cycle efficiency
         params.eta_pb_expected.push_back( cycle_eff_ave );
 		// Maximum power cycle output (normalized)
-        params.f_pb_op_limit.push_back(f_pb_op_lim_ave);		//[-]
+        params.f_pb_op_limit.push_back(f_pb_op_lim_ave);
         //condenser power
         params.w_condf_expected.push_back( wcond_ave );
     }
 
-    //reset the weather data reader
-    //m_weather.jump_to_timestep(step_start, simloc);
+    if(! check_setup(m_nstep_opt) )
+        throw C_csp_exception("Dispatch optimization precheck failed.");
     
     return true;
 }
@@ -338,6 +350,7 @@ static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::s
         //TODO: Ramp rate -> User input
         pars["Wdlim"] = pars["W_dot_cycle"] * 0.03 * 60. * pars["delta"];      //Cycle Power Ramping Limit = Rated cycle power * 3%/min (ramp limit "User Input") * 60 mins/hr * hr
 
+        // TODO: This should be moved...
         // Adjust wlim if specified value is too low to permit cycle operation
         optinst->params.wnet_lim_min.resize(nt);
         optinst->params.delta_rs.resize(nt);
@@ -1481,11 +1494,11 @@ bool csp_dispatch_opt::optimize()
         lp_outputs.presolve_nvar = get_Ncolumns(lp);
         lp_outputs.solve_time = time_elapsed(lp);
 
-        //set_outputfile(lp, "C:\\Users\\mwagner\\Documents\\NREL\\SAM\\Dev\\ssc\\branches\\CSP_dev\\build_vc2013\\x64\\setup.txt");
-        //print_lp(lp);
+        set_outputfile(lp, "C:\\Users\\WHamilt2\\Documents\\SAM\\ZZZ_working_directory\\setup.txt");
+        print_lp(lp);
 
-        //set_outputfile(lp, "C:\\Users\\mwagner\\Documents\\NREL\\OM Optimization\\cspopt\\software\\sdk\\scripts\\lpsolve_dump\\solution.txt");
-        //print_solution(lp, 1);
+        set_outputfile(lp, "C:\\Users\\WHamilt2\\Documents\\SAM\\ZZZ_working_directory\\solution.txt");
+        print_solution(lp, 1);
         
 
         if(return_ok)
@@ -1499,16 +1512,7 @@ bool csp_dispatch_opt::optimize()
             lp_outputs.objective = get_objective(lp);
             lp_outputs.objective_relaxed = get_bb_relaxed_objective(lp);
 
-            outputs.pb_standby.resize(nt, false);
-            outputs.pb_operation.resize(nt, false);
-            outputs.q_pb_standby.resize(nt, 0.);
-            outputs.q_pb_target.resize(nt, 0.);
-            outputs.rec_operation.resize(nt, false);
-            outputs.tes_charge_expected.resize(nt, 0.);
-            outputs.q_sf_expected.resize(nt, 0.);
-            outputs.q_pb_startup.resize(nt, 0.);
-            outputs.q_rec_startup.resize(nt, 0.);
-            outputs.w_pb_target.resize(nt, 0.);
+            outputs.resize(nt);
 
             int ncols = get_Ncolumns(lp);
 
@@ -1683,7 +1687,7 @@ bool csp_dispatch_opt::optimize()
         pointers.messages->add_message(type, s.str() );
         
         if(return_ok)
-            write_ampl(); //why is this here?
+            write_ampl(); //TODO: why is this here?
 
         return return_ok;
     }
@@ -1936,9 +1940,10 @@ bool csp_dispatch_opt::set_dispatch_outputs()
         disp_outputs.is_pc_sb_allowed = outputs.pb_standby.at(m_current_read_step);
         disp_outputs.is_pc_su_allowed = outputs.pb_operation.at(m_current_read_step) || disp_outputs.is_pc_sb_allowed;
 
-        disp_outputs.q_pc_target = outputs.q_pb_target.at(m_current_read_step) / 1000.;
-        //+ dispatch.outputs.q_pb_startup.at( dispatch.m_current_read_step )
-              //TODO: Think about why this includes startup power
+        disp_outputs.q_pc_target = ( outputs.q_pb_target.at(m_current_read_step) 
+                                    + outputs.q_pb_startup.at(m_current_read_step) )
+                                    / 1000.;
+        //TODO: Think about why this includes startup power
 
         disp_outputs.q_dot_elec_to_CR_heat = outputs.q_sf_expected.at(m_current_read_step) / 1000.;
 
@@ -1950,7 +1955,7 @@ bool csp_dispatch_opt::set_dispatch_outputs()
             q_pc_target = dispatch.params.q_pb_standby*1.e-3;
         */
 
-        if (disp_outputs.q_pc_target + 1.e-5 < params.q_pb_min) //TODO: etes required a conversion on q_pb_min
+        if (disp_outputs.q_pc_target + 1.e-5 < params.q_pb_min / 1000.)
         {
             disp_outputs.is_pc_su_allowed = false;
             disp_outputs.q_pc_target = 0.0;

@@ -44,7 +44,6 @@ private:
 
 public:
     int m_current_read_step;           //current step to read from optimization results
-    //C_csp_weatherreader m_weather;       //Local copy of weather reader object
 
     s_solver_params solver_params;
 
@@ -74,7 +73,7 @@ public:
             C_csp_messages *csp_messages,
             C_csp_solver_sim_info *sim_info)
         {
-            m_weather = weather;
+            m_weather = weather;    // Todo: technically not a pointer
             col_rec = collector_receiver;
             mpc_pc = power_cycle;
             tes = thermal_es;
@@ -161,9 +160,6 @@ public:
 
     //Populated dispatch outputs for csp solver core
     virtual bool set_dispatch_outputs();
-
-    //copy the weather data over
-    //bool copy_weather_data(C_csp_weatherreader &weather_source);
 
     //simple string compare
     bool strcompare(std::string a, std::string b);

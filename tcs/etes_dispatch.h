@@ -289,9 +289,11 @@ public:
     //declare dispatch function in etes_dispatch.cpp
     bool optimize();
 
+    //Functions to write AMPL data files and solve AMPL model
     std::string write_ampl();
     bool optimize_ampl();
 
+    //Populated dispatch outputs for csp solver core
     bool set_dispatch_outputs();
 };
 

@@ -25,20 +25,6 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdlib.h>
 #include <algorithm>
 #include "base_dispatch.h"
-//#include "lp_lib.h" 
-//#include "lib_util.h"
-
-/*
-
-Careful with namespaces in this file.. importing the LPsolve library introduces new macro definitions
-and function definitions.
-
-    #define SOS_NONE
-    //#define SOS_SEQUENCE
-    //#define SOS_MANUAL
-    //#define SOS_LPSOLVE
-*/
-
 
 base_dispatch_opt::base_dispatch_opt()
 {
@@ -72,15 +58,6 @@ bool base_dispatch_opt::check_setup()
     
     return true;
 }
-
-//bool base_dispatch_opt::copy_weather_data(C_csp_weatherreader &weather_source)
-//{
-//    //copy the weather data
-//    m_weather = weather_source;
-//    m_is_weather_setup = true;
-//
-//    return m_is_weather_setup;
-//}
 
 bool base_dispatch_opt::update_horizon_parameters(C_csp_tou &mc_tou)
 {

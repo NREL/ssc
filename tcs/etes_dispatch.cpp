@@ -169,7 +169,6 @@ void etes_dispatch_opt::update_initial_conditions(double q_dot_to_pb, double T_h
         params.e_tes0 = params.e_tes_max;
 }
 
-
 bool etes_dispatch_opt::predict_performance(int step_start, int ntimeints, int divs_per_int)
 {
     //TODO: clean up code that is not required for eTES
@@ -242,7 +241,9 @@ static void calculate_parameters(etes_dispatch_opt *optinst, unordered_map<std::
 {
     /* 
     A central location for making sure the parameters from the model are accurately calculated for use in
-    the dispatch optimization model. 
+    the dispatch optimization model.
+
+    TODO: Why did I make this static?
     */
 
         pars["T"] = nt ;
@@ -501,8 +502,9 @@ bool etes_dispatch_opt::optimize()
                 col[ t + nt*(i  ) ] = O.column("qeh", t);
                 row[ t + nt*(i++) ] = - (P["delta"] * (1 / tadj) * params.buy_price.at(t) * ( 1 / P["eta_eh"]));
 
-                col[ t + nt*(i  ) ] = O.column("zhsu", t);
-                row[ t + nt*(i++) ] = (P["delta_hsu"] * (1 / tadj) * params.buy_price.at(t) * (1 / P["eta_eh"]));
+                //col[ t + nt*(i  ) ] = O.column("zhsu", t);
+                //row[ t + nt*(i++) ] = (P["delta_hsu"] * (1 / tadj) * params.buy_price.at(t) * (1 / P["eta_eh"]));
+                //TODO: Convince yourself this is needed in the objective...
 
                 col[ t + nt*(i  ) ] = O.column("yhsu", t);
                 row[ t + nt*(i++) ] = - (P["delta"] * (1 / tadj) * params.buy_price.at(t) * (1 / P["eta_eh"]) * P["Qhsu"]);
@@ -513,7 +515,7 @@ bool etes_dispatch_opt::optimize()
                 col[ t + nt*(i  ) ] = O.column("delta_w", t);
                 row[ t + nt*(i++) ] = - (1/tadj) * P["pen_delta_w"];
 
-                col[t + nt * (i)] = O.column("yhsu", t);        // TODO: to handle multi-starts during zero pricing
+                col[t + nt * (i)] = O.column("yhsu", t);
                 row[t + nt * (i++)] = -(1 / tadj) * P["hsu_cost"];
 
                 ////col[ t + nt*(i  ) ] = O.column("x", t);
@@ -643,7 +645,7 @@ bool etes_dispatch_opt::optimize()
                 ////col[i++] = O.column("yhsu", t);
 
                 //row[i] = -P["Qehu"];
-                //col[i++] = O.column("yhsu", t);
+                //col[i++] = O.column("yhsu", t); //TODO: Unclear, what this constraint was for?
 
                 //add_constraintex(lp, i, row, col, GE, 0.);
 
@@ -980,9 +982,6 @@ bool etes_dispatch_opt::optimize()
                 row[i  ] = -P["delta"]*P["Qcsu"];
                 col[i++] = O.column("ycsu", t);
                 
-                //row[i  ] = -P["delta"]*P["Qhsu"]; 
-                //col[i++] = O.column("yhsu", t);     // TODO: I don't think this term should be here
-
                 row[i  ] = -1.;
                 col[i++] = O.column("s", t);
                 
