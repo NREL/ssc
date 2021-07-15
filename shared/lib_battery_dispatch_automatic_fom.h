@@ -66,7 +66,8 @@ public:
 		UtilityRate * utilityRate,
 		double etaPVCharge,
 		double etaGridCharge,
-		double etaDischarge
+		double etaDischarge,
+        double interconnection_limit
 		);
 
 	~dispatch_automatic_front_of_meter_t();

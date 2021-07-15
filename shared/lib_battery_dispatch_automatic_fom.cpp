@@ -34,9 +34,10 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 	UtilityRate * utilityRate,
 	double etaPVCharge,
 	double etaGridCharge,
-	double etaDischarge) : dispatch_automatic_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max_kwdc, Pd_max_kwdc, Pc_max_kwac, Pd_max_kwac,
+	double etaDischarge,
+    double interconnection_limit) : dispatch_automatic_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max_kwdc, Pd_max_kwdc, Pc_max_kwac, Pd_max_kwac,
 		t_min, dispatch_mode, pv_dispatch, nyears, look_ahead_hours, dispatch_update_frequency_hours, can_charge, can_clip_charge, can_grid_charge, can_fuelcell_charge,
-        battReplacementCostPerkWh, battCycleCostChoice, battCycleCost)
+        battReplacementCostPerkWh, battCycleCostChoice, battCycleCost, interconnection_limit)
 {
 	// if look behind, only allow 24 hours
 	if (_mode == dispatch_t::FOM_LOOK_BEHIND)

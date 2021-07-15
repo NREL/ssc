@@ -200,6 +200,11 @@ struct batt_variables
 	/* Battery cycle costs */
 	int batt_cycle_cost_choice;
     std::vector<double> batt_cycle_cost;
+
+    /* Interconnection and curtailment for dispatch */
+    bool enable_interconnection_limit;
+    double grid_interconnection_limit_kW;
+    std::vector<double> gridCurtailmentLifetime_MW;
 };
 
 struct battstor

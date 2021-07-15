@@ -35,6 +35,9 @@ BatteryPower::BatteryPower(double dtHour) :
 		powerBatteryDischargeMaxAC(0),
 		powerSystemLoss(0),
 		powerConversionLoss(0),
+        powerInterconnectionLimit(1e+38),
+        powerInterconnectionLoss(0),
+        powerCurtailmentLimit(1e+38),
         voltageSystem(0),
         isOutageStep(false),
 		connectionMode(0),
@@ -85,6 +88,9 @@ BatteryPower::BatteryPower(const BatteryPower& orig) {
     powerBatteryDischargeMaxAC = orig.powerBatteryDischargeMaxAC;
     powerSystemLoss = orig.powerSystemLoss;
     powerConversionLoss = orig.powerConversionLoss;
+    powerInterconnectionLimit = orig.powerInterconnectionLimit;
+    powerInterconnectionLoss = orig.powerInterconnectionLoss;
+    powerCurtailmentLimit = orig.powerCurtailmentLimit;
     voltageSystem = orig.voltageSystem;
     isOutageStep = orig.isOutageStep;
     connectionMode = orig.connectionMode;
@@ -133,6 +139,8 @@ void BatteryPower::reset()
 	powerSystemToBattery = 0;
 	powerSystemToGrid = 0;
 	powerSystemToLoad = 0;
+    powerInterconnectionLoss = 0;
+    powerCurtailmentLimit = 1e+38;
 	voltageSystem = 0;
     isOutageStep = false;
 }

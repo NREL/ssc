@@ -36,6 +36,8 @@ protected:
     int cyclingChoice = 1;
     std::vector<double> cyclingCost = { 0.0 };
 
+    double interconnection_limit = 1e+38;
+
     /*! Variables to store forecast data */
     std::vector<double> pv_prediction;
     std::vector<double> load_prediction;

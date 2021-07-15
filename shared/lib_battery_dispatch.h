@@ -65,7 +65,8 @@ public:
 		double Pd_max_kwac,
 		double t_min,
 		int dispatch_mode,
-		int meter_position);
+		int meter_position,
+        double interconnection_limit);
 
 	// deep copy constructor (new memory), from dispatch to this
 	dispatch_t(const dispatch_t& dispatch);
@@ -250,7 +251,8 @@ public:
 		bool can_fuelcell_charge,
         std::vector<double> battReplacementCostPerkWh,
         int battCycleCostChoice,
-        std::vector<double> battCycleCost
+        std::vector<double> battCycleCost,
+        double interconnection_limit
 		);
 
 	virtual ~dispatch_automatic_t(){};

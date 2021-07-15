@@ -296,6 +296,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             if (batt_vars->system_use_lifetime_output) {
                 nyears = batt_vars->analysis_period;
             }
+            total_steps = nyears * 8760 * step_per_hour;
 
             // Chemistry
             batt_vars->batt_chem = vt.as_integer("batt_chem");
@@ -420,6 +421,42 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             }
             else
                 batt_vars->batt_cost_per_kwh = std::vector<double>(nyears, 0.0);
+
+            // Interconnection and curtailment
+            std::vector<double> scaleFactors(batt_vars->analysis_period, 1.0); // No scaling factors for curtailment
+
+            std::vector<double> curtailment_year_one;
+            if (vt.is_assigned("grid_curtailment")) {
+                curtailment_year_one = vt.as_vector_double("grid_curtailment");
+            }
+            double interpolation_factor = 1.0;
+            single_year_to_lifetime_interpolated<double>(
+                batt_vars->system_use_lifetime_output,
+                (size_t)batt_vars->analysis_period,
+                total_steps,
+                curtailment_year_one,
+                scaleFactors,
+                interpolation_factor,
+                batt_vars->gridCurtailmentLifetime_MW,
+                step_per_year,
+                _dt_hour);
+
+            if (vt.is_assigned("enable_interconnection_limit")) {
+                batt_vars->enable_interconnection_limit = vt.as_boolean("enable_interconnection_limit");
+                if (batt_vars->enable_interconnection_limit && vt.is_assigned("grid_interconnection_limit_kwac")) {
+                    batt_vars->grid_interconnection_limit_kW = vt.as_double("grid_interconnection_limit_kwac");
+                }
+                else {
+                    batt_vars->enable_interconnection_limit = false;
+                }
+            }
+            else {
+                batt_vars->enable_interconnection_limit = false;
+            }
+
+            if (!batt_vars->enable_interconnection_limit) {
+                batt_vars->grid_interconnection_limit_kW = 1e+38;
+            }
 
             // Front of meter
             if (batt_vars->batt_meter_position == dispatch_t::FRONT)
@@ -629,6 +666,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
     }
     else {
         nyears = (batt_vars_in->system_use_lifetime_output) ? batt_vars_in->analysis_period : 1;
+        total_steps = nyears * 8760 * step_per_hour;
         batt_vars = batt_vars_in;
     }
 
@@ -693,7 +731,6 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
         if (batt_vars->batt_replacement_option > 0)
             throw exec_error("battery", "Battery replacements are enabled with single year simulation. You must enable lifetime simulations to model battery replacements.");
     }
-    total_steps = nyears * 8760 * step_per_hour;
     chem = batt_vars->batt_chem;
 
 
@@ -969,7 +1006,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
                 batt_vars->batt_dispatch, batt_vars->batt_meter_position,
                 batt_vars->batt_discharge_schedule_weekday, batt_vars->batt_discharge_schedule_weekend,
                 batt_vars->batt_can_charge, batt_vars->batt_can_discharge, batt_vars->batt_can_gridcharge, batt_vars->batt_can_fuelcellcharge,
-                dm_percent_discharge, dm_percent_gridcharge);
+                dm_percent_discharge, dm_percent_gridcharge, batt_vars->grid_interconnection_limit_kW);
         }
     }
     /*! Front of meter automated DC-connected dispatch */
@@ -1000,7 +1037,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             batt_vars->inverter_paco, batt_vars->batt_cost_per_kwh,
             batt_vars->batt_cycle_cost_choice, batt_vars->batt_cycle_cost,
             batt_vars->forecast_price_series_dollar_per_kwh, utilityRate,
-            eta_pvcharge, eta_gridcharge, eta_discharge);
+            eta_pvcharge, eta_gridcharge, eta_discharge, batt_vars->grid_interconnection_limit_kW);
 
         if (batt_vars->batt_dispatch == dispatch_t::CUSTOM_DISPATCH)
         {
@@ -1030,7 +1067,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             batt_vars->batt_dispatch, batt_vars->batt_meter_position, nyears,
             batt_vars->batt_look_ahead_hours, batt_vars->batt_dispatch_update_frequency_hours,
             batt_vars->batt_dispatch_auto_can_charge, batt_vars->batt_dispatch_auto_can_clipcharge, batt_vars->batt_dispatch_auto_can_gridcharge, batt_vars->batt_dispatch_auto_can_fuelcellcharge,
-            util_rate_data, batt_vars->batt_cost_per_kwh, batt_vars->batt_cycle_cost_choice, batt_vars->batt_cycle_cost
+            util_rate_data, batt_vars->batt_cost_per_kwh, batt_vars->batt_cycle_cost_choice, batt_vars->batt_cycle_cost, batt_vars->grid_interconnection_limit_kW
         );
         if (batt_vars->batt_dispatch == dispatch_t::CUSTOM_DISPATCH)
         {
@@ -1386,6 +1423,9 @@ void battstor::advance(var_table*, double P_gen, double V_gen, double P_load, do
     if (index < fuelcellPower.size()) {
         powerflow->powerFuelCell = fuelcellPower[index];
     }
+    if (index < batt_vars->gridCurtailmentLifetime_MW.size()) {
+        powerflow->powerCurtailmentLimit = batt_vars->gridCurtailmentLifetime_MW[index] * 1000.0;
+    }
 
     powerflow->powerGeneratedBySystem = P_gen;
     powerflow->powerSystem = P_gen - powerflow->powerFuelCell;
@@ -1599,6 +1639,7 @@ public:
         add_var_info(vtab_battery_outputs);
         add_var_info(vtab_resilience_outputs);
         add_var_info(vtab_utility_rate_common);
+        add_var_info(vtab_grid_curtailment);
     }
 
     void exec() override
