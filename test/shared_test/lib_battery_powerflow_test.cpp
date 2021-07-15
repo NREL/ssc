@@ -1680,3 +1680,147 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, DC_outage_excessPV) {
 
     check_net_flows("4th case");
 }
+
+TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, DC_PVCharging_ExcessLoad_outage) {
+    m_batteryPower->connectionMode = ChargeController::DC_CONNECTED;
+
+    m_batteryPower->canSystemCharge = true;
+    m_batteryPower->canDischarge = true;
+    m_batteryPower->canGridCharge = false;
+    m_batteryPower->isOutageStep = true;
+    m_batteryPower->powerSystem = 25;
+    m_batteryPower->powerLoad = 50;
+    m_batteryPower->powerCritLoad = 50;
+
+    // do not discharge battery
+    m_batteryPower->powerBatteryDC = 0;
+    m_batteryPowerFlow->calculate();
+
+    EXPECT_NEAR(m_batteryPower->powerBatteryAC, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToLoad, 22.68, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToBattery, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToBattery, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToGrid, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerBatteryToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerConversionLoss, 2.32, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemLoss, 0.0, error);
+    EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 27.31, error);
+    EXPECT_NEAR(m_batteryPower->powerInterconnectionLoss, 0.0, error);
+
+    check_net_flows("1st case");
+
+
+    // discharge battery
+    m_batteryPower->powerBatteryDC = 20;
+    m_batteryPowerFlow->calculate();
+
+    EXPECT_NEAR(m_batteryPower->powerBatteryAC, 18.43, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToLoad, 23.50, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToBattery, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToBattery, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToGrid, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerBatteryToLoad, 18.43, error);
+    EXPECT_NEAR(m_batteryPower->powerConversionLoss, 3.05, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemLoss, 0.0, error);
+    EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 8.05, error);
+    EXPECT_NEAR(m_batteryPower->powerInterconnectionLoss, 0.0, error);
+
+    check_net_flows("2nd case");
+
+
+    // charging happens from pv
+    m_batteryPower->powerBatteryDC = -20;
+    m_batteryPowerFlow->calculate();
+
+    EXPECT_NEAR(m_batteryPower->powerBatteryAC, -20.4, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToLoad, 2.60, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToBattery, 20.40, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToBattery, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToGrid, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerBatteryToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerConversionLoss, 2.39, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemLoss, 0.0, error);
+    EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 47.39, error);
+    EXPECT_NEAR(m_batteryPower->powerInterconnectionLoss, 0.0, error);
+
+    check_net_flows("3rd case");
+
+    // do not discharge battery
+    m_batteryPower->powerBatteryDC = 0;
+    m_batteryPower->powerSystemLoss = 0.5;
+    m_batteryPowerFlow->calculate();
+
+    EXPECT_NEAR(m_batteryPower->powerBatteryAC, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToLoad, 22.18, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToBattery, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToBattery, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToGrid, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerBatteryToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerConversionLoss, 2.32, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemLoss, 0.5, error);
+    EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 27.81, error);
+    EXPECT_NEAR(m_batteryPower->powerInterconnectionLoss, 0.0, error);
+
+    check_net_flows("4th case");
+
+
+    // discharge battery
+    m_batteryPower->powerBatteryDC = 20;
+    m_batteryPower->powerSystemLoss = 1.0;
+    m_batteryPowerFlow->calculate();
+
+    EXPECT_NEAR(m_batteryPower->powerBatteryAC, 17.47, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToLoad, 23.50, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToBattery, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToBattery, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToGrid, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerBatteryToLoad, 17.47, error);
+    EXPECT_NEAR(m_batteryPower->powerConversionLoss, 3.05, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemLoss, 1.0, error);
+    EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 9.05, error);
+    EXPECT_NEAR(m_batteryPower->powerInterconnectionLoss, 0.0, error);
+
+    check_net_flows("5th case");
+
+
+    // charging happens from pv
+    m_batteryPower->powerBatteryDC = -20;
+    m_batteryPowerFlow->calculate();
+
+    EXPECT_NEAR(m_batteryPower->powerBatteryAC, -20.4, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToLoad, 1.62, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToBattery, 20.40, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToBattery, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToGrid, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerBatteryToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerConversionLoss, 2.39, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemLoss, 1.0, error);
+    EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 48.39, error);
+    EXPECT_NEAR(m_batteryPower->powerInterconnectionLoss, 0.0, error);
+
+    check_net_flows("6th case");
+
+    // excess discharging causes interconnection loss
+    m_batteryPower->powerBatteryDC = 50;
+    m_batteryPowerFlow->calculate();
+
+    EXPECT_NEAR(m_batteryPower->powerBatteryAC, 26.33, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToLoad, 23.67, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToBattery, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToBattery, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToGrid, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerBatteryToLoad, 26.32, error);
+    EXPECT_NEAR(m_batteryPower->powerConversionLoss, 3.39, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemLoss, 1.0, error);
+    EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerInterconnectionLoss, 0.0, error);
+
+    check_net_flows("7th case");
+}

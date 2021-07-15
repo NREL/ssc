@@ -562,7 +562,9 @@ void BatteryPowerFlow::calculateDCConnected()
 
             P_batt_to_grid_ac = P_battery_ac - P_batt_to_load_ac;
             if (P_batt_to_grid_ac > tolerance) {
-                m_BatteryPower->powerBatteryDC = P_batt_to_load_ac / efficiencyDCAC;
+                // Technically the ac power should be converted back to DC here, but if you include the efficiency it overshoots
+                // This way it can iterate and match the critical load exactly
+                m_BatteryPower->powerBatteryDC -= P_batt_to_grid_ac;
                 return calculateDCConnected();
             }
         }
