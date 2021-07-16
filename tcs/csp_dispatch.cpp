@@ -1335,9 +1335,10 @@ bool csp_dispatch_opt::optimize()
 			}
 		}
 
-        
         //Set problem to maximize
         set_maxim(lp);
+
+        // TODO:: most of this can be moved to dispatch_builder...
 
         //reset the row mode
         set_add_rowmode(lp, FALSE);
@@ -1492,12 +1493,11 @@ bool csp_dispatch_opt::optimize()
         lp_outputs.presolve_nvar = get_Ncolumns(lp);
         lp_outputs.solve_time = time_elapsed(lp);
 
-        set_outputfile(lp, "C:\\Users\\WHamilt2\\Documents\\SAM\\ZZZ_working_directory\\setup.txt");
-        print_lp(lp);
+        //set_outputfile(lp, "C:\\Users\\WHamilt2\\Documents\\SAM\\ZZZ_working_directory\\setup.txt");
+        //print_lp(lp);
 
-        set_outputfile(lp, "C:\\Users\\WHamilt2\\Documents\\SAM\\ZZZ_working_directory\\solution.txt");
-        print_solution(lp, 1);
-        
+        //set_outputfile(lp, "C:\\Users\\WHamilt2\\Documents\\SAM\\ZZZ_working_directory\\solution.txt");
+        //print_solution(lp, 1);
 
         if(return_ok)
         {

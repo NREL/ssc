@@ -68,7 +68,6 @@ void etes_dispatch_opt::init(double cycle_q_dot_des, double cycle_eta_des, doubl
 
     params.q_pb_des = cycle_q_dot_des * 1000.;
     params.eta_pb_des = cycle_eta_des;
-    //params.w_pb_des = cycle_w_dot_des * 1000.;
 
     //Cycle efficiency
     params.eff_table_load.clear();
@@ -140,7 +139,6 @@ bool etes_dispatch_opt::update_horizon_parameters(C_csp_tou& mc_tou)
             params.w_lim.at(t * solver_params.steps_per_hour + d) = mc_tou.mc_dispatch_params.m_w_lim_full.at(hour_start + t);
     }
 
-
     //time
     params.info_time = pointers.siminfo->ms_ts.m_time; //s
 
@@ -178,8 +176,7 @@ bool etes_dispatch_opt::predict_performance(int step_start, int ntimeints, int d
     //save step count
     m_nstep_opt = ntimeints;
 
-    //Predict performance out nstep values. 
-    outputs.clear();        //TODO: check if this clears too much..
+    //Predict performance out nstep values.
     params.eta_pb_expected.clear();  // TODO: update csp_dispatch
     params.w_condf_expected.clear();
 
@@ -628,26 +625,10 @@ bool etes_dispatch_opt::optimize()
                 row[i  ] = 1.;
                 col[i++] = O.column("qeh", t);
 
-                //row[i  ] = P["Qhsu"];
-                //col[i++] = O.column("yhsu", t);
-
                 row[i  ] = -P["Qehu"];
                 col[i++] = O.column("yeh", t);
                 
                 add_constraintex(lp, i, row, col, LE, 0.);
-
-                ////Heater power limit  //*NEW// (This wont work for multi time period starts
-                //i = 0;
-                //row[i] = 1.;
-                //col[i++] = O.column("qeh", t);
-
-                ////row[i  ] = P["Qhsu"];
-                ////col[i++] = O.column("yhsu", t);
-
-                //row[i] = -P["Qehu"];
-                //col[i++] = O.column("yhsu", t); //TODO: Unclear, what this constraint was for?
-
-                //add_constraintex(lp, i, row, col, GE, 0.);
 
                 //Heater minimum operation requirement
                 i = 0;
@@ -1405,16 +1386,8 @@ bool etes_dispatch_opt::optimize()
             lp_outputs.objective = get_objective(lp);
             lp_outputs.objective_relaxed = get_bb_relaxed_objective(lp);
 
-            outputs.pb_standby.resize(nt, false);
-            outputs.pb_operation.resize(nt, false);
-            outputs.q_pb_standby.resize(nt, 0.);
-            outputs.q_pb_target.resize(nt, 0.);
-            outputs.rec_operation.resize(nt, false);
-            outputs.tes_charge_expected.resize(nt, 0.);
-            outputs.q_sf_expected.resize(nt, 0.);
-            outputs.q_pb_startup.resize(nt, 0.);
-            outputs.q_rec_startup.resize(nt, 0.);
-            outputs.w_pb_target.resize(nt, 0.);
+            outputs.clear();
+            outputs.resize(nt);
 
             int ncols = get_Ncolumns(lp);
 
@@ -1651,7 +1624,6 @@ bool etes_dispatch_opt::set_dispatch_outputs()
         //calculate the current read step, account for number of dispatch steps per hour and the simulation time step
         m_current_read_step = (int)(pointers.siminfo->ms_ts.m_time * solver_params.steps_per_hour / 3600. - .001)
             % (solver_params.optimize_frequency * solver_params.steps_per_hour);
-
 
         disp_outputs.is_rec_su_allowed = outputs.rec_operation.at(m_current_read_step);
         disp_outputs.is_pc_sb_allowed = outputs.pb_standby.at(m_current_read_step);
