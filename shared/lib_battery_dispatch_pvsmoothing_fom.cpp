@@ -148,57 +148,73 @@ void dispatch_pvsmoothing_front_of_meter_t::update_dispatch(size_t year, size_t 
 	m_batteryPower->powerBatteryTarget = 0;
 
     size_t ndx_sampled = lifetimeIndex / m_batt_dispatch_pvs_timestep_multiplier;
-    double slope, intercept;
+
+    bool linear_interpolation = false; // updated per 7/14/2021 meeting
+
     size_t xval = (lifetimeIndex % m_batt_dispatch_pvs_timestep_multiplier);
 
-    if (ndx_sampled == 0)
-        intercept = 0;
-    else 
-        intercept = m_batt_dispatch_pvs_battpower_vec[ndx_sampled - 1];
-    slope = (m_batt_dispatch_pvs_battpower_vec[ndx_sampled] - intercept) / m_batt_dispatch_pvs_timestep_multiplier;
-    m_batt_dispatch_pvs_battpower = slope * xval + intercept;
+    if (linear_interpolation) {
+        double slope, intercept;
 
-    if (ndx_sampled == 0)
-        intercept = 0;
-    else
-        intercept = m_batt_dispatch_pvs_outpower_vec[ndx_sampled - 1];
-    slope = (m_batt_dispatch_pvs_outpower_vec[ndx_sampled] - intercept) / m_batt_dispatch_pvs_timestep_multiplier;
-    m_batt_dispatch_pvs_outpower = slope * xval + intercept;
+        if (ndx_sampled == 0)
+            intercept = 0;
+        else
+            intercept = m_batt_dispatch_pvs_battpower_vec[ndx_sampled - 1];
+        slope = (m_batt_dispatch_pvs_battpower_vec[ndx_sampled] - intercept) / m_batt_dispatch_pvs_timestep_multiplier;
+        m_batt_dispatch_pvs_battpower = slope * xval + intercept;
 
-    if (ndx_sampled == 0)
-        intercept = 0;
-    else
-        intercept = m_batt_dispatch_pvs_battsoc_vec[ndx_sampled - 1];
-    slope = (m_batt_dispatch_pvs_battsoc_vec[ndx_sampled] - intercept) / m_batt_dispatch_pvs_timestep_multiplier;
-    m_batt_dispatch_pvs_battsoc = slope * xval + intercept;
+        if (ndx_sampled == 0)
+            intercept = 0;
+        else
+            intercept = m_batt_dispatch_pvs_outpower_vec[ndx_sampled - 1];
+        slope = (m_batt_dispatch_pvs_outpower_vec[ndx_sampled] - intercept) / m_batt_dispatch_pvs_timestep_multiplier;
+        m_batt_dispatch_pvs_outpower = slope * xval + intercept;
 
-    if (ndx_sampled == 0)
-        intercept = 0;
-    else
-        intercept = m_batt_dispatch_pvs_curtail_vec[ndx_sampled - 1];
-    slope = (m_batt_dispatch_pvs_curtail_vec[ndx_sampled] - intercept) / m_batt_dispatch_pvs_timestep_multiplier;
-    m_batt_dispatch_pvs_curtail = slope * xval + intercept;
+        if (ndx_sampled == 0)
+            intercept = 0;
+        else
+            intercept = m_batt_dispatch_pvs_battsoc_vec[ndx_sampled - 1];
+        slope = (m_batt_dispatch_pvs_battsoc_vec[ndx_sampled] - intercept) / m_batt_dispatch_pvs_timestep_multiplier;
+        m_batt_dispatch_pvs_battsoc = slope * xval + intercept;
 
-    if (ndx_sampled == 0)
-        intercept = 0;
-    else
-        intercept = m_pv_power_input_sampled_vec[ndx_sampled - 1];
-    slope = (m_pv_power_input_sampled_vec[ndx_sampled] - intercept) / m_batt_dispatch_pvs_timestep_multiplier;
-    m_batt_dispatch_pvs_PV_ramp_interval = slope * xval + intercept;
+        if (ndx_sampled == 0)
+            intercept = 0;
+        else
+            intercept = m_batt_dispatch_pvs_curtail_vec[ndx_sampled - 1];
+        slope = (m_batt_dispatch_pvs_curtail_vec[ndx_sampled] - intercept) / m_batt_dispatch_pvs_timestep_multiplier;
+        m_batt_dispatch_pvs_curtail = slope * xval + intercept;
 
-    if (ndx_sampled == 0)
-        intercept = 0;
-    else
-        intercept = m_forecast_pv_energy_vec[ndx_sampled - 1];
-    slope = (m_forecast_pv_energy_vec[ndx_sampled] - intercept) / m_batt_dispatch_pvs_timestep_multiplier;
-    m_batt_dispatch_pvs_forecast_pv_energy = slope * (xval - m_batt_dispatch_pvs_timestep_multiplier) + intercept;
+        if (ndx_sampled == 0)
+            intercept = 0;
+        else
+            intercept = m_pv_power_input_sampled_vec[ndx_sampled - 1];
+        slope = (m_pv_power_input_sampled_vec[ndx_sampled] - intercept) / m_batt_dispatch_pvs_timestep_multiplier;
+        m_batt_dispatch_pvs_PV_ramp_interval = slope * xval + intercept;
 
+        if (ndx_sampled == 0)
+            intercept = 0;
+        else
+            intercept = m_forecast_pv_energy_vec[ndx_sampled - 1];
+        slope = (m_forecast_pv_energy_vec[ndx_sampled] - intercept) / m_batt_dispatch_pvs_timestep_multiplier;
+        m_batt_dispatch_pvs_forecast_pv_energy = slope * (xval - m_batt_dispatch_pvs_timestep_multiplier) + intercept;
+
+    }
+    else { // based on EPRI email that value is constant over smoothing interval
+        m_batt_dispatch_pvs_battpower = m_batt_dispatch_pvs_battpower_vec[ndx_sampled];
+        m_batt_dispatch_pvs_outpower = m_batt_dispatch_pvs_outpower_vec[ndx_sampled];
+        m_batt_dispatch_pvs_battsoc = m_batt_dispatch_pvs_battsoc_vec[ndx_sampled];
+        m_batt_dispatch_pvs_curtail = m_batt_dispatch_pvs_curtail_vec[ndx_sampled];
+        m_batt_dispatch_pvs_PV_ramp_interval = m_pv_power_input_sampled_vec[ndx_sampled];
+        m_batt_dispatch_pvs_forecast_pv_energy = m_forecast_pv_energy_vec[ndx_sampled];
+    }
+
+    // record violations at end of ramp interval timestep, e.g. 10 minute = 0 to 9 time steps with violation at index 9
     if (xval == m_batt_dispatch_pvs_timestep_multiplier - 1)
         m_batt_dispatch_pvs_violation_list = m_batt_dispatch_pvs_violation_list_vec[ndx_sampled];
     else
         m_batt_dispatch_pvs_violation_list = 0;
 
-    m_batt_dispatch_pvs_P_pv_ac = _P_pv_ac[lifetimeIndex]; // testing unsmoothed pv system output.
+    m_batt_dispatch_pvs_P_pv_ac = _P_pv_ac[lifetimeIndex]; // unsmoothed pv system output.
 
 
     m_batteryPower->powerBatteryTarget = m_batt_dispatch_pvs_nameplate_ac > 0 ? m_batt_dispatch_pvs_nameplate_ac * m_batt_dispatch_pvs_battpower : m_batt_dispatch_pvs_battpower;

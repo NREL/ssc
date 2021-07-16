@@ -1724,8 +1724,8 @@ void battstor::calculate_monthly_and_annual_outputs(compute_module& cm)
             if (energy_to_grid_pv <= 0) { // throw if this happens
                 energy_to_grid_pv = 1.0;
             }
-            // unscale pvs outpower
-            energy_to_grid_pvs *= batt_vars->batt_dispatch_pvs_nameplate_ac;
+            // unscale pvs outpower if scaled
+            //energy_to_grid_pvs *= batt_vars->batt_dispatch_pvs_nameplate_ac;
             cm.assign("batt_pvs_energy_to_grid_percent", energy_to_grid_pvs / energy_to_grid_pv * 100.0);
             cm.assign("batt_pvs_energy_to_grid_percent_sam", energy_to_grid_sam / energy_to_grid_pv * 100.0);
 
