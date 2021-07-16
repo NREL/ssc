@@ -976,7 +976,15 @@ double C_csp_two_tank_tes::get_hot_tank_vol_frac()
 double C_csp_two_tank_tes::get_initial_charge_energy() 
 {
     //MWh
-	return m_q_pb_design * ms_params.m_ts_hours * m_V_tank_hot_ini / m_vol_tank *1.e-6;
+    if (std::isnan(m_V_tank_hot_ini))
+    {
+        return m_q_pb_design * ms_params.m_ts_hours * (ms_params.m_f_V_hot_ini / 100.0) * 1.e-6;
+    }
+    else
+    {
+        //TODO: m_V_tank_hot_ini does not get initialized to user value...
+        return m_q_pb_design * ms_params.m_ts_hours * m_V_tank_hot_ini / m_vol_tank * 1.e-6;
+    }
 }
 
 double C_csp_two_tank_tes::get_min_charge_energy() 
@@ -2378,7 +2386,14 @@ double C_csp_cold_tes::get_cold_massflow_avail(double step_s) //[kg/sec]
 double C_csp_cold_tes::get_initial_charge_energy()
 {
 	//MWh
-	return m_q_pb_design * ms_params.m_ts_hours * m_V_tank_hot_ini / m_vol_tank * 1.e-6;
+    if (std::isnan(m_V_tank_hot_ini))
+    {
+        return m_q_pb_design * ms_params.m_ts_hours * (ms_params.m_f_V_hot_ini / 100.0) * 1.e-6;
+    }
+    else
+    {
+        return m_q_pb_design * ms_params.m_ts_hours * m_V_tank_hot_ini / m_vol_tank * 1.e-6;
+    }
 }
 
 double C_csp_cold_tes::get_min_charge_energy()

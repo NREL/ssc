@@ -75,14 +75,13 @@ void csp_dispatch_opt::init(double cycle_q_dot_des, double cycle_eta_des, double
     params.w_track = pointers.col_rec->get_tracking_power() * 1000.0;	//kWe
     params.w_stow = pointers.col_rec->get_col_startup_power() * 1000.0;	//kWe-hr
 
-    params.e_tes0 = pointers.tes->get_initial_charge_energy() * 1000; //TODO: this doesn't seem to do the job -> m_V_tank_hot_ini == nan
+    params.e_tes0 = pointers.tes->get_initial_charge_energy() * 1000;
     params.e_tes_min = pointers.tes->get_min_charge_energy() * 1000;
     params.e_tes_max = pointers.tes->get_max_charge_energy() * 1000;
     params.tes_degrade_rate = pointers.tes->get_degradation_rate();
 
     params.q_pb_des = cycle_q_dot_des * 1000.;
     params.eta_pb_des = cycle_eta_des;
-    //params.w_pb_des = cycle_w_dot_des * 1000.;
 
     //Cycle efficiency
     params.eff_table_load.clear();
@@ -131,7 +130,6 @@ bool csp_dispatch_opt::check_setup(int nstep)
     //if ((int)params.wnet_lim_min.size() < nstep)   return false;
     //if ((int)params.delta_rs.size() < nstep)   return false;
     
-
     // TODO: add other checks
 
     return base_dispatch_opt::check_setup();

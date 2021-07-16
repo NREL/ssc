@@ -61,7 +61,7 @@ void etes_dispatch_opt::init(double cycle_q_dot_des, double cycle_eta_des, doubl
     params.q_eh_min = 0.0; //pointers.col_rec->get_min_power_delivery() * 1000.;
     params.q_eh_max = pointers.col_rec->get_max_thermal_power() * 1000;
 
-    params.e_tes0 = pointers.tes->get_initial_charge_energy() * 1000; //TODO: this doesn't seem to do the job -> check on this?
+    params.e_tes0 = pointers.tes->get_initial_charge_energy() * 1000;
     params.e_tes_min = pointers.tes->get_min_charge_energy() * 1000;
     params.e_tes_max = pointers.tes->get_max_charge_energy() * 1000;
     //params.tes_degrade_rate = pointers.tes->get_degradation_rate();
