@@ -248,6 +248,9 @@ void BatteryPowerFlow::calculateACConnected()
         P_grid_to_batt_loss_ac = P_batt_to_load_loss_ac = P_batt_to_grid_loss_ac = P_pv_to_batt_loss_ac =
         P_batt_to_system_loss = P_batt_to_system_loss_conversion_loss = P_interconnection_loss_ac = P_crit_load_unmet_ac = 0;
 
+    // Dispatch code treats these independetly, here we only need to know the smaller number
+    double P_grid_limit_ac = std::fmin(m_BatteryPower->powerInterconnectionLimit, m_BatteryPower->powerCurtailmentLimit);
+
     // convert the calculated DC power to AC, considering the microinverter efficiences
     double P_battery_ac = 0;
     if (P_battery_dc < 0)
@@ -384,6 +387,31 @@ void BatteryPowerFlow::calculateACConnected()
         P_grid_to_load_ac = P_load_ac - P_pv_to_load_ac - P_batt_to_load_ac - P_fuelcell_to_load_ac;
         // Grid charging loss accounted for in P_battery_ac
         P_grid_ac = P_gen_ac - P_load_ac;
+
+        if (P_grid_ac > P_grid_limit_ac) {
+            double grid_diff = P_grid_ac - P_grid_limit_ac;
+            // Update grid variables first
+            P_grid_ac -= grid_diff;
+            P_interconnection_loss_ac += grid_diff;
+            if (grid_diff > P_pv_to_grid_ac) {
+                // Curtail PV "first"
+                grid_diff -= P_pv_to_grid_ac;
+                P_pv_to_grid_ac = 0;
+                if (grid_diff > P_fuelcell_to_grid_ac) {
+                    grid_diff -= P_fuelcell_to_grid_ac;
+                    P_fuelcell_to_grid_ac = 0;
+                    // Then curtail battery
+                    P_batt_to_grid_ac -= grid_diff;
+                }
+                else {
+                    P_fuelcell_to_grid_ac -= grid_diff;
+                }
+
+            }
+            else {
+                P_pv_to_grid_ac -= grid_diff;
+            }
+        }
     }
 
     // Error checking trying to charge from grid when not allowed
