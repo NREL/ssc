@@ -201,10 +201,11 @@ struct batt_variables
 	int batt_cycle_cost_choice;
     std::vector<double> batt_cycle_cost;
 
-    /* Interconnection and curtailment for dispatch */
+    /* Interconnection, curtailment, and outages for dispatch */
     bool enable_interconnection_limit;
     double grid_interconnection_limit_kW;
     std::vector<double> gridCurtailmentLifetime_MW;
+    std::vector<bool> grid_outage_steps;
 };
 
 struct battstor
@@ -282,6 +283,9 @@ struct battstor
 	bool en;
 	int chem;
 
+    // Toggle whether the outage variables should be output, such as crit_load_met
+    bool analyze_outage;
+
 	std::shared_ptr<batt_variables> batt_vars;
 	bool make_vars;
 
@@ -346,6 +350,8 @@ struct battstor
 		*outFuelCellToGrid,
 		*outBatteryConversionPowerLoss,
 		*outBatterySystemLoss,
+        *outInterconnectionLoss,
+        *outCritLoadUnmet,
 		*outAnnualSystemChargeEnergy,
 		*outAnnualGridChargeEnergy,
 		*outAnnualChargeEnergy,

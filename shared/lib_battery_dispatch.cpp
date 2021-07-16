@@ -447,6 +447,8 @@ double dispatch_t::power_battery_to_grid() { return m_batteryPower->powerBattery
 double dispatch_t::power_fuelcell_to_grid() { return m_batteryPower->powerFuelCellToGrid; }
 double dispatch_t::power_conversion_loss() { return m_batteryPower->powerConversionLoss; }
 double dispatch_t::power_system_loss() { return m_batteryPower->powerSystemLoss; }
+double dispatch_t::power_interconnection_loss() { return m_batteryPower->powerInterconnectionLoss; }
+double dispatch_t::power_crit_load_unmet() { return m_batteryPower->powerCritLoadUnmet; }
 double dispatch_t::battery_power_to_fill() { return _Battery->power_to_fill(m_batteryPower->stateOfChargeMax); }
 double dispatch_t::battery_soc() { return _Battery->SOC(); }
 BatteryPowerFlow * dispatch_t::getBatteryPowerFlow() { return m_batteryPowerFlow.get(); }
