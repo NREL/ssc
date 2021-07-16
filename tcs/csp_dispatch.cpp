@@ -75,7 +75,7 @@ void csp_dispatch_opt::init(double cycle_q_dot_des, double cycle_eta_des, double
     params.w_track = pointers.col_rec->get_tracking_power() * 1000.0;	//kWe
     params.w_stow = pointers.col_rec->get_col_startup_power() * 1000.0;	//kWe-hr
 
-    params.e_tes0 = pointers.tes->get_initial_charge_energy() * 1000; //TODO: this doesn't seem to do the job -> check on this?
+    params.e_tes0 = pointers.tes->get_initial_charge_energy() * 1000; //TODO: this doesn't seem to do the job -> m_V_tank_hot_ini == nan
     params.e_tes_min = pointers.tes->get_min_charge_energy() * 1000;
     params.e_tes_max = pointers.tes->get_max_charge_energy() * 1000;
     params.tes_degrade_rate = pointers.tes->get_degradation_rate();
@@ -1509,9 +1509,12 @@ bool csp_dispatch_opt::optimize()
             print_solution(lp, 1);
             throw;*/
 
+            // Set dispatch outputs
+
             lp_outputs.objective = get_objective(lp);
             lp_outputs.objective_relaxed = get_bb_relaxed_objective(lp);
 
+            outputs.clear();
             outputs.resize(nt);
 
             int ncols = get_Ncolumns(lp);
@@ -1874,6 +1877,7 @@ bool csp_dispatch_opt::optimize_ampl()
     */
     
     int nt = m_nstep_opt;
+    outputs.clear();
     outputs.resize(nt);
     
     util::to_double(F.at(0), &lp_outputs.objective);
@@ -1943,7 +1947,6 @@ bool csp_dispatch_opt::set_dispatch_outputs()
         disp_outputs.q_pc_target = ( outputs.q_pb_target.at(m_current_read_step) 
                                     + outputs.q_pb_startup.at(m_current_read_step) )
                                     / 1000.;
-        //TODO: Think about why this includes startup power
 
         disp_outputs.q_dot_elec_to_CR_heat = outputs.q_sf_expected.at(m_current_read_step) / 1000.;
 
