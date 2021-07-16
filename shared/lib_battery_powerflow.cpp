@@ -441,6 +441,9 @@ void BatteryPowerFlow::calculateDCConnected()
     P_pv_to_batt_dc = P_grid_to_batt_dc = P_pv_to_inverter_dc = 0;
     double P_system_loss_dc = m_BatteryPower->powerSystemLoss; // Units of power sytem loss match battery connection type, see help for details
 
+    // Dispatch code treats these independetly, here we only need to know the smaller number
+    double P_grid_limit_ac = std::fmin(m_BatteryPower->powerInterconnectionLimit, m_BatteryPower->powerCurtailmentLimit);
+
 	// The battery power and PV power are initially DC, which must be converted to AC for powerflow
 	double P_battery_dc_pre_bms = m_BatteryPower->powerBatteryDC;
 	double P_battery_dc = m_BatteryPower->powerBatteryDC;
@@ -644,6 +647,23 @@ void BatteryPowerFlow::calculateDCConnected()
         // Error checking for power to load
         if (P_pv_to_load_ac + P_grid_to_load_ac + P_batt_to_load_ac != P_load_ac)
             P_grid_to_load_ac = P_load_ac - P_pv_to_load_ac - P_batt_to_load_ac;
+
+        if (P_grid_ac > P_grid_limit_ac) {
+            double grid_diff = P_grid_ac - P_grid_limit_ac;
+            // Update grid variables first
+            P_grid_ac -= grid_diff;
+            P_interconnection_loss_ac += grid_diff;
+            if (grid_diff > P_pv_to_grid_ac) {
+                // Curtail PV "first"
+                grid_diff -= P_pv_to_grid_ac;
+                P_pv_to_grid_ac = 0;
+                // Then curtail battery
+                P_batt_to_grid_ac -= grid_diff;
+            }
+            else {
+                P_pv_to_grid_ac -= grid_diff;
+            }
+        }
     }
 
     // check tolerances

@@ -2095,3 +2095,77 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, DC_PVCharging_ExcessLoad_outa
 
     check_net_flows("7th case");
 }
+
+// DC connected outage
+TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, DC_interconnection_limit_excessPV) {
+    m_batteryPower->connectionMode = ChargeController::DC_CONNECTED;
+
+    m_batteryPower->canGridCharge = false;
+    m_batteryPower->canDischarge = true;
+    m_batteryPower->canSystemCharge = true;
+    m_batteryPower->isOutageStep = false;
+    m_batteryPower->powerSystem = 100;
+    m_batteryPower->powerLoad = 25;
+    m_batteryPower->powerCritLoad = 0;
+
+    // export is limited due to interconnection
+    m_batteryPower->powerInterconnectionLimit = 25;
+    m_batteryPower->powerCurtailmentLimit = 1e+38;
+    m_batteryPower->powerBatteryDC = -40;
+    m_batteryPowerFlow->calculate();
+
+    EXPECT_NEAR(m_batteryPower->powerBatteryAC, -40.81, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToLoad, 25, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToBattery, 40.81, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToGrid, 25, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToBattery, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerBatteryToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerConversionLoss, 3.74, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemLoss, 0.0, error);
+    EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 0.0, error);
+    EXPECT_NEAR(m_batteryPower->powerInterconnectionLoss, 6.25, error);
+
+    check_net_flows("1st case");
+
+    // export is limited due to curtailment
+    m_batteryPower->powerInterconnectionLimit = 1e+38;
+    m_batteryPower->powerCurtailmentLimit = 25;
+    m_batteryPower->powerBatteryDC = -40;
+    m_batteryPowerFlow->calculate();
+
+    EXPECT_NEAR(m_batteryPower->powerBatteryAC, -40.81, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToLoad, 25, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToBattery, 40.81, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToGrid, 25, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToBattery, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerBatteryToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerConversionLoss, 3.74, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemLoss, 0.0, error);
+    EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 0.0, error);
+    EXPECT_NEAR(m_batteryPower->powerInterconnectionLoss, 6.25, error);
+
+    check_net_flows("2nd case");
+
+    // export is limited due to interconnection, battery discharge is curtailed second
+    m_batteryPower->powerInterconnectionLimit = 10;
+    m_batteryPower->powerCurtailmentLimit = 25;
+    m_batteryPower->powerBatteryDC = 20;
+    m_batteryPowerFlow->calculate();
+
+    EXPECT_NEAR(m_batteryPower->powerBatteryAC, 18.91, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToLoad, 25, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToBattery, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToGrid, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToBattery, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerBatteryToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerBatteryToGrid, 10, error);
+    EXPECT_NEAR(m_batteryPower->powerConversionLoss, 4.59, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemLoss, 0.0, error);
+    EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 0.0, error);
+    EXPECT_NEAR(m_batteryPower->powerInterconnectionLoss, 80.41, error);
+
+    check_net_flows("3rd case");
+}
