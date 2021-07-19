@@ -431,18 +431,18 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             std::vector<double> curtailment_year_one;
             if (vt.is_assigned("grid_curtailment")) {
                 curtailment_year_one = vt.as_vector_double("grid_curtailment");
+                double interpolation_factor = 1.0;
+                single_year_to_lifetime_interpolated<double>(
+                    batt_vars->system_use_lifetime_output,
+                    (size_t)batt_vars->analysis_period,
+                    total_steps,
+                    curtailment_year_one,
+                    scaleFactors,
+                    interpolation_factor,
+                    batt_vars->gridCurtailmentLifetime_MW,
+                    step_per_year,
+                    _dt_hour);
             }
-            double interpolation_factor = 1.0;
-            single_year_to_lifetime_interpolated<double>(
-                batt_vars->system_use_lifetime_output,
-                (size_t)batt_vars->analysis_period,
-                total_steps,
-                curtailment_year_one,
-                scaleFactors,
-                interpolation_factor,
-                batt_vars->gridCurtailmentLifetime_MW,
-                step_per_year,
-                _dt_hour);
 
             if (vt.is_assigned("enable_interconnection_limit")) {
                 batt_vars->enable_interconnection_limit = vt.as_boolean("enable_interconnection_limit");
