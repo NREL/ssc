@@ -30,6 +30,9 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define SOS_NONE
 
+#undef min
+#undef max
+
 /*
 
 Careful with namespaces in this file.. importing the LPsolve library introduces new macro definitions
@@ -1196,7 +1199,7 @@ bool etes_dispatch_opt::optimize()
             // cycle minimum up time initial enforcement
             for (int t = 0; t < nt; t++)
             {
-                if (params.time_elapsed.at(t) <= max((P["Yu"] - P["Yu0"]) * P["y0"], (P["Yd"] - P["Yd0"]) * (1 - P["y0"])))
+                if (params.time_elapsed.at(t) <= std::max((P["Yu"] - P["Yu0"]) * P["y0"], (P["Yd"] - P["Yd0"]) * (1 - P["y0"])))
                 {
                     int i = 0;
                     row[i  ] = 1.;
@@ -1681,7 +1684,7 @@ bool etes_dispatch_opt::set_dispatch_outputs()
         disp_outputs.qpbsu_expect = outputs.q_pb_startup.at(m_current_read_step) * 1.e-3;
         disp_outputs.wpb_expect = outputs.w_pb_target.at(m_current_read_step) * 1.e-3;
         disp_outputs.rev_expect = disp_outputs.wpb_expect * params.sell_price.at(m_current_read_step);
-        disp_outputs.etapb_expect = disp_outputs.wpb_expect / max(1.e-6, outputs.q_pb_target.at(m_current_read_step)) * 1.e3
+        disp_outputs.etapb_expect = disp_outputs.wpb_expect / std::max(1.e-6, outputs.q_pb_target.at(m_current_read_step)) * 1.e3
             * (outputs.pb_operation.at(m_current_read_step) ? 1. : 0.);
 
         if (m_current_read_step > solver_params.optimize_frequency* solver_params.steps_per_hour)
