@@ -191,6 +191,7 @@ static var_info _cm_vtab_trough_physical_process_heat[] = {
     { SSC_INPUT,        SSC_NUMBER,      "disp_rsu_cost",             "Receiver startup cost",                                                            "$",            "",               "tou",            "is_dispatch=1",           "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "disp_csu_cost",             "Heat sink startup cost",                                                           "$",            "",               "tou",            "is_dispatch=1",           "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "disp_pen_delta_w",          "Dispatch heat production change penalty",                                          "$/kWt-change", "",               "tou",            "is_dispatch=1",           "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "disp_inventory_incentive",  "Dispatch storage terminal inventory incentive multiplier",                         "",             "",               "System Control", "?=0.0",                   "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "q_rec_standby",             "Receiver standby energy consumption",                                              "kWt",          "",               "tou",            "?=9e99",                  "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "q_rec_heattrace",           "Receiver heat trace energy consumption during startup",                            "kWe-hr",       "",               "tou",            "?=0.0",                   "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "is_wlim_series",            "Use time-series net heat generation limits",                                       "",             "",               "tou",            "?=0",                     "",                      "" },
@@ -871,16 +872,9 @@ public:
 
         // *****************************************************
         // System dispatch
+            // Dispatch not available yet for IPH (no signal to use to incentivize production)
         csp_dispatch_opt dispatch;
-
-        dispatch.solver_params.set_user_inputs(as_boolean("is_dispatch"), as_integer("disp_steps_per_hour"), as_integer("disp_frequency"), as_integer("disp_horizon"),
-            as_integer("disp_max_iter"), as_double("disp_mip_gap"), as_double("disp_timeout"),
-            as_integer("disp_spec_presolve"), as_integer("disp_spec_bb"), as_integer("disp_reporting"), as_integer("disp_spec_scaling"),
-            as_boolean("is_write_ampl_dat"), as_boolean("is_ampl_engine"), as_string("ampl_data_dir"), as_string("ampl_exec_call"));
-        dispatch.params.set_user_params(as_double("disp_time_weighting"),
-            as_double("disp_rsu_cost"), as_double("disp_csu_cost"), as_double("disp_pen_delta_w"), as_double("disp_inventory_incentive"),
-            as_double("q_rec_standby"), as_double("q_rec_heattrace"));
-
+        dispatch.solver_params.dispatch_optimize = false;
 
 		// Instantiate Solver
 		C_csp_solver csp_solver(weather_reader, 
