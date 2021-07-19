@@ -1598,11 +1598,23 @@ void battstor::metrics()
         outSystemChargePercent = 0;
 }
 
-// function needed to correctly calculate P_grid to to additional losses in P_gen post battery like wiring, curtailment, availablity
+// function needed to correctly calculate P_grid due to additional losses in P_gen post battery like wiring, curtailment, availablity
 void battstor::update_grid_power(compute_module&, double P_gen_ac, double P_load_ac, size_t index_replace)
 {
-    double P_grid = P_gen_ac - P_load_ac;
+    double P_interconnection_loss = outInterconnectionLoss[index_replace];
+    double P_grid = P_gen_ac - P_load_ac - P_interconnection_loss;
+    if (P_grid < 0 && P_gen_ac > P_load_ac) {
+        outInterconnectionLoss[index_replace] += P_grid;
+        P_grid = 0;
+    }
     outGridPower[index_replace] = (ssc_number_t)(P_grid);
+}
+
+bool battstor::is_outage_step(size_t index) {
+    if (index < batt_vars->grid_outage_steps.size()) {
+        return batt_vars->grid_outage_steps[index];
+    }
+    return false;
 }
 
 void battstor::calculate_monthly_and_annual_outputs(compute_module& cm)

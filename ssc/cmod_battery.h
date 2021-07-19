@@ -236,6 +236,7 @@ struct battstor
 	void outputs_topology_dependent();
 	void metrics();
 	void update_grid_power(compute_module &cm, double P_gen_ac, double P_load_ac, size_t index);
+    bool is_outage_step(size_t index);
 
 	/*! Manual dispatch*/
 	bool manual_dispatch = false;

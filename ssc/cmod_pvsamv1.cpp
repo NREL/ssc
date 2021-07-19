@@ -2338,8 +2338,14 @@ void cm_pvsamv1::exec()
                 }
 			}
 			// Update battery with final gen to compute grid power
-			if (en_batt)
-				batt->update_grid_power(*this, PVSystem->p_systemACPower[idx], p_load_full[idx], idx);
+            if (en_batt) {
+                if (batt->is_outage_step(idx % nrec)) {
+                    batt->update_grid_power(*this, PVSystem->p_systemACPower[idx], p_crit_load_in[idx % nrec], idx);
+                }
+                else {
+                    batt->update_grid_power(*this, PVSystem->p_systemACPower[idx], p_load_full[idx], idx);
+                }
+            }
 
             if (iyear == 0) {
                 annual_energy += (ssc_number_t)(PVSystem->p_systemACPower[idx] * ts_hour);
