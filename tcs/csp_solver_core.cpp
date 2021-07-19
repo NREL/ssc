@@ -31,6 +31,9 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <sstream>
 
+#undef min
+#undef max
+
 void C_timestep_fixed::init(double time_start /*s*/, double step /*s*/)
 {
 	ms_timestep.m_time_start = time_start;	//[s]
@@ -449,7 +452,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 	// Check the collector-receiver model for a maximum step
 	if(mc_collector_receiver.m_max_step > 0.0)
 	{
-		baseline_step = max(m_step_tolerance, min(baseline_step, mc_collector_receiver.m_max_step));
+		baseline_step = std::max(m_step_tolerance, std::min(baseline_step, mc_collector_receiver.m_max_step));
 	}
 	
 	mc_kernel.init(sim_setup, wf_step, baseline_step, mc_csp_messages);
@@ -756,7 +759,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
                 //if this is the last day of the year, update the optimization horizon to be no more than the last 24 hours. 
                 if (hour_now >= (8760. - opt_horizon))
-                    mc_dispatch.solver_params.optimize_horizon = (int)min((double)opt_horizon, (double)(8761. - hour_now));
+                    mc_dispatch.solver_params.optimize_horizon = (int)std::min((double)opt_horizon, (double)(8761. - hour_now));
 
                 //message
                 std::stringstream ss;
@@ -1734,7 +1737,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 							mc_cr_out_solver.m_m_dot_salt_tot - 
 							mc_tes_outputs.m_m_dot_tes_cold_in*3600.0) / m_m_dot_pc_des;	//[-]
 
-		double m_dot_bal_max = max(fabs(m_dot_bal_hot), fabs(m_dot_bal_cold));
+		double m_dot_bal_max = std::max(fabs(m_dot_bal_hot), fabs(m_dot_bal_cold));
 
 		double q_dot_bal = (mc_cr_out_solver.m_q_thermal +
 							mc_tes_outputs.m_q_dot_dc_to_htf -
