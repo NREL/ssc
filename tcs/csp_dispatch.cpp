@@ -1994,7 +1994,7 @@ bool csp_dispatch_opt::set_dispatch_outputs()
         disp_outputs.qpbsu_expect = outputs.q_pb_startup.at(m_current_read_step) * 1.e-3;
         disp_outputs.wpb_expect = outputs.w_pb_target.at(m_current_read_step) * 1.e-3;
         disp_outputs.rev_expect = disp_outputs.wpb_expect * params.sell_price.at(m_current_read_step);
-        disp_outputs.etapb_expect = disp_outputs.wpb_expect / max(1.e-6, outputs.q_pb_target.at(m_current_read_step)) * 1.e3
+        disp_outputs.etapb_expect = disp_outputs.wpb_expect / (std::max)(1.e-6, outputs.q_pb_target.at(m_current_read_step)) * 1.e3
             * (outputs.pb_operation.at(m_current_read_step) ? 1. : 0.);
 
         if (m_current_read_step > solver_params.optimize_frequency* solver_params.steps_per_hour)
