@@ -369,7 +369,7 @@ static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::s
             optinst->params.wnet_lim_min.at(t) =  wmin - max_parasitic;
             if( t < nt-1 )
             {
-                double delta_rec_startup = min(1., max(optinst->params.e_rec_startup / max(optinst->params.q_sfavail_expected.at(t + 1)*pars["delta"], 1.), optinst->params.dt_rec_startup / pars["delta"]));
+                double delta_rec_startup = (std::min)(1., (std::max)(optinst->params.e_rec_startup / (std::max)(optinst->params.q_sfavail_expected.at(t + 1)*pars["delta"], 1.), optinst->params.dt_rec_startup / pars["delta"]));
                 optinst->params.delta_rs.at(t) = delta_rec_startup;
             }
         }
@@ -800,7 +800,7 @@ bool csp_dispatch_opt::optimize()
                 row[0] = 1.;
                 col[0] = O.column("yrsu", t);
 
-                add_constraintex(lp, 1, row, col, LE, min(P["M"]* params.q_sfavail_expected.at(t), 1.0));
+                add_constraintex(lp, 1, row, col, LE, (std::min)(P["M"]* params.q_sfavail_expected.at(t), 1.0));
 
                 //Receiver consumption limit
                 row[0] = 1.;
@@ -833,7 +833,7 @@ bool csp_dispatch_opt::optimize()
                 row[0] = 1.;
                 col[0] = O.column("yr", t);
 
-                add_constraintex(lp, 1, row, col, LE, min(floor(params.q_sfavail_expected.at(t) / P["Qrl"]), 1.0)); //tighter formulation
+                add_constraintex(lp, 1, row, col, LE, (std::min)(floor(params.q_sfavail_expected.at(t) / P["Qrl"]), 1.0)); //tighter formulation
 
                 // --- new constraints ---
 
@@ -1229,11 +1229,11 @@ bool csp_dispatch_opt::optimize()
                 //outputs.delta_rs.resize(nt);
 				if (t < nt - 1)
 				{
-					/*double delta_rec_startup = min(1., max(params.e_rec_startup / max(outputs.q_sfavail_expected.at(t + 1)*P["delta"], 1.), params.dt_rec_startup / P["delta"]));
+					/*double delta_rec_startup = std::min(1., std::max(params.e_rec_startup / std::max(outputs.q_sfavail_expected.at(t + 1)*P["delta"], 1.), params.dt_rec_startup / P["delta"]));
                     outputs.delta_rs.at(t) = delta_rec_startup;*/
 					double t_rec_startup = params.delta_rs.at(t) * P["delta"];
 					//double large = 5.0*params.q_pb_max; //Can we make this tighter?
-                    double large = max(params.q_pb_max,params.q_pb_standby); //tighter formulation
+                    double large = (std::max)(params.q_pb_max,params.q_pb_standby); //tighter formulation
 					int i = 0;
 
 					row[i] = 1.;
