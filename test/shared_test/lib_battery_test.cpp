@@ -213,7 +213,7 @@ TEST_F(lib_battery_test, runTestCycleAt1C){
     capacity_passed += batteryModel->I() * batteryModel->V() / 1000.;
 //    std::cerr << "\n" << idx << ": " << capacity_passed << "\n";
 
-    auto s = battery_state_test();
+    auto s = battery_state_test(lifetime_params::CALCYC);
     s.capacity = {479.75, 1000, 960.01, 20.25, 0, 49.97, 52.09, 2};
     s.batt_voltage = 552.03;
     s.lifetime.calendar->q_relative_calendar = 102;
@@ -286,7 +286,7 @@ TEST_F(lib_battery_test, runTestCycleAt3C){
     capacity_passed += batteryModel->I() * batteryModel->V() / 1000.;
 //    std::cerr << "\n" << idx << ": " << capacity_passed << "\n";
 
-    auto s = battery_state_test();
+    auto s = battery_state_test(lifetime_params::CALCYC);
     s.capacity = {439.25, 1000, 960.02, 60.75, 0, 45.75, 52.08, 2};
     s.batt_voltage = 550.10;
     s.lifetime.q_relative = 100;

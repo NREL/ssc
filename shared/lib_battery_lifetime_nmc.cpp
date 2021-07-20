@@ -27,7 +27,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "logger.h"
 
 void lifetime_nmc_t::initialize() {
-    state = std::make_shared<lifetime_state>();
+    state = std::make_shared<lifetime_state>(params->model_choice);
     // cycle model for counting cycles only, no cycle-only degradation
     cycle_model = std::unique_ptr<lifetime_cycle_t>(new lifetime_cycle_t(params, state));
     cycle_model->resetDailyCycles();

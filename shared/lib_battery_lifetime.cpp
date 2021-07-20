@@ -39,7 +39,7 @@ lifetime_params &lifetime_params::operator=(const lifetime_params &rhs) {
     return *this;
 }
 
-lifetime_state::lifetime_state(){
+lifetime_state::lifetime_state(int model_choice) {
     q_relative = 0;
     n_cycles = 0;
     cycle_range = 0;
@@ -47,9 +47,13 @@ lifetime_state::lifetime_state(){
     average_range = 0;
     day_age_of_battery = 0;
     cycle = std::make_shared<cycle_state>();
-    calendar = std::make_shared<calendar_state>();
-    nmc_li_neg = std::make_shared<lifetime_nmc_state>();
-    lmo_lto = std::make_shared<lifetime_lmolto_state>();
+    if (model_choice == lifetime_params::CALCYC) {
+        calendar = std::make_shared<calendar_state>();
+    }
+    else if (model_choice == lifetime_params::NMC)
+        nmc_li_neg = std::make_shared<lifetime_nmc_state>();
+    else if (model_choice == lifetime_params::LMOLTO)
+        lmo_lto = std::make_shared<lifetime_lmolto_state>();
 }
 
 lifetime_state::lifetime_state(const lifetime_state &rhs) :
@@ -66,9 +70,18 @@ lifetime_state &lifetime_state::operator=(const lifetime_state &rhs) {
         average_range = rhs.average_range;
         day_age_of_battery = rhs.day_age_of_battery;
         *cycle = *rhs.cycle;
-        *calendar = *rhs.calendar;
-        *nmc_li_neg = *rhs.nmc_li_neg;
-        *lmo_lto = *rhs.lmo_lto;
+        if (rhs.calendar) {
+            if (!calendar) calendar = std::make_shared<calendar_state>();
+            *calendar = *rhs.calendar;
+        }
+        if (rhs.nmc_li_neg) {
+            if (!nmc_li_neg) nmc_li_neg = std::make_shared<lifetime_nmc_state>();
+            *nmc_li_neg = *rhs.nmc_li_neg;
+        }
+        if (rhs.lmo_lto) {
+            if (!lmo_lto) lmo_lto = std::make_shared<lifetime_lmolto_state>();
+            *lmo_lto = *rhs.lmo_lto;
+        }
     }
     return *this;
 }
