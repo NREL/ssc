@@ -424,6 +424,7 @@ void dispatch_pvsmoothing_front_of_meter_t::setup_pvsmoothing_ramp_interval_vect
         else if (battery_power_terminal < 0)//:#charging - efficiency loss decreases the amount of energy put into the battery
             battery_soc = battery_soc - battery_power_terminal * batt_half_round_trip_eff * power_to_energy_conversion_factor;
         previous_power = out_power;
+        // check limits
 
         //                #update output variables
         total_energy += out_power;

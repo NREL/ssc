@@ -1607,6 +1607,8 @@ void battstor::outputs_topology_dependent()
             outPVS_P_pv_ac[index] = dispatch_fom->batt_dispatch_pvs_P_pv_ac();
             outPVS_PV_ramp_interval[index] = dispatch_fom->batt_dispatch_pvs_PV_ramp_interval();
             outPVS_forecast_pv_energy[index] = dispatch_fom->batt_dispatch_pvs_forecast_pv_energy();
+            // remove pv smoothing hour limited (curtailed) power - lost (before system output in pvsamv1)
+            outGenPower[index] -= outPVS_curtail[index]; 
         }
         else if (batt_vars->batt_dispatch != dispatch_t::FOM_MANUAL) {
             dispatch_automatic_front_of_meter_t* dispatch_fom = dynamic_cast<dispatch_automatic_front_of_meter_t*>(dispatch_model);
@@ -1703,13 +1705,13 @@ void battstor::calculate_monthly_and_annual_outputs(compute_module& cm)
             ssc_number_t violation_percent = 0;
             // energy to grid percent - algorithm and actual
             ssc_number_t energy_to_grid_pvs = 0; // sum of pvs outpower
-            ssc_number_t energy_to_grid_sam = 0; // sum of energy to grid
-            ssc_number_t energy_to_grid_pv = 0; // pv system only energy
+            ssc_number_t energy_to_grid_sam = 0; // sum of outGenPower 
+            ssc_number_t energy_to_grid_pv = 0; // pv system only energy no battery or curtaiment
             for (size_t i = 0; i < total_steps; i++) {
                 violation_count += (size_t)outPVS_violation_list[i];
                 energy_to_grid_pv += outPVS_P_pv_ac[i] * _dt_hour;
                 energy_to_grid_pvs += outPVS_outpower[i] * _dt_hour;
-                energy_to_grid_sam += outGridPower[i] * _dt_hour; // or gen power
+                energy_to_grid_sam += outGenPower[i] * _dt_hour;
             }
 
             cm.assign("batt_pvs_violation_count", (ssc_number_t)violation_count);
