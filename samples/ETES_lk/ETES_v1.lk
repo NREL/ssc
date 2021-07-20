@@ -138,12 +138,9 @@ var( 'disp_max_iter', 35000 );
 var( 'disp_timeout', 5.0 );	//5.0
 var( 'disp_mip_gap', 0.001 );
 var( 'disp_time_weighting', 0.999 );
-var( 'disp_rsu_cost', 950 );
 var( 'disp_csu_cost', 10000 );
 var( 'disp_pen_delta_w', 0.10000000000000001 );
-var( 'disp_inventory_incentive', 0.14999999999999999 );
 var( 'is_wlim_series', 0 );
-
 
 var( 'const_per_interest_rate1', 4 );
 var( 'const_per_interest_rate2', 0 );
