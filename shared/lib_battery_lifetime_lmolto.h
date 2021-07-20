@@ -74,15 +74,15 @@ protected:
     std::unique_ptr<lifetime_cycle_t> cycle_model;
 
     /// Capacity degradation due to calendar loss
-    double q1_b0 = 3.4984e-5;           // [relative capacity]
-    double q1_b1 = -1.0704e9;           // [relative capacity]
-    double q1_b2 = 3.7839e6;            // [relative capacity]
-    double q2 = 0.6224;                 // [relative capacity]
+    double q2 = 0.6224;                 // 1
+    double q1_b0 = 3.4984e-5;           // day^-q2
+    double q1_b1 = -1.0704e9;           // K^3
+    double q1_b2 = 3.7839e6;            // K^2
 
     /// Capacity degradation due to cycling loss
-    double q3_b0 = -7.146e-4;           // [relative capacity]
-    double q3_b1 = 1.071e-13;           // [relative capacity]
-    double q4 = 0.5539;                 // [relative capacity]
+    double q4 = 0.5539;                 // 1
+    double q3_b0 = -7.146e-4;           // cycles^-q4
+    double q3_b1 = 1.071e-13;           // cycles^-q4 K^-4
 
     /// Update the relative capacity loss due to calendar effects
     double runQcal();
