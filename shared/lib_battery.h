@@ -256,7 +256,7 @@ struct battery_state {
     std::shared_ptr<replacement_state> replacement;
 
     // create with new subclass states
-    battery_state();
+    explicit battery_state(int life_model_choice = -1);
 
     // create with given subclass states
     battery_state(const std::shared_ptr<capacity_state> &cap, const std::shared_ptr<voltage_state> &vol,

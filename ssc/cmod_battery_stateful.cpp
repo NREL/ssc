@@ -592,8 +592,8 @@ void cm_battery_stateful::exec() {
         throw exec_error("battery_stateful", "Battery stateful model must be `setup` first.");
 
     // Update state
-    battery_state state;
     try {
+        battery_state state(params->lifetime->model_choice);
         read_battery_state(state, m_vartab);
         battery->set_state(state);
     }
