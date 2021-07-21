@@ -58,27 +58,22 @@ struct lifetime_state {
     double average_range;                   // average cycle_DOD cycle_range of all cycles, %
     double day_age_of_battery;
 
-    // Calendar model state
-    std::shared_ptr<calendar_state> calendar;
-
-    // Cycling model state
+    // Cycling model state, used for cycle counting in all the MODEL_CHOICE classes
     std::shared_ptr<cycle_state> cycle;
 
-    // NMC model state
+    // Calendar model state, only exists when model_choice is CALCYC
+    std::shared_ptr<calendar_state> calendar;
+
+    // NMC model state, only exists when model_choice is NMC
     std::shared_ptr<lifetime_nmc_state> nmc_li_neg;
 
-    // LMO/LTO model state
+    // LMO/LTO model state, only exists when model_choice is LMOLTO
     std::shared_ptr<lifetime_lmolto_state> lmo_lto;
 
-    lifetime_state();
+    // Creates the appropriate sub-state structs for the model_choice, -1 default creates none of the sub-states
+    explicit lifetime_state(int model_choice = -1);
 
     lifetime_state(const lifetime_state &rhs);
-
-    lifetime_state(const std::shared_ptr<cycle_state>& cyc, const std::shared_ptr<calendar_state>& cal);
-
-    lifetime_state(const std::shared_ptr<lifetime_nmc_state>& nmc);
-
-    lifetime_state(const std::shared_ptr<lifetime_lmolto_state>& lmolto);
 
     lifetime_state &operator=(const lifetime_state &rhs);
 

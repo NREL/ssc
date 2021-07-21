@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
+#include <cmath>
 #include <json/json.h>
 #include <fstream>
+#include <algorithm>
 
 #include "lib_util.h"
 #include "lib_battery_lifetime_nmc.h"
@@ -73,7 +75,7 @@ TEST_F(lib_battery_lifetime_nmc_test, StorageDays) {
             size_t hr = i * 24 + h;
             model->runLifetimeModels(hr, false, 50, 50, 25);
         }
-        auto pos = std::find(days.begin(), days.end(), i);
+        auto pos = std::find(days.begin(), days.end(), (double)i);
         if (pos != days.end()) {
             auto state = model->get_state();
             EXPECT_NEAR(state.nmc_li_neg->q_relative_li, expected_q_li[pos - days.begin()], 0.5);
@@ -529,7 +531,7 @@ TEST_F(lib_battery_lifetime_nmc_test, TestAgainstKokamData) {
 
         std::vector<int> days_to_test;
         for (const auto & i : root["rpt_days_cum"])
-            days_to_test.push_back((int)std::round(i.asDouble()));
+            days_to_test.push_back((int)round(i.asDouble()));
 
         std::vector<double> full_soc_profile;
         for (const auto & i : root["15min_profile"])

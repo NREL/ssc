@@ -260,11 +260,11 @@ losses_params losses_t::get_params() {return *params; }
 /*
 Define Battery
 */
-battery_state::battery_state():
+battery_state::battery_state(int life_model_choice) :
         battery_state(std::make_shared<capacity_state>(),
                       std::make_shared<voltage_state>(),
                       std::make_shared<thermal_state>(),
-                      std::make_shared<lifetime_state>(),
+                      std::make_shared<lifetime_state>(life_model_choice),
                       std::make_shared<losses_state>()) {
 }
 

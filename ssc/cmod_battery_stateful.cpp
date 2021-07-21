@@ -372,7 +372,7 @@ void read_battery_state(battery_state& state, var_table* vt) {
             vt_get_array_vec(vt, "cycle_DOD_max", lifetime->cycle->cycle_DOD_max);
         }
         else {
-            lifetime->cycle->cycle_DOD_range.clear();
+            lifetime->cycle->cycle_DOD_max.clear();
         }
         if (choice == lifetime_params::NMC) {
             vt_get_number(vt, "q_relative_li", &lifetime->nmc_li_neg->q_relative_li);
@@ -592,8 +592,8 @@ void cm_battery_stateful::exec() {
         throw exec_error("battery_stateful", "Battery stateful model must be `setup` first.");
 
     // Update state
-    battery_state state;
     try {
+        battery_state state(params->lifetime->model_choice);
         read_battery_state(state, m_vartab);
         battery->set_state(state);
     }

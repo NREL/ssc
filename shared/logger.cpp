@@ -135,8 +135,17 @@ std::ostream &operator<<(std::ostream &os, const lifetime_state &p) {
     sprintf(buf, R"("lifetime_state": { "q_relative": %f, "n_cycles": %d, "cycle_DOD": %.3f, "cycle_range": %.3f,
                   "average_range": %.3f, day_age_of_battery": %.3f, )",
             p.q_relative, p.n_cycles, p.cycle_DOD, p.cycle_range, p.average_range, p.day_age_of_battery);
-    os << buf << *p.cycle << ", " << *p.calendar;
-    os << ", " << *p.nmc_li_neg << ", " << *p.lmo_lto << " }";
+    os << buf << *p.cycle << ", ";
+    if (p.calendar) {
+        os << *p.calendar;
+    }
+    else if (p.nmc_li_neg) {
+        os << *p.nmc_li_neg;
+    }
+    else if (p.lmo_lto) {
+        os << *p.lmo_lto;
+    }
+    os << " }";
     return os;
 }
 

@@ -48,13 +48,13 @@ void lifetime_cycle_t::initialize() {
 lifetime_cycle_t::lifetime_cycle_t(const util::matrix_t<double> &batt_lifetime_matrix) {
     params = std::make_shared<lifetime_params>();
     params->cal_cyc->cycling_matrix = batt_lifetime_matrix;
-    state = std::make_shared<lifetime_state>();
+    state = std::make_shared<lifetime_state>(params->model_choice);
     initialize();
 }
 
 lifetime_cycle_t::lifetime_cycle_t(std::shared_ptr<lifetime_params> params_ptr) :
         params(std::move(params_ptr)) {
-    state = std::make_shared<lifetime_state>();
+    state = std::make_shared<lifetime_state>(params->model_choice);
     initialize();
 }
 
@@ -429,7 +429,7 @@ lifetime_calendar_t::lifetime_calendar_t(double dt_hour, const util::matrix_t<do
     params->dt_hr = dt_hour;
     params->cal_cyc->calendar_choice = calendar_cycle_params::CALENDAR_CHOICE::TABLE;
     params->cal_cyc->calendar_matrix = calendar_matrix;
-    state = std::make_shared<lifetime_state>();
+    state = std::make_shared<lifetime_state>(params->model_choice);
     initialize();
 }
 
@@ -442,7 +442,7 @@ lifetime_calendar_t::lifetime_calendar_t(double dt_hour, double q0, double a, do
     params->cal_cyc->calendar_a = a;
     params->cal_cyc->calendar_b = b;
     params->cal_cyc->calendar_c = c;
-    state = std::make_shared<lifetime_state>();
+    state = std::make_shared<lifetime_state>(params->model_choice);
     initialize();
 }
 
@@ -549,7 +549,7 @@ Define Lifetime Model
 */
 
 void lifetime_calendar_cycle_t::initialize() {
-    state = std::make_shared<lifetime_state>();
+    state = std::make_shared<lifetime_state>(params->model_choice);
     if (params->cal_cyc->cycling_matrix.nrows() < 3 || params->cal_cyc->cycling_matrix.ncols() != 3)
         throw std::runtime_error("lifetime_cycle_t error: Battery lifetime matrix must have three columns and at least three rows");
     cycle_model = std::unique_ptr<lifetime_cycle_t>(new lifetime_cycle_t(params, state));
