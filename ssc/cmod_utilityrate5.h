@@ -27,7 +27,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 struct rate_setup
 {
-    static void setup(var_table* vt, int num_recs_yearly, int nyears, rate_data& rate, std::string cm_name);
+    static void setup(var_table* vt, int num_recs_yearly, size_t nyears, rate_data& rate, std::string cm_name);
 };
 
 #endif // _CMOD_UTILITYRATE5_H_

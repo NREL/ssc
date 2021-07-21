@@ -115,7 +115,7 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
     ssc_data_t_get_number(data, "T_loop_out", &T_loop_out);
     ssc_data_t_get_number(data, "Fluid", &Fluid);
     ssc_data_t_get_matrix(vt, "field_fl_props", field_fl_props);
-    field_htf_cp_avg = Field_htf_cp_avg(T_loop_in_des, T_loop_out, Fluid, field_fl_props);      // [kJ/kg-K]
+    field_htf_cp_avg = Field_htf_cp_avg(T_loop_in_des, T_loop_out, (int)Fluid, field_fl_props);      // [kJ/kg-K]
     ssc_data_t_set_number(data, "field_htf_cp_avg", field_htf_cp_avg);
 
     // single_loop_aperature
@@ -174,7 +174,7 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
     
     // sca_defocus_array
     SCADefocusArray = Sca_defocus_array(trough_loop_control);
-    ssc_data_t_set_array(data, "scadefocusarray", SCADefocusArray.data(), SCADefocusArray.ncells());
+    ssc_data_t_set_array(data, "scadefocusarray", SCADefocusArray.data(), (int)SCADefocusArray.ncells());
 
 
     // max_field_flow_velocity
@@ -374,6 +374,6 @@ void Physical_Trough_System_Control_Equations(ssc_data_t data)
     // wlim_series
     if (!vt->is_assigned("wlim_series")) {
         wlim_series = Wlim_series(disp_wlim_max);
-        ssc_data_t_set_array(data, "wlim_series", wlim_series.data(), wlim_series.ncells());
+        ssc_data_t_set_array(data, "wlim_series", wlim_series.data(), (int)wlim_series.ncells());
     }
 }

@@ -51,6 +51,7 @@ TEST_F(CMBattery_cmod_battery, ResilienceMetricsFullLoad){
     data_vtab->assign("analysis_period", 1);
     data_vtab->assign("gen", var_data(data_vtab->as_array("gen", nullptr), 8760));
     data_vtab->assign("batt_replacement_option", 0);
+    data_vtab->assign("run_resiliency_calcs", 1);
 
     int errors = run_module(data, "battery");
     EXPECT_FALSE(errors);
@@ -106,6 +107,7 @@ TEST_F(CMBattery_cmod_battery, ResilienceMetricsFullLoadLifetime){
     data_vtab->assign("analysis_period", nyears);
     data_vtab->assign("gen", var_data(data_vtab->as_array("gen", nullptr), 8760 * nyears));
     data_vtab->assign("batt_replacement_option", 0);
+    data_vtab->assign("run_resiliency_calcs", 1);
 
     int errors = run_module(data, "battery");
     EXPECT_FALSE(errors);

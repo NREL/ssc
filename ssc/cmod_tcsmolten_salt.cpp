@@ -52,6 +52,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 
     { SSC_INPUT,     SSC_NUMBER, "ppa_multiplier_model",               "PPA multiplier model",                                                                                                                    "0/1",          "0=diurnal,1=timestep",              "Time of Delivery Factors",                 "?=0",                                                              "INTEGER,MIN=0", ""},
     { SSC_INPUT,     SSC_ARRAY,  "dispatch_factors_ts",                "Dispatch payment factor array",                                                                                                           "",             "",                                  "Time of Delivery Factors",                 "ppa_multiplier_model=1",                                           "",              ""},
+    { SSC_INPUT,     SSC_ARRAY,  "timestep_load_fractions",            "Turbine load fraction for each timestep, alternative to block dispatch",                                                                  "",             "",                                  "System Control",                           "?",                                                                "",              ""},
 
     { SSC_INPUT,     SSC_NUMBER, "field_model_type",                   "0=design field and tower/receiver geometry, 1=design field, 2=user specified field, 3=user performance maps vs solar position",           "",             "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "gross_net_conversion_factor",        "Estimated gross to net conversion factor",                                                                                                "",             "",                                  "System Design",                            "*",                                                                "",              ""},
@@ -1184,24 +1185,24 @@ public:
                 pc->m_m_dot_water_des = 0.0;        //[kg/s]
 
                 // Also need lower and upper levels for the 3 independent variables...
-                pc->m_T_htf_low = as_double("sco2ud_T_htf_low");            //[C]
-                pc->m_T_htf_high = as_double("sco2ud_T_htf_high");          //[C]
-                pc->m_T_amb_low = as_double("sco2ud_T_amb_low");            //[C]
-                pc->m_T_amb_high = as_double("sco2ud_T_amb_high");          //[C]
-                pc->m_m_dot_htf_low = as_double("sco2ud_m_dot_htf_low");    //[-]
-                pc->m_m_dot_htf_high = as_double("sco2ud_m_dot_htf_high");  //[-]
+                double T_htf_low_sco2ud = as_double("sco2ud_T_htf_low");            //[C]
+                double T_htf_high_sco2ud = as_double("sco2ud_T_htf_high");          //[C]
+                double T_amb_low_sco2ud = as_double("sco2ud_T_amb_low");            //[C]
+                double T_amb_high_sco2ud = as_double("sco2ud_T_amb_high");          //[C]
+                double m_dot_htf_low_sco2ud = as_double("sco2ud_m_dot_htf_low");    //[-]
+                double m_dot_htf_high_sco2ud = as_double("sco2ud_m_dot_htf_high");  //[-]
 
                 // User-Defined Cycle Off-Design Tables 
-                pc->mc_T_htf_ind = as_matrix("sco2ud_T_htf_ind_od");
-                pc->mc_T_amb_ind = as_matrix("sco2ud_T_amb_ind_od");
-                pc->mc_m_dot_htf_ind = as_matrix("sco2ud_m_dot_htf_ind_od");
+                util::matrix_t<double> T_htf_ind_sco2ud = as_matrix("sco2ud_T_htf_ind_od");
+                util::matrix_t<double> T_amb_ind_sco2ud = as_matrix("sco2ud_T_amb_ind_od");
+                util::matrix_t<double> m_dot_htf_ind_sco2ud = as_matrix("sco2ud_m_dot_htf_ind_od");
 
                 util::matrix_t<double> cmbd_ind;
 
-                N_udpc_common::combine_ind_tbl(cmbd_ind, pc->mc_T_htf_ind, pc->mc_m_dot_htf_ind, pc->mc_T_amb_ind,
-                    pc->m_m_dot_htf_low, 1.0, pc->m_m_dot_htf_high,
-                    pc->m_T_htf_low, pc->m_T_htf_hot_ref, pc->m_T_htf_high,
-                    pc->m_T_amb_low, pc->m_T_amb_des, pc->m_T_amb_high);
+                N_udpc_common::combine_ind_tbl(cmbd_ind, T_htf_ind_sco2ud, m_dot_htf_ind_sco2ud, T_amb_ind_sco2ud,
+                    m_dot_htf_low_sco2ud, 1.0, m_dot_htf_high_sco2ud,
+                    T_htf_low_sco2ud, pc->m_T_htf_hot_ref, m_dot_htf_high_sco2ud,
+                    T_amb_low_sco2ud, pc->m_T_amb_des, T_amb_high_sco2ud);
 
                 size_t ncols_udpc = cmbd_ind.ncols();
                 size_t nrows_udpc = cmbd_ind.nrows();
@@ -1442,25 +1443,14 @@ public:
                     pc->m_W_dot_cooling_des = as_double("fan_power_perc_net") / 100.0*as_double("P_ref");   //[MWe]
                     pc->m_m_dot_water_des = 0.0;        //[kg/s]
 
-                    // Also need lower and upper levels for the 3 independent variables...
-                    pc->m_T_htf_low = T_htf_hot_low;            //[C]
-                    pc->m_T_htf_high = T_htf_hot_high;          //[C]
-                    pc->m_T_amb_low = T_amb_low;                //[C]
-                    pc->m_T_amb_high = T_amb_high;              //[C]
-                    pc->m_m_dot_htf_low = m_dot_htf_ND_low;     //[-]
-                    pc->m_m_dot_htf_high = m_dot_htf_ND_high;   //[-]
-
-                    // User-Defined Cycle Off-Design Tables 
-                    pc->mc_T_htf_ind = T_htf_parametrics;
-                    pc->mc_T_amb_ind = T_amb_parametrics;
-                    pc->mc_m_dot_htf_ind = m_dot_htf_ND_parametrics;
-
                     util::matrix_t<double> cmbd_ind;
 
-                    N_udpc_common::combine_ind_tbl(cmbd_ind, pc->mc_T_htf_ind, pc->mc_m_dot_htf_ind, pc->mc_T_amb_ind,
-                        pc->m_m_dot_htf_low, 1.0, pc->m_m_dot_htf_high,
-                        pc->m_T_htf_low, pc->m_T_htf_hot_ref, pc->m_T_htf_high,
-                        pc->m_T_amb_low, pc->m_T_amb_des, pc->m_T_amb_high);
+                    N_udpc_common::combine_ind_tbl(cmbd_ind, T_htf_parametrics, m_dot_htf_ND_parametrics, T_amb_parametrics,
+                        m_dot_htf_ND_low, 1.0, m_dot_htf_ND_high,
+                        T_htf_hot_low, pc->m_T_htf_hot_ref, T_htf_hot_high,
+                        T_amb_low, pc->m_T_amb_des, T_amb_high);
+
+                    pc->mc_combined_ind = cmbd_ind;
 
                     size_t ncols_udpc = cmbd_ind.ncols();
                     size_t nrows_udpc = cmbd_ind.nrows();
@@ -1865,9 +1855,19 @@ public:
         for( size_t i = 0; i < n_f_turbine; i++ )
             tou_params->mc_csp_ops.mvv_tou_arrays[C_block_schedule_csp_ops::TURB_FRAC][i] = (double)p_f_turbine[i];
 
-        bool is_timestep_input = (as_integer("ppa_multiplier_model") == 1);
-        tou_params->mc_pricing.mv_is_diurnal = !(is_timestep_input);
-        if (is_timestep_input)
+        // Load fraction by time step:
+        bool is_load_fraction_by_timestep = is_assigned("timestep_load_fractions");
+        tou_params->mc_csp_ops.mv_is_diurnal = !(is_load_fraction_by_timestep);
+        if (is_load_fraction_by_timestep) {
+            size_t N_load_fractions;
+            ssc_number_t* load_fractions = as_array("timestep_load_fractions", &N_load_fractions);
+            std::copy(load_fractions, load_fractions + N_load_fractions, std::back_inserter(tou_params->mc_csp_ops.timestep_load_fractions));
+        }
+
+        // Time-of-Delivery factors by time step:
+        bool is_tod_by_timestep = (as_integer("ppa_multiplier_model") == 1);
+        tou_params->mc_pricing.mv_is_diurnal = !(is_tod_by_timestep);
+        if (is_tod_by_timestep)
         {
             size_t nmultipliers;
             ssc_number_t *multipliers = as_array("dispatch_factors_ts", &nmultipliers);

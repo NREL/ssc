@@ -22,6 +22,7 @@ int pvsam_residential_pheonix(ssc_data_t &data)
 	status += run_module(data, "utilityrate5");
 
 	cashloan_default(data);
+    ssc_data_unassign(data, "battery_total_cost_lcos");
 	status += run_module(data, "cashloan");
 
 	return status;
