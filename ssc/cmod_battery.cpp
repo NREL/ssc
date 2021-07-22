@@ -72,17 +72,17 @@ var_info vtab_battery_inputs[] = {
     { SSC_INPUT,        SSC_ARRAY,       "batt_losses_idle",                           "Battery system losses when idle (kW DC for DC connected, AC for AC connected)",                         "kW",       "",                     "BatterySystem",       "?=0",                        "",                             "" },
     { SSC_INPUT,        SSC_NUMBER,      "batt_loss_choice",                           "Loss power input option",                                 "0/1",      "0=Monthly,1=TimeSeries",                     "BatterySystem",       "?=0",                        "",                             "" },
 
-        // Current and capacity battery inputs
-        { SSC_INPUT,        SSC_NUMBER,      "batt_current_choice",                        "Limit cells by current or power",                         "",        "",                     "BatterySystem",       "",                           "",                              "" },
-        { SSC_INOUT,        SSC_NUMBER,      "batt_computed_strings",                      "Battery number of strings of cells",                              "",        "",                     "BatterySystem",       "",                           "",                              "" },
-        { SSC_INOUT,        SSC_NUMBER,      "batt_computed_series",                       "Battery number of cells in series",                               "",        "",                     "BatterySystem",       "",                           "",                              "" },
-        { SSC_INOUT,        SSC_NUMBER,      "batt_computed_bank_capacity",                "Battery computed bank capacity",                                  "kWh",     "",                     "BatterySystem",       "",                           "",                              "" },
-        { SSC_INOUT,        SSC_NUMBER,      "batt_current_charge_max",                    "Battery maximum charge current",                                  "A",       "",                     "BatterySystem",       "",                           "",                              "" },
-        { SSC_INOUT,        SSC_NUMBER,      "batt_current_discharge_max",                 "Battery maximum discharge current",                               "A",       "",                     "BatterySystem",       "",                           "",                              "" },
-        { SSC_INOUT,        SSC_NUMBER,      "batt_power_charge_max_kwdc",                 "Battery maximum charge power (DC)",                               "kWdc",    "",                    "BatterySystem",       "",                           "",                              "" },
-        { SSC_INOUT,        SSC_NUMBER,      "batt_power_discharge_max_kwdc",              "Battery maximum discharge power (DC)",                            "kWdc",    "",                    "BatterySystem",       "",                           "",                              "" },
-        { SSC_INOUT,        SSC_NUMBER,      "batt_power_charge_max_kwac",                 "Battery maximum charge power (AC)",                               "kWac",    "",                    "BatterySystem",       "",                           "",                              "" },
-        { SSC_INOUT,        SSC_NUMBER,      "batt_power_discharge_max_kwac",              "Battery maximum discharge power (AC)",                            "kWac",    "",                    "BatterySystem",       "",                           "",                              "" },
+    // Current and capacity battery inputs
+    { SSC_INPUT,        SSC_NUMBER,      "batt_current_choice",                        "Limit cells by current or power",                         "",        "",                     "BatterySystem",       "",                           "",                              "" },
+    { SSC_INOUT,        SSC_NUMBER,      "batt_computed_strings",                      "Battery number of strings of cells",                              "",        "",                     "BatterySystem",       "",                           "",                              "" },
+    { SSC_INOUT,        SSC_NUMBER,      "batt_computed_series",                       "Battery number of cells in series",                               "",        "",                     "BatterySystem",       "",                           "",                              "" },
+    { SSC_INOUT,        SSC_NUMBER,      "batt_computed_bank_capacity",                "Battery computed bank capacity",                                  "kWh",     "",                     "BatterySystem",       "",                           "",                              "" },
+    { SSC_INOUT,        SSC_NUMBER,      "batt_current_charge_max",                    "Battery maximum charge current",                                  "A",       "",                     "BatterySystem",       "",                           "",                              "" },
+    { SSC_INOUT,        SSC_NUMBER,      "batt_current_discharge_max",                 "Battery maximum discharge current",                               "A",       "",                     "BatterySystem",       "",                           "",                              "" },
+    { SSC_INOUT,        SSC_NUMBER,      "batt_power_charge_max_kwdc",                 "Battery maximum charge power (DC)",                               "kWdc",    "",                    "BatterySystem",       "",                           "",                              "" },
+    { SSC_INOUT,        SSC_NUMBER,      "batt_power_discharge_max_kwdc",              "Battery maximum discharge power (DC)",                            "kWdc",    "",                    "BatterySystem",       "",                           "",                              "" },
+    { SSC_INOUT,        SSC_NUMBER,      "batt_power_charge_max_kwac",                 "Battery maximum charge power (AC)",                               "kWac",    "",                    "BatterySystem",       "",                           "",                              "" },
+    { SSC_INOUT,        SSC_NUMBER,      "batt_power_discharge_max_kwac",              "Battery maximum discharge power (AC)",                            "kWac",    "",                    "BatterySystem",       "",                           "",                              "" },
 
 
     // Voltage discharge curve
@@ -113,7 +113,7 @@ var_info vtab_battery_inputs[] = {
     { SSC_INPUT,        SSC_NUMBER,      "batt_minimum_modetime",                      "Minimum time at charge state",                            "min",     "",                     "BatteryCell",       "",                           "",                              "" },
 
     // lifetime inputs
-    { SSC_INPUT,		SSC_NUMBER,     "batt_life_model",                             "Battery life model specifier",                           "0/1",      "0=calendar/cycle,1=NMC", "BatteryCell",       "?=0",                           "",                             "" },
+    { SSC_INPUT,		SSC_NUMBER,     "batt_life_model",                             "Battery life model specifier",                           "0/1/2",    "0=calendar/cycle,1=NMC,2=LMO/LTO", "BatteryCell",       "?=0",                           "",                             "" },
     { SSC_INPUT,		SSC_MATRIX,     "batt_lifetime_matrix",                        "Cycles vs capacity at different depths-of-discharge",    "",         "",                     "BatteryCell",       "en_batt=1&batt_life_model=0",                           "",                             "" },
     { SSC_INPUT,        SSC_NUMBER,     "batt_calendar_choice",                        "Calendar life degradation input option",                 "0/1/2",    "0=NoCalendarDegradation,1=LithiomIonModel,2=InputLossTable", "BatteryCell",       "en_batt=1&batt_life_model=0",                           "",                             "" },
     { SSC_INPUT,        SSC_MATRIX,     "batt_calendar_lifetime_matrix",               "Days vs capacity",                                       "",         "",                     "BatteryCell",       "en_batt=1&batt_life_model=0&batt_calendar_choice=2", "",                             "" },
@@ -626,8 +626,11 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             // Battery lifetime
             batt_vars->batt_life_model = vt.as_integer("batt_life_model");
 
-            if (batt_vars->batt_life_model == 1 && batt_vars->batt_chem != 1)
+            if (batt_vars->batt_life_model == lifetime_params::NMC && batt_vars->batt_chem != 1)
                 throw exec_error("battery", "NMC life model (batt_life_model=1) can only be used with Li-Ion chemistries (batt_chem=1).");
+
+            if (batt_vars->batt_life_model == lifetime_params::LMOLTO && batt_vars->batt_chem != 1)
+                throw exec_error("battery", "LMO/LTO life model (batt_life_model=2) can only be used with Li-Ion chemistries (batt_chem=1).");
 
             if (batt_vars->batt_life_model == 0) {
                 batt_vars->batt_calendar_choice = vt.as_integer("batt_calendar_choice");
@@ -916,9 +919,12 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
     else if (batt_vars->batt_life_model == 1) {
         lifetime_model = new lifetime_nmc_t(dt_hr);
     }
+    else if (batt_vars->batt_life_model == 2) {
+        lifetime_model = new lifetime_lmolto_t(dt_hr);
+    }
     else {
         throw exec_error("battery", "Unrecognized `batt_life_model` option. Valid options are 0 for separate calendar & cycle models; "
-                                    "1 for NMC (Smith 2017) life model.");
+                                    "1 for NMC (Smith 2017) life model; 2 for LMO/LTO life model");
     }
 
     if (batt_vars->T_room.size() != nrec) {

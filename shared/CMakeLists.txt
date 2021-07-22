@@ -35,6 +35,8 @@ set(SHARED_SRC
         lib_battery_lifetime.h
         lib_battery_lifetime_calendar_cycle.cpp
         lib_battery_lifetime_calendar_cycle.h
+        lib_battery_lifetime_lmolto.cpp
+        lib_battery_lifetime_lmolto.h
         lib_battery_lifetime_nmc.cpp
         lib_battery_lifetime_nmc.h
         lib_battery_powerflow.cpp
