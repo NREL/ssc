@@ -57,7 +57,7 @@ lifetime_state::lifetime_state(int model_choice) {
 }
 
 lifetime_state::lifetime_state(const lifetime_state &rhs) :
-        lifetime_state() {
+        lifetime_state(-1) {
     operator=(rhs);
 }
 
