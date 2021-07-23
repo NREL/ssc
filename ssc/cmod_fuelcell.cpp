@@ -236,7 +236,7 @@ void cm_fuelcell::allocateOutputs()
 
 	// annual outputs
 	size_t annual_size = fcVars->numberOfYears + 1;
-	if (fcVars->numberOfYears == 1) { annual_size = 1; };
+	//if (fcVars->numberOfYears == 1) { annual_size = 1; }; // why?
 
 	p_fuelCellReplacements = allocate("fuelcell_replacement", annual_size);
 	p_fuelCellConsumption_MCf_annual = allocate("annual_fuel_usage_lifetime", annual_size);
