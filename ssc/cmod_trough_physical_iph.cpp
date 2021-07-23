@@ -86,6 +86,7 @@ static var_info _cm_vtab_trough_physical_process_heat[] = {
     { SSC_INPUT,        SSC_NUMBER,      "m_dot_htfmin",              "Minimum loop HTF flow rate",                                                       "kg/s",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "m_dot_htfmax",              "Maximum loop HTF flow rate",                                                       "kg/s",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "Fluid",                     "Field HTF fluid ID number",                                                        "none",         "",               "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "Fluid_FPC",                 "Flat plate array HTF fluid ID number",                                             "none",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "wind_stow_speed",           "Trough wind stow speed",                                                           "m/s",          "",               "solar_field",    "?=50",                       "",                      "" },
     { SSC_INPUT,        SSC_MATRIX,      "field_fl_props",            "User defined field fluid property data",                                           "-",            "",               "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_fp",                      "Freeze protection temperature (heat trace activation temperature)",                "none",         "",               "solar_field",    "*",                       "",                      "" },
@@ -319,8 +320,8 @@ static var_info _cm_vtab_trough_physical_process_heat[] = {
     { SSC_OUTPUT,   SSC_ARRAY,   "Q_loss_flat_plates",                  "Heat loss in flat plate array",                "kWt",   "",    "trough_field",        "*",        "",     "" },
     { SSC_OUTPUT,   SSC_ARRAY,   "Q_net_flat_plates",                   "Net heat gain in flat plate array",            "kWt",   "",    "trough_field",        "*",        "",     "" },
 
-    { SSC_INOUT,   SSC_NUMBER,  "flat_plates_in_series",               "Number of flat plate collectors in series",    "", "",         "trough_field",         "*",        "",     "" },
-    { SSC_INOUT,   SSC_NUMBER,  "flat_plates_in_parallel",             "Number of flat plate collectors in parallel",  "", "",         "trough_field",         "*",        "",     "" },
+    { SSC_INOUT,    SSC_NUMBER,  "flat_plates_in_series",               "Number of flat plate collectors in series",    "", "",         "trough_field",        "*",        "",     "" },
+    { SSC_INOUT,    SSC_NUMBER,  "flat_plates_in_parallel",             "Number of flat plate collectors in parallel",  "", "",         "trough_field",        "*",        "",     "" },
                                                                                                                         
         // Heat Sink                                                                                                    
     { SSC_OUTPUT,   SSC_ARRAY,   "q_dot_to_heat_sink",                  "Heat sink thermal power",                      "MWt",     "",  "Heat_Sink",           "*",        "",     "" },
@@ -451,6 +452,7 @@ public:
         c_trough.m_include_fixed_power_block_runner = as_boolean("is_model_heat_sink_piping");	//[-] Should model consider piping through heat sink?
         c_trough.m_eta_pump = as_double("eta_pump");				//[-] HTF pump efficiency
         c_trough.m_Fluid = as_integer("Fluid");						//[-] Field HTF fluid number
+        c_trough.m_Fluid_FPC = as_integer("Fluid_FPC");             //[-] Flat plate array HTF fluid number
         //c_trough.m_fthrok = as_integer("fthrok");					//[-] Flag to allow partial defocusing of the collectors
         c_trough.m_fthrctrl = 2;									//[-] Defocusing strategy; hardcode = 2 for now
         c_trough.m_accept_loc = as_integer("accept_loc");			//[-] In acceptance testing mode - temperature sensor location (1=hx,2=loop)

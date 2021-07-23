@@ -296,6 +296,8 @@ double HTFProperties::Cp( double T_K )
             0.0022*std::pow(T_C, 2) + 0.6218*T_C + 434.06;  // BPVC_CC_BPV_2017 Case 2702 - 3
 	case PG_50_50:
 		return 0.0033*T_C + 3.6374;
+	case PG_30_70:
+		return 0.0022 * T_C + 3.9305;
 	case User_defined:
 		{
 			if ( m_userTable.nrows() < 3 ) return std::numeric_limits<double>::quiet_NaN();
@@ -386,6 +388,8 @@ double HTFProperties::dens(double T_K, double P)
             return 8072.0;  // BPVC_CC_BPV_2017 Case 2702 - 3
 		case PG_50_50:
 			return -0.0026*T_C*T_C - 0.4402*T_C + 1052.7;
+		case PG_30_70:
+			return -0.0026 * T_C * T_C - 0.3430 * T_C + 1036.2;
 		case User_defined:
 			if ( m_userTable.nrows() < 3 )
 						return std::numeric_limits<double>::quiet_NaN();
@@ -481,6 +485,8 @@ double HTFProperties::visc(double T_K)
 		return 3.E-8*T_C*T_C - 1.E-5*T_C + 0.0011;
 	case PG_50_50:
 		return 5E-13*T_C*T_C*T_C*T_C*T_C*T_C - 2E-10*T_C*T_C*T_C*T_C*T_C + 2E-08*T_C*T_C*T_C*T_C - 1E-06*T_C*T_C*T_C + 5E-05*T_C*T_C - 0.0011*T_C + 0.0176;
+	case PG_30_70:
+		return 4E-14 * T_C * T_C * T_C * T_C * T_C * T_C - 2E-11 * T_C * T_C * T_C * T_C * T_C + 3E-09 * T_C * T_C * T_C * T_C - 2E-07 * T_C * T_C * T_C + 1E-05 * T_C * T_C - 0.0003 * T_C + 0.0071;
 	case User_defined:
 		if ( m_userTable.nrows() < 3 )
 					return std::numeric_limits<double>::quiet_NaN();
@@ -568,6 +574,8 @@ double HTFProperties::cond(double T_K)
         return 0.0155*T_C + 9.7239;  // BPVC_CC_BPV_2017 Case 2702 - 3
 	case PG_50_50:
 		return -4E-06*T_C*T_C + 0.0007*T_C + 0.3491;
+	case PG_30_70:
+		return -6E-06 * T_C * T_C + 0.0012 * T_C + 0.4222;
 	case User_defined:
 		if ( m_userTable.nrows() < 3 )
 					return std::numeric_limits<double>::quiet_NaN();

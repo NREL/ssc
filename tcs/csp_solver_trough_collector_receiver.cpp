@@ -119,6 +119,7 @@ C_csp_trough_collector_receiver::C_csp_trough_collector_receiver()
 	m_T_PTC_in_des = std::numeric_limits<double>::quiet_NaN();
 	m_T_loop_out_des = std::numeric_limits<double>::quiet_NaN();
 	m_Fluid = -1;
+	m_Fluid_FPC = -1;
 
 	m_m_dot_design = std::numeric_limits<double>::quiet_NaN();
 	m_m_dot_loop_des = std::numeric_limits<double>::quiet_NaN();
@@ -673,8 +674,7 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 		m_mc_bal_cold = m_mc_bal_cold_per_MW * 3.6 * m_q_design;  //[J/K]
         
         // Size flat plate array
-		int kFluidFp = HTFProperties::PG_50_50;		// also used for HX
-		flat_plate_array_.SetFluid(kFluidFp);
+		flat_plate_array_.SetFluid(m_Fluid_FPC);
 		ArrayDimensions array_dimensions = flat_plate_array_.array_size();
 		if (array_dimensions.num_in_series < 1) {
 			flat_plate_array_.resize_num_in_series(m_T_loop_in_des - 273.15, m_T_PTC_in_des - m_T_loop_in_des, T_approach_hx_);
@@ -691,7 +691,7 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 		hx_design_props.dT_approach = T_approach_hx_;
 		hx_design_props.duty = flat_plate_array_.RatedHeatGain();	// [kWt]
 		hx_design_props.external_fluid_id = m_Fluid;
-		hx_design_props.subsystem_fluid_id = kFluidFp;
+		hx_design_props.subsystem_fluid_id = m_Fluid_FPC;
 		hx_design_props.T_in_hot = m_T_PTC_in_des - 273.15 + T_approach_hx_;
 		hx_design_props.T_out_hot = m_T_loop_in_des - 273.15 + T_approach_hx_;
 		flat_plate_array_.SetHxDesignProps(hx_design_props);

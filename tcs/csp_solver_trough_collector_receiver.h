@@ -357,6 +357,7 @@ public:
 	double m_T_PTC_in_des;	//[C] Design PTC inlet temperature, converted to K in init
 	double m_T_loop_out_des;//[C] Target loop outlet temperature, converted to K in init
 	int m_Fluid;			//[-] Field HTF fluid number
+	int m_Fluid_FPC;		//[-] Flat plate array HTF fluid number
 	
 	double m_T_fp;			//[C] Freeze protection temperature (heat trace activation temperature), convert to K in init
 	double m_I_bn_des;		//[W/m^2] Solar irradiation at design

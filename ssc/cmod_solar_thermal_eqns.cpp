@@ -65,8 +65,9 @@ void Flat_Plate_Array_Design_Equations(ssc_data_t data)
     fluid_external.SetFluid(static_cast<int>(Fluid));
     //flat_plate_array.resize_array(m_dot_array_design, specific_heat, temp_rise_array_design, dT_approach, fluid_external);
     
-    int kFluidFp = HTFProperties::PG_50_50;		// also used for HX
-    flat_plate_array.SetFluid(kFluidFp);
+    double Fluid_FPC;
+    vt_get_number(vt, "Fluid_FPC", &Fluid_FPC);
+    flat_plate_array.SetFluid(static_cast<int>(Fluid_FPC));
     array_dimensions = flat_plate_array.array_size();
     if (array_dimensions.num_in_series < 1) {
         flat_plate_array.resize_num_in_series(T_in_des_external, temp_rise_array_design, dT_approach);

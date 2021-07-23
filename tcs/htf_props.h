@@ -68,6 +68,7 @@ public:
         N06230,         // Nickel alloy
         N07740,         // Nickel alloy
 		PG_50_50,		// propylene glycol, 50%
+		PG_30_70,		// propylene glycol, 30%
 		End_Library_Fluids,
 		User_defined = 50
 	};
