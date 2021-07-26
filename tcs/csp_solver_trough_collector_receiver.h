@@ -55,6 +55,7 @@ public:
 		E_DNI_COSTH,			//[W/m2]
 		E_EQUIV_OPT_ETA_TOT,	//[-]
 		E_DEFOCUS,				//[-]
+		E_Q_DOT_DUMP,			//[MWt]
 
 		E_Q_DOT_INC_SF_TOT,        //[MWt]
 		E_Q_DOT_INC_SF_COSTH,	   //[MWt]
@@ -208,6 +209,7 @@ private:
 	double m_Q_gain_fp;
 	double m_Q_loss_fp;
 	double m_Q_net_fp;
+	double m_Q_dot_dump;		// [MWt] Total defocused, or dumped, power
 
 
 	// Classes that are defined as member data so are re-declared each time performance function is called

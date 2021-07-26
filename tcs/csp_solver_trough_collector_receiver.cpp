@@ -39,6 +39,7 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 	{C_csp_trough_collector_receiver::E_DNI_COSTH, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 	{C_csp_trough_collector_receiver::E_EQUIV_OPT_ETA_TOT, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 	{C_csp_trough_collector_receiver::E_DEFOCUS, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_csp_trough_collector_receiver::E_Q_DOT_DUMP, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 
 	{C_csp_trough_collector_receiver::E_Q_DOT_INC_SF_TOT, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 	{C_csp_trough_collector_receiver::E_Q_DOT_INC_SF_COSTH, C_csp_reported_outputs::TS_WEIGHTED_AVE},
@@ -1381,6 +1382,9 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 
 	m_Q_field_losses_total_subts = Q_loss_xover + Q_loss_HR_cold + Q_loss_HR_hot - Q_abs_scas_summed;		//[MJ]
 
+	double frac_defocused = 1. - m_control_defocus * m_component_defocus;					// aka 1 - E_DEFOCUS
+	m_Q_dot_dump = m_Ap_tot * weather.m_beam * m_EqOpteff * frac_defocused * 1.e-6;			// [MWt]
+
 	return E_loop_energy_balance_exit::SOLVED;
 }
 
@@ -1855,6 +1859,7 @@ void C_csp_trough_collector_receiver::set_output_value()
 	mc_reported_outputs.value(E_DNI_COSTH, m_dni_costh);			//[W/m2]
 	mc_reported_outputs.value(E_EQUIV_OPT_ETA_TOT, m_EqOpteff);		//[-]
 	mc_reported_outputs.value(E_DEFOCUS, m_control_defocus*m_component_defocus);	//[-]
+	mc_reported_outputs.value(E_Q_DOT_DUMP, m_Q_dot_dump);			//[MWt]
 
 	mc_reported_outputs.value(E_Q_DOT_INC_SF_TOT, m_q_dot_inc_sf_tot);			//[MWt]
 	mc_reported_outputs.value(E_Q_DOT_INC_SF_COSTH, m_dni_costh*m_Ap_tot/1.E6);	//[MWt]

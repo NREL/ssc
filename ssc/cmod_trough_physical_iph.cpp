@@ -292,6 +292,7 @@ static var_info _cm_vtab_trough_physical_process_heat[] = {
     { SSC_OUTPUT,   SSC_ARRAY,   "dni_costh",                           "Field collector DNI-cosine product",           "W/m2",   "",   "trough_field",        "*",        "",     "" },
     { SSC_OUTPUT,   SSC_ARRAY,   "EqOpteff",                            "Field optical efficiency before defocus",      "",       "",   "trough_field",        "*",        "",     "" },
     { SSC_OUTPUT,   SSC_ARRAY,   "SCAs_def",                            "Field fraction of focused SCAs",               "",       "",   "trough_field",        "*",        "",     "" },
+    { SSC_OUTPUT,   SSC_ARRAY,   "q_dot_dump",                          "Field defocused, or dumped, energy",           "MWt",    "",   "trough_field",        "*",        "",     "" },
                                                                                                                               
     { SSC_OUTPUT,   SSC_ARRAY,   "q_inc_sf_tot",                        "Field thermal power incident",                 "MWt",    "",   "trough_field",        "*",        "",     "" },
     { SSC_OUTPUT,   SSC_ARRAY,   "qinc_costh",                          "Field thermal power incident after cosine",    "MWt",    "",   "trough_field",        "*",        "",     "" },
@@ -670,6 +671,7 @@ public:
         c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_DNI_COSTH, allocate("dni_costh", n_steps_fixed), n_steps_fixed);    
         c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_EQUIV_OPT_ETA_TOT, allocate("EqOpteff", n_steps_fixed), n_steps_fixed);
         c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_DEFOCUS, allocate("SCAs_def", n_steps_fixed), n_steps_fixed);
+        c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_Q_DOT_DUMP, allocate("q_dot_dump", n_steps_fixed), n_steps_fixed);
         
         c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_Q_DOT_INC_SF_TOT, allocate("q_inc_sf_tot", n_steps_fixed), n_steps_fixed);
         c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_Q_DOT_INC_SF_COSTH, allocate("qinc_costh", n_steps_fixed), n_steps_fixed);  
