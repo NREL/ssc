@@ -148,65 +148,16 @@ void dispatch_pvsmoothing_front_of_meter_t::update_dispatch(size_t year, size_t 
 	m_batteryPower->powerBatteryTarget = 0;
 
     size_t ndx_sampled = lifetimeIndex / m_batt_dispatch_pvs_timestep_multiplier;
-
-    bool linear_interpolation = false; // updated per 7/14/2021 meeting
-
+      
     size_t xval = (lifetimeIndex % m_batt_dispatch_pvs_timestep_multiplier);
 
-    if (linear_interpolation) {
-        double slope, intercept;
-
-        if (ndx_sampled == 0)
-            intercept = 0;
-        else
-            intercept = m_batt_dispatch_pvs_battpower_vec[ndx_sampled - 1];
-        slope = (m_batt_dispatch_pvs_battpower_vec[ndx_sampled] - intercept) / m_batt_dispatch_pvs_timestep_multiplier;
-        m_batt_dispatch_pvs_battpower = slope * xval + intercept;
-
-        if (ndx_sampled == 0)
-            intercept = 0;
-        else
-            intercept = m_batt_dispatch_pvs_outpower_vec[ndx_sampled - 1];
-        slope = (m_batt_dispatch_pvs_outpower_vec[ndx_sampled] - intercept) / m_batt_dispatch_pvs_timestep_multiplier;
-        m_batt_dispatch_pvs_outpower = slope * xval + intercept;
-
-        if (ndx_sampled == 0)
-            intercept = 0;
-        else
-            intercept = m_batt_dispatch_pvs_battsoc_vec[ndx_sampled - 1];
-        slope = (m_batt_dispatch_pvs_battsoc_vec[ndx_sampled] - intercept) / m_batt_dispatch_pvs_timestep_multiplier;
-        m_batt_dispatch_pvs_battsoc = slope * xval + intercept;
-
-        if (ndx_sampled == 0)
-            intercept = 0;
-        else
-            intercept = m_batt_dispatch_pvs_curtail_vec[ndx_sampled - 1];
-        slope = (m_batt_dispatch_pvs_curtail_vec[ndx_sampled] - intercept) / m_batt_dispatch_pvs_timestep_multiplier;
-        m_batt_dispatch_pvs_curtail = slope * xval + intercept;
-
-        if (ndx_sampled == 0)
-            intercept = 0;
-        else
-            intercept = m_pv_power_input_sampled_vec[ndx_sampled - 1];
-        slope = (m_pv_power_input_sampled_vec[ndx_sampled] - intercept) / m_batt_dispatch_pvs_timestep_multiplier;
-        m_batt_dispatch_pvs_PV_ramp_interval = slope * xval + intercept;
-
-        if (ndx_sampled == 0)
-            intercept = 0;
-        else
-            intercept = m_forecast_pv_energy_vec[ndx_sampled - 1];
-        slope = (m_forecast_pv_energy_vec[ndx_sampled] - intercept) / m_batt_dispatch_pvs_timestep_multiplier;
-        m_batt_dispatch_pvs_forecast_pv_energy = slope * (xval - m_batt_dispatch_pvs_timestep_multiplier) + intercept;
-
-    }
-    else { // based on EPRI email that value is constant over smoothing interval
-        m_batt_dispatch_pvs_battpower = m_batt_dispatch_pvs_battpower_vec[ndx_sampled];
-        m_batt_dispatch_pvs_outpower = m_batt_dispatch_pvs_outpower_vec[ndx_sampled];
-        m_batt_dispatch_pvs_battsoc = m_batt_dispatch_pvs_battsoc_vec[ndx_sampled];
-        m_batt_dispatch_pvs_curtail = m_batt_dispatch_pvs_curtail_vec[ndx_sampled];
-        m_batt_dispatch_pvs_PV_ramp_interval = m_pv_power_input_sampled_vec[ndx_sampled];
-        m_batt_dispatch_pvs_forecast_pv_energy = m_forecast_pv_energy_vec[ndx_sampled];
-    }
+    // based on EPRI email that value is constant over smoothing interval
+    m_batt_dispatch_pvs_battpower = m_batt_dispatch_pvs_battpower_vec[ndx_sampled];
+    m_batt_dispatch_pvs_outpower = m_batt_dispatch_pvs_outpower_vec[ndx_sampled];
+    m_batt_dispatch_pvs_battsoc = m_batt_dispatch_pvs_battsoc_vec[ndx_sampled];
+    m_batt_dispatch_pvs_curtail = m_batt_dispatch_pvs_curtail_vec[ndx_sampled];
+    m_batt_dispatch_pvs_PV_ramp_interval = m_pv_power_input_sampled_vec[ndx_sampled];
+    m_batt_dispatch_pvs_forecast_pv_energy = m_forecast_pv_energy_vec[ndx_sampled];
 
     // record violations at end of ramp interval timestep, e.g. 10 minute = 0 to 9 time steps with violation at index 9
     if (xval == m_batt_dispatch_pvs_timestep_multiplier - 1)
@@ -227,7 +178,6 @@ void dispatch_pvsmoothing_front_of_meter_t::update_dispatch(size_t year, size_t 
         m_batteryPower->powerBatteryTarget += loss_kw;
     }
 
-//    m_batteryPower->powerBatteryTarget = m_batt_dispatch_pvs_nameplate_ac > 0 ? m_batt_dispatch_pvs_nameplate_ac * m_batt_dispatch_pvs_battpower : m_batt_dispatch_pvs_battpower;
     m_batteryPower->powerBatteryDC = m_batteryPower->powerBatteryTarget;
 }
 
@@ -289,7 +239,7 @@ void dispatch_pvsmoothing_front_of_meter_t::setup_pvsmoothing_ramp_interval_vect
     }
  
     // main loop from ramp_rate_control.py
-    //      #conversion factors
+    // conversion factors
     ssc_number_t  power_to_energy_conversion_factor = m_batt_dispatch_pvs_timestep_multiplier * _dt_hour;
     ssc_number_t  batt_half_round_trip_eff = sqrt(m_etaDischarge * m_etaPVCharge);
 
@@ -337,26 +287,26 @@ void dispatch_pvsmoothing_front_of_meter_t::setup_pvsmoothing_ramp_interval_vect
     if (!en_forecast)
         kf = 0;
 
-    //  #iterate through time - series
+    // iterate through time - series
     for (size_t ndx_sampled = 0; ndx_sampled < nRecordsSampled; ndx_sampled++) {
         ssc_number_t pv_power = m_pv_power_input_sampled_vec[ndx_sampled];
         ssc_number_t out_power = 0;
         ssc_number_t battery_power_terminal = 0;
         ssc_number_t forecast_power = 0;
         forecast_power = m_forecast_pv_energy_vec[ndx_sampled];
-        //                #calculate controller error
+        // calculate controller error
         ssc_number_t delta_power = pv_power - previous_power; //#proportional error
         ssc_number_t soc_increment = battery_soc + (pv_power - previous_power) * power_to_energy_conversion_factor;// #integral error
         ssc_number_t future_error = previous_power * forecast_shift_periods * power_to_energy_conversion_factor - forecast_power; //#derivitive error
         ssc_number_t error = kp * delta_power + ki * (soc_increment - soc_rest * battery_energy) - kf * future_error;
 
-        //                #calculate the desired output power, enforce ramp rate limit
+        // calculate the desired output power, enforce ramp rate limit
         if (error > 0)
             out_power = previous_power + std::min(max_ramp, std::abs(error));
         else
             out_power = previous_power - std::min(max_ramp, std::abs(error));
 
-        //            #enforce grid power limits
+        // enforce grid power limits
         if (AC_upper_bound_on) {
             if (out_power > AC_upper_bound)
                 out_power = AC_upper_bound;
@@ -366,67 +316,67 @@ void dispatch_pvsmoothing_front_of_meter_t::setup_pvsmoothing_ramp_interval_vect
                 out_power = AC_lower_bound;
         }
 
-        //                  #calculate desired(unconstrained) battery power
+        // calculate desired(unconstrained) battery power
         battery_power_terminal = out_power - pv_power; //# positive is power leaving battery(discharging)
 
-//                    #adjust battery power to factor in battery constraints
-//                    #check SOC limit - reduce battery power if either soc exceeds either 0 or 100 %
-//                    #check full
+        // adjust battery power to factor in battery constraints
+        // check SOC limit - reduce battery power if either soc exceeds either 0 or 100 %
+        // check full
         if ((battery_soc - battery_power_terminal * batt_half_round_trip_eff * power_to_energy_conversion_factor) > battery_energy)
             battery_power_terminal = -1.0 * (battery_energy - battery_soc) / power_to_energy_conversion_factor / batt_half_round_trip_eff; 
-//            #check empty
+        //            #check empty
         else if ((battery_soc - battery_power_terminal * power_to_energy_conversion_factor) < 0)
             battery_power_terminal = battery_soc / power_to_energy_conversion_factor / batt_half_round_trip_eff;
 
- //            #enforce battery power limits
-//            #discharging too fast
+        // enforce battery power limits
+        // discharging too fast
         if (battery_power_terminal > battery_power)
             battery_power_terminal = battery_power;
-        //            #charging too fast
+        // charging too fast
         else if (battery_power_terminal < -1.0 * battery_power)
             battery_power_terminal = -1.0 * battery_power;
 
-        //            #update output power after battery constraints are applied
+        // update output power after battery constraints are applied
         out_power = pv_power + battery_power_terminal;
 
-        //            #flag if a ramp rate violation has occurred - up or down - because limits of battery prevented smoothing
+        // flag if a ramp rate violation has occurred - up or down - because limits of battery prevented smoothing
         int violation = 0;
         if (std::abs(out_power - previous_power) > (max_ramp + 0.00001))
             violation = 1;
 
 
-        //                #curtailment
+        // curtailment
         ssc_number_t curtail_power = 0;
 
-        //#if curtailment is considered part of the control - don't count up-ramp violations
+        // if curtailment is considered part of the control - don't count up-ramp violations
         if (curtail_as_control) {
             if ((out_power - previous_power) > (max_ramp - 0.00001)) {
-                out_power = previous_power + max_ramp;// #reduce output to a non - violation
-                curtail_power = pv_power + battery_power_terminal - out_power;// #curtail the remainder
+                out_power = previous_power + max_ramp;// reduce output to a non - violation
+                curtail_power = pv_power + battery_power_terminal - out_power;// curtail the remainder
                 violation = 0;
             }
         }
 
-        //            #with this setting, curtail output power upon an upramp violation - rather than sending excess power to the grid
-        //            #curtailment still counts as a violation
-        //            #sum total of energy output is reduced
+        // with this setting, curtail output power upon an upramp violation - rather than sending excess power to the grid
+        // curtailment still counts as a violation
+        // sum total of energy output is reduced
         if (curtail_if_violation) {
             if ((out_power - previous_power) > (max_ramp - 0.00001)) {
-                out_power = previous_power + max_ramp; //#reduce output to a non - violation
-                curtail_power = pv_power + battery_power_terminal - out_power;// #curtail the remainder
+                out_power = previous_power + max_ramp; // reduce output to a non - violation
+                curtail_power = pv_power + battery_power_terminal - out_power;// curtail the remainder
             }
         }
 
 
-        //           #update memory variables
-        if (battery_power_terminal > 0)//:#discharging - efficiency loss increases the amount of energy drawn from the battery
+        // update memory variables
+        if (battery_power_terminal > 0)//discharging - efficiency loss increases the amount of energy drawn from the battery
             battery_soc = battery_soc - battery_power_terminal * power_to_energy_conversion_factor / batt_half_round_trip_eff;
-        else if (battery_power_terminal < 0)//:#charging - efficiency loss decreases the amount of energy put into the battery
+        else if (battery_power_terminal < 0)//charging - efficiency loss decreases the amount of energy put into the battery
             battery_soc = battery_soc - battery_power_terminal * batt_half_round_trip_eff * power_to_energy_conversion_factor;
         previous_power = out_power;
         // check limits
 
-        //                #update output variables
+        // update output variables
         total_energy += out_power;
         violation_count += violation;
 

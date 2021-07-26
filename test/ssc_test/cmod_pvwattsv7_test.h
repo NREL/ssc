@@ -15,22 +15,19 @@
 class CMPvwattsV7Integration_cmod_pvwattsv7 : public ::testing::Test {
 protected: //doesn't really matter if this is protected or public, but you need to declare one or the other or it will default to private which doesn't work
 	ssc_data_t data;
-    var_data* weather_data;
 
 	double error_tolerance = 1.0e-3;
 
 	bool compute();
 	void SetUp() { //if you always want to set up with the same default case, this can go in the class. otherwise it probably makes sense in the test itself.
 		data = ssc_data_create();
-        int errors = pvwattsv7_nofinancial_testfile(data);
+		int errors = pvwattsv7_nofinancial_testfile(data);
 		EXPECT_FALSE(errors); //make sure that the test ran ok
-
 	}
 	void TearDown()
 	{
-        ssc_data_free(data);
-        data = nullptr;
-
+		ssc_data_free(data);
+		data = nullptr;
 	} 
 };
 

@@ -15,10 +15,7 @@ TEST_F(CM_SWH, ResidentialDefault_cmod_swh) {
 }
 
 TEST_F(CM_SWH, ResidentialDefaultUsingData_cmod_swh) {
-    var_data* weather_data = create_weatherdata_array(8760);
-//    var_data weather_data;
-//    create_weatherdata_array(weather_data, 8760);
-
+    auto weather_data = create_weatherdata_array(8760);
     ssc_data_unassign(data, "solar_resource_file");
     ssc_data_set_table(data, "solar_resource_data", &weather_data->table);
 
@@ -29,6 +26,5 @@ TEST_F(CM_SWH, ResidentialDefaultUsingData_cmod_swh) {
     ssc_data_get_number(data, "annual_energy", &annual_energy);
     EXPECT_NEAR(annual_energy, 1229, 1);
 
-    //delete[] weather_data;
-    //    free_weatherdata_array(weather_data);
+    free_weatherdata_array(weather_data);
 }
