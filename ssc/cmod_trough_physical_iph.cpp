@@ -292,7 +292,7 @@ static var_info _cm_vtab_trough_physical_process_heat[] = {
     { SSC_OUTPUT,   SSC_ARRAY,   "dni_costh",                           "Field collector DNI-cosine product",           "W/m2",   "",   "trough_field",        "*",        "",     "" },
     { SSC_OUTPUT,   SSC_ARRAY,   "EqOpteff",                            "Field optical efficiency before defocus",      "",       "",   "trough_field",        "*",        "",     "" },
     { SSC_OUTPUT,   SSC_ARRAY,   "SCAs_def",                            "Field fraction of focused SCAs",               "",       "",   "trough_field",        "*",        "",     "" },
-    { SSC_OUTPUT,   SSC_ARRAY,   "q_dot_dump",                          "Field defocused, or dumped, energy",           "MWt",    "",   "trough_field",        "*",        "",     "" },
+    { SSC_OUTPUT,   SSC_ARRAY,   "q_dot_dump",                          "Field defocused (dumped) power",               "MWt",    "",   "trough_field",        "*",        "",     "" },
                                                                                                                               
     { SSC_OUTPUT,   SSC_ARRAY,   "q_inc_sf_tot",                        "Field thermal power incident",                 "MWt",    "",   "trough_field",        "*",        "",     "" },
     { SSC_OUTPUT,   SSC_ARRAY,   "qinc_costh",                          "Field thermal power incident after cosine",    "MWt",    "",   "trough_field",        "*",        "",     "" },
