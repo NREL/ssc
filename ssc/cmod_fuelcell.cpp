@@ -91,6 +91,7 @@ var_info vtab_fuelcell_output[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "fuelcell_fuel_consumption_mcf",      "Fuel consumption of fuel cell",         "MCf",        "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "fuelcell_to_load",                   "Electricity to load from fuel cell",    "kW",        "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "fuelcell_to_grid",                   "Electricity to grid from fuel cell",    "kW",        "",                 "Fuel Cell",                  "",                        "",                              "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "fuelcell_annual_energy_discharged",  "Annual energy from fuelcell",    "kWh",        "",                 "Fuel Cell",                  "",                        "",                              "" },
 
 	{ SSC_OUTPUT,       SSC_ARRAY,       "fuelcell_replacement",                "Fuel cell replacements per year",      "number/year", "",              "Fuel Cell",           "",                           "",                              "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "system_heat_rate",                    "Heat rate conversion factor (MMBTUs/MWhe)",  "MMBTUs/MWhe",   "",      "Fuel Cell",           "*",               "",                    "" },
@@ -141,7 +142,7 @@ void cm_fuelcell::exec()
 	// float percent_complete = 0.0;
 //	float percent = 0.0;
 	// size_t nStatusUpdates = 50;
-
+    double annual_energy_fc = 0.0;
 /*
 	if (is_assigned("percent_complete")) {
 		percent_complete = as_float("percent_complete");
@@ -155,6 +156,7 @@ void cm_fuelcell::exec()
 		size_t idx_year = 0;
 		size_t annual_index;
 		fcVars->numberOfYears > 1 ? annual_index = y + 1 : annual_index = 0;
+        annual_energy_fc = 0;
 
 		for (size_t h = 0; h < 8760; h++){
 /*
@@ -173,6 +175,7 @@ void cm_fuelcell::exec()
             for (size_t s = 0; s < fcVars->stepsPerHour; s++) {
 				fuelCellDispatch->runSingleTimeStep(h, idx_year, fcVars->systemGeneration_kW[idx], fcVars->electricLoad_kW[idx]);
 				p_fuelCellPower_kW[idx] = (ssc_number_t)fuelCellDispatch->getPower();
+                annual_energy_fc += p_fuelCellPower_kW[idx] * fcVars->dt_hour;
 				p_fuelCellPowerMaxAvailable_percent[idx] = (ssc_number_t)fuelCellDispatch->getPowerMaxPercent();
 				p_fuelCellLoad_percent[idx] = (ssc_number_t)fuelCellDispatch->getPercentLoad();
 				p_fuelCellElectricalEfficiency_percent[idx] = (ssc_number_t)fuelCellDispatch->getElectricalEfficiencyPercent();
@@ -196,11 +199,13 @@ void cm_fuelcell::exec()
 			annual_fuel = p_fuelCellConsumption_MCf_annual[annual_index];
 		}
 
+        p_fuelCellAnnualEnergy[annual_index] = annual_energy_fc;
+
 		// tabulate replacements
 		p_fuelCellReplacements[annual_index] = (ssc_number_t)(fuelCell->getTotalReplacements());
 		fuelCell->resetReplacements();
 	}
-
+    
     ssc_number_t* p_annual_energy_dist_time_fc = gen_heatmap(this, 1);
 
 	// capacity factor update
@@ -244,6 +249,8 @@ void cm_fuelcell::allocateOutputs()
 	p_fuelCellConsumption_MCf_annual[0] = 0;
 
 	p_gen_kW = allocate("gen", fcVars->numberOfLifetimeRecords);
+    p_fuelCellAnnualEnergy = allocate("fuelcell_annual_energy_discharged", annual_size);
+    p_fuelCellAnnualEnergy[0] = 0;
 
 }
 

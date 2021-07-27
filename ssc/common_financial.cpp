@@ -3597,13 +3597,11 @@ void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double
             //cf.at(CF_charging_cost_grid, a) = charged_grid[a] * 10 / 100; //using 0.10 $/kWh as a placeholder
             if (cm->as_integer("system_use_lifetime_output") == 1 && a != 0) { //Lifetime
                 cf.at(CF_charging_cost_pv_lcos, a) = charged_pv[a] * lcoe_real_lcos / 100 * pow(1 + inflation_rate, a - 1); //Calculate system charging cost from year a system charged amount ($)
-                cf.at(CF_om_production1_expense_lcos, a) *= lcos_energy_discharged[a];
                 cf.at(CF_energy_discharged_lcos, a) = lcos_energy_discharged[a];
 
             }
             else if (cm->as_integer("system_use_lifetime_output") != 1 && a != 0) { //Not lifetime
                 cf.at(CF_charging_cost_pv_lcos, a) = charged_pv[0] * cf.at(CF_degradation_lcos, a) * lcoe_real_lcos / 100 * pow(1 + inflation_rate, a - 1); //Calculate system charging cost from year 1 sytem charged amount ($) (Probably need to account for degradation)
-                cf.at(CF_om_production1_expense_lcos, a) *= lcos_energy_discharged[0] * cf.at(CF_degradation_lcos, a); //Scale om production expense by amount discharged in year 1 ($) account for degradation
                 cf.at(CF_energy_discharged_lcos, a) = lcos_energy_discharged[0] * cf.at(CF_degradation_lcos, a); //Store energy discharged in year 1 to each year of the cash flow
             }
             cf.at(CF_annual_cost_lcos_lcos, a) = -cf.at(CF_charging_cost_grid_lcos, a) + //Grid charging cost +

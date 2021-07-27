@@ -258,6 +258,7 @@ protected:
 	ssc_number_t * p_fuelCellToLoad_kW;
 	ssc_number_t * p_fuelCellReplacements;
 	ssc_number_t * p_fuelCellConsumption_MCf_annual;
+    ssc_number_t * p_fuelCellAnnualEnergy;
 };
 
 #endif
