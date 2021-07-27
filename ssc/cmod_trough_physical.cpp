@@ -234,6 +234,7 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "dispatch_factor9",          "Dispatch payment factor 9",                                                        "",             "",               "tou",            "?=1",                     "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "is_dispatch_series",        "Use time-series dispatch factors",                                                 "",             "",               "tou",            "?=1",                     "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "dispatch_series",           "Time series dispatch factors",                                                     "",             "",               "tou",            "",                        "",                      "" },
+    { SSC_INPUT,        SSC_ARRAY,       "timestep_load_fractions",   "Turbine load fraction for each timestep, alternative to block dispatch",           "",             "",               "tou",            "?",                       "",                      "" },
 
     // System
     { SSC_INPUT,        SSC_NUMBER,      "pb_fixed_par",              "Fraction of rated gross power constantly consumed",                                "MWe/MWcap",    "",               "system",         "*",                       "",                      "" },
@@ -1023,9 +1024,19 @@ public:
         for (size_t i = 0; i < n_f_turbine; i++)
             tou_params->mc_csp_ops.mvv_tou_arrays[C_block_schedule_csp_ops::TURB_FRAC][i] = (double)p_f_turbine[i];
 
-        bool is_timestep_input = (as_integer("ppa_multiplier_model") == 1);
-        tou_params->mc_pricing.mv_is_diurnal = !(is_timestep_input);
-        if (is_timestep_input)
+        // Load fraction by time step:
+        bool is_load_fraction_by_timestep = is_assigned("timestep_load_fractions");
+        tou_params->mc_csp_ops.mv_is_diurnal = !(is_load_fraction_by_timestep);
+        if (is_load_fraction_by_timestep) {
+            size_t N_load_fractions;
+            ssc_number_t* load_fractions = as_array("timestep_load_fractions", &N_load_fractions);
+            std::copy(load_fractions, load_fractions + N_load_fractions, std::back_inserter(tou_params->mc_csp_ops.timestep_load_fractions));
+        }
+
+        // Time-of-Delivery factors by time step:
+        bool is_tod_by_timestep = (as_integer("ppa_multiplier_model") == 1);
+        tou_params->mc_pricing.mv_is_diurnal = !(is_tod_by_timestep);
+        if (is_tod_by_timestep)
         {
             size_t nmultipliers;
             ssc_number_t *multipliers = as_array("dispatch_factors_ts", &nmultipliers);

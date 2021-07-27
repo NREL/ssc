@@ -170,6 +170,8 @@ C_block_schedule_csp_ops::C_block_schedule_csp_ops()
 	mv_labels.resize(N_END);
 
 	mv_labels[0] = "Turbine Fraction";
+
+    mv_is_diurnal = true;
 }
 
 C_block_schedule_pricing::C_block_schedule_pricing()
@@ -210,6 +212,20 @@ void C_csp_tou_block_schedules::init()
 			throw(C_csp_exception(m_error_msg, "TOU block schedule initialization"));
 		}
 	}
+
+    if (ms_params.mc_csp_ops.mv_is_diurnal)
+    {
+        try
+        {
+            ms_params.mc_csp_ops.init(C_block_schedule_csp_ops::N_END, mc_dispatch_params.m_isleapyear);
+        }
+        catch (C_csp_exception& csp_exception)
+        {
+            m_error_msg = "The CSP ops " + csp_exception.m_error_message;
+            throw(C_csp_exception(m_error_msg, "TOU block schedule initialization"));
+        }
+    }
+
 	return;
 }
 
@@ -223,11 +239,14 @@ void C_csp_tou_block_schedules::call(double time_s, C_csp_tou::S_csp_tou_outputs
 		throw(C_csp_exception(m_error_msg, "TOU timestep call"));
 	}
 
-	size_t csp_op_tou = (size_t)ms_params.mc_csp_ops.m_hr_tou[i_hour];
-
-	tou_outputs.m_csp_op_tou = (int)csp_op_tou;
-	
-	tou_outputs.m_f_turbine = ms_params.mc_csp_ops.mvv_tou_arrays[C_block_schedule_csp_ops::TURB_FRAC][csp_op_tou-1];
+	size_t csp_op_tou = (size_t)ms_params.mc_csp_ops.m_hr_tou[i_hour];      // an 8760-size array of the 1-9 turbine output fraction for the timestep
+	tou_outputs.m_csp_op_tou = (int)csp_op_tou;	                            // needed for hybrid cooling regardless of turbine output fraction schedule type
+    if (ms_params.mc_csp_ops.mv_is_diurnal) {
+	    tou_outputs.m_f_turbine = ms_params.mc_csp_ops.mvv_tou_arrays[C_block_schedule_csp_ops::TURB_FRAC][csp_op_tou-1];       // an array of size 9 of the different turbine output fractions
+    }
+    else {
+        tou_outputs.m_f_turbine = ms_params.mc_csp_ops.timestep_load_fractions.at(i_hour);
+    }
 	
 	if (ms_params.mc_pricing.mv_is_diurnal)
 	{
