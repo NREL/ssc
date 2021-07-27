@@ -1496,8 +1496,11 @@ weatherdata::weatherdata( var_data *data_table )
 
 weatherdata::~weatherdata()
 {
-	for( size_t i=0;i<m_data.size();i++ )
-		delete m_data[i];
+    if (m_data.size() > 0) {
+        for (size_t i = 0; i< m_data.size(); i++)
+            delete m_data[i];
+    }
+    m_data.clear();
 }
 
 

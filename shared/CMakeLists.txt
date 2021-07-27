@@ -25,8 +25,10 @@ set(SHARED_SRC
 		lib_battery_dispatch.h
 		lib_battery_dispatch_automatic_btm.cpp
 		lib_battery_dispatch_automatic_btm.h
-		lib_battery_dispatch_automatic_fom.cpp
-		lib_battery_dispatch_automatic_fom.h
+        lib_battery_dispatch_automatic_fom.cpp
+        lib_battery_dispatch_automatic_fom.h
+        lib_battery_dispatch_pvsmoothing_fom.cpp
+        lib_battery_dispatch_pvsmoothing_fom.h
 		lib_battery_dispatch_manual.cpp
 		lib_battery_dispatch_manual.h
         lib_battery_lifetime.cpp
