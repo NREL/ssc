@@ -60,7 +60,7 @@ set_default_compile_options(Test)
 if(MSVC)
     set_additional_compile_options(Test "/MP /W3 /wd4244 /D_MBCS")
 else()
-    set_additional_compile_options(Test "-Wno-ignored-attributes -Wno-deprecated-declarations")
+    set_additional_compile_options(Test "-Wno-deprecated-declarations")
 endif()
 
 if (MSVC)
