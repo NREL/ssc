@@ -13,7 +13,7 @@
 // more can be added but these tests take a while...
 TEST_F(PVSmoothing_lib_battery_dispatch, PV_Phoenix_all_on) {
 
-    char file_path[256];
+    char file_path[1024];
     int nfc1 = sprintf(file_path, "%s/test/input_cases/general_data/pvsmoothing_Phoenix_Validation_alloptions.json", SSCDIR);
     std::ifstream file(file_path);
     std::ostringstream tmp;
@@ -52,7 +52,7 @@ TEST_F(PVSmoothing_lib_battery_dispatch, PV_Phoenix_all_on) {
 
 TEST_F(PVSmoothing_lib_battery_dispatch, Generic_w_PV_input_all_on) {
 
-    char file_path[256];
+    char file_path[1024];
     int nfc1 = sprintf(file_path, "%s/test/input_cases/general_data/pvsmoothing_Generic_alloptions.json", SSCDIR);
     std::ifstream file(file_path);
     std::ostringstream tmp;
@@ -89,7 +89,7 @@ TEST_F(PVSmoothing_lib_battery_dispatch, Generic_w_PV_input_all_on) {
 
 TEST_F(PVSmoothing_lib_battery_dispatch, FuelCell_PV_Phoenix_all_on) {
 
-    char file_path[256];
+    char file_path[1024];
     int nfc1 = sprintf(file_path, "%s/test/input_cases/general_data/pvsmoothing_Fuel_Cell_Phoenix_Validation_alloptions.json", SSCDIR);
     std::ifstream file(file_path);
     std::ostringstream tmp;
