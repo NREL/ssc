@@ -92,7 +92,9 @@ std::ostream &operator<<(std::ostream &os, const cycle_state &p) {
                  "\"rainflow_Xlt\": %.3f, \"rainflow_Ylt\": %.3f, \"rainflow_jlt\": %d, \"rainflow_peaks\": ",
             p.q_relative_cycle,
             p.rainflow_Xlt, p.rainflow_Ylt, p.rainflow_jlt);
-    os << buf << p.rainflow_peaks << " }";
+    os << buf << p.rainflow_peaks;
+    os << ", cum_dt: " << p.cum_dt << ", DOD_max: " << p.DOD_max << ", DOD_min:" <<  p.DOD_min << ", ";
+    os << R"("cycle_DOD_max": ")" << p.cycle_DOD_max << R"(", cycle_DOD_range": ")" << p.cycle_DOD_range << "}";
     return os;
 }
 
@@ -109,22 +111,41 @@ std::ostream& operator<<(std::ostream& os, const lifetime_nmc_state& p) {
     char buf[1024];
     sprintf(buf, "\"lifetime_nmc_state\": { \"q_relative_li\": %.3f, \"q_relative_neg\": %.3f, "
                  "\"dq_relative_li1\": %.3f, \"dq_relative_li2\": %.3f, \"dq_relative_li3\": %.3f, "
-                 "\"dq_relative_neg\": %.3f, \"DOD_max\": %f, \"DOD_min\": %f, "
-                 "\"cum_dt\": %.3f, \"b1_dt\": %.3f, \"b2_dt\": %.3f, \"b3_dt\": %.3f, \"c0_dt\": %.3f, \"c2_dt\": %.3f, ",
+                 "\"dq_relative_neg\": %.3f, "
+                 "\"b1_dt\": %.3f, \"b2_dt\": %.3f, \"b3_dt\": %.3f, \"c0_dt\": %.3f, \"c2_dt\": %.3f}",
             p.q_relative_li, p.q_relative_neg, p.dq_relative_li1, p.dq_relative_li2, p.dq_relative_li3,
-            p.dq_relative_neg, p.DOD_max, p.DOD_min,
-            p.cum_dt, p.b1_dt, p.b2_dt, p.b3_dt, p.c0_dt, p.c2_dt);
-    os << buf << R"("cycle_DOD_max": ")" << p.cycle_DOD_max << R"(", cycle_DOD_range": ")" << p.cycle_DOD_range << "}";
+            p.dq_relative_neg,
+            p.b1_dt, p.b2_dt, p.b3_dt, p.c0_dt, p.c2_dt);
+    os << buf;
+    return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const lifetime_lmolto_state& p) {
+    char buf[1024];
+    sprintf(buf, "\"lifetime_lmolto_state\": { \"dq_relative_cal\": %.3f, \"dq_relative_cyc\": %.3f, "
+                 "\"EFC\": %.3f, \"EFC_dt\": %.3f, \"temp_avg\": %.3f}",
+            p.dq_relative_cal, p.dq_relative_cyc, p.EFC, p.EFC_dt, p.temp_avg);
+    os << buf;
     return os;
 }
 
 std::ostream &operator<<(std::ostream &os, const lifetime_state &p) {
     os.precision(3);
     char buf[1024];
-    sprintf(buf, R"("lifetime_state": { "q_relative": %f, "n_cycles": %d,"cycle_range": %.3f,  "cycle_DOD": %.3f,
+    sprintf(buf, R"("lifetime_state": { "q_relative": %f, "n_cycles": %d, "cycle_DOD": %.3f, "cycle_range": %.3f,
                   "average_range": %.3f, day_age_of_battery": %.3f, )",
             p.q_relative, p.n_cycles, p.cycle_DOD, p.cycle_range, p.average_range, p.day_age_of_battery);
-    os << buf << *p.cycle << ", " << *p.calendar << ", " << *p.nmc_li_neg << " }";
+    os << buf << *p.cycle << ", ";
+    if (p.calendar) {
+        os << *p.calendar;
+    }
+    else if (p.nmc_li_neg) {
+        os << *p.nmc_li_neg;
+    }
+    else if (p.lmo_lto) {
+        os << *p.lmo_lto;
+    }
+    os << " }";
     return os;
 }
 

@@ -16,11 +16,11 @@ NAMESPACE_TEST(solar_thermal, FlatPlateCollectorTest, TestFlatPlateCollectorNomi
     std::unique_ptr<TimeAndPosition> time_and_position = default_fpc_factory.MakeTimeAndPosition();
     std::unique_ptr<ExternalConditions> external_conditions = default_fpc_factory.MakeExternalConditions();
 
-    double useful_power_gain = flat_plate_collector->UsefulPowerGain(*time_and_position, *external_conditions);  // [W]
-    double T_out = flat_plate_collector->T_out(*time_and_position, *external_conditions);                        // [C]
+    HeatAndTempInOut heat_and_temp = flat_plate_collector->HeatFlowsAndOutletTemp(*time_and_position, *external_conditions);
+    double net_heat_gain = heat_and_temp.Q_gain - heat_and_temp.Q_loss;  // [kWt]
 
-    EXPECT_NEAR(useful_power_gain, 1.659e3, 1.659e3 * kErrorToleranceHi);
-    EXPECT_NEAR(T_out, 50.26, 50.26 * kErrorToleranceHi);
+    EXPECT_NEAR(net_heat_gain, 1.659, 1.659 * kErrorToleranceHi);
+    EXPECT_NEAR(heat_and_temp.T_out, 50.26, 50.26 * kErrorToleranceHi);
 }
 
 // Basic test of expected power gain and outlet temperature of a flat plate collector array
@@ -33,11 +33,11 @@ NAMESPACE_TEST(solar_thermal, FlatPlateArrayTest, TestFlatPlateArrayOfOneNominal
     std::unique_ptr<ExternalConditions> external_conditions = default_fpc_factory.MakeExternalConditions();
     external_conditions->inlet_fluid_flow.temp = 44.86;
 
-    double useful_power_gain = flat_plate_array->UsefulPowerGain(timestamp, *external_conditions);  // [W]
-    double T_out = flat_plate_array->T_out(timestamp, *external_conditions);                        // [C]
+    HeatAndTempInOut heat_and_temp = flat_plate_array->HeatFlowsAndOutletTemp(timestamp, *external_conditions);
+    double net_heat_gain = heat_and_temp.Q_gain - heat_and_temp.Q_loss;  // [kWt]
 
-    EXPECT_NEAR(useful_power_gain, 1.587e3, 1.587e3 * kErrorToleranceHi);
-    EXPECT_NEAR(T_out, 49.03, 49.03 * kErrorToleranceHi);
+    EXPECT_NEAR(net_heat_gain, 1.587, 1.587 * kErrorToleranceHi);
+    EXPECT_NEAR(heat_and_temp.T_out, 49.03, 49.03 * kErrorToleranceHi);
 }
 //========/Tests==================================================================================
 
