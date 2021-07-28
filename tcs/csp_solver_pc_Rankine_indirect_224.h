@@ -184,7 +184,7 @@ public:
 		int m_n_pl_inc;				//[-] Number of part-load increments for the heat rejection system
 		
 		
-		std::vector<double> m_F_wc;		//[-] hybrid cooling dispatch fractions 1 thru 9 (array index 0-8)	
+		std::vector<double> m_F_wc;		//[-] hybrid cooling dispatch fractions 1 thru 9 (array index 0-8)
 		
 		// Parameters for user-defined power cycle
             // Lookup table that is the combination of the three above T_htf_hot, T_amb, and m_dot_htf tables (this is the newer table format)

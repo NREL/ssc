@@ -30,7 +30,12 @@ GTEST_API_ int main(int argc, char **argv) {
 //	::testing::GTEST_FLAG(filter) = "CMPvsamv1PowerIntegration_cmod_pvsamv1.DefaultNoFinancialModel";
 //	::testing::GTEST_FLAG(filter) = "CMPvsamv1PowerIntegration_cmod_pvsamv1.NoFinancialModelCustomWeatherFile";
 //	::testing::GTEST_FLAG(filter) = "URDBv7*";
-	
+//	::testing::GTEST_FLAG(filter) = "PVSmoothing_lib_battery_dispatch*";
+//    ::testing::GTEST_FLAG(filter) = "CM_SWH*";
+//   ::testing::GTEST_FLAG(filter) = "CMPvwattsV7Integration_cmod_pvwattsv7.IntermediateOutputTesting:CMPvwattsV7Integration_cmod_pvwattsv7.DefaultNoFinancialModel_cmod_pvwattsv7:CMPvwattsV7Integration_cmod_pvwattsv7.NonAnnual"; //works with 24 only 20 times in a row
+//   ::testing::GTEST_FLAG(filter) = "CMPvwattsV7Integration_cmod_pvwattsv7.IntermediateOutputTesting";
+//   ::testing::GTEST_FLAG(filter) = "CMPvwattsV7Integration_cmod_pvwattsv7*";
+//   ::testing::GTEST_FLAG(filter) = "Data9999CaseWeatherData*";
 
 
 

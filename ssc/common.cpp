@@ -128,6 +128,8 @@ var_info vtab_oandm[] = {
 { SSC_INPUT,SSC_ARRAY   , "om_fuelcell_fixed_cost"                            , "Fuel cell fixed System Costs annual amount"                     , "$/year"                                 , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
 { SSC_INPUT,SSC_ARRAY   , "om_fuelcell_variable_cost"                       , "Fuel cell production-based System Costs amount"                 , "$/MWh"                                  , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
 { SSC_INPUT,SSC_ARRAY   , "om_fuelcell_capacity_cost"                         , "Fuel cell capacity-based System Costs amount"                   , "$/kWcap"                                , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
+{ SSC_INPUT, SSC_ARRAY,   "fuelcell_annual_energy_discharged",  "Annual energy from fuelcell",    "kWh",        "",                 "System Costs",                  "?=0",                        "",                              "" },
+
 var_info_invalid };
 
 var_info vtab_equip_reserve[] = {
@@ -1299,12 +1301,12 @@ bool weatherdata::check_continuous_single_year(bool leapyear)
                     if (idx > (int)m_nRecords - 1)
                         return false;
                     //if any of the month, day, hour, or minute don't line up with what we've calculated, then it doesn't fit our criteria for a continuous year
-                    min += tsph * ts_min;
 					if (this->m_data[idx]->month != m || this->m_data[idx]->day != d || this->m_data[idx]->hour != h
 					    || this->m_data[idx]->minute != min)
 						return false;
 					else
 						idx++;
+                    min += ts_min;
 				}
 			}
 		}
@@ -1496,8 +1498,11 @@ weatherdata::weatherdata( var_data *data_table )
 
 weatherdata::~weatherdata()
 {
-	for( size_t i=0;i<m_data.size();i++ )
-		delete m_data[i];
+    if (m_data.size() > 0) {
+        for (size_t i = 0; i< m_data.size(); i++)
+            delete m_data[i];
+    }
+    m_data.clear();
 }
 
 

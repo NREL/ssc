@@ -19,7 +19,6 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <algorithm>
 #include <cmath>
 
 #include "lib_battery_lifetime_calendar_cycle.h"
@@ -28,17 +27,14 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "logger.h"
 
 void lifetime_nmc_t::initialize() {
-    state = std::make_shared<lifetime_state>();
+    state = std::make_shared<lifetime_state>(params->model_choice);
     // cycle model for counting cycles only, no cycle-only degradation
     cycle_model = std::unique_ptr<lifetime_cycle_t>(new lifetime_cycle_t(params, state));
-    // do any state initialization here
-    state->nmc_li_neg->DOD_min = -1;
-    state->nmc_li_neg->DOD_max = -1;
+    cycle_model->resetDailyCycles();
     state->nmc_li_neg->dq_relative_li1 = 0;
     state->nmc_li_neg->dq_relative_li2 = 0;
     state->nmc_li_neg->dq_relative_li3 = 0;
     state->nmc_li_neg->dq_relative_neg = 0;
-    state->nmc_li_neg->cum_dt = 0;
     state->nmc_li_neg->b1_dt = 0;
     state->nmc_li_neg->b2_dt = 0;
     state->nmc_li_neg->b3_dt = 0;
@@ -46,14 +42,12 @@ void lifetime_nmc_t::initialize() {
     state->nmc_li_neg->c2_dt = 0;
     state->nmc_li_neg->q_relative_li = 100;
     state->nmc_li_neg->q_relative_neg = 100;
-    state->nmc_li_neg->cycle_DOD_range.clear();
-    state->nmc_li_neg->cycle_DOD_max.clear();
     state->q_relative = fmin(state->nmc_li_neg->q_relative_li, state->nmc_li_neg->q_relative_neg);
 }
 
 lifetime_nmc_t::lifetime_nmc_t(double dt_hr) {
     params = std::make_shared<lifetime_params>();
-    params->model_choice = lifetime_params::NMCNREL;
+    params->model_choice = lifetime_params::NMC;
     params->dt_hr = dt_hr;
     initialize();
 }
@@ -107,7 +101,7 @@ double lifetime_nmc_t::calculate_Voc(double SOC) {
 }
 
 double lifetime_nmc_t::runQli(double T_battery_K) {
-    size_t dn_cycles = state->nmc_li_neg->cycle_DOD_range.size();
+    size_t dn_cycles = state->cycle->cycle_DOD_range.size();
 
     double b1 = state->nmc_li_neg->b1_dt;
     double b2 = state->nmc_li_neg->b2_dt;
@@ -143,7 +137,7 @@ double lifetime_nmc_t::runQneg() {
 
     double c0 = state->nmc_li_neg->c0_dt;
     double c2 = 0;
-    for (double i : state->nmc_li_neg->cycle_DOD_range) {
+    for (double i : state->cycle->cycle_DOD_range) {
         c2 += pow(i * 0.01, beta_c2);
     }
     c2 *= state->nmc_li_neg->c2_dt;
@@ -161,24 +155,8 @@ double lifetime_nmc_t::runQneg() {
 }
 
 void lifetime_nmc_t::integrateDegParams(double dt_day, double DOD, double T_battery) {
-    // try to predict range of coming cycle if no cycles have yet elapsed
-    double DOD_range = state->nmc_li_neg->DOD_max - state->nmc_li_neg->DOD_min;
-    if (!state->nmc_li_neg->cycle_DOD_range.empty()) {
-        DOD_range = fmax(DOD_range, *std::max_element(state->nmc_li_neg->cycle_DOD_range.begin(), state->nmc_li_neg->cycle_DOD_range.end()) * 0.01);
-    }
-
-    double SOC_avg = 0;
-    if (state->nmc_li_neg->cycle_DOD_max.empty()) {
-        SOC_avg = 1 - DOD * 0.01;
-    }
-    else {
-        for (size_t i = 0; i < state->nmc_li_neg->cycle_DOD_max.size(); i++) {
-            double cycle_DOD_max = state->nmc_li_neg->cycle_DOD_max[i] * 0.01;
-            double cycle_DOD_rng = state->nmc_li_neg->cycle_DOD_range[i] * 0.01;
-            SOC_avg += 1 - (cycle_DOD_max + (cycle_DOD_max - cycle_DOD_rng)) / 2;
-        }
-        SOC_avg /= (double)state->nmc_li_neg->cycle_DOD_max.size();
-    }
+    double DOD_range = cycle_model->predictDODRng();
+    double SOC_avg = cycle_model->predictAvgSOC(DOD);
     double U_neg = calculate_Uneg(SOC_avg);
     double V_oc = calculate_Voc(SOC_avg);
 
@@ -206,55 +184,37 @@ void lifetime_nmc_t::integrateDegParams(double dt_day, double DOD, double T_batt
     state->nmc_li_neg->c0_dt += c0_dt_el;
     state->nmc_li_neg->c2_dt += c2_dt_el;
 
-    state->nmc_li_neg->cum_dt += dt_day;
+    state->cycle->cum_dt += dt_day;
 }
 
-void lifetime_nmc_t::integrateDegLoss(double DOD, double T_battery) {
+void lifetime_nmc_t::integrateDegLoss(double T_battery) {
     state->nmc_li_neg->q_relative_li = runQli(T_battery);
     state->nmc_li_neg->q_relative_neg = runQneg();
     state->q_relative = fmin(state->nmc_li_neg->q_relative_li, state->nmc_li_neg->q_relative_neg);
 
     // reset cycle tracking
-    state->nmc_li_neg->cum_dt = 0;
-    state->nmc_li_neg->DOD_min = -1;
-    state->nmc_li_neg->DOD_max = -1;
-    state->nmc_li_neg->cycle_DOD_max.clear();
-    state->nmc_li_neg->cycle_DOD_range.clear();
+    state->cycle->cum_dt = 0;
+    cycle_model->resetDailyCycles();
 }
 
 void lifetime_nmc_t::runLifetimeModels(size_t _, bool charge_changed, double prev_DOD, double DOD,
                                        double T_battery) {
-    prev_DOD = fmax(fmin(prev_DOD, 100), 0);
-    DOD = fmax(fmin(DOD, 100), 0);
     T_battery += 273.15;
-    if (state->nmc_li_neg->DOD_min == -1) {
-        state->nmc_li_neg->DOD_max = fmax(prev_DOD, DOD) * 0.01;
-        state->nmc_li_neg->DOD_min = fmin(prev_DOD, DOD) * 0.01;
-    }
-    else {
-        state->nmc_li_neg->DOD_max = fmax(state->nmc_li_neg->DOD_max, DOD * 0.01);
-        state->nmc_li_neg->DOD_min = fmin(state->nmc_li_neg->DOD_min, DOD * 0.01);
-    }
 
-    if (charge_changed){
-        size_t n_cyc_prev = cycle_model->cycles_elapsed();
-        cycle_model->rainflow(prev_DOD);
-        if (cycle_model->cycles_elapsed() > n_cyc_prev) {
-            state->nmc_li_neg->cycle_DOD_range.emplace_back(cycle_model->cycle_range());
-            state->nmc_li_neg->cycle_DOD_max.emplace_back(cycle_model->cycle_depth());
-        }
-    }
+    cycle_model->updateDailyCycles(prev_DOD, DOD, charge_changed);
 
-    double dt_day = (1. / (double)util::hours_per_day) * params->dt_hr;
     // Run capacity degradation model after every 24 hours
-    double new_cum_dt = state->nmc_li_neg->cum_dt + dt_day;
+    double dt_day = (1. / (double)util::hours_per_day) * params->dt_hr;
+    double new_cum_dt = state->cycle->cum_dt + dt_day;
+    // Check if adaptive time stepping has caused new timestep to not hit each day-end
+    double dt_day_to_end_of_day = 1 - state->cycle->cum_dt;
     if (new_cum_dt > 1 + 1e-7) {
-        double dt_day_to_end_of_day = 1 - state->nmc_li_neg->cum_dt;
+        // If so, finish the day before, and continue the rest of the time into a new day
         double DOD_at_end_of_day = (DOD - prev_DOD) / dt_day * dt_day_to_end_of_day + prev_DOD;
         state->day_age_of_battery += dt_day_to_end_of_day;
 
         integrateDegParams(dt_day_to_end_of_day, DOD_at_end_of_day, T_battery);
-        integrateDegLoss(DOD_at_end_of_day, T_battery);
+        integrateDegLoss(T_battery);
 
         dt_day = new_cum_dt - 1;
     }
@@ -262,8 +222,8 @@ void lifetime_nmc_t::runLifetimeModels(size_t _, bool charge_changed, double pre
     state->day_age_of_battery += dt_day;
     integrateDegParams(dt_day, DOD, T_battery);
 
-    if (fabs(state->nmc_li_neg->cum_dt - 1.) < 1e-7) {
-        integrateDegLoss(DOD, T_battery);
+    if (fabs(state->cycle->cum_dt - 1.) < 1e-7) {
+        integrateDegLoss(T_battery);
     }
 }
 
@@ -276,8 +236,6 @@ double lifetime_nmc_t::estimateCycleDamage() {
 
 void lifetime_nmc_t::replaceBattery(double percent_to_replace) {
     state->day_age_of_battery = 0;
-    state->nmc_li_neg->DOD_min = -1;
-    state->nmc_li_neg->DOD_max = -1;
     state->nmc_li_neg->dq_relative_li1 = 0;
     state->nmc_li_neg->dq_relative_li2 = 0;
     state->nmc_li_neg->dq_relative_li3 = 0;
@@ -286,9 +244,8 @@ void lifetime_nmc_t::replaceBattery(double percent_to_replace) {
     state->nmc_li_neg->q_relative_neg += percent_to_replace;
     state->nmc_li_neg->q_relative_li = fmin(100, state->nmc_li_neg->q_relative_li);
     state->nmc_li_neg->q_relative_neg = fmin(100, state->nmc_li_neg->q_relative_neg);
-    state->nmc_li_neg->cycle_DOD_max.clear();
-    state->nmc_li_neg->cycle_DOD_range.clear();
     state->q_relative = fmin(state->nmc_li_neg->q_relative_li, state->nmc_li_neg->q_relative_neg);
     cycle_model->replaceBattery(percent_to_replace);
+    cycle_model->resetDailyCycles();
     state->cycle->q_relative_cycle = 0;
 }
