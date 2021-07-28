@@ -35,6 +35,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lib_battery_voltage.h"
 #include "lib_battery_lifetime_calendar_cycle.h"
 #include "lib_battery_lifetime_nmc.h"
+#include "lib_battery_lifetime_lmolto.h"
+
 
 /**
 * \class thermal_t
@@ -254,7 +256,7 @@ struct battery_state {
     std::shared_ptr<replacement_state> replacement;
 
     // create with new subclass states
-    battery_state();
+    explicit battery_state(int life_model_choice = -1);
 
     // create with given subclass states
     battery_state(const std::shared_ptr<capacity_state> &cap, const std::shared_ptr<voltage_state> &vol,

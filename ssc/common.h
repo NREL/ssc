@@ -165,7 +165,8 @@ public:
 	If wet-bulb temperature or dew point are missing, calculate using tdry, pres & rhum or tdry & rhum, respectively.
 	Interpolates meteorological data if requested.*/
 	weatherdata(var_data *data_table);
-	virtual ~weatherdata();
+//    virtual ~weatherdata();
+    ~weatherdata() override;
 
 	void set_counter_to(size_t cur_index);
 	bool read(weather_record *r); // reads one more record
