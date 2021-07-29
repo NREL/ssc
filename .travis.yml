@@ -1,7 +1,6 @@
-dist: Xenial
-sudo: required
+dist: Bionic
 
-language: c++
+language: cpp
 
 #cache: ccache
 
