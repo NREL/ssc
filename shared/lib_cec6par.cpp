@@ -953,8 +953,8 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
         std::vector<double> R(n_p);
         std::vector<double> R_n(n_p);
 
-        util::matrix_t<int> ArrayLog = SolArrayLog(res, 5 * ground_clearance_height, GCR, Length, 0.025, input.Tilt, Width, 9, false, oA_out);
-        SuperLac(ArrayLog, oA_out, 2, L, L_n, R, R_n, Z, Z_n);
+        //util::matrix_t<int> ArrayLog = SolArrayLog(res, 5 * ground_clearance_height, GCR, Length, 0.025, input.Tilt, Width, 9, false, oA_out);
+        //SuperLac(ArrayLog, oA_out, 2, L, L_n, R, R_n, Z, Z_n);
         //Do something with finding asymptote of L or L_n to get final Lacunarity value here?
 
 
@@ -993,9 +993,9 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
                 //double Re_forced = MAX(0.1, rho_air * V_cover * Lsc / mu_air); //  !Reynolds number of wind moving across module
                 double Re_forced = MAX(0.1, rho_air_test * V_cover * Lsc / mu_air_test);
                 double Nu_forced  = 0.037 * pow(Re_forced,4./5.) * pow(Pr_air_test, 1./3.) ; //  !Nusselt Number (Incropera et al., 2006)
-				//double h_forced   = Nu_forced * k_air / L_char;
+				double h_forced   = Nu_forced * k_air / L_char;
                 //double h_forced   = h_lacunarity;
-                double h_forced   = (k_air / (ground_clearance_height + 2* Length * sind(input.Tilt))) * pow(10, (0.085513 * pow(Re_forced, 1 / 5) * pow(Pr_air, 1 / 12) + 1.9086));
+                //double h_forced   = (k_air / (ground_clearance_height + 2* Length * sind(input.Tilt))) * pow(10, (0.085513 * pow(Re_forced, 1 / 5) * pow(Pr_air, 1 / 12) + 1.9086));
 				double h_sky      = (TC*TC+T_sky*T_sky)*(TC+T_sky);
 				double h_ground   = (TC*TC+T_ground*T_ground)*(TC+T_ground);
 				double h_free_c   = free_convection_194(TC,TA,input.Tilt,rho_air,Area,Length,Width) ; //   !Call function to calculate free convection on tilted surface (top)           
