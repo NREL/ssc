@@ -34,7 +34,6 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lib_sandia.h"
 #include "lib_pv_incidence_modifier.h"
 #include "lib_cec6par.h"
-#include "lib_shared_inverter.h"
 
 class lossdiagram
 {
@@ -1185,8 +1184,22 @@ public:
                     dc *= degradationFactor[y];
 
                     // inverter calculations
-                    std::unique_ptr<SharedInverter> sharedInverter; //where are these parameters set in pvsamv1??
-                    sharedInverter->calculateACPower(dc, dcVoltage, 0.0); // assume no temperature derates, so set temperature to 0
+                    sandia_inverter_t inverter;
+                    inverter.Paco = pv.ac_nameplate;
+                    inverter.Pdco = inverter.Paco / (pv.inv_eff_percent * 0.01); //get inverter DC rating by dividing AC rating by efficiency
+                    inverter.Vdco = 0.0; //justification for this??????????????????????
+                    inverter.Pso = 0.0; //simplifying assumption that the inverter can always operate
+                    inverter.Pntare = 0.0; //simplifying assumption that inverter has no nighttime losses
+                    inverter.C0 = 0.0; //justification for this????????????????????
+                    // default values for C1, C2, C3 are zero per Sandia documentation: https://pvpmc.sandia.gov/modeling-steps/dc-to-ac-conversion/sandia-inverter-model/
+                    // setting these to 0 results in the same inverter model as pvwattsv5
+                    inverter.C1 = 0.0; 
+                    inverter.C2 = 0.0;
+                    inverter.C3 = 0.0;
+
+                    ac = 0;
+                    if (y == 0 && wdprov->annualSimulation()) ld("ac_nominal") += dc * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
+
                     double etanom = pv.inv_eff_percent * 0.01;
                     double etaref = 0.9637;
                     double A = -0.0162;
@@ -1194,9 +1207,8 @@ public:
                     double C = 0.9858;
                     double pdc0 = pv.ac_nameplate / etanom;
                     double plr = dc / pdc0; //power loading ratio of the inverter
-                    ac = 0;
 
-                    if (y == 0 && wdprov->annualSimulation()) ld("ac_nominal") += dc * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
+
 
                     if (plr > 0)
                     { // normal operation
