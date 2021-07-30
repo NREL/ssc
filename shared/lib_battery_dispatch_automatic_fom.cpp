@@ -194,7 +194,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t year, size_t ho
         double revenueToPVChargeMax = 0;
         if (m_batteryPower->canSystemCharge) {
             std::vector<double> revenueToPVChargeForecast;
-            for (size_t i = idx_year1; i < idx_year1 + idx_lookahead; i++) {
+            for (size_t i = idx_year1; i < idx_year1 + idx_lookahead && i < _P_pv_ac.size(); i++) {
                 // when considering grid charging, require PV output to exceed battery input capacity before accepting as a better option
                 bool system_on = _P_pv_ac[i] >= m_batteryPower->powerBatteryChargeMaxDC ? 1 : 0;
                 if (system_on) {
