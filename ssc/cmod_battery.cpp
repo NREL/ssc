@@ -861,7 +861,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
 
     // annual outputs
     size_t annual_size = nyears + 1;
-    //if (!batt_vars->system_use_lifetime_output) { annual_size = 1; };
+//    if (!batt_vars->system_use_lifetime_output) { annual_size = 1; };
 
     outBatteryBankReplacement = vt.allocate("batt_bank_replacement", annual_size);
     outAnnualChargeEnergy = vt.allocate("batt_annual_charge_energy", annual_size);
