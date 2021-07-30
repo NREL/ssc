@@ -11,7 +11,7 @@
 #include <json/writer.h>
 
 // more can be added but these tests take a while...
-TEST_F(AAPVSmoothing_lib_battery_dispatch, PV_Phoenix_all_on) {
+TEST_F(PVSmoothing_lib_battery_dispatch, PV_Phoenix_all_on) {
 
     char file_path[256];
     int nfc1 = sprintf(file_path, "%s/test/input_cases/general_data/pvsmoothing_Phoenix_Validation_alloptions.json", SSCDIR);
@@ -19,8 +19,6 @@ TEST_F(AAPVSmoothing_lib_battery_dispatch, PV_Phoenix_all_on) {
     std::ostringstream tmp;
     tmp << file.rdbuf();
     file.close();
-//    std::string json_string = tmp.str();
-//    ssc_data_t dat = json_to_ssc_data(json_string.c_str());
     ssc_data_t dat = json_to_ssc_data(tmp.str().c_str());
     tmp.str("");
     // setup path to weather file
@@ -29,6 +27,7 @@ TEST_F(AAPVSmoothing_lib_battery_dispatch, PV_Phoenix_all_on) {
 
     // Run with fixed output
     int errors = run_module(dat, "pvsamv1");
+    // minimize memory usage for Travis
  //   errors = run_module(dat, "grid");
  //   errors = run_module(dat, "utilityrate5");
  //   errors = run_module(dat, "singleowner");
@@ -52,9 +51,7 @@ TEST_F(AAPVSmoothing_lib_battery_dispatch, PV_Phoenix_all_on) {
     dat = nullptr;
 }
 
-/* runs on Windows 10 and CentOS7 without issue and fails on Travis error 137 out of memory - difference is size of json input file with 1 minute pv profile from first test */
-
-TEST_F(AAPVSmoothing_lib_battery_dispatch, Generic_w_PV_input_all_on) {
+TEST_F(PVSmoothing_lib_battery_dispatch, Generic_w_PV_input_all_on) {
 
     char file_path[256];
     int nfc1 = sprintf(file_path, "%s/test/input_cases/general_data/pvsmoothing_Generic_alloptions.json", SSCDIR);
@@ -62,14 +59,13 @@ TEST_F(AAPVSmoothing_lib_battery_dispatch, Generic_w_PV_input_all_on) {
     std::ostringstream tmp;
     tmp << file.rdbuf();
     file.close();
-    //    std::string json_string = tmp.str();
-    //    ssc_data_t dat = json_to_ssc_data(json_string.c_str());
     ssc_data_t dat = json_to_ssc_data(tmp.str().c_str());
     tmp.str("");
 
     // Run with fixed output
     int errors = run_module(dat, "generic_system");
     errors = run_module(dat, "battery");
+    // minimize memory usage for Travis
 //    errors = run_module(dat, "grid");
 //    errors = run_module(dat, "utilityrate5");
 //    errors = run_module(dat, "singleowner");
@@ -93,7 +89,7 @@ TEST_F(AAPVSmoothing_lib_battery_dispatch, Generic_w_PV_input_all_on) {
     dat = nullptr;
 }
 
-TEST_F(AAPVSmoothing_lib_battery_dispatch, FuelCell_PV_Phoenix_all_on) {
+TEST_F(PVSmoothing_lib_battery_dispatch, FuelCell_PV_Phoenix_all_on) {
 
     char file_path[256];
     int nfc1 = sprintf(file_path, "%s/test/input_cases/general_data/pvsmoothing_Fuel_Cell_Phoenix_Validation_alloptions.json", SSCDIR);
@@ -101,8 +97,6 @@ TEST_F(AAPVSmoothing_lib_battery_dispatch, FuelCell_PV_Phoenix_all_on) {
     std::ostringstream tmp;
     tmp << file.rdbuf();
     file.close();
-    //    std::string json_string = tmp.str();
-    //    ssc_data_t dat = json_to_ssc_data(json_string.c_str());
     ssc_data_t dat = json_to_ssc_data(tmp.str().c_str());
     tmp.str("");
 
@@ -114,6 +108,7 @@ TEST_F(AAPVSmoothing_lib_battery_dispatch, FuelCell_PV_Phoenix_all_on) {
     int errors = run_module(dat, "pvwattsv7");
     errors = run_module(dat, "fuelcell");
     errors = run_module(dat, "battery");
+    // minimize memory usage for Travis
 //    errors = run_module(dat, "grid");
 //    errors = run_module(dat, "utilityrate5");
 //    errors = run_module(dat, "thermalrate");
