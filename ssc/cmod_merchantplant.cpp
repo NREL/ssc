@@ -534,7 +534,6 @@ static var_info _cm_vtab_merchantplant[] = {
 
 	{ SSC_INPUT,        SSC_NUMBER,     "mp_enable_energy_market_revenue",		      "Enable energy market revenue",   "0/1",   "",    "Revenue",  "*",	"INTEGER,MIN=0,MAX=1",      "" },
 	{ SSC_INPUT, SSC_MATRIX, "mp_energy_market_revenue", "Energy market revenue input", "", "Lifetime x 2[Cleared Capacity(MW),Price($/MWh)]","Revenue", "*", "", ""},
-	{ SSC_INPUT, SSC_MATRIX, "mp_energy_market_revenue", "Energy market revenue input", "", "Lifetime x 2 [Cleared Capacity(MW),Price($/MWh)]","Revenue", "*", "", ""},
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_energy_market_revenue", "Energy market revenue", "$", "", "Revenue", "*", "LENGTH_EQUAL=cf_length", "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv1",		      "Enable ancillary services 1 Revenue",   "0/1",   "",    "Revenue",  "*",	"INTEGER,MIN=0,MAX=1",      "" },
 	{ SSC_INPUT, SSC_MATRIX, "mp_ancserv1_revenue", "Ancillary services 1 revenue input", "", "Lifetime x 2[Cleared Capacity(MW),Price($/MWh)]","Revenue", "*", "", "" },
