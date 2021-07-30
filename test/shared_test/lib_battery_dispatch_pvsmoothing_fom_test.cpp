@@ -11,26 +11,27 @@
 #include <json/writer.h>
 
 // more can be added but these tests take a while...
-TEST_F(PVSmoothing_lib_battery_dispatch, PV_Phoenix_all_on) {
+TEST_F(AAPVSmoothing_lib_battery_dispatch, PV_Phoenix_all_on) {
 
-    char file_path[1024];
+    char file_path[256];
     int nfc1 = sprintf(file_path, "%s/test/input_cases/general_data/pvsmoothing_Phoenix_Validation_alloptions.json", SSCDIR);
     std::ifstream file(file_path);
     std::ostringstream tmp;
     tmp << file.rdbuf();
-    std::string json_string = tmp.str();
-
-    ssc_data_t dat = json_to_ssc_data(json_string.c_str());
-
+    file.close();
+//    std::string json_string = tmp.str();
+//    ssc_data_t dat = json_to_ssc_data(json_string.c_str());
+    ssc_data_t dat = json_to_ssc_data(tmp.str().c_str());
+    tmp.str("");
     // setup path to weather file
     nfc1 = sprintf(file_path, "%s/test/input_cases/general_data/phoenix_az_33.450495_-111.983688_psmv3_60_tmy_1mInterpolated.csv", SSCDIR);
     ssc_data_set_string(dat, "solar_resource_file", file_path);
 
     // Run with fixed output
     int errors = run_module(dat, "pvsamv1");
-    errors = run_module(dat, "grid");
-    errors = run_module(dat, "utilityrate5");
-    errors = run_module(dat, "singleowner");
+ //   errors = run_module(dat, "grid");
+ //   errors = run_module(dat, "utilityrate5");
+ //   errors = run_module(dat, "singleowner");
 
     EXPECT_FALSE(errors);
     if (!errors)
@@ -48,27 +49,30 @@ TEST_F(PVSmoothing_lib_battery_dispatch, PV_Phoenix_all_on) {
         EXPECT_NEAR(grid_percent_sam, 99.90, 0.01);
     }
     ssc_data_free(dat);
+    dat = nullptr;
 }
 
 /* runs on Windows 10 and CentOS7 without issue and fails on Travis error 137 out of memory - difference is size of json input file with 1 minute pv profile from first test */
 
-TEST_F(PVSmoothing_lib_battery_dispatch, Generic_w_PV_input_all_on) {
+TEST_F(AAPVSmoothing_lib_battery_dispatch, Generic_w_PV_input_all_on) {
 
-    char file_path[1024];
+    char file_path[256];
     int nfc1 = sprintf(file_path, "%s/test/input_cases/general_data/pvsmoothing_Generic_alloptions.json", SSCDIR);
     std::ifstream file(file_path);
     std::ostringstream tmp;
     tmp << file.rdbuf();
-    std::string json_string = tmp.str();
-
-    ssc_data_t dat = json_to_ssc_data(json_string.c_str());
+    file.close();
+    //    std::string json_string = tmp.str();
+    //    ssc_data_t dat = json_to_ssc_data(json_string.c_str());
+    ssc_data_t dat = json_to_ssc_data(tmp.str().c_str());
+    tmp.str("");
 
     // Run with fixed output
     int errors = run_module(dat, "generic_system");
     errors = run_module(dat, "battery");
-    errors = run_module(dat, "grid");
-    errors = run_module(dat, "utilityrate5");
-    errors = run_module(dat, "singleowner");
+//    errors = run_module(dat, "grid");
+//    errors = run_module(dat, "utilityrate5");
+//    errors = run_module(dat, "singleowner");
 
     EXPECT_FALSE(errors);
     if (!errors)
@@ -86,19 +90,21 @@ TEST_F(PVSmoothing_lib_battery_dispatch, Generic_w_PV_input_all_on) {
         EXPECT_NEAR(grid_percent_sam, 99.90, 0.01);
     }
     ssc_data_free(dat);
-
+    dat = nullptr;
 }
 
-TEST_F(PVSmoothing_lib_battery_dispatch, FuelCell_PV_Phoenix_all_on) {
+TEST_F(AAPVSmoothing_lib_battery_dispatch, FuelCell_PV_Phoenix_all_on) {
 
-    char file_path[1024];
+    char file_path[256];
     int nfc1 = sprintf(file_path, "%s/test/input_cases/general_data/pvsmoothing_Fuel_Cell_Phoenix_Validation_alloptions.json", SSCDIR);
     std::ifstream file(file_path);
     std::ostringstream tmp;
     tmp << file.rdbuf();
-    std::string json_string = tmp.str();
-
-    ssc_data_t dat = json_to_ssc_data(json_string.c_str());
+    file.close();
+    //    std::string json_string = tmp.str();
+    //    ssc_data_t dat = json_to_ssc_data(json_string.c_str());
+    ssc_data_t dat = json_to_ssc_data(tmp.str().c_str());
+    tmp.str("");
 
     // setup path to weather file
     nfc1 = sprintf(file_path, "%s/test/input_cases/general_data/phoenix_az_33.450495_-111.983688_psmv3_60_tmy_1mInterpolated.csv", SSCDIR);
@@ -108,10 +114,10 @@ TEST_F(PVSmoothing_lib_battery_dispatch, FuelCell_PV_Phoenix_all_on) {
     int errors = run_module(dat, "pvwattsv7");
     errors = run_module(dat, "fuelcell");
     errors = run_module(dat, "battery");
-    errors = run_module(dat, "grid");
-    errors = run_module(dat, "utilityrate5");
-    errors = run_module(dat, "thermalrate");
-    errors = run_module(dat, "singleowner");
+//    errors = run_module(dat, "grid");
+//    errors = run_module(dat, "utilityrate5");
+//    errors = run_module(dat, "thermalrate");
+//    errors = run_module(dat, "singleowner");
 
     EXPECT_FALSE(errors);
     if (!errors)
@@ -129,6 +135,6 @@ TEST_F(PVSmoothing_lib_battery_dispatch, FuelCell_PV_Phoenix_all_on) {
         EXPECT_NEAR(grid_percent_sam, 99.92, 0.01);
     }
     ssc_data_free(dat);
-
+    dat = nullptr;
 }
 
