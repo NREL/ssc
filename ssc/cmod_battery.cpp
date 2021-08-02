@@ -1743,11 +1743,12 @@ void battstor::metrics()
 void battstor::update_grid_power(compute_module&, double P_gen_ac, double P_load_ac, size_t index_replace)
 {
     double P_interconnection_loss = outInterconnectionLoss[index_replace];
-    double P_grid = P_gen_ac - P_load_ac - P_interconnection_loss;
-    if (P_grid < 0 && P_gen_ac > P_load_ac) {
-        outInterconnectionLoss[index_replace] += P_grid;
-        P_grid = 0;
-    }
+    double P_grid_old = outGridPower[index_replace] + P_interconnection_loss;
+    double P_grid = P_gen_ac - P_load_ac;
+    P_interconnection_loss = std::fmax(P_interconnection_loss - (P_grid_old - P_grid), 0.0);
+    outInterconnectionLoss[index_replace] = P_interconnection_loss;
+    P_grid = P_gen_ac - P_load_ac - P_interconnection_loss;
+    
     outGridPower[index_replace] = (ssc_number_t)(P_grid);
 }
 
