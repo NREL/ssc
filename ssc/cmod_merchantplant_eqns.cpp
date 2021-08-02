@@ -456,7 +456,7 @@ void mp_ancillary_services(ssc_data_t data)
 							}
 							else */  if ((cleared_capacity_sum[i] > 0) && (abs(cleared_capacity_sum[i] - system_generation[i]) > 1e-7 * abs(system_generation[i]) ))
 							{
-								error = util::format("sum of cleared capacity %g MW exceeds system capacity %g MW at timestep %d", cleared_capacity_sum[i], system_generation[i], int(i));
+								error = util::format("sum of cleared capacity %g MW does not match system capacity %g MW at timestep %d", cleared_capacity_sum[i], system_generation[i], int(i));
 								break;
 							}
 						}
