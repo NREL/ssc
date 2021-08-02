@@ -1,6 +1,7 @@
 #ifndef __LIB_CSP_TES_TEST_H__
 #define __LIB_CSP_TES_TEST_H__
 
+#include <memory>
 #include <gtest/gtest.h>
 #include "../tcs/storage_hx.h"
 

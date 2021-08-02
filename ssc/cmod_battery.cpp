@@ -861,7 +861,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
 
     // annual outputs
     size_t annual_size = nyears + 1;
-    if (nyears == 1) { annual_size = 1; };
+//    if (!batt_vars->system_use_lifetime_output) { annual_size = 1; };
 
     outBatteryBankReplacement = vt.allocate("batt_bank_replacement", annual_size);
     outAnnualChargeEnergy = vt.allocate("batt_annual_charge_energy", annual_size);
@@ -1636,7 +1636,7 @@ void battstor::outputs_topology_dependent()
 void battstor::metrics()
 {
     size_t annual_index;
-    nyears > 1 ? annual_index = year + 1 : annual_index = 0;
+    batt_vars->system_use_lifetime_output ? annual_index = year + 1 : annual_index = 0;
     outBatteryBankReplacement[annual_index] = (ssc_number_t)battery_model->getNumReplacementYear();
 
     if ((hour == 8759) && (step == step_per_hour - 1))
