@@ -298,7 +298,7 @@ std::shared_ptr<batt_variables> cm_battwatts::setup_variables(size_t n_recs)
     std::vector<double> scaleFactors(nyears, 1.0); // No scaling factors for curtailment
 
     std::vector<double> curtailment_year_one;
-    std::vector<double> curtaliment_lifetime;
+    std::vector<double> curtailment_lifetime;
     if (is_assigned("grid_curtailment")) {
         curtailment_year_one = as_vector_double("grid_curtailment");
         double interpolation_factor = 1.0;
@@ -310,7 +310,7 @@ std::shared_ptr<batt_variables> cm_battwatts::setup_variables(size_t n_recs)
             curtailment_year_one,
             scaleFactors,
             interpolation_factor,
-            curtaliment_lifetime,
+            curtailment_lifetime,
             n_recs,
             dt_hour);
     }
@@ -324,7 +324,7 @@ std::shared_ptr<batt_variables> cm_battwatts::setup_variables(size_t n_recs)
         }
     }
 
-    return battwatts_create(n_recs, nyears, chem, pos, kwh, kw, inv_eff, dispatch, dispatch_custom, interconnection_limit, curtaliment_lifetime);
+    return battwatts_create(n_recs, nyears, chem, pos, kwh, kw, inv_eff, dispatch, dispatch_custom, interconnection_limit, curtailment_lifetime);
 }
 
 

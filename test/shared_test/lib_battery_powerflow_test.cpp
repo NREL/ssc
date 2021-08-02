@@ -823,7 +823,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, AC_outage_ExcessPV) {
     EXPECT_NEAR(m_batteryPower->powerGeneratedBySystem, gen, error);
     EXPECT_NEAR(m_batteryPower->powerLoad, 50, error);
 
-    // charging will be from both PV and grid
+    // charging is reduced since the grid is unavailable
     m_batteryPower->powerBatteryDC = -100;
     m_batteryPowerFlow->calculate();
 
@@ -843,7 +843,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, AC_outage_ExcessPV) {
     EXPECT_NEAR(m_batteryPower->powerGeneratedBySystem, gen, error);
     EXPECT_NEAR(m_batteryPower->powerLoad, 50, error);
 
-    // discharge to grid
+    // attempt to discharge to grid - battery is curtailed since grid is unavailable
     m_batteryPower->powerBatteryDC = 20;
     m_batteryPowerFlow->calculate();
 
@@ -1096,7 +1096,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, AC_grid_limits) {
     EXPECT_NEAR(m_batteryPower->powerGeneratedBySystem, gen, error);
     EXPECT_NEAR(m_batteryPower->powerLoad, 25, error);
 
-    // charging will be from both PV and grid
+    // system to grid is reduced due to curtailment limit
     m_batteryPower->powerInterconnectionLimit = 1e+38;
     m_batteryPower->powerCurtailmentLimit = 25;
     m_batteryPower->powerBatteryDC = -40;
@@ -2207,7 +2207,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, DC_PVCharging_ExcessLoad_outa
 
     check_net_flows("6th case");
 
-    // excess discharging causes interconnection loss
+    // excess discharging is curtailed due to interconnection loss during outage
     m_batteryPower->powerBatteryDC = 50;
     m_batteryPowerFlow->calculate();
 

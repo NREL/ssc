@@ -509,8 +509,7 @@ void BatteryPowerFlow::calculateDCConnected()
                 if (P_pv_to_batt_dc < 0) {
                     P_pv_to_batt_dc = 0.0; // Don't allow losses to drive this negative
                 }
-            }
-            
+            }   
         }
         
         if (P_pv_dc >= P_pv_to_batt_dc + P_system_loss_dc)
