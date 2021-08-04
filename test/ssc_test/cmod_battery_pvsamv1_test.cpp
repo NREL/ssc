@@ -1007,11 +1007,13 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACBatteryModelInterc
         std::vector<double> batt_to_load = data_vtab->as_vector_double("batt_to_load");
         std::vector<double> grid_to_load = data_vtab->as_vector_double("grid_to_load");
         std::vector<double> pv_to_battery = data_vtab->as_vector_double("system_to_batt");
+        std::vector<double> performance_loss = data_vtab->as_vector_double("ac_perf_adj_loss");
+        std::vector<double> ac_lifetime_loss = data_vtab->as_vector_double("ac_lifetime_loss");
 
         for (int i = 0; i < grid_power.size(); i++) {
-            EXPECT_NEAR(gen[i], grid_power[i] + pv_to_load[i] + batt_to_load[i] + grid_to_load[i] + interconnection_loss[i], 0.1) << " at step " << i;
-            EXPECT_NEAR(grid_power[i] + grid_to_load[i], pv_to_grid_power[i], 0.1) << " at step " << i;
-            EXPECT_NEAR(gen_without_battery[i], grid_power[i] + grid_to_load[i] + pv_to_load[i] + pv_to_battery[i] + interconnection_loss[i], 0.1) << " at step " << i;
+            double ac_losses = performance_loss[i] + ac_lifetime_loss[i];
+            EXPECT_NEAR(gen[i], grid_power[i] + pv_to_load[i] + batt_to_load[i] + grid_to_load[i] + interconnection_loss[i], 0.001) << " at step " << i;
+            // The ac losses can either come from the power delivered to load or grid, so it is hard to write universal rules that apply to every step
         }
     }
 

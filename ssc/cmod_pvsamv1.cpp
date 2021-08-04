@@ -684,6 +684,10 @@ static var_info _cm_vtab_pvsamv1[] = {
 
         { SSC_OUTPUT,        SSC_ARRAY,     "ac_transmission_loss",                   "Transmission loss",                                     "kW", "",    "Time Series (Transmission)",                 "",                     "",                   "" },
 
+        // Post batt AC losses - record so the powerflows from PV and batt to grid add up properly
+        { SSC_OUTPUT,        SSC_ARRAY,     "ac_perf_adj_loss",                       "AC performance adjustment loss",                             "kW", "",    "Time Series (AC Loss)",                 "",                     "",                   "" },
+        { SSC_OUTPUT,        SSC_ARRAY,     "ac_lifetime_loss",                       "AC lifetime daily loss",                                     "kW", "",    "Time Series (AC Loss)",                 "",                     "",                   "" },
+
         //total losses- not part of loss diagram but now outputs instead of inputs JMF 11/25/15
         { SSC_OUTPUT,        SSC_NUMBER,     "ac_loss",                              "AC wiring loss",                                       "%",   "",    "Annual (Year 1)",              "",                        "",                   "" },
         // monthly and annual outputs
@@ -1999,7 +2003,7 @@ void cm_pvsamv1::exec()
                 dcPowerNetPerSubarray[nn] *= dc_haf(hour_of_year);
 
                 //lifetime daily DC losses apply to all subarrays and should be applied last. Only applied if they are enabled.
-                if (save_full_lifetime_variables == 1 && PVSystem->enableDCLifetimeLosses)
+                if (PVSystem->enableDCLifetimeLosses)
                 {
                     //current index of the lifetime daily DC losses is the number of years that have passed (iyear, because it is 0-indexed) * the number of days + the number of complete days that have passed
                     int dc_loss_index = (int)iyear * 365 + (int)floor(hour_of_year / 24); //in units of days
@@ -2319,19 +2323,30 @@ void cm_pvsamv1::exec()
             }
 
             // accumulate system generation before curtailment and availability
-            if (iyear == 0)
+            if (iyear == 0) {
                 annual_ac_pre_avail += PVSystem->p_systemACPower[idx] * ts_hour;
+            }
 
-
+            ssc_number_t adj_factor = haf(hour_of_year);
+            if (iyear == 0 || save_full_lifetime_variables == 1) {
+                PVSystem->p_acPerfAdjLoss[idx] = PVSystem->p_systemACPower[idx] * (1 - adj_factor);
+            }
             //apply availability and curtailment
-            PVSystem->p_systemACPower[idx] *= haf(hour_of_year);
+            PVSystem->p_systemACPower[idx] *= adj_factor;
+            if (en_batt) {
+                batt->outGenWithoutBattery[idx] *= adj_factor;
+            }
 
 			//apply lifetime daily AC losses only if they are enabled
 			if (system_use_lifetime_output && PVSystem->enableACLifetimeLosses)
 			{
 				//current index of the lifetime daily AC losses is the number of years that have passed (iyear, because it is 0-indexed) * days in a year + the number of complete days that have passed
 				int ac_loss_index = (int)iyear * 365 + (int)floor(hour_of_year / 24); //in units of days
-				if (iyear == 0) annual_ac_lifetime_loss += PVSystem->p_systemACPower[idx] * (PVSystem->acLifetimeLosses[ac_loss_index] / 100) * util::watt_to_kilowatt * ts_hour; //this loss is still in percent, only keep track of it for year 0, convert from power W to energy kWh
+                ssc_number_t ac_lifetime_loss = PVSystem->p_systemACPower[idx] * (PVSystem->acLifetimeLosses[ac_loss_index] / 100); // loss in kWac
+                if (iyear == 0 || save_full_lifetime_variables == 1) {
+                    PVSystem->p_acLifetimeLoss[idx] = ac_lifetime_loss;
+                }
+                if (iyear == 0) annual_ac_lifetime_loss += ac_lifetime_loss * ts_hour; // convert to kWh for yr 1 annual sum
 				PVSystem->p_systemACPower[idx] *= (100 - PVSystem->acLifetimeLosses[ac_loss_index]) / 100;
                 if (en_batt) {
                     batt->outGenWithoutBattery[idx] *= (100 - PVSystem->acLifetimeLosses[ac_loss_index]) / 100;
@@ -2686,7 +2701,7 @@ void cm_pvsamv1::exec()
         percent = 0.;
         if (annual_xfmr_loss > 0) percent = 100 * annual_xfmr_loss / annual_ac_gross;
         assign("annual_xfmr_loss_percent", var_data((ssc_number_t)percent));
-        sys_output -= annual_ac_lifetime_loss;
+        sys_output -= annual_xfmr_loss;
 
 
 #ifdef WITH_CHECKS
