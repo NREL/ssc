@@ -33,10 +33,8 @@ NAMESPACE_TEST(csp_common, TroughSharedWithUi, SolarField) {
     vd->assign("Fluid", 21);
     vd->assign("I_bn_des", 950);
     vd->assign("m_dot_htfmax", 12);
-    vd->assign("fluid_dens_outlet_temp", 706.38);
     vd->assign("m_dot_htfmin", 1);
-    vd->assign("fluid_dens_inlet_temp", 820.81);
-    vd->assign("radio_sm_or_area", 0);
+    vd->assign("use_solar_mult_or_aperture_area", 0);
     vd->assign("specified_solar_multiple", 2);
     vd->assign("specified_total_aperture", 877000);
     vd->assign("tshours", 6);
