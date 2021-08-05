@@ -34,6 +34,11 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "csp_solver_pc_heat_sink.h"
 #include "csp_solver_two_tank_tes.h"
 #include "csp_solver_tou_block_schedules.h"
+#include "cmod_csp_common_eqns.h"
+
+#include <ctime>
+#include <algorithm>
+#include <iterator>
 
 static var_info _cm_vtab_trough_physical_process_heat[] = {
 //   weather reader inputs
@@ -50,7 +55,6 @@ static var_info _cm_vtab_trough_physical_process_heat[] = {
 
 	// System Design
     { SSC_INPUT,        SSC_NUMBER,      "I_bn_des",                  "Solar irradiation at design",                                                      "C",            "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "solar_mult",                "Solar multiple",                                                                   "none",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_loop_in_des",             "Design loop inlet temperature",                                                    "C",            "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_loop_out",                "Target loop outlet temperature",                                                   "C",            "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "q_pb_design",               "Design heat input to power block",                               "MWt",          "",             "controller",     "*",                       "",                      "" },
@@ -146,9 +150,6 @@ static var_info _cm_vtab_trough_physical_process_heat[] = {
     { SSC_INPUT,        SSC_MATRIX,      "Shadowing",                 "Receiver bellows shadowing loss factor",                                           "none",         "",             "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_MATRIX,      "Dirt_HCE",                  "Loss due to dirt on the receiver envelope",                                        "none",         "",             "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_MATRIX,      "Design_loss",               "Receiver heat loss at design",                                                     "W/m",          "",             "solar_field",    "*",                       "",                      "" },
-
-    { SSC_INPUT,        SSC_MATRIX,      "SCAInfoArray",              "Receiver (,1) and collector (,2) type for each assembly in loop",                 "none",          "",             "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_ARRAY,       "SCADefocusArray",           "Collector defocus order",                                                         "none",          "",             "solar_field",    "*",                       "",                      "" },      
 
 		// Heat Sink
     { SSC_INPUT,        SSC_NUMBER,      "pb_pump_coef",              "Pumping power to move 1kg of HTF through PB loop",               "kW/kg",        "",             "controller",     "*",                       "",                      "" },
@@ -256,14 +257,9 @@ static var_info _cm_vtab_trough_physical_process_heat[] = {
     //{ SSC_INPUT,        SSC_NUMBER,      "DP_SGS",                    "Pressure drop within the steam generator",                                         "bar",          "",               "controller",     "*",                       "",                      "" },
 
     // Needed for auto-updating dependent inputs
-    { SSC_INPUT,        SSC_NUMBER,      "fluid_dens_outlet_temp",              "fluid_dens_outlet_temp",                                                 "-",            "",               "controller",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "fluid_dens_inlet_temp",               "fluid_dens_inlet_temp",                                                  "-",            "",               "controller",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "radio_sm_or_area",                    "radio_sm_or_area",                                                       "-",            "",               "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "specified_solar_multiple",            "specified_solar_multiple",                                               "-",            "",               "controller",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "specified_total_aperture",            "specified_total_aperture",                                               "-",            "",               "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "non_solar_field_land_area_multiplier", "non_solar_field_land_area_multiplier",                                  "-",            "",               "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "trough_loop_control",                 "trough_loop_control",                                                    "-",            "",               "controller",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "lat",                                 "lat",                                                                    "-",            "",               "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "disp_wlim_maxspec",                   "disp_wlim_maxspec",                                                      "-",            "",               "controller",     "*",                       "",                      "" },
 
 
@@ -367,6 +363,7 @@ static var_info _cm_vtab_trough_physical_process_heat[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_tes_freeze_protection",    "Annual thermal power for TES freeze protection",			  "kWt-hr",  "",  "Post-process",    "*",   "",   "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "capacity_factor",					"Capacity factor",											  "%",       "",  "Post-process",    "*",   "",   "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "kwh_per_kw",						"First year kWh/kW",										  "kWht/kWt", "", "Post-process",    "*",   "",   "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "solar_multiple_actual",           "Actual solar multiple of system",                            "-",       "",  "Post-process",    "*",   "",   "" },
 
 
 	var_info_invalid };
@@ -466,7 +463,7 @@ public:
 		c_trough.m_wind_stow_speed = as_double("wind_stow_speed");	//[m/s] Wind speed at and above which the collectors will be stowed
 		c_trough.m_accept_mode = as_integer("accept_mode");			//[-] Acceptance testing mode? (1=yes, 0=no)
 		c_trough.m_accept_init = as_boolean("accept_init");			//[-] In acceptance testing mode - require steady-state startup
-		c_trough.m_solar_mult = as_double("solar_mult");			//[-] Solar Multiple
+        c_trough.m_solar_mult = as_double("solar_mult");			//[-] Solar Multiple  (set during verify() using cmod_csp_trough_eqns.cpp)
 		c_trough.m_mc_bal_hot_per_MW = as_double("mc_bal_hot");     //[kWht/K-MWt] The heat capacity of the balance of plant on the hot side
 		c_trough.m_mc_bal_cold_per_MW = as_double("mc_bal_cold");	//[kWht/K-MWt] The heat capacity of the balance of plant on the cold side
 		c_trough.m_mc_bal_sca = as_double("mc_bal_sca"); 			//[Wht/K-m] Non-HTF heat capacity associated with each SCA - per meter basis
@@ -605,13 +602,18 @@ public:
 			}
 		}
 
+        // Calculated during verify() using cmod_csp_trough_eqns.cpp:
+        c_trough.m_SCAInfoArray = as_matrix("scainfoarray");            //[-] Receiver (,1) and collector (,2) type for each assembly in loop
+        size_t SCADefocusArraySize = -1;
+        ssc_number_t* SCADefocusArray = as_array("scadefocusarray", &SCADefocusArraySize);      //[-] Collector defocus order
+        std::copy(SCADefocusArray, SCADefocusArray + SCADefocusArraySize, back_inserter(c_trough.m_SCADefocusArray));    // convert matrix_t and set to vector
+
 		c_trough.m_P_a = as_matrix("P_a");		                         //[torr] Annulus gas pressure				 
 		c_trough.m_AnnulusGas = as_matrix("AnnulusGas");		         //[-] Annulus gas type (1=air, 26=Ar, 27=H2)
 		c_trough.m_AbsorberMaterial = as_matrix("AbsorberMaterial");	 //[-] Absorber material type
 		c_trough.m_Shadowing = as_matrix("Shadowing");                   //[-] Receiver bellows shadowing loss factor
 		c_trough.m_Dirt_HCE = as_matrix("Dirt_HCE");                     //[-] Loss due to dirt on the receiver envelope
 		c_trough.m_Design_loss = as_matrix("Design_loss");               //[-] Receiver heat loss at design
-		c_trough.m_SCAInfoArray = as_matrix("SCAInfoArray");			 //[-] Receiver (,1) and collector (,2) type for each assembly in loop 
 		
         c_trough.m_calc_design_pipe_vals = as_boolean("calc_design_pipe_vals"); //[-] Should the HTF state be calculated at design conditions
         c_trough.m_L_rnr_pb = as_double("L_rnr_pb");                      //[m] Length of hot or cold runner pipe around the power block
@@ -634,13 +636,6 @@ public:
         c_trough.m_sf_hdr_diams = as_matrix("sf_hdr_diams");              //[m] Imported header diameters, used if custom_sf_pipe_sizes is true
         c_trough.m_sf_hdr_wallthicks = as_matrix("sf_hdr_wallthicks");    //[m] Imported header wall thicknesses, used if custom_sf_pipe_sizes is true
         c_trough.m_sf_hdr_lengths = as_matrix("sf_hdr_lengths");          //[m] Imported header lengths, used if custom_sf_pipe_sizes is true
-
-		//[-] Collector defocus order
-		size_t nval_SCADefocusArray = 0;
-		ssc_number_t *SCADefocusArray = as_array("SCADefocusArray", &nval_SCADefocusArray);
-		c_trough.m_SCADefocusArray.resize(nval_SCADefocusArray);
-		for (size_t i = 0; i < nval_SCADefocusArray; i++)
-			c_trough.m_SCADefocusArray[i] = (int)SCADefocusArray[i];
 
 		// Allocate trough outputs
 		c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_THETA_AVE, allocate("Theta_ave", n_steps_fixed), n_steps_fixed);
@@ -722,7 +717,7 @@ public:
 		tes->m_is_hx = false;		//[-]
 		tes->m_W_dot_pc_design = c_heat_sink.ms_params.m_q_dot_des;	//[MWt]
 		tes->m_eta_pc = 1.0;
-		tes->m_solarm = as_double("solar_mult");	//[-]
+		tes->m_solarm = as_double("solar_mult");	//[-]  (set during verify() using cmod_csp_trough_eqns.cpp)
 
 		tes->m_ts_hours = as_double("tshours");		//[hr]
 	
@@ -971,6 +966,7 @@ public:
 			log(out_msg, out_type);
 		}
 
+        assign("solar_multiple_actual", as_double("solar_mult"));   // calculated during verify() using cmod_csp_trough_eqns.cpp
 		size_t count;
 		
 		ssc_number_t *p_time_final_hr = as_array("time_hr", &count);
