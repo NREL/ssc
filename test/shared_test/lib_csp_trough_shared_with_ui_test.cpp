@@ -151,7 +151,7 @@ NAMESPACE_TEST(csp_common, TroughSharedWithUi, CollectorType) {
     util::matrix_t<double> IAM_matrix(4, 3, &IAM_matrix_vec);
     vd->assign("IAM_matrix", IAM_matrix);
 
-    Physical_Trough_Collector_Type_Equations(vd);
+    Physical_Trough_Collector_Type_UI_Only_Equations(vd);
 
     ASSERT_NEAR_FRAC(GetNum(vd, "csp_dtr_sca_calc_zenith"), 0.1506, kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "csp_dtr_sca_calc_costh"), 0.9886, kErrorToleranceHi);

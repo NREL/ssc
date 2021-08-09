@@ -76,7 +76,8 @@ public:
         rate_data* util_rate,
         std::vector<double> battReplacementCostPerkWh,
         int battCycleCostChoice,
-        std::vector<double> battCycleCost
+        std::vector<double> battCycleCost,
+        double interconnection_limit
 		);
 
 	~dispatch_automatic_behind_the_meter_t() override {};

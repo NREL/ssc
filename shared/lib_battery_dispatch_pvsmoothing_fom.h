@@ -78,7 +78,8 @@ public:
         bool batt_dispatch_pvs_short_forecast_enable,
         double batt_dispatch_pvs_soc_rest,
         size_t batt_dispatch_pvs_timestep_multiplier,
-        double batt_dispatch_pvs_initial_SOC
+        double batt_dispatch_pvs_initial_SOC,
+        double interconnection_limit
 		);
 
 	~dispatch_pvsmoothing_front_of_meter_t();

@@ -8,7 +8,11 @@ namespace csp_common {}
 using namespace csp_common;
 
 double GetNum(var_table* vd, std::string name) {
-    return vd->lookup(name.c_str())->num;
+    var_data* data = vd->lookup(name.c_str());
+    if (data) {
+        return data->num;
+    }
+    throw std::invalid_argument(name + " is null");
 }
 double GetNum(ssc_data_t data, std::string name) {
     auto data_vtab = static_cast<var_table*>(data);
