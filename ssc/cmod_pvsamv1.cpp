@@ -2093,6 +2093,10 @@ void cm_pvsamv1::exec()
     {
         batt->initialize_automated_dispatch(p_pv_ac_use, p_load_full, p_invcliploss_full);
     }
+    else {
+        // Recompute the forecast after AC losses
+        p_pv_ac_use.clear();
+    }
 
     /* *********************************************************************************************
     PV AC calculation
@@ -2238,6 +2242,16 @@ void cm_pvsamv1::exec()
                 }
 			}
 
+            // Re-compute PV AC forecast for AC connected batteries
+            if (en_batt && batt_topology == ChargeController::AC_CONNECTED)
+            {
+                double pv_ac_kw = sharedInverter->powerAC_kW;
+                if (p_pv_ac_forecast.size() > 1 && p_pv_ac_forecast.size() > idx % (8760 * step_per_hour)) {
+                    pv_ac_kw = p_pv_ac_forecast[idx % (8760 * step_per_hour)];
+                }
+                p_pv_ac_use.push_back(static_cast<ssc_number_t>(pv_ac_kw));
+            }
+
             // accumulate first year annual energy
             if (iyear == 0)
             {
@@ -2271,7 +2285,7 @@ void cm_pvsamv1::exec()
 
     // Initialize AC connected battery predictive control
     if (en_batt && batt_topology == ChargeController::AC_CONNECTED)
-        batt->initialize_automated_dispatch(util::array_to_vector<ssc_number_t>(PVSystem->p_systemACPower, nlifetime), p_load_full);
+        batt->initialize_automated_dispatch(p_pv_ac_use, p_load_full);
 
     /* *********************************************************************************************
     Post PV AC
