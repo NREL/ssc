@@ -177,7 +177,7 @@ var_info vtab_battery_inputs[] = {
 
 
     // Dispatch forecast - optional parameters used in cmod_pvsamv1
-    { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_wf_forecast_choice",            "Forecast choice for automatic dispatch",                 "0/1/2",   "0=LookAhead,1=LookBehind,2=InputForecast", "BatteryDispatch",       "?=0",                        "",                             "" },
+    { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_wf_forecast_choice",            "Weather forecast choice for automatic dispatch",                 "0/1/2",   "0=LookAhead,1=LookBehind,2=InputForecast", "BatteryDispatch",       "?=0",                        "",                             "" },
     { SSC_INPUT,        SSC_ARRAY,      "batt_pv_clipping_forecast",                   "PV clipping forecast",                                   "kW",       "",                     "BatteryDispatch",       "",  "",          "" },
     { SSC_INPUT,        SSC_ARRAY,      "batt_pv_ac_forecast",                         "PV ac power forecast",                                   "kW",       "",                     "BatteryDispatch",       "",  "",          "" },
 
