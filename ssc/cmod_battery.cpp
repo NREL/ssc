@@ -178,8 +178,10 @@ var_info vtab_battery_inputs[] = {
 
     // Dispatch forecast - optional parameters used in cmod_pvsamv1
     { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_wf_forecast_choice",            "Weather forecast choice for automatic dispatch",                 "0/1/2",   "0=LookAhead,1=LookBehind,2=InputForecast", "BatteryDispatch",       "?=0",                        "",                             "" },
+    { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_load_forecast_choice",          "Load forecast choice for automatic dispatch",                 "0/1/2",   "0=LookAhead,1=LookBehind,2=InputForecast", "BatteryDispatch",       "?=0",                        "",                             "" },
     { SSC_INPUT,        SSC_ARRAY,      "batt_pv_clipping_forecast",                   "PV clipping forecast",                                   "kW",       "",                     "BatteryDispatch",       "",  "",          "" },
     { SSC_INPUT,        SSC_ARRAY,      "batt_pv_ac_forecast",                         "PV ac power forecast",                                   "kW",       "",                     "BatteryDispatch",       "",  "",          "" },
+    { SSC_INPUT,        SSC_ARRAY,      "batt_load_ac_forecast",                       "Load ac power forecast",                                   "kW",       "",                     "BatteryDispatch",       "",  "",          "" },
 
     //  cycle cost inputs
     { SSC_INPUT,        SSC_NUMBER,     "batt_cycle_cost_choice",                      "Use SAM cost model for degradaton penalty or input custom via batt_cycle_cost", "0/1",     "0=UseCostModel,1=InputCost", "BatteryDispatch", "?=0",                           "",                             "" },
@@ -419,6 +421,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             // Storage dispatch controllers
             batt_vars->batt_dispatch = vt.as_integer("batt_dispatch_choice");
             batt_vars->batt_dispatch_wf_forecast = vt.as_integer("batt_dispatch_wf_forecast_choice");
+            batt_vars->batt_dispatch_load_forecast = vt.as_integer("batt_dispatch_load_forecast_choice");
             batt_vars->batt_meter_position = vt.as_integer("batt_meter_position");
 
             // Cycle cost calculations
@@ -1224,6 +1227,7 @@ void battstor::parse_configuration()
 {
     int batt_dispatch = batt_vars->batt_dispatch;
     int batt_weather_forecast = batt_vars->batt_dispatch_wf_forecast;
+    int batt_load_forecast = batt_vars->batt_dispatch_load_forecast;
     int batt_meter_position = batt_vars->batt_meter_position;
 
     // parse configuration
@@ -1238,10 +1242,9 @@ void battstor::parse_configuration()
                 wf_look_behind = batt_weather_forecast == dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_BEHIND;
                 wf_input_forecast = batt_weather_forecast == dispatch_t::WEATHER_FORECAST_CHOICE::WF_CUSTOM;
 
-                // Temporary while we hook up the variables to other parts of SSC. TODO FIX!
-                load_look_ahead = batt_weather_forecast == dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD;
-                load_look_behind = batt_weather_forecast == dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_BEHIND;
-                load_input_forecast = batt_weather_forecast == dispatch_t::WEATHER_FORECAST_CHOICE::WF_CUSTOM;
+                load_look_ahead = batt_load_forecast == dispatch_t::LOAD_LOOK_AHEAD;
+                load_look_behind = batt_load_forecast  == dispatch_t::LOAD_LOOK_BEHIND;
+                load_input_forecast = batt_load_forecast == dispatch_t::LOAD_CUSTOM;
                 if (batt_dispatch == dispatch_t::MAINTAIN_TARGET)
                     input_target = true;
             }
