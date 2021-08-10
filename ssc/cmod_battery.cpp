@@ -1234,9 +1234,14 @@ void battstor::parse_configuration()
         {
             if (batt_dispatch == dispatch_t::PEAK_SHAVING || batt_dispatch == dispatch_t::MAINTAIN_TARGET || batt_dispatch == dispatch_t::FORECAST)
             {
-                look_ahead = batt_weather_forecast == dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD;
-                look_behind = batt_weather_forecast == dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_BEHIND;
-                input_forecast = batt_weather_forecast == dispatch_t::WEATHER_FORECAST_CHOICE::WF_CUSTOM;
+                wf_look_ahead = batt_weather_forecast == dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD;
+                wf_look_behind = batt_weather_forecast == dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_BEHIND;
+                wf_input_forecast = batt_weather_forecast == dispatch_t::WEATHER_FORECAST_CHOICE::WF_CUSTOM;
+
+                // Temporary while we hook up the variables to other parts of SSC. TODO FIX!
+                load_look_ahead = batt_weather_forecast == dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD;
+                load_look_behind = batt_weather_forecast == dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_BEHIND;
+                load_input_forecast = batt_weather_forecast == dispatch_t::WEATHER_FORECAST_CHOICE::WF_CUSTOM;
                 if (batt_dispatch == dispatch_t::MAINTAIN_TARGET)
                     input_target = true;
             }
@@ -1248,9 +1253,9 @@ void battstor::parse_configuration()
         else if (batt_meter_position == dispatch_t::FRONT)
         {
             if (batt_dispatch == dispatch_t::FOM_AUTOMATED_ECONOMIC || batt_dispatch == dispatch_t::FOM_PV_SMOOTHING) {
-                look_ahead = batt_weather_forecast == dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD;
-                look_behind = batt_weather_forecast == dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_BEHIND;
-                input_forecast = batt_weather_forecast == dispatch_t::WEATHER_FORECAST_CHOICE::WF_CUSTOM;
+                wf_look_ahead = batt_weather_forecast == dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD;
+                wf_look_behind = batt_weather_forecast == dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_BEHIND;
+                wf_input_forecast = batt_weather_forecast == dispatch_t::WEATHER_FORECAST_CHOICE::WF_CUSTOM;
             }
             else if (batt_dispatch == dispatch_t::FOM_CUSTOM_DISPATCH) {
                 input_custom_dispatch = true;
@@ -1270,7 +1275,7 @@ void battstor::initialize_automated_dispatch(std::vector<ssc_number_t> pv, std::
         if (!input_custom_dispatch)
         {
             // look ahead
-            if (look_ahead)
+            if (wf_look_ahead)
             {
                 if (pv.size() != 0)
                 {
@@ -1279,12 +1284,6 @@ void battstor::initialize_automated_dispatch(std::vector<ssc_number_t> pv, std::
                     }
 
                 }
-                if (load.size() != 0)
-                {
-                    for (size_t idx = 0; idx != nrec; idx++) {
-                        load_prediction.push_back(load[idx]);
-                    }
-                }
                 if (cliploss.size() != 0)
                 {
                     for (size_t idx = 0; idx != nrec; idx++) {
@@ -1292,13 +1291,12 @@ void battstor::initialize_automated_dispatch(std::vector<ssc_number_t> pv, std::
                     }
                 }
             }
-            else if (look_behind)
+            else if (wf_look_behind)
             {
                 // day one is zeros
                 for (size_t idx = 0; idx != 24 * step_per_hour; idx++)
                 {
                     pv_prediction.push_back(0);
-                    load_prediction.push_back(0);
                     cliploss_prediction.push_back(0);
                 }
 
@@ -1308,12 +1306,6 @@ void battstor::initialize_automated_dispatch(std::vector<ssc_number_t> pv, std::
                         pv_prediction.push_back(pv[idx]);
                     }
                 }
-                if (load.size() != 0)
-                {
-                    for (size_t idx = 0; idx != nrec - 24 * step_per_hour; idx++) {
-                        load_prediction.push_back(load[idx]);
-                    }
-                }
                 if (cliploss.size() != 0)
                 {
                     for (size_t idx = 0; idx != nrec - 24 * step_per_hour; idx++) {
@@ -1321,7 +1313,7 @@ void battstor::initialize_automated_dispatch(std::vector<ssc_number_t> pv, std::
                     }
                 }
             }
-            else if (input_forecast)
+            else if (wf_input_forecast)
             {
                 if (pv.size() != 0)
                 {
@@ -1336,6 +1328,39 @@ void battstor::initialize_automated_dispatch(std::vector<ssc_number_t> pv, std::
                     }
                 }
             }
+
+            // All of these will be false for FOM, so load will not be populated
+            if (load_look_ahead) {
+                if (load.size() != 0)
+                {
+                    for (size_t idx = 0; idx != nrec; idx++) {
+                        load_prediction.push_back(load[idx]);
+                    }
+                }
+            }
+            else if (load_look_behind) {
+                // day one is zeros
+                for (size_t idx = 0; idx != 24 * step_per_hour; idx++)
+                {
+                    load_prediction.push_back(0);
+                }
+                if (load.size() != 0)
+                {
+                    for (size_t idx = 0; idx != nrec - 24 * step_per_hour; idx++) {
+                        load_prediction.push_back(load[idx]);
+                    }
+                }
+
+            }
+            else if (load_input_forecast) {
+                if (load.size() != 0)
+                {
+                    for (size_t idx = 0; idx != nrec; idx++) {
+                        load_prediction.push_back(load[idx]);
+                    }
+                }
+            }
+
             // Input checking
             if (pv.size() == 0)
             {
@@ -1395,9 +1420,12 @@ battstor::~battstor()
 battstor::battstor(const battstor& orig) {
     // copy values
     manual_dispatch = orig.manual_dispatch;
-    look_ahead = orig.look_ahead;
-    look_behind = orig.look_behind;
-    input_forecast = orig.input_forecast;
+    wf_look_ahead = orig.wf_look_ahead;
+    wf_look_behind = orig.wf_look_behind;
+    wf_input_forecast = orig.wf_input_forecast;
+    load_look_ahead = orig.load_look_ahead;
+    load_look_behind = orig.load_look_behind;
+    load_input_forecast = orig.load_input_forecast;
     input_target = orig.input_target;
     input_custom_dispatch = orig.input_custom_dispatch;
     step_per_hour = orig.step_per_hour;
