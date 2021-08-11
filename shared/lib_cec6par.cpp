@@ -965,44 +965,56 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 			{
                 //L_char = Lsc; //Change characteristic length to Lacunarity length scale
 				double rho_air    = Patm*28.967/8314.34*(1./((TA+TC)/2.)) ; // !density of air as a function of pressure and ambient temp
-                for (size_t i = 0; i < 41; i++) {
-                    if (i == 0 && input.Tdry < air_table[i][0]) {
-                        rho_air_test = air_table[i][1];
-                        k_air_test = air_table[i][3];
-                        Pr_air_test =air_table[i][7];
-                        mu_air_test = air_table[i][5];
-                        break;
-                    }
-                    if (i == 40 && input.Tdry > air_table[i][0]) {
-                        rho_air_test = air_table[i][1];
-                        k_air_test = air_table[i][3];
-                        Pr_air_test = air_table[i][7];
-                        mu_air_test = air_table[i][5];
-                        break;
-                    }
-                    if (input.Tdry - air_table[i][0] > 0) {
-                        temp_interp = (input.Tdry - air_table[i][0]) / (air_table[i + 1][0] - air_table[i][0]);
-                        rho_air_test = temp_interp * (air_table[i + 1][1] - air_table[i][1]) + air_table[i][1];
-                        k_air_test = temp_interp * (air_table[i + 1][3] - air_table[i][3]) + air_table[i][3];
-                        Pr_air_test = temp_interp * (air_table[i + 1][7] - air_table[i][7]) + air_table[i][7];
-                        mu_air_test = temp_interp * (air_table[i + 1][5] - air_table[i][5]) + air_table[i][5];
-                        break;
-                    }
+                int iter = 0;
+               
+                if (input.Tdry < air_table[0][0]) {
+                    rho_air_test = air_table[0][1];
+                    k_air_test = air_table[0][3];
+                    Pr_air_test =air_table[0][7];
+                    mu_air_test = air_table[0][5];
                 }
+                else if (input.Tdry > air_table[40][0]) {
+                    rho_air_test = air_table[40][1];
+                    k_air_test = air_table[40][3];
+                    Pr_air_test = air_table[40][7];
+                    mu_air_test = air_table[40][5];
+                }
+                else {
+                    iter = 0;
+                    while (input.Tdry >= air_table[iter][0] && iter < 39)
+                        iter++;
+                    if (iter != 0) {
+                        temp_interp = (input.Tdry - air_table[iter - 1][0]) / (air_table[iter][0] - air_table[iter - 1][0]);
+                        rho_air_test = temp_interp * (air_table[iter][1] - air_table[iter - 1][1]) + air_table[iter][1];
+                        k_air_test = temp_interp * (air_table[iter][3] - air_table[iter - 1][3]) + air_table[iter - 1][3];
+                        Pr_air_test = temp_interp * (air_table[iter][7] - air_table[iter - 1][7]) + air_table[iter - 1][7];
+                        mu_air_test = temp_interp * (air_table[iter][5] - air_table[iter - 1][5]) + air_table[iter - 1][5];
+                    }
+                    else {
+                        temp_interp = (input.Tdry - air_table[0][0]) / (air_table[1][0] - air_table[0][0]);
+                        rho_air_test = temp_interp * (air_table[1][1] - air_table[0][1]) + air_table[0][1];
+                        k_air_test = temp_interp * (air_table[1][3] - air_table[0][3]) + air_table[0][3];
+                        Pr_air_test = temp_interp * (air_table[1][7] - air_table[0][7]) + air_table[0][7];
+                        mu_air_test = temp_interp * (air_table[1][5] - air_table[0][5]) + air_table[0][5];
+                    }
+                    
+                }
+                
                                                                             //double Re_forced  = MAX(0.1,rho_air*V_cover*L_char/mu_air) ; //  !Reynolds number of wind moving across module
                 //double Re_forced = MAX(0.1, rho_air * V_cover * Lsc / mu_air); //  !Reynolds number of wind moving across module
                 double Re_forced = MAX(0.1, rho_air_test * V_cover * Lsc / mu_air_test);
                 double Nu_forced  = 0.037 * pow(Re_forced,4./5.) * pow(Pr_air_test, 1./3.) ; //  !Nusselt Number (Incropera et al., 2006)
-				double h_forced   = Nu_forced * k_air / L_char;
+				//double h_forced   = Nu_forced * k_air_test / L_char;
                 //double h_forced   = h_lacunarity;
-                //double h_forced   = (k_air / (ground_clearance_height + 2* Length * sind(input.Tilt))) * pow(10, (0.085513 * pow(Re_forced, 1 / 5) * pow(Pr_air, 1 / 12) + 1.9086));
+                double h_forced   = (k_air_test / (ground_clearance_height + 2* Length * sind(input.Tilt))) * pow(10, (0.085513 * pow(Re_forced, 1 / 5) * pow(Pr_air_test, 1 / 12) + 1.9086));
 				double h_sky      = (TC*TC+T_sky*T_sky)*(TC+T_sky);
 				double h_ground   = (TC*TC+T_ground*T_ground)*(TC+T_ground);
 				double h_free_c   = free_convection_194(TC,TA,input.Tilt,rho_air,Area,Length,Width) ; //   !Call function to calculate free convection on tilted surface (top)           
 				double h_free_b   = free_convection_194(TC,TA,180.0-input.Tilt,rho_air,Area,Length,Width); // !Call function to calculate free convection on tilted surface (bottom)              
 				double h_conv_c   = pow( pow(h_forced,3.) + pow(h_free_c,3.) , 1./3.) ; // !Combine free and forced heat transfer coefficients (top)
 				double h_conv_b   = pow( pow(h_forced,3.) + pow(h_free_b,3.) , 1./3.) ; // !Combine free and forced heat transfer coefficients (bottom)
-			
+                //h_conv_c = h_forced;
+                //h_conv_b = h_forced;
 				// !Energy balance to calculate TC
 				double TC1 = ( (h_conv_c+h_conv_b)*TA 
 						+ (Fcs*EmisC+Fbs*EmisB)*sigma*h_sky*T_sky 
