@@ -563,17 +563,17 @@ void Tower_SolarPilot_Capital_Costs_Equations(ssc_data_t data)
 /////////////////////////////////////////////////////////////////////////////////////////////
 
 
-double Solar_mult(int radio_sm_or_area, double field_thermal_output, double q_pb_design, double specified_solar_multiple, double total_aperture, double total_required_aperture_for_SM1)
+double Solar_mult(int use_solar_mult_or_aperture_area, double field_thermal_output, double q_pb_design, double specified_solar_multiple, double total_aperture, double total_required_aperture_for_SM1)
 {
     double solar_mult = std::numeric_limits<double>::quiet_NaN();
 
-    if (radio_sm_or_area == -1) {
+    if (use_solar_mult_or_aperture_area == -1) {
         solar_mult = field_thermal_output / q_pb_design;
     }
-    else if (radio_sm_or_area == 0) {
+    else if (use_solar_mult_or_aperture_area == 0) {
         solar_mult = specified_solar_multiple;
     }
-    else if (radio_sm_or_area == 1) {
+    else if (use_solar_mult_or_aperture_area == 1) {
         solar_mult = total_aperture / total_required_aperture_for_SM1;
     }
     else {
@@ -583,15 +583,23 @@ double Solar_mult(int radio_sm_or_area, double field_thermal_output, double q_pb
     return solar_mult;
 }
 
-double Max_field_flow_velocity(double m_dot_htfmax, double fluid_dens_outlet_temp, double min_inner_diameter)
+double Max_field_flow_velocity(double m_dot_htfmax, double min_inner_diameter,
+    double T_out /*C*/, int rec_htf /*-*/, const util::matrix_t<ssc_number_t>& field_fl_props /*-*/)
 {
-    return m_dot_htfmax * 4 / (fluid_dens_outlet_temp * M_PI *
+    HTFProperties htf_properties = GetHtfProperties(rec_htf, field_fl_props);
+    double density = htf_properties.dens(T_out + 273.15, std::numeric_limits<double>::quiet_NaN());
+
+    return m_dot_htfmax * 4 / (density * M_PI *
         min_inner_diameter * min_inner_diameter);
 }
 
-double Min_field_flow_velocity(double m_dot_htfmin, double fluid_dens_inlet_temp, double min_inner_diameter)
+double Min_field_flow_velocity(double m_dot_htfmin, double min_inner_diameter,
+    double T_in /*C*/, int rec_htf /*-*/, const util::matrix_t<ssc_number_t>& field_fl_props /*-*/)
 {
-    return m_dot_htfmin * 4 / (fluid_dens_inlet_temp * M_PI *
+    HTFProperties htf_properties = GetHtfProperties(rec_htf, field_fl_props);
+    double density = htf_properties.dens(T_in + 273.15, std::numeric_limits<double>::quiet_NaN());
+
+    return m_dot_htfmin * 4 / (density * M_PI *
         min_inner_diameter * min_inner_diameter);
 }
 
@@ -660,16 +668,16 @@ double Cspdtr_loop_hce_heat_loss(const util::matrix_t<ssc_number_t>& trough_loop
     return derate;
 }
 
-double Nloops(int radio_sm_or_area, double specified_solar_multiple, double total_required_aperture_for_SM1,
+double Nloops(int use_solar_mult_or_aperture_area, double specified_solar_multiple, double total_required_aperture_for_SM1,
     double specified_total_aperture, double single_loop_aperture)
 {
     double total_aperture = std::numeric_limits<double>::quiet_NaN();
     double n_loops = std::numeric_limits<double>::quiet_NaN();
 
-    if (radio_sm_or_area == -1 || radio_sm_or_area == 0) {    // includes -1 for IPH
+    if (use_solar_mult_or_aperture_area == -1 || use_solar_mult_or_aperture_area == 0) {    // includes -1 for IPH
         total_aperture = specified_solar_multiple * total_required_aperture_for_SM1;
     }
-    else if (radio_sm_or_area == 1) {
+    else if (use_solar_mult_or_aperture_area == 1) {
         total_aperture = specified_total_aperture;
     }
     else {

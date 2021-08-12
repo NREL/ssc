@@ -107,8 +107,8 @@ public:
 static var_info _cm_vtab_pvwattsv7[] = {
 
     /*   VARTYPE           DATATYPE          NAME                              LABEL                                          UNITS        META                                            GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-        { SSC_INPUT,        SSC_STRING,      "solar_resource_file",            "Weather file path",                          "",           "",                                             "Solar Resource",      "?",                       "",                              "" },
-        { SSC_INPUT,        SSC_TABLE,       "solar_resource_data",            "Weather data",                               "",           "dn,df,tdry,wspd,lat,lon,tz,elev",              "Solar Resource",      "?",                       "",                              "" },
+        { SSC_INPUT,        SSC_STRING,      "solar_resource_file",            "Weather file path",                          "",           "",                                             "Solar Resource",      "",                       "",                              "" },
+        { SSC_INPUT,        SSC_TABLE,       "solar_resource_data",            "Weather data",                               "",           "dn,df,tdry,wspd,lat,lon,tz,elev",              "Solar Resource",      "",                       "",                              "" },
         { SSC_INPUT,        SSC_ARRAY,       "albedo",                         "Albedo",                                     "frac",       "if provided, will overwrite weather file albedo","Solar Resource",    "",                        "",                              "" },
 
         { SSC_INOUT,        SSC_NUMBER,      "system_use_lifetime_output",     "Run lifetime simulation",                    "0/1",        "",                                             "Lifetime",            "?=0",                        "",                              "" },
@@ -344,14 +344,14 @@ public:
 
     void exec()
     {
-        std::unique_ptr<weather_data_provider> wdprov;
+       std::unique_ptr<weather_data_provider> wdprov;
 
         if (is_assigned("solar_resource_file"))
         {
             const char* file = as_string("solar_resource_file");
             wdprov = std::unique_ptr<weather_data_provider>(new weatherfile(file));
-
             weatherfile* wfile = dynamic_cast<weatherfile*>(wdprov.get());
+            
             if (!wfile->ok()) throw exec_error("pvwattsv7", wfile->message());
             if (wfile->has_message()) log(wfile->message(), SSC_WARNING);
         }
@@ -1269,7 +1269,7 @@ public:
             assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
             assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6))); //convert from kWh/kW to percent, so divide by 8760 hours and multiply by 100 percent
         }
-
+        
         // location outputs
         assign("location", var_data(hdr.location));
         assign("city", var_data(hdr.city));
@@ -1279,7 +1279,7 @@ public:
         assign("tz", var_data((ssc_number_t)hdr.tz));
         assign("elev", var_data((ssc_number_t)hdr.elev));
         assign("percent_complete", var_data((ssc_number_t)percent));
-
+        
         double gcr_for_land = pv.gcr;
         if (gcr_for_land < 0.01) gcr_for_land = 1.0;
         double landf = is_assigned("landf") ? as_number("landf") : 1.0f;

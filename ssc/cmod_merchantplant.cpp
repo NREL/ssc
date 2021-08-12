@@ -1037,17 +1037,25 @@ public:
 		double om_opt_fuel_1_usage = as_double("om_opt_fuel_1_usage");
 		double om_opt_fuel_2_usage = as_double("om_opt_fuel_2_usage");
 
-		// additional o and m sub types (e.g. batteries and fuel cells)
-		int add_om_num_types = as_integer("add_om_num_types");
-		ssc_number_t nameplate1 = 0;
-		ssc_number_t nameplate2 = 0;
-
+        // additional o and m sub types (e.g. batteries and fuel cells)
+        int add_om_num_types = as_integer("add_om_num_types");
+        ssc_number_t nameplate1 = 0;
+        ssc_number_t nameplate2 = 0;
+        std::vector<double> battery_discharged;
+        std::vector<double> fuelcell_discharged;
+        for (int i = 0; i <= nyears; i++) {
+            battery_discharged.push_back(0);
+            fuelcell_discharged.push_back(0);
+        }
+        //throw exec_error("singleowner", "Checkpoint 1");
         if (add_om_num_types > 0) //PV Battery
         {
             escal_or_annual(CF_om_fixed1_expense, nyears, "om_batt_fixed_cost", inflation_rate, 1.0, false, as_double("om_fixed_escal") * 0.01);
-            escal_or_annual(CF_om_production1_expense, nyears, "om_batt_variable_cost", inflation_rate, 0.001, false, as_double("om_production_escal") * 0.01);
+            escal_or_annual(CF_om_production1_expense, nyears, "om_batt_variable_cost", inflation_rate, 0.001, false, as_double("om_production_escal") * 0.01); //$/MWh
             escal_or_annual(CF_om_capacity1_expense, nyears, "om_batt_capacity_cost", inflation_rate, 1.0, false, as_double("om_capacity_escal") * 0.01);
             nameplate1 = as_number("ui_batt_capacity");
+            if (as_integer("en_batt") == 1)
+                battery_discharged = as_vector_double("batt_annual_discharge_energy");
         }
         if (add_om_num_types > 1) // PV Battery Fuel Cell
         {
@@ -1055,6 +1063,7 @@ public:
             escal_or_annual(CF_om_production2_expense, nyears, "om_fuelcell_variable_cost", inflation_rate, 0.001, false, as_double("om_production_escal") * 0.01);
             escal_or_annual(CF_om_capacity2_expense, nyears, "om_fuelcell_capacity_cost", inflation_rate, 1.0, false, as_double("om_capacity_escal") * 0.01);
             nameplate2 = as_number("ui_fuelcell_capacity");
+            fuelcell_discharged = as_vector_double("fuelcell_annual_energy_discharged");
         }
 
 
@@ -1296,6 +1305,10 @@ public:
 			cf.at(CF_om_capacity1_expense, i) *= nameplate1;
 			cf.at(CF_om_capacity2_expense, i) *= nameplate2;
 			cf.at(CF_om_fuel_expense,i) *= fuel_use[i];
+
+            //Battery Production OM Costs
+            cf.at(CF_om_production1_expense, i) *= battery_discharged[i]; //$/MWh * 0.001 MWh/kWh * kWh = $
+            cf.at(CF_om_production2_expense, i) *= fuelcell_discharged[i];
 
 			cf.at(CF_om_opt_fuel_1_expense,i) *= om_opt_fuel_1_usage;
 			cf.at(CF_om_opt_fuel_2_expense,i) *= om_opt_fuel_2_usage;

@@ -128,6 +128,8 @@ var_info vtab_oandm[] = {
 { SSC_INPUT,SSC_ARRAY   , "om_fuelcell_fixed_cost"                            , "Fuel cell fixed System Costs annual amount"                     , "$/year"                                 , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
 { SSC_INPUT,SSC_ARRAY   , "om_fuelcell_variable_cost"                       , "Fuel cell production-based System Costs amount"                 , "$/MWh"                                  , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
 { SSC_INPUT,SSC_ARRAY   , "om_fuelcell_capacity_cost"                         , "Fuel cell capacity-based System Costs amount"                   , "$/kWcap"                                , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
+{ SSC_INPUT, SSC_ARRAY,   "fuelcell_annual_energy_discharged",  "Annual energy from fuelcell",    "kWh",        "",                 "System Costs",                  "?=0",                        "",                              "" },
+
 var_info_invalid };
 
 var_info vtab_equip_reserve[] = {
@@ -519,7 +521,10 @@ var_info vtab_grid_curtailment[] = {
 	/*   VARTYPE           DATATYPE         NAME                               LABEL                                       UNITS     META                                     GROUP                 REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 
 		{ SSC_INPUT,        SSC_ARRAY,       "grid_curtailment",              "Grid curtailment as energy delivery limit (first year)",              "MW",    "",                                     "GridLimits",      "?",                     "",                "" },
-	var_info_invalid };
+        { SSC_INPUT,        SSC_NUMBER,      "enable_interconnection_limit",      "Enable grid interconnection limit",     "0/1",     "Enable a grid interconnection limit",   "GridLimits",        "","",                           "" },
+        { SSC_INPUT,        SSC_NUMBER,      "grid_interconnection_limit_kwac",   "Grid interconnection limit",            "kWac",    "",                                      "GridLimits",        "","",                           "" },
+
+    var_info_invalid };
 
 
 var_info vtab_technology_outputs[] = {
@@ -1496,8 +1501,11 @@ weatherdata::weatherdata( var_data *data_table )
 
 weatherdata::~weatherdata()
 {
-	for( size_t i=0;i<m_data.size();i++ )
-		delete m_data[i];
+    if (m_data.size() > 0) {
+        for (size_t i = 0; i< m_data.size(); i++)
+            delete m_data[i];
+    }
+    m_data.clear();
 }
 
 

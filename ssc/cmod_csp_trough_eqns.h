@@ -28,10 +28,8 @@ extern "C" {
         "     'Fluid' - double [-]\\n"
         "     'I_bn_des' - double [W/m2]\\n"
         "     'm_dot_htfmax' - double [kg/s]\\n"
-        "     'fluid_dens_outlet_temp' - double [kg/m3]\\n"
         "     'm_dot_htfmin' - double [kg/s]\\n"
-        "     'fluid_dens_inlet_temp' - double [kg/m3]\\n"
-        "     'radio_sm_or_area' - double [-]\\n"
+        "     'use_solar_mult_or_aperture_area' - double [-]\\n"
         "     'specified_solar_multiple' - double [-]\\n"
         "     'specified_total_aperture' - double [m2]\\n"
         "     'tshours' - double [hr]\\n"
@@ -113,6 +111,31 @@ extern "C" {
         "     'csp_dtr_sca_calc_iams' - double [-]\\n";
 
     SSCEXPORT void Physical_Trough_Collector_Type_Equations(ssc_data_t data);
+
+
+    static const char* Physical_Trough_Collector_Type_UI_Only_Equations_doc =
+        "\\n"
+        "Input: var_table with key-value pairs\\n"
+        "     'lat' - double [deg]\\n"
+        "     'tilt' - double [deg]\\n"
+        "     'azimuth' - double [deg]\\n"
+        "     'nSCA' - double [-]\\n"
+        "     'L_SCA' - double [m]\\n"
+        "     'ColperSCA' - double [-]\\n"
+        "     'Ave_Focal_Length' - double [m]\\n"
+        "     'Distance_SCA' - double [m]\\n"
+        "     'IAM_matrix' - double [-]\\n"
+        "Output: key-value pairs added to var_table\\n"
+        "     'csp_dtr_sca_calc_zenith' - double [deg]\\n"
+        "     'csp_dtr_sca_calc_costh' - double [-]\\n"
+        "     'csp_dtr_sca_calc_theta' - double [deg]\\n"
+        "     'csp_dtr_sca_calc_latitude' - double [deg]\\n"
+        "     'csp_dtr_sca_ap_lengths' - double [m]\\n"
+        "     'csp_dtr_sca_calc_end_gains' - double []\\n"
+        "     'csp_dtr_sca_calc_end_losses' - double []\\n"
+        "     'csp_dtr_sca_calc_iams' - double [-]\\n";
+
+    SSCEXPORT void Physical_Trough_Collector_Type_UI_Only_Equations(ssc_data_t data);
 
 
     static const char* Physical_Trough_System_Control_Equations_doc =

@@ -200,6 +200,30 @@ struct batt_variables
 	/* Battery cycle costs */
 	int batt_cycle_cost_choice;
     std::vector<double> batt_cycle_cost;
+
+    /* PV Smoothing */
+    ssc_number_t batt_dispatch_pvs_nameplate_ac;
+    bool batt_dispatch_pvs_ac_lb_enable;
+    ssc_number_t batt_dispatch_pvs_ac_lb;
+    bool batt_dispatch_pvs_ac_ub_enable;
+    ssc_number_t batt_dispatch_pvs_ac_ub;
+    bool batt_dispatch_pvs_curtail_as_control;
+    bool batt_dispatch_pvs_curtail_if_violation;
+    bool batt_dispatch_pvs_short_forecast_enable;
+    ssc_number_t batt_dispatch_pvs_forecast_shift_periods;
+    ssc_number_t batt_dispatch_pvs_timestep_multiplier;
+    ssc_number_t batt_dispatch_pvs_max_ramp;
+    ssc_number_t batt_dispatch_pvs_soc_rest;
+    ssc_number_t batt_dispatch_pvs_kp;
+    ssc_number_t batt_dispatch_pvs_ki;
+    ssc_number_t batt_dispatch_pvs_kf;
+
+
+    /* Interconnection, curtailment, and outages for dispatch */
+    bool enable_interconnection_limit;
+    double grid_interconnection_limit_kW;
+    std::vector<double> gridCurtailmentLifetime_MW;
+    std::vector<bool> grid_outage_steps;
 };
 
 struct battstor
@@ -230,6 +254,7 @@ struct battstor
 	void outputs_topology_dependent();
 	void metrics();
 	void update_grid_power(compute_module &cm, double P_gen_ac, double P_load_ac, size_t index);
+    bool is_outage_step(size_t index);
 
 	/*! Manual dispatch*/
 	bool manual_dispatch = false;
@@ -277,6 +302,9 @@ struct battstor
 	bool en;
 	int chem;
 
+    // Toggle whether the outage variables should be output, such as crit_load_met
+    bool analyze_outage;
+
 	std::shared_ptr<batt_variables> batt_vars;
 	bool make_vars;
 
@@ -302,59 +330,70 @@ struct battstor
 	std::vector<double> fuelcellPower;
 
 	// outputs
-	ssc_number_t
-		*outTotalCharge,
-		*outAvailableCharge,
-		*outBoundCharge,
-		*outMaxChargeAtCurrent,
-		*outMaxCharge,
-		*outMaxChargeThermal,
-		*outSOC,
-		*outDOD,
-		*outCurrent,
-		*outCellVoltage,
-		*outBatteryVoltage,
-		*outCapacityPercent,
-		*outCapacityPercentCycle,
-		*outCapacityPercentCalendar,
-		*outCycles,
-		*outDODCycleAverage,
-		*outBatteryBankReplacement,
-		*outBatteryTemperature,
-		*outCapacityThermalPercent,
-		*outDispatchMode,
-		*outBatteryPower,
-		*outGenPower,
-        *outGenWithoutBattery,
-		*outGridPower,
-		*outSystemToLoad,
-		*outBatteryToLoad,
-		*outGridToLoad,
-		*outFuelCellToLoad,
-		*outGridPowerTarget,
-		*outBattPowerTarget,
-		*outSystemToBatt,
-		*outGridToBatt,
-		*outFuelCellToBatt,
-		*outSystemToGrid,
-		*outBatteryToGrid,
-		*outFuelCellToGrid,
-		*outBatteryConversionPowerLoss,
-		*outBatterySystemLoss,
-		*outAnnualSystemChargeEnergy,
-		*outAnnualGridChargeEnergy,
-		*outAnnualChargeEnergy,
-		*outAnnualDischargeEnergy,
-		*outAnnualGridImportEnergy,
-		*outAnnualGridExportEnergy,
-		*outAnnualEnergySystemLoss,
-		*outAnnualEnergyLoss,
-		*outMarketPrice,
-		*outCostToCycle,
-		*outBenefitCharge,
-		*outBenefitGridcharge,
-		*outBenefitClipcharge,
-		*outBenefitDischarge;
+    ssc_number_t
+        * outTotalCharge,
+        * outAvailableCharge,
+        * outBoundCharge,
+        * outMaxChargeAtCurrent,
+        * outMaxCharge,
+        * outMaxChargeThermal,
+        * outSOC,
+        * outDOD,
+        * outCurrent,
+        * outCellVoltage,
+        * outBatteryVoltage,
+        * outCapacityPercent,
+        * outCapacityPercentCycle,
+        * outCapacityPercentCalendar,
+        * outCycles,
+        * outDODCycleAverage,
+        * outBatteryBankReplacement,
+        * outBatteryTemperature,
+        * outCapacityThermalPercent,
+        * outDispatchMode,
+        * outBatteryPower,
+        * outGenPower,
+        * outGenWithoutBattery,
+        * outGridPower,
+        * outSystemToLoad,
+        * outBatteryToLoad,
+        * outGridToLoad,
+        * outFuelCellToLoad,
+        * outGridPowerTarget,
+        * outBattPowerTarget,
+        * outSystemToBatt,
+        * outGridToBatt,
+        * outFuelCellToBatt,
+        * outSystemToGrid,
+        * outBatteryToGrid,
+        * outFuelCellToGrid,
+        * outBatteryConversionPowerLoss,
+        * outBatterySystemLoss,
+		* outInterconnectionLoss,
+		* outCritLoadUnmet,
+        * outAnnualSystemChargeEnergy,
+        * outAnnualGridChargeEnergy,
+        * outAnnualChargeEnergy,
+        * outAnnualDischargeEnergy,
+        * outAnnualGridImportEnergy,
+        * outAnnualGridExportEnergy,
+        * outAnnualEnergySystemLoss,
+        * outAnnualEnergyLoss,
+        * outMarketPrice,
+        * outCostToCycle,
+        * outBenefitCharge,
+        * outBenefitGridcharge,
+        * outBenefitClipcharge,
+        * outBenefitDischarge,
+        * outPVS_outpower,
+        * outPVS_battpower,
+        * outPVS_battsoc,
+        * outPVS_curtail,
+        * outPVS_violation_list,
+        * outPVS_P_pv_ac, // testing with input pv output
+        * outPVS_PV_ramp_interval, // testing with sampled input pv output
+        * outPVS_forecast_pv_energy; // testing with forecast based on input pv output
+
 
 	double outAverageCycleEfficiency;
 	double outAverageRoundtripEfficiency;

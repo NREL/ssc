@@ -142,14 +142,16 @@ void Tower_SolarPilot_Capital_Costs_Equations(ssc_data_t data);
 /////////////////////////////////////////////////////////////////////////////////////////////
 
 // Originally from 'Physical Trough System Design'
-double Solar_mult(int radio_sm_or_area, double field_thermal_output, double q_pb_design, double specified_solar_multiple, double total_aperture, double total_required_aperture_for_SM1);
+double Solar_mult(int use_solar_mult_or_aperture_area, double field_thermal_output, double q_pb_design, double specified_solar_multiple, double total_aperture, double total_required_aperture_for_SM1);
 
-double Nloops(int radio_sm_or_area, double specified_solar_multiple, double total_required_aperture_for_SM1,
+double Nloops(int use_solar_mult_or_aperture_area, double specified_solar_multiple, double total_required_aperture_for_SM1,
     double specified_total_aperture, double single_loop_aperature);
 
-double Max_field_flow_velocity(double m_dot_htfmax, double fluid_dens_outlet_temp, double min_inner_diameter);
+double Max_field_flow_velocity(double m_dot_htfmax, double min_inner_diameter,
+    double T_out /*C*/, int rec_htf /*-*/, const util::matrix_t<ssc_number_t>& field_fl_props /*-*/);
 
-double Min_field_flow_velocity(double m_dot_htfmin, double fluid_dens_inlet_temp, double min_inner_diameter);
+double Min_field_flow_velocity(double m_dot_htfmin, double min_inner_diameter,
+    double T_in /*C*/, int rec_htf /*-*/, const util::matrix_t<ssc_number_t>& field_fl_props /*-*/);
 
 double Field_htf_cp_avg(double T_in /*C*/, double T_out /*C*/, int rec_htf /*-*/,
     const util::matrix_t<ssc_number_t>& field_fl_props /*-*/);      // [kJ/kg-K]

@@ -44,7 +44,7 @@ class dispatch_t
 {
 public:
 
-	enum FOM_MODES { FOM_LOOK_AHEAD, FOM_LOOK_BEHIND, FOM_FORECAST, FOM_CUSTOM_DISPATCH, FOM_MANUAL };
+	enum FOM_MODES { FOM_LOOK_AHEAD, FOM_LOOK_BEHIND, FOM_FORECAST, FOM_CUSTOM_DISPATCH, FOM_MANUAL, FOM_PV_SMOOTHING };
 	enum BTM_MODES { LOOK_AHEAD, LOOK_BEHIND, MAINTAIN_TARGET, CUSTOM_DISPATCH, MANUAL, FORECAST };
 	enum METERING { BEHIND, FRONT };
 	enum PV_PRIORITY { MEET_LOAD, CHARGE_BATTERY };
@@ -65,7 +65,8 @@ public:
 		double Pd_max_kwac,
 		double t_min,
 		int dispatch_mode,
-		int meter_position);
+		int meter_position,
+        double interconnection_limit);
 
 	// deep copy constructor (new memory), from dispatch to this
 	dispatch_t(const dispatch_t& dispatch);
@@ -106,6 +107,8 @@ public:
 	double power_fuelcell_to_grid();
 	double power_conversion_loss();
 	double power_system_loss();
+    double power_interconnection_loss();
+    double power_crit_load_unmet();
 
 	virtual double power_grid_target(){	return 0;}
 	virtual double power_batt_target(){ return 0.;}
@@ -151,7 +154,7 @@ protected:
 	/**
 	The dispatch mode.
 	For behind-the-meter dispatch: 0 = LOOK_AHEAD, 1 = LOOK_BEHIND, 2 = MAINTAIN_TARGET, 3 = CUSTOM, 4 = MANUAL, 5 = FORECAST
-	For front-of-meter dispatch: 0 = FOM_LOOK_AHEAD, 1 = FOM_LOOK_BEHIND, 2 = INPUT FORECAST, 3 = CUSTOM, 4 = MANUAL
+	For front-of-meter dispatch: 0 = FOM_LOOK_AHEAD, 1 = FOM_LOOK_BEHIND, 2 = INPUT FORECAST, 3 = CUSTOM, 4 = MANUAL, 5 = PV Smoothing
 	*/
 	int _mode;
 
@@ -250,7 +253,8 @@ public:
 		bool can_fuelcell_charge,
         std::vector<double> battReplacementCostPerkWh,
         int battCycleCostChoice,
-        std::vector<double> battCycleCost
+        std::vector<double> battCycleCost,
+        double interconnection_limit
 		);
 
 	virtual ~dispatch_automatic_t(){};
