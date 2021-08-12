@@ -555,6 +555,8 @@ static var_info _cm_vtab_pvsamv1[] = {
     { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_celltempSS",                 "Subarray 1 Cell temperature (steady state)",                           "C",      "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
     { SSC_OUTPUT,        SSC_NUMBER,      "temp_test",                 "Subarray 1 Cell temperature test value",                           "C",      "", "Temperature",       "",                    "",                              "" },
     { SSC_OUTPUT,        SSC_NUMBER,      "temp_test2",                 "Subarray 1 Cell temperature test value2",                           "C",      "", "Temperature",       "",                    "",                              "" },
+    { SSC_OUTPUT,        SSC_NUMBER,      "temp_test3",                 "Subarray 1 Cell temperature test value3",                           "C",      "", "Temperature",       "",                    "",                              "" },
+    { SSC_OUTPUT,        SSC_NUMBER,      "temp_test4",                 "Subarray 1 Cell temperature test value4",                           "C",      "", "Temperature",       "",                    "",                              "" },
 
     { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_dc_voltage",                 "Subarray 1 Operating DC voltage",                                         "V",      "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_dc_gross",                   "Subarray 1 DC power gross",                                             "kW",      "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
@@ -2095,8 +2097,10 @@ void cm_pvsamv1::exec()
         }
     }
 
-    assign("temp_test", PVSystem->p_temperatureCell[0][2099]);
-    assign("temp_test2", PVSystem->p_temperatureCell[0][2100]);
+    assign("temp_test", PVSystem->p_temperatureCell[0][1138]);
+    assign("temp_test2", PVSystem->p_temperatureCell[0][6254]);
+    assign("temp_test3", PVSystem->p_temperatureCell[0][1719]);
+    assign("temp_test4", PVSystem->p_temperatureCell[0][6634]);
 
     // Initialize DC battery predictive controller
     if (en_batt && batt_topology == ChargeController::DC_CONNECTED)
