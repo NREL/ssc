@@ -42,6 +42,8 @@ protected:
 
     double dtHour = 1;
 
+    double interconnection_limit = 1e+38;
+
 public:
 
     void SetUp()

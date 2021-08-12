@@ -60,7 +60,7 @@ set_default_compile_options(Test)
 if(MSVC)
     set_additional_compile_options(Test "/MP /W3 /wd4244 /D_MBCS")
 else()
-    set_additional_compile_options(Test "-Wno-ignored-attributes -Wno-deprecated-declarations")
+    set_additional_compile_options(Test "-Wno-deprecated-declarations")
 endif()
 
 if (MSVC)
@@ -77,14 +77,14 @@ endif()
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug" OR MSVC)
 find_library( GTESTD_LIB
-        NAMES libgtestd.a gtestd.lib
+        NAMES libgtestd.a gtestd.lib libgtestd.so
         PATHS $ENV{GTESTD_DIR} ${GTDIR}/build/lib ${GTDIR}/build/lib/Debug)
 target_link_libraries(Test debug ${GTESTD_LIB})
 endif()
 
 if (CMAKE_BUILD_TYPE STREQUAL "Release" OR MSVC)
     find_library( GTEST_LIB
-            NAMES libgtest.a gtest.lib
+            NAMES libgtest.a gtest.lib libgtest.so
             PATHS $ENV{GTEST_DIR} ${GTDIR}/build/lib ${GTDIR}/build/lib/Release)
     target_link_libraries(Test optimized ${GTEST_LIB})
 endif()

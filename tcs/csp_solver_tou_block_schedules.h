@@ -70,6 +70,8 @@ public:
 
 	std::vector<string> mv_labels;
 
+    std::vector<double> timestep_load_fractions;
+
 	void init(int n_arrays, bool is_leapyear=false);
 };
 
@@ -82,6 +84,8 @@ public:
 
 	~C_block_schedule_csp_ops(){};
 
+    bool mv_is_diurnal;
+
 	enum 
 	{
 		TURB_FRAC,
@@ -89,7 +93,6 @@ public:
 		N_END	
 	};
 
-	
 	
 };
 

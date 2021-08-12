@@ -114,6 +114,14 @@ struct battery_state_test{
     thermal_state thermal;
 
     size_t last_idx;
+
+    battery_state_test(int model_choice = -1) {
+        capacity = capacity_state();
+        lifetime = lifetime_state(model_choice);
+        thermal = thermal_state();
+        batt_voltage = 0;
+        last_idx = 0;
+    }
 };
 
 static void compareState(std::unique_ptr<battery_t>&model, const battery_state_test& expected_state, const std::string& msg){
