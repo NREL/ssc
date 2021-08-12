@@ -2095,8 +2095,8 @@ void cm_pvsamv1::exec()
         }
     }
 
-    assign("temp_test", PVSystem->p_temperatureCell[0][12]);
-    assign("temp_test2", PVSystem->p_temperatureCell[0][33]);
+    assign("temp_test", PVSystem->p_temperatureCell[0][2099]);
+    assign("temp_test2", PVSystem->p_temperatureCell[0][2100]);
 
     // Initialize DC battery predictive controller
     if (en_batt && batt_topology == ChargeController::DC_CONNECTED)
