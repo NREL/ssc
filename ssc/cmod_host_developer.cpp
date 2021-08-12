@@ -1000,6 +1000,8 @@ public:
             escal_or_annual(CF_om_production1_expense, nyears, "om_batt_variable_cost", inflation_rate, 0.001, false, as_double("om_production_escal") * 0.01); //$/MWh
             escal_or_annual(CF_om_capacity1_expense, nyears, "om_batt_capacity_cost", inflation_rate, 1.0, false, as_double("om_capacity_escal") * 0.01);
             nameplate1 = as_number("om_batt_nameplate");
+            if (as_integer("en_batt") == 1)
+                battery_discharged = as_vector_double("batt_annual_discharge_energy");
         }
         if (add_om_num_types > 1) // PV Battery Fuel Cell
         {
