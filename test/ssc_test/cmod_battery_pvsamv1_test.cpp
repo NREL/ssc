@@ -442,8 +442,8 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_ACBatteryModelIntegration)
     ssc_number_t avgCycles[3] = { 0.003, 0.006, 0.003 };
 
     ssc_data_set_number(data, "batt_dispatch_choice", 0);
-    // Test economoic dispatch look ahead, economoic dispatch look behind, and custom forecast. Others require additional input data
-    for (int i = 0; i < 3; i++) {
+    // Test economoic dispatch look ahead, economoic dispatch look behind. Others require additional input data
+    for (int i = 0; i < 2; i++) {
         ssc_data_set_number(data, "batt_dispatch_wf_forecast_choice", i);
 
         int pvsam_errors = run_pvsam1_battery_ppa(data);
