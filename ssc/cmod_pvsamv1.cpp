@@ -489,6 +489,8 @@ static var_info _cm_vtab_pvsamv1[] = {
 { SSC_INPUT, SSC_NUMBER,   "en_batt",                              "Enable battery storage model",                        "0/1",    "",                                                                                                                                                                                      "BatterySystem",                                               "?=0",                                "",                    "" },
 { SSC_INPUT, SSC_ARRAY,    "load",                                 "Electricity load (year 1)",                           "kW",     "",                                                                                                                                                                                      "Load",                                               "?",                                  "",                    "" },
 { SSC_INPUT, SSC_ARRAY,    "crit_load",                            "Critical Electricity load (year 1)",                  "kW",     "",                                                                                                                                                                                      "Load",                                               "",                                   "",                    "" },
+{ SSC_INPUT, SSC_ARRAY,    "grid_outage",                          "Timesteps with grid outage",                          "0/1",    "0=GridAvailable,1=GridUnavailable,Length=load", "Load",    "",                       "",                               "" },
+{ SSC_INPUT, SSC_NUMBER,   "run_resiliency_calcs",                 "Enable resilence calculations for every timestep",    "0/1",    "0=DisableCalcs,1=EnableCalcs",                  "Load",    "?=0",                    "",                               "" },
 { SSC_INPUT, SSC_ARRAY,    "load_escalation",                      "Annual load escalation",                              "%/year", "",                                                                                                                                                                                      "Load",                                               "?=0",                                "",                    "" },
 // NOTE:  other battery storage model inputs and outputs are defined in batt_common.h/batt_common.cpp
 
@@ -681,6 +683,10 @@ static var_info _cm_vtab_pvsamv1[] = {
         { SSC_OUTPUT,        SSC_ARRAY,      "xfmr_loss_ts",                         "Transformer total loss",                                "kW", "",    "Time Series (Transformer)", "", "", "" },
 
         { SSC_OUTPUT,        SSC_ARRAY,     "ac_transmission_loss",                   "Transmission loss",                                     "kW", "",    "Time Series (Transmission)",                 "",                     "",                   "" },
+
+        // Post batt AC losses - record so the powerflows from PV and batt to grid add up properly
+        { SSC_OUTPUT,        SSC_ARRAY,     "ac_perf_adj_loss",                       "AC performance adjustment loss",                             "kW", "",    "Time Series (AC Loss)",                 "",                     "",                   "" },
+        { SSC_OUTPUT,        SSC_ARRAY,     "ac_lifetime_loss",                       "AC lifetime daily loss",                                     "kW", "",    "Time Series (AC Loss)",                 "",                     "",                   "" },
 
         //total losses- not part of loss diagram but now outputs instead of inputs JMF 11/25/15
         { SSC_OUTPUT,        SSC_NUMBER,     "ac_loss",                              "AC wiring loss",                                       "%",   "",    "Annual (Year 1)",              "",                        "",                   "" },
@@ -927,6 +933,7 @@ cm_pvsamv1::cm_pvsamv1()
     add_var_info(vtab_battery_outputs);
     add_var_info(vtab_resilience_outputs);
     add_var_info(vtab_utility_rate_common); // Required by battery
+    add_var_info(vtab_grid_curtailment); // Required by battery
 }
 
 
@@ -1094,11 +1101,17 @@ void cm_pvsamv1::exec()
         if (PVSystem->Inverter->nMpptInputs > 1 && en_batt && batt_topology == ChargeController::DC_CONNECTED)
             throw exec_error("pvsamv1", "DC-connected batteries do not work with multiple MPPT input inverters.");
 
-        if (!p_crit_load_in.empty() && *std::max_element(p_crit_load_in.begin(), p_crit_load_in.end()) > 0) {
-            resilience = std::unique_ptr<resilience_runner>(new resilience_runner(batt));
-            auto logs = resilience->get_logs();
-            if (!logs.empty()) {
-                log(logs[0], SSC_WARNING);
+        bool run_resilience = as_boolean("run_resiliency_calcs");
+        if (run_resilience) {
+            if (!p_crit_load_in.empty() && *std::max_element(p_crit_load_in.begin(), p_crit_load_in.end()) > 0) {
+                resilience = std::unique_ptr<resilience_runner>(new resilience_runner(batt));
+                auto logs = resilience->get_logs();
+                if (!logs.empty()) {
+                    log(logs[0], SSC_WARNING);
+                }
+            }
+            else {
+                throw exec_error("pvsamv1", "If run_resiliency_calcs is 1, crit_load must have length > 0 and values > 0");
             }
         }
     }
@@ -1990,7 +2003,7 @@ void cm_pvsamv1::exec()
                 dcPowerNetPerSubarray[nn] *= dc_haf(hour_of_year);
 
                 //lifetime daily DC losses apply to all subarrays and should be applied last. Only applied if they are enabled.
-                if (save_full_lifetime_variables == 1 && PVSystem->enableDCLifetimeLosses)
+                if (PVSystem->enableDCLifetimeLosses)
                 {
                     //current index of the lifetime daily DC losses is the number of years that have passed (iyear, because it is 0-indexed) * the number of days + the number of complete days that have passed
                     int dc_loss_index = (int)iyear * 365 + (int)floor(hour_of_year / 24); //in units of days
@@ -2089,7 +2102,6 @@ void cm_pvsamv1::exec()
     wdprov->rewind();
 
     double annual_dc_loss_ond = 0, annual_ac_loss_ond = 0; // (TR)
-
 
     for (size_t iyear = 0; iyear < nyears; iyear++)
     {
@@ -2311,32 +2323,49 @@ void cm_pvsamv1::exec()
             }
 
             // accumulate system generation before curtailment and availability
-            if (iyear == 0)
+            if (iyear == 0) {
                 annual_ac_pre_avail += PVSystem->p_systemACPower[idx] * ts_hour;
+            }
 
-
+            ssc_number_t adj_factor = haf(hour_of_year);
+            if (iyear == 0 || save_full_lifetime_variables == 1) {
+                PVSystem->p_acPerfAdjLoss[idx] = PVSystem->p_systemACPower[idx] * (1 - adj_factor);
+            }
             //apply availability and curtailment
-            PVSystem->p_systemACPower[idx] *= haf(hour_of_year);
+            PVSystem->p_systemACPower[idx] *= adj_factor;
+            if (en_batt) {
+                batt->outGenWithoutBattery[idx] *= adj_factor;
+            }
 
 			//apply lifetime daily AC losses only if they are enabled
 			if (system_use_lifetime_output && PVSystem->enableACLifetimeLosses)
 			{
 				//current index of the lifetime daily AC losses is the number of years that have passed (iyear, because it is 0-indexed) * days in a year + the number of complete days that have passed
 				int ac_loss_index = (int)iyear * 365 + (int)floor(hour_of_year / 24); //in units of days
-				if (iyear == 0) annual_ac_lifetime_loss += PVSystem->p_systemACPower[idx] * (PVSystem->acLifetimeLosses[ac_loss_index] / 100) * util::watt_to_kilowatt * ts_hour; //this loss is still in percent, only keep track of it for year 0, convert from power W to energy kWh
+                ssc_number_t ac_lifetime_loss = PVSystem->p_systemACPower[idx] * (PVSystem->acLifetimeLosses[ac_loss_index] / 100); // loss in kWac
+                if (iyear == 0 || save_full_lifetime_variables == 1) {
+                    PVSystem->p_acLifetimeLoss[idx] = ac_lifetime_loss;
+                }
+                if (iyear == 0) annual_ac_lifetime_loss += ac_lifetime_loss * ts_hour; // convert to kWh for yr 1 annual sum
 				PVSystem->p_systemACPower[idx] *= (100 - PVSystem->acLifetimeLosses[ac_loss_index]) / 100;
                 if (en_batt) {
                     batt->outGenWithoutBattery[idx] *= (100 - PVSystem->acLifetimeLosses[ac_loss_index]) / 100;
                 }
 			}
 			// Update battery with final gen to compute grid power
-			if (en_batt)
-				batt->update_grid_power(*this, PVSystem->p_systemACPower[idx], p_load_full[idx], idx);
+            if (en_batt) {
+                if (batt->is_outage_step(idx % nrec)) {
+                    batt->update_grid_power(*this, PVSystem->p_systemACPower[idx], p_crit_load_in[idx % nrec], idx);
+                }
+                else {
+                    batt->update_grid_power(*this, PVSystem->p_systemACPower[idx], p_load_full[idx], idx);
+                }
+            }
 
-            if (iyear == 0)
+            if (iyear == 0) {
                 annual_energy += (ssc_number_t)(PVSystem->p_systemACPower[idx] * ts_hour);
 
-
+            }
         }
         wdprov->rewind();
     }
@@ -2672,7 +2701,7 @@ void cm_pvsamv1::exec()
         percent = 0.;
         if (annual_xfmr_loss > 0) percent = 100 * annual_xfmr_loss / annual_ac_gross;
         assign("annual_xfmr_loss_percent", var_data((ssc_number_t)percent));
-        sys_output -= annual_ac_lifetime_loss;
+        sys_output -= annual_xfmr_loss;
 
 
 #ifdef WITH_CHECKS

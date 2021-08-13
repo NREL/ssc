@@ -292,9 +292,7 @@ ssc_data_t trough_physical_defaults()
     ssc_data_set_matrix(data, "tes_lengths", p_tes_lengths, 1, 11);
     ssc_data_set_number(data, "DP_SGS", 0);
     ssc_data_set_number(data, "adjust:constant", 4);
-    ssc_data_set_number(data, "fluid_dens_outlet_temp", 706.384);
-    ssc_data_set_number(data, "fluid_dens_inlet_temp", 820.811);
-    ssc_data_set_number(data, "radio_sm_or_area", 0);
+    ssc_data_set_number(data, "use_solar_mult_or_aperture_area", 0);
     ssc_data_set_number(data, "specified_solar_multiple", 2);
     ssc_data_set_number(data, "specified_total_aperture", 877000);
     ssc_data_set_number(data, "non_solar_field_land_area_multiplier", 1.4);

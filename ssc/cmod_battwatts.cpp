@@ -50,6 +50,8 @@ var_info vtab_battwatts[] = {
 	{ SSC_INPUT,        SSC_ARRAY,       "ac",							     "AC inverter power",                      "W",       "",                 "Battery",                           "",                           "",                              "" },
     { SSC_INPUT,		SSC_ARRAY,	     "load",			                     "Electricity load (year 1)",              "kW",	   "",		           "Battery",                           "",	                         "",	                          "" },
     { SSC_INPUT,		SSC_ARRAY,	     "crit_load",			             "Critical electricity load (year 1)",     "kW",	   "",		           "Battery",                           "",	                         "",	                          "" },
+    { SSC_INPUT,        SSC_ARRAY,       "grid_outage",                      "Timesteps with grid outage",             "0/1",     "0=GridAvailable,1=GridUnavailable,Length=load", "Load",    "",                       "",                               "" },
+    { SSC_INPUT,        SSC_NUMBER,      "run_resiliency_calcs",             "Enable resilence calculations for every timestep",           "0/1",     "0=DisableCalcs,1=EnableCalcs",                  "Load",    "?=0",                    "",                               "" },
     { SSC_INPUT,        SSC_ARRAY,       "load_escalation",                  "Annual load escalation",                 "%/year",   "",                 "Load",                              "?=0",                       "",                              "" },
     { SSC_INPUT,        SSC_NUMBER,      "inverter_efficiency",               "Inverter Efficiency",                     "%",      "",                  "Battery",                          "",                           "MIN=0,MAX=100",                               "" },
 
@@ -57,7 +59,7 @@ var_info_invalid  };
 
 std::shared_ptr<batt_variables>
 battwatts_create(size_t n_recs, size_t n_years, int chem, int meter_pos, double size_kwh, double size_kw, double inv_eff,
-                 int dispatch, std::vector<double> dispatch_custom){
+                 int dispatch, std::vector<double> dispatch_custom, double interconnection_limit, std::vector<double> curtailment_limit){
     auto batt_vars = std::make_shared<batt_variables>();
 
     // allocate vectors
@@ -213,6 +215,13 @@ battwatts_create(size_t n_recs, size_t n_years, int chem, int meter_pos, double 
     batt_vars->batt_minimum_SOC = 15.;
     batt_vars->batt_minimum_modetime = 10;
 
+    // Interconnection and curtailment
+    batt_vars->gridCurtailmentLifetime_MW = curtailment_limit;
+    batt_vars->grid_interconnection_limit_kW = interconnection_limit;
+    if (interconnection_limit < 1e+38) {
+        batt_vars->enable_interconnection_limit = true;
+    }
+
     // Storage dispatch controllers
     switch (dispatch){
         default:
@@ -264,12 +273,14 @@ cm_battwatts::cm_battwatts()
     add_var_info(vtab_battery_outputs);
     add_var_info(vtab_technology_outputs);
     add_var_info(vtab_resilience_outputs);
+    add_var_info(vtab_grid_curtailment);
 }
 
 std::shared_ptr<batt_variables> cm_battwatts::setup_variables(size_t n_recs)
 {
     size_t nyears = 1;
-    if (as_boolean("system_use_lifetime_output"))
+    bool system_use_lifetime_output = as_boolean("system_use_lifetime_output");
+    if (system_use_lifetime_output)
         nyears = (size_t)as_double("analysis_period");
     int chem = as_integer("batt_simple_chemistry");
     int pos = as_integer("batt_simple_meter_position");
@@ -283,7 +294,37 @@ std::shared_ptr<batt_variables> cm_battwatts::setup_variables(size_t n_recs)
         if (dispatch_custom.size()!=n_recs) throw exec_error("battwatts",
                 "'batt_custom_dispatch' length must be equal to length of 'ac'.");
     }
-    return battwatts_create(n_recs, nyears, chem, pos, kwh, kw, inv_eff, dispatch, dispatch_custom);
+    // Interconnection and curtailment
+    std::vector<double> scaleFactors(nyears, 1.0); // No scaling factors for curtailment
+
+    std::vector<double> curtailment_year_one;
+    std::vector<double> curtailment_lifetime;
+    if (is_assigned("grid_curtailment")) {
+        curtailment_year_one = as_vector_double("grid_curtailment");
+        double interpolation_factor = 1.0;
+        double dt_hour = 8760.0 / (double)n_recs;
+        single_year_to_lifetime_interpolated<double>(
+            system_use_lifetime_output,
+            (size_t)nyears,
+            n_recs * nyears,
+            curtailment_year_one,
+            scaleFactors,
+            interpolation_factor,
+            curtailment_lifetime,
+            n_recs,
+            dt_hour);
+    }
+
+    bool enable_interconnection_limit = false;
+    double interconnection_limit = 1e+38;
+    if (is_assigned("enable_interconnection_limit")) {
+        enable_interconnection_limit = as_boolean("enable_interconnection_limit");
+        if (enable_interconnection_limit && is_assigned("grid_interconnection_limit_kwac")) {
+            interconnection_limit = as_double("grid_interconnection_limit_kwac");
+        }
+    }
+
+    return battwatts_create(n_recs, nyears, chem, pos, kwh, kw, inv_eff, dispatch, dispatch_custom, interconnection_limit, curtailment_lifetime);
 }
 
 
@@ -334,15 +375,21 @@ void cm_battwatts::exec()
 
         std::unique_ptr<resilience_runner> resilience = nullptr;
         std::vector<ssc_number_t> p_crit_load;
+        bool run_resilience = as_boolean("run_resiliency_calcs");
         if (is_assigned("crit_load")){
             p_crit_load = as_vector_ssc_number_t("crit_load");
             if (p_crit_load.size() != p_load.size())
                 throw exec_error("battwatts", "critical electric load profile must have same number of values as load");
-            if (!p_crit_load.empty() && *std::max_element(p_crit_load.begin(), p_crit_load.end()) > 0){
-                resilience = std::unique_ptr<resilience_runner>(new resilience_runner(batt));
-                auto logs = resilience->get_logs();
-                if (!logs.empty()){
-                    log(logs[0], SSC_WARNING);
+            if (run_resilience) {
+                if (!p_crit_load.empty() && *std::max_element(p_crit_load.begin(), p_crit_load.end()) > 0) {
+                    resilience = std::unique_ptr<resilience_runner>(new resilience_runner(batt));
+                    auto logs = resilience->get_logs();
+                    if (!logs.empty()) {
+                        log(logs[0], SSC_WARNING);
+                    }
+                }
+                else {
+                    throw exec_error("battwatts", "If run_resiliency_calcs is 1, crit_load must have length > 0 and values > 0");
                 }
             }
         }
