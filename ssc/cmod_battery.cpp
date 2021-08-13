@@ -181,7 +181,8 @@ var_info vtab_battery_inputs[] = {
     { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_load_forecast_choice",          "Load forecast choice for automatic dispatch",                 "0/1/2",   "0=LookAhead,1=LookBehind,2=InputForecast", "BatteryDispatch",       "?=0",                        "",                             "" },
     { SSC_INPUT,        SSC_ARRAY,      "batt_pv_clipping_forecast",                   "PV clipping forecast",                                   "kW",       "",                     "BatteryDispatch",       "",  "",          "" },
     { SSC_INPUT,        SSC_ARRAY,      "batt_pv_ac_forecast",                         "PV ac power forecast",                                   "kW",       "",                     "BatteryDispatch",       "",  "",          "" },
-    { SSC_INPUT,        SSC_ARRAY,      "batt_load_ac_forecast",                       "Load ac power forecast",                                   "kW",       "",                     "BatteryDispatch",       "",  "",          "" },
+    { SSC_INPUT,        SSC_ARRAY,      "batt_load_ac_forecast",                       "Load ac power forecast",                                  "kW",       "",                     "BatteryDispatch",       "",  "",          "" },
+    { SSC_INPUT,        SSC_ARRAY,      "batt_load_ac_forecast_escalation",            "Annual load escalation for ac power forecast",            "kW",       "length <= analysis_period",                     "BatteryDispatch",       "",  "",          "" },
 
     //  cycle cost inputs
     { SSC_INPUT,        SSC_NUMBER,     "batt_cycle_cost_choice",                      "Use SAM cost model for degradaton penalty or input custom via batt_cycle_cost", "0/1",     "0=UseCostModel,1=InputCost", "BatteryDispatch", "?=0",                           "",                             "" },
