@@ -127,7 +127,8 @@ bool partload_inverter_t::acpower(
 	*Pntloss = 0.0;
 	if (Pdc_total <= 0.0)
 	{
-		*Pac = -Pntare;
+		//*Pac = -Pntare;
+        *Pac = 0;
 		*Ppar = Pntare;
 		*Pntloss = Pntare;
 	}
