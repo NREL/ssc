@@ -1052,14 +1052,6 @@ void cm_pvsamv1::exec()
     std::vector<ssc_number_t> p_pv_ac_forecast;
     std::vector<ssc_number_t> p_pv_ac_use;
 
-    if (is_assigned("batt_pv_clipping_forecast")) {
-        p_pv_clipping_forecast = as_vector_ssc_number_t("batt_pv_clipping_forecast");
-    }
-    if (is_assigned("batt_pv_ac_forecast")) {
-        p_pv_ac_forecast = as_vector_ssc_number_t("batt_pv_ac_forecast");
-    }
-
-
     // electric load - lifetime load data?
     double cur_load = 0.0;
     size_t nload = 0;
@@ -1092,6 +1084,22 @@ void cm_pvsamv1::exec()
         // Single timestep or non-annual simulations are not enabled with batteries
         if (!Simulation->annualSimulation)
             throw exec_error("pvsamv1", "The PV+Battery configuration requires a simulation period that is continuous over one or more years.");
+
+        int batt_forecast_choice = as_integer("batt_dispatch_wf_forecast_choice");
+        if (is_assigned("batt_pv_clipping_forecast")) {
+            p_pv_clipping_forecast = as_vector_ssc_number_t("batt_pv_clipping_forecast");
+            // Annual simulation is enforced above
+            if (p_pv_clipping_forecast.size() < step_per_hour * 8760 && batt_forecast_choice == dispatch_t::WEATHER_FORECAST_CHOICE::WF_CUSTOM) {
+                throw exec_error("pvsamv1", "batt_pv_clipping_forecast forecast length is " + std::to_string(p_pv_clipping_forecast.size()) + " when custom weather file forecast is selected. Change batt_dispatch_wf_forecast_choice or provide a forecast of at least length " + std::to_string(step_per_hour * 8760));
+            }
+        }
+        if (is_assigned("batt_pv_ac_forecast")) {
+            p_pv_ac_forecast = as_vector_ssc_number_t("batt_pv_ac_forecast");
+            // Annual simulation is enforced above
+            if (p_pv_ac_forecast.size() < step_per_hour * 8760 && batt_forecast_choice == dispatch_t::WEATHER_FORECAST_CHOICE::WF_CUSTOM) {
+                throw exec_error("pvsamv1", "batt_pv_clipping_forecast forecast length is " + std::to_string(p_pv_ac_forecast.size()) + " when custom weather file forecast is selected. Change batt_dispatch_wf_forecast_choice or provide a forecast of at least length " + std::to_string(step_per_hour * 8760));
+            }
+        }
 
         batt = std::make_shared<battstor>(*m_vartab, en_batt, nrec, ts_hour);
         batt->setSharedInverter(sharedInverter);
