@@ -28,7 +28,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 std::shared_ptr<batt_variables>
 battwatts_create(size_t n_recs, size_t n_years, int chem, int meter_pos, double size_kwh, double size_kw, double inv_eff,
-                 int dispatch, std::vector<double> dispatch_custom = std::vector<double>());
+                 int dispatch, std::vector<double> dispatch_custom = std::vector<double>(), double interconnection_limit = 1e+38, std::vector<double> curtailment_limit = std::vector<double>());
 
 class cm_battwatts : public compute_module {
 public:

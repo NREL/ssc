@@ -313,17 +313,17 @@ struct PVSystem_IO
 	std::vector<ssc_number_t *> p_dcPowerNetPerMppt; /// An output vector containing Net DC Power in W for each mppt input
 
 	// Snow Model outputs
-	std::vector<ssc_number_t *> p_snowLoss; /// The angle of incidence of the subarray [degrees]
-	std::vector<ssc_number_t *> p_snowCoverage; /// The angle of incidence of the subarray [degrees]
+	std::vector<ssc_number_t *> p_snowLoss;
+	std::vector<ssc_number_t *> p_snowCoverage;
 
 	// Shade Database Validation
-	std::vector<ssc_number_t *> p_shadeDB_GPOA; /// The angle of incidence of the subarray [degrees]
-	std::vector<ssc_number_t *> p_shadeDB_DPOA; /// The angle of incidence of the subarray [degrees]
-	std::vector<ssc_number_t *> p_shadeDB_temperatureCell; /// The angle of incidence of the subarray [degrees]
-	std::vector<ssc_number_t *> p_shadeDB_modulesPerString; /// The angle of incidence of the subarray [degrees]
-	std::vector<ssc_number_t *> p_shadeDB_voltageMaxPowerSTC; /// The angle of incidence of the subarray [degrees]
-	std::vector<ssc_number_t *> p_shadeDB_voltageMPPTLow; /// The angle of incidence of the subarray [degrees]
-	std::vector<ssc_number_t *> p_shadeDB_voltageMPPTHigh; /// The angle of incidence of the subarray [degrees]
+	std::vector<ssc_number_t *> p_shadeDB_GPOA;
+	std::vector<ssc_number_t *> p_shadeDB_DPOA;
+	std::vector<ssc_number_t *> p_shadeDB_temperatureCell;
+	std::vector<ssc_number_t *> p_shadeDB_modulesPerString;
+	std::vector<ssc_number_t *> p_shadeDB_voltageMaxPowerSTC;
+	std::vector<ssc_number_t *> p_shadeDB_voltageMPPTLow;
+	std::vector<ssc_number_t *> p_shadeDB_voltageMPPTHigh;
 
 	// Degradation
 	ssc_number_t *p_dcDegradationFactor;
@@ -354,11 +354,13 @@ struct PVSystem_IO
 	ssc_number_t *p_inverterThermalLoss;
 	ssc_number_t *p_inverterTotalLoss;
 
-	ssc_number_t *p_acWiringLoss;
-	ssc_number_t *p_transmissionLoss;
+	ssc_number_t *p_acWiringLoss; // kWac
+	ssc_number_t *p_transmissionLoss; // kWac
+    ssc_number_t *p_acPerfAdjLoss; // kWac
+    ssc_number_t *p_acLifetimeLoss; // kWac
 
-	ssc_number_t *p_systemDCPower;
-	ssc_number_t *p_systemACPower;
+	ssc_number_t *p_systemDCPower; // kWdc
+	ssc_number_t *p_systemACPower; // kWac
 };
 
 /**

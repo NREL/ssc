@@ -218,6 +218,12 @@ struct batt_variables
     ssc_number_t batt_dispatch_pvs_ki;
     ssc_number_t batt_dispatch_pvs_kf;
 
+
+    /* Interconnection, curtailment, and outages for dispatch */
+    bool enable_interconnection_limit;
+    double grid_interconnection_limit_kW;
+    std::vector<double> gridCurtailmentLifetime_MW;
+    std::vector<bool> grid_outage_steps;
 };
 
 struct battstor
@@ -248,6 +254,7 @@ struct battstor
 	void outputs_topology_dependent();
 	void metrics();
 	void update_grid_power(compute_module &cm, double P_gen_ac, double P_load_ac, size_t index);
+    bool is_outage_step(size_t index);
 
 	/*! Manual dispatch*/
 	bool manual_dispatch = false;
@@ -294,6 +301,9 @@ struct battstor
 
 	bool en;
 	int chem;
+
+    // Toggle whether the outage variables should be output, such as crit_load_met
+    bool analyze_outage;
 
 	std::shared_ptr<batt_variables> batt_vars;
 	bool make_vars;
@@ -359,6 +369,8 @@ struct battstor
         * outFuelCellToGrid,
         * outBatteryConversionPowerLoss,
         * outBatterySystemLoss,
+		* outInterconnectionLoss,
+		* outCritLoadUnmet,
         * outAnnualSystemChargeEnergy,
         * outAnnualGridChargeEnergy,
         * outAnnualChargeEnergy,
