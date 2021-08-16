@@ -100,16 +100,19 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACBatteryModelIntegr
                 // Peak shaving, look ahead
                 pairs["batt_dispatch_choice"] = 0;
                 pairs["batt_dispatch_wf_forecast_choice"] = 0;
+                pairs["batt_dispatch_load_forecast_choice"] = 0;
                 break;
             case 1:
                 // Peak shaving, look behind
                 pairs["batt_dispatch_choice"] = 0;
                 pairs["batt_dispatch_wf_forecast_choice"] = 1;
+                pairs["batt_dispatch_load_forecast_choice"] = 1;
                 break;
             case 2:
                 // Input grid power targets
                 pairs["batt_dispatch_choice"] = 1;
                 pairs["batt_dispatch_wf_forecast_choice"] = 0;
+                pairs["batt_dispatch_load_forecast_choice"] = 0;
                 break;
 
         }
@@ -326,21 +329,24 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialDCBatteryModelIntegr
     // Test peak shaving look ahead, peak shaving look behind, and automated grid power target. Others require additional input data
     for (int i = 0; i < 3; i++) {
         switch (i) {
-            case 0:
-                // Peak shaving, look ahead
-                pairs["batt_dispatch_choice"] = 0;
-                pairs["batt_dispatch_wf_forecast_choice"] = 0;
-                break;
-            case 1:
-                // Peak shaving, look behind
-                pairs["batt_dispatch_choice"] = 0;
-                pairs["batt_dispatch_wf_forecast_choice"] = 1;
-                break;
-            case 2:
-                // Input grid power targets
-                pairs["batt_dispatch_choice"] = 1;
-                pairs["batt_dispatch_wf_forecast_choice"] = 0;
-                break;
+        case 0:
+            // Peak shaving, look ahead
+            pairs["batt_dispatch_choice"] = 0;
+            pairs["batt_dispatch_wf_forecast_choice"] = 0;
+            pairs["batt_dispatch_load_forecast_choice"] = 0;
+            break;
+        case 1:
+            // Peak shaving, look behind
+            pairs["batt_dispatch_choice"] = 0;
+            pairs["batt_dispatch_wf_forecast_choice"] = 1;
+            pairs["batt_dispatch_load_forecast_choice"] = 1;
+            break;
+        case 2:
+            // Input grid power targets
+            pairs["batt_dispatch_choice"] = 1;
+            pairs["batt_dispatch_wf_forecast_choice"] = 0;
+            pairs["batt_dispatch_load_forecast_choice"] = 0;
+            break;
 
         }
 

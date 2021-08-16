@@ -1960,7 +1960,49 @@ public:
                 n_rec_single_year,
                 dt_hour_gen);
 
+            // Setup custom forecasts
+            std::vector<ssc_number_t> p_pv_ac_forecast;
+            int batt_forecast_choice = as_integer("batt_dispatch_wf_forecast_choice");
+            if (is_assigned("batt_pv_ac_forecast")) {
+                p_pv_ac_forecast = as_vector_ssc_number_t("batt_pv_ac_forecast");
+                // Annual simulation is enforced above
+                if (p_pv_ac_forecast.size() < dt_hour_gen * 8760 && batt_forecast_choice == dispatch_t::WEATHER_FORECAST_CHOICE::WF_CUSTOM) {
+                    throw exec_error("pvsamv1", "batt_pv_clipping_forecast forecast length is " + std::to_string(p_pv_ac_forecast.size()) + " when custom weather file forecast is selected. Change batt_dispatch_wf_forecast_choice or provide a forecast of at least length " + std::to_string(dt_hour_gen * 8760));
+                }
+            }
+            else {
+                p_pv_ac_forecast = power_input_lifetime;
+            }
 
+            std::vector<ssc_number_t> p_load_forecast_in;
+            std::vector<ssc_number_t> p_load_forecast_full;
+            p_load_forecast_full.reserve(n_rec_lifetime);
+            if (is_assigned("batt_load_ac_forecast"))
+            {
+                p_load_forecast_in = as_vector_ssc_number_t("batt_load_ac_forecast");
+                size_t nload = p_load_forecast_in.size();
+                if (nload == 1) {
+                    // Length 1 is "empty" to UI lk
+                    p_load_forecast_in.clear();
+                }
+            }
+            if (p_load_forecast_in.size() > 0) {
+                std::vector<ssc_number_t> load_forecast_scale = scale_calculator.get_factors("batt_load_ac_forecast_escalation");
+                interpolation_factor = 1.0;
+                single_year_to_lifetime_interpolated<ssc_number_t>(
+                    use_lifetime,
+                    analysis_period,
+                    n_rec_lifetime,
+                    p_load_forecast_in,
+                    load_forecast_scale,
+                    interpolation_factor,
+                    p_load_forecast_full,
+                    n_rec_single_year,
+                    dt_hour_gen);
+            }
+            else {
+                p_load_forecast_full = load_lifetime;
+            }
 
             auto batt = std::make_shared<battstor>(*m_vartab, true, n_rec_single_year, dt_hour_gen);
 
@@ -1968,7 +2010,7 @@ public:
 
             if (is_assigned("fuelcell_power"))
                 add_var_info(vtab_fuelcell_output);
-            batt->initialize_automated_dispatch(power_input_lifetime, load_lifetime);
+            batt->initialize_automated_dispatch(p_pv_ac_forecast, p_load_forecast_full);
 
             if (load_lifetime.size() != n_rec_lifetime) {
                 throw exec_error("battery", "Load length does not match system generation length.");
