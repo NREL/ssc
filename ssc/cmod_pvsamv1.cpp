@@ -1029,6 +1029,7 @@ void cm_pvsamv1::exec()
 
     // lifetime outputs
     std::vector<ssc_number_t> p_load_full; p_load_full.reserve(nlifetime);
+    std::vector<ssc_number_t> p_load_forecast_full; // Reserve within an en_batt call, below
 
     //dc hourly adjustment factors
     adjustment_factors dc_haf(this, "dc_adjust");
@@ -1057,6 +1058,7 @@ void cm_pvsamv1::exec()
     size_t nload = 0;
     std::vector<ssc_number_t> p_load_in;
     std::vector<ssc_number_t> p_crit_load_in;
+    std::vector<ssc_number_t> p_load_forecast_in;
     if (is_assigned("load"))
     {
         p_load_in = as_vector_ssc_number_t("load");
@@ -1071,6 +1073,18 @@ void cm_pvsamv1::exec()
         if (nload != nrec && nload != 8760)
             throw exec_error("pvsamv1", "The critical electric load profile must have either same number of time steps as the weather file, or 8760 time steps.");
     }
+    if (is_assigned("batt_load_ac_forecast"))
+    {
+        p_load_forecast_in = as_vector_ssc_number_t("batt_load_ac_forecast");
+        nload = p_load_forecast_in.size();
+        if (nload == 1) {
+            // Length 1 is "empty" to UI lk
+            p_load_forecast_in.clear();
+        }
+        else if (nload != nrec && nload != 8760) {
+            throw exec_error("pvsamv1", "The electric load forecast profile must have either same number of time steps as the weather file, or 8760 time steps.");
+        }
+    }
 
     // resilience metrics for battery
     std::unique_ptr<resilience_runner> resilience = nullptr;
@@ -1084,6 +1098,8 @@ void cm_pvsamv1::exec()
         // Single timestep or non-annual simulations are not enabled with batteries
         if (!Simulation->annualSimulation)
             throw exec_error("pvsamv1", "The PV+Battery configuration requires a simulation period that is continuous over one or more years.");
+
+        p_load_forecast_full.reserve(nlifetime);
 
         int batt_forecast_choice = as_integer("batt_dispatch_wf_forecast_choice");
         if (is_assigned("batt_pv_clipping_forecast")) {
@@ -1163,6 +1179,26 @@ void cm_pvsamv1::exec()
     }
     else {
         p_load_full = p_load_in;
+    }
+
+    if (en_batt) {
+        if (p_load_forecast_in.size() > 0) {
+            std::vector<ssc_number_t> load_forecast_scale = scale_calculator.get_factors("batt_load_ac_forecast_escalation");
+            double interpolation_factor = 1.0;
+            single_year_to_lifetime_interpolated<ssc_number_t>(
+                (bool)as_integer("system_use_lifetime_output"),
+                nyears,
+                nlifetime,
+                p_load_forecast_in,
+                load_forecast_scale,
+                interpolation_factor,
+                p_load_forecast_full,
+                nrec,
+                ts_hour);
+        }
+        else {
+            p_load_forecast_full = p_load_full;
+        }
     }
 
     for (size_t mpptInput = 0; mpptInput < PVSystem->Inverter->nMpptInputs; mpptInput++)
@@ -2099,7 +2135,7 @@ void cm_pvsamv1::exec()
     // Initialize DC battery predictive controller
     if (en_batt && batt_topology == ChargeController::DC_CONNECTED)
     {
-        batt->initialize_automated_dispatch(p_pv_ac_use, p_load_full, p_invcliploss_full);
+        batt->initialize_automated_dispatch(p_pv_ac_use, p_load_forecast_full, p_invcliploss_full);
     }
     else {
         // Recompute the forecast after AC losses
@@ -2293,7 +2329,7 @@ void cm_pvsamv1::exec()
 
     // Initialize AC connected battery predictive control
     if (en_batt && batt_topology == ChargeController::AC_CONNECTED)
-        batt->initialize_automated_dispatch(p_pv_ac_use, p_load_full);
+        batt->initialize_automated_dispatch(p_pv_ac_use, p_load_forecast_full);
 
     /* *********************************************************************************************
     Post PV AC
