@@ -170,11 +170,8 @@ void csp_dispatch_opt::update_initial_conditions(double q_dot_to_pb, double T_ht
     params.is_pb_operating0 = pointers.mpc_pc->get_operating_state() == 1;
     params.is_pb_standby0 = pointers.mpc_pc->get_operating_state() == 2;
     params.is_rec_operating0 = pointers.col_rec->get_operating_state() == C_csp_collector_receiver::ON;
-    //dispatch.params.is_eh_operating0 = mc_collector_receiver.get_operating_state() == C_csp_collector_receiver::ON;
 
     params.q_pb0 = q_dot_to_pb * 1000.;
-    if (params.q_pb0 != params.q_pb0) //TODO: What is this testing? ==> need to check
-        params.q_pb0 = 0.;
 
     //Note the state of the thermal energy storage system
     double q_disch, m_dot_disch, T_tes_return;
@@ -201,7 +198,7 @@ bool csp_dispatch_opt::predict_performance(int step_start, int ntimeints, int di
     params.w_condf_expected.clear();        //condenser power
 
     //create the sim info
-    C_csp_solver_sim_info simloc;    // = *params.siminfo;
+    C_csp_solver_sim_info simloc;
 	simloc.ms_ts.m_step = pointers.siminfo->ms_ts.m_step;
 
     double Asf = pointers.col_rec->get_collector_area();

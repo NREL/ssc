@@ -36,7 +36,6 @@ public:
         std::vector<double> buy_price;    //[$/kWh] Electricity purchase price in time t
         std::vector<double> eta_pb_expected; //
         std::vector<double> w_condf_expected; //
-        std::vector<double> w_lim;              //
 
         // initial conditions
         bool is_pb_operating0;      //[-] Power block is operating at the initial time step
@@ -214,7 +213,6 @@ public:
             buy_price.clear();
             eta_pb_expected.clear();
             w_condf_expected.clear();
-            w_lim.clear();
         }
 
         void set_user_params(double disp_time_weighting,

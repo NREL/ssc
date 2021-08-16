@@ -49,6 +49,8 @@ etes_dispatch_opt::etes_dispatch_opt()
 void etes_dispatch_opt::init(double cycle_q_dot_des, double cycle_eta_des, double cycle_w_dot_des)
 {
     // TODO: I don't like having to pass these in, why can't I access them via the cycle pointer? ask Ty
+    // TODO: we could pass in C_csp_power_cycle::S_solved_params instead which contains these 3 items?
+    // TODO: Can we create getters for design point infromation?
     params.clear();
 
     params.dt = 1. / (double)solver_params.steps_per_hour;  //hr
@@ -72,6 +74,7 @@ void etes_dispatch_opt::init(double cycle_q_dot_des, double cycle_eta_des, doubl
     params.q_pb_des = cycle_q_dot_des * 1000.;
     params.eta_pb_des = cycle_eta_des;
 
+    // TODO: This code below should be moved to a function...
     //Cycle efficiency
     params.eff_table_load.clear();
     //add zero point
@@ -132,15 +135,6 @@ bool etes_dispatch_opt::update_horizon_parameters(C_csp_tou& mc_tou)
         params.sell_price.at(t) = mc_tou_outputs.m_price_mult;
         params.buy_price.at(t) = params.sell_price.at(t);     //TODO: make these unique if specified by user
     }
-    // get the new electricity generation limits
-    params.w_lim.clear();
-    params.w_lim.resize((int)solver_params.optimize_horizon * solver_params.steps_per_hour, 1.e99);
-    int hour_start = (int)(ceil(pointers.siminfo->ms_ts.m_time / 3600. - 1.e-6)) - 1;
-    for (int t = 0; t < solver_params.optimize_horizon * solver_params.steps_per_hour; t++)
-    {
-        for (int d = 0; d < solver_params.steps_per_hour; d++)
-            params.w_lim.at(t * solver_params.steps_per_hour + d) = mc_tou.mc_dispatch_params.m_w_lim_full.at(hour_start + t);
-    }
 
     //time
     params.info_time = pointers.siminfo->ms_ts.m_time; //s
@@ -157,8 +151,6 @@ void etes_dispatch_opt::update_initial_conditions(double q_dot_to_pb, double T_h
     params.is_eh_operating0 = pointers.col_rec->get_operating_state() == C_csp_collector_receiver::ON;
 
     params.q_pb0 = q_dot_to_pb * 1000.;
-    if (params.q_pb0 != params.q_pb0) //TODO: What is this testing? ==> need to check
-        params.q_pb0 = 0.;
 
     //Note the state of the thermal energy storage system
     double q_disch, m_dot_disch, T_tes_return;
@@ -180,14 +172,14 @@ bool etes_dispatch_opt::predict_performance(int step_start, int ntimeints, int d
     m_nstep_opt = ntimeints;
 
     //Predict performance out nstep values.
-    params.eta_pb_expected.clear();  // TODO: update csp_dispatch
+    params.eta_pb_expected.clear();
     params.w_condf_expected.clear();
 
     if (!check_setup(m_nstep_opt))
         throw C_csp_exception("Dispatch optimization precheck failed.");
 
     //create the sim info
-    C_csp_solver_sim_info simloc;    // = *params.siminfo;
+    C_csp_solver_sim_info simloc;
     simloc.ms_ts.m_step = pointers.siminfo->ms_ts.m_step;
 
     double Asf = pointers.col_rec->get_collector_area();
@@ -1633,18 +1625,7 @@ bool etes_dispatch_opt::set_dispatch_outputs()
         disp_outputs.is_pc_su_allowed = outputs.pb_operation.at(m_current_read_step) || disp_outputs.is_pc_sb_allowed;
 
         disp_outputs.q_pc_target = outputs.q_pb_target.at(m_current_read_step) / 1000.;
-        //+ dispatch.outputs.q_pb_startup.at( dispatch.m_current_read_step )
-              //TODO: Think about why this includes startup power
-
         disp_outputs.q_dot_elec_to_CR_heat = outputs.q_sf_expected.at(m_current_read_step) / 1000.;
-
-        //quality checks
-        /*
-        if(!is_pc_sb_allowed && (q_pc_target + 1.e-5 < q_pc_min))
-            is_pc_su_allowed = false;
-        if(is_pc_sb_allowed)
-            q_pc_target = dispatch.params.q_pb_standby*1.e-3;
-        */
 
         if (disp_outputs.q_pc_target + 1.e-5 < params.q_pb_min/1.e3)
         {
@@ -1652,30 +1633,7 @@ bool etes_dispatch_opt::set_dispatch_outputs()
             disp_outputs.q_pc_target = 0.0;
         }
 
-        // Calculate approximate upper limit for power cycle thermal input at current electricity generation limit
-        if (params.w_lim.at(m_current_read_step) < 1.e-6)
-        {
-            disp_outputs.q_dot_pc_max = 0.0;
-        }
-        else
-        {
-            double wcond;
-            double eta_corr = pointers.mpc_pc->get_efficiency_at_TPH(pointers.m_weather.ms_outputs.m_tdry, 1., 30., &wcond) / params.eta_pb_des;
-            double eta_calc = params.eta_cycle_ref * eta_corr;
-            double eta_diff = 1.;
-            int i = 0;
-            while (eta_diff > 0.001 && i < 20)
-            {
-                double q_pc_est = params.w_lim.at(m_current_read_step) * 1.e-3 / eta_calc;			// Estimated power cycle thermal input at w_lim
-                double eta_new = pointers.mpc_pc->get_efficiency_at_load(q_pc_est / params.q_pb_des) * eta_corr;		// Calculated power cycle efficiency
-                eta_diff = fabs(eta_calc - eta_new);
-                eta_calc = eta_new;
-                i++;
-            }
-            disp_outputs.q_dot_pc_max = fmin(disp_outputs.q_dot_pc_max, params.w_lim.at(m_current_read_step) * 1.e-3 / eta_calc); // Restrict max pc thermal input to *approximate* current allowable value (doesn't yet account for parasitics)
-            disp_outputs.q_dot_pc_max = fmax(disp_outputs.q_dot_pc_max, disp_outputs.q_pc_target);													// calculated q_pc_target accounts for parasitics --> can be higher than approximate limit 
-        }
-
+        disp_outputs.q_dot_pc_max = params.q_pb_max;   // disp_outputs.q_pc_target;
         disp_outputs.etasf_expect = 0.0;
         disp_outputs.qsf_expect = 0.0;
         disp_outputs.qsfprod_expect = outputs.q_sf_expected.at(m_current_read_step) * 1.e-3;
