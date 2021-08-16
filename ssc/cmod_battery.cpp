@@ -23,7 +23,6 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <math.h>
 
 #include "cmod_battery.h"
-#include "cmod_battery.h"
 #include "common.h"
 #include "core.h"
 #include "lib_battery.h"
@@ -230,6 +229,7 @@ var_info vtab_battery_outputs[] = {
     { SSC_OUTPUT,        SSC_ARRAY,      "grid_to_batt",                               "Electricity to battery from grid",                      "kW",      "",                       "Battery",       "",                           "",                              "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "system_to_grid",                             "Electricity to grid from system",                       "kW",      "",                       "Battery",       "",                           "",                              "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "batt_to_grid",                               "Electricity to grid from battery",                      "kW",      "",                       "Battery",       "",                           "",                              "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "interconnection_loss",                       "Electricity loss due to curtailment, interconnection, or outage", "kW",      "",             "Battery",       "",                           "",                              "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "batt_conversion_loss",                       "Battery loss from power electronics",         "kW",      "",                       "Battery",       "",                           "",                              "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "batt_system_loss",                           "Battery loss from ancillary equipment",     "kW",      "",                       "Battery",       "",                           "",                              "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "grid_power_target",                          "Electricity grid power target for automated dispatch","kW","",                               "Battery",       "",                           "",                              "" },
@@ -241,6 +241,7 @@ var_info vtab_battery_outputs[] = {
     { SSC_OUTPUT,        SSC_ARRAY,      "batt_revenue_clipcharge",                    "Revenue to charge from clipped",                        "$/kWh", "",                         "Battery",       "",                           "",                              "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "batt_revenue_discharge",                     "Revenue to discharge",                                  "$/kWh", "",                         "Battery",       "",                           "",                              "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "gen_without_battery",                        "Energy produced without the battery or curtailment",    "kW","",                      "Battery",       "",                           "",                              "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "crit_load_unmet",                            "Critical load unmet in this timestep",                  "kW","",                      "Battery",       "",                           "",                              "" },
 
     // PV Smoothing
     { SSC_OUTPUT,        SSC_ARRAY,      "batt_pvs_PV_ramp_interval",                  "PV smoothing PV power sampled", "kW", "", "Battery", "", "", "" },
@@ -277,6 +278,8 @@ var_info vtab_battery_outputs[] = {
     { SSC_OUTPUT,        SSC_ARRAY,      "monthly_batt_to_grid",                       "Energy to grid from battery",                           "kWh",      "",                      "Battery",       "",                          "LENGTH=12",                     "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "monthly_system_to_batt",                     "Energy to battery from system",                         "kWh",      "",                      "Battery",       "",                          "LENGTH=12",                     "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "monthly_grid_to_batt",                       "Energy to battery from grid",                           "kWh",      "",                      "Battery",       "",                          "LENGTH=12",                     "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "monthly_interconnection_loss",               "Energy loss due to curtailment, interconnection, or outage", "kWh",      "",                      "Battery",       "",                          "LENGTH = 12",                     "" },
+
 
     // annual metrics
     { SSC_OUTPUT,        SSC_ARRAY,      "batt_annual_charge_from_system",                 "Battery annual energy charged from system",                 "kWh",      "",                      "Battery",       "",                           "",                               "" },
@@ -342,6 +345,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             if (batt_vars->system_use_lifetime_output) {
                 nyears = batt_vars->analysis_period;
             }
+            total_steps = nyears * 8760 * step_per_hour;
 
             // Chemistry
             batt_vars->batt_chem = vt.as_integer("batt_chem");
@@ -466,6 +470,42 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             }
             else
                 batt_vars->batt_cost_per_kwh = std::vector<double>(nyears, 0.0);
+
+            // Interconnection and curtailment
+            std::vector<double> scaleFactors(batt_vars->analysis_period, 1.0); // No scaling factors for curtailment
+
+            std::vector<double> curtailment_year_one;
+            if (vt.is_assigned("grid_curtailment")) {
+                curtailment_year_one = vt.as_vector_double("grid_curtailment");
+                double interpolation_factor = 1.0;
+                single_year_to_lifetime_interpolated<double>(
+                    batt_vars->system_use_lifetime_output,
+                    (size_t)batt_vars->analysis_period,
+                    total_steps,
+                    curtailment_year_one,
+                    scaleFactors,
+                    interpolation_factor,
+                    batt_vars->gridCurtailmentLifetime_MW,
+                    step_per_year,
+                    _dt_hour);
+            }
+
+            if (vt.is_assigned("enable_interconnection_limit")) {
+                batt_vars->enable_interconnection_limit = vt.as_boolean("enable_interconnection_limit");
+                if (batt_vars->enable_interconnection_limit && vt.is_assigned("grid_interconnection_limit_kwac")) {
+                    batt_vars->grid_interconnection_limit_kW = vt.as_double("grid_interconnection_limit_kwac");
+                }
+                else {
+                    batt_vars->enable_interconnection_limit = false;
+                }
+            }
+            else {
+                batt_vars->enable_interconnection_limit = false;
+            }
+
+            if (!batt_vars->enable_interconnection_limit) {
+                batt_vars->grid_interconnection_limit_kW = 1e+38;
+            }
 
             // Front of meter
             if (batt_vars->batt_meter_position == dispatch_t::FRONT)
@@ -697,7 +737,16 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
     }
     else {
         nyears = (batt_vars_in->system_use_lifetime_output) ? batt_vars_in->analysis_period : 1;
+        total_steps = nyears * 8760 * step_per_hour;
         batt_vars = batt_vars_in;
+    }
+
+    // Check to see if the outage variables need to be set up
+    analyze_outage = false;
+    if (vt.is_assigned("grid_outage")) {
+        batt_vars->grid_outage_steps = vt.as_vector_bool("grid_outage");
+        // If not all false, we need the outage vars
+        analyze_outage = !std::all_of(batt_vars->grid_outage_steps.begin(), batt_vars->grid_outage_steps.end(), [](bool x) {return x; });
     }
 
     // component models
@@ -739,6 +788,8 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
     outFuelCellToGrid = 0;
     outBatteryConversionPowerLoss = 0;
     outBatterySystemLoss = 0;
+    outInterconnectionLoss = 0;
+    outCritLoadUnmet = 0;
     outAverageCycleEfficiency = 0;
     outSystemChargePercent = 0;
     outAnnualSystemChargeEnergy = 0;
@@ -769,7 +820,6 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
         if (batt_vars->batt_replacement_option > 0)
             throw exec_error("battery", "Battery replacements are enabled with single year simulation. You must enable lifetime simulations to model battery replacements.");
     }
-    total_steps = nyears * 8760 * step_per_hour;
     chem = batt_vars->batt_chem;
 
 
@@ -858,6 +908,11 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
 
     outBatteryConversionPowerLoss = vt.allocate("batt_conversion_loss", nrec * nyears);
     outBatterySystemLoss = vt.allocate("batt_system_loss", nrec * nyears);
+    outInterconnectionLoss = vt.allocate("interconnection_loss", nrec * nyears);
+
+    if (analyze_outage) {
+        outCritLoadUnmet = vt.allocate("crit_load_unmet", nrec * nyears);
+    }
 
     // annual outputs
     size_t annual_size = nyears + 1;
@@ -1058,7 +1113,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
                 batt_vars->batt_dispatch, batt_vars->batt_meter_position,
                 batt_vars->batt_discharge_schedule_weekday, batt_vars->batt_discharge_schedule_weekend,
                 batt_vars->batt_can_charge, batt_vars->batt_can_discharge, batt_vars->batt_can_gridcharge, batt_vars->batt_can_fuelcellcharge,
-                dm_percent_discharge, dm_percent_gridcharge);
+                dm_percent_discharge, dm_percent_gridcharge, batt_vars->grid_interconnection_limit_kW);
         }
     }
     /*! Front of meter automated DC-connected dispatch */
@@ -1096,7 +1151,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
                 batt_vars->batt_dispatch_pvs_ac_ub_enable, batt_vars->batt_dispatch_pvs_curtail_as_control, batt_vars->batt_dispatch_pvs_curtail_if_violation,
                 batt_vars->batt_dispatch_pvs_forecast_shift_periods, batt_vars->batt_dispatch_pvs_kf, batt_vars->batt_dispatch_pvs_ki, batt_vars->batt_dispatch_pvs_kp,
                 batt_vars->batt_dispatch_pvs_max_ramp, batt_vars->batt_dispatch_pvs_short_forecast_enable,
-                batt_vars->batt_dispatch_pvs_soc_rest, batt_vars->batt_dispatch_pvs_timestep_multiplier,batt_vars->batt_initial_SOC);
+                batt_vars->batt_dispatch_pvs_soc_rest, batt_vars->batt_dispatch_pvs_timestep_multiplier,batt_vars->batt_initial_SOC, batt_vars->grid_interconnection_limit_kW);
 
         }
         else {
@@ -1111,7 +1166,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
                 batt_vars->inverter_paco, batt_vars->batt_cost_per_kwh,
                 batt_vars->batt_cycle_cost_choice, batt_vars->batt_cycle_cost,
                 batt_vars->forecast_price_series_dollar_per_kwh, utilityRate,
-                eta_pvcharge, eta_gridcharge, eta_discharge);
+                eta_pvcharge, eta_gridcharge, eta_discharge,  batt_vars->grid_interconnection_limit_kW);
 
             if (batt_vars->batt_dispatch == dispatch_t::FOM_CUSTOM_DISPATCH)
             {
@@ -1141,7 +1196,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             batt_vars->batt_dispatch, batt_vars->batt_meter_position, nyears,
             batt_vars->batt_look_ahead_hours, batt_vars->batt_dispatch_update_frequency_hours,
             batt_vars->batt_dispatch_auto_can_charge, batt_vars->batt_dispatch_auto_can_clipcharge, batt_vars->batt_dispatch_auto_can_gridcharge, batt_vars->batt_dispatch_auto_can_fuelcellcharge,
-            util_rate_data, batt_vars->batt_cost_per_kwh, batt_vars->batt_cycle_cost_choice, batt_vars->batt_cycle_cost
+            util_rate_data, batt_vars->batt_cost_per_kwh, batt_vars->batt_cycle_cost_choice, batt_vars->batt_cycle_cost, batt_vars->grid_interconnection_limit_kW
         );
         if (batt_vars->batt_dispatch == dispatch_t::CUSTOM_DISPATCH)
         {
@@ -1419,6 +1474,8 @@ battstor::battstor(const battstor& orig) {
     outFuelCellToGrid = orig.outFuelCellToGrid;
     outBatteryConversionPowerLoss = orig.outBatteryConversionPowerLoss;
     outBatterySystemLoss = orig.outBatterySystemLoss;
+    outInterconnectionLoss = orig.outInterconnectionLoss;
+    outCritLoadUnmet = orig.outCritLoadUnmet;
     outAnnualSystemChargeEnergy = orig.outAnnualSystemChargeEnergy;
     outAnnualGridChargeEnergy = orig.outAnnualGridChargeEnergy;
     outAnnualChargeEnergy = orig.outAnnualChargeEnergy;
@@ -1514,6 +1571,9 @@ void battstor::advance(var_table*, double P_gen, double V_gen, double P_load, do
     if (index < fuelcellPower.size()) {
         powerflow->powerFuelCell = fuelcellPower[index];
     }
+    if (index < batt_vars->gridCurtailmentLifetime_MW.size()) {
+        powerflow->powerCurtailmentLimit = batt_vars->gridCurtailmentLifetime_MW[index] * 1000.0;
+    }
 
     powerflow->powerGeneratedBySystem = P_gen;
     powerflow->powerSystem = P_gen - powerflow->powerFuelCell;
@@ -1585,6 +1645,7 @@ void battstor::outputs_topology_dependent()
     outBatteryConversionPowerLoss[index] = (ssc_number_t)(dispatch_model->power_conversion_loss());
     outBatterySystemLoss[index] = (ssc_number_t)(dispatch_model->power_system_loss());
     outSystemToGrid[index] = (ssc_number_t)(dispatch_model->power_pv_to_grid());
+    outInterconnectionLoss[index] = (ssc_number_t)(dispatch_model->power_interconnection_loss());
 
     if (batt_vars->batt_meter_position == dispatch_t::BEHIND)
     {
@@ -1598,6 +1659,9 @@ void battstor::outputs_topology_dependent()
             outBattPowerTarget[index] = (ssc_number_t)(dispatch_model->power_batt_target());
         }
 
+        if (analyze_outage) {
+            outCritLoadUnmet[index] = (ssc_number_t)(dispatch_model->power_crit_load_unmet());
+        }
     }
     else if (batt_vars->batt_meter_position == dispatch_t::FRONT)
     {
@@ -1675,11 +1739,30 @@ void battstor::metrics()
         outSystemChargePercent = 0;
 }
 
-// function needed to correctly calculate P_grid to to additional losses in P_gen post battery like wiring, curtailment, availablity
+// function needed to correctly calculate P_grid due to additional losses in P_gen post battery like wiring, curtailment, availablity
 void battstor::update_grid_power(compute_module&, double P_gen_ac, double P_load_ac, size_t index_replace)
 {
+    double P_interconnection_loss = outInterconnectionLoss[index_replace];
+    double P_grid_old = outGridPower[index_replace] + P_interconnection_loss;
     double P_grid = P_gen_ac - P_load_ac;
+    if (P_grid >= 0) {
+        P_interconnection_loss = std::fmax(P_interconnection_loss - (P_grid_old - P_grid), 0.0);
+    }
+    else {
+        // Interconnection losses should be 0 if drawing power from the grid
+        P_interconnection_loss = 0;
+    }
+    outInterconnectionLoss[index_replace] = P_interconnection_loss;
+    P_grid = P_gen_ac - P_load_ac - P_interconnection_loss;
+    
     outGridPower[index_replace] = (ssc_number_t)(P_grid);
+}
+
+bool battstor::is_outage_step(size_t index) {
+    if (index < batt_vars->grid_outage_steps.size()) {
+        return batt_vars->grid_outage_steps[index];
+    }
+    return false;
 }
 
 void battstor::calculate_monthly_and_annual_outputs(compute_module& cm)
@@ -1694,6 +1777,7 @@ void battstor::calculate_monthly_and_annual_outputs(compute_module& cm)
     cm.accumulate_monthly_for_year("system_to_batt", "monthly_system_to_batt", _dt_hour, step_per_hour);
     cm.accumulate_monthly_for_year("grid_to_batt", "monthly_grid_to_batt", _dt_hour, step_per_hour);
     cm.accumulate_monthly_for_year("system_to_grid", "monthly_system_to_grid", _dt_hour, step_per_hour);
+    cm.accumulate_monthly_for_year("interconnection_loss", "monthly_interconnection_loss", _dt_hour, step_per_hour);
 
     if (batt_vars->batt_meter_position == dispatch_t::BEHIND)
     {
@@ -1809,6 +1893,7 @@ public:
         add_var_info(vtab_battery_outputs);
         add_var_info(vtab_resilience_outputs);
         add_var_info(vtab_utility_rate_common);
+        add_var_info(vtab_grid_curtailment);
     }
 
     void exec() override
