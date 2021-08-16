@@ -3,15 +3,15 @@ clear();
 // PPA schedule option
 // 0: Simple step-change TOU block schedule (dispatch_sched_weekday, dispatch_sched_weekend, dispatch_factorX)
 // 1: Hourly schedule (dispatch_factor_ts)
-var( 'ppa_multiplier_model', 0 );
+var( 'ppa_multiplier_model', 1 );
 var( 'is_dispatch', 1 );
 //var( 'disp_reporting', 4);
 
 var( 'tshours', 10 );
 var( 'heater_mult', 2.3999999999999999 );
 // Choose financial mode
-var( 'ppa_soln_mode', 0 );			// 0: calc ppa price to get flip target percent (irr), 1: use ppa price input
-var( 'ppa_price_input', [ 0.06 ] );
+var( 'ppa_soln_mode', 1 );			// 0: calc ppa price to get flip target percent (irr), 1: use ppa price input
+var( 'ppa_price_input', [ 0.10 ] );
 var( 'flip_target_percent', 11 );
 var( 'hot_htf_code', 17);
 var('ud_hot_htf_props', [[0,0,0]]);
@@ -21,9 +21,6 @@ var( 'T_htf_cold_des', 290 );
 var( 'T_htf_hot_des', 574 );
 var( 'P_ref', 115 );
 var( 'design_eff', 0.41199999999999998 );
-var( 'tes_fl_code', 17 );
-var( 'ud_tes_fl_props', 
-[ [ 0, 0, 0, 0, 0, 0, 0 ] ] );
 
 var( 'dispatch_factors_ts', real_array(read_text_file('PPA_mults_v1.csv')));
 var( 'dispatch_sched_weekday', 
@@ -352,7 +349,7 @@ var( 'term_int_rate', 7 );
 var( 'dscr', 1.3 );
 var( 'dscr_reserve_months', 6 );
 var( 'debt_percent', 50 );
-var( 'debt_option', 1 );
+var( 'debt_option', 0 );
 var( 'payment_option', 0 );
 var( 'cost_debt_closing', 450000 );
 var( 'cost_debt_fee', 2.75 );
@@ -360,6 +357,7 @@ var( 'months_working_reserve', 6 );
 var( 'months_receivables_reserve', 0 );
 var( 'cost_other_financing', 0 );
 
+var( 'analysis_period', 25 );
 var( 'flip_target_year', 20 );
 var( 'pbi_fed_for_ds', 0 );
 var( 'pbi_sta_for_ds', 0 );
