@@ -435,7 +435,8 @@ bool sandia_inverter_t::acpower(
 		for (size_t m = 0; m < Vdc.size(); m++)
 		{
 			*Psoloss += PacNoPso_each[m] - Pac_each[m];
-			*Pac += Pac_each[m];
+			//*Pac += Pac_each[m];
+            *Pac += PacNoPso_each[m];
 		}
 	
 	// clipping loss Wac (note that the Pso=0 may have no clipping)

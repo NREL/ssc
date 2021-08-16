@@ -551,6 +551,8 @@ static var_info _cm_vtab_singleowner[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_om_production_expense",               "O&M production-based expense",       "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_om_capacity_expense",                 "O&M capacity-based expense",         "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_om_fuel_expense",                     "O&M fuel expense",                   "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "cf_om_inv_pntloss",                     "Night time inverter power consumption expense",                   "$",            "",                      "Cash Flow Expenses",      "",                     "LENGTH_EQUAL=cf_length",                "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "cf_om_inv_psoloss",                     "Inverter power consumption expense",                   "$",            "",                      "Cash Flow Expenses",      "",                     "LENGTH_EQUAL=cf_length",                "" },
 
 
     { SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fixed1_expense",      "Battery fixed expense",                  "$",            "",                      "Cash Flow Expenses",      "",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -708,6 +710,9 @@ enum {
 	CF_om_production2_expense,
 	CF_om_capacity2_expense,
 	CF_om_fuel_expense,
+
+    CF_om_inv_pntloss,
+    CF_om_inv_psoloss,
 
 	CF_om_opt_fuel_2_expense,
 	CF_om_opt_fuel_1_expense,
@@ -1385,6 +1390,96 @@ public:
 			cf.at(CF_om_opt_fuel_2_expense,i) *= om_opt_fuel_2_usage;
 		}
 
+        //Inverter OM Calculations
+        size_t n_inv_psoloss;
+        size_t n_inv_pntloss;
+
+        util::matrix_t<double> monthly_energy_charge;
+        util::matrix_t<double> net_annual_true_up;
+
+        double inv_psoloss_annual;
+        double inv_pntloss_annual;
+        double inv_pntloss_pct_annual;
+        double inv_psoloss_pct_annual;
+        ssc_number_t* inv_psoloss_monthly;
+        ssc_number_t* inv_pntloss_monthly;
+        size_t n_inv_psoloss_monthly;
+        size_t n_inv_pntloss_monthly;
+        if (is_assigned("annual_inv_pntloss")) inv_pntloss_annual = as_double("annual_inv_pntloss");
+        if (is_assigned("annual_inv_psoloss")) inv_psoloss_annual = as_double("annual_inv_psoloss");
+        if (is_assigned("annual_ac_inv_pso_loss_percent")) inv_pntloss_pct_annual = as_double("annual_ac_inv_pso_loss_percent");
+        if (is_assigned("annual_ac_inv_pnt_loss_percent")) inv_psoloss_pct_annual = as_double("annual_ac_inv_pnt_loss_percent");
+        if (is_assigned("monthly_inv_pntloss")) inv_pntloss_monthly = as_array("monthly_inv_pntloss", &n_inv_pntloss_monthly);
+        if (is_assigned("monthly_inv_psoloss")) inv_psoloss_monthly = as_array("monthly_inv_pntloss", &n_inv_psoloss_monthly);
+
+        ssc_number_t* inv_psoloss = as_array("inv_psoloss", &n_inv_psoloss);
+        ssc_number_t* inv_pntloss = as_array("inv_pntloss", &n_inv_pntloss);
+        cf.at(CF_om_inv_psoloss, 0) = 0;
+        cf.at(CF_om_inv_pntloss, 0) = 0;
+        size_t n_monthly_batt_to_grid;
+        size_t n_monthly_system_to_grid;
+        size_t n_monthly_elec_tofrom_grid;
+        ssc_number_t* monthly_grid_to_batt;
+        ssc_number_t* monthly_batt_to_grid;
+        ssc_number_t* monthly_system_to_grid;
+        ssc_number_t* monthly_electricity_tofrom_grid;
+        size_t n_multipliers;
+        ssc_number_t* ppa_multipliers = as_array("ppa_multipliers", &n_multipliers);
+        bool ppa_purchases = !(is_assigned("en_electricity_rates") && as_number("en_electricity_rates") == 1);
+        if (is_assigned("inv_psoloss") && is_assigned("inv_pntloss")) {
+
+            if (as_integer("system_use_lifetime_output") == 1) //Lifetime
+            {
+                // hourly_enet includes all curtailment, availability
+                for (size_t i = 1; i <= nyears; i++) {
+                    double ppa_value = cf.at(CF_ppa_price, i);
+                    if (ppa_purchases) {
+                        for (size_t h = 0; h < 8760; h++) {
+                            cf.at(CF_om_inv_pntloss, i) += inv_pntloss[(i-1) * 8760 + h] * ppa_value / 100 * ppa_multipliers[h];
+                            cf.at(CF_om_inv_psoloss, i) += inv_psoloss[(i-1) * 8760 + h] * ppa_value / 100 * ppa_multipliers[h];
+                        }
+                        if (!ppa_purchases) {
+                            monthly_batt_to_grid = as_array("monthly_batt_to_grid", &n_monthly_batt_to_grid);
+                            monthly_system_to_grid = as_array("monthly_system_to_grid", &n_monthly_system_to_grid);
+                            monthly_electricity_tofrom_grid = as_array("year1_monthly_electricity_to_grid", &n_monthly_elec_tofrom_grid);
+                            monthly_energy_charge = as_matrix("charge_w_sys_ec_ym"); //Use monthly energy charges from utility bill ($)
+                            net_annual_true_up = as_matrix("true_up_credits_ym"); //Use net annual true up payments regardless of billing mode ($)
+                            for (size_t m = 0; m < 12; m++) {
+                                cf.at(CF_om_inv_pntloss, i) += inv_pntloss_monthly[m] * pow(1 + inflation_rate, i - 1) / ((monthly_batt_to_grid[m] + monthly_system_to_grid[m]) + -monthly_electricity_tofrom_grid[m]) * monthly_energy_charge.at(m, i) + net_annual_true_up.at(m, i);
+                                // Recompute this variable because the ppa_gen values (hourly_net) were all positve until now 
+                                cf.at(CF_om_inv_psoloss, i) += inv_psoloss_monthly[m] * pow(1 + inflation_rate, i - 1) / ((monthly_batt_to_grid[m] + monthly_system_to_grid[m]) + -monthly_electricity_tofrom_grid[m]) * monthly_energy_charge.at(m, i) + net_annual_true_up.at(m, i);
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                for (size_t i = 1; i <= nyears; i++) {
+                    double ppa_value = cf.at(CF_ppa_price, i);
+                    if (ppa_purchases) {
+                        for (size_t h = 0; h < 8760; h++) {
+                            cf.at(CF_om_inv_pntloss, i) += inv_pntloss[h] * ppa_value / 100 * ppa_multipliers[h];
+                            cf.at(CF_om_inv_psoloss, i) += inv_psoloss[h] * ppa_value / 100 * ppa_multipliers[h];
+                        }
+                        if (!ppa_purchases) {
+                            monthly_energy_charge = as_matrix("charge_w_sys_ec_ym"); //Use monthly energy charges from utility bill ($)
+                            net_annual_true_up = as_matrix("true_up_credits_ym"); //Use net annual true up payments regardless of billing mode ($)
+                            for (size_t m = 0; m < 12; m++) {
+                                cf.at(CF_om_inv_pntloss, i) += inv_pntloss_annual * pow(1 + inflation_rate, i - 1) / cf.at(CF_energy_purchases, i) * monthly_energy_charge.at(m, i) + net_annual_true_up.at(m, i);
+                                // Recompute this variable because the ppa_gen values (hourly_net) were all positve until now 
+                                cf.at(CF_om_inv_psoloss, i) += inv_psoloss_annual * pow(1 + inflation_rate, i - 1) / cf.at(CF_energy_purchases, i) * monthly_energy_charge.at(m, i) + net_annual_true_up.at(m, i);
+                            }
+                        }
+                    }
+                }
+
+
+            }
+            save_cf(CF_om_inv_pntloss, nyears, "cf_om_inv_pntloss");
+            save_cf(CF_om_inv_psoloss, nyears, "cf_om_inv_psoloss");
+        }
+
 
 		size_t count_ppa_price_input;
 		ssc_number_t* ppa_price_input = as_array("ppa_price_input", &count_ppa_price_input);
@@ -1558,6 +1653,8 @@ public:
 				+ cf.at(CF_om_fuel_expense,i)
 				+ cf.at(CF_om_opt_fuel_1_expense,i)
 				+ cf.at(CF_om_opt_fuel_2_expense,i)
+                + cf.at(CF_om_inv_pntloss, i)
+                + cf.at(CF_om_inv_psoloss, i)
 				+ cf.at(CF_property_tax_expense,i)
 				+ cf.at(CF_insurance_expense,i)
 				+ cf.at(CF_battery_replacement_cost,i)
@@ -2865,10 +2962,10 @@ public:
     
 
     // Use PPA values to calculate revenue from purchases and sales
-    size_t n_multipliers;
     
-    ssc_number_t* ppa_multipliers = as_array("ppa_multipliers", &n_multipliers);
-    bool ppa_purchases = !(is_assigned("en_electricity_rates") && as_number("en_electricity_rates") == 1);
+    
+    ppa_multipliers = as_array("ppa_multipliers", &n_multipliers);
+    ppa_purchases = !(is_assigned("en_electricity_rates") && as_number("en_electricity_rates") == 1);
     if (as_integer("system_use_lifetime_output") == 1)
     {
         // hourly_enet includes all curtailment, availability
@@ -3016,7 +3113,7 @@ public:
         lcos_calc(this, cf_lcos, nyears, nom_discount_rate, inflation_rate, lcoe_real, cost_prefinancing, disc_real, grid_charging_cost_version);
     }
     /////////////////////////////////////////////////////////////////////////////////////////
-
+            
 	// DSCR calculations
 	for (i = 0; i <= nyears; i++)
 	{

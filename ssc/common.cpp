@@ -100,6 +100,14 @@ var_info vtab_oandm[] = {
 { SSC_INPUT,        SSC_NUMBER,      "annual_fuel_usage",            "Fuel usage (yr 1)",                 "kWht",    "",                  "System Costs",            "?=0",                     "MIN=0",                                         "" },
 { SSC_INPUT,        SSC_ARRAY,       "annual_fuel_usage_lifetime",   "Fuel usage (lifetime)",             "kWht",    "",                  "System Costs",            "",                     "",                                         "" },
 
+//Inverter Nighttime and Operational Losses
+{ SSC_INPUT,        SSC_ARRAY,      "inv_psoloss",                          "Inverter power consumption loss",                      "kW",   "",  "Time Series (Inverter)",       "?",                    "",                              "" },
+{ SSC_INPUT,        SSC_ARRAY,      "inv_pntloss",                          "Inverter night time loss",                             "kW",   "",  "Time Series (Inverter)",       "?",                    "",                              "" },
+{ SSC_INPUT,        SSC_NUMBER,     "annual_inv_psoloss",                   "Inverter power consumption loss",                        "kWh/yr",    "",                      "Annual (Year 1)",       "?",                    "",                              "" },
+{ SSC_INPUT,        SSC_NUMBER,     "annual_inv_pntloss",                   "Inverter night time loss",                               "kWh/yr",    "",                      "Annual (Year 1)",       "?",                    "",                              "" },
+{ SSC_INPUT,        SSC_ARRAY,      "monthly_inv_psoloss",                          "Inverter power consumption loss (Monthly)",                      "kWh",   "",  "Time Series (Inverter)",       "?",                    "",                              "" },
+{ SSC_INPUT,        SSC_ARRAY,      "monthly_inv_pntloss",                          "Inverter night time loss (Monthly)",                             "kWh",   "",  "Time Series (Inverter)",       "?",                    "",                              "" },
+
 // replacements
 { SSC_INPUT,SSC_ARRAY   , "om_batt_replacement_cost"                 , "Replacement cost 1"                                             , "$/kWh"                                  , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
 { SSC_INPUT,SSC_ARRAY   , "om_fuelcell_replacement_cost"                 , "Replacement cost 2"                                             , "$/kW"                                   , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
