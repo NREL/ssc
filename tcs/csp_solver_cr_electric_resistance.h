@@ -72,7 +72,10 @@ public:
     {
         E_W_DOT_HEATER,     //[MWe] Electricity consumed by heater
         E_Q_DOT_HTF,        //[MWt] Heat transferred to HTF
-        E_Q_DOT_STARTUP     //[MWt] Heat consumed during startup
+        E_Q_DOT_STARTUP,    //[MWt] Heat consumed during startup
+        E_M_DOT_HTF,        //[kg/s] HTF mass flow rate
+        E_T_HTF_IN,         //[C] HTF inlet temperature
+        E_T_HTF_OUT         //[C] HTF outlet temperature
     };
 
     C_csp_reported_outputs mc_reported_outputs;
