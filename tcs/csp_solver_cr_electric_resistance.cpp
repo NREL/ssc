@@ -30,6 +30,9 @@ static C_csp_reported_outputs::S_output_info S_cr_electric_resistance_output_inf
     {C_csp_cr_electric_resistance::E_W_DOT_HEATER, C_csp_reported_outputs::TS_WEIGHTED_AVE},
     {C_csp_cr_electric_resistance::E_Q_DOT_HTF, C_csp_reported_outputs::TS_WEIGHTED_AVE},
     {C_csp_cr_electric_resistance::E_Q_DOT_STARTUP, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+    {C_csp_cr_electric_resistance::E_M_DOT_HTF, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+    {C_csp_cr_electric_resistance::E_T_HTF_IN, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+    {C_csp_cr_electric_resistance::E_T_HTF_OUT, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 
     csp_info_invalid
 };
@@ -202,6 +205,9 @@ void C_csp_cr_electric_resistance::off(const C_csp_weatherreader::S_outputs& wea
     mc_reported_outputs.value(E_W_DOT_HEATER, 0.0);     //[MWe]
     mc_reported_outputs.value(E_Q_DOT_HTF, 0.0);        //[MWt]
     mc_reported_outputs.value(E_Q_DOT_STARTUP, 0.0);    //[MWt]
+    mc_reported_outputs.value(E_M_DOT_HTF, cr_out_solver.m_m_dot_salt_tot / 3600.0);
+    mc_reported_outputs.value(E_T_HTF_IN, m_T_htf_cold_des);    //[C]
+    mc_reported_outputs.value(E_T_HTF_OUT, m_T_htf_hot_des);    //[C]
 
     return;
 }
@@ -248,6 +254,9 @@ void C_csp_cr_electric_resistance::startup(const C_csp_weatherreader::S_outputs&
     mc_reported_outputs.value(E_W_DOT_HEATER, W_dot_heater);    //[MWe]
     mc_reported_outputs.value(E_Q_DOT_HTF, 0.0);     //[MWt]
     mc_reported_outputs.value(E_Q_DOT_STARTUP, m_q_dot_su_max); //[MWt]
+    mc_reported_outputs.value(E_M_DOT_HTF, cr_out_solver.m_m_dot_salt_tot / 3600.0);    //[kg/s]
+    mc_reported_outputs.value(E_T_HTF_IN, m_T_htf_cold_des);    //[C]
+    mc_reported_outputs.value(E_T_HTF_OUT, m_T_htf_hot_des);    //[C]
 }
 
 void C_csp_cr_electric_resistance::on(const C_csp_weatherreader::S_outputs& weather,
@@ -291,6 +300,9 @@ void C_csp_cr_electric_resistance::on(const C_csp_weatherreader::S_outputs& weat
     mc_reported_outputs.value(E_W_DOT_HEATER, W_dot_heater);    //[MWe]
     mc_reported_outputs.value(E_Q_DOT_HTF, q_dot_elec);         //[MWt]
     mc_reported_outputs.value(E_Q_DOT_STARTUP, 0.0);            //[MWt]
+    mc_reported_outputs.value(E_M_DOT_HTF, cr_out_solver.m_m_dot_salt_tot / 3600.0);    //[kg/s]
+    mc_reported_outputs.value(E_T_HTF_IN, htf_state_in.m_temp);    //[C]
+    mc_reported_outputs.value(E_T_HTF_OUT, cr_out_solver.m_T_salt_hot);    //[C]
 
     return;
 }

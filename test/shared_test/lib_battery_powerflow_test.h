@@ -46,7 +46,12 @@ public:
         double gen = calc_dc_gen();
         EXPECT_NEAR(m_batteryPower->powerGeneratedBySystem, gen, dc_error) << id_string;
         double met_load = calc_met_load();
-        EXPECT_NEAR(met_load, m_batteryPower->powerLoad, dc_error) << id_string;
+        if (m_batteryPower->isOutageStep) {
+            EXPECT_NEAR(met_load + m_batteryPower->powerCritLoadUnmet, m_batteryPower->powerCritLoad, dc_error) << id_string;
+        }
+        else {
+            EXPECT_NEAR(met_load, m_batteryPower->powerLoad, dc_error) << id_string;
+        }
     }
 
     void TearDown()
