@@ -1265,9 +1265,10 @@ bool etes_dispatch_opt::optimize()
         else
             set_presolve(lp, PRESOLVE_ROWS + PRESOLVE_COLS + PRESOLVE_ELIMEQ2 + PRESOLVE_PROBEFIX, get_presolveloops(lp) );   //independent optimization
 
-        //Debugging parameters
+        set_mip_gap(lp, FALSE, solver_params.mip_gap);
         set_timeout(lp, solver_params.solution_timeout);  //max solution time
 
+        //Debugging parameters
         //set_bb_depthlimit(lp, -10);   //max branch depth
         //set_solutionlimit(lp, 1);     //only look for 1 optimal solution
         //set_outputfile(lp, "c://users//mwagner//documents//dropbox//nrel//formulation//trace.txt");
@@ -1488,7 +1489,13 @@ bool etes_dispatch_opt::optimize()
 
         //record the solve state
         lp_outputs.solve_state = ret;
-        
+
+        // When solve_state is 0, this is the last known gap before tree was prune
+        if (lp_outputs.solve_state == 1)
+            lp_outputs.rel_mip_gap = abs(lp_outputs.objective_relaxed - lp_outputs.objective) / abs(lp_outputs.objective_relaxed);
+        else
+            lp_outputs.rel_mip_gap = 0.0;
+
         //get number of iterations
         lp_outputs.solve_iter = (int)get_total_iter(lp);
 

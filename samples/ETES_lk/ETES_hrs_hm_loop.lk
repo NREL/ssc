@@ -16,7 +16,7 @@ tshours = [4., 6., 8., 10., 12., 14., 16., 18., 20.];
 heater_mult = [1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5];
 
 tshours = [12.];
-heater_mult = [2.5, 4.0];
+heater_mult = [2.5];
 
 var( 'tshours', 10 );
 var( 'heater_mult', 2.3999999999999999 );
@@ -412,9 +412,11 @@ for (i = 0; i< #tshours; i++)
 		outputs{"disp_wpb_expect"} = var("disp_wpb_expect");
 		outputs{"disp_tes_expect"} = var("disp_tes_expect");
 
+		outputs{"disp_rel_mip_gap"} = var("disp_rel_mip_gap");
 		outputs{"disp_solve_state"} = var("disp_solve_state");
 		outputs{"disp_solve_iter"} = var("disp_solve_iter");
 		outputs{"disp_objective"} = var("disp_objective");
+		outputs{"disp_obj_relax"} = var("disp_obj_relax");
 		outputs{"disp_rev_expect"} = var("disp_rev_expect");
 		outputs{"disp_presolve_nconstr"} = var("disp_presolve_nconstr");
 		outputs{"disp_presolve_nvar"} = var("disp_presolve_nvar");

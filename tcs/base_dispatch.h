@@ -88,6 +88,7 @@ public:
         bool m_last_opt_successful;     //last optimization run was successful?
         double objective;
         double objective_relaxed;
+        double rel_mip_gap;
         int solve_iter;                 //Number of iterations required to solve
         int solve_state;
         double solve_time;
@@ -98,6 +99,7 @@ public:
             m_last_opt_successful = false;
             objective = std::numeric_limits<double>::quiet_NaN();
             objective_relaxed = std::numeric_limits<double>::quiet_NaN();
+            rel_mip_gap = std::numeric_limits<double>::quiet_NaN();
             solve_iter = 0;
             solve_state = NOTRUN;
             presolve_nconstr = 0;
