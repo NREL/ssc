@@ -552,7 +552,7 @@ public:
                 throw exec_error("mhk_wave", "Wave height and Energy period arrays of equal length must be assigned");
 
             ssc_number_t* energy_hourly = allocate("hourly_energy", number_records);
-            ssc_number_t* energy_hourly_gen = allocate("gen", number_records);
+            ssc_number_t* energy_hourly_gen = allocate("gen", number_records * 3);
             ssc_number_t* sig_wave_height_index_mat = allocate("sig_wave_height_index_mat", number_records);
             ssc_number_t* sig_wave_height_data = allocate("sig_wave_height_data", number_records);
             ssc_number_t* energy_period_index_mat = allocate("energy_period_index_mat", number_records);
@@ -610,7 +610,10 @@ public:
                 //n-hour energy based on wave power matrix value at height and period best matching the time series inputs * number devices * size multiplier
                 energy_hourly[i] = (ssc_number_t)(wave_power_matrix.at(size_t(sig_wave_height_index), size_t(energy_period_index))) * hour_step * (1 - total_loss / 100) * number_devices;
                 p_annual_energy_dist[size_t(sig_wave_height_index) * 22 + size_t(energy_period_index)] += energy_hourly[i]; //Add energy for given time step to height x period distribution matrix at specified grid point
-                energy_hourly_gen[i] = energy_hourly[i]; //Store in gen to use in heatmap output (probably don't need two variables)
+                energy_hourly_gen[i*3] = energy_hourly[i]; //Store in gen to use in heatmap output (probably don't need two variables)
+                energy_hourly_gen[i*3+1] = energy_hourly[i]; //Store in gen to use in heatmap output (probably don't need two variables)
+                energy_hourly_gen[i*3+2] = energy_hourly[i]; //Store in gen to use in heatmap output (probably don't need two variables)
+
                 //iday = floor(double(i * 3) / 24); //Calculate day of year
                 if (month[i] == 1)
                     iday = day[i];
