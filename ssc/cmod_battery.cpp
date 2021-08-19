@@ -1130,7 +1130,8 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
                 batt_vars->batt_dispatch, batt_vars->batt_meter_position,
                 batt_vars->batt_discharge_schedule_weekday, batt_vars->batt_discharge_schedule_weekend,
                 batt_vars->batt_can_charge, batt_vars->batt_can_discharge, batt_vars->batt_can_gridcharge, batt_vars->batt_can_fuelcellcharge,
-                dm_percent_discharge, dm_percent_gridcharge, batt_vars->grid_interconnection_limit_kW);
+                dm_percent_discharge, dm_percent_gridcharge, batt_vars->grid_interconnection_limit_kW, batt_vars->batt_dispatch_charge_only_system_exceeds_load,
+                batt_vars->batt_dispatch_discharge_only_load_exceeds_system);
         }
     }
     /*! Front of meter automated DC-connected dispatch */
@@ -1213,7 +1214,8 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             batt_vars->batt_dispatch, batt_vars->batt_dispatch_wf_forecast, batt_vars->batt_meter_position, nyears,
             batt_vars->batt_look_ahead_hours, batt_vars->batt_dispatch_update_frequency_hours,
             batt_vars->batt_dispatch_auto_can_charge, batt_vars->batt_dispatch_auto_can_clipcharge, batt_vars->batt_dispatch_auto_can_gridcharge, batt_vars->batt_dispatch_auto_can_fuelcellcharge,
-            util_rate_data, batt_vars->batt_cost_per_kwh, batt_vars->batt_cycle_cost_choice, batt_vars->batt_cycle_cost, batt_vars->grid_interconnection_limit_kW
+            util_rate_data, batt_vars->batt_cost_per_kwh, batt_vars->batt_cycle_cost_choice, batt_vars->batt_cycle_cost, batt_vars->grid_interconnection_limit_kW,
+            batt_vars->batt_dispatch_charge_only_system_exceeds_load, batt_vars->batt_dispatch_discharge_only_load_exceeds_system
         );
         if (batt_vars->batt_dispatch == dispatch_t::CUSTOM_DISPATCH)
         {
