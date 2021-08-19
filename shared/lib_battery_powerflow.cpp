@@ -377,7 +377,7 @@ void BatteryPowerFlow::calculateACConnected()
         else {
             P_batt_to_load_ac = P_battery_ac;
             P_fuelcell_to_load_ac = std::fmin(P_fuelcell_ac, calc_load_ac - P_batt_to_load_ac);
-            P_pv_to_load_ac = std::fmax(0, calc_load_ac - P_fuelcell_to_load_ac - P_batt_to_load_ac);
+            P_pv_to_load_ac = std::fmin(std::fmax(0, calc_load_ac - P_fuelcell_to_load_ac - P_batt_to_load_ac), P_pv_ac);
             P_pv_to_grid_ac = std::fmax(0, P_pv_ac - P_pv_to_load_ac);
             P_fuelcell_to_grid_ac = std::fmax(0, P_fuelcell_ac - P_fuelcell_to_load_ac);
         }
@@ -648,8 +648,8 @@ void BatteryPowerFlow::calculateDCConnected()
             P_battery_ac = 0;
         }
 
-        P_pv_to_load_ac = P_pv_ac;
         if (m_BatteryPower->isOutageStep) {
+            P_pv_to_load_ac = P_pv_ac;
             if (P_pv_ac >= P_crit_load_ac)
             {
                 P_pv_to_load_ac = P_crit_load_ac;
@@ -671,19 +671,27 @@ void BatteryPowerFlow::calculateDCConnected()
             }
         }
         else {
-            if (P_pv_ac >= P_load_ac)
-            {
-                P_pv_to_load_ac = P_load_ac;
-                P_batt_to_load_ac = 0;
+            if (m_BatteryPower->dischargeOnlyLoadExceedSystem) {
+                P_pv_to_load_ac = P_pv_ac;
+                if (P_pv_ac >= P_load_ac)
+                {
+                    P_pv_to_load_ac = P_load_ac;
+                    P_batt_to_load_ac = 0;
 
-                // discharging to grid
-                P_pv_to_grid_ac = P_pv_ac - P_pv_to_load_ac;
+                    // discharging to grid
+                    P_pv_to_grid_ac = P_pv_ac - P_pv_to_load_ac;
+                }
+                else {
+                    P_batt_to_load_ac = std::fmin(P_battery_ac, P_load_ac - P_pv_to_load_ac);
+                }
+
+                P_batt_to_grid_ac = P_battery_ac - P_batt_to_load_ac;
             }
             else {
-                P_batt_to_load_ac = std::fmin(P_battery_ac, P_load_ac - P_pv_to_load_ac);
+                P_batt_to_load_ac = P_battery_ac;
+                P_pv_to_load_ac = std::fmin(std::fmax(0, P_load_ac - P_batt_to_load_ac), P_pv_ac);
+                P_pv_to_grid_ac = std::fmax(0, P_pv_ac - P_pv_to_load_ac);
             }
-
-            P_batt_to_grid_ac = P_battery_ac - P_batt_to_load_ac;
         }
     }
 
