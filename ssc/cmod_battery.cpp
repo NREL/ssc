@@ -178,8 +178,8 @@ var_info vtab_battery_inputs[] = {
 
     // Dispatch forecast - optional parameters used in cmod_pvsamv1
     { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_wf_forecast_choice",            "Weather forecast choice for automatic dispatch",                 "0/1/2",   "0=LookAhead,1=LookBehind,2=InputForecast", "BatteryDispatch",       "?=0",                        "",                             "" },
-    { SSC_INPUT,        SSC_ARRAY,      "batt_pv_clipping_forecast",                   "PV clipping forecast",                                   "kW",       "",                     "BatteryDispatch",       "",  "",          "" },
-    { SSC_INPUT,        SSC_ARRAY,      "batt_pv_ac_forecast",                         "PV ac power forecast",                                   "kW",       "",                     "BatteryDispatch",       "",  "",          "" },
+    { SSC_INPUT,        SSC_ARRAY,      "batt_pv_clipping_forecast",                   "PV clipping forecast",                                   "kW",       "Length either 8760 * steps per hour (values repeat each year) or 8760 * steps per hour * analysis period",                     "BatteryDispatch",       "",  "",          "" },
+    { SSC_INPUT,        SSC_ARRAY,      "batt_pv_ac_forecast",                         "PV ac power forecast",                                   "kW",       "Length either 8760 * steps per hour (values repeat each year) or 8760 * steps per hour * analysis period",                     "BatteryDispatch",       "",  "",          "" },
 
     //  cycle cost inputs
     { SSC_INPUT,        SSC_NUMBER,     "batt_cycle_cost_choice",                      "Use SAM cost model for degradaton penalty or input custom via batt_cycle_cost", "0/1",     "0=UseCostModel,1=InputCost", "BatteryDispatch", "?=0",                           "",                             "" },
@@ -1234,9 +1234,17 @@ void battstor::parse_configuration()
         {
             if (batt_dispatch == dispatch_t::PEAK_SHAVING || batt_dispatch == dispatch_t::MAINTAIN_TARGET || batt_dispatch == dispatch_t::FORECAST)
             {
-                look_ahead = batt_weather_forecast == dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD;
-                look_behind = batt_weather_forecast == dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_BEHIND;
-                input_forecast = batt_weather_forecast == dispatch_t::WEATHER_FORECAST_CHOICE::WF_CUSTOM;
+                switch (batt_weather_forecast) {
+                    case dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD:
+                        look_ahead = true;
+                        break;
+                    case dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_BEHIND:
+                        look_behind = true;
+                        break;
+                    case dispatch_t::WEATHER_FORECAST_CHOICE::WF_CUSTOM:
+                        input_forecast = true;
+                        break;
+                }
                 if (batt_dispatch == dispatch_t::MAINTAIN_TARGET)
                     input_target = true;
             }
@@ -1248,9 +1256,17 @@ void battstor::parse_configuration()
         else if (batt_meter_position == dispatch_t::FRONT)
         {
             if (batt_dispatch == dispatch_t::FOM_AUTOMATED_ECONOMIC || batt_dispatch == dispatch_t::FOM_PV_SMOOTHING) {
-                look_ahead = batt_weather_forecast == dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD;
-                look_behind = batt_weather_forecast == dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_BEHIND;
-                input_forecast = batt_weather_forecast == dispatch_t::WEATHER_FORECAST_CHOICE::WF_CUSTOM;
+                switch (batt_weather_forecast) {
+                case dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD:
+                    look_ahead = true;
+                    break;
+                case dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_BEHIND:
+                    look_behind = true;
+                    break;
+                case dispatch_t::WEATHER_FORECAST_CHOICE::WF_CUSTOM:
+                    input_forecast = true;
+                    break;
+                }
             }
             else if (batt_dispatch == dispatch_t::FOM_CUSTOM_DISPATCH) {
                 input_custom_dispatch = true;

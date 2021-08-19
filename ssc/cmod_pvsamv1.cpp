@@ -2072,13 +2072,23 @@ void cm_pvsamv1::exec()
                 PVSystem->p_systemACPower[idx] = sharedInverter->powerAC_kW;
 
                 double pv_ac_kw = sharedInverter->powerAC_kW;
-                if (p_pv_ac_forecast.size() > 1 && p_pv_ac_forecast.size() > idx % (8760 * step_per_hour)) {
-                    pv_ac_kw = p_pv_ac_forecast[idx % (8760 * step_per_hour)];
+                if (p_pv_ac_forecast.size() > 1) {
+                    if (p_pv_ac_forecast.size() > idx) {
+                        pv_ac_kw = p_pv_ac_forecast[idx];
+                    }
+                    else if (p_pv_ac_forecast.size() > idx % (8760 * step_per_hour)) {
+                        pv_ac_kw = p_pv_ac_forecast[idx % (8760 * step_per_hour)];
+                    }
                 }
                 p_pv_ac_use.push_back(static_cast<ssc_number_t>(pv_ac_kw));
 
-                if (p_pv_clipping_forecast.size() > 1 && p_pv_clipping_forecast.size() > idx % (8760 * step_per_hour)) {
-                    cliploss = p_pv_clipping_forecast[idx % (8760 * step_per_hour)] * util::kilowatt_to_watt;
+                if (p_pv_clipping_forecast.size() > 1) {
+                    if (p_pv_clipping_forecast.size() > idx) {
+                        cliploss = p_pv_clipping_forecast[idx];
+                    }
+                    else if (p_pv_clipping_forecast.size() > idx % (8760 * step_per_hour)) {
+                        cliploss = p_pv_clipping_forecast[idx % (8760 * step_per_hour)];
+                    }
                 }
                 else {
                     cliploss = sharedInverter->powerClipLoss_kW;
@@ -2254,8 +2264,13 @@ void cm_pvsamv1::exec()
             if (en_batt && batt_topology == ChargeController::AC_CONNECTED)
             {
                 double pv_ac_kw = sharedInverter->powerAC_kW;
-                if (p_pv_ac_forecast.size() > 1 && p_pv_ac_forecast.size() > idx % (8760 * step_per_hour)) {
-                    pv_ac_kw = p_pv_ac_forecast[idx % (8760 * step_per_hour)];
+                if (p_pv_ac_forecast.size() > 1) {
+                    if (p_pv_ac_forecast.size() > idx) {
+                        pv_ac_kw = p_pv_ac_forecast[idx];
+                    }
+                    else if (p_pv_ac_forecast.size() > idx % (8760 * step_per_hour)) {
+                        pv_ac_kw = p_pv_ac_forecast[idx % (8760 * step_per_hour)];
+                    }
                 }
                 p_pv_ac_use.push_back(static_cast<ssc_number_t>(pv_ac_kw));
             }
