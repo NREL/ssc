@@ -914,6 +914,7 @@ class cm_singleowner : public compute_module
 private:
 	util::matrix_t<double> cf;
     util::matrix_t<double> cf_lcos;
+    util::matrix_t<double> cf_ppa_purchases;
 	dispatch_calculations m_disp_calcs;
 	hourly_energy_calculation hourly_energy_calcs;
 
@@ -947,6 +948,7 @@ public:
 		int nyears = as_integer("analysis_period");
 		cf.resize_fill(CF_max, nyears + 1, 0.0);
         cf_lcos.resize_fill(CF_max, nyears + 1, 0.0);
+        cf_ppa_purchases.resize_fill(CF_max, nyears + 1, 0.0);
 		// assign inputs
 		double inflation_rate = as_double("inflation_rate")*0.01;
 		double ppa_escalation = as_double("ppa_escalation")*0.01;
@@ -2870,8 +2872,25 @@ public:
 //	log(util::format("after loop  - size of debt =%lg .", size_of_debt), SSC_WARNING);
 
     
-
+    /*
     // Use PPA values to calculate revenue from purchases and sales
+    for (int y = 0; y <= nyears; y++) {
+        cf_ppa_purchases.at(0, y) = cf.at(CF_ppa_price, y);
+        cf_ppa_purchases.at(1, y) = cf.at(CF_energy_sales_value, y);
+        cf_ppa_purchases.at(2, y) = cf.at(CF_degradation, y);
+        cf_ppa_purchases.at(3, y) = cf.at(CF_energy_purchases_value, y); //Fixed OM Battery cost
+        cf_ppa_purchases.at(4, y) = cf.at(CF_energy_net, y); //Produciton OM Battery cost
+        cf_ppa_purchases.at(5, y) = cf.at(CF_energy_sales, y); //Capacity OM Battery Cost
+        cf_ppa_purchases.at(6, y) = cf.at(CF_energy_purchases, y);
+        
+    }
+    ppa_retail_purchases(this, cf_ppa_purchases, nyears, hourly_energy_calcs);
+    for (int y = 0; y <= nyears; y++) {
+        cf.at(CF_energy_sales_value, y) = cf_ppa_purchases.at(1, y);
+        cf.at(CF_energy_purchases_value, y) = cf_ppa_purchases.at(3, y);
+        cf.at(CF_energy_net, y) = cf.at(CF_energy_sales, y) + cf.at(CF_energy_purchases, y);
+    }
+    */
     
     size_t n_multipliers;
     ssc_number_t* ppa_multipliers = as_array("ppa_multipliers", &n_multipliers);
@@ -2911,7 +2930,7 @@ public:
             }
         }
     }
-
+    
 	assign("flip_target_year", var_data((ssc_number_t) flip_target_year ));
 	assign("flip_target_irr", var_data((ssc_number_t)  flip_target_percent ));
 
@@ -2957,11 +2976,11 @@ public:
 	// Thermal value not included in LPPA calculation but in total revenue.
 	double npv_ppa_revenue = npv(CF_energy_value, nyears, nom_discount_rate);
 //	double npv_ppa_revenue = npv(CF_total_revenue, nyears, nom_discount_rate);
-	double npv_energy_nom = npv(CF_energy_sales, nyears, nom_discount_rate);
+	double npv_energy_nom = npv(CF_energy_sales, nyears, nom_discount_rate); //Only sales in denominator
 	double lppa_nom = 0;
 	if (npv_energy_nom != 0) lppa_nom = npv_ppa_revenue / npv_energy_nom * 100.0;
 	double lppa_real = 0;
-	double npv_energy_real = npv(CF_energy_sales,nyears,disc_real);
+	double npv_energy_real = npv(CF_energy_sales,nyears,disc_real); //Only energy sales in denominator
 	if (npv_energy_real != 0) lppa_real = npv_ppa_revenue / npv_energy_real * 100.0;
 
 	// update LCOE calculations 
@@ -2993,7 +3012,8 @@ public:
 			+ cf.at(CF_reserve_interest, i)
 			- cf.at(CF_disbursement_debtservice, i) // note sign is negative for positive disbursement
 			- cf.at(CF_disbursement_om, i) // note sign is negative for positive disbursement
-			+ cf.at(CF_net_salvage_value, i); // benefit to cost reduction so that project revenue based on PPA revenue and not total revenue per 7/16/15 meeting
+			+ cf.at(CF_net_salvage_value, i) // benefit to cost reduction so that project revenue based on PPA revenue and not total revenue per 7/16/15 meeting
+            + cf.at(CF_energy_purchases_value, i); //Energy purchases from grid (does this need to be here?)
 	}
 	// year 1 add total ITC (net benefit) so that project return = project revenue - project cost
 	if (nyears >= 1) cf.at(CF_Annual_Costs, 1) += itc_total;
@@ -3026,6 +3046,7 @@ public:
 
 
     //Inverter OM Calculations
+    /*
     size_t n_inv_psoloss;
     size_t n_inv_pntloss;
 
@@ -3115,7 +3136,7 @@ public:
         save_cf(CF_om_inv_pntloss, nyears, "cf_om_inv_pntloss");
         save_cf(CF_om_inv_psoloss, nyears, "cf_om_inv_psoloss");
     }
-
+    */
 	// DSCR calculations
 	for (i = 0; i <= nyears; i++)
 	{

@@ -3639,3 +3639,54 @@ void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double
     }
     /////////////////////////////////////////////////////////////////////////////////////////
 }
+
+void ppa_retail_purchases(compute_module* cm, util::matrix_t<double> cf, int nyears, hourly_energy_calculation hourly_energy_calcs) {
+    enum {
+        CF_ppa_price_common,
+        CF_energy_sales_value_common,
+        CF_degradation_common,
+        CF_energy_purchases_value_common,
+        CF_energy_net_common,
+        CF_energy_sales_common,
+        CF_energy_purchases_common,
+    };
+
+    size_t n_multipliers;
+    ssc_number_t* ppa_multipliers = cm->as_array("ppa_multipliers", &n_multipliers);
+    bool ppa_purchases = !(cm->is_assigned("en_electricity_rates") && cm->as_number("en_electricity_rates") == 1);
+    if (cm->as_integer("system_use_lifetime_output") == 1)
+    {
+        // hourly_enet includes all curtailment, availability
+        for (size_t i = 1; i <= nyears; i++) {
+            double ppa_value = cf.at(CF_ppa_price_common, i);
+            for (size_t h = 0; h < 8760; h++) {
+                cf.at(CF_energy_sales_value_common, i) += hourly_energy_calcs.hourly_sales()[(i - 1) * 8760 + h] * cf.at(CF_degradation_common, i) * ppa_value / 100.0 * ppa_multipliers[h];
+                if (ppa_purchases) {
+                    cf.at(CF_energy_purchases_value_common, i) += hourly_energy_calcs.hourly_purchases()[(i - 1) * 8760 + h] * cf.at(CF_degradation_common, i) * ppa_value / 100.0 * ppa_multipliers[h];
+                }
+            }
+            if (!ppa_purchases) {
+                cf.at(CF_energy_purchases_value_common, i) = 0.0;
+                // Recompute this variable because the ppa_gen values (hourly_net) were all positve until now 
+                cf.at(CF_energy_net_common, i) = cf.at(CF_energy_sales_common, i) + cf.at(CF_energy_purchases_common, i); // Adding a positive and negative number
+            }
+        }
+    }
+    else
+    {
+        for (size_t i = 1; i <= nyears; i++) {
+            double ppa_value = cf.at(CF_ppa_price_common, i);
+            for (size_t h = 0; h < 8760; h++) {
+                cf.at(CF_energy_sales_value_common, i) += hourly_energy_calcs.hourly_sales()[h] * cf.at(CF_degradation_common, i) * ppa_value / 100.0 * ppa_multipliers[h];
+                if (ppa_purchases) {
+                    cf.at(CF_energy_purchases_value_common, i) += hourly_energy_calcs.hourly_purchases()[h] * cf.at(CF_degradation_common, i) * ppa_value / 100.0 * ppa_multipliers[h];
+                }
+            }
+            if (!ppa_purchases) {
+                cf.at(CF_energy_purchases_value_common, i) = 0.0;
+                // Recompute this variable because the ppa_gen values (hourly_net) were all positve until now 
+                cf.at(CF_energy_net_common, i) = cf.at(CF_energy_sales_common, i) + cf.at(CF_energy_purchases_common, i); // Adding a positive and negative number
+            }
+        }
+    }
+}

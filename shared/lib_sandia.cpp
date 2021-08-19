@@ -425,8 +425,8 @@ bool sandia_inverter_t::acpower(
 	// night time: power is equal to nighttime power loss (note that if PacNoPso > Pso and Pac < Pso then the night time loss could be considered an operating power loss)
 	if (Pdc_total <= Pso)
 	{
-		//*Pac = -Pntare;
-        *Pac = 0;
+		*Pac = -Pntare;
+        //*Pac = 0;
 		*Ppar = Pntare;
 		*Pntloss = Pntare;
 	}
@@ -435,8 +435,8 @@ bool sandia_inverter_t::acpower(
 		for (size_t m = 0; m < Vdc.size(); m++)
 		{
 			*Psoloss += PacNoPso_each[m] - Pac_each[m];
-			//*Pac += Pac_each[m];
-            *Pac += PacNoPso_each[m];
+			*Pac += Pac_each[m]; //Allow for reduction in gen by daytime consumption
+            //*Pac += PacNoPso_each[m];
 		}
 	
 	// clipping loss Wac (note that the Pso=0 may have no clipping)
@@ -449,7 +449,7 @@ bool sandia_inverter_t::acpower(
 
 	*Plr = Pdc_total / Pdco;
 	*Eff = *Pac / Pdc_total;
-	if ( *Eff < 0.0 || *Pac == 0 ) *Eff = 0.0;
+	if ( *Eff < 0.0 ) *Eff = 0.0;
 
 	return true;
 }

@@ -485,8 +485,8 @@ bool ond_inverter::acpower(
 	*Pntloss = 0.0;
 	if (Pdc_eff <= PSeuil)
 	{
-		//*Pac = -Night_Loss;
-        *Pac = 0;
+		*Pac = -Night_Loss;
+        //*Pac = 0;
 		*Ppar = Night_Loss;
 		*Pntloss = Night_Loss;
 	}

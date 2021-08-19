@@ -42,7 +42,7 @@ void save_cf(int cf_line, int nyears, const std::string& name, util::matrix_t<do
 extern var_info vtab_lcos_inputs[]; //LCOS var table
 
 void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double nom_discount_rate, double inflation_rate, double lcoe_real, double total_cost, double real_discount_rate, int grid_charging_cost_version); //LCOS function
-
+//void ppa_retail_purchases(compute_module* cm, util::matrix_t<double> cf, int nyears, hourly_energy_calculation hourly_energy_calcs);
 
 class dispatch_calculations
 {
@@ -114,7 +114,7 @@ public:
     void sum_ts_to_hourly(ssc_number_t* timestep_power, std::vector<double>& hourly);
 };
 
-
+void ppa_retail_purchases(compute_module* cm, util::matrix_t<double> cf, int nyears, hourly_energy_calculation hourly_energy_calcs);
 
 
 /*
