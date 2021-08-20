@@ -36,6 +36,8 @@ protected:
 
     std::vector<double> replacementCost = { 0.0 };
     std::vector<double> cyclingCost = { 0.005 };
+
+    double interconnection_limit = 1e+38;
 public:
 
     void CreateBattery(double dtHour)
