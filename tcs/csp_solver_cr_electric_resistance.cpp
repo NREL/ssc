@@ -352,7 +352,7 @@ void C_csp_cr_electric_resistance::estimates(const C_csp_weatherreader::S_output
 
 void C_csp_cr_electric_resistance::converged()
 {
-    if (m_E_su_initial == 0.0) {
+    if (m_E_su_calculated == 0.0) {
         m_operating_mode_converged = C_csp_collector_receiver::ON;
     }
     else {
