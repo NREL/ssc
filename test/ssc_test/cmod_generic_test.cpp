@@ -8,7 +8,7 @@ TEST_F(CMGeneric, SingleOwnerWithBattery_cmod_generic) {
 	generic_singleowner_battery_60min(data);
 
 	// Test different dispatch strategies
-	std::vector<size_t> dispatch_options{ 0,1,3,4 };
+	std::vector<size_t> dispatch_options{ 0,2,3 };
 
 	// Run with hourly data
 	for (size_t i = 0; i < dispatch_options.size(); i++) {
@@ -42,7 +42,7 @@ TEST_F(CMGeneric, CommercialWithBattery_cmod_generic) {
 	generic_commerical_battery_60min(data);
 	
 	// Test different dispatch strategies
-	std::vector<size_t> dispatch_options{ 0,3,4 };
+	std::vector<size_t> dispatch_options{ 0,2,3 };
 
 	// Run with hourly data, with and without lifetime
 	for (size_t l = 0; l < 2; l++) {

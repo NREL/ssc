@@ -10,7 +10,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMGridCharging) {
     dispatchAutoBTM = new dispatch_automatic_behind_the_meter_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice,
                                                                 max_current,
                                                                 max_current, max_power, max_power, max_power, max_power,
-                                                                0, dispatch_t::BTM_MODES::LOOK_AHEAD, 0, 1, 24, 1, true,
+                                                                0, dispatch_t::BTM_MODES::PEAK_SHAVING, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1, true,
                                                                 true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit);
 
     // Setup pv and load signal for peak shaving algorithm
@@ -59,7 +59,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMPVCharging) {
     dispatchAutoBTM = new dispatch_automatic_behind_the_meter_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice,
                                                                 max_current,
                                                                 max_current, max_power, max_power, max_power, max_power,
-                                                                0, dispatch_t::BTM_MODES::LOOK_AHEAD, 0, 1, 24, 1, true,
+                                                                0, dispatch_t::BTM_MODES::PEAK_SHAVING, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1, true,
                                                                 true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit);
 
     // Setup pv and load signal for peak shaving algorithm
@@ -102,7 +102,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMPVChargeAndDischarge) {
     dispatchAutoBTM = new dispatch_automatic_behind_the_meter_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice,
                                                                 max_current,
                                                                 max_current, max_power, max_power, max_power, max_power,
-                                                                0, dispatch_t::BTM_MODES::LOOK_AHEAD, 0, 1, 24, 1, true,
+                                                                0, dispatch_t::BTM_MODES::PEAK_SHAVING, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1, true,
                                                                 true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit);
 
     // Setup pv and load signal for peak shaving algorithm
@@ -152,7 +152,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMPVChargeAndDischargeSubh
     dispatchAutoBTM = new dispatch_automatic_behind_the_meter_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice,
                                                                 max_current,
                                                                 max_current, max_power, max_power, max_power, max_power,
-                                                                0, dispatch_t::BTM_MODES::LOOK_AHEAD, 0, 1, 24, 1, true,
+                                                                0, dispatch_t::BTM_MODES::PEAK_SHAVING, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1, true,
                                                                 true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit);
 
     // Setup pv and load signal for peak shaving algorithm
@@ -219,7 +219,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMDCClipCharge) {
     dispatchAutoBTM = new dispatch_automatic_behind_the_meter_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice,
                                                                 max_current,
                                                                 max_current, max_power, max_power, max_power, max_power,
-                                                                0, dispatch_t::BTM_MODES::LOOK_AHEAD, 0, 1, 24, 1,
+                                                                0, dispatch_t::BTM_MODES::PEAK_SHAVING, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1,
                                                                 false, true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit);
 
     // Setup pv and load signal for peak shaving algorithm
@@ -272,7 +272,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, TestBasicForecast) {
     dispatchAutoBTM = new dispatch_automatic_behind_the_meter_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice,
         max_current,
         max_current, max_power, max_power, max_power, max_power,
-        0, dispatch_t::BTM_MODES::FORECAST, 0, 1, 24, 1, true,
+        0, dispatch_t::BTM_MODES::FORECAST, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1, true,
         true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit);
 
     // Setup pv and load signal for peak shaving algorithm
@@ -325,7 +325,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, TestSummerPeak) {
     dispatchAutoBTM = new dispatch_automatic_behind_the_meter_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice,
         max_current,
         max_current, max_power, max_power, max_power, max_power,
-        0, dispatch_t::BTM_MODES::FORECAST, 0, 1, 24, 1, true,
+        0, dispatch_t::BTM_MODES::FORECAST, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1, true,
         true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit);
 
     load_prediction = { 1.44289, 1.27067, 1.1681, 1.09342, 1.12921, 1.39345, 1.57299, 1.63055, 1.85622, 2.44991, 2.61812, 2.90909, 3.29601, 3.64366, 3.88232, 3.99237, 4.09673, 4.11102, 4.09175, 4.13445, 3.91011, 3.27815, 2.67845, 2.11802, 1.78025, 1.57142, 1.42908, 1.32466,
@@ -362,7 +362,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, TestSummerPeakNetMeteringCredits) {
     dispatchAutoBTM = new dispatch_automatic_behind_the_meter_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice,
         max_current,
         max_current, max_power, max_power, max_power, max_power,
-        0, dispatch_t::BTM_MODES::FORECAST, 0, 1, 24, 1, true,
+        0, dispatch_t::BTM_MODES::FORECAST, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1, true,
         true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit);
 
     load_prediction = { 1.44289, 1.27067, 1.1681, 1.09342, 1.12921, 1.39345, 1.57299, 1.63055, 1.85622, 2.44991, 2.61812, 2.90909, 3.29601, 3.64366, 3.88232, 3.99237, 4.09673, 4.11102, 4.09175, 4.13445, 3.91011, 3.27815, 2.67845, 2.11802, 1.78025, 1.57142, 1.42908, 1.32466,
@@ -399,7 +399,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, TestSummerPeakGridCharging) {
     dispatchAutoBTM = new dispatch_automatic_behind_the_meter_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice,
         max_current,
         max_current, max_power, max_power, max_power, max_power,
-        0, dispatch_t::BTM_MODES::FORECAST, 0, 1, 24, 1, true,
+        0, dispatch_t::BTM_MODES::FORECAST, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1, true,
         true, canGridCharge, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit);
 
     load_prediction = { 1.44289, 1.27067, 1.1681, 1.09342, 1.12921, 1.39345, 1.57299, 1.63055, 1.85622, 2.44991, 2.61812, 2.90909, 3.29601, 3.64366, 3.88232, 3.99237, 4.09673, 4.11102, 4.09175, 4.13445, 3.91011, 3.27815, 2.67845, 2.11802, 1.78025, 1.57142, 1.42908, 1.32466,
@@ -437,7 +437,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, TestSummerPeakGridChargingSubhourly) {
     dispatchAutoBTM = new dispatch_automatic_behind_the_meter_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice,
         max_current,
         max_current, max_power, max_power, max_power, max_power,
-        0, dispatch_t::BTM_MODES::FORECAST, 0, 1, 24, 1, true,
+        0, dispatch_t::BTM_MODES::FORECAST, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1, true,
         true, canGridCharge, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit);
 
     load_prediction = { 1.44289, 1.27067, 1.1681, 1.09342, 1.12921, 1.39345, 1.57299, 1.63055, 1.85622, 2.44991, 2.61812, 2.90909, 3.29601, 3.64366, 3.88232, 3.99237, 4.09673, 4.11102, 4.09175, 4.13445, 3.91011, 3.27815, 2.67845, 2.11802, 1.78025, 1.57142, 1.42908, 1.32466,
@@ -489,7 +489,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, TestCommercialPeakForecasting) {
     dispatchAutoBTM = new dispatch_automatic_behind_the_meter_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice,
         max_current,
         max_current, max_power, max_power, max_power, max_power,
-        0, dispatch_t::BTM_MODES::FORECAST, 0, 1, 24, 1, true,
+        0, dispatch_t::BTM_MODES::FORECAST, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1, true,
         true, true, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit);
 
     load_prediction = { 49.9898, 42.4037, 42.1935, 43.3778, 39.4545, 59.3723, 84.6907, 180.423, 180.836, 186.225, 197.275, 205.302, 231.362,
@@ -530,7 +530,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMPVChargeAndDischargeSmal
     dispatchAutoBTM = new dispatch_automatic_behind_the_meter_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice,
         max_current,
         max_current, max_power, max_power, max_power, max_power,
-        0, dispatch_t::BTM_MODES::LOOK_AHEAD, 0, 1, 24, 1, true,
+        0, dispatch_t::BTM_MODES::PEAK_SHAVING, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1, true,
         true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit);
 
     // Setup pv and load signal for peak shaving algorithm
@@ -580,7 +580,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMPVChargeAndDischargeSmal
     dispatchAutoBTM = new dispatch_automatic_behind_the_meter_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice,
         max_current,
         max_current, max_power, max_power, max_power, max_power,
-        0, dispatch_t::BTM_MODES::LOOK_AHEAD, 0, 1, 24, 1, true,
+        0, dispatch_t::BTM_MODES::PEAK_SHAVING, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1, true,
         true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit);
 
     // Setup pv and load signal for peak shaving algorithm
@@ -630,7 +630,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMCustomDispatch) {
     dispatchAutoBTM = new dispatch_automatic_behind_the_meter_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice,
         max_current,
         max_current, max_power, max_power, max_power, max_power,
-        0, dispatch_t::BTM_MODES::CUSTOM_DISPATCH, 0, 1, 24, 1, true,
+        0, dispatch_t::BTM_MODES::CUSTOM_DISPATCH, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1, true,
         true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit);
 
     // Setup custom dispatch signal - signal and expected AC power are the same without losses
@@ -663,7 +663,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMCustomDispatchWithLosses
     dispatchAutoBTM = new dispatch_automatic_behind_the_meter_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice,
         max_current,
         max_current, max_power, max_power, max_power, max_power,
-        0, dispatch_t::BTM_MODES::CUSTOM_DISPATCH, 0, 1, 24, 1, true,
+        0, dispatch_t::BTM_MODES::CUSTOM_DISPATCH, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1, true,
         true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit);
 
     // Setup custom dispatch signal - need to account for losses when discharging
@@ -698,7 +698,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMCustomWExcessPV) {
     dispatchAutoBTM = new dispatch_automatic_behind_the_meter_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice,
         max_current,
         max_current, max_power, max_power, max_power, max_power,
-        0, dispatch_t::BTM_MODES::CUSTOM_DISPATCH, 0, 1, 24, 1, true,
+        0, dispatch_t::BTM_MODES::CUSTOM_DISPATCH, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1, true,
         true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit);
 
     // Setup custom dispatch signal - signal is greater than expected power since constraints should prevent dispatch hours 13 through 17

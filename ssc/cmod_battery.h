@@ -48,6 +48,7 @@ struct batt_variables
 	int analysis_period;
 	int batt_chem;
 	int batt_dispatch;
+    int batt_dispatch_wf_forecast;
 	int batt_voltage_choice;
 	int batt_current_choice;
 	int batt_meter_position;
