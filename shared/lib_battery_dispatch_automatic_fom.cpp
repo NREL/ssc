@@ -18,6 +18,7 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 	double Pd_max_kwac,
 	double t_min,
 	int dispatch_mode,
+    int weather_forecast_mode,
 	int pv_dispatch,
 	size_t nyears,
 	size_t look_ahead_hours,
@@ -36,11 +37,11 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 	double etaGridCharge,
 	double etaDischarge,
     double interconnection_limit) : dispatch_automatic_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max_kwdc, Pd_max_kwdc, Pc_max_kwac, Pd_max_kwac,
-		t_min, dispatch_mode, pv_dispatch, nyears, look_ahead_hours, dispatch_update_frequency_hours, can_charge, can_clip_charge, can_grid_charge, can_fuelcell_charge,
+		t_min, dispatch_mode, weather_forecast_mode, pv_dispatch, nyears, look_ahead_hours, dispatch_update_frequency_hours, can_charge, can_clip_charge, can_grid_charge, can_fuelcell_charge,
         battReplacementCostPerkWh, battCycleCostChoice, battCycleCost, interconnection_limit)
 {
 	// if look behind, only allow 24 hours
-	if (_mode == dispatch_t::FOM_LOOK_BEHIND)
+	if (_weather_forecast_mode == dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_BEHIND)
 		_forecast_hours = 24;
 
 	_inverter_paco = inverter_paco;
@@ -79,7 +80,7 @@ void dispatch_automatic_front_of_meter_t::setup_cost_forecast_vector()
 	ppa_price_series.reserve(_forecast_price_rt_series.size());
 
 	// add elements at beginning, so our forecast is looking at yesterday's prices
-	if (_mode == dispatch_t::FOM_LOOK_BEHIND) {
+	if (_weather_forecast_mode == dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_BEHIND) {
 		for (size_t i = 0; i != _forecast_hours * _steps_per_hour; i++)
 			ppa_price_series.push_back(0);
 	}

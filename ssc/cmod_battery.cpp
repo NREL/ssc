@@ -136,19 +136,19 @@ var_info vtab_battery_inputs[] = {
     { SSC_INPUT,        SSC_MATRIX,     "cap_vs_temp",                                 "Effective capacity as function of temperature",          "C,%",      "",                     "BatteryCell",       "",                           "",                             "" },
 
     // storage dispatch
-    { SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_charge",                      "Periods 1-6 charging from system allowed?",              "",         "",                     "BatteryDispatch",       "en_batt=1&batt_dispatch_choice=4",                           "",                             "" },
+    { SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_charge",                      "Periods 1-6 charging from system allowed?",              "",         "",                     "BatteryDispatch",       "en_batt=1&batt_dispatch_choice=3",                           "",                             "" },
     { SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_fuelcellcharge",			  "Periods 1-6 charging from fuel cell allowed?",           "",         "",                      "BatteryDispatch",     "",                        "",                              "" },
-    { SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_discharge",                   "Periods 1-6 discharging allowed?",                       "",         "",                     "BatteryDispatch",       "en_batt=1&batt_dispatch_choice=4",                           "",                             "" },
-    { SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_gridcharge",                  "Periods 1-6 grid charging allowed?",                     "",         "",                     "BatteryDispatch",       "en_batt=1&batt_dispatch_choice=4",                           "",                             "" },
-    { SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_percent_discharge",           "Periods 1-6 discharge percent",                          "%",        "",                     "BatteryDispatch",       "en_batt=1&batt_dispatch_choice=4",                           "",                             "" },
-    { SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_percent_gridcharge",          "Periods 1-6 gridcharge percent",                         "%",        "",                     "BatteryDispatch",       "en_batt=1&batt_dispatch_choice=4",                           "",                             "" },
-    { SSC_INPUT,        SSC_MATRIX,     "dispatch_manual_sched",                       "Battery dispatch schedule for weekday",                  "",         "",                     "BatteryDispatch",       "en_batt=1&batt_dispatch_choice=4",                           "",                             "" },
-    { SSC_INPUT,        SSC_MATRIX,     "dispatch_manual_sched_weekend",               "Battery dispatch schedule for weekend",                  "",         "",                     "BatteryDispatch",       "en_batt=1&batt_dispatch_choice=4",                           "",                             "" },
-    { SSC_INPUT,        SSC_ARRAY,      "batt_target_power",                           "Grid target power for every time step",                  "kW",       "",                     "BatteryDispatch",       "en_batt=1&batt_meter_position=0&batt_dispatch_choice=2",                        "",                             "" },
-    { SSC_INPUT,        SSC_ARRAY,      "batt_target_power_monthly",                   "Grid target power on monthly basis",                     "kW",       "",                     "BatteryDispatch",       "en_batt=1&batt_meter_position=0&batt_dispatch_choice=2",                        "",                             "" },
-    { SSC_INPUT,        SSC_NUMBER,     "batt_target_choice",                          "Target power input option",                              "0/1",      "0=InputMonthlyTarget,1=InputFullTimeSeries", "BatteryDispatch", "en_batt=1&batt_meter_position=0&batt_dispatch_choice=2",                        "",                             "" },
-    { SSC_INPUT,        SSC_ARRAY,      "batt_custom_dispatch",                        "Custom battery power for every time step",               "kW",       "kWAC if AC-connected, else kWDC", "BatteryDispatch",       "en_batt=1&batt_dispatch_choice=3","",                         "" },
-    { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_choice",                        "Battery dispatch algorithm",                             "0/1/2/3/4/5", "If behind the meter: 0=PeakShavingLookAhead,1=PeakShavingLookBehind,2=InputGridTarget,3=InputBatteryPower,4=ManualDispatch,5=PriceSignalForecast if front of meter: 0=AutomatedLookAhead,1=AutomatedLookBehind,2=AutomatedInputForecast,3=InputBatteryPower,4=ManualDispatch",                    "BatteryDispatch",       "en_batt=1",                        "",                             "" },
+    { SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_discharge",                   "Periods 1-6 discharging allowed?",                       "",         "",                     "BatteryDispatch",       "en_batt=1&batt_dispatch_choice=3",                           "",                             "" },
+    { SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_gridcharge",                  "Periods 1-6 grid charging allowed?",                     "",         "",                     "BatteryDispatch",       "en_batt=1&batt_dispatch_choice=3",                           "",                             "" },
+    { SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_percent_discharge",           "Periods 1-6 discharge percent",                          "%",        "",                     "BatteryDispatch",       "en_batt=1&batt_dispatch_choice=3",                           "",                             "" },
+    { SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_percent_gridcharge",          "Periods 1-6 gridcharge percent",                         "%",        "",                     "BatteryDispatch",       "en_batt=1&batt_dispatch_choice=3",                           "",                             "" },
+    { SSC_INPUT,        SSC_MATRIX,     "dispatch_manual_sched",                       "Battery dispatch schedule for weekday",                  "",         "",                     "BatteryDispatch",       "en_batt=1&batt_dispatch_choice=3",                           "",                             "" },
+    { SSC_INPUT,        SSC_MATRIX,     "dispatch_manual_sched_weekend",               "Battery dispatch schedule for weekend",                  "",         "",                     "BatteryDispatch",       "en_batt=1&batt_dispatch_choice=3",                           "",                             "" },
+    { SSC_INPUT,        SSC_ARRAY,      "batt_target_power",                           "Grid target power for every time step",                  "kW",       "",                     "BatteryDispatch",       "en_batt=1&batt_meter_position=0&batt_dispatch_choice=1",                        "",                             "" },
+    { SSC_INPUT,        SSC_ARRAY,      "batt_target_power_monthly",                   "Grid target power on monthly basis",                     "kW",       "",                     "BatteryDispatch",       "en_batt=1&batt_meter_position=0&batt_dispatch_choice=1",                        "",                             "" },
+    { SSC_INPUT,        SSC_NUMBER,     "batt_target_choice",                          "Target power input option",                              "0/1",      "0=InputMonthlyTarget,1=InputFullTimeSeries", "BatteryDispatch", "en_batt=1&batt_meter_position=0&batt_dispatch_choice=1",                        "",                             "" },
+    { SSC_INPUT,        SSC_ARRAY,      "batt_custom_dispatch",                        "Custom battery power for every time step",               "kW",       "kWAC if AC-connected, else kWDC", "BatteryDispatch",       "en_batt=1&batt_dispatch_choice=2","",                         "" },
+    { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_choice",                        "Battery dispatch algorithm",                             "0/1/2/3/4", "If behind the meter: 0=PeakShaving,1=InputGridTarget,2=InputBatteryPower,3=ManualDispatch,4=PriceSignalForecast if front of meter: 0=AutomatedEconomic,1=PV_Smoothing,2=InputBatteryPower,3=ManualDispatch",                    "BatteryDispatch",       "en_batt=1",                        "",                             "" },
     { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_auto_can_fuelcellcharge",       "Charging from fuel cell allowed for automated dispatch?",          "kW",       "",                     "BatteryDispatch",       "",                           "",                             "" },
     { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_auto_can_gridcharge",           "Grid charging allowed for automated dispatch?",          "kW",       "",                     "BatteryDispatch",       "",                           "",                             "" },
     { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_auto_can_charge",               "System charging allowed for automated dispatch?",            "kW",       "",                     "BatteryDispatch",       "",                           "",                             "" },
@@ -158,27 +158,28 @@ var_info vtab_battery_inputs[] = {
     { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_update_frequency_hours",        "Frequency to update the look-ahead dispatch",            "hours",    "",                     "BatteryDispatch",       "",                           "",                             "" },
 
     // PV smoothing specific inputs
-    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_nameplate_ac",             "Nameplate for pv smoothing",                            "kWac",         "",   "BatteryDispatch",       "en_batt=1&batt_meter_position=1&batt_dispatch_choice=5",                           "",                             "" },
-    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_ac_lb_enable",             "Enable AC lower bound",                                 "0/1",         "",   "BatteryDispatch",       "en_batt=1&batt_meter_position=1&batt_dispatch_choice=5",                           "",                             "" },
-    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_ac_lb",                    "AC lower bound",                                        "fraction of nameplate",         "",                     "BatteryDispatch",       "en_batt=1&batt_meter_position=1&batt_dispatch_choice=5",                           "",                             "" },
-    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_ac_ub_enable",             "Enable AC upper bound",                                 "0/1",         "",   "BatteryDispatch",       "en_batt=1&batt_meter_position=1&batt_dispatch_choice=5",                           "",                             "" },
-    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_ac_ub",                    "AC upper bound",                                        "fraction of nameplate",         "",                     "BatteryDispatch",       "en_batt=1&batt_meter_position=1&batt_dispatch_choice=5",                           "",                             "" },
-    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_curtail_as_control",       "Correct up-ramp violations",                            "0/1",         "",   "BatteryDispatch",       "en_batt=1&batt_meter_position=1&batt_dispatch_choice=5",                           "",                             "" },
-    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_curtail_if_violation",     "Curtail violations",                                    "0/1",         "",   "BatteryDispatch",       "en_batt=1&batt_meter_position=1&batt_dispatch_choice=5",                           "",                             "" },
-    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_short_forecast_enable",    "Enable short term power forecast",                      "0/1",         "",   "BatteryDispatch",       "en_batt=1&batt_meter_position=1&batt_dispatch_choice=5",                           "",                             "" },
-    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_forecast_shift_periods",   "Forecasting window",                                    "periods of ramp intervals",         "",                     "BatteryDispatch",       "en_batt=1&batt_meter_position=1&batt_dispatch_choice=5",                           "",                             "" },
-    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_timestep_multiplier",      "Ramp timestep multiplier",                              "",         "",                     "BatteryDispatch",       "en_batt=1&batt_meter_position=1&batt_dispatch_choice=5",                           "",                             "" },
-    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_max_ramp",                 "Maximum ramp rate",                                     "% of nameplate per ramp interval",         "",                     "BatteryDispatch",       "en_batt=1&batt_meter_position=1&batt_dispatch_choice=5",                           "",                             "" },
-    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_soc_rest",                 "Battery resting SOC",                                   "%",         "",                     "BatteryDispatch",       "en_batt=1&batt_meter_position=1&batt_dispatch_choice=5",                           "",                             "" },
-    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_kp",                       "Track PV power multiplier (kp)",                        "",         "",                     "BatteryDispatch",       "en_batt=1&batt_meter_position=1&batt_dispatch_choice=5",                           "",                             "" },
-    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_ki",                       "Return to rest SOC multiplier (ki)",                    "",         "",                     "BatteryDispatch",       "en_batt=1&batt_meter_position=1&batt_dispatch_choice=5",                           "",                             "" },
-    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_kf",                       "Forecast accumulation error multiplier (kf)",           "",         "",                     "BatteryDispatch",       "en_batt=1&batt_meter_position=1&batt_dispatch_choice=5",                           "",                             "" },
+    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_nameplate_ac",             "Nameplate for pv smoothing",                            "kWac",         "",   "BatteryDispatch",       "en_batt=1&batt_meter_position=1&batt_dispatch_choice=1",                           "",                             "" },
+    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_ac_lb_enable",             "Enable AC lower bound",                                 "0/1",         "",   "BatteryDispatch",       "en_batt=1&batt_meter_position=1&batt_dispatch_choice=1",                           "",                             "" },
+    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_ac_lb",                    "AC lower bound",                                        "fraction of nameplate",         "",                     "BatteryDispatch",       "en_batt=1&batt_meter_position=1&batt_dispatch_choice=1",                           "",                             "" },
+    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_ac_ub_enable",             "Enable AC upper bound",                                 "0/1",         "",   "BatteryDispatch",       "en_batt=1&batt_meter_position=1&batt_dispatch_choice=1",                           "",                             "" },
+    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_ac_ub",                    "AC upper bound",                                        "fraction of nameplate",         "",                     "BatteryDispatch",       "en_batt=1&batt_meter_position=1&batt_dispatch_choice=1",                           "",                             "" },
+    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_curtail_as_control",       "Correct up-ramp violations",                            "0/1",         "",   "BatteryDispatch",       "en_batt=1&batt_meter_position=1&batt_dispatch_choice=1",                           "",                             "" },
+    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_curtail_if_violation",     "Curtail violations",                                    "0/1",         "",   "BatteryDispatch",       "en_batt=1&batt_meter_position=1&batt_dispatch_choice=1",                           "",                             "" },
+    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_short_forecast_enable",    "Enable short term power forecast",                      "0/1",         "",   "BatteryDispatch",       "en_batt=1&batt_meter_position=1&batt_dispatch_choice=1",                           "",                             "" },
+    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_forecast_shift_periods",   "Forecasting window",                                    "periods of ramp intervals",         "",                     "BatteryDispatch",       "en_batt=1&batt_meter_position=1&batt_dispatch_choice=1",                           "",                             "" },
+    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_timestep_multiplier",      "Ramp timestep multiplier",                              "",         "",                     "BatteryDispatch",       "en_batt=1&batt_meter_position=1&batt_dispatch_choice=1",                           "",                             "" },
+    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_max_ramp",                 "Maximum ramp rate",                                     "% of nameplate per ramp interval",         "",                     "BatteryDispatch",       "en_batt=1&batt_meter_position=1&batt_dispatch_choice=1",                           "",                             "" },
+    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_soc_rest",                 "Battery resting SOC",                                   "%",         "",                     "BatteryDispatch",       "en_batt=1&batt_meter_position=1&batt_dispatch_choice=1",                           "",                             "" },
+    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_kp",                       "Track PV power multiplier (kp)",                        "",         "",                     "BatteryDispatch",       "en_batt=1&batt_meter_position=1&batt_dispatch_choice=1",                           "",                             "" },
+    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_ki",                       "Return to rest SOC multiplier (ki)",                    "",         "",                     "BatteryDispatch",       "en_batt=1&batt_meter_position=1&batt_dispatch_choice=1",                           "",                             "" },
+    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_kf",                       "Forecast accumulation error multiplier (kf)",           "",         "",                     "BatteryDispatch",       "en_batt=1&batt_meter_position=1&batt_dispatch_choice=1",                           "",                             "" },
 
 
 
     // Dispatch forecast - optional parameters used in cmod_pvsamv1
-    { SSC_INPUT,        SSC_ARRAY,      "batt_pv_clipping_forecast",                   "PV clipping forecast",                                   "kW",       "",                     "BatteryDispatch",       "",  "",          "" },
-    { SSC_INPUT,        SSC_ARRAY,      "batt_pv_ac_forecast",                         "PV ac power forecast",                                   "kW",       "",                     "BatteryDispatch",       "",  "",          "" },
+    { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_wf_forecast_choice",            "Weather forecast choice for automatic dispatch",                 "0/1/2",   "0=LookAhead,1=LookBehind,2=InputForecast", "BatteryDispatch",       "?=0",                        "",                             "" },
+    { SSC_INPUT,        SSC_ARRAY,      "batt_pv_clipping_forecast",                   "PV clipping forecast",                                   "kW",       "Length either 8760 * steps per hour (values repeat each year) or 8760 * steps per hour * analysis period",                     "BatteryDispatch",       "",  "",          "" },
+    { SSC_INPUT,        SSC_ARRAY,      "batt_pv_ac_forecast",                         "PV ac power forecast",                                   "kW",       "Length either 8760 * steps per hour (values repeat each year) or 8760 * steps per hour * analysis period",                     "BatteryDispatch",       "",  "",          "" },
 
     //  cycle cost inputs
     { SSC_INPUT,        SSC_NUMBER,     "batt_cycle_cost_choice",                      "Use SAM cost model for degradaton penalty or input custom via batt_cycle_cost", "0/1",     "0=UseCostModel,1=InputCost", "BatteryDispatch", "?=0",                           "",                             "" },
@@ -417,6 +418,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
 
             // Storage dispatch controllers
             batt_vars->batt_dispatch = vt.as_integer("batt_dispatch_choice");
+            batt_vars->batt_dispatch_wf_forecast = vt.as_integer("batt_dispatch_wf_forecast_choice");
             batt_vars->batt_meter_position = vt.as_integer("batt_meter_position");
 
             // Cycle cost calculations
@@ -558,9 +560,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
                         }
                     }
 
-                    if (batt_vars->batt_dispatch == dispatch_t::FOM_LOOK_AHEAD ||
-                        batt_vars->batt_dispatch == dispatch_t::FOM_FORECAST ||
-                        batt_vars->batt_dispatch == dispatch_t::FOM_LOOK_BEHIND)
+                    if (batt_vars->batt_dispatch == dispatch_t::FOM_AUTOMATED_ECONOMIC)
                     {
                         batt_vars->batt_look_ahead_hours = vt.as_unsigned_long("batt_look_ahead_hours");
                         batt_vars->batt_dispatch_update_frequency_hours = vt.as_double("batt_dispatch_update_frequency_hours");
@@ -1141,7 +1141,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
                 batt_vars->batt_power_charge_max_kwdc, batt_vars->batt_power_discharge_max_kwdc,
                 batt_vars->batt_power_charge_max_kwac, batt_vars->batt_power_discharge_max_kwac,
                 batt_vars->batt_minimum_modetime,
-                batt_vars->batt_dispatch, batt_vars->batt_meter_position,
+                batt_vars->batt_dispatch, batt_vars->batt_dispatch_wf_forecast, batt_vars->batt_meter_position,
                 nyears, batt_vars->batt_look_ahead_hours, batt_vars->batt_dispatch_update_frequency_hours,
                 batt_vars->batt_dispatch_auto_can_charge, batt_vars->batt_dispatch_auto_can_clipcharge, batt_vars->batt_dispatch_auto_can_gridcharge, batt_vars->batt_dispatch_auto_can_fuelcellcharge,
                 batt_vars->inverter_paco, batt_vars->batt_cost_per_kwh,
@@ -1160,7 +1160,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
                 batt_vars->batt_power_charge_max_kwdc, batt_vars->batt_power_discharge_max_kwdc,
                 batt_vars->batt_power_charge_max_kwac, batt_vars->batt_power_discharge_max_kwac,
                 batt_vars->batt_minimum_modetime,
-                batt_vars->batt_dispatch, batt_vars->batt_meter_position,
+                batt_vars->batt_dispatch, batt_vars->batt_dispatch_wf_forecast, batt_vars->batt_meter_position,
                 nyears, batt_vars->batt_look_ahead_hours, batt_vars->batt_dispatch_update_frequency_hours,
                 batt_vars->batt_dispatch_auto_can_charge, batt_vars->batt_dispatch_auto_can_clipcharge, batt_vars->batt_dispatch_auto_can_gridcharge, batt_vars->batt_dispatch_auto_can_fuelcellcharge,
                 batt_vars->inverter_paco, batt_vars->batt_cost_per_kwh,
@@ -1193,7 +1193,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             batt_vars->batt_power_charge_max_kwdc, batt_vars->batt_power_discharge_max_kwdc,
             batt_vars->batt_power_charge_max_kwac, batt_vars->batt_power_discharge_max_kwac,
             batt_vars->batt_minimum_modetime,
-            batt_vars->batt_dispatch, batt_vars->batt_meter_position, nyears,
+            batt_vars->batt_dispatch, batt_vars->batt_dispatch_wf_forecast, batt_vars->batt_meter_position, nyears,
             batt_vars->batt_look_ahead_hours, batt_vars->batt_dispatch_update_frequency_hours,
             batt_vars->batt_dispatch_auto_can_charge, batt_vars->batt_dispatch_auto_can_clipcharge, batt_vars->batt_dispatch_auto_can_gridcharge, batt_vars->batt_dispatch_auto_can_fuelcellcharge,
             util_rate_data, batt_vars->batt_cost_per_kwh, batt_vars->batt_cycle_cost_choice, batt_vars->batt_cycle_cost, batt_vars->grid_interconnection_limit_kW
@@ -1223,6 +1223,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
 void battstor::parse_configuration()
 {
     int batt_dispatch = batt_vars->batt_dispatch;
+    int batt_weather_forecast = batt_vars->batt_dispatch_wf_forecast;
     int batt_meter_position = batt_vars->batt_meter_position;
 
     // parse configuration
@@ -1231,9 +1232,19 @@ void battstor::parse_configuration()
         prediction_index = 0;
         if (batt_meter_position == dispatch_t::BEHIND)
         {
-            if (batt_dispatch == dispatch_t::LOOK_AHEAD || batt_dispatch == dispatch_t::MAINTAIN_TARGET || batt_dispatch == dispatch_t::FORECAST)
+            if (batt_dispatch == dispatch_t::PEAK_SHAVING || batt_dispatch == dispatch_t::MAINTAIN_TARGET || batt_dispatch == dispatch_t::FORECAST)
             {
-                look_ahead = true;
+                switch (batt_weather_forecast) {
+                    case dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD:
+                        look_ahead = true;
+                        break;
+                    case dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_BEHIND:
+                        look_behind = true;
+                        break;
+                    case dispatch_t::WEATHER_FORECAST_CHOICE::WF_CUSTOM:
+                        input_forecast = true;
+                        break;
+                }
                 if (batt_dispatch == dispatch_t::MAINTAIN_TARGET)
                     input_target = true;
             }
@@ -1241,19 +1252,21 @@ void battstor::parse_configuration()
             {
                 input_custom_dispatch = true;
             }
-            else
-                look_behind = true;
         }
         else if (batt_meter_position == dispatch_t::FRONT)
         {
-            if (batt_dispatch == dispatch_t::FOM_LOOK_AHEAD || batt_dispatch == dispatch_t::FOM_PV_SMOOTHING) {
-                look_ahead = true;
-            }
-            else if (batt_dispatch == dispatch_t::FOM_LOOK_BEHIND) {
-                look_behind = true;
-            }
-            else if (batt_dispatch == dispatch_t::FOM_FORECAST) {
-                input_forecast = true;
+            if (batt_dispatch == dispatch_t::FOM_AUTOMATED_ECONOMIC || batt_dispatch == dispatch_t::FOM_PV_SMOOTHING) {
+                switch (batt_weather_forecast) {
+                case dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD:
+                    look_ahead = true;
+                    break;
+                case dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_BEHIND:
+                    look_behind = true;
+                    break;
+                case dispatch_t::WEATHER_FORECAST_CHOICE::WF_CUSTOM:
+                    input_forecast = true;
+                    break;
+                }
             }
             else if (batt_dispatch == dispatch_t::FOM_CUSTOM_DISPATCH) {
                 input_custom_dispatch = true;

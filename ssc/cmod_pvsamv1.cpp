@@ -1052,14 +1052,6 @@ void cm_pvsamv1::exec()
     std::vector<ssc_number_t> p_pv_ac_forecast;
     std::vector<ssc_number_t> p_pv_ac_use;
 
-    if (is_assigned("batt_pv_clipping_forecast")) {
-        p_pv_clipping_forecast = as_vector_ssc_number_t("batt_pv_clipping_forecast");
-    }
-    if (is_assigned("batt_pv_ac_forecast")) {
-        p_pv_ac_forecast = as_vector_ssc_number_t("batt_pv_ac_forecast");
-    }
-
-
     // electric load - lifetime load data?
     double cur_load = 0.0;
     size_t nload = 0;
@@ -1092,6 +1084,22 @@ void cm_pvsamv1::exec()
         // Single timestep or non-annual simulations are not enabled with batteries
         if (!Simulation->annualSimulation)
             throw exec_error("pvsamv1", "The PV+Battery configuration requires a simulation period that is continuous over one or more years.");
+
+        int batt_forecast_choice = as_integer("batt_dispatch_wf_forecast_choice");
+        if (is_assigned("batt_pv_clipping_forecast")) {
+            p_pv_clipping_forecast = as_vector_ssc_number_t("batt_pv_clipping_forecast");
+            // Annual simulation is enforced above
+            if (p_pv_clipping_forecast.size() < step_per_hour * 8760 && batt_forecast_choice == dispatch_t::WEATHER_FORECAST_CHOICE::WF_CUSTOM) {
+                throw exec_error("pvsamv1", "batt_pv_clipping_forecast forecast length is " + std::to_string(p_pv_clipping_forecast.size()) + " when custom weather file forecast is selected. Change batt_dispatch_wf_forecast_choice or provide a forecast of at least length " + std::to_string(step_per_hour * 8760));
+            }
+        }
+        if (is_assigned("batt_pv_ac_forecast")) {
+            p_pv_ac_forecast = as_vector_ssc_number_t("batt_pv_ac_forecast");
+            // Annual simulation is enforced above
+            if (p_pv_ac_forecast.size() < step_per_hour * 8760 && batt_forecast_choice == dispatch_t::WEATHER_FORECAST_CHOICE::WF_CUSTOM) {
+                throw exec_error("pvsamv1", "batt_pv_clipping_forecast forecast length is " + std::to_string(p_pv_ac_forecast.size()) + " when custom weather file forecast is selected. Change batt_dispatch_wf_forecast_choice or provide a forecast of at least length " + std::to_string(step_per_hour * 8760));
+            }
+        }
 
         batt = std::make_shared<battstor>(*m_vartab, en_batt, nrec, ts_hour);
         batt->setSharedInverter(sharedInverter);
@@ -2064,13 +2072,23 @@ void cm_pvsamv1::exec()
                 PVSystem->p_systemACPower[idx] = sharedInverter->powerAC_kW;
 
                 double pv_ac_kw = sharedInverter->powerAC_kW;
-                if (p_pv_ac_forecast.size() > 1 && p_pv_ac_forecast.size() > idx % (8760 * step_per_hour)) {
-                    pv_ac_kw = p_pv_ac_forecast[idx % (8760 * step_per_hour)];
+                if (p_pv_ac_forecast.size() > 1) {
+                    if (p_pv_ac_forecast.size() > idx) {
+                        pv_ac_kw = p_pv_ac_forecast[idx];
+                    }
+                    else if (p_pv_ac_forecast.size() > idx % (8760 * step_per_hour)) {
+                        pv_ac_kw = p_pv_ac_forecast[idx % (8760 * step_per_hour)];
+                    }
                 }
                 p_pv_ac_use.push_back(static_cast<ssc_number_t>(pv_ac_kw));
 
-                if (p_pv_clipping_forecast.size() > 1 && p_pv_clipping_forecast.size() > idx % (8760 * step_per_hour)) {
-                    cliploss = p_pv_clipping_forecast[idx % (8760 * step_per_hour)] * util::kilowatt_to_watt;
+                if (p_pv_clipping_forecast.size() > 1) {
+                    if (p_pv_clipping_forecast.size() > idx) {
+                        cliploss = p_pv_clipping_forecast[idx];
+                    }
+                    else if (p_pv_clipping_forecast.size() > idx % (8760 * step_per_hour)) {
+                        cliploss = p_pv_clipping_forecast[idx % (8760 * step_per_hour)];
+                    }
                 }
                 else {
                     cliploss = sharedInverter->powerClipLoss_kW;
@@ -2092,6 +2110,10 @@ void cm_pvsamv1::exec()
     if (en_batt && batt_topology == ChargeController::DC_CONNECTED)
     {
         batt->initialize_automated_dispatch(p_pv_ac_use, p_load_full, p_invcliploss_full);
+    }
+    else {
+        // Recompute the forecast after AC losses
+        p_pv_ac_use.clear();
     }
 
     /* *********************************************************************************************
@@ -2238,6 +2260,21 @@ void cm_pvsamv1::exec()
                 }
 			}
 
+            // Re-compute PV AC forecast for AC connected batteries
+            if (en_batt && batt_topology == ChargeController::AC_CONNECTED)
+            {
+                double pv_ac_kw = sharedInverter->powerAC_kW;
+                if (p_pv_ac_forecast.size() > 1) {
+                    if (p_pv_ac_forecast.size() > idx) {
+                        pv_ac_kw = p_pv_ac_forecast[idx];
+                    }
+                    else if (p_pv_ac_forecast.size() > idx % (8760 * step_per_hour)) {
+                        pv_ac_kw = p_pv_ac_forecast[idx % (8760 * step_per_hour)];
+                    }
+                }
+                p_pv_ac_use.push_back(static_cast<ssc_number_t>(pv_ac_kw));
+            }
+
             // accumulate first year annual energy
             if (iyear == 0)
             {
@@ -2271,7 +2308,7 @@ void cm_pvsamv1::exec()
 
     // Initialize AC connected battery predictive control
     if (en_batt && batt_topology == ChargeController::AC_CONNECTED)
-        batt->initialize_automated_dispatch(util::array_to_vector<ssc_number_t>(PVSystem->p_systemACPower, nlifetime), p_load_full);
+        batt->initialize_automated_dispatch(p_pv_ac_use, p_load_full);
 
     /* *********************************************************************************************
     Post PV AC
