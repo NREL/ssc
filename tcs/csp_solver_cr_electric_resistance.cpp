@@ -113,6 +113,10 @@ void C_csp_cr_electric_resistance::init(const C_csp_collector_receiver::S_csp_cr
     m_cp_htf_des = mc_pc_htfProps.Cp_ave(m_T_htf_cold_des + 273.15, m_T_htf_hot_des + 273.15, 5);	//[kJ/kg-K]
     m_m_dot_htf_des = m_q_dot_heater_des*1.E3 / (m_cp_htf_des*(m_T_htf_hot_des - m_T_htf_cold_des));	//[kg/s]
 
+    // Check startup parameters
+    m_f_q_dot_des_allowable_su = std::max(0.0, m_f_q_dot_des_allowable_su); //[-]
+    m_hrs_startup_at_max_rate = std::max(0.0, m_hrs_startup_at_max_rate);   //[hr]
+
     // Calculate design startup requirements
     m_q_dot_su_max = m_q_dot_heater_des*m_f_q_dot_des_allowable_su;  //[MWt]
     m_E_su_des = m_q_dot_su_max*m_hrs_startup_at_max_rate;   //[MWt-hr] 
@@ -127,8 +131,14 @@ void C_csp_cr_electric_resistance::init(const C_csp_collector_receiver::S_csp_cr
     solved_params.m_dP_sf = m_dP_htf;                           //[bar]
 
     // State variables
-    m_operating_mode_converged = C_csp_collector_receiver::OFF;					//
     m_E_su_initial = m_E_su_des;        //[MWt-hr]
+    if (m_E_su_initial == 0.0) {
+        m_operating_mode_converged = C_csp_collector_receiver::ON;
+    }
+    else {
+        m_operating_mode_converged = C_csp_collector_receiver::OFF;					//
+    }
+    
 
 }
 
@@ -337,13 +347,17 @@ void C_csp_cr_electric_resistance::estimates(const C_csp_weatherreader::S_output
         est_out.m_T_htf_hot = 0.0;
     }
     
-
     return;
 }
 
 void C_csp_cr_electric_resistance::converged()
 {
-    m_operating_mode_converged = m_operating_mode;
+    if (m_E_su_initial == 0.0) {
+        m_operating_mode_converged = C_csp_collector_receiver::ON;
+    }
+    else {
+        m_operating_mode_converged = m_operating_mode;		
+    }
 
     m_E_su_initial = m_E_su_calculated;
 
