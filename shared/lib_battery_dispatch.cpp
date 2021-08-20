@@ -468,6 +468,7 @@ dispatch_automatic_t::dispatch_automatic_t(
 	double Pd_max_kwac,
 	double t_min,
 	int dispatch_mode,
+    int weather_forecast_mode,
 	int pv_dispatch,
 	size_t nyears,
 	size_t look_ahead_hours,
@@ -500,6 +501,7 @@ dispatch_automatic_t::dispatch_automatic_t(
     curr_year = 0;
 
     _mode = dispatch_mode;
+    _weather_forecast_mode = weather_forecast_mode;
     _safety_factor = 0.03;
 
 	m_batteryPower->canClipCharge = can_clip_charge;
@@ -524,6 +526,7 @@ void dispatch_automatic_t::init_with_pointer(const dispatch_automatic_t* tmp)
 	_nyears = tmp->_nyears;
     curr_year = tmp->curr_year;
 	_mode = tmp->_mode;
+    _weather_forecast_mode = tmp->_weather_forecast_mode;
 	_safety_factor = tmp->_safety_factor;
 	_forecast_hours = tmp->_forecast_hours;
     m_battReplacementCostPerKWH = tmp->m_battReplacementCostPerKWH;

@@ -225,9 +225,13 @@ battwatts_create(size_t n_recs, size_t n_years, int chem, int meter_pos, double 
     // Storage dispatch controllers
     switch (dispatch){
         default:
-        case 0: batt_vars->batt_dispatch = dispatch_t::LOOK_AHEAD;
+        case 0:
+            batt_vars->batt_dispatch = dispatch_t::PEAK_SHAVING;
+            batt_vars->batt_dispatch_wf_forecast = dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD;
             break;
-        case 1: batt_vars->batt_dispatch = dispatch_t::LOOK_BEHIND;
+        case 1:
+            batt_vars->batt_dispatch = dispatch_t::PEAK_SHAVING;
+            batt_vars->batt_dispatch_wf_forecast = dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_BEHIND;
             break;
         case 2: batt_vars->batt_dispatch = dispatch_t::CUSTOM_DISPATCH;
             batt_vars->batt_custom_dispatch = std::move(dispatch_custom);
