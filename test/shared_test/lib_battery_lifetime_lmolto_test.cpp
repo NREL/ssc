@@ -126,9 +126,9 @@ TEST_F(lib_battery_lifetime_lmolto_test, CyclingCRateMinuteTimestep) {
     auto state = model->get_state();
 
     EXPECT_EQ(state.n_cycles, 86);
-    EXPECT_NEAR(state.lmo_lto->dq_relative_cal, 0.268, 1e-3);
+    EXPECT_NEAR(state.lmo_lto->dq_relative_cal, 0.265, 1e-3);
     EXPECT_NEAR(state.lmo_lto->dq_relative_cyc, 0, 1e-3);
-    EXPECT_NEAR(state.q_relative, 99.732, 1e-3);
+    EXPECT_NEAR(state.q_relative, 99.735, 1e-3);
     EXPECT_NEAR(state.day_age_of_battery, 87, 1e-3);
 
     while (day < 870) {
@@ -149,9 +149,9 @@ TEST_F(lib_battery_lifetime_lmolto_test, CyclingCRateMinuteTimestep) {
     state = model->get_state();
 
     EXPECT_EQ(state.n_cycles, 869);
-    EXPECT_NEAR(state.lmo_lto->dq_relative_cal, 1.106, 1e-3);
+    EXPECT_NEAR(state.lmo_lto->dq_relative_cal, 1.105, 1e-3);
     EXPECT_NEAR(state.lmo_lto->dq_relative_cyc, 0, 1e-3);
-    EXPECT_NEAR(state.q_relative, 98.894, 1e-3);
+    EXPECT_NEAR(state.q_relative, 98.895, 1e-3);
     EXPECT_NEAR(state.day_age_of_battery, 870, 1e-3);
 }
 
@@ -176,9 +176,9 @@ TEST_F(lib_battery_lifetime_lmolto_test, CyclingEveryTwoDays) {
     auto state = model->get_state();
 
     EXPECT_EQ(state.n_cycles, 43);
-    EXPECT_NEAR(state.lmo_lto->dq_relative_cal, 0.404, 1e-3);
+    EXPECT_NEAR(state.lmo_lto->dq_relative_cal, 0.27, 1e-3);
     EXPECT_NEAR(state.lmo_lto->dq_relative_cyc, 0.0637, 1e-3);
-    EXPECT_NEAR(state.q_relative, 99.532, 1e-3);
+    EXPECT_NEAR(state.q_relative, 99.666, 1e-3);
     EXPECT_NEAR(state.day_age_of_battery, 88, 1e-3);
 }
 
@@ -217,7 +217,7 @@ TEST_F(lib_battery_lifetime_lmolto_test, IrregularTimeStep) {
     state = model->get_state();
 
     EXPECT_EQ(state.n_cycles, 869);
-    EXPECT_NEAR(state.lmo_lto->dq_relative_cal, 2.414, 1e-3);
+    EXPECT_NEAR(state.lmo_lto->dq_relative_cal, 2.408, 1e-3);
     EXPECT_NEAR(state.lmo_lto->dq_relative_cyc, 0.141, 1e-3);
     EXPECT_NEAR(state.day_age_of_battery, 870, 1e-3);
 
@@ -263,7 +263,7 @@ TEST_F(lib_battery_lifetime_lmolto_test, IrregularTimeStep) {
     state = subhourly_model->get_state();
 
     EXPECT_EQ(state.n_cycles, 869);
-    EXPECT_NEAR(state.lmo_lto->dq_relative_cal, 2.414, 1e-3);
+    EXPECT_NEAR(state.lmo_lto->dq_relative_cal, 2.408, 1e-3);
     EXPECT_NEAR(state.lmo_lto->dq_relative_cyc, 0.145, 1e-3);
     EXPECT_NEAR(state.day_age_of_battery, 870, 1e-3);
 }
