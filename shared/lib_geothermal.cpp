@@ -1609,12 +1609,12 @@ bool CGeothermalAnalyzer::RunAnalysis(bool(*update_function)(float, void*), void
 
 					// record outputs based on current inputs
 					if (mo_geo_in.mi_ModelChoice == 0) // model choice 0 = GETEM
-						mp_geo_out->maf_timestep_power[iElapsedTimeSteps] = (float)MAX(PlantGrossPowerkW() - mp_geo_out->md_PumpWorkKW, 0);
+						mp_geo_out->maf_timestep_power[iElapsedTimeSteps] = (float)MAX(PlantGrossPowerkW() * mo_geo_in.haf[iElapsedTimeSteps] - mp_geo_out->md_PumpWorkKW, 0);
 					else
 					{	// run power block model
 						if (!mo_PowerBlock.Execute((ml_HourCount - 1) * 3600, mo_pb_in))
 							ms_ErrorString = "There was an error running the power block model: " + mo_PowerBlock.GetLastError();
-						mp_geo_out->maf_timestep_power[iElapsedTimeSteps] = (float)MAX(mo_PowerBlock.GetOutputkW() - mp_geo_out->md_PumpWorkKW, 0);
+                        mp_geo_out->maf_timestep_power[iElapsedTimeSteps] = (float)MAX(mo_PowerBlock.GetOutputkW() * mo_geo_in.haf[int(util::hour_of_year(month, floor(hour/24)+1, hour))] - mp_geo_out->md_PumpWorkKW, 0);
 						//fJunk = (float)moMA->PlantGrossPowerkW(); // kinda works, but not quite the same
 					}
 
