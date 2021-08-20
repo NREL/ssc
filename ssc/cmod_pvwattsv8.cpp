@@ -410,6 +410,8 @@ public:
         //hidden input variable (not in var_table): whether or not to use the mermoud lejeune single diode model as defined above (0 = don't use model, 1 = use model)
         int en_sdm = is_assigned("en_sdm") ? as_integer("en_sdm") : 0;
 
+        cec6par_module_t mod;
+
         module.type = (module_type)as_integer("module_type");
         switch (module.type)
         {
@@ -438,6 +440,20 @@ public:
             sdm.R_shref = 550;
             sdm.R_s = 0.382;
             sdm.D2MuTau = 0.0;
+
+            mod.Area = 1.940;
+            mod.Vmp = 37.8;
+            mod.Imp = 8.73;
+            mod.Voc = 46.2;
+            mod.Isc = 9.27;
+            mod.alpha_isc = 0.0046;
+            mod.beta_voc = as_double("beta_voc");
+            mod.a = as_double("a");
+            mod.Il = as_double("Il");
+            mod.Io = as_double("Io");
+            mod.Rs = 0.382;
+            mod.Rsh = 550;
+            mod.Adj = as_double("Adj");
             break;
 
         case PREMIUM:
@@ -465,6 +481,20 @@ public:
             sdm.R_shref = 3444;
             sdm.R_s = 0.4;
             sdm.D2MuTau = 0.0;
+
+            mod.Area = 1.630;
+            mod.Vmp = 59.5;
+            mod.Imp = 5.49;
+            mod.Voc = 70.0;
+            mod.Isc = 5.84;
+            mod.alpha_isc = 0.0025;
+            mod.beta_voc = as_double("beta_voc");
+            mod.a = as_double("a");
+            mod.Il = as_double("Il");
+            mod.Io = as_double("Io");
+            mod.Rs = 0.4;
+            mod.Rsh = 3444;
+            mod.Adj = as_double("Adj");
             break;
 
         case THINFILM:
@@ -492,6 +522,20 @@ public:
             sdm.R_shref = 3500;
             sdm.R_s = 4.36;
             sdm.D2MuTau = 0.95;
+
+            mod.Area = 0.72;
+            mod.Vmp = 68.5;
+            mod.Imp = 1.64;
+            mod.Voc = 87.0;
+            mod.Isc = 1.83;
+            mod.alpha_isc = 0.0007;
+            mod.beta_voc = as_double("beta_voc");
+            mod.a = as_double("a");
+            mod.Il = as_double("Il");
+            mod.Io = as_double("Io");
+            mod.Rs = 4.36;
+            mod.Rsh = 3500;
+            mod.Adj = as_double("Adj");
             break;
         }
 
@@ -800,7 +844,7 @@ public:
                     instantaneous ? IRRADPROC_NO_INTERPOLATE_SUNRISE_SUNSET : ts_hour);
                 irr.set_location(hdr.lat, hdr.lon, hdr.tz);
                 irr.set_optional(hdr.elev, wf.pres, wf.tdry);
-                irr.set_sky_model(2, alb);
+                irr.set_sky_model(irrad::PEREZ, alb);
                 irr.set_beam_diffuse(wf.dn, wf.df);
 
                 int track_mode = 0;
@@ -1088,25 +1132,27 @@ public:
                     if (y == 0 && wdprov->annualSimulation()) ld("dc_nominal") += dc_nom * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
 
                     // module cover module to handle transmitted POA
-                    double f_cover = 1.0;
-                    if (aoi > AOI_MIN && aoi < AOI_MAX && poa_front > 0)
-                    {
+                   // double f_cover = 1.0;
+                   // if (aoi > AOI_MIN && aoi < AOI_MAX && poa_front > 0)
+                   // {
                         /*double modifier = iam( aoi, module.ar_glass );
                         double tpoa = poa - ( 1.0 - modifier )*wf.dn*cosd(aoi); */ // previous PVWatts method, skips diffuse calc
 
+                        /* disable this calculation for switch to CEC model
                         tpoa = calculateIrradianceThroughCoverDeSoto(
                             aoi, solzen, stilt, ibeam, iskydiff, ignddiff, en_sdm == 0 && module.ar_glass);
                         if (tpoa < 0.0) tpoa = 0.0;
                         if (tpoa > poa) tpoa = poa_front;
 
-                        f_cover = tpoa / poa_front;
-                    }
+                        f_cover = tpoa / poa_front; */
+                   // }
 
-                    if (y == 0 && wdprov->annualSimulation()) ld("dc_loss_cover") += (1 - f_cover) * dc_nom * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
+                    //if (y == 0 && wdprov->annualSimulation()) ld("dc_loss_cover") += (1 - f_cover) * dc_nom * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
 
                     // spectral correction via air mass modifier
+                    /*
                     double f_AM = air_mass_modifier(solzen, hdr.elev, AMdesoto);
-                    if (y == 0 && wdprov->annualSimulation()) ld("dc_loss_spectral") += (1 - f_AM) * dc_nom * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
+                    if (y == 0 && wdprov->annualSimulation()) ld("dc_loss_spectral") += (1 - f_AM) * dc_nom * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data*/
 
                     // cell temperature
                     double wspd_corr = wf.wspd < 0 ? 0 : wf.wspd; //correct the wind speed if it is negative
@@ -1161,11 +1207,23 @@ public:
                         (f_nonlinear < 1.0 && poa > 0.0) // if there is a nonlinear self-shading derate
                         ? (ibeam_unselfshaded + iskydiff + ignddiff) // then use the unshaded beam to calculate eff POA for power calc but adjust for IAM and spectral
                         : (ibeam + iskydiff + ignddiff); // otherwise, use the 'linearly' derated beam irradiance
-                    poa_for_power *= f_cover * f_AM; //derate irradiance for module cover and spectral effects
-                    poa_for_power += irear * f_AM; // backside irradiance model already includes back cover effects
+                    //poa_for_power *= f_cover * f_AM; //derate irradiance for module cover and spectral effects //remove these for cec model?????????
+                    //poa_for_power += irear * f_AM; // backside irradiance model already includes back cover effects //remove this for cec model???????
 
-                    if (en_sdm)
+                    if (en_sdm) //change this flag if this works************************* perhaps make hidden flag for old model??????
                     {
+                        // set up inputs to module model
+                        pvinput_t in((f_nonlinear < 1.0 && poa > 0.0) ? ibeam_unselfshaded : ibeam, iskydiff, ignddiff, irear * module.bifaciality, poa_for_power,
+                            wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres,
+                            solzen, aoi, hdr.elev,
+                            stilt, sazi,
+                            ((double)wf.hour) + wf.minute / 60.0,
+                            irrad::DN_DF, false);
+                        // set up output structure for module model
+                        pvoutput_t out(0, 0, 0, 0, 0, 0, 0, 0);
+                        // call the module model
+                        if (!mod(in, tmod, -1, out)) throw exec_error("pvwattsv8", "error calculating module power and temperature with given parameters at time "); // +util::to_string(idx)); ????????????????
+
                         // single diode model per PVsyst using representative module parameters for each module type
                         double P_single_module_sdm = sdmml_power(sdm, poa_for_power, tmod);
                         dc = P_single_module_sdm * pv.dc_nameplate / (sdm.Vmp * sdm.Imp);
