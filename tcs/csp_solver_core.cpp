@@ -246,6 +246,14 @@ C_csp_solver::C_csp_solver(C_csp_weatherreader &weather,
     mpf_callback = pf_callback;
     mp_cmod_active = p_cmod_active;
 
+    // Default to a system without a parallel heater
+    if (mp_heater == NULL) {
+        m_is_parallel_heater = false;
+    }
+    else {
+        m_is_parallel_heater = true;
+    }
+
 	// Hierarchy logic
 	//reset_hierarchy_logic();
     mc_operating_modes.reset_all_availability();

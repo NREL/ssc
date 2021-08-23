@@ -1002,6 +1002,8 @@ private:
     bool m_is_cr_config_recirc; //[-] True: Receiver "off" and "startup" are recirculated from outlet to inlet
 
         // System control logic
+        // Checks if mp_heater is defined. if True, then solves system for CSP+ETES
+    bool m_is_parallel_heater;
         // True: allows control to consider sending rec exit HTF to cold tank if colder than some threshold
     bool m_is_rec_to_coldtank_allowed;  //[-] 
         // if 'm_is_rec_to_coldtank_allowed' then T_cr_out < this temp go to cold tank
