@@ -1981,8 +1981,12 @@ public:
 
             size_t n_rec_single_year;
             double dt_hour_gen;
+            size_t nload;
             if (is_assigned("load")) {
                 load_year_one = as_vector_ssc_number_t("load");
+                nload = load_year_one.size();
+                if (nload != n_rec_lifetime / analysis_period && nload != 8760)
+                    throw exec_error("pvsamv1", "The electric load profile must have either the same time step as the weather file, or 8760 time steps.");
             }
             scalefactors scale_calculator(m_vartab);
             // compute load (electric demand) annual escalation multipliers
@@ -2024,6 +2028,9 @@ public:
                 if (nload == 1) {
                     // Length 1 is "empty" to UI lk
                     p_load_forecast_in.clear();
+                }
+                else if (nload != n_rec_lifetime / analysis_period && nload != 8760) {
+                        throw exec_error("pvsamv1", "The electric load forecast must have either the same time step as the weather file, or 8760 time steps.");
                 }
             }
             if (p_load_forecast_in.size() > 0) {
