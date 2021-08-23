@@ -1322,11 +1322,17 @@ void battstor::initialize_automated_dispatch(std::vector<ssc_number_t> pv, std::
             }
             else if (wf_look_behind)
             {
-                // day one is zeros
-                for (size_t idx = 0; idx != 24 * step_per_hour; idx++)
+                // day one Dec 31st
+                for (size_t idx = ((8760 * step_per_hour) - (24 * step_per_hour)); idx != 8760 * step_per_hour; idx++)
                 {
-                    pv_prediction.push_back(0);
-                    cliploss_prediction.push_back(0);
+                    if (pv.size() > idx)
+                    {
+                        pv_prediction.push_back(pv[idx]);
+                    }
+                    if (cliploss.size() > idx)
+                    {
+                        cliploss_prediction.push_back(cliploss[idx]);
+                    }
                 }
 
                 if (pv.size() != 0)
@@ -1368,10 +1374,13 @@ void battstor::initialize_automated_dispatch(std::vector<ssc_number_t> pv, std::
                 }
             }
             else if (load_look_behind) {
-                // day one is zeros
-                for (size_t idx = 0; idx != 24 * step_per_hour; idx++)
+                // day one uses Dec 31st
+                for (size_t idx = ((8760 * step_per_hour) - (24 * step_per_hour)); idx != 8760 * step_per_hour; idx++)
                 {
-                    load_prediction.push_back(0);
+                    if (load.size() > idx)
+                    {
+                        load_prediction.push_back(load[idx]);
+                    }
                 }
                 if (load.size() != 0)
                 {

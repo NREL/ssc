@@ -91,7 +91,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACBatteryModelIntegr
     ssc_number_t peakKwCharge[3] = { -2.81, -3.02, -2.25 };
     ssc_number_t peakKwDischarge[3] = { 1.39, 1.30, 0.97 };
     ssc_number_t peakCycles[3] = { 1, 1, 1 };
-    ssc_number_t avgCycles[3] = { 1, 0.9973, 0.4904 };
+    ssc_number_t avgCycles[3] = { 1, 1, 0.4904 };
 
     // Test peak shaving look ahead, peak shaving look behind, and automated grid power target. Others require additional input data
     for (int i = 0; i < 3; i++) {
@@ -324,7 +324,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialDCBatteryModelIntegr
     ssc_number_t peakKwCharge[3] = { -3.21, -2.96, -2.69 };
     ssc_number_t peakKwDischarge[3] = { 1.40, 1.31, 0.967 };
     ssc_number_t peakCycles[3] = { 2, 2, 1 };
-    ssc_number_t avgCycles[3] = { 1.0109, 1.0054, 0.4794 };
+    ssc_number_t avgCycles[3] = { 1.0109, 1.0082, 0.4794 };
 
     // Test peak shaving look ahead, peak shaving look behind, and automated grid power target. Others require additional input data
     for (int i = 0; i < 3; i++) {
@@ -655,7 +655,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, CommercialMultipleSubarrayBatte
     ssc_number_t peakCycles = 1;
     ssc_number_t avgCycles = 1;
 
-    // Test peak shaving look ahead, peak shaving look behind, and automated grid power target. Others require additional input data
+    // Test peak shaving look ahead
     int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
     EXPECT_FALSE(pvsam_errors);
 
