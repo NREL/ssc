@@ -952,6 +952,7 @@ private:
 	C_csp_tes &mc_tes;
 	C_csp_tou &mc_tou;
     base_dispatch_opt &mc_dispatch;
+    C_csp_collector_receiver* mp_heater;
 
 	S_csp_system_params & ms_system_params;
 
@@ -1051,6 +1052,7 @@ public:
 		C_csp_tou &tou,
         base_dispatch_opt &dispatch,
 		S_csp_system_params &system,
+        C_csp_collector_receiver* heater,
 		bool(*pf_callback)(std::string &log_msg, std::string &progress_msg, void *data, double progress, int out_type) = 0,
 		void *p_cmod_active = 0);
 

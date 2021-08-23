@@ -230,6 +230,7 @@ C_csp_solver::C_csp_solver(C_csp_weatherreader &weather,
 	C_csp_tou &tou,
     base_dispatch_opt &dispatch,
 	S_csp_system_params &system,
+    C_csp_collector_receiver* heater,
 	bool(*pf_callback)(std::string &log_msg, std::string &progress_msg, void *data, double progress, int out_type),
 	void *p_cmod_active) :
 	mc_weather(weather), 
@@ -240,6 +241,10 @@ C_csp_solver::C_csp_solver(C_csp_weatherreader &weather,
     mc_dispatch(dispatch),
 	ms_system_params(system)
 {
+    // Assign remaining member data
+    mp_heater = heater;
+    mpf_callback = pf_callback;
+    mp_cmod_active = p_cmod_active;
 
 	// Hierarchy logic
 	//reset_hierarchy_logic();
@@ -273,8 +278,7 @@ C_csp_solver::C_csp_solver(C_csp_weatherreader &weather,
 
 	mv_time_local.reserve(10);
 
-	mpf_callback = pf_callback;
-	mp_cmod_active = p_cmod_active;
+	
 
 	// Solved Controller Variables
 	m_defocus = std::numeric_limits<double>::quiet_NaN();
