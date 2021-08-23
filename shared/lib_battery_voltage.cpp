@@ -134,8 +134,12 @@ voltage_table_t::voltage_table_t(int num_cells_series, int num_strings, double v
                                  util::matrix_t<double> &voltage_table, double R, double dt_hour) :
         voltage_t(voltage_params::TABLE, num_cells_series, num_strings, voltage, dt_hour) {
     params->resistance = R;
-    for (int r = 0; r != (int) voltage_table.nrows(); r++)
-        params->voltage_table.emplace_back(std::vector<double>({voltage_table.at(r, 0), voltage_table.at(r, 1)}));
+    for (int r = 0; r != (int) voltage_table.nrows(); r++) {
+        std::vector<double> row;
+        for (int c = 0; c != (int) voltage_table.ncols(); c++)
+            row.push_back(voltage_table.at(r, c));
+        params->voltage_table.emplace_back(row);
+    }
     initialize();
 }
 
