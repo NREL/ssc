@@ -848,8 +848,10 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
     outDOD = vt.allocate("batt_DOD", nrec * nyears);
     outDODCycleAverage = vt.allocate("batt_DOD_cycle_average", nrec * nyears);
     outCapacityPercent = vt.allocate("batt_capacity_percent", nrec * nyears);
-    outCapacityPercentCycle = vt.allocate("batt_capacity_percent_cycle", nrec * nyears);
-    outCapacityPercentCalendar = vt.allocate("batt_capacity_percent_calendar", nrec * nyears);
+    if (batt_vars->batt_life_model == 0 || batt_vars->batt_life_model == 2) {
+        outCapacityPercentCycle = vt.allocate("batt_capacity_percent_cycle", nrec * nyears);
+        outCapacityPercentCalendar = vt.allocate("batt_capacity_percent_calendar", nrec * nyears);
+    }
     outBatteryPower = vt.allocate("batt_power", nrec * nyears);
     outGridPower = vt.allocate("grid_power", nrec * nyears); // Net grid energy required.  Positive indicates putting energy on grid.  Negative indicates pulling off grid
     outGenPower = vt.allocate("pv_batt_gen", nrec * nyears);
@@ -1635,9 +1637,14 @@ void battstor::outputs_fixed()
     outDOD[index] = (ssc_number_t)(state.lifetime->cycle_range);
     outDODCycleAverage[index] = (ssc_number_t)(state.lifetime->average_range);
     outCapacityPercent[index] = (ssc_number_t)(state.lifetime->q_relative);
-    outCapacityPercentCycle[index] = (ssc_number_t)(state.lifetime->cycle->q_relative_cycle);
-    outCapacityPercentCalendar[index] = (ssc_number_t)(state.lifetime->calendar->q_relative_calendar);
-
+    if (batt_vars->batt_life_model == 0) {
+        outCapacityPercentCycle[index] = (ssc_number_t)(state.lifetime->cycle->q_relative_cycle);
+        outCapacityPercentCalendar[index] = (ssc_number_t)(state.lifetime->calendar->q_relative_calendar);
+    }
+    else if (batt_vars->batt_life_model == 2) {
+        outCapacityPercentCycle[index] = (ssc_number_t)(100. - state.lifetime->lmo_lto->dq_relative_cyc);
+        outCapacityPercentCalendar[index] = (ssc_number_t)(100. - state.lifetime->lmo_lto->dq_relative_cal);
+    }
 }
 
 void battstor::outputs_topology_dependent()
@@ -1691,7 +1698,7 @@ void battstor::outputs_topology_dependent()
             outPVS_PV_ramp_interval[index] = dispatch_fom->batt_dispatch_pvs_PV_ramp_interval();
             outPVS_forecast_pv_energy[index] = dispatch_fom->batt_dispatch_pvs_forecast_pv_energy();
             // remove pv smoothing hour limited (curtailed) power - lost (before system output in pvsamv1)
-            outGenPower[index] -= outPVS_curtail[index]; 
+            outGenPower[index] -= outPVS_curtail[index];
         }
         else if (batt_vars->batt_dispatch != dispatch_t::FOM_MANUAL) {
             dispatch_automatic_front_of_meter_t* dispatch_fom = dynamic_cast<dispatch_automatic_front_of_meter_t*>(dispatch_model);
@@ -1767,7 +1774,7 @@ void battstor::update_grid_power(compute_module&, double P_gen_ac, double P_load
     }
     outInterconnectionLoss[index_replace] = P_interconnection_loss;
     P_grid = P_gen_ac - P_load_ac - P_interconnection_loss;
-    
+
     outGridPower[index_replace] = (ssc_number_t)(P_grid);
 }
 
@@ -1804,11 +1811,11 @@ void battstor::calculate_monthly_and_annual_outputs(compute_module& cm)
         if (batt_vars->batt_dispatch == dispatch_t::FOM_PV_SMOOTHING) {
             // total number of violations
             size_t violation_count = 0;
-            // violation percent 
+            // violation percent
             ssc_number_t violation_percent = 0;
             // energy to grid percent - algorithm and actual
             ssc_number_t energy_to_grid_pvs = 0; // sum of pvs outpower
-            ssc_number_t energy_to_grid_sam = 0; // sum of outGenPower 
+            ssc_number_t energy_to_grid_sam = 0; // sum of outGenPower
             ssc_number_t energy_to_grid_pv = 0; // pv system only energy no battery or curtaiment
             for (size_t i = 0; i < total_steps; i++) {
                 violation_count += (size_t)outPVS_violation_list[i];
@@ -1868,7 +1875,7 @@ void battstor::calculate_monthly_and_annual_outputs(compute_module& cm)
                 }
              */
         }
-   
+
 
     }
 }

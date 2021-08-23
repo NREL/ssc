@@ -86,7 +86,7 @@ void voltage_table_t::initialize() {
         throw std::runtime_error("voltage_table_t error: Empty voltage table.");
     }
     if (params->voltage_table.size() < 2 || params->voltage_table[0].size() != 2)
-        throw std::runtime_error("voltage_table_t error: Battery lifetime matrix must have 2 columns and at least 2 rows.");
+        throw std::runtime_error("voltage_table_t error: Battery voltage matrix must have 2 columns and at least 2 rows.");
 
     // save slope and intercept for every set of points to interpolate between
     std::sort(params->voltage_table.begin(), params->voltage_table.end(),
