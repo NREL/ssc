@@ -1337,11 +1337,17 @@ void battstor::initialize_automated_dispatch(std::vector<ssc_number_t> pv, std::
             }
             else if (wf_look_behind)
             {
-                // day one is zeros
-                for (size_t idx = 0; idx != 24 * step_per_hour; idx++)
+                // day one Dec 31st
+                for (size_t idx = ((8760 * step_per_hour) - (24 * step_per_hour)); idx != 8760 * step_per_hour; idx++)
                 {
-                    pv_prediction.push_back(0);
-                    cliploss_prediction.push_back(0);
+                    if (pv.size() > idx)
+                    {
+                        pv_prediction.push_back(pv[idx]);
+                    }
+                    if (cliploss.size() > idx)
+                    {
+                        cliploss_prediction.push_back(cliploss[idx]);
+                    }
                 }
 
                 if (pv.size() != 0)
@@ -1383,10 +1389,13 @@ void battstor::initialize_automated_dispatch(std::vector<ssc_number_t> pv, std::
                 }
             }
             else if (load_look_behind) {
-                // day one is zeros
-                for (size_t idx = 0; idx != 24 * step_per_hour; idx++)
+                // day one uses Dec 31st
+                for (size_t idx = ((8760 * step_per_hour) - (24 * step_per_hour)); idx != 8760 * step_per_hour; idx++)
                 {
-                    load_prediction.push_back(0);
+                    if (load.size() > idx)
+                    {
+                        load_prediction.push_back(load[idx]);
+                    }
                 }
                 if (load.size() != 0)
                 {
@@ -1985,8 +1994,9 @@ public:
             if (is_assigned("load")) {
                 load_year_one = as_vector_ssc_number_t("load");
                 nload = load_year_one.size();
-                if (nload != n_rec_lifetime / analysis_period && nload != 8760)
-                    throw exec_error("pvsamv1", "The electric load profile must have either the same time step as the weather file, or 8760 time steps.");
+                // Array length for non-lifetime mode, lifetime mode, and hourly load
+                if (nload != n_rec_lifetime && nload != n_rec_lifetime / analysis_period && nload != 8760)
+                    throw exec_error("battery", "The electric load profile must have either the same time step as the weather file, or 8760 time steps.");
             }
             scalefactors scale_calculator(m_vartab);
             // compute load (electric demand) annual escalation multipliers
@@ -2011,7 +2021,7 @@ public:
                 p_pv_ac_forecast = as_vector_ssc_number_t("batt_pv_ac_forecast");
                 // Annual simulation is enforced above
                 if (p_pv_ac_forecast.size() < dt_hour_gen * 8760 && batt_forecast_choice == dispatch_t::WEATHER_FORECAST_CHOICE::WF_CUSTOM) {
-                    throw exec_error("pvsamv1", "batt_pv_clipping_forecast forecast length is " + std::to_string(p_pv_ac_forecast.size()) + " when custom weather file forecast is selected. Change batt_dispatch_wf_forecast_choice or provide a forecast of at least length " + std::to_string(dt_hour_gen * 8760));
+                    throw exec_error("battery", "batt_pv_clipping_forecast forecast length is " + std::to_string(p_pv_ac_forecast.size()) + " when custom weather file forecast is selected. Change batt_dispatch_wf_forecast_choice or provide a forecast of at least length " + std::to_string(dt_hour_gen * 8760));
                 }
             }
             else {
@@ -2029,8 +2039,9 @@ public:
                     // Length 1 is "empty" to UI lk
                     p_load_forecast_in.clear();
                 }
-                else if (nload != n_rec_lifetime / analysis_period && nload != 8760) {
-                        throw exec_error("pvsamv1", "The electric load forecast must have either the same time step as the weather file, or 8760 time steps.");
+                // Array length for non-lifetime mode, lifetime mode, and hourly load
+                else if (nload != n_rec_lifetime && nload != n_rec_lifetime / analysis_period && nload != 8760) {
+                        throw exec_error("battery", "The electric load forecast must have either the same time step as the weather file, or 8760 time steps.");
                 }
             }
             if (p_load_forecast_in.size() > 0) {
