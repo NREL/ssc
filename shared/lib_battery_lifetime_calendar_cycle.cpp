@@ -177,9 +177,15 @@ int lifetime_cycle_t::rainflow_compareRanges() {
         state->average_range = (state->average_range * state->n_cycles + state->cycle_range) / (double)(state->n_cycles + (size_t) 1);
         state->n_cycles++;
 
+        // Update cycle matrix with latest DOD
+        size_t cycle_index = util::nearest_col_index(state->cycle->cycle_counts, cycle_state::DOD, state->cycle_range);
+        int cycles_at_range = state->cycle->cycle_counts(cycle_index, cycle_state::CYCLES);
+        cycles_at_range += 1;
+        state->cycle->cycle_counts.set_value(cycles_at_range, cycle_index, cycle_state::CYCLES);
+
         // the capacity percent cannot increase
         double dq =
-                bilinear(state->average_range, state->n_cycles) - bilinear(state->average_range, state->n_cycles + 1);
+                bilinear(state->cycle_range, cycles_at_range) - bilinear(state->cycle_range, cycles_at_range + 1);
         if (dq > 0)
             state->cycle->q_relative_cycle -= dq;
 
