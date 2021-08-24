@@ -372,6 +372,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             // Voltage properties
             batt_vars->batt_voltage_choice = vt.as_integer("batt_voltage_choice");
             batt_vars->batt_Vnom_default = vt.as_double("batt_Vnom_default");
+            batt_vars->batt_voltage_matrix = vt.as_matrix("batt_voltage_matrix");
             batt_vars->batt_Vfull = vt.as_double("batt_Vfull");
             batt_vars->batt_Vexp = vt.as_double("batt_Vexp");
             batt_vars->batt_Vnom = vt.as_double("batt_Vnom");
@@ -670,17 +671,16 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             // Battery lifetime
             batt_vars->batt_life_model = vt.as_integer("batt_life_model");
 
-            if (batt_vars->batt_life_model == lifetime_params::NMC && batt_vars->batt_chem != 1)
+            if (batt_vars->batt_life_model == lifetime_params::NMC && batt_vars->batt_chem != battery_params::LITHIUM_ION)
                 throw exec_error("battery", "NMC life model (batt_life_model=1) can only be used with Li-Ion chemistries (batt_chem=1).");
 
-            if (batt_vars->batt_life_model == lifetime_params::LMOLTO && batt_vars->batt_chem != 1)
+            if (batt_vars->batt_life_model == lifetime_params::LMOLTO && batt_vars->batt_chem != battery_params::LITHIUM_ION)
                 throw exec_error("battery", "LMO/LTO life model (batt_life_model=2) can only be used with Li-Ion chemistries (batt_chem=1).");
 
-            if (batt_vars->batt_life_model == 0) {
+            if (batt_vars->batt_life_model == lifetime_params::MODEL_CHOICE::CALCYC) {
                 batt_vars->batt_calendar_choice = vt.as_integer("batt_calendar_choice");
                 batt_vars->batt_lifetime_matrix = vt.as_matrix("batt_lifetime_matrix");
                 batt_vars->batt_calendar_lifetime_matrix = vt.as_matrix("batt_calendar_lifetime_matrix");
-                batt_vars->batt_voltage_matrix = vt.as_matrix("batt_voltage_matrix");
                 batt_vars->batt_calendar_q0 = vt.as_double("batt_calendar_q0");
                 batt_vars->batt_calendar_a = vt.as_double("batt_calendar_a");
                 batt_vars->batt_calendar_b = vt.as_double("batt_calendar_b");
@@ -852,8 +852,10 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
     outDOD = vt.allocate("batt_DOD", nrec * nyears);
     outDODCycleAverage = vt.allocate("batt_DOD_cycle_average", nrec * nyears);
     outCapacityPercent = vt.allocate("batt_capacity_percent", nrec * nyears);
-    outCapacityPercentCycle = vt.allocate("batt_capacity_percent_cycle", nrec * nyears);
-    outCapacityPercentCalendar = vt.allocate("batt_capacity_percent_calendar", nrec * nyears);
+    if (batt_vars->batt_life_model == lifetime_params::CALCYC || batt_vars->batt_life_model == lifetime_params::LMOLTO) {
+        outCapacityPercentCycle = vt.allocate("batt_capacity_percent_cycle", nrec * nyears);
+        outCapacityPercentCalendar = vt.allocate("batt_capacity_percent_calendar", nrec * nyears);
+    }
     outBatteryPower = vt.allocate("batt_power", nrec * nyears);
     outGridPower = vt.allocate("grid_power", nrec * nyears); // Net grid energy required.  Positive indicates putting energy on grid.  Negative indicates pulling off grid
     outGenPower = vt.allocate("pv_batt_gen", nrec * nyears);
@@ -963,7 +965,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             batt_vars->batt_voltage_matrix, batt_vars->batt_resistance,
             dt_hr);
 
-    if (batt_vars->batt_life_model == 0) {
+    if (batt_vars->batt_life_model == lifetime_params::CALCYC) {
         if (batt_vars->batt_calendar_choice == calendar_cycle_params::CALENDAR_CHOICE::MODEL) {
             lifetime_model = new lifetime_calendar_cycle_t(batt_vars->batt_lifetime_matrix, dt_hr,
                                                            batt_vars->batt_calendar_q0, batt_vars->batt_calendar_a, batt_vars->batt_calendar_b, batt_vars->batt_calendar_c);
@@ -975,10 +977,10 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             lifetime_model = new lifetime_calendar_cycle_t(batt_vars->batt_lifetime_matrix, dt_hr);
         }
     }
-    else if (batt_vars->batt_life_model == 1) {
+    else if (batt_vars->batt_life_model == lifetime_params::NMC) {
         lifetime_model = new lifetime_nmc_t(dt_hr);
     }
-    else if (batt_vars->batt_life_model == 2) {
+    else if (batt_vars->batt_life_model == lifetime_params::LMOLTO) {
         lifetime_model = new lifetime_lmolto_t(dt_hr);
     }
     else {
@@ -990,7 +992,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
         throw exec_error("battery", "Environment temperature input length must equal number of weather file records.");
     }
 
-    if (batt_vars->batt_life_model == 1) {
+    if (batt_vars->batt_life_model == lifetime_params::NMC) {
         thermal_model = new thermal_t(
             dt_hr,
             batt_vars->batt_mass, // [kg]
@@ -1685,9 +1687,14 @@ void battstor::outputs_fixed()
     outDOD[index] = (ssc_number_t)(state.lifetime->cycle_range);
     outDODCycleAverage[index] = (ssc_number_t)(state.lifetime->average_range);
     outCapacityPercent[index] = (ssc_number_t)(state.lifetime->q_relative);
-    outCapacityPercentCycle[index] = (ssc_number_t)(state.lifetime->cycle->q_relative_cycle);
-    outCapacityPercentCalendar[index] = (ssc_number_t)(state.lifetime->calendar->q_relative_calendar);
-
+    if (batt_vars->batt_life_model == lifetime_params::CALCYC) {
+        outCapacityPercentCycle[index] = (ssc_number_t)(state.lifetime->cycle->q_relative_cycle);
+        outCapacityPercentCalendar[index] = (ssc_number_t)(state.lifetime->calendar->q_relative_calendar);
+    }
+    else if (batt_vars->batt_life_model == lifetime_params::LMOLTO) {
+        outCapacityPercentCycle[index] = (ssc_number_t)(100. - state.lifetime->lmo_lto->dq_relative_cyc);
+        outCapacityPercentCalendar[index] = (ssc_number_t)(100. - state.lifetime->lmo_lto->dq_relative_cal);
+    }
 }
 
 void battstor::outputs_topology_dependent()
@@ -1741,7 +1748,7 @@ void battstor::outputs_topology_dependent()
             outPVS_PV_ramp_interval[index] = dispatch_fom->batt_dispatch_pvs_PV_ramp_interval();
             outPVS_forecast_pv_energy[index] = dispatch_fom->batt_dispatch_pvs_forecast_pv_energy();
             // remove pv smoothing hour limited (curtailed) power - lost (before system output in pvsamv1)
-            outGenPower[index] -= outPVS_curtail[index]; 
+            outGenPower[index] -= outPVS_curtail[index];
         }
         else if (batt_vars->batt_dispatch != dispatch_t::FOM_MANUAL) {
             dispatch_automatic_front_of_meter_t* dispatch_fom = dynamic_cast<dispatch_automatic_front_of_meter_t*>(dispatch_model);
@@ -1817,7 +1824,7 @@ void battstor::update_grid_power(compute_module&, double P_gen_ac, double P_load
     }
     outInterconnectionLoss[index_replace] = P_interconnection_loss;
     P_grid = P_gen_ac - P_load_ac - P_interconnection_loss;
-    
+
     outGridPower[index_replace] = (ssc_number_t)(P_grid);
 }
 
@@ -1854,11 +1861,11 @@ void battstor::calculate_monthly_and_annual_outputs(compute_module& cm)
         if (batt_vars->batt_dispatch == dispatch_t::FOM_PV_SMOOTHING) {
             // total number of violations
             size_t violation_count = 0;
-            // violation percent 
+            // violation percent
             ssc_number_t violation_percent = 0;
             // energy to grid percent - algorithm and actual
             ssc_number_t energy_to_grid_pvs = 0; // sum of pvs outpower
-            ssc_number_t energy_to_grid_sam = 0; // sum of outGenPower 
+            ssc_number_t energy_to_grid_sam = 0; // sum of outGenPower
             ssc_number_t energy_to_grid_pv = 0; // pv system only energy no battery or curtaiment
             for (size_t i = 0; i < total_steps; i++) {
                 violation_count += (size_t)outPVS_violation_list[i];
@@ -1918,7 +1925,7 @@ void battstor::calculate_monthly_and_annual_outputs(compute_module& cm)
                 }
              */
         }
-   
+
 
     }
 }
