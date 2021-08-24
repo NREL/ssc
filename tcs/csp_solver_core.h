@@ -1039,6 +1039,14 @@ private:
 
 	void send_callback(double percent);
 
+    void calc_timestep_plant_control_and_targets(
+        double f_turbine_tou /*-*/, double q_dot_pc_min /*MWt*/, double q_dot_tes_ch /*MWt*/,
+        int pc_operating_state, double purchase_mult /*-*/, double sale_mult /*-*/,
+        double calc_frac_current /*-*/, double baseline_step /*s*/,
+        bool& is_q_dot_pc_target_overwrite,
+        double& q_dot_pc_target /*MWt*/, double& q_dot_pc_max /*MWt*/, double& q_dot_elec_to_CR_heat /*MWt*/,
+        bool& is_rec_su_allowed, bool& is_pc_su_allowed, bool& is_pc_sb_allowed);
+
 public:
 
 	// Class to save messages for up stream classes

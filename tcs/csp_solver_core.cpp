@@ -661,175 +661,18 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
         bool is_pc_sb_allowed = false;
 
         double q_dot_elec_to_CR_heat = std::numeric_limits<double>::quiet_NaN();    //[MWt]
+        double q_dot_pc_max = std::numeric_limits<double>::quiet_NaN();     //[MWt]
 
-		// Optional rules for TOD Block Plant Control
-		if( mc_tou.mc_dispatch_params.m_is_block_dispatch )
-		{
-            is_rec_su_allowed = true;
-            is_pc_su_allowed = true;
-            is_pc_sb_allowed = true;
+        calc_timestep_plant_control_and_targets(
+            f_turbine_tou, q_pc_min, q_dot_tes_ch,
+            pc_operating_state, purchase_mult, pricing_mult,
+            calc_frac_current, baseline_step,
+            is_q_dot_pc_target_overwrite,
+            q_pc_target, q_dot_pc_max, q_dot_elec_to_CR_heat,
+            is_rec_su_allowed, is_pc_su_allowed, is_pc_sb_allowed);
 
-            // Set PC target and max thermal power
-            q_pc_target = f_turbine_tou * m_cycle_q_dot_des;	//[MW]
-            if (mc_tou.mc_dispatch_params.m_is_tod_pc_target_also_pc_max) {
-                m_q_dot_pc_max = q_pc_target;     //[MW]
-            }
-            else {
-                m_q_dot_pc_max = m_cycle_max_frac * m_cycle_q_dot_des;		//[MWt]
-            }
-
-			// Rule 1: if the sun sets (or does not rise) in __ [hours], then do not allow power cycle standby
-				//double standby_time_buffer = 2.0;
-			if( mc_tou.mc_dispatch_params.m_use_rule_1 &&
-				(mc_weather.ms_outputs.m_hour + mc_tou.mc_dispatch_params.m_standby_off_buffer <= mc_weather.ms_outputs.m_time_rise ||
-				mc_weather.ms_outputs.m_hour + mc_tou.mc_dispatch_params.m_standby_off_buffer >= mc_weather.ms_outputs.m_time_set))
-			{
-				is_pc_sb_allowed = false;
-			}
-
-			// Rule 2:
-			if( mc_tou.mc_dispatch_params.m_use_rule_2 &&
-				((q_pc_target < q_pc_min && q_dot_tes_ch < m_q_dot_rec_des*mc_tou.mc_dispatch_params.m_q_dot_rec_des_mult) ||
-				is_q_dot_pc_target_overwrite) )
-			{
-				// If overwrite was previously true, but now power cycle is off, set to false
-				if( is_q_dot_pc_target_overwrite && 
-				(pc_operating_state == C_csp_power_cycle::OFF || q_pc_target >= q_pc_min) )
-				{
-					is_q_dot_pc_target_overwrite = false;
-				}
-				else
-				{
-					is_q_dot_pc_target_overwrite = true;
-				}
-
-				if( is_q_dot_pc_target_overwrite )
-				{
-					q_pc_target = mc_tou.mc_dispatch_params.m_f_q_dot_pc_overwrite*m_cycle_q_dot_des;
-				}
-			}
-
-            // After rules, reset booleans if necessary
-		    if( q_pc_target < q_pc_min || q_pc_target <= 0. )
-		    {
-			    is_pc_su_allowed = false;
-			    is_pc_sb_allowed = false;
-			    q_pc_target = 0.0;
-		    }
-		}
-        // use simply policy to govern arbitrage operation
-        else if (mc_tou.mc_dispatch_params.m_is_arbitrage_policy) {
-
-            // Check purchase multiplier
-            // If less than 1, then allow charging
-            if (purchase_mult < 1.0 && q_dot_tes_ch > 0.0) {
-                is_rec_su_allowed = true;
-                q_dot_elec_to_CR_heat = m_q_dot_rec_des;    //[MWt]
-            }
-            else {
-                is_rec_su_allowed = false;
-                q_dot_elec_to_CR_heat = 0.0;
-            }
-
-            // Check (sale) price multiplier
-            // If greater than 1, the allow discharging
-            if (pricing_mult > 1.0) {
-                is_pc_su_allowed = true;
-                is_pc_sb_allowed = false;
-
-                q_pc_target = m_cycle_q_dot_des;	//[MWt]
-                if (mc_tou.mc_dispatch_params.m_is_tod_pc_target_also_pc_max) {
-                    m_q_dot_pc_max = q_pc_target;     //[MWt]
-                }
-                else {
-                    m_q_dot_pc_max = m_cycle_max_frac * m_cycle_q_dot_des;		//[MWt]
-                }
-            }
-            else {
-                is_pc_su_allowed = false;
-                is_pc_sb_allowed = false;
-
-                q_pc_target = 0.0;
-                m_q_dot_pc_max = 0.0;
-            }
-
-            // Do we need to reset q_cr_on for control logic?
-
-            double abce = 1.23;
-
-        }
-        // Run dispatch optimization?
-        else if(mc_dispatch.solver_params.dispatch_optimize)
-        {
-            //time to reoptimize
-            //reoptimize when the time is equal to multiples of the first time step
-			if( (int)mc_kernel.mc_sim_info.ms_ts.m_time % (int)(3600.*mc_dispatch.solver_params.optimize_frequency) == baseline_step
-				&& mc_dispatch.disp_outputs.time_last != mc_kernel.mc_sim_info.ms_ts.m_time
-                )
-            {
-                int opt_horizon = mc_dispatch.solver_params.optimize_horizon;
-                double hour_now = mc_kernel.mc_sim_info.ms_ts.m_time / 3600.;
-
-                //if this is the last day of the year, update the optimization horizon to be no more than the last 24 hours. 
-                if (hour_now >= (8760. - opt_horizon))
-                    mc_dispatch.solver_params.optimize_horizon = (int)std::min((double)opt_horizon, (double)(8761. - hour_now));
-
-                //message
-                std::stringstream ss;
-                ss << "Optimizing thermal energy dispatch profile for time window " 
-					<< (int)(mc_kernel.mc_sim_info.ms_ts.m_time / 3600.) << " - "
-					<< (int)(mc_kernel.mc_sim_info.ms_ts.m_time / 3600.) + mc_dispatch.solver_params.optimize_frequency;
-                
-                mc_csp_messages.add_message(C_csp_messages::NOTICE, ss.str());
-				send_callback((float)calc_frac_current*100.f);
-                ss.flush();
-
-                // Update horizon parameter values and inital conition parameters
-                if (!mc_dispatch.update_horizon_parameters(mc_tou)) {
-                    throw(C_csp_exception("Dispatch failed to update horizon parameter values"));
-                }
-                mc_dispatch.update_initial_conditions(mc_pc_out_solver.m_q_dot_htf, m_T_htf_cold_des);
-
-                //predict performance for the time horizon
-                if( 
-                    mc_dispatch.predict_performance((int)
-                            (mc_kernel.mc_sim_info.ms_ts.m_time/ baseline_step - 1), 
-                            (int)(mc_dispatch.solver_params.optimize_horizon * mc_dispatch.solver_params.steps_per_hour),
-                            (int)((3600./baseline_step)/ mc_dispatch.solver_params.steps_per_hour)
-                            ) 
-                    )
-                {
-                    //call the optimize method
-                    bool opt_complete = mc_dispatch.lp_outputs.m_last_opt_successful = mc_dispatch.optimize();
-                    
-                    if (mc_dispatch.solver_params.disp_reporting && (!mc_dispatch.solver_params.log_message.empty()))
-                    {
-                        mc_csp_messages.add_message(C_csp_messages::NOTICE, mc_dispatch.solver_params.log_message.c_str());
-                        send_callback((float)calc_frac_current * 100.f);
-                    }
-
-                    mc_dispatch.m_current_read_step = 0;   //reset
-                }
-                else
-                {
-                    throw(C_csp_exception("Dispatch failed to predict performance over the dispatch horizon"));
-                }
-
-                //call again to go back to original state
-                mc_tou.call(mc_kernel.mc_sim_info.ms_ts.m_time, mc_tou_outputs);
-            }
-
-            //running from the optimized profile
-            mc_dispatch.set_dispatch_outputs();
-
-            //setting binaries and targets
-            is_rec_su_allowed = mc_dispatch.disp_outputs.is_rec_su_allowed;
-            is_pc_sb_allowed = mc_dispatch.disp_outputs.is_pc_sb_allowed;
-            is_pc_su_allowed = mc_dispatch.disp_outputs.is_pc_su_allowed;
-            q_pc_target = mc_dispatch.disp_outputs.q_pc_target;
-            q_dot_elec_to_CR_heat = mc_dispatch.disp_outputs.q_dot_elec_to_CR_heat;
-            m_q_dot_pc_max = mc_dispatch.disp_outputs.q_dot_pc_max;
-        }
+        // Avoid setting member data in method, so set here
+        m_q_dot_pc_max = q_dot_pc_max;
 
         // Split up reported q_dot_pc target into 'startup' and 'on' so input dispatch can specify both for a single full timestep
         double q_dot_pc_su_target_reporting = 0.0;
@@ -1945,6 +1788,178 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
 }	// End simulate() method
 
+void C_csp_solver::calc_timestep_plant_control_and_targets(
+    double f_turbine_tou /*-*/, double q_dot_pc_min /*MWt*/, double q_dot_tes_ch /*MWt*/,
+    int pc_operating_state, double purchase_mult /*-*/, double sale_mult /*-*/,
+    double calc_frac_current /*-*/, double baseline_step /*s*/,
+    bool& is_q_dot_pc_target_overwrite,
+    double& q_dot_pc_target /*MWt*/, double& q_dot_pc_max /*MWt*/, double& q_dot_elec_to_CR_heat /*MWt*/,
+    bool& is_rec_su_allowed, bool& is_pc_su_allowed, bool& is_pc_sb_allowed)
+{
+    // Optional rules for TOD Block Plant Control
+    if (mc_tou.mc_dispatch_params.m_is_block_dispatch)
+    {
+        is_rec_su_allowed = true;
+        is_pc_su_allowed = true;
+        is_pc_sb_allowed = true;
+
+        // Set PC target and max thermal power
+        q_dot_pc_target = f_turbine_tou * m_cycle_q_dot_des;	//[MW]
+        if (mc_tou.mc_dispatch_params.m_is_tod_pc_target_also_pc_max) {
+            q_dot_pc_max = q_dot_pc_target;     //[MW]
+        }
+        else {
+            q_dot_pc_max = m_cycle_max_frac * m_cycle_q_dot_des;		//[MWt]
+        }
+
+        // Rule 1: if the sun sets (or does not rise) in __ [hours], then do not allow power cycle standby
+            //double standby_time_buffer = 2.0;
+        if (mc_tou.mc_dispatch_params.m_use_rule_1 &&
+            (mc_weather.ms_outputs.m_hour + mc_tou.mc_dispatch_params.m_standby_off_buffer <= mc_weather.ms_outputs.m_time_rise ||
+                mc_weather.ms_outputs.m_hour + mc_tou.mc_dispatch_params.m_standby_off_buffer >= mc_weather.ms_outputs.m_time_set))
+        {
+            is_pc_sb_allowed = false;
+        }
+
+        // Rule 2:
+        if (mc_tou.mc_dispatch_params.m_use_rule_2 &&
+            ((q_dot_pc_target < q_dot_pc_min && q_dot_tes_ch < m_q_dot_rec_des * mc_tou.mc_dispatch_params.m_q_dot_rec_des_mult) ||
+                is_q_dot_pc_target_overwrite))
+        {
+            // If overwrite was previously true, but now power cycle is off, set to false
+            if (is_q_dot_pc_target_overwrite &&
+                (pc_operating_state == C_csp_power_cycle::OFF || q_dot_pc_target >= q_dot_pc_min))
+            {
+                is_q_dot_pc_target_overwrite = false;
+            }
+            else
+            {
+                is_q_dot_pc_target_overwrite = true;
+            }
+
+            if (is_q_dot_pc_target_overwrite)
+            {
+                q_dot_pc_target = mc_tou.mc_dispatch_params.m_f_q_dot_pc_overwrite * m_cycle_q_dot_des;
+            }
+        }
+
+        // After rules, reset booleans if necessary
+        if (q_dot_pc_target < q_dot_pc_min || q_dot_pc_target <= 0.)
+        {
+            is_pc_su_allowed = false;
+            is_pc_sb_allowed = false;
+            q_dot_pc_target = 0.0;
+        }
+    }
+    // use simply policy to govern arbitrage operation
+    else if (mc_tou.mc_dispatch_params.m_is_arbitrage_policy) {
+
+        // Check purchase multiplier
+        // If less than 1, then allow charging
+        if (purchase_mult < 1.0 && q_dot_tes_ch > 0.0) {
+            is_rec_su_allowed = true;
+            q_dot_elec_to_CR_heat = m_q_dot_rec_des;    //[MWt]
+        }
+        else {
+            is_rec_su_allowed = false;
+            q_dot_elec_to_CR_heat = 0.0;
+        }
+
+        // Check (sale) price multiplier
+        // If greater than 1, the allow discharging
+        if (sale_mult > 1.0) {
+            is_pc_su_allowed = true;
+            is_pc_sb_allowed = false;
+
+            q_dot_pc_target = m_cycle_q_dot_des;	//[MWt]
+            if (mc_tou.mc_dispatch_params.m_is_tod_pc_target_also_pc_max) {
+                q_dot_pc_max = q_dot_pc_target;     //[MWt]
+            }
+            else {
+                q_dot_pc_max = m_cycle_max_frac * m_cycle_q_dot_des;		//[MWt]
+            }
+        }
+        else {
+            is_pc_su_allowed = false;
+            is_pc_sb_allowed = false;
+
+            q_dot_pc_target = 0.0;
+            q_dot_pc_max = 0.0;
+        }
+    }
+    // Run dispatch optimization?
+    else if (mc_dispatch.solver_params.dispatch_optimize)
+    {
+        //time to reoptimize
+        //reoptimize when the time is equal to multiples of the first time step
+        if ((int)mc_kernel.mc_sim_info.ms_ts.m_time % (int)(3600. * mc_dispatch.solver_params.optimize_frequency) == baseline_step
+            && mc_dispatch.disp_outputs.time_last != mc_kernel.mc_sim_info.ms_ts.m_time
+            )
+        {
+            int opt_horizon = mc_dispatch.solver_params.optimize_horizon;
+            double hour_now = mc_kernel.mc_sim_info.ms_ts.m_time / 3600.;
+
+            //if this is the last day of the year, update the optimization horizon to be no more than the last 24 hours. 
+            if (hour_now >= (8760. - opt_horizon))
+                mc_dispatch.solver_params.optimize_horizon = (int)std::min((double)opt_horizon, (double)(8761. - hour_now));
+
+            //message
+            std::stringstream ss;
+            ss << "Optimizing thermal energy dispatch profile for time window "
+                << (int)(mc_kernel.mc_sim_info.ms_ts.m_time / 3600.) << " - "
+                << (int)(mc_kernel.mc_sim_info.ms_ts.m_time / 3600.) + mc_dispatch.solver_params.optimize_frequency;
+
+            mc_csp_messages.add_message(C_csp_messages::NOTICE, ss.str());
+            send_callback((float)calc_frac_current * 100.f);
+            ss.flush();
+
+            // Update horizon parameter values and inital conition parameters
+            if (!mc_dispatch.update_horizon_parameters(mc_tou)) {
+                throw(C_csp_exception("Dispatch failed to update horizon parameter values"));
+            }
+            mc_dispatch.update_initial_conditions(mc_pc_out_solver.m_q_dot_htf, m_T_htf_cold_des);
+
+            //predict performance for the time horizon
+            if (
+                mc_dispatch.predict_performance((int)
+                    (mc_kernel.mc_sim_info.ms_ts.m_time / baseline_step - 1),
+                    (int)(mc_dispatch.solver_params.optimize_horizon * mc_dispatch.solver_params.steps_per_hour),
+                    (int)((3600. / baseline_step) / mc_dispatch.solver_params.steps_per_hour)
+                )
+                )
+            {
+                //call the optimize method
+                bool opt_complete = mc_dispatch.lp_outputs.m_last_opt_successful = mc_dispatch.optimize();
+
+                if (mc_dispatch.solver_params.disp_reporting && (!mc_dispatch.solver_params.log_message.empty()))
+                {
+                    mc_csp_messages.add_message(C_csp_messages::NOTICE, mc_dispatch.solver_params.log_message.c_str());
+                    send_callback((float)calc_frac_current * 100.f);
+                }
+
+                mc_dispatch.m_current_read_step = 0;   //reset
+            }
+            else
+            {
+                throw(C_csp_exception("Dispatch failed to predict performance over the dispatch horizon"));
+            }
+
+            //call again to go back to original state
+            mc_tou.call(mc_kernel.mc_sim_info.ms_ts.m_time, mc_tou_outputs);
+        }
+
+        //running from the optimized profile
+        mc_dispatch.set_dispatch_outputs();
+
+        //setting binaries and targets
+        is_rec_su_allowed = mc_dispatch.disp_outputs.is_rec_su_allowed;
+        is_pc_sb_allowed = mc_dispatch.disp_outputs.is_pc_sb_allowed;
+        is_pc_su_allowed = mc_dispatch.disp_outputs.is_pc_su_allowed;
+        q_dot_pc_target = mc_dispatch.disp_outputs.q_pc_target;
+        q_dot_elec_to_CR_heat = mc_dispatch.disp_outputs.q_dot_elec_to_CR_heat;
+        q_dot_pc_max = mc_dispatch.disp_outputs.q_dot_pc_max;
+    }
+}
 
 void C_csp_tou::init_parent(bool dispatch_optimize)
 {
