@@ -347,3 +347,65 @@ TEST_F(lib_battery_lifetime_test, runCycleLifetimeTestWithRestPeriod) {
     EXPECT_NEAR(s.average_range, 90, tol);
     EXPECT_NEAR(s.n_cycles, 2, tol);
 }
+
+TEST_F(lib_battery_lifetime_test, TestCycleDegradationDifferentOrdering) {
+    double DOD = 100;
+    double prev_DOD = 0;
+
+    // First run: high DOD first
+    for (int idx = 0; idx < 4000; idx++) {
+        if (idx % 2 == 0) {
+            DOD = 100;
+            prev_DOD = 0;
+        }
+        else {
+            DOD = 0;
+            prev_DOD = 100;
+        }
+        model->runLifetimeModels(idx, true, DOD, prev_DOD, 20);
+    }
+
+    // First run: low DOD second
+    for (int idx = 4000; idx < 8000; idx++) {
+        if (idx % 2 == 0) {
+            DOD = 20;
+            prev_DOD = 0;
+        }
+        else {
+            DOD = 0;
+            prev_DOD = 20;
+        }
+        model->runLifetimeModels(idx, true, DOD, prev_DOD, 20);
+    }
+
+    EXPECT_NEAR(model->capacity_percent_cycle(), 50, 1);
+
+    std::unique_ptr<lifetime_calendar_cycle_t> low_hi_model = std::unique_ptr<lifetime_calendar_cycle_t>(new lifetime_calendar_cycle_t(cycles_vs_DOD, dt_hour, 1.02, 2.66e-3, -7280, 930));
+
+    // Second run: low DOD first
+    for (int idx = 4000; idx < 8000; idx++) {
+        if (idx % 2 == 0) {
+            DOD == 20;
+            prev_DOD = 0;
+        }
+        else {
+            DOD == 0;
+            prev_DOD = 20;
+        }
+        low_hi_model->runLifetimeModels(idx, true, DOD, prev_DOD, 20);
+    }
+
+    // Second run: high DOD second
+    for (int idx = 0; idx < 4000; idx++) {
+        if (idx % 2 == 0) {
+            DOD == 100;
+            prev_DOD = 0;
+        }
+        else {
+            DOD == 0;
+            prev_DOD = 100;
+        }
+        low_hi_model->runLifetimeModels(idx, true, DOD, prev_DOD, 20);
+    }
+    EXPECT_NEAR(low_hi_model->capacity_percent_cycle(), 50, 1);
+}

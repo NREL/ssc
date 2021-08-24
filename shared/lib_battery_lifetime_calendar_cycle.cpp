@@ -42,7 +42,23 @@ void lifetime_cycle_t::initialize() {
     state->cycle->rainflow_Xlt = 0;
     state->cycle->rainflow_Ylt = 0;
     state->cycle->rainflow_peaks.clear();
+    init_cycle_counts();
     resetDailyCycles();
+}
+
+void lifetime_cycle_t::init_cycle_counts() {
+    std::vector<double> DOD_levels;
+    for (size_t i = 0; i < params->cal_cyc->cycling_matrix.nrows(); i++) {
+        double dod = params->cal_cyc->cycling_matrix.at(i, calendar_cycle_params::DOD);
+        if (std::find(DOD_levels.begin(), DOD_levels.end(), dod) == DOD_levels.end()) {
+            DOD_levels.push_back(dod);
+        }
+    }
+    std::sort(DOD_levels.begin(), DOD_levels.end());
+    state->cycle->cycle_counts.resize_fill(2, DOD_levels.size(), 0.0);
+    for (size_t i = 0; i < DOD_levels.size(); i++) {
+        state->cycle->cycle_counts.set_value(DOD_levels[i], i, cycle_state::DOD);
+    }
 }
 
 lifetime_cycle_t::lifetime_cycle_t(const util::matrix_t<double> &batt_lifetime_matrix) {
@@ -194,6 +210,9 @@ void lifetime_cycle_t::replaceBattery(double replacement_percent) {
         state->cycle_range = 0;
         state->cycle_DOD = 0;
         state->average_range = 0;
+        for (size_t i = 0; i < state->cycle->cycle_counts.nrows(); i++) {
+            state->cycle->cycle_counts.set_value(0.0, i, cycle_state::CYCLES);
+        }
     }
 
     state->cycle->rainflow_jlt = 0;
