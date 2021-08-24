@@ -48,6 +48,8 @@ struct batt_variables
 	int analysis_period;
 	int batt_chem;
 	int batt_dispatch;
+    int batt_dispatch_wf_forecast;
+    int batt_dispatch_load_forecast;
 	int batt_voltage_choice;
 	int batt_current_choice;
 	int batt_meter_position;
@@ -259,14 +261,23 @@ struct battstor
 	/*! Manual dispatch*/
 	bool manual_dispatch = false;
 
-	/*! Automated dispatch look ahead*/
-	bool look_ahead = false;
+	/*! Automated dispatch weather file look ahead*/
+	bool wf_look_ahead = false;
 
-	/*! Automated dispatch look behind*/
-	bool look_behind = false;
+	/*! Automated dispatch weather file look behind*/
+	bool wf_look_behind = false;
 
-	/*! Automated dispatch use custom input forecast (look ahead)*/
-	bool input_forecast = false;
+	/*! Automated dispatch use custom weather file input forecast (look ahead)*/
+	bool wf_input_forecast = false;
+
+    /*! Automated dispatch look ahead for load*/
+    bool load_look_ahead = false;
+
+    /*! Automated dispatch look behind for load*/
+    bool load_look_behind = false;
+
+    /*! Automated dispatch use custom input forecast (look ahead) for load*/
+    bool load_input_forecast = false;
 
 	/*! Automated dispatch override algorithm grid target calculation*/
 	bool input_target = false;

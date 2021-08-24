@@ -171,7 +171,6 @@ void C_mspt_receiver_222::init()
 	m_A_rec_proj = m_od_tube*m_h_rec*n_tubes;		//[m^2] The projected area of the tubes on a plane parallel to the center lines of the tubes
 	m_A_node = CSP::pi*m_d_rec / m_n_panels*m_h_rec; //[m^2] The area associated with each node
 
-	m_mode = C_csp_collector_receiver::OFF;					//[-] 0 = requires startup, 1 = starting up, 2 = running
 	m_itermode = 1;			//[-] 1: Solve for design temp, 2: solve to match mass flow restriction
 	m_od_control = 1.0;			//[-] Additional defocusing for over-design conditions
 	m_tol_od = 0.001;		//[-] Tolerance for over-design iteration
@@ -192,9 +191,22 @@ void C_mspt_receiver_222::init()
 	}
 	m_m_dot_htf_max = m_m_dot_htf_max_frac * m_m_dot_htf_des;	//[kg/s]
 
-	m_mode_prev = m_mode;
+    // Check startup parameters for negative value
+    m_rec_qf_delay = std::max(0.0, m_rec_qf_delay);
+    m_rec_su_delay = std::max(0.0, m_rec_su_delay);
+
 	m_E_su_prev = m_q_rec_des * m_rec_qf_delay;	//[W-hr] Startup energy
 	m_t_su_prev = m_rec_su_delay;				//[hr] Startup time requirement
+
+    // If no startup requirements, then receiver is always ON
+        // ... in the sense that the controller doesn't need to worry about startup
+    if (m_E_su_prev == 0.0 && m_t_su_prev == 0.0) {
+        m_mode_prev = C_csp_collector_receiver::ON;					//[-] 0 = requires startup, 1 = starting up, 2 = running
+    }
+    else {
+        m_mode_prev = C_csp_collector_receiver::OFF;					//[-] 0 = requires startup, 1 = starting up, 2 = running
+    }
+
 	m_eta_field_iter_prev = 1.0;				//[-] Set to largest possible value
 
 	m_T_salt_hot_target += 273.15;			//[K] convert from C
@@ -800,6 +812,12 @@ void C_mspt_receiver_222::converged()
 	{
 		m_E_su = m_q_rec_des * m_rec_qf_delay;
 		m_t_su = m_rec_su_delay;
+
+        // If no startup requirements, then receiver is always ON
+        // ... in the sense that the controller doesn't need to worry about startup
+        if (m_E_su == 0.0 && m_t_su == 0.0) {
+            m_mode = C_csp_collector_receiver::ON;
+        }
 	}
 
 	m_mode_prev = m_mode;
