@@ -43,6 +43,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "csp_solver_two_tank_tes.h"
 #include "csp_solver_tou_block_schedules.h"
 #include "csp_dispatch.h"
+#include "csp_solver_cr_electric_resistance.h"
 
 #include "csp_system_costs.h"
 
@@ -1751,6 +1752,22 @@ public:
 		collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_Q_DOT_THERMAL_CSKY_SS, allocate("Q_thermal_ss_csky", n_steps_fixed), n_steps_fixed);
 		collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_Q_DOT_THERMAL_SS, allocate("Q_thermal_ss", n_steps_fixed), n_steps_fixed);
 
+        // Check if system configuration includes a heater parallel to primary collector receiver
+        C_csp_collector_receiver* p_heater;
+        bool is_parallel_heater = false;
+        if (is_parallel_heater) {
+            double q_dot_heater_des = receiver->m_q_rec_des / 2.0;      //[MWt]
+            double f_q_dot_des_allowable_su = 1.0;      //[-]
+            double hrs_startup_at_max_rate = 0.25;      //[hr]
+            C_csp_cr_electric_resistance c_electric_resistance(receiver->m_T_htf_cold_des, receiver->m_T_htf_hot_des, q_dot_heater_des,
+                f_q_dot_des_allowable_su, hrs_startup_at_max_rate,
+                as_integer("rec_htf"), as_matrix("field_fl_props"), C_csp_cr_electric_resistance::E_elec_resist_startup_mode::INSTANTANEOUS_NO_MAX_ELEC_IN);
+            p_heater = &c_electric_resistance;
+        }
+        else {
+            p_heater = NULL;
+        }
+
         // Thermal energy storage 
         C_csp_two_tank_tes storage;
         C_csp_two_tank_tes::S_params *tes = &storage.ms_params;
@@ -1969,7 +1986,7 @@ public:
                         tou,
                         dispatch,
                         system,
-                        NULL,
+                        p_heater,
                         ssc_cmod_update,
                         (void*)(this));
 
