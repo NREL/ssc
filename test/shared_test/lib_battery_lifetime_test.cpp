@@ -385,11 +385,11 @@ TEST_F(lib_battery_lifetime_test, TestCycleDegradationDifferentOrdering) {
     // Second run: low DOD first
     for (int idx = 4000; idx < 8000; idx++) {
         if (idx % 2 == 0) {
-            DOD == 20;
+            DOD = 20;
             prev_DOD = 0;
         }
         else {
-            DOD == 0;
+            DOD = 0;
             prev_DOD = 20;
         }
         low_hi_model->runLifetimeModels(idx, true, DOD, prev_DOD, 20);
@@ -398,11 +398,11 @@ TEST_F(lib_battery_lifetime_test, TestCycleDegradationDifferentOrdering) {
     // Second run: high DOD second
     for (int idx = 0; idx < 4000; idx++) {
         if (idx % 2 == 0) {
-            DOD == 100;
+            DOD = 100;
             prev_DOD = 0;
         }
         else {
-            DOD == 0;
+            DOD = 0;
             prev_DOD = 100;
         }
         low_hi_model->runLifetimeModels(idx, true, DOD, prev_DOD, 20);
