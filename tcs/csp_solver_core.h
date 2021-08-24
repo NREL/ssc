@@ -619,7 +619,7 @@ public:
 
 	virtual void init(C_csp_power_cycle::S_solved_params &solved_params) = 0;
 
-	virtual int get_operating_state() = 0;
+	virtual C_csp_power_cycle::E_csp_power_cycle_modes get_operating_state() = 0;
 
     //required gets
     virtual double get_cold_startup_time() = 0;
@@ -1041,7 +1041,7 @@ private:
 
     void calc_timestep_plant_control_and_targets(
         double f_turbine_tou /*-*/, double q_dot_pc_min /*MWt*/, double q_dot_tes_ch /*MWt*/,
-        int pc_operating_state, double purchase_mult /*-*/, double sale_mult /*-*/,
+        C_csp_power_cycle::E_csp_power_cycle_modes pc_operating_state, double purchase_mult /*-*/, double sale_mult /*-*/,
         double calc_frac_current /*-*/, double baseline_step /*s*/,
         bool& is_q_dot_pc_target_overwrite,
         double& q_dot_pc_target /*MWt*/, double& q_dot_pc_max /*MWt*/, double& q_dot_elec_to_CR_heat /*MWt*/,

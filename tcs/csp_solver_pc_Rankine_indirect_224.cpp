@@ -1692,7 +1692,7 @@ void C_pc_Rankine_indirect_224::assign(int index, double *p_reporting_ts_array, 
 	mc_reported_outputs.assign(index, p_reporting_ts_array, n_reporting_ts_array);
 }
 
-int C_pc_Rankine_indirect_224::get_operating_state()
+C_csp_power_cycle::E_csp_power_cycle_modes C_pc_Rankine_indirect_224::get_operating_state()
 {
 	if(ms_params.m_startup_frac == 0.0 && ms_params.m_startup_time == 0.0)
 	{
