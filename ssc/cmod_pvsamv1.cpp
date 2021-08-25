@@ -1309,7 +1309,7 @@ void cm_pvsamv1::exec()
                     throw exec_error("pvsamv1",
                         util::format("Failed to calculate POA irradiance %d (code: %d) [y:%d m:%d d:%d h:%d minute:%lg]",
                             nn + 1, code, wf.year, wf.month, wf.day, wf.hour, wf.minute));
-
+                /*
                 if (code == 40)
                     log(util::format("POA decomposition model calculated negative direct normal irradiance at time [y:%d m:%d d:%d h:%d minute:%lg], set to zero.",
                         wf.year, wf.month, wf.day, wf.hour, wf.minute), SSC_WARNING, (float)idx);
@@ -1319,7 +1319,7 @@ void cm_pvsamv1::exec()
                 else if (code == 42)
                     log(util::format("POA decomposition model calculated negative global horizontal irradiance at time [y:%d m:%d d:%d h:%d minute:%lg], set to zero.",
                         wf.year, wf.month, wf.day, wf.hour, wf.minute), SSC_WARNING, (float)idx);
-
+                */
                 // p_irrad_calc is only weather file records long...
                 if (iyear == 0)
                 {
