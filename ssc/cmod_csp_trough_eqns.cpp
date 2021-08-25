@@ -47,10 +47,8 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
     double Fluid = std::numeric_limits<double>::quiet_NaN();
     double I_bn_des = std::numeric_limits<double>::quiet_NaN();
     double m_dot_htfmax = std::numeric_limits<double>::quiet_NaN();
-    double fluid_dens_outlet_temp = std::numeric_limits<double>::quiet_NaN();
     double m_dot_htfmin = std::numeric_limits<double>::quiet_NaN();
-    double fluid_dens_inlet_temp = std::numeric_limits<double>::quiet_NaN();
-    double radio_sm_or_area = std::numeric_limits<double>::quiet_NaN();
+    double use_solar_mult_or_aperture_area = std::numeric_limits<double>::quiet_NaN();
     double specified_solar_multiple = std::numeric_limits<double>::quiet_NaN();
     double specified_total_aperture = std::numeric_limits<double>::quiet_NaN();
     double tshours = std::numeric_limits<double>::quiet_NaN();
@@ -179,14 +177,14 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
 
     // max_field_flow_velocity
     ssc_data_t_get_number(data, "m_dot_htfmax", &m_dot_htfmax);
-    ssc_data_t_get_number(data, "fluid_dens_outlet_temp", &fluid_dens_outlet_temp);
-    max_field_flow_velocity = Max_field_flow_velocity(m_dot_htfmax, fluid_dens_outlet_temp, min_inner_diameter);
+    max_field_flow_velocity = Max_field_flow_velocity(m_dot_htfmax, min_inner_diameter,
+        T_loop_out, (int)Fluid, field_fl_props);
     ssc_data_t_set_number(data, "max_field_flow_velocity", max_field_flow_velocity);
 
     // min_field_flow_velocity
     ssc_data_t_get_number(data, "m_dot_htfmin", &m_dot_htfmin);
-    ssc_data_t_get_number(data, "fluid_dens_inlet_temp", &fluid_dens_inlet_temp);
-    min_field_flow_velocity = Min_field_flow_velocity(m_dot_htfmin, fluid_dens_inlet_temp, min_inner_diameter);
+    min_field_flow_velocity = Min_field_flow_velocity(m_dot_htfmin, min_inner_diameter,
+        T_loop_in_des, (int)Fluid, field_fl_props);
     ssc_data_t_set_number(data, "min_field_flow_velocity", min_field_flow_velocity);
 
     // total_loop_conversion_efficiency
@@ -199,10 +197,13 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
     ssc_data_t_set_number(data, "total_required_aperture_for_sm1", total_required_aperture_for_SM1);
 
     // nloops
-    ssc_data_t_get_number(data, "radio_sm_or_area", &radio_sm_or_area);
+    ssc_data_t_get_number(data, "use_solar_mult_or_aperture_area", &use_solar_mult_or_aperture_area);
+    if (std::isnan(use_solar_mult_or_aperture_area)) {
+        use_solar_mult_or_aperture_area = -1.;                   // IPH model
+    }
     ssc_data_t_get_number(data, "specified_solar_multiple", &specified_solar_multiple);
     ssc_data_t_get_number(data, "specified_total_aperture", &specified_total_aperture);
-    nLoops = Nloops(static_cast<int>(radio_sm_or_area), specified_solar_multiple, total_required_aperture_for_SM1, specified_total_aperture, single_loop_aperature);
+    nLoops = Nloops(static_cast<int>(use_solar_mult_or_aperture_area), specified_solar_multiple, total_required_aperture_for_SM1, specified_total_aperture, single_loop_aperature);
     ssc_data_t_set_number(data, "nloops", nLoops);
 
     // total_aperture
@@ -214,7 +215,7 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
     ssc_data_t_set_number(data, "field_thermal_output", field_thermal_output);
 
     // solar_mult
-    solar_mult = Solar_mult(static_cast<int>(radio_sm_or_area), field_thermal_output, q_pb_design, specified_solar_multiple, total_aperture, total_required_aperture_for_SM1);
+    solar_mult = Solar_mult(static_cast<int>(use_solar_mult_or_aperture_area), field_thermal_output, q_pb_design, specified_solar_multiple, total_aperture, total_required_aperture_for_SM1);
     ssc_data_t_set_number(data, "solar_mult", solar_mult);
 
     // required_number_of_loops_for_SM1
@@ -265,6 +266,15 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
 }
 
 void Physical_Trough_Collector_Type_Equations(ssc_data_t data)
+{
+    auto vt = static_cast<var_table*>(data);
+    if (!vt) {
+        throw std::runtime_error("ssc_data_t data invalid");
+    }
+
+}
+
+void Physical_Trough_Collector_Type_UI_Only_Equations(ssc_data_t data)
 {
     auto vt = static_cast<var_table*>(data);
     if (!vt) {
@@ -335,7 +345,6 @@ void Physical_Trough_Collector_Type_Equations(ssc_data_t data)
     csp_dtr_sca_calc_iams = Csp_dtr_sca_calc_iams(IAM_matrix, csp_dtr_sca_calc_theta, csp_dtr_sca_calc_costh);
     ssc_data_t_set_matrix(data, "csp_dtr_sca_calc_iams", csp_dtr_sca_calc_iams);
 }
-
 
 void Physical_Trough_System_Control_Equations(ssc_data_t data)
 {

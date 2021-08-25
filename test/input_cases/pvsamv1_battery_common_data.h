@@ -432,8 +432,8 @@ void pvsamv1_battery_defaults(ssc_data_t& data) {
 	ssc_data_set_array(data, "batt_replacement_schedule", p_batt_replacement_schedule, 25);
 	ssc_number_t p_batt_replacement_schedule_percent[25] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 	ssc_data_set_array(data, "batt_replacement_schedule_percent", p_batt_replacement_schedule_percent, 25);
-	ssc_number_t p_om_replacement_cost1[25] = { 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500,500, 500, 500, 500, 500 };
-	ssc_data_set_array(data, "om_replacement_cost1", p_om_replacement_cost1, 25);
+	ssc_number_t p_om_batt_replacement_cost[25] = { 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500,500, 500, 500, 500, 500 };
+	ssc_data_set_array(data, "om_batt_replacement_cost", p_om_batt_replacement_cost, 25);
 	ssc_data_set_number(data, "batt_mass", 95);
 	ssc_data_set_number(data, "batt_surface_area", 502.3);
 	ssc_data_set_number(data, "batt_Cp", 1004);
@@ -457,7 +457,8 @@ void pvsamv1_battery_defaults(ssc_data_t& data) {
 	ssc_data_set_matrix(data, "dispatch_manual_sched_weekend", p_dispatch_manual_sched_weekend, 12, 24);
 	ssc_number_t p_batt_custom_dispatch[1] = { 0 };
 	ssc_data_set_array(data, "batt_custom_dispatch", p_batt_custom_dispatch, 1);
-	ssc_data_set_number(data, "batt_dispatch_choice", 1);
+	ssc_data_set_number(data, "batt_dispatch_choice", 0);
+    ssc_data_set_number(data, "batt_dispatch_wf_forecast_choice", 1);
 	ssc_number_t p_batt_pv_clipping_forecast[1] = { 0 };
 	ssc_data_set_array(data, "batt_pv_clipping_forecast", p_batt_pv_clipping_forecast, 1);
 	ssc_number_t p_batt_pv_dc_forecast[1] = { 0 };
@@ -536,6 +537,8 @@ void singleowner_defaults(ssc_data_t& data) {
 	ssc_data_set_number(data, "real_discount_rate", 6.4000000000000004);
 	ssc_data_set_number(data, "insurance_rate", 0.5);
 	ssc_number_t p_om_fixed[1] = { 0 };
+    ssc_data_set_number(data, "batt_salvage_percentage", 0);
+    ssc_data_set_number(data, "battery_total_cost_lcos", 9618.60);
 	ssc_data_set_array(data, "om_fixed", p_om_fixed, 1);
 	ssc_data_set_number(data, "om_fixed_escal", 0);
 	ssc_number_t p_om_production[1] = { 0 };
@@ -548,6 +551,12 @@ void singleowner_defaults(ssc_data_t& data) {
 	ssc_data_set_array(data, "om_fuel_cost", p_om_fuel_cost, 1);
 	ssc_data_set_number(data, "om_fuel_cost_escal", 0);
 	ssc_data_set_number(data, "om_replacement_cost_escal", 0);
+    ssc_number_t p_om_batt_fixed[1] = { 1000 };
+    ssc_data_set_array(data, "om_batt_fixed_cost", p_om_batt_fixed, 1);
+    ssc_number_t p_om_batt_variable[1] = { 0.5 };
+    ssc_data_set_array(data, "om_batt_variable_cost", p_om_batt_variable, 1);
+    ssc_number_t p_om_batt_capacity[1] = { 0.5 };
+    ssc_data_set_array(data, "om_batt_capacity_cost", p_om_batt_capacity, 1);
 	ssc_data_set_number(data, "reserves_interest", 1.75);
 	ssc_data_set_number(data, "equip1_reserve_cost", 0.25);
 	ssc_data_set_number(data, "equip1_reserve_freq", 12);
@@ -758,6 +767,8 @@ void singleowner_defaults(ssc_data_t& data) {
 	ssc_number_t p_grid_curtailment_price[1] = { 0 };
 	ssc_data_set_array(data, "grid_curtailment_price", p_grid_curtailment_price, 1);
 	ssc_data_set_number(data, "grid_curtailment_price_esc", 0);
+    ssc_data_set_number(data, "batt_salvage_percentage", 0);
+    ssc_data_set_number(data, "battery_total_cost_lcos", 9618.60);
 }
 
 void commercial_multiarray_default(ssc_data_t& data) {
@@ -767,6 +778,15 @@ void commercial_multiarray_default(ssc_data_t& data) {
 	ssc_data_set_number(data, "system_use_lifetime_output", 1);
 	ssc_data_set_number(data, "save_full_lifetime_variables", 1);
 	ssc_data_set_number(data, "analysis_period", 25);
+    ssc_number_t p_federal_tax_rate[1] = { 21 };
+    ssc_data_set_array(data, "federal_tax_rate", p_federal_tax_rate, 1);
+    ssc_number_t p_state_tax_rate[1] = { 7 };
+    ssc_data_set_array(data, "state_tax_rate", p_state_tax_rate, 1);
+    ssc_data_set_number(data, "property_tax_rate", 0);
+    ssc_data_set_number(data, "prop_tax_cost_assessed_percent", 100);
+    ssc_data_set_number(data, "prop_tax_assessed_decline", 0);
+    ssc_data_set_number(data, "real_discount_rate", 6.4000000000000004);
+    ssc_data_set_number(data, "insurance_rate", 0.5);
 	ssc_number_t p_dc_degradation[1] = { 0.5 };
 	ssc_data_set_array(data, "dc_degradation", p_dc_degradation, 1);
 	ssc_data_set_number(data, "en_dc_lifetime_losses", 0);
@@ -1150,8 +1170,14 @@ void commercial_multiarray_default(ssc_data_t& data) {
 	ssc_data_set_array(data, "batt_replacement_schedule", p_batt_replacement_schedule, 25);
 	ssc_number_t p_batt_replacement_schedule_percent[25] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 	ssc_data_set_array(data, "batt_replacement_schedule_percent", p_batt_replacement_schedule_percent, 25);
-	ssc_number_t p_om_replacement_cost1[1] = { 300 };
-	ssc_data_set_array(data, "om_replacement_cost1", p_om_replacement_cost1, 1);
+	ssc_number_t p_om_batt_replacement_cost[1] = { 300 };
+	ssc_data_set_array(data, "om_batt_replacement_cost", p_om_batt_replacement_cost, 1);
+    ssc_number_t p_om_batt_fixed[1] = { 1000 };
+    ssc_data_set_array(data, "om_batt_fixed_cost", p_om_batt_fixed, 1);
+    ssc_number_t p_om_batt_variable[1] = { 0.5 };
+    ssc_data_set_array(data, "om_batt_variable_cost", p_om_batt_variable, 1);
+    ssc_number_t p_om_batt_capacity[1] = { 0.5 };
+    ssc_data_set_array(data, "om_batt_capacity_cost", p_om_batt_capacity, 1);
 	ssc_data_set_number(data, "batt_mass", 102.70206451416016);
 	ssc_data_set_number(data, "batt_surface_area", 0.7);
 	ssc_data_set_number(data, "batt_Cp", 1004);
@@ -1180,12 +1206,17 @@ void commercial_multiarray_default(ssc_data_t& data) {
 	ssc_number_t p_batt_custom_dispatch[1] = { 0 };
 	ssc_data_set_array(data, "batt_custom_dispatch", p_batt_custom_dispatch, 1);
 	ssc_data_set_number(data, "batt_dispatch_choice", 0);
+    ssc_data_set_number(data, "batt_dispatch_wf_forecast_choice", 0);
 	ssc_data_set_number(data, "batt_dispatch_auto_can_fuelcellcharge", 0);
 	ssc_data_set_number(data, "batt_dispatch_auto_can_gridcharge", 0);
 	ssc_data_set_number(data, "batt_dispatch_auto_can_charge", 1);
     ssc_data_set_number(data, "batt_cycle_cost_choice", 0);
     ssc_number_t p_batt_cycle_cost[1] = { 0.1 };
     ssc_data_set_array(data, "batt_cycle_cost", p_batt_cycle_cost, 1);
+    ssc_data_set_number(data, "total_installed_cost", 22868070);
+    ssc_data_set_number(data, "salvage_percentage", 0);
+    ssc_data_set_number(data, "batt_salvage_percentage", 0);
+    ssc_data_set_number(data, "battery_total_cost_lcos", 9618.60);
 }
 
 // Run pvsam1 with battery enabled and a PPA agreement. Set up data elsewhere to allow adjustment of dispatch mode and similar
@@ -1195,6 +1226,24 @@ int run_pvsam1_battery_ppa(ssc_data_t& data) {
 	status += run_module(data, "utilityrate5");
 	status += run_module(data, "singleowner");
 	return status;
+}
+
+int run_pvsam1_battery_fom(ssc_data_t& data) {
+    int status = run_module(data, "pvsamv1");
+    status += run_module(data, "grid");
+    status += run_module(data, "utilityrate5");
+    status += run_module(data, "levpartflip");
+    return status;
+}
+
+
+
+int run_pvsam1_battery_cashloan(ssc_data_t& data) {
+    int status = run_module(data, "pvsamv1");
+    status += run_module(data, "grid");
+    status += run_module(data, "utilityrate5");
+    status += run_module(data, "cashloan");
+    return status;
 }
 
 #endif
