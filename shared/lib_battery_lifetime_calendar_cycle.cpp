@@ -55,7 +55,7 @@ void lifetime_cycle_t::init_cycle_counts() {
         }
     }
     std::sort(DOD_levels.begin(), DOD_levels.end());
-    state->cycle->cycle_counts.resize_fill(2, DOD_levels.size(), 0.0);
+    state->cycle->cycle_counts.resize_fill(DOD_levels.size(), 2, 0.0);
     for (size_t i = 0; i < DOD_levels.size(); i++) {
         state->cycle->cycle_counts.set_value(DOD_levels[i], i, cycle_state::DOD);
     }
@@ -179,7 +179,7 @@ int lifetime_cycle_t::rainflow_compareRanges() {
 
         // Update cycle matrix with latest DOD
         size_t cycle_index = util::nearest_col_index(state->cycle->cycle_counts, cycle_state::DOD, state->cycle_range);
-        int cycles_at_range = state->cycle->cycle_counts(cycle_index, cycle_state::CYCLES);
+        int cycles_at_range = state->cycle->cycle_counts.at(cycle_index, cycle_state::CYCLES);
         cycles_at_range += 1;
         state->cycle->cycle_counts.set_value(cycles_at_range, cycle_index, cycle_state::CYCLES);
 
