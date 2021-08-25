@@ -774,632 +774,19 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 			mc_kernel.mc_sim_info.ms_ts.m_time = mc_kernel.get_baseline_end_time();
 			mc_kernel.mc_sim_info.ms_ts.m_step = mc_kernel.mc_sim_info.ms_ts.m_time - mc_kernel.mc_sim_info.ms_ts.m_time_start;
 
-			if( (cr_operating_state == C_csp_collector_receiver::OFF || cr_operating_state == C_csp_collector_receiver::STARTUP)
-				&& (pc_operating_state == C_csp_power_cycle::OFF || pc_operating_state == C_csp_power_cycle::STARTUP) )
-			{	// At start of this timestep, are power cycle AND collector/receiver off?
-
-				if( q_dot_cr_startup > 0.0 && is_rec_su_allowed &&
-                    mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_SU__PC_OFF__TES_OFF__AUX_OFF))
-				{	// Receiver startup is allowed and possible (will generate net energy)
-
-					if( q_dot_tes_dc > 0.0 && is_pc_su_allowed &&
-                        mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_SU__PC_SU__TES_DC__AUX_OFF))
-					{
-						operating_mode = C_system_operating_modes::CR_SU__PC_SU__TES_DC__AUX_OFF;
-					}
-					else
-					{
-						operating_mode = C_system_operating_modes::CR_SU__PC_OFF__TES_OFF__AUX_OFF;
-					}
-				}
-				else
-				{
-					if( q_dot_tes_dc > 0.0 && is_pc_su_allowed &&
-                        mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_OFF__PC_SU__TES_DC__AUX_OFF))
-					{
-						operating_mode = C_system_operating_modes::CR_OFF__PC_SU__TES_DC__AUX_OFF;
-					}
-					else
-					{
-						operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-					}
-				}
-			}	// End logic for CR_state == OFF or STARTUP    AND     PC_state == OFF or STARTUP
-
-			else if( cr_operating_state == C_csp_collector_receiver::ON &&
-				(pc_operating_state == C_csp_power_cycle::OFF || pc_operating_state == C_csp_power_cycle::STARTUP) )
-			{
-				if( q_dot_cr_on > 0.0 && is_rec_su_allowed && is_rec_outlet_to_hottank )
-				{	// Receiver is allowed to remain on, and it can produce useful energy. Now, need to find a home for it
-
-					if( is_pc_su_allowed &&
-                        mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_ON__PC_SU__TES_OFF__AUX_OFF)) // Can receiver output go to power cycle?
-					{   
-						if( q_dot_tes_ch > 0.0 )
-						{
-							if( ( (q_dot_cr_on - q_dot_tes_ch)*(1.0+tol_mode_switching) > q_dot_pc_su_max 
-								|| (m_dot_cr_on - m_dot_tes_ch_est)*(1.0+tol_mode_switching) > m_m_dot_pc_max ) &&
-                                mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_DF__PC_SU__TES_FULL__AUX_OFF))
-							{
-								operating_mode = C_system_operating_modes::CR_DF__PC_SU__TES_FULL__AUX_OFF;
-							}
-							else if( ( q_dot_cr_on*(1.0+tol_mode_switching) > q_dot_pc_su_max 
-								|| m_dot_cr_on*(1.0 + tol_mode_switching) > m_m_dot_pc_max ) &&
-                                mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_ON__PC_SU__TES_CH__AUX_OFF))
-							{
-								operating_mode = C_system_operating_modes::CR_ON__PC_SU__TES_CH__AUX_OFF;
-							}
-							else
-							{
-								operating_mode = C_system_operating_modes::CR_ON__PC_SU__TES_OFF__AUX_OFF;
-							}
-						}
-						else
-						{
-							if( (q_dot_cr_on*(1.0+tol_mode_switching) > q_dot_pc_su_max ||
-								m_dot_cr_on*(1.0+tol_mode_switching) > m_m_dot_pc_max) 
-                                && mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_DF__PC_SU__TES_OFF__AUX_OFF))
-							{
-								operating_mode = C_system_operating_modes::CR_DF__PC_SU__TES_OFF__AUX_OFF;
-							}
-							else
-							{
-								operating_mode = C_system_operating_modes::CR_ON__PC_SU__TES_OFF__AUX_OFF;
-							}							
-						}						
-					}
-					else if( q_dot_tes_ch > 0.0 )
-					{
-						if( q_dot_cr_on*(1.0 - tol_mode_switching) < q_dot_tes_ch &&
-                            mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_ON__PC_OFF__TES_CH__AUX_OFF))
-						{
-							operating_mode = C_system_operating_modes::CR_ON__PC_OFF__TES_CH__AUX_OFF;
-						}
-						else if(mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF)) // m_is_CR_DF__PC_OFF__TES_FULL__AUX_OFF_avail)
-						{
-							operating_mode = C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF;
-						}
-						else
-						{
-							operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-						}
-					}
-					else
-					{
-						operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-					}
-				}
-                else 
-                {
-                    if ((q_dot_cr_on >0.0 || m_dot_cr_on>0.0)  && is_rec_su_allowed)
-                    {
-                        if (q_dot_tes_dc > 0.0 && is_pc_su_allowed &&
-                            mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_TO_COLD__PC_SU__TES_DC__AUX_OFF))
-				        {	// Can power cycle startup using TES?
-
-                            operating_mode = C_system_operating_modes::CR_TO_COLD__PC_SU__TES_DC__AUX_OFF;
-                        }
-                        else if(mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF)) // m_is_CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF_avail)
-                        {
-                            operating_mode = C_system_operating_modes::CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF;
-                        }
-                        else
-                        {
-                            operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-                        }
-                    }
-                    else
-                    {
-                        if (q_dot_tes_dc > 0.0 && is_pc_su_allowed &&
-                            mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_OFF__PC_SU__TES_DC__AUX_OFF))
-                        {	// Can power cycle startup using TES?
-
-					        operating_mode = C_system_operating_modes::CR_OFF__PC_SU__TES_DC__AUX_OFF;
-				        }
-				        else
-				        {
-					        operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-				        }
-			        }
-                }
-			}
-
-			else if( (cr_operating_state == C_csp_collector_receiver::OFF || cr_operating_state == C_csp_collector_receiver::STARTUP) &&
-				(pc_operating_state == C_csp_power_cycle::ON || pc_operating_state == C_csp_power_cycle::STANDBY) )
-			{
-				if( q_dot_cr_startup > 0.0 && is_rec_su_allowed )
-				{	// Receiver startup is allowed and possible (will generate net energy) - determine if power cycle can remain on
-
-					if( is_pc_su_allowed || is_pc_sb_allowed )
-					{					
-						if( ( (q_dot_tes_dc_t_CR_su*(1.0 + tol_mode_switching) > q_pc_target
-							&& m_dot_tes_dc_t_CR_su*(1.0 + tol_mode_switching) > m_m_dot_pc_min)
-							|| m_dot_tes_dc_t_CR_su*(1.0 + tol_mode_switching) > m_m_dot_pc_max )
-							&& is_pc_su_allowed &&
-                            mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_SU__PC_TARGET__TES_DC__AUX_OFF))
-						{	// Tolerance is applied so that if TES is *close* to matching target, the controller tries that mode
-
-							operating_mode = C_system_operating_modes::CR_SU__PC_TARGET__TES_DC__AUX_OFF;
-						}
-						else if( q_dot_tes_dc_t_CR_su*(1.0 + tol_mode_switching) > q_pc_min 
-							&& m_dot_tes_dc_t_CR_su*(1.0 + tol_mode_switching) > m_m_dot_pc_min
-							&& is_pc_su_allowed &&
-                            mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_SU__PC_RM_LO__TES_EMPTY__AUX_OFF))
-						{	// Tolerance is applied so that if TES is *close* to reaching min fraction, the controller tries that mode
-
-							operating_mode = C_system_operating_modes::CR_SU__PC_RM_LO__TES_EMPTY__AUX_OFF;
-						}
-						else if( q_dot_tes_dc_t_CR_su*(1.0 + tol_mode_switching) > q_pc_sb 
-							&& m_dot_tes_dc_t_CR_su*(1.0 + tol_mode_switching) > m_m_dot_pc_min
-							&& is_pc_sb_allowed &&
-                            mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_SU__PC_SB__TES_DC__AUX_OFF))
-						{	// Tolerance is applied so that if TES is *close* to reaching min fraction, the controller tries that mode
-
-							operating_mode = C_system_operating_modes::CR_SU__PC_SB__TES_DC__AUX_OFF;
-						}
-						else if( q_dot_tes_dc_t_CR_su > 0.0 && is_pc_su_allowed &&
-                            mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_SU__PC_MIN__TES_EMPTY__AUX_OFF))
-						{
-							operating_mode = C_system_operating_modes::CR_SU__PC_MIN__TES_EMPTY__AUX_OFF;
-						}
-						else if( mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_SU__PC_OFF__TES_OFF__AUX_OFF)) // m_is_CR_SU__PC_OFF__TES_OFF__AUX_OFF_avail )
-						{
-							operating_mode = C_system_operating_modes::CR_SU__PC_OFF__TES_OFF__AUX_OFF;
-						}
-						else
-						{
-							operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-						}
-					}	// End 'is_pc_su_allowed' logic
-					else
-					{	// power cycle startup/operation not allowed
-						
-						if( mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_SU__PC_OFF__TES_OFF__AUX_OFF)) // m_is_CR_SU__PC_OFF__TES_OFF__AUX_OFF_avail )
-						{
-							operating_mode = C_system_operating_modes::CR_SU__PC_OFF__TES_OFF__AUX_OFF;
-						}
-						else
-						{
-							operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-						}
-					}
-				}
-				else	// Receiver remains OFF - determine if power cycle can remain on
-				{
-					if( is_pc_su_allowed || is_pc_sb_allowed )
-					{
-					
-						if( ( (q_dot_tes_dc*(1.0 + tol_mode_switching) > q_pc_target
-							&& m_dot_tes_dc_est*(1.0 + tol_mode_switching) > m_m_dot_pc_min)
-							|| m_dot_tes_dc_est*(1.0 + tol_mode_switching) > m_m_dot_pc_max )
-							&& is_pc_su_allowed &&
-                            mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_OFF__PC_TARGET__TES_DC__AUX_OFF))
-						{	// Tolerance is applied so that if TES is *close* to matching target, the controller tries that mode
-
-							operating_mode = C_system_operating_modes::CR_OFF__PC_TARGET__TES_DC__AUX_OFF;
-						}
-						else if( q_dot_tes_dc*(1.0 + tol_mode_switching) > q_pc_min 
-								&& m_dot_tes_dc_est*(1.0 + tol_mode_switching) > m_m_dot_pc_min
-								&& is_pc_su_allowed &&
-                                mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF))
-						{	// Tolerance is applied so that if TES is *close* to reaching min fraction, the controller tries that mode
-
-							operating_mode = C_system_operating_modes::CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF;
-						}
-						else if( q_dot_tes_dc*(1.0 + tol_mode_switching) > q_pc_sb
-								&& m_dot_tes_dc_est*(1.0 + tol_mode_switching) > m_m_dot_pc_min
-								&& is_pc_sb_allowed &&
-                                mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_OFF__PC_SB__TES_DC__AUX_OFF))
-						{	// Tolerance is applied so that if TES is *close* to reaching min fraction, the controller tries that mode
-
-							operating_mode = C_system_operating_modes::CR_OFF__PC_SB__TES_DC__AUX_OFF;
-						}
-						else if( q_dot_tes_dc > 0.0 && is_pc_su_allowed &&
-                                mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF))
-						{
-							operating_mode = C_system_operating_modes::CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF;
-						}
-						else
-						{
-							operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-						}
-					}	// end logic on 'is_pc_su_allowed'
-					else
-					{
-
-						operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-					}
-				}
-			}
-
-			else if( cr_operating_state == C_csp_collector_receiver::ON &&
-				(pc_operating_state == C_csp_power_cycle::ON || pc_operating_state == C_csp_power_cycle::STANDBY) )
-			{
-				if( q_dot_cr_on > 0.0 && is_rec_su_allowed && is_rec_outlet_to_hottank )
-				{	// Receiver operation is allowed and possible - find a home for output
-
-					if( is_pc_su_allowed || is_pc_sb_allowed )
-					{
-						if( (q_dot_cr_on*(1.0 + tol_mode_switching) > q_pc_target || m_dot_cr_on*(1.0 + tol_mode_switching) > m_m_dot_pc_max) && 
-							is_pc_su_allowed &&
-                            mc_operating_modes.is_LO_SIDE_mode_avail(C_system_operating_modes::CR_ON__PC_RM_HI__TES_OFF__AUX_OFF) &&
-                            mc_operating_modes.is_LO_SIDE_mode_avail(C_system_operating_modes::CR_ON__PC_TARGET__TES_CH__AUX_OFF))
-						{	// The power cycle cannot accept the entire receiver output
-							// Tolerance is applied so that if CR is *close* to reaching the PC target, the controller tries modes that fill TES
-
-							// Can storage be charged?
-							if( q_dot_tes_ch > 0.0 )
-							{
-								// 1) Try to fill storage while hitting power cycle target
-								if( (q_dot_cr_on - q_dot_tes_ch)*(1.0 - tol_mode_switching) < q_pc_target 
-									&& (m_dot_cr_on - m_dot_tes_ch_est)*(1.0 - tol_mode_switching) < m_m_dot_pc_max &&
-                                    mc_operating_modes.is_HI_SIDE_mode_avail(C_system_operating_modes::CR_ON__PC_TARGET__TES_CH__AUX_OFF))
-								{	// Storage can accept the remaining receiver output
-									// Tolerance is applied so that if CR + TES is *close* to reaching PC target, the controller tries that mode
-
-									operating_mode = C_system_operating_modes::CR_ON__PC_TARGET__TES_CH__AUX_OFF;
-								}
-
-								// 2) Try operating power cycle at maximum capacity
-								// Assume we want to completely fill storage, so the power cycle operation should float to meet that condition
-								else if( (q_dot_cr_on - q_dot_tes_ch)*(1.0 - tol_mode_switching) < m_q_dot_pc_max
-									&& (m_dot_cr_on - m_dot_tes_ch_est)*(1.0 - tol_mode_switching) < m_m_dot_pc_max &&
-                                    mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_ON__PC_RM_HI__TES_FULL__AUX_OFF))
-								{	// Storage and the power cycle operating between target and max can accept the remaining receiver output
-									// Tolerance is applied so that if CR + TES is *close* to reaching PC  max, the controller tries that mode
-
-									operating_mode = C_system_operating_modes::CR_ON__PC_RM_HI__TES_FULL__AUX_OFF;
-								}
-
-								// 3) Try defocusing the CR and operating the power cycle at maximum capacity
-								else if( mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_DF__PC_MAX__TES_FULL__AUX_OFF))  // m_is_CR_DF__PC_MAX__TES_FULL__AUX_OFF_avail )
-								{
-									
-									operating_mode = C_system_operating_modes::CR_DF__PC_MAX__TES_FULL__AUX_OFF;
-								}
-								else
-								{
-									operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;;
-								}
-							}	// End if(q_dot_tes_ch > 0.0) logic
-
-							else
-							{	// No storage available for dispatch
-
-								// 1) Try operating power cycle at maximum capacity
-								if( (q_dot_cr_on*(1.0 - tol_mode_switching) < m_q_dot_pc_max && m_dot_cr_on*(1.0 - tol_mode_switching)) &&
-                                    mc_operating_modes.is_HI_SIDE_mode_avail(C_system_operating_modes::CR_ON__PC_RM_HI__TES_OFF__AUX_OFF))
-								{	// Tolerance is applied so that if CR + TES is *close* to reaching PC  max, the controller tries that mode
-
-									operating_mode = C_system_operating_modes::CR_ON__PC_RM_HI__TES_OFF__AUX_OFF;
-								}
-								else if( mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_DF__PC_MAX__TES_OFF__AUX_OFF))   // m_is_CR_DF__PC_MAX__TES_OFF__AUX_OFF_avail )
-								{
-									operating_mode = C_system_operating_modes::CR_DF__PC_MAX__TES_OFF__AUX_OFF;
-								}
-								else
-								{
-									operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-								}
-							}	// End else 'no storage available for dispatch'
-						}
-						else
-						{	// Power cycle is asking for more output than the receiver can supply
-
-							if( q_dot_tes_dc > 0.0 )
-							{	// Storage dispatch is available
-
-								if( ( ( (q_dot_cr_on + q_dot_tes_dc)*(1.0 + tol_mode_switching) > q_pc_target 
-									&& (m_dot_cr_on + m_dot_tes_dc_est)*(1.0 + tol_mode_switching) > m_m_dot_pc_min  )
-									|| (m_dot_cr_on + m_dot_tes_dc_est)*(1.0 + tol_mode_switching) > m_m_dot_pc_max )
-									&& is_pc_su_allowed &&
-                                    mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_ON__PC_TARGET__TES_DC__AUX_OFF))
-								{	// Storage can provide enough dispatch to reach power cycle target
-									// Tolerance is applied so that if CR + TES is *close* to reaching PC target, the controller tries that mode
-
-									operating_mode = C_system_operating_modes::CR_ON__PC_TARGET__TES_DC__AUX_OFF;
-								}
-								else if( (q_dot_cr_on + q_dot_tes_dc)*(1.0 + tol_mode_switching) > q_pc_min 
-									&& is_pc_su_allowed 
-									&& (m_dot_cr_on + m_dot_tes_dc_est)*(1.0 + tol_mode_switching) > m_m_dot_pc_min &&
-                                    mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF))
-								{	// Storage can provide enough dispatch to at least meet power cycle minimum operation fraction
-									// Run at highest possible PC fraction by dispatch all remaining storage
-									// Tolerance is applied so that if CR + TES is *close* to reaching PC min, the controller tries that mode
-
-									operating_mode = C_system_operating_modes::CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF;
-								}
-								else if( q_dot_cr_on*(1.0 + tol_mode_switching) > q_pc_sb 
-									&& m_dot_cr_on*(1.0 + tol_mode_switching) > m_m_dot_pc_min
-									&& is_pc_sb_allowed &&
-                                    mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_ON__PC_SB__TES_OFF__AUX_OFF) &&
-                                    mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_ON__PC_SB__TES_CH__AUX_OFF) )
-								{
-									if( q_dot_tes_ch > 0.0 )
-									{
-										if( ( (q_dot_cr_on - q_dot_tes_ch)*(1.0 + tol_mode_switching) > q_pc_sb 
-											|| (m_dot_cr_on - m_dot_tes_ch_est)*(1.0 + tol_mode_switching) > m_m_dot_pc_min ) &&
-                                            mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_ON__PC_SB__TES_FULL__AUX_OFF))
-										{	// Tolerance is applied so that if CR output is *close* to operating at standby AND completely filling storage, controller tries that mode
-
-											operating_mode = C_system_operating_modes::CR_ON__PC_SB__TES_FULL__AUX_OFF;
-										}
-										else
-										{
-											operating_mode = C_system_operating_modes::CR_ON__PC_SB__TES_CH__AUX_OFF;
-										}
-									}
-									else
-									{
-										// This could *technically* use defocus, but can argue the energy is just being thrown away in power cycle anyway
-										operating_mode = C_system_operating_modes::CR_ON__PC_SB__TES_OFF__AUX_OFF;
-									}
-								}
-								else if( (q_dot_cr_on + q_dot_tes_dc)*(1.0 + tol_mode_switching) > q_pc_sb 
-									&& (m_dot_cr_on + m_dot_tes_dc_est)*(1.0 + tol_mode_switching) > m_m_dot_pc_min
-									&& is_pc_sb_allowed &&
-                                    mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_ON__PC_SB__TES_DC__AUX_OFF))
-								{
-									operating_mode = C_system_operating_modes::CR_ON__PC_SB__TES_DC__AUX_OFF;
-								}
-								else if( is_pc_su_allowed && mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_ON__PC_MIN__TES_EMPTY__AUX_OFF))
-								{
-									operating_mode = C_system_operating_modes::CR_ON__PC_MIN__TES_EMPTY__AUX_OFF;
-								}
-								else if (q_dot_tes_ch > 0.0)
-								{
-									if (q_dot_cr_on * (1.0 - tol_mode_switching) < q_dot_tes_ch &&
-                                        mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_ON__PC_OFF__TES_CH__AUX_OFF))
-									{	// Tolerance is applied so that if CR is *close* to being less than a full TES charge, the controller tries normal operation (no defocus)
-
-										operating_mode = C_system_operating_modes::CR_ON__PC_OFF__TES_CH__AUX_OFF;
-									}
-									else if (mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF))
-									{	// The CR output will overcharge storage, so it needs to defocus.
-										// However, because the CR output is already part-load, it may be close to shutting down before defocus...
-
-										operating_mode = C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF;
-									}
-									else
-									{
-										operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-									}
-								}
-								else
-								{	// No home for receiver output, and not enough thermal power for power cycle
-
-									operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-								}
-							}
-							else
-							{	// Storage dispatch is not available
-
-								// Can the power cycle operate at or above the minimum operation fraction?
-								if( ( (q_dot_cr_on*(1.0 + tol_mode_switching) > q_pc_min 
-									&& m_dot_cr_on*(1.0 + tol_mode_switching) > m_m_dot_pc_min)
-									|| m_dot_cr_on*(1.0 + tol_mode_switching) > m_m_dot_pc_max)
-									&& is_pc_su_allowed &&
-                                    mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_ON__PC_RM_LO__TES_OFF__AUX_OFF))
-								{	// Tolerance is applied so that if CR is *close* to reaching PC min, the controller tries that mode
-
-									operating_mode = C_system_operating_modes::CR_ON__PC_RM_LO__TES_OFF__AUX_OFF;
-								}
-								else if( is_pc_sb_allowed 
-									&& q_dot_cr_on*(1.0 + tol_mode_switching) > q_pc_sb 
-									&& m_dot_cr_on*(1.0 + tol_mode_switching) > m_m_dot_pc_min &&
-                                    mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_ON__PC_SB__TES_OFF__AUX_OFF) &&
-                                    mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_ON__PC_SB__TES_CH__AUX_OFF))
-								{	// Receiver can likely operate in standby
-									// Tolerance is applied so that if CR is *close* to reaching PC standby, the controller tries that mode
-
-									if( q_dot_tes_ch > 0.0 )
-									{
-										if( ( (q_dot_cr_on - q_dot_tes_ch)*(1.0+tol_mode_switching) > q_pc_sb
-											|| (m_dot_cr_on - m_dot_tes_ch_est)*(1.0+tol_mode_switching) > m_m_dot_pc_min ) &&
-                                            mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_ON__PC_SB__TES_FULL__AUX_OFF))
-										{	// Tolerance is applied so that if CR output is *close* to operating at standby AND completely filling storage, controller tries that mode
-
-											operating_mode = C_system_operating_modes::CR_ON__PC_SB__TES_FULL__AUX_OFF;
-										}
-										else
-										{
-											operating_mode = C_system_operating_modes::CR_ON__PC_SB__TES_CH__AUX_OFF;
-										}
-									}
-									else
-									{
-										// This could *technically* use defocus, but can argue the energy is just being thrown away in power cycle anyway
-										operating_mode = C_system_operating_modes::CR_ON__PC_SB__TES_OFF__AUX_OFF;
-									}
-								}
-								else if( q_dot_tes_ch > 0.0 )
-								{	// Charge storage with receiver output
-
-									if( q_dot_cr_on*(1.0 - tol_mode_switching) < q_dot_tes_ch &&
-                                        mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_ON__PC_OFF__TES_CH__AUX_OFF))
-									{	// Tolerance is applied so that if CR is *close* to being less than a full TES charge, the controller tries normal operation (no defocus)
-
-										operating_mode = C_system_operating_modes::CR_ON__PC_OFF__TES_CH__AUX_OFF;
-									}
-									else if( mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF)) 
-									{	// The CR output will overcharge storage, so it needs to defocus.
-										// However, because the CR output is already part-load, it may be close to shutting down before defocus...
-
-										operating_mode = C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF;
-									}
-									else
-									{
-										operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-									}
-								}
-								else
-								{	// No home for receiver output, and not enough thermal power for power cycle
-
-									operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-								}
-							}	// End logic else 'storage dispatch not available'
-						}	// End logic else 'power cycle requires more q_dot than receiver can supply'				
-					}	// End logic if(is_rec_su_allowed)
-					else
-					{	// Power cycle startup is not allowed - see if receiver output can go to storage
-
-						if( q_dot_tes_ch > 0.0 )
-						{
-							if( q_dot_cr_on*(1.0 - tol_mode_switching) < q_dot_tes_ch &&
-                                mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_ON__PC_OFF__TES_CH__AUX_OFF))
-							{
-								operating_mode = C_system_operating_modes::CR_ON__PC_OFF__TES_CH__AUX_OFF;
-							}
-							else if( mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF) )
-							{
-								operating_mode = C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF;
-							}
-							else
-							{
-								operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-							}
-						}
-						else
-						{
-							operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-						}
-
-					}	// End logic else 'pc su is NOT allowed'		
-				}	// End logic if(q_dot_cr_output > 0.0 && is_rec_su_allowed)
-
-                // 'else if' loop for receiver 'on' but sending htf to cold tank
-                else if ((q_dot_cr_on > 0.0 || m_dot_cr_on > 0.0)&& is_rec_su_allowed) {
-
-                    if (is_pc_su_allowed || is_pc_sb_allowed)
-                    {
-                        if (q_dot_tes_dc > 0.0)
-                        {	// Storage dispatch is available
-
-                            if (((q_dot_tes_dc * (1.0 + tol_mode_switching) > q_pc_target
-                                && m_dot_tes_dc_est * (1.0 + tol_mode_switching) > m_m_dot_pc_min)
-                                || m_dot_tes_dc_est * (1.0 + tol_mode_switching) > m_m_dot_pc_max)
-                                && is_pc_su_allowed &&
-                                mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_TO_COLD__PC_TARGET__TES_DC__AUX_OFF))
-                            {	// Storage can provide enough dispatch to reach power cycle target
-                                // Tolerance is applied so that if TES is *close* to reaching PC target, the controller tries that mode
-
-                                operating_mode = C_system_operating_modes::CR_TO_COLD__PC_TARGET__TES_DC__AUX_OFF;
-                            }
-                            else if (q_dot_tes_dc * (1.0 + tol_mode_switching) > q_pc_min
-                                && m_dot_tes_dc_est * (1.0 + tol_mode_switching) > m_m_dot_pc_min
-                                && is_pc_su_allowed &&
-                                mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_TO_COLD__PC_RM_LO__TES_EMPTY__AUX_OFF))
-                            {	// Storage can provide enough dispatch to at least meet power cycle minimum operation fraction
-                                // Run at highest possible PC fraction by dispatching all remaining storage
-                                // Tolerance is applied so that if CR + TES is *close* to reaching PC min, the controller tries that mode
-
-                                operating_mode = C_system_operating_modes::CR_TO_COLD__PC_RM_LO__TES_EMPTY__AUX_OFF;
-                            }
-                            else if (q_dot_tes_dc * (1.0 + tol_mode_switching) > q_pc_sb
-                                && m_dot_tes_dc_est * (1.0 + tol_mode_switching) > m_m_dot_pc_min
-                                && is_pc_sb_allowed &&
-                                mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_TO_COLD__PC_SB__TES_DC__AUX_OFF))
-                            {	// Tolerance is applied so that if CR + TES is *close* to reaching standby, the controller tries that mode
-
-                                operating_mode = C_system_operating_modes::CR_TO_COLD__PC_SB__TES_DC__AUX_OFF;
-                            }
-                            else if (is_pc_su_allowed && mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_TO_COLD__PC_MIN__TES_EMPTY__AUX_OFF))
-                            {	// If not enough thermal power to stay in standby, then run at min PC load until TES is fully discharged
-
-                                operating_mode = C_system_operating_modes::CR_TO_COLD__PC_MIN__TES_EMPTY__AUX_OFF;
-                            }
-                            else if (mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF) )
-                            {
-                                operating_mode = C_system_operating_modes::CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF;
-                            }
-                            else
-                            {
-                                operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-                            }
-                        }	// End logic for if( q_dot_tes_dc > 0.0 )
-                        else if( mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF) ) 
-                        {	// Storage dispatch is not available
-
-                            // No thermal power available to power cycle
-                            operating_mode = C_system_operating_modes::CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF;
-                        }
-                        else
-                        {
-                            operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-                        }
-                    }	// End logic if( is_pc_su_allowed )
-                    else if ( mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF) )
-                    {	// If neither receiver nor power cycle operation is allowed, then shut everything off
-
-                        operating_mode = C_system_operating_modes::CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF;
-                    }
-                    else
-                    {
-                        operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-                    }
-
-                }           
-				else	// Receiver is off - determine if power cycle can remain on
-				{
-					if( is_pc_su_allowed || is_pc_sb_allowed )
-					{
-						if( q_dot_tes_dc > 0.0 )
-						{	// Storage dispatch is available
-
-							if( ( (q_dot_tes_dc*(1.0 + tol_mode_switching) > q_pc_target
-								&& m_dot_tes_dc_est*(1.0 + tol_mode_switching) > m_m_dot_pc_min)
-								|| m_dot_tes_dc_est*(1.0 + tol_mode_switching) > m_m_dot_pc_max )
-								&& is_pc_su_allowed &&
-                                mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_OFF__PC_TARGET__TES_DC__AUX_OFF))
-							{	// Storage can provide enough dispatch to reach power cycle target
-								// Tolerance is applied so that if TES is *close* to reaching PC target, the controller tries that mode
-
-								operating_mode = C_system_operating_modes::CR_OFF__PC_TARGET__TES_DC__AUX_OFF;
-							}
-							else if( q_dot_tes_dc*(1.0 + tol_mode_switching) > q_pc_min 
-									&& m_dot_tes_dc_est*(1.0 + tol_mode_switching) > m_m_dot_pc_min
-									&& is_pc_su_allowed &&
-                                    mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF))
-							{	// Storage can provide enough dispatch to at least meet power cycle minimum operation fraction
-								// Run at highest possible PC fraction by dispatching all remaining storage
-								// Tolerance is applied so that if CR + TES is *close* to reaching PC min, the controller tries that mode
-
-								operating_mode = C_system_operating_modes::CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF;
-							}
-							else if( q_dot_tes_dc*(1.0 + tol_mode_switching) > q_pc_sb 
-									&& m_dot_tes_dc_est*(1.0 + tol_mode_switching) > m_m_dot_pc_min
-									&& is_pc_sb_allowed &&
-                                    mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_OFF__PC_SB__TES_DC__AUX_OFF))
-							{	// Tolerance is applied so that if CR + TES is *close* to reaching standby, the controller tries that mode
-								
-								operating_mode = C_system_operating_modes::CR_OFF__PC_SB__TES_DC__AUX_OFF;
-							}
-							else if( is_pc_su_allowed && mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF))
-							{	// If not enough thermal power to stay in standby, then run at min PC load until TES is fully discharged
-
-								operating_mode = C_system_operating_modes::CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF;
-							}
-							else
-							{
-								operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-							}
-						}	// End logic for if( q_dot_tes_dc > 0.0 )
-						else
-						{	// Storage dispatch is not available
-
-							// No thermal power available to power cycle
-							operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-						}
-					}	// End logic if( is_pc_su_allowed )
-					else
-					{	// If neither receiver nor power cycle operation is allowed, then shut everything off
-
-						operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-					}
-				}	// End logic for else 'receiver not on'
-
-			}
-			// End operating state mode for CR ON, PC ON/STANDBY
+            operating_mode = mc_operating_modes.find_operating_mode(
+                cr_operating_state, pc_operating_state,
+                q_dot_cr_startup /*MWt*/, q_dot_tes_dc /*MWt*/,
+                q_dot_cr_on /*MWt*/, q_dot_tes_ch /*MWt*/,
+                q_dot_pc_su_max /*MWt*/, q_pc_target /*MWt*/,
+                q_dot_tes_dc_t_CR_su /*MWt*/, q_pc_min /*MWt*/,
+                q_pc_sb /*MWt*/, q_dot_pc_max,
+                m_dot_cr_on /*kg/s*/, m_dot_tes_ch_est /*kg/s*/,
+                m_m_dot_pc_max /*kg/s*/, m_dot_tes_dc_t_CR_su /*kg/s*/,
+                m_m_dot_pc_min /*kg/s*/, m_dot_tes_dc_est /*kg/s*/,
+                tol_mode_switching /*-*/,
+                is_rec_su_allowed, is_pc_su_allowed,
+                is_rec_outlet_to_hottank, is_pc_sb_allowed);
 
 			// Store operating mode
 			m_op_mode_tracking.push_back((int)operating_mode);
@@ -3452,4 +2839,649 @@ void C_csp_solver::C_system_operating_modes::turn_off_plant()
         get_pointer_to_op_mode(static_cast<E_operating_modes>(it))->turn_off_mode_availability();
     }
 
+}
+
+C_csp_solver::C_system_operating_modes::E_operating_modes C_csp_solver::C_system_operating_modes::find_operating_mode
+(C_csp_collector_receiver::E_csp_cr_modes cr_operating_state,
+    C_csp_power_cycle::E_csp_power_cycle_modes pc_operating_state,
+    double q_dot_cr_startup /*MWt*/, double q_dot_tes_dc /*MWt*/,
+    double q_dot_cr_on /*MWt*/, double q_dot_tes_ch /*MWt*/,
+    double q_dot_pc_su_max /*MWt*/, double q_dot_pc_target /*MWt*/,
+    double q_dot_tes_dc_t_CR_su /*MWt*/, double q_dot_pc_min /*MWt*/,
+    double q_dot_pc_sb /*MWt*/, double q_dot_pc_max /*MWt*/,
+    double m_dot_cr_on /*kg/s*/, double m_dot_tes_ch_est /*kg/s*/,
+    double m_dot_pc_max /*kg/s*/, double m_dot_tes_dc_t_CR_su /*kg/s*/,
+    double m_dot_pc_min /*kg/s*/, double m_dot_tes_dc_est /*kg/s*/,
+    double tol_mode_switching /*-*/,
+    bool is_rec_su_allowed, bool is_pc_su_allowed,
+    bool is_rec_outlet_to_hottank, bool is_pc_sb_allowed)
+{
+    C_system_operating_modes::E_operating_modes operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+
+    if ((cr_operating_state == C_csp_collector_receiver::OFF || cr_operating_state == C_csp_collector_receiver::STARTUP)
+        && (pc_operating_state == C_csp_power_cycle::OFF || pc_operating_state == C_csp_power_cycle::STARTUP))
+    {	// At start of this timestep, are power cycle AND collector/receiver off?
+
+        if (q_dot_cr_startup > 0.0 && is_rec_su_allowed &&
+            is_mode_avail(C_system_operating_modes::CR_SU__PC_OFF__TES_OFF__AUX_OFF))
+        {	// Receiver startup is allowed and possible (will generate net energy)
+
+            if (q_dot_tes_dc > 0.0 && is_pc_su_allowed &&
+                is_mode_avail(C_system_operating_modes::CR_SU__PC_SU__TES_DC__AUX_OFF))
+            {
+                operating_mode = C_system_operating_modes::CR_SU__PC_SU__TES_DC__AUX_OFF;
+            }
+            else
+            {
+                operating_mode = C_system_operating_modes::CR_SU__PC_OFF__TES_OFF__AUX_OFF;
+            }
+        }
+        else
+        {
+            if (q_dot_tes_dc > 0.0 && is_pc_su_allowed &&
+                is_mode_avail(C_system_operating_modes::CR_OFF__PC_SU__TES_DC__AUX_OFF))
+            {
+                operating_mode = C_system_operating_modes::CR_OFF__PC_SU__TES_DC__AUX_OFF;
+            }
+            else
+            {
+                operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+            }
+        }
+    }	// End logic for CR_state == OFF or STARTUP    AND     PC_state == OFF or STARTUP
+
+    else if (cr_operating_state == C_csp_collector_receiver::ON &&
+        (pc_operating_state == C_csp_power_cycle::OFF || pc_operating_state == C_csp_power_cycle::STARTUP))
+    {
+        if (q_dot_cr_on > 0.0 && is_rec_su_allowed && is_rec_outlet_to_hottank)
+        {	// Receiver is allowed to remain on, and it can produce useful energy. Now, need to find a home for it
+
+            if (is_pc_su_allowed &&
+                is_mode_avail(C_system_operating_modes::CR_ON__PC_SU__TES_OFF__AUX_OFF)) // Can receiver output go to power cycle?
+            {
+                if (q_dot_tes_ch > 0.0)
+                {
+                    if (((q_dot_cr_on - q_dot_tes_ch) * (1.0 + tol_mode_switching) > q_dot_pc_su_max
+                        || (m_dot_cr_on - m_dot_tes_ch_est) * (1.0 + tol_mode_switching) > m_dot_pc_max) &&
+                        is_mode_avail(C_system_operating_modes::CR_DF__PC_SU__TES_FULL__AUX_OFF))
+                    {
+                        operating_mode = C_system_operating_modes::CR_DF__PC_SU__TES_FULL__AUX_OFF;
+                    }
+                    else if ((q_dot_cr_on * (1.0 + tol_mode_switching) > q_dot_pc_su_max
+                        || m_dot_cr_on * (1.0 + tol_mode_switching) > m_dot_pc_max) &&
+                        is_mode_avail(C_system_operating_modes::CR_ON__PC_SU__TES_CH__AUX_OFF))
+                    {
+                        operating_mode = C_system_operating_modes::CR_ON__PC_SU__TES_CH__AUX_OFF;
+                    }
+                    else
+                    {
+                        operating_mode = C_system_operating_modes::CR_ON__PC_SU__TES_OFF__AUX_OFF;
+                    }
+                }
+                else
+                {
+                    if ((q_dot_cr_on * (1.0 + tol_mode_switching) > q_dot_pc_su_max ||
+                        m_dot_cr_on * (1.0 + tol_mode_switching) > m_dot_pc_max) &&
+                        is_mode_avail(C_system_operating_modes::CR_DF__PC_SU__TES_OFF__AUX_OFF))
+                    {
+                        operating_mode = C_system_operating_modes::CR_DF__PC_SU__TES_OFF__AUX_OFF;
+                    }
+                    else
+                    {
+                        operating_mode = C_system_operating_modes::CR_ON__PC_SU__TES_OFF__AUX_OFF;
+                    }
+                }
+            }
+            else if (q_dot_tes_ch > 0.0)
+            {
+                if (q_dot_cr_on * (1.0 - tol_mode_switching) < q_dot_tes_ch &&
+                    is_mode_avail(C_system_operating_modes::CR_ON__PC_OFF__TES_CH__AUX_OFF))
+                {
+                    operating_mode = C_system_operating_modes::CR_ON__PC_OFF__TES_CH__AUX_OFF;
+                }
+                else if (is_mode_avail(C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF)) // m_is_CR_DF__PC_OFF__TES_FULL__AUX_OFF_avail)
+                {
+                    operating_mode = C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF;
+                }
+                else
+                {
+                    operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+                }
+            }
+            else
+            {
+                operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+            }
+        }
+        else
+        {
+            if ((q_dot_cr_on > 0.0 || m_dot_cr_on > 0.0) && is_rec_su_allowed)
+            {
+                if (q_dot_tes_dc > 0.0 && is_pc_su_allowed &&
+                    is_mode_avail(C_system_operating_modes::CR_TO_COLD__PC_SU__TES_DC__AUX_OFF))
+                {	// Can power cycle startup using TES?
+
+                    operating_mode = C_system_operating_modes::CR_TO_COLD__PC_SU__TES_DC__AUX_OFF;
+                }
+                else if (is_mode_avail(C_system_operating_modes::CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF)) // m_is_CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF_avail)
+                {
+                    operating_mode = C_system_operating_modes::CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF;
+                }
+                else
+                {
+                    operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+                }
+            }
+            else
+            {
+                if (q_dot_tes_dc > 0.0 && is_pc_su_allowed &&
+                    is_mode_avail(C_system_operating_modes::CR_OFF__PC_SU__TES_DC__AUX_OFF))
+                {	// Can power cycle startup using TES?
+
+                    operating_mode = C_system_operating_modes::CR_OFF__PC_SU__TES_DC__AUX_OFF;
+                }
+                else
+                {
+                    operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+                }
+            }
+        }
+    }
+
+    else if ((cr_operating_state == C_csp_collector_receiver::OFF || cr_operating_state == C_csp_collector_receiver::STARTUP) &&
+    (pc_operating_state == C_csp_power_cycle::ON || pc_operating_state == C_csp_power_cycle::STANDBY))
+    {
+        if (q_dot_cr_startup > 0.0 && is_rec_su_allowed)
+        {	// Receiver startup is allowed and possible (will generate net energy) - determine if power cycle can remain on
+
+            if (is_pc_su_allowed || is_pc_sb_allowed)
+            {
+                if (((q_dot_tes_dc_t_CR_su * (1.0 + tol_mode_switching) > q_dot_pc_target
+                    && m_dot_tes_dc_t_CR_su * (1.0 + tol_mode_switching) > m_dot_pc_min)
+                    || m_dot_tes_dc_t_CR_su * (1.0 + tol_mode_switching) > m_dot_pc_max)
+                    && is_pc_su_allowed &&
+                    is_mode_avail(C_system_operating_modes::CR_SU__PC_TARGET__TES_DC__AUX_OFF))
+                {	// Tolerance is applied so that if TES is *close* to matching target, the controller tries that mode
+
+                    operating_mode = C_system_operating_modes::CR_SU__PC_TARGET__TES_DC__AUX_OFF;
+                }
+                else if (q_dot_tes_dc_t_CR_su * (1.0 + tol_mode_switching) > q_dot_pc_min
+                    && m_dot_tes_dc_t_CR_su * (1.0 + tol_mode_switching) > m_dot_pc_min
+                    && is_pc_su_allowed &&
+                    is_mode_avail(C_system_operating_modes::CR_SU__PC_RM_LO__TES_EMPTY__AUX_OFF))
+                {	// Tolerance is applied so that if TES is *close* to reaching min fraction, the controller tries that mode
+
+                    operating_mode = C_system_operating_modes::CR_SU__PC_RM_LO__TES_EMPTY__AUX_OFF;
+                }
+                else if (q_dot_tes_dc_t_CR_su * (1.0 + tol_mode_switching) > q_dot_pc_sb
+                    && m_dot_tes_dc_t_CR_su * (1.0 + tol_mode_switching) > m_dot_pc_min
+                    && is_pc_sb_allowed &&
+                    is_mode_avail(C_system_operating_modes::CR_SU__PC_SB__TES_DC__AUX_OFF))
+                {	// Tolerance is applied so that if TES is *close* to reaching min fraction, the controller tries that mode
+
+                    operating_mode = C_system_operating_modes::CR_SU__PC_SB__TES_DC__AUX_OFF;
+                }
+                else if (q_dot_tes_dc_t_CR_su > 0.0 && is_pc_su_allowed &&
+                    is_mode_avail(C_system_operating_modes::CR_SU__PC_MIN__TES_EMPTY__AUX_OFF))
+                {
+                    operating_mode = C_system_operating_modes::CR_SU__PC_MIN__TES_EMPTY__AUX_OFF;
+                }
+                else if (is_mode_avail(C_system_operating_modes::CR_SU__PC_OFF__TES_OFF__AUX_OFF)) // m_is_CR_SU__PC_OFF__TES_OFF__AUX_OFF_avail )
+                {
+                    operating_mode = C_system_operating_modes::CR_SU__PC_OFF__TES_OFF__AUX_OFF;
+                }
+                else
+                {
+                    operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+                }
+            }	// End 'is_pc_su_allowed' logic
+            else
+            {	// power cycle startup/operation not allowed
+
+                if (is_mode_avail(C_system_operating_modes::CR_SU__PC_OFF__TES_OFF__AUX_OFF)) // m_is_CR_SU__PC_OFF__TES_OFF__AUX_OFF_avail )
+                {
+                    operating_mode = C_system_operating_modes::CR_SU__PC_OFF__TES_OFF__AUX_OFF;
+                }
+                else
+                {
+                    operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+                }
+            }
+        }
+        else	// Receiver remains OFF - determine if power cycle can remain on
+        {
+            if (is_pc_su_allowed || is_pc_sb_allowed)
+            {
+
+                if (((q_dot_tes_dc * (1.0 + tol_mode_switching) > q_dot_pc_target
+                    && m_dot_tes_dc_est * (1.0 + tol_mode_switching) > m_dot_pc_min)
+                    || m_dot_tes_dc_est * (1.0 + tol_mode_switching) > m_dot_pc_max)
+                    && is_pc_su_allowed &&
+                    is_mode_avail(C_system_operating_modes::CR_OFF__PC_TARGET__TES_DC__AUX_OFF))
+                {	// Tolerance is applied so that if TES is *close* to matching target, the controller tries that mode
+
+                    operating_mode = C_system_operating_modes::CR_OFF__PC_TARGET__TES_DC__AUX_OFF;
+                }
+                else if (q_dot_tes_dc * (1.0 + tol_mode_switching) > q_dot_pc_min
+                    && m_dot_tes_dc_est * (1.0 + tol_mode_switching) > m_dot_pc_min
+                    && is_pc_su_allowed &&
+                    is_mode_avail(C_system_operating_modes::CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF))
+                {	// Tolerance is applied so that if TES is *close* to reaching min fraction, the controller tries that mode
+
+                    operating_mode = C_system_operating_modes::CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF;
+                }
+                else if (q_dot_tes_dc * (1.0 + tol_mode_switching) > q_dot_pc_sb
+                    && m_dot_tes_dc_est * (1.0 + tol_mode_switching) > m_dot_pc_min
+                    && is_pc_sb_allowed &&
+                    is_mode_avail(C_system_operating_modes::CR_OFF__PC_SB__TES_DC__AUX_OFF))
+                {	// Tolerance is applied so that if TES is *close* to reaching min fraction, the controller tries that mode
+
+                    operating_mode = C_system_operating_modes::CR_OFF__PC_SB__TES_DC__AUX_OFF;
+                }
+                else if (q_dot_tes_dc > 0.0 && is_pc_su_allowed &&
+                    is_mode_avail(C_system_operating_modes::CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF))
+                {
+                    operating_mode = C_system_operating_modes::CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF;
+                }
+                else
+                {
+                    operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+                }
+            }	// end logic on 'is_pc_su_allowed'
+            else
+            {
+
+                operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+            }
+        }
+    }
+
+    else if (cr_operating_state == C_csp_collector_receiver::ON &&
+        (pc_operating_state == C_csp_power_cycle::ON || pc_operating_state == C_csp_power_cycle::STANDBY))
+    {
+        if (q_dot_cr_on > 0.0 && is_rec_su_allowed && is_rec_outlet_to_hottank)
+        {	// Receiver operation is allowed and possible - find a home for output
+
+            if (is_pc_su_allowed || is_pc_sb_allowed)
+            {
+                if ((q_dot_cr_on * (1.0 + tol_mode_switching) > q_dot_pc_target || m_dot_cr_on * (1.0 + tol_mode_switching) > m_dot_pc_max) &&
+                    is_pc_su_allowed &&
+                    is_LO_SIDE_mode_avail(C_system_operating_modes::CR_ON__PC_RM_HI__TES_OFF__AUX_OFF) &&
+                    is_LO_SIDE_mode_avail(C_system_operating_modes::CR_ON__PC_TARGET__TES_CH__AUX_OFF))
+                {	// The power cycle cannot accept the entire receiver output
+                    // Tolerance is applied so that if CR is *close* to reaching the PC target, the controller tries modes that fill TES
+
+                    // Can storage be charged?
+                    if (q_dot_tes_ch > 0.0)
+                    {
+                        // 1) Try to fill storage while hitting power cycle target
+                        if ((q_dot_cr_on - q_dot_tes_ch) * (1.0 - tol_mode_switching) < q_dot_pc_target
+                            && (m_dot_cr_on - m_dot_tes_ch_est) * (1.0 - tol_mode_switching) < m_dot_pc_max &&
+                            is_HI_SIDE_mode_avail(C_system_operating_modes::CR_ON__PC_TARGET__TES_CH__AUX_OFF))
+                        {	// Storage can accept the remaining receiver output
+                            // Tolerance is applied so that if CR + TES is *close* to reaching PC target, the controller tries that mode
+
+                            operating_mode = C_system_operating_modes::CR_ON__PC_TARGET__TES_CH__AUX_OFF;
+                        }
+
+                        // 2) Try operating power cycle at maximum capacity
+                        // Assume we want to completely fill storage, so the power cycle operation should float to meet that condition
+                        else if ((q_dot_cr_on - q_dot_tes_ch) * (1.0 - tol_mode_switching) < q_dot_pc_max
+                            && (m_dot_cr_on - m_dot_tes_ch_est) * (1.0 - tol_mode_switching) < m_dot_pc_max &&
+                            is_mode_avail(C_system_operating_modes::CR_ON__PC_RM_HI__TES_FULL__AUX_OFF))
+                        {	// Storage and the power cycle operating between target and max can accept the remaining receiver output
+                            // Tolerance is applied so that if CR + TES is *close* to reaching PC  max, the controller tries that mode
+
+                            operating_mode = C_system_operating_modes::CR_ON__PC_RM_HI__TES_FULL__AUX_OFF;
+                        }
+
+                        // 3) Try defocusing the CR and operating the power cycle at maximum capacity
+                        else if (is_mode_avail(C_system_operating_modes::CR_DF__PC_MAX__TES_FULL__AUX_OFF))  // m_is_CR_DF__PC_MAX__TES_FULL__AUX_OFF_avail )
+                        {
+
+                            operating_mode = C_system_operating_modes::CR_DF__PC_MAX__TES_FULL__AUX_OFF;
+                        }
+                        else
+                        {
+                            operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;;
+                        }
+                    }	// End if(q_dot_tes_ch > 0.0) logic
+
+                    else
+                    {	// No storage available for dispatch
+
+                        // 1) Try operating power cycle at maximum capacity
+                        if ((q_dot_cr_on * (1.0 - tol_mode_switching) < q_dot_pc_max && m_dot_cr_on * (1.0 - tol_mode_switching)) &&
+                            is_HI_SIDE_mode_avail(C_system_operating_modes::CR_ON__PC_RM_HI__TES_OFF__AUX_OFF))
+                        {	// Tolerance is applied so that if CR + TES is *close* to reaching PC  max, the controller tries that mode
+
+                            operating_mode = C_system_operating_modes::CR_ON__PC_RM_HI__TES_OFF__AUX_OFF;
+                        }
+                        else if (is_mode_avail(C_system_operating_modes::CR_DF__PC_MAX__TES_OFF__AUX_OFF))   // m_is_CR_DF__PC_MAX__TES_OFF__AUX_OFF_avail )
+                        {
+                            operating_mode = C_system_operating_modes::CR_DF__PC_MAX__TES_OFF__AUX_OFF;
+                        }
+                        else
+                        {
+                            operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+                        }
+                    }	// End else 'no storage available for dispatch'
+                }
+                else
+                {	// Power cycle is asking for more output than the receiver can supply
+
+                    if (q_dot_tes_dc > 0.0)
+                    {	// Storage dispatch is available
+
+                        if ((((q_dot_cr_on + q_dot_tes_dc) * (1.0 + tol_mode_switching) > q_dot_pc_target
+                            && (m_dot_cr_on + m_dot_tes_dc_est) * (1.0 + tol_mode_switching) > m_dot_pc_min)
+                            || (m_dot_cr_on + m_dot_tes_dc_est) * (1.0 + tol_mode_switching) > m_dot_pc_max)
+                            && is_pc_su_allowed &&
+                            is_mode_avail(C_system_operating_modes::CR_ON__PC_TARGET__TES_DC__AUX_OFF))
+                        {	// Storage can provide enough dispatch to reach power cycle target
+                            // Tolerance is applied so that if CR + TES is *close* to reaching PC target, the controller tries that mode
+
+                            operating_mode = C_system_operating_modes::CR_ON__PC_TARGET__TES_DC__AUX_OFF;
+                        }
+                        else if ((q_dot_cr_on + q_dot_tes_dc) * (1.0 + tol_mode_switching) > q_dot_pc_min
+                            && is_pc_su_allowed
+                            && (m_dot_cr_on + m_dot_tes_dc_est) * (1.0 + tol_mode_switching) > m_dot_pc_min &&
+                            is_mode_avail(C_system_operating_modes::CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF))
+                        {	// Storage can provide enough dispatch to at least meet power cycle minimum operation fraction
+                            // Run at highest possible PC fraction by dispatch all remaining storage
+                            // Tolerance is applied so that if CR + TES is *close* to reaching PC min, the controller tries that mode
+
+                            operating_mode = C_system_operating_modes::CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF;
+                        }
+                        else if (q_dot_cr_on * (1.0 + tol_mode_switching) > q_dot_pc_sb
+                            && m_dot_cr_on * (1.0 + tol_mode_switching) > m_dot_pc_min
+                            && is_pc_sb_allowed &&
+                            is_mode_avail(C_system_operating_modes::CR_ON__PC_SB__TES_OFF__AUX_OFF) &&
+                            is_mode_avail(C_system_operating_modes::CR_ON__PC_SB__TES_CH__AUX_OFF))
+                        {
+                            if (q_dot_tes_ch > 0.0)
+                            {
+                                if (((q_dot_cr_on - q_dot_tes_ch) * (1.0 + tol_mode_switching) > q_dot_pc_sb
+                                    || (m_dot_cr_on - m_dot_tes_ch_est) * (1.0 + tol_mode_switching) > m_dot_pc_min) &&
+                                    is_mode_avail(C_system_operating_modes::CR_ON__PC_SB__TES_FULL__AUX_OFF))
+                                {	// Tolerance is applied so that if CR output is *close* to operating at standby AND completely filling storage, controller tries that mode
+
+                                    operating_mode = C_system_operating_modes::CR_ON__PC_SB__TES_FULL__AUX_OFF;
+                                }
+                                else
+                                {
+                                    operating_mode = C_system_operating_modes::CR_ON__PC_SB__TES_CH__AUX_OFF;
+                                }
+                            }
+                            else
+                            {
+                                // This could *technically* use defocus, but can argue the energy is just being thrown away in power cycle anyway
+                                operating_mode = C_system_operating_modes::CR_ON__PC_SB__TES_OFF__AUX_OFF;
+                            }
+                        }
+                        else if ((q_dot_cr_on + q_dot_tes_dc) * (1.0 + tol_mode_switching) > q_dot_pc_sb
+                            && (m_dot_cr_on + m_dot_tes_dc_est) * (1.0 + tol_mode_switching) > m_dot_pc_min
+                            && is_pc_sb_allowed &&
+                            is_mode_avail(C_system_operating_modes::CR_ON__PC_SB__TES_DC__AUX_OFF))
+                        {
+                            operating_mode = C_system_operating_modes::CR_ON__PC_SB__TES_DC__AUX_OFF;
+                        }
+                        else if (is_pc_su_allowed && is_mode_avail(C_system_operating_modes::CR_ON__PC_MIN__TES_EMPTY__AUX_OFF))
+                        {
+                            operating_mode = C_system_operating_modes::CR_ON__PC_MIN__TES_EMPTY__AUX_OFF;
+                        }
+                        else if (q_dot_tes_ch > 0.0)
+                        {
+                            if (q_dot_cr_on * (1.0 - tol_mode_switching) < q_dot_tes_ch &&
+                                is_mode_avail(C_system_operating_modes::CR_ON__PC_OFF__TES_CH__AUX_OFF))
+                            {	// Tolerance is applied so that if CR is *close* to being less than a full TES charge, the controller tries normal operation (no defocus)
+
+                                operating_mode = C_system_operating_modes::CR_ON__PC_OFF__TES_CH__AUX_OFF;
+                            }
+                            else if (is_mode_avail(C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF))
+                            {	// The CR output will overcharge storage, so it needs to defocus.
+                                // However, because the CR output is already part-load, it may be close to shutting down before defocus...
+
+                                operating_mode = C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF;
+                            }
+                            else
+                            {
+                                operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+                            }
+                        }
+                        else
+                        {	// No home for receiver output, and not enough thermal power for power cycle
+
+                            operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+                        }
+                    }
+                    else
+                    {	// Storage dispatch is not available
+
+                        // Can the power cycle operate at or above the minimum operation fraction?
+                        if (((q_dot_cr_on * (1.0 + tol_mode_switching) > q_dot_pc_min
+                            && m_dot_cr_on * (1.0 + tol_mode_switching) > m_dot_pc_min)
+                            || m_dot_cr_on * (1.0 + tol_mode_switching) > m_dot_pc_max)
+                            && is_pc_su_allowed &&
+                            is_mode_avail(C_system_operating_modes::CR_ON__PC_RM_LO__TES_OFF__AUX_OFF))
+                        {	// Tolerance is applied so that if CR is *close* to reaching PC min, the controller tries that mode
+
+                            operating_mode = C_system_operating_modes::CR_ON__PC_RM_LO__TES_OFF__AUX_OFF;
+                        }
+                        else if (is_pc_sb_allowed
+                            && q_dot_cr_on * (1.0 + tol_mode_switching) > q_dot_pc_sb
+                            && m_dot_cr_on * (1.0 + tol_mode_switching) > m_dot_pc_min &&
+                            is_mode_avail(C_system_operating_modes::CR_ON__PC_SB__TES_OFF__AUX_OFF) &&
+                            is_mode_avail(C_system_operating_modes::CR_ON__PC_SB__TES_CH__AUX_OFF))
+                        {	// Receiver can likely operate in standby
+                            // Tolerance is applied so that if CR is *close* to reaching PC standby, the controller tries that mode
+
+                            if (q_dot_tes_ch > 0.0)
+                            {
+                                if (((q_dot_cr_on - q_dot_tes_ch) * (1.0 + tol_mode_switching) > q_dot_pc_sb
+                                    || (m_dot_cr_on - m_dot_tes_ch_est) * (1.0 + tol_mode_switching) > m_dot_pc_min) &&
+                                    is_mode_avail(C_system_operating_modes::CR_ON__PC_SB__TES_FULL__AUX_OFF))
+                                {	// Tolerance is applied so that if CR output is *close* to operating at standby AND completely filling storage, controller tries that mode
+
+                                    operating_mode = C_system_operating_modes::CR_ON__PC_SB__TES_FULL__AUX_OFF;
+                                }
+                                else
+                                {
+                                    operating_mode = C_system_operating_modes::CR_ON__PC_SB__TES_CH__AUX_OFF;
+                                }
+                            }
+                            else
+                            {
+                                // This could *technically* use defocus, but can argue the energy is just being thrown away in power cycle anyway
+                                operating_mode = C_system_operating_modes::CR_ON__PC_SB__TES_OFF__AUX_OFF;
+                            }
+                        }
+                        else if (q_dot_tes_ch > 0.0)
+                        {	// Charge storage with receiver output
+
+                            if (q_dot_cr_on * (1.0 - tol_mode_switching) < q_dot_tes_ch &&
+                                is_mode_avail(C_system_operating_modes::CR_ON__PC_OFF__TES_CH__AUX_OFF))
+                            {	// Tolerance is applied so that if CR is *close* to being less than a full TES charge, the controller tries normal operation (no defocus)
+
+                                operating_mode = C_system_operating_modes::CR_ON__PC_OFF__TES_CH__AUX_OFF;
+                            }
+                            else if (is_mode_avail(C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF))
+                            {	// The CR output will overcharge storage, so it needs to defocus.
+                                // However, because the CR output is already part-load, it may be close to shutting down before defocus...
+
+                                operating_mode = C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF;
+                            }
+                            else
+                            {
+                                operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+                            }
+                        }
+                        else
+                        {	// No home for receiver output, and not enough thermal power for power cycle
+
+                            operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+                        }
+                    }	// End logic else 'storage dispatch not available'
+                }	// End logic else 'power cycle requires more q_dot than receiver can supply'				
+            }	// End logic if(is_rec_su_allowed)
+            else
+            {	// Power cycle startup is not allowed - see if receiver output can go to storage
+
+                if (q_dot_tes_ch > 0.0)
+                {
+                    if (q_dot_cr_on * (1.0 - tol_mode_switching) < q_dot_tes_ch &&
+                        is_mode_avail(C_system_operating_modes::CR_ON__PC_OFF__TES_CH__AUX_OFF))
+                    {
+                        operating_mode = C_system_operating_modes::CR_ON__PC_OFF__TES_CH__AUX_OFF;
+                    }
+                    else if (is_mode_avail(C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF))
+                    {
+                        operating_mode = C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF;
+                    }
+                    else
+                    {
+                        operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+                    }
+                }
+                else
+                {
+                    operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+                }
+
+            }	// End logic else 'pc su is NOT allowed'		
+        }	// End logic if(q_dot_cr_output > 0.0 && is_rec_su_allowed)
+
+        // 'else if' loop for receiver 'on' but sending htf to cold tank
+        else if ((q_dot_cr_on > 0.0 || m_dot_cr_on > 0.0) && is_rec_su_allowed) {
+
+            if (is_pc_su_allowed || is_pc_sb_allowed)
+            {
+                if (q_dot_tes_dc > 0.0)
+                {	// Storage dispatch is available
+
+                    if (((q_dot_tes_dc * (1.0 + tol_mode_switching) > q_dot_pc_target
+                        && m_dot_tes_dc_est * (1.0 + tol_mode_switching) > m_dot_pc_min)
+                        || m_dot_tes_dc_est * (1.0 + tol_mode_switching) > m_dot_pc_max)
+                        && is_pc_su_allowed &&
+                        is_mode_avail(C_system_operating_modes::CR_TO_COLD__PC_TARGET__TES_DC__AUX_OFF))
+                    {	// Storage can provide enough dispatch to reach power cycle target
+                        // Tolerance is applied so that if TES is *close* to reaching PC target, the controller tries that mode
+
+                        operating_mode = C_system_operating_modes::CR_TO_COLD__PC_TARGET__TES_DC__AUX_OFF;
+                    }
+                    else if (q_dot_tes_dc * (1.0 + tol_mode_switching) > q_dot_pc_min
+                        && m_dot_tes_dc_est * (1.0 + tol_mode_switching) > m_dot_pc_min
+                        && is_pc_su_allowed &&
+                        is_mode_avail(C_system_operating_modes::CR_TO_COLD__PC_RM_LO__TES_EMPTY__AUX_OFF))
+                    {	// Storage can provide enough dispatch to at least meet power cycle minimum operation fraction
+                        // Run at highest possible PC fraction by dispatching all remaining storage
+                        // Tolerance is applied so that if CR + TES is *close* to reaching PC min, the controller tries that mode
+
+                        operating_mode = C_system_operating_modes::CR_TO_COLD__PC_RM_LO__TES_EMPTY__AUX_OFF;
+                    }
+                    else if (q_dot_tes_dc * (1.0 + tol_mode_switching) > q_dot_pc_sb
+                        && m_dot_tes_dc_est * (1.0 + tol_mode_switching) > m_dot_pc_min
+                        && is_pc_sb_allowed &&
+                        is_mode_avail(C_system_operating_modes::CR_TO_COLD__PC_SB__TES_DC__AUX_OFF))
+                    {	// Tolerance is applied so that if CR + TES is *close* to reaching standby, the controller tries that mode
+
+                        operating_mode = C_system_operating_modes::CR_TO_COLD__PC_SB__TES_DC__AUX_OFF;
+                    }
+                    else if (is_pc_su_allowed && is_mode_avail(C_system_operating_modes::CR_TO_COLD__PC_MIN__TES_EMPTY__AUX_OFF))
+                    {	// If not enough thermal power to stay in standby, then run at min PC load until TES is fully discharged
+
+                        operating_mode = C_system_operating_modes::CR_TO_COLD__PC_MIN__TES_EMPTY__AUX_OFF;
+                    }
+                    else if (is_mode_avail(C_system_operating_modes::CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF))
+                    {
+                        operating_mode = C_system_operating_modes::CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF;
+                    }
+                    else
+                    {
+                        operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+                    }
+                }	// End logic for if( q_dot_tes_dc > 0.0 )
+                else if (is_mode_avail(C_system_operating_modes::CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF))
+                {	// Storage dispatch is not available
+
+                    // No thermal power available to power cycle
+                    operating_mode = C_system_operating_modes::CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF;
+                }
+                else
+                {
+                    operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+                }
+            }	// End logic if( is_pc_su_allowed )
+            else if (is_mode_avail(C_system_operating_modes::CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF))
+            {	// If neither receiver nor power cycle operation is allowed, then shut everything off
+
+                operating_mode = C_system_operating_modes::CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF;
+            }
+            else
+            {
+                operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+            }
+
+        }
+        else	// Receiver is off - determine if power cycle can remain on
+        {
+            if (is_pc_su_allowed || is_pc_sb_allowed)
+            {
+                if (q_dot_tes_dc > 0.0)
+                {	// Storage dispatch is available
+
+                    if (((q_dot_tes_dc * (1.0 + tol_mode_switching) > q_dot_pc_target
+                        && m_dot_tes_dc_est * (1.0 + tol_mode_switching) > m_dot_pc_min)
+                        || m_dot_tes_dc_est * (1.0 + tol_mode_switching) > m_dot_pc_max)
+                        && is_pc_su_allowed &&
+                        is_mode_avail(C_system_operating_modes::CR_OFF__PC_TARGET__TES_DC__AUX_OFF))
+                    {	// Storage can provide enough dispatch to reach power cycle target
+                        // Tolerance is applied so that if TES is *close* to reaching PC target, the controller tries that mode
+
+                        operating_mode = C_system_operating_modes::CR_OFF__PC_TARGET__TES_DC__AUX_OFF;
+                    }
+                    else if (q_dot_tes_dc * (1.0 + tol_mode_switching) > q_dot_pc_min
+                        && m_dot_tes_dc_est * (1.0 + tol_mode_switching) > m_dot_pc_min
+                        && is_pc_su_allowed &&
+                        is_mode_avail(C_system_operating_modes::CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF))
+                    {	// Storage can provide enough dispatch to at least meet power cycle minimum operation fraction
+                        // Run at highest possible PC fraction by dispatching all remaining storage
+                        // Tolerance is applied so that if CR + TES is *close* to reaching PC min, the controller tries that mode
+
+                        operating_mode = C_system_operating_modes::CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF;
+                    }
+                    else if (q_dot_tes_dc * (1.0 + tol_mode_switching) > q_dot_pc_sb
+                        && m_dot_tes_dc_est * (1.0 + tol_mode_switching) > m_dot_pc_min
+                        && is_pc_sb_allowed &&
+                        is_mode_avail(C_system_operating_modes::CR_OFF__PC_SB__TES_DC__AUX_OFF))
+                    {	// Tolerance is applied so that if CR + TES is *close* to reaching standby, the controller tries that mode
+
+                        operating_mode = C_system_operating_modes::CR_OFF__PC_SB__TES_DC__AUX_OFF;
+                    }
+                    else if (is_pc_su_allowed && is_mode_avail(C_system_operating_modes::CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF))
+                    {	// If not enough thermal power to stay in standby, then run at min PC load until TES is fully discharged
+
+                        operating_mode = C_system_operating_modes::CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF;
+                    }
+                    else
+                    {
+                        operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+                    }
+                }	// End logic for if( q_dot_tes_dc > 0.0 )
+                else
+                {	// Storage dispatch is not available
+
+                    // No thermal power available to power cycle
+                    operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+                }
+            }	// End logic if( is_pc_su_allowed )
+            else
+            {	// If neither receiver nor power cycle operation is allowed, then shut everything off
+
+                operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+            }
+        }
+    }
+
+    return operating_mode;
 }

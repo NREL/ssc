@@ -2057,6 +2057,21 @@ public:
         void reset_all_availability();
 
         void turn_off_plant();
+
+        C_system_operating_modes::E_operating_modes find_operating_mode
+        (C_csp_collector_receiver::E_csp_cr_modes cr_operating_state,
+        C_csp_power_cycle::E_csp_power_cycle_modes pc_operating_state,
+        double q_dot_cr_startup /*MWt*/, double q_dot_tes_dc /*MWt*/,
+        double q_dot_cr_on /*MWt*/, double q_dot_tes_ch /*MWt*/,
+        double q_dot_pc_su_max /*MWt*/, double q_dot_pc_target /*MWt*/,
+        double q_dot_tes_dc_t_CR_su /*MWt*/, double q_dot_pc_min /*MWt*/,
+        double q_dot_pc_sb /*MWt*/, double q_dot_pc_max /*MWt*/,
+        double m_dot_cr_on /*kg/s*/, double m_dot_tes_ch_est /*kg/s*/,
+        double m_dot_pc_max /*kg/s*/, double m_dot_tes_dc_t_CR_su /*kg/s*/,
+        double m_dot_pc_min /*kg/s*/, double m_dot_tes_dc_est /*kg/s*/,
+        double tol_mode_switching /*-*/,
+        bool is_rec_su_allowed, bool is_pc_su_allowed,
+        bool is_rec_outlet_to_hottank, bool is_pc_sb_allowed);
     };
 
     C_system_operating_modes mc_operating_modes;
