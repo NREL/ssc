@@ -2872,9 +2872,9 @@ public:
 //	log(util::format("after loop  - size of debt =%lg .", size_of_debt), SSC_WARNING);
 
     
-    /*
+    
     // Use PPA values to calculate revenue from purchases and sales
-    for (int y = 0; y <= nyears; y++) {
+    for (int y = 1; y <= nyears; y++) {
         cf_ppa_purchases.at(0, y) = cf.at(CF_ppa_price, y);
         cf_ppa_purchases.at(1, y) = cf.at(CF_energy_sales_value, y);
         cf_ppa_purchases.at(2, y) = cf.at(CF_degradation, y);
@@ -2885,13 +2885,13 @@ public:
         
     }
     ppa_retail_purchases(this, cf_ppa_purchases, nyears, hourly_energy_calcs);
-    for (int y = 0; y <= nyears; y++) {
+    for (int y = 1; y <= nyears; y++) {
         cf.at(CF_energy_sales_value, y) = cf_ppa_purchases.at(1, y);
         cf.at(CF_energy_purchases_value, y) = cf_ppa_purchases.at(3, y);
         cf.at(CF_energy_net, y) = cf.at(CF_energy_sales, y) + cf.at(CF_energy_purchases, y);
     }
-    */
     
+    /*
     size_t n_multipliers;
     ssc_number_t* ppa_multipliers = as_array("ppa_multipliers", &n_multipliers);
     bool ppa_purchases = !(is_assigned("en_electricity_rates") && as_number("en_electricity_rates") == 1);
@@ -2930,7 +2930,7 @@ public:
             }
         }
     }
-    
+    */
 	assign("flip_target_year", var_data((ssc_number_t) flip_target_year ));
 	assign("flip_target_irr", var_data((ssc_number_t)  flip_target_percent ));
 
@@ -2977,6 +2977,7 @@ public:
 	double npv_ppa_revenue = npv(CF_energy_value, nyears, nom_discount_rate);
 //	double npv_ppa_revenue = npv(CF_total_revenue, nyears, nom_discount_rate);
 	double npv_energy_nom = npv(CF_energy_sales, nyears, nom_discount_rate); //Only sales in denominator
+    //Denominator become sales all the time
 	double lppa_nom = 0;
 	if (npv_energy_nom != 0) lppa_nom = npv_ppa_revenue / npv_energy_nom * 100.0;
 	double lppa_real = 0;

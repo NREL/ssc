@@ -3214,7 +3214,7 @@ bool hourly_energy_calculation::calculate(compute_module *cm)
 		 
 	// we do this so that grid energy purchased through the electricity rate is not inadvertently double counted as lost revenue
 	for (i = 0; i < nrec_gen; i++) {
-        gen_purchases[i] = std::min(pgen[i], 0.0);
+        gen_purchases[i] = std::min(pgen[i], 0.0); //Comments needed
 		revenue_gen[i] = std::max(pgen[i], 0.0);
 	}
 	
@@ -3315,6 +3315,7 @@ var_info vtab_lcos_inputs[] = {
     { SSC_INPUT,        SSC_ARRAY,      "batt_annual_charge_from_system",                 "Battery annual energy charged from system",                 "kWh",      "",                      "Battery",       "",                           "",                               "" },
     { SSC_INPUT,        SSC_ARRAY,      "batt_annual_discharge_energy",               "Battery annual energy discharged",                      "kWh",      "",                      "Battery",       "",                           "",                               "" },
     { SSC_INPUT,        SSC_NUMBER,     "batt_salvage_percentage",                     "Net pre-tax cash battery salvage value",	                               "%",	 "",					  "Financial Parameters",             "?=0",                     "MIN=0,MAX=100",      			"" },
+    { SSC_INPUT,        SSC_NUMBER,      "en_electricity_rates",                       "Enable electricity rates for grid purchase",              "0/1",     "",                     "Electricity Rates",       "?",                                 "",                              "" },
 
     { SSC_INPUT,        SSC_NUMBER,      "battery_total_cost_lcos",               "Battery total investment cost",                      "$",      "",                      "Battery",       "",                           "",                               "" },
     { SSC_INPUT,        SSC_ARRAY,      "grid_to_batt",                               "Electricity to grid from battery",                      "kW",      "",                       "Battery",       "",                           "",                              "" },
@@ -3654,6 +3655,7 @@ void ppa_retail_purchases(compute_module* cm, util::matrix_t<double> cf, int nye
     size_t n_multipliers;
     ssc_number_t* ppa_multipliers = cm->as_array("ppa_multipliers", &n_multipliers);
     bool ppa_purchases = !(cm->is_assigned("en_electricity_rates") && cm->as_number("en_electricity_rates") == 1);
+    hourly_energy_calcs.calculate(cm);
     if (cm->as_integer("system_use_lifetime_output") == 1)
     {
         // hourly_enet includes all curtailment, availability

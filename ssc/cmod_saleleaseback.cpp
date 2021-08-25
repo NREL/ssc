@@ -900,7 +900,11 @@ enum {
 	CF_battery_replacement_cost_schedule,
 	CF_battery_replacement_cost,
 
-	
+    CF_energy_sales,
+    CF_energy_sales_value,
+    CF_energy_purchases,
+    CF_energy_purchases_value,
+
 
     CF_energy_charged_grid,
     CF_energy_charged_pv,
@@ -922,6 +926,7 @@ class cm_saleleaseback : public compute_module
 private:
 	util::matrix_t<double> cf;
     util::matrix_t<double> cf_lcos;
+    util::matrix_t<double> cf_ppa_purchases;
 	dispatch_calculations m_disp_calcs;
 	hourly_energy_calculation hourly_energy_calcs;
 
@@ -950,6 +955,7 @@ public:
 		int nyears = as_integer("analysis_period");
 		cf.resize_fill( CF_max, nyears+1, 0.0 );
         cf_lcos.resize_fill(CF_max, nyears + 1, 0.0);
+        cf_ppa_purchases.resize_fill(CF_max, nyears + 1, 0.0);
 
 		// assign inputs
 		double inflation_rate = as_double("inflation_rate")*0.01;
@@ -1092,57 +1098,69 @@ public:
 		// initialize energy
 		// differs from samsim - accumulate hourly energy
 		//double first_year_energy = as_double("energy_net");
-		double first_year_energy = 0.0;
+        double first_year_energy = 0.0;
+        double first_year_sales = 0.0;
+        double first_year_purchases = 0.0;
 
 
-		// degradation
-		// degradation starts in year 2 for single value degradation - no degradation in year 1 - degradation =1.0
-		// lifetime degradation applied in technology compute modules
-		if (as_integer("system_use_lifetime_output") == 1)
-		{
-			for (i = 1; i <= nyears; i++) cf.at(CF_degradation, i) = 1.0;
-		}
-		else
-		{
-			size_t count_degrad = 0;
-			ssc_number_t *degrad = 0;
-			degrad = as_array("degradation", &count_degrad);
+        // degradation
+        // degradation starts in year 2 for single value degradation - no degradation in year 1 - degradation =1.0
+        // lifetime degradation applied in technology compute modules
+        if (as_integer("system_use_lifetime_output") == 1)
+        {
+            for (i = 1; i <= nyears; i++) cf.at(CF_degradation, i) = 1.0;
+        }
+        else
+        {
+            size_t count_degrad = 0;
+            ssc_number_t* degrad = 0;
+            degrad = as_array("degradation", &count_degrad);
 
-			if (count_degrad == 1)
-			{
-				for (i = 1; i <= nyears; i++) cf.at(CF_degradation, i) = pow((1.0 - degrad[0] / 100.0), i - 1);
-			}
-			else if (count_degrad > 0)
-			{
-				for (i = 0; i < nyears && i < (int)count_degrad; i++) cf.at(CF_degradation, i + 1) = (1.0 - degrad[i] / 100.0);
-			}
-		}
-
-
+            if (count_degrad == 1)
+            {
+                for (i = 1; i <= nyears; i++) cf.at(CF_degradation, i) = pow((1.0 - degrad[0] / 100.0), i - 1);
+            }
+            else if (count_degrad > 0)
+            {
+                for (i = 0; i < nyears && i < (int)count_degrad; i++) cf.at(CF_degradation, i + 1) = (1.0 - degrad[i] / 100.0);
+            }
+        }
 
 
-		hourly_energy_calcs.calculate(this);
+
+        hourly_energy_calcs.calculate(this);
 
 
-		// dispatch
-		if (as_integer("system_use_lifetime_output") == 1)
-		{
-			// hourly_enet includes all curtailment, availability
-			for (size_t y = 1; y <= (size_t)nyears; y++)
-			{
-				for (size_t h = 0; h<8760; h++)
-				{
-					cf.at(CF_energy_net, y) += hourly_energy_calcs.hourly_energy()[(y - 1) * 8760 + h] * cf.at(CF_degradation, y);
-				}
-			}
-		}
-		else
-		{
-			for (i = 0; i<8760; i++) first_year_energy += hourly_energy_calcs.hourly_energy()[i]; // sum up hourly kWh to get total annual kWh first year production includes first year curtailment, availability 
-			cf.at(CF_energy_net, 1) = first_year_energy;
-			for (i = 1; i <= nyears; i++)
-				cf.at(CF_energy_net, i) = first_year_energy * cf.at(CF_degradation, i);
-		}
+        // dispatch
+        if (as_integer("system_use_lifetime_output") == 1)
+        {
+            // hourly_enet includes all curtailment, availability
+            for (size_t y = 1; y <= (size_t)nyears; y++)
+            {
+                for (size_t h = 0; h < 8760; h++)
+                {
+                    cf.at(CF_energy_net, y) += hourly_energy_calcs.hourly_energy()[(y - 1) * 8760 + h] * cf.at(CF_degradation, y);
+                    cf.at(CF_energy_sales, y) += hourly_energy_calcs.hourly_sales()[(y - 1) * 8760 + h] * cf.at(CF_degradation, y);
+                    cf.at(CF_energy_purchases, y) += hourly_energy_calcs.hourly_purchases()[(y - 1) * 8760 + h] * cf.at(CF_degradation, y);
+                }
+            }
+        }
+        else
+        {
+            for (i = 0; i < 8760; i++) {
+                first_year_energy += hourly_energy_calcs.hourly_energy()[i]; // sum up hourly kWh to get total annual kWh first year production includes first year curtailment, availability
+                first_year_sales += hourly_energy_calcs.hourly_sales()[i];
+                first_year_purchases += hourly_energy_calcs.hourly_purchases()[i];
+            }
+            cf.at(CF_energy_net, 1) = first_year_energy;
+            cf.at(CF_energy_sales, 1) = first_year_sales;
+            cf.at(CF_energy_purchases, 1) = first_year_purchases;
+            for (i = 1; i <= nyears; i++) {
+                cf.at(CF_energy_net, i) = first_year_energy * cf.at(CF_degradation, i);
+                cf.at(CF_energy_sales, i) = first_year_sales * cf.at(CF_degradation, i);
+                cf.at(CF_energy_purchases, i) = first_year_purchases * cf.at(CF_degradation, i);
+            }
+        }
 
 		first_year_energy = cf.at(CF_energy_net, 1);
 
@@ -2495,6 +2513,25 @@ public:
 
 /***************** end iterative solution *********************************************************************/
 
+
+    // Use PPA values to calculate revenue from purchases and sales
+    for (int y = 1; y <= nyears; y++) {
+        cf_ppa_purchases.at(0, y) = cf.at(CF_ppa_price, y);
+        cf_ppa_purchases.at(1, y) = cf.at(CF_energy_sales_value, y);
+        cf_ppa_purchases.at(2, y) = cf.at(CF_degradation, y);
+        cf_ppa_purchases.at(3, y) = cf.at(CF_energy_purchases_value, y); //Fixed OM Battery cost
+        cf_ppa_purchases.at(4, y) = cf.at(CF_energy_net, y); //Produciton OM Battery cost
+        cf_ppa_purchases.at(5, y) = cf.at(CF_energy_sales, y); //Capacity OM Battery Cost
+        cf_ppa_purchases.at(6, y) = cf.at(CF_energy_purchases, y);
+
+    }
+    ppa_retail_purchases(this, cf_ppa_purchases, nyears, hourly_energy_calcs);
+    for (int y = 1; y <= nyears; y++) {
+        cf.at(CF_energy_sales_value, y) = cf_ppa_purchases.at(1, y);
+        cf.at(CF_energy_purchases_value, y) = cf_ppa_purchases.at(3, y);
+        cf.at(CF_energy_net, y) = cf.at(CF_energy_sales, y) + cf.at(CF_energy_purchases, y);
+    }
+
 	assign("flip_target_year", var_data((ssc_number_t) flip_target_year ));
 	assign("flip_target_irr", var_data((ssc_number_t)  flip_target_percent ));
 /*	assign("flip_actual_year", var_data((ssc_number_t) flip_year));
@@ -2522,11 +2559,11 @@ public:
 	// fixed price PPA - LPPA independent of salvage value per 7/16/15 meeting
 	double npv_ppa_revenue = npv(CF_energy_value, nyears, nom_discount_rate);
 	//	double npv_ppa_revenue = npv(CF_total_revenue, nyears, nom_discount_rate);
-	double npv_energy_nom = npv(CF_energy_net, nyears, nom_discount_rate);
+	double npv_energy_nom = npv(CF_energy_sales, nyears, nom_discount_rate);
 	double lppa_nom = 0;
 	if (npv_energy_nom != 0) lppa_nom = npv_ppa_revenue / npv_energy_nom * 100.0;
 	double lppa_real = 0;
-	double npv_energy_real = npv(CF_energy_net, nyears, disc_real);
+	double npv_energy_real = npv(CF_energy_sales, nyears, disc_real);
 	if (npv_energy_real != 0) lppa_real = npv_ppa_revenue / npv_energy_real * 100.0;
 
 	// update LCOE calculations 
@@ -2553,6 +2590,7 @@ public:
 			- cf.at(CF_funding_om, i)
 			+ cf.at(CF_reserve_interest, i)
 			- cf.at(CF_disbursement_om, i) // note sign is negative for positive disbursement
+            - cf.at(CF_energy_purchases_value, i)
 			+ cf.at(CF_net_salvage_value, i); // benefit to cost reduction so that project revenue based on PPA revenue and not total revenue per 7/16/15 meeting
 	}
 	// year 1 add total ITC (net benefit) so that project return = project revenue - project cost
