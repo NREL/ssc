@@ -417,6 +417,10 @@ void C_csp_solver::init()
 		throw(C_csp_exception("The collector-receiver and power cycle models have incompatible HTF - direct/indirect assumptions", "CSP Solver"));
 	}
 
+    if (!mc_collector_receiver.m_is_sensible_htf && m_is_parallel_heater) {
+        throw(C_csp_exception("Model does allow parallel heater with latent heat receivers", "CSP Solver"));
+    }
+
     /* 
     If no TES exists, initialize values to zero. They won't be touched again
     */

@@ -717,6 +717,16 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
         }
     }
 
+    // Solve parallel heater performance, if applicable
+    if (mpc_csp_solver->m_is_parallel_heater) {
+
+        double add_stuff_here = 1.23;
+    }
+
+    // Define variables for CR outlet HTF conditions
+    // Mix with heater outlet as applicable
+    double T_htf_hot_cr_mixed = mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot;      //[C]
+
     // For now, check the CR return pressure against the assumed constant system interface pressure
     if (fabs((mpc_csp_solver->mc_cr_out_solver.m_P_htf_hot - m_P_field_in) / m_P_field_in) > 0.001 && !mpc_csp_solver->mc_collector_receiver.m_is_sensible_htf)
     {
@@ -781,7 +791,7 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
             double q_dot_ch_est, m_dot_hot_to_tes_est, T_cold_field_est;
             q_dot_ch_est = m_dot_hot_to_tes_est = T_cold_field_est = std::numeric_limits<double>::quiet_NaN();
             if (mpc_csp_solver->m_is_tes) {
-                mpc_csp_solver->mc_tes.charge_avail_est(mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot + 273.15, mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step,
+                mpc_csp_solver->mc_tes.charge_avail_est(T_htf_hot_cr_mixed + 273.15, mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step,
                     q_dot_ch_est, m_dot_hot_to_tes_est, T_cold_field_est);
             }
             else {
@@ -806,7 +816,7 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
             double q_dot_ch_est, m_dot_hot_to_tes_est, T_cold_field_est;
             q_dot_ch_est = m_dot_hot_to_tes_est = T_cold_field_est = std::numeric_limits<double>::quiet_NaN();
             if (mpc_csp_solver->m_is_tes) {
-                mpc_csp_solver->mc_tes.charge_avail_est(mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot + 273.15, mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step,
+                mpc_csp_solver->mc_tes.charge_avail_est(T_htf_hot_cr_mixed + 273.15, mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step,
                     q_dot_ch_est, m_dot_hot_to_tes_est, T_cold_field_est);
             }
             else {
@@ -836,7 +846,7 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
         double q_dot_ch_est, m_dot_hot_to_tes_est, T_cold_field_est;
         q_dot_ch_est = m_dot_hot_to_tes_est = T_cold_field_est = std::numeric_limits<double>::quiet_NaN();
         if (mpc_csp_solver->m_is_tes) {
-            mpc_csp_solver->mc_tes.charge_avail_est(mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot + 273.15, mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step,
+            mpc_csp_solver->mc_tes.charge_avail_est(T_htf_hot_cr_mixed + 273.15, mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step,
                 q_dot_ch_est, m_dot_hot_to_tes_est, T_cold_field_est);
         }
         else {
@@ -884,7 +894,7 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
         double q_dot_ch_est, m_dot_hot_to_tes_est, T_cold_field_est;
         q_dot_ch_est = m_dot_hot_to_tes_est = T_cold_field_est = std::numeric_limits<double>::quiet_NaN();
         if (mpc_csp_solver->m_is_tes) {
-            mpc_csp_solver->mc_tes.charge_avail_est(mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot + 273.15, mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step,
+            mpc_csp_solver->mc_tes.charge_avail_est(T_htf_hot_cr_mixed + 273.15, mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step,
                 q_dot_ch_est, m_dot_hot_to_tes_est, T_cold_field_est);
         }
         else {
@@ -905,7 +915,7 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
         int tes_code = mpc_csp_solver->mc_tes.solve_tes_off_design(mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step,
             mpc_csp_solver->mc_weather.ms_outputs.m_tdry + 273.15,
             m_dot_hot_to_tes / 3600.0, m_m_dot_pc_in / 3600.0, m_dot_field_out_to_cold_tank / 3600.0, 
-            mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot + 273.15, m_T_field_cold_guess + 273.15,
+            T_htf_hot_cr_mixed + 273.15, m_T_field_cold_guess + 273.15,
             T_cycle_hot, T_field_cold_calc,
             mpc_csp_solver->mc_tes_outputs);
 
@@ -917,7 +927,7 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
     }
     else
     {
-        T_cycle_hot = mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot + 273.15;   //[K]
+        T_cycle_hot = T_htf_hot_cr_mixed + 273.15;   //[K]
     }
 
     // Solve power cycle with solved inlet temperature
@@ -955,7 +965,7 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
         int tes_code = mpc_csp_solver->mc_tes.solve_tes_off_design(mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step,
             mpc_csp_solver->mc_weather.ms_outputs.m_tdry + 273.15,
             m_dot_hot_to_tes / 3600.0, m_m_dot_pc_in / 3600.0, m_dot_field_out_to_cold_tank / 3600.0,
-            mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot + 273.15, mpc_csp_solver->mc_pc_out_solver.m_T_htf_cold + 273.15,
+            T_htf_hot_cr_mixed + 273.15, mpc_csp_solver->mc_pc_out_solver.m_T_htf_cold + 273.15,
             T_cycle_hot, T_field_cold_calc,
             mpc_csp_solver->mc_tes_outputs);
 
