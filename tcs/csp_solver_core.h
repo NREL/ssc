@@ -979,6 +979,13 @@ private:
 	double m_q_dot_rec_des;				//[MW]
 	double m_A_aperture;				//[m2]
 
+        // Parallel heater design parameters
+    double m_PAR_HTR_T_htf_cold_des;			//[K]
+    double m_PAR_HTR_P_cold_des;				//[kPa]
+    double m_PAR_HTR_x_cold_des;				//[-]
+    double m_PAR_HTR_q_dot_rec_des;				//[MW]
+    double m_PAR_HTR_A_aperture;				//[m2]
+
 		// Power cycle design parameters
 	double m_cycle_W_dot_des;			//[MW]
 	double m_cycle_eta_des;				//[-]
@@ -1045,7 +1052,8 @@ private:
         double calc_frac_current /*-*/, double baseline_step /*s*/,
         bool& is_q_dot_pc_target_overwrite,
         double& q_dot_pc_target /*MWt*/, double& q_dot_pc_max /*MWt*/, double& q_dot_elec_to_CR_heat /*MWt*/,
-        bool& is_rec_su_allowed, bool& is_pc_su_allowed, bool& is_pc_sb_allowed);
+        bool& is_rec_su_allowed, bool& is_pc_su_allowed, bool& is_pc_sb_allowed,
+        double& q_dot_elec_to_PAR_HTR /*MWt*/, bool& is_PAR_HTR_allowed);
 
 public:
 
@@ -2119,7 +2127,8 @@ public:
         double m_dot_pc_min /*kg/s*/, double m_dot_tes_dc_est /*kg/s*/,
         double tol_mode_switching /*-*/,
         bool is_rec_su_allowed, bool is_pc_su_allowed,
-        bool is_rec_outlet_to_hottank, bool is_pc_sb_allowed);
+        bool is_rec_outlet_to_hottank, bool is_pc_sb_allowed,
+        double q_dot_PAR_HTR_on /*MWt*/, bool is_PAR_HTR_allowed);
     };
 
     C_system_operating_modes mc_operating_modes;

@@ -261,6 +261,7 @@ C_csp_solver::C_csp_solver(C_csp_weatherreader &weather,
 	// Inititalize non-reference member data
 	m_T_htf_cold_des = m_P_cold_des = m_x_cold_des =
 		m_q_dot_rec_des = m_A_aperture =
+        m_PAR_HTR_T_htf_cold_des = m_PAR_HTR_P_cold_des = m_PAR_HTR_x_cold_des = m_PAR_HTR_q_dot_rec_des = m_PAR_HTR_A_aperture =
 		m_cycle_W_dot_des = m_cycle_eta_des = m_cycle_q_dot_des = m_cycle_max_frac = m_cycle_cutoff_frac =
 		m_cycle_sb_frac_des = m_cycle_T_htf_hot_des =
 		m_cycle_P_hot_des = m_cycle_x_hot_des = 
@@ -345,6 +346,21 @@ void C_csp_solver::init()
 	m_x_cold_des = cr_solved_params.m_x_cold_des;				//[-]
 	m_q_dot_rec_des = cr_solved_params.m_q_dot_rec_des;			//[MW]
 	m_A_aperture = cr_solved_params.m_A_aper_total;				//[m2]
+
+        // Parallel Heater
+    if (m_is_parallel_heater) {
+        C_csp_collector_receiver::S_csp_cr_solved_params par_htr_solved_params;
+
+        mp_heater->init(init_inputs, par_htr_solved_params);
+        mc_csp_messages.transfer_messages(mp_heater->mc_csp_messages);
+
+        m_PAR_HTR_T_htf_cold_des = par_htr_solved_params.m_T_htf_cold_des;      //[K]
+        m_PAR_HTR_P_cold_des = par_htr_solved_params.m_P_cold_des;              //[kPa]
+        m_PAR_HTR_x_cold_des = par_htr_solved_params.m_x_cold_des;              //[-]
+        m_PAR_HTR_q_dot_rec_des = par_htr_solved_params.m_q_dot_rec_des;        //[MWt]
+        m_PAR_HTR_A_aperture = par_htr_solved_params.m_A_aper_total;            //[m2]
+    }
+
 		// Power cycle
 	C_csp_power_cycle::S_solved_params pc_solved_params;
 	mc_power_cycle.init(pc_solved_params);
@@ -618,6 +634,18 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
             is_rec_outlet_to_hottank = false;
         }
 
+        // If parallel heater, estimate performance
+        double q_dot_PAR_HTR_on = std::numeric_limits<double>::quiet_NaN(); //[MWt]
+        if (m_is_parallel_heater) {
+            C_csp_collector_receiver::S_csp_cr_est_out par_htr_est_out;
+            mp_heater->estimates(mc_weather.ms_outputs,
+                mc_cr_htf_state_in,
+                par_htr_est_out,
+                mc_kernel.mc_sim_info);
+
+            q_dot_PAR_HTR_on = par_htr_est_out.m_q_dot_avail;   //[MWt]
+        }
+
 		// Get TES operating state info at end of last time step
 		double q_dot_tes_dc, q_dot_tes_ch;      //[MWt]
 		q_dot_tes_dc = q_dot_tes_ch = std::numeric_limits<double>::quiet_NaN();
@@ -667,9 +695,11 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
         bool is_rec_su_allowed = false;
         bool is_pc_su_allowed = false;
         bool is_pc_sb_allowed = false;
+        bool is_PAR_HTR_allowed = false;
 
         double q_dot_elec_to_CR_heat = std::numeric_limits<double>::quiet_NaN();    //[MWt]
         double q_dot_pc_max = std::numeric_limits<double>::quiet_NaN();     //[MWt]
+        double q_dot_elec_to_PAR_HTR = std::numeric_limits<double>::quiet_NaN();
 
         calc_timestep_plant_control_and_targets(
             f_turbine_tou, q_pc_min, q_dot_tes_ch,
@@ -677,7 +707,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
             calc_frac_current, baseline_step,
             is_q_dot_pc_target_overwrite,
             q_pc_target, q_dot_pc_max, q_dot_elec_to_CR_heat,
-            is_rec_su_allowed, is_pc_su_allowed, is_pc_sb_allowed);
+            is_rec_su_allowed, is_pc_su_allowed, is_pc_sb_allowed,
+            q_dot_elec_to_PAR_HTR, is_PAR_HTR_allowed);
 
         // Avoid setting member data in method, so set here
         m_q_dot_pc_max = q_dot_pc_max;
@@ -794,7 +825,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 m_m_dot_pc_min /*kg/s*/, m_dot_tes_dc_est /*kg/s*/,
                 tol_mode_switching /*-*/,
                 is_rec_su_allowed, is_pc_su_allowed,
-                is_rec_outlet_to_hottank, is_pc_sb_allowed);
+                is_rec_outlet_to_hottank, is_pc_sb_allowed,
+                q_dot_PAR_HTR_on, is_PAR_HTR_allowed);
 
 			// Store operating mode
 			m_op_mode_tracking.push_back((int)operating_mode);
@@ -805,8 +837,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
             bool is_op_mode_avail = true;
             bool is_turn_off_plant = false;
             bool is_turn_off_rec_su = false;
-
-            double q_dot_elec_to_PAR_HTR = std::numeric_limits<double>::quiet_NaN();
 
             are_models_converged = mc_operating_modes.solve(operating_mode, this, is_rec_outlet_to_hottank,
                 q_pc_target, q_dot_pc_su_max, q_pc_sb,
@@ -1191,7 +1221,8 @@ void C_csp_solver::calc_timestep_plant_control_and_targets(
     double calc_frac_current /*-*/, double baseline_step /*s*/,
     bool& is_q_dot_pc_target_overwrite,
     double& q_dot_pc_target /*MWt*/, double& q_dot_pc_max /*MWt*/, double& q_dot_elec_to_CR_heat /*MWt*/,
-    bool& is_rec_su_allowed, bool& is_pc_su_allowed, bool& is_pc_sb_allowed)
+    bool& is_rec_su_allowed, bool& is_pc_su_allowed, bool& is_pc_sb_allowed,
+    double& q_dot_elec_to_PAR_HTR /*MWt*/, bool& is_PAR_HTR_allowed)
 {
     // Optional rules for TOD Block Plant Control
     if (mc_tou.mc_dispatch_params.m_is_block_dispatch)
@@ -1247,15 +1278,30 @@ void C_csp_solver::calc_timestep_plant_control_and_targets(
             is_pc_sb_allowed = false;
             q_dot_pc_target = 0.0;
         }
+
+        q_dot_elec_to_PAR_HTR = 0.0;
+        is_PAR_HTR_allowed = 0.0;
+        if (m_is_parallel_heater && !is_pc_su_allowed && !is_pc_sb_allowed &&
+            purchase_mult < 1.0 && q_dot_tes_ch > 0.0) {
+
+            is_PAR_HTR_allowed = true;
+            q_dot_elec_to_PAR_HTR = m_PAR_HTR_q_dot_rec_des;    //[MWt]
+        }
     }
     // use simply policy to govern arbitrage operation
     else if (mc_tou.mc_dispatch_params.m_is_arbitrage_policy) {
 
         // Check purchase multiplier
         // If less than 1, then allow charging
+        q_dot_elec_to_PAR_HTR = 0.0;
+        is_PAR_HTR_allowed = 0.0;
         if (purchase_mult < 1.0 && q_dot_tes_ch > 0.0) {
             is_rec_su_allowed = true;
             q_dot_elec_to_CR_heat = m_q_dot_rec_des;    //[MWt]
+            if (m_is_parallel_heater) {
+                is_PAR_HTR_allowed = true;
+                q_dot_elec_to_PAR_HTR = m_PAR_HTR_q_dot_rec_des;    //[MWt]
+            }
         }
         else {
             is_rec_su_allowed = false;
@@ -1287,6 +1333,13 @@ void C_csp_solver::calc_timestep_plant_control_and_targets(
     // Run dispatch optimization?
     else if (mc_dispatch.solver_params.dispatch_optimize)
     {
+        q_dot_elec_to_PAR_HTR = 0.0;
+        is_PAR_HTR_allowed = 0.0;
+
+        if (m_is_parallel_heater) {
+            throw(C_csp_exception("Dispatch optimization not available for parallel heater configs"));
+        }
+
         //time to reoptimize
         //reoptimize when the time is equal to multiples of the first time step
         if ((int)mc_kernel.mc_sim_info.ms_ts.m_time % (int)(3600. * mc_dispatch.solver_params.optimize_frequency) == baseline_step
@@ -2868,7 +2921,8 @@ C_csp_solver::C_system_operating_modes::E_operating_modes C_csp_solver::C_system
     double m_dot_pc_min /*kg/s*/, double m_dot_tes_dc_est /*kg/s*/,
     double tol_mode_switching /*-*/,
     bool is_rec_su_allowed, bool is_pc_su_allowed,
-    bool is_rec_outlet_to_hottank, bool is_pc_sb_allowed)
+    bool is_rec_outlet_to_hottank, bool is_pc_sb_allowed,
+    double q_dot_PAR_HTR_on /*MWt*/, bool is_PAR_HTR_allowed)
 {
     C_system_operating_modes::E_operating_modes operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
 
