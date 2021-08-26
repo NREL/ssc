@@ -134,7 +134,7 @@ void C_csp_cr_electric_resistance::init(const C_csp_collector_receiver::S_csp_cr
 
     // State variables
     m_E_su_initial = m_E_su_des;        //[MWt-hr]
-    if (m_E_su_initial == 0.0) {
+    if (m_E_su_initial == 0.0 || m_startup_mode == INSTANTANEOUS_NO_MAX_ELEC_IN) {
         m_operating_mode_converged = C_csp_collector_receiver::ON;
     }
     else {
