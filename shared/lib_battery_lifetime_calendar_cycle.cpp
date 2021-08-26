@@ -182,7 +182,7 @@ int lifetime_cycle_t::rainflow_compareRanges() {
         // Update cycle matrix with latest DOD - size 1 is uninitalized (NMC or LMO/LTO models)
         if (state->cycle->cycle_counts.ncells() > 1) {
             size_t cycle_index = util::nearest_col_index(state->cycle->cycle_counts, cycle_state::DOD, state->cycle_range);
-            int cycles_at_range = state->cycle->cycle_counts.at(cycle_index, cycle_state::CYCLES);
+            cycles_at_range = state->cycle->cycle_counts.at(cycle_index, cycle_state::CYCLES);
             cycles_at_range += 1;
             state->cycle->cycle_counts.set_value(cycles_at_range, cycle_index, cycle_state::CYCLES);
         }
