@@ -52,6 +52,8 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,     SSC_STRING, "solar_resource_file",                "Local weather file path",                                                                                                                 "",             "",                                  "Solar Resource",                    "?",                                                                "LOCAL_FILE",    ""},
     { SSC_INPUT,     SSC_TABLE,  "solar_resource_data",                "Weather resource data in memory",                                                                                                         "",             "",                                  "Solar Resource",                    "?",                                                                "",              ""},
 
+    { SSC_INPUT,     SSC_NUMBER, "is_parallel_htr",                    "Does plant include a HTF heater parallel to solar field?",                                                                                "",             "",                                  "System Control",                           "?=0",                                                              "",              ""},
+
     { SSC_INPUT,     SSC_NUMBER, "csp_financial_model",                "",                                                                                                                                        "1-8",          "",                                  "Financial Model",                          "?=1",                                                              "INTEGER,MIN=0", ""},
     { SSC_INPUT,     SSC_NUMBER, "ppa_multiplier_model",               "PPA multiplier model 0: dispatch factors dispatch_factorX, 1: hourly multipliers dispatch_factors_ts",                                    "0/1",          "0=diurnal,1=timestep",              "Time of Delivery Factors",                 "?=0", /*need a default so this var works in required_if*/          "INTEGER,MIN=0", ""},
     { SSC_INPUT,     SSC_ARRAY,  "dispatch_factors_ts",                "Dispatch payment factor array",                                                                                                           "",             "",                                  "Time of Delivery Factors",                 "ppa_multiplier_model=1&csp_financial_model<5&is_dispatch=1",                     "",              ""},
@@ -1754,19 +1756,17 @@ public:
 
         // Check if system configuration includes a heater parallel to primary collector receiver
         C_csp_collector_receiver* p_heater;
-        bool is_parallel_heater = false;
+        C_csp_cr_electric_resistance* p_electric_resistance = NULL;
+        bool is_parallel_heater = as_boolean("is_parallel_htr");   // false;
         if (is_parallel_heater) {
-            double q_dot_heater_des = receiver->m_q_rec_des / 2.0;      //[MWt]
+            double q_dot_heater_des = receiver->m_q_rec_des / 4.0;      //[MWt]
             double f_q_dot_des_allowable_su = 1.0;      //[-]
             double hrs_startup_at_max_rate = 0.25;      //[hr]
-            C_csp_cr_electric_resistance c_electric_resistance(receiver->m_T_htf_cold_des, receiver->m_T_htf_hot_des, q_dot_heater_des,
+            p_electric_resistance = new C_csp_cr_electric_resistance(receiver->m_T_htf_cold_des, receiver->m_T_htf_hot_des, q_dot_heater_des,
                 f_q_dot_des_allowable_su, hrs_startup_at_max_rate,
                 as_integer("rec_htf"), as_matrix("field_fl_props"), C_csp_cr_electric_resistance::E_elec_resist_startup_mode::INSTANTANEOUS_NO_MAX_ELEC_IN);
-            p_heater = &c_electric_resistance;
         }
-        else {
-            p_heater = NULL;
-        }
+        p_heater = p_electric_resistance;        
 
         // Thermal energy storage 
         C_csp_two_tank_tes storage;
@@ -2542,6 +2542,9 @@ public:
         }
         //Single value outputs from radiative cooling system
 
+        if (p_electric_resistance != NULL) {
+            delete p_electric_resistance;
+        }
     }
 };
 
