@@ -86,6 +86,33 @@ static var_info _cm_vtab_communitysolar[] = {
 /* Dispatch */                                                                    															       
 	{ SSC_INPUT,        SSC_NUMBER,     "system_use_lifetime_output",		      "Lifetime hourly system outputs",	                               "0/1",                         "0=hourly first year,1=hourly lifetime",                      "Lifetime",             "*",						   "INTEGER,MIN=0",                 "" },
 
+
+    // community solar
+    { SSC_INPUT,        SSC_NUMBER,     "subscriber1_share",	          "Subscriber 1 share",	                                                    "%",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
+    { SSC_INPUT,        SSC_NUMBER,     "subscriber1_growth",	          "Subscriber 1 growth",	                                                "%/yr",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
+    { SSC_INPUT,        SSC_NUMBER,     "subscriber2_share",	          "Subscriber 2 share",	                                                    "%",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
+    { SSC_INPUT,        SSC_NUMBER,     "subscriber2_growth",	          "Subscriber 2 growth",	                                                "%/yr",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
+    { SSC_INPUT,        SSC_NUMBER,     "subscriber3_share",	          "Subscriber 3 share",	                                                    "%",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
+    { SSC_INPUT,        SSC_NUMBER,     "subscriber3_growth",	          "Subscriber 3 growth",	                                                "%/yr",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
+    { SSC_INPUT,        SSC_NUMBER,     "subscriber4_share",	          "Subscriber 4 share",	                                                    "%",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
+    { SSC_INPUT,        SSC_NUMBER,     "subscriber4_growth",	          "Subscriber 4 growth",	                                                "%/yr",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
+
+    { SSC_INPUT,        SSC_NUMBER,     "subscriber1_retail_rate",	      "Subscriber 1 retail rate",	                                            "$/kWh",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
+    { SSC_INPUT,        SSC_NUMBER,     "subscriber1_retail_rate_escal",  "Subscriber 1 retail rate escalation",	                                                "%/yr",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
+    { SSC_INPUT,        SSC_NUMBER,     "subscriber2_retail_rate",	      "Subscriber 2 retail rate",	                                            "$/kWh",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
+    { SSC_INPUT,        SSC_NUMBER,     "subscriber2_retail_rate_escal",  "Subscriber 2 retail rate escalation",	                                                "%/yr",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
+    { SSC_INPUT,        SSC_NUMBER,     "subscriber3_retail_rate",	      "Subscriber 3 retail rate",	                                            "$/kWh",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
+    { SSC_INPUT,        SSC_NUMBER,     "subscriber3_retail_rate_escal",  "Subscriber 3 retail rate escalation",	                                                "%/yr",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
+    { SSC_INPUT,        SSC_NUMBER,     "subscriber4_retail_rate",	      "Subscriber 4 retail rate",	                                            "$/kWh",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
+    { SSC_INPUT,        SSC_NUMBER,     "subscriber4_retail_rate_escal",  "Subscriber 4 retail rate escalation",	                                                "%/yr",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
+
+
+
+
+
+
+
+
 	// dispatch update TODO - remove SO output label below after consildated with CSP
 	{ SSC_INPUT, SSC_NUMBER, "ppa_multiplier_model", "PPA multiplier model", "0/1", "0=diurnal,1=timestep", "Revenue", "?=0", "INTEGER,MIN=0", "" },
 	{ SSC_INPUT, SSC_ARRAY, "dispatch_factors_ts", "Dispatch payment factor array", "", "", "Revenue", "ppa_multiplier_model=1", "", "" },
