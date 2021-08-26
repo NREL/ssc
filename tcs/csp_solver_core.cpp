@@ -138,7 +138,7 @@ static C_csp_reported_outputs::S_output_info S_solver_output_info[] =
 		// Controller, TES, & Dispatch
 	{C_csp_solver::C_solver_outputs::ERR_M_DOT, C_csp_reported_outputs::TS_1ST},		//[-] Relative mass conservation error
 	{C_csp_solver::C_solver_outputs::ERR_Q_DOT, C_csp_reported_outputs::TS_1ST},		//[-] Relative energy conservation error
-	{C_csp_solver::C_solver_outputs::N_OP_MODES, C_csp_reported_outputs::TS_1ST},	//[-] Number of subtimesteps in reporting timestep
+	{C_csp_solver::C_solver_outputs::N_OP_MODES, C_csp_reported_outputs::TS_LAST},	//[-] Number of subtimesteps in reporting timestep
 	{C_csp_solver::C_solver_outputs::OP_MODE_1, C_csp_reported_outputs::TS_1ST},     //[-] Operating mode in first subtimestep
 	{C_csp_solver::C_solver_outputs::OP_MODE_2, C_csp_reported_outputs::TS_1ST},		//[-] Operating mode in second subtimestep
 	{C_csp_solver::C_solver_outputs::OP_MODE_3, C_csp_reported_outputs::TS_1ST},		//[-] Operating mode in third subtimestep
@@ -1925,7 +1925,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
 
 		int n_sub_ts = (int)mv_time_local.size();
-		mc_reported_outputs.overwrite_vector_to_constant(C_solver_outputs::N_OP_MODES, n_sub_ts);	//[-]
+        mc_reported_outputs.value(C_solver_outputs::N_OP_MODES, n_sub_ts);
 		if( n_sub_ts == 1 )
 		{
 			mc_reported_outputs.value(C_solver_outputs::OP_MODE_1, operating_mode);
