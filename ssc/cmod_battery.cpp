@@ -2012,8 +2012,14 @@ public:
             if (is_assigned("batt_pv_ac_forecast")) {
                 p_pv_ac_forecast = as_vector_ssc_number_t("batt_pv_ac_forecast");
                 // Annual simulation is enforced above
-                if (p_pv_ac_forecast.size() < dt_hour_gen * 8760 && batt_forecast_choice == dispatch_t::WEATHER_FORECAST_CHOICE::WF_CUSTOM) {
-                    throw exec_error("battery", "batt_pv_clipping_forecast forecast length is " + std::to_string(p_pv_ac_forecast.size()) + " when custom weather file forecast is selected. Change batt_dispatch_wf_forecast_choice or provide a forecast of at least length " + std::to_string(dt_hour_gen * 8760));
+                if (p_pv_ac_forecast.size() < dt_hour_gen * 8760) {
+                    if (batt_forecast_choice == dispatch_t::WEATHER_FORECAST_CHOICE::WF_CUSTOM) {
+                        throw exec_error("battery", "batt_pv_clipping_forecast forecast length is " + std::to_string(p_pv_ac_forecast.size()) + " when custom weather file forecast is selected. Change batt_dispatch_wf_forecast_choice or provide a forecast of at least length " + std::to_string(dt_hour_gen * 8760));
+                    }
+                    else {
+                        // Using look ahead or look behind, and need to clear inputs from lk
+                        p_pv_ac_forecast = power_input_lifetime;
+                    }
                 }
             }
             else {
