@@ -109,15 +109,15 @@ TEST_F(CMBattwatts_cmod_battwatts, ResidentialDefaultsLeadAcid) {
     ssc_number_t peakKwCharge = *std::min_element(batt_power_data.begin(), batt_power_data.end());
 
     EXPECT_NEAR(peakKwDischarge, 1.83, 0.1);
-    EXPECT_NEAR(peakKwCharge, -2.7, 0.1);
+    EXPECT_NEAR(peakKwCharge, -2.56, 0.1);
 
     auto batt_voltage = data.as_vector_ssc_number_t("batt_voltage");
     ssc_number_t peakVoltage = *std::max_element(batt_voltage.begin(), batt_voltage.end());
-    EXPECT_NEAR(peakVoltage, 61.8, 0.1);
+    EXPECT_NEAR(peakVoltage, 61.43, 0.1);
 
     auto cycles = data.as_vector_ssc_number_t("batt_cycles");
     ssc_number_t maxCycles = *std::max_element(cycles.begin(), cycles.end());
-    EXPECT_NEAR(maxCycles, 614, 0.1);
+    EXPECT_NEAR(maxCycles, 616, 0.1);
 }
 
 TEST_F(CMBattwatts_cmod_battwatts, NoPV) {
@@ -147,5 +147,5 @@ TEST_F(CMBattwatts_cmod_battwatts, NoPV) {
 
     auto cycles = data.as_vector_ssc_number_t("batt_cycles");
     ssc_number_t maxCycles = *std::max_element(cycles.begin(), cycles.end());
-    EXPECT_NEAR(maxCycles, 525, 0.1);
+    EXPECT_NEAR(maxCycles, 519, 0.1);
 }

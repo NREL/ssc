@@ -43,21 +43,24 @@ TEST_F(lib_battery_lifetime_cycle_test, runCycleLifetimeTest) {
     EXPECT_NEAR(s.average_range, 90, tol);
     EXPECT_NEAR(s.n_cycles, 249, tol);
 
+    // Cycles at a smaller DOD should produce a smaller amount of degradation
     while (idx < 1000){
-        if (idx % 2 != 0){
+        if (idx % 2 != 0) {
             DOD = 90;
         }
+        else
+            DOD = 80;
         cycle_model->runCycleLifetime(DOD);
         idx++;
     }
     s = cycle_model->get_state();
-    EXPECT_NEAR(s.cycle->q_relative_cycle, 91.244, tol);
-    EXPECT_NEAR(s.cycle->rainflow_Xlt, 0, tol);
-    EXPECT_NEAR(s.cycle->rainflow_Ylt, 0, tol);
-    EXPECT_NEAR(s.cycle->rainflow_jlt, 2, tol);
-    EXPECT_NEAR(s.cycle_range, 0, tol);
-    EXPECT_NEAR(s.average_range, 44.9098, tol);
-    EXPECT_NEAR(s.n_cycles, 499, tol);
+    EXPECT_NEAR(s.cycle->q_relative_cycle, 94.52, tol); // Only 0.5%, even with the same number of cycles
+    EXPECT_NEAR(s.cycle->rainflow_Xlt, 10, tol);
+    EXPECT_NEAR(s.cycle->rainflow_Ylt, 15, tol);
+    EXPECT_NEAR(s.cycle->rainflow_jlt, 4, tol);
+    EXPECT_NEAR(s.cycle_range, 10, tol);
+    EXPECT_NEAR(s.average_range, 50.0, tol);
+    EXPECT_NEAR(s.n_cycles, 498, tol);
 }
 
 TEST_F(lib_battery_lifetime_cycle_test, runCycleLifetimeTestJaggedProfile) {
@@ -86,7 +89,7 @@ TEST_F(lib_battery_lifetime_cycle_test, runCycleLifetimeTestKokamProfile) {
         idx++;
     }
     lifetime_state s = cycle_model->get_state();
-    EXPECT_NEAR(s.cycle->q_relative_cycle, 99.79, tol);
+    EXPECT_NEAR(s.cycle->q_relative_cycle, 99.77, tol);
     EXPECT_NEAR(s.cycle->rainflow_Xlt, 75.09, tol);
     EXPECT_NEAR(s.cycle->rainflow_Ylt, 75.27, tol);
     EXPECT_NEAR(s.cycle->rainflow_jlt, 5, tol);
