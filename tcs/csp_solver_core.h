@@ -1111,25 +1111,36 @@ public:
 		};
 
 	private:
-		E_m_dot_solver_modes m_solver_mode;  //[-] see enum: solver_modes
+
+        // Defined in constructor
+
+        E_m_dot_solver_modes m_solver_mode;  //[-] see enum: solver_modes
 
 		C_csp_solver* mpc_csp_solver;
 
 		C_csp_power_cycle::E_csp_power_cycle_modes m_pc_mode;      //[-]
         C_csp_collector_receiver::E_csp_cr_modes m_cr_mode;      //[-]
+        C_csp_collector_receiver::E_csp_cr_modes m_htr_mode;    //[-]
 
         bool m_is_rec_outlet_to_hottank;    //[-]
 
         double m_q_dot_elec_to_CR_heat;   //[MWt]
+        double m_q_dot_elec_to_PAR_HTR;     //[MWt]
 
 		double m_q_dot_pc_target;   //[MWt]
 
 		double m_defocus;   //[-]
+        double m_defocus_PAR_HTR;   //[-]
+
 		double m_t_ts_in;      //[s]
 		double m_P_field_in;    //[kPa]
 		double m_x_field_in;    //[-]
 
 		double m_T_field_cold_guess;    //[C]
+
+        // Not defined in constructor
+        C_csp_solver_htf_1state mc_htr_htf_state_in;
+        C_csp_collector_receiver::S_csp_cr_out_solver ms_htr_out_solver;
 
 	public:
 		
@@ -1140,10 +1151,12 @@ public:
 
 		C_MEQ__m_dot_tes(E_m_dot_solver_modes solver_mode, C_csp_solver* pc_csp_solver,
             C_csp_power_cycle::E_csp_power_cycle_modes pc_mode, C_csp_collector_receiver::E_csp_cr_modes cr_mode,
+            C_csp_collector_receiver::E_csp_cr_modes htr_mode,    //[-]
             double q_dot_elec_to_CR_heat /*MWt*/,
+            double q_dot_elec_to_PAR_HTR /*MWt*/,
             bool is_rec_outlet_to_hottank,
 			double q_dot_pc_target /*MWt*/,
-			double defocus /*-*/, double t_ts /*s*/,
+			double defocus /*-*/, double defocus_PAR_HTR, double t_ts /*s*/,
 			double P_field_in /*kPa*/, double x_field_in /*-*/,
 			double T_field_cold_guess /*C*/)
 		{
@@ -1152,13 +1165,18 @@ public:
 			mpc_csp_solver = pc_csp_solver;
 			m_pc_mode = pc_mode;    //[-]
 			m_cr_mode = cr_mode;    //[-]
+            m_htr_mode = htr_mode;  //[-]
 
             m_q_dot_elec_to_CR_heat = q_dot_elec_to_CR_heat;    //[MWt]
+            m_q_dot_elec_to_PAR_HTR = q_dot_elec_to_PAR_HTR;    //[MWt]
 
             m_is_rec_outlet_to_hottank = is_rec_outlet_to_hottank;
 
 			m_q_dot_pc_target = q_dot_pc_target;    //[MWt]
-			m_defocus = defocus;    //[-]
+
+            m_defocus = defocus;    //[-]
+            m_defocus_PAR_HTR = defocus_PAR_HTR;    //[-]
+
 			m_t_ts_in = t_ts;          //[s]
 			m_P_field_in = P_field_in;  //[kPa]
 			m_x_field_in = x_field_in;  //[-]
@@ -1184,13 +1202,17 @@ public:
 
         C_csp_power_cycle::E_csp_power_cycle_modes m_pc_mode;      //[-]
         C_csp_collector_receiver::E_csp_cr_modes m_cr_mode;      //[-]
+        C_csp_collector_receiver::E_csp_cr_modes m_htr_mode;    //[-]
 
         double m_q_dot_elec_to_CR_heat;   //[MWt]
+        double m_q_dot_elec_to_PAR_HTR;     //[MWt]
 
         bool m_is_rec_outlet_to_hottank;    //[-]
 
 		double m_defocus;   //[-]
-		double m_t_ts_in;      //[s]
+        double m_defocus_PAR_HTR;   //[-]
+
+        double m_t_ts_in;      //[s]
 
 		double m_P_field_in;	//[kPa]
 		double m_x_field_in;	//[-]
@@ -1198,26 +1220,32 @@ public:
 	public:
 		double m_t_ts_calc; //[s]
 
-		C_MEQ__T_field_cold(C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode, C_csp_solver* pc_csp_solver,
-			double q_dot_pc_target /*MWt*/,
+        C_MEQ__T_field_cold(C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode, C_csp_solver* pc_csp_solver,
+            double q_dot_pc_target /*MWt*/,
             C_csp_power_cycle::E_csp_power_cycle_modes pc_mode, C_csp_collector_receiver::E_csp_cr_modes cr_mode,
-            double q_dot_elec_to_CR_heat /*MWt*/,
+            C_csp_collector_receiver::E_csp_cr_modes htr_mode,    //[-]
+            double q_dot_elec_to_CR_heat /*MWt*/, double q_dot_elec_to_PAR_HTR /*MWt*/,
             bool is_rec_outlet_to_hottank,
-			double defocus /*-*/, double t_ts /*s*/,
+            double defocus /*-*/, double defocus_PAR_HTR /*-*/, double t_ts /*s*/,
 			double P_field_in /*kPa*/, double x_field_in /*-*/)
 		{
 			m_solver_mode = solver_mode;
 
 			mpc_csp_solver = pc_csp_solver;
             m_q_dot_elec_to_CR_heat = q_dot_elec_to_CR_heat;    //[MWt]
+            m_q_dot_elec_to_PAR_HTR = q_dot_elec_to_PAR_HTR;    //[MWt]
 
 			m_q_dot_pc_target = q_dot_pc_target;    //[MWt]
 
 			m_pc_mode = pc_mode;
 			m_cr_mode = cr_mode;
+            m_htr_mode = htr_mode;
             m_is_rec_outlet_to_hottank = is_rec_outlet_to_hottank;
-			m_defocus = defocus;
-			m_t_ts_in = t_ts;  //[s]
+
+            m_defocus = defocus;
+            m_defocus_PAR_HTR = defocus_PAR_HTR;
+
+            m_t_ts_in = t_ts;  //[s]
 
 			m_P_field_in = P_field_in;  //[kPa]
 			m_x_field_in = x_field_in;  //[-]
@@ -1245,24 +1273,29 @@ public:
 		E_timestep_target_modes m_step_target_mode;
 
 		C_csp_solver* mpc_csp_solver;
-        double m_q_dot_elec_to_CR_heat;   //[MWt]
+        double m_q_dot_elec_to_CR_heat;     //[MWt]
+        double m_q_dot_elec_to_PAR_HTR;     //[MWt]
 
 		double m_q_dot_pc_target;   //[MWt]
 
         C_csp_power_cycle::E_csp_power_cycle_modes m_pc_mode;      //[-]
         C_csp_collector_receiver::E_csp_cr_modes m_cr_mode;      //[-]
+        C_csp_collector_receiver::E_csp_cr_modes m_htr_mode;    //[-]
+
         bool m_is_rec_outlet_to_hottank;    //[-]
 
 		double m_defocus;   //[-]
+        double m_defocus_PAR_HTR;   //[-]
 
 	public:
 		C_MEQ__timestep(C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode, C_MEQ__timestep::E_timestep_target_modes step_target_mode,
 			C_csp_solver* pc_csp_solver,
 			double q_dot_pc_target /*MWt*/,
             C_csp_power_cycle::E_csp_power_cycle_modes pc_mode, C_csp_collector_receiver::E_csp_cr_modes cr_mode,
-            double q_dot_elec_to_CR_heat /*MWt*/,
+            C_csp_collector_receiver::E_csp_cr_modes htr_mode,    //[-]
+            double q_dot_elec_to_CR_heat /*MWt*/, double q_dot_elec_to_PAR_HTR /*MWt*/,
             bool is_rec_outlet_to_hottank,
-			double defocus /*-*/)
+			double defocus /*-*/, double defocus_PAR_HTR /*-*/)
 		{
 			m_solver_mode = solver_mode;
 			m_step_target_mode = step_target_mode;
@@ -1270,12 +1303,17 @@ public:
 			mpc_csp_solver = pc_csp_solver;
 
             m_q_dot_elec_to_CR_heat = q_dot_elec_to_CR_heat;    //[MWt]
+            m_q_dot_elec_to_PAR_HTR = q_dot_elec_to_PAR_HTR;    //[MWt]
+
 			m_q_dot_pc_target = q_dot_pc_target;    //[MWt]
 
 			m_pc_mode = pc_mode;
 			m_cr_mode = cr_mode;
+            m_htr_mode = htr_mode;
             m_is_rec_outlet_to_hottank = is_rec_outlet_to_hottank;
-			m_defocus = defocus;
+
+            m_defocus = defocus;
+            m_defocus_PAR_HTR = defocus_PAR_HTR;
 		}
 
 		virtual int operator()(double t_ts_guess /*s*/, double* diff_t_ts_guess /*s*/);
@@ -1298,10 +1336,14 @@ public:
         C_csp_solver *mpc_csp_solver;
 
         double m_q_dot_elec_to_CR_heat; //[MWt]
+        double m_q_dot_elec_to_PAR_HTR;     //[MWt]
+
         double m_q_dot_pc_target;   //[MWt]
 
         C_csp_power_cycle::E_csp_power_cycle_modes m_pc_mode;      //[-]
         C_csp_collector_receiver::E_csp_cr_modes m_cr_mode;      //[-]
+        C_csp_collector_receiver::E_csp_cr_modes m_htr_mode;    //[-]
+
         bool m_is_rec_outlet_to_hottank;    //[-]
 
         double m_t_ts_initial;  //[s]
@@ -1313,7 +1355,8 @@ public:
             C_csp_solver *pc_csp_solver, 
 			double q_dot_pc_target /*MWt*/,
             C_csp_power_cycle::E_csp_power_cycle_modes pc_mode, C_csp_collector_receiver::E_csp_cr_modes cr_mode,
-            double q_dot_elec_to_CR_heat /*MWt*/,
+            C_csp_collector_receiver::E_csp_cr_modes htr_mode,    //[-]
+            double q_dot_elec_to_CR_heat /*MWt*/, double q_dot_elec_to_PAR_HTR /*MWt*/,
             bool is_rec_outlet_to_hottank,
             double t_ts_initial /*s*/)
         {
@@ -1324,10 +1367,13 @@ public:
             mpc_csp_solver = pc_csp_solver;
 
             m_q_dot_elec_to_CR_heat = q_dot_elec_to_CR_heat;    //[MWt]
+            m_q_dot_elec_to_PAR_HTR = q_dot_elec_to_PAR_HTR;    //[MWt]
+
             m_q_dot_pc_target = q_dot_pc_target;    //[MWt]
 
             m_pc_mode = pc_mode;
             m_cr_mode = cr_mode;
+            m_htr_mode = htr_mode;
             m_is_rec_outlet_to_hottank = is_rec_outlet_to_hottank;
 
             m_t_ts_initial = t_ts_initial;  //[s]
@@ -1338,10 +1384,11 @@ public:
         double calc_meq_target();
     };
 
-	int solve_operating_mode(C_csp_collector_receiver::E_csp_cr_modes cr_mode, C_csp_power_cycle::E_csp_power_cycle_modes pc_mode,
+	int solve_operating_mode(C_csp_collector_receiver::E_csp_cr_modes cr_mode,
+        C_csp_power_cycle::E_csp_power_cycle_modes pc_mode, C_csp_collector_receiver::E_csp_cr_modes htr_mode,    //[-]
         C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode, C_MEQ__timestep::E_timestep_target_modes step_target_mode,
 		double q_dot_pc_target /*MWt*/, bool is_defocus, bool is_rec_outlet_to_hottank,
-        double q_dot_elec_to_CR_heat /*MWt*/,
+        double q_dot_elec_to_CR_heat /*MWt*/, double q_dot_elec_to_PAR_HTR /*MWt*/,
         std::string op_mode_str, double& defocus_solved);
 
 
@@ -1364,6 +1411,7 @@ public:
         // Constructor arguments
         C_csp_collector_receiver::E_csp_cr_modes m_cr_mode;
         C_csp_power_cycle::E_csp_power_cycle_modes m_pc_mode;
+        C_csp_collector_receiver::E_csp_cr_modes m_htr_mode;    
         C_MEQ__m_dot_tes::E_m_dot_solver_modes m_solver_mode;
         C_MEQ__timestep::E_timestep_target_modes m_step_target_mode;
 
@@ -1422,7 +1470,7 @@ public:
             double q_dot_pc_on_dispatch_target /*MWt*/, double q_dot_pc_startup /*MWt*/, double q_dot_pc_standby /*MWt*/,
             double q_dot_pc_min /*MWt*/, double q_dot_pc_max /*MWt*/, double q_dot_pc_startup_max /*MWt*/,
             double m_dot_pc_startup_max /*kg/hr*/, double m_dot_pc_max /*kg/hr*/, double m_dot_pc_min /*kg/hr*/,
-            double q_dot_elec_to_CR_heat /*MWt*/, double limit_comp_tol /*-*/,
+            double q_dot_elec_to_CR_heat /*MWt*/, double q_dot_elec_to_PAR_HTR /*MWt*/, double limit_comp_tol /*-*/,
             double& defocus_solved, bool& is_op_mode_avail /*-*/, bool& is_turn_off_plant, bool& is_rec_su_unchanged);
 
     protected:
@@ -2036,7 +2084,7 @@ public:
             double q_dot_pc_on_target /*MWt*/, double q_dot_pc_startup /*MWt*/, double q_dot_pc_standby /*MWt*/,
             double q_dot_pc_min /*MWt*/, double q_dot_pc_max /*MWt*/, double q_dot_pc_startup_max /*MWt*/,
             double m_dot_pc_startup_max /*kg/hr*/, double m_dot_pc_max /*kg/hr*/, double m_dot_pc_min /*kg/hr*/,
-            double W_dot_elec_to_CR_heat /*MWe*/, double limit_comp_tol /*-*/,
+            double q_dot_elec_to_CR_heat /*MWe*/, double q_dot_elec_to_PAR_HTR /*MWt*/, double limit_comp_tol /*-*/,
             double& defocus_solved, bool& is_op_mode_avail /*-*/, bool& is_turn_off_plant, bool& is_turn_off_rec_su);
 
         bool is_mode_avail(E_operating_modes op_mode)

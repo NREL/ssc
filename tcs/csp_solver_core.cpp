@@ -418,7 +418,11 @@ void C_csp_solver::init()
 	}
 
     if (!mc_collector_receiver.m_is_sensible_htf && m_is_parallel_heater) {
-        throw(C_csp_exception("Model does allow parallel heater with latent heat receivers", "CSP Solver"));
+        throw(C_csp_exception("Model does not allow parallel heater with latent heat receivers", "CSP Solver"));
+    }
+
+    if (m_is_parallel_heater && m_is_rec_to_coldtank_allowed) {
+        throw(C_csp_exception("Model does not allow parallel heater when receiver is configured to send HTF to cold tank", "CSP Solver"));
     }
 
     /* 
@@ -802,11 +806,13 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
             bool is_turn_off_plant = false;
             bool is_turn_off_rec_su = false;
 
+            double q_dot_elec_to_PAR_HTR = std::numeric_limits<double>::quiet_NaN();
+
             are_models_converged = mc_operating_modes.solve(operating_mode, this, is_rec_outlet_to_hottank,
                 q_pc_target, q_dot_pc_su_max, q_pc_sb,
                 q_pc_min, m_q_dot_pc_max, q_dot_pc_su_max,
                 m_m_dot_pc_max_startup, m_m_dot_pc_max, m_m_dot_pc_min,
-                q_dot_elec_to_CR_heat, 1.E-3,
+                q_dot_elec_to_CR_heat, q_dot_elec_to_PAR_HTR, 1.E-3,
                 defocus_solved, is_op_mode_avail, is_turn_off_plant, is_turn_off_rec_su);
             if (is_turn_off_rec_su) {
                 is_rec_su_allowed = false;
@@ -1422,6 +1428,8 @@ C_csp_solver::C_operating_mode_core::C_operating_mode_core(C_csp_collector_recei
     m_cycle_target_type = cycle_target_type;
     m_is_sensible_htf_only = is_sensible_htf_only;
 
+    m_htr_mode = C_csp_collector_receiver::E_csp_cr_modes::OFF;
+
     turn_on_mode_availability();
 }
 
@@ -1447,7 +1455,7 @@ bool C_csp_solver::C_operating_mode_core::solve(C_csp_solver* pc_csp_solver, boo
     double q_dot_pc_on_dispatch_target /*MWt*/, double q_dot_pc_startup /*MWt*/, double q_dot_pc_standby /*MWt*/,
     double q_dot_pc_min /*MWt*/, double q_dot_pc_max /*MWt*/, double q_dot_pc_startup_max /*MWt*/,
     double m_dot_pc_startup_max /*kg/hr*/, double m_dot_pc_max /*kg/hr*/, double m_dot_pc_min /*kg/hr*/,
-    double q_dot_elec_to_CR_heat /*MWt*/, double limit_comp_tol /*-*/,
+    double q_dot_elec_to_CR_heat /*MWt*/, double q_dot_elec_to_PAR_HTR /*MWt*/, double limit_comp_tol /*-*/,
     double& defocus_solved, bool& is_op_mode_avail /*-*/, bool& is_turn_off_plant, bool& is_turn_off_rec_su)
 {
     if (!pc_csp_solver->mc_collector_receiver.m_is_sensible_htf && m_is_sensible_htf_only) {
@@ -1494,9 +1502,11 @@ bool C_csp_solver::C_operating_mode_core::solve(C_csp_solver* pc_csp_solver, boo
         throw(C_csp_exception("Unknown cycle target type"));
     }
 
-    int solve_error_code = pc_csp_solver->solve_operating_mode(m_cr_mode, m_pc_mode, m_solver_mode,
-        m_step_target_mode, q_dot_pc_solve, m_is_defocus, is_rec_outlet_to_hottank,
-        q_dot_elec_to_CR_heat,
+    int solve_error_code = pc_csp_solver->solve_operating_mode(m_cr_mode,
+        m_pc_mode, m_htr_mode,
+        m_solver_mode, m_step_target_mode,
+        q_dot_pc_solve, m_is_defocus, is_rec_outlet_to_hottank,
+        q_dot_elec_to_CR_heat, q_dot_elec_to_PAR_HTR,
         m_op_mode_name, defocus_solved);
 
     bool is_converged = true;
@@ -2819,14 +2829,14 @@ bool C_csp_solver::C_system_operating_modes::solve(C_system_operating_modes::E_o
     double q_dot_pc_on_target /*MWt*/, double q_dot_pc_startup /*MWt*/, double q_dot_pc_standby /*MWt*/,
     double q_dot_pc_min /*MWt*/, double q_dot_pc_max /*MWt*/, double q_dot_pc_startup_max /*MWt*/,
     double m_dot_pc_startup_max /*kg/hr*/, double m_dot_pc_max /*kg/hr*/, double m_dot_pc_min /*kg/hr*/,
-    double q_dot_elec_to_CR_heat /*MWt*/, double limit_comp_tol /*-*/,
+    double q_dot_elec_to_CR_heat /*MWt*/, double q_dot_elec_to_PAR_HTR /*MWt*/, double limit_comp_tol /*-*/,
     double& defocus_solved, bool& is_op_mode_avail /*-*/, bool& is_turn_off_plant, bool& is_turn_off_rec_su)
 {
     return get_pointer_to_op_mode(op_mode)->solve(pc_csp_solver, is_rec_outlet_to_hottank,
         q_dot_pc_on_target, q_dot_pc_startup, q_dot_pc_standby,
         q_dot_pc_min, q_dot_pc_max, q_dot_pc_startup_max,
         m_dot_pc_startup_max, m_dot_pc_max, m_dot_pc_min,
-        q_dot_elec_to_CR_heat, limit_comp_tol,
+        q_dot_elec_to_CR_heat, q_dot_elec_to_PAR_HTR, limit_comp_tol,
         defocus_solved, is_op_mode_avail, is_turn_off_plant, is_turn_off_rec_su);
 }
 
