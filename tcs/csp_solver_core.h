@@ -959,6 +959,8 @@ private:
 	C_csp_solver_htf_1state mc_cr_htf_state_in;
 	C_csp_collector_receiver::S_csp_cr_out_solver mc_cr_out_solver;
 
+    C_csp_collector_receiver::S_csp_cr_out_solver mc_par_htr_out_solver;
+
 	C_csp_solver_htf_1state mc_pc_htf_state_in;
 	C_csp_power_cycle::S_control_inputs mc_pc_inputs;
 	C_csp_power_cycle::S_csp_pc_out_solver mc_pc_out_solver;
@@ -1148,7 +1150,6 @@ public:
 
         // Not defined in constructor
         C_csp_solver_htf_1state mc_htr_htf_state_in;
-        C_csp_collector_receiver::S_csp_cr_out_solver ms_htr_out_solver;
 
 	public:
 		
@@ -1464,6 +1465,16 @@ public:
                                 cycle_targets cycle_target_type,
                                 bool is_sensible_htf_only);
 
+        C_operating_mode_core(C_csp_collector_receiver::E_csp_cr_modes cr_mode,
+                                C_csp_power_cycle::E_csp_power_cycle_modes pc_mode,
+                                C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode,
+                                C_MEQ__timestep::E_timestep_target_modes step_target_mode,
+                                bool is_defocus,
+                                std::string op_mode_name,
+                                cycle_targets cycle_target_type,
+                                bool is_sensible_htf_only,
+                                C_csp_collector_receiver::E_csp_cr_modes htr_mode);
+
         virtual void handle_solve_error(double time /*hr*/, bool& is_rec_su_unchanged);
 
         virtual void check_system_limits(C_csp_solver* pc_csp_solver,
@@ -1602,6 +1613,14 @@ public:
             C_csp_power_cycle::OFF, C_MEQ__m_dot_tes::E__CR_OUT__0, C_MEQ__timestep::E_STEP_FIXED,
             false, "CR_ON__PC_OFF__TES_CH__AUX_OFF", QUIETNAN, true) {}
 
+    };
+
+    class C_CR_OFF__PC_OFF__TES_CH__HTR_ON : public C_operating_mode_core
+    {
+    public:
+        C_CR_OFF__PC_OFF__TES_CH__HTR_ON() : C_operating_mode_core(C_csp_collector_receiver::OFF,
+            C_csp_power_cycle::OFF, C_MEQ__m_dot_tes::E__CR_OUT__0, C_MEQ__timestep::E_STEP_FIXED,
+            false, "CR_OFF__PC_OFF__TES_CH__HTR_ON", QUIETNAN, true, C_csp_collector_receiver::ON) {}
     };
 
     class C_CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF : public C_operating_mode_core
@@ -2033,6 +2052,8 @@ public:
         C_CR_TO_COLD__PC_TARGET__TES_DC__AUX_OFF mc_CR_TO_COLD__PC_TARGET__TES_DC__AUX_OFF;
         C_CR_TO_COLD__PC_SB__TES_DC__AUX_OFF mc_CR_TO_COLD__PC_SB__TES_DC__AUX_OFF;
 
+        C_CR_OFF__PC_OFF__TES_CH__HTR_ON mc_CR_OFF__PC_OFF__TES_CH__HTR_ON;
+
     public:
 
         enum E_operating_modes
@@ -2076,6 +2097,8 @@ public:
             CR_TO_COLD__PC_MIN__TES_EMPTY__AUX_OFF,
             CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF,
             CR_TO_COLD__PC_SU__TES_DC__AUX_OFF,
+
+            CR_OFF__PC_OFF__TES_CH__HTR_ON,
 
             ITER_END
         };

@@ -741,17 +741,17 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
                 mc_htr_htf_state_in,
                 m_q_dot_elec_to_PAR_HTR,
                 m_defocus_PAR_HTR,
-                ms_htr_out_solver,
+                mpc_csp_solver->mc_par_htr_out_solver,
                 mpc_csp_solver->mc_kernel.mc_sim_info);
 
-            if (ms_htr_out_solver.m_m_dot_salt_tot == 0.0 || ms_htr_out_solver.m_q_thermal == 0.0)
+            if (mpc_csp_solver->mc_par_htr_out_solver.m_m_dot_salt_tot == 0.0 || mpc_csp_solver->mc_par_htr_out_solver.m_q_thermal == 0.0)
             {
                 *diff_target = std::numeric_limits<double>::quiet_NaN();
                 return -1;
             }
 
-            m_dot_htf_par_htr = ms_htr_out_solver.m_m_dot_salt_tot;  //[kg/hr]
-            T_htf_hot_par_htr = ms_htr_out_solver.m_T_salt_hot;      //[C]
+            m_dot_htf_par_htr = mpc_csp_solver->mc_par_htr_out_solver.m_m_dot_salt_tot;  //[kg/hr]
+            T_htf_hot_par_htr = mpc_csp_solver->mc_par_htr_out_solver.m_T_salt_hot;      //[C]
         }
         else if (m_htr_mode == C_csp_collector_receiver::STARTUP)
         {
@@ -761,15 +761,26 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
         {
             mpc_csp_solver->mp_heater->off(mpc_csp_solver->mc_weather.ms_outputs,
                 mc_htr_htf_state_in,
-                ms_htr_out_solver,
+                mpc_csp_solver->mc_par_htr_out_solver,
                 mpc_csp_solver->mc_kernel.mc_sim_info);
 
             m_dot_htf_par_htr = 0.0;    //[kg/hr]
         }
 
+        // Assume for parallel heater configs, primary CR will not send HTF to cold tank
+        //    May eventually want to expand model to capture this
+        if (m_dot_cr_out_to_cold_tank) {
+            throw(C_csp_exception("Model is not configured to operate parallel heater when primary CR output is routed to cold tank"));
+        }
+        m_dot_field_out_to_cold_tank = 0.0;
+
         if (m_dot_htf_par_htr > 0.0) {
             m_dot_field_out = m_dot_cr_out + m_dot_htf_par_htr;     //[kg/hr]
             T_htf_hot_cr_mixed = (m_dot_cr_out*mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot + m_dot_htf_par_htr*T_htf_hot_par_htr)/m_dot_field_out;    //[C]
+        }
+        else {
+            m_dot_field_out = m_dot_cr_out;
+            T_htf_hot_cr_mixed = mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot;     //[C]
         }
     }
     else {   // No parallel heater, so set mixed field outputs to cr outputs

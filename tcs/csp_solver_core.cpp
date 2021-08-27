@@ -890,11 +890,19 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
             W_dot_cr_freeze_protection = mc_cr_out_solver.m_q_dot_heater;
         }
 
+        double W_dot_par_htr_elec_load = 0.0;
+        if (m_is_parallel_heater) {
+            W_dot_par_htr_elec_load = mc_par_htr_out_solver.m_W_dot_col_tracking +
+                                    mc_par_htr_out_solver.m_W_dot_htf_pump +
+                                    mc_par_htr_out_solver.m_q_dot_heater;       //[MWe]
+        }
+
 		double W_dot_net = mc_pc_out_solver.m_P_cycle - 
 			mc_cr_out_solver.m_W_dot_col_tracking -
 			mc_cr_out_solver.m_W_dot_htf_pump - 
 			(mc_pc_out_solver.m_W_dot_htf_pump + W_dot_tes_pump) -
 			W_dot_cr_freeze_protection -
+            W_dot_par_htr_elec_load -
 			mc_pc_out_solver.m_W_cool_par -
 			mc_tes_outputs.m_q_heater - 
 			W_dot_fixed -
@@ -1010,19 +1018,29 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
             m_dot_cr_out_to_tes_hot = 0.0;
         }
 
-		double m_dot_bal_hot = (m_dot_cr_out_to_tes_hot +
+        double m_dot_par_htr_out_to_tes_hot = 0.0;      //[kg/hr]
+        if (m_is_parallel_heater) {
+            m_dot_par_htr_out_to_tes_hot = mc_par_htr_out_solver.m_m_dot_salt_tot;  //[kg/hr]
+        }
+
+		double m_dot_bal_hot = (m_dot_cr_out_to_tes_hot + m_dot_par_htr_out_to_tes_hot +
 							mc_tes_outputs.m_m_dot_tes_hot_out*3600.0 -
 							mc_pc_inputs.m_m_dot -
 							mc_tes_outputs.m_m_dot_cr_to_tes_hot*3600.0) / m_m_dot_pc_des;		//[-]
 
 		double m_dot_bal_cold = (m_dot_cr_out_to_tes_cold + mc_pc_inputs.m_m_dot +
 							mc_tes_outputs.m_m_dot_tes_cold_out*3600.0 -
-							mc_cr_out_solver.m_m_dot_salt_tot - 
+							mc_cr_out_solver.m_m_dot_salt_tot - m_dot_par_htr_out_to_tes_hot -
 							mc_tes_outputs.m_m_dot_tes_cold_in*3600.0) / m_m_dot_pc_des;	//[-]
 
 		double m_dot_bal_max = std::max(fabs(m_dot_bal_hot), fabs(m_dot_bal_cold));
 
-		double q_dot_bal = (mc_cr_out_solver.m_q_thermal +
+        double q_dot_par_htr = 0.0;
+        if (m_is_parallel_heater) {
+            q_dot_par_htr = mc_par_htr_out_solver.m_q_thermal;  //[MWt]
+        }
+
+		double q_dot_bal = (mc_cr_out_solver.m_q_thermal + q_dot_par_htr +
 							mc_tes_outputs.m_q_dot_dc_to_htf -
 							mc_pc_out_solver.m_q_dot_htf -
 							mc_tes_outputs.m_q_dot_ch_from_htf) / m_cycle_q_dot_des;	//[-]
@@ -1482,6 +1500,30 @@ C_csp_solver::C_operating_mode_core::C_operating_mode_core(C_csp_collector_recei
     m_is_sensible_htf_only = is_sensible_htf_only;
 
     m_htr_mode = C_csp_collector_receiver::E_csp_cr_modes::OFF;
+
+    turn_on_mode_availability();
+}
+
+C_csp_solver::C_operating_mode_core::C_operating_mode_core(C_csp_collector_receiver::E_csp_cr_modes cr_mode,
+    C_csp_power_cycle::E_csp_power_cycle_modes pc_mode,
+    C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode,
+    C_MEQ__timestep::E_timestep_target_modes step_target_mode,
+    bool is_defocus,
+    std::string op_mode_name,
+    cycle_targets cycle_target_type,
+    bool is_sensible_htf_only,
+    C_csp_collector_receiver::E_csp_cr_modes htr_mode)
+{
+    m_cr_mode = cr_mode;
+    m_pc_mode = pc_mode;
+    m_solver_mode = solver_mode;
+    m_step_target_mode = step_target_mode;
+    m_is_defocus = is_defocus;
+    m_op_mode_name = op_mode_name;
+    m_cycle_target_type = cycle_target_type;
+    m_is_sensible_htf_only = is_sensible_htf_only;
+
+    m_htr_mode = htr_mode;
 
     turn_on_mode_availability();
 }
@@ -2873,6 +2915,8 @@ C_csp_solver::C_operating_mode_core* C_csp_solver::C_system_operating_modes::get
         return &mc_CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF;
     case CR_TO_COLD__PC_SU__TES_DC__AUX_OFF:
         return &mc_CR_TO_COLD__PC_SU__TES_DC__AUX_OFF;
+    case CR_OFF__PC_OFF__TES_CH__HTR_ON:
+        return &mc_CR_OFF__PC_OFF__TES_CH__HTR_ON;
     default:
         throw(C_csp_exception("Operating mode class not defined"));
     }
@@ -2950,6 +2994,11 @@ C_csp_solver::C_system_operating_modes::E_operating_modes C_csp_solver::C_system
                 is_mode_avail(C_system_operating_modes::CR_OFF__PC_SU__TES_DC__AUX_OFF))
             {
                 operating_mode = C_system_operating_modes::CR_OFF__PC_SU__TES_DC__AUX_OFF;
+            }
+            else if (is_PAR_HTR_allowed && q_dot_PAR_HTR_on > 0.0 && q_dot_tes_ch > 0.0 &&
+                is_mode_avail(C_system_operating_modes::CR_OFF__PC_OFF__TES_CH__HTR_ON)) {
+
+                operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_CH__HTR_ON;
             }
             else
             {
