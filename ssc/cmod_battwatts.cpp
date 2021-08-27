@@ -381,6 +381,7 @@ void cm_battwatts::exec()
 
         std::unique_ptr<resilience_runner> resilience = nullptr;
         std::vector<ssc_number_t> p_crit_load;
+        std::vector<ssc_number_t> p_crit_load_full; p_crit_load_full.reserve(n_rec_lifetime);
         bool run_resilience = as_boolean("run_resiliency_calcs");
         if (is_assigned("crit_load")){
             p_crit_load = as_vector_ssc_number_t("crit_load");
@@ -400,6 +401,21 @@ void cm_battwatts::exec()
             }
         }
 
+        // compute critical load (electric demand) annual escalation multipliers
+        std::vector<ssc_number_t> crit_load_scale = scale_calculator.get_factors("crit_load_escalation");
+
+        interpolation_factor = 1.0;
+        single_year_to_lifetime_interpolated<ssc_number_t>(
+            (bool)as_integer("system_use_lifetime_output"),
+            analysis_period,
+            n_rec_lifetime,
+            p_crit_load,
+            crit_load_scale,
+            interpolation_factor,
+            p_crit_load_full,
+            n_rec_single_year,
+            dt_hour_gen);
+
         /* *********************************************************************************************
         Run Simulation
         *********************************************************************************************** */
@@ -417,7 +433,7 @@ void cm_battwatts::exec()
 
                     if (resilience){
                         resilience->add_battery_at_outage_timestep(*batt->dispatch_model, count);
-                        resilience->run_surviving_batteries(p_crit_load[count % n_rec_single_year], p_ac[count]);
+                        resilience->run_surviving_batteries(p_crit_load_full[count], p_ac[count]);
                     }
 
                     batt->outGenWithoutBattery[count] = p_ac[count];
@@ -432,7 +448,7 @@ void cm_battwatts::exec()
 
 
         if (resilience) {
-            resilience->run_surviving_batteries_by_looping(&p_crit_load[0], &p_ac[0]);
+            resilience->run_surviving_batteries_by_looping(&p_crit_load_full[0], &p_ac[0]);
             calculate_resilience_outputs(this, resilience);
         }
     }

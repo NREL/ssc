@@ -1941,6 +1941,7 @@ static var_info _cm_vtab_battery[] = {
     { SSC_INPUT,		SSC_ARRAY,	     "load",			                           "Electricity load (year 1)",                               "kW",	        "",				        "Load",                             "",	                      "",	                            "" },
     { SSC_INPUT,		SSC_ARRAY,	     "crit_load",			                       "Critical electricity load (year 1)",                      "kW",	        "",				        "Load",                             "",	                      "",	                            "" },
     { SSC_INPUT,        SSC_ARRAY,       "load_escalation",                            "Annual load escalation",                                  "%/year",     "",                     "Load",                             "?=0",                    "",                               "" },
+    { SSC_INPUT,        SSC_ARRAY,       "crit_load_escalation",                       "Annual critical load escalation",                         "%/year",     "",                     "Load",                             "?=0",                    "",                    "" },
     { SSC_INPUT,        SSC_ARRAY,       "grid_outage",                                "Timesteps with grid outage",                              "0/1",        "0=GridAvailable,1=GridUnavailable,Length=load", "Load",    "",                       "",                               "" },
     { SSC_INPUT,        SSC_NUMBER,      "run_resiliency_calcs",                       "Enable resilence calculations for every timestep",        "0/1",        "0=DisableCalcs,1=EnableCalcs",                  "Load",    "?=0",                    "",                               "" },
     { SSC_INOUT,        SSC_NUMBER,      "capacity_factor",                            "Capacity factor",                                         "%",          "",                     "System Output",                             "?=0",                    "",                               "" },
@@ -2078,6 +2079,7 @@ public:
             // resilience metrics for battery
             std::unique_ptr<resilience_runner> resilience = nullptr;
             std::vector<ssc_number_t> p_crit_load;
+            std::vector<ssc_number_t> p_crit_load_full; p_crit_load_full.reserve(n_rec_lifetime);
             bool run_resilience = as_boolean("run_resiliency_calcs");
             if (is_assigned("crit_load")) {
                 p_crit_load = as_vector_ssc_number_t("crit_load");
@@ -2097,6 +2099,21 @@ public:
                     }
                 }
             }
+
+            // compute critical load (electric demand) annual escalation multipliers
+            std::vector<ssc_number_t> crit_load_scale = scale_calculator.get_factors("crit_load_escalation");
+
+            interpolation_factor = 1.0;
+            single_year_to_lifetime_interpolated<ssc_number_t>(
+                use_lifetime,
+                analysis_period,
+                n_rec_lifetime,
+                p_crit_load,
+                crit_load_scale,
+                interpolation_factor,
+                p_crit_load_full,
+                n_rec_single_year,
+                dt_hour_gen);
 
             // Prepare outputs
             ssc_number_t* p_gen = allocate("gen", n_rec_lifetime);
@@ -2146,7 +2163,7 @@ public:
 
                         if (resilience) {
                             resilience->add_battery_at_outage_timestep(*batt->dispatch_model, lifetime_idx);
-                            resilience->run_surviving_batteries(p_crit_load[lifetime_idx % n_rec_single_year], power_input_lifetime[lifetime_idx]);
+                            resilience->run_surviving_batteries(p_crit_load_full[lifetime_idx], power_input_lifetime[lifetime_idx]);
                         }
 
                         batt->outGenWithoutBattery[lifetime_idx] = power_input_lifetime[lifetime_idx];
@@ -2169,7 +2186,7 @@ public:
 
             // resiliency metrics
             if (resilience) {
-                resilience->run_surviving_batteries_by_looping(&p_crit_load[0], &power_input_lifetime[0]);
+                resilience->run_surviving_batteries_by_looping(&p_crit_load_full[0], &power_input_lifetime[0]);
                 calculate_resilience_outputs(this, resilience);
             }
          }

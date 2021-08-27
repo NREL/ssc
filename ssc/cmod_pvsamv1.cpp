@@ -492,6 +492,7 @@ static var_info _cm_vtab_pvsamv1[] = {
         { SSC_INPUT, SSC_ARRAY,    "grid_outage",                          "Timesteps with grid outage",                          "0/1",    "0=GridAvailable,1=GridUnavailable,Length=load", "Load",    "",                       "",                               "" },
         { SSC_INPUT, SSC_NUMBER,   "run_resiliency_calcs",                 "Enable resilence calculations for every timestep",    "0/1",    "0=DisableCalcs,1=EnableCalcs",                  "Load",    "?=0",                    "",                               "" },
         { SSC_INPUT, SSC_ARRAY,    "load_escalation",                      "Annual load escalation",                              "%/year", "",                                                                                                                                                                                      "Load",                                               "?=0",                                "",                    "" },
+        { SSC_INPUT, SSC_ARRAY,    "crit_load_escalation",                 "Annual critical load escalation",                     "%/year", "",                                                                                                                                                                                      "Load",                                               "?=0",                                "",                    "" },
         // NOTE:  other battery storage model inputs and outputs are defined in batt_common.h/batt_common.cpp
 
     // outputs
@@ -1029,6 +1030,7 @@ void cm_pvsamv1::exec()
 
     // lifetime outputs
     std::vector<ssc_number_t> p_load_full; p_load_full.reserve(nlifetime);
+    std::vector<ssc_number_t> p_crit_load_full; // Reserve within an en_batt call, below
     std::vector<ssc_number_t> p_load_forecast_full; // Reserve within an en_batt call, below
 
     //dc hourly adjustment factors
@@ -1199,6 +1201,22 @@ void cm_pvsamv1::exec()
         else {
             p_load_forecast_full = p_load_full;
         }
+
+        p_crit_load_full.reserve(nlifetime);
+        std::vector<ssc_number_t> crit_load_scale = scale_calculator.get_factors("crit_load_escalation");
+        double interpolation_factor = 1.0;
+        // Will pad with zeroes if crit load is not defined - which is fine by the dispatch and powerflow code
+        single_year_to_lifetime_interpolated<ssc_number_t>(
+            (bool)as_integer("system_use_lifetime_output"),
+            nyears,
+            nlifetime,
+            p_crit_load_in,
+            crit_load_scale,
+            interpolation_factor,
+            p_crit_load_full,
+            nrec,
+            ts_hour);
+
     }
 
     for (size_t mpptInput = 0; mpptInput < PVSystem->Inverter->nMpptInputs; mpptInput++)
@@ -2215,7 +2233,7 @@ void cm_pvsamv1::exec()
 
                 if (resilience) {
                     resilience->add_battery_at_outage_timestep(*batt->dispatch_model, idx);
-                    resilience->run_surviving_batteries(p_crit_load_in[idx % nrec], sharedInverter->powerAC_kW, dcPower_kW,
+                    resilience->run_surviving_batteries(p_crit_load_full[idx], sharedInverter->powerAC_kW, dcPower_kW,
                         dcVoltagePerMppt[0], sharedInverter->powerClipLoss_kW, Irradiance->weatherRecord.tdry);
                 }
 
@@ -2387,7 +2405,7 @@ void cm_pvsamv1::exec()
 
                 if (resilience) {
                     resilience->add_battery_at_outage_timestep(*batt->dispatch_model, idx);
-                    resilience->run_surviving_batteries(p_crit_load_in[idx % nrec], PVSystem->p_systemACPower[idx], 0, 0, 0, 0);
+                    resilience->run_surviving_batteries(p_crit_load_full[idx], PVSystem->p_systemACPower[idx], 0, 0, 0, 0);
                 }
 
 				batt->advance(m_vartab, PVSystem->p_systemACPower[idx], 0, p_load_full[idx]);
@@ -2428,7 +2446,7 @@ void cm_pvsamv1::exec()
 			// Update battery with final gen to compute grid power
             if (en_batt) {
                 if (batt->is_outage_step(idx % nrec)) {
-                    batt->update_grid_power(*this, PVSystem->p_systemACPower[idx], p_crit_load_in[idx % nrec], idx);
+                    batt->update_grid_power(*this, PVSystem->p_systemACPower[idx], p_crit_load_full[idx], idx);
                 }
                 else {
                     batt->update_grid_power(*this, PVSystem->p_systemACPower[idx], p_load_full[idx], idx);
@@ -2852,7 +2870,7 @@ void cm_pvsamv1::exec()
 
         // resiliency metrics
     if (resilience) {
-        resilience->run_surviving_batteries_by_looping(&p_crit_load_in[0], PVSystem->p_systemACPower, PVSystem->p_systemDCPower,
+        resilience->run_surviving_batteries_by_looping(&p_crit_load_full[0], PVSystem->p_systemACPower, PVSystem->p_systemDCPower,
             PVSystem->p_mpptVoltage[0], PVSystem->p_inverterClipLoss, Irradiance->p_weatherFileAmbientTemp);
         calculate_resilience_outputs(this, resilience);
     }
