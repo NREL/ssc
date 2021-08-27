@@ -437,7 +437,7 @@ void cm_battwatts::exec()
                     }
 
                     batt->outGenWithoutBattery[count] = p_ac[count];
-                    batt->advance(m_vartab, p_ac[count], voltage, p_load[count]);
+                    batt->advance(m_vartab, p_ac[count], voltage, load_lifetime[count], p_crit_load_full[count]);
                     p_gen[count] = batt->outGenPower[count];
                     count++;
                 }

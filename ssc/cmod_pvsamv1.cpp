@@ -2238,7 +2238,7 @@ void cm_pvsamv1::exec()
                 }
 
                 // Run PV plus battery through sharedInverter, returns AC power
-                batt->advance(m_vartab, dcPower_kW, dcVoltagePerMppt[0], cur_load, sharedInverter->powerClipLoss_kW);
+                batt->advance(m_vartab, dcPower_kW, dcVoltagePerMppt[0], cur_load, p_crit_load_full[idx], sharedInverter->powerClipLoss_kW);
                 acpwr_gross = batt->outGenPower[idx];
             }
             else if (PVSystem->Inverter->inverterType == INVERTER_PVYIELD) //PVyield inverter model not currently enabled for multiple MPPT
@@ -2408,7 +2408,7 @@ void cm_pvsamv1::exec()
                     resilience->run_surviving_batteries(p_crit_load_full[idx], PVSystem->p_systemACPower[idx], 0, 0, 0, 0);
                 }
 
-				batt->advance(m_vartab, PVSystem->p_systemACPower[idx], 0, p_load_full[idx]);
+				batt->advance(m_vartab, PVSystem->p_systemACPower[idx], 0, p_load_full[idx], p_crit_load_full[idx]);
                 batt->outGenWithoutBattery[idx] = PVSystem->p_systemACPower[idx];
                 PVSystem->p_systemACPower[idx] = batt->outGenPower[idx];
             }

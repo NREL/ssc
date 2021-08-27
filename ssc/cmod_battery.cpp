@@ -1630,7 +1630,7 @@ void battstor::initialize_time(size_t year_in, size_t hour_of_year, size_t step_
     year_index = (hour * step_per_hour) + step;
     step_per_year = 8760 * step_per_hour;
 }
-void battstor::advance(var_table*, double P_gen, double V_gen, double P_load, double P_gen_clipped)
+void battstor::advance(var_table*, double P_gen, double V_gen, double P_load, double P_crit_load, double P_gen_clipped)
 {
     BatteryPower* powerflow = dispatch_model->getBatteryPower();
     powerflow->reset();
@@ -1649,6 +1649,7 @@ void battstor::advance(var_table*, double P_gen, double V_gen, double P_load, do
     powerflow->powerGeneratedBySystem = P_gen;
     powerflow->powerSystem = P_gen - powerflow->powerFuelCell;
     powerflow->powerLoad = P_load;
+    powerflow->powerCritLoad = P_crit_load;
     powerflow->voltageSystem = V_gen;
     powerflow->powerSystemClipped = P_gen_clipped;
 
@@ -2173,7 +2174,7 @@ public:
                         }
 
                         batt->outGenWithoutBattery[lifetime_idx] = power_input_lifetime[lifetime_idx];
-                        batt->advance(m_vartab, power_input_lifetime[lifetime_idx], 0, load_lifetime[lifetime_idx], 0);
+                        batt->advance(m_vartab, power_input_lifetime[lifetime_idx], 0, load_lifetime[lifetime_idx], p_crit_load_full[lifetime_idx], 0);
                         p_gen[lifetime_idx] = batt->outGenPower[lifetime_idx];
                         if (year == 0) {
                             annual_energy += p_gen[lifetime_idx] * batt->_dt_hour;
