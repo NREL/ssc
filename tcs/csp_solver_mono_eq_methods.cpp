@@ -36,18 +36,19 @@ void C_csp_solver::reset_time(double step /*s*/)
         mc_kernel.mc_sim_info.ms_ts.m_step;		//[s]
 }
 
-int C_csp_solver::solve_operating_mode(C_csp_collector_receiver::E_csp_cr_modes cr_mode, C_csp_power_cycle::E_csp_power_cycle_modes pc_mode,
+int C_csp_solver::solve_operating_mode(C_csp_collector_receiver::E_csp_cr_modes cr_mode,
+    C_csp_power_cycle::E_csp_power_cycle_modes pc_mode, C_csp_collector_receiver::E_csp_cr_modes htr_mode,    //[-]
     C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode, C_MEQ__timestep::E_timestep_target_modes step_target_mode,
     double q_dot_pc_target /*MWt*/, bool is_defocus, bool is_rec_outlet_to_hottank,
-    double q_dot_elec_to_CR_heat /*MWe*/,
+    double q_dot_elec_to_CR_heat /*MWe*/, double q_dot_elec_to_PAR_HTR /*MWt*/,
     std::string op_mode_str, double & defocus_solved)
 {
     double t_ts_initial = mc_kernel.mc_sim_info.ms_ts.m_step;   //[s]
 
     C_MEQ__defocus c_mdot_eq(solver_mode, C_MEQ__defocus::E_M_DOT_BAL, step_target_mode, this,
         q_dot_pc_target,
-        pc_mode, cr_mode,
-        q_dot_elec_to_CR_heat,
+        pc_mode, cr_mode, htr_mode,
+        q_dot_elec_to_CR_heat, q_dot_elec_to_PAR_HTR,
         is_rec_outlet_to_hottank,
         t_ts_initial); //, step_tolerance);
     C_monotonic_eq_solver c_mdot_solver(c_mdot_eq);
@@ -143,8 +144,8 @@ int C_csp_solver::solve_operating_mode(C_csp_collector_receiver::E_csp_cr_modes 
             C_MEQ__defocus c_q_dot_eq(C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT_LESS_TES_FULL, C_MEQ__defocus::E_Q_DOT_PC, step_target_mode, 
                 this,
                 q_dot_pc_target,
-                pc_mode, cr_mode,
-                q_dot_elec_to_CR_heat,
+                pc_mode, cr_mode, htr_mode,
+                q_dot_elec_to_CR_heat, q_dot_elec_to_PAR_HTR,
                 is_rec_outlet_to_hottank,
                 t_ts_initial);
             C_monotonic_eq_solver c_q_dot_solver(c_q_dot_eq);
@@ -233,8 +234,8 @@ int C_csp_solver::solve_operating_mode(C_csp_collector_receiver::E_csp_cr_modes 
             C_MEQ__defocus c_bal_eq(solver_mode_df1, C_MEQ__defocus::E_Q_DOT_PC, step_target_mode, this,
                 //m_dot_tes, 
                 q_dot_pc_target,
-                pc_mode, cr_mode,
-                q_dot_elec_to_CR_heat,
+                pc_mode, cr_mode, htr_mode,
+                q_dot_elec_to_CR_heat, q_dot_elec_to_PAR_HTR,
                 is_rec_outlet_to_hottank,
                 t_ts_initial);  // , step_tolerance);
             C_monotonic_eq_solver c_bal_solver(c_bal_eq);
@@ -283,12 +284,15 @@ double C_csp_solver::C_MEQ__defocus::calc_meq_target()
 
 int C_csp_solver::C_MEQ__defocus::operator()(double defocus /*-*/, double *target /*-*/)
 {
+    double defocus_CR = defocus;
+    double defocus_PAR_HTR = 1.0;
+
     C_MEQ__timestep c_T_cold_eq(m_solver_mode, m_ts_target_mode, mpc_csp_solver,
         m_q_dot_pc_target,
-        m_pc_mode, m_cr_mode,
-        m_q_dot_elec_to_CR_heat,
+        m_pc_mode, m_cr_mode, m_htr_mode,
+        m_q_dot_elec_to_CR_heat, m_q_dot_elec_to_PAR_HTR,
         m_is_rec_outlet_to_hottank,
-        defocus);
+        defocus_CR, defocus_PAR_HTR);
     C_monotonic_eq_solver c_T_cold_solver(c_T_cold_eq);
 
     double t_ts_solved = std::numeric_limits<double>::quiet_NaN();
@@ -537,10 +541,10 @@ int C_csp_solver::C_MEQ__timestep::operator()(double t_ts_guess /*s*/, double *t
 {
     C_MEQ__T_field_cold c_eq(m_solver_mode, mpc_csp_solver, 
         m_q_dot_pc_target,
-        m_pc_mode, m_cr_mode,
-        m_q_dot_elec_to_CR_heat,
+        m_pc_mode, m_cr_mode, m_htr_mode,
+        m_q_dot_elec_to_CR_heat, m_q_dot_elec_to_PAR_HTR,
         m_is_rec_outlet_to_hottank,
-        m_defocus, t_ts_guess, 
+        m_defocus, m_defocus_PAR_HTR, t_ts_guess, 
         mpc_csp_solver->m_P_cold_des, mpc_csp_solver->m_x_cold_des);
     C_monotonic_eq_solver c_solver(c_eq);
     
@@ -657,8 +661,8 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
     mpc_csp_solver->mc_cr_htf_state_in.m_pres = m_P_field_in;	//[kPa]
     mpc_csp_solver->mc_cr_htf_state_in.m_qual = m_x_field_in;	//[-]
 
-    double m_dot_field_out = std::numeric_limits<double>::quiet_NaN();     //[kg/hr]
-    double m_dot_field_out_to_cold_tank = 0.0;                              //[kg/hr]
+    double m_dot_cr_out = std::numeric_limits<double>::quiet_NaN();     //[kg/hr]
+    double m_dot_cr_out_to_cold_tank = 0.0;                              //[kg/hr]
     double t_ts_cr_su = m_t_ts_in;
     if (m_cr_mode == C_csp_collector_receiver::ON)
     {
@@ -676,12 +680,12 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
         }
 
         if (m_is_rec_outlet_to_hottank) {
-            m_dot_field_out = mpc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot;     //[kg/hr]
-            m_dot_field_out_to_cold_tank = 0.0;
+            m_dot_cr_out = mpc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot;     //[kg/hr]
+            m_dot_cr_out_to_cold_tank = 0.0;
         }
         else {
-            m_dot_field_out_to_cold_tank = mpc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot;     //[kg/hr]
-            m_dot_field_out = 0.0;
+            m_dot_cr_out_to_cold_tank = mpc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot;     //[kg/hr]
+            m_dot_cr_out = 0.0;
         }
     }
     else if (m_cr_mode == C_csp_collector_receiver::STARTUP)
@@ -699,7 +703,7 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
 
         if (mpc_csp_solver->m_is_cr_config_recirc)
         {
-            m_dot_field_out = 0.0;  //[kg/hr]
+            m_dot_cr_out = 0.0;  //[kg/hr]
         }
 
         t_ts_cr_su = mpc_csp_solver->mc_cr_out_solver.m_time_required_su;       //[s]
@@ -713,9 +717,80 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
 
         if (mpc_csp_solver->m_is_cr_config_recirc)
         {
-            m_dot_field_out = 0.0;  //[kg/hr]
+            m_dot_cr_out = 0.0;  //[kg/hr]
         }
     }
+
+    double T_htf_hot_cr_mixed = std::numeric_limits<double>::quiet_NaN();
+    double m_dot_field_out = std::numeric_limits<double>::quiet_NaN();
+    double m_dot_field_out_to_cold_tank = std::numeric_limits<double>::quiet_NaN();
+
+    // Solve parallel heater performance, if applicable, then mix outlet streams
+    if (mpc_csp_solver->m_is_parallel_heater) {
+
+        double m_dot_htf_par_htr = std::numeric_limits<double>::quiet_NaN();
+        double T_htf_hot_par_htr = std::numeric_limits<double>::quiet_NaN();
+
+        mc_htr_htf_state_in.m_temp = m_T_field_cold_guess;       //[C]
+        mc_htr_htf_state_in.m_pres = m_P_field_in;	//[kPa]
+        mc_htr_htf_state_in.m_qual = m_x_field_in;	//[-]
+
+        if (m_htr_mode == C_csp_collector_receiver::ON) {
+            
+            mpc_csp_solver->mp_heater->on(mpc_csp_solver->mc_weather.ms_outputs,
+                mc_htr_htf_state_in,
+                m_q_dot_elec_to_PAR_HTR,
+                m_defocus_PAR_HTR,
+                mpc_csp_solver->mc_par_htr_out_solver,
+                mpc_csp_solver->mc_kernel.mc_sim_info);
+
+            if (mpc_csp_solver->mc_par_htr_out_solver.m_m_dot_salt_tot == 0.0 || mpc_csp_solver->mc_par_htr_out_solver.m_q_thermal == 0.0)
+            {
+                *diff_target = std::numeric_limits<double>::quiet_NaN();
+                return -1;
+            }
+
+            m_dot_htf_par_htr = mpc_csp_solver->mc_par_htr_out_solver.m_m_dot_salt_tot;  //[kg/hr]
+            T_htf_hot_par_htr = mpc_csp_solver->mc_par_htr_out_solver.m_T_salt_hot;      //[C]
+        }
+        else if (m_htr_mode == C_csp_collector_receiver::STARTUP)
+        {
+            throw(C_csp_exception("Model is not configured to operate parallel heater in Startup mode"));
+        }
+        else if (m_htr_mode == C_csp_collector_receiver::OFF)
+        {
+            mpc_csp_solver->mp_heater->off(mpc_csp_solver->mc_weather.ms_outputs,
+                mc_htr_htf_state_in,
+                mpc_csp_solver->mc_par_htr_out_solver,
+                mpc_csp_solver->mc_kernel.mc_sim_info);
+
+            m_dot_htf_par_htr = 0.0;    //[kg/hr]
+        }
+
+        // Assume for parallel heater configs, primary CR will not send HTF to cold tank
+        //    May eventually want to expand model to capture this
+        if (m_dot_cr_out_to_cold_tank) {
+            throw(C_csp_exception("Model is not configured to operate parallel heater when primary CR output is routed to cold tank"));
+        }
+        m_dot_field_out_to_cold_tank = 0.0;
+
+        if (m_dot_htf_par_htr > 0.0) {
+            m_dot_field_out = m_dot_cr_out + m_dot_htf_par_htr;     //[kg/hr]
+            T_htf_hot_cr_mixed = (m_dot_cr_out*mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot + m_dot_htf_par_htr*T_htf_hot_par_htr)/m_dot_field_out;    //[C]
+        }
+        else {
+            m_dot_field_out = m_dot_cr_out;
+            T_htf_hot_cr_mixed = mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot;     //[C]
+        }
+    }
+    else {   // No parallel heater, so set mixed field outputs to cr outputs
+
+        T_htf_hot_cr_mixed = mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot;      //[C]
+
+        m_dot_field_out = m_dot_cr_out;     //[kg/hr]
+        m_dot_field_out_to_cold_tank = m_dot_cr_out_to_cold_tank;                              //[kg/hr]
+    }
+   
 
     // For now, check the CR return pressure against the assumed constant system interface pressure
     if (fabs((mpc_csp_solver->mc_cr_out_solver.m_P_htf_hot - m_P_field_in) / m_P_field_in) > 0.001 && !mpc_csp_solver->mc_collector_receiver.m_is_sensible_htf)
@@ -781,7 +856,7 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
             double q_dot_ch_est, m_dot_hot_to_tes_est, T_cold_field_est;
             q_dot_ch_est = m_dot_hot_to_tes_est = T_cold_field_est = std::numeric_limits<double>::quiet_NaN();
             if (mpc_csp_solver->m_is_tes) {
-                mpc_csp_solver->mc_tes.charge_avail_est(mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot + 273.15, mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step,
+                mpc_csp_solver->mc_tes.charge_avail_est(T_htf_hot_cr_mixed + 273.15, mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step,
                     q_dot_ch_est, m_dot_hot_to_tes_est, T_cold_field_est);
             }
             else {
@@ -806,7 +881,7 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
             double q_dot_ch_est, m_dot_hot_to_tes_est, T_cold_field_est;
             q_dot_ch_est = m_dot_hot_to_tes_est = T_cold_field_est = std::numeric_limits<double>::quiet_NaN();
             if (mpc_csp_solver->m_is_tes) {
-                mpc_csp_solver->mc_tes.charge_avail_est(mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot + 273.15, mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step,
+                mpc_csp_solver->mc_tes.charge_avail_est(T_htf_hot_cr_mixed + 273.15, mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step,
                     q_dot_ch_est, m_dot_hot_to_tes_est, T_cold_field_est);
             }
             else {
@@ -836,7 +911,7 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
         double q_dot_ch_est, m_dot_hot_to_tes_est, T_cold_field_est;
         q_dot_ch_est = m_dot_hot_to_tes_est = T_cold_field_est = std::numeric_limits<double>::quiet_NaN();
         if (mpc_csp_solver->m_is_tes) {
-            mpc_csp_solver->mc_tes.charge_avail_est(mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot + 273.15, mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step,
+            mpc_csp_solver->mc_tes.charge_avail_est(T_htf_hot_cr_mixed + 273.15, mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step,
                 q_dot_ch_est, m_dot_hot_to_tes_est, T_cold_field_est);
         }
         else {
@@ -884,7 +959,7 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
         double q_dot_ch_est, m_dot_hot_to_tes_est, T_cold_field_est;
         q_dot_ch_est = m_dot_hot_to_tes_est = T_cold_field_est = std::numeric_limits<double>::quiet_NaN();
         if (mpc_csp_solver->m_is_tes) {
-            mpc_csp_solver->mc_tes.charge_avail_est(mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot + 273.15, mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step,
+            mpc_csp_solver->mc_tes.charge_avail_est(T_htf_hot_cr_mixed + 273.15, mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step,
                 q_dot_ch_est, m_dot_hot_to_tes_est, T_cold_field_est);
         }
         else {
@@ -905,7 +980,7 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
         int tes_code = mpc_csp_solver->mc_tes.solve_tes_off_design(mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step,
             mpc_csp_solver->mc_weather.ms_outputs.m_tdry + 273.15,
             m_dot_hot_to_tes / 3600.0, m_m_dot_pc_in / 3600.0, m_dot_field_out_to_cold_tank / 3600.0, 
-            mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot + 273.15, m_T_field_cold_guess + 273.15,
+            T_htf_hot_cr_mixed + 273.15, m_T_field_cold_guess + 273.15,
             T_cycle_hot, T_field_cold_calc,
             mpc_csp_solver->mc_tes_outputs);
 
@@ -917,7 +992,7 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
     }
     else
     {
-        T_cycle_hot = mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot + 273.15;   //[K]
+        T_cycle_hot = T_htf_hot_cr_mixed + 273.15;   //[K]
     }
 
     // Solve power cycle with solved inlet temperature
@@ -955,7 +1030,7 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
         int tes_code = mpc_csp_solver->mc_tes.solve_tes_off_design(mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step,
             mpc_csp_solver->mc_weather.ms_outputs.m_tdry + 273.15,
             m_dot_hot_to_tes / 3600.0, m_m_dot_pc_in / 3600.0, m_dot_field_out_to_cold_tank / 3600.0,
-            mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot + 273.15, mpc_csp_solver->mc_pc_out_solver.m_T_htf_cold + 273.15,
+            T_htf_hot_cr_mixed + 273.15, mpc_csp_solver->mc_pc_out_solver.m_T_htf_cold + 273.15,
             T_cycle_hot, T_field_cold_calc,
             mpc_csp_solver->mc_tes_outputs);
 
@@ -1011,10 +1086,11 @@ int C_csp_solver::C_MEQ__T_field_cold::operator()(double T_field_cold /*C*/, dou
 
     C_MEQ__m_dot_tes c_eq(m_solver_mode, mpc_csp_solver, 
         m_pc_mode, m_cr_mode,
-        m_q_dot_elec_to_CR_heat,
+        m_htr_mode,
+        m_q_dot_elec_to_CR_heat, m_q_dot_elec_to_PAR_HTR,
         m_is_rec_outlet_to_hottank,
         m_q_dot_pc_target,
-        m_defocus, m_t_ts_in,
+        m_defocus, m_defocus_PAR_HTR, m_t_ts_in,
         m_P_field_in, m_x_field_in, T_field_cold);
 
     C_monotonic_eq_solver c_solver(c_eq);

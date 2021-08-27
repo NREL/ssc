@@ -883,7 +883,8 @@ public:
             storage,
             tou,
             dispatch,
-            system);
+            system,
+            NULL);
 
 		// Set solver reporting outputs
 		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TIME_FINAL, allocate("time_hr", n_steps_fixed), n_steps_fixed);

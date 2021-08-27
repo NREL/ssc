@@ -43,6 +43,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "csp_solver_two_tank_tes.h"
 #include "csp_solver_tou_block_schedules.h"
 #include "csp_dispatch.h"
+#include "csp_solver_cr_electric_resistance.h"
 
 #include "csp_system_costs.h"
 
@@ -50,6 +51,8 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     // VARTYPE       DATATYPE    NAME                                  LABEL                                                                                                                                      UNITS           META                                 GROUP                                       REQUIRED_IF                                                         CONSTRAINTS      UI_HINTS
     { SSC_INPUT,     SSC_STRING, "solar_resource_file",                "Local weather file path",                                                                                                                 "",             "",                                  "Solar Resource",                    "?",                                                                "LOCAL_FILE",    ""},
     { SSC_INPUT,     SSC_TABLE,  "solar_resource_data",                "Weather resource data in memory",                                                                                                         "",             "",                                  "Solar Resource",                    "?",                                                                "",              ""},
+
+    { SSC_INPUT,     SSC_NUMBER, "is_parallel_htr",                    "Does plant include a HTF heater parallel to solar field?",                                                                                "",             "",                                  "System Control",                           "?=0",                                                              "",              ""},
 
     { SSC_INPUT,     SSC_NUMBER, "csp_financial_model",                "",                                                                                                                                        "1-8",          "",                                  "Financial Model",                          "?=1",                                                              "INTEGER,MIN=0", ""},
     { SSC_INPUT,     SSC_NUMBER, "ppa_multiplier_model",               "PPA multiplier model 0: dispatch factors dispatch_factorX, 1: hourly multipliers dispatch_factors_ts",                                    "0/1",          "0=diurnal,1=timestep",              "Time of Delivery Factors",                 "?=0", /*need a default so this var works in required_if*/          "INTEGER,MIN=0", ""},
@@ -1753,6 +1756,20 @@ public:
 		collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_Q_DOT_THERMAL_CSKY_SS, allocate("Q_thermal_ss_csky", n_steps_fixed), n_steps_fixed);
 		collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_Q_DOT_THERMAL_SS, allocate("Q_thermal_ss", n_steps_fixed), n_steps_fixed);
 
+        // Check if system configuration includes a heater parallel to primary collector receiver
+        C_csp_collector_receiver* p_heater;
+        C_csp_cr_electric_resistance* p_electric_resistance = NULL;
+        bool is_parallel_heater = as_boolean("is_parallel_htr");   // false;
+        if (is_parallel_heater) {
+            double q_dot_heater_des = receiver->m_q_rec_des * 2.0;  // / 4.0;      //[MWt]
+            double f_q_dot_des_allowable_su = 1.0;      //[-]
+            double hrs_startup_at_max_rate = 0.25;      //[hr]
+            p_electric_resistance = new C_csp_cr_electric_resistance(receiver->m_T_htf_cold_des, receiver->m_T_htf_hot_des, q_dot_heater_des,
+                f_q_dot_des_allowable_su, hrs_startup_at_max_rate,
+                as_integer("rec_htf"), as_matrix("field_fl_props"), C_csp_cr_electric_resistance::E_elec_resist_startup_mode::INSTANTANEOUS_NO_MAX_ELEC_IN);
+        }
+        p_heater = p_electric_resistance;        
+
         // Thermal energy storage 
         C_csp_two_tank_tes storage;
         C_csp_two_tank_tes::S_params *tes = &storage.ms_params;
@@ -1971,6 +1988,7 @@ public:
                         tou,
                         dispatch,
                         system,
+                        p_heater,
                         ssc_cmod_update,
                         (void*)(this));
 
@@ -2527,6 +2545,9 @@ public:
         }
         //Single value outputs from radiative cooling system
 
+        if (p_electric_resistance != NULL) {
+            delete p_electric_resistance;
+        }
     }
 };
 

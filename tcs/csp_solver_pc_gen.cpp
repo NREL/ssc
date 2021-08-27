@@ -47,7 +47,7 @@ C_pc_gen::C_pc_gen()
 	m_q_startup_remain = m_q_startup_used =
 		m_q_des = m_qttmin = m_qttmax = std::numeric_limits<double>::quiet_NaN();
 
-	m_pc_mode_prev = m_pc_mode = -1;
+	m_pc_mode_prev = m_pc_mode = C_csp_power_cycle::E_csp_power_cycle_modes::OFF;
 
 	mc_reported_outputs.construct(S_output_info);
 }
@@ -122,7 +122,7 @@ void C_pc_gen::init(C_csp_power_cycle::S_solved_params &solved_params)
 	m_qttmax = m_q_des*ms_params.m_f_wmax;		//[MWt]
 		// Set initial values for power cycle mode and startup requirements
 	m_q_startup_remain = m_q_des*ms_params.m_f_startup;	//[MWt-hr]
-	m_pc_mode_prev = 0;
+	m_pc_mode_prev = C_csp_power_cycle::E_csp_power_cycle_modes::OFF;
 
 	// ************************
 	// Set solved parameters
@@ -139,7 +139,7 @@ void C_pc_gen::init(C_csp_power_cycle::S_solved_params &solved_params)
 	solved_params.m_m_dot_max = solved_params.m_m_dot_design*solved_params.m_max_frac;		//[kg/hr]
 }
 
-int C_pc_gen::get_operating_state()
+C_csp_power_cycle::E_csp_power_cycle_modes C_pc_gen::get_operating_state()
 {
 	return m_pc_mode_prev;		//[-]
 }
