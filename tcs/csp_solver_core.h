@@ -796,6 +796,7 @@ public:
 			CTRL_OP_MODE_SEQ_C,         //[-] Final 3 operating modes tried
             DISPATCH_REL_MIP_GAP,       //[-] Relative MIP gap from optimization solver
 			DISPATCH_SOLVE_STATE,       //[-] The status of the dispatch optimization solver
+            DISPATCH_SUBOPT_FLAG,       //[-] Flag specifing information about LPSolve suboptimal result
 			DISPATCH_SOLVE_ITER,        //[-] Number of iterations before completing dispatch optimization
 			DISPATCH_SOLVE_OBJ,         //[$] Objective function value achieved by the dispatch optimization solver
 			DISPATCH_SOLVE_OBJ_RELAX,   //[$] Objective function value for the relaxed continuous problem 

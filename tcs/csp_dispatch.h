@@ -306,5 +306,8 @@ public:
     std::string write_ampl();
     bool optimize_ampl();
 
+    // Set outputs struct based on LP solution -> could move to outputs struct
+    void set_outputs_from_lp_solution(lprec* lp, unordered_map<std::string, double>& params);
+
     bool set_dispatch_outputs();
 };

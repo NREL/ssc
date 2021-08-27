@@ -1272,103 +1272,7 @@ bool csp_dispatch_opt::optimize()
         //save_problem_solution_debug(lp);
 
         if(return_ok)
-        {
-            outputs.clear();
-            outputs.resize(nt);
-
-            int ncols = get_Ncolumns(lp);
-
-            REAL *vars = new REAL[ncols];
-            get_variables(lp, vars);
-
-            for(int c=1; c<ncols; c++)
-            {
-                char *colname = get_col_name(lp, c);
-                if(! colname) continue;
-
-                char root[15];
-
-                int i;
-                for(i=0; i<15; i++)
-                {
-                    if(colname[i] == '-')
-                    {
-                        root[i] = '\0';
-                        break;
-                    }
-                    else
-                        root[i] = colname[i];
-                }
-                int i1=1 + i++;
-                char ind[4];
-                bool not_interested = false;
-                for(i=i1; i<15; i++)
-                {
-                    if(colname[i] == '-')
-                    {
-                        //2D variable. Not interested at the moment..
-                        not_interested = true;
-                        break;
-                    }
-                    else if(colname[i] == 0)
-                    {
-                        ind[i-i1] = '\0';
-                        break;
-                    }
-                    else
-                        ind[i-i1] = colname[i];
-                }
-
-                if(not_interested) continue;  //a 2D variable
-
-                int t = atoi(ind);
-
-                if(strcmp(root, "ycsb") == 0)  //Cycle standby
-                {
-                    outputs.pb_standby.at(t) = vars[ c-1 ] == 1.;
-                }
-                else if(strcmp(root, "ycsu") == 0)     //Cycle start up
-                {
-                    bool su = (fabs(1 - vars[ c-1 ]) < 0.001);
-                    outputs.pb_operation.at(t) = outputs.pb_operation.at(t) || su;
-                    outputs.q_pb_startup.at(t) = su ? P["Qc"] : 0.;
-                }
-                else if(strcmp(root, "y") == 0)     //Cycle operation
-                {
-                    outputs.pb_operation.at(t) = outputs.pb_operation.at(t) || ( fabs(1. - vars[ c-1 ]) < 0.001 );
-                }
-                else if(strcmp(root, "x") == 0)     //Cycle thermal energy consumption
-                {
-                    outputs.q_pb_target.at(t) = vars[ c-1 ];
-                }
-                else if(strcmp(root, "yrsu") == 0)     //Receiver start up
-                {
-                    outputs.rec_operation.at(t) = outputs.rec_operation.at(t) || (fabs(1 - vars[ c-1 ]) < 0.001);
-                }
-                else if(strcmp(root, "xrsu") == 0)
-                {
-                    outputs.q_rec_startup.at(t) = vars[ c-1 ];
-                }
-                else if(strcmp(root, "yr") == 0)
-                {
-                    outputs.rec_operation.at(t) = outputs.rec_operation.at(t) || (fabs(1 - vars[ c-1 ]) < 0.001);
-                }
-                else if(strcmp(root, "s") == 0)         //Thermal storage charge state
-                {
-                    outputs.tes_charge_expected.at(t) = vars[ c-1 ];
-                }
-                else if(strcmp(root, "xr") == 0)   //receiver production
-                {
-                    outputs.q_sf_expected.at(t) = vars[ c-1 ];
-                }
-                else if(strcmp(root, "wdot") == 0) //electricity production
-                {
-                    outputs.w_pb_target.at(t) = vars[ c-1 ];
-                }
-            }
-
-            delete [] vars;
-        }
+            set_outputs_from_lp_solution(lp, P);
 
         delete_lp(lp);
         lp = NULL;
@@ -1614,6 +1518,107 @@ bool csp_dispatch_opt::optimize_ampl()
         util::to_double( svals.at(i), &outputs.w_pb_target.at(i) );
 
     return true;
+}
+
+void csp_dispatch_opt::set_outputs_from_lp_solution(lprec* lp, unordered_map<std::string, double>& params)
+{
+    int nt = (int)m_nstep_opt;
+
+    outputs.clear();
+    outputs.resize(nt);
+
+    int ncols = get_Ncolumns(lp);
+
+    REAL* vars = new REAL[ncols];
+    get_variables(lp, vars);
+
+    for (int c = 1; c < ncols; c++)
+    {
+        char* colname = get_col_name(lp, c);
+        if (!colname) continue;
+
+        char root[15];
+
+        int i;
+        for (i = 0; i < 15; i++)
+        {
+            if (colname[i] == '-')
+            {
+                root[i] = '\0';
+                break;
+            }
+            else
+                root[i] = colname[i];
+        }
+        int i1 = 1 + i++;
+        char ind[4];
+        bool not_interested = false;
+        for (i = i1; i < 15; i++)
+        {
+            if (colname[i] == '-')
+            {
+                //2D variable. Not interested at the moment..
+                not_interested = true;
+                break;
+            }
+            else if (colname[i] == 0)
+            {
+                ind[i - i1] = '\0';
+                break;
+            }
+            else
+                ind[i - i1] = colname[i];
+        }
+
+        if (not_interested) continue;  //a 2D variable
+
+        int t = atoi(ind);
+
+        if (strcmp(root, "ycsb") == 0)  //Cycle standby
+        {
+            outputs.pb_standby.at(t) = vars[c - 1] == 1.;
+        }
+        else if (strcmp(root, "ycsu") == 0)     //Cycle start up
+        {
+            bool su = (fabs(1 - vars[c - 1]) < 0.001);
+            outputs.pb_operation.at(t) = outputs.pb_operation.at(t) || su;
+            outputs.q_pb_startup.at(t) = su ? params["Qc"] : 0.;
+        }
+        else if (strcmp(root, "y") == 0)     //Cycle operation
+        {
+            outputs.pb_operation.at(t) = outputs.pb_operation.at(t) || (fabs(1. - vars[c - 1]) < 0.001);
+        }
+        else if (strcmp(root, "x") == 0)     //Cycle thermal energy consumption
+        {
+            outputs.q_pb_target.at(t) = vars[c - 1];
+        }
+        else if (strcmp(root, "yrsu") == 0)     //Receiver start up
+        {
+            outputs.rec_operation.at(t) = outputs.rec_operation.at(t) || (fabs(1 - vars[c - 1]) < 0.001);
+        }
+        else if (strcmp(root, "xrsu") == 0)
+        {
+            outputs.q_rec_startup.at(t) = vars[c - 1];
+        }
+        else if (strcmp(root, "yr") == 0)
+        {
+            outputs.rec_operation.at(t) = outputs.rec_operation.at(t) || (fabs(1 - vars[c - 1]) < 0.001);
+        }
+        else if (strcmp(root, "s") == 0)         //Thermal storage charge state
+        {
+            outputs.tes_charge_expected.at(t) = vars[c - 1];
+        }
+        else if (strcmp(root, "xr") == 0)   //receiver production
+        {
+            outputs.q_sf_expected.at(t) = vars[c - 1];
+        }
+        else if (strcmp(root, "wdot") == 0) //electricity production
+        {
+            outputs.w_pb_target.at(t) = vars[c - 1];
+        }
+    }
+
+    delete[] vars;
 }
 
 bool csp_dispatch_opt::set_dispatch_outputs()
