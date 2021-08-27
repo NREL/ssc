@@ -913,6 +913,9 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		mc_collector_receiver.converged();
 		mc_power_cycle.converged();
 		mc_tes.converged();
+        if (m_is_parallel_heater) {
+            mp_heater->converged();
+        }
 		
         //Update the estimated thermal energy storage charge state
         double e_tes_disch = 0.;
@@ -1145,6 +1148,9 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				mc_collector_receiver.write_output_intervals(m_report_time_start, mv_time_local, m_report_time_end);
 				mc_power_cycle.write_output_intervals(m_report_time_start, mv_time_local, m_report_time_end);
 				mc_tes.write_output_intervals(m_report_time_start, mv_time_local, m_report_time_end);
+                if (m_is_parallel_heater) {
+                    mp_heater->write_output_intervals(m_report_time_start, mv_time_local, m_report_time_end);
+                }
 
 				// Overwrite TIME_FINAL
 				mc_reported_outputs.overwrite_most_recent_timestep(C_solver_outputs::TIME_FINAL, m_report_time_end / 3600.0);	//[hr]
@@ -2917,6 +2923,10 @@ C_csp_solver::C_operating_mode_core* C_csp_solver::C_system_operating_modes::get
         return &mc_CR_TO_COLD__PC_SU__TES_DC__AUX_OFF;
     case CR_OFF__PC_OFF__TES_CH__HTR_ON:
         return &mc_CR_OFF__PC_OFF__TES_CH__HTR_ON;
+    case CR_SU__PC_OFF__TES_CH__HTR_ON:
+        return &mc_CR_SU__PC_OFF__TES_CH__HTR_ON;
+    case CR_ON__PC_OFF__TES_CH__HTR_ON:
+        return &mc_CR_ON__PC_OFF__TES_CH__HTR_ON;
     default:
         throw(C_csp_exception("Operating mode class not defined"));
     }
@@ -2982,6 +2992,18 @@ C_csp_solver::C_system_operating_modes::E_operating_modes C_csp_solver::C_system
                 is_mode_avail(C_system_operating_modes::CR_SU__PC_SU__TES_DC__AUX_OFF))
             {
                 operating_mode = C_system_operating_modes::CR_SU__PC_SU__TES_DC__AUX_OFF;
+            }
+            else if (is_PAR_HTR_allowed && q_dot_tes_ch > 0.0 && q_dot_PAR_HTR_on > 0.0 &&
+                is_mode_avail(C_system_operating_modes::CR_SU__PC_OFF__TES_CH__HTR_ON))
+            {
+                //if (q_dot_PAR_HTR_on > 0.0 && is_mode_avail(C_system_operating_modes::CR_SU__PC_OFF__TES_FULL__HTR_DF))
+                //{
+                //    operating_mode = C_system_operating_modes::CR_SU__PC_OFF__TES_FULL__HTR_DF;
+                //}
+                //else
+                //{
+                    operating_mode = C_system_operating_modes::CR_SU__PC_OFF__TES_CH__HTR_ON;
+                //}
             }
             else
             {
@@ -3051,18 +3073,29 @@ C_csp_solver::C_system_operating_modes::E_operating_modes C_csp_solver::C_system
             }
             else if (q_dot_tes_ch > 0.0)
             {
-                if (q_dot_cr_on * (1.0 - tol_mode_switching) < q_dot_tes_ch &&
-                    is_mode_avail(C_system_operating_modes::CR_ON__PC_OFF__TES_CH__AUX_OFF))
-                {
-                    operating_mode = C_system_operating_modes::CR_ON__PC_OFF__TES_CH__AUX_OFF;
+                if (is_PAR_HTR_allowed && q_dot_PAR_HTR_on > 0.0 &&
+                    is_mode_avail(C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF)) {
+
+                    if ((q_dot_cr_on + q_dot_PAR_HTR_on) * (1.0 - tol_mode_switching) < q_dot_tes_ch &&
+                        is_mode_avail(C_system_operating_modes::CR_ON__PC_OFF__TES_CH__HTR_ON)) {
+
+                        operating_mode = C_system_operating_modes::CR_ON__PC_OFF__TES_CH__HTR_ON;
+                    }
                 }
-                else if (is_mode_avail(C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF)) // m_is_CR_DF__PC_OFF__TES_FULL__AUX_OFF_avail)
-                {
-                    operating_mode = C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF;
-                }
-                else
-                {
-                    operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+                else {
+                    if (q_dot_cr_on * (1.0 - tol_mode_switching) < q_dot_tes_ch &&
+                        is_mode_avail(C_system_operating_modes::CR_ON__PC_OFF__TES_CH__AUX_OFF))
+                    {
+                        operating_mode = C_system_operating_modes::CR_ON__PC_OFF__TES_CH__AUX_OFF;
+                    }
+                    else if (is_mode_avail(C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF)) // m_is_CR_DF__PC_OFF__TES_FULL__AUX_OFF_avail)
+                    {
+                        operating_mode = C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF;
+                    }
+                    else
+                    {
+                        operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+                    }
                 }
             }
             else

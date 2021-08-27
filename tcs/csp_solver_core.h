@@ -1615,12 +1615,28 @@ public:
 
     };
 
+    class C_CR_SU__PC_OFF__TES_CH__HTR_ON : public C_operating_mode_core
+    {
+    public:
+        C_CR_SU__PC_OFF__TES_CH__HTR_ON() : C_operating_mode_core(C_csp_collector_receiver::STARTUP,
+            C_csp_power_cycle::OFF, C_MEQ__m_dot_tes::E__CR_OUT__0, C_MEQ__timestep::E_STEP_FROM_COMPONENT,
+            false, "CR_SU__PC_OFF__TES_CH__HTR_ON", QUIETNAN, true, C_csp_collector_receiver::ON) {}
+    };
+
     class C_CR_OFF__PC_OFF__TES_CH__HTR_ON : public C_operating_mode_core
     {
     public:
         C_CR_OFF__PC_OFF__TES_CH__HTR_ON() : C_operating_mode_core(C_csp_collector_receiver::OFF,
             C_csp_power_cycle::OFF, C_MEQ__m_dot_tes::E__CR_OUT__0, C_MEQ__timestep::E_STEP_FIXED,
             false, "CR_OFF__PC_OFF__TES_CH__HTR_ON", QUIETNAN, true, C_csp_collector_receiver::ON) {}
+    };
+
+    class C_CR_ON__PC_OFF__TES_CH__HTR_ON : public C_operating_mode_core
+    {
+    public:
+        C_CR_ON__PC_OFF__TES_CH__HTR_ON() : C_operating_mode_core(C_csp_collector_receiver::ON,
+            C_csp_power_cycle::OFF, C_MEQ__m_dot_tes::E__CR_OUT__0, C_MEQ__timestep::E_STEP_FIXED,
+            false, "CR_ON__PC_OFF__TES_CH__HTR_ON", QUIETNAN, true, C_csp_collector_receiver::ON) {}
     };
 
     class C_CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF : public C_operating_mode_core
@@ -2053,6 +2069,8 @@ public:
         C_CR_TO_COLD__PC_SB__TES_DC__AUX_OFF mc_CR_TO_COLD__PC_SB__TES_DC__AUX_OFF;
 
         C_CR_OFF__PC_OFF__TES_CH__HTR_ON mc_CR_OFF__PC_OFF__TES_CH__HTR_ON;
+        C_CR_SU__PC_OFF__TES_CH__HTR_ON mc_CR_SU__PC_OFF__TES_CH__HTR_ON;
+        C_CR_ON__PC_OFF__TES_CH__HTR_ON mc_CR_ON__PC_OFF__TES_CH__HTR_ON;
 
     public:
 
@@ -2099,6 +2117,8 @@ public:
             CR_TO_COLD__PC_SU__TES_DC__AUX_OFF,
 
             CR_OFF__PC_OFF__TES_CH__HTR_ON,
+            CR_SU__PC_OFF__TES_CH__HTR_ON,
+            CR_ON__PC_OFF__TES_CH__HTR_ON,
 
             ITER_END
         };
