@@ -1759,7 +1759,7 @@ public:
         C_csp_cr_electric_resistance* p_electric_resistance = NULL;
         bool is_parallel_heater = as_boolean("is_parallel_htr");   // false;
         if (is_parallel_heater) {
-            double q_dot_heater_des = receiver->m_q_rec_des / 4.0;      //[MWt]
+            double q_dot_heater_des = receiver->m_q_rec_des * 2.0;  // / 4.0;      //[MWt]
             double f_q_dot_des_allowable_su = 1.0;      //[-]
             double hrs_startup_at_max_rate = 0.25;      //[hr]
             p_electric_resistance = new C_csp_cr_electric_resistance(receiver->m_T_htf_cold_des, receiver->m_T_htf_hot_des, q_dot_heater_des,
