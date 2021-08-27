@@ -1933,7 +1933,7 @@ bool csp_dispatch_opt::optimize_ampl()
 
 bool csp_dispatch_opt::set_dispatch_outputs()
 {
-    if (lp_outputs.m_last_opt_successful && m_current_read_step < (int)outputs.q_pb_target.size())
+    if (lp_outputs.last_opt_successful && m_current_read_step < (int)outputs.q_pb_target.size())
     {
         //calculate the current read step, account for number of dispatch steps per hour and the simulation time step
         m_current_read_step = (int)(pointers.siminfo->ms_ts.m_time * solver_params.steps_per_hour / 3600. - .001)

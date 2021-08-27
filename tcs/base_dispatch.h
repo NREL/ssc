@@ -28,8 +28,11 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "dispatch_builder.h"
 #include "csp_solver_core.h"
 
-//class C_csp_weatherreader;
-//class C_csp_tou;
+/* Suboptimal dispatch flags */
+#define INTERATION              1
+#define TIMELIMIT               2
+#define MIPGAP                  3
+#define MIPGAPLPSOLVE           4
 
 class base_dispatch_opt
 {
@@ -85,23 +88,25 @@ public:
 
     struct s_lp_outputs
     {
-        bool m_last_opt_successful;     //last optimization run was successful?
+        bool last_opt_successful;     //last optimization run was successful?
         double objective;
         double objective_relaxed;
         double rel_mip_gap;
         int solve_iter;                 //Number of iterations required to solve
         int solve_state;
+        int subopt_flag;                //Flag specifing information about LPSolve suboptimal result
         double solve_time;
         int presolve_nconstr;
         int presolve_nvar;
 
         s_lp_outputs() {
-            m_last_opt_successful = false;
+            last_opt_successful = false;
             objective = std::numeric_limits<double>::quiet_NaN();
             objective_relaxed = std::numeric_limits<double>::quiet_NaN();
             rel_mip_gap = std::numeric_limits<double>::quiet_NaN();
             solve_iter = 0;
             solve_state = NOTRUN;
+            subopt_flag = OPTIMAL;
             presolve_nconstr = 0;
             solve_time = 0.;
             presolve_nvar = 0;
@@ -162,6 +167,24 @@ public:
 
     //Populated dispatch outputs for csp solver core
     virtual bool set_dispatch_outputs();
+
+    //Constructs lp model
+    lprec* construct_lp_model(optimization_vars* opt_vars);
+
+    //Set LPsolve solver presolve settings and bb rules
+    void setup_solver_presolve_bbrules(lprec* lp);
+
+    //Problem scaling loop algorithm
+    bool problem_scaling_solve_loop(lprec* lp);
+
+    //Set LPsolve outputs
+    void set_lp_solve_outputs(lprec* lp);
+
+    // Saving problem and solution for debugging
+    void save_problem_solution_debug(lprec* lp);
+
+    //Dispatch update and result print to screen
+    void print_dispatch_update();
 
     //simple string compare
     bool strcompare(std::string a, std::string b);

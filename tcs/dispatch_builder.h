@@ -37,7 +37,6 @@ void __WINAPI opt_iter_function(lprec* lp, void* userhandle, int msg);
 struct s_solver_params
 {
     bool is_abort_flag;         //optimization flagged for abort
-    int iter_count;             //branch and bound iteration count
     std::string log_message;
     double obj_relaxed;
 
@@ -52,6 +51,7 @@ struct s_solver_params
     double solution_timeout;    //[s] Max solve time for each solution
     int presolve_type;
     int bb_type;
+    bool is_transmission_limited;  //For bb_type specific for transmission limited dispatch
     int disp_reporting;
     int scaling_type;
 

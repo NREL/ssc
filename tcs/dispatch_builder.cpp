@@ -74,7 +74,6 @@ void __WINAPI opt_iter_function(lprec* lp, void* userhandle, int msg)
 s_solver_params::s_solver_params()
 {
     is_abort_flag = false;
-    iter_count = 0;
     log_message = "";
     obj_relaxed = std::numeric_limits<double>::quiet_NaN();
 
@@ -90,6 +89,7 @@ s_solver_params::s_solver_params()
 
     presolve_type = -1;
     bb_type = -1;
+    is_transmission_limited = false;
     disp_reporting = -1;
     scaling_type = -1;
 
@@ -132,7 +132,6 @@ void s_solver_params::set_user_inputs(bool is_dispatch, int disp_steps_per_hour,
 void s_solver_params::reset()
 {
     is_abort_flag = false;
-    iter_count = 0;
     log_message.clear();
     obj_relaxed = 0.;
 }
