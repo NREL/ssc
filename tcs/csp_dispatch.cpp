@@ -428,6 +428,9 @@ bool csp_dispatch_opt::optimize()
         //Calculate the number of variables
         int nt = (int)m_nstep_opt;
 
+        unordered_map<std::string, double> P;
+        calculate_parameters(this, P, nt);
+
         //set up the variable structure
         optimization_vars O;
         O.add_var("xr", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0. );
@@ -452,60 +455,8 @@ bool csp_dispatch_opt::optimize()
         O.add_var("wdot", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0. ); //0 lower bound?
         O.add_var("delta_w", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0. ); 
         
-        unordered_map<std::string, double> P;
-        calculate_parameters(this, P, nt);
-
-        O.construct();  //allocates memory for data array
-
-        int nvar = O.get_total_var_count(); //total number of variables in the problem
-
-        lp = make_lp(0, nvar);  //build the context
-
-        if(lp == NULL)
-            throw C_csp_exception("Failed to create a new CSP dispatch optimization problem context.");
-
-        //set variable names and types for each column
-        for(int i=0; i<O.get_num_varobjs(); i++)
-        {
-            optimization_vars::opt_var *v = O.get_var(i);
-
-            std::string name_base = v->name;
-
-            if( v->var_dim == optimization_vars::VAR_DIM::DIM_T )
-            {
-                for(int t=0; t<nt; t++)
-                {
-                    char s[40];
-                    sprintf(s, "%s-%d", name_base.c_str(), t);
-                    set_col_name(lp, O.column(i, t), s);
-                    
-                }
-            }
-            else if( v->var_dim == optimization_vars::VAR_DIM::DIM_NT ) 
-            {
-                for(int t1=0; t1<v->var_dim_size; t1++)
-                {
-                    for(int t2=0; t2<v->var_dim_size2; t2++)
-                    {
-                        char s[40];
-                        sprintf(s, "%s-%d-%d", name_base.c_str(), t1, t2);
-                        set_col_name(lp, O.column(i, t1,t2 ), s);
-                    }
-                }
-            }
-            else
-            {
-                for(int t1=0; t1<nt; t1++)
-                {
-                    for(int t2=t1; t2<nt; t2++)
-                    {
-                        char s[40];
-                        sprintf(s, "%s-%d-%d", name_base.c_str(), t1, t2);
-                        set_col_name(lp, O.column(i, t1, t2 ), s);
-                    }
-                }
-            }
-        }
+        // Construct LP model and set up variable properties
+        lp = construct_lp_model(&O);
 
         /* 
         --------------------------------------------------------------------------------
@@ -572,31 +523,6 @@ bool csp_dispatch_opt::optimize()
             delete[] col;
             delete[] row;
         }
-
-        //set the row mode
-        set_add_rowmode(lp, TRUE);
-
-        /* 
-        --------------------------------------------------------------------------------
-        set up the variable properties
-        --------------------------------------------------------------------------------
-        */
-        for(int i=0; i<O.get_num_varobjs(); i++)
-        {
-            optimization_vars::opt_var *v = O.get_var(i);
-            if( v->var_type == optimization_vars::VAR_TYPE::BINARY_T )
-            {
-                for(int i=v->ind_start; i<v->ind_end; i++)
-                    set_binary(lp, i+1, TRUE);
-            }
-            //upper and lower variable bounds
-            for(int i=v->ind_start; i<v->ind_end; i++)
-            {
-                set_upbo(lp, i+1, v->upper_bound);
-                set_lowbo(lp, i+1, v->lower_bound);
-            }
-        }
-
 
         /* 
         --------------------------------------------------------------------------------
@@ -1335,181 +1261,18 @@ bool csp_dispatch_opt::optimize()
         //Set problem to maximize
         set_maxim(lp);
 
-        // TODO:: most of this can be moved to dispatch_builder...
+        if (P["wlim_min"] < 1.e20)
+            solver_params.is_transmission_limited = true;
 
-        //reset the row mode
-        set_add_rowmode(lp, FALSE);
+        setup_solver_presolve_bbrules(lp);
+        bool return_ok = problem_scaling_solve_loop(lp);
+        set_lp_solve_outputs(lp);
 
-        //set the log function
-        solver_params.reset();
-        
-        put_msgfunc(lp, opt_iter_function, (void*)(&solver_params), MSG_ITERATION | MSG_MILPBETTER | MSG_MILPFEASIBLE);
-        put_abortfunc(lp, opt_abortfunction, (void*)(&solver_params));
-        if( solver_params.disp_reporting > 0 )
-        {
-            put_logfunc(lp, opt_logfunction, (void*)(&solver_params));
-            set_verbose(lp, solver_params.disp_reporting); //http://web.mit.edu/lpsolve/doc/set_verbose.htm
-        }
-        else
-        {
-            set_verbose(lp, 0);
-        }
-
-        /* 
-        The presolve options have been tested and show that the optimal combination of options is as set below.
-
-        Optimality was measured by observing the number of constraints + number of variables that resulted an an 
-        annual-averaged basis from each combination.
-        */
-
-        /* 
-        From the genetic algorithm:
-
-        Presolve        512 
-        Branch&Bound    0 32 64 128 256 1024 
-        Scaling         7 16 32 64 128
-
-
-        ----- keep a record of what's been tried historically for each setting ----
-
-        >>> set_presolve
-            PRESOLVE_ROWS + PRESOLVE_COLS + PRESOLVE_REDUCEMIP + PRESOLVE_ELIMEQ2 :: original from 2015
-            PRESOLVE_ROWS + PRESOLVE_COLS + PRESOLVE_ELIMEQ2 + PRESOLVE_PROBEFIX :: version used as of 12/5/2016
-            PRESOLVE_IMPLIEDFREE :: genetic algorithm from 2015
-
-        >> set_bb_rule
-            -- combos set for older problem formulation, appropriate as of mid-2015
-            NODE_PSEUDOCOSTSELECT + NODE_RCOSTFIXING :: original
-            NODE_PSEUDORATIOSELECT + NODE_BREADTHFIRSTMODE :: original v2
-            NODE_PSEUDONONINTSELECT + NODE_GREEDYMODE + NODE_DYNAMICMODE + NODE_RCOSTFIXING :: 5m30s, 10.24c
-            NODE_PSEUDOCOSTSELECT + NODE_RANDOMIZEMODE + NODE_RCOSTFIXING :: 5m20s, 10.17c
-            NODE_GREEDYMODE + NODE_PSEUDOCOSTMODE + NODE_DEPTHFIRSTMODE + NODE_RANDOMIZEMODE + NODE_DYNAMICMODE :: optimal from genetic algorithm
-            NODE_PSEUDOCOSTSELECT + NODE_RANDOMIZEMODE :: optimal from independent optimization, THIS VERSION CURRENT AS OF 12/5/2016
-        */
-
-        //presolve
-        if(solver_params.presolve_type > 0)
-            set_presolve(lp, solver_params.presolve_type, get_presolveloops(lp));
-        else
-            set_presolve(lp, PRESOLVE_ROWS + PRESOLVE_COLS + PRESOLVE_ELIMEQ2 + PRESOLVE_PROBEFIX, get_presolveloops(lp) );   //independent optimization
-
-        set_mip_gap(lp, FALSE, solver_params.mip_gap);
-        set_timeout(lp, solver_params.solution_timeout);  //max solution time
-
-        //Debugging parameters
-        //set_bb_depthlimit(lp, -10);   //max branch depth
-        //set_solutionlimit(lp, 1);     //only look for 1 optimal solution
-        //set_outputfile(lp, "c://users//mwagner//documents//dropbox//nrel//formulation//trace.txt");
-        //set_debug(lp, TRUE);
-        
-        //Different Basis Factorization Package:
-            /* Using these packages did not seem to help reduce solution times. */
-        //set_BFP(lp, "bfp_etaPFI");    // original lp_solve product form of the inverse.
-        //set_BFP(lp, "bfp_LUSOL");     // LU decomposition. (LP solve manual suggests using this one) Seems to increase solve times
-        //set_BFP(lp, "bfp_GLPK");      // GLPK LU decomposition.
-
-        //branch and bound rule. This one has a big impact on solver performance.
-        if(solver_params.bb_type > 0)
-            set_bb_rule(lp, solver_params.bb_type);
-		else
-		{
-			set_bb_rule(lp, NODE_RCOSTFIXING + NODE_DYNAMICMODE + NODE_GREEDYMODE + NODE_PSEUDONONINTSELECT);
-			if (P["wlim_min"] < 1.e20)
-				set_bb_rule(lp, NODE_PSEUDOCOSTSELECT + NODE_DYNAMICMODE);
-		}
-        
- 
-       //Problem scaling loop
-        int scaling_iter = 0;
-        bool return_ok = false;
-        while(scaling_iter < 5)
-        {
-
-            if( solver_params.scaling_type < 0 && scaling_iter == 0)
-            {
-                scaling_iter ++;
-                continue;
-            }
-
-            //Scaling algorithm
-            switch(scaling_iter)
-            {
-            case 0:
-                set_scaling(lp, solver_params.scaling_type);
-                break;
-            case 1:
-                //set_scaling(lp,  SCALE_INTEGERS | SCALE_LINEAR | SCALE_GEOMETRIC | SCALE_EQUILIBRATE);  //default
-                //set_scaling(lp, SCALE_EXTREME + SCALE_LOGARITHMIC + SCALE_POWER2 + SCALE_EQUILIBRATE + SCALE_INTEGERS + SCALE_DYNUPDATE + SCALE_ROWSONLY); //from noload run
-                set_scaling(lp, SCALE_MEAN + SCALE_LOGARITHMIC + SCALE_POWER2 + SCALE_EQUILIBRATE + SCALE_INTEGERS );   //this works really well before trying modified bb weights
-                //set_scaling(lp, SCALE_CURTISREID + SCALE_LOGARITHMIC + SCALE_POWER2 + SCALE_EQUILIBRATE + SCALE_INTEGERS );   //genetic algorithm
-                break;
-            case 2:
-                set_scaling(lp, SCALE_NONE);
-                break;
-            case 3:
-                set_scaling(lp, SCALE_CURTISREID | SCALE_LINEAR | SCALE_EQUILIBRATE | SCALE_INTEGERS);
-                //set_scaling(lp, SCALE_FUTURE1); 
-                break;
-            case 4:
-                set_scaling(lp,  SCALE_INTEGERS | SCALE_LINEAR | SCALE_GEOMETRIC | SCALE_EQUILIBRATE);  //default
-                break;
-            }
-
-
-            ret = solve(lp);
-
-            //Collect the dispatch profile and startup flags
-            return_ok = ret == OPTIMAL || ret == SUBOPTIMAL;
-            
-            if(return_ok)
-                break;      //break the scaling loop
-
-            //If the problem was reported as unbounded, this probably has to do with poor scaling. Try again with no scaling.
-            std::string fail_type;
-            switch(ret)
-            {
-            case UNBOUNDED:
-                fail_type = "... Unbounded";
-                break;
-            case NUMFAILURE:
-                fail_type = "... Numerical failure in";
-                break;
-            case INFEASIBLE:
-                fail_type = "... Infeasible";
-                break;
-            }
-            pointers.messages->add_message(C_csp_messages::NOTICE, fail_type + " dispatch optimization problem. Retrying with modified problem scaling.");
-            
-            unscale(lp);
-            default_basis(lp);
-
-            scaling_iter ++;
-        }
-
-        //keep track of problem efficiency
-        lp_outputs.presolve_nconstr = get_Nrows(lp);
-        lp_outputs.presolve_nvar = get_Ncolumns(lp);
-        lp_outputs.solve_time = time_elapsed(lp);
-
-        //set_outputfile(lp, "C:\\Users\\WHamilt2\\Documents\\SAM\\ZZZ_working_directory\\setup.txt");
-        //print_lp(lp);
-
-        //set_outputfile(lp, "C:\\Users\\WHamilt2\\Documents\\SAM\\ZZZ_working_directory\\solution.txt");
-        //print_solution(lp, 1);
+        // Saving problem and solution for DEBUGGING formulation
+        //save_problem_solution_debug(lp);
 
         if(return_ok)
         {
-            /*set_outputfile(lp, "C:\\Users\\mwagner\\Documents\\NREL\\OM Optimization\\cspopt\\software\\sdk\\scripts\\lpsolve\\setup.txt");
-            print_lp(lp);
-            set_outputfile(lp, "C:\\Users\\mwagner\\Documents\\NREL\\OM Optimization\\cspopt\\software\\sdk\\scripts\\lpsolve\\solution.txt");
-            print_solution(lp, 1);
-            throw;*/
-
-            // Set dispatch outputs
-
-            lp_outputs.objective = get_objective(lp);
-            lp_outputs.objective_relaxed = get_bb_relaxed_objective(lp);
-
             outputs.clear();
             outputs.resize(nt);
 
@@ -1606,89 +1369,11 @@ bool csp_dispatch_opt::optimize()
 
             delete [] vars;
         }
-        else
-        {
-            //if the optimization wasn't successful, just set the objective values to zero - otherwise they are NAN
-            lp_outputs.objective = 0.;
-            lp_outputs.objective_relaxed = 0.;
-        }
-
-        //record the solve state
-        lp_outputs.solve_state = ret;
-        // When solve_state is 0, this is the last known gap before tree was prune
-        if (lp_outputs.solve_state == 1)
-            lp_outputs.rel_mip_gap = abs(lp_outputs.objective_relaxed - lp_outputs.objective) / abs(lp_outputs.objective_relaxed);
-        else
-            lp_outputs.rel_mip_gap = 0.0;
-
-        //get number of iterations
-        lp_outputs.solve_iter = (int)get_total_iter(lp);
 
         delete_lp(lp);
         lp = NULL;
+        print_dispatch_update();
 
-        std::stringstream s;
-        int time_start = (int)(params.info_time / 3600.);
-        s << "Time " << time_start << " - " << time_start + nt << ": ";
-
-        int type= OPTIMAL;
-
-        switch(ret)
-        {
-        case UNKNOWNERROR:
-            type = C_csp_messages::WARNING;
-            s << "... An unknown error occurred while attempting to solve the dispatch optimization problem.";
-            break;
-        case DATAIGNORED:
-            type = C_csp_messages::WARNING;
-            s << "Dispatch optimization failed: Data ignored.";
-            break;
-        case NOBFP:
-            type = C_csp_messages::WARNING;
-            s << "Dispatch optimization failed: No BFP.";
-            break;
-        case NOMEMORY:
-            type = C_csp_messages::WARNING;
-            s << "Dispatch optimization failed: Out of memory.";
-            break;
-        case NOTRUN:
-            type = C_csp_messages::WARNING;
-            s << "Dispatch optimization failed: Simulation did not run.";
-            break;
-        case SUBOPTIMAL:
-            type = C_csp_messages::NOTICE;
-			s << "Suboptimal solution identified.";
-            break;
-        case INFEASIBLE:
-            type = C_csp_messages::WARNING;
-            s << "Dispatch optimization failed: Infeasible problem.";
-            break;
-        case UNBOUNDED:
-            type = C_csp_messages::WARNING;
-            s << "Dispatch optimization failed: Unbounded problem.";
-            break;
-        case DEGENERATE:
-            type = C_csp_messages::WARNING;
-            s << "Dispatch optimization failed: Degenerate problem.";
-            break;
-        case NUMFAILURE:
-            type = C_csp_messages::WARNING;
-            s << "Dispatch optimization failed: Numerical failure.";
-            break;
-        case USERABORT:
-        case TIMEOUT:
-            type = C_csp_messages::WARNING;
-            s << "Dispatch optimization failed: Iteration or time limit reached before identifying a solution.";
-            break;
-        case OPTIMAL:
-            type = C_csp_messages::NOTICE;
-			s << "Optimal solution identified.";
-        default:
-            break;
-        }
-
-        pointers.messages->add_message(type, s.str() );
-        
         if(return_ok)
             write_ampl(); //TODO: why is this here?
 

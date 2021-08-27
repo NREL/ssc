@@ -322,18 +322,18 @@ bool base_dispatch_opt::problem_scaling_solve_loop(lprec* lp)
         {
         case UNBOUNDED:
             fail_type = "... Unbounded";
-            set_outputfile(lp, "C:\\Users\\WHamilt2\\Documents\\SAM\\ZZZ_working_directory\\unbounded_setup.txt");
-            print_lp(lp);
+            //set_outputfile(lp, "C:\\Users\\WHamilt2\\Documents\\SAM\\ZZZ_working_directory\\unbounded_setup.txt");
+            //print_lp(lp);
             break;
         case NUMFAILURE:
             fail_type = "... Numerical failure in";
-            set_outputfile(lp, "C:\\Users\\WHamilt2\\Documents\\SAM\\ZZZ_working_directory\\numerical_failure_setup.txt");
-            print_lp(lp);
+            //set_outputfile(lp, "C:\\Users\\WHamilt2\\Documents\\SAM\\ZZZ_working_directory\\numerical_failure_setup.txt");
+            //print_lp(lp);
             break;
         case INFEASIBLE:
             fail_type = "... Infeasible";
-            set_outputfile(lp, "C:\\Users\\WHamilt2\\Documents\\SAM\\ZZZ_working_directory\\infeasable_setup.txt");
-            print_lp(lp);
+            //set_outputfile(lp, "C:\\Users\\WHamilt2\\Documents\\SAM\\ZZZ_working_directory\\infeasable_setup.txt");
+            //print_lp(lp);
             break;
         }
         pointers.messages->add_message(C_csp_messages::NOTICE, fail_type + " dispatch optimization problem. Retrying with modified problem scaling.");
@@ -372,7 +372,7 @@ void base_dispatch_opt::set_lp_solve_outputs(lprec* lp)
         lp_outputs.objective_relaxed = 0.;
     }
 
-    // When solve_state is 0, this is the last known gap before tree was prune
+    // When solve_state is 0, I believe this is the last known gap before tree was prune. Therefore, not reporting
     if (lp_outputs.solve_state == SUBOPTIMAL)
         lp_outputs.rel_mip_gap = abs(lp_outputs.objective_relaxed - lp_outputs.objective) / abs(lp_outputs.objective_relaxed);
     else
