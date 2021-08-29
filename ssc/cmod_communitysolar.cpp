@@ -728,64 +728,64 @@ static var_info _cm_vtab_communitysolar[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_thermal_value",                        "Present value of thermal value",              "$",                   "", "Metrics", "*", "", "" },
 
         // community solar specific outputs
-    { SSC_OUTPUT, SSC_ARRAY, "CF_subscriber1_share_fraction", "Subscriber1 share", "", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "CF_subscriber2_share_fraction", "Subscriber2 share", "", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "CF_subscriber3_share_fraction", "Subscriber3 share", "", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "CF_subscriber4_share_fraction", "Subscriber4 share", "", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber1_share_fraction", "Subscriber1 share", "", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber2_share_fraction", "Subscriber2 share", "", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber3_share_fraction", "Subscriber3 share", "", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber4_share_fraction", "Subscriber4 share", "", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
 
-    { SSC_OUTPUT, SSC_ARRAY, "CF_subscriber1_retail", "Subscriber1 retail", "$/kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "CF_subscriber2_retail", "Subscriber2 retail", "$/kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "CF_subscriber3_retail", "Subscriber3 retail", "$/kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "CF_subscriber4_retail", "Subscriber4 retail", "$/kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber1_retail", "Subscriber1 retail", "$/kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber2_retail", "Subscriber2 retail", "$/kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber3_retail", "Subscriber3 retail", "$/kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber4_retail", "Subscriber4 retail", "$/kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
 
-    { SSC_OUTPUT, SSC_ARRAY, "CF_recurring_fixed", "Recurring fixed cost", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "CF_recurring_capacity", "Recurring capacity cost", "$/kW-yr", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "CF_recurring_generation", "Recurring generation cost", "$/kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_recurring_fixed", "Recurring fixed cost", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_recurring_capacity", "Recurring capacity cost", "$/kW-yr", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_recurring_generation", "Recurring generation cost", "$/kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
 
-    { SSC_OUTPUT, SSC_ARRAY, "CF_subscriber1_payment", "Subscriber1 payment", "$/yr", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "CF_subscriber2_payment", "Subscriber2 payment", "$/yr", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "CF_subscriber3_payment", "Subscriber3 payment", "$/yr", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "CF_subscriber4_payment", "Subscriber4 payment", "$/yr", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber1_payment", "Subscriber1 payment", "$/yr", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber2_payment", "Subscriber2 payment", "$/yr", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber3_payment", "Subscriber3 payment", "$/yr", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber4_payment", "Subscriber4 payment", "$/yr", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
 
-    { SSC_OUTPUT, SSC_ARRAY, "CF_subscriber1_share_of_generation", "Subscriber1 share of generation", "kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "CF_subscriber2_share_of_generation", "Subscriber2 share of generation", "kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "CF_subscriber3_share_of_generation", "Subscriber3 share of generation", "kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "CF_subscriber4_share_of_generation", "Subscriber4 share of generation", "kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "CF_unsubscribed_share_of_generation", "Unsubscribed share of generation", "kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber1_share_of_generation", "Subscriber1 share of generation", "kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber2_share_of_generation", "Subscriber2 share of generation", "kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber3_share_of_generation", "Subscriber3 share of generation", "kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber4_share_of_generation", "Subscriber4 share of generation", "kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_unsubscribed_share_of_generation", "Unsubscribed share of generation", "kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
 
-    { SSC_OUTPUT, SSC_ARRAY, "CF_subscriber1_revenue_generation", "Subscriber1 revenue generation", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "CF_subscriber2_revenue_generation", "Subscriber2 revenue generation", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "CF_subscriber3_revenue_generation", "Subscriber3 revenue generation", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "CF_subscriber4_revenue_generation", "Subscriber4 revenue generation", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "CF_unsubscribed_revenue_generation", "Unsubscribed revenue generation", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber1_revenue_generation", "Subscriber1 revenue generation", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber2_revenue_generation", "Subscriber2 revenue generation", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber3_revenue_generation", "Subscriber3 revenue generation", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber4_revenue_generation", "Subscriber4 revenue generation", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_unsubscribed_revenue_generation", "Unsubscribed revenue generation", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
 
-    { SSC_OUTPUT, SSC_ARRAY, "CF_subscriber1_revenue_upfront", "Subscriber1 revenue upfront", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "CF_subscriber2_revenue_upfront", "Subscriber2 revenue upfront", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "CF_subscriber3_revenue_upfront", "Subscriber3 revenue upfront", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "CF_subscriber4_revenue_upfront", "Subscriber4 revenue upfront", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber1_revenue_upfront", "Subscriber1 revenue upfront", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber2_revenue_upfront", "Subscriber2 revenue upfront", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber3_revenue_upfront", "Subscriber3 revenue upfront", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber4_revenue_upfront", "Subscriber4 revenue upfront", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
 
-    { SSC_OUTPUT, SSC_ARRAY, "CF_subscriber1_revenue_annual_payment", "Subscriber1 revenue annual payment", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "CF_subscriber2_revenue_annual_payment", "Subscriber2 revenue annual payment", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "CF_subscriber3_revenue_annual_payment", "Subscriber3 revenue annual payment", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "CF_subscriber4_revenue_annual_payment", "Subscriber4 revenue annual payment", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber1_revenue_annual_payment", "Subscriber1 revenue annual payment", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber2_revenue_annual_payment", "Subscriber2 revenue annual payment", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber3_revenue_annual_payment", "Subscriber3 revenue annual payment", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber4_revenue_annual_payment", "Subscriber4 revenue annual payment", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
 
-    { SSC_OUTPUT, SSC_ARRAY, "CF_subscriber1_revenue_retail_cost", "Subscriber1 revenue retail cost", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "CF_subscriber2_revenue_retail_cost", "Subscriber2 revenue retail cost", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "CF_subscriber3_revenue_retail_cost", "Subscriber3 revenue retail cost", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "CF_subscriber4_revenue_retail_cost", "Subscriber4 revenue retail cost", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber1_retail_cost", "Subscriber1 revenue retail cost", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber2_retail_cost", "Subscriber2 revenue retail cost", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber3_retail_cost", "Subscriber3 revenue retail cost", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber4_retail_cost", "Subscriber4 revenue retail cost", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
 
-    { SSC_OUTPUT, SSC_ARRAY, "CF_community_solar_subscriber1_revenue", "Subscriber1 revenue ", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "CF_community_solar_subscriber1_revenue", "Subscriber2 revenue ", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "CF_community_solar_subscriber1_revenue", "Subscriber3 revenue ", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "CF_community_solar_subscriber1_revenue", "Subscriber4 revenue ", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "CF_community_solar_unsubscribed_revenue", "Unsubscribed revenue ", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_subscriber1_revenue", "Subscriber1 total revenue", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_subscriber2_revenue", "Subscriber2 total revenue", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_subscriber3_revenue", "Subscriber3 total revenue", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_subscriber4_revenue", "Subscriber4 total revenue", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_unsubscribed_revenue", "Unsubscribed total revenue", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
 
 
-    { SSC_OUTPUT, SSC_ARRAY, "CF_community_solar_upfront", "Total upfront fixed cost", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "CF_community_solar_upfront_per_capacity", "Total upfront capacity cost", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "CF_community_solar_recurring_fixed", "Total recurring fixed cost", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "CF_community_solar_recurring_capacity", "Total recurring capacity cost", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "CF_community_solar_recurring_generation", "Total recurring generation cost", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_upfront", "Total upfront fixed cost", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_upfront_per_capacity", "Total upfront capacity cost", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_recurring_fixed", "Total recurring fixed cost", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_recurring_capacity", "Total recurring capacity cost", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_recurring_generation", "Total recurring generation cost", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
 
 var_info_invalid };
 
@@ -3544,6 +3544,64 @@ public:
 		save_cf(CF_return_on_equity_dollars, nyears, "cf_return_on_equity_dollars");
 		save_cf(CF_return_on_equity, nyears, "cf_return_on_equity");
 
+        // community solar cashflow outputs
+        save_cf(CF_subscriber1_share_fraction, nyears, "cf_subscriber1_share_fraction");
+        save_cf(CF_subscriber2_share_fraction, nyears, "cf_subscriber2_share_fraction");
+        save_cf(CF_subscriber3_share_fraction, nyears, "cf_subscriber3_share_fraction");
+        save_cf(CF_subscriber4_share_fraction, nyears, "cf_subscriber4_share_fraction");
+
+        save_cf(CF_subscriber1_retail, nyears, "cf_subscriber1_retail");
+        save_cf(CF_subscriber2_retail, nyears, "cf_subscriber2_retail");
+        save_cf(CF_subscriber3_retail, nyears, "cf_subscriber3_retail");
+        save_cf(CF_subscriber4_retail, nyears, "cf_subscriber4_retail");
+
+        save_cf(CF_recurring_fixed, nyears, "cf_recurring_fixed");
+        save_cf(CF_recurring_capacity, nyears, "cf_recurring_capacity");
+        save_cf(CF_recurring_generation, nyears, "cf_recurring_generation");
+
+        save_cf(CF_subscriber1_payment, nyears, "cf_subscriber1_payment");
+        save_cf(CF_subscriber2_payment, nyears, "cf_subscriber2_payment");
+        save_cf(CF_subscriber3_payment, nyears, "cf_subscriber3_payment");
+        save_cf(CF_subscriber4_payment, nyears, "cf_subscriber4_payment");
+
+        save_cf(CF_subscriber1_share_of_generation, nyears, "cf_subscriber1_share_of_generation");
+        save_cf(CF_subscriber2_share_of_generation, nyears, "cf_subscriber2_share_of_generation");
+        save_cf(CF_subscriber3_share_of_generation, nyears, "cf_subscriber3_share_of_generation");
+        save_cf(CF_subscriber4_share_of_generation, nyears, "cf_subscriber4_share_of_generation");
+        save_cf(CF_unsubscribed_share_of_generation, nyears, "cf_unsubscribed_share_of_generation");
+
+        save_cf(CF_subscriber1_revenue_generation, nyears, "cf_subscriber1_revenue_generation");
+        save_cf(CF_subscriber2_revenue_generation, nyears, "cf_subscriber2_revenue_generation");
+        save_cf(CF_subscriber3_revenue_generation, nyears, "cf_subscriber3_revenue_generation");
+        save_cf(CF_subscriber4_revenue_generation, nyears, "cf_subscriber4_revenue_generation");
+        save_cf(CF_unsubscribed_revenue_generation, nyears, "cf_unsubscribed_revenue_generation");
+
+        save_cf(CF_subscriber1_revenue_upfront, nyears, "cf_subscriber1_revenue_upfront");
+        save_cf(CF_subscriber2_revenue_upfront, nyears, "cf_subscriber2_revenue_upfront");
+        save_cf(CF_subscriber3_revenue_upfront, nyears, "cf_subscriber3_revenue_upfront");
+        save_cf(CF_subscriber4_revenue_upfront, nyears, "cf_subscriber4_revenue_upfront");
+
+        save_cf(CF_subscriber1_revenue_annual_payment, nyears, "cf_subscriber1_revenue_annual_payment");
+        save_cf(CF_subscriber2_revenue_annual_payment, nyears, "cf_subscriber2_revenue_annual_payment");
+        save_cf(CF_subscriber3_revenue_annual_payment, nyears, "cf_subscriber3_revenue_annual_payment");
+        save_cf(CF_subscriber4_revenue_annual_payment, nyears, "cf_subscriber4_revenue_annual_payment");
+
+        save_cf(CF_subscriber1_retail_cost, nyears, "cf_subscriber1_retail_cost");
+        save_cf(CF_subscriber2_retail_cost, nyears, "cf_subscriber2_retail_cost");
+        save_cf(CF_subscriber3_retail_cost, nyears, "cf_subscriber3_retail_cost");
+        save_cf(CF_subscriber4_retail_cost, nyears, "cf_subscriber4_retail_cost");
+
+        save_cf(CF_community_solar_subscriber1_revenue, nyears, "cf_community_solar_subscriber1_revenue");
+        save_cf(CF_community_solar_subscriber2_revenue, nyears, "cf_community_solar_subscriber2_revenue");
+        save_cf(CF_community_solar_subscriber3_revenue, nyears, "cf_community_solar_subscriber3_revenue");
+        save_cf(CF_community_solar_subscriber4_revenue, nyears, "cf_community_solar_subscriber4_revenue");
+        save_cf(CF_community_solar_unsubscribed_revenue, nyears, "cf_community_solar_unsubscribed_revenue");
+
+        save_cf(CF_community_solar_upfront, nyears, "cf_community_solar_upfront");
+        save_cf(CF_community_solar_upfront_per_capacity, nyears, "cf_community_solar_upfront_per_capacity");
+        save_cf(CF_community_solar_recurring_fixed, nyears, "cf_community_solar_recurring_fixed");
+        save_cf(CF_community_solar_recurring_capacity, nyears, "cf_community_solar_recurring_capacity");
+        save_cf(CF_community_solar_recurring_generation, nyears, "cf_community_solar_recurring_generation");
 
 		for (i = 0; i <= nyears; i++)
 		{
