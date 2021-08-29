@@ -2438,11 +2438,11 @@ public:
 	// fixed price PPA - LPPA independent of salvage value per 7/16/15 meeting
 		double npv_ppa_revenue = npv(CF_energy_value, nyears, nom_discount_rate);
 	//	double npv_ppa_revenue = npv(CF_total_revenue, nyears, nom_discount_rate);
-	double npv_energy_nom = npv(CF_energy_net, nyears, nom_discount_rate);
+	double npv_energy_nom = npv(CF_energy_sales, nyears, nom_discount_rate);
 	double lppa_nom = 0;
 	if (npv_energy_nom != 0) lppa_nom = npv_ppa_revenue / npv_energy_nom * 100.0;
 	double lppa_real = 0;
-	double npv_energy_real = npv(CF_energy_net, nyears, disc_real);
+	double npv_energy_real = npv(CF_energy_sales, nyears, disc_real);
 	if (npv_energy_real != 0) lppa_real = npv_ppa_revenue / npv_energy_real * 100.0;
 
 	// update LCOE calculations 
