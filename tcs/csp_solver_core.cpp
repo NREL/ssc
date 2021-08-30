@@ -4028,3 +4028,8 @@ void C_csp_solver::C_system_operating_modes::turn_off_mode_availability(E_operat
 {
     get_pointer_to_op_mode(op_mode)->turn_off_mode_availability();
 }
+
+std::vector<double> C_csp_collector_receiver::get_scas_outlet_temps() {
+    std::vector<double> vect;
+    return vect;
+}

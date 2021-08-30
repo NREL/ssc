@@ -559,6 +559,7 @@ public:
 	virtual double get_tracking_power() = 0;		//MWe
 	virtual double get_col_startup_power() = 0;		//MWe-hr
 	virtual double get_remaining_startup_energy() = 0; //kWh
+    virtual std::vector<double> get_scas_outlet_temps(); //C
 
 	virtual void off(const C_csp_weatherreader::S_outputs &weather,
 		const C_csp_solver_htf_1state &htf_state_in,

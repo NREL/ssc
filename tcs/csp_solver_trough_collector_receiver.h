@@ -73,8 +73,13 @@ public:
 		E_T_FIELD_HOT_OUT,	//[C]
 		E_PRESSURE_DROP,	//[bar]
 
-		E_W_DOT_SCA_TRACK,	//[MWe]
-		E_W_DOT_PUMP		//[MWe]
+		E_W_DOT_SCA_TRACK,          //[MWe]
+		E_W_DOT_PUMP,               //[MWe]
+
+        E_REC_OP_MODE_FINAL,        //[-] Final receiver operating mode
+        E_DEFOCUS_FINAL,            //[-]
+        E_T_IN_LOOP_FINAL,          //[C]
+        E_T_OUT_LOOP_FINAL,         //[C]
 	};
 
 	C_csp_reported_outputs mc_reported_outputs;
@@ -463,6 +468,12 @@ public:
 
     vector<interconnect> m_interconnects;
 
+    int m_operating_mode_initial;
+    double m_defocus_initial;
+    double m_T_in_loop_initial;
+    double m_T_out_loop_initial;
+    std::vector<double> m_T_out_scas_last_initial;
+
 	// **************************************************************************
 	// **************************************************************************
 	// **************************************************************************
@@ -492,6 +503,7 @@ public:
 	virtual double get_tracking_power();		//MWe
 	virtual double get_col_startup_power();		//MWe-hr
 	virtual double get_remaining_startup_energy();		//kWh
+    virtual std::vector<double> get_scas_outlet_temps();    //[C]
 
 	virtual int get_operating_state();
 	
@@ -523,6 +535,8 @@ public:
 		const C_csp_solver_htf_1state &htf_state_in,
 		C_csp_collector_receiver::S_csp_cr_est_out &est_out,
 		const C_csp_solver_sim_info &sim_info);
+
+	void set_state(double T_in_loop, double T_out_loop, std::vector<double> T_out_scas);
 
 	virtual void converged();
 

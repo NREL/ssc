@@ -63,6 +63,11 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 	{C_csp_trough_collector_receiver::E_W_DOT_SCA_TRACK, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 	{C_csp_trough_collector_receiver::E_W_DOT_PUMP, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 
+    {C_csp_trough_collector_receiver::E_REC_OP_MODE_FINAL, C_csp_reported_outputs::TS_LAST},
+    {C_csp_trough_collector_receiver::E_DEFOCUS_FINAL, C_csp_reported_outputs::TS_LAST},
+    {C_csp_trough_collector_receiver::E_T_IN_LOOP_FINAL, C_csp_reported_outputs::TS_LAST},
+    {C_csp_trough_collector_receiver::E_T_OUT_LOOP_FINAL, C_csp_reported_outputs::TS_LAST},
+
 	csp_info_invalid
 };
 
@@ -227,6 +232,10 @@ C_csp_trough_collector_receiver::C_csp_trough_collector_receiver()
 	m_AnnulusGasMat.fill(NULL);
 	m_AbsorberPropMat.fill(NULL);
 
+    m_operating_mode_initial = C_csp_collector_receiver::OFF;
+    m_defocus_initial = std::numeric_limits<double>::quiet_NaN();
+    m_T_in_loop_initial = std::numeric_limits<double>::quiet_NaN();
+    m_T_out_loop_initial = std::numeric_limits<double>::quiet_NaN();
 }
 
 void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp_cr_init_inputs init_inputs, 
@@ -490,7 +499,14 @@ void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp
     }
 
 	// Set previous operating mode
-	m_operating_mode_converged = C_csp_collector_receiver::OFF;					//[-] 0 = requires startup, 1 = starting up, 2 = running
+    m_operating_mode = m_operating_mode_initial;
+    m_operating_mode_converged = m_operating_mode_initial;
+    m_defocus_old = m_defocus_initial;
+
+    // Set initial state if configured
+    if (isfinite(m_T_in_loop_initial) && isfinite(m_T_out_loop_initial) && !m_T_out_scas_last_initial.empty()) {
+        set_state(m_T_in_loop_initial, m_T_out_loop_initial, m_T_out_scas_last_initial);
+    }
 
 	return;
 }
@@ -860,8 +876,13 @@ double C_csp_trough_collector_receiver::get_tracking_power()
 
 double C_csp_trough_collector_receiver::get_remaining_startup_energy()
 {
-	throw(C_csp_exception("C_csp_trough_collector_receiver::get_remaining_startup_energy() is not complete"));
-	return std::numeric_limits<double>::quiet_NaN(); //kWh
+    throw(C_csp_exception("C_csp_trough_collector_receiver::get_remaining_startup_energy() is not complete"));
+    return std::numeric_limits<double>::quiet_NaN(); //kWh
+}
+
+std::vector<double> C_csp_trough_collector_receiver::get_scas_outlet_temps()
+{
+    return m_T_htf_out_t_end_converged;
 }
 
 double C_csp_trough_collector_receiver::get_col_startup_power()
@@ -2194,104 +2215,81 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
 	const C_csp_solver_sim_info &sim_info)
 {
-	// Always reset last temps
+	// Reset last temps
 	reset_last_temps();
+	m_T_sys_c_t_int_fullts = m_T_htf_c_rec_in_t_int_fullts =
+		m_T_htf_h_rec_out_t_int_fullts = m_T_sys_h_t_int_fullts =
+	    m_q_dot_sca_loss_summed_fullts = m_q_dot_sca_abs_summed_fullts = m_q_dot_xover_loss_summed_fullts =
+		m_q_dot_HR_cold_loss_fullts = m_q_dot_HR_hot_loss_fullts =
+		m_E_dot_sca_summed_fullts = m_E_dot_xover_summed_fullts =
+		m_E_dot_HR_cold_fullts = m_E_dot_HR_hot_fullts =
+		m_q_dot_htf_to_sink_fullts = 0.0;
 
 	m_is_m_dot_recirc = true;
 
 	// Get optical performance
 	loop_optical_eta(weather, sim_info);
 
-	// Set mass flow rate to what I imagine might be an appropriate value
+	// Set mass flow rate to an appropriate value
 	double m_dot_htf_loop = m_m_dot_htfmin;
-	if( weather.m_beam > 50.0 && m_T_htf_out_t_end_converged[m_nSCA - 1] > (0.5*m_T_fp + 0.5*m_T_startup) )
-	{
+	if( weather.m_beam > 50.0 && m_T_htf_out_t_end_converged[m_nSCA - 1] > (0.5*m_T_fp + 0.5*m_T_startup) )	{
 		double m_dot_ss = (weather.m_beam * m_CosTh_ave * m_IAM_ave * m_RowShadow_ave * m_EndLoss_ave) / 
 								(m_I_bn_des * m_opteff_des) * m_m_dot_loop_des;		//[kg/s]
 		m_dot_htf_loop = min( m_m_dot_htfmax, max(m_m_dot_htfmin, 0.8*m_dot_ss + 0.2*m_m_dot_htfmin) );		//[kg/s]
 	}
 
 	// Set duration for recirculation timestep
-	if( m_step_recirc != m_step_recirc )
-		m_step_recirc = 10.0*60.0;	//[s]
+    if (m_step_recirc != m_step_recirc) {
+        m_step_recirc = 10.0 * 60.0;	//[s]
+    }
 
-	// Calculate number of steps required given timestep from solver and recirculation step
-	int n_steps_recirc = (int)std::ceil(sim_info.ms_ts.m_step / m_step_recirc);	//[-] Number of recirculation steps required
-
-	// Define a copy of the sim_info structure
-	double time_start = sim_info.ms_ts.m_time - sim_info.ms_ts.m_step;	//[s]
-    double time_end = sim_info.ms_ts.m_time;            //[s]
-	C_csp_solver_sim_info sim_info_temp = sim_info;
-
-	bool is_T_startup_achieved = false;
-	
 	// This code finds the first "Recirculation Step" when the outlet temperature is greater than the Startup Temperature
-	double time_required_su = sim_info.ms_ts.m_step;		//[s]
-	
-	double Q_fp_sum = 0.0;				//[MJ]
-
-	// Zero full timestep outputs
-	m_T_sys_c_t_int_fullts = m_T_htf_c_rec_in_t_int_fullts =
-		m_T_htf_h_rec_out_t_int_fullts = m_T_sys_h_t_int_fullts = 0.0;	//[K]
-
-	// Zero full timestep outputs
-	m_q_dot_sca_loss_summed_fullts = m_q_dot_sca_abs_summed_fullts = m_q_dot_xover_loss_summed_fullts =
-		m_q_dot_HR_cold_loss_fullts = m_q_dot_HR_hot_loss_fullts =
-		m_E_dot_sca_summed_fullts = m_E_dot_xover_summed_fullts =
-		m_E_dot_HR_cold_fullts = m_E_dot_HR_hot_fullts =
-		m_q_dot_htf_to_sink_fullts = 0.0;
-
-    sim_info_temp.ms_ts.m_time = time_start;
-    while(sim_info_temp.ms_ts.m_time < time_end)
-	{
-        sim_info_temp.ms_ts.m_time_start = sim_info_temp.ms_ts.m_time;      //[s]
-        sim_info_temp.ms_ts.m_time = std::min(sim_info_temp.ms_ts.m_time_start + m_step_recirc, time_end);  //[s]
-        sim_info_temp.ms_ts.m_step = sim_info_temp.ms_ts.m_time - sim_info_temp.ms_ts.m_time_start;     //[s]
+	double time_required_su = sim_info.ms_ts.m_step;		            //[s]
+	double time_start = sim_info.ms_ts.m_time - sim_info.ms_ts.m_step;	//[s]   NOTE: m_time is time at end of timestep, where m_time_start is time at beginning
+    double time_end = sim_info.ms_ts.m_time;                            //[s]
+	C_csp_solver_sim_info sim_info_temp = sim_info;
+    sim_info_temp.ms_ts.m_time = time_start;                            // Why are we setting the temporary timestep end equal to beginning of real one?
+	bool is_T_startup_achieved = false;
+	double Q_fp_sum = 0.0;				                                //[MJ]
+    while(sim_info_temp.ms_ts.m_time < time_end) {
+        sim_info_temp.ms_ts.m_time_start = sim_info_temp.ms_ts.m_time;                                      //[s]   timestep start (temporary), first iteration timestep_start_temporary = timestep_start_real
+        sim_info_temp.ms_ts.m_time = std::min(sim_info_temp.ms_ts.m_time_start + m_step_recirc, time_end);  //[s]   timestep end (temporary)
+        sim_info_temp.ms_ts.m_step = sim_info_temp.ms_ts.m_time - sim_info_temp.ms_ts.m_time_start;         //[s]   timestep
         
-		// Could iterate here for each step such that T_cold_in = m_T_sys_h_t_in
-		// This would signficantly slow the code
+		double T_cold_in = m_T_sys_h_t_end_last;			// [K] Set inlet temperature to previous timestep outlet temperature
 
-		// Set inlet temperature to previous timestep outlet temperature
-		double T_cold_in = m_T_sys_h_t_end_last;			//[K]
-
-		// Call energy balance with updated info
-		loop_energy_balance_T_t_int(weather, T_cold_in, m_dot_htf_loop, sim_info_temp);
+		loop_energy_balance_T_t_int(weather, T_cold_in, m_dot_htf_loop, sim_info_temp);     // this updates m_T_htf_out_t_end[] and m_T_sys_h_t_end
 
 		// Check freeze protection
-		if( m_T_htf_out_t_end[m_nSCA - 1] < m_T_fp + 10.0 )
-		{
-			if( m_Q_field_losses_total_subts > 0.0 )
-			{
+		if( m_T_htf_out_t_end[m_nSCA - 1] < m_T_fp + 10.0 ) {
+			if( m_Q_field_losses_total_subts > 0.0 ) {
 				double Q_fp_i = std::numeric_limits<double>::quiet_NaN();
 				double T_cold_in_i = T_cold_in;
+                // This also updates m_T_htf_out_t_end[] and m_T_sys_h_t_end:
 				int fp_code = freeze_protection(weather, T_cold_in_i, m_dot_htf_loop, sim_info_temp, Q_fp_i);
-
 				T_cold_in = T_cold_in_i;	//[K]
 				Q_fp_sum += Q_fp_i;			//[MJ]
 			}
 		}
 
-		// Add current temperatures
-		m_T_sys_c_t_int_fullts += T_cold_in*sim_info_temp.ms_ts.m_step;					//[K]
-		m_T_htf_c_rec_in_t_int_fullts += m_T_htf_in_t_int[0]*sim_info_temp.ms_ts.m_step;	//[K]
-		m_T_htf_h_rec_out_t_int_fullts += m_T_htf_out_t_int[m_nSCA - 1]*sim_info_temp.ms_ts.m_step;	//[K]
-		m_T_sys_h_t_int_fullts += m_T_sys_h_t_int*sim_info_temp.ms_ts.m_step;				//[K]	
-
-		// Add subtimestep calcs
-		m_q_dot_sca_loss_summed_fullts += m_q_dot_sca_loss_summed_subts*sim_info_temp.ms_ts.m_step;		//[MWt]
+		// Add current temperatures and subtimestep calcs (for integrated averages)
+		m_T_sys_c_t_int_fullts += T_cold_in*sim_info_temp.ms_ts.m_step;					                    //[K]
+		m_T_htf_c_rec_in_t_int_fullts += m_T_htf_in_t_int[0]*sim_info_temp.ms_ts.m_step;	                //[K]
+		m_T_htf_h_rec_out_t_int_fullts += m_T_htf_out_t_int[m_nSCA - 1]*sim_info_temp.ms_ts.m_step;	        //[K]
+		m_T_sys_h_t_int_fullts += m_T_sys_h_t_int*sim_info_temp.ms_ts.m_step;				                //[K]	
+		m_q_dot_sca_loss_summed_fullts += m_q_dot_sca_loss_summed_subts*sim_info_temp.ms_ts.m_step;		    //[MWt]
 		m_q_dot_sca_abs_summed_fullts += m_q_dot_sca_abs_summed_subts*sim_info_temp.ms_ts.m_step;			//[MWt]
-		m_q_dot_xover_loss_summed_fullts += m_q_dot_xover_loss_summed_subts*sim_info_temp.ms_ts.m_step;	//[MWt]
+		m_q_dot_xover_loss_summed_fullts += m_q_dot_xover_loss_summed_subts*sim_info_temp.ms_ts.m_step;	    //[MWt]
 		m_q_dot_HR_cold_loss_fullts += m_q_dot_HR_cold_loss_subts*sim_info_temp.ms_ts.m_step;				//[MWt]
-		m_q_dot_HR_hot_loss_fullts += m_q_dot_HR_hot_loss_subts*sim_info_temp.ms_ts.m_step;				//[MWt]
+		m_q_dot_HR_hot_loss_fullts += m_q_dot_HR_hot_loss_subts*sim_info_temp.ms_ts.m_step;				    //[MWt]
 		m_E_dot_sca_summed_fullts += m_E_dot_sca_summed_subts*sim_info_temp.ms_ts.m_step;					//[MWt]
 		m_E_dot_xover_summed_fullts += m_E_dot_xover_summed_subts*sim_info_temp.ms_ts.m_step;				//[MWt]
-		m_E_dot_HR_cold_fullts += m_E_dot_HR_cold_subts*sim_info_temp.ms_ts.m_step;						//[MWt]
+		m_E_dot_HR_cold_fullts += m_E_dot_HR_cold_subts*sim_info_temp.ms_ts.m_step;						    //[MWt]
 		m_E_dot_HR_hot_fullts += m_E_dot_HR_hot_subts*sim_info_temp.ms_ts.m_step;							//[MWt]
-		m_q_dot_htf_to_sink_fullts += m_q_dot_htf_to_sink_subts*sim_info_temp.ms_ts.m_step;				//[MWt]
+		m_q_dot_htf_to_sink_fullts += m_q_dot_htf_to_sink_subts*sim_info_temp.ms_ts.m_step;				    //[MWt]
 
 		// If the *outlet temperature at the end of the timestep* is greater than startup temperature,
-		if( m_T_sys_h_t_end > m_T_startup )
-		{
+		if( m_T_sys_h_t_end > m_T_startup )	{
 			time_required_su = sim_info_temp.ms_ts.m_time - time_start;		//[s]
 			m_operating_mode = C_csp_collector_receiver::ON;				//[-]
 			is_T_startup_achieved = true;
@@ -2301,26 +2299,24 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 		update_last_temps();
 	}
 
-    // Check if startup is achieved in current controller/kernel timestep
-    if (!is_T_startup_achieved)
-    {
-        time_required_su = sim_info.ms_ts.m_step;		//[s]
+    // Do not progress to 'ON' if startup is not achieved in current controller timestep
+    if (!is_T_startup_achieved) {
+        time_required_su = sim_info.ms_ts.m_step;		        //[s]
         m_operating_mode = C_csp_collector_receiver::STARTUP;	//[-]
     }
 
-	//double nd_steps_recirc = min((double)n_steps_recirc, (double)(i_step + 1));
-	m_T_sys_c_t_int_fullts /= time_required_su;			//[K]
-	m_T_htf_c_rec_in_t_int_fullts /= time_required_su;	//[K]
-	m_T_htf_h_rec_out_t_int_fullts /= time_required_su;	//[K]
-	m_T_sys_h_t_int_fullts /= time_required_su;			//[K]
-
+    // Compute integrated averages
+	m_T_sys_c_t_int_fullts /= time_required_su;			        //[K]
+	m_T_htf_c_rec_in_t_int_fullts /= time_required_su;	        //[K]
+	m_T_htf_h_rec_out_t_int_fullts /= time_required_su;	        //[K]
+	m_T_sys_h_t_int_fullts /= time_required_su;			        //[K]
 	m_q_dot_sca_loss_summed_fullts /= time_required_su;			//[MWt]
 	m_q_dot_sca_abs_summed_fullts /= time_required_su;			//[MWt]
 	m_q_dot_xover_loss_summed_fullts /= time_required_su;		//[MWt]
-	m_q_dot_HR_cold_loss_fullts /= time_required_su;				//[MWt]
+	m_q_dot_HR_cold_loss_fullts /= time_required_su;			//[MWt]
 	m_q_dot_HR_hot_loss_fullts /= time_required_su;				//[MWt]
 	m_E_dot_sca_summed_fullts /= time_required_su;				//[MWt]
-	m_E_dot_xover_summed_fullts /= time_required_su;				//[MWt]
+	m_E_dot_xover_summed_fullts /= time_required_su;			//[MWt]
 	m_E_dot_HR_cold_fullts /= time_required_su;					//[MWt]
 	m_E_dot_HR_hot_fullts /= time_required_su;					//[MWt]
 	m_q_dot_htf_to_sink_fullts /= time_required_su;				//[MWt]
@@ -2868,6 +2864,26 @@ void C_csp_trough_collector_receiver::estimates(const C_csp_weatherreader::S_out
 	}
 	
 	return;
+}
+
+void C_csp_trough_collector_receiver::set_state(double T_in_loop, double T_out_loop, std::vector<double> T_out_scas)
+{
+    std::size_t N_scas_trough = m_T_htf_out_t_end_converged.size();
+    std::size_t N_scas_state = T_out_scas.size();
+    if (N_scas_trough != N_scas_state) {
+        throw "Incorrect trough state array length.";
+    }
+
+    // Set converged values so reset_last_temps() propagates the temps in time
+    m_T_sys_c_t_end_converged = m_T_sys_c_t_end_last = T_in_loop;       // this ends up setting m_T_sys_c_t_end_last
+    m_T_sys_h_t_end_converged = m_T_sys_h_t_end_last = T_out_loop;      // this ends up setting m_T_sys_h_t_end_last
+
+    // SCA temperatures - these end up setting m_T_htf_out_t_end_last[i]
+    for (std::vector<int>::size_type i = 0; i != T_out_scas.size(); i++) {
+        m_T_htf_out_t_end_converged[i] = T_out_scas[i];
+        m_T_htf_out_t_end[i] = T_out_scas[i];
+        m_T_htf_out_t_int[i] = T_out_scas[i];
+    }
 }
 
 void C_csp_trough_collector_receiver::update_last_temps()
@@ -4004,6 +4020,13 @@ void C_csp_trough_collector_receiver::converged()
 
 	// Reset the optical efficiency member data
 	loop_optical_eta_off();
+
+    // Set reported converged values
+    mc_reported_outputs.value(E_REC_OP_MODE_FINAL, m_operating_mode_converged);
+    mc_reported_outputs.value(E_DEFOCUS_FINAL, m_defocus_old);
+    mc_reported_outputs.value(E_T_IN_LOOP_FINAL, m_T_sys_c_t_end_converged);
+    mc_reported_outputs.value(E_T_OUT_LOOP_FINAL, m_T_sys_h_t_end_converged);
+    // NOTE: m_T_htf_out_t_end_converged is returned in the compute module;
 
 	mc_reported_outputs.set_timestep_outputs();
 
