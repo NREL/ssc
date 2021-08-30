@@ -100,6 +100,7 @@ static var_info _cm_vtab_communitysolar[] = {
     { SSC_INPUT,        SSC_NUMBER,     "subscriber4_growth",	          "Subscriber 4 growth",	                                                "%/yr",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
 
     // optional retail rate
+    { SSC_INPUT,        SSC_NUMBER,     "enable_subscriber_retail_rate",  "Consider subscriber retail cost of electricity",	                        "0/1",            "",                      "Community Solar",             "?=0",						   "BOOLEAN",                 "" },
     { SSC_INPUT,        SSC_ARRAY,      "subscriber1_retail_rate",	      "Subscriber 1 retail rate",	                                            "$/kWh",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
     { SSC_INPUT,        SSC_NUMBER,     "subscriber1_retail_rate_escal",  "Subscriber 1 retail rate escalation",	                                                "%/yr",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
     { SSC_INPUT,        SSC_ARRAY,      "subscriber2_retail_rate",	      "Subscriber 2 retail rate",	                                            "$/kWh",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
@@ -732,6 +733,7 @@ static var_info _cm_vtab_communitysolar[] = {
     { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber2_share_fraction", "Subscriber2 share", "", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber3_share_fraction", "Subscriber3 share", "", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber4_share_fraction", "Subscriber4 share", "", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_unsubscribed_share_fraction", "Unsubscribed share", "", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
 
     { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber1_retail", "Subscriber1 retail", "$/kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber2_retail", "Subscriber2 retail", "$/kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
@@ -1021,6 +1023,7 @@ enum {
     CF_subscriber2_share_fraction,
     CF_subscriber3_share_fraction,
     CF_subscriber4_share_fraction,
+    CF_unsubscribed_share_fraction,
 
     CF_subscriber1_retail,
     CF_subscriber2_retail,
@@ -1214,14 +1217,16 @@ public:
 
 
 		// general financial expenses and incentives - stdlib?
-		// precompute expenses from annual schedules or value+escalation
-		escal_or_annual( CF_om_fixed_expense, nyears, "om_fixed", inflation_rate, 1.0, false, as_double("om_fixed_escal")*0.01 );
+		// precompute share from annual schedules or value+escalation
+        escal_or_annual(CF_om_fixed_expense, nyears, "om_fixed", inflation_rate, 1.0, false, as_double("om_fixed_escal") * 0.01);
 		escal_or_annual( CF_om_production_expense, nyears, "om_production", inflation_rate, 0.001, false, as_double("om_production_escal")*0.01 );  
 		escal_or_annual( CF_om_capacity_expense, nyears, "om_capacity", inflation_rate, 1.0, false, as_double("om_capacity_escal")*0.01 );  
 		escal_or_annual( CF_om_fuel_expense, nyears, "om_fuel_cost", inflation_rate, as_double("system_heat_rate")*0.001, false, as_double("om_fuel_cost_escal")*0.01 );
 		
 		escal_or_annual( CF_om_opt_fuel_1_expense, nyears, "om_opt_fuel_1_cost", inflation_rate, 1.0, false, as_double("om_opt_fuel_1_cost_escal")*0.01 );  
 		escal_or_annual( CF_om_opt_fuel_2_expense, nyears, "om_opt_fuel_2_cost", inflation_rate, 1.0, false, as_double("om_opt_fuel_2_cost_escal")*0.01 );  
+
+
 
 		double om_opt_fuel_1_usage = as_double("om_opt_fuel_1_usage");
 		double om_opt_fuel_2_usage = as_double("om_opt_fuel_2_usage");
@@ -1561,6 +1566,96 @@ public:
 			cf.at(CF_om_opt_fuel_2_expense,i) *= om_opt_fuel_2_usage;
 		}
 
+        // community solar calculations
+        // community solar -  subscriber fraction
+        escal_or_annual(CF_subscriber1_share_fraction, nyears, "subscriber1_share", 0.0, 0.01, false, as_double("subscriber1_growth") * 0.01); // entered as percentage and growth rate without inflation
+        escal_or_annual(CF_subscriber2_share_fraction, nyears, "subscriber2_share", 0.0, 0.01, false, as_double("subscriber2_growth") * 0.01); // entered as percentage and growth rate without inflation
+        escal_or_annual(CF_subscriber3_share_fraction, nyears, "subscriber3_share", 0.0, 0.01, false, as_double("subscriber3_growth") * 0.01); // entered as percentage and growth rate without inflation
+        escal_or_annual(CF_subscriber4_share_fraction, nyears, "subscriber4_share", 0.0, 0.01, false, as_double("subscriber4_growth") * 0.01); // entered as percentage and growth rate without inflation
+
+        // throw or balance if total subscription > 1.0
+        for (size_t i = 0; i <= nyears; i++) {
+            double sum = cf.at(CF_subscriber1_share_fraction,i) + cf.at(CF_subscriber2_share_fraction,i) + cf.at(CF_subscriber3_share_fraction,i) + cf.at(CF_subscriber4_share_fraction,i);
+            if (sum < 0.0)
+                throw exec_error("communitysolar", util::format("total subscribed fraction for year (%d) is %g (less than zero).", (int)i, sum));
+            if (sum > 1.0)
+                throw exec_error("communitysolar", util::format("total subscribed fraction for year (%d) is %g (greater than one).", (int)i, sum));
+            cf.at(CF_unsubscribed_share_fraction, i) = 1.0 - sum;
+        }
+
+        // community solar - retail portion (escalation above inflation)
+        if (as_boolean("enable_subscriber_retail_rate")) {
+            escal_or_annual(CF_subscriber1_retail, nyears, "subscriber1_retail_rate", inflation_rate, 1.0, false, as_double("subscriber1_retail_rate_escal") * 0.01); 
+            escal_or_annual(CF_subscriber2_retail, nyears, "subscriber2_retail_rate", inflation_rate, 1.0, false, as_double("subscriber2_retail_rate_escal") * 0.01); 
+            escal_or_annual(CF_subscriber3_retail, nyears, "subscriber3_retail_rate", inflation_rate, 1.0, false, as_double("subscriber3_retail_rate_escal") * 0.01); 
+            escal_or_annual(CF_subscriber4_retail, nyears, "subscriber4_retail_rate", inflation_rate, 1.0, false, as_double("subscriber4_retail_rate_escal") * 0.01); 
+        }
+
+        // community solar - revenue - only annual values translate to cashflow line items
+        escal_or_annual(CF_subscriber1_payment, nyears, "subscriber1_payment_annual", inflation_rate, 1.0, false, as_double("subscriber1_payment_annual_escal") * 0.01); 
+        escal_or_annual(CF_subscriber2_payment, nyears, "subscriber2_payment_annual", inflation_rate, 1.0, false, as_double("subscriber2_payment_annual_escal") * 0.01); 
+        escal_or_annual(CF_subscriber3_payment, nyears, "subscriber3_payment_annual", inflation_rate, 1.0, false, as_double("subscriber3_payment_annual_escal") * 0.01); 
+        escal_or_annual(CF_subscriber4_payment, nyears, "subscriber4_payment_annual", inflation_rate, 1.0, false, as_double("subscriber4_payment_annual_escal") * 0.01); 
+
+        // community solar - up front costs
+        cf.at(CF_community_solar_upfront, 0) = as_double("cs_cost_upfront");
+        cf.at(CF_community_solar_upfront_per_capacity, 0) = as_double("cs_cost_upfront_per_capacity") * nameplate;
+
+        // community solar - recurring cost inputs
+        escal_or_annual(CF_recurring_fixed, nyears, "cs_cost_recurring_fixed", inflation_rate, 1.0, false, as_double("cs_cost_recurring_fixed_escal") * 0.01); 
+        escal_or_annual(CF_recurring_capacity, nyears, "cs_cost_recurring_capacity", inflation_rate, 1.0, false, as_double("cs_cost_recurring_capacity_escal") * 0.01);
+        escal_or_annual(CF_recurring_generation, nyears, "cs_cost_recurring_generation", inflation_rate, 1.0, false, as_double("cs_cost_recurring_generation_escal") * 0.01); // $/kWh input so no scaling for $/MWh
+
+        // community solar - revenue
+        cf.at(CF_subscriber1_revenue_upfront, 0) = as_double("subscriber1_payment_upfront");
+        cf.at(CF_subscriber2_revenue_upfront, 0) = as_double("subscriber2_payment_upfront");
+        cf.at(CF_subscriber3_revenue_upfront, 0) = as_double("subscriber3_payment_upfront");
+        cf.at(CF_subscriber4_revenue_upfront, 0) = as_double("subscriber4_payment_upfront");
+
+        for (size_t i = 0; i <= nyears; i++) {
+            cf.at(CF_subscriber1_share_of_generation, i) = cf.at(CF_subscriber1_share_fraction, i) * cf.at(CF_energy_net, i);
+            cf.at(CF_subscriber2_share_of_generation, i) = cf.at(CF_subscriber2_share_fraction, i) * cf.at(CF_energy_net, i);
+            cf.at(CF_subscriber3_share_of_generation, i) = cf.at(CF_subscriber3_share_fraction, i) * cf.at(CF_energy_net, i);
+            cf.at(CF_subscriber4_share_of_generation, i) = cf.at(CF_subscriber4_share_fraction, i) * cf.at(CF_energy_net, i);
+            cf.at(CF_unsubscribed_share_of_generation, i) = cf.at(CF_unsubscribed_share_fraction, i) * cf.at(CF_energy_net, i);
+            // rate or escalation values???
+            cf.at(CF_subscriber1_revenue_generation, i) = cf.at(CF_subscriber1_share_of_generation, i) * as_double("subscriber1_payment_generation");
+            cf.at(CF_subscriber2_revenue_generation, i) = cf.at(CF_subscriber2_share_of_generation, i) * as_double("subscriber2_payment_generation");
+            cf.at(CF_subscriber3_revenue_generation, i) = cf.at(CF_subscriber3_share_of_generation, i) * as_double("subscriber3_payment_generation");
+            cf.at(CF_subscriber4_revenue_generation, i) = cf.at(CF_subscriber4_share_of_generation, i) * as_double("subscriber4_payment_generation");
+            cf.at(CF_unsubscribed_revenue_generation, i) = cf.at(CF_unsubscribed_share_of_generation, i) * as_double("unsubscribed_generation_rate");
+
+            cf.at(CF_subscriber1_revenue_annual_payment, i) = cf.at(CF_subscriber1_payment, i); // why twice???
+            cf.at(CF_subscriber2_revenue_annual_payment, i) = cf.at(CF_subscriber2_payment, i); // why twice???
+            cf.at(CF_subscriber3_revenue_annual_payment, i) = cf.at(CF_subscriber3_payment, i); // why twice???
+            cf.at(CF_subscriber4_revenue_annual_payment, i) = cf.at(CF_subscriber4_payment, i); // why twice???
+
+            cf.at(CF_subscriber1_retail_cost, i) = cf.at(CF_subscriber1_share_of_generation, i) * cf.at(CF_subscriber1_retail, i);
+            cf.at(CF_subscriber2_retail_cost, i) = cf.at(CF_subscriber2_share_of_generation, i) * cf.at(CF_subscriber2_retail, i);
+            cf.at(CF_subscriber3_retail_cost, i) = cf.at(CF_subscriber3_share_of_generation, i) * cf.at(CF_subscriber3_retail, i);
+            cf.at(CF_subscriber4_retail_cost, i) = cf.at(CF_subscriber4_share_of_generation, i) * cf.at(CF_subscriber4_retail, i);
+
+            cf.at(CF_community_solar_subscriber1_revenue, i) = cf.at(CF_subscriber1_revenue_upfront, i) + cf.at(CF_subscriber1_revenue_generation, i) + cf.at(CF_subscriber1_revenue_annual_payment, i);
+            cf.at(CF_community_solar_subscriber2_revenue, i) = cf.at(CF_subscriber2_revenue_upfront, i) + cf.at(CF_subscriber2_revenue_generation, i) + cf.at(CF_subscriber2_revenue_annual_payment, i);
+            cf.at(CF_community_solar_subscriber3_revenue, i) = cf.at(CF_subscriber3_revenue_upfront, i) + cf.at(CF_subscriber3_revenue_generation, i) + cf.at(CF_subscriber3_revenue_annual_payment, i);
+            cf.at(CF_community_solar_subscriber4_revenue, i) = cf.at(CF_subscriber4_revenue_upfront, i) + cf.at(CF_subscriber4_revenue_generation, i) + cf.at(CF_subscriber4_revenue_annual_payment, i);
+            cf.at(CF_community_solar_unsubscribed_revenue, i) =  cf.at(CF_unsubscribed_revenue_generation, i) ;
+
+            // operating expenses
+            cf.at(CF_recurring_generation, i) *= cf.at(CF_energy_net, i);
+            cf.at(CF_recurring_capacity, i) *= nameplate;
+
+            // twice??
+            cf.at(CF_community_solar_recurring_fixed, i) = cf.at(CF_recurring_fixed, i);
+            cf.at(CF_community_solar_recurring_capacity, i) = cf.at(CF_recurring_capacity, i);
+            cf.at(CF_community_solar_recurring_generation, i) = cf.at(CF_recurring_generation, i);
+        }
+
+
+
+
+
+
 
 		size_t count_ppa_price_input;
 		ssc_number_t* ppa_price_input = as_array("ppa_price_input", &count_ppa_price_input);
@@ -1739,7 +1834,10 @@ public:
 				+ cf.at(CF_battery_replacement_cost,i)
 				+ cf.at(CF_fuelcell_replacement_cost, i)
 				+ cf.at(CF_utility_bill,i)
-				+ cf.at(CF_Recapitalization,i);
+                + cf.at(CF_recurring_fixed, i)
+                + cf.at(CF_recurring_capacity, i)
+                + cf.at(CF_recurring_generation, i)
+                + cf.at(CF_Recapitalization,i);
 		}
 
 		// salvage value
@@ -2216,6 +2314,8 @@ public:
 				+ cost_other_financing
 				+ cf.at(CF_reserve_debtservice, 0) // initially zero - based on p&i
 				+ cf.at(CF_reserve_om, 0)
+                + cf.at(CF_community_solar_upfront, 0)
+                + cf.at(CF_community_solar_upfront_per_capacity, 0)
 				- ibi_fed_amount 
 				- ibi_sta_amount
 				- ibi_uti_amount
@@ -2275,6 +2375,8 @@ public:
 					+ cost_other_financing
 					+ cf.at(CF_reserve_debtservice, 0) // initially zero - based on p&i
 					+ cf.at(CF_reserve_om, 0)
+                    + cf.at(CF_community_solar_upfront, 0)
+                    + cf.at(CF_community_solar_upfront_per_capacity, 0)
 					- ibi_fed_amount
 					- ibi_sta_amount
 					- ibi_uti_amount
@@ -2415,8 +2517,13 @@ public:
 
 //			log(util::format("year %d : energy value =%lg", i, m_disp_calcs.tod_energy_value(i)), SSC_WARNING);
 			// total revenue
-			cf.at(CF_total_revenue,i) = cf.at(CF_energy_value,i) + 
-				cf.at(CF_thermal_value,i) + 
+			cf.at(CF_total_revenue,i) = cf.at(CF_energy_value,i) +
+                cf.at(CF_community_solar_subscriber1_revenue, i) +
+                cf.at(CF_community_solar_subscriber2_revenue, i) +
+                cf.at(CF_community_solar_subscriber3_revenue, i) +
+                cf.at(CF_community_solar_subscriber4_revenue, i) +
+                cf.at(CF_community_solar_unsubscribed_revenue, i) +
+                cf.at(CF_thermal_value,i) +
 				cf.at(CF_curtailment_value, i) +
 				cf.at(CF_capacity_payment, i) +
 				pbi_fed_for_ds_frac * cf.at(CF_pbi_fed,i) +
@@ -3549,7 +3656,8 @@ public:
         save_cf(CF_subscriber2_share_fraction, nyears, "cf_subscriber2_share_fraction");
         save_cf(CF_subscriber3_share_fraction, nyears, "cf_subscriber3_share_fraction");
         save_cf(CF_subscriber4_share_fraction, nyears, "cf_subscriber4_share_fraction");
-
+        save_cf(CF_unsubscribed_share_fraction, nyears, "cf_unsubscribed_share_fraction");
+        
         save_cf(CF_subscriber1_retail, nyears, "cf_subscriber1_retail");
         save_cf(CF_subscriber2_retail, nyears, "cf_subscriber2_retail");
         save_cf(CF_subscriber3_retail, nyears, "cf_subscriber3_retail");
