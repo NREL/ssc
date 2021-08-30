@@ -2929,6 +2929,8 @@ C_csp_solver::C_operating_mode_core* C_csp_solver::C_system_operating_modes::get
         return &mc_CR_SU__PC_OFF__TES_CH__HTR_ON;
     case CR_ON__PC_OFF__TES_CH__HTR_ON:
         return &mc_CR_ON__PC_OFF__TES_CH__HTR_ON;
+    case CR_OFF__PC_OFF__TES_FULL__HTR_DF:
+        return &mc_CR_OFF__PC_OFF__TES_FULL__HTR_DF;
     default:
         throw(C_csp_exception("Operating mode class not defined"));
     }
@@ -3033,12 +3035,9 @@ C_csp_solver::C_system_operating_modes::E_operating_modes C_csp_solver::C_system
 
                         operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_CH__HTR_ON;
                     }
-                    else if (true) {
-                        throw(C_csp_exception("Add CR_OFF__PC_OFF__TES_FULL__HTR_DF mode here"));
+                    else if (is_mode_avail(CR_OFF__PC_OFF__TES_FULL__HTR_DF)) {
+                        operating_mode = CR_OFF__PC_OFF__TES_FULL__HTR_DF;
                     }
-                    //else if (is_mode_avail(CR_OFF__PC_OFF__TES_FULL__HTR_DF)) {
-                    //    operating_mode = CR_OFF__PC_OFF__TES_FULL__HTR_DF;
-                    //}
                     else {
                         operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
                     }

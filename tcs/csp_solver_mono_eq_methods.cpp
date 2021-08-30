@@ -274,7 +274,12 @@ double C_csp_solver::C_MEQ__defocus::calc_meq_target()
         double m_dot_dc = std::max(0.0, mpc_csp_solver->mc_tes_outputs.m_m_dot_pc_to_tes_cold -
             mpc_csp_solver->mc_tes_outputs.m_m_dot_tes_cold_out)*3600.0;  // mpc_csp_solver->mc_tes_dc_htf_state.m_m_dot;          //[kg/hr]
 
-        return (m_dot_rec + m_dot_dc - m_dot_pc - m_dot_ch) / mpc_csp_solver->m_m_dot_pc_des; //[-]
+        double m_dot_htr = 0.0;
+        if (mpc_csp_solver->m_is_parallel_heater) {
+            m_dot_htr = mpc_csp_solver->mc_par_htr_out_solver.m_m_dot_salt_tot; //[kg/hr]
+        }
+
+        return (m_dot_rec + m_dot_htr + m_dot_dc - m_dot_pc - m_dot_ch) / mpc_csp_solver->m_m_dot_pc_des; //[-]
     }
     else if (m_df_target_mode == C_MEQ__defocus::E_Q_DOT_PC)
     {
@@ -286,6 +291,12 @@ int C_csp_solver::C_MEQ__defocus::operator()(double defocus /*-*/, double *targe
 {
     double defocus_CR = defocus;
     double defocus_PAR_HTR = 1.0;
+
+    // Don't allow simultaneous CR and HTR defocus
+    if (m_htr_mode == C_csp_collector_receiver::ON) {
+        defocus_PAR_HTR = defocus;
+        defocus_CR = 1.0;
+    }
 
     C_MEQ__timestep c_T_cold_eq(m_solver_mode, m_ts_target_mode, mpc_csp_solver,
         m_q_dot_pc_target,
