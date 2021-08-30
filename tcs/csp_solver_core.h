@@ -1854,6 +1854,14 @@ public:
             true, "CR_ON__PC_OFF__TES_FULL__HTR_DF", QUIETNAN, true, C_csp_collector_receiver::ON) {}
     };
 
+    class C_CR_SU__PC_OFF__TES_FULL__HTR_DF : public C_operating_mode_core
+    {
+    public:
+        C_CR_SU__PC_OFF__TES_FULL__HTR_DF() : C_operating_mode_core(C_csp_collector_receiver::STARTUP,
+            C_csp_power_cycle::OFF, C_MEQ__m_dot_tes::E__TES_FULL__0, C_MEQ__timestep::E_STEP_FROM_COMPONENT,
+            true, "CR_SU__PC_OFF__TES_FULL__HTR_DF", QUIETNAN, true, C_csp_collector_receiver::ON) {}
+    };
+
     class C_CR_DF__PC_SU__TES_OFF__AUX_OFF : public C_operating_mode_core
     {
     public:
@@ -2089,7 +2097,8 @@ public:
         C_CR_SU__PC_OFF__TES_CH__HTR_ON mc_CR_SU__PC_OFF__TES_CH__HTR_ON;
         C_CR_ON__PC_OFF__TES_CH__HTR_ON mc_CR_ON__PC_OFF__TES_CH__HTR_ON;
         C_CR_OFF__PC_OFF__TES_FULL__HTR_DF mc_CR_OFF__PC_OFF__TES_FULL__HTR_DF;
-        C_CR_ON__PC_OFF__TES_FULL__HTR_DF C_CR_ON__PC_OFF__TES_FULL__HTR_DF;
+        C_CR_ON__PC_OFF__TES_FULL__HTR_DF mc_CR_ON__PC_OFF__TES_FULL__HTR_DF;
+        C_CR_SU__PC_OFF__TES_FULL__HTR_DF mc_CR_SU__PC_OFF__TES_FULL__HTR_DF;
 
     public:
 
@@ -2140,6 +2149,7 @@ public:
             CR_ON__PC_OFF__TES_CH__HTR_ON,
             CR_OFF__PC_OFF__TES_FULL__HTR_DF,
             CR_ON__PC_OFF__TES_FULL__HTR_DF,
+            CR_SU__PC_OFF__TES_FULL__HTR_DF,
 
             ITER_END
         };
