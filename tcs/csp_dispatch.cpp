@@ -158,8 +158,6 @@ bool csp_dispatch_opt::update_horizon_parameters(C_csp_tou& mc_tou)
         for (int d = 0; d < solver_params.steps_per_hour; d++)
             params.w_lim.at(t * solver_params.steps_per_hour + d) = mc_tou.mc_dispatch_params.m_w_lim_full.at(hour_start + t);
     }
-    //time
-    params.info_time = pointers.siminfo->ms_ts.m_time; //s
 
     return true;
 }
@@ -303,13 +301,14 @@ static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::s
         pars["eta_cycle"] = optinst->params.eta_cycle_ref;
         pars["Qrsd"] = 0.;      //<< not yet modeled, passing temporarily as zero
 
-
+        // Initial conditions
         pars["s0"] = optinst->params.e_tes0;
         pars["ursu0"] = 0.;
         pars["ucsu0"] = 0.;
-        pars["y0"] = (optinst->params.is_pb_operating0 ? 1 : 0) ;
+        pars["y0"] = (optinst->params.is_pb_operating0 ? 1 : 0) ;  //TODO: update model to use this parameter value
         pars["ycsb0"] = (optinst->params.is_pb_standby0 ? 1 : 0) ;
         pars["q0"] =  optinst->params.q_pb0 ;
+
         pars["qrecmaxobs"] = 1.;
         for(int i=0; i<(int)optinst->params.q_sfavail_expected.size(); i++)
             pars["qrecmaxobs"] = optinst->params.q_sfavail_expected.at(i) > pars["qrecmaxobs"] ? optinst->params.q_sfavail_expected.at(i) : pars["qrecmaxobs"];
@@ -371,7 +370,7 @@ static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::s
             }
         }
 
-        //temporary fixed constants
+        //Set by user
         pars["disp_time_weighting"] = optinst->params.time_weighting;
         pars["rsu_cost"] = optinst->params.rsu_cost;
         pars["csu_cost"] = optinst->params.csu_cost;
@@ -875,7 +874,6 @@ bool csp_dispatch_opt::optimize()
                 row[0] = 1.;
                 col[0] = O.column("ucsu", t);
 
-                //row[1] = -P["M"];
                 row[1] = -P["Ec"]*1.00001; //tighter formulation
                 col[1] = O.column("ycsu", t);
 
@@ -1538,39 +1536,8 @@ void csp_dispatch_opt::set_outputs_from_lp_solution(lprec* lp, unordered_map<std
         if (!colname) continue;
 
         char root[15];
-
-        int i;
-        for (i = 0; i < 15; i++)
-        {
-            if (colname[i] == '-')
-            {
-                root[i] = '\0';
-                break;
-            }
-            else
-                root[i] = colname[i];
-        }
-        int i1 = 1 + i++;
         char ind[4];
-        bool not_interested = false;
-        for (i = i1; i < 15; i++)
-        {
-            if (colname[i] == '-')
-            {
-                //2D variable. Not interested at the moment..
-                not_interested = true;
-                break;
-            }
-            else if (colname[i] == 0)
-            {
-                ind[i - i1] = '\0';
-                break;
-            }
-            else
-                ind[i - i1] = colname[i];
-        }
-
-        if (not_interested) continue;  //a 2D variable
+        if (parse_column_name(colname, root, ind)) continue;  //a 2D variable
 
         int t = atoi(ind);
 

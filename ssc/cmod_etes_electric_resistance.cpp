@@ -119,6 +119,9 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
     { SSC_INPUT,  SSC_NUMBER, "disp_csu_cost",                 "Cycle startup cost",                                            "$",            "",                                  "System Control",                           "is_dispatch=1",                                                    "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "disp_hsu_cost",                 "Heater startup cost",                                           "$",            "",                                  "System Control",                           "is_dispatch=1",                                                    "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "disp_time_weighting",           "Dispatch optimization future time discounting factor",          "",             "",                                  "System Control",                           "?=0.99",                                                           "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "disp_down_time_min",            "Minimum time requirement for cycle to not generate power",      "hr",           "",                                  "System Control",                           "is_dispatch=1",                                                    "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "disp_up_time_min",              "Minimum time requirement for cycle to generate power",          "hr",           "",                                  "System Control",                           "is_dispatch=1",                                                    "",              ""},
+
 
 
     // System performance
@@ -696,8 +699,8 @@ public:
                 as_integer("disp_max_iter"), as_double("disp_mip_gap"), as_double("disp_timeout"),
                 as_integer("disp_spec_presolve"), as_integer("disp_spec_bb"), as_integer("disp_reporting"), as_integer("disp_spec_scaling"),
                 false, false, "", "");
-            dispatch.params.set_user_params(as_double("disp_time_weighting"),
-                as_double("disp_csu_cost"), as_double("disp_pen_delta_w"), as_double("disp_hsu_cost"));
+            dispatch.params.set_user_params(as_double("disp_time_weighting"), as_double("disp_csu_cost"), as_double("disp_pen_delta_w"),
+                as_double("disp_hsu_cost"), as_double("disp_down_time_min"), as_double("disp_up_time_min"));
         }
         else {
             dispatch.solver_params.dispatch_optimize = false;

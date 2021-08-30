@@ -186,6 +186,9 @@ public:
     //Dispatch update and result print to screen
     void print_dispatch_update();
 
+    // Parse column name to get variable name (root) and index (ind)
+    bool parse_column_name(char* colname, char* root, char* ind);
+
     //simple string compare
     bool strcompare(std::string a, std::string b);
 };

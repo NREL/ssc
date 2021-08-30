@@ -76,8 +76,6 @@ public:
         double up_time_min;         //[hr] Minimum required power cycle up-time
         double eta_pb_des;
 
-        double info_time;           //[s] time of the year at sim start. informational only.
-
         // TODO: move this struct to somewhere that is accessable to both dispatch -> base_dispatch?
         struct s_efftable
         {
@@ -170,10 +168,9 @@ public:
 
         s_params() {
             dt = 1.;
-            info_time = 0.;
             time_weighting = 0.99;
             csu_cost = 10000.;
-            hsu_cost = 10.; // Default cost
+            hsu_cost = 10.;
             pen_delta_w = 0.1;
 
             //parameters
@@ -214,13 +211,15 @@ public:
             w_condf_expected.clear();
         }
 
-        void set_user_params(double disp_time_weighting,
-            double disp_csu_cost, double disp_pen_delta_w, double disp_hsu_cost)
+        void set_user_params(double disp_time_weighting, double disp_csu_cost, double disp_pen_delta_w,
+            double disp_hsu_cost, double disp_down_time_min, double disp_up_time_min)
         {
             time_weighting = disp_time_weighting;
             csu_cost = disp_csu_cost;
             pen_delta_w = disp_pen_delta_w;
             hsu_cost = disp_hsu_cost;
+            down_time_min = disp_down_time_min;
+            up_time_min = disp_up_time_min;
         }
 
     } params;

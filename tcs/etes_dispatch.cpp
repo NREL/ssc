@@ -50,7 +50,7 @@ void etes_dispatch_opt::init(double cycle_q_dot_des, double cycle_eta_des, doubl
 {
     // TODO: I don't like having to pass these in, why can't I access them via the cycle pointer? ask Ty
     // TODO: we could pass in C_csp_power_cycle::S_solved_params instead which contains these 3 items?
-    // TODO: Can we create getters for design point infromation?
+    // TODO: Should we create getters for design point infromation?
     params.clear();
 
     params.dt = 1. / (double)solver_params.steps_per_hour;  //hr
@@ -141,6 +141,10 @@ bool etes_dispatch_opt::update_horizon_parameters(C_csp_tou& mc_tou)
 void etes_dispatch_opt::update_initial_conditions(double q_dot_to_pb, double T_htf_cold_des)
 {
     //TODO: Update with etes initial conditions
+    //params.down_time0
+    //params.up_time0
+    //params.e_pb_start0 = 0
+    //params.e_eh_start0 = 0
 
     //note the states of the power cycle and receiver
     params.is_pb_operating0 = pointers.mpc_pc->get_operating_state() == 1;
@@ -241,6 +245,7 @@ static void calculate_parameters(etes_dispatch_opt *optinst, unordered_map<std::
             optinst->params.time_elapsed.push_back(pars["delta"] * (t + 1));
         }
 
+        pars["W_dot_cycle"] = optinst->params.q_pb_des * optinst->params.eta_cycle_ref;
         pars["eta_cycle"] = optinst->params.eta_cycle_ref;
         pars["eta_eh"] = optinst->params.eta_eh;
         pars["Ec"] = optinst->params.e_pb_startup_cold;
@@ -271,15 +276,11 @@ static void calculate_parameters(etes_dispatch_opt *optinst, unordered_map<std::
         }
         pars["delta_csu"] = delta_csu;
 
-        //pars["Leh"] = optinst->params.w_eh_pump ;
-        //pars["Lc"] = optinst->params.w_cycle_pump;
-
+        // dispatch user inputs
         pars["disp_time_weighting"] = optinst->params.time_weighting;
         pars["csu_cost"] = optinst->params.csu_cost;
         pars["hsu_cost"] = optinst->params.hsu_cost;
         pars["pen_delta_w"] = optinst->params.pen_delta_w;
-
-        pars["W_dot_cycle"] = optinst->params.q_pb_des * optinst->params.eta_cycle_ref;
         pars["Yd"] = optinst->params.down_time_min;
         pars["Yu"] = optinst->params.up_time_min;
 
@@ -313,8 +314,6 @@ static void calculate_parameters(etes_dispatch_opt *optinst, unordered_map<std::
         pars["etap"] = (q[1] * eta[1] - q[0] * eta[0]) / (q[1] - q[0]);
         //calculate the y-intercept of the linear fit at 'b'
         double b = q[1] * eta[1] - q[1] * pars["etap"];
-        //locate the heat input at which the linear fit crosses zero power
-        //double limit1 = -b / pars["etap"];
 
         //maximum power based on linear fit
         pars["Wdotu"] = (pars["etap"] * pars["Qu"] + b);
@@ -325,23 +324,15 @@ static void calculate_parameters(etes_dispatch_opt *optinst, unordered_map<std::
         if (pars["q0"] >= pars["Ql"])
             pars["Wdot0"] = (pars["etap"] * pars["q0"] + b) * optinst->params.eta_pb_expected.at(0) / optinst->params.eta_cycle_ref;
 
-        //TODO: Fixed parameters
-        pars["eta_eh"] = 1.0;   //0.95;
-        //pars["Qhsu"] = pars["Qcsu"];    // 1000.0;
-        //pars["Eeh"] = pars["Qcsu"];     // 1000.0;
-        //pars["Qehu"] = pars["Qu"] * 2.4;
-        pars["Qehl"] = pars["Qehu"]*0.25;
-        pars["Yd"] = 2.;
-        pars["Yu"] = 2.;
+        // ==================================================================
+        // TODO: Talk to TY about these two
+        pars["eta_eh"] = 1.0;   //0.95; We could remove this completely
+        pars["Qehl"] = pars["Qehu"]*0.25;  //get_min_power_delivery()  
 
         pars["uhsu0"] = 0.;          // Assuming start up within an hour
-        pars["ucsu0"] = 0.;           // Assuming start up within an hour
+        pars["ucsu0"] = 0.;          // Assuming start up within an hour // This would have to be fixed for csp dispatch as well
         pars["Yd0"] = pars["Yd"];    // Over riding these constraints
         pars["Yu0"] = pars["Yu"];    // Over riding these constraints
-
-        //pars["hsu_cost"] = 10.;
-
-        //pars["s0"] = 0.0;  pars["Eu"];  // For testing
 };
 
 bool etes_dispatch_opt::optimize()
@@ -466,6 +457,7 @@ bool etes_dispatch_opt::optimize()
         set up the constraints
         --------------------------------------------------------------------------------
         */
+        // TODO: Should each of these constraints be moved to individual functions to be accessed by both CSP and ETES dispatch models
 
         // ******************** Electric heater constraints *******************
         {
@@ -1148,44 +1140,12 @@ void etes_dispatch_opt::set_outputs_from_lp_solution(lprec* lp, unordered_map<st
 
     for (int c = 1; c < ncols; c++)
     {
-        //TODO: understand this code...
         char* colname = get_col_name(lp, c);
         if (!colname) continue;
 
         char root[15];
-
-        int i;
-        for (i = 0; i < 15; i++)
-        {
-            if (colname[i] == '-')
-            {
-                root[i] = '\0';
-                break;
-            }
-            else
-                root[i] = colname[i];
-        }
-        int i1 = 1 + i++;
         char ind[4];
-        bool not_interested = false;
-        for (i = i1; i < 15; i++)
-        {
-            if (colname[i] == '-')
-            {
-                //2D variable. Not interested at the moment..
-                not_interested = true;
-                break;
-            }
-            else if (colname[i] == 0)
-            {
-                ind[i - i1] = '\0';
-                break;
-            }
-            else
-                ind[i - i1] = colname[i];
-        }
-
-        if (not_interested) continue;  //a 2D variable
+        if (parse_column_name(colname, root, ind)) continue;  //a 2D variable
 
         int t = atoi(ind);
 

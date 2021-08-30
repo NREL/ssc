@@ -475,6 +475,41 @@ void base_dispatch_opt::print_dispatch_update()
     pointers.messages->add_message(type, s.str());
 }
 
+bool base_dispatch_opt::parse_column_name(char* colname, char* root, char* ind)
+{
+    int i;
+    for (i = 0; i < 15; i++)
+    {
+        if (colname[i] == '-')
+        {
+            root[i] = '\0';
+            break;
+        }
+        else
+            root[i] = colname[i];
+    }
+    int i1 = 1 + i++;
+    bool not_interested = false;
+    for (i = i1; i < 15; i++)
+    {
+        if (colname[i] == '-')
+        {
+            //2D variable. Not interested at the moment..
+            not_interested = true;
+            break;
+        }
+        else if (colname[i] == 0)
+        {
+            ind[i - i1] = '\0';
+            break;
+        }
+        else
+            ind[i - i1] = colname[i];
+    }
+
+    return not_interested;
+}
+
 
 bool base_dispatch_opt::strcompare(std::string a, std::string b)
 {
