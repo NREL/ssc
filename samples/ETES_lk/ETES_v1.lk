@@ -137,6 +137,7 @@ var( 'disp_mip_gap', 0.001 );
 var( 'disp_time_weighting', 0.999 );
 var( 'disp_csu_cost', 10000 );
 var( 'disp_pen_delta_w', 0.10000000000000001 );
+var( 'disp_hsu_cost', 10. );
 var( 'is_wlim_series', 0 );
 
 var( 'const_per_interest_rate1', 4 );
@@ -391,15 +392,15 @@ outputs{"e_ch_tes"} = var("e_ch_tes");
 
 //Dispatch outputs
 outputs{"q_pc_target"} = var("q_pc_target");
-outputs{"disp_qsfprod_expect"} = var("disp_qsfprod_expect");
-outputs{"disp_qsfsu_expect"} = var("disp_qsfsu_expect");
-outputs{"disp_wpb_expect"} = var("disp_wpb_expect");
-outputs{"disp_tes_expect"} = var("disp_tes_expect");
+outputs{"disp_qsfprod_expected"} = var("disp_qsfprod_expected");
+outputs{"disp_qsfsu_expected"} = var("disp_qsfsu_expected");
+outputs{"disp_wpb_expected"} = var("disp_wpb_expected");
+outputs{"disp_tes_expected"} = var("disp_tes_expected");
 
 outputs{"disp_solve_state"} = var("disp_solve_state");
 outputs{"disp_solve_iter"} = var("disp_solve_iter");
 outputs{"disp_objective"} = var("disp_objective");
-outputs{"disp_rev_expect"} = var("disp_rev_expect");
+outputs{"disp_rev_expected"} = var("disp_rev_expected");
 outputs{"disp_presolve_nconstr"} = var("disp_presolve_nconstr");
 outputs{"disp_presolve_nvar"} = var("disp_presolve_nvar");
 outputs{"disp_solve_time"} = var("disp_solve_time");

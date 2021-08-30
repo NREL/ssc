@@ -395,6 +395,10 @@ void base_dispatch_opt::set_lp_solve_outputs(lprec* lp)
             lp_outputs.subopt_flag = MIPGAPLPSOLVE;   // stop due to mip gap internal of LPSolve
         }
     }
+    else
+    {
+        lp_outputs.subopt_flag = OPTIMAL;
+    }
 }
 
 void base_dispatch_opt::save_problem_solution_debug(lprec* lp)

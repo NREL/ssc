@@ -373,9 +373,9 @@ static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::s
 
         //temporary fixed constants
         pars["disp_time_weighting"] = optinst->params.time_weighting;
-        pars["rsu_cost"] = optinst->params.rsu_cost; //952.;
-        pars["csu_cost"] = optinst->params.csu_cost; //10000.;
-        pars["pen_delta_w"] = optinst->params.pen_delta_w; //0.1;
+        pars["rsu_cost"] = optinst->params.rsu_cost;
+        pars["csu_cost"] = optinst->params.csu_cost;
+        pars["pen_delta_w"] = optinst->params.pen_delta_w;
 };
 
 bool csp_dispatch_opt::optimize()

@@ -41,7 +41,6 @@ public:
         bool is_pb_operating0;      //[-] Power block is operating at the initial time step
         double q_pb0;               //[kWt] Thermal power consumption in the cycle entering the initial time step
         bool is_eh_operating0;      //[-] Electric heaters are operating at the initial time step
-        double q_eh0;               //[kWt] Thermal power from electric heaters at the initial time step
 
         bool is_pb_starting0;       //[-] Power block is starting at the initial time step
         double e_pb_start0;         //[-] Power block start energy consumed before initial time step 
@@ -70,7 +69,7 @@ public:
         double q_eh_min;            //[kWt] Minimum allowable power delivery by the electrical heaters when operating
 
         double csu_cost;            //[$/start] Cycle startup cost
-        //double hsu_cost;            //[$/start] electrical heater startup cost
+        double hsu_cost;            //[$/start] electrical heater startup cost
         double pen_delta_w;         //[$/kWe-change] Cycle production change penalty
 
         double down_time_min;       //[hr] Minimum required power cycle down-time
@@ -173,14 +172,14 @@ public:
             dt = 1.;
             info_time = 0.;
             time_weighting = 0.99;
-            csu_cost = 10000;
+            csu_cost = 10000.;
+            hsu_cost = 10.; // Default cost
             pen_delta_w = 0.1;
 
             //parameters
             is_pb_operating0 = false;
             q_pb0 = std::numeric_limits<double>::quiet_NaN();
             is_eh_operating0 = false;
-            q_eh0 = std::numeric_limits<double>::quiet_NaN();
             is_pb_starting0 = false;
             e_pb_start0 = std::numeric_limits<double>::quiet_NaN();
             is_eh_starting0 = false;
@@ -216,11 +215,12 @@ public:
         }
 
         void set_user_params(double disp_time_weighting,
-            double disp_csu_cost, double disp_pen_delta_w)
+            double disp_csu_cost, double disp_pen_delta_w, double disp_hsu_cost)
         {
             time_weighting = disp_time_weighting;
             csu_cost = disp_csu_cost;
             pen_delta_w = disp_pen_delta_w;
+            hsu_cost = disp_hsu_cost;
         }
 
     } params;
