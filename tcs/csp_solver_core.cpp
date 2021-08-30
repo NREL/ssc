@@ -1405,7 +1405,7 @@ void C_csp_solver::calc_timestep_plant_control_and_targets(
                 )
             {
                 //call the optimize method
-                bool opt_complete = mc_dispatch.lp_outputs.m_last_opt_successful = mc_dispatch.optimize();
+                bool opt_complete = mc_dispatch.lp_outputs.last_opt_successful = mc_dispatch.optimize();
 
                 if (mc_dispatch.solver_params.disp_reporting && (!mc_dispatch.solver_params.log_message.empty()))
                 {
