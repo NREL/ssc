@@ -230,8 +230,6 @@ static void calculate_parameters(etes_dispatch_opt *optinst, unordered_map<std::
     /* 
     A central location for making sure the parameters from the model are accurately calculated for use in
     the dispatch optimization model.
-
-    TODO: Why did I make this static?
     */
 
         pars["T"] = nt ;
@@ -240,7 +238,7 @@ static void calculate_parameters(etes_dispatch_opt *optinst, unordered_map<std::
         optinst->params.time_elapsed.clear();
         for (int t = 0; t < nt; t++)
         {
-            optinst->params.time_elapsed.push_back(pars["delta"] * (t + 1));    //TODO: variable step size? if of interest
+            optinst->params.time_elapsed.push_back(pars["delta"] * (t + 1));
         }
 
         pars["eta_cycle"] = optinst->params.eta_cycle_ref;
@@ -249,7 +247,7 @@ static void calculate_parameters(etes_dispatch_opt *optinst, unordered_map<std::
         pars["Eeh"] = optinst->params.e_rec_startup;
 
         pars["Eu"] = optinst->params.e_tes_max;
-        //pars["El"] = optinst->params.e_tes_min;
+        //pars["El"] = optinst->params.e_tes_min;     // NOT used in formulation -> min set to zero
 
         pars["Qu"] = optinst->params.q_pb_max ;
         pars["Ql"] = optinst->params.q_pb_min ;
@@ -266,7 +264,7 @@ static void calculate_parameters(etes_dispatch_opt *optinst, unordered_map<std::
         }
         pars["delta_hsu"] = delta_hsu;
 
-        double delta_csu = optinst->params.dt_pb_startup_cold;  // TODO: wrong but works for now
+        double delta_csu = optinst->params.dt_pb_startup_cold;
         while (delta_csu > pars["delta"])
         {
             delta_csu -= pars["delta"];
@@ -278,20 +276,22 @@ static void calculate_parameters(etes_dispatch_opt *optinst, unordered_map<std::
 
         pars["disp_time_weighting"] = optinst->params.time_weighting;
         pars["csu_cost"] = optinst->params.csu_cost;
-        //pars["hsu_cost"] = optinst->params.hsu_cost;
+        pars["hsu_cost"] = optinst->params.hsu_cost;
         pars["pen_delta_w"] = optinst->params.pen_delta_w;
 
         pars["W_dot_cycle"] = optinst->params.q_pb_des * optinst->params.eta_cycle_ref;
         pars["Yd"] = optinst->params.down_time_min;
         pars["Yu"] = optinst->params.up_time_min;
 
-        // Initial conditions
+        /*
+        ----------------------
+        Initial conditions
+        ----------------------
+        */
         pars["y0"] = (optinst->params.is_pb_operating0 ? 1 : 0);
         pars["q0"] = optinst->params.q_pb0;
 
         pars["yeh0"] = (optinst->params.is_eh_operating0 ? 1 : 0);
-        //pars["qeh0"] = optinst->params.q_eh0;
-
         pars["ycsu0"] = (optinst->params.is_pb_starting0 ? 1 : 0);
         pars["ucsu0"] = optinst->params.e_pb_start0;
         pars["yhsu0"] = (optinst->params.is_eh_starting0 ? 1 : 0);
@@ -299,7 +299,6 @@ static void calculate_parameters(etes_dispatch_opt *optinst, unordered_map<std::
 
         pars["Yd0"] = optinst->params.down_time0;
         pars["Yu0"] = optinst->params.up_time0;
-
         pars["s0"] = optinst->params.e_tes0 ;
 
         //linear power-heat fit requires that the efficiency table has 3 points.. 0->zero point, 1->min load point, 2->max load point. This is created in csp_solver_core::Ssimulate().
@@ -340,8 +339,7 @@ static void calculate_parameters(etes_dispatch_opt *optinst, unordered_map<std::
         pars["Yd0"] = pars["Yd"];    // Over riding these constraints
         pars["Yu0"] = pars["Yu"];    // Over riding these constraints
 
-        pars["hsu_cost"] = 10.;
-        //pars["qeh0"] = 0.;    // Not needed
+        //pars["hsu_cost"] = 10.;
 
         //pars["s0"] = 0.0;  pars["Eu"];  // For testing
 };
@@ -442,10 +440,6 @@ bool etes_dispatch_opt::optimize()
                 col[ t + nt*(i  ) ] = O.column("qeh", t);
                 row[ t + nt*(i++) ] = - (P["delta"] * (1 / tadj) * params.buy_price.at(t) * ( 1 / P["eta_eh"]));
 
-                //col[ t + nt*(i  ) ] = O.column("zhsu", t);
-                //row[ t + nt*(i++) ] = (P["delta_hsu"] * (1 / tadj) * params.buy_price.at(t) * (1 / P["eta_eh"]));
-                //TODO: Convince yourself this is needed in the objective...
-
                 col[ t + nt*(i  ) ] = O.column("yhsu", t);
                 row[ t + nt*(i++) ] = - (P["delta"] * (1 / tadj) * params.buy_price.at(t) * (1 / P["eta_eh"]) * P["Qhsu"]);
 
@@ -458,15 +452,8 @@ bool etes_dispatch_opt::optimize()
                 col[t + nt * (i)] = O.column("yhsu", t);
                 row[t + nt * (i++)] = -(1 / tadj) * P["hsu_cost"];
 
-                ////col[ t + nt*(i  ) ] = O.column("x", t);
-                ////row[ t + nt*(i++) ] = -P["delta"] * params.sell_price.at(t)* (1/tadj) * params.w_cycle_pump;
-
                 tadj *= P["disp_time_weighting"];
             }
-
-
-            //col[i * nt] = O.column("s", nt - 1);       //terminal inventory
-            //row[i * nt] = P["delta"] * tadj * pmean * P["eta_cycle"] * params.disp_inventory_incentive;  // new terminal inventory 
 
             set_obj_fnex(lp, i*nt, row, col);
 
@@ -1079,6 +1066,7 @@ bool etes_dispatch_opt::optimize()
         //Set problem to maximize
         set_maxim(lp);
 
+        lp_outputs.clear_output();
         setup_solver_presolve_bbrules(lp);
         bool return_ok = problem_scaling_solve_loop(lp);
         set_lp_solve_outputs(lp);

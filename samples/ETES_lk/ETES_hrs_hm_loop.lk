@@ -9,9 +9,9 @@ var( 'is_dispatch', 1 );
 var( 'ppa_soln_mode', 0 );
 var( 'ppa_price_input', [ 0.075 ] );
 
-timeout = 30.0;
-mip_gap = 0.00001;
-iter = 500000;
+timeout = 5.0;  //5.0
+mip_gap = 0.001;  //0.001
+iter = 35000;  //35000
 
 var( 'ppa_soln_min', 0);
 var( 'ppa_soln_max', 100);
@@ -22,14 +22,15 @@ disp_horizon = [12, 24, 36, 48, 54, 60, 72];
 disp_freq = [6, 12, 18, 24, 36, 48];
  //, 120, 96, 72, 60, 48, 36, 24]; 
  
-tshours = [6., 12., 24, 36];
-heater_mult = [1.2, 2.4, 4.8, 7.2];
+tshours = [12.];
+heater_mult = [2.4];
+disp_horizon = [48]; 
+disp_freq = [24];
 
 var( 'tshours', 10 );
 var( 'heater_mult', 2.3999999999999999 );
-
 var( 'disp_horizon', 48 );
-var( 'disp_frequency', 12 );
+var( 'disp_frequency', 24 );
 
 hours = [];
 hm = [];
@@ -43,7 +44,6 @@ PPAreal = [];
 gen = [];
 
 optimal = [];
-suboptimal = [];
 iter_stop = [];
 timeout_stop = [];
 gap_abort = [];
@@ -196,8 +196,8 @@ for (i = 0; i< #tshours; i++)
 				var( 'disp_timeout', timeout );	//5.0
 				var( 'disp_mip_gap', mip_gap ); //0.001
 				var( 'disp_time_weighting', 0.999 );
-				var( 'disp_rsu_cost', 950 );
 				var( 'disp_csu_cost', 10000 );
+				var( 'disp_hsu_cost', 10. );
 				var( 'disp_pen_delta_w', 0.10000000000000001 );
 				var( 'disp_inventory_incentive', 0.14999999999999999 );
 				var( 'is_wlim_series', 0 );
@@ -448,17 +448,18 @@ for (i = 0; i< #tshours; i++)
 
 				//Dispatch outputs
 				outputs{"q_pc_target"} = var("q_pc_target");
-				outputs{"disp_qsfprod_expect"} = var("disp_qsfprod_expect");
-				outputs{"disp_qsfsu_expect"} = var("disp_qsfsu_expect");
-				outputs{"disp_wpb_expect"} = var("disp_wpb_expect");
-				outputs{"disp_tes_expect"} = var("disp_tes_expect");
+				outputs{"disp_qsfprod_expected"} = var("disp_qsfprod_expected");
+				outputs{"disp_qsfsu_expected"} = var("disp_qsfsu_expected");
+				outputs{"disp_wpb_expected"} = var("disp_wpb_expected");
+				outputs{"disp_tes_expected"} = var("disp_tes_expected");
 
 				outputs{"disp_rel_mip_gap"} = var("disp_rel_mip_gap");
 				outputs{"disp_solve_state"} = var("disp_solve_state");
+				outputs{"disp_subopt_flag"} = var("disp_subopt_flag");
 				outputs{"disp_solve_iter"} = var("disp_solve_iter");
 				outputs{"disp_objective"} = var("disp_objective");
 				outputs{"disp_obj_relax"} = var("disp_obj_relax");
-				outputs{"disp_rev_expect"} = var("disp_rev_expect");
+				outputs{"disp_rev_expected"} = var("disp_rev_expected");
 				outputs{"disp_presolve_nconstr"} = var("disp_presolve_nconstr");
 				outputs{"disp_presolve_nvar"} = var("disp_presolve_nvar");
 				outputs{"disp_solve_time"} = var("disp_solve_time");
@@ -476,33 +477,29 @@ for (i = 0; i< #tshours; i++)
 				csvwrite(filename, outputs);
 				
 				optimal[count] = 0;
-				suboptimal[count] = 0;
 				iter_stop[count] = 0;
 				timeout_stop[count] = 0;
 				gap_abort[count] = 0;
 				gap_lpsolve[count] = 0;
 				
-				solve_state = var("disp_solve_state");
+				solve_state = var("disp_subopt_flag");
 				for (t = 0; t< #solve_state; t=t+24)
 				{
-					if (solve_state[t] == 0){
-						optimal[count] ++;	
-					}
-					elseif (solve_state[t] == 1){
-						suboptimal[count] ++;	
-					}
-					elseif (solve_state[t] == 10){
+					if (solve_state[t] == 1){
 						iter_stop[count] ++;	
 					}
-					elseif (solve_state[t] == 20){
+					elseif (solve_state[t] == 2){
 						timeout_stop[count] ++;	
 					}
-					elseif (solve_state[t] == 30){
+					elseif (solve_state[t] == 3){
 						gap_abort[count] ++;	
 					}
-					elseif (solve_state[t] == 40){
+					elseif (solve_state[t] == 4){
 						gap_lpsolve[count] ++;	
-					}						
+					}	
+					elseif (solve_state[t] == 0){
+						optimal[count] ++;	
+					}
 				}
 				
 				solve_time[count] = sum(var("disp_solve_time"))/var('disp_frequency');
@@ -536,7 +533,6 @@ summary_table{"PPA"} = PPA;
 summary_table{"gen"} = gen;
 
 summary_table{"optimal"} = optimal;
-summary_table{"suboptimal"} = suboptimal;
 summary_table{"iter_stop"} = iter_stop;
 summary_table{"timeout_stop"} = timeout_stop;
 summary_table{"gap_abort"} = gap_abort;

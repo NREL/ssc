@@ -224,36 +224,10 @@ public:
     {
         bool m_is_block_dispatch;
         bool m_is_arbitrage_policy;
-        //bool m_dispatch_optimize;
-
-
         bool m_isleapyear;
-        //int m_optimize_frequency;
-        //int m_disp_steps_per_hour;
-        //int m_optimize_horizon;
-        //double m_solver_timeout;
-        //double m_mip_gap;
-        //int m_presolve_type;
-        //int m_bb_type;
-        //int m_disp_reporting;
-        //int m_scaling_type;
-        //int m_max_iterations;
-        //double m_disp_time_weighting;
-        //double m_rsu_cost;
-        //double m_csu_cost;
-        //double m_q_rec_standby;
-        //double m_pen_delta_w;
-        //double m_disp_inventory_incentive;
-		//double m_w_rec_ht;
 		std::vector<double> m_w_lim_full;
 
-		//bool m_is_write_ampl_dat;
-        //bool m_is_ampl_engine;
-        //std::string m_ampl_data_dir;
-        //std::string m_ampl_exec_call;
-		
         bool m_is_tod_pc_target_also_pc_max;
-
         bool m_is_purchase_mult_same_as_price;
 
 		bool m_use_rule_1;
@@ -268,37 +242,12 @@ public:
         {
             m_is_block_dispatch = true;			// Either this or m_dispatch_optimize must be true
             m_is_arbitrage_policy = false;
-            //m_dispatch_optimize = false;        //Do dispatch optimization
 
             m_isleapyear = false;
-            //m_optimize_frequency = 24;          //[hr] Optimization occurs every X hours
-            //m_disp_steps_per_hour = 1;          //[-] Steps per hour for dispatch optimization
-            //m_optimize_horizon = 48;            //[hr] Optimization time horizon
-            //m_solver_timeout = 5.;
-            //m_mip_gap = 0.055;
-            //m_max_iterations = 10000;
-            //m_bb_type = -1;
-            //m_disp_reporting = -1;
-            //m_presolve_type = -1;
-            //m_scaling_type = -1;
-
-            //m_disp_time_weighting = 0.99;
-            //m_rsu_cost = 952.;
-            //m_csu_cost = 10000.;
-            //m_pen_delta_w = 0.1;
-            //m_disp_inventory_incentive = 0.;
-            //m_q_rec_standby = 9.e99;
-			//m_w_rec_ht = 0.0;
 			m_w_lim_full.resize(8760);
 			m_w_lim_full.assign(8760, 9.e99);
 
-			//m_is_write_ampl_dat = false;        //write ampl data files?
-            //m_is_ampl_engine = false;           //run dispatch with external AMPL engine?
-            //m_ampl_data_dir = "";               //directory where files should be written 
-            //m_ampl_exec_call = "";
-			
             m_is_tod_pc_target_also_pc_max = false;
-
             m_is_purchase_mult_same_as_price = true;
 
 			// Rule 1: if the sun sets (or does not rise) in m_standby_off_buffer [hours], then do not allow power cycle standby

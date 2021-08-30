@@ -779,43 +779,7 @@ public:
             // Resize default value from var table to proper dimensions
             tou_params->mc_pricing.mc_weekends = util::matrix_t<double>(12, 24, 1.0);
         }
-        //tou.mc_dispatch_params.m_dispatch_optimize = as_boolean("is_dispatch");
-        //tou.mc_dispatch_params.m_is_write_ampl_dat = as_boolean("is_write_ampl_dat");
-        //tou.mc_dispatch_params.m_is_ampl_engine = as_boolean("is_ampl_engine");
-        //tou.mc_dispatch_params.m_ampl_data_dir = as_string("ampl_data_dir");
-        //tou.mc_dispatch_params.m_ampl_exec_call = as_string("ampl_exec_call");
-        //if (tou.mc_dispatch_params.m_dispatch_optimize)
-        //{
-        //    tou.mc_dispatch_params.m_optimize_frequency = as_integer("disp_frequency");
-        //    tou.mc_dispatch_params.m_disp_steps_per_hour = as_integer("disp_steps_per_hour");
-        //    tou.mc_dispatch_params.m_optimize_horizon = as_integer("disp_horizon");
-        //    tou.mc_dispatch_params.m_max_iterations = as_integer("disp_max_iter");
-        //    tou.mc_dispatch_params.m_solver_timeout = as_double("disp_timeout");
-        //    tou.mc_dispatch_params.m_mip_gap = as_double("disp_mip_gap");
-        //    tou.mc_dispatch_params.m_presolve_type = as_integer("disp_spec_presolve");
-        //    tou.mc_dispatch_params.m_bb_type = as_integer("disp_spec_bb");
-        //    tou.mc_dispatch_params.m_disp_reporting = as_integer("disp_reporting");
-        //    tou.mc_dispatch_params.m_scaling_type = as_integer("disp_spec_scaling");
-        //    tou.mc_dispatch_params.m_disp_time_weighting = as_double("disp_time_weighting");
-        //    tou.mc_dispatch_params.m_rsu_cost = as_double("disp_rsu_cost");
-        //    tou.mc_dispatch_params.m_csu_cost = as_double("disp_csu_cost");
-        //    tou.mc_dispatch_params.m_pen_delta_w = as_double("disp_pen_delta_w");
-        //    tou.mc_dispatch_params.m_q_rec_standby = as_double("q_rec_standby");
-        //    tou.mc_dispatch_params.m_w_rec_ht = as_double("q_rec_heattrace");
 
-        // TODO: check on this...
-        //    if (as_boolean("is_wlim_series"))
-        //    {
-        //        size_t n_wlim_series = 0;
-        //        ssc_number_t* wlim_series = as_array("wlim_series", &n_wlim_series);
-        //        if ((int)n_wlim_series != n_wf_records)
-        //            throw exec_error("trough_physical", "Invalid net heat generation limit series dimension. Matrix must have " + util::to_string((int)n_wf_records) + " rows.");
-        //        for (int i = 0; i < n_wf_records; i++)
-        //            tou.mc_dispatch_params.m_w_lim_full.at(i) = (double)wlim_series[i];
-        //    }
-
-
-        //}
         tou.mc_dispatch_params.m_is_tod_pc_target_also_pc_max = as_boolean("is_tod_pc_target_also_pc_max");
         tou.mc_dispatch_params.m_is_block_dispatch = !as_boolean("is_dispatch");      //mw
         tou.mc_dispatch_params.m_use_rule_1 = true;

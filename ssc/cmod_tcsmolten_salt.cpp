@@ -1824,17 +1824,6 @@ public:
 
         if (true)
         {
-            //tou.mc_dispatch_params.m_optimize_frequency = as_integer("disp_frequency");
-            //tou.mc_dispatch_params.m_disp_steps_per_hour = as_integer("disp_steps_per_hour");
-            //tou.mc_dispatch_params.m_optimize_horizon = as_integer("disp_horizon");
-            //tou.mc_dispatch_params.m_disp_time_weighting = as_double("disp_time_weighting");
-            //tou.mc_dispatch_params.m_rsu_cost = as_double("disp_rsu_cost");
-            //tou.mc_dispatch_params.m_csu_cost = as_double("disp_csu_cost");
-            //tou.mc_dispatch_params.m_pen_delta_w = as_double("disp_pen_delta_w");
-            //tou.mc_dispatch_params.m_disp_inventory_incentive = as_double("disp_inventory_incentive");
-
-            //tou.mc_dispatch_params.m_q_rec_standby = as_double("q_rec_standby");
-            //tou.mc_dispatch_params.m_w_rec_ht = as_double("q_rec_heattrace");
 
             if (as_boolean("is_wlim_series"))
             {
@@ -1847,7 +1836,6 @@ public:
             }
         }
 
-        // TODO: figure out where this should live...
         tou.mc_dispatch_params.m_is_tod_pc_target_also_pc_max = as_boolean("is_tod_pc_target_also_pc_max");
         tou.mc_dispatch_params.m_is_block_dispatch = ! as_boolean("is_dispatch");      //mw
         tou.mc_dispatch_params.m_use_rule_1 = true;
