@@ -124,7 +124,8 @@ static var_info _cm_vtab_communitysolar[] = {
     { SSC_INPUT,        SSC_NUMBER,    "subscriber3_payment_generation_escal",    "Subscriber 1 payment generation escalation",	                     "%/yr",                  "",                        "Community Solar",          "?=0",					   "",                              "" },
     { SSC_INPUT,        SSC_ARRAY,     "subscriber4_payment_generation",	      "Subscriber 4 payment generation",                                 "$/kWh",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
     { SSC_INPUT,        SSC_NUMBER,    "subscriber4_payment_generation_escal",    "Subscriber 1 payment generation escalation",	                     "%/yr",                  "",                        "Community Solar",          "?=0",					   "",                              "" },
-    { SSC_INPUT,        SSC_NUMBER,     "unsubscribed_payment_generation",	      "Unsubscribed generation rate",                                    "$/kWh",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
+    { SSC_INPUT,        SSC_ARRAY,     "unsubscribed_payment_generation",	      "Unsubscribed generation rate",                                    "$/kWh",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
+    { SSC_INPUT,        SSC_NUMBER,    "unsubscribed_payment_generation_escal",    "Unsubscribed generation escalation",	                          "%/yr",                  "",                        "Community Solar",          "?=0",					   "",                              "" },
 
     { SSC_INPUT,        SSC_ARRAY,      "subscriber1_payment_annual",	      "Subscriber 1 payment annual",	                                        "$/yr",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
     { SSC_INPUT,        SSC_NUMBER,     "subscriber1_payment_annual_escal",   "Subscriber 1 payment annual escalation",	                                "%/yr",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
@@ -1042,6 +1043,7 @@ enum {
     CF_subscriber2_generation_payment,
     CF_subscriber3_generation_payment,
     CF_subscriber4_generation_payment,
+    CF_unsubscribed_generation_payment,
 
     CF_subscriber1_share_of_generation,
     CF_subscriber2_share_of_generation,
@@ -1649,6 +1651,7 @@ public:
         escal_or_annual(CF_subscriber2_generation_payment, nyears, "subscriber2_payment_generation", inflation_rate, 1.0, false, as_double("subscriber2_payment_generation_escal") * 0.01);
         escal_or_annual(CF_subscriber3_generation_payment, nyears, "subscriber3_payment_generation", inflation_rate, 1.0, false, as_double("subscriber3_payment_generation_escal") * 0.01);
         escal_or_annual(CF_subscriber4_generation_payment, nyears, "subscriber4_payment_generation", inflation_rate, 1.0, false, as_double("subscriber4_payment_generation_escal") * 0.01);
+        escal_or_annual(CF_unsubscribed_generation_payment, nyears, "unsubscribed_payment_generation", inflation_rate, 1.0, false, as_double("unsubscribed_payment_generation_escal") * 0.01);
 
         // community solar - up front costs
         cf.at(CF_community_solar_upfront, 0) = as_double("cs_cost_upfront");
@@ -1676,7 +1679,7 @@ public:
             cf.at(CF_subscriber2_revenue_generation, i) = cf.at(CF_subscriber2_share_of_generation, i) * cf.at(CF_subscriber2_generation_payment, i);
             cf.at(CF_subscriber3_revenue_generation, i) = cf.at(CF_subscriber3_share_of_generation, i) * cf.at(CF_subscriber3_generation_payment, i);
             cf.at(CF_subscriber4_revenue_generation, i) = cf.at(CF_subscriber4_share_of_generation, i) * cf.at(CF_subscriber4_generation_payment, i);
-            cf.at(CF_unsubscribed_revenue_generation, i) = cf.at(CF_unsubscribed_share_of_generation, i) * as_double("unsubscribed_payment_generation");
+            cf.at(CF_unsubscribed_revenue_generation, i) = cf.at(CF_unsubscribed_share_of_generation, i) * cf.at(CF_unsubscribed_generation_payment, i);
 
             cf.at(CF_subscriber1_retail_cost, i) = cf.at(CF_subscriber1_share_of_generation, i) * cf.at(CF_subscriber1_retail, i);
             cf.at(CF_subscriber2_retail_cost, i) = cf.at(CF_subscriber2_share_of_generation, i) * cf.at(CF_subscriber2_retail, i);
