@@ -663,6 +663,7 @@ static var_info _cm_vtab_levpartflip[] = {
 
 	// metrics table
 	{ SSC_OUTPUT, SSC_NUMBER, "npv_annual_costs", "Present value of annual costs", "$", "", "LCOE calculations", "*", "", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_annual_costs", "Annual costs", "$", "", "LCOE calculations", "*", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT, SSC_NUMBER, "adjusted_installed_cost", "Initial cost less cash incentives", "$", "", "", "*", "", "" },
 
 	{ SSC_OUTPUT, SSC_NUMBER, "min_dscr", "Minimum DSCR", "", "", "DSCR", "", "" },
@@ -884,11 +885,6 @@ enum {
 	CF_battery_replacement_cost_schedule,
 	CF_battery_replacement_cost,
 
-    CF_energy_sales,
-    CF_energy_sales_value,
-    CF_energy_purchases,
-    CF_energy_purchases_value,
-
     CF_energy_charged_grid,
     CF_energy_charged_pv,
     CF_energy_discharged,
@@ -898,6 +894,11 @@ enum {
     CF_salvage_cost_lcos,
     CF_investment_cost_lcos,
     CF_annual_cost_lcos,
+
+    CF_energy_sales,
+    CF_energy_sales_value,
+    CF_energy_purchases,
+    CF_energy_purchases_value,
 
     CF_max,
 };
