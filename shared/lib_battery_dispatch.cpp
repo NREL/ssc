@@ -841,6 +841,51 @@ void battery_metrics_t::new_year()
     _e_loss_system_annual = 0.;
 }
 
+outage_manager::outage_manager(BatteryPower* batteryPower) {
+    m_batteryPower = batteryPower;
+    last_step_was_outage = false;
+}
+
+outage_manager::~outage_manager() {
+    m_batteryPower = NULL;
+}
+
+void outage_manager::startOutage() {
+    canSystemChargeWhenGrid = m_batteryPower->canSystemCharge;	
+    canClipChargeWhenGrid = m_batteryPower->canClipCharge;
+    canGridChargeWhenGrid = m_batteryPower->canGridCharge;
+    canDischargeWhenGrid = m_batteryPower->canDischarge;
+
+    stateOfChargeMaxWhenGrid = m_batteryPower->stateOfChargeMax; 
+    stateOfChargeMinWhenGrid = m_batteryPower->stateOfChargeMin;
+
+    if (m_batteryPower->connectionMode == m_batteryPower->DC_CONNECTED) {
+        m_batteryPower->canClipCharge = true;
+    }
+    m_batteryPower->canSystemCharge = true;
+    m_batteryPower->canGridCharge = false;
+    m_batteryPower->canDischarge = true;
+
+    m_batteryPower->stateOfChargeMax = 100.0;
+    m_batteryPower->stateOfChargeMin = 0.0;
+
+    last_step_was_outage = true;
+}
+
+void outage_manager::endOutage(bool isAutomated) {
+    if (isAutomated) {
+        m_batteryPower->canSystemCharge = canSystemChargeWhenGrid;
+        m_batteryPower->canClipCharge = canClipChargeWhenGrid;
+        m_batteryPower->canGridCharge = canGridChargeWhenGrid;
+        m_batteryPower->canDischarge = canDischargeWhenGrid;
+    }
+
+    m_batteryPower->stateOfChargeMax = stateOfChargeMaxWhenGrid;
+    m_batteryPower->stateOfChargeMin = stateOfChargeMinWhenGrid;
+
+    last_step_was_outage = false;
+}
+
 bool byGrid:: operator()(grid_point const& a, grid_point const& b)
 {
     return a.Grid() > b.Grid();

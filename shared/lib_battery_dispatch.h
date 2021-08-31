@@ -182,6 +182,33 @@ protected:
 
 };
 
+/*! Class responsible for changing and storing outage related variables for when the grid goes out or comes back */
+class outage_manager
+{
+public:
+    outage_manager(BatteryPower* batteryPower);
+
+    ~outage_manager();
+
+    void startOutage();
+
+    void endOutage(bool isAutomated);
+
+    bool last_step_was_outage;
+
+private:
+    // Managed by dispatch_t::m_batteryPowerFlow
+    BatteryPower* m_batteryPower;
+
+    bool canSystemChargeWhenGrid;	///< A boolean specifying whether the battery is allowed to charge from PV when the grid is on
+    bool canClipChargeWhenGrid;	///< A boolean specifying whether the battery is allowed to charge from otherwise clipped PV when the grid is on
+    bool canGridChargeWhenGrid; ///< A boolean specifying whether the battery is allowed to charge from the Grid when the grid is on
+    bool canDischargeWhenGrid;  ///< A boolean specifying whether the battery is allowed to discharge when the grid is on
+
+    double stateOfChargeMaxWhenGrid;   ///< The maximum state of charge when the grid is on (0-100)
+    double stateOfChargeMinWhenGrid;   ///< The minimum state of charge when the grid is on (0-100)
+};
+
 /*! Class containing calculated grid power at a single time step */
 class grid_point
 {
