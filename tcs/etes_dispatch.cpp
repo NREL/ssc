@@ -46,10 +46,9 @@ etes_dispatch_opt::etes_dispatch_opt()
     params.clear();
 }
 
-void etes_dispatch_opt::init(double cycle_q_dot_des, double cycle_eta_des, double cycle_w_dot_des)
+void etes_dispatch_opt::init(double cycle_q_dot_des, double cycle_eta_des)
 {
     // TODO: I don't like having to pass these in, why can't I access them via the cycle pointer? ask Ty
-    // TODO: we could pass in C_csp_power_cycle::S_solved_params instead which contains these 3 items?
     // TODO: Should we create getters for design point infromation?
     params.clear();
 
@@ -72,40 +71,11 @@ void etes_dispatch_opt::init(double cycle_q_dot_des, double cycle_eta_des, doubl
     //params.tes_degrade_rate = pointers.tes->get_degradation_rate();
 
     params.q_pb_des = cycle_q_dot_des * 1000.;
-    params.eta_pb_des = cycle_eta_des;
+    params.eta_pb_des = cycle_eta_des;  // TODO: what is the difference between this and ref (above)?
+    double w_pb_des = params.q_pb_des * params.eta_pb_des;
 
-    // TODO: This code below should be moved to a function...
-    //Cycle efficiency
-    params.eff_table_load.clear();
-    //add zero point
-    params.eff_table_load.add_point(0., 0.);    //this is required to allow the model to converge
-
-    int neff = 2;   //mjw: if using something other than 2, the linear approximation assumption and associated code in csp_dispatch.cpp/calculate_parameters() needs to be reformulated.
-    for (int i = 0; i < neff; i++)
-    {
-        double x = params.q_pb_min + (params.q_pb_max - params.q_pb_min) / (double)(neff - 1) * i;
-        double xf = x * 1.e-3 / cycle_q_dot_des;  //MW
-
-        double eta;
-        eta = pointers.mpc_pc->get_efficiency_at_load(xf);
-
-        params.eff_table_load.add_point(x, eta);
-    }
-
-    //cycle efficiency vs temperature
-    params.eff_table_Tdb.clear();
-    params.wcondcoef_table_Tdb.clear();
-    int neffT = 40;
-
-    for (int i = 0; i < neffT; i++)
-    {
-        double T = -10. + 60. / (double)(neffT - 1) * i;
-        double wcond;
-        double eta = pointers.mpc_pc->get_efficiency_at_TPH(T, 1., 30., &wcond) / cycle_eta_des;
-
-        params.eff_table_Tdb.add_point(T, eta);
-        params.wcondcoef_table_Tdb.add_point(T, wcond / cycle_w_dot_des); //fraction of rated gross gen
-    }
+    params.eff_table_load.init_linear_cycle_efficiency_table(params.q_pb_min, params.q_pb_max, params.q_pb_des, pointers.mpc_pc);
+    params.eff_table_Tdb.init_efficiency_ambient_temp_table(params.eta_pb_des, w_pb_des, pointers.mpc_pc, &params.wcondcoef_table_Tdb);
 }
 
 bool etes_dispatch_opt::check_setup(int nstep)
@@ -143,8 +113,8 @@ void etes_dispatch_opt::update_initial_conditions(double q_dot_to_pb, double T_h
     //TODO: Update with etes initial conditions
     //params.down_time0
     //params.up_time0
-    //params.e_pb_start0 = 0
-    //params.e_eh_start0 = 0
+    params.e_pb_start0 = 0;     //these are set assuming no carry over
+    params.e_eh_start0 = 0;
 
     //note the states of the power cycle and receiver
     params.is_pb_operating0 = pointers.mpc_pc->get_operating_state() == 1;
@@ -302,35 +272,25 @@ static void calculate_parameters(etes_dispatch_opt *optinst, unordered_map<std::
         pars["Yu0"] = optinst->params.up_time0;
         pars["s0"] = optinst->params.e_tes0 ;
 
-        //linear power-heat fit requires that the efficiency table has 3 points.. 0->zero point, 1->min load point, 2->max load point. This is created in csp_solver_core::Ssimulate().
-        int m = optinst->params.eff_table_load.get_size()-1;
-        if (m != 2)
-            throw C_csp_exception("Model failure during dispatch optimization problem formulation. Ill-formed load table.");
-        //get the two points used to create the linear fit
-        double q[2], eta[2];
-        optinst->params.eff_table_load.get_point(1, q[0], eta[0]);
-        optinst->params.eff_table_load.get_point(2, q[1], eta[1]);
-        //calculate the rate of change in power output versus heat input
-        pars["etap"] = (q[1] * eta[1] - q[0] * eta[0]) / (q[1] - q[0]);
-        //calculate the y-intercept of the linear fit at 'b'
-        double b = q[1] * eta[1] - q[1] * pars["etap"];
+        // power cycle linear performance curve
+        double intercept;
+        optinst->params.eff_table_load.get_slope_intercept_cycle_linear_performance(&pars["etap"], &intercept);
 
-        //maximum power based on linear fit
-        pars["Wdotu"] = (pars["etap"] * pars["Qu"] + b);
+        // maximum power based on linear fit
+        pars["Wdotu"] = (pars["etap"] * pars["Qu"] + intercept);
         // minimum power based on linear fit
-        pars["Wdotl"] = (pars["etap"] * pars["Ql"] + b);
+        pars["Wdotl"] = (pars["etap"] * pars["Ql"] + intercept);
 
         pars["Wdot0"] = 0.;
         if (pars["q0"] >= pars["Ql"])
-            pars["Wdot0"] = (pars["etap"] * pars["q0"] + b) * optinst->params.eta_pb_expected.at(0) / optinst->params.eta_cycle_ref;
+            pars["Wdot0"] = (pars["etap"] * pars["q0"] + intercept) * optinst->params.eta_pb_expected.at(0) / optinst->params.eta_cycle_ref;
 
         // ==================================================================
         // TODO: Talk to TY about these two
         pars["eta_eh"] = 1.0;   //0.95; We could remove this completely
         pars["Qehl"] = pars["Qehu"]*0.25;  //get_min_power_delivery()  
 
-        pars["uhsu0"] = 0.;          // Assuming start up within an hour
-        pars["ucsu0"] = 0.;          // Assuming start up within an hour // This would have to be fixed for csp dispatch as well
+        //TODO: How can I calculate these? Ask Ty
         pars["Yd0"] = pars["Yd"];    // Over riding these constraints
         pars["Yu0"] = pars["Yu"];    // Over riding these constraints
 };
@@ -797,8 +757,7 @@ bool etes_dispatch_opt::optimize()
             }
         }
 
-        // ******************** Balance constraints *******************
-        //Energy in, out, and stored in the TES system must balance.
+        //Energy balance constraint
         {
             REAL row[7];
             int col[7];

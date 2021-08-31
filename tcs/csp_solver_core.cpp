@@ -417,7 +417,7 @@ void C_csp_solver::init()
     if (mc_dispatch.solver_params.dispatch_optimize)
     {
         mc_dispatch.pointers.set_pointers(mc_weather, &mc_collector_receiver, &mc_power_cycle, &mc_tes, &mc_csp_messages, &mc_kernel.mc_sim_info);
-        mc_dispatch.init(m_cycle_q_dot_des, m_cycle_eta_des, m_cycle_W_dot_des);
+        mc_dispatch.init(m_cycle_q_dot_des, m_cycle_eta_des);
     }
 
     // Value helps solver get out of T_field_htf_cold iteration when weird conditions cause the solution to be a very cold value

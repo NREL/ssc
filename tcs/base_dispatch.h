@@ -144,7 +144,7 @@ public:
     //----- public member functions ----
     base_dispatch_opt();
 
-    virtual void init(double cycle_q_dot_des, double cycle_eta_des, double cycle_w_dot_des);
+    virtual void init(double cycle_q_dot_des, double cycle_eta_des);
 
     //check parameters and inputs to make sure everything has been set up correctly
     bool check_setup();
@@ -193,5 +193,45 @@ public:
     bool strcompare(std::string a, std::string b);
 };
 
-#endif //__base_dispatch_
+struct s_efftable
+{
+private:
+    struct s_effmember
+    {
+        double x;
+        double eta;
 
+        s_effmember() {};
+        s_effmember(double _x, double _eta)
+        {
+            x = _x;
+            eta = _eta;
+        };
+    };
+    std::vector<s_effmember> table;
+
+public:
+
+    void clear();
+
+    void add_point(double x, double eta);
+
+    bool get_point(int index, double& x, double& eta);
+
+    double get_point_eff(int index);
+
+    double get_point_x(int index);
+
+    size_t get_size();
+
+    double interpolate(double x);
+
+    void init_linear_cycle_efficiency_table(double q_pb_min, double q_pb_max, double q_pb_des, C_csp_power_cycle* power_cycle);
+   
+    void init_efficiency_ambient_temp_table(double eta_pb_des, double cycle_w_dot_des, C_csp_power_cycle* power_cycle, s_efftable* wcondcoef_table_Tdb);
+
+    void get_slope_intercept_cycle_linear_performance(double* slope, double* intercept);
+};
+
+
+#endif //__base_dispatch_
