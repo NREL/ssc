@@ -1583,25 +1583,25 @@ public:
         for (size_t i = 0; i <= nyears; i++) {
             // check all subscribers for negative fractions and reset to zero
             if (cf.at(CF_subscriber1_share_fraction, i) < 0.0) {
-                log(util::format("Subscriber 1 share fraction was %g and reset to zero for year %d.", cf.at(CF_subscriber1_share_fraction, i), (int(i)), SSC_NOTICE, (float)i));
+                log(util::format("Subscriber 1 share fraction was negative (%g) and reset to zero for year %d.", cf.at(CF_subscriber1_share_fraction, i), (int(i)), SSC_NOTICE, (float)i));
                 cf.at(CF_subscriber1_share_fraction, i) = 0.0;
             }
             if (cf.at(CF_subscriber2_share_fraction, i) < 0.0) {
-                log(util::format("Subscriber 2 share fraction was %g and reset to zero for year %d.", cf.at(CF_subscriber2_share_fraction, i), (int(i)), SSC_NOTICE, (float)i));
+                log(util::format("Subscriber 2 share fraction was negative (%g) and reset to zero for year %d.", cf.at(CF_subscriber2_share_fraction, i), (int(i)), SSC_NOTICE, (float)i));
                 cf.at(CF_subscriber2_share_fraction, i) = 0.0;
             }
             if (cf.at(CF_subscriber3_share_fraction, i) < 0.0) {
-                log(util::format("Subscriber 3 share fraction was %g and reset to zero for year %d.", cf.at(CF_subscriber3_share_fraction, i), (int(i)), SSC_NOTICE, (float)i));
+                log(util::format("Subscriber 3 share fraction was negative (%g) and reset to zero for year %d.", cf.at(CF_subscriber3_share_fraction, i), (int(i)), SSC_NOTICE, (float)i));
                 cf.at(CF_subscriber3_share_fraction, i) = 0.0;
             }
             if (cf.at(CF_subscriber4_share_fraction, i) < 0.0) {
-                log(util::format("Subscriber 4 share fraction was %g and reset to zero for year %d.", cf.at(CF_subscriber4_share_fraction, i), (int(i)), SSC_NOTICE, (float)i));
+                log(util::format("Subscriber 4 share fraction was negative (%g) and reset to zero for year %d.", cf.at(CF_subscriber4_share_fraction, i), (int(i)), SSC_NOTICE, (float)i));
                 cf.at(CF_subscriber4_share_fraction, i) = 0.0;
             }
 
             double sum = cf.at(CF_subscriber1_share_fraction,i) + cf.at(CF_subscriber2_share_fraction,i) + cf.at(CF_subscriber3_share_fraction,i) + cf.at(CF_subscriber4_share_fraction,i);
             if (sum < 0.0) // this should not happen, all are set to >=0
-                throw exec_error("communitysolar", util::format("total subscribed fraction for year (%d) is %g (less than zero).", (int)i, sum));
+                throw exec_error("communitysolar", util::format("Total subscribed fraction for year (%d) is %g (less than zero).", (int)i, sum));
             if (sum > 1.0) {
                 // here we can check is values are growth rates to address concern in emails from HEIC or we can give priority for subscriber 1 to handle schedules, too.
            // priority given to subscriber 1 (anchor)
