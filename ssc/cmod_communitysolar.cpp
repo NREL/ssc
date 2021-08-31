@@ -748,10 +748,10 @@ static var_info _cm_vtab_communitysolar[] = {
     { SSC_OUTPUT, SSC_ARRAY, "cf_recurring_capacity", "Recurring capacity cost", "$/kW-yr", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT, SSC_ARRAY, "cf_recurring_generation", "Recurring generation cost", "$/kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
 
-    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber1_payment", "Subscriber1 payment", "$/yr", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber2_payment", "Subscriber2 payment", "$/yr", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber3_payment", "Subscriber3 payment", "$/yr", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber4_payment", "Subscriber4 payment", "$/yr", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber1_generation_payment", "Subscriber1 generation payment", "$/kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber2_generation_payment", "Subscriber2 generation payment", "$/kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber3_generation_payment", "Subscriber3 generation payment", "$/kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber4_generation_payment", "Subscriber4 generation payment", "$/kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
 
     { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber1_share_of_generation", "Subscriber1 share of generation", "kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber2_share_of_generation", "Subscriber2 share of generation", "kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
@@ -1038,10 +1038,10 @@ enum {
     CF_recurring_capacity,
     CF_recurring_generation,
 
-    CF_subscriber1_payment,
-    CF_subscriber2_payment,
-    CF_subscriber3_payment,
-    CF_subscriber4_payment,
+    CF_subscriber1_generation_payment,
+    CF_subscriber2_generation_payment,
+    CF_subscriber3_generation_payment,
+    CF_subscriber4_generation_payment,
 
     CF_subscriber1_share_of_generation,
     CF_subscriber2_share_of_generation,
@@ -1577,13 +1577,56 @@ public:
         escal_or_annual(CF_subscriber3_share_fraction, nyears, "subscriber3_share", 0.0, 0.01, false, as_double("subscriber3_growth") * 0.01); // entered as percentage and growth rate without inflation
         escal_or_annual(CF_subscriber4_share_fraction, nyears, "subscriber4_share", 0.0, 0.01, false, as_double("subscriber4_growth") * 0.01); // entered as percentage and growth rate without inflation
 
-        // throw or balance if total subscription > 1.0
+        // Automatically cap the subscriber shares at the values that cause the total share to reach 100%. SAM would report a simulation message to explain the adjustment.
         for (size_t i = 0; i <= nyears; i++) {
+            // check all subscribers for negative fractions and reset to zero
+            if (cf.at(CF_subscriber1_share_fraction, i) < 0.0) {
+                log(util::format("Subscriber 1 share fraction was %g and reset to zero for year %d.", cf.at(CF_subscriber1_share_fraction, i), (int(i)), SSC_NOTICE, (float)i));
+                cf.at(CF_subscriber1_share_fraction, i) = 0.0;
+            }
+            if (cf.at(CF_subscriber2_share_fraction, i) < 0.0) {
+                log(util::format("Subscriber 2 share fraction was %g and reset to zero for year %d.", cf.at(CF_subscriber2_share_fraction, i), (int(i)), SSC_NOTICE, (float)i));
+                cf.at(CF_subscriber2_share_fraction, i) = 0.0;
+            }
+            if (cf.at(CF_subscriber3_share_fraction, i) < 0.0) {
+                log(util::format("Subscriber 3 share fraction was %g and reset to zero for year %d.", cf.at(CF_subscriber3_share_fraction, i), (int(i)), SSC_NOTICE, (float)i));
+                cf.at(CF_subscriber3_share_fraction, i) = 0.0;
+            }
+            if (cf.at(CF_subscriber4_share_fraction, i) < 0.0) {
+                log(util::format("Subscriber 4 share fraction was %g and reset to zero for year %d.", cf.at(CF_subscriber4_share_fraction, i), (int(i)), SSC_NOTICE, (float)i));
+                cf.at(CF_subscriber4_share_fraction, i) = 0.0;
+            }
+
             double sum = cf.at(CF_subscriber1_share_fraction,i) + cf.at(CF_subscriber2_share_fraction,i) + cf.at(CF_subscriber3_share_fraction,i) + cf.at(CF_subscriber4_share_fraction,i);
-            if (sum < 0.0)
+            if (sum < 0.0) // this should not happen, all are set to >=0
                 throw exec_error("communitysolar", util::format("total subscribed fraction for year (%d) is %g (less than zero).", (int)i, sum));
-            if (sum > 1.0)
-                throw exec_error("communitysolar", util::format("total subscribed fraction for year (%d) is %g (greater than one).", (int)i, sum));
+            if (sum > 1.0) {
+                // here we can check is values are growth rates to address concern in emails from HEIC or we can give priority for subscriber 1 to handle schedules, too.
+           // priority given to subscriber 1 (anchor)
+                if (cf.at(CF_subscriber1_share_fraction, i) > 1.0) {
+                    log(util::format("Subscriber 1 share fraction was %g and reset to one for year %d and other subscriber classes reset to zero", cf.at(CF_subscriber1_share_fraction, i), (int(i)), SSC_NOTICE, (float)i));
+                    cf.at(CF_subscriber1_share_fraction, i) = 1.0;
+                    cf.at(CF_subscriber2_share_fraction, i) = 0.0;
+                    cf.at(CF_subscriber3_share_fraction, i) = 0.0;
+                    cf.at(CF_subscriber4_share_fraction, i) = 0.0;
+                }
+                else if ((cf.at(CF_subscriber1_share_fraction, i) + cf.at(CF_subscriber2_share_fraction, i)) > 1.0) {
+                    log(util::format("Subscriber 2 share fraction was %g and reset to %g for year %d and other subscriber classes 3 and 4 reset to zero", cf.at(CF_subscriber2_share_fraction, i), 1.0 - cf.at(CF_subscriber1_share_fraction, i),(int(i)), SSC_NOTICE, (float)i));
+                    cf.at(CF_subscriber2_share_fraction, i) = 1.0 - cf.at(CF_subscriber1_share_fraction, i);
+                    cf.at(CF_subscriber3_share_fraction, i) = 0.0;
+                    cf.at(CF_subscriber4_share_fraction, i) = 0.0;
+                }
+                else if ((cf.at(CF_subscriber1_share_fraction, i) + cf.at(CF_subscriber2_share_fraction, i) + cf.at(CF_subscriber3_share_fraction, i)) > 1.0) {
+                    log(util::format("Subscriber 3 share fraction was %g and reset to %g for year %d and other subscriber class 4 reset to zero", cf.at(CF_subscriber3_share_fraction, i), 1.0 - (cf.at(CF_subscriber1_share_fraction, i) + cf.at(CF_subscriber2_share_fraction, i)), (int(i)), SSC_NOTICE, (float)i));
+                    cf.at(CF_subscriber3_share_fraction, i) = 1.0 - (cf.at(CF_subscriber1_share_fraction, i) + cf.at(CF_subscriber2_share_fraction, i));
+                    cf.at(CF_subscriber4_share_fraction, i) = 0.0;
+                }
+                else {
+                    log(util::format("Subscriber 4 share fraction was %g and reset to %g for year %d", cf.at(CF_subscriber4_share_fraction, i), 1.0 - (cf.at(CF_subscriber1_share_fraction, i) + cf.at(CF_subscriber2_share_fraction, i) + cf.at(CF_subscriber3_share_fraction, i)), (int(i)), SSC_NOTICE, (float)i));
+                    cf.at(CF_subscriber4_share_fraction, i) = 1.0 - (cf.at(CF_subscriber1_share_fraction, i) + cf.at(CF_subscriber2_share_fraction, i) + +cf.at(CF_subscriber3_share_fraction, i));
+                }
+                sum = cf.at(CF_subscriber1_share_fraction, i) + cf.at(CF_subscriber2_share_fraction, i) + cf.at(CF_subscriber3_share_fraction, i) + cf.at(CF_subscriber4_share_fraction, i);
+            }
             cf.at(CF_unsubscribed_share_fraction, i) = 1.0 - sum;
         }
 
@@ -1595,11 +1638,17 @@ public:
             escal_or_annual(CF_subscriber4_retail, nyears, "subscriber4_retail_rate", inflation_rate, 1.0, false, as_double("subscriber4_retail_rate_escal") * 0.01); 
         }
 
-        // community solar - revenue - only annual values translate to cashflow line items
-        escal_or_annual(CF_subscriber1_payment, nyears, "subscriber1_payment_annual", inflation_rate, 1.0, false, as_double("subscriber1_payment_annual_escal") * 0.01); 
-        escal_or_annual(CF_subscriber2_payment, nyears, "subscriber2_payment_annual", inflation_rate, 1.0, false, as_double("subscriber2_payment_annual_escal") * 0.01); 
-        escal_or_annual(CF_subscriber3_payment, nyears, "subscriber3_payment_annual", inflation_rate, 1.0, false, as_double("subscriber3_payment_annual_escal") * 0.01); 
-        escal_or_annual(CF_subscriber4_payment, nyears, "subscriber4_payment_annual", inflation_rate, 1.0, false, as_double("subscriber4_payment_annual_escal") * 0.01); 
+        // community solar - revenue - annual values
+        escal_or_annual(CF_subscriber1_revenue_annual_payment, nyears, "subscriber1_payment_annual", inflation_rate, 1.0, false, as_double("subscriber1_payment_annual_escal") * 0.01);
+        escal_or_annual(CF_subscriber2_revenue_annual_payment, nyears, "subscriber2_payment_annual", inflation_rate, 1.0, false, as_double("subscriber2_payment_annual_escal") * 0.01);
+        escal_or_annual(CF_subscriber3_revenue_annual_payment, nyears, "subscriber3_payment_annual", inflation_rate, 1.0, false, as_double("subscriber3_payment_annual_escal") * 0.01);
+        escal_or_annual(CF_subscriber4_revenue_annual_payment, nyears, "subscriber4_payment_annual", inflation_rate, 1.0, false, as_double("subscriber4_payment_annual_escal") * 0.01);
+
+        // community solar - revenue - generation values
+        escal_or_annual(CF_subscriber1_generation_payment, nyears, "subscriber1_payment_generation", inflation_rate, 1.0, false, as_double("subscriber1_payment_generation_escal") * 0.01);
+        escal_or_annual(CF_subscriber2_generation_payment, nyears, "subscriber2_payment_generation", inflation_rate, 1.0, false, as_double("subscriber2_payment_generation_escal") * 0.01);
+        escal_or_annual(CF_subscriber3_generation_payment, nyears, "subscriber3_payment_generation", inflation_rate, 1.0, false, as_double("subscriber3_payment_generation_escal") * 0.01);
+        escal_or_annual(CF_subscriber4_generation_payment, nyears, "subscriber4_payment_generation", inflation_rate, 1.0, false, as_double("subscriber4_payment_generation_escal") * 0.01);
 
         // community solar - up front costs
         cf.at(CF_community_solar_upfront, 0) = as_double("cs_cost_upfront");
@@ -1608,7 +1657,7 @@ public:
         // community solar - recurring cost inputs
         escal_or_annual(CF_recurring_fixed, nyears, "cs_cost_recurring_fixed", inflation_rate, 1.0, false, as_double("cs_cost_recurring_fixed_escal") * 0.01); 
         escal_or_annual(CF_recurring_capacity, nyears, "cs_cost_recurring_capacity", inflation_rate, 1.0, false, as_double("cs_cost_recurring_capacity_escal") * 0.01);
-        escal_or_annual(CF_recurring_generation, nyears, "cs_cost_recurring_generation", inflation_rate, 1.0, false, as_double("cs_cost_recurring_generation_escal") * 0.01); // $/kWh input so no scaling for $/MWh
+        escal_or_annual(CF_recurring_generation, nyears, "cs_cost_recurring_generation", inflation_rate, 0.001, false, as_double("cs_cost_recurring_generation_escal") * 0.01); // $/MWh scaling to $/kWh
 
         // community solar - revenue
         cf.at(CF_subscriber1_revenue_upfront, 0) = as_double("subscriber1_payment_upfront");
@@ -1622,17 +1671,12 @@ public:
             cf.at(CF_subscriber3_share_of_generation, i) = cf.at(CF_subscriber3_share_fraction, i) * cf.at(CF_energy_net, i);
             cf.at(CF_subscriber4_share_of_generation, i) = cf.at(CF_subscriber4_share_fraction, i) * cf.at(CF_energy_net, i);
             cf.at(CF_unsubscribed_share_of_generation, i) = cf.at(CF_unsubscribed_share_fraction, i) * cf.at(CF_energy_net, i);
-            // rate or escalation values???
-            cf.at(CF_subscriber1_revenue_generation, i) = cf.at(CF_subscriber1_share_of_generation, i) * as_double("subscriber1_payment_generation");
-            cf.at(CF_subscriber2_revenue_generation, i) = cf.at(CF_subscriber2_share_of_generation, i) * as_double("subscriber2_payment_generation");
-            cf.at(CF_subscriber3_revenue_generation, i) = cf.at(CF_subscriber3_share_of_generation, i) * as_double("subscriber3_payment_generation");
-            cf.at(CF_subscriber4_revenue_generation, i) = cf.at(CF_subscriber4_share_of_generation, i) * as_double("subscriber4_payment_generation");
-            cf.at(CF_unsubscribed_revenue_generation, i) = cf.at(CF_unsubscribed_share_of_generation, i) * as_double("unsubscribed_payment_generation");
 
-            cf.at(CF_subscriber1_revenue_annual_payment, i) = cf.at(CF_subscriber1_payment, i); // why twice???
-            cf.at(CF_subscriber2_revenue_annual_payment, i) = cf.at(CF_subscriber2_payment, i); // why twice???
-            cf.at(CF_subscriber3_revenue_annual_payment, i) = cf.at(CF_subscriber3_payment, i); // why twice???
-            cf.at(CF_subscriber4_revenue_annual_payment, i) = cf.at(CF_subscriber4_payment, i); // why twice???
+            cf.at(CF_subscriber1_revenue_generation, i) = cf.at(CF_subscriber1_share_of_generation, i) * cf.at(CF_subscriber1_generation_payment, i);
+            cf.at(CF_subscriber2_revenue_generation, i) = cf.at(CF_subscriber2_share_of_generation, i) * cf.at(CF_subscriber2_generation_payment, i);
+            cf.at(CF_subscriber3_revenue_generation, i) = cf.at(CF_subscriber3_share_of_generation, i) * cf.at(CF_subscriber3_generation_payment, i);
+            cf.at(CF_subscriber4_revenue_generation, i) = cf.at(CF_subscriber4_share_of_generation, i) * cf.at(CF_subscriber4_generation_payment, i);
+            cf.at(CF_unsubscribed_revenue_generation, i) = cf.at(CF_unsubscribed_share_of_generation, i) * as_double("unsubscribed_payment_generation");
 
             cf.at(CF_subscriber1_retail_cost, i) = cf.at(CF_subscriber1_share_of_generation, i) * cf.at(CF_subscriber1_retail, i);
             cf.at(CF_subscriber2_retail_cost, i) = cf.at(CF_subscriber2_share_of_generation, i) * cf.at(CF_subscriber2_retail, i);
@@ -3671,10 +3715,10 @@ public:
         save_cf(CF_recurring_capacity, nyears, "cf_recurring_capacity");
         save_cf(CF_recurring_generation, nyears, "cf_recurring_generation");
 
-        save_cf(CF_subscriber1_payment, nyears, "cf_subscriber1_payment");
-        save_cf(CF_subscriber2_payment, nyears, "cf_subscriber2_payment");
-        save_cf(CF_subscriber3_payment, nyears, "cf_subscriber3_payment");
-        save_cf(CF_subscriber4_payment, nyears, "cf_subscriber4_payment");
+        save_cf(CF_subscriber1_generation_payment, nyears, "cf_subscriber1_generation_payment");
+        save_cf(CF_subscriber2_generation_payment, nyears, "cf_subscriber2_generation_payment");
+        save_cf(CF_subscriber3_generation_payment, nyears, "cf_subscriber3_generation_payment");
+        save_cf(CF_subscriber4_generation_payment, nyears, "cf_subscriber4_generation_payment");
 
         save_cf(CF_subscriber1_share_of_generation, nyears, "cf_subscriber1_share_of_generation");
         save_cf(CF_subscriber2_share_of_generation, nyears, "cf_subscriber2_share_of_generation");
