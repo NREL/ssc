@@ -91,10 +91,16 @@ void dispatch_manual_t::dispatch(size_t year,
 	size_t hour_of_year,
 	size_t step)
 {
-	prepareDispatch(hour_of_year, step);
+    m_outage_manager->update(false); // false is for manual dispatch
+    if (m_batteryPower->isOutageStep) {
 
-	// Initialize power flow model by calculating the battery power to dispatch
-	m_batteryPowerFlow->initialize(_Battery->SOC());
+    }
+    else {
+        prepareDispatch(hour_of_year, step);
+
+        // Initialize power flow model by calculating the battery power to dispatch
+        m_batteryPowerFlow->initialize(_Battery->SOC());
+    }
 
 	// Run the dispatch
 	runDispatch(year, hour_of_year, step);

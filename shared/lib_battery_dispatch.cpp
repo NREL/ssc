@@ -57,6 +57,8 @@ dispatch_t::dispatch_t(battery_t* Battery, double dt_hour, double SOC_min, doubl
     _Battery = Battery;
     _Battery_initial = new battery_t(*_Battery);
 
+    m_outage_manager = std::make_unique<outage_manager>(m_batteryPower);
+
     // Call the dispatch init method
     init(_Battery, dt_hour, current_choice, t_min, mode);
 }
@@ -88,6 +90,8 @@ dispatch_t::dispatch_t(const dispatch_t& dispatch)
     std::unique_ptr<BatteryPowerFlow> tmp(new BatteryPowerFlow(*dispatch.m_batteryPowerFlow));
     m_batteryPowerFlow = std::move(tmp);
     m_batteryPower = m_batteryPowerFlow->getBatteryPower();
+    m_outage_manager = std::make_unique<outage_manager>(m_batteryPower);
+    m_outage_manager->copy(*(dispatch.m_outage_manager));
 
     _Battery = new battery_t(*dispatch._Battery);
     _Battery_initial = new battery_t(*dispatch._Battery_initial);
@@ -105,6 +109,9 @@ void dispatch_t::copy(const dispatch_t* dispatch)
     std::unique_ptr<BatteryPowerFlow> tmp(new BatteryPowerFlow(*dispatch->m_batteryPowerFlow));
     m_batteryPowerFlow = std::move(tmp);
     m_batteryPower = m_batteryPowerFlow->getBatteryPower();
+    m_outage_manager = std::make_unique<outage_manager>(m_batteryPower);
+    m_outage_manager->copy(*(dispatch->m_outage_manager));
+
 }
 void dispatch_t::delete_clone()
 {
@@ -843,12 +850,41 @@ void battery_metrics_t::new_year()
 
 outage_manager::outage_manager(BatteryPower* batteryPower) {
     m_batteryPower = batteryPower;
+    canSystemChargeWhenGrid = m_batteryPower->canSystemCharge;
+    canClipChargeWhenGrid = m_batteryPower->canClipCharge;
+    canGridChargeWhenGrid = m_batteryPower->canGridCharge;
+    canDischargeWhenGrid = m_batteryPower->canDischarge;
+
+    stateOfChargeMaxWhenGrid = m_batteryPower->stateOfChargeMax;
+    stateOfChargeMinWhenGrid = m_batteryPower->stateOfChargeMin;
     last_step_was_outage = false;
 }
 
 outage_manager::~outage_manager() {
     m_batteryPower = NULL;
 }
+
+void outage_manager::copy(const outage_manager& tmp) {
+    // Do not copy battery power - that belongs to a different constructor
+    canSystemChargeWhenGrid = tmp.canSystemChargeWhenGrid;
+    canClipChargeWhenGrid = tmp.canClipChargeWhenGrid;
+    canGridChargeWhenGrid = tmp.canGridChargeWhenGrid;
+    canDischargeWhenGrid = tmp.canDischargeWhenGrid;
+
+    stateOfChargeMaxWhenGrid = tmp.stateOfChargeMaxWhenGrid;
+    stateOfChargeMinWhenGrid = tmp.stateOfChargeMinWhenGrid;
+    last_step_was_outage = tmp.last_step_was_outage;
+}
+
+void outage_manager::update(bool isAutomated) {
+    if (m_batteryPower->isOutageStep && !last_step_was_outage) {
+        startOutage();
+    }
+    else if (!m_batteryPower->isOutageStep && last_step_was_outage) {
+        endOutage(isAutomated);
+    }
+}
+
 
 void outage_manager::startOutage() {
     canSystemChargeWhenGrid = m_batteryPower->canSystemCharge;	

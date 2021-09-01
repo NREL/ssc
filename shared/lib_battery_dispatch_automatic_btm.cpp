@@ -125,7 +125,13 @@ void dispatch_automatic_behind_the_meter_t::dispatch(size_t year,
 	size_t step_per_hour = (size_t)(1 / _dt_hour);
 	size_t lifetimeIndex = util::lifetimeIndex(year, hour_of_year, step, step_per_hour);
 
-	update_dispatch(year, hour_of_year, step, lifetimeIndex);
+    m_outage_manager->update(true); // true is for automated dispatch
+    if (m_batteryPower->isOutageStep) {
+
+    }
+    else {
+        update_dispatch(year, hour_of_year, step, lifetimeIndex);
+    }
 	dispatch_automatic_t::dispatch(year, hour_of_year, step);
     if (rate_forecast)
     {

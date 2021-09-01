@@ -31,6 +31,7 @@ struct BatteryPower;
 class BatteryPowerFlow;
 class UtilityRate;
 class UtilityRateCalculator;
+class outage_manager;
 
 namespace battery_dispatch
 {
@@ -168,6 +169,8 @@ protected:
 	// managed by BatteryPowerFlow
 	BatteryPower * m_batteryPower;
 
+    std::unique_ptr<outage_manager> m_outage_manager;
+
 	// Charge & current limits controllers
 	int _current_choice;
 	double _t_min;
@@ -189,6 +192,11 @@ public:
     outage_manager(BatteryPower* batteryPower);
 
     ~outage_manager();
+
+    // Use this to copy member variables other than the m_batteryPower pointer. Use the pointer created by dispatch_t's copy constructor.
+    void copy(const outage_manager& tmp);
+
+    void update(bool isAutomated);
 
     void startOutage();
 
