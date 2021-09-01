@@ -2330,8 +2330,26 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, AC_PVCharging_ExcessPV_Flexib
     EXPECT_NEAR(m_batteryPower->powerGeneratedBySystem, gen, error);
     EXPECT_NEAR(m_batteryPower->powerLoad, 50, error);
 
-    // Try to charge more than is available from PV, allowed due to powerflow
+    // Try to charge more than is available from PV less load, allowed due to powerflow
     m_batteryPower->powerBatteryDC = -100;
+    m_batteryPowerFlow->calculate();
+
+    EXPECT_NEAR(m_batteryPower->powerBatteryAC, -100, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToBattery, 100, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToBattery, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToLoad, 50, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToGrid, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerBatteryToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerConversionLoss, 4.0, error);
+
+    gen = m_batteryPower->powerSystem + m_batteryPower->powerBatteryAC;
+    EXPECT_NEAR(m_batteryPower->powerGeneratedBySystem, gen, error);
+    EXPECT_NEAR(m_batteryPower->powerLoad, 50, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemLoss, 0.0, error);
+
+    // Try to charge more than is available from PV total, disallowed due to no grid charging
+    m_batteryPower->powerBatteryDC = -150;
     m_batteryPowerFlow->calculate();
 
     EXPECT_NEAR(m_batteryPower->powerBatteryAC, -100, error);
@@ -2523,7 +2541,6 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, DC_PVCharging_ExcessPV_Flexib
     m_batteryPower->canSystemCharge = true;
     m_batteryPower->canDischarge = true;
     m_batteryPower->canGridCharge = false;
-    m_batteryPower->chargeOnlySystemExceedLoad = false;
     m_batteryPower->dischargeOnlyLoadExceedSystem = false;
     m_batteryPower->powerSystem = 100;
     m_batteryPower->powerLoad = 50;
@@ -2620,7 +2637,6 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, DC_PVCharging_ExcessLoad_Flex
     m_batteryPower->canSystemCharge = true;
     m_batteryPower->canDischarge = true;
     m_batteryPower->canGridCharge = false;
-    m_batteryPower->chargeOnlySystemExceedLoad = false;
     m_batteryPower->dischargeOnlyLoadExceedSystem = false;
     m_batteryPower->powerSystem = 25;
     m_batteryPower->powerLoad = 50;
