@@ -89,7 +89,6 @@ s_solver_params::s_solver_params()
 
     presolve_type = -1;
     bb_type = -1;
-    is_transmission_limited = false;
     disp_reporting = -1;
     scaling_type = -1;
 

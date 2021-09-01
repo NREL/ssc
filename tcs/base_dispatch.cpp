@@ -259,13 +259,8 @@ void base_dispatch_opt::setup_solver_presolve_bbrules(lprec* lp)
         set_bb_rule(lp, solver_params.bb_type);
     else
     {
-        if (solver_params.is_transmission_limited)
-            set_bb_rule(lp, NODE_PSEUDOCOSTSELECT + NODE_DYNAMICMODE);
-        else
-            set_bb_rule(lp, NODE_RCOSTFIXING + NODE_DYNAMICMODE + NODE_GREEDYMODE + NODE_PSEUDONONINTSELECT);
+        set_bb_rule(lp, NODE_PSEUDOCOSTSELECT + NODE_DYNAMICMODE);
         //set_bb_rule(lp, NODE_RCOSTFIXING + NODE_DYNAMICMODE + NODE_GREEDYMODE + NODE_PSEUDONONINTSELECT);
-        //if (P["wlim_min"] < 1.e20)  // TODO: Set this in CSP dispatch
-        //    set_bb_rule(lp, NODE_PSEUDOCOSTSELECT + NODE_DYNAMICMODE);
     }
 }
 

@@ -51,7 +51,6 @@ struct s_solver_params
     double solution_timeout;    //[s] Max solve time for each solution
     int presolve_type;
     int bb_type;
-    bool is_transmission_limited;  //For bb_type specific for transmission limited dispatch
     int disp_reporting;
     int scaling_type;
 

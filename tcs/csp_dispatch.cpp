@@ -1218,9 +1218,6 @@ bool csp_dispatch_opt::optimize()
         //Set problem to maximize
         set_maxim(lp);
 
-        if (P["wlim_min"] < 1.e20)
-            solver_params.is_transmission_limited = true;
-
         setup_solver_presolve_bbrules(lp);
         bool return_ok = problem_scaling_solve_loop(lp);
         set_lp_solve_outputs(lp);
