@@ -7,8 +7,8 @@ var( 'ppa_multiplier_model', 1 );
 var( 'is_dispatch', 1 );
 //var( 'disp_reporting', 4);
 
-var( 'tshours', 20 );
-var( 'heater_mult', 4.0 );
+var( 'tshours', 10 );
+var( 'heater_mult', 2.4 );
 // Choose financial mode
 var( 'ppa_soln_mode', 1 );			// 0: calc ppa price to get flip target percent (irr), 1: use ppa price input
 var( 'ppa_price_input', [ 0.10 ] );
