@@ -2970,6 +2970,101 @@ void C_csp_solver::C_system_operating_modes::turn_off_plant()
 
 }
 
+C_csp_solver::C_system_operating_modes::E_operating_modes C_csp_solver::C_system_operating_modes::cr_and_pc_stay_off__try_htr
+(double q_dot_tes_ch /*MWt*/, double tol_mode_switching /*-*/,
+ bool is_PAR_HTR_allowed, double q_dot_PAR_HTR_on /*MWt*/)
+{
+    C_csp_solver::C_system_operating_modes::E_operating_modes operating_mode;
+
+    if (is_PAR_HTR_allowed && q_dot_PAR_HTR_on > 0.0 && q_dot_tes_ch > 0.0) {
+        if (q_dot_PAR_HTR_on * (1. - tol_mode_switching) < q_dot_tes_ch &&
+            is_mode_avail(CR_OFF__PC_OFF__TES_CH__HTR_ON)) {
+
+            operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_CH__HTR_ON;
+        }
+        else if (is_mode_avail(CR_OFF__PC_OFF__TES_FULL__HTR_DF)) {
+
+            operating_mode = CR_OFF__PC_OFF__TES_FULL__HTR_DF;
+        }
+        else {
+            operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+        }
+    }
+    else {
+        operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+    }
+
+    return operating_mode;
+}
+
+C_csp_solver::C_system_operating_modes::E_operating_modes C_csp_solver::C_system_operating_modes::pc_off__try_cr_su_with_htr_combs
+(double q_dot_tes_ch /*MWt*/, double tol_mode_switching /*-*/,
+ bool is_PAR_HTR_allowed, double q_dot_PAR_HTR_on /*MWt*/)
+{
+    C_csp_solver::C_system_operating_modes::E_operating_modes operating_mode;
+
+    if (is_PAR_HTR_allowed && q_dot_tes_ch > 0.0 && q_dot_PAR_HTR_on > 0.0 &&
+    is_mode_avail(C_system_operating_modes::CR_SU__PC_OFF__TES_CH__HTR_ON))
+    {
+        if (q_dot_PAR_HTR_on * (1. + tol_mode_switching) > q_dot_tes_ch &&
+            is_mode_avail(C_system_operating_modes::CR_SU__PC_OFF__TES_FULL__HTR_DF)) {
+
+            operating_mode = C_system_operating_modes::CR_SU__PC_OFF__TES_FULL__HTR_DF;
+        }
+        else {
+            operating_mode = C_system_operating_modes::CR_SU__PC_OFF__TES_CH__HTR_ON;
+        }
+    }
+    else
+    {
+        operating_mode = C_system_operating_modes::CR_SU__PC_OFF__TES_OFF__AUX_OFF;
+    }
+
+    return operating_mode;
+}
+
+C_csp_solver::C_system_operating_modes::E_operating_modes C_csp_solver::C_system_operating_modes::cr_on_pc_off_tes_ch_avail__try_htr
+(double q_dot_cr_on /*MWt*/, double q_dot_tes_ch /*MWt*/, double tol_mode_switching /*-*/,
+ bool is_PAR_HTR_allowed, double q_dot_PAR_HTR_on /*MWt*/)
+{
+    C_csp_solver::C_system_operating_modes::E_operating_modes operating_mode;
+
+    if (is_PAR_HTR_allowed && q_dot_PAR_HTR_on > 0.0 &&
+        is_mode_avail(C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF)) {
+
+        if ((q_dot_cr_on + q_dot_PAR_HTR_on) * (1.0 - tol_mode_switching) < q_dot_tes_ch &&
+            is_mode_avail(C_system_operating_modes::CR_ON__PC_OFF__TES_CH__HTR_ON)) {
+
+            operating_mode = C_system_operating_modes::CR_ON__PC_OFF__TES_CH__HTR_ON;
+        }
+        else if (q_dot_cr_on * (1. - tol_mode_switching) < q_dot_tes_ch &&
+            is_mode_avail(C_system_operating_modes::CR_ON__PC_OFF__TES_FULL__HTR_DF)) {
+
+            operating_mode = C_system_operating_modes::CR_ON__PC_OFF__TES_FULL__HTR_DF;
+        }
+        else {
+            operating_mode = C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF;
+        }
+    }
+    else {
+        if (q_dot_cr_on * (1.0 - tol_mode_switching) < q_dot_tes_ch &&
+            is_mode_avail(C_system_operating_modes::CR_ON__PC_OFF__TES_CH__AUX_OFF))
+        {
+            operating_mode = C_system_operating_modes::CR_ON__PC_OFF__TES_CH__AUX_OFF;
+        }
+        else if (is_mode_avail(C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF)) // m_is_CR_DF__PC_OFF__TES_FULL__AUX_OFF_avail)
+        {
+            operating_mode = C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF;
+        }
+        else
+        {
+            operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+        }
+    }
+
+    return operating_mode;
+}
+
 C_csp_solver::C_system_operating_modes::E_operating_modes C_csp_solver::C_system_operating_modes::find_operating_mode
 (C_csp_collector_receiver::E_csp_cr_modes cr_operating_state,
     C_csp_power_cycle::E_csp_power_cycle_modes pc_operating_state,
@@ -3001,22 +3096,25 @@ C_csp_solver::C_system_operating_modes::E_operating_modes C_csp_solver::C_system
             {
                 operating_mode = C_system_operating_modes::CR_SU__PC_SU__TES_DC__AUX_OFF;
             }
-            else if (is_PAR_HTR_allowed && q_dot_tes_ch > 0.0 && q_dot_PAR_HTR_on > 0.0 &&
-                is_mode_avail(C_system_operating_modes::CR_SU__PC_OFF__TES_CH__HTR_ON))
-            {
-                if (q_dot_PAR_HTR_on * (1. + tol_mode_switching) > q_dot_tes_ch &&
-                    is_mode_avail(C_system_operating_modes::CR_SU__PC_OFF__TES_FULL__HTR_DF)) {
-
-                    operating_mode = C_system_operating_modes::CR_SU__PC_OFF__TES_FULL__HTR_DF;
-                }
-                else {
-                    operating_mode = C_system_operating_modes::CR_SU__PC_OFF__TES_CH__HTR_ON;
-                }
+            else {
+                operating_mode = pc_off__try_cr_su_with_htr_combs(q_dot_tes_ch, tol_mode_switching, is_PAR_HTR_allowed, q_dot_PAR_HTR_on);
             }
-            else
-            {
-                operating_mode = C_system_operating_modes::CR_SU__PC_OFF__TES_OFF__AUX_OFF;
-            }
+            //else if (is_PAR_HTR_allowed && q_dot_tes_ch > 0.0 && q_dot_PAR_HTR_on > 0.0 &&
+            //    is_mode_avail(C_system_operating_modes::CR_SU__PC_OFF__TES_CH__HTR_ON))
+            //{
+            //    if (q_dot_PAR_HTR_on * (1. + tol_mode_switching) > q_dot_tes_ch &&
+            //        is_mode_avail(C_system_operating_modes::CR_SU__PC_OFF__TES_FULL__HTR_DF)) {
+            //
+            //        operating_mode = C_system_operating_modes::CR_SU__PC_OFF__TES_FULL__HTR_DF;
+            //    }
+            //    else {
+            //        operating_mode = C_system_operating_modes::CR_SU__PC_OFF__TES_CH__HTR_ON;
+            //    }
+            //}
+            //else
+            //{
+            //    operating_mode = C_system_operating_modes::CR_SU__PC_OFF__TES_OFF__AUX_OFF;
+            //}
         }
         else
         {
@@ -3026,22 +3124,23 @@ C_csp_solver::C_system_operating_modes::E_operating_modes C_csp_solver::C_system
                 operating_mode = C_system_operating_modes::CR_OFF__PC_SU__TES_DC__AUX_OFF;
             }
             else {
-                if (is_PAR_HTR_allowed && q_dot_PAR_HTR_on > 0.0 && q_dot_tes_ch > 0.0) {
-                    if (q_dot_PAR_HTR_on * (1. - tol_mode_switching) < q_dot_tes_ch &&
-                        is_mode_avail(CR_OFF__PC_OFF__TES_CH__HTR_ON)) {
-
-                        operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_CH__HTR_ON;
-                    }
-                    else if (is_mode_avail(CR_OFF__PC_OFF__TES_FULL__HTR_DF)) {
-                        operating_mode = CR_OFF__PC_OFF__TES_FULL__HTR_DF;
-                    }
-                    else {
-                        operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-                    }
-                }
-                else {
-                    operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-                }
+                operating_mode = cr_and_pc_stay_off__try_htr(q_dot_tes_ch, tol_mode_switching, is_PAR_HTR_allowed, q_dot_PAR_HTR_on);
+                //if (is_PAR_HTR_allowed && q_dot_PAR_HTR_on > 0.0 && q_dot_tes_ch > 0.0) {
+                //    if (q_dot_PAR_HTR_on * (1. - tol_mode_switching) < q_dot_tes_ch &&
+                //        is_mode_avail(CR_OFF__PC_OFF__TES_CH__HTR_ON)) {
+                //
+                //        operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_CH__HTR_ON;
+                //    }
+                //    else if (is_mode_avail(CR_OFF__PC_OFF__TES_FULL__HTR_DF)) {
+                //        operating_mode = CR_OFF__PC_OFF__TES_FULL__HTR_DF;
+                //    }
+                //    else {
+                //        operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+                //    }
+                //}
+                //else {
+                //    operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+                //}
             }
         }
     }	// End logic for CR_state == OFF or STARTUP    AND     PC_state == OFF or STARTUP
@@ -3090,38 +3189,41 @@ C_csp_solver::C_system_operating_modes::E_operating_modes C_csp_solver::C_system
             }
             else if (q_dot_tes_ch > 0.0)
             {
-                if (is_PAR_HTR_allowed && q_dot_PAR_HTR_on > 0.0 &&
-                    is_mode_avail(C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF)) {
+                operating_mode = cr_on_pc_off_tes_ch_avail__try_htr(q_dot_cr_on, q_dot_tes_ch, tol_mode_switching,
+                    is_PAR_HTR_allowed, q_dot_PAR_HTR_on);
 
-                    if ((q_dot_cr_on + q_dot_PAR_HTR_on) * (1.0 - tol_mode_switching) < q_dot_tes_ch &&
-                        is_mode_avail(C_system_operating_modes::CR_ON__PC_OFF__TES_CH__HTR_ON)) {
-
-                        operating_mode = C_system_operating_modes::CR_ON__PC_OFF__TES_CH__HTR_ON;
-                    }
-                    else if (q_dot_cr_on * (1. - tol_mode_switching) < q_dot_tes_ch &&
-                        is_mode_avail(C_system_operating_modes::CR_ON__PC_OFF__TES_FULL__HTR_DF)) {
-
-                        operating_mode = C_system_operating_modes::CR_ON__PC_OFF__TES_FULL__HTR_DF;
-                    }
-                    else {
-                        operating_mode = C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF;
-                    }
-                }
-                else {
-                    if (q_dot_cr_on * (1.0 - tol_mode_switching) < q_dot_tes_ch &&
-                        is_mode_avail(C_system_operating_modes::CR_ON__PC_OFF__TES_CH__AUX_OFF))
-                    {
-                        operating_mode = C_system_operating_modes::CR_ON__PC_OFF__TES_CH__AUX_OFF;
-                    }
-                    else if (is_mode_avail(C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF)) // m_is_CR_DF__PC_OFF__TES_FULL__AUX_OFF_avail)
-                    {
-                        operating_mode = C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF;
-                    }
-                    else
-                    {
-                        operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-                    }
-                }
+                //if (is_PAR_HTR_allowed && q_dot_PAR_HTR_on > 0.0 &&
+                //    is_mode_avail(C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF)) {
+                //
+                //    if ((q_dot_cr_on + q_dot_PAR_HTR_on) * (1.0 - tol_mode_switching) < q_dot_tes_ch &&
+                //        is_mode_avail(C_system_operating_modes::CR_ON__PC_OFF__TES_CH__HTR_ON)) {
+                //
+                //        operating_mode = C_system_operating_modes::CR_ON__PC_OFF__TES_CH__HTR_ON;
+                //    }
+                //    else if (q_dot_cr_on * (1. - tol_mode_switching) < q_dot_tes_ch &&
+                //        is_mode_avail(C_system_operating_modes::CR_ON__PC_OFF__TES_FULL__HTR_DF)) {
+                //
+                //        operating_mode = C_system_operating_modes::CR_ON__PC_OFF__TES_FULL__HTR_DF;
+                //    }
+                //    else {
+                //        operating_mode = C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF;
+                //    }
+                //}
+                //else {
+                //    if (q_dot_cr_on * (1.0 - tol_mode_switching) < q_dot_tes_ch &&
+                //        is_mode_avail(C_system_operating_modes::CR_ON__PC_OFF__TES_CH__AUX_OFF))
+                //    {
+                //        operating_mode = C_system_operating_modes::CR_ON__PC_OFF__TES_CH__AUX_OFF;
+                //    }
+                //    else if (is_mode_avail(C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF)) // m_is_CR_DF__PC_OFF__TES_FULL__AUX_OFF_avail)
+                //    {
+                //        operating_mode = C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF;
+                //    }
+                //    else
+                //    {
+                //        operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+                //    }
+                //}
             }
             else
             {
@@ -3144,7 +3246,7 @@ C_csp_solver::C_system_operating_modes::E_operating_modes C_csp_solver::C_system
                 }
                 else
                 {
-                    operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+                    operating_mode = cr_and_pc_stay_off__try_htr(q_dot_tes_ch, tol_mode_switching, is_PAR_HTR_allowed, q_dot_PAR_HTR_on);
                 }
             }
             else
@@ -3157,7 +3259,7 @@ C_csp_solver::C_system_operating_modes::E_operating_modes C_csp_solver::C_system
                 }
                 else
                 {
-                    operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+                    operating_mode = cr_and_pc_stay_off__try_htr(q_dot_tes_ch, tol_mode_switching, is_PAR_HTR_allowed, q_dot_PAR_HTR_on);
                 }
             }
         }
@@ -3166,10 +3268,11 @@ C_csp_solver::C_system_operating_modes::E_operating_modes C_csp_solver::C_system
     else if ((cr_operating_state == C_csp_collector_receiver::OFF || cr_operating_state == C_csp_collector_receiver::STARTUP) &&
     (pc_operating_state == C_csp_power_cycle::ON || pc_operating_state == C_csp_power_cycle::STANDBY))
     {
-        if (q_dot_cr_startup > 0.0 && is_rec_su_allowed)
+        if (q_dot_cr_startup > 0.0 && is_rec_su_allowed &&
+            is_mode_avail(C_system_operating_modes::CR_SU__PC_OFF__TES_OFF__AUX_OFF))
         {	// Receiver startup is allowed and possible (will generate net energy) - determine if power cycle can remain on
 
-            if (is_pc_su_allowed || is_pc_sb_allowed)
+            if ((is_pc_su_allowed || is_pc_sb_allowed))
             {
                 if (((q_dot_tes_dc_t_CR_su * (1.0 + tol_mode_switching) > q_dot_pc_target
                     && m_dot_tes_dc_t_CR_su * (1.0 + tol_mode_switching) > m_dot_pc_min)
@@ -3201,26 +3304,23 @@ C_csp_solver::C_system_operating_modes::E_operating_modes C_csp_solver::C_system
                 {
                     operating_mode = C_system_operating_modes::CR_SU__PC_MIN__TES_EMPTY__AUX_OFF;
                 }
-                else if (is_mode_avail(C_system_operating_modes::CR_SU__PC_OFF__TES_OFF__AUX_OFF)) // m_is_CR_SU__PC_OFF__TES_OFF__AUX_OFF_avail )
-                {
-                    operating_mode = C_system_operating_modes::CR_SU__PC_OFF__TES_OFF__AUX_OFF;
+                else {
+                    operating_mode = pc_off__try_cr_su_with_htr_combs(q_dot_tes_ch, tol_mode_switching, is_PAR_HTR_allowed, q_dot_PAR_HTR_on);
                 }
-                else
-                {
-                    operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-                }
+                //else if (is_mode_avail(C_system_operating_modes::CR_SU__PC_OFF__TES_OFF__AUX_OFF)) // m_is_CR_SU__PC_OFF__TES_OFF__AUX_OFF_avail )
+                //{
+                //    operating_mode = C_system_operating_modes::CR_SU__PC_OFF__TES_OFF__AUX_OFF;
+                //}
+                // If no solutions in this branch, return to 'is_rec_su_allowed' branch and try NO path
             }	// End 'is_pc_su_allowed' logic
             else
             {	// power cycle startup/operation not allowed
-
-                if (is_mode_avail(C_system_operating_modes::CR_SU__PC_OFF__TES_OFF__AUX_OFF)) // m_is_CR_SU__PC_OFF__TES_OFF__AUX_OFF_avail )
-                {
-                    operating_mode = C_system_operating_modes::CR_SU__PC_OFF__TES_OFF__AUX_OFF;
-                }
-                else
-                {
-                    operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-                }
+                operating_mode = pc_off__try_cr_su_with_htr_combs(q_dot_tes_ch, tol_mode_switching, is_PAR_HTR_allowed, q_dot_PAR_HTR_on);
+                //if (is_mode_avail(C_system_operating_modes::CR_SU__PC_OFF__TES_OFF__AUX_OFF)) // m_is_CR_SU__PC_OFF__TES_OFF__AUX_OFF_avail )
+                //{
+                //    operating_mode = C_system_operating_modes::CR_SU__PC_OFF__TES_OFF__AUX_OFF;
+                //}
+                // If no solutions in this branch, return to 'is_rec_su_allowed' branch and try NO path
             }
         }
         else	// Receiver remains OFF - determine if power cycle can remain on
@@ -3260,13 +3360,13 @@ C_csp_solver::C_system_operating_modes::E_operating_modes C_csp_solver::C_system
                 }
                 else
                 {
-                    operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+                    operating_mode = cr_and_pc_stay_off__try_htr(q_dot_tes_ch, tol_mode_switching, is_PAR_HTR_allowed, q_dot_PAR_HTR_on);
                 }
             }	// end logic on 'is_pc_su_allowed'
             else
             {
 
-                operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+                operating_mode = cr_and_pc_stay_off__try_htr(q_dot_tes_ch, tol_mode_switching, is_PAR_HTR_allowed, q_dot_PAR_HTR_on);
             }
         }
     }
@@ -3504,19 +3604,22 @@ C_csp_solver::C_system_operating_modes::E_operating_modes C_csp_solver::C_system
 
                 if (q_dot_tes_ch > 0.0)
                 {
-                    if (q_dot_cr_on * (1.0 - tol_mode_switching) < q_dot_tes_ch &&
-                        is_mode_avail(C_system_operating_modes::CR_ON__PC_OFF__TES_CH__AUX_OFF))
-                    {
-                        operating_mode = C_system_operating_modes::CR_ON__PC_OFF__TES_CH__AUX_OFF;
-                    }
-                    else if (is_mode_avail(C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF))
-                    {
-                        operating_mode = C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF;
-                    }
-                    else
-                    {
-                        operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-                    }
+                    operating_mode = cr_on_pc_off_tes_ch_avail__try_htr(q_dot_cr_on, q_dot_tes_ch, tol_mode_switching,
+                        is_PAR_HTR_allowed, q_dot_PAR_HTR_on);
+
+                    //if (q_dot_cr_on * (1.0 - tol_mode_switching) < q_dot_tes_ch &&          
+                    //    is_mode_avail(C_system_operating_modes::CR_ON__PC_OFF__TES_CH__AUX_OFF))
+                    //{
+                    //    operating_mode = C_system_operating_modes::CR_ON__PC_OFF__TES_CH__AUX_OFF;
+                    //}
+                    //else if (is_mode_avail(C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF))
+                    //{
+                    //    operating_mode = C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF;
+                    //}
+                    //else
+                    //{
+                    //    operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+                    //}
                 }
                 else
                 {
@@ -3640,20 +3743,20 @@ C_csp_solver::C_system_operating_modes::E_operating_modes C_csp_solver::C_system
                     }
                     else
                     {
-                        operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+                        operating_mode = cr_and_pc_stay_off__try_htr(q_dot_tes_ch, tol_mode_switching, is_PAR_HTR_allowed, q_dot_PAR_HTR_on);
                     }
                 }	// End logic for if( q_dot_tes_dc > 0.0 )
                 else
                 {	// Storage dispatch is not available
 
                     // No thermal power available to power cycle
-                    operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+                    operating_mode = cr_and_pc_stay_off__try_htr(q_dot_tes_ch, tol_mode_switching, is_PAR_HTR_allowed, q_dot_PAR_HTR_on);
                 }
             }	// End logic if( is_pc_su_allowed )
             else
             {	// If neither receiver nor power cycle operation is allowed, then shut everything off
 
-                operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+                operating_mode = cr_and_pc_stay_off__try_htr(q_dot_tes_ch, tol_mode_switching, is_PAR_HTR_allowed, q_dot_PAR_HTR_on);
             }
         }
     }

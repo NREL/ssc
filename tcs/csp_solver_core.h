@@ -2152,6 +2152,18 @@ public:
         bool is_rec_su_allowed, bool is_pc_su_allowed,
         bool is_rec_outlet_to_hottank, bool is_pc_sb_allowed,
         double q_dot_PAR_HTR_on /*MWt*/, bool is_PAR_HTR_allowed);
+
+        C_system_operating_modes::E_operating_modes cr_and_pc_stay_off__try_htr
+        (double q_dot_tes_ch /*MWt*/, double tol_mode_switching /*-*/,
+         bool is_PAR_HTR_allowed, double q_dot_PAR_HTR_on /*MWt*/);
+
+        C_system_operating_modes::E_operating_modes pc_off__try_cr_su_with_htr_combs
+        (double q_dot_tes_ch /*MWt*/, double tol_mode_switching /*-*/,
+         bool is_PAR_HTR_allowed, double q_dot_PAR_HTR_on /*MWt*/);
+
+        C_system_operating_modes::E_operating_modes cr_on_pc_off_tes_ch_avail__try_htr
+        (double q_dot_cr_on /*MWt*/, double q_dot_tes_ch /*MWt*/, double tol_mode_switching /*-*/,
+         bool is_PAR_HTR_allowed, double q_dot_PAR_HTR_on /*MWt*/);
     };
 
     C_system_operating_modes mc_operating_modes;
