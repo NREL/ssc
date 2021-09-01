@@ -61,7 +61,6 @@ public:
         double q_rec_min;                   //[kWt] Minimum allowable power delivery by the receiver when operating
         double w_rec_pump;                  //[kWe/kWt] Pumping parasitic power per thermal energy produced
         double sf_effadj;                   //[-] 0..1 Solar field efficiency adjustment
-        double info_time;                   //[s] time of the year at sim start. informational only.
         double eta_cycle_ref;               //[kWe/kWt]  Design-point power cycle efficiency
         double time_weighting;              //[-] Weighting factor that discounts future decisions over more imminent ones
         double rsu_cost;                    //[$/start] Receiver startup cost
@@ -84,95 +83,7 @@ public:
 		double w_cycle_pump;		        //[kWe/kWt] Cycle HTF pumping power per thermal energy consumed
         double inventory_incentive;    //[-]   Terminal storage inventory objective incentive multiplier
 
-        // TODO: determine what to due with this...
-        struct s_efftable
-        {
-        private:
-            struct s_effmember
-            {
-                double x;
-                double eta;
-
-                s_effmember(){};
-                s_effmember(double _x, double _eta)
-                {
-                    x = _x;
-                    eta = _eta;
-                };
-            };
-            std::vector<s_effmember> table;
-
-        public:
-
-            void clear()
-            {
-                table.clear();
-            }
-
-            void add_point(double x, double eta)
-            {
-                table.push_back( s_effmember(x, eta) );
-            };
-
-            bool get_point(int index, double &x, double &eta)
-            {
-                if( index > (int)table.size()-1 || index < 0 ) return false;
-
-                x = table.at(index).x;
-                eta = table.at(index).eta;
-				return true;
-            }
-
-            double get_point_eff(int index)
-            {
-                return table.at(index).eta;
-            }
-
-            double get_point_x(int index)
-            {
-                return table.at(index).x;
-            }
-
-            size_t get_size()
-            {
-                return table.size();
-            }
-
-            double interpolate(double x)
-            {
-
-                double eff = table.front().eta;
-
-                int ind = 0;
-                int ni = (int)table.size();
-                while( true )
-                {
-                    if( ind ==  ni-1 )
-                    {
-                        eff = table.back().eta;
-                        break;
-                    }
-
-                    if( x < table.at(ind).x )
-                    {
-                        if(ind == 0)
-                        {
-                            eff = table.front().eta;
-                        }
-                        else
-                        {
-                            eff = table.at(ind-1).eta + (table.at(ind).eta - table.at(ind-1).eta)*(x - table.at(ind-1).x)/(table.at(ind).x - table.at(ind-1).x);
-                        }
-                        break;
-                    }
-
-                    ind ++;
-                }
-
-                return eff;
-            }
-
-        } eff_table_load, eff_table_Tdb, wcondcoef_table_Tdb;        //Efficiency of the power cycle, condenser power coefs
+        s_efftable eff_table_load, eff_table_Tdb, wcondcoef_table_Tdb;  //Efficiency of the power cycle, condenser power coefs
 
         s_params() {
             is_pb_operating0 = false;
@@ -199,7 +110,6 @@ public:
             eta_pb_des = std::numeric_limits<double>::quiet_NaN();
             inventory_incentive = 0.;
             sf_effadj = 1.;
-            info_time = 0.;
             eta_cycle_ref = std::numeric_limits<double>::quiet_NaN();
             time_weighting = 0.99;
             rsu_cost = 952.;
@@ -286,7 +196,7 @@ public:
 
     csp_dispatch_opt();
 
-    void init(double cycle_q_dot_des, double cycle_eta_des, double cycle_w_dot_des);
+    void init(double cycle_q_dot_des, double cycle_eta_des);
 
     //check parameters and inputs to make sure everything has been set up correctly
     bool check_setup(int nstep);

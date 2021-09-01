@@ -200,6 +200,8 @@ for (i = 0; i< #tshours; i++)
 				var( 'disp_hsu_cost', 10. );
 				var( 'disp_pen_delta_w', 0.10000000000000001 );
 				var( 'disp_inventory_incentive', 0.14999999999999999 );
+				var( 'disp_down_time_min', 2. );
+				var( 'disp_up_time_min', 2. );
 				var( 'is_wlim_series', 0 );
 
 

@@ -46,7 +46,7 @@ void base_dispatch_opt::clear_output()
     lp_outputs.clear_output();
 }
 
-void base_dispatch_opt::init(double cycle_q_dot_des, double cycle_eta_des, double cycle_w_dot_des)
+void base_dispatch_opt::init(double cycle_q_dot_des, double cycle_eta_des)
 {
     not_implemented_function((std::string)__func__);
 }
@@ -475,8 +475,165 @@ void base_dispatch_opt::print_dispatch_update()
     pointers.messages->add_message(type, s.str());
 }
 
+bool base_dispatch_opt::parse_column_name(char* colname, char* root, char* ind)
+{
+    int i;
+    for (i = 0; i < 15; i++)
+    {
+        if (colname[i] == '-')
+        {
+            root[i] = '\0';
+            break;
+        }
+        else
+            root[i] = colname[i];
+    }
+    int i1 = 1 + i++;
+    bool not_interested = false;
+    for (i = i1; i < 15; i++)
+    {
+        if (colname[i] == '-')
+        {
+            //2D variable. Not interested at the moment..
+            not_interested = true;
+            break;
+        }
+        else if (colname[i] == 0)
+        {
+            ind[i - i1] = '\0';
+            break;
+        }
+        else
+            ind[i - i1] = colname[i];
+    }
+
+    return not_interested;
+}
 
 bool base_dispatch_opt::strcompare(std::string a, std::string b)
 {
     return util::lower_case(a) < util::lower_case(b);
+}
+
+void s_efftable::clear()
+{
+    table.clear();
+}
+
+void s_efftable::add_point(double x, double eta)
+{
+    table.push_back(s_effmember(x, eta));
+};
+
+bool s_efftable::get_point(int index, double& x, double& eta)
+{
+    if (index > (int)table.size() - 1 || index < 0) return false;
+
+    x = table.at(index).x;
+    eta = table.at(index).eta;
+    return true;
+}
+
+double s_efftable::get_point_eff(int index)
+{
+    return table.at(index).eta;
+}
+
+double s_efftable::get_point_x(int index)
+{
+    return table.at(index).x;
+}
+
+size_t s_efftable::get_size()
+{
+    return table.size();
+}
+
+double s_efftable::interpolate(double x)
+{
+
+    double eff = table.front().eta;
+
+    int ind = 0;
+    int ni = (int)table.size();
+    while (true)
+    {
+        if (ind == ni - 1)
+        {
+            eff = table.back().eta;
+            break;
+        }
+
+        if (x < table.at(ind).x)
+        {
+            if (ind == 0)
+            {
+                eff = table.front().eta;
+            }
+            else
+            {
+                eff = table.at(ind - 1).eta + (table.at(ind).eta - table.at(ind - 1).eta) * (x - table.at(ind - 1).x) / (table.at(ind).x - table.at(ind - 1).x);
+            }
+            break;
+        }
+
+        ind++;
+    }
+
+    return eff;
+}
+
+void s_efftable::init_linear_cycle_efficiency_table(double q_pb_min, double q_pb_max, double q_pb_des, C_csp_power_cycle* power_cycle)
+{
+    //Cycle efficiency
+    this->clear();
+    //add zero point
+    this->add_point(0., 0.);    //this is required to allow the model to converge
+
+    int neff = 2;   //mjw: if using something other than 2, the linear approximation assumption and associated code in csp_dispatch.cpp/calculate_parameters() needs to be reformulated.
+    for (int i = 0; i < neff; i++)
+    {
+        double x = q_pb_min + (q_pb_max - q_pb_min) / (double)(neff - 1) * i;
+        double xf = x / q_pb_des;
+        //double xf = x * 1.e-3 / cycle_q_dot_des;  //MW
+
+        double eta;
+        eta = power_cycle->get_efficiency_at_load(xf);
+
+        this->add_point(x, eta);
+    }
+}
+
+void s_efftable::init_efficiency_ambient_temp_table(double eta_pb_des, double cycle_w_dot_des, C_csp_power_cycle* power_cycle, s_efftable* wcondcoef_table_Tdb)
+{
+    //cycle efficiency vs temperature
+    this->clear();
+    wcondcoef_table_Tdb->clear();
+    int neffT = 40;
+
+    for (int i = 0; i < neffT; i++)
+    {
+        double T = -10. + 60. / (double)(neffT - 1) * i;
+        double wcond;
+        double eta = power_cycle->get_efficiency_at_TPH(T, 1., 30., &wcond) / eta_pb_des;
+
+        this->add_point(T, eta);
+        wcondcoef_table_Tdb->add_point(T, wcond / cycle_w_dot_des); //fraction of rated gross gen
+    }
+}
+
+void s_efftable::get_slope_intercept_cycle_linear_performance(double* slope, double* intercept)
+{
+    //linear power-heat fit requires that the efficiency table has 3 points.. 0->zero point, 1->min load point, 2->max load point. This is created in csp_solver_core::Ssimulate().
+    int m = this->get_size() - 1;
+    if (m != 2)
+        throw C_csp_exception("Model failure during dispatch optimization problem formulation. Ill-formed load table.");
+    //get the two points used to create the linear fit
+    double q[2], eta[2];
+    this->get_point(1, q[0], eta[0]);
+    this->get_point(2, q[1], eta[1]);
+    //calculate the rate of change in power output versus heat input
+    *slope = (q[1] * eta[1] - q[0] * eta[0]) / (q[1] - q[0]);
+    //calculate the y-intercept of the linear fit
+    *intercept = q[1] * eta[1] - q[1] * *slope;
 }

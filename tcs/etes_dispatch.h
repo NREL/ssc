@@ -76,104 +76,13 @@ public:
         double up_time_min;         //[hr] Minimum required power cycle up-time
         double eta_pb_des;
 
-        double info_time;           //[s] time of the year at sim start. informational only.
-
-        // TODO: move this struct to somewhere that is accessable to both dispatch -> base_dispatch?
-        struct s_efftable
-        {
-        private:
-            struct s_effmember
-            {
-                double x;
-                double eta;
-
-                s_effmember(){};
-                s_effmember(double _x, double _eta)
-                {
-                    x = _x;
-                    eta = _eta;
-                };
-            };
-            std::vector<s_effmember> table;
-
-        public:
-
-            void clear()
-            {
-                table.clear();
-            }
-
-            void add_point(double x, double eta)
-            {
-                table.push_back( s_effmember(x, eta) );
-            };
-
-            bool get_point(int index, double &x, double &eta)
-            {
-                if( index > (int)table.size()-1 || index < 0 ) return false;
-
-                x = table.at(index).x;
-                eta = table.at(index).eta;
-				return true;
-            }
-
-            double get_point_eff(int index)
-            {
-                return table.at(index).eta;
-            }
-
-            double get_point_x(int index)
-            {
-                return table.at(index).x;
-            }
-
-            size_t get_size()
-            {
-                return table.size();
-            }
-
-            double interpolate(double x)
-            {
-
-                double eff = table.front().eta;
-
-                int ind = 0;
-                int ni = (int)table.size();
-                while( true )
-                {
-                    if( ind ==  ni-1 )
-                    {
-                        eff = table.back().eta;
-                        break;
-                    }
-
-                    if( x < table.at(ind).x )
-                    {
-                        if(ind == 0)
-                        {
-                            eff = table.front().eta;
-                        }
-                        else
-                        {
-                            eff = table.at(ind-1).eta + (table.at(ind).eta - table.at(ind-1).eta)*(x - table.at(ind-1).x)/(table.at(ind).x - table.at(ind-1).x);
-                        }
-                        break;
-                    }
-
-                    ind ++;
-                }
-
-                return eff;
-            }
-
-        } eff_table_load, eff_table_Tdb, wcondcoef_table_Tdb;        //Efficiency of the power cycle, condenser power coefs
+        s_efftable eff_table_load, eff_table_Tdb, wcondcoef_table_Tdb; //Efficiency of the power cycle, condenser power coefs
 
         s_params() {
             dt = 1.;
-            info_time = 0.;
             time_weighting = 0.99;
             csu_cost = 10000.;
-            hsu_cost = 10.; // Default cost
+            hsu_cost = 10.;
             pen_delta_w = 0.1;
 
             //parameters
@@ -214,13 +123,15 @@ public:
             w_condf_expected.clear();
         }
 
-        void set_user_params(double disp_time_weighting,
-            double disp_csu_cost, double disp_pen_delta_w, double disp_hsu_cost)
+        void set_user_params(double disp_time_weighting, double disp_csu_cost, double disp_pen_delta_w,
+            double disp_hsu_cost, double disp_down_time_min, double disp_up_time_min)
         {
             time_weighting = disp_time_weighting;
             csu_cost = disp_csu_cost;
             pen_delta_w = disp_pen_delta_w;
             hsu_cost = disp_hsu_cost;
+            down_time_min = disp_down_time_min;
+            up_time_min = disp_up_time_min;
         }
 
     } params;
@@ -270,7 +181,7 @@ public:
 
     etes_dispatch_opt();
 
-    void init(double cycle_q_dot_des, double cycle_eta_des, double cycle_w_dot_des);
+    void init(double cycle_q_dot_des, double cycle_eta_des);
 
     //check parameters and inputs to make sure everything has been set up correctly
     bool check_setup(int nstep);

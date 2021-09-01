@@ -138,6 +138,8 @@ var( 'disp_time_weighting', 0.999 );
 var( 'disp_csu_cost', 10000 );
 var( 'disp_pen_delta_w', 0.10000000000000001 );
 var( 'disp_hsu_cost', 10. );
+var( 'disp_down_time_min', 2. );
+var( 'disp_up_time_min', 2. );
 var( 'is_wlim_series', 0 );
 
 var( 'const_per_interest_rate1', 4 );
