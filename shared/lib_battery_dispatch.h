@@ -135,7 +135,7 @@ public:
 protected:
 
 	/// Helper function to run common dispatch tasks.  Requires that m_batteryPower->powerBattery is previously defined
-	virtual void runDispatch(size_t year, size_t hour, size_t step);
+	virtual void runDispatch(size_t lifetimeIndex);
 
 	// Initialization help
 	void init(battery_t * Battery,
@@ -150,6 +150,10 @@ protected:
 	double current_controller(double power_kw);
 	bool restrict_current(double &I);
 	bool restrict_power(double &I);
+
+    void run_outage_step(size_t lifetimeIndex);
+    void dispatch_dc_outage_step(size_t lifetimeIndex);
+    void dispatch_ac_outage_step(size_t lifetimeIndex);
 
 	battery_t * _Battery;
 	battery_t * _Battery_initial;

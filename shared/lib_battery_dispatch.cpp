@@ -397,7 +397,7 @@ bool dispatch_t::restrict_power(double& I)
     return iterate;
 }
 
-void dispatch_t::runDispatch(size_t year, size_t hour_of_year, size_t step)
+void dispatch_t::runDispatch(size_t lifetimeIndex)
 {
     // Ensure the battery operates within the state-of-charge limits
     SOC_controller();
@@ -413,7 +413,6 @@ void dispatch_t::runDispatch(size_t year, size_t hour_of_year, size_t step)
 
     bool iterate = true;
     size_t count = 0;
-    size_t lifetimeIndex = util::lifetimeIndex(year, hour_of_year, step, static_cast<size_t>(1 / _dt_hour));
 
     do {
 
@@ -440,6 +439,121 @@ void dispatch_t::runDispatch(size_t year, size_t hour_of_year, size_t step)
     // finalize AC power flow calculation and update for next step
     m_batteryPowerFlow->calculate();
     _prev_charging = _charging;
+}
+
+void dispatch_t::run_outage_step(size_t lifetimeIndex) {
+    if (m_batteryPower->connectionMode == DC_CONNECTED) {
+        dispatch_dc_outage_step(lifetimeIndex);
+    }
+    else {
+        dispatch_ac_outage_step(lifetimeIndex);
+    }
+}
+
+void dispatch_t::dispatch_dc_outage_step(size_t lifetimeIndex) {
+
+    double dc_dc_eff = m_batteryPower->singlePointEfficiencyDCToDC;
+    double pv_kwdc = m_batteryPower->powerSystem;
+    double V_pv = m_batteryPower->voltageSystem;
+    double pv_clipped = m_batteryPower->powerSystemClipped;
+    double crit_load_kwac = m_batteryPower->powerCritLoad;
+
+    m_batteryPower->sharedInverter->calculateACPower(pv_kwdc, V_pv, m_batteryPower->sharedInverter->Tdry_C);
+    double dc_ac_eff = m_batteryPower->sharedInverter->efficiencyAC * 0.01;
+    double pv_kwac = m_batteryPower->sharedInverter->powerAC_kW;
+
+    double max_discharge_kwdc = _Battery->calculate_max_discharge_kw();
+    double max_charge_kwdc = _Battery->calculate_max_charge_kw();
+
+    if (pv_kwac > crit_load_kwac) {
+        double remaining_kwdc = -(pv_kwac - crit_load_kwac) / dc_ac_eff + pv_clipped;
+        remaining_kwdc = fmax(remaining_kwdc / dc_dc_eff, max_charge_kwdc);
+        m_batteryPower->powerBatteryTarget = remaining_kwdc;
+        m_batteryPower->powerBatteryDC = remaining_kwdc;
+        runDispatch(lifetimeIndex);
+    }
+    else {
+        // find dc power required from pv + battery discharge to meet load, then get just the power required from battery
+        double required_kwdc = (m_batteryPower->sharedInverter->calculateRequiredDCPower(crit_load_kwac, V_pv, m_batteryPower->sharedInverter->Tdry_C) - pv_kwdc) / dc_dc_eff;
+
+        if (required_kwdc < max_discharge_kwdc) {
+            required_kwdc = fmin(required_kwdc, max_discharge_kwdc);
+            double required_kwac = required_kwdc * m_batteryPower->sharedInverter->efficiencyAC * 0.01 * dc_dc_eff;
+
+            // iterate in case the dispatched power is slightly less (by tolerance) than required
+            double discharge_kwdc = required_kwdc;
+            auto Battery_initial = _Battery->get_state();
+
+            m_batteryPower->powerBatteryTarget = discharge_kwdc;
+            m_batteryPower->powerBatteryDC = discharge_kwdc;
+            runDispatch(lifetimeIndex);
+            if (m_batteryPower->powerCritLoadUnmet > tolerance) {
+                while (discharge_kwdc < max_discharge_kwdc) {
+                    if (m_batteryPower->powerCritLoadUnmet < tolerance)
+                        break;
+                    discharge_kwdc *= 1.01;
+                    _Battery->set_state(Battery_initial);
+                    m_batteryPower->powerBatteryTarget = discharge_kwdc;
+                    m_batteryPower->powerBatteryDC = discharge_kwdc;
+                    runDispatch(lifetimeIndex);
+                }
+            }
+        }
+        else {
+            m_batteryPower->powerBatteryTarget = max_discharge_kwdc;
+            m_batteryPower->powerBatteryDC = max_discharge_kwdc;
+            runDispatch(lifetimeIndex);
+        }
+    }
+}
+
+void dispatch_t::dispatch_ac_outage_step(size_t lifetimeIndex) {
+    double crit_load_kwac = m_batteryPower->powerCritLoad;
+    double pv_kwac = m_batteryPower->powerSystem;
+
+    double battery_dispatched_kwac = 0;
+    double max_discharge_kwdc = _Battery->calculate_max_discharge_kw();
+    double max_discharge_kwac = max_discharge_kwdc * m_batteryPower->singlePointEfficiencyDCToDC;
+    double max_charge_kwdc = _Battery->calculate_max_charge_kw();
+
+    if (pv_kwac > crit_load_kwac) {
+        double remaining_kwdc = -(pv_kwac - crit_load_kwac) * m_batteryPower->singlePointEfficiencyACToDC;
+        remaining_kwdc = fmax(remaining_kwdc, max_charge_kwdc);
+        m_batteryPower->powerBatteryTarget = remaining_kwdc;
+        m_batteryPower->powerBatteryDC = remaining_kwdc;
+        runDispatch(lifetimeIndex);
+    }
+    else {
+        double max_to_load_kwac = max_discharge_kwac + pv_kwac;
+        double required_kwdc = (crit_load_kwac - pv_kwac) / m_batteryPower->singlePointEfficiencyDCToAC;
+        required_kwdc = fmin(required_kwdc, max_discharge_kwdc);
+
+        if (max_to_load_kwac > crit_load_kwac) {
+            double discharge_kwdc = required_kwdc;
+
+            // iterate in case the dispatched power is slightly less (by tolerance) than required
+            auto Battery_initial = _Battery->get_state();
+            m_batteryPower->powerBatteryTarget = discharge_kwdc;
+            m_batteryPower->powerBatteryDC = discharge_kwdc;
+            runDispatch(lifetimeIndex);
+            if (m_batteryPower->powerCritLoadUnmet > tolerance) {
+                while (discharge_kwdc < max_discharge_kwdc) {
+                    if (m_batteryPower->powerCritLoadUnmet < tolerance)
+                        break;
+                    discharge_kwdc *= 1.01;
+                    _Battery->set_state(Battery_initial);
+                    m_batteryPower->powerBatteryTarget = discharge_kwdc;
+                    m_batteryPower->powerBatteryDC = discharge_kwdc;
+                    runDispatch(lifetimeIndex);
+                }
+            }
+        }
+        else {
+            m_batteryPower->powerBatteryTarget = max_discharge_kwdc;
+            m_batteryPower->powerBatteryDC = max_discharge_kwdc;
+            runDispatch(lifetimeIndex);
+        }
+    }
 }
 
 double dispatch_t::power_tofrom_battery() { return m_batteryPower->powerBatteryAC; }
@@ -581,7 +695,8 @@ void dispatch_automatic_t::dispatch(size_t year,
     size_t hour_of_year,
     size_t step)
 {
-    runDispatch(year, hour_of_year, step);
+    size_t lifetimeIndex = util::lifetimeIndex(year, hour_of_year, step, static_cast<size_t>(1 / _dt_hour));
+    runDispatch(lifetimeIndex);
 }
 
 

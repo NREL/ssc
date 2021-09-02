@@ -41,9 +41,11 @@ BatteryPower::BatteryPower(double dtHour) :
         voltageSystem(0),
         isOutageStep(false),
 		connectionMode(0),
+        meterPosition(0),
 		singlePointEfficiencyACToDC(0.96),
 		singlePointEfficiencyDCToAC(0.96),
 		singlePointEfficiencyDCToDC(0.99),
+        sharedInverter(NULL),
         inverterEfficiencyCutoff(5),
 		canSystemCharge(false),
 		canClipCharge(false),
@@ -55,6 +57,8 @@ BatteryPower::BatteryPower(double dtHour) :
 		stateOfChargeMax(1),
 		stateOfChargeMin(0),
 		depthOfDischargeMax(1),
+        currentChargeMax(0),
+        currentDischargeMax(0),
 		tolerance(0.001){}
 
 BatteryPower::BatteryPower(const BatteryPower& orig) {
@@ -96,9 +100,11 @@ BatteryPower::BatteryPower(const BatteryPower& orig) {
     voltageSystem = orig.voltageSystem;
     isOutageStep = orig.isOutageStep;
     connectionMode = orig.connectionMode;
+    meterPosition = orig.meterPosition;
     singlePointEfficiencyACToDC = orig.singlePointEfficiencyACToDC;
     singlePointEfficiencyDCToAC = orig.singlePointEfficiencyDCToAC;
     singlePointEfficiencyDCToDC = orig.singlePointEfficiencyDCToDC;
+    inverterEfficiencyCutoff = orig.inverterEfficiencyCutoff;
     canSystemCharge = orig.canSystemCharge;
     canClipCharge = orig.canClipCharge;
     canGridCharge = orig.canGridCharge;
@@ -109,6 +115,8 @@ BatteryPower::BatteryPower(const BatteryPower& orig) {
     stateOfChargeMax = orig.stateOfChargeMax;
     stateOfChargeMin = orig.stateOfChargeMin;
     depthOfDischargeMax = orig.depthOfDischargeMax;
+    currentChargeMax = orig.currentChargeMax;
+    currentDischargeMax = orig.currentDischargeMax;
     tolerance = orig.tolerance;
 }
 

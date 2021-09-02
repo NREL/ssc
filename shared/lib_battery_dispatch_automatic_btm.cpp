@@ -127,12 +127,14 @@ void dispatch_automatic_behind_the_meter_t::dispatch(size_t year,
 
     m_outage_manager->update(true); // true is for automated dispatch
     if (m_batteryPower->isOutageStep) {
-
+        // Calls dispatch function, sometimes iteratively
+        run_outage_step(lifetimeIndex);
     }
     else {
         update_dispatch(year, hour_of_year, step, lifetimeIndex);
+        dispatch_automatic_t::dispatch(year, hour_of_year, step);
     }
-	dispatch_automatic_t::dispatch(year, hour_of_year, step);
+
     if (rate_forecast)
     {
         std::vector<double> actual_dispatch = { m_batteryPower->powerGrid };

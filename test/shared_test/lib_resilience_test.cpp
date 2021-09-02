@@ -406,7 +406,7 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsACHourly_Discharge)
         batt->initialize_time(0, i, 0);
         resilience.add_battery_at_outage_timestep(*dispatch, i);
         resilience.run_surviving_batteries(load[i], 0, 0, 0, 0, 0);
-        batt->advance(vartab, ac[i], voltage, load[i]);
+        batt->advance(vartab, ac[i], voltage, load[i], load[i]); // Critical load is 100% of the load
         charge_total.emplace_back(batt->battery_model->charge_total());
         if (i < 5)
             EXPECT_NEAR(batt->outBatteryPower[i], 1., 1e-3) << "timestep " << i;
@@ -466,7 +466,7 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsACHalfHourly_Discharge)
             batt->initialize_time(0, i, j);
             resilience.add_battery_at_outage_timestep(*dispatch, i * 2 + j);
             resilience.run_surviving_batteries(load[i], 0, 0, 0, 0, 0);
-            batt->advance(vartab, ac[i], voltage, load[i]);
+            batt->advance(vartab, ac[i], voltage, load[i], load[i]); // Critical load is 100% of the load
             EXPECT_NEAR(batt->outBatteryPower[i], 1., 1e-3) << "timestep " << i * 2 + j;
         }
         charge_total.emplace_back(batt->battery_model->charge_total());
@@ -525,7 +525,7 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsDCHourly_Discharge)
         batt->initialize_time(0, i, 0);
         resilience.add_battery_at_outage_timestep(*dispatch, i);
         resilience.run_surviving_batteries(load[i], 0, 0, 0, 0, 0);
-        batt->advance(vartab, ac[i], voltage, load[i]);
+        batt->advance(vartab, ac[i], voltage, load[i], load[i]); // Critical load is 100% of the load
         charge_total.emplace_back(batt->battery_model->charge_total());
         if (i < 5)
             EXPECT_NEAR(batt->outBatteryPower[i], 1. * inverter->efficiencyAC/100. * batt_vars->batt_dc_dc_bms_efficiency/100., 1e-3) << "timestep " << i << " battery discharging";
@@ -587,7 +587,7 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsDCHalfHourly_Discharge)
             batt->initialize_time(0, i, j);
             resilience.add_battery_at_outage_timestep(*dispatch, i * 2 + j);
             resilience.run_surviving_batteries(load[i], 0, 0, 0, 0, 0);
-            batt->advance(vartab, ac[i], voltage, load[i]);
+            batt->advance(vartab, ac[i], voltage, load[i], load[i]); // Critical load is 100% of the load
             EXPECT_NEAR(batt->outBatteryPower[i], 1. * inverter->efficiencyAC/100. * batt_vars->batt_dc_dc_bms_efficiency/100., 1e-3) << "timestep " << i * 2 + j;
         }
         charge_total.emplace_back(batt->battery_model->charge_total());
@@ -642,7 +642,7 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsACHourly_Charge)
         batt->initialize_time(0, i, 0);
         resilience.add_battery_at_outage_timestep(*dispatch, i);
         resilience.run_surviving_batteries(load[i], ac[i], 0, 0, 0, 0);
-        batt->advance(vartab, ac[i], voltage, load[i]);
+        batt->advance(vartab, ac[i], voltage, load[i], load[i]); // Critical load is 100% of the load
         charge_total.emplace_back(batt->battery_model->charge_total());
         EXPECT_NEAR(batt->outBatteryPower[i], -0.5, 0.005) << "timestep " << i;
     }

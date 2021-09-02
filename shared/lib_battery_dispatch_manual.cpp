@@ -92,18 +92,21 @@ void dispatch_manual_t::dispatch(size_t year,
 	size_t step)
 {
     m_outage_manager->update(false); // false is for manual dispatch
-    if (m_batteryPower->isOutageStep) {
+    size_t lifetimeIndex = util::lifetimeIndex(year, hour_of_year, step, static_cast<size_t>(1 / _dt_hour));
 
+    if (m_batteryPower->isOutageStep) {
+        // Calls dispatch function, sometimes iteratively
+        run_outage_step(lifetimeIndex);
     }
     else {
         prepareDispatch(hour_of_year, step);
 
         // Initialize power flow model by calculating the battery power to dispatch
         m_batteryPowerFlow->initialize(_Battery->SOC());
-    }
 
-	// Run the dispatch
-	runDispatch(year, hour_of_year, step);
+        // Run the dispatch
+        runDispatch(lifetimeIndex);
+    }
 }
 
 bool dispatch_manual_t::check_constraints(double &I, size_t count)
