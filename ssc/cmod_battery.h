@@ -81,6 +81,14 @@ struct batt_variables
 	/*! Determines if the battery is allowed to charge from fuel cell using automated control*/
 	bool batt_dispatch_auto_can_fuelcellcharge;
 
+    /*! Determines if the battery is allowed to charge only when the system output exceeds load (false is more flexible)
+        Applies to both automated and manual dispatch */
+    bool batt_dispatch_charge_only_system_exceeds_load;
+
+    /*! Determines if the battery is allowed to discharge only when the load exceeds system output (false is more flexible)
+        Applies to both automated and manual dispatch */
+    bool batt_dispatch_discharge_only_load_exceeds_system;
+
 	/*! Vector of periods and if battery can charge from PV*/
 	std::vector<bool> batt_can_charge;
 

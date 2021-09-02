@@ -68,7 +68,9 @@ public:
 		double t_min,
 		int dispatch_mode,
 		int meter_position,
-        double interconnection_limit);
+        double interconnection_limit,
+        bool chargeOnlySystemExceedLoad = true, // Optional so FOM doesn't have to specify them
+        bool dischargeOnlyLoadExceedSystem = true);
 
 	// deep copy constructor (new memory), from dispatch to this
 	dispatch_t(const dispatch_t& dispatch);
@@ -257,7 +259,9 @@ public:
         std::vector<double> battReplacementCostPerkWh,
         int battCycleCostChoice,
         std::vector<double> battCycleCost,
-        double interconnection_limit
+        double interconnection_limit,
+        bool chargeOnlySystemExceedLoad = true,  // Optional so FOM doesn't have to specify them
+        bool dischargeOnlyLoadExceedSystem = true
 		);
 
 	virtual ~dispatch_automatic_t(){};

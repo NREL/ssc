@@ -72,7 +72,7 @@ TEST_F(CMBattwatts_cmod_battwatts, ResidentialDefaults) {
     EXPECT_FALSE(errors);
 
     double charge_percent = data.as_number("batt_system_charge_percent");
-    EXPECT_NEAR(charge_percent, 70.8, 0.1);
+    EXPECT_NEAR(charge_percent, 95.64, 0.1);
 
     auto batt_power_data = data.as_vector_ssc_number_t("batt_power");
     ssc_number_t peakKwDischarge = *std::max_element(batt_power_data.begin(), batt_power_data.end());
@@ -102,14 +102,14 @@ TEST_F(CMBattwatts_cmod_battwatts, ResidentialDefaultsLeadAcid) {
     EXPECT_FALSE(errors);
 
     double charge_percent = data.as_number("batt_system_charge_percent");
-    EXPECT_NEAR(charge_percent, 76.4, 0.1);
+    EXPECT_NEAR(charge_percent, 95.91, 0.1);
 
     auto batt_power_data = data.as_vector_ssc_number_t("batt_power");
     ssc_number_t peakKwDischarge = *std::max_element(batt_power_data.begin(), batt_power_data.end());
     ssc_number_t peakKwCharge = *std::min_element(batt_power_data.begin(), batt_power_data.end());
 
-    EXPECT_NEAR(peakKwDischarge, 1.83, 0.1);
-    EXPECT_NEAR(peakKwCharge, -2.56, 0.1);
+    EXPECT_NEAR(peakKwDischarge, 1.97, 0.1);
+    EXPECT_NEAR(peakKwCharge, -2.57, 0.1);
 
     auto batt_voltage = data.as_vector_ssc_number_t("batt_voltage");
     ssc_number_t peakVoltage = *std::max_element(batt_voltage.begin(), batt_voltage.end());
