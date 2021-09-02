@@ -1580,56 +1580,111 @@ public:
         escal_or_annual(CF_subscriber4_share_fraction, nyears, "subscriber4_share", 0.0, 0.01, false, as_double("subscriber4_growth") * 0.01); // entered as percentage and growth rate without inflation
 
         // Automatically cap the subscriber shares at the values that cause the total share to reach 100%. SAM would report a simulation message to explain the adjustment.
-        for (size_t i = 0; i <= nyears; i++) {
-            // check all subscribers for negative fractions and reset to zero
-            if (cf.at(CF_subscriber1_share_fraction, i) < 0.0) {
-                log(util::format("Subscriber 1 share fraction was negative (%g) and reset to zero for year %d.", cf.at(CF_subscriber1_share_fraction, i), (int(i)), SSC_NOTICE, (float)i));
-                cf.at(CF_subscriber1_share_fraction, i) = 0.0;
-            }
-            if (cf.at(CF_subscriber2_share_fraction, i) < 0.0) {
-                log(util::format("Subscriber 2 share fraction was negative (%g) and reset to zero for year %d.", cf.at(CF_subscriber2_share_fraction, i), (int(i)), SSC_NOTICE, (float)i));
-                cf.at(CF_subscriber2_share_fraction, i) = 0.0;
-            }
-            if (cf.at(CF_subscriber3_share_fraction, i) < 0.0) {
-                log(util::format("Subscriber 3 share fraction was negative (%g) and reset to zero for year %d.", cf.at(CF_subscriber3_share_fraction, i), (int(i)), SSC_NOTICE, (float)i));
-                cf.at(CF_subscriber3_share_fraction, i) = 0.0;
-            }
-            if (cf.at(CF_subscriber4_share_fraction, i) < 0.0) {
-                log(util::format("Subscriber 4 share fraction was negative (%g) and reset to zero for year %d.", cf.at(CF_subscriber4_share_fraction, i), (int(i)), SSC_NOTICE, (float)i));
-                cf.at(CF_subscriber4_share_fraction, i) = 0.0;
-            }
+        // for schedules, throw simulation error if sum greater than one
+        // for single value and growth rate FOR ALL FOUR subscriber classes, check values and cap as follows:
+        size_t sub1_cnt, sub2_cnt, sub3_cnt, sub4_cnt;
+        ssc_number_t* sub1 = as_array("subscriber1_share", &sub1_cnt);
+        ssc_number_t* sub2 = as_array("subscriber2_share", &sub2_cnt);
+        ssc_number_t* sub3 = as_array("subscriber3_share", &sub3_cnt);
+        ssc_number_t* sub4 = as_array("subscriber4_share", &sub4_cnt);
+        // check that all are entered as growth rates
+        bool all_sub_growth_rate = ((sub1_cnt == 1)&& (sub2_cnt == 1)&& (sub3_cnt == 1)&& (sub4_cnt == 1));
 
-            double sum = cf.at(CF_subscriber1_share_fraction,i) + cf.at(CF_subscriber2_share_fraction,i) + cf.at(CF_subscriber3_share_fraction,i) + cf.at(CF_subscriber4_share_fraction,i);
-            if (sum < 0.0) // this should not happen, all are set to >=0
-                throw exec_error("communitysolar", util::format("Total subscribed fraction for year (%d) is %g (less than zero).", (int)i, sum));
-            if (sum > 1.0) {
-                // here we can check is values are growth rates to address concern in emails from HEIC or we can give priority for subscriber 1 to handle schedules, too.
-           // priority given to subscriber 1 (anchor)
-                if (cf.at(CF_subscriber1_share_fraction, i) > 1.0) {
-                    log(util::format("Subscriber 1 share fraction was %g and reset to one for year %d and other subscriber classes reset to zero", cf.at(CF_subscriber1_share_fraction, i), (int(i)), SSC_NOTICE, (float)i));
-                    cf.at(CF_subscriber1_share_fraction, i) = 1.0;
-                    cf.at(CF_subscriber2_share_fraction, i) = 0.0;
-                    cf.at(CF_subscriber3_share_fraction, i) = 0.0;
-                    cf.at(CF_subscriber4_share_fraction, i) = 0.0;
+        if (all_sub_growth_rate) {
+            double prev_sum, prev_sub1, prev_sub2, prev_sub3, prev_sub4;
+            double sum, sub1, sub2, sub3, sub4;
+            for (size_t i = 0; i <= nyears; i++) {
+                sub1 = cf.at(CF_subscriber1_share_fraction, i);
+                sub2 = cf.at(CF_subscriber2_share_fraction, i);
+                sub3 = cf.at(CF_subscriber3_share_fraction, i);
+                sub4 = cf.at(CF_subscriber4_share_fraction, i);
+                // check all subscribers for negative fractions and reset to zero
+                if (sub1 < 0.0) {
+                    log(util::format("Subscriber 1 share fraction was negative (%g) and reset to zero for year %d.", sub1, (int(i)), SSC_NOTICE, (float)i));
+                    sub1 = 0.0;
                 }
-                else if ((cf.at(CF_subscriber1_share_fraction, i) + cf.at(CF_subscriber2_share_fraction, i)) > 1.0) {
-                    log(util::format("Subscriber 2 share fraction was %g and reset to %g for year %d and other subscriber classes 3 and 4 reset to zero", cf.at(CF_subscriber2_share_fraction, i), 1.0 - cf.at(CF_subscriber1_share_fraction, i),(int(i)), SSC_NOTICE, (float)i));
-                    cf.at(CF_subscriber2_share_fraction, i) = 1.0 - cf.at(CF_subscriber1_share_fraction, i);
-                    cf.at(CF_subscriber3_share_fraction, i) = 0.0;
-                    cf.at(CF_subscriber4_share_fraction, i) = 0.0;
+                if (sub2 < 0.0) {
+                    log(util::format("Subscriber 2 share fraction was negative (%g) and reset to zero for year %d.", sub2, (int(i)), SSC_NOTICE, (float)i));
+                    sub2 = 0.0;
                 }
-                else if ((cf.at(CF_subscriber1_share_fraction, i) + cf.at(CF_subscriber2_share_fraction, i) + cf.at(CF_subscriber3_share_fraction, i)) > 1.0) {
-                    log(util::format("Subscriber 3 share fraction was %g and reset to %g for year %d and other subscriber class 4 reset to zero", cf.at(CF_subscriber3_share_fraction, i), 1.0 - (cf.at(CF_subscriber1_share_fraction, i) + cf.at(CF_subscriber2_share_fraction, i)), (int(i)), SSC_NOTICE, (float)i));
-                    cf.at(CF_subscriber3_share_fraction, i) = 1.0 - (cf.at(CF_subscriber1_share_fraction, i) + cf.at(CF_subscriber2_share_fraction, i));
-                    cf.at(CF_subscriber4_share_fraction, i) = 0.0;
+                if (sub3 < 0.0) {
+                    log(util::format("Subscriber 3 share fraction was negative (%g) and reset to zero for year %d.", sub3, (int(i)), SSC_NOTICE, (float)i));
+                    sub3 = 0.0;
                 }
-                else {
-                    log(util::format("Subscriber 4 share fraction was %g and reset to %g for year %d", cf.at(CF_subscriber4_share_fraction, i), 1.0 - (cf.at(CF_subscriber1_share_fraction, i) + cf.at(CF_subscriber2_share_fraction, i) + cf.at(CF_subscriber3_share_fraction, i)), (int(i)), SSC_NOTICE, (float)i));
-                    cf.at(CF_subscriber4_share_fraction, i) = 1.0 - (cf.at(CF_subscriber1_share_fraction, i) + cf.at(CF_subscriber2_share_fraction, i) + +cf.at(CF_subscriber3_share_fraction, i));
+                if (sub4 < 0.0) {
+                    log(util::format("Subscriber 4 share fraction was negative (%g) and reset to zero for year %d.", sub4, (int(i)), SSC_NOTICE, (float)i));
+                    sub4 = 0.0;
                 }
-                sum = cf.at(CF_subscriber1_share_fraction, i) + cf.at(CF_subscriber2_share_fraction, i) + cf.at(CF_subscriber3_share_fraction, i) + cf.at(CF_subscriber4_share_fraction, i);
+                double sum = sub1 + sub2 + sub3 + sub4;
+                if (sum < 0.0) // this should not happen, all are set to >=0
+                    throw exec_error("communitysolar", util::format("Total subscribed fraction for year (%d) is %g (less than zero).", (int)i, sum));
+                else if (sum > 1.0) { // adjust based on previous values
+                    if (prev_sum < 1.0) {
+                        double additional_share = sum - 1.0; // divide up amongst changed values
+                        if (i > 0) additional_share = cf.at(CF_unsubscribed_share_fraction, i - 1);
+                        double newsub;
+                        if (sub1 != prev_sub1) {
+                            newsub = (sub1-prev_sub1) / (sum - prev_sum) * additional_share;
+                            log(util::format("Subscriber 1 share fraction was %g and reset to %g for year %d", sub1, prev_sub1 + newsub, (int(i)), SSC_NOTICE, (float)i));
+                            sub1 = prev_sub1 + newsub;
+                        }
+                        if (sub2 != prev_sub2) {
+                            newsub = (sub2 - prev_sub2) / (sum - prev_sum) * additional_share;
+                            log(util::format("Subscriber 2 share fraction was %g and reset to %g for year %d", sub2, prev_sub2 + newsub, (int(i)), SSC_NOTICE, (float)i));
+                            sub2 = prev_sub2 + newsub;
+                        }
+                        if (sub3 != prev_sub3) {
+                            newsub = (sub3 - prev_sub3) / (sum - prev_sum) * additional_share;
+                            log(util::format("Subscriber 3 share fraction was %g and reset to %g for year %d", sub3, prev_sub3 + newsub, (int(i)), SSC_NOTICE, (float)i));
+                            sub3 = prev_sub3 + newsub;
+                        }
+                        if (sub4 != prev_sub4) {
+                            newsub = (sub4 - prev_sub4) / (sum - prev_sum) * additional_share;
+                            log(util::format("Subscriber 4 share fraction was %g and reset to %g for year %d", sub4, prev_sub4 + newsub, (int(i)), SSC_NOTICE, (float)i));
+                            sub4 = prev_sub4 + newsub;
+                        }
+                    }
+                    else { // prev_sum = 1 and reset as necessary
+                        if (sub1 != prev_sub1) {
+                            log(util::format("Subscriber 1 share fraction was %g and reset to %g for year %d", sub1, prev_sub1, (int(i)), SSC_NOTICE, (float)i));
+                            sub1 = prev_sub1;
+                        }
+                        if (sub2 != prev_sub2) {
+                            log(util::format("Subscriber 2 share fraction was %g and reset to %g for year %d", sub2, prev_sub2, (int(i)), SSC_NOTICE, (float)i));
+                            sub2 = prev_sub2;
+                        }
+                        if (sub3 != prev_sub3) {
+                            log(util::format("Subscriber 3 share fraction was %g and reset to %g for year %d", sub3, prev_sub3, (int(i)), SSC_NOTICE, (float)i));
+                            sub3 = prev_sub3;
+                        }
+                        if (sub4 != prev_sub4) {
+                            log(util::format("Subscriber 4 share fraction was %g and reset to %g for year %d", sub4, prev_sub4, (int(i)), SSC_NOTICE, (float)i));
+                            sub4 = prev_sub4;
+                        }
+                    }
+                    //sum = sub1 + sub2 + sub3 + sub4; // check that is one
+                    sum = 1.0;
+                }
+                cf.at(CF_subscriber1_share_fraction, i) = sub1;
+                cf.at(CF_subscriber2_share_fraction, i) = sub2;
+                cf.at(CF_subscriber3_share_fraction, i) = sub3;
+                cf.at(CF_subscriber4_share_fraction, i) = sub4;
+                cf.at(CF_unsubscribed_share_fraction, i) = 1.0 - sum;
+                prev_sum = sum;
+                prev_sub1 = sub1;
+                prev_sub2 = sub2;
+                prev_sub3 = sub3;
+                prev_sub4 = sub4;
             }
-            cf.at(CF_unsubscribed_share_fraction, i) = 1.0 - sum;
+        }
+        else { // at least one subscriber share entered as a schedule
+            for (size_t i = 0; i <= nyears; i++) {
+                double sum = cf.at(CF_subscriber1_share_fraction, i) + cf.at(CF_subscriber2_share_fraction, i) + cf.at(CF_subscriber3_share_fraction, i) + cf.at(CF_subscriber4_share_fraction, i);
+                if (sum < 0.0) 
+                    throw exec_error("communitysolar", util::format("Total subscribed fraction for year (%d) is %g (less than zero).", (int)i, sum));
+                else if (sum > 1.0)
+                    throw exec_error("communitysolar", util::format("Total subscribed fraction for year (%d) is %g (greater than one).", (int)i, sum));
+            }
         }
 
         // community solar - retail portion (escalation above inflation)
