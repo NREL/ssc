@@ -79,9 +79,9 @@ void csp_dispatch_opt::init(double cycle_q_dot_des, double cycle_eta_des)
     params.e_tes_max = pointers.tes->get_max_charge_energy() * 1000;
     params.tes_degrade_rate = pointers.tes->get_degradation_rate();
 
-    params.q_pb_des = cycle_q_dot_des * 1000.;
+    params.q_pb_des = cycle_q_dot_des * 1000.;  // Convert to kW
     params.eta_pb_des = cycle_eta_des;
-    double w_pb_des = params.q_pb_des * params.eta_pb_des;
+    double w_pb_des = cycle_q_dot_des * params.eta_pb_des;  // keep in MW
 
     params.eff_table_load.init_linear_cycle_efficiency_table(params.q_pb_min, params.q_pb_max, params.q_pb_des, pointers.mpc_pc);
     params.eff_table_Tdb.init_efficiency_ambient_temp_table(params.eta_pb_des, w_pb_des, pointers.mpc_pc, &params.wcondcoef_table_Tdb);

@@ -590,7 +590,6 @@ void s_efftable::init_linear_cycle_efficiency_table(double q_pb_min, double q_pb
     {
         double x = q_pb_min + (q_pb_max - q_pb_min) / (double)(neff - 1) * i;
         double xf = x / q_pb_des;
-        //double xf = x * 1.e-3 / cycle_q_dot_des;  //MW
 
         double eta;
         eta = power_cycle->get_efficiency_at_load(xf);
@@ -601,7 +600,16 @@ void s_efftable::init_linear_cycle_efficiency_table(double q_pb_min, double q_pb
 
 void s_efftable::init_efficiency_ambient_temp_table(double eta_pb_des, double cycle_w_dot_des, C_csp_power_cycle* power_cycle, s_efftable* wcondcoef_table_Tdb)
 {
-    //cycle efficiency vs temperature
+    /*
+    Creates cycle efficiency vs. ambient temperature table and condenser load (normalized by gross cycle power rating) vs. ambient temperature table.
+    Varies ambient temperature between -10 C and 60 C using 40 uniform points.
+
+    Parameters:
+        eta_pb_des -> cycle design efficiency (fractional) [-]
+        cycle_w_dot_des -> cycle design gross generation [MWe]
+        power_cycle -> pointer to C_csp_power_cycle class (TODO: the above two parameters should be accessable via this pointer)
+        wcondcoef_table_Tdb -> pointer to table for this function to populate with data.
+    */
     this->clear();
     wcondcoef_table_Tdb->clear();
     int neffT = 40;
