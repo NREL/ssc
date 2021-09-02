@@ -52,7 +52,9 @@ public:
 		std::vector<bool> can_fuelcellcharge,
 		std::map<size_t, double> dm_percent_discharge,
 		std::map<size_t, double> dm_percent_gridcharge,
-        double interconnection_limit);
+        double interconnection_limit,
+        bool chargeOnlySystemExceedLoad = true,
+        bool dischargeOnlyLoadExceedSystem = true);
 
 	// deep copy constructor (new memory), from dispatch to this
 	dispatch_manual_t(const dispatch_t& dispatch);
