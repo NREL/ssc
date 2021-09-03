@@ -341,6 +341,9 @@ public:
 
     void exec() override
     {
+        //FILE* fp = fopen("etes_cmod_to_lk.lk", "w");
+        //write_cmod_to_lk_script(fp, m_vartab);
+
         // First, check sim type
         int sim_type = as_integer("sim_type");
         if (sim_type != 1 && sim_type != 2) {
