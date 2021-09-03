@@ -38,6 +38,9 @@ protected:
 
     double interconnection_limit = 1e+38;
 
+    bool chargeOnlySystemExceedLoad = true;
+    bool dischargeOnlyLoadExceedSystem = true;
+
     /*! Variables to store forecast data */
     std::vector<double> pv_prediction;
     std::vector<double> load_prediction;

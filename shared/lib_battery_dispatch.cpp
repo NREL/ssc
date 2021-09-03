@@ -32,7 +32,8 @@ Dispatch base class
 */
 dispatch_t::dispatch_t(battery_t* Battery, double dt_hour, double SOC_min, double SOC_max, int current_choice, double Ic_max, double Id_max,
     double Pc_max_kwdc, double Pd_max_kwdc, double Pc_max_kwac, double Pd_max_kwac,
-    double t_min, int mode, int battMeterPosition, double interconnection_limit)
+    double t_min, int mode, int battMeterPosition, double interconnection_limit,
+    bool chargeOnlySystemExceedLoad, bool dischargeOnlyLoadExceedSystem)
 {
     // initialize battery power flow
     std::unique_ptr<BatteryPowerFlow> tmp(new BatteryPowerFlow(dt_hour));
@@ -49,6 +50,8 @@ dispatch_t::dispatch_t(battery_t* Battery, double dt_hour, double SOC_min, doubl
     m_batteryPower->powerBatteryDischargeMaxAC = Pd_max_kwac;
     m_batteryPower->meterPosition = battMeterPosition;
     m_batteryPower->powerInterconnectionLimit = interconnection_limit;
+    m_batteryPower->chargeOnlySystemExceedLoad = chargeOnlySystemExceedLoad;
+    m_batteryPower->dischargeOnlyLoadExceedSystem = dischargeOnlyLoadExceedSystem;
 
     // initalize Battery and a copy of the Battery for iteration
     _Battery = Battery;
@@ -468,6 +471,7 @@ dispatch_automatic_t::dispatch_automatic_t(
 	double Pd_max_kwac,
 	double t_min,
 	int dispatch_mode,
+    int weather_forecast_mode,
 	int pv_dispatch,
 	size_t nyears,
 	size_t look_ahead_hours,
@@ -479,10 +483,12 @@ dispatch_automatic_t::dispatch_automatic_t(
     std::vector<double> battReplacementCostPerkWh,
     int battCycleCostChoice,
     std::vector<double> battCycleCost,
-    double interconnection_limit
+    double interconnection_limit,
+    bool chargeOnlySystemExceedLoad,
+    bool dischargeOnlyLoadExceedSystem
 	) : dispatch_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max_kwdc, Pd_max_kwdc, Pc_max_kwac, Pd_max_kwac,
 
-    t_min, dispatch_mode, pv_dispatch, interconnection_limit)
+    t_min, dispatch_mode, pv_dispatch, interconnection_limit, chargeOnlySystemExceedLoad, dischargeOnlyLoadExceedSystem)
 {
 
     _dt_hour = dt_hour;
@@ -500,6 +506,7 @@ dispatch_automatic_t::dispatch_automatic_t(
     curr_year = 0;
 
     _mode = dispatch_mode;
+    _weather_forecast_mode = weather_forecast_mode;
     _safety_factor = 0.03;
 
 	m_batteryPower->canClipCharge = can_clip_charge;
@@ -524,6 +531,7 @@ void dispatch_automatic_t::init_with_pointer(const dispatch_automatic_t* tmp)
 	_nyears = tmp->_nyears;
     curr_year = tmp->curr_year;
 	_mode = tmp->_mode;
+    _weather_forecast_mode = tmp->_weather_forecast_mode;
 	_safety_factor = tmp->_safety_factor;
 	_forecast_hours = tmp->_forecast_hours;
     m_battReplacementCostPerKWH = tmp->m_battReplacementCostPerKWH;

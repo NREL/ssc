@@ -44,12 +44,14 @@ class dispatch_t
 {
 public:
 
-	enum FOM_MODES { FOM_LOOK_AHEAD, FOM_LOOK_BEHIND, FOM_FORECAST, FOM_CUSTOM_DISPATCH, FOM_MANUAL, FOM_PV_SMOOTHING };
-	enum BTM_MODES { LOOK_AHEAD, LOOK_BEHIND, MAINTAIN_TARGET, CUSTOM_DISPATCH, MANUAL, FORECAST };
+	enum FOM_MODES { FOM_AUTOMATED_ECONOMIC, FOM_PV_SMOOTHING, FOM_CUSTOM_DISPATCH, FOM_MANUAL };
+	enum BTM_MODES { PEAK_SHAVING, MAINTAIN_TARGET, CUSTOM_DISPATCH, MANUAL, FORECAST };
 	enum METERING { BEHIND, FRONT };
+    enum WEATHER_FORECAST_CHOICE { WF_LOOK_AHEAD, WF_LOOK_BEHIND, WF_CUSTOM };
+    enum LOAD_FORECAST_CHOICE { LOAD_LOOK_AHEAD, LOAD_LOOK_BEHIND, LOAD_CUSTOM };
 	enum PV_PRIORITY { MEET_LOAD, CHARGE_BATTERY };
 	enum CURRENT_CHOICE { RESTRICT_POWER, RESTRICT_CURRENT, RESTRICT_BOTH };
-	enum FOM_CYCLE_COST {MODEL_CYCLE_COST, INPUT_CYCLE_COST};
+	enum CYCLE_COST {MODEL_CYCLE_COST, INPUT_CYCLE_COST};
 	enum CONNECTION { DC_CONNECTED, AC_CONNECTED };
 
 	dispatch_t(battery_t * Battery,
@@ -66,7 +68,9 @@ public:
 		double t_min,
 		int dispatch_mode,
 		int meter_position,
-        double interconnection_limit);
+        double interconnection_limit,
+        bool chargeOnlySystemExceedLoad = true, // Optional so FOM doesn't have to specify them
+        bool dischargeOnlyLoadExceedSystem = true);
 
 	// deep copy constructor (new memory), from dispatch to this
 	dispatch_t(const dispatch_t& dispatch);
@@ -243,6 +247,7 @@ public:
 		double Pd_max_kwac,
 		double t_min,
 		int dispatch_mode,
+        int weather_forecast_mode,
 		int pv_dispatch,
 		size_t nyears,
 		size_t look_ahead_hours,
@@ -254,7 +259,9 @@ public:
         std::vector<double> battReplacementCostPerkWh,
         int battCycleCostChoice,
         std::vector<double> battCycleCost,
-        double interconnection_limit
+        double interconnection_limit,
+        bool chargeOnlySystemExceedLoad = true,  // Optional so FOM doesn't have to specify them
+        bool dischargeOnlyLoadExceedSystem = true
 		);
 
 	virtual ~dispatch_automatic_t(){};
@@ -340,6 +347,9 @@ protected:
 
 	/*! The dispatch mode, described by dispatch_t::BTM_MODES or dispatch_t::FOM_MODES*/
 	int _mode;
+
+    /*! What weather forecast to use, described by dispatch_t::WEATHER_FORECAST_CHOICE*/
+    int _weather_forecast_mode;
 
 	/*! An internal factor to describe how conservative the peak shaving algorithm should be */
 	double _safety_factor;

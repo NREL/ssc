@@ -48,6 +48,8 @@ struct batt_variables
 	int analysis_period;
 	int batt_chem;
 	int batt_dispatch;
+    int batt_dispatch_wf_forecast;
+    int batt_dispatch_load_forecast;
 	int batt_voltage_choice;
 	int batt_current_choice;
 	int batt_meter_position;
@@ -78,6 +80,14 @@ struct batt_variables
 
 	/*! Determines if the battery is allowed to charge from fuel cell using automated control*/
 	bool batt_dispatch_auto_can_fuelcellcharge;
+
+    /*! Determines if the battery is allowed to charge only when the system output exceeds load (false is more flexible)
+        Applies to both automated and manual dispatch */
+    bool batt_dispatch_charge_only_system_exceeds_load;
+
+    /*! Determines if the battery is allowed to discharge only when the load exceeds system output (false is more flexible)
+        Applies to both automated and manual dispatch */
+    bool batt_dispatch_discharge_only_load_exceeds_system;
 
 	/*! Vector of periods and if battery can charge from PV*/
 	std::vector<bool> batt_can_charge;
@@ -259,14 +269,23 @@ struct battstor
 	/*! Manual dispatch*/
 	bool manual_dispatch = false;
 
-	/*! Automated dispatch look ahead*/
-	bool look_ahead = false;
+	/*! Automated dispatch weather file look ahead*/
+	bool wf_look_ahead = false;
 
-	/*! Automated dispatch look behind*/
-	bool look_behind = false;
+	/*! Automated dispatch weather file look behind*/
+	bool wf_look_behind = false;
 
-	/*! Automated dispatch use custom input forecast (look ahead)*/
-	bool input_forecast = false;
+	/*! Automated dispatch use custom weather file input forecast (look ahead)*/
+	bool wf_input_forecast = false;
+
+    /*! Automated dispatch look ahead for load*/
+    bool load_look_ahead = false;
+
+    /*! Automated dispatch look behind for load*/
+    bool load_look_behind = false;
+
+    /*! Automated dispatch use custom input forecast (look ahead) for load*/
+    bool load_input_forecast = false;
 
 	/*! Automated dispatch override algorithm grid target calculation*/
 	bool input_target = false;
