@@ -788,11 +788,15 @@ static var_info _cm_vtab_communitysolar[] = {
     { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_unsubscribed_revenue", "Unsubscribed total revenue", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
 
 
-    { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_upfront", "Total upfront fixed cost", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_upfront_per_capacity", "Total upfront capacity cost", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_recurring_fixed", "Total recurring fixed cost", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_recurring_capacity", "Total recurring capacity cost", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_recurring_generation", "Total recurring generation cost", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_upfront", "CS total upfront fixed cost", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_upfront_per_capacity", "CS total upfront capacity cost", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_recurring_fixed", "CS total recurring fixed cost", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_recurring_capacity", "CS total recurring capacity cost", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_recurring_generation", "CS total recurring generation cost", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+
+    { SSC_OUTPUT,       SSC_NUMBER,     "community_solar_upfront_cost",   "CS total upfront cost",              "$",                   "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "community_solar_upfront_revenue",   "CS total upfront revenue",              "$",                   "", "Metrics", "*", "", "" },
+
 
 var_info_invalid };
 
@@ -1758,7 +1762,8 @@ public:
         }
 
 
-
+        double cs_upfront_cost = cf.at(CF_community_solar_upfront, 0) + cf.at(CF_community_solar_upfront_per_capacity, 0);
+        double cs_upfront_revenue = cf.at(CF_subscriber1_revenue_upfront, 0) + cf.at(CF_subscriber2_revenue_upfront, 0) + cf.at(CF_subscriber3_revenue_upfront, 0) + cf.at(CF_subscriber4_revenue_upfront, 0);
 
 
 
@@ -2420,8 +2425,8 @@ public:
 				+ cost_other_financing
 				+ cf.at(CF_reserve_debtservice, 0) // initially zero - based on p&i
 				+ cf.at(CF_reserve_om, 0)
-                + cf.at(CF_community_solar_upfront, 0)
-                + cf.at(CF_community_solar_upfront_per_capacity, 0)
+                + cs_upfront_cost
+                - cs_upfront_revenue
 				- ibi_fed_amount 
 				- ibi_sta_amount
 				- ibi_uti_amount
@@ -2481,8 +2486,8 @@ public:
 					+ cost_other_financing
 					+ cf.at(CF_reserve_debtservice, 0) // initially zero - based on p&i
 					+ cf.at(CF_reserve_om, 0)
-                    + cf.at(CF_community_solar_upfront, 0)
-                    + cf.at(CF_community_solar_upfront_per_capacity, 0)
+                    + cs_upfront_cost
+                    - cs_upfront_revenue
 					- ibi_fed_amount
 					- ibi_sta_amount
 					- ibi_uti_amount
@@ -2737,7 +2742,12 @@ public:
 
 			cost_debt_upfront = cost_debt_fee_frac * size_of_debt; // cpg added this to make cash flow consistent with single_owner.xlsx
 
-			cost_installed = cost_prefinancing + cost_financing
+            // Community Solar adjustment for upfront revenue and costs
+			cost_installed =
+                cost_prefinancing
+                + cost_financing
+                + cs_upfront_cost
+                - cs_upfront_revenue
 				- ibi_fed_amount
 				- ibi_sta_amount
 				- ibi_uti_amount
@@ -3486,6 +3496,8 @@ public:
 
 		assign( "cost_prefinancing", var_data((ssc_number_t) cost_prefinancing ) );
 		//assign( "cost_prefinancingperwatt", var_data((ssc_number_t)( cost_prefinancing / nameplate / 1000.0 ) ));
+        assign("community_solar_upfront_cost", var_data((ssc_number_t)cs_upfront_cost));
+        assign("community_solar_upfront_revenue", var_data((ssc_number_t)cs_upfront_revenue));
 
 		assign( "nominal_discount_rate", var_data((ssc_number_t)nom_discount_rate ) );
 
