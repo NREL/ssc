@@ -111,10 +111,10 @@ static var_info _cm_vtab_communitysolar[] = {
     { SSC_INPUT,        SSC_NUMBER,     "subscriber4_retail_rate_escal",  "Subscriber 4 retail rate escalation",	                                                "%/yr",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
 
     // subscription revenue
-    { SSC_INPUT,        SSC_NUMBER,     "subscriber1_payment_upfront",	          "Subscriber 1 payment upfront",                                    "$",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
-    { SSC_INPUT,        SSC_NUMBER,     "subscriber2_payment_upfront",	          "Subscriber 2 payment upfront",                                    "$",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
-    { SSC_INPUT,        SSC_NUMBER,     "subscriber3_payment_upfront",	          "Subscriber 3 payment upfront",                                    "$",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
-    { SSC_INPUT,        SSC_NUMBER,     "subscriber4_payment_upfront",	          "Subscriber 4 payment upfront",                                    "$",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
+    { SSC_INPUT,        SSC_NUMBER,     "subscriber1_payment_upfront",	          "Subscriber 1 payment up-front",                                    "$",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
+    { SSC_INPUT,        SSC_NUMBER,     "subscriber2_payment_upfront",	          "Subscriber 2 payment up-front",                                    "$",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
+    { SSC_INPUT,        SSC_NUMBER,     "subscriber3_payment_upfront",	          "Subscriber 3 payment up-front",                                    "$",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
+    { SSC_INPUT,        SSC_NUMBER,     "subscriber4_payment_upfront",	          "Subscriber 4 payment up-front",                                    "$",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
 
     { SSC_INPUT,        SSC_ARRAY,     "subscriber1_payment_generation",	      "Subscriber 1 payment generation",                                 "$/kWh",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
     { SSC_INPUT,        SSC_NUMBER,    "subscriber1_payment_generation_escal",    "Subscriber 1 payment generation escalation",	                     "%/yr",                  "",                        "Community Solar",          "?=0",					   "",                              "" },
@@ -734,68 +734,68 @@ static var_info _cm_vtab_communitysolar[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_thermal_value",                        "Present value of thermal value",              "$",                   "", "Metrics", "*", "", "" },
 
         // community solar specific outputs
-    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber1_share_fraction", "Subscriber1 share", "", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber2_share_fraction", "Subscriber2 share", "", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber3_share_fraction", "Subscriber3 share", "", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber4_share_fraction", "Subscriber4 share", "", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_unsubscribed_share_fraction", "Unsubscribed share", "", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber1_share_fraction", "Subscriber 1 share of system capacity", "", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber2_share_fraction", "Subscriber 2 share of system capacity", "", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber3_share_fraction", "Subscriber 3 share of system capacity", "", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber4_share_fraction", "Subscriber 4 share of system capacity", "", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_unsubscribed_share_fraction", "Unsubscribed share of system capacity", "", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
 
-    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber1_retail", "Subscriber1 retail", "$/kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber2_retail", "Subscriber2 retail", "$/kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber3_retail", "Subscriber3 retail", "$/kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber4_retail", "Subscriber4 retail", "$/kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber1_retail", "Subscriber 1 retail rate", "$/kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber2_retail", "Subscriber 2 retail rate", "$/kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber3_retail", "Subscriber 3 retail rate", "$/kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber4_retail", "Subscriber 4 retail rate", "$/kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
 
-    { SSC_OUTPUT, SSC_ARRAY, "cf_recurring_fixed", "Recurring fixed cost", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_recurring_capacity", "Recurring capacity cost", "$/kW-yr", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_recurring_generation", "Recurring generation cost", "$/kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_recurring_fixed", "CS recurring fixed cost", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_recurring_capacity", "CS recurring capacity cost", "$/kW-yr", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_recurring_generation", "CS recurring generation cost", "$/kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
 
-    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber1_generation_payment", "Subscriber1 generation payment", "$/kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber2_generation_payment", "Subscriber2 generation payment", "$/kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber3_generation_payment", "Subscriber3 generation payment", "$/kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber4_generation_payment", "Subscriber4 generation payment", "$/kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber1_generation_payment", "Subscriber 1 generation rate", "$/kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber2_generation_payment", "Subscriber 2 generation rate", "$/kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber3_generation_payment", "Subscriber 3 generation rate", "$/kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber4_generation_payment", "Subscriber 4 generation rate", "$/kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
 
-    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber1_share_of_generation", "Subscriber1 share of generation", "kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber2_share_of_generation", "Subscriber2 share of generation", "kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber3_share_of_generation", "Subscriber3 share of generation", "kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber4_share_of_generation", "Subscriber4 share of generation", "kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber1_share_of_generation", "Subscriber 1 share of generation", "kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber2_share_of_generation", "Subscriber 2 share of generation", "kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber3_share_of_generation", "Subscriber 3 share of generation", "kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber4_share_of_generation", "Subscriber 4 share of generation", "kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT, SSC_ARRAY, "cf_unsubscribed_share_of_generation", "Unsubscribed share of generation", "kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
 
-    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber1_revenue_generation", "Subscriber1 revenue generation", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber2_revenue_generation", "Subscriber2 revenue generation", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber3_revenue_generation", "Subscriber3 revenue generation", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber4_revenue_generation", "Subscriber4 revenue generation", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_unsubscribed_revenue_generation", "Unsubscribed revenue generation", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber1_revenue_generation", "CS revenue from Subscriber 1 generation payments", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber2_revenue_generation", "CS revenue from Subscriber 2 generation payments", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber3_revenue_generation", "CS revenue from Subscriber 3 generation payments", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber4_revenue_generation", "CS revenue from Subscriber 4 generation payments", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_unsubscribed_revenue_generation", "CS revenue from unsubscribed generation", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
 
-    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber1_revenue_upfront", "Subscriber1 revenue upfront", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber2_revenue_upfront", "Subscriber2 revenue upfront", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber3_revenue_upfront", "Subscriber3 revenue upfront", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber4_revenue_upfront", "Subscriber4 revenue upfront", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber1_revenue_upfront", "CS revenue from Subscriber 1 up-front payment", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber2_revenue_upfront", "CS revenue from Subscriber 2 up-front payment", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber3_revenue_upfront", "CS revenue from Subscriber 3 up-front payment", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber4_revenue_upfront", "CS revenue from Subscriber 4 up-front payment", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
 
-    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber1_revenue_annual_payment", "Subscriber1 revenue annual payment", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber2_revenue_annual_payment", "Subscriber2 revenue annual payment", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber3_revenue_annual_payment", "Subscriber3 revenue annual payment", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber4_revenue_annual_payment", "Subscriber4 revenue annual payment", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber1_revenue_annual_payment", "CS revenue from Subscriber 1 annual payments", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber2_revenue_annual_payment", "CS revenue from Subscriber 2 annual payments", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber3_revenue_annual_payment", "CS revenue from Subscriber 3 annual payments", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber4_revenue_annual_payment", "CS revenue from Subscriber 4 annual payments", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
 
-    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber1_retail_cost", "Subscriber1 revenue retail cost", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber2_retail_cost", "Subscriber2 revenue retail cost", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber3_retail_cost", "Subscriber3 revenue retail cost", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber4_retail_cost", "Subscriber4 revenue retail cost", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber1_retail_cost", "Retail cost of electricity for Subscriber 1 class", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber2_retail_cost", "Retail cost of electricity for Subscriber 2 class", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber3_retail_cost", "Retail cost of electricity for Subscriber 3 class", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber4_retail_cost", "Retail cost of electricity for Subscriber 4 class", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
 
-    { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_subscriber1_revenue", "Subscriber1 total revenue", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_subscriber2_revenue", "Subscriber2 total revenue", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_subscriber3_revenue", "Subscriber3 total revenue", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_subscriber4_revenue", "Subscriber4 total revenue", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_unsubscribed_revenue", "Unsubscribed total revenue", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_subscriber1_revenue", "CS total revenue from Subscriber 1 class", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_subscriber2_revenue", "CS total revenue from Subscriber 2 class", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_subscriber3_revenue", "CS total revenue from Subscruber 3 class", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_subscriber4_revenue", "CS total revenue from Subscriber 4 class", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_unsubscribed_revenue", "CS total revenue from unsubscribed generation", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
 
 
-    { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_upfront", "CS total upfront fixed cost", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_upfront_per_capacity", "CS total upfront capacity cost", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_upfront", "CS total up-front fixed cost", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_upfront_per_capacity", "CS total up-front capacity cost", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_recurring_fixed", "CS total recurring fixed cost", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_recurring_capacity", "CS total recurring capacity cost", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_recurring_generation", "CS total recurring generation cost", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
 
-    { SSC_OUTPUT,       SSC_NUMBER,     "community_solar_upfront_cost",   "CS total upfront cost",              "$",                   "", "Metrics", "*", "", "" },
-    { SSC_OUTPUT,       SSC_NUMBER,     "community_solar_upfront_revenue",   "CS total upfront revenue",              "$",                   "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "community_solar_upfront_cost",   "CS total up-front cost",              "$",                   "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "community_solar_upfront_revenue",   "CS total up-front revenue",              "$",                   "", "Metrics", "*", "", "" },
 
 
 var_info_invalid };
@@ -2742,7 +2742,7 @@ public:
 
 			cost_debt_upfront = cost_debt_fee_frac * size_of_debt; // cpg added this to make cash flow consistent with single_owner.xlsx
 
-            // Community Solar adjustment for upfront revenue and costs
+            // Community Solar adjustment for up-front revenue and costs
 			cost_installed =
                 cost_prefinancing
                 + cost_financing
