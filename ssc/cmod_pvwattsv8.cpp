@@ -421,15 +421,29 @@ public:
             module.ff = 0.778; //fill factors required for self-shading calculations
             module.stc_eff = 0.19;
 
+            // for full CEC single diode model, Canadian Solar CS1H-320MS, parameters calculated by SAM version 2020.2.29 r3
+            mod.Area = 1.6864;
+            mod.Vmp = 35.8;
+            mod.Imp = 9.01;
+            mod.Voc = 43.3;
+            mod.Isc = 9.51;
+            mod.alpha_isc = 0.004755;
+            mod.beta_voc = -0.12557;
+            mod.a = 1.65916;
+            mod.Il = 9.51393;
+            mod.Io = 4.37813e-11;
+            mod.Rs = 0.269953;
+            mod.Rsh = 654.059;
+            mod.Adj = 5.79586;
+
             // for optional SDM module model:
             // selected module from PVsyst PAN database: TSM-330DD14A(II)
-            // note that this is a DIFFERENT module than the four main factors listed above
+            // note that this is a DIFFERENT module than the factors listed above
             sdm.Area = 1.940;
             sdm.Vmp = 37.8;
             sdm.Imp = 8.73;
             sdm.Voc = 46.2;
             sdm.Isc = 9.27;
-
             sdm.n_0 = 0.92;
             sdm.mu_n = 0;
             sdm.N_series = 72;
@@ -440,37 +454,37 @@ public:
             sdm.R_shref = 550;
             sdm.R_s = 0.382;
             sdm.D2MuTau = 0.0;
-
-            mod.Area = 1.940;
-            mod.Vmp = 37.8;
-            mod.Imp = 8.73;
-            mod.Voc = 46.2;
-            mod.Isc = 9.27;
-            mod.alpha_isc = 0.0046;
-            mod.beta_voc = as_double("beta_voc");
-            mod.a = as_double("a");
-            mod.Il = as_double("Il");
-            mod.Io = as_double("Io");
-            mod.Rs = 0.382;
-            mod.Rsh = 550;
-            mod.Adj = as_double("Adj");
             break;
 
         case PREMIUM:
             module.gamma = -0.0035;
             module.ar_glass = true;
             module.ff = 0.780;
-            module.stc_eff = 0.21;
+            module.stc_eff = 0.21; //efficiency assumption updated per Sunpower
+
+            // for full CEC single diode model, Sunpower SPR-E20-327
+            mod.Area = 1.6297;
+            mod.Vmp = 54.7;
+            mod.Imp = 5.98;
+            mod.Voc = 64.9;
+            mod.Isc = 6.46;
+            mod.alpha_isc = 0.0026;
+            mod.beta_voc = -0.1766;
+            mod.a = 2.45326;
+            mod.Il = 6.4704;
+            mod.Io = 2.01784e-11;
+            mod.Rs = 0.421231;
+            mod.Rsh = 261.723;
+            mod.Adj = 9.56482;
 
             // for optional SDM module model:
             // selected module from PVsyst PAN database: SPR-X20-327-COM
-            // note that this is a DIFFERENT module than the four main factors listed above
+            // note that this is a DIFFERENT module than the factors listed above
             sdm.Area = 1.630;
             sdm.Vmp = 59.5;
             sdm.Imp = 5.49;
             sdm.Voc = 70.0;
             sdm.Isc = 5.84;
-
             sdm.n_0 = 1.17;
             sdm.mu_n = 0;
             sdm.N_series = 96;
@@ -481,20 +495,6 @@ public:
             sdm.R_shref = 3444;
             sdm.R_s = 0.4;
             sdm.D2MuTau = 0.0;
-
-            mod.Area = 1.630;
-            mod.Vmp = 59.5;
-            mod.Imp = 5.49;
-            mod.Voc = 70.0;
-            mod.Isc = 5.84;
-            mod.alpha_isc = 0.0025;
-            mod.beta_voc = as_double("beta_voc");
-            mod.a = as_double("a");
-            mod.Il = as_double("Il");
-            mod.Io = as_double("Io");
-            mod.Rs = 0.4;
-            mod.Rsh = 3444;
-            mod.Adj = as_double("Adj");
             break;
 
         case THINFILM:
@@ -503,15 +503,29 @@ public:
             module.ff = 0.777;
             module.stc_eff = 0.18;
 
+            // for full CEC single diode model, First Solar FS-6435A
+            mod.Area = 2.4751;
+            mod.Vmp = 183.6;
+            mod.Imp = 2.37;
+            mod.Voc = 219.6;
+            mod.Isc = 2.55;
+            mod.alpha_isc = 0.00102;
+            mod.beta_voc = -0.61488;
+            mod.a = 7.97293;
+            mod.Il = 2.55475;
+            mod.Io = 2.69243e-12;
+            mod.Rs = 4.60991;
+            mod.Rsh = 2476.95;
+            mod.Adj = -2.49865;
+
             // for optional SDM module model:
             // selected module from PVsyst PAN database: FS-4112-3
-            // note that this is a DIFFERENT module than the four main factors listed above
+            // note that this is a DIFFERENT module than the factors listed above
             sdm.Area = 0.72;
             sdm.Vmp = 68.5;
             sdm.Imp = 1.64;
             sdm.Voc = 87.0;
             sdm.Isc = 1.83;
-
             sdm.n_0 = 1.5;
             sdm.mu_n = 0.002;
             sdm.N_series = 108;
@@ -522,20 +536,6 @@ public:
             sdm.R_shref = 3500;
             sdm.R_s = 4.36;
             sdm.D2MuTau = 0.95;
-
-            mod.Area = 0.72;
-            mod.Vmp = 68.5;
-            mod.Imp = 1.64;
-            mod.Voc = 87.0;
-            mod.Isc = 1.83;
-            mod.alpha_isc = 0.0007;
-            mod.beta_voc = as_double("beta_voc");
-            mod.a = as_double("a");
-            mod.Il = as_double("Il");
-            mod.Io = as_double("Io");
-            mod.Rs = 4.36;
-            mod.Rsh = 3500;
-            mod.Adj = as_double("Adj");
             break;
         }
 
@@ -1223,10 +1223,11 @@ public:
                         pvoutput_t out(0, 0, 0, 0, 0, 0, 0, 0);
                         // call the module model
                         if (!mod(in, tmod, -1, out)) throw exec_error("pvwattsv8", "error calculating module power and temperature with given parameters at time "); // +util::to_string(idx)); ????????????????
+                        dc = out.Power;
 
                         // single diode model per PVsyst using representative module parameters for each module type
-                        double P_single_module_sdm = sdmml_power(sdm, poa_for_power, tmod);
-                        dc = P_single_module_sdm * pv.dc_nameplate / (sdm.Vmp * sdm.Imp);
+                        //double P_single_module_sdm = sdmml_power(sdm, poa_for_power, tmod);
+                        //dc = P_single_module_sdm * pv.dc_nameplate / (sdm.Vmp * sdm.Imp);
                     }
                     else
                     {
