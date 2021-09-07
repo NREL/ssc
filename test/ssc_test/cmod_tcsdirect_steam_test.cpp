@@ -7,72 +7,72 @@
 namespace csp_tower {}
 using namespace csp_tower;
 
-//========Tests===================================================================================
-NAMESPACE_TEST(csp_tower, SteamTowerCmod, Default_NoFinancial)
-{
-    ssc_data_t defaults = tcsdirect_steam_defaults();
-    CmodUnderTest steam_tower = CmodUnderTest("tcsdirect_steam", defaults);
-    int errors = steam_tower.RunModule();
-    EXPECT_FALSE(errors);
-    if (!errors) {
-        EXPECT_NEAR_FRAC(steam_tower.GetOutput("annual_energy"), 263809742, kErrorToleranceHi);
-        EXPECT_NEAR(steam_tower.GetOutput("annual_fuel_usage"), 0., kErrorToleranceHi);
-        EXPECT_NEAR_FRAC(steam_tower.GetOutput("capacity_factor"), 30.08, kErrorToleranceHi);
-        EXPECT_NEAR_FRAC(steam_tower.GetOutput("annual_W_cycle_gross"), 296630582, kErrorToleranceHi);
-        EXPECT_NEAR_FRAC(steam_tower.GetOutput("kwh_per_kw"), 2635, kErrorToleranceHi);
-        EXPECT_NEAR_FRAC(steam_tower.GetOutput("conversion_factor"), 92.64, kErrorToleranceHi);
-        EXPECT_NEAR_FRAC(steam_tower.GetOutput("system_heat_rate"), 3.413, kErrorToleranceHi);
-        EXPECT_NEAR_FRAC(steam_tower.GetOutput("annual_total_water_use"), 55716, kErrorToleranceHi);
-    }
-}
-
-// Alternative condenser type : Evaporative
-NAMESPACE_TEST(csp_tower, SteamTowerCmod, EvaporativeCondenser_NoFinancial)
-{
-    ssc_data_t defaults = tcsdirect_steam_defaults();
-    CmodUnderTest steam_tower = CmodUnderTest("tcsdirect_steam", defaults);
-    steam_tower.SetInput("ct", 1);
-    steam_tower.SetInput("eta_ref", 0.404);
-    steam_tower.SetInput("startup_frac", 0.5);
-    steam_tower.SetInput("P_cond_min", 2);
-
-    int errors = steam_tower.RunModule();
-    EXPECT_FALSE(errors);
-    if (!errors) {
-        EXPECT_NEAR_FRAC(steam_tower.GetOutput("annual_energy"), 280975356, kErrorToleranceHi);
-        EXPECT_NEAR(steam_tower.GetOutput("annual_fuel_usage"), 0., kErrorToleranceHi);
-        EXPECT_NEAR_FRAC(steam_tower.GetOutput("capacity_factor"), 32.03, kErrorToleranceHi);
-        EXPECT_NEAR_FRAC(steam_tower.GetOutput("annual_W_cycle_gross"), 307624737, kErrorToleranceHi);
-        EXPECT_NEAR_FRAC(steam_tower.GetOutput("kwh_per_kw"), 2806, kErrorToleranceHi);
-        EXPECT_NEAR_FRAC(steam_tower.GetOutput("conversion_factor"), 95.14, kErrorToleranceHi);
-        EXPECT_NEAR_FRAC(steam_tower.GetOutput("system_heat_rate"), 3.413, kErrorToleranceHi);
-        EXPECT_NEAR_FRAC(steam_tower.GetOutput("annual_total_water_use"), 893431, kErrorToleranceHi);
-    }
-}
-
-// Alternative condenser type : Hybrid
-NAMESPACE_TEST(csp_tower, SteamTowerCmod, HybridCondenser_NoFinancial)
-{
-    ssc_data_t defaults = tcsdirect_steam_defaults();
-    CmodUnderTest steam_tower = CmodUnderTest("tcsdirect_steam", defaults);
-    steam_tower.SetInput("ct", 3);
-    steam_tower.SetInput("eta_ref", 0.404);
-    steam_tower.SetInput("startup_frac", 0.5);
-    steam_tower.SetInput("P_cond_min", 2);
-
-    int errors = steam_tower.RunModule();
-    EXPECT_FALSE(errors);
-    if (!errors) {
-        EXPECT_NEAR_FRAC(steam_tower.GetOutput("annual_energy"), 268116066, kErrorToleranceHi);
-        EXPECT_NEAR(steam_tower.GetOutput("annual_fuel_usage"), 0., kErrorToleranceHi);
-        EXPECT_NEAR_FRAC(steam_tower.GetOutput("capacity_factor"), 30.57, kErrorToleranceHi);
-        EXPECT_NEAR_FRAC(steam_tower.GetOutput("annual_W_cycle_gross"), 304066728, kErrorToleranceHi);
-        EXPECT_NEAR_FRAC(steam_tower.GetOutput("kwh_per_kw"), 2678, kErrorToleranceHi);
-        EXPECT_NEAR_FRAC(steam_tower.GetOutput("conversion_factor"), 91.85, kErrorToleranceHi);
-        EXPECT_NEAR_FRAC(steam_tower.GetOutput("system_heat_rate"), 3.413, kErrorToleranceHi);
-        EXPECT_NEAR_FRAC(steam_tower.GetOutput("annual_total_water_use"), 55716, kErrorToleranceHi);
-    }
-}
+////========Tests===================================================================================
+//NAMESPACE_TEST(csp_tower, SteamTowerCmod, Default_NoFinancial)
+//{
+//    ssc_data_t defaults = tcsdirect_steam_defaults();
+//    CmodUnderTest steam_tower = CmodUnderTest("tcsdirect_steam", defaults);
+//    int errors = steam_tower.RunModule();
+//    EXPECT_FALSE(errors);
+//    if (!errors) {
+//        EXPECT_NEAR_FRAC(steam_tower.GetOutput("annual_energy"), 263809742, kErrorToleranceHi);
+//        EXPECT_NEAR(steam_tower.GetOutput("annual_fuel_usage"), 0., kErrorToleranceHi);
+//        EXPECT_NEAR_FRAC(steam_tower.GetOutput("capacity_factor"), 30.08, kErrorToleranceHi);
+//        EXPECT_NEAR_FRAC(steam_tower.GetOutput("annual_W_cycle_gross"), 296630582, kErrorToleranceHi);
+//        EXPECT_NEAR_FRAC(steam_tower.GetOutput("kwh_per_kw"), 2635, kErrorToleranceHi);
+//        EXPECT_NEAR_FRAC(steam_tower.GetOutput("conversion_factor"), 92.64, kErrorToleranceHi);
+//        EXPECT_NEAR_FRAC(steam_tower.GetOutput("system_heat_rate"), 3.413, kErrorToleranceHi);
+//        EXPECT_NEAR_FRAC(steam_tower.GetOutput("annual_total_water_use"), 55716, kErrorToleranceHi);
+//    }
+//}
+//
+//// Alternative condenser type : Evaporative
+//NAMESPACE_TEST(csp_tower, SteamTowerCmod, EvaporativeCondenser_NoFinancial)
+//{
+//    ssc_data_t defaults = tcsdirect_steam_defaults();
+//    CmodUnderTest steam_tower = CmodUnderTest("tcsdirect_steam", defaults);
+//    steam_tower.SetInput("ct", 1);
+//    steam_tower.SetInput("eta_ref", 0.404);
+//    steam_tower.SetInput("startup_frac", 0.5);
+//    steam_tower.SetInput("P_cond_min", 2);
+//
+//    int errors = steam_tower.RunModule();
+//    EXPECT_FALSE(errors);
+//    if (!errors) {
+//        EXPECT_NEAR_FRAC(steam_tower.GetOutput("annual_energy"), 280975356, kErrorToleranceHi);
+//        EXPECT_NEAR(steam_tower.GetOutput("annual_fuel_usage"), 0., kErrorToleranceHi);
+//        EXPECT_NEAR_FRAC(steam_tower.GetOutput("capacity_factor"), 32.03, kErrorToleranceHi);
+//        EXPECT_NEAR_FRAC(steam_tower.GetOutput("annual_W_cycle_gross"), 307624737, kErrorToleranceHi);
+//        EXPECT_NEAR_FRAC(steam_tower.GetOutput("kwh_per_kw"), 2806, kErrorToleranceHi);
+//        EXPECT_NEAR_FRAC(steam_tower.GetOutput("conversion_factor"), 95.14, kErrorToleranceHi);
+//        EXPECT_NEAR_FRAC(steam_tower.GetOutput("system_heat_rate"), 3.413, kErrorToleranceHi);
+//        EXPECT_NEAR_FRAC(steam_tower.GetOutput("annual_total_water_use"), 893431, kErrorToleranceHi);
+//    }
+//}
+//
+//// Alternative condenser type : Hybrid
+//NAMESPACE_TEST(csp_tower, SteamTowerCmod, HybridCondenser_NoFinancial)
+//{
+//    ssc_data_t defaults = tcsdirect_steam_defaults();
+//    CmodUnderTest steam_tower = CmodUnderTest("tcsdirect_steam", defaults);
+//    steam_tower.SetInput("ct", 3);
+//    steam_tower.SetInput("eta_ref", 0.404);
+//    steam_tower.SetInput("startup_frac", 0.5);
+//    steam_tower.SetInput("P_cond_min", 2);
+//
+//    int errors = steam_tower.RunModule();
+//    EXPECT_FALSE(errors);
+//    if (!errors) {
+//        EXPECT_NEAR_FRAC(steam_tower.GetOutput("annual_energy"), 268116066, kErrorToleranceHi);
+//        EXPECT_NEAR(steam_tower.GetOutput("annual_fuel_usage"), 0., kErrorToleranceHi);
+//        EXPECT_NEAR_FRAC(steam_tower.GetOutput("capacity_factor"), 30.57, kErrorToleranceHi);
+//        EXPECT_NEAR_FRAC(steam_tower.GetOutput("annual_W_cycle_gross"), 304066728, kErrorToleranceHi);
+//        EXPECT_NEAR_FRAC(steam_tower.GetOutput("kwh_per_kw"), 2678, kErrorToleranceHi);
+//        EXPECT_NEAR_FRAC(steam_tower.GetOutput("conversion_factor"), 91.85, kErrorToleranceHi);
+//        EXPECT_NEAR_FRAC(steam_tower.GetOutput("system_heat_rate"), 3.413, kErrorToleranceHi);
+//        EXPECT_NEAR_FRAC(steam_tower.GetOutput("annual_total_water_use"), 55716, kErrorToleranceHi);
+//    }
+//}
 
 //// Fossil dispatch
 //NAMESPACE_TEST(csp_tower, SteamTowerCmod, FossilDispatch_NoFinancial)

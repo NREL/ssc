@@ -172,6 +172,9 @@ public:
 	bool canDischarge;  ///< A boolean specifying whether the battery is allowed to discharge in the timestep
 	bool canFuelCellCharge; ///< A boolean specifying whether the battery is allowed to charge from the fuel cell
 
+    bool chargeOnlySystemExceedLoad; ///< A boolean specifying whether the battery can charge only if the system's output power exceeds the load
+    bool dischargeOnlyLoadExceedSystem; ///< A boolean specifying whether the battery can discharge only if the load exceeds the system's output power
+
 	double stateOfChargeMax;   ///< The maximum state of charge (0-100)
 	double stateOfChargeMin;   ///< The minimum state of charge (0-100)
 	double depthOfDischargeMax; ///< The maximum depth of discharge (0-100)
