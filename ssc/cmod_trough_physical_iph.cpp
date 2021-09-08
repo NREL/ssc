@@ -378,6 +378,7 @@ public:
 	{
 		add_var_info( _cm_vtab_trough_physical_process_heat );
 		add_var_info(vtab_adjustment_factors);
+        add_var_info(vtab_technology_outputs);
 	}
 
 	void exec( )
