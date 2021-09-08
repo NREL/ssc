@@ -813,7 +813,6 @@ namespace util
 	double bilinear( double rowval, double colval, const matrix_t<double> &mat );
 	double interpolate(double x1, double y1, double x2, double y2, double xValueToGetYValueFor);
 	double linterp_col( const matrix_t<double> &mat, size_t ixcol, double xval, size_t iycol );
-    size_t nearest_col_index(const matrix_t<double>& mat, size_t col, double val);
 	bool translate_schedule(int tod[8760], const matrix_t<double> &wkday, const matrix_t<double> &wkend, int min_val, int max_val);
 
 	std::vector<double> frequency_table(double* values, size_t n_vals, double bin_width);

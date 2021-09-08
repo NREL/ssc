@@ -70,12 +70,6 @@ struct cycle_state {
     int rainflow_jlt;                       // last index in Peaks, i.e, if Peaks = [0,1], then jlt = 1
     std::vector<double> rainflow_peaks;
 
-    util::matrix_t<double> cycle_counts;   // Cycles, sorted by DOD bins provided in cycling_matrix
-    enum CYCLE_COUNTS_COLUMNS {
-        DOD,
-        CYCLES
-    };
-
     // values for current day, refreshed end of each day; used only in analytic life models not calendar_cycle model
     double cum_dt;                          // day, [0-1]
     double DOD_max;                         // max DOD of battery for current day, [0-1]
@@ -161,8 +155,6 @@ protected:
 
 private:
     void initialize();
-
-    void init_cycle_counts();
 
     friend class lifetime_calendar_cycle_t;
 };

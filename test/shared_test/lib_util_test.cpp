@@ -17,19 +17,6 @@ TEST(libUtilTests, testFormat_lib_util)
 		301.3, 10.4, 4.3, 2.2, 2.1, 2.4), str);
 }
 
-TEST(libUtilTests, testNearestColValue) {
-    util::matrix_t<double> cycles_vs_DOD;
-    double table_vals[27] = { 20, 0, 100, 20, 5000, 80, 20, 10000, 60, 60, 0, 100, 60, 2500, 80, 60, 5000, 60, 80, 0, 100, 80, 1000, 80, 80, 2000, 60 };
-    cycles_vs_DOD.assign(table_vals, 9, 3);
-
-    ASSERT_EQ(0, util::nearest_col_index(cycles_vs_DOD, 0, 0));
-    ASSERT_EQ(0, util::nearest_col_index(cycles_vs_DOD, 0, 20));
-    ASSERT_EQ(2, util::nearest_col_index(cycles_vs_DOD, 0, 35));
-    ASSERT_EQ(3, util::nearest_col_index(cycles_vs_DOD, 0, 40));
-    ASSERT_EQ(3, util::nearest_col_index(cycles_vs_DOD, 0, 45));
-    ASSERT_EQ(8, util::nearest_col_index(cycles_vs_DOD, 0, 100));
-}
-
 TEST(sscapiTest, SSC_DATARR_test)
 {
     // create data entries
