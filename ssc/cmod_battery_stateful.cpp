@@ -138,6 +138,7 @@ var_info vtab_battery_state[] = {
     { SSC_INOUT,        SSC_NUMBER,     "n_cycles",                  "Number of cycles",                                         "",          "",                     "StateCell",        "",                           "",                               ""  },
     { SSC_INOUT,        SSC_NUMBER,     "cycle_range",               "Range of last cycle",                                      "%",         "",                     "StateCell",        "",                           "",                               ""  },
     { SSC_INOUT,        SSC_NUMBER,     "cycle_DOD",                 "cycle_DOD of last cycle",                                  "%",         "",                     "StateCell",        "",                           "",                               ""  },
+    { SSC_INOUT,        SSC_MATRIX,     "cycle_counts",              "Counts of cycles by DOD categories in cycle matrix",                                  "",         "",                      "StateCell",        "",                           "",                               ""  },
     { SSC_INOUT,        SSC_NUMBER,     "average_range",             "Average cycle cycle_range",                                "%",         "",                     "StateCell",        "",                           "",                               ""  },
     { SSC_INOUT,        SSC_NUMBER,     "rainflow_Xlt",              "Rainflow cycle_range of second to last half cycle",        "%",         "",                     "StateCell",        "",                           "",                               ""  },
     { SSC_INOUT,        SSC_NUMBER,     "rainflow_Ylt",              "Rainflow cycle_range of last half cycle",                  "%",         "",                     "StateCell",        "",                           "",                               ""  },
@@ -244,6 +245,7 @@ void write_battery_state(const battery_state& state, var_table* vt) {
     if (choice == lifetime_params::CALCYC) {
         vt->assign_match_case("q_relative_calendar", lifetime->calendar->q_relative_calendar);
         vt->assign_match_case("dq_relative_calendar_old", lifetime->calendar->dq_relative_calendar_old);
+        vt->assign_match_case("cycle_counts", lifetime->cycle->cycle_counts);
     }
     else {
         vt->assign_match_case("cum_dt", lifetime->cycle->cum_dt);
@@ -355,6 +357,7 @@ void read_battery_state(battery_state& state, var_table* vt) {
     if (choice == lifetime_params::CALCYC) {
         vt_get_number(vt, "q_relative_calendar", &lifetime->calendar->q_relative_calendar);
         vt_get_number(vt, "dq_relative_calendar_old", &lifetime->calendar->dq_relative_calendar_old);
+        vt_get_matrix(vt, "cycle_counts", lifetime->cycle->cycle_counts);
     }
     else {
         vt_get_number(vt, "cum_dt", &lifetime->cycle->cum_dt);
