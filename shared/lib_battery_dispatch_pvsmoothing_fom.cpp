@@ -243,7 +243,8 @@ void dispatch_pvsmoothing_front_of_meter_t::setup_pvsmoothing_ramp_interval_vect
     // main loop from ramp_rate_control.py
     // conversion factors
     ssc_number_t  power_to_energy_conversion_factor = m_batt_dispatch_pvs_timestep_multiplier * _dt_hour;
-    ssc_number_t  batt_half_round_trip_eff = sqrt(m_etaDischarge * m_etaPVCharge);
+    ssc_number_t  dc_dc_eff = 0.988;
+    ssc_number_t  batt_half_round_trip_eff = sqrt(m_etaDischarge * m_etaPVCharge * dc_dc_eff);
 
 
     ssc_number_t kp = m_batt_dispatch_pvs_kp;
@@ -259,7 +260,7 @@ void dispatch_pvsmoothing_front_of_meter_t::setup_pvsmoothing_ramp_interval_vect
     bool curtail_as_control = m_batt_dispatch_pvs_curtail_as_control;
     bool curtail_if_violation = m_batt_dispatch_pvs_curtail_if_violation;
 
-    ssc_number_t battery_energy = _Battery->energy_nominal(); // check units in equations below 
+    ssc_number_t battery_energy = _Battery->energy_nominal() * m_etaDischarge; // check units in equations below 
     ssc_number_t battery_power = m_batteryPower->powerBatteryChargeMaxAC;
     // scale by nameplate per ERPI code
     battery_energy = m_batt_dispatch_pvs_nameplate_ac > 0 ? battery_energy / m_batt_dispatch_pvs_nameplate_ac : battery_energy;
@@ -327,8 +328,8 @@ void dispatch_pvsmoothing_front_of_meter_t::setup_pvsmoothing_ramp_interval_vect
         if ((battery_soc - battery_power_terminal * batt_half_round_trip_eff * power_to_energy_conversion_factor) > battery_energy)
             battery_power_terminal = -1.0 * (battery_energy - battery_soc) / power_to_energy_conversion_factor / batt_half_round_trip_eff; 
         //            #check empty
-        else if ((battery_soc - battery_power_terminal * power_to_energy_conversion_factor) < 0)
-            battery_power_terminal = battery_soc / power_to_energy_conversion_factor / batt_half_round_trip_eff;
+        else if ((battery_soc - battery_power_terminal / batt_half_round_trip_eff * power_to_energy_conversion_factor) < 0)
+            battery_power_terminal = battery_soc / power_to_energy_conversion_factor * batt_half_round_trip_eff;
 
         // enforce battery power limits
         // discharging too fast
