@@ -1171,6 +1171,27 @@ double util::linterp_col( const util::matrix_t<double> &mat, size_t ixcol, doubl
 			xval );
 }
 
+size_t util::nearest_col_index(const matrix_t<double>& mat, size_t col, double val) {
+    std::vector<double> values;
+    for (size_t i = 0; i < mat.nrows(); i++) {
+        values.push_back(mat.at(i, col));
+    }
+
+    auto iter = std::lower_bound(values.begin(), values.end(), val);
+
+    if (iter == values.begin()) {
+        return 0;
+    }
+    if (iter == values.end()) {
+        return iter - values.begin() - 1;
+    }
+
+    double a = *(iter - 1);
+    double b = *(iter);
+
+    return fabs(val - a) < fabs(val - b) ? (iter - values.begin() - 1) : (iter - values.begin());
+}
+
 size_t util::lifetimeIndex(size_t year, size_t hour_of_year, size_t step_of_hour, size_t step_per_hour)
 {
 	return (year * util::hours_per_year + hour_of_year)*step_per_hour + step_of_hour;
