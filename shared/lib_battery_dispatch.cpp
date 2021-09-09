@@ -463,7 +463,9 @@ void dispatch_t::dispatch_dc_outage_step(size_t lifetimeIndex) {
     double pv_kwac = m_batteryPower->sharedInverter->powerAC_kW;
 
     double max_discharge_kwdc = _Battery->calculate_max_discharge_kw();
+    max_discharge_kwdc = std::fmin(max_discharge_kwdc, m_batteryPower->powerBatteryDischargeMaxDC);
     double max_charge_kwdc = _Battery->calculate_max_charge_kw();
+    max_charge_kwdc = std::fmax(max_charge_kwdc, -1.0 * m_batteryPower->powerBatteryChargeMaxDC); // Max, since charging numbers are negative
 
     if (pv_kwac > crit_load_kwac) {
         double remaining_kwdc = -(pv_kwac - crit_load_kwac) / dc_ac_eff + pv_clipped;
@@ -513,8 +515,11 @@ void dispatch_t::dispatch_ac_outage_step(size_t lifetimeIndex) {
 
     double battery_dispatched_kwac = 0;
     double max_discharge_kwdc = _Battery->calculate_max_discharge_kw();
+    max_discharge_kwdc = std::fmin(max_discharge_kwdc, m_batteryPower->powerBatteryDischargeMaxDC);
     double max_discharge_kwac = max_discharge_kwdc * m_batteryPower->singlePointEfficiencyDCToDC;
+    max_discharge_kwac = std::fmin(max_discharge_kwac, m_batteryPower->powerBatteryDischargeMaxAC);
     double max_charge_kwdc = _Battery->calculate_max_charge_kw();
+    max_charge_kwdc = std::fmax(max_charge_kwdc, -1.0 * m_batteryPower->powerBatteryChargeMaxDC); // Max, since charging numbers are negative
 
     if (pv_kwac > crit_load_kwac) {
         double remaining_kwdc = -(pv_kwac - crit_load_kwac) * m_batteryPower->singlePointEfficiencyACToDC;
