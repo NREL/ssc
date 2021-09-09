@@ -206,7 +206,7 @@ public:
 
     void endOutage(bool isAutomated);
 
-    bool last_step_was_outage;
+    bool recover_from_outage; // Tells the dispatch algorithms to re-plan given outage recovery
 
 private:
     // Managed by dispatch_t::m_batteryPowerFlow
@@ -219,6 +219,8 @@ private:
 
     double stateOfChargeMaxWhenGrid;   ///< The maximum state of charge when the grid is on (0-100)
     double stateOfChargeMinWhenGrid;   ///< The minimum state of charge when the grid is on (0-100)
+
+    bool last_step_was_outage; // Used by outage manager to determine when to call endOutage
 };
 
 /*! Class containing calculated grid power at a single time step */

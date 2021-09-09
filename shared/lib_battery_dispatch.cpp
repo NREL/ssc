@@ -978,6 +978,7 @@ outage_manager::outage_manager(BatteryPower* batteryPower) {
     stateOfChargeMaxWhenGrid = m_batteryPower->stateOfChargeMax;
     stateOfChargeMinWhenGrid = m_batteryPower->stateOfChargeMin;
     last_step_was_outage = false;
+    recover_from_outage = false;
 }
 
 outage_manager::~outage_manager() {
@@ -994,14 +995,17 @@ void outage_manager::copy(const outage_manager& tmp) {
     stateOfChargeMaxWhenGrid = tmp.stateOfChargeMaxWhenGrid;
     stateOfChargeMinWhenGrid = tmp.stateOfChargeMinWhenGrid;
     last_step_was_outage = tmp.last_step_was_outage;
+    recover_from_outage = tmp.recover_from_outage;
 }
 
 void outage_manager::update(bool isAutomated) {
+    recover_from_outage = false;
     if (m_batteryPower->isOutageStep && !last_step_was_outage) {
         startOutage();
     }
     else if (!m_batteryPower->isOutageStep && last_step_was_outage) {
         endOutage(isAutomated);
+        recover_from_outage = true; // True for one timestep so dispatch can re-plan
     }
 }
 
