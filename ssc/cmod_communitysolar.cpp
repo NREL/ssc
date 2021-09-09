@@ -99,16 +99,15 @@ static var_info _cm_vtab_communitysolar[] = {
     { SSC_INPUT,        SSC_ARRAY,     "subscriber4_share",	          "Subscriber 4 share",	                                                    "%",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
     { SSC_INPUT,        SSC_NUMBER,     "subscriber4_growth",	          "Subscriber 4 growth",	                                                "%/yr",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
 
-    // optional retail rate
-    { SSC_INPUT,        SSC_NUMBER,     "enable_subscriber_retail_rate",  "Consider subscriber retail cost of electricity",	                        "0/1",            "",                      "Community Solar",             "?=0",						   "BOOLEAN",                 "" },
-    { SSC_INPUT,        SSC_ARRAY,      "subscriber1_retail_rate",	      "Subscriber 1 retail rate",	                                            "$/kWh",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
-    { SSC_INPUT,        SSC_NUMBER,     "subscriber1_retail_rate_escal",  "Subscriber 1 retail rate escalation",	                                                "%/yr",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
-    { SSC_INPUT,        SSC_ARRAY,      "subscriber2_retail_rate",	      "Subscriber 2 retail rate",	                                            "$/kWh",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
-    { SSC_INPUT,        SSC_NUMBER,     "subscriber2_retail_rate_escal",  "Subscriber 2 retail rate escalation",	                                                "%/yr",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
-    { SSC_INPUT,        SSC_ARRAY,      "subscriber3_retail_rate",	      "Subscriber 3 retail rate",	                                            "$/kWh",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
-    { SSC_INPUT,        SSC_NUMBER,     "subscriber3_retail_rate_escal",  "Subscriber 3 retail rate escalation",	                                                "%/yr",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
-    { SSC_INPUT,        SSC_ARRAY,      "subscriber4_retail_rate",	      "Subscriber 4 retail rate",	                                            "$/kWh",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
-    { SSC_INPUT,        SSC_NUMBER,     "subscriber4_retail_rate_escal",  "Subscriber 4 retail rate escalation",	                                                "%/yr",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
+    // bill credit rate
+    { SSC_INPUT,        SSC_ARRAY,      "subscriber1_bill_credit_rate",	      "Subscriber 1 bill credit rate",	                                            "$/kWh",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
+    { SSC_INPUT,        SSC_NUMBER,     "subscriber1_bill_credit_rate_escal",  "Subscriber 1 bill credit rate escalation",	                                                "%/yr",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
+    { SSC_INPUT,        SSC_ARRAY,      "subscriber2_bill_credit_rate",	      "Subscriber 2 bill credit rate",	                                            "$/kWh",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
+    { SSC_INPUT,        SSC_NUMBER,     "subscriber2_bill_credit_rate_escal",  "Subscriber 2 bill credit rate escalation",	                                                "%/yr",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
+    { SSC_INPUT,        SSC_ARRAY,      "subscriber3_bill_credit_rate",	      "Subscriber 3 bill credit rate",	                                            "$/kWh",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
+    { SSC_INPUT,        SSC_NUMBER,     "subscriber3_bill_credit_rate_escal",  "Subscriber 3 bill credit rate escalation",	                                                "%/yr",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
+    { SSC_INPUT,        SSC_ARRAY,      "subscriber4_bill_credit_rate",	      "Subscriber 4 bill credit rate",	                                            "$/kWh",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
+    { SSC_INPUT,        SSC_NUMBER,     "subscriber4_bill_credit_rate_escal",  "Subscriber 4 bill credit rate escalation",	                                                "%/yr",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
 
     // subscription revenue
     { SSC_INPUT,        SSC_NUMBER,     "subscriber1_payment_upfront",	          "Subscriber 1 payment up-front",                                    "$",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
@@ -740,10 +739,10 @@ static var_info _cm_vtab_communitysolar[] = {
     { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber4_share_fraction", "Subscriber 4 share of system capacity", "", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT, SSC_ARRAY, "cf_unsubscribed_share_fraction", "Unsubscribed share of system capacity", "", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
 
-    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber1_retail", "Subscriber 1 retail rate", "$/kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber2_retail", "Subscriber 2 retail rate", "$/kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber3_retail", "Subscriber 3 retail rate", "$/kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber4_retail", "Subscriber 4 retail rate", "$/kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber1_bill_credit_rate", "Subscriber 1 bill credit rate", "$/kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber2_bill_credit_rate", "Subscriber 2 bill credit rate", "$/kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber3_bill_credit_rate", "Subscriber 3 bill credit rate", "$/kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber4_bill_credit_rate", "Subscriber 4 bill credit rate", "$/kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
 
     { SSC_OUTPUT, SSC_ARRAY, "cf_recurring_fixed", "CS recurring fixed cost", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT, SSC_ARRAY, "cf_recurring_capacity", "CS recurring capacity cost", "$/kW-yr", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
@@ -776,10 +775,10 @@ static var_info _cm_vtab_communitysolar[] = {
     { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber3_revenue_annual_payment", "CS revenue from Subscriber 3 annual payments", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber4_revenue_annual_payment", "CS revenue from Subscriber 4 annual payments", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
 
-    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber1_retail_cost", "Retail cost of electricity for Subscriber 1 class", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber2_retail_cost", "Retail cost of electricity for Subscriber 2 class", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber3_retail_cost", "Retail cost of electricity for Subscriber 3 class", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber4_retail_cost", "Retail cost of electricity for Subscriber 4 class", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber1_bill_credit_amount", "Bill credit for Subscriber 1 class", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber2_bill_credit_amount", "Bill credit for Subscriber 2 class", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber3_bill_credit_amount", "Bill credit for Subscriber 3 class", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber4_bill_credit_amount", "Bill credit for Subscriber 4 class", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
 
     { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_subscriber1_revenue", "CS total revenue from Subscriber 1 class", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_subscriber2_revenue", "CS total revenue from Subscriber 2 class", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
@@ -1034,10 +1033,10 @@ enum {
     CF_subscriber4_share_fraction,
     CF_unsubscribed_share_fraction,
 
-    CF_subscriber1_retail,
-    CF_subscriber2_retail,
-    CF_subscriber3_retail,
-    CF_subscriber4_retail,
+    CF_subscriber1_bill_credit_rate,
+    CF_subscriber2_bill_credit_rate,
+    CF_subscriber3_bill_credit_rate,
+    CF_subscriber4_bill_credit_rate,
 
     CF_recurring_fixed,
     CF_recurring_capacity,
@@ -1071,10 +1070,10 @@ enum {
     CF_subscriber3_revenue_annual_payment,
     CF_subscriber4_revenue_annual_payment,
 
-    CF_subscriber1_retail_cost,
-    CF_subscriber2_retail_cost,
-    CF_subscriber3_retail_cost,
-    CF_subscriber4_retail_cost,
+    CF_subscriber1_bill_credit_amount,
+    CF_subscriber2_bill_credit_amount,
+    CF_subscriber3_bill_credit_amount,
+    CF_subscriber4_bill_credit_amount,
 
     CF_community_solar_subscriber1_revenue,
     CF_community_solar_subscriber2_revenue,
@@ -1691,13 +1690,11 @@ public:
             }
         }
 
-        // community solar - retail portion (escalation above inflation)
-        if (as_boolean("enable_subscriber_retail_rate")) {
-            escal_or_annual(CF_subscriber1_retail, nyears, "subscriber1_retail_rate", inflation_rate, 1.0, false, as_double("subscriber1_retail_rate_escal") * 0.01); 
-            escal_or_annual(CF_subscriber2_retail, nyears, "subscriber2_retail_rate", inflation_rate, 1.0, false, as_double("subscriber2_retail_rate_escal") * 0.01); 
-            escal_or_annual(CF_subscriber3_retail, nyears, "subscriber3_retail_rate", inflation_rate, 1.0, false, as_double("subscriber3_retail_rate_escal") * 0.01); 
-            escal_or_annual(CF_subscriber4_retail, nyears, "subscriber4_retail_rate", inflation_rate, 1.0, false, as_double("subscriber4_retail_rate_escal") * 0.01); 
-        }
+        // community solar - bill credit portion (escalation above inflation)
+        escal_or_annual(CF_subscriber1_bill_credit_rate, nyears, "subscriber1_bill_credit_rate", inflation_rate, 1.0, false, as_double("subscriber1_bill_credit_rate_escal") * 0.01); 
+        escal_or_annual(CF_subscriber2_bill_credit_rate, nyears, "subscriber2_bill_credit_rate", inflation_rate, 1.0, false, as_double("subscriber2_bill_credit_rate_escal") * 0.01); 
+        escal_or_annual(CF_subscriber3_bill_credit_rate, nyears, "subscriber3_bill_credit_rate", inflation_rate, 1.0, false, as_double("subscriber3_bill_credit_rate_escal") * 0.01); 
+        escal_or_annual(CF_subscriber4_bill_credit_rate, nyears, "subscriber4_bill_credit_rate", inflation_rate, 1.0, false, as_double("subscriber4_bill_credit_rate_escal") * 0.01); 
 
         // community solar - revenue - annual values
         escal_or_annual(CF_subscriber1_revenue_annual_payment, nyears, "subscriber1_payment_annual", inflation_rate, 1.0, false, as_double("subscriber1_payment_annual_escal") * 0.01);
@@ -1740,10 +1737,10 @@ public:
             cf.at(CF_subscriber4_revenue_generation, i) = cf.at(CF_subscriber4_share_of_generation, i) * cf.at(CF_subscriber4_generation_payment, i);
             cf.at(CF_unsubscribed_revenue_generation, i) = cf.at(CF_unsubscribed_share_of_generation, i) * cf.at(CF_unsubscribed_generation_payment, i);
 
-            cf.at(CF_subscriber1_retail_cost, i) = cf.at(CF_subscriber1_share_of_generation, i) * cf.at(CF_subscriber1_retail, i);
-            cf.at(CF_subscriber2_retail_cost, i) = cf.at(CF_subscriber2_share_of_generation, i) * cf.at(CF_subscriber2_retail, i);
-            cf.at(CF_subscriber3_retail_cost, i) = cf.at(CF_subscriber3_share_of_generation, i) * cf.at(CF_subscriber3_retail, i);
-            cf.at(CF_subscriber4_retail_cost, i) = cf.at(CF_subscriber4_share_of_generation, i) * cf.at(CF_subscriber4_retail, i);
+            cf.at(CF_subscriber1_bill_credit_amount, i) = cf.at(CF_subscriber1_share_of_generation, i) * cf.at(CF_subscriber1_bill_credit_rate, i);
+            cf.at(CF_subscriber2_bill_credit_amount, i) = cf.at(CF_subscriber2_share_of_generation, i) * cf.at(CF_subscriber2_bill_credit_rate, i);
+            cf.at(CF_subscriber3_bill_credit_amount, i) = cf.at(CF_subscriber3_share_of_generation, i) * cf.at(CF_subscriber3_bill_credit_rate, i);
+            cf.at(CF_subscriber4_bill_credit_amount, i) = cf.at(CF_subscriber4_share_of_generation, i) * cf.at(CF_subscriber4_bill_credit_rate, i);
 
             cf.at(CF_community_solar_subscriber1_revenue, i) = cf.at(CF_subscriber1_revenue_upfront, i) + cf.at(CF_subscriber1_revenue_generation, i) + cf.at(CF_subscriber1_revenue_annual_payment, i);
             cf.at(CF_community_solar_subscriber2_revenue, i) = cf.at(CF_subscriber2_revenue_upfront, i) + cf.at(CF_subscriber2_revenue_generation, i) + cf.at(CF_subscriber2_revenue_annual_payment, i);
@@ -3776,10 +3773,10 @@ public:
         save_cf(CF_subscriber4_share_fraction, nyears, "cf_subscriber4_share_fraction");
         save_cf(CF_unsubscribed_share_fraction, nyears, "cf_unsubscribed_share_fraction");
         
-        save_cf(CF_subscriber1_retail, nyears, "cf_subscriber1_retail");
-        save_cf(CF_subscriber2_retail, nyears, "cf_subscriber2_retail");
-        save_cf(CF_subscriber3_retail, nyears, "cf_subscriber3_retail");
-        save_cf(CF_subscriber4_retail, nyears, "cf_subscriber4_retail");
+        save_cf(CF_subscriber1_bill_credit_rate, nyears, "cf_subscriber1_bill_credit_rate");
+        save_cf(CF_subscriber2_bill_credit_rate, nyears, "cf_subscriber2_bill_credit_rate");
+        save_cf(CF_subscriber3_bill_credit_rate, nyears, "cf_subscriber3_bill_credit_rate");
+        save_cf(CF_subscriber4_bill_credit_rate, nyears, "cf_subscriber4_bill_credit_rate");
 
         save_cf(CF_recurring_fixed, nyears, "cf_recurring_fixed");
         save_cf(CF_recurring_capacity, nyears, "cf_recurring_capacity");
@@ -3812,10 +3809,10 @@ public:
         save_cf(CF_subscriber3_revenue_annual_payment, nyears, "cf_subscriber3_revenue_annual_payment");
         save_cf(CF_subscriber4_revenue_annual_payment, nyears, "cf_subscriber4_revenue_annual_payment");
 
-        save_cf(CF_subscriber1_retail_cost, nyears, "cf_subscriber1_retail_cost");
-        save_cf(CF_subscriber2_retail_cost, nyears, "cf_subscriber2_retail_cost");
-        save_cf(CF_subscriber3_retail_cost, nyears, "cf_subscriber3_retail_cost");
-        save_cf(CF_subscriber4_retail_cost, nyears, "cf_subscriber4_retail_cost");
+        save_cf(CF_subscriber1_bill_credit_amount, nyears, "cf_subscriber1_bill_credit_amount");
+        save_cf(CF_subscriber2_bill_credit_amount, nyears, "cf_subscriber2_bill_credit_amount");
+        save_cf(CF_subscriber3_bill_credit_amount, nyears, "cf_subscriber3_bill_credit_amount");
+        save_cf(CF_subscriber4_bill_credit_amount, nyears, "cf_subscriber4_bill_credit_amount");
 
         save_cf(CF_community_solar_subscriber1_revenue, nyears, "cf_community_solar_subscriber1_revenue");
         save_cf(CF_community_solar_subscriber2_revenue, nyears, "cf_community_solar_subscriber2_revenue");
