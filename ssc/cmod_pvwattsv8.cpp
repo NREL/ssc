@@ -27,7 +27,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "lib_weatherfile.h"
 #include "lib_irradproc.h"
-#include "lib_pvwatts.h"
+//#include "lib_pvwatts.h"
 #include "lib_pvshade.h"
 #include "lib_pvmodel.h"
 #include "lib_snowmodel.h"
@@ -244,7 +244,6 @@ protected:
         double xfmr_nll_f;      //transformer no-load-loss (percent of AC power)
         double xfmr_ll_f;       //transformer load loss (percent of AC power)
 
-        double inoct;           //module installed nominal operating cell temperature, hardcoded factor depending on array_type         
         double nmodules;        //number of modules (unitless)
         double nmodperstr;      //number of modules per string (unitless)
         int nmodx, nmody, nrows;//number of modules along the bottom of a row, number of modules along the upward direction of a row, number of rows (unitless)
@@ -253,7 +252,7 @@ protected:
 
     } pv;
 
-    struct sdmml { //single diode model mermoud lejeune (alternative to pvwatts linear model)
+    struct sdmml { //single diode model mermoud lejeune (alternative to pvwatts model)
         double Area;
         double Vmp;
         double Imp;
@@ -317,7 +316,7 @@ public:
         // nothing to do
     }
 
-    double sdmml_power(sdmml& m, double S, double T_cell) //single diode model structure, S=irradiance, T_cell is cell temperature
+    double sdmml_power(sdmml& m, double S, double T_cell) //mermoud lejeune single diode model structure, S=irradiance, T_cell is cell temperature
     {
         static const double S_ref = 1000;
         static const double T_ref = 25;
@@ -408,9 +407,12 @@ public:
         // gust factor defined later because it depends on timestep
 
         //hidden input variable (not in var_table): whether or not to use the mermoud lejeune single diode model as defined above (0 = don't use model, 1 = use model)
-        int en_sdm = is_assigned("en_sdm") ? as_integer("en_sdm") : 0;
+        int en_mlm = is_assigned("en_mlm") ? as_integer("en_mlm") : 0;
 
-        cec6par_module_t mod;
+        cec6par_module_t mod; // structure for the CEC single diode model calculations
+        noct_celltemp_t modTempCalc; // structure for the module temperature calculations
+        modTempCalc.standoff_tnoct_adj = 0; // do not use the adjustment for cell temperature, but rather set noct as commented below
+        modTempCalc.ffv_wind = 0.51; // assume that all mounting configurations are < 22 ft. This may not be perfect for roof-mounted systems, but the differences are likely minimal.
 
         module.type = (module_type)as_integer("module_type");
         switch (module.type)
@@ -561,10 +563,10 @@ public:
         switch (pv.type)
         {
         case FIXED_ROOF:
-            pv.inoct = 49;
+            modTempCalc.Tnoct = 49; // rather than using the standoff_tnoct_adj factor from the noct_celltemp_t structure, we just make an assumption here for increased Tnoct due to roof-mounting
             break;
         default: // all other types
-            pv.inoct = 45;
+            modTempCalc.Tnoct = 45;
             break;
         }
 
@@ -774,8 +776,6 @@ public:
         ssc_number_t* p_dc = allocate("dc", nrec);
         ssc_number_t* p_ac = allocate("ac", nrec);
         ssc_number_t* p_gen = allocate("gen", nlifetime);
-
-        pvwatts_celltemp tccalc(pv.inoct + 273.15, PVWATTS_HEIGHT, ts_hour); 
 
         double annual_kwh = 0;
 
@@ -1131,46 +1131,6 @@ public:
                     double dc_nom = pv.dc_nameplate * poa / 1000; // Watts_DC * (POA W/m2 / 1000 W/m2 STC value );
                     if (y == 0 && wdprov->annualSimulation()) ld("dc_nominal") += dc_nom * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
 
-                    // module cover module to handle transmitted POA
-                   // double f_cover = 1.0;
-                   // if (aoi > AOI_MIN && aoi < AOI_MAX && poa_front > 0)
-                   // {
-                        /*double modifier = iam( aoi, module.ar_glass );
-                        double tpoa = poa - ( 1.0 - modifier )*wf.dn*cosd(aoi); */ // previous PVWatts method, skips diffuse calc
-
-                        /* disable this calculation for switch to CEC model
-                        tpoa = calculateIrradianceThroughCoverDeSoto(
-                            aoi, solzen, stilt, ibeam, iskydiff, ignddiff, en_sdm == 0 && module.ar_glass);
-                        if (tpoa < 0.0) tpoa = 0.0;
-                        if (tpoa > poa) tpoa = poa_front;
-
-                        f_cover = tpoa / poa_front; */
-                   // }
-
-                    //if (y == 0 && wdprov->annualSimulation()) ld("dc_loss_cover") += (1 - f_cover) * dc_nom * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
-
-                    // spectral correction via air mass modifier
-                    /*
-                    double f_AM = air_mass_modifier(solzen, hdr.elev, AMdesoto);
-                    if (y == 0 && wdprov->annualSimulation()) ld("dc_loss_spectral") += (1 - f_AM) * dc_nom * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data*/
-
-                    // cell temperature
-                    double wspd_corr = wf.wspd < 0 ? 0 : wf.wspd; //correct the wind speed if it is negative
-                    tmod = tccalc(poa, wspd_corr, wf.tdry);
-
-                    /*
-                        // optional: maybe can use sandia typical open rack module thermal model
-                        double a = -3.56;
-                        double b = -0.075;
-                        double dT = 3.0;
-                        double Tmod = sandia_celltemp_t::sandia_module_temperature( poa, wspd_corr, wf.tdry, 1.0, a, b );
-                        tmod = sandia_celltemp_t::sandia_tmod_from_tmodule( Tmod, poa, 1.0, dT);
-                    */
-
-                    // module temperature losses
-                    double f_temp = (1.0 + module.gamma * (tmod - 25.0));
-                    if (y == 0 && wdprov->annualSimulation()) ld("dc_loss_thermal") += dc_nom * (1.0 - f_temp) * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
-
                     // nonlinear dc loss from shading
                     if (y == 0 && wdprov->annualSimulation()) ld("dc_loss_nonlinear") += dc_nom * (1.0 - f_nonlinear) * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
 
@@ -1207,37 +1167,61 @@ public:
                         (f_nonlinear < 1.0 && poa > 0.0) // if there is a nonlinear self-shading derate
                         ? (ibeam_unselfshaded + iskydiff + ignddiff) // then use the unshaded beam to calculate eff POA for power calc but adjust for IAM and spectral
                         : (ibeam + iskydiff + ignddiff); // otherwise, use the 'linearly' derated beam irradiance
-                    //poa_for_power *= f_cover * f_AM; //derate irradiance for module cover and spectral effects //remove these for cec model?????????
-                    //poa_for_power += irear * f_AM; // backside irradiance model already includes back cover effects //remove this for cec model???????
 
-                    if (en_sdm) //change this flag if this works************************* perhaps make hidden flag for old model??????
+                    // set up inputs to module model for both temperature and subsequent CEC module model calculations
+                    pvinput_t in((f_nonlinear < 1.0 && poa > 0.0) ? ibeam_unselfshaded : ibeam, iskydiff, ignddiff, irear * module.bifaciality, poa_for_power,
+                        wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres,
+                        solzen, aoi, hdr.elev,
+                        stilt, sazi,
+                        ((double)wf.hour) + wf.minute / 60.0,
+                        irrad::DN_DF, false);
+
+                    // module temperature calculations
+                    if (!modTempCalc(in, mod, -1.0, tmod)) throw exec_error("pvwattsv8", util::format("Module temperature calculation failed at index %d.", (int)idx_life)); //calculate temperature at MPP (-1.0 flag determines this)
+
+                    // DC power conversion calculations
+                    if (en_mlm) // hidden feature for pvwatts SDK users contributed by Aron Dobos
                     {
-                        // set up inputs to module model
-                        pvinput_t in((f_nonlinear < 1.0 && poa > 0.0) ? ibeam_unselfshaded : ibeam, iskydiff, ignddiff, irear * module.bifaciality, poa_for_power,
-                            wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres,
-                            solzen, aoi, hdr.elev,
-                            stilt, sazi,
-                            ((double)wf.hour) + wf.minute / 60.0,
-                            irrad::DN_DF, false);
+                        // adjustments to irradiance that are covered as part of the CEC model, but not by the mlm model
+                        // module cover module to handle transmitted POA
+                        double f_cover = 1.0;
+                        if (aoi > AOI_MIN && aoi < AOI_MAX && poa_front > 0)
+                        {
+                            tpoa = calculateIrradianceThroughCoverDeSoto(
+                                aoi, solzen, stilt, ibeam, iskydiff, ignddiff, en_mlm == 0 && module.ar_glass);
+                            if (tpoa < 0.0) tpoa = 0.0;
+                            if (tpoa > poa) tpoa = poa_front;
+
+                            f_cover = tpoa / poa_front; 
+                        }
+
+                        // spectral correction via air mass modifier
+                        double f_AM = air_mass_modifier(solzen, hdr.elev, AMdesoto);
+
+                        // derate poa irradiance and record losses for loss diagram
+                        poa_for_power *= f_cover * f_AM; //derate irradiance for module cover and spectral effects
+                        poa_for_power += irear * f_AM; // backside irradiance model already includes back cover effects
+                        if (y == 0 && wdprov->annualSimulation()) ld("dc_loss_cover") += (1 - f_cover) * dc_nom * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
+                        if (y == 0 && wdprov->annualSimulation()) ld("dc_loss_spectral") += (1 - f_AM) * dc_nom * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data*/                   
+                        
+                        // single diode model per PVsyst using representative module parameters for each module type
+                        double P_single_module_sdm = sdmml_power(sdm, poa_for_power, tmod);
+                        dc = P_single_module_sdm * pv.dc_nameplate / (sdm.Vmp * sdm.Imp);
+                    }
+                    else // normal PVWattsV8 DC conversion module model
+                    {
+
                         // set up output structure for module model
                         pvoutput_t out(0, 0, 0, 0, 0, 0, 0, 0);
                         // call the module model
-                        if (!mod(in, tmod, -1, out)) throw exec_error("pvwattsv8", "error calculating module power and temperature with given parameters at time "); // +util::to_string(idx)); ????????????????
+                        if (!mod(in, tmod, -1.0, out)) throw exec_error("pvwattsv8", util::format("Module power calculation failed at index %d.", (int)idx_life));
                         dc = out.Power;
-
-                        // single diode model per PVsyst using representative module parameters for each module type
-                        //double P_single_module_sdm = sdmml_power(sdm, poa_for_power, tmod);
-                        //dc = P_single_module_sdm * pv.dc_nameplate / (sdm.Vmp * sdm.Imp);
-                    }
-                    else
-                    {
-                        // basic linear PVWatts model
-                        dc = pv.dc_nameplate * (poa_for_power / 1000) * f_temp;
-                        //need to set dcVoltage here!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                     }
 
                     // apply common DC losses here (independent of module model)
                     dc *= f_nonlinear * f_snow * f_losses;
+                    p_dcshadederate[idx] = (ssc_number_t)f_nonlinear;
+                    p_dcsnowderate[idx] = (ssc_number_t)f_snow;
 
                     // apply DC degradation
                     dc *= degradationFactor[y];
@@ -1245,36 +1229,24 @@ public:
                     // inverter calculations
                     sandia_inverter_t inverter;
                     inverter.Paco = pv.ac_nameplate;
-                    inverter.Pdco = inverter.Paco / (pv.inv_eff_percent * 0.01); //get inverter DC rating by dividing AC rating by efficiency
-                    inverter.Vdco = 0.0; //justification for this??????????????????????
-                    inverter.Pso = 0.0; //simplifying assumption that the inverter can always operate
-                    inverter.Pntare = 0.0; //simplifying assumption that inverter has no nighttime losses
-                    inverter.C0 = 0.0; //justification for this????????????????????
+                    inverter.Pdco = inverter.Paco / (pv.inv_eff_percent * 0.01); // get inverter DC rating by dividing AC rating by efficiency
+                    // set both Vdco and Vdc to zero. the assumption we make for voltages are irrelevant as long as C1, C2, and C3 are zero
+                    inverter.Vdco = 0.0;
+                    inverter.Pso = 0.0; // simplifying assumption that the inverter can always operate
+                    inverter.Pntare = 0.0; // simplifying assumption that inverter has no nighttime losses
+                    inverter.C0 = 0.0; // justification for this????????????????????
                     // default values for C1, C2, C3 are zero per Sandia documentation: https://pvpmc.sandia.gov/modeling-steps/dc-to-ac-conversion/sandia-inverter-model/
-                    // setting these to 0 results in the same inverter model as pvwattsv5
+                    // setting these to 0 results in similar inverter output to pvwattsv5
                     inverter.C1 = 0.0; 
                     inverter.C2 = 0.0;
                     inverter.C3 = 0.0;
+                    // call inverter function
+                    // set operating voltage (second parameter) to zero. the assumption we make for voltages are irrelevant as long as C1, C2, and C3 are zero (set above)
+                    // use null pointers for results that we don't care about
+                    if (!inverter.acpower(dc, 0.0, &ac, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr)) throw exec_error("pvwattsv8", util::format("Inverter power calculation failed at index %d.", (int)idx_life));
 
-                    ac = 0;
+                    // record AC results
                     if (y == 0 && wdprov->annualSimulation()) ld("ac_nominal") += dc * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
-
-                    double etanom = pv.inv_eff_percent * 0.01;
-                    double etaref = 0.9637;
-                    double A = -0.0162;
-                    double B = -0.0059;
-                    double C = 0.9858;
-                    double pdc0 = pv.ac_nameplate / etanom;
-                    double plr = dc / pdc0; //power loading ratio of the inverter
-
-
-
-                    if (plr > 0)
-                    { // normal operation
-                        double eta = (A * plr + B / plr + C) * etanom / etaref;
-                        ac = dc * eta;
-                    }
-
                     if (y == 0 && wdprov->annualSimulation()) ld("ac_loss_efficiency") += (dc - ac) * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
 
                     // power clipping
@@ -1282,11 +1254,8 @@ public:
                     if (y == 0 && wdprov->annualSimulation()) ld("ac_loss_inverter_clipping") += cliploss * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
                     ac -= cliploss;
 
-                    // make sure no negative AC values during daytime hour (no parasitic nighttime losses calculated for PVWatts)
+                    // make sure no negative AC values (no parasitic nighttime losses calculated for PVWatts)
                     if (ac < 0) ac = 0;
-
-                    p_dcshadederate[idx] = (ssc_number_t)f_nonlinear;
-                    p_dcsnowderate[idx] = (ssc_number_t)f_snow;
                 }
                 else
                 {
