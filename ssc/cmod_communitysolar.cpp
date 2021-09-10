@@ -146,7 +146,7 @@ static var_info _cm_vtab_communitysolar[] = {
     { SSC_INPUT,        SSC_NUMBER,     "cs_cost_recurring_generation_escal",   "Recurring annual cost by generation escalation",                           "%/yr",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
 
 
-/*
+/* PPA revenue not applicable to community solar, may need to be restored later
 	// dispatch update TODO - remove SO output label below after consildated with CSP
 	{ SSC_INPUT, SSC_NUMBER, "ppa_multiplier_model", "PPA multiplier model", "0/1", "0=diurnal,1=timestep", "Revenue", "?=0", "INTEGER,MIN=0", "" },
 	{ SSC_INPUT, SSC_ARRAY, "dispatch_factors_ts", "Dispatch payment factor array", "", "", "Revenue", "ppa_multiplier_model=1", "", "" },
@@ -603,11 +603,13 @@ static var_info _cm_vtab_communitysolar[] = {
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_sales",                        "Energy to grid",                    "kWh",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_purchases",                    "Energy from grid",                  "kWh",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_without_battery",              "Energy produced without the battery or curtailment", "kWh",      "",       "Cash Flow Revenues",             "",                       "LENGTH_EQUAL=cf_length",                             "" },
+    /* PPA revenue not applicable to community solar, may need to be restored later
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_ppa_price",                           "PPA price",                     "cents/kWh",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_value",                        "PPA revenue net",                     "$",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_sales_value",                  "PPA revenue gross",                   "$",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_purchases_value",              "PPA revenue lost to self-consumption","$",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_thermal_value",                       "Thermal revenue",                     "$",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
+    */
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_om_fixed_expense",                    "O&M fixed expense",                  "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_om_production_expense",               "O&M production-based expense",       "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_om_capacity_expense",                 "O&M capacity-based expense",         "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
