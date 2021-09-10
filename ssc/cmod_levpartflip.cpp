@@ -65,7 +65,9 @@ static var_info _cm_vtab_levpartflip[] = {
 	{ SSC_INPUT, SSC_ARRAY, "dispatch_factors_ts", "Dispatch payment factor array", "", "", "Time of Delivery", "ppa_multiplier_model=1", "", "" },
 
 	{ SSC_OUTPUT, SSC_ARRAY, "ppa_multipliers", "TOD factors", "", "", "Time of Delivery", "*", "", "" },
-
+    /* PPA Buy Rate values */
+    { SSC_INPUT, SSC_ARRAY, "utility_bill_w_sys", "Electricity bill with system", "$", "", "Utility Bill", "", "", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_utility_bill", "Electricity purchase", "$", "", "", "", "LENGTH_EQUAL=cf_length", "" },
 
 
 
@@ -900,6 +902,8 @@ enum {
     CF_energy_purchases,
     CF_energy_purchases_value,
 
+    CF_utility_bill,
+
     CF_max,
 };
 
@@ -1080,6 +1084,25 @@ public:
                 cf.at(CF_battery_replacement_cost, i + 1) = batt_rep[i + 1] * replacement_percent[i] * 0.01 *
                     cf.at(CF_battery_replacement_cost_schedule, i + 1);
             }
+        }
+
+        if (is_assigned("utility_bill_w_sys"))
+        {
+            size_t ub_count;
+            ssc_number_t* ub_arr;
+            ub_arr = as_array("utility_bill_w_sys", &ub_count);
+            if (ub_count != (size_t)(nyears + 1))
+                throw exec_error("singleowner", util::format("utility bill years (%d) not equal to analysis period years (%d).", (int)ub_count, nyears));
+
+            for (i = 0; i <= nyears; i++)
+                cf.at(CF_utility_bill, i) = ub_arr[i];
+            save_cf(CF_utility_bill, nyears, "cf_utility_bill");
+        }
+        else
+        {
+            for (i = 0; i <= nyears; i++)
+                cf.at(CF_utility_bill, i) = 0;
+            save_cf(CF_utility_bill, nyears, "cf_utility_bill");
         }
 
 		// initialize energy and revenue

@@ -36,7 +36,7 @@ static var_info _cm_vtab_singleowner[] = {
 // 3 additional variables for PPA Buy rate
 // optional output from battery model
 	{ SSC_INPUT,        SSC_NUMBER,      "en_batt",                                    "Enable battery storage model",                            "0/1",     "",                     "BatterySystem",       "?=0",                                 "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "en_electricity_rates",                       "Enable electricity rates for grid purchase",              "0/1",     "",                     "Electricity Rates",       "?=0",                                 "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "en_electricity_rates",                       "Enable electricity rates for grid purchase",              "0/1",     "",                     "Electricity Rates",       "?=1",                                 "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_meter_position",                        "Position of battery relative to electric meter",          "",        "",                     "BatterySystem",       "",                           "",                              "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "revenue_gen",                                "Electricity to grid",                                     "kW",      "",                       "System Output",       "",                           "",                              "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "gen_purchases",                              "Electricity from grid",                                    "kW",      "",                       "System Output",       "",                           "",                              "" },
@@ -1385,7 +1385,7 @@ public:
 			cf.at(CF_om_opt_fuel_2_expense,i) *= om_opt_fuel_2_usage;
 		}
 
-
+        //Commenting out to test forced retail rate cost calculations
 		size_t count_ppa_price_input;
 		ssc_number_t* ppa_price_input = as_array("ppa_price_input", &count_ppa_price_input);
 		double ppa = 0;
@@ -1397,6 +1397,7 @@ public:
         size_t n_multipliers;
 
         ssc_number_t* ppa_multipliers = as_array("ppa_multipliers", &n_multipliers);
+        /*
         bool ppa_purchases = !(is_assigned("en_electricity_rates") && as_number("en_electricity_rates") == 1);
         if (as_integer("system_use_lifetime_output") == 1)
         {
@@ -1442,7 +1443,7 @@ public:
                 }
             }
         }
-
+        */
 		double property_tax_assessed_value = cost_prefinancing * as_double("prop_tax_cost_assessed_percent") * 0.01;
 		double property_tax_decline_percentage = as_double("prop_tax_assessed_decline");
 		double property_tax_rate = as_double("property_tax_rate")*0.01;
