@@ -91,7 +91,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACBatteryModelIntegr
     ssc_number_t peakKwCharge[3] = { -2.81, -3.02, -2.25 };
     ssc_number_t peakKwDischarge[3] = { 1.39, 1.30, 0.97 };
     ssc_number_t peakCycles[3] = { 1, 1, 1 };
-    ssc_number_t avgCycles[3] = { 1, 0.9973, 0.4904 };
+    ssc_number_t avgCycles[3] = { 1, 1, 0.4904 };
 
     // Test peak shaving look ahead, peak shaving look behind, and automated grid power target. Others require additional input data
     for (int i = 0; i < 3; i++) {
@@ -100,16 +100,19 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACBatteryModelIntegr
                 // Peak shaving, look ahead
                 pairs["batt_dispatch_choice"] = 0;
                 pairs["batt_dispatch_wf_forecast_choice"] = 0;
+                pairs["batt_dispatch_load_forecast_choice"] = 0;
                 break;
             case 1:
                 // Peak shaving, look behind
                 pairs["batt_dispatch_choice"] = 0;
                 pairs["batt_dispatch_wf_forecast_choice"] = 1;
+                pairs["batt_dispatch_load_forecast_choice"] = 1;
                 break;
             case 2:
                 // Input grid power targets
                 pairs["batt_dispatch_choice"] = 1;
                 pairs["batt_dispatch_wf_forecast_choice"] = 0;
+                pairs["batt_dispatch_load_forecast_choice"] = 0;
                 break;
 
         }
@@ -321,26 +324,29 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialDCBatteryModelIntegr
     ssc_number_t peakKwCharge[3] = { -3.21, -2.96, -2.69 };
     ssc_number_t peakKwDischarge[3] = { 1.40, 1.31, 0.967 };
     ssc_number_t peakCycles[3] = { 2, 2, 1 };
-    ssc_number_t avgCycles[3] = { 1.0109, 1.0054, 0.4794 };
+    ssc_number_t avgCycles[3] = { 1.0109, 1.0082, 0.4794 };
 
     // Test peak shaving look ahead, peak shaving look behind, and automated grid power target. Others require additional input data
     for (int i = 0; i < 3; i++) {
         switch (i) {
-            case 0:
-                // Peak shaving, look ahead
-                pairs["batt_dispatch_choice"] = 0;
-                pairs["batt_dispatch_wf_forecast_choice"] = 0;
-                break;
-            case 1:
-                // Peak shaving, look behind
-                pairs["batt_dispatch_choice"] = 0;
-                pairs["batt_dispatch_wf_forecast_choice"] = 1;
-                break;
-            case 2:
-                // Input grid power targets
-                pairs["batt_dispatch_choice"] = 1;
-                pairs["batt_dispatch_wf_forecast_choice"] = 0;
-                break;
+        case 0:
+            // Peak shaving, look ahead
+            pairs["batt_dispatch_choice"] = 0;
+            pairs["batt_dispatch_wf_forecast_choice"] = 0;
+            pairs["batt_dispatch_load_forecast_choice"] = 0;
+            break;
+        case 1:
+            // Peak shaving, look behind
+            pairs["batt_dispatch_choice"] = 0;
+            pairs["batt_dispatch_wf_forecast_choice"] = 1;
+            pairs["batt_dispatch_load_forecast_choice"] = 1;
+            break;
+        case 2:
+            // Input grid power targets
+            pairs["batt_dispatch_choice"] = 1;
+            pairs["batt_dispatch_wf_forecast_choice"] = 0;
+            pairs["batt_dispatch_load_forecast_choice"] = 0;
+            break;
 
         }
 
@@ -486,9 +492,9 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_ManualDispatchBatteryModelI
     grid_and_rate_defaults(data);
     singleowner_defaults(data);
 
-    ssc_number_t expectedEnergy = 37184421;
-    ssc_number_t expectedBatteryChargeEnergy = 1300958;
-    ssc_number_t expectedBatteryDischargeEnergy = 1177242;
+    ssc_number_t expectedEnergy = 37184559;
+    ssc_number_t expectedBatteryChargeEnergy = 1299674;
+    ssc_number_t expectedBatteryDischargeEnergy = 1176096;
 
     ssc_number_t peakKwCharge = -1052.0;
     ssc_number_t peakKwDischarge = 848.6;
@@ -596,7 +602,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_CustomDispatchBatteryModelD
     ssc_number_t peakKwCharge = -948.6;
     ssc_number_t peakKwDischarge = 651.7;
     ssc_number_t peakCycles = 3;
-    ssc_number_t avgCycles = 1.1945;
+    ssc_number_t avgCycles = 1.1941;
 
     ssc_data_set_number(data, "batt_dispatch_choice", 2);
     ssc_data_set_number(data, "batt_ac_or_dc", 0);
@@ -649,7 +655,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, CommercialMultipleSubarrayBatte
     ssc_number_t peakCycles = 1;
     ssc_number_t avgCycles = 1;
 
-    // Test peak shaving look ahead, peak shaving look behind, and automated grid power target. Others require additional input data
+    // Test peak shaving look ahead
     int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
     EXPECT_FALSE(pvsam_errors);
 
@@ -896,7 +902,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialDCBatteryModelPriceS
         auto batt_q_rel = data_vtab->as_vector_ssc_number_t("batt_capacity_percent");
         auto batt_cyc_avg = data_vtab->as_vector_ssc_number_t("batt_DOD_cycle_average");
         EXPECT_NEAR(batt_q_rel.back(), 98.034, 2e-2);
-        EXPECT_NEAR(batt_cyc_avg.back(), 27.00, 0.2);
+        EXPECT_NEAR(batt_cyc_avg.back(), 27.1, 0.5);
     }
 }
 

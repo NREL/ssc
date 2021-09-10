@@ -1210,6 +1210,8 @@ void commercial_multiarray_default(ssc_data_t& data) {
 	ssc_data_set_number(data, "batt_dispatch_auto_can_fuelcellcharge", 0);
 	ssc_data_set_number(data, "batt_dispatch_auto_can_gridcharge", 0);
 	ssc_data_set_number(data, "batt_dispatch_auto_can_charge", 1);
+	ssc_data_set_number(data, "batt_dispatch_charge_only_system_exceeds_load", 1);
+	ssc_data_set_number(data, "batt_dispatch_discharge_only_load_exceeds_system", 1);
     ssc_data_set_number(data, "batt_cycle_cost_choice", 0);
     ssc_number_t p_batt_cycle_cost[1] = { 0.1 };
     ssc_data_set_array(data, "batt_cycle_cost", p_batt_cycle_cost, 1);

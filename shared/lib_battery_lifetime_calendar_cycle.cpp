@@ -42,7 +42,23 @@ void lifetime_cycle_t::initialize() {
     state->cycle->rainflow_Xlt = 0;
     state->cycle->rainflow_Ylt = 0;
     state->cycle->rainflow_peaks.clear();
+    init_cycle_counts();
     resetDailyCycles();
+}
+
+void lifetime_cycle_t::init_cycle_counts() {
+    std::vector<double> DOD_levels;
+    for (size_t i = 0; i < params->cal_cyc->cycling_matrix.nrows(); i++) {
+        double dod = params->cal_cyc->cycling_matrix.at(i, calendar_cycle_params::DOD);
+        if (std::find(DOD_levels.begin(), DOD_levels.end(), dod) == DOD_levels.end()) {
+            DOD_levels.push_back(dod);
+        }
+    }
+    std::sort(DOD_levels.begin(), DOD_levels.end());
+    state->cycle->cycle_counts.resize_fill(DOD_levels.size(), 2, 0.0);
+    for (size_t i = 0; i < DOD_levels.size(); i++) {
+        state->cycle->cycle_counts.set_value(DOD_levels[i], i, cycle_state::DOD);
+    }
 }
 
 lifetime_cycle_t::lifetime_cycle_t(const util::matrix_t<double> &batt_lifetime_matrix) {
@@ -161,9 +177,19 @@ int lifetime_cycle_t::rainflow_compareRanges() {
         state->average_range = (state->average_range * state->n_cycles + state->cycle_range) / (double)(state->n_cycles + (size_t) 1);
         state->n_cycles++;
 
+        int cycles_at_range = state->n_cycles;
+
+        // Update cycle matrix with latest DOD - size 1 is uninitalized (NMC or LMO/LTO models)
+        if (state->cycle->cycle_counts.ncells() > 1) {
+            size_t cycle_index = util::nearest_col_index(state->cycle->cycle_counts, cycle_state::DOD, state->cycle_range);
+            cycles_at_range = state->cycle->cycle_counts.at(cycle_index, cycle_state::CYCLES);
+            cycles_at_range += 1;
+            state->cycle->cycle_counts.set_value(cycles_at_range, cycle_index, cycle_state::CYCLES);
+        }
+
         // the capacity percent cannot increase
         double dq =
-                bilinear(state->average_range, state->n_cycles) - bilinear(state->average_range, state->n_cycles + 1);
+                bilinear(state->cycle_range, cycles_at_range) - bilinear(state->cycle_range, cycles_at_range + 1);
         if (dq > 0)
             state->cycle->q_relative_cycle -= dq;
 
@@ -194,6 +220,11 @@ void lifetime_cycle_t::replaceBattery(double replacement_percent) {
         state->cycle_range = 0;
         state->cycle_DOD = 0;
         state->average_range = 0;
+        if (state->cycle->cycle_counts.ncells() > 1) {
+            for (size_t i = 0; i < state->cycle->cycle_counts.nrows(); i++) {
+                state->cycle->cycle_counts.set_value(0.0, i, cycle_state::CYCLES);
+            }
+        }
     }
 
     state->cycle->rainflow_jlt = 0;
