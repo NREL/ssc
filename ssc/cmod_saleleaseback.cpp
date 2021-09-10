@@ -1359,6 +1359,7 @@ public:
 				+ cf.at(CF_property_tax_expense,i)
 				+ cf.at(CF_insurance_expense,i)
 				+ cf.at(CF_sponsor_margin,i)
+                + cf.at(CF_utility_bill,i)
 				+ cf.at(CF_Recapitalization,i);
 		}
 
