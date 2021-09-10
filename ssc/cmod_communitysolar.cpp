@@ -146,7 +146,7 @@ static var_info _cm_vtab_communitysolar[] = {
     { SSC_INPUT,        SSC_NUMBER,     "cs_cost_recurring_generation_escal",   "Recurring annual cost by generation escalation",                           "%/yr",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
 
 
-
+/*
 	// dispatch update TODO - remove SO output label below after consildated with CSP
 	{ SSC_INPUT, SSC_NUMBER, "ppa_multiplier_model", "PPA multiplier model", "0/1", "0=diurnal,1=timestep", "Revenue", "?=0", "INTEGER,MIN=0", "" },
 	{ SSC_INPUT, SSC_ARRAY, "dispatch_factors_ts", "Dispatch payment factor array", "", "", "Revenue", "ppa_multiplier_model=1", "", "" },
@@ -262,7 +262,7 @@ static var_info _cm_vtab_communitysolar[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,     "cf_energy_net_monthly_firstyear_TOD8",   "Energy produced in Year 1 by month for TOD period 8",   "kWh",   "",                      "Cash Flow Revenue by Month and TOD Period",             "ppa_multiplier_model=0",				   "",                 "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,     "cf_revenue_monthly_firstyear_TOD9",      "PPA revenue in Year 1 by month for TOD period 9",  "$",   "",                      "Cash Flow Revenue by Month and TOD Period",             "ppa_multiplier_model=0",				   "",                 "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,     "cf_energy_net_monthly_firstyear_TOD9",   "Energy produced in Year 1 by month for TOD period 9",   "kWh",   "",                      "Cash Flow Revenue by Month and TOD Period",             "ppa_multiplier_model=0",				   "",                 "" },
-                                                                                  
+  */                                                                                
 /* inputs in model not currently in M 11/15/10 */                             
 	{ SSC_INPUT,         SSC_NUMBER,    "total_installed_cost",                   "Installed cost",                                                "$",     "",					  "System Costs",			 "*",                         "",                             "" },
 
@@ -817,7 +817,7 @@ static var_info _cm_vtab_communitysolar[] = {
 var_info_invalid };
 
 extern var_info
-	vtab_ppa_inout[],
+//	vtab_ppa_inout[],
 	vtab_standard_financial[],
 	vtab_oandm[],
     vtab_equip_reserve[],
@@ -827,7 +827,7 @@ extern var_info
 	vtab_payment_incentives[],
 	vtab_debt[],
     vtab_financial_metrics[],
-	vtab_financial_capacity_payments[],
+//	vtab_financial_capacity_payments[],
 	vtab_financial_grid[],
 	vtab_fuelcell_replacement_cost[],
     vtab_lcos_inputs[],
@@ -1129,14 +1129,14 @@ class cm_communitysolar : public compute_module
 private:
 	util::matrix_t<double> cf;
     util::matrix_t<double> cf_lcos;
-	dispatch_calculations m_disp_calcs;
+//	dispatch_calculations m_disp_calcs;
 	hourly_energy_calculation hourly_energy_calcs;
 
 
 public:
 	cm_communitysolar()
 	{
-        add_var_info(vtab_ppa_inout );
+//        add_var_info(vtab_ppa_inout );
         add_var_info( vtab_standard_financial );
 		add_var_info( vtab_oandm );
 		add_var_info( vtab_equip_reserve );
@@ -1149,7 +1149,7 @@ public:
 		add_var_info( _cm_vtab_communitysolar );
 		add_var_info(vtab_battery_replacement_cost);
 		add_var_info(vtab_fuelcell_replacement_cost);
-		add_var_info(vtab_financial_capacity_payments);
+//		add_var_info(vtab_financial_capacity_payments);
 		add_var_info(vtab_financial_grid);
         add_var_info(vtab_lcos_inputs);
 	}
@@ -1164,7 +1164,7 @@ public:
         cf_lcos.resize_fill(CF_max, nyears + 1, 0.0);
 		// assign inputs
 		double inflation_rate = as_double("inflation_rate")*0.01;
-		double ppa_escalation = as_double("ppa_escalation")*0.01;
+        double ppa_escalation = 0.0;// as_double("ppa_escalation") * 0.01;
 		double disc_real = as_double("real_discount_rate")*0.01;
 //		double federal_tax_rate = as_double("federal_tax_rate")*0.01;
 //		double state_tax_rate = as_double("state_tax_rate")*0.01;
@@ -1248,7 +1248,9 @@ public:
 
 		double constr_total_financing = as_double("construction_financing_cost");
 
-		int ppa_mode = as_integer("ppa_soln_mode");
+        // Community Solar overrride since in separate vtab
+		//int ppa_mode = as_integer("ppa_soln_mode");
+        int ppa_mode = 1; // specify ppa price input
 
 		bool constant_dscr_mode = (as_integer("debt_option")==1);
 		bool constant_principal = (as_integer("payment_option") == 1);;
@@ -1518,7 +1520,7 @@ public:
 				cf.at(CF_curtailment_value, y) = 0.0;
 		}
 
-
+        /*
 		// capacity payment
 		int cp_payment_type = as_integer("cp_capacity_payment_type");
 		if (cp_payment_type < 0 || cp_payment_type > 1)
@@ -1564,7 +1566,7 @@ public:
 				}
 			}
 		}
-
+        */
 
 
 
@@ -1580,7 +1582,7 @@ public:
 		{
 			degrade_cf.push_back(cf.at(CF_degradation, i));
 		}
-		m_disp_calcs.init(this, degrade_cf, hourly_energy_calcs.hourly_energy());
+		//m_disp_calcs.init(this, degrade_cf, hourly_energy_calcs.hourly_energy());
 		// end of energy and dispatch initialization
 
        
@@ -1832,8 +1834,11 @@ public:
 
 
 
-		size_t count_ppa_price_input;
-		ssc_number_t* ppa_price_input = as_array("ppa_price_input", &count_ppa_price_input);
+		size_t count_ppa_price_input = 0;
+        // Community Solar override of ppa_price_input since in separate common vtab
+//		ssc_number_t* ppa_price_input = as_array("ppa_price_input", &count_ppa_price_input);
+        ssc_number_t ppa_price_input[1] = { 0.0 };
+
 		double ppa = 0;
 		if (count_ppa_price_input > 0) ppa = ppa_price_input[0] * 100.0;
 //		double ppa = as_double("ppa_price_input")*100.0; // either initial guess for ppa_mode=1 or final ppa for ppa_mode=0
@@ -2450,17 +2455,17 @@ public:
 
 		
 		//		if (ppa_mode == 0) // iterate to meet flip target by varying ppa price
-		double ppa_soln_tolerance = as_double("ppa_soln_tolerance");
-		int ppa_soln_max_iteations = as_integer("ppa_soln_max_iterations");
+        double ppa_soln_tolerance = 0;// as_double("ppa_soln_tolerance");
+        int ppa_soln_max_iteations = 1;// as_integer("ppa_soln_max_iterations");
 		double flip_target_percent = as_double("flip_target_percent") ;
-		int flip_target_year = as_integer("flip_target_year");
+        int flip_target_year = 20; //  as_integer("flip_target_year");
 		// check for accessing off of the end of cashflow matrix
 		if (flip_target_year > nyears) flip_target_year = nyears;
 		int flip_year=-1;
 		double purchase_of_property;
 		bool solved=true;
-		double ppa_min=as_double("ppa_soln_min");
-		double ppa_max=as_double("ppa_soln_max");
+        double ppa_min = 0;// as_double("ppa_soln_min");
+        double ppa_max = 1000;// as_double("ppa_soln_max");
 		int its=0;
 		double irr_weighting_factor = DBL_MAX;
 		bool irr_is_minimally_met = false;
@@ -2687,8 +2692,8 @@ public:
 				cf.at(CF_ppa_price, i) = ppa * pow(1 + ppa_escalation, i - 1); // ppa_mode==0 or single value 
 //			cf.at(CF_energy_value,i) = cf.at(CF_energy_net,i) * cf.at(CF_ppa_price,i) /100.0;
 			// dispatch
-			cf.at(CF_energy_value, i) = cf.at(CF_ppa_price, i) / 100.0 *(
-				m_disp_calcs.tod_energy_value(i));
+//			cf.at(CF_energy_value, i) = cf.at(CF_ppa_price, i) / 100.0 *(
+//				m_disp_calcs.tod_energy_value(i));
 
 //			log(util::format("year %d : energy value =%lg", i, m_disp_calcs.tod_energy_value(i)), SSC_WARNING);
 			// total revenue
@@ -3326,7 +3331,7 @@ public:
 //	log(util::format("after loop  - size of debt =%lg .", size_of_debt), SSC_WARNING);
 
     
-
+    /*
     // Use PPA values to calculate revenue from purchases and sales
     size_t n_multipliers;
     
@@ -3367,7 +3372,7 @@ public:
             }
         }
     }
-
+    */
 	assign("flip_target_year", var_data((ssc_number_t) flip_target_year ));
 	assign("flip_target_irr", var_data((ssc_number_t)  flip_target_percent ));
 
@@ -3957,7 +3962,7 @@ public:
 		{
 			ppa_cf.push_back(cf.at(CF_ppa_price, i));
 		}
-		m_disp_calcs.compute_outputs(ppa_cf);
+		//m_disp_calcs.compute_outputs(ppa_cf);
 
 
 		// State ITC/depreciation table
