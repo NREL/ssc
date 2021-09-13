@@ -4,6 +4,41 @@
  <title>SAM Simulation Core (SSC) Release Notes</title>
 </head>
 <body>
-<p>Placeholder for SSC release notes.</p>
+<p>SSC Version ## (placeholder for Fall 2021 release)
+<ul>
+<li>Battery model:
+<ul>
+<li> Refactor the battery dispatch options such that forecast and dispatch algorithm are seperate options. New options are:
+<ul>
+<li> Front of meter:
+<ul>
+<li> 0 - Economic Dispatch </li>
+<li> 1 - PV Smoothing Dispatch </li>
+<li> 2 - Custom Dispatch </li>
+<li> 3 - Manual Dispatch </li>
+</ul>
+</li>
+<li> Behind the meter:
+<ul>
+<li> 0 - Automatic Peak Shaving Dispatch </li>
+<li> 1 - Input Grid Power Target </li>
+<li> 2 - Custom Dispatch </li>
+<li> 3 - Manual Dispatch </li>
+<li> 4 - Price Signals Dispatch </li>
+</ul>
+</li>
+</ul>
+</li>
+<li> Forecast is now controlled by new variables batt_dispatch_wf_forecast_choice and batt_dispatch_load_forecast_choice:
+<ul>
+<li> 0 - Perfect look ahead </li>
+<li> 1 - One day look behind </li>
+<li> 2 - Custom (using batt_pv_clipping_forecast and batt_pv_ac_forecast for weather and batt_load_ac_forecast and batt_load_ac_forecast_escalation for load </li>
+</ul>
+</ul>
+</li>
+</li>
+</ul>
+</p>
 </body>
 </html>
