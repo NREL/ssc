@@ -2460,7 +2460,7 @@ public:
         double ppa_soln_tolerance = 0;// as_double("ppa_soln_tolerance");
         int ppa_soln_max_iteations = 1;// as_integer("ppa_soln_max_iterations");
 		double flip_target_percent = as_double("flip_target_percent") ;
-        int flip_target_year = 20; //  as_integer("flip_target_year");
+        int flip_target_year = nyears; //  as_integer("flip_target_year");
 		// check for accessing off of the end of cashflow matrix
 		if (flip_target_year > nyears) flip_target_year = nyears;
 		int flip_year=-1;
@@ -3375,23 +3375,6 @@ public:
         }
     }
     */
-	assign("flip_target_year", var_data((ssc_number_t) flip_target_year ));
-	assign("flip_target_irr", var_data((ssc_number_t)  flip_target_percent ));
-
-	// Paul 1/27/15 - update for ppa specified and IRR year requested
-	if (ppa_mode == 1) flip_year = flip_target_year;
-
-	double actual_flip_irr = std::numeric_limits<double>::quiet_NaN();
-	if (flip_year > -1)
-	{
-		actual_flip_irr = cf.at(CF_project_return_aftertax_irr, flip_target_year);
-		assign("flip_actual_year", var_data((ssc_number_t)flip_year));
-	}
-	else
-	{
-		assign("flip_actual_year", var_data((ssc_number_t)actual_flip_irr));
-	}
-	assign("flip_actual_irr", var_data((ssc_number_t)actual_flip_irr));
 
 	// NPV of revenue components for stacked bar chart
 	/*
@@ -3533,6 +3516,7 @@ public:
 	if ((size_of_debt + size_of_equity) > 0)
 		debt_fraction = size_of_debt / (size_of_debt + size_of_equity);
 
+   
 
 
 	double wacc = 0.0;
@@ -3549,6 +3533,27 @@ public:
 	assign("wacc", var_data( (ssc_number_t) wacc));
 	assign("effective_tax_rate", var_data((ssc_number_t)(cf.at(CF_effective_tax_frac, 1)*100.0)));
 	assign("analysis_period_irr", var_data( (ssc_number_t) analysis_period_irr));
+
+    // community solar
+    flip_target_percent = analysis_period_irr;
+    flip_target_year = nyears;
+    assign("flip_target_year", var_data((ssc_number_t)flip_target_year));
+    assign("flip_target_irr", var_data((ssc_number_t)flip_target_percent));
+
+    // Paul 1/27/15 - update for ppa specified and IRR year requested
+    if (ppa_mode == 1) flip_year = flip_target_year;
+
+    double actual_flip_irr = std::numeric_limits<double>::quiet_NaN();
+    if (flip_year > -1)
+    {
+        actual_flip_irr = cf.at(CF_project_return_aftertax_irr, flip_target_year);
+        assign("flip_actual_year", var_data((ssc_number_t)flip_year));
+    }
+    else
+    {
+        assign("flip_actual_year", var_data((ssc_number_t)actual_flip_irr));
+    }
+    assign("flip_actual_irr", var_data((ssc_number_t)actual_flip_irr));
 
 
 
