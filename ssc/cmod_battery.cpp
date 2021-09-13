@@ -760,9 +760,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
     // Check to see if the outage variables need to be set up
     analyze_outage = false;
     if (vt.is_assigned("grid_outage")) {
-        batt_vars->grid_outage_steps = vt.as_vector_bool("grid_outage");
-        if (batt_vars->grid_outage_steps.size() != total_steps)
-            throw exec_error("battery", "Grid outage status needs to be specified for the length of the simulation: " + std::to_string(total_steps) + " steps");
+        batt_vars->grid_outage_steps = vt.as_vector_bool("grid_outage"); // All lines that check for this check for length and default to false, so no exception should be ok here.
         // If not all false, we need the outage vars
         analyze_outage = !std::all_of(batt_vars->grid_outage_steps.begin(), batt_vars->grid_outage_steps.end(), [](bool x) {return x; });
     }
