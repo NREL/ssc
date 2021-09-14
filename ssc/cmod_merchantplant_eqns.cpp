@@ -55,12 +55,12 @@ void mp_ancillary_services(ssc_data_t data)
 		vt_get_matrix(vt, "mp_ancserv2_revenue", mp_ancserv2_revenue);
 		vt_get_matrix(vt, "mp_ancserv3_revenue", mp_ancserv3_revenue);
 		vt_get_matrix(vt, "mp_ancserv4_revenue", mp_ancserv4_revenue);
-		gen_is_assigned = (vt->lookup("gen") != NULL);
+		gen_is_assigned = (vt->lookup("revenue_gen") != NULL);
 		if (gen_is_assigned)
 		{
 			system_capacity = 0.0;
 			// these are arrays so VT_GET_INPUT replaced by vt_get_matrix fails for all in commit c461b9
-			vt_get_matrix(vt, "gen", system_gen);
+			vt_get_matrix(vt, "revenue_gen", system_gen);
 			vt_get_matrix(vt, "degradation", degradation);
 		}
 		else
