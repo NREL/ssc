@@ -592,20 +592,47 @@ public:
             for (size_t i = 0; i < size_t(number_records); i++) {
                 ts_significant_wave_height = wave_height_input[i];
                 ts_energy_period = wave_period_input[i];
-                for (ssc_number_t j = 0; j < (ssc_number_t)wave_power_matrix.nrows(); j++) {
-                    if (abs(ts_significant_wave_height - wave_power_matrix.at(size_t(j), 0)) <= 0.25) { //Find which height is closest to height at current timestep
-                        sig_wave_height_index = j;
-                        sig_wave_height_index_mat[i] = sig_wave_height_index; //Store height index location in time series array
-
-
+                sig_wave_height_index = 0;
+                energy_period_index = 0;
+                //Significant Wave Height
+                if (ts_significant_wave_height < 0) {
+                    sig_wave_height_index = 1;
+                    sig_wave_height_index_mat[i] = 1;
+                }
+                else if (ts_significant_wave_height > 9.75) {
+                    sig_wave_height_index = wave_power_matrix.nrows() - 1;
+                    sig_wave_height_index_mat[i] = wave_power_matrix.nrows() - 1;
+                }
+                else {
+                    for (ssc_number_t j = 1; j < (ssc_number_t)wave_power_matrix.nrows(); j++) {
+                        if (abs(ts_significant_wave_height - wave_power_matrix.at(size_t(j), 0)) <= 0.25) { //Find which height is closest to height at current timestep
+                            sig_wave_height_index = j;
+                            sig_wave_height_index_mat[i] = sig_wave_height_index; //Store height index location in time series array
+                        }
                     }
                 }
-                for (ssc_number_t m = 0; m < (ssc_number_t)wave_power_matrix.ncols(); m++) {
-                    if (abs(ts_energy_period - wave_power_matrix.at(0, size_t(m))) <= 0.50) {
-                        energy_period_index = m;
-                        energy_period_index_mat[i] = energy_period_index;
+                //Energy Period
+                if (ts_energy_period < 0) {
+                    energy_period_index = 1;
+                    energy_period_index_mat[i] = 1;
+                }
+                else if (ts_energy_period > 20.5) {
+                    energy_period_index = wave_power_matrix.ncols() - 1;
+                    energy_period_index_mat[i] = wave_power_matrix.ncols() - 1;
+                }
+                else {
+                    for (ssc_number_t m = 1; m < (ssc_number_t)wave_power_matrix.ncols(); m++) {
+                        if (abs(ts_energy_period - wave_power_matrix.at(0, size_t(m))) <= 0.50) {
+                            energy_period_index = m;
+                            energy_period_index_mat[i] = energy_period_index;
+                        }
                     }
                 }
+
+                if (sig_wave_height_index == 0 || energy_period_index == 0) {
+                    throw exec_error("mhk_wave", "The wave conditions at timestep" + to_string(i) + "were not able to be located in the power matrix. Please check your resource file");
+                }
+                
 
                 //n-hour energy based on wave power matrix value at height and period best matching the time series inputs * number devices * size multiplier
                 energy_hourly[i] = (ssc_number_t)(wave_power_matrix.at(size_t(sig_wave_height_index), size_t(energy_period_index))) * hour_step * (1 - total_loss / 100) * number_devices;
