@@ -193,7 +193,7 @@ protected:
 class outage_manager
 {
 public:
-    outage_manager(BatteryPower* batteryPower);
+    outage_manager(BatteryPower* batteryPower, battery_t* battery);
 
     ~outage_manager();
 
@@ -211,6 +211,7 @@ public:
 private:
     // Managed by dispatch_t::m_batteryPowerFlow
     BatteryPower* m_batteryPower;
+    battery_t* _Battery; // Managed by dispatch_t
 
     bool canSystemChargeWhenGrid;	///< A boolean specifying whether the battery is allowed to charge from PV when the grid is on
     bool canClipChargeWhenGrid;	///< A boolean specifying whether the battery is allowed to charge from otherwise clipped PV when the grid is on

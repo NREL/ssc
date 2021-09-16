@@ -57,7 +57,7 @@ dispatch_t::dispatch_t(battery_t* Battery, double dt_hour, double SOC_min, doubl
     _Battery = Battery;
     _Battery_initial = new battery_t(*_Battery);
 
-    m_outage_manager = std::make_unique<outage_manager>(m_batteryPower);
+    m_outage_manager = std::make_unique<outage_manager>(m_batteryPower, _Battery);
 
     // Call the dispatch init method
     init(_Battery, dt_hour, current_choice, t_min, mode);
@@ -90,11 +90,12 @@ dispatch_t::dispatch_t(const dispatch_t& dispatch)
     std::unique_ptr<BatteryPowerFlow> tmp(new BatteryPowerFlow(*dispatch.m_batteryPowerFlow));
     m_batteryPowerFlow = std::move(tmp);
     m_batteryPower = m_batteryPowerFlow->getBatteryPower();
-    m_outage_manager = std::make_unique<outage_manager>(m_batteryPower);
-    m_outage_manager->copy(*(dispatch.m_outage_manager));
 
     _Battery = new battery_t(*dispatch._Battery);
     _Battery_initial = new battery_t(*dispatch._Battery_initial);
+
+    m_outage_manager = std::make_unique<outage_manager>(m_batteryPower, _Battery);
+    m_outage_manager->copy(*(dispatch.m_outage_manager));
     init(_Battery, dispatch._dt_hour, dispatch._current_choice, dispatch._t_min, dispatch._mode);
 }
 
@@ -109,7 +110,7 @@ void dispatch_t::copy(const dispatch_t* dispatch)
     std::unique_ptr<BatteryPowerFlow> tmp(new BatteryPowerFlow(*dispatch->m_batteryPowerFlow));
     m_batteryPowerFlow = std::move(tmp);
     m_batteryPower = m_batteryPowerFlow->getBatteryPower();
-    m_outage_manager = std::make_unique<outage_manager>(m_batteryPower);
+    m_outage_manager = std::make_unique<outage_manager>(m_batteryPower, _Battery);
     m_outage_manager->copy(*(dispatch->m_outage_manager));
 
 }
@@ -824,10 +825,10 @@ bool dispatch_automatic_t::check_constraints(double& I, size_t count)
                 m_batteryPower->powerBatteryAC -= m_batteryPower->powerBatteryToGrid; // Target was too large given PV, reduce
 			}
 			else
-				iterate = false;
+				iterate = abs(I_initial - I) > tolerance;;
 		}
 		else
-			iterate = false;
+			iterate = abs(I_initial - I) > tolerance;;
 
         // don't allow any changes to violate current limits
         bool current_iterate = restrict_current(I);
@@ -968,8 +969,9 @@ void battery_metrics_t::new_year()
     _e_loss_system_annual = 0.;
 }
 
-outage_manager::outage_manager(BatteryPower* batteryPower) {
+outage_manager::outage_manager(BatteryPower* batteryPower, battery_t* battery) {
     m_batteryPower = batteryPower;
+    _Battery = battery;
     canSystemChargeWhenGrid = m_batteryPower->canSystemCharge;
     canClipChargeWhenGrid = m_batteryPower->canClipCharge;
     canGridChargeWhenGrid = m_batteryPower->canGridCharge;
@@ -983,6 +985,7 @@ outage_manager::outage_manager(BatteryPower* batteryPower) {
 
 outage_manager::~outage_manager() {
     m_batteryPower = NULL;
+    _Battery = NULL;
 }
 
 void outage_manager::copy(const outage_manager& tmp) {
@@ -1029,6 +1032,8 @@ void outage_manager::startOutage() {
     m_batteryPower->stateOfChargeMax = 100.0;
     m_batteryPower->stateOfChargeMin = 0.0;
 
+    _Battery->changeSOCLimits(0., 100.);
+
     last_step_was_outage = true;
 }
 
@@ -1042,6 +1047,8 @@ void outage_manager::endOutage(bool isAutomated) {
 
     m_batteryPower->stateOfChargeMax = stateOfChargeMaxWhenGrid;
     m_batteryPower->stateOfChargeMin = stateOfChargeMinWhenGrid;
+
+    _Battery->changeSOCLimits(stateOfChargeMinWhenGrid, stateOfChargeMaxWhenGrid);
 
     last_step_was_outage = false;
 }

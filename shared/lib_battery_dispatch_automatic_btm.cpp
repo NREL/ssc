@@ -125,6 +125,12 @@ void dispatch_automatic_behind_the_meter_t::dispatch(size_t year,
 	size_t step_per_hour = (size_t)(1 / _dt_hour);
 	size_t lifetimeIndex = util::lifetimeIndex(year, hour_of_year, step, step_per_hour);
 
+    bool new_month = check_new_month(hour_of_year, step);
+    if (new_month && rate_forecast != NULL)
+    {
+        rate_forecast->copyTOUForecast();
+    }
+
     m_outage_manager->update(true); // true is for automated dispatch
     if (m_batteryPower->isOutageStep) {
         // Calls dispatch function, sometimes iteratively
@@ -223,11 +229,7 @@ void dispatch_automatic_behind_the_meter_t::update_dispatch(size_t year, size_t 
         if ((hour_of_year != _hour_last_updated) || m_outage_manager->recover_from_outage)
         {
             costToCycle();
-            bool new_month = check_new_month(hour_of_year, step);
-            if (new_month)
-            {
-                rate_forecast->copyTOUForecast();
-            }
+
             initialize(hour_of_year, idx);
 
             double no_dispatch_cost = compute_costs(idx, year, hour_of_year, p, debug);

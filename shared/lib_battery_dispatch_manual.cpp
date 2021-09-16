@@ -201,34 +201,39 @@ bool dispatch_manual_t::check_constraints(double &I, size_t count)
 
 void dispatch_manual_t::SOC_controller()
 {
-	// Implement minimum SOC cut-off
-	if (m_batteryPower->powerBatteryDC > 0)
-	{
-		_charging = false;
+    if (m_batteryPower->isOutageStep) {
+        dispatch_t::SOC_controller();
+    }
+    else {
+        // Implement minimum SOC cut-off and apply percent charge/discharge
+        if (m_batteryPower->powerBatteryDC > 0)
+        {
+            _charging = false;
 
-		if (m_batteryPower->powerBatteryDC*_dt_hour > _e_max)
-			m_batteryPower->powerBatteryDC = _e_max / _dt_hour;
+            if (m_batteryPower->powerBatteryDC * _dt_hour > _e_max)
+                m_batteryPower->powerBatteryDC = _e_max / _dt_hour;
 
-		//  discharge percent
-		double e_percent = _e_max*_percent_discharge*0.01;
+            //  discharge percent
+            double e_percent = _e_max * _percent_discharge * 0.01;
 
-		if (m_batteryPower->powerBatteryDC*_dt_hour > e_percent)
-			m_batteryPower->powerBatteryDC = e_percent / _dt_hour;
-	}
-	// Maximum SOC cut-off
-	else if (m_batteryPower->powerBatteryDC < 0)
-	{
-		_charging = true;
+            if (m_batteryPower->powerBatteryDC * _dt_hour > e_percent)
+                m_batteryPower->powerBatteryDC = e_percent / _dt_hour;
+        }
+        // Maximum SOC cut-off
+        else if (m_batteryPower->powerBatteryDC < 0)
+        {
+            _charging = true;
 
-		if (m_batteryPower->powerBatteryDC*_dt_hour < -_e_max)
-			m_batteryPower->powerBatteryDC = -_e_max / _dt_hour;
+            if (m_batteryPower->powerBatteryDC * _dt_hour < -_e_max)
+                m_batteryPower->powerBatteryDC = -_e_max / _dt_hour;
 
-		//  charge percent for automated grid charging
-		double e_percent = _e_max*_percent_charge*0.01;
+            //  charge percent for automated grid charging
+            double e_percent = _e_max * _percent_charge * 0.01;
 
-		if (fabs(m_batteryPower->powerBatteryDC) > fabs(e_percent) / _dt_hour)
-			m_batteryPower->powerBatteryDC = -e_percent / _dt_hour;
-	}
-	else
-		_charging = _prev_charging;
+            if (fabs(m_batteryPower->powerBatteryDC) > fabs(e_percent) / _dt_hour)
+                m_batteryPower->powerBatteryDC = -e_percent / _dt_hour;
+        }
+        else
+            _charging = _prev_charging;
+    }
 }

@@ -163,7 +163,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACDCBatteryModelInte
     ssc_number_t expectedBatteryDischargeEnergy[2] = { 0.76, 7.6 };
 
     ssc_number_t peakKwCharge[2] = { -2.7, -2.8 };
-    ssc_number_t peakKwDischarge[2] = { 0.03, 0.16 };
+    ssc_number_t peakKwDischarge[2] = { 0.835, 0.836 };
     ssc_number_t peakCycles[2] = { 1, 1 };
     ssc_number_t avgCycles[2] = { 0.0027, 0.0027 };
 
@@ -218,8 +218,8 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACDCBatteryModelInte
 
     ssc_number_t peakKwCharge[2] = { -0.47, -0.47 };
     ssc_number_t peakKwDischarge[2] = { 0.39, 0.41 };
-    ssc_number_t peakCycles[2] = { 2, 2 };
-    ssc_number_t avgCycles[2] = { 0.8219, 0.8219 };
+    ssc_number_t peakCycles[2] = { 1, 1 };
+    ssc_number_t avgCycles[2] = { 0.8, 0.8 };
 
     // Test both AC and DC using the same dispatch model
     for (int i = 0; i < 2; i++) {

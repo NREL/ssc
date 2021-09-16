@@ -55,7 +55,7 @@ struct DispatchProperties {
     DispatchProperties() {
 
         // dispatch
-        dispatchChoice = 4; // custom dispatch
+        dispatchChoice = dispatch_t::BTM_MODES::MANUAL;
         currentChoice = dispatch_t::CURRENT_CHOICE::RESTRICT_POWER;
         minimumModeTime = 0.1;
         meterPosition = dispatch_t::METERING::BEHIND;
