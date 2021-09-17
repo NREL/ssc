@@ -74,14 +74,14 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "m_dot_htfmin",              "Minimum loop HTF flow rate",                                                       "kg/s",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "m_dot_htfmax",              "Maximum loop HTF flow rate",                                                       "kg/s",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_MATRIX,      "field_fl_props",            "User defined field fluid property data",                                           "-",            "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_fp",                      "Freeze protection temperature (heat trace activation temperature)",                "none",         "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "I_bn_des",                  "Solar irradiation at design",                                                      "C",            "",               "solar_field",    "*",                       "",                      "" },
-    //{ SSC_INPUT,        SSC_NUMBER,      "V_hdr_max",                 "Maximum HTF velocity in the header at design",                                     "W/m2",         "",               "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "T_fp",                      "Freeze protection temperature (heat trace activation temperature)",                "C",         "",               "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "I_bn_des",                  "Solar irradiation at design",                                                      "W/m2",            "",               "solar_field",    "*",                       "",                      "" },
+    //{ SSC_INPUT,        SSC_NUMBER,      "V_hdr_max",                 "Maximum HTF velocity in the header at design",                                     "m/s",         "",               "solar_field",    "*",                       "",                      "" },
     //{ SSC_INPUT,        SSC_NUMBER,      "V_hdr_min",                 "Minimum HTF velocity in the header at design",                                     "m/s",          "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "Pipe_hl_coef",              "Loss coefficient from the header, runner pipe, and non-HCE piping",                "m/s",          "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "SCA_drives_elec",           "Tracking power, in Watts per SCA drive",                                           "W/m2-K",       "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "tilt",                      "Tilt angle of surface/axis",                                                       "none",         "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "azimuth",                   "Azimuth angle of surface/axis",                                                    "none",         "",               "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "Pipe_hl_coef",              "Loss coefficient from the header, runner pipe, and non-HCE piping",                "W/m2-K",          "",               "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "SCA_drives_elec",           "Tracking power, in Watts per SCA drive",                                           "W/SCA",       "",               "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "tilt",                      "Tilt angle of surface/axis",                                                       "deg",         "",               "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "azimuth",                   "Azimuth angle of surface/axis",                                                    "deg",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "wind_stow_speed",           "Trough wind stow speed",                                                           "m/s",          "",               "solar_field",    "?=50",                    "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "accept_mode",               "Acceptance testing mode?",                                                         "0/1",          "no/yes",         "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "accept_init",               "In acceptance testing mode - require steady-state startup",                        "none",         "",               "solar_field",    "*",                       "",                      "" },
@@ -541,6 +541,10 @@ static var_info _cm_vtab_trough_physical[] = {
         // Thermal energy storage
     { SSC_OUTPUT,       SSC_ARRAY,       "hot_tank_htf_percent_final", "Final percent fill of available hot tank mass",                                   "%",            "",               "System Control", "",                        "",                      "" },
 
+        // Cycle off-design perfomance tables
+    { SSC_OUTPUT,      SSC_MATRIX,       "cycle_eff_load_table",            "Cycle efficiency vs. load",                                                  "",             "",               "",               "*",                       "",                      "COL_LABEL=EFFICIENCY,ROW_LABEL=NO_ROW_LABEL" },
+    { SSC_OUTPUT,      SSC_MATRIX,       "cycle_eff_Tdb_table",             "Cycle efficiency vs. ambient temperature",                                   "",             "",               "",               "*",                       "",                      "COL_LABEL=EFFICIENCY,ROW_LABEL=NO_ROW_LABEL" },
+    { SSC_OUTPUT,      SSC_MATRIX,       "cycle_wcond_Tdb_table",           "Cycle (condenser power / rated gross power) vs. ambient temperature",        "",             "",               "",               "*",                       "",                      "COL_LABEL=POWER_FRACTION,ROW_LABEL=NO_ROW_LABEL" },
 
     var_info_invalid };
 
@@ -1724,8 +1728,37 @@ public:
         std::vector<double> T_out_scas_last_final = c_trough.get_scas_outlet_temps();
         ssc_number_t* p_T_out_scas_last_final = allocate("T_out_scas_last_final", T_out_scas_last_final.size());
         std::copy(T_out_scas_last_final.begin(), T_out_scas_last_final.end(), p_T_out_scas_last_final);
-    }
 
+        // Cycle off-design performance tables for use with dispatch optimization models solved outside of ssc
+        // Mimics calculations in dispatch.params.eff_table_load and dispatch.params.eff_table_Tdb in csp_solver_core, but repeating here to allow for more load points that could be needed for nonlinear dispatch model formulation
+        int neff = 10;
+        ssc_number_t* table_load_efficiency = allocate("cycle_eff_load_table", neff, 2);
+        double q_min = p_csp_power_cycle->get_min_thermal_power();
+        double q_max = p_csp_power_cycle->get_max_thermal_power();
+        double q_des = as_double("P_ref") / as_double("eta_ref");
+        for (int i = 0; i < neff; i++)
+        {
+            double x = q_min + (q_max - q_min) / (double)(neff - 1) * i;
+            double xf = x / q_des;
+            double eta = p_csp_power_cycle->get_efficiency_at_load(xf);
+            table_load_efficiency[2 * i] = x;  //MWt
+            table_load_efficiency[2 * i + 1] = eta;
+        }
+
+        int neffT = 40;
+        ssc_number_t* table_Tdb_efficiency = allocate("cycle_eff_Tdb_table", neffT, 2);
+        ssc_number_t* table_Tdb_wcondcoef = allocate("cycle_wcond_Tdb_table", neffT, 2);
+        for (int i = 0; i < neffT; i++)
+        {
+            double T = -10. + 60. / (double)(neffT - 1) * i; // C
+            double wcond;
+            double eta = p_csp_power_cycle->get_efficiency_at_TPH(T, 1., 30., &wcond) / as_double("eta_ref");
+            table_Tdb_efficiency[2 * i] = T;
+            table_Tdb_efficiency[2 * i + 1] = eta;
+            table_Tdb_wcondcoef[2 * i] = T;
+            table_Tdb_wcondcoef[2 * i + 1] = wcond / as_double("P_ref");  //fraction of rated gross gen
+        }
+    }
 };
 
 DEFINE_MODULE_ENTRY(trough_physical, "Physical trough applications", 1)
