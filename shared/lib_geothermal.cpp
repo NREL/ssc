@@ -304,10 +304,11 @@ namespace geothermal
 	CPolynomial oFlashTemperatureOver1000(342.90613285, 0.33345911089, -0.00020256473758, 0.000000094407417758, -2.7823504188E-11, 4.589696886E-15, -3.2288675486E-19);
 
 	// Second law equations, used in FractionOfMaxEfficiency
-	CPolynomial oSecondLawConstantsBinary(130.8952, -426.5406, 462.9957, -166.3503); // ("6Ab. Makeup-Annl%").Range("R24:R27")
-	CPolynomial oSecondLawConstantsSingleFlash(-3637.06, 25.7411, -0.0684072, 0.0000808782, -0.0000000359423);	// ("6Ef.Flash Makeup").Range("R20:V20")
-	CPolynomial oSecondLawConstantsDualFlashNoTempConstraint(-2762.4048, 18.637876, -0.047198813, 0.000053163057, -0.000000022497296); // ("6Ef.Flash Makeup").Range("R22:V22")
-	CPolynomial oSecondLawConstantsDualFlashWithTempConstraint(-4424.6599, 31.149268, -0.082103498, 0.000096016499, -0.00000004211223);	// ("6Ef.Flash Makeup").Range("R21:V21")
+	CPolynomial oSecondLawConstantsBinary(-10.466, 22.422, -10.956, 0); // ("6Ab. Makeup-Annl%").Range("R24:R27")
+	CPolynomial oSecondLawConstantsSingleFlashAbove240(-10.467, 22.89446, -11.42747, 0);	// ("6Ef.Flash Makeup").Range("R20:V20")
+    CPolynomial oSecondLawConstantsSingleFlashBelow240(-9.07044, 20.13903, -10.06859, 0);	// ("6Ef.Flash Makeup").Range("R20:V20")
+	CPolynomial oSecondLawConstantsDualFlashAbove210(-8.8276, 19.388, -9.5604, 0); // ("6Ef.Flash Makeup").Range("R22:V22")
+	CPolynomial oSecondLawConstantsDualFlashBelow210(-10.124, 21.683, -10.599, 0);	// ("6Ef.Flash Makeup").Range("R21:V21")
 
 
 	//Specific Volume Coefficients (Used in Flass Vessels Cost Calculation):
@@ -420,7 +421,7 @@ namespace geothermal
 
 		double GetAEForFlashBTU(double tempHighF, double tempLowF)
 		{
-			return (oFlashEnthalpyConstants.evaluate(tempHighF) - oAmbientEnthalpyConstants.evaluate(tempLowF)) - ((tempLowF + 460) * (oFlashEntropyConstants.evaluate(tempHighF) - oAmbientEntropyConstants.evaluate(tempLowF)));
+			return (oBinaryEnthalpyConstants.evaluate(tempHighF) - oAmbientEnthalpyConstants.evaluate(tempLowF)) - ((tempLowF + 460) * (oBinaryEntropyConstants.evaluate(tempHighF) - oAmbientEntropyConstants.evaluate(tempLowF)));
 		}
 
 	};
@@ -479,7 +480,7 @@ double CGeothermalAnalyzer::PlantGrossPowerkW(void)
 		break;
 
 	case MA_FLASH:
-		dPlantBrineEfficiency = MaxSecondLawEfficiency() * FractionOfMaxEfficiency() * GetAEFlashAtTemp(md_WorkingTemperatureC);
+		dPlantBrineEfficiency = MaxSecondLawEfficiency() * FractionOfMaxEfficiency() * GetAEFlashAtTemp(md_WorkingTemperatureC-1.75);
 		break;
 
 	case MA_EGS:
@@ -512,30 +513,37 @@ double CGeothermalAnalyzer::FractionOfMaxEfficiency()
 {
 	double dTemperatureRatio = 0.0;
 	if (me_makeup == MA_EGS)
-		dTemperatureRatio = physics::CelciusToKelvin(md_LastProductionTemperatureC) / physics::CelciusToKelvin(GetTemperaturePlantDesignC());
+		dTemperatureRatio = physics::CelciusToKelvin(mo_geo_in.md_TemperatureEGSAmbientC) / physics::CelciusToKelvin(md_LastProductionTemperatureC);
 	else
-		dTemperatureRatio = physics::CelciusToKelvin(md_WorkingTemperatureC) / physics::CelciusToKelvin(GetTemperaturePlantDesignC());
-
+		dTemperatureRatio = physics::CelciusToKelvin(mo_geo_in.md_TemperatureEGSAmbientC) / physics::CelciusToKelvin(md_WorkingTemperatureC-1.75);
+    double carnot_eff_initial = 1 - physics::CelciusToKelvin(mo_geo_in.md_TemperatureEGSAmbientC) / physics::CelciusToKelvin(GetTemperaturePlantDesignC()-1.75);
+    double carnot_eff = 1 - dTemperatureRatio;
+    double carnot_ratio = carnot_eff / carnot_eff_initial;
 	if (me_makeup == MA_FLASH)
 	{
 		switch (mo_geo_in.me_ft)
 		{
 		case SINGLE_FLASH_NO_TEMP_CONSTRAINT:
 		case SINGLE_FLASH_WITH_TEMP_CONSTRAINT:
-			return (1.1 - (0.1 * pow(dTemperatureRatio, geothermal::oSecondLawConstantsSingleFlash.evaluate(physics::CelciusToKelvin(GetResourceTemperatureC())))));
+            
+            if (GetResourceTemperatureC() <= 240.0)
+                return -10.06859 * pow(carnot_ratio, 2) + 20.13903 * carnot_ratio - 9.07044;
+            else
+                return -11.42747 * pow(carnot_ratio, 2) + 22.89466 * carnot_ratio - 10.467;
 
 		case DUAL_FLASH_NO_TEMP_CONSTRAINT:
-			return (1.1 - (0.1 * pow(dTemperatureRatio, geothermal::oSecondLawConstantsDualFlashNoTempConstraint.evaluate(physics::CelciusToKelvin(GetResourceTemperatureC())))));
-
 		case DUAL_FLASH_WITH_TEMP_CONSTRAINT:
-			return (1.1 - (0.1 * pow(dTemperatureRatio, geothermal::oSecondLawConstantsDualFlashWithTempConstraint.evaluate(physics::CelciusToKelvin(GetResourceTemperatureC())))));
+            if (GetResourceTemperatureC() <= 210.0)
+			    return -10.559 * pow(carnot_ratio, 2) + 21.683 * carnot_ratio - 10.124;
+            else
+                return -9.5604 * pow(carnot_ratio, 2) + 19.388 * carnot_ratio - 8.8276;
 
 		default: ms_ErrorString = ("Invalid flash technology in CGeothermalAnalyzer::FractionOfMaxEfficiency"); return 0;
 		}
 
 	}
 	else // Binary and EGS
-		return(dTemperatureRatio > 0.98) ? geothermal::oSecondLawConstantsBinary.evaluate(dTemperatureRatio) : 1.0177 * pow(dTemperatureRatio, 2.6237);
+		return -4.02806 * pow(carnot_ratio, 2) + 8.19363 * carnot_ratio - 3.16557;
 }
 
 bool CGeothermalAnalyzer::CanReplaceReservoir(double dTimePassedInYears)
@@ -708,7 +716,7 @@ double CGeothermalAnalyzer::GetResourceTemperatureC(void) // degrees C
 	return mo_geo_in.md_TemperatureResourceC;
 }
 
-double CGeothermalAnalyzer::GetTemperaturePlantDesignC(void) { return (mo_geo_in.me_rt == EGS) ? mo_geo_in.md_TemperaturePlantDesignC : GetResourceTemperatureC(); }
+double CGeothermalAnalyzer::GetTemperaturePlantDesignC(void) { return (mo_geo_in.me_rt == EGS) ? mo_geo_in.md_TemperaturePlantDesignC : (GetResourceTemperatureC()); }
 
 double CGeothermalAnalyzer::GetResourceDepthM(void) // meters
 {
@@ -720,7 +728,7 @@ double CGeothermalAnalyzer::GetAmbientTemperatureC(conversionTypes ct)
 {
 	if (ct == NO_CONVERSION_TYPE) ct = mo_geo_in.me_ct;
 	//return (ct == BINARY) ? geothermal::DEFAULT_AMBIENT_TEMPC_BINARY : (1.3842 * geothermal::WET_BULB_TEMPERATURE_FOR_FLASH_CALCS) + 5.1772 ;
-	return (ct == BINARY) ? geothermal::DEFAULT_AMBIENT_TEMPC_BINARY : (1.3842 * mo_geo_in.md_TemperatureWetBulbC) + 5.1772;
+	return (ct == BINARY) ? geothermal::DEFAULT_AMBIENT_TEMPC_BINARY : (mo_geo_in.md_TemperatureWetBulbC);
 }
 
 double CGeothermalAnalyzer::InjectionTemperatureC() // calculate injection temperature in degrees C
@@ -770,7 +778,7 @@ double CGeothermalAnalyzer::InjectionDensity(void) { return (1 / geothermal::oSV
 double CGeothermalAnalyzer::GetAEAtTemp(double tempC) { return (mo_geo_in.me_ct == BINARY) ? GetAEBinaryAtTemp(tempC) : GetAEFlashAtTemp(tempC); }
 double CGeothermalAnalyzer::GetAEBinaryAtTemp(double tempC) { return geothermal::oGFC.GetAEForBinaryWattHrUsingC(tempC, GetAmbientTemperatureC()); }	// watt-hr/lb - Calculate available energy using binary constants and plant design temp (short cut)
 double CGeothermalAnalyzer::GetAEFlashAtTemp(double tempC) { return geothermal::oGFC.GetAEForFlashWattHrUsingC(tempC, GetAmbientTemperatureC()); }	// watt-hr/lb - Calculate available energy using flash constants and plant design temp (short cut)
-double CGeothermalAnalyzer::GetAE(void) { return GetAEAtTemp(GetTemperaturePlantDesignC()); }
+double CGeothermalAnalyzer::GetAE(void) { return GetAEAtTemp(GetTemperaturePlantDesignC()-1.75); }
 double CGeothermalAnalyzer::GetAEBinary(void) { return GetAEBinaryAtTemp(GetTemperaturePlantDesignC()); }// watt-hr/lb - Calculate available energy using binary constants and plant design temp (short cut)
 double CGeothermalAnalyzer::GetAEFlash(void) { return GetAEFlashAtTemp(GetTemperaturePlantDesignC()); }
 
@@ -1340,7 +1348,7 @@ double CGeothermalAnalyzer::pressureDualHighWithConstraint()
 {
 	double a = (temperatureCondF() > 125) ? 1.59 + (0.0015547 * exp(0.0354727*temperatureCondF())) : 1.59 + (0.098693 * exp(0.0025283*temperatureCondF()));
 	double b = (temperatureCondF() > 125) ? 0.01916 - (0.000005307 * exp(0.031279921*temperatureCondF())) : 0.01916 - (0.000167123 * exp(0.00400728*temperatureCondF()));
-	return a * exp(b * GetTemperaturePlantDesignC());
+	return a * exp(b * (GetTemperaturePlantDesignC()-1.75));
 }
 double CGeothermalAnalyzer::pressureDualHigh(void)
 {	// P64
@@ -1445,10 +1453,10 @@ bool CGeothermalAnalyzer::determineMakeupAlgorithm()
 
 	if (mo_geo_in.me_tdm == ENTER_RATE)
 	{ // if user has chosen to enter the temperature decline rate, then the makeup is calculated either with the binary or flash method.
-		if (mo_geo_in.me_ct == BINARY)
-			me_makeup = MA_BINARY;
-		else if (mo_geo_in.me_rt == EGS)
-			ms_ErrorString = ("GETEM algorithms are not meant to handle flash plants with EGS resources.");
+        if (mo_geo_in.me_ct == BINARY)
+            me_makeup = MA_BINARY;
+        else if (mo_geo_in.me_rt == EGS)
+            me_makeup = MA_FLASH;
 		else
 		{
 			if ((mo_geo_in.me_ft > NO_FLASH_SUBTYPE) && (mo_geo_in.me_ft <= DUAL_FLASH_WITH_TEMP_CONSTRAINT))
