@@ -6,7 +6,7 @@
 #include "../ssc/core.h"
 #include "vartab.h"
 #include "../ssc/common.h"
-#include "../input_cases/pvwattsv5_cases.h"
+#include "../input_cases/pvwatts_cases.h"
 
 /**
 * CMPVWattsV5 tests cmod_pvwattsv5 using a solar resource file. SetUp() creates default case,
@@ -21,7 +21,7 @@ protected: //doesn't really matter if this is protected or public, but you need 
 	bool compute();
 	void SetUp() { //if you always want to set up with the same default case, this can go in the class. otherwise it probably makes sense in the test itself.
 		data = ssc_data_create();
-		int errors = pvwattsv5_nofinancial_testfile(data);
+		int errors = pvwatts_nofinancial_testfile(data);
 		EXPECT_FALSE(errors); //make sure that the test ran ok
 	}
 	void TearDown()
