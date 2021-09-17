@@ -200,12 +200,12 @@ void C_mspt_receiver_222::init()
 	m_m_dot_htf_max = m_m_dot_htf_max_frac * m_m_dot_htf_des;	//[kg/s]
 
 	m_mode_prev = m_mode;
-    if (m_mode_prev == C_csp_collector_receiver::OFF) {
+    if (m_mode_initial == C_csp_collector_receiver::OFF) {
 
         m_E_su_prev = m_q_rec_des * m_rec_qf_delay;	//[W-hr] Startup energy
         m_t_su_prev = m_rec_su_delay;				//[hr] Startup time requirement
     }
-	if (m_mode_initial == C_csp_collector_receiver::STARTUP) {
+	else if (m_mode_initial == C_csp_collector_receiver::STARTUP) {
 			
         if (std::isfinite(m_E_su_init)) {
             m_E_su_prev = std::fmin(m_q_rec_des * m_rec_qf_delay, std::fmax(0.0, m_E_su_init));
