@@ -39,6 +39,10 @@ static var_info _cm_vtab_host_developer[] = {
 	{ SSC_INPUT,        SSC_ARRAY,       "elec_cost_without_system",             "Host energy bill without system",                       "$",            "",                      "Host",      "*",                       "",                                         "" },
 	{ SSC_INPUT,        SSC_NUMBER,       "host_real_discount_rate",             "Host real discount rate",                       "%",            "",                      "Host",      "*",                       "",                                         "" },
 
+    { SSC_INPUT,        SSC_ARRAY,      "utility_bill_par",          "Electricity bill for system parasitics", "$", "", "Charges by Month", "*", "", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_utility_bill", "Electricity purchase", "$", "", "", "", "LENGTH_EQUAL=cf_length", "" },
+
+
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_agreement_cost",      "Host agreement cost",                  "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_after_tax_net_equity_cost_flow",        "Host after-tax annual costs",           "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_after_tax_cash_flow",                   "Host after-tax cash flow",                      "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -861,6 +865,8 @@ enum {
     CF_annual_cost_lcos,
     CF_util_escal_rate,
 
+    CF_utility_bill,
+
     CF_max,
  };
 
@@ -1284,7 +1290,24 @@ public:
 			}
 		}
 
+        if (is_assigned("utility_bill_par"))
+        {
+            size_t ub_count;
+            ssc_number_t* ub_arr;
+            ub_arr = as_array("utility_bill_par", &ub_count);
+            if (ub_count != (size_t)(nyears + 1))
+                throw exec_error("singleowner", util::format("utility bill years (%d) not equal to analysis period years (%d).", (int)ub_count, nyears));
 
+            for (i = 0; i <= nyears; i++)
+                cf.at(CF_utility_bill, i) = ub_arr[i];
+            save_cf(CF_utility_bill, nyears, "cf_utility_bill");
+        }
+        else
+        {
+            for (i = 0; i <= nyears; i++)
+                cf.at(CF_utility_bill, i) = 0;
+            save_cf(CF_utility_bill, nyears, "cf_utility_bill");
+        }
 
 		for (i=1; i<=nyears; i++)
 		{			
@@ -1311,6 +1334,7 @@ public:
 				+ cf.at(CF_property_tax_expense,i)
 				+ cf.at(CF_insurance_expense,i)
 				+ cf.at(CF_battery_replacement_cost,i)
+                + cf.at(CF_utility_bill, i)
 				+ cf.at(CF_Recapitalization,i);
 		}
 

@@ -35,6 +35,9 @@ static var_info vtab_cashloan[] = {
 	{ SSC_INPUT,        SSC_NUMBER,     "market",                    "Residential or Commercial Market",   "0/1",          "0=residential,1=comm.",     "Financial Parameters",      "?=1",                     "INTEGER,MIN=0,MAX=1",            "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "mortgage",                  "Use mortgage style loan (res. only)","0/1",          "0=standard loan,1=mortgage","Financial Parameters", "?=0", "INTEGER,MIN=0,MAX=1", "" },
 
+    { SSC_INPUT,        SSC_ARRAY,      "utility_bill_par",          "Electricity bill for system parasitics", "$", "", "Charges by Month", "*", "", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_utility_bill", "Electricity purchase", "$", "", "", "", "LENGTH_EQUAL=cf_length", "" },
+
 	{ SSC_INPUT,        SSC_NUMBER,      "total_installed_cost",     "Total installed cost",               "$",            "",                      "System Costs",            "*",                      "MIN=0",                                         "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "salvage_percentage",       "Salvage value percentage",           "%",            "",                      "Financial Parameters",      "?=0.0",                  "MIN=0,MAX=100",                 "" },
     //{ SSC_INPUT,        SSC_NUMBER,     "batt_salvage_percentage",                     "Net pre-tax cash battery salvage value",	                               "%",	 "",					  "Financial Parameters",             "?=0",                     "MIN=0,MAX=100",      			"" },
@@ -275,6 +278,8 @@ enum {
     CF_investment_cost_lcos,
     CF_annual_cost_lcos,
     CF_util_escal_rate,
+
+    CF_utility_bill,
 
     CF_max,
 };
@@ -755,6 +760,25 @@ public:
 		double itc_total_fed = itc_fed_amount + itc_fed_per;
 		double itc_total_sta = itc_sta_amount + itc_sta_per;
 
+        if (is_assigned("utility_bill_par"))
+        {
+            size_t ub_count;
+            ssc_number_t* ub_arr;
+            ub_arr = as_array("utility_bill_par", &ub_count);
+            if (ub_count != (size_t)(nyears + 1))
+                throw exec_error("singleowner", util::format("utility bill years (%d) not equal to analysis period years (%d).", (int)ub_count, nyears));
+
+            for (i = 0; i <= nyears; i++)
+                cf.at(CF_utility_bill, i) = ub_arr[i];
+            save_cf(CF_utility_bill, nyears, "cf_utility_bill");
+        }
+        else
+        {
+            for (i = 0; i <= nyears; i++)
+                cf.at(CF_utility_bill, i) = 0;
+            save_cf(CF_utility_bill, nyears, "cf_utility_bill");
+        }
+
 		for (i=1; i<=nyears; i++)
 		{			
 			// compute expenses
@@ -801,6 +825,7 @@ public:
 				+ cf.at(CF_insurance_expense,i)
 				+ cf.at(CF_battery_replacement_cost, i)
 				+ cf.at(CF_fuelcell_replacement_cost, i)
+                + cf.at(CF_utility_bill, i) //Parasitics
 				- cf.at(CF_net_salvage_value,i);
 
 			

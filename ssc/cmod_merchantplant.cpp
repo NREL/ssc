@@ -2653,6 +2653,9 @@ public:
 //	log(util::format("after loop  - size of debt =%lg .", size_of_debt), SSC_WARNING);
 
 
+    for (size_t i = 1; i <= nyears; i++)
+        cf.at(CF_energy_net, i) = cf.at(CF_energy_sales, i) + cf.at(CF_energy_purchases, i); // Adding a positive and negative number
+
 	double	flip_target_percent = cf.at(CF_project_return_aftertax_irr, flip_target_year);
 
 	assign("flip_target_year", var_data((ssc_number_t) flip_target_year ));

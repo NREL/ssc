@@ -2444,7 +2444,10 @@ public:
 
 /***************** end iterative solution *********************************************************************/
 
-	assign("flip_target_year", var_data((ssc_number_t) flip_target_year ));
+    for (size_t i = 1; i <= nyears; i++)
+        cf.at(CF_energy_net, i) = cf.at(CF_energy_sales, i) + cf.at(CF_energy_purchases, i); // Adding a positive and negative number
+
+    assign("flip_target_year", var_data((ssc_number_t) flip_target_year ));
 	assign("flip_target_irr", var_data((ssc_number_t)  flip_target_percent ));
 /*	assign("flip_actual_year", var_data((ssc_number_t) flip_year));
 	double actual_flip_irr = 0;
