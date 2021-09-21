@@ -496,7 +496,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 	mc_kernel.init(sim_setup, wf_step, baseline_step, mc_csp_messages);
     
     C_csp_collector_receiver::E_csp_cr_modes cr_operating_state = C_csp_collector_receiver::OFF;
-	C_csp_power_cycle::E_csp_power_cycle_modes pc_operating_state = C_csp_power_cycle::OFF;
+	//C_csp_power_cycle::E_csp_power_cycle_modes pc_operating_state = C_csp_power_cycle::OFF;
 	double tol_mode_switching = 0.10;		// Give buffer to account for uncertainty in estimates
 
 	// Reset vector that tracks operating modes
@@ -516,7 +516,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
 	double pc_state_persist = 0.;  // Time [hr] that current pc operating state (on/off/standby) has persisted
 	double rec_state_persist = 0.;  // Time [hr] that current receiver operating state (on/off/standby) has persisted
-	int prev_pc_state = mc_power_cycle.get_operating_state();
+	//int prev_pc_state = mc_power_cycle.get_operating_state();
 	int prev_rec_state = mc_collector_receiver.get_operating_state();
 
 	double q_pb_last = 0.0;   // Cycle thermal input at end of last time step [kWt]
@@ -573,7 +573,13 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 			throw(C_csp_exception(msg,"CSP Solver Core"));
 		}
             // power cycle
-		pc_operating_state = static_cast<C_csp_power_cycle::E_csp_power_cycle_modes>(mc_power_cycle.get_operating_state());
+        C_csp_power_cycle::E_csp_power_cycle_modes pc_operating_state_prev = mc_power_cycle.get_operating_state();
+        C_csp_power_cycle::E_csp_power_cycle_modes pc_operating_state_to_controller = pc_operating_state_prev;
+        // If component is off but does not require startup to switch to on,
+        // Then for the purposed of the controller hierarchy, the component is on
+        if (pc_operating_state_to_controller == C_csp_power_cycle::OFF_NO_SU_REQ) {
+            pc_operating_state_to_controller = C_csp_power_cycle::ON;
+        }
 
 		double q_pb_last = mc_pc_out_solver.m_q_dot_htf * 1000.; //[kWt]
 		double w_pb_last = mc_pc_out_solver.m_P_cycle * 1000.;   //[kWt]
@@ -704,7 +710,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
         calc_timestep_plant_control_and_targets(
             f_turbine_tou, q_pc_min, q_dot_tes_ch,
-            pc_operating_state, purchase_mult, pricing_mult,
+            pc_operating_state_to_controller, purchase_mult, pricing_mult,
             calc_frac_current, baseline_step,
             is_q_dot_pc_target_overwrite,
             q_pc_target, q_dot_pc_max, q_dot_elec_to_CR_heat,
@@ -717,7 +723,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
         // Split up reported q_dot_pc target into 'startup' and 'on' so input dispatch can specify both for a single full timestep
         double q_dot_pc_su_target_reporting = 0.0;
         double q_dot_pc_on_target_reporting = 0.0;
-        if (pc_operating_state == C_csp_power_cycle::OFF || pc_operating_state == C_csp_power_cycle::STARTUP) {
+        if (pc_operating_state_to_controller == C_csp_power_cycle::OFF || pc_operating_state_to_controller == C_csp_power_cycle::STARTUP) {
             q_dot_pc_su_target_reporting = q_pc_target;
         }
         else {
@@ -787,7 +793,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		if (cr_operating_state == C_csp_collector_receiver::ON && (q_dot_cr_on >0.0 || m_dot_cr_on > 0.0) && is_rec_su_allowed && is_rec_outlet_to_hottank && m_is_tes)
 		{
 			double qpcmax = m_q_dot_pc_max;
-			if (pc_operating_state == C_csp_power_cycle::OFF || C_csp_power_cycle::STARTUP)
+			if (pc_operating_state_to_controller == C_csp_power_cycle::OFF || C_csp_power_cycle::STARTUP)
 				qpcmax = q_dot_pc_su_max;
 
             double qmax = q_dot_tes_ch / (1.0 - tol_mode_switching);
@@ -815,7 +821,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 			mc_kernel.mc_sim_info.ms_ts.m_step = mc_kernel.mc_sim_info.ms_ts.m_time - mc_kernel.mc_sim_info.ms_ts.m_time_start;
 
             operating_mode = mc_operating_modes.find_operating_mode(
-                cr_operating_state, pc_operating_state,
+                cr_operating_state, pc_operating_state_to_controller,
                 q_dot_cr_startup /*MWt*/, q_dot_tes_dc /*MWt*/,
                 q_dot_cr_on /*MWt*/, q_dot_tes_ch /*MWt*/,
                 q_dot_pc_su_max /*MWt*/, q_pc_target /*MWt*/,
@@ -936,12 +942,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
         }
 
 		// Update the cycle state persistance
-		if (mc_power_cycle.get_operating_state() == prev_pc_state)
-			pc_state_persist += mc_kernel.mc_sim_info.ms_ts.m_step / 3600.;
+		if (mc_power_cycle.get_operating_state() == pc_operating_state_prev)
+			pc_state_persist += mc_kernel.mc_sim_info.ms_ts.m_step / 3600.; //[hr]
 		else
 		{
 			pc_state_persist = 0.;
-			prev_pc_state = mc_power_cycle.get_operating_state();
+			//prev_pc_state = mc_power_cycle.get_operating_state();
 		}
 
 		// Update the receiver state persistance

@@ -500,6 +500,7 @@ public:
 		ON,
 		STANDBY,
 		OFF,
+        OFF_NO_SU_REQ,
 		STARTUP_CONTROLLED
 	};
 

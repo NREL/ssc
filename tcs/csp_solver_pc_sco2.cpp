@@ -119,7 +119,9 @@ void C_pc_sco2::init(C_csp_power_cycle::S_solved_params &solved_params)
 	m_standby_control_prev = OFF;			// Assume power cycle is off when simulation begins
 	m_startup_energy_remain_prev = m_startup_energy_required;		//[kWt-hr]
 	m_startup_time_remain_prev = ms_params.m_startup_time;			//[hr]
-
+    if (ms_params.m_startup_frac == 0.0 && ms_params.m_startup_time == 0.0 && m_standby_control_prev == OFF) {
+        m_standby_control_prev = OFF_NO_SU_REQ;
+    }
 }
 
 C_csp_power_cycle::E_csp_power_cycle_modes C_pc_sco2::get_operating_state()
@@ -497,6 +499,10 @@ void C_pc_sco2::converged()
 	m_standby_control_prev = m_standby_control_calc;
 	m_startup_time_remain_prev = m_startup_time_remain_calc;
 	m_startup_energy_remain_prev = m_startup_energy_remain_calc;
+
+    if (ms_params.m_startup_frac == 0.0 && ms_params.m_startup_time == 0.0 && m_standby_control_prev == OFF) {
+        m_standby_control_prev = OFF_NO_SU_REQ;
+    }
 
 	mc_reported_outputs.set_timestep_outputs();
 }

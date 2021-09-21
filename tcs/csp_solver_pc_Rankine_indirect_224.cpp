@@ -127,6 +127,9 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
     m_operating_mode_prev = OFF;			// Assume power cycle is off when simulation begins
     m_startup_energy_remain_prev = m_startup_energy_required;	//[kW-hr]
     m_startup_time_remain_prev = ms_params.m_startup_time;		//[hr]
+    if (ms_params.m_startup_frac == 0.0 && ms_params.m_startup_time == 0.0 && m_operating_mode_prev == OFF) {
+        m_operating_mode_prev = OFF_NO_SU_REQ;
+    }
     // ***********************************************************************
 
 
@@ -1672,8 +1675,12 @@ void C_pc_Rankine_indirect_224::converged()
 	mc_two_tank_ctes.converged();
 	mc_stratified_ctes.converged();
 	m_operating_mode_prev = m_operating_mode_calc;
-	m_startup_time_remain_prev = m_startup_time_remain_calc;
+    m_startup_time_remain_prev = m_startup_time_remain_calc;
 	m_startup_energy_remain_prev = m_startup_energy_remain_calc;
+
+    if (ms_params.m_startup_frac == 0.0 && ms_params.m_startup_time == 0.0 && m_operating_mode_prev == OFF){
+        m_operating_mode_prev = OFF_NO_SU_REQ;
+    }
 
 	m_ncall = -1;
 
@@ -1694,10 +1701,10 @@ void C_pc_Rankine_indirect_224::assign(int index, double *p_reporting_ts_array, 
 
 C_csp_power_cycle::E_csp_power_cycle_modes C_pc_Rankine_indirect_224::get_operating_state()
 {
-	if(ms_params.m_startup_frac == 0.0 && ms_params.m_startup_time == 0.0)
-	{
-		return C_csp_power_cycle::ON;
-	}
+	//if(ms_params.m_startup_frac == 0.0 && ms_params.m_startup_time == 0.0)
+	//{
+	//	return C_csp_power_cycle::ON;
+	//}
 
 	return m_operating_mode_prev;
 }
