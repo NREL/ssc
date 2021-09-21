@@ -897,6 +897,9 @@ public:
 			DISPATCH_PRES_NVAR,         //[-] Number of variables in dispatch model formulation
 			DISPATCH_SOLVE_TIME,        //[sec]   Time required to solve the dispatch model at each instance
 			DISPATCH_QPBTARGET_EXPECT,        //[MWt] Power cycle energy consumption in dispatch model
+            QSF_EXPECT,                 //[MWt] Expected total solar field energy generation for dispatch model
+            ETA_SF_EXPECT,              //[-] Expected field optical efficiency for dispatch model
+
 
 			// **************************************************************
 			//      Outputs that are reported as weighted averages if 

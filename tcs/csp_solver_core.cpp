@@ -176,7 +176,10 @@ static C_csp_reported_outputs::S_output_info S_solver_output_info[] =
 	{C_csp_solver::C_solver_outputs::DISPATCH_PRES_NCONSTR, C_csp_reported_outputs::TS_1ST},		  //[-] Number of constraint relationships in dispatch model formulation
 	{C_csp_solver::C_solver_outputs::DISPATCH_PRES_NVAR, C_csp_reported_outputs::TS_1ST},		  //[-] Number of variables in dispatch model formulation
 	{C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_TIME, C_csp_reported_outputs::TS_1ST},		  //[sec]   Time required to solve the dispatch model at each instance
-	{ C_csp_solver::C_solver_outputs::DISPATCH_QPBTARGET_EXPECT, C_csp_reported_outputs::TS_1ST },		  //[MWt] Power cycle energy consumption in dispatch model
+	{C_csp_solver::C_solver_outputs::DISPATCH_QPBTARGET_EXPECT, C_csp_reported_outputs::TS_1ST },		  //[MWt] Power cycle energy consumption in dispatch model
+
+    {C_csp_solver::C_solver_outputs::QSF_EXPECT, C_csp_reported_outputs::TS_1ST},		        //[MWt] Expected total solar field energy generation for dispatch model
+    {C_csp_solver::C_solver_outputs::ETA_SF_EXPECT, C_csp_reported_outputs::TS_1ST},		    //[-] Expected field optical efficiency for dispatch model
 
 	// **************************************************************
 	//      Outputs that are reported as weighted averages if 
@@ -882,7 +885,14 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
 
         bool opt_complete = false;
-		
+
+        // Get approximate collector/receiver available energy for use in external dispatch optimization models
+        double opt_eff_approx = mc_collector_receiver.calculate_optical_efficiency(mc_weather.ms_outputs, mc_kernel.mc_sim_info);
+        double qinc = mc_collector_receiver.get_collector_area() * opt_eff_approx * mc_weather.ms_outputs.m_beam * 1e-6; // MW
+        double therm_eff_approx = mc_collector_receiver.calculate_thermal_efficiency_approx(mc_weather.ms_outputs, qinc);
+        double q_sfavail_approx = qinc * therm_eff_approx;  // MW
+
+
 
         //Run dispatch optimization?
 		// assume dispatch optimization frequency, horizon and horizon update frequency are defined relative to the start of the year, regardless of the simulation start time
@@ -2400,6 +2410,9 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		mc_reported_outputs.value(C_solver_outputs::DISPATCH_PRES_NVAR, dispatch.outputs.presolve_nvar);
 		mc_reported_outputs.value(C_solver_outputs::DISPATCH_SOLVE_TIME, dispatch.outputs.solve_time);
 		mc_reported_outputs.value(C_solver_outputs::DISPATCH_QPBTARGET_EXPECT, disp_qpbtarget_expect);
+
+        mc_reported_outputs.value(C_solver_outputs::QSF_EXPECT, q_sfavail_approx);
+        mc_reported_outputs.value(C_solver_outputs::ETA_SF_EXPECT, opt_eff_approx);
 
 		// Report series of operating modes attempted during the timestep as a 'double' so can see in hourly outputs
         // Key will start with 1 then add two digits for each operating mode. Single digits enumerations will add a 0 before the number

@@ -658,6 +658,8 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_OUTPUT,    SSC_ARRAY,  "disp_solve_time",                    "Dispatch solver time",                                                                                                                    "sec",          "",                                  "",                                         "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_ARRAY,  "disp_qpbtarget_expected",            "Dispatch expected power cycle startup energy",                                                                                            "MWt",          "",                                  "",                                         "*",                                                                "",              ""},
 
+    { SSC_OUTPUT,    SSC_ARRAY,  "qsf_expected",                       "Expected solar field available energy (for dispatch)",                                                                                    "MWt",          "",                                  "",                                         "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "eta_opt_expected",                   "Expected field optical efficiency (for dispatch)",                                                                                        "",             "",                                  "",                                         "*",                                                                "",              "" },
 
         // These outputs correspond to the first csp-solver timestep in the reporting timestep.
         //     Subsequent csp-solver timesteps within the same reporting timestep are not tracked
@@ -2593,6 +2595,9 @@ public:
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_PRES_NVAR, allocate("disp_presolve_nvar", n_steps_fixed), n_steps_fixed);
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_TIME, allocate("disp_solve_time", n_steps_fixed), n_steps_fixed);
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_QPBTARGET_EXPECT, allocate("disp_qpbtarget_expected", n_steps_fixed), n_steps_fixed);
+
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::QSF_EXPECT, allocate("qsf_expected", n_steps_fixed), n_steps_fixed);
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::ETA_SF_EXPECT, allocate("eta_opt_expected", n_steps_fixed), n_steps_fixed);
 
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::SOLZEN, allocate("solzen", n_steps_fixed), n_steps_fixed);
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::SOLAZ, allocate("solaz", n_steps_fixed), n_steps_fixed);
