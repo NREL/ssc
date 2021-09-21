@@ -488,6 +488,13 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_OUTPUT,    SSC_ARRAY,  "Q_thermal_ss",					   "Receiver thermal power to HTF less piping loss (steady state)",																			  "MWt",          "",                                  "CR",                                       "*",                                                                "",              "" },
 	{ SSC_OUTPUT,    SSC_ARRAY,  "Q_thermal_ss_csky",				   "Receiver thermal power to HTF less piping loss under clear-sky conditions (steady state)",												  "MWt",          "",                                  "CR",                                       "*",                                                                "",              "" },
 
+        // Heater outputs is_parallel_htr
+    { SSC_OUTPUT,    SSC_ARRAY,  "W_dot_heater",                       "Parallel heater electricity consumption",                                                                                                 "MWe",          "",                                  "Parallel Heater",                          "is_parallel_htr=1",                                                "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "q_dot_heater_to_htf",                "Parallel heater thermal power to HTF",                                                                                                    "MWt",          "",                                  "Parallel Heater",                          "is_parallel_htr=1",                                                "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "q_dot_heater_startup",               "Parallel heater thermal power consumed during startup",                                                                                   "MWt",          "",                                  "Parallel Heater",                          "is_parallel_htr=1",                                                "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "m_dot_htf_heater",                   "Parallel heater HTF mass flow rate",                                                                                                      "kg/s",         "",                                  "Parallel Heater",                          "is_parallel_htr=1",                                                "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "T_htf_heater_in",                    "Parallel heater HTF inlet temperature",                                                                                                   "C",            "",                                  "Parallel Heater",                          "is_parallel_htr=1",                                                "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "T_htf_heater_out",                   "Parallel heater HTF outlet temperature",                                                                                                  "C",            "",                                  "Parallel Heater",                          "is_parallel_htr=1",                                                "",              "" },
 
         // Power cycle outputs
     { SSC_OUTPUT,    SSC_ARRAY,  "eta",                                "PC efficiency, gross",                                                                                                                    "",             "",                                  "",                                         "*",                                                                "",              ""},
@@ -1759,7 +1766,7 @@ public:
         // Check if system configuration includes a heater parallel to primary collector receiver
         C_csp_collector_receiver* p_heater;
         C_csp_cr_electric_resistance* p_electric_resistance = NULL;
-        bool is_parallel_heater = as_boolean("is_parallel_htr");   // false;
+        bool is_parallel_heater = as_boolean("is_parallel_htr");    // defaults to false
         if (is_parallel_heater) {
             double q_dot_heater_des = receiver->m_q_rec_des * 2.0;  // / 4.0;      //[MWt]
             double f_q_dot_des_allowable_su = 1.0;      //[-]
@@ -1767,6 +1774,13 @@ public:
             p_electric_resistance = new C_csp_cr_electric_resistance(receiver->m_T_htf_cold_des, receiver->m_T_htf_hot_des, q_dot_heater_des,
                 f_q_dot_des_allowable_su, hrs_startup_at_max_rate,
                 as_integer("rec_htf"), as_matrix("field_fl_props"), C_csp_cr_electric_resistance::E_elec_resist_startup_mode::INSTANTANEOUS_NO_MAX_ELEC_IN);
+
+            p_electric_resistance->mc_reported_outputs.assign(C_csp_cr_electric_resistance::E_W_DOT_HEATER, allocate("W_dot_heater", n_steps_fixed), n_steps_fixed);
+            p_electric_resistance->mc_reported_outputs.assign(C_csp_cr_electric_resistance::E_Q_DOT_HTF, allocate("q_dot_heater_to_htf", n_steps_fixed), n_steps_fixed);
+            p_electric_resistance->mc_reported_outputs.assign(C_csp_cr_electric_resistance::E_Q_DOT_STARTUP, allocate("q_dot_heater_startup", n_steps_fixed), n_steps_fixed);
+            p_electric_resistance->mc_reported_outputs.assign(C_csp_cr_electric_resistance::E_M_DOT_HTF, allocate("m_dot_htf_heater", n_steps_fixed), n_steps_fixed);
+            p_electric_resistance->mc_reported_outputs.assign(C_csp_cr_electric_resistance::E_T_HTF_IN, allocate("T_htf_heater_in", n_steps_fixed), n_steps_fixed);
+            p_electric_resistance->mc_reported_outputs.assign(C_csp_cr_electric_resistance::E_T_HTF_OUT, allocate("T_htf_heater_out", n_steps_fixed), n_steps_fixed);
         }
         p_heater = p_electric_resistance;        
 
