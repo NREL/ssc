@@ -189,7 +189,13 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,     SSC_NUMBER, "startup_target_Tdiff",               "Target HTF T at end of startup - steady state hot HTF temperature",                                                                          "C",            "",                                  "Tower and Receiver",                       "?=-5.0",                                                           "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "is_rec_startup_from_T_soln",         "Begin receiver startup from solved temperature profiles?",                                                                                "",             "",                                  "Tower and Receiver",                       "?=0",                                                              "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "is_rec_enforce_min_startup",         "Always enforce minimum startup time",                                                                                                     "",             "",                                  "Tower and Receiver",                       "?=1",                                                              "",              ""},
-    
+
+    // Parallel heater parameters
+    { SSC_INPUT,     SSC_NUMBER, "heater_mult",                        "Heater multiple relative to design cycle thermal power",                                                                                  "-",             "",                                 "Parallel Heater",                          "is_parallel_htr=1",                                                "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "f_q_dot_des_allowable_su",           "Fraction of design power allowed during startup",                                                                                         "-",            "",                                  "Parallel Heater",                          "is_parallel_htr=1",                                                "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "hrs_startup_at_max_rate",            "Duration of startup at max startup power",                                                                                                "hr",           "",                                  "Parallel Heater",                          "is_parallel_htr=1",                                                "",              "" },
+
+
     // TES parameters - general
     { SSC_INPUT,     SSC_NUMBER, "csp.pt.tes.init_hot_htf_percent",    "Initial fraction of available volume that is hot",                                                                                        "%",            "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "h_tank",                             "Total height of tank (height of HTF when tank is full)",                                                                                  "m",            "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
@@ -643,6 +649,18 @@ public:
 
 	void exec() override
 	{
+        // *****************************************************
+        // System Design Parameters
+        double T_htf_cold_des = as_double("T_htf_cold_des");    //[C]
+        double T_htf_hot_des = as_double("T_htf_hot_des");      //[C]
+        double W_dot_cycle_des = as_double("P_ref");            //[MWe]
+        double eta_cycle = as_double("design_eff");             //[-]
+        double tshours = as_double("tshours");                  //[-]
+
+        // System Design Calcs
+        double q_dot_pc_des = W_dot_cycle_des / eta_cycle;      //[MWt]
+        double Q_tes = q_dot_pc_des * tshours;                  //[MWt-hr]
+
 		// Weather reader
 		C_csp_weatherreader weather_reader;
 		if (is_assigned("solar_resource_file")){
@@ -1768,9 +1786,14 @@ public:
         C_csp_cr_electric_resistance* p_electric_resistance = NULL;
         bool is_parallel_heater = as_boolean("is_parallel_htr");    // defaults to false
         if (is_parallel_heater) {
-            double q_dot_heater_des = receiver->m_q_rec_des * 2.0;  // / 4.0;      //[MWt]
-            double f_q_dot_des_allowable_su = 1.0;      //[-]
-            double hrs_startup_at_max_rate = 0.25;      //[hr]
+
+            double heater_mult = as_double("heater_mult");          //[-]
+            double q_dot_heater_des = q_dot_pc_des*heater_mult;     //[MWt]
+            //double q_dot_heater_des = receiver->m_q_rec_des * 2.0;  // / 4.0;      //[MWt]
+
+            double f_q_dot_des_allowable_su = as_double("f_q_dot_des_allowable_su");    //[-] fraction of design power allowed during startup
+            double hrs_startup_at_max_rate = as_double("hrs_startup_at_max_rate");      //[hr] duration of startup at max startup power
+
             p_electric_resistance = new C_csp_cr_electric_resistance(receiver->m_T_htf_cold_des, receiver->m_T_htf_hot_des, q_dot_heater_des,
                 f_q_dot_des_allowable_su, hrs_startup_at_max_rate,
                 as_integer("rec_htf"), as_matrix("field_fl_props"), C_csp_cr_electric_resistance::E_elec_resist_startup_mode::INSTANTANEOUS_NO_MAX_ELEC_IN);
