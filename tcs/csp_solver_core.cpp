@@ -495,8 +495,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 	
 	mc_kernel.init(sim_setup, wf_step, baseline_step, mc_csp_messages);
     
-    C_csp_collector_receiver::E_csp_cr_modes cr_operating_state = C_csp_collector_receiver::OFF;
-	//C_csp_power_cycle::E_csp_power_cycle_modes pc_operating_state = C_csp_power_cycle::OFF;
 	double tol_mode_switching = 0.10;		// Give buffer to account for uncertainty in estimates
 
 	// Reset vector that tracks operating modes
@@ -517,7 +515,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 	double pc_state_persist = 0.;  // Time [hr] that current pc operating state (on/off/standby) has persisted
 	double rec_state_persist = 0.;  // Time [hr] that current receiver operating state (on/off/standby) has persisted
 	//int prev_pc_state = mc_power_cycle.get_operating_state();
-	int prev_rec_state = mc_collector_receiver.get_operating_state();
+	//int prev_rec_state = mc_collector_receiver.get_operating_state();
 
 	double q_pb_last = 0.0;   // Cycle thermal input at end of last time step [kWt]
 	double w_pb_last = 0.0;   // Cycle gross generation at end of last time step [kWt]
@@ -564,14 +562,21 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
 		// Get collector/receiver & power cycle operating states at start of time step (end of last time step)
             // collector/receiver
-		cr_operating_state = mc_collector_receiver.get_operating_state();
-		if( cr_operating_state < C_csp_collector_receiver::OFF ||
-			cr_operating_state > C_csp_collector_receiver::ON )
+        C_csp_collector_receiver::E_csp_cr_modes cr_operating_state_prev = mc_collector_receiver.get_operating_state();
+		if( cr_operating_state_prev < C_csp_collector_receiver::OFF ||
+			cr_operating_state_prev > C_csp_collector_receiver::ON )
 		{
 			std::string msg = util::format("The collector-receiver operating state at time %lg [hr] is %d. Recognized"
-				" values are from %d to %d\n", mc_kernel.mc_sim_info.ms_ts.m_step/ 3600.0, cr_operating_state, C_csp_collector_receiver::OFF, C_csp_collector_receiver::ON);
+				" values are from %d to %d\n", mc_kernel.mc_sim_info.ms_ts.m_step/ 3600.0, cr_operating_state_prev, C_csp_collector_receiver::OFF, C_csp_collector_receiver::ON);
 			throw(C_csp_exception(msg,"CSP Solver Core"));
 		}
+        C_csp_collector_receiver::E_csp_cr_modes cr_operating_state_to_controller = cr_operating_state_prev;
+        // If component is off but does not require startup to switch to on,
+        // Then for the purposed of the controller hierarchy, the component is on
+        if (cr_operating_state_to_controller == C_csp_collector_receiver::OFF_NO_SU_REQ) {
+            cr_operating_state_to_controller = C_csp_collector_receiver::ON;
+        }
+
             // power cycle
         C_csp_power_cycle::E_csp_power_cycle_modes pc_operating_state_prev = mc_power_cycle.get_operating_state();
         C_csp_power_cycle::E_csp_power_cycle_modes pc_operating_state_to_controller = pc_operating_state_prev;
@@ -631,11 +636,11 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		double q_dot_cr_on = est_out.m_q_dot_avail;     //[MWt]
 		double m_dot_cr_on = est_out.m_m_dot_avail;		//[kg/hr]
 		double T_htf_hot_cr_on = est_out.m_T_htf_hot;	//[C]
-		if (cr_operating_state != C_csp_collector_receiver::ON)
+		if (cr_operating_state_to_controller != C_csp_collector_receiver::ON)
 			T_htf_hot_cr_on = m_cycle_T_htf_hot_des - 273.15;	//[C]
 
         // Is receiver on and will it likely remain on
-        if (cr_operating_state == C_csp_collector_receiver::ON && m_dot_cr_on > 0.0
+        if (cr_operating_state_to_controller == C_csp_collector_receiver::ON && m_dot_cr_on > 0.0
             && m_is_rec_to_coldtank_allowed
             && T_htf_hot_cr_on < m_T_htf_hot_tank_in_min) {
             is_rec_outlet_to_hottank = false;
@@ -743,7 +748,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		// Check if CR startup should be solved before entering hierarchy
 		double q_dot_tes_dc_t_CR_su = 0.0;
 		double m_dot_tes_dc_t_CR_su = 0.0;
-		if( (cr_operating_state == C_csp_collector_receiver::OFF || cr_operating_state == C_csp_collector_receiver::STARTUP) &&
+		if( (cr_operating_state_to_controller == C_csp_collector_receiver::OFF || cr_operating_state_to_controller == C_csp_collector_receiver::STARTUP) &&
 			q_dot_cr_startup > 0.0 &&
 			is_rec_su_allowed && 
 			m_is_tes )
@@ -790,7 +795,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
 		// Check if receiver can be defocused enough to stay under cycle+TES max thermal power and mass flow (if cold recirculation is not enabled)
         // (this will usually be the case unless using clear-sky control or constrained cycle thermal input)
-		if (cr_operating_state == C_csp_collector_receiver::ON && (q_dot_cr_on >0.0 || m_dot_cr_on > 0.0) && is_rec_su_allowed && is_rec_outlet_to_hottank && m_is_tes)
+		if (cr_operating_state_to_controller == C_csp_collector_receiver::ON && (q_dot_cr_on >0.0 || m_dot_cr_on > 0.0) && is_rec_su_allowed && is_rec_outlet_to_hottank && m_is_tes)
 		{
 			double qpcmax = m_q_dot_pc_max;
 			if (pc_operating_state_to_controller == C_csp_power_cycle::OFF || C_csp_power_cycle::STARTUP)
@@ -821,7 +826,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 			mc_kernel.mc_sim_info.ms_ts.m_step = mc_kernel.mc_sim_info.ms_ts.m_time - mc_kernel.mc_sim_info.ms_ts.m_time_start;
 
             operating_mode = mc_operating_modes.find_operating_mode(
-                cr_operating_state, pc_operating_state_to_controller,
+                cr_operating_state_to_controller, pc_operating_state_to_controller,
                 q_dot_cr_startup /*MWt*/, q_dot_tes_dc /*MWt*/,
                 q_dot_cr_on /*MWt*/, q_dot_tes_ch /*MWt*/,
                 q_dot_pc_su_max /*MWt*/, q_pc_target /*MWt*/,
@@ -947,25 +952,15 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		else
 		{
 			pc_state_persist = 0.;
-			//prev_pc_state = mc_power_cycle.get_operating_state();
 		}
 
 		// Update the receiver state persistance
-		if (mc_collector_receiver.get_operating_state() == prev_rec_state)
+		if (mc_collector_receiver.get_operating_state() == cr_operating_state_prev)
 			rec_state_persist += mc_kernel.mc_sim_info.ms_ts.m_step / 3600.;
 		else
 		{
 			rec_state_persist = 0.;
-			prev_rec_state = mc_collector_receiver.get_operating_state();
 		}
-
-
-
-		double f_op_last = 0.0;
-		if (mc_power_cycle.get_operating_state() == C_csp_power_cycle::ON || mc_power_cycle.get_operating_state() == C_csp_power_cycle::STANDBY)
-			f_op_last = mc_kernel.mc_sim_info.ms_ts.m_step / baseline_step;   // Fraction of timestep cycle was in this state
-
-
 
 		// Save timestep outputs
 		// This is after timestep convergence, so be sure convergence() methods don't unexpectedly change outputs

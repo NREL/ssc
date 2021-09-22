@@ -135,7 +135,7 @@ void C_csp_cr_electric_resistance::init(const C_csp_collector_receiver::S_csp_cr
     // State variables
     m_E_su_initial = m_E_su_des;        //[MWt-hr]
     if (m_E_su_initial == 0.0 || m_startup_mode == INSTANTANEOUS_NO_MAX_ELEC_IN) {
-        m_operating_mode_converged = C_csp_collector_receiver::ON;
+        m_operating_mode_converged = C_csp_collector_receiver::OFF_NO_SU_REQ;
     }
     else {
         m_operating_mode_converged = C_csp_collector_receiver::OFF;					//
@@ -349,7 +349,7 @@ void C_csp_cr_electric_resistance::estimates(const C_csp_weatherreader::S_output
 
     E_csp_cr_modes mode = get_operating_state();
 
-    if (mode == C_csp_collector_receiver::ON)
+    if (mode == C_csp_collector_receiver::ON || mode == C_csp_collector_receiver::OFF_NO_SU_REQ)
     {
         est_out.m_q_dot_avail = m_q_dot_heater_des;		//[MWt]
         est_out.m_m_dot_avail = m_dot_htf*3600.0;		//[kg/hr]
@@ -369,12 +369,19 @@ void C_csp_cr_electric_resistance::estimates(const C_csp_weatherreader::S_output
 
 void C_csp_cr_electric_resistance::converged()
 {
-    if (m_E_su_calculated == 0.0 || m_startup_mode == INSTANTANEOUS_NO_MAX_ELEC_IN) {
-        m_operating_mode_converged = C_csp_collector_receiver::ON;
+    m_operating_mode_converged = m_operating_mode;
+
+    if ((m_startup_mode == INSTANTANEOUS_NO_MAX_ELEC_IN || m_E_su_des == 0.0)
+        && m_operating_mode_converged == OFF) {
+        m_operating_mode_converged = OFF_NO_SU_REQ;
     }
-    else {
-        m_operating_mode_converged = m_operating_mode;		
-    }
+
+    //if (m_E_su_calculated == 0.0 || m_startup_mode == INSTANTANEOUS_NO_MAX_ELEC_IN) {
+    //    m_operating_mode_converged = C_csp_collector_receiver::ON;
+    //}
+    //else {
+    //    m_operating_mode_converged = m_operating_mode;		
+    //}
 
     m_E_su_initial = m_E_su_calculated;
 

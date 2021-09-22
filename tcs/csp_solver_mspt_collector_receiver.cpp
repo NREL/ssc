@@ -313,7 +313,7 @@ void C_csp_mspt_collector_receiver::estimates(const C_csp_weatherreader::S_outpu
 
 	int mode = get_operating_state();
 
-	if( mode == C_csp_collector_receiver::ON )
+	if( mode == C_csp_collector_receiver::ON || mode == C_csp_collector_receiver::OFF_NO_SU_REQ)
 	{
 		est_out.m_q_dot_avail = cr_out_solver.m_q_thermal;			//[MWt]
 		est_out.m_m_dot_avail = cr_out_solver.m_m_dot_salt_tot;		//[kg/hr]

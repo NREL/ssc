@@ -322,6 +322,7 @@ public:
 	enum E_csp_cr_modes
 	{
 		OFF = 0,
+        OFF_NO_SU_REQ,
 		STARTUP,
 		ON,
 		STEADY_STATE
