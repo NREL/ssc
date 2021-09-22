@@ -2,6 +2,7 @@
 #define __ssc_eqn_h
 
 #include "sscapi.h"
+#include "cmod_battery_eqns.h"
 #include "cmod_windpower_eqns.h"
 #include "cmod_mhk_eqns.h"
 #include "cmod_merchantplant_eqns.h"
@@ -56,6 +57,20 @@ static ssc_equation_entry ssc_equation_table [] = {
             false, true},
         {"Reopt_size_battery_post", Reopt_size_battery_params,
             "Pvwattsv7", Reopt_size_battery_params_doc,
+            false, true},
+
+        // Battery
+        {"Calculate_thermal_params", Calculate_thermal_params,
+            "Battery", calculate_thermal_params_doc,
+            false, true},
+
+        // Battery stateful
+        {"Calculate_thermal_params", Calculate_thermal_params,
+            "battery_stateful", calculate_thermal_params_doc,
+            false, true},
+
+        {"Size_batterystateful", Size_batterystateful,
+            "battery_stateful", size_batterystateful_doc,
             false, true},
 
         // Wind
