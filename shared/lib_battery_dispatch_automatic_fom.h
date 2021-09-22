@@ -50,6 +50,7 @@ public:
 		double Pd_max_kwac,
 		double t_min,
 		int dispatch_mode,
+        int weather_forecast_mode,
 		int pv_dispatch,
 		size_t nyears,
 		size_t look_ahead_hours,
@@ -66,7 +67,8 @@ public:
 		UtilityRate * utilityRate,
 		double etaPVCharge,
 		double etaGridCharge,
-		double etaDischarge
+		double etaDischarge,
+        double interconnection_limit
 		);
 
 	~dispatch_automatic_front_of_meter_t();

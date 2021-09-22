@@ -1,3 +1,26 @@
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+
 #ifndef _LIB_BATTERY_POWERFLOW_H_
 #define _LIB_BATTERY_POWERFLOW_H_
 
@@ -120,6 +143,7 @@ public:
 	double powerSystem;				   ///< The power production of the renewable system (PV array) (kW)
 	double powerSystemThroughSharedInverter; ///< The power going through the shared inverter (kW)
 	double powerLoad;			   ///< The power required by the electric load (kW)
+    double powerCritLoad;          ///< The power for critical loads during an outage. Battery will only discharge to this during outage (kW)
 	double powerBatteryDC; 	       ///< The power flow to and from the battery (> 0, discharging, < 0 charging) (kWdc)
 	double powerBatteryAC; 	       ///< The power flow to and from the battery (> 0, discharging, < 0 charging) (kWac)
 	double powerBatteryTarget;	   ///< A user specified or algorithm calculated target dispatch power (kW)
@@ -134,7 +158,8 @@ public:
 	double powerGridToLoad;        ///< The power from the grid to the electric load (kW)
 	double powerBatteryToLoad;     ///< The power from the battery to the electric load (kW)
 	double powerBatteryToGrid;     ///< The power from the battery to the grid (kW)
-	double powerFuelCell;          ///< The power from the fuelcell (kW)
+    double powerCritLoadUnmet;     ///< Output of unmet critical load during outage (kW)
+    double powerFuelCell;          ///< The power from the fuelcell (kW)
 	double powerFuelCellToGrid;    ///< The power from the fuelcell to the grid (kW)
 	double powerFuelCellToLoad;    ///< The power from the fuelcell to the load (kW)
 	double powerFuelCellToBattery; ///< The power from the fuelcell to the battery (kW)
@@ -145,7 +170,12 @@ public:
 	double powerBatteryDischargeMaxAC; ///< The maximum sustained power the battery can discharge (kWac)
 	double powerSystemLoss;        ///< The auxiliary power loss in the system (kW)
 	double powerConversionLoss;    ///< The power loss due to conversions in the battery power electronics (kW)
-	double voltageSystem;		   ///< The system voltage
+    double powerInterconnectionLimit; ///< The size of the grid interconnection (kW). As of July 2021 only applies to discharging, should apply to charging & dispatch
+    double powerInterconnectionLoss; ///< The power loss due to interconnection limit, outage, or curtailment (kW)
+    double powerCurtailmentLimit; ///< The curtailment limit for the current step (kW)
+    double voltageSystem;		   ///< The system voltage
+
+    bool   isOutageStep;
 
 	//double annualEnergySystemLoss;  /// The total annual loss due to user-specified system losses
 	//double annualEnergyConversionLoss;  /// The total annual loss due to power electronic conversions
@@ -164,6 +194,9 @@ public:
 	bool canGridCharge; ///< A boolean specifying whether the battery is allowed to charge from the Grid in the timestep
 	bool canDischarge;  ///< A boolean specifying whether the battery is allowed to discharge in the timestep
 	bool canFuelCellCharge; ///< A boolean specifying whether the battery is allowed to charge from the fuel cell
+
+    bool chargeOnlySystemExceedLoad; ///< A boolean specifying whether the battery can charge only if the system's output power exceeds the load
+    bool dischargeOnlyLoadExceedSystem; ///< A boolean specifying whether the battery can discharge only if the load exceeds the system's output power
 
 	double stateOfChargeMax;   ///< The maximum state of charge (0-100)
 	double stateOfChargeMin;   ///< The minimum state of charge (0-100)

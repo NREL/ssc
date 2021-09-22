@@ -1,3 +1,25 @@
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 #include <gtest/gtest.h>
 #include <fstream>
 #include <cmath>
@@ -126,9 +148,9 @@ TEST_F(lib_battery_lifetime_lmolto_test, CyclingCRateMinuteTimestep) {
     auto state = model->get_state();
 
     EXPECT_EQ(state.n_cycles, 86);
-    EXPECT_NEAR(state.lmo_lto->dq_relative_cal, 0.268, 1e-3);
+    EXPECT_NEAR(state.lmo_lto->dq_relative_cal, 0.265, 1e-3);
     EXPECT_NEAR(state.lmo_lto->dq_relative_cyc, 0, 1e-3);
-    EXPECT_NEAR(state.q_relative, 99.732, 1e-3);
+    EXPECT_NEAR(state.q_relative, 99.735, 1e-3);
     EXPECT_NEAR(state.day_age_of_battery, 87, 1e-3);
 
     while (day < 870) {
@@ -149,9 +171,9 @@ TEST_F(lib_battery_lifetime_lmolto_test, CyclingCRateMinuteTimestep) {
     state = model->get_state();
 
     EXPECT_EQ(state.n_cycles, 869);
-    EXPECT_NEAR(state.lmo_lto->dq_relative_cal, 1.106, 1e-3);
+    EXPECT_NEAR(state.lmo_lto->dq_relative_cal, 1.105, 1e-3);
     EXPECT_NEAR(state.lmo_lto->dq_relative_cyc, 0, 1e-3);
-    EXPECT_NEAR(state.q_relative, 98.894, 1e-3);
+    EXPECT_NEAR(state.q_relative, 98.895, 1e-3);
     EXPECT_NEAR(state.day_age_of_battery, 870, 1e-3);
 }
 
@@ -176,9 +198,9 @@ TEST_F(lib_battery_lifetime_lmolto_test, CyclingEveryTwoDays) {
     auto state = model->get_state();
 
     EXPECT_EQ(state.n_cycles, 43);
-    EXPECT_NEAR(state.lmo_lto->dq_relative_cal, 0.404, 1e-3);
+    EXPECT_NEAR(state.lmo_lto->dq_relative_cal, 0.27, 1e-3);
     EXPECT_NEAR(state.lmo_lto->dq_relative_cyc, 0.0637, 1e-3);
-    EXPECT_NEAR(state.q_relative, 99.532, 1e-3);
+    EXPECT_NEAR(state.q_relative, 99.666, 1e-3);
     EXPECT_NEAR(state.day_age_of_battery, 88, 1e-3);
 }
 
@@ -217,7 +239,7 @@ TEST_F(lib_battery_lifetime_lmolto_test, IrregularTimeStep) {
     state = model->get_state();
 
     EXPECT_EQ(state.n_cycles, 869);
-    EXPECT_NEAR(state.lmo_lto->dq_relative_cal, 2.414, 1e-3);
+    EXPECT_NEAR(state.lmo_lto->dq_relative_cal, 2.408, 1e-3);
     EXPECT_NEAR(state.lmo_lto->dq_relative_cyc, 0.141, 1e-3);
     EXPECT_NEAR(state.day_age_of_battery, 870, 1e-3);
 
@@ -263,7 +285,7 @@ TEST_F(lib_battery_lifetime_lmolto_test, IrregularTimeStep) {
     state = subhourly_model->get_state();
 
     EXPECT_EQ(state.n_cycles, 869);
-    EXPECT_NEAR(state.lmo_lto->dq_relative_cal, 2.414, 1e-3);
+    EXPECT_NEAR(state.lmo_lto->dq_relative_cal, 2.408, 1e-3);
     EXPECT_NEAR(state.lmo_lto->dq_relative_cyc, 0.145, 1e-3);
     EXPECT_NEAR(state.day_age_of_battery, 870, 1e-3);
 }
