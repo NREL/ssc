@@ -122,11 +122,13 @@ int C_csp_solver::solve_operating_mode(C_csp_collector_receiver::E_csp_cr_modes 
                 }
                 else
                 {
-                    // Weird that controller chose Defocus operating mode, so report message and shut down CR and PC
-                    error_msg = util::format("At time = %lg the controller chose %s operating mode, but the code"
-                        " failed to converge.",
-                        mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str());
-                    mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
+                    if (htr_mode != C_csp_collector_receiver::ON || !m_is_parallel_heater) {
+                        // Weird that controller chose Defocus operating mode, so report message and shut down CR and PC
+                        error_msg = util::format("At time = %lg the controller chose %s operating mode, but the code"
+                            " failed to converge.",
+                            mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str());
+                        mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
+                    }
 
                     reset_time(t_ts_initial);
                     return -4;
