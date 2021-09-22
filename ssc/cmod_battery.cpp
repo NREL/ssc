@@ -1834,6 +1834,9 @@ void battstor::update_grid_power(compute_module&, double P_gen_ac, double P_load
     double P_interconnection_loss = outInterconnectionLoss[index_replace];
     double P_grid_old = outGridPower[index_replace] + P_interconnection_loss;
     double P_grid = P_gen_ac - P_load_ac;
+    double P_crit_load_unmet = 0;
+    if (analyze_outage)
+        P_crit_load_unmet = outCritLoadUnmet[index_replace];
     if (P_grid >= 0) {
         P_interconnection_loss = std::fmax(P_interconnection_loss - (P_grid_old - P_grid), 0.0);
     }
@@ -1842,7 +1845,7 @@ void battstor::update_grid_power(compute_module&, double P_gen_ac, double P_load
         P_interconnection_loss = 0;
     }
     outInterconnectionLoss[index_replace] = P_interconnection_loss;
-    P_grid = P_gen_ac - P_load_ac - P_interconnection_loss;
+    P_grid = P_gen_ac - P_load_ac - P_interconnection_loss + P_crit_load_unmet;
 
     outGridPower[index_replace] = (ssc_number_t)(P_grid);
 }

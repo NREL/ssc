@@ -818,6 +818,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, AC_outage_ExcessPV) {
     EXPECT_NEAR(m_batteryPower->powerSystemLoss, 0.0, error);
     EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 0, error);
     EXPECT_NEAR(m_batteryPower->powerInterconnectionLoss, 8.33, error);
+    EXPECT_NEAR(m_batteryPower->powerGrid, 0.0, error);
 
     double gen = m_batteryPower->powerSystem + m_batteryPower->powerBatteryAC;
     EXPECT_NEAR(m_batteryPower->powerGeneratedBySystem, gen, error);
@@ -838,6 +839,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, AC_outage_ExcessPV) {
     EXPECT_NEAR(m_batteryPower->powerSystemLoss, 0.0, error);
     EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 0, error);
     EXPECT_NEAR(m_batteryPower->powerInterconnectionLoss, 0.0, error);
+    EXPECT_NEAR(m_batteryPower->powerGrid, 0.0, error);
 
     gen = m_batteryPower->powerSystem + m_batteryPower->powerBatteryAC;
     EXPECT_NEAR(m_batteryPower->powerGeneratedBySystem, gen, error);
@@ -859,6 +861,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, AC_outage_ExcessPV) {
     EXPECT_NEAR(m_batteryPower->powerSystemLoss, 0.0, error);
     EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 0, error);
     EXPECT_NEAR(m_batteryPower->powerInterconnectionLoss, 50, error);
+    EXPECT_NEAR(m_batteryPower->powerGrid, 0.0, error);
 
     gen = m_batteryPower->powerSystem + m_batteryPower->powerBatteryAC;
     EXPECT_NEAR(m_batteryPower->powerGeneratedBySystem, gen, error);
@@ -880,6 +883,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, AC_outage_ExcessPV) {
     EXPECT_NEAR(m_batteryPower->powerSystemLoss, 1.0, error);
     EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 0, error);
     EXPECT_NEAR(m_batteryPower->powerInterconnectionLoss, 7.33, error);
+    EXPECT_NEAR(m_batteryPower->powerGrid, 0.0, error);
 
     gen = m_batteryPower->powerSystem + m_batteryPower->powerBatteryAC - m_batteryPower->powerSystemLoss;
     EXPECT_NEAR(m_batteryPower->powerGeneratedBySystem, gen, error);
@@ -900,6 +904,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, AC_outage_ExcessPV) {
     EXPECT_NEAR(m_batteryPower->powerSystemLoss, 1.0, error);
     EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 0, error);
     EXPECT_NEAR(m_batteryPower->powerInterconnectionLoss, 0.0, error);
+    EXPECT_NEAR(m_batteryPower->powerGrid, 0.0, error);
 
     gen = m_batteryPower->powerSystem + m_batteryPower->powerBatteryAC - m_batteryPower->powerSystemLoss;
     EXPECT_NEAR(m_batteryPower->powerGeneratedBySystem, gen, error);
@@ -922,6 +927,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, AC_outage_ExcessPV) {
     EXPECT_NEAR(m_batteryPower->powerSystemLoss, 1.0, error);
     EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 0, error);
     EXPECT_NEAR(m_batteryPower->powerInterconnectionLoss, 50.0, error);
+    EXPECT_NEAR(m_batteryPower->powerGrid, 0.0, error);
 
     gen = m_batteryPower->powerSystem + m_batteryPower->powerBatteryAC - m_batteryPower->powerSystemLoss;
     EXPECT_NEAR(m_batteryPower->powerGeneratedBySystem, gen, error);
@@ -955,6 +961,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, AC_outage_ExcessLoad) {
     EXPECT_NEAR(m_batteryPower->powerSystemLoss, 0.0, error);
     EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 25, error);
     EXPECT_NEAR(m_batteryPower->powerInterconnectionLoss, 0.0, error);
+    EXPECT_NEAR(m_batteryPower->powerGrid, 0.0, error);
 
     double gen = m_batteryPower->powerSystem + m_batteryPower->powerBatteryAC;
     EXPECT_NEAR(m_batteryPower->powerGeneratedBySystem, gen, error);
@@ -975,6 +982,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, AC_outage_ExcessLoad) {
     EXPECT_NEAR(m_batteryPower->powerSystemLoss, 0.0, error);
     EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 5.8, error);
     EXPECT_NEAR(m_batteryPower->powerInterconnectionLoss, 0.0, error);
+    EXPECT_NEAR(m_batteryPower->powerGrid, 0.0, error);
 
     gen = m_batteryPower->powerSystem + m_batteryPower->powerBatteryAC;
     EXPECT_NEAR(m_batteryPower->powerGeneratedBySystem, gen, error);
@@ -995,6 +1003,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, AC_outage_ExcessLoad) {
     EXPECT_NEAR(m_batteryPower->powerSystemLoss, 0.0, error);
     EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 25, error);
     EXPECT_NEAR(m_batteryPower->powerInterconnectionLoss, 0.0, error);
+    EXPECT_NEAR(m_batteryPower->powerGrid, 0.0, error);
 
     gen = m_batteryPower->powerSystem + m_batteryPower->powerBatteryAC;
     EXPECT_NEAR(m_batteryPower->powerGeneratedBySystem, gen, error);
@@ -1016,6 +1025,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, AC_outage_ExcessLoad) {
     EXPECT_NEAR(m_batteryPower->powerSystemLoss, 0.5, error);
     EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 25.5, error);
     EXPECT_NEAR(m_batteryPower->powerInterconnectionLoss, 0.0, error);
+    EXPECT_NEAR(m_batteryPower->powerGrid, 0.0, error);
 
     gen = m_batteryPower->powerSystem + m_batteryPower->powerBatteryAC - m_batteryPower->powerSystemLoss;
     EXPECT_NEAR(m_batteryPower->powerGeneratedBySystem, gen, error);
@@ -1037,6 +1047,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, AC_outage_ExcessLoad) {
     EXPECT_NEAR(m_batteryPower->powerSystemLoss, 1.0, error);
     EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 6.8, error);
     EXPECT_NEAR(m_batteryPower->powerInterconnectionLoss, 0.0, error);
+    EXPECT_NEAR(m_batteryPower->powerGrid, 0.0, error);
 
     gen = m_batteryPower->powerSystem + m_batteryPower->powerBatteryAC - m_batteryPower->powerSystemLoss;
     EXPECT_NEAR(m_batteryPower->powerGeneratedBySystem, gen, error);
@@ -1057,6 +1068,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, AC_outage_ExcessLoad) {
     EXPECT_NEAR(m_batteryPower->powerSystemLoss, 1.0, error);
     EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 26, error);
     EXPECT_NEAR(m_batteryPower->powerInterconnectionLoss, 0.0, error);
+    EXPECT_NEAR(m_batteryPower->powerGrid, 0.0, error);
 
     gen = m_batteryPower->powerSystem + m_batteryPower->powerBatteryAC - m_batteryPower->powerSystemLoss;
     EXPECT_NEAR(m_batteryPower->powerGeneratedBySystem, gen, error);
@@ -1091,6 +1103,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, AC_grid_limits) {
     EXPECT_NEAR(m_batteryPower->powerSystemLoss, 0.0, error);
     EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 0, error);
     EXPECT_NEAR(m_batteryPower->powerInterconnectionLoss, 8.33, error);
+    EXPECT_NEAR(m_batteryPower->powerGrid, 25.0, error);
 
     double gen = m_batteryPower->powerSystem + m_batteryPower->powerBatteryAC;
     EXPECT_NEAR(m_batteryPower->powerGeneratedBySystem, gen, error);
@@ -1113,6 +1126,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, AC_grid_limits) {
     EXPECT_NEAR(m_batteryPower->powerSystemLoss, 0.0, error);
     EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 0, error);
     EXPECT_NEAR(m_batteryPower->powerInterconnectionLoss, 8.33, error);
+    EXPECT_NEAR(m_batteryPower->powerGrid, 25.0, error);
 
     gen = m_batteryPower->powerSystem + m_batteryPower->powerBatteryAC;
     EXPECT_NEAR(m_batteryPower->powerGeneratedBySystem, gen, error);
@@ -1136,6 +1150,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, AC_grid_limits) {
     EXPECT_NEAR(m_batteryPower->powerSystemLoss, 0.0, error);
     EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 0.0, error);
     EXPECT_NEAR(m_batteryPower->powerInterconnectionLoss, 84.2, error);
+    EXPECT_NEAR(m_batteryPower->powerGrid, 10.0, error);
 
     gen = m_batteryPower->powerSystem + m_batteryPower->powerBatteryAC;
     EXPECT_NEAR(m_batteryPower->powerGeneratedBySystem, gen, error);
