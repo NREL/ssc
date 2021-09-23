@@ -109,6 +109,7 @@ public:
 	double power_fuelcell_to_batt();
 	double power_pv_to_grid();
 	double power_battery_to_grid();
+    double power_battery_to_system_load();
 	double power_fuelcell_to_grid();
 	double power_conversion_loss();
 	double power_system_loss();

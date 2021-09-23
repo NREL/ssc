@@ -45,6 +45,7 @@ BatteryPower::BatteryPower(double dtHour) :
 		powerGridToLoad(0),
 		powerBatteryToLoad(0),
 		powerBatteryToGrid(0),
+        powerBatteryToSystemLoad(0),
         powerCritLoadUnmet(0),
 		powerFuelCell(0),
 		powerFuelCellToGrid(0),
@@ -104,6 +105,7 @@ BatteryPower::BatteryPower(const BatteryPower& orig) {
     powerGridToLoad = orig.powerGridToLoad;
     powerBatteryToLoad = orig.powerBatteryToLoad;
     powerBatteryToGrid = orig.powerBatteryToGrid;
+    powerBatteryToSystemLoad = orig.powerBatteryToSystemLoad;
     powerCritLoadUnmet = orig.powerCritLoadUnmet;
     powerFuelCell = orig.powerFuelCell;
     powerFuelCellToGrid = orig.powerFuelCellToGrid;
@@ -157,6 +159,7 @@ void BatteryPower::reset()
 	powerBatteryTarget = 0;
 	powerBatteryToGrid = 0;
 	powerBatteryToLoad = 0;
+    powerBatteryToSystemLoad = 0;
 	powerClippedToBattery = 0;
 	powerConversionLoss = 0;
 	powerGeneratedBySystem = 0;

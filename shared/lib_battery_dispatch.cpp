@@ -574,6 +574,7 @@ double dispatch_t::power_grid_to_batt() { return m_batteryPower->powerGridToBatt
 double dispatch_t::power_fuelcell_to_batt() { return m_batteryPower->powerFuelCellToBattery; }
 double dispatch_t::power_pv_to_grid() { return m_batteryPower->powerSystemToGrid; }
 double dispatch_t::power_battery_to_grid() { return m_batteryPower->powerBatteryToGrid; }
+double dispatch_t::power_battery_to_system_load() { return m_batteryPower->powerBatteryToSystemLoad; }
 double dispatch_t::power_fuelcell_to_grid() { return m_batteryPower->powerFuelCellToGrid; }
 double dispatch_t::power_conversion_loss() { return m_batteryPower->powerConversionLoss; }
 double dispatch_t::power_system_loss() { return m_batteryPower->powerSystemLoss; }

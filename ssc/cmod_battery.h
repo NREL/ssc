@@ -385,6 +385,7 @@ struct battstor
         * outFuelCellToBatt,
         * outSystemToGrid,
         * outBatteryToGrid,
+        * outBatteryToSystemLoad,
         * outFuelCellToGrid,
         * outBatteryConversionPowerLoss,
         * outBatterySystemLoss,

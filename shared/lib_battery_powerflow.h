@@ -158,6 +158,7 @@ public:
 	double powerGridToLoad;        ///< The power from the grid to the electric load (kW)
 	double powerBatteryToLoad;     ///< The power from the battery to the electric load (kW)
 	double powerBatteryToGrid;     ///< The power from the battery to the grid (kW)
+    double powerBatteryToSystemLoad; ///< The power from the battery to system loads (such as inverter night time losses) (kW)
     double powerCritLoadUnmet;     ///< Output of unmet critical load during outage (kW)
     double powerFuelCell;          ///< The power from the fuelcell (kW)
 	double powerFuelCellToGrid;    ///< The power from the fuelcell to the grid (kW)
