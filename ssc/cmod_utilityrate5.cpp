@@ -31,10 +31,10 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 static var_info vtab_utility_rate5[] = {
 
 /*   VARTYPE           DATATYPE         NAME                         LABEL                                           UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
+	{ SSC_INPUT,        SSC_NUMBER,     "en_electricity_rates",           "Optionally enable/disable electricity_rate",                   "years",  "",                      "Electricity Rates",             "",                         "INTEGER,MIN=0,MAX=1",              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "analysis_period",           "Number of years in analysis",                   "years",  "",                      "Lifetime",             "*",                         "INTEGER,POSITIVE",              "" },
 
 	{ SSC_INPUT, SSC_NUMBER, "system_use_lifetime_output", "Lifetime hourly system outputs", "0/1", "0=hourly first year,1=hourly lifetime", "Lifetime", "*", "INTEGER,MIN=0,MAX=1", "" },
-    { SSC_INPUT, SSC_NUMBER, "is_btm", "Is system FOM or BTM", "0/1", "0=FOM,1=BTM", "Lifetime", "?=0", "INTEGER,MIN=0,MAX=1", "" },
 
 	{ SSC_INPUT, SSC_NUMBER, "TOU_demand_single_peak", "Use single monthly peak for TOU demand charge", "0/1", "0=use TOU peak,1=use flat peak", "Electricity Rates", "?=0", "INTEGER,MIN=0,MAX=1", "" },
 
@@ -141,8 +141,6 @@ static var_info vtab_utility_rate5[] = {
 
 	// annual sums
 	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_w_sys", "Electricity bill with system", "$", "", "Charges by Month", "*", "", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "utility_bill_par", "Electricity bill for system parasitics", "$", "", "Charges by Month", "*", "", "" },
-
 	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_wo_sys", "Electricity bill without system", "$", "", "Charges by Month", "*", "", "" },
 
 	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_fixed", "Fixed monthly charge with system", "$", "", "Charges by Month", "*", "", "" },
@@ -445,6 +443,14 @@ public:
 
 	void exec( )
 	{
+		// if not assigned, we assume electricity rates are enabled
+		if (is_assigned("en_electricity_rates")) {
+			if (!as_boolean("en_electricity_rates")) {
+				remove_var_info(vtab_utility_rate5);
+				return;
+			}
+		}
+
 		ssc_number_t *parr = 0;
 		size_t count, i, j;
 
@@ -492,20 +498,10 @@ public:
 		4. use (kW)  p_load[i] = max(load) over the hour for each hour i
 		5. After above assignment, proceed as before with same outputs
 		*/
-        ssc_number_t* pload = NULL;
-        ssc_number_t* pgen;
-        ssc_number_t* pgenpar;
+		ssc_number_t *pload = NULL, *pgen;
 		size_t nrec_load = 0, nrec_gen = 0, step_per_hour_gen=1, step_per_hour_load=1;
-        bool bload = false;
-        pgen = as_array("gen", &nrec_gen);
-        pgenpar = as_array("gen", &nrec_gen);
-        if (as_integer("is_btm") == 1) {
-            pgenpar = as_array("gen", &nrec_gen);
-            for (size_t i = 0; i < nrec_gen; i++) {
-                pgen[i] = (pgenpar[i] > 0) ? pgenpar[i] : 0.0;
-            }
-        }
-        
+		bool bload=false;
+		pgen = as_array("gen", &nrec_gen);
 		// for lifetime analysis
 		size_t nrec_gen_per_year = nrec_gen;
 		if (as_integer("system_use_lifetime_output") == 1)
@@ -530,9 +526,9 @@ public:
 
 		// prepare timestep arrays for load and grid values
 		std::vector<ssc_number_t>
-			e_sys_cy(m_num_rec_yearly), e_sys_cy_par(m_num_rec_yearly), p_sys_cy(m_num_rec_yearly), p_sys_cy_par(m_num_rec_yearly),
+			e_sys_cy(m_num_rec_yearly), p_sys_cy(m_num_rec_yearly),
 			p_load(m_num_rec_yearly), // to handle no load, or num load != num gen
-			e_grid_cy(m_num_rec_yearly), e_grid_cy_par(m_num_rec_yearly), p_grid_cy(m_num_rec_yearly), p_grid_cy_par(m_num_rec_yearly),
+			e_grid_cy(m_num_rec_yearly), p_grid_cy(m_num_rec_yearly),
 			e_load_cy(m_num_rec_yearly), p_load_cy(m_num_rec_yearly); // current year load (accounts for escal)
 
 
@@ -586,7 +582,7 @@ public:
 			monthly_salespurchases(12),
 			monthly_load(12), monthly_system_generation(12), monthly_elec_to_grid(12),
 			monthly_elec_needed_from_grid(12),
-			monthly_cumulative_excess_energy(12), monthly_cumulative_excess_dollars(12), monthly_bill(12), monthly_bill_par(12), monthly_test(12),
+			monthly_cumulative_excess_energy(12), monthly_cumulative_excess_dollars(12), monthly_bill(12), monthly_test(12),
             monthly_two_meter_sales(12),
             monthly_peak_wo_sys(12), monthly_peak_w_sys(12), // can't re-use these due to their role in billing demand
             monthly_true_up_credits(12); // Realistically only one true-up month will be non-zero, but track them all for monthly outputs
@@ -625,7 +621,6 @@ public:
 
 		// annual sums
 		ssc_number_t *utility_bill_w_sys = allocate("utility_bill_w_sys", nyears + 1);
-        ssc_number_t* utility_bill_par = allocate("utility_bill_par", nyears + 1);
 		ssc_number_t *utility_bill_wo_sys = allocate("utility_bill_wo_sys", nyears + 1);
 		ssc_number_t *ch_w_sys_dc_fixed = allocate("charge_w_sys_dc_fixed", nyears + 1);
 		ssc_number_t *ch_w_sys_dc_tou = allocate("charge_w_sys_dc_tou", nyears + 1);
@@ -917,9 +912,7 @@ public:
 //					e_sys[j] = ts_power * ts_hour_gen;
 //					p_sys[j] = ((ts_power > p_sys[j]) ? ts_power : p_sys[j]);
 					e_sys_cy[j] = pgen[idx] * ts_hour_gen;
-                    e_sys_cy_par[j] = pgenpar[idx] * ts_hour_gen;
 					p_sys_cy[j] = pgen[idx];
-                    p_sys_cy_par[j] = pgenpar[idx];
 					// until lifetime load fully implemented
 					// report lifetime load in kW and not kWh
 					lifetime_load[idx] = -e_load_cy[j] / ts_hour_gen;
@@ -928,22 +921,16 @@ public:
 				else
 				{
 					e_sys_cy[j] = pgen[j] * ts_hour_gen;
-                    e_sys_cy_par[j] = pgenpar[j] * ts_hour_gen;
 					p_sys_cy[j] = pgen[j];
-                    p_sys_cy_par[j] = pgenpar[j];
 				}
 				e_sys_cy[j] *= sys_scale[i];
-                e_sys_cy_par[j] *= sys_scale[i];
 				p_sys_cy[j] *= sys_scale[i];
-                p_sys_cy_par[j] *= sys_scale[i];
 				// calculate e_grid value (e_sys + e_load)
 //				e_sys_cy[j] = e_sys[j] * sys_scale[i];
 //				p_sys_cy[j] = p_sys[j] * sys_scale[i];
 				// note: load is assumed to have negative sign
 				e_grid_cy[j] = e_sys_cy[j] + e_load_cy[j];
-                e_grid_cy_par[j] = e_sys_cy_par[j];
 				p_grid_cy[j] = p_sys_cy[j] + p_load_cy[j];
-                e_grid_cy_par[j] = p_sys_cy_par[j];
 			}
 
 
@@ -1111,24 +1098,7 @@ public:
 			{
 				if (two_meter)
 				{
-                    if (as_integer("is_btm") == 1) {
-                        ur_calc_timestep(&e_sys_cy_par[0], &p_sys_cy_par[0],
-                            &revenue_w_sys[0], &payment[0], &income[0],
-                            &demand_charge_w_sys[0], &energy_charge_w_sys[0],
-                            &monthly_fixed_charges[0], &monthly_minimum_charges[0],
-                            &monthly_ec_charges[0],
-                            &monthly_ec_charges_gross[0],
-                            &monthly_excess_dollars_earned[0],
-                            &monthly_excess_kwhs_earned[0],
-                            &monthly_net_billing_credits[0],
-                            &rate.dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill_par[0],
-                            &monthly_two_meter_sales[0], &monthly_true_up_credits[0],
-                            &monthly_peak_w_sys[0],
-                            rate.rate_scale[i],
-                            i, last_excess_dollars, false, false, true);
-                    }
-
-                    ur_calc_timestep(&e_sys_cy[0], &p_sys_cy[0],
+					ur_calc_timestep(&e_sys_cy[0], &p_sys_cy[0],
 						&revenue_w_sys[0], &payment[0], &income[0],
 						&demand_charge_w_sys[0], &energy_charge_w_sys[0],
 						&monthly_fixed_charges[0], &monthly_minimum_charges[0],
@@ -1145,25 +1115,7 @@ public:
 				}
 				else
 				{
-
-                    if (as_integer("is_btm") == 1) {
-                        ur_calc_timestep(&e_grid_cy_par[0], &p_grid_cy_par[0],
-                            &revenue_w_sys[0], &payment[0], &income[0],
-                            &demand_charge_w_sys[0], &energy_charge_w_sys[0],
-                            &monthly_fixed_charges[0], &monthly_minimum_charges[0],
-                            &monthly_ec_charges[0],
-                            &monthly_ec_charges_gross[0],
-                            &monthly_excess_dollars_earned[0],
-                            &monthly_excess_kwhs_earned[0],
-                            &monthly_net_billing_credits[0],
-                            &rate.dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0],
-                            &monthly_bill_par[0], &monthly_two_meter_sales[0],
-                            &monthly_true_up_credits[0],
-                            &monthly_peak_w_sys[0],
-                            rate.rate_scale[i], i, last_excess_dollars);
-                    }
-
-                    ur_calc_timestep(&e_grid_cy[0], &p_grid_cy[0],
+					ur_calc_timestep(&e_grid_cy[0], &p_grid_cy[0],
 						&revenue_w_sys[0], &payment[0], &income[0],
 						&demand_charge_w_sys[0], &energy_charge_w_sys[0],
 						&monthly_fixed_charges[0], &monthly_minimum_charges[0],
@@ -1183,25 +1135,7 @@ public:
 			{
 				// Two-meter always hits the timestep_reconciliation path, so ur_calc will never be called for buy all / sell all
 				// calculate revenue with solar system (using net grid energy & maxpower)
-
-                if (as_integer("is_btm") == 1) {
-                    ur_calc(&e_grid_cy_par[0], &p_grid_cy_par[0],
-                        &revenue_w_sys[0], &payment[0], &income[0],
-                        &demand_charge_w_sys[0], &energy_charge_w_sys[0],
-                        &monthly_fixed_charges[0], &monthly_minimum_charges[0],
-                        &monthly_ec_charges[0],
-                        &monthly_ec_charges_gross[0],
-                        &monthly_excess_dollars_earned[0],
-                        &monthly_nm_dollars_applied[0],
-                        &monthly_excess_kwhs_earned[0],
-                        &rate.dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0],
-                        &monthly_bill_par[0], &monthly_true_up_credits[0],
-                        &monthly_peak_w_sys[0],
-                        rate.rate_scale[i], i,
-                        &last_month, last_excess_energy, last_excess_dollars);
-                }
-
-                ur_calc(&e_grid_cy[0], &p_grid_cy[0],
+				ur_calc(&e_grid_cy[0], &p_grid_cy[0],
 					&revenue_w_sys[0], &payment[0], &income[0],
 					&demand_charge_w_sys[0], &energy_charge_w_sys[0],
 					&monthly_fixed_charges[0], &monthly_minimum_charges[0],
@@ -1502,8 +1436,6 @@ public:
                 }
 
 				utility_bill_w_sys[i + 1] += monthly_bill[j];
-                if (as_integer("is_btm") == 1)
-                    utility_bill_par[i + 1] += monthly_bill_par[j];
 				ch_w_sys_dc_fixed[i + 1] += rate.monthly_dc_fixed[j];
 				ch_w_sys_dc_tou[i + 1] += rate.monthly_dc_tou[j];
 				ch_w_sys_ec[i + 1] += monthly_ec_charges[j];

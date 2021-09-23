@@ -35,7 +35,6 @@ static var_info vtab_cashloan[] = {
 	{ SSC_INPUT,        SSC_NUMBER,     "market",                    "Residential or Commercial Market",   "0/1",          "0=residential,1=comm.",     "Financial Parameters",      "?=1",                     "INTEGER,MIN=0,MAX=1",            "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "mortgage",                  "Use mortgage style loan (res. only)","0/1",          "0=standard loan,1=mortgage","Financial Parameters", "?=0", "INTEGER,MIN=0,MAX=1", "" },
 
-    { SSC_INPUT,        SSC_ARRAY,      "utility_bill_par",          "Electricity bill for system parasitics", "$", "", "Charges by Month", "*", "", "" },
     { SSC_INPUT,        SSC_ARRAY,      "utility_bill_w_sys",          "Electricity bill for system", "$", "", "Charges by Month", "*", "", "" },
     { SSC_INPUT, SSC_MATRIX,           "charge_w_sys_ec_ym", "Energy charge with system", "$", "", "Charges by Month", "", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
     { SSC_INPUT, SSC_MATRIX,           "true_up_credits_ym",     "Net annual true-up payments", "$", "", "Charges by Month", "", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
@@ -417,15 +416,6 @@ public:
             }
 
         }
-        ssc_number_t* monthly_energy_purchases = 0;
-        for (size_t m = 0; m < 12; m++) {
-            for (size_t d = 0; d < util::days_in_month(m); d++) {
-                for (size_t h = 0; h < 24; h++) {
-                    monthly_energy_purchases[m] = hourly_energy_calcs.hourly_purchases()[util::hour_of_year(m, d, h)];
-                }
-                
-            }
-        }
 
 		if (is_assigned("annual_thermal_value"))
 		{
@@ -776,34 +766,7 @@ public:
 		double cbi_total = cbi_fed_amount + cbi_sta_amount + cbi_uti_amount + cbi_oth_amount;
 		double itc_total_fed = itc_fed_amount + itc_fed_per;
 		double itc_total_sta = itc_sta_amount + itc_sta_per;
-        /*
-        if (is_assigned("utility_bill_par"))
-        {
-            size_t ub_count;
-            ssc_number_t* ub_arr;
-            ub_arr = as_array("utility_bill_par", &ub_count);
-            if (ub_count != (size_t)(nyears + 1))
-                throw exec_error("singleowner", util::format("utility bill years (%d) not equal to analysis period years (%d).", (int)ub_count, nyears));
-
-            for (i = 0; i <= nyears; i++)
-                cf.at(CF_utility_bill, i) = ub_arr[i];
-            save_cf(CF_utility_bill, nyears, "cf_utility_bill");
-        }
-        else
-        {
-            for (i = 0; i <= nyears; i++)
-                cf.at(CF_utility_bill, i) = 0;
-            save_cf(CF_utility_bill, nyears, "cf_utility_bill");
-        }*/
-        util::matrix_t<double> monthly_energy_charge = as_matrix("charge_w_sys_ec_ym"); //Use monthly energy charges from utility bill ($)
-        util::matrix_t<double> net_annual_true_up = as_matrix("true_up_credits_ym"); //Use net annual true up payments regardless of billing mode ($)
-        size_t n_monthly_grid_to_load;
-        ssc_number_t* load = as_array("monthly_grid_to_load", &n_monthly_grid_to_load);
-        for (i = 1; i <= nyears; i++) {
-            for (size_t m = 0; m < 12; m++) {
-                cf.at(CF_utility_bill, i) += monthly_energy_purchases[m] / (load[m] + monthly_energy_purchases[m]) * monthly_energy_charge.at(i, m) + net_annual_true_up.at(i, m);
-            }
-        }
+        
 
 		for (i=1; i<=nyears; i++)
 		{			
@@ -851,7 +814,7 @@ public:
 				+ cf.at(CF_insurance_expense,i)
 				+ cf.at(CF_battery_replacement_cost, i)
 				+ cf.at(CF_fuelcell_replacement_cost, i)
-                + cf.at(CF_utility_bill, i) //Parasitics
+                //+ cf.at(CF_utility_bill, i) //Parasitics
 				- cf.at(CF_net_salvage_value,i);
 
 			

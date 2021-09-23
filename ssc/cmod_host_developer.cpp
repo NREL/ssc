@@ -39,7 +39,6 @@ static var_info _cm_vtab_host_developer[] = {
 	{ SSC_INPUT,        SSC_ARRAY,       "elec_cost_without_system",             "Host energy bill without system",                       "$",            "",                      "Host",      "*",                       "",                                         "" },
 	{ SSC_INPUT,        SSC_NUMBER,       "host_real_discount_rate",             "Host real discount rate",                       "%",            "",                      "Host",      "*",                       "",                                         "" },
 
-    { SSC_INPUT,        SSC_ARRAY,      "utility_bill_par",          "Electricity bill for system parasitics", "$", "", "Charges by Month", "*", "", "" },
     { SSC_OUTPUT, SSC_ARRAY, "cf_utility_bill", "Electricity purchase", "$", "", "", "", "LENGTH_EQUAL=cf_length", "" },
 
 
@@ -1290,24 +1289,6 @@ public:
 			}
 		}
 
-        if (is_assigned("utility_bill_par"))
-        {
-            size_t ub_count;
-            ssc_number_t* ub_arr;
-            ub_arr = as_array("utility_bill_par", &ub_count);
-            if (ub_count != (size_t)(nyears + 1))
-                throw exec_error("singleowner", util::format("utility bill years (%d) not equal to analysis period years (%d).", (int)ub_count, nyears));
-
-            for (i = 0; i <= nyears; i++)
-                cf.at(CF_utility_bill, i) = ub_arr[i];
-            save_cf(CF_utility_bill, nyears, "cf_utility_bill");
-        }
-        else
-        {
-            for (i = 0; i <= nyears; i++)
-                cf.at(CF_utility_bill, i) = 0;
-            save_cf(CF_utility_bill, nyears, "cf_utility_bill");
-        }
 
 		for (i=1; i<=nyears; i++)
 		{			
@@ -1334,7 +1315,7 @@ public:
 				+ cf.at(CF_property_tax_expense,i)
 				+ cf.at(CF_insurance_expense,i)
 				+ cf.at(CF_battery_replacement_cost,i)
-                + cf.at(CF_utility_bill, i)
+                //+ cf.at(CF_utility_bill, i)
 				+ cf.at(CF_Recapitalization,i);
 		}
 
@@ -2687,14 +2668,14 @@ public:
 
 
 
-	double host_npv_energy_real = npv(CF_energy_net, nyears, host_disc_real);
+	double host_npv_energy_real = npv(CF_energy_sales, nyears, host_disc_real);
 	double host_lcoe_real = -(cf.at(CF_after_tax_net_equity_cost_flow, 0) + npv(CF_after_tax_net_equity_cost_flow, nyears, host_nom_discount_rate)) * 100;
 	if (host_npv_energy_real == 0.0)
 		host_lcoe_real = std::numeric_limits<double>::quiet_NaN();
 	else
 		host_lcoe_real /= host_npv_energy_real;
 
-	double host_npv_energy_nom = npv(CF_energy_net, nyears, host_nom_discount_rate);
+	double host_npv_energy_nom = npv(CF_energy_sales, nyears, host_nom_discount_rate);
 	double host_lcoe_nom = -(cf.at(CF_after_tax_net_equity_cost_flow, 0) + npv(CF_after_tax_net_equity_cost_flow, nyears, host_nom_discount_rate)) * 100;
 	if (host_npv_energy_nom == 0.0)
 		host_lcoe_nom = std::numeric_limits<double>::quiet_NaN();
