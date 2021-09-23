@@ -80,6 +80,7 @@ static var_info vtab_cashloan[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fixed_expense",      "O&M fixed expense",                  "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_production_expense", "O&M production-based expense",       "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_capacity_expense",   "O&M capacity-based expense",         "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "cf_om_land_expense",                 "O&M land lease expense",         "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fixed1_expense",      "Battery fixed expense",                  "$",            "",                      "Cash Flow",      "",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_production1_expense", "Battery production-based expense",       "$",            "",                      "Cash Flow",      "",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -270,6 +271,8 @@ enum {
     CF_investment_cost_lcos,
     CF_annual_cost_lcos,
     CF_util_escal_rate,
+
+    CF_om_land_expense,
 
     CF_max,
 };
@@ -488,7 +491,8 @@ public:
 		escal_or_annual( CF_om_fixed_expense, nyears, "om_fixed", inflation_rate, 1.0, false, as_double("om_fixed_escal")*0.01 );
 		escal_or_annual( CF_om_production_expense, nyears, "om_production", inflation_rate, 0.001, false, as_double("om_production_escal")*0.01 );  
 		escal_or_annual( CF_om_capacity_expense, nyears, "om_capacity", inflation_rate, 1.0, false, as_double("om_capacity_escal")*0.01 );  
-		escal_or_annual( CF_om_fuel_expense, nyears, "om_fuel_cost", inflation_rate, as_double("system_heat_rate")*0.001, false, as_double("om_fuel_cost_escal")*0.01 );
+        escal_or_annual(CF_om_land_expense, nyears, "om_land_lease", inflation_rate, 1.0, false, as_double("om_land_lease_escal") * 0.01);
+        escal_or_annual( CF_om_fuel_expense, nyears, "om_fuel_cost", inflation_rate, as_double("system_heat_rate")*0.001, false, as_double("om_fuel_cost_escal")*0.01 );
 
         // additional o and m sub types (e.g. batteries and fuel cells)
         int add_om_num_types = as_integer("add_om_num_types");
@@ -570,6 +574,8 @@ public:
 
 		double om_opt_fuel_1_usage = as_double("om_opt_fuel_1_usage");
 		double om_opt_fuel_2_usage = as_double("om_opt_fuel_2_usage");
+        double total_land_area = as_double("total_land_area");
+
 		
 		// ibi fixed
 		ibi_fed_amount = as_double("ibi_fed_amount");
@@ -751,6 +757,8 @@ public:
 
 
 			cf.at(CF_om_fuel_expense,i) *= fuel_use[i];
+            cf.at(CF_om_land_expense, i) *= total_land_area;
+
 
             //Battery Production OM Costs
             cf.at(CF_om_production1_expense, i) *= battery_discharged[i]; //$/MWh * 0.001 MWh/kWh * kWh = $
@@ -785,6 +793,7 @@ public:
 				+ cf.at(CF_insurance_expense,i)
 				+ cf.at(CF_battery_replacement_cost, i)
 				+ cf.at(CF_fuelcell_replacement_cost, i)
+                + cf.at(CF_om_land_expense, i)
 				- cf.at(CF_net_salvage_value,i);
 
 			
@@ -1140,6 +1149,7 @@ public:
 		save_cf(CF_om_fixed_expense, nyears, "cf_om_fixed_expense");
 		save_cf(CF_om_production_expense, nyears, "cf_om_production_expense");
 		save_cf(CF_om_capacity_expense, nyears, "cf_om_capacity_expense");
+        save_cf(CF_om_land_expense, nyears, "cf_om_land_expense");
         if (add_om_num_types > 0) {
             save_cf(CF_om_fixed1_expense, nyears, "cf_om_fixed1_expense");
             save_cf(CF_om_production1_expense, nyears, "cf_om_production1_expense");
@@ -1237,15 +1247,16 @@ public:
 		// present value of o and m value - note - present value is distributive - sum of pv = pv of sum
 		double pvAnnualOandM = npv(CF_om_fixed_expense, nyears, nom_discount_rate);
 		double pvFixedOandM = npv(CF_om_capacity_expense, nyears, nom_discount_rate);
+        double pvLandOandM = npv(CF_om_land_expense, nyears, nom_discount_rate);
 		double pvVariableOandM = npv(CF_om_production_expense, nyears, nom_discount_rate);
 		double pvFuelOandM = npv(CF_om_fuel_expense, nyears, nom_discount_rate);
 		double pvOptFuel1OandM = npv(CF_om_opt_fuel_1_expense, nyears, nom_discount_rate);
 		double pvOptFuel2OandM = npv(CF_om_opt_fuel_2_expense, nyears, nom_discount_rate);
 	//	double pvWaterOandM = NetPresentValue(sv[svNominalDiscountRate], cf[cfAnnualWaterCost], analysis_period);
 
-		assign( "present_value_oandm",  var_data((ssc_number_t)(pvAnnualOandM + pvFixedOandM + pvVariableOandM + pvFuelOandM))); // + pvWaterOandM);
+		assign( "present_value_oandm",  var_data((ssc_number_t)(pvAnnualOandM + pvFixedOandM + pvVariableOandM + pvLandOandM + pvFuelOandM))); // + pvWaterOandM);
 
-		assign( "present_value_oandm_nonfuel", var_data((ssc_number_t)(pvAnnualOandM + pvFixedOandM + pvVariableOandM)));
+		assign( "present_value_oandm_nonfuel", var_data((ssc_number_t)(pvAnnualOandM + pvFixedOandM + pvVariableOandM + pvLandOandM)));
 		assign( "present_value_fuel", var_data((ssc_number_t)(pvFuelOandM + pvOptFuel1OandM + pvOptFuel2OandM)));
 
 		// present value of insurance and property tax
