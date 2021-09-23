@@ -325,7 +325,10 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
     { SSC_OUTPUT, SSC_NUMBER, "annual_Q_cycle_thermal_in",     "Annual cycle thermal energy input",                             "MWht",         "",                                  "",                                         "sim_type=1",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "annual_Q_cycle_thermal_startup","Annual cycle thermal energy consumed by startup",               "MWht",         "",                                  "",                                         "sim_type=1",                                                                "",              "" },
 
-    
+        // ETES settings for financial model
+    { SSC_OUTPUT, SSC_NUMBER, "ppa_soln_mode",                 "PPA solution mode",                                             "0/1",          "0 = solve ppa,1 = specify ppa",     "Revenue",                                  "sim_type=1",                                                                "INTEGER,MIN = 0,MAX = 1", "" },
+    { SSC_OUTPUT, SSC_NUMBER, "flip_target_percent",		   "After-tax IRR target",		                                    "%",	        "",					                 "Revenue",                                  "sim_type=1",					                                              "MIN=0,MAX=100",     	     "" },
+
 
     var_info_invalid };
 
@@ -950,6 +953,11 @@ public:
         assign("installed_per_cap_cost_calc", (ssc_number_t)(total_installed_cost / system_capacity));
         assign("total_installed_cost", (ssc_number_t)total_installed_cost);                 //[$]
         assign("construction_financing_cost", (ssc_number_t)construction_financing_cost);   //[$]
+
+            // Financial
+        assign("ppa_soln_mode", 1);     // Only allow dispatch model to use fixed ppa mode so dispatch model knows absolute prices
+        assign("flip_target_percent", 0.0); //[%] fixed ppa mode shouldn't use this input, so set it to a value that, if used, will give weird results
+            
         // *****************************************************
         // *****************************************************
 
