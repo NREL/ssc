@@ -602,6 +602,7 @@ public:
         // assume a ''square'' system layout- meaning same number of modules across a row as number of rows
         // therefore, if rows are 2 up, need to estimate with half the modules
         pv.nrows = (int)ceil(sqrt(pv.nmodules/pv.nmody)); // estimate of # rows for a square system
+        //need to add better estimates for rooftop system, so as not to confuse users with outputs below ???????????????????????????!!!!!!!!!!!!!!!!!!!
 
         // number of modules in a row...
         //   If 1 module per Y dimension, nmodx=nrows.
@@ -1216,7 +1217,9 @@ public:
                         pvoutput_t out(0, 0, 0, 0, 0, 0, 0, 0);
                         // call the module model
                         if (!mod(in, tmod, -1.0, out)) throw exec_error("pvwattsv8", util::format("Module power calculation failed at index %d.", (int)idx_life));
-                        dc = out.Power;
+                        // scale the power output for a single module (out.Power) to the actual system size-
+                        // divide the DC nameplate input by the "single module" nameplate (Vmp * Imp) to get a fractional number of modules in the system, and multiply by that fraction
+                        dc = out.Power * pv.dc_nameplate / (mod.Vmp * mod.Imp);
                     }
 
                     // apply common DC losses here (independent of module model)
