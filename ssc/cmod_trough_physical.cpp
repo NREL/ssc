@@ -549,6 +549,12 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_OUTPUT,      SSC_MATRIX,       "cycle_eff_Tdb_table",             "Cycle efficiency vs. ambient temperature",                                   "",             "",               "",               "*",                       "",                      "COL_LABEL=EFFICIENCY,ROW_LABEL=NO_ROW_LABEL" },
     { SSC_OUTPUT,      SSC_MATRIX,       "cycle_wcond_Tdb_table",           "Cycle (condenser power / rated gross power) vs. ambient temperature",        "",             "",               "",               "*",                       "",                      "COL_LABEL=POWER_FRACTION,ROW_LABEL=NO_ROW_LABEL" },
 
+        // Total aperture area and land area
+    { SSC_OUTPUT,       SSC_NUMBER,      "total_aperture",                  "Total aperture reflective area",                                             "m2",           "",               "",               "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "total_land_area",                 "Total land area",                                                            "acre",         "",               "",               "*",                       "",                      "" },
+
+
+
     var_info_invalid };
 
 
@@ -1764,6 +1770,9 @@ public:
             table_Tdb_wcondcoef[2 * i] = T;
             table_Tdb_wcondcoef[2 * i + 1] = wcond / as_double("P_ref");  //fraction of rated gross gen
         }
+
+        assign("total_aperture", as_double("total_aperture"));
+        assign("total_land_area", as_double("total_land_area"));
     }
 };
 
