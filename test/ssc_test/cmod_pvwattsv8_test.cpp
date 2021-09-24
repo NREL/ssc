@@ -45,7 +45,7 @@ TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, DefaultNoFinancialModel_cmod_pvwat
         tmp += (double)monthly_energy[i];
     //v5 is 6909.79, decrease of 2.4%: decreases due to shading, module cover losses, and spectral losses
     //v7 prior to module coeff changes is 6750.4236, increase of 3.7% due to improved tempco for standard module
-    //v7 final version is 6999.0158, decrease of 0.5% due to model updates
+    //v7 final version is 6999.0158, decrease of 0.4% due to model updates
     EXPECT_NEAR(tmp, 6969.8105, error_tolerance) << "Annual energy.";
 
     EXPECT_NEAR((double)monthly_energy[0], 436.644, error_tolerance) << "Monthly energy of January";
@@ -77,8 +77,12 @@ TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, DifferentTechnologyInputs_cmod_pvw
 	//PVWattsV5 results: annual_energy_expected = { 6909.79, 7123.32, 7336.478, 6909.79, 6804.376, 8601.011, 8727.704, 9690.735};
 	//V7 prior to module coefficient updates: std::vector<double> annual_energy_expected = { 6750.42, 7034.39, 7166.88, 6750.42, 6693.49, 8514.26, 8441.60, 9631.76 };
 	//standard fixed -2.4%, premium fixed -1.3%, thinfilm fixed -2.4%, standard fixed -2.4%, standard roof -1.7%, standard 1-axis -1.0%, standard backtrack -3.4%, standard 2-axis -0.6%
-	std::vector<double> annual_energy_expected = { 6999.01, 7030.26, 7077.07,6999.01, 6971.04, 8785.40, 8725.66, 9861.27 };
+    //V7 final version:
+    //annual_energy_expected = { 6999.01, 7030.26, 7077.07,6999.01, 6971.04, 8785.40, 8725.66, 9861.27 };
 	//standard fixed +3.6%, premium fixed 0%, thinfilm fixed -1.2%, standard fixed +3.6%, standard roof +4.0%, standard 1-axis +3.3%, standard backtrack +3.3%, standard 2-axis +2.6%
+    //V8 results
+    std::vector<double> annual_energy_expected = { 6969.81, 6967.37, 7025.19, 6969.81, 6948.78, 8816.15, 8752.55, 9895.99 };
+    //wrt V7 final results: standard fixed -0.4%, premium fixed -0.9%, thinfilm fixed -0.7%, standard fixed -0.4%, standard roof -0.3%, standard 1-axis +0.4%, standard backtrack +0.3%, standard 2-axis +0.4%
 
     std::map<std::string, double> pairs;
     size_t count = 0;
