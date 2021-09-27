@@ -3449,7 +3449,7 @@ void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double
         ssc_number_t* monthly_system_to_grid = cm->as_array("monthly_system_to_grid", &n_monthly_grid_to_load); //monthly grid energy bought to satisfy load for first year (kWh)
         ssc_number_t* monthly_electricity_tofrom_grid;
         
-        if ((grid_charging_cost_version == 0)) { //Are ppa purchases used in Single Owner or is the case using BTM financial model?
+        if ((grid_charging_cost_version != 2)) { //Are ppa purchases used in Single Owner or is the case using BTM financial model?
             monthly_electricity_tofrom_grid = cm->as_array("year1_monthly_electricity_to_grid", &n_monthly_grid_to_load); //Monthly electricity exported to the grid in the first year (kWh)
             monthly_energy_charge = cm->as_matrix("charge_w_sys_ec_ym"); //Use monthly energy charges from utility bill ($)
             net_annual_true_up = cm->as_matrix("true_up_credits_ym"); //Use net annual true up payments regardless of billing mode ($)
@@ -3507,7 +3507,7 @@ void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double
                 for (size_t m = 0; m < 12; m++) { //monthly iteration for each year
                     if (a != 0 && (monthly_grid_to_load[m] + monthly_grid_to_batt[m]) != 0) {
                         //cf.at(CF_charging_cost_grid_month, a) += monthly_grid_to_batt[m] / (monthly_grid_to_batt[m] + monthly_grid_to_load[m]) * monthly_energy_charge[m] * charged_grid[a] / charged_grid[1] * cf.at(CF_util_escal_rate, a);
-                        cf.at(CF_charging_cost_grid_lcos, a) += monthly_grid_to_batt[m] / (monthly_grid_to_load[m] + monthly_grid_to_batt[m]) * monthly_energy_charge.at(a, m) + net_annual_true_up.at(a, m); //use the electricity rate data by year (also trueup) //* charged_grid[a] / charged_grid[1] * cf.at(CF_util_escal_rate, a);
+                        cf.at(CF_charging_cost_grid_lcos, a) += monthly_grid_to_batt[m] / (monthly_system_to_grid[m] + -monthly_electricity_tofrom_grid[m]) * monthly_energy_charge.at(a, m) + net_annual_true_up.at(a, m); //use the electricity rate data by year (also trueup) //* charged_grid[a] / charged_grid[1] * cf.at(CF_util_escal_rate, a);
                     }
                 }
             }

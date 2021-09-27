@@ -473,7 +473,7 @@ void pvsamv1_battery_defaults(ssc_data_t& data) {
 	ssc_data_set_number(data, "batt_cycle_cost_choice", 0);
     ssc_number_t p_batt_cycle_cost[1] = { 0.1 };
     ssc_data_set_array(data, "batt_cycle_cost", p_batt_cycle_cost, 1);
-	ssc_data_set_number(data, "en_electricity_rates", 0);
+	ssc_data_set_number(data, "en_electricity_rates", 1);
 	ssc_data_set_number(data, "ur_en_ts_sell_rate", 0);
 	ssc_number_t p_ur_ts_buy_rate[1] = { 0 };
 	ssc_data_set_array(data, "ur_ts_buy_rate", p_ur_ts_buy_rate, 1);
