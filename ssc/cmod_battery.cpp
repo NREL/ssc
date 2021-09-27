@@ -762,9 +762,13 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
     // Check to see if the outage variables need to be set up
     analyze_outage = false;
     if (vt.is_assigned("grid_outage")) {
-        batt_vars->grid_outage_steps = vt.as_vector_bool("grid_outage"); // All lines that check for this check for length and default to false, so no exception should be ok here.
         // If not all false, we need the outage vars
         analyze_outage = std::any_of(batt_vars->grid_outage_steps.begin(), batt_vars->grid_outage_steps.end(), [](bool x) {return x; });
+
+        // If outage is all zeroes we don't care about the length, make sure if an outage is specified that it matches the weather file
+        if (analyze_outage && batt_vars->grid_outage_steps.size() < step_per_hour * 8760) {
+            throw exec_error("Battery", "Length of grid_outage did not match number of steps in one year of simulation");
+        }
     }
 
     // component models
@@ -1658,9 +1662,9 @@ void battstor::advance(var_table*, double P_gen, double V_gen, double P_load, do
     if (index < batt_vars->gridCurtailmentLifetime_MW.size()) {
         powerflow->powerCurtailmentLimit = batt_vars->gridCurtailmentLifetime_MW[index] * 1000.0;
     }
-    if (index < batt_vars->grid_outage_steps.size()) {
+    if ((index % step_per_year) < batt_vars->grid_outage_steps.size()) {
         // Set to false in reset() above, so don't need else here.
-        powerflow->isOutageStep = batt_vars->grid_outage_steps[index];
+        powerflow->isOutageStep = batt_vars->grid_outage_steps[index % step_per_year];
     }
 
     powerflow->powerGeneratedBySystem = P_gen;
