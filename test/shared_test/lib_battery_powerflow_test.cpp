@@ -1099,25 +1099,25 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, AC_outage_ExcessLoad) {
     // discharge battery w/inverter night time losses
     m_batteryPower->powerSystem = 0.0;
     m_batteryPower->powerSystemLoss = 0.0;
-    m_batteryPower->powerPVInverterDraw = 1.0;
-    m_batteryPower->powerBatteryDC = 52;
+    m_batteryPower->powerPVInverterDraw = -1.0;
+    m_batteryPower->powerBatteryDC = 53.125;
     m_batteryPowerFlow->calculate();
 
-    EXPECT_NEAR(m_batteryPower->powerBatteryAC, 50, error);
+    EXPECT_NEAR(m_batteryPower->powerBatteryAC, 51, error);
     EXPECT_NEAR(m_batteryPower->powerSystemToLoad, 0, error);
     EXPECT_NEAR(m_batteryPower->powerSystemToBattery, 0, error);
     EXPECT_NEAR(m_batteryPower->powerGridToBattery, 0, error);
     EXPECT_NEAR(m_batteryPower->powerGridToLoad, 0, error);
     EXPECT_NEAR(m_batteryPower->powerSystemToGrid, 0, error);
     EXPECT_NEAR(m_batteryPower->powerBatteryToLoad, 50, error);
-    EXPECT_NEAR(m_batteryPower->powerConversionLoss, 0.8, error);
+    EXPECT_NEAR(m_batteryPower->powerConversionLoss, 2.08, error);
     EXPECT_NEAR(m_batteryPower->powerSystemLoss, 0.0, error);
     EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 0.0, error);
     EXPECT_NEAR(m_batteryPower->powerInterconnectionLoss, 0.0, error);
     EXPECT_NEAR(m_batteryPower->powerBatteryToSystemLoad, 1.0, error);
     EXPECT_NEAR(m_batteryPower->powerGrid, 0.0, error);
 
-    gen = m_batteryPower->powerSystem + m_batteryPower->powerBatteryAC;
+    gen = m_batteryPower->powerSystem + m_batteryPower->powerBatteryAC + m_batteryPower->powerPVInverterDraw;
     EXPECT_NEAR(m_batteryPower->powerGeneratedBySystem, gen, error);
     EXPECT_NEAR(m_batteryPower->powerLoad, 50, error);
 }
