@@ -389,8 +389,9 @@ void cm_battwatts::exec()
             p_crit_load = as_vector_ssc_number_t("crit_load");
             if (p_crit_load.size() != p_load.size())
                 throw exec_error("battwatts", "critical electric load profile must have same number of values as load");
+            bool crit_load_specified = !p_crit_load.empty() && *std::max_element(p_crit_load.begin(), p_crit_load.end()) > 0;
             if (run_resilience) {
-                if (!p_crit_load.empty() && *std::max_element(p_crit_load.begin(), p_crit_load.end()) > 0) {
+                if (crit_load_specified) {
                     resilience = std::unique_ptr<resilience_runner>(new resilience_runner(batt));
                     auto logs = resilience->get_logs();
                     if (!logs.empty()) {
@@ -400,6 +401,9 @@ void cm_battwatts::exec()
                 else {
                     throw exec_error("battwatts", "If run_resiliency_calcs is 1, crit_load must have length > 0 and values > 0");
                 }
+            }
+            if (!crit_load_specified && batt->analyze_outage) {
+                throw exec_error("battery", "If grid_outage is specified in any time step, crit_load must have length > 0 and values > 0");
             }
         }
 

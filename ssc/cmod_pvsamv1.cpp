@@ -1127,9 +1127,11 @@ void cm_pvsamv1::exec()
         if (PVSystem->Inverter->nMpptInputs > 1 && en_batt && batt_topology == ChargeController::DC_CONNECTED)
             throw exec_error("pvsamv1", "DC-connected batteries do not work with multiple MPPT input inverters.");
 
+        bool crit_load_specified = !p_crit_load_in.empty() && *std::max_element(p_crit_load_in.begin(), p_crit_load_in.end()) > 0;
+
         bool run_resilience = as_boolean("run_resiliency_calcs");
         if (run_resilience) {
-            if (!p_crit_load_in.empty() && *std::max_element(p_crit_load_in.begin(), p_crit_load_in.end()) > 0) {
+            if (crit_load_specified) {
                 resilience = std::unique_ptr<resilience_runner>(new resilience_runner(batt));
                 auto logs = resilience->get_logs();
                 if (!logs.empty()) {
@@ -1139,6 +1141,9 @@ void cm_pvsamv1::exec()
             else {
                 throw exec_error("pvsamv1", "If run_resiliency_calcs is 1, crit_load must have length > 0 and values > 0");
             }
+        }
+        if (!crit_load_specified && batt->analyze_outage) {
+            throw exec_error("battery", "If grid_outage is specified in any time step, crit_load must have length > 0 and values > 0");
         }
     }
 
