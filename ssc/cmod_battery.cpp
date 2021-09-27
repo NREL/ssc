@@ -2114,8 +2114,10 @@ public:
                 size_t nload = p_crit_load.size();
                 if (nload != n_rec_single_year)
                     throw exec_error("battery", "Electric load profile must have same number of values as weather file, or 8760.");
+
+                bool crit_load_specified = !p_crit_load.empty() && *std::max_element(p_crit_load.begin(), p_crit_load.end()) > 0;
                 if (run_resilience) {
-                    if (!p_crit_load.empty() && *std::max_element(p_crit_load.begin(), p_crit_load.end()) > 0) {
+                    if (crit_load_specified) {
                         resilience = std::unique_ptr<resilience_runner>(new resilience_runner(batt));
                         auto logs = resilience->get_logs();
                         if (!logs.empty()) {
@@ -2125,6 +2127,9 @@ public:
                     else {
                         throw exec_error("battery", "If run_resiliency_calcs is 1, crit_load must have length > 0 and values > 0");
                     }
+                }
+                if (!crit_load_specified && batt->analyze_outage) {
+                    throw exec_error("battery", "If grid_outage is specified in any time step, crit_load must have length > 0 and values > 0");
                 }
             }
 
