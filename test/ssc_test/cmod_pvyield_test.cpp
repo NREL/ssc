@@ -39,15 +39,25 @@ TEST_F(CMPvYieldTimo, DefaultTimoModel_cmod_pvsamv1)
 
 TEST_F(CMPvYieldTimo, Bifacial_cmod_pvsamv1)
 {
+    double desired_annual_energy =  7748435.0977219529;
     pvyield_no_financial_meteo(data);
     ssc_data_set_number(data, "mlm_is_bifacial", 1);
     ssc_data_set_number(data, "mlm_bifaciality", 0.6);
     ssc_data_set_number(data, "mlm_bifacial_transmission_factor", 0.13);
     ssc_data_set_number(data, "mlm_bifacial_ground_clearance_height", 1);
-
-    int pvsam_errors = pvyield_test(data);
+    int pvsam_errors = run_module(data, "pvsamv1");
     EXPECT_FALSE(pvsam_errors);
-    // TODO: check values
+    ssc_number_t annual_energy_6;
+    ssc_data_get_number(data, "annual_energy", &annual_energy_6);
+    EXPECT_NEAR(annual_energy_6, desired_annual_energy, m_error_tolerance_lo);
+
+
+    ssc_data_set_number(data, "mlm_bifaciality", 0.8);
+    pvsam_errors = run_module(data, "pvsamv1");
+    EXPECT_FALSE(pvsam_errors);
+    ssc_number_t annual_energy_8;
+    ssc_data_get_number(data, "annual_energy", &annual_energy_8);
+    EXPECT_GT(annual_energy_8, desired_annual_energy + 1);
 }
 
 
