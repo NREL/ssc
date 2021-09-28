@@ -435,6 +435,9 @@ private:
 	double pressureDualLowConstrained(void);  // T65
 	double pressureDualLowToTest(void); // R65 or T65
 	double pressureDualLow(void); // P65
+    double pressureDualFlashTempHigh(void);
+    double pressureDualFlashTempLow(void);
+    double pressureSingleFlash(void);
 
 
 	// weather file opening, reading, checking inputs, etc.

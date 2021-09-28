@@ -56,7 +56,7 @@ namespace geothermal
 	//const double PRESSURE_CHANGE_ACROSS_SURFACE_EQUIPMENT_PSI = 25;	// 25 psi [2B.Resource&Well Input].D146, H146
 	const double TEMPERATURE_EGS_INJECTIONC = 76.1;					// degrees C, [7C.EGS Subsrfce HX].D11 [should be a function of plant design temperature]
 	const double TEMPERATURE_EGS_AMBIENT_C = 15.0;					// Note in GETEM spreadsheet says that this is only used in calculating resource temp or depth.  However, if EGS calculations are based on depth, then resource temp is based on this number, so all power calcs are based on it as well
-	const double CONST_CT = 0.0009;									// these are both inputs that are shaded out in GETEM
+	const double CONST_CT = 0.000581;									// these are both inputs that are shaded out in GETEM
 	const double CONST_CP = 0.000000000464;							//	"		"			"			"			"
 	//const double EXCESS_PRESSURE_BAR = 3.5;						// default 3.5 bar, [2B.Resource&Well Input].D205
 	//const double PRESSURE_AMBIENT_PSI = 14.7; // default
@@ -316,6 +316,12 @@ namespace geothermal
 	CPolynomial specVol125to325(3890.919, -83.834081, 0.78482148, -0.0040132715, 0.000011692082, -0.000000018270648, 0.000000000011909478);
 	CPolynomial specVol325to675(268.32894, -2.7389634, 0.011958041, -0.000028277928, 0.000000037948334, -0.000000000027284644, 8.187709e-15);
 	CPolynomial specVolOver675(1786.8983, 10.645163, -0.023769687, 0.000023582903, -0.0000000087731388);
+
+    //Pressure from temperature for flash plants
+    CPolynomial PressureUnder125(0.021248, 1.11e-03, 1.84e-05, 3.42e-07, 1.14e-09, 1.68e-11, 9.97e-15);
+    CPolynomial Pressure125to325(-0.060792, 6.00e-03, -9.10e-05, 1.59e-06, -6.75e-09, 4.35e-11, -2.80e-14);
+    CPolynomial Pressure325to675(1934.47, -26.49, 0.150475, -4.54e-04, 7.68e-07, -6.63e-10, 2.43e-13);
+    CPolynomial PressureOver675(10153.58, -125.9218, 0.6471745, -1.77e-03, 2.70e-06, -2.17e-09, 7.26e-13);
 
 	double EGSWaterDensity(double tempC) { return 1 / oEGSDensity.evaluate(tempC); }			// kg/m^3
 	double EGSSpecificHeat(double tempC) { return oEGSSpecificHeat.evaluate(tempC) * 1000; }	// J/kg-C
@@ -941,8 +947,8 @@ double CGeothermalAnalyzer::pressureHydrostaticPSI()
 
 	// hydrostatic pressure at production well depth (GetResourceDepthFt) in bar
 	double d1 = densityAmbient * geothermal::GRAVITY_MS2 * geothermal::CONST_CP;
-	double d2 = (exp(d1 * (GetResourceDepthM() - (0.5 * geothermal::CONST_CT * tempGradient * pow(GetResourceDepthM(), 2)))) - 1);
-	double pressureHydrostaticBar = pressureAmbientBar + (1 / geothermal::CONST_CP) * (d2) / 100000;
+	double d2 = (exp(d1 * (GetResourceDepthM() - (0.5 * geothermal::CONST_CT * tempGradient * pow(GetResourceDepthM(), 2)))/1000000) - 1);
+	double pressureHydrostaticBar = pressureAmbientBar + (1 / geothermal::CONST_CP) * (d2);
 
 	return geothermal::BarToPsi(pressureHydrostaticBar);
 }
@@ -1187,18 +1193,20 @@ void CGeothermalAnalyzer::calculateFlashPressures(void)
 	// if single flash - add flash pressure to delta pressure and quit
 	if (FlashCount() == 1)
 	{
-		mp_geo_out->md_PressureHPFlashPSI = pressureSingle() + geothermal::DELTA_PRESSURE_HP_FLASH_PSI;
+		//mp_geo_out->md_PressureHPFlashPSI = pressureSingle() + geothermal::DELTA_PRESSURE_HP_FLASH_PSI;
+        mp_geo_out->md_PressureHPFlashPSI = pressureSingleFlash() + geothermal::DELTA_PRESSURE_HP_FLASH_PSI;
 		return;
 	}
 
 	// dual flash, have to calculate both
 	// high pressure flash
 //i think this might be using the wrong temperature - resource instead of plant design - for EGS
-	mp_geo_out->md_PressureHPFlashPSI = pressureDualHigh() + geothermal::DELTA_PRESSURE_HP_FLASH_PSI;
-
+	//mp_geo_out->md_PressureHPFlashPSI = pressureDualHigh() + geothermal::DELTA_PRESSURE_HP_FLASH_PSI;
+    mp_geo_out->md_PressureHPFlashPSI = pressureDualFlashTempHigh() + geothermal::DELTA_PRESSURE_HP_FLASH_PSI;
 
 	// low pressure flash
-	mp_geo_out->md_PressureLPFlashPSI = pressureDualLow() + geothermal::DELTA_PRESSURE_LP_FLASH_PSI;
+	//mp_geo_out->md_PressureLPFlashPSI = pressureDualLow() + geothermal::DELTA_PRESSURE_LP_FLASH_PSI;
+    mp_geo_out->md_PressureLPFlashPSI = pressureDualFlashTempLow() + geothermal::DELTA_PRESSURE_LP_FLASH_PSI;
 	mp_geo_out->mb_FlashPressuresCalculated = true;
 }
 
@@ -1370,6 +1378,40 @@ double CGeothermalAnalyzer::pressureDualLow(void)
 {	// P65
 	//return  (pressureDualLowToTest() < geothermal::PRESSURE_AMBIENT_PSI) ? geothermal::PRESSURE_AMBIENT_PSI : pressureDualLowToTest(); 
 	return  (pressureDualLowToTest() < mo_geo_in.md_PressureAmbientPSI) ? mo_geo_in.md_PressureAmbientPSI : pressureDualLowToTest();
+}
+double CGeothermalAnalyzer::pressureDualFlashTempHigh(void)
+{
+    double temp_lpdualflash = physics::CelciusToFarenheit(GetTemperaturePlantDesignC()) - 2 * (physics::CelciusToFarenheit(GetTemperaturePlantDesignC()) - temperatureCondF()) / 3;
+    double si_limit = physics::CelciusToFarenheit(0.000161869 * pow(GetTemperaturePlantDesignC(), 2) + 0.83889 * GetTemperaturePlantDesignC() - 79.496);
+    if (temp_lpdualflash < si_limit) temp_lpdualflash = si_limit;
+    double temp_hpdualflash = physics::CelciusToFarenheit(GetTemperaturePlantDesignC()) - (physics::CelciusToFarenheit(GetTemperaturePlantDesignC()) - temp_lpdualflash) / 2;
+    if (temp_hpdualflash < 125) return geothermal::PressureUnder125.evaluate(temp_hpdualflash);
+    else if (temp_hpdualflash >= 125 && temp_hpdualflash < 325) return geothermal::Pressure125to325.evaluate(temp_hpdualflash);
+    else if (temp_hpdualflash >= 325 && temp_hpdualflash < 675) return geothermal::Pressure325to675.evaluate(temp_hpdualflash);
+    else return geothermal::PressureOver675.evaluate(temp_hpdualflash);
+}
+
+double CGeothermalAnalyzer::pressureDualFlashTempLow(void)
+{
+    double temp_lpdualflash = physics::CelciusToFarenheit(GetTemperaturePlantDesignC()) - 2*(physics::CelciusToFarenheit(GetTemperaturePlantDesignC()) - temperatureCondF()) / 3;
+    double si_limit = physics::CelciusToFarenheit(0.000161869 * pow(GetTemperaturePlantDesignC(), 2) + 0.83889 * GetTemperaturePlantDesignC() - 79.496);
+    if (temp_lpdualflash < si_limit) temp_lpdualflash = si_limit;
+    if (temp_lpdualflash < 125) return geothermal::PressureUnder125.evaluate(temp_lpdualflash);
+    else if (temp_lpdualflash >= 125 && temp_lpdualflash < 325) return geothermal::Pressure125to325.evaluate(temp_lpdualflash);
+    else if (temp_lpdualflash >= 325 && temp_lpdualflash < 675) return geothermal::Pressure325to675.evaluate(temp_lpdualflash);
+    else return geothermal::PressureOver675.evaluate(temp_lpdualflash);
+}
+
+double CGeothermalAnalyzer::pressureSingleFlash(void)
+{
+    double temp_hpdualflash = physics::CelciusToFarenheit(GetTemperaturePlantDesignC()) - (physics::CelciusToFarenheit(GetTemperaturePlantDesignC()) - temperatureCondF()) / 2;
+    double si_limit = physics::CelciusToFarenheit(0.000161869 * pow(GetTemperaturePlantDesignC(), 2) + 0.83889 * GetTemperaturePlantDesignC() - 79.496);
+    double temp_celcius = physics::FarenheitToCelcius(temp_hpdualflash);
+    if (temp_celcius < si_limit) temp_celcius = si_limit;
+    if (temp_celcius < 125) return geothermal::PressureUnder125.evaluate(temp_celcius);
+    else if (temp_celcius >= 125 && temp_celcius < 325) return geothermal::Pressure125to325.evaluate(temp_celcius);
+    else if (temp_celcius >= 325 && temp_celcius < 675) return geothermal::Pressure325to675.evaluate(temp_celcius);
+    else return geothermal::PressureOver675.evaluate(temp_celcius);
 }
 
 
