@@ -2916,6 +2916,13 @@ double cm_pvsamv1::module_eff(int mod_type)
         eff = 100.0 * ((vmp * imp) / area) / 1000.0;
     }
     break;
+        case 5: // Mermoud Lejeune
+    {
+        double area = as_double("mlm_Length") * as_double("mlm_Width");
+        double vmp = as_double("mlm_V_mp_ref");
+        double imp = as_double("mlm_I_mp_ref");
+        eff = 100.0 * ((vmp * imp) / area) / 1000.0;
+    }
     }
 
     if (eff == 0.0) eff = -1;

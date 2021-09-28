@@ -51,7 +51,11 @@ TEST_F(CMPvYieldTimo, Bifacial_cmod_pvsamv1)
     ssc_data_get_number(data, "annual_energy", &annual_energy_6);
     EXPECT_NEAR(annual_energy_6, desired_annual_energy, m_error_tolerance_lo);
 
+    ssc_number_t annual_dc_nominal;
+    ssc_data_get_number(data, "annual_dc_nominal", &annual_dc_nominal);
+    EXPECT_GT(annual_dc_nominal, desired_annual_energy);  // make sure dc_nominal isn't nan/negative/nonsense
 
+    // Check to see if increasing bifaciality increase energy
     ssc_data_set_number(data, "mlm_bifaciality", 0.8);
     pvsam_errors = run_module(data, "pvsamv1");
     EXPECT_FALSE(pvsam_errors);
