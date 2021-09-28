@@ -1,3 +1,25 @@
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 #include "lib_battery_dispatch.h"
 #include "lib_battery_powerflow.h"
 #include "lib_power_electronics.h"
@@ -50,6 +72,8 @@ BatteryPower::BatteryPower(double dtHour) :
 		canGridCharge(false),
 		canDischarge(false),
 		canFuelCellCharge(false),
+        chargeOnlySystemExceedLoad(true),
+        dischargeOnlyLoadExceedSystem(true),
 		stateOfChargeMax(1),
 		stateOfChargeMin(0),
 		depthOfDischargeMax(1),
@@ -102,6 +126,8 @@ BatteryPower::BatteryPower(const BatteryPower& orig) {
     canGridCharge = orig.canGridCharge;
     canDischarge = orig.canDischarge;
     canFuelCellCharge = orig.canFuelCellCharge;
+    chargeOnlySystemExceedLoad = orig.chargeOnlySystemExceedLoad;
+    dischargeOnlyLoadExceedSystem = orig.dischargeOnlyLoadExceedSystem;
     stateOfChargeMax = orig.stateOfChargeMax;
     stateOfChargeMin = orig.stateOfChargeMin;
     depthOfDischargeMax = orig.depthOfDischargeMax;
@@ -269,14 +295,16 @@ void BatteryPowerFlow::calculateACConnected()
             P_pv_to_batt_ac = P_grid_to_batt_ac = P_fuelcell_to_batt_ac = 0;
             P_battery_ac = 0;
         }
-        // PV always goes to load first
-        P_pv_to_load_ac = P_pv_ac;
+        // If PV must meet load first, assign right away
+        if (m_BatteryPower->chargeOnlySystemExceedLoad) {
+            P_pv_to_load_ac = P_pv_ac;
 
-        if (P_pv_to_load_ac > calc_load_ac) {
-            P_pv_to_load_ac = calc_load_ac;
+            if (P_pv_to_load_ac > calc_load_ac) {
+                P_pv_to_load_ac = calc_load_ac;
+            }
+            // Fuel cell goes to load next
+            P_fuelcell_to_load_ac = std::fmin(calc_load_ac - P_pv_to_load_ac, P_fuelcell_ac);
         }
-        // Fuel cell goes to load next
-        P_fuelcell_to_load_ac = std::fmin(calc_load_ac - P_pv_to_load_ac, P_fuelcell_ac);
 
         // Excess PV can go to battery, if PV can cover charging losses
         if (m_BatteryPower->canSystemCharge) {
@@ -294,6 +322,22 @@ void BatteryPowerFlow::calculateACConnected()
         }
         // Apply PV to losses if possible, grid (via gen) if not
         bool pv_handles_losses = P_pv_to_batt_ac > 0 || P_available_pv > 0.0;
+
+        // If flexible charging powerflow, assign PV now
+        if (!m_BatteryPower->chargeOnlySystemExceedLoad) {
+            if (pv_handles_losses) {
+                P_pv_to_load_ac = P_pv_ac - P_pv_to_batt_ac - P_system_loss_ac;
+            }
+            else {
+                P_pv_to_load_ac = P_pv_ac - P_pv_to_batt_ac;
+            }
+
+            if (P_pv_to_load_ac > calc_load_ac) {
+                P_pv_to_load_ac = calc_load_ac;
+            }
+            // Fuel cell goes to load next
+            P_fuelcell_to_load_ac = std::fmin(calc_load_ac - P_pv_to_load_ac, P_fuelcell_ac);
+        }
 
         // Fuelcell can also charge battery
         if (m_BatteryPower->canFuelCellCharge) {
@@ -333,22 +377,31 @@ void BatteryPowerFlow::calculateACConnected()
             P_batt_to_grid_ac = P_batt_to_load_ac = 0;
             P_battery_ac = 0;
         }
-        P_pv_to_load_ac = P_pv_ac;
+        if (m_BatteryPower->dischargeOnlyLoadExceedSystem) {
+            P_pv_to_load_ac = P_pv_ac;
 
-        // Excess PV production, no other component meets load
-        if (P_pv_ac >= calc_load_ac)
-        {
-            P_pv_to_load_ac = calc_load_ac;
-            P_fuelcell_to_load_ac = 0;
-            P_batt_to_load_ac = 0;
+            // Excess PV production, no other component meets load
+            if (P_pv_ac >= calc_load_ac)
+            {
+                P_pv_to_load_ac = calc_load_ac;
+                P_fuelcell_to_load_ac = 0;
+                P_batt_to_load_ac = 0;
 
-            // discharging to grid
-            P_pv_to_grid_ac = P_pv_ac - P_pv_to_load_ac;
-            P_fuelcell_to_grid_ac = P_fuelcell_ac;   
+                // discharging to grid
+                P_pv_to_grid_ac = P_pv_ac - P_pv_to_load_ac;
+                P_fuelcell_to_grid_ac = P_fuelcell_ac;
+            }
+            else {
+                P_fuelcell_to_load_ac = std::fmin(P_fuelcell_ac, calc_load_ac - P_pv_to_load_ac);
+                P_batt_to_load_ac = std::fmin(P_battery_ac - P_system_loss_ac, calc_load_ac - P_pv_to_load_ac - P_fuelcell_to_load_ac);
+            }
         }
         else {
-            P_fuelcell_to_load_ac = std::fmin(P_fuelcell_ac, calc_load_ac - P_pv_to_load_ac);
-            P_batt_to_load_ac = std::fmin(P_battery_ac - P_system_loss_ac, calc_load_ac - P_pv_to_load_ac - P_fuelcell_to_load_ac);
+            P_batt_to_load_ac = std::fmin(P_battery_ac, calc_load_ac);
+            P_fuelcell_to_load_ac = std::fmin(P_fuelcell_ac, calc_load_ac - P_batt_to_load_ac);
+            P_pv_to_load_ac = std::fmin(std::fmax(0, calc_load_ac - P_fuelcell_to_load_ac - P_batt_to_load_ac), P_pv_ac);
+            P_pv_to_grid_ac = std::fmax(0, P_pv_ac - P_pv_to_load_ac);
+            P_fuelcell_to_grid_ac = std::fmax(0, P_fuelcell_ac - P_fuelcell_to_load_ac);
         }
 
         if (m_BatteryPower->isOutageStep) {
@@ -617,8 +670,8 @@ void BatteryPowerFlow::calculateDCConnected()
             P_battery_ac = 0;
         }
 
-        P_pv_to_load_ac = P_pv_ac;
         if (m_BatteryPower->isOutageStep) {
+            P_pv_to_load_ac = P_pv_ac;
             if (P_pv_ac >= P_crit_load_ac)
             {
                 P_pv_to_load_ac = P_crit_load_ac;
@@ -640,19 +693,27 @@ void BatteryPowerFlow::calculateDCConnected()
             }
         }
         else {
-            if (P_pv_ac >= P_load_ac)
-            {
-                P_pv_to_load_ac = P_load_ac;
-                P_batt_to_load_ac = 0;
+            if (m_BatteryPower->dischargeOnlyLoadExceedSystem) {
+                P_pv_to_load_ac = P_pv_ac;
+                if (P_pv_ac >= P_load_ac)
+                {
+                    P_pv_to_load_ac = P_load_ac;
+                    P_batt_to_load_ac = 0;
 
-                // discharging to grid
-                P_pv_to_grid_ac = P_pv_ac - P_pv_to_load_ac;
+                    // discharging to grid
+                    P_pv_to_grid_ac = P_pv_ac - P_pv_to_load_ac;
+                }
+                else {
+                    P_batt_to_load_ac = std::fmin(P_battery_ac, P_load_ac - P_pv_to_load_ac);
+                }
+
+                P_batt_to_grid_ac = P_battery_ac - P_batt_to_load_ac;
             }
             else {
-                P_batt_to_load_ac = std::fmin(P_battery_ac, P_load_ac - P_pv_to_load_ac);
+                P_batt_to_load_ac = std::fmin(P_battery_ac, P_load_ac);
+                P_pv_to_load_ac = std::fmin(std::fmax(0, P_load_ac - P_batt_to_load_ac), P_pv_ac);
+                P_pv_to_grid_ac = std::fmax(0, P_pv_ac - P_pv_to_load_ac);
             }
-
-            P_batt_to_grid_ac = P_battery_ac - P_batt_to_load_ac;
         }
     }
 
