@@ -21,6 +21,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #include "cmod_battery_eqns.h"
 
+#include "core.h"
 #include "vartab.h"
 
 #include <cmath>
@@ -31,11 +32,26 @@ void Size_batterystateful(ssc_data_t data) {
         throw std::runtime_error("ssc_data_t data invalid");
     }
 
+    char errmsg[250];
+
     double nominal_energy, desired_voltage, desired_capacity;
 
     vt_get_number(vt, "nominal_energy", &nominal_energy);
     vt_get_number(vt, "desired_voltage", &desired_voltage);
     vt_get_number(vt, "desired_capacity", &desired_capacity);
+
+    // Cannot specify energy of zero (less than mW, really) due to resulting errors in scaling factors
+    if (nominal_energy < 1e-7) {
+        sprintf(errmsg, "nominal_energy cannot be less than 1e-7. Current value: %f", nominal_energy);
+        vt->assign("error", std::string(errmsg));
+        return;
+    }
+
+    if (desired_capacity < 1e-7) {
+        sprintf(errmsg, "desired_capacity cannot be less than 1e-7. Current value: %f", desired_capacity);
+        vt->assign("error", std::string(errmsg));
+        return;
+    }
 
     vt->assign("original_capacity", nominal_energy);
 
