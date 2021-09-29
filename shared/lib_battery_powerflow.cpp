@@ -434,7 +434,7 @@ void BatteryPowerFlow::calculateACConnected()
     if (m_BatteryPower->isOutageStep) {
         P_crit_load_unmet_ac = P_crit_load_ac - P_pv_to_load_ac - P_batt_to_load_ac - P_fuelcell_to_load_ac;
         P_grid_to_load_ac = 0;
-        P_grid_ac = P_gen_ac - P_crit_load_ac - P_interconnection_loss_ac; // This should be zero, but if it's not the error checking below will fix it
+        P_grid_ac = P_gen_ac - P_crit_load_ac - P_interconnection_loss_ac + P_crit_load_unmet_ac; // This should be zero, but if it's not the error checking below will fix it
     }
     else {
         P_grid_to_load_ac = P_load_ac - P_pv_to_load_ac - P_batt_to_load_ac - P_fuelcell_to_load_ac;
@@ -484,6 +484,8 @@ void BatteryPowerFlow::calculateACConnected()
         P_grid_to_batt_ac = 0;
     if (fabs(P_grid_ac) < m_BatteryPower->tolerance)
         P_grid_ac = 0;
+    if (fabs(P_crit_load_unmet_ac) < m_BatteryPower->tolerance)
+        P_crit_load_unmet_ac = 0;
 
 	// assign outputs
 	m_BatteryPower->powerBatteryAC = P_battery_ac;
@@ -761,6 +763,8 @@ void BatteryPowerFlow::calculateDCConnected()
         P_grid_to_batt_ac = 0;
     if (fabs(P_grid_ac) < m_BatteryPower->tolerance)
         P_grid_ac = 0;
+    if (fabs(P_crit_load_unmet_ac) < m_BatteryPower->tolerance)
+        P_crit_load_unmet_ac = 0;
 
 	// assign outputs
 	m_BatteryPower->powerBatteryAC = P_battery_ac;
