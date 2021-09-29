@@ -319,7 +319,7 @@ namespace geothermal
 
     //Pressure from temperature for flash plants
     CPolynomial PressureUnder125(0.021248, 1.11e-03, 1.84e-05, 3.42e-07, 1.14e-09, 1.68e-11, 9.97e-15);
-    CPolynomial Pressure125to325(-0.060792, 6.00e-03, -9.10e-05, 1.59e-06, -6.75e-09, 4.35e-11, -2.80e-14);
+    CPolynomial Pressure125to325(-0.0607916, 6.00322e-03, -9.09892e-05, 1.58988e-06, -6.75074e-09, 4.34771e-11, -2.80188e-14);
     CPolynomial Pressure325to675(1934.47, -26.49, 0.150475, -4.54e-04, 7.68e-07, -6.63e-10, 2.43e-13);
     CPolynomial PressureOver675(10153.58, -125.9218, 0.6471745, -1.77e-03, 2.70e-06, -2.17e-09, 7.26e-13);
 
@@ -1046,7 +1046,7 @@ double CGeothermalAnalyzer::enthalpyChangeTurbine(double dEnthalpyDeltaInitial, 
 // Turbine 1 - high pressure
 double CGeothermalAnalyzer::turbine1dHInitial() { return calculateDH(mp_geo_out->md_PressureHPFlashPSI - geothermal::DELTA_PRESSURE_HP_FLASH_PSI); } // I65
 double CGeothermalAnalyzer::turbine1TemperatureF() {
-	mp_geo_out->flash_temperature = geothermal::GetFlashTemperature(mp_geo_out->md_PressureHPFlashPSI);		//Storing HP Flash Temperature (for cmod_geothermal_costs)
+	mp_geo_out->flash_temperature = geothermal::GetFlashTemperature(mp_geo_out->md_PressureHPFlashPSI - geothermal::DELTA_PRESSURE_HP_FLASH_PSI);		//Storing HP Flash Temperature (for cmod_geothermal_costs)
 	return geothermal::GetFlashTemperature(mp_geo_out->md_PressureHPFlashPSI);
 } // D80
 
@@ -1061,7 +1061,7 @@ double CGeothermalAnalyzer::turbine1HEx() { return turbine1EnthalpyG() - turbine
 double CGeothermalAnalyzer::turbine1X()
 {	// D83 - %
 	mp_geo_out->spec_vol = GetSpecVol(mp_geo_out->flash_temperature);
-	double enthalpyPlantDesignTemp = geothermal::GetFlashEnthalpyF(physics::CelciusToFarenheit(GetTemperaturePlantDesignC()));// D69
+	double enthalpyPlantDesignTemp = geothermal::GetFlashEnthalpyF(physics::CelciusToFarenheit(GetTemperaturePlantDesignC()-1.75));// D69
 	mp_geo_out->getX_hp = calculateX(enthalpyPlantDesignTemp, turbine1TemperatureF());
 	return calculateX(enthalpyPlantDesignTemp, turbine1TemperatureF());
 }
@@ -1083,7 +1083,7 @@ double CGeothermalAnalyzer::turbine1OutputKWh() { return turbine1DH() * turbine1
 // Flash Turbine 2 - low pressure
 double CGeothermalAnalyzer::turbine2dHInitial(void) { return calculateDH(mp_geo_out->md_PressureLPFlashPSI - geothermal::DELTA_PRESSURE_LP_FLASH_PSI); }														// I87
 double CGeothermalAnalyzer::turbine2TemperatureF(void) {
-	mp_geo_out->flash_temperature_lp = geothermal::GetFlashTemperature(mp_geo_out->md_PressureLPFlashPSI);	//Getting LP Flash Temperature value for calculations in cmod_geothermal_costs
+	mp_geo_out->flash_temperature_lp = geothermal::GetFlashTemperature(mp_geo_out->md_PressureLPFlashPSI - geothermal::DELTA_PRESSURE_LP_FLASH_PSI);	//Getting LP Flash Temperature value for calculations in cmod_geothermal_costs
 	mp_geo_out->spec_vol_lp = GetSpecVol(mp_geo_out->flash_temperature_lp);
 	return geothermal::GetFlashTemperature(mp_geo_out->md_PressureLPFlashPSI);
 }														// D88
@@ -1385,10 +1385,7 @@ double CGeothermalAnalyzer::pressureDualFlashTempHigh(void)
     double si_limit = physics::CelciusToFarenheit(0.000161869 * pow(GetTemperaturePlantDesignC(), 2) + 0.83889 * GetTemperaturePlantDesignC() - 79.496);
     if (temp_lpdualflash < si_limit) temp_lpdualflash = si_limit;
     double temp_hpdualflash = physics::CelciusToFarenheit(GetTemperaturePlantDesignC()) - (physics::CelciusToFarenheit(GetTemperaturePlantDesignC()) - temp_lpdualflash) / 2;
-    if (temp_hpdualflash < 125) return geothermal::PressureUnder125.evaluate(temp_hpdualflash);
-    else if (temp_hpdualflash >= 125 && temp_hpdualflash < 325) return geothermal::Pressure125to325.evaluate(temp_hpdualflash);
-    else if (temp_hpdualflash >= 325 && temp_hpdualflash < 675) return geothermal::Pressure325to675.evaluate(temp_hpdualflash);
-    else return geothermal::PressureOver675.evaluate(temp_hpdualflash);
+    return geothermal::Pressure125to325.evaluate(temp_hpdualflash);
 }
 
 double CGeothermalAnalyzer::pressureDualFlashTempLow(void)
@@ -1396,10 +1393,7 @@ double CGeothermalAnalyzer::pressureDualFlashTempLow(void)
     double temp_lpdualflash = physics::CelciusToFarenheit(GetTemperaturePlantDesignC()) - 2*(physics::CelciusToFarenheit(GetTemperaturePlantDesignC()) - temperatureCondF()) / 3;
     double si_limit = physics::CelciusToFarenheit(0.000161869 * pow(GetTemperaturePlantDesignC(), 2) + 0.83889 * GetTemperaturePlantDesignC() - 79.496);
     if (temp_lpdualflash < si_limit) temp_lpdualflash = si_limit;
-    if (temp_lpdualflash < 125) return geothermal::PressureUnder125.evaluate(temp_lpdualflash);
-    else if (temp_lpdualflash >= 125 && temp_lpdualflash < 325) return geothermal::Pressure125to325.evaluate(temp_lpdualflash);
-    else if (temp_lpdualflash >= 325 && temp_lpdualflash < 675) return geothermal::Pressure325to675.evaluate(temp_lpdualflash);
-    else return geothermal::PressureOver675.evaluate(temp_lpdualflash);
+    return geothermal::Pressure125to325.evaluate(temp_lpdualflash);
 }
 
 double CGeothermalAnalyzer::pressureSingleFlash(void)
