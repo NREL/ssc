@@ -809,8 +809,8 @@ void C_csp_two_tank_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inputs
 
     if (ms_params.m_is_hx && !ms_params.tanks_in_parallel)
     {
-        mc_csp_messages.add_message(C_csp_messages::NOTICE, "The inputs specified serial TES operation, but the field and storage fluids are different"
-            " The simulation model parallel TES operation.");
+        mc_csp_messages.add_message(C_csp_messages::NOTICE, "The inputs specified serial TES operation, but the field and storage fluids are different."
+            " The simulation modeled parallel TES operation.\n");
         ms_params.tanks_in_parallel = true;
     }
 
