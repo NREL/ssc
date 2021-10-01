@@ -765,7 +765,6 @@ public:
 		tes->m_field_fl_props = as_matrix("field_fl_props");
 		tes->m_tes_fl = as_integer("Fluid");
 		tes->m_tes_fl_props = as_matrix("field_fl_props");
-		tes->m_is_hx = false;									//[-] Assuming direct storage here
 		tes->m_W_dot_pc_design = as_double("W_pb_design");		//[MWe]
 		tes->m_eta_pc = as_double("eta_ref");					//[-]
 		tes->m_solarm = as_double("solar_mult");				//[-]
