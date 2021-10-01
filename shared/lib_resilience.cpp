@@ -51,8 +51,14 @@ dispatch_resilience::~dispatch_resilience() {
 bool dispatch_resilience::run_outage_step_ac(double crit_load_kwac, double pv_kwac){
     if (connection != CONNECTION::AC_CONNECTED)
         throw std::runtime_error("Error in resilience::run_outage_step_ac: called for battery with DC connection.");
-
-    m_batteryPower->powerSystem = pv_kwac;
+    if (pv_kwac < 0) {
+        m_batteryPower->powerPVInverterDraw = m_batteryPower->powerSystem;
+        m_batteryPower->powerSystem = 0;
+    }
+    else {
+        m_batteryPower->powerPVInverterDraw = 0;
+        m_batteryPower->powerSystem = pv_kwac;
+    }
     m_batteryPower->powerCritLoad = crit_load_kwac;
     m_batteryPower->isOutageStep = true;
 
