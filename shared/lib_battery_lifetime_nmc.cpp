@@ -229,8 +229,8 @@ void lifetime_nmc_t::runLifetimeModels(size_t _, bool charge_changed, double pre
 
 double lifetime_nmc_t::estimateCycleDamage() {
     // Use cumulative damage from cycling and average it over elapsed cycles
-    double QLi_cycle_damage = state->nmc_li_neg->dq_relative_li2 / (double)state->n_cycles;
-    double QNeg_cycle_damage = state->nmc_li_neg->dq_relative_neg / (double)state->n_cycles;
+    double QLi_cycle_damage = state->nmc_li_neg->dq_relative_li2 / (fmax(1.0, (double)state->n_cycles));
+    double QNeg_cycle_damage = state->nmc_li_neg->dq_relative_neg / fmax(1.0,(double)state->n_cycles);
     return fmax(QLi_cycle_damage, QNeg_cycle_damage) * 100;
 }
 

@@ -42,8 +42,13 @@ static var_info vtab_cashloan[] = {
     { SSC_INPUT,        SSC_ARRAY,      "monthly_grid_to_batt",                       "Energy to battery from grid",                           "kWh",      "",                      "Battery",       "",                          "LENGTH=12",                     "" },
     { SSC_INPUT,        SSC_ARRAY,      "monthly_batt_to_grid",                       "Energy to grid from battery",                           "kWh",      "",                      "Battery",       "",                          "LENGTH=12",                     "" },
     { SSC_INPUT,        SSC_ARRAY,      "monthly_grid_to_load",                       "Energy to load from grid",                              "kWh",      "",                      "Battery",       "",                          "LENGTH=12",                     "" },
+    { SSC_INPUT, SSC_MATRIX, "charge_w_sys_dc_tou_ym", "Demand charge with system (TOU)", "$", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
+    { SSC_INPUT, SSC_ARRAY, "year1_hourly_ec_with_system", "Energy charge with system (year 1 hourly)", "$", "", "Time Series", "*", "", "" },
+    { SSC_INPUT, SSC_ARRAY, "year1_hourly_dc_with_system", "Demand charge with system (year 1 hourly)", "$", "", "Time Series", "*", "", "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "gen_purchases",                              "Electricity from grid",                                    "kW",      "",                       "System Output",       "",                           "",                              "" },
 
     { SSC_OUTPUT, SSC_ARRAY, "cf_utility_bill", "Electricity purchase", "$", "", "", "", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_INPUT, SSC_ARRAY, "year1_hourly_e_fromgrid", "Electricity from grid (year 1 hourly)", "kWh", "", "Time Series", "*", "", "" },
 
 	{ SSC_INPUT,        SSC_NUMBER,      "total_installed_cost",     "Total installed cost",               "$",            "",                      "System Costs",            "*",                      "MIN=0",                                         "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "salvage_percentage",       "Salvage value percentage",           "%",            "",                      "Financial Parameters",      "?=0.0",                  "MIN=0,MAX=100",                 "" },
@@ -60,7 +65,9 @@ static var_info vtab_cashloan[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "cf_length",                "Number of periods in cash flow",      "",             "",                      "Cash Flow",      "*",                       "INTEGER",                                  "" },
 
 	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoe_real",                "Real LCOE",                          "cents/kWh",    "",                      "Cash Flow",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoe_nom",                 "Nominal LCOE",                       "cents/kWh",    "",                      "Cash Flow",      "*",                       "",                                         "" },
+    { SSC_OUTPUT,        SSC_NUMBER,     "lcoe_real_monthly",                "Real LCOE (monthly)",                          "cents/kWh",    "",                      "Cash Flow",      "*",                       "",                                         "" },
+
+    { SSC_OUTPUT,        SSC_NUMBER,     "lcoe_nom",                 "Nominal LCOE",                       "cents/kWh",    "",                      "Cash Flow",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "payback",                  "Payback period",                            "years",        "",                      "Cash Flow",      "*",                       "",                                         "" },
 	// added 9/26/16 for Owen Zinaman Mexico
 	{ SSC_OUTPUT, SSC_NUMBER, "discounted_payback", "Discounted payback period", "years", "", "Cash Flow", "*", "", "" },
@@ -170,15 +177,16 @@ static var_info vtab_cashloan[] = {
 var_info_invalid };
 
 extern var_info
-	vtab_standard_financial[],
-	vtab_standard_loan[],
-	vtab_oandm[],
-	vtab_depreciation[],
-	vtab_battery_replacement_cost[],
-	vtab_fuelcell_replacement_cost[],
-	vtab_tax_credits[],
-	vtab_payment_incentives[],
-    vtab_lcos_inputs[];
+    vtab_standard_financial[],
+    vtab_standard_loan[],
+    vtab_oandm[],
+    vtab_depreciation[],
+    vtab_battery_replacement_cost[],
+    vtab_fuelcell_replacement_cost[],
+    vtab_tax_credits[],
+    vtab_payment_incentives[],
+    vtab_lcos_inputs[],
+    vtab_utility_rate_common[];
     
 
 enum {
@@ -287,6 +295,8 @@ enum {
     CF_util_escal_rate,
 
     CF_utility_bill,
+    CF_parasitic_cost,
+    CF_parasitic_cost_monthly,
 
     CF_max,
 };
@@ -416,7 +426,21 @@ public:
             }
 
         }
-
+        size_t n_e_fromgrid;
+        ssc_number_t* year1_hourly_e_from_grid = as_array("year1_hourly_e_fromgrid", &n_e_fromgrid);
+        ssc_number_t* monthly_gen_purchases = allocate("monthly_gen_purchases", 12 * nyears);
+        ssc_number_t* monthly_e_fromgrid = allocate("monthly_e_from_grid", 12);
+        for (size_t y = 1; y < (size_t)nyears; y++) {
+            for (size_t m = 0; m < (size_t)12; m++) {
+                for (size_t d = 0; d < (size_t)util::days_in_month((int)m); d++) {
+                    for (size_t h = 0; h < 24; h++) {
+                        monthly_gen_purchases[(y - 1) * 12 + m] += hourly_energy_calcs.hourly_purchases()[(y-1)*8760 + util::hour_of_year(m+1, d+1, h)];
+                        if (y == 1) monthly_e_fromgrid[m] = year1_hourly_e_from_grid[util::hour_of_year(m+1, d+1, h)];
+                        
+                    }
+                }
+            }
+        }
 		if (is_assigned("annual_thermal_value"))
 		{
 			arrp = as_array("annual_thermal_value", &count);
@@ -1006,21 +1030,60 @@ public:
 				+ cf.at(CF_cumulative_payback_without_expenses,i-1)
 				+ cf.at(CF_payback_without_expenses,i);	
 		}
-		
-		double npv_energy_real = npv( CF_energy_sales, nyears, real_discount_rate );
+
+
+        util::matrix_t<double> monthly_energy_charge; //monthly energy charges at 12 month x nyears matrix ($)
+        util::matrix_t<double> net_annual_true_up; //net annual true up payments as 12 month x nyears matrix ($)
+        size_t n_steps_per_year = 8760; //Initialize number of timesteps per year (calculated based on lifetime choice and nstep of weather file
+        //ssc_number_t* monthly_batt_to_grid = as_array("monthly_batt_to_grid", &n_monthly_grid_to_load);
+        monthly_energy_charge = as_matrix("charge_w_sys_ec_ym"); //Use monthly energy charges from utility bill ($)
+        util::matrix_t<double> monthly_demand_charge;
+        monthly_demand_charge = as_matrix("charge_w_sys_dc_tou_ym"); //Use monthly energy charges from utility bill ($)
+        net_annual_true_up = as_matrix("true_up_credits_ym"); //Use net annual true up payments regardless of billing mode ($)
+        size_t n_year1_hourly_ec;
+        size_t n_year1_hourly_dc;
+        ssc_number_t* year1_hourly_ec = as_array("year1_hourly_ec_with_system", &n_year1_hourly_ec);
+        ssc_number_t* year1_hourly_dc = as_array("year1_hourly_dc_with_system", &n_year1_hourly_dc);
+        if (is_assigned("rate_escalation")) //Create rate escalation nyears array with inflation and specified rate escalation %
+            escal_or_annual(CF_util_escal_rate, nyears, "rate_escalation", inflation_rate, 0.01, true, 0);
+        save_cf(CF_util_escal_rate, nyears, "cf_util_escal_rate");
+        cf.at(CF_parasitic_cost, 0) = 0;
+        cf.at(CF_parasitic_cost_monthly, 0) = 0;
+        for (int a = 0; a <= nyears; a++) { //Iterate through nyears of the project
+            for (size_t h = 0; h < 8760; h++) { //monthly iteration for each year
+                if (a != 0 && year1_hourly_e_from_grid[h] != 0.0) {
+                    //cf.at(CF_charging_cost_grid_month, a) += monthly_grid_to_batt[m] / (monthly_grid_to_batt[m] + monthly_grid_to_load[m]) * monthly_energy_charge[m] * charged_grid[a] / charged_grid[1] * cf.at(CF_util_escal_rate, a);
+                    cf.at(CF_parasitic_cost, a) += -hourly_energy_calcs.hourly_purchases()[(a - 1) * 8760 + h] * cf.at(CF_degradation, a) / year1_hourly_e_from_grid[h] * (year1_hourly_dc[h] + year1_hourly_ec[h]) * cf.at(CF_util_escal_rate, a); //use the electricity rate data by year (also trueup) //* charged_grid[a] / charged_grid[1] * cf.at(CF_util_escal_rate, a);
+                }
+            }
+        }
+
+        for (int a = 0; a <= nyears; a++) { //Iterate through nyears of the project
+            for (size_t m = 0; m < 12; m++) { //monthly iteration for each year
+                if (a != 0) {
+                    //cf.at(CF_charging_cost_grid_month, a) += monthly_grid_to_batt[m] / (monthly_grid_to_batt[m] + monthly_grid_to_load[m]) * monthly_energy_charge[m] * charged_grid[a] / charged_grid[1] * cf.at(CF_util_escal_rate, a);
+                    cf.at(CF_parasitic_cost_monthly, a) += -monthly_gen_purchases[(a-1)*12 + m] / monthly_e_fromgrid[m] * (monthly_energy_charge[m] + monthly_demand_charge[m]) * cf.at(CF_util_escal_rate, a); //use the electricity rate data by year (also trueup) //* charged_grid[a] / charged_grid[1] * cf.at(CF_util_escal_rate, a);
+                }
+            }
+        }
+
+        double npv_energy_real = npv(CF_energy_sales, nyears, real_discount_rate);
 //		if (npv_energy_real == 0.0) throw general_error("lcoe real failed because energy npv is zero");
 //		double lcoe_real = -( cf.at(CF_after_tax_net_equity_cost_flow,0) + npv(CF_after_tax_net_equity_cost_flow, nyears, nom_discount_rate) ) * 100 / npv_energy_real;
-		double lcoe_real = -( cf.at(CF_after_tax_net_equity_cost_flow,0) + npv(CF_after_tax_net_equity_cost_flow, nyears, nom_discount_rate) ) * 100;
+		double lcoe_real = -( cf.at(CF_after_tax_net_equity_cost_flow,0) + npv(CF_after_tax_net_equity_cost_flow, nyears, nom_discount_rate) + npv(CF_parasitic_cost, nyears, nom_discount_rate) ) * 100;
+        double lcoe_real_monthly = -(cf.at(CF_after_tax_net_equity_cost_flow, 0) + npv(CF_after_tax_net_equity_cost_flow, nyears, nom_discount_rate) + npv(CF_parasitic_cost_monthly, nyears, nom_discount_rate)) * 100;
 		if (npv_energy_real == 0.0) 
 		{
 			lcoe_real = std::numeric_limits<double>::quiet_NaN();
+            lcoe_real_monthly = std::numeric_limits<double>::quiet_NaN();
 		}
 		else
 		{
 			lcoe_real /= npv_energy_real;
+            lcoe_real_monthly /= npv_energy_real;
 		}
 
-		double npv_energy_nom = npv( CF_energy_sales, nyears, nom_discount_rate );
+		double npv_energy_nom = npv( CF_energy_sales, nyears, nom_discount_rate ) + npv(CF_parasitic_cost, nyears, nom_discount_rate);
 //		if (npv_energy_nom == 0.0) throw general_error("lcoe nom failed because energy npv is zero");
 //		double lcoe_nom = -( cf.at(CF_after_tax_net_equity_cost_flow,0) + npv(CF_after_tax_net_equity_cost_flow, nyears, nom_discount_rate) ) * 100 / npv_energy_nom;
 		double lcoe_nom = -( cf.at(CF_after_tax_net_equity_cost_flow,0) + npv(CF_after_tax_net_equity_cost_flow, nyears, nom_discount_rate) ) * 100;
@@ -1131,6 +1194,7 @@ public:
 		assign("payback", var_data((ssc_number_t)payback));
 		assign("discounted_payback", var_data((ssc_number_t)discounted_payback));
 		assign("lcoe_real", var_data((ssc_number_t)lcoe_real));
+        assign("lcoe_real_monthly", var_data((ssc_number_t)lcoe_real_monthly));
 		assign( "lcoe_nom", var_data((ssc_number_t)lcoe_nom) );
 		assign( "npv",  var_data((ssc_number_t)net_present_value) );
 

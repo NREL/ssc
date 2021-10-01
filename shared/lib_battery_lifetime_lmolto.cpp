@@ -182,5 +182,5 @@ void lifetime_lmolto_t::replaceBattery(double percent_to_replace) {
 }
 
 double lifetime_lmolto_t::estimateCycleDamage() {
-    return state->lmo_lto->dq_relative_cyc / (double)state->n_cycles;
+    return state->lmo_lto->dq_relative_cyc / ((double)state->n_cycles + 1);
 }
