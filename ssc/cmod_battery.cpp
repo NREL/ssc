@@ -762,6 +762,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
     // Check to see if the outage variables need to be set up
     analyze_outage = false;
     if (vt.is_assigned("grid_outage")) {
+        batt_vars->grid_outage_steps = vt.as_vector_bool("grid_outage"); // All lines that check for this check for length and default to false, so no exception should be ok here.
         // If not all false, we need the outage vars
         analyze_outage = std::any_of(batt_vars->grid_outage_steps.begin(), batt_vars->grid_outage_steps.end(), [](bool x) {return x; });
 
@@ -1662,10 +1663,8 @@ void battstor::advance(var_table*, double P_gen, double V_gen, double P_load, do
     if (index < batt_vars->gridCurtailmentLifetime_MW.size()) {
         powerflow->powerCurtailmentLimit = batt_vars->gridCurtailmentLifetime_MW[index] * 1000.0;
     }
-    if ((index % step_per_year) < batt_vars->grid_outage_steps.size()) {
-        // Set to false in reset() above, so don't need else here.
-        powerflow->isOutageStep = batt_vars->grid_outage_steps[index % step_per_year];
-    }
+    // Set to false in reset() above
+    powerflow->isOutageStep = is_outage_step(index % step_per_year);
 
     powerflow->powerGeneratedBySystem = P_gen;
     powerflow->powerSystem = P_gen - powerflow->powerFuelCell;
