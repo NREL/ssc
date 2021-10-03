@@ -474,6 +474,15 @@ void dispatch_t::dispatch_dc_outage_step(size_t lifetimeIndex) {
         m_batteryPower->powerBatteryTarget = remaining_kwdc;
         m_batteryPower->powerBatteryDC = remaining_kwdc;
         runDispatch(lifetimeIndex);
+        while (m_batteryPower->powerCritLoadUnmet > tolerance) {
+            m_batteryPower->sharedInverter->calculateACPower(pv_kwdc - remaining_kwdc, V_pv, m_batteryPower->sharedInverter->Tdry_C);
+            dc_ac_eff = m_batteryPower->sharedInverter->efficiencyAC * 0.01;
+            pv_kwac = m_batteryPower->sharedInverter->powerAC_kW;
+            remaining_kwdc = -(pv_kwac - crit_load_kwac) / dc_ac_eff + pv_clipped;
+            m_batteryPower->powerBatteryTarget = remaining_kwdc;
+            m_batteryPower->powerBatteryDC = remaining_kwdc;
+            runDispatch(lifetimeIndex);
+        }
     }
     else {
         // find dc power required from pv + battery discharge to meet load, then get just the power required from battery
