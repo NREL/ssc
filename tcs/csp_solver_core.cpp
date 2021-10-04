@@ -1308,7 +1308,7 @@ void C_csp_solver::calc_timestep_plant_control_and_targets(
         }
 
         q_dot_elec_to_PAR_HTR = 0.0;
-        is_PAR_HTR_allowed = 0.0;
+        is_PAR_HTR_allowed = false;
         if (m_is_parallel_heater && !is_pc_su_allowed && !is_pc_sb_allowed &&
             purchase_mult < 1.0 && q_dot_tes_ch > 0.0) {
 
@@ -1322,7 +1322,7 @@ void C_csp_solver::calc_timestep_plant_control_and_targets(
         // Check purchase multiplier
         // If less than 1, then allow charging
         q_dot_elec_to_PAR_HTR = 0.0;
-        is_PAR_HTR_allowed = 0.0;
+        is_PAR_HTR_allowed = false;
         if (purchase_mult < 1.0 && q_dot_tes_ch > 0.0) {
             is_rec_su_allowed = true;
             q_dot_elec_to_CR_heat = m_q_dot_rec_des;    //[MWt]
@@ -1362,7 +1362,7 @@ void C_csp_solver::calc_timestep_plant_control_and_targets(
     else if (mc_dispatch.solver_params.dispatch_optimize)
     {
         q_dot_elec_to_PAR_HTR = 0.0;
-        is_PAR_HTR_allowed = 0.0;
+        is_PAR_HTR_allowed = false;
 
         if (m_is_parallel_heater) {
             throw(C_csp_exception("Dispatch optimization not available for parallel heater configs"));
