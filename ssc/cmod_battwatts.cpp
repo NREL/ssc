@@ -383,13 +383,15 @@ void cm_battwatts::exec()
 
         std::unique_ptr<resilience_runner> resilience = nullptr;
         std::vector<ssc_number_t> p_crit_load;
+        std::vector<ssc_number_t> p_crit_load_full; p_crit_load_full.reserve(n_rec_lifetime);
         bool run_resilience = as_boolean("run_resiliency_calcs");
         if (is_assigned("crit_load")){
             p_crit_load = as_vector_ssc_number_t("crit_load");
             if (p_crit_load.size() != p_load.size())
                 throw exec_error("battwatts", "critical electric load profile must have same number of values as load");
+            bool crit_load_specified = !p_crit_load.empty() && *std::max_element(p_crit_load.begin(), p_crit_load.end()) > 0;
             if (run_resilience) {
-                if (!p_crit_load.empty() && *std::max_element(p_crit_load.begin(), p_crit_load.end()) > 0) {
+                if (crit_load_specified) {
                     resilience = std::unique_ptr<resilience_runner>(new resilience_runner(batt));
                     auto logs = resilience->get_logs();
                     if (!logs.empty()) {
@@ -400,7 +402,25 @@ void cm_battwatts::exec()
                     throw exec_error("battwatts", "If run_resiliency_calcs is 1, crit_load must have length > 0 and values > 0");
                 }
             }
+            if (!crit_load_specified && batt->analyze_outage) {
+                throw exec_error("battery", "If grid_outage is specified in any time step, crit_load must have length > 0 and values > 0");
+            }
         }
+
+        // compute critical load (electric demand) annual escalation multipliers
+        std::vector<ssc_number_t> crit_load_scale = scale_calculator.get_factors("crit_load_escalation");
+
+        interpolation_factor = 1.0;
+        single_year_to_lifetime_interpolated<ssc_number_t>(
+            (bool)as_integer("system_use_lifetime_output"),
+            analysis_period,
+            n_rec_lifetime,
+            p_crit_load,
+            crit_load_scale,
+            interpolation_factor,
+            p_crit_load_full,
+            n_rec_single_year,
+            dt_hour_gen);
 
         /* *********************************************************************************************
         Run Simulation
@@ -419,11 +439,11 @@ void cm_battwatts::exec()
 
                     if (resilience){
                         resilience->add_battery_at_outage_timestep(*batt->dispatch_model, count);
-                        resilience->run_surviving_batteries(p_crit_load[count % n_rec_single_year], p_ac[count]);
+                        resilience->run_surviving_batteries(p_crit_load_full[count], p_ac[count]);
                     }
 
                     batt->outGenWithoutBattery[count] = p_ac[count];
-                    batt->advance(m_vartab, p_ac[count], voltage, p_load[count]);
+                    batt->advance(m_vartab, p_ac[count], voltage, load_lifetime[count], p_crit_load_full[count]);
                     p_gen[count] = batt->outGenPower[count];
                     count++;
                 }
@@ -434,7 +454,7 @@ void cm_battwatts::exec()
 
 
         if (resilience) {
-            resilience->run_surviving_batteries_by_looping(&p_crit_load[0], &p_ac[0]);
+            resilience->run_surviving_batteries_by_looping(&p_crit_load_full[0], &p_ac[0]);
             calculate_resilience_outputs(this, resilience);
         }
     }

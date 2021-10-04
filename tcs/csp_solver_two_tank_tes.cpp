@@ -796,6 +796,9 @@ void C_csp_two_tank_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inputs
 		is_hx_calc = !mc_field_htfProps.equals(&mc_store_htfProps);
 	}
 
+    m_is_hx = is_hx_calc;
+
+    /*
 	if( ms_params.m_is_hx != is_hx_calc )
 	{
 		if( is_hx_calc )
@@ -804,12 +807,12 @@ void C_csp_two_tank_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inputs
 			mc_csp_messages.add_message(C_csp_messages::NOTICE, "Input field and storage fluids are identical, but the inputs specified a field-to-storage heat exchanger. The system was modeled assuming no heat exchanger.");
 
 		ms_params.m_is_hx = is_hx_calc;
-	}
+	}*/
 
-    if (ms_params.m_is_hx && !ms_params.tanks_in_parallel)
+    if (m_is_hx && !ms_params.tanks_in_parallel)
     {
-        mc_csp_messages.add_message(C_csp_messages::NOTICE, "The inputs specified serial TES operation, but the field and storage fluids are different"
-            " The simulation model parallel TES operation.");
+        mc_csp_messages.add_message(C_csp_messages::NOTICE, "The inputs specified serial TES operation, but the field and storage fluids are different."
+            " The simulation modeled parallel TES operation.\n");
         ms_params.tanks_in_parallel = true;
     }
 
@@ -1071,7 +1074,7 @@ void C_csp_two_tank_tes::discharge_avail_est(double T_cold_K, double step_s,
 
 	double T_hot_ini = mc_hot_tank.get_m_T_prev();		//[K]
 
-	if(ms_params.m_is_hx)
+	if(m_is_hx)
 	{
 		m_dot_field_est = get_field_m_dot(m_dot_tank_disch_avail);	//[kg/s]
 
@@ -1104,7 +1107,7 @@ void C_csp_two_tank_tes::charge_avail_est(double T_hot_K, double step_s,
 
 	double T_cold_ini = mc_cold_tank.get_m_T_prev();	//[K]
 
-	if(ms_params.m_is_hx)
+	if(m_is_hx)
 	{
 		m_dot_field_est = get_field_m_dot(m_dot_tank_charge_avail);		//[kg/s]
 
@@ -1183,7 +1186,7 @@ int C_csp_two_tank_tes::solve_tes_off_design(double timestep /*s*/, double  T_am
     }
     else
     {   // Serial configuration
-        if (ms_params.m_is_hx)
+        if (m_is_hx)
         {
             throw(C_csp_exception("Serial operation of C_csp_two_tank_tes not available if there is a storage HX"));
         }
@@ -1269,7 +1272,7 @@ int C_csp_two_tank_tes::solve_tes_off_design(double timestep /*s*/, double  T_am
     }
     else // Serial tank operation
     {
-        if (ms_params.m_is_hx)
+        if (m_is_hx)
         {
             throw(C_csp_exception("C_csp_two_tank_tes::discharge_decoupled not available if there is a storage HX"));
         }
@@ -1440,7 +1443,7 @@ bool C_csp_two_tank_tes::discharge(double timestep /*s*/, double T_amb /*K*/, do
 		m_dot_field = T_field_cold_in = T_field_hot_out = m_dot_tank = T_cold_tank_in = std::numeric_limits<double>::quiet_NaN();
 
 	// If no heat exchanger, no iteration is required between the heat exchanger and storage tank models
-	if(!ms_params.m_is_hx)
+	if(!m_is_hx)
 	{
         m_dot_field = m_dot_tank = m_dot_htf_in;
         T_field_cold_in = T_cold_tank_in = T_htf_cold_in;
@@ -1584,7 +1587,7 @@ bool C_csp_two_tank_tes::discharge(double timestep /*s*/, double T_amb /*K*/, do
 
 	q_dot_heater = q_heater_cold + q_heater_hot;			//[MWt]
    
-	if (!ms_params.m_is_hx) 
+	if (!m_is_hx) 
 	{
 		m_dot_tank_to_tank = 0.0;
 		W_dot_rhtf_pump = 0;                          //[MWe] Just tank-to-tank pumping power
@@ -1654,7 +1657,7 @@ bool C_csp_two_tank_tes::charge(double timestep /*s*/, double T_amb /*K*/, doubl
 		T_field_hot_in = T_field_cold_out = m_dot_tank = T_hot_tank_in = std::numeric_limits<double>::quiet_NaN();
 
 	// If no heat exchanger, no iteration is required between the heat exchanger and storage tank models
-	if( !ms_params.m_is_hx )
+	if( !m_is_hx )
 	{
         m_dot_field = m_dot_tank = m_dot_htf_in;
         T_field_hot_in = T_hot_tank_in = T_htf_hot_in;
@@ -1798,7 +1801,7 @@ bool C_csp_two_tank_tes::charge(double timestep /*s*/, double T_amb /*K*/, doubl
 
 	q_dot_heater = q_heater_cold + q_heater_hot;			//[MWt]
     
-	if (!ms_params.m_is_hx) 
+	if (!m_is_hx) 
 	{
 		m_dot_tank_to_tank = 0.0;
 		W_dot_rhtf_pump = 0;                          //[MWe] Just tank-to-tank pumping power
@@ -1931,7 +1934,7 @@ double C_csp_two_tank_tes::pumping_power(double m_dot_sf, double m_dot_pb, doubl
             DP_col, DP_gen);
         rho_sf = this->mc_field_htfProps.dens((T_sf_in + T_sf_out) / 2., 8e5);
         rho_pb = this->mc_field_htfProps.dens((T_pb_in + T_pb_out) / 2., 1e5);
-        if (this->ms_params.m_is_hx) {
+        if (this->m_is_hx) {
             // TODO - replace tes_pump_coef with a pump efficiency. Maybe utilize unused coefficients specified for the
             //  series configuration, namely the SGS Pump suction header to Individual SGS pump inlet and the additional
             //  two immediately downstream
@@ -1943,7 +1946,7 @@ double C_csp_two_tank_tes::pumping_power(double m_dot_sf, double m_dot_pb, doubl
         }
     }
     else {    // original methods
-        if (this->ms_params.m_is_hx) 
+        if (this->m_is_hx) 
 		{
             // Also going to be tanks_in_parallel = true if there's a hx between field and TES HTF
 			htf_pump_power = (tes_pump_coef * m_dot_tank + tes_pump_coef * fabs(m_dot_pb - m_dot_sf)) / 1000.0;		//[MWe]

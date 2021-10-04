@@ -537,7 +537,6 @@ public:
         tes->m_field_fl_props = ud_hot_htf_props;
         tes->m_tes_fl = hot_htf_code;
         tes->m_tes_fl_props = ud_hot_htf_props;
-        tes->m_is_hx = false;                       // ETES assumes direct storage, so no user input required here: hardcode = false
         tes->m_W_dot_pc_design = W_dot_cycle_des;   //[MWe]
         tes->m_eta_pc = eta_cycle;                  //[-]
         tes->m_solarm = heater_mult;                //[-]

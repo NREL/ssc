@@ -33,12 +33,14 @@ static var_info _cm_vtab_ui_tes_calcs[] = {
 	{ SSC_INPUT,   SSC_NUMBER,   "tshours",                  "Hours of TES relative to q_dot_pb_des",        "hr",    "", "",  "*",  "", "" },
 	{ SSC_INPUT,   SSC_NUMBER,   "T_htf_hot_des",            "Hot HTF temp (into TES HX, if applicable)",    "C",     "", "",  "*",  "", "" },
 	{ SSC_INPUT,   SSC_NUMBER,   "T_htf_cold_des",           "Cold HTF temp (out of TES HX, if applicable)", "C",     "", "",  "*",  "", "" },
-	{ SSC_INPUT,   SSC_NUMBER,   "rec_htf",                  "TES storage fluid code",                       "",      "", "",  "*",  "", "" },
-	{ SSC_INPUT,   SSC_MATRIX,   "field_fl_props",           "User defined tes storage fluid prop data",     "",      "7 columns (T,Cp,dens,visc,kvisc,cond,h), at least 3 rows", "",  "*",  "", "" },
+	{ SSC_INPUT,   SSC_NUMBER,   "store_fluid",              "TES storage fluid code",                       "",      "", "",  "*",  "", "" },
+	{ SSC_INPUT,   SSC_MATRIX,   "store_fl_props",           "User defined tes storage fluid prop data",     "",      "7 columns (T,Cp,dens,visc,kvisc,cond,h), at least 3 rows", "",  "*",  "", "" },
 	{ SSC_INPUT,   SSC_NUMBER,   "h_tank_min",               "Min. allowable HTF height in storage tank",    "m",     "", "",  "*",  "", "" },
 	{ SSC_INPUT,   SSC_NUMBER,   "h_tank",                   "Total height of tank (HTF when tank is full",  "m",     "", "",  "*",  "", "" },
 	{ SSC_INPUT,   SSC_NUMBER,   "tank_pairs",               "Number of equivalent tank pairs",              "",      "", "",  "*",  "", "" },
 	{ SSC_INPUT,   SSC_NUMBER,   "u_tank",                   "Loss coefficient from the tank",               "W/m2-K","", "",  "*",  "", "" },
+    { SSC_INPUT,   SSC_NUMBER,   "field_fluid",              "Field fluid code",                             "",      "", "",  "*",  "", "" },
+    { SSC_INPUT,   SSC_MATRIX,   "field_fl_props",           "User defined field fluid prop data",           "",      "7 columns (T,Cp,dens,visc,kvisc,cond,h), at least 3 rows", "",  "*",  "", "" },
 
 	{ SSC_OUTPUT,  SSC_NUMBER,   "q_tes",                    "TES thermal capacity at design",               "MWt-hr","", "",  "*",  "", "" },
 	{ SSC_OUTPUT,  SSC_NUMBER,   "tes_avail_vol",            "Available single temp storage volume",         "m^3",   "", "",  "*",  "", "" },
@@ -46,6 +48,7 @@ static var_info _cm_vtab_ui_tes_calcs[] = {
 	{ SSC_OUTPUT,  SSC_NUMBER,   "csp_pt_tes_tank_diameter", "Single tank diameter",                         "m",     "", "",  "*",  "", "" },
 	{ SSC_OUTPUT,  SSC_NUMBER,   "q_dot_tes_est",            "Estimated tank heat loss to env.",             "MWt",   "", "",  "*",  "", "" },
 	{ SSC_OUTPUT,  SSC_NUMBER,   "csp_pt_tes_htf_density",   "HTF dens",                                     "kg/m^3","", "",  "*",  "", "" },
+    { SSC_OUTPUT,  SSC_NUMBER,   "are_htfs_equal",           "0: no, 1: yes",                                "",      "", "",  "*",  "", "" },
 
 	var_info_invalid};
 
@@ -70,8 +73,8 @@ public:
 
 		// Initialize HTF class
 		HTFProperties tes_htf_props;			// Instance of HTFProperties class for TES HTF
-		int tes_fl = (int) as_double("rec_htf");
-		util::matrix_t<double> tes_fl_props = as_matrix("field_fl_props");
+		int tes_fl = (int) as_double("store_fluid");
+		util::matrix_t<double> tes_fl_props = as_matrix("store_fl_props");
 
 		double T_htf_hot_des = as_double("T_htf_hot_des");			//[C] Hot HTF temp
 		double T_htf_cold_des = as_double("T_htf_cold_des");		//[C] Cold HTF temp
@@ -127,34 +130,69 @@ public:
 		assign("csp_pt_tes_htf_density", (ssc_number_t)tes_htf_props.dens(T_HTF_ave + 273.15, 1.0));
         assign("csp.pt.tes.htf_density", (ssc_number_t)tes_htf_props.dens(T_HTF_ave + 273.15, 1.0));
 
-		//double rho_ave = tes_htf_props.dens(T_HTF_ave+273.15, 1.0);		//[kg/m^3] Density at average temperature
-		//double cp_ave = tes_htf_props.Cp(T_HTF_ave+273.15);				//[kJ/kg-K] Specific heat at average temperature
-		//
-		//	//[m^3] = [MJ/s-hr] * [sec]/[hr] = [MJ] / (kg/m^3 * MJ/kg-K * K 
-		//double tes_avail_vol = Q_tes_des*3600.0 / (rho_ave * cp_ave/1000.0 * (T_htf_hot_des - T_htf_cold_des));
-		//assign("tes_avail_vol", tes_avail_vol);
-		//
-		//double h_min = as_double("h_tank_min");
-		//double h_tank = as_double("h_tank");
-		//
-		//double vol_tank = tes_avail_vol / (1.0 - h_min/h_tank);	//[m^3]
-		//assign("vol_tank", vol_tank);
-		//
-		//double tank_pairs = as_double("tank_pairs");
-		//
-		//double A_cs = vol_tank / (h_tank*tank_pairs);		//[m^2] Cross-sectional area of a single tank
-		//
-		//double diameter = pow(A_cs / CSP::pi, 0.5)*2.0;			//[m] Diameter of a single tank
-		////assign("csp_pt_tes_tank_diameter", diameter);
-		//assign("csp_pt_tes_tank_diameter", 1234.5);
-		//
-		//double u_tank = as_double("u_tank");	//[W/m^2-K]
-		//
-		//double UA = u_tank*(A_cs + CSP::pi*diameter*h_tank)*tank_pairs;		//[W/K]
-		//double q_dot_tes_est = UA*(T_HTF_ave - 15.0)*1.E-6;	//[MWt]
-		//
-		//assign("q_dot_tes_est",q_dot_tes_est);
-		
+		// Check if HX is required
+
+        // Field HTF class
+        HTFProperties field_htf_props;			        // Instance of HTFProperties class for TES HTF
+        int field_fl = (int)as_double("field_fluid");
+        util::matrix_t<double> field_fl_props = as_matrix("field_fl_props");
+
+        bool are_htfs_same = false;
+        do {
+
+            if (tes_fl != field_fl) {
+                are_htfs_same = false;
+                break;
+            }
+
+            // Following code assumes tes and field codes are equal
+            if (field_fl != HTFProperties::User_defined) {
+                are_htfs_same = true;
+                break;
+            }
+
+            // Set fluid number and copy over fluid matrix if it makes sense.
+            if (field_fl != HTFProperties::User_defined && field_fl < HTFProperties::End_Library_Fluids)
+            {
+                if (!field_htf_props.SetFluid(field_fl))
+                {
+                    throw exec_error("ui_tes_calcs", util::format("The user-defined field HTF did not read correctly"));
+                }
+            }
+            else if (field_fl == HTFProperties::User_defined)
+            {
+                size_t n_rows = field_fl_props.nrows();
+                size_t n_cols = field_fl_props.ncols();
+                if (n_rows > 2 && n_cols == 7)
+                {
+                    if (!field_htf_props.SetUserDefinedFluid(field_fl_props))
+                    {
+                        std::string error_msg = util::format(field_htf_props.UserFluidErrMessage(), n_rows, n_cols);
+                        throw exec_error("ui_tes_calcs", error_msg);
+                    }
+                }
+                else
+                {
+                    std::string error_msg = util::format("The user defined field HTF table must contain at least 3 rows and exactly 7 columns. The current table contains %d row(s) and %d column(s)", n_rows, n_cols);
+                    throw exec_error("ui_tes_calcs", error_msg);
+                }
+            }
+            else
+            {
+                throw exec_error("ui_tes_calcs", "Field HTF code is not recognized");
+            }
+
+            are_htfs_same = tes_htf_props.equals(&field_htf_props);
+
+        } while (false);
+
+        if (are_htfs_same) {
+            assign("are_htfs_equal", 1);
+        }
+        else {
+            assign("are_htfs_equal", 0);
+        }
+
 		return;
 	}
 };

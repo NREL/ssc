@@ -161,6 +161,8 @@ private:
 
 	double get_field_m_dot(double m_dot_tes /*kg/s*/);	//[kg/s]
 
+    bool m_is_hx;
+
 public:
 
 	enum 
@@ -177,9 +179,6 @@ public:
 
 	C_csp_reported_outputs mc_reported_outputs;
 
-	// Class to save messages for up stream classes
-	C_csp_messages mc_csp_messages;
-
 	struct S_params
 	{
 		int m_field_fl;
@@ -187,8 +186,6 @@ public:
 
 		int m_tes_fl;
 		util::matrix_t<double> m_tes_fl_props;
-
-		bool m_is_hx;
 
 		double m_W_dot_pc_design;   //[MWe] Design point gross power cycle output
 		double m_eta_pc;            //[-] Design point power cycle thermal efficiency
@@ -231,7 +228,6 @@ public:
 		S_params()
 		{
 			m_field_fl = m_tes_fl = m_tank_pairs = -1;		
-			m_is_hx = true;
             tanks_in_parallel = true;
             has_hot_tank_bypass = true;
             custom_tes_p_loss = false;

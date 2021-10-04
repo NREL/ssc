@@ -760,9 +760,9 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
     // Check to see if the outage variables need to be set up
     analyze_outage = false;
     if (vt.is_assigned("grid_outage")) {
-        batt_vars->grid_outage_steps = vt.as_vector_bool("grid_outage");
+        batt_vars->grid_outage_steps = vt.as_vector_bool("grid_outage"); // All lines that check for this check for length and default to false, so no exception should be ok here.
         // If not all false, we need the outage vars
-        analyze_outage = !std::all_of(batt_vars->grid_outage_steps.begin(), batt_vars->grid_outage_steps.end(), [](bool x) {return x; });
+        analyze_outage = std::any_of(batt_vars->grid_outage_steps.begin(), batt_vars->grid_outage_steps.end(), [](bool x) {return x; });
     }
 
     // component models
@@ -1642,7 +1642,7 @@ void battstor::initialize_time(size_t year_in, size_t hour_of_year, size_t step_
     year_index = (hour * step_per_hour) + step;
     step_per_year = 8760 * step_per_hour;
 }
-void battstor::advance(var_table*, double P_gen, double V_gen, double P_load, double P_gen_clipped)
+void battstor::advance(var_table*, double P_gen, double V_gen, double P_load, double P_crit_load, double P_gen_clipped)
 {
     BatteryPower* powerflow = dispatch_model->getBatteryPower();
     powerflow->reset();
@@ -1653,10 +1653,15 @@ void battstor::advance(var_table*, double P_gen, double V_gen, double P_load, do
     if (index < batt_vars->gridCurtailmentLifetime_MW.size()) {
         powerflow->powerCurtailmentLimit = batt_vars->gridCurtailmentLifetime_MW[index] * 1000.0;
     }
+    if (index < batt_vars->grid_outage_steps.size()) {
+        // Set to false in reset() above, so don't need else here.
+        powerflow->isOutageStep = batt_vars->grid_outage_steps[index];
+    }
 
     powerflow->powerGeneratedBySystem = P_gen;
     powerflow->powerSystem = P_gen - powerflow->powerFuelCell;
     powerflow->powerLoad = P_load;
+    powerflow->powerCritLoad = P_crit_load;
     powerflow->voltageSystem = V_gen;
     powerflow->powerSystemClipped = P_gen_clipped;
 
@@ -1955,6 +1960,7 @@ static var_info _cm_vtab_battery[] = {
     { SSC_INPUT,		SSC_ARRAY,	     "load",			                           "Electricity load (year 1)",                               "kW",	        "",				        "Load",                             "",	                      "",	                            "" },
     { SSC_INPUT,		SSC_ARRAY,	     "crit_load",			                       "Critical electricity load (year 1)",                      "kW",	        "",				        "Load",                             "",	                      "",	                            "" },
     { SSC_INPUT,        SSC_ARRAY,       "load_escalation",                            "Annual load escalation",                                  "%/year",     "",                     "Load",                             "?=0",                    "",                               "" },
+    { SSC_INPUT,        SSC_ARRAY,       "crit_load_escalation",                       "Annual critical load escalation",                         "%/year",     "",                     "Load",                             "?=0",                    "",                    "" },
     { SSC_INPUT,        SSC_ARRAY,       "grid_outage",                                "Timesteps with grid outage",                              "0/1",        "0=GridAvailable,1=GridUnavailable,Length=load", "Load",    "",                       "",                               "" },
     { SSC_INPUT,        SSC_NUMBER,      "run_resiliency_calcs",                       "Enable resilence calculations for every timestep",        "0/1",        "0=DisableCalcs,1=EnableCalcs",                  "Load",    "?=0",                    "",                               "" },
     { SSC_INOUT,        SSC_NUMBER,      "capacity_factor",                            "Capacity factor",                                         "%",          "",                     "System Output",                             "?=0",                    "",                               "" },
@@ -2092,14 +2098,17 @@ public:
             // resilience metrics for battery
             std::unique_ptr<resilience_runner> resilience = nullptr;
             std::vector<ssc_number_t> p_crit_load;
+            std::vector<ssc_number_t> p_crit_load_full; p_crit_load_full.reserve(n_rec_lifetime);
             bool run_resilience = as_boolean("run_resiliency_calcs");
             if (is_assigned("crit_load")) {
                 p_crit_load = as_vector_ssc_number_t("crit_load");
                 size_t nload = p_crit_load.size();
                 if (nload != n_rec_single_year)
                     throw exec_error("battery", "Electric load profile must have same number of values as weather file, or 8760.");
+
+                bool crit_load_specified = !p_crit_load.empty() && *std::max_element(p_crit_load.begin(), p_crit_load.end()) > 0;
                 if (run_resilience) {
-                    if (!p_crit_load.empty() && *std::max_element(p_crit_load.begin(), p_crit_load.end()) > 0) {
+                    if (crit_load_specified) {
                         resilience = std::unique_ptr<resilience_runner>(new resilience_runner(batt));
                         auto logs = resilience->get_logs();
                         if (!logs.empty()) {
@@ -2110,7 +2119,25 @@ public:
                         throw exec_error("battery", "If run_resiliency_calcs is 1, crit_load must have length > 0 and values > 0");
                     }
                 }
+                if (!crit_load_specified && batt->analyze_outage) {
+                    throw exec_error("battery", "If grid_outage is specified in any time step, crit_load must have length > 0 and values > 0");
+                }
             }
+
+            // compute critical load (electric demand) annual escalation multipliers
+            std::vector<ssc_number_t> crit_load_scale = scale_calculator.get_factors("crit_load_escalation");
+
+            interpolation_factor = 1.0;
+            single_year_to_lifetime_interpolated<ssc_number_t>(
+                use_lifetime,
+                analysis_period,
+                n_rec_lifetime,
+                p_crit_load,
+                crit_load_scale,
+                interpolation_factor,
+                p_crit_load_full,
+                n_rec_single_year,
+                dt_hour_gen);
 
             // Prepare outputs
             ssc_number_t* p_gen = allocate("gen", n_rec_lifetime);
@@ -2160,11 +2187,11 @@ public:
 
                         if (resilience) {
                             resilience->add_battery_at_outage_timestep(*batt->dispatch_model, lifetime_idx);
-                            resilience->run_surviving_batteries(p_crit_load[lifetime_idx % n_rec_single_year], power_input_lifetime[lifetime_idx]);
+                            resilience->run_surviving_batteries(p_crit_load_full[lifetime_idx], power_input_lifetime[lifetime_idx]);
                         }
 
                         batt->outGenWithoutBattery[lifetime_idx] = power_input_lifetime[lifetime_idx];
-                        batt->advance(m_vartab, power_input_lifetime[lifetime_idx], 0, load_lifetime[lifetime_idx], 0);
+                        batt->advance(m_vartab, power_input_lifetime[lifetime_idx], 0, load_lifetime[lifetime_idx], p_crit_load_full[lifetime_idx], 0);
                         p_gen[lifetime_idx] = batt->outGenPower[lifetime_idx];
                         if (year == 0) {
                             annual_energy += p_gen[lifetime_idx] * batt->_dt_hour;
@@ -2183,7 +2210,7 @@ public:
 
             // resiliency metrics
             if (resilience) {
-                resilience->run_surviving_batteries_by_looping(&p_crit_load[0], &power_input_lifetime[0]);
+                resilience->run_surviving_batteries_by_looping(&p_crit_load_full[0], &power_input_lifetime[0]);
                 calculate_resilience_outputs(this, resilience);
             }
          }
