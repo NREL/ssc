@@ -32,7 +32,7 @@ TEST_F(CMPvYieldTimo, DefaultTimoModel_cmod_pvsamv1)
 
         ssc_number_t performance_ratio;
         ssc_data_get_number(data, "performance_ratio", &performance_ratio);
-        EXPECT_NEAR(performance_ratio, -14.485646, m_error_tolerance_lo) << "Energy yield";
+        EXPECT_NEAR(performance_ratio, 0.84380863, m_error_tolerance_lo) << "Energy yield";
     }
 }
 
@@ -88,7 +88,7 @@ TEST_F(CMPvYieldTimo, TimoModel80603_meteo_cmod_pvsamv1)
 
         ssc_number_t performance_ratio;
         ssc_data_get_number(data, "performance_ratio", &performance_ratio);
-        EXPECT_NEAR(performance_ratio, -14.6145, m_error_tolerance_lo) << "Energy yield";
+        EXPECT_NEAR(performance_ratio, 0.84380863, m_error_tolerance_lo) << "Energy yield";
     }
 }
 
@@ -118,7 +118,7 @@ TEST_F(CMPvYieldTimo, TimoModel80603_AZ_cmod_pvsamv1)
 
         ssc_number_t performance_ratio;
         ssc_data_get_number(data, "performance_ratio", &performance_ratio);
-        EXPECT_NEAR(performance_ratio, -14.105, m_error_tolerance_lo) << "Energy yield";
+        EXPECT_NEAR(performance_ratio, 0.8147345055, m_error_tolerance_lo) << "Energy yield";
     }
 }
 
