@@ -222,14 +222,16 @@ NAMESPACE_TEST(csp_common, TowerSharedWithUi, Tes) {
     data_vtab->assign("tshours", 10.);
     data_vtab->assign("T_htf_hot_des", 574.);
     data_vtab->assign("T_htf_cold_des", 290.);
-    data_vtab->assign("rec_htf", 17);
+    data_vtab->assign("store_fluid", 17);
     std::vector<double> field_fluid_properties{ 1, 7, 0, 0, 0, 0, 0, 0, 0 };
     util::matrix_t<double> field_fl_props(1, 9, &field_fluid_properties);
-    data_vtab->assign("field_fl_props", field_fl_props);
+    data_vtab->assign("store_fl_props", field_fl_props);
     data_vtab->assign("h_tank_min", 1.);
     data_vtab->assign("h_tank", 12.);
     data_vtab->assign("tank_pairs", 1.);
     data_vtab->assign("u_tank", 0.4);
+    data_vtab->assign("field_fluid", 17);
+    data_vtab->assign("field_fl_props", field_fl_props);
 
     int errors = run_module(data, "ui_tes_calcs");
     EXPECT_FALSE(errors);
@@ -252,14 +254,16 @@ NAMESPACE_TEST(csp_common, TowerSharedWithUi, TesWithPeriodUse) {
     data_vtab->assign("tshours", 10.);
     data_vtab->assign("T_htf_hot_des", 574.);
     data_vtab->assign("T_htf_cold_des", 290.);
-    data_vtab->assign("rec_htf", 17);
+    data_vtab->assign("store_fluid", 17);
     std::vector<double> field_fluid_properties{ 1, 7, 0, 0, 0, 0, 0, 0, 0 };
     util::matrix_t<double> field_fl_props(1, 9, &field_fluid_properties);
-    data_vtab->assign("field_fl_props", field_fl_props);
+    data_vtab->assign("store_fl_props", field_fl_props);
     data_vtab->assign("h_tank_min", 1.);
     data_vtab->assign("h_tank", 12.);
     data_vtab->assign("tank_pairs", 1.);
     data_vtab->assign("u_tank", 0.4);
+    data_vtab->assign("field_fluid", 17);
+    data_vtab->assign("field_fl_props", field_fl_props);
 
     int errors = run_module(data, "ui_tes_calcs");
     EXPECT_FALSE(errors);
