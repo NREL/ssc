@@ -313,7 +313,7 @@ TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, IntermediateOutputTesting)
     EXPECT_NEAR(aoi, 32.195, 0.01) << "Angle of incidence at noon";
 
     poa = ssc_data_get_array(data, "poa", nullptr)[12];
-    EXPECT_NEAR(poa, 828.180, 0.01) << "POA at noon";
+    EXPECT_NEAR(poa, 828.180, 0.01) << "POA at noon"; //this shouldn't have changed, and code comparison shows no differences, so why are we now getting 828.570????
 
     tpoa = ssc_data_get_array(data, "tpoa", nullptr)[12];
     EXPECT_NEAR(tpoa, 823.306, 0.01) << "Transmitted POA at noon";

@@ -108,8 +108,8 @@ public:
 static var_info _cm_vtab_pvwattsv8[] = {
 
     /*   VARTYPE           DATATYPE          NAME                              LABEL                                          UNITS        META                                            GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-        { SSC_INPUT,        SSC_STRING,      "solar_resource_file",            "Weather file path",                          "",           "",                                             "Solar Resource",      "?",                       "",                              "" },
-        { SSC_INPUT,        SSC_TABLE,       "solar_resource_data",            "Weather data",                               "",           "dn,df,tdry,wspd,lat,lon,tz,elev",              "Solar Resource",      "?",                       "",                              "" },
+        { SSC_INPUT,        SSC_STRING,      "solar_resource_file",            "Weather file path",                          "",           "",                                             "Solar Resource",      "",                       "",                              "" },
+        { SSC_INPUT,        SSC_TABLE,       "solar_resource_data",            "Weather data",                               "",           "dn,df,tdry,wspd,lat,lon,tz,elev",              "Solar Resource",      "",                       "",                              "" },
         { SSC_INPUT,        SSC_ARRAY,       "albedo",                         "Albedo",                                     "frac",       "if provided, will overwrite weather file albedo","Solar Resource",    "",                        "",                              "" },
 
         { SSC_INOUT,        SSC_NUMBER,      "system_use_lifetime_output",     "Run lifetime simulation",                    "0/1",        "",                                             "Lifetime",            "?=0",                        "",                              "" },
@@ -175,6 +175,7 @@ static var_info _cm_vtab_pvwattsv8[] = {
         { SSC_OUTPUT,       SSC_ARRAY,       "dc_monthly",                     "DC output",                             "kWh",       "",                                             "Monthly",          "",                       "LENGTH=12",                          "" },
         { SSC_OUTPUT,       SSC_ARRAY,       "ac_monthly",                     "AC output",                            "kWh",       "",                                             "Monthly",          "",                       "LENGTH=12",                          "" },
         { SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",                 "Monthly energy",                              "kWh",       "",                                             "Monthly",          "",                       "LENGTH=12",                          "" },
+        { SSC_OUTPUT,	    SSC_MATRIX,		 "annual_energy_distribution_time","Annual energy production as function of Time",				"",				"",				"Heatmaps",			"",						"",							"" },
 
         { SSC_OUTPUT,       SSC_NUMBER,      "solrad_annual",                  "Daily average solar irradiance",              "kWh/m2/day","",                                             "Annual",      "",                       "",                          "" },
         { SSC_OUTPUT,       SSC_NUMBER,      "ac_annual",                      "Annual AC output",                     "kWh",       "",                                             "Annual",      "",                       "",                          "" },
@@ -878,7 +879,7 @@ public:
                 double solazi, solzen, solalt, aoi, stilt, sazi, rot, btd;
                 int sunup;
                 double ibeam = 0.0, iskydiff = 0.0, ignddiff = 0.0, irear = 0.0;
-                double poa = 0, tpoa = 0, tmod = 0, dc = 0, dcVoltage = 0, ac = 0;
+                double poa = 0.0, tpoa = 0.0, tmod = 0.0, dc = 0.0, dcVoltage = 0.0, ac = 0.0;
 
                 irr.get_sun(&solazi, &solzen, &solalt, nullptr, nullptr, nullptr, &sunup, nullptr, nullptr, nullptr); //nullptr used when you don't need to retrieve the output
                 irr.get_angles(&aoi, &stilt, &sazi, &rot, &btd);
@@ -1220,6 +1221,7 @@ public:
                         // scale the power output for a single module (out.Power) to the actual system size-
                         // divide the DC nameplate input by the "single module" nameplate (Vmp * Imp) to get a fractional number of modules in the system, and multiply by that fraction
                         dc = out.Power * pv.dc_nameplate / (mod.Vmp * mod.Imp);
+                        tpoa = out.
                     }
 
                     // apply common DC losses here (independent of module model)
