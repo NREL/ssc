@@ -220,7 +220,12 @@ bool mlmodel_module_t::operator() (pvinput_t &input, double T_C, double opvoltag
 		S_total = S_front + input.Irear;  // Note the rear irradiance has already taken bifaciality into consideration
 		S_eff_front = (f_IAM_beam * input.Ibeam + f_IAM_diff * input.Idiff + groundRelfectionFraction * f_IAM_gnd * input.Ignd) * f_AM;
 		S_eff_total = S_eff_front + input.Irear * f_AM;
-		out.AOIModifier = S_eff_front / S_front;
+        if (S_front > 1e-8) {  // TODO: should sunup catch this?
+            out.AOIModifier = S_eff_front / S_front;
+        }
+        else {
+            out.AOIModifier = 1.0;
+        }
     }
     else if(input.usePOAFromWF){ // Check if decomposed POA is required, if not use weather file POA directly
 		S_total = S_eff_total = input.poaIrr;
