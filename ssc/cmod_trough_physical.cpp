@@ -175,7 +175,6 @@ static var_info _cm_vtab_trough_physical[] = {
     // TES
     { SSC_INPUT,        SSC_NUMBER,      "store_fluid",               "Material number for storage fluid",                                                "-",            "",               "TES",            "*",                       "",                      "" },
     { SSC_INPUT,        SSC_MATRIX,      "store_fl_props",            "User defined storage fluid property data",                                         "-",            "",               "TES",            "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "is_hx",                     "Heat exchanger (HX) exists (1=yes, 0=no)" ,                                        "-",            "",               "TES",            "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "tshours",                   "Equivalent full-load thermal storage hours",                                       "hr",           "",               "TES",            "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "h_tank",                    "Total height of tank (height of HTF when tank is full",                            "m",            "",               "TES",            "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "u_tank",                    "Loss coefficient from the tank",                                                   "W/m2-K",       "",               "TES",            "*",                       "",                      "" },
@@ -898,7 +897,6 @@ public:
         tes->m_field_fl_props     = c_trough.m_field_fl_props;              //[-]
         tes->m_tes_fl             = as_integer("store_fluid");              //[-]
         tes->m_tes_fl_props       = as_matrix("store_fl_props");            //[-]
-        tes->m_is_hx              = as_boolean("is_hx");                    //[-]
         tes->m_W_dot_pc_design    = as_double("P_ref");                     //[MWt]
         tes->m_eta_pc             = as_double("eta_ref");                   //[-]
         tes->m_solarm             = as_double("solar_mult");                //[-]  (set during verify() using cmod_csp_trough_eqns.cpp)

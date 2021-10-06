@@ -1,3 +1,25 @@
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 #include <gtest/gtest.h>
 #include "cmod_csp_tower_eqns.h"
 #include "cmod_financial_eqns.h"
@@ -200,14 +222,16 @@ NAMESPACE_TEST(csp_common, TowerSharedWithUi, Tes) {
     data_vtab->assign("tshours", 10.);
     data_vtab->assign("T_htf_hot_des", 574.);
     data_vtab->assign("T_htf_cold_des", 290.);
-    data_vtab->assign("rec_htf", 17);
+    data_vtab->assign("store_fluid", 17);
     std::vector<double> field_fluid_properties{ 1, 7, 0, 0, 0, 0, 0, 0, 0 };
     util::matrix_t<double> field_fl_props(1, 9, &field_fluid_properties);
-    data_vtab->assign("field_fl_props", field_fl_props);
+    data_vtab->assign("store_fl_props", field_fl_props);
     data_vtab->assign("h_tank_min", 1.);
     data_vtab->assign("h_tank", 12.);
     data_vtab->assign("tank_pairs", 1.);
     data_vtab->assign("u_tank", 0.4);
+    data_vtab->assign("field_fluid", 17);
+    data_vtab->assign("field_fl_props", field_fl_props);
 
     int errors = run_module(data, "ui_tes_calcs");
     EXPECT_FALSE(errors);
@@ -230,14 +254,16 @@ NAMESPACE_TEST(csp_common, TowerSharedWithUi, TesWithPeriodUse) {
     data_vtab->assign("tshours", 10.);
     data_vtab->assign("T_htf_hot_des", 574.);
     data_vtab->assign("T_htf_cold_des", 290.);
-    data_vtab->assign("rec_htf", 17);
+    data_vtab->assign("store_fluid", 17);
     std::vector<double> field_fluid_properties{ 1, 7, 0, 0, 0, 0, 0, 0, 0 };
     util::matrix_t<double> field_fl_props(1, 9, &field_fluid_properties);
-    data_vtab->assign("field_fl_props", field_fl_props);
+    data_vtab->assign("store_fl_props", field_fl_props);
     data_vtab->assign("h_tank_min", 1.);
     data_vtab->assign("h_tank", 12.);
     data_vtab->assign("tank_pairs", 1.);
     data_vtab->assign("u_tank", 0.4);
+    data_vtab->assign("field_fluid", 17);
+    data_vtab->assign("field_fl_props", field_fl_props);
 
     int errors = run_module(data, "ui_tes_calcs");
     EXPECT_FALSE(errors);
