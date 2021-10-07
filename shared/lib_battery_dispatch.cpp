@@ -589,6 +589,7 @@ double dispatch_t::power_conversion_loss() { return m_batteryPower->powerConvers
 double dispatch_t::power_system_loss() { return m_batteryPower->powerSystemLoss; }
 double dispatch_t::power_interconnection_loss() { return m_batteryPower->powerInterconnectionLoss; }
 double dispatch_t::power_crit_load_unmet() { return m_batteryPower->powerCritLoadUnmet; }
+double dispatch_t::power_crit_load() { return m_batteryPower->powerCritLoad; }
 double dispatch_t::battery_power_to_fill() { return _Battery->power_to_fill(m_batteryPower->stateOfChargeMax); }
 double dispatch_t::battery_soc() { return _Battery->SOC(); }
 BatteryPowerFlow * dispatch_t::getBatteryPowerFlow() { return m_batteryPowerFlow.get(); }

@@ -115,6 +115,7 @@ public:
 	double power_system_loss();
     double power_interconnection_loss();
     double power_crit_load_unmet();
+    double power_crit_load();
 
 	virtual double power_grid_target(){	return 0;}
 	virtual double power_batt_target(){ return 0.;}
