@@ -43,7 +43,7 @@ static const char* size_batterystateful_doc =
     "     'original_capacity': kWh [kWh]\\n";
 
 
-SSCEXPORT void Size_batterystateful(ssc_data_t data);
+SSCEXPORT bool Size_batterystateful(ssc_data_t data);
 
 static const char* calculate_thermal_params_doc =
     "Resizes the battery for a battery_stateful data object \\n\\n"
@@ -56,7 +56,7 @@ static const char* calculate_thermal_params_doc =
     "     'module_surface_area': double [m^2], optional\\n"
     "Output: mass and surface_area will be modified\\n";
 
-SSCEXPORT void Calculate_thermal_params(ssc_data_t data);
+SSCEXPORT bool Calculate_thermal_params(ssc_data_t data);
 
 #ifdef __cplusplus
 }

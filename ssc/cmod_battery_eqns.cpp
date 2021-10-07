@@ -26,13 +26,14 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <cmath>
 
-void Size_batterystateful(ssc_data_t data) {
+bool Size_batterystateful(ssc_data_t data) {
     auto vt = static_cast<var_table*>(data);
-    if (!vt) {
-        throw std::runtime_error("ssc_data_t data invalid");
-    }
-
     char errmsg[250];
+    if (!vt) {
+        sprintf(errmsg, "ssc_data_t data invalid");
+        vt->assign("error", std::string(errmsg));
+        return false;
+    }
 
     double nominal_energy, desired_voltage, desired_capacity;
 
@@ -44,27 +45,32 @@ void Size_batterystateful(ssc_data_t data) {
     if (nominal_energy < 1e-7) {
         sprintf(errmsg, "nominal_energy cannot be less than 1e-7. Current value: %f", nominal_energy);
         vt->assign("error", std::string(errmsg));
-        return;
+        return false;
     }
 
     if (desired_capacity < 1e-7) {
         sprintf(errmsg, "desired_capacity cannot be less than 1e-7. Current value: %f", desired_capacity);
         vt->assign("error", std::string(errmsg));
-        return;
+        return false;
     }
 
     vt->assign("original_capacity", nominal_energy);
 
-    Calculate_thermal_params(data);
+    bool thermal_success = Calculate_thermal_params(data);
 
     vt->assign("nominal_energy", desired_capacity);
     vt->assign("nominal_voltage", desired_voltage);
+
+    return thermal_success;
 }
 
-void Calculate_thermal_params(ssc_data_t data) {
+bool Calculate_thermal_params(ssc_data_t data) {
     auto vt = static_cast<var_table*>(data);
+    char errmsg[250];
     if (!vt) {
-        throw std::runtime_error("ssc_data_t data invalid");
+        sprintf(errmsg, "ssc_data_t data invalid");
+        vt->assign("error", std::string(errmsg));
+        return false;
     }
 
     double mass, surface_area, original_capacity, desired_capacity, module_capacity, module_surface_area;
@@ -92,5 +98,7 @@ void Calculate_thermal_params(ssc_data_t data) {
 
     vt->assign("mass", mass);
     vt->assign("surface_area", surface_area);
+
+    return true;
 }
 
