@@ -301,7 +301,7 @@ private:
 
 	// turbine output
 	double calculateX(double enthalpyIn, double temperatureF);
-	double enthalpyChangeTurbine(double dEnthalpyDeltaInitial, double dEnthalpyTurbineG); // I65-I80, I87-I102
+    double enthalpyChangeTurbine(double dEnthalpyDeltaInitial, double dEnthalpyTurbineG, double dCondF, double dCondG); // I65-I80, I87-I102
 
 	// Flash Turbine 1 - high pressure
 	double turbine1dHInitial(void); // I65
@@ -351,7 +351,8 @@ private:
 
 
 	int FlashCount(void);
-	double calculateDH(double pressureIn);
+	double calculateDH1(double pressureIn);
+    double calculateDH2(double pressureIn);
 	double TemperatureWetBulbF(void);
 	double temperatureCondF(void); // D72 - deg F
 	double pressureSaturation(void); // D72 - psi
