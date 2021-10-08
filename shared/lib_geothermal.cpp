@@ -520,7 +520,7 @@ double CGeothermalAnalyzer::PlantGrossPowerkW(void)
 		break;
 
 	case MA_FLASH:
-		dPlantBrineEfficiency = MaxSecondLawEfficiency() * FractionOfMaxEfficiency() * GetAEFlashAtTemp(md_WorkingTemperatureC-1.75);
+		dPlantBrineEfficiency = MaxSecondLawEfficiency() * FractionOfMaxEfficiency() * GetAEFlashAtTemp(md_WorkingTemperatureC-1.7539);
 		break;
 
 	case MA_EGS:
@@ -555,8 +555,8 @@ double CGeothermalAnalyzer::FractionOfMaxEfficiency()
 	if (me_makeup == MA_EGS)
 		dTemperatureRatio = physics::CelciusToKelvin(mo_geo_in.md_TemperatureEGSAmbientC) / physics::CelciusToKelvin(md_LastProductionTemperatureC);
 	else
-		dTemperatureRatio = physics::CelciusToKelvin(mo_geo_in.md_TemperatureEGSAmbientC) / physics::CelciusToKelvin(md_WorkingTemperatureC-1.75);
-    double carnot_eff_initial = 1 - physics::CelciusToKelvin(mo_geo_in.md_TemperatureEGSAmbientC) / physics::CelciusToKelvin(GetTemperaturePlantDesignC()-1.75);
+		dTemperatureRatio = physics::CelciusToKelvin(mo_geo_in.md_TemperatureEGSAmbientC) / physics::CelciusToKelvin(md_WorkingTemperatureC);
+    double carnot_eff_initial = 1 - physics::CelciusToKelvin(mo_geo_in.md_TemperatureEGSAmbientC) / physics::CelciusToKelvin(GetTemperaturePlantDesignC());
     double carnot_eff = 1 - dTemperatureRatio;
     double carnot_ratio = carnot_eff / carnot_eff_initial;
 	if (me_makeup == MA_FLASH)
@@ -818,7 +818,7 @@ double CGeothermalAnalyzer::InjectionDensity(void) { return (1 / geothermal::oSV
 double CGeothermalAnalyzer::GetAEAtTemp(double tempC) { return (mo_geo_in.me_ct == BINARY) ? GetAEBinaryAtTemp(tempC) : GetAEFlashAtTemp(tempC); }
 double CGeothermalAnalyzer::GetAEBinaryAtTemp(double tempC) { return geothermal::oGFC.GetAEForBinaryWattHrUsingC(tempC, GetAmbientTemperatureC()); }	// watt-hr/lb - Calculate available energy using binary constants and plant design temp (short cut)
 double CGeothermalAnalyzer::GetAEFlashAtTemp(double tempC) { return geothermal::oGFC.GetAEForFlashWattHrUsingC(tempC, GetAmbientTemperatureC()); }	// watt-hr/lb - Calculate available energy using flash constants and plant design temp (short cut)
-double CGeothermalAnalyzer::GetAE(void) { return GetAEAtTemp(GetTemperaturePlantDesignC()-1.75); }
+double CGeothermalAnalyzer::GetAE(void) { return GetAEAtTemp(GetTemperaturePlantDesignC()-1.7539); }
 double CGeothermalAnalyzer::GetAEBinary(void) { return GetAEBinaryAtTemp(GetTemperaturePlantDesignC()); }// watt-hr/lb - Calculate available energy using binary constants and plant design temp (short cut)
 double CGeothermalAnalyzer::GetAEFlash(void) { return GetAEFlashAtTemp(GetTemperaturePlantDesignC()); }
 
@@ -1092,7 +1092,7 @@ double CGeothermalAnalyzer::turbine1HEx() { return turbine1EnthalpyG() - turbine
 double CGeothermalAnalyzer::turbine1X()
 {	// D83 - %
 	mp_geo_out->spec_vol = GetSpecVol(mp_geo_out->flash_temperature);
-	double enthalpyPlantDesignTemp = geothermal::GetFlashEnthalpyF(physics::CelciusToFarenheit(GetTemperaturePlantDesignC()-1.75));// D69
+	double enthalpyPlantDesignTemp = geothermal::GetFlashEnthalpyF(physics::CelciusToFarenheit(GetTemperaturePlantDesignC()-1.7539));// D69
 	mp_geo_out->getX_hp = calculateX(enthalpyPlantDesignTemp, turbine1TemperatureF());
 	return calculateX(enthalpyPlantDesignTemp, geothermal::GetFlashTemperature(mp_geo_out->md_PressureHPFlashPSI));
 }
@@ -1409,7 +1409,7 @@ double CGeothermalAnalyzer::pressureDualHighWithConstraint()
 {
 	double a = (temperatureCondF() > 125) ? 1.59 + (0.0015547 * exp(0.0354727*temperatureCondF())) : 1.59 + (0.098693 * exp(0.0025283*temperatureCondF()));
 	double b = (temperatureCondF() > 125) ? 0.01916 - (0.000005307 * exp(0.031279921*temperatureCondF())) : 0.01916 - (0.000167123 * exp(0.00400728*temperatureCondF()));
-	return a * exp(b * (GetTemperaturePlantDesignC()-1.75));
+	return a * exp(b * (GetTemperaturePlantDesignC()-1.7539));
 }
 double CGeothermalAnalyzer::pressureDualHigh(void)
 {	// P64
@@ -1721,6 +1721,7 @@ bool CGeothermalAnalyzer::RunAnalysis(bool(*update_function)(float, void*), void
 
 					// record hourly power which = hourly energy
 					mp_geo_out->maf_hourly_power[iElapsedHours] = mp_geo_out->maf_timestep_power[iElapsedTimeSteps];
+                    
 
 					//md_ElapsedTimeInYears = year + util::percent_of_year(month,hour);
 					if (!ms_ErrorString.empty()) { return false; }
