@@ -899,7 +899,7 @@ public:
 			DISPATCH_QPBTARGET_EXPECT,        //[MWt] Power cycle energy consumption in dispatch model
             QSF_EXPECT,                 //[MWt] Expected total solar field energy generation for dispatch model
             ETA_SF_EXPECT,              //[-] Expected field optical efficiency for dispatch model
-
+            ETA_THERM_EXPECT,           //[-] Expected receiver thermal efficiency for dispatch model
 
 			// **************************************************************
 			//      Outputs that are reported as weighted averages if 

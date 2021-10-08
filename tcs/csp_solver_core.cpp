@@ -180,6 +180,7 @@ static C_csp_reported_outputs::S_output_info S_solver_output_info[] =
 
     {C_csp_solver::C_solver_outputs::QSF_EXPECT, C_csp_reported_outputs::TS_1ST},		        //[MWt] Expected total solar field energy generation for dispatch model
     {C_csp_solver::C_solver_outputs::ETA_SF_EXPECT, C_csp_reported_outputs::TS_1ST},		    //[-] Expected field optical efficiency for dispatch model
+    {C_csp_solver::C_solver_outputs::ETA_THERM_EXPECT, C_csp_reported_outputs::TS_1ST},		    //[-] Expected receiver thermal efficiency for dispatch model
 
 	// **************************************************************
 	//      Outputs that are reported as weighted averages if 
@@ -2413,6 +2414,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
         mc_reported_outputs.value(C_solver_outputs::QSF_EXPECT, q_sfavail_approx);
         mc_reported_outputs.value(C_solver_outputs::ETA_SF_EXPECT, opt_eff_approx);
+        mc_reported_outputs.value(C_solver_outputs::ETA_THERM_EXPECT, therm_eff_approx);
 
 		// Report series of operating modes attempted during the timestep as a 'double' so can see in hourly outputs
         // Key will start with 1 then add two digits for each operating mode. Single digits enumerations will add a 0 before the number

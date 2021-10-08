@@ -660,6 +660,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 
     { SSC_OUTPUT,    SSC_ARRAY,  "qsf_expected",                       "Expected solar field available energy (for dispatch)",                                                                                    "MWt",          "",                                  "",                                         "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_ARRAY,  "eta_opt_expected",                   "Expected field optical efficiency (for dispatch)",                                                                                        "",             "",                                  "",                                         "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "eta_therm_expected",                 "Expected receiver thermal optical efficiency (for dispatch)",                                                                             "",             "",                                  "",                                         "*",                                                                "",              "" },
 
         // These outputs correspond to the first csp-solver timestep in the reporting timestep.
         //     Subsequent csp-solver timesteps within the same reporting timestep are not tracked
@@ -2598,6 +2599,7 @@ public:
 
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::QSF_EXPECT, allocate("qsf_expected", n_steps_fixed), n_steps_fixed);
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::ETA_SF_EXPECT, allocate("eta_opt_expected", n_steps_fixed), n_steps_fixed);
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::ETA_THERM_EXPECT, allocate("eta_therm_expected", n_steps_fixed), n_steps_fixed);
 
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::SOLZEN, allocate("solzen", n_steps_fixed), n_steps_fixed);
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::SOLAZ, allocate("solaz", n_steps_fixed), n_steps_fixed);

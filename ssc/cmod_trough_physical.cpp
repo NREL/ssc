@@ -500,6 +500,8 @@ static var_info _cm_vtab_trough_physical[] = {
 
     { SSC_OUTPUT,       SSC_ARRAY,       "qsf_expected",              "Expected solar field available energy (for dispatch)",                             "MWt",          "",               "tou",            "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "eta_opt_expected",          "Expected field optical efficiency (for dispatch)",                                 "",             "",               "tou",            "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "eta_therm_expected",        "Expected receiver thermal optical efficiency (for dispatch)",                      "",             "",               "tou",            "*",                       "",                      "" },
+
 
     { SSC_OUTPUT,       SSC_ARRAY,       "htf_pump_power",            "Parasitic power TES and Cycle HTF pump",                                           "MWe",          "",               "system",         "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "P_cooling_tower_tot",       "Parasitic power condenser operation",                                              "MWe",          "",               "system",         "*",                       "",                      "" },
@@ -1455,7 +1457,7 @@ public:
 
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::QSF_EXPECT, allocate("qsf_expected", n_steps_fixed), n_steps_fixed);
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::ETA_SF_EXPECT, allocate("eta_opt_expected", n_steps_fixed), n_steps_fixed);
-
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::ETA_THERM_EXPECT, allocate("eta_therm_expected", n_steps_fixed), n_steps_fixed);
 
         update("Initialize physical trough model...", 0.0);
 
