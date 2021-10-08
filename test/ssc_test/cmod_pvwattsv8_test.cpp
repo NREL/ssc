@@ -319,13 +319,45 @@ TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, IntermediateOutputTesting)
     EXPECT_NEAR(tpoa, 823.306, 0.01) << "Transmitted POA at noon";
 
     tcell = ssc_data_get_array(data, "tcell", nullptr)[12];
-    EXPECT_NEAR(tcell, 51.332, 0.01) << "Cell temp at noon";
+    EXPECT_NEAR(tcell, 48.861, 0.01) << "Cell temp at noon";
 
     dc = ssc_data_get_array(data, "dc", nullptr)[12];
-    EXPECT_NEAR(dc, 2512.300, 0.01) << "DC Energy at noon";
+    EXPECT_NEAR(dc, 2509.045, 0.01) << "DC Energy at noon";
 
     ac = ssc_data_get_array(data, "ac", nullptr)[12];
-    EXPECT_NEAR(ac, 2417.375, 0.01) << "AC Energy at noon";
+    EXPECT_NEAR(ac, 2408.683, 0.01) << "AC Energy at noon";
 
     free_weatherdata_array(weather_data);
+}
+
+// Test the calculated layout
+TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, CalculatedLayout)
+{
+    //set up a short weather data array (for runtime) and unassign the solar resource file
+    auto weather_data = create_weatherdata_array(1);
+    ssc_data_unassign(data, "solar_resource_file");
+    ssc_data_set_table(data, "solar_resource_data", &weather_data->table);
+
+    //run the simulation
+    EXPECT_FALSE(run_module(data, "pvwattsv8"));
+
+    ssc_number_t nmodules, nmodperstr, nmodx, nmody, nrows, row_spacing;
+
+    ssc_data_get_number(data, "estimated_nmodules", &nmodules);
+    EXPECT_NEAR(nmodules, 14.0, 0.01) << "Number of modules";
+
+    ssc_data_get_number(data, "estimated_nmodperstr", &nmodperstr);
+    EXPECT_NEAR(nmodperstr, 7.0, 0.01) << "Number of modules per string";
+
+    ssc_data_get_number(data, "estimated_nmodx", &nmodx);
+    EXPECT_NEAR(nmodx, 1.0, 0.01) << "Nmodx";
+
+    ssc_data_get_number(data, "estimated_nmody", &nmody);
+    EXPECT_NEAR(nmody, 2.0, 0.01) << "Nmody";
+
+    ssc_data_get_number(data, "estimated_nrows", &nrows);
+    EXPECT_NEAR(nrows, 3.0, 0.01) << "Number of rows";
+
+    ssc_data_get_number(data, "estimated_row_spacing", &row_spacing);
+    EXPECT_NEAR(row_spacing, 8.192, 0.01) << "Row spacing";
 }

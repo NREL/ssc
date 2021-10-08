@@ -1182,22 +1182,22 @@ public:
                     // module temperature calculations
                     if (!modTempCalc(in, mod, -1.0, tmod)) throw exec_error("pvwattsv8", util::format("Module temperature calculation failed at index %d.", (int)idx_life)); //calculate temperature at MPP (-1.0 flag determines this)
 
+                    // calculate transmitted POA (tpoa) to report as an output
+                    if (aoi > AOI_MIN && aoi < AOI_MAX && poa_front > 0)
+                    {
+                        tpoa = calculateIrradianceThroughCoverDeSoto(
+                            aoi, solzen, stilt, ibeam, iskydiff, ignddiff, en_mlm == 0 && module.ar_glass);
+                        if (tpoa < 0.0) tpoa = 0.0;
+                        if (tpoa > poa) tpoa = poa_front;
+                    }
+
                     // DC power conversion calculations
                     if (en_mlm) // hidden feature for pvwatts SDK users contributed by Aron Dobos
                     {
                         // adjustments to irradiance that are covered as part of the CEC model, but not by the mlm model
-                        // module cover module to handle transmitted POA
+                        // module cover effects
                         double f_cover = 1.0;
-                        if (aoi > AOI_MIN && aoi < AOI_MAX && poa_front > 0)
-                        {
-                            tpoa = calculateIrradianceThroughCoverDeSoto(
-                                aoi, solzen, stilt, ibeam, iskydiff, ignddiff, en_mlm == 0 && module.ar_glass);
-                            if (tpoa < 0.0) tpoa = 0.0;
-                            if (tpoa > poa) tpoa = poa_front;
-
-                            f_cover = tpoa / poa_front; 
-                        }
-
+                        f_cover = tpoa / poa_front;
                         // spectral correction via air mass modifier
                         double f_AM = air_mass_modifier(solzen, hdr.elev, AMdesoto);
 
@@ -1221,7 +1221,6 @@ public:
                         // scale the power output for a single module (out.Power) to the actual system size-
                         // divide the DC nameplate input by the "single module" nameplate (Vmp * Imp) to get a fractional number of modules in the system, and multiply by that fraction
                         dc = out.Power * pv.dc_nameplate / (mod.Vmp * mod.Imp);
-                        tpoa = out.
                     }
 
                     // apply common DC losses here (independent of module model)
