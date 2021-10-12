@@ -323,35 +323,3 @@ TEST_F(CMPvwattsV7Integration_cmod_pvwattsv7, IntermediateOutputTesting)
 
     free_weatherdata_array(weather_data);
 }
-
-// Test the calculated layout
-TEST_F(CMPvwattsV7Integration_cmod_pvwattsv7, CalculatedLayout)
-{
-    //set up a short weather data array (for runtime) and unassign the solar resource file
-    auto weather_data = create_weatherdata_array(1);
-    ssc_data_unassign(data, "solar_resource_file");
-    ssc_data_set_table(data, "solar_resource_data", &weather_data->table);
-
-    //run the simulation
-    EXPECT_FALSE(run_module(data, "pvwattsv7"));
-
-    ssc_number_t nmodules, nmodperstr, nmodx, nmody, nrows, row_spacing;
-
-    ssc_data_get_number(data, "estimated_nmodules", &nmodules);
-    EXPECT_NEAR(nmodules, 14.0, 0.01) << "Number of modules";
-
-    ssc_data_get_number(data, "estimated_nmodperstr", &nmodperstr);
-    EXPECT_NEAR(nmodperstr, 7.0, 0.01) << "Number of modules per string";
-
-    ssc_data_get_number(data, "estimated_nmodx", &nmodx);
-    EXPECT_NEAR(nmodx, 2.0, 0.01) << "Nmodx";
-
-    ssc_data_get_number(data, "estimated_nmody", &nmody);
-    EXPECT_NEAR(nmody, 2.0, 0.01) << "Nmody";
-
-    ssc_data_get_number(data, "estimated_rows", &nrows);
-    EXPECT_NEAR(nrows, 4.0, 0.01) << "Number of rows";
-
-    ssc_data_get_number(data, "estimated_row_spacing", &row_spacing);
-    EXPECT_NEAR(row_spacing, 8.192, 0.01) << "Row spacing";
-}

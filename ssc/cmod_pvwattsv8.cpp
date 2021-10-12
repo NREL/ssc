@@ -192,12 +192,6 @@ static var_info _cm_vtab_pvwattsv8[] = {
         { SSC_OUTPUT,       SSC_NUMBER,      "elev",                           "Site elevation",                              "m",         "",                                             "Location",      "*",                       "",                          "" },
 
         { SSC_OUTPUT,       SSC_NUMBER,      "inverter_efficiency",            "Inverter efficiency at rated power",          "%",         "",                                             "PVWatts",      "",                        "",                              "" },
-        { SSC_OUTPUT,       SSC_NUMBER,      "estimated_nmodules",			   "Estimated number of modules in the system",	  "",          "",                                             "PVWatts",      "",                        "",                              "" },
-        { SSC_OUTPUT,       SSC_NUMBER,      "estimated_nmodperstr",		   "Estimated number of modules per string",	  "",          "",                                             "PVWatts",      "",                        "",                              "" },
-        { SSC_OUTPUT,       SSC_NUMBER,      "estimated_nmodx",				   "Estimated number of modules across a row",	  "",          "",                                             "PVWatts",      "",                        "",                              "" },
-        { SSC_OUTPUT,       SSC_NUMBER,      "estimated_nmody",				   "Estimated number of modules up in a row",	  "",          "",                                             "PVWatts",      "",                        "",                              "" },
-        { SSC_OUTPUT,       SSC_NUMBER,      "estimated_nrows",				   "Estimated number of rows in the system",	  "",          "",                                             "PVWatts",      "",                        "",                              "" },
-        { SSC_OUTPUT,       SSC_NUMBER,      "estimated_row_spacing",		   "Estimated row spacing in the system",	      "m",         "",                                             "PVWatts",      "",                        "",                              "" },
 
         { SSC_OUTPUT,       SSC_NUMBER,      "ts_shift_hours",                 "Time offset for interpreting time series outputs", "hours","",                                             "Miscellaneous", "*",                       "",                          "" },
         { SSC_OUTPUT,       SSC_NUMBER,      "percent_complete",               "Estimated percent of total completed simulation", "%",     "",                                             "Miscellaneous", "",                        "",                          "" },
@@ -612,15 +606,6 @@ public:
         // shading calculation fails for pv.nmodx < 1
         if (pv.nmodx < 1) pv.nmodx = 1;
         pv.row_spacing = module.length * pv.nmody / pv.gcr;
-
-        //output the estimated layout
-        assign("estimated_nmodules", var_data((ssc_number_t)pv.nmodules));
-        assign("estimated_nmodperstr", var_data((ssc_number_t)pv.nmodperstr));
-        assign("estimated_nmodx", var_data((ssc_number_t)pv.nmodx));
-        assign("estimated_nmody", var_data((ssc_number_t)pv.nmody));
-        assign("estimated_nrows", var_data((ssc_number_t)pv.nrows));
-        assign("estimated_row_spacing", var_data((ssc_number_t)pv.row_spacing));
-
 
         // see note farther down in code about self-shading for small systems
         // assume at least some reasonable number of rows.
