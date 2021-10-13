@@ -28,7 +28,6 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "lib_weatherfile.h"
 #include "lib_irradproc.h"
-//#include "lib_pvwatts.h"
 #include "lib_pvshade.h"
 #include "lib_pvmodel.h"
 #include "lib_snowmodel.h"
@@ -121,7 +120,6 @@ static var_info _cm_vtab_pvwattsv8[] = {
         { SSC_INPUT,        SSC_NUMBER,      "dc_ac_ratio",                    "DC to AC ratio",                              "ratio",     "",                                             "System Design",      "?=1.1",                   "POSITIVE",                      "" },
 
         { SSC_INPUT,        SSC_NUMBER,      "bifaciality",                    "Module bifaciality factor",                   "0 or ~0.65","",                                             "System Design",      "?=0",                       "",                              "" },
-        { SSC_INPUT,        SSC_NUMBER,      "ac_plant_max_f",                 "Plant controller max output (as f(ac_size))", "ratio",     "",                                             "System Design",      "?=1.0",                   "",                              "" },
 
         { SSC_INPUT,        SSC_NUMBER,      "array_type",                     "Array type",                                  "0/1/2/3/4", "Fixed Rack,Fixed Roof,1Axis,Backtracked,2Axis","System Design",      "*",                       "MIN=0,MAX=4,INTEGER",           "" },
         { SSC_INPUT,        SSC_NUMBER,      "tilt",                           "Tilt angle",                                  "deg",       "H=0,V=90",                                     "System Design",      "array_type<4",            "MIN=0,MAX=90",                  "" },
@@ -160,7 +158,10 @@ static var_info _cm_vtab_pvwattsv8[] = {
         { SSC_OUTPUT,       SSC_ARRAY,       "snow",                           "Weather file snow depth",                                  "cm",        "",										       "Time Series",      "",                        "",                          "" },
 
         { SSC_OUTPUT,       SSC_ARRAY,       "sunup",                          "Sun up over horizon",                         "0/1",       "",                                             "Time Series",      "*",                       "",                          "" },
-        { SSC_OUTPUT,       SSC_ARRAY,       "shad_beam_factor",               "Shading factor for beam radiation",           "",          "",                                             "Time Series",      "*",                       "",                                     "" },
+        { SSC_OUTPUT,       SSC_ARRAY,       "shad_beam_factor",               "External shading factor for beam radiation",           "",          "",                                             "Time Series",      "*",                       "",                                     "" },
+        { SSC_OUTPUT,       SSC_ARRAY,       "ss_beam_factor",                 "Calculated self-shading factor for beam radiation",           "",          "1=no shading",                                             "Time Series",      "*",                       "",                                     "" },
+        { SSC_OUTPUT,       SSC_ARRAY,       "ss_sky_diffuse_factor",          "Calculated self-shading factor for sky diffuse radiation",           "",          "1=no shading",                                             "Time Series",      "*",                       "",                                     "" },
+        { SSC_OUTPUT,       SSC_ARRAY,       "ss_gnd_diffuse_factor",          "Calculated self-shading factor for ground-reflected diffuse radiation",           "",          "1=no shading",                                             "Time Series",      "*",                       "",                                     "" },
         { SSC_OUTPUT,       SSC_ARRAY,       "aoi",                            "Angle of incidence",                          "deg",       "",                                             "Time Series",      "*",                       "",                          "" },
         { SSC_OUTPUT,       SSC_ARRAY,       "poa",                            "Plane of array irradiance",                   "W/m2",      "",                                             "Time Series",      "*",                       "",                          "" },
         { SSC_OUTPUT,       SSC_ARRAY,       "tpoa",                           "Transmitted plane of array irradiance",       "W/m2",      "",                                             "Time Series",      "*",                       "",                          "" },
@@ -231,7 +232,6 @@ protected:
         double dc_ac_ratio;     //ratio of DC nameplate capacity to AC nameplate capacity (unitless)
         double ac_nameplate;    //nameplate rated capacity of the AC side of the system (W)
         double xfmr_rating;     //rating of the transformer, hardcoded to be equal to ac_nameplate (W)   
-        double ac_plant_max;    //??? is this used?
         double inv_eff_percent; //inverter efficiency at rated power (percent)
         double dc_loss_percent; //DC system losses (percent)
         double tilt, azimuth;   //tilt and azimuth of the system (degrees)
@@ -398,7 +398,7 @@ public:
             log("Using the wind stow model with weather data that is not continuous over one year may result in over-estimation of stow losses.", SSC_WARNING);
         double wstow = std::numeric_limits<double>::quiet_NaN();
         if (is_assigned("stow_wspd")) wstow = as_double("stow_wspd"); // wind stow speed, m/s.
-        double wind_stow_angle_deg; // default is to assume stowing at 30 degrees (set in var_table) for better dynamic torsional stability, despite higher static loading on piles
+        double wind_stow_angle_deg = std::numeric_limits<double>::quiet_NaN(); // default is to assume stowing at 30 degrees (set in var_table) for better dynamic torsional stability, despite higher static loading on piles
         if (is_assigned("wind_stow_angle")) wind_stow_angle_deg = as_double("wind_stow_angle");
         // gust factor defined later because it depends on timestep
 
@@ -588,23 +588,18 @@ public:
         if (pv.nmodules < 1) pv.nmodules = 1;
 
         // Physical Layout
-        // reasonable estimates of system geometry
+        // reasonable estimates of system geometry, used for self-shading calculations ONLY.
         // assume one module high for trackers, 2 modules high for fixed or two-axis
         if (pv.type == ONE_AXIS || pv.type == ONE_AXIS_BACKTRACKING)
             pv.nmody = 1; // e.g. Nextracker or ArrayTechnologies single portrait
         else
             pv.nmody = 2; // typical fixed 2 up portrait
-        // assume a ''square'' system layout- meaning same number of modules across a row as number of rows
-        // therefore, if rows are 2 up, need to estimate with half the modules
-        pv.nrows = (int)ceil(sqrt(pv.nmodules/pv.nmody)); // estimate of # rows for a square system
-        //need to add better estimates for rooftop system, so as not to confuse users with outputs below ???????????????????????????!!!!!!!!!!!!!!!!!!!
-
-        // number of modules in a row...
-        //   If 1 module per Y dimension, nmodx=nrows.
-        //   If 2 module per Y, then nmodx=nrows/2.
-        pv.nmodx = pv.nrows / pv.nmody; //does this need to be checked to be an integer??? check logic in UI and pvsamv1
-        // shading calculation fails for pv.nmodx < 1
-        if (pv.nmodx < 1) pv.nmodx = 1;
+         if (pv.type == FIXED_ROOF)
+            pv.nrows = 1; // fixed roof systems are all in one "row", so we'll assign that here for clarity even though these numbers only affect self-shading and that's disabled for rooftop systems
+        else
+            pv.nrows = (int)ceil(sqrt(pv.nmodules/pv.nmody)); // assume a ''square'' system layout- same number of modules across a row (nmodx) as number of rows (nrows), so need to divide by nmody to ensure that's true
+        pv.nmodx = ceil(pv.nmodules / ( pv.nrows * pv.nmody)); // would rather that the estimated physical layout be larger than the actual number of modules for estimating self-shading impacts
+        if (pv.nmodx < 1) pv.nmodx = 1; // shading calculation fails for pv.nmodx < 1
         pv.row_spacing = module.length * pv.nmody / pv.gcr;
 
         // see note farther down in code about self-shading for small systems
@@ -754,6 +749,9 @@ public:
         ssc_number_t* p_sunup = allocate("sunup", nrec);
         ssc_number_t* p_aoi = allocate("aoi", nrec);
         ssc_number_t* p_shad_beam = allocate("shad_beam_factor", nrec); // just for reporting output
+        ssc_number_t* p_ss_beam = allocate("ss_beam_factor", nrec);
+        ssc_number_t* p_ss_sky_diffuse = allocate("ss_sky_diffuse_factor", nrec);
+        ssc_number_t* p_ss_gnd_diffuse = allocate("ss_gnd_diffuse_factor", nrec);
         ssc_number_t* p_stow = allocate("tracker_stowing", nrec); // just for reporting output
 
         ssc_number_t* p_tmod = allocate("tcell", nrec);
@@ -864,7 +862,7 @@ public:
                 double solazi, solzen, solalt, aoi, stilt, sazi, rot, btd;
                 int sunup;
                 double ibeam = 0.0, iskydiff = 0.0, ignddiff = 0.0, irear = 0.0;
-                double poa = 0.0, tpoa = 0.0, tmod = 0.0, dc = 0.0, dcVoltage = 0.0, ac = 0.0;
+                double poa = 0.0, tpoa = 0.0, tmod = 0.0, dc = 0.0, ac = 0.0;
 
                 irr.get_sun(&solazi, &solzen, &solalt, nullptr, nullptr, nullptr, &sunup, nullptr, nullptr, nullptr); //nullptr used when you don't need to retrieve the output
                 irr.get_angles(&aoi, &stilt, &sazi, &rot, &btd);
@@ -894,6 +892,9 @@ public:
                     shad_beam = shad.beam_shade_factor();
 
                 p_shad_beam[idx] = (ssc_number_t)shad_beam;
+                p_ss_beam[idx] = (ssc_number_t)1.0;
+                p_ss_sky_diffuse[idx] = (ssc_number_t)1.0;
+                p_ss_gnd_diffuse[idx] = (ssc_number_t)1.0;
 
                 if (sunup > 0)
                 {
@@ -1039,6 +1040,7 @@ public:
                         {
                             if (y == 0 && wdprov->annualSimulation()) ld("poa_loss_self_beam_shade") += ibeam * ssout.m_shade_frac_fixed * wm2_to_wh;
                             ibeam *= (1 - ssout.m_shade_frac_fixed);
+                            p_ss_beam[idx] = (ssc_number_t)(1 - ssout.m_shade_frac_fixed);
                         }
 
                         // one-axis true tracking system with linear self-shading: beam is derated by linear shade fraction for 1-axis trackers
@@ -1050,6 +1052,7 @@ public:
                         {
                             if (y == 0 && wdprov->annualSimulation()) ld("poa_loss_self_beam_shade") += ibeam * shad1xf * wm2_to_wh;
                             ibeam *= (1 - shad1xf);
+                            p_ss_beam[idx] = (ssc_number_t)(1 - shad1xf);
                         }
 
                         // for non-linear self-shading (fixed and one-axis, but not backtracking)
@@ -1077,6 +1080,7 @@ public:
                         if (y == 0 && wdprov->annualSimulation()) ld("poa_loss_self_diff_shade") += (1.0 - Fskydiff) * (iskydiff + irear) * wm2_to_wh; //irear is zero if not bifacial
                         iskydiff *= Fskydiff;
                         irear *= Fskydiff;
+                        p_ss_sky_diffuse[idx] = (ssc_number_t)Fskydiff;
                     }
                     else log(util::format("Sky diffuse reduction factor invalid at time %lg: fskydiff=%lg, stilt=%lg.", idx, Fskydiff, stilt), SSC_NOTICE, (float)idx);
 
@@ -1084,6 +1088,7 @@ public:
                     {
                         if (y == 0 && wdprov->annualSimulation()) ld("poa_loss_self_diff_shade") += (1.0 - Fgnddiff) * ignddiff * wm2_to_wh;
                         ignddiff *= Fgnddiff;
+                        p_ss_gnd_diffuse[idx] = (ssc_number_t)Fgnddiff;
                     }
                     else log(util::format("Ground diffuse reduction factor invalid at time %lg: fgnddiff=%lg, stilt=%lg.", idx, Fgnddiff, stilt), SSC_NOTICE, (float)idx);
 
@@ -1224,7 +1229,7 @@ public:
                     inverter.Vdco = 0.0;
                     inverter.Pso = 0.0; // simplifying assumption that the inverter can always operate
                     inverter.Pntare = 0.0; // simplifying assumption that inverter has no nighttime losses
-                    inverter.C0 = 0.0; // justification for this????????????????????
+                    inverter.C0 = 0.0; 
                     // default values for C1, C2, C3 are zero per Sandia documentation: https://pvpmc.sandia.gov/modeling-steps/dc-to-ac-conversion/sandia-inverter-model/
                     // setting these to 0 results in similar inverter output to pvwattsv5
                     inverter.C1 = 0.0; 
@@ -1287,7 +1292,7 @@ public:
 
             wdprov->rewind();
         }
-        ssc_number_t *p_annual_energy_dist_time = gen_heatmap(this, step_per_hour);
+        ssc_number_t *p_annual_energy_dist_time = gen_heatmap(this, (double)step_per_hour);
         // monthly and annual outputs
         if (wdprov->annualSimulation())
         {
