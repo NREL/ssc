@@ -283,16 +283,6 @@ double Dni_des_calc(double dni_des /*W/m2*/) {       // [W/m2]
     return dni_des;
 }
 
-int Opt_algorithm() {        // [-]
-    return 1;
-}
-
-double Opt_flux_penalty() {  // [-]
-    return 0.25;
-}
-
-
-
 // Originally from 'MSPT Receiver' UI Form
 double Csp_pt_rec_htf_t_avg(double T_htf_cold_des /*C*/, double T_htf_hot_des /*C*/) {       // [C]
     return (T_htf_cold_des + T_htf_hot_des) / 2.;

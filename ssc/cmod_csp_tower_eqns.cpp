@@ -177,13 +177,6 @@ void Tower_SolarPilot_Solar_Field_Equations(ssc_data_t data)
     dni_des_calc = Dni_des_calc(dni_des);
     ssc_data_t_set_number(data, "dni_des_calc", dni_des_calc);
 
-    // opt_algorithm
-    opt_algorithm = Opt_algorithm();
-    ssc_data_t_set_number(data, "opt_algorithm", opt_algorithm);
-
-    // opt_flux_penalty
-    opt_flux_penalty = Opt_flux_penalty();
-    ssc_data_t_set_number(data, "opt_flux_penalty", opt_flux_penalty);
 }
 
 void MSPT_Receiver_Equations(ssc_data_t data)
@@ -198,18 +191,6 @@ void MSPT_Receiver_Equations(ssc_data_t data)
         rec_htf;
 
     util::matrix_t<double> field_fl_props;
-
-    //  This one is not being read in the UI
-    // Csp_pt_rec_cav_lip_height
-    //double csp_pt_rec_cav_lip_height;
-    //csp_pt_rec_cav_lip_height = Csp_pt_rec_cav_lip_height();
-    //ssc_data_t_set_number(data, "csp_pt_rec_cav_lip_height", csp_pt_rec_cav_lip_height);
-
-    //  This one is not being read in the UI
-    // csp_pt_rec_cav_panel_height
-    //double csp_pt_rec_cav_panel_height;
-    //csp_pt_rec_cav_panel_height = Csp_pt_rec_cav_panel_height();
-    //ssc_data_t_set_number(data, "csp_pt_rec_cav_panel_height", csp_pt_rec_cav_panel_height);
 
     // csp_pt_rec_htf_t_avg
     ssc_data_t_get_number(data, "t_htf_cold_des", &t_htf_cold_des);

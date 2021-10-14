@@ -98,11 +98,6 @@ double Q_design(double Q_rec_des /*MWt*/);      // [MWt]
 
 double Dni_des_calc(double dni_des /*W/m2*/);       // [W/m2]
 
-int Opt_algorithm();        // [-]
-
-double Opt_flux_penalty();  // [-]
-
-
 
 // Originally from 'MSPT Receiver' UI Form
 double Csp_pt_rec_max_flow_to_rec(double csp_pt_rec_max_oper_frac /*-*/, double Q_rec_des /*MWt*/,
