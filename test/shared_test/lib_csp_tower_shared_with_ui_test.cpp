@@ -99,8 +99,6 @@ NAMESPACE_TEST(csp_common, TowerSharedWithUi, SolarPilotField) {
     ASSERT_NEAR_FRAC(GetNum(vd, "land_max_calc"), 1837.85, kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "land_min_calc"), 145.094, kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "n_hel"), 8790., kErrorToleranceHi);
-    ASSERT_NEAR_FRAC(GetNum(vd, "opt_algorithm"), 1., kErrorToleranceHi);
-    ASSERT_NEAR_FRAC(GetNum(vd, "opt_flux_penalty"), 0.25, kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "q_design"), 670., kErrorToleranceHi);
 }
 
@@ -145,8 +143,6 @@ NAMESPACE_TEST(csp_common, TowerSharedWithUi, SolarPilotFieldWithPeriodUse) {
     ASSERT_NEAR_FRAC(GetNum(vd, "land_max_calc"), 1837.85, kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "land_min_calc"), 145.094, kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "n_hel"), 8790., kErrorToleranceHi);
-    ASSERT_NEAR_FRAC(GetNum(vd, "opt_algorithm"), 1., kErrorToleranceHi);
-    ASSERT_NEAR_FRAC(GetNum(vd, "opt_flux_penalty"), 0.25, kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "q_design"), 670., kErrorToleranceHi);
 }
 
