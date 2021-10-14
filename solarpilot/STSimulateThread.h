@@ -119,7 +119,7 @@ public:
 };
 
 //Multithreaded callback 
-extern int STCallback_MT(st_uint_t ntracedtotal, st_uint_t ntraced, st_uint_t ntotrace, st_uint_t curstage, st_uint_t nstages, void *data);
+extern int STCallback_thread_update(st_uint_t ntracedtotal, st_uint_t ntraced, st_uint_t ntotrace, st_uint_t curstage, st_uint_t nstages, void *data);
 
 #endif
 

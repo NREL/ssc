@@ -27,6 +27,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "cmod_csp_common_eqns.h"
 #include "vartab.h"
 #include "csp_system_costs.h"
+#include "csp_solver_cavity_receiver.h"
 
 #pragma warning(disable: 4297)  // ignore warning: 'function assumed not to throw an exception but does'
 
@@ -293,14 +294,6 @@ double Opt_flux_penalty() {  // [-]
 
 
 // Originally from 'MSPT Receiver' UI Form
-double Csp_pt_rec_cav_lip_height() {     // [m]
-    return 1.;
-}
-
-double Csp_pt_rec_cav_panel_height() {   // [m]
-    return 1.1;
-}
-
 double Csp_pt_rec_htf_t_avg(double T_htf_cold_des /*C*/, double T_htf_hot_des /*C*/) {       // [C]
     return (T_htf_cold_des + T_htf_hot_des) / 2.;
 }
@@ -317,10 +310,6 @@ double Csp_pt_rec_max_flow_to_rec(double csp_pt_rec_max_oper_frac /*-*/, double 
 
     return (csp_pt_rec_max_oper_frac * Q_rec_des * 1.e6) /
         (csp_pt_rec_htf_c_avg * 1.e3 * (T_htf_hot_des - T_htf_cold_des));
-}
-
-double Csp_pt_rec_cav_ap_height(double rec_d_spec /*m*/, double csp_pt_rec_cav_ap_hw_ratio /*-*/) {      // [m]
-    return rec_d_spec * csp_pt_rec_cav_ap_hw_ratio;
 }
 
 double Rec_aspect(double D_rec /*m*/, double rec_height /*m*/) {     // [-]
@@ -380,10 +369,13 @@ util::matrix_t<double> Wlim_series(double disp_wlim_max /*MWe*/) {    // [kWe]
 //
 //}
 
-double Csp_pt_cost_receiver_area(TowerTypes tower_type /*-*/, double d_rec /*m*/, double rec_height /*m*/,
-    int receiver_type /*-*/, double rec_d_spec /*m*/, double csp_pt_rec_cav_ap_height /*m*/) {      // [m2]
+void Csp_pt_cost_receiver_area(TowerTypes tower_type /*-*/, double d_rec /*m*/,
+    double rec_height /*m*/, int receiver_type /*-*/, double cav_rec_height /*m*/,
+    double cav_rec_width /*m*/, double rec_span_deg /*deg*/, int n_cav_panels,
+    double& area /*m2*/, double& cav_panel_width /*m*/,
+    double& cav_radius /*m*/, double& cav_offset) {      // [m2]
 
-    double area = std::numeric_limits<double>::quiet_NaN();
+    area = cav_panel_width = cav_radius = cav_offset = std::numeric_limits<double>::quiet_NaN();
 
     if (tower_type == TowerTypes::kMoltenSalt || tower_type == TowerTypes::kIscc) {
         switch (receiver_type) {
@@ -391,7 +383,14 @@ double Csp_pt_cost_receiver_area(TowerTypes tower_type /*-*/, double d_rec /*m*/
             area = rec_height * d_rec * M_PI;
             break;
         case 1:
-            area = rec_d_spec * csp_pt_rec_cav_ap_height;
+        {
+            double rec_span_rad = rec_span_deg * M_PI / 180.0;
+            double theta0, panelSpan;
+            theta0 = panelSpan = std::numeric_limits<double>::quiet_NaN();
+            cavity_receiver_helpers::calc_receiver_macro_geometry(cav_rec_height, cav_rec_width,
+                rec_span_rad, n_cav_panels,
+                theta0, panelSpan, cav_panel_width, area, cav_radius, cav_offset);
+        }
             break;
         default:
             throw std::runtime_error("Receiver type not supported.");
@@ -401,7 +400,7 @@ double Csp_pt_cost_receiver_area(TowerTypes tower_type /*-*/, double d_rec /*m*/
         area = d_rec * rec_height * M_PI;
     }
 
-    return area;
+    return;
 }
 
 double Csp_pt_cost_storage_mwht(TowerTypes tower_type /*-*/, double p_ref /*MWe*/, double design_eff /*-*/,

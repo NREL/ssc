@@ -175,7 +175,6 @@ NAMESPACE_TEST(csp_common, TowerSharedWithUi, Receiver) {
     ASSERT_NEAR_FRAC(GetNum(vd, "csp_pt_rec_htf_t_avg"), 432., kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "csp_pt_rec_htf_c_avg"), 1.5066, kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "csp_pt_rec_max_flow_to_rec"), 1853.5, kErrorToleranceHi);
-    ASSERT_NEAR_FRAC(GetNum(vd, "csp_pt_rec_cav_ap_height"), 18., kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "rec_aspect"), 1.349, kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "piping_length"), 502.991, kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "piping_loss_tot"), 5130.51, kErrorToleranceHi);
@@ -206,7 +205,6 @@ NAMESPACE_TEST(csp_common, TowerSharedWithUi, ReceiverWithPeriodUse) {
     ASSERT_NEAR_FRAC(GetNum(vd, "csp_pt_rec_htf_t_avg"), 432., kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "csp_pt_rec_htf_c_avg"), 1.5066, kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "csp_pt_rec_max_flow_to_rec"), 1853.5, kErrorToleranceHi);
-    ASSERT_NEAR_FRAC(GetNum(vd, "csp_pt_rec_cav_ap_height"), 18., kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "rec_aspect"), 1.349, kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "piping_length"), 502.991, kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "piping_loss_tot"), 5130.51, kErrorToleranceHi);

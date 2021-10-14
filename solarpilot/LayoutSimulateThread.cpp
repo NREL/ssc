@@ -261,7 +261,7 @@ void LayoutSimThread::StartThread() //Entry()
 		    //store the _results
             double azzen[] = {az, zen};
 		    if(! is_cancel)
-			    _results->at(i).process_analytical_simulation(*_SF, _is_flux_detail ? 2 : 0, azzen); //2);
+			    _results->at(i).process_analytical_simulation(*_SF, P, _is_flux_detail ? 2 : 0, azzen); //2);
 		
 		    StatusLock.lock();
 		    is_cancel = this->CancelFlag; 
