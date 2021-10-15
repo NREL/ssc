@@ -41,10 +41,15 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "csp_solver_pc_Rankine_indirect_224.h"
 #include "csp_solver_two_tank_tes.h"
 #include "csp_solver_tou_block_schedules.h"
+
 #include "csp_dispatch.h"
+
 #include "csp_solver_cr_electric_resistance.h"
+#include "csp_solver_cavity_receiver.h"
 
 #include "csp_system_costs.h"
+
+#include <ctime>
 
 static var_info _cm_vtab_tcsmolten_salt[] = {
     // VARTYPE       DATATYPE    NAME                                  LABEL                                                                                                                                      UNITS           META                                 GROUP                                       REQUIRED_IF                                                         CONSTRAINTS      UI_HINTS
@@ -60,6 +65,18 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 
     { SSC_INPUT,     SSC_NUMBER, "field_model_type",                   "0=design field and tower/receiver geometry, 1=design field, 2=user specified field, 3=user performance maps vs solar position",           "",             "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "gross_net_conversion_factor",        "Estimated gross to net conversion factor",                                                                                                "",             "",                                  "System Design",                            "*",                                                                "",              ""},
+
+    { SSC_INPUT,     SSC_NUMBER, "receiver_type",                      "0: external (default), 1; cavity",                                                                                                        "",             "",                                  "Heliostat Field",                          "?=0",                                                              "",              ""},
+
+    // Cavity height and width can be reset by solarpilot optimization
+    { SSC_INOUT,     SSC_NUMBER, "cav_rec_height",                     "Cavity receiver height",                                                                                                                  "m",            "",                                  "Tower and Receiver",                       "receiver_type=1",                                                  "",              ""},
+    { SSC_INOUT,     SSC_NUMBER, "cav_rec_width",                      "Cavity receiver width",                                                                                                                   "m",            "",                                  "Tower and Receiver",                       "receiver_type=1",                                                  "",              ""},
+    // Cavity inputs that should *not* be reset during call to this cmod
+    { SSC_INPUT,     SSC_NUMBER, "n_cav_rec_panels",                   "Cavity receiver number of panels",                                                                                                        "",             "",                                  "Tower and Receiver",                       "receiver_type=1",                                                  "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "cav_rec_span",                       "Cavity receiver span angle",                                                                                                              "deg",          "",                                  "Tower and Receiver",                       "receiver_type=1",                                                  "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "cav_rec_passive_abs",                "Cavity receiver passive surface solar absorptance",                                                                                       "",             "",                                  "Tower and Receiver",                       "receiver_type=1",                                                  "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "cav_rec_passive_eps",                "Cavity receiver passive surface thermal emissivity",                                                                                      "",             "",                                  "Tower and Receiver",                       "receiver_type=1",                                                  "",              ""},
+
 
     { SSC_INPUT,     SSC_NUMBER, "helio_width",                        "Heliostat width",                                                                                                                         "m",            "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "helio_height",                       "Heliostat height",                                                                                                                        "m",            "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
@@ -123,7 +140,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,     SSC_NUMBER, "opt_max_iter",                       "Max number iteration steps",                                                                                                              "",             "",                                  "Heliostat Field",                          "?=200",                                                            "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "opt_conv_tol",                       "Optimization convergence tolerance",                                                                                                      "",             "",                                  "Heliostat Field",                          "?=0.001",                                                          "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "opt_flux_penalty",                   "Optimization flux overage penalty",                                                                                                       "",             "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "opt_algorithm",                      "Optimization algorithm",                                                                                                                  "",             "",                                  "Heliostat Field",                          "?=0",                                                              "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "opt_algorithm",                      "Optimization algorithm",                                                                                                                  "",             "",                                  "Heliostat Field",                          "?=1",                                                              "",              ""},
 
     //other costs needed for optimization update
     { SSC_INPUT,     SSC_NUMBER, "csp.pt.cost.epc.per_acre",           "EPC cost per acre",                                                                                                                       "$/acre",       "",                                  "System Costs",                             "*",                                                                "",              ""},
@@ -589,6 +606,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_OUTPUT,    SSC_NUMBER, "disp_presolve_nvar_ann",             "Annual sum of dispatch problem variable count",                                                                                           "",             "",                                  "",                                         "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "disp_solve_time_ann",                "Annual sum of dispatch solver time",                                                                                                      "",             "",                                  "",                                         "*",                                                                "",              ""},
 
+    { SSC_OUTPUT,    SSC_NUMBER, "sim_cpu_run_time",                   "Simulation duration clock time",                                                                                                         "s",             "",                                  "",                                         "*",                                                                "",              "" },
 
     var_info_invalid };
 
@@ -611,6 +629,8 @@ public:
 
 	void exec() override
 	{
+        std::clock_t clock_start = std::clock();
+
         // *****************************************************
         // System Design Parameters
         double T_htf_cold_des = as_double("T_htf_cold_des");    //[C]
@@ -622,8 +642,9 @@ public:
         // System Design Calcs
         double q_dot_pc_des = W_dot_cycle_des / eta_cycle;      //[MWt]
         double Q_tes = q_dot_pc_des * tshours;                  //[MWt-hr]
+        double q_dot_rec_des = q_dot_pc_des * as_number("solarm");  //[MWt]
 
-		// Weather reader
+        // Weather reader
 		C_csp_weatherreader weather_reader;
 		if (is_assigned("solar_resource_file")){
 			weather_reader.m_weather_data_provider = make_shared<weatherfile>(as_string("solar_resource_file"));
@@ -647,28 +668,26 @@ public:
 
         int tes_type = 1;
 
-        int rec_type = var_receiver::REC_TYPE::EXTERNAL_CYLINDRICAL;
-        switch (rec_type)
-        {
-            case var_receiver::REC_TYPE::EXTERNAL_CYLINDRICAL:
-            {
-                assign("rec_aspect", as_number("rec_height") / as_number("D_rec"));
-                break;
-            }
-            case var_receiver::REC_TYPE::FLAT_PLATE:
-                assign("rec_aspect", as_number("rec_height") / as_number("D_rec"));
-                break;
-        }
-
-        assign("q_design", as_number("P_ref") / as_number("design_eff") * as_number("solarm"));
+        assign("q_design", q_dot_rec_des);  //[MWt]
 
         // Set up "cmod_solarpilot.cpp" conversions as necessary
         assign("helio_optical_error", (ssc_number_t)(as_number("helio_optical_error_mrad")*1.E-3));
 
         // Set 'n_flux_x' and 'n_flux_y' here, for now
         assign("n_flux_y", 1);
-        int n_rec_panels = as_integer("N_panels");
-        assign("n_flux_x", (ssc_number_t)max(12, n_rec_panels));
+
+        int rec_type = as_integer("receiver_type");
+        if (rec_type == 0) {
+            assign("rec_aspect", as_number("rec_height") / as_number("D_rec"));
+            int n_ext_rec_panels = as_integer("N_panels");
+            assign("n_flux_x", (ssc_number_t)max(12, n_ext_rec_panels));
+        }
+        else if (rec_type == 1) {
+            assign("n_flux_x", 2);  // n_flux_x represents *per panel* the number subsurfaces in x direction 
+        }
+        else {
+            throw exec_error("tcsmolten_salt", "receiver_type must be 1 (external) or 0 (cavity)");
+        }
 
         // Calculate system capacity instead of pass in
         double system_capacity = as_double("P_ref") * as_double("gross_net_conversion_factor") *1.E3;       //[kWe]
@@ -724,7 +743,6 @@ public:
 
             // receiver calculations
             double H_rec = spi.recs.front().rec_height.val;
-            double rec_aspect = spi.recs.front().rec_aspect.Val();
             double THT = spi.sf.tht.val;
 
             int nr = (int)spi.layout.heliostat_positions.size();
@@ -733,9 +751,35 @@ public:
             double A_sf = as_double("helio_height") * as_double("helio_width") * as_double("dens_mirror") * (double)nr;
 
             //update assignments for cost model
-            assign("rec_height", var_data((ssc_number_t)H_rec));
-            assign("rec_aspect", var_data((ssc_number_t)rec_aspect));
-            assign("D_rec", var_data((ssc_number_t)(H_rec / rec_aspect)));
+            if (rec_type == 0) {
+                assign("rec_height", var_data((ssc_number_t)H_rec));
+                double rec_aspect = spi.recs.front().rec_aspect.Val();
+                assign("rec_aspect", var_data((ssc_number_t)rec_aspect));
+                assign("D_rec", var_data((ssc_number_t)(H_rec / rec_aspect)));
+            }
+            else if (rec_type == 1) {
+
+                // copied from cmod_solarpilot, would be nice to consolidate there
+                double cav_rec_height_spout, cav_radius_spout, f_offset_spout;
+                cav_rec_height_spout = cav_radius_spout = f_offset_spout = std::numeric_limits<double>::quiet_NaN();
+                int n_panels_spout = -1;
+
+                cav_rec_height_spout = spi.recs.front().rec_height.val;   //[m]
+                cav_radius_spout = spi.recs.front().rec_cav_rad.val;      //[m]
+                f_offset_spout = spi.recs.front().rec_cav_cdepth.val;       //[-]
+                n_panels_spout = spi.recs.front().n_panels.val;           //[-]
+
+                double theta0_calc, panelSpan_calc, panel_width_calc, rec_area_calc, rec_width_calc,
+                    rec_span_calc, offset_calc;
+
+                cavity_receiver_helpers::calc_receiver_macro_geometry_sp_inputs(cav_rec_height_spout, cav_radius_spout,
+                    f_offset_spout, n_panels_spout,
+                    theta0_calc, panelSpan_calc, panel_width_calc,
+                    rec_area_calc, rec_width_calc, rec_span_calc, offset_calc);
+
+                assign("cav_rec_width", (ssc_number_t)rec_width_calc);      //[m]
+                assign("cav_rec_height", (ssc_number_t)H_rec);  //[m]
+            }
             assign("h_tower", var_data((ssc_number_t)THT));
             assign("A_sf", var_data((ssc_number_t)A_sf));
 
@@ -767,25 +811,76 @@ public:
                 throw exec_error("solarpilot", "failed to calculate a correct optical efficiency table");
 
             //collect the flux map data
-            block_t<double> *flux_data = &spi.fluxtab.flux_surfaces.front().flux_data;  //there should be only one flux stack for SAM
+            block_t<double>* flux_data = &spi.fluxtab.flux_surfaces.front().flux_data;  //there should be only one flux stack for SAM
             if (flux_data->ncols() > 0 && flux_data->nlayers() > 0)
             {
+                if (rec_type == 0) {
 
-                int nflux_y = (int)flux_data->nrows();
-                int nflux_x = (int)flux_data->ncols();
+                    int nflux_y = (int)flux_data->nrows();
+                    int nflux_x = (int)flux_data->ncols();
 
-                mt_flux_maps.resize(nflux_y * flux_data->nlayers(), nflux_x);
-                int cur_row = 0;
+                    mt_flux_maps.resize(nflux_y * flux_data->nlayers(), nflux_x);
 
-                for (size_t i = 0; i<flux_data->nlayers(); i++)
-                {
-                    for (int j = 0; j<nflux_y; j++)
+                    int cur_row = 0;
+
+                    for (size_t i = 0; i < flux_data->nlayers(); i++)
                     {
-                        for (int k = 0; k<nflux_x; k++)
+                        for (int j = 0; j < nflux_y; j++)
                         {
-                            mt_flux_maps(cur_row, k) = flux_data->at(j, k, i);
-                            //fluxdata[cur_row * nflux_x + k] = (float)flux_data->at(j, k, i);
+                            for (int k = 0; k < nflux_x; k++)
+                            {
+                                mt_flux_maps(cur_row, k) = flux_data->at(j, k, i);
+                                //fluxdata[cur_row * nflux_x + k] = (float)flux_data->at(j, k, i);
+                            }
+                            cur_row++;
                         }
+                    }
+                }
+                else if (rec_type == 1) {
+
+                    int nflux_y = (int)flux_data->nrows();
+                    int nflux_x = (int)flux_data->ncols();
+
+                    int n_panels_cav = as_integer("n_cav_rec_panels");  //[-]
+                    int n_sp_surfaces = spi.fluxtab.flux_surfaces.size();
+                    int n_panels_cav_sp = n_sp_surfaces - 1;
+
+                    if (nflux_y > 1) {
+                        throw exec_error("solarpilot", "cavity flux maps currently only work for nflux_y = 1");
+                    }
+
+                    mt_flux_maps.resize(nflux_y * flux_data->nlayers(), n_panels_cav_sp);
+
+                    int cur_row = 0;
+
+                    // nlayers is number of solar positions (i.e. flux maps)
+                    for (size_t i = 0; i < flux_data->nlayers(); i++) {
+
+                        int j = 0;
+
+                        double flux_receiver = 0.0;
+
+                        // Start at k=1 because the first surface in flux_surfaces is the aperture, which we don't want
+                        for (int k = 1; k <= n_panels_cav_sp; k++) {
+
+                            block_t<double>* flux_data = &spi.fluxtab.flux_surfaces[k].flux_data; //.front().flux_data;  //there should be only one flux stack for SAM
+
+                            double flux_local = 0.0;
+                            for (int l = 0; l < nflux_x; l++) {
+                                //double flux_local0 = flux_data->at(j, 0, i);
+                                //double flux_local1 = flux_data->at(j, 1, i);
+                                //double flux_local2 = flux_data->at(j, 2, i);
+                                //double flux_local3 = flux_data->at(j, 3, i);
+
+                                flux_local += flux_data->at(j, l, i);
+                            }
+
+                            // Adjust k to start flux maps with first receiver surface
+                            mt_flux_maps(cur_row, k - 1) = flux_local;
+                            flux_receiver += flux_local;
+                            double abc = 1.23;
+                        }
+
                         cur_row++;
                     }
                 }
@@ -799,11 +894,39 @@ public:
             util::matrix_t<double> helio_pos_temp = as_matrix("helio_positions");
             size_t n_h_rows = helio_pos_temp.nrows();
             ssc_number_t *p_helio_positions_in = allocate("helio_positions_in", n_h_rows, 2);
+
+            // Try to determine whether heliostat positions represent surround or cavity field
+            double y_h_min = 1.E5;
+            double y_h_max = -1.E5;
             for (size_t i = 0; i < n_h_rows; i++)
             {
-                p_helio_positions_in[i * 2] = (ssc_number_t)helio_pos_temp(i, 0);
-                p_helio_positions_in[i * 2 + 1] = (ssc_number_t)helio_pos_temp(i, 1);
+                p_helio_positions_in[i * 2] = (ssc_number_t)helio_pos_temp(i, 0);       //[m] x
+                p_helio_positions_in[i * 2 + 1] = (ssc_number_t)helio_pos_temp(i, 1);   //[m] y
+
+                y_h_min = min(y_h_min, p_helio_positions_in[i*2+1]);
+                y_h_max = max(y_h_max, p_helio_positions_in[i*2+1]);
             }
+
+            bool is_cavity_field = false;
+            if ((y_h_max - y_h_min) / max(abs(y_h_max), abs(y_h_min)) < 1.25 ) {
+                is_cavity_field = true;
+            }
+
+            // Check determined field type against user-specified receiver type
+            if (is_cavity_field && rec_type == 0) {
+                throw exec_error("mspt compute module", "\nExternal receiver specified, but cavity field detected. Try one of the following options:\n"
+                    "1) Run field layout macro on Heliostat Field page\n"
+                    "2) Select option for simulation to layout field and tower/receiver design\n"
+                    "3) Enter new heliostat positions\n");
+            }
+
+            if (!is_cavity_field && rec_type == 1) {
+                throw exec_error("mspt compute module", "\nCavity receiver specified, but surround field detected. Try one of the following options:\n"
+                    "1) Run field layout macro on Heliostat Field page\n"
+                    "2) Select option for simulation to layout field and tower/receiver design\n"
+                    "3) Enter new heliostat positions\n");
+            }
+
             assign("N_hel", (ssc_number_t)n_h_rows);
             // 'calc_fluxmaps' should be true
             assign("calc_fluxmaps", 1);
@@ -831,23 +954,68 @@ public:
             block_t<double> *flux_data = &spi.fluxtab.flux_surfaces.front().flux_data;  //there should be only one flux stack for SAM
             if (flux_data->ncols() > 0 && flux_data->nlayers() > 0)
             {
+                if (rec_type == 0) {
 
-                int nflux_y = (int)flux_data->nrows();
-                int nflux_x = (int)flux_data->ncols();
+                    int nflux_y = (int)flux_data->nrows();
+                    int nflux_x = (int)flux_data->ncols();
 
-                mt_flux_maps.resize(nflux_y * flux_data->nlayers(), nflux_x);
+                    mt_flux_maps.resize(nflux_y * flux_data->nlayers(), nflux_x);
 
-                int cur_row = 0;
+                    int cur_row = 0;
 
-                for (size_t i = 0; i<flux_data->nlayers(); i++)
-                {
-                    for (int j = 0; j<nflux_y; j++)
+                    for (size_t i = 0; i < flux_data->nlayers(); i++)
                     {
-                        for (int k = 0; k<nflux_x; k++)
+                        for (int j = 0; j < nflux_y; j++)
                         {
-                            mt_flux_maps(cur_row, k) = flux_data->at(j, k, i);
-                            //fluxdata[cur_row * nflux_x + k] = (float)flux_data->at(j, k, i);
+                            for (int k = 0; k < nflux_x; k++)
+                            {
+                                mt_flux_maps(cur_row, k) = flux_data->at(j, k, i);
+                                //fluxdata[cur_row * nflux_x + k] = (float)flux_data->at(j, k, i);
+                            }
+                            cur_row++;
                         }
+                    }
+                }
+                else if (rec_type == 1) {
+
+                    int nflux_y = (int)flux_data->nrows();
+                    int nflux_x = (int)flux_data->ncols();
+
+                    int n_panels_cav = as_integer("n_cav_rec_panels"); //[-]
+                    int n_sp_surfaces = spi.fluxtab.flux_surfaces.size();
+                    int n_panels_cav_sp = n_sp_surfaces - 1;
+
+                    if (nflux_y > 1) {
+                        throw exec_error("solarpilot", "cavity flux maps currently only work for nflux_y = 1");
+                    }
+
+                    mt_flux_maps.resize(nflux_y* flux_data->nlayers(), n_panels_cav_sp);
+
+                    int cur_row = 0;
+
+                    // nlayers is number of solar positions (i.e. flux maps)
+                    for (size_t i = 0; i < flux_data->nlayers(); i++) {
+
+                        int j = 0;
+
+                        double flux_receiver = 0.0;
+
+                        // Start at k=1 because the first surface in flux_surfaces is the aperture, which we don't want
+                        for (int k = 1; k <= n_panels_cav_sp; k++) {
+
+                            block_t<double>* flux_data = &spi.fluxtab.flux_surfaces[k].flux_data; //.front().flux_data;  //there should be only one flux stack for SAM
+
+                            double flux_local = 0.0;
+                            for (int l = 0; l < nflux_x; l++) {
+                                flux_local += flux_data->at(j, l, i);
+                            }
+
+                            // Adjust k to start flux maps with first receiver surface
+                            mt_flux_maps(cur_row, k-1) = flux_local;
+                            flux_receiver += flux_local;
+                        }
+                        // flux_receiver should equal 1 after each panel is added
+
                         cur_row++;
                     }
                 }
@@ -1070,7 +1238,12 @@ public:
         heliostatfield.ms_params.m_p_track = as_double("p_track");      //[kWe] Heliostat tracking power
         heliostatfield.ms_params.m_hel_stow_deploy = as_double("hel_stow_deploy");  // N/A
         heliostatfield.ms_params.m_v_wind_max = as_double("v_wind_max");            // N/A
-        heliostatfield.ms_params.m_n_flux_x = (int) as_double("n_flux_x");      // sp match
+        if (rec_type == 0) {
+            heliostatfield.ms_params.m_n_flux_x = (int)as_double("n_flux_x");      // sp match
+        }
+        else if (rec_type == 1) {
+            heliostatfield.ms_params.m_n_flux_x = mt_flux_maps.ncols();     // for multi-surface cav receiver, these values need to match
+        }
         heliostatfield.ms_params.m_n_flux_y = (int) as_double("n_flux_y");      // sp match
 
         if (field_model_type != 3)
@@ -1118,145 +1291,198 @@ public:
         //// *********************************************************
         //// *********************************************************
         //// *********************************************************
-        double H_rec = as_double("rec_height");
-        double rec_aspect = as_double("rec_aspect");
 
-        double D_rec = H_rec / rec_aspect;
-
+        double H_rec = std::numeric_limits<double>::quiet_NaN();
+        double D_rec = std::numeric_limits<double>::quiet_NaN();
         double A_rec = std::numeric_limits<double>::quiet_NaN();
 
-        switch (rec_type)
-        {
-        case var_receiver::REC_TYPE::EXTERNAL_CYLINDRICAL:
-        {
+        // Calculate external receiver area, height, diameter here
+        // Calculate cavity receiver area and height below. Don't set diameter or aspect ratio for cavity receiver
+        if(rec_type == 0){
+            H_rec = as_double("rec_height");
+            double rec_aspect = as_double("rec_aspect");
+            D_rec = H_rec / rec_aspect;
             A_rec = H_rec * D_rec * 3.1415926;
-            break;
-        }
-        case var_receiver::REC_TYPE::FLAT_PLATE:
-            A_rec = H_rec * D_rec;
-            break;
         }
 
         std::unique_ptr<C_pt_receiver> receiver;
+        
+        if (rec_type == 1) {
 
-        if (!as_boolean("is_rec_model_trans") && !as_boolean("is_rec_startup_trans")) {
-            //std::unique_ptr<C_mspt_receiver_222> ss_receiver = std::make_unique<C_mspt_receiver_222>();   // new to C++14
-            std::unique_ptr<C_mspt_receiver_222> ss_receiver = std::unique_ptr<C_mspt_receiver_222>(new C_mspt_receiver_222());   // steady-state receiver
+            double hel_stow_deploy = as_double("hel_stow_deploy");          //[deg]
 
-            ss_receiver->m_n_panels = as_integer("N_panels");
-            ss_receiver->m_d_rec = D_rec;
-            ss_receiver->m_h_rec = H_rec;
-            ss_receiver->m_od_tube = as_double("d_tube_out");
-            ss_receiver->m_th_tube = as_double("th_tube");
-            ss_receiver->m_mat_tube = as_integer("mat_tube");
-            ss_receiver->m_field_fl = as_integer("rec_htf");
-            ss_receiver->m_field_fl_props = as_matrix("field_fl_props");
-            ss_receiver->m_flow_type = as_integer("Flow_type");
-            ss_receiver->m_crossover_shift = as_integer("crossover_shift");
-            ss_receiver->m_hl_ffact = as_double("hl_ffact");
-            ss_receiver->m_A_sf = as_double("A_sf");
-            ss_receiver->m_pipe_loss_per_m = as_double("piping_loss");                      //[Wt/m]
-            ss_receiver->m_pipe_length_add = as_double("piping_length_const");  //[m]
-            ss_receiver->m_pipe_length_mult = as_double("piping_length_mult");      //[-]
-            ss_receiver->m_n_flux_x = as_integer("n_flux_x");
-            ss_receiver->m_n_flux_y = as_integer("n_flux_y");
-            ss_receiver->m_T_salt_hot_target = as_double("T_htf_hot_des");
-            ss_receiver->m_hel_stow_deploy = as_double("hel_stow_deploy");
-            ss_receiver->m_is_iscc = false;    // Set parameters that were set with TCS defaults
-			ss_receiver->m_csky_frac = as_double("rec_clearsky_fraction");
+            double od_rec_tube = as_double("d_tube_out")*1.E-3;         //[m] convert from cmod units of mm
+            double th_rec_tube = as_double("th_tube") * 1.E-3;          //[m] convert from cmod units of mm
+            double receiverHeight = as_double("cav_rec_height");        //[m]
+            double receiverWidth = as_double("cav_rec_width");          //[m]
+            double rec_span = as_double("cav_rec_span")*CSP::pi/180.0;  //[rad] convert from cmod units of deg
 
-            receiver = std::move(ss_receiver);
+            // lips must be 0 for now due to solarpilot limitations
+            size_t nPanels = as_integer("n_cav_rec_panels");    //[-]
+            double topLipHeight = 0;        //[m] Height of top lip in meters
+            double botLipHeight = 0;        //[m] Height of bottom lip in meters
+
+            // surface radiative properties
+            double e_act_sol = as_double("rec_absorptance");        //[-] Absorptivity in short wave - active surfaces
+            double e_act_therm = as_double("epsilon");              //[-] Emissivity in long wave - active surfaces
+            double e_pass_sol = as_double("cav_rec_passive_abs");   //[-] Absorptivity in short wave (solar) - passive surfaces
+            double e_pass_therm = as_double("cav_rec_passive_eps"); //[-] Emissivity in long wave - passive surfaces
+
+            C_cavity_receiver::E_mesh_types active_surface_mesh_type = C_cavity_receiver::E_mesh_types::no_mesh;    // quad;   // no_mesh;    // quad;
+            C_cavity_receiver::E_mesh_types floor_and_cover_mesh_type = C_cavity_receiver::E_mesh_types::no_mesh;
+            C_cavity_receiver::E_mesh_types lips_mesh_type = C_cavity_receiver::E_mesh_types::no_mesh;  // quad;
+
+            // Default values to test against matlab code
+            // *************************************************************************************
+            if (false) {
+                // Method sets up, initializes, and runs the steady state model w/ inputs corresponding to matlab code
+                cavity_receiver_helpers::test_cavity_case();
+            }
+            // ***************************************************************************************
+            // ***************************************************************************************
+
+            std::unique_ptr<C_cavity_receiver> c_cav_rec = std::unique_ptr<C_cavity_receiver>(new C_cavity_receiver(as_double("dni_des"), hel_stow_deploy,
+                as_integer("rec_htf"), as_matrix("field_fl_props"),
+                od_rec_tube, th_rec_tube, as_integer("mat_tube"),
+                nPanels, receiverHeight, receiverWidth,
+                rec_span, topLipHeight, botLipHeight,
+                e_act_sol, e_pass_sol, e_act_therm, e_pass_therm,
+                active_surface_mesh_type, floor_and_cover_mesh_type, lips_mesh_type,
+                as_double("piping_loss"), as_double("piping_length_const"), as_double("piping_length_mult"),
+                as_double("A_sf"), as_double("h_tower"), as_double("T_htf_hot_des"),
+                as_double("T_htf_cold_des"), as_double("f_rec_min"), q_dot_rec_des,
+                as_double("rec_su_delay"), as_double("rec_qf_delay"), as_double("csp.pt.rec.max_oper_frac"),
+                as_double("eta_pump") ));
+
+            receiver = std::move(c_cav_rec);
+
+            // Calculate receiver area
+            double theta0, panelspan, panelwidth, radius, offset;
+            theta0 = panelspan = panelwidth = radius = offset = A_rec = std::numeric_limits<double>::quiet_NaN();
+            cavity_receiver_helpers::calc_receiver_macro_geometry(receiverHeight, receiverWidth,
+                                            rec_span, nPanels,
+                                            theta0, panelspan, panelwidth, A_rec, radius, offset );
+
+            H_rec = receiverHeight;     //[m]
         }
-        else {
-            //std::unique_ptr<C_mspt_receiver> trans_receiver = std::make_unique<C_mspt_receiver>();    // new to C++14
-            std::unique_ptr<C_mspt_receiver> trans_receiver = std::unique_ptr<C_mspt_receiver>(new C_mspt_receiver());    // transient receiver
+        else if (rec_type == 0){
+            if (!as_boolean("is_rec_model_trans") && !as_boolean("is_rec_startup_trans")) {
+                //std::unique_ptr<C_mspt_receiver_222> ss_receiver = std::make_unique<C_mspt_receiver_222>();   // new to C++14
+                std::unique_ptr<C_mspt_receiver_222> ss_receiver = std::unique_ptr<C_mspt_receiver_222>(new C_mspt_receiver_222());   // steady-state receiver
 
-            trans_receiver->m_n_panels = as_integer("N_panels");
-            trans_receiver->m_d_rec = D_rec;
-            trans_receiver->m_h_rec = H_rec;
-            trans_receiver->m_od_tube = as_double("d_tube_out");
-            trans_receiver->m_th_tube = as_double("th_tube");
-            trans_receiver->m_mat_tube = as_integer("mat_tube");
-            trans_receiver->m_field_fl = as_integer("rec_htf");
-            trans_receiver->m_field_fl_props = as_matrix("field_fl_props");
-            trans_receiver->m_flow_type = as_integer("Flow_type");
-            trans_receiver->m_crossover_shift = as_integer("crossover_shift");
-            trans_receiver->m_hl_ffact = as_double("hl_ffact");
-            trans_receiver->m_A_sf = as_double("A_sf");
-            trans_receiver->m_pipe_loss_per_m = as_double("piping_loss");                       //[Wt/m]
-            trans_receiver->m_pipe_length_add = as_double("piping_length_const");   //[m]
-            trans_receiver->m_pipe_length_mult = as_double("piping_length_mult");       //[-]
-            trans_receiver->m_n_flux_x = as_integer("n_flux_x");
-            trans_receiver->m_n_flux_y = as_integer("n_flux_y");
-            trans_receiver->m_T_salt_hot_target = as_double("T_htf_hot_des");
-            trans_receiver->m_hel_stow_deploy = as_double("hel_stow_deploy");
-            trans_receiver->m_is_iscc = false;    // Set parameters that were set with TCS defaults
-			trans_receiver->m_csky_frac = as_double("rec_clearsky_fraction");
+                ss_receiver->m_n_panels = as_integer("N_panels");
+                ss_receiver->m_d_rec = D_rec;
+                ss_receiver->m_h_rec = H_rec;
+                ss_receiver->m_od_tube = as_double("d_tube_out");
+                ss_receiver->m_th_tube = as_double("th_tube");
+                ss_receiver->m_mat_tube = as_integer("mat_tube");
+                ss_receiver->m_field_fl = as_integer("rec_htf");
+                ss_receiver->m_field_fl_props = as_matrix("field_fl_props");
+                ss_receiver->m_flow_type = as_integer("Flow_type");
+                ss_receiver->m_crossover_shift = as_integer("crossover_shift");
+                ss_receiver->m_hl_ffact = as_double("hl_ffact");
+                ss_receiver->m_A_sf = as_double("A_sf");
+                ss_receiver->m_pipe_loss_per_m = as_double("piping_loss");                      //[Wt/m]
+                ss_receiver->m_pipe_length_add = as_double("piping_length_const");  //[m]
+                ss_receiver->m_pipe_length_mult = as_double("piping_length_mult");      //[-]
+                ss_receiver->m_n_flux_x = as_integer("n_flux_x");
+                ss_receiver->m_n_flux_y = as_integer("n_flux_y");
+                ss_receiver->m_T_salt_hot_target = as_double("T_htf_hot_des");
+                ss_receiver->m_hel_stow_deploy = as_double("hel_stow_deploy");
+                ss_receiver->m_is_iscc = false;    // Set parameters that were set with TCS defaults
+                ss_receiver->m_csky_frac = as_double("rec_clearsky_fraction");
+
+                receiver = std::move(ss_receiver);
+            }
+            else {
+                //std::unique_ptr<C_mspt_receiver> trans_receiver = std::make_unique<C_mspt_receiver>();    // new to C++14
+                std::unique_ptr<C_mspt_receiver> trans_receiver = std::unique_ptr<C_mspt_receiver>(new C_mspt_receiver());    // transient receiver
+
+                trans_receiver->m_n_panels = as_integer("N_panels");
+                trans_receiver->m_d_rec = D_rec;
+                trans_receiver->m_h_rec = H_rec;
+                trans_receiver->m_od_tube = as_double("d_tube_out");
+                trans_receiver->m_th_tube = as_double("th_tube");
+                trans_receiver->m_mat_tube = as_integer("mat_tube");
+                trans_receiver->m_field_fl = as_integer("rec_htf");
+                trans_receiver->m_field_fl_props = as_matrix("field_fl_props");
+                trans_receiver->m_flow_type = as_integer("Flow_type");
+                trans_receiver->m_crossover_shift = as_integer("crossover_shift");
+                trans_receiver->m_hl_ffact = as_double("hl_ffact");
+                trans_receiver->m_A_sf = as_double("A_sf");
+                trans_receiver->m_pipe_loss_per_m = as_double("piping_loss");                       //[Wt/m]
+                trans_receiver->m_pipe_length_add = as_double("piping_length_const");   //[m]
+                trans_receiver->m_pipe_length_mult = as_double("piping_length_mult");       //[-]
+                trans_receiver->m_n_flux_x = as_integer("n_flux_x");
+                trans_receiver->m_n_flux_y = as_integer("n_flux_y");
+                trans_receiver->m_T_salt_hot_target = as_double("T_htf_hot_des");
+                trans_receiver->m_hel_stow_deploy = as_double("hel_stow_deploy");
+                trans_receiver->m_is_iscc = false;    // Set parameters that were set with TCS defaults
+                trans_receiver->m_csky_frac = as_double("rec_clearsky_fraction");
 
 
-            // Inputs for transient receiver model
-            trans_receiver->m_is_transient = as_boolean("is_rec_model_trans");
-            trans_receiver->m_is_startup_transient = as_boolean("is_rec_startup_trans");
-            trans_receiver->m_u_riser = as_double("u_riser");                       //[m/s]
-            trans_receiver->m_th_riser = as_double("th_riser");                 //[mm]
-            trans_receiver->m_rec_tm_mult = as_double("rec_tm_mult");
-            trans_receiver->m_riser_tm_mult = as_double("riser_tm_mult");
-            trans_receiver->m_downc_tm_mult = as_double("downc_tm_mult");
-            trans_receiver->m_heat_trace_power = as_double("heat_trace_power");		//[kW/m]
-            trans_receiver->m_tube_flux_preheat = as_double("preheat_flux");        //[kW/m2]
-			trans_receiver->m_min_preheat_time = as_double("min_preheat_time");		//[hr]
-			trans_receiver->m_fill_time = as_double("min_fill_time");				//[hr]
-            trans_receiver->m_flux_ramp_time = as_double("startup_ramp_time");      //[hr]
-			trans_receiver->m_preheat_target = as_double("T_htf_cold_des");
-			trans_receiver->m_startup_target_delta = min(0.0, as_double("startup_target_Tdiff"));  
-            trans_receiver->m_initial_temperature = 5.0; //[C]
+                // Inputs for transient receiver model
+                trans_receiver->m_is_transient = as_boolean("is_rec_model_trans");
+                trans_receiver->m_is_startup_transient = as_boolean("is_rec_startup_trans");
+                trans_receiver->m_u_riser = as_double("u_riser");                       //[m/s]
+                trans_receiver->m_th_riser = as_double("th_riser");                 //[mm]
+                trans_receiver->m_rec_tm_mult = as_double("rec_tm_mult");
+                trans_receiver->m_riser_tm_mult = as_double("riser_tm_mult");
+                trans_receiver->m_downc_tm_mult = as_double("downc_tm_mult");
+                trans_receiver->m_heat_trace_power = as_double("heat_trace_power");		//[kW/m]
+                trans_receiver->m_tube_flux_preheat = as_double("preheat_flux");        //[kW/m2]
+                trans_receiver->m_min_preheat_time = as_double("min_preheat_time");		//[hr]
+                trans_receiver->m_fill_time = as_double("min_fill_time");				//[hr]
+                trans_receiver->m_flux_ramp_time = as_double("startup_ramp_time");      //[hr]
+                trans_receiver->m_preheat_target = as_double("T_htf_cold_des");
+                trans_receiver->m_startup_target_delta = min(0.0, as_double("startup_target_Tdiff"));
+                trans_receiver->m_initial_temperature = 5.0; //[C]
 
-            trans_receiver->m_is_startup_from_solved_profile = as_boolean("is_rec_startup_from_T_soln");
-            if (!trans_receiver->m_is_startup_transient && trans_receiver->m_is_startup_from_solved_profile)
-                throw exec_error("tcsmolten_salt", "Receiver startup from solved temperature profiles is only available when receiver transient startup model is enabled");
+                trans_receiver->m_is_startup_from_solved_profile = as_boolean("is_rec_startup_from_T_soln");
+                if (!trans_receiver->m_is_startup_transient && trans_receiver->m_is_startup_from_solved_profile)
+                    throw exec_error("tcsmolten_salt", "Receiver startup from solved temperature profiles is only available when receiver transient startup model is enabled");
 
-            trans_receiver->m_is_enforce_min_startup = as_boolean("is_rec_enforce_min_startup");
-            if (as_boolean("is_rec_startup_trans") && !trans_receiver->m_is_startup_from_solved_profile && !trans_receiver->m_is_enforce_min_startup)
-            {
-                log("Both 'is_rec_enforce_min_startup' and 'is_rec_startup_from_T_soln' were set to 'false'. Minimum startup time will always be enforced unless 'is_rec_startup_from_T_soln' is set to 'true'", SSC_WARNING);
-                trans_receiver->m_is_enforce_min_startup = 1;
+                trans_receiver->m_is_enforce_min_startup = as_boolean("is_rec_enforce_min_startup");
+                if (as_boolean("is_rec_startup_trans") && !trans_receiver->m_is_startup_from_solved_profile && !trans_receiver->m_is_enforce_min_startup)
+                {
+                    log("Both 'is_rec_enforce_min_startup' and 'is_rec_startup_from_T_soln' were set to 'false'. Minimum startup time will always be enforced unless 'is_rec_startup_from_T_soln' is set to 'true'", SSC_WARNING);
+                    trans_receiver->m_is_enforce_min_startup = 1;
+                }
+
+                receiver = std::move(trans_receiver);
             }
 
-            receiver = std::move(trans_receiver);
-        }
-        //steady-state or transient receiver;
-        receiver->m_h_tower = as_double("h_tower");
-        receiver->m_epsilon = as_double("epsilon");
-        receiver->m_T_htf_hot_des = as_double("T_htf_hot_des");             //[C]
-        receiver->m_T_htf_cold_des = as_double("T_htf_cold_des");           //[C]
-        receiver->m_f_rec_min = as_double("f_rec_min");
-        receiver->m_q_rec_des = as_double("P_ref")/as_double("design_eff")*as_double("solarm");
-        receiver->m_rec_su_delay = as_double("rec_su_delay");
-        receiver->m_rec_qf_delay = as_double("rec_qf_delay");
-        receiver->m_m_dot_htf_max_frac = as_double("csp.pt.rec.max_oper_frac");
-        receiver->m_eta_pump = as_double("eta_pump");
-        receiver->m_night_recirc = 0;
+            // Parent class member data
+            receiver->m_h_tower = as_double("h_tower");                 //[m]
+            receiver->m_epsilon = as_double("epsilon");                 //[-]
+            receiver->m_T_htf_hot_des = as_double("T_htf_hot_des");     //[C]
+            receiver->m_T_htf_cold_des = as_double("T_htf_cold_des");   //[C]
+            receiver->m_f_rec_min = as_double("f_rec_min");             //[-]
+            receiver->m_q_rec_des = q_dot_rec_des;                      //[MWt] 
+            receiver->m_rec_su_delay = as_double("rec_su_delay");
+            receiver->m_rec_qf_delay = as_double("rec_qf_delay");
+            receiver->m_m_dot_htf_max_frac = as_double("csp.pt.rec.max_oper_frac");
+            receiver->m_eta_pump = as_double("eta_pump");
+            receiver->m_night_recirc = 0;
 
-		receiver->m_clearsky_model = as_integer("rec_clearsky_model");
-        if (receiver->m_clearsky_model > 4)
-            throw exec_error("tcsmolten_salt", "Invalid specification for 'rec_clearsky_model'");
-		if (receiver->m_clearsky_model == -1 && as_double("rec_clearsky_fraction")>=0.0001)
-			throw exec_error("tcsmolten_salt", "'rec_clearsky_model' must be specified when 'rec_clearsky_fraction' > 0.0.");
+            receiver->m_clearsky_model = as_integer("rec_clearsky_model");
+            if (receiver->m_clearsky_model > 4)
+                throw exec_error("tcsmolten_salt", "Invalid specification for 'rec_clearsky_model'");
+            if (receiver->m_clearsky_model == -1 && as_double("rec_clearsky_fraction") >= 0.0001)
+                throw exec_error("tcsmolten_salt", "'rec_clearsky_model' must be specified when 'rec_clearsky_fraction' > 0.0.");
 
-		if (receiver->m_clearsky_model == 0)
-		{
-			size_t n_csky = 0;
-			ssc_number_t* csky = as_array("rec_clearsky_dni", &n_csky);
-			if (n_csky != n_steps_full)
-				throw exec_error("tcsmolten_salt", "Invalid clear-sky DNI data. Array must have " + util::to_string((int)n_steps_full) + " rows.");
+            if (receiver->m_clearsky_model == 0)
+            {
+                size_t n_csky = 0;
+                ssc_number_t* csky = as_array("rec_clearsky_dni", &n_csky);
+                if (n_csky != n_steps_full)
+                    throw exec_error("tcsmolten_salt", "Invalid clear-sky DNI data. Array must have " + util::to_string((int)n_steps_full) + " rows.");
 
-			receiver->m_clearsky_data.resize(n_steps_full);
-			for (size_t i = 0; i < n_steps_full; i++)
-				receiver->m_clearsky_data.at(i) = (double)csky[i];
-		}
-
-
-        // Could add optional ISCC stuff...
+                receiver->m_clearsky_data.resize(n_steps_full);
+                for (size_t i = 0; i < n_steps_full; i++)
+                    receiver->m_clearsky_data.at(i) = (double)csky[i];
+            }
+        }        
 
         // Test mspt_receiver initialization
         //receiver.init();
@@ -2005,10 +2231,9 @@ public:
             log("The number of rows in the field efficiency and receiver flux map matrices are not equal. This is unexpected, and the flux maps may be inaccurate.");
         }
 
+        // [W/m2 * m2 / (m2_per_panel?)]
         double flux_scaling_mult = as_double("dni_des")*heliostatfield.ms_params.m_A_sf / 1000.0 /
-            (CSP::pi*H_rec*
-            H_rec / rec_aspect /
-            double(heliostatfield.ms_params.m_n_flux_x));
+            (A_rec / double(heliostatfield.ms_params.m_n_flux_x));
 
         for( size_t i = 0; i < n_rows_eta_map; i++ )
         {
@@ -2089,6 +2314,11 @@ public:
         if (p_electric_resistance != NULL) {
             delete p_electric_resistance;
         }
+
+        std::clock_t clock_end = std::clock();
+        double sim_cpu_run_time = (clock_end - clock_start) / (double)CLOCKS_PER_SEC;		//[s]
+        assign("sim_cpu_run_time", sim_cpu_run_time);   //[s]
+
     }
 };
 
