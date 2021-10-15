@@ -447,6 +447,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 	{
 		dispatch.copy_weather_data(mc_weather);
 		dispatch.params.col_rec = &mc_collector_receiver;
+        dispatch.params.tes = &mc_tes;
 		dispatch.params.mpc_pc = &mc_power_cycle;
 		dispatch.params.siminfo = &mc_kernel.mc_sim_info;
 		dispatch.params.messages = &mc_csp_messages;
