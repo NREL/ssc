@@ -52,6 +52,8 @@ csp_dispatch_opt::csp_dispatch_opt()
 
 void csp_dispatch_opt::init(double cycle_q_dot_des, double cycle_eta_des)
 {
+    set_default_solver_parameters();
+
     params.clear();
 
     params.dt = 1. / (double)solver_params.steps_per_hour;  //hr
@@ -85,6 +87,50 @@ void csp_dispatch_opt::init(double cycle_q_dot_des, double cycle_eta_des)
 
     params.eff_table_load.init_linear_cycle_efficiency_table(params.q_pb_min, params.q_pb_max, params.q_pb_des, pointers.mpc_pc);
     params.eff_table_Tdb.init_efficiency_ambient_temp_table(params.eta_pb_des, w_pb_des, pointers.mpc_pc, &params.wcondcoef_table_Tdb);
+
+}
+
+void csp_dispatch_opt::set_default_solver_parameters()
+{
+    /*
+    The presolve options have been tested and show that the optimal combination of options is as set below.
+
+    Optimality was measured by observing the number of constraints + number of variables that resulted an an
+    annual-averaged basis from each combination.
+    */
+
+    /*
+    From the genetic algorithm:
+
+    Presolve        512
+    Branch&Bound    0 32 64 128 256 1024
+    Scaling         7 16 32 64 128
+
+
+    ----- keep a record of what's been tried historically for each setting ----
+
+    >>> set_presolve
+        PRESOLVE_ROWS + PRESOLVE_COLS + PRESOLVE_REDUCEMIP + PRESOLVE_ELIMEQ2 :: original from 2015
+        PRESOLVE_ROWS + PRESOLVE_COLS + PRESOLVE_ELIMEQ2 + PRESOLVE_PROBEFIX :: version used as of 12/5/2016
+        PRESOLVE_IMPLIEDFREE :: genetic algorithm from 2015
+
+    >> set_bb_rule
+        -- combos set for older problem formulation, appropriate as of mid-2015
+        NODE_PSEUDOCOSTSELECT + NODE_RCOSTFIXING :: original
+        NODE_PSEUDORATIOSELECT + NODE_BREADTHFIRSTMODE :: original v2
+        NODE_PSEUDONONINTSELECT + NODE_GREEDYMODE + NODE_DYNAMICMODE + NODE_RCOSTFIXING :: 5m30s, 10.24c
+        NODE_PSEUDOCOSTSELECT + NODE_RANDOMIZEMODE + NODE_RCOSTFIXING :: 5m20s, 10.17c
+        NODE_GREEDYMODE + NODE_PSEUDOCOSTMODE + NODE_DEPTHFIRSTMODE + NODE_RANDOMIZEMODE + NODE_DYNAMICMODE :: optimal from genetic algorithm
+        NODE_PSEUDOCOSTSELECT + NODE_RANDOMIZEMODE :: optimal from independent optimization, THIS VERSION CURRENT AS OF 12/5/2016
+    */
+    // If user did not set solver parameters, set defaults specific to CSP dispatch model
+    if (solver_params.presolve_type < 0)
+        solver_params.presolve_type = PRESOLVE_ROWS + PRESOLVE_COLS + PRESOLVE_ELIMEQ2 + PRESOLVE_PROBEFIX;
+    if (solver_params.bb_type < 0)
+        solver_params.bb_type = NODE_PSEUDOCOSTSELECT + NODE_DYNAMICMODE;
+    if (solver_params.scaling_type < 0)
+        solver_params.scaling_type = SCALE_MEAN + SCALE_LOGARITHMIC + SCALE_POWER2 + SCALE_EQUILIBRATE + SCALE_INTEGERS;
+    //SCALE_CURTISREID + SCALE_LOGARITHMIC + SCALE_POWER2 + SCALE_EQUILIBRATE + SCALE_INTEGERS   //genetic algorithm
 }
 
 bool csp_dispatch_opt::check_setup(int nstep)

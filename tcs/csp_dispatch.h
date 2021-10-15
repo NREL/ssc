@@ -198,6 +198,9 @@ public:
 
     void init(double cycle_q_dot_des, double cycle_eta_des);
 
+    // Set default solver parameters if user did not set them
+    void set_default_solver_parameters();
+
     //check parameters and inputs to make sure everything has been set up correctly
     bool check_setup(int nstep);
 

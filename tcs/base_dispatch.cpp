@@ -51,6 +51,11 @@ void base_dispatch_opt::init(double cycle_q_dot_des, double cycle_eta_des)
     not_implemented_function((std::string)__func__);
 }
 
+void base_dispatch_opt::set_default_solver_parameters()
+{
+    not_implemented_function((std::string)__func__);
+}
+
 bool base_dispatch_opt::check_setup()
 {
     //check parameters and inputs to make sure everything has been set up correctly
@@ -201,44 +206,7 @@ void base_dispatch_opt::setup_solver_presolve_bbrules(lprec* lp)
         set_verbose(lp, 0);
     }
 
-    /*
-    The presolve options have been tested and show that the optimal combination of options is as set below.
-
-    Optimality was measured by observing the number of constraints + number of variables that resulted an an
-    annual-averaged basis from each combination.
-    */
-
-    /*
-    From the genetic algorithm:
-
-    Presolve        512
-    Branch&Bound    0 32 64 128 256 1024
-    Scaling         7 16 32 64 128
-
-
-    ----- keep a record of what's been tried historically for each setting ----
-
-    >>> set_presolve
-        PRESOLVE_ROWS + PRESOLVE_COLS + PRESOLVE_REDUCEMIP + PRESOLVE_ELIMEQ2 :: original from 2015
-        PRESOLVE_ROWS + PRESOLVE_COLS + PRESOLVE_ELIMEQ2 + PRESOLVE_PROBEFIX :: version used as of 12/5/2016
-        PRESOLVE_IMPLIEDFREE :: genetic algorithm from 2015
-
-    >> set_bb_rule
-        -- combos set for older problem formulation, appropriate as of mid-2015
-        NODE_PSEUDOCOSTSELECT + NODE_RCOSTFIXING :: original
-        NODE_PSEUDORATIOSELECT + NODE_BREADTHFIRSTMODE :: original v2
-        NODE_PSEUDONONINTSELECT + NODE_GREEDYMODE + NODE_DYNAMICMODE + NODE_RCOSTFIXING :: 5m30s, 10.24c
-        NODE_PSEUDOCOSTSELECT + NODE_RANDOMIZEMODE + NODE_RCOSTFIXING :: 5m20s, 10.17c
-        NODE_GREEDYMODE + NODE_PSEUDOCOSTMODE + NODE_DEPTHFIRSTMODE + NODE_RANDOMIZEMODE + NODE_DYNAMICMODE :: optimal from genetic algorithm
-        NODE_PSEUDOCOSTSELECT + NODE_RANDOMIZEMODE :: optimal from independent optimization, THIS VERSION CURRENT AS OF 12/5/2016
-    */
-
-    //presolve
-    if (solver_params.presolve_type > 0)
-        set_presolve(lp, solver_params.presolve_type, get_presolveloops(lp));
-    else
-        set_presolve(lp, PRESOLVE_ROWS + PRESOLVE_COLS + PRESOLVE_ELIMEQ2 + PRESOLVE_PROBEFIX, get_presolveloops(lp));   //independent optimization
-
+    set_presolve(lp, solver_params.presolve_type, get_presolveloops(lp));
     set_mip_gap(lp, FALSE, solver_params.mip_gap);
     set_timeout(lp, solver_params.solution_timeout);  //max solution time
 
@@ -255,14 +223,7 @@ void base_dispatch_opt::setup_solver_presolve_bbrules(lprec* lp)
     //set_BFP(lp, "bfp_GLPK");      // GLPK LU decomposition.
 
     //branch and bound rule. This one has a big impact on solver performance.
-    if (solver_params.bb_type > 0)
-        set_bb_rule(lp, solver_params.bb_type);
-    else
-    {
-        set_bb_rule(lp, NODE_PSEUDOCOSTSELECT + NODE_DYNAMICMODE);
-        //set_bb_rule(lp, NODE_PSEUDOCOSTSELECT + NODE_AUTOORDER); // This works better for ETES dispatch
-        //set_bb_rule(lp, NODE_RCOSTFIXING + NODE_DYNAMICMODE + NODE_GREEDYMODE + NODE_PSEUDONONINTSELECT);
-    }
+    set_bb_rule(lp, solver_params.bb_type);
 }
 
 bool base_dispatch_opt::problem_scaling_solve_loop(lprec* lp)
@@ -272,12 +233,6 @@ bool base_dispatch_opt::problem_scaling_solve_loop(lprec* lp)
     bool is_opt_or_subopt = false;
     while (scaling_iter < 5)
     {
-        if (solver_params.scaling_type < 0 && scaling_iter == 0)
-        {
-            scaling_iter++;
-            continue;
-        }
-
         //Scaling algorithm
         switch (scaling_iter)
         {
@@ -285,21 +240,16 @@ bool base_dispatch_opt::problem_scaling_solve_loop(lprec* lp)
             set_scaling(lp, solver_params.scaling_type);
             break;
         case 1:
-            //set_scaling(lp, SCALE_EXTREME + SCALE_LOGARITHMIC + SCALE_POWER2 + SCALE_EQUILIBRATE + SCALE_INTEGERS + SCALE_DYNUPDATE + SCALE_ROWSONLY); //from noload run
-            set_scaling(lp, SCALE_MEAN + SCALE_LOGARITHMIC + SCALE_POWER2 + SCALE_EQUILIBRATE + SCALE_INTEGERS);   //this works really well before trying modified bb weights
-            //set_scaling(lp, SCALE_CURTISREID + SCALE_LOGARITHMIC + SCALE_POWER2 + SCALE_EQUILIBRATE + SCALE_INTEGERS );   //genetic algorithm
-            break;
-        case 2:
             set_scaling(lp, SCALE_NONE);
             break;
-        case 3:
+        case 2:
             set_scaling(lp, SCALE_CURTISREID | SCALE_LINEAR | SCALE_EQUILIBRATE | SCALE_INTEGERS);
             //set_scaling(lp, SCALE_FUTURE1); 
             break;
-        case 4:
+        case 3:
             set_scaling(lp, SCALE_CURTISREID);
             break;
-        case 5:
+        case 4:
             set_scaling(lp, SCALE_INTEGERS | SCALE_LINEAR | SCALE_GEOMETRIC | SCALE_EQUILIBRATE);  //default
             break;
         }

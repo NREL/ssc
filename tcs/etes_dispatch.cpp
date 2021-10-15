@@ -47,6 +47,8 @@ etes_dispatch_opt::etes_dispatch_opt()
 
 void etes_dispatch_opt::init(double cycle_q_dot_des, double cycle_eta_des)
 {
+    set_default_solver_parameters();
+
     params.clear();
 
     params.dt = 1. / (double)solver_params.steps_per_hour;  //hr
@@ -73,6 +75,22 @@ void etes_dispatch_opt::init(double cycle_q_dot_des, double cycle_eta_des)
 
     params.eff_table_load.init_linear_cycle_efficiency_table(params.q_pb_min, params.q_pb_max, params.q_pb_des, pointers.mpc_pc);
     params.eff_table_Tdb.init_efficiency_ambient_temp_table(params.eta_pb_des, w_pb_des, pointers.mpc_pc, &params.wcondcoef_table_Tdb);
+
+
+}
+
+void etes_dispatch_opt::set_default_solver_parameters()
+{
+    // If user did not set solver parameters, set defaults specific to ETES dispatch model
+    if (solver_params.presolve_type < 0)
+        solver_params.presolve_type = PRESOLVE_ROWS + PRESOLVE_COLS + PRESOLVE_ELIMEQ2 + PRESOLVE_PROBEFIX;
+        //PRESOLVE_SOS + PRESOLVE_LINDEP //genetic algorithm
+    if (solver_params.bb_type < 0)
+        solver_params.bb_type = NODE_PSEUDOCOSTSELECT + NODE_AUTOORDER; // This works better for ETES dispatch
+        //NODE_RCOSTFIXING + NODE_AUTOORDER + NODE_BREADTHFIRSTMODE + NODE_RESTARTMODE + NODE_DYNAMICMODE + NODE_RANDOMIZEMODE + NODE_DEPTHFIRSTMODE + NODE_PSEUDORATIOSELECT //genetic algorithm
+    if (solver_params.scaling_type < 0)
+        solver_params.scaling_type = SCALE_MEAN + SCALE_LOGARITHMIC + SCALE_POWER2 + SCALE_EQUILIBRATE + SCALE_INTEGERS;
+        // SCALE_LOGARITHMIC + SCALE_QUADRATIC + SCALE_EXTREME //genetic algorithm
 }
 
 bool etes_dispatch_opt::check_setup(int nstep)

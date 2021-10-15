@@ -62,7 +62,7 @@ struct s_solver_params
     s_solver_params();
     void set_user_inputs(bool is_dispatch, int disp_steps_per_hour, int disp_frequency, int disp_horizon,
         int disp_max_iter, double disp_mip_gap, double disp_timeout,
-        int disp_spec_presolve, int disp_spec_bb, int disp_spec_reporting, int disp_spec_scaling,
+        int disp_spec_presolve, int disp_spec_bb, int disp_spec_scaling, int disp_spec_reporting,
         bool is_write_ampl_dat_spec, bool is_ampl_engine_spec, std::string ampl_data_dir_spec, std::string ampl_exec_call_spec);
     void reset();
 };
