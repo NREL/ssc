@@ -41,6 +41,7 @@ The weather file reader is provided in SAM SIM CORE (SSC).
 class Ambient : public mod_base
  {
     var_ambient *_amb_map;
+    double _buie_kappa, _buie_gamma;    //some parameters for the Buie sunshape model
  
  public:
 
@@ -61,6 +62,8 @@ class Ambient : public mod_base
 	static double calcAttenuation(var_map &V, double &len);
 	static void calcSpacedDaysHours(double lat, double lon, double tmz, int nday, double delta_hr, std::vector<std::vector<double> > &utime, std::vector<int> &uday); //calculate days and times that produce evenly spaced sun positions over the year
 	static double calcInsolation(var_map &V, double azimuth, double zenith, int day_of_year); //calculate clear-sky radiation using one of the DELSOL models
+    
+    void calcBuieCSRIntensity(std::vector<double>& angle, std::vector<double>& intensity);   //calculate relative solar intensity over the span 0..angle_max[mrad] at npt increments, filling 'angle' and 'intesity'
 
  } ;
 

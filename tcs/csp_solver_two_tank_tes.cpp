@@ -840,7 +840,16 @@ void C_csp_two_tank_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inputs
 
 	double d_tank_temp = std::numeric_limits<double>::quiet_NaN();
 	double q_dot_loss_temp = std::numeric_limits<double>::quiet_NaN();
-	two_tank_tes_sizing(mc_store_htfProps, Q_tes_des, ms_params.m_T_field_out_des, ms_params.m_T_field_in_des,
+    double T_tes_hot_des, T_tes_cold_des;
+    if (m_is_hx) {
+        T_tes_hot_des = ms_params.m_T_field_out_des - ms_params.m_dt_hot;
+        T_tes_cold_des = ms_params.m_T_field_in_des + ms_params.m_dt_hot;
+    }
+    else {
+        T_tes_hot_des = ms_params.m_T_field_out_des;
+        T_tes_cold_des = ms_params.m_T_field_in_des;
+    }
+	two_tank_tes_sizing(mc_store_htfProps, Q_tes_des, T_tes_hot_des, T_tes_cold_des,
 		ms_params.m_h_tank_min, ms_params.m_h_tank, ms_params.m_tank_pairs, ms_params.m_u_tank,
 		m_V_tank_active, m_vol_tank, d_tank_temp, q_dot_loss_temp);
 
@@ -858,13 +867,13 @@ void C_csp_two_tank_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inputs
 	// Calculate initial storage values
 
 	// Initial storage charge based on % mass 
-	double T_tes_ave = 0.5*(ms_params.m_T_field_out_des + ms_params.m_T_field_in_des);
+	double T_tes_ave = 0.5*(T_tes_hot_des + T_tes_cold_des);
 	double cp_ave = mc_store_htfProps.Cp(T_tes_ave);				//[kJ/kg-K] Specific heat at average temperature
-	m_mass_total_active = Q_tes_des*3600.0 / (cp_ave / 1000.0 * (ms_params.m_T_field_out_des - ms_params.m_T_field_in_des));  //[kg] Total HTF mass at design point inlet/outlet T
+	m_mass_total_active = Q_tes_des*3600.0 / (cp_ave / 1000.0 * (T_tes_hot_des - T_tes_cold_des));  //[kg] Total HTF mass at design point inlet/outlet T
 	double V_inactive = m_vol_tank - m_V_tank_active;
 
-    double rho_hot_des = mc_store_htfProps.dens(ms_params.m_T_field_out_des, 1.0);
-    double rho_cold_des = mc_store_htfProps.dens(ms_params.m_T_field_in_des, 1.0);
+    double rho_hot_des = mc_store_htfProps.dens(T_tes_hot_des, 1.0);
+    double rho_cold_des = mc_store_htfProps.dens(T_tes_cold_des, 1.0);
     double rho_hot = mc_store_htfProps.dens(ms_params.m_T_tank_hot_ini, 1.0);
     double rho_cold = mc_store_htfProps.dens(ms_params.m_T_tank_cold_ini, 1.0);
     double m_hot_ini = ms_params.m_f_V_hot_ini * 0.01 * m_mass_total_active + V_inactive * rho_hot_des;  // Updating intiial storage charge calculation to avoid variation in total mass with specified initial T
@@ -891,11 +900,11 @@ void C_csp_two_tank_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inputs
 			// Hot tank
 	mc_hot_tank.init(mc_store_htfProps, m_vol_tank, ms_params.m_h_tank, ms_params.m_h_tank_min, 
 		ms_params.m_u_tank, ms_params.m_tank_pairs, ms_params.m_hot_tank_Thtr, ms_params.m_hot_tank_max_heat,
-		V_hot_ini, T_hot_ini, ms_params.m_T_field_out_des);
+		V_hot_ini, T_hot_ini, T_tes_hot_des);
 			// Cold tank
 	mc_cold_tank.init(mc_store_htfProps, m_vol_tank, ms_params.m_h_tank, ms_params.m_h_tank_min, 
 		ms_params.m_u_tank, ms_params.m_tank_pairs, ms_params.m_cold_tank_Thtr, ms_params.m_cold_tank_max_heat,
-		V_cold_ini, T_cold_ini, ms_params.m_T_field_in_des);
+		V_cold_ini, T_cold_ini, T_tes_cold_des);
 
     if (ms_params.custom_tes_pipe_sizes &&
         (ms_params.tes_diams.ncells() != N_tes_pipe_sections ||
@@ -905,7 +914,7 @@ void C_csp_two_tank_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inputs
     }
     double rho_avg = mc_field_htfProps.dens((ms_params.m_T_field_in_des + ms_params.m_T_field_out_des) / 2, 9 / 1.e-5);
     m_cp_field_avg = mc_field_htfProps.Cp((ms_params.m_T_field_in_des + ms_params.m_T_field_out_des) / 2);
-	double cp_tes_avg = mc_store_htfProps.Cp((ms_params.m_T_field_in_des + ms_params.m_T_field_out_des) / 2);
+	double cp_tes_avg = mc_store_htfProps.Cp((T_tes_hot_des + T_tes_cold_des) / 2);
 	m_m_dot_tes_des_over_m_dot_field_des = m_cp_field_avg / cp_tes_avg;		//[-] assume hx cr = 1
     double m_dot_pb_design = ms_params.m_W_dot_pc_design * 1.e3 /   // convert MWe to kWe for cp [kJ/kg-K]
         (ms_params.m_eta_pc * m_cp_field_avg * (ms_params.m_T_field_out_des - ms_params.m_T_field_in_des));
@@ -1090,6 +1099,12 @@ void C_csp_two_tank_tes::charge_avail_est(double T_hot_K, double step_s,
 	double m_dot_tank_charge_avail = mc_cold_tank.m_dot_available(f_ch_storage, step_s);	//[kg/s]
 
 	double T_cold_ini = mc_cold_tank.get_m_T_prev();	//[K]
+
+    // for debugging
+    double T_hot_ini = mc_hot_tank.get_m_T_prev();      //[K]
+    double cp_T_tanks_avg = mc_store_htfProps.Cp(0.5 * (T_cold_ini + T_hot_ini));   // [kJ/kg-K]
+    double mass_avail_hot_tank = mc_hot_tank.m_dot_available(f_ch_storage, step_s) * step_s;   //[kg]
+    double tes_charge_state = mass_avail_hot_tank * cp_T_tanks_avg * (T_hot_ini - T_cold_ini) * 1.e-3 / 3600.;  // [MWht]
 
 	if(m_is_hx)
 	{
