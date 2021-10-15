@@ -19,7 +19,6 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 #include <fstream>
 #include <sstream>
 #include <stdlib.h>
@@ -48,29 +47,27 @@ etes_dispatch_opt::etes_dispatch_opt()
 
 void etes_dispatch_opt::init(double cycle_q_dot_des, double cycle_eta_des)
 {
-    // TODO: I don't like having to pass these in, why can't I access them via the cycle pointer? ask Ty
-    // TODO: Should we create getters for design point infromation?
     params.clear();
 
     params.dt = 1. / (double)solver_params.steps_per_hour;  //hr
 
     params.dt_pb_startup_cold = pointers.mpc_pc->get_cold_startup_time();
-    params.e_pb_startup_cold = pointers.mpc_pc->get_cold_startup_energy() * 1000.;
-    params.q_pb_max = pointers.mpc_pc->get_max_thermal_power() * 1000;
-    params.q_pb_min = pointers.mpc_pc->get_min_thermal_power() * 1000;
+    params.e_pb_startup_cold = pointers.mpc_pc->get_cold_startup_energy();
+    params.q_pb_max = pointers.mpc_pc->get_max_thermal_power();
+    params.q_pb_min = pointers.mpc_pc->get_min_thermal_power();
     params.eta_cycle_ref = pointers.mpc_pc->get_efficiency_at_load(1.);
 
     params.dt_rec_startup = pointers.col_rec->get_startup_time(); // / 3600.;
-    params.e_rec_startup = pointers.col_rec->get_startup_energy() * 1000;
-    params.q_eh_min = 0.0; //pointers.col_rec->get_min_power_delivery() * 1000.;
-    params.q_eh_max = pointers.col_rec->get_max_thermal_power() * 1000;
+    params.e_rec_startup = pointers.col_rec->get_startup_energy();
+    params.q_eh_min = 0.0; //pointers.col_rec->get_min_power_delivery();
+    params.q_eh_max = pointers.col_rec->get_max_thermal_power();
 
-    params.e_tes0 = pointers.tes->get_initial_charge_energy() * 1000;
-    params.e_tes_min = pointers.tes->get_min_charge_energy() * 1000;
-    params.e_tes_max = pointers.tes->get_max_charge_energy() * 1000;
+    params.e_tes0 = pointers.tes->get_initial_charge_energy();
+    params.e_tes_min = pointers.tes->get_min_charge_energy();
+    params.e_tes_max = pointers.tes->get_max_charge_energy();
     //params.tes_degrade_rate = pointers.tes->get_degradation_rate();
 
-    params.q_pb_des = cycle_q_dot_des * 1000.; // convert to kW
+    params.q_pb_des = cycle_q_dot_des; // MW
     params.eta_pb_des = cycle_eta_des;  // TODO: what is the difference between this and ref (above)?
     double w_pb_des = cycle_q_dot_des * params.eta_pb_des;  // keep in MW
 
@@ -89,8 +86,6 @@ bool etes_dispatch_opt::check_setup(int nstep)
 
 bool etes_dispatch_opt::update_horizon_parameters(C_csp_tou& mc_tou)
 {
-    // TODO: update the horizon parameters correctly
-
     //get the new price signal
     params.sell_price.clear();
     params.sell_price.resize(solver_params.optimize_horizon * solver_params.steps_per_hour, 1.);
@@ -120,12 +115,12 @@ void etes_dispatch_opt::update_initial_conditions(double q_dot_to_pb, double T_h
     params.is_pb_operating0 = pointers.mpc_pc->get_operating_state() == 1;
     params.is_eh_operating0 = pointers.col_rec->get_operating_state() == C_csp_collector_receiver::ON;
 
-    params.q_pb0 = q_dot_to_pb * 1000.;
+    params.q_pb0 = q_dot_to_pb;
 
     //Note the state of the thermal energy storage system
     double q_disch, m_dot_disch, T_tes_return;
     pointers.tes->discharge_avail_est(T_htf_cold_des, pointers.siminfo->ms_ts.m_step, q_disch, m_dot_disch, T_tes_return);
-    params.e_tes0 = q_disch * 1000. * pointers.siminfo->ms_ts.m_step / 3600. + params.e_tes_min;        //kWh
+    params.e_tes0 = q_disch * pointers.siminfo->ms_ts.m_step / 3600. + params.e_tes_min;        //kWh
     if (params.e_tes0 < params.e_tes_min)
         params.e_tes0 = params.e_tes_min;
     if (params.e_tes0 > params.e_tes_max)
@@ -293,6 +288,8 @@ static void calculate_parameters(etes_dispatch_opt *optinst, unordered_map<std::
         //TODO: How can I calculate these? Ask Ty
         pars["Yd0"] = pars["Yd"];    // Over riding these constraints
         pars["Yu0"] = pars["Yu"];    // Over riding these constraints
+
+        pars["pen_delta_w"] = 2;  // TODO: change default value to be $2/MW
 };
 
 bool etes_dispatch_opt::optimize()
@@ -308,18 +305,17 @@ bool etes_dispatch_opt::optimize()
     Formulate the optimization problem for dispatch generation. We are trying to maximize revenue subject to inventory
     constraints.
     
-    
     Variables
     -------------------------------------------------------------
     Continuous
     -------------------------------------------------------------
-    s           kWht    TES reserve quantity at time t
-    wdot        kWe     Electrical power production at time t
-    delta_w     kWe     Change in power production at time t w/r/t t-1
-    qdot        kWt	    Cycle thermal power consumption at time t
-    qeh         kWt     Thermal power delivered by the electric heaters at time t
-    ucsu        kWt     Cycle accumulated start-up thermal power at time t
-    uhsu        kWt     Heaters accumulated start-up thermal power at time t
+    s           MWht    TES reserve quantity at time t
+    wdot        MWe     Electrical power production at time t
+    delta_w     MWe     Change in power production at time t w/r/t t-1
+    qdot        MWt	    Cycle thermal power consumption at time t
+    qeh         MWt     Thermal power delivered by the electric heaters at time t
+    ucsu        MWt     Cycle accumulated start-up thermal power at time t
+    uhsu        MWt     Heaters accumulated start-up thermal power at time t
     -------------------------------------------------------------
     Binary
     -------------------------------------------------------------
@@ -555,29 +551,29 @@ bool etes_dispatch_opt::optimize()
                 }
             }
 
-            for (int t = 0; t < nt; t++)
-            {
-                // Ramp down
-                int i = 0;
+            //for (int t = 0; t < nt; t++)
+            //{
+            //    // Ramp down
+            //    int i = 0;
 
-                row[i] = 1.;
-                col[i++] = O.column("delta_w", t);
+            //    row[i] = 1.;
+            //    col[i++] = O.column("delta_w", t);
 
-                row[i] = 1.;
-                col[i++] = O.column("wdot", t);
+            //    row[i] = 1.;
+            //    col[i++] = O.column("wdot", t);
 
-                if (t > 0)
-                {
-                    row[i] = -1.;
-                    col[i++] = O.column("wdot", t - 1);
+            //    if (t > 0)
+            //    {
+            //        row[i] = -1.;
+            //        col[i++] = O.column("wdot", t - 1);
 
-                    add_constraintex(lp, i, row, col, GE, 0.);
-                }
-                else
-                {
-                    add_constraintex(lp, i, row, col, GE, P["Wdot0"]);
-                }
-            }
+            //        add_constraintex(lp, i, row, col, GE, 0.);
+            //    }
+            //    else
+            //    {
+            //        add_constraintex(lp, i, row, col, GE, P["Wdot0"]);
+            //    }
+            //}
         }
 
         //Linearization of the implementation of the piecewise efficiency equation 
@@ -1024,9 +1020,12 @@ bool etes_dispatch_opt::optimize()
 
         // Saving problem and solution for DEBUGGING formulation
         //save_problem_solution_debug(lp);
+        //if (solver_params.disp_reporting > 4)
+        //    print_log_to_file();
 
-        if (return_ok)
+        if (return_ok){
             set_outputs_from_lp_solution(lp, P);
+        }
 
         delete_lp(lp);
         lp = NULL;
@@ -1149,9 +1148,19 @@ void etes_dispatch_opt::set_outputs_from_lp_solution(lprec* lp, unordered_map<st
     delete[] vars;
 }
 
+
+void etes_dispatch_opt::print_log_to_file()
+{
+    std::stringstream outname;   
+    outname << "ETES_dispatch.log";
+    std::ofstream fout(outname.str().c_str());
+    fout << solver_params.log_message.c_str();
+    fout.close();
+}
+
+
 bool etes_dispatch_opt::set_dispatch_outputs()
 {
-    //TODO: customize for etes
     if (lp_outputs.last_opt_successful && m_current_read_step < (int)outputs.q_pb_target.size())
     {
         //calculate the current read step, account for number of dispatch steps per hour and the simulation time step
@@ -1162,10 +1171,10 @@ bool etes_dispatch_opt::set_dispatch_outputs()
         disp_outputs.is_pc_sb_allowed = outputs.pb_standby.at(m_current_read_step);
         disp_outputs.is_pc_su_allowed = outputs.pb_operation.at(m_current_read_step) || disp_outputs.is_pc_sb_allowed;
 
-        disp_outputs.q_pc_target = outputs.q_pb_target.at(m_current_read_step) / 1000.;
-        disp_outputs.q_dot_elec_to_CR_heat = outputs.q_sf_expected.at(m_current_read_step) / 1000.;
+        disp_outputs.q_pc_target = outputs.q_pb_target.at(m_current_read_step);
+        disp_outputs.q_dot_elec_to_CR_heat = outputs.q_sf_expected.at(m_current_read_step);
 
-        if (disp_outputs.q_pc_target + 1.e-5 < params.q_pb_min/1.e3)
+        if (disp_outputs.q_pc_target + 1.e-5 < params.q_pb_min)
         {
             disp_outputs.is_pc_su_allowed = false;
             disp_outputs.q_pc_target = 0.0;
@@ -1174,17 +1183,17 @@ bool etes_dispatch_opt::set_dispatch_outputs()
         disp_outputs.q_dot_pc_max = params.q_pb_max;   // disp_outputs.q_pc_target;
         disp_outputs.etasf_expect = 0.0;
         disp_outputs.qsf_expect = 0.0;
-        disp_outputs.qsfprod_expect = outputs.q_sf_expected.at(m_current_read_step) * 1.e-3;
-        disp_outputs.qsfsu_expect = outputs.q_rec_startup.at(m_current_read_step) * 1.e-3;
-        disp_outputs.tes_expect = outputs.tes_charge_expected.at(m_current_read_step) * 1.e-3;
-        disp_outputs.qpbsu_expect = outputs.q_pb_startup.at(m_current_read_step) * 1.e-3;
-        disp_outputs.wpb_expect = outputs.w_pb_target.at(m_current_read_step) * 1.e-3;
+        disp_outputs.qsfprod_expect = outputs.q_sf_expected.at(m_current_read_step);
+        disp_outputs.qsfsu_expect = outputs.q_rec_startup.at(m_current_read_step);
+        disp_outputs.tes_expect = outputs.tes_charge_expected.at(m_current_read_step);
+        disp_outputs.qpbsu_expect = outputs.q_pb_startup.at(m_current_read_step);
+        disp_outputs.wpb_expect = outputs.w_pb_target.at(m_current_read_step);
         disp_outputs.rev_expect = disp_outputs.wpb_expect * params.sell_price.at(m_current_read_step);
-        disp_outputs.etapb_expect = disp_outputs.wpb_expect / std::max(1.e-6, outputs.q_pb_target.at(m_current_read_step)) * 1.e3
+        disp_outputs.etapb_expect = disp_outputs.wpb_expect / std::max(1.e-6, disp_outputs.q_pc_target)
             * (outputs.pb_operation.at(m_current_read_step) ? 1. : 0.);
 
         if (m_current_read_step > solver_params.optimize_frequency* solver_params.steps_per_hour)
-            throw C_csp_exception("Counter synchronization error in dispatch optimization routine.", "csp_dispatch");
+            throw C_csp_exception("Counter synchronization error in dispatch optimization routine.", "etes_dispatch");
     }
     disp_outputs.time_last = pointers.siminfo->ms_ts.m_time;
 

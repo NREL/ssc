@@ -205,6 +205,9 @@ public:
     // Set outputs struct based on LP solution -> could move to outputs struct
     void set_outputs_from_lp_solution(lprec* lp, unordered_map<std::string, double>& params);
 
+    // Print dispatch solver log to file for debugging solver
+    void print_log_to_file();
+
     //Populated dispatch outputs for csp solver core
     bool set_dispatch_outputs();
 };

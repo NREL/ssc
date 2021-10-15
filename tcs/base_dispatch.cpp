@@ -260,6 +260,7 @@ void base_dispatch_opt::setup_solver_presolve_bbrules(lprec* lp)
     else
     {
         set_bb_rule(lp, NODE_PSEUDOCOSTSELECT + NODE_DYNAMICMODE);
+        //set_bb_rule(lp, NODE_PSEUDOCOSTSELECT + NODE_AUTOORDER); // This works better for ETES dispatch
         //set_bb_rule(lp, NODE_RCOSTFIXING + NODE_DYNAMICMODE + NODE_GREEDYMODE + NODE_PSEUDONONINTSELECT);
     }
 }
@@ -369,7 +370,7 @@ void base_dispatch_opt::set_lp_solve_outputs(lprec* lp)
 
     // When solve_state is 0, I believe this is the last known gap before tree was prune. Therefore, not reporting
     if (lp_outputs.solve_state == SUBOPTIMAL)
-        lp_outputs.rel_mip_gap = abs(lp_outputs.objective_relaxed - lp_outputs.objective) / abs(lp_outputs.objective_relaxed);
+        lp_outputs.rel_mip_gap = abs(lp_outputs.objective - lp_outputs.objective_relaxed) / (1 + abs(lp_outputs.objective_relaxed));
     else
         lp_outputs.rel_mip_gap = get_mip_gap(lp, FALSE);
 
