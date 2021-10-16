@@ -31,6 +31,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //#define _WRITE_AMPL_DATA 1
 #define SOS_NONE
+#undef min
 //#define SOS_SEQUENCE
 //#define SOS_MANUAL
 //#define SOS_LPSOLVE
@@ -506,7 +507,7 @@ bool csp_dispatch_opt::predict_performance(int step_start, double horizon, doubl
 
 			// update arrays at weather-file resolution
 			outputs.eta_sf_expected.at(t, w) = therm_eff;			  // thermal efficiency
-			outputs.q_sfavail_expected.at(t, w) = min(q_max, q_inc * therm_eff);    // predicted field energy output
+			outputs.q_sfavail_expected.at(t, w) = std::min(q_max, q_inc * therm_eff);    // predicted field energy output
 			outputs.eta_pb_expected.at(t, w) = cycle_eff;			  // power cycle efficiency
 			outputs.f_pb_op_limit.at(t, w) = f_pb_op_lim_local;		  // maximum power cycle output (normalized)
 			outputs.w_condf_expected.at(t, w) = wcond_f;			  // condenser power
