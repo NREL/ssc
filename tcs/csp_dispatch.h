@@ -29,6 +29,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class C_csp_weatherreader;
 class C_csp_solver_sim_info;     //Pointer to existing simulation info object
 class C_csp_collector_receiver;   //Pointer to collector/receiver object
+class C_csp_tes;
 class C_csp_messages;   //Pointer to message structure
 class C_csp_power_cycle;
 
@@ -161,6 +162,7 @@ public:
 
         C_csp_solver_sim_info *siminfo;     //Pointer to existing simulation info object
         C_csp_collector_receiver *col_rec;   //Pointer to collector/receiver object
+        C_csp_tes* tes;             // Pointer to tes object
 		C_csp_power_cycle *mpc_pc;	// Pointer to csp power cycle class object
 		C_csp_messages *messages;   //Pointer to message structure
 

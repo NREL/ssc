@@ -449,6 +449,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 	{
 		dispatch.copy_weather_data(mc_weather);
 		dispatch.params.col_rec = &mc_collector_receiver;
+        dispatch.params.tes = &mc_tes;
 		dispatch.params.mpc_pc = &mc_power_cycle;
 		dispatch.params.siminfo = &mc_kernel.mc_sim_info;
 		dispatch.params.messages = &mc_csp_messages;
@@ -891,7 +892,13 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
         double opt_eff_approx = mc_collector_receiver.calculate_optical_efficiency(mc_weather.ms_outputs, mc_kernel.mc_sim_info);
         double qinc = mc_collector_receiver.get_collector_area() * opt_eff_approx * mc_weather.ms_outputs.m_beam * 1e-6; // MW
         double therm_eff_approx = mc_collector_receiver.calculate_thermal_efficiency_approx(mc_weather.ms_outputs, qinc);
-        double q_sfavail_approx = qinc * therm_eff_approx;  // MW
+        // use the cold tank temperature as a surrogate for the loop inlet temperature, as it
+            //  closely follows the loop inlet temperature, and is more representative over the
+            //  two-day lookahead period than the loop inlet temperature (design or actual) at the
+            //  same point in time
+        double T_tank_cold = mc_tes.get_cold_temp() - 273.15;   // [C]
+        double q_max = mc_collector_receiver.get_max_power_delivery(T_tank_cold);     // [MW]
+        double q_sfavail_approx = std::min(q_max, qinc * therm_eff_approx);  // MW
 
 
 

@@ -186,6 +186,7 @@ csp_dispatch_opt::csp_dispatch_opt()
     params.disp_inventory_incentive = std::numeric_limits<double>::quiet_NaN();
     params.siminfo = 0;   
     params.col_rec = 0;
+    params.tes = 0;
 	params.mpc_pc = 0;
     params.sf_effadj = 1.;
     params.info_time = 0.;
@@ -480,6 +481,13 @@ bool csp_dispatch_opt::predict_performance(int step_start, double horizon, doubl
             double therm_eff = params.col_rec->calculate_thermal_efficiency_approx(*weatherstep, q_inc*0.001);
 			therm_eff *= params.sf_effadj;
 
+            //store the predicted field energy output
+            // use the cold tank temperature as a surrogate for the loop inlet temperature, as it
+            //  closely follows the loop inlet temperature, and is more representative over the
+            //  two-day lookahead period than the loop inlet temperature (design or actual) at the
+            //  same point in time
+            double T_tank_cold = params.tes->get_cold_temp() - 273.15;   // [C]
+            double q_max = params.col_rec->get_max_power_delivery(T_tank_cold) * 1.e3;     // [kW]
 
             //store the power cycle efficiency
             double cycle_eff = params.eff_table_Tdb.interpolate( weatherstep->m_tdry );
@@ -498,10 +506,10 @@ bool csp_dispatch_opt::predict_performance(int step_start, double horizon, doubl
 
 			// update arrays at weather-file resolution
 			outputs.eta_sf_expected.at(t, w) = therm_eff;			  // thermal efficiency
-			outputs.q_sfavail_expected.at(t, w) = q_inc * therm_eff;  // predicted field energy output
+			outputs.q_sfavail_expected.at(t, w) = min(q_max, q_inc * therm_eff);    // predicted field energy output
 			outputs.eta_pb_expected.at(t, w) = cycle_eff;			  // power cycle efficiency
 			outputs.f_pb_op_limit.at(t, w) = f_pb_op_lim_local;		  // maximum power cycle output (normalized)
-			outputs.w_condf_expected.at(t, w) = wcond_f;			   //condenser power
+			outputs.w_condf_expected.at(t, w) = wcond_f;			  // condenser power
 
         }
 

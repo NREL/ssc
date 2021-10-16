@@ -111,6 +111,10 @@ double C_csp_mspt_collector_receiver::get_min_power_delivery()    //MWt
     return mc_pt_receiver.m_f_rec_min * mc_pt_receiver.m_q_rec_des*1.e-6;
 }
 
+double C_csp_mspt_collector_receiver::get_max_power_delivery(double T_cold_in)    //MWt
+{
+    return mc_pt_receiver.m_m_dot_htf_max_frac * mc_pt_receiver.m_q_rec_des * 1.e-6;
+}
 
 double C_csp_mspt_collector_receiver::get_tracking_power()
 {
