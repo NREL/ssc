@@ -390,6 +390,7 @@ struct battstor
         * outBatterySystemLoss,
 		* outInterconnectionLoss,
 		* outCritLoadUnmet,
+        * outCritLoad,
         * outAnnualSystemChargeEnergy,
         * outAnnualGridChargeEnergy,
         * outAnnualChargeEnergy,

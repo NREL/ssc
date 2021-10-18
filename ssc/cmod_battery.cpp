@@ -247,6 +247,7 @@ var_info vtab_battery_outputs[] = {
     { SSC_OUTPUT,        SSC_ARRAY,      "batt_revenue_discharge",                     "Revenue to discharge",                                  "$/kWh", "",                         "Battery",       "",                           "",                              "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "gen_without_battery",                        "Energy produced without the battery or curtailment",    "kW","",                      "Battery",       "",                           "",                              "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "crit_load_unmet",                            "Critical load unmet in this timestep",                  "kW","",                      "Battery",       "",                           "",                              "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "crit_load",                                  "Critical load in this timestep",                  "kW","",                      "Battery",       "",                           "",                              "" },
 
     // PV Smoothing
     { SSC_OUTPUT,        SSC_ARRAY,      "batt_pvs_PV_ramp_interval",                  "PV smoothing PV power sampled", "kW", "", "Battery", "", "", "" },
@@ -283,11 +284,14 @@ var_info vtab_battery_outputs[] = {
     { SSC_OUTPUT,        SSC_ARRAY,      "monthly_batt_to_grid",                       "Energy to grid from battery",                           "kWh",      "",                      "Battery",       "",                          "LENGTH=12",                     "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "monthly_system_to_batt",                     "Energy to battery from system",                         "kWh",      "",                      "Battery",       "",                          "LENGTH=12",                     "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "monthly_grid_to_batt",                       "Energy to battery from grid",                           "kWh",      "",                      "Battery",       "",                          "LENGTH=12",                     "" },
-    { SSC_OUTPUT,        SSC_ARRAY,      "monthly_interconnection_loss",               "Energy loss due to curtailment, interconnection, or outage", "kWh",      "",                      "Battery",       "",                          "LENGTH = 12",                     "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "monthly_interconnection_loss",               "Energy loss due to curtailment, interconnection, or outage", "kWh", "",                      "Battery",       "",                          "LENGTH = 12",                     "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "monthly_crit_load_unmet",                    "Critical load energy unmet",                                 "kWh",      "",                      "Battery",       "",                           "LENGTH=12",                              "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "monthly_crit_load_unmet_percentage",         "Critical load unmet percentage",                         "%",      "",                      "Battery",       "",                           "LENGTH=12",                              "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "monthly_crit_load",                          "Critical load energy",                                  "kWh",      "",                      "Battery",       "",                           "LENGTH=12",                              "" },
 
 
     // annual metrics
-    { SSC_OUTPUT,        SSC_ARRAY,      "batt_annual_charge_from_system",                 "Battery annual energy charged from system",                 "kWh",      "",                      "Battery",       "",                           "",                               "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "batt_annual_charge_from_system",             "Battery annual energy charged from system",                 "kWh",      "",                      "Battery",       "",                           "",                               "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "batt_annual_charge_from_grid",               "Battery annual energy charged from grid",               "kWh",      "",                      "Battery",       "",                           "",                               "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "batt_annual_charge_energy",                  "Battery annual energy charged",                         "kWh",      "",                      "Battery",       "",                           "",                               "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "batt_annual_discharge_energy",               "Battery annual energy discharged",                      "kWh",      "",                      "Battery",       "",                           "",                               "" },
@@ -301,6 +305,9 @@ var_info vtab_battery_outputs[] = {
     { SSC_OUTPUT,        SSC_NUMBER,     "average_battery_roundtrip_efficiency",       "Battery average roundtrip efficiency",                  "%",        "",                      "Annual",        "",                           "",                               "" },
     { SSC_OUTPUT,        SSC_NUMBER,     "batt_system_charge_percent",                 "Battery charge energy charged from system",             "%",        "",                      "Annual",        "",                           "",                               "" },
     { SSC_OUTPUT,        SSC_NUMBER,     "batt_bank_installed_capacity",               "Battery bank installed capacity",                       "kWh",      "",                      "Annual",        "",                           "",                               "" },
+    { SSC_OUTPUT,        SSC_NUMBER,     "annual_crit_load",                           "Critical load energy (year 1)",                    "kWh",      "",                           "Battery",       "",                           "",                              "" },
+    { SSC_OUTPUT,        SSC_NUMBER,     "annual_crit_load_unmet",                     "Critical load energy unmet (year 1)",                    "kWh",      "",                      "Battery",       "",                           "",                              "" },
+    { SSC_OUTPUT,        SSC_NUMBER,     "annual_crit_load_unmet_percentage",          "Critical load unmet percentage (year 1)",                "%",        "",                      "Battery",       "",                           "",                              "" },
 
     // test matrix output
     { SSC_OUTPUT,        SSC_MATRIX,     "batt_dispatch_sched",                        "Battery dispatch schedule",                              "",        "",                     "Battery",       "",                           "",                               "ROW_LABEL=MONTHS,COL_LABEL=HOURS_OF_DAY"  },
@@ -930,6 +937,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
 
     if (analyze_outage) {
         outCritLoadUnmet = vt.allocate("crit_load_unmet", nrec * nyears);
+        outCritLoad = vt.allocate("crit_load", nrec * nyears);
     }
 
     // annual outputs
@@ -1555,6 +1563,7 @@ battstor::battstor(const battstor& orig) {
     outBatterySystemLoss = orig.outBatterySystemLoss;
     outInterconnectionLoss = orig.outInterconnectionLoss;
     outCritLoadUnmet = orig.outCritLoadUnmet;
+    outCritLoad = orig.outCritLoad;
     outAnnualSystemChargeEnergy = orig.outAnnualSystemChargeEnergy;
     outAnnualGridChargeEnergy = orig.outAnnualGridChargeEnergy;
     outAnnualChargeEnergy = orig.outAnnualChargeEnergy;
@@ -1750,6 +1759,7 @@ void battstor::outputs_topology_dependent()
 
         if (analyze_outage) {
             outCritLoadUnmet[index] = (ssc_number_t)(dispatch_model->power_crit_load_unmet());
+            outCritLoad[index] = (ssc_number_t)(dispatch_model->power_crit_load());
         }
     }
     else if (batt_vars->batt_meter_position == dispatch_t::FRONT)
@@ -1867,6 +1877,22 @@ void battstor::calculate_monthly_and_annual_outputs(compute_module& cm)
     cm.accumulate_monthly_for_year("grid_to_batt", "monthly_grid_to_batt", _dt_hour, step_per_hour);
     cm.accumulate_monthly_for_year("system_to_grid", "monthly_system_to_grid", _dt_hour, step_per_hour);
     cm.accumulate_monthly_for_year("interconnection_loss", "monthly_interconnection_loss", _dt_hour, step_per_hour);
+
+    // critical load unmet values
+    if (cm.is_assigned("crit_load_unmet")) {
+        auto annual_unmet_load = cm.accumulate_annual_for_year("crit_load_unmet", "annual_crit_load_unmet", _dt_hour, step_per_hour);
+        auto pmonthly_unmet_load = cm.accumulate_monthly_for_year("crit_load_unmet", "monthly_crit_load_unmet", _dt_hour, step_per_hour);
+        if (cm.is_assigned("crit_load")) {
+            auto annual_load = cm.accumulate_annual_for_year("crit_load", "annual_crit_load", _dt_hour, step_per_hour);
+            auto pmonthly_load = cm.accumulate_monthly_for_year("crit_load", "monthly_crit_load", _dt_hour, step_per_hour);
+            ssc_number_t* monthly_unmet_percentage = cm.allocate("monthly_crit_load_unmet_percentage", 12);
+            for (size_t i = 0; i < 12; i++) {
+                monthly_unmet_percentage[i] = 100.0 * (pmonthly_load[i] > 0 ? pmonthly_unmet_load[i] / pmonthly_load[i] : 0.0);
+            }
+            cm.assign("annual_crit_load_unmet_percentage", (var_data)((ssc_number_t)(100.0 * (annual_load > 0 ? annual_unmet_load / annual_load : 0.0))));
+        }
+    }
+
 
     if (batt_vars->batt_meter_position == dispatch_t::BEHIND)
     {

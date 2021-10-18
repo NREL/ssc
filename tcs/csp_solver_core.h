@@ -473,6 +473,7 @@ public:
     virtual double get_startup_energy() = 0; //MWh
     virtual double get_pumping_parasitic_coef() = 0;  //MWe/MWt
     virtual double get_min_power_delivery() = 0;    //MWt
+    virtual double get_max_power_delivery(double T_cold_in) = 0;    //MWt
 	virtual double get_tracking_power() = 0;		//MWe
 	virtual double get_col_startup_power() = 0;		//MWe-hr
 
@@ -656,6 +657,10 @@ class C_csp_tes
 {
 
 public:
+
+    // Class to save messages for up stream classes
+    C_csp_messages mc_csp_messages;
+
 	C_csp_tes(){};
 
 	~C_csp_tes(){};

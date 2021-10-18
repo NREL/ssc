@@ -37,8 +37,8 @@ NAMESPACE_TEST(csp_trough, PowerTroughCmod, Default_NoFinancial)
     EXPECT_FALSE(errors);
     if (!errors) {
         EXPECT_NEAR_FRAC(power_trough.GetOutput("annual_energy"), 369272759, kErrorToleranceHi);
-        EXPECT_NEAR_FRAC(power_trough.GetOutput("annual_thermal_consumption"), 596547, kErrorToleranceHi);
-        EXPECT_NEAR_FRAC(power_trough.GetOutput("annual_tes_freeze_protection"), 558505, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_trough.GetOutput("annual_thermal_consumption"), 638999, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_trough.GetOutput("annual_tes_freeze_protection"), 600961, kErrorToleranceHi);
         EXPECT_NEAR_FRAC(power_trough.GetOutput("annual_field_freeze_protection"), 38042, kErrorToleranceHi);
         EXPECT_NEAR_FRAC(power_trough.GetOutput("capacity_factor"), 42.20, kErrorToleranceHi);
         EXPECT_NEAR_FRAC(power_trough.GetOutput("annual_W_cycle_gross"), 420379150, kErrorToleranceHi);
