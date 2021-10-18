@@ -2,6 +2,7 @@ clear();
 
 var( 'time_start', 0 );
 var( 'time_stop', 31536000 );
+//var( 'time_stop', 30*24*3600);
 
 // PPA schedule option
 // 0: Simple step-change TOU block schedule (dispatch_sched_weekday, dispatch_sched_weekend, dispatch_factorX)
@@ -15,17 +16,29 @@ var( 'heater_mult', 2.4);
 // Choose financial mode
 	// 9.23.21 ETES dispatch model hardcoded to use ppa price input, so that dispatch knows absolute cost
 	// ........ so removed ppa_soln_mode and flip_target_percent
-var( 'ppa_price_input', [ 0.10 ] );
+var( 'ppa_price_input', [ 0.1 ] );  // 0.053889  for LCGS_price_multipliers
 var( 'hot_htf_code', 17);
 var('ud_hot_htf_props', [[0,0,0]]);
 
+
+//var( 'disp_reporting', 6);
+
+var( 'disp_pen_delta_w', 1.3); // $/delta MW (ramp)
+
+var( 'disp_max_iter', 100000);
+var( 'disp_timeout', 5.0);
 
 var( 'T_htf_cold_des', 290 );
 var( 'T_htf_hot_des', 574 );
 var( 'P_ref', 115 );
 var( 'design_eff', 0.41199999999999998 );
 
-var( 'dispatch_factors_ts', real_array(read_text_file('PPA_mults_v1.csv')));
+var( 'disp_down_time_min', 2. );
+var( 'disp_up_time_min', 2. );
+
+// Normalized prices
+var('dispatch_factors_ts', real_array(read_text_file('LCGS_price_multipliers.csv')));
+
 var( 'dispatch_sched_weekday', 
 [ [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 ], 
 [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 ], 
@@ -122,15 +135,12 @@ var( 'bop_par_2', 0 );
 
 var( 'disp_horizon', 48 );
 var( 'disp_frequency', 24 );
-var( 'disp_max_iter', 35000 );
-var( 'disp_timeout', 5.0 );	//5.0
 var( 'disp_mip_gap', 0.001 );
-var( 'disp_time_weighting', 0.999 );
 var( 'disp_csu_cost', 10000 );
-var( 'disp_pen_delta_w', 0.10000000000000001 );
+var( 'disp_time_weighting', 0.999 );
+
 var( 'disp_hsu_cost', 10. );
-var( 'disp_down_time_min', 2. );
-var( 'disp_up_time_min', 2. );
+
 
 var( 'const_per_interest_rate1', 4 );
 var( 'const_per_interest_rate2', 0 );
@@ -157,10 +167,6 @@ var( 'adjust:constant', 4 );
 
 
 var( 'system_use_lifetime_output', 0 );		// from Degradation page
-
-
-
-
 
 var( 'ppa_escalation', 1 );
 var( 'federal_tax_rate', [ 21 ] );
@@ -381,6 +387,7 @@ outputs{"W_dot_out_net"} = var("W_dot_out_net");
 outputs{"q_dot_dc_tes"} = var("q_dot_dc_tes");
 outputs{"q_dot_ch_tes"} = var("q_dot_ch_tes");
 outputs{"e_ch_tes"} = var("e_ch_tes");
+outputs{"gen"} = var("gen");
 
 //Dispatch outputs
 outputs{"q_pc_target"} = var("q_pc_target");
@@ -392,6 +399,10 @@ outputs{"disp_tes_expected"} = var("disp_tes_expected");
 outputs{"disp_solve_state"} = var("disp_solve_state");
 outputs{"disp_solve_iter"} = var("disp_solve_iter");
 outputs{"disp_objective"} = var("disp_objective");
+outputs{"disp_obj_relax"} = var("disp_obj_relax");
+outputs{"disp_rel_mip_gap"} = var("disp_rel_mip_gap");
+outputs{"disp_solve_state"} = var("disp_solve_state");
+
 outputs{"disp_rev_expected"} = var("disp_rev_expected");
 outputs{"disp_presolve_nconstr"} = var("disp_presolve_nconstr");
 outputs{"disp_presolve_nvar"} = var("disp_presolve_nvar");
@@ -401,6 +412,44 @@ csvwrite("outputs.csv", outputs);
 
 run('singleowner');
 
+// calculating dispatch stop conditions
+subopt_count = {'optimal_solves' = 0,
+				'iteration_stop' = 0,
+				'timeout_stop' = 0,
+				'gap_abort' = 0,
+				'gap_lpsolve' = 0};
+
+subopt_flag = var("disp_subopt_flag");
+for (t = 0; t< #subopt_flag; t=t+24)
+{
+	if (subopt_flag[t] == 0){
+		subopt_count{'optimal_solves'} ++;
+	}
+	elseif (subopt_flag[t] == 1){
+		subopt_count{'iteration_stop'} ++;
+	}
+	elseif (subopt_flag[t] == 2){
+		subopt_count{'timeout_stop'} ++;	
+	}
+	elseif (subopt_flag[t] == 3){
+		subopt_count{'gap_abort'} ++;	
+	}
+	elseif (subopt_flag[t] == 4){
+		subopt_count{'gap_lpsolve'} ++;	
+	}
+}
+
+revenue = 0;
+prices = var("dispatch_factors_ts");
+ppa_year1 = var("ppa_price_input")[0];
+gen = var("gen");
+for (t = 0; t < #gen; t++) {
+	revenue += prices[t] * ppa_year1 * 1000. * gen[t];
+}
+revenue /= 1000;
+
+		
+outln("annual revenue ", revenue);
 outln("annual_energy ", var("annual_energy"));
 outln("heater spec cost ", var('heater_spec_cost'));
 outln("annual_E_cycle_gross ", var("annual_E_cycle_gross"));
@@ -410,6 +459,16 @@ outln("ppa ", var('ppa'));
 outln("lppa_real ", var('lppa_real'));
 outln("lppa_nom ", var('lppa_nom'));
 outln("total_installed_cost ", var('total_installed_cost'));
+
+outln("Total dispatch objective: ", var('disp_objective_ann'));
+outln("Total dispatch solve time: ", var('disp_solve_time_ann'));
+outln("Number of subopt days: ", var('disp_solve_state_ann'));
+
+outln("\tNumber of solves that stopped due to iterations: ", subopt_count{'iteration_stop'});
+outln("\tNumber of solves that timed out: ", subopt_count{'timeout_stop'});
+outln("\tNumber of solves that aborted due to external gap: ", subopt_count{'gap_abort'});
+outln("\tNumber of subopt that aborted due to lpsolve gap: ", subopt_count{'gap_lpsolve'});
+
 
 
 
