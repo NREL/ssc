@@ -342,7 +342,7 @@ TEST_F(NightCaseIrradProc, incidenceTest_lib_irradproc) {
     /* Just before sunrise test case */
     sun_azm = 0.95662;
     sun_zen = 1.79457;
-    incidence(mode, tilt, azim, rotlim, sun_zen, sun_azm, backtrack_on, gcr, false, 0.0, angle);
+    incidence(mode, tilt, azim, rotlim, sun_zen, sun_azm, backtrack_on, gcr, 0, false, 0.0, angle);
     solutions = { 1.89243, 0.174533, 3.14159, 0, 0 };
     for (int i = 0; i < 5; i++) {
         EXPECT_NEAR(angle[i], solutions[i], e) << "before-sunrise case";
@@ -358,7 +358,7 @@ TEST_F(SunriseCaseIrradProc, incidenceTest_lib_irradproc) {
 
     sun_azm = 1.11047;
     sun_zen = 1.6031;
-    incidence(mode, tilt, azim, rotlim, sun_zen, sun_azm, backtrack_on, gcr, false, 0.0, angle);
+    incidence(mode, tilt, azim, rotlim, sun_zen, sun_azm, backtrack_on, gcr, 0, false, 0.0, angle);
     solution = 1.67992;
     EXPECT_NEAR(angle[0], solution, e) << "sunrise case";
 }
@@ -372,7 +372,7 @@ TEST_F(DayCaseIrradProc, incidenceTest_lib_irradproc) {
 
     sun_azm = 0;
     sun_zen = 0;
-    incidence(mode, tilt, azim, rotlim, sun_zen, sun_azm, backtrack_on, gcr, false, 0.0, angle);
+    incidence(mode, tilt, azim, rotlim, sun_zen, sun_azm, backtrack_on, gcr, 0, false, 0.0, angle);
     solution = 0.174533;
     EXPECT_NEAR(angle[0], solution, e) << "noon case";
 }
@@ -386,7 +386,7 @@ TEST_F(SunsetCaseIrradProc, incidenceTest_lib_irradproc) {
 
     sun_azm = 5.13947;
     sun_zen = 1.55886;
-    incidence(mode, tilt, azim, rotlim, sun_zen, sun_azm, backtrack_on, gcr, false, 0.0, angle);
+    incidence(mode, tilt, azim, rotlim, sun_zen, sun_azm, backtrack_on, gcr, 0, false, 0.0, angle);
     solution = 1.631;
     EXPECT_NEAR(angle[0], solution, e) << "sunset case";
 }
@@ -813,7 +813,7 @@ TEST(SingleAxisTrackingTest, TrackingBacktracking) {
 	{
 		tt = truetrack(solar_azimuths[i], solar_zeniths[i], axis_tilts[i], axis_azimuths[i]);
 		ASSERT_NEAR(tt, expected_truetracking[i], 1e-4);
-		bt = backtrack(tt, 0.4);
+		bt = backtrack(tt, 0.4, 0);
 		ASSERT_NEAR(bt, expected_backtracking[i], 1e-4);
 		fs_tt = shadeFraction1x(solar_azimuths[i], solar_zeniths[i], axis_tilts[i], axis_azimuths[i], gcr, tt);
 		ASSERT_NEAR(fs_tt, expected_shadefraction[i], 1e-4);
@@ -828,7 +828,7 @@ TEST(SingleAxisTrackingTest, TrackingBacktracking) {
 TEST(SingleAxisTrackingTest, SunBelowTiltedArray) {
 	double tt = truetrack(300, 89, 10, 180);
 	ASSERT_NEAR(tt, 94.59707, 1e-4);  // true-tracking rotation > 90 when sun is below system plane
-	double bt = backtrack(tt, 0.4);
+	double bt = backtrack(tt, 0.4, 0);
 	ASSERT_NEAR(bt, 16.15566, 1e-4);
 }
 
