@@ -1479,7 +1479,8 @@ bool weatherfile::open(const std::string& file, bool header_only)
 
             if (m_columns[MINUTE].index < 0 && (int)m_columns[HOUR].data[1] == m_columns[HOUR].data[1])
             {
-                m_columns[MINUTE].data[i] = (float)((m_stepSec / 2) / 60); //automatic minute calculation based on halfway between step size
+                //m_columns[MINUTE].data[i] = (float)((m_stepSec / 2) / 60); //automatic minute calculation based on halfway between step size
+                m_columns[MINUTE].data[i] = (float)(0.0);
             }
             else if (m_columns[MINUTE].index < 0)  //implies fractional hours are provided
             {
