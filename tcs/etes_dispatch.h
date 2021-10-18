@@ -193,7 +193,7 @@ public:
     bool update_horizon_parameters(C_csp_tou& mc_tou);
 
     // update dispatch inital conditions
-    void update_initial_conditions(double q_dot_to_pb, double T_htf_cold_des);
+    void update_initial_conditions(double q_dot_to_pb, double T_htf_cold_des, double pc_state_persist);
 
     //Predict performance out nstep values. 
     bool predict_performance(int step_start, int ntimeints, int divs_per_int);    

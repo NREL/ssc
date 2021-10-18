@@ -715,7 +715,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
         double q_dot_elec_to_PAR_HTR = std::numeric_limits<double>::quiet_NaN();
 
         calc_timestep_plant_control_and_targets(
-            f_turbine_tou, q_pc_min, q_dot_tes_ch,
+            f_turbine_tou, q_pc_min, q_dot_tes_ch, pc_state_persist,
             pc_operating_state_to_controller, purchase_mult, pricing_mult,
             calc_frac_current, baseline_step,
             is_q_dot_pc_target_overwrite,
@@ -1244,7 +1244,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 }	// End simulate() method
 
 void C_csp_solver::calc_timestep_plant_control_and_targets(
-    double f_turbine_tou /*-*/, double q_dot_pc_min /*MWt*/, double q_dot_tes_ch /*MWt*/,
+    double f_turbine_tou /*-*/, double q_dot_pc_min /*MWt*/, double q_dot_tes_ch /*MWt*/, double pc_state_persist /*hours*/,
     C_csp_power_cycle::E_csp_power_cycle_modes pc_operating_state, double purchase_mult /*-*/, double sale_mult /*-*/,
     double calc_frac_current /*-*/, double baseline_step /*s*/,
     bool& is_q_dot_pc_target_overwrite,
@@ -1395,7 +1395,7 @@ void C_csp_solver::calc_timestep_plant_control_and_targets(
             if (!mc_dispatch.update_horizon_parameters(mc_tou)) {
                 throw(C_csp_exception("Dispatch failed to update horizon parameter values"));
             }
-            mc_dispatch.update_initial_conditions(mc_pc_out_solver.m_q_dot_htf, m_T_htf_cold_des);
+            mc_dispatch.update_initial_conditions(mc_pc_out_solver.m_q_dot_htf, m_T_htf_cold_des, pc_state_persist);
 
             //predict performance for the time horizon
             if (

@@ -121,11 +121,9 @@ bool etes_dispatch_opt::update_horizon_parameters(C_csp_tou& mc_tou)
     return true;
 }
 
-void etes_dispatch_opt::update_initial_conditions(double q_dot_to_pb, double T_htf_cold_des)
+void etes_dispatch_opt::update_initial_conditions(double q_dot_to_pb, double T_htf_cold_des, double pc_state_persist)
 {
-    //TODO: Update with etes initial conditions
-    //params.down_time0
-    //params.up_time0
+    //TODO: update start-up energy already consumed
     params.e_pb_start0 = 0;     //these are set assuming no carry over
     params.e_eh_start0 = 0;
 
@@ -135,6 +133,15 @@ void etes_dispatch_opt::update_initial_conditions(double q_dot_to_pb, double T_h
 
     params.q_pb0 = q_dot_to_pb;
 
+    if (params.is_pb_operating0 == 1) {
+        params.up_time0 = pc_state_persist;  // cycle is up
+        params.down_time0 = 0;
+    }
+    else {
+        params.up_time0 = 0;
+        params.down_time0 = pc_state_persist; // cycle is down
+    }
+        
     //Note the state of the thermal energy storage system
     double q_disch, m_dot_disch, T_tes_return;
     pointers.tes->discharge_avail_est(T_htf_cold_des, pointers.siminfo->ms_ts.m_step, q_disch, m_dot_disch, T_tes_return);
@@ -304,10 +311,10 @@ static void calculate_parameters(etes_dispatch_opt *optinst, unordered_map<std::
         pars["Qehl"] = pars["Qehu"]*0.25;  //get_min_power_delivery()  
 
         //TODO: How can I calculate these? Ask Ty
-        pars["Yd0"] = pars["Yd"];    // Over riding these constraints
-        pars["Yu0"] = pars["Yu"];    // Over riding these constraints
+        //pars["Yd0"] = pars["Yd"];    // Over riding these constraints
+        //pars["Yu0"] = pars["Yu"];    // Over riding these constraints
 
-        pars["pen_delta_w"] = 2;  // TODO: change default value to be $2/MW
+        //pars["pen_delta_w"] = 2;  // TODO: change default value to be $2/MW
 };
 
 bool etes_dispatch_opt::optimize()

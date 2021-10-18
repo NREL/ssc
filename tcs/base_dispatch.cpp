@@ -70,7 +70,7 @@ bool base_dispatch_opt::update_horizon_parameters(C_csp_tou &mc_tou)
     return false;
 }
 
-void base_dispatch_opt::update_initial_conditions(double q_dot_to_pb, double T_htf_cold_des)
+void base_dispatch_opt::update_initial_conditions(double q_dot_to_pb, double T_htf_cold_des, double pc_state_persist)
 {
     not_implemented_function((std::string)__func__);
 }

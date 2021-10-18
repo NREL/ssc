@@ -159,7 +159,7 @@ public:
     virtual bool predict_performance(int step_start, int ntimeints, int divs_per_int);
 
     //Updated dispatch initial conditions
-    virtual void update_initial_conditions(double q_dot_to_pb, double T_htf_cold_des);
+    virtual void update_initial_conditions(double q_dot_to_pb, double T_htf_cold_des, double pc_state_persist);
 
     //declare dispatch function
     virtual bool optimize();
