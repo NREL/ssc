@@ -619,7 +619,7 @@ public:
                         ssc_number_t* multipliers = as_array("dispatch_factors_ts", &nmultipliers);
                         tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(nmultipliers, 0.0);
                         for (size_t ii = 0; ii < nmultipliers; ii++)
-                            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][ii] = multipliers[ii];
+                            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][ii] = ppa_price_year1 * multipliers[ii] * 1000.; // [$/kWh] to [$/MWh]
                     }
                     else { // if no dispatch optimization, don't need an input pricing schedule
                         tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed, -1.0);
