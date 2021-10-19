@@ -54,6 +54,7 @@ class Heliostat : public mod_base
 		_corners,	//Position in global coordinates of the heliostat corners (used for blocking and shadowing)
 		_shadow;	//Position in global coordinates of the heliostat shadow
 	Heliostat* _master_template;	//Pointer to the template used to create this heliostat
+    unordered_map<Receiver*, double> _rec_power_alloc;  //the power delivered to each receiver during layout calcs
 		
 	matrix_t<double>
 		_mu_MN,		//Normalized mirror shape hermite expansion coefficients (n_terms x n_terms)
@@ -67,7 +68,8 @@ class Heliostat : public mod_base
 	bool
 		_in_layout, // Is the heliostat included in the final layout?
 		_is_user_canted,	//Are the panels canted according to user-specified values?
-		_is_enabled;		//Is template enabled?
+		_is_enabled,		//Is template enabled?
+        _has_multi_rec_assignment;  //in multi-receiver mode, has this heliostat yet been assigned a final receiver target?
 
 
 	int 
@@ -110,6 +112,7 @@ public:
 	int getId();
 	int *getGroupId();		//(row,col) nodes
 	bool IsInLayout();
+    bool IsMultiReceiverAssigned();
 	double getFocalX();
 	double getFocalY();
 	double getSlantRange();
@@ -137,10 +140,14 @@ public:
 	double getPowerToReceiver();
 	double getPowerValue();
 	double getRankingMetricValue();
+    double getEnergyValue();
+    double getAnnualEnergy();
+    double getAnnualEfficiency();
 	double getAzimuthTrack();
 	double getZenithTrack();
     double getArea();
     double getCollisionRadius();
+    unordered_map<Receiver*, double>& getReceiverPowerAlloc();
 	std::vector<Heliostat*> *getNeighborList();
 	std::vector<sp_point> *getCornerCoords();
 	std::vector<sp_point> *getShadowCoords();
@@ -162,6 +169,7 @@ public:
 	void IsUserCant(bool setting);	//Set
     bool IsEnabled(); //fetch
     void IsEnabled(bool enable); //set
+    void IsMultiReceiverAssigned(bool assigned); //set
 
 	void setId(int id);
 	void setGroupId(int row, int col);
@@ -175,7 +183,9 @@ public:
 	void setEfficiencyCloudiness(double eta_cloud);
 	void setEfficiencyTotal(double eta_tot);
 	void setRankingMetricValue(double rval);
-	void setLocation(double x, double y, double z);
+    void setAnnualEfficiency(double eta_annual);
+    void setAnnualEnergy(double p_annual);
+    void setLocation(double x, double y, double z);
 	void setAimPoint(double x, double y, double z);
 	void setAimPoint(sp_point &Aim);
 	void setAimPointFluxPlane(sp_point &Aim);
@@ -194,9 +204,9 @@ public:
 	void setWhichReceiver(Receiver *rec);
 	void setPowerToReceiver(double P);
 	void setPowerValue(double P);
+    void setEnergyValue(double E);
 	void setImageSize(double sigx_n, double sigy_n);
 	void setMasterTemplate(Heliostat *htemp);
-
  } ;
 
 class Reflector {
