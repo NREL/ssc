@@ -1,51 +1,24 @@
-/*******************************************************************************************************
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (�Alliance�) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as �System Advisor Model� or �SAM�. Except
-*  to comply with the foregoing, the terms �System Advisor Model�, �SAM�, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************************************/
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #include <stdio.h>
 #include <cstring>
@@ -66,7 +39,7 @@
 
 SSCEXPORT int ssc_version()
 {
-	return 250;
+	return 259;
 }
 
 SSCEXPORT const char *ssc_build_info()
@@ -131,12 +104,10 @@ extern module_entry_info
 	cm_entry_iph_to_lcoefcr,
 	cm_entry_tcsgeneric_solar,
 	cm_entry_tcsmolten_salt,
-	cm_entry_tcsdirect_steam,
 	cm_entry_tcslinear_fresnel,
 	cm_entry_linear_fresnel_dsg_iph,
-	cm_entry_tcsdish,
-	cm_entry_tcsiscc,
 	cm_entry_tcsmslf,
+    cm_entry_etes_electric_resistance,
 	cm_entry_hcpv,
 	cm_entry_wfcheck,
 	cm_entry_wind_file_reader,
@@ -149,12 +120,11 @@ extern module_entry_info
 	cm_entry_belpe,
 	cm_entry_dsg_flux_preprocess,
 	cm_entry_layoutarea,
-	cm_entry_sco2_design_point,
-	cm_entry_sco2_design_cycle,
 	cm_entry_sco2_csp_system,
 	cm_entry_sco2_csp_ud_pc_tables,
 	cm_entry_sco2_air_cooler,
     cm_entry_sco2_comp_curves,
+    cm_entry_test_ud_power_cycle,
 	cm_entry_user_htf_comparison,
 	cm_entry_ui_tes_calcs,
     cm_entry_ui_udpc_checks,
@@ -228,12 +198,10 @@ static module_entry_info *module_table[] = {
 	&cm_entry_iph_to_lcoefcr,
 	&cm_entry_tcsgeneric_solar,
 	&cm_entry_tcsmolten_salt,
-	&cm_entry_tcsdirect_steam,
 	&cm_entry_tcslinear_fresnel,
 	&cm_entry_linear_fresnel_dsg_iph,
-	&cm_entry_tcsdish,
-	&cm_entry_tcsiscc,
 	&cm_entry_tcsmslf,
+    &cm_entry_etes_electric_resistance,
 	&cm_entry_hcpv,
 	&cm_entry_wind_file_reader,
 	&cm_entry_wfcheck,
@@ -246,12 +214,11 @@ static module_entry_info *module_table[] = {
 	&cm_entry_belpe,
 	&cm_entry_dsg_flux_preprocess,
 	&cm_entry_layoutarea,
-	&cm_entry_sco2_design_point,
-	&cm_entry_sco2_design_cycle,
 	&cm_entry_sco2_csp_system,
 	&cm_entry_sco2_csp_ud_pc_tables,
 	&cm_entry_sco2_air_cooler,
     &cm_entry_sco2_comp_curves,
+    &cm_entry_test_ud_power_cycle,
 	&cm_entry_user_htf_comparison,
 	&cm_entry_ui_tes_calcs,
     &cm_entry_ui_udpc_checks,
@@ -1368,36 +1335,44 @@ SSCEXPORT void __ssc_segfault()
 
 static std::string* s_python_path;
 
-SSCEXPORT void set_python_path(const char* abs_path) {
+SSCEXPORT int set_python_path(const char* abs_path) {
     if (util::dir_exists(abs_path)){
         delete s_python_path;
         s_python_path = new std::string(abs_path);
+        return 1;
     }
     else
-        throw(std::runtime_error("set_python_path error. Python directory doesn't not exist: " + std::string(abs_path)));
+        return 0;
 }
 
 SSCEXPORT const char *get_python_path() {
     if (s_python_path)
         return s_python_path->c_str();
     else
-        throw(std::runtime_error("get_python_path error. Path does not exist. Set with 'set_python_path' first."));
+        return nullptr;
 }
 
-SSCEXPORT ssc_module_t ssc_stateful_module_create( const char *name, ssc_data_t p_data) {
-    auto vt = static_cast<var_table*>(p_data);
-    if (!vt) throw std::runtime_error("p_data invalid.");
+SSCEXPORT int ssc_stateful_module_setup(ssc_module_t p_mod, ssc_data_t p_data) {
+    auto cm = static_cast<compute_module*>(p_mod);
+    if (!cm)
+        return 0;
 
-    std::string lname = util::lower_case( name );
+    auto vt = static_cast<var_table*>(p_data);
+    if (!vt)
+        cm->log("p_data invalid.");
+
+    std::string lname = cm->get_name();
     int i = 0;
     while ( module_table[i] != nullptr && module_table[i]->f_create != nullptr ) {
         if ( lname == util::lower_case( module_table[i]->name ) ) {
-            if (module_table[i]->f_create_stateful)
-                return (*(module_table[i]->f_create_stateful))(vt);
-            else
-                throw std::runtime_error("stateful module by that name does not exist.");
+            if (module_table[i]->f_setup_stateful)
+                return (*(module_table[i]->f_setup_stateful))(cm, vt);
+            else {
+                cm->log("This module is not stateful. `setup` does not need to be called.");
+                return 0;
+            }
         }
         i++;
     }
-    throw std::runtime_error("stateful module by that name does not exist.");
+    return 0;
 }

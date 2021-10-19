@@ -902,15 +902,19 @@ size_t util::hour_of_year(size_t month, size_t day, size_t hour)
 	size_t h = 0;
 	bool ok = true;
 	std::vector<size_t> days_in_months = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+    //first add the days from all the preceding completed months
 	if (month >= 1 && month <= 12)
 	{
 		for (size_t m = 0; m < (month - 1); m++)
 			h += days_in_months[m] * 24;
 	}
 	else ok = false;
-	if (day >= 1 && day <= days_in_months[month - 1])
-		h += (day - 1) * 24;
-	else ok = false;
+    //then add days in the current month up to the current day
+    if (day >= 1 && day <= days_in_months[month - 1])
+        h += (day - 1) * 24;
+    else if (month == 2 && day == 29) //special check for leap day present in data
+        h += (27 * 24); //for leap day, repeat Feb 28 in annual indexes, because hour_of_year is used to index 8760 non-leap-year arrays.
+    else ok = false;
 	if (hour >= 0 && hour <= 23)
 		h += hour;
 	else ok = false;
@@ -1165,6 +1169,27 @@ double util::linterp_col( const util::matrix_t<double> &mat, size_t ixcol, doubl
 			mat( i-1, ixcol ), mat( i-1, iycol ),
 			mat( i,   ixcol ), mat( i,   iycol ),
 			xval );
+}
+
+size_t util::nearest_col_index(const matrix_t<double>& mat, size_t col, double val) {
+    std::vector<double> values;
+    for (size_t i = 0; i < mat.nrows(); i++) {
+        values.push_back(mat.at(i, col));
+    }
+
+    auto iter = std::lower_bound(values.begin(), values.end(), val);
+
+    if (iter == values.begin()) {
+        return 0;
+    }
+    if (iter == values.end()) {
+        return iter - values.begin() - 1;
+    }
+
+    double a = *(iter - 1);
+    double b = *(iter);
+
+    return fabs(val - a) < fabs(val - b) ? (iter - values.begin() - 1) : (iter - values.begin());
 }
 
 size_t util::lifetimeIndex(size_t year, size_t hour_of_year, size_t step_of_hour, size_t step_per_hour)

@@ -1,0 +1,387 @@
+clear();
+
+// PPA schedule option
+// 0: Simple step-change TOU block schedule (dispatch_sched_weekday, dispatch_sched_weekend, dispatch_factorX)
+// 1: Hourly schedule (dispatch_factor_ts)
+var( 'ppa_multiplier_model', 0 );
+
+
+var( 'T_htf_cold_des', 290 );
+var( 'T_htf_hot_des', 574 );
+var( 'P_ref', 115 );
+var( 'design_eff', 0.41199999999999998 );
+var( 'tshours', 10 );
+var( 'heater_mult', 2.3999999999999999 );
+var( 'tes_fl_code', 17 );
+var( 'ud_tes_fl_props', 
+[ [ 0, 0, 0, 0, 0, 0, 0 ] ] );
+
+var( 'is_dispatch', 0 );
+
+var( 'dispatch_factors_ts', real_array(read_text_file('PPA_mults_v1.csv')));
+var( 'dispatch_sched_weekday', 
+[ [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 ], 
+[ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 ], 
+[ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 ], 
+[ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 ], 
+[ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 ], 
+[ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 ], 
+[ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 ], 
+[ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 ], 
+[ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 ], 
+[ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 ], 
+[ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 ], 
+[ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 ] ] );
+var( 'dispatch_sched_weekend', 
+[ [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 ], 
+[ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 ], 
+[ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 ], 
+[ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 ], 
+[ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 ], 
+[ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 ], 
+[ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 ], 
+[ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 ], 
+[ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 ], 
+[ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 ], 
+[ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 ], 
+[ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 ] ] );
+var( 'dispatch_factor1', 0.5 );
+var( 'dispatch_factor2', 1.5 );
+var( 'dispatch_factor3', 1 );
+var( 'dispatch_factor4', 1 );
+var( 'dispatch_factor5', 1 );
+var( 'dispatch_factor6', 1 );
+var( 'dispatch_factor7', 1 );
+var( 'dispatch_factor8', 1 );
+var( 'dispatch_factor9', 1 );
+
+
+var( 'solar_resource_file', '../../test/input_cases/moltensalt_data/daggett_ca_34.865371_-116.783023_psmv3_60_tmy.csv' );
+var( 'gross_net_conversion_factor', 0.90000000000000002 );
+
+var( 'cycle_spec_cost', 1040 );
+var( 'heater_spec_cost', var('cycle_spec_cost')/10.0 );
+var( 'tes_spec_cost', 22 );
+var( 'bop_spec_cost', 0.0 );
+var( 'contingency_rate', 7 );
+var( 'sales_tax_rate', 5 );
+var( 'sales_tax_frac', 80 );
+var( 'epc_cost_perc_of_direct', 13 );
+var( 'epc_cost_per_watt', 0 );
+var( 'epc_cost_fixed', 0 );
+var( 'land_cost_perc_of_direct', 0 );
+var( 'land_cost_per_watt', 0 );
+var( 'land_cost_fixed', 0 );
+
+
+var( 'opt_init_step', 0.059999999999999998 );
+var( 'opt_max_iter', 200 );
+var( 'opt_conv_tol', 0.001 );
+var( 'opt_flux_penalty', 0.25 );
+var( 'opt_algorithm', 1 );
+
+
+
+
+var( 'csp.pt.tes.init_hot_htf_percent', 0.0 );
+var( 'h_tank', 12 );
+var( 'cold_tank_max_heat', 15 );
+var( 'u_tank', 0.40000000000000002 );
+var( 'tank_pairs', 1 );
+var( 'cold_tank_Thtr', 280 );
+var( 'h_tank_min', 1 );
+var( 'hot_tank_Thtr', 500 );
+var( 'hot_tank_max_heat', 30 );
+var( 'tanks_in_parallel', 1 );
+
+var( 'pc_config', 0 );
+var( 'pb_pump_coef', 0.55000000000000004 );
+var( 'startup_time', 0.5 );
+var( 'startup_frac', 0.5 );
+var( 'cycle_max_frac', 1.05 );
+var( 'cycle_cutoff_frac', 0.20000000000000001 );
+var( 'q_sby_frac', 0.20000000000000001 );
+var( 'dT_cw_ref', 10 );
+var( 'T_amb_des', 42 );
+var( 'P_boil', 100 );
+var( 'CT', 2 );
+var( 'T_approach', 5 );
+var( 'T_ITD_des', 16 );
+var( 'P_cond_ratio', 1.0027999999999999 );
+var( 'pb_bd_frac', 0.02 );
+var( 'P_cond_min', 2 );
+var( 'n_pl_inc', 8 );
+var( 'F_wc', [ 0, 0, 0, 0, 0, 0, 0, 0, 0 ] );
+var( 'tech_type', 1 );
+var( 'ud_f_W_dot_cool_des', 0 );
+var( 'ud_m_dot_water_cool_des', 0 );
+var( 'time_start', 0 );
+var( 'time_stop', 31536000 );
+var( 'pb_fixed_par', 0.0054999999999999997 );
+var( 'bop_par', 0 );
+var( 'bop_par_f', 1 );
+var( 'bop_par_0', 0 );
+var( 'bop_par_1', 0.48299999999999998 );
+var( 'bop_par_2', 0 );
+var( 'is_tod_pc_target_also_pc_max', 0 );
+
+var( 'disp_horizon', 48 );
+var( 'disp_frequency', 24 );
+var( 'disp_max_iter', 35000 );
+var( 'disp_timeout', 5 );
+var( 'disp_mip_gap', 0.001 );
+var( 'disp_time_weighting', 0.98999999999999999 );
+var( 'disp_rsu_cost', 950 );
+var( 'disp_csu_cost', 10000 );
+var( 'disp_pen_delta_w', 0.10000000000000001 );
+var( 'disp_inventory_incentive', 0.14999999999999999 );
+var( 'is_wlim_series', 0 );
+
+
+var( 'const_per_interest_rate1', 4 );
+var( 'const_per_interest_rate2', 0 );
+var( 'const_per_interest_rate3', 0 );
+var( 'const_per_interest_rate4', 0 );
+var( 'const_per_interest_rate5', 0 );
+var( 'const_per_months1', 24 );
+var( 'const_per_months2', 0 );
+var( 'const_per_months3', 0 );
+var( 'const_per_months4', 0 );
+var( 'const_per_months5', 0 );
+var( 'const_per_percent1', 100 );
+var( 'const_per_percent2', 0 );
+var( 'const_per_percent3', 0 );
+var( 'const_per_percent4', 0 );
+var( 'const_per_percent5', 0 );
+var( 'const_per_upfront_rate1', 1 );
+var( 'const_per_upfront_rate2', 0 );
+var( 'const_per_upfront_rate3', 0 );
+var( 'const_per_upfront_rate4', 0 );
+var( 'const_per_upfront_rate5', 0 );
+var( 'adjust:constant', 4 );
+
+
+
+var( 'system_use_lifetime_output', 0 );		// from Degradation page
+var( 'ppa_soln_mode', 0 );
+var( 'ppa_price_input', [ 0.13 ] );
+var( 'ppa_escalation', 1 );
+var( 'federal_tax_rate', [ 21 ] );
+var( 'state_tax_rate', [ 7 ] );
+var( 'property_tax_rate', 0 );
+var( 'prop_tax_cost_assessed_percent', 100 );
+var( 'prop_tax_assessed_decline', 0 );
+var( 'real_discount_rate', 6.4000000000000004 );
+var( 'inflation_rate', 2.5 );
+var( 'insurance_rate', 0.5 );
+
+var( 'om_fixed', [ 0 ] );
+var( 'om_fixed_escal', 0 );
+var( 'om_production', [ 3.5 ] );
+var( 'om_production_escal', 0 );
+var( 'om_capacity', [ 66 ] );
+var( 'om_capacity_escal', 0 );
+var( 'om_fuel_cost', [ 0 ] );
+var( 'om_fuel_cost_escal', 0 );
+var( 'om_replacement_cost1', [ 0 ] );
+var( 'om_replacement_cost_escal', 0 );
+var( 'reserves_interest', 1.75 );
+var( 'equip1_reserve_cost', 0 );
+var( 'equip1_reserve_freq', 12 );
+var( 'equip2_reserve_cost', 0 );
+var( 'equip2_reserve_freq', 15 );
+var( 'equip3_reserve_cost', 0 );
+var( 'equip3_reserve_freq', 3 );
+var( 'equip_reserve_depr_sta', 0 );
+var( 'equip_reserve_depr_fed', 0 );
+var( 'itc_fed_amount', 0 );
+var( 'itc_fed_amount_deprbas_fed', 1 );
+var( 'itc_fed_amount_deprbas_sta', 1 );
+var( 'itc_sta_amount', 0 );
+var( 'itc_sta_amount_deprbas_fed', 0 );
+var( 'itc_sta_amount_deprbas_sta', 0 );
+var( 'itc_fed_percent', 26 );
+var( 'itc_fed_percent_maxvalue', 9.9999999999999998e+37 );
+var( 'itc_fed_percent_deprbas_fed', 1 );
+var( 'itc_fed_percent_deprbas_sta', 1 );
+var( 'itc_sta_percent', 0 );
+var( 'itc_sta_percent_maxvalue', 9.9999999999999998e+37 );
+var( 'itc_sta_percent_deprbas_fed', 0 );
+var( 'itc_sta_percent_deprbas_sta', 0 );
+var( 'ptc_fed_amount', [ 0 ] );
+var( 'ptc_fed_term', 10 );
+var( 'ptc_fed_escal', 0 );
+var( 'ptc_sta_amount', [ 0 ] );
+var( 'ptc_sta_term', 10 );
+var( 'ptc_sta_escal', 0 );
+var( 'depr_alloc_macrs_5_percent', 90 );
+var( 'depr_alloc_macrs_15_percent', 1.5 );
+var( 'depr_alloc_sl_5_percent', 0 );
+var( 'depr_alloc_sl_15_percent', 2.5 );
+var( 'depr_alloc_sl_20_percent', 3 );
+var( 'depr_alloc_sl_39_percent', 0 );
+var( 'depr_alloc_custom_percent', 0 );
+var( 'depr_custom_schedule', [ 0 ] );
+var( 'depr_bonus_sta', 0 );
+var( 'depr_bonus_sta_macrs_5', 1 );
+var( 'depr_bonus_sta_macrs_15', 1 );
+var( 'depr_bonus_sta_sl_5', 0 );
+var( 'depr_bonus_sta_sl_15', 0 );
+var( 'depr_bonus_sta_sl_20', 0 );
+var( 'depr_bonus_sta_sl_39', 0 );
+var( 'depr_bonus_sta_custom', 0 );
+var( 'depr_bonus_fed', 0 );
+var( 'depr_bonus_fed_macrs_5', 1 );
+var( 'depr_bonus_fed_macrs_15', 1 );
+var( 'depr_bonus_fed_sl_5', 0 );
+var( 'depr_bonus_fed_sl_15', 0 );
+var( 'depr_bonus_fed_sl_20', 0 );
+var( 'depr_bonus_fed_sl_39', 0 );
+var( 'depr_bonus_fed_custom', 0 );
+var( 'depr_itc_sta_macrs_5', 1 );
+var( 'depr_itc_sta_macrs_15', 0 );
+var( 'depr_itc_sta_sl_5', 0 );
+var( 'depr_itc_sta_sl_15', 0 );
+var( 'depr_itc_sta_sl_20', 0 );
+var( 'depr_itc_sta_sl_39', 0 );
+var( 'depr_itc_sta_custom', 0 );
+var( 'depr_itc_fed_macrs_5', 1 );
+var( 'depr_itc_fed_macrs_15', 0 );
+var( 'depr_itc_fed_sl_5', 0 );
+var( 'depr_itc_fed_sl_15', 0 );
+var( 'depr_itc_fed_sl_20', 0 );
+var( 'depr_itc_fed_sl_39', 0 );
+var( 'depr_itc_fed_custom', 0 );
+var( 'ibi_fed_amount', 0 );
+var( 'ibi_fed_amount_tax_fed', 1 );
+var( 'ibi_fed_amount_tax_sta', 1 );
+var( 'ibi_fed_amount_deprbas_fed', 0 );
+var( 'ibi_fed_amount_deprbas_sta', 0 );
+var( 'ibi_sta_amount', 0 );
+var( 'ibi_sta_amount_tax_fed', 1 );
+var( 'ibi_sta_amount_tax_sta', 1 );
+var( 'ibi_sta_amount_deprbas_fed', 0 );
+var( 'ibi_sta_amount_deprbas_sta', 0 );
+var( 'ibi_uti_amount', 0 );
+var( 'ibi_uti_amount_tax_fed', 1 );
+var( 'ibi_uti_amount_tax_sta', 1 );
+var( 'ibi_uti_amount_deprbas_fed', 0 );
+var( 'ibi_uti_amount_deprbas_sta', 0 );
+var( 'ibi_oth_amount', 0 );
+var( 'ibi_oth_amount_tax_fed', 1 );
+var( 'ibi_oth_amount_tax_sta', 1 );
+var( 'ibi_oth_amount_deprbas_fed', 0 );
+var( 'ibi_oth_amount_deprbas_sta', 0 );
+var( 'ibi_fed_percent', 0 );
+var( 'ibi_fed_percent_maxvalue', 9.9999999999999998e+37 );
+var( 'ibi_fed_percent_tax_fed', 1 );
+var( 'ibi_fed_percent_tax_sta', 1 );
+var( 'ibi_fed_percent_deprbas_fed', 0 );
+var( 'ibi_fed_percent_deprbas_sta', 0 );
+var( 'ibi_sta_percent', 0 );
+var( 'ibi_sta_percent_maxvalue', 9.9999999999999998e+37 );
+var( 'ibi_sta_percent_tax_fed', 1 );
+var( 'ibi_sta_percent_tax_sta', 1 );
+var( 'ibi_sta_percent_deprbas_fed', 0 );
+var( 'ibi_sta_percent_deprbas_sta', 0 );
+var( 'ibi_uti_percent', 0 );
+var( 'ibi_uti_percent_maxvalue', 9.9999999999999998e+37 );
+var( 'ibi_uti_percent_tax_fed', 1 );
+var( 'ibi_uti_percent_tax_sta', 1 );
+var( 'ibi_uti_percent_deprbas_fed', 0 );
+var( 'ibi_uti_percent_deprbas_sta', 0 );
+var( 'ibi_oth_percent', 0 );
+var( 'ibi_oth_percent_maxvalue', 9.9999999999999998e+37 );
+var( 'ibi_oth_percent_tax_fed', 1 );
+var( 'ibi_oth_percent_tax_sta', 1 );
+var( 'ibi_oth_percent_deprbas_fed', 0 );
+var( 'ibi_oth_percent_deprbas_sta', 0 );
+var( 'cbi_fed_amount', 0 );
+var( 'cbi_fed_maxvalue', 9.9999999999999998e+37 );
+var( 'cbi_fed_tax_fed', 1 );
+var( 'cbi_fed_tax_sta', 1 );
+var( 'cbi_fed_deprbas_fed', 0 );
+var( 'cbi_fed_deprbas_sta', 0 );
+var( 'cbi_sta_amount', 0 );
+var( 'cbi_sta_maxvalue', 9.9999999999999998e+37 );
+var( 'cbi_sta_tax_fed', 1 );
+var( 'cbi_sta_tax_sta', 1 );
+var( 'cbi_sta_deprbas_fed', 0 );
+var( 'cbi_sta_deprbas_sta', 0 );
+var( 'cbi_uti_amount', 0 );
+var( 'cbi_uti_maxvalue', 9.9999999999999998e+37 );
+var( 'cbi_uti_tax_fed', 1 );
+var( 'cbi_uti_tax_sta', 1 );
+var( 'cbi_uti_deprbas_fed', 0 );
+var( 'cbi_uti_deprbas_sta', 0 );
+var( 'cbi_oth_amount', 0 );
+var( 'cbi_oth_maxvalue', 9.9999999999999998e+37 );
+var( 'cbi_oth_tax_fed', 1 );
+var( 'cbi_oth_tax_sta', 1 );
+var( 'cbi_oth_deprbas_fed', 0 );
+var( 'cbi_oth_deprbas_sta', 0 );
+var( 'pbi_fed_amount', [ 0 ] );
+var( 'pbi_fed_term', 0 );
+var( 'pbi_fed_escal', 0 );
+var( 'pbi_fed_tax_fed', 1 );
+var( 'pbi_fed_tax_sta', 1 );
+var( 'pbi_sta_amount', [ 0 ] );
+var( 'pbi_sta_term', 0 );
+var( 'pbi_sta_escal', 0 );
+var( 'pbi_sta_tax_fed', 1 );
+var( 'pbi_sta_tax_sta', 1 );
+var( 'pbi_uti_amount', [ 0 ] );
+var( 'pbi_uti_term', 0 );
+var( 'pbi_uti_escal', 0 );
+var( 'pbi_uti_tax_fed', 1 );
+var( 'pbi_uti_tax_sta', 1 );
+var( 'pbi_oth_amount', [ 0 ] );
+var( 'pbi_oth_term', 0 );
+var( 'pbi_oth_escal', 0 );
+var( 'pbi_oth_tax_fed', 1 );
+var( 'pbi_oth_tax_sta', 1 );
+var( 'term_tenor', 18 );
+var( 'term_int_rate', 7 );
+var( 'dscr', 1.3 );
+var( 'dscr_reserve_months', 6 );
+var( 'debt_percent', 50 );
+var( 'debt_option', 1 );
+var( 'payment_option', 0 );
+var( 'cost_debt_closing', 450000 );
+var( 'cost_debt_fee', 2.75 );
+var( 'months_working_reserve', 6 );
+var( 'months_receivables_reserve', 0 );
+var( 'cost_other_financing', 0 );
+var( 'flip_target_percent', 11 );
+var( 'flip_target_year', 20 );
+var( 'pbi_fed_for_ds', 0 );
+var( 'pbi_sta_for_ds', 0 );
+var( 'pbi_uti_for_ds', 0 );
+var( 'pbi_oth_for_ds', 0 );
+var( 'degradation', [ 0 ] );
+var( 'roe_input', [ 0 ] );
+var( 'loan_moratorium', 0 );
+var( 'system_use_recapitalization', 0 );
+
+var( 'salvage_percentage', 0 );
+
+var( 'depr_stabas_method', 1 );
+var( 'depr_fedbas_method', 1 );
+var( 'cp_capacity_payment_esc', 0 );
+var( 'cp_capacity_payment_type', 0 );
+var( 'cp_capacity_payment_amount', [ 0 ] );
+var( 'cp_capacity_credit_percent', [ 0 ] );
+var( 'cp_battery_nameplate', 0 );
+var( 'grid_curtailment_price', [ 0 ] );
+var( 'grid_curtailment_price_esc', 0 );
+
+
+run('etes_electric_resistance');
+
+
+run('singleowner');
+
+outln("Project after-tax IRR ", var('project_return_aftertax_irr'));
+outln("Project after-tax NPV ", var('project_return_aftertax_npv'));
+
+

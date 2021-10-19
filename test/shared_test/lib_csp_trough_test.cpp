@@ -1,3 +1,25 @@
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 #include <gtest/gtest.h>
 
 #define private public              // for setting private data members
@@ -24,7 +46,7 @@ NAMESPACE_TEST(csp_trough, TroughLoop, DefaultTest)
     TroughOutputs trough_outputs;
     TimestepAndTou timestep_and_tou = default_trough_factory.MakeTimestepAndTou();
 
-    trough->on(*time_and_weather, fluid_inlet_state, defocus, trough_outputs, timestep_and_tou);
+    trough->on(*time_and_weather, fluid_inlet_state, std::numeric_limits<double>::quiet_NaN(), defocus, trough_outputs, timestep_and_tou);
 
     EXPECT_NEAR(trough_outputs.m_T_salt_hot, 391.17, 391.17 * kErrorToleranceLo);
     EXPECT_NEAR(trough_outputs.m_m_dot_salt_tot, 6568369, 6568369 * kErrorToleranceLo);
@@ -74,7 +96,7 @@ NAMESPACE_TEST(csp_trough, TroughLoop, SteadyStateTest)
 
     do
     {
-        trough->on(*time_and_weather, fluid_inlet_state, defocus, trough_outputs, timestep_and_tou);
+        trough->on(*time_and_weather, fluid_inlet_state, std::numeric_limits<double>::quiet_NaN(), defocus, trough_outputs, timestep_and_tou);
 
         // Calculate metric for deciding whether steady-state is reached
         ss_diff = 0.;

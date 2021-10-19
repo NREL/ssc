@@ -1,3 +1,25 @@
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 #include <gtest/gtest.h>
 #include <lib_utility_rate_equations.h>
 
@@ -163,4 +185,339 @@ TEST(lib_utility_rate_equations_test, test_seasonal_demand_charges)
 
     // Same profile provides demand charges in June
     ASSERT_NEAR(10.0, data.get_demand_charge(5, 0), 0.1);
+}
+
+// Excel version of this test: https://github.com/NREL/SAM-documentation/blob/master/Unit%20Testing/Utility%20Rates/block_step/GPC_PLL_Tiered_Bill_Calc_Example_v3_btm_tests.xlsx
+TEST(lib_utility_rate_equations_test, test_block_step_tiers)
+{
+    ssc_number_t p_ur_ec_sched_weekday[288] = { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 };
+    ssc_number_t p_ur_ec_sched_weekend[288] = { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 };
+    ssc_number_t p_ur_ec_tou_mat[96] = { 1, 1, 200, 1, 0.031718000000000003, 0,
+                                         1, 2, 3000, 0, 0.132655, 0,
+                                         1, 3, 10000, 0, 0.120303, 0,
+                                         1, 4, 200000, 0, 0.102607, 0,
+                                         1, 5, 9.9999999999999998e+37, 0, 0.079109, 0,
+                                         1, 6, 400, 1, 0.013627, 0,
+                                         1, 7, 600, 1, 0.010275, 0,
+                                         1, 8, 9.9999999999999998e+37, 1, 0.00771, 0,
+                                         2, 1, 200, 1, 0.028812999999999998, 0,
+                                         2, 2, 3000, 0, 0.132655, 0,
+                                         2, 3, 10000, 0, 0.120303, 0,
+                                         2, 4, 200000, 0, 0.102607, 0,
+                                         2, 5, 9.9999999999999998e+37, 0, 0.079109, 0,
+                                         2, 6, 400, 1, 0.013627, 0,
+                                         2, 7, 600, 1, 0.010275, 0,
+                                         2, 8, 9.9999999999999998e+37, 1, 0.00771, 0 };
+    size_t tou_rows = 16;
+    bool sell_eq_buy = false;
+
+    ssc_number_t p_ur_dc_sched_weekday[288] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+    ssc_number_t p_ur_dc_sched_weekend[288] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+    ssc_number_t p_ur_dc_tou_mat[4] = { 1, 1, 9.9999999999999998e+37, 0 };
+    size_t dc_tou_rows = 1;
+
+    ssc_number_t p_ur_dc_flat_mat[48] = { 0, 1, 9.9999999999999998e+37, 0,
+                                          1, 1, 9.9999999999999998e+37, 0,
+                                          2, 1, 9.9999999999999998e+37, 0,
+                                          3, 1, 9.9999999999999998e+37, 0,
+                                          4, 1, 9.9999999999999998e+37, 0,
+                                          5, 1, 9.9999999999999998e+37, 0,
+                                          6, 1, 9.9999999999999998e+37, 0,
+                                          7, 1, 9.9999999999999998e+37, 0,
+                                          8, 1, 9.9999999999999998e+37, 0,
+                                          9, 1, 9.9999999999999998e+37, 0,
+                                          10, 1, 9.9999999999999998e+37, 0,
+                                          11, 1, 9.9999999999999998e+37, 0 };
+
+    size_t dc_flat_rows = 12;
+
+    rate_data data;
+    data.m_num_rec_yearly = 8760;
+    data.rate_scale = { 1 };
+    data.init(8760);
+    data.setup_demand_charges(&p_ur_dc_sched_weekday[0], &p_ur_dc_sched_weekend[0], dc_tou_rows, &p_ur_dc_tou_mat[0], dc_flat_rows, &p_ur_dc_flat_mat[0]);
+    data.setup_energy_rates(&p_ur_ec_sched_weekday[0], &p_ur_ec_sched_weekend[0], tou_rows, &p_ur_ec_tou_mat[0], sell_eq_buy);
+    data.init_energy_rates(false); // This gets called once to set up all the vectors
+    data.init_dc_peak_vectors(0);
+
+    // Only really need one power number to set up the peak, but include a couple extras as a test
+    std::vector<double> day_one_power = { -500, -600, -658, };
+
+    int base_step = 0;
+    int step = 0;
+    int month = 0;
+    ur_month& curr_month = data.m_month[month];
+    for (step = 0; step < day_one_power.size(); step++)
+    {
+        double power = day_one_power.at(step);
+        // Hourly, so power and energy are the same number
+        curr_month.update_net_and_peak(power, power, step + base_step);
+    }
+    // Recompute the tiers based on actual peaks
+    data.init_energy_rates(false);
+
+    // Each month is only going to have one TOU period in this schedule
+    EXPECT_NEAR(3000, curr_month.ec_tou_ub.at(0, 0), 0.1);
+    EXPECT_NEAR(10000, curr_month.ec_tou_ub.at(0, 1), 0.1);
+    EXPECT_NEAR(131600, curr_month.ec_tou_ub.at(0, 2), 0.1);
+    EXPECT_NEAR(263200, curr_month.ec_tou_ub.at(0, 3), 0.1);
+    EXPECT_NEAR(394800, curr_month.ec_tou_ub.at(0, 4), 0.1);
+    EXPECT_NEAR(9.9999999999999998e+37, curr_month.ec_tou_ub.at(0, 5), 0.1);
+
+    EXPECT_NEAR(0.132655, curr_month.ec_tou_br.at(0, 0), 0.0001);
+    EXPECT_NEAR(0.120303, curr_month.ec_tou_br.at(0, 1), 0.0001);
+    EXPECT_NEAR(0.102607, curr_month.ec_tou_br.at(0, 2), 0.0001);
+    EXPECT_NEAR(0.013627, curr_month.ec_tou_br.at(0, 3), 0.0001);
+    EXPECT_NEAR(0.010275, curr_month.ec_tou_br.at(0, 4), 0.0001);
+    EXPECT_NEAR(0.00771, curr_month.ec_tou_br.at(0, 5), 0.0001);
+
+
+    day_one_power = { -500, -1413, -1000, };
+    data.init_dc_peak_vectors(5);
+    base_step = 3648; // 12 am June 1st
+    month = 5;
+    ur_month& month_5 = data.m_month[month];
+    for (step = 0; step < day_one_power.size(); step++)
+    {
+        double power = day_one_power.at(step);
+        // Hourly, so power and energy are the same number
+        month_5.update_net_and_peak(power, power, step + base_step);
+    }
+    // Recompute the tiers based on actual peaks
+    data.init_energy_rates(false);
+
+    EXPECT_NEAR(3000, month_5.ec_tou_ub.at(0, 0), 0.1);
+    EXPECT_NEAR(10000, month_5.ec_tou_ub.at(0, 1), 0.1);
+    EXPECT_NEAR(200000, month_5.ec_tou_ub.at(0, 2), 0.1);
+    EXPECT_NEAR(282600, month_5.ec_tou_ub.at(0, 3), 0.1);
+    EXPECT_NEAR(565200, month_5.ec_tou_ub.at(0, 4), 0.1);
+    EXPECT_NEAR(847800, month_5.ec_tou_ub.at(0, 5), 0.1);
+    EXPECT_NEAR(9.9999999999999998e+37, month_5.ec_tou_ub.at(0, 6), 0.1);
+
+    EXPECT_NEAR(0.132655, month_5.ec_tou_br.at(0, 0), 0.0001);
+    EXPECT_NEAR(0.120303, month_5.ec_tou_br.at(0, 1), 0.0001);
+    EXPECT_NEAR(0.102607, month_5.ec_tou_br.at(0, 2), 0.0001);
+    EXPECT_NEAR(0.079109, month_5.ec_tou_br.at(0, 3), 0.0001);
+    EXPECT_NEAR(0.013627, month_5.ec_tou_br.at(0, 4), 0.0001);
+    EXPECT_NEAR(0.010275, month_5.ec_tou_br.at(0, 5), 0.0001);
+    EXPECT_NEAR(0.00771, month_5.ec_tou_br.at(0, 6), 0.0001);
+}
+
+TEST(lib_utility_rate_equations_test, test_kwh_per_kw_only)
+{
+    ssc_number_t p_ur_ec_sched_weekday[288] = { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 };
+    ssc_number_t p_ur_ec_sched_weekend[288] = { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 };
+    ssc_number_t p_ur_ec_tou_mat[96] = { 1, 1, 200, 1, 0.031718000000000003, 0,
+                                         1, 6, 400, 1, 0.013627, 0,
+                                         1, 7, 600, 1, 0.010275, 0,
+                                         1, 8, 9.9999999999999998e+37, 1, 0.00771, 0,
+                                         2, 1, 200, 1, 0.028812999999999998, 0,
+                                         2, 6, 400, 1, 0.013627, 0,
+                                         2, 7, 600, 1, 0.010275, 0,
+                                         2, 8, 9.9999999999999998e+37, 1, 0.00771, 0 };
+    size_t tou_rows = 16;
+    bool sell_eq_buy = false;
+
+    ssc_number_t p_ur_dc_sched_weekday[288] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+    ssc_number_t p_ur_dc_sched_weekend[288] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+    ssc_number_t p_ur_dc_tou_mat[4] = { 1, 1, 9.9999999999999998e+37, 0 };
+    size_t dc_tou_rows = 1;
+
+    ssc_number_t p_ur_dc_flat_mat[48] = { 0, 1, 9.9999999999999998e+37, 0,
+                                          1, 1, 9.9999999999999998e+37, 0,
+                                          2, 1, 9.9999999999999998e+37, 0,
+                                          3, 1, 9.9999999999999998e+37, 0,
+                                          4, 1, 9.9999999999999998e+37, 0,
+                                          5, 1, 9.9999999999999998e+37, 0,
+                                          6, 1, 9.9999999999999998e+37, 0,
+                                          7, 1, 9.9999999999999998e+37, 0,
+                                          8, 1, 9.9999999999999998e+37, 0,
+                                          9, 1, 9.9999999999999998e+37, 0,
+                                          10, 1, 9.9999999999999998e+37, 0,
+                                          11, 1, 9.9999999999999998e+37, 0 };
+
+    size_t dc_flat_rows = 12;
+
+    rate_data data;
+    data.m_num_rec_yearly = 8760;
+    data.rate_scale = { 1 };
+    data.init(8760);
+    data.setup_demand_charges(&p_ur_dc_sched_weekday[0], &p_ur_dc_sched_weekend[0], dc_tou_rows, &p_ur_dc_tou_mat[0], dc_flat_rows, &p_ur_dc_flat_mat[0]);
+    data.setup_energy_rates(&p_ur_ec_sched_weekday[0], &p_ur_ec_sched_weekend[0], tou_rows, &p_ur_ec_tou_mat[0], sell_eq_buy);
+    data.init_energy_rates(false); // This gets called once to set up all the vectors
+    data.init_dc_peak_vectors(0);
+
+    // Only really need one power number to set up the peak, but include a couple extras as a test
+    std::vector<double> day_one_power = { -500, -600, -658, };
+
+    int base_step = 0;
+    int step = 0;
+    int month = 0;
+    ur_month& curr_month = data.m_month[month];
+    for (step = 0; step < day_one_power.size(); step++)
+    {
+        double power = day_one_power.at(step);
+        // Hourly, so power and energy are the same number
+        curr_month.update_net_and_peak(power, power, step + base_step);
+    }
+    // Recompute the tiers based on actual peaks
+    data.init_energy_rates(false);
+
+    // Each month is only going to have one TOU period in this schedule
+    EXPECT_NEAR(131600, curr_month.ec_tou_ub.at(0, 0), 0.1);
+    EXPECT_NEAR(263200, curr_month.ec_tou_ub.at(0, 1), 0.1);
+    EXPECT_NEAR(394800, curr_month.ec_tou_ub.at(0, 2), 0.1);
+    EXPECT_NEAR(9.9999999999999998e+37, curr_month.ec_tou_ub.at(0, 3), 0.1);
+
+    EXPECT_NEAR(0.02881, curr_month.ec_tou_br.at(0, 0), 0.0001);
+    EXPECT_NEAR(0.013627, curr_month.ec_tou_br.at(0, 1), 0.0001);
+    EXPECT_NEAR(0.010275, curr_month.ec_tou_br.at(0, 2), 0.0001);
+    EXPECT_NEAR(0.00771, curr_month.ec_tou_br.at(0, 3), 0.0001);
+
+
+    day_one_power = { -500, -1413, -1000, };
+    data.init_dc_peak_vectors(5);
+    base_step = 3648; // 12 am June 1st
+    month = 5;
+    ur_month& month_5 = data.m_month[month];
+    for (step = 0; step < day_one_power.size(); step++)
+    {
+        double power = day_one_power.at(step);
+        // Hourly, so power and energy are the same number
+        month_5.update_net_and_peak(power, power, step + base_step);
+    }
+    // Recompute the tiers based on actual peaks
+    data.init_energy_rates(false);
+
+    EXPECT_NEAR(282600, month_5.ec_tou_ub.at(0, 0), 0.1);
+    EXPECT_NEAR(565200, month_5.ec_tou_ub.at(0, 1), 0.1);
+    EXPECT_NEAR(847800, month_5.ec_tou_ub.at(0, 2), 0.1);
+    EXPECT_NEAR(9.9999999999999998e+37, curr_month.ec_tou_ub.at(0, 3), 0.1);
+
+    EXPECT_NEAR(0.031718, month_5.ec_tou_br.at(0, 0), 0.0001);
+    EXPECT_NEAR(0.013627, month_5.ec_tou_br.at(0, 1), 0.0001);
+    EXPECT_NEAR(0.010275, month_5.ec_tou_br.at(0, 2), 0.0001);
+    EXPECT_NEAR(0.00771, month_5.ec_tou_br.at(0, 3), 0.0001);
+}
+
+TEST(lib_utility_rate_equations_test, test_billing_demand_calcs)
+{
+    ssc_number_t p_ur_ec_sched_weekday[288] = { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 };
+    ssc_number_t p_ur_ec_sched_weekend[288] = { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 };
+    ssc_number_t p_ur_ec_tou_mat[96] = { 1, 1, 200, 1, 0.031718000000000003, 0,
+                                         1, 6, 400, 1, 0.013627, 0,
+                                         1, 7, 600, 1, 0.010275, 0,
+                                         1, 8, 9.9999999999999998e+37, 1, 0.00771, 0,
+                                         2, 1, 200, 1, 0.028812999999999998, 0,
+                                         2, 6, 400, 1, 0.013627, 0,
+                                         2, 7, 600, 1, 0.010275, 0,
+                                         2, 8, 9.9999999999999998e+37, 1, 0.00771, 0 };
+    size_t tou_rows = 16;
+    bool sell_eq_buy = false;
+
+    ssc_number_t p_ur_dc_sched_weekday[288] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+    ssc_number_t p_ur_dc_sched_weekend[288] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+    ssc_number_t p_ur_dc_tou_mat[4] = { 1, 1, 9.9999999999999998e+37, 0 };
+    size_t dc_tou_rows = 1;
+
+    ssc_number_t p_ur_dc_flat_mat[48] = { 0, 1, 9.9999999999999998e+37, 0,
+                                          1, 1, 9.9999999999999998e+37, 0,
+                                          2, 1, 9.9999999999999998e+37, 0,
+                                          3, 1, 9.9999999999999998e+37, 0,
+                                          4, 1, 9.9999999999999998e+37, 0,
+                                          5, 1, 9.9999999999999998e+37, 0,
+                                          6, 1, 9.9999999999999998e+37, 0,
+                                          7, 1, 9.9999999999999998e+37, 0,
+                                          8, 1, 9.9999999999999998e+37, 0,
+                                          9, 1, 9.9999999999999998e+37, 0,
+                                          10, 1, 9.9999999999999998e+37, 0,
+                                          11, 1, 9.9999999999999998e+37, 0 };
+
+    size_t dc_flat_rows = 12;
+
+    rate_data data;
+    data.m_num_rec_yearly = 8760;
+    data.rate_scale = { 1 };
+    data.init(8760);
+    data.setup_demand_charges(&p_ur_dc_sched_weekday[0], &p_ur_dc_sched_weekend[0], dc_tou_rows, &p_ur_dc_tou_mat[0], dc_flat_rows, &p_ur_dc_flat_mat[0]);
+    data.setup_energy_rates(&p_ur_ec_sched_weekday[0], &p_ur_ec_sched_weekend[0], tou_rows, &p_ur_ec_tou_mat[0], sell_eq_buy);
+    data.init_energy_rates(false); // This gets called once to set up all the vectors
+    data.init_dc_peak_vectors(0);
+
+    // Only need one power number per month to set up the peak
+    ssc_number_t year_zero_power[12] = { 1200,
+                                            1100,
+                                            900,
+                                            700,
+                                            800,
+                                            950,
+                                            1050,
+                                            1150,
+                                            850,
+                                            400,
+                                            600,
+                                            750 };
+
+    ssc_number_t p_ur_ec_billing_demand_lookback_percentages [24] = { 60, 0,
+                                          60, 0,
+                                          60, 0,
+                                          60, 0,
+                                          60, 0,
+                                          95, 1,
+                                          95, 1,
+                                          95, 1,
+                                          95, 1,
+                                          60, 0,
+                                          60, 0,
+                                          60, 0 };
+
+    data.setup_ratcheting_demand(p_ur_ec_billing_demand_lookback_percentages);
+    data.ec_bd_minimum = 500;
+    data.en_ec_billing_demand = true;
+    data.ec_bd_lookback_months = 11;
+
+    std::vector<ssc_number_t> year_one_power = {  -1200,
+                                            -1100,
+                                            -900,
+                                            -700,
+                                            -800,
+                                            -950,
+                                            -1050,
+                                            -1150,
+                                            -850,
+                                            -400,
+                                            -600,
+                                            -750 };
+
+    int step = 0;
+    int month = 0;
+    ur_month& curr_month = data.m_month[month];
+    for (month = 0; month < year_one_power.size(); month++)
+    {
+        double power = year_one_power.at(month);
+        // Hourly, so power and energy are the same number
+        curr_month = data.m_month[month];
+        curr_month.update_net_and_peak(power, power, step);
+        data.m_month[month] = curr_month;
+    }
+
+    data.setup_prev_demand(year_zero_power);
+
+    std::vector<double> billing_demands = { 1092.5,
+                                            1092.5,
+                                            1092.5,
+                                            1092.5,
+                                            1092.5,
+                                            1092.5,
+                                            1092.5,
+                                            1150,
+                                            1092.5,
+                                            1092.5,
+                                            1092.5,
+                                            1092.5 };
+
+    for (month = 0; month < year_one_power.size(); month++)
+    {
+        EXPECT_NEAR(billing_demands[month], data.get_billing_demand(month), 0.1);
+    }
 }

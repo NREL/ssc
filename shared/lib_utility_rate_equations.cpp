@@ -1,3 +1,25 @@
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 #include "lib_utility_rate_equations.h"
 
 #include <sstream>
@@ -28,7 +50,8 @@ ur_month::ur_month() :
 	dc_flat_ub(),
 	dc_flat_ch(),
 	dc_tou_charge(),
-	dc_flat_charge()
+	dc_flat_charge(),
+    use_current_month_ratchet(false)
 {}
 
 ur_month::ur_month(const ur_month& tmp) :
@@ -57,7 +80,8 @@ ur_month::ur_month(const ur_month& tmp) :
 	dc_flat_ub(tmp.dc_flat_ub),
 	dc_flat_ch(tmp.dc_flat_ch),
 	dc_tou_charge(tmp.dc_tou_charge),
-	dc_flat_charge(tmp.dc_flat_charge)
+	dc_flat_charge(tmp.dc_flat_charge),
+    use_current_month_ratchet(tmp.use_current_month_ratchet)
 {}
 
 void ur_month::update_net_and_peak(double energy, double power, size_t step) {
@@ -105,6 +129,12 @@ rate_data::rate_data() :
 	dc_hourly_peak(),
 	monthly_dc_fixed(12),
 	monthly_dc_tou(12),
+    en_ec_billing_demand(false),
+    prev_peak_demand(12),
+    ec_bd_lookback_percents(12),
+    ec_bd_minimum(0.0),
+    ec_bd_lookback_months(1),
+    billing_demand(12),
 	tou_demand_single_peak(false),
     enable_nm(false),
     nm_credits_w_rollover(false),
@@ -130,6 +160,12 @@ rate_data::rate_data(const rate_data& tmp) :
 	dc_hourly_peak(tmp.dc_hourly_peak),
 	monthly_dc_fixed(tmp.monthly_dc_fixed),
 	monthly_dc_tou(tmp.monthly_dc_tou),
+    en_ec_billing_demand(tmp.en_ec_billing_demand),
+    prev_peak_demand(tmp.prev_peak_demand),
+    ec_bd_lookback_percents(tmp.ec_bd_lookback_percents),
+    ec_bd_minimum(tmp.ec_bd_minimum),
+    ec_bd_lookback_months(tmp.ec_bd_lookback_months),
+    billing_demand(tmp.billing_demand),
 	tou_demand_single_peak(tmp.tou_demand_single_peak),
     enable_nm(tmp.enable_nm),
     nm_credits_w_rollover(tmp.nm_credits_w_rollover),
@@ -173,65 +209,145 @@ void rate_data::init(int num_rec_yearly) {
     dc_hourly_peak = std::vector<ssc_number_t>(m_num_rec_yearly, 0);
 }
 
+bool rate_data::check_for_kwh_per_kw_rate(int units) {
+    return (units == 1) || (units == 3);
+}
+
+double rate_data::get_billing_demand(int month) {
+    int m = 0;
+    double billing_demand = ec_bd_minimum;
+    int prev_yr_lookback = 11 - (ec_bd_lookback_months - month); // What month do we stop looking back in the prev yr?
+
+    for (m = 11; m >= prev_yr_lookback && m >= 0; m--) {
+        double ratchet_percent = ec_bd_lookback_percents[m] * 0.01;
+        double months_demand = prev_peak_demand[m] * ratchet_percent;
+        if (months_demand > billing_demand) {
+            billing_demand = months_demand;
+        }
+    }
+
+    int start_month = 0;
+    if (month >= ec_bd_lookback_months) {
+        start_month = month - ec_bd_lookback_months;
+    }
+
+    for (m = start_month; m <= month; m++) {
+        double ratchet_percent = ec_bd_lookback_percents[m] * 0.01;
+        double months_demand = m_month[m].dc_flat_peak * ratchet_percent;
+        if (months_demand > billing_demand) {
+            billing_demand = months_demand;
+        }
+    }
+
+    if (m_month[month].dc_flat_peak > billing_demand && m_month[month].use_current_month_ratchet) {
+        billing_demand = m_month[month].dc_flat_peak;
+    }
+
+    return billing_demand;
+}
+
+void rate_data::setup_prev_demand(ssc_number_t* prev_demand) {
+    for (size_t i = 0; i < prev_peak_demand.size(); i++) {
+        prev_peak_demand[i] = prev_demand[i];
+    }
+}
+
 void rate_data::init_energy_rates(bool gen_only) {
 	// calculate the monthly net energy per tier and period based on units
 	for (int m = 0; m < (int)m_month.size(); m++)
 	{
 		// check for kWh/kW
-        size_t start_tier = 0;
-        size_t end_tier = (int)m_month[m].ec_tou_ub.ncols() - 1;
         size_t num_periods = (int)m_month[m].ec_tou_ub.nrows();
-        size_t num_tiers = end_tier - start_tier + 1;
+        size_t num_tiers = (int)m_month[m].ec_tou_ub.ncols(); // Likely to be overwritten later
 
 		if (!gen_only) // added for two meter no load scenarios to use load tier sizing
 		{
-			//start_tier = 0;
-			end_tier = (int)m_month[m].ec_tou_ub_init.ncols() - 1;
-			//int num_periods = (int)m_month[m].ec_tou_ub_init.nrows();
-			num_tiers = end_tier - start_tier + 1;
-
 
 			// kWh/kW (kWh/kW daily handled in Setup)
 			// 1. find kWh/kW tier
-			// 2. set min tier and max tier based on next item in ec_tou matrix
-			// 3. resize use and chart based on number of tiers in kWh/kW section
+			// 2. fill in kWh tiers as needed, up to kWh/kW * flat peak
+            // 3. repeat until maximum tier is reached
 			// 4. assumption is that all periods in same month have same tier breakdown
 			// 5. assumption is that tier numbering is correct for the kWh/kW breakdown
 			// That is, first tier must be kWh/kW
-			if ((m_month[m].ec_tou_units.ncols() > 0 && m_month[m].ec_tou_units.nrows() > 0)
-				&& ((m_month[m].ec_tou_units.at(0, 0) == 1) || (m_month[m].ec_tou_units.at(0, 0) == 3)))
+            // See example at: https://github.com/NREL/SAM-documentation/blob/master/Unit%20Testing/Utility%20Rates/block_step/GPC_PLL_Tiered_Bill_Calc_Example_v3_btm_tests.xlsx
+			if (has_kwh_per_kw_rate(m))
 			{
-				// monthly total energy / monthly peak to determine which kWh/kW tier
-				double mon_kWhperkW = -m_month[m].energy_net; // load negative
-				if (m_month[m].dc_flat_peak != 0)
-					mon_kWhperkW /= m_month[m].dc_flat_peak;
-				// find correct start and end tier based on kWhperkW band
-				start_tier = 1;
-				bool found = false;
-				for (size_t i_tier = 0; i_tier < m_month[m].ec_tou_units.ncols(); i_tier++)
+                std::vector<double> kWh_per_kW_tiers; // Fill this first so we can see where the kWh tiers break
+                std::vector<size_t> tier_numbers;
+                std::vector<double> tier_kwh;
+
+				// track monthly peak to determine which kWh/kW tier
+                double flat_peak = m_month[m].dc_flat_peak;
+                if (en_ec_billing_demand) {
+                    // If ratchets are present the peak used here might be the actual peak, or something based on a previous month.
+                    flat_peak = get_billing_demand(m);
+                }
+                billing_demand[m] = flat_peak;
+
+                // get kWh/kW break points based on actual demand
+                for (size_t i_tier = 0; i_tier < m_month[m].ec_tou_units.ncols(); i_tier++)
+                {
+                    int units = (int)m_month[m].ec_tou_units.at(0, i_tier);
+                    if (check_for_kwh_per_kw_rate(units))
+                    {
+                        double kwh_per_kw = m_month[m].ec_tou_ub_init.at(0, i_tier);
+                        if (kwh_per_kw > 1e+37) {
+                            // Max double stays max double
+                            kWh_per_kW_tiers.push_back(kwh_per_kw);
+                        }
+                        else {
+                            kWh_per_kW_tiers.push_back(kwh_per_kw * flat_peak);
+                        }
+                    }
+                }
+
+                size_t block = 0; // Start with first kWh/kW tier
+                size_t total_tiers = m_month[m].ec_tou_units.ncols();
+				for (size_t i_tier = 0; i_tier < total_tiers; i_tier++)
 				{
 					int units = (int)m_month[m].ec_tou_units.at(0, i_tier);
-					if ((units == 1) || (units == 3))
+					if (check_for_kwh_per_kw_rate(units))
 					{
-						if (found)
-						{
-							end_tier = i_tier - 1;
-							break;
-						}
-						else if (mon_kWhperkW < m_month[m].ec_tou_ub_init.at(0, i_tier))
-						{
-							start_tier = i_tier + 1;
-							found = true;
-						}
+                        // Update to current block
+                        double kwh_per_kw = m_month[m].ec_tou_ub_init.at(0, i_tier);
+                        if (kWh_per_kW_tiers[block] < kwh_per_kw * flat_peak && (block + 1 < kWh_per_kW_tiers.size())) {
+                            block++; // Move on to next block tier
+                        }
+						// Check this block, if it has kWh steps skip it and move on, otherwise add it
+                        if (i_tier + 1 < total_tiers) {
+                            int next_units = (int)m_month[m].ec_tou_units.at(0, i_tier+1);
+                            
+                            if (check_for_kwh_per_kw_rate(next_units)) {
+                                tier_numbers.push_back(i_tier);
+                                tier_kwh.push_back(kWh_per_kW_tiers[block]);
+                            }
+                            // Else do nothing, loop again and add the step
+                        }
+                        else {
+                            // Last tier - add it
+                            tier_numbers.push_back(i_tier);
+                            tier_kwh.push_back(kWh_per_kW_tiers[block]);
+                        }
 					}
+                    else {
+                        // Add steps up to block max
+                        double max = m_month[m].ec_tou_ub_init.at(0, i_tier);
+                        if (max < kWh_per_kW_tiers[block]) {
+                            tier_kwh.push_back(max);
+                            tier_numbers.push_back(i_tier);
+                        }
+                        else {
+                            if (tier_kwh.empty() || (tier_kwh[tier_kwh.size() - 1] < kWh_per_kW_tiers[block])) {
+                                tier_kwh.push_back(kWh_per_kW_tiers[block]);
+                                tier_numbers.push_back(i_tier);
+                            }
+                        }
+                        
+                    }
 				}
-				// last tier since no max specified in rate
-				if (!found) start_tier = end_tier;
-				if (start_tier >= (int)m_month[m].ec_tou_ub_init.ncols())
-					start_tier = (int)m_month[m].ec_tou_ub_init.ncols() - 1;
-				if (end_tier < start_tier)
-					end_tier = start_tier;
-				num_tiers = end_tier - start_tier + 1;
+
+                num_tiers = tier_kwh.size();
 				// resize everytime to handle load and energy changes
 				// resize sr, br and ub for use in energy charge calculations below
 				util::matrix_t<double> br(num_periods, num_tiers);
@@ -242,11 +358,11 @@ void rate_data::init_energy_rates(bool gen_only) {
 				{
 					for (size_t tier = 0; tier < num_tiers; tier++)
 					{
-						br.at(period, tier) = m_month[m].ec_tou_br_init.at(period, start_tier + tier);
-						sr.at(period, tier) = m_month[m].ec_tou_sr_init.at(period, start_tier + tier);
-						ub.at(period, tier) = m_month[m].ec_tou_ub_init.at(period, start_tier + tier);
+						br.at(period, tier) = m_month[m].ec_tou_br_init.at(period, tier_numbers[tier]);
+						sr.at(period, tier) = m_month[m].ec_tou_sr_init.at(period, tier_numbers[tier]);
+						ub.at(period, tier) = tier_kwh[tier];
 						// update for correct tier number column headings
-						m_month[m].ec_periods_tiers[period][tier] = (int) (start_tier + m_ec_periods_tiers_init[period][tier]);
+						m_month[m].ec_periods_tiers[period][tier] = (int) (m_ec_periods_tiers_init[period][tier_numbers[tier]]);
 					}
 				}
 
@@ -255,9 +371,6 @@ void rate_data::init_energy_rates(bool gen_only) {
 				m_month[m].ec_tou_ub = ub;
 			}
 		}
-		// reset now resized
-		start_tier = 0;
-		end_tier = m_month[m].ec_tou_ub.ncols() - 1;
 
 		m_month[m].ec_energy_surplus.resize_fill(num_periods, num_tiers, 0);
 		m_month[m].ec_energy_use.resize_fill(num_periods, num_tiers, 0);
@@ -366,7 +479,7 @@ void rate_data::setup_energy_rates(ssc_number_t* ec_weekday, ssc_number_t* ec_we
 	//m_ec_tou_ub, m_ec_tou_units, m_ec_tou_br, ec_tou_sr vectors of vectors
 
     m_ec_periods_tiers_init = std::vector<std::vector<int>>(m_ec_periods.size());
-
+    
 	for (r = 0; r < ec_tou_rows; r++)
 	{
 		period = (int)ec_tou_mat.at(r, 0);
@@ -424,7 +537,7 @@ void rate_data::setup_energy_rates(ssc_number_t* ec_weekday, ssc_number_t* ec_we
 	for (m = 0; m < m_month.size(); m++)
 	{
 		int num_periods = 0;
-		int num_tiers = 0;
+		int num_tiers = 0; 
 
 		for (i = 0; i < m_month[m].ec_periods.size(); i++)
 		{
@@ -433,16 +546,16 @@ void rate_data::setup_energy_rates(ssc_number_t* ec_weekday, ssc_number_t* ec_we
 			if (per_num == m_ec_periods.end())
 			{
 				std::ostringstream ss;
-				ss << "Period " << m_month[m].ec_periods[i] << " is in Month " << m << " but is not defined in the energy rate table. Rates for each period in the Weekday and Weekend schedules must be defined in the energy rate table.";
+				ss << "Period " << m_month[m].ec_periods[i] << " is in a Weekday or Weekend schedule but is not defined in the energy rate table. Each period in the Weekday and Weekend schedules must have a corresponding row in the energy rate table.";
 				throw exec_error("lib_utility_rate_equations", ss.str());
 			}
 			period = (*per_num);
 			int ndx = (int)(per_num - m_ec_periods.begin());
-			num_tiers = (int)m_ec_periods_tiers_init[ndx].size();
 			if (i == 0)
 			{
 				// redimension ec_ field of ur_month class
 				num_periods = (int)m_month[m].ec_periods.size();
+                num_tiers = (int)m_ec_periods_tiers_init[ndx].size();
 				m_month[m].ec_tou_ub.resize_fill(num_periods, num_tiers, (ssc_number_t)1e+38);
 				m_month[m].ec_tou_units.resize_fill(num_periods, num_tiers, 0); // kWh
 				m_month[m].ec_tou_br.resize_fill(num_periods, num_tiers, 0);
@@ -453,8 +566,9 @@ void rate_data::setup_energy_rates(ssc_number_t* ec_weekday, ssc_number_t* ec_we
 				if ((int)m_ec_periods_tiers_init[ndx].size() != num_tiers)
 				{
 					std::ostringstream ss;
-					ss << "The number of tiers in the energy rate table, " << m_ec_periods_tiers_init[ndx].size() << ", is incorrect for Month " << m << " and Period " << m_month[m].ec_periods[i] << ". The correct number of tiers for that month and period is " << num_tiers << ".";
-					throw exec_error("lib_utility_rate_equations", ss.str());
+					//ss << "The energy rate table defines " << m_ec_periods_tiers_init[ndx].size() << " tiers. For Month " << m << " and Period " << m_month[m].ec_periods[i] << " SAM expects " << num_tiers << "tiers. All periods must have the same number of tiers.";
+                    ss << "The energy rate table defines " << m_ec_periods_tiers_init[ndx].size() << " tiers, but one or more periods have " << num_tiers << " tier. All periods must have the same number of tiers.";
+                    throw exec_error("lib_utility_rate_equations", ss.str());
 				}
 			}
 			for (j = 0; j < m_ec_periods_tiers_init[ndx].size(); j++)
@@ -599,7 +713,7 @@ void rate_data::setup_demand_charges(ssc_number_t* dc_weekday, ssc_number_t* dc_
 			if (per_num == m_dc_tou_periods.end())
 			{
 				std::ostringstream ss;
-				ss << "Period " << m_month[m].dc_periods[i] << " is in Month " << m << " but is not defined in the demand rate table.  Rates for each period in the Weekday and Weekend schedules must be defined in the demand rate table.";
+				ss << "Period " << m_month[m].dc_periods[i] << " is defined in the Weekday or Weekend schedule but is not defined in the demand rate table. Each period in the Weekday and Weekend schedule must have a corresponding row in the demand rate table.";
 				throw exec_error("utilityrate5", ss.str());
 			}
 			period = (*per_num);
@@ -689,6 +803,21 @@ void rate_data::setup_demand_charges(ssc_number_t* dc_weekday, ssc_number_t* dc_
 
 		}
 	}
+}
+
+void rate_data::setup_ratcheting_demand(ssc_number_t* ratchet_percent_matrix)
+{
+    // Error checked in SSC variables
+    size_t nrows = 12;
+    size_t ncols = 2;
+    util::matrix_t<double> ratchet_matrix(nrows, ncols);
+    ratchet_matrix.assign(ratchet_percent_matrix, nrows, ncols);
+
+    for (int i = 0; i < nrows; i++) {
+        ec_bd_lookback_percents[i] = ratchet_matrix.at(i, 0);
+        m_month[i].use_current_month_ratchet = ratchet_matrix.at(i, 1) == 1;
+    }
+
 }
 
 void rate_data::sort_energy_to_periods(int month, double energy, size_t step) {
@@ -887,4 +1016,9 @@ void rate_data::compute_surplus(ur_month& curr_month)
         else
             curr_month.ec_energy_use.at(ir, 0) = -curr_month.ec_energy_use.at(ir, 0);
     }
+}
+
+bool rate_data::has_kwh_per_kw_rate(int month) {
+    return (m_month[month].ec_tou_units.ncols() > 0 && m_month[month].ec_tou_units.nrows() > 0)
+        && check_for_kwh_per_kw_rate(m_month[month].ec_tou_units.at(0, 0));
 }

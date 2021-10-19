@@ -56,8 +56,8 @@ var_info vtab_battery_replacement_cost[] = {
 { SSC_INPUT, SSC_NUMBER , "batt_replacement_option"              , "Enable battery replacement?"                                    , "0=none,1=capacity based,2=user schedule", ""                                      , "BatterySystem"              , "?=0"            , "INTEGER,MIN=0,MAX=2"   , ""},
 { SSC_INPUT, SSC_NUMBER , "battery_per_kWh"                      , "Battery cost"                                                   , "$/kWh"                                  , ""                                      , "BatterySystem"              , "?=0.0"          , ""                      , ""},
 { SSC_INPUT, SSC_NUMBER , "batt_computed_bank_capacity"          , "Battery bank capacity"                                          , "kWh"                                    , ""                                      , "BatterySystem"              , "?=0.0"          , ""                      , ""},
-{ SSC_OUTPUT, SSC_ARRAY , "cf_battery_replacement_cost"          , "Battery replacement cost"                                       , "$"                                      , ""                                      , "Cash Flow"            , "*"              , ""                      , ""},
-{ SSC_OUTPUT, SSC_ARRAY , "cf_battery_replacement_cost_schedule" , "Battery replacement cost schedule"                              , "$/kWh"                                  , ""                                      , "Cash Flow"            , "*"              , ""                      , ""},
+{ SSC_OUTPUT, SSC_ARRAY , "cf_battery_replacement_cost"          , "Battery replacement cost"                                       , "$"                                      , ""                                      , "Cash Flow"            , ""              , ""                      , ""},
+{ SSC_OUTPUT, SSC_ARRAY , "cf_battery_replacement_cost_schedule" , "Battery replacement cost schedule"                              , "$"                                  , ""                                      , "Cash Flow"            , ""              , ""                      , ""},
 var_info_invalid };
 
 var_info vtab_financial_grid[] = {
@@ -73,11 +73,11 @@ var_info vtab_fuelcell_replacement_cost[] = {
 { SSC_INPUT, SSC_ARRAY  , "fuelcell_replacement"                 , "Fuel cell replacements per year"                                , "number/year"                            , ""                                      , "Fuel Cell"            , ""               , ""                      , ""},
 { SSC_INPUT, SSC_ARRAY  , "fuelcell_replacement_schedule"        , "Fuel cell replacements per year (user specified)"               , "number/year"                            , ""                                      , "Fuel Cell"            , ""               , ""                      , ""},
 { SSC_INPUT, SSC_NUMBER , "en_fuelcell"                          , "Enable fuel cell storage model"                                 , "0/1"                                    , ""                                      , "Fuel Cell"            , "?=0"            , ""                      , ""},
-{ SSC_INPUT, SSC_NUMBER , "fuelcell_replacement_option"          , "Enable fuel cell replacement?"                                  , "0=none,1=capacity based,2=user schedule", ""                                      , "Fuel Cell"            , "?=0"            , "INTEGER,MIN=0,MAX=2"   , ""},
+{ SSC_INPUT, SSC_NUMBER , "fuelcell_replacement_option"          , "Enable fuel cell replacement?"                                  , "0=none,1=capacity based,2=user schedule", ""                                      , "Fuel Cell"            , ""            , "INTEGER,MIN=0,MAX=2"   , ""},
 { SSC_INPUT, SSC_NUMBER , "fuelcell_per_kWh"                     , "Fuel cell cost"                                                 , "$/kWh"                                  , ""                                      , "Fuel Cell"            , "?=0.0"          , ""                      , ""},
 { SSC_INPUT, SSC_NUMBER , "fuelcell_computed_bank_capacity"      , "Fuel cell capacity"                                             , "kWh"                                    , ""                                      , "Fuel Cell"            , "?=0.0"          , ""                      , ""},
-{ SSC_OUTPUT, SSC_ARRAY , "cf_fuelcell_replacement_cost"         , "Fuel cell replacement cost"                                     , "$"                                      , ""                                      , "Cash Flow"            , "*"              , ""                      , ""},
-{ SSC_OUTPUT, SSC_ARRAY , "cf_fuelcell_replacement_cost_schedule", "Fuel cell replacement cost schedule"                            , "$/kW"                                   , ""                                      , "Cash Flow"            , "*"              , ""                      , ""},
+{ SSC_OUTPUT, SSC_ARRAY , "cf_fuelcell_replacement_cost"         , "Fuel cell replacement cost"                                     , "$"                                      , ""                                      , "Cash Flow"            , ""              , ""                      , ""},
+{ SSC_OUTPUT, SSC_ARRAY , "cf_fuelcell_replacement_cost_schedule", "Fuel cell replacement cost schedule"                            , "$/kW"                                   , ""                                      , "Cash Flow"            , ""              , ""                      , ""},
 var_info_invalid };
 
 var_info vtab_standard_loan[] = {
@@ -101,8 +101,8 @@ var_info vtab_oandm[] = {
 { SSC_INPUT,        SSC_ARRAY,       "annual_fuel_usage_lifetime",   "Fuel usage (lifetime)",             "kWht",    "",                  "System Costs",            "",                     "",                                         "" },
 
 // replacements
-{ SSC_INPUT,SSC_ARRAY   , "om_replacement_cost1"                 , "Replacement cost 1"                                             , "$/kWh"                                  , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
-{ SSC_INPUT,SSC_ARRAY   , "om_replacement_cost2"                 , "Replacement cost 2"                                             , "$/kW"                                   , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
+{ SSC_INPUT,SSC_ARRAY   , "om_batt_replacement_cost"                 , "Replacement cost 1"                                             , "$/kWh"                                  , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
+{ SSC_INPUT,SSC_ARRAY   , "om_fuelcell_replacement_cost"                 , "Replacement cost 2"                                             , "$/kW"                                   , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
 { SSC_INPUT,SSC_NUMBER  , "om_replacement_cost_escal"            , "Replacement cost escalation"                                    , "%/year"                                 , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
 
 // optional fuel o and m for Biopower - usage can be in any unit and cost is in $ per usage unit
@@ -115,19 +115,21 @@ var_info vtab_oandm[] = {
 
 // optional additional base o and m types
 { SSC_INPUT,SSC_NUMBER  , "add_om_num_types"                     , "Number of O and M types"                                        , ""                                       , ""                                      , "System Costs"         , "?=0"            , "INTEGER,MIN=0,MAX=2"   , ""},
-{ SSC_INPUT,SSC_NUMBER  , "om_capacity1_nameplate"               , "Battery capacity for System Costs values"                       , "kW"                                     , ""                                      , "System Costs"         , "?=0"            , ""                      , ""},
+{ SSC_INPUT,SSC_NUMBER  , "om_batt_nameplate"               , "Battery capacity for System Costs values"                       , "kW"                                     , ""                                      , "System Costs"         , "?=0"            , ""                      , ""},
 { SSC_INPUT,SSC_ARRAY   , "om_production1_values"                , "Battery production for System Costs values"                     , "kWh"                                    , ""                                      , "System Costs"         , "?=0"            , ""                      , ""},
 
-{ SSC_INPUT,SSC_ARRAY   , "om_fixed1"                            , "Battery fixed System Costs annual amount"                       , "$/year"                                 , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
-{ SSC_INPUT,SSC_ARRAY   , "om_production1"                       , "Battery production-based System Costs amount"                   , "$/MWh"                                  , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
-{ SSC_INPUT,SSC_ARRAY   , "om_capacity1"                         , "Battery capacity-based System Costs amount"                     , "$/kWcap"                                , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
+{ SSC_INPUT,SSC_ARRAY   , "om_batt_fixed_cost"                            , "Battery fixed System Costs annual amount"                       , "$/year"                                 , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
+{ SSC_INPUT,SSC_ARRAY   , "om_batt_variable_cost"                       , "Battery production-based System Costs amount"                   , "$/MWh"                                  , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
+{ SSC_INPUT,SSC_ARRAY   , "om_batt_capacity_cost"                         , "Battery capacity-based System Costs amount"                     , "$/kWcap"                                , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
 
-{ SSC_INPUT,SSC_NUMBER  , "om_capacity2_nameplate"               , "Fuel cell capacity for System Costs values"                     , "kW"                                     , ""                                      , "System Costs"         , "?=0"            , ""                      , ""},
+{ SSC_INPUT,SSC_NUMBER  , "om_fuelcell_nameplate"               , "Fuel cell capacity for System Costs values"                     , "kW"                                     , ""                                      , "System Costs"         , "?=0"            , ""                      , ""},
 { SSC_INPUT,SSC_ARRAY   , "om_production2_values"                , "Fuel cell production for System Costs values"                   , "kWh"                                    , ""                                      , "System Costs"         , "?=0"            , ""                      , ""},
 
-{ SSC_INPUT,SSC_ARRAY   , "om_fixed2"                            , "Fuel cell fixed System Costs annual amount"                     , "$/year"                                 , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
-{ SSC_INPUT,SSC_ARRAY   , "om_production2"                       , "Fuel cell production-based System Costs amount"                 , "$/MWh"                                  , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
-{ SSC_INPUT,SSC_ARRAY   , "om_capacity2"                         , "Fuel cell capacity-based System Costs amount"                   , "$/kWcap"                                , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
+{ SSC_INPUT,SSC_ARRAY   , "om_fuelcell_fixed_cost"                            , "Fuel cell fixed System Costs annual amount"                     , "$/year"                                 , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
+{ SSC_INPUT,SSC_ARRAY   , "om_fuelcell_variable_cost"                       , "Fuel cell production-based System Costs amount"                 , "$/MWh"                                  , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
+{ SSC_INPUT,SSC_ARRAY   , "om_fuelcell_capacity_cost"                         , "Fuel cell capacity-based System Costs amount"                   , "$/kWcap"                                , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
+{ SSC_INPUT, SSC_ARRAY,   "fuelcell_annual_energy_discharged",  "Annual energy from fuelcell",    "kWh",        "",                 "System Costs",                  "?=0",                        "",                              "" },
+
 var_info_invalid };
 
 var_info vtab_equip_reserve[] = {
@@ -437,6 +439,8 @@ var_info vtab_financial_metrics[] = {
 { SSC_OUTPUT,       SSC_NUMBER,     "flip_actual_irr",                        "IRR in target year",                        "%",                   "", "Metrics", "*", "", "" },
 { SSC_OUTPUT,       SSC_NUMBER,     "lcoe_real",                              "Levelized cost (real)",                               "cents/kWh",               "", "Metrics", "*", "", "" },
 { SSC_OUTPUT,       SSC_NUMBER,     "lcoe_nom",                               "Levelized cost (nominal)",                            "cents/kWh",               "", "Metrics", "*", "", "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "lcos_real",                              "Levelized cost of storage (real)",                               "cents/kWh",               "", "Metrics", "?", "", "" },
+//{ SSC_OUTPUT,       SSC_NUMBER,     "lcos_nom",                               "Levelized cost of storage (nominal)",                            "cents/kWh",               "", "Metrics", "?", "", "" },
 { SSC_OUTPUT,       SSC_NUMBER,     "npv_energy_nom",                         "Present value of annual energy (nominal)",     "kWh",                 "", "Metrics", "*", "", "" },
 { SSC_OUTPUT,       SSC_NUMBER,     "npv_energy_real",                        "Present value of annual energy (real)",     "kWh",                 "", "Metrics", "*", "", "" },
 { SSC_OUTPUT,       SSC_NUMBER,     "present_value_oandm",                    "Present value of O&M",				       "$",                   "", "Metrics", "*", "", "" },
@@ -517,13 +521,50 @@ var_info vtab_grid_curtailment[] = {
 	/*   VARTYPE           DATATYPE         NAME                               LABEL                                       UNITS     META                                     GROUP                 REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 
 		{ SSC_INPUT,        SSC_ARRAY,       "grid_curtailment",              "Grid curtailment as energy delivery limit (first year)",              "MW",    "",                                     "GridLimits",      "?",                     "",                "" },
-	var_info_invalid };
+        { SSC_INPUT,        SSC_NUMBER,      "enable_interconnection_limit",      "Enable grid interconnection limit",     "0/1",     "Enable a grid interconnection limit",   "GridLimits",        "","",                           "" },
+        { SSC_INPUT,        SSC_NUMBER,      "grid_interconnection_limit_kwac",   "Grid interconnection limit",            "kWac",    "",                                      "GridLimits",        "","",                           "" },
+
+    var_info_invalid };
 
 
 var_info vtab_technology_outputs[] = {
 	// instantaneous power at each timestep - consistent with sun position
 { SSC_OUTPUT, SSC_ARRAY , "gen"                                  , "System power generated"                                         , "kW"                                     , ""                                      , "Time Series"          , "*"              , ""                      , ""},
-	var_info_invalid };
+{ SSC_OUTPUT, SSC_MATRIX,			"annual_energy_distribution_time",			"Annual energy production as function of time",				"kW",				"",				"Heatmaps",			"",						"",							"" },
+
+    var_info_invalid };
+
+ssc_number_t* gen_heatmap(compute_module* cm, double step_per_hour) {
+    if (!cm)
+        return 0;
+    size_t count = (size_t)(8760 * step_per_hour);
+    size_t imonth = 0;
+    size_t iday = 0;
+    size_t hour;
+    size_t count_gen;
+    ssc_number_t* p_gen = cm->as_array("gen", &count_gen);
+    ssc_number_t* p_annual_energy_dist_time = cm->allocate("annual_energy_distribution_time", 25, 366);
+    for (size_t i = 0; i < count; i++) {
+        hour = (size_t)fmod(floor(double(i) / step_per_hour), 24);
+        iday = (size_t)floor((double(i) / step_per_hour) / 24) ;
+        for (size_t d = 0; d < 366; d++) {
+            for (size_t h = 0; h < 25; h++) {
+                if (i == 0) {
+                    p_annual_energy_dist_time[h * 366] = (ssc_number_t)(h - 1);
+                    p_annual_energy_dist_time[d] = (ssc_number_t)d;
+                }
+                if (iday == d && hour == (h - 1) && d != 365) {
+                    p_annual_energy_dist_time[h * 366 + d + 1] += p_gen[i] * 1 / step_per_hour;
+                    break;
+                }
+            }
+        }
+    }
+    p_annual_energy_dist_time[0] = 0;
+    return p_annual_energy_dist_time;
+
+
+}
 
 var_info vtab_p50p90[] = {
         { SSC_INPUT, SSC_NUMBER ,  "total_uncert"                 , "Total uncertainty in energy production as percent of annual energy", "%"                                   , ""                                      , "Uncertainty"          , ""              , "MIN=0,MAX=100"         , ""},
@@ -826,6 +867,15 @@ var_info vtab_utility_rate_common[] = {
     // ur_dc_tou_flat has 4 columns month, tier, peak demand (kW), demand charge
     // replaces 12(P)*6(T)*(peak+charge) = 144 single inputs
     { SSC_INPUT,        SSC_MATRIX,     "ur_dc_flat_mat",           "Demand rates (flat) table",            "",         "",                     "Electricity Rates",        "ur_dc_enable=1",   "",                             "" },
+
+    // Ratcheting demand charges
+    { SSC_INPUT,        SSC_NUMBER,     "ur_ec_enable_billing_demand",     "Enable billing demand for energy charges",     "0/1",  "0=disable,1=enable",        "Electricity Rates",        "?=0",                 "INTEGER,MIN=0,MAX=1",       "" },
+    { SSC_INPUT,        SSC_NUMBER,     "ur_ec_billing_demand_minimum",       "Minimum billing demand",               "",         "",                     "Electricity Rates",        "ur_ec_enable_billing_demand=1",                 "",                             "" },
+    { SSC_INPUT,        SSC_NUMBER,     "ur_ec_billing_demand_lookback_period", "Billing demand lookback period",  "mn",         "",                "Electricity Rates",           "ur_ec_enable_billing_demand=1",                 "INTEGER,MIN=0,MAX=12",                             "" },
+    { SSC_INPUT,        SSC_MATRIX,     "ur_ec_billing_demand_lookback_percentages", "Billing demand lookback percentages by month and consider actual peak demand",       "",         "12x2",      "Electricity Rates",        "ur_ec_enable_billing_demand=1",                 "",                             "" },
+    { SSC_INPUT,        SSC_ARRAY,      "ur_yearzero_usage_peaks",  "Peak usage by month for year zero",       "",         "12",                "Electricity Rates",        "ur_ec_enable_billing_demand=1",                 "",                             "" },
+
+
     var_info_invalid
 };
 
@@ -1139,7 +1189,7 @@ size_t shading_factor_calculator::get_row_index_for_input(size_t hour_of_year, s
 
 	// then figure out how many row indices to add for the subhourly timeseries entries based on the minute stamp
 	// for example, minute 30 in a half-hour weather file will calculate: floor(30 / (60/2)) = 1 and will add one to the row index, which is correct
-	ndx += floor((int)minute / (60 / (m_steps_per_hour)));
+	ndx += (size_t)floor((int)minute / (60 / (m_steps_per_hour)));
 
 	return ndx;
 }
@@ -1149,7 +1199,7 @@ bool shading_factor_calculator::fbeam(size_t hour_of_year, double minute, double
 {
 	bool ok = false;
 	double factor = 1.0;
-	size_t irow = get_row_index_for_input(hour_of_year, minute);
+	size_t irow = get_row_index_for_input(hour_of_year, (size_t)minute);
 	if (irow < m_beamFactors.nrows() && irow >= 0)
 	{
 		factor = m_beamFactors.at(irow, 0);
@@ -1173,7 +1223,7 @@ bool shading_factor_calculator::fbeam_shade_db(ShadeDB8_mpp * p_shadedb, size_t 
 	bool ok = false;
 	double dc_factor = 1.0;
 	double beam_factor = 1.0;
-	size_t irow = get_row_index_for_input(hour, minute);
+	size_t irow = get_row_index_for_input(hour, (size_t)minute);
 	if (irow < m_beamFactors.nrows())
 	{
 		std::vector<double> shad_fracs;
@@ -1222,19 +1272,27 @@ double shading_factor_calculator::dc_shade_factor()
 //HOWEVER, the year value may vary (i.e., TMY) so only checking month, day, hour, minute timesteps, not actual year vector
 bool weatherdata::check_continuous_single_year(bool leapyear)
 {
+    //first, set up some timestep variables
 	int ts_per_hour = 0; //determine the number of timesteps in each hour
 	if (leapyear)
 		ts_per_hour = (int)(m_nRecords / 8784);
 	else
 		ts_per_hour = (int)(m_nRecords / 8760);
 	double ts_min = 60. / ts_per_hour; //determine the number of minutes of each timestep
+
+    //next, check if the data has leap day (feb 29). need to do this because some tools pass in 8760 data that contains feb 29 and not dec 31
+    bool has_leapday = false;
+    int leapDayNoon = 1429 * ts_per_hour; //look for the index of noon on leap day. noon on leap day is hour 1429 of the year
+    if (this->m_data[leapDayNoon]->month == 2 && this->m_data[leapDayNoon]->day == 29) //check noon on what would be feb 29 if it's in the data
+        has_leapday = true;
+
+    //last, go through each index in order and make sure that the timestamps all correspond to a single, serially complete year with even timesteps
 	int idx = 0; // index to keep track of where we are in the timestamp vectors
-	// now, check that the month, hour, day, and minute vectors are consistent with a single, continuous year with an
-	// even timestep that starts on jan 1 and ends dec 31
 	for (int m = 1; m <= 12; m++)
 	{
 		int daymax = util::days_in_month(m - 1);
-		if (m == 2 && leapyear) daymax = 29; //make sure to account for leap day in Feb
+		if (m == 2 && has_leapday) daymax = 29; //make sure to account for leap day in Feb if it's in the data
+        if (m == 12 && has_leapday && !leapyear) daymax = 30; //if the data is 8760 but has Feb 29, then it won't have Dec 31
 		for (int d = 1; d <= daymax; d++)
 		{
 			for (int h = 0; h < 24; h++)
@@ -1242,13 +1300,16 @@ bool weatherdata::check_continuous_single_year(bool leapyear)
 				double min = this->m_data[idx]->minute;
 				for (int tsph = 0; tsph < ts_per_hour; tsph++)
 				{
-					min += tsph * ts_min;
-					//if any of the month, day, hour, or minute don't line up with what we've calculated, then it doesn't fit our criteria for a continuous year
+                    //first check that the index isn't out of bounds
+                    if (idx > (int)m_nRecords - 1)
+                        return false;
+                    //if any of the month, day, hour, or minute don't line up with what we've calculated, then it doesn't fit our criteria for a continuous year
 					if (this->m_data[idx]->month != m || this->m_data[idx]->day != d || this->m_data[idx]->hour != h
 					    || this->m_data[idx]->minute != min)
 						return false;
 					else
 						idx++;
+                    min += ts_min;
 				}
 			}
 		}
@@ -1440,8 +1501,11 @@ weatherdata::weatherdata( var_data *data_table )
 
 weatherdata::~weatherdata()
 {
-	for( size_t i=0;i<m_data.size();i++ )
-		delete m_data[i];
+    if (m_data.size() > 0) {
+        for (size_t i = 0; i< m_data.size(); i++)
+            delete m_data[i];
+    }
+    m_data.clear();
 }
 
 

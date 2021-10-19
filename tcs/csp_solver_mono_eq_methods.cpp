@@ -36,9 +36,10 @@ void C_csp_solver::reset_time(double step /*s*/)
         mc_kernel.mc_sim_info.ms_ts.m_step;		//[s]
 }
 
-int C_csp_solver::solve_operating_mode(int cr_mode, C_csp_power_cycle::E_csp_power_cycle_modes pc_mode,
+int C_csp_solver::solve_operating_mode(C_csp_collector_receiver::E_csp_cr_modes cr_mode, C_csp_power_cycle::E_csp_power_cycle_modes pc_mode,
     C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode, C_MEQ__timestep::E_timestep_target_modes step_target_mode,
-    double q_dot_pc_target /*MWt*/, bool is_defocus,
+    double q_dot_pc_target /*MWt*/, bool is_defocus, bool is_rec_outlet_to_hottank,
+    double q_dot_elec_to_CR_heat /*MWe*/,
     std::string op_mode_str, double & defocus_solved)
 {
     double t_ts_initial = mc_kernel.mc_sim_info.ms_ts.m_step;   //[s]
@@ -46,6 +47,8 @@ int C_csp_solver::solve_operating_mode(int cr_mode, C_csp_power_cycle::E_csp_pow
     C_MEQ__defocus c_mdot_eq(solver_mode, C_MEQ__defocus::E_M_DOT_BAL, step_target_mode, this,
         q_dot_pc_target,
         pc_mode, cr_mode,
+        q_dot_elec_to_CR_heat,
+        is_rec_outlet_to_hottank,
         t_ts_initial); //, step_tolerance);
     C_monotonic_eq_solver c_mdot_solver(c_mdot_eq);
 
@@ -141,6 +144,8 @@ int C_csp_solver::solve_operating_mode(int cr_mode, C_csp_power_cycle::E_csp_pow
                 this,
                 q_dot_pc_target,
                 pc_mode, cr_mode,
+                q_dot_elec_to_CR_heat,
+                is_rec_outlet_to_hottank,
                 t_ts_initial);
             C_monotonic_eq_solver c_q_dot_solver(c_q_dot_eq);
 
@@ -229,6 +234,8 @@ int C_csp_solver::solve_operating_mode(int cr_mode, C_csp_power_cycle::E_csp_pow
                 //m_dot_tes, 
                 q_dot_pc_target,
                 pc_mode, cr_mode,
+                q_dot_elec_to_CR_heat,
+                is_rec_outlet_to_hottank,
                 t_ts_initial);  // , step_tolerance);
             C_monotonic_eq_solver c_bal_solver(c_bal_eq);
 
@@ -278,7 +285,10 @@ int C_csp_solver::C_MEQ__defocus::operator()(double defocus /*-*/, double *targe
 {
     C_MEQ__timestep c_T_cold_eq(m_solver_mode, m_ts_target_mode, mpc_csp_solver,
         m_q_dot_pc_target,
-        m_pc_mode, m_cr_mode, defocus);
+        m_pc_mode, m_cr_mode,
+        m_q_dot_elec_to_CR_heat,
+        m_is_rec_outlet_to_hottank,
+        defocus);
     C_monotonic_eq_solver c_T_cold_solver(c_T_cold_eq);
 
     double t_ts_solved = std::numeric_limits<double>::quiet_NaN();
@@ -528,6 +538,8 @@ int C_csp_solver::C_MEQ__timestep::operator()(double t_ts_guess /*s*/, double *t
     C_MEQ__T_field_cold c_eq(m_solver_mode, mpc_csp_solver, 
         m_q_dot_pc_target,
         m_pc_mode, m_cr_mode,
+        m_q_dot_elec_to_CR_heat,
+        m_is_rec_outlet_to_hottank,
         m_defocus, t_ts_guess, 
         mpc_csp_solver->m_P_cold_des, mpc_csp_solver->m_x_cold_des);
     C_monotonic_eq_solver c_solver(c_eq);
@@ -646,12 +658,14 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
     mpc_csp_solver->mc_cr_htf_state_in.m_qual = m_x_field_in;	//[-]
 
     double m_dot_field_out = std::numeric_limits<double>::quiet_NaN();     //[kg/hr]
+    double m_dot_field_out_to_cold_tank = 0.0;                              //[kg/hr]
     double t_ts_cr_su = m_t_ts_in;
     if (m_cr_mode == C_csp_collector_receiver::ON)
     {
         mpc_csp_solver->mc_collector_receiver.on(mpc_csp_solver->mc_weather.ms_outputs,
             mpc_csp_solver->mc_cr_htf_state_in,
-            m_defocus,
+            m_q_dot_elec_to_CR_heat,
+            m_defocus,            
             mpc_csp_solver->mc_cr_out_solver,
             mpc_csp_solver->mc_kernel.mc_sim_info);
 
@@ -661,7 +675,14 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
             return -1;
         }
 
-        m_dot_field_out = mpc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot;     //[kg/hr]
+        if (m_is_rec_outlet_to_hottank) {
+            m_dot_field_out = mpc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot;     //[kg/hr]
+            m_dot_field_out_to_cold_tank = 0.0;
+        }
+        else {
+            m_dot_field_out_to_cold_tank = mpc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot;     //[kg/hr]
+            m_dot_field_out = 0.0;
+        }
     }
     else if (m_cr_mode == C_csp_collector_receiver::STARTUP)
     {
@@ -725,7 +746,12 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
         {
             double q_dot_dc_est, m_dot_tes_dc, T_tes_dc_est;
             q_dot_dc_est = m_dot_tes_dc = T_tes_dc_est = std::numeric_limits<double>::quiet_NaN();
-            mpc_csp_solver->mc_tes.discharge_avail_est(m_T_field_cold_guess, mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step, q_dot_dc_est, m_dot_tes_dc, T_tes_dc_est);
+            if (mpc_csp_solver->m_is_tes) {
+                mpc_csp_solver->mc_tes.discharge_avail_est(m_T_field_cold_guess, mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step, q_dot_dc_est, m_dot_tes_dc, T_tes_dc_est);
+            }
+            else {
+                q_dot_dc_est = m_dot_tes_dc = T_tes_dc_est = 0.0;
+            }
             m_dot_tes_dc *= 3600.0;     //[kg/hr] convert from kg/s
             m_m_dot_pc_in = fmin(m_dot_pc_max, m_dot_field_out + m_dot_tes_dc);
         }
@@ -737,7 +763,12 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
         {
             double q_dot_dc_est, m_dot_tes_dc, T_tes_dc_est;
             q_dot_dc_est = m_dot_tes_dc = T_tes_dc_est = std::numeric_limits<double>::quiet_NaN();
-            mpc_csp_solver->mc_tes.discharge_avail_est(m_T_field_cold_guess, mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step, q_dot_dc_est, m_dot_tes_dc, T_tes_dc_est);
+            if (mpc_csp_solver->m_is_tes) {
+                mpc_csp_solver->mc_tes.discharge_avail_est(m_T_field_cold_guess, mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step, q_dot_dc_est, m_dot_tes_dc, T_tes_dc_est);
+            }
+            else {
+                q_dot_dc_est = m_dot_tes_dc = T_tes_dc_est = 0.0;
+            }
             m_dot_tes_dc *= 3600.0;     //[kg/hr] convert from kg/s
 
             // max: not allowing TES CH, so all field m_dot must go to pc
@@ -749,8 +780,13 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
         {
             double q_dot_ch_est, m_dot_hot_to_tes_est, T_cold_field_est;
             q_dot_ch_est = m_dot_hot_to_tes_est = T_cold_field_est = std::numeric_limits<double>::quiet_NaN();
-            mpc_csp_solver->mc_tes.charge_avail_est(mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot + 273.15, mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step,
-                q_dot_ch_est, m_dot_hot_to_tes_est, T_cold_field_est);
+            if (mpc_csp_solver->m_is_tes) {
+                mpc_csp_solver->mc_tes.charge_avail_est(mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot + 273.15, mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step,
+                    q_dot_ch_est, m_dot_hot_to_tes_est, T_cold_field_est);
+            }
+            else {
+                q_dot_ch_est = m_dot_hot_to_tes_est = T_cold_field_est = 0.0;
+            }
             m_dot_hot_to_tes_est *= 3600;       //[kg/hr] convert from kg/s
 
             // min: not allowing TES DC, so max m_dot to pc is field m_dot
@@ -769,8 +805,13 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
         {
             double q_dot_ch_est, m_dot_hot_to_tes_est, T_cold_field_est;
             q_dot_ch_est = m_dot_hot_to_tes_est = T_cold_field_est = std::numeric_limits<double>::quiet_NaN();
-            mpc_csp_solver->mc_tes.charge_avail_est(mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot + 273.15, mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step,
-                q_dot_ch_est, m_dot_hot_to_tes_est, T_cold_field_est);
+            if (mpc_csp_solver->m_is_tes) {
+                mpc_csp_solver->mc_tes.charge_avail_est(mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot + 273.15, mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step,
+                    q_dot_ch_est, m_dot_hot_to_tes_est, T_cold_field_est);
+            }
+            else {
+                q_dot_ch_est = m_dot_hot_to_tes_est = T_cold_field_est = 0.0;
+            }
 
             m_dot_hot_to_tes_est *= 3600;       //[kg/hr] convert from kg/s
 
@@ -794,8 +835,13 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
     {
         double q_dot_ch_est, m_dot_hot_to_tes_est, T_cold_field_est;
         q_dot_ch_est = m_dot_hot_to_tes_est = T_cold_field_est = std::numeric_limits<double>::quiet_NaN();
-        mpc_csp_solver->mc_tes.charge_avail_est(mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot + 273.15, mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step,
-            q_dot_ch_est, m_dot_hot_to_tes_est, T_cold_field_est); 
+        if (mpc_csp_solver->m_is_tes) {
+            mpc_csp_solver->mc_tes.charge_avail_est(mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot + 273.15, mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step,
+                q_dot_ch_est, m_dot_hot_to_tes_est, T_cold_field_est);
+        }
+        else {
+            q_dot_ch_est = m_dot_hot_to_tes_est = T_cold_field_est = 0.0;
+        }
         
         m_dot_hot_to_tes_est *= 3600;       //[kg/hr] convert from kg/s
 
@@ -837,22 +883,28 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
     {
         double q_dot_ch_est, m_dot_hot_to_tes_est, T_cold_field_est;
         q_dot_ch_est = m_dot_hot_to_tes_est = T_cold_field_est = std::numeric_limits<double>::quiet_NaN();
-        mpc_csp_solver->mc_tes.charge_avail_est(mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot + 273.15, mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step,
-            q_dot_ch_est, m_dot_hot_to_tes_est, T_cold_field_est);
-
+        if (mpc_csp_solver->m_is_tes) {
+            mpc_csp_solver->mc_tes.charge_avail_est(mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot + 273.15, mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step,
+                q_dot_ch_est, m_dot_hot_to_tes_est, T_cold_field_est);
+        }
+        else {
+            q_dot_ch_est = m_dot_hot_to_tes_est = T_cold_field_est = 0.0;
+        }
         m_dot_hot_to_tes_est *= 3600;       //[kg/hr] convert from kg/s
 
         m_dot_hot_to_tes = m_dot_hot_to_tes_est;    //[kg/hr]
         m_m_dot_pc_in = 0.0;
     }
 
+    // Solve TES with solved CR outlet temperature and guessed PC outlet temperature
+    //    to get the cycle inlet temperature
     double T_cycle_hot = std::numeric_limits<double>::quiet_NaN();          //[K]
     double T_field_cold_calc = std::numeric_limits<double>::quiet_NaN();    //[K]
     if (mpc_csp_solver->m_is_tes)
     {
         int tes_code = mpc_csp_solver->mc_tes.solve_tes_off_design(mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step,
             mpc_csp_solver->mc_weather.ms_outputs.m_tdry + 273.15,
-            m_dot_hot_to_tes / 3600.0, m_m_dot_pc_in / 3600.0,
+            m_dot_hot_to_tes / 3600.0, m_m_dot_pc_in / 3600.0, m_dot_field_out_to_cold_tank / 3600.0, 
             mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot + 273.15, m_T_field_cold_guess + 273.15,
             T_cycle_hot, T_field_cold_calc,
             mpc_csp_solver->mc_tes_outputs);
@@ -868,7 +920,8 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
         T_cycle_hot = mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot + 273.15;   //[K]
     }
 
-    // Power Cycle
+    // Solve power cycle with solved inlet temperature
+    //   get outlet temperature
     mpc_csp_solver->mc_pc_htf_state_in.m_temp = T_cycle_hot - 273.15;		//[C], convert from K
     mpc_csp_solver->mc_pc_htf_state_in.m_pres = mpc_csp_solver->mc_cr_out_solver.m_P_htf_hot;	//[kPa]
     mpc_csp_solver->mc_pc_htf_state_in.m_qual = mpc_csp_solver->mc_cr_out_solver.m_xb_htf_hot;	//[-]
@@ -896,11 +949,12 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
         t_ts_pc_su = mpc_csp_solver->mc_pc_out_solver.m_time_required_max;  //[s]
     }
 
+    // Solve TES again, this time with both the solved CR outlet and PC outlet temperatures
     if (mpc_csp_solver->m_is_tes)
     {
         int tes_code = mpc_csp_solver->mc_tes.solve_tes_off_design(mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step,
             mpc_csp_solver->mc_weather.ms_outputs.m_tdry + 273.15,
-            m_dot_hot_to_tes / 3600.0, m_m_dot_pc_in / 3600.0,
+            m_dot_hot_to_tes / 3600.0, m_m_dot_pc_in / 3600.0, m_dot_field_out_to_cold_tank / 3600.0,
             mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot + 273.15, mpc_csp_solver->mc_pc_out_solver.m_T_htf_cold + 273.15,
             T_cycle_hot, T_field_cold_calc,
             mpc_csp_solver->mc_tes_outputs);
@@ -957,6 +1011,8 @@ int C_csp_solver::C_MEQ__T_field_cold::operator()(double T_field_cold /*C*/, dou
 
     C_MEQ__m_dot_tes c_eq(m_solver_mode, mpc_csp_solver, 
         m_pc_mode, m_cr_mode,
+        m_q_dot_elec_to_CR_heat,
+        m_is_rec_outlet_to_hottank,
         m_q_dot_pc_target,
         m_defocus, m_t_ts_in,
         m_P_field_in, m_x_field_in, T_field_cold);

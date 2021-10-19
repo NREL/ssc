@@ -323,11 +323,11 @@ void C_csp_gen_collector_receiver::init_sf()
 	return;
 }
 
-int C_csp_gen_collector_receiver::get_operating_state()
+C_csp_collector_receiver::E_csp_cr_modes C_csp_gen_collector_receiver::get_operating_state()
 {
 	throw(C_csp_exception("C_csp_gen_collector_receiver::get_operating_state() is not complete"));
 
-	return -1;
+	return C_csp_collector_receiver::E_csp_cr_modes::STEADY_STATE;
 }
 
 double C_csp_gen_collector_receiver::get_startup_time()
@@ -358,6 +358,13 @@ double C_csp_gen_collector_receiver::get_min_power_delivery()
 	return std::numeric_limits<double>::quiet_NaN();
 }
 
+double C_csp_gen_collector_receiver::get_max_power_delivery(double T_cold_in)
+{
+    throw(C_csp_exception("C_csp_gen_collector_receiver::get_max_power_delivery() is not complete"));
+
+    return std::numeric_limits<double>::quiet_NaN();
+}
+
 double C_csp_gen_collector_receiver::get_tracking_power()
 {
 	throw(C_csp_exception("C_csp_gen_collector_receiver::get_tracking_power() is not complete"));
@@ -372,9 +379,8 @@ double C_csp_gen_collector_receiver::get_col_startup_power()
 
 void C_csp_gen_collector_receiver::on(const C_csp_weatherreader::S_outputs &weather,
 	const C_csp_solver_htf_1state &htf_state_in,
-	double field_control,
+    double q_dot_elec_to_CR_heat /*MWt*/, double field_control,
 	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
-	//C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
 	const C_csp_solver_sim_info &sim_info)
 {
 	throw(C_csp_exception("C_csp_gen_collector_receiver::on(...) is not complete"));

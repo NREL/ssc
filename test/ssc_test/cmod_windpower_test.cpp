@@ -1,3 +1,24 @@
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #include <fstream>
 #include <gtest/gtest.h>
@@ -145,7 +166,6 @@ TEST_F(CMWindPowerIntegration, UsingInterpolatedSubhourly_cmod_windpower) {
 
     EXPECT_TRUE(success) << "Computation 3 should succeed";
 
-    check_annual_energy;
     ssc_data_get_number(data, "annual_energy", &check_annual_energy);
     EXPECT_NEAR(check_annual_energy, hourly_annual_energy, 0.005 * check_annual_energy);
 
@@ -188,7 +208,6 @@ TEST_F(CMWindPowerIntegration, UsingDataArray_cmod_windpower) {
 
     compute();
 
-    annual_energy;
     ssc_data_get_number(data, "annual_energy", &annual_energy);
     EXPECT_NEAR(annual_energy, expectedAnnualEnergy, relErr);
 
@@ -477,7 +496,8 @@ bool setup_python() {
     }
 #endif
 
-    set_python_path(python_dir.c_str());
+    if (!set_python_path(python_dir.c_str()))
+        std::cerr << "set_python_path error for directory " + python_dir;
     return true;
 }
 
@@ -488,6 +508,8 @@ TEST(windpower_landbosse, SetupPython) {
 
 	Json::Value python_config_root;
 	std::string configPath = std::string(get_python_path()) + "python_config.json";
+    if (configPath.empty())
+        return;
 
 	std::ifstream python_config_doc(configPath);
 	if (python_config_doc.fail()) {
@@ -526,6 +548,9 @@ bool check_Python_setup() {
         return false;
     }
     std::string configPath = std::string(get_python_path()) + "python_config.json";
+    if (configPath.empty())
+        return false;
+
     std::ifstream python_config_doc(configPath);
     Json::Value python_config_root;
     python_config_doc >> python_config_root;

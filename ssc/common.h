@@ -59,6 +59,9 @@ bool calculate_p50p90(compute_module *cm);
 
 void calculate_resilience_outputs(compute_module *cm, std::unique_ptr<resilience_runner> &resilience);
 
+ssc_number_t* gen_heatmap(compute_module* cm, double step_per_hour);
+
+
 class adjustment_factors
 {
 	compute_module *m_cm;
@@ -162,7 +165,8 @@ public:
 	If wet-bulb temperature or dew point are missing, calculate using tdry, pres & rhum or tdry & rhum, respectively.
 	Interpolates meteorological data if requested.*/
 	weatherdata(var_data *data_table);
-	virtual ~weatherdata();
+//    virtual ~weatherdata();
+    ~weatherdata() override;
 
 	void set_counter_to(size_t cur_index);
 	bool read(weather_record *r); // reads one more record

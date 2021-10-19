@@ -1,3 +1,25 @@
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 #ifndef _GENERIC_COMMON_DATA_H_
 #define _GENERIC_COMMON_DATA_H_
 
@@ -79,6 +101,7 @@ void generic_singleowner_battery_60min(ssc_data_t &data)
 	ssc_data_set_number( data, "batt_Vfull", 3.5999999046325684 );
 	ssc_data_set_number( data, "batt_Vexp", 3.4000000953674316 );
 	ssc_data_set_number( data, "batt_Vnom", 3.2999999523162842 );
+    ssc_data_set_number(data, "batt_Vcut", 0.66 * 3.5999999046325684);
 	ssc_data_set_number( data, "batt_Vnom_default", 3.2999999523162842 );
 	ssc_data_set_number( data, "batt_Qfull", 2.2999999523162842 );
 	ssc_data_set_number( data, "batt_Qfull_flow", 3987240.75 );
@@ -96,7 +119,8 @@ void generic_singleowner_battery_60min(ssc_data_t &data)
 	ssc_data_set_number( data, "batt_minimum_SOC", 15 );
 	ssc_data_set_number( data, "batt_maximum_SOC", 95 );
 	ssc_data_set_number( data, "batt_minimum_modetime", 10 );
-	ssc_number_t p_batt_lifetime_matrix[18] ={ 20, 0, 100, 20, 2500, 98, 20, 5000, 95, 80, 0, 100, 80, 500, 98, 80, 1000, 95 };
+    ssc_data_set_number(data, "batt_life_model", 0);
+    ssc_number_t p_batt_lifetime_matrix[18] ={ 20, 0, 100, 20, 2500, 98, 20, 5000, 95, 80, 0, 100, 80, 500, 98, 80, 1000, 95 };
 	ssc_data_set_matrix( data, "batt_lifetime_matrix", p_batt_lifetime_matrix, 6, 3 );
 	ssc_data_set_number( data, "batt_calendar_choice", 1 );
 	ssc_number_t p_batt_calendar_lifetime_matrix[6] ={ 0, 100, 3650, 80, 7300, 50 };
@@ -109,7 +133,7 @@ void generic_singleowner_battery_60min(ssc_data_t &data)
 	ssc_number_t p_batt_replacement_schedule[1] ={ 0 };
 	ssc_data_set_array( data, "batt_replacement_schedule", p_batt_replacement_schedule, 1 );
 	ssc_number_t p_replacement_cost[1] = { 600 };
-	ssc_data_set_array(data, "om_replacement_cost1", p_replacement_cost, 1);
+	ssc_data_set_array(data, "om_batt_replacement_cost", p_replacement_cost, 1);
 	ssc_data_set_number( data, "batt_mass", 21489202 );
 	ssc_data_set_number( data, "batt_surface_area", 2694 );
 	ssc_data_set_number( data, "batt_Cp", 1004 );
@@ -449,6 +473,7 @@ void generic_commerical_battery_60min(ssc_data_t &data)
 	ssc_data_set_number(data, "batt_Vfull", 4.0999999046325684);
 	ssc_data_set_number(data, "batt_Vexp", 4.0500001907348633);
 	ssc_data_set_number(data, "batt_Vnom", 3.4000000953674316);
+    ssc_data_set_number(data, "batt_Vcut", 0.66 * 4.0999999046325684);
 	ssc_data_set_number(data, "batt_Vnom_default", 3.5999999046325684);
 	ssc_data_set_number(data, "batt_Qfull", 2.25);
 	ssc_data_set_number(data, "batt_Qfull_flow", 200.25);
@@ -466,6 +491,7 @@ void generic_commerical_battery_60min(ssc_data_t &data)
 	ssc_data_set_number(data, "batt_minimum_SOC", 15);
 	ssc_data_set_number(data, "batt_maximum_SOC", 95);
 	ssc_data_set_number(data, "batt_minimum_modetime", 10);
+    ssc_data_set_number(data, "batt_life_model", 0);
 	ssc_number_t p_batt_lifetime_matrix[18] = { 20, 0, 100, 20, 5000, 80, 20, 10000, 60, 80, 0, 100, 80, 1000, 80, 80, 2000, 60 };
 	ssc_data_set_matrix(data, "batt_lifetime_matrix", p_batt_lifetime_matrix, 6, 3);
 	ssc_data_set_number(data, "batt_calendar_choice", 0);
@@ -479,7 +505,7 @@ void generic_commerical_battery_60min(ssc_data_t &data)
 	ssc_number_t p_batt_replacement_schedule[1] = { 0 };
 	ssc_data_set_array(data, "batt_replacement_schedule", p_batt_replacement_schedule, 1);
 	ssc_number_t p_replacement_cost[1] = { 600 };
-	ssc_data_set_array(data, "om_replacement_cost1", p_replacement_cost, 1);
+	ssc_data_set_array(data, "om_batt_replacement_cost", p_replacement_cost, 1);
     ssc_data_set_number(data, "batt_cycle_cost_choice", 0);
     ssc_number_t p_batt_cycle_cost[1] = { 0.1 };
     ssc_data_set_array(data, "batt_cycle_cost", p_batt_cycle_cost, 1);
@@ -513,6 +539,8 @@ void generic_commerical_battery_60min(ssc_data_t &data)
 	ssc_data_set_number(data, "batt_dispatch_choice", 3);
 	ssc_data_set_number(data, "batt_dispatch_auto_can_gridcharge", 0);
 	ssc_data_set_number(data, "batt_dispatch_auto_can_charge", 1);
+    ssc_data_set_number(data, "batt_dispatch_charge_only_system_exceeds_load", 1);
+    ssc_data_set_number(data, "batt_dispatch_discharge_only_load_exceeds_system", 1);
 	ssc_number_t p_ur_ec_sched_weekday[288] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
 	ssc_data_set_matrix(data, "ur_ec_sched_weekday", p_ur_ec_sched_weekday, 12, 24);
 	ssc_number_t p_ur_ec_sched_weekend[288] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };

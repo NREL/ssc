@@ -1,3 +1,25 @@
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 #include "lib_resilience_test.h"
 
 TEST_F(ResilienceTest_lib_resilience, VoltageCutoffParameterSetup)
@@ -15,29 +37,32 @@ TEST_F(ResilienceTest_lib_resilience, VoltageCutoffParameterSetup)
                             Qexp *= Qfull;
                             for (auto Qnom : {0.8, 0.9}){
                                 Qnom *= Qexp;
-                                for (auto C_rate : {0.05, 0.1, 0.2}){
-                                    for (auto resistance : {0.05, 0.1, 0.2}){
-                                        char buf[300];
-                                        sprintf(buf, "dtHour, %f, Vfull, %f, Vexp, %f, Vnom, %f, Qfull, %f, Qexp, %f, Qnom, %f, C rate, %f, res, %f",
-                                                dtHour, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom, C_rate, resistance);
-                                        auto voltageModel = new voltage_dynamic_t(n_series, n_strings, Vnom * 0.98,
-                                                                                  Vfull, Vexp, Vnom, Qfull, Qexp, Qnom,
-                                                                                  C_rate, resistance, dtHour);
-                                        try{
-                                            double current1;
-                                            for (auto q_ratio : {0.25, 0.5, 0.75}){
-                                                double q = n_strings * Qfull * q_ratio;
-                                                double qmax = n_strings * Qfull;
-                                                auto max_1 = voltageModel->calculate_max_discharge_w(q, qmax, 0, &current1);
-                                                auto power1 = voltageModel->calculate_voltage_for_current(current1, q - current1 * dtHour, qmax, 0) * current1;
-                                                EXPECT_NEAR(max_1, power1, 1e-3) << buf << ", q_ratio, " << q_ratio;
-                                            }
-                                            delete voltageModel;
+                                for (auto Vcut : { 0.8, 0.9 }) {
+                                    Vcut *= Vnom;
+                                    for (auto C_rate : { 0.05, 0.1, 0.2 }) {
+                                        for (auto resistance : { 0.05, 0.1, 0.2 }) {
+                                            char buf[300];
+                                            sprintf(buf, "dtHour, %f, Vfull, %f, Vexp, %f, Vnom, %f, Qfull, %f, Qexp, %f, Qnom, %f, Vcut, %f, C rate, %f, res, %f",
+                                                dtHour, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom, Vcut, C_rate, resistance);
+                                            auto voltageModel = new voltage_dynamic_t(n_series, n_strings, Vnom * 0.98,
+                                                Vfull, Vexp, Vnom, Qfull, Qexp, Qnom, Vcut,
+                                                C_rate, resistance, dtHour);
+                                            try {
+                                                double current1;
+                                                for (auto q_ratio : { 0.25, 0.5, 0.75 }) {
+                                                    double q = n_strings * Qfull * q_ratio;
+                                                    double qmax = n_strings * Qfull;
+                                                    auto max_1 = voltageModel->calculate_max_discharge_w(q, qmax, 0, &current1);
+                                                    auto power1 = voltageModel->calculate_voltage_for_current(current1, q - current1 * dtHour, qmax, 0) * current1;
+                                                    EXPECT_NEAR(max_1, power1, 1e-3) << buf << ", q_ratio, " << q_ratio;
+                                                }
+                                                delete voltageModel;
 
-                                        }
-                                        catch (std::exception&){
-                                            std::cerr << buf;
-                                            delete voltageModel;
+                                            }
+                                            catch (std::exception&) {
+                                                std::cerr << buf;
+                                                delete voltageModel;
+                                            }
                                         }
                                     }
                                 }
@@ -116,6 +141,42 @@ TEST_F(ResilienceTest_lib_resilience, DischargeBatteryModelSubHourly)
             EXPECT_NEAR(actual_power, desired_power, 1e-2);
         }
         else{
+            EXPECT_LT(actual_power, desired_power);
+        }
+
+        desired_power += max_power / 100.;
+        delete battery;
+        battery = new battery_t(initial_batt);
+    }
+}
+
+TEST_F(ResilienceTest_lib_resilience, DischargeBatteryModelSubHourlyWSOCLimits)
+{
+    CreateBattery(false, 2, 0., 1., 1.);
+    batt->battery_model->changeSOCLimits(10, 100);
+    double current = 1;
+    while (batt->battery_model->SOC() > 40)
+        batt->battery_model->run(0, current);
+
+    battery_t initial_batt = battery_t(*batt->battery_model);
+    auto battery = new battery_t(initial_batt);
+
+    double max_current;
+    double max_power = batt->battery_model->calculate_max_discharge_kw(&max_current);
+
+    EXPECT_NEAR(max_power, 8.199, 5);
+
+    double desired_power = 0.;
+    while (desired_power < max_power * 1.2) {
+        double target = desired_power;
+        current = battery->calculate_current_for_power_kw(target);
+        battery->run(1, current);
+        double actual_power = battery->I() * battery->V() / 1000.;
+
+        if (desired_power < max_power) {
+            EXPECT_NEAR(actual_power, desired_power, 1e-2);
+        }
+        else {
             EXPECT_LT(actual_power, desired_power);
         }
 
@@ -215,7 +276,7 @@ TEST_F(ResilienceTest_lib_resilience, VoltageTable)
     std::vector<double> vals = {99, 0, 50, 2, 0, 3};
     util::matrix_t<double> table(3, 2, &vals);
     double soc_init = 50;
-    auto volt = voltage_table_t(1, 1, 3, table, 0.1, 1);
+    auto volt = voltage_table_t(1, 1, 2, table, 0.1, 1);
     auto cap = capacity_lithium_ion_t(2.25, soc_init, 100, 0, 1);
 
     volt.updateVoltage(cap.q0(), cap.qmax(), cap.I(), 0, 0.);
@@ -252,7 +313,7 @@ TEST_F(ResilienceTest_lib_resilience, DischargeVoltageTable){
     std::vector<double> vals = {99, 0, 50, 2, 0, 3};
     util::matrix_t<double> table(3, 2, &vals);
     double soc_init = 50;
-    auto volt = voltage_table_t(1, 1, 3, table, 0.1, 1);
+    auto volt = voltage_table_t(1, 1, 2, table, 0.1, 1);
     auto cap = capacity_lithium_ion_t(2.25, soc_init, 100, 0, 1);
 
     // test discharging
@@ -297,7 +358,7 @@ TEST_F(ResilienceTest_lib_resilience, ChargeVoltageTable){
     std::vector<double> vals = {99, 0, 50, 2, 0, 3};
     util::matrix_t<double> table(3, 2, &vals);
     double soc_init = 50;
-    auto volt = voltage_table_t(1, 1, 3, table, 0.1, 1);
+    auto volt = voltage_table_t(1, 1, 2, table, 0.1, 1);
     auto cap = capacity_lithium_ion_t(2.25, soc_init, 100, 0, 1);
 
     // test charging

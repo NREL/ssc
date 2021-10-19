@@ -122,38 +122,29 @@ void Financial::calcPlantCapitalCost(var_map &V){
 	double Asf = V.sf.sf_area.Val(); 
     double Arec = V.sf.rec_area.Val(); 
 
-	_tower_cost =  V.fin.tower_fixed_cost.val * exp(V.sf.tht.val * V.fin.tower_exp.val ) ;
-	
-	_rec_cost =  V.fin.rec_ref_cost.val * pow( Arec / V.fin.rec_ref_area.val, V.fin.rec_cost_exp.val ) ;
-	
-	
-	_site_cost =  V.fin.site_spec_cost.val * Asf ;
-	_heliostat_cost =  V.fin.heliostat_spec_cost.val * Asf ;
-	_wiring_cost =  V.fin.wiring_user_spec.val * Asf ;
+    // Direct Costs
+	_tower_cost =  V.fin.tower_fixed_cost.val * exp(V.sf.tht.val * V.fin.tower_exp.val );
+	_rec_cost =  V.fin.rec_ref_cost.val * pow( Arec / V.fin.rec_ref_area.val, V.fin.rec_cost_exp.val );
+	_site_cost =  V.fin.site_spec_cost.val * Asf;
+	_heliostat_cost =  V.fin.heliostat_spec_cost.val * Asf;
+	_wiring_cost =  V.fin.wiring_user_spec.val * Asf;
 
     double tdc =
         _tower_cost + 
         _rec_cost +
+        _site_cost +
         _heliostat_cost +
         _wiring_cost +
-        V.fin.fixed_cost.val ;
+        V.fin.fixed_cost.val;
 
-	_contingency_cost =  V.fin.contingency_rate.val/100. * tdc ;
+	_contingency_cost =  V.fin.contingency_rate.val/100. * tdc;
+	_total_direct_cost =  tdc + _contingency_cost;
 
-	_total_direct_cost =  tdc + _contingency_cost ;
-
-	_land_cost =  V.land.land_area.Val() * V.fin.land_spec_cost.val ;		
-
-	_sales_tax_cost =  
-        V.fin.sales_tax_rate.val * V.fin.sales_tax_frac.val * _total_direct_cost / 1.e4 ;
-
-	_total_indirect_cost =  
-        _sales_tax_cost + _land_cost ;
-
-	_total_installed_cost =  
-        _total_direct_cost + _total_indirect_cost ;
-
-
+    // Indirect Costs
+	_land_cost =  V.land.land_area.Val() * V.fin.land_spec_cost.val;		
+	_sales_tax_cost = V.fin.sales_tax_rate.val * V.fin.sales_tax_frac.val * (_total_direct_cost + _land_cost) / 1.e4;
+	_total_indirect_cost = _sales_tax_cost + _land_cost;
+	_total_installed_cost = _total_direct_cost + _total_indirect_cost;
 }
 
 //void Financial::calcSimpleCOE(double *enet, int nval){

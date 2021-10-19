@@ -1,3 +1,25 @@
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 #include <cmath>
 #include <iterator>
 #include <vector>
@@ -130,7 +152,7 @@ size_t UtilityRateCalculator::getEnergyPeriod(size_t hourOfYear)
 	return period;
 }
 
-UtilityRateForecast::UtilityRateForecast(rate_data* util_rate, size_t stepsPerHour, const std::vector<double>& monthly_load_forecast, const std::vector<double>& monthly_gen_forecast, const std::vector<double>& monthly_peak_forecast, size_t analysis_period) :
+UtilityRateForecast::UtilityRateForecast(rate_data* util_rate, size_t stepsPerHour, const std::vector<double>& monthly_load_forecast, const std::vector<double>& monthly_gen_forecast, const std::vector<double>& monthly_avg_load_forecast, size_t analysis_period) :
     current_composite_buy_rates(),
     current_composite_sell_rates(),
     next_composite_buy_rates(),
@@ -143,7 +165,7 @@ UtilityRateForecast::UtilityRateForecast(rate_data* util_rate, size_t stepsPerHo
 	rate = std::shared_ptr<rate_data>(new rate_data(*util_rate));
 	m_monthly_load_forecast = monthly_load_forecast;
 	m_monthly_gen_forecast = monthly_gen_forecast;
-	m_monthly_peak_forecast = monthly_peak_forecast;
+	m_monthly_avg_load_forecast = monthly_avg_load_forecast;
     nyears = analysis_period;
 }
 
@@ -153,7 +175,7 @@ UtilityRateForecast::UtilityRateForecast(UtilityRateForecast& tmp) :
 	last_step(tmp.last_step),
 	m_monthly_load_forecast(tmp.m_monthly_load_forecast),
 	m_monthly_gen_forecast(tmp.m_monthly_gen_forecast),
-	m_monthly_peak_forecast(tmp.m_monthly_peak_forecast),
+	m_monthly_avg_load_forecast(tmp.m_monthly_avg_load_forecast),
     current_composite_buy_rates(tmp.current_composite_buy_rates),
     current_composite_sell_rates(tmp.current_composite_sell_rates),
     next_composite_buy_rates(tmp.next_composite_buy_rates),
@@ -198,10 +220,7 @@ double UtilityRateForecast::forecastCost(std::vector<double>& predicted_loads, s
 	if (crossing_month)
 	{
         initializeMonth(month_at_end, year_at_end);
-        if (n > 1)
-        {
-            previousDemandCharge += rate->get_demand_charge(month_at_end, year_at_end);
-        }
+        previousDemandCharge += rate->get_demand_charge(month_at_end, year_at_end);
 	}
 
     double newEnergyCharge = 0;
@@ -248,9 +267,20 @@ double UtilityRateForecast::forecastCost(std::vector<double>& predicted_loads, s
 		}
 	}
 
-	// Compute new peak cost - may need to run two months
-	double newDemandCharge = rate->get_demand_charge(month, year);
-	if (crossing_month && n > 1)
+    // Compute new peak cost - may need to run two months
+    double newDemandCharge = rate->get_demand_charge(month, year);
+    // If forecast length is 1, restartMonth won't be triggered on the next forecast. Trigger it now
+    if (crossing_month && n == 1)
+    {
+        if (rate->enable_nm)
+        {
+            newEnergyCharge += getEnergyChargeNetMetering(month, current_composite_buy_rates, current_composite_sell_rates);
+        }
+        restartMonth(month, month_at_end, year_at_end);
+        copyTOUForecast();
+    }
+
+	if (crossing_month)
 	{
 		newDemandCharge += rate->get_demand_charge(month_at_end, year_at_end);
         if (rate->enable_nm)
@@ -261,13 +291,6 @@ double UtilityRateForecast::forecastCost(std::vector<double>& predicted_loads, s
     else if(rate->enable_nm)
     {
         newEnergyCharge += getEnergyChargeNetMetering(month, current_composite_buy_rates, current_composite_sell_rates);
-    }
-
-    // If forecast length is 1, restartMonth won't be triggered on the next forecast. Trigger it now
-    if (crossing_month && n == 1)
-    {
-        restartMonth(month, month_at_end, year_at_end);
-        copyTOUForecast();
     }
 
 	cost += newDemandCharge + newEnergyCharge - previousDemandCharge - previousEnergyCharge;
@@ -381,7 +404,8 @@ void UtilityRateForecast::initializeMonth(int month, size_t year)
 		rate->init_dc_peak_vectors(month);
 		compute_next_composite_tou(month, year);
 
-		double avg_load = m_monthly_load_forecast[year * 12 + month] / util::hours_in_month(month + (int) 1);
+        // Ignore any peak charges lower than the average gross load - this prevents the price signal from showing demand charges on the first hour of each month when the load is not really a peak
+		double avg_load = m_monthly_avg_load_forecast[year * 12 + month];
 
 		ur_month& curr_month = rate->m_month[month];
 		curr_month.dc_flat_peak = avg_load;
@@ -405,7 +429,6 @@ void UtilityRateForecast::restartMonth(int prevMonth, int currentMonth, size_t y
 {
     ur_month& prev_month = rate->m_month[prevMonth];
     ur_month& curr_month = rate->m_month[currentMonth];
-    curr_month.reset();
     rate->compute_surplus(prev_month);
 
     bool skip_rollover = (currentMonth == 0 && year == 0) || (currentMonth == rate->net_metering_credit_month + 1) || (currentMonth == 0 && rate->net_metering_credit_month == 11);
@@ -413,6 +436,7 @@ void UtilityRateForecast::restartMonth(int prevMonth, int currentMonth, size_t y
     {
         rate->transfer_surplus(curr_month, prev_month);
     }
+    prev_month.reset();
 }
 
 double UtilityRateForecast::getEnergyChargeNetMetering(int month, std::vector<double>& buy_rates, std::vector<double>& sell_rates)

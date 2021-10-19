@@ -65,6 +65,7 @@ public:
 		double Pd_max_kwac,
 		double t_min,
 		int dispatch_mode,
+        int weather_forecast_mode,
 		int pv_dispatch,
 		size_t nyears,
 		size_t look_ahead_hours,
@@ -76,7 +77,10 @@ public:
         rate_data* util_rate,
         std::vector<double> battReplacementCostPerkWh,
         int battCycleCostChoice,
-        std::vector<double> battCycleCost
+        std::vector<double> battCycleCost,
+        double interconnection_limit,
+        bool chargeOnlySystemExceedLoad,
+        bool dischargeOnlyLoadExceedSystem
 		);
 
 	~dispatch_automatic_behind_the_meter_t() override {};
@@ -108,7 +112,7 @@ public:
 	double power_grid_target() override;
 
     /*! Return the calculated cost to cycle for battery outputs */
-    double cost_to_cycle_per_kwh();
+    double cost_to_cycle_per_kwh() override;
 
 	enum BTM_TARGET_MODES {TARGET_SINGLE_MONTHLY, TARGET_TIME_SERIES};
 

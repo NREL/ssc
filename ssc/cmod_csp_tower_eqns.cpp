@@ -1,7 +1,30 @@
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 #include "cmod_csp_tower_eqns.h"
 #include "cmod_csp_common_eqns.h"
 #include "vartab.h"
 #include <cmath>
+#include "csp_solver_cavity_receiver.h"
 
 #pragma warning(disable: 4297)  // ignore warning: 'function assumed not to throw an exception but does'
 
@@ -99,7 +122,7 @@ void Tower_SolarPilot_Solar_Field_Equations(ssc_data_t data)
     ssc_data_t_get_number(data, "helio_height", &helio_height);
     ssc_data_t_get_number(data, "dens_mirror", &dens_mirror);
     ssc_data_t_get_number(data, "n_hel", &n_hel);
-    a_sf_ui = A_sf_UI(helio_width, helio_height, dens_mirror, n_hel);
+    a_sf_ui = A_sf_UI(helio_width, helio_height, dens_mirror, (int)n_hel);
     ssc_data_t_set_number(data, "a_sf_ui", a_sf_ui);
 
     // helio_area_tot
@@ -154,13 +177,6 @@ void Tower_SolarPilot_Solar_Field_Equations(ssc_data_t data)
     dni_des_calc = Dni_des_calc(dni_des);
     ssc_data_t_set_number(data, "dni_des_calc", dni_des_calc);
 
-    // opt_algorithm
-    opt_algorithm = Opt_algorithm();
-    ssc_data_t_set_number(data, "opt_algorithm", opt_algorithm);
-
-    // opt_flux_penalty
-    opt_flux_penalty = Opt_flux_penalty();
-    ssc_data_t_set_number(data, "opt_flux_penalty", opt_flux_penalty);
 }
 
 void MSPT_Receiver_Equations(ssc_data_t data)
@@ -170,23 +186,11 @@ void MSPT_Receiver_Equations(ssc_data_t data)
         throw std::runtime_error("ssc_data_t data invalid");
     }
     double csp_pt_rec_max_oper_frac, q_rec_des, csp_pt_rec_htf_c_avg, t_htf_hot_des, t_htf_cold_des,
-        csp_pt_rec_max_flow_to_rec, csp_pt_rec_htf_t_avg, rec_d_spec, csp_pt_rec_cav_ap_hw_ratio, csp_pt_rec_cav_ap_height, d_rec, rec_height, rec_aspect,
+        csp_pt_rec_max_flow_to_rec, csp_pt_rec_htf_t_avg, d_rec, rec_height, rec_aspect,
         h_tower, piping_length_mult, piping_length_const, piping_length, piping_loss, piping_loss_tot,
         rec_htf;
 
     util::matrix_t<double> field_fl_props;
-
-    //  This one is not being read in the UI
-    // Csp_pt_rec_cav_lip_height
-    //double csp_pt_rec_cav_lip_height;
-    //csp_pt_rec_cav_lip_height = Csp_pt_rec_cav_lip_height();
-    //ssc_data_t_set_number(data, "csp_pt_rec_cav_lip_height", csp_pt_rec_cav_lip_height);
-
-    //  This one is not being read in the UI
-    // csp_pt_rec_cav_panel_height
-    //double csp_pt_rec_cav_panel_height;
-    //csp_pt_rec_cav_panel_height = Csp_pt_rec_cav_panel_height();
-    //ssc_data_t_set_number(data, "csp_pt_rec_cav_panel_height", csp_pt_rec_cav_panel_height);
 
     // csp_pt_rec_htf_t_avg
     ssc_data_t_get_number(data, "t_htf_cold_des", &t_htf_cold_des);
@@ -198,7 +202,7 @@ void MSPT_Receiver_Equations(ssc_data_t data)
     ssc_data_t_get_number(data, "csp.pt.rec.htf_t_avg", &csp_pt_rec_htf_t_avg);
     ssc_data_t_get_number(data, "rec_htf", &rec_htf);
     ssc_data_t_get_matrix(vt, "field_fl_props", field_fl_props);
-    csp_pt_rec_htf_c_avg = Csp_pt_rec_htf_c_avg(csp_pt_rec_htf_t_avg, rec_htf, field_fl_props);
+    csp_pt_rec_htf_c_avg = Csp_pt_rec_htf_c_avg(csp_pt_rec_htf_t_avg, (int)rec_htf, field_fl_props);
     ssc_data_t_set_number(data, "csp.pt.rec.htf_c_avg", csp_pt_rec_htf_c_avg);
 
     // csp_pt_rec_max_flow_to_rec
@@ -210,18 +214,43 @@ void MSPT_Receiver_Equations(ssc_data_t data)
     csp_pt_rec_max_flow_to_rec = Csp_pt_rec_max_flow_to_rec(csp_pt_rec_max_oper_frac, q_rec_des, csp_pt_rec_htf_c_avg, t_htf_hot_des, t_htf_cold_des);
     ssc_data_t_set_number(data, "csp.pt.rec.max_flow_to_rec", csp_pt_rec_max_flow_to_rec);
 
-    // This one doesn't seem to be used
-    // csp_pt_rec_cav_ap_height
-    ssc_data_t_get_number(data, "rec_d_spec", &rec_d_spec);
-    ssc_data_t_get_number(data, "csp.pt.rec.cav_ap_hw_ratio", &csp_pt_rec_cav_ap_hw_ratio);
-    csp_pt_rec_cav_ap_height = Csp_pt_rec_cav_ap_height(rec_d_spec, csp_pt_rec_cav_ap_hw_ratio);
-    ssc_data_t_set_number(data, "csp.pt.rec.cav_ap_height", csp_pt_rec_cav_ap_height);
-
     // rec_aspect
     ssc_data_t_get_number(data, "d_rec", &d_rec);
     ssc_data_t_get_number(data, "rec_height", &rec_height);
     rec_aspect = Rec_aspect(d_rec, rec_height);
     ssc_data_t_set_number(data, "rec_aspect", rec_aspect);
+
+    // receiver areas
+    TowerTypes tower_type = TowerTypes::kMoltenSalt;
+    double cav_rec_height, cav_rec_width, cav_rec_span, double_n_cav_panels;
+    ssc_data_t_get_number(data, "cav_rec_height", &cav_rec_height);
+    ssc_data_t_get_number(data, "cav_rec_width", &cav_rec_width);
+    ssc_data_t_get_number(data, "cav_rec_span", &cav_rec_span);
+    ssc_data_t_get_number(data, "n_cav_rec_panels", &double_n_cav_panels);
+    int n_cav_panels = (int)std::round(double_n_cav_panels);
+
+    // Solve external receiver area
+    int receiver_type = 0;
+    double ext_rec_area, cav_panel_width, cav_radius, cav_offset;
+    ext_rec_area = cav_panel_width = cav_radius = cav_offset = std::numeric_limits<double>::quiet_NaN();
+    Csp_pt_cost_receiver_area(tower_type, d_rec,
+        rec_height, receiver_type, cav_rec_height,
+        cav_rec_width, cav_rec_span, n_cav_panels,
+        ext_rec_area, cav_panel_width, cav_radius, cav_offset);
+    ssc_data_t_set_number(data, "ext_rec_area", ext_rec_area);
+
+    // Solve cavity receiver area
+    receiver_type = 1;
+    double cav_rec_area;
+    cav_rec_area = cav_panel_width = cav_radius = cav_offset = std::numeric_limits<double>::quiet_NaN();
+    Csp_pt_cost_receiver_area(tower_type, d_rec,
+        rec_height, receiver_type, cav_rec_height,
+        cav_rec_width, cav_rec_span, n_cav_panels,
+        cav_rec_area, cav_panel_width, cav_radius, cav_offset);
+    ssc_data_t_set_number(data, "cav_rec_area", cav_rec_area);
+    ssc_data_t_set_number(data, "cav_panel_width", cav_panel_width);
+    ssc_data_t_set_number(data, "cav_radius", cav_radius);
+    ssc_data_t_set_number(data, "cav_offset", cav_offset);
 
     // piping_length
     ssc_data_t_get_number(data, "h_tower", &h_tower);
@@ -290,7 +319,7 @@ void MSPT_System_Control_Equations(ssc_data_t data)
         ssc_data_t_get_number(data, "disp_wlim_max", &disp_wlim_max);
         ssc_data_t_get_number(data, "constant", &constant);
         wlim_series = Wlim_series(disp_wlim_max);
-        ssc_data_t_set_array(data, "wlim_series", wlim_series.data(), wlim_series.ncells());
+        ssc_data_t_set_array(data, "wlim_series", wlim_series.data(), (int)wlim_series.ncells());
     }
 }
 
@@ -301,7 +330,7 @@ void Tower_SolarPilot_Capital_Costs_MSPT_Equations(ssc_data_t data)
         throw std::runtime_error("ssc_data_t data invalid");
     }
 
-    double d_rec, rec_height, receiver_type_double, rec_d_spec, csp_pt_rec_cav_ap_height, csp_pt_cost_receiver_area,
+    double d_rec, rec_height, receiver_type_double, csp_pt_cost_receiver_area,
         p_ref, design_eff, tshours, csp_pt_cost_storage_mwht,
         demand_var, csp_pt_cost_power_block_mwe;
     int receiver_type;
@@ -318,10 +347,19 @@ void Tower_SolarPilot_Capital_Costs_MSPT_Equations(ssc_data_t data)
     else {
         receiver_type = static_cast<int>(receiver_type_double);
     }
-    ssc_data_t_get_number(data, "rec_d_spec", &rec_d_spec);
-    ssc_data_t_get_number(data, "csp.pt.rec.cav_ap_height", &csp_pt_rec_cav_ap_height);
-    csp_pt_cost_receiver_area = Csp_pt_cost_receiver_area(tower_type, d_rec, rec_height,
-        static_cast<int>(receiver_type), rec_d_spec, csp_pt_rec_cav_ap_height);
+
+    double cav_rec_height, cav_rec_width, cav_rec_span, double_n_cav_panels;
+    ssc_data_t_get_number(data, "cav_rec_height", &cav_rec_height);
+    ssc_data_t_get_number(data, "cav_rec_width", &cav_rec_width);
+    ssc_data_t_get_number(data, "cav_rec_span", &cav_rec_span);
+    ssc_data_t_get_number(data, "n_cav_rec_panels", &double_n_cav_panels);
+    int n_cav_panels = (int)std::round(double_n_cav_panels);
+    double cav_panel_width, cav_radius, cav_offset;
+    cav_panel_width = cav_radius = cav_offset = std::numeric_limits<double>::quiet_NaN();
+    Csp_pt_cost_receiver_area(tower_type, d_rec,
+                            rec_height, static_cast<int>(receiver_type), cav_rec_height,
+                            cav_rec_width, cav_rec_span, n_cav_panels,
+                            csp_pt_cost_receiver_area, cav_panel_width, cav_radius, cav_offset);
     ssc_data_t_set_number(data, "csp.pt.cost.receiver.area", csp_pt_cost_receiver_area);
 
     ssc_data_t_get_number(data, "p_ref", &p_ref);
@@ -345,7 +383,7 @@ void Tower_SolarPilot_Capital_Costs_DSPT_Equations(ssc_data_t data)
         throw std::runtime_error("ssc_data_t data invalid");
     }
 
-    double d_rec, rec_height, receiver_type, rec_d_spec, csp_pt_rec_cav_ap_height, csp_pt_cost_receiver_area,
+    double d_rec, rec_height, receiver_type, rec_d_spec, csp_pt_cost_receiver_area,
         p_ref, design_eff, tshours, csp_pt_cost_storage_mwht,
         demand_var, csp_pt_cost_power_block_mwe;
 
@@ -355,9 +393,12 @@ void Tower_SolarPilot_Capital_Costs_DSPT_Equations(ssc_data_t data)
     ssc_data_t_get_number(data, "rec_height", &rec_height);
     receiver_type = std::numeric_limits<double>::quiet_NaN();
     rec_d_spec = std::numeric_limits<double>::quiet_NaN();
-    csp_pt_rec_cav_ap_height = std::numeric_limits<double>::quiet_NaN();
-    csp_pt_cost_receiver_area = Csp_pt_cost_receiver_area(tower_type, d_rec, rec_height,
-        static_cast<int>(receiver_type), rec_d_spec, csp_pt_rec_cav_ap_height);
+    double cav_panel_width, cav_radius, cav_offset;
+    cav_panel_width = cav_radius = cav_offset = std::numeric_limits<double>::quiet_NaN();
+    Csp_pt_cost_receiver_area(tower_type, d_rec,
+        rec_height, static_cast<int>(receiver_type), std::numeric_limits<double>::quiet_NaN(),
+        std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(), -1,
+        csp_pt_cost_receiver_area, cav_panel_width, cav_radius, cav_offset);
     ssc_data_t_set_number(data, "csp.pt.cost.receiver_area", csp_pt_cost_receiver_area);
 
     p_ref = std::numeric_limits<double>::quiet_NaN();
@@ -392,8 +433,12 @@ void Tower_SolarPilot_Capital_Costs_ISCC_Equations(ssc_data_t data)
     ssc_data_t_get_number(data, "receiver_type", &receiver_type);
     ssc_data_t_get_number(data, "rec_d_spec", &rec_d_spec);
     ssc_data_t_get_number(data, "csp.pt.rec.cav_ap_height", &csp_pt_rec_cav_ap_height);
-    csp_pt_cost_receiver_area = Csp_pt_cost_receiver_area(tower_type, d_rec, rec_height,
-        static_cast<int>(receiver_type), rec_d_spec, csp_pt_rec_cav_ap_height);
+    double cav_panel_width, cav_radius, cav_offset;
+    cav_panel_width = cav_radius = cav_offset = std::numeric_limits<double>::quiet_NaN();
+    Csp_pt_cost_receiver_area(tower_type, d_rec,
+        rec_height, static_cast<int>(receiver_type), std::numeric_limits<double>::quiet_NaN(),
+        std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(), -1,
+        csp_pt_cost_receiver_area, cav_panel_width, cav_radius, cav_offset);
     ssc_data_t_set_number(data, "csp.pt.cost.receiver_area", csp_pt_cost_receiver_area);
 
     p_ref = std::numeric_limits<double>::quiet_NaN();

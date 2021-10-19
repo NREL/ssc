@@ -40,8 +40,8 @@ static var_info _cm_vtab_windpower[] = {
 
 	{ SSC_INPUT  , SSC_NUMBER , "wind_resource_shear"                , "Shear exponent"                           , ""        ,""                                    , "Turbine"                              , "*"                                               , "MIN=0"                                           , "" } ,
 	{ SSC_INPUT  , SSC_NUMBER , "wind_turbine_rotor_diameter"        , "Rotor diameter"                           , "m"       ,""                                    , "Turbine"                              , "*"                                               , "POSITIVE"                                        , "" } ,
-	{ SSC_INOUT  , SSC_ARRAY  , "wind_turbine_powercurve_windspeeds" , "Power curve wind speed array"             , "m/s"     ,""                                    , "Turbine"                              , "*"                                               , ""                                                , "" } ,
-	{ SSC_INOUT  , SSC_ARRAY  , "wind_turbine_powercurve_powerout"   , "Power curve turbine output array"         , "kW"      ,""                                    , "Turbine"                              , "*"                                               , "LENGTH_EQUAL=wind_turbine_powercurve_windspeeds" , "" } ,
+	{ SSC_INOUT  , SSC_ARRAY  , "wind_turbine_powercurve_windspeeds" , "Power curve wind speed array"             , "m/s"     ,""                                    , "Turbine"                              , "*"                                               , ""                                                , "GROUP=WTPCD" } ,
+	{ SSC_INOUT  , SSC_ARRAY  , "wind_turbine_powercurve_powerout"   , "Power curve turbine output array"         , "kW"      ,""                                    , "Turbine"                              , "*"                                               , "LENGTH_EQUAL=wind_turbine_powercurve_windspeeds" , "GROUP=WTPCD" } ,
 	{ SSC_INPUT  , SSC_NUMBER , "wind_turbine_hub_ht"                , "Hub height"                               , "m"       ,""                                    , "Turbine"                              , "*"                                               , "POSITIVE"                                        , "" } ,
 	{ SSC_INPUT  , SSC_NUMBER , "wind_turbine_max_cp"                , "Max Coefficient of Power"                 , ""        ,""                                    , "Turbine"                              , "wind_resource_model_choice=1"                    , "MIN=0"                                           , "" } ,
 
@@ -479,6 +479,7 @@ void cm_windpower::exec()
 	ssc_number_t *air_temp = allocate("temp", nstep);
 	ssc_number_t *air_pres = allocate("pressure", nstep);
 
+
 	std::vector<double> Power(wpc.nTurbines, 0.), Thrust(wpc.nTurbines, 0.),
 		Eff(wpc.nTurbines, 0.), Wind(wpc.nTurbines, 0.), Turb(wpc.nTurbines, 0.),
 		DistDown(wpc.nTurbines, 0.), DistCross(wpc.nTurbines, 0.);
@@ -593,7 +594,7 @@ void cm_windpower::exec()
 			i++;
 		} // end steps_per_hour loop
 	} // end 1->8760 loop
-
+    ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, steps_per_hour);
 	// assign outputs
 	assign("annual_energy", var_data((ssc_number_t)annual));
 	double kWhperkW = 0.0;

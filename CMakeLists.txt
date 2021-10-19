@@ -4,7 +4,7 @@
 #
 #####################################################################################################################
 
-cmake_minimum_required(VERSION 3.11)
+cmake_minimum_required(VERSION 3.10)
 
 if(POLICY CMP0077)
     cmake_policy(SET CMP0077 NEW)
@@ -101,6 +101,9 @@ function(set_default_compile_options target)
             set(MAIN_CFLAGS "${MAIN_CFLAGS} -O3 -DNDEBUG")
         endif()
     endif()
+    if (SAMAPI_EXPORT AND APPLE)
+        SET(MAIN_CFLAGS "${MAIN_CFLAGS} -mmacosx-version-min=10.9" )
+    endif()
     set_target_properties(${target} PROPERTIES COMPILE_FLAGS ${MAIN_CFLAGS})
 endfunction()
 
@@ -140,12 +143,7 @@ endfunction()
 # turn off examples, tests and install for jsoncpp
 set(JSONCPP_WITH_EXAMPLE 0)
 set(JSONCPP_WITH_TESTS 0)
-macro (install)
-endmacro ()
-add_subdirectory(jsoncpp)
-macro (install)
-  _install(${ARGV})
-endmacro(install)
+add_subdirectory(jsoncpp EXCLUDE_FROM_ALL)
 
 add_subdirectory(splinter)
 add_subdirectory(shared)

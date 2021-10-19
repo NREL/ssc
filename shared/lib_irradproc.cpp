@@ -995,7 +995,7 @@ double atmospheric_refraction_correction(double pressure, double temperature,
                                          double atmos_refract, double e0) //atmospheric refraction correction (degrees)
 {
     double del_e = 0;
-    int SUN_RADIUS = 0.26667;
+    double SUN_RADIUS = 0.26667;
     if (e0 >= -1 * (SUN_RADIUS + atmos_refract))
         del_e = (pressure / 1010.0) * (283.0 / (273.0 + temperature)) *
                 1.02 / (60.0 * tan(DTOR * (e0 + 10.3 / (e0 + 5.11))));
@@ -2472,6 +2472,9 @@ int irrad::calc_rear_side(double transmissionFactor, double groundClearanceHeigh
                                      cos(tiltRadian);        // The normalized distance from the read of module to front of module in next row
         double verticalHeight = slopeLength * sin(tiltRadian);
         double horizontalLength = slopeLength * cos(tiltRadian);
+
+        if (horizontalLength == 0)
+            throw std::runtime_error("Bifacial calc_rear_side error: module's horizontal length cannot be 0. Please check module's dimensions.");
 
         // Determine the factors for points on the ground from the leading edge of one row of PV panels to the edge of the next row of panels behind
         std::vector<double> rearSkyConfigFactors, frontSkyConfigFactors;

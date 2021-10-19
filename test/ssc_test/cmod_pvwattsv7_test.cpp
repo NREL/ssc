@@ -1,3 +1,25 @@
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 #include <gtest/gtest.h>
 
 #include "../ssc/core.h"
@@ -40,6 +62,10 @@ TEST_F(CMPvwattsV7Integration_cmod_pvwattsv7, DefaultNoFinancialModel_cmod_pvwat
     ssc_number_t capacity_factor;
     ssc_data_get_number(data, "capacity_factor", &capacity_factor);
     EXPECT_NEAR(capacity_factor, 19.974, error_tolerance) << "Capacity factor";
+
+    ssc_number_t kwh_per_kw;
+    ssc_data_get_number(data, "kwh_per_kw", &kwh_per_kw);
+    EXPECT_NEAR(kwh_per_kw, 1749.754, error_tolerance) << "Energy yield";
 
 }
 
@@ -258,5 +284,42 @@ TEST_F(CMPvwattsV7Integration_cmod_pvwattsv7, NonAnnual)
 
     gen = ssc_data_get_array(data, "gen", nullptr)[12];
     EXPECT_NEAR(gen, 2.417, 0.01) << "Gen at noon";
+    free_weatherdata_array(weather_data);
+}
+
+TEST_F(CMPvwattsV7Integration_cmod_pvwattsv7, IntermediateOutputTesting)
+{
+    //set up a weather data array and unassign the solar resource file
+
+    auto weather_data = create_weatherdata_array(24);
+    ssc_data_unassign(data, "solar_resource_file");
+    ssc_data_set_table(data, "solar_resource_data", &weather_data->table);
+
+    //run the tests
+    EXPECT_FALSE(run_module(data, "pvwattsv7"));
+
+    ssc_number_t shad_beam_factor, aoi, poa, tpoa, tcell, dc, ac;
+
+    shad_beam_factor = ssc_data_get_array(data, "shad_beam_factor", nullptr)[12];
+    EXPECT_NEAR(shad_beam_factor, 1.000, 0.01) << "Beam Shading factor at noon";
+
+    aoi = ssc_data_get_array(data, "aoi", nullptr)[12];
+    EXPECT_NEAR(aoi, 32.195, 0.01) << "Angle of incidence at noon";
+
+    poa = ssc_data_get_array(data, "poa", nullptr)[12];
+    EXPECT_NEAR(poa, 828.180, 0.01) << "POA at noon";
+
+    tpoa = ssc_data_get_array(data, "tpoa", nullptr)[12];
+    EXPECT_NEAR(tpoa, 823.306, 0.01) << "Transmitted POA at noon";
+
+    tcell = ssc_data_get_array(data, "tcell", nullptr)[12];
+    EXPECT_NEAR(tcell, 51.332, 0.01) << "Cell temp at noon";
+
+    dc = ssc_data_get_array(data, "dc", nullptr)[12];
+    EXPECT_NEAR(dc, 2512.300, 0.01) << "DC Energy at noon";
+
+    ac = ssc_data_get_array(data, "ac", nullptr)[12];
+    EXPECT_NEAR(ac, 2417.375, 0.01) << "AC Energy at noon";
+
     free_weatherdata_array(weather_data);
 }

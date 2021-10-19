@@ -4,6 +4,8 @@
 #
 #####################################################################################################################
 
+# For CMake build option `SAMAPI_EXPORT`, see ../CMakeLists.txt
+
 include_directories(. ../splinter ../shared ../nlopt ../lpsolve ../solarpilot ../tcs ../ssc)
 
 set(SSC_SRC
@@ -25,7 +27,10 @@ set(SSC_SRC
 		cmod_csp_common_eqns.h
 		cmod_csp_tower_eqns.cpp
 		cmod_csp_tower_eqns.h
+        cmod_csp_trough_eqns.cpp
+		cmod_csp_trough_eqns.h
 		cmod_dsg_flux_preprocess.cpp
+		cmod_etes_electric_resistance.cpp
 		cmod_equpartflip.cpp
 		cmod_financial_eqns.cpp
 		cmod_financial_eqns.h
@@ -77,8 +82,6 @@ set(SSC_SRC
 		cmod_sco2_air_cooler.cpp
 		cmod_sco2_csp_system.cpp
 		cmod_sco2_csp_ud_pc_tables.cpp
-		cmod_sco2_design_cycle.cpp
-		cmod_sco2_design_point.cpp
 		cmod_singlediode.cpp
 		cmod_singleowner.cpp
 		cmod_snowmodel.cpp
@@ -173,6 +176,7 @@ else()
     set(SRC_UNUSED_VARS
             cmod_mhk_eqns.cpp
             cmod_csp_tower_eqns.cpp
+            cmod_csp_trough_eqns.cpp
             cmod_merchantplant.cpp
             cmod_merchantplant_eqns.cpp
             cmod_pvsamv1_eqns.cpp
@@ -202,12 +206,13 @@ if(UNIX)
 		set_property(TARGET ssc PROPERTY PREFIX "lib")
 		set(CMAKE_SHARED_LIBRARY_SUFFIX ".so")
 		if (APPLE)
-			add_custom_command(
+            SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmacosx-version-min=10.9")
+            add_custom_command(
 				TARGET ssc
 				POST_BUILD
 				COMMAND install_name_tool -id @rpath/libssc$<$<CONFIG:Debug>:d>.so $<TARGET_FILE:ssc>
 			)
-		endif()
+        endif()
 	endif()
 endif()
 
@@ -219,7 +224,7 @@ endif()
 #####################################################################################################################
 
 set( DEPENDENCIES
-	solarpilot
+	solarpilot_core
 	tcs
 	nlopt
 	shared

@@ -76,12 +76,13 @@ public:
 	virtual void init(const C_csp_collector_receiver::S_csp_cr_init_inputs init_inputs, 
 			C_csp_collector_receiver::S_csp_cr_solved_params & solved_params);
 
-	virtual int get_operating_state();
+	virtual C_csp_collector_receiver::E_csp_cr_modes get_operating_state();
 
     virtual double get_startup_time();
     virtual double get_startup_energy(); //MWh
     virtual double get_pumping_parasitic_coef();  //MWe/MWt
     virtual double get_min_power_delivery();    //MWt
+    virtual double get_max_power_delivery(double T_cold_in);    //MWt
 	virtual double get_tracking_power();		//MWe
 	virtual double get_col_startup_power();		//MWe-hr
 
@@ -94,14 +95,12 @@ public:
 	virtual void startup(const C_csp_weatherreader::S_outputs &weather,
 		const C_csp_solver_htf_1state &htf_state_in,
 		C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
-		//C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
 		const C_csp_solver_sim_info &sim_info);
 
 	virtual void on(const C_csp_weatherreader::S_outputs &weather,
 		const C_csp_solver_htf_1state &htf_state_in,
-		double field_control,
+        double q_dot_elec_to_CR_heat /*MWt*/, double field_control,
 		C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
-		//C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
 		const C_csp_solver_sim_info &sim_info);
 
 	virtual void estimates(const C_csp_weatherreader::S_outputs &weather,

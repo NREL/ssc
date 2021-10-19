@@ -1,3 +1,25 @@
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 #include <memory>
 #include <vector>
 
@@ -167,59 +189,59 @@ void Irradiance_IO::checkWeatherFile(compute_module* cm, std::string cmName)
 
         // Check for missing data
         if ((weatherRecord.gh != weatherRecord.gh) && (radiationMode == irrad::DN_GH || radiationMode == irrad::GH_DF)) {
-            cm->log(util::format("missing global irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], exiting",
-                weatherRecord.gh, weatherRecord.year, weatherRecord.month, weatherRecord.day, weatherRecord.hour), SSC_ERROR, (float)idx);
+            cm->log(util::format("missing global irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d, minute:%lg], exiting",
+                weatherRecord.gh, weatherRecord.year, weatherRecord.month, weatherRecord.day, weatherRecord.hour, weatherRecord.minute), SSC_ERROR, (float)idx);
             return;
         }
         if ((weatherRecord.dn != weatherRecord.dn) && (radiationMode == irrad::DN_DF || radiationMode == irrad::DN_GH)) {
-            cm->log(util::format("missing beam irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], exiting",
-                weatherRecord.dn, weatherRecord.year, weatherRecord.month, weatherRecord.day, weatherRecord.hour), SSC_ERROR, (float)idx);
+            cm->log(util::format("missing beam irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d, minute:%lg], exiting",
+                weatherRecord.dn, weatherRecord.year, weatherRecord.month, weatherRecord.day, weatherRecord.hour, weatherRecord.minute), SSC_ERROR, (float)idx);
             return;
         }
         if ((weatherRecord.df != weatherRecord.df) && (radiationMode == irrad::DN_DF || radiationMode == irrad::GH_DF)) {
-            cm->log(util::format("missing diffuse irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], exiting",
-                weatherRecord.df, weatherRecord.year, weatherRecord.month, weatherRecord.day, weatherRecord.hour), SSC_ERROR, (float)idx);
+            cm->log(util::format("missing diffuse irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d, minute:%lg], exiting",
+                weatherRecord.df, weatherRecord.year, weatherRecord.month, weatherRecord.day, weatherRecord.hour, weatherRecord.minute), SSC_ERROR, (float)idx);
             return;
         }
         if ((weatherRecord.poa != weatherRecord.poa) && (radiationMode == irrad::POA_R || radiationMode == irrad::POA_P)) {
-            cm->log(util::format("missing POA irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], exiting",
-                weatherRecord.poa, weatherRecord.year, weatherRecord.month, weatherRecord.day, weatherRecord.hour), SSC_ERROR, (float)idx);
+            cm->log(util::format("missing POA irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d, minute:%lg], exiting",
+                weatherRecord.poa, weatherRecord.year, weatherRecord.month, weatherRecord.day, weatherRecord.hour, weatherRecord.minute), SSC_ERROR, (float)idx);
             return;
         }
         if (weatherRecord.tdry != weatherRecord.tdry) {
-            cm->log(util::format("missing temperature %lg W/m2 at time [y:%d m:%d d:%d h:%d], exiting",
-                weatherRecord.tdry, weatherRecord.year, weatherRecord.month, weatherRecord.day, weatherRecord.hour), SSC_ERROR, (float)idx);
+            cm->log(util::format("missing temperature %lg W/m2 at time [y:%d m:%d d:%d h:%d, minute:%lg], exiting",
+                weatherRecord.tdry, weatherRecord.year, weatherRecord.month, weatherRecord.day, weatherRecord.hour, weatherRecord.minute), SSC_ERROR, (float)idx);
             return;
         }
         if (weatherRecord.wspd != weatherRecord.wspd) {
-            cm->log(util::format("missing wind speed %lg W/m2 at time [y:%d m:%d d:%d h:%d], exiting",
-                weatherRecord.wspd, weatherRecord.year, weatherRecord.month, weatherRecord.day, weatherRecord.hour), SSC_ERROR, (float)idx);
+            cm->log(util::format("missing wind speed %lg W/m2 at time [y:%d m:%d d:%d h:%d, minute:%lg], exiting",
+                weatherRecord.wspd, weatherRecord.year, weatherRecord.month, weatherRecord.day, weatherRecord.hour, weatherRecord.minute), SSC_ERROR, (float)idx);
             return;
         }
 
         // Check for bad data
         if ((weatherRecord.gh < 0 || weatherRecord.gh >  irrad::irradiationMax) && (radiationMode == irrad::DN_GH || radiationMode == irrad::GH_DF))
         {
-            cm->log(util::format("out of range global irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero",
-                weatherRecord.gh, weatherRecord.year, weatherRecord.month, weatherRecord.day, weatherRecord.hour), SSC_WARNING, (float)idx);
+            cm->log(util::format("Out of range global irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d minute:%lg], set to zero",
+                weatherRecord.gh, weatherRecord.year, weatherRecord.month, weatherRecord.day, weatherRecord.hour, weatherRecord.minute), SSC_WARNING, (float)idx);
             weatherRecord.gh = 0;
         }
         if ((weatherRecord.dn < 0 || weatherRecord.dn >  irrad::irradiationMax) && (radiationMode == irrad::DN_DF || radiationMode == irrad::DN_GH))
         {
-            cm->log(util::format("out of range beam irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero",
-                weatherRecord.dn, weatherRecord.year, weatherRecord.month, weatherRecord.day, weatherRecord.hour), SSC_WARNING, (float)idx);
+            cm->log(util::format("Out of range beam irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d minute:%lg], set to zero",
+                weatherRecord.dn, weatherRecord.year, weatherRecord.month, weatherRecord.day, weatherRecord.hour, weatherRecord.minute), SSC_WARNING, (float)idx);
             weatherRecord.dn = 0;
         }
         if ((weatherRecord.df < 0 || weatherRecord.df >  irrad::irradiationMax) && (radiationMode == irrad::DN_DF || radiationMode == irrad::GH_DF))
         {
-            cm->log(util::format("out of range diffuse irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero",
-                weatherRecord.df, weatherRecord.year, weatherRecord.month, weatherRecord.day, weatherRecord.hour), SSC_WARNING, (float)idx);
+            cm->log(util::format("Out of range diffuse irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d minute:%lg], set to zero",
+                weatherRecord.df, weatherRecord.year, weatherRecord.month, weatherRecord.day, weatherRecord.hour, weatherRecord.minute), SSC_WARNING, (float)idx);
             weatherRecord.df = 0;
         }
         if ((weatherRecord.poa < 0 || weatherRecord.poa >  irrad::irradiationMax) && (radiationMode == irrad::POA_R || radiationMode == irrad::POA_P))
         {
-            cm->log(util::format("out of range POA irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero",
-                weatherRecord.poa, weatherRecord.year, weatherRecord.month, weatherRecord.day, weatherRecord.hour), SSC_WARNING, (float)idx);
+            cm->log(util::format("Out of range POA irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d minute:%lg], set to zero",
+                weatherRecord.poa, weatherRecord.year, weatherRecord.month, weatherRecord.day, weatherRecord.hour, weatherRecord.minute), SSC_WARNING, (float)idx);
             weatherRecord.poa = 0;
         }
         //albedo is allowed to be missing in the weather file- will be filled in from user-entered monthly array.
@@ -831,6 +853,8 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
 
     p_acWiringLoss = cm->allocate("ac_wiring_loss", numberOfWeatherFileRecords);
     p_transmissionLoss = cm->allocate("ac_transmission_loss", numberOfWeatherFileRecords);
+    p_acPerfAdjLoss = cm->allocate("ac_perf_adj_loss", numberOfWeatherFileRecords);
+    p_acLifetimeLoss = cm->allocate("ac_lifetime_loss", numberOfWeatherFileRecords);
     p_systemDCPower = cm->allocate("dc_net", numberOfLifetimeRecords);
     p_systemACPower = cm->allocate("gen", numberOfLifetimeRecords);
 

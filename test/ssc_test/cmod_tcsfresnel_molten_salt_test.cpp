@@ -1,3 +1,25 @@
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 #include <gtest/gtest.h>
 #include "tcsfresnel_molten_salt_defaults.h"
 #include "csp_common_test.h"
@@ -14,14 +36,14 @@ NAMESPACE_TEST(csp_fresnel, PowerFresnelCmod, Default_NoFinancial)
     int errors = power_fresnel.RunModule();
     EXPECT_FALSE(errors);
     if (!errors) {
-        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("annual_energy"), 337249089, kErrorToleranceLo);
-        EXPECT_NEAR(power_fresnel.GetOutput("annual_fuel_usage"), 0, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("capacity_factor"), 38.50, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("annual_W_cycle_gross"), 372639466, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("kwh_per_kw"), 3372, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("conversion_factor"), 94.27, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("system_heat_rate"), 3.413, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("annual_total_water_use"), 30058, kErrorToleranceLo);
+        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("annual_energy"), 337249089, kErrorToleranceHi);
+        EXPECT_NEAR(power_fresnel.GetOutput("annual_fuel_usage"), 0, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("capacity_factor"), 38.50, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("annual_W_cycle_gross"), 372639466, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("kwh_per_kw"), 3372, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("conversion_factor"), 94.27, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("system_heat_rate"), 3.413, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("annual_total_water_use"), 30058, kErrorToleranceHi);
     }
 }
 
@@ -35,14 +57,14 @@ NAMESPACE_TEST(csp_fresnel, PowerFresnelCmod, SequencedDefocusing_NoFinancial)
     int errors = power_fresnel.RunModule();
     EXPECT_FALSE(errors);
     if (!errors) {
-        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("annual_energy"), 337249089, kErrorToleranceLo);
-        EXPECT_NEAR(power_fresnel.GetOutput("annual_fuel_usage"), 0, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("capacity_factor"), 38.50, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("annual_W_cycle_gross"), 372639466, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("kwh_per_kw"), 3372, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("conversion_factor"), 94.27, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("system_heat_rate"), 3.413, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("annual_total_water_use"), 30058, kErrorToleranceLo);
+        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("annual_energy"), 337249089, kErrorToleranceHi);
+        EXPECT_NEAR(power_fresnel.GetOutput("annual_fuel_usage"), 0, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("capacity_factor"), 38.50, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("annual_W_cycle_gross"), 372639466, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("kwh_per_kw"), 3372, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("conversion_factor"), 94.27, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("system_heat_rate"), 3.413, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("annual_total_water_use"), 30058, kErrorToleranceHi);
     }
 }
 
@@ -60,14 +82,14 @@ NAMESPACE_TEST(csp_fresnel, PowerFresnelCmod, TherminolVp1Htf_NoFinancial)
     int errors = power_fresnel.RunModule();
     EXPECT_FALSE(errors);
     if (!errors) {
-        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("annual_energy"), 336171001, kErrorToleranceLo);
-        EXPECT_NEAR(power_fresnel.GetOutput("annual_fuel_usage"), 0, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("capacity_factor"), 38.38, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("annual_W_cycle_gross"), 371306661, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("kwh_per_kw"), 3362, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("conversion_factor"), 94.31, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("system_heat_rate"), 3.413, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("annual_total_water_use"), 29944, kErrorToleranceLo);
+        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("annual_energy"), 336171001, kErrorToleranceHi);
+        EXPECT_NEAR(power_fresnel.GetOutput("annual_fuel_usage"), 0, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("capacity_factor"), 38.38, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("annual_W_cycle_gross"), 371306661, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("kwh_per_kw"), 3362, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("conversion_factor"), 94.31, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("system_heat_rate"), 3.413, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("annual_total_water_use"), 29944, kErrorToleranceHi);
     }
 }
 
@@ -81,14 +103,14 @@ NAMESPACE_TEST(csp_fresnel, PowerFresnelCmod, SolarPositioinOpticalChar_NoFinanc
     int errors = power_fresnel.RunModule();
     EXPECT_FALSE(errors);
     if (!errors) {
-        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("annual_energy"), 228344862, kErrorToleranceLo);
-        EXPECT_NEAR(power_fresnel.GetOutput("annual_fuel_usage"), 0, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("capacity_factor"), 26.07, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("annual_W_cycle_gross"), 255036717, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("kwh_per_kw"), 2283, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("conversion_factor"), 93.26, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("system_heat_rate"), 3.413, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("annual_total_water_use"), 21776, kErrorToleranceLo);
+        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("annual_energy"), 228344862, kErrorToleranceHi);
+        EXPECT_NEAR(power_fresnel.GetOutput("annual_fuel_usage"), 0, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("capacity_factor"), 26.07, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("annual_W_cycle_gross"), 255036717, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("kwh_per_kw"), 2283, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("conversion_factor"), 93.26, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("system_heat_rate"), 3.413, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_fresnel.GetOutput("annual_total_water_use"), 21776, kErrorToleranceHi);
     }
 }
 

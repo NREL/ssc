@@ -1,51 +1,24 @@
-/*******************************************************************************************************
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as �System Advisor Model� or �SAM�. Except
-*  to comply with the foregoing, the terms �System Advisor Model�, �SAM�, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************************************/
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #include "csp_common.h"
 #include "core.h"
@@ -59,6 +32,9 @@
 #include "AutoPilot_API.h"
 #include "SolarField.h"
 #include "IOUtil.h"
+
+// cavity receiver geometry
+#include "csp_solver_cavity_receiver.h"
 
 #ifdef _MSC_VER
 #define mysnprintf _snprintf
@@ -117,7 +93,7 @@ bool solarpilot_invoke::run(std::shared_ptr<weather_data_provider> wdata)
         opt.flux_penalty.val = m_cmod->as_double("opt_flux_penalty");
     }
 
-	recs.front().peak_flux.val = m_cmod->as_double("flux_max");
+	recs.front().peak_flux.val = m_cmod->as_double("flux_max");     //[kW/m2]
 
     var_heliostat *hf = &hels.front();
     //need to set up the template combo
@@ -183,12 +159,44 @@ bool solarpilot_invoke::run(std::shared_ptr<weather_data_provider> wdata)
 
     var_receiver *rf = &recs.front();
 
-	rf->absorptance.val = m_cmod->as_double("rec_absorptance");
-	rf->rec_height.val = m_cmod->as_double("rec_height");
-	rf->rec_width.val = rf->rec_diameter.val = rf->rec_height.val/m_cmod->as_double("rec_aspect"); 
+    int rec_type = m_cmod->as_integer("receiver_type");
+    if (rec_type == 0) {
+        rf->rec_type.val = "External cylindrical";
+        rf->rec_height.val = m_cmod->as_double("rec_height");
+        rf->rec_width.val = rf->rec_diameter.val = rf->rec_height.val / m_cmod->as_double("rec_aspect");
+        rf->absorptance.val = m_cmod->as_double("rec_absorptance");
+    }
+    else if (rec_type == 1) {
+        rf->rec_type.val = "Cavity";
+
+        double cav_rec_height = m_cmod->as_double("cav_rec_height");   //[m]
+        rf->rec_height.val = cav_rec_height;        //[m]
+
+        double cav_rec_width = m_cmod->as_double("cav_rec_width");     //[m] 
+        rf->rec_width.val = cav_rec_width;      //[m]
+
+        double cav_rec_span = m_cmod->as_double("cav_rec_span")*PI/180.0;   //[rad] convert from cmod unit of [deg]
+
+        size_t n_panels = m_cmod->as_integer("n_cav_rec_panels"); //[-]
+        rf->n_panels.val = n_panels;
+
+        double theta0, panelSpan, panel_width, rec_area, radius, offset;
+        theta0 = panelSpan = panel_width = rec_area = radius = offset = std::numeric_limits<double>::quiet_NaN();
+        cavity_receiver_helpers::calc_receiver_macro_geometry(cav_rec_height, cav_rec_width, cav_rec_span, n_panels,
+            theta0, panelSpan, panel_width, rec_area, radius, offset);
+
+        rf->rec_cav_cdepth.val = offset/radius;
+        rf->rec_cav_rad.val = radius;
+
+        rf->absorptance.val = 1.0;      // don't apply absorptivity in solarpilot for cavity receivers - performance model will do this
+    }
+    else {
+        throw exec_error("solarpilot cmod", "receiver type must be 0 (external) or 1 (cavity)");
+    }
+
 	rf->therm_loss_base.val = m_cmod->as_double("rec_hl_perm2");
 		
-    sf.q_des.val = m_cmod->as_double("q_design");
+    sf.q_des.val = m_cmod->as_double("q_design");       //[MWt]
 	sf.dni_des.val = m_cmod->as_double("dni_des");
     land.is_bounds_scaled.val = true;
     land.is_bounds_fixed.val = false;
@@ -271,28 +279,94 @@ bool solarpilot_invoke::run(std::shared_ptr<weather_data_provider> wdata)
             
             //set up optimization variables
             {
-                int nv = 3;
-                vector<double*> optvars(nv);
-                vector<double> upper(nv, HUGE_VAL);
-                vector<double> lower(nv, -HUGE_VAL);
-                vector<double> stepsize(nv);
-                vector<string> names(nv);
+                if (rec_type == 0) {
 
-                //pointers
-                optvars.at(0) = &sf.tht.val;
-                optvars.at(1) = &recs.front().rec_height.val;
-                optvars.at(2) = &recs.front().rec_diameter.val;
-                //names
-                names.at(0) = (split(sf.tht.name, ".")).back();
-                names.at(1) = (split(recs.front().rec_height.name, ".")).back();
-                names.at(2) = (split(recs.front().rec_diameter.name, ".")).back();
-                //step size
-                stepsize.at(0) = sf.tht.val*opt.max_step.val;
-                stepsize.at(1) = recs.front().rec_height.val*opt.max_step.val;
-                stepsize.at(2) = recs.front().rec_diameter.val*opt.max_step.val;
+                    int nv = 3;
+                    vector<double*> optvars(nv);
+                    vector<double> upper(nv, HUGE_VAL);
+                    vector<double> lower(nv, -HUGE_VAL);
+                    vector<double> stepsize(nv);
+                    vector<string> names(nv);
+                
+                    //pointers
+                    optvars.at(0) = &sf.tht.val;
+                    optvars.at(1) = &recs.front().rec_height.val;
+                    optvars.at(2) = &recs.front().rec_diameter.val;
+                    //names
+                    names.at(0) = (split(sf.tht.name, ".")).back();
+                    names.at(1) = (split(recs.front().rec_height.name, ".")).back();
+                    names.at(2) = (split(recs.front().rec_diameter.name, ".")).back();
+                    //step size
+                    stepsize.at(0) = sf.tht.val * opt.max_step.val;
+                    stepsize.at(1) = recs.front().rec_height.val * opt.max_step.val;
+                    stepsize.at(2) = recs.front().rec_diameter.val * opt.max_step.val;
 
-                if(! m_sapi->Optimize(opt.algorithm.mapval(), optvars, upper, lower, stepsize, &names) )
-                    return false;
+                    if (!m_sapi->Optimize(/*opt.algorithm.mapval(),*/ optvars, upper, lower, stepsize, &names))
+                        return false;
+                }
+                else if (rec_type == 1) {
+
+                    int nv = 3;
+                    vector<double*> optvars(nv);
+                    vector<double> upper(nv, HUGE_VAL);
+                    vector<double> lower(nv, -HUGE_VAL);
+                    vector<double> stepsize(nv);
+                    vector<string> names(nv);
+
+                    //// Set initial values for optimized parameters
+                    //double q_dot_rec_des = m_cmod->as_double("q_design")*1.E3;       //[kWt]
+                    //double A_rec_min = (q_dot_rec_des) / m_cmod->as_double("flux_max");    //[m2]
+                    //recs.front().rec_height.val = sqrt(A_rec_min);
+                    //recs.front().rec_width.val = recs.front().rec_height.val;     //[m] 
+
+                    //// Set up parameters for cavity geometry calc
+                    //double cav_rec_span = m_cmod->as_double("cav_rec_span") * PI / 180.0;   //[rad] convert from cmod unit of [deg]
+
+                    //size_t n_panels = cavity_receiver_helpers::get_default_number_of_panels();
+                    //recs.front().n_panels.val = n_panels;
+
+                    //double theta0, panelSpan, panel_width, rec_area, radius, offset;
+                    //theta0 = panelSpan = panel_width = rec_area = radius = offset = std::numeric_limits<double>::quiet_NaN();
+                    //cavity_receiver_helpers::calc_receiver_macro_geometry(recs.front().rec_height.val, recs.front().rec_width.val, cav_rec_span, n_panels,
+                    //    theta0, panelSpan, panel_width, rec_area, radius, offset);
+
+                    //recs.front().rec_cav_cdepth.val = offset / radius;
+                    //recs.front().rec_cav_rad.val = radius;
+
+                    //double eta_active = m_cmod->as_double("helio_active_fraction");     //[-]
+                    //double eta_profile = m_cmod->as_double("dens_mirror");              //[-]
+                    //double eta_refl = m_cmod->as_double("helio_reflectance");           //[-]
+                    //double eta_cos_guess = 0.85;        //[-]
+                    //double eta_dens_guess = 0.25;       //[-]
+                    //double dni_des = m_cmod->as_double("dni_des")*1.E-3;          //[kW/m2]
+
+                    //double q_dot_rec_heatloss = m_cmod->as_double("rec_hl_perm2")*A_rec_min;  //[kW]
+                    //double A_sf_est = (q_dot_rec_des - q_dot_rec_heatloss) / (dni_des * eta_dens_guess * eta_cos_guess * eta_refl * eta_profile * eta_active);
+
+                    //double f_land_max = m_cmod->as_double("land_max");
+                    //double f_land_min = m_cmod->as_double("land_min");
+
+                    //double h_tower_est = sqrt((A_sf_est*2.0)/(PI*(f_land_max*f_land_max - f_land_min*f_land_min)));     //[m]
+
+                    //sf.tht.val = h_tower_est;
+
+                    //pointers
+                    optvars.at(0) = &sf.tht.val;
+                    optvars.at(1) = &recs.front().rec_height.val;
+                    optvars.at(2) = &recs.front().rec_cav_rad.val;
+                    //names
+                    names.at(0) = (split(sf.tht.name, ".")).back();
+                    names.at(1) = (split(recs.front().rec_height.name, ".")).back();
+                    names.at(2) = (split(recs.front().rec_cav_rad.name, ".")).back();
+                    //step size
+                    stepsize.at(0) = sf.tht.val * opt.max_step.val;
+                    stepsize.at(1) = recs.front().rec_height.val * opt.max_step.val;
+                    stepsize.at(2) = recs.front().rec_cav_rad.val * opt.max_step.val;
+
+                    if (!m_sapi->Optimize(/*opt.algorithm.mapval(),*/ optvars, upper, lower, stepsize, &names))
+                        return false;
+
+                }
             }
 
 			m_sapi->Setup(*this);
