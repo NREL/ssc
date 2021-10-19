@@ -43,15 +43,22 @@ bool Turbine_calculate_powercurve(ssc_data_t data)
             cut_out;
     int drive_train;
 
-    vt_get_number(vt, "turbine_size", &turbine_size);
-    vt_get_number(vt, "wind_turbine_rotor_diameter", &rotor_diameter);     // ssc input
-    vt_get_number(vt, "elevation", &elevation);
-    vt_get_number(vt, "wind_turbine_max_cp", &max_cp);                     // ssc input
-    vt_get_number(vt, "max_tip_speed", &max_tip_speed);
-    vt_get_number(vt, "max_tip_sp_ratio", &max_tip_sp_ratio);
-    vt_get_number(vt, "cut_in", &cut_in);
-    vt_get_number(vt, "cut_out", &cut_out);
-    vt_get_int(vt, "drive_train", &drive_train);
+    try {
+        vt_get_number(vt, "turbine_size", &turbine_size);
+        vt_get_number(vt, "wind_turbine_rotor_diameter", &rotor_diameter);     // ssc input
+        vt_get_number(vt, "elevation", &elevation);
+        vt_get_number(vt, "wind_turbine_max_cp", &max_cp);                     // ssc input
+        vt_get_number(vt, "max_tip_speed", &max_tip_speed);
+        vt_get_number(vt, "max_tip_sp_ratio", &max_tip_sp_ratio);
+        vt_get_number(vt, "cut_in", &cut_in);
+        vt_get_number(vt, "cut_out", &cut_out);
+        vt_get_int(vt, "drive_train", &drive_train);
+
+    }
+    catch (std::runtime_error& e) {
+        vt->assign("error", var_data(e.what()));
+        return false;
+    }
 
     util::matrix_t<ssc_number_t> powercurve_windspeeds;
     util::matrix_t<ssc_number_t> powercurve_powerout;
