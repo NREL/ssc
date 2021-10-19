@@ -226,6 +226,7 @@ NAMESPACE_TEST(csp_common, TowerSharedWithUi, Tes) {
     data_vtab->assign("u_tank", 0.4);
     data_vtab->assign("field_fluid", 17);
     data_vtab->assign("field_fl_props", field_fl_props);
+    data_vtab->assign("dt_hot", 5);
 
     int errors = run_module(data, "ui_tes_calcs");
     EXPECT_FALSE(errors);
@@ -258,6 +259,7 @@ NAMESPACE_TEST(csp_common, TowerSharedWithUi, TesWithPeriodUse) {
     data_vtab->assign("u_tank", 0.4);
     data_vtab->assign("field_fluid", 17);
     data_vtab->assign("field_fl_props", field_fl_props);
+    data_vtab->assign("dt_hot", 5);
 
     int errors = run_module(data, "ui_tes_calcs");
     EXPECT_FALSE(errors);
