@@ -36,7 +36,7 @@ void map_input(var_table* vt, const std::string& sam_name, var_table* reopt_tabl
             vd->num = vd->num + sam_input;
         }
         else
-            throw std::runtime_error(reopt_name + " variable already exists in 'reopt_table'.");
+            vt->assign("warning", var_data(reopt_name + " variable already exists in 'reopt_table'."));
     }
     else{
         if (to_ratio)
@@ -57,15 +57,16 @@ void map_optional_input(var_table* vt, const std::string& sam_name, var_table* r
         sam_input = def_val;
     }
     if (reopt_table->lookup(reopt_name)){
-        throw std::runtime_error(reopt_name + " variable already exists in 'reopt_table'.");
+        vt->assign("warning", var_data(reopt_name + " variable already exists in 'reopt_table'."));
+        return;
     }
     reopt_table->assign(reopt_name, sam_input);
 }
 
-SSCEXPORT void Reopt_size_battery_params(ssc_data_t data) {
+SSCEXPORT bool Reopt_size_battery_params(ssc_data_t data) {
     auto vt = static_cast<var_table*>(data);
     if (!vt){
-        throw std::runtime_error("ssc_data_t data invalid");
+        return false;
     }
     std::string log;
     auto reopt_params = var_data();
@@ -129,8 +130,10 @@ SSCEXPORT void Reopt_size_battery_params(ssc_data_t data) {
         std::vector<std::string> inv_eff_names = {"inv_snl_eff_cec", "inv_ds_eff", "inv_pd_eff", "inv_cec_cg_eff"};
         double eff;
         inv_model = (int)vd->num[0];
-        if (inv_model == 4)
-            throw std::runtime_error("Inverter Mermoud Lejeune Model not supported.");
+        if (inv_model == 4) {
+            vt->assign("error", var_data("Inverter Mermoud Lejeune Model not supported."));
+            return false;
+        }
         vt_get_number(vt, inv_eff_names[inv_model], &eff);
         eff /= 100.;
         reopt_pv.assign("inv_eff", eff);
@@ -281,14 +284,16 @@ SSCEXPORT void Reopt_size_battery_params(ssc_data_t data) {
     vt_get_array_vec(vt, "load", vec);
     size_t sim_len = vec.size();
     if (sim_len != 8760 && sim_len != 8760 * 2 && sim_len != 8760 * 4){
-        throw std::runtime_error("Load profile must be hourly, 30 min or 15 min data for a single year.");
+        vt->assign("error", var_data("Load profile must be hourly, 30 min or 15 min data for a single year."));
+        return false;
     }
     reopt_load.assign("loads_kw", var_data(&vec[0], sim_len));
     reopt_load.assign("loads_kw_is_net", false);
 
 	vt_get_array_vec(vt, "crit_load", vec);
 	if (vec.size() != sim_len) {
-        throw std::runtime_error("Critical load profile's length must be same as for load.");
+	    vt->assign("error", var_data("Critical load profile's length must be same as for load."));
+	    return false;
     }
     reopt_load.assign("critical_loads_kw", var_data(&vec[0], vec.size()));
 
@@ -305,4 +310,5 @@ SSCEXPORT void Reopt_size_battery_params(ssc_data_t data) {
     reopt_table->assign_match_case("Scenario", reopt_scenario);
     vt->assign_match_case("reopt_scenario", reopt_params);
     vt->assign_match_case("log", log);
+    return true;
 }

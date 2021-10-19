@@ -28,11 +28,11 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma warning(disable: 4297)  // ignore warning: 'function assumed not to throw an exception but does'
 
 
-void MSPT_System_Design_Equations(ssc_data_t data)
+bool MSPT_System_Design_Equations(ssc_data_t data)
 {
     auto vt = static_cast<var_table*>(data);
     if (!vt) {
-        throw std::runtime_error("ssc_data_t data invalid");
+        return false;
     }
     double P_ref, gross_net_conversion_factor, nameplate, design_eff, solarm, q_pb_design, q_rec_des, tshours, tshours_sf;
 
@@ -59,13 +59,14 @@ void MSPT_System_Design_Equations(ssc_data_t data)
     ssc_data_t_get_number(data, "solarm", &solarm);
     tshours_sf = Tshours_sf(tshours, solarm);
     ssc_data_t_set_number(data, "tshours_sf", tshours_sf);
+    return true;
 }
 
-void Tower_SolarPilot_Solar_Field_Equations(ssc_data_t data)
+bool Tower_SolarPilot_Solar_Field_Equations(ssc_data_t data)
 {
     auto vt = static_cast<var_table*>(data);
     if (!vt) {
-        throw std::runtime_error("ssc_data_t data invalid");
+        return false;
     }
     double land_max, h_tower, land_max_calc, helio_height, helio_width, dens_mirror, csp_pt_sf_heliostat_area,
         land_min, land_min_calc, csp_pt_sf_fixed_land_area, land_area_base,
@@ -94,7 +95,7 @@ void Tower_SolarPilot_Solar_Field_Equations(ssc_data_t data)
     ssc_data_t_get_number(data, "dens_mirror", &dens_mirror);
     csp_pt_sf_heliostat_area = Csp_pt_sf_heliostat_area(helio_height, helio_width, dens_mirror);
     ssc_data_t_set_number(data, "csp.pt.sf.heliostat_area", csp_pt_sf_heliostat_area);
-    
+
     //  This one is not being read in the UI
     //// csp_pt_sf_total_reflective_area
     //double csp_pt_sf_total_reflective_area;
@@ -128,7 +129,7 @@ void Tower_SolarPilot_Solar_Field_Equations(ssc_data_t data)
     ssc_data_t_get_number(data, "a_sf_ui", &a_sf_ui);
     helio_area_tot = Helio_area_tot(a_sf_ui);
     ssc_data_t_set_number(data, "helio_area_tot", helio_area_tot);
-    
+
     // csp_pt_sf_tower_height
     ssc_data_t_get_number(data, "h_tower", &h_tower);
     csp_pt_sf_tower_height = Csp_pt_sf_tower_height(h_tower);
@@ -183,13 +184,14 @@ void Tower_SolarPilot_Solar_Field_Equations(ssc_data_t data)
     // opt_flux_penalty
     opt_flux_penalty = Opt_flux_penalty();
     ssc_data_t_set_number(data, "opt_flux_penalty", opt_flux_penalty);
+    return true;
 }
 
-void MSPT_Receiver_Equations(ssc_data_t data)
+bool MSPT_Receiver_Equations(ssc_data_t data)
 {
     auto vt = static_cast<var_table*>(data);
     if (!vt) {
-        throw std::runtime_error("ssc_data_t data invalid");
+        return false;
     }
     double csp_pt_rec_max_oper_frac, q_rec_des, csp_pt_rec_htf_c_avg, t_htf_hot_des, t_htf_cold_des,
         csp_pt_rec_max_flow_to_rec, csp_pt_rec_htf_t_avg, rec_d_spec, csp_pt_rec_cav_ap_hw_ratio, csp_pt_rec_cav_ap_height, d_rec, rec_height, rec_aspect,
@@ -257,13 +259,14 @@ void MSPT_Receiver_Equations(ssc_data_t data)
     ssc_data_t_get_number(data, "piping_loss", &piping_loss);
     piping_loss_tot = Piping_loss_tot(piping_length, piping_loss);
     ssc_data_t_set_number(data, "piping_loss_tot", piping_loss_tot);
+    return true;
 }
 
-void MSPT_System_Control_Equations(ssc_data_t data)
+bool MSPT_System_Control_Equations(ssc_data_t data)
 {
     auto vt = static_cast<var_table*>(data);
     if (!vt) {
-        throw std::runtime_error("ssc_data_t data invalid");
+        return false;
     }
     double bop_par, bop_par_f, bop_par_0, bop_par_1, bop_par_2, p_ref, csp_pt_par_calc_bop,
         aux_par, aux_par_f, aux_par_0, aux_par_1, aux_par_2, csp_pt_par_calc_aux,
@@ -314,13 +317,14 @@ void MSPT_System_Control_Equations(ssc_data_t data)
         wlim_series = Wlim_series(disp_wlim_max);
         ssc_data_t_set_array(data, "wlim_series", wlim_series.data(), (int)wlim_series.ncells());
     }
+    return true;
 }
 
-void Tower_SolarPilot_Capital_Costs_MSPT_Equations(ssc_data_t data)
+bool Tower_SolarPilot_Capital_Costs_MSPT_Equations(ssc_data_t data)
 {
     auto vt = static_cast<var_table*>(data);
     if (!vt) {
-        throw std::runtime_error("ssc_data_t data invalid");
+        return false;
     }
 
     double d_rec, rec_height, receiver_type_double, rec_d_spec, csp_pt_rec_cav_ap_height, csp_pt_cost_receiver_area,
@@ -358,13 +362,14 @@ void Tower_SolarPilot_Capital_Costs_MSPT_Equations(ssc_data_t data)
     ssc_data_t_set_number(data, "csp.pt.cost.power_block_mwe", csp_pt_cost_power_block_mwe);
 
     Tower_SolarPilot_Capital_Costs_Equations(data);
+    return true;
 }
 
-void Tower_SolarPilot_Capital_Costs_DSPT_Equations(ssc_data_t data)
+bool Tower_SolarPilot_Capital_Costs_DSPT_Equations(ssc_data_t data)
 {
     auto vt = static_cast<var_table*>(data);
     if (!vt) {
-        throw std::runtime_error("ssc_data_t data invalid");
+        return false;
     }
 
     double d_rec, rec_height, receiver_type, rec_d_spec, csp_pt_rec_cav_ap_height, csp_pt_cost_receiver_area,
@@ -394,13 +399,14 @@ void Tower_SolarPilot_Capital_Costs_DSPT_Equations(ssc_data_t data)
     ssc_data_t_set_number(data, "csp.pt.cost.power_block_mwe", csp_pt_cost_power_block_mwe);
 
     Tower_SolarPilot_Capital_Costs_Equations(data);
+    return true;
 }
 
-void Tower_SolarPilot_Capital_Costs_ISCC_Equations(ssc_data_t data)
+bool Tower_SolarPilot_Capital_Costs_ISCC_Equations(ssc_data_t data)
 {
     auto vt = static_cast<var_table*>(data);
     if (!vt) {
-        throw std::runtime_error("ssc_data_t data invalid");
+        return false;
     }
 
     double d_rec, rec_height, receiver_type, rec_d_spec, csp_pt_rec_cav_ap_height, csp_pt_cost_receiver_area,
@@ -430,4 +436,5 @@ void Tower_SolarPilot_Capital_Costs_ISCC_Equations(ssc_data_t data)
     ssc_data_t_set_number(data, "csp.pt.cost.power_block_mwe", csp_pt_cost_power_block_mwe);
 
     Tower_SolarPilot_Capital_Costs_Equations(data);
+    return true;
 }

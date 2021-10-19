@@ -30,8 +30,6 @@ bool Size_batterystateful(ssc_data_t data) {
     auto vt = static_cast<var_table*>(data);
     char errmsg[250];
     if (!vt) {
-        sprintf(errmsg, "ssc_data_t data invalid");
-        vt->assign("error", std::string(errmsg));
         return false;
     }
 
@@ -66,10 +64,7 @@ bool Size_batterystateful(ssc_data_t data) {
 
 bool Calculate_thermal_params(ssc_data_t data) {
     auto vt = static_cast<var_table*>(data);
-    char errmsg[250];
     if (!vt) {
-        sprintf(errmsg, "ssc_data_t data invalid");
-        vt->assign("error", std::string(errmsg));
         return false;
     }
 

@@ -34,8 +34,11 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "cmod_financial_eqns.h"
 #include "cmod_utilityrate5_eqns.h"
 
-
-typedef void (*ssc_equation_ptr)(ssc_data_t data);
+/**
+ *  Returns true if completed successfully. For failures, query the "error" string that has been assigned to the `data`.
+ *  For non-fatal issues that result in successful completion, a `warning` string will be provided.
+ */
+typedef bool (*ssc_equation_ptr)(ssc_data_t data);
 
 /**
  * name:
@@ -45,10 +48,10 @@ typedef void (*ssc_equation_ptr)(ssc_data_t data);
  * cmod:
  *      Which compute module the equation should be associated with. At the moment, if you want to associate it with
  *      multiple compute modules, a new entry for each is required.
- *auto_eval:
+ * auto_eval:
  *      True means the equation is run in core.cpp before exec()
- * FLI_export:
- *      True to export to PySAM (only
+ * PySAM_export:
+ *      True to export to PySAM (only)
  */
 
 struct ssc_equation_entry{
