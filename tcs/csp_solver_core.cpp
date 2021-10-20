@@ -138,7 +138,7 @@ static C_csp_reported_outputs::S_output_info S_solver_output_info[] =
 		// Controller, TES, & Dispatch
 	{C_csp_solver::C_solver_outputs::ERR_M_DOT, C_csp_reported_outputs::TS_1ST},		//[-] Relative mass conservation error
 	{C_csp_solver::C_solver_outputs::ERR_Q_DOT, C_csp_reported_outputs::TS_1ST},		//[-] Relative energy conservation error
-	{C_csp_solver::C_solver_outputs::N_OP_MODES, C_csp_reported_outputs::TS_1ST},	//[-] Number of subtimesteps in reporting timestep
+	{C_csp_solver::C_solver_outputs::N_OP_MODES, C_csp_reported_outputs::TS_LAST},	//[-] Number of subtimesteps in reporting timestep
 	{C_csp_solver::C_solver_outputs::OP_MODE_1, C_csp_reported_outputs::TS_1ST},     //[-] Operating mode in first subtimestep
 	{C_csp_solver::C_solver_outputs::OP_MODE_2, C_csp_reported_outputs::TS_1ST},		//[-] Operating mode in second subtimestep
 	{C_csp_solver::C_solver_outputs::OP_MODE_3, C_csp_reported_outputs::TS_1ST},		//[-] Operating mode in third subtimestep
@@ -350,6 +350,7 @@ void C_csp_solver::init()
     tes_init_inputs.T_from_cr_at_des = cr_solved_params.m_T_htf_hot_des;
     tes_init_inputs.P_to_cr_at_des = cr_solved_params.m_dP_sf;
 	mc_tes.init(tes_init_inputs);
+    mc_csp_messages.transfer_messages(mc_tes.mc_csp_messages);
 		// TOU
     mc_tou.mc_dispatch_params.m_isleapyear = mc_weather.ms_solved_params.m_leapyear;
 	mc_tou.init();
@@ -446,6 +447,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 	{
 		dispatch.copy_weather_data(mc_weather);
 		dispatch.params.col_rec = &mc_collector_receiver;
+        dispatch.params.tes = &mc_tes;
 		dispatch.params.mpc_pc = &mc_power_cycle;
 		dispatch.params.siminfo = &mc_kernel.mc_sim_info;
 		dispatch.params.messages = &mc_csp_messages;
@@ -1925,7 +1927,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
 
 		int n_sub_ts = (int)mv_time_local.size();
-		mc_reported_outputs.overwrite_vector_to_constant(C_solver_outputs::N_OP_MODES, n_sub_ts);	//[-]
+        mc_reported_outputs.value(C_solver_outputs::N_OP_MODES, n_sub_ts);
 		if( n_sub_ts == 1 )
 		{
 			mc_reported_outputs.value(C_solver_outputs::OP_MODE_1, operating_mode);

@@ -1,3 +1,26 @@
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+
 #ifndef __LIB_PV_IO_MANAGER_H__
 #define __LIB_PV_IO_MANAGER_H__
 
@@ -313,17 +336,17 @@ struct PVSystem_IO
 	std::vector<ssc_number_t *> p_dcPowerNetPerMppt; /// An output vector containing Net DC Power in W for each mppt input
 
 	// Snow Model outputs
-	std::vector<ssc_number_t *> p_snowLoss; /// The angle of incidence of the subarray [degrees]
-	std::vector<ssc_number_t *> p_snowCoverage; /// The angle of incidence of the subarray [degrees]
+	std::vector<ssc_number_t *> p_snowLoss;
+	std::vector<ssc_number_t *> p_snowCoverage;
 
 	// Shade Database Validation
-	std::vector<ssc_number_t *> p_shadeDB_GPOA; /// The angle of incidence of the subarray [degrees]
-	std::vector<ssc_number_t *> p_shadeDB_DPOA; /// The angle of incidence of the subarray [degrees]
-	std::vector<ssc_number_t *> p_shadeDB_temperatureCell; /// The angle of incidence of the subarray [degrees]
-	std::vector<ssc_number_t *> p_shadeDB_modulesPerString; /// The angle of incidence of the subarray [degrees]
-	std::vector<ssc_number_t *> p_shadeDB_voltageMaxPowerSTC; /// The angle of incidence of the subarray [degrees]
-	std::vector<ssc_number_t *> p_shadeDB_voltageMPPTLow; /// The angle of incidence of the subarray [degrees]
-	std::vector<ssc_number_t *> p_shadeDB_voltageMPPTHigh; /// The angle of incidence of the subarray [degrees]
+	std::vector<ssc_number_t *> p_shadeDB_GPOA;
+	std::vector<ssc_number_t *> p_shadeDB_DPOA;
+	std::vector<ssc_number_t *> p_shadeDB_temperatureCell;
+	std::vector<ssc_number_t *> p_shadeDB_modulesPerString;
+	std::vector<ssc_number_t *> p_shadeDB_voltageMaxPowerSTC;
+	std::vector<ssc_number_t *> p_shadeDB_voltageMPPTLow;
+	std::vector<ssc_number_t *> p_shadeDB_voltageMPPTHigh;
 
 	// Degradation
 	ssc_number_t *p_dcDegradationFactor;
@@ -354,11 +377,13 @@ struct PVSystem_IO
 	ssc_number_t *p_inverterThermalLoss;
 	ssc_number_t *p_inverterTotalLoss;
 
-	ssc_number_t *p_acWiringLoss;
-	ssc_number_t *p_transmissionLoss;
+	ssc_number_t *p_acWiringLoss; // kWac
+	ssc_number_t *p_transmissionLoss; // kWac
+    ssc_number_t *p_acPerfAdjLoss; // kWac
+    ssc_number_t *p_acLifetimeLoss; // kWac
 
-	ssc_number_t *p_systemDCPower;
-	ssc_number_t *p_systemACPower;
+	ssc_number_t *p_systemDCPower; // kWdc
+	ssc_number_t *p_systemACPower; // kWac
 };
 
 /**

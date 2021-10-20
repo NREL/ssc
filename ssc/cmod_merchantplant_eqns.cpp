@@ -1,3 +1,25 @@
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 #include <exception>
 #include <algorithm>
 #include <math.h>
@@ -9,21 +31,15 @@
 #include "cmod_merchantplant_eqns.h"
 //#pragma warning(disable: 4297)  // ignore warning: 'function assumed not to throw an exception but does'
 
-void mp_ancillary_services(ssc_data_t data)
+bool mp_ancillary_services(ssc_data_t data)
 {
 	std::string error = "";
 	bool ancillary_services_success = false;
 	bool calculate_revenue = false;
 	auto vt = static_cast<var_table*>(data);
-	try {
-		if (!vt) {
-			throw std::runtime_error("ssc_data_t data invalid");
-		}
-	}
-	catch (std::exception& e)
-	{
-		error = std::string(e.what());
-	}
+    if (!vt) {
+        return false;
+    }
 	try {
 		bool gen_is_assigned = false;
 
@@ -129,7 +145,7 @@ void mp_ancillary_services(ssc_data_t data)
 		if (en_mp_ancserv4)
 			nsteps = std::max(nsteps, mp_ancserv4_revenue.nrows());
 
-		if (nsteps < (8760 * (size_t)analysis_period)) nsteps = 8760 * (size_t)analysis_period; // extrapolated timeseries has minimum of hourly values for use in all forecasting 
+		if (nsteps < (8760 * (size_t)analysis_period)) nsteps = 8760 * (size_t)analysis_period; // extrapolated timeseries has minimum of hourly values for use in all forecasting
 
 		std::vector<ssc_number_t> energy_market_revenue(nsteps, 0.0);
 		std::vector<ssc_number_t> ancillary_services1_revenue(nsteps, 0.0);
@@ -155,7 +171,7 @@ void mp_ancillary_services(ssc_data_t data)
 
 				if (nsteps > 0)
 				{
-					if (nsteps < (8760 * (size_t)analysis_period)) nsteps = 8760 * (size_t)analysis_period; // extrapolated timeseries has minimum of hourly values for use in all forecasting 
+					if (nsteps < (8760 * (size_t)analysis_period)) nsteps = 8760 * (size_t)analysis_period; // extrapolated timeseries has minimum of hourly values for use in all forecasting
 					std::vector<ssc_number_t> cleared_capacity_sum(nsteps, 0.0);
 					std::vector<ssc_number_t> system_generation(nsteps, 0.0);
 					std::vector<ssc_number_t> energy_market_capacity(nsteps, 0.0);
@@ -460,7 +476,7 @@ void mp_ancillary_services(ssc_data_t data)
 								break;
 							}
 						}
-					} 
+					}
 
 					if (calculate_revenue)
 					{ // all user specified capacities are greater than zero and sum of all less than system generation at timestep i
@@ -524,11 +540,12 @@ void mp_ancillary_services(ssc_data_t data)
 	catch (std::exception& e)
 	{
 		error = std::string(e.what());
+		return false;
 	}
 	ancillary_services_success = (error == "");
 	vt->assign("mp_ancillary_services", var_data(ancillary_services_success));
 	vt->assign("mp_ancillary_services_error", var_data(error));
-
+    return true;
 }
 
 
