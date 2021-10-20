@@ -31,21 +31,15 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "cmod_merchantplant_eqns.h"
 //#pragma warning(disable: 4297)  // ignore warning: 'function assumed not to throw an exception but does'
 
-void mp_ancillary_services(ssc_data_t data)
+bool mp_ancillary_services(ssc_data_t data)
 {
 	std::string error = "";
 	bool ancillary_services_success = false;
 	bool calculate_revenue = false;
 	auto vt = static_cast<var_table*>(data);
-	try {
-		if (!vt) {
-			throw std::runtime_error("ssc_data_t data invalid");
-		}
-	}
-	catch (std::exception& e)
-	{
-		error = std::string(e.what());
-	}
+    if (!vt) {
+        return false;
+    }
 	try {
 		bool gen_is_assigned = false;
 
@@ -119,7 +113,7 @@ void mp_ancillary_services(ssc_data_t data)
 		if (en_mp_ancserv4)
 			nsteps = std::max(nsteps, mp_ancserv4_revenue.nrows());
 
-		if (nsteps < (8760 * (size_t)analysis_period)) nsteps = 8760 * (size_t)analysis_period; // extrapolated timeseries has minimum of hourly values for use in all forecasting 
+		if (nsteps < (8760 * (size_t)analysis_period)) nsteps = 8760 * (size_t)analysis_period; // extrapolated timeseries has minimum of hourly values for use in all forecasting
 
 		std::vector<ssc_number_t> energy_market_revenue(nsteps, 0.0);
 		std::vector<ssc_number_t> ancillary_services1_revenue(nsteps, 0.0);
@@ -145,7 +139,7 @@ void mp_ancillary_services(ssc_data_t data)
 
 				if (nsteps > 0)
 				{
-					if (nsteps < (8760 * (size_t)analysis_period)) nsteps = 8760 * (size_t)analysis_period; // extrapolated timeseries has minimum of hourly values for use in all forecasting 
+					if (nsteps < (8760 * (size_t)analysis_period)) nsteps = 8760 * (size_t)analysis_period; // extrapolated timeseries has minimum of hourly values for use in all forecasting
 					std::vector<ssc_number_t> cleared_capacity_sum(nsteps, 0.0);
 					std::vector<ssc_number_t> system_generation(nsteps, 0.0);
 					std::vector<ssc_number_t> energy_market_capacity(nsteps, 0.0);
@@ -378,7 +372,7 @@ void mp_ancillary_services(ssc_data_t data)
 								break;
 							}
 						}
-					} 
+					}
 
 					if (calculate_revenue)
 					{ // all user specified capacities are greater than zero and sum of all less than system generation at timestep i
@@ -442,11 +436,12 @@ void mp_ancillary_services(ssc_data_t data)
 	catch (std::exception& e)
 	{
 		error = std::string(e.what());
+		return false;
 	}
 	ancillary_services_success = (error == "");
 	vt->assign("mp_ancillary_services", var_data(ancillary_services_success));
 	vt->assign("mp_ancillary_services_error", var_data(error));
-
+    return true;
 }
 
 

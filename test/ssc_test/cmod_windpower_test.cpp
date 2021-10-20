@@ -363,12 +363,12 @@ TEST_F(CMWindPowerIntegration, IcingAndLowTempCutoff_cmod_windpower) {
 
 /// Testing Turbine powercurve calculation
 TEST(Turbine_powercurve_cmod_windpower_eqns, NoData) {
-    ASSERT_THROW(Turbine_calculate_powercurve(nullptr), std::runtime_error);
+    ASSERT_FALSE(Turbine_calculate_powercurve(nullptr));
 }
 
 TEST(Turbine_powercurve_cmod_windpower_eqns, MissingVariables) {
     var_table *vd = new var_table;
-    ASSERT_THROW(Turbine_calculate_powercurve(vd), std::runtime_error);
+    ASSERT_FALSE(Turbine_calculate_powercurve(vd));
 }
 
 TEST(Turbine_powercurve_cmod_windpower_eqns, Case1) {
