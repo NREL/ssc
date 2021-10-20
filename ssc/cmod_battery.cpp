@@ -1661,7 +1661,7 @@ void battstor::initialize_time(size_t year_in, size_t hour_of_year, size_t step_
     year_index = (hour * step_per_hour) + step;
     step_per_year = 8760 * step_per_hour;
 }
-void battstor::advance(var_table*, double P_gen, double V_gen, double P_load, double P_crit_load, double P_gen_clipped)
+void battstor::advance(var_table*, double P_gen, double V_gen, double P_load, double P_crit_load, double ac_loss_percent, double P_gen_clipped)
 {
     BatteryPower* powerflow = dispatch_model->getBatteryPower();
     powerflow->reset();
@@ -1680,6 +1680,7 @@ void battstor::advance(var_table*, double P_gen, double V_gen, double P_load, do
     powerflow->powerLoad = P_load;
     powerflow->powerCritLoad = P_crit_load;
     powerflow->voltageSystem = V_gen;
+    powerflow->acLossPercent = ac_loss_percent;
     powerflow->powerSystemClipped = P_gen_clipped;
 
     charge_control->run(year, hour, step, year_index);
@@ -1865,6 +1866,9 @@ void battstor::update_grid_power(compute_module&, double P_gen_ac, double P_load
     }
     outInterconnectionLoss[index_replace] = P_interconnection_loss;
     P_grid = P_gen_ac - P_load_ac - P_interconnection_loss + P_crit_load_unmet;
+    if (fabs(P_grid) < tolerance) {
+        P_grid = 0;
+    }
 
     outGridPower[index_replace] = (ssc_number_t)(P_grid);
 }

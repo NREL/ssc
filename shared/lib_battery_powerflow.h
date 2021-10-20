@@ -175,6 +175,7 @@ public:
     double powerInterconnectionLoss; ///< The power loss due to interconnection limit, outage, or curtailment (kW)
     double powerCurtailmentLimit; ///< The curtailment limit for the current step (kW)
     double voltageSystem;		   ///< The system voltage
+    double acLossPercent; ///< The expected AC losses after the battery is dispatched (%)
 
     bool   isOutageStep;
 
