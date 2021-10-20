@@ -440,13 +440,12 @@ for (t = 0; t< #subopt_flag; t=t+24)
 }
 
 revenue = 0;
-prices = var("dispatch_factors_ts");
+price_frac = var("dispatch_factors_ts");
 ppa_year1 = var("ppa_price_input")[0];
 gen = var("gen");
 for (t = 0; t < #gen; t++) {
-	revenue += prices[t] * ppa_year1 * 1000. * gen[t];
+	revenue += ppa_year1 * price_frac[t] * gen[t];
 }
-revenue /= 1000;
 
 		
 outln("annual revenue ", revenue);
