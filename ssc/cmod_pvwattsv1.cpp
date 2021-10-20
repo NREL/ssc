@@ -279,7 +279,7 @@ public:
             irr.set_beam_diffuse(wf.dn, wf.df);
             irr.set_surface(track_mode, tilt, azimuth, rlim,
                 shade_mode_1x == 1, // backtracking mode
-                gcr, 0, false, 0.0);
+                gcr, 0, 0, false, 0.0);
 
             double ibeam, iskydiff, ignddiff;
             double solazi = 0, solzen = 0, solalt = 0, aoi, stilt, sazi, rot, btd;

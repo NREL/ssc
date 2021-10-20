@@ -171,8 +171,10 @@ public:
         bool en_backtrack = as_boolean("backtrack");
         double gcr = 0; //use a default value since it's needed to be passed into the set_surface function, but isn't used subsequently
         if (is_assigned("gcr")) gcr = as_double("gcr");
-        double cross_axis_slope = 0; //use a default value since it's needed to be passed into the set_surface function, but isn't used subsequently
-        if (is_assigned("cross_axis_slope")) gcr = as_double("cross_axis_slope");
+        double slope_tilt = 0; //use a default value since it's needed to be passed into the set_surface function, but isn't used subsequently
+        if (is_assigned("slope_tilt")) slope_tilt = as_double("slope_tilt");
+        double slope_azm = 0;
+        if (is_assigned("slope_azm")) slope_azm = as_double("slope_azm");
 
         double alb_const = as_double("albedo_const");
         ssc_number_t* albvec = 0;
@@ -239,7 +241,7 @@ public:
             if (irrad_mode == 1) x.set_global_beam(glob[i], beam[i]);
             else if (irrad_mode == 2) x.set_global_diffuse(glob[i], diff[i]);
             else x.set_beam_diffuse(beam[i], diff[i]);
-            x.set_surface(track_mode, tilt, azimuth, rotlim, en_backtrack, gcr, cross_axis_slope, false, 0.0); //last two inputs are to force to a stow angle, which doesn't make sense for irradproc as a standalone cmod
+            x.set_surface(track_mode, tilt, azimuth, rotlim, en_backtrack, gcr, slope_tilt, slope_azm, false, 0.0); //last two inputs are to force to a stow angle, which doesn't make sense for irradproc as a standalone cmod
 
             int code = x.calc();
             if (code < 0)
