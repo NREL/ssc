@@ -456,8 +456,9 @@ void BatteryPowerFlow::calculateACConnected()
 
     P_ac_losses = P_gen_ac * ac_loss_percent;
 
+    double P_loss_coverage = 0;
     if (m_BatteryPower->isOutageStep) {
-        double P_loss_coverage = P_gen_ac - P_batt_to_load_ac - P_pv_to_load_ac - P_fuelcell_to_load_ac - P_ac_losses;
+        P_loss_coverage = P_gen_ac - P_batt_to_load_ac - P_pv_to_load_ac - P_fuelcell_to_load_ac - P_ac_losses;
         // If gen is greater than load and losses, then there's curtailment and we don't need to worry about it
         if (P_loss_coverage > 0) {
             P_loss_coverage = 0;
@@ -499,7 +500,7 @@ void BatteryPowerFlow::calculateACConnected()
 
     // Error checking trying to charge from grid when not allowed
     if (!m_BatteryPower->canGridCharge && P_battery_ac < -tolerance) {
-        if ((fabs(P_grid_ac - P_grid_to_load_ac) > tolerance) && (-P_grid_ac > P_grid_to_load_ac + tolerance)) {
+        if (((fabs(P_grid_ac - P_grid_to_load_ac) > tolerance) && (-P_grid_ac > P_grid_to_load_ac + tolerance)) || (fabs(P_loss_coverage) > tolerance)) {
             P_battery_ac = P_pv_ac - P_pv_to_grid_ac - P_pv_to_load_ac - P_system_loss_ac - P_ac_losses;
             P_battery_ac = P_battery_ac > 0 ? P_battery_ac : 0; // Don't swap from charging to discharging
             m_BatteryPower->powerBatteryDC = -P_battery_ac * m_BatteryPower->singlePointEfficiencyACToDC;

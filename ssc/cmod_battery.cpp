@@ -1851,6 +1851,10 @@ void battstor::metrics()
 // function needed to correctly calculate P_grid due to additional losses in P_gen post battery like wiring, curtailment, availablity
 void battstor::update_grid_power(compute_module&, double P_gen_ac, double P_load_ac, size_t index_replace)
 {
+    // Need to get this tolerance instead of the one defined in the header of battery capacity
+    BatteryPower* powerflow = dispatch_model->getBatteryPower();
+    double tolerance = powerflow->tolerance;
+
     double P_interconnection_loss = outInterconnectionLoss[index_replace];
     double P_grid_old = outGridPower[index_replace] + P_interconnection_loss;
     double P_grid = P_gen_ac - P_load_ac;
