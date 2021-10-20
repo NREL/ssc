@@ -1644,7 +1644,7 @@ bool csp_dispatch_opt::set_dispatch_outputs()
                 i++;
             }
             disp_outputs.q_dot_pc_max = fmin(disp_outputs.q_dot_pc_max, params.w_lim.at(m_current_read_step) * 1.e-3 / eta_calc); // Restrict max pc thermal input to *approximate* current allowable value (doesn't yet account for parasitics)
-            disp_outputs.q_dot_pc_max = fmax(disp_outputs.q_dot_pc_max, disp_outputs.q_pc_target);													// calculated q_pc_target accounts for parasitics --> can be higher than approximate limit 
+            disp_outputs.q_dot_pc_max = fmax(disp_outputs.q_dot_pc_max, disp_outputs.q_pc_target);								  // calculated q_pc_target accounts for parasitics --> can be higher than approximate limit 
         }
 
         disp_outputs.etasf_expect = params.eta_sf_expected.at(m_current_read_step);

@@ -603,11 +603,6 @@ public:
         if (sim_type == 1) {    // if sim_type = 2, skip this until ui call back is ironed out
             if (etes_financial_model > 0 && etes_financial_model < 5) { // Single Owner financial models
 
-                // Get first year base ppa price
-                size_t count_ppa_price_input;
-                ssc_number_t* ppa_price_input_array = as_array("ppa_price_input", &count_ppa_price_input);
-                double ppa_price_year1 = (double)ppa_price_input_array[0];  //[$/kWh]
-
                 // Time-of-Delivery factors by time step:
                 int ppa_mult_model = as_integer("ppa_multiplier_model");
                 if (ppa_mult_model == 1) {   // use dispatch_ts input
@@ -619,7 +614,7 @@ public:
                         ssc_number_t* multipliers = as_array("dispatch_factors_ts", &nmultipliers);
                         tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(nmultipliers, 0.0);
                         for (size_t ii = 0; ii < nmultipliers; ii++)
-                            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][ii] = ppa_price_year1 * multipliers[ii] * 1000.; // [$/kWh] to [$/MWh]
+                            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][ii] = multipliers[ii];
                     }
                     else { // if no dispatch optimization, don't need an input pricing schedule
                         tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed, -1.0);
@@ -707,6 +702,11 @@ public:
         // *****************************************************
         // *****************************************************
 
+        // Get first year base ppa price
+        size_t count_ppa_price_input;
+        ssc_number_t* ppa_price_input_array = as_array("ppa_price_input", &count_ppa_price_input);
+        double ppa_price_year1 = (double)ppa_price_input_array[0];  // [$/kWh]
+
         // *****************************************************
         // System dispatch
         etes_dispatch_opt dispatch;
@@ -717,7 +717,7 @@ public:
                 as_integer("disp_spec_presolve"), as_integer("disp_spec_bb"), as_integer("disp_spec_scaling"), as_integer("disp_reporting"),
                 false, false, "", "");
             dispatch.params.set_user_params(as_double("disp_time_weighting"), as_double("disp_csu_cost"), as_double("disp_pen_delta_w"),
-                as_double("disp_hsu_cost"), as_double("disp_down_time_min"), as_double("disp_up_time_min"));
+                as_double("disp_hsu_cost"), as_double("disp_down_time_min"), as_double("disp_up_time_min"), ppa_price_year1);
         }
         else {
             dispatch.solver_params.dispatch_optimize = false;
