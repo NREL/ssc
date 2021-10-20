@@ -1467,9 +1467,11 @@ bool weatherfile::open(const std::string& file, bool header_only)
 
     // special handling for missing values for various fields
     if (m_type == EPW) {
+        /*
         if (m_columns[MINUTE].data[0] == 60 && m_columns[MINUTE].data[1] == 60) { //check if 60 is the minutes value for each time step (assuming uniform time stamps
             m_columns[MINUTE].index = -1; //Reset column index to allow for automatic minute calculation 
-        }
+        }*/
+        m_columns[MINUTE].index = -1; //Reset column index to allow for automatic minute calculation
         for (size_t i = 0; i < m_nRecords; i++) {
             for (int j = 5; j < 19; j++) {
                 if (j == 8 || j == 17 || j == 18 || j == 10) continue;	// EPW format does not contain
@@ -1479,7 +1481,6 @@ bool weatherfile::open(const std::string& file, bool header_only)
 
             if (m_columns[MINUTE].index < 0 && (int)m_columns[HOUR].data[1] == m_columns[HOUR].data[1])
             {
-                
                 m_columns[MINUTE].data[i] = (float)((m_stepSec / 2) / 60); //automatic minute calculation based on halfway between step size
                 //m_columns[MINUTE].data[i] = (float)(59.0);
             }
