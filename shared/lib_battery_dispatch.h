@@ -71,7 +71,8 @@ public:
 		int meter_position,
         double interconnection_limit,
         bool chargeOnlySystemExceedLoad = true, // Optional so FOM doesn't have to specify them
-        bool dischargeOnlyLoadExceedSystem = true);
+        bool dischargeOnlyLoadExceedSystem = true,
+        double SOC_min_outage = 0.0);
 
 	// deep copy constructor (new memory), from dispatch to this
 	dispatch_t(const dispatch_t& dispatch);
@@ -164,8 +165,8 @@ protected:
 
 	/**
 	The dispatch mode.
-	For behind-the-meter dispatch: 0 = LOOK_AHEAD, 1 = LOOK_BEHIND, 2 = MAINTAIN_TARGET, 3 = CUSTOM, 4 = MANUAL, 5 = FORECAST
-	For front-of-meter dispatch: 0 = FOM_LOOK_AHEAD, 1 = FOM_LOOK_BEHIND, 2 = INPUT FORECAST, 3 = CUSTOM, 4 = MANUAL, 5 = PV Smoothing
+	For behind-the-meter dispatch: 0 = PEAK_SHAVING, 1 = MAINTAIN_TARGET, 2 = CUSTOM, 3 = MANUAL, 4 = FORECAST
+	For front-of-meter dispatch: 0 = FOM_AUTOMATED_ECONOMIC, 1 = FOM_PV_SMOOTHING, 2 = FOM_CUSTOM_DISPATCH, 3 = FOM_MANUAL
 	*/
 	int _mode;
 
@@ -195,7 +196,7 @@ protected:
 class outage_manager
 {
 public:
-    outage_manager(BatteryPower* batteryPower, battery_t* battery);
+    outage_manager(BatteryPower* batteryPower, battery_t* battery, double min_soc);
 
     ~outage_manager();
 
@@ -209,6 +210,8 @@ public:
     void endOutage(bool isAutomated);
 
     bool recover_from_outage; // Tells the dispatch algorithms to re-plan given outage recovery
+
+    double min_outage_soc; // The minium state of charge to use during an outage
 
 private:
     // Managed by dispatch_t::m_batteryPowerFlow
@@ -305,7 +308,8 @@ public:
         std::vector<double> battCycleCost,
         double interconnection_limit,
         bool chargeOnlySystemExceedLoad = true,  // Optional so FOM doesn't have to specify them
-        bool dischargeOnlyLoadExceedSystem = true
+        bool dischargeOnlyLoadExceedSystem = true,
+        double SOC_min_outage = 0.0
 		);
 
 	virtual ~dispatch_automatic_t(){};

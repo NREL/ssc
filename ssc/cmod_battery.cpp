@@ -107,7 +107,8 @@ var_info vtab_battery_inputs[] = {
 
     // charge limits and priority inputs
     { SSC_INPUT,        SSC_NUMBER,      "batt_initial_SOC",		                   "Initial state-of-charge",                                 "%",       "",                     "BatteryCell",       "",                           "",                              "" },
-    { SSC_INPUT,        SSC_NUMBER,      "batt_minimum_SOC",		                   "Minimum allowed state-of-charge",                         "%",       "",                     "BatteryCell",       "",                           "",                              "" },
+    { SSC_INPUT,        SSC_NUMBER,      "batt_minimum_SOC",		                   "Minimum allowed state-of-charge during nominal operation","%",       "",                     "BatteryCell",       "",                           "",                              "" },
+    { SSC_INPUT,        SSC_NUMBER,      "batt_minimum_outage_SOC",		               "Minimum allowed state-of-charge during an outage",        "%",       "",                     "BatteryCell",       "",                           "",                              "" },
     { SSC_INPUT,        SSC_NUMBER,      "batt_maximum_SOC",                           "Maximum allowed state-of-charge",                         "%",       "",                     "BatteryCell",       "",                           "",                              "" },
     { SSC_INPUT,        SSC_NUMBER,      "batt_minimum_modetime",                      "Minimum time at charge state",                            "min",     "",                     "BatteryCell",       "",                           "",                              "" },
 
@@ -428,7 +429,18 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             batt_vars->batt_initial_SOC = vt.as_double("batt_initial_SOC");
             batt_vars->batt_maximum_SOC = vt.as_double("batt_maximum_soc");
             batt_vars->batt_minimum_SOC = vt.as_double("batt_minimum_soc");
+            if (vt.is_assigned("batt_minimum_outage_SOC")) {
+                batt_vars->batt_minimum_outage_SOC = vt.as_double("batt_minimum_outage_SOC");
+            }
+            else {
+                batt_vars->batt_minimum_outage_SOC = 0.0; // This is likely to happen for front of meter, which is not able to set up outages
+            }
             batt_vars->batt_minimum_modetime = vt.as_double("batt_minimum_modetime");
+
+            if (batt_vars->batt_minimum_SOC < batt_vars->batt_minimum_outage_SOC)
+            {
+                throw exec_error("battery", "batt_minimum_outage_SOC must be less than or equal to batt_minimum_soc");
+            }
 
             // Storage dispatch controllers
             batt_vars->batt_dispatch = vt.as_integer("batt_dispatch_choice");
@@ -1149,7 +1161,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
                 batt_vars->batt_discharge_schedule_weekday, batt_vars->batt_discharge_schedule_weekend,
                 batt_vars->batt_can_charge, batt_vars->batt_can_discharge, batt_vars->batt_can_gridcharge, batt_vars->batt_can_fuelcellcharge,
                 dm_percent_discharge, dm_percent_gridcharge, batt_vars->grid_interconnection_limit_kW, batt_vars->batt_dispatch_charge_only_system_exceeds_load,
-                batt_vars->batt_dispatch_discharge_only_load_exceeds_system);
+                batt_vars->batt_dispatch_discharge_only_load_exceeds_system, batt_vars->batt_minimum_outage_SOC);
         }
     }
     /*! Front of meter automated DC-connected dispatch */
@@ -1233,7 +1245,8 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             batt_vars->batt_look_ahead_hours, batt_vars->batt_dispatch_update_frequency_hours,
             batt_vars->batt_dispatch_auto_can_charge, batt_vars->batt_dispatch_auto_can_clipcharge, batt_vars->batt_dispatch_auto_can_gridcharge, batt_vars->batt_dispatch_auto_can_fuelcellcharge,
             util_rate_data, batt_vars->batt_cost_per_kwh, batt_vars->batt_cycle_cost_choice, batt_vars->batt_cycle_cost, batt_vars->grid_interconnection_limit_kW,
-            batt_vars->batt_dispatch_charge_only_system_exceeds_load, batt_vars->batt_dispatch_discharge_only_load_exceeds_system
+            batt_vars->batt_dispatch_charge_only_system_exceeds_load, batt_vars->batt_dispatch_discharge_only_load_exceeds_system,
+            batt_vars->batt_minimum_outage_SOC
         );
         if (batt_vars->batt_dispatch == dispatch_t::CUSTOM_DISPATCH)
         {

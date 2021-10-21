@@ -165,6 +165,7 @@ struct batt_variables
 	double batt_initial_SOC;
 	double batt_maximum_SOC;
 	double batt_minimum_SOC;
+    double batt_minimum_outage_SOC;
 	double batt_current_charge_max;
 	double batt_current_discharge_max;
 	double batt_power_charge_max_kwdc;
