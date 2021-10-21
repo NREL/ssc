@@ -174,8 +174,7 @@ double C_csp_cr_electric_resistance::get_pumping_parasitic_coef()  //MWe/MWt
 
 double C_csp_cr_electric_resistance::get_min_power_delivery()    //MWt
 {
-    throw(C_csp_exception("C_csp_cr_electric_resistance::get_min_power_delivery(...) is not complete"));
-    return std::numeric_limits<double>::quiet_NaN();
+    return m_q_dot_min;     //[MWt]
 }
 
 double C_csp_cr_electric_resistance::get_max_thermal_power()    //MWt

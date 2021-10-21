@@ -520,7 +520,7 @@ public:
         // Construct electric resistance heater class
         double f_q_dot_des_allowable_su = as_double("f_q_dot_des_allowable_su");    //[-] fraction of design power allowed during startup
         double hrs_startup_at_max_rate = as_double("hrs_startup_at_max_rate");      //[hr] duration of startup at max startup power
-        double f_heater_min = 0.5;
+        double f_heater_min = 0.25;
         C_csp_cr_electric_resistance c_electric_resistance(T_htf_cold_des, T_htf_hot_des,
             q_dot_heater_des, f_heater_min,
             f_q_dot_des_allowable_su, hrs_startup_at_max_rate,
@@ -602,8 +602,14 @@ public:
         int etes_financial_model = as_integer("etes_financial_model");
         bool is_dispatch = as_boolean("is_dispatch");
 
+        double ppa_price_year1 = std::numeric_limits<double>::quiet_NaN();
         if (sim_type == 1) {    // if sim_type = 2, skip this until ui call back is ironed out
             if (etes_financial_model > 0 && etes_financial_model < 5) { // Single Owner financial models
+
+                // Get first year base ppa price
+                size_t count_ppa_price_input;
+                ssc_number_t* ppa_price_input_array = as_array("ppa_price_input", &count_ppa_price_input);
+                ppa_price_year1 = (double)ppa_price_input_array[0];  // [$/kWh]
 
                 // Time-of-Delivery factors by time step:
                 int ppa_mult_model = as_integer("ppa_multiplier_model");
@@ -704,10 +710,6 @@ public:
         // *****************************************************
         // *****************************************************
 
-        // Get first year base ppa price
-        size_t count_ppa_price_input;
-        ssc_number_t* ppa_price_input_array = as_array("ppa_price_input", &count_ppa_price_input);
-        double ppa_price_year1 = (double)ppa_price_input_array[0];  // [$/kWh]
 
         // *****************************************************
         // System dispatch
