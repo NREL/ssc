@@ -520,7 +520,9 @@ public:
         // Construct electric resistance heater class
         double f_q_dot_des_allowable_su = as_double("f_q_dot_des_allowable_su");    //[-] fraction of design power allowed during startup
         double hrs_startup_at_max_rate = as_double("hrs_startup_at_max_rate");      //[hr] duration of startup at max startup power
-        C_csp_cr_electric_resistance c_electric_resistance(T_htf_cold_des, T_htf_hot_des, q_dot_heater_des,
+        double f_heater_min = 0.5;
+        C_csp_cr_electric_resistance c_electric_resistance(T_htf_cold_des, T_htf_hot_des,
+            q_dot_heater_des, f_heater_min,
             f_q_dot_des_allowable_su, hrs_startup_at_max_rate,
             hot_htf_code, ud_hot_htf_props, C_csp_cr_electric_resistance::E_elec_resist_startup_mode::SEQUENCED);
 

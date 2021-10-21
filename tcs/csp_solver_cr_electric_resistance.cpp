@@ -37,7 +37,8 @@ static C_csp_reported_outputs::S_output_info S_cr_electric_resistance_output_inf
     csp_info_invalid
 };
 
-C_csp_cr_electric_resistance::C_csp_cr_electric_resistance(double T_htf_cold_des /*C*/, double T_htf_hot_des /*C*/, double q_dot_heater_des /*MWt*/,
+C_csp_cr_electric_resistance::C_csp_cr_electric_resistance(double T_htf_cold_des /*C*/, double T_htf_hot_des /*C*/,
+    double q_dot_heater_des /*MWt*/, double f_q_dot_min /*-*/,
     double f_q_dot_des_allowable_su /*-*/, double hrs_startup_at_max_rate /*hr*/,
     int htf_code /*-*/, util::matrix_t<double> ud_htf_props, E_elec_resist_startup_mode startup_mode)
 {
@@ -45,6 +46,7 @@ C_csp_cr_electric_resistance::C_csp_cr_electric_resistance(double T_htf_cold_des
     m_T_htf_cold_des = T_htf_cold_des;      //[C]
     m_T_htf_hot_des = T_htf_hot_des;        //[C]
     m_q_dot_heater_des = q_dot_heater_des;  //[MWt]
+    m_q_dot_min = f_q_dot_min*m_q_dot_heater_des; //[MWt]
 
     m_f_q_dot_des_allowable_su = f_q_dot_des_allowable_su;  //[-]
     m_hrs_startup_at_max_rate = hrs_startup_at_max_rate;    //[hr]
@@ -293,11 +295,18 @@ void C_csp_cr_electric_resistance::on(const C_csp_weatherreader::S_outputs& weat
     double heater_turn_down = 1.0;  //[-]
     double q_dot_elec = q_dot_elec_to_CR_heat * field_control * heater_turn_down;  //[MWt]
 
+    // Check if value is less than min allowed
+    if (q_dot_elec < m_q_dot_min) {
+        m_operating_mode = C_csp_collector_receiver::OFF;
+        q_dot_elec = 0.0;       //[MWt]
+    }
+    else {
+        m_operating_mode = C_csp_collector_receiver::ON;
+    }
+
     double W_dot_heater = q_dot_elec;       //[MWe]
 
     double m_dot_htf = q_dot_elec * 1.E3 / (m_cp_htf_des*(m_T_htf_hot_des - htf_state_in.m_temp));  //[kg/s]
-
-    m_operating_mode = C_csp_collector_receiver::ON;
 
     double q_startup = 0.0;         //[MWt-hr]
     double q_dot_startup = 0.0;     //[MWt-hr]
