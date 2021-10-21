@@ -29,6 +29,8 @@ char inputs_as_JSON3[256] = {};
 int np3 = sprintf(inputs_as_JSON3, "%s/test/input_json/PT_MP.json", SSCDIR);
 char inputs_as_JSON4[256] = {};
 int np4 = sprintf(inputs_as_JSON4, "%s/test/input_json/Trough_MP.json", SSCDIR);
+char inputs_as_JSON5[256] = {};
+int np5 = sprintf(inputs_as_JSON5, "%s/test/input_json/Wind_MP.json", SSCDIR);
 
 
 
@@ -109,6 +111,7 @@ TEST(save_as_JSON_test_parse, pv_batt_mechant_plant_rapidjson_parse_file) {
     }
     EXPECT_TRUE(!document.HasParseError());
 }
+
 TEST(save_as_JSON_test_parse, pt_mechant_plant_jsoncpp_parse_file) {
     Json::Value root;
     Json::Reader reader;
@@ -136,6 +139,7 @@ TEST(save_as_JSON_test_parse, pt_mechant_plant_rapidjson_parse_file) {
     }
     EXPECT_TRUE(!document.HasParseError());
 }
+
 TEST(save_as_JSON_test_parse, trough_mechant_plant_jsoncpp_parse_file) {
     Json::Value root;
     Json::Reader reader;
@@ -224,7 +228,7 @@ TEST(save_as_JSON_test_run, pvwatts_mechant_plant_jsoncpp) {
     EXPECT_TRUE(success);
     ssc_number_t npv;
     ssc_data_get_number(data, "project_return_aftertax_npv", &npv);
-    EXPECT_NEAR(npv, -60929408, fabs(60929408) / 1e6);
+    EXPECT_NEAR(npv, -59413096, fabs(59413096) / 1e6);
 }
 
 TEST(save_as_JSON_test_run, pvwatts_mechant_plant_rapidjson) {
@@ -240,7 +244,7 @@ TEST(save_as_JSON_test_run, pvwatts_mechant_plant_rapidjson) {
     EXPECT_TRUE(success);
     ssc_number_t npv;
     ssc_data_get_number(data, "project_return_aftertax_npv", &npv);
-    EXPECT_NEAR(npv, -60929408, fabs(60929408) / 1e6);
+    EXPECT_NEAR(npv, -59413096, fabs(59413096) / 1e6);
 }
 
 TEST(save_as_JSON_test_run, pv_batt_mechant_plant_jsoncpp) {
@@ -259,7 +263,7 @@ TEST(save_as_JSON_test_run, pv_batt_mechant_plant_jsoncpp) {
     EXPECT_TRUE(success);
     ssc_number_t npv;
     ssc_data_get_number(data, "project_return_aftertax_npv", &npv);
-    EXPECT_NEAR(npv, -62278740, fabs(62278740) / 1e6);
+    EXPECT_NEAR(npv, -60474912, fabs(60474912) / 1e6);
 }
 
 TEST(save_as_JSON_test_run, pv_batt_mechant_plant_rapidjson) {
@@ -278,7 +282,7 @@ TEST(save_as_JSON_test_run, pv_batt_mechant_plant_rapidjson) {
     EXPECT_TRUE(success);
     ssc_number_t npv;
     ssc_data_get_number(data, "project_return_aftertax_npv", &npv);
-    EXPECT_NEAR(npv, -62278740, fabs(62278740) / 1e6);
+    EXPECT_NEAR(npv, -60474912, fabs(60474912) / 1e6);
 }
 
 TEST(save_as_JSON_test_run, pt_mechant_plant_jsoncpp) {
@@ -297,7 +301,7 @@ TEST(save_as_JSON_test_run, pt_mechant_plant_jsoncpp) {
     EXPECT_TRUE(success);
     ssc_number_t npv;
     ssc_data_get_number(data, "project_return_aftertax_npv", &npv);
-    EXPECT_NEAR(npv, -591543354, fabs(591543354) / 1e8);
+    EXPECT_NEAR(npv, -570843776, fabs(570843776) / 1e7);
 }
 
 TEST(save_as_JSON_test_run, pt_mechant_plant_rapidjson) {
@@ -316,7 +320,7 @@ TEST(save_as_JSON_test_run, pt_mechant_plant_rapidjson) {
     EXPECT_TRUE(success);
     ssc_number_t npv;
     ssc_data_get_number(data, "project_return_aftertax_npv", &npv);
-    EXPECT_NEAR(npv, -591543354, fabs(591543354) / 1e8);
+    EXPECT_NEAR(npv, -570843776, fabs(570843776) / 1e7);
 }
 
 
@@ -336,7 +340,7 @@ TEST(save_as_JSON_test_run, ptrough_mechant_plant_jsoncpp) {
     EXPECT_TRUE(success);
     ssc_number_t npv;
     ssc_data_get_number(data, "project_return_aftertax_npv", &npv);
-    EXPECT_NEAR(npv, -501734880, fabs(501734880) / 1e8);
+    EXPECT_NEAR(npv, -484617984, fabs(484617984) / 1e8);
 }
 
 TEST(save_as_JSON_test_run, ptrough_mechant_plant_rapidjson) {
@@ -355,6 +359,6 @@ TEST(save_as_JSON_test_run, ptrough_mechant_plant_rapidjson) {
     EXPECT_TRUE(success);
     ssc_number_t npv;
     ssc_data_get_number(data, "project_return_aftertax_npv", &npv);
-    EXPECT_NEAR(npv, -501734880, fabs(501734880) / 1e8);
+    EXPECT_NEAR(npv, -484617984, fabs(484617984) / 1e8);
 }
 
