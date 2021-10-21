@@ -32,14 +32,14 @@ public:
     {
         // Time-indexed parameters
         std::vector<double> time_elapsed; //[hr] Cumulative time elapsed at the end of period t
-        std::vector<double> sell_price;   //[$/kWh] Electricity sell price in time t
-        std::vector<double> buy_price;    //[$/kWh] Electricity purchase price in time t
+        std::vector<double> sell_price;   //[$/MWh] Electricity sell price in time t
+        std::vector<double> buy_price;    //[$/MWh] Electricity purchase price in time t
         std::vector<double> eta_pb_expected; //
         std::vector<double> w_condf_expected; //
 
         // initial conditions
         bool is_pb_operating0;      //[-] Power block is operating at the initial time step
-        double q_pb0;               //[kWt] Thermal power consumption in the cycle entering the initial time step
+        double q_pb0;               //[MWt] Thermal power consumption in the cycle entering the initial time step
         bool is_eh_operating0;      //[-] Electric heaters are operating at the initial time step
 
         bool is_pb_starting0;       //[-] Power block is starting at the initial time step
@@ -49,32 +49,34 @@ public:
 
         double down_time0;          //[hr] Time that has passed since the cycle has been down before the initial time step
         double up_time0;            //[hr] Time that has passed since the cycle has been up before the initial time step
-        double e_tes0;              //[kWht] current stored energy capacity
+        double e_tes0;              //[MWht] current stored energy capacity
 
         // scaler parameters
         double time_weighting;      //[-] Weighting factor that discounts future decisions over more imminent ones
         double dt;                  //[hr] Time step
-        double eta_cycle_ref;       //[kWe/kWt]  Design-point power cycle efficiency
-        double eta_eh;              //[kWt/kWe]  Electric heater efficiency
+        double eta_cycle_ref;       //[MWe/MWt]  Design-point power cycle efficiency
+        double eta_eh;              //[MWt/MWe]  Electric heater efficiency
         double dt_pb_startup_cold;  //[hr] time requirement to start up the power block
-        double e_pb_startup_cold;   //[kWht] energy requirement to start up the power block
+        double e_pb_startup_cold;   //[MWht] energy requirement to start up the power block
         double dt_rec_startup;      //[hr] time requirement to start up the electrical heaters
-        double e_rec_startup;       //[kWht] energy requirement to start up the electrical heaters
-        double e_tes_max;           //[kWht] maximum allowable energy capacity in TES
-        double e_tes_min;           //[kWht] minimum allowable energy capacity in TES
-        double q_pb_des;            //[kWt] design cycle thermal power input
-        double q_pb_max;            //[kWt] Maximum allowable thermal energy rate to the cycle
-        double q_pb_min;            //[kWt] Minimum allowable thermal energy rate to the cycle
-        double q_eh_max;            //[kWt] Maximum allowable power delivery by the electrical heaters when operating
-        double q_eh_min;            //[kWt] Minimum allowable power delivery by the electrical heaters when operating
+        double e_rec_startup;       //[MWht] energy requirement to start up the electrical heaters
+        double e_tes_max;           //[MWht] maximum allowable energy capacity in TES
+        double e_tes_min;           //[MWht] minimum allowable energy capacity in TES
+        double q_pb_des;            //[MWt] design cycle thermal power input
+        double q_pb_max;            //[MWt] Maximum allowable thermal energy rate to the cycle
+        double q_pb_min;            //[MWt] Minimum allowable thermal energy rate to the cycle
+        double q_eh_max;            //[MWt] Maximum allowable power delivery by the electrical heaters when operating
+        double q_eh_min;            //[MWt] Minimum allowable power delivery by the electrical heaters when operating
 
         double csu_cost;            //[$/start] Cycle startup cost
         double hsu_cost;            //[$/start] electrical heater startup cost
-        double pen_delta_w;         //[$/kWe-change] Cycle production change penalty
+        double pen_delta_w;         //[$/MWe-change] Cycle production change penalty
 
         double down_time_min;       //[hr] Minimum required power cycle down-time
         double up_time_min;         //[hr] Minimum required power cycle up-time
         double eta_pb_des;
+
+        double ppa_price_y1;        //[$/MWh] Assumed ppa price for year 1 dispatch
 
         s_efftable eff_table_load, eff_table_Tdb, wcondcoef_table_Tdb; //Efficiency of the power cycle, condenser power coefs
 
@@ -112,6 +114,7 @@ public:
             down_time_min = std::numeric_limits<double>::quiet_NaN();
             up_time_min = std::numeric_limits<double>::quiet_NaN();
             eta_pb_des = std::numeric_limits<double>::quiet_NaN();
+            ppa_price_y1 = std::numeric_limits<double>::quiet_NaN();
         }
 
         void clear()
@@ -124,7 +127,7 @@ public:
         }
 
         void set_user_params(double disp_time_weighting, double disp_csu_cost, double disp_pen_delta_w,
-            double disp_hsu_cost, double disp_down_time_min, double disp_up_time_min)
+            double disp_hsu_cost, double disp_down_time_min, double disp_up_time_min, double ppa_price_year1/*$/kWh*/)
         {
             time_weighting = disp_time_weighting;
             csu_cost = disp_csu_cost;
@@ -132,6 +135,7 @@ public:
             hsu_cost = disp_hsu_cost;
             down_time_min = disp_down_time_min;
             up_time_min = disp_up_time_min;
+            ppa_price_y1 = ppa_price_year1 * 1000.0;    // $/kWh -> $/MWh
         }
 
     } params;
