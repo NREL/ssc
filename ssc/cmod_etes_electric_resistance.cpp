@@ -116,11 +116,11 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
     { SSC_INPUT,  SSC_NUMBER, "disp_spec_presolve",            "Dispatch optimization presolve heuristic",                      "",             "",                                  "System Control",                           "?=-1",                                                             "",              "SIMULATION_PARAMETER"},
     { SSC_INPUT,  SSC_NUMBER, "disp_spec_scaling",             "Dispatch optimization scaling heuristic",                       "",             "",                                  "System Control",                           "?=-1",                                                             "",              "SIMULATION_PARAMETER"},
     { SSC_INPUT,  SSC_NUMBER, "disp_pen_delta_w",              "Dispatch cycle production change penalty",                      "$/MWe-change", "",                                  "System Control",                           "is_dispatch=1",                                                    "",              ""},
-    { SSC_INPUT,  SSC_NUMBER, "disp_csu_cost",                 "Cycle startup cost",                                            "$",            "",                                  "System Control",                           "is_dispatch=1",                                                    "",              ""},
-    { SSC_INPUT,  SSC_NUMBER, "disp_hsu_cost",                 "Heater startup cost",                                           "$",            "",                                  "System Control",                           "?=10",                                                             "",              "SIMULATION_PARAMETER"},
-    { SSC_INPUT,  SSC_NUMBER, "disp_time_weighting",           "Dispatch optimization future time discounting factor",          "",             "",                                  "System Control",                           "?=0.99",                                                           "",              ""},
-    { SSC_INPUT,  SSC_NUMBER, "disp_down_time_min",            "Minimum time requirement for cycle to not generate power",      "hr",           "",                                  "System Control",                           "?=2",                                                              "",              "SIMULATION_PARAMETER"},
-    { SSC_INPUT,  SSC_NUMBER, "disp_up_time_min",              "Minimum time requirement for cycle to generate power",          "hr",           "",                                  "System Control",                           "?=2",                                                              "",              "SIMULATION_PARAMETER"},
+    { SSC_INPUT,  SSC_NUMBER, "disp_csu_cost",                 "Cycle startup cost",                                            "$/MWe-cycle/start", "",                             "System Control",                           "is_dispatch=1",                                                    "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "disp_hsu_cost",                 "Heater startup cost",                                           "$/MWe-cycle/start", "",                             "System Control",                           "is_dispatch=1",                                                    "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "disp_time_weighting",           "Dispatch optimization future time discounting factor",          "",             "",                                  "System Control",                           "is_dispatch=1",                                                    "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "disp_down_time_min",            "Minimum time requirement for cycle to not generate power",      "hr",           "",                                  "System Control",                           "is_dispatch=1",                                                    "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "disp_up_time_min",              "Minimum time requirement for cycle to generate power",          "hr",           "",                                  "System Control",                           "is_dispatch=1",                                                    "",              ""},
 
 
     // System performance
@@ -520,7 +520,9 @@ public:
         // Construct electric resistance heater class
         double f_q_dot_des_allowable_su = as_double("f_q_dot_des_allowable_su");    //[-] fraction of design power allowed during startup
         double hrs_startup_at_max_rate = as_double("hrs_startup_at_max_rate");      //[hr] duration of startup at max startup power
-        C_csp_cr_electric_resistance c_electric_resistance(T_htf_cold_des, T_htf_hot_des, q_dot_heater_des,
+        double f_heater_min = 0.25;
+        C_csp_cr_electric_resistance c_electric_resistance(T_htf_cold_des, T_htf_hot_des,
+            q_dot_heater_des, f_heater_min,
             f_q_dot_des_allowable_su, hrs_startup_at_max_rate,
             hot_htf_code, ud_hot_htf_props, C_csp_cr_electric_resistance::E_elec_resist_startup_mode::SEQUENCED);
 
@@ -600,8 +602,14 @@ public:
         int etes_financial_model = as_integer("etes_financial_model");
         bool is_dispatch = as_boolean("is_dispatch");
 
+        double ppa_price_year1 = std::numeric_limits<double>::quiet_NaN();
         if (sim_type == 1) {    // if sim_type = 2, skip this until ui call back is ironed out
             if (etes_financial_model > 0 && etes_financial_model < 5) { // Single Owner financial models
+
+                // Get first year base ppa price
+                size_t count_ppa_price_input;
+                ssc_number_t* ppa_price_input_array = as_array("ppa_price_input", &count_ppa_price_input);
+                ppa_price_year1 = (double)ppa_price_input_array[0];  // [$/kWh]
 
                 // Time-of-Delivery factors by time step:
                 int ppa_mult_model = as_integer("ppa_multiplier_model");
@@ -702,10 +710,6 @@ public:
         // *****************************************************
         // *****************************************************
 
-        // Get first year base ppa price
-        size_t count_ppa_price_input;
-        ssc_number_t* ppa_price_input_array = as_array("ppa_price_input", &count_ppa_price_input);
-        double ppa_price_year1 = (double)ppa_price_input_array[0];  // [$/kWh]
 
         // *****************************************************
         // System dispatch
@@ -716,8 +720,8 @@ public:
                 as_integer("disp_max_iter"), as_double("disp_mip_gap"), as_double("disp_timeout"),
                 as_integer("disp_spec_presolve"), as_integer("disp_spec_bb"), as_integer("disp_spec_scaling"), as_integer("disp_reporting"),
                 false, false, "", "");
-            dispatch.params.set_user_params(as_double("disp_time_weighting"), as_double("disp_csu_cost"), as_double("disp_pen_delta_w"),
-                as_double("disp_hsu_cost"), as_double("disp_down_time_min"), as_double("disp_up_time_min"), ppa_price_year1);
+            dispatch.params.set_user_params(as_double("disp_time_weighting"), as_double("disp_csu_cost")*W_dot_cycle_des, as_double("disp_pen_delta_w"),
+                as_double("disp_hsu_cost")*q_dot_heater_des, as_double("disp_down_time_min"), as_double("disp_up_time_min"), ppa_price_year1);
         }
         else {
             dispatch.solver_params.dispatch_optimize = false;

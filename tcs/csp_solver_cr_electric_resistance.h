@@ -43,6 +43,7 @@ private:
     double m_T_htf_cold_des;        //[C]
     double m_T_htf_hot_des;         //[C]
     double m_q_dot_heater_des;      //[MWt]
+    double m_q_dot_min;             //[MWt] min allowable heater output
 
     double m_f_q_dot_des_allowable_su;//[-] fraction of design thermal power allowed for startup
     double m_hrs_startup_at_max_rate; //[hr]
@@ -90,7 +91,8 @@ public:
 
     C_csp_reported_outputs mc_reported_outputs;
 
-    C_csp_cr_electric_resistance(double T_htf_cold_des /*C*/, double T_htf_hot_des /*C*/, double q_dot_heater_des /*MWt*/,
+    C_csp_cr_electric_resistance(double T_htf_cold_des /*C*/, double T_htf_hot_des /*C*/,
+        double q_dot_heater_des /*MWt*/, double f_q_dot_min /*- rel design*/,
         double f_q_dot_des_allowable_su /*-*/, double hrs_startup_at_max_rate /*hr*/,
         int htf_code /*-*/, util::matrix_t<double> ud_htf_props, E_elec_resist_startup_mode startup_mode);
 

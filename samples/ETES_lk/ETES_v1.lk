@@ -20,6 +20,9 @@ var( 'ppa_price_input', [ 0.1 ] );  // 0.053889  for LCGS_price_multipliers
 var( 'hot_htf_code', 17);
 var('ud_hot_htf_props', [[0,0,0]]);
 
+// Startup costs now required in normalized units ($/MWe-cycle(heater)/start)
+var( 'disp_csu_cost', 87 );			//[$/MWe-cycle/start]
+var( 'disp_hsu_cost', 0.015 );		//[$/MWe-heater/start]
 
 //var( 'disp_reporting', 6);
 
@@ -136,10 +139,8 @@ var( 'bop_par_2', 0 );
 var( 'disp_horizon', 48 );
 var( 'disp_frequency', 24 );
 var( 'disp_mip_gap', 0.001 );
-var( 'disp_csu_cost', 10000 );
 var( 'disp_time_weighting', 0.999 );
 
-var( 'disp_hsu_cost', 10. );
 
 
 var( 'const_per_interest_rate1', 4 );
