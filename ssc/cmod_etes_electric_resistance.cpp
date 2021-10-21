@@ -721,7 +721,7 @@ public:
                 as_integer("disp_spec_presolve"), as_integer("disp_spec_bb"), as_integer("disp_spec_scaling"), as_integer("disp_reporting"),
                 false, false, "", "");
             dispatch.params.set_user_params(as_double("disp_time_weighting"), as_double("disp_csu_cost")*W_dot_cycle_des, as_double("disp_pen_delta_w"),
-                as_double("disp_hsu_cost")*W_dot_cycle_des, as_double("disp_down_time_min"), as_double("disp_up_time_min"), ppa_price_year1);
+                as_double("disp_hsu_cost")*q_dot_heater_des, as_double("disp_down_time_min"), as_double("disp_up_time_min"), ppa_price_year1);
         }
         else {
             dispatch.solver_params.dispatch_optimize = false;
