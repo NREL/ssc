@@ -2,7 +2,7 @@ clear();
 
 var( 'time_start', 0 );
 var( 'time_stop', 31536000 );
-//var( 'time_stop', 30*24*3600);
+//var( 'time_stop', 10*24*3600);
 
 // PPA schedule option
 // 0: Simple step-change TOU block schedule (dispatch_sched_weekday, dispatch_sched_weekend, dispatch_factorX)
@@ -25,13 +25,14 @@ var('ud_hot_htf_props', [[0,0,0]]);
 
 var( 'disp_pen_delta_w', 1.3); // $/delta MW (ramp)
 
-var( 'disp_max_iter', 100000);
-var( 'disp_timeout', 5.0);
+var( 'disp_max_iter', 150000);
+var( 'disp_timeout', 15.0);
 
 var( 'T_htf_cold_des', 290 );
 var( 'T_htf_hot_des', 574 );
 var( 'P_ref', 115 );
-var( 'design_eff', 0.41199999999999998 );
+var( 'design_eff', 0.412 ); //0.41199999999999998 
+var( 'cycle_cutoff_frac', 0.3 ); //0.2
 
 var( 'disp_down_time_min', 2. );
 var( 'disp_up_time_min', 2. );
@@ -111,7 +112,6 @@ var( 'pb_pump_coef', 0.55000000000000004 );
 var( 'startup_time', 0.5 );
 var( 'startup_frac', 0.5 );
 var( 'cycle_max_frac', 1.05 );
-var( 'cycle_cutoff_frac', 0.20000000000000001 );
 var( 'q_sby_frac', 0.20000000000000001 );
 var( 'dT_cw_ref', 10 );
 var( 'T_amb_des', 42 );
@@ -382,31 +382,17 @@ var( 'grid_curtailment_price_esc', 0 );
 
 run('etes_electric_resistance');
 
-outputs{"dispatch_factors_ts"} = var("dispatch_factors_ts");
-outputs{"W_dot_out_net"} = var("W_dot_out_net");
-outputs{"q_dot_dc_tes"} = var("q_dot_dc_tes");
-outputs{"q_dot_ch_tes"} = var("q_dot_ch_tes");
-outputs{"e_ch_tes"} = var("e_ch_tes");
-outputs{"gen"} = var("gen");
+outputs_vars = ["dispatch_factors_ts", "W_dot_out_net", "q_dot_dc_tes", "q_dot_ch_tes",  "e_ch_tes", "gen",
+				"W_dot_cycle_gross", "q_dot_cycle", "q_dot_cycle_startup",
+				//Dispatch outputs
+				"q_pc_target", "disp_qsfprod_expected", "disp_qsfsu_expected", "disp_wpb_expected", "disp_tes_expected", 
+				"disp_solve_state", "disp_solve_iter", "disp_objective", "disp_obj_relax", "disp_rel_mip_gap", "disp_pceff_expected",
+				"disp_qpbsu_expected", "disp_solve_state", "disp_rev_expected", "disp_presolve_nconstr", "disp_presolve_nvar", "disp_solve_time"];
 
-//Dispatch outputs
-outputs{"q_pc_target"} = var("q_pc_target");
-outputs{"disp_qsfprod_expected"} = var("disp_qsfprod_expected");
-outputs{"disp_qsfsu_expected"} = var("disp_qsfsu_expected");
-outputs{"disp_wpb_expected"} = var("disp_wpb_expected");
-outputs{"disp_tes_expected"} = var("disp_tes_expected");
-
-outputs{"disp_solve_state"} = var("disp_solve_state");
-outputs{"disp_solve_iter"} = var("disp_solve_iter");
-outputs{"disp_objective"} = var("disp_objective");
-outputs{"disp_obj_relax"} = var("disp_obj_relax");
-outputs{"disp_rel_mip_gap"} = var("disp_rel_mip_gap");
-outputs{"disp_solve_state"} = var("disp_solve_state");
-
-outputs{"disp_rev_expected"} = var("disp_rev_expected");
-outputs{"disp_presolve_nconstr"} = var("disp_presolve_nconstr");
-outputs{"disp_presolve_nvar"} = var("disp_presolve_nvar");
-outputs{"disp_solve_time"} = var("disp_solve_time");
+for (i = 0; i< #outputs_vars; i++)
+{
+	outputs{outputs_vars[i]} = var(outputs_vars[i]);
+}
 
 csvwrite("outputs.csv", outputs);
 
@@ -447,7 +433,28 @@ for (t = 0; t < #gen; t++) {
 	revenue += ppa_year1 * price_frac[t] * gen[t];
 }
 
-		
+outln("Cycle gross power:", var("annual_E_cycle_gross"));
+outln("Cycle heat input:", var("annual_Q_cycle_thermal_in") - var("annual_Q_cycle_thermal_startup"));
+outln("Cycle average gross efficiency:", var("annual_E_cycle_gross")/(var("annual_Q_cycle_thermal_in") - var("annual_Q_cycle_thermal_startup")));
+
+cycle_gen_disp = 0;
+disp_wpb_expected = var("disp_wpb_expected");
+disp_qpbsu_expected = var("disp_qpbsu_expected");
+startup_time = var("startup_time");
+
+for (i = 0; i<#disp_wpb_expected; i++) {
+	if (disp_qpbsu_expected[i] > 0) {
+		cycle_gen_disp += disp_wpb_expected[i]*(1 - startup_time);	// assumes hourly steps
+	}
+	else {
+		cycle_gen_disp += disp_wpb_expected[i];
+	}
+}
+
+outln("Cycle gross power (dispatch):", cycle_gen_disp);
+outln("Cycle heat input (dispatch):", sum(var("q_pc_target")) - sum(var("disp_qpbsu_expected")));
+outln("Cycle average gross efficiency (dispatch):", cycle_gen_disp/ (sum(var("q_pc_target")) - sum(var("disp_qpbsu_expected"))));
+
 outln("annual revenue ", revenue);
 outln("annual_energy ", var("annual_energy"));
 outln("heater spec cost ", var('heater_spec_cost'));

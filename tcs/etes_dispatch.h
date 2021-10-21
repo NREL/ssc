@@ -54,7 +54,6 @@ public:
         // scaler parameters
         double time_weighting;      //[-] Weighting factor that discounts future decisions over more imminent ones
         double dt;                  //[hr] Time step
-        double eta_cycle_ref;       //[MWe/MWt]  Design-point power cycle efficiency
         double eta_eh;              //[MWt/MWe]  Electric heater efficiency
         double dt_pb_startup_cold;  //[hr] time requirement to start up the power block
         double e_pb_startup_cold;   //[MWht] energy requirement to start up the power block
@@ -63,6 +62,7 @@ public:
         double e_tes_max;           //[MWht] maximum allowable energy capacity in TES
         double e_tes_min;           //[MWht] minimum allowable energy capacity in TES
         double q_pb_des;            //[MWt] design cycle thermal power input
+        double eta_pb_des;          //[MWe/MWt]  Design-point power cycle efficiency
         double q_pb_max;            //[MWt] Maximum allowable thermal energy rate to the cycle
         double q_pb_min;            //[MWt] Minimum allowable thermal energy rate to the cycle
         double q_eh_max;            //[MWt] Maximum allowable power delivery by the electrical heaters when operating
@@ -74,7 +74,7 @@ public:
 
         double down_time_min;       //[hr] Minimum required power cycle down-time
         double up_time_min;         //[hr] Minimum required power cycle up-time
-        double eta_pb_des;
+
 
         double ppa_price_y1;        //[$/MWh] Assumed ppa price for year 1 dispatch
 
@@ -98,7 +98,6 @@ public:
             down_time0 = std::numeric_limits<double>::quiet_NaN();
             up_time0 = std::numeric_limits<double>::quiet_NaN();
             e_tes0 = std::numeric_limits<double>::quiet_NaN();
-            eta_cycle_ref = std::numeric_limits<double>::quiet_NaN();
             eta_eh = std::numeric_limits<double>::quiet_NaN();
             dt_pb_startup_cold = std::numeric_limits<double>::quiet_NaN();
             e_pb_startup_cold = std::numeric_limits<double>::quiet_NaN();
@@ -107,13 +106,13 @@ public:
             e_tes_min = std::numeric_limits<double>::quiet_NaN();     // TODO: this needs to be accounted for       
             e_tes_max = std::numeric_limits<double>::quiet_NaN();
             q_pb_des = std::numeric_limits<double>::quiet_NaN();
+            eta_pb_des = std::numeric_limits<double>::quiet_NaN();
             q_pb_max = std::numeric_limits<double>::quiet_NaN();
             q_pb_min = std::numeric_limits<double>::quiet_NaN();
             q_eh_max = std::numeric_limits<double>::quiet_NaN();
             q_eh_min = std::numeric_limits<double>::quiet_NaN();
             down_time_min = std::numeric_limits<double>::quiet_NaN();
             up_time_min = std::numeric_limits<double>::quiet_NaN();
-            eta_pb_des = std::numeric_limits<double>::quiet_NaN();
             ppa_price_y1 = std::numeric_limits<double>::quiet_NaN();
         }
 

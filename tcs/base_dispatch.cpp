@@ -529,7 +529,7 @@ double s_efftable::interpolate(double x)
     return eff;
 }
 
-void s_efftable::init_linear_cycle_efficiency_table(double q_pb_min, double q_pb_max, double q_pb_des, C_csp_power_cycle* power_cycle)
+void s_efftable::init_linear_cycle_efficiency_table(double q_pb_min, double q_pb_des, double eta_pb_des, C_csp_power_cycle* power_cycle)
 {
     //Cycle efficiency
     this->clear();
@@ -539,11 +539,13 @@ void s_efftable::init_linear_cycle_efficiency_table(double q_pb_min, double q_pb
     int neff = 2;   //mjw: if using something other than 2, the linear approximation assumption and associated code in csp_dispatch.cpp/calculate_parameters() needs to be reformulated.
     for (int i = 0; i < neff; i++)
     {
-        double x = q_pb_min + (q_pb_max - q_pb_min) / (double)(neff - 1) * i;
+        double x = q_pb_min + (q_pb_des - q_pb_min) / (double)(neff - 1) * i;
         double xf = x / q_pb_des;
 
         double eta;
         eta = power_cycle->get_efficiency_at_load(xf);
+        // TODO: This is a quick fix for design point power but doesn't fix poor low power estimate
+        eta += (eta_pb_des - power_cycle->get_efficiency_at_load(1));  // shift efficiency to specific design point
 
         this->add_point(x, eta);
     }

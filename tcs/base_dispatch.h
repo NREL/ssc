@@ -230,7 +230,7 @@ public:
     double interpolate(double x);
 
     // Initialize linear cycle performance approximation -> used to calculate slope and intercept parameters
-    void init_linear_cycle_efficiency_table(double q_pb_min, double q_pb_max, double q_pb_des, C_csp_power_cycle* power_cycle);
+    void init_linear_cycle_efficiency_table(double q_pb_min, double q_pb_des, double eta_pb_des, C_csp_power_cycle* power_cycle);
 
     // Initializes cycle efficiency vs. ambient temperature table and normalized condenser power  vs. ambient temperature table.
     void init_efficiency_ambient_temp_table(double eta_pb_des, double cycle_w_dot_des, C_csp_power_cycle* power_cycle, s_efftable* wcondcoef_table_Tdb);
