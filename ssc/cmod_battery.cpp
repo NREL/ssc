@@ -437,11 +437,6 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             }
             batt_vars->batt_minimum_modetime = vt.as_double("batt_minimum_modetime");
 
-            if (batt_vars->batt_minimum_SOC < batt_vars->batt_minimum_outage_SOC)
-            {
-                throw exec_error("battery", "batt_minimum_outage_SOC must be less than or equal to batt_minimum_soc");
-            }
-
             // Storage dispatch controllers
             batt_vars->batt_dispatch = vt.as_integer("batt_dispatch_choice");
             batt_vars->batt_dispatch_wf_forecast = vt.as_integer("batt_dispatch_wf_forecast_choice");

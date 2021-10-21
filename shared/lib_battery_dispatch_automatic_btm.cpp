@@ -132,7 +132,7 @@ void dispatch_automatic_behind_the_meter_t::dispatch(size_t year,
         rate_forecast->copyTOUForecast();
     }
 
-    m_outage_manager->update(true); // true is for automated dispatch
+    m_outage_manager->update(true, _min_outage_soc); // true is for automated dispatch
     if (m_batteryPower->isOutageStep) {
         // Calls dispatch function, sometimes iteratively
         run_outage_step(lifetimeIndex);

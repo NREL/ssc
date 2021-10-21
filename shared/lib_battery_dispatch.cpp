@@ -57,7 +57,8 @@ dispatch_t::dispatch_t(battery_t* Battery, double dt_hour, double SOC_min, doubl
     _Battery = Battery;
     _Battery_initial = new battery_t(*_Battery);
 
-    m_outage_manager = std::make_unique<outage_manager>(m_batteryPower, _Battery, SOC_min_outage);
+    m_outage_manager = std::make_unique<outage_manager>(m_batteryPower, _Battery);
+    _min_outage_soc = SOC_min_outage;
 
     // Call the dispatch init method
     init(_Battery, dt_hour, current_choice, t_min, mode);
@@ -94,7 +95,8 @@ dispatch_t::dispatch_t(const dispatch_t& dispatch)
     _Battery = new battery_t(*dispatch._Battery);
     _Battery_initial = new battery_t(*dispatch._Battery_initial);
 
-    m_outage_manager = std::make_unique<outage_manager>(m_batteryPower, _Battery, dispatch.m_outage_manager->min_outage_soc);
+    _min_outage_soc = dispatch._min_outage_soc;
+    m_outage_manager = std::make_unique<outage_manager>(m_batteryPower, _Battery);
     m_outage_manager->copy(*(dispatch.m_outage_manager));
     init(_Battery, dispatch._dt_hour, dispatch._current_choice, dispatch._t_min, dispatch._mode);
 }
@@ -110,7 +112,8 @@ void dispatch_t::copy(const dispatch_t* dispatch)
     std::unique_ptr<BatteryPowerFlow> tmp(new BatteryPowerFlow(*dispatch->m_batteryPowerFlow));
     m_batteryPowerFlow = std::move(tmp);
     m_batteryPower = m_batteryPowerFlow->getBatteryPower();
-    m_outage_manager = std::make_unique<outage_manager>(m_batteryPower, _Battery, dispatch->m_outage_manager->min_outage_soc);
+    _min_outage_soc = dispatch->_min_outage_soc;
+    m_outage_manager = std::make_unique<outage_manager>(m_batteryPower, _Battery);
     m_outage_manager->copy(*(dispatch->m_outage_manager));
 
 }
@@ -981,7 +984,7 @@ void battery_metrics_t::new_year()
     _e_loss_system_annual = 0.;
 }
 
-outage_manager::outage_manager(BatteryPower* batteryPower, battery_t* battery, double min_soc) {
+outage_manager::outage_manager(BatteryPower* batteryPower, battery_t* battery) {
     m_batteryPower = batteryPower;
     _Battery = battery;
     canSystemChargeWhenGrid = m_batteryPower->canSystemCharge;
@@ -993,7 +996,6 @@ outage_manager::outage_manager(BatteryPower* batteryPower, battery_t* battery, d
     stateOfChargeMinWhenGrid = m_batteryPower->stateOfChargeMin;
     last_step_was_outage = false;
     recover_from_outage = false;
-    min_outage_soc = min_soc;
 }
 
 outage_manager::~outage_manager() {
@@ -1012,13 +1014,12 @@ void outage_manager::copy(const outage_manager& tmp) {
     stateOfChargeMinWhenGrid = tmp.stateOfChargeMinWhenGrid;
     last_step_was_outage = tmp.last_step_was_outage;
     recover_from_outage = tmp.recover_from_outage;
-    min_outage_soc = tmp.min_outage_soc;
 }
 
-void outage_manager::update(bool isAutomated) {
+void outage_manager::update(bool isAutomated, double min_outage_soc) {
     recover_from_outage = false;
     if (m_batteryPower->isOutageStep && !last_step_was_outage) {
-        startOutage();
+        startOutage(min_outage_soc);
     }
     else if (!m_batteryPower->isOutageStep && last_step_was_outage) {
         endOutage(isAutomated);
@@ -1027,7 +1028,7 @@ void outage_manager::update(bool isAutomated) {
 }
 
 
-void outage_manager::startOutage() {
+void outage_manager::startOutage(double min_outage_soc) {
     canSystemChargeWhenGrid = m_batteryPower->canSystemCharge;	
     canClipChargeWhenGrid = m_batteryPower->canClipCharge;
     canGridChargeWhenGrid = m_batteryPower->canGridCharge;

@@ -38,8 +38,8 @@ dispatch_resilience::dispatch_resilience(const dispatch_t &orig, size_t start_in
     m_batteryPower->canDischarge = true;
 
     // change SOC limits
-    _Battery->changeSOCLimits(0., 100.);
-    m_batteryPower->stateOfChargeMin = 0;
+    _Battery->changeSOCLimits(orig._min_outage_soc, 100.);
+    m_batteryPower->stateOfChargeMin = orig._min_outage_soc;
     m_batteryPower->stateOfChargeMax = 100;
 }
 

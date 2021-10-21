@@ -135,6 +135,8 @@ public:
 	/// Return a pointer to the object which calculates the battery power flow
 	BatteryPowerFlow * getBatteryPowerFlow();
 
+    double _min_outage_soc;
+
 protected:
 
 	/// Helper function to run common dispatch tasks.  Requires that m_batteryPower->powerBattery is previously defined
@@ -189,29 +191,26 @@ protected:
 	bool _charging;
 	bool _prev_charging;
 	bool _grid_recharge;
-
 };
 
 /*! Class responsible for changing and storing outage related variables for when the grid goes out or comes back */
 class outage_manager
 {
 public:
-    outage_manager(BatteryPower* batteryPower, battery_t* battery, double min_soc);
+    outage_manager(BatteryPower* batteryPower, battery_t* battery);
 
     ~outage_manager();
 
     // Use this to copy member variables other than the m_batteryPower pointer. Use the pointer created by dispatch_t's copy constructor.
     void copy(const outage_manager& tmp);
 
-    void update(bool isAutomated);
+    void update(bool isAutomated, double min_outage_soc);
 
-    void startOutage();
+    void startOutage(double min_outage_soc);
 
     void endOutage(bool isAutomated);
 
     bool recover_from_outage; // Tells the dispatch algorithms to re-plan given outage recovery
-
-    double min_outage_soc; // The minium state of charge to use during an outage
 
 private:
     // Managed by dispatch_t::m_batteryPowerFlow

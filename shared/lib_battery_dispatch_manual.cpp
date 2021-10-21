@@ -113,7 +113,7 @@ void dispatch_manual_t::dispatch(size_t year,
 	size_t hour_of_year,
 	size_t step)
 {
-    m_outage_manager->update(false); // false is for manual dispatch
+    m_outage_manager->update(false, _min_outage_soc); // false is for manual dispatch
     size_t lifetimeIndex = util::lifetimeIndex(year, hour_of_year, step, static_cast<size_t>(1 / _dt_hour));
 
     if (m_batteryPower->isOutageStep) {
