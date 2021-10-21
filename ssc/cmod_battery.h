@@ -265,6 +265,7 @@ struct battstor
 	void metrics();
 	void update_grid_power(compute_module &cm, double P_gen_ac, double P_load_ac, size_t index);
     bool is_outage_step(size_t index);
+    bool is_offline(size_t index); // Must be run after advance to get valid answer
 
 	/*! Manual dispatch*/
 	bool manual_dispatch = false;

@@ -2295,11 +2295,25 @@ void cm_pvsamv1::exec()
                 PVSystem->p_inverterEfficiency[idx] = (ssc_number_t)(sharedInverter->efficiencyAC);
                 PVSystem->p_inverterClipLoss[idx] = (ssc_number_t)(sharedInverter->powerClipLoss_kW);
                 PVSystem->p_inverterPowerConsumptionLoss[idx] = (ssc_number_t)(sharedInverter->powerConsumptionLoss_kW);
-                PVSystem->p_inverterNightTimeLoss[idx] = (ssc_number_t)(sharedInverter->powerNightLoss_kW);
                 PVSystem->p_inverterThermalLoss[idx] = (ssc_number_t)(sharedInverter->powerTempLoss_kW);
                 PVSystem->p_acWiringLoss[idx] = (ssc_number_t)(ac_wiringloss);
                 PVSystem->p_transmissionLoss[idx] = (ssc_number_t)(transmissionloss);
-                PVSystem->p_inverterTotalLoss[idx] = (ssc_number_t)(sharedInverter->powerLossTotal_kW);
+
+                bool offline = false;
+                if (en_batt && (batt_topology == ChargeController::DC_CONNECTED)) {
+                    if (batt->is_outage_step(idx)) {
+                        offline = batt->is_offline(idx);
+                    }
+                }
+                
+                if (offline) {
+                    PVSystem->p_inverterNightTimeLoss[idx] = 0.0;
+                    PVSystem->p_inverterTotalLoss[idx] = (ssc_number_t)(sharedInverter->powerLossTotal_kW - sharedInverter->powerNightLoss_kW);
+                }
+                else {
+                    PVSystem->p_inverterNightTimeLoss[idx] = (ssc_number_t)(sharedInverter->powerNightLoss_kW);
+                    PVSystem->p_inverterTotalLoss[idx] = (ssc_number_t)(sharedInverter->powerLossTotal_kW);
+                }
             }
             PVSystem->p_systemDCPower[idx] = (ssc_number_t)(sharedInverter->powerDC_kW);
 
@@ -2443,6 +2457,16 @@ void cm_pvsamv1::exec()
 				batt->advance(m_vartab, PVSystem->p_systemACPower[idx], 0, p_load_full[idx], p_crit_load_full[idx], ac_loss_percent);
                 batt->outGenWithoutBattery[idx] = PVSystem->p_systemACPower[idx];
                 PVSystem->p_systemACPower[idx] = batt->outGenPower[idx];
+
+                bool offline = false;
+                if (batt->is_outage_step(idx)) {
+                    offline = batt->is_offline(idx);
+                }
+                
+                if (offline) {
+                    PVSystem->p_inverterTotalLoss[idx] = (ssc_number_t)(PVSystem->p_inverterTotalLoss[idx] - PVSystem->p_inverterNightTimeLoss[idx]);
+                    PVSystem->p_inverterNightTimeLoss[idx] = 0.0;
+                }
             }
 
             // accumulate system generation before curtailment and availability

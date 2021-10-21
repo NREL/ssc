@@ -1884,6 +1884,18 @@ bool battstor::is_outage_step(size_t index) {
     return false;
 }
 
+bool battstor::is_offline(size_t index) {
+    double soc = (double) outSOC[index];
+    double prev_soc = soc;
+    if (index > 0) {
+        prev_soc = (double) outSOC[index - 1];
+    }
+    
+    double min_soc = dispatch_model->getBatteryPower()->stateOfChargeMin;
+
+    return ((soc - min_soc) < tolerance) && ((prev_soc - min_soc) < tolerance);
+}
+
 void battstor::calculate_monthly_and_annual_outputs(compute_module& cm)
 {
     // single value metrics
