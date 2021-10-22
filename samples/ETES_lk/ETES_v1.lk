@@ -29,13 +29,13 @@ var( 'disp_hsu_cost', 0.015 );		//[$/MWe-heater/start]
 var( 'disp_pen_delta_w', 1.3); // $/delta MW (ramp)
 
 var( 'disp_max_iter', 150000);
-var( 'disp_timeout', 15.0);
+var( 'disp_timeout', 5.0);
 
 var( 'T_htf_cold_des', 290 );
 var( 'T_htf_hot_des', 574 );
 var( 'P_ref', 115 );
 var( 'design_eff', 0.412 ); //0.41199999999999998 
-var( 'cycle_cutoff_frac', 0.3 ); //0.2
+var( 'cycle_cutoff_frac', 0.2 ); //0.2
 
 var( 'disp_down_time_min', 2. );
 var( 'disp_up_time_min', 2. );

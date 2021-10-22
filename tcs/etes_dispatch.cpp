@@ -60,7 +60,7 @@ void etes_dispatch_opt::init(double cycle_q_dot_des, double cycle_eta_des)
 
     params.dt_rec_startup = pointers.col_rec->get_startup_time(); // / 3600.;
     params.e_rec_startup = pointers.col_rec->get_startup_energy();
-    params.q_eh_min = 0.0; //pointers.col_rec->get_min_power_delivery();
+    params.q_eh_min = pointers.col_rec->get_min_power_delivery();
     params.q_eh_max = pointers.col_rec->get_max_thermal_power();
 
     params.e_tes0 = pointers.tes->get_initial_charge_energy();
@@ -286,9 +286,7 @@ static void calculate_parameters(etes_dispatch_opt *optinst, unordered_map<std::
             pars["Wdot0"] = (pars["etap"] * pars["q0"] + intercept) * optinst->params.eta_pb_expected.at(0) / optinst->params.eta_pb_des;
 
         // ==================================================================
-        // TODO: Talk to TY about these two
         pars["eta_eh"] = 1.0;   //0.95; We could remove this completely
-        pars["Qehl"] = pars["Qehu"]*0.25;  //get_min_power_delivery()  
 };
 
 bool etes_dispatch_opt::optimize()
