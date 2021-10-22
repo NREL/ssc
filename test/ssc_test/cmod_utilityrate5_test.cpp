@@ -1484,11 +1484,11 @@ TEST(cmod_utilityrate5_eqns, Test_Commercial_kWh_per_kW_charges_with_billing_dem
                                          11, 1, 9.9999999999999998e+37, 0 };
     ssc_data_set_matrix(data, "ur_dc_flat_mat", p_ur_dc_flat_mat, 12, 4);
 
-    ssc_data_set_number(data, "ur_ec_enable_billing_demand", 1);
-    ssc_data_set_number(data, "ur_ec_billing_demand_minimum", 100);
-    ssc_data_set_number(data, "ur_ec_billing_demand_lookback_period", 11);
+    ssc_data_set_number(data, "ur_enable_billing_demand", 1);
+    ssc_data_set_number(data, "ur_billing_demand_minimum", 100);
+    ssc_data_set_number(data, "ur_billing_demand_lookback_period", 11);
 
-    ssc_number_t p_ur_ec_billing_demand_lookback_percentages[24] = { 60, 0,
+    ssc_number_t p_ur_billing_demand_lookback_percentages[24] = { 60, 0,
                                       60, 0,
                                       60, 0,
                                       60, 0,
@@ -1500,7 +1500,7 @@ TEST(cmod_utilityrate5_eqns, Test_Commercial_kWh_per_kW_charges_with_billing_dem
                                       60, 0,
                                       60, 0,
                                       60, 0 };
-    ssc_data_set_matrix(data, "ur_ec_billing_demand_lookback_percentages", p_ur_ec_billing_demand_lookback_percentages, 12, 2);
+    ssc_data_set_matrix(data, "ur_billing_demand_lookback_percentages", p_ur_billing_demand_lookback_percentages, 12, 2);
 
     ssc_number_t year_zero_power[12] = { -1200,
                                         -1100,

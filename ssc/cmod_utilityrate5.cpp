@@ -404,13 +404,13 @@ void rate_setup::setup(var_table* vt, int num_recs_yearly, size_t nyears, rate_d
     rate.nm_credit_sell_rate = vt->as_number("ur_nm_yearend_sell_rate");
 
     ssc_number_t* ratchet_matrix = NULL;
-    bool ratchets_enabled = vt->as_boolean("ur_ec_enable_billing_demand");
+    bool ratchets_enabled = vt->as_boolean("ur_enable_billing_demand");
     if (ratchets_enabled) {
         rate.en_ec_billing_demand = ratchets_enabled;
-        rate.ec_bd_minimum = vt->as_number("ur_ec_billing_demand_minimum");
-        rate.ec_bd_lookback_months = vt->as_integer("ur_ec_billing_demand_lookback_period");
+        rate.ec_bd_minimum = vt->as_number("ur_billing_demand_minimum");
+        rate.ec_bd_lookback_months = vt->as_integer("ur_billing_demand_lookback_period");
 
-        ratchet_matrix = vt->as_matrix("ur_ec_billing_demand_lookback_percentages", &nrows, &ncols);
+        ratchet_matrix = vt->as_matrix("ur_billing_demand_lookback_percentages", &nrows, &ncols);
         if (nrows != 12 || ncols != 2)
         {
             std::ostringstream ss;
@@ -838,12 +838,12 @@ public:
         // If billing demand ratchets - populate monthly_peaks with what the user specified as year zero:
         ssc_number_t* year_zero_peaks = NULL;
         size_t nrows;
-        bool ratchets_enabled = as_boolean("ur_ec_enable_billing_demand");
+        bool ratchets_enabled = as_boolean("ur_enable_billing_demand");
         if (ratchets_enabled) {
 
             if (!has_kwh_per_kw) {
                 std::ostringstream ss;
-                ss << "The option ur_ec_enable_billing_demand is only relevant when the energy rates have kWh/kW or kWh/kW daily units, please add those units to your rates structure or set ur_ec_enable_billing_demand to false";
+                ss << "The option ur_enable_billing_demand is only relevant when the energy rates have kWh/kW or kWh/kW daily units, please add those units to your rates structure or set ur_ec_enable_billing_demand to false";
                 throw exec_error("utilityrate5", ss.str());
             }
 
