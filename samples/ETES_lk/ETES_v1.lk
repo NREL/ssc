@@ -13,6 +13,7 @@ var( 'is_dispatch', 1 );
 
 var( 'tshours', 10 );
 var( 'heater_mult', 2.4);
+var( 'f_q_dot_heater_min', 0.25);
 // Choose financial mode
 	// 9.23.21 ETES dispatch model hardcoded to use ppa price input, so that dispatch knows absolute cost
 	// ........ so removed ppa_soln_mode and flip_target_percent
