@@ -2278,6 +2278,18 @@ void cm_pvsamv1::exec()
                 acpwr_gross = sharedInverter->powerAC_kW;
             }
 
+            bool offline = false;
+            if (en_batt && (batt_topology == ChargeController::DC_CONNECTED)) {
+                if (batt->is_outage_step(idx)) {
+                    offline = batt->is_offline(idx);
+                }
+            }
+
+            if (offline && acpwr_gross < 0) {
+                acpwr_gross += sharedInverter->powerNightLoss_kW;
+                batt->outGenWithoutBattery[idx] += sharedInverter->powerNightLoss_kW;
+            }
+
             ac_wiringloss = fabs(acpwr_gross) * PVSystem->acLossPercent * 0.01;
             transmissionloss = fabs(acpwr_gross) * PVSystem->transmissionLossPercent * 0.01;
 
@@ -2298,13 +2310,6 @@ void cm_pvsamv1::exec()
                 PVSystem->p_inverterThermalLoss[idx] = (ssc_number_t)(sharedInverter->powerTempLoss_kW);
                 PVSystem->p_acWiringLoss[idx] = (ssc_number_t)(ac_wiringloss);
                 PVSystem->p_transmissionLoss[idx] = (ssc_number_t)(transmissionloss);
-
-                bool offline = false;
-                if (en_batt && (batt_topology == ChargeController::DC_CONNECTED)) {
-                    if (batt->is_outage_step(idx)) {
-                        offline = batt->is_offline(idx);
-                    }
-                }
                 
                 if (offline) {
                     PVSystem->p_inverterNightTimeLoss[idx] = 0.0;
@@ -2463,9 +2468,16 @@ void cm_pvsamv1::exec()
                     offline = batt->is_offline(idx);
                 }
                 
-                if (offline) {
+                if (offline && PVSystem->p_systemACPower[idx] < tolerance) {
+
                     PVSystem->p_inverterTotalLoss[idx] = (ssc_number_t)(PVSystem->p_inverterTotalLoss[idx] - PVSystem->p_inverterNightTimeLoss[idx]);
+                    ssc_number_t avoided_losses = PVSystem->p_inverterNightTimeLoss[idx] + PVSystem->p_acWiringLoss[idx] + PVSystem->p_transmissionLoss[idx];
+                    PVSystem->p_systemACPower[idx] += avoided_losses;
+                    batt->outGenWithoutBattery[idx] += avoided_losses;
+                    annual_ac_gross += avoided_losses * ts_hour;
                     PVSystem->p_inverterNightTimeLoss[idx] = 0.0;
+                    PVSystem->p_acWiringLoss[idx] = 0.0;
+                    PVSystem->p_transmissionLoss[idx] = 0.0;
                 }
             }
 

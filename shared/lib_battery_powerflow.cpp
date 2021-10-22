@@ -576,6 +576,10 @@ void BatteryPowerFlow::calculateDCConnected()
     bool pv_handles_loss = P_pv_dc > P_system_loss_dc && P_battery_dc <= tolerance; // Idle losses need to be handled by PV to keep inverter flows consistent, even if PV charging is disallowed
     double P_gen_dc = P_pv_dc + P_battery_dc - P_system_loss_dc;
 
+    if (fabs(P_gen_dc) < tolerance) {
+        P_gen_dc = 0.0;
+    }
+
     // in the event that PV system isn't operating, assume battery BMS converts battery voltage to nominal inverter input at the weighted efficiency
     double voltage = m_BatteryPower->voltageSystem;
     double efficiencyDCAC = m_BatteryPower->sharedInverter->efficiencyAC * 0.01;
@@ -602,7 +606,7 @@ void BatteryPowerFlow::calculateDCConnected()
             }   
         }
         
-        if (P_pv_dc >= P_pv_to_batt_dc + P_system_loss_dc)
+        if ((P_pv_dc >= P_pv_to_batt_dc + P_system_loss_dc) || m_BatteryPower->isOutageStep)
         {
             P_pv_to_inverter_dc = P_pv_dc - P_pv_to_batt_dc - P_system_loss_dc;
         }
@@ -619,7 +623,11 @@ void BatteryPowerFlow::calculateDCConnected()
             P_grid_to_batt_dc = fabs(P_battery_dc) - P_pv_to_batt_dc - P_system_loss_dc;
         }
 
-        if ((!m_BatteryPower->canGridCharge || m_BatteryPower->isOutageStep) && P_grid_to_batt_dc > tolerance) {
+        if (fabs(P_grid_to_batt_dc) < tolerance) {
+            P_grid_to_batt_dc = 0.0;
+        }
+
+        if ((!m_BatteryPower->canGridCharge || m_BatteryPower->isOutageStep) && P_grid_to_batt_dc > 0.0) {
             m_BatteryPower->powerBatteryDC = -P_pv_to_batt_dc * m_BatteryPower->singlePointEfficiencyDCToDC;
             return calculateDCConnected();
         }
