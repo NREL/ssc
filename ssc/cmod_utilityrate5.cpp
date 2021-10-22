@@ -174,10 +174,10 @@ static var_info vtab_utility_rate5[] = {
     { SSC_OUTPUT, SSC_ARRAY, "year1_true_up_credits",  "Net annual true-up payments", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
 
     // Outputs for billing demand calculations
-    { SSC_OUTPUT, SSC_MATRIX, "billing_demand_w_sys_ym",     "Billing demand for kWh/kW rates with system", "kW", "", "Charges by Month", "", "", "COL_LABEL=MONTHS,GROUP=UR_AM" },
-    { SSC_OUTPUT, SSC_ARRAY, "year1_billing_demand_w_sys",  "Billing demand for kWh/kW rates with system", "kW", "", "Monthly", "", "LENGTH=12", "" },
-    { SSC_OUTPUT, SSC_MATRIX, "billing_demand_wo_sys_ym",     "Billing demand for kWh/kW rates without system", "kW", "", "Charges by Month", "", "", "COL_LABEL=MONTHS,GROUP=UR_AM" },
-    { SSC_OUTPUT, SSC_ARRAY, "year1_billing_demand_wo_sys",  "Billing demand for kWh/kW rates without system", "kW", "", "Monthly", "", "LENGTH=12", "" },
+    { SSC_OUTPUT, SSC_MATRIX, "billing_demand_w_sys_ym",     "Billing demand with system", "kW", "", "Charges by Month", "", "", "COL_LABEL=MONTHS,GROUP=UR_AM" },
+    { SSC_OUTPUT, SSC_ARRAY, "year1_billing_demand_w_sys",  "Billing demand with system", "kW", "", "Monthly", "", "LENGTH=12", "" },
+    { SSC_OUTPUT, SSC_MATRIX, "billing_demand_wo_sys_ym",     "Billing demand without system", "kW", "", "Charges by Month", "", "", "COL_LABEL=MONTHS,GROUP=UR_AM" },
+    { SSC_OUTPUT, SSC_ARRAY, "year1_billing_demand_wo_sys",  "Billing demand without system", "kW", "", "Monthly", "", "LENGTH=12", "" },
 
 
 // for Pablo at IRENA 8/8/15
@@ -826,11 +826,12 @@ public:
 			throw exec_error("utilityrate5", "Time series rates are not compatible with net metering. Please disable time series rates or change to net billing / buy all - sell all");
 		}
 
+        bool dc_enabled = as_boolean("ur_dc_enable");
         // Assume if the kwh per kw rate exists in January that it exists in all of the months
-        bool has_kwh_per_kw = rate.has_kwh_per_kw_rate(0);
+        bool uses_billing_demand = rate.has_kwh_per_kw_rate(0) || dc_enabled;
         ssc_number_t* billing_demand_w_sys_ym = NULL;
         ssc_number_t* billing_demand_wo_sys_ym = NULL;
-        if (has_kwh_per_kw) {
+        if (uses_billing_demand) {
             billing_demand_w_sys_ym = allocate("billing_demand_w_sys_ym", nyears + 1, 12);
             billing_demand_wo_sys_ym = allocate("billing_demand_wo_sys_ym", nyears + 1, 12);
         }
@@ -841,7 +842,7 @@ public:
         bool ratchets_enabled = as_boolean("ur_enable_billing_demand");
         if (ratchets_enabled) {
 
-            if (!has_kwh_per_kw) {
+            if (!uses_billing_demand) {
                 std::ostringstream ss;
                 ss << "The option ur_enable_billing_demand is only relevant when the energy rates have kWh/kW or kWh/kW daily units, please add those units to your rates structure or set ur_ec_enable_billing_demand to false";
                 throw exec_error("utilityrate5", ss.str());
@@ -981,7 +982,7 @@ public:
 				ch_wo_sys_fixed_ym[(i + 1) * 12 + j] = monthly_fixed_charges[j];
 				ch_wo_sys_minimum_ym[(i + 1) * 12 + j] = monthly_minimum_charges[j];
 
-                if (has_kwh_per_kw) {
+                if (uses_billing_demand) {
                     billing_demand_wo_sys_ym[(i + 1) * 12 + j] = rate.billing_demand[j];
                 }
 
@@ -1050,7 +1051,7 @@ public:
 				assign( "year1_monthly_dc_tou_without_system", var_data(&rate.monthly_dc_tou[0], 12) );
 				assign("year1_monthly_ec_charge_without_system", var_data(&monthly_ec_charges[0], 12));
 
-                if (has_kwh_per_kw) {
+                if (uses_billing_demand) {
                     assign("year1_billing_demand_wo_sys", var_data(&rate.billing_demand[0], 12));
                 }
 
@@ -1386,7 +1387,7 @@ public:
 				assign("year1_monthly_peak_w_system", var_data(&monthly_peak_w_sys[0], 12));
 				assign("year1_monthly_use_w_system", var_data(&monthly_test[0], 12));
 
-                if (has_kwh_per_kw) {
+                if (uses_billing_demand) {
                     assign("year1_billing_demand_w_sys", var_data(&rate.billing_demand[0], 12));
                 }
 
@@ -1431,7 +1432,7 @@ public:
 				ch_w_sys_fixed_ym[(i + 1) * 12 + j] = monthly_fixed_charges[j];
 				ch_w_sys_minimum_ym[(i + 1) * 12 + j] = monthly_minimum_charges[j];
 
-                if (has_kwh_per_kw) {
+                if (uses_billing_demand) {
                     billing_demand_w_sys_ym[(i + 1) * 12 + j] = rate.billing_demand[j];
                 }
 
@@ -1451,7 +1452,7 @@ public:
 		assign("elec_cost_without_system_year1", annual_elec_cost_wo_sys[1]);
 		assign("savings_year1", annual_elec_cost_wo_sys[1] - annual_elec_cost_w_sys[1]);
 
-        bool dc_enabled = as_boolean("ur_dc_enable");
+
         if (!dc_enabled) {
             unassign("monthly_tou_demand_peak_w_sys");
             unassign("monthly_tou_demand_peak_wo_sys");
