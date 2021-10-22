@@ -57,11 +57,10 @@ void etes_dispatch_opt::init(double cycle_q_dot_des, double cycle_eta_des)
     params.e_pb_startup_cold = pointers.mpc_pc->get_cold_startup_energy();
     params.q_pb_max = pointers.mpc_pc->get_max_thermal_power();
     params.q_pb_min = pointers.mpc_pc->get_min_thermal_power();
-    params.eta_cycle_ref = pointers.mpc_pc->get_efficiency_at_load(1.);
 
     params.dt_rec_startup = pointers.col_rec->get_startup_time(); // / 3600.;
     params.e_rec_startup = pointers.col_rec->get_startup_energy();
-    params.q_eh_min = 0.0; //pointers.col_rec->get_min_power_delivery();
+    params.q_eh_min = pointers.col_rec->get_min_power_delivery();
     params.q_eh_max = pointers.col_rec->get_max_thermal_power();
 
     params.e_tes0 = pointers.tes->get_initial_charge_energy();
@@ -70,13 +69,11 @@ void etes_dispatch_opt::init(double cycle_q_dot_des, double cycle_eta_des)
     //params.tes_degrade_rate = pointers.tes->get_degradation_rate();
 
     params.q_pb_des = cycle_q_dot_des; // MW
-    params.eta_pb_des = cycle_eta_des;  // TODO: what is the difference between this and ref (above)?
+    params.eta_pb_des = cycle_eta_des; 
     double w_pb_des = cycle_q_dot_des * params.eta_pb_des;  // keep in MW
 
-    params.eff_table_load.init_linear_cycle_efficiency_table(params.q_pb_min, params.q_pb_max, params.q_pb_des, pointers.mpc_pc);
+    params.eff_table_load.init_linear_cycle_efficiency_table(params.q_pb_min, params.q_pb_des, params.eta_pb_des, pointers.mpc_pc);
     params.eff_table_Tdb.init_efficiency_ambient_temp_table(params.eta_pb_des, w_pb_des, pointers.mpc_pc, &params.wcondcoef_table_Tdb);
-
-
 }
 
 void etes_dispatch_opt::set_default_solver_parameters()
@@ -154,8 +151,6 @@ void etes_dispatch_opt::update_initial_conditions(double q_dot_to_pb, double T_h
 
 bool etes_dispatch_opt::predict_performance(int step_start, int ntimeints, int divs_per_int)
 {
-    //TODO: clean up code that is not required for eTES
-
     //Step number - 1-based index for first hour of the year.
 
     //save step count
@@ -172,35 +167,24 @@ bool etes_dispatch_opt::predict_performance(int step_start, int ntimeints, int d
     C_csp_solver_sim_info simloc;
     simloc.ms_ts.m_step = pointers.siminfo->ms_ts.m_step;
 
-    double Asf = pointers.col_rec->get_collector_area();
-
     double ave_weight = 1. / (double)divs_per_int;
 
     for (int i = 0; i < m_nstep_opt; i++)
     {
         //initialize hourly average values
-        double therm_eff_ave = 0.;
         double cycle_eff_ave = 0.;
-        double q_inc_ave = 0.;
         double wcond_ave = 0.;
-        double f_pb_op_lim_ave = 0.0;
 
         for (int j = 0; j < divs_per_int; j++)     //take averages over hour if needed
         {
-
             //jump to the current step
             if (!pointers.m_weather.read_time_step(step_start + i * divs_per_int + j, simloc))
                 return false;
 
             //store the power cycle efficiency
             double cycle_eff = params.eff_table_Tdb.interpolate(pointers.m_weather.ms_outputs.m_tdry);
-            cycle_eff *= params.eta_cycle_ref;
+            cycle_eff *= params.eta_pb_des;
             cycle_eff_ave += cycle_eff * ave_weight;
-
-            double f_pb_op_lim_local = std::numeric_limits<double>::quiet_NaN();
-            double m_dot_htf_max_local = std::numeric_limits<double>::quiet_NaN();
-            pointers.mpc_pc->get_max_power_output_operation_constraints(pointers.m_weather.ms_outputs.m_tdry, m_dot_htf_max_local, f_pb_op_lim_local);
-            f_pb_op_lim_ave += f_pb_op_lim_local * ave_weight;	//[-]
 
             //store the condenser parasitic power fraction
             double wcond_f = params.wcondcoef_table_Tdb.interpolate(pointers.m_weather.ms_outputs.m_tdry);
@@ -235,16 +219,12 @@ static void calculate_parameters(etes_dispatch_opt *optinst, unordered_map<std::
             optinst->params.time_elapsed.push_back(pars["delta"] * (t + 1));
         }
 
-        pars["W_dot_cycle"] = optinst->params.q_pb_des * optinst->params.eta_cycle_ref;
-        pars["eta_cycle"] = optinst->params.eta_cycle_ref;
         pars["eta_eh"] = optinst->params.eta_eh;
         pars["Ec"] = optinst->params.e_pb_startup_cold;
         pars["Eeh"] = optinst->params.e_rec_startup;
-
         pars["Eu"] = optinst->params.e_tes_max;
-        //pars["El"] = optinst->params.e_tes_min;     // NOT used in formulation -> min set to zero
 
-        pars["Qu"] = optinst->params.q_pb_max ;
+        pars["Qu"] = optinst->params.q_pb_des;
         pars["Ql"] = optinst->params.q_pb_min ;
         pars["Qcsu"] = optinst->params.e_pb_startup_cold / ceil(optinst->params.dt_pb_startup_cold / pars["delta"]) / pars["delta"];
 
@@ -303,18 +283,10 @@ static void calculate_parameters(etes_dispatch_opt *optinst, unordered_map<std::
 
         pars["Wdot0"] = 0.;
         if (pars["q0"] >= pars["Ql"])
-            pars["Wdot0"] = (pars["etap"] * pars["q0"] + intercept) * optinst->params.eta_pb_expected.at(0) / optinst->params.eta_cycle_ref;
+            pars["Wdot0"] = (pars["etap"] * pars["q0"] + intercept) * optinst->params.eta_pb_expected.at(0) / optinst->params.eta_pb_des;
 
         // ==================================================================
-        // TODO: Talk to TY about these two
         pars["eta_eh"] = 1.0;   //0.95; We could remove this completely
-        pars["Qehl"] = pars["Qehu"]*0.25;  //get_min_power_delivery()  
-
-        //TODO: How can I calculate these? Ask Ty
-        //pars["Yd0"] = pars["Yd"];    // Over riding these constraints
-        //pars["Yu0"] = pars["Yu"];    // Over riding these constraints
-
-        //pars["pen_delta_w"] = 2;  // TODO: change default value to be $2/MW
 };
 
 bool etes_dispatch_opt::optimize()
@@ -613,10 +585,10 @@ bool etes_dispatch_opt::optimize()
                 row[i] = 1.;
                 col[i++] = O.column("wdot", t);
 
-                row[i] = -P["etap"] * params.eta_pb_expected.at(t) / params.eta_cycle_ref;
+                row[i] = -P["etap"] * params.eta_pb_expected.at(t) / params.eta_pb_des;
                 col[i++] = O.column("qdot", t);
 
-                row[i] = -(P["Wdotu"] - P["etap"] * P["Qu"]) * params.eta_pb_expected.at(t) / params.eta_cycle_ref;
+                row[i] = -(P["Wdotu"] - P["etap"] * P["Qu"]) * params.eta_pb_expected.at(t) / params.eta_pb_des;
                 col[i++] = O.column("y", t);
 
                 //add_constraintex(lp, i, row, col, EQ, 0.);
@@ -1205,7 +1177,7 @@ bool etes_dispatch_opt::set_dispatch_outputs()
             disp_outputs.q_pc_target = 0.0;
         }
 
-        disp_outputs.q_dot_pc_max = params.q_pb_max;   // disp_outputs.q_pc_target;
+        disp_outputs.q_dot_pc_max = params.q_pb_max;  //TODO: Talk to ty about this
         disp_outputs.etasf_expect = 0.0;
         disp_outputs.qsf_expect = 0.0;
         disp_outputs.qsfprod_expect = outputs.q_sf_expected.at(m_current_read_step);

@@ -753,7 +753,6 @@ public:
 
             // Cycle
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::PC_W_DOT_COOLING, allocate("W_dot_cycle_cooling", n_steps_fixed), n_steps_fixed);
-
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::W_DOT_NET, allocate("W_dot_out_net", n_steps_fixed), n_steps_fixed);
 
             // TES
