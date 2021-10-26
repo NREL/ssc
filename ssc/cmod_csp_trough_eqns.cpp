@@ -28,11 +28,11 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma warning(disable: 4297)  // ignore warning: 'function assumed not to throw an exception but does'
 
 
-void Physical_Trough_System_Design_Equations(ssc_data_t data)
+bool Physical_Trough_System_Design_Equations(ssc_data_t data)
 {
     auto vt = static_cast<var_table*>(data);
     if (!vt) {
-        throw std::runtime_error("ssc_data_t data invalid");
+        return false;
     }
 
     // Inputs
@@ -54,13 +54,14 @@ void Physical_Trough_System_Design_Equations(ssc_data_t data)
     ssc_data_t_get_number(data, "eta_ref", &eta_ref);
     q_pb_design = Q_pb_design(P_ref, eta_ref);
     ssc_data_t_set_number(data, "q_pb_design", q_pb_design);
+    return true;
 }
 
-void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
+bool Physical_Trough_Solar_Field_Equations(ssc_data_t data)
 {
     auto vt = static_cast<var_table*>(data);
     if (!vt) {
-        throw std::runtime_error("ssc_data_t data invalid");
+        return false;
     }
 
     // Inputs
@@ -191,7 +192,7 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
     // sca_info_array
     SCAInfoArray = Sca_info_array(trough_loop_control);
     ssc_data_t_set_matrix(data, "scainfoarray", SCAInfoArray);
-    
+
     // sca_defocus_array
     SCADefocusArray = Sca_defocus_array(trough_loop_control);
     ssc_data_t_set_array(data, "scadefocusarray", SCADefocusArray.data(), (int)SCADefocusArray.ncells());
@@ -285,22 +286,23 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
     // Type_cpnt
     Type_cpnt = Type_Cpnt(static_cast<int>(nSCA));
     ssc_data_t_set_matrix(data, "type_cpnt", Type_cpnt);
+    return true;
 }
 
-void Physical_Trough_Collector_Type_Equations(ssc_data_t data)
+bool Physical_Trough_Collector_Type_Equations(ssc_data_t data)
 {
     auto vt = static_cast<var_table*>(data);
     if (!vt) {
-        throw std::runtime_error("ssc_data_t data invalid");
+        return false;
     }
 
 }
 
-void Physical_Trough_Collector_Type_UI_Only_Equations(ssc_data_t data)
+bool Physical_Trough_Collector_Type_UI_Only_Equations(ssc_data_t data)
 {
     auto vt = static_cast<var_table*>(data);
     if (!vt) {
-        throw std::runtime_error("ssc_data_t data invalid");
+        return false;
     }
 
     // Inputs
@@ -366,13 +368,14 @@ void Physical_Trough_Collector_Type_UI_Only_Equations(ssc_data_t data)
     ssc_data_t_get_matrix(vt, "IAM_matrix", IAM_matrix);
     csp_dtr_sca_calc_iams = Csp_dtr_sca_calc_iams(IAM_matrix, csp_dtr_sca_calc_theta, csp_dtr_sca_calc_costh);
     ssc_data_t_set_matrix(data, "csp_dtr_sca_calc_iams", csp_dtr_sca_calc_iams);
+    return true;
 }
 
-void Physical_Trough_System_Control_Equations(ssc_data_t data)
+bool Physical_Trough_System_Control_Equations(ssc_data_t data)
 {
     auto vt = static_cast<var_table*>(data);
     if (!vt) {
-        throw std::runtime_error("ssc_data_t data invalid");
+        return false;
     }
 
     // Inputs
@@ -407,4 +410,5 @@ void Physical_Trough_System_Control_Equations(ssc_data_t data)
         wlim_series = Wlim_series(disp_wlim_max);
         ssc_data_t_set_array(data, "wlim_series", wlim_series.data(), (int)wlim_series.ncells());
     }
+    return true;
 }

@@ -40,7 +40,7 @@ extern "C" {
         "     'csp_dtr_pwrb_nameplate' - double [MWe]\\n"
         "     'q_pb_design' - double [MWt]";
 
-    SSCEXPORT void Physical_Trough_System_Design_Equations(ssc_data_t data);
+    SSCEXPORT bool Physical_Trough_System_Design_Equations(ssc_data_t data);
 
 
     static const char* Physical_Trough_Solar_Field_Equations_doc =
@@ -108,7 +108,7 @@ extern "C" {
         "     'L_cpnt' - double [m]\\n"
         "     'Type_cpnt' - double [-]\\n";
 
-    SSCEXPORT void Physical_Trough_Solar_Field_Equations(ssc_data_t data);
+    SSCEXPORT bool Physical_Trough_Solar_Field_Equations(ssc_data_t data);
 
 
     static const char* Physical_Trough_Collector_Type_Equations_doc =
@@ -133,7 +133,7 @@ extern "C" {
         "     'csp_dtr_sca_calc_end_losses' - double []\\n"
         "     'csp_dtr_sca_calc_iams' - double [-]\\n";
 
-    SSCEXPORT void Physical_Trough_Collector_Type_Equations(ssc_data_t data);
+    SSCEXPORT bool Physical_Trough_Collector_Type_Equations(ssc_data_t data);
 
 
     static const char* Physical_Trough_Collector_Type_UI_Only_Equations_doc =
@@ -158,7 +158,7 @@ extern "C" {
         "     'csp_dtr_sca_calc_end_losses' - double []\\n"
         "     'csp_dtr_sca_calc_iams' - double [-]\\n";
 
-    SSCEXPORT void Physical_Trough_Collector_Type_UI_Only_Equations(ssc_data_t data);
+    SSCEXPORT bool Physical_Trough_Collector_Type_UI_Only_Equations(ssc_data_t data);
 
 
     static const char* Physical_Trough_System_Control_Equations_doc =
@@ -172,7 +172,7 @@ extern "C" {
         "     'disp_wlim_max' - double [MWe]\\n"
         "     'wlim_series' - double [kWe]\\n";
 
-    SSCEXPORT void Physical_Trough_System_Control_Equations(ssc_data_t data);
+    SSCEXPORT bool Physical_Trough_System_Control_Equations(ssc_data_t data);
 
 #ifdef __cplusplus
 }

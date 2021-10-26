@@ -154,7 +154,7 @@ void STSimThread::StartThread()
     //else if(SaveStage0Data)
         //ResultCode = st_sim_run_data(ContextId, (unsigned int)SeedVal, &raydata_st0, &raydata_st1, true, STCallback_MT, (void*) this);
     //else
-	    ResultCode = st_sim_run( ContextId, (unsigned int)SeedVal, true, STCallback_MT, (void*) this );
+	    ResultCode = st_sim_run( ContextId, (unsigned int)SeedVal, true, STCallback_thread_update, (void*) this );
 
 	FinishedLock.lock();
 	Finished = true;
@@ -163,7 +163,7 @@ void STSimThread::StartThread()
 
 };	
 
-int STCallback_MT(st_uint_t ntracedtotal, st_uint_t ntraced, st_uint_t ntotrace, st_uint_t curstage, st_uint_t nstages, void *data)
+int STCallback_thread_update(st_uint_t ntracedtotal, st_uint_t ntraced, st_uint_t ntotrace, st_uint_t curstage, st_uint_t nstages, void *data)
 {
 	STSimThread *t = static_cast<STSimThread*>(data);
 	t->UpdateStatus(ntracedtotal, ntraced, ntotrace, curstage, nstages);

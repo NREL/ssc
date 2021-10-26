@@ -34,7 +34,7 @@ using namespace std;
 simulation_info::simulation_info(){ 
 	_is_active = false; 
 	Reset(); 
-	_callback = 0;
+	_callback = nullptr;
 	_callback_data = 0;
 }
 	
@@ -63,7 +63,7 @@ void simulation_info::Reset(){
 };
 
 //Sets
-void simulation_info::setCallbackFunction(bool (*updateFunc)(simulation_info* siminfo, void *data), void *cdata){
+void simulation_info::setCallbackFunction(callbackPtr updateFunc, void *cdata){
 	_callback = updateFunc;
 	_callback_data = cdata;
 	_is_active = true;
@@ -73,6 +73,12 @@ void *simulation_info::getCallbackData()
 {
     return _callback_data;
 }
+
+simulation_info::callbackPtr simulation_info::getCallbackFunction()
+{
+	return _callback;
+}
+
 
 bool simulation_info::setCurrentSimulation(int val)
 {
