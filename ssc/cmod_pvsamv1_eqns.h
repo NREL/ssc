@@ -110,7 +110,7 @@ static const char *Reopt_size_battery_params_doc =
         "         'reopt_scenario': table, Scenario inputs to Reopt Lite API\\n"
         "         'log': string";
 
-SSCEXPORT void Reopt_size_battery_params(ssc_data_t data);
+SSCEXPORT bool Reopt_size_battery_params(ssc_data_t data);
 
 
 }

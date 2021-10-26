@@ -82,8 +82,10 @@ bool try_get_rate_structure(var_table* vt, const std::string& ssc_name, bool pow
                 rate_data.table.assign("unit", var_data("kWh"));
             else if (unit_type == 2)
                 rate_data.table.assign("unit", var_data("kWh daily"));
-            else
-                throw(std::runtime_error("ElectricityRates_format_as_URDBv7 error. Unit type in " + ssc_name + " not allowed."));
+            else{
+                vt->assign("error", var_data("ElectricityRates_format_as_URDBv7 error. Unit type in " + ssc_name + " not allowed."));
+                return false;
+            }
             rate_data.table.assign("sell", sell);
         }
         else{
@@ -97,10 +99,10 @@ bool try_get_rate_structure(var_table* vt, const std::string& ssc_name, bool pow
     return true;
 }
 
-SSCEXPORT void ElectricityRates_format_as_URDBv7(ssc_data_t data) {
+SSCEXPORT bool ElectricityRates_format_as_URDBv7(ssc_data_t data) {
     auto vt = static_cast<var_table*>(data);
     if (!vt){
-        throw std::runtime_error("ssc_data_t data invalid");
+        return false;
     }
     auto urdb_data = var_table();
     std::string log;
@@ -122,7 +124,7 @@ SSCEXPORT void ElectricityRates_format_as_URDBv7(ssc_data_t data) {
             dgrules = "Buy All Sell All";
             break;
         default:
-            throw(std::runtime_error("ElectricityRates_format_as_URDBv7 error. ur_net_metering_option not recognized."));
+            vt->assign("error", var_data("ElectricityRates_format_as_URDBv7 error. ur_net_metering_option not recognized."));
     }
     urdb_data.assign("dgrules", dgrules);
 
@@ -236,5 +238,9 @@ SSCEXPORT void ElectricityRates_format_as_URDBv7(ssc_data_t data) {
     if (try_get_rate_structure(vt, "ur_dc_tou_mat", true, rate_structure))
         urdb_data.assign("demandratestructure", rate_structure);
 
+    if (vt->is_assigned("error"))
+        return false;
+
     vt->assign("urdb_data", urdb_data);
+    return true;
 }

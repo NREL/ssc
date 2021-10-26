@@ -182,6 +182,12 @@ double C_csp_cr_electric_resistance::get_max_thermal_power()    //MWt
     return m_q_dot_heater_des;
 }
 
+double C_csp_cr_electric_resistance::get_max_power_delivery(double T_cold_in)    //MWt
+{
+    throw(C_csp_exception("C_csp_cr_electric_resistance::get_max_power_delivery(...) is not complete"));
+    return std::numeric_limits<double>::quiet_NaN();
+}
+
 double C_csp_cr_electric_resistance::get_tracking_power()	//MWe
 {
     throw(C_csp_exception("C_csp_cr_electric_resistance::get_tracking_power(...) is not complete"));
