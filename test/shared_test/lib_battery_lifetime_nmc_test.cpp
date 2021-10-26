@@ -22,7 +22,10 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <gtest/gtest.h>
 #include <cmath>
-#include <json/json.h>
+//#include <json/json.h>
+#include "../rapidjson/document.h"
+#include "../rapidjson/istreamwrapper.h"
+
 #include <fstream>
 #include <algorithm>
 
@@ -544,23 +547,29 @@ TEST_F(lib_battery_lifetime_nmc_test, TestAgainstKokamData) {
         std::string file_path = kokam_validation_path + "lifetime_validation_cell_" + std::to_string(cell) + ".json";
         std::ifstream file(file_path);
 
-        Json::Value root;
-        file >> root;
+//        Json::Value root;
+//        file >> root;
+        rapidjson::Document root;
+        rapidjson::IStreamWrapper iswc(file);
+        root.ParseStream(iswc);
+
 
         std::vector<double> rpt_cycles;
-        for (const auto & i : root["rpt_cycles_cum"])
-            rpt_cycles.push_back(i.asDouble());
+//        for (const auto& i : root["rpt_cycles_cum"])
+//            rpt_cycles.push_back(i.asDouble());
+        for (const auto& i : root["rpt_cycles_cum"].GetArray())
+            rpt_cycles.push_back(i.GetDouble());
 
         std::vector<int> days_to_test;
-        for (const auto & i : root["rpt_days_cum"])
-            days_to_test.push_back((int)round(i.asDouble()));
+        for (const auto & i : root["rpt_days_cum"].GetArray())
+            days_to_test.push_back((int)round(i.GetDouble()));
 
         std::vector<double> full_soc_profile;
-        for (const auto & i : root["15min_profile"])
-            full_soc_profile.push_back(i.asDouble());
+        for (const auto & i : root["15min_profile"].GetArray())
+            full_soc_profile.push_back(i.GetDouble());
         dt_hour = 0.25;
 
-        double cell_temp_K = root["temp"].asDouble();
+        double cell_temp_K = root["temp"].GetDouble();
 
         // Run Life model with the profile, which starts with charging and ends with discharging
         model = std::unique_ptr<lifetime_nmc_t>(new lifetime_nmc_t(dt_hour));
@@ -609,12 +618,12 @@ TEST_F(lib_battery_lifetime_nmc_test, TestAgainstKokamData) {
 
         // Get Expected Cycle Count & Model Prediction
         std::vector<double> sam_cap_Ah;
-        for (const auto & i : root["sam_cap_Ah"])
-            sam_cap_Ah.push_back(i.asDouble());
+        for (const auto & i : root["sam_cap_Ah"].GetArray())
+            sam_cap_Ah.push_back(i.GetDouble());
 
         std::vector<double> sam_cap_cycles;
-        for (const auto & i : root["sam_cap_cycles"])
-            sam_cap_cycles.push_back(i.asDouble());
+        for (const auto & i : root["sam_cap_cycles"].GetArray())
+            sam_cap_cycles.push_back(i.GetDouble());
 
         for (size_t n = 0; n < life_model_caps.size(); n++) {
             EXPECT_NEAR(sam_cap_Ah[n], life_model_caps[n], 1e-3) << "cell" << cell;

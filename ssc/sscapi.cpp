@@ -29,7 +29,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "core.h"
 #include "sscapi.h"
 
-#include <json/json.h>
+//#include <json/json.h>
 #include "../rapidjson/document.h"
 #include "../rapidjson/error/en.h" // parser errors returned as char strings
 #include "../rapidjson/stringbuffer.h"
@@ -672,7 +672,7 @@ SSCEXPORT ssc_var_t ssc_data_get_data_matrix(ssc_data_t p_data, const char *name
     }
     return dat;
 }
-
+/*
 void json_to_ssc_var(const Json::Value& json_val, ssc_var_t ssc_val){
     if (!ssc_val)
         return;
@@ -788,13 +788,13 @@ SSCEXPORT ssc_data_t json_to_ssc_data(const char* json_str){
     return vt;
 }
 
-
+*/
 
 
 
 //////////////  RapidJSON testing
 
-void rapidjson_to_ssc_var(const rapidjson::Value& json_val, ssc_var_t ssc_val) {
+void json_to_ssc_var(const rapidjson::Value& json_val, ssc_var_t ssc_val) {
     if (!ssc_val)
         return;
     auto vd = static_cast<var_data*>(ssc_val);
@@ -869,7 +869,7 @@ void rapidjson_to_ssc_var(const rapidjson::Value& json_val, ssc_var_t ssc_val) {
         for (rapidjson::SizeType i = 0; i < json_val.Size(); i++) {
             vd_arr->emplace_back(var_data());
             auto entry = &vd_arr->back();
-            rapidjson_to_ssc_var(json_val[i], entry);
+            json_to_ssc_var(json_val[i], entry);
         }
         vd->type = SSC_DATARR;
         return;
@@ -877,13 +877,13 @@ void rapidjson_to_ssc_var(const rapidjson::Value& json_val, ssc_var_t ssc_val) {
         vd_tab = &vd->table;
         for (rapidjson::Value::ConstMemberIterator itr = json_val.MemberBegin(); itr != json_val.MemberEnd(); ++itr) {
             auto entry = vd_tab->assign(itr->name.GetString(), var_data());
-            rapidjson_to_ssc_var(itr->value, entry);
+            json_to_ssc_var(itr->value, entry);
         }
         vd->type = SSC_TABLE;
     }
 }
 
-SSCEXPORT ssc_data_t rapidjson_to_ssc_data(const char* json_str) {
+SSCEXPORT ssc_data_t json_to_ssc_data(const char* json_str) {
     auto vt = new var_table;
     rapidjson::Document document;
     document.Parse(json_str);
@@ -896,7 +896,7 @@ SSCEXPORT ssc_data_t rapidjson_to_ssc_data(const char* json_str) {
     for (rapidjson::Value::ConstMemberIterator itr = document.MemberBegin(); itr != document.MemberEnd(); ++itr) {
         //printf("Type of member %s is %s\n", itr->name.GetString(), kTypeNames[itr->value.GetType()]);
         var_data ssc_val;
-        rapidjson_to_ssc_var(itr->value, &ssc_val);
+        json_to_ssc_var(itr->value, &ssc_val);
         vt->assign(itr->name.GetString(), ssc_val);
     }
     return vt;
@@ -905,7 +905,7 @@ SSCEXPORT ssc_data_t rapidjson_to_ssc_data(const char* json_str) {
 
 
 
-rapidjson::Value ssc_var_to_rapidjson(var_data* vd, rapidjson::Document& d) {
+rapidjson::Value ssc_var_to_json(var_data* vd, rapidjson::Document& d) {
     rapidjson::Value json_val;
     switch (vd->type) {
     default:
@@ -935,7 +935,7 @@ rapidjson::Value ssc_var_to_rapidjson(var_data* vd, rapidjson::Document& d) {
     case SSC_DATARR:
         json_val.SetArray();
         for (auto& dat : vd->vec) {
-            json_val.PushBack(ssc_var_to_rapidjson(&dat,d),d.GetAllocator());
+            json_val.PushBack(ssc_var_to_json(&dat,d),d.GetAllocator());
         }
         return json_val;
     case SSC_DATMAT:
@@ -943,7 +943,7 @@ rapidjson::Value ssc_var_to_rapidjson(var_data* vd, rapidjson::Document& d) {
         for (auto& row : vd->mat) {
             auto json_row =rapidjson::Value(rapidjson::kArrayType);
             for (auto& dat : row) {
-                json_row.PushBack(ssc_var_to_rapidjson(&dat,d), d.GetAllocator());
+                json_row.PushBack(ssc_var_to_json(&dat,d), d.GetAllocator());
             }
             json_val.PushBack(json_row, d.GetAllocator());
         }
@@ -951,20 +951,20 @@ rapidjson::Value ssc_var_to_rapidjson(var_data* vd, rapidjson::Document& d) {
     case SSC_TABLE:
         json_val.SetObject();
         for (auto const& it : *vd->table.get_hash()) {
-            json_val.AddMember(rapidjson::Value(it.first.c_str(), d.GetAllocator()).Move(), ssc_var_to_rapidjson(it.second, d).Move(), d.GetAllocator());
+            json_val.AddMember(rapidjson::Value(it.first.c_str(), d.GetAllocator()).Move(), ssc_var_to_json(it.second, d).Move(), d.GetAllocator());
         }
         return json_val;
     }
 }
 
-SSCEXPORT const char* ssc_data_to_rapidjson(ssc_data_t p_data) {
+SSCEXPORT const char* ssc_data_to_json(ssc_data_t p_data) {
     auto vt = static_cast<var_table*>(p_data);
     if (!vt) return nullptr;
 
     rapidjson::Document root;
     root.SetObject();
     for (auto const& it : *vt->get_hash()) {
-        root.AddMember(rapidjson::Value(it.first.c_str(), it.first.size(), root.GetAllocator()).Move(), ssc_var_to_rapidjson(it.second, root).Move(), root.GetAllocator());
+        root.AddMember(rapidjson::Value(it.first.c_str(), it.first.size(), root.GetAllocator()).Move(), ssc_var_to_json(it.second, root).Move(), root.GetAllocator());
     }
     rapidjson::StringBuffer buffer;
     buffer.Clear();
@@ -982,7 +982,7 @@ SSCEXPORT const char* ssc_data_to_rapidjson(ssc_data_t p_data) {
 
 
 
-
+/*
 
 Json::Value ssc_var_to_json(var_data* vd){
     Json::Value json_val;
@@ -1045,7 +1045,7 @@ SSCEXPORT const char* ssc_data_to_json(ssc_data_t p_data){
     strcpy(arr, json_file.c_str());
     return arr;
 }
-
+*/
 
 SSCEXPORT ssc_entry_t ssc_module_entry( int index )
 {

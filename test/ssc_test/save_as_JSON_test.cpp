@@ -5,7 +5,7 @@
 #include <gtest/gtest.h>
 
 #include "../ssc/vartab.h"
-#include "json/json.h" // Jsoncpp
+//#include "json/json.h" // Jsoncpp
 #include "../rapidjson/document.h"
 #include "../rapidjson/istreamwrapper.h"
 #include "../rapidjson/filereadstream.h"
@@ -39,7 +39,7 @@ TEST(save_as_JSON_test, pvwatts_mechant_plant_read_file_to_string) {
     std::string str((std::istreambuf_iterator<char>(test)), std::istreambuf_iterator<char>());
     EXPECT_EQ(str.length(), 12263124);
 }
-
+/*
 TEST(save_as_JSON_test_parse, pvwatts_mechant_plant_jsoncpp_parse_file) {
     Json::Value root;
     Json::Reader reader;
@@ -53,7 +53,7 @@ TEST(save_as_JSON_test_parse, pvwatts_mechant_plant_jsoncpp_parse_file) {
     }
     EXPECT_TRUE(parsingSuccessful);
 }
-
+*/
 TEST(save_as_JSON_test_parse, pvwatts_mechant_plant_rapidjson_parse_file) {
     std::ifstream test(inputs_as_JSON, std::ifstream::binary);
     rapidjson::Document document;
@@ -83,7 +83,7 @@ TEST(save_as_JSON_test_parse, pvwatts_mechant_plant_rapidjson_parse_file_freadst
     }
     EXPECT_TRUE(!document.HasParseError());
 }
-
+/*
 TEST(save_as_JSON_test_parse, pv_batt_mechant_plant_jsoncpp_parse_file) {
     Json::Value root;
     Json::Reader reader;
@@ -97,7 +97,7 @@ TEST(save_as_JSON_test_parse, pv_batt_mechant_plant_jsoncpp_parse_file) {
     }
     EXPECT_TRUE(parsingSuccessful);
 }
-
+*/
 TEST(save_as_JSON_test_parse, pv_batt_mechant_plant_rapidjson_parse_file) {
     std::ifstream test(inputs_as_JSON2, std::ifstream::binary);
     rapidjson::Document document;
@@ -111,7 +111,7 @@ TEST(save_as_JSON_test_parse, pv_batt_mechant_plant_rapidjson_parse_file) {
     }
     EXPECT_TRUE(!document.HasParseError());
 }
-
+/*
 TEST(save_as_JSON_test_parse, pt_mechant_plant_jsoncpp_parse_file) {
     Json::Value root;
     Json::Reader reader;
@@ -125,7 +125,7 @@ TEST(save_as_JSON_test_parse, pt_mechant_plant_jsoncpp_parse_file) {
     }
     EXPECT_TRUE(parsingSuccessful);
 }
-
+*/
 TEST(save_as_JSON_test_parse, pt_mechant_plant_rapidjson_parse_file) {
     std::ifstream test(inputs_as_JSON3, std::ifstream::binary);
     rapidjson::Document document;
@@ -139,7 +139,7 @@ TEST(save_as_JSON_test_parse, pt_mechant_plant_rapidjson_parse_file) {
     }
     EXPECT_TRUE(!document.HasParseError());
 }
-
+/*
 TEST(save_as_JSON_test_parse, trough_mechant_plant_jsoncpp_parse_file) {
     Json::Value root;
     Json::Reader reader;
@@ -153,7 +153,7 @@ TEST(save_as_JSON_test_parse, trough_mechant_plant_jsoncpp_parse_file) {
     }
     EXPECT_TRUE(parsingSuccessful);
 }
-
+*/
 TEST(save_as_JSON_test_parse, trough_mechant_plant_rapidjson_parse_file) {
     std::ifstream test(inputs_as_JSON4, std::ifstream::binary);
     rapidjson::Document document;

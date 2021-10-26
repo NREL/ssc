@@ -232,7 +232,6 @@ set( DEPENDENCIES
 	shared
 	lpsolve
 	splinter
-	jsoncpp_lib
 	)
 foreach( name ${DEPENDENCIES} )
 	target_link_libraries(ssc ${name})
