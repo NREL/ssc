@@ -426,8 +426,8 @@ public:
     virtual double get_pumping_parasitic_coef() = 0;  //MWe/MWt
     virtual double get_min_power_delivery() = 0;    //MWt
 
-    virtual double get_max_thermal_power() = 0;     //MWt
-    virtual double get_max_power_delivery(double T_cold_in) = 0;    //MWt
+    //virtual double get_max_thermal_power() = 0;     //MWt
+    virtual double get_max_power_delivery(double T_htf_cold_in /*C*/) = 0;    //MWt
 
     virtual double get_tracking_power() = 0;		//MWe
 	virtual double get_col_startup_power() = 0;		//MWe-hr

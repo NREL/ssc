@@ -61,7 +61,7 @@ void etes_dispatch_opt::init(double cycle_q_dot_des, double cycle_eta_des)
     params.dt_rec_startup = pointers.col_rec->get_startup_time(); // / 3600.;
     params.e_rec_startup = pointers.col_rec->get_startup_energy();
     params.q_eh_min = pointers.col_rec->get_min_power_delivery();
-    params.q_eh_max = pointers.col_rec->get_max_thermal_power();
+    params.q_eh_max = pointers.col_rec->get_max_power_delivery(std::numeric_limits<double>::quiet_NaN());
 
     params.e_tes0 = pointers.tes->get_initial_charge_energy();
     params.e_tes_min = pointers.tes->get_min_charge_energy();

@@ -107,7 +107,6 @@ public:
     virtual double get_startup_time();
     virtual double get_startup_energy(); //MWh
     virtual double get_pumping_parasitic_coef();  //MWe/MWt
-    virtual double get_max_thermal_power();     //MWt
     virtual double get_min_power_delivery();    //MWt
     virtual double get_max_power_delivery(double T_cold_in);    //MWt
     virtual double get_tracking_power();		//MWe
