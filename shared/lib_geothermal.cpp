@@ -56,7 +56,7 @@ namespace geothermal
 	//const double PRESSURE_CHANGE_ACROSS_SURFACE_EQUIPMENT_PSI = 25;	// 25 psi [2B.Resource&Well Input].D146, H146
 	const double TEMPERATURE_EGS_INJECTIONC = 76.1;					// degrees C, [7C.EGS Subsrfce HX].D11 [should be a function of plant design temperature]
 	const double TEMPERATURE_EGS_AMBIENT_C = 15.0;					// Note in GETEM spreadsheet says that this is only used in calculating resource temp or depth.  However, if EGS calculations are based on depth, then resource temp is based on this number, so all power calcs are based on it as well
-	const double CONST_CT = 0.000581;									// these are both inputs that are shaded out in GETEM
+	const double CONST_CT = 0.000544;									// these are both inputs that are shaded out in GETEM
 	const double CONST_CP = 0.000000000464;							//	"		"			"			"			"
 	//const double EXCESS_PRESSURE_BAR = 3.5;						// default 3.5 bar, [2B.Resource&Well Input].D205
 	//const double PRESSURE_AMBIENT_PSI = 14.7; // default
@@ -516,7 +516,8 @@ double CGeothermalAnalyzer::PlantGrossPowerkW(void)
 	switch (me_makeup)
 	{
 	case MA_BINARY:
-		dPlantBrineEfficiency = MaxSecondLawEfficiency() * mo_geo_in.md_PlantEfficiency * ((geothermal::IMITATE_GETEM) ? GetAEBinary() : GetAE());				//MaxSecondLawEfficiency() * FractionOfMaxEfficiency() * GetAEBinaryAtTemp(md_WorkingTemperatureC);
+		//dPlantBrineEfficiency = MaxSecondLawEfficiency() * FractionOfMaxEfficiency() * ((geothermal::IMITATE_GETEM) ? GetAEBinary() : GetAE());				//MaxSecondLawEfficiency() * FractionOfMaxEfficiency() * GetAEBinaryAtTemp(md_WorkingTemperatureC);
+        dPlantBrineEfficiency = MaxSecondLawEfficiency() * mo_geo_in.md_PlantEfficiency * FractionOfMaxEfficiency() * GetAEBinaryAtTemp(md_WorkingTemperatureC - 1.7539);	
 		break;
 
 	case MA_FLASH:
@@ -583,7 +584,7 @@ double CGeothermalAnalyzer::FractionOfMaxEfficiency()
 
 	}
 	else // Binary and EGS
-		return -4.02806 * pow(carnot_ratio, 2) + 8.19363 * carnot_ratio - 3.16557;
+		return -10.956 * pow(carnot_ratio, 2) + 22.422 * carnot_ratio - 10.466;
 }
 
 bool CGeothermalAnalyzer::CanReplaceReservoir(double dTimePassedInYears)
@@ -717,7 +718,7 @@ double CGeothermalAnalyzer::GetCalculatedPumpDepthInFeet(void)
 
 double CGeothermalAnalyzer::pumpHeadFt() // ft
 {	// calculate the friction head loss of the casing
-	double dDiameterPumpCasingFt = mo_geo_in.md_DiameterPumpCasingInches / 12;
+	double dDiameterPumpCasingFt = (mo_geo_in.md_DiameterPumpCasingInches - 0.944) / 12;
 	double areaCasing = physics::areaCircle(dDiameterPumpCasingFt / 2); // ft^2
 	double velocityCasing = productionFlowRate() / areaCasing;
 
@@ -970,18 +971,18 @@ double CGeothermalAnalyzer::pressureWellHeadPSI()
 
 double CGeothermalAnalyzer::pressureHydrostaticPSI()
 {	// calculate the hydrostatic pressure (at the bottom of the well)
-	double tempAmbientF = (geothermal::IMITATE_GETEM) ? physics::CelciusToFarenheit(geothermal::TEMPERATURE_EGS_AMBIENT_C) : physics::CelciusToFarenheit(GetAmbientTemperatureC());
+	double tempAmbientF = (geothermal::IMITATE_GETEM) ? physics::CelciusToFarenheit(geothermal::TEMPERATURE_EGS_AMBIENT_C) : physics::CelciusToFarenheit(11.6);
 	double pressureAmbientBar = physics::PsiToBar(geothermal::oPressureAmbientConstants.evaluate(tempAmbientF));
-
-	double tempF = (geothermal::IMITATE_GETEM) ? physics::CelciusToFarenheit(geothermal::TEMPERATURE_EGS_AMBIENT_C) : physics::CelciusToFarenheit(GetAmbientTemperatureC());
+    if (tempAmbientF <= 212) pressureAmbientBar = 1.014;
+	double tempF = (geothermal::IMITATE_GETEM) ? physics::CelciusToFarenheit(geothermal::TEMPERATURE_EGS_AMBIENT_C) : physics::CelciusToFarenheit(11.6);
 	double densityAmbient = geothermal::LbPerCfToKgPerM3_B(geothermal::oDensityConstants.evaluate(tempF));
 
-	double tempAmbientC = (geothermal::IMITATE_GETEM) ? 10 : GetAmbientTemperatureC(); // GETEM assumes 10 deg C ambient temperature here. Above, the assumption is 15 deg C ambient.
+	double tempAmbientC = (geothermal::IMITATE_GETEM) ? 10 : 11.6; // GETEM assumes 10 deg C ambient temperature here. Above, the assumption is 15 deg C ambient.
 	double tempGradient = (mo_geo_in.me_rt == EGS) ? GetTemperatureGradient() / 1000 : (GetResourceTemperatureC() - tempAmbientC) / GetResourceDepthM();
 
 	// hydrostatic pressure at production well depth (GetResourceDepthFt) in bar
 	double d1 = densityAmbient * geothermal::GRAVITY_MS2 * geothermal::CONST_CP;
-	double d2 = (exp(d1 * (GetResourceDepthM() - (0.5 * geothermal::CONST_CT * tempGradient * pow(GetResourceDepthM(), 2)))/1000000) - 1);
+	double d2 = (exp(d1 * (GetResourceDepthM() - (0.5 * geothermal::CONST_CT * tempGradient * pow(GetResourceDepthM(), 2)))/100000) - 1);
 	double pressureHydrostaticBar = pressureAmbientBar + (1 / geothermal::CONST_CP) * (d2);
 
 	return geothermal::BarToPsi(pressureHydrostaticBar);
@@ -998,7 +999,14 @@ double CGeothermalAnalyzer::productionViscosity(void) { return 0.115631 * pow(pr
 double CGeothermalAnalyzer::flowRatePerWell(void) { return (60 * 60 * geothermal::KgToLb(mo_geo_in.md_ProductionFlowRateKgPerS)); } // lbs per hour, one well
 double CGeothermalAnalyzer::flowRateTotal(void) {
 	mp_geo_out->GF_flowrate = (flowRatePerWell() * GetNumberOfWells());
-	return (flowRatePerWell() * GetNumberOfWells());
+    if (me_makeup == MA_BINARY) {
+        mp_geo_out->GF_flowrate = mo_geo_in.md_DesiredSalesCapacityKW * 1000 / (GetPlantBrineEffectiveness() - GetPumpWorkWattHrPerLb());
+        return (mo_geo_in.md_DesiredSalesCapacityKW * 1000 / (GetPlantBrineEffectiveness() - GetPumpWorkWattHrPerLb()));
+    }
+    else {
+        mp_geo_out->GF_flowrate = (flowRatePerWell() * GetNumberOfWells());
+        return (flowRatePerWell() * GetNumberOfWells());
+    }
 }								// lbs per hour, all wells
 
 double CGeothermalAnalyzer::GetNumberOfWells(void)
@@ -1050,7 +1058,7 @@ double CGeothermalAnalyzer::GetPlantBrineEffectiveness(void)
 	mp_geo_out->max_secondlaw = (1 - ((geothermal::IMITATE_GETEM) ? GetAEBinaryAtTemp(TamphSiO2) / GetAEBinary() : dAE_At_Exit / GetAE()) - 0.375);
 	double dMaxBinaryBrineEffectiveness = ((geothermal::IMITATE_GETEM) ? GetAEBinary() : GetAE()) * ((GetTemperaturePlantDesignC() < 150) ? 0.14425 * exp(0.008806 * GetTemperaturePlantDesignC()) : mp_geo_out->max_secondlaw);
 
-	return (mo_geo_in.me_ct == FLASH) ? FlashBrineEffectiveness() : dMaxBinaryBrineEffectiveness * mo_geo_in.md_PlantEfficiency;
+	return (mo_geo_in.me_ct == FLASH) ? FlashBrineEffectiveness() : dMaxBinaryBrineEffectiveness;
 }
 
 double CGeothermalAnalyzer::calculateX(double enthalpyIn, double temperatureF)
