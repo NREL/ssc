@@ -66,4 +66,5 @@ branches:
   - patch
   - PySAM
   - wind_pruf
+  - etes_dispatch
 
