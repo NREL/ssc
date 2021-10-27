@@ -745,9 +745,11 @@ static var_info _cm_vtab_communitysolar[] = {
     { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber3_bill_credit_rate", "Subscriber 3 Bill credit rate", "$/kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber4_bill_credit_rate", "Subscriber 4 Bill credit rate", "$/kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
 
+    /* these are already accounted for by cf_community_solar_ outputs below, so no need to duplicate TO DO ok to delete?
     { SSC_OUTPUT, SSC_ARRAY, "cf_recurring_fixed", "Recurring fixed cost", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT, SSC_ARRAY, "cf_recurring_capacity", "Recurring cost by capacity", "$/kW-yr", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT, SSC_ARRAY, "cf_recurring_generation", "Recurring cost by generation", "$/kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    */
 
     { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber1_generation_payment", "Subscriber 1 Generation rate", "$/kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber2_generation_payment", "Subscriber 2 Generation rate", "$/kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
@@ -765,10 +767,10 @@ static var_info _cm_vtab_communitysolar[] = {
     { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber3_revenue_generation", "Revenue from Subscriber 3 generation payments", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber4_revenue_generation", "Revenue from Subscriber 4 generation", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
 
-    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber1_revenue_upfront", "Revenue from Subscriber 1 up-front payment", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber2_revenue_upfront", "Revenue from Subscriber 2 up-front payment", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber3_revenue_upfront", "Revenue from Subscriber 3 up-front payment", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber4_revenue_upfront", "Revenue from Subscriber 4 up-front payment", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber1_revenue_upfront", "Revenue from Subscriber 1 up-front payments", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber2_revenue_upfront", "Revenue from Subscriber 2 up-front payments", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber3_revenue_upfront", "Revenue from Subscriber 3 up-front payments", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber4_revenue_upfront", "Revenue from Subscriber 4 up-front payments", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
 
     { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber1_revenue_annual_payment", "Revenue from Subscriber 1 annual payments", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber2_revenue_annual_payment", "Revenue from Subscriber 2 annual payments", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
@@ -780,10 +782,10 @@ static var_info _cm_vtab_communitysolar[] = {
     { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber3_bill_credit_amount", "Bill credit for Subscriber 3 class", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber4_bill_credit_amount", "Bill credit for Subscriber 4 class", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
 
-    { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_subscriber1_revenue", "Revenue total from Subscriber 1 class", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_subscriber2_revenue", "Revenue total from Subscriber 2 class", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_subscriber3_revenue", "Revenue total from Subscriber 3 class", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_subscriber4_revenue", "Revenue total from Subscriber 4 class", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_subscriber1_revenue", "Revenue from Subscriber 1 total", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_subscriber2_revenue", "Revenue from Subscriber 2 total", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_subscriber3_revenue", "Revenue from Subscriber 3 total", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_subscriber4_revenue", "Revenue from Subscriber 4 total", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_unsubscribed_revenue", "Revenue from unsubscribed generation", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
 
     { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber1_cost_of_participation", "Cost of participation for Subscriber 1 class", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
@@ -801,14 +803,14 @@ static var_info _cm_vtab_communitysolar[] = {
     { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber3_net_benefit_cumulative", "Cumulative net benefit for Subscriber 3 class", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT, SSC_ARRAY, "cf_subscriber4_net_benefit_cumulative", "Cumulative net benefit for Subscriber 4 class", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
 
-    { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_upfront", "Total up-front fixed cost", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_upfront_per_capacity", "Total up-front cost by capacity", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_recurring_fixed", "Total recurring fixed cost", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_recurring_capacity", "Total recurring cost by capacity", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_recurring_generation", "Total recurring cost by generation", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_upfront", "Community solar total up-front fixed cost", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_upfront_per_capacity", "Community solar total up-front cost by capacity", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_recurring_fixed", "Community solar recurring total fixed cost", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_recurring_capacity", "Community solar total recurring cost by capacity", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_community_solar_recurring_generation", "Community solar total recurring cost by generation", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
 
-    { SSC_OUTPUT,       SSC_NUMBER,     "community_solar_upfront_cost",   "Total up-front cost",              "$",                   "", "Metrics", "*", "", "" },
-    { SSC_OUTPUT,       SSC_NUMBER,     "community_solar_upfront_revenue",   "Total up-front revenue",              "$",                   "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "community_solar_upfront_cost",   "Community solar total up-front cost",              "$",                   "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "community_solar_upfront_revenue",   "Revenue from total up-front payments",              "$",                   "", "Metrics", "*", "", "" },
 
     { SSC_OUTPUT,       SSC_NUMBER,     "subscriber1_npv",            "Subscriber 1 Net present value (NPV)",             "$",                   "", "Metrics", "*", "", "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "subscriber2_npv",            "Subscriber 2 Net present value (NPV)",             "$",                   "", "Metrics", "*", "", "" },
