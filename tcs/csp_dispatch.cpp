@@ -257,7 +257,7 @@ bool csp_dispatch_opt::predict_performance(int step_start, int ntimeints, int di
             //  same point in time
             double T_tank_cold = pointers.tes->get_cold_temp() - 273.15;   // [C]
             double q_max = pointers.col_rec->get_max_power_delivery(T_tank_cold) * 1.e3;     // [kW]
-            q_inc_ave += min(q_max, q_inc * therm_eff * ave_weight);
+            q_inc_ave += (std::min)(q_max, q_inc * therm_eff * ave_weight);
 
             //store the power cycle efficiency
             double cycle_eff = params.eff_table_Tdb.interpolate( pointers.m_weather.ms_outputs.m_tdry );
