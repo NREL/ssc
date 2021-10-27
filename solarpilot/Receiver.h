@@ -32,6 +32,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //Declare referenced classes
 class Receiver;
 class SolarField;
+class Heliostat;
 
 
 /*Define a structure that contains information on each mesh point for the receiver surface*/
@@ -134,6 +135,7 @@ public:
 	//Declare the scripts
 	void DefineFluxPoints(var_receiver &V, int rec_geom, int nx=-1, int ny=-1);
 	void Normalize();
+    void Scale(double flux_mult /*-*/);
 	void ClearFluxGrid();
 };
 
@@ -164,10 +166,13 @@ class Receiver : public mod_base
     
     var_receiver *_var_receiver;    //pointer to applicable parameter map
 
+    std::vector< Heliostat* > _heliostat_preference_list;   //list of heliostats in order of preference for this receiver (best to worst)
+
 public:	
 	
 	void Create(var_receiver &V, double tht);	//create from variable map
     void updateCalculatedParameters(var_receiver &V, double tht);
+    static void updateUserFluxNormalization(var_receiver &V);
 	
 	/* Define an enumeration structure for receiver geometry types */
 	struct REC_GEOM_TYPE { 
@@ -186,6 +191,7 @@ public:
 	void CalculateNormalVector(PointVect &NV);	//Returns the normal std::vector and receiver centroid that represents the optimal optical incidence
 	void CalculateNormalVector(sp_point &Hloc, PointVect &NV);	//(Overload) for non-flat receivers, closest normal std::vector given a viewpoint std::vector
 	FluxSurfaces *getFluxSurfaces();
+    std::vector< Heliostat* > *getHeliostatPreferenceList();
 
     bool isReceiverEnabled();
     void isReceiverEnabled(bool enable);

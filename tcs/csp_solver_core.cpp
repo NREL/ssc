@@ -350,6 +350,7 @@ void C_csp_solver::init()
     tes_init_inputs.T_from_cr_at_des = cr_solved_params.m_T_htf_hot_des;
     tes_init_inputs.P_to_cr_at_des = cr_solved_params.m_dP_sf;
 	mc_tes.init(tes_init_inputs);
+    mc_csp_messages.transfer_messages(mc_tes.mc_csp_messages);
 		// TOU
     mc_tou.mc_dispatch_params.m_isleapyear = mc_weather.ms_solved_params.m_leapyear;
 	mc_tou.init();
@@ -446,6 +447,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 	{
 		dispatch.copy_weather_data(mc_weather);
 		dispatch.params.col_rec = &mc_collector_receiver;
+        dispatch.params.tes = &mc_tes;
 		dispatch.params.mpc_pc = &mc_power_cycle;
 		dispatch.params.siminfo = &mc_kernel.mc_sim_info;
 		dispatch.params.messages = &mc_csp_messages;

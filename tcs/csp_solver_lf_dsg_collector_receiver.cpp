@@ -1040,6 +1040,14 @@ double C_csp_lf_dsg_collector_receiver::get_min_power_delivery()
 	return std::numeric_limits<double>::quiet_NaN();
 }
 
+double C_csp_lf_dsg_collector_receiver::get_max_power_delivery(double T_cold_in)
+{
+    throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::get_max_power_delivery() is not complete"));
+
+
+    return std::numeric_limits<double>::quiet_NaN();
+}
+
 double C_csp_lf_dsg_collector_receiver::get_tracking_power()
 {
 	throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::get_tracking_power() is not complete"));

@@ -1,3 +1,25 @@
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 #include "cmod_csp_trough_eqns.h"
 #include "cmod_csp_common_eqns.h"
 #include "vartab.h"
@@ -6,11 +28,11 @@
 #pragma warning(disable: 4297)  // ignore warning: 'function assumed not to throw an exception but does'
 
 
-void Physical_Trough_System_Design_Equations(ssc_data_t data)
+bool Physical_Trough_System_Design_Equations(ssc_data_t data)
 {
     auto vt = static_cast<var_table*>(data);
     if (!vt) {
-        throw std::runtime_error("ssc_data_t data invalid");
+        return false;
     }
 
     // Inputs
@@ -32,13 +54,14 @@ void Physical_Trough_System_Design_Equations(ssc_data_t data)
     ssc_data_t_get_number(data, "eta_ref", &eta_ref);
     q_pb_design = Q_pb_design(P_ref, eta_ref);
     ssc_data_t_set_number(data, "q_pb_design", q_pb_design);
+    return true;
 }
 
-void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
+bool Physical_Trough_Solar_Field_Equations(ssc_data_t data)
 {
     auto vt = static_cast<var_table*>(data);
     if (!vt) {
-        throw std::runtime_error("ssc_data_t data invalid");
+        return false;
     }
 
     // Inputs
@@ -169,7 +192,7 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
     // sca_info_array
     SCAInfoArray = Sca_info_array(trough_loop_control);
     ssc_data_t_set_matrix(data, "scainfoarray", SCAInfoArray);
-    
+
     // sca_defocus_array
     SCADefocusArray = Sca_defocus_array(trough_loop_control);
     ssc_data_t_set_array(data, "scadefocusarray", SCADefocusArray.data(), (int)SCADefocusArray.ncells());
@@ -263,22 +286,23 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
     // Type_cpnt
     Type_cpnt = Type_Cpnt(static_cast<int>(nSCA));
     ssc_data_t_set_matrix(data, "type_cpnt", Type_cpnt);
+    return true;
 }
 
-void Physical_Trough_Collector_Type_Equations(ssc_data_t data)
+bool Physical_Trough_Collector_Type_Equations(ssc_data_t data)
 {
     auto vt = static_cast<var_table*>(data);
     if (!vt) {
-        throw std::runtime_error("ssc_data_t data invalid");
+        return false;
     }
 
 }
 
-void Physical_Trough_Collector_Type_UI_Only_Equations(ssc_data_t data)
+bool Physical_Trough_Collector_Type_UI_Only_Equations(ssc_data_t data)
 {
     auto vt = static_cast<var_table*>(data);
     if (!vt) {
-        throw std::runtime_error("ssc_data_t data invalid");
+        return false;
     }
 
     // Inputs
@@ -344,13 +368,14 @@ void Physical_Trough_Collector_Type_UI_Only_Equations(ssc_data_t data)
     ssc_data_t_get_matrix(vt, "IAM_matrix", IAM_matrix);
     csp_dtr_sca_calc_iams = Csp_dtr_sca_calc_iams(IAM_matrix, csp_dtr_sca_calc_theta, csp_dtr_sca_calc_costh);
     ssc_data_t_set_matrix(data, "csp_dtr_sca_calc_iams", csp_dtr_sca_calc_iams);
+    return true;
 }
 
-void Physical_Trough_System_Control_Equations(ssc_data_t data)
+bool Physical_Trough_System_Control_Equations(ssc_data_t data)
 {
     auto vt = static_cast<var_table*>(data);
     if (!vt) {
-        throw std::runtime_error("ssc_data_t data invalid");
+        return false;
     }
 
     // Inputs
@@ -385,4 +410,5 @@ void Physical_Trough_System_Control_Equations(ssc_data_t data)
         wlim_series = Wlim_series(disp_wlim_max);
         ssc_data_t_set_array(data, "wlim_series", wlim_series.data(), (int)wlim_series.ncells());
     }
+    return true;
 }

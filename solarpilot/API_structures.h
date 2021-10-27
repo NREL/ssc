@@ -32,14 +32,13 @@ struct sp_optimize
 {
 private:
 	std::vector<std::vector<double> > _optimization_sim_points;
-	std::vector<double>
-		_optimization_objectives,
-		_optimization_fluxes;
+    std::vector<double> _optimization_objectives;
+    std::vector< std::vector<double> > _optimization_fluxes;
 
 public:
 
-	void getOptimizationSimulationHistory(std::vector<std::vector<double> > &sim_points, std::vector<double> &obj_values, std::vector<double> &flux_values);
-	void setOptimizationSimulationHistory(std::vector<std::vector<double> > &sim_points, std::vector<double> &obj_values, std::vector<double> &flux_values);
+	void getOptimizationSimulationHistory(std::vector<std::vector<double> > &sim_points, std::vector<double> &obj_values, std::vector<std::vector< double > > &flux_values);
+	void setOptimizationSimulationHistory(std::vector<std::vector<double> > &sim_points, std::vector<double> &obj_values, std::vector<std::vector< double > > &flux_values);
 };
 
 struct sp_layout
