@@ -146,6 +146,13 @@ static var_info _cm_vtab_communitysolar[] = {
     { SSC_INPUT,        SSC_NUMBER,     "cs_cost_recurring_generation_escal",   "Recurring annual cost by generation escalation",                           "%/yr",                 "",                        "Community Solar",          "?=0",					   "",                              "" },
 
 
+    // Land lease cost to be moved to common financials when incorporated into all financial models
+    { SSC_INPUT,        SSC_NUMBER,     "total_land_area",                      "Total land area",	                                                "acres",                "",                        "Land Lease",            "?=0",					   "",                              "" },
+    { SSC_INPUT,        SSC_ARRAY,      "om_land_lease",	                    "Land lease cost",	                                                "$/acre",               "",                        "Land Lease",            "?=0",					   "",                              "" },
+    { SSC_INPUT,        SSC_NUMBER,     "om_land_lease_escal",                  "Land lease cost escalation",	                                    "%/yr",                 "",                        "Land Lease",            "?=0",					   "",                              "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "cf_land_lease_expense",                "Land lease payments expense",                                       "$",                    "",                         "Land Lease",            "*", "LENGTH_EQUAL=cf_length", "" },
+
+
 /* PPA revenue not applicable to community solar, may need to be restored later
 	// dispatch update TODO - remove SO output label below after consildated with CSP
 	{ SSC_INPUT, SSC_NUMBER, "ppa_multiplier_model", "PPA multiplier model", "0/1", "0=diurnal,1=timestep", "Revenue", "?=0", "INTEGER,MIN=0", "" },
@@ -1123,6 +1130,8 @@ enum {
     CF_community_solar_recurring_capacity,
     CF_community_solar_recurring_generation,
 
+    CF_land_lease_expense,
+
     CF_max,
  };
 
@@ -1767,7 +1776,7 @@ public:
         cf.at(CF_subscriber3_bill_credit_amount, 0) = 0.0;
         cf.at(CF_subscriber4_bill_credit_amount, 0) = 0.0;
 
-        for (size_t i = 0; i <= nyears; i++) {
+         for (size_t i = 0; i <= nyears; i++) {
 
             // revenue to system owner from subscriber payments
             cf.at(CF_subscriber1_share_of_generation, i) = cf.at(CF_subscriber1_share_fraction, i) * cf.at(CF_energy_net, i);
@@ -1835,8 +1844,9 @@ public:
         double cs_upfront_cost = cf.at(CF_community_solar_upfront, 0) + cf.at(CF_community_solar_upfront_per_capacity, 0);
         double cs_upfront_revenue = cf.at(CF_subscriber1_revenue_upfront, 0) + cf.at(CF_subscriber2_revenue_upfront, 0) + cf.at(CF_subscriber3_revenue_upfront, 0) + cf.at(CF_subscriber4_revenue_upfront, 0);
 
-
-
+        // land lease - general for all financial models in the future
+        ssc_number_t total_land_area = as_double("total_land_area");
+        escal_or_annual(CF_land_lease_expense, nyears, "om_land_lease", inflation_rate, total_land_area, false, as_double("om_land_lease_escal") * 0.01);
 
 		size_t count_ppa_price_input = 0;
         // Community Solar override of ppa_price_input since in separate common vtab
@@ -2021,6 +2031,7 @@ public:
                 + cf.at(CF_recurring_fixed, i)
                 + cf.at(CF_recurring_capacity, i)
                 + cf.at(CF_recurring_generation, i)
+                + cf.at(CF_land_lease_expense, i)
                 + cf.at(CF_Recapitalization,i);
 		}
 
@@ -3790,6 +3801,8 @@ public:
             save_cf(CF_om_capacity2_expense, nyears, "cf_om_capacity2_expense");
         }
 
+
+        save_cf(CF_land_lease_expense, nyears, "cf_land_lease_expense");
 
 		save_cf( CF_om_fuel_expense, nyears, "cf_om_fuel_expense" );
 		save_cf( CF_om_opt_fuel_1_expense, nyears, "cf_om_opt_fuel_1_expense" );
