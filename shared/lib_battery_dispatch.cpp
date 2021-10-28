@@ -57,7 +57,7 @@ dispatch_t::dispatch_t(battery_t* Battery, double dt_hour, double SOC_min, doubl
     _Battery = Battery;
     _Battery_initial = new battery_t(*_Battery);
 
-    m_outage_manager = std::make_unique<outage_manager>(m_batteryPower, _Battery);
+    m_outage_manager = std::unique_ptr<outage_manager>(new outage_manager(m_batteryPower, _Battery));
     _min_outage_soc = SOC_min_outage;
 
     // Call the dispatch init method
@@ -96,7 +96,7 @@ dispatch_t::dispatch_t(const dispatch_t& dispatch)
     _Battery_initial = new battery_t(*dispatch._Battery_initial);
 
     _min_outage_soc = dispatch._min_outage_soc;
-    m_outage_manager = std::make_unique<outage_manager>(m_batteryPower, _Battery);
+    m_outage_manager = std::unique_ptr<outage_manager>(new outage_manager(m_batteryPower, _Battery));
     m_outage_manager->copy(*(dispatch.m_outage_manager));
     init(_Battery, dispatch._dt_hour, dispatch._current_choice, dispatch._t_min, dispatch._mode);
 }
@@ -113,7 +113,7 @@ void dispatch_t::copy(const dispatch_t* dispatch)
     m_batteryPowerFlow = std::move(tmp);
     m_batteryPower = m_batteryPowerFlow->getBatteryPower();
     _min_outage_soc = dispatch->_min_outage_soc;
-    m_outage_manager = std::make_unique<outage_manager>(m_batteryPower, _Battery);
+    m_outage_manager = std::unique_ptr<outage_manager>(new outage_manager(m_batteryPower, _Battery));
     m_outage_manager->copy(*(dispatch->m_outage_manager));
 
 }
