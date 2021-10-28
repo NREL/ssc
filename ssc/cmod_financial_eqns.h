@@ -74,7 +74,7 @@ extern "C" {
         "     'construction_financing_cost' - double [$]\\n"
         "     'const_per_interest_total' - double [$]\\n";
 
-    SSCEXPORT void Financial_Construction_Financing_Equations(ssc_data_t data);
+    SSCEXPORT bool Financial_Construction_Financing_Equations(ssc_data_t data);
 
 
     static const char* Financial_Capacity_Payments_Equations_doc =
@@ -84,7 +84,7 @@ extern "C" {
         "Output: key-value pairs added to var_table\\n"
         "     'cp_system_nameplate' - double [MW]\\n";
 
-    SSCEXPORT void Financial_Capacity_Payments_Equations(ssc_data_t data);
+    SSCEXPORT bool Financial_Capacity_Payments_Equations(ssc_data_t data);
 
 #ifdef __cplusplus
 }

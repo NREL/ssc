@@ -20,38 +20,31 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef _CMOD_WINDPOWER_BUILDER_H_
-#define _CMOD_WINDPOWER_BUILDER_H_
+#include <chrono>
 
-#include "sscapi.h"
+#include "cmod_battery_eqns_test.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "cmod_battery_eqns.h"
+TEST_F(CMBatteryEqns_cmod_battery_eqns, TestStatefulSizeModifications) {
+    CreateModel(1.);
 
-static const char* Turbine_calculate_powercurve_doc =
-    "Calculates the power produced by a wind turbine at windspeeds incremented by 0.25 m/s\\n\\n"
-    "Input: var_table with key-value pairs\\n"
-    "     'turbine_size': double [kW]\\n"
-    "     'rotor_diameter': int [m]\\n"
-    "     'elevation': double [m], required if using Weibull resource model, otherwise 0\\n"
-    "     'max_cp': double max Cp [-],\\n"
-    "     'max_tip_speed': double [m/s]\\n"
-    "     'max_tip_sp_ratio': double max tip speed ratio [-]\\n"
-    "     'cut_in': double cut in speed [m/s]\\n"
-    "     'cut_out': double cut out speed [m/s]\\n"
-    "     'drive_train': int 0: 3 Stage Planetary, 1: Single Stage - Low Speed Generator, 2: Multi-Generator, 3: Direct Drive\\n\\n"
-    "Output: key-value pairs added to var_table\\n"
-    "     'wind_turbine_powercurve_windspeeds': array [m/s]\\n"
-    "     'wind_turbine_powercurve_powerout': array [m/s]\\n"
-    "     'rated_wind_speed': double [m/s[\\n"
-    "     'hub_efficiency': array [m/s]";
+    ssc_data_set_number(data, "desired_voltage", 600.0); // Increase voltage from 500 V
+    ssc_data_set_number(data, "desired_capacity", 20.0); // Increase capacity from 10 kWh
 
-SSCEXPORT bool Turbine_calculate_powercurve(ssc_data_t data);
+    Size_batterystateful(data);
 
+    EXPECT_TRUE(ssc_stateful_module_setup(mod, data));
+    EXPECT_TRUE(ssc_module_exec(mod, data));
 
-#ifdef __cplusplus
+    ssc_number_t new_voltage, new_capacity, new_mass, new_surface_area;
+    ssc_data_get_number(data, "nominal_voltage", &new_voltage);
+    ssc_data_get_number(data, "nominal_energy", &new_capacity);
+    ssc_data_get_number(data, "mass", &new_mass);
+    ssc_data_get_number(data, "surface_area", &new_surface_area);
+
+    EXPECT_NEAR(600.0, new_voltage, m_error_tolerance_lo);
+    EXPECT_NEAR(20.0, new_capacity, m_error_tolerance_lo);
+    EXPECT_NEAR(1014.0, new_mass, m_error_tolerance_lo);
+    EXPECT_NEAR(3.2033, new_surface_area, m_error_tolerance_lo);
 }
-#endif
 
-#endif

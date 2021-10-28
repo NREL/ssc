@@ -984,10 +984,10 @@ public:
 			if (is_commercial || is_mortgage)
 				cf.at(CF_discounted_costs, i) += cf.at(CF_debt_payment_interest, i) * cf.at(CF_effective_tax_frac,i);
 			// discount at nominal discount rate
-			cf.at(CF_discounted_costs, i) /= pow((1.0 + nom_discount_rate), (i - 1));
+			cf.at(CF_discounted_costs, i) /= pow((1.0 + nom_discount_rate), (i));
 			// savings reduced by effective tax rate for commercial since already included in tax savings
-			cf.at(CF_discounted_savings, i) = ((is_commercial ? (1.0 - cf.at(CF_effective_tax_frac, i)) : 1.0)*cf.at(CF_energy_value, i)) / pow((1.0 + nom_discount_rate), (i - 1))
-				+ ((is_commercial ? (1.0 - cf.at(CF_effective_tax_frac, i)) : 1.0)*cf.at(CF_thermal_value, i)) / pow((1.0 + nom_discount_rate), (i - 1));
+			cf.at(CF_discounted_savings, i) = ((is_commercial ? (1.0 - cf.at(CF_effective_tax_frac, i)) : 1.0)*cf.at(CF_energy_value, i)) / pow((1.0 + nom_discount_rate), (i))
+				+ ((is_commercial ? (1.0 - cf.at(CF_effective_tax_frac, i)) : 1.0)*cf.at(CF_thermal_value, i)) / pow((1.0 + nom_discount_rate), (i));
 			cf.at(CF_discounted_payback, i) = cf.at(CF_discounted_savings, i) - cf.at(CF_discounted_costs, i);
 			cf.at(CF_discounted_cumulative_payback, i) =
 				cf.at(CF_discounted_cumulative_payback, i - 1)
