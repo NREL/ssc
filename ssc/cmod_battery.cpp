@@ -192,6 +192,9 @@ var_info vtab_battery_inputs[] = {
 
     { SSC_INPUT,        SSC_NUMBER,     "inflation_rate",                              "Inflation rate",                                          "%", "", "Lifetime", "?=0", "MIN=-99", "" },
     { SSC_INPUT,        SSC_ARRAY,      "load_escalation",                             "Annual load escalation",                                  "%/year", "",                                                                                                                                                                                      "Load",                                               "?=0",                                "",                    "" },
+    { SSC_INPUT,        SSC_ARRAY,      "om_batt_replacement_cost"                 , "Replacement cost 1"                                             , "$/kWh"                                  , ""                                      , "System Costs"         , "?=0.0"          , ""                      , "" },
+    { SSC_INPUT,        SSC_NUMBER,     "om_replacement_cost_escal"            , "Replacement cost escalation"                                    , "%/year"                                 , ""                                      , "System Costs"         , "?=0.0"          , ""                      , "" },
+
 
     // Powerflow calculation inputs
     { SSC_INPUT,       SSC_ARRAY,       "fuelcell_power",                               "Electricity from fuel cell",                            "kW",       "",                     "FuelCell",     "",                           "",                         "" },
@@ -482,8 +485,13 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
                 ssc_number_t*  parr = vt.as_array("om_batt_replacement_cost", &cnt);
                 if (cnt == 1)
                 {
+                    double escal = 0.0;
+                    if (vt.is_assigned("om_replacement_cost_escal")) {
+                        escal = vt.as_double("om_replacement_cost_escal");
+                    }
+
                     for (i = 0; i < nyears; i++)
-                        replacement_cost[i] = parr[0] * (ssc_number_t)pow((double)(inflation_rate + 1), (double)i);
+                        replacement_cost[i] = parr[0] * (ssc_number_t)pow((double)(inflation_rate + escal + 1), (double)i);
                 }
                 else if (cnt < nyears)
                 {
