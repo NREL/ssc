@@ -20,8 +20,9 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef _PVWATTSV7_CASES_
-#define _PVWATTSV7_CASES_
+
+#ifndef _PVWATTS_CASES_
+#define _PVWATTS_CASES_
 
 #include <stdio.h>
 #include <string>
@@ -34,7 +35,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *   Test uses SSCAPI interfaces (similiar to SDK usage) to pass and receive data to PVWattsV7
 */
 
-int pvwattsv7_nofinancial_testfile(ssc_data_t &data)
+static int pvwatts_nofinancial_testfile(ssc_data_t &data)
 {
 	//this sets whether or not the status prints
 	ssc_module_exec_set_print(0);

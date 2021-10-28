@@ -21,9 +21,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 
-
-#ifndef _CMOD_PVWATTSV7_TEST_H_
-#define _CMOD_PVWATTSV7_TEST_H_
+#ifndef _CMOD_PVWATTSV8_TEST_H_
+#define _CMOD_PVWATTSV8_TEST_H_
 
 #include <gtest/gtest.h>
 #include "../ssc/core.h"
@@ -32,10 +31,10 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../input_cases/pvwatts_cases.h"
 
 /**
-* CMPVWattsV7 tests cmod_pvwattsv7 using a solar resource file. SetUp() creates default case,
+* CMPVWattsv8 tests cmod_pvwattsv8 using a solar resource file. SetUp() creates default case,
 * which can be modified within each individual test before running compute() and tests.
 */
-class CMPvwattsV7Integration_cmod_pvwattsv7 : public ::testing::Test {
+class CMPvwattsv8Integration_cmod_pvwattsv8 : public ::testing::Test {
 protected: //doesn't really matter if this is protected or public, but you need to declare one or the other or it will default to private which doesn't work
 	ssc_data_t data;
 
@@ -54,12 +53,12 @@ protected: //doesn't really matter if this is protected or public, but you need 
 	} 
 };
 
-//this function will be available to run the pvwattsV7 compute module from within tests
-bool CMPvwattsV7Integration_cmod_pvwattsv7::compute() {
-	ssc_module_t module = ssc_module_create("pvwattsv7");
+//this function will be available to run the pvwattsv8 compute module from within tests
+bool CMPvwattsv8Integration_cmod_pvwattsv8::compute() {
+	ssc_module_t module = ssc_module_create("pvwattsv8");
 	if (NULL == module)
 	{
-		printf("error: could not create 'pvwattsv7' module.");
+		printf("error: could not create 'pvwattsv8' module.");
 		ssc_data_free(data);
 		return false;
 	}
@@ -74,4 +73,4 @@ bool CMPvwattsV7Integration_cmod_pvwattsv7::compute() {
 	return 0;
 }
 
-#endif // _CMOD_PVWATTSV7_TEST_H_
+#endif // _CMOD_PVWATTSv8_TEST_H_
