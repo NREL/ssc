@@ -367,7 +367,7 @@ void dispatch_automatic_behind_the_meter_t::sort_grid(size_t idx, FILE *p, const
 			count++;
 		}
 	}
-	std::sort(sorted_grid.begin(), sorted_grid.end(), byGrid());
+	std::stable_sort(sorted_grid.begin(), sorted_grid.end(), byGrid());
 }
 
 void dispatch_automatic_behind_the_meter_t::compute_energy(double & E_max, FILE* p, const bool debug)
@@ -430,7 +430,7 @@ double dispatch_automatic_behind_the_meter_t::compute_costs(size_t idx, size_t y
             count++;
         }
     }
-    std::sort(sorted_grid.begin(), sorted_grid.end(), byCost());
+    std::stable_sort(sorted_grid.begin(), sorted_grid.end(), byCost());
     return no_dispatch_cost;
 }
 
@@ -607,7 +607,7 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(dispatch_plan
 {
     size_t i = 0, index = 0;
 
-    std::sort(sorted_grid.begin(), sorted_grid.end(), byCost());
+    std::stable_sort(sorted_grid.begin(), sorted_grid.end(), byCost());
     // Iterating over sorted grid
     double costDuringDispatchHours = 0.0;
     double costAtStep = 0.0;
@@ -683,7 +683,7 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(dispatch_plan
         }
     }
     // Get max grid use during charging. Choose highest percentile < 25% where we aren't planning on discharging
-    std::sort(sorted_grid.begin(), sorted_grid.end(), byGrid());
+    std::stable_sort(sorted_grid.begin(), sorted_grid.end(), byGrid());
     bool lookingForGridUse = true;
     double peakDesiredGridUse = 0.0;
     i = _num_steps / 4;
@@ -706,7 +706,7 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(dispatch_plan
     }
 
     // Iterating over sorted grid
-    std::sort(sorted_grid.begin(), sorted_grid.end(), byLowestMarginalCost());
+    std::stable_sort(sorted_grid.begin(), sorted_grid.end(), byLowestMarginalCost());
     // Find m hours to get required energy - hope we got today's energy yesterday (for morning peaks). Apportion between hrs of lowest marginal cost
     i = 0;
     while (requiredEnergy > 0 && i < _num_steps)
