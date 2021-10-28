@@ -436,7 +436,7 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsACHourly_Discharge)
             EXPECT_LT(batt->outBatteryPower[i], 1.) << "timestep " << i;
 
     }
-    std::vector<double> correct_charge_total = {13.86, 11.96, 10.05, 8.10, 6.10, 4.72, 4.72, 4.72, 4.72, 4.72};
+    std::vector<double> correct_charge_total = {13.86, 11.96, 10.05, 8.10, 6.10, 4.0, 3.15, 3.15, 3.15, 3.15 };
 
     for (size_t i = 0; i < correct_charge_total.size(); i++){
         EXPECT_NEAR(charge_total[i], correct_charge_total[i], 0.1) << i;
@@ -444,7 +444,7 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsACHourly_Discharge)
 
     resilience.run_surviving_batteries_by_looping(&load[0], &ac[0]);
     double avg_hours = resilience.compute_metrics();
-    EXPECT_NEAR(avg_hours, 0.0028, 1e-4);
+    EXPECT_NEAR(avg_hours, 0.0024, 1e-4);
 
     auto survived_hours = resilience.get_hours_survived();
     EXPECT_EQ(survived_hours[0], 6);
@@ -453,7 +453,6 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsACHourly_Discharge)
     EXPECT_EQ(survived_hours[3], 3);
     EXPECT_EQ(survived_hours[4], 2);
     EXPECT_EQ(survived_hours[5], 1);
-    EXPECT_EQ(survived_hours[9], 1);
 
     auto outage_durations = resilience.get_outage_duration_hrs();
     EXPECT_EQ(outage_durations[0], 0);
@@ -466,13 +465,13 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsACHourly_Discharge)
 
     auto probs = resilience.get_probs_of_surviving();
     EXPECT_NEAR(probs[0], 0.999, 1e-3);
-    EXPECT_NEAR(probs[1], 0.000571, 1e-6);
+    EXPECT_NEAR(probs[1], 0.000114, 1e-6);
     EXPECT_NEAR(probs[2], 0.000114, 1e-6);
     EXPECT_NEAR(probs[3], 0.000114, 1e-6);
     EXPECT_NEAR(probs[4], 0.000114, 1e-6);
 
     double avg_load = resilience.get_avg_crit_load_kwh();
-    EXPECT_NEAR(avg_load, 0.003504, 1e-4);
+    EXPECT_NEAR(avg_load, 0.00269, 1e-4);
 }
 
 TEST_F(ResilienceTest_lib_resilience, PVWattsACHalfHourly_Discharge)
@@ -493,7 +492,7 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsACHalfHourly_Discharge)
         }
         charge_total.emplace_back(batt->battery_model->charge_total());
     }
-    std::vector<double> correct_charge_total = {13.86, 11.96, 10.05, 8.10, 6.10, 4.72, 4.72, 4.72, 4.72, 4.72};
+    std::vector<double> correct_charge_total = {13.86, 11.96, 10.05, 8.10, 6.10, 4.0, 3.15, 3.15, 3.15, 3.15 };
 
     for (size_t i = 0; i < correct_charge_total.size(); i++){
         EXPECT_NEAR(charge_total[i], correct_charge_total[i], 0.1);
@@ -501,34 +500,34 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsACHalfHourly_Discharge)
 
     resilience.run_surviving_batteries_by_looping(&load[0], &ac[0]);
     double avg_hours = resilience.compute_metrics();
-    EXPECT_NEAR(avg_hours, 0.0030, 1e-4);
+    EXPECT_NEAR(avg_hours, 0.0022, 1e-4);
 
     auto survived_hours = resilience.get_hours_survived();
-    EXPECT_EQ(survived_hours[0], 6.5);
-    EXPECT_EQ(survived_hours[1], 6);
-    EXPECT_EQ(survived_hours[2], 5.5);
-    EXPECT_EQ(survived_hours[3], 5);
-    EXPECT_EQ(survived_hours[4], 4.5);
-    EXPECT_EQ(survived_hours[5], 4);
-    EXPECT_EQ(survived_hours[6], 3.5);
-    EXPECT_EQ(survived_hours[7], 3);
-    EXPECT_EQ(survived_hours[11], 1);
+    EXPECT_EQ(survived_hours[0], 6);
+    EXPECT_EQ(survived_hours[1], 5.5);
+    EXPECT_EQ(survived_hours[2], 5);
+    EXPECT_EQ(survived_hours[3], 4.5);
+    EXPECT_EQ(survived_hours[4], 4);
+    EXPECT_EQ(survived_hours[5], 3.5);
+    EXPECT_EQ(survived_hours[6], 3);
+    EXPECT_EQ(survived_hours[7], 2.5);
+    EXPECT_EQ(survived_hours[11], 0.5);
 
     auto outage_durations = resilience.get_outage_duration_hrs();
     EXPECT_EQ(outage_durations[0], 0);
-    EXPECT_EQ(outage_durations[1], 1);
-    EXPECT_EQ(outage_durations[2], 1.5);
-    EXPECT_EQ(outage_durations[3], 2);
-    EXPECT_EQ(outage_durations[7], 4);
+    EXPECT_EQ(outage_durations[1], 0.5);
+    EXPECT_EQ(outage_durations[2], 1);
+    EXPECT_EQ(outage_durations[3], 1.5);
+    EXPECT_EQ(outage_durations[7], 3.5);
 
     auto probs = resilience.get_probs_of_surviving();
     EXPECT_NEAR(probs[0], 0.999, 1e-3);
-    EXPECT_NEAR(probs[1], 0.000514, 1e-6);
+    EXPECT_NEAR(probs[1], 0.0000571, 1e-6);
     EXPECT_NEAR(probs[2], 0.0000571, 1e-6);
     EXPECT_NEAR(probs[3], 0.0000571, 1e-6);
 
     double avg_load = resilience.get_avg_crit_load_kwh();
-    EXPECT_NEAR(avg_load, 0.00348, 1e-4);
+    EXPECT_NEAR(avg_load, 0.00253, 1e-4);
 }
 
 
@@ -549,15 +548,15 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsDCHourly_Discharge)
         resilience.run_surviving_batteries(load[i], 0, 0, 0, 0, 0);
         batt->advance(vartab, ac[i], voltage, load[i], load[i]); // Critical load is 100% of the load
         charge_total.emplace_back(batt->battery_model->charge_total());
-        if (i < 5)
-            EXPECT_NEAR(batt->outBatteryPower[i], 1. * inverter->efficiencyAC/100. * batt_vars->batt_dc_dc_bms_efficiency/100., 1e-3) << "timestep " << i << " battery discharging";
-        else if (i == 5)
-            EXPECT_NEAR(batt->outBatteryPower[i], 0.855, 1e-3) << "timestep 5 battery SOC limits";
+        if (i < 6)
+            EXPECT_NEAR(batt->outBatteryPower[i], 1., 1e-3) << "timestep " << i << " battery discharging";
+        else if (i == 6)
+            EXPECT_NEAR(batt->outBatteryPower[i], 0.301, 1e-3) << "timestep 5 battery SOC limits";
         else
             EXPECT_NEAR(batt->outBatteryPower[i], 0, 1e-3) << "timestep " << i << " battery at min SOC";
 
     }
-    std::vector<double> correct_charge_total = {13.94, 12.12, 10.28, 8.42, 6.51, 4.72, 4.72, 4.72, 4.72, 4.72};
+    std::vector<double> correct_charge_total = { 13.86, 11.96, 10.05, 8.10, 6.0, 3.82, 3.15, 3.15, 3.15, 3.15 };
 
     for (size_t i = 0; i < correct_charge_total.size(); i++){
         EXPECT_NEAR(charge_total[i], correct_charge_total[i], 0.1);
@@ -565,7 +564,7 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsDCHourly_Discharge)
 
     resilience.run_surviving_batteries_by_looping(&load[0], &ac[0]);
     double avg_hours = resilience.compute_metrics();
-    EXPECT_NEAR(avg_hours, 0.0028, 1e-4);
+    EXPECT_NEAR(avg_hours, 0.0024, 1e-4);
 
     auto survived_hours = resilience.get_hours_survived();
     EXPECT_EQ(survived_hours[0], 6);
@@ -574,7 +573,6 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsDCHourly_Discharge)
     EXPECT_EQ(survived_hours[3], 3);
     EXPECT_EQ(survived_hours[4], 2);
     EXPECT_EQ(survived_hours[5], 1);
-    EXPECT_EQ(survived_hours[9], 1);
 
     auto outage_durations = resilience.get_outage_duration_hrs();
     EXPECT_EQ(outage_durations[0], 0);
@@ -587,13 +585,13 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsDCHourly_Discharge)
 
     auto probs = resilience.get_probs_of_surviving();
     EXPECT_NEAR(probs[0], 0.999, 1e-3);
-    EXPECT_NEAR(probs[1], 0.000571, 1e-6);
+    EXPECT_NEAR(probs[1], 0.000114, 1e-6);
     EXPECT_NEAR(probs[2], 0.000114, 1e-6);
     EXPECT_NEAR(probs[3], 0.000114, 1e-6);
     EXPECT_NEAR(probs[4], 0.000114, 1e-6);
 
     double avg_load = resilience.get_avg_crit_load_kwh();
-    EXPECT_NEAR(avg_load, 0.00352, 1e-4);
+    EXPECT_NEAR(avg_load, 0.00263, 1e-4);
 }
 
 TEST_F(ResilienceTest_lib_resilience, PVWattsDCHalfHourly_Discharge)
@@ -610,11 +608,11 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsDCHalfHourly_Discharge)
             resilience.add_battery_at_outage_timestep(*dispatch, i * 2 + j);
             resilience.run_surviving_batteries(load[i], 0, 0, 0, 0, 0);
             batt->advance(vartab, ac[i], voltage, load[i], load[i]); // Critical load is 100% of the load
-            EXPECT_NEAR(batt->outBatteryPower[i], 1. * inverter->efficiencyAC/100. * batt_vars->batt_dc_dc_bms_efficiency/100., 1e-3) << "timestep " << i * 2 + j;
+            EXPECT_NEAR(batt->outBatteryPower[i], 1., 1e-3) << "timestep " << i * 2 + j;
         }
         charge_total.emplace_back(batt->battery_model->charge_total());
     }
-    std::vector<double> correct_charge_total = {13.94, 12.12, 10.28, 8.42, 6.51, 4.72, 4.72, 4.72, 4.72, 4.72};
+    std::vector<double> correct_charge_total = { 13.86, 11.96, 10.05, 8.10, 6.10, 4.0, 3.15, 3.15, 3.15, 3.15 };
 
     for (size_t i = 0; i < correct_charge_total.size(); i++){
         EXPECT_NEAR(charge_total[i], correct_charge_total[i], 0.1);
@@ -622,34 +620,34 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsDCHalfHourly_Discharge)
 
     resilience.run_surviving_batteries_by_looping(&load[0], &ac[0]);
     double avg_hours = resilience.compute_metrics();
-    EXPECT_NEAR(avg_hours, 0.0032, 1e-4);
+    EXPECT_NEAR(avg_hours, 0.00222, 1e-4);
 
     auto survived_hours = resilience.get_hours_survived();
-    EXPECT_EQ(survived_hours[0], 6.5);
-    EXPECT_EQ(survived_hours[1], 6);
-    EXPECT_EQ(survived_hours[2], 5.5);
-    EXPECT_EQ(survived_hours[3], 5);
-    EXPECT_EQ(survived_hours[4], 4.5);
-    EXPECT_EQ(survived_hours[5], 4.5);
-    EXPECT_EQ(survived_hours[6], 4);
-    EXPECT_EQ(survived_hours[7], 3.5);
-    EXPECT_EQ(survived_hours[11], 1.5);
+    EXPECT_EQ(survived_hours[0], 6);
+    EXPECT_EQ(survived_hours[1], 5.5);
+    EXPECT_EQ(survived_hours[2], 5);
+    EXPECT_EQ(survived_hours[3], 4.5);
+    EXPECT_EQ(survived_hours[4], 4);
+    EXPECT_EQ(survived_hours[5], 3.5);
+    EXPECT_EQ(survived_hours[6], 3);
+    EXPECT_EQ(survived_hours[7], 2.5);
+    EXPECT_EQ(survived_hours[11], 0.5);
 
     auto outage_durations = resilience.get_outage_duration_hrs();
     EXPECT_EQ(outage_durations[0], 0);
-    EXPECT_EQ(outage_durations[1], 1);
-    EXPECT_EQ(outage_durations[2], 1.5);
-    EXPECT_EQ(outage_durations[3], 2);
-    EXPECT_EQ(outage_durations[7], 4);
+    EXPECT_EQ(outage_durations[1], 0.5);
+    EXPECT_EQ(outage_durations[2], 1);
+    EXPECT_EQ(outage_durations[3], 1.5);
+    EXPECT_EQ(outage_durations[7], 3.5);
 
     auto probs = resilience.get_probs_of_surviving();
     EXPECT_NEAR(probs[0], 0.999, 1e-3);
-    EXPECT_NEAR(probs[1], 0.000456, 1e-6);
+    EXPECT_NEAR(probs[1], 0.0000571, 1e-6);
     EXPECT_NEAR(probs[2], 0.0000571, 1e-6);
     EXPECT_NEAR(probs[3], 0.0000571, 1e-6);
 
     double avg_load = resilience.get_avg_crit_load_kwh();
-    EXPECT_NEAR(avg_load, 0.00355, 1e-4);
+    EXPECT_NEAR(avg_load, 0.00248, 1e-4);
 }
 
 TEST_F(ResilienceTest_lib_resilience, PVWattsACHourly_Charge)

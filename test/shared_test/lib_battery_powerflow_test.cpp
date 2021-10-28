@@ -2325,9 +2325,9 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, DC_PVCharging_ExcessLoad_outa
     EXPECT_NEAR(m_batteryPower->powerGridToLoad, 0.0, error);
     EXPECT_NEAR(m_batteryPower->powerSystemToGrid, 0, error);
     EXPECT_NEAR(m_batteryPower->powerBatteryToLoad, 0, error);
-    EXPECT_NEAR(m_batteryPower->powerConversionLoss, 0.099, error); // Inverter night time losses - will be cleaned up by pv ac code as appropriate
+    EXPECT_NEAR(m_batteryPower->powerConversionLoss, 2.179, error); // Inverter night time losses - will be cleaned up by pv ac code as appropriate
     EXPECT_NEAR(m_batteryPower->powerSystemLoss, 1.0, error);
-    EXPECT_NEAR(m_batteryPower->powerLossesUnmet, 1.099, error);
+    EXPECT_NEAR(m_batteryPower->powerLossesUnmet, 2.179, error);
     EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 50.0, error);
     EXPECT_NEAR(m_batteryPower->powerInterconnectionLoss, 0.0, error);
 
