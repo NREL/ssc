@@ -54,7 +54,7 @@ GTEST_API_ int main(int argc, char **argv) {
 //	::testing::GTEST_FLAG(filter) = "URDBv7*";
 //    ::testing::GTEST_FLAG(filter) = "save_as_JSON_test_parse*";
 //    ::testing::GTEST_FLAG(filter) = "save_as_JSON_test*";
-    ::testing::GTEST_FLAG(filter) = "save_as_JSON_test_run*";
+//    ::testing::GTEST_FLAG(filter) = "save_as_JSON_test_run*";
 //    ::testing::GTEST_FLAG(filter) = "sscapi_test*";
     /*
     CMPvwattsV7Integration_cmod_pvwattsv7.NonAnnual
