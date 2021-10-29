@@ -150,7 +150,7 @@ static var_info _cm_vtab_communitysolar[] = {
     { SSC_INPUT,        SSC_NUMBER,     "total_land_area",                      "Total land area",	                                                "acres",                "",                        "Land Lease",            "?=0",					   "",                              "" },
     { SSC_INPUT,        SSC_ARRAY,      "om_land_lease",	                    "Land lease cost",	                                                "$/acre",               "",                        "Land Lease",            "?=0",					   "",                              "" },
     { SSC_INPUT,        SSC_NUMBER,     "om_land_lease_escal",                  "Land lease cost escalation",	                                    "%/yr",                 "",                        "Land Lease",            "?=0",					   "",                              "" },
-    { SSC_OUTPUT,       SSC_ARRAY,      "cf_land_lease_expense",                "Land lease payments expense",                                       "$",                    "",                         "Land Lease",            "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "cf_land_lease_expense",                "Land lease expense",                                       "$",                    "",                         "Land Lease",            "*", "LENGTH_EQUAL=cf_length", "" },
 
 
 /* PPA revenue not applicable to community solar, may need to be restored later
@@ -1757,6 +1757,7 @@ public:
         escal_or_annual(CF_unsubscribed_generation_payment, nyears, "unsubscribed_payment_generation", inflation_rate, 1.0, false, as_double("unsubscribed_payment_generation_escal") * 0.01);
 
         // community solar - up front costs
+        // TO DO these are Year zero values so shouldn't be arrays for cash flow
         cf.at(CF_community_solar_upfront, 0) = as_double("cs_cost_upfront");
         cf.at(CF_community_solar_upfront_per_capacity, 0) = as_double("cs_cost_upfront_per_capacity") * nameplate;
 
@@ -1791,11 +1792,18 @@ public:
             cf.at(CF_subscriber4_revenue_generation, i) = cf.at(CF_subscriber4_share_of_generation, i) * cf.at(CF_subscriber4_generation_payment, i);
             cf.at(CF_unsubscribed_revenue_generation, i) = cf.at(CF_unsubscribed_share_of_generation, i) * cf.at(CF_unsubscribed_generation_payment, i);
 
+            /* TO DO Upfront revenue treated in investment activities like IBI, so do not include in revenue cash flow unless we hear otherwise from user feedback
             cf.at(CF_community_solar_subscriber1_revenue, i) = cf.at(CF_subscriber1_revenue_upfront, i) + cf.at(CF_subscriber1_revenue_generation, i) + cf.at(CF_subscriber1_revenue_annual_payment, i);
             cf.at(CF_community_solar_subscriber2_revenue, i) = cf.at(CF_subscriber2_revenue_upfront, i) + cf.at(CF_subscriber2_revenue_generation, i) + cf.at(CF_subscriber2_revenue_annual_payment, i);
             cf.at(CF_community_solar_subscriber3_revenue, i) = cf.at(CF_subscriber3_revenue_upfront, i) + cf.at(CF_subscriber3_revenue_generation, i) + cf.at(CF_subscriber3_revenue_annual_payment, i);
             cf.at(CF_community_solar_subscriber4_revenue, i) = cf.at(CF_subscriber4_revenue_upfront, i) + cf.at(CF_subscriber4_revenue_generation, i) + cf.at(CF_subscriber4_revenue_annual_payment, i);
             cf.at(CF_community_solar_unsubscribed_revenue, i) =  cf.at(CF_unsubscribed_revenue_generation, i) ;
+            */
+            cf.at(CF_community_solar_subscriber1_revenue, i) = cf.at(CF_subscriber1_revenue_generation, i) + cf.at(CF_subscriber1_revenue_annual_payment, i);
+            cf.at(CF_community_solar_subscriber2_revenue, i) = cf.at(CF_subscriber2_revenue_generation, i) + cf.at(CF_subscriber2_revenue_annual_payment, i);
+            cf.at(CF_community_solar_subscriber3_revenue, i) = cf.at(CF_subscriber3_revenue_generation, i) + cf.at(CF_subscriber3_revenue_annual_payment, i);
+            cf.at(CF_community_solar_subscriber4_revenue, i) = cf.at(CF_subscriber4_revenue_generation, i) + cf.at(CF_subscriber4_revenue_annual_payment, i);
+            cf.at(CF_community_solar_unsubscribed_revenue, i) = cf.at(CF_unsubscribed_revenue_generation, i);
 
             // subscriber bill credits
             cf.at(CF_subscriber1_bill_credit_amount, i) = cf.at(CF_subscriber1_share_of_generation, i) * cf.at(CF_subscriber1_bill_credit_rate, i);
@@ -1839,7 +1847,6 @@ public:
             cf.at(CF_community_solar_recurring_capacity, i) = cf.at(CF_recurring_capacity, i);
             cf.at(CF_community_solar_recurring_generation, i) = cf.at(CF_recurring_generation, i);
         }
-
 
         double cs_upfront_cost = cf.at(CF_community_solar_upfront, 0) + cf.at(CF_community_solar_upfront_per_capacity, 0);
         double cs_upfront_revenue = cf.at(CF_subscriber1_revenue_upfront, 0) + cf.at(CF_subscriber2_revenue_upfront, 0) + cf.at(CF_subscriber3_revenue_upfront, 0) + cf.at(CF_subscriber4_revenue_upfront, 0);
