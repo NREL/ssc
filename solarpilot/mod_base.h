@@ -80,7 +80,8 @@ class simulation_info
 	This object provides information to the calling program on the status of the 
 	simulations underway.
 	*/
-	bool (*_callback)(simulation_info* siminfo, void *data);
+	typedef bool (*callbackPtr)(simulation_info* siminfo, void* data);
+	callbackPtr _callback;
 	void *_callback_data;
 
 	double
@@ -107,7 +108,7 @@ public:
 	void Reset();
 
 	//Sets
-	void setCallbackFunction(bool (*updateFunc)(simulation_info* siminfo, void *data), void *cdata);
+	void setCallbackFunction(callbackPtr updateFunc, void *cdata);
 	bool setCurrentSimulation(int val);
 	bool setTotalSimulationCount(int val);
 	void clearSimulationNotices();
@@ -115,6 +116,7 @@ public:
 	bool addSimulationNotice(std::string notice);
 	void isEnabled(bool state);
     void* getCallbackData();
+	callbackPtr getCallbackFunction();
 };
 
 class simulation_error
@@ -486,6 +488,7 @@ public:
 	
     bool is_param;	//Is this variable parameterizable?
 	bool is_disabled;	//Is this variable disabled (overridden)?
+    bool is_output;     //is this variable datatype spout?
 
     //virtual bool set_from_string(std::string &Val){ (void)Val; return false;};
     virtual bool set_from_string(const char* Val){(void)Val; return false;};
@@ -551,7 +554,7 @@ public:
         return rv;
     };
     
-    void combo_add_choice(std::string &choicename, std::string &mval)
+    void combo_add_choice(std::string choicename, std::string mval)
     {
         int mapint;
         to_integer(mval, &mapint);
@@ -649,6 +652,7 @@ public:
 	    long_desc = Description;	//Long description
         is_param = Is_param;	//Is this variable parameterizable?
 	    is_disabled = UI_disable;	//Is this variable disabled (overridden)?
+        is_output = false;      //hard set of variable for spvar initializer
 
         choices.clear();
         if( ctype == "combo" )
@@ -700,6 +704,7 @@ private:
 	
     using spbase::is_param;	//Is this variable parameterizable?
 	using spbase::is_disabled;	//Is this variable disabled (overridden)?
+    using spbase::is_output;
 
     T _val;
 public:
@@ -743,6 +748,7 @@ public:
 
         is_param = Is_param;	//Is this variable parameterizable?
 	    is_disabled = UI_disable;	//Is this variable disabled (overridden)?
+        is_output = true;       //hard set for spout
 
     }
 

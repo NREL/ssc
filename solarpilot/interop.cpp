@@ -23,13 +23,21 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdio.h>
 #include <algorithm>
 #include <sstream>
+#include <fstream>
+#include <iomanip>
 #include <math.h>
+#include <thread>
 
 #include "interop.h"
 #include "SolarField.h"
 #include "STObject.h"
 #include "solpos00.h"
 #include "sort_method.h"
+
+#include "LayoutSimulateThread.h"
+#include "STSimulateThread.h"
+#include "STObject.h"
+#include "IOUtil.h"
 
 using namespace std;
 
@@ -76,6 +84,25 @@ par_variable::par_variable()
 }
 //-------------------
 
+//------------------- SimControl -------------------
+void SimControl::SetThreadCount( int nthread)
+{
+	_n_threads = max(min(int(std::thread::hardware_concurrency()), nthread), 1);
+}
+
+SimControl::SimControl()
+{
+	_n_threads = 1;
+	_n_threads_active = 1;
+	_is_mt_simulation = false;
+	_cancel_simulation = false;
+
+	_stthread = 0;
+	_STSim = 0;
+}
+//--------------------
+
+//interop namespace
 
 void interop::GenerateSimulationWeatherData(var_map &V, int design_method, ArrayString &wf_entries){
 	/* 
@@ -89,6 +116,28 @@ void interop::GenerateSimulationWeatherData(var_map &V, int design_method, Array
 	*/
 	
 	WeatherData *wdatvar = &V.sf.sim_step_data.Val(); 
+
+    //convert ArrayString wf_entries to matrix_t<double>
+    matrix_t<double> wf_entries_d;
+    {
+        int nr, nc;
+        nr = (int)wf_entries.size();
+        nc = (int)split(wf_entries.at(0), ",").size();
+
+        wf_entries_d.resize(nr, nc);
+
+        for (int i = 0; i < nr; i++)
+        {
+            std::vector<std::string> row = split(wf_entries.at(i), ",");
+
+            for (int j = 0; j < nc; j++)
+            {
+                double val;
+                to_double(row.at(j), &val);
+                wf_entries_d.at(i, j) = val;
+            }
+        }
+    }
 
 	switch (design_method)
 	{
@@ -116,7 +165,12 @@ void interop::GenerateSimulationWeatherData(var_map &V, int design_method, Array
         to_double(vdata.at(4), &P.Tamb);
         to_double(vdata.at(5), &P.Patm);
         to_double(vdata.at(6), &P.Vwind);
-        to_double(vdata.at(7), &P.Simweight);
+
+        //calculate total annual DNI energy
+        P.Simweight = 0.;
+        for (int i = 0; i < wf_entries_d.nrows(); i++)
+            P.Simweight += wf_entries_d.at(i, 3);
+
         wdatvar->resizeAll(1);
         wdatvar->setStep(0, dom, hour, month, P.dni, P.Tamb, P.Patm, P.Vwind, P.Simweight);
 		break;
@@ -167,9 +221,6 @@ void interop::GenerateSimulationWeatherData(var_map &V, int design_method, Array
 				hoy = double( doy ) * 24.;
 				dt.hours_to_date( hoy, month, dom );	//midnight on the month/day
 								
-				/*char ts[150];
-				std::sprintf(ts,"[P]%d,%f,%d,%f,%f,%f,%f,%f", dom, hod, month, dni_des, 25., 1., 1., 1.);
-				wdatvar->append(ts);*/
                 wdatvar->append(dom, hod, month, dni_des, 25., 1., 1., 1.0);
 			}
 		}
@@ -221,8 +272,8 @@ void interop::GenerateSimulationWeatherData(var_map &V, int design_method, Array
 		quicksort(simdays, 0, nday-1);
 
 		//Calculate the month and day for each item
-		vector<string> tsdat;
-		for(int i=0; i<nday; i++){
+		for(int i=0; i<nday; i++)
+        {
 			int month, dom;
 			double hoy;
 			int doy = simdays.at(i);	//because of the doy calcluation used before, this is actually [0..364]
@@ -248,7 +299,6 @@ void interop::GenerateSimulationWeatherData(var_map &V, int design_method, Array
 
 			//make sure the start and end hours are symmetric about solar noon
 			double nmidspan = (double)nhrs/2.;
-			//double nmidspan = (double)nskip*floor(nhrs/(2.*(double)nskip));
 			double hr_st = hrmid - nmidspan; 
 			double hr_end = hrmid + nmidspan;
 				
@@ -258,35 +308,20 @@ void interop::GenerateSimulationWeatherData(var_map &V, int design_method, Array
 				
                 //weighting fractions for DNI
 				double fthis = fmin(0.5, hr_st - floor(hr_st)) + fmin(0.5, ceil(hr_st) - hr_st);
-				//double fthis = all_time.front() - floor(all_time.front());
 				double fcomp = 1.-fthis;
 
 				//for integration, which way should we go?
 				int iind = (hr_st - floor(hr_st)) < 0.5 ? -1 : 1;
-				//int iind = fthis < 0.5 ? -1 : 1;
-
-
-
                 
                 //preprocess the day's weather
-				/*vector<double>
-					all_time, all_dni, all_tdry, all_pres, all_wind, all_weights;*/
 				double jd = hr_st;
 				while(jd<hr_end+.001){	//include hr_end
 					//index associated with time jd
 					int jind = (int)floor(jd);	//the (j-1) originally may have been an error
-					tsdat = split(wf_entries.at(jind), ",");
-
-					to_double(tsdat.at(3), &dni);
-					to_double(tsdat.at(4), &tdry);
-					to_double(tsdat.at(5), &pres);
-					to_double(tsdat.at(6), &wind);
-
-					/*all_time.push_back(jd);
-					all_dni.push_back(dni);
-					all_tdry.push_back(tdry);
-					all_pres.push_back(pres);
-					all_wind.push_back(wind);*/
+                    dni = wf_entries_d.at(jind, 3);
+                    tdry = wf_entries_d.at(jind, 4);
+                    pres = wf_entries_d.at(jind, 5);
+                    wind = wf_entries_d.at(jind, 6);
 
 					//Calculate weighting factor for this hour
 					double hod = fmod(jd,24.);
@@ -301,34 +336,16 @@ void interop::GenerateSimulationWeatherData(var_map &V, int design_method, Array
 						step_weight = hrs[1] - hod + nskip/2.;
 					}
 					step_weight *= Toolbox::round(delta_day);
-					//all_weights.push_back( step_weight );
-
-					//jd += (double)nskip;	
-				//}
-
-				//int ndatpt = (int)all_time.size();
-
-				
-				
-				//for(int i=0; i<ndatpt; i++){
 
 					//calculate the adjusted DNI based on the time surrounding the simulation position
 					double dnimod, dnicomp;
 					if(iind > 0)
-					    tsdat = split(wf_entries.at(min(8759,jind+1)), ",");
-						//dnicomp = i < ndatpt - 1 ? all_dni.at(i+1) : 0.;
+                        dnicomp = wf_entries_d.at(min(8759, jind + 1));
 					else
-					    tsdat = split(wf_entries.at(max(0,jind-1)), ",");
-						//dnicomp = i > 0 ? all_dni.at(i-1) : 0.;
-					to_double(tsdat.at(3), &dnicomp);
+                        dnicomp = wf_entries_d.at(max(0,jind-1));
 
-					//dnimod = all_dni.at(i)*fthis + dnicomp * fcomp;
 					dnimod = dni*fthis + dnicomp * fcomp;
 
-					//double hod = fmod(jd,24.);
-
-					//char ts[150];
-					//std::sprintf(ts,"[P]%d,%f,%d,%f,%f,%f,%f,%f", int(dom), hod, int(month), dnimod, tdry, pres, wind, step_weight );
 					wdatvar->append(int(dom), hod, int(month), dnimod, tdry, pres, wind, step_weight);
 					
                     jd += (double)nskip;	
@@ -368,11 +385,6 @@ void interop::GenerateSimulationWeatherData(var_map &V, int design_method, Array
 				int nwf = (int)wf_entries.size();
 				double dnicomp;
 				double jd=hr_st;
-				/*double hr_end_choose;
-				if( design_method == LAYOUT_DETAIL::FOR_OPTIMIZATION )
-					hr_end_choose = hrmid;
-				else
-					hr_end_choose = hr_end;*/
 
 				while(jd < hr_end + 0.001){
 					double tdry_per = 0., pres_per = 0., wind_per = 0., dni_per = 0., dni_per2 = 0.;
@@ -381,45 +393,18 @@ void interop::GenerateSimulationWeatherData(var_map &V, int design_method, Array
 						if(ind < 0) ind += 8760;
 						if(ind > 8759) ind += -8760;
 
-						tsdat = split(wf_entries.at(ind), ",");
-						to_double(tsdat.at(3), &dni);
-						to_double(tsdat.at(4), &tdry);
-						to_double(tsdat.at(5), &pres);
-						to_double(tsdat.at(6), &wind);
+                        dni = wf_entries_d.at(ind, 3);
+                        tdry = wf_entries_d.at(ind, 4);
+                        pres = wf_entries_d.at(ind, 5);
+                        wind = wf_entries_d.at(ind, 6);
 
 						//get the complement dni data
-						tsdat = split(wf_entries.at( min( max(ind+iind, 0), nwf-1) ), ",");
-						to_double(tsdat.at(3), &dnicomp);
+                        dnicomp = wf_entries_d.at(min(max(ind + iind, 0), nwf - 1), 3);
 
-
-						//
 						dni_per += dni * fthis + dnicomp * fcomp;
 						tdry_per += tdry;
 						pres_per += pres;
 						wind_per += wind;
-
-						//if it's for optimization, also add the symmetric afternoon hour
-						//if(design_method == LAYOUT_DETAIL::FOR_OPTIMIZATION){
-						//	double jdhi = hrmid + hrmid - jd;
-						//	int indhi = (int)floor(jdhi)+k*24;
-						//	if(indhi < 0) indhi += 8760;
-						//	if(indhi > 8759) indhi += -8760;
-
-						//	if(indhi == ind)
-						//		continue;
-
-						//	tsdat = split(wf_entries.at(indhi), ",");
-						//	to_double(tsdat.at(3), &dni);
-
-						//	//get the complement dni data
-						//	tsdat = split(wf_entries.at( min( max(ind+iind, 0), nwf-1) ), ",");
-						//	to_double(tsdat.at(3), &dnicomp);
-
-
-						//	//
-						//	dni_per2 += dni * fthis + dnicomp * fcomp;							
-						//}
-
 					}
 
 					dni_per = (dni_per + dni_per2)/(double)range;
@@ -446,8 +431,6 @@ void interop::GenerateSimulationWeatherData(var_map &V, int design_method, Array
 					}
 					step_weight *= (double)range;
 
-					//char ts[150];
-					//std::sprintf(ts, "[P]%d,%f,%d,%f,%f,%f,%f,%f", int(dom), hod, int(month), dni_per, tdry_per, pres_per, wind_per, step_weight);
 					wdatvar->append(int(dom), hod, int(month), dni_per, tdry_per, pres_per, wind_per, step_weight);
 
 					dayind++;
@@ -589,7 +572,7 @@ bool interop::PerformanceSimulationPrep(SolarField &SF, Hvector &helios, int /*s
     FluxSimData *fd = SF.getFluxSimObject();
     //make sure simulation data is up to date
     fd->Create(*V);
-	vector<Receiver*> *recs = SF.getReceivers();
+	Rvector *recs = SF.getReceivers();
 	
 	for(unsigned int i=0; i<recs->size(); i++){
 		recs->at(i)->DefineReceiverGeometry(V->flux.x_res.val, V->flux.y_res.val);
@@ -736,6 +719,940 @@ void interop::UpdateMapLayoutData(var_map &V, Hvector *heliostats){
 
 }
 
+bool interop::HermiteFluxSimulationHandler(sim_results& results, SolarField& SF, Hvector& helios)
+{
+	/*
+	Call the hermite flux evaluation algorithm and process.
+	*/
+	SF.HermiteFluxSimulation(helios,
+		SF.getVarMap()->flux.aim_method.mapval() == var_fluxsim::AIM_METHOD::IMAGE_SIZE_PRIORITY    //to not re-simulate, aim strategy must be "IMAGE_SIZE"...
+		&& helios.size() == SF.getHeliostats()->size());                                        //and all heliostats must be included.
+
+	//Process the results
+	double azzen[2];
+	azzen[0] = D2R * SF.getVarMap()->flux.flux_solar_az.Val();
+	azzen[1] = D2R * (90. - SF.getVarMap()->flux.flux_solar_el.Val());
+
+	sim_params P;
+	P.dni = SF.getVarMap()->flux.flux_dni.val;
+
+	results.back().process_analytical_simulation(SF, P, 2, azzen, &helios);
+
+	//if we have more than 1 receiver, create performance summaries for each and append to the results vector
+	if (SF.getActiveReceiverCount() > 1)
+	{
+		//which heliostats are aiming at which receiver?
+		unordered_map<Receiver*, Hvector> aim_map;
+		for (Hvector::iterator h = helios.begin(); h != helios.end(); h++)
+			aim_map[(*h)->getWhichReceiver()].push_back(*h);
+
+		for (Rvector::iterator rec = SF.getReceivers()->begin(); rec != SF.getReceivers()->end(); rec++)
+		{
+			results.push_back(sim_result());
+			Rvector recs = { *rec };
+			results.back().process_analytical_simulation(SF, P, 2, azzen, &aim_map[*rec], &recs);
+		}
+	}
+
+	return true;
+}
+
+#ifdef SP_USE_THREADS
+bool interop::SolTraceFluxSimulation(SimControl& SimC, sim_results& results, SolarField& SF, var_map& vset, Hvector& helios)
+{
+	/*
+	Send geometry to Soltrace and get back simulation results.
+	From Soltrace library, reference "runthreads.cpp" and "sysdata.cpp"
+
+	Note that the SolTrace coordinate system for defining the sun position is typically:
+	X -> positive west
+	Y -> positive toward zenith
+	Z -> positive north
+	.. However ..
+	We will use a coordinate system consistent with SolarPILOT geometry where:
+	X -> positive east
+	Y -> positive north
+	Z -> positive zenith
+
+	As long as the sun position vector passed to SolTrace is consistent with the field geometry
+	that we're using, the results will be correct.
+
+	*/
+	bool is_load_raydata = vset.flux.is_load_raydata.val;
+	bool is_save_raydata = vset.flux.is_save_raydata.val;
+	//raydata_file
+	std::string raydata_file = vset.flux.raydata_file.val;
+
+	//check that the file exists
+	vector<vector<double> > raydat_st0;
+	vector<vector<double> > raydat_st1;
+	int nsunrays_loadst = 0;
+	if (is_load_raydata)
+	{
+		if (!ioutil::file_exists(raydata_file.c_str()))
+			throw spexception("Specified ray data file does not exist. Looking for file: " + raydata_file);
+
+		//Load the ray data from a file
+		ifstream fdat(raydata_file);
+
+		if (fdat.is_open())
+		{
+
+			string str;
+			str.reserve(96);
+
+			char line[96];
+			bool nextloop = false;
+			bool firstline = true;
+			while (fdat.getline(line, 96))
+			{
+				//first line is number of sun rays
+				if (firstline)
+				{
+					for (int i = 0; i < 16; i++)
+					{
+						if (line[i] == '\n' || i == 15)
+						{
+							to_integer(str, &nsunrays_loadst);
+							str.clear();
+							str.reserve(96);
+							break;
+						}
+						else
+						{
+							str.push_back(line[i]);
+						}
+					}
+					firstline = false;
+					continue;
+				}
+
+
+				vector<double> dat(8);
+
+
+				int ilast = 0;
+
+				for (int i = 0; i < 96; i++)
+				{
+					//check for the transition character
+					if (line[i] == '#')
+					{
+						nextloop = true;
+						break;
+					}
+
+					if (line[i] == ',')
+					{
+						to_double(str, &dat[ilast++]);
+
+						//clear the string
+						str.clear();
+						str.reserve(96);
+						//if this was the 8th entry, go to next line
+						if (ilast > 7)
+							break;
+					}
+					else
+					{
+						str.push_back(line[i]);
+					}
+				}
+				ilast = 0;
+
+				if (nextloop) break;
+
+				raydat_st0.push_back(dat);
+			}
+
+			//next loop to get stage 1 input rays
+			while (fdat.getline(line, 96))
+			{
+				vector<double> dat(7);
+
+				int ilast = 0;
+				//int istr = 0;
+				for (int i = 0; i < 96; i++)
+				{
+					if (line[i] == ',')
+					{
+						to_double(str, &dat[ilast++]);
+
+						//clear the string
+						str.clear();
+						str.reserve(96);
+						//if this was the 8th entry, go to next line
+						if (ilast > 6)
+							break;
+					}
+					else
+					{
+						str.push_back(line[i]);
+					}
+				}
+				ilast = 0;
+
+				raydat_st1.push_back(dat);
+			}
+
+			fdat.close();
+		}
+
+		//set the number of traced rays based on the length of the supplied data
+		int nray = (int)raydat_st0.size();
+
+		vset.flux.min_rays.val = nray;
+	}
+	//for saving, check that the specified directory exists. If none specified or if it doesn't exist, prepend the working directory.
+	//TODO: Remove SPFrame and wxString dependence
+	//if (is_save_raydata)
+	//{
+	//	if (!raydata_file.DirExists())
+	//		raydata_file = _working_dir.GetPath(true) + raydata_file.GetName();
+	//}
+
+	bool err_maxray = false;
+	int minrays, maxrays;
+	vector<st_context_t> contexts;
+
+	SimC._stthread = 0;    //initialize to null
+
+	//get sun position and create a vector
+	double el = vset.flux.flux_solar_el.Val() * D2R;
+	double az = vset.flux.flux_solar_az.Val() * D2R;
+	Vect sun = Ambient::calcSunVectorFromAzZen(az, PI / 2. - el);
+
+	SimC._STSim = new ST_System;
+
+	SimC._STSim->CreateSTSystem(SF, helios, sun);
+
+	minrays = SimC._STSim->sim_raycount;
+	maxrays = SimC._STSim->sim_raymax;
+
+	vector< vector<vector< double > >* > st0datawrap;
+	vector< vector<vector< double > >* > st1datawrap;
+
+	if (SimC._n_threads > 1)
+	{
+		//Multithreading support
+		SimC._stthread = new STSimThread[SimC._n_threads];
+		SimC._is_mt_simulation = true;
+
+		int rays_alloc = 0;
+		int rays_alloc1 = 0;
+		for (int i = 0; i < SimC._n_threads; i++)
+		{
+			//declare soltrace context
+			st_context_t pcxt = st_create_context();
+			//load soltrace data structure into context
+			ST_System::LoadIntoContext(SimC._STSim, pcxt);
+			//get random seed
+			int seed = SF.getFluxObject()->getRandomObject()->integer();
+			//setup the thread
+			SimC._stthread[i].Setup(pcxt, i, seed, is_load_raydata, is_save_raydata);
+
+			////Decide how many rays to trace for each thread. Evenly divide and allocate remainder to thread 0
+			int rays_this_thread = SimC._STSim->sim_raycount / SimC._n_threads;
+			if (i == 0) rays_this_thread += (SimC._STSim->sim_raycount % SimC._n_threads);
+			//when loading ray data externally, we need to divide up receiver stage hits
+			int rays_this_thread1 = raydat_st1.size() / SimC._n_threads;     //for receiver stage input rays
+			if (i == 0) rays_this_thread1 += (raydat_st1.size() % SimC._n_threads);
+
+			//if loading ray data, add by thread here
+			if (is_load_raydata)
+			{
+				SimC._stthread[i].CopyStageRayData(raydat_st0, 0, rays_alloc, rays_alloc + rays_this_thread);
+				SimC._stthread[i].CopyStageRayData(raydat_st1, 1, rays_alloc1, rays_alloc1 + rays_this_thread1);   //for receiver stage input rays
+			}
+			rays_alloc += rays_this_thread;
+			rays_alloc1 += rays_this_thread1;
+
+			st_sim_params(pcxt, rays_this_thread, SimC._STSim->sim_raymax / SimC._n_threads);
+		}
+
+		for (int i = 0; i < SimC._n_threads; i++)
+		{
+			thread(&STSimThread::StartThread, std::ref(SimC._stthread[i])).detach();
+		}
+		int ntotal = 0, ntraced = 0, ntotrace = 0, stagenum = 0, nstages = 0;
+
+		// every now and then query the threads and update the UI;
+		while (1)
+		{
+			int num_finished = 0;
+			for (int i = 0; i < SimC._n_threads; i++)
+				if (SimC._stthread[i].IsFinished())
+					num_finished++;
+
+			if (num_finished == SimC._n_threads)
+				break;
+
+			// threads still running so update interface
+			int ntotaltraces = 0;
+			for (int i = 0; i < SimC._n_threads; i++)
+			{
+				SimC._stthread[i].GetStatus(&ntotal, &ntraced, &ntotrace, &stagenum, &nstages);
+				ntotaltraces += ntotal;
+			}
+
+			SimC.soltrace_callback(ntotal, ntraced, ntotrace, stagenum, nstages, SimC.soltrace_callback_data);
+
+			// if dialog's cancel button was pressed, send cancel signal to all threads
+			if (SimC._cancel_simulation)
+			{
+				for (int i = 0; i < SimC._n_threads; i++)
+					SimC._stthread[i].CancelTrace();
+			}
+			std::this_thread::sleep_for(std::chrono::milliseconds(75));
+		}
+
+		// determine if any errors occurred
+		bool errors_found = false;
+		contexts.clear();
+		for (int i = 0; i < SimC._n_threads; i++)
+		{
+			contexts.push_back(SimC._stthread[i].GetContextId());
+			int code = SimC._stthread[i].GetResultCode();
+
+			if (code < 0)
+			{
+				errors_found = true;
+				err_maxray = true;
+				std::string msg("Error occured in trace core thread" + std::to_string(i + 1) + ", code=" + std::to_string(code) + ".\n\n");
+				SimC.message_callback(msg.c_str(), SimC.message_callback_data);
+				break;  //Don't keep displaying if there's an error
+			}
+		}
+
+		//Consolidate the stage 0 ray data if needed
+		if (is_save_raydata && !errors_found)
+		{
+			for (int i = 0; i < SimC._n_threads; i++)
+			{
+				st0datawrap.push_back(SimC._stthread[i].GetStage0RayDataObject());
+				st1datawrap.push_back(SimC._stthread[i].GetStage1RayDataObject());
+			}
+		}
+	}
+	else
+	{
+		//Create context
+		st_context_t cxt = st_create_context();
+		int seed = SF.getFluxObject()->getRandomObject()->integer();
+		ST_System::LoadIntoContext(SimC._STSim, cxt);
+
+		//Passes an optional pointer to a callback function that updates the GUI.
+		int minrays = SimC._STSim->sim_raycount;
+		int maxrays = SimC._STSim->sim_raymax;
+
+		//simulate, setting the UI callback and a pointer to the UI class
+		st_sim_params(cxt, minrays, maxrays);
+
+		bool sim_result = st_sim_run(cxt, seed, true, SimC.soltrace_callback, SimC.soltrace_callback_data) != -1;
+		if(sim_result)
+			contexts.push_back(cxt);
+		else
+			err_maxray = true;  //hit max ray limit if function returns false
+
+		if (is_save_raydata && !err_maxray)
+		{
+			st0datawrap.push_back(&raydat_st0);
+			st1datawrap.push_back(&raydat_st1);
+		}
+	}
+
+	//reset the progress gauge
+	SimC._is_mt_simulation = false;
+	//_flux_gauge->SetValue(0);		//TODO: is this important?
+	//Did the simulation terminate after reaching the max ray count?
+	if (err_maxray)
+	{
+		std::string msg = "The simulation has reached the maximum number of rays (" + my_to_string(maxrays) +
+			") without achieving the required number of ray hits (" + my_to_string(minrays) + ")." +
+			" Consider increasing the 'Maximum number of generated rays' or decreasing the " +
+			" 'Desired number of ray intersections'.";
+		SimC.message_callback( msg.c_str(), SimC.message_callback_data);
+
+		return false;
+	}
+	//Was the simulation cancelled during st_sim_run()?
+	if (SimC._cancel_simulation)
+	{
+		SimC._cancel_simulation = false; //reset
+		return false;
+	}
+
+	//Process the results
+	int nint = 0;
+	int nc = contexts.size();
+	vector<int> csizes;
+	for (int i = 0; i < nc; i++)
+	{
+		csizes.push_back(st_num_intersections(contexts.at(i)));
+		nint += csizes.at(i);
+	}
+
+	double bounds[5]; //xmin, xmax, ymin, ymax, empty
+	SimC._STSim->IntData.nsunrays = 0;
+
+	SimC._STSim->IntData.AllocateArrays(nint);
+
+	//Collect all of the results
+	int ind = 0;
+	for (int i = 0; i < nc; i++)
+	{
+		int cs = csizes.at(i);
+
+		st_locations(contexts.at(i), &SimC._STSim->IntData.hitx[ind], &SimC._STSim->IntData.hity[ind], &SimC._STSim->IntData.hitz[ind]);
+		st_cosines(contexts.at(i), &SimC._STSim->IntData.cosx[ind], &SimC._STSim->IntData.cosy[ind], &SimC._STSim->IntData.cosz[ind]);
+		st_elementmap(contexts.at(i), &SimC._STSim->IntData.emap[ind]);
+		st_stagemap(contexts.at(i), &SimC._STSim->IntData.smap[ind]);
+		st_raynumbers(contexts.at(i), &SimC._STSim->IntData.rnum[ind]);
+
+		int nsr;
+		st_sun_stats(contexts.at(i), &bounds[0], &bounds[1], &bounds[2], &bounds[3], &nsr);    //Bounds should always be the same
+		SimC._STSim->IntData.nsunrays += nsr;
+		ind += cs;
+
+	}
+
+	//DNI
+	double dni = vset.sf.dni_des.val / 1000.;    //[kw/m2]
+
+	//if the heliostat field ray data is loaded from a file, just specify the number of sun rays based on this value
+	if (is_load_raydata)
+		SimC._STSim->IntData.nsunrays = nsunrays_loadst;
+
+	//Get bounding box and sun ray information to calculate power per ray
+	SimC._STSim->IntData.q_ray = (bounds[1] - bounds[0]) * (bounds[3] - bounds[2]) / float(SimC._STSim->IntData.nsunrays) * dni;
+
+	bool skip_receiver = false;
+	if (!skip_receiver)
+	{
+
+		bounds[4] = (float)SimC._STSim->IntData.nsunrays;
+
+		for (int i = 0; i < 5; i++)
+			SimC._STSim->IntData.bounds[i] = bounds[i];
+		SolTraceFluxBinning(SimC, SF);
+
+
+		//Process the results
+		sim_params P;
+		P.dni = dni;
+		double azzen[2] = { az, PI / 2. - el };
+		results.back().process_raytrace_simulation(SF, P, 2, azzen, helios, SimC._STSim->IntData.q_ray, SimC._STSim->IntData.emap, SimC._STSim->IntData.smap, SimC._STSim->IntData.rnum, nint, bounds);
+	}
+
+	//If the user wants to save stage0 ray data, do so here
+	if (is_save_raydata)
+	{
+		ofstream fout(raydata_file);
+		fout.clear();
+		//first line is number of sun rays
+		fout << SimC._STSim->IntData.nsunrays << "\n";
+		//write heliostat IN stage
+		for (int i = 0; i < (int)st0datawrap.size(); i++)
+		{
+			for (int j = 0; j < (int)st0datawrap.at(i)->size(); j++)
+			{
+				for (int k = 0; k < 8; k++)
+					fout << st0datawrap.at(i)->at(j).at(k) << ",";
+				fout << "\n";
+			}
+		}
+		//special separator
+		fout << "#\n";
+		//write receiver IN stage
+		for (int i = 0; i < (int)st1datawrap.size(); i++)
+		{
+			for (int j = 0; j < (int)st1datawrap.at(i)->size(); j++)
+			{
+				for (int k = 0; k < 7; k++)
+					fout << st1datawrap.at(i)->at(j).at(k) << ",";
+				fout << "\n";
+			}
+		}
+
+		fout.close();
+	}
+
+	//If the user wants to save the ray data, do so here
+	if (vset.flux.save_data.val)
+	{
+		string fname = vset.flux.save_data_loc.val;
+		if (fname == "")
+		{
+			std::string msg = "Notice: Ray data was not saved. No file was specified.";
+			SimC.message_callback(msg.c_str(), SimC.message_callback_data);
+		}
+		else
+		{
+			FILE* file = fopen(fname.c_str(), "w");
+			if (!file)
+			{
+				std::string msg = "File Error: Error opening the flux simulation output file. Please make sure the file is closed and the directory is not write-protected.";
+				SimC.message_callback(msg.c_str(), SimC.message_callback_data);
+				return false;
+			}
+			fprintf(file, "Pos X, Pos Y, Pos Z, Cos X, Cos Y, Cos Z, Element Map, Stage Map, Ray Number\n");
+			for (int i = 0; i < nint; i++)
+			{
+				fprintf(file, "%.3f, %.3f, %.3f, %.7f, %.7f, %.7f, %d, %d, %d\n",
+					SimC._STSim->IntData.hitx[i], SimC._STSim->IntData.hity[i], SimC._STSim->IntData.hitz[i],
+					SimC._STSim->IntData.cosx[i], SimC._STSim->IntData.cosy[i], SimC._STSim->IntData.cosz[i],
+					SimC._STSim->IntData.emap[i], SimC._STSim->IntData.smap[i], SimC._STSim->IntData.rnum[i]);
+			}
+			std::fclose(file);  // REMOVE: fclose(file);
+		}
+
+	}
+	//Clean up
+	SimC._STSim->IntData.DeallocateArrays();
+	if (SimC._stthread != 0) delete[] SimC._stthread;
+
+	return true;
+}
+
+bool interop::SolTraceFluxBinning(SimControl& SimC, SolarField& SF)
+{
+	//Collect all of the rays that hit the receiver(s) into the flux profile
+	int rstage1 = 2;
+
+	for (int r = 0; r < (int)SF.getReceivers()->size(); r++)
+	{
+		Receiver* Rec = SF.getReceivers()->at(r);
+		if (!Rec->isReceiverEnabled())
+			continue;
+		var_receiver* RV = Rec->getVarMap();
+
+		//.. for each receiver, 
+		int recgeom = Rec->getGeometryType();
+
+		//Pre-declare all relevant variables
+		FluxSurface* fs;
+		FluxGrid* fg;
+		int e_ind, nfx, nfy,
+			ibin, jbin;    //indices of the flux grid bin that the current ray will go into
+		double rel, raz, rh, rw, paz, ph, pw, Arec, dqspec;
+		Vect rayhit;
+		//----------
+
+
+		switch (recgeom)
+		{
+		case Receiver::REC_GEOM_TYPE::CYLINDRICAL_CLOSED:        //0    |    Continuous closed cylinder - external
+		{
+			//There will be only one flux surface and flux grid. Get both objects.
+			fs = &Rec->getFluxSurfaces()->at(0);
+			fs->ClearFluxGrid();
+			fg = fs->getFluxMap();
+			e_ind = r + 1;    //element index for this receiver
+
+			rel = RV->rec_elevation.val * D2R;
+			raz = RV->rec_azimuth.val * D2R;
+			rh = RV->rec_height.val;
+
+			sp_point offset(RV->rec_offset_x_global.Val(), RV->rec_offset_y_global.Val(), RV->optical_height.Val());   //optical height includes z offset
+
+			//The number of points in the flux grid 
+			//(x-axis is angular around the circumference, y axis is receiver height)
+			nfx = fs->getFluxNX();
+			nfy = fs->getFluxNY();
+
+			Arec = Rec->getAbsorberArea();
+			dqspec = SimC._STSim->IntData.q_ray / Arec * (float)(nfx * nfy);
+
+			for (int j = 0; j < SimC._STSim->IntData.nint; j++)
+			{    //loop through each intersection
+
+				if (SimC._STSim->IntData.smap[j] != rstage1 || abs(SimC._STSim->IntData.emap[j]) != e_ind) continue;    //only consider rays that interact with this element
+
+				//Where did the ray hit relative to the location of the receiver?
+				rayhit.Set(SimC._STSim->IntData.hitx[j] - offset.x, SimC._STSim->IntData.hity[j] - offset.y, SimC._STSim->IntData.hitz[j] - offset.z);
+
+				//Do any required transform to get the ray intersection into receiver coordinates
+				Toolbox::rotation(-raz, 2, rayhit);
+				Toolbox::rotation(-rel, 0, rayhit);
+
+				//Calculate the point location in relative cylindrical coorinates
+				paz = 0.5 - atan2(rayhit.i, rayhit.j) / (2. * PI);    //0 for the flux grid begins at <S>, progresses CCW to 1
+				ph = 0.5 + rayhit.k / rh;    //0 for flux grid at bottom of the panel, 1 at top
+
+				//Calculate which bin to add this ray to in the flux grid
+				ibin = int(floor(paz * nfx));
+				jbin = int(floor(ph * nfy));
+
+				//Add the magnitude of the flux to the correct bin
+				fg->at(ibin).at(jbin).flux += dqspec;
+
+			}
+
+			break;
+		}
+		case Receiver::REC_GEOM_TYPE::CYLINDRICAL_OPEN:
+		case Receiver::REC_GEOM_TYPE::CYLINDRICAL_CAV:
+			break;
+		case Receiver::REC_GEOM_TYPE::PLANE_RECT:    //3    |    Planar rectangle
+		{
+			//Only one flux surface and grid per receiver instance
+			fs = &Rec->getFluxSurfaces()->at(0);
+			fs->ClearFluxGrid();
+			fg = fs->getFluxMap();
+			e_ind = r + 1;    //element index for this receiver
+
+			rel = RV->rec_elevation.val * D2R;
+			raz = RV->rec_azimuth.val * D2R;
+			rh = RV->rec_height.val;
+			rw = Rec->getReceiverWidth(*RV);
+
+			sp_point offset(RV->rec_offset_x_global.Val(), RV->rec_offset_y_global.Val(), RV->optical_height.Val());   //optical height includes z offset
+
+			//The number of points in the flux grid 
+			//(x-axis receiver width, y axis is receiver height)
+			nfx = fs->getFluxNX();
+			nfy = fs->getFluxNY();
+
+			Arec = Rec->getAbsorberArea();
+			dqspec = SimC._STSim->IntData.q_ray / Arec * (float)(nfx * nfy);
+
+
+			for (int j = 0; j < SimC._STSim->IntData.nint; j++)
+			{    //loop through each intersection
+
+				if (SimC._STSim->IntData.smap[j] != rstage1 || abs(SimC._STSim->IntData.emap[j]) != e_ind) continue;    //only consider rays that interact with this element
+
+				//Where did the ray hit relative to the location of the receiver?
+				rayhit.Set(SimC._STSim->IntData.hitx[j] - offset.x, SimC._STSim->IntData.hity[j] - offset.y, SimC._STSim->IntData.hitz[j] - offset.z);
+
+				//Do any required transform to get the ray intersection into receiver coordinates
+				Toolbox::rotation(PI - raz, 2, rayhit);
+				Toolbox::rotation(-rel, 0, rayhit);
+
+				//Calculate the point location in relative cylindrical coorinates
+				pw = 0.5 + rayhit.i / rw;    //0 at "starboard" side, increase towards "port"
+				ph = 0.5 + rayhit.k / rh;    //0 for flux grid at bottom of the panel, 1 at top
+
+				//Calculate which bin to add this ray to in the flux grid
+				ibin = int(floor(pw * nfx));
+				jbin = int(floor(ph * nfy));
+
+				//Add the magnitude of the flux to the correct bin
+				fg->at(ibin).at(jbin).flux += dqspec;
+
+			}
+			break;
+		}
+		case Receiver::REC_GEOM_TYPE::PLANE_ELLIPSE:
+		case Receiver::REC_GEOM_TYPE::POLYGON_CLOSED:
+		case Receiver::REC_GEOM_TYPE::POLYGON_OPEN:
+		case Receiver::REC_GEOM_TYPE::POLYGON_CAV:
+		default:
+			return false;
+			break;
+		}
+
+
+	}
+	return true;
+}
+#endif
+
+bool interop::DoManagedLayout(SimControl& SimC, SolarField& SF, var_map& V, LayoutSimThread* simthread)
+{
+	/*
+	This method is called to create a field layout. The method automatically handles
+	multithreading of hourly simulations.
+
+	Call
+	SF.Create()
+	before passing the solar field to this method.
+
+	*/
+
+	//Make sure the solar field has been created
+	if (SF.getVarMap() == 0)
+	{
+		std::string msg = "Error: The solar field Create() method must be called before generating the field layout.";
+		SimC.message_callback(msg.c_str(), SimC.message_callback_data);
+		return false;
+	}
+
+	//Is it possible to run a multithreaded simulation?
+	int nsim_req = SF.calcNumRequiredSimulations();
+	std::string msg;
+#ifdef SP_USE_THREADS
+	if (SimC._n_threads > 1 && nsim_req > 1)
+	{
+		//More than 1 thread and more than 1 simulation to run
+
+		//Prepare the master solar field object for layout simulation
+		WeatherData wdata;
+		bool full_sim = SF.PrepareFieldLayout(SF, &wdata);
+
+		//If full simulation is required...
+		if (full_sim)
+		{
+
+			int nthreads = min(nsim_req, SimC._n_threads);
+
+			//Duplicate SF objects in memory
+
+			msg = "Preparing " + std::to_string(SimC._n_threads) + " threads for simulation";
+			SimC.layout_log_callback(0., msg.c_str(), SimC.layout_log_callback_data);
+
+			SolarField **SFarr;
+			SFarr = new SolarField*[nthreads];
+			for (int i = 0; i < nthreads; i++)
+			{
+				SFarr[i] = new SolarField(SF);
+			}
+
+			//Create sufficient results arrays in memory
+			sim_results results;
+			results.resize(nsim_req);
+
+			//Calculate the number of simulations per thread
+			int npert = (int)ceil((float)nsim_req / (float)nthreads);
+
+			//Create thread objects
+			simthread = new LayoutSimThread[nthreads];
+			SimC._n_threads_active = nthreads;    //Keep track of how many threads are active
+			SimC._is_mt_simulation = true;
+
+			int
+				sim_first = 0,
+				sim_last = npert;
+			for (int i = 0; i < nthreads; i++)
+			{
+				std::string si = my_to_string(i + 1);
+				simthread[i].Setup(si, SFarr[i], &results, &wdata, sim_first, sim_last, false, false);
+				sim_first = sim_last;
+				sim_last = min(sim_last + npert, nsim_req);
+			}
+
+			msg = "Simulating " + std::to_string(nsim_req) + " design hours";
+			SimC.layout_log_callback(0., msg.c_str(), SimC.layout_log_callback_data);
+
+			//Run
+			for (int i = 0; i < nthreads; i++)
+				thread(&LayoutSimThread::StartThread, std::ref(simthread[i])).detach();
+
+			//Wait loop
+			while (true)
+			{
+				int nsim_done = 0, nsim_remain = 0, nthread_done = 0;
+				for (int i = 0; i < nthreads; i++)
+				{
+					if (simthread[i].IsFinished())
+						nthread_done++;
+
+					int ns, nr;
+					simthread[i].GetStatus(&ns, &nr);
+					nsim_done += ns;
+					nsim_remain += nr;
+				}
+				//TODO:  SimProgressUpdateMT(nsim_done, nsim_req); // uses wex
+				SimC.layout_log_callback((double)nsim_done / (double)nsim_req, "", SimC.layout_log_callback_data);
+
+				if (nthread_done == nthreads) break;
+				std::this_thread::sleep_for(std::chrono::milliseconds(75));
+			}
+
+			//Check to see whether the simulation was cancelled
+			bool cancelled = false;
+			for (int i = 0; i < nthreads; i++)
+			{
+				cancelled = cancelled || simthread[i].IsSimulationCancelled();
+			}
+
+			//check to see whether simulation errored out
+			bool errored_out = false;
+			for (int i = 0; i < SimC._n_threads; i++)
+			{
+				errored_out = errored_out || simthread[i].IsFinishedWithErrors();
+			}
+			if (errored_out)
+			{
+				//make sure each thread is cancelled
+				for (int i = 0; i < SimC._n_threads; i++)
+					simthread[i].CancelSimulation();
+
+				//Get the error messages, if any
+				string errmsgs;
+				for (int i = 0; i < SimC._n_threads; i++)
+				{
+					for (int j = 0; j < (int)simthread[i].GetSimMessages()->size(); j++)
+						errmsgs.append(simthread[i].GetSimMessages()->at(j) + "\n");
+				}
+				//Display error messages
+				if (!errmsgs.empty())
+					SimC.message_callback(errmsgs.c_str(), SimC.message_callback_data);
+			}
+
+			//Clean up dynamic memory
+			for (int i = 0; i < nthreads; i++)
+			{
+				delete SFarr[i];
+			}
+			delete[] SFarr;
+			delete[] simthread;
+			simthread = 0;
+
+			//If the simulation was cancelled per the check above, exit out
+			if (cancelled || errored_out)
+			{
+				return false;
+			}
+
+			//For the map-to-annual case, run a simulation here
+			if (V.sf.des_sim_detail.mapval() == var_solarfield::DES_SIM_DETAIL::EFFICIENCY_MAP__ANNUAL)
+				SolarField::AnnualEfficiencySimulation(V.amb.weather_file.val, &SF, results);
+
+			//Process the results
+			SF.ProcessLayoutResults(&results, nsim_req);
+
+		}
+	}
+	else
+#endif 
+	{
+		SimC._n_threads_active = 1;
+		SimC._is_mt_simulation = false;
+		bool simok = SF.FieldLayout();
+		if (SF.ErrCheck() || !simok) return false;
+	}
+
+	//follow-on stuff
+	Vect sun = Ambient::calcSunVectorFromAzZen(SF.getVarMap()->sf.sun_az_des.Val() * D2R, (90. - SF.getVarMap()->sf.sun_el_des.Val()) * D2R);
+	SF.calcHeliostatShadows(sun);    if (SF.ErrCheck()) return false;
+	V.land.bound_area.Setval(SF.getLandObject()->getLandBoundArea());
+
+	return true;
+
+}
+
+void interop::CreateResultsTable(sim_result& result, grid_emulator_base& table)
+{
+	try
+	{
+		//table.CreateGrid(result.is_soltrace ? 18 : 19, 6);
+		table.CreateGrid(18, 6);
+
+		table.SetColLabelValue(0, "Units");
+		table.SetColLabelValue(1, "Value");
+		table.SetColLabelValue(2, "Mean");
+		table.SetColLabelValue(3, "Minimum");
+		table.SetColLabelValue(4, "Maximum");
+		table.SetColLabelValue(5, "Std. dev");
+
+		int id = 0;
+		table.AddRow(id++, "Total plant cost", "$", result.total_installed_cost, 0);
+		//table.AddRow(id++, "Cost/Energy metric", "-", result.coe_metric);
+		table.AddRow(id++, "Simulated heliostat area", "m^2", result.total_heliostat_area);
+		table.AddRow(id++, "Simulated heliostat count", "-", result.num_heliostats_used, 0);
+		table.AddRow(id++, "Power incident on field", "kW", result.power_on_field);
+		table.AddRow(id++, "Power absorbed by the receiver", "kW", result.power_absorbed);
+		table.AddRow(id++, "Power absorbed by HTF", "kW", result.power_to_htf);
+
+		double nan = std::numeric_limits<double>::quiet_NaN();
+		//------------------------------------
+		if (result.is_soltrace)
+		{
+			table.AddRow(id++, "Cloudiness efficiency", "%", 100. * result.eff_cloud.wtmean, 2);
+			table.AddRow(id++, "Shadowing and Cosine efficiency", "%", 100. * result.eff_cosine.wtmean, 2);
+			table.AddRow(id++, "Reflection efficiency", "%", 100. * result.eff_reflect.wtmean, 2);
+			table.AddRow(id++, "Blocking efficiency", "%", 100. * result.eff_blocking.wtmean, 2);
+			table.AddRow(id++, "Image intercept efficiency", "%", 100. * result.eff_intercept.wtmean, 2);
+			table.AddRow(id++, "Absorption efficiency", "%", 100. * result.eff_absorption.wtmean, 2);
+			table.AddRow(id++, "Solar field optical efficiency", "%", 100. * result.eff_total_sf.wtmean / result.eff_absorption.wtmean, 2);
+			table.AddRow(id++, "Optical efficiency incl. receiver", "%", 100. * result.eff_total_sf.wtmean, 2);
+			table.AddRow(id++, "Incident flux", "kW/m2", result.flux_density.ave, -1, result.flux_density.min, result.flux_density.max, result.flux_density.stdev);
+			table.AddRow(id++, "No. rays traced", "-", result.num_ray_traced, 0);
+			table.AddRow(id++, "No. heliostat ray intersections", "-", result.num_ray_heliostat, 0);
+			table.AddRow(id++, "No. receiver ray intersections", "-", result.num_ray_receiver, 0);
+		}
+		else
+		{   //results table for hermite simulation
+			table.AddRow(id++, "Cloudiness efficiency", "%",
+				100. * result.eff_cloud.wtmean, 2,
+				100. * result.eff_cloud.ave,
+				100. * result.eff_cloud.min,
+				100. * result.eff_cloud.max,
+				100. * result.eff_cloud.stdev);
+			table.AddRow(id++, "Shading efficiency", "%",
+				100. * result.eff_shading.wtmean, 2,
+				100. * result.eff_shading.ave,
+				100. * result.eff_shading.min,
+				100. * result.eff_shading.max,
+				100. * result.eff_shading.stdev);
+			table.AddRow(id++, "Cosine efficiency", "%",
+				100. * result.eff_cosine.wtmean, 2,
+				100. * result.eff_cosine.ave,
+				100. * result.eff_cosine.min,
+				100. * result.eff_cosine.max,
+				100. * result.eff_cosine.stdev);
+			table.AddRow(id++, "Reflection efficiency", "%",
+				100. * result.eff_reflect.wtmean, 2,
+				100. * result.eff_reflect.ave,
+				100. * result.eff_reflect.min,
+				100. * result.eff_reflect.max,
+				100. * result.eff_reflect.stdev);
+			table.AddRow(id++, "Blocking efficiency", "%",
+				100. * result.eff_blocking.wtmean, 2,
+				100. * result.eff_blocking.ave,
+				100. * result.eff_blocking.min,
+				100. * result.eff_blocking.max,
+				100. * result.eff_blocking.stdev);
+			table.AddRow(id++, "Attenuation efficiency", "%",
+				100. * result.eff_attenuation.wtmean, 2,
+				100. * result.eff_attenuation.ave,
+				100. * result.eff_attenuation.min,
+				100. * result.eff_attenuation.max,
+				100. * result.eff_attenuation.stdev);
+			table.AddRow(id++, "Image intercept efficiency", "%",
+				100. * result.eff_intercept.wtmean, 2,
+				100. * result.eff_intercept.ave,
+				100. * result.eff_intercept.min,
+				100. * result.eff_intercept.max,
+				100. * result.eff_intercept.stdev);
+			table.AddRow(id++, "Absorption efficiency", "%", 100. * result.eff_absorption.wtmean, 2);
+			table.AddRow(id++, "Solar field optical efficiency", "%",
+				100. * result.eff_total_sf.wtmean / result.eff_absorption.wtmean, 2,
+				nan,
+				100. * result.eff_total_sf.min / result.eff_absorption.wtmean,
+				100. * result.eff_total_sf.max / result.eff_absorption.wtmean,
+				100. * result.eff_total_sf.stdev / result.eff_absorption.wtmean);
+			table.AddRow(id++, "Optical efficiency incl. receiver", "%",
+				100. * result.eff_total_sf.wtmean, 2,
+				nan,
+				100. * result.eff_total_sf.min,
+				100. * result.eff_total_sf.max,
+				100. * result.eff_total_sf.stdev);
+			table.AddRow(id++, "Annualized heliostat efficiency", "%",
+				100. * result.eff_annual.wtmean, 2,
+				nan,
+				100. * result.eff_annual.min,
+				100. * result.eff_annual.max,
+				100. * result.eff_annual.stdev);
+			table.AddRow(id++, "Incident flux", "kW/m2",
+				result.flux_density.ave, -1,
+				nan,
+				result.flux_density.min,
+				result.flux_density.max,
+				result.flux_density.stdev);
+		}
+	}
+	catch (...)
+	{
+		throw spexception("An error occurred while trying to process the simulation results for display.");
+	}
+
+}
+
+
+
+
 //-----
 
 
@@ -743,9 +1660,19 @@ void stat_object::initialize(){ //int size){
 	min = 9.e99; 
 	max = -9.e99;
 	sum = 0.;
+    wtmean = 0.;
 	stdev = 0.;
 	ave = 0.;
+}
 
+void stat_object::zero()
+{
+    min = 0.;
+    max = 0.;
+    sum = 0.;
+    wtmean = 0.;
+    stdev = 0.;
+    ave = 0.;
 }
 
 void stat_object::set(double _min, double _max, double _ave, double _stdev, double _sum, double _wtmean)
@@ -787,25 +1714,35 @@ sim_result::sim_result(){
 }
 
 void sim_result::initialize(){
-	total_heliostat_area = 0.;
-	total_receiver_area = 0.;
-	total_land_area = 0.;
-	power_on_field = 0.;
-	power_absorbed = 0.;
+
+    total_heliostat_area = 0.;
+    total_receiver_area = 0.;
+    total_land_area = 0.;
+    power_on_field = 0.;
+    power_absorbed = 0.;
     power_thermal_loss = 0.;
     power_piping_loss = 0.;
     power_to_htf = 0.;
-	power_to_cycle = 0.;
-	power_gross = 0.;
-	power_net = 0.;
-	num_heliostats_used = 0;
+    power_to_cycle = 0.;
+    power_gross = 0.;
+    power_net = 0.;
+    dni = 0.;
+    solar_az = 0.;
+    solar_zen = 0.;
+    total_installed_cost = 0.;
+    coe_metric = 0.;
+    
+    num_heliostats_used = 0;
 	num_heliostats_avail = 0;
     num_ray_traced = 0;
     num_ray_heliostat = 0;
     num_ray_receiver = 0;
 	_q_coe = 0.;
+    
+    time_date_stamp = "";
+    aim_method = "";
 
-	eff_total_heliostat.initialize();
+    eff_total_heliostat.initialize();
 	eff_total_sf.initialize();
 	eff_cosine.initialize();
 	eff_attenuation.initialize();
@@ -814,11 +1751,30 @@ void sim_result::initialize(){
 	eff_reflect.initialize();
 	eff_intercept.initialize();
 	eff_absorption.initialize();
-    eff_cloud.initialize();
+    eff_annual.initialize();
 	flux_density.initialize();
+    eff_cloud.initialize();
 
 	flux_surfaces.clear();
 	data_by_helio.clear();
+}
+
+void sim_result::zero()
+{
+    initialize();
+
+    eff_total_heliostat.zero();
+    eff_total_sf.zero();
+    eff_cosine.zero();
+    eff_attenuation.zero();
+    eff_blocking.zero();
+    eff_shading.zero();
+    eff_reflect.zero();
+    eff_intercept.zero();
+    eff_absorption.zero();
+    eff_annual.zero();
+    eff_cloud.zero();
+    flux_density.zero();
 }
 
 void sim_result::add_heliostat(Heliostat &H){
@@ -835,15 +1791,14 @@ void sim_result::process_field_stats(){
         return;
 
 	int nm = (data_by_helio.begin()->second).n_metric;
-	double 
-		*sums = new double[nm],
-		*aves = new double[nm],
-		*stdevs = new double[nm],
-		*mins = new double[nm],
-		*maxs = new double[nm],
-        *wtmean = new double[nm];
-	
-	double *aves2 = new double[nm];		//Temporary array for calculating variance
+	double
+		* sums = new double[nm],		// Why is this done on the heap rather than the stack?
+		* stdevs = new double[nm],
+		* mins = new double[nm],
+		* maxs = new double[nm],
+		* aves = new double[nm],
+		* aves2 = new double[nm],		//Temporary array for calculating variance
+		* wtmean = new double[nm];
 
 	for(int i=0; i<nm; i++){ 
 		sums[i] = 0.;
@@ -966,6 +1921,13 @@ void sim_result::process_field_stats(){
         stdevs[helio_perf_data::PERF_VALUES::REC_ABSORPTANCE],
         sums[helio_perf_data::PERF_VALUES::REC_ABSORPTANCE],
         wtmean[helio_perf_data::PERF_VALUES::REC_ABSORPTANCE]);
+    eff_annual.set(
+        mins[helio_perf_data::PERF_VALUES::ANNUAL_EFFICIENCY],
+        maxs[helio_perf_data::PERF_VALUES::ANNUAL_EFFICIENCY],
+        aves[helio_perf_data::PERF_VALUES::ANNUAL_EFFICIENCY],
+        stdevs[helio_perf_data::PERF_VALUES::ANNUAL_EFFICIENCY],
+        sums[helio_perf_data::PERF_VALUES::ANNUAL_EFFICIENCY],
+        wtmean[helio_perf_data::PERF_VALUES::ANNUAL_EFFICIENCY]);
     eff_cloud.set(
         mins[helio_perf_data::PERF_VALUES::ETA_CLOUD],
         maxs[helio_perf_data::PERF_VALUES::ETA_CLOUD],
@@ -995,13 +1957,14 @@ void sim_result::process_field_stats(){
 	delete [] stdevs;
 	delete [] mins; 
 	delete [] maxs;
+	delete [] wtmean;
 }
 
-void sim_result::process_flux_stats(SolarField &SF){
+void sim_result::process_flux_stats(Rvector *recs)
+{
 	//Determine the flux info
 	double fave=0., fave2=0., fmax = -9.e9, fmin = 9.e9;
 	int nf = 0;
-	vector<Receiver*> *recs = SF.getReceivers();
 	for( int i=0; i<(int)recs->size(); i++){
 		FluxSurfaces *fs = recs->at(i)->getFluxSurfaces();
 		for(int j=0; j<(int)fs->size(); j++){
@@ -1035,11 +1998,21 @@ void sim_result::process_flux_stats(SolarField &SF){
 	flux_density.ave = fave;
 }
 
-void sim_result::process_analytical_simulation(SolarField &SF, int nsim_type, double sun_az_zen[2], Hvector &helios){
+void sim_result::process_analytical_simulation(SolarField &SF, sim_params &P, int nsim_type, double sun_az_zen[2], Hvector* helios, Rvector* receivers)
+{
 	is_soltrace = false;
 	sim_type = nsim_type;
 
     var_map *V = SF.getVarMap();
+
+    if (!helios)
+        helios = SF.getHeliostats();
+    if (!receivers)
+        receivers = SF.getReceivers();
+
+    receiver_names.clear();
+    for(size_t i=0; i<receivers->size(); i++)
+        receiver_names.push_back( receivers->at(i)->getVarMap()->rec_name.val );
 
 	switch (sim_type)
 	{
@@ -1050,51 +2023,85 @@ void sim_result::process_analytical_simulation(SolarField &SF, int nsim_type, do
 		//process only the ranking metric for each heliostat and the field avg. eff
 		initialize();
 		double effsum = 0.;
-		for(unsigned int i=0; i<helios.size(); i++){
-			effsum += helios.at(i)->getEfficiencyTotal();
-			add_heliostat(*helios.at(i));
+		for(unsigned int i=0; i<helios->size(); i++)
+        {
+			effsum += helios->at(i)->getEfficiencyTotal();
+			add_heliostat(*helios->at(i));
 		}
-		eff_total_sf.ave = effsum / (double)helios.size() ;
-		total_receiver_area = V->sf.rec_area.Val(); //SF.calcReceiverTotalArea();
-		dni = V->sf.dni_des.val/1000.; // SF.getDesignPointDNI()/1000.;
-		power_on_field = total_heliostat_area * dni;	//[kW]
+		
+        eff_total_sf.ave = effsum / (double)helios->size() ;
+		
+        dni = P.dni; //W/m2
+		power_on_field = total_heliostat_area * dni;	//[W]
 		power_absorbed = power_on_field * eff_total_sf.ave;
+        
+        total_receiver_area = 0.;
+        power_thermal_loss = 0.;
+        power_piping_loss = 0.;
+        
+        for (Rvector::iterator rec = receivers->begin(); rec != receivers->end(); rec++)
+        {
+            if (!(*rec)->isReceiverEnabled())
+                continue;
+            total_receiver_area += (*rec)->getVarMap()->absorber_area.Val();
+            power_thermal_loss += (*rec)->getReceiverThermalLoss();
+            power_piping_loss += (*rec)->getReceiverPipingLoss();
+        }
 
-        power_thermal_loss = SF.getReceiverTotalHeatLoss();
-        power_piping_loss = SF.getReceiverPipingHeatLoss();
-        power_to_htf = power_absorbed - (power_thermal_loss + power_piping_loss);
+        power_to_htf = power_absorbed - (power_thermal_loss + power_piping_loss)*1.e6;
 
 		solar_az = sun_az_zen[0];
 		solar_zen = sun_az_zen[1];
-
-
+        time_date_stamp = SF.getVarMap()->sf.des_sim_detail.val + " 12:00";
+        aim_method = "Simple aimpoints";
 		break;
 	}
 	case sim_result::SIM_TYPE::FLUX_SIMULATION:
 	{
 		initialize();
-		for (unsigned int i = 0; i < helios.size(); i++)
+        for (unsigned int i = 0; i < helios->size(); i++)
 		{
-			if( helios.at(i)->IsInLayout() && helios.at(i)->IsEnabled() )
-				add_heliostat(*helios.at(i));
+            if (helios->at(i)->IsInLayout() && helios->at(i)->IsEnabled())
+            {
+				add_heliostat(*helios->at(i));
+            }
 		}
 		process_field_stats();
-		total_receiver_area = SF.calcReceiverTotalArea();
 		dni =  SF.getVarMap()->flux.flux_dni.val/1000.;
 		power_on_field = total_heliostat_area * dni;	//[kW]
 		power_absorbed = power_on_field * eff_total_sf.ave;
-        power_thermal_loss = SF.getReceiverTotalHeatLoss();
-        power_piping_loss = SF.getReceiverPipingHeatLoss();
+
+        total_receiver_area = 0.;
+        power_thermal_loss = 0.;
+        power_piping_loss = 0.; 
+
+        for (Rvector::iterator rec = receivers->begin(); rec != receivers->end(); rec++)
+        {
+            if (!(*rec)->isReceiverEnabled())
+                continue;
+            total_receiver_area += (*rec)->getVarMap()->absorber_area.Val();
+            power_thermal_loss += (*rec)->getReceiverThermalLoss()*1000.;
+            power_piping_loss += (*rec)->getReceiverPipingLoss()*1000.;
+        }
+
         power_to_htf = power_absorbed - (power_thermal_loss + power_piping_loss);
 
 		solar_az = sun_az_zen[0];
 		solar_zen = sun_az_zen[1];
+        double hour = SF.getVarMap()->flux.flux_hour.val;
+        std::stringstream ss;
+        ss << DateTime::GetMonthName(SF.getVarMap()->flux.flux_month.val)
+           << " " << SF.getVarMap()->flux.flux_day.val << " | "
+           << std::setw(2) << std::setfill('0') << (int)hour << ":"
+           << std::setw(2) << std::setfill('0') << (int)(std::fmod(hour,1.)*60.+.001);
+        time_date_stamp = ss.str();
+        aim_method = SF.getVarMap()->flux.aim_method.val + " aimpoints";
 
-		//SF.getFinancialObject()->calcPlantCapitalCost(*SF.getVarMap());	//Always update the plant cost
-		total_installed_cost = V->fin.total_installed_cost.Val(); //SF.getFinancialObject()->getTotalInstalledCost();
+		SF.getFinancialObject()->calcPlantCapitalCost(*SF.getVarMap());	//Always update the plant cost
+		total_installed_cost = V->fin.total_installed_cost.Val(); 
 		coe_metric = total_installed_cost/_q_coe;
 		
-		process_flux_stats(SF);
+		process_flux_stats(receivers);
 
 		break;
 	}
@@ -1104,13 +2111,8 @@ void sim_result::process_analytical_simulation(SolarField &SF, int nsim_type, do
 
 }
 
-void sim_result::process_analytical_simulation(SolarField &SF, int sim_type, double sun_az_zen[2]){  /*0=Layout, 1=Optimize, 2=Flux sim, 3=Parametric */
-	process_analytical_simulation(SF, sim_type, sun_az_zen, *SF.getHeliostats());
-};
-
-void sim_result::process_raytrace_simulation(SolarField &SF, int nsim_type, double sun_az_zen[2], Hvector &helios, double qray, int *emap, int *smap, int *rnum, int ntot, double *boxinfo){
-	
-
+void sim_result::process_raytrace_simulation(SolarField &SF, sim_params &P, int nsim_type, double sun_az_zen[2], Hvector &helios, double qray, int *emap, int *smap, int *rnum, int ntot, double *boxinfo)
+{
 	is_soltrace = true;
 	/* sim_type: 2=flux simulation, 3=parametric */
 	initialize();
@@ -1121,7 +2123,7 @@ void sim_result::process_raytrace_simulation(SolarField &SF, int nsim_type, doub
 		for(int i=0; i<num_heliostats_used; i++){
 			total_heliostat_area += helios.at(i)->getArea();
 		}
-		double dni = SF.getVarMap()->sf.dni_des.val/1000.; // SF.getDesignPointDNI()/1000.;
+        double dni = P.dni; //W/m2
 
 
 		//Process the ray data
@@ -1191,6 +2193,7 @@ void sim_result::process_raytrace_simulation(SolarField &SF, int nsim_type, doub
 
         eff_total_sf.set(0,0, 0, 0, 0., power_absorbed / power_on_field);
         eff_cosine.set(0.,0., 0., 0., 0., (double)nhin / (double)nsunrays*Abox / total_heliostat_area);
+        eff_shading.set(1., 1., 1., 0., 1., 1.);        //shading is accounted for in the blocking calculation
 		eff_blocking.set(0.,0., 0., 0., 0., 1. - (double)nhblock / (double)(nhin - nhabs));
 		eff_attenuation.set(0., 0., 0., 0., 0., 1.);	//Not currently accounted for
 		eff_reflect.set(0., 0., 0., 0., 0., (double)(nhin - nhabs) / (double)nhin);
@@ -1202,13 +2205,22 @@ void sim_result::process_raytrace_simulation(SolarField &SF, int nsim_type, doub
 		total_receiver_area = SF.calcReceiverTotalArea();
 		solar_az = sun_az_zen[0];
 		solar_zen = sun_az_zen[1];
+        int month, day_of_month;
+        double hour = SF.getVarMap()->flux.flux_hour.val;
+        DateTime().hours_to_date(SF.getVarMap()->flux.flux_day.val * 24 + hour, month, day_of_month);
+        std::stringstream ss;
+        ss << DateTime::GetMonthName(month) << " " << day_of_month
+            << std::setw(2) << std::setfill('0') << (int)hour << ":"
+            << std::setw(2) << std::setfill('0') << (int)(std::fmod(hour, 1.)*60. + .001);
+        time_date_stamp = ss.str();
+        aim_method = SF.getVarMap()->flux.aim_method.val + " aimpoints";
 
 		SF.getFinancialObject()->calcPlantCapitalCost(*SF.getVarMap());	//Always update the plant cost
 
 		total_installed_cost = SF.getVarMap()->fin.total_installed_cost.Val(); //SF.getFinancialObject()->getTotalInstalledCost();
 		coe_metric = total_installed_cost/power_absorbed;
 
-		process_flux_stats(SF);
+		process_flux_stats(SF.getReceivers());
 
 	}
 	else{
@@ -1226,11 +2238,28 @@ void sim_result::process_flux(SolarField *SF, bool normalize){
 	for(int i=0; i<nr; i++){
 		rec = SF->getReceivers()->at(i);
 		if(! rec->isReceiverEnabled() ) continue;
+        int n_surfaces = rec->getFluxSurfaces()->size();
 		flux_surfaces.push_back( *rec->getFluxSurfaces() );
 		if(normalize){
-			for(unsigned int j=0; j<rec->getFluxSurfaces()->size(); j++){
-				flux_surfaces.back().at(j).Normalize();
-			}
+            if (n_surfaces == 1) {
+                for (unsigned int j = 0; j < rec->getFluxSurfaces()->size(); j++) {
+                    flux_surfaces.back().at(j).Normalize();
+                }
+            }
+            else {
+                // For aperture (j = 0), use normalize, because we don't want it to count towards total flux
+                flux_surfaces.back().at(0).Normalize();
+
+                // Sum flux on all receiver panels
+                double flux_tot = 0.0;
+                for (unsigned int j = 1; j < rec->getFluxSurfaces()->size(); j++) {
+                    flux_tot += flux_surfaces.back().at(j).getTotalFlux();
+                }
+
+                for (unsigned int j = 1; j < rec->getFluxSurfaces()->size(); j++) {
+                    flux_surfaces.back().at(j).Scale(1.0 / flux_tot);
+                }
+            }
 		}
 		receiver_names.push_back( 
             //*SF->getReceivers()->at(i)->getReceiverName() 
@@ -1381,4 +2410,125 @@ void simulation_table::getKeys(ArrayString &keys){
 	for(unordered_map<string, ArrayString>::iterator it = data.begin(); it != data.end(); it++)
 		keys.push_back(it->first);
 	
+}
+
+
+void grid_emulator_base::CreateGrid(int nrow, int ncol)
+{
+	_nrow = nrow;
+	_ncol = ncol;
+	data.clear();
+	data.resize(nrow);
+	for (int i = 0; i < nrow; i++)
+		data.at(i).resize(ncol);
+	rowlabs.resize(nrow);
+	collabs.resize(ncol);
+}
+
+bool grid_emulator_base::SetColLabelValue(int col, std::string value)
+{
+	collabs.at(col) = value;
+	return true;
+}
+
+bool grid_emulator_base::SetRowLabelValue(int row, std::string value)
+{
+	rowlabs.at(row) = value;
+	return true;
+}
+
+bool grid_emulator_base::SetCellValue(int row, int col, std::string value)
+{
+	data.at(row).at(col) = value;
+	return true;
+}
+
+bool grid_emulator_base::SetCellValue(std::string value, int row, int col)
+{
+	return SetCellValue(row, col, value);
+}
+
+std::vector<std::string> grid_emulator_base::GetPrintableTable(std::string eol)
+{
+	std::vector<std::string> printable(_nrow + 1, "");
+
+	std::string hdr;
+	for (int i = 0; i < _ncol; i++)
+		hdr.append(", " + collabs.at(i));
+	printable[0] = hdr;
+
+	for (int i = 0; i < _nrow; i++)
+	{
+		std::string line = rowlabs.at(i);
+
+		for (int j = 0; j < _ncol; j++)
+		{
+			std::string tval = GetCellValue(i, j);
+
+			tval.erase(std::remove(tval.begin(), tval.end(), ','), tval.end());
+			line.append(", " + tval); //Remove any commas from cell values - the file is comma-delimited
+		}
+		printable[i + 1] = line.append(eol);
+
+	}
+	return printable;
+}
+
+
+
+void grid_emulator_base::AddRow(int row, std::string label, std::string units, double value, int sigfigs, double mean, double min, double max, double stdev)
+{
+	//Row adding method for simple performance runs
+
+	if ((GetNumberCols() < 6) || (GetNumberRows() < row + 1))
+		throw spexception("Sorry! Results table incorrectly formatted. Please contact solarpilot.support@nrel.gov for help.");
+
+	bool is_currency = false;
+	if (units.find("$") != std::string::npos) is_currency = true;
+
+	//calculate a good precision
+	if (sigfigs < 0)
+	{
+		int prec = 4 - (int)log10f(value);
+		sigfigs = prec < 0 ? 0 : prec;
+	}
+
+	char cline[300];
+	sprintf(cline, "%s.%df", "%", sigfigs);
+	std::string infmt(cline);
+	sprintf(cline, "%s.%df", "%", sigfigs + 2);
+	std::string stfmt(cline);
+	//wxString infmt = wxString::Format("%s.%df", "%", sigfigs);
+	//wxString stfmt = wxString::Format("%s.%df", "%", sigfigs+2);
+
+	SetRowLabelValue(row, label);
+	SetCellValue(row, 0, units);
+	//SetCellValue(row, 1, is_currency ? gui_util::FormatAsCurrency(value) : to_string(value, infmt.c_str()));
+	SetCellValue(row, 1, to_string(value, infmt.c_str()));
+	SetCellValue(row, 2, (mean == mean ? to_string(mean, infmt.c_str()) : ""));
+	SetCellValue(row, 3, (min == min ? to_string(min, infmt.c_str()) : ""));
+	SetCellValue(row, 4, (max == max ? to_string(max, infmt.c_str()) : ""));
+	SetCellValue(row, 5, (stdev == stdev ? to_string(stdev, stfmt.c_str()) : ""));
+
+}
+
+int grid_emulator_base::GetNumberRows()
+{
+	return _nrow;
+}
+int grid_emulator_base::GetNumberCols()
+{
+	return _ncol;
+}
+std::string grid_emulator_base::GetRowLabelValue(int row)
+{
+	return rowlabs.at(row);
+}
+std::string grid_emulator_base::GetColLabelValue(int col)
+{
+	return collabs.at(col);
+}
+std::string grid_emulator_base::GetCellValue(int row, int col)
+{
+	return data.at(row).at(col);
 }

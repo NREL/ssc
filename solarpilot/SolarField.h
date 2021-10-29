@@ -49,6 +49,7 @@ class Ambient;
 class Land;
 
 typedef std::vector<Heliostat*> Hvector;
+typedef std::vector<Receiver*> Rvector;
 class sim_result;
 typedef std::vector<sim_result> sim_results;
 
@@ -86,7 +87,8 @@ struct sim_params
     double TOUweight;   //- weighting factor due to time of delivery
     double Simweight;   //- weighting factor due to simulation setup
     bool is_layout;     //Run simulation in layout mode
-    
+    Receiver* force_receiver;   //Require simulation using the specified receiver. 0 if false, receiver pointer if true
+
     sim_params();
 };
 
@@ -125,9 +127,10 @@ protected:
 		_helio_groups,	//A 2-D mesh containing vectors that list the heliostats in each field group.
 		_neighbors;	//A 2-D mesh where each node lists the heliostats that neighbor each other
 	std::vector<Hvector> _layout_groups; //a std::vector of heliostat vectors that share flux intercept factor during layout calculations
-	std::vector<Receiver*> _receivers; //A std::vector containing all of the receiver objects
-	std::vector<Receiver*> _active_receivers;	//A std::vector containing only active receivers
-	Land _land;
+	Rvector _receivers; //A std::vector containing all of the receiver objects
+	Rvector _active_receivers;	//A std::vector containing only active receivers
+    Ambient _ambient;
+    Land _land;
 	Financial _financial;
     FluxSimData _fluxsim;
 	Flux *_flux;	/*This object is a pointer because it has a recursive relationship to the SolarField object.
@@ -162,9 +165,10 @@ public:
 	
 	//-------Access functions
 	//"GETS"
-	std::vector<Receiver*> *getReceivers();
+	Rvector *getReceivers();
 	Land *getLandObject();
 	Flux *getFluxObject();
+    Ambient *getAmbientObject();
 	Financial *getFinancialObject();
     FluxSimData *getFluxSimObject();
 	htemp_map *getHeliostatTemplates();
@@ -205,6 +209,7 @@ public:
 	void Create(var_map &V);
     void updateCalculatedParameters(var_map &V);
     void updateAllCalculatedParameters(var_map &V);
+    void updateCalculatedReceiverPower(var_map &V);
 	void Clean();
 	bool ErrCheck();
 	void CancelSimulation();
@@ -226,6 +231,7 @@ public:
 	Heliostat *whichTemplate(int method, sp_point &pos);		//Function returning a pointer to the template to use
 	void TemplateRange(int pos_order, int method, double *rrange, double *azrange);
 	void RefactorHeliostatImages(Vect &Sun);
+    static bool CheckReceiverAcceptance(Receiver* rec, sp_point *hpos, double towerheight);
 	
     void Simulate(double az, double zen, sim_params &P);		//Method to simulate the performance of the field
 	bool SimulateTime(int hour, int day_of_Month, int month, sim_params &P);

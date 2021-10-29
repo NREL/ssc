@@ -1,3 +1,26 @@
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+
 #ifndef _CMOD_CSP_COMMON_EQNS_H_
 #define _CMOD_CSP_COMMON_EQNS_H_
 
@@ -75,23 +98,12 @@ double Q_design(double Q_rec_des /*MWt*/);      // [MWt]
 
 double Dni_des_calc(double dni_des /*W/m2*/);       // [W/m2]
 
-int Opt_algorithm();        // [-]
-
-double Opt_flux_penalty();  // [-]
-
-
 
 // Originally from 'MSPT Receiver' UI Form
-double Csp_pt_rec_cav_lip_height();     // [m?]
-
-double Csp_pt_rec_cav_panel_height();   // [m?]
-
 double Csp_pt_rec_max_flow_to_rec(double csp_pt_rec_max_oper_frac /*-*/, double Q_rec_des /*MWt*/,
     double csp_pt_rec_htf_c_avg /*kJ/kg-K*/, double T_htf_hot_des /*C*/, double T_htf_cold_des /*C*/);      // [kg/s]
 
 double Csp_pt_rec_htf_t_avg(double T_htf_cold_des /*C*/, double T_htf_hot_des /*C*/);       // [C]
-
-double Csp_pt_rec_cav_ap_height(double rec_d_spec /*m*/, double csp_pt_rec_cav_ap_hw_ratio /*-*/);      // [m]
 
 double Csp_pt_rec_htf_c_avg(double csp_pt_rec_htf_t_avg /*C*/, int rec_htf /*-*/,
     const util::matrix_t<ssc_number_t> &field_fl_props /*-*/);      // [kJ/kg-K]
@@ -120,11 +132,11 @@ util::matrix_t<double> Wlim_series(double disp_wlim_max /*MWe*/);    // [kWe]
 // Originally from 'Tower SolarPilot Capital Costs'
 //double Ui_tower_height(TowerTypes tower_type, double height);
 
-double Csp_pt_cost_receiver_area(TowerTypes tower_type /*-*/, double d_rec /*m*/,
-    double rec_height = std::numeric_limits<double>::quiet_NaN() /*m*/,
-    int receiver_type = std::numeric_limits<int>::quiet_NaN() /*-*/,
-    double rec_d_spec = std::numeric_limits<double>::quiet_NaN() /*m*/,
-    double csp_pt_rec_cav_ap_height = std::numeric_limits<double>::quiet_NaN() /*m*/);        // [m2]
+void Csp_pt_cost_receiver_area(TowerTypes tower_type /*-*/, double d_rec /*m*/,
+    double rec_height /*m*/, int receiver_type /*-*/, double cav_rec_height /*m*/,
+    double cav_rec_width /*m*/, double rec_span_deg /*deg*/, int n_cav_panels,
+    double& area /*m2*/, double& cav_panel_width /*m*/,
+    double& cav_radius /*m*/, double& cav_offset);        // [m2]
 
 double Csp_pt_cost_storage_mwht(TowerTypes tower_type /*-*/, double p_ref = std::numeric_limits<double>::quiet_NaN() /*MWe*/,
     double design_eff = std::numeric_limits<double>::quiet_NaN() /*-*/,
