@@ -62,6 +62,8 @@ GTEST_API_ int main(int argc, char **argv) {
     */
 //    ::testing::GTEST_FLAG(filter) = "BatteryPowerFlowTest_lib_battery_powerflow.TestDCConnected";
 
+ //   ::testing::GTEST_FLAG(filter) = "CMBatteryEqns_cmod_battery_eqns.TestStatefulSizeModifications";
+
 
 
 	int status = RUN_ALL_TESTS();

@@ -838,10 +838,15 @@ void json_to_ssc_var(const rapidjson::Value& json_val, ssc_var_t ssc_val) {
         is_arr = is_numerical(json_val);
         if (is_arr) {
             vd->type = SSC_ARRAY;
-            if (json_val[0].IsNull())
-                return;
-            for (rapidjson::SizeType i = 0; i < json_val.Size(); i++) {
-                vec.push_back(json_val[i].GetDouble());
+            //if (json_val[0].IsNull())
+            if (json_val.Size() == 0) {
+                vec.push_back(0.0);
+//                return;
+            }
+            else {
+                for (rapidjson::SizeType i = 0; i < json_val.Size(); i++) {
+                    vec.push_back(json_val[i].GetDouble());
+                }
             }
             vd->num.assign(&vec[0], vec.size());
             return;
@@ -856,8 +861,10 @@ void json_to_ssc_var(const rapidjson::Value& json_val, ssc_var_t ssc_val) {
         }
         if (is_mat) {
             vd->type = SSC_MATRIX;
-            if (json_val[0].IsNull())
+//            if (json_val[0].IsNull())
+            if (json_val.Size() == 0) {
                 return;
+            }
             for (rapidjson::SizeType irow = 0; irow < json_val.Size(); irow++) {
                 for (rapidjson::SizeType icol = 0; icol < json_val[irow].Size(); icol++) {
                     vec.push_back(json_val[irow][icol].GetDouble());
