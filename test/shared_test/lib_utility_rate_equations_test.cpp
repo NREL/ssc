@@ -472,9 +472,9 @@ TEST(lib_utility_rate_equations_test, test_billing_demand_calcs)
                                           60, 0 };
 
     data.setup_ratcheting_demand(p_ur_ec_billing_demand_lookback_percentages);
-    data.ec_bd_minimum = 500;
-    data.en_ec_billing_demand = true;
-    data.ec_bd_lookback_months = 11;
+    data.bd_minimum = 500;
+    data.en_billing_demand = true;
+    data.bd_lookback_months = 11;
 
     std::vector<ssc_number_t> year_one_power = {  -1200,
                                             -1100,
@@ -520,4 +520,120 @@ TEST(lib_utility_rate_equations_test, test_billing_demand_calcs)
     {
         EXPECT_NEAR(billing_demands[month], data.get_billing_demand(month), 0.1);
     }
+}
+
+// APS large rate: https://openei.org/apps/IURDB/rate/view/5caf91045457a3c4357780e3
+// https://www.aps.com/-/media/APS/APSCOM-PDFs/Utility/Regulatory-and-Legal/Regulatory-Plan-Details-Tariffs/Business/TOU-Business-NonRes-Plans/e32_TimeOfUseLarge.ashx?la=en
+TEST(lib_utility_rate_equations_test, test_billing_demand_calcs_w_tou)
+{
+   
+    ssc_number_t p_ur_ec_sched_weekday[288] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1 };
+    ssc_number_t p_ur_ec_sched_weekend[288] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+    ssc_number_t p_ur_ec_tou_mat[24] = { 1, 1, 9.9999999999999998e+37, 0, 0.044822000000000001, 0,
+                                         2, 1, 9.9999999999999998e+37, 0, 0.057702000000000003, 0,
+                                         3, 1, 9.9999999999999998e+37, 0, 0.059481999999999993, 0,
+                                         4, 1, 9.9999999999999998e+37, 0, 0.07236200000000001, 0 };
+
+    size_t tou_rows = 4;
+    bool sell_eq_buy = false;
+
+    ssc_number_t p_ur_dc_sched_weekday[288] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1 };
+    ssc_number_t p_ur_dc_sched_weekend[288] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+    ssc_number_t p_ur_dc_tou_mat[16] = { 1, 1, 100, 6.6539999999999999,
+                                         1, 2, 9.9999999999999998e+37, 3.6280000000000001,
+                                         2, 1, 100, 17.765999999999998,
+                                         2, 2, 9.9999999999999998e+37, 12.053000000000001 };
+    size_t dc_tou_rows = 4;
+
+    ssc_number_t p_ur_dc_flat_mat[48] = { 0, 1, 9.9999999999999998e+37, 0,
+                                          1, 1, 9.9999999999999998e+37, 0,
+                                          2, 1, 9.9999999999999998e+37, 0,
+                                          3, 1, 9.9999999999999998e+37, 0,
+                                          4, 1, 9.9999999999999998e+37, 0,
+                                          5, 1, 9.9999999999999998e+37, 0,
+                                          6, 1, 9.9999999999999998e+37, 0,
+                                          7, 1, 9.9999999999999998e+37, 0,
+                                          8, 1, 9.9999999999999998e+37, 0,
+                                          9, 1, 9.9999999999999998e+37, 0,
+                                          10, 1, 9.9999999999999998e+37, 0,
+                                          11, 1, 9.9999999999999998e+37, 0 };
+    
+
+    size_t dc_flat_rows = 12;
+
+    rate_data data;
+    data.m_num_rec_yearly = 8760;
+    data.rate_scale = { 1 };
+    data.init(8760);
+    data.setup_demand_charges(&p_ur_dc_sched_weekday[0], &p_ur_dc_sched_weekend[0], dc_tou_rows, &p_ur_dc_tou_mat[0], dc_flat_rows, &p_ur_dc_flat_mat[0]);
+    data.setup_energy_rates(&p_ur_ec_sched_weekday[0], &p_ur_ec_sched_weekend[0], tou_rows, &p_ur_ec_tou_mat[0], sell_eq_buy);
+    data.init_energy_rates(false); // This gets called once to set up all the vectors
+    data.init_dc_peak_vectors(0);
+    data.enable_nm = false;
+    data.nm_credits_w_rollover = false;
+
+    // Only need one power number per month to set up the peak
+    ssc_number_t year_zero_power[12] = { 1200,
+                                            1100,
+                                            900,
+                                            700,
+                                            800,
+                                            950,
+                                            1050,
+                                            1150,
+                                            850,
+                                            400,
+                                            600,
+                                            750 };
+
+    ssc_number_t p_ur_billing_demand_lookback_percentages[24] = { 0, 1,
+                                                                  0, 1,
+                                                                  0, 1,
+                                                                  0, 1,
+                                                                  80, 1,
+                                                                  80, 1,
+                                                                  80, 1,
+                                                                  80, 1,
+                                                                  80, 1,
+                                                                  80, 1,
+                                                                  0, 1,
+                                                                  0, 1 };
+
+    data.setup_ratcheting_demand(p_ur_billing_demand_lookback_percentages);
+    data.bd_minimum = 500;
+    data.en_billing_demand = true;
+    data.bd_lookback_months = 11;
+
+    std::vector<ssc_number_t> year_one_power = { -1200,
+                                            -1100,
+                                            -900,
+                                            -700,
+                                            -800,
+                                            -950,
+                                            -1050,
+                                            -1300, // 80% of this is 1040 kW, which is higher than the peak in Jan (below)
+                                            -850,
+                                            -400,
+                                            -600,
+                                            -750 };
+
+    data.setup_prev_demand(year_zero_power);
+
+    // Peak period 1: 900 kW, peak period 2: 1000 kW
+    std::vector<double> day_one_power = { -100, -100, -200, -300, -400, -500, // Period 1
+                                            -600, -700, -800, -900, -800, -900, // Period 1
+                                            -800, -700, -600, -1000, -950, -900, // first 3 period 1, last 3 period 2
+                                            -850, -800, -700, -500, -500, -500 }; // First 3 period 2, last 3 period 1
+
+    ASSERT_EQ(24, day_one_power.size());
+    int step = 24; // Jan 1st is a Sunday, need to hit on peak period on Monday
+    int month = 0;
+    for (int i = 0; i < day_one_power.size(); i++)
+    {
+        // Hourly, so power and energy are the same number
+        data.sort_energy_to_periods(month, day_one_power.at(i), step + i);
+        data.find_dc_tou_peak(month, day_one_power.at(i), step + i);
+    }
+
+    ASSERT_NEAR(16674.22, data.get_demand_charge(0, 0), 0.1);
 }

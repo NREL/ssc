@@ -23,6 +23,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef _LIB_UTILITY_RATE_EQUATIONS_H_
 #define _LIB_UTILITY_RATE_EQUATIONS_H_
 
+#include <map>
 #include <vector>
 
 #include "../ssc/core.h"
@@ -113,11 +114,12 @@ public:
 	std::vector<ssc_number_t> monthly_dc_fixed;
 	std::vector<ssc_number_t> monthly_dc_tou;
 
-    bool en_ec_billing_demand; // Enable billing demand lookback percentages for kWh/kW energy charges
+    bool en_billing_demand; // Enable billing demand lookback percentages for kWh/kW energy charges
     std::vector<ssc_number_t> prev_peak_demand; // Set before calling init_energy_rates
-    std::vector<ssc_number_t> ec_bd_lookback_percents;
-    double ec_bd_minimum;
-    int ec_bd_lookback_months;
+    std::vector<ssc_number_t> bd_lookback_percents;
+    double bd_minimum;
+    int bd_lookback_months;
+    std::unordered_map<int, bool> bd_tou_periods;
     std::vector<ssc_number_t> billing_demand; // Store locally for ssc outputs
 
 	bool tou_demand_single_peak;

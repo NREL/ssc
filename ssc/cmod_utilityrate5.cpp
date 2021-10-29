@@ -406,9 +406,9 @@ void rate_setup::setup(var_table* vt, int num_recs_yearly, size_t nyears, rate_d
     ssc_number_t* ratchet_matrix = NULL;
     bool ratchets_enabled = vt->as_boolean("ur_enable_billing_demand");
     if (ratchets_enabled) {
-        rate.en_ec_billing_demand = ratchets_enabled;
-        rate.ec_bd_minimum = vt->as_number("ur_billing_demand_minimum");
-        rate.ec_bd_lookback_months = vt->as_integer("ur_billing_demand_lookback_period");
+        rate.en_billing_demand = ratchets_enabled;
+        rate.bd_minimum = vt->as_number("ur_billing_demand_minimum");
+        rate.bd_lookback_months = vt->as_integer("ur_billing_demand_lookback_period");
 
         ratchet_matrix = vt->as_matrix("ur_billing_demand_lookback_percentages", &nrows, &ncols);
         if (nrows != 12 || ncols != 2)
@@ -984,6 +984,7 @@ public:
 
                 if (uses_billing_demand) {
                     billing_demand_wo_sys_ym[(i + 1) * 12 + j] = rate.billing_demand[j];
+                    monthly_peak_wo_sys[j] = rate.m_month[j].dc_flat_peak; // Update this every year
                 }
 
 				utility_bill_wo_sys[i + 1] += monthly_bill[j];
@@ -1083,10 +1084,9 @@ public:
 				assign("year1_monthly_fixed_without_system", var_data(&monthly_fixed_charges[0], 12));
 				assign("year1_monthly_minimum_without_system", var_data(&monthly_minimum_charges[0], 12));
 
-				// peak demand and testing energy use
+				// testing energy use
 				for (int ii = 0; ii < 12; ii++)
 				{
-                    monthly_peak_wo_sys[ii] = rate.m_month[ii].dc_flat_peak;
 					monthly_test[ii] = -rate.m_month[ii].energy_net;
 				}
 				assign("year1_monthly_peak_wo_system", var_data(&monthly_peak_wo_sys[0], 12));
@@ -1434,6 +1434,7 @@ public:
 
                 if (uses_billing_demand) {
                     billing_demand_w_sys_ym[(i + 1) * 12 + j] = rate.billing_demand[j];
+                    monthly_peak_w_sys[j] = rate.m_month[j].dc_flat_peak;
                 }
 
 				utility_bill_w_sys[i + 1] += monthly_bill[j];
@@ -1638,7 +1639,7 @@ public:
 
 		if (ec_enabled)
 		{
-            if (rate.en_ec_billing_demand) {
+            if (rate.en_billing_demand) {
                 rate.setup_prev_demand(prev_monthly_peaks);
             }
 
@@ -2144,7 +2145,7 @@ public:
 				excess_kwhs_earned[m] = rate.m_month[m].energy_net;
 		}
 
-        if (rate.en_ec_billing_demand) {
+        if (rate.en_billing_demand) {
             rate.setup_prev_demand(prev_monthly_peaks);
         }
 
