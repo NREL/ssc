@@ -233,16 +233,32 @@ double rate_data::get_billing_demand(int month) {
         start_month = month - bd_lookback_months;
     }
 
+    int idx = 0;
     for (m = start_month; m <= month; m++) {
-        double ratchet_percent = bd_lookback_percents[m] * 0.01;
-        double months_demand = m_month[m].dc_flat_peak * ratchet_percent;
-        if (months_demand > billing_demand) {
-            billing_demand = months_demand;
+        idx = 0;
+        for (int p : m_month[m].dc_periods) {
+            if (bd_tou_periods.at(p)) {
+                double ratchet_percent = bd_lookback_percents[m] * 0.01;
+                double months_demand = m_month[m].dc_tou_peak[idx] * ratchet_percent;
+                if (months_demand > billing_demand) {
+                    billing_demand = months_demand;
+                }
+            }
+            idx++;
         }
     }
 
-    if (m_month[month].dc_flat_peak > billing_demand && m_month[month].use_current_month_ratchet) {
-        billing_demand = m_month[month].dc_flat_peak;
+    if (m_month[month].use_current_month_ratchet) {
+        idx = 0;
+        for (int p : m_month[month].dc_periods) {
+            if (bd_tou_periods.at(p)) {
+                double months_demand = m_month[month].dc_tou_peak[idx];
+                if (months_demand > billing_demand) {
+                    billing_demand = months_demand;
+                }
+            }
+            idx++;
+        }
     }
 
     return billing_demand;
@@ -807,7 +823,7 @@ void rate_data::setup_demand_charges(ssc_number_t* dc_weekday, ssc_number_t* dc_
 	}
 }
 
-void rate_data::setup_ratcheting_demand(ssc_number_t* ratchet_percent_matrix)
+void rate_data::setup_ratcheting_demand(ssc_number_t* ratchet_percent_matrix, ssc_number_t* bd_tou_period_matrix)
 {
     // Error checked in SSC variables
     size_t nrows = 12;
@@ -820,6 +836,12 @@ void rate_data::setup_ratcheting_demand(ssc_number_t* ratchet_percent_matrix)
         m_month[i].use_current_month_ratchet = ratchet_matrix.at(i, 1) == 1;
     }
 
+    nrows = m_dc_tou_periods.size();
+    util::matrix_t<double> tou_matrix(nrows, ncols);
+    tou_matrix.assign(bd_tou_period_matrix, nrows, ncols);
+    for (int i = 0; i < nrows; i++) {
+        bd_tou_periods.emplace((int) tou_matrix.at(i, 0), tou_matrix.at(i, 1) == 1.0);
+    }
 }
 
 void rate_data::sort_energy_to_periods(int month, double energy, size_t step) {

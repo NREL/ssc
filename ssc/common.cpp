@@ -873,6 +873,7 @@ var_info vtab_utility_rate_common[] = {
     { SSC_INPUT,        SSC_NUMBER,     "ur_billing_demand_minimum",       "Minimum billing demand",               "",         "",                     "Electricity Rates",        "ur_enable_billing_demand=1",                 "",                             "" },
     { SSC_INPUT,        SSC_NUMBER,     "ur_billing_demand_lookback_period", "Billing demand lookback period",  "mn",         "",                "Electricity Rates",           "ur_enable_billing_demand=1",                 "INTEGER,MIN=0,MAX=12",                             "" },
     { SSC_INPUT,        SSC_MATRIX,     "ur_billing_demand_lookback_percentages", "Billing demand lookback percentages by month and consider actual peak demand",       "",         "12x2",      "Electricity Rates",        "ur_enable_billing_demand=1",                 "",                             "" },
+    { SSC_INPUT,        SSC_MATRIX,     "ur_dc_billing_demand_periods", "Billing demand applicability to a given demand charge time of use period",       "",         "",      "Electricity Rates",        "ur_enable_billing_demand=1",                 "",                             "" },
     { SSC_INPUT,        SSC_ARRAY,      "ur_yearzero_usage_peaks",  "Peak usage by month for year zero",       "",         "12",                "Electricity Rates",        "ur_enable_billing_demand=1",                 "",                             "" },
 
 

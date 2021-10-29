@@ -442,7 +442,9 @@ TEST(lib_utility_rate_equations_test, test_billing_demand_calcs)
     data.setup_demand_charges(&p_ur_dc_sched_weekday[0], &p_ur_dc_sched_weekend[0], dc_tou_rows, &p_ur_dc_tou_mat[0], dc_flat_rows, &p_ur_dc_flat_mat[0]);
     data.setup_energy_rates(&p_ur_ec_sched_weekday[0], &p_ur_ec_sched_weekend[0], tou_rows, &p_ur_ec_tou_mat[0], sell_eq_buy);
     data.init_energy_rates(false); // This gets called once to set up all the vectors
-    data.init_dc_peak_vectors(0);
+    for (size_t i = 0; i < 12; i++) {
+        data.init_dc_peak_vectors(i);
+    }
 
     // Only need one power number per month to set up the peak
     ssc_number_t year_zero_power[12] = { 1200,
@@ -471,7 +473,9 @@ TEST(lib_utility_rate_equations_test, test_billing_demand_calcs)
                                           60, 0,
                                           60, 0 };
 
-    data.setup_ratcheting_demand(p_ur_ec_billing_demand_lookback_percentages);
+    ssc_number_t p_ur_billing_demand_tou_matrix[2] = { 1, 1 };
+
+    data.setup_ratcheting_demand(p_ur_ec_billing_demand_lookback_percentages, p_ur_billing_demand_tou_matrix);
     data.bd_minimum = 500;
     data.en_billing_demand = true;
     data.bd_lookback_months = 11;
@@ -499,6 +503,7 @@ TEST(lib_utility_rate_equations_test, test_billing_demand_calcs)
         curr_month = data.m_month[month];
         curr_month.update_net_and_peak(power, power, step);
         data.m_month[month] = curr_month;
+        data.find_dc_tou_peak(month, power, step);
     }
 
     data.setup_prev_demand(year_zero_power);
@@ -518,7 +523,7 @@ TEST(lib_utility_rate_equations_test, test_billing_demand_calcs)
 
     for (month = 0; month < year_one_power.size(); month++)
     {
-        EXPECT_NEAR(billing_demands[month], data.get_billing_demand(month), 0.1);
+        EXPECT_NEAR(billing_demands[month], data.get_billing_demand(month), 0.1) << " at month " << month;
     }
 }
 
@@ -568,7 +573,9 @@ TEST(lib_utility_rate_equations_test, test_billing_demand_calcs_w_tou)
     data.setup_demand_charges(&p_ur_dc_sched_weekday[0], &p_ur_dc_sched_weekend[0], dc_tou_rows, &p_ur_dc_tou_mat[0], dc_flat_rows, &p_ur_dc_flat_mat[0]);
     data.setup_energy_rates(&p_ur_ec_sched_weekday[0], &p_ur_ec_sched_weekend[0], tou_rows, &p_ur_ec_tou_mat[0], sell_eq_buy);
     data.init_energy_rates(false); // This gets called once to set up all the vectors
-    data.init_dc_peak_vectors(0);
+    for (size_t i = 0; i < 12; i++) {
+        data.init_dc_peak_vectors(i);
+    }
     data.enable_nm = false;
     data.nm_credits_w_rollover = false;
 
@@ -599,7 +606,10 @@ TEST(lib_utility_rate_equations_test, test_billing_demand_calcs_w_tou)
                                                                   0, 1,
                                                                   0, 1 };
 
-    data.setup_ratcheting_demand(p_ur_billing_demand_lookback_percentages);
+    ssc_number_t p_ur_billing_demand_tou_matrix[4] = { 1, 0,
+                                                   2, 1 };
+
+    data.setup_ratcheting_demand(p_ur_billing_demand_lookback_percentages, p_ur_billing_demand_tou_matrix);
     data.bd_minimum = 500;
     data.en_billing_demand = true;
     data.bd_lookback_months = 11;
@@ -628,12 +638,14 @@ TEST(lib_utility_rate_equations_test, test_billing_demand_calcs_w_tou)
     ASSERT_EQ(24, day_one_power.size());
     int step = 24; // Jan 1st is a Sunday, need to hit on peak period on Monday
     int month = 0;
+    ur_month& curr_month = data.m_month[month];
     for (int i = 0; i < day_one_power.size(); i++)
     {
+        curr_month.update_net_and_peak(day_one_power.at(i), day_one_power.at(i), step + i);
         // Hourly, so power and energy are the same number
         data.sort_energy_to_periods(month, day_one_power.at(i), step + i);
         data.find_dc_tou_peak(month, day_one_power.at(i), step + i);
     }
 
-    ASSERT_NEAR(16674.22, data.get_demand_charge(0, 0), 0.1);
+    ASSERT_NEAR(16674.22, data.get_demand_charge(0, 0), 0.01);
 }
