@@ -149,14 +149,19 @@ private:
 	double m_q_pb_design;		//[Wt] thermal power to power cycle at design
 	double m_V_tank_hot_ini;	//[m^3] Initial volume in hot storage tank
     double m_mass_total_active; //[kg] Total HTF mass at design point inlet/outlet T
+    double m_d_tank;            //[m] diameter of a single tank
+    double m_q_dot_loss_des;    //[MWt] design tank heat loss
 
 	double m_cp_field_avg;		//[kJ/kg-K]
+    double m_rho_store_avg;     //[kg/m3]
 
 	double m_m_dot_tes_des_over_m_dot_field_des;	//[-]
 
 	double get_tes_m_dot(double m_dot_field /*kg/s*/);	//[kg/s]
 
 	double get_field_m_dot(double m_dot_tes /*kg/s*/);	//[kg/s]
+
+    bool m_is_hx;
 
 public:
 
@@ -174,9 +179,6 @@ public:
 
 	C_csp_reported_outputs mc_reported_outputs;
 
-	// Class to save messages for up stream classes
-	C_csp_messages mc_csp_messages;
-
 	struct S_params
 	{
 		int m_field_fl;
@@ -184,8 +186,6 @@ public:
 
 		int m_tes_fl;
 		util::matrix_t<double> m_tes_fl_props;
-
-		bool m_is_hx;
 
 		double m_W_dot_pc_design;   //[MWe] Design point gross power cycle output
 		double m_eta_pc;            //[-] Design point power cycle thermal efficiency
@@ -228,7 +228,6 @@ public:
 		S_params()
 		{
 			m_field_fl = m_tes_fl = m_tank_pairs = -1;		
-			m_is_hx = true;
             tanks_in_parallel = true;
             has_hot_tank_bypass = true;
             custom_tes_p_loss = false;
@@ -329,6 +328,9 @@ public:
 
     virtual double pumping_power(double m_dot_sf, double m_dot_pb, double m_dot_tank,
         double T_sf_in, double T_sf_out, double T_pb_in, double T_pb_out, bool recirculating);
+
+    void get_design_parameters(double& vol_one_temp_avail /*m3*/, double& vol_one_temp_total /*m3*/, double& d_tank /*m*/,
+        double& q_dot_loss_des /*MWt*/, double& dens_store_htf_at_T_ave /*kg/m3*/);
 };
 
 class C_hx_cold_tes

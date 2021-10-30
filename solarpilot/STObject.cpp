@@ -591,10 +591,11 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 	int sun_type = V->amb.sun_type.mapval(); 
 	double sigma = V->amb.sun_rad_limit.val; 
 	char shape = 'i';	//invalid
-	if(sun_type == 2){ shape = 'p'; }	//Pillbox sun
-	else if(sun_type == 0){ shape = 'g'; }	 //Point sun -- doesn't matter just use something here. it is disabled later.
-	else if(sun_type == 4){	shape = 'g'; }		//Gaussian sun
-	else if(sun_type == 1){	//Limb-darkened sun
+	if(sun_type == var_ambient::SUN_TYPE::PILLBOX_SUN){ shape = 'p'; }	//Pillbox sun
+	else if(sun_type == var_ambient::SUN_TYPE::POINT_SUN){ shape = 'g'; }	 //Point sun -- doesn't matter just use something here. it is disabled later.
+	else if(sun_type == var_ambient::SUN_TYPE::GAUSSIAN_SUN){	shape = 'g'; }		//Gaussian sun
+	else if(sun_type == var_ambient::SUN_TYPE::LIMBDARKENED_SUN)
+    {	//Limb-darkened sun
 		/* Create a table based on the limb-darkened profile and set as a user sun */
 		shape = 'd';
 		int np = 26;
@@ -621,44 +622,18 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 		delete [] angle;
 		delete [] intens;
 	}
-	else if(sun_type == 5){		//Buie sun
+	else if(sun_type == var_ambient::SUN_TYPE::BUIE_CSR )
+    {		
+        //Buie sun
 		shape = 'd';
-		double
-			kappa, gamma, theta, chi;
-		//calculate coefficients
-        chi = V->amb.sun_csr.val; 
-		kappa = 0.9*log(13.5 * chi)*pow(chi, -0.3);
-		gamma = 2.2*log(0.52 * chi)*pow(chi, 0.43) - 0.1;
-
-		int np = 50;
-		double
-			*angle = new double[np],
-			*intens = new double[np];
-
-		for(int i=0; i<np; i++){
-			theta = (double)i*25./(double)np;
-			angle[i] = theta;
-			if(theta > 4.65){
-				intens[i] = exp(kappa)*pow(theta, gamma);
-			}
-			else
-			{
-				intens[i] = cos(0.326 * theta)/cos(0.308 * theta);
-			}
-		}
-		//Fill into the sun object
-		Sun.SunShapeIntensity.resize(np);
-		Sun.SunShapeAngle.resize(np);
-		for(int i=0; i<np; i++){
-			Sun.SunShapeIntensity.at(i) = intens[i];
-			Sun.SunShapeAngle.at(i) = angle[i];
-		}
 		
-		delete [] angle;
-		delete [] intens;
+		//Fill into the sun object
+        SF.getAmbientObject()->calcBuieCSRIntensity(Sun.SunShapeAngle, Sun.SunShapeIntensity);
 
 	}
-	else if(sun_type == 3){	//User sun
+	else if(sun_type == 3)
+    {	
+        //User sun
 		shape = 'd';
 		int np = (int)V->amb.user_sun.val.nrows();
 		double
@@ -1028,7 +1003,7 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 	//Name
 	r_stage->Name = "Receiver";
 
-	vector<Receiver*> *recs = SF.getReceivers();
+	Rvector *recs = SF.getReceivers();
 	int nrecs = (int)recs->size();
 	unordered_map<int, Receiver*> rstage_map;	//map between element number and pointer to the receiver
 	
@@ -1083,8 +1058,8 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 
 			ST_Element *element = r_stage->ElementList.at(i);
 			element->Enabled = true;
-			pos.x = rv->rec_offset_x.val; 
-			pos.y = rv->rec_offset_y.val - diam/2.;
+			pos.x = rv->rec_offset_x_global.Val(); 
+			pos.y = rv->rec_offset_y_global.Val() - diam/2.;
 			pos.z = rv->optical_height.Val();    //optical height includes z offset
 			element->Origin[0] = pos.x;
 			element->Origin[1] = pos.y;
@@ -1139,8 +1114,8 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
             r_stage->ElementList.push_back( new ST_Element() );
             element = r_stage->ElementList.back();
 			element->Enabled = true;
-			pos.x = rv->rec_offset_x.val; 
-			pos.y = rv->rec_offset_y.val;
+			pos.x = rv->rec_offset_x_global.Val(); 
+			pos.y = rv->rec_offset_y_global.Val();
 			pos.z = rv->optical_height.Val() - rv->rec_height.val/2.;    //optical height includes z offset
 			element->Origin[0] = pos.x;
 			element->Origin[1] = pos.y;
@@ -1175,7 +1150,7 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 			*/
 			break;
 		case Receiver::REC_GEOM_TYPE::CYLINDRICAL_CAV:
-			break;
+			//break;
 		case Receiver::REC_GEOM_TYPE::PLANE_RECT:
 		{
 			double
@@ -1211,8 +1186,8 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 			Vect aim;
 			ST_Element *element = r_stage->ElementList.at(i);
 			element->Enabled = true;
-			pos.x = rv->rec_offset_x.val;
-			pos.y = rv->rec_offset_y.val;
+			pos.x = rv->rec_offset_x_global.Val();
+			pos.y = rv->rec_offset_y_global.Val();
 			pos.z = rv->optical_height.Val();    //optical height includes z offset
 			element->Origin[0] = pos.x;
 			element->Origin[1] = pos.y;

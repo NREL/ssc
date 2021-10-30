@@ -1,3 +1,25 @@
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 #include <gtest/gtest.h>
 #include <random>
 #include <fstream>
@@ -43,21 +65,24 @@ TEST_F(lib_battery_lifetime_cycle_test, runCycleLifetimeTest) {
     EXPECT_NEAR(s.average_range, 90, tol);
     EXPECT_NEAR(s.n_cycles, 249, tol);
 
+    // Cycles at a smaller DOD should produce a smaller amount of degradation
     while (idx < 1000){
-        if (idx % 2 != 0){
+        if (idx % 2 != 0) {
             DOD = 90;
         }
+        else
+            DOD = 80;
         cycle_model->runCycleLifetime(DOD);
         idx++;
     }
     s = cycle_model->get_state();
-    EXPECT_NEAR(s.cycle->q_relative_cycle, 91.244, tol);
-    EXPECT_NEAR(s.cycle->rainflow_Xlt, 0, tol);
-    EXPECT_NEAR(s.cycle->rainflow_Ylt, 0, tol);
-    EXPECT_NEAR(s.cycle->rainflow_jlt, 2, tol);
-    EXPECT_NEAR(s.cycle_range, 0, tol);
-    EXPECT_NEAR(s.average_range, 44.9098, tol);
-    EXPECT_NEAR(s.n_cycles, 499, tol);
+    EXPECT_NEAR(s.cycle->q_relative_cycle, 94.52, tol); // Only 0.5%, even with the same number of cycles
+    EXPECT_NEAR(s.cycle->rainflow_Xlt, 10, tol);
+    EXPECT_NEAR(s.cycle->rainflow_Ylt, 15, tol);
+    EXPECT_NEAR(s.cycle->rainflow_jlt, 4, tol);
+    EXPECT_NEAR(s.cycle_range, 10, tol);
+    EXPECT_NEAR(s.average_range, 50.0, tol);
+    EXPECT_NEAR(s.n_cycles, 498, tol);
 }
 
 TEST_F(lib_battery_lifetime_cycle_test, runCycleLifetimeTestJaggedProfile) {
@@ -86,7 +111,7 @@ TEST_F(lib_battery_lifetime_cycle_test, runCycleLifetimeTestKokamProfile) {
         idx++;
     }
     lifetime_state s = cycle_model->get_state();
-    EXPECT_NEAR(s.cycle->q_relative_cycle, 99.79, tol);
+    EXPECT_NEAR(s.cycle->q_relative_cycle, 99.77, tol);
     EXPECT_NEAR(s.cycle->rainflow_Xlt, 75.09, tol);
     EXPECT_NEAR(s.cycle->rainflow_Ylt, 75.27, tol);
     EXPECT_NEAR(s.cycle->rainflow_jlt, 5, tol);
@@ -346,4 +371,66 @@ TEST_F(lib_battery_lifetime_test, runCycleLifetimeTestWithRestPeriod) {
     EXPECT_NEAR(s.cycle_range, 90, tol);
     EXPECT_NEAR(s.average_range, 90, tol);
     EXPECT_NEAR(s.n_cycles, 2, tol);
+}
+
+TEST_F(lib_battery_lifetime_test, TestCycleDegradationDifferentOrdering) {
+    double DOD = 100;
+    double prev_DOD = 0;
+
+    // First run: high DOD first
+    for (int idx = 0; idx < 4000; idx++) {
+        if (idx % 2 == 0) {
+            DOD = 100;
+            prev_DOD = 0;
+        }
+        else {
+            DOD = 0;
+            prev_DOD = 100;
+        }
+        model->runLifetimeModels(idx, true, DOD, prev_DOD, 20);
+    }
+
+    // First run: low DOD second
+    for (int idx = 4000; idx < 8000; idx++) {
+        if (idx % 2 == 0) {
+            DOD = 20;
+            prev_DOD = 0;
+        }
+        else {
+            DOD = 0;
+            prev_DOD = 20;
+        }
+        model->runLifetimeModels(idx, true, DOD, prev_DOD, 20);
+    }
+
+    EXPECT_NEAR(model->capacity_percent_cycle(), 52.02, 0.1);
+
+    std::unique_ptr<lifetime_calendar_cycle_t> low_hi_model = std::unique_ptr<lifetime_calendar_cycle_t>(new lifetime_calendar_cycle_t(cycles_vs_DOD, dt_hour, 1.02, 2.66e-3, -7280, 930));
+
+    // Second run: low DOD first
+    for (int idx = 0; idx < 4000; idx++) {
+        if (idx % 2 == 0) {
+            DOD = 20;
+            prev_DOD = 0;
+        }
+        else {
+            DOD = 0;
+            prev_DOD = 20;
+        }
+        low_hi_model->runLifetimeModels(idx, true, DOD, prev_DOD, 20);
+    }
+
+    // Second run: high DOD second
+    for (int idx = 4000; idx < 8000; idx++) {
+        if (idx % 2 == 0) {
+            DOD = 100;
+            prev_DOD = 0;
+        }
+        else {
+            DOD = 0;
+            prev_DOD = 100;
+        }
+        low_hi_model->runLifetimeModels(idx, true, DOD, prev_DOD, 20);
+    }
+    EXPECT_NEAR(low_hi_model->capacity_percent_cycle(), 52.02, 0.1);
 }

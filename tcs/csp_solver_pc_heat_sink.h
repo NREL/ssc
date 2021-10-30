@@ -83,7 +83,7 @@ public:
 
 	virtual void init(C_csp_power_cycle::S_solved_params &solved_params);
 
-	virtual int get_operating_state();
+	virtual C_csp_power_cycle::E_csp_power_cycle_modes get_operating_state();
 
 	virtual double get_cold_startup_time();
 	virtual double get_warm_startup_time();

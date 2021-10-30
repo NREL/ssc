@@ -159,7 +159,10 @@ static var_info _cm_vtab_pvwattsv7[] = {
         { SSC_OUTPUT,       SSC_ARRAY,       "snow",                           "Weather file snow depth",                                  "cm",        "",										       "Time Series",      "",                        "",                          "" },
 
         { SSC_OUTPUT,       SSC_ARRAY,       "sunup",                          "Sun up over horizon",                         "0/1",       "",                                             "Time Series",      "*",                       "",                          "" },
-        { SSC_OUTPUT,       SSC_ARRAY,       "shad_beam_factor",               "Shading factor for beam radiation",           "",          "",                                             "Time Series",      "*",                       "",                                     "" },
+        { SSC_OUTPUT,       SSC_ARRAY,       "shad_beam_factor",               "External shading factor for beam radiation",           "",          "",                                             "Time Series",      "*",                       "",                                     "" },
+        { SSC_OUTPUT,       SSC_ARRAY,       "ss_beam_factor",                 "Calculated self-shading factor for beam radiation",           "",          "1=no shading",                                             "Time Series",      "*",                       "",                                     "" },
+        { SSC_OUTPUT,       SSC_ARRAY,       "ss_sky_diffuse_factor",          "Calculated self-shading factor for sky diffuse radiation",           "",          "1=no shading",                                             "Time Series",      "*",                       "",                                     "" },
+        { SSC_OUTPUT,       SSC_ARRAY,       "ss_gnd_diffuse_factor",          "Calculated self-shading factor for ground-reflected diffuse radiation",           "",          "1=no shading",                                             "Time Series",      "*",                       "",                                     "" },
         { SSC_OUTPUT,       SSC_ARRAY,       "aoi",                            "Angle of incidence",                          "deg",       "",                                             "Time Series",      "*",                       "",                          "" },
         { SSC_OUTPUT,       SSC_ARRAY,       "poa",                            "Plane of array irradiance",                   "W/m2",      "",                                             "Time Series",      "*",                       "",                          "" },
         { SSC_OUTPUT,       SSC_ARRAY,       "tpoa",                           "Transmitted plane of array irradiance",       "W/m2",      "",                                             "Time Series",      "*",                       "",                          "" },
@@ -174,7 +177,7 @@ static var_info _cm_vtab_pvwattsv7[] = {
         { SSC_OUTPUT,       SSC_ARRAY,       "dc_monthly",                     "DC output",                             "kWh",       "",                                             "Monthly",          "",                       "LENGTH=12",                          "" },
         { SSC_OUTPUT,       SSC_ARRAY,       "ac_monthly",                     "AC output",                            "kWh",       "",                                             "Monthly",          "",                       "LENGTH=12",                          "" },
         { SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",                 "Monthly energy",                              "kWh",       "",                                             "Monthly",          "",                       "LENGTH=12",                          "" },
-        { SSC_OUTPUT,	    SSC_MATRIX,			"annual_energy_distribution_time",			"Annual energy production as function of Time",				"",				"",				"Heatmaps",			"",						"",							"" },
+        { SSC_OUTPUT,	    SSC_MATRIX,		 "annual_energy_distribution_time","Annual energy production as function of Time",				"",				"",				"Heatmaps",			"",						"",							"" },
 
         { SSC_OUTPUT,       SSC_NUMBER,      "solrad_annual",                  "Daily average solar irradiance",              "kWh/m2/day","",                                             "Annual",      "",                       "",                          "" },
         { SSC_OUTPUT,       SSC_NUMBER,      "ac_annual",                      "Annual AC output",                     "kWh",       "",                                             "Annual",      "",                       "",                          "" },
@@ -191,7 +194,6 @@ static var_info _cm_vtab_pvwattsv7[] = {
         { SSC_OUTPUT,       SSC_NUMBER,      "elev",                           "Site elevation",                              "m",         "",                                             "Location",      "*",                       "",                          "" },
 
         { SSC_OUTPUT,       SSC_NUMBER,      "inverter_efficiency",            "Inverter efficiency at rated power",          "%",         "",                                             "PVWatts",      "",                        "",                              "" },
-        { SSC_OUTPUT,       SSC_NUMBER,      "estimated_rows",				   "Estimated number of rows in the system",	  "",          "",                                             "PVWatts",      "",                        "",                              "" },
 
         { SSC_OUTPUT,       SSC_NUMBER,      "ts_shift_hours",                 "Time offset for interpreting time series outputs", "hours","",                                             "Miscellaneous", "*",                       "",                          "" },
         { SSC_OUTPUT,       SSC_NUMBER,      "percent_complete",               "Estimated percent of total completed simulation", "%",     "",                                             "Miscellaneous", "",                        "",                          "" },
@@ -546,7 +548,6 @@ public:
             // fails for pv.modules < 1 that is id dc_nameplate < stc_watts
             if (pv.nmodules < 1) pv.nmodules = 1;
             pv.nrows = (int)ceil(sqrt(pv.nmodules)); // estimate of # rows, assuming 1 module in each row
-            assign("estimated_rows", var_data((ssc_number_t)pv.nrows));
 
             // see note farther down in code about self-shading for small systems
             // assume at least some reasonable number of rows.
@@ -556,7 +557,7 @@ public:
                 log(util::format("system size is too small to accurately estimate regular row-row self shading impacts. (estimates: #modules=%d, #rows=%d).  disabling self-shading calculations.",
                 (int)pv.nmodules, (int)pv.nrows), SSC_WARNING);*/
 
-            if (pv.type == ONE_AXIS)
+            if (pv.type == ONE_AXIS || pv.type == ONE_AXIS_BACKTRACKING)
                 pv.nmody = 1; // e.g. Nextracker or ArrayTechnologies single portrait
             else
                 pv.nmody = 2; // typical fixed 2 up portrait
@@ -709,7 +710,10 @@ public:
         ssc_number_t* p_sunup = allocate("sunup", nrec);
         ssc_number_t* p_aoi = allocate("aoi", nrec);
         ssc_number_t* p_shad_beam = allocate("shad_beam_factor", nrec); // just for reporting output
-        ssc_number_t* p_stow = allocate("tracker_stowing", nrec); // just for reporting output
+        ssc_number_t* p_ss_beam = allocate("ss_beam_factor", nrec);
+        ssc_number_t* p_ss_sky_diffuse = allocate("ss_sky_diffuse_factor", nrec);
+        ssc_number_t* p_ss_gnd_diffuse = allocate("ss_gnd_diffuse_factor", nrec);
+        ssc_number_t* p_stow = allocate("tracker_stowing", nrec); 
 
         ssc_number_t* p_tmod = allocate("tcell", nrec);
         ssc_number_t* p_dcshadederate = allocate("dcshadederate", nrec);
@@ -850,7 +854,11 @@ public:
                 if (shad.fbeam(hour_of_year, wf.minute, solalt, solazi))
                     shad_beam = shad.beam_shade_factor();
 
+                // initialize shading outputs
                 p_shad_beam[idx] = (ssc_number_t)shad_beam;
+                p_ss_beam[idx] = (ssc_number_t)1.0;
+                p_ss_sky_diffuse[idx] = (ssc_number_t)1.0;
+                p_ss_gnd_diffuse[idx] = (ssc_number_t)1.0;
 
                 if (sunup > 0)
                 {
@@ -996,6 +1004,7 @@ public:
                         {
                             if (y == 0 && wdprov->annualSimulation()) ld("poa_loss_self_beam_shade") += ibeam * ssout.m_shade_frac_fixed * wm2_to_wh;
                             ibeam *= (1 - ssout.m_shade_frac_fixed);
+                            p_ss_beam[idx] = (ssc_number_t)(1 - ssout.m_shade_frac_fixed);
                         }
 
                         // one-axis true tracking system with linear self-shading: beam is derated by linear shade fraction for 1-axis trackers
@@ -1007,6 +1016,7 @@ public:
                         {
                             if (y == 0 && wdprov->annualSimulation()) ld("poa_loss_self_beam_shade") += ibeam * shad1xf * wm2_to_wh;
                             ibeam *= (1 - shad1xf);
+                            p_ss_beam[idx] = (ssc_number_t)(1 - shad1xf);
                         }
 
                         // for non-linear self-shading (fixed and one-axis, but not backtracking)
@@ -1034,6 +1044,7 @@ public:
                         if (y == 0 && wdprov->annualSimulation()) ld("poa_loss_self_diff_shade") += (1.0 - Fskydiff) * (iskydiff + irear) * wm2_to_wh; //irear is zero if not bifacial
                         iskydiff *= Fskydiff;
                         irear *= Fskydiff;
+                        p_ss_sky_diffuse[idx] = (ssc_number_t)Fskydiff;
                     }
                     else log(util::format("Sky diffuse reduction factor invalid at time %lg: fskydiff=%lg, stilt=%lg.", idx, Fskydiff, stilt), SSC_NOTICE, (float)idx);
 
@@ -1041,6 +1052,7 @@ public:
                     {
                         if (y == 0 && wdprov->annualSimulation()) ld("poa_loss_self_diff_shade") += (1.0 - Fgnddiff) * ignddiff * wm2_to_wh;
                         ignddiff *= Fgnddiff;
+                        p_ss_gnd_diffuse[idx] = (ssc_number_t)Fgnddiff;
                     }
                     else log(util::format("Ground diffuse reduction factor invalid at time %lg: fgnddiff=%lg, stilt=%lg.", idx, Fgnddiff, stilt), SSC_NOTICE, (float)idx);
 

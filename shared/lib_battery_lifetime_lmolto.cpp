@@ -74,9 +74,9 @@ lifetime_t * lifetime_lmolto_t::clone() {
 }
 
 double lifetime_lmolto_t::runQcal() {
-    double SOC_avg = cycle_model->predictAvgSOC(state->cycle->DOD_max - state->cycle->DOD_min);
+    double SOC_avg = cycle_model->predictAvgSOC((state->cycle->DOD_max + state->cycle->DOD_min) / 2 * 100);
 
-    // trajectory eqn: qLossCal=q1*t^q2; rate eqn: dqLossCal=q1*q2*(qLossCal / q1)^((1-q2)/q2))
+    // trajectory eqn: qLossCal=q1*t^q2; rate eqn: dqLossCal=q1*q2*(q1 / qLossCal)^((1-q2)/q2))
     double dqLossCal = 0;
     double q1 = q1_b0 * exp(q1_b1 * (1 / pow(state->lmo_lto->temp_avg, 3.)) * sqrt(SOC_avg)) *
                       exp(q1_b2 * (1 / pow(state->lmo_lto->temp_avg, 2.)) * sqrt(SOC_avg));
@@ -182,5 +182,5 @@ void lifetime_lmolto_t::replaceBattery(double percent_to_replace) {
 }
 
 double lifetime_lmolto_t::estimateCycleDamage() {
-    return state->lmo_lto->dq_relative_cyc / (double)state->n_cycles;
+    return state->lmo_lto->dq_relative_cyc / fmax(1.0, (double)state->n_cycles);
 }

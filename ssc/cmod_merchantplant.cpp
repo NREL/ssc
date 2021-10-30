@@ -548,6 +548,24 @@ static var_info _cm_vtab_merchantplant[] = {
 	{ SSC_INPUT, SSC_MATRIX, "mp_ancserv4_revenue", "Ancillary services 4 revenue input", "", "Lifetime x 2 [Cleared Capacity(MW),Price($/MWh)]","Revenue", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_ancillary_services_4_revenue", "Ancillary services 4 revenue", "$", "", "Revenue", "*", "LENGTH_EQUAL=cf_length", "" },
 
+    // percent generation matrices (1-column)
+    { SSC_INPUT, SSC_MATRIX, "mp_energy_market_revenue_single", "Energy market revenue input", "", "Lifetime x 1 [Price($/MWh)]","Revenue", "mp_enable_market_percent_gen=1", "", "" },
+    { SSC_INPUT, SSC_MATRIX, "mp_ancserv1_revenue_single", "Ancillary services 1 revenue input", "", "Lifetime x 1[Price($/MWh)]","Revenue", "mp_enable_ancserv1_percent_gen=1", "", "" },
+    { SSC_INPUT, SSC_MATRIX, "mp_ancserv2_revenue_single", "Ancillary services 2 revenue input", "", "Lifetime x 1[Price($/MWh)]","Revenue", "mp_enable_ancserv2_percent_gen=1", "", "" },
+    { SSC_INPUT, SSC_MATRIX, "mp_ancserv3_revenue_single", "Ancillary services 3 revenue input", "", "Lifetime x 1[Price($/MWh)]","Revenue", "mp_enable_ancserv3_percent_gen=1", "", "" },
+    { SSC_INPUT, SSC_MATRIX, "mp_ancserv4_revenue_single", "Ancillary services 4 revenue input", "", "Lifetime x 1[Price($/MWh)]","Revenue", "mp_enable_ancserv4_percent_gen=1", "", "" },
+
+        // percent generation variables
+    { SSC_INPUT,        SSC_NUMBER,     "mp_enable_market_percent_gen",		      "Enable percent demand cleared capacity option for market revenue",   "0/1",   "",    "Revenue",  "*",	"INTEGER,MIN=0,MAX=1",      "" },
+    { SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv1_percent_gen",		      "Enable percent demand cleared capacity option for ancillary service 1",   "0/1",   "",    "Revenue",  "*",	"INTEGER,MIN=0,MAX=1",      "" },
+    { SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv2_percent_gen",		      "Enable percent demand cleared capacity option for ancillary service 2",   "0/1",   "",    "Revenue",  "*",	"INTEGER,MIN=0,MAX=1",      "" },
+    { SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv3_percent_gen",		      "Enable percent demand cleared capacity option for ancillary service 3",   "0/1",   "",    "Revenue",  "*",	"INTEGER,MIN=0,MAX=1",      "" },
+    { SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv4_percent_gen",		      "Enable percent demand cleared capacity option for ancillary service 4",   "0/1",   "",    "Revenue",  "*",	"INTEGER,MIN=0,MAX=1",      "" },
+    { SSC_INPUT,       SSC_NUMBER,     "mp_market_percent_gen",               "Percent of demand to copy to cleared capacity array",       "%","", "Revenue", "mp_enable_market_percent_gen=1", "MIN=0,MAX=100", "" },
+    { SSC_INPUT,       SSC_NUMBER,     "mp_ancserv1_percent_gen",               "Percent of demand to copy to cleared capacity array",       "%","", "Revenue", "mp_enable_ancserv1_percent_gen=1", "MIN=0,MAX=100", "" },
+    { SSC_INPUT,       SSC_NUMBER,     "mp_ancserv2_percent_gen",               "Percent of demand to copy to cleared capacity array",       "%","", "Revenue", "mp_enable_ancserv2_percent_gen=1", "MIN=0,MAX=100", "" },
+    { SSC_INPUT,       SSC_NUMBER,     "mp_ancserv3_percent_gen",               "Percent of demand to copy to cleared capacity array",       "%","", "Revenue", "mp_enable_ancserv3_percent_gen=1", "MIN=0,MAX=100", "" },
+    { SSC_INPUT,       SSC_NUMBER,     "mp_ancserv4_percent_gen",               "Percent of demand to copy to cleared capacity array",       "%","", "Revenue", "mp_enable_ancserv4_percent_gen=1", "MIN=0,MAX=100", "" },
 
 
 	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_curtailment_revenue",                        "Present value of curtailment payment revenue",              "$",                   "", "Metrics", "*", "", "" },
@@ -585,8 +603,6 @@ static var_info _cm_vtab_merchantplant[] = {
 	{ SSC_OUTPUT, SSC_ARRAY, "mp_ancillary_services4_price", "Ancillary services 4 generated price", "$/MWh", "", "", "*", "", "GROUP=LIFETIME_MP" },
 		// sum of all cleared capacities
 	{ SSC_OUTPUT, SSC_ARRAY, "mp_total_cleared_capacity", "Total cleared capacity", "MW", "", "", "*", "", "GROUP=LIFETIME_MP" },
-
-
 
 var_info_invalid };
 
@@ -1053,7 +1069,7 @@ public:
             escal_or_annual(CF_om_fixed1_expense, nyears, "om_batt_fixed_cost", inflation_rate, 1.0, false, as_double("om_fixed_escal") * 0.01);
             escal_or_annual(CF_om_production1_expense, nyears, "om_batt_variable_cost", inflation_rate, 0.001, false, as_double("om_production_escal") * 0.01); //$/MWh
             escal_or_annual(CF_om_capacity1_expense, nyears, "om_batt_capacity_cost", inflation_rate, 1.0, false, as_double("om_capacity_escal") * 0.01);
-            nameplate1 = as_number("ui_batt_capacity");
+            nameplate1 = as_number("om_batt_nameplate");
             if (as_integer("en_batt") == 1)
                 battery_discharged = as_vector_double("batt_annual_discharge_energy");
         }
@@ -1062,7 +1078,7 @@ public:
             escal_or_annual(CF_om_fixed2_expense, nyears, "om_fuelcell_fixed_cost", inflation_rate, 1.0, false, as_double("om_fixed_escal") * 0.01);
             escal_or_annual(CF_om_production2_expense, nyears, "om_fuelcell_variable_cost", inflation_rate, 0.001, false, as_double("om_production_escal") * 0.01);
             escal_or_annual(CF_om_capacity2_expense, nyears, "om_fuelcell_capacity_cost", inflation_rate, 1.0, false, as_double("om_capacity_escal") * 0.01);
-            nameplate2 = as_number("ui_fuelcell_capacity");
+            nameplate2 = as_number("om_fuelcell_nameplate");
             fuelcell_discharged = as_vector_double("fuelcell_annual_energy_discharged");
         }
 

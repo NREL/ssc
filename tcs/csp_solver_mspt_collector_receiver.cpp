@@ -104,6 +104,10 @@ double C_csp_mspt_collector_receiver::get_min_power_delivery()    //MWt
     return mc_pt_receiver.m_f_rec_min * mc_pt_receiver.m_q_rec_des*1.e-6;
 }
 
+double C_csp_mspt_collector_receiver::get_max_power_delivery(double T_htf_cold_in /*C*/)    //MWt
+{
+    return mc_pt_receiver.m_m_dot_htf_max_frac * mc_pt_receiver.m_q_rec_des * 1.e-6;
+}
 
 double C_csp_mspt_collector_receiver::get_tracking_power()
 {
@@ -307,7 +311,7 @@ void C_csp_mspt_collector_receiver::estimates(const C_csp_weatherreader::S_outpu
 
 	int mode = get_operating_state();
 
-	if( mode == C_csp_collector_receiver::ON )
+	if( mode == C_csp_collector_receiver::ON || mode == C_csp_collector_receiver::OFF_NO_SU_REQ)
 	{
 		est_out.m_q_dot_avail = cr_out_solver.m_q_thermal;			//[MWt]
 		est_out.m_m_dot_avail = cr_out_solver.m_m_dot_salt_tot;		//[kg/hr]

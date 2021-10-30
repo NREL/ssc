@@ -1,3 +1,25 @@
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 #include <gtest/gtest.h>
 #include "cmod_csp_trough_eqns.h"
 #include "cmod_financial_eqns.h"
@@ -33,10 +55,8 @@ NAMESPACE_TEST(csp_common, TroughSharedWithUi, SolarField) {
     vd->assign("Fluid", 21);
     vd->assign("I_bn_des", 950);
     vd->assign("m_dot_htfmax", 12);
-    vd->assign("fluid_dens_outlet_temp", 706.38);
     vd->assign("m_dot_htfmin", 1);
-    vd->assign("fluid_dens_inlet_temp", 820.81);
-    vd->assign("radio_sm_or_area", 0);
+    vd->assign("use_solar_mult_or_aperture_area", 0);
     vd->assign("specified_solar_multiple", 2);
     vd->assign("specified_total_aperture", 877000);
     vd->assign("tshours", 6);
@@ -153,7 +173,7 @@ NAMESPACE_TEST(csp_common, TroughSharedWithUi, CollectorType) {
     util::matrix_t<double> IAM_matrix(4, 3, &IAM_matrix_vec);
     vd->assign("IAM_matrix", IAM_matrix);
 
-    Physical_Trough_Collector_Type_Equations(vd);
+    Physical_Trough_Collector_Type_UI_Only_Equations(vd);
 
     ASSERT_NEAR_FRAC(GetNum(vd, "csp_dtr_sca_calc_zenith"), 0.1506, kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "csp_dtr_sca_calc_costh"), 0.9886, kErrorToleranceHi);

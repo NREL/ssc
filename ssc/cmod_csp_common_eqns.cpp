@@ -1,3 +1,25 @@
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 #include <cmath>
 #include <math.h>
 #include <cmath>
@@ -5,6 +27,7 @@
 #include "cmod_csp_common_eqns.h"
 #include "vartab.h"
 #include "csp_system_costs.h"
+#include "csp_solver_cavity_receiver.h"
 
 #pragma warning(disable: 4297)  // ignore warning: 'function assumed not to throw an exception but does'
 
@@ -260,25 +283,7 @@ double Dni_des_calc(double dni_des /*W/m2*/) {       // [W/m2]
     return dni_des;
 }
 
-int Opt_algorithm() {        // [-]
-    return 1;
-}
-
-double Opt_flux_penalty() {  // [-]
-    return 0.25;
-}
-
-
-
 // Originally from 'MSPT Receiver' UI Form
-double Csp_pt_rec_cav_lip_height() {     // [m]
-    return 1.;
-}
-
-double Csp_pt_rec_cav_panel_height() {   // [m]
-    return 1.1;
-}
-
 double Csp_pt_rec_htf_t_avg(double T_htf_cold_des /*C*/, double T_htf_hot_des /*C*/) {       // [C]
     return (T_htf_cold_des + T_htf_hot_des) / 2.;
 }
@@ -295,10 +300,6 @@ double Csp_pt_rec_max_flow_to_rec(double csp_pt_rec_max_oper_frac /*-*/, double 
 
     return (csp_pt_rec_max_oper_frac * Q_rec_des * 1.e6) /
         (csp_pt_rec_htf_c_avg * 1.e3 * (T_htf_hot_des - T_htf_cold_des));
-}
-
-double Csp_pt_rec_cav_ap_height(double rec_d_spec /*m*/, double csp_pt_rec_cav_ap_hw_ratio /*-*/) {      // [m]
-    return rec_d_spec * csp_pt_rec_cav_ap_hw_ratio;
 }
 
 double Rec_aspect(double D_rec /*m*/, double rec_height /*m*/) {     // [-]
@@ -358,10 +359,13 @@ util::matrix_t<double> Wlim_series(double disp_wlim_max /*MWe*/) {    // [kWe]
 //
 //}
 
-double Csp_pt_cost_receiver_area(TowerTypes tower_type /*-*/, double d_rec /*m*/, double rec_height /*m*/,
-    int receiver_type /*-*/, double rec_d_spec /*m*/, double csp_pt_rec_cav_ap_height /*m*/) {      // [m2]
+void Csp_pt_cost_receiver_area(TowerTypes tower_type /*-*/, double d_rec /*m*/,
+    double rec_height /*m*/, int receiver_type /*-*/, double cav_rec_height /*m*/,
+    double cav_rec_width /*m*/, double rec_span_deg /*deg*/, int n_cav_panels,
+    double& area /*m2*/, double& cav_panel_width /*m*/,
+    double& cav_radius /*m*/, double& cav_offset) {      // [m2]
 
-    double area = std::numeric_limits<double>::quiet_NaN();
+    area = cav_panel_width = cav_radius = cav_offset = std::numeric_limits<double>::quiet_NaN();
 
     if (tower_type == TowerTypes::kMoltenSalt || tower_type == TowerTypes::kIscc) {
         switch (receiver_type) {
@@ -369,7 +373,14 @@ double Csp_pt_cost_receiver_area(TowerTypes tower_type /*-*/, double d_rec /*m*/
             area = rec_height * d_rec * M_PI;
             break;
         case 1:
-            area = rec_d_spec * csp_pt_rec_cav_ap_height;
+        {
+            double rec_span_rad = rec_span_deg * M_PI / 180.0;
+            double theta0, panelSpan;
+            theta0 = panelSpan = std::numeric_limits<double>::quiet_NaN();
+            cavity_receiver_helpers::calc_receiver_macro_geometry(cav_rec_height, cav_rec_width,
+                rec_span_rad, n_cav_panels,
+                theta0, panelSpan, cav_panel_width, area, cav_radius, cav_offset);
+        }
             break;
         default:
             throw std::runtime_error("Receiver type not supported.");
@@ -379,7 +390,7 @@ double Csp_pt_cost_receiver_area(TowerTypes tower_type /*-*/, double d_rec /*m*/
         area = d_rec * rec_height * M_PI;
     }
 
-    return area;
+    return;
 }
 
 double Csp_pt_cost_storage_mwht(TowerTypes tower_type /*-*/, double p_ref /*MWe*/, double design_eff /*-*/,
@@ -563,17 +574,17 @@ void Tower_SolarPilot_Capital_Costs_Equations(ssc_data_t data)
 /////////////////////////////////////////////////////////////////////////////////////////////
 
 
-double Solar_mult(int radio_sm_or_area, double field_thermal_output, double q_pb_design, double specified_solar_multiple, double total_aperture, double total_required_aperture_for_SM1)
+double Solar_mult(int use_solar_mult_or_aperture_area, double field_thermal_output, double q_pb_design, double specified_solar_multiple, double total_aperture, double total_required_aperture_for_SM1)
 {
     double solar_mult = std::numeric_limits<double>::quiet_NaN();
 
-    if (radio_sm_or_area == -1) {
+    if (use_solar_mult_or_aperture_area == -1) {
         solar_mult = field_thermal_output / q_pb_design;
     }
-    else if (radio_sm_or_area == 0) {
+    else if (use_solar_mult_or_aperture_area == 0) {
         solar_mult = specified_solar_multiple;
     }
-    else if (radio_sm_or_area == 1) {
+    else if (use_solar_mult_or_aperture_area == 1) {
         solar_mult = total_aperture / total_required_aperture_for_SM1;
     }
     else {
@@ -583,15 +594,23 @@ double Solar_mult(int radio_sm_or_area, double field_thermal_output, double q_pb
     return solar_mult;
 }
 
-double Max_field_flow_velocity(double m_dot_htfmax, double fluid_dens_outlet_temp, double min_inner_diameter)
+double Max_field_flow_velocity(double m_dot_htfmax, double min_inner_diameter,
+    double T_out /*C*/, int rec_htf /*-*/, const util::matrix_t<ssc_number_t>& field_fl_props /*-*/)
 {
-    return m_dot_htfmax * 4 / (fluid_dens_outlet_temp * M_PI *
+    HTFProperties htf_properties = GetHtfProperties(rec_htf, field_fl_props);
+    double density = htf_properties.dens(T_out + 273.15, std::numeric_limits<double>::quiet_NaN());
+
+    return m_dot_htfmax * 4 / (density * M_PI *
         min_inner_diameter * min_inner_diameter);
 }
 
-double Min_field_flow_velocity(double m_dot_htfmin, double fluid_dens_inlet_temp, double min_inner_diameter)
+double Min_field_flow_velocity(double m_dot_htfmin, double min_inner_diameter,
+    double T_in /*C*/, int rec_htf /*-*/, const util::matrix_t<ssc_number_t>& field_fl_props /*-*/)
 {
-    return m_dot_htfmin * 4 / (fluid_dens_inlet_temp * M_PI *
+    HTFProperties htf_properties = GetHtfProperties(rec_htf, field_fl_props);
+    double density = htf_properties.dens(T_in + 273.15, std::numeric_limits<double>::quiet_NaN());
+
+    return m_dot_htfmin * 4 / (density * M_PI *
         min_inner_diameter * min_inner_diameter);
 }
 
@@ -660,16 +679,16 @@ double Cspdtr_loop_hce_heat_loss(const util::matrix_t<ssc_number_t>& trough_loop
     return derate;
 }
 
-double Nloops(int radio_sm_or_area, double specified_solar_multiple, double total_required_aperture_for_SM1,
+double Nloops(int use_solar_mult_or_aperture_area, double specified_solar_multiple, double total_required_aperture_for_SM1,
     double specified_total_aperture, double single_loop_aperture)
 {
     double total_aperture = std::numeric_limits<double>::quiet_NaN();
     double n_loops = std::numeric_limits<double>::quiet_NaN();
 
-    if (radio_sm_or_area == -1 || radio_sm_or_area == 0) {    // includes -1 for IPH
+    if (use_solar_mult_or_aperture_area == -1 || use_solar_mult_or_aperture_area == 0) {    // includes -1 for IPH
         total_aperture = specified_solar_multiple * total_required_aperture_for_SM1;
     }
-    else if (radio_sm_or_area == 1) {
+    else if (use_solar_mult_or_aperture_area == 1) {
         total_aperture = specified_total_aperture;
     }
     else {

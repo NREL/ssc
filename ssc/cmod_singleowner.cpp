@@ -1066,7 +1066,7 @@ public:
 			escal_or_annual(CF_om_fixed1_expense, nyears, "om_batt_fixed_cost", inflation_rate, 1.0, false, as_double("om_fixed_escal")*0.01);
 			escal_or_annual(CF_om_production1_expense, nyears, "om_batt_variable_cost", inflation_rate, 0.001, false, as_double("om_production_escal")*0.01); //$/MWh
 			escal_or_annual(CF_om_capacity1_expense, nyears, "om_batt_capacity_cost", inflation_rate, 1.0, false, as_double("om_capacity_escal")*0.01);
-			nameplate1 = as_number("ui_batt_capacity");
+			nameplate1 = as_number("om_batt_nameplate");
             if (as_integer("en_batt") == 1)
                 battery_discharged = as_vector_double("batt_annual_discharge_energy");
 		}
@@ -1075,7 +1075,7 @@ public:
 			escal_or_annual(CF_om_fixed2_expense, nyears, "om_fuelcell_fixed_cost", inflation_rate, 1.0, false, as_double("om_fixed_escal")*0.01);
 			escal_or_annual(CF_om_production2_expense, nyears, "om_fuelcell_variable_cost", inflation_rate, 0.001, false, as_double("om_production_escal")*0.01);
 			escal_or_annual(CF_om_capacity2_expense, nyears, "om_fuelcell_capacity_cost", inflation_rate, 1.0, false, as_double("om_capacity_escal")*0.01);
-			nameplate2 = as_number("ui_fuelcell_capacity");
+			nameplate2 = as_number("om_fuelcell_nameplate");
             fuelcell_discharged = as_vector_double("fuelcell_annual_energy_discharged");
 		}
 
@@ -3007,7 +3007,7 @@ public:
             cf_lcos.at(1, y) = cf.at(CF_battery_replacement_cost_schedule, y);
             cf_lcos.at(2, y) = cf.at(CF_ppa_price, y);
             cf_lcos.at(6, y) = cf.at(CF_om_fixed1_expense, y); //Fixed OM Battery cost
-            cf_lcos.at(7, y) = cf.at(CF_om_production1_expense, y); //Produciton OM Battery cost
+            cf_lcos.at(7, y) = cf.at(CF_om_production1_expense, y); //Production OM Battery cost
             cf_lcos.at(8, y) = cf.at(CF_om_capacity1_expense, y); //Capacity OM Battery Cost
         }
         int grid_charging_cost_version = 1;

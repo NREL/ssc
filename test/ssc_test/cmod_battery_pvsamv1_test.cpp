@@ -1,3 +1,25 @@
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 #include <gtest/gtest.h>
 
 #include "cmod_battery_pvsamv1_test.h"
@@ -91,11 +113,31 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACBatteryModelIntegr
     ssc_number_t peakKwCharge[3] = { -2.81, -3.02, -2.25 };
     ssc_number_t peakKwDischarge[3] = { 1.39, 1.30, 0.97 };
     ssc_number_t peakCycles[3] = { 1, 1, 1 };
-    ssc_number_t avgCycles[3] = { 1, 0.9973, 0.4904 };
+    ssc_number_t avgCycles[3] = { 1, 1, 0.4904 };
 
     // Test peak shaving look ahead, peak shaving look behind, and automated grid power target. Others require additional input data
     for (int i = 0; i < 3; i++) {
-        pairs["batt_dispatch_choice"] = i;
+        switch (i) {
+            case 0:
+                // Peak shaving, look ahead
+                pairs["batt_dispatch_choice"] = 0;
+                pairs["batt_dispatch_wf_forecast_choice"] = 0;
+                pairs["batt_dispatch_load_forecast_choice"] = 0;
+                break;
+            case 1:
+                // Peak shaving, look behind
+                pairs["batt_dispatch_choice"] = 0;
+                pairs["batt_dispatch_wf_forecast_choice"] = 1;
+                pairs["batt_dispatch_load_forecast_choice"] = 1;
+                break;
+            case 2:
+                // Input grid power targets
+                pairs["batt_dispatch_choice"] = 1;
+                pairs["batt_dispatch_wf_forecast_choice"] = 0;
+                pairs["batt_dispatch_load_forecast_choice"] = 0;
+                break;
+
+        }
 
         int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
         EXPECT_FALSE(pvsam_errors);
@@ -135,7 +177,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACDCBatteryModelInte
 
     pairs["analysis_period"] = 1;
     set_array(data, "load", load_profile_path, 8760); // Load is required for peak shaving controllers
-    pairs["batt_dispatch_choice"] = 3;
+    pairs["batt_dispatch_choice"] = 2;
     set_array(data, "batt_custom_dispatch", custom_dispatch_residential_schedule, 8760);
 
     ssc_number_t expectedEnergy[2] = { 8710, 8717 };
@@ -189,7 +231,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACDCBatteryModelInte
 
     pairs["analysis_period"] = 1;
     set_array(data, "load", load_profile_path, 8760); // Load is required for peak shaving controllers
-    pairs["batt_dispatch_choice"] = 3;
+    pairs["batt_dispatch_choice"] = 2;
     set_array(data, "batt_custom_dispatch", custom_dispatch_residential_hourly_schedule, 8760);
 
     ssc_number_t expectedEnergy[2] = { 8708, 8672 };
@@ -243,7 +285,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACDCBatteryModelInte
 
     pairs["analysis_period"] = 1;
     set_array(data, "load", load_profile_path, 8760); // Load is required for peak shaving controllers
-    pairs["batt_dispatch_choice"] = 4;
+    pairs["batt_dispatch_choice"] = 3;
 
     ssc_number_t expectedEnergy[2] = { 8701, 8672 };
     ssc_number_t expectedBatteryChargeEnergy[2] = { 468, 488 };
@@ -304,11 +346,31 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialDCBatteryModelIntegr
     ssc_number_t peakKwCharge[3] = { -3.21, -2.96, -2.69 };
     ssc_number_t peakKwDischarge[3] = { 1.40, 1.31, 0.967 };
     ssc_number_t peakCycles[3] = { 2, 2, 1 };
-    ssc_number_t avgCycles[3] = { 1.0109, 1.0054, 0.4794 };
+    ssc_number_t avgCycles[3] = { 1.0109, 1.0082, 0.4794 };
 
     // Test peak shaving look ahead, peak shaving look behind, and automated grid power target. Others require additional input data
     for (int i = 0; i < 3; i++) {
-        pairs["batt_dispatch_choice"] = i;
+        switch (i) {
+        case 0:
+            // Peak shaving, look ahead
+            pairs["batt_dispatch_choice"] = 0;
+            pairs["batt_dispatch_wf_forecast_choice"] = 0;
+            pairs["batt_dispatch_load_forecast_choice"] = 0;
+            break;
+        case 1:
+            // Peak shaving, look behind
+            pairs["batt_dispatch_choice"] = 0;
+            pairs["batt_dispatch_wf_forecast_choice"] = 1;
+            pairs["batt_dispatch_load_forecast_choice"] = 1;
+            break;
+        case 2:
+            // Input grid power targets
+            pairs["batt_dispatch_choice"] = 1;
+            pairs["batt_dispatch_wf_forecast_choice"] = 0;
+            pairs["batt_dispatch_load_forecast_choice"] = 0;
+            break;
+
+        }
 
         int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
         EXPECT_FALSE(pvsam_errors);
@@ -407,9 +469,10 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_ACBatteryModelIntegration)
     ssc_number_t peakCycles[3] = { 1, 1, 1 };
     ssc_number_t avgCycles[3] = { 0.003, 0.006, 0.003 };
 
-    // Test peak shaving look ahead, peak shaving look behind, and automated grid power target. Others require additional input data
-    for (int i = 0; i < 3; i++) {
-        ssc_data_set_number(data, "batt_dispatch_choice", i);
+    ssc_data_set_number(data, "batt_dispatch_choice", 0);
+    // Test economoic dispatch look ahead, economoic dispatch look behind. Others require additional input data
+    for (int i = 0; i < 2; i++) {
+        ssc_data_set_number(data, "batt_dispatch_wf_forecast_choice", i);
 
         int pvsam_errors = run_pvsam1_battery_ppa(data);
         EXPECT_FALSE(pvsam_errors);
@@ -451,16 +514,16 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_ManualDispatchBatteryModelI
     grid_and_rate_defaults(data);
     singleowner_defaults(data);
 
-    ssc_number_t expectedEnergy = 37184421;
-    ssc_number_t expectedBatteryChargeEnergy = 1300958;
-    ssc_number_t expectedBatteryDischargeEnergy = 1177242;
+    ssc_number_t expectedEnergy = 37184559;
+    ssc_number_t expectedBatteryChargeEnergy = 1299674;
+    ssc_number_t expectedBatteryDischargeEnergy = 1176096;
 
     ssc_number_t peakKwCharge = -1052.0;
     ssc_number_t peakKwDischarge = 848.6;
     ssc_number_t peakCycles = 1;
     ssc_number_t avgCycles = 1;
 
-    ssc_data_set_number(data, "batt_dispatch_choice", 4);
+    ssc_data_set_number(data, "batt_dispatch_choice", 3);
 
     // Modify utility rate to Salt River Project Super Peak
     ssc_number_t p_ur_ec_sched_weekday_srp[288] = { 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 5, 5, 5, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 5, 5, 5, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 5, 5, 5, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 5, 5, 5, 6, 6, 6, 6, 6, 6, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 5, 5, 5, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 5, 5, 5, 6, 6, 6, 6, 6, 6, 6 };
@@ -513,7 +576,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_CustomDispatchBatteryModelD
     ssc_number_t peakCycles = 1;
     ssc_number_t avgCycles = 0.0027;
 
-    ssc_data_set_number(data, "batt_dispatch_choice", 3);
+    ssc_data_set_number(data, "batt_dispatch_choice", 2);
     ssc_data_set_number(data, "batt_ac_or_dc", 0);
     set_array(data, "batt_custom_dispatch", custom_dispatch_singleowner_schedule, 8760);
 
@@ -561,9 +624,9 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_CustomDispatchBatteryModelD
     ssc_number_t peakKwCharge = -948.6;
     ssc_number_t peakKwDischarge = 651.7;
     ssc_number_t peakCycles = 3;
-    ssc_number_t avgCycles = 1.1945;
+    ssc_number_t avgCycles = 1.1941;
 
-    ssc_data_set_number(data, "batt_dispatch_choice", 3);
+    ssc_data_set_number(data, "batt_dispatch_choice", 2);
     ssc_data_set_number(data, "batt_ac_or_dc", 0);
     set_array(data, "batt_custom_dispatch", custom_dispatch_singleowner_hourly_schedule, 8760);
 
@@ -614,7 +677,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, CommercialMultipleSubarrayBatte
     ssc_number_t peakCycles = 1;
     ssc_number_t avgCycles = 1;
 
-    // Test peak shaving look ahead, peak shaving look behind, and automated grid power target. Others require additional input data
+    // Test peak shaving look ahead
     int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
     EXPECT_FALSE(pvsam_errors);
 
@@ -626,10 +689,10 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, CommercialMultipleSubarrayBatte
 
         auto data_vtab = static_cast<var_table*>(data);
         auto annualChargeEnergy = data_vtab->as_vector_ssc_number_t("batt_annual_charge_energy");
-        EXPECT_NEAR(annualChargeEnergy[0], expectedBatteryChargeEnergy, m_error_tolerance_hi) << "Battery annual charge energy.";
+        EXPECT_NEAR(annualChargeEnergy[1], expectedBatteryChargeEnergy, m_error_tolerance_hi) << "Battery annual charge energy.";
 
         auto annualDischargeEnergy = data_vtab->as_vector_ssc_number_t("batt_annual_discharge_energy");
-        EXPECT_NEAR(annualDischargeEnergy[0], expectedBatteryDischargeEnergy, m_error_tolerance_hi) << "Battery annual discharge energy.";
+        EXPECT_NEAR(annualDischargeEnergy[1], expectedBatteryDischargeEnergy, m_error_tolerance_hi) << "Battery annual discharge energy.";
 
         auto dcInverterLoss = data_vtab->as_vector_ssc_number_t("dc_invmppt_loss");
         ssc_number_t totalLoss = 0;
@@ -668,7 +731,6 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ClippingForecastTest1_DC_FOM_Di
     ssc_number_t peakCycles = 1;
     ssc_number_t avgCycles = 1;
 
-    // Test peak shaving look ahead, peak shaving look behind, and automated grid power target. Others require additional input data
     int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
     EXPECT_FALSE(pvsam_errors);
 
@@ -680,10 +742,10 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ClippingForecastTest1_DC_FOM_Di
 
         auto data_vtab = static_cast<var_table*>(data);
         auto annualChargeEnergy = data_vtab->as_vector_ssc_number_t("batt_annual_charge_energy");
-        EXPECT_NEAR(annualChargeEnergy[0], expectedBatteryChargeEnergy, m_error_tolerance_hi) << "Battery annual charge energy.";
+        EXPECT_NEAR(annualChargeEnergy[1], expectedBatteryChargeEnergy, m_error_tolerance_hi) << "Battery annual charge energy.";
 
         auto annualDischargeEnergy = data_vtab->as_vector_ssc_number_t("batt_annual_discharge_energy");
-        EXPECT_NEAR(annualDischargeEnergy[0], expectedBatteryDischargeEnergy, m_error_tolerance_hi) << "Battery annual discharge energy.";
+        EXPECT_NEAR(annualDischargeEnergy[1], expectedBatteryDischargeEnergy, m_error_tolerance_hi) << "Battery annual discharge energy.";
 
         auto dcInverterLoss = data_vtab->as_vector_ssc_number_t("dc_invmppt_loss");
         ssc_number_t totalLoss = 0;
@@ -722,7 +784,6 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ClippingForecastTest2_DC_FOM_Di
     ssc_number_t peakCycles = 1;
     ssc_number_t avgCycles = 1;
 
-    // Test peak shaving look ahead, peak shaving look behind, and automated grid power target. Others require additional input data
     int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
     EXPECT_FALSE(pvsam_errors);
 
@@ -734,10 +795,10 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ClippingForecastTest2_DC_FOM_Di
 
         auto data_vtab = static_cast<var_table*>(data);
         auto annualChargeEnergy = data_vtab->as_vector_ssc_number_t("batt_annual_charge_energy");
-        EXPECT_NEAR(annualChargeEnergy[0], expectedBatteryChargeEnergy, m_error_tolerance_hi) << "Battery annual charge energy.";
+        EXPECT_NEAR(annualChargeEnergy[1], expectedBatteryChargeEnergy, m_error_tolerance_hi) << "Battery annual charge energy.";
 
         auto annualDischargeEnergy = data_vtab->as_vector_ssc_number_t("batt_annual_discharge_energy");
-        EXPECT_NEAR(annualDischargeEnergy[0], expectedBatteryDischargeEnergy, m_error_tolerance_hi) << "Battery annual discharge energy.";
+        EXPECT_NEAR(annualDischargeEnergy[1], expectedBatteryDischargeEnergy, m_error_tolerance_hi) << "Battery annual discharge energy.";
 
         auto dcInverterLoss = data_vtab->as_vector_ssc_number_t("dc_invmppt_loss");
         ssc_number_t totalLoss = 0;
@@ -775,7 +836,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_CustomDispatchBatteryModelD
     ssc_number_t peakCycles = 3;
     ssc_number_t avgCycles = 1.1829;
 
-    ssc_data_set_number(data, "batt_dispatch_choice", 3);
+    ssc_data_set_number(data, "batt_dispatch_choice", 2);
     ssc_data_set_number(data, "batt_ac_or_dc", 0);
     set_array(data, "batt_custom_dispatch", custom_dispatch_singleowner_subhourly_schedule, 8760 * 4);
     set_array(data, "batt_room_temperature_celsius", subhourly_batt_temps, 8760 * 4);
@@ -834,7 +895,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialDCBatteryModelPriceS
     ssc_number_t peakCycles = 2;
     ssc_number_t avgCycles = 0.41;
 
-    pairs["batt_dispatch_choice"] = 5;
+    pairs["batt_dispatch_choice"] = 4;
 
     int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
     EXPECT_FALSE(pvsam_errors);
@@ -863,6 +924,162 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialDCBatteryModelPriceS
         auto batt_q_rel = data_vtab->as_vector_ssc_number_t("batt_capacity_percent");
         auto batt_cyc_avg = data_vtab->as_vector_ssc_number_t("batt_DOD_cycle_average");
         EXPECT_NEAR(batt_q_rel.back(), 98.034, 2e-2);
-        EXPECT_NEAR(batt_cyc_avg.back(), 27.00, 0.2);
+        EXPECT_NEAR(batt_cyc_avg.back(), 27.1, 0.5);
     }
+}
+
+/// Test PVSAMv1 with an interconnection limit to ensure powerflow calcluations are working properly
+TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACBatteryModelInterconnectionLimits)
+{
+    pvsamv_nofinancial_default(data);
+    battery_data_default(data);
+
+    std::map<std::string, double> pairs;
+    pairs["en_batt"] = 1;
+    pairs["batt_ac_or_dc"] = 1; //AC
+    pairs["analysis_period"] = 1;
+    set_array(data, "load", load_profile_path, 8760); // Load is required for peak shaving controllers
+    pairs["batt_dispatch_choice"] = 0; // Peak shaving
+    pairs["batt_dispatch_wf_forecast_choice"] = 0; // Look ahead
+
+    pairs["enable_interconnection_limit"] = true;
+    double interconnection_limit = 1.0; // kWac
+    pairs["grid_interconnection_limit_kwac"] = interconnection_limit;
+
+    ssc_number_t expectedEnergy = 8594;
+    ssc_number_t expectedBatteryChargeEnergy = 1442;
+    ssc_number_t expectedBatteryDischargeEnergy = 1321;
+
+    ssc_number_t peakKwCharge = -2.81;
+    ssc_number_t peakKwDischarge = 1.39;
+    ssc_number_t peakCycles = 1;
+    ssc_number_t avgCycles = 1;
+
+    int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+    EXPECT_FALSE(pvsam_errors);
+
+    if (!pvsam_errors)
+    {
+        ssc_number_t annual_energy;
+        ssc_data_get_number(data, "annual_energy", &annual_energy);
+        EXPECT_NEAR(annual_energy, expectedEnergy, m_error_tolerance_hi) << "Annual energy.";
+
+        auto data_vtab = static_cast<var_table*>(data);
+        auto annualChargeEnergy = data_vtab->as_vector_ssc_number_t("batt_annual_charge_energy");
+        EXPECT_NEAR(annualChargeEnergy[0], expectedBatteryChargeEnergy, m_error_tolerance_hi) << "Battery annual charge energy.";
+
+        auto annualDischargeEnergy = data_vtab->as_vector_ssc_number_t("batt_annual_discharge_energy");
+        EXPECT_NEAR(annualDischargeEnergy[0], expectedBatteryDischargeEnergy, m_error_tolerance_hi) << "Battery annual discharge energy.";
+
+        auto batt_power = data_vtab->as_vector_ssc_number_t("batt_power");
+        daily_battery_stats batt_stats = daily_battery_stats(batt_power);
+
+        EXPECT_NEAR(batt_stats.peakKwCharge, peakKwCharge, m_error_tolerance_lo);
+        EXPECT_NEAR(batt_stats.peakKwDischarge, peakKwDischarge, m_error_tolerance_lo);
+        EXPECT_NEAR(batt_stats.peakCycles, peakCycles, m_error_tolerance_lo);
+        EXPECT_NEAR(batt_stats.avgCycles, avgCycles, 0.0001);
+
+        std::vector<double> grid_power = data_vtab->as_vector_double("grid_power");
+        EXPECT_NEAR(*std::max_element(grid_power.begin(), grid_power.end()), interconnection_limit, 0.0001);
+
+        std::vector<double> pv_to_grid_power = data_vtab->as_vector_double("system_to_grid");
+        EXPECT_NEAR(*std::max_element(pv_to_grid_power.begin(), pv_to_grid_power.end()), interconnection_limit, 0.0001);
+
+        std::vector<double> interconnection_loss = data_vtab->as_vector_double("interconnection_loss");
+        std::vector<double> gen = data_vtab->as_vector_double("gen");
+        std::vector<double> gen_without_battery = data_vtab->as_vector_double("gen_without_battery");
+        std::vector<double> pv_to_load = data_vtab->as_vector_double("system_to_load");
+        std::vector<double> batt_to_load = data_vtab->as_vector_double("batt_to_load");
+        std::vector<double> grid_to_load = data_vtab->as_vector_double("grid_to_load");
+        std::vector<double> pv_to_battery = data_vtab->as_vector_double("system_to_batt");
+
+        for (int i = 0; i < grid_power.size(); i++) {
+            EXPECT_NEAR(gen[i], grid_power[i] + pv_to_load[i] + batt_to_load[i] + grid_to_load[i] + interconnection_loss[i], 0.001) << " at step " << i;
+            EXPECT_NEAR(grid_power[i] + grid_to_load[i], pv_to_grid_power[i], 0.001) << " at step " << i;
+            EXPECT_NEAR(gen_without_battery[i], grid_power[i] + grid_to_load[i] + pv_to_load[i] + pv_to_battery[i] + interconnection_loss[i], 0.001) << " at step " << i;
+        }
+    }
+
+}
+
+TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACBatteryModelInterconnectionLimitsWAvailabilityLoss)
+{
+    pvsamv_nofinancial_default(data);
+    battery_data_default(data);
+
+    std::map<std::string, double> pairs;
+    pairs["en_batt"] = 1;
+    pairs["batt_ac_or_dc"] = 1; //AC
+    pairs["analysis_period"] = 1;
+    set_array(data, "load", load_profile_path, 8760); // Load is required for peak shaving controllers
+    pairs["batt_dispatch_choice"] = 0; // Peak shaving
+    pairs["batt_dispatch_wf_forecast_choice"] = 0; // Look ahead
+
+    pairs["enable_interconnection_limit"] = true;
+    double interconnection_limit = 1.0; // kWac
+    pairs["grid_interconnection_limit_kwac"] = interconnection_limit;
+    pairs["system_use_lifetime_output"] = 1;
+    pairs["save_full_lifetime_variables"] = 1;
+    pairs["en_ac_lifetime_losses"] = true;
+    ssc_number_t degradation[1] = { 0.5 };
+    ssc_data_set_array(data, "dc_degradation", degradation, 1);
+    ssc_number_t losses[365] = { 10 };
+    ssc_data_set_array(data, "ac_lifetime_losses", losses, 365);
+
+    ssc_number_t expectedEnergy = 8594;
+    ssc_number_t expectedBatteryChargeEnergy = 1442;
+    ssc_number_t expectedBatteryDischargeEnergy = 1321;
+
+    ssc_number_t peakKwCharge = -2.81;
+    ssc_number_t peakKwDischarge = 1.39;
+    ssc_number_t peakCycles = 1;
+    ssc_number_t avgCycles = 1;
+
+    int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+    EXPECT_FALSE(pvsam_errors);
+
+    if (!pvsam_errors)
+    {
+        ssc_number_t annual_energy;
+        ssc_data_get_number(data, "annual_energy", &annual_energy);
+        EXPECT_NEAR(annual_energy, expectedEnergy, m_error_tolerance_hi) << "Annual energy.";
+
+        auto data_vtab = static_cast<var_table*>(data);
+        auto annualChargeEnergy = data_vtab->as_vector_ssc_number_t("batt_annual_charge_energy");
+        EXPECT_NEAR(annualChargeEnergy[1], expectedBatteryChargeEnergy, m_error_tolerance_hi) << "Battery annual charge energy.";
+
+        auto annualDischargeEnergy = data_vtab->as_vector_ssc_number_t("batt_annual_discharge_energy");
+        EXPECT_NEAR(annualDischargeEnergy[1], expectedBatteryDischargeEnergy, m_error_tolerance_hi) << "Battery annual discharge energy.";
+
+        auto batt_power = data_vtab->as_vector_ssc_number_t("batt_power");
+        daily_battery_stats batt_stats = daily_battery_stats(batt_power);
+
+        EXPECT_NEAR(batt_stats.peakKwCharge, peakKwCharge, m_error_tolerance_lo);
+        EXPECT_NEAR(batt_stats.peakKwDischarge, peakKwDischarge, m_error_tolerance_lo);
+        EXPECT_NEAR(batt_stats.peakCycles, peakCycles, m_error_tolerance_lo);
+        EXPECT_NEAR(batt_stats.avgCycles, avgCycles, 0.0001);
+
+        std::vector<double> grid_power = data_vtab->as_vector_double("grid_power");
+        EXPECT_NEAR(*std::max_element(grid_power.begin(), grid_power.end()), interconnection_limit, 0.0001);
+
+        std::vector<double> pv_to_grid_power = data_vtab->as_vector_double("system_to_grid");
+        EXPECT_NEAR(*std::max_element(pv_to_grid_power.begin(), pv_to_grid_power.end()), interconnection_limit, 0.0001);
+
+        std::vector<double> interconnection_loss = data_vtab->as_vector_double("interconnection_loss");
+        std::vector<double> gen = data_vtab->as_vector_double("gen");
+        std::vector<double> gen_without_battery = data_vtab->as_vector_double("gen_without_battery");
+        std::vector<double> pv_to_load = data_vtab->as_vector_double("system_to_load");
+        std::vector<double> batt_to_load = data_vtab->as_vector_double("batt_to_load");
+        std::vector<double> grid_to_load = data_vtab->as_vector_double("grid_to_load");
+        std::vector<double> pv_to_battery = data_vtab->as_vector_double("system_to_batt");
+        std::vector<double> performance_loss = data_vtab->as_vector_double("ac_perf_adj_loss");
+        std::vector<double> ac_lifetime_loss = data_vtab->as_vector_double("ac_lifetime_loss");
+
+        for (int i = 0; i < grid_power.size(); i++) {
+            double ac_losses = performance_loss[i] + ac_lifetime_loss[i];
+            EXPECT_NEAR(gen[i], grid_power[i] + pv_to_load[i] + batt_to_load[i] + grid_to_load[i] + interconnection_loss[i], 0.001) << " at step " << i;
+            // The ac losses can either come from the power delivered to load or grid, so it is hard to write universal rules that apply to every step
+        }
+    }
+
 }
