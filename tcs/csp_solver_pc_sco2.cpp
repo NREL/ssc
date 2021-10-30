@@ -46,7 +46,7 @@ C_pc_sco2::C_pc_sco2()
 		m_startup_time_remain_prev = m_startup_energy_remain_prev =
 		m_startup_time_remain_calc = m_startup_energy_remain_calc = std::numeric_limits<double>::quiet_NaN();
 
-	m_standby_control_prev = m_standby_control_calc = -1;
+	m_standby_control_prev = m_standby_control_calc = C_csp_power_cycle::E_csp_power_cycle_modes::OFF;
 
 	mc_reported_outputs.construct(S_output_info);
 }
@@ -119,10 +119,12 @@ void C_pc_sco2::init(C_csp_power_cycle::S_solved_params &solved_params)
 	m_standby_control_prev = OFF;			// Assume power cycle is off when simulation begins
 	m_startup_energy_remain_prev = m_startup_energy_required;		//[kWt-hr]
 	m_startup_time_remain_prev = ms_params.m_startup_time;			//[hr]
-
+    if (ms_params.m_startup_frac == 0.0 && ms_params.m_startup_time == 0.0 && m_standby_control_prev == OFF) {
+        m_standby_control_prev = OFF_NO_SU_REQ;
+    }
 }
 
-int C_pc_sco2::get_operating_state()
+C_csp_power_cycle::E_csp_power_cycle_modes C_pc_sco2::get_operating_state()
 {
 	if( ms_params.m_startup_frac == 0.0 && ms_params.m_startup_time == 0.0 )
 	{
@@ -235,7 +237,7 @@ void C_pc_sco2::call(const C_csp_weatherreader::S_outputs &weather,
 	double m_dot_htf = inputs.m_m_dot;				//[kg/hr]
 	
 	int standby_control = inputs.m_standby_control;			//[-] 1: On, 2: Standby, 3: Off
-	m_standby_control_calc = standby_control;
+	m_standby_control_calc = static_cast<C_csp_power_cycle::E_csp_power_cycle_modes>(standby_control);
 
 	double P_cycle, eta, T_htf_cold, m_dot_demand, W_cool_par;
 	P_cycle = eta = T_htf_cold = m_dot_demand = W_cool_par = std::numeric_limits<double>::quiet_NaN();
@@ -497,6 +499,10 @@ void C_pc_sco2::converged()
 	m_standby_control_prev = m_standby_control_calc;
 	m_startup_time_remain_prev = m_startup_time_remain_calc;
 	m_startup_energy_remain_prev = m_startup_energy_remain_calc;
+
+    if (ms_params.m_startup_frac == 0.0 && ms_params.m_startup_time == 0.0 && m_standby_control_prev == OFF) {
+        m_standby_control_prev = OFF_NO_SU_REQ;
+    }
 
 	mc_reported_outputs.set_timestep_outputs();
 }

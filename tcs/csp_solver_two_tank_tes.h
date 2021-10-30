@@ -149,8 +149,11 @@ private:
 	double m_q_pb_design;		//[Wt] thermal power to power cycle at design
 	double m_V_tank_hot_ini;	//[m^3] Initial volume in hot storage tank
     double m_mass_total_active; //[kg] Total HTF mass at design point inlet/outlet T
+    double m_d_tank;            //[m] diameter of a single tank
+    double m_q_dot_loss_des;    //[MWt] design tank heat loss
 
 	double m_cp_field_avg;		//[kJ/kg-K]
+    double m_rho_store_avg;     //[kg/m3]
 
 	double m_m_dot_tes_des_over_m_dot_field_des;	//[-]
 
@@ -325,6 +328,9 @@ public:
 
     virtual double pumping_power(double m_dot_sf, double m_dot_pb, double m_dot_tank,
         double T_sf_in, double T_sf_out, double T_pb_in, double T_pb_out, bool recirculating);
+
+    void get_design_parameters(double& vol_one_temp_avail /*m3*/, double& vol_one_temp_total /*m3*/, double& d_tank /*m*/,
+        double& q_dot_loss_des /*MWt*/, double& dens_store_htf_at_T_ave /*kg/m3*/);
 };
 
 class C_hx_cold_tes

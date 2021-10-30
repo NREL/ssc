@@ -229,6 +229,7 @@ void C_csp_tou_block_schedules::init()
 	return;
 }
 
+// TODO: move this into dispatch some how
 void C_csp_tou_block_schedules::call(double time_s, C_csp_tou::S_csp_tou_outputs & tou_outputs)
 {
 	int i_hour = (int)(ceil(time_s/3600.0 - 1.e-6) - 1);
