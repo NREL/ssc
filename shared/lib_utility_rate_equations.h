@@ -114,6 +114,7 @@ public:
 	std::vector<ssc_number_t> monthly_dc_fixed;
 	std::vector<ssc_number_t> monthly_dc_tou;
 
+    bool uses_billing_demand; // Has a energy rate with kWh/kw OR has a demand charge. If false, en_billing_demand must be false
     bool en_billing_demand; // Enable billing demand lookback percentages for kWh/kW energy charges
     std::vector<ssc_number_t> prev_peak_demand; // Set before calling init_energy_rates
     std::vector<ssc_number_t> bd_lookback_percents;

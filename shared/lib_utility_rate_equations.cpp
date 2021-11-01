@@ -129,6 +129,7 @@ rate_data::rate_data() :
 	dc_hourly_peak(),
 	monthly_dc_fixed(12),
 	monthly_dc_tou(12),
+    uses_billing_demand(false),
     en_billing_demand(false),
     prev_peak_demand(12),
     bd_lookback_percents(12),
@@ -161,6 +162,7 @@ rate_data::rate_data(const rate_data& tmp) :
 	dc_hourly_peak(tmp.dc_hourly_peak),
 	monthly_dc_fixed(tmp.monthly_dc_fixed),
 	monthly_dc_tou(tmp.monthly_dc_tou),
+    uses_billing_demand(tmp.uses_billing_demand),
     en_billing_demand(tmp.en_billing_demand),
     prev_peak_demand(tmp.prev_peak_demand),
     bd_lookback_percents(tmp.bd_lookback_percents),
@@ -295,13 +297,8 @@ void rate_data::init_energy_rates(bool gen_only) {
                 std::vector<size_t> tier_numbers;
                 std::vector<double> tier_kwh;
 
-				// track monthly peak to determine which kWh/kW tier
-                double flat_peak = m_month[m].dc_flat_peak;
-                if (en_billing_demand) {
-                    // If ratchets are present the peak used here might be the actual peak, or something based on a previous month.
-                    flat_peak = get_billing_demand(m);
-                }
-                billing_demand[m] = flat_peak;
+				// Monthly billing demand is computed prior to this loop
+                double flat_peak = billing_demand[m];
 
                 // get kWh/kW break points based on actual demand
                 for (size_t i_tier = 0; i_tier < m_month[m].ec_tou_units.ncols(); i_tier++)
@@ -905,7 +902,7 @@ ssc_number_t rate_data::get_demand_charge(int month, size_t year)
 	ssc_number_t charge = 0;
 	ssc_number_t d_lower = 0;
 	ssc_number_t total_charge = 0;
-	ssc_number_t demand = curr_month.dc_flat_peak;
+	ssc_number_t demand = billing_demand[month];
 	bool found = false;
 	for (tier = 0; tier < (int)curr_month.dc_flat_ub.size() && !found; tier++)
 	{
@@ -939,11 +936,19 @@ ssc_number_t rate_data::get_demand_charge(int month, size_t year)
 		d_lower = 0;
 		if (tou_demand_single_peak)
 		{
-			demand = curr_month.dc_flat_peak;
+            // If billing demand lookback is not enabled, this will be the flat peak
+			demand = billing_demand[month];
 			if (curr_month.dc_flat_peak_hour != curr_month.dc_tou_peak_hour[period]) continue; // only one peak per month.
 		}
-		else if (period < curr_month.dc_periods.size())
-			demand = curr_month.dc_tou_peak[period];
+        else if (period < curr_month.dc_periods.size()) {
+            int period_num = curr_month.dc_periods[period];
+            if (en_billing_demand && bd_tou_periods.at(period_num)) {
+                demand = billing_demand[month];
+            }
+            else {
+                demand = curr_month.dc_tou_peak[period];
+            }
+        }
 		// find tier corresponding to peak demand
 		found = false;
 		for (tier = 0; tier < (int)curr_month.dc_tou_ub.ncols() && !found; tier++)

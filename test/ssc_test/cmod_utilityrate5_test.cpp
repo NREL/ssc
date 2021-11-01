@@ -1502,6 +1502,9 @@ TEST(cmod_utilityrate5_eqns, Test_Commercial_kWh_per_kW_charges_with_billing_dem
                                       60, 0 };
     ssc_data_set_matrix(data, "ur_billing_demand_lookback_percentages", p_ur_billing_demand_lookback_percentages, 12, 2);
 
+    ssc_number_t p_ur_billing_demand_tou_matrix[2] = { 1, 1 };
+    ssc_data_set_matrix(data, "ur_dc_billing_demand_periods", p_ur_billing_demand_tou_matrix, 1, 2);
+
     ssc_number_t year_zero_power[12] = { -1200,
                                         -1100,
                                         -900,

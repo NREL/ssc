@@ -141,6 +141,9 @@ TEST(lib_utility_rate_equations_test, test_seasonal_demand_charges)
                                         11, 1, 9.9999999999999998e+37, 0 };
     size_t dc_flat_rows = 12;
 
+    ssc_number_t prev_monthly_peaks[12] = { 5, 5, 5, 5, 5, 5,
+                                    5, 5, 5, 5, 5, 5 };
+
     rate_data data;
     data.m_num_rec_yearly = 8760;
     data.rate_scale = { 1 };
@@ -148,6 +151,8 @@ TEST(lib_utility_rate_equations_test, test_seasonal_demand_charges)
     data.setup_demand_charges(&p_ur_dc_sched_weekday[0], &p_ur_dc_sched_weekend[0], dc_tou_rows, &p_ur_dc_tou_mat[0], dc_flat_rows, &p_ur_dc_flat_mat[0]);
     data.setup_energy_rates(&p_ur_ec_sched_weekday[0], &p_ur_ec_sched_weekend[0], tou_rows, &p_ur_ec_tou_mat[0], sell_eq_buy);
     data.init_energy_rates(false);
+    data.uses_billing_demand = true;
+    data.en_billing_demand = false;
     data.init_dc_peak_vectors(0);
 
     // Peak period 1: 5 kW, peak period 2: 10 kW
@@ -166,14 +171,11 @@ TEST(lib_utility_rate_equations_test, test_seasonal_demand_charges)
         data.sort_energy_to_periods(month, power, step + base_step);
         data.find_dc_tou_peak(month, power, step + base_step);
     }
-    // No demand charges in January
-    ASSERT_NEAR(0.0, data.get_demand_charge(0, 0), 0.1);
 
     data.init_dc_peak_vectors(5);
     base_step = 3648; // 12 am June 1st
     month = 5;
     ur_month& month_5 = data.m_month[month];
-    
     for (step = 0; step < day_one_power.size(); step++)
     {
         double power = day_one_power.at(step);
@@ -182,6 +184,23 @@ TEST(lib_utility_rate_equations_test, test_seasonal_demand_charges)
         data.sort_energy_to_periods(month, power, step + base_step);
         data.find_dc_tou_peak(month, power, step + base_step);
     }
+
+    if (data.uses_billing_demand) {
+        if (data.en_billing_demand) {
+            data.setup_prev_demand(prev_monthly_peaks);
+        }
+        for (int m = 0; m < (int)data.m_month.size(); m++) {
+            double flat_peak = data.m_month[m].dc_flat_peak;
+            if (data.en_billing_demand) {
+                // If ratchets are present the peak used here might be the actual peak, or something based on a previous month.
+                flat_peak = data.get_billing_demand(m);
+            }
+            data.billing_demand[m] = flat_peak;
+        }
+    }
+
+    // No demand charges in January
+    ASSERT_NEAR(0.0, data.get_demand_charge(0, 0), 0.1);
 
     // Same profile provides demand charges in June
     ASSERT_NEAR(10.0, data.get_demand_charge(5, 0), 0.1);
@@ -231,6 +250,10 @@ TEST(lib_utility_rate_equations_test, test_block_step_tiers)
 
     size_t dc_flat_rows = 12;
 
+    ssc_number_t prev_monthly_peaks[12] = { 500, 500, 500, 500, 500, 500,
+                                        500, 500, 500, 500, 500, 500 };
+
+
     rate_data data;
     data.m_num_rec_yearly = 8760;
     data.rate_scale = { 1 };
@@ -239,6 +262,8 @@ TEST(lib_utility_rate_equations_test, test_block_step_tiers)
     data.setup_energy_rates(&p_ur_ec_sched_weekday[0], &p_ur_ec_sched_weekend[0], tou_rows, &p_ur_ec_tou_mat[0], sell_eq_buy);
     data.init_energy_rates(false); // This gets called once to set up all the vectors
     data.init_dc_peak_vectors(0);
+    data.uses_billing_demand = true;
+    data.en_billing_demand = false;
 
     // Only really need one power number to set up the peak, but include a couple extras as a test
     std::vector<double> day_one_power = { -500, -600, -658, };
@@ -253,6 +278,33 @@ TEST(lib_utility_rate_equations_test, test_block_step_tiers)
         // Hourly, so power and energy are the same number
         curr_month.update_net_and_peak(power, power, step + base_step);
     }
+
+    day_one_power = { -500, -1413, -1000, };
+    data.init_dc_peak_vectors(5);
+    base_step = 3648; // 12 am June 1st
+    month = 5;
+    ur_month& month_5 = data.m_month[month];
+    for (step = 0; step < day_one_power.size(); step++)
+    {
+        double power = day_one_power.at(step);
+        // Hourly, so power and energy are the same number
+        month_5.update_net_and_peak(power, power, step + base_step);
+    }
+
+    if (data.uses_billing_demand) {
+        if (data.en_billing_demand) {
+            data.setup_prev_demand(prev_monthly_peaks);
+        }
+        for (int m = 0; m < (int)data.m_month.size(); m++) {
+            double flat_peak = data.m_month[m].dc_flat_peak;
+            if (data.en_billing_demand) {
+                // If ratchets are present the peak used here might be the actual peak, or something based on a previous month.
+                flat_peak = data.get_billing_demand(m);
+            }
+            data.billing_demand[m] = flat_peak;
+        }
+    }
+
     // Recompute the tiers based on actual peaks
     data.init_energy_rates(false);
 
@@ -270,21 +322,6 @@ TEST(lib_utility_rate_equations_test, test_block_step_tiers)
     EXPECT_NEAR(0.013627, curr_month.ec_tou_br.at(0, 3), 0.0001);
     EXPECT_NEAR(0.010275, curr_month.ec_tou_br.at(0, 4), 0.0001);
     EXPECT_NEAR(0.00771, curr_month.ec_tou_br.at(0, 5), 0.0001);
-
-
-    day_one_power = { -500, -1413, -1000, };
-    data.init_dc_peak_vectors(5);
-    base_step = 3648; // 12 am June 1st
-    month = 5;
-    ur_month& month_5 = data.m_month[month];
-    for (step = 0; step < day_one_power.size(); step++)
-    {
-        double power = day_one_power.at(step);
-        // Hourly, so power and energy are the same number
-        month_5.update_net_and_peak(power, power, step + base_step);
-    }
-    // Recompute the tiers based on actual peaks
-    data.init_energy_rates(false);
 
     EXPECT_NEAR(3000, month_5.ec_tou_ub.at(0, 0), 0.1);
     EXPECT_NEAR(10000, month_5.ec_tou_ub.at(0, 1), 0.1);
@@ -338,6 +375,9 @@ TEST(lib_utility_rate_equations_test, test_kwh_per_kw_only)
 
     size_t dc_flat_rows = 12;
 
+    ssc_number_t prev_monthly_peaks[12] = { -500, -500, -500, -500, -500, -500,
+                                            -500, -500, -500, -500, -500, -500 };
+
     rate_data data;
     data.m_num_rec_yearly = 8760;
     data.rate_scale = { 1 };
@@ -346,6 +386,8 @@ TEST(lib_utility_rate_equations_test, test_kwh_per_kw_only)
     data.setup_energy_rates(&p_ur_ec_sched_weekday[0], &p_ur_ec_sched_weekend[0], tou_rows, &p_ur_ec_tou_mat[0], sell_eq_buy);
     data.init_energy_rates(false); // This gets called once to set up all the vectors
     data.init_dc_peak_vectors(0);
+    data.uses_billing_demand = true;
+    data.en_billing_demand = false;
 
     // Only really need one power number to set up the peak, but include a couple extras as a test
     std::vector<double> day_one_power = { -500, -600, -658, };
@@ -360,6 +402,33 @@ TEST(lib_utility_rate_equations_test, test_kwh_per_kw_only)
         // Hourly, so power and energy are the same number
         curr_month.update_net_and_peak(power, power, step + base_step);
     }
+
+    day_one_power = { -500, -1413, -1000, };
+    data.init_dc_peak_vectors(5);
+    base_step = 3648; // 12 am June 1st
+    month = 5;
+    ur_month& month_5 = data.m_month[month];
+    for (step = 0; step < day_one_power.size(); step++)
+    {
+        double power = day_one_power.at(step);
+        // Hourly, so power and energy are the same number
+        month_5.update_net_and_peak(power, power, step + base_step);
+    }
+
+    if (data.uses_billing_demand) {
+        if (data.en_billing_demand) {
+            data.setup_prev_demand(prev_monthly_peaks);
+        }
+        for (int m = 0; m < (int)data.m_month.size(); m++) {
+            double flat_peak = data.m_month[m].dc_flat_peak;
+            if (data.en_billing_demand) {
+                // If ratchets are present the peak used here might be the actual peak, or something based on a previous month.
+                flat_peak = data.get_billing_demand(m);
+            }
+            data.billing_demand[m] = flat_peak;
+        }
+    }
+
     // Recompute the tiers based on actual peaks
     data.init_energy_rates(false);
 
@@ -373,21 +442,6 @@ TEST(lib_utility_rate_equations_test, test_kwh_per_kw_only)
     EXPECT_NEAR(0.013627, curr_month.ec_tou_br.at(0, 1), 0.0001);
     EXPECT_NEAR(0.010275, curr_month.ec_tou_br.at(0, 2), 0.0001);
     EXPECT_NEAR(0.00771, curr_month.ec_tou_br.at(0, 3), 0.0001);
-
-
-    day_one_power = { -500, -1413, -1000, };
-    data.init_dc_peak_vectors(5);
-    base_step = 3648; // 12 am June 1st
-    month = 5;
-    ur_month& month_5 = data.m_month[month];
-    for (step = 0; step < day_one_power.size(); step++)
-    {
-        double power = day_one_power.at(step);
-        // Hourly, so power and energy are the same number
-        month_5.update_net_and_peak(power, power, step + base_step);
-    }
-    // Recompute the tiers based on actual peaks
-    data.init_energy_rates(false);
 
     EXPECT_NEAR(282600, month_5.ec_tou_ub.at(0, 0), 0.1);
     EXPECT_NEAR(565200, month_5.ec_tou_ub.at(0, 1), 0.1);
@@ -478,6 +532,7 @@ TEST(lib_utility_rate_equations_test, test_billing_demand_calcs)
     data.setup_ratcheting_demand(p_ur_ec_billing_demand_lookback_percentages, p_ur_billing_demand_tou_matrix);
     data.bd_minimum = 500;
     data.en_billing_demand = true;
+    data.uses_billing_demand = true;
     data.bd_lookback_months = 11;
 
     std::vector<ssc_number_t> year_one_power = {  -1200,
@@ -579,20 +634,6 @@ TEST(lib_utility_rate_equations_test, test_billing_demand_calcs_w_tou)
     data.enable_nm = false;
     data.nm_credits_w_rollover = false;
 
-    // Only need one power number per month to set up the peak
-    ssc_number_t year_zero_power[12] = { 1200,
-                                            1100,
-                                            900,
-                                            700,
-                                            800,
-                                            950,
-                                            1050,
-                                            1150,
-                                            850,
-                                            400,
-                                            600,
-                                            750 };
-
     ssc_number_t p_ur_billing_demand_lookback_percentages[24] = { 0, 1,
                                                                   0, 1,
                                                                   0, 1,
@@ -612,22 +653,21 @@ TEST(lib_utility_rate_equations_test, test_billing_demand_calcs_w_tou)
     data.setup_ratcheting_demand(p_ur_billing_demand_lookback_percentages, p_ur_billing_demand_tou_matrix);
     data.bd_minimum = 500;
     data.en_billing_demand = true;
+    data.uses_billing_demand = true;
     data.bd_lookback_months = 11;
 
-    std::vector<ssc_number_t> year_one_power = { -1200,
-                                            -1100,
-                                            -900,
-                                            -700,
-                                            -800,
-                                            -950,
-                                            -1050,
-                                            -1300, // 80% of this is 1040 kW, which is higher than the peak in Jan (below)
-                                            -850,
-                                            -400,
-                                            -600,
-                                            -750 };
-
-    data.setup_prev_demand(year_zero_power);
+    ssc_number_t year_zero_power[12] = { 1200,
+                                            1100,
+                                            900,
+                                            700,
+                                            800,
+                                            950,
+                                            1050,
+                                            1300, // 80% of this is 1040 kW, which is higher than the peak in Jan (below)
+                                            850,
+                                            400,
+                                            600,
+                                            750 };
 
     // Peak period 1: 900 kW, peak period 2: 1000 kW
     std::vector<double> day_one_power = { -100, -100, -200, -300, -400, -500, // Period 1
@@ -645,6 +685,20 @@ TEST(lib_utility_rate_equations_test, test_billing_demand_calcs_w_tou)
         // Hourly, so power and energy are the same number
         data.sort_energy_to_periods(month, day_one_power.at(i), step + i);
         data.find_dc_tou_peak(month, day_one_power.at(i), step + i);
+    }
+
+    if (data.uses_billing_demand) {
+        if (data.en_billing_demand) {
+            data.setup_prev_demand(year_zero_power);
+        }
+        for (int m = 0; m < (int)data.m_month.size(); m++) {
+            double flat_peak = data.m_month[m].dc_flat_peak;
+            if (data.en_billing_demand) {
+                // If ratchets are present the peak used here might be the actual peak, or something based on a previous month.
+                flat_peak = data.get_billing_demand(m);
+            }
+            data.billing_demand[m] = flat_peak;
+        }
     }
 
     ASSERT_NEAR(16674.22, data.get_demand_charge(0, 0), 0.01);

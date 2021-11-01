@@ -840,10 +840,10 @@ public:
 
         bool dc_enabled = as_boolean("ur_dc_enable");
         // Assume if the kwh per kw rate exists in January that it exists in all of the months
-        bool uses_billing_demand = rate.has_kwh_per_kw_rate(0) || dc_enabled;
+        rate.uses_billing_demand = rate.has_kwh_per_kw_rate(0) || dc_enabled;
         ssc_number_t* billing_demand_w_sys_ym = NULL;
         ssc_number_t* billing_demand_wo_sys_ym = NULL;
-        if (uses_billing_demand) {
+        if (rate.uses_billing_demand) {
             billing_demand_w_sys_ym = allocate("billing_demand_w_sys_ym", nyears + 1, 12);
             billing_demand_wo_sys_ym = allocate("billing_demand_wo_sys_ym", nyears + 1, 12);
         }
@@ -854,7 +854,7 @@ public:
         bool ratchets_enabled = as_boolean("ur_enable_billing_demand");
         if (ratchets_enabled) {
 
-            if (!uses_billing_demand) {
+            if (!rate.uses_billing_demand) {
                 std::ostringstream ss;
                 ss << "The option ur_enable_billing_demand is only relevant when the energy rates have kWh/kW or kWh/kW daily units, please add those units to your rates structure or set ur_ec_enable_billing_demand to false";
                 throw exec_error("utilityrate5", ss.str());
@@ -994,7 +994,7 @@ public:
 				ch_wo_sys_fixed_ym[(i + 1) * 12 + j] = monthly_fixed_charges[j];
 				ch_wo_sys_minimum_ym[(i + 1) * 12 + j] = monthly_minimum_charges[j];
 
-                if (uses_billing_demand) {
+                if (rate.uses_billing_demand) {
                     billing_demand_wo_sys_ym[(i + 1) * 12 + j] = rate.billing_demand[j];
                     monthly_peak_wo_sys[j] = rate.m_month[j].dc_flat_peak; // Update this every year
                 }
@@ -1064,7 +1064,7 @@ public:
 				assign( "year1_monthly_dc_tou_without_system", var_data(&rate.monthly_dc_tou[0], 12) );
 				assign("year1_monthly_ec_charge_without_system", var_data(&monthly_ec_charges[0], 12));
 
-                if (uses_billing_demand) {
+                if (rate.uses_billing_demand) {
                     assign("year1_billing_demand_wo_sys", var_data(&rate.billing_demand[0], 12));
                 }
 
@@ -1399,7 +1399,7 @@ public:
 				assign("year1_monthly_peak_w_system", var_data(&monthly_peak_w_sys[0], 12));
 				assign("year1_monthly_use_w_system", var_data(&monthly_test[0], 12));
 
-                if (uses_billing_demand) {
+                if (rate.uses_billing_demand) {
                     assign("year1_billing_demand_w_sys", var_data(&rate.billing_demand[0], 12));
                 }
 
@@ -1444,7 +1444,7 @@ public:
 				ch_w_sys_fixed_ym[(i + 1) * 12 + j] = monthly_fixed_charges[j];
 				ch_w_sys_minimum_ym[(i + 1) * 12 + j] = monthly_minimum_charges[j];
 
-                if (uses_billing_demand) {
+                if (rate.uses_billing_demand) {
                     billing_demand_w_sys_ym[(i + 1) * 12 + j] = rate.billing_demand[j];
                     monthly_peak_w_sys[j] = rate.m_month[j].dc_flat_peak;
                 }
@@ -1648,13 +1648,43 @@ public:
 			}
 		}
 
+        // set peak per period - no tier accumulation
+        if (dc_enabled)
+        {
+            c = 0;
+            for (m = 0; m < (int)rate.m_month.size(); m++)
+            {
+                rate.init_dc_peak_vectors(m);
+                for (d = 0; d < util::nday[m]; d++)
+                {
+                    for (h = 0; h < 24; h++)
+                    {
+                        for (s = 0; s < (int)steps_per_hour && c < (int)m_num_rec_yearly; s++)
+                        {
+                            rate.find_dc_tou_peak(m, p_in[c], c);
+                            c++;
+                        }
+                    }
+                }
+            }
+        }
 
-		if (ec_enabled)
-		{
+        if (rate.uses_billing_demand) {
             if (rate.en_billing_demand) {
                 rate.setup_prev_demand(prev_monthly_peaks);
             }
+            for (int m = 0; m < (int)rate.m_month.size(); m++) {
+                double flat_peak = rate.m_month[m].dc_flat_peak;
+                if (rate.en_billing_demand) {
+                    // If ratchets are present the peak used here might be the actual peak, or something based on a previous month.
+                    flat_peak = rate.get_billing_demand(m);
+                }
+                rate.billing_demand[m] = flat_peak;
+            }
+        }
 
+		if (ec_enabled)
+		{
 			// calculate the monthly net energy per tier and period based on units
 			rate.init_energy_rates(gen_only);
 			c = 0;
@@ -1767,30 +1797,6 @@ public:
 
 			} // end month
 		}
-
-		// set peak per period - no tier accumulation
-		if (dc_enabled)
-		{
-			c = 0;
-			for (m = 0; m < (int)rate.m_month.size(); m++)
-			{
-				rate.init_dc_peak_vectors(m);
-				for (d = 0; d < util::nday[m]; d++)
-				{
-					for (h = 0; h < 24; h++)
-					{
-						for (s = 0; s < (int)steps_per_hour && c < (int)m_num_rec_yearly; s++)
-						{
-							rate.find_dc_tou_peak(m, p_in[c], c);
-							c++;
-						}
-					}
-				}
-			}
-		}
-
-
-
 
 // main loop
 		c = 0;
@@ -2157,35 +2163,44 @@ public:
 				excess_kwhs_earned[m] = rate.m_month[m].energy_net;
 		}
 
-        if (rate.en_billing_demand) {
-            rate.setup_prev_demand(prev_monthly_peaks);
+        // set peak per period - no tier accumulation
+        if (dc_enabled)
+        {
+            c = 0;
+            for (m = 0; m < (int)rate.m_month.size(); m++)
+            {
+                rate.init_dc_peak_vectors(m);
+                for (d = 0; d < util::nday[m]; d++)
+                {
+                    for (h = 0; h < 24; h++)
+                    {
+                        for (s = 0; s < (int)steps_per_hour && c < (int)m_num_rec_yearly; s++)
+                        {
+                            rate.find_dc_tou_peak(m, p_in[c], c);
+                            c++;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (rate.uses_billing_demand) {
+            if (rate.en_billing_demand) {
+                rate.setup_prev_demand(prev_monthly_peaks);
+            }
+            for (int m = 0; m < (int)rate.m_month.size(); m++) {
+                double flat_peak = rate.m_month[m].dc_flat_peak;
+                if (rate.en_billing_demand) {
+                    // If ratchets are present the peak used here might be the actual peak, or something based on a previous month.
+                    flat_peak = rate.get_billing_demand(m);
+                }
+                rate.billing_demand[m] = flat_peak;
+            }
         }
 
 		if (ec_enabled)
 		{
 			rate.init_energy_rates(gen_only);
-		}
-
-
-		// set peak per period - no tier accumulation
-		if (dc_enabled)
-		{
-			c = 0;
-			for (m = 0; m < (int)rate.m_month.size(); m++)
-			{
-				rate.init_dc_peak_vectors(m);
-				for (d = 0; d < util::nday[m]; d++)
-				{
-					for (h = 0; h < 24; h++)
-					{
-						for (s = 0; s < (int)steps_per_hour && c < (int)m_num_rec_yearly; s++)
-						{
-							rate.find_dc_tou_peak(m, p_in[c], c);
-							c++;
-						}
-					}
-				}
-			}
 		}
 
 // main loop
