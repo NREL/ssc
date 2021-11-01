@@ -201,7 +201,7 @@ void C_mspt_receiver_222::init()
     // If no startup requirements, then receiver is always ON
         // ... in the sense that the controller doesn't need to worry about startup
     if (m_E_su_prev == 0.0 && m_t_su_prev == 0.0) {
-        m_mode_prev = C_csp_collector_receiver::ON;					//[-] 0 = requires startup, 1 = starting up, 2 = running
+        m_mode_prev = C_csp_collector_receiver::OFF_NO_SU_REQ;					//[-] 0 = requires startup, 1 = starting up, 2 = running
     }
     else {
         m_mode_prev = C_csp_collector_receiver::OFF;					//[-] 0 = requires startup, 1 = starting up, 2 = running
@@ -687,7 +687,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 			// GOTO 900
 			// Steady State always reports q_thermal (even when much less than min) because model is letting receiver begin startup with this energy
 			// Should be a way to communicate to controller that q_thermal is less than q_min without losing this functionality
-			if(m_mode != C_csp_collector_receiver::STEADY_STATE || m_mode_prev == C_csp_collector_receiver::ON)
+			if(m_mode != C_csp_collector_receiver::STEADY_STATE || m_mode_prev == C_csp_collector_receiver::ON || m_mode_prev == C_csp_collector_receiver::OFF_NO_SU_REQ)
 				rec_is_off = true;
 		}
 	}
@@ -816,7 +816,7 @@ void C_mspt_receiver_222::converged()
         // If no startup requirements, then receiver is always ON
         // ... in the sense that the controller doesn't need to worry about startup
         if (m_E_su == 0.0 && m_t_su == 0.0) {
-            m_mode = C_csp_collector_receiver::ON;
+            m_mode = C_csp_collector_receiver::OFF_NO_SU_REQ;
         }
 	}
 

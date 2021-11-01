@@ -29,18 +29,29 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class C_csp_cr_electric_resistance : public C_csp_collector_receiver
 {
+public:
+
+    enum E_elec_resist_startup_mode
+    {
+        SEQUENCED = 0,
+        INSTANTANEOUS_NO_MAX_ELEC_IN
+    };
+
 private:
 
     // Defined in constructor
     double m_T_htf_cold_des;        //[C]
     double m_T_htf_hot_des;         //[C]
     double m_q_dot_heater_des;      //[MWt]
+    double m_q_dot_min;             //[MWt] min allowable heater output
 
     double m_f_q_dot_des_allowable_su;//[-] fraction of design thermal power allowed for startup
     double m_hrs_startup_at_max_rate; //[hr]
 
     int m_htf_code;
     util::matrix_t<double> m_ud_htf_props;
+
+    E_elec_resist_startup_mode m_startup_mode;
 
     // ********************************
     // ********************************
@@ -67,19 +78,23 @@ private:
     double m_E_su_calculated;   //[MWt-hr] Startup energy at end of timestep
 
 public:
-
+    
     enum
     {
         E_W_DOT_HEATER,     //[MWe] Electricity consumed by heater
         E_Q_DOT_HTF,        //[MWt] Heat transferred to HTF
-        E_Q_DOT_STARTUP     //[MWt] Heat consumed during startup
+        E_Q_DOT_STARTUP,    //[MWt] Heat consumed during startup
+        E_M_DOT_HTF,        //[kg/s] HTF mass flow rate
+        E_T_HTF_IN,         //[C] HTF inlet temperature
+        E_T_HTF_OUT         //[C] HTF outlet temperature
     };
 
     C_csp_reported_outputs mc_reported_outputs;
 
-    C_csp_cr_electric_resistance(double T_htf_cold_des /*C*/, double T_htf_hot_des /*C*/, double q_dot_heater_des /*MWt*/,
+    C_csp_cr_electric_resistance(double T_htf_cold_des /*C*/, double T_htf_hot_des /*C*/,
+        double q_dot_heater_des /*MWt*/, double f_q_dot_min /*- rel design*/,
         double f_q_dot_des_allowable_su /*-*/, double hrs_startup_at_max_rate /*hr*/,
-        int htf_code /*-*/, util::matrix_t<double> ud_htf_props);
+        int htf_code /*-*/, util::matrix_t<double> ud_htf_props, E_elec_resist_startup_mode startup_mode);
 
     ~C_csp_cr_electric_resistance();
 
@@ -128,6 +143,8 @@ public:
     virtual double calculate_thermal_efficiency_approx(const C_csp_weatherreader::S_outputs& weather, double q_incident /*MW*/);
 
     virtual double get_collector_area();
+
+    void get_design_parameters(double& E_su_design /*MWt-hr*/);
 
     // ***************************************************************
     // ***************************************************************
