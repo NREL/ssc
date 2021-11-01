@@ -347,7 +347,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             batt_vars->batt_can_fuelcellcharge = vt.as_vector_bool("dispatch_manual_fuelcellcharge");
         }
 
-        batt_vars->en_batt = vt.as_boolean("en_batt");
+        batt_vars->en_batt = vt.as_boolean("en_batt") || vt.as_boolean("en_standalone_batt");
         if (batt_vars->en_batt)
         {
             // Financial Parameters
@@ -2023,12 +2023,16 @@ public:
 
     void exec() override
     {
-        if (as_boolean("en_batt"))
+        if (as_boolean("en_batt") || as_boolean("en_standalone_batt"))
         {
             std::vector<ssc_number_t> power_input_lifetime;
             // System generation output, which is lifetime (if system_lifetime_output == true);
-            if (as_boolean("en_standalone_batt"))
-                power_input_lifetime.resize(as_vector_ssc_number_t("gen").size(), 0.0);
+            if (as_boolean("en_standalone_batt")) {
+                power_input_lifetime.resize(8760.0 * as_integer("analysis_period"), 0.0);
+                ssc_number_t* p_gen = allocate("gen", power_input_lifetime.size());
+                for (size_t i = 0; i < power_input_lifetime.size(); i++)
+                    p_gen[i] = power_input_lifetime[i];
+            }
             else
                 power_input_lifetime = as_vector_ssc_number_t("gen");
 
