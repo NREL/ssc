@@ -666,7 +666,7 @@ double CGeothermalAnalyzer::GetPumpWorkWattHrPerLb(void)
 		{
 			calculateFlashPressures();
 			double dWaterLossFractionOfGF = waterLoss() / geothermal::GEOTHERMAL_FLUID_FOR_FLASH;
-			return (1 - dWaterLossFractionOfGF);
+			//return (1 - dWaterLossFractionOfGF);
 		}
 
 		// Calculate injection pump items, on [7A.GF Pumps] unless otherwise noted
@@ -1376,7 +1376,7 @@ double CGeothermalAnalyzer::injCoeffD(void) { return -0.0325112 * pow(geothermal
 double CGeothermalAnalyzer::evaporativeWaterLoss(void) { return ((injCoeffA() * pow(TemperatureWetBulbF(), 3)) + (injCoeffB() * pow(TemperatureWetBulbF(), 2)) + (injCoeffC() * TemperatureWetBulbF()) + injCoeffD()) * qRejectedTower() / 1000000; } // D129 - lb/hr (evaporative water loss)
 double CGeothermalAnalyzer::drift(void) { return 0.0005 * cwFlow(); }																												// D130
 double CGeothermalAnalyzer::blowDown(void) { return evaporativeWaterLoss() / (geothermal::INJECTION_PUMPING_CYCLES - 1) - drift(); }																	// D132
-double CGeothermalAnalyzer::waterLoss(void) { return evaporativeWaterLoss() + drift() + blowDown(); }																				// D133
+double CGeothermalAnalyzer::waterLoss(void) { return evaporativeWaterLoss() + drift(); }																				// D133
 double CGeothermalAnalyzer::steamCondensate(void) { return (turbine1Steam() + turbine2Steam()) - waterLoss(); }																		// D135
 double CGeothermalAnalyzer::steamCondensateInjected(void) { return (steamCondensate() < 0) ? 0 : steamCondensate(); }																// D136 - lb/hr
 double CGeothermalAnalyzer::condenserInjectionPumpingKW() { return CalculatePumpWorkInKW(steamCondensateInjected(), injectionPumpHead()); }													// D138, I120 - kW
