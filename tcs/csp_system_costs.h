@@ -262,6 +262,7 @@ namespace N_mspt
 		double receiver_cost /*$*/,
 		double tes_cost /*$*/,
 		double power_cycle_cost /*$*/,
+        double heater_cost /*$*/,
 		double rad_field_totcost /*$*/,
 		double rad_fluid_totcost /*$*/,
 		double rad_storage_totcost /*$*/,

@@ -34,6 +34,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "csp_solver_pc_Rankine_indirect_224.h"
 #include "csp_solver_two_tank_tes.h"
 #include "csp_solver_tou_block_schedules.h"
+#include "csp_dispatch.h"
 #include "cmod_csp_common_eqns.h"
 
 #include <ctime>
@@ -213,6 +214,7 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "disp_rsu_cost",             "Receiver startup cost",                                                            "$",            "",               "tou",            "is_dispatch=1",           "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "disp_csu_cost",             "Cycle startup cost",                                                               "$",            "",               "tou",            "is_dispatch=1",           "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "disp_pen_delta_w",          "Dispatch cycle production change penalty",                                         "$/kWe-change", "",               "tou",            "is_dispatch=1",           "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "disp_inventory_incentive",  "Dispatch storage terminal inventory incentive multiplier",                         "",             "",               "System Control", "?=0.0",                   "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "q_rec_standby",             "Receiver standby energy consumption",                                              "kWt",          "",               "tou",            "?=9e99",                  "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "q_rec_heattrace",           "Receiver heat trace energy consumption during startup",                            "kWe-hr",       "",               "tou",            "?=0.0",                   "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "is_wlim_series",            "Use time-series net electricity generation limits",                                "",             "",               "tou",            "?=0",                     "",                      "" },
@@ -444,7 +446,9 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "operating_modes_b",         "Next 3 operating modes tried",                                                     "",             "",               "solver",         "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "operating_modes_c",         "Final 3 operating modes tried",                                                    "",             "",               "solver",         "*",                       "",                      "" },
                                                                                                                                                                                                                                                                   
+    { SSC_OUTPUT,       SSC_ARRAY,       "disp_rel_mip_gap",          "Dispatch relative MIP gap",                                                        "",             "",               "tou",            "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "disp_solve_state",          "Dispatch solver state",                                                            "",             "",               "tou",            "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "disp_subopt_flag",          "Dispatch suboptimal solution flag",                                                "",             "",               "tou",            "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "disp_solve_iter",           "Dispatch iterations count",                                                        "",             "",               "tou",            "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "disp_objective",            "Dispatch objective function value",                                                "",             "",               "tou",            "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "disp_obj_relax",            "Dispatch objective function - relaxed max",                                        "",             "",               "tou",            "*",                       "",                      "" },
@@ -568,7 +572,7 @@ public:
         {
             T_startup_min = T_loop_out_des - 70.0;
         }
-        double T_startup = std::max(T_startup_min, 0.67*T_loop_in_des + 0.33*T_loop_out_des); //[C]
+        double T_startup = max(T_startup_min, 0.67*T_loop_in_des + 0.33*T_loop_out_des); //[C]
         c_trough.m_T_startup = T_startup;                           //[C] The required temperature (converted to K in init) of the system before the power block can be switched on
 
         c_trough.m_m_dot_htfmin = as_double("m_dot_htfmin");        //[kg/s] Minimum loop HTF flow rate
@@ -966,45 +970,9 @@ public:
             // Resize default value from var table to proper dimensions
             tou_params->mc_pricing.mc_weekends = util::matrix_t<double>(12, 24, 1.0);
         }
-        tou.mc_dispatch_params.m_dispatch_optimize = as_boolean("is_dispatch");
-        tou.mc_dispatch_params.m_is_write_ampl_dat = as_boolean("is_write_ampl_dat");
-        tou.mc_dispatch_params.m_is_ampl_engine    = as_boolean("is_ampl_engine");
-        tou.mc_dispatch_params.m_ampl_data_dir     = as_string("ampl_data_dir");
-        tou.mc_dispatch_params.m_ampl_exec_call    = as_string("ampl_exec_call");
-        if (tou.mc_dispatch_params.m_dispatch_optimize)
-        {
-            tou.mc_dispatch_params.m_optimize_frequency  = as_integer("disp_frequency");
-            tou.mc_dispatch_params.m_disp_steps_per_hour = as_integer("disp_steps_per_hour");
-            tou.mc_dispatch_params.m_optimize_horizon    = as_integer("disp_horizon");
-            tou.mc_dispatch_params.m_max_iterations      = as_integer("disp_max_iter");
-            tou.mc_dispatch_params.m_solver_timeout      = as_double("disp_timeout");
-            tou.mc_dispatch_params.m_mip_gap             = as_double("disp_mip_gap");
-            tou.mc_dispatch_params.m_presolve_type       = as_integer("disp_spec_presolve");
-            tou.mc_dispatch_params.m_bb_type             = as_integer("disp_spec_bb");
-            tou.mc_dispatch_params.m_disp_reporting      = as_integer("disp_reporting");
-            tou.mc_dispatch_params.m_scaling_type        = as_integer("disp_spec_scaling");
-            tou.mc_dispatch_params.m_disp_time_weighting = as_double("disp_time_weighting");
-            tou.mc_dispatch_params.m_rsu_cost            = as_double("disp_rsu_cost");
-            tou.mc_dispatch_params.m_csu_cost            = as_double("disp_csu_cost");
-            tou.mc_dispatch_params.m_pen_delta_w         = as_double("disp_pen_delta_w");
-            tou.mc_dispatch_params.m_q_rec_standby       = as_double("q_rec_standby");
-            tou.mc_dispatch_params.m_w_rec_ht            = as_double("q_rec_heattrace");
 
-
-            if (as_boolean("is_wlim_series"))
-            {
-                size_t n_wlim_series = 0;
-                ssc_number_t* wlim_series = as_array("wlim_series", &n_wlim_series);
-                if ((int)n_wlim_series != n_wf_records)
-                    throw exec_error("trough_physical", "Invalid net electricity generation limit series dimension. Matrix must have " + util::to_string(n_wf_records) + " rows.");
-                for (int i = 0; i < n_wf_records; i++)
-                    tou.mc_dispatch_params.m_w_lim_full.at(i) = (double)wlim_series[i];
-            }
-
-
-        }
         tou.mc_dispatch_params.m_is_tod_pc_target_also_pc_max = as_boolean("is_tod_pc_target_also_pc_max");
-        tou.mc_dispatch_params.m_is_block_dispatch    = !tou.mc_dispatch_params.m_dispatch_optimize;      //mw
+        tou.mc_dispatch_params.m_is_block_dispatch    = !as_boolean("is_dispatch");      //mw
         tou.mc_dispatch_params.m_use_rule_1           = true;
         tou.mc_dispatch_params.m_standby_off_buffer   = 2.0;
         tou.mc_dispatch_params.m_use_rule_2           = false;
@@ -1137,13 +1105,32 @@ public:
         system.m_bop_par_1    = bop_array[3];    //as_double("bop_par_1");
         system.m_bop_par_2    = bop_array[4];    //as_double("bop_par_2");
 
+        // *****************************************************
+        // System dispatch
+        csp_dispatch_opt dispatch;
+
+        if (as_boolean("is_dispatch")) {
+            dispatch.solver_params.set_user_inputs(as_boolean("is_dispatch"), as_integer("disp_steps_per_hour"), as_integer("disp_frequency"), as_integer("disp_horizon"),
+                as_integer("disp_max_iter"), as_double("disp_mip_gap"), as_double("disp_timeout"),
+                as_integer("disp_spec_presolve"), as_integer("disp_spec_bb"), as_integer("disp_spec_scaling"), as_integer("disp_reporting"),
+                as_boolean("is_write_ampl_dat"), as_boolean("is_ampl_engine"), as_string("ampl_data_dir"), as_string("ampl_exec_call"));
+            dispatch.params.set_user_params(as_double("disp_time_weighting"),
+                as_double("disp_rsu_cost"), as_double("disp_csu_cost"), as_double("disp_pen_delta_w"), as_double("disp_inventory_incentive"),
+                as_double("q_rec_standby"), as_double("q_rec_heattrace"));
+        }
+        else {
+            dispatch.solver_params.dispatch_optimize = false;
+        }
+
         // Instantiate Solver
         C_csp_solver csp_solver(weather_reader, 
                                 c_trough,
                                 *p_csp_power_cycle,
                                 storage, 
-                                tou, 
+                                tou,
+                                dispatch,
                                 system,
+                                NULL,
                                 ssc_cmod_update,
                                 (void*)(this));
 
@@ -1207,7 +1194,9 @@ public:
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::CTRL_OP_MODE_SEQ_B, allocate("operating_modes_b", n_steps_fixed), n_steps_fixed);
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::CTRL_OP_MODE_SEQ_C, allocate("operating_modes_c", n_steps_fixed), n_steps_fixed);
 
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_REL_MIP_GAP, allocate("disp_rel_mip_gap", n_steps_fixed), n_steps_fixed);
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_STATE, allocate("disp_solve_state", n_steps_fixed), n_steps_fixed);
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_SUBOPT_FLAG, allocate("disp_subopt_flag", n_steps_fixed), n_steps_fixed);
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_ITER, allocate("disp_solve_iter", n_steps_fixed), n_steps_fixed);
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_OBJ, allocate("disp_objective", n_steps_fixed), n_steps_fixed);
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_OBJ_RELAX, allocate("disp_obj_relax", n_steps_fixed), n_steps_fixed);
