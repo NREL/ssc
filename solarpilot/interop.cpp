@@ -797,14 +797,15 @@ void sim_result::process_field_stats(){
         return;
 
 	int nm = (data_by_helio.begin()->second).n_metric;
-	double
-		* sums = new double[nm],		// Why is this done on the heap rather than the stack?
-		* stdevs = new double[nm],
-		* mins = new double[nm],
-		* maxs = new double[nm],
-		* aves = new double[nm],
-		* aves2 = new double[nm],		//Temporary array for calculating variance
-		* wtmean = new double[nm];
+	double 
+		*sums = new double[nm],
+		*aves = new double[nm],
+		*stdevs = new double[nm],
+		*mins = new double[nm],
+		*maxs = new double[nm],
+        *wtmean = new double[nm];
+	
+	double *aves2 = new double[nm];		//Temporary array for calculating variance
 
 	for(int i=0; i<nm; i++){ 
 		sums[i] = 0.;
@@ -963,7 +964,6 @@ void sim_result::process_field_stats(){
 	delete [] stdevs;
 	delete [] mins; 
 	delete [] maxs;
-	delete [] wtmean;
 }
 
 void sim_result::process_flux_stats(Rvector *recs)
