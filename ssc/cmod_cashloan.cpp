@@ -800,7 +800,7 @@ public:
 		for (i=1; i<=nyears; i++)
 		{			
 			// compute expenses
-			cf.at(CF_om_production_expense,i) *= cf.at(CF_energy_net,i);
+			cf.at(CF_om_production_expense,i) *= cf.at(CF_energy_sales,i);
 			cf.at(CF_om_capacity_expense,i) *= nameplate;
 
 			cf.at(CF_om_capacity1_expense, i) *= nameplate1;
