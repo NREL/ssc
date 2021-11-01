@@ -71,7 +71,7 @@ TEST(sscapi_test, json_to_ssc_data) {
     EXPECT_EQ(vt->lookup("datmat")->vec[1].vec[1].table.lookup("four")->num[0], 4);
     ssc_data_free(dat);
 
-    json_string = R"({"table": {"entry": 1}}})";
+    json_string = R"({"table": {"entry": 1}})";
     dat = json_to_ssc_data(json_string.c_str());
     vt = static_cast<var_table *>(dat);
     EXPECT_EQ(vt->lookup("table")->table.lookup("entry")->num[0], 1);

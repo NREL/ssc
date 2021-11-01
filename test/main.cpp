@@ -63,7 +63,11 @@ GTEST_API_ int main(int argc, char **argv) {
 //    ::testing::GTEST_FLAG(filter) = "BatteryPowerFlowTest_lib_battery_powerflow.TestDCConnected";
 
  //   ::testing::GTEST_FLAG(filter) = "CMBatteryEqns_cmod_battery_eqns.TestStatefulSizeModifications";
-
+//    ::testing::GTEST_FLAG(filter) = "save_as_JSON_test.pvwatts_mechant_plant_read_file_to_string";
+//    ::testing::GTEST_FLAG(filter) = "sscapi_test.json_to_ssc_data";
+  //  ::testing::GTEST_FLAG(filter) = "CM_MHKWave.ReadJson_MatrixData";
+//    ::testing::GTEST_FLAG(filter) = "CM_MHKWave.ReadJson_MatrixFile";
+//    ::testing::GTEST_FLAG(filter) = "windpower_landbosse*";
 
 
 	int status = RUN_ALL_TESTS();
