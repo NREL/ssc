@@ -1887,8 +1887,13 @@ void battstor::update_grid_power(compute_module&, double P_gen_ac, double P_load
     if (analyze_outage) {
         P_crit_load_unmet = outCritLoadUnmet[index_replace];
         if (P_gen_ac < 0.0) {
-            // Update post-AC losses
-            outUnmetLosses[index_replace] = abs(P_gen_ac);
+            if (fabs(P_gen_ac) < tolerance) {
+                outUnmetLosses[index_replace] = 0.0;
+            }
+            else {
+                // Update post-AC losses
+                outUnmetLosses[index_replace] = abs(P_gen_ac);
+            }
         }
         P_unmet_losses = outUnmetLosses[index_replace];
     }

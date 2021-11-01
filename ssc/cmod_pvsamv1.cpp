@@ -2474,6 +2474,7 @@ void cm_pvsamv1::exec()
                     ssc_number_t avoided_losses = PVSystem->p_inverterNightTimeLoss[idx] + PVSystem->p_acWiringLoss[idx] + PVSystem->p_transmissionLoss[idx];
                     PVSystem->p_systemACPower[idx] += avoided_losses;
                     batt->outGenWithoutBattery[idx] += avoided_losses;
+                    batt->outUnmetLosses[idx] -= avoided_losses;
                     annual_ac_gross += avoided_losses * ts_hour;
                     PVSystem->p_inverterNightTimeLoss[idx] = 0.0;
                     PVSystem->p_acWiringLoss[idx] = 0.0;
