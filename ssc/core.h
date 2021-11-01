@@ -328,5 +328,8 @@ struct module_entry_info
 	int (*f_setup_stateful)(compute_module*, var_table*);       // return 1 for success, otherwise 0 with errors in log
 };
 
+void dump_ssc_variable(FILE* fp, ssc_data_t p_data, const char* name);
+
+bool write_cmod_to_lk_script(FILE* fp, ssc_data_t p_data);
 
 #endif
