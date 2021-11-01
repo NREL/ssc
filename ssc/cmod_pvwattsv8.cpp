@@ -19,6 +19,7 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+
 #include <memory>
 
 #include "core.h"
@@ -27,7 +28,6 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "lib_weatherfile.h"
 #include "lib_irradproc.h"
-#include "lib_pvwatts.h"
 #include "lib_pvshade.h"
 #include "lib_pvmodel.h"
 #include "lib_snowmodel.h"
@@ -104,7 +104,7 @@ public:
 
 };
 
-static var_info _cm_vtab_pvwattsv7[] = {
+static var_info _cm_vtab_pvwattsv8[] = {
 
     /*   VARTYPE           DATATYPE          NAME                              LABEL                                          UNITS        META                                            GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
         { SSC_INPUT,        SSC_STRING,      "solar_resource_file",            "Weather file path",                          "",           "",                                             "Solar Resource",      "",                       "",                              "" },
@@ -120,7 +120,6 @@ static var_info _cm_vtab_pvwattsv7[] = {
         { SSC_INPUT,        SSC_NUMBER,      "dc_ac_ratio",                    "DC to AC ratio",                              "ratio",     "",                                             "System Design",      "?=1.1",                   "POSITIVE",                      "" },
 
         { SSC_INPUT,        SSC_NUMBER,      "bifaciality",                    "Module bifaciality factor",                   "0 or ~0.65","",                                             "System Design",      "?=0",                       "",                              "" },
-        { SSC_INPUT,        SSC_NUMBER,      "ac_plant_max_f",                 "Plant controller max output (as f(ac_size))", "ratio",     "",                                             "System Design",      "?=1.0",                   "",                              "" },
 
         { SSC_INPUT,        SSC_NUMBER,      "array_type",                     "Array type",                                  "0/1/2/3/4", "Fixed Rack,Fixed Roof,1Axis,Backtracked,2Axis","System Design",      "*",                       "MIN=0,MAX=4,INTEGER",           "" },
         { SSC_INPUT,        SSC_NUMBER,      "tilt",                           "Tilt angle",                                  "deg",       "H=0,V=90",                                     "System Design",      "array_type<4",            "MIN=0,MAX=90",                  "" },
@@ -200,7 +199,7 @@ static var_info _cm_vtab_pvwattsv7[] = {
 
         var_info_invalid };
 
-class cm_pvwattsv7 : public compute_module
+class cm_pvwattsv8 : public compute_module
 {
 protected:
 
@@ -229,29 +228,27 @@ protected:
     struct {
         array_type type;
 
-        double dc_nameplate; //units of this variable are W, while input is in kW
-        double dc_ac_ratio;
-        double ac_nameplate;
-        double xfmr_rating;
-        double ac_plant_max;
-        double inv_eff_percent;
-        double dc_loss_percent;
-        double tilt, azimuth;
-        double rotlim;
+        double dc_nameplate;    //nameplate rated capacity of the DC side of the system units of this variable are W, while input is in kW
+        double dc_ac_ratio;     //ratio of DC nameplate capacity to AC nameplate capacity (unitless)
+        double ac_nameplate;    //nameplate rated capacity of the AC side of the system (W)
+        double xfmr_rating;     //rating of the transformer, hardcoded to be equal to ac_nameplate (W)   
+        double inv_eff_percent; //inverter efficiency at rated power (percent)
+        double dc_loss_percent; //DC system losses (percent)
+        double tilt, azimuth;   //tilt and azimuth of the system (degrees)
+        double rotlim;          //tracker rotation limit (degrees)
 
-        double xfmr_nll_f;
-        double xfmr_ll_f;
+        double xfmr_nll_f;      //transformer no-load-loss (percent of AC power)
+        double xfmr_ll_f;       //transformer load loss (percent of AC power)
 
-        double inoct;
-        double nmodules;
-        double nmodperstr;
-        int nmodx, nmody, nrows;
-        double row_spacing;
-        double gcr;
+        double nmodules;        //number of modules (unitless)
+        double nmodperstr;      //number of modules per string (unitless)
+        int nmodx, nmody, nrows;//number of modules along the bottom of a row, number of modules along the upward direction of a row, number of rows (unitless)
+        double row_spacing;     //row spacing, calculated from other inputs (meters)
+        double gcr;             //ground coverage ratio (unitless)
 
     } pv;
 
-    struct sdmml { //single diode model mermoud lejeune (alternative to pvwatts linear model)
+    struct sdmml { //single diode model mermoud lejeune (alternative to pvwatts model)
         double Area;
         double Vmp;
         double Imp;
@@ -275,10 +272,10 @@ protected:
     lossdiagram ld;
 
 public:
-    cm_pvwattsv7()
+    cm_pvwattsv8()
     {
         add_var_info(vtab_technology_outputs);
-        add_var_info(_cm_vtab_pvwattsv7);
+        add_var_info(_cm_vtab_pvwattsv8);
         add_var_info(vtab_adjustment_factors);
         add_var_info(vtab_technology_outputs);
 
@@ -310,12 +307,12 @@ public:
         ld.add("ac_delivered", true);
     }
 
-    virtual ~cm_pvwattsv7()
+    virtual ~cm_pvwattsv8()
     {
         // nothing to do
     }
 
-    double sdmml_power(sdmml& m, double S, double T_cell) //single diode model structure, S=irradiance, T_cell is cell temperature
+    double sdmml_power(sdmml& m, double S, double T_cell) //mermoud lejeune single diode model structure, S=irradiance, T_cell is cell temperature
     {
         static const double S_ref = 1000;
         static const double T_ref = 25;
@@ -346,15 +343,15 @@ public:
 
     void exec()
     {
-       std::unique_ptr<weather_data_provider> wdprov;
+        std::unique_ptr<weather_data_provider> wdprov;
 
         if (is_assigned("solar_resource_file"))
         {
             const char* file = as_string("solar_resource_file");
             wdprov = std::unique_ptr<weather_data_provider>(new weatherfile(file));
+
             weatherfile* wfile = dynamic_cast<weatherfile*>(wdprov.get());
-            
-            if (!wfile->ok()) throw exec_error("pvwattsv7", wfile->message());
+            if (!wfile->ok()) throw exec_error("pvwattsv8", wfile->message());
             if (wfile->has_message()) log(wfile->message(), SSC_WARNING);
         }
         else if (is_assigned("solar_resource_data"))
@@ -362,7 +359,7 @@ public:
             wdprov = std::unique_ptr<weather_data_provider>(new weatherdata(lookup("solar_resource_data")));
         }
         else
-            throw exec_error("pvwattsv7", "No weather data supplied.");
+            throw exec_error("pvwattsv8", "No weather data supplied.");
 
         pv.dc_nameplate = as_double("system_capacity") * 1000; //units of this variable are W, while input is in kW
         pv.dc_ac_ratio = as_double("dc_ac_ratio");
@@ -401,12 +398,17 @@ public:
             log("Using the wind stow model with weather data that is not continuous over one year may result in over-estimation of stow losses.", SSC_WARNING);
         double wstow = std::numeric_limits<double>::quiet_NaN();
         if (is_assigned("stow_wspd")) wstow = as_double("stow_wspd"); // wind stow speed, m/s.
-        double wind_stow_angle_deg; // default is to assume stowing at 30 degrees (set in var_table) for better dynamic torsional stability, despite higher static loading on piles
+        double wind_stow_angle_deg = std::numeric_limits<double>::quiet_NaN(); // default is to assume stowing at 30 degrees (set in var_table) for better dynamic torsional stability, despite higher static loading on piles
         if (is_assigned("wind_stow_angle")) wind_stow_angle_deg = as_double("wind_stow_angle");
         // gust factor defined later because it depends on timestep
 
         //hidden input variable (not in var_table): whether or not to use the mermoud lejeune single diode model as defined above (0 = don't use model, 1 = use model)
-        int en_sdm = is_assigned("en_sdm") ? as_integer("en_sdm") : 0;
+        int en_mlm = is_assigned("en_mlm") ? as_integer("en_mlm") : 0;
+
+        cec6par_module_t mod; // structure for the CEC single diode model calculations
+        noct_celltemp_t modTempCalc; // structure for the module temperature calculations
+        modTempCalc.standoff_tnoct_adj = 0; // do not use the adjustment for cell temperature, but rather set noct as commented below
+        modTempCalc.ffv_wind = 0.51; // assume that all mounting configurations are < 22 ft. This may not be perfect for roof-mounted systems, but the differences are likely minimal.
 
         module.type = (module_type)as_integer("module_type");
         switch (module.type)
@@ -417,15 +419,29 @@ public:
             module.ff = 0.778; //fill factors required for self-shading calculations
             module.stc_eff = 0.19;
 
+            // for full CEC single diode model, Canadian Solar CS1H-320MS, parameters calculated by SAM version 2020.2.29 r3
+            mod.Area = 1.6864;
+            mod.Vmp = 35.8;
+            mod.Imp = 9.01;
+            mod.Voc = 43.3;
+            mod.Isc = 9.51;
+            mod.alpha_isc = 0.004755;
+            mod.beta_voc = -0.12557;
+            mod.a = 1.65916;
+            mod.Il = 9.51393;
+            mod.Io = 4.37813e-11;
+            mod.Rs = 0.269953;
+            mod.Rsh = 654.059;
+            mod.Adj = 5.79586;
+
             // for optional SDM module model:
             // selected module from PVsyst PAN database: TSM-330DD14A(II)
-            // note that this is a DIFFERENT module than the four main factors listed above
+            // note that this is a DIFFERENT module than the factors listed above
             sdm.Area = 1.940;
             sdm.Vmp = 37.8;
             sdm.Imp = 8.73;
             sdm.Voc = 46.2;
             sdm.Isc = 9.27;
-
             sdm.n_0 = 0.92;
             sdm.mu_n = 0;
             sdm.N_series = 72;
@@ -442,17 +458,31 @@ public:
             module.gamma = -0.0035;
             module.ar_glass = true;
             module.ff = 0.780;
-            module.stc_eff = 0.21;
+            module.stc_eff = 0.21; //efficiency assumption updated per Sunpower
+
+            // for full CEC single diode model, Sunpower SPR-E20-327
+            mod.Area = 1.6297;
+            mod.Vmp = 54.7;
+            mod.Imp = 5.98;
+            mod.Voc = 64.9;
+            mod.Isc = 6.46;
+            mod.alpha_isc = 0.0026;
+            mod.beta_voc = -0.1766;
+            mod.a = 2.45326;
+            mod.Il = 6.4704;
+            mod.Io = 2.01784e-11;
+            mod.Rs = 0.421231;
+            mod.Rsh = 261.723;
+            mod.Adj = 9.56482;
 
             // for optional SDM module model:
             // selected module from PVsyst PAN database: SPR-X20-327-COM
-            // note that this is a DIFFERENT module than the four main factors listed above
+            // note that this is a DIFFERENT module than the factors listed above
             sdm.Area = 1.630;
             sdm.Vmp = 59.5;
             sdm.Imp = 5.49;
             sdm.Voc = 70.0;
             sdm.Isc = 5.84;
-
             sdm.n_0 = 1.17;
             sdm.mu_n = 0;
             sdm.N_series = 96;
@@ -471,15 +501,29 @@ public:
             module.ff = 0.777;
             module.stc_eff = 0.18;
 
+            // for full CEC single diode model, First Solar FS-6435A
+            mod.Area = 2.4751;
+            mod.Vmp = 183.6;
+            mod.Imp = 2.37;
+            mod.Voc = 219.6;
+            mod.Isc = 2.55;
+            mod.alpha_isc = 0.00102;
+            mod.beta_voc = -0.61488;
+            mod.a = 7.97293;
+            mod.Il = 2.55475;
+            mod.Io = 2.69243e-12;
+            mod.Rs = 4.60991;
+            mod.Rsh = 2476.95;
+            mod.Adj = -2.49865;
+
             // for optional SDM module model:
             // selected module from PVsyst PAN database: FS-4112-3
-            // note that this is a DIFFERENT module than the four main factors listed above
+            // note that this is a DIFFERENT module than the factors listed above
             sdm.Area = 0.72;
             sdm.Vmp = 68.5;
             sdm.Imp = 1.64;
             sdm.Voc = 87.0;
             sdm.Isc = 1.83;
-
             sdm.n_0 = 1.5;
             sdm.mu_n = 0.002;
             sdm.N_series = 108;
@@ -515,10 +559,10 @@ public:
         switch (pv.type)
         {
         case FIXED_ROOF:
-            pv.inoct = 49;
+            modTempCalc.Tnoct = 49; // rather than using the standoff_tnoct_adj factor from the noct_celltemp_t structure, we just make an assumption here for increased Tnoct due to roof-mounting
             break;
         default: // all other types
-            pv.inoct = 45;
+            modTempCalc.Tnoct = 45;
             break;
         }
 
@@ -530,46 +574,41 @@ public:
             log("The bifacial model is designed for fixed arrays and may not produce reliable results for tracking arrays.", SSC_WARNING);
 
         pv.gcr = as_double("gcr");
+        if (pv.gcr < 0.01 || pv.gcr >= 1.0)
+            throw exec_error("pvwattsv8", "invalid gcr");
 
         bool en_self_shading = (pv.type == FIXED_RACK || pv.type == ONE_AXIS || pv.type == ONE_AXIS_BACKTRACKING);
 
-        if (en_self_shading)
-        {
-            if (pv.gcr < 0.01 || pv.gcr >= 1.0)
-                throw exec_error("pvwattsv7", "invalid gcr for fixed rack or one axis tracking system");
+        // Electrical Layout
+        // modules per string: 7 modules of about 60 Vmp each
+        // gives a nominal DC voltage of about 420 V DC which seems reasonable
+        pv.nmodperstr = 7;
+        pv.nmodules = ceil(pv.dc_nameplate / module.stc_watts); // estimate of # of modules in system
+        // but make sure there's at least one module, in the case where dc_nameplate < stc_watts
+        if (pv.nmodules < 1) pv.nmodules = 1;
 
-            // reasonable estimates of system geometry:
-            // assume a perhaps a ''square'' system layout based on DC nameplate size
+        // Physical Layout
+        // reasonable estimates of system geometry, used for self-shading calculations ONLY.
+        // assume one module high for trackers, 2 modules high for fixed or two-axis
+        if (pv.type == ONE_AXIS || pv.type == ONE_AXIS_BACKTRACKING)
+            pv.nmody = 1; // e.g. Nextracker or ArrayTechnologies single portrait
+        else
+            pv.nmody = 2; // typical fixed 2 up portrait
+         if (pv.type == FIXED_ROOF)
+            pv.nrows = 1; // fixed roof systems are all in one "row", so we'll assign that here for clarity even though these numbers only affect self-shading and that's disabled for rooftop systems
+        else
+            pv.nrows = (int)ceil(sqrt(pv.nmodules/pv.nmody)); // assume a ''square'' system layout- same number of modules across a row (nmodx) as number of rows (nrows), so need to divide by nmody to ensure that's true
+        pv.nmodx = ceil(pv.nmodules / ( pv.nrows * pv.nmody)); // would rather that the estimated physical layout be larger than the actual number of modules for estimating self-shading impacts
+        if (pv.nmodx < 1) pv.nmodx = 1; // shading calculation fails for pv.nmodx < 1
+        pv.row_spacing = module.length * pv.nmody / pv.gcr;
 
-            // modules per string: 7 modules of about 60 Vmp each
-            // gives a nominal DC voltage of about 420 V DC which seems reasonable
-            pv.nmodperstr = 7;
-            pv.nmodules = ceil(pv.dc_nameplate / module.stc_watts); // estimate of # of modules in system
-            // fails for pv.modules < 1 that is id dc_nameplate < stc_watts
-            if (pv.nmodules < 1) pv.nmodules = 1;
-            pv.nrows = (int)ceil(sqrt(pv.nmodules)); // estimate of # rows, assuming 1 module in each row
-
-            // see note farther down in code about self-shading for small systems
-            // assume at least some reasonable number of rows.
-            // otherwise self shading model may not really apply very well.
-            // in fact, should have some minimum system size
-            /*if (pv.nrows < 10)
-                log(util::format("system size is too small to accurately estimate regular row-row self shading impacts. (estimates: #modules=%d, #rows=%d).  disabling self-shading calculations.",
-                (int)pv.nmodules, (int)pv.nrows), SSC_WARNING);*/
-
-            if (pv.type == ONE_AXIS || pv.type == ONE_AXIS_BACKTRACKING)
-                pv.nmody = 1; // e.g. Nextracker or ArrayTechnologies single portrait
-            else
-                pv.nmody = 2; // typical fixed 2 up portrait
-
-            // number of modules in a row...
-            //   If 1 module per Y dimension, nmodx=nrows.
-            //   If 2 module per Y, then nmodx=nrows/2.
-            pv.nmodx = pv.nrows / pv.nmody;
-            // shading calculation fails for pv.nmodx < 1
-            if (pv.nmodx < 1) pv.nmodx = 1;
-            pv.row_spacing = module.length * pv.nmody / pv.gcr;
-        }
+        // see note farther down in code about self-shading for small systems
+        // assume at least some reasonable number of rows.
+        // otherwise self shading model may not really apply very well.
+        // in fact, should have some minimum system size
+        /*if (pv.nrows < 10)
+            log(util::format("system size is too small to accurately estimate regular row-row self shading impacts. (estimates: #modules=%d, #rows=%d).  disabling self-shading calculations.",
+            (int)pv.nmodules, (int)pv.nrows), SSC_WARNING);*/
 
         pvsnowmodel snowmodel;
         bool en_snowloss = as_boolean("en_snowloss");
@@ -592,15 +631,15 @@ public:
 
         adjustment_factors haf(this, "adjust");
         if (!haf.setup())
-            throw exec_error("pvwattsv7", "Failed to set up adjustment factors: " + haf.error());
+            throw exec_error("pvwattsv8", "Failed to set up adjustment factors: " + haf.error());
 
         // read all the shading input data and calculate the hourly factors for use subsequently
         // timeseries beam shading factors cannot be used with non-annual data
         if (is_assigned("shading:timestep") && !wdprov->annualSimulation())
-            throw exec_error("pvwattsv7", "Timeseries beam shading inputs cannot be used for a simulation period that is not continuous over one or more years.");
+            throw exec_error("pvwattsv8", "Timeseries beam shading inputs cannot be used for a simulation period that is not continuous over one or more years.");
         shading_factor_calculator shad;
         if (!shad.setup(this, ""))
-            throw exec_error("pvwattsv7", shad.get_error());
+            throw exec_error("pvwattsv8", shad.get_error());
         // self-shading initialization
         sssky_diffuse_table ssSkyDiffuseTable;
         if (en_self_shading)
@@ -609,7 +648,7 @@ public:
         weather_header hdr;
         wdprov->header(&hdr);
 
-        // assumes instantaneous values, unless hourly file with no minute column specified
+        // assumes instantaneous values, unless hourly file with no minute column specified- same code as lib_pv_io_manager.cpp. can we make this one set of code somehow?
         double ts_shift_hours = 0.0;
         bool instantaneous = true;
         if (wdprov->has_data_column(weather_data_provider::MINUTE))
@@ -632,7 +671,7 @@ public:
             ts_shift_hours = 0.5;
         }
         else
-            throw exec_error("pvwattsv7", "Minute column required in weather data for subhourly data or data that is not continuous over one year.");
+            throw exec_error("pvwattsv8", "Minute column required in weather data for subhourly data or data that is not continuous over one year.");
 
         assign("ts_shift_hours", var_data((ssc_number_t)ts_shift_hours));
 
@@ -642,7 +681,7 @@ public:
         std::vector<double> degradationFactor;
         if (as_boolean("system_use_lifetime_output")) {
             if (!wdprov->annualSimulation())
-                throw exec_error("pvwattsv7", "Simulation cannot be run over analysis period for weather data that is not continuous over one year. Set system_use_lifetime_output to 0 to resolve this issue.");
+                throw exec_error("pvwattsv8", "Simulation cannot be run over analysis period for weather data that is not continuous over one year. Set system_use_lifetime_output to 0 to resolve this issue.");
             nyears = as_unsigned_long("analysis_period");
             std::vector<double> dc_degradation = as_vector_double("dc_degradation");
             if (dc_degradation.size() == 1) {
@@ -653,7 +692,7 @@ public:
             }
             else {
                 if (dc_degradation.size() != nyears)
-                    throw exec_error("pvwattsv7", "Length of degradation array must be equal to analysis period.");
+                    throw exec_error("pvwattsv8", "Length of degradation array must be equal to analysis period.");
                 for (size_t y = 0; y < nyears; y++) {
                     degradationFactor.push_back(1.0 - dc_degradation[y] / 100.0);
                 }
@@ -669,7 +708,7 @@ public:
         if (wdprov->annualSimulation())
             step_per_hour = nrec / 8760; //overwrite with real value for annual simulations
         if (wdprov->annualSimulation() && (step_per_hour < 1 || step_per_hour > 60 || step_per_hour * 8760 != nrec))
-            throw exec_error("pvwattsv7", util::format("Invalid number of data records (%d): must be an integer multiple of 8760.", (int)nrec));
+            throw exec_error("pvwattsv8", util::format("Invalid number of data records (%d): must be an integer multiple of 8760.", (int)nrec));
         double ts_hour = 1.0 / step_per_hour; //timestep in fraction of hours (decimal)
 
         double wm2_to_wh = module_m2 * ts_hour; //conversion from watts per meter squared to watt hours- need to convert with ts_hour for subhourly data
@@ -713,7 +752,7 @@ public:
         ssc_number_t* p_ss_beam = allocate("ss_beam_factor", nrec);
         ssc_number_t* p_ss_sky_diffuse = allocate("ss_sky_diffuse_factor", nrec);
         ssc_number_t* p_ss_gnd_diffuse = allocate("ss_gnd_diffuse_factor", nrec);
-        ssc_number_t* p_stow = allocate("tracker_stowing", nrec); 
+        ssc_number_t* p_stow = allocate("tracker_stowing", nrec); // just for reporting output
 
         ssc_number_t* p_tmod = allocate("tcell", nrec);
         ssc_number_t* p_dcshadederate = allocate("dcshadederate", nrec);
@@ -724,8 +763,6 @@ public:
         ssc_number_t* p_ac = allocate("ac", nrec);
         ssc_number_t* p_gen = allocate("gen", nlifetime);
 
-        pvwatts_celltemp tccalc(pv.inoct + 273.15, PVWATTS_HEIGHT, ts_hour); //in pvwattsv5 there is some code about previous tcell and poa that doesn't appear to get used, so not adding it here
-
         double annual_kwh = 0;
 
         size_t idx_life = 0;
@@ -735,7 +772,7 @@ public:
             for (size_t idx = 0; idx < nrec; idx++)
             {
                 if (!wdprov->read(&wf))
-                    throw exec_error("pvwattsv7", util::format("could not read data line %d of %d in weather file", (int)(idx + 1), (int)nrec));
+                    throw exec_error("pvwattsv8", util::format("could not read data line %d of %d in weather file", (int)(idx + 1), (int)nrec));
                 size_t hour_of_year = util::hour_of_year(wf.month, wf.day, wf.hour);
 
 #define NSTATUS_UPDATES 50  // set this to the number of times a progress update should be issued for the simulation
@@ -747,7 +784,7 @@ public:
                         // check percentage
                         if (percent > 100.0f) percent = 99.0f;
                         if (!update("", percent, (float)hour_of_year))
-                            throw exec_error("pvwattsv7", "Simulation stopped at hour " + util::to_string(hour_of_year + 1.0));
+                            throw exec_error("pvwattsv8", "Simulation stopped at hour " + util::to_string(hour_of_year + 1.0));
                     }
                 }
 
@@ -793,7 +830,7 @@ public:
                     instantaneous ? IRRADPROC_NO_INTERPOLATE_SUNRISE_SUNSET : ts_hour);
                 irr.set_location(hdr.lat, hdr.lon, hdr.tz);
                 irr.set_optional(hdr.elev, wf.pres, wf.tdry);
-                irr.set_sky_model(2, alb);
+                irr.set_sky_model(irrad::PEREZ, alb);
                 irr.set_beam_diffuse(wf.dn, wf.df);
 
                 int track_mode = 0;
@@ -825,7 +862,7 @@ public:
                 double solazi, solzen, solalt, aoi, stilt, sazi, rot, btd;
                 int sunup;
                 double ibeam = 0.0, iskydiff = 0.0, ignddiff = 0.0, irear = 0.0;
-                double poa = 0, tpoa = 0, tmod = 0, dc = 0, ac = 0;
+                double poa = 0.0, tpoa = 0.0, tmod = 0.0, dc = 0.0, ac = 0.0;
 
                 irr.get_sun(&solazi, &solzen, &solalt, nullptr, nullptr, nullptr, &sunup, nullptr, nullptr, nullptr); //nullptr used when you don't need to retrieve the output
                 irr.get_angles(&aoi, &stilt, &sazi, &rot, &btd);
@@ -843,7 +880,7 @@ public:
                         wf.year, wf.month, wf.day, wf.hour, wf.minute));
                 }
                 else if (0 != code)
-                    throw exec_error("pvwattsv7",
+                    throw exec_error("pvwattsv8",
                         util::format("Failed to process irradiation on surface (code: %d) [y:%d m:%d d:%d h:%d minute:%lg].",
                             code, wf.year, wf.month, wf.day, wf.hour, wf.minute));
 
@@ -854,7 +891,6 @@ public:
                 if (shad.fbeam(hour_of_year, wf.minute, solalt, solazi))
                     shad_beam = shad.beam_shade_factor();
 
-                // initialize shading outputs
                 p_shad_beam[idx] = (ssc_number_t)shad_beam;
                 p_ss_beam[idx] = (ssc_number_t)1.0;
                 p_ss_sky_diffuse[idx] = (ssc_number_t)1.0;
@@ -992,7 +1028,7 @@ public:
                             ssSkyDiffuseTable,
                             ssout))
                         {
-                            throw exec_error("pvwattsv7", util::format("Self-shading calculation failed at %d.", (int)idx_life));
+                            throw exec_error("pvwattsv8", util::format("Self-shading calculation failed at %d.", (int)idx_life));
                         }
 
                         // fixed tilt system with linear self-shading: beam is derated by fixed shade fraction
@@ -1068,7 +1104,7 @@ public:
                         else if (soiling_len == nrec)
                             soiling_f = soiling[idx] * 0.01; //convert from percentage to decimal
                         else
-                            throw exec_error("pvwattsv7", "Soiling input array must have 1, 12, or nrecords values.");
+                            throw exec_error("pvwattsv8", "Soiling input array must have 1, 12, or nrecords values.");
 
                         if (y == 0 && wdprov->annualSimulation()) ld("poa_loss_soiling") += (ibeam + iskydiff + ignddiff) * soiling_f * wm2_to_wh;
 
@@ -1087,44 +1123,6 @@ public:
                     // dc power nominal before any losses
                     double dc_nom = pv.dc_nameplate * poa / 1000; // Watts_DC * (POA W/m2 / 1000 W/m2 STC value );
                     if (y == 0 && wdprov->annualSimulation()) ld("dc_nominal") += dc_nom * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
-
-                    // module cover module to handle transmitted POA
-                    double f_cover = 1.0;
-                    if (aoi > AOI_MIN && aoi < AOI_MAX && poa_front > 0)
-                    {
-                        /*double modifier = iam( aoi, module.ar_glass );
-                        double tpoa = poa - ( 1.0 - modifier )*wf.dn*cosd(aoi); */ // previous PVWatts method, skips diffuse calc
-
-                        tpoa = calculateIrradianceThroughCoverDeSoto(
-                            aoi, solzen, stilt, ibeam, iskydiff, ignddiff, en_sdm == 0 && module.ar_glass);
-                        if (tpoa < 0.0) tpoa = 0.0;
-                        if (tpoa > poa) tpoa = poa_front;
-
-                        f_cover = tpoa / poa_front;
-                    }
-
-                    if (y == 0 && wdprov->annualSimulation()) ld("dc_loss_cover") += (1 - f_cover) * dc_nom * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
-
-                    // spectral correction via air mass modifier
-                    double f_AM = air_mass_modifier(solzen, hdr.elev, AMdesoto);
-                    if (y == 0 && wdprov->annualSimulation()) ld("dc_loss_spectral") += (1 - f_AM) * dc_nom * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
-
-                    // cell temperature
-                    double wspd_corr = wf.wspd < 0 ? 0 : wf.wspd; //correct the wind speed if it is negative
-                    tmod = tccalc(poa, wspd_corr, wf.tdry);
-
-                    /*
-                        // optional: maybe can use sandia typical open rack module thermal model
-                        double a = -3.56;
-                        double b = -0.075;
-                        double dT = 3.0;
-                        double Tmod = sandia_celltemp_t::sandia_module_temperature( poa, wspd_corr, wf.tdry, 1.0, a, b );
-                        tmod = sandia_celltemp_t::sandia_tmod_from_tmodule( Tmod, poa, 1.0, dT);
-                    */
-
-                    // module temperature losses
-                    double f_temp = (1.0 + module.gamma * (tmod - 25.0));
-                    if (y == 0 && wdprov->annualSimulation()) ld("dc_loss_thermal") += dc_nom * (1.0 - f_temp) * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
 
                     // nonlinear dc loss from shading
                     if (y == 0 && wdprov->annualSimulation()) ld("dc_loss_nonlinear") += dc_nom * (1.0 - f_nonlinear) * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
@@ -1145,7 +1143,7 @@ public:
                             smLoss))
                         {
                             if (!snowmodel.good)
-                                throw exec_error("pvwattsv7", snowmodel.msg);
+                                throw exec_error("pvwattsv8", snowmodel.msg);
                         }
                         f_snow = (1.0 - smLoss);
                     }
@@ -1162,45 +1160,88 @@ public:
                         (f_nonlinear < 1.0 && poa > 0.0) // if there is a nonlinear self-shading derate
                         ? (ibeam_unselfshaded + iskydiff + ignddiff) // then use the unshaded beam to calculate eff POA for power calc but adjust for IAM and spectral
                         : (ibeam + iskydiff + ignddiff); // otherwise, use the 'linearly' derated beam irradiance
-                    poa_for_power *= f_cover * f_AM; //derate irradiance for module cover and spectral effects
-                    poa_for_power += irear * f_AM; // backside irradiance model already includes back cover effects
 
-                    if (en_sdm)
+                    // set up inputs to module model for both temperature and subsequent CEC module model calculations
+                    pvinput_t in((f_nonlinear < 1.0 && poa > 0.0) ? ibeam_unselfshaded : ibeam, iskydiff, ignddiff, irear * module.bifaciality, poa_for_power,
+                        wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres,
+                        solzen, aoi, hdr.elev,
+                        stilt, sazi,
+                        ((double)wf.hour) + wf.minute / 60.0,
+                        irrad::DN_DF, false);
+
+                    // module temperature calculations
+                    if (!modTempCalc(in, mod, -1.0, tmod)) throw exec_error("pvwattsv8", util::format("Module temperature calculation failed at index %d.", (int)idx_life)); //calculate temperature at MPP (-1.0 flag determines this)
+
+                    // calculate transmitted POA (tpoa) to report as an output
+                    if (aoi > AOI_MIN && aoi < AOI_MAX && poa_front > 0)
                     {
+                        tpoa = calculateIrradianceThroughCoverDeSoto(
+                            aoi, solzen, stilt, ibeam, iskydiff, ignddiff, en_mlm == 0 && module.ar_glass);
+                        if (tpoa < 0.0) tpoa = 0.0;
+                        if (tpoa > poa) tpoa = poa_front;
+                    }
+
+                    // DC power conversion calculations
+                    if (en_mlm) // hidden feature for pvwatts SDK users contributed by Aron Dobos
+                    {
+                        // adjustments to irradiance that are covered as part of the CEC model, but not by the mlm model
+                        // module cover effects
+                        double f_cover = 1.0;
+                        f_cover = tpoa / poa_front;
+                        // spectral correction via air mass modifier
+                        double f_AM = air_mass_modifier(solzen, hdr.elev, AMdesoto);
+
+                        // derate poa irradiance and record losses for loss diagram
+                        poa_for_power *= f_cover * f_AM; //derate irradiance for module cover and spectral effects
+                        poa_for_power += irear * f_AM; // backside irradiance model already includes back cover effects
+                        if (y == 0 && wdprov->annualSimulation()) ld("dc_loss_cover") += (1 - f_cover) * dc_nom * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
+                        if (y == 0 && wdprov->annualSimulation()) ld("dc_loss_spectral") += (1 - f_AM) * dc_nom * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data*/                   
+                        
                         // single diode model per PVsyst using representative module parameters for each module type
                         double P_single_module_sdm = sdmml_power(sdm, poa_for_power, tmod);
                         dc = P_single_module_sdm * pv.dc_nameplate / (sdm.Vmp * sdm.Imp);
                     }
-                    else
+                    else // normal PVWattsV8 DC conversion module model
                     {
-                        // basic linear PVWatts model
-                        dc = pv.dc_nameplate * (poa_for_power / 1000) * f_temp;
+
+                        // set up output structure for module model
+                        pvoutput_t out(0, 0, 0, 0, 0, 0, 0, 0);
+                        // call the module model
+                        if (!mod(in, tmod, -1.0, out)) throw exec_error("pvwattsv8", util::format("Module power calculation failed at index %d.", (int)idx_life));
+                        // scale the power output for a single module (out.Power) to the actual system size-
+                        // divide the DC nameplate input by the "single module" nameplate (Vmp * Imp) to get a fractional number of modules in the system, and multiply by that fraction
+                        dc = out.Power * pv.dc_nameplate / (mod.Vmp * mod.Imp);
                     }
 
                     // apply common DC losses here (independent of module model)
                     dc *= f_nonlinear * f_snow * f_losses;
+                    p_dcshadederate[idx] = (ssc_number_t)f_nonlinear;
+                    p_dcsnowderate[idx] = (ssc_number_t)f_snow;
 
                     // apply DC degradation
                     dc *= degradationFactor[y];
 
-                    // inverter efficiency
-                    double etanom = pv.inv_eff_percent * 0.01;
-                    double etaref = 0.9637;
-                    double A = -0.0162;
-                    double B = -0.0059;
-                    double C = 0.9858;
-                    double pdc0 = pv.ac_nameplate / etanom;
-                    double plr = dc / pdc0; //power loading ratio of the inverter
-                    ac = 0;
+                    // inverter calculations
+                    sandia_inverter_t inverter;
+                    inverter.Paco = pv.ac_nameplate;
+                    inverter.Pdco = inverter.Paco / (pv.inv_eff_percent * 0.01); // get inverter DC rating by dividing AC rating by efficiency
+                    // set both Vdco and Vdc to zero. the assumption we make for voltages are irrelevant as long as C1, C2, and C3 are zero
+                    inverter.Vdco = 0.0;
+                    inverter.Pso = 0.0; // simplifying assumption that the inverter can always operate
+                    inverter.Pntare = 0.0; // simplifying assumption that inverter has no nighttime losses
+                    inverter.C0 = 0.0; 
+                    // default values for C1, C2, C3 are zero per Sandia documentation: https://pvpmc.sandia.gov/modeling-steps/dc-to-ac-conversion/sandia-inverter-model/
+                    // setting these to 0 results in similar inverter output to pvwattsv5
+                    inverter.C1 = 0.0; 
+                    inverter.C2 = 0.0;
+                    inverter.C3 = 0.0;
+                    // call inverter function
+                    // set operating voltage (second parameter) to zero. the assumption we make for voltages are irrelevant as long as C1, C2, and C3 are zero (set above)
+                    // use null pointers for results that we don't care about
+                    if (!inverter.acpower(dc, 0.0, &ac, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr)) throw exec_error("pvwattsv8", util::format("Inverter power calculation failed at index %d.", (int)idx_life));
 
+                    // record AC results
                     if (y == 0 && wdprov->annualSimulation()) ld("ac_nominal") += dc * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
-
-                    if (plr > 0)
-                    { // normal operation
-                        double eta = (A * plr + B / plr + C) * etanom / etaref;
-                        ac = dc * eta;
-                    }
-
                     if (y == 0 && wdprov->annualSimulation()) ld("ac_loss_efficiency") += (dc - ac) * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
 
                     // power clipping
@@ -1208,11 +1249,8 @@ public:
                     if (y == 0 && wdprov->annualSimulation()) ld("ac_loss_inverter_clipping") += cliploss * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
                     ac -= cliploss;
 
-                    // make sure no negative AC values during daytime hour (no parasitic nighttime losses calculated for PVWatts)
+                    // make sure no negative AC values (no parasitic nighttime losses calculated for PVWatts)
                     if (ac < 0) ac = 0;
-
-                    p_dcshadederate[idx] = (ssc_number_t)f_nonlinear;
-                    p_dcsnowderate[idx] = (ssc_number_t)f_snow;
                 }
                 else
                 {
@@ -1254,7 +1292,7 @@ public:
 
             wdprov->rewind();
         }
-        ssc_number_t *p_annual_energy_dist_time = gen_heatmap(this, step_per_hour);
+        ssc_number_t *p_annual_energy_dist_time = gen_heatmap(this, (double)step_per_hour);
         // monthly and annual outputs
         if (wdprov->annualSimulation())
         {
@@ -1281,7 +1319,7 @@ public:
             assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
             assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6))); //convert from kWh/kW to percent, so divide by 8760 hours and multiply by 100 percent
         }
-        
+
         // location outputs
         assign("location", var_data(hdr.location));
         assign("city", var_data(hdr.city));
@@ -1291,7 +1329,7 @@ public:
         assign("tz", var_data((ssc_number_t)hdr.tz));
         assign("elev", var_data((ssc_number_t)hdr.elev));
         assign("percent_complete", var_data((ssc_number_t)percent));
-        
+
         double gcr_for_land = pv.gcr;
         if (gcr_for_land < 0.01) gcr_for_land = 1.0;
         double landf = is_assigned("landf") ? as_number("landf") : 1.0f;
@@ -1312,5 +1350,5 @@ public:
     }
 };
 
-DEFINE_MODULE_ENTRY(pvwattsv7, "PVWatts V7 - integrated hourly weather reader and PV system simulator.", 3)
+DEFINE_MODULE_ENTRY(pvwattsv8, "PVWatts V8 - integrated hourly weather reader and PV system simulator.", 3)
 
