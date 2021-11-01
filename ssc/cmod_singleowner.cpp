@@ -1431,6 +1431,15 @@ public:
         else
         {
             for (size_t i = 1; i <= nyears; i++) {
+                if ((ppa_mode == 1) && (count_ppa_price_input > 1))
+                {
+                    if (i <= (int)count_ppa_price_input)
+                        cf.at(CF_ppa_price, i) = ppa_price_input[i - 1] * 100.0; // $/kWh to cents/kWh
+                    else
+                        cf.at(CF_ppa_price, i) = 0;
+                }
+                else
+                    cf.at(CF_ppa_price, i) = ppa * pow(1 + ppa_escalation, i - 1); // ppa_mode==0 or single value 
                 double ppa_value = cf.at(CF_ppa_price, i);
                 for (size_t h = 0; h < 8760; h++) {
                     cf.at(CF_energy_sales_value, i) += hourly_energy_calcs.hourly_sales()[h] * cf.at(CF_degradation, i) * ppa_value / 100.0 * ppa_multipliers[h];
