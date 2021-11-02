@@ -406,7 +406,7 @@ void rate_setup::setup(var_table* vt, int num_recs_yearly, size_t nyears, rate_d
     ssc_number_t* ratchet_matrix = NULL; ssc_number_t* bd_tou_matrix = NULL;
     bool ratchets_enabled = vt->as_boolean("ur_enable_billing_demand");
     if (ratchets_enabled) {
-        rate.en_billing_demand = ratchets_enabled;
+        rate.en_billing_demand_lookback = ratchets_enabled;
         rate.bd_minimum = vt->as_number("ur_billing_demand_minimum");
         rate.bd_lookback_months = vt->as_integer("ur_billing_demand_lookback_period");
 
@@ -998,7 +998,7 @@ public:
                 if (rate.uses_billing_demand) {
                     billing_demand_wo_sys_ym[(i + 1) * 12 + j] = rate.billing_demand[j];
                 }
-                if (rate.en_billing_demand) {
+                if (rate.en_billing_demand_lookback) {
                     double monthly_peak_demand = 0.0;
                     std::vector<int> dc_periods = rate.m_month[j].dc_periods;
                     for (size_t p = 0; p < dc_periods.size(); p++) {
@@ -1460,7 +1460,7 @@ public:
                 if (rate.uses_billing_demand) {
                     billing_demand_w_sys_ym[(i + 1) * 12 + j] = rate.billing_demand[j];
                 }
-                if (rate.en_billing_demand) {
+                if (rate.en_billing_demand_lookback) {
                     double monthly_peak_demand = 0.0;
                     std::vector<int> dc_periods = rate.m_month[j].dc_periods;
                     for (size_t p = 0; p < dc_periods.size(); p++) {
@@ -1693,12 +1693,12 @@ public:
         }
 
         if (rate.uses_billing_demand) {
-            if (rate.en_billing_demand) {
+            if (rate.en_billing_demand_lookback) {
                 rate.setup_prev_demand(prev_monthly_peaks);
             }
             for (int m = 0; m < (int)rate.m_month.size(); m++) {
                 double flat_peak = rate.m_month[m].dc_flat_peak;
-                if (rate.en_billing_demand) {
+                if (rate.en_billing_demand_lookback) {
                     // If ratchets are present the peak used here might be the actual peak, or something based on a previous month.
                     flat_peak = rate.get_billing_demand(m);
                 }
@@ -2208,12 +2208,12 @@ public:
         }
 
         if (rate.uses_billing_demand) {
-            if (rate.en_billing_demand) {
+            if (rate.en_billing_demand_lookback) {
                 rate.setup_prev_demand(prev_monthly_peaks);
             }
             for (int m = 0; m < (int)rate.m_month.size(); m++) {
                 double flat_peak = rate.m_month[m].dc_flat_peak;
-                if (rate.en_billing_demand) {
+                if (rate.en_billing_demand_lookback) {
                     // If ratchets are present the peak used here might be the actual peak, or something based on a previous month.
                     flat_peak = rate.get_billing_demand(m);
                 }

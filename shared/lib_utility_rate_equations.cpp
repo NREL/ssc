@@ -130,7 +130,7 @@ rate_data::rate_data() :
 	monthly_dc_fixed(12),
 	monthly_dc_tou(12),
     uses_billing_demand(false),
-    en_billing_demand(false),
+    en_billing_demand_lookback(false),
     prev_peak_demand(12),
     bd_lookback_percents(12),
     bd_minimum(0.0),
@@ -163,7 +163,7 @@ rate_data::rate_data(const rate_data& tmp) :
 	monthly_dc_fixed(tmp.monthly_dc_fixed),
 	monthly_dc_tou(tmp.monthly_dc_tou),
     uses_billing_demand(tmp.uses_billing_demand),
-    en_billing_demand(tmp.en_billing_demand),
+    en_billing_demand_lookback(tmp.en_billing_demand_lookback),
     prev_peak_demand(tmp.prev_peak_demand),
     bd_lookback_percents(tmp.bd_lookback_percents),
     bd_minimum(tmp.bd_minimum),
@@ -942,7 +942,7 @@ ssc_number_t rate_data::get_demand_charge(int month, size_t year)
 		}
         else if (period < curr_month.dc_periods.size()) {
             int period_num = curr_month.dc_periods[period];
-            if (en_billing_demand && bd_tou_periods.at(period_num)) {
+            if (en_billing_demand_lookback && bd_tou_periods.at(period_num)) {
                 demand = billing_demand[month];
             }
             else {
