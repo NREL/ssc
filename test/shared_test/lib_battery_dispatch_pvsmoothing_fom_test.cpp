@@ -29,8 +29,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <fstream>
 #include <sstream>
 #include <cmath>
-#include <json/json.h>
-#include <json/writer.h>
+#include "../rapidjson/document.h"
+#include "../rapidjson/istreamwrapper.h"
 
 // more can be added but these tests take a while...
 TEST_F(PVSmoothing_lib_battery_dispatch, PV_Phoenix_all_on) {
