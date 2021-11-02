@@ -745,6 +745,8 @@ public:
 			CTRL_IS_REC_SU,             //[-] Control decision: is receiver startup allowed?
 			CTRL_IS_PC_SU,              //[-] Control decision: is power cycle startup allowed?
 			CTRL_IS_PC_SB,              //[-] Control decision: is power cycle standby allowed?
+            CTRL_IS_PAR_HTR_SU,         //[-] Control decision: is parallel electric heater startup allowed?
+            PAR_HTR_Q_DOT_TARGET,       //[MWt] Parallel electric heater target thermal power
 			EST_Q_DOT_CR_SU,            //[MWt] Estimate receiver startup thermal power
 			EST_Q_DOT_CR_ON,            //[MWt] Estimate receiver thermal power to HTF
 			EST_Q_DOT_DC,               //[MWt] Estimate max TES dc thermal power

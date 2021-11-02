@@ -176,7 +176,7 @@ void optimization_vars::add_var(const std::string& vname, int var_type /* VAR_TY
     }
 
     //calculate the required memory space for this type of variable
-    int mem_size;
+    int mem_size = 0;
     switch (var_dim)
     {
     case optimization_vars::VAR_DIM::DIM_T:

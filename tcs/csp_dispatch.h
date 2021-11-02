@@ -68,6 +68,10 @@ public:
         double pen_delta_w;                 //[$/kWe-change] Cycle production change penalty
         double q_rec_standby;               //[kWt] Receiver standby thermal power consumption fraction
 
+        bool is_parallel_heater;            //[-] Is there a heater parallel to the receiver
+        double q_eh_max;                    //[kWt] Maximum allowable power delivery by the electrical heaters when operating
+        double q_eh_min;                    //[kWt] Minimum allowable power delivery by the electrical heaters when operating
+
         // Initial Conditions
         bool is_rec_operating0;             //receiver is operating at the initial time step
         bool is_pb_operating0;              //Power block is operating at the initial time step
@@ -121,6 +125,9 @@ public:
             w_stow = std::numeric_limits<double>::quiet_NaN();
             w_cycle_standby = std::numeric_limits<double>::quiet_NaN();
             w_cycle_pump = std::numeric_limits<double>::quiet_NaN();
+            is_parallel_heater = false;
+            q_eh_max = 0.0;
+            q_eh_min = 0.0;
         }
 
         void clear()
@@ -164,6 +171,9 @@ public:
         std::vector<double> q_rec_startup;       //thermal power going to startup
         std::vector<double> w_pb_target;         //optimized electricity generation
 
+        std::vector<bool> htr_operation;       //is heater allowed to operate
+        std::vector<double> q_eh_target;         //heater target thermal power
+
         void clear() {
             rec_operation.clear();
             pb_operation.clear();
@@ -175,6 +185,9 @@ public:
             q_pb_startup.clear();
             q_rec_startup.clear();
             w_pb_target.clear();
+
+            htr_operation.clear();
+            q_eh_target.clear();
         }
 
         void resize(int nt) {
@@ -188,6 +201,9 @@ public:
             q_pb_startup.resize(nt, 0.);
             q_rec_startup.resize(nt, 0.);
             w_pb_target.resize(nt, 0.);
+
+            htr_operation.resize(nt, false);
+            q_eh_target.resize(nt, 0.);
         }
 
     } outputs;
