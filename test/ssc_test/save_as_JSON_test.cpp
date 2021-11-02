@@ -116,8 +116,9 @@ TEST(save_as_JSON_test_run, pvwatts_mechant_plant_rapidjson_read_file_to_ssc_var
     std::ifstream test(inputs_as_JSON);
     std::string json_str((std::istreambuf_iterator<char>(test)), std::istreambuf_iterator<char>());
     auto vt = json_to_ssc_data(json_str.c_str());
-    std::string str(ssc_data_first(vt));
-    EXPECT_EQ(str, "pbi_fed_for_ds"); // differenct order
+    ssc_number_t num;
+    ssc_data_get_number(vt, "number_metrics", &num);
+    EXPECT_EQ(num, 12); 
 }
 
 
@@ -127,6 +128,9 @@ TEST(save_as_JSON_test_run, pvwatts_mechant_plant_rapidjson_read_file_run_pvwatt
     std::string json_str((std::istreambuf_iterator<char>(test)), std::istreambuf_iterator<char>());
     auto data = json_to_ssc_data(json_str.c_str());
     auto mod = ssc_module_create("pvwattsv7");
+    char file_path[256];
+    int nfc1 = sprintf(file_path, "%s/test/input_cases/general_data/phoenix_az_33.450495_-111.983688_psmv3_60_tmy.csv", SSCDIR);
+    ssc_data_set_string(data, "solar_resource_file", file_path);
     ssc_module_exec_set_print(0);
     bool success = ssc_module_exec(mod, data);
     EXPECT_TRUE(success);
@@ -142,6 +146,9 @@ TEST(save_as_JSON_test_run, pvwatts_mechant_plant_rapidjson) {
     auto data = json_to_ssc_data(json_str.c_str());
     ssc_module_exec_set_print(0);
     auto mod_pv = ssc_module_create("pvwattsv7");
+    char file_path[256];
+    int nfc1 = sprintf(file_path, "%s/test/input_cases/general_data/phoenix_az_33.450495_-111.983688_psmv3_60_tmy.csv", SSCDIR);
+    ssc_data_set_string(data, "solar_resource_file", file_path);
     bool success = ssc_module_exec(mod_pv, data);
     EXPECT_TRUE(success);
     auto mod_mp = ssc_module_create("merchantplant");
@@ -159,6 +166,9 @@ TEST(save_as_JSON_test_run, pv_batt_mechant_plant_rapidjson) {
     auto data = json_to_ssc_data(json_str.c_str());
     ssc_module_exec_set_print(0);
     auto mod_pv = ssc_module_create("pvsamv1");
+    char file_path[256];
+    int nfc1 = sprintf(file_path, "%s/test/input_cases/general_data/phoenix_az_33.450495_-111.983688_psmv3_60_tmy.csv", SSCDIR);
+    ssc_data_set_string(data, "solar_resource_file", file_path);
     bool success = ssc_module_exec(mod_pv, data);
     EXPECT_TRUE(success);
     auto mod_grid = ssc_module_create("grid");
@@ -178,6 +188,9 @@ TEST(save_as_JSON_test_run, pt_mechant_plant_rapidjson) {
     auto data = json_to_ssc_data(json_str.c_str());
     ssc_module_exec_set_print(0);
     auto mod_pv = ssc_module_create("tcsmolten_salt");
+    char file_path[256];
+    int nfc1 = sprintf(file_path, "%s/test/input_cases/general_data/daggett_ca_34.865371_-116.783023_psmv3_60_tmy.csv", SSCDIR);
+    ssc_data_set_string(data, "solar_resource_file", file_path);
     bool success = ssc_module_exec(mod_pv, data);
     EXPECT_TRUE(success);
     auto mod_grid = ssc_module_create("grid");
@@ -188,7 +201,7 @@ TEST(save_as_JSON_test_run, pt_mechant_plant_rapidjson) {
     EXPECT_TRUE(success);
     ssc_number_t npv;
     ssc_data_get_number(data, "project_return_aftertax_npv", &npv);
-    EXPECT_NEAR(npv, -570843776, fabs(570843776) / 1e7);
+    EXPECT_NEAR(npv, -570438934, fabs(570438934) / 1e7);
 }
 
 
@@ -199,6 +212,9 @@ TEST(save_as_JSON_test_run, ptrough_mechant_plant_rapidjson) {
     auto data = json_to_ssc_data(json_str.c_str());
     ssc_module_exec_set_print(0);
     auto mod_pv = ssc_module_create("trough_physical");
+    char file_path[256];
+    int nfc1 = sprintf(file_path, "%s/test/input_cases/general_data/tucson_az_32.116521_-110.933042_psmv3_60_tmy.csv", SSCDIR);
+    ssc_data_set_string(data, "file_name", file_path);
     bool success = ssc_module_exec(mod_pv, data);
     EXPECT_TRUE(success);
     auto mod_grid = ssc_module_create("grid");
