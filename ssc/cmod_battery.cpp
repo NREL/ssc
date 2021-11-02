@@ -2099,8 +2099,8 @@ public:
             if (use_lifetime && (double)(util::hours_per_year * analysis_period) / n_rec_lifetime > 1)
                 throw exec_error("battery", "Input gen must be from lifetime simulation when system_use_lifetime_output=1.");
 
-            size_t n_rec_single_year;
-            double dt_hour_gen;
+            size_t n_rec_single_year = n_rec_lifetime / analysis_period;
+            double dt_hour_gen = (double)(util::hours_per_year) / n_rec_single_year;
             size_t nload;
             if (is_assigned("load")) {
                 load_year_one = as_vector_ssc_number_t("load");
@@ -2109,6 +2109,42 @@ public:
                 if (nload != n_rec_lifetime && nload != n_rec_lifetime / analysis_period && nload != 8760)
                     throw exec_error("battery", "The electric load profile must have either the same time step as the weather file, or 8760 time steps.");
             }
+
+            // resilience metrics for battery
+            std::unique_ptr<resilience_runner> resilience = nullptr;
+            std::vector<ssc_number_t> p_crit_load;
+            std::vector<ssc_number_t> p_crit_load_full; p_crit_load_full.reserve(n_rec_lifetime);
+            bool run_resilience = as_boolean("run_resiliency_calcs");
+            // Need to grab the crit load before battstor assigns it as an output
+            if (is_assigned("crit_load")) {
+                p_crit_load = as_vector_ssc_number_t("crit_load");
+                size_t nload = p_crit_load.size();
+                if (nload != n_rec_single_year)
+                    throw exec_error("battery", "Electric load profile must have same number of values as weather file, or 8760.");
+
+            }
+
+            auto batt = std::make_shared<battstor>(*m_vartab, true, n_rec_single_year, dt_hour_gen);
+
+            if (is_assigned("crit_load")) {
+                bool crit_load_specified = !p_crit_load.empty() && *std::max_element(p_crit_load.begin(), p_crit_load.end()) > 0;
+                if (run_resilience) {
+                    if (crit_load_specified) {
+                        resilience = std::unique_ptr<resilience_runner>(new resilience_runner(batt));
+                        auto logs = resilience->get_logs();
+                        if (!logs.empty()) {
+                            log(logs[0], SSC_WARNING);
+                        }
+                    }
+                    else {
+                        throw exec_error("battery", "If run_resiliency_calcs is 1, crit_load must have length > 0 and values > 0");
+                    }
+                }
+                if (!crit_load_specified && batt->analyze_outage) {
+                    throw exec_error("battery", "If grid_outage is specified in any time step, crit_load must have length > 0 and values > 0");
+                }
+            }
+
             scalefactors scale_calculator(m_vartab);
             // compute load (electric demand) annual escalation multipliers
             std::vector<ssc_number_t> load_scale = scale_calculator.get_factors("load_escalation");
@@ -2179,8 +2215,6 @@ public:
                 p_load_forecast_full = load_lifetime;
             }
 
-            auto batt = std::make_shared<battstor>(*m_vartab, true, n_rec_single_year, dt_hour_gen);
-
             // Create battery structure and initialize
 
             if (is_assigned("fuelcell_power"))
@@ -2192,35 +2226,6 @@ public:
             }
             if (batt->batt_vars->batt_topology == ChargeController::DC_CONNECTED) {
                 throw exec_error("battery", "Generic System must be AC connected to battery.");
-            }
-
-            // resilience metrics for battery
-            std::unique_ptr<resilience_runner> resilience = nullptr;
-            std::vector<ssc_number_t> p_crit_load;
-            std::vector<ssc_number_t> p_crit_load_full; p_crit_load_full.reserve(n_rec_lifetime);
-            bool run_resilience = as_boolean("run_resiliency_calcs");
-            if (is_assigned("crit_load")) {
-                p_crit_load = as_vector_ssc_number_t("crit_load");
-                size_t nload = p_crit_load.size();
-                if (nload != n_rec_single_year)
-                    throw exec_error("battery", "Electric load profile must have same number of values as weather file, or 8760.");
-
-                bool crit_load_specified = !p_crit_load.empty() && *std::max_element(p_crit_load.begin(), p_crit_load.end()) > 0;
-                if (run_resilience) {
-                    if (crit_load_specified) {
-                        resilience = std::unique_ptr<resilience_runner>(new resilience_runner(batt));
-                        auto logs = resilience->get_logs();
-                        if (!logs.empty()) {
-                            log(logs[0], SSC_WARNING);
-                        }
-                    }
-                    else {
-                        throw exec_error("battery", "If run_resiliency_calcs is 1, crit_load must have length > 0 and values > 0");
-                    }
-                }
-                if (!crit_load_specified && batt->analyze_outage) {
-                    throw exec_error("battery", "If grid_outage is specified in any time step, crit_load must have length > 0 and values > 0");
-                }
             }
 
             // compute critical load (electric demand) annual escalation multipliers
