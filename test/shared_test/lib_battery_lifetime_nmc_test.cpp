@@ -22,7 +22,6 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <gtest/gtest.h>
 #include <cmath>
-//#include <json/json.h>
 #include "../rapidjson/document.h"
 #include "../rapidjson/istreamwrapper.h"
 
@@ -547,16 +546,12 @@ TEST_F(lib_battery_lifetime_nmc_test, TestAgainstKokamData) {
         std::string file_path = kokam_validation_path + "lifetime_validation_cell_" + std::to_string(cell) + ".json";
         std::ifstream file(file_path);
 
-//        Json::Value root;
-//        file >> root;
         rapidjson::Document root;
         rapidjson::IStreamWrapper iswc(file);
         root.ParseStream(iswc);
 
 
         std::vector<double> rpt_cycles;
-//        for (const auto& i : root["rpt_cycles_cum"])
-//            rpt_cycles.push_back(i.asDouble());
         for (const auto& i : root["rpt_cycles_cum"].GetArray())
             rpt_cycles.push_back(i.GetDouble());
 

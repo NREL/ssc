@@ -29,7 +29,6 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "core.h"
 #include "sscapi.h"
 
-//#include <json/json.h>
 #include "../rapidjson/document.h"
 #include "../rapidjson/error/en.h" // parser errors returned as char strings
 #include "../rapidjson/stringbuffer.h"

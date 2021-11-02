@@ -32,7 +32,6 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "AtlConv.h"
 #endif
 
-//#include <json/json.h>
 #include "../rapidjson/document.h"
 #include "../rapidjson/istreamwrapper.h"
 
@@ -115,7 +114,6 @@ void cm_wind_landbosse::load_config(){
                                            "Use 'set_python_path' function in sscapi.h to point to the correct folder.");
 
     // load python configuration
-//    Json::Value python_config_root;
     rapidjson::Document python_config_root;
     std::ifstream python_config_doc(python_config_path + "/python_config.json");
     if (python_config_doc.fail())
@@ -132,33 +130,26 @@ void cm_wind_landbosse::load_config(){
         python_config_doc.seekg(0);
     }
 #endif
-//    python_config_doc >> python_config_root;
     rapidjson::IStreamWrapper iswc(python_config_doc);
     python_config_root.ParseStream(iswc);
 
 
-//    if (!python_config_root.isMember("exec_path"))
     if (!python_config_root.HasMember("exec_path"))
             throw exec_error("wind_landbosse", "Missing key 'exec_path' in 'python_config.json'.");
-//    if (!python_config_root.isMember("python_version"))
     if (!python_config_root.HasMember("python_version"))
             throw exec_error("wind_landbosse", "Missing key 'python_version' in 'python_config.json'.");
 
 
-//    python_exec_path = python_config_root["exec_path"].asString();
- //   auto python_version = python_config_root["python_version"].asString();
     python_exec_path = python_config_root["exec_path"].GetString();
     auto python_version = python_config_root["python_version"].GetString();
 
     // load landbosse configuration
-//    Json::Value landbosse_config_root;
     rapidjson::Document landbosse_config_root;
     std::ifstream landbosse_config_doc(python_config_path + "/landbosse.json");
     if (landbosse_config_doc.fail())
         throw exec_error("wind_landbosse", "Could not open 'landbosse.json'. "
                                            "Use 'set_python_path' function in sscapi.h to point to the folder containing the file.");
 
-//    landbosse_config_doc >> landbosse_config_root;
     rapidjson::IStreamWrapper isw(landbosse_config_doc);
     landbosse_config_root.ParseStream(isw);
 

@@ -24,7 +24,6 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <gtest/gtest.h>
 #include <vector>
 
-//#include <json/json.h>
 #include "../rapidjson/document.h"
 #include "../rapidjson/istreamwrapper.h"
 
@@ -509,7 +508,6 @@ TEST(windpower_landbosse, SetupPython) {
 	if (!setup_python())
 	    return;
 
-//    Json::Value python_config_root;
     rapidjson::Document python_config_root;
     std::string configPath = std::string(get_python_path()) + "python_config.json";
     if (configPath.empty())
@@ -521,7 +519,6 @@ TEST(windpower_landbosse, SetupPython) {
 	    return;
 	}
 
-//	python_config_doc >> python_config_root;
     rapidjson::IStreamWrapper iswd(python_config_doc);
     python_config_root.ParseStream(iswd);
 
@@ -538,8 +535,6 @@ TEST(windpower_landbosse, SetupPython) {
 		throw std::runtime_error("Missing key 'packages' in " + configPath);
 
 	std::vector<std::string> packages;
-//    for (auto& i : python_config_root["packages"])
-//        packages.push_back(i.asString());
     for (auto& i : python_config_root["packages"].GetArray())
         packages.push_back(i.GetString());
 
@@ -561,13 +556,10 @@ bool check_Python_setup() {
         return false;
 
     std::ifstream python_config_doc(configPath);
-//    Json::Value python_config_root;
- //   python_config_doc >> python_config_root;
     rapidjson::Document python_config_root;
     rapidjson::IStreamWrapper iswc(python_config_doc);
     python_config_root.ParseStream(iswc);
 
-//    if (python_config_root["exec_path"].asString().empty()) {
     if (!python_config_root["exec_path"].GetString()) {
         std::cerr << "Python not configured.";
         return false;

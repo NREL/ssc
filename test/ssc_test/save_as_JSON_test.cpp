@@ -5,7 +5,6 @@
 #include <gtest/gtest.h>
 
 #include "../ssc/vartab.h"
-//#include "json/json.h" // Jsoncpp
 #include "../rapidjson/document.h"
 #include "../rapidjson/istreamwrapper.h"
 #include "../rapidjson/filereadstream.h"
@@ -51,15 +50,13 @@ TEST(save_as_JSON_test_parse, pvwatts_mechant_plant_rapidjson_parse_file) {
         std::cout << document.GetParseError()
             << "\n";
     }
-    EXPECT_TRUE(!document.HasParseError());
+    EXPECT_FALSE(document.HasParseError());
 }
 TEST(save_as_JSON_test_parse, pvwatts_mechant_plant_rapidjson_parse_file_freadstream) {
- //   std::ifstream test(inputs_as_JSON, std::ifstream::binary);
     FILE* fp = fopen(inputs_as_JSON, "rb"); // non-Windows use "r"
     char readBuffer[65536];
     rapidjson::FileReadStream is(fp, readBuffer, sizeof(readBuffer));
     rapidjson::Document document;
- //   rapidjson::IStreamWrapper isw(test);
     document.ParseStream(is);
     if (document.HasParseError())
     {
