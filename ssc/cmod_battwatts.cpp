@@ -212,7 +212,7 @@ battwatts_create(size_t n_recs, size_t n_years, int chem, int meter_pos, double 
     // Charge limits and priority
     batt_vars->batt_initial_SOC = 50.;
     batt_vars->batt_maximum_SOC = 95.;
-    batt_vars->batt_minimum_SOC = 30.;
+    batt_vars->batt_minimum_SOC = 15.;
     batt_vars->batt_minimum_outage_SOC = 10.;
     batt_vars->batt_minimum_modetime = 10;
 
