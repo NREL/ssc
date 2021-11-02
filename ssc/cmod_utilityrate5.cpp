@@ -997,6 +997,8 @@ public:
 
                 if (rate.uses_billing_demand) {
                     billing_demand_wo_sys_ym[(i + 1) * 12 + j] = rate.billing_demand[j];
+                }
+                if (rate.en_billing_demand) {
                     double monthly_peak_demand = 0.0;
                     std::vector<int> dc_periods = rate.m_month[j].dc_periods;
                     for (size_t p = 0; p < dc_periods.size(); p++) {
@@ -1457,7 +1459,8 @@ public:
 
                 if (rate.uses_billing_demand) {
                     billing_demand_w_sys_ym[(i + 1) * 12 + j] = rate.billing_demand[j];
-
+                }
+                if (rate.en_billing_demand) {
                     double monthly_peak_demand = 0.0;
                     std::vector<int> dc_periods = rate.m_month[j].dc_periods;
                     for (size_t p = 0; p < dc_periods.size(); p++) {
