@@ -65,13 +65,12 @@ void csp_dispatch_opt::init(double cycle_q_dot_des, double cycle_eta_des)
     params.e_pb_startup_hot = pointers.mpc_pc->get_hot_startup_energy()*1000.;
     params.q_pb_max = pointers.mpc_pc->get_max_thermal_power() * 1000;
     params.q_pb_min = pointers.mpc_pc->get_min_thermal_power() * 1000;
-    params.eta_cycle_ref = pointers.mpc_pc->get_efficiency_at_load(1.);
     params.w_cycle_pump = pointers.mpc_pc->get_htf_pumping_parasitic_coef();// kWe/kWt
     params.w_cycle_standby = params.q_pb_standby * params.w_cycle_pump; //kWe
 
     params.dt_rec_startup = pointers.col_rec->get_startup_time() / 3600.;
     params.e_rec_startup = pointers.col_rec->get_startup_energy() * 1000;
-    params.q_rec_min = pointers.col_rec->get_min_power_delivery()*1000.;
+    params.q_rec_min = pointers.col_rec->get_min_power_delivery() * 1000.;
     params.w_rec_pump = pointers.col_rec->get_pumping_parasitic_coef();
     params.w_track = pointers.col_rec->get_tracking_power() * 1000.0;	//kWe
     params.w_stow = pointers.col_rec->get_col_startup_power() * 1000.0;	//kWe-hr
@@ -271,7 +270,7 @@ bool csp_dispatch_opt::predict_performance(int step_start, int ntimeints, int di
 
             //store the power cycle efficiency
             double cycle_eff = params.eff_table_Tdb.interpolate( pointers.m_weather.ms_outputs.m_tdry );
-            cycle_eff *= params.eta_cycle_ref;  
+            cycle_eff *= params.eta_pb_des;
             cycle_eff_ave += cycle_eff * ave_weight;
 
 			double f_pb_op_lim_local = std::numeric_limits<double>::quiet_NaN();
@@ -330,7 +329,7 @@ static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::s
         pars["Wb"] = optinst->params.w_cycle_standby;
         pars["Ehs"] = optinst->params.w_stow;
         pars["Wrsb"] = optinst->params.w_rec_ht;
-        pars["eta_cycle"] = optinst->params.eta_cycle_ref;
+        pars["eta_cycle"] = optinst->params.eta_pb_des;
         pars["Qrsd"] = 0.;      //<< not yet modeled, passing temporarily as zero
 
         if (optinst->params.is_parallel_heater) {
@@ -352,7 +351,7 @@ static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::s
             pars["qrecmaxobs"] = optinst->params.q_sfavail_expected.at(i) > pars["qrecmaxobs"] ? optinst->params.q_sfavail_expected.at(i) : pars["qrecmaxobs"];
 
         pars["Qrsb"] = optinst->params.q_rec_standby; // * dq_rsu;
-        pars["W_dot_cycle"] = optinst->params.q_pb_des * optinst->params.eta_cycle_ref;
+        pars["W_dot_cycle"] = optinst->params.q_pb_des * optinst->params.eta_pb_des;
 
         // power cycle linear performance curve
         double intercept;
@@ -365,7 +364,7 @@ static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::s
 
         pars["Wdot0"] = 0.;
         if( pars["q0"] >= pars["Ql"] )
-            pars["Wdot0"] = (pars["etap"] * pars["q0"] + intercept) * optinst->params.eta_pb_expected.at(0) / optinst->params.eta_cycle_ref;
+            pars["Wdot0"] = (pars["etap"] * pars["q0"] + intercept) * optinst->params.eta_pb_expected.at(0) / optinst->params.eta_pb_des;
 
         //TODO: Ramp rate -> User input
         pars["Wdlim"] = pars["W_dot_cycle"] * 0.03 * 60. * pars["delta"];      //Cycle Power Ramping Limit = Rated cycle power * 3%/min (ramp limit "User Input") * 60 mins/hr * hr
@@ -376,8 +375,8 @@ static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::s
         optinst->params.delta_rs.resize(nt);
         for(int t=0; t<nt; t++)
         {
-		    double wmin = (pars["Ql"] * pars["etap"]*optinst->params.eta_pb_expected.at(t) / optinst->params.eta_cycle_ref) + 
-                            (pars["Wdotu"] - pars["etap"]*pars["Qu"])*optinst->params.eta_pb_expected.at(t) / optinst->params.eta_cycle_ref; // Electricity generation at minimum pb thermal input
+		    double wmin = (pars["Ql"] * pars["etap"]*optinst->params.eta_pb_expected.at(t) / optinst->params.eta_pb_des) +
+                            (pars["Wdotu"] - pars["etap"]*pars["Qu"])*optinst->params.eta_pb_expected.at(t) / optinst->params.eta_pb_des; // Electricity generation at minimum pb thermal input
 		    double max_parasitic = 
                     pars["Lr"] * optinst->params.q_sfavail_expected.at(t) 
                 + (optinst->params.w_rec_ht / optinst->params.dt) 
@@ -592,7 +591,7 @@ bool csp_dispatch_opt::optimize()
                 // Cycle ramping limit (sub-hourly model Delta < 1)
                 if (P["delta"] < 1.)
                 {
-                    double temp_coef = (params.eta_pb_expected.at(t) / params.eta_cycle_ref) * P["Wdotl"] - P["Wdlim"];
+                    double temp_coef = (params.eta_pb_expected.at(t) / params.eta_pb_des) * P["Wdotl"] - P["Wdlim"];
 
                     int i = 0;
                     row[i] = 1.;
@@ -641,10 +640,10 @@ bool csp_dispatch_opt::optimize()
                 row[i  ] = 1.;
                 col[i++] = O.column("wdot", t);
 
-                row[i  ] = -P["etap"]* params.eta_pb_expected.at(t)/params.eta_cycle_ref;
+                row[i  ] = -P["etap"]* params.eta_pb_expected.at(t)/params.eta_pb_des;
                 col[i++] = O.column("x", t);
 
-                row[i  ] = -(P["Wdotu"] - P["etap"]*P["Qu"])* params.eta_pb_expected.at(t)/params.eta_cycle_ref;
+                row[i  ] = -(P["Wdotu"] - P["etap"]*P["Qu"])* params.eta_pb_expected.at(t)/params.eta_pb_des;
                 col[i++] = O.column("y", t);
 
                 //row[i  ] = -outputs.eta_pb_expected.at(t);
@@ -1720,7 +1719,7 @@ bool csp_dispatch_opt::set_dispatch_outputs()
         {
             double wcond;
             double eta_corr = pointers.mpc_pc->get_efficiency_at_TPH(pointers.m_weather.ms_outputs.m_tdry, 1., 30., &wcond) / params.eta_pb_des;
-            double eta_calc = params.eta_cycle_ref * eta_corr;
+            double eta_calc = params.eta_pb_des * eta_corr;
             double eta_diff = 1.;
             int i = 0;
             while (eta_diff > 0.001 && i < 20)

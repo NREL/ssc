@@ -61,7 +61,6 @@ public:
         double q_rec_min;                   //[kWt] Minimum allowable power delivery by the receiver when operating
         double w_rec_pump;                  //[kWe/kWt] Pumping parasitic power per thermal energy produced
         double sf_effadj;                   //[-] 0..1 Solar field efficiency adjustment
-        double eta_cycle_ref;               //[kWe/kWt]  Design-point power cycle efficiency
         double time_weighting;              //[-] Weighting factor that discounts future decisions over more imminent ones
         double rsu_cost;                    //[$/start] Receiver startup cost
         double csu_cost;                    //[$/start] Cycle startup cost
@@ -114,7 +113,6 @@ public:
             eta_pb_des = std::numeric_limits<double>::quiet_NaN();
             inventory_incentive = 0.;
             sf_effadj = 1.;
-            eta_cycle_ref = std::numeric_limits<double>::quiet_NaN();
             time_weighting = 0.99;
             rsu_cost = 952.;
             csu_cost = 10000;
