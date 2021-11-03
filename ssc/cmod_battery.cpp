@@ -2099,7 +2099,7 @@ public:
             if (use_lifetime && (double)(util::hours_per_year * analysis_period) / n_rec_lifetime > 1)
                 throw exec_error("battery", "Input gen must be from lifetime simulation when system_use_lifetime_output=1.");
 
-            size_t n_rec_single_year = n_rec_lifetime / analysis_period;
+            size_t n_rec_single_year = use_lifetime ? n_rec_lifetime / analysis_period : n_rec_lifetime;
             double dt_hour_gen = (double)(util::hours_per_year) / n_rec_single_year;
             size_t nload;
             if (is_assigned("load")) {
