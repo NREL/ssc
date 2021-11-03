@@ -130,8 +130,11 @@ void cm_wind_landbosse::load_config(){
         python_config_doc.seekg(0);
     }
 #endif
-    rapidjson::IStreamWrapper iswc(python_config_doc);
-    python_config_root.ParseStream(iswc);
+ //   rapidjson::IStreamWrapper iswc(python_config_doc);
+ //   python_config_root.ParseStream(iswc);
+    std::ostringstream tmp;
+    tmp << python_config_doc.rdbuf();
+    python_config_root.Parse(tmp.str().c_str());
 
 
     if (!python_config_root.HasMember("exec_path"))
@@ -150,8 +153,10 @@ void cm_wind_landbosse::load_config(){
         throw exec_error("wind_landbosse", "Could not open 'landbosse.json'. "
                                            "Use 'set_python_path' function in sscapi.h to point to the folder containing the file.");
 
-    rapidjson::IStreamWrapper isw(landbosse_config_doc);
-    landbosse_config_root.ParseStream(isw);
+    std::ostringstream tmplb;
+    tmplb << landbosse_config_doc.rdbuf();
+    landbosse_config_root.Parse(tmplb.str().c_str());
+
 
     if (!landbosse_config_root.HasMember("run_cmd"))
         throw exec_error("wind_landbosse", "Missing key 'run_cmd' in 'landbosse.json'.");
