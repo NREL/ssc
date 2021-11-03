@@ -266,6 +266,17 @@ double rate_data::get_billing_demand(int month) {
     return billing_demand;
 }
 
+void rate_data::set_billing_demands() {
+    for (int m = 0; m < (int) m_month.size(); m++) {
+        double flat_peak = m_month[m].dc_flat_peak;
+        if (en_billing_demand_lookback) {
+            // If ratchets are present the peak used here might be the actual peak, or something based on a previous month.
+            flat_peak = get_billing_demand(m);
+        }
+        billing_demand[m] = flat_peak;
+    }
+}
+
 void rate_data::setup_prev_demand(ssc_number_t* prev_demand) {
     for (size_t i = 0; i < prev_peak_demand.size(); i++) {
         prev_peak_demand[i] = prev_demand[i];

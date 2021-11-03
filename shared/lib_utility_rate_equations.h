@@ -150,6 +150,7 @@ public:
     void setup_prev_demand(ssc_number_t* prev_demand);
     /* call ur_month.update_net_and_peak before this, otherwise you'll get low values back */
     double get_billing_demand(int month);
+    void set_billing_demands(); // Runs get_billing_demand and updates the billing_demand structure
 
     /* Populate ur_month objects from those filled out in setup_energy_rates. Called annually in cmod_utility_rate5, other classes may reset ur_month directly
        Can be called right away to create the vectors, but for kWh/kW rates needs to be called once after ur_month.update_net_and_peak to be accurate */

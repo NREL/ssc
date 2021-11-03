@@ -1696,14 +1696,7 @@ public:
             if (rate.en_billing_demand_lookback) {
                 rate.setup_prev_demand(prev_monthly_peaks);
             }
-            for (int m = 0; m < (int)rate.m_month.size(); m++) {
-                double flat_peak = rate.m_month[m].dc_flat_peak;
-                if (rate.en_billing_demand_lookback) {
-                    // If ratchets are present the peak used here might be the actual peak, or something based on a previous month.
-                    flat_peak = rate.get_billing_demand(m);
-                }
-                rate.billing_demand[m] = flat_peak;
-            }
+            rate.set_billing_demands();
         }
 
 		if (ec_enabled)
@@ -2211,14 +2204,7 @@ public:
             if (rate.en_billing_demand_lookback) {
                 rate.setup_prev_demand(prev_monthly_peaks);
             }
-            for (int m = 0; m < (int)rate.m_month.size(); m++) {
-                double flat_peak = rate.m_month[m].dc_flat_peak;
-                if (rate.en_billing_demand_lookback) {
-                    // If ratchets are present the peak used here might be the actual peak, or something based on a previous month.
-                    flat_peak = rate.get_billing_demand(m);
-                }
-                rate.billing_demand[m] = flat_peak;
-            }
+            rate.set_billing_demands();
         }
 
 		if (ec_enabled)
