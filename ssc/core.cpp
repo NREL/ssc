@@ -29,6 +29,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "core.h"
 #include "ssc_equations.h"
 
+#include <regex>
+
 const var_info var_info_invalid = {0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
 
 compute_module::compute_module()
@@ -1023,4 +1025,72 @@ ssc_number_t compute_module::accumulate_annual_for_year(const std::string &ts_va
     assign(annual_var, var_data((ssc_number_t) (sum * scale)));
 
     return (ssc_number_t) (sum * scale);
+}
+
+bool write_cmod_to_lk_script(FILE* fp, ssc_data_t p_data)
+{
+    const char* name = ssc_data_first(p_data);
+    while (name)
+    {
+        dump_ssc_variable(fp, p_data, name);
+        name = ssc_data_next(p_data);
+    }
+    fclose(fp);
+    return true;
+}
+
+void dump_ssc_variable(FILE* fp, ssc_data_t p_data, const char* name)
+{ // .17g to .17g for full double precesion.
+    ssc_number_t value;
+    ssc_number_t* p;
+    int len, nr, nc;
+
+    std::string str_value;
+
+    double dbl_value;
+    int type = ::ssc_data_query(p_data, name);
+    switch (type)
+    {
+    case SSC_STRING:
+        str_value = ::ssc_data_get_string(p_data, name);
+        //str_value = std::regex_replace(str_value, std::regex("\\"), "/"); //.replace("\\", "/");
+        //str_value = std::regex_replace(str_value, std::regex("'"), "");
+        fprintf(fp, "var( '%s', '%s' );\n", name, (const char*)str_value.c_str());
+        break;
+    case SSC_NUMBER:
+        ::ssc_data_get_number(p_data, name, &value);
+        dbl_value = (double)value;
+        if (dbl_value > 1e38) dbl_value = 1e38;
+        fprintf(fp, "var( '%s', %.17g );\n", name, dbl_value);
+        break;
+    case SSC_ARRAY:
+        p = ::ssc_data_get_array(p_data, name, &len);
+        fprintf(fp, "var( '%s', [", name);
+        for (int i = 0; i < (len - 1); i++)
+        {
+            dbl_value = (double)p[i];
+            if (dbl_value > 1e38) dbl_value = 1e38;
+            fprintf(fp, " %.17g,", dbl_value);
+        }
+        dbl_value = (double)p[len - 1];
+        if (dbl_value > 1e38) dbl_value = 1e38;
+        fprintf(fp, " %.17g ] );\n", dbl_value);
+        break;
+    case SSC_MATRIX:
+        p = ::ssc_data_get_matrix(p_data, name, &nr, &nc);
+        len = nr * nc;
+        fprintf(fp, "var( '%s', \n[ [", name);
+        for (int k = 0; k < (len - 1); k++)
+        {
+            dbl_value = (double)p[k];
+            if (dbl_value > 1e38) dbl_value = 1e38;
+            if ((k + 1) % nc == 0)
+                fprintf(fp, " %.17g ], \n[", dbl_value);
+            else
+                fprintf(fp, " %.17g,", dbl_value);
+        }
+        dbl_value = (double)p[len - 1];
+        if (dbl_value > 1e38) dbl_value = 1e38;
+        fprintf(fp, " %.17g ] ] );\n", dbl_value);
+    }
 }

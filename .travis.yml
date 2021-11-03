@@ -64,6 +64,4 @@ branches:
   - release
   - develop
   - patch
-  - PySAM
-  - wind_pruf
-
+  

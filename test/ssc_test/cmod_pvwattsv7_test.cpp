@@ -298,10 +298,19 @@ TEST_F(CMPvwattsV7Integration_cmod_pvwattsv7, IntermediateOutputTesting)
     //run the tests
     EXPECT_FALSE(run_module(data, "pvwattsv7"));
 
-    ssc_number_t shad_beam_factor, aoi, poa, tpoa, tcell, dc, ac;
+    ssc_number_t shad_beam_factor, ss_beam, ss_sky_diffuse, ss_gnd_diffuse, aoi, poa, tpoa, tcell, dc, ac;
 
     shad_beam_factor = ssc_data_get_array(data, "shad_beam_factor", nullptr)[12];
-    EXPECT_NEAR(shad_beam_factor, 1.000, 0.01) << "Beam Shading factor at noon";
+    EXPECT_NEAR(shad_beam_factor, 1.000, 0.01) << "External beam shading factor at noon";
+
+    ss_beam = ssc_data_get_array(data, "ss_beam_factor", nullptr)[12];
+    EXPECT_NEAR(ss_beam, 1.000, 0.01) << "Calculated self-shading beam shading factor at noon";
+
+    ss_sky_diffuse = ssc_data_get_array(data, "ss_sky_diffuse_factor", nullptr)[12];
+    EXPECT_NEAR(ss_sky_diffuse, 0.981, 0.01) << "Calculated self-shading sky diffuse shading factor at noon";
+
+    ss_gnd_diffuse = ssc_data_get_array(data, "ss_gnd_diffuse_factor", nullptr)[12];
+    EXPECT_NEAR(ss_gnd_diffuse, 0.265, 0.01) << "Calculated self-shading ground-reflected diffuse shading factor at noon";
 
     aoi = ssc_data_get_array(data, "aoi", nullptr)[12];
     EXPECT_NEAR(aoi, 32.195, 0.01) << "Angle of incidence at noon";

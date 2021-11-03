@@ -47,7 +47,7 @@ static const char* Turbine_calculate_powercurve_doc =
     "     'rated_wind_speed': double [m/s[\\n"
     "     'hub_efficiency': array [m/s]";
 
-SSCEXPORT void Turbine_calculate_powercurve(ssc_data_t data);
+SSCEXPORT bool Turbine_calculate_powercurve(ssc_data_t data);
 
 
 #ifdef __cplusplus

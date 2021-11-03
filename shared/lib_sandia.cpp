@@ -391,13 +391,17 @@ bool sandia_inverter_t::acpower(
 	double *Pntloss /* Power loss due to night time tare loss (Wac) */
 	)
 {
-	//initialize values
-	*Pac = 0;
-	*Ppar = 0.0;
-	*Psoloss = 0.0; // Power consumption during operation
-	*Pntloss = 0.0;
-	*Pcliploss = 0.0;
-	double Pdc_total = 0;
+	//initialize output values, use a local variable so that not all outputs need to be retrieved in the function call (i.e. the function call can use a nullptr in place of an actual pointer value)
+	double Pac_ = 0.0;
+	double Ppar_ = 0.0;
+    double Plr_ = 0.0;
+    double Eff_ = 0.0;
+    double Pcliploss_ = 0.0;
+	double Psoloss_ = 0.0; // Power consumption during operation
+	double Pntloss_ = 0.0;
+
+    //initialize interim variables
+    double Pdc_total = 0.0;
 	std::vector<double> Pac_each;
 	std::vector<double> PacNoPso_each;
 
@@ -425,29 +429,38 @@ bool sandia_inverter_t::acpower(
 	// night time: power is equal to nighttime power loss (note that if PacNoPso > Pso and Pac < Pso then the night time loss could be considered an operating power loss)
 	if (Pdc_total <= Pso)
 	{
-		*Pac = -Pntare;
-		*Ppar = Pntare;
-		*Pntloss = Pntare;
+		Pac_ = -Pntare;
+		Ppar_ = Pntare;
+		Pntloss_ = Pntare;
 	}
 	// day time: calculate total Pac; power loss is the Pso loss, use values calculated above
 	else
 		for (size_t m = 0; m < Vdc.size(); m++)
 		{
-			*Psoloss += PacNoPso_each[m] - Pac_each[m];
-			*Pac += Pac_each[m];
+			Psoloss_ += PacNoPso_each[m] - Pac_each[m];
+			Pac_ += Pac_each[m];
 		}
 	
 	// clipping loss Wac (note that the Pso=0 may have no clipping)
-	double PacNoClip = *Pac;
-	if ( *Pac > Paco )
+	double PacNoClip = Pac_;
+	if ( Pac_ > Paco )
 	{
-		*Pac = Paco;
-		*Pcliploss = PacNoClip - *Pac;
+		Pac_ = Paco;
+		Pcliploss_ = PacNoClip - Pac_;
 	}
 
-	*Plr = Pdc_total / Pdco;
-	*Eff = *Pac / Pdc_total;
-	if ( *Eff < 0.0 ) *Eff = 0.0;
+	Plr_ = Pdc_total / Pdco;
+	Eff_ = Pac_ / Pdc_total;
+	if ( Eff_ < 0.0 ) Eff_ = 0.0;
+
+    //check for existence of output pointers before assigning outputs
+    if (Pac) *Pac = Pac_;
+    if (Ppar) *Ppar = Ppar_;
+    if (Plr) *Plr = Plr_;
+    if (Eff) *Eff = Eff_;
+    if (Pcliploss) *Pcliploss = Pcliploss_;
+    if (Psoloss) *Psoloss = Psoloss_; // Power consumption during operation
+    if (Pntloss) *Pntloss = Pntloss_;
 
 	return true;
 }
