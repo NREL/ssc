@@ -127,6 +127,9 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
     m_operating_mode_prev = OFF;			// Assume power cycle is off when simulation begins
     m_startup_energy_remain_prev = m_startup_energy_required;	//[kW-hr]
     m_startup_time_remain_prev = ms_params.m_startup_time;		//[hr]
+    if (ms_params.m_startup_frac == 0.0 && ms_params.m_startup_time == 0.0 && m_operating_mode_prev == OFF) {
+        m_operating_mode_prev = OFF_NO_SU_REQ;
+    }
     // ***********************************************************************
 
 
@@ -405,27 +408,29 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 
         ms_params.m_P_cond_min = physics::InHgToPa(ms_params.m_P_cond_min);
 
-        // find min and max hybrid cooling dispatch fractions
-        for( int i = 0; i<9; i++ )
-        {
-            double F_wc_current = ms_params.m_F_wc[i];
-            if(F_wc_current < 0.0)
+        if (ms_params.m_CT == 3) {
+            // find min and max hybrid cooling dispatch fractions
+            for (int i = 0; i < 9; i++)
             {
-                m_error_msg = util::format("The hybrid dispatch value at TOU period %d was entered as %lg. It was reset to 0", i + 1, F_wc_current);
-                mc_csp_messages.add_message(C_csp_messages::WARNING, m_error_msg);
-                F_wc_current = 0.0;
-            }
-            if(F_wc_current > 1.0)
-            {
-                m_error_msg = util::format("The hybrid dispatch value at TOU period %d was entered as %lg. It was reset to 1.0", i + 1, F_wc_current);
-                mc_csp_messages.add_message(C_csp_messages::WARNING, m_error_msg);
-                F_wc_current = 1.0;
-            }
+                double F_wc_current = ms_params.m_F_wc[i];
+                if (F_wc_current < 0.0)
+                {
+                    m_error_msg = util::format("The hybrid dispatch value at TOU period %d was entered as %lg. It was reset to 0", i + 1, F_wc_current);
+                    mc_csp_messages.add_message(C_csp_messages::WARNING, m_error_msg);
+                    F_wc_current = 0.0;
+                }
+                if (F_wc_current > 1.0)
+                {
+                    m_error_msg = util::format("The hybrid dispatch value at TOU period %d was entered as %lg. It was reset to 1.0", i + 1, F_wc_current);
+                    mc_csp_messages.add_message(C_csp_messages::WARNING, m_error_msg);
+                    F_wc_current = 1.0;
+                }
 
-            m_F_wcMax = fmax(m_F_wcMax, F_wc_current);
-            m_F_wcMin = fmin(m_F_wcMin, F_wc_current);
+                m_F_wcMax = fmax(m_F_wcMax, F_wc_current);
+                m_F_wcMin = fmin(m_F_wcMin, F_wc_current);
 
-            ms_params.m_F_wc[i] = F_wc_current;
+                ms_params.m_F_wc[i] = F_wc_current;
+            }
         }
 
 		// Calculate the power block side steam enthalpy rise for blowdown calculations
@@ -677,6 +682,12 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 
 	}
 } //init
+
+void C_pc_Rankine_indirect_224::get_design_parameters(double& m_dot_htf_des /*kg/hr*/, double& cp_htf_des_at_T_ave /*kJ/kg-K*/)
+{
+    m_dot_htf_des = m_m_dot_design;         //[kg/hr]
+    cp_htf_des_at_T_ave = m_cp_htf_design;  //[kJ/kg-K]
+}
 
 double C_pc_Rankine_indirect_224::get_cold_startup_time()
 {
@@ -936,6 +947,11 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 	int tou = sim_info.m_tou - 1;				//[-], convert from 1-based index
 	//double rh = weather.m_rhum/100.0;			//[-], convert from %
 
+    // Get F_wc using tou
+    double F_wc = std::numeric_limits<double>::quiet_NaN();
+    if (ms_params.m_CT == 3) {
+        F_wc = ms_params.m_F_wc[tou];
+    }
 
 	double m_dot_st_bd = 0.0;
 
@@ -1088,7 +1104,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 		{
 
 			RankineCycle(T_db, T_wb, P_amb, T_htf_hot, m_dot_htf, mode, demand_var, ms_params.m_P_boil,
-                ms_params.m_F_wc[tou], m_F_wcMin, m_F_wcMax, T_cold_prev,dT_cw_design,
+				F_wc, m_F_wcMin, m_F_wcMax, T_cold_prev,dT_cw_design,
 				P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_water_cooling, W_cool_par, f_hrsys, P_cond, T_cond_out);
 
 			if (ms_params.m_CT == 4) // only if radiative cooling is chosen ARD
@@ -1659,8 +1675,12 @@ void C_pc_Rankine_indirect_224::converged()
 	mc_two_tank_ctes.converged();
 	mc_stratified_ctes.converged();
 	m_operating_mode_prev = m_operating_mode_calc;
-	m_startup_time_remain_prev = m_startup_time_remain_calc;
+    m_startup_time_remain_prev = m_startup_time_remain_calc;
 	m_startup_energy_remain_prev = m_startup_energy_remain_calc;
+
+    if (ms_params.m_startup_frac == 0.0 && ms_params.m_startup_time == 0.0 && m_operating_mode_prev == OFF){
+        m_operating_mode_prev = OFF_NO_SU_REQ;
+    }
 
 	m_ncall = -1;
 
@@ -1679,12 +1699,12 @@ void C_pc_Rankine_indirect_224::assign(int index, double *p_reporting_ts_array, 
 	mc_reported_outputs.assign(index, p_reporting_ts_array, n_reporting_ts_array);
 }
 
-int C_pc_Rankine_indirect_224::get_operating_state()
+C_csp_power_cycle::E_csp_power_cycle_modes C_pc_Rankine_indirect_224::get_operating_state()
 {
-	if(ms_params.m_startup_frac == 0.0 && ms_params.m_startup_time == 0.0)
-	{
-		return C_csp_power_cycle::ON;
-	}
+	//if(ms_params.m_startup_frac == 0.0 && ms_params.m_startup_time == 0.0)
+	//{
+	//	return C_csp_power_cycle::ON;
+	//}
 
 	return m_operating_mode_prev;
 }

@@ -52,17 +52,22 @@ GTEST_API_ int main(int argc, char **argv) {
 //	::testing::GTEST_FLAG(filter) = "CMPvsamv1PowerIntegration_cmod_pvsamv1.DefaultNoFinancialModel";
 //	::testing::GTEST_FLAG(filter) = "CMPvsamv1PowerIntegration_cmod_pvsamv1.NoFinancialModelCustomWeatherFile";
 //	::testing::GTEST_FLAG(filter) = "URDBv7*";
-//	::testing::GTEST_FLAG(filter) = "AAPVSmoothing_lib_battery_dispatch*";
-//    ::testing::GTEST_FLAG(filter) = "CM_SWH*";
-//   ::testing::GTEST_FLAG(filter) = "CMPvwattsV7Integration_cmod_pvwattsv7.IntermediateOutputTesting:CMPvwattsV7Integration_cmod_pvwattsv7.DefaultNoFinancialModel_cmod_pvwattsv7:CMPvwattsV7Integration_cmod_pvwattsv7.NonAnnual"; //works with 24 only 20 times in a row
-//   ::testing::GTEST_FLAG(filter) = "CMPvwattsV7Integration_cmod_pvwattsv7.IntermediateOutputTesting";
-//   ::testing::GTEST_FLAG(filter) = "CMPvwattsV7Integration_cmod_pvwattsv7*";
-//   ::testing::GTEST_FLAG(filter) = "Data9999CaseWeatherData*";
-//	::testing::GTEST_FLAG(filter) = "CMPvsamv1PowerIntegration_cmod_pvsamv1.DefaultResidentialModel";
-//	::testing::GTEST_FLAG(filter) = "BatteryPowerFlowTest_lib_battery_powerflow.TestDCConnected";
-//	::testing::GTEST_FLAG(filter) = "CMPvwattsV7Integration_cmod_pvwattsv7.IntermediateOutputTesting";
-//	::testing::GTEST_FLAG(filter) = "CmodCashLoanTest*";
+//    ::testing::GTEST_FLAG(filter) = "save_as_JSON_test_parse*";
+//    ::testing::GTEST_FLAG(filter) = "save_as_JSON_test*";
+//    ::testing::GTEST_FLAG(filter) = "save_as_JSON_test_run*";
+//    ::testing::GTEST_FLAG(filter) = "sscapi_test*";
+    /*
+    CMPvwattsV7Integration_cmod_pvwattsv7.NonAnnual
+    CMPvwattsV7Integration_cmod_pvwattsv7.IntermediateOutputTesting
+    */
+//    ::testing::GTEST_FLAG(filter) = "BatteryPowerFlowTest_lib_battery_powerflow.TestDCConnected";
 
+ //   ::testing::GTEST_FLAG(filter) = "CMBatteryEqns_cmod_battery_eqns.TestStatefulSizeModifications";
+//    ::testing::GTEST_FLAG(filter) = "save_as_JSON_test.pvwatts_mechant_plant_read_file_to_string";
+//    ::testing::GTEST_FLAG(filter) = "sscapi_test.json_to_ssc_data";
+  //  ::testing::GTEST_FLAG(filter) = "CM_MHKWave.ReadJson_MatrixData";
+//    ::testing::GTEST_FLAG(filter) = "CM_MHKWave.ReadJson_MatrixFile";
+//    ::testing::GTEST_FLAG(filter) = "windpower_landbosse*";
 
 
 	int status = RUN_ALL_TESTS();

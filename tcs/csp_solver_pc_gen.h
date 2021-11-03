@@ -41,8 +41,8 @@ private:
 		// As of 3.15.16, no minimum power cycle startup time requirement
 	double m_q_startup_remain;		//[MWt] power cycle startup energy required before electricity generation
 	double m_q_startup_used;		//[MWt] power cycle startup energy used during timestep
-	int m_pc_mode_prev;				//[-] power cycle operating mode in previous timestep
-	int m_pc_mode;					//[-] power cycle operating mode in current timestep
+    C_csp_power_cycle::E_csp_power_cycle_modes m_pc_mode_prev;				//[-] power cycle operating mode in previous timestep
+    C_csp_power_cycle::E_csp_power_cycle_modes m_pc_mode;					//[-] power cycle operating mode in current timestep
 
 	// Calculated constant member data
 	double m_q_des;			//[MWt] Thermal power to cycle at design
@@ -97,7 +97,7 @@ public:
 
 	virtual void init(C_csp_power_cycle::S_solved_params &solved_params);
 
-	virtual int get_operating_state();
+	virtual C_csp_power_cycle::E_csp_power_cycle_modes get_operating_state();
 
 	virtual double get_cold_startup_time();
 	virtual double get_warm_startup_time();
