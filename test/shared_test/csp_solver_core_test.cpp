@@ -1,7 +1,8 @@
+#include <cmath>
 #include <string>
 #include <vector>
 #include <memory>
-#include <cmath>
+
 
 #include <gtest/gtest.h>
 #include "../input_cases/weather_inputs.h"
@@ -15,13 +16,14 @@
 #include "../tcs/csp_solver_tou_block_schedules.h"
 #include "../tcs/csp_dispatch.h"
 
+#define isnan std::isnan
 /**
  * This class tests the C_csp_weatherreader's functions and ensures that the interface is the
  * same using weatherfile & weatherdata as weather inputs. The test also tests for variable
  * access and memory.
  */
 
-
+using namespace std;
 class CspWeatherReaderTest : public ::testing::Test {
 protected:
     C_csp_weatherreader wr;
