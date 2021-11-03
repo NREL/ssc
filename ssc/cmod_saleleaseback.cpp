@@ -38,6 +38,7 @@ static var_info _cm_vtab_saleleaseback[] = {
 
 		{ SSC_INPUT, SSC_ARRAY, "degradation", "Annual energy degradation", "", "", "System Output", "*", "", "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "system_capacity",			"System nameplate capacity",		"kW",    "",                      "System Output",             "*",						   "MIN=1e-3",                         "" },
+    { SSC_INPUT,        SSC_NUMBER,      "en_electricity_rates",                       "Enable electricity rates for grid purchase",              "0/1",     "",                     "Electricity Rates",       "?=0",                                 "",                              "" },
 
 /* Recapitalization */
 	{ SSC_INOUT, SSC_NUMBER, "system_use_recapitalization", "Recapitalization expenses", "0/1", "0=None,1=Recapitalize", "Sale Leaseback", "?=0", "INTEGER,MIN=0", "" },
@@ -1220,6 +1221,68 @@ public:
 		//		double ppa = as_double("ppa_price_input")*100.0; // either initial guess for ppa_mode=1 or final ppa for ppa_mode=0
 		if (ppa_mode == 0) ppa = 0; // initial guess for target irr mode
 
+        // Use PPA values to calculate revenue from purchases and sales
+        size_t n_multipliers;
+
+        ssc_number_t* ppa_multipliers = as_array("ppa_multipliers", &n_multipliers);
+        bool ppa_purchases = !(is_assigned("en_electricity_rates") && as_number("en_electricity_rates") == 1);
+        if (as_integer("system_use_lifetime_output") == 1)
+        {
+            // hourly_enet includes all curtailment, availability
+            for (size_t i = 1; i <= nyears; i++) {
+
+                // Project partial income statement			
+                    // energy_value = DHF Total PPA Revenue (cents/kWh)
+                if ((ppa_mode == 1) && (count_ppa_price_input > 1))
+                {
+                    if (i <= (int)count_ppa_price_input)
+                        cf.at(CF_ppa_price, i) = ppa_price_input[i - 1] * 100.0; // $/kWh to cents/kWh
+                    else
+                        cf.at(CF_ppa_price, i) = 0;
+                }
+                else
+                    cf.at(CF_ppa_price, i) = ppa * pow(1 + ppa_escalation, i - 1); // ppa_mode==0 or single value 
+                double ppa_value = cf.at(CF_ppa_price, i);
+                for (size_t h = 0; h < 8760; h++) {
+                    cf.at(CF_energy_sales_value, i) += hourly_energy_calcs.hourly_sales()[(i - 1) * 8760 + h] * cf.at(CF_degradation, i) * ppa_value / 100.0 * ppa_multipliers[h];
+                    if (ppa_purchases) {
+                        cf.at(CF_energy_purchases_value, i) += -hourly_energy_calcs.hourly_purchases()[(i - 1) * 8760 + h] * cf.at(CF_degradation, i) * ppa_value / 100.0 * ppa_multipliers[h];
+                    }
+                }
+                if (!ppa_purchases) {
+                    cf.at(CF_energy_purchases_value, i) = 0.0;
+                    // Recompute this variable because the ppa_gen values (hourly_net) were all positve until now 
+                    //cf.at(CF_energy_net, i) = cf.at(CF_energy_sales, i) + cf.at(CF_energy_purchases, i); // Adding a positive and negative number
+                }
+            }
+        }
+        else
+        {
+            for (size_t i = 1; i <= nyears; i++) {
+                if ((ppa_mode == 1) && (count_ppa_price_input > 1))
+                {
+                    if (i <= (int)count_ppa_price_input)
+                        cf.at(CF_ppa_price, i) = ppa_price_input[i - 1] * 100.0; // $/kWh to cents/kWh
+                    else
+                        cf.at(CF_ppa_price, i) = 0;
+                }
+                else
+                    cf.at(CF_ppa_price, i) = ppa * pow(1 + ppa_escalation, i - 1); // ppa_mode==0 or single value 
+                double ppa_value = cf.at(CF_ppa_price, i);
+                for (size_t h = 0; h < 8760; h++) {
+                    cf.at(CF_energy_sales_value, i) += hourly_energy_calcs.hourly_sales()[h] * cf.at(CF_degradation, i) * ppa_value / 100.0 * ppa_multipliers[h];
+                    if (ppa_purchases) {
+                        cf.at(CF_energy_purchases_value, i) += -hourly_energy_calcs.hourly_purchases()[h] * cf.at(CF_degradation, i) * ppa_value / 100.0 * ppa_multipliers[h];
+                    }
+                }
+                if (!ppa_purchases) {
+                    cf.at(CF_energy_purchases_value, i) = 0.0;
+                    // Recompute this variable because the ppa_gen values (hourly_net) were all positve until now 
+                    //cf.at(CF_energy_net, i) = cf.at(CF_energy_sales, i) + cf.at(CF_energy_purchases, i); // Adding a positive and negative number
+                }
+            }
+        }
+
 
 		double property_tax_assessed_value = cost_prefinancing * as_double("prop_tax_cost_assessed_percent") * 0.01;
 		double property_tax_decline_percentage = as_double("prop_tax_assessed_decline");
@@ -1360,6 +1423,7 @@ public:
 				+ cf.at(CF_insurance_expense,i)
 				+ cf.at(CF_sponsor_margin,i)
                 + cf.at(CF_utility_bill,i)
+                + cf.at(CF_energy_purchases_value,i)
 				+ cf.at(CF_Recapitalization,i);
 		}
 
