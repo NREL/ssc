@@ -130,8 +130,6 @@ void cm_wind_landbosse::load_config(){
         python_config_doc.seekg(0);
     }
 #endif
- //   rapidjson::IStreamWrapper iswc(python_config_doc);
- //   python_config_root.ParseStream(iswc);
     std::ostringstream tmp;
     tmp << python_config_doc.rdbuf();
     python_config_root.Parse(tmp.str().c_str());
