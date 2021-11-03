@@ -60,42 +60,43 @@ void csp_dispatch_opt::init(double cycle_q_dot_des, double cycle_eta_des)
 
     params.dt_pb_startup_cold = pointers.mpc_pc->get_cold_startup_time();
     params.dt_pb_startup_hot = pointers.mpc_pc->get_hot_startup_time();
-    params.q_pb_standby = pointers.mpc_pc->get_standby_energy_requirement()*1000.;
-    params.e_pb_startup_cold = pointers.mpc_pc->get_cold_startup_energy() * 1000.;
-    params.e_pb_startup_hot = pointers.mpc_pc->get_hot_startup_energy()*1000.;
-    params.q_pb_max = pointers.mpc_pc->get_max_thermal_power() * 1000;
-    params.q_pb_min = pointers.mpc_pc->get_min_thermal_power() * 1000;
-    params.w_cycle_pump = pointers.mpc_pc->get_htf_pumping_parasitic_coef();// kWe/kWt
-    params.w_cycle_standby = params.q_pb_standby * params.w_cycle_pump; //kWe
+    params.q_pb_standby = pointers.mpc_pc->get_standby_energy_requirement();
+    params.e_pb_startup_cold = pointers.mpc_pc->get_cold_startup_energy();
+    params.e_pb_startup_hot = pointers.mpc_pc->get_hot_startup_energy();
+    params.q_pb_max = pointers.mpc_pc->get_max_thermal_power();
+    params.q_pb_min = pointers.mpc_pc->get_min_thermal_power();
+    params.w_cycle_pump = pointers.mpc_pc->get_htf_pumping_parasitic_coef();
+    params.w_cycle_standby = params.q_pb_standby * params.w_cycle_pump;
 
     params.dt_rec_startup = pointers.col_rec->get_startup_time() / 3600.;
-    params.e_rec_startup = pointers.col_rec->get_startup_energy() * 1000;
-    params.q_rec_min = pointers.col_rec->get_min_power_delivery() * 1000.;
+    params.e_rec_startup = pointers.col_rec->get_startup_energy();
+    params.q_rec_min = pointers.col_rec->get_min_power_delivery();
     params.w_rec_pump = pointers.col_rec->get_pumping_parasitic_coef();
-    params.w_track = pointers.col_rec->get_tracking_power() * 1000.0;	//kWe
-    params.w_stow = pointers.col_rec->get_col_startup_power() * 1000.0;	//kWe-hr
+    params.w_track = pointers.col_rec->get_tracking_power();
+    params.w_stow = pointers.col_rec->get_col_startup_power();
 
-    params.e_tes0 = pointers.tes->get_initial_charge_energy() * 1000;
-    params.e_tes_min = pointers.tes->get_min_charge_energy() * 1000;
-    params.e_tes_max = pointers.tes->get_max_charge_energy() * 1000;
+    params.e_tes0 = pointers.tes->get_initial_charge_energy();
+    params.e_tes_min = pointers.tes->get_min_charge_energy();
+    params.e_tes_max = pointers.tes->get_max_charge_energy();
     params.tes_degrade_rate = pointers.tes->get_degradation_rate();
 
     //heater params
     if (pointers.par_htr != NULL) {
-        params.q_eh_min = pointers.par_htr->get_min_power_delivery() * 1000.0;
-        params.q_eh_max = pointers.par_htr->get_max_power_delivery(std::numeric_limits<double>::quiet_NaN()) * 1000;
+        params.q_eh_min = pointers.par_htr->get_min_power_delivery();
+        params.q_eh_max = pointers.par_htr->get_max_power_delivery(std::numeric_limits<double>::quiet_NaN());
         params.is_parallel_heater = true;
     }
     else {
         params.is_parallel_heater = false;
     }
 
-    params.q_pb_des = cycle_q_dot_des * 1000.;  // Convert to kW
+    params.q_pb_des = cycle_q_dot_des;
     params.eta_pb_des = cycle_eta_des;
-    double w_pb_des = cycle_q_dot_des * params.eta_pb_des;  // keep in MW
+    double w_pb_des = cycle_q_dot_des * params.eta_pb_des;
 
     params.eff_table_load.init_linear_cycle_efficiency_table(params.q_pb_min, params.q_pb_des, params.eta_pb_des, pointers.mpc_pc);
     params.eff_table_Tdb.init_efficiency_ambient_temp_table(params.eta_pb_des, w_pb_des, pointers.mpc_pc, &params.wcondcoef_table_Tdb);
+
 }
 
 void csp_dispatch_opt::set_default_solver_parameters()
@@ -194,12 +195,12 @@ void csp_dispatch_opt::update_initial_conditions(double q_dot_to_pb, double T_ht
     params.is_pb_standby0 = pointers.mpc_pc->get_operating_state() == 2;
     params.is_rec_operating0 = pointers.col_rec->get_operating_state() == C_csp_collector_receiver::ON;
 
-    params.q_pb0 = q_dot_to_pb * 1000.;
+    params.q_pb0 = q_dot_to_pb;
 
     //Note the state of the thermal energy storage system
     double q_disch, m_dot_disch, T_tes_return;
     pointers.tes->discharge_avail_est(T_htf_cold_des, pointers.siminfo->ms_ts.m_step, q_disch, m_dot_disch, T_tes_return);
-    params.e_tes0 = q_disch * 1000. * pointers.siminfo->ms_ts.m_step / 3600. + params.e_tes_min;        //kWh
+    params.e_tes0 = q_disch * pointers.siminfo->ms_ts.m_step / 3600. + params.e_tes_min;        //MWh
     if (params.e_tes0 < params.e_tes_min)
         params.e_tes0 = params.e_tes_min;
     if (params.e_tes0 > params.e_tes_max)
@@ -252,10 +253,10 @@ bool csp_dispatch_opt::predict_performance(int step_start, int ntimeints, int di
             //get optical efficiency
             double opt_eff = pointers.col_rec->calculate_optical_efficiency(pointers.m_weather.ms_outputs, simloc);
 
-            double q_inc = Asf * opt_eff * dni * 1.e-3; //kW
+            double q_inc = Asf * opt_eff * dni * 1.e-6; //MW
 
             //get thermal efficiency
-            double therm_eff = pointers.col_rec->calculate_thermal_efficiency_approx(pointers.m_weather.ms_outputs, q_inc*0.001);
+            double therm_eff = pointers.col_rec->calculate_thermal_efficiency_approx(pointers.m_weather.ms_outputs, q_inc);
             therm_eff *= params.sf_effadj;
             therm_eff_ave += therm_eff * ave_weight;
 
@@ -265,7 +266,7 @@ bool csp_dispatch_opt::predict_performance(int step_start, int ntimeints, int di
             //  two-day lookahead period than the loop inlet temperature (design or actual) at the
             //  same point in time
             double T_tank_cold = pointers.tes->get_cold_temp() - 273.15;   // [C]
-            double q_max = pointers.col_rec->get_max_power_delivery(T_tank_cold) * 1.e3;     // [kW]
+            double q_max = pointers.col_rec->get_max_power_delivery(T_tank_cold);     // [kW]
             q_inc_ave += (std::min)(q_max, q_inc * therm_eff * ave_weight);
 
             //store the power cycle efficiency
@@ -1064,102 +1065,102 @@ bool csp_dispatch_opt::optimize()
                 }
 
                 //row[0] = 1.;
-//col[0] = O.column("y", t);
-//row[1] = 1.;
-//col[1] = O.column("ycsb", t);    
+                //col[0] = O.column("y", t);
+                //row[1] = 1.;
+                //col[1] = O.column("ycsb", t);    
 
-//add_constraintex(lp, 2, row, col, LE, 1);   
+                //add_constraintex(lp, 2, row, col, LE, 1);   
 
-//set partitioning constraint (with cycle off state)
-if (P["delta"] >= 1)    // hourly model
-{
-    //cycle start-up and standby can't coincide
-    row[0] = 1.;
-    col[0] = O.column("ycsu", t);
-    row[1] = 1.;
-    col[1] = O.column("ycsb", t);
-    //add extra variable
+                //set partitioning constraint (with cycle off state)
+                if (P["delta"] >= 1)    // hourly model
+                {
+                    //cycle start-up and standby can't coincide
+                    row[0] = 1.;
+                    col[0] = O.column("ycsu", t);
+                    row[1] = 1.;
+                    col[1] = O.column("ycsb", t);
+                    //add extra variable
 
-    add_constraintex(lp, 2, row, col, LE, 1);
+                    add_constraintex(lp, 2, row, col, LE, 1);
 
-    row[0] = 1.;
-    col[0] = O.column("y", t);
-    row[1] = 1.;
-    col[1] = O.column("ycsb", t);
-    row[2] = 1.;
-    col[2] = O.column("yoff", t);
+                    row[0] = 1.;
+                    col[0] = O.column("y", t);
+                    row[1] = 1.;
+                    col[1] = O.column("ycsb", t);
+                    row[2] = 1.;
+                    col[2] = O.column("yoff", t);
 
-    add_constraintex(lp, 3, row, col, EQ, 1);
-}
-else
-{
-    // sub-hourly model
-    row[0] = 1.;
-    col[0] = O.column("ycsu", t);
-    row[1] = 1.;
-    col[1] = O.column("y", t);
-    row[2] = 1.;
-    col[2] = O.column("ycsb", t);
-    row[3] = 1.;
-    col[3] = O.column("yoff", t);
+                    add_constraintex(lp, 3, row, col, EQ, 1);
+                }
+                else
+                {
+                    // sub-hourly model
+                    row[0] = 1.;
+                    col[0] = O.column("ycsu", t);
+                    row[1] = 1.;
+                    col[1] = O.column("y", t);
+                    row[2] = 1.;
+                    col[2] = O.column("ycsb", t);
+                    row[3] = 1.;
+                    col[3] = O.column("yoff", t);
 
-    add_constraintex(lp, 4, row, col, EQ, 1);
-}
+                    add_constraintex(lp, 4, row, col, EQ, 1);
+                }
 
-//Standby cut
-row[0] = 1.;
-col[0] = O.column("ycsb", t);
-row[1] = 1.0 / P["Qu"];
-col[1] = O.column("x", t);
-add_constraintex(lp, 2, row, col, LE, 1);
+                //Standby cut
+                row[0] = 1.;
+                col[0] = O.column("ycsb", t);
+                row[1] = 1.0 / P["Qu"];
+                col[1] = O.column("x", t);
+                add_constraintex(lp, 2, row, col, LE, 1);
 
-if (t > 0)
-{
-    //cycle start penalty
-    row[0] = 1.;
-    col[0] = O.column("ycsup", t);
+                if (t > 0)
+                {
+                    //cycle start penalty
+                    row[0] = 1.;
+                    col[0] = O.column("ycsup", t);
 
-    row[1] = -1.;
-    col[1] = O.column("ycsu", t);
+                    row[1] = -1.;
+                    col[1] = O.column("ycsu", t);
 
-    row[2] = 1.;
-    col[2] = O.column("ycsu", t - 1);
+                    row[2] = 1.;
+                    col[2] = O.column("ycsu", t - 1);
 
-    add_constraintex(lp, 3, row, col, GE, 0.);
+                    add_constraintex(lp, 3, row, col, GE, 0.);
 
-    //cycle standby start penalty
-    row[0] = 1.;
-    col[0] = O.column("ychsp", t);
+                    //cycle standby start penalty
+                    row[0] = 1.;
+                    col[0] = O.column("ychsp", t);
 
-    row[1] = -1.;
-    col[1] = O.column("y", t);
+                    row[1] = -1.;
+                    col[1] = O.column("y", t);
 
-    row[2] = -1.;
-    col[2] = O.column("ycsb", t - 1);
+                    row[2] = -1.;
+                    col[2] = O.column("ycsb", t - 1);
 
-    add_constraintex(lp, 3, row, col, GE, -1.);
+                    add_constraintex(lp, 3, row, col, GE, -1.);
 
-#ifdef MOD_CYCLE_SHUTDOWN
-    //cycle shutdown energy penalty
-    row[0] = 1.;
-    col[0] = O.column("ycsd", t - 1);
+                #ifdef MOD_CYCLE_SHUTDOWN
+                    //cycle shutdown energy penalty
+                    row[0] = 1.;
+                    col[0] = O.column("ycsd", t - 1);
 
-    row[1] = -1.;
-    col[1] = O.column("y", t - 1);
+                    row[1] = -1.;
+                    col[1] = O.column("y", t - 1);
 
-    row[2] = 1.;
-    col[2] = O.column("y", t);
+                    row[2] = 1.;
+                    col[2] = O.column("y", t);
 
-    row[3] = -1.;
-    col[3] = O.column("ycsb", t - 1);
+                    row[3] = -1.;
+                    col[3] = O.column("ycsb", t - 1);
 
-    row[4] = 1.;
-    col[4] = O.column("ycsb", t);
+                    row[4] = 1.;
+                    col[4] = O.column("ycsb", t);
 
-    add_constraintex(lp, 5, row, col, GE, 0.);
-#endif
+                    add_constraintex(lp, 5, row, col, GE, 0.);
+                #endif
 
-}
+                }
             }
         }
 
@@ -1687,13 +1688,11 @@ bool csp_dispatch_opt::set_dispatch_outputs()
         disp_outputs.is_pc_sb_allowed = outputs.pb_standby.at(m_current_read_step);
         disp_outputs.is_pc_su_allowed = outputs.pb_operation.at(m_current_read_step) || disp_outputs.is_pc_sb_allowed;
 
-        disp_outputs.q_pc_target = ( outputs.q_pb_target.at(m_current_read_step) 
-                                    + outputs.q_pb_startup.at(m_current_read_step) )
-                                    / 1000.;
+        disp_outputs.q_pc_target = outputs.q_pb_target.at(m_current_read_step) + outputs.q_pb_startup.at(m_current_read_step);
 
-        disp_outputs.q_dot_elec_to_CR_heat = outputs.q_sf_expected.at(m_current_read_step) / 1000.;
+        disp_outputs.q_dot_elec_to_CR_heat = outputs.q_sf_expected.at(m_current_read_step);
 
-        disp_outputs.q_eh_target = outputs.q_eh_target.at(m_current_read_step) / 1000.;
+        disp_outputs.q_eh_target = outputs.q_eh_target.at(m_current_read_step);
         disp_outputs.is_eh_su_allowed = outputs.htr_operation.at(m_current_read_step);
 
         //quality checks
@@ -1704,7 +1703,7 @@ bool csp_dispatch_opt::set_dispatch_outputs()
             q_pc_target = dispatch.params.q_pb_standby*1.e-3;
         */
 
-        if (disp_outputs.q_pc_target + 1.e-5 < params.q_pb_min / 1000.)
+        if (disp_outputs.q_pc_target + 1.e-5 < params.q_pb_min)
         {
             disp_outputs.is_pc_su_allowed = false;
             disp_outputs.q_pc_target = 0.0;
@@ -1730,19 +1729,19 @@ bool csp_dispatch_opt::set_dispatch_outputs()
                 eta_calc = eta_new;
                 i++;
             }
-            disp_outputs.q_dot_pc_max = fmin(disp_outputs.q_dot_pc_max, params.w_lim.at(m_current_read_step) * 1.e-3 / eta_calc); // Restrict max pc thermal input to *approximate* current allowable value (doesn't yet account for parasitics)
+            disp_outputs.q_dot_pc_max = fmin(disp_outputs.q_dot_pc_max, params.w_lim.at(m_current_read_step) / eta_calc); // Restrict max pc thermal input to *approximate* current allowable value (doesn't yet account for parasitics)
             disp_outputs.q_dot_pc_max = fmax(disp_outputs.q_dot_pc_max, disp_outputs.q_pc_target);								  // calculated q_pc_target accounts for parasitics --> can be higher than approximate limit 
         }
 
         disp_outputs.etasf_expect = params.eta_sf_expected.at(m_current_read_step);
-        disp_outputs.qsf_expect = params.q_sfavail_expected.at(m_current_read_step) * 1.e-3;
-        disp_outputs.qsfprod_expect = outputs.q_sf_expected.at(m_current_read_step) * 1.e-3;
-        disp_outputs.qsfsu_expect = outputs.q_rec_startup.at(m_current_read_step) * 1.e-3;
-        disp_outputs.tes_expect = outputs.tes_charge_expected.at(m_current_read_step) * 1.e-3;
-        disp_outputs.qpbsu_expect = outputs.q_pb_startup.at(m_current_read_step) * 1.e-3;
-        disp_outputs.wpb_expect = outputs.w_pb_target.at(m_current_read_step) * 1.e-3;
+        disp_outputs.qsf_expect = params.q_sfavail_expected.at(m_current_read_step);
+        disp_outputs.qsfprod_expect = outputs.q_sf_expected.at(m_current_read_step);
+        disp_outputs.qsfsu_expect = outputs.q_rec_startup.at(m_current_read_step);
+        disp_outputs.tes_expect = outputs.tes_charge_expected.at(m_current_read_step);
+        disp_outputs.qpbsu_expect = outputs.q_pb_startup.at(m_current_read_step);
+        disp_outputs.wpb_expect = outputs.w_pb_target.at(m_current_read_step);
         disp_outputs.rev_expect = disp_outputs.wpb_expect * params.sell_price.at(m_current_read_step);
-        disp_outputs.etapb_expect = disp_outputs.wpb_expect / (std::max)(1.e-6, outputs.q_pb_target.at(m_current_read_step)) * 1.e3
+        disp_outputs.etapb_expect = disp_outputs.wpb_expect / (std::max)(1.e-6, outputs.q_pb_target.at(m_current_read_step))
             * (outputs.pb_operation.at(m_current_read_step) ? 1. : 0.);
 
         if (m_current_read_step > solver_params.optimize_frequency* solver_params.steps_per_hour)
