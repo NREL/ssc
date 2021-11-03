@@ -3112,18 +3112,18 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 
 double shadeFraction1x(double solar_azimuth, double solar_zenith,
                        double axis_tilt, double axis_azimuth,
-                       double gcr, double rotation) {
+                       double gcr, double rotation, double slope_tilt, double slope_azimuth) {
     /*
     Calculate the fraction of a row's width affected by row-to-row beam shading.
     All input angles in degrees.
     Changed 2020-10-15 from complex row-to-row 3D geometry to equivalent (?) simple equations
     */
     // TODO: enable cross_axis_slope as a parameter
-    double cross_axis_slope = 0;
+    double axis_slope = cross_axis_slope(slope_tilt, axis_azimuth, slope_azimuth);
 
     double truetracking_angle = truetrack(solar_azimuth, solar_zenith, axis_tilt, axis_azimuth);
     double numerator =
-            gcr * cosd(rotation) + (gcr * sind(rotation) - tand(cross_axis_slope)) * tand(truetracking_angle) - 1;
+            gcr * cosd(rotation) + (gcr * sind(rotation) - tand(axis_slope)) * tand(truetracking_angle) - 1;
     double denominator = gcr * (sind(rotation) * tand(truetracking_angle) + cosd(rotation));
     double fs = numerator / denominator;
     fs = fs < 0 ? 0 : fs;

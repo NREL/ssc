@@ -815,9 +815,9 @@ TEST(SingleAxisTrackingTest, TrackingBacktracking) {
 		ASSERT_NEAR(tt, expected_truetracking[i], 1e-4);
 		bt = backtrack(tt, 0.4, 0);
 		ASSERT_NEAR(bt, expected_backtracking[i], 1e-4);
-		fs_tt = shadeFraction1x(solar_azimuths[i], solar_zeniths[i], axis_tilts[i], axis_azimuths[i], gcr, tt);
+		fs_tt = shadeFraction1x(solar_azimuths[i], solar_zeniths[i], axis_tilts[i], axis_azimuths[i], gcr, tt, 0.0, 0.0);
 		ASSERT_NEAR(fs_tt, expected_shadefraction[i], 1e-4);
-		fs_bt = shadeFraction1x(solar_azimuths[i], solar_zeniths[i], axis_tilts[i], axis_azimuths[i], gcr, bt);
+		fs_bt = shadeFraction1x(solar_azimuths[i], solar_zeniths[i], axis_tilts[i], axis_azimuths[i], gcr, bt, 0.0, 0.0);
 		ASSERT_NEAR(fs_bt, 0, 1e-10);  // no self-shading when backtracking
 	}
 }

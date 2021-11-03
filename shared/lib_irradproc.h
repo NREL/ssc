@@ -863,7 +863,7 @@ void ModifiedDISC(const double kt[3], const double kt1[3], const double g[3], co
 * \param[in] rotation tracking axis rotation angle in degrees
 * \return fraction shaded (0-1) if system is shaded (0 for unshaded)
 */
-double shadeFraction1x(double solar_azimuth, double solar_zenith, double axis_tilt, double axis_azimuth, double gcr, double rotation);
+double shadeFraction1x(double solar_azimuth, double solar_zenith, double axis_tilt, double axis_azimuth, double gcr, double rotation, double slope_tilt, double slope_azimuth);
 
 /**
 * truetrack calculates the tracker rotation that minimizes the angle of incidence betweem direct irradiance and the module front surface normal

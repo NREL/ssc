@@ -1564,8 +1564,8 @@ void cm_pvsamv1::exec()
                     //USES A DIFFERENT FUNCTION THAN THE SELF-SHADING BECAUSE SS IS MEANT FOR FIXED ONLY. shadeFraction1x IS FOR TRUE-TRACKING ONE-AXIS TRACKERS ONLY.
                     //used in the non-linear self-shading calculator for one-axis tracking only
                     double shad1xf = 0.0;
-                    if (trackbool && (Subarrays[nn]->backtrackingEnabled == false))
-                        shad1xf = shadeFraction1x(solazi, solzen, Subarrays[nn]->tiltDegrees, Subarrays[nn]->azimuthDegrees, Subarrays[nn]->groundCoverageRatio, rot);
+                    if (trackbool && ((Subarrays[nn]->backtrackingEnabled == false) || (Subarrays[nn]->slopeTilt != 0 || Subarrays[nn]->slopeAzm != 0)))
+                        shad1xf = shadeFraction1x(solazi, solzen, Subarrays[nn]->tiltDegrees, Subarrays[nn]->azimuthDegrees, Subarrays[nn]->groundCoverageRatio, rot, Subarrays[nn]->slopeTilt, Subarrays[nn]->slopeAzm);
 
                     //execute self-shading calculations
                     ssc_number_t beam_to_use; //some self-shading calculations require DNI, NOT ibeam (beam in POA). Need to know whether to use DNI from wf or calculated, depending on radmode

@@ -314,7 +314,7 @@ public:
                 if (sunup > 0 && track_mode == 1
                     && shade_mode_1x == 0) // selfshaded mode
                 {
-                    double shad1xf = shadeFraction1x(solazi, solzen, tilt, azimuth, gcr, rot);
+                    double shad1xf = shadeFraction1x(solazi, solzen, tilt, azimuth, gcr, rot, 0.0, 0.0);
                     p_shad_beam[i] *= (ssc_number_t)(1 - shad1xf);
 
                     if (fd > 0 && shade_mode_1x == 0 && iskydiff > 0)

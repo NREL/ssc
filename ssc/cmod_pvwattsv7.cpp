@@ -957,7 +957,7 @@ public:
                         double shad1xf = 0.0; // default: zero shade fraction
                         if (pv.type == ONE_AXIS)
                         {
-                            shad1xf = shadeFraction1x(solazi, solzen, pv.tilt, pv.azimuth, pv.gcr, rot);
+                            shad1xf = shadeFraction1x(solazi, solzen, pv.tilt, pv.azimuth, pv.gcr, rot, 0.0, 0.0);
                         }
 
                         // run self-shading calculations for both FIXED_RACK and ONE_AXIS because the non-linear derate applies in both cases (below)
