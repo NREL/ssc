@@ -21,7 +21,6 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #include <fstream>
 #include <future>
-#include <sstream>
 
 #ifdef __WINDOWS__
 #include <Windows.h>
@@ -32,9 +31,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "AtlConv.h"
 #endif
 
-#include "../rapidjson/document.h"
-#include "../rapidjson/istreamwrapper.h"
-
+#include <json/json.h>
 
 #include "sscapi.h"
 #include "core.h"
@@ -114,7 +111,7 @@ void cm_wind_landbosse::load_config(){
                                            "Use 'set_python_path' function in sscapi.h to point to the correct folder.");
 
     // load python configuration
-    rapidjson::Document python_config_root;
+    Json::Value python_config_root;
     std::ifstream python_config_doc(python_config_path + "/python_config.json");
     if (python_config_doc.fail())
         throw exec_error("wind_landbosse", "Could not open 'python_config.json'. "
@@ -130,36 +127,33 @@ void cm_wind_landbosse::load_config(){
         python_config_doc.seekg(0);
     }
 #endif
-    rapidjson::IStreamWrapper iswc(python_config_doc);
-    python_config_root.ParseStream(iswc);
+    python_config_doc >> python_config_root;
+
+    if (!python_config_root.isMember("exec_path"))
+        throw exec_error("wind_landbosse", "Missing key 'exec_path' in 'python_config.json'.");
+    if (!python_config_root.isMember("python_version"))
+        throw exec_error("wind_landbosse", "Missing key 'python_version' in 'python_config.json'.");
 
 
-    if (!python_config_root.HasMember("exec_path"))
-            throw exec_error("wind_landbosse", "Missing key 'exec_path' in 'python_config.json'.");
-    if (!python_config_root.HasMember("python_version"))
-            throw exec_error("wind_landbosse", "Missing key 'python_version' in 'python_config.json'.");
-
-
-    python_exec_path = python_config_root["exec_path"].GetString();
-    auto python_version = python_config_root["python_version"].GetString();
+    python_exec_path = python_config_root["exec_path"].asString();
+    auto python_version = python_config_root["python_version"].asString();
 
     // load landbosse configuration
-    rapidjson::Document landbosse_config_root;
+    Json::Value landbosse_config_root;
     std::ifstream landbosse_config_doc(python_config_path + "/landbosse.json");
     if (landbosse_config_doc.fail())
         throw exec_error("wind_landbosse", "Could not open 'landbosse.json'. "
                                            "Use 'set_python_path' function in sscapi.h to point to the folder containing the file.");
 
-    rapidjson::IStreamWrapper isw(landbosse_config_doc);
-    landbosse_config_root.ParseStream(isw);
+    landbosse_config_doc >> landbosse_config_root;
 
-    if (!landbosse_config_root.HasMember("run_cmd"))
+    if (!landbosse_config_root.isMember("run_cmd"))
         throw exec_error("wind_landbosse", "Missing key 'run_cmd' in 'landbosse.json'.");
-    if (!landbosse_config_root.HasMember("min_python_version"))
+    if (!landbosse_config_root.isMember("min_python_version"))
         throw exec_error("wind_landbosse", "Missing key 'min_python_version' in 'landbosse.json'.");
 
-    python_run_cmd = landbosse_config_root["run_cmd"].GetString();
-    auto min_python_version = landbosse_config_root["min_python_version"].GetString();
+    python_run_cmd = landbosse_config_root["run_cmd"].asString();
+    auto min_python_version = landbosse_config_root["min_python_version"].asString();
 
     // check version works out
     std::stringstream min_ver(min_python_version);
