@@ -147,7 +147,7 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, DefaultResidentialModel)
 
         ssc_number_t discounted_payback;
         ssc_data_get_number(data, "discounted_payback", &discounted_payback);
-        EXPECT_TRUE(std::isnan(discounted_payback)); // ssc issue 616 - discounted to year 0 instead of year 1, so discounted payback is greater than the analysis period (=NaN)
+        EXPECT_TRUE(isnan(discounted_payback)); // ssc issue 616 - discounted to year 0 instead of year 1, so discounted payback is greater than the analysis period (=NaN)
 //        EXPECT_NEAR(discounted_payback, 22.9, m_error_tolerance_lo) << "Discounted payback period";
 
         ssc_number_t adjusted_installed_cost;
