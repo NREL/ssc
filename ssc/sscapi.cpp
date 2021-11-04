@@ -675,124 +675,6 @@ SSCEXPORT ssc_var_t ssc_data_get_data_matrix(ssc_data_t p_data, const char *name
     }
     return dat;
 }
-/*
-void json_to_ssc_var(const Json::Value& json_val, ssc_var_t ssc_val){
-    if (!ssc_val)
-        return;
-    auto vd = static_cast<var_data*>(ssc_val);
-    vd->clear();
-
-    using namespace Json;
-    Json::Value::Members members;
-    bool is_arr, is_mat;
-    std::vector<ssc_number_t> vec;
-    std::vector<var_data>* vd_arr;
-    var_table* vd_tab;
-
-    auto is_numerical = [](const Json::Value& json_val){
-        bool is_num = true;
-        for (const auto & value : json_val){
-            if (!value.isDouble() && !value.isBool()){
-                is_num = false;
-                break;
-            }
-        }
-        return is_num;
-    };
-
-    switch (json_val.type()){
-        default:
-        case ValueType::nullValue:
-            return;
-        case ValueType::intValue:
-        case ValueType::uintValue:
-        case ValueType::booleanValue:
-        case ValueType::realValue:
-            vd->type = SSC_NUMBER;
-            vd->num[0] = json_val.asDouble();
-            return;
-        case ValueType::stringValue:
-            vd->type = SSC_STRING;
-            vd->str = json_val.asString();
-            return;
-        case ValueType::arrayValue:
-            // determine if SSC_ARRAY
-            is_arr = is_numerical(json_val);
-            if (is_arr){
-                vd->type = SSC_ARRAY;
-				if (json_val.empty())
-					return;
-                for (const auto & row : json_val){
-                    vec.push_back(row.asDouble());
-                }
-                vd->num.assign(&vec[0], vec.size());
-                return;
-            }
-            // SSC_MATRIX
-            is_mat = true;
-            for (const auto & value : json_val){
-                if (value.type() != ValueType::arrayValue || !is_numerical(value)){
-                    is_mat = false;
-                    break;
-                }
-            }
-            if (is_mat){
-                vd->type = SSC_MATRIX;
-				if (json_val.empty())
-					return;
-                for (const auto & row : json_val){
-                    for (const auto & value : row){
-                        vec.push_back(value.asDouble());
-                    }
-                }
-                vd->num.assign(&vec[0], json_val.size(), json_val[0].size());
-                return;
-            }
-            // SSC_DATARR
-            vd_arr = &vd->vec;
-            for (const auto & value : json_val){
-                vd_arr->emplace_back(var_data());
-                auto entry = &vd_arr->back();
-                json_to_ssc_var(value, entry);
-            }
-            vd->type = SSC_DATARR;
-            return;
-        case ValueType::objectValue:
-            vd_tab = &vd->table;
-            members = json_val.getMemberNames();
-            for (auto const &name : members) {
-                auto entry = vd_tab->assign(name, var_data());
-                json_to_ssc_var(json_val[name], entry);
-            }
-            vd->type = SSC_TABLE;
-    }
-}
-
-SSCEXPORT ssc_data_t json_to_ssc_data(const char* json_str){
-    auto vt = new var_table;
-    const std::string rawJson(json_str);
-    const auto rawJsonLength = static_cast<int>(rawJson.length());
-    JSONCPP_STRING err;
-    Json::Value root;
-    Json::CharReaderBuilder builder;
-    const std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
-    if (!reader->parse(rawJson.c_str(), rawJson.c_str() + rawJsonLength, &root,
-                       &err)) {
-        vt->assign("error", err);
-        return dynamic_cast<ssc_data_t>(vt);
-    }
-
-    Json::Value::Members members = root.getMemberNames();
-    for (auto const &name : members) {
-        var_data ssc_val;
-        json_to_ssc_var(root[name], &ssc_val);
-        vt->assign(name, ssc_val);
-    }
-    return vt;
-}
-
-*/
-
 
 
 //////////////  RapidJSON testing
@@ -802,8 +684,6 @@ void json_to_ssc_var(const rapidjson::Value& json_val, ssc_var_t ssc_val) {
         return;
     auto vd = static_cast<var_data*>(ssc_val);
     vd->clear();
-    //using namespace Json;
-    //Json::Value::Members members;
     bool is_arr, is_mat;
     std::vector<ssc_number_t> vec;
     std::vector<var_data>* vd_arr;
