@@ -51,7 +51,7 @@ var_info_invalid };
 
 var_info vtab_battery_replacement_cost[] = {
 { SSC_INPUT, SSC_NUMBER , "en_batt"                              , "Enable battery storage model"                                   , "0/1"                                    , ""                                      , "BatterySystem"              , "?=0"            , ""                      , ""},
-{ SSC_INPUT, SSC_ARRAY  , "batt_bank_replacement"                , "Battery bank replacements per year"                             , "number/year"                            , ""                                      , "BatterySystem"              , ""               , ""                      , ""},
+{ SSC_INOUT, SSC_ARRAY  , "batt_bank_replacement"                , "Battery bank replacements per year"                             , "number/year"                            , ""                                      , "BatterySystem"              , ""               , ""                      , ""},
 { SSC_INPUT, SSC_ARRAY  , "batt_replacement_schedule_percent"    , "Percentage of battery capacity to replace in each year"         , "%"                                      , "length <= analysis_period"             , "BatterySystem"              , ""               , ""                      , ""},
 { SSC_INPUT, SSC_NUMBER , "batt_replacement_option"              , "Enable battery replacement?"                                    , "0=none,1=capacity based,2=user schedule", ""                                      , "BatterySystem"              , "?=0"            , "INTEGER,MIN=0,MAX=2"   , ""},
 { SSC_INPUT, SSC_NUMBER , "battery_per_kWh"                      , "Battery cost"                                                   , "$/kWh"                                  , ""                                      , "BatterySystem"              , "?=0.0"          , ""                      , ""},
@@ -1673,4 +1673,19 @@ std::vector<double> scalefactors::get_factors(const char* name)
         }
     }
     return scale_factors;
+}
+
+void prepend_to_output(var_table* v, std::string var_name, size_t count, ssc_number_t value) {
+    size_t orig_count = 0;
+    ssc_number_t* arr = v->as_array(var_name, &orig_count);
+    arr = v->resize_array(var_name, count);
+    if (count > orig_count) {
+        size_t diff = count - orig_count;
+        for (int i = orig_count - 1; i >= 0; i--) {
+            arr[i + diff] = arr[i];
+        }
+        for (int i = 0; i < diff; i++) {
+            arr[i] = value;
+        }
+    }
 }
