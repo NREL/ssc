@@ -140,6 +140,10 @@ endfunction()
 #
 #####################################################################################################################
 
+# turn off examples, tests and install for jsoncpp
+set(JSONCPP_WITH_EXAMPLE 0)
+set(JSONCPP_WITH_TESTS 0)
+add_subdirectory(jsoncpp EXCLUDE_FROM_ALL)
 
 add_subdirectory(splinter)
 add_subdirectory(shared)
