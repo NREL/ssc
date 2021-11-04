@@ -687,9 +687,9 @@ public:
             nyears = as_unsigned_long("analysis_period");
             std::vector<double> dc_degradation = as_vector_double("dc_degradation");
             if (dc_degradation.size() == 1) {
-                degradationFactor.push_back(1.0);
+                degradationFactor.push_back(1.0); // assume zero degradation in year 1
                 for (size_t y = 1; y < nyears; y++) {
-                    degradationFactor.push_back(pow((1.0 - dc_degradation[0] / 100.0), y));
+                    degradationFactor.push_back(1.0 - (dc_degradation[0] * y) / 100.0);
                 }
             }
             else {

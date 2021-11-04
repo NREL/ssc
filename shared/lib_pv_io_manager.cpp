@@ -663,12 +663,12 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO* 
 
         if (dc_degrad.size() == 1)
         {
-            for (size_t i = 1; i < Simulation->numberOfYears; i++)
-                dcDegradationFactor.push_back(pow((1.0 - dc_degrad[0] / 100.0), i));
+            for (size_t i = 1; i <= Simulation->numberOfYears; i++)
+                dcDegradationFactor.push_back(1.0 - (dc_degrad[0] * i) / 100.0);
         }
         else if (dc_degrad.size() > 0)
         {
-            for (size_t i = 1; i < Simulation->numberOfYears && i < dc_degrad.size(); i++)
+            for (size_t i = 1; i <= Simulation->numberOfYears && i < dc_degrad.size(); i++)
                 dcDegradationFactor.push_back(1.0 - dc_degrad[i] / 100.0);
         }
 
