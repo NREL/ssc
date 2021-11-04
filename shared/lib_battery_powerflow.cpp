@@ -306,6 +306,10 @@ void BatteryPowerFlow::calculateACConnected()
     else if (P_battery_dc > 0)
         P_battery_ac = P_battery_dc * m_BatteryPower->singlePointEfficiencyDCToAC;
 
+    if (fabs(P_battery_ac) < tolerance) {
+        P_battery_ac = 0;
+    }
+
     // Code simplification to remove redundancy for code that should use either critical load or actual load
     double calc_load_ac = (m_BatteryPower->isOutageStep ? P_crit_load_ac : P_load_ac);
 
@@ -712,6 +716,10 @@ void BatteryPowerFlow::calculateDCConnected()
             P_battery_ac = -(P_pv_to_batt_dc + P_grid_to_batt_ac);
         }
 
+        if (fabs(P_battery_ac) < tolerance) {
+            P_battery_ac = 0.0;
+        }
+
         // Assign this as AC values, even though they are fully DC
         P_pv_to_batt_ac = P_pv_to_batt_dc;
     }
@@ -739,6 +747,10 @@ void BatteryPowerFlow::calculateDCConnected()
         else { // TODO - what if the grid needs to handle idle losses?
             P_pv_ac = P_pv_dc * efficiencyDCAC;
             P_battery_ac = (P_battery_dc - P_system_loss_dc) * efficiencyDCAC;
+        }
+
+        if (fabs(P_battery_ac) < tolerance) {
+            P_battery_ac = 0.0;
         }
 
         P_ac_losses = (P_battery_ac + P_pv_ac) * ac_loss_percent;

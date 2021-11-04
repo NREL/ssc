@@ -2280,7 +2280,7 @@ void cm_pvsamv1::exec()
 
             bool offline = false;
             if (en_batt && (batt_topology == ChargeController::DC_CONNECTED)) {
-                if (batt->is_outage_step(idx)) {
+                if (batt->is_outage_step(idx % 8760)) {
                     offline = batt->is_offline(idx);
                 }
             }
@@ -2464,7 +2464,7 @@ void cm_pvsamv1::exec()
                 PVSystem->p_systemACPower[idx] = batt->outGenPower[idx];
 
                 bool offline = false;
-                if (batt->is_outage_step(idx)) {
+                if (batt->is_outage_step(idx % 8760)) {
                     offline = batt->is_offline(idx);
                 }
                 

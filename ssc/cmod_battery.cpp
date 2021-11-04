@@ -250,7 +250,7 @@ var_info vtab_battery_outputs[] = {
     { SSC_OUTPUT,        SSC_ARRAY,      "batt_revenue_charge",                        "Revenue to charge from system",                         "$/kWh", "",                         "Battery",       "",                           "",                              "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "batt_revenue_clipcharge",                    "Revenue to charge from clipped",                        "$/kWh", "",                         "Battery",       "",                           "",                              "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "batt_revenue_discharge",                     "Revenue to discharge",                                  "$/kWh", "",                         "Battery",       "",                           "",                              "" },
-    { SSC_OUTPUT,        SSC_ARRAY,      "gen_without_battery",                        "Energy produced without the battery or curtailment",    "kW","",                      "Battery",       "",                           "",                              "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "gen_without_battery",                        "Power produced without the battery or curtailment",    "kW","",                      "Battery",       "",                           "",                              "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "crit_load_unmet",                            "Critical load unmet in this timestep",                  "kW","",                      "Battery",       "",                           "",                              "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "crit_load",                                  "Critical load in this timestep",                        "kW","",                      "Battery",       "",                           "",                              "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "outage_losses_unmet",                        "Battery and system losses unmet in this timestep",     "kW","",                      "Battery",       "",                           "",                              "" },
@@ -1896,6 +1896,10 @@ void battstor::update_grid_power(compute_module&, double P_gen_ac, double P_load
             }
         }
         P_unmet_losses = outUnmetLosses[index_replace];
+        if (fabs(P_unmet_losses) < tolerance) {
+            P_unmet_losses = 0.0;
+            outUnmetLosses[index_replace] = 0.0;
+        }
     }
     
     if (P_grid >= 0) {
