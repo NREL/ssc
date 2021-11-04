@@ -519,8 +519,6 @@ TEST(windpower_landbosse, SetupPython) {
 	    return;
 	}
 
-//    rapidjson::IStreamWrapper iswd(python_config_doc);
-//    python_config_root.ParseStream(iswd);
     std::ostringstream tmp;
     tmp << python_config_doc.rdbuf();
     python_config_root.Parse(tmp.str().c_str());
@@ -560,8 +558,6 @@ bool check_Python_setup() {
 
     std::ifstream python_config_doc(configPath);
     rapidjson::Document python_config_root;
-//    rapidjson::IStreamWrapper iswc(python_config_doc);
-//    python_config_root.ParseStream(iswc);
     std::ostringstream tmp;
     tmp << python_config_doc.rdbuf();
     python_config_root.Parse(tmp.str().c_str());
