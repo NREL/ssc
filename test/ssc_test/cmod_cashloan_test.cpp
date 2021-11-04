@@ -29,9 +29,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <fstream>
 #include <sstream>
 #include <cmath>
-#include "../rapidjson/document.h"
-#include "../rapidjson/istreamwrapper.h"
-
+#include <json/json.h>
+#include <json/writer.h>
 
 // Discounted Payback update to address ssc issue 616
 TEST_F(CmodCashLoanTest, DiscountedPayback) {
