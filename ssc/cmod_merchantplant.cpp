@@ -26,6 +26,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <float.h>
 #endif
 #include "common_financial.h"
+#include "common.h"
 #include "lib_financial.h"
 #include "cmod_merchantplant_eqns.h"
 using namespace libfin;
@@ -79,7 +80,7 @@ static var_info _cm_vtab_merchantplant[] = {
 	{ SSC_INOUT,        SSC_NUMBER,     "system_use_recapitalization",	          "Recapitalization expenses",	                                   "0/1",               "0=None,1=Recapitalize",   "System Costs",          "?=0",					   "INTEGER,MIN=0",                 "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "system_recapitalization_cost",	          "Recapitalization cost",	                                       "$",                 "",                        "System Costs",          "?=0",					   "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "system_recapitalization_escalation",     "Recapitalization escalation (above inflation)",	               "%",	                "",					       "System Costs",          "?=0",                     "MIN=0,MAX=100",      		    "" },
-	{ SSC_INPUT,        SSC_ARRAY,      "system_lifetime_recapitalize",		      "Recapitalization boolean",	                                   "",                  "",                        "System Costs",          "?=0",					   "",                              "" },
+	{ SSC_INOUT,        SSC_ARRAY,      "system_lifetime_recapitalize",		      "Recapitalization boolean",	                                   "",                  "",                        "System Costs",          "?=0",					   "",                              "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_recapitalization",	                  "Recapitalization operating expense",	                           "$",                 "",                        "Recapitalization",          "*",					   "LENGTH_EQUAL=cf_length",        "" },
                                                                                   															       
 /* Dispatch */                                                                    															       
@@ -1111,7 +1112,7 @@ public:
 
             for (i = 0; i < nyears && i < (int)count; i++) {
                 // batt_rep and the cash flow sheets are 1 indexed, replacement_percent is zero indexed
-                cf.at(CF_battery_replacement_cost, i + 1) = batt_rep[i + 1] * replacement_percent[i] * 0.01 *
+                cf.at(CF_battery_replacement_cost, i + 1) = batt_rep[i] * replacement_percent[i] * 0.01 *
                     cf.at(CF_battery_replacement_cost_schedule, i + 1);
             }
         }
@@ -1506,6 +1507,7 @@ public:
 			{
 				for (i=0;i<nyears && i<(int)recap_boolean_count;i++) cf.at(CF_Recapitalization_boolean,i+1) = recap_boolean[i];
 			}
+            prepend_to_output(this, "system_lifetime_recapitalize", nyears + 1, 0.0);
 		}
 
 		// return on equity based on workbook and emails from Sara Turner for SAM for India
@@ -2828,6 +2830,9 @@ public:
     }
     /////////////////////////////////////////////////////////////////////////////////////////
 
+    if (as_integer("en_batt") == 1) {
+        update_battery_outputs(this, nyears);
+    }
 
 	// DSCR calculations
 	for (i = 0; i <= nyears; i++)

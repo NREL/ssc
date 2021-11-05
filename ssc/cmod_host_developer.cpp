@@ -21,6 +21,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "common_financial.h"
+#include "common.h"
 #include "lib_financial.h"
 using namespace libfin;
 #include <sstream>
@@ -86,7 +87,7 @@ static var_info _cm_vtab_host_developer[] = {
 	{ SSC_INOUT,        SSC_NUMBER,     "system_use_recapitalization",	          "Recapitalization expenses",	                                   "0/1",               "0=None,1=Recapitalize",   "Recapitalization",          "?=0",					   "INTEGER,MIN=0",                 "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "system_recapitalization_cost",	          "Recapitalization cost",	                                       "$",                 "",                        "Recapitalization",          "?=0",					   "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "system_recapitalization_escalation",     "Recapitalization escalation (above inflation)",	               "%",	                "",					       "Recapitalization",          "?=0",                     "MIN=0,MAX=100",      		    "" },
-	{ SSC_INPUT,        SSC_ARRAY,      "system_lifetime_recapitalize",		      "Recapitalization boolean",	                                   "",                  "",                        "Recapitalization",          "?=0",					   "",                              "" },
+	{ SSC_INOUT,        SSC_ARRAY,      "system_lifetime_recapitalize",		      "Recapitalization boolean",	                                   "",                  "",                        "Recapitalization",          "?=0",					   "",                              "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_recapitalization",	                  "Recapitalization operating expense",	                           "$",                 "",                        "Recapitalization",          "*",					   "LENGTH_EQUAL=cf_length",        "" },
                                                                                   															       
 /* Dispatch */                                                                    															       
@@ -1269,6 +1270,7 @@ public:
 			{
 				for (i=0;i<nyears && i<(int)recap_boolean_count;i++) cf.at(CF_Recapitalization_boolean,i+1) = recap_boolean[i];
 			}
+            prepend_to_output(this, "system_lifetime_recapitalize", nyears + 1, 0.0);
 		}
 
 		// return on equity based on workbook and emails from Sara Turner for SAM for India
@@ -2805,117 +2807,13 @@ public:
         }
         int grid_charging_cost_version = 0;
         lcos_calc(this, cf_lcos, nyears, nom_discount_rate, inflation_rate, lcoe_real, cost_prefinancing, disc_real, grid_charging_cost_version);
-        /*
-        double lcos_investment_cost = as_double("battery_total_cost_lcos"); //does not include replacement costs
-        double lcos_om_cost = npv(CF_om_capacity1_expense, nyears, nom_discount_rate); //Todo: include variable om due to charging
-        std::vector<double> charged_grid = as_vector_double("batt_annual_charge_from_grid");
-        std::vector<double> charged_pv = as_vector_double("batt_annual_charge_from_system");
-        std::vector<double> charged_total = as_vector_double("batt_annual_charge_energy");
-        std::vector<double> lcos_energy_discharged = as_vector_double("batt_annual_discharge_energy");
-        //std::vector<double> grid_to_batt = as_vector_double("grid_to_batt");
-        size_t n_monthly_grid_to_batt, n_monthly_grid_to_load, n_monthly_energy_charge;
-        ssc_number_t* monthly_grid_to_batt = as_array("monthly_grid_to_batt", &n_monthly_grid_to_batt);
-        ssc_number_t* monthly_grid_to_load = as_array("monthly_grid_to_load", &n_monthly_grid_to_load);
-        //ssc_number_t* monthly_energy_charge = as_array("year1_monthly_ec_charge_with_system", &n_monthly_energy_charge); //Power from grid to battery in kW (needs to be changed to kwh)
-        util::matrix_t<double> monthly_energy_charge = as_matrix("charge_w_sys_ec_ym");
-        util::matrix_t<double> net_annual_true_up = as_matrix("true_up_credits_ym");
-        size_t n_grid_to_batt;
-        ssc_number_t* grid_to_batt = as_array("grid_to_batt", &n_grid_to_batt); //Power from grid to battery in kW (needs to be changed to kwh)
-        size_t n_steps_per_year = n_grid_to_batt / nyears;
-        cf.at(CF_charging_cost_grid, 0) = 0;
-        std::vector<double> elec_purchases = as_vector_double("year1_hourly_salespurchases_with_system");
-        std::vector<double> elec_from_grid = as_vector_double("year1_hourly_e_fromgrid");
-
-        if (is_assigned("rate_escalation"))
-            escal_or_annual(CF_util_escal_rate, nyears, "rate_escalation", inflation_rate, 0.01, true, 0);
-        save_cf(CF_util_escal_rate, nyears, "cf_util_escal_rate");
-
-        double capex_lcoe_ratio = 1 / 0.8; //ratio of capex ratio between PV+batt / PV to LCOE ratio PV+batt/ PV (assumed based on table)
-        double lcoe_real_lcos = lcoe_real * capex_lcoe_ratio * (cost_prefinancing - lcos_investment_cost) / cost_prefinancing; //cents/kWh
-
-        for (int a = 0; a <= nyears; a++) {
-
-            if (as_integer("system_use_lifetime_output") == 1)
-            {
-
-
-                for (size_t m = 0; m < 12; m++) {
-                    if (a != 0) {
-                        //cf.at(CF_charging_cost_grid_month, a) += monthly_grid_to_batt[m] / (monthly_grid_to_batt[m] + monthly_grid_to_load[m]) * monthly_energy_charge[m] * charged_grid[a] / charged_grid[1] * cf.at(CF_util_escal_rate, a);
-                        cf.at(CF_charging_cost_grid, a) += monthly_grid_to_batt[m] / (monthly_grid_to_batt[m] + monthly_grid_to_load[m]) * monthly_energy_charge.at(a, m) + net_annual_true_up.at(a, m);
-
-                    }
-                }
-
-
-
-            }
-            else
-            {
-
-
-                for (size_t m = 0; m < 12; m++) {
-                    if (a != 0) {
-                        cf.at(CF_charging_cost_grid, a) += monthly_grid_to_batt[m] / (monthly_grid_to_load[m] + monthly_grid_to_batt[m]) * monthly_energy_charge.at(a, m) + net_annual_true_up.at(a, m);
-                    }
-                }
-
-
-            }
-
-            if (as_integer("system_use_lifetime_output") == 1) {
-                cf.at(CF_charging_cost_pv, a) = charged_pv[a] * lcoe_real_lcos / 100 * pow(1 + inflation_rate, a - 1);
-                cf.at(CF_om_production1_expense, a) *= charged_total[a];
-                cf.at(CF_energy_discharged, a) = lcos_energy_discharged[a];
-
-            }
-            else {
-                cf.at(CF_charging_cost_pv, a) = charged_pv[0] * lcoe_real_lcos / 100 * pow(1 + inflation_rate, a - 1);
-                cf.at(CF_om_production1_expense, a) *= charged_total[0];
-                cf.at(CF_energy_discharged, a) = lcos_energy_discharged[0];
-            }
-            //cf.at(CF_charging_cost_grid, a) = charged_grid[a] * cf.at(CF_ppa_price, a) / 100;
-            
-            //charged_total[a] = charged_grid[a] + charged_pv[a];
-            cf.at(CF_energy_charged_grid, a) = cf.at(CF_charging_cost_grid, a) + cf.at(CF_charging_cost_pv, a);
-            cf.at(CF_annual_cost_lcos, a) = -cf.at(CF_charging_cost_grid, a) +
-                -cf.at(CF_charging_cost_pv, a) + -cf.at(CF_om_fixed1_expense, a) +
-                -cf.at(CF_om_capacity1_expense, a) + -cf.at(CF_om_production1_expense, a) +
-                -cf.at(CF_battery_replacement_cost, a);
-
-        }
-        cf.at(CF_annual_cost_lcos, 0) += -lcos_investment_cost; //add initial investment to year 0
-        lcos_om_cost += npv(CF_om_production1_expense, nyears, nom_discount_rate);
-        lcos_om_cost += npv(CF_om_fixed1_expense, nyears, nom_discount_rate);
-        double lcos_charging_cost = npv(CF_energy_charged_grid, nyears, nom_discount_rate);
-        double batt_salvage_value_frac = as_double("batt_salvage_percentage") * 0.01;
-        double lcos_salvage_value = lcos_investment_cost * batt_salvage_value_frac / pow(1 + nom_discount_rate, nyears + 1); //set as a percentage or direct salvage value
-        cf.at(CF_salvage_cost_lcos, nyears) = lcos_salvage_value;
-        cf.at(CF_annual_cost_lcos, nyears) -= cf.at(CF_salvage_cost_lcos, nyears);
-        double lcos_denominator = npv(CF_energy_discharged, nyears, nom_discount_rate);
-        double lcos_denominator_real = npv(CF_energy_discharged, nyears, disc_real);
-        //double lcos_numerator = (lcos_investment_cost + lcos_om_cost + lcos_charging_cost + lcos_salvage_value);
-        double lcos_numerator = -(npv(CF_annual_cost_lcos, nyears, nom_discount_rate)) - cf.at(CF_annual_cost_lcos, 0);
-        assign("npv_annual_costs_lcos", var_data((ssc_number_t)lcos_numerator));
-        save_cf(CF_annual_cost_lcos, nyears, "cf_annual_cost_lcos");
-        save_cf(CF_energy_discharged, nyears, "cf_annual_discharge_lcos");
-        save_cf(CF_charging_cost_grid, nyears, "cf_charging_cost_grid");
-        save_cf(CF_charging_cost_pv, nyears, "cf_charging_cost_pv");
-        save_cf(CF_om_capacity1_expense, nyears, "cf_om_batt_capacity_expense");
-        save_cf(CF_om_production1_expense, nyears, "cf_om_batt_production_expense");
-        save_cf(CF_om_fixed1_expense, nyears, "cf_om_batt_fixed_expense");
-        save_cf(CF_battery_replacement_cost, nyears, "cf_batt_replacement_cost");
-        save_cf(CF_salvage_cost_lcos, nyears, "cf_salvage_cost_lcos");
-        double lcos_nom = lcos_numerator / lcos_denominator * 100.0; // cent/kWh
-        double lcos_real = lcos_numerator / lcos_denominator_real * 100.0; // cents/kWh
-        assign("lcos_nom", var_data((ssc_number_t)lcos_nom));
-        assign("lcos_real", var_data((ssc_number_t)lcos_real));
-        assign("npv_energy_lcos_nom", var_data((ssc_number_t)lcos_denominator));
-        assign("npv_energy_lcos_real", var_data((ssc_number_t)lcos_denominator_real));
-        */
+       
     }
     /////////////////////////////////////////////////////////////////////////////////////////
 
+    if (as_integer("en_batt") == 1) {
+        update_battery_outputs(this, nyears);
+    }
 
 	// DSCR calculations
 	for (i = 0; i <= nyears; i++)

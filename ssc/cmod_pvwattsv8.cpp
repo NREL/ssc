@@ -110,6 +110,7 @@ static var_info _cm_vtab_pvwattsv8[] = {
         { SSC_INPUT,        SSC_STRING,      "solar_resource_file",            "Weather file path",                          "",           "",                                             "Solar Resource",      "",                       "",                              "" },
         { SSC_INPUT,        SSC_TABLE,       "solar_resource_data",            "Weather data",                               "",           "dn,df,tdry,wspd,lat,lon,tz,elev",              "Solar Resource",      "",                       "",                              "" },
         { SSC_INPUT,        SSC_ARRAY,       "albedo",                         "Albedo",                                     "frac",       "if provided, will overwrite weather file albedo","Solar Resource",    "",                        "",                              "" },
+        { SSC_INPUT,        SSC_NUMBER,      "use_wf_albedo",                  "Use albedo from weather file",               "0/1",        "will use weather file albedo instead of albedo input","Solar Resource","?=0",                    "BOOLEAN",          "" },
 
         { SSC_INOUT,        SSC_NUMBER,      "system_use_lifetime_output",     "Run lifetime simulation",                    "0/1",        "",                                             "Lifetime",            "?=0",                        "",                              "" },
         { SSC_INPUT,        SSC_NUMBER,      "analysis_period",                "Analysis period",                            "years",      "",                                             "Lifetime",            "system_use_lifetime_output=1", "",                          "" },
@@ -130,7 +131,7 @@ static var_info _cm_vtab_pvwattsv8[] = {
         { SSC_INPUT,        SSC_ARRAY,       "soiling",                        "Soiling loss",                                "%",         "",                                             "System Design",      "?",                       "",                              "" },
         { SSC_INPUT,        SSC_NUMBER,      "losses",						   "Other DC losses",                             "%",         "Total system losses",                          "System Design",      "*",                       "MIN=-5,MAX=99",                 "" },
 
-        { SSC_INPUT,        SSC_NUMBER,      "enable_wind_stow",               "Enable tracker stow at high wind speeds",     "0/1",       "",                                             "System Design",      "?=0",                     "",                              "" },
+        { SSC_INPUT,        SSC_NUMBER,      "enable_wind_stow",               "Enable tracker stow at high wind speeds",     "0/1",       "",                                             "System Design",      "?=0",                     "BOOLEAN",                              "" },
         { SSC_INPUT,        SSC_NUMBER,      "stow_wspd",                      "Tracker stow wind speed threshold",           "m/s",       "",                                             "System Design",      "?=10",                    "",                              "" },
         { SSC_INPUT,        SSC_NUMBER,      "gust_factor",                    "Wind gust estimation factor",                 "",          "",                                             "System Design",      "?",                       "",                              "" },
         { SSC_INPUT,        SSC_NUMBER,      "wind_stow_angle",                "Tracker angle for wind stow",                 "deg",       "",                                             "System Design",      "?=30.0",                  "",                              "" },
@@ -382,6 +383,7 @@ public:
         {
             albedo = as_array("albedo", &albedo_len);
         }
+        bool use_wf_albedo = as_boolean("use_wf_albedo");
 
         pv.dc_loss_percent = as_double("losses");
         pv.tilt = pv.azimuth = std::numeric_limits<double>::quiet_NaN();
@@ -819,9 +821,10 @@ public:
                 else if (is_assigned("albedo"))
                     log(util::format("Albedo array was assigned but is not the correct length (1, 12, or %d entries). Using default value.", nrec), SSC_WARNING);
 
-                // if the user hasn't specified an albedo, and the weather file contains hourly albedo, use that instead
+                // if the user hasn't specified an albedo, or has specified to use wf albedo, and the weather file contains hourly albedo, use that instead
+                // but make sure that the weather file albedo is realistic
                 // albedo_len will be zero if the albedo input isn't assigned
-                if (std::isfinite(wf.alb) && wf.alb > 0 && wf.alb < 1 && albedo_len == 0)
+                if (std::isfinite(wf.alb) && wf.alb > 0 && wf.alb < 1 && (albedo_len == 0 || use_wf_albedo))
                     alb = wf.alb;
 
 
