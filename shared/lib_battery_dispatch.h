@@ -262,7 +262,8 @@ public:
         std::vector<double> battCycleCost,
         double interconnection_limit,
         bool chargeOnlySystemExceedLoad = true,  // Optional so FOM doesn't have to specify them
-        bool dischargeOnlyLoadExceedSystem = true
+        bool dischargeOnlyLoadExceedSystem = true,
+        bool behindTheMeterDischargeToGrid = true
 		);
 
 	virtual ~dispatch_automatic_t(){};

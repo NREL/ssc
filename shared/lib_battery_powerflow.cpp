@@ -71,6 +71,7 @@ BatteryPower::BatteryPower(double dtHour) :
 		canClipCharge(false),
 		canGridCharge(false),
 		canDischarge(false),
+        canDischargeToGrid(false),
 		canFuelCellCharge(false),
         chargeOnlySystemExceedLoad(true),
         dischargeOnlyLoadExceedSystem(true),
@@ -125,6 +126,7 @@ BatteryPower::BatteryPower(const BatteryPower& orig) {
     canClipCharge = orig.canClipCharge;
     canGridCharge = orig.canGridCharge;
     canDischarge = orig.canDischarge;
+    canDischargeToGrid = orig.canDischargeToGrid;
     canFuelCellCharge = orig.canFuelCellCharge;
     chargeOnlySystemExceedLoad = orig.chargeOnlySystemExceedLoad;
     dischargeOnlyLoadExceedSystem = orig.dischargeOnlyLoadExceedSystem;

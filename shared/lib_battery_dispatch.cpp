@@ -486,7 +486,8 @@ dispatch_automatic_t::dispatch_automatic_t(
     std::vector<double> battCycleCost,
     double interconnection_limit,
     bool chargeOnlySystemExceedLoad,
-    bool dischargeOnlyLoadExceedSystem
+    bool dischargeOnlyLoadExceedSystem,
+    bool behindTheMeterDischargeToGrid
 	) : dispatch_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max_kwdc, Pd_max_kwdc, Pc_max_kwac, Pd_max_kwac,
 
     t_min, dispatch_mode, pv_dispatch, interconnection_limit, chargeOnlySystemExceedLoad, dischargeOnlyLoadExceedSystem)
@@ -515,6 +516,7 @@ dispatch_automatic_t::dispatch_automatic_t(
 	m_batteryPower->canGridCharge = can_grid_charge;
 	m_batteryPower->canFuelCellCharge = can_fuelcell_charge;
 	m_batteryPower->canDischarge = true;
+    m_batteryPower->canDischargeToGrid = behindTheMeterDischargeToGrid;
     m_battReplacementCostPerKWH = battReplacementCostPerkWh;
     m_battCycleCostChoice = battCycleCostChoice;
     cycle_costs_by_year = battCycleCost;

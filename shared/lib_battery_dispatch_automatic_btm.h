@@ -80,7 +80,8 @@ public:
         std::vector<double> battCycleCost,
         double interconnection_limit,
         bool chargeOnlySystemExceedLoad,
-        bool dischargeOnlyLoadExceedSystem
+        bool dischargeOnlyLoadExceedSystem,
+        bool behindTheMeterDischargeToGrid
 		);
 
 	~dispatch_automatic_behind_the_meter_t() override {};

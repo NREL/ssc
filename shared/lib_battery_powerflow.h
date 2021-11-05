@@ -193,7 +193,8 @@ public:
 	bool canClipCharge;	///< A boolean specifying whether the battery is allowed to charge from otherwise clipped PV in the timestep
 	bool canGridCharge; ///< A boolean specifying whether the battery is allowed to charge from the Grid in the timestep
 	bool canDischarge;  ///< A boolean specifying whether the battery is allowed to discharge in the timestep
-	bool canFuelCellCharge; ///< A boolean specifying whether the battery is allowed to charge from the fuel cell
+    bool canDischargeToGrid; ///< A boolean specifying whether the battery is allowed to discharge to grid in the timestep
+    bool canFuelCellCharge; ///< A boolean specifying whether the battery is allowed to charge from the fuel cell
 
     bool chargeOnlySystemExceedLoad; ///< A boolean specifying whether the battery can charge only if the system's output power exceeds the load
     bool dischargeOnlyLoadExceedSystem; ///< A boolean specifying whether the battery can discharge only if the load exceeds the system's output power

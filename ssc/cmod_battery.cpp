@@ -139,6 +139,7 @@ var_info vtab_battery_inputs[] = {
     { SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_charge",                      "Periods 1-6 charging from system allowed?",              "",         "",                     "BatteryDispatch",       "en_batt=1&batt_dispatch_choice=3",                           "",                             "" },
     { SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_fuelcellcharge",			  "Periods 1-6 charging from fuel cell allowed?",           "",         "",                      "BatteryDispatch",     "",                        "",                              "" },
     { SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_discharge",                   "Periods 1-6 discharging allowed?",                       "",         "",                     "BatteryDispatch",       "en_batt=1&batt_dispatch_choice=3",                           "",                             "" },
+    { SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_discharge",                   "Periods 1-6 behind the meter discharging to grid allowed?", "",      "",                     "BatteryDispatch",       "en_batt=1&batt_dispatch_choice=3&batt_meter_position=0",                           "",                             "" },
     { SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_gridcharge",                  "Periods 1-6 grid charging allowed?",                     "",         "",                     "BatteryDispatch",       "en_batt=1&batt_dispatch_choice=3",                           "",                             "" },
     { SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_percent_discharge",           "Periods 1-6 discharge percent",                          "%",        "",                     "BatteryDispatch",       "en_batt=1&batt_dispatch_choice=3",                           "",                             "" },
     { SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_percent_gridcharge",          "Periods 1-6 gridcharge percent",                         "%",        "",                     "BatteryDispatch",       "en_batt=1&batt_dispatch_choice=3",                           "",                             "" },
@@ -153,6 +154,7 @@ var_info vtab_battery_inputs[] = {
     { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_auto_can_gridcharge",           "Grid charging allowed for automated dispatch?",          "0/1",       "",                    "BatteryDispatch",       "",                           "",                             "" },
     { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_auto_can_charge",               "System charging allowed for automated dispatch?",            "0/1",       "",                "BatteryDispatch",       "",                           "",                             "" },
     { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_auto_can_clipcharge",           "Battery can charge from clipped power for automated dispatch?", "0/1",   "",                 "BatteryDispatch",       "",                           "",                             "" },
+    { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_auto_btm_can_discharge_to_grid", "Behind the meter battery can discharge to grid?",        "0/1",   "",                       "BatteryDispatch",       "en_batt=1&batt_meter_position=0",                           "",                             "" },
     { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_charge_only_system_exceeds_load",  "Battery can charge from system only when system output exceeds load", "0/1",   "",        "BatteryDispatch",       "en_batt=1&batt_meter_position=0",                           "",                             "" },
     { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_discharge_only_load_exceeds_system","Battery can discharge battery only when load exceeds system output", "0/1",   "",        "BatteryDispatch",       "en_batt=1&batt_meter_position=0",                           "",                             "" },
     { SSC_INPUT,        SSC_NUMBER,     "batt_look_ahead_hours",                       "Hours to look ahead in automated dispatch",              "hours",    "",                     "BatteryDispatch",       "",                           "",                             "" },
@@ -663,6 +665,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             batt_vars->batt_dispatch_auto_can_clipcharge = true;
             batt_vars->batt_dispatch_auto_can_gridcharge = false;
             batt_vars->batt_dispatch_auto_can_fuelcellcharge = true;
+            batt_vars->batt_dispatch_auto_btm_can_discharge_to_grid = false;
 
             if (vt.is_assigned("batt_dispatch_auto_can_gridcharge")) {
                 batt_vars->batt_dispatch_auto_can_gridcharge = vt.as_boolean("batt_dispatch_auto_can_gridcharge");
@@ -675,6 +678,9 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             }
             if (vt.is_assigned("batt_dispatch_auto_can_fuelcellcharge")) {
                 batt_vars->batt_dispatch_auto_can_fuelcellcharge = vt.as_boolean("batt_dispatch_auto_can_fuelcellcharge");
+            }
+            if (vt.is_assigned("batt_dispatch_auto_btm_can_discharge_to_grid")) {
+                batt_vars->batt_dispatch_auto_btm_can_discharge_to_grid = vt.as_boolean("batt_dispatch_auto_btm_can_discharge_to_grid");
             }
 
             // Control powerflow for all BTM methods
@@ -1232,7 +1238,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             batt_vars->batt_look_ahead_hours, batt_vars->batt_dispatch_update_frequency_hours,
             batt_vars->batt_dispatch_auto_can_charge, batt_vars->batt_dispatch_auto_can_clipcharge, batt_vars->batt_dispatch_auto_can_gridcharge, batt_vars->batt_dispatch_auto_can_fuelcellcharge,
             util_rate_data, batt_vars->batt_cost_per_kwh, batt_vars->batt_cycle_cost_choice, batt_vars->batt_cycle_cost, batt_vars->grid_interconnection_limit_kW,
-            batt_vars->batt_dispatch_charge_only_system_exceeds_load, batt_vars->batt_dispatch_discharge_only_load_exceeds_system
+            batt_vars->batt_dispatch_charge_only_system_exceeds_load, batt_vars->batt_dispatch_discharge_only_load_exceeds_system, batt_vars->batt_dispatch_auto_btm_can_discharge_to_grid
         );
         if (batt_vars->batt_dispatch == dispatch_t::CUSTOM_DISPATCH)
         {
