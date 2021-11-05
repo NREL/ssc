@@ -241,7 +241,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACDCBatteryModelInte
     ssc_number_t peakKwCharge[2] = { -0.47, -0.47 };
     ssc_number_t peakKwDischarge[2] = { 0.39, 0.41 };
     ssc_number_t peakCycles[2] = { 1, 1 };
-    ssc_number_t avgCycles[2] = { 0.8, 0.8 };
+    ssc_number_t avgCycles[2] = { 0.8, 0.7972 };
 
     // Test both AC and DC using the same dispatch model
     for (int i = 0; i < 2; i++) {
@@ -269,7 +269,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACDCBatteryModelInte
             EXPECT_NEAR(batt_stats.peakKwCharge, peakKwCharge[i], m_error_tolerance_lo);
             EXPECT_NEAR(batt_stats.peakKwDischarge, peakKwDischarge[i], m_error_tolerance_lo);
             EXPECT_NEAR(batt_stats.peakCycles, peakCycles[i], m_error_tolerance_lo);
-            EXPECT_NEAR(batt_stats.avgCycles, avgCycles[i], 0.0001);
+            EXPECT_NEAR(batt_stats.avgCycles, avgCycles[i], 0.0001) << " Battery average cycles for " << i;
         }
     }
 }
@@ -294,7 +294,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACDCBatteryModelInte
     ssc_number_t peakKwCharge[2] = { -2.37, -2.27 };
     ssc_number_t peakKwDischarge[2] = { 1.31, 1.31 };
     ssc_number_t peakCycles[2] = { 2, 2 };
-    ssc_number_t avgCycles[2] = { 0.7178, 0.7205 };
+    ssc_number_t avgCycles[2] = { 0.7178, 0.7178 };
 
     // Test both AC and DC using the same dispatch model
     for (int i = 0; i < 2; i++) {
@@ -322,7 +322,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACDCBatteryModelInte
             EXPECT_NEAR(batt_stats.peakKwCharge, peakKwCharge[i], m_error_tolerance_lo);
             EXPECT_NEAR(batt_stats.peakKwDischarge, peakKwDischarge[i], m_error_tolerance_lo);
             EXPECT_NEAR(batt_stats.peakCycles, peakCycles[i], m_error_tolerance_lo);
-            EXPECT_NEAR(batt_stats.avgCycles, avgCycles[i], 0.0001);
+            EXPECT_NEAR(batt_stats.avgCycles, avgCycles[i], 0.0001) << " Battery average cycles for " << i;
         }
     }
 }
@@ -449,7 +449,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, LCOS_test_cashloan)
 
     ssc_number_t lcos_real;
     ssc_data_get_number(data, "lcos_real", &lcos_real);
-    EXPECT_NEAR(lcos_real, 577.1, 0.1);
+    EXPECT_NEAR(lcos_real, 577.2, 0.1);
 }
 
 /// Test PVSAMv1 with all defaults and battery enabled with 3 automatic dispatch methods
@@ -893,7 +893,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialDCBatteryModelPriceS
     ssc_number_t peakKwCharge = -3.709;
     ssc_number_t peakKwDischarge = 1.99;
     ssc_number_t peakCycles = 2;
-    ssc_number_t avgCycles = 0.3452;
+    ssc_number_t avgCycles = 0.3424;
 
     pairs["batt_dispatch_choice"] = 4;
 
