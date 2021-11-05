@@ -34,12 +34,12 @@ var_info vtab_grid_input[] = {
 	// simulation inputs
 	{ SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",        "Lifetime simulation",                   "0/1",     "0=SingleYearRepeated,1=RunEveryYear",   "Lifetime",        "?=0",                   "BOOLEAN",                          "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                   "Lifetime analysis period",              "years",   "The number of years in the simulation", "Lifetime",        "system_use_lifetime_output=1","",                           "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "enable_interconnection_limit",      "Enable grid interconnection limit",     "0/1",     "Enable a grid interconnection limit",   "GridLimits",        "","",                           "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "grid_interconnection_limit_kwac",   "Grid interconnection limit",            "kWac",    "",                                      "GridLimits",        "","",                           "" },
 
 	// external compute module inputs
 	{ SSC_INOUT,        SSC_ARRAY,       "gen",								  "System power generated",                "kW",        "Lifetime system generation",          "System Output",                  "",                        "",                              "" },
 	{ SSC_INPUT,		SSC_ARRAY,	     "load",			                  "Electricity load (year 1)",             "kW",	    "",                                    "Load",	                       "",	                      "",	                           "" },
+    { SSC_INPUT,		SSC_ARRAY,	     "crit_load",			              "Critical electricity load (year 1)",    "kW",	        "",				        "Load",                             "",	                      "",	                            "" },
+    { SSC_INPUT,        SSC_ARRAY,       "grid_outage",                       "Timesteps with grid outage",            "0/1",        "0=GridAvailable,1=GridUnavailable,Length=load", "Load",    "",                       "",                               "" },
     { SSC_INPUT,        SSC_ARRAY,       "load_escalation",                   "Annual load escalation",                "%/year",    "",                                    "Load",                        "?=0",                      "",                            "" },
 
 var_info_invalid };
@@ -166,6 +166,7 @@ void cm_grid::exec()
 	    double gen = gridVars->systemGenerationLifetime_kW[i];
 		double gridNet = gen - gridVars->loadLifetime_kW[i];
 
+        // TODO - curtail if grid outage here
 
 		if (gridVars->enable_interconnection_limit){
 		    p_genPreInterconnect_kW[i] = static_cast<ssc_number_t>(gen);

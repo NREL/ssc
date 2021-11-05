@@ -1,3 +1,25 @@
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 #include <numeric>
 
 #include <gtest/gtest.h>
@@ -51,6 +73,7 @@ TEST_F(CMBattery_cmod_battery, ResilienceMetricsFullLoad){
     data_vtab->assign("analysis_period", 1);
     data_vtab->assign("gen", var_data(data_vtab->as_array("gen", nullptr), 8760));
     data_vtab->assign("batt_replacement_option", 0);
+    data_vtab->assign("run_resiliency_calcs", 1);
 
     int errors = run_module(data, "battery");
     EXPECT_FALSE(errors);
@@ -106,6 +129,7 @@ TEST_F(CMBattery_cmod_battery, ResilienceMetricsFullLoadLifetime){
     data_vtab->assign("analysis_period", nyears);
     data_vtab->assign("gen", var_data(data_vtab->as_array("gen", nullptr), 8760 * nyears));
     data_vtab->assign("batt_replacement_option", 0);
+    data_vtab->assign("run_resiliency_calcs", 1);
 
     int errors = run_module(data, "battery");
     EXPECT_FALSE(errors);

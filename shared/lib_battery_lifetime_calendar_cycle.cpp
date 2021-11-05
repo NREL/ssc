@@ -20,6 +20,8 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <algorithm>
+#include <numeric>
 #include <cmath>
 #include <memory>
 
@@ -32,25 +34,43 @@ extern double low_tolerance;
 
 void lifetime_cycle_t::initialize() {
     state->n_cycles = 0;
-    state->range = 0;
+    state->cycle_range = 0;
+    state->cycle_DOD = 0;
     state->average_range = 0;
     state->cycle->q_relative_cycle = bilinear(0., 0);
     state->cycle->rainflow_jlt = 0;
     state->cycle->rainflow_Xlt = 0;
     state->cycle->rainflow_Ylt = 0;
     state->cycle->rainflow_peaks.clear();
+    init_cycle_counts();
+    resetDailyCycles();
+}
+
+void lifetime_cycle_t::init_cycle_counts() {
+    std::vector<double> DOD_levels;
+    for (size_t i = 0; i < params->cal_cyc->cycling_matrix.nrows(); i++) {
+        double dod = params->cal_cyc->cycling_matrix.at(i, calendar_cycle_params::DOD);
+        if (std::find(DOD_levels.begin(), DOD_levels.end(), dod) == DOD_levels.end()) {
+            DOD_levels.push_back(dod);
+        }
+    }
+    std::sort(DOD_levels.begin(), DOD_levels.end());
+    state->cycle->cycle_counts.resize_fill(DOD_levels.size(), 2, 0.0);
+    for (size_t i = 0; i < DOD_levels.size(); i++) {
+        state->cycle->cycle_counts.set_value(DOD_levels[i], i, cycle_state::DOD);
+    }
 }
 
 lifetime_cycle_t::lifetime_cycle_t(const util::matrix_t<double> &batt_lifetime_matrix) {
     params = std::make_shared<lifetime_params>();
     params->cal_cyc->cycling_matrix = batt_lifetime_matrix;
-    state = std::make_shared<lifetime_state>();
+    state = std::make_shared<lifetime_state>(params->model_choice);
     initialize();
 }
 
 lifetime_cycle_t::lifetime_cycle_t(std::shared_ptr<lifetime_params> params_ptr) :
         params(std::move(params_ptr)) {
-    state = std::make_shared<lifetime_state>();
+    state = std::make_shared<lifetime_state>(params->model_choice);
     initialize();
 }
 
@@ -152,13 +172,24 @@ int lifetime_cycle_t::rainflow_compareRanges() {
 
     // Step 5: Count range Y, discard peak & valley of Y, go to Step 2
     if (!contained) {
-        state->range = state->cycle->rainflow_Ylt;
-        state->average_range = (state->average_range * state->n_cycles + state->range) / (double)(state->n_cycles + (size_t) 1);
+        state->cycle_range = state->cycle->rainflow_Ylt;
+        state->cycle_DOD = *std::max_element(state->cycle->rainflow_peaks.begin(), state->cycle->rainflow_peaks.end());
+        state->average_range = (state->average_range * state->n_cycles + state->cycle_range) / (double)(state->n_cycles + (size_t) 1);
         state->n_cycles++;
+
+        int cycles_at_range = state->n_cycles;
+
+        // Update cycle matrix with latest DOD - size 1 is uninitalized (NMC or LMO/LTO models)
+        if (state->cycle->cycle_counts.ncells() > 1) {
+            size_t cycle_index = util::nearest_col_index(state->cycle->cycle_counts, cycle_state::DOD, state->cycle_range);
+            cycles_at_range = state->cycle->cycle_counts.at(cycle_index, cycle_state::CYCLES);
+            cycles_at_range += 1;
+            state->cycle->cycle_counts.set_value(cycles_at_range, cycle_index, cycle_state::CYCLES);
+        }
 
         // the capacity percent cannot increase
         double dq =
-                bilinear(state->average_range, state->n_cycles) - bilinear(state->average_range, state->n_cycles + 1);
+                bilinear(state->cycle_range, cycles_at_range) - bilinear(state->cycle_range, cycles_at_range + 1);
         if (dq > 0)
             state->cycle->q_relative_cycle -= dq;
 
@@ -186,22 +217,91 @@ void lifetime_cycle_t::replaceBattery(double replacement_percent) {
     // More work to figure out degradation of multiple-aged battery units
     if (replacement_percent == 100) {
         state->n_cycles = 0;
+        state->cycle_range = 0;
+        state->cycle_DOD = 0;
+        state->average_range = 0;
+        if (state->cycle->cycle_counts.ncells() > 1) {
+            for (size_t i = 0; i < state->cycle->cycle_counts.nrows(); i++) {
+                state->cycle->cycle_counts.set_value(0.0, i, cycle_state::CYCLES);
+            }
+        }
     }
 
     state->cycle->rainflow_jlt = 0;
     state->cycle->rainflow_Xlt = 0;
     state->cycle->rainflow_Ylt = 0;
-    state->range = 0;
     state->cycle->rainflow_peaks.clear();
 }
 
 int lifetime_cycle_t::cycles_elapsed() { return state->n_cycles; }
 
-double lifetime_cycle_t::cycle_range() { return state->range; }
+double lifetime_cycle_t::cycle_range() { return state->cycle_range; }
+
+double lifetime_cycle_t::cycle_depth() { return state->cycle_DOD; }
 
 double lifetime_cycle_t::average_range() { return state->average_range; }
 
 double lifetime_cycle_t::capacity_percent() { return state->cycle->q_relative_cycle; }
+
+void lifetime_cycle_t::resetDailyCycles() {
+    state->cycle->DOD_min = -1;
+    state->cycle->DOD_max = -1;
+    state->cycle->cum_dt = 0;
+    state->cycle->cycle_DOD_max.clear();
+    state->cycle->cycle_DOD_range.clear();
+}
+
+void lifetime_cycle_t::updateDailyCycles(double &prev_DOD, double &DOD, bool charge_changed) {
+    prev_DOD = fmax(fmin(prev_DOD, 100), 0);
+    DOD = fmax(fmin(DOD, 100), 0);
+    if (state->cycle->DOD_min == -1) {
+        state->cycle->DOD_max = fmax(prev_DOD, DOD) * 0.01;
+        state->cycle->DOD_min = fmin(prev_DOD, DOD) * 0.01;
+    }
+    else {
+        state->cycle->DOD_max = fmax(state->cycle->DOD_max, DOD * 0.01);
+        state->cycle->DOD_min = fmin(state->cycle->DOD_min, DOD * 0.01);
+    }
+
+    if (charge_changed){
+        size_t n_cyc_prev = state->n_cycles;
+        rainflow(prev_DOD);
+        if (state->n_cycles > n_cyc_prev) {
+            state->cycle->cycle_DOD_range.push_back(state->cycle_range);
+            state->cycle->cycle_DOD_max.push_back(state->cycle_DOD);
+        }
+    }
+}
+
+double lifetime_cycle_t::predictDODRng() {
+    // if no cycles have yet elapsed, try to predict range of coming cycle
+    double DOD_range = state->cycle->DOD_max - state->cycle->DOD_min;
+    // otherwise, use average DOD range of cycles so far this day
+    if (!state->cycle->cycle_DOD_range.empty()) {
+        DOD_range = fmax(DOD_range, std::accumulate(state->cycle->cycle_DOD_range.begin(),
+                                                    state->cycle->cycle_DOD_range.end(), 0.)
+                                    * 0.01 / (double)state->cycle->cycle_DOD_range.size());
+    }
+    return DOD_range;
+}
+
+double lifetime_cycle_t::predictAvgSOC(double DOD) {
+    double SOC_avg = 0;
+    // if no cycles have yet elapsed, try to predict average SOC
+    if (state->cycle->cycle_DOD_max.empty()) {
+        SOC_avg = 1 - DOD * 0.01;
+    }
+    // otherwise, get average SOCs of each cycle
+    else {
+        for (size_t i = 0; i < state->cycle->cycle_DOD_max.size(); i++) {
+            double cycle_DOD_max = state->cycle->cycle_DOD_max[i] * 0.01;
+            double cycle_DOD_rng = state->cycle->cycle_DOD_range[i] * 0.01;
+            SOC_avg += 1 - (cycle_DOD_max + (cycle_DOD_max - cycle_DOD_rng)) / 2;
+        }
+        SOC_avg /= (double)state->cycle->cycle_DOD_max.size();
+    }
+    return SOC_avg;
+}
 
 lifetime_state lifetime_cycle_t::get_state() { return *state; }
 
@@ -360,7 +460,7 @@ lifetime_calendar_t::lifetime_calendar_t(double dt_hour, const util::matrix_t<do
     params->dt_hr = dt_hour;
     params->cal_cyc->calendar_choice = calendar_cycle_params::CALENDAR_CHOICE::TABLE;
     params->cal_cyc->calendar_matrix = calendar_matrix;
-    state = std::make_shared<lifetime_state>();
+    state = std::make_shared<lifetime_state>(params->model_choice);
     initialize();
 }
 
@@ -373,7 +473,7 @@ lifetime_calendar_t::lifetime_calendar_t(double dt_hour, double q0, double a, do
     params->cal_cyc->calendar_a = a;
     params->cal_cyc->calendar_b = b;
     params->cal_cyc->calendar_c = c;
-    state = std::make_shared<lifetime_state>();
+    state = std::make_shared<lifetime_state>(params->model_choice);
     initialize();
 }
 
@@ -480,7 +580,7 @@ Define Lifetime Model
 */
 
 void lifetime_calendar_cycle_t::initialize() {
-    state = std::make_shared<lifetime_state>();
+    state = std::make_shared<lifetime_state>(params->model_choice);
     if (params->cal_cyc->cycling_matrix.nrows() < 3 || params->cal_cyc->cycling_matrix.ncols() != 3)
         throw std::runtime_error("lifetime_cycle_t error: Battery lifetime matrix must have three columns and at least three rows");
     cycle_model = std::unique_ptr<lifetime_cycle_t>(new lifetime_cycle_t(params, state));

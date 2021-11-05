@@ -1,3 +1,25 @@
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 #include "logger.h"
 
 #include "lib_util.h"
@@ -92,7 +114,9 @@ std::ostream &operator<<(std::ostream &os, const cycle_state &p) {
                  "\"rainflow_Xlt\": %.3f, \"rainflow_Ylt\": %.3f, \"rainflow_jlt\": %d, \"rainflow_peaks\": ",
             p.q_relative_cycle,
             p.rainflow_Xlt, p.rainflow_Ylt, p.rainflow_jlt);
-    os << buf << p.rainflow_peaks << " }";
+    os << buf << p.rainflow_peaks;
+    os << ", cum_dt: " << p.cum_dt << ", DOD_max: " << p.DOD_max << ", DOD_min:" <<  p.DOD_min << ", ";
+    os << R"("cycle_DOD_max": ")" << p.cycle_DOD_max << R"(", cycle_DOD_range": ")" << p.cycle_DOD_range << "}";
     return os;
 }
 
@@ -107,23 +131,43 @@ std::ostream &operator<<(std::ostream &os, const calendar_state &p) {
 
 std::ostream& operator<<(std::ostream& os, const lifetime_nmc_state& p) {
     char buf[1024];
-    sprintf(buf, "\"lifetime_nmc_state\": { \"q_relative_li\": %.3f, "
-        "\"q_relative_neg\": %.3f, \"dq_relative_li_old\": %.3f, \"dq_relative_neg_old\": %.3f, "
-        "\"DOD_max\": %f, \"n_cycles_prev_day\": %d, \"cum_dt\": %.3f, \"b1_dt\": %.3f, "
-        "\"b2_dt\": %.3f, \"b3_dt\": %.3f, \"c0_dt\": %.3f, \"c2_dt\": %.3f }",
-        p.q_relative_li, p.q_relative_neg, p.dq_relative_li_old, p.dq_relative_neg_old, p.DOD_max, p.n_cycles_prev_day,
-        p.cum_dt, p.b1_dt, p.b2_dt, p.b3_dt, p.c0_dt, p.c2_dt);
-    os << buf ;
+    sprintf(buf, "\"lifetime_nmc_state\": { \"q_relative_li\": %.3f, \"q_relative_neg\": %.3f, "
+                 "\"dq_relative_li1\": %.3f, \"dq_relative_li2\": %.3f, \"dq_relative_li3\": %.3f, "
+                 "\"dq_relative_neg\": %.3f, "
+                 "\"b1_dt\": %.3f, \"b2_dt\": %.3f, \"b3_dt\": %.3f, \"c0_dt\": %.3f, \"c2_dt\": %.3f}",
+            p.q_relative_li, p.q_relative_neg, p.dq_relative_li1, p.dq_relative_li2, p.dq_relative_li3,
+            p.dq_relative_neg,
+            p.b1_dt, p.b2_dt, p.b3_dt, p.c0_dt, p.c2_dt);
+    os << buf;
+    return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const lifetime_lmolto_state& p) {
+    char buf[1024];
+    sprintf(buf, "\"lifetime_lmolto_state\": { \"dq_relative_cal\": %.3f, \"dq_relative_cyc\": %.3f, "
+                 "\"EFC\": %.3f, \"EFC_dt\": %.3f, \"temp_avg\": %.3f}",
+            p.dq_relative_cal, p.dq_relative_cyc, p.EFC, p.EFC_dt, p.temp_avg);
+    os << buf;
     return os;
 }
 
 std::ostream &operator<<(std::ostream &os, const lifetime_state &p) {
     os.precision(3);
     char buf[1024];
-    sprintf(buf, R"("lifetime_state": { "q_relative": %f, "n_cycles": %d, "range": %.3f, "average_range": %.3f,
-                 "day_age_of_battery": %.3f, )",
-            p.q_relative, p.n_cycles, p.range, p.average_range, p.day_age_of_battery);
-    os << buf << *p.cycle << ", " << *p.calendar << ", " << *p.nmc_li_neg << " }";
+    sprintf(buf, R"("lifetime_state": { "q_relative": %f, "n_cycles": %d, "cycle_DOD": %.3f, "cycle_range": %.3f,
+                  "average_range": %.3f, day_age_of_battery": %.3f, )",
+            p.q_relative, p.n_cycles, p.cycle_DOD, p.cycle_range, p.average_range, p.day_age_of_battery);
+    os << buf << *p.cycle << ", ";
+    if (p.calendar) {
+        os << *p.calendar;
+    }
+    else if (p.nmc_li_neg) {
+        os << *p.nmc_li_neg;
+    }
+    else if (p.lmo_lto) {
+        os << *p.lmo_lto;
+    }
+    os << " }";
     return os;
 }
 

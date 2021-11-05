@@ -51,10 +51,80 @@ void Ambient::Create(var_map &V)
 
 void Ambient::Clean(){};
 
-void Ambient::updateCalculatedParameters(var_map &/*V*/)
+void Ambient::updateCalculatedParameters(var_map &V)
 {
+    //correct for chi based on tonatiuh polys
+    double csr = V.amb.sun_csr.val;
+    double chi;
+    if (csr > 0.145)
+        chi = -0.04419909985804843 + csr * (1.401323894233574 + csr * (-0.3639746714505299 + csr * (-0.9579768560161194 + 1.1550475450828657 * csr)));
+    else if (csr > 0.035)
+        chi = 0.022652077593662934 + csr * (0.5252380349996234 + (2.5484334534423887 - 0.8763755326550412 * csr) * csr);
+    else
+        chi = 0.004733749294807862 + csr * (4.716738065192151 + csr * (-463.506669149804 + csr * (24745.88727411664 + csr * (-606122.7511711778 + 5521693.445014727 * csr))));
+
+    V.amb.sun_csr_adj.Setval(chi);
+    _buie_kappa = 0.9*log(13.5 * chi)*pow(chi, -0.3);
+    _buie_gamma = 2.2*log(0.52 * chi)*pow(chi, 0.43) - 0.1;
 
 }
+
+void Ambient::calcBuieCSRIntensity(std::vector<double>& angle, std::vector<double>& intensity)
+{
+    /*
+    calculate relative solar intensity over the span 0..angle_max[mrad] at npt increments, filling 'angle' and 'intesity'
+
+    Creates the Buie (2003) sun shape based on CSR
+    [1] Buie, D., Dey, C., & Bosi, S. (2003). The effective size of the solar cone for solar concentrating systems. Solar energy, 74(2003), 417–427.
+    [2] Buie, D., Monger, A., & Dey, C. (2003). Sunshape distributions for terrestrial solar simulations. Solar Energy, 74(March 2003), 113–122.
+
+    */
+    double dt_s = .2;
+    double dt_tr = .05;
+    double dt_cs = 1.;
+    double angle_max = 43.6;
+    double delta_theta_tr = 1.;
+
+    angle.clear();
+    intensity.clear();
+
+    double theta = -dt_s; //set so first adjustment is back to 0
+
+    while(theta < angle_max)
+    {
+
+        if (theta < 4.65 - delta_theta_tr / 2.)
+            theta += dt_s;
+        else if (theta > 4.65 + delta_theta_tr / 2.)
+        {
+            theta += dt_cs;
+            dt_cs *= 1.2;   //take larger steps as we get away from the transition region
+        }
+        else
+        {
+            theta += dt_tr;
+        }
+
+        if (theta > 4.65)
+        {
+            theta = theta > angle_max ? angle_max + .000001 : theta;
+
+            //in the circumsolar region
+            angle.push_back(theta);
+            intensity.push_back(exp(_buie_kappa)*pow(theta, _buie_gamma));
+        }
+        else
+        {
+            //in the solar disc
+            angle.push_back(theta);
+            intensity.push_back(cos(0.326 * theta) / cos(0.308 * theta));
+        }
+    }
+
+
+    return;
+}
+
 
 void Ambient::setDateTime(DateTime &DT, double day_hour, double year_day, double year){
 	DT.setZero();

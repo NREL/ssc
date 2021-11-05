@@ -4,6 +4,8 @@
 #
 #####################################################################################################################
 
+# For CMake build option `SAMAPI_EXPORT`, see ../CMakeLists.txt
+
 include_directories(. ../splinter ../shared ../nlopt ../lpsolve ../solarpilot ../tcs ../ssc)
 
 set(SSC_SRC
@@ -11,6 +13,8 @@ set(SSC_SRC
 		cmod_annualoutput.cpp
 		cmod_battery.cpp
 		cmod_battery.h
+		cmod_battery_eqns.cpp
+		cmod_battery_eqns.h
         cmod_battery_stateful.cpp
         cmod_battery_stateful.h
 		cmod_battwatts.cpp
@@ -76,6 +80,7 @@ set(SSC_SRC
 		cmod_pvwattsv1_poa.cpp
 		cmod_pvwattsv5.cpp
 		cmod_pvwattsv7.cpp
+		cmod_pvwattsv8.cpp
 		cmod_saleleaseback.cpp
 		cmod_sco2_air_cooler.cpp
 		cmod_sco2_csp_system.cpp
@@ -222,7 +227,7 @@ endif()
 #####################################################################################################################
 
 set( DEPENDENCIES
-	solarpilot
+	solarpilot_core
 	tcs
 	nlopt
 	shared

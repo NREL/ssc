@@ -27,29 +27,8 @@ using namespace std;
 //helio data
 helio_perf_data::helio_perf_data(){
 	resetMetrics();
-	n_metric = 13;
+	n_metric = PERF_VALUES::_LAST;
 }
-
-//vector<double*> *helio_perf_data::getDataVars(){
-//	//Reset the pointer values
-//	_dvars.clear();
-//	_dvars.reserve(n_metric);
-//	//POWER_TO_REC=0, ETA_TOT, ETA_COS, ETA_ATT, ETA_INT, ETA_BLOCK, ETA_SHADOW, POWER_VALUE, /* after this, order not significant */
-//	//REFLECTIVITY, SOILING, REC_ABSORPTANCE, RANK_METRIC
-//	_dvars.push_back(&power_to_rec);	//[W] delivered power
-//	_dvars.push_back(&eta_tot);	//[-] Total heliostat intercept
-//	_dvars.push_back(&eta_cos);	//[-] Heliostat cosine efficiency
-//	_dvars.push_back(&eta_att);	//[-] Atmospheric attenuation efficiency
-//	_dvars.push_back(&eta_int);	//[-] Intercept efficiency
-//	_dvars.push_back(&eta_block);  //[-] Blocking efficiency
-//	_dvars.push_back(&eta_shadow); //[-] Shadowing efficiency
-//	_dvars.push_back(&power_value);	//Power weighted by the payment allocation factor if applicable
-//	_dvars.push_back(&reflectivity);
-//	_dvars.push_back(&soiling);
-//	_dvars.push_back(&rec_absorptance);
-//	_dvars.push_back(&rank_metric);
-//	return &_dvars;
-//}
 
 double helio_perf_data::getDataByIndex(const int id){
 	double rval;
@@ -94,6 +73,15 @@ double helio_perf_data::getDataByIndex(const int id){
 		case helio_perf_data::PERF_VALUES::ETA_CLOUD:
 			rval = eta_cloud;
 			break;
+        case helio_perf_data::PERF_VALUES::ANNUAL_POWER:
+            rval = energy_annual;
+            break;
+        case helio_perf_data::PERF_VALUES::ENERGY_VALUE:
+            rval = energy_value;
+            break;
+        case helio_perf_data::PERF_VALUES::ANNUAL_EFFICIENCY:
+            rval = eta_annual;
+            break;
 		default:
 			rval = 0.;
 	}	
@@ -143,6 +131,15 @@ void helio_perf_data::setDataByIndex(const int id, double value){
 		case helio_perf_data::PERF_VALUES::ETA_CLOUD:
 			eta_cloud = value;
 			break;
+        case helio_perf_data::PERF_VALUES::ANNUAL_POWER:
+            energy_annual = value;
+            break;
+        case helio_perf_data::PERF_VALUES::ENERGY_VALUE:
+            energy_value = value;
+            break;
+        case helio_perf_data::PERF_VALUES::ANNUAL_EFFICIENCY:
+            eta_annual = value;
+            break;
 	}	
 }
 
@@ -157,6 +154,9 @@ void helio_perf_data::resetMetrics(){
 	power_to_rec = 0.;
 	power_value = 0.;
 	rank_metric = 0.;
+    energy_value = 0.;
+    energy_annual = 0.;
+    eta_annual = 0.;
 }
 
 double helio_perf_data::calcTotalEfficiency(){

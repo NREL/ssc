@@ -32,6 +32,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "csp_solver_pc_steam_heat_sink.h"
 #include "csp_solver_tou_block_schedules.h"
 #include "csp_solver_two_tank_tes.h"
+#include "csp_dispatch.h"
 
 static var_info _cm_vtab_linear_fresnel_dsg_iph[] = {
 
@@ -422,7 +423,6 @@ public:
 		// ********************************
 		C_csp_tou_block_schedules tou;
 		tou.setup_block_uniform_tod();
-		tou.mc_dispatch_params.m_dispatch_optimize = false;
 
 		// System parameters
 		C_csp_solver::S_csp_system_params system;
@@ -433,6 +433,11 @@ public:
 		system.m_bop_par_1 = 0.0;
 		system.m_bop_par_2 = 0.0;
         system.m_is_field_freeze_protection_electric = false;
+
+        // *****************************************************
+        // System dispatch
+        csp_dispatch_opt dispatch;
+        dispatch.solver_params.dispatch_optimize = false;
 
 		// ********************************
 		// ********************************
@@ -447,8 +452,10 @@ public:
 								c_lf_dsg, 
 								steam_heat_sink, 
 								storage, 
-								tou, 
+								tou,
+                                dispatch,
 								system,
+                                NULL,
 								ssc_cmod_update,
 								(void*)(this));
 

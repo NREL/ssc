@@ -48,6 +48,8 @@ struct batt_variables
 	int analysis_period;
 	int batt_chem;
 	int batt_dispatch;
+    int batt_dispatch_wf_forecast;
+    int batt_dispatch_load_forecast;
 	int batt_voltage_choice;
 	int batt_current_choice;
 	int batt_meter_position;
@@ -78,6 +80,14 @@ struct batt_variables
 
 	/*! Determines if the battery is allowed to charge from fuel cell using automated control*/
 	bool batt_dispatch_auto_can_fuelcellcharge;
+
+    /*! Determines if the battery is allowed to charge only when the system output exceeds load (false is more flexible)
+        Applies to both automated and manual dispatch */
+    bool batt_dispatch_charge_only_system_exceeds_load;
+
+    /*! Determines if the battery is allowed to discharge only when the load exceeds system output (false is more flexible)
+        Applies to both automated and manual dispatch */
+    bool batt_dispatch_discharge_only_load_exceeds_system;
 
 	/*! Vector of periods and if battery can charge from PV*/
 	std::vector<bool> batt_can_charge;
@@ -200,6 +210,30 @@ struct batt_variables
 	/* Battery cycle costs */
 	int batt_cycle_cost_choice;
     std::vector<double> batt_cycle_cost;
+
+    /* PV Smoothing */
+    ssc_number_t batt_dispatch_pvs_nameplate_ac;
+    bool batt_dispatch_pvs_ac_lb_enable;
+    ssc_number_t batt_dispatch_pvs_ac_lb;
+    bool batt_dispatch_pvs_ac_ub_enable;
+    ssc_number_t batt_dispatch_pvs_ac_ub;
+    bool batt_dispatch_pvs_curtail_as_control;
+    bool batt_dispatch_pvs_curtail_if_violation;
+    bool batt_dispatch_pvs_short_forecast_enable;
+    ssc_number_t batt_dispatch_pvs_forecast_shift_periods;
+    ssc_number_t batt_dispatch_pvs_timestep_multiplier;
+    ssc_number_t batt_dispatch_pvs_max_ramp;
+    ssc_number_t batt_dispatch_pvs_soc_rest;
+    ssc_number_t batt_dispatch_pvs_kp;
+    ssc_number_t batt_dispatch_pvs_ki;
+    ssc_number_t batt_dispatch_pvs_kf;
+
+
+    /* Interconnection, curtailment, and outages for dispatch */
+    bool enable_interconnection_limit;
+    double grid_interconnection_limit_kW;
+    std::vector<double> gridCurtailmentLifetime_MW;
+    std::vector<bool> grid_outage_steps;
 };
 
 struct battstor
@@ -221,7 +255,7 @@ struct battstor
 	void initialize_time(size_t year, size_t hour_of_year, size_t step);
 
 	/// Run the battery for the current timestep, given the System power, load, and clipped power
-	void advance(var_table *vt, double P_gen, double V_gen=0, double P_load=0, double P_gen_clipped=0);
+	void advance(var_table *vt, double P_gen, double V_gen=0, double P_load=0, double P_crit_load=0, double P_gen_clipped=0);
 
 	/// Given a DC connected battery, set the shared system (typically PV) and battery inverter
 	void setSharedInverter(SharedInverter * sharedInverter);
@@ -230,18 +264,28 @@ struct battstor
 	void outputs_topology_dependent();
 	void metrics();
 	void update_grid_power(compute_module &cm, double P_gen_ac, double P_load_ac, size_t index);
+    bool is_outage_step(size_t index);
 
 	/*! Manual dispatch*/
 	bool manual_dispatch = false;
 
-	/*! Automated dispatch look ahead*/
-	bool look_ahead = false;
+	/*! Automated dispatch weather file look ahead*/
+	bool wf_look_ahead = false;
 
-	/*! Automated dispatch look behind*/
-	bool look_behind = false;
+	/*! Automated dispatch weather file look behind*/
+	bool wf_look_behind = false;
 
-	/*! Automated dispatch use custom input forecast (look ahead)*/
-	bool input_forecast = false;
+	/*! Automated dispatch use custom weather file input forecast (look ahead)*/
+	bool wf_input_forecast = false;
+
+    /*! Automated dispatch look ahead for load*/
+    bool load_look_ahead = false;
+
+    /*! Automated dispatch look behind for load*/
+    bool load_look_behind = false;
+
+    /*! Automated dispatch use custom input forecast (look ahead) for load*/
+    bool load_input_forecast = false;
 
 	/*! Automated dispatch override algorithm grid target calculation*/
 	bool input_target = false;
@@ -277,6 +321,9 @@ struct battstor
 	bool en;
 	int chem;
 
+    // Toggle whether the outage variables should be output, such as crit_load_met
+    bool analyze_outage;
+
 	std::shared_ptr<batt_variables> batt_vars;
 	bool make_vars;
 
@@ -302,59 +349,71 @@ struct battstor
 	std::vector<double> fuelcellPower;
 
 	// outputs
-	ssc_number_t
-		*outTotalCharge,
-		*outAvailableCharge,
-		*outBoundCharge,
-		*outMaxChargeAtCurrent,
-		*outMaxCharge,
-		*outMaxChargeThermal,
-		*outSOC,
-		*outDOD,
-		*outCurrent,
-		*outCellVoltage,
-		*outBatteryVoltage,
-		*outCapacityPercent,
-		*outCapacityPercentCycle,
-		*outCapacityPercentCalendar,
-		*outCycles,
-		*outDODCycleAverage,
-		*outBatteryBankReplacement,
-		*outBatteryTemperature,
-		*outCapacityThermalPercent,
-		*outDispatchMode,
-		*outBatteryPower,
-		*outGenPower,
-        *outGenWithoutBattery,
-		*outGridPower,
-		*outSystemToLoad,
-		*outBatteryToLoad,
-		*outGridToLoad,
-		*outFuelCellToLoad,
-		*outGridPowerTarget,
-		*outBattPowerTarget,
-		*outSystemToBatt,
-		*outGridToBatt,
-		*outFuelCellToBatt,
-		*outSystemToGrid,
-		*outBatteryToGrid,
-		*outFuelCellToGrid,
-		*outBatteryConversionPowerLoss,
-		*outBatterySystemLoss,
-		*outAnnualSystemChargeEnergy,
-		*outAnnualGridChargeEnergy,
-		*outAnnualChargeEnergy,
-		*outAnnualDischargeEnergy,
-		*outAnnualGridImportEnergy,
-		*outAnnualGridExportEnergy,
-		*outAnnualEnergySystemLoss,
-		*outAnnualEnergyLoss,
-		*outMarketPrice,
-		*outCostToCycle,
-		*outBenefitCharge,
-		*outBenefitGridcharge,
-		*outBenefitClipcharge,
-		*outBenefitDischarge;
+    ssc_number_t
+        * outTotalCharge,
+        * outAvailableCharge,
+        * outBoundCharge,
+        * outMaxChargeAtCurrent,
+        * outMaxCharge,
+        * outMaxChargeThermal,
+        * outSOC,
+        * outDOD,
+        * outCurrent,
+        * outCellVoltage,
+        * outBatteryVoltage,
+        * outCapacityPercent,
+        * outCapacityPercentCycle,
+        * outCapacityPercentCalendar,
+        * outCycles,
+        * outDODCycleAverage,
+        * outBatteryBankReplacement,
+        * outBatteryTemperature,
+        * outCapacityThermalPercent,
+        * outDispatchMode,
+        * outBatteryPower,
+        * outGenPower,
+        * outGenWithoutBattery,
+        * outGridPower,
+        * outSystemToLoad,
+        * outBatteryToLoad,
+        * outGridToLoad,
+        * outFuelCellToLoad,
+        * outGridPowerTarget,
+        * outBattPowerTarget,
+        * outSystemToBatt,
+        * outGridToBatt,
+        * outFuelCellToBatt,
+        * outSystemToGrid,
+        * outBatteryToGrid,
+        * outFuelCellToGrid,
+        * outBatteryConversionPowerLoss,
+        * outBatterySystemLoss,
+		* outInterconnectionLoss,
+		* outCritLoadUnmet,
+        * outCritLoad,
+        * outAnnualSystemChargeEnergy,
+        * outAnnualGridChargeEnergy,
+        * outAnnualChargeEnergy,
+        * outAnnualDischargeEnergy,
+        * outAnnualGridImportEnergy,
+        * outAnnualGridExportEnergy,
+        * outAnnualEnergySystemLoss,
+        * outAnnualEnergyLoss,
+        * outMarketPrice,
+        * outCostToCycle,
+        * outBenefitCharge,
+        * outBenefitGridcharge,
+        * outBenefitClipcharge,
+        * outBenefitDischarge,
+        * outPVS_outpower,
+        * outPVS_battpower,
+        * outPVS_battsoc,
+        * outPVS_curtail,
+        * outPVS_violation_list,
+        * outPVS_P_pv_ac, // testing with input pv output
+        * outPVS_PV_ramp_interval, // testing with sampled input pv output
+        * outPVS_forecast_pv_energy; // testing with forecast based on input pv output
+
 
 	double outAverageCycleEfficiency;
 	double outAverageRoundtripEfficiency;
