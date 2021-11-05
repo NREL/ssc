@@ -1675,10 +1675,10 @@ std::vector<double> scalefactors::get_factors(const char* name)
     return scale_factors;
 }
 
-void prepend_to_output(var_table* v, std::string var_name, size_t count, ssc_number_t value) {
+void prepend_to_output(compute_module* cm, std::string var_name, size_t count, ssc_number_t value) {
     size_t orig_count = 0;
-    ssc_number_t* arr = v->as_array(var_name, &orig_count);
-    arr = v->resize_array(var_name, count);
+    ssc_number_t* arr = cm->as_array(var_name, &orig_count);
+    arr = cm->resize_array(var_name, count);
     if (count > orig_count) {
         size_t diff = count - orig_count;
         for (int i = orig_count - 1; i >= 0; i--) {

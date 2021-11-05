@@ -59,23 +59,3 @@ TEST_F(vartab_test, test_resize) {
     ASSERT_EQ(mat.ncols(), 3);
     ASSERT_NEAR(mat.at(0, 0), 1.0, 0.001);
 }
-
-TEST_F(vartab_test, test_prepend) {
-    // Test array first
-    std::string arr_name = "lifetime_array";
-    var->allocate(arr_name, 25);
-    size_t count = 0;
-    ssc_number_t* arr = var->as_array(arr_name, &count);
-    arr[0] = 1.0;
-    arr[24] = 25.0;
-    ASSERT_EQ(count, 25);
-    ASSERT_NEAR(arr[0], 1.0, 0.001);
-    ASSERT_NEAR(arr[24], 25.0, 0.001);
-
-    prepend_to_output(var, arr_name, 30, 0.0);
-    arr = var->as_array(arr_name, &count);
-    ASSERT_EQ(count, 30);
-    ASSERT_NEAR(arr[0], 0.0, 0.001);
-    ASSERT_NEAR(arr[5], 1.0, 0.001);
-    ASSERT_NEAR(arr[29], 25.0, 0.001);
-}

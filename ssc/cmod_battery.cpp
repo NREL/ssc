@@ -949,25 +949,15 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
     }
 
     // annual outputs
-    size_t annual_size = nyears + 1;
-//    if (!batt_vars->system_use_lifetime_output) { annual_size = 1; };
-
-    outBatteryBankReplacement = vt.allocate("batt_bank_replacement", annual_size);
-    outAnnualChargeEnergy = vt.allocate("batt_annual_charge_energy", annual_size);
-    outAnnualDischargeEnergy = vt.allocate("batt_annual_discharge_energy", annual_size);
-    outAnnualGridImportEnergy = vt.allocate("annual_import_to_grid_energy", annual_size);
-    outAnnualGridExportEnergy = vt.allocate("annual_export_to_grid_energy", annual_size);
-    outAnnualEnergySystemLoss = vt.allocate("batt_annual_energy_system_loss", annual_size);
-    outAnnualEnergyLoss = vt.allocate("batt_annual_energy_loss", annual_size);
-    outAnnualSystemChargeEnergy = vt.allocate("batt_annual_charge_from_system", annual_size);
-    outAnnualGridChargeEnergy = vt.allocate("batt_annual_charge_from_grid", annual_size);
-
-    outBatteryBankReplacement[0] = 0;
-    outAnnualChargeEnergy[0] = 0;
-    outAnnualDischargeEnergy[0] = 0;
-    outAnnualGridImportEnergy[0] = 0;
-    outAnnualGridExportEnergy[0] = 0;
-    outAnnualEnergyLoss[0] = 0;
+    outBatteryBankReplacement = vt.allocate("batt_bank_replacement", nyears);
+    outAnnualChargeEnergy = vt.allocate("batt_annual_charge_energy", nyears);
+    outAnnualDischargeEnergy = vt.allocate("batt_annual_discharge_energy", nyears);
+    outAnnualGridImportEnergy = vt.allocate("annual_import_to_grid_energy", nyears);
+    outAnnualGridExportEnergy = vt.allocate("annual_export_to_grid_energy", nyears);
+    outAnnualEnergySystemLoss = vt.allocate("batt_annual_energy_system_loss", nyears);
+    outAnnualEnergyLoss = vt.allocate("batt_annual_energy_loss", nyears);
+    outAnnualSystemChargeEnergy = vt.allocate("batt_annual_charge_from_system", nyears);
+    outAnnualGridChargeEnergy = vt.allocate("batt_annual_charge_from_grid", nyears);
 
     // model initialization
     voltage_t* voltage_model = 0;
@@ -1806,8 +1796,7 @@ void battstor::outputs_topology_dependent()
 
 void battstor::metrics()
 {
-    size_t annual_index;
-    batt_vars->system_use_lifetime_output ? annual_index = year + 1 : annual_index = 0;
+    size_t annual_index = year;
     outBatteryBankReplacement[annual_index] = (ssc_number_t)battery_model->getNumReplacementYear();
 
     if ((hour == 8759) && (step == step_per_hour - 1))
@@ -1981,6 +1970,15 @@ void battstor::calculate_monthly_and_annual_outputs(compute_module& cm)
 
 
     }
+
+    /* Add yr 0 to annual outputs */
+    size_t arr_length = nyears + 1;
+    ssc_number_t yr_0_value = 0.0;
+    prepend_to_output(&cm, "annual_import_to_grid_energy", arr_length, yr_0_value);
+    prepend_to_output(&cm, "annual_export_to_grid_energy", arr_length, yr_0_value);
+    prepend_to_output(&cm, "batt_annual_energy_system_loss", arr_length, yr_0_value);
+    prepend_to_output(&cm, "batt_annual_energy_loss", arr_length, yr_0_value);
+    prepend_to_output(&cm, "batt_annual_charge_from_grid", arr_length, yr_0_value);
 }
 
 ///////////////////////////////////////////////////
