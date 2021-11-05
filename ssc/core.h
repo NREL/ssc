@@ -228,6 +228,8 @@ public:
     ssc_number_t *allocate( const std::string &name, size_t length );
 	ssc_number_t *allocate( const std::string &name, size_t nrows, size_t ncols );
 	util::matrix_t<ssc_number_t>& allocate_matrix( const std::string &name, size_t nrows, size_t ncols );
+    ssc_number_t* resize_array(const std::string& name, size_t length);
+    ssc_number_t* resize_matrix(const std::string& name, size_t n_rows, size_t n_cols);
 	var_data &value( const std::string &name );
 	bool is_assigned( const std::string &name );
 	size_t as_unsigned_long(const std::string &name);

@@ -66,6 +66,8 @@ public:
 	var_data *assign( const std::string &name, const var_data &value );
     var_data *assign_match_case( const std::string &name, const var_data &value );
     void merge(const var_table &rhs, bool overwrite_existing);
+    ssc_number_t *resize_array(const std::string& name, size_t length);
+    ssc_number_t *resize_matrix(const std::string& name, size_t n_rows, size_t n_cols);
 
 	// getters
 	var_data *lookup( const std::string &name );
