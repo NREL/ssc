@@ -107,12 +107,15 @@ void dispatch_manual_t::prepareDispatch(size_t hour_of_year, size_t )
 		m_batteryPower->canFuelCellCharge = _fuelcellcharge_array[iprofile - 1];
 	}
 
+    if (iprofile < _discharge_grid_array.size()) {
+        m_batteryPower->canDischargeToGrid = _discharge_grid_array[iprofile - 1];
+    }
+
 	_percent_discharge = 0.;
 	_percent_charge = 0.;
 
 	if (m_batteryPower->canDischarge){ _percent_discharge = _percent_discharge_array[iprofile]; }
-    if (m_batteryPower->canClipCharge) { _percent_charge = m_batteryPower->powerSystemClipped / m_batteryPower->powerBatteryChargeMaxDC; } // System, fuel cell, or grid charging overwriting this is intentional
-	if (m_batteryPower->canSystemCharge || m_batteryPower->canFuelCellCharge){ _percent_charge = 100.; }
+	if (m_batteryPower->canClipCharge || m_batteryPower->canSystemCharge || m_batteryPower->canFuelCellCharge){ _percent_charge = 100.; }
 	if (m_batteryPower->canGridCharge){ _percent_charge = _percent_charge_array[iprofile]; }
 }
 void dispatch_manual_t::dispatch(size_t year,
@@ -159,9 +162,9 @@ bool dispatch_manual_t::check_constraints(double &I, size_t count)
 
 			I -= fmin(dI, dQ / _dt_hour);
 		}
-		// Don't let PV serve battery before load (decrease charging)
+		// Don't let PV serve battery before load (decrease charging) when specified by chargeOnlySystemExceedLoad
 		else if (m_batteryPower->meterPosition == dispatch_t::BEHIND && I < 0 && m_batteryPower->powerGridToLoad > tolerance &&
-			m_batteryPower->powerSystemToBattery > 0) {
+			m_batteryPower->powerSystemToBattery > 0 && m_batteryPower->chargeOnlySystemExceedLoad) {
 
 			double dP = m_batteryPower->powerGridToLoad;
 			if (dP > m_batteryPower->powerSystemToBattery) {
@@ -177,7 +180,7 @@ bool dispatch_manual_t::check_constraints(double &I, size_t count)
 			I += dI;
 		}
 		// Don't let battery export to the grid if behind the meter
-		else if (m_batteryPower->meterPosition == dispatch_t::BEHIND && I > 0 && m_batteryPower->powerBatteryToGrid > tolerance)
+		else if (m_batteryPower->meterPosition == dispatch_t::BEHIND && !m_batteryPower->canDischargeToGrid && I > 0 && m_batteryPower->powerBatteryToGrid > tolerance)
 		{
 			if (fabs(m_batteryPower->powerBatteryAC) < tolerance)
 				I -= (m_batteryPower->powerBatteryToGrid * util::kilowatt_to_watt / _Battery->V());

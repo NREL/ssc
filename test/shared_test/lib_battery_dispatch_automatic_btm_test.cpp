@@ -679,6 +679,41 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMCustomDispatch) {
     }
 }
 
+TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMCustomDispatchDischargeToGrid) {
+    double dtHour = 1;
+    CreateBattery(dtHour);
+
+    dischargeToGrid = true;
+
+    dispatchAutoBTM = new dispatch_automatic_behind_the_meter_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice,
+        max_current,
+        max_current, max_power, max_power, max_power, max_power ,
+        0, dispatch_t::BTM_MODES::CUSTOM_DISPATCH, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1, true,
+        true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit, chargeOnlySystemExceedLoad, dischargeOnlyLoadExceedSystem, dischargeToGrid);
+
+    // Setup custom dispatch signal - signal and expected AC power are the same without losses. Load is 40 kW, so this will exceed load by 8 kW
+    std::vector<double> expectedPower = { 0, 0, 0, 0, 0, 0, 0, -50, -50, -50, -50, -50, -1.63, 0, 0, 0, 0, 0, 0, 48, 48,
+                                      48, 48, 48, 0, 0, 0 };
+    dispatchAutoBTM->set_custom_dispatch(expectedPower);
+
+
+    batteryPower = dispatchAutoBTM->getBatteryPower();
+    batteryPower->connectionMode = ChargeController::AC_CONNECTED;
+
+    for (size_t h = 0; h < 24; h++) {
+        batteryPower->powerLoad = 30;
+        batteryPower->powerSystem = 0;
+        if (h > 6 && h < 18) {
+            batteryPower->powerSystem = 100; // Match the predicted PV
+        }
+        else if (h > 18) {
+            batteryPower->powerLoad = 40; // Match the predicted load
+        }
+        dispatchAutoBTM->dispatch(0, h, 0);
+        EXPECT_NEAR(batteryPower->powerBatteryAC, expectedPower[h], 0.5) << " error in expected at hour " << h;
+    }
+}
+
 TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMCustomDispatchWithLosses) {
     double dtHour = 1;
     CreateBatteryWithLosses(dtHour);

@@ -688,7 +688,7 @@ bool dispatch_automatic_t::check_constraints(double& I, size_t count)
 					I -= (m_batteryPower->powerSystemToGrid  / fabs(m_batteryPower->powerBatteryAC)) *fabs(I);
 			}
 			// Don't let battery export to the grid if behind the meter
-			else if (m_batteryPower->powerBatteryToGrid > tolerance)
+			else if (m_batteryPower->powerBatteryToGrid > tolerance && !m_batteryPower->canDischargeToGrid)
 			{
                 if (fabs(m_batteryPower->powerBatteryAC) < tolerance) {
                     I -= (m_batteryPower->powerBatteryToGrid * util::kilowatt_to_watt / _Battery->V());

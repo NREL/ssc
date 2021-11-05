@@ -515,7 +515,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_ManualDispatchBatteryModelI
     singleowner_defaults(data);
 
     ssc_number_t expectedEnergy = 37184559;
-    ssc_number_t expectedBatteryChargeEnergy = 1299674;
+    ssc_number_t expectedBatteryChargeEnergy = 1299643;
     ssc_number_t expectedBatteryDischargeEnergy = 1176096;
 
     ssc_number_t peakKwCharge = -1052.0;
