@@ -32,13 +32,13 @@ dispatch_manual_t::dispatch_manual_t(battery_t * Battery, double dt, double SOC_
 	double Pc_max_kwdc, double Pd_max_kwdc, double Pc_max_kwac, double Pd_max_kwac,
 	double t_min, int mode, int battMeterPosition,
 	util::matrix_t<size_t> dm_dynamic_sched, util::matrix_t<size_t> dm_dynamic_sched_weekend,
-	std::vector<bool> dm_charge, std::vector<bool> dm_discharge, std::vector<bool> dm_gridcharge, std::vector<bool> dm_fuelcellcharge,
-	std::map<size_t, double>  dm_percent_discharge, std::map<size_t, double>  dm_percent_gridcharge, double interconnection_limit,
+	std::vector<bool> dm_charge, std::vector<bool> dm_discharge, std::vector<bool> dm_gridcharge, std::vector<bool> dm_fuelcellcharge, std::vector<bool> dm_btm_to_grid,
+	std::map<size_t, double>  dm_percent_discharge, std::map<size_t, double>  dm_percent_gridcharge, bool can_clip_charge, double interconnection_limit,
     bool chargeOnlySystemExceedLoad, bool dischargeOnlyLoadExceedSystem)
 	: dispatch_t(Battery, dt, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max_kwdc, Pd_max_kwdc, Pc_max_kwac, Pd_max_kwac,
 	t_min, mode, battMeterPosition, interconnection_limit, chargeOnlySystemExceedLoad, dischargeOnlyLoadExceedSystem)
 {
-	init_with_vects(dm_dynamic_sched, dm_dynamic_sched_weekend, dm_charge, dm_discharge, dm_gridcharge, dm_fuelcellcharge, dm_percent_discharge, dm_percent_gridcharge);
+	init_with_vects(dm_dynamic_sched, dm_dynamic_sched_weekend, dm_charge, dm_discharge, dm_gridcharge, dm_fuelcellcharge, dm_btm_to_grid, dm_percent_discharge, dm_percent_gridcharge, can_clip_charge);
 }
 
 void dispatch_manual_t::init_with_vects(
@@ -48,8 +48,10 @@ void dispatch_manual_t::init_with_vects(
 	std::vector<bool> dm_discharge,
 	std::vector<bool> dm_gridcharge,
 	std::vector<bool> dm_fuelcellcharge,
+    std::vector<bool> dm_btm_to_grid,
 	std::map<size_t, double> dm_percent_discharge,
-	std::map<size_t, double> dm_percent_gridcharge)
+	std::map<size_t, double> dm_percent_gridcharge,
+    bool can_clip_charge)
 {
 	_sched = dm_dynamic_sched;
 	_sched_weekend = dm_dynamic_sched_weekend;
@@ -57,8 +59,10 @@ void dispatch_manual_t::init_with_vects(
 	_discharge_array = dm_discharge;
 	_gridcharge_array = dm_gridcharge;
 	_fuelcellcharge_array = dm_fuelcellcharge;
+    _discharge_grid_array = dm_btm_to_grid;
 	_percent_discharge_array = dm_percent_discharge;
 	_percent_charge_array = dm_percent_gridcharge;
+    _can_clip_charge = can_clip_charge;
 }
 
 // deep copy from dispatch to this
@@ -67,8 +71,8 @@ dispatch_t(dispatch)
 {
 	const dispatch_manual_t * tmp = dynamic_cast<const dispatch_manual_t *>(&dispatch);
 	init_with_vects(tmp->_sched, tmp->_sched_weekend,
-		tmp->_charge_array, tmp->_discharge_array, tmp->_gridcharge_array, tmp->_fuelcellcharge_array,
-		tmp->_percent_discharge_array, tmp->_percent_charge_array);
+		tmp->_charge_array, tmp->_discharge_array, tmp->_gridcharge_array, tmp->_fuelcellcharge_array, tmp->_discharge_grid_array,
+		tmp->_percent_discharge_array, tmp->_percent_charge_array, tmp->_can_clip_charge);
 }
 
 // shallow copy from dispatch to this
@@ -77,8 +81,8 @@ void dispatch_manual_t::copy(const dispatch_t * dispatch)
 	dispatch_t::copy(dispatch);
 	const dispatch_manual_t * tmp = dynamic_cast<const dispatch_manual_t *>(dispatch);
 	init_with_vects(tmp->_sched, tmp->_sched_weekend,
-		tmp->_charge_array, tmp->_discharge_array, tmp->_gridcharge_array, tmp->_fuelcellcharge_array,
-		tmp->_percent_discharge_array, tmp->_percent_charge_array);
+		tmp->_charge_array, tmp->_discharge_array, tmp->_gridcharge_array, tmp->_fuelcellcharge_array, tmp->_discharge_grid_array,
+		tmp->_percent_discharge_array, tmp->_percent_charge_array, tmp->_can_clip_charge);
 }
 
 void dispatch_manual_t::prepareDispatch(size_t hour_of_year, size_t )
@@ -97,6 +101,7 @@ void dispatch_manual_t::prepareDispatch(size_t hour_of_year, size_t )
 	m_batteryPower->canSystemCharge = _charge_array[iprofile - 1];
 	m_batteryPower->canDischarge = _discharge_array[iprofile - 1];
 	m_batteryPower->canGridCharge = _gridcharge_array[iprofile - 1];
+    m_batteryPower->canClipCharge = _can_clip_charge;
 
 	if (iprofile < _fuelcellcharge_array.size()) {
 		m_batteryPower->canFuelCellCharge = _fuelcellcharge_array[iprofile - 1];
@@ -106,6 +111,7 @@ void dispatch_manual_t::prepareDispatch(size_t hour_of_year, size_t )
 	_percent_charge = 0.;
 
 	if (m_batteryPower->canDischarge){ _percent_discharge = _percent_discharge_array[iprofile]; }
+    if (m_batteryPower->canClipCharge) { _percent_charge = m_batteryPower->powerSystemClipped / m_batteryPower->powerBatteryChargeMaxDC; } // System, fuel cell, or grid charging overwriting this is intentional
 	if (m_batteryPower->canSystemCharge || m_batteryPower->canFuelCellCharge){ _percent_charge = 100.; }
 	if (m_batteryPower->canGridCharge){ _percent_charge = _percent_charge_array[iprofile]; }
 }

@@ -101,6 +101,9 @@ struct batt_variables
 	/*! Vector of periods and if battery can discharge*/
 	std::vector<bool> batt_can_discharge;
 
+    /*! Vector of periods and if behind the meter battery can discharge to grid*/
+    std::vector<bool> batt_btm_can_discharge_to_grid;
+
 	/*! Vector of periods and if battery can charge from the grid*/
 	std::vector<bool> batt_can_gridcharge;
 

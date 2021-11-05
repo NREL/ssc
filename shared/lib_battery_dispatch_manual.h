@@ -50,8 +50,10 @@ public:
 		std::vector<bool> can_discharge,
 		std::vector<bool> can_gridcharge,
 		std::vector<bool> can_fuelcellcharge,
+        std::vector<bool> can_discharge_btm_to_grid,
 		std::map<size_t, double> dm_percent_discharge,
 		std::map<size_t, double> dm_percent_gridcharge,
+        bool can_clip_charge,
         double interconnection_limit,
         bool chargeOnlySystemExceedLoad = true,
         bool dischargeOnlyLoadExceedSystem = true);
@@ -74,12 +76,6 @@ protected:
 	/// Helper function to internally set up the dispatch model
 	virtual void prepareDispatch(size_t hour_of_year, size_t step);
 
-	// Initialization help
-	void init(util::matrix_t<float> dm_dynamic_sched,
-		util::matrix_t<float> dm_dynamic_sched_weekend,
-		std::map<size_t, double> dm_percent_discharge,
-		std::map<size_t, double> dm_percent_gridcharge);
-
 	void init_with_vects(
 		util::matrix_t<size_t> dm_dynamic_sched,
 		util::matrix_t<size_t> dm_dynamic_sched_weekend,
@@ -87,8 +83,10 @@ protected:
 		std::vector<bool>,
 		std::vector<bool>,
 		std::vector<bool>,
+        std::vector<bool>,
 		std::map<size_t, double> dm_percent_discharge,
-		std::map<size_t, double> dm_percent_gridcharge);
+		std::map<size_t, double> dm_percent_gridcharge,
+        bool can_clip_charge);
 
 	void SOC_controller() override;
 	bool check_constraints(double &I, size_t count) override;
@@ -100,6 +98,8 @@ protected:
 	std::vector<bool> _discharge_array;
 	std::vector<bool> _gridcharge_array;
 	std::vector<bool> _fuelcellcharge_array;
+    std::vector<bool> _discharge_grid_array;
+    bool _can_clip_charge;
 
 	double _percent_discharge;
 	double _percent_charge;

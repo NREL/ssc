@@ -139,7 +139,7 @@ var_info vtab_battery_inputs[] = {
     { SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_charge",                      "Periods 1-6 charging from system allowed?",              "",         "",                     "BatteryDispatch",       "en_batt=1&batt_dispatch_choice=3",                           "",                             "" },
     { SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_fuelcellcharge",			  "Periods 1-6 charging from fuel cell allowed?",           "",         "",                      "BatteryDispatch",     "",                        "",                              "" },
     { SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_discharge",                   "Periods 1-6 discharging allowed?",                       "",         "",                     "BatteryDispatch",       "en_batt=1&batt_dispatch_choice=3",                           "",                             "" },
-    { SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_discharge",                   "Periods 1-6 behind the meter discharging to grid allowed?", "",      "",                     "BatteryDispatch",       "en_batt=1&batt_dispatch_choice=3&batt_meter_position=0",                           "",                             "" },
+    { SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_btm_discharge_to_grid",        "Periods 1-6 behind the meter discharging to grid allowed?", "",      "",                     "BatteryDispatch",       "en_batt=1&batt_dispatch_choice=3&batt_meter_position=0",                           "",                             "" },
     { SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_gridcharge",                  "Periods 1-6 grid charging allowed?",                     "",         "",                     "BatteryDispatch",       "en_batt=1&batt_dispatch_choice=3",                           "",                             "" },
     { SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_percent_discharge",           "Periods 1-6 discharge percent",                          "%",        "",                     "BatteryDispatch",       "en_batt=1&batt_dispatch_choice=3",                           "",                             "" },
     { SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_percent_gridcharge",          "Periods 1-6 gridcharge percent",                         "%",        "",                     "BatteryDispatch",       "en_batt=1&batt_dispatch_choice=3",                           "",                             "" },
@@ -153,7 +153,7 @@ var_info vtab_battery_inputs[] = {
     { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_auto_can_fuelcellcharge",       "Charging from fuel cell allowed for automated dispatch?", "0/1",       "",                   "BatteryDispatch",       "",                           "",                             "" },
     { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_auto_can_gridcharge",           "Grid charging allowed for automated dispatch?",          "0/1",       "",                    "BatteryDispatch",       "",                           "",                             "" },
     { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_auto_can_charge",               "System charging allowed for automated dispatch?",            "0/1",       "",                "BatteryDispatch",       "",                           "",                             "" },
-    { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_auto_can_clipcharge",           "Battery can charge from clipped power for automated dispatch?", "0/1",   "",                 "BatteryDispatch",       "",                           "",                             "" },
+    { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_auto_can_clipcharge",           "Battery can charge from clipped power?",                 "0/1",   "",                        "BatteryDispatch",       "",                           "",                             "" },
     { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_auto_btm_can_discharge_to_grid", "Behind the meter battery can discharge to grid?",        "0/1",   "",                       "BatteryDispatch",       "en_batt=1&batt_meter_position=0",                           "",                             "" },
     { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_charge_only_system_exceeds_load",  "Battery can charge from system only when system output exceeds load", "0/1",   "",        "BatteryDispatch",       "en_batt=1&batt_meter_position=0",                           "",                             "" },
     { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_discharge_only_load_exceeds_system","Battery can discharge battery only when load exceeds system output", "0/1",   "",        "BatteryDispatch",       "en_batt=1&batt_meter_position=0",                           "",                             "" },
@@ -658,6 +658,10 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
                 batt_vars->batt_gridcharge_percent = vt.as_vector_double("dispatch_manual_percent_gridcharge");
                 batt_vars->batt_discharge_schedule_weekday = vt.as_matrix_unsigned_long("dispatch_manual_sched");
                 batt_vars->batt_discharge_schedule_weekend = vt.as_matrix_unsigned_long("dispatch_manual_sched_weekend");
+
+                if (batt_vars->batt_meter_position == dispatch_t::BEHIND) {
+                    batt_vars->batt_btm_can_discharge_to_grid = vt.as_vector_bool("dispatch_manual_btm_discharge_to_grid");
+                }
             }
 
             // Common to automated methods
@@ -1129,6 +1133,12 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
                 throw exec_error("fuelcell", "Invalid manual dispatch control vector lengths, must be length 6.");
         }
 
+        if (batt_vars->batt_meter_position == dispatch_t::BEHIND) {
+            if (batt_vars->batt_btm_can_discharge_to_grid.size() != 6) {
+                throw exec_error("Battery", "Invalid manual dispatch control vector lenghts, must be length 6.");
+            }
+        }
+
 
         size_t discharge_index = 0;
         size_t gridcharge_index = 0;
@@ -1152,8 +1162,9 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
                 batt_vars->batt_minimum_modetime,
                 batt_vars->batt_dispatch, batt_vars->batt_meter_position,
                 batt_vars->batt_discharge_schedule_weekday, batt_vars->batt_discharge_schedule_weekend,
-                batt_vars->batt_can_charge, batt_vars->batt_can_discharge, batt_vars->batt_can_gridcharge, batt_vars->batt_can_fuelcellcharge,
-                dm_percent_discharge, dm_percent_gridcharge, batt_vars->grid_interconnection_limit_kW, batt_vars->batt_dispatch_charge_only_system_exceeds_load,
+                batt_vars->batt_can_charge, batt_vars->batt_can_discharge, batt_vars->batt_can_gridcharge, batt_vars->batt_can_fuelcellcharge, batt_vars->batt_btm_can_discharge_to_grid,
+                dm_percent_discharge, dm_percent_gridcharge, batt_vars->grid_interconnection_limit_kW, batt_vars->batt_dispatch_auto_can_clipcharge,
+                batt_vars->batt_dispatch_charge_only_system_exceeds_load,
                 batt_vars->batt_dispatch_discharge_only_load_exceeds_system);
         }
     }
