@@ -1971,14 +1971,16 @@ void battstor::calculate_monthly_and_annual_outputs(compute_module& cm)
 
     }
 
-    /* Add yr 0 to annual outputs */
-    size_t arr_length = nyears + 1;
-    ssc_number_t yr_0_value = 0.0;
-    prepend_to_output(&cm, "annual_import_to_grid_energy", arr_length, yr_0_value);
-    prepend_to_output(&cm, "annual_export_to_grid_energy", arr_length, yr_0_value);
-    prepend_to_output(&cm, "batt_annual_energy_system_loss", arr_length, yr_0_value);
-    prepend_to_output(&cm, "batt_annual_energy_loss", arr_length, yr_0_value);
-    prepend_to_output(&cm, "batt_annual_charge_from_grid", arr_length, yr_0_value);
+    if (batt_vars->system_use_lifetime_output) {
+        /* Add yr 0 to annual outputs */
+        size_t arr_length = nyears + 1;
+        ssc_number_t yr_0_value = 0.0;
+        prepend_to_output(&cm, "annual_import_to_grid_energy", arr_length, yr_0_value);
+        prepend_to_output(&cm, "annual_export_to_grid_energy", arr_length, yr_0_value);
+        prepend_to_output(&cm, "batt_annual_energy_system_loss", arr_length, yr_0_value);
+        prepend_to_output(&cm, "batt_annual_energy_loss", arr_length, yr_0_value);
+        prepend_to_output(&cm, "batt_annual_charge_from_grid", arr_length, yr_0_value);
+    }
 }
 
 ///////////////////////////////////////////////////

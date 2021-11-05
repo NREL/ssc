@@ -3642,10 +3642,12 @@ void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double
 }
 
 void update_battery_outputs(compute_module* cm, size_t nyears) {
-    size_t arr_length = nyears + 1;
-    ssc_number_t yr_0_value = 0.0;
-    prepend_to_output(cm, "batt_bank_replacement", arr_length, yr_0_value);
-    prepend_to_output(cm, "batt_annual_charge_energy", arr_length, yr_0_value);
-    prepend_to_output(cm, "batt_annual_discharge_energy", arr_length, yr_0_value);
-    prepend_to_output(cm, "batt_annual_charge_from_system", arr_length, yr_0_value);
+    if (cm->as_integer("system_use_lifetime_output") == 1) {
+        size_t arr_length = nyears + 1;
+        ssc_number_t yr_0_value = 0.0;
+        prepend_to_output(cm, "batt_bank_replacement", arr_length, yr_0_value);
+        prepend_to_output(cm, "batt_annual_charge_energy", arr_length, yr_0_value);
+        prepend_to_output(cm, "batt_annual_discharge_energy", arr_length, yr_0_value);
+        prepend_to_output(cm, "batt_annual_charge_from_system", arr_length, yr_0_value);
+    }
 }
