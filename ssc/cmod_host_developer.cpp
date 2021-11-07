@@ -1150,7 +1150,9 @@ public:
 		int loan_moratorium = as_integer("loan_moratorium");
 		double term_int_rate = as_double("term_int_rate")*0.01;
 		double dscr = as_double("dscr");
-		double dscr_reserve_months = as_double("dscr_reserve_months");
+        bool dscr_limit_debt_fraction = as_boolean("dscr_limit_debt_fraction");
+        double dscr_maximum_debt_fraction = as_double("dscr_maximum_debt_fraction") * 0.01;
+        double dscr_reserve_months = as_double("dscr_reserve_months");
 		double cash_for_debt_service=0;
 		double pv_cafds=0;
 		double size_of_debt=0;
