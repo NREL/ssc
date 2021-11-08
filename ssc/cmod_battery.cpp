@@ -919,6 +919,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
     outGenWithoutBattery = vt.allocate("gen_without_battery", nrec * nyears);
     outSystemToGrid = vt.allocate("system_to_grid", nrec * nyears);
     outBatteryToSystemLoad = vt.allocate("batt_to_system_load", nrec * nyears);
+    outBatteryToGrid = vt.allocate("batt_to_grid", nrec * nyears);
 
     if (batt_vars->batt_meter_position == dispatch_t::BEHIND)
     {
@@ -934,8 +935,6 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
     }
     else if (batt_vars->batt_meter_position == dispatch_t::FRONT)
     {
-        outBatteryToGrid = vt.allocate("batt_to_grid", nrec * nyears);
-
         if (batt_vars->batt_dispatch == dispatch_t::FOM_PV_SMOOTHING) {
             outPVS_outpower = vt.allocate("batt_pvs_outpower", nrec * nyears);
             outPVS_battpower = vt.allocate("batt_pvs_battpower", nrec * nyears);
@@ -1773,6 +1772,7 @@ void battstor::outputs_topology_dependent()
     outGenPower[index] = (ssc_number_t)(dispatch_model->power_gen());
     outSystemToBatt[index] = (ssc_number_t)(dispatch_model->power_pv_to_batt());
     outGridToBatt[index] = (ssc_number_t)(dispatch_model->power_grid_to_batt());
+    outBatteryToGrid[index] = (ssc_number_t)(dispatch_model->power_battery_to_grid());
 
     // Fuel cell updates
     if (batt_vars->en_fuelcell) {
@@ -1806,8 +1806,6 @@ void battstor::outputs_topology_dependent()
     }
     else if (batt_vars->batt_meter_position == dispatch_t::FRONT)
     {
-        outBatteryToGrid[index] = (ssc_number_t)(dispatch_model->power_battery_to_grid());
-
         if (batt_vars->batt_dispatch == dispatch_t::FOM_PV_SMOOTHING) {
             dispatch_pvsmoothing_front_of_meter_t* dispatch_fom = dynamic_cast<dispatch_pvsmoothing_front_of_meter_t*>(dispatch_model);
             outPVS_battpower[index] = dispatch_fom->batt_dispatch_pvs_battpower();
@@ -1957,6 +1955,7 @@ void battstor::calculate_monthly_and_annual_outputs(compute_module& cm)
     cm.accumulate_monthly_for_year("grid_to_batt", "monthly_grid_to_batt", _dt_hour, step_per_hour);
     cm.accumulate_monthly_for_year("system_to_grid", "monthly_system_to_grid", _dt_hour, step_per_hour);
     cm.accumulate_monthly_for_year("interconnection_loss", "monthly_interconnection_loss", _dt_hour, step_per_hour);
+    cm.accumulate_monthly_for_year("batt_to_grid", "monthly_batt_to_grid", _dt_hour, step_per_hour);
 
     // critical load unmet values
     if (cm.is_assigned("crit_load_unmet")) {
@@ -1986,7 +1985,6 @@ void battstor::calculate_monthly_and_annual_outputs(compute_module& cm)
     }
     else if (batt_vars->batt_meter_position == dispatch_t::FRONT)
     {
-        cm.accumulate_monthly_for_year("batt_to_grid", "monthly_batt_to_grid", _dt_hour, step_per_hour);
         if (batt_vars->batt_dispatch == dispatch_t::FOM_PV_SMOOTHING) {
             // total number of violations
             size_t violation_count = 0;
