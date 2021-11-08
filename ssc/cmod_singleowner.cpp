@@ -2032,9 +2032,35 @@ public:
 		double ppa_old=ppa;
 
 
-		// debt fraction input
-		if (!constant_dscr_mode)
-		{
+		
+        if (constant_dscr_mode) {
+           // initial installed_cost estimate
+            cost_financing =
+                cost_debt_closing +
+                cost_debt_fee_frac * cost_prefinancing + //estimate until final size of debt known
+                cost_other_financing +
+                // cf.at(CF_reserve_debtservice, 0) +  // estimate until debt size for each year is known
+                constr_total_financing +
+                cf.at(CF_reserve_om, 0) +
+                cf.at(CF_reserve_receivables, 0);
+
+            cost_installed = cost_prefinancing + cost_financing
+                - ibi_fed_amount
+                - ibi_sta_amount
+                - ibi_uti_amount
+                - ibi_oth_amount
+                - ibi_fed_per
+                - ibi_sta_per
+                - ibi_uti_per
+                - ibi_oth_per
+                - cbi_fed_amount
+                - cbi_sta_amount
+                - cbi_uti_amount
+                - cbi_oth_amount;
+
+        }
+        else
+		{ // debt fraction input
 			double debt_frac = as_double("debt_percent")*0.01;
 
 			cost_installed = 
@@ -2206,6 +2232,7 @@ public:
 
 		}
 
+
 //		log(util::format("before loop  - size of debt =%lg .",	size_of_debt),	SSC_WARNING);
 
 
@@ -2296,14 +2323,26 @@ public:
 		}
 
         /* Github issue 550 update dscr if necessary with limit on maximum debt fraction */
-        if (constant_dscr_mode && dscr_limit_debt_fraction) {
+        if (constant_dscr_mode && dscr_limit_debt_fraction /* && (size_of_debt > 0)*/) {
             // need installed cost to apply maximum debt fraction for dscr mode - not initialized until line 2379 below
         // debt fee and debt service reserves are based on size_of_debt and need to be potentially readjusted
+            // estimate for cost_finaincing
+       //     dscr = size_of_debt / (cost_prefinancing * dscr_maximum_debt_fraction) * dscr_input;
+            /*
+            cf.at(CF_debt_payment_interest, 1) = size_of_debt * term_int_rate;
+            if (dscr > 0)
+                cf.at(CF_debt_payment_total, 1) = cf.at(CF_cash_for_ds, 1) / dscr;
+            else
+                cf.at(CF_debt_payment_total, 1) = cf.at(CF_debt_payment_interest, 1);
+            cf.at(CF_reserve_debtservice, 0) = dscr_reserve_months / 12.0 * (cf.at(CF_debt_payment_principal, 1) + cf.at(CF_debt_payment_interest, 1));
+
+         //   dscr = dscr_input;
+
             cost_financing =
                 cost_debt_closing +
-                (size_of_debt > 0) ? cost_debt_fee_frac * size_of_debt : 0 + //estimate until final size of debt known
+                ((size_of_debt > 0) ? cost_debt_fee_frac * size_of_debt : cost_debt_fee_frac * cost_prefinancing) + //estimate until final size of debt known
                 cost_other_financing +
-                cf.at(CF_reserve_debtservice, 0) +  // estimate until debt size for each year is known
+               // cf.at(CF_reserve_debtservice, 0) +  // estimate until debt size for each year is known
                 constr_total_financing +
                 cf.at(CF_reserve_om, 0) +
                 cf.at(CF_reserve_receivables, 0);
@@ -2322,10 +2361,35 @@ public:
                 - cbi_uti_amount
                 - cbi_oth_amount;
 
+               
+            if (cost_installed < 0) {
+                cost_financing =
+                    cost_debt_closing +
+                    ((size_of_debt > 0) ? cost_debt_fee_frac * size_of_debt : cost_debt_fee_frac * cost_prefinancing) + //estimate until final size of debt known
+                    cost_other_financing +
+                    // cf.at(CF_reserve_debtservice, 0) +  // estimate until debt size for each year is known
+                    constr_total_financing +
+                    cf.at(CF_reserve_om, 0) +
+                    cf.at(CF_reserve_receivables, 0);
 
-            if (size_of_debt > (cost_installed * dscr_maximum_debt_fraction)) {
-                if ((size_of_debt > 0) && (cost_installed > 0) && (dscr_maximum_debt_fraction > 0)) {
-                    dscr = size_of_debt / (cost_installed * dscr_maximum_debt_fraction) * dscr_input;
+                cost_installed = cost_prefinancing + cost_financing
+                    - ibi_fed_amount
+                    - ibi_sta_amount
+                    - ibi_uti_amount
+                    - ibi_oth_amount
+                    - ibi_fed_per
+                    - ibi_sta_per
+                    - ibi_uti_per
+                    - ibi_oth_per
+                    - cbi_fed_amount
+                    - cbi_sta_amount
+                    - cbi_uti_amount
+                    - cbi_oth_amount;
+            }
+            */
+            if (fabs(size_of_debt) > (cost_installed * dscr_maximum_debt_fraction)) {
+                if (/*(size_of_debt > 0) &&*/ (cost_installed > 0) && (dscr_maximum_debt_fraction > 0)) {
+                    dscr = fabs(size_of_debt) / (cost_installed * dscr_maximum_debt_fraction) * dscr_input;
                     // recalculate debt size with constrained dscr
                     size_of_debt = 0.0;
                     for (i = 0; i <= nyears; i++) {
