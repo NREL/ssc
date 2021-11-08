@@ -2387,9 +2387,10 @@ public:
                     - cbi_oth_amount;
             }
             */
-            if (fabs(size_of_debt) > (cost_installed * dscr_maximum_debt_fraction)) {
+            if ((fabs(size_of_debt) > (cost_installed * dscr_maximum_debt_fraction)) || (size_of_debt <0)) {
                 if (/*(size_of_debt > 0) &&*/ (cost_installed > 0) && (dscr_maximum_debt_fraction > 0)) {
-                    dscr = fabs(size_of_debt) / (cost_installed * dscr_maximum_debt_fraction) * dscr_input;
+//                    dscr = fabs(size_of_debt) / (cost_installed * dscr_maximum_debt_fraction) * dscr_input;
+                    dscr = size_of_debt / (cost_installed * dscr_maximum_debt_fraction) * dscr_input;
                     // recalculate debt size with constrained dscr
                     size_of_debt = 0.0;
                     for (i = 0; i <= nyears; i++) {
