@@ -980,7 +980,10 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	{
 		if (m_HLCharType.at(i, 0) == 2)
 		{
-			htfProps.SetFluid(21);
+            // Evacuated tube model assumes sensible fluid for internal convective heat transfer coefficient
+            // So hardcode to Therminol_VP1 here
+            // When calling evacuated tube model, set mass flow to a large value to approximate high heat transfer coefficient of boiling
+            htfProps.SetFluid(21);
 			evac_tube_model.Initialize_Receiver(m_GlazingIntactIn, m_P_a, m_D_5, m_D_4, m_D_3, m_D_2, m_D_p, m_opteff_des, m_Dirt_HCE, m_Shadowing, m_Tau_envelope, m_alpha_abs,
 				m_alpha_env, &eps_abs, m_AnnulusGas, m_AbsorberMaterial, m_EPSILON_4, m_EPSILON_5, m_L_col, &htfProps, m_A_cs, m_D_h, m_Flow_type);
 		}
@@ -2531,7 +2534,7 @@ int C_csp_lf_dsg_collector_receiver::once_thru_loop_energy_balance_T_t_int(const
 		mc_sca_out_t_int[i].m_pres = mc_sca_out_t_end[i].m_pres = mc_sca_in_t_int[i].m_pres;	//[bar]
 
 		transient_energy_bal_numeric_int_ave(mc_sca_in_t_int[i].m_enth, mc_sca_out_t_int[i].m_pres*100.0, m_q_abs[i], m_m_dot_loop,
-			mc_sca_out_t_end_last[i].m_temp, mc_sca_out_t_end[i].m_enth,
+			mc_sca_out_t_end_last[i].m_temp, mc_sca_out_t_end_last[i].m_enth,
             m_C_thermal, sim_info.ms_ts.m_step, mc_sca_out_t_end[i].m_enth, mc_sca_out_t_int[i].m_enth);
 
 		wp_code = water_PH(mc_sca_out_t_end[i].m_pres*100.0, mc_sca_out_t_end[i].m_enth, &wp);
