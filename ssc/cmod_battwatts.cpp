@@ -191,6 +191,13 @@ battwatts_create(size_t n_recs, size_t n_years, int chem, int meter_pos, double 
     batt_vars->batt_voltage_choice = voltage_params::MODEL;
     batt_vars->batt_voltage_matrix = util::matrix_t<double>();
 
+    // Power converters and topology
+    batt_vars->batt_topology = ChargeController::AC_CONNECTED;
+    batt_vars->batt_ac_dc_efficiency = 96;
+    batt_vars->batt_dc_ac_efficiency = 96;
+    batt_vars->batt_dc_dc_bms_efficiency = 99;
+    batt_vars->pv_dc_dc_mppt_efficiency = 99;
+
     // Current and Capacity
     double batt_time_hour = batt_vars->batt_kwh / batt_vars->batt_kw;
     double batt_C_rate_discharge = 1. / batt_time_hour;
@@ -202,17 +209,11 @@ battwatts_create(size_t n_recs, size_t n_years, int chem, int meter_pos, double 
     batt_vars->batt_power_charge_max_kwdc = batt_vars->batt_kw / (batt_vars->batt_dc_ac_efficiency * 0.01);
     batt_vars->batt_power_discharge_max_kwdc = batt_vars->batt_kw / (batt_vars->batt_ac_dc_efficiency * 0.01);
 
-    // Power converters and topology
-    batt_vars->batt_topology = ChargeController::AC_CONNECTED;
-    batt_vars->batt_ac_dc_efficiency = 96;
-    batt_vars->batt_dc_ac_efficiency = 96;
-    batt_vars->batt_dc_dc_bms_efficiency = 99;
-    batt_vars->pv_dc_dc_mppt_efficiency = 99;
-
     // Charge limits and priority
     batt_vars->batt_initial_SOC = 50.;
     batt_vars->batt_maximum_SOC = 95.;
     batt_vars->batt_minimum_SOC = 15.;
+    batt_vars->batt_minimum_outage_SOC = 10.;
     batt_vars->batt_minimum_modetime = 10;
 
     // Interconnection and curtailment

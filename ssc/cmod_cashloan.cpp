@@ -543,7 +543,7 @@ public:
 
             for (i = 0; i < nyears && i < (int)count; i++) {
                 // batt_rep and the cash flow sheets are 1 indexed, replacement_percent is zero indexed
-                cf.at(CF_battery_replacement_cost, i + 1) = batt_rep[i + 1] * replacement_percent[i] * 0.01 *
+                cf.at(CF_battery_replacement_cost, i + 1) = batt_rep[i] * replacement_percent[i] * 0.01 *
                     cf.at(CF_battery_replacement_cost_schedule, i + 1);
             }
         }
@@ -1051,6 +1051,10 @@ public:
         lcos_calc(this, cf_lcos, nyears, nom_discount_rate, inflation_rate, lcoe_real, total_cost, real_discount_rate, grid_charging_cost_version);
     }
     /////////////////////////////////////////////////////////////////////////////////////////
+
+    if (as_integer("en_batt") == 1) {
+        update_battery_outputs(this, nyears);
+    }
 
 	double wacc = 0.0;
 	wacc = (1.0 - debt_frac)*nom_discount_rate + debt_frac*loan_rate*(1.0 - cf.at(CF_effective_tax_frac, 1));

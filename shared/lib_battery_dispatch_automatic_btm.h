@@ -81,7 +81,8 @@ public:
         double interconnection_limit,
         bool chargeOnlySystemExceedLoad,
         bool dischargeOnlyLoadExceedSystem,
-        bool behindTheMeterDischargeToGrid
+        bool behindTheMeterDischargeToGrid,
+        double SOC_min_outage
 		);
 
 	~dispatch_automatic_behind_the_meter_t() override {};

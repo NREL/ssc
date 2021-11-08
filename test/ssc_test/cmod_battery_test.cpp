@@ -86,16 +86,16 @@ TEST_F(CMBattery_cmod_battery, ResilienceMetricsFullLoad){
     auto pdf_of_surviving = data_vtab->as_vector_ssc_number_t("pdf_of_surviving");
     double avg_critical_load = data_vtab->as_double("avg_critical_load");
 
-    EXPECT_EQ(resilience_hours[0], 1);
-    EXPECT_EQ(resilience_hours[1], 1);
-    EXPECT_NEAR(avg_critical_load,  1037.67, 0.1);
-    EXPECT_NEAR(resilience_hrs_avg, 1.43, 0.01);
+    EXPECT_EQ(resilience_hours[0], 0); // Max current restrictions prevent this battery from meeting the outage until day 2 (hr 46)
+    EXPECT_EQ(resilience_hours[46], 5);
+    EXPECT_NEAR(avg_critical_load, 702.8, 0.1);
+    EXPECT_NEAR(resilience_hrs_avg, 1.17, 0.01);
     EXPECT_EQ(resilience_hrs_min, 0);
     EXPECT_EQ(outage_durations[0], 0);
     EXPECT_EQ(resilience_hrs_max, 24);
     EXPECT_EQ(outage_durations[17], 17);
-    EXPECT_NEAR(pdf_of_surviving[0], 0.600, 1e-3);
-    EXPECT_NEAR(pdf_of_surviving[1], 0.141, 1e-3);
+    EXPECT_NEAR(pdf_of_surviving[0], 0.756, 1e-3);
+    EXPECT_NEAR(pdf_of_surviving[1], 0.0314, 1e-3);
 
     auto batt_power = data_vtab->as_vector_ssc_number_t("batt_power");
     auto power_max = *std::max_element(batt_power.begin(), batt_power.end());
@@ -142,16 +142,16 @@ TEST_F(CMBattery_cmod_battery, ResilienceMetricsFullLoadLifetime){
     auto pdf_of_surviving = data_vtab->as_vector_ssc_number_t("pdf_of_surviving");
     double avg_critical_load = data_vtab->as_double("avg_critical_load");
 
-    EXPECT_EQ(resilience_hours[0], 1);
-    EXPECT_EQ(resilience_hours[1], 1);
-    EXPECT_NEAR(avg_critical_load, 1021.50, 0.1);
-    EXPECT_NEAR(resilience_hrs_avg, 1.407, 0.01);
+    EXPECT_EQ(resilience_hours[0], 0); // Max current restrictions prevent this battery from meeting the outage until day 2 (hr 46)
+    EXPECT_EQ(resilience_hours[46], 5);
+    EXPECT_NEAR(avg_critical_load, 700.2, 0.1);
+    EXPECT_NEAR(resilience_hrs_avg, 1.17, 0.01);
     EXPECT_EQ(resilience_hrs_min, 0);
     EXPECT_EQ(outage_durations[0], 0);
     EXPECT_EQ(resilience_hrs_max, 24);
     EXPECT_EQ(outage_durations[17], 17);
-    EXPECT_NEAR(pdf_of_surviving[0], 0.608, 1e-3);
-    EXPECT_NEAR(pdf_of_surviving[1], 0.134, 1e-3);
+    EXPECT_NEAR(pdf_of_surviving[0], 0.754, 1e-3);
+    EXPECT_NEAR(pdf_of_surviving[1], 0.0314, 1e-3);
 
     auto batt_power = data_vtab->as_vector_ssc_number_t("batt_power");
     auto power_max = *std::max_element(batt_power.begin(), batt_power.end());
