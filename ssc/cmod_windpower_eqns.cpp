@@ -32,26 +32,33 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma warning(disable: 4297)  // ignore warning: 'function assumed not to throw an exception but does'
 
-void Turbine_calculate_powercurve(ssc_data_t data)
+bool Turbine_calculate_powercurve(ssc_data_t data)
 {
     auto vt = static_cast<var_table*>(data);
     if (!vt){
-        throw std::runtime_error("ssc_data_t data invalid");
+        return false;
     }
-	 
+
     double turbine_size, rotor_diameter, elevation, max_cp, max_tip_speed, max_tip_sp_ratio, cut_in,
             cut_out;
     int drive_train;
 
-    vt_get_number(vt, "turbine_size", &turbine_size);
-    vt_get_number(vt, "wind_turbine_rotor_diameter", &rotor_diameter);     // ssc input
-    vt_get_number(vt, "elevation", &elevation);
-    vt_get_number(vt, "wind_turbine_max_cp", &max_cp);                     // ssc input
-    vt_get_number(vt, "max_tip_speed", &max_tip_speed);
-    vt_get_number(vt, "max_tip_sp_ratio", &max_tip_sp_ratio);
-    vt_get_number(vt, "cut_in", &cut_in);
-    vt_get_number(vt, "cut_out", &cut_out);
-    vt_get_int(vt, "drive_train", &drive_train);
+    try {
+        vt_get_number(vt, "turbine_size", &turbine_size);
+        vt_get_number(vt, "wind_turbine_rotor_diameter", &rotor_diameter);     // ssc input
+        vt_get_number(vt, "elevation", &elevation);
+        vt_get_number(vt, "wind_turbine_max_cp", &max_cp);                     // ssc input
+        vt_get_number(vt, "max_tip_speed", &max_tip_speed);
+        vt_get_number(vt, "max_tip_sp_ratio", &max_tip_sp_ratio);
+        vt_get_number(vt, "cut_in", &cut_in);
+        vt_get_number(vt, "cut_out", &cut_out);
+        vt_get_int(vt, "drive_train", &drive_train);
+
+    }
+    catch (std::runtime_error& e) {
+        vt->assign("error", var_data(e.what()));
+        return false;
+    }
 
     util::matrix_t<ssc_number_t> powercurve_windspeeds;
     util::matrix_t<ssc_number_t> powercurve_powerout;
@@ -67,13 +74,13 @@ void Turbine_calculate_powercurve(ssc_data_t data)
 	    a = 0.012894;
 	    b = 0.085095;
 		c = 0.000000;
-	
+
 	}
 	else if ( drive_train_type == 2 ) {
 		a = 0.013307;
 		b = 0.036547;
 		c = 0.061067;
-	
+
 	}
 	else if ( drive_train_type == 3 ) {
 		a = 0.015474;
@@ -86,7 +93,8 @@ void Turbine_calculate_powercurve(ssc_data_t data)
 		c = 0.068990;
 	}
 	else{
-        throw std::runtime_error("drive_train must be between 0 and 3");
+        vt->assign("error", var_data("drive_train must be between 0 and 3"));
+        return false;
 	}
 
 	double eff = 1.0 - (a + b + c);
@@ -117,6 +125,7 @@ void Turbine_calculate_powercurve(ssc_data_t data)
 	if ( omegaT > omega_m ) {
 		sprintf( errmsg, "Turbine inputs are not valid, please adjust the inputs. omegaT: %f, omegaM: %f", omegaT, omega_m );
         vt->assign( "error", std::string(errmsg ));
+        return false;
     }
 
 	double step = 0.25;
@@ -145,7 +154,7 @@ void Turbine_calculate_powercurve(ssc_data_t data)
 
 		if ( hub_power > rated_hub_power ) {
             sprintf( errmsg, "Turbine power curve calculation calculated power > rated output at windspeed %f", ws );
-            vt->assign( "error", std::string(errmsg ));
+            vt->assign( "warning", std::string(errmsg ));
             hub_power = rated_hub_power;
 		}
 		if ( hub_power == 0. ) {
@@ -169,4 +178,5 @@ void Turbine_calculate_powercurve(ssc_data_t data)
     vt->assign( "wind_turbine_powercurve_powerout", powerout);
     vt->assign( "rated_wind_speed", rated_wind_speed );
     vt->assign( "hub_efficiency", hub_eff );
+    return true;
 }

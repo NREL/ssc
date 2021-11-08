@@ -52,7 +52,7 @@ static const char* mp_ancillary_services_doc =
 	"     'mp_capacity_check': boolean\\n"
 	"     'mp_capacity_check_error': string\\n";
 
-SSCEXPORT void mp_ancillary_services(ssc_data_t data);
+SSCEXPORT bool mp_ancillary_services(ssc_data_t data);
 
 
 #ifdef __cplusplus

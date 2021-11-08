@@ -26,6 +26,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <float.h>
 #endif
 #include "common_financial.h"
+#include "common.h"
 #include "lib_financial.h"
 #include "cmod_merchantplant_eqns.h"
 using namespace libfin;
@@ -78,7 +79,7 @@ static var_info _cm_vtab_merchantplant[] = {
 	{ SSC_INOUT,        SSC_NUMBER,     "system_use_recapitalization",	          "Recapitalization expenses",	                                   "0/1",               "0=None,1=Recapitalize",   "System Costs",          "?=0",					   "INTEGER,MIN=0",                 "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "system_recapitalization_cost",	          "Recapitalization cost",	                                       "$",                 "",                        "System Costs",          "?=0",					   "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "system_recapitalization_escalation",     "Recapitalization escalation (above inflation)",	               "%",	                "",					       "System Costs",          "?=0",                     "MIN=0,MAX=100",      		    "" },
-	{ SSC_INPUT,        SSC_ARRAY,      "system_lifetime_recapitalize",		      "Recapitalization boolean",	                                   "",                  "",                        "System Costs",          "?=0",					   "",                              "" },
+	{ SSC_INOUT,        SSC_ARRAY,      "system_lifetime_recapitalize",		      "Recapitalization boolean",	                                   "",                  "",                        "System Costs",          "?=0",					   "",                              "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_recapitalization",	                  "Recapitalization operating expense",	                           "$",                 "",                        "Recapitalization",          "*",					   "LENGTH_EQUAL=cf_length",        "" },
                                                                                   															       
 /* Dispatch */                                                                    															       
@@ -548,6 +549,24 @@ static var_info _cm_vtab_merchantplant[] = {
 	{ SSC_INPUT, SSC_MATRIX, "mp_ancserv4_revenue", "Ancillary services 4 revenue input", "", "Lifetime x 2 [Cleared Capacity(MW),Price($/MWh)]","Revenue", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_ancillary_services_4_revenue", "Ancillary services 4 revenue", "$", "", "Revenue", "*", "LENGTH_EQUAL=cf_length", "" },
 
+    // percent generation matrices (1-column)
+    { SSC_INPUT, SSC_MATRIX, "mp_energy_market_revenue_single", "Energy market revenue input", "", "Lifetime x 1 [Price($/MWh)]","Revenue", "mp_enable_market_percent_gen=1", "", "" },
+    { SSC_INPUT, SSC_MATRIX, "mp_ancserv1_revenue_single", "Ancillary services 1 revenue input", "", "Lifetime x 1[Price($/MWh)]","Revenue", "mp_enable_ancserv1_percent_gen=1", "", "" },
+    { SSC_INPUT, SSC_MATRIX, "mp_ancserv2_revenue_single", "Ancillary services 2 revenue input", "", "Lifetime x 1[Price($/MWh)]","Revenue", "mp_enable_ancserv2_percent_gen=1", "", "" },
+    { SSC_INPUT, SSC_MATRIX, "mp_ancserv3_revenue_single", "Ancillary services 3 revenue input", "", "Lifetime x 1[Price($/MWh)]","Revenue", "mp_enable_ancserv3_percent_gen=1", "", "" },
+    { SSC_INPUT, SSC_MATRIX, "mp_ancserv4_revenue_single", "Ancillary services 4 revenue input", "", "Lifetime x 1[Price($/MWh)]","Revenue", "mp_enable_ancserv4_percent_gen=1", "", "" },
+
+        // percent generation variables
+    { SSC_INPUT,        SSC_NUMBER,     "mp_enable_market_percent_gen",		      "Enable percent demand cleared capacity option for market revenue",   "0/1",   "",    "Revenue",  "*",	"INTEGER,MIN=0,MAX=1",      "" },
+    { SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv1_percent_gen",		      "Enable percent demand cleared capacity option for ancillary service 1",   "0/1",   "",    "Revenue",  "*",	"INTEGER,MIN=0,MAX=1",      "" },
+    { SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv2_percent_gen",		      "Enable percent demand cleared capacity option for ancillary service 2",   "0/1",   "",    "Revenue",  "*",	"INTEGER,MIN=0,MAX=1",      "" },
+    { SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv3_percent_gen",		      "Enable percent demand cleared capacity option for ancillary service 3",   "0/1",   "",    "Revenue",  "*",	"INTEGER,MIN=0,MAX=1",      "" },
+    { SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv4_percent_gen",		      "Enable percent demand cleared capacity option for ancillary service 4",   "0/1",   "",    "Revenue",  "*",	"INTEGER,MIN=0,MAX=1",      "" },
+    { SSC_INPUT,       SSC_NUMBER,     "mp_market_percent_gen",               "Percent of demand to copy to cleared capacity array",       "%","", "Revenue", "mp_enable_market_percent_gen=1", "MIN=0,MAX=100", "" },
+    { SSC_INPUT,       SSC_NUMBER,     "mp_ancserv1_percent_gen",               "Percent of demand to copy to cleared capacity array",       "%","", "Revenue", "mp_enable_ancserv1_percent_gen=1", "MIN=0,MAX=100", "" },
+    { SSC_INPUT,       SSC_NUMBER,     "mp_ancserv2_percent_gen",               "Percent of demand to copy to cleared capacity array",       "%","", "Revenue", "mp_enable_ancserv2_percent_gen=1", "MIN=0,MAX=100", "" },
+    { SSC_INPUT,       SSC_NUMBER,     "mp_ancserv3_percent_gen",               "Percent of demand to copy to cleared capacity array",       "%","", "Revenue", "mp_enable_ancserv3_percent_gen=1", "MIN=0,MAX=100", "" },
+    { SSC_INPUT,       SSC_NUMBER,     "mp_ancserv4_percent_gen",               "Percent of demand to copy to cleared capacity array",       "%","", "Revenue", "mp_enable_ancserv4_percent_gen=1", "MIN=0,MAX=100", "" },
 
 
 	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_curtailment_revenue",                        "Present value of curtailment payment revenue",              "$",                   "", "Metrics", "*", "", "" },
@@ -585,8 +604,6 @@ static var_info _cm_vtab_merchantplant[] = {
 	{ SSC_OUTPUT, SSC_ARRAY, "mp_ancillary_services4_price", "Ancillary services 4 generated price", "$/MWh", "", "", "*", "", "GROUP=LIFETIME_MP" },
 		// sum of all cleared capacities
 	{ SSC_OUTPUT, SSC_ARRAY, "mp_total_cleared_capacity", "Total cleared capacity", "MW", "", "", "*", "", "GROUP=LIFETIME_MP" },
-
-
 
 var_info_invalid };
 
@@ -1091,7 +1108,7 @@ public:
 
             for (i = 0; i < nyears && i < (int)count; i++) {
                 // batt_rep and the cash flow sheets are 1 indexed, replacement_percent is zero indexed
-                cf.at(CF_battery_replacement_cost, i + 1) = batt_rep[i + 1] * replacement_percent[i] * 0.01 *
+                cf.at(CF_battery_replacement_cost, i + 1) = batt_rep[i] * replacement_percent[i] * 0.01 *
                     cf.at(CF_battery_replacement_cost_schedule, i + 1);
             }
         }
@@ -1429,6 +1446,7 @@ public:
 			{
 				for (i=0;i<nyears && i<(int)recap_boolean_count;i++) cf.at(CF_Recapitalization_boolean,i+1) = recap_boolean[i];
 			}
+            prepend_to_output(this, "system_lifetime_recapitalize", nyears + 1, 0.0);
 		}
 
 		// return on equity based on workbook and emails from Sara Turner for SAM for India
@@ -2745,97 +2763,12 @@ public:
         }
         int grid_charging_cost_version = 2; //Merchant plant
         lcos_calc(this, cf_lcos, nyears, nom_discount_rate, inflation_rate, lcoe_real, cost_prefinancing, disc_real, grid_charging_cost_version);
-        /*
-        double lcos_investment_cost = as_double("battery_total_cost_lcos"); //does not include replacement costs
-        double lcos_om_cost = npv(CF_om_capacity1_expense, nyears, nom_discount_rate); //Todo: include variable om due to charging
-        std::vector<double> charged_grid = as_vector_double("batt_annual_charge_from_grid");
-        std::vector<double> charged_pv = as_vector_double("batt_annual_charge_from_system");
-        std::vector<double> charged_total = as_vector_double("batt_annual_charge_energy");
-        std::vector<double> lcos_energy_discharged = as_vector_double("batt_annual_discharge_energy");
-        cf.at(CF_charging_cost_grid, 0) = 0;
-        size_t n_grid_to_batt;
-        ssc_number_t* grid_to_batt = as_array("grid_to_batt", &n_grid_to_batt); //Power from grid to battery in kW (needs to be changed to kwh)
-        size_t n_steps_per_year = n_grid_to_batt / nyears;
-        //std::vector<double> grid_to_batt = as_vector_double("grid_to_batt");
-
-        double capex_lcoe_ratio = 1 / 0.8; //ratio of capex ratio between PV+batt / PV to LCOE ratio PV+batt/ PV (assumed based on table)
-        double lcoe_real_lcos = lcoe_real * capex_lcoe_ratio * (cost_prefinancing - lcos_investment_cost) / cost_prefinancing; //cents/kWh
-        
-        size_t n_multipliers, n_mp_market_price;
-        ssc_number_t* mp_market_price = as_array("mp_energy_market_price", &n_mp_market_price);
-        for (int a = 0; a <= nyears; a++) {
-            if (as_integer("system_use_lifetime_output") == 1)
-            {
-                // hourly_enet includes all curtailment, availability
-
-                double market_price = mp_market_price[a] / 1000; //$/kWh
-                for (size_t h = 0; h < n_steps_per_year; h++) {
-                    if (a != 0) {
-                        cf.at(CF_charging_cost_grid, a) += grid_to_batt[(a - 1) * n_steps_per_year + h] * 8760 / n_steps_per_year * mp_market_price[(a - 1) * n_steps_per_year + h]/ (1000);
-                    }
-
-                }
-
-
-            }
-            else
-            {
-
-                
-                for (size_t h = 0; h < n_steps_per_year; h++) {
-                    if (a != 0) {
-                        cf.at(CF_charging_cost_grid, a) += grid_to_batt[h] * 8760 / n_steps_per_year * mp_market_price[h] / (1000);
-                    }
-
-                }
-
-
-            }
-            //cf.at(CF_charging_cost_grid, a) = charged_grid[a] * cf.at(CF_ppa_price, a) / 100;
-            //cf.at(CF_charging_cost_grid, a) = charged_grid[a] * 10 / 100; //todo: set up utility rate structure
-            cf.at(CF_charging_cost_pv, a) = charged_pv[a] * lcoe_real_lcos / 100 * pow(1+inflation_rate, a-1);
-            //charged_total[a] = charged_grid[a] + charged_pv[a];
-            cf.at(CF_energy_charged_grid, a) = cf.at(CF_charging_cost_grid, a) + cf.at(CF_charging_cost_pv, a);
-            cf.at(CF_om_production1_expense, a) *= charged_total[a];
-            cf.at(CF_energy_discharged, a) = lcos_energy_discharged[a];
-            cf.at(CF_annual_cost_lcos, a) = -cf.at(CF_charging_cost_grid, a) +
-                -cf.at(CF_charging_cost_pv, a) + -cf.at(CF_om_fixed1_expense, a) +
-                -cf.at(CF_om_capacity1_expense, a) + -cf.at(CF_om_production1_expense, a) +
-                -cf.at(CF_battery_replacement_cost, a);
-
-        }
-        cf.at(CF_annual_cost_lcos, 0) += -lcos_investment_cost; //add initial investment to year 0
-        lcos_om_cost += npv(CF_om_production1_expense, nyears, nom_discount_rate);
-        lcos_om_cost += npv(CF_om_fixed1_expense, nyears, nom_discount_rate);
-        double lcos_charging_cost = npv(CF_energy_charged_grid, nyears, nom_discount_rate);
-        double batt_salvage_value_frac = as_double("batt_salvage_percentage") * 0.01;
-        double lcos_salvage_value = lcos_investment_cost * batt_salvage_value_frac / pow(1 + nom_discount_rate, nyears + 1); //set as a percentage or direct salvage value
-        cf.at(CF_salvage_cost_lcos, nyears) = lcos_salvage_value;
-        cf.at(CF_annual_cost_lcos, nyears) -= cf.at(CF_salvage_cost_lcos, nyears);
-        double lcos_denominator = npv(CF_energy_discharged, nyears, nom_discount_rate);
-        double lcos_denominator_real = npv(CF_energy_discharged, nyears, disc_real);
-        //double lcos_numerator = (lcos_investment_cost + lcos_om_cost + lcos_charging_cost + lcos_salvage_value);
-        double lcos_numerator = -(npv(CF_annual_cost_lcos, nyears, nom_discount_rate)) - cf.at(CF_annual_cost_lcos, 0);
-        assign("npv_annual_costs_lcos", var_data((ssc_number_t)lcos_numerator));
-        save_cf(CF_annual_cost_lcos, nyears, "cf_annual_cost_lcos");
-        save_cf(CF_energy_discharged, nyears, "cf_annual_discharge_lcos");
-        save_cf(CF_charging_cost_grid, nyears, "cf_charging_cost_grid");
-        save_cf(CF_charging_cost_pv, nyears, "cf_charging_cost_pv");
-        save_cf(CF_om_capacity1_expense, nyears, "cf_om_batt_capacity_expense");
-        save_cf(CF_om_production1_expense, nyears, "cf_om_batt_production_expense");
-        save_cf(CF_om_fixed1_expense, nyears, "cf_om_batt_fixed_expense");
-        save_cf(CF_battery_replacement_cost, nyears, "cf_batt_replacement_cost");
-        save_cf(CF_salvage_cost_lcos, nyears, "cf_salvage_cost_lcos");
-        double lcos_nom = lcos_numerator / lcos_denominator * 100.0; // cent/kWh
-        double lcos_real = lcos_numerator / lcos_denominator_real * 100.0; // cents/kWh
-        assign("lcos_nom", var_data((ssc_number_t)lcos_nom));
-        assign("lcos_real", var_data((ssc_number_t)lcos_real));
-        assign("npv_energy_lcos_nom", var_data((ssc_number_t)lcos_denominator));
-        assign("npv_energy_lcos_real", var_data((ssc_number_t)lcos_denominator_real));
-        */
     }
     /////////////////////////////////////////////////////////////////////////////////////////
 
+    if (as_integer("en_batt") == 1) {
+        update_battery_outputs(this, nyears);
+    }
 
 	// DSCR calculations
 	for (i = 0; i <= nyears; i++)

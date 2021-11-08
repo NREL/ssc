@@ -58,6 +58,10 @@ GTEST_API_ int main(int argc, char **argv) {
 //   ::testing::GTEST_FLAG(filter) = "CMPvwattsV7Integration_cmod_pvwattsv7.IntermediateOutputTesting";
 //   ::testing::GTEST_FLAG(filter) = "CMPvwattsV7Integration_cmod_pvwattsv7*";
 //   ::testing::GTEST_FLAG(filter) = "Data9999CaseWeatherData*";
+//	::testing::GTEST_FLAG(filter) = "CMPvsamv1PowerIntegration_cmod_pvsamv1.DefaultResidentialModel";
+//	::testing::GTEST_FLAG(filter) = "BatteryPowerFlowTest_lib_battery_powerflow.TestDCConnected";
+//	::testing::GTEST_FLAG(filter) = "CMPvwattsV7Integration_cmod_pvwattsv7.IntermediateOutputTesting";
+//	::testing::GTEST_FLAG(filter) = "CmodCashLoanTest*";
 
 
 

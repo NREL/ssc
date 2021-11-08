@@ -8,10 +8,12 @@ include_directories(. ../nlopt ../shared ../splinter ../lpsolve ../solarpilot)
 
 set(TCS_SRC
 		atmospheric_aod.cpp
+		base_dispatch.cpp
 		co2_compressor_library.cpp
 		CO2_properties.cpp
 		csp_dispatch.cpp
 		csp_radiator.cpp
+		csp_solver_cavity_receiver.cpp
 		csp_solver_core.cpp
 		csp_solver_cr_electric_resistance.cpp
 		csp_solver_gen_collector_receiver.cpp
@@ -36,6 +38,8 @@ set(TCS_SRC
 		csp_solver_weatherreader.cpp
 		csp_system_costs.cpp
 		direct_steam_receivers.cpp
+		dispatch_builder.cpp
+		etes_dispatch.cpp
 		fmin.cpp
 		fmin_callbacks.cpp
 		heat_exchangers.cpp
@@ -98,6 +102,7 @@ set(TCS_SRC
 		tou_translator.cpp
 		flat_plate_solar_collector.cpp
 		atmospheric_aod.h
+		base_dispatch.h
 		cavity_calcs.h
 		co2props_nn1.h
 		co2_compressor_library.h
@@ -105,6 +110,7 @@ set(TCS_SRC
 		co2_testing.h
 		csp_dispatch.h
 		csp_radiator.h
+		csp_solver_cavity_receiver.h
 		csp_solver_core.h
 		csp_solver_cr_electric_resistance.h
 		csp_solver_gen_collector_receiver.h
@@ -127,6 +133,8 @@ set(TCS_SRC
 		csp_solver_util.h
 		csp_system_costs.h
 		direct_steam_receivers.h
+		dispatch_builder.h
+		etes_dispatch.h
 		flat_plate_solar_collector.h
 		fmin.h
 		fmin_callbacks.h

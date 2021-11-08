@@ -35,7 +35,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 SSCEXPORT int ssc_version()
 {
-	return 259;
+	return 262;
 }
 
 SSCEXPORT const char *ssc_build_info()
@@ -63,6 +63,7 @@ extern module_entry_info
 	cm_entry_pvwattsv1_poa,
 	cm_entry_pvwattsv5,
 	cm_entry_pvwattsv7,
+    cm_entry_pvwattsv8,
 	cm_entry_pvwattsv5_1ts,
 	cm_entry_pv6parmod,
 	cm_entry_pvsandiainv,
@@ -158,6 +159,7 @@ static module_entry_info *module_table[] = {
 	&cm_entry_pvwattsv1_poa,
 	&cm_entry_pvwattsv5,
 	&cm_entry_pvwattsv7,
+    &cm_entry_pvwattsv8,
 	&cm_entry_pvwattsv5_1ts,
 	&cm_entry_pvsandiainv,
 	&cm_entry_wfreader,
