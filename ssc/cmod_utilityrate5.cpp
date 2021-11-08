@@ -2306,6 +2306,7 @@ public:
                                     if (c < rate.m_ec_ts_buy_rate.size()) {
                                         tier_energy = energy_deficit;
                                         br = rate.m_ec_ts_buy_rate[c];
+                                        tier_charge = tier_energy * br * rate_esc;
                                         charge_amt = tier_energy * br * rate_esc;
                                         curr_month.ec_energy_use.at(row, deficit_tier) += (ssc_number_t)tier_energy;
                                         curr_month.ec_charge.at(row, deficit_tier) += (ssc_number_t)charge_amt;
