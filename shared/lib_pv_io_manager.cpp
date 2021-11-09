@@ -1219,6 +1219,10 @@ Module_IO::Module_IO(compute_module* cm, std::string cmName, double dcLoss)
     else if (modulePowerModel == MODULE_PVYIELD)
     {
         // Mermoud/Lejeune single-diode model
+        isBifacial = cm->as_boolean("mlm_is_bifacial");
+		bifaciality = cm->as_double("mlm_bifaciality");
+		bifacialTransmissionFactor = cm->as_double("mlm_bifacial_transmission_factor");
+		groundClearanceHeight = cm->as_double("mlm_bifacial_ground_clearance_height");
         size_t elementCount1 = 0;
         size_t elementCount2 = 0;
         ssc_number_t* arrayIncAngle = 0;
