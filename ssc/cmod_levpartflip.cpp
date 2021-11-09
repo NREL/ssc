@@ -1156,7 +1156,7 @@ public:
 			cf.at(CF_om_fuel_expense,i) *= year1_fuel_use;
 
             //Battery Production OM Costs
-            cf.at(CF_om_production1_expense, i) *= battery_discharged[i]; //$/MWh * 0.001 MWh/kWh * kWh = $
+            cf.at(CF_om_production1_expense, i) *= battery_discharged[i - 1]; //$/MWh * 0.001 MWh/kWh * kWh = $
             cf.at(CF_om_production2_expense, i) *= fuelcell_discharged[i];
 
 			cf.at(CF_om_opt_fuel_1_expense,i) *= om_opt_fuel_1_usage;
