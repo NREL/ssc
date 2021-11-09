@@ -2237,9 +2237,28 @@ void cm_pvsamv1::exec()
                 dcPowerNetPerMppt_kW[m] = PVSystem->p_dcPowerNetPerMppt[m][idx] * util::watt_to_kilowatt;
             }
 
-			//run AC power calculation
-			if (en_batt && (batt_topology == ChargeController::DC_CONNECTED)) // DC-connected battery
-			{
+            // Get percentages for transformer loss
+            ssc_number_t transformerRatingkW = static_cast<ssc_number_t>(PVSystem->ratedACOutput * util::watt_to_kilowatt);
+            ssc_number_t xfmr_ll = PVSystem->transformerLoadLossFraction / step_per_hour;
+            ssc_number_t xfmr_nll = PVSystem->transformerNoLoadLossFraction * static_cast<ssc_number_t>(ts_hour * transformerRatingkW);
+
+            //run AC power calculation
+            if (en_batt && (batt_topology == ChargeController::DC_CONNECTED)) // DC-connected battery
+            {
+                // Add up AC loss percents for DC connected batteries
+                double delivered_percent = 1 - (PVSystem->acLossPercent + PVSystem->transmissionLossPercent) * 0.01; // These are both multipled by acpwr_gross
+
+                ssc_number_t xfmr_loss_percent = transformerLoss(PVSystem->p_systemACPower[idx], PVSystem->transformerLoadLossFraction, transformerRatingkW, xfmr_ll, xfmr_nll) / PVSystem->p_systemACPower[idx];
+                delivered_percent *= (1 - xfmr_loss_percent);
+
+                ssc_number_t adj_factor = haf(hour_of_year);
+                delivered_percent *= adj_factor;
+                if (system_use_lifetime_output && PVSystem->enableACLifetimeLosses) {
+                    int ac_loss_index = (int)iyear * 365 + (int)floor(hour_of_year / 24); //in units of days
+                    delivered_percent *= (1 - PVSystem->acLifetimeLosses[ac_loss_index] / 100);
+                }
+                ssc_number_t dc_loss_percent = 1 - delivered_percent;
+
 				// Compute PV clipping before adding battery
 				sharedInverter->calculateACPower(dcPower_kW, dcVoltagePerMppt[0], Irradiance->weatherRecord.tdry); //DC batteries not allowed with multiple MPPT, so can just use MPPT 1's voltage
                 batt->outGenWithoutBattery[idx] = sharedInverter->powerAC_kW;
@@ -2251,7 +2270,7 @@ void cm_pvsamv1::exec()
                 }
 
                 // Run PV plus battery through sharedInverter, returns AC power
-                batt->advance(m_vartab, dcPower_kW, dcVoltagePerMppt[0], cur_load, p_crit_load_full[idx], sharedInverter->powerClipLoss_kW);
+                batt->advance(m_vartab, dcPower_kW, dcVoltagePerMppt[0], cur_load, p_crit_load_full[idx], dc_loss_percent, sharedInverter->powerClipLoss_kW);
                 acpwr_gross = batt->outGenPower[idx];
             }
             else if (PVSystem->Inverter->inverterType == INVERTER_PVYIELD) //PVyield inverter model not currently enabled for multiple MPPT
@@ -2265,6 +2284,18 @@ void cm_pvsamv1::exec()
                 // for capturing tare losses
                 sharedInverter->calculateACPower(dcPowerNetPerMppt_kW, dcVoltagePerMppt, Irradiance->weatherRecord.tdry);
                 acpwr_gross = sharedInverter->powerAC_kW;
+            }
+
+            bool offline = false;
+            if (en_batt && (batt_topology == ChargeController::DC_CONNECTED)) {
+                if (batt->is_outage_step(idx % 8760)) {
+                    offline = batt->is_offline(idx);
+                }
+            }
+
+            if (offline && acpwr_gross < 0) {
+                acpwr_gross += sharedInverter->powerNightLoss_kW;
+                batt->outGenWithoutBattery[idx] += sharedInverter->powerNightLoss_kW;
             }
 
             ac_wiringloss = fabs(acpwr_gross) * PVSystem->acLossPercent * 0.01;
@@ -2284,11 +2315,18 @@ void cm_pvsamv1::exec()
                 PVSystem->p_inverterEfficiency[idx] = (ssc_number_t)(sharedInverter->efficiencyAC);
                 PVSystem->p_inverterClipLoss[idx] = (ssc_number_t)(sharedInverter->powerClipLoss_kW);
                 PVSystem->p_inverterPowerConsumptionLoss[idx] = (ssc_number_t)(sharedInverter->powerConsumptionLoss_kW);
-                PVSystem->p_inverterNightTimeLoss[idx] = (ssc_number_t)(sharedInverter->powerNightLoss_kW);
                 PVSystem->p_inverterThermalLoss[idx] = (ssc_number_t)(sharedInverter->powerTempLoss_kW);
                 PVSystem->p_acWiringLoss[idx] = (ssc_number_t)(ac_wiringloss);
                 PVSystem->p_transmissionLoss[idx] = (ssc_number_t)(transmissionloss);
-                PVSystem->p_inverterTotalLoss[idx] = (ssc_number_t)(sharedInverter->powerLossTotal_kW);
+                
+                if (offline) {
+                    PVSystem->p_inverterNightTimeLoss[idx] = 0.0;
+                    PVSystem->p_inverterTotalLoss[idx] = (ssc_number_t)(sharedInverter->powerLossTotal_kW - sharedInverter->powerNightLoss_kW);
+                }
+                else {
+                    PVSystem->p_inverterNightTimeLoss[idx] = (ssc_number_t)(sharedInverter->powerNightLoss_kW);
+                    PVSystem->p_inverterTotalLoss[idx] = (ssc_number_t)(sharedInverter->powerLossTotal_kW);
+                }
             }
             PVSystem->p_systemDCPower[idx] = (ssc_number_t)(sharedInverter->powerDC_kW);
 
@@ -2299,11 +2337,8 @@ void cm_pvsamv1::exec()
                 batt->outGenWithoutBattery[idx] -= fabs(batt->outGenWithoutBattery[idx]) * PVSystem->acLossPercent * 0.01;;
             }
 
-            // Apply transformer loss
-            ssc_number_t transformerRatingkW = static_cast<ssc_number_t>(PVSystem->ratedACOutput * util::watt_to_kilowatt);
-            ssc_number_t xfmr_ll = PVSystem->transformerLoadLossFraction / step_per_hour;
-            ssc_number_t xfmr_nll = PVSystem->transformerNoLoadLossFraction * static_cast<ssc_number_t>(ts_hour * transformerRatingkW);
 
+            // Apply transformer loss
 			// total load loss
             ssc_number_t xfmr_loss = transformerLoss(PVSystem->p_systemACPower[idx], PVSystem->transformerLoadLossFraction, transformerRatingkW, xfmr_ll, xfmr_nll);
 
@@ -2406,8 +2441,19 @@ void cm_pvsamv1::exec()
             if (iyear == 0)
                 annual_energy_pre_battery += PVSystem->p_systemACPower[idx] * ts_hour;
 
+            // Compute AC loss percent for AC connected batteries
+            ssc_number_t adj_factor = haf(hour_of_year);
+
             if (en_batt && batt_topology == ChargeController::AC_CONNECTED)
             {
+                double delivered_percent = adj_factor; // Delivered percent is effectively 1 before this line, so just set it to adj_factor
+                if (system_use_lifetime_output && PVSystem->enableACLifetimeLosses)
+                {
+                    int ac_loss_index = (int)iyear * 365 + (int)floor(hour_of_year / 24); //in units of days
+                    delivered_percent *= (1 - PVSystem->acLifetimeLosses[ac_loss_index] / 100); // loss in kWac
+                }
+                double ac_loss_percent = 1 - delivered_percent;
+
                 // calculate timestep in hour for battery models
                 // jj represents which timestep within the hour you're on, 0-indexed
                 // i.e. if idx is 7 in a 15-minute weather file (time 1:45), hour_of_year will be 1, so jj = 7 - (1*4) = 3 (which is correct for 0-indexed jj)
@@ -2421,9 +2467,27 @@ void cm_pvsamv1::exec()
                     resilience->run_surviving_batteries(p_crit_load_full[idx], PVSystem->p_systemACPower[idx], 0, 0, 0, 0);
                 }
 
-				batt->advance(m_vartab, PVSystem->p_systemACPower[idx], 0, p_load_full[idx], p_crit_load_full[idx]);
+				batt->advance(m_vartab, PVSystem->p_systemACPower[idx], 0, p_load_full[idx], p_crit_load_full[idx], ac_loss_percent);
                 batt->outGenWithoutBattery[idx] = PVSystem->p_systemACPower[idx];
                 PVSystem->p_systemACPower[idx] = batt->outGenPower[idx];
+
+                bool offline = false;
+                if (batt->is_outage_step(idx % 8760)) {
+                    offline = batt->is_offline(idx);
+                }
+                
+                if (offline && PVSystem->p_systemACPower[idx] < tolerance) {
+
+                    PVSystem->p_inverterTotalLoss[idx] = (ssc_number_t)(PVSystem->p_inverterTotalLoss[idx] - PVSystem->p_inverterNightTimeLoss[idx]);
+                    ssc_number_t avoided_losses = PVSystem->p_inverterNightTimeLoss[idx] + PVSystem->p_acWiringLoss[idx] + PVSystem->p_transmissionLoss[idx];
+                    PVSystem->p_systemACPower[idx] += avoided_losses;
+                    batt->outGenWithoutBattery[idx] += avoided_losses;
+                    batt->outUnmetLosses[idx] -= avoided_losses;
+                    annual_ac_gross += avoided_losses * ts_hour;
+                    PVSystem->p_inverterNightTimeLoss[idx] = 0.0;
+                    PVSystem->p_acWiringLoss[idx] = 0.0;
+                    PVSystem->p_transmissionLoss[idx] = 0.0;
+                }
             }
 
             // accumulate system generation before curtailment and availability
@@ -2431,7 +2495,6 @@ void cm_pvsamv1::exec()
                 annual_ac_pre_avail += PVSystem->p_systemACPower[idx] * ts_hour;
             }
 
-            ssc_number_t adj_factor = haf(hour_of_year);
             if (iyear == 0 || save_full_lifetime_variables == 1) {
                 PVSystem->p_acPerfAdjLoss[idx] = PVSystem->p_systemACPower[idx] * (1 - adj_factor);
             }

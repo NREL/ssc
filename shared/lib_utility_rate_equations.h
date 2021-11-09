@@ -23,6 +23,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef _LIB_UTILITY_RATE_EQUATIONS_H_
 #define _LIB_UTILITY_RATE_EQUATIONS_H_
 
+#include <map>
 #include <vector>
 
 #include "../ssc/core.h"
@@ -113,11 +114,13 @@ public:
 	std::vector<ssc_number_t> monthly_dc_fixed;
 	std::vector<ssc_number_t> monthly_dc_tou;
 
-    bool en_ec_billing_demand; // Enable billing demand lookback percentages for kWh/kW energy charges
+    bool uses_billing_demand; // Has a energy rate with kWh/kw AND/OR has a demand charge. If false, en_billing_demand_lookback must be false
+    bool en_billing_demand_lookback; // Enable billing demand lookback percentages
     std::vector<ssc_number_t> prev_peak_demand; // Set before calling init_energy_rates
-    std::vector<ssc_number_t> ec_bd_lookback_percents;
-    double ec_bd_minimum;
-    int ec_bd_lookback_months;
+    std::vector<ssc_number_t> bd_lookback_percents;
+    double bd_minimum;
+    int bd_lookback_months;
+    std::unordered_map<int, bool> bd_tou_periods;
     std::vector<ssc_number_t> billing_demand; // Store locally for ssc outputs
 
 	bool tou_demand_single_peak;
@@ -142,11 +145,12 @@ public:
     /* Optional function if demand charges are present */
 	void setup_demand_charges(ssc_number_t* dc_weekday, ssc_number_t* dc_weekend, size_t dc_tou_rows, ssc_number_t* dc_tou_in, size_t dc_flat_rows, ssc_number_t* dc_flat_in);
     /* Optional function if energy charges use a ratchet for the billing demand */
-    void setup_ratcheting_demand(ssc_number_t* ratchet_percent_matrix);
+    void setup_ratcheting_demand(ssc_number_t* ratchet_percent_matrix, ssc_number_t* bd_tou_period_matrix);
 
     void setup_prev_demand(ssc_number_t* prev_demand);
     /* call ur_month.update_net_and_peak before this, otherwise you'll get low values back */
     double get_billing_demand(int month);
+    void set_billing_demands(); // Runs get_billing_demand and updates the billing_demand structure
 
     /* Populate ur_month objects from those filled out in setup_energy_rates. Called annually in cmod_utility_rate5, other classes may reset ur_month directly
        Can be called right away to create the vectors, but for kWh/kW rates needs to be called once after ur_month.update_net_and_peak to be accurate */

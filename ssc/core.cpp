@@ -439,6 +439,14 @@ util::matrix_t<ssc_number_t> &compute_module::allocate_matrix(const std::string 
     return v->num;
 }
 
+ssc_number_t* compute_module::resize_array(const std::string& name, size_t length) {
+    return m_vartab->resize_array(name, length);
+}
+
+ssc_number_t* compute_module::resize_matrix(const std::string& name, size_t n_rows, size_t n_cols) {
+    return m_vartab->resize_matrix(name, n_rows, n_cols);
+}
+
 var_data &compute_module::value(const std::string &name) {
     var_data *v = lookup(name);
     if (!v) {
@@ -1054,7 +1062,7 @@ void dump_ssc_variable(FILE* fp, ssc_data_t p_data, const char* name)
     case SSC_STRING:
         str_value = ::ssc_data_get_string(p_data, name);
         //str_value = std::regex_replace(str_value, std::regex("\\"), "/"); //.replace("\\", "/");
-        //str_value = std::regex_replace(str_value, std::regex("'"), "");
+        str_value = std::regex_replace(str_value, std::regex("'"), "");
         fprintf(fp, "var( '%s', '%s' );\n", name, (const char*)str_value.c_str());
         break;
     case SSC_NUMBER:

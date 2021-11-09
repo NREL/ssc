@@ -375,7 +375,10 @@ void SharedInverter::convertOutputsToKWandScale(double tempLoss, double powerAC_
     powerConsumptionLoss_kW *= m_numInverters * util::watt_to_kilowatt;
     powerNightLoss_kW *= m_numInverters * util::watt_to_kilowatt;
     powerTempLoss_kW = tempLoss * m_numInverters * util::watt_to_kilowatt;
-    powerLossTotal_kW = powerDC_kW - powerAC_kW;
+    if (powerDC_kW < 0.0)
+        powerLossTotal_kW = fabs(powerDC_kW) - fabs(powerAC_kW); // DC connected grid charging
+    else
+        powerLossTotal_kW = powerDC_kW - powerAC_kW; // Normal operation and night time losses
     efficiencyAC *= 100;
     dcWiringLoss_ond_kW *= m_numInverters * util::watt_to_kilowatt;
     acWiringLoss_ond_kW *= m_numInverters * util::watt_to_kilowatt;
