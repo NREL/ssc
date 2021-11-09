@@ -1669,6 +1669,8 @@ public:
                 if (sum < 0.0) // this should not happen, all are set to >=0
                     throw exec_error("communitysolar", util::format("Total subscribed fraction for year (%d) is %g (less than zero).", (int)i, sum));
                 else if (sum > 1.0) { // adjust based on previous values
+                    if (prev_sum >= 1)
+                        log(util::format("Total subscription fraction exceeds 1 in Year %d. Subscriber shares adjusted so that total subscription rate is 100 percent. See notices for details.", int(i)), SSC_WARNING);
                     if (prev_sum < 1.0) {
                         double additional_share = sum - 1.0; // divide up amongst changed values
                         if (i > 0) additional_share = cf.at(CF_unsubscribed_share_fraction, i - 1);
