@@ -62,7 +62,7 @@ static var_info _cm_vtab_mhk_wave[] = {
 
 	{ SSC_OUTPUT,			SSC_NUMBER,			"device_average_power",					"Average power production of a single device",											"kW",			"",				"MHKWave",			"*",						"",							"" },
 	{ SSC_OUTPUT,			SSC_NUMBER,			"annual_energy",						"Annual energy production of array",											"kWh",			"",				"MHKWave",			"*",						"",							"" },
-    { SSC_OUTPUT,           SSC_ARRAY,          "hourly_energy",                        "Hourly energy production of device",                                            "kWh",          "", "Time Series",          "wave_resource_model_choice=1",                        "",          "" },
+    { SSC_OUTPUT,           SSC_ARRAY,          "energy_hourly_kWh",                        "Energy production of array",                                            "kWh",          "", "Time Series",          "wave_resource_model_choice=1",                        "",          "" },
     { SSC_OUTPUT,           SSC_ARRAY,          "gen",                        "System power generated",                                            "kW",          "", "Time Series",          "",                        "",          "" },
 
     { SSC_OUTPUT,           SSC_ARRAY,          "sig_wave_height_index_mat",            "Wave height index locations for time series",                      "m",                         "", "MHKWave",          "wave_resource_model_choice=1",                        "",          "" },
@@ -380,7 +380,7 @@ public:
 
         util::matrix_t<double>  wave_power_matrix = as_matrix("wave_power_matrix"); //Power matrix at various wave heights and periods
         //Get the system capacity
-        //double system_capacity = as_double("system_capacity");
+        double system_capacity = as_double("system_capacity");
         double annual_energy = 0, device_rated_capacity = 0, device_average_power = 0, capacity_factor = 0;
         //User either sets device_rated_capacity in the UI, or allows cmod to determine from power curve:
         device_rated_capacity = as_double("device_rated_power"); //Rated power of 1 Wave energy converter device (derived from power matrix)
@@ -523,8 +523,8 @@ public:
             else if (!is_assigned("significant_wave_height") || !is_assigned("energy_period")) //Both heights and periods must be assigned
                 throw exec_error("mhk_wave", "Wave height and Energy period arrays of equal length must be assigned");
 
-            ssc_number_t* energy_hourly = allocate("hourly_energy", number_records);
-            ssc_number_t* energy_hourly_gen = allocate("gen", number_records * 3);
+            ssc_number_t* energy_hourly_kWh = allocate("energy_hourly_kWh", number_records);
+            ssc_number_t* energy_hourly_gen = allocate("gen", number_records);
             ssc_number_t* sig_wave_height_index_mat = allocate("sig_wave_height_index_mat", number_records);
             ssc_number_t* sig_wave_height_data = allocate("sig_wave_height_data", number_records);
             ssc_number_t* energy_period_index_mat = allocate("energy_period_index_mat", number_records);
@@ -607,11 +607,14 @@ public:
                 
 
                 //n-hour energy based on wave power matrix value at height and period best matching the time series inputs * number devices * size multiplier
-                energy_hourly[i] = (ssc_number_t)(wave_power_matrix.at(size_t(sig_wave_height_index), size_t(energy_period_index))) * hour_step * (1 - total_loss / 100) * number_devices;
-                p_annual_energy_dist[size_t(sig_wave_height_index) * 22 + size_t(energy_period_index)] += energy_hourly[i]; //Add energy for given time step to height x period distribution matrix at specified grid point
-                energy_hourly_gen[i*3] = energy_hourly[i]; //Store in gen to use in heatmap output (probably don't need two variables)
-                energy_hourly_gen[i*3+1] = energy_hourly[i]; //Store in gen to use in heatmap output (probably don't need two variables)
-                energy_hourly_gen[i*3+2] = energy_hourly[i]; //Store in gen to use in heatmap output (probably don't need two variables)
+                //First check that indexed power does not exceed maximum system power
+                if (wave_power_matrix.at(size_t(sig_wave_height_index), size_t(energy_period_index)) > device_rated_capacity)
+                    throw exec_error("mhk_wave", "The device power calculated from the wave height and wave period exceeds the maximum power matrix value at index" + to_string(i) + ". Please check the wave conditions.");
+                energy_hourly_kWh[i] = (ssc_number_t)(wave_power_matrix.at(size_t(sig_wave_height_index), size_t(energy_period_index))) * hour_step * (1 - total_loss / 100) * number_devices;
+                p_annual_energy_dist[size_t(sig_wave_height_index) * 22 + size_t(energy_period_index)] += energy_hourly_kWh[i]; //Add energy for given time step to height x period distribution matrix at specified grid point
+                energy_hourly_gen[i] = (ssc_number_t)(wave_power_matrix.at(size_t(sig_wave_height_index), size_t(energy_period_index))) * (1 - total_loss / 100) * number_devices; //Store in gen to use in heatmap output (probably don't need two variables)
+                //energy_hourly_gen[i*3+1] = energy_hourly[i]; //Store in gen to use in heatmap output (probably don't need two variables)
+                //energy_hourly_gen[i*3+2] = energy_hourly[i]; //Store in gen to use in heatmap output (probably don't need two variables)
 
                 //iday = floor(double(i * 3) / 24); //Calculate day of year
                 if (month[i] == 1)
@@ -623,7 +626,7 @@ public:
                 for (size_t d = 0; d < days_in_year; d++) {
                     for (size_t h = 0; h < 9; h++) {
                         if (iday == d && ihour == size_t(3 * (h - 1))) {
-                            p_annual_energy_dist_time[h * days_in_year + d] += energy_hourly[i]; //Add energy for time step to time distribution matrix at day and hour of current timestep
+                            p_annual_energy_dist_time[h * days_in_year + d] += energy_hourly_kWh[i]; //Add energy for time step to time distribution matrix at day and hour of current timestep
                             break; //Get out of loop once day and hour match is found
                         }
                     }
@@ -633,9 +636,9 @@ public:
                 energy_period_index_mat[i] = (ssc_number_t)(wave_power_matrix.at(0, size_t(energy_period_index))); //Store wave period values closest to those in time series input array
                 energy_period_data[i] = ts_energy_period;
                 wave_power_index_mat[i] = (ssc_number_t)(wave_power_matrix.at(size_t(sig_wave_height_index), size_t(energy_period_index))); //Store wave power used in each time step based on closest height and period from time series input arrays
-                annual_energy += energy_hourly[i]; //Sum up to annual energy
+                annual_energy += energy_hourly_kWh[i]; //Sum up to annual energy
                 //device_average_power += energy_hourly[i] / 8760;
-                device_average_power += energy_hourly[i] / (number_hours * (1 - total_loss / 100) * number_devices); //Average for device average power
+                device_average_power += energy_hourly_kWh[i] / (number_hours * (1 - total_loss / 100) * number_devices); //Average for device average power
 
 
             }
