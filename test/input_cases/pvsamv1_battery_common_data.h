@@ -759,8 +759,6 @@ void singleowner_defaults(ssc_data_t& data) {
 	ssc_data_set_number(data, "pbi_sta_for_ds", 0);
 	ssc_data_set_number(data, "pbi_uti_for_ds", 0);
 	ssc_data_set_number(data, "pbi_oth_for_ds", 0);
-	ssc_number_t p_roe_input[1] = { 0 };
-	ssc_data_set_array(data, "roe_input", p_roe_input, 1);
 	ssc_data_set_number(data, "loan_moratorium", 0);
 	ssc_data_set_number(data, "system_use_recapitalization", 0);
 	ssc_data_set_number(data, "dispatch_factor1", 1);
