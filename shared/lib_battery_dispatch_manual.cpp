@@ -34,9 +34,9 @@ dispatch_manual_t::dispatch_manual_t(battery_t * Battery, double dt, double SOC_
 	util::matrix_t<size_t> dm_dynamic_sched, util::matrix_t<size_t> dm_dynamic_sched_weekend,
 	std::vector<bool> dm_charge, std::vector<bool> dm_discharge, std::vector<bool> dm_gridcharge, std::vector<bool> dm_fuelcellcharge,
 	std::map<size_t, double>  dm_percent_discharge, std::map<size_t, double>  dm_percent_gridcharge, double interconnection_limit,
-    bool chargeOnlySystemExceedLoad, bool dischargeOnlyLoadExceedSystem)
+    bool chargeOnlySystemExceedLoad, bool dischargeOnlyLoadExceedSystem, double SOC_min_outage)
 	: dispatch_t(Battery, dt, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max_kwdc, Pd_max_kwdc, Pc_max_kwac, Pd_max_kwac,
-	t_min, mode, battMeterPosition, interconnection_limit, chargeOnlySystemExceedLoad, dischargeOnlyLoadExceedSystem)
+	t_min, mode, battMeterPosition, interconnection_limit, chargeOnlySystemExceedLoad, dischargeOnlyLoadExceedSystem, SOC_min_outage)
 {
 	init_with_vects(dm_dynamic_sched, dm_dynamic_sched_weekend, dm_charge, dm_discharge, dm_gridcharge, dm_fuelcellcharge, dm_percent_discharge, dm_percent_gridcharge);
 }
@@ -113,13 +113,22 @@ void dispatch_manual_t::dispatch(size_t year,
 	size_t hour_of_year,
 	size_t step)
 {
-	prepareDispatch(hour_of_year, step);
+    m_outage_manager->update(false, _min_outage_soc); // false is for manual dispatch
+    size_t lifetimeIndex = util::lifetimeIndex(year, hour_of_year, step, static_cast<size_t>(1 / _dt_hour));
 
-	// Initialize power flow model by calculating the battery power to dispatch
-	m_batteryPowerFlow->initialize(_Battery->SOC());
+    if (m_batteryPower->isOutageStep) {
+        // Calls dispatch function, sometimes iteratively
+        run_outage_step(lifetimeIndex);
+    }
+    else {
+        prepareDispatch(hour_of_year, step);
 
-	// Run the dispatch
-	runDispatch(year, hour_of_year, step);
+        // Initialize power flow model by calculating the battery power to dispatch
+        m_batteryPowerFlow->initialize(_Battery->SOC());
+
+        // Run the dispatch
+        runDispatch(lifetimeIndex);
+    }
 }
 
 bool dispatch_manual_t::check_constraints(double &I, size_t count)
@@ -214,34 +223,39 @@ bool dispatch_manual_t::check_constraints(double &I, size_t count)
 
 void dispatch_manual_t::SOC_controller()
 {
-	// Implement minimum SOC cut-off
-	if (m_batteryPower->powerBatteryDC > 0)
-	{
-		_charging = false;
+    if (m_batteryPower->isOutageStep) {
+        dispatch_t::SOC_controller();
+    }
+    else {
+        // Implement minimum SOC cut-off and apply percent charge/discharge
+        if (m_batteryPower->powerBatteryDC > 0)
+        {
+            _charging = false;
 
-		if (m_batteryPower->powerBatteryDC*_dt_hour > _e_max)
-			m_batteryPower->powerBatteryDC = _e_max / _dt_hour;
+            if (m_batteryPower->powerBatteryDC * _dt_hour > _e_max)
+                m_batteryPower->powerBatteryDC = _e_max / _dt_hour;
 
-		//  discharge percent
-		double e_percent = _e_max*_percent_discharge*0.01;
+            //  discharge percent
+            double e_percent = _e_max * _percent_discharge * 0.01;
 
-		if (m_batteryPower->powerBatteryDC*_dt_hour > e_percent)
-			m_batteryPower->powerBatteryDC = e_percent / _dt_hour;
-	}
-	// Maximum SOC cut-off
-	else if (m_batteryPower->powerBatteryDC < 0)
-	{
-		_charging = true;
+            if (m_batteryPower->powerBatteryDC * _dt_hour > e_percent)
+                m_batteryPower->powerBatteryDC = e_percent / _dt_hour;
+        }
+        // Maximum SOC cut-off
+        else if (m_batteryPower->powerBatteryDC < 0)
+        {
+            _charging = true;
 
-		if (m_batteryPower->powerBatteryDC*_dt_hour < -_e_max)
-			m_batteryPower->powerBatteryDC = -_e_max / _dt_hour;
+            if (m_batteryPower->powerBatteryDC * _dt_hour < -_e_max)
+                m_batteryPower->powerBatteryDC = -_e_max / _dt_hour;
 
-		//  charge percent for automated grid charging
-		double e_percent = _e_max*_percent_charge*0.01;
+            //  charge percent for automated grid charging
+            double e_percent = _e_max * _percent_charge * 0.01;
 
-		if (fabs(m_batteryPower->powerBatteryDC) > fabs(e_percent) / _dt_hour)
-			m_batteryPower->powerBatteryDC = -e_percent / _dt_hour;
-	}
-	else
-		_charging = _prev_charging;
+            if (fabs(m_batteryPower->powerBatteryDC) > fabs(e_percent) / _dt_hour)
+                m_batteryPower->powerBatteryDC = -e_percent / _dt_hour;
+        }
+        else
+            _charging = _prev_charging;
+    }
 }

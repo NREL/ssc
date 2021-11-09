@@ -86,6 +86,9 @@ protected:
             inverter = new fakeInverter;
         }
 
+        std::vector<bool> outage_vars(n_recs, true);
+        batt_vars->grid_outage_steps = std::move(outage_vars);
+
         vartab = new var_table;
         batt = std::make_shared<battstor>(*vartab, true, n_recs, dt_hr, batt_vars);
         batt->initialize_automated_dispatch(ac, load);
