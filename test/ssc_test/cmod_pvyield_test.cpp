@@ -54,9 +54,35 @@ TEST_F(CMPvYieldTimo, DefaultTimoModel_cmod_pvsamv1)
 
         ssc_number_t performance_ratio;
         ssc_data_get_number(data, "performance_ratio", &performance_ratio);
-        EXPECT_NEAR(performance_ratio, -14.485646, m_error_tolerance_lo) << "Energy yield";
+        EXPECT_NEAR(performance_ratio, 0.84380863, m_error_tolerance_lo) << "Energy yield";
     }
 }
+
+
+TEST_F(CMPvYieldTimo, Bifacial_cmod_pvsamv1)
+{
+    double desired_annual_energy =  346314432.10048527;
+    pvyield_bifacial_case(data);
+    int pvsam_errors = run_module(data, "pvsamv1");
+    EXPECT_FALSE(pvsam_errors);
+
+    ssc_number_t annual_energy_6;
+    ssc_data_get_number(data, "annual_energy", &annual_energy_6);
+    EXPECT_NEAR(annual_energy_6, desired_annual_energy, m_error_tolerance_lo);
+
+    ssc_number_t annual_dc_nominal;
+    ssc_data_get_number(data, "annual_dc_nominal", &annual_dc_nominal);
+    EXPECT_GT(annual_dc_nominal, desired_annual_energy);  // make sure dc_nominal isn't nan/negative/nonsense
+
+    // Check to see if increasing bifaciality increase energy
+    ssc_data_set_number(data, "mlm_bifaciality", 0.8);
+    pvsam_errors = run_module(data, "pvsamv1");
+    EXPECT_FALSE(pvsam_errors);
+    ssc_number_t annual_energy_8;
+    ssc_data_get_number(data, "annual_energy", &annual_energy_8);
+    EXPECT_GT(annual_energy_8, desired_annual_energy + 1);
+}
+
 
 /// Test PVSAMv1 with inputs from PVYield and user support 80603 with meteo weather file
 TEST_F(CMPvYieldTimo, TimoModel80603_meteo_cmod_pvsamv1)
@@ -84,7 +110,7 @@ TEST_F(CMPvYieldTimo, TimoModel80603_meteo_cmod_pvsamv1)
 
         ssc_number_t performance_ratio;
         ssc_data_get_number(data, "performance_ratio", &performance_ratio);
-        EXPECT_NEAR(performance_ratio, -14.6145, m_error_tolerance_lo) << "Energy yield";
+        EXPECT_NEAR(performance_ratio, 0.84380863, m_error_tolerance_lo) << "Energy yield";
     }
 }
 
@@ -114,7 +140,7 @@ TEST_F(CMPvYieldTimo, TimoModel80603_AZ_cmod_pvsamv1)
 
         ssc_number_t performance_ratio;
         ssc_data_get_number(data, "performance_ratio", &performance_ratio);
-        EXPECT_NEAR(performance_ratio, -14.105, m_error_tolerance_lo) << "Energy yield";
+        EXPECT_NEAR(performance_ratio, 0.8147345055, m_error_tolerance_lo) << "Energy yield";
     }
 }
 
