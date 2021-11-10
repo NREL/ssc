@@ -22,6 +22,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "common_financial.h"
 #include "core.h"
+#include "common.h"
 #include <sstream>
 #include <sstream>
 
@@ -3312,9 +3313,9 @@ void hourly_energy_calculation::sum_ts_to_hourly(ssc_number_t* timestep_power, s
 var_info vtab_lcos_inputs[] = {
     /*   VARTYPE           DATATYPE         NAME                             LABEL                                UNITS      META                 GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 
-    { SSC_INPUT,        SSC_ARRAY,      "batt_annual_charge_from_system",                 "Battery annual energy charged from system",                 "kWh",      "",                      "LCOS",       "",                           "",                               "" },
-    { SSC_INPUT,        SSC_ARRAY,      "batt_annual_discharge_energy",               "Battery annual energy discharged",                      "kWh",      "",                      "LCOS",       "",                           "",                               "" },
-    { SSC_INPUT,        SSC_ARRAY,      "batt_annual_charge_energy",               "Battery annual energy charged",                      "kWh",      "",                      "LCOS",       "",                           "",                               "" },
+    { SSC_INOUT,        SSC_ARRAY,      "batt_annual_charge_from_system",                 "Battery annual energy charged from system",                 "kWh",      "",                      "LCOS",       "",                           "",                               "" },
+    { SSC_INOUT,        SSC_ARRAY,      "batt_annual_discharge_energy",               "Battery annual energy discharged",                      "kWh",      "",                      "LCOS",       "",                           "",                               "" },
+    { SSC_INOUT,        SSC_ARRAY,      "batt_annual_charge_energy",               "Battery annual energy charged",                      "kWh",      "",                      "LCOS",       "",                           "",                               "" },
     { SSC_INPUT,        SSC_NUMBER,     "batt_salvage_percentage",                     "Net pre-tax cash battery salvage value",	                               "%",	 "",					  "LCOS",             "?=0",                     "MIN=0,MAX=100",      			"" },
 
     { SSC_INPUT,        SSC_NUMBER,      "battery_total_cost_lcos",               "Battery total investment cost",                      "$",      "",                      "LCOS",       "",                           "",                               "" },
@@ -3596,8 +3597,8 @@ void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double
             //cf.at(CF_charging_cost_grid, a) = charged_grid[a] * cf.at(CF_ppa_price, a) / 100; //What is the BTM charge for charging from the grid (do we need to calculate based on utility rates?)
             //cf.at(CF_charging_cost_grid, a) = charged_grid[a] * 10 / 100; //using 0.10 $/kWh as a placeholder
             if (cm->as_integer("system_use_lifetime_output") == 1 && a != 0) { //Lifetime
-                cf.at(CF_charging_cost_pv_lcos, a) = charged_pv[a] * lcoe_real_lcos / 100 * pow(1 + inflation_rate, a - 1); //Calculate system charging cost from year a system charged amount ($)
-                cf.at(CF_energy_discharged_lcos, a) = lcos_energy_discharged[a];
+                cf.at(CF_charging_cost_pv_lcos, a) = charged_pv[a - 1] * lcoe_real_lcos / 100 * pow(1 + inflation_rate, a - 1); //Calculate system charging cost from year a system charged amount ($)
+                cf.at(CF_energy_discharged_lcos, a) = lcos_energy_discharged[a - 1];
 
             }
             else if (cm->as_integer("system_use_lifetime_output") != 1 && a != 0) { //Not lifetime
@@ -3638,4 +3639,15 @@ void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double
         cm->assign("npv_energy_lcos_real", var_data((ssc_number_t)lcos_denominator_real)); //Store Real LCOS denominator in outputs
     }
     /////////////////////////////////////////////////////////////////////////////////////////
+}
+
+void update_battery_outputs(compute_module* cm, size_t nyears) {
+    if (cm->as_integer("system_use_lifetime_output") == 1) {
+        size_t arr_length = nyears + 1;
+        ssc_number_t yr_0_value = 0.0;
+        prepend_to_output(cm, "batt_bank_replacement", arr_length, yr_0_value);
+        prepend_to_output(cm, "batt_annual_charge_energy", arr_length, yr_0_value);
+        prepend_to_output(cm, "batt_annual_discharge_energy", arr_length, yr_0_value);
+        prepend_to_output(cm, "batt_annual_charge_from_system", arr_length, yr_0_value);
+    }
 }

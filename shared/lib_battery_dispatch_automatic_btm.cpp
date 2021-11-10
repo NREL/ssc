@@ -55,10 +55,11 @@ dispatch_automatic_behind_the_meter_t::dispatch_automatic_behind_the_meter_t(
     std::vector<double> battCycleCost,
     double interconnection_limit,
     bool chargeOnlySystemExceedLoad,
-    bool dischargeOnlyLoadExceedSystem
+    bool dischargeOnlyLoadExceedSystem,
+    double SOC_min_outage
 	) : dispatch_automatic_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max_kwdc, Pd_max_kwdc, Pc_max_kwac, Pd_max_kwac,
 		t_min, dispatch_mode, weather_forecast_mode, pv_dispatch, nyears, look_ahead_hours, dispatch_update_frequency_hours, can_charge, can_clip_charge, can_grid_charge, can_fuelcell_charge,
-        battReplacementCostPerkWh, battCycleCostChoice, battCycleCost, interconnection_limit, chargeOnlySystemExceedLoad, dischargeOnlyLoadExceedSystem)
+        battReplacementCostPerkWh, battCycleCostChoice, battCycleCost, interconnection_limit, chargeOnlySystemExceedLoad, dischargeOnlyLoadExceedSystem, SOC_min_outage)
 {
 	_P_target_month = -1e16;
 	_P_target_current = -1e16;
@@ -125,8 +126,22 @@ void dispatch_automatic_behind_the_meter_t::dispatch(size_t year,
 	size_t step_per_hour = (size_t)(1 / _dt_hour);
 	size_t lifetimeIndex = util::lifetimeIndex(year, hour_of_year, step, step_per_hour);
 
-	update_dispatch(year, hour_of_year, step, lifetimeIndex);
-	dispatch_automatic_t::dispatch(year, hour_of_year, step);
+    bool new_month = check_new_month(hour_of_year, step);
+    if (new_month && rate_forecast != NULL)
+    {
+        rate_forecast->copyTOUForecast();
+    }
+
+    m_outage_manager->update(true, _min_outage_soc); // true is for automated dispatch
+    if (m_batteryPower->isOutageStep) {
+        // Calls dispatch function, sometimes iteratively
+        run_outage_step(lifetimeIndex);
+    }
+    else {
+        update_dispatch(year, hour_of_year, step, lifetimeIndex);
+        dispatch_automatic_t::dispatch(year, hour_of_year, step);
+    }
+
     if (rate_forecast)
     {
         std::vector<double> actual_dispatch = { m_batteryPower->powerGrid };
@@ -204,7 +219,7 @@ void dispatch_automatic_behind_the_meter_t::update_dispatch(size_t year, size_t 
 	FILE *p;
 	check_debug(hour_of_year, idx, p, debug);
 	size_t hour_of_day = util::hour_of_day(hour_of_year);
-	_day_index = (hour_of_day * _steps_per_hour + step);
+	_day_index++;
 
     // [kWh] - the maximum energy that can be cycled
     double E_max = 0;
@@ -212,14 +227,10 @@ void dispatch_automatic_behind_the_meter_t::update_dispatch(size_t year, size_t 
     if (_mode == dispatch_t::FORECAST)
     {
         // Hourly rolling forecast horizon
-        if (hour_of_year != _hour_last_updated)
+        if ((hour_of_year != _hour_last_updated) || m_outage_manager->recover_from_outage)
         {
             costToCycle();
-            bool new_month = check_new_month(hour_of_year, step);
-            if (new_month)
-            {
-                rate_forecast->copyTOUForecast();
-            }
+
             initialize(hour_of_year, idx);
 
             double no_dispatch_cost = compute_costs(idx, year, hour_of_year, p, debug);
@@ -235,7 +246,7 @@ void dispatch_automatic_behind_the_meter_t::update_dispatch(size_t year, size_t 
 	else if (_mode != dispatch_t::CUSTOM_DISPATCH)
 	{
 		// Currently hardcoded to have 24 hour look ahead and 24 dispatch_update
-		if (hour_of_day == 0 && hour_of_year != _hour_last_updated)
+		if ((hour_of_day == 0 && hour_of_year != _hour_last_updated) || m_outage_manager->recover_from_outage)
 		{
 			check_new_month(hour_of_year, step);
 
@@ -283,6 +294,7 @@ void dispatch_automatic_behind_the_meter_t::initialize(size_t hour_of_year, size
 	m_batteryPower->powerBatteryDC = 0;
 	m_batteryPower->powerBatteryAC = 0;
 	m_batteryPower->powerBatteryTarget = 0;
+    _day_index = 0;
 
 	// clean up vectors
     size_t lifetimeMax = _P_pv_ac.size();
@@ -340,7 +352,7 @@ void dispatch_automatic_behind_the_meter_t::sort_grid(size_t idx, FILE *p, const
 
 	// compute grid net from pv and load (no battery)
 	size_t count = 0;
-	for (size_t hour = 0; hour != 24; hour++)
+	for (size_t hour = 0; hour != 24 && idx < _P_load_ac.size(); hour++)
 	{
 		for (size_t step = 0; step != _steps_per_hour; step++)
 		{
@@ -355,7 +367,7 @@ void dispatch_automatic_behind_the_meter_t::sort_grid(size_t idx, FILE *p, const
 			count++;
 		}
 	}
-	std::sort(sorted_grid.begin(), sorted_grid.end(), byGrid());
+	std::stable_sort(sorted_grid.begin(), sorted_grid.end(), byGrid());
 }
 
 void dispatch_automatic_behind_the_meter_t::compute_energy(double & E_max, FILE* p, const bool debug)
@@ -418,24 +430,27 @@ double dispatch_automatic_behind_the_meter_t::compute_costs(size_t idx, size_t y
             count++;
         }
     }
-    std::sort(sorted_grid.begin(), sorted_grid.end(), byCost());
+    std::stable_sort(sorted_grid.begin(), sorted_grid.end(), byCost());
     return no_dispatch_cost;
 }
 
 void dispatch_automatic_behind_the_meter_t::target_power(double E_useful, size_t idx, FILE*p, const bool debug)
 {
+    size_t steps_remaining = (_P_load_ac.size() - idx);
+    size_t num_steps = steps_remaining < _num_steps ? steps_remaining : _num_steps;
+
 	// if target power set, use that
 	if (_P_target_input.size() > idx && _P_target_input[idx] >= 0)
 	{
 		double_vec::const_iterator first = _P_target_input.begin() + idx;
-		double_vec::const_iterator last = _P_target_input.begin() + idx + _num_steps;
+		double_vec::const_iterator last = _P_target_input.begin() + idx + num_steps;
 		double_vec tmp(first, last);
 		_P_target_use = tmp;
 	}
 	// don't calculate if peak grid demand is less than a previous target in the month
 	else if (sorted_grid[0].Grid() < _P_target_month)
 	{
-		for (size_t i = 0; i != _num_steps; i++)
+		for (size_t i = 0; i != num_steps; i++)
 			_P_target_use[i] = _P_target_month;
 	}
 	// otherwise, compute one target for the next 24 hours.
@@ -448,14 +463,14 @@ void dispatch_automatic_behind_the_meter_t::target_power(double E_useful, size_t
 		double P_target = sorted_grid[0].Grid();
 		double P_target_min = 1e16;
 		double E_charge = 0.;
-		int index = (int)_num_steps - 1;
+		int index = (int)num_steps - 1;
 		std::vector<double> E_charge_vec;
-		for (int jj = (int)_num_steps - 1; jj >= 0; jj--)
+		for (int jj = (int)num_steps - 1; jj >= 0; jj--)
 		{
 			E_charge = 0.;
 			P_target_min = sorted_grid[index].Grid();
 
-			for (int ii = (int)_num_steps - 1; ii >= 0; ii--)
+			for (int ii = (int)num_steps - 1; ii >= 0; ii--)
 			{
 				if (sorted_grid[ii].Grid() > P_target_min)
 					break;
@@ -474,9 +489,9 @@ void dispatch_automatic_behind_the_meter_t::target_power(double E_useful, size_t
 
 		// Calculate target power
 		std::vector<double> sorted_grid_diff;
-		sorted_grid_diff.reserve(_num_steps - 1);
+		sorted_grid_diff.reserve(num_steps - 1);
 
-		for (size_t ii = 0; ii != _num_steps - 1; ii++)
+		for (size_t ii = 0; ii != num_steps - 1; ii++)
 			sorted_grid_diff.push_back(sorted_grid[ii].Grid() - sorted_grid[ii + 1].Grid());
 
 		P_target = sorted_grid[0].Grid(); // target power to shave to [kW]
@@ -485,7 +500,7 @@ void dispatch_automatic_behind_the_meter_t::target_power(double E_useful, size_t
 			fprintf(p, "Step\tTarget_Power\tEnergy_Sum\tEnergy_charged\n");
 
 		// Iterate over sorted load to determine target power
-		for (size_t ii = 0; ii != _num_steps - 1; ii++)
+		for (size_t ii = 0; ii != num_steps - 1; ii++)
 		{
 			// don't look at negative grid power
 			if (sorted_grid[ii + 1].Grid() < 0)
@@ -546,7 +561,7 @@ void dispatch_automatic_behind_the_meter_t::target_power(double E_useful, size_t
 			_P_target_month = P_target;
 
 		// write vector of targets
-		for (size_t i = 0; i != _num_steps; i++)
+		for (size_t i = 0; i != num_steps; i++)
 			_P_target_use[i] = P_target;
 	}
     for (size_t i = 0; i != _P_battery_use.size(); i++)
@@ -592,7 +607,7 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(dispatch_plan
 {
     size_t i = 0, index = 0;
 
-    std::sort(sorted_grid.begin(), sorted_grid.end(), byCost());
+    std::stable_sort(sorted_grid.begin(), sorted_grid.end(), byCost());
     // Iterating over sorted grid
     double costDuringDispatchHours = 0.0;
     double costAtStep = 0.0;
@@ -668,7 +683,7 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(dispatch_plan
         }
     }
     // Get max grid use during charging. Choose highest percentile < 25% where we aren't planning on discharging
-    std::sort(sorted_grid.begin(), sorted_grid.end(), byGrid());
+    std::stable_sort(sorted_grid.begin(), sorted_grid.end(), byGrid());
     bool lookingForGridUse = true;
     double peakDesiredGridUse = 0.0;
     i = _num_steps / 4;
@@ -691,7 +706,7 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(dispatch_plan
     }
 
     // Iterating over sorted grid
-    std::sort(sorted_grid.begin(), sorted_grid.end(), byLowestMarginalCost());
+    std::stable_sort(sorted_grid.begin(), sorted_grid.end(), byLowestMarginalCost());
     // Find m hours to get required energy - hope we got today's energy yesterday (for morning peaks). Apportion between hrs of lowest marginal cost
     i = 0;
     while (requiredEnergy > 0 && i < _num_steps)

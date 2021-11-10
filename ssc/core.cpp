@@ -439,6 +439,14 @@ util::matrix_t<ssc_number_t> &compute_module::allocate_matrix(const std::string 
     return v->num;
 }
 
+ssc_number_t* compute_module::resize_array(const std::string& name, size_t length) {
+    return m_vartab->resize_array(name, length);
+}
+
+ssc_number_t* compute_module::resize_matrix(const std::string& name, size_t n_rows, size_t n_cols) {
+    return m_vartab->resize_matrix(name, n_rows, n_cols);
+}
+
 var_data &compute_module::value(const std::string &name) {
     var_data *v = lookup(name);
     if (!v) {

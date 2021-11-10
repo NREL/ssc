@@ -673,3 +673,15 @@ util::matrix_t<ssc_number_t>& var_table::allocate_matrix( const std::string &nam
     v->num.resize_fill(nrows, ncols, 0.0);
     return v->num;
 }
+
+ssc_number_t* var_table::resize_array(const std::string& name, size_t length) {
+    var_data* v = lookup(name);
+    v->num.resize_preserve(1, length, 0.0);
+    return v->num.data();
+}
+
+ssc_number_t* var_table::resize_matrix(const std::string& name, size_t n_rows, size_t n_cols) {
+    var_data* v = lookup(name);
+    v->num.resize_preserve(n_rows, n_cols, 0.0);
+    return v->num.data();
+}
