@@ -1608,10 +1608,31 @@ public:
 		int m, h, s, period, tier;
 		size_t d;
 		int c = 0;
+        ssc_number_t prev_demand_charge = 0.0;
+        ssc_number_t curr_demand_charge = 0.0;
+
+        if (rate.uses_billing_demand) {
+            if (rate.en_billing_demand_lookback) {
+                rate.setup_prev_demand(prev_monthly_peaks);
+            }
+        }
+
 		for (m = 0; m < (int)rate.m_month.size(); m++)
 		{
 			ur_month& curr_month = rate.m_month[m];
             curr_month.reset();
+            
+            if (dc_enabled) {
+                rate.init_dc_peak_vectors(m);
+                if (rate.en_billing_demand_lookback) {
+                    rate.billing_demand[m] = rate.get_billing_demand(m);
+                }
+                else {
+                    rate.billing_demand[m] = 0.0;
+                }
+                prev_demand_charge = rate.get_demand_charge(m, year);
+            }
+            
 			for (d = 0; d < util::nday[m]; d++)
 			{
 				for (h = 0; h < 24; h++)
@@ -1619,6 +1640,20 @@ public:
 					for (s = 0; s < (int)steps_per_hour && c < (int)m_num_rec_yearly; s++)
 					{
 						curr_month.update_net_and_peak(e_in[c], p_in[c], c);
+                        if (dc_enabled) {
+                            // set peak per period - no tier accumulation
+                            rate.find_dc_tou_peak(m, p_in[c], c);
+
+                            if (rate.en_billing_demand_lookback) {
+                                rate.billing_demand[m] = rate.get_billing_demand(m);
+                            }
+                            else {
+                                rate.billing_demand[m] = curr_month.dc_flat_peak;
+                            }
+                            curr_demand_charge = rate.get_demand_charge(m, year);
+                            demand_charge[c] = curr_demand_charge - prev_demand_charge;
+                            prev_demand_charge = curr_demand_charge;
+                        }
 						c++;
 					}
 				}
@@ -1670,34 +1705,6 @@ public:
 				}
 			}
 		}
-
-        // set peak per period - no tier accumulation
-        if (dc_enabled)
-        {
-            c = 0;
-            for (m = 0; m < (int)rate.m_month.size(); m++)
-            {
-                rate.init_dc_peak_vectors(m);
-                for (d = 0; d < util::nday[m]; d++)
-                {
-                    for (h = 0; h < 24; h++)
-                    {
-                        for (s = 0; s < (int)steps_per_hour && c < (int)m_num_rec_yearly; s++)
-                        {
-                            rate.find_dc_tou_peak(m, p_in[c], c);
-                            c++;
-                        }
-                    }
-                }
-            }
-        }
-
-        if (rate.uses_billing_demand) {
-            if (rate.en_billing_demand_lookback) {
-                rate.setup_prev_demand(prev_monthly_peaks);
-            }
-            rate.set_billing_demands();
-        }
 
 		if (ec_enabled)
 		{
@@ -1896,8 +1903,6 @@ public:
 							if (dc_enabled)
 							{
 								ssc_number_t charge = rate.get_demand_charge(m, year);
-
-								demand_charge[c] = charge;
 								payment[c] += charge; // apply to last hour of the month
 							}
 
@@ -2141,25 +2146,58 @@ public:
         size_t surplus_tier = 0, deficit_tier = 0;
 		size_t d;
 		size_t c = 0;
-		for (m = 0; m < (int)rate.m_month.size(); m++)
-		{
-			ur_month& curr_month = rate.m_month[m];
-			curr_month.energy_net = 0;
-			curr_month.hours_per_month = 0;
-			curr_month.dc_flat_peak = 0;
-			curr_month.dc_flat_peak_hour = 0;
-			for (d = 0; d < util::nday[m]; d++)
-			{
-				for (h = 0; h < 24; h++)
-				{
-					for (s = 0; s < (int)steps_per_hour && c < (int)m_num_rec_yearly; s++)
-					{
-						curr_month.update_net_and_peak(e_in[c], p_in[c], c);
-						c++;
-					}
-				}
-			}
-		}
+
+        ssc_number_t prev_demand_charge = 0.0;
+        ssc_number_t curr_demand_charge = 0.0;
+
+        if (rate.uses_billing_demand) {
+            if (rate.en_billing_demand_lookback) {
+                rate.setup_prev_demand(prev_monthly_peaks);
+            }
+        }
+
+        for (m = 0; m < (int)rate.m_month.size(); m++)
+        {
+            ur_month& curr_month = rate.m_month[m];
+            curr_month.reset();
+
+            if (dc_enabled) {
+                rate.init_dc_peak_vectors(m);
+                if (rate.en_billing_demand_lookback) {
+                    rate.billing_demand[m] = rate.get_billing_demand(m);
+                }
+                else {
+                    rate.billing_demand[m] = 0.0;
+                }
+                prev_demand_charge = rate.get_demand_charge(m, year);
+            }
+
+            for (d = 0; d < util::nday[m]; d++)
+            {
+                for (h = 0; h < 24; h++)
+                {
+                    for (s = 0; s < (int)steps_per_hour && c < (int)m_num_rec_yearly; s++)
+                    {
+                        curr_month.update_net_and_peak(e_in[c], p_in[c], c);
+                        if (dc_enabled) {
+                            // set peak per period - no tier accumulation
+                            rate.find_dc_tou_peak(m, p_in[c], c);
+
+                            if (rate.en_billing_demand_lookback) {
+                                rate.billing_demand[m] = rate.get_billing_demand(m);
+                            }
+                            else {
+                                rate.billing_demand[m] = curr_month.dc_flat_peak;
+                            }
+                            curr_demand_charge = rate.get_demand_charge(m, year);
+                            demand_charge[c] = curr_demand_charge - prev_demand_charge;
+                            prev_demand_charge = curr_demand_charge;
+                        }
+                        c++;
+                    }
+                }
+            }
+        }
 
 		// excess earned
 		for (m = 0; m < 12; m++)
@@ -2168,34 +2206,6 @@ public:
 			if (rate.m_month[m].energy_net > 0 && !gen_only)
 				excess_kwhs_earned[m] = rate.m_month[m].energy_net;
 		}
-
-        // set peak per period - no tier accumulation
-        if (dc_enabled)
-        {
-            c = 0;
-            for (m = 0; m < (int)rate.m_month.size(); m++)
-            {
-                rate.init_dc_peak_vectors(m);
-                for (d = 0; d < util::nday[m]; d++)
-                {
-                    for (h = 0; h < 24; h++)
-                    {
-                        for (s = 0; s < (int)steps_per_hour && c < (int)m_num_rec_yearly; s++)
-                        {
-                            rate.find_dc_tou_peak(m, p_in[c], c);
-                            c++;
-                        }
-                    }
-                }
-            }
-        }
-
-        if (rate.uses_billing_demand) {
-            if (rate.en_billing_demand_lookback) {
-                rate.setup_prev_demand(prev_monthly_peaks);
-            }
-            rate.set_billing_demands();
-        }
 
 		if (ec_enabled)
 		{
@@ -2395,7 +2405,6 @@ public:
 							if (dc_enabled)
 							{
 								ssc_number_t charge = rate.get_demand_charge(m, year);
-								demand_charge[c] = charge;
 								payment[c] += charge; // apply to last hour of the month
 
 							} // if demand charges enabled (dc_enabled)

@@ -941,6 +941,7 @@ ssc_number_t rate_data::get_demand_charge(int month, size_t year)
 	d_lower = 0;
 	int peak_hour = 0;
 	curr_month.dc_tou_charge.clear();
+    monthly_dc_tou[month] = 0;
 	for (period = 0; period < (int)curr_month.dc_tou_ub.nrows(); period++)
 	{
 		charge = 0;
