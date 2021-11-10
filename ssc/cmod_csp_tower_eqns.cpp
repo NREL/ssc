@@ -25,6 +25,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "vartab.h"
 #include <cmath>
 #include "csp_solver_cavity_receiver.h"
+#include "sam_csp_util.h"
 
 #pragma warning(disable: 4297)  // ignore warning: 'function assumed not to throw an exception but does'
 
@@ -189,11 +190,11 @@ bool MSPT_Receiver_Equations(ssc_data_t data)
     }
     double csp_pt_rec_max_oper_frac, q_rec_des, csp_pt_rec_htf_c_avg, t_htf_hot_des, t_htf_cold_des,
         csp_pt_rec_max_flow_to_rec, csp_pt_rec_htf_t_avg, d_rec, rec_height, rec_aspect,
-        h_tower, piping_length_mult, piping_length_const, piping_length, piping_loss, piping_loss_tot,
-        rec_htf;
+        h_tower, piping_length_mult, piping_length_const, piping_length, piping_loss_coefficient, piping_loss_tot,
+        d_inner_piping, rec_htf;
 
     util::matrix_t<double> field_fl_props;
-
+    
     // csp_pt_rec_htf_t_avg
     ssc_data_t_get_number(data, "t_htf_cold_des", &t_htf_cold_des);
     ssc_data_t_get_number(data, "t_htf_hot_des", &t_htf_hot_des);
@@ -207,6 +208,10 @@ bool MSPT_Receiver_Equations(ssc_data_t data)
     csp_pt_rec_htf_c_avg = Csp_pt_rec_htf_c_avg(csp_pt_rec_htf_t_avg, (int)rec_htf, field_fl_props);
     ssc_data_t_set_number(data, "csp.pt.rec.htf_c_avg", csp_pt_rec_htf_c_avg);
 
+    // Get HTFProperties class
+    HTFProperties field_htfProps;
+    field_htfProps = GetHtfProperties(rec_htf, field_fl_props);
+
     // csp_pt_rec_max_flow_to_rec
     ssc_data_t_get_number(data, "csp.pt.rec.max_oper_frac", &csp_pt_rec_max_oper_frac);
     ssc_data_t_get_number(data, "q_rec_des", &q_rec_des);
@@ -214,6 +219,7 @@ bool MSPT_Receiver_Equations(ssc_data_t data)
     ssc_data_t_get_number(data, "t_htf_hot_des", &t_htf_hot_des);
     ssc_data_t_get_number(data, "t_htf_cold_des", &t_htf_cold_des);
     csp_pt_rec_max_flow_to_rec = Csp_pt_rec_max_flow_to_rec(csp_pt_rec_max_oper_frac, q_rec_des, csp_pt_rec_htf_c_avg, t_htf_hot_des, t_htf_cold_des);
+    double m_dot_htf_des = csp_pt_rec_max_flow_to_rec / csp_pt_rec_max_oper_frac;   //[kg/s]
     ssc_data_t_set_number(data, "csp.pt.rec.max_flow_to_rec", csp_pt_rec_max_flow_to_rec);
 
     // rec_aspect
@@ -258,14 +264,18 @@ bool MSPT_Receiver_Equations(ssc_data_t data)
     ssc_data_t_get_number(data, "h_tower", &h_tower);
     ssc_data_t_get_number(data, "piping_length_mult", &piping_length_mult);
     ssc_data_t_get_number(data, "piping_length_const", &piping_length_const);
-    piping_length = Piping_length(h_tower, piping_length_mult, piping_length_const);
-    ssc_data_t_set_number(data, "piping_length", piping_length);
 
     // piping_loss_tot
     ssc_data_t_get_number(data, "piping_length", &piping_length);
-    ssc_data_t_get_number(data, "piping_loss", &piping_loss);
-    piping_loss_tot = Piping_loss_tot(piping_length, piping_loss);
-    ssc_data_t_set_number(data, "piping_loss_tot", piping_loss_tot);
+    ssc_data_t_get_number(data, "piping_loss_coefficient", &piping_loss_coefficient);   //[W/m2-K]
+    CSP::mspt_piping_design(field_htfProps,
+        h_tower, piping_length_mult,
+        piping_length_const, piping_loss_coefficient,
+        t_htf_hot_des+273.15, t_htf_cold_des+273.15,
+        m_dot_htf_des,
+        piping_length, d_inner_piping, piping_loss_tot);
+    ssc_data_t_set_number(data, "piping_length", piping_length);
+    ssc_data_t_set_number(data, "piping_loss_tot", piping_loss_tot*1.E-3);        //[kWt] convert from Wt
     return true;
 }
 

@@ -181,10 +181,12 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,     SSC_NUMBER, "rec_qf_delay",                       "Energy-based receiver startup delay (fraction of rated thermal power)",                                                                   "",             "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "csp.pt.rec.max_oper_frac",           "Maximum receiver mass flow rate fraction",                                                                                                "",             "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "eta_pump",                           "Receiver HTF pump efficiency",                                                                                                            "",             "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "piping_loss",                        "Thermal loss per meter of piping",                                                                                                        "Wt/m",         "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "piping_length_mult",                 "Piping length multiplier",                                                                                                                "",             "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "piping_length_const",                "Piping constant length",                                                                                                                  "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
-	
+
+    // New variables replacing deprecated variable "piping_loss". Variable currently not required so exec() can check if assigned and throw a more detailed error
+    { SSC_INPUT,     SSC_NUMBER, "piping_loss_coefficient",            "Thermal loss per meter of piping",                                                                                                        "Wt/m2-K",      "",                                  "Tower and Receiver",                       "",                                                                 "",              ""},
+
 	{ SSC_INPUT,     SSC_NUMBER, "rec_clearsky_model",				   "Clearsky model: None = -1, User-defined data = 0, Meinel = 1; Hottel = 2; Allen = 3; Moon = 4",											  "",             "",                                  "Tower and Receiver",                       "?=-1",															   "",              ""},
 	{ SSC_INPUT,     SSC_ARRAY,  "rec_clearsky_dni",					"User-defined clear-sky DNI",																											  "W/m2",         "",                                  "Tower and Receiver",                       "rec_clearsky_model=0",											   "",              ""},
 	{ SSC_INPUT,     SSC_NUMBER, "rec_clearsky_fraction",               "Weighting fraction on clear-sky DNI for receiver flow control",                                                                          "",             "",                                  "Tower and Receiver",                       "?=0.0",                                                            "",              ""},
@@ -428,6 +430,11 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_OUTPUT,    SSC_NUMBER, "const_per_interest_total",           "Total interest costs, all loans",                                                                                                         "$",            "",                                  "Financial Parameters",                     "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "construction_financing_cost",        "Total construction financing cost",                                                                                                       "$",            "",                                  "Financial Parameters",                     "*",                                                                "",              ""},
 
+    // ****************************************************************************************************************************************
+    //     DEPRECATED INPUTS -- exec() checks if a) variable is assigned and b) if replacement variable is assigned. throws exception if a=true and b=false
+    // ****************************************************************************************************************************************
+    { SSC_INPUT,     SSC_NUMBER, "piping_loss",                        "Thermal loss per meter of piping",                                                                                                        "Wt/m",         "",                                  "Tower and Receiver",                       "",                                                                 "",              "" },
+
 
 
     // ****************************************************************************************************************************************
@@ -631,6 +638,21 @@ public:
 	void exec() override
 	{
         std::clock_t clock_start = std::clock();
+
+        // *****************************************************
+        // Check deprecated variables
+        bool is_piping_loss_assigned = is_assigned("piping_loss");
+        bool is_piping_loss_coefficient_assigned = is_assigned("piping_loss_coefficient");
+
+        if (is_piping_loss_assigned && is_piping_loss_coefficient_assigned) {
+            log("We replaced the functionality of input variable piping_loss with new input variable piping_loss_coefficient,"
+                " so the model does not use your piping_loss input.");
+        }
+        else if (is_piping_loss_assigned) {
+            throw exec_error("tcsmolten_salt", "We replaced the functionality of input variable piping_loss [Wt/m] with new input variable piping_loss_coefficient [Wt/m2-K]."
+                " The new input scales piping thermal losses as a function of receiver thermal power and design-point temperatures."
+                " Please define piping_loss_coefficient in your script.");
+        }
 
         // *****************************************************
         // System Design Parameters
@@ -1349,7 +1371,7 @@ public:
                 rec_span, topLipHeight, botLipHeight,
                 e_act_sol, e_pass_sol, e_act_therm, e_pass_therm,
                 active_surface_mesh_type, floor_and_cover_mesh_type, lips_mesh_type,
-                as_double("piping_loss"), as_double("piping_length_const"), as_double("piping_length_mult"),
+                as_double("piping_loss_coefficient"), as_double("piping_length_const"), as_double("piping_length_mult"),
                 as_double("A_sf"), as_double("h_tower"), as_double("T_htf_hot_des"),
                 as_double("T_htf_cold_des"), as_double("f_rec_min"), q_dot_rec_des,
                 as_double("rec_su_delay"), as_double("rec_qf_delay"), as_double("csp.pt.rec.max_oper_frac"),
@@ -1383,7 +1405,7 @@ public:
                 ss_receiver->m_crossover_shift = as_integer("crossover_shift");
                 ss_receiver->m_hl_ffact = as_double("hl_ffact");
                 ss_receiver->m_A_sf = as_double("A_sf");
-                ss_receiver->m_pipe_loss_per_m = as_double("piping_loss");                      //[Wt/m]
+                ss_receiver->m_piping_loss_coefficient = as_double("piping_loss_coefficient");
                 ss_receiver->m_pipe_length_add = as_double("piping_length_const");  //[m]
                 ss_receiver->m_pipe_length_mult = as_double("piping_length_mult");      //[-]
                 ss_receiver->m_n_flux_x = as_integer("n_flux_x");
@@ -1411,7 +1433,7 @@ public:
                 trans_receiver->m_crossover_shift = as_integer("crossover_shift");
                 trans_receiver->m_hl_ffact = as_double("hl_ffact");
                 trans_receiver->m_A_sf = as_double("A_sf");
-                trans_receiver->m_pipe_loss_per_m = as_double("piping_loss");                       //[Wt/m]
+                trans_receiver->m_piping_loss_coeff = as_double("piping_loss_coefficient");                       //[Wt/m]
                 trans_receiver->m_pipe_length_add = as_double("piping_length_const");   //[m]
                 trans_receiver->m_pipe_length_mult = as_double("piping_length_mult");       //[-]
                 trans_receiver->m_n_flux_x = as_integer("n_flux_x");
