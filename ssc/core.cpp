@@ -1062,7 +1062,7 @@ void dump_ssc_variable(FILE* fp, ssc_data_t p_data, const char* name)
     case SSC_STRING:
         str_value = ::ssc_data_get_string(p_data, name);
         //str_value = std::regex_replace(str_value, std::regex("\\"), "/"); //.replace("\\", "/");
-        str_value = std::regex_replace(str_value, std::regex("'"), "");
+        //str_value = std::regex_replace(str_value, std::regex("'"), "");
         fprintf(fp, "var( '%s', '%s' );\n", name, (const char*)str_value.c_str());
         break;
     case SSC_NUMBER:
