@@ -1707,24 +1707,16 @@ public:
 			for (m = 0; m < (int)rate.m_month.size(); m++)
 			{
 				ur_month& curr_month = rate.m_month[m];
-				for (d = 0; d < util::nday[m]; d++)
-				{
-					for (h = 0; h < 24; h++)
-					{
-						for (s = 0; s < (int)steps_per_hour && c < (int)m_num_rec_yearly; s++)
-						{
-							rate.sort_energy_to_periods(m, e_in[c], c);
-							c++;
-						}
-					}
-				}
 
-				bool skip_rollover = (m == 0 && year == 0) || (m == net_metering_credit_month + 1) || (m == 0 && net_metering_credit_month == 11);
-				
-				// rollover energy from correct period - matching time of day 
-				if (!skip_rollover && enable_nm && !excess_monthly_dollars)
-				{
-					ur_month& prev_month = (m == 0) ? *prev_dec : rate.m_month[m - 1];
+                std::vector<double> composite_buy_rate = rate.get_composite_tou_buy_rate(m, year, curr_month.energy_net);
+                std::vector<double> composite_sell_rate = rate.get_composite_tou_sell_rate(m, year, curr_month.energy_net);
+
+                bool skip_rollover = (m == 0 && year == 0) || (m == net_metering_credit_month + 1) || (m == 0 && net_metering_credit_month == 11);
+
+                // rollover energy from correct period - matching time of day 
+                if (!skip_rollover && enable_nm && !excess_monthly_dollars)
+                {
+                    ur_month& prev_month = (m == 0) ? *prev_dec : rate.m_month[m - 1];
                     int errorCode = rate.transfer_surplus(curr_month, prev_month);
                     if (errorCode > 0)
                     {
@@ -1737,6 +1729,22 @@ public:
                         ss << "year:" << year << "utilityrate5: Unable to determine period for energy charge rollover: Period " << errorCode % 100 << " does not exist for 12 am, 6 am, 12 pm or 6 pm in the current month, which is " << util::schedule_int_to_month(errorMonth) << ".";
                         log(ss.str(), SSC_NOTICE);
                     }
+                }
+
+                ssc_number_t prev_cost = 0;
+				for (d = 0; d < util::nday[m]; d++)
+				{
+					for (h = 0; h < 24; h++)
+					{
+						for (s = 0; s < (int)steps_per_hour && c < (int)m_num_rec_yearly; s++)
+						{
+							rate.sort_energy_to_periods(m, e_in[c], c);
+                            ssc_number_t curr_cost = rate.getEnergyChargeNetMetering(m, composite_buy_rate, composite_sell_rate);
+                            energy_charge[c] = curr_cost - prev_cost;
+                            prev_cost = curr_cost;
+							c++;
+						}
+					}
 				}
 
                 rate.compute_surplus(curr_month);
@@ -1842,8 +1850,6 @@ public:
 									{
 										ssc_number_t cr = curr_month.ec_energy_surplus.at(period, tier) * curr_month.ec_tou_sr.at(period, tier) * rate_esc;
 
-//										excess_kwhs_earned[m] += m_month[m].ec_energy_surplus.at(period, tier);
-
 										if (!enable_nm)
 										{
 											credit_amt += cr;
@@ -1852,14 +1858,6 @@ public:
 										else if (excess_monthly_dollars)
 											monthly_cumulative_excess_dollars[m] += cr;
 
-										/*
-										if (!enable_nm || excess_monthly_kwhs)
-										{
-										credit_amt += cr;
-										if (!excess_monthly_kwhs)
-										m_month[m].ec_charge.at(period, tier) = -cr;
-										}
-										*/
 									}
 								}
 								monthly_ec_charges[m] -= credit_amt;
@@ -1880,13 +1878,7 @@ public:
 								if (enable_nm)
 								{
 									payment[c] += monthly_ec_charges[m];
-									/*
-									if (monthly_ec_charges[m] < 0)
-									{
-									monthly_cumulative_excess_kwhs[m] = -monthly_ec_charges[m];
-									payment[c] += monthly_ec_charges[m];
-									}
-									*/
+
 								}
 								else // non-net metering - no rollover
 								{
@@ -1895,8 +1887,6 @@ public:
 									else // surplus - sell to grid
 										income[c] -= monthly_ec_charges[m]; // charge is negative for income!
 								}
-
-								energy_charge[c] += monthly_ec_charges[m];
 
 								// end of energy charge
 
