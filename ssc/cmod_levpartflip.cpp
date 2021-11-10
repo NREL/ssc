@@ -1291,7 +1291,9 @@ public:
 		int loan_moratorium = as_integer("loan_moratorium");
 		int term_tenor = as_integer("term_tenor");
 		double term_int_rate = as_double("term_int_rate")*0.01;
-		double dscr = as_double("dscr");
+		double dscr_input = as_double("dscr");
+        bool dscr_limit_debt_fraction = as_boolean("dscr_limit_debt_fraction");
+        double dscr_maximum_debt_fraction = as_double("dscr_maximum_debt_fraction") * 0.01;
 		double dscr_reserve_months = as_double("dscr_reserve_months");
 		double cash_for_debt_service=0;
 		double pv_cafds=0;
@@ -1891,10 +1893,35 @@ public:
 		// 12/14/12 - address issue from Eric Lantz - ppa solution when target mode and ppa < 0
 		double ppa_old=ppa;
 
-		// debt fraction input
-		if (!constant_dscr_mode)
-		{
-			double debt_frac = as_double("debt_percent")*0.01;
+        if (constant_dscr_mode) {
+            // initial installed_cost estimate
+            cost_financing =
+                cost_debt_closing +
+                cost_debt_fee_frac * cost_prefinancing + //estimate until final size of debt known
+                cost_other_financing +
+                // cf.at(CF_reserve_debtservice, 0) +  // estimate until debt size for each year is known
+                constr_total_financing +
+                cf.at(CF_reserve_om, 0) +
+                cf.at(CF_reserve_receivables, 0);
+
+            cost_installed = cost_prefinancing + cost_financing
+                - ibi_fed_amount
+                - ibi_sta_amount
+                - ibi_uti_amount
+                - ibi_oth_amount
+                - ibi_fed_per
+                - ibi_sta_per
+                - ibi_uti_per
+                - ibi_oth_per
+                - cbi_fed_amount
+                - cbi_sta_amount
+                - cbi_uti_amount
+                - cbi_oth_amount;
+
+        }
+        else
+        { // debt fraction input
+            double debt_frac = as_double("debt_percent")*0.01;
 
 			cost_installed =
 				cost_prefinancing
@@ -2067,6 +2094,8 @@ public:
 
 		//		log(util::format("before loop  - size of debt =%lg .",	size_of_debt),	SSC_WARNING);
 
+        double dscr = dscr_input; // reset to input and limit to max debt fraction if necessary line 2298 and Github issue 550
+
 
 
 
@@ -2078,7 +2107,10 @@ public:
 		flip_year=-1;
 		cash_for_debt_service=0;
 		pv_cafds=0;
-		if (constant_dscr_mode)	size_of_debt = 0;
+        if (constant_dscr_mode) {
+            size_of_debt = 0;
+            dscr = dscr_input;
+        }
 		if (ppa_interval_found)	ppa = (w0*x1 + w1*x0) / (w0 + w1);
 
 		// debt pre calculation
@@ -2146,6 +2178,26 @@ public:
 		for (i = 0; i <= nyears; i++)
 			cf.at(CF_project_receivablesra, i) = -cf.at(CF_funding_receivables, i) - cf.at(CF_disbursement_receivables, i);
 
+        /* Github issue 550 update dscr if necessary with limit on maximum debt fraction */
+        if (constant_dscr_mode && dscr_limit_debt_fraction /* && (size_of_debt > 0)*/) {
+            // TODO - determine if we are going to allow negative DSCR values for coverage when PPA fixed price is too low to cover expenses
+            if ((fabs(size_of_debt) > (cost_installed * dscr_maximum_debt_fraction)) || (size_of_debt < 0)) {
+                if (/*(size_of_debt > 0) &&*/ (cost_installed > 0) && (dscr_maximum_debt_fraction > 0)) {
+                    //                    dscr = fabs(size_of_debt) / (cost_installed * dscr_maximum_debt_fraction) * dscr_input;
+                    dscr = size_of_debt / (cost_installed * dscr_maximum_debt_fraction) * dscr_input;
+                    // recalculate debt size with constrained dscr
+                    size_of_debt = 0.0;
+                    for (i = 0; i <= nyears; i++) {
+                        if (dscr != 0)
+                            cf.at(CF_debt_size, i) = cf.at(CF_pv_cash_for_ds, i) / dscr;
+                        else
+                            cf.at(CF_debt_size, i) = 0.0; // default behavior of initialization of cash flow line items
+                        size_of_debt += cf.at(CF_debt_size, i);
+                    }
+
+                }
+            }
+        }
 
 
 		if (constant_dscr_mode)

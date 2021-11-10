@@ -2514,7 +2514,7 @@ void Evacuated_Receiver::EvacReceiver(double T_1_in, double m_dot, double T_amb,
 
 	double T_upper_max = std::numeric_limits<double>::quiet_NaN();
 
-	if( reguess )
+	if( reguess || m_is_always_reguess )
 	{
 		if( m_Glazing_intact.at(hn,hv) )
 		{

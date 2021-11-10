@@ -33,7 +33,7 @@ Dispatch base class
 dispatch_t::dispatch_t(battery_t* Battery, double dt_hour, double SOC_min, double SOC_max, int current_choice, double Ic_max, double Id_max,
     double Pc_max_kwdc, double Pd_max_kwdc, double Pc_max_kwac, double Pd_max_kwac,
     double t_min, int mode, int battMeterPosition, double interconnection_limit,
-    bool chargeOnlySystemExceedLoad, bool dischargeOnlyLoadExceedSystem)
+    bool chargeOnlySystemExceedLoad, bool dischargeOnlyLoadExceedSystem, double SOC_min_outage)
 {
     // initialize battery power flow
     std::unique_ptr<BatteryPowerFlow> tmp(new BatteryPowerFlow(dt_hour));
@@ -56,6 +56,9 @@ dispatch_t::dispatch_t(battery_t* Battery, double dt_hour, double SOC_min, doubl
     // initalize Battery and a copy of the Battery for iteration
     _Battery = Battery;
     _Battery_initial = new battery_t(*_Battery);
+
+    m_outage_manager = std::unique_ptr<outage_manager>(new outage_manager(m_batteryPower, _Battery));
+    _min_outage_soc = SOC_min_outage;
 
     // Call the dispatch init method
     init(_Battery, dt_hour, current_choice, t_min, mode);
@@ -91,6 +94,10 @@ dispatch_t::dispatch_t(const dispatch_t& dispatch)
 
     _Battery = new battery_t(*dispatch._Battery);
     _Battery_initial = new battery_t(*dispatch._Battery_initial);
+
+    _min_outage_soc = dispatch._min_outage_soc;
+    m_outage_manager = std::unique_ptr<outage_manager>(new outage_manager(m_batteryPower, _Battery));
+    m_outage_manager->copy(*(dispatch.m_outage_manager));
     init(_Battery, dispatch._dt_hour, dispatch._current_choice, dispatch._t_min, dispatch._mode);
 }
 
@@ -105,6 +112,10 @@ void dispatch_t::copy(const dispatch_t* dispatch)
     std::unique_ptr<BatteryPowerFlow> tmp(new BatteryPowerFlow(*dispatch->m_batteryPowerFlow));
     m_batteryPowerFlow = std::move(tmp);
     m_batteryPower = m_batteryPowerFlow->getBatteryPower();
+    _min_outage_soc = dispatch->_min_outage_soc;
+    m_outage_manager = std::unique_ptr<outage_manager>(new outage_manager(m_batteryPower, _Battery));
+    m_outage_manager->copy(*(dispatch->m_outage_manager));
+
 }
 void dispatch_t::delete_clone()
 {
@@ -390,7 +401,7 @@ bool dispatch_t::restrict_power(double& I)
     return iterate;
 }
 
-void dispatch_t::runDispatch(size_t year, size_t hour_of_year, size_t step)
+void dispatch_t::runDispatch(size_t lifetimeIndex)
 {
     // Ensure the battery operates within the state-of-charge limits
     SOC_controller();
@@ -406,7 +417,6 @@ void dispatch_t::runDispatch(size_t year, size_t hour_of_year, size_t step)
 
     bool iterate = true;
     size_t count = 0;
-    size_t lifetimeIndex = util::lifetimeIndex(year, hour_of_year, step, static_cast<size_t>(1 / _dt_hour));
 
     do {
 
@@ -435,6 +445,142 @@ void dispatch_t::runDispatch(size_t year, size_t hour_of_year, size_t step)
     _prev_charging = _charging;
 }
 
+void dispatch_t::run_outage_step(size_t lifetimeIndex) {
+    if (m_batteryPower->connectionMode == DC_CONNECTED) {
+        dispatch_dc_outage_step(lifetimeIndex);
+    }
+    else {
+        dispatch_ac_outage_step(lifetimeIndex);
+    }
+}
+
+void dispatch_t::dispatch_dc_outage_step(size_t lifetimeIndex) {
+
+    double dc_dc_eff = m_batteryPower->singlePointEfficiencyDCToDC;
+    double pv_kwdc = m_batteryPower->powerSystem;
+    double V_pv = m_batteryPower->voltageSystem;
+    double pv_clipped = m_batteryPower->powerSystemClipped;
+    double crit_load_kwac = m_batteryPower->powerCritLoad;
+    double ac_loss_percent = m_batteryPower->acLossPercent;
+
+    m_batteryPower->sharedInverter->calculateACPower(pv_kwdc, V_pv, m_batteryPower->sharedInverter->Tdry_C);
+    double dc_ac_eff = m_batteryPower->sharedInverter->efficiencyAC * 0.01;
+    double pv_kwac = m_batteryPower->sharedInverter->powerAC_kW;
+
+    double max_discharge_kwdc = _Battery->calculate_max_discharge_kw();
+    max_discharge_kwdc = std::fmin(max_discharge_kwdc, m_batteryPower->powerBatteryDischargeMaxDC);
+    double max_charge_kwdc = _Battery->calculate_max_charge_kw();
+    max_charge_kwdc = std::fmax(max_charge_kwdc, -1.0 * m_batteryPower->powerBatteryChargeMaxDC); // Max, since charging numbers are negative
+    double batt_losses = _Battery->calculate_loss(max_charge_kwdc, lifetimeIndex);
+
+    // Setup battery iteration
+    auto Battery_initial = _Battery->get_state();
+
+    if ((pv_kwac - batt_losses) * (1 - ac_loss_percent) > crit_load_kwac) {
+        double remaining_kwdc = -(pv_kwac * (1 - ac_loss_percent) - crit_load_kwac) / dc_ac_eff + pv_clipped;
+        remaining_kwdc = fmax((remaining_kwdc + batt_losses) / dc_dc_eff, max_charge_kwdc);
+        m_batteryPower->powerBatteryTarget = remaining_kwdc;
+        m_batteryPower->powerBatteryDC = remaining_kwdc;
+        runDispatch(lifetimeIndex);
+        while (m_batteryPower->powerCritLoadUnmet > tolerance) {
+            _Battery->set_state(Battery_initial);
+            // remaining_kw_dc is a negative number, so add it to pv_kwdc to reduce inverter dc power
+            m_batteryPower->sharedInverter->calculateACPower(pv_kwdc + remaining_kwdc, V_pv, m_batteryPower->sharedInverter->Tdry_C);
+            dc_ac_eff = m_batteryPower->sharedInverter->efficiencyAC * 0.01;
+            pv_kwac = m_batteryPower->sharedInverter->powerAC_kW;
+            remaining_kwdc = -(pv_kwac * (1 - ac_loss_percent) - crit_load_kwac) / dc_ac_eff + pv_clipped;
+            remaining_kwdc = fmax((remaining_kwdc + batt_losses) / dc_dc_eff, max_charge_kwdc);
+            m_batteryPower->powerBatteryTarget = remaining_kwdc;
+            m_batteryPower->powerBatteryDC = remaining_kwdc;
+            runDispatch(lifetimeIndex);
+        }
+    }
+    else {
+        // find dc power required from pv + battery discharge to meet load, then get just the power required from battery
+        double required_kwdc = (m_batteryPower->sharedInverter->calculateRequiredDCPower(crit_load_kwac * (1 + ac_loss_percent), V_pv, m_batteryPower->sharedInverter->Tdry_C) - pv_kwdc) / dc_dc_eff;
+        required_kwdc = required_kwdc < tolerance ? tolerance : required_kwdc; // Cover for the fact that the loss percent can occasionally drive the above number negative
+
+        if (required_kwdc < max_discharge_kwdc) {
+            batt_losses = _Battery->calculate_loss(required_kwdc, lifetimeIndex);
+            required_kwdc = fmin(required_kwdc + batt_losses, max_discharge_kwdc);
+            double discharge_kwdc = required_kwdc;
+
+            m_batteryPower->powerBatteryTarget = discharge_kwdc;
+            m_batteryPower->powerBatteryDC = discharge_kwdc;
+            runDispatch(lifetimeIndex);
+            if (m_batteryPower->powerCritLoadUnmet > tolerance) {
+                while (discharge_kwdc < max_discharge_kwdc) {
+                    if (m_batteryPower->powerCritLoadUnmet < tolerance)
+                        break;
+                    discharge_kwdc *= 1.01;
+                    _Battery->set_state(Battery_initial);
+                    m_batteryPower->powerBatteryTarget = discharge_kwdc;
+                    m_batteryPower->powerBatteryDC = discharge_kwdc;
+                    runDispatch(lifetimeIndex);
+                }
+            }
+        }
+        else {
+            m_batteryPower->powerBatteryTarget = max_discharge_kwdc;
+            m_batteryPower->powerBatteryDC = max_discharge_kwdc;
+            runDispatch(lifetimeIndex);
+        }
+    }
+}
+
+void dispatch_t::dispatch_ac_outage_step(size_t lifetimeIndex) {
+    double crit_load_kwac = m_batteryPower->powerCritLoad;
+    double pv_kwac = m_batteryPower->powerSystem;
+    double ac_loss_percent = m_batteryPower->acLossPercent;
+
+    double battery_dispatched_kwac = 0;
+    double max_discharge_kwdc = _Battery->calculate_max_discharge_kw();
+    max_discharge_kwdc = std::fmin(max_discharge_kwdc, m_batteryPower->powerBatteryDischargeMaxDC);
+    double max_discharge_kwac = max_discharge_kwdc * m_batteryPower->singlePointEfficiencyDCToDC;
+    max_discharge_kwac = std::fmin(max_discharge_kwac, m_batteryPower->powerBatteryDischargeMaxAC);
+    double max_charge_kwdc = _Battery->calculate_max_charge_kw();
+    max_charge_kwdc = std::fmax(max_charge_kwdc, -1.0 * m_batteryPower->powerBatteryChargeMaxDC); // Max, since charging numbers are negative
+
+    if (pv_kwac * (1 - ac_loss_percent) > crit_load_kwac) {
+        double remaining_kwdc = -(pv_kwac * (1 - ac_loss_percent) - crit_load_kwac) * m_batteryPower->singlePointEfficiencyACToDC;
+        remaining_kwdc = fmax(remaining_kwdc, max_charge_kwdc);
+        m_batteryPower->powerBatteryTarget = remaining_kwdc;
+        m_batteryPower->powerBatteryDC = remaining_kwdc;
+        runDispatch(lifetimeIndex);
+    }
+    else {
+        double max_to_load_kwac = (max_discharge_kwac + pv_kwac) * (1 - ac_loss_percent);
+        double required_kwdc = (crit_load_kwac - pv_kwac * (1 - ac_loss_percent)) / m_batteryPower->singlePointEfficiencyDCToAC;
+        required_kwdc = fmin(required_kwdc, max_discharge_kwdc);
+
+        if (max_to_load_kwac > crit_load_kwac) {
+            double discharge_kwdc = required_kwdc;
+
+            // iterate in case the dispatched power is slightly less (by tolerance) than required
+            auto Battery_initial = _Battery->get_state();
+            m_batteryPower->powerBatteryTarget = discharge_kwdc;
+            m_batteryPower->powerBatteryDC = discharge_kwdc;
+            runDispatch(lifetimeIndex);
+            if (m_batteryPower->powerCritLoadUnmet > tolerance) {
+                while (discharge_kwdc < max_discharge_kwdc) {
+                    if (m_batteryPower->powerCritLoadUnmet < tolerance)
+                        break;
+                    discharge_kwdc *= 1.01;
+                    _Battery->set_state(Battery_initial);
+                    m_batteryPower->powerBatteryTarget = discharge_kwdc;
+                    m_batteryPower->powerBatteryDC = discharge_kwdc;
+                    runDispatch(lifetimeIndex);
+                }
+            }
+        }
+        else {
+            m_batteryPower->powerBatteryTarget = max_discharge_kwdc;
+            m_batteryPower->powerBatteryDC = max_discharge_kwdc;
+            runDispatch(lifetimeIndex);
+        }
+    }
+}
+
 double dispatch_t::power_tofrom_battery() { return m_batteryPower->powerBatteryAC; }
 double dispatch_t::power_tofrom_grid() { return m_batteryPower->powerGrid; }
 double dispatch_t::power_gen() { return m_batteryPower->powerGeneratedBySystem; }
@@ -447,12 +593,14 @@ double dispatch_t::power_grid_to_batt() { return m_batteryPower->powerGridToBatt
 double dispatch_t::power_fuelcell_to_batt() { return m_batteryPower->powerFuelCellToBattery; }
 double dispatch_t::power_pv_to_grid() { return m_batteryPower->powerSystemToGrid; }
 double dispatch_t::power_battery_to_grid() { return m_batteryPower->powerBatteryToGrid; }
+double dispatch_t::power_battery_to_system_load() { return m_batteryPower->powerBatteryToSystemLoad; }
 double dispatch_t::power_fuelcell_to_grid() { return m_batteryPower->powerFuelCellToGrid; }
 double dispatch_t::power_conversion_loss() { return m_batteryPower->powerConversionLoss; }
 double dispatch_t::power_system_loss() { return m_batteryPower->powerSystemLoss; }
 double dispatch_t::power_interconnection_loss() { return m_batteryPower->powerInterconnectionLoss; }
 double dispatch_t::power_crit_load_unmet() { return m_batteryPower->powerCritLoadUnmet; }
 double dispatch_t::power_crit_load() { return m_batteryPower->powerCritLoad; }
+double dispatch_t::power_losses_unmet() { return m_batteryPower->powerLossesUnmet; }
 double dispatch_t::battery_power_to_fill() { return _Battery->power_to_fill(m_batteryPower->stateOfChargeMax); }
 double dispatch_t::battery_soc() { return _Battery->SOC(); }
 BatteryPowerFlow * dispatch_t::getBatteryPowerFlow() { return m_batteryPowerFlow.get(); }
@@ -486,10 +634,11 @@ dispatch_automatic_t::dispatch_automatic_t(
     std::vector<double> battCycleCost,
     double interconnection_limit,
     bool chargeOnlySystemExceedLoad,
-    bool dischargeOnlyLoadExceedSystem
+    bool dischargeOnlyLoadExceedSystem,
+    double SOC_min_outage
 	) : dispatch_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max_kwdc, Pd_max_kwdc, Pc_max_kwac, Pd_max_kwac,
 
-    t_min, dispatch_mode, pv_dispatch, interconnection_limit, chargeOnlySystemExceedLoad, dischargeOnlyLoadExceedSystem)
+    t_min, dispatch_mode, pv_dispatch, interconnection_limit, chargeOnlySystemExceedLoad, dischargeOnlyLoadExceedSystem, SOC_min_outage)
 {
 
     _dt_hour = dt_hour;
@@ -575,7 +724,8 @@ void dispatch_automatic_t::dispatch(size_t year,
     size_t hour_of_year,
     size_t step)
 {
-    runDispatch(year, hour_of_year, step);
+    size_t lifetimeIndex = util::lifetimeIndex(year, hour_of_year, step, static_cast<size_t>(1 / _dt_hour));
+    runDispatch(lifetimeIndex);
 }
 
 
@@ -698,10 +848,10 @@ bool dispatch_automatic_t::check_constraints(double& I, size_t count)
                 m_batteryPower->powerBatteryAC -= m_batteryPower->powerBatteryToGrid; // Target was too large given PV, reduce
 			}
 			else
-				iterate = false;
+				iterate = abs(I_initial - I) > tolerance;;
 		}
 		else
-			iterate = false;
+			iterate = abs(I_initial - I) > tolerance;;
 
         // don't allow any changes to violate current limits
         bool current_iterate = restrict_current(I);
@@ -840,6 +990,90 @@ void battery_metrics_t::new_year()
     _e_grid_import_annual = 0.;
     _e_grid_export_annual = 0.;
     _e_loss_system_annual = 0.;
+}
+
+outage_manager::outage_manager(BatteryPower* batteryPower, battery_t* battery) {
+    m_batteryPower = batteryPower;
+    _Battery = battery;
+    canSystemChargeWhenGrid = m_batteryPower->canSystemCharge;
+    canClipChargeWhenGrid = m_batteryPower->canClipCharge;
+    canGridChargeWhenGrid = m_batteryPower->canGridCharge;
+    canDischargeWhenGrid = m_batteryPower->canDischarge;
+
+    stateOfChargeMaxWhenGrid = m_batteryPower->stateOfChargeMax;
+    stateOfChargeMinWhenGrid = m_batteryPower->stateOfChargeMin;
+    last_step_was_outage = false;
+    recover_from_outage = false;
+}
+
+outage_manager::~outage_manager() {
+    m_batteryPower = NULL;
+    _Battery = NULL;
+}
+
+void outage_manager::copy(const outage_manager& tmp) {
+    // Do not copy battery power - that belongs to a different constructor
+    canSystemChargeWhenGrid = tmp.canSystemChargeWhenGrid;
+    canClipChargeWhenGrid = tmp.canClipChargeWhenGrid;
+    canGridChargeWhenGrid = tmp.canGridChargeWhenGrid;
+    canDischargeWhenGrid = tmp.canDischargeWhenGrid;
+
+    stateOfChargeMaxWhenGrid = tmp.stateOfChargeMaxWhenGrid;
+    stateOfChargeMinWhenGrid = tmp.stateOfChargeMinWhenGrid;
+    last_step_was_outage = tmp.last_step_was_outage;
+    recover_from_outage = tmp.recover_from_outage;
+}
+
+void outage_manager::update(bool isAutomated, double min_outage_soc) {
+    recover_from_outage = false;
+    if (m_batteryPower->isOutageStep && !last_step_was_outage) {
+        startOutage(min_outage_soc);
+    }
+    else if (!m_batteryPower->isOutageStep && last_step_was_outage) {
+        endOutage(isAutomated);
+        recover_from_outage = true; // True for one timestep so dispatch can re-plan
+    }
+}
+
+
+void outage_manager::startOutage(double min_outage_soc) {
+    canSystemChargeWhenGrid = m_batteryPower->canSystemCharge;	
+    canClipChargeWhenGrid = m_batteryPower->canClipCharge;
+    canGridChargeWhenGrid = m_batteryPower->canGridCharge;
+    canDischargeWhenGrid = m_batteryPower->canDischarge;
+
+    stateOfChargeMaxWhenGrid = m_batteryPower->stateOfChargeMax; 
+    stateOfChargeMinWhenGrid = m_batteryPower->stateOfChargeMin;
+
+    if (m_batteryPower->connectionMode == m_batteryPower->DC_CONNECTED) {
+        m_batteryPower->canClipCharge = true;
+    }
+    m_batteryPower->canSystemCharge = true;
+    m_batteryPower->canGridCharge = false;
+    m_batteryPower->canDischarge = true;
+
+    m_batteryPower->stateOfChargeMax = 100.0;
+    m_batteryPower->stateOfChargeMin = min_outage_soc;
+
+    _Battery->changeSOCLimits(min_outage_soc, 100.);
+
+    last_step_was_outage = true;
+}
+
+void outage_manager::endOutage(bool isAutomated) {
+    if (isAutomated) {
+        m_batteryPower->canSystemCharge = canSystemChargeWhenGrid;
+        m_batteryPower->canClipCharge = canClipChargeWhenGrid;
+        m_batteryPower->canGridCharge = canGridChargeWhenGrid;
+        m_batteryPower->canDischarge = canDischargeWhenGrid;
+    }
+
+    m_batteryPower->stateOfChargeMax = stateOfChargeMaxWhenGrid;
+    m_batteryPower->stateOfChargeMin = stateOfChargeMinWhenGrid;
+
+    _Battery->changeSOCLimits(stateOfChargeMinWhenGrid, stateOfChargeMaxWhenGrid);
+
+    last_step_was_outage = false;
 }
 
 bool byGrid:: operator()(grid_point const& a, grid_point const& b)

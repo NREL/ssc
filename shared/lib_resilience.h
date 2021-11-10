@@ -81,9 +81,6 @@ protected:
     /// valid inverter required for DC-connected batteries
     std::unique_ptr<SharedInverter> inverter;
 
-    /// dispatch the battery model with the target power, where kw < 0 is discharging
-    double dispatch_kw(double kw);
-
     void dispatch(size_t, size_t, size_t) override {}
 };
 

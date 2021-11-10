@@ -165,6 +165,7 @@ struct batt_variables
 	double batt_initial_SOC;
 	double batt_maximum_SOC;
 	double batt_minimum_SOC;
+    double batt_minimum_outage_SOC;
 	double batt_current_charge_max;
 	double batt_current_discharge_max;
 	double batt_power_charge_max_kwdc;
@@ -255,7 +256,7 @@ struct battstor
 	void initialize_time(size_t year, size_t hour_of_year, size_t step);
 
 	/// Run the battery for the current timestep, given the System power, load, and clipped power
-	void advance(var_table *vt, double P_gen, double V_gen=0, double P_load=0, double P_crit_load=0, double P_gen_clipped=0);
+	void advance(var_table *vt, double P_gen, double V_gen=0, double P_load=0, double P_crit_load=0, double ac_loss_percent=0, double P_gen_clipped=0);
 
 	/// Given a DC connected battery, set the shared system (typically PV) and battery inverter
 	void setSharedInverter(SharedInverter * sharedInverter);
@@ -265,6 +266,7 @@ struct battstor
 	void metrics();
 	void update_grid_power(compute_module &cm, double P_gen_ac, double P_load_ac, size_t index);
     bool is_outage_step(size_t index);
+    bool is_offline(size_t index); // Must be run after advance to get valid answer
 
 	/*! Manual dispatch*/
 	bool manual_dispatch = false;
@@ -385,12 +387,14 @@ struct battstor
         * outFuelCellToBatt,
         * outSystemToGrid,
         * outBatteryToGrid,
+        * outBatteryToSystemLoad,
         * outFuelCellToGrid,
         * outBatteryConversionPowerLoss,
         * outBatterySystemLoss,
 		* outInterconnectionLoss,
 		* outCritLoadUnmet,
         * outCritLoad,
+        * outUnmetLosses,
         * outAnnualSystemChargeEnergy,
         * outAnnualGridChargeEnergy,
         * outAnnualChargeEnergy,

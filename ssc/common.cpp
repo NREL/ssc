@@ -463,6 +463,8 @@ var_info vtab_debt[] = {
 { SSC_INPUT,        SSC_NUMBER,     "term_tenor",                             "Term financing period",				                            "years", "",				      "Financial Parameters",             "?=10",					"INTEGER,MIN=0",      			"" },
 { SSC_INPUT,        SSC_NUMBER,     "term_int_rate",                          "Term financing interest rate",		                            "%",	 "",					  "Financial Parameters",             "?=8.5",                   "MIN=0,MAX=100",      			"" },
 { SSC_INPUT,        SSC_NUMBER,     "dscr",						              "Debt service coverage ratio",		                            "",	     "",				      "Financial Parameters",             "?=1.5",					"MIN=0",      			        "" },
+{ SSC_INPUT,        SSC_NUMBER,     "dscr_limit_debt_fraction",				  "Limit debt fraction",		                            "0/1",	     "",				      "Financial Parameters",             "?=0",					"BOOLEAN",      			        "" },
+{ SSC_INPUT,        SSC_NUMBER,     "dscr_maximum_debt_fraction",			  "Maximum debt fraction",		                            "%",	     "",				      "Financial Parameters",             "?=100",					"MIN=0",      			        "" },
 { SSC_INPUT,        SSC_NUMBER,     "dscr_reserve_months",		              "Debt service reserve account",		                            "months P&I","",			      "Financial Parameters",             "?=6",					    "MIN=0",      			        "" },
 /* Debt fraction input option */
 { SSC_INPUT, SSC_NUMBER, "debt_percent", "Debt percent", "%", "", "Financial Parameters", "?=50", "MIN=0,MAX=100", "" },
@@ -869,11 +871,12 @@ var_info vtab_utility_rate_common[] = {
     { SSC_INPUT,        SSC_MATRIX,     "ur_dc_flat_mat",           "Demand rates (flat) table",            "",         "",                     "Electricity Rates",        "ur_dc_enable=1",   "",                             "" },
 
     // Ratcheting demand charges
-    { SSC_INPUT,        SSC_NUMBER,     "ur_ec_enable_billing_demand",     "Enable billing demand for energy charges",     "0/1",  "0=disable,1=enable",        "Electricity Rates",        "?=0",                 "INTEGER,MIN=0,MAX=1",       "" },
-    { SSC_INPUT,        SSC_NUMBER,     "ur_ec_billing_demand_minimum",       "Minimum billing demand",               "",         "",                     "Electricity Rates",        "ur_ec_enable_billing_demand=1",                 "",                             "" },
-    { SSC_INPUT,        SSC_NUMBER,     "ur_ec_billing_demand_lookback_period", "Billing demand lookback period",  "mn",         "",                "Electricity Rates",           "ur_ec_enable_billing_demand=1",                 "INTEGER,MIN=0,MAX=12",                             "" },
-    { SSC_INPUT,        SSC_MATRIX,     "ur_ec_billing_demand_lookback_percentages", "Billing demand lookback percentages by month and consider actual peak demand",       "",         "12x2",      "Electricity Rates",        "ur_ec_enable_billing_demand=1",                 "",                             "" },
-    { SSC_INPUT,        SSC_ARRAY,      "ur_yearzero_usage_peaks",  "Peak usage by month for year zero",       "",         "12",                "Electricity Rates",        "ur_ec_enable_billing_demand=1",                 "",                             "" },
+    { SSC_INPUT,        SSC_NUMBER,     "ur_enable_billing_demand",     "Enable billing demand ratchets",     "0/1",  "0=disable,1=enable",        "Electricity Rates",        "?=0",                 "INTEGER,MIN=0,MAX=1",       "" },
+    { SSC_INPUT,        SSC_NUMBER,     "ur_billing_demand_minimum",       "Minimum billing demand",               "",         "",                     "Electricity Rates",        "ur_enable_billing_demand=1",                 "",                             "" },
+    { SSC_INPUT,        SSC_NUMBER,     "ur_billing_demand_lookback_period", "Billing demand lookback period",  "mn",         "",                "Electricity Rates",           "ur_enable_billing_demand=1",                 "INTEGER,MIN=0,MAX=12",                             "" },
+    { SSC_INPUT,        SSC_MATRIX,     "ur_billing_demand_lookback_percentages", "Billing demand lookback percentages by month and consider actual peak demand",       "",         "12x2",      "Electricity Rates",        "ur_enable_billing_demand=1",                 "",                             "" },
+    { SSC_INPUT,        SSC_MATRIX,     "ur_dc_billing_demand_periods", "Billing demand applicability to a given demand charge time of use period",       "",         "",      "Electricity Rates",        "ur_enable_billing_demand=1",                 "",                             "" },
+    { SSC_INPUT,        SSC_ARRAY,      "ur_yearzero_usage_peaks",  "Peak usage by month for year zero",       "",         "12",                "Electricity Rates",        "ur_enable_billing_demand=1",                 "",                             "" },
 
 
     var_info_invalid
