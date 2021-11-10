@@ -211,6 +211,7 @@ double UtilityRateForecast::forecastCost(std::vector<double>& predicted_loads, s
     }
 
 	// Get previous peak cost - may need to run two months
+    rate->set_billing_demands();
 	double previousDemandCharge = rate->get_demand_charge(month, year);
     double previousEnergyCharge = 0;
     if (rate->enable_nm)
@@ -268,6 +269,7 @@ double UtilityRateForecast::forecastCost(std::vector<double>& predicted_loads, s
 	}
 
     // Compute new peak cost - may need to run two months
+    rate->set_billing_demands();
     double newDemandCharge = rate->get_demand_charge(month, year);
     // If forecast length is 1, restartMonth won't be triggered on the next forecast. Trigger it now
     if (crossing_month && n == 1)
