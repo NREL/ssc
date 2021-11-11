@@ -14,7 +14,10 @@
 #include "../tcs/csp_solver_two_tank_tes.h"
 #include "../tcs/csp_solver_tou_block_schedules.h"
 #include "../tcs/csp_dispatch.h"
-
+// For Travis
+#ifdef __UNIX__
+using namespace std;
+#endif
 /**
  * This class tests the C_csp_weatherreader's functions and ensures that the interface is the
  * same using weatherfile & weatherdata as weather inputs. The test also tests for variable
