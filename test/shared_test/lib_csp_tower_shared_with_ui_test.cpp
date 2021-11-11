@@ -161,7 +161,7 @@ NAMESPACE_TEST(csp_common, TowerSharedWithUi, Receiver) {
     vd->assign("h_tower", 193.458);
     vd->assign("piping_length_mult", 2.6);
     vd->assign("piping_length_const", 0.);
-    vd->assign("piping_loss", 10200.);
+    vd->assign("piping_loss_coefficient", 2.);
     std::vector<double> field_fluid_properties{ 1, 7, 0, 0, 0, 0, 0, 0, 0 };
     util::matrix_t<double> field_fl_props(1, 9, &field_fluid_properties);
     vd->assign("field_fl_props", field_fl_props);
@@ -173,7 +173,7 @@ NAMESPACE_TEST(csp_common, TowerSharedWithUi, Receiver) {
     ASSERT_NEAR_FRAC(GetNum(vd, "csp_pt_rec_max_flow_to_rec"), 1853.5, kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "rec_aspect"), 1.349, kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "piping_length"), 502.991, kErrorToleranceHi);
-    ASSERT_NEAR_FRAC(GetNum(vd, "piping_loss_tot"), 5130.51, kErrorToleranceHi);
+    ASSERT_NEAR_FRAC(GetNum(vd, "piping_loss_tot"), 789.262, kErrorToleranceHi);
 }
 
 NAMESPACE_TEST(csp_common, TowerSharedWithUi, ReceiverWithPeriodUse) {
@@ -191,7 +191,7 @@ NAMESPACE_TEST(csp_common, TowerSharedWithUi, ReceiverWithPeriodUse) {
     vd->assign("h_tower", 193.458);
     vd->assign("piping_length_mult", 2.6);
     vd->assign("piping_length_const", 0.);
-    vd->assign("piping_loss", 10200.);
+    vd->assign("piping_loss_coefficient", 2.);
     std::vector<double> field_fluid_properties{ 1, 7, 0, 0, 0, 0, 0, 0, 0 };
     util::matrix_t<double> field_fl_props(1, 9, &field_fluid_properties);
     vd->assign("field_fl_props", field_fl_props);
@@ -203,7 +203,7 @@ NAMESPACE_TEST(csp_common, TowerSharedWithUi, ReceiverWithPeriodUse) {
     ASSERT_NEAR_FRAC(GetNum(vd, "csp_pt_rec_max_flow_to_rec"), 1853.5, kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "rec_aspect"), 1.349, kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "piping_length"), 502.991, kErrorToleranceHi);
-    ASSERT_NEAR_FRAC(GetNum(vd, "piping_loss_tot"), 5130.51, kErrorToleranceHi);
+    ASSERT_NEAR_FRAC(GetNum(vd, "piping_loss_tot"), 789.262, kErrorToleranceHi);
 }
 
 NAMESPACE_TEST(csp_common, TowerSharedWithUi, Tes) {
