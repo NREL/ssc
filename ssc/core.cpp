@@ -29,8 +29,6 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "core.h"
 #include "ssc_equations.h"
 
-#include <regex>
-
 const var_info var_info_invalid = {0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
 
 compute_module::compute_module()
@@ -1061,9 +1059,7 @@ void dump_ssc_variable(FILE* fp, ssc_data_t p_data, const char* name)
     {
     case SSC_STRING:
         str_value = ::ssc_data_get_string(p_data, name);
-#ifndef __WXGTK__
-        str_value = std::regex_replace(str_value, std::regex("\\\\"), "/"); //.replace("\\", "/");
-#endif
+        util::replace(str_value, "\\", "/"); //.replace("\\", "/");
         fprintf(fp, "var( '%s', '%s' );\n", name, (const char*)str_value.c_str());
         break;
     case SSC_NUMBER:
