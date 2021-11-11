@@ -1,6 +1,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <cmath>
 
 #include <gtest/gtest.h>
 #include "../input_cases/weather_inputs.h"
