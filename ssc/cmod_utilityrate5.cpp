@@ -1630,7 +1630,6 @@ public:
                 else {
                     rate.billing_demand[m] = 0.0;
                 }
-                prev_demand_charge = rate.get_demand_charge(m, year);
             }
             
 			for (d = 0; d < util::nday[m]; d++)
@@ -2169,7 +2168,6 @@ public:
                 else {
                     rate.billing_demand[m] = 0.0;
                 }
-                prev_demand_charge = rate.get_demand_charge(m, year);
             }
 
             for (d = 0; d < util::nday[m]; d++)
