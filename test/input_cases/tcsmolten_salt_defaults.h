@@ -137,7 +137,7 @@ ssc_data_t tcsmolten_salt_defaults()
     ssc_data_set_number(data, "rec_qf_delay", 0.25);
     ssc_data_set_number(data, "csp.pt.rec.max_oper_frac", 1.2);
     ssc_data_set_number(data, "eta_pump", 0.84999999999999998);
-    ssc_data_set_number(data, "piping_loss", 10200);
+    ssc_data_set_number(data, "piping_loss_coefficient", 2.);
     ssc_data_set_number(data, "piping_length_mult", 2.6000000000000001);
     ssc_data_set_number(data, "piping_length_const", 0);
     ssc_data_set_number(data, "is_rec_model_trans", 0);

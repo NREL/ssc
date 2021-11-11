@@ -57,7 +57,7 @@ C_cavity_receiver::C_cavity_receiver(double dni_des /*W/m2*/, double hel_stow_de
     double rec_span /*rad*/, double toplip_height /*m*/, double botlip_height /*m*/,
     double eps_active_sol /*-*/, double eps_passive_sol /*-*/, double eps_active_therm /*-*/, double eps_passive_therm /*-*/,
     E_mesh_types active_surface_mesh_type, E_mesh_types floor_and_cover_mesh_type, E_mesh_types lips_mesh_type,
-    double pipe_loss_per_m /*Wt/m*/, double pipe_length_add /*m*/, double pipe_length_mult /*-*/,
+    double piping_loss_coefficient /*Wt/m2-K*/, double pipe_length_add /*m*/, double pipe_length_mult /*-*/,
     double A_sf /*m2*/, double h_tower /*m*/, double T_htf_hot_des /*C*/,
     double T_htf_cold_des /*C*/, double f_rec_min /*-*/, double q_dot_rec_des /*MWt*/,
     double rec_su_delay /*hr*/, double rec_qf_delay /*-*/, double m_dot_htf_max_frac /*-*/,
@@ -87,7 +87,8 @@ C_cavity_receiver::C_cavity_receiver(double dni_des /*W/m2*/, double hel_stow_de
     m_floor_and_cover_mesh_type = floor_and_cover_mesh_type;
     m_lips_mesh_type = lips_mesh_type;
 
-    m_pipe_loss_per_m = pipe_loss_per_m;    //[Wt/m]
+    //m_pipe_loss_per_m = pipe_loss_per_m;    //[Wt/m]
+    m_piping_loss_coefficient = piping_loss_coefficient;    //[Wt/m2-K]
     m_pipe_length_add = pipe_length_add;    //[m]
     m_pipe_length_mult = pipe_length_mult;  //[-]
 
@@ -2880,11 +2881,14 @@ void C_cavity_receiver::init()
     double c_htf_des = field_htfProps.Cp((m_T_htf_hot_des + m_T_htf_cold_des) / 2.0) * 1000.0;		//[J/kg-K] Specific heat at design conditions
     m_m_dot_htf_des = m_q_rec_des / (c_htf_des*(m_T_htf_hot_des - m_T_htf_cold_des));   //[kg/s]
 
-    // Calculate constant thermal piping losses to the environment
-    if (m_pipe_loss_per_m > 0.0 && m_pipe_length_mult > 0.0)
-        m_Q_dot_piping_loss = m_pipe_loss_per_m * (m_h_tower * m_pipe_length_mult + m_pipe_length_add);		//[Wt]
-    else
-        m_Q_dot_piping_loss = 0.0;
+    double L_piping = std::numeric_limits<double>::quiet_NaN();     //[m]
+    double d_inner_piping = std::numeric_limits<double>::quiet_NaN();   //[m]
+    CSP::mspt_piping_design(field_htfProps,
+        m_h_tower, m_pipe_length_mult,
+        m_pipe_length_add, m_piping_loss_coefficient,
+        m_T_htf_hot_des, m_T_htf_cold_des,
+        m_m_dot_htf_des,
+        L_piping, d_inner_piping, m_Q_dot_piping_loss);
 
     m_mode_prev = C_csp_collector_receiver::OFF;
     m_od_control = 1.0;			                //[-] Additional defocusing for over-design conditions

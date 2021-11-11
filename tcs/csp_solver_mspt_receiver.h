@@ -301,8 +301,8 @@ public:
 	double m_A_sf;					//[m2]
 
 	// 8.10.2015 twn: add tower piping thermal losses to receiver performance
-	double m_pipe_loss_per_m;		//[Wt/m]
-	double m_pipe_length_add;		//[m]
+    double m_piping_loss_coeff;		//[W/m2/K]
+    double m_pipe_length_add;		//[m]
 	double m_pipe_length_mult;		//[-]
 
 	// 7.13.17 twn: keep this public for now so iscc can calculate
@@ -319,7 +319,6 @@ public:
 	double m_u_riser;				//[m/s], 
 	double m_th_riser;				//[mm], convert to [m] in init()
 	double m_th_downc;				//[mm], convert to [m] in init()
-	double m_piping_loss_coeff;		//[W/m2/K]
 	double m_riser_tm_mult;			//[-], riser thermal mass multiplier
 	double m_downc_tm_mult;			//[-], downcomer thermal mass multiplier
 	double m_heat_trace_power;		//[kW/m], convert to [W/m] in init()
