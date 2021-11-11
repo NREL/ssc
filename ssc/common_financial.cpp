@@ -3449,8 +3449,8 @@ void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double
         //ssc_number_t* monthly_batt_to_grid = as_array("monthly_batt_to_grid", &n_monthly_grid_to_load);
         ssc_number_t* monthly_system_to_grid = cm->as_array("monthly_system_to_grid", &n_monthly_grid_to_load); //monthly grid energy bought to satisfy load for first year (kWh)
         ssc_number_t* monthly_electricity_tofrom_grid;
-        
-        if ((grid_charging_cost_version != 2)) { //Are ppa purchases used in Single Owner or is the case using BTM financial model?
+        bool ppa_purchases = !(cm->is_assigned("en_electricity_rates") && cm->as_number("en_electricity_rates") == 1); //Does the system use ppa purchases in revenue calculations (Single Owner only)
+        if (!ppa_purchases || (grid_charging_cost_version == 0)) { //Are ppa purchases used in Single Owner or is the case using BTM financial model?
             monthly_electricity_tofrom_grid = cm->as_array("year1_monthly_electricity_to_grid", &n_monthly_grid_to_load); //Monthly electricity exported to the grid in the first year (kWh)
             monthly_energy_charge = cm->as_matrix("charge_w_sys_ec_ym"); //Use monthly energy charges from utility bill ($)
             net_annual_true_up = cm->as_matrix("true_up_credits_ym"); //Use net annual true up payments regardless of billing mode ($)
@@ -3518,8 +3518,13 @@ void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double
                     //Lifetime calculations
                     //Calculate cost to charge battery from grid (either using ppa price or electricity rates if enabled)
                     double ppa_value = cf.at(CF_ppa_price_lcos, a); //PPA price at year a
-                    
-                    if (a != 0) {
+                    if (ppa_purchases && a != 0) {
+                        for (size_t h = 0; h < n_steps_per_year; h++) {
+                            tod_mult_index = floor(h / (n_steps_per_year / 8760));
+                            cf.at(CF_charging_cost_grid_lcos, a) += grid_to_batt[(size_t(a) - 1) * n_steps_per_year + h] * 8760 / n_steps_per_year * ppa_value / 100.0 * tod_multipliers[tod_mult_index]; //Grid charging cost from PPA price ($)
+                        }
+                    }
+                    else if (!ppa_purchases && a != 0) {
                         for (size_t m = 0; m < 12; m++) {
                             if (((monthly_batt_to_grid[m] + monthly_system_to_grid[m]) + -monthly_electricity_tofrom_grid[m]) != 0)
                                 cf.at(CF_charging_cost_grid_lcos, a) += monthly_grid_to_batt[m] / ((monthly_batt_to_grid[m] + monthly_system_to_grid[m]) + -monthly_electricity_tofrom_grid[m]) * monthly_energy_charge.at(a, m) + net_annual_true_up.at(a, m); //Grid charging cost from monthly energy charges and net annual true up ($
@@ -3534,8 +3539,14 @@ void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double
                     //Single year calculations (might not be needed as their is no Single Owner for PVWatts Battery
                     //Calculate cost to charge battery from grid (either using ppa price or electricity rates if enabled)
                     double ppa_value = cf.at(CF_ppa_price_lcos, a); //PPA price at year a ($)
+                    if (ppa_purchases && a != 0) { //PPA purchases enabled and not in investment year
+                        for (size_t h = 0; h < 8760; h++) {
 
-                    if (a != 0) { //No PPA purchases and not in investment year
+                            tod_mult_index = floor(h / 8760);
+                            cf.at(CF_charging_cost_grid_lcos, a) += grid_to_batt[h] * cf.at(CF_degradation_lcos, a) * ppa_value / 100.0 * tod_multipliers[h]; //Grid charging cost calculated from PPA price ($)
+                        }
+                    }
+                    else if (!ppa_purchases && a != 0) { //No PPA purchases and not in investment year
                         for (size_t m = 0; m < 12; m++) {
                             if ((-monthly_electricity_tofrom_grid[m] + (monthly_batt_to_grid[m] + monthly_system_to_grid[m])) != 0)
                                 cf.at(CF_charging_cost_grid_lcos, a) += monthly_grid_to_batt[m] / (-monthly_electricity_tofrom_grid[m] + (monthly_batt_to_grid[m] + monthly_system_to_grid[m])) * monthly_energy_charge.at(a, m) + net_annual_true_up.at(a, m); //Grid charging cost calculated from monthly energy charges at year a and net annual true ($)
@@ -3550,17 +3561,36 @@ void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double
 
                 if (cm->as_integer("system_use_lifetime_output") == 1) //Lifetime
                 {
-                    for (size_t h = 0; h < n_steps_per_year; h++) {
-                        if (a != 0) { //Not in investment year
-                            cf.at(CF_charging_cost_grid_lcos, a) += grid_to_batt[(a - 1) * n_steps_per_year + h] * 8760 / n_steps_per_year * mp_market_price[(a - 1) * n_steps_per_year + h] / (1000); //Grid charging cost from energy market price ($)
+                    if (ppa_purchases && a != 0) {
+                        for (size_t h = 0; h < n_steps_per_year; h++) {
+                            if (a != 0) { //Not in investment year
+                                cf.at(CF_charging_cost_grid_lcos, a) += grid_to_batt[(a - 1) * n_steps_per_year + h] * 8760 / n_steps_per_year * mp_market_price[(a - 1) * n_steps_per_year + h] / (1000); //Grid charging cost from energy market price ($)
+                            }
                         }
                     }
+                    else if (!ppa_purchases && a != 0) {
+                        for (size_t m = 0; m < 12; m++) {
+                            if (((monthly_batt_to_grid[m] + monthly_system_to_grid[m]) + -monthly_electricity_tofrom_grid[m]) != 0)
+                                cf.at(CF_charging_cost_grid_lcos, a) += monthly_grid_to_batt[m] / ((monthly_batt_to_grid[m] + monthly_system_to_grid[m]) + -monthly_electricity_tofrom_grid[m]) * monthly_energy_charge.at(a, m) + net_annual_true_up.at(a, m); //Grid charging cost from monthly energy charges and net annual true up ($
+
+                        }
+                    }
+
                 }
                 else //Not Lifetime
                 {
-                    for (size_t h = 0; h < n_steps_per_year; h++) {
-                        if (a != 0) { //Not in investment year
-                            cf.at(CF_charging_cost_grid_lcos, a) += grid_to_batt[h] * cf.at(CF_degradation_lcos, a) * 8760 / n_steps_per_year * mp_market_price[h] / (1000); //Grid charging cost from energy market price ($)
+                    if (ppa_purchases && a != 0) {
+                        for (size_t h = 0; h < n_steps_per_year; h++) {
+                            if (a != 0) { //Not in investment year
+                                cf.at(CF_charging_cost_grid_lcos, a) += grid_to_batt[h] * cf.at(CF_degradation_lcos, a) * 8760 / n_steps_per_year * mp_market_price[h] / (1000); //Grid charging cost from energy market price ($)
+                            }
+                        }
+                    }
+                    else if (!ppa_purchases && a != 0) { //No PPA purchases and not in investment year
+                        for (size_t m = 0; m < 12; m++) {
+                            if ((-monthly_electricity_tofrom_grid[m] + (monthly_batt_to_grid[m] + monthly_system_to_grid[m])) != 0)
+                                cf.at(CF_charging_cost_grid_lcos, a) += monthly_grid_to_batt[m] / (-monthly_electricity_tofrom_grid[m] + (monthly_batt_to_grid[m] + monthly_system_to_grid[m])) * monthly_energy_charge.at(a, m) + net_annual_true_up.at(a, m); //Grid charging cost calculated from monthly energy charges at year a and net annual true ($)
+
                         }
                     }
                 }

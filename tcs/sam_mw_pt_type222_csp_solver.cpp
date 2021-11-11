@@ -227,7 +227,7 @@ public:
 
 		// 8.12.15 twn: have added tower piping thermal losses to receiver performance model
 		//  ....... if we want to be consistent with old model, need to set these parameters to 0 here
-		mspt_receiver.m_pipe_loss_per_m = value(P_PIPING_LOSS_PER_M);	//[Wt/m]
+		//mspt_receiver.m_pipe_loss_per_m = value(P_PIPING_LOSS_PER_M);	//[Wt/m]
 		mspt_receiver.m_pipe_length_add = value(P_PIPE_LENGTH_ADD);		//[m]
 		mspt_receiver.m_pipe_length_mult = value(P_PIPE_LENGTH_MULT);	//[-]
 		// *************************************************************************************
