@@ -101,7 +101,8 @@ private:
     double m_e_act_therm;   //[-] Emissivity in long wave range for active surfaces
     double m_e_pass_therm;  //[-] Emissivity in long wave range for passive surfaces
 
-    double m_pipe_loss_per_m;		//[Wt/m]
+    //double m_pipe_loss_per_m;		//[Wt/m]
+    double m_piping_loss_coefficient;   //[Wt/m2-K]
     double m_pipe_length_add;		//[m]
     double m_pipe_length_mult;		//[-]
 
@@ -179,7 +180,7 @@ public:
         double rec_span /*rad*/, double toplip_height /*m*/, double botlip_height /*m*/,
         double eps_active_sol /*-*/, double eps_passive_sol /*-*/, double eps_active_therm /*-*/, double eps_passive_therm /*-*/,
         E_mesh_types active_surface_mesh_type, E_mesh_types floor_and_cover_mesh_type,  E_mesh_types lips_mesh_type,
-        double pipe_loss_per_m /*Wt/m*/, double pipe_length_add /*m*/, double pipe_length_mult /*-*/,
+        double piping_loss_coefficient /*Wt/m2-K*/, double pipe_length_add /*m*/, double pipe_length_mult /*-*/,
         double A_sf /*m2*/, double h_tower /*m*/, double T_htf_hot_des /*C*/,
         double T_htf_cold_des /*C*/, double f_rec_min /*-*/, double q_dot_rec_des /*MWt*/,
         double rec_su_delay /*hr*/, double rec_qf_delay /*-*/, double m_dot_htf_max_frac /*-*/,

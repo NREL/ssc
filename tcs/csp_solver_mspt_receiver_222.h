@@ -44,7 +44,6 @@ private:
 	double m_A_node;
 	
 	double m_Q_dot_piping_loss;		//[Wt] = Constant thermal losses from piping to env. = (THT*length_mult + length_add) * piping_loss_coef
-	double m_piping_loss_coeff;		//[W/m2/K]
 
 	int m_itermode;
 	double m_od_control;
@@ -180,8 +179,9 @@ public:
 	double m_A_sf;					//[m2]
 
 	// 8.10.2015 twn: add tower piping thermal losses to receiver performance
-	double m_pipe_loss_per_m;		//[Wt/m]
-	double m_pipe_length_add;		//[m]
+	//double m_pipe_loss_per_m;		//[Wt/m]
+    double m_piping_loss_coefficient;   //[Wt/m2-K]
+    double m_pipe_length_add;		//[m]
 	double m_pipe_length_mult;		//[-]
 
 	// 7.13.17 twn: keep this public for now so iscc can calculate
