@@ -350,9 +350,9 @@ void base_dispatch_opt::set_lp_solve_outputs(lprec* lp)
 void base_dispatch_opt::save_problem_solution_debug(lprec* lp)
 {
     // Saving problem and solution for debugging
-    set_outputfile(lp, "C:\\Users\\WHamilt2\\Documents\\SAM\\ZZZ_working_directory\\setup.txt");
+    set_outputfile(lp, "setup.txt");
     print_lp(lp);
-    set_outputfile(lp, "C:\\Users\\WHamilt2\\Documents\\SAM\\ZZZ_working_directory\\solution.txt");
+    set_outputfile(lp, "solution.txt");
     print_solution(lp, 1);
 }
 
@@ -459,6 +459,15 @@ bool base_dispatch_opt::parse_column_name(char* colname, char* root, char* ind)
 bool base_dispatch_opt::strcompare(std::string a, std::string b)
 {
     return util::lower_case(a) < util::lower_case(b);
+}
+
+void base_dispatch_opt::print_log_to_file()
+{
+    std::stringstream outname;
+    outname << "Dispatch.log";
+    std::ofstream fout(outname.str().c_str());
+    fout << solver_params.log_message.c_str();
+    fout.close();
 }
 
 void s_efftable::clear()

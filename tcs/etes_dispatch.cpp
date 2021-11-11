@@ -1145,17 +1145,6 @@ void etes_dispatch_opt::set_outputs_from_lp_solution(lprec* lp, unordered_map<st
     delete[] vars;
 }
 
-
-void etes_dispatch_opt::print_log_to_file()
-{
-    std::stringstream outname;   
-    outname << "ETES_dispatch.log";
-    std::ofstream fout(outname.str().c_str());
-    fout << solver_params.log_message.c_str();
-    fout.close();
-}
-
-
 bool etes_dispatch_opt::set_dispatch_outputs()
 {
     if (lp_outputs.last_opt_successful && m_current_read_step < (int)outputs.q_pb_target.size())

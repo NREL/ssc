@@ -199,8 +199,11 @@ public:
     // Parse column name to get variable name (root) and index (ind)
     bool parse_column_name(char* colname, char* root, char* ind);
 
-    //simple string compare
+    // simple string compare
     bool strcompare(std::string a, std::string b);
+
+    // Print dispatch solver log to file for debugging solver
+    void print_log_to_file();
 };
 
 struct s_efftable

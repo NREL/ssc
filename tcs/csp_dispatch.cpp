@@ -137,6 +137,7 @@ void csp_dispatch_opt::set_default_solver_parameters()
         solver_params.presolve_type = PRESOLVE_ROWS + PRESOLVE_COLS + PRESOLVE_ELIMEQ2 + PRESOLVE_PROBEFIX;
     if (solver_params.bb_type < 0)
         solver_params.bb_type = NODE_PSEUDOCOSTSELECT + NODE_DYNAMICMODE;
+        //solver_params.bb_type = NODE_PSEUDOCOSTSELECT + NODE_AUTOORDER;
     if (solver_params.scaling_type < 0)
         solver_params.scaling_type = SCALE_MEAN + SCALE_LOGARITHMIC + SCALE_POWER2 + SCALE_EQUILIBRATE + SCALE_INTEGERS;
     //SCALE_CURTISREID + SCALE_LOGARITHMIC + SCALE_POWER2 + SCALE_EQUILIBRATE + SCALE_INTEGERS   //genetic algorithm
@@ -318,7 +319,7 @@ static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::s
         pars["Eu"] = optinst->params.e_tes_max ;
         pars["Er"] = optinst->params.e_rec_startup ;
         pars["Ec"] = optinst->params.e_pb_startup_cold ;
-        pars["Qu"] = optinst->params.q_pb_max ;
+        pars["Qu"] = optinst->params.q_pb_des ;
         pars["Ql"] = optinst->params.q_pb_min ;
         pars["Qru"] = optinst->params.e_rec_startup / optinst->params.dt_rec_startup;
         pars["Qrl"] = optinst->params.q_rec_min ;
@@ -458,17 +459,19 @@ bool csp_dispatch_opt::optimize()
 
         //set up the variable structure
         optimization_vars O;
-        O.add_var("xr", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0. );
-        O.add_var("xrsu", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0. );
-        O.add_var("ursu", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0. );
+        O.add_var("xr", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0.);
+        O.add_var("xrsu", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0., P["Qru"]);
+        O.add_var("ursu", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0., P["Er"] * 1.0001);
         O.add_var("yr", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_T, nt);
         O.add_var("yrsu", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_T, nt);
         O.add_var("yrsup", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_T, nt);
 
-        O.add_var("x", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0.);
+        O.add_var("x", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0., P["Qu"]);
+        O.add_var("wdot", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0., P["Wdotu"] * 1.1);
+        O.add_var("delta_w", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0., P["Wdotu"] * 1.1);
+        O.add_var("s", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0., P["Eu"]);
+        O.add_var("ucsu", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0., P["Ec"] * 1.0001);
         O.add_var("y", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_T, nt);
-        O.add_var("s", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0. );
-        O.add_var("ucsu", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0. );
         O.add_var("ycsu", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_T, nt);
         O.add_var("ycsb", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_T, nt);
 #ifdef MOD_CYCLE_SHUTDOWN
@@ -477,12 +480,10 @@ bool csp_dispatch_opt::optimize()
         O.add_var("yoff", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_T, nt);
         O.add_var("ycsup", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_T, nt);
         O.add_var("ychsp", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_T, nt);
-        O.add_var("wdot", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0. ); //0 lower bound?
-        O.add_var("delta_w", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0. );
 
         if (params.is_parallel_heater) {
-            O.add_var("yeh", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_T, nt);
             O.add_var("qeh", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0., P["Qehu"]);
+            O.add_var("yeh", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_T, nt);
         }
         
         // Construct LP model and set up variable properties
@@ -1343,7 +1344,9 @@ bool csp_dispatch_opt::optimize()
         set_lp_solve_outputs(lp);
 
         // Saving problem and solution for DEBUGGING formulation
-        save_problem_solution_debug(lp);
+        //save_problem_solution_debug(lp);
+        //if (solver_params.disp_reporting > 4)
+        //    print_log_to_file();
 
         if(return_ok)
             set_outputs_from_lp_solution(lp, P);
