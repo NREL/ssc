@@ -309,6 +309,7 @@ public:
         double interconnection_limit,
         bool chargeOnlySystemExceedLoad = true,  // Optional so FOM doesn't have to specify them
         bool dischargeOnlyLoadExceedSystem = true,
+        bool behindTheMeterDischargeToGrid = true,
         double SOC_min_outage = 0.0
 		);
 

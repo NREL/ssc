@@ -1547,9 +1547,8 @@ void incidence(int mode, double tilt, double sazm, double rlim, double zen,
                 //do not report angle difference for backtracking if forced to stow, since this isn't backtracking
             }
             else if (en_backtrack) {
-                // TODO: add cross-axis slope angle parameter
-                double axis_slope = cross_axis_slope(slope_tilt, azm, slope_azm);
-                double backtracking_rotation = backtrack(truetracking_rotation * 180 / M_PI, gcr, axis_slope);
+                double cross_axis_slope = calc_cross_axis_slope(slope_tilt, azm, slope_azm);
+                double backtracking_rotation = backtrack(truetracking_rotation * 180 / M_PI, gcr, cross_axis_slope);
                 backtracking_rotation *= M_PI / 180;
                 backtracking_rotation = backtracking_rotation > rlim ? rlim : backtracking_rotation;
                 backtracking_rotation = backtracking_rotation < -rlim ? -rlim : backtracking_rotation;
@@ -3118,12 +3117,10 @@ double shadeFraction1x(double solar_azimuth, double solar_zenith,
     All input angles in degrees.
     Changed 2020-10-15 from complex row-to-row 3D geometry to equivalent (?) simple equations
     */
-    // TODO: enable cross_axis_slope as a parameter
-    double axis_slope = cross_axis_slope(slope_tilt, axis_azimuth, slope_azimuth);
-
+    double cross_axis_slope = calc_cross_axis_slope(slope_tilt, axis_azimuth, slope_azimuth);
     double truetracking_angle = truetrack(solar_azimuth, solar_zenith, axis_tilt, axis_azimuth);
     double numerator =
-            gcr * cosd(rotation) + (gcr * sind(rotation) - tand(axis_slope)) * tand(truetracking_angle) - 1;
+            gcr * cosd(rotation) + (gcr * sind(rotation) - tand(cross_axis_slope)) * tand(truetracking_angle) - 1;
     double denominator = gcr * (sind(rotation) * tand(truetracking_angle) + cosd(rotation));
     double fs = numerator / denominator;
     fs = fs < 0 ? 0 : fs;
@@ -3152,7 +3149,7 @@ double truetrack(double solar_azimuth, double solar_zenith, double axis_tilt, do
     return theta_t;
 }
 
-double cross_axis_slope(double slope_tilt, double axis_azimuth, double slope_azimuth) {
+double calc_cross_axis_slope(double slope_tilt, double axis_azimuth, double slope_azimuth) {
     double delta_azimuth = axis_azimuth - slope_azimuth;
     double beta_a = atan(tand(slope_tilt) * cosd(delta_azimuth)) * 180 / M_PI;
     double v_x = sind(delta_azimuth) * cosd(beta_a) * cosd(slope_tilt);
@@ -3171,9 +3168,6 @@ double backtrack(double truetracking_rotation, double gcr, double axis_slope) {
     All input and output angles in degrees.
     Changed 2020-10-15 from iterative self-shading avoidance to closed-form equations
     */
-
-    // TODO: enable cross_axis_slope as a parameter
-    //double cross_axis_slope = 0;
     double cross_axis_slope = axis_slope;
 
     // check backtracking criterion; if there is no self-shading to avoid, then

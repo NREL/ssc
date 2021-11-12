@@ -659,20 +659,34 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO* 
     {
         std::vector<double> dc_degrad = cm->as_vector_double("dc_degradation");
 
-        // degradation assumed to start at year 2
+        // degradation assumed to start at year 2, so the first value should be 1.0
         dcDegradationFactor.push_back(1.0);
-        dcDegradationFactor.push_back(1.0);
-
+        bool warningFlag = false;
         if (dc_degrad.size() == 1)
         {
             for (size_t i = 1; i < Simulation->numberOfYears; i++)
-                dcDegradationFactor.push_back(pow((1.0 - dc_degrad[0] / 100.0), i));
+            {
+                dcDegradationFactor.push_back(1.0 - (dc_degrad[0] * i) / 100.0);
+                if (dcDegradationFactor[i] < 0.0)
+                {
+                    dcDegradationFactor[i] = 0.0;
+                    warningFlag = true;
+                }
+            }
         }
         else if (dc_degrad.size() > 0)
         {
             for (size_t i = 1; i < Simulation->numberOfYears && i < dc_degrad.size(); i++)
+            {
                 dcDegradationFactor.push_back(1.0 - dc_degrad[i] / 100.0);
+                if (dcDegradationFactor[i] > 0.0)
+                {
+                    dcDegradationFactor[i] = 0.0;
+                    warningFlag = true;
+                }
+            }
         }
+        if (warningFlag) cm->log("Degradation calculated to be greater than 100%, capped at 100%.", SSC_WARNING);
 
         //read in optional DC and AC lifetime daily losses, error check length of arrays
         if (enableDCLifetimeLosses)
@@ -862,7 +876,7 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
 
     if (Simulation->useLifetimeOutput)
     {
-        p_dcDegradationFactor = cm->allocate("dc_degrade_factor", numberOfYears + 1);
+        p_dcDegradationFactor = cm->allocate("dc_degrade_factor", numberOfYears);
     }
 
 }

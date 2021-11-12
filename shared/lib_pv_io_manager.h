@@ -471,7 +471,7 @@ public:
 		double surfaceAzimuthDegrees; /// The azimuth of the subarray after tracking [degrees]
 		double nonlinearDCShadingDerate; /// The DC loss due to non-linear shading [%]
 		bool usePOAFromWF;     /// Flag indicating whether or not to use POA input from the weatherfile
-		int poaShadWarningCount; /// A counter to track warnings related to POA
+		int poaShadWarningCount = 0; /// A counter to track warnings related to POA
 		std::unique_ptr<poaDecompReq> poaAll; /// A structure containing POA decompositions into the three irrradiance components from input POA
 	} poa;
 

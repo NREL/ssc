@@ -841,7 +841,7 @@ TEST(SingleAxisTrackingTest, TrackingBacktrackingwSlopedTerrain) {
     {
         tt = truetrack(solar_azimuths[i], solar_zeniths[i], axis_tilts[i], axis_azimuths[i]);
         ASSERT_NEAR(tt, expected_truetracking[i], 1e-4);
-        slope = cross_axis_slope(slope_tilts[i], axis_azimuths[i], slope_azimuths[i]);
+        slope = calc_cross_axis_slope(slope_tilts[i], axis_azimuths[i], slope_azimuths[i]);
         ASSERT_NEAR(slope, expected_cross_axis_slope[i], 1e-4);
         bt = backtrack(tt, 0.4, slope);
         ASSERT_NEAR(bt, expected_backtracking[i], 1e-4);

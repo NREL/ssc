@@ -100,7 +100,7 @@ TEST_F(CMBattwatts_cmod_battwatts, ResidentialDefaults) {
     ssc_number_t peakKwDischarge = *std::max_element(batt_power_data.begin(), batt_power_data.end());
     ssc_number_t peakKwCharge = *std::min_element(batt_power_data.begin(), batt_power_data.end());
 
-    EXPECT_NEAR(peakKwDischarge, 1.98, 0.1);
+    EXPECT_NEAR(peakKwDischarge, 2.16, 0.1);
     EXPECT_NEAR(peakKwCharge, -3.04, 0.1);
 
     auto batt_voltage = data.as_vector_ssc_number_t("batt_voltage");
