@@ -314,16 +314,6 @@ double Rec_aspect(double D_rec /*m*/, double rec_height /*m*/) {     // [-]
     return aspect;
 }
 
-double Piping_length(double h_tower /*m*/, double piping_length_mult /*-*/, double piping_length_const /*m*/) {      // [m]
-    return h_tower * piping_length_mult + piping_length_const;
-}
-
-double Piping_loss_tot(double piping_length /*m*/, double piping_loss /*Wt/m*/) {        // [kWt]
-    return piping_length * piping_loss / 1000.;
-}
-
-
-
 // Originally from 'MSPT System Control'
 double Csp_pt_par_calc_bop(double bop_par /*MWe/MWcap*/, double bop_par_f /*-*/, double bop_par_0 /*-*/,
     double bop_par_1 /*-*/, double bop_par_2 /*-*/, double p_ref /*MWe*/) {      // [MWe]

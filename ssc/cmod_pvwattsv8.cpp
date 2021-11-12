@@ -687,9 +687,9 @@ public:
             nyears = as_unsigned_long("analysis_period");
             std::vector<double> dc_degradation = as_vector_double("dc_degradation");
             if (dc_degradation.size() == 1) {
-                degradationFactor.push_back(1.0);
+                degradationFactor.push_back(1.0); // assume zero degradation in year 1
                 for (size_t y = 1; y < nyears; y++) {
-                    degradationFactor.push_back(pow((1.0 - dc_degradation[0] / 100.0), y));
+                    degradationFactor.push_back(1.0 - (dc_degradation[0] * y) / 100.0);
                 }
             }
             else {
@@ -857,7 +857,7 @@ public:
 
                 irr.set_surface(track_mode, pv.tilt, pv.azimuth, pv.rotlim,
                     pv.type == ONE_AXIS_BACKTRACKING, // backtracking mode
-                    pv.gcr, false, 0.0);
+                    pv.gcr, 0.0, 0.0, false, 0.0);
 
                 int code = irr.calc();
 
@@ -928,7 +928,7 @@ public:
                                 // because the force to stow flag only fixes one rotation angle, not both
                                 irr.set_surface(irrad::FIXED_TILT, // tracking 0=fixed
                                     0, 180, // tilt, azimuth
-                                    0, 0, 0.4, false, 0.0); // rotlim, bt, gcr, force to stow, stow angle
+                                    0, 0, 0.4, 0.0, 0.0, false, 0.0); // rotlim, bt, gcr, force to stow, stow angle
                             }
                             else
                             {
@@ -940,7 +940,7 @@ public:
                                 irr.set_surface(irrad::SINGLE_AXIS, pv.tilt, pv.azimuth,
                                     stow_angle, // rotation angle limit, the forced stow position
                                     false, // backtracking mode
-                                    pv.gcr,
+                                    pv.gcr, 0.0, 0.0,
                                     true, stow_angle  // force tracker to the rotation limit (stow_angle here)
                                 );
                             }
@@ -996,7 +996,7 @@ public:
                         double shad1xf = 0.0; // default: zero shade fraction
                         if (pv.type == ONE_AXIS)
                         {
-                            shad1xf = shadeFraction1x(solazi, solzen, pv.tilt, pv.azimuth, pv.gcr, rot);
+                            shad1xf = shadeFraction1x(solazi, solzen, pv.tilt, pv.azimuth, pv.gcr, rot, 0.0, 0.0);
                         }
 
                         // run self-shading calculations for both FIXED_RACK and ONE_AXIS because the non-linear derate applies in both cases (below)
