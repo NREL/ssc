@@ -861,6 +861,8 @@ void ModifiedDISC(const double kt[3], const double kt1[3], const double g[3], co
 * \param[in] axis_azimuth axis azimuth in degrees, measured east from north
 * \param[in] gcr ground coverage ratio of system
 * \param[in] rotation tracking axis rotation angle in degrees
+* \param[in] slope_tilt tilt angle of terrain slope in degrees
+* \param[in] slope_azimuth azimuth angle of terrain slope measured East of North in degrees
 * \return fraction shaded (0-1) if system is shaded (0 for unshaded)
 */
 double shadeFraction1x(double solar_azimuth, double solar_zenith, double axis_tilt, double axis_azimuth, double gcr, double rotation, double slope_tilt, double slope_azimuth);
@@ -881,6 +883,7 @@ double truetrack(double solar_azimuth, double solar_zenith, double axis_tilt, do
 *
 * \param[in] ideal (true-tracking) axis rotation angle in degrees, not adjusted for physical limits or stow
 * \param[in] gcr ground coverage ratio (0-1) of array
+* \param[in] axis_slope cross axis slope of terrain in degrees
 * \return updated rotation angle in degrees after backtracking
 */
 double backtrack(double truetracking_rotation, double gcr, double axis_slope);
@@ -894,7 +897,7 @@ double backtrack(double truetracking_rotation, double gcr, double axis_slope);
 * \return cross axis tilt angle in degrees
 */
 
-double cross_axis_slope(double slope_tilt, double axis_azimuth, double slope_azimuth);
+double calc_cross_axis_slope(double slope_tilt, double axis_azimuth, double slope_azimuth);
 
 /**
 * \class irrad
