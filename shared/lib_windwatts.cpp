@@ -136,10 +136,11 @@ windPowerCalculator::windPowerUsingResource(double windSpeed, double windDirDeg,
 
 	size_t i, j;
 	//unsigned char wt_id[MAX_WIND_TURBINES], wid; // unsigned char has 256 limit
-	size_t wt_id[MAX_WIND_TURBINES], wid;
+    size_t wid;
+	std::vector<size_t> wt_id;
 
 	for (i = 0; i<nTurbines; i++)
-		wt_id[i] = i;
+		wt_id.push_back(i);
 
 	// convert barometric pressure in ATM to air density
 	double fAirDensity = (airPressureAtm * physics::Pa_PER_Atm) / (physics::R_GAS_DRY_AIR * physics::CelciusToKelvin(TdryC));   //!Air Density, kg/m^3
@@ -365,10 +366,11 @@ bool windPowerCalculator::windPowerUsingDistribution(std::vector<std::vector<dou
 
     size_t i, j;
     //unsigned char wt_id[MAX_WIND_TURBINES], wid; // unsigned char has 256 limit
-    size_t wt_id[MAX_WIND_TURBINES], wid;
+    size_t wid;
+    std::vector<size_t> wt_id;
 
     for (i = 0; i<nTurbines; i++)
-        wt_id[i] = i;
+        wt_id.push_back(i);
 
 
     double freq_total = 0.0, farmpower = 0.0, farmgross = 0.0;

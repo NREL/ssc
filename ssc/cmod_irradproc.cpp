@@ -59,6 +59,9 @@ static var_info _cm_vtab_irradproc[] = {
         { SSC_INPUT,        SSC_NUMBER,      "rotlim",                     "Rotational limit on tracker",    "deg",    "",                      "Irradiance Processor",      "?=45",                    "MIN=0,MAX=90",                             "" },
         { SSC_INPUT,        SSC_NUMBER,      "backtrack",                  "Enable backtracking",            "0/1",    "",                      "Irradiance Processor",      "?=0",                    "BOOLEAN",                                   "" },
         { SSC_INPUT,        SSC_NUMBER,      "gcr",                        "Ground coverage ratio",          "0..1",   "",                      "Irradiance Processor",      "backtrack=1",              "MIN=0,MAX=1",                             "" },
+        { SSC_INPUT,        SSC_NUMBER,      "slope_tilt",                        "Terrain slope",          "deg",   "",                      "Irradiance Processor",      "?=0",              "MIN=0,MAX=1",                             "" },
+        { SSC_INPUT,        SSC_NUMBER,      "slope_azm",                        "Terrain azimuth",          "deg",   "",                      "Irradiance Processor",      "?=0",              "MIN=0,MAX=1",                             "" },
+
         { SSC_INPUT,        SSC_NUMBER,      "elevation",                  "Elevation",                      "m",      "",                      "Irradiance Processor",        "?",                                 "",                             "" },
         { SSC_INPUT,        SSC_NUMBER,      "tamb",                       "Ambient Temperature (dry bulb temperature)","°C",     "",           "Irradiance Processor",        "?",                                  "",                            "" },
         { SSC_INPUT,        SSC_NUMBER,      "pressure",                   "Pressure",                       "mbars",  "",                      "Irradiance Processor",        "?",                                  "",                            "" },
@@ -169,6 +172,10 @@ public:
         bool en_backtrack = as_boolean("backtrack");
         double gcr = 0; //use a default value since it's needed to be passed into the set_surface function, but isn't used subsequently
         if (is_assigned("gcr")) gcr = as_double("gcr");
+        double slope_tilt = 0; //use a default value since it's needed to be passed into the set_surface function, but isn't used subsequently
+        if (is_assigned("slope_tilt")) slope_tilt = as_double("slope_tilt");
+        double slope_azm = 0;
+        if (is_assigned("slope_azm")) slope_azm = as_double("slope_azm");
 
         double alb_const = as_double("albedo_const");
         ssc_number_t* albvec = 0;
@@ -235,7 +242,7 @@ public:
             if (irrad_mode == 1) x.set_global_beam(glob[i], beam[i]);
             else if (irrad_mode == 2) x.set_global_diffuse(glob[i], diff[i]);
             else x.set_beam_diffuse(beam[i], diff[i]);
-            x.set_surface(track_mode, tilt, azimuth, rotlim, en_backtrack, gcr, false, 0.0); //last two inputs are to force to a stow angle, which doesn't make sense for irradproc as a standalone cmod
+            x.set_surface(track_mode, tilt, azimuth, rotlim, en_backtrack, gcr, slope_tilt, slope_azm, false, 0.0); //last two inputs are to force to a stow angle, which doesn't make sense for irradproc as a standalone cmod
 
             int code = x.calc();
             if (code < 0)
