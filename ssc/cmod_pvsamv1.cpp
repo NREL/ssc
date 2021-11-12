@@ -1339,13 +1339,13 @@ void cm_pvsamv1::exec()
 
                 if (code == 40)
                     log(util::format("POA decomposition model calculated negative direct normal irradiance at time [y:%d m:%d d:%d h:%d minute:%lg], set to zero.",
-                        wf.year, wf.month, wf.day, wf.hour, wf.minute), SSC_WARNING, (float)idx);
+                        wf.year, wf.month, wf.day, wf.hour, wf.minute), SSC_NOTICE, (float)idx);
                 else if (code == 41)
                     log(util::format("POA decomposition model calculated negative diffuse horizontal irradiance at time [y:%d m:%d d:%d h:%d minute:%lg], set to zero.",
-                        wf.year, wf.month, wf.day, wf.hour, wf.minute), SSC_WARNING, (float)idx);
+                        wf.year, wf.month, wf.day, wf.hour, wf.minute), SSC_NOTICE, (float)idx);
                 else if (code == 42)
                     log(util::format("POA decomposition model calculated negative global horizontal irradiance at time [y:%d m:%d d:%d h:%d minute:%lg], set to zero.",
-                        wf.year, wf.month, wf.day, wf.hour, wf.minute), SSC_WARNING, (float)idx);
+                        wf.year, wf.month, wf.day, wf.hour, wf.minute), SSC_NOTICE, (float)idx);
 
                 // p_irrad_calc is only weather file records long...
                 if (iyear == 0)
@@ -1415,7 +1415,7 @@ void cm_pvsamv1::exec()
                         if (Irradiance->p_IrradianceCalculated[2][idx] < -1)
                         {
                             log(util::format("Calculated negative beam irradiance of %lg W/m2 at time [y:%d m:%d d:%d h:%d, minute:%lg], set to zero.",
-                                Irradiance->p_IrradianceCalculated[2][idx], wf.year, wf.month, wf.day, wf.hour, wf.minute), SSC_WARNING, (float)idx);
+                                Irradiance->p_IrradianceCalculated[2][idx], wf.year, wf.month, wf.day, wf.hour, wf.minute), SSC_NOTICE, (float)idx);
                             Irradiance->p_IrradianceCalculated[2][idx] = 0;
                         }
                     }
@@ -1427,7 +1427,7 @@ void cm_pvsamv1::exec()
                         if (Irradiance->p_IrradianceCalculated[0][idx] < -1)
                         {
                             log(util::format("Calculated negative global horizontal irradiance of %lg W/m2 at time [y:%d m:%d d:%d h:%d minute:%lg], set to zero.",
-                                Irradiance->p_IrradianceCalculated[0][idx], wf.year, wf.month, wf.day, wf.hour, wf.minute), SSC_WARNING, (float)idx);
+                                Irradiance->p_IrradianceCalculated[0][idx], wf.year, wf.month, wf.day, wf.hour, wf.minute), SSC_NOTICE, (float)idx);
                             Irradiance->p_IrradianceCalculated[0][idx] = 0;
                         }
                     }
@@ -1439,7 +1439,7 @@ void cm_pvsamv1::exec()
                         if (Irradiance->p_IrradianceCalculated[1][idx] < -1)
                         {
                             log(util::format("Calculated negative diffuse horizontal irradiance of %lg W/m2 at time [y:%d m:%d d:%d h:%d minute:%lg], set to zero.",
-                                Irradiance->p_IrradianceCalculated[1][idx], wf.year, wf.month, wf.day, wf.hour, wf.minute), SSC_WARNING, (float)idx);
+                                Irradiance->p_IrradianceCalculated[1][idx], wf.year, wf.month, wf.day, wf.hour, wf.minute), SSC_NOTICE, (float)idx);
                             Irradiance->p_IrradianceCalculated[1][idx] = 0;
                         }
                     }
