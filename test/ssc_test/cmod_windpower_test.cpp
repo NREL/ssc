@@ -361,6 +361,33 @@ TEST_F(CMWindPowerIntegration, IcingAndLowTempCutoff_cmod_windpower) {
     free_winddata_array(windresourcedata);
 }
 
+/// Override for number of wind turbines with wake model
+TEST_F(CMWindPowerIntegration, WakeModelMaxTurbineOverride) {
+    // set up 310 turbines
+    ssc_number_t xcoord[310];
+    ssc_number_t ycoord[310];
+    for (int i = 0; i < 310; i++) {
+        double x = i % 20;
+        xcoord[i] = (ssc_number_t)x;
+        double y = floor(i / 30);
+        ycoord[i] = (ssc_number_t)y;
+    }
+    ssc_data_set_array(data, "wind_farm_xCoordinates", xcoord, 310);
+    ssc_data_set_array(data, "wind_farm_yCoordinates", ycoord, 310);
+
+    // should fail with an error for 310 turbines
+    ssc_module_t module = ssc_module_create("windpower");
+    ASSERT_FALSE(ssc_module_exec(module, data));
+
+    // set new override input and test that it works
+    ssc_data_set_number(data, "max_turbine_override", 315);
+    ssc_module_exec(module, data);
+    ssc_number_t annual_energy;
+    ssc_data_get_number(data, "annual_energy", &annual_energy);
+    EXPECT_NEAR(annual_energy, 31636868.6, 1) << "Turbine override";
+}
+
+
 /// Testing Turbine powercurve calculation
 TEST(Turbine_powercurve_cmod_windpower_eqns, NoData) {
     ASSERT_FALSE(Turbine_calculate_powercurve(nullptr));
