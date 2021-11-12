@@ -186,7 +186,7 @@ TEST_F(CM_MHKWave, ReadJson_TSFile) {
     ssc_data_unassign(data, "wave_resource_matrix");
     const char* SSCDIR = std::getenv("SSCDIR");
     char file[256];
-    sprintf(file, "%s/test/input_cases/mhk/time_series_edited.csv", SSCDIR);
+    sprintf(file, "%s/test/input_cases/mhk/timeseries_waveresource_api.csv", SSCDIR);
     std::string js = "{\"use_specific_wf_wave\": 0.0, \"wave_resource_model_choice\": 1.0}";
     auto copy = json_to_ssc_data(js.c_str());
     ssc_data_set_string(copy, "wave_resource_filename_ts", file);
@@ -253,7 +253,7 @@ TEST_F(CM_MHKWave, ComputeModuleTest_cmod_mhk_wave_time_series_file) {
     ssc_data_clear(data);
     const char* SSCDIR = std::getenv("SSCDIR");
     char file[256];
-    sprintf(file, "%s/test/input_cases/mhk/timeseries_data_file.csv", SSCDIR);
+    sprintf(file, "%s/test/input_cases/mhk/timeseries_waveresource_api.csv", SSCDIR);
 
     ssc_data_set_string(data, "wave_resource_filename_ts", file);
     ssc_data_set_number(data, "wave_resource_model_choice", 1);
