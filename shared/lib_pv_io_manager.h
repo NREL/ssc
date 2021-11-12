@@ -472,6 +472,9 @@ public:
 		double nonlinearDCShadingDerate; /// The DC loss due to non-linear shading [%]
 		bool usePOAFromWF;     /// Flag indicating whether or not to use POA input from the weatherfile
 		int poaShadWarningCount; /// A counter to track warnings related to POA
+        int poaDecompBeamWarningCount; /// A counter to track warnings for calculated negative beam irradiance
+        int poaDecompDiffWarningCount; /// A counter to track warnings for calculated negative diffuse irradiance
+        int poaDecompGlobWarningCount; /// A counter to track warnings for calculated negative global irradiance
 		std::unique_ptr<poaDecompReq> poaAll; /// A structure containing POA decompositions into the three irrradiance components from input POA
 	} poa;
 
