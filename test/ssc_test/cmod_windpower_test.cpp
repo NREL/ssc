@@ -376,12 +376,12 @@ TEST_F(CMWindPowerIntegration, WakeModelMaxTurbineOverride) {
     ssc_data_set_array(data, "wind_farm_yCoordinates", ycoord, 310);
 
     // should fail with an error for 310 turbines
-    int errors = windpower_nofinancial_testfile(data);
-    EXPECT_TRUE(errors);
+    ssc_module_t module = ssc_module_create("windpower");
+    ASSERT_FALSE(ssc_module_exec(module, data));
 
-    ssc_number_t annual_energy;
+    /*ssc_number_t annual_energy;
     ssc_data_get_number(data, "annual_energy", &annual_energy);
-    EXPECT_NEAR(annual_energy, 31081848, e) << "Eddy";
+    EXPECT_NEAR(annual_energy, 31081848, e) << "Eddy";*/
 }
 
 
