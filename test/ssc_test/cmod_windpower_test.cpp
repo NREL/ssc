@@ -379,9 +379,12 @@ TEST_F(CMWindPowerIntegration, WakeModelMaxTurbineOverride) {
     ssc_module_t module = ssc_module_create("windpower");
     ASSERT_FALSE(ssc_module_exec(module, data));
 
-    /*ssc_number_t annual_energy;
+    // set new override input and test that it works
+    ssc_data_set_number(data, "max_turbine_override", 315);
+    ssc_module_exec(module, data);
+    ssc_number_t annual_energy;
     ssc_data_get_number(data, "annual_energy", &annual_energy);
-    EXPECT_NEAR(annual_energy, 31081848, e) << "Eddy";*/
+    EXPECT_NEAR(annual_energy, 31636868.6, 1) << "Turbine override";
 }
 
 
