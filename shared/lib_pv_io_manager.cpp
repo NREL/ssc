@@ -348,7 +348,6 @@ Subarray_IO::Subarray_IO(compute_module* cm, const std::string& cmName, size_t s
 
         trackerRotationLimitDegrees = cm->as_double(prefix + "rotlim");
         groundCoverageRatio = cm->as_double(prefix + "gcr");
-        //crossAxisSlope = cm->as_double(prefix + "cross_axis_slope");
         slopeTilt = cm->as_double(prefix + "slope_tilt");
         slopeAzm = cm->as_double(prefix + "slope_azm");
 
