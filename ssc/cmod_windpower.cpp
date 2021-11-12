@@ -50,6 +50,7 @@ static var_info _cm_vtab_windpower[] = {
 	{ SSC_INPUT  , SSC_NUMBER , "system_capacity"                    , "Nameplate capacity"                       , "kW"      ,""                                    , "Farm"                                 , "*"                                               , "MIN=0"                                           , "" } ,
 	{ SSC_INPUT  , SSC_ARRAY  , "wind_farm_xCoordinates"             , "Turbine X coordinates"                    , "m"       ,""                                    , "Farm"                                 , "*"                                               , ""                                                , "" } ,
 	{ SSC_INPUT  , SSC_ARRAY  , "wind_farm_yCoordinates"             , "Turbine Y coordinates"                    , "m"       ,""                                    , "Farm"                                 , "*"                                               , "LENGTH_EQUAL=wind_farm_xCoordinates"             , "" } ,
+    { SSC_INPUT  , SSC_NUMBER , "max_turbine_override"               , "Override the max number of turbines for wake modeling","numTurbines","set new max num turbines","Farm"                                , ""                                                , ""                                                , "" } ,
 
 	{ SSC_INPUT  , SSC_NUMBER , "en_low_temp_cutoff"                 , "Enable Low Temperature Cutoff"            , "0/1"     ,""                                    , "Losses"                               , "?=0"                                             , "INTEGER"                                         , "" } ,
 	{ SSC_INPUT  , SSC_NUMBER , "low_temp_cutoff"                    , "Low Temperature Cutoff"                   , "C"       ,""                                    , "Losses"                               , "en_low_temp_cutoff=1"                            , ""                                                , "" } ,
@@ -280,6 +281,14 @@ void cm_windpower::exec()
 		throw exec_error("windpower", util::format("wind turbine class not properly initialized"));
 	if (wpc.nTurbines < 1)
 		throw exec_error("windpower", util::format("the number of wind turbines was zero."));
+
+    // check for maximum number of turbines
+    int newMaxTurbines = 0;
+    if (is_assigned("max_turbine_override"))
+    {
+        newMaxTurbines = as_integer("max_turbine_override");
+        wpc.SetMaxTurbines(newMaxTurbines);
+    }
 	if (wpc.nTurbines > wpc.GetMaxTurbines())
 		throw exec_error("windpower", util::format("the wind model is only configured to handle up to %d turbines.", wpc.GetMaxTurbines()));
 
