@@ -57,8 +57,10 @@ struct DispatchProperties {
     std::vector<bool> canCharge;
     std::vector<bool> canDischarge;
     std::vector<bool> canGridcharge;
+    std::vector<bool> canDischargeToGrid;
     std::map<size_t, double> percentDischarge;
     std::map<size_t, double> percentGridcharge;
+    bool canClipCharge = false;
 
     // resource
     std::vector<double> pv;
@@ -101,6 +103,7 @@ struct DispatchProperties {
             canCharge.push_back(1);
             canDischarge.push_back(1);
             canGridcharge.push_back(0);
+            canDischargeToGrid.push_back(0);
             percentDischarge[p] = 100;
         }
         // dispatch FOM data for 18 steps
