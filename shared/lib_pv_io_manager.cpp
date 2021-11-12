@@ -348,6 +348,8 @@ Subarray_IO::Subarray_IO(compute_module* cm, const std::string& cmName, size_t s
 
         trackerRotationLimitDegrees = cm->as_double(prefix + "rotlim");
         groundCoverageRatio = cm->as_double(prefix + "gcr");
+        slopeTilt = cm->as_double(prefix + "slope_tilt");
+        slopeAzm = cm->as_double(prefix + "slope_azm");
 
         //check that backtracking input is assigned here because cannot check in the variable table
         backtrackingEnabled = 0;
@@ -599,7 +601,7 @@ void PVSystem_IO::SetupPOAInput()
 
 
                 if (tms[2] > 0) {
-                    incidence(Subarrays[nn]->trackMode, Subarrays[nn]->tiltDegrees, Subarrays[nn]->azimuthDegrees, Subarrays[nn]->trackerRotationLimitDegrees, sun[1], sun[0], Subarrays[nn]->backtrackingEnabled, Subarrays[nn]->groundCoverageRatio, false, 0.0, angle);
+                    incidence(Subarrays[nn]->trackMode, Subarrays[nn]->tiltDegrees, Subarrays[nn]->azimuthDegrees, Subarrays[nn]->trackerRotationLimitDegrees, sun[1], sun[0], Subarrays[nn]->backtrackingEnabled, Subarrays[nn]->groundCoverageRatio, Subarrays[nn]->slopeTilt, Subarrays[nn]->slopeAzm, false, 0.0, angle);
                 }
                 else {
                     angle[0] = -999;

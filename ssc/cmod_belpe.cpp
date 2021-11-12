@@ -247,22 +247,22 @@ public:
             //variables to store irradiance info
             double beam, sky, gnd;
             //North wall
-            irr.set_surface(0, 90, 0, 0, 0, 0, false, 0.0);
+            irr.set_surface(0, 90, 0, 0, 0, 0, 0, 0, false, 0.0);
             irr.calc();
             irr.get_poa(&beam, &sky, &gnd, 0, 0, 0);
             RadWallN[i] = beam + sky + gnd;
             //East wall
-            irr.set_surface(0, 90, 90, 0, 0, 0, false, 0.0);
+            irr.set_surface(0, 90, 90, 0, 0, 0, 0, 0, false, 0.0);
             irr.calc();
             irr.get_poa(&beam, &sky, &gnd, 0, 0, 0);
             RadWallE[i] = beam + sky + gnd;
             //South wall
-            irr.set_surface(0, 90, 180, 0, 0, 0, false, 0.0);
+            irr.set_surface(0, 90, 180, 0, 0, 0, 0, 0, false, 0.0);
             irr.calc();
             irr.get_poa(&beam, &sky, &gnd, 0, 0, 0);
             RadWallS[i] = beam + sky + gnd;
             //West wall
-            irr.set_surface(0, 90, 270, 0, 0, 0, false, 0.0);
+            irr.set_surface(0, 90, 270, 0, 0, 0, 0, 0, false, 0.0);
             irr.calc();
             irr.get_poa(&beam, &sky, &gnd, 0, 0, 0);
             RadWallW[i] = beam + sky + gnd;
