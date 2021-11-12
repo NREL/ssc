@@ -363,19 +363,19 @@ TEST_F(CMWindPowerIntegration, IcingAndLowTempCutoff_cmod_windpower) {
 
 /// Override for number of wind turbines with wake model
 TEST_F(CMWindPowerIntegration, WakeModelMaxTurbineOverride) {
-    // set up 301 turbines
-    ssc_number_t xcoord[301];
-    ssc_number_t ycoord[301];
-    for (int i = 0; i < 301; i++) {
+    // set up 310 turbines
+    ssc_number_t xcoord[310];
+    ssc_number_t ycoord[310];
+    for (int i = 0; i < 310; i++) {
         double x = i % 20;
         xcoord[i] = (ssc_number_t)x;
         double y = floor(i / 30);
         ycoord[i] = (ssc_number_t)y;
     }
-    ssc_data_set_array(data, "wind_farm_xCoordinates", xcoord, 301);
-    ssc_data_set_array(data, "wind_farm_yCoordinates", ycoord, 301);
+    ssc_data_set_array(data, "wind_farm_xCoordinates", xcoord, 310);
+    ssc_data_set_array(data, "wind_farm_yCoordinates", ycoord, 310);
 
-    // should fail with an error for 301 turbines
+    // should fail with an error for 310 turbines
     int errors = windpower_nofinancial_testfile(data);
     EXPECT_TRUE(errors);
 
