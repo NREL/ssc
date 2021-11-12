@@ -3479,7 +3479,7 @@ void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double
             year1_hourly_e_from_grid = cm->as_array("year1_hourly_e_fromgrid", &n_e_fromgrid);
             monthly_gen_purchases = cm->allocate("monthly_gen_purchases", 12 * nyears);
             monthly_e_fromgrid = cm->allocate("monthly_e_from_grid", 12);
-            int n_steps_per_hour = n_grid_to_batt / (nyears * 8760);
+            n_steps_per_hour = n_grid_to_batt / (nyears * 8760);
         }
 
         size_t n_mp_market_price;
@@ -3536,7 +3536,7 @@ void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double
                         for (size_t d = 1; d <= util::days_in_month(int(m - 1)); d++) {
                             for (size_t h = 0; h < 24; h++) { //monthly iteration for each year
                                 for (size_t n = 0; n < n_steps_per_hour; n++) {
-                                    if (a == 1) monthly_e_fromgrid[m-1] += year1_hourly_e_from_grid[n_steps_per_hour * util::hour_of_year(m, d, h) + n];
+                                    if (a == 0) monthly_e_fromgrid[m-1] += year1_hourly_e_from_grid[n_steps_per_hour * util::hour_of_year(m, d, h) + n];
                                     if (a != 0 && year1_hourly_e_from_grid[n_steps_per_hour * util::hour_of_year(m, d, h) + n] != 0.0) {
                                         //cf.at(CF_charging_cost_grid_month, a) += monthly_grid_to_batt[m] / (monthly_grid_to_batt[m] + monthly_grid_to_load[m]) * monthly_energy_charge[m] * charged_grid[a] / charged_grid[1] * cf.at(CF_util_escal_rate, a);
                                         cf.at(CF_charging_cost_grid_lcos, a) += -grid_to_batt[(size_t(a) - 1) * 8760 * n_steps_per_hour + n_steps_per_hour * util::hour_of_year(m, d, h) + n] * cf.at(CF_degradation_lcos, a) /
@@ -3547,6 +3547,7 @@ void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double
                             }
                         }
                         cf.at(CF_charging_cost_grid_lcos, a) += -monthly_grid_to_batt[m - 1] / monthly_e_fromgrid[m - 1] * (net_annual_true_up.at(a, m - 1) + net_billing_credit.at(a, m - 1) + net_metering_credit.at(a, m - 1));
+                        if (std::isnan(cf.at(CF_charging_cost_grid_lcos, a))) throw exec_error("Lcos_calculation", "grid charging cost nan error");
                     }
                 }
                 else {
