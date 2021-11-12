@@ -2076,7 +2076,7 @@ void cm_pvsamv1::exec()
 
                 //module degradation and lifetime DC losses apply to all subarrays
                 if (save_full_lifetime_variables == 1)
-                    dcPowerNetPerSubarray[nn] *= PVSystem->dcDegradationFactor[iyear + 1];
+                    dcPowerNetPerSubarray[nn] *= PVSystem->dcDegradationFactor[iyear];
 
                 //dc adjustment factors apply to all subarrays
                 if (iyear == 0) annual_dc_adjust_loss += dcPowerNetPerSubarray[nn] * (1 - dc_haf(hour_of_year)) * util::watt_to_kilowatt * ts_hour; //only keep track of this loss for year 0, convert from power W to energy kWh
@@ -2177,6 +2177,9 @@ void cm_pvsamv1::exec()
             PVSystem->p_dcDegradationFactor[iyear] = (ssc_number_t)(PVSystem->dcDegradationFactor[iyear]);
         }
     }
+
+    //extend DC degradation output for year 0
+    if (system_use_lifetime_output) prepend_to_output(this, "dc_degrade_factor", nyears + 1, 1.0);
 
     // Initialize DC battery predictive controller
     if (en_batt && batt_topology == ChargeController::DC_CONNECTED)
