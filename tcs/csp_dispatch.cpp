@@ -422,14 +422,14 @@ bool csp_dispatch_opt::optimize()
     -------------------------------------------------------------
     Continuous
     -------------------------------------------------------------
-    xr          kWt     Power delivered by the receiver at time t
-    xrsu        kWt     Power used by the reciever for start up
-    ursu        kWt     Receiver accumulated start-up thermal power at time t
-    x           kWt	    Cycle thermal power consumption at time t 
-    ucsu        kWt     Cycle accumulated start-up thermal power at time t
-    s           kWht    TES reserve quantity at time t (auxiliary variable) 
-    wdot        kWe     Electrical power production at time t
-    delta_w     kWe     Positive change in power production at time t w/r/t t-1
+    xr          MWt     Power delivered by the receiver at time t
+    xrsu        MWt     Power used by the reciever for start up
+    ursu        MWt     Receiver accumulated start-up thermal power at time t
+    x           MWt	    Cycle thermal power consumption at time t 
+    ucsu        MWt     Cycle accumulated start-up thermal power at time t
+    s           MWht    TES reserve quantity at time t (auxiliary variable) 
+    wdot        MWe     Electrical power production at time t
+    delta_w     MWe     Positive change in power production at time t w/r/t t-1
     -------------------------------------------------------------
     Binary
     -------------------------------------------------------------
@@ -473,13 +473,16 @@ bool csp_dispatch_opt::optimize()
         O.add_var("ucsu", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0., P["Ec"] * 1.0001);
         O.add_var("y", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_T, nt);
         O.add_var("ycsu", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_T, nt);
-        O.add_var("ycsb", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_T, nt);
+        O.add_var("ycsup", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_T, nt);
+
 #ifdef MOD_CYCLE_SHUTDOWN
         O.add_var("ycsd", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_T, nt);
 #endif
-        O.add_var("yoff", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_T, nt);
-        O.add_var("ycsup", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_T, nt);
-        O.add_var("ychsp", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_T, nt);
+        if (params.can_cycle_use_standby) {
+            O.add_var("ycsb", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_T, nt);
+            O.add_var("ychsp", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_T, nt);
+            O.add_var("yoff", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_T, nt);
+        }
 
         if (params.is_parallel_heater) {
             O.add_var("qeh", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0., P["Qehu"]);
@@ -495,8 +498,8 @@ bool csp_dispatch_opt::optimize()
         --------------------------------------------------------------------------------
         */
 		{
-            int *col = new int[12 * nt +1];
-            REAL *row = new REAL[12 * nt +1];
+            int *col = new int[12 * nt + 1];
+            REAL *row = new REAL[12 * nt + 1];
             double tadj = P["disp_time_weighting"];
             int i = 0;
 
@@ -509,50 +512,52 @@ bool csp_dispatch_opt::optimize()
             for(int t=0; t<nt; t++)
             {
                 i = 0;
-                col[ t + nt*(i  ) ] = O.column("wdot", t);
-                row[ t + nt*(i++) ] = P["delta"] * params.sell_price.at(t)*tadj*(1.- params.w_condf_expected.at(t));
+                col[ t + nt * (i  ) ] = O.column("wdot", t);
+                row[ t + nt * (i++) ] = P["delta"] * params.sell_price.at(t)*tadj*(1.- params.w_condf_expected.at(t));
 
-                col[ t + nt*(i  ) ] = O.column("xr", t);
-                row[ t + nt*(i++) ] = -(P["delta"] * params.sell_price.at(t)*(1/tadj) * P["Lr"]); // +tadj * pmean;  // tadj added to prefer receiver production sooner (i.e. delay dumping)
+                col[ t + nt * (i  ) ] = O.column("xr", t);
+                row[ t + nt * (i++) ] = -(P["delta"] * params.sell_price.at(t)*(1/tadj) * P["Lr"]); // tadj added to prefer receiver production sooner (i.e. delay dumping)
 
-                col[ t + nt*(i  ) ] = O.column("xrsu", t);
-                row[ t + nt*(i++) ] = -P["delta"] * params.sell_price.at(t)*(1/tadj)* P["Lr"];
+                col[ t + nt * (i  ) ] = O.column("xrsu", t);
+                row[ t + nt * (i++) ] = -P["delta"] * params.sell_price.at(t)*(1/tadj)* P["Lr"];
 
-                col[ t + nt*(i  ) ] = O.column("yrsu", t);
-                row[ t + nt*(i++) ] = -params.sell_price.at(t)* (1/tadj) * (params.w_rec_ht + params.w_stow);
+                col[ t + nt * (i  ) ] = O.column("yrsu", t);
+                row[ t + nt * (i++) ] = -params.sell_price.at(t)* (1/tadj) * (params.w_rec_ht + params.w_stow);
 
-                col[ t + nt*(i  ) ] = O.column("yr", t);
-                row[ t + nt*(i++) ] = -(P["delta"] * params.sell_price.at(t)* (1/tadj) * params.w_track); // +tadj;	// tadj added to prefer receiver operation in nearer term to longer term
+                col[ t + nt * (i  ) ] = O.column("yr", t);
+                row[ t + nt * (i++) ] = -(P["delta"] * params.sell_price.at(t)* (1/tadj) * params.w_track); // tadj added to prefer receiver operation in nearer term to longer term
 
-                col[ t + nt*(i  ) ] = O.column("x", t);
-                row[ t + nt*(i++) ] = -P["delta"] * params.sell_price.at(t)* (1/tadj) * params.w_cycle_pump;
+                col[ t + nt * (i  ) ] = O.column("x", t);
+                row[ t + nt * (i++) ] = -P["delta"] * params.sell_price.at(t)* (1/tadj) * params.w_cycle_pump;
 
-                col[ t + nt*(i  ) ] = O.column("ycsb", t);
-                row[ t + nt*(i++) ] = -P["delta"] * params.sell_price.at(t)* (1/tadj) * params.w_cycle_standby;
+                col[ t + nt * (i  ) ] = O.column("delta_w", t);
+                row[ t + nt * (i++) ] = -P["pen_delta_w"] * (1 / tadj);
 
-                col[ t + nt*(i  ) ] = O.column("yrsup", t);
-                row[ t + nt*(i++) ] = -P["rsu_cost"]* (1/tadj);
+                col[ t + nt * (i  ) ] = O.column("yrsup", t);
+                row[ t + nt * (i++) ] = -P["rsu_cost"]* (1/tadj);
 
-                col[ t + nt*(i  ) ] = O.column("ycsup", t);
-                row[ t + nt*(i++) ] = -P["csu_cost"]* (1/tadj);
+                col[ t + nt * (i  ) ] = O.column("ycsup", t);
+                row[ t + nt * (i++) ] = -P["csu_cost"]* (1/tadj);
 
-                col[ t + nt*(i  ) ] = O.column("ychsp", t);
-                row[ t + nt*(i++) ] = -P["csu_cost"]* (1/tadj) * 0.1;
+                if (params.can_cycle_use_standby) {
+                    col[ t + nt*(i  ) ] = O.column("ycsb", t);
+                    row[ t + nt*(i++) ] = -P["delta"] * params.sell_price.at(t)* (1/tadj) * params.w_cycle_standby;
 
-                col[ t + nt*(i  ) ] = O.column("delta_w", t);
-                row[ t + nt*(i++) ] = -P["pen_delta_w"]* (1/tadj);
+                    col[ t + nt*(i  ) ] = O.column("ychsp", t);
+                    row[ t + nt*(i++) ] = -P["csu_cost"]* (1/tadj) * 0.1;
+                }
 
                 if (params.is_parallel_heater) {
-                    col [t + nt*(i  )] = O.column("qeh", t);
-                    row[ t + nt*(i++)] = -(P["delta"] * params.sell_price.at(t) * (1 / tadj) * (1 / P["eta_eh"]));
+                    col[ t + nt * (i  ) ] = O.column("qeh", t);
+                    row[ t + nt * (i++) ] = -(P["delta"] * params.sell_price.at(t) * (1 / tadj) * (1 / P["eta_eh"]));
                 }
 
                 tadj *= P["disp_time_weighting"];
             }
 
-
-            col[i * nt] = O.column("s", nt - 1);       //terminal inventory
-            row[i * nt] = P["delta"] * tadj * pmean * P["eta_cycle"] * params.inventory_incentive;  // new terminal inventory 
+            // new terminal inventory incentive
+            col[i * nt] = O.column("s", nt - 1);
+            row[i * nt] = P["delta"] * tadj * pmean * P["eta_cycle"] * params.inventory_incentive;  
 
             set_obj_fnex(lp, i*nt+1, row, col);
 
@@ -572,22 +577,23 @@ bool csp_dispatch_opt::optimize()
             
             for(int t=0; t<nt; t++)
             {
-                col[0] = O.column("delta_w", t);
-                row[0] = 1.;
+                int i = 0;
+                col[i  ] = O.column("delta_w", t);
+                row[i++] = 1.;
 
-                col[1] = O.column("wdot", t);
-                row[1] = -1.;
+                col[i  ] = O.column("wdot", t);
+                row[i++] = -1.;
 
                 if(t>0)
                 {
-                    col[2] = O.column("wdot", t-1);
-                    row[2] = 1.;
+                    col[i  ] = O.column("wdot", t-1);
+                    row[i++] = 1.;
                     
-                    add_constraintex(lp, 3, row, col, GE, 0.);
+                    add_constraintex(lp, i, row, col, GE, 0.);
                 }
                 else
                 {
-                    add_constraintex(lp, 2, row, col, GE, -P["Wdot0"]);
+                    add_constraintex(lp, i, row, col, GE, -P["Wdot0"]);
                 }
 
                 // Cycle ramping limit (sub-hourly model Delta < 1)
@@ -595,27 +601,29 @@ bool csp_dispatch_opt::optimize()
                 {
                     double temp_coef = (params.eta_pb_expected.at(t) / params.eta_pb_des) * P["Wdotl"] - P["Wdlim"];
 
-                    int i = 0;
-                    row[i] = 1.;
+                    i = 0;
+                    row[i  ] = 1.;
                     col[i++] = O.column("delta_w", t);
-
-                    row[i] = -temp_coef * 2.;
-                    col[i++] = O.column("ycsb", t);
              
              /* #ifdef MOD_CYCLE_SHUTDOWN
                     row[i] = -temp_coef * 2.;
                     col[i++] = O.column("ycsd", t);
                 #endif   */
 
-                    row[i] = -temp_coef * 2.;
-                    col[i++] = O.column("yoff", t);
+                    if (params.can_cycle_use_standby) {
+                        row[i  ] = -temp_coef * 2.;
+                        col[i++] = O.column("ycsb", t);
 
-                    row[i] = -temp_coef;
+                        row[i  ] = -temp_coef * 2.;
+                        col[i++] = O.column("yoff", t);
+                    }
+
+                    row[i  ] = -temp_coef;
                     col[i++] = O.column("y", t);
 
                     if (t>0)
                     {
-                        row[i] = temp_coef;
+                        row[i  ] = temp_coef;
                         col[i++] = O.column("y", t-1);
 
                         add_constraintex(lp, i, row, col, LE, P["Wdlim"]);
@@ -632,8 +640,8 @@ bool csp_dispatch_opt::optimize()
         
         {
             //Linearization of the implementation of the piecewise efficiency equation 
-            REAL row[3];
-            int col[3];
+            REAL row[5];
+            int col[5];
 
             for(int t=0; t<nt; t++)
             {
@@ -684,115 +692,119 @@ bool csp_dispatch_opt::optimize()
 
             for(int t=0; t<nt; t++)
             {
-
                 //Receiver startup inventory
-                row[0] = 1.;
-                col[0] = O.column("ursu", t);
+                int i = 0;
+                row[i  ] = 1.;
+                col[i++] = O.column("ursu", t);
 
-                row[1] = -P["delta"];
-                col[1] = O.column("xrsu", t);
+                row[i  ] = -P["delta"];
+                col[i++] = O.column("xrsu", t);
 
-                if(t>0)
-                {
-                    row[2] = -1.;
-                    col[2] = O.column("ursu", t-1);
+                if(t>0) {
+                    row[i  ] = -1.;
+                    col[i++] = O.column("ursu", t-1);
 
-                    add_constraintex(lp, 3, row, col, LE, 0);
+                    add_constraintex(lp, i, row, col, LE, 0);
                 }
-                else
-                {
-                    add_constraintex(lp, 2, row, col, LE, 0.);
+                else {
+                    add_constraintex(lp, i, row, col, LE, 0.);
                 }
 
                 //-----
 
                 //inventory nonzero
-                row[0] = 1.;
-                col[0] = O.column("ursu", t);
+                i = 0;
+                row[i  ] = 1.;
+                col[i++] = O.column("ursu", t);
 
-                row[1] = -P["Er"];
-                col[1] = O.column("yrsu", t);
+                row[i  ] = -P["Er"];
+                col[i++] = O.column("yrsu", t);
 
-                add_constraintex(lp, 2, row, col, LE, 0.);
+                add_constraintex(lp, i, row, col, LE, 0.);
 
                 //Receiver operation allowed when:
-                row[0] = P["Er"];
-                col[0] = O.column("yr", t);
+                i = 0;
+                row[i  ] = P["Er"];
+                col[i++] = O.column("yr", t);
 
-                row[1] = -1.0;
-                col[1] = O.column("ursu", t);
+                row[i  ] = -1.0;
+                col[i++] = O.column("ursu", t);
 
-                if (t > 0)
-                {
-                    row[2] = - P["Er"];
-                    col[2] = O.column("yr", t - 1);
+                if (t > 0) {
+                    row[i  ] = - P["Er"];
+                    col[i++] = O.column("yr", t - 1);
 
-                    add_constraintex(lp, 3, row, col, LE, 0.);
+                    add_constraintex(lp, i, row, col, LE, 0.);
                 }
-                else
-                {
-                    add_constraintex(lp, 2, row, col, LE, (params.is_rec_operating0 ? P["Er"] : 0.));
+                else {
+                    add_constraintex(lp, i, row, col, LE, (params.is_rec_operating0 ? P["Er"] : 0.));
                 }
 
                 //Receiver startup can't be enabled after a time step where the Receiver was operating
-                if(t>0)
-                {
-                    row[0] = 1.;
-                    col[0] = O.column("yrsu", t);
+                if(t>0) {
+                    i = 0;
+                    row[i  ] = 1.;
+                    col[i++] = O.column("yrsu", t);
 
-                    row[1] = 1.;
-                    col[1] = O.column("yr", t-1);
+                    row[i  ] = 1.;
+                    col[i++] = O.column("yr", t-1);
 
-                    add_constraintex(lp, 2, row, col, LE, 1.);
+                    add_constraintex(lp, i, row, col, LE, 1.);
                 }
 
                 //Receiver startup energy consumption
-                row[0] = 1.;
-                col[0] = O.column("xrsu", t);
+                i = 0;
+                row[i  ] = 1.;
+                col[i++] = O.column("xrsu", t);
 
-                row[1] = -P["Qru"];
-                col[1] = O.column("yrsu", t);
+                row[i  ] = -P["Qru"];
+                col[i++] = O.column("yrsu", t);
 
-                add_constraintex(lp, 2, row, col, LE, 0.);
+                add_constraintex(lp, i, row, col, LE, 0.);
 
                 //Receiver startup only during solar positive periods
-                row[0] = 1.;
-                col[0] = O.column("yrsu", t);
+                i = 0;
+                row[i  ] = 1.;
+                col[i++] = O.column("yrsu", t);
 
-                add_constraintex(lp, 1, row, col, LE, (std::min)(P["Qru"]* params.q_sfavail_expected.at(t), 1.0));
+                add_constraintex(lp, i, row, col, LE, (std::min)(P["Qru"]* params.q_sfavail_expected.at(t), 1.0));
 
                 //Receiver consumption limit
-                row[0] = 1.;
-                col[0] = O.column("xr", t);
+                i = 0;
+                row[i  ] = 1.;
+                col[i++] = O.column("xr", t);
 
-                row[1] = 1.;
-                col[1] = O.column("xrsu", t);
+                row[i  ] = 1.;
+                col[i++] = O.column("xrsu", t);
                 
-                add_constraintex(lp, 2, row, col, LE, params.q_sfavail_expected.at(t));
+                add_constraintex(lp, i, row, col, LE, params.q_sfavail_expected.at(t));
 
                 //Receiver operation mode requirement
-                row[0] = 1.;
-                col[0] = O.column("xr", t);
+                i = 0;
+                row[i  ] = 1.;
+                col[i++] = O.column("xr", t);
 
-                row[1] = -params.q_sfavail_expected.at(t);
-                col[1] = O.column("yr", t);
+                row[i  ] = -params.q_sfavail_expected.at(t);
+                col[i++] = O.column("yr", t);
 
-                add_constraintex(lp, 2, row, col, LE, 0.);
+                add_constraintex(lp, i, row, col, LE, 0.);
 
                 //Receiver minimum operation requirement
-                row[0] = 1.;
-                col[0] = O.column("xr", t);
+                i = 0;
+                row[i  ] = 1.;
+                col[i++] = O.column("xr", t);
 
-                row[1] = -P["Qrl"];
-                col[1] = O.column("yr", t);
+                row[i  ] = -P["Qrl"];
+                col[i++] = O.column("yr", t);
 
-                add_constraintex(lp, 2, row, col, GE, 0.);
+                add_constraintex(lp, i, row, col, GE, 0.);
 
                 //Receiver can't continue operating when no energy is available
-                row[0] = 1.;
-                col[0] = O.column("yr", t);
+                i = 0;
+                row[i  ] = 1.;
+                col[i++] = O.column("yr", t);
 
-                add_constraintex(lp, 1, row, col, LE, (std::min)(floor(params.q_sfavail_expected.at(t) / P["Qrl"]), 1.0)); //tighter formulation
+                add_constraintex(lp, i, row, col, LE, (std::min)(floor(params.q_sfavail_expected.at(t) / P["Qrl"]), 1.0)); //tighter formulation
 
                 // --- new constraints ---
 
@@ -829,16 +841,17 @@ bool csp_dispatch_opt::optimize()
                     add_constraintex(lp, 3, row, col, LE, 0.);*/
 
                     //receiver startup penalty
-                    row[0] = 1.;
-                    col[0] = O.column("yrsup", t);
+                    i = 0; 
+                    row[i  ] = 1.;
+                    col[i++] = O.column("yrsup", t);
 
-                    row[1] = -1.;
-                    col[1] = O.column("yrsu", t);
+                    row[i  ] = -1.;
+                    col[i++] = O.column("yrsu", t);
 
-                    row[2] = 1.;
-                    col[2] = O.column("yrsu", t-1);
+                    row[i  ] = 1.;
+                    col[i++] = O.column("yrsu", t-1);
 
-                    add_constraintex(lp, 3, row, col, GE, 0.);
+                    add_constraintex(lp, i, row, col, GE, 0.);
 
                     //receiver hot startup penalty
                     /*row[0] = 1.;
@@ -890,30 +903,30 @@ bool csp_dispatch_opt::optimize()
             {
                 //Heater power limit
                 int i = 0;
-                row[i] = 1.;
+                row[i  ] = 1.;
                 col[i++] = O.column("qeh", t);
 
-                row[i] = -P["Qehu"];
+                row[i  ] = -P["Qehu"];
                 col[i++] = O.column("yeh", t);
 
                 add_constraintex(lp, i, row, col, LE, 0.);
 
                 //Heater minimum operation requirement
                 i = 0;
-                row[i] = 1.;
+                row[i  ] = 1.;
                 col[i++] = O.column("qeh", t);
 
-                row[i] = -P["Qehl"];
+                row[i  ] = -P["Qehl"];
                 col[i++] = O.column("yeh", t);
 
                 add_constraintex(lp, i, row, col, GE, 0.);
 
                 //Heaters and cycle cannot coincide
                 i = 0;
-                row[i] = 1.;
+                row[i  ] = 1.;
                 col[i++] = O.column("yeh", t);
 
-                row[i] = 1.;
+                row[i  ] = 1.;
                 col[i++] = O.column("y", t);
 
                 add_constraintex(lp, i, row, col, LE, 1.);
@@ -927,91 +940,95 @@ bool csp_dispatch_opt::optimize()
             int col[5];
 
 
-            for(int t=0; t<nt; t++)
+            for (int t = 0; t < nt; t++)
             {
 
-                int i=0;
+                int i = 0;
                 //Startup Inventory balance
                 row[i  ] = 1.;
                 col[i++] = O.column("ucsu", t);
-                
+
                 row[i  ] = -P["delta"] * P["Qc"];
                 col[i++] = O.column("ycsu", t);
 
-                if(t>0)
+                if (t > 0)
                 {
                     row[i  ] = -1.;
-                    col[i++] = O.column("ucsu", t-1);
+                    col[i++] = O.column("ucsu", t - 1);
                 }
 
                 add_constraintex(lp, i, row, col, LE, 0.);
 
                 //Inventory nonzero
-                row[0] = 1.;
-                col[0] = O.column("ucsu", t);
+                i = 0;
+                row[i  ] = 1.;
+                col[i++] = O.column("ucsu", t);
 
-                row[1] = -P["Ec"]*1.00001; //tighter formulation
-                col[1] = O.column("ycsu", t);
+                row[i  ] = -P["Ec"] * 1.00001; //tighter formulation
+                col[i++] = O.column("ycsu", t);
 
-                add_constraintex(lp, 2, row, col, LE, 0.);
+                add_constraintex(lp, i, row, col, LE, 0.);
 
                 //Cycle operation allowed when:
                 i = 0;
-                row[i] = P["Ec"];
+                row[i  ] = P["Ec"];
                 col[i++] = O.column("y", t);
 
                 row[i] = -1.0;
-                if (P["delta"] >= 1.)
-                {
+                if (P["delta"] >= 1.) {
                     col[i++] = O.column("ucsu", t);                 // for hourly model (delta = 1)
                 }
-                else
-                {
+                else {
                     col[i++] = O.column("ucsu", t - 1);             // for sub-hourly model (delta < 1)
                 }
 
-                if (t > 0)
-                {
-                    row[i] = -P["Ec"];
+                if (t > 0) {
+                    row[i  ] = -P["Ec"];
                     col[i++] = O.column("y", t - 1);
 
-                    row[i] = -P["Ec"];
-                    col[i++] = O.column("ycsb", t - 1);
+                    if (params.can_cycle_use_standby) {
+                        row[i  ] = -P["Ec"];
+                        col[i++] = O.column("ycsb", t - 1);
+                    }
 
                     add_constraintex(lp, i, row, col, LE, 0.);
                 }
-                else
-                {
-                    add_constraintex(lp, i, row, col, LE, P["Ec"]*(P["y0"] + P["ycsb0"]));
+                else {
+                    if (params.can_cycle_use_standby) {
+                        add_constraintex(lp, i, row, col, LE, P["Ec"] * (P["y0"] + P["ycsb0"]));
+                    }
+                    else {
+                        add_constraintex(lp, i, row, col, LE, P["Ec"] * (P["y0"]));
+                    }
                 }
 
                 //Cycle consumption limit (valid only for hourly model -> Delta == 1)
                 if (P["delta"] >= 1.)
                 {
                     i = 0;
-                    row[i] = 1.;
+                    row[i  ] = 1.;
                     col[i++] = O.column("x", t);
 
-                    //mjw 2016.12.2 --> This constraint seems to be problematic in identifying feasible solutions for subhourly runs. Needs attention.
-                    row[i] = P["Qc"];
+                    row[i  ] = P["Qc"];
                     col[i++] = O.column("ycsu", t);
 
-                    row[i] = -P["Qu"];
+                    row[i  ] = -P["Qu"];
                     col[i++] = O.column("y", t);
 
                     add_constraintex(lp, i, row, col, LE, 0.);
                 }
                 //cycle operation mode requirement
-                row[0] = 1.;
-                col[0] = O.column("x", t);
+                i = 0;
+                row[i  ] = 1.;
+                col[i++] = O.column("x", t);
 
-                row[1] = -P["Qu"];
-                col[1] = O.column("y", t);
+                row[i  ] = -P["Qu"];
+                col[i++] = O.column("y", t);
 
-                add_constraintex(lp, 2, row, col, LE, 0.);
+                add_constraintex(lp, i, row, col, LE, 0.);
 
                 //Minimum cycle energy contribution
-                i=0;
+                i = 0;
                 row[i  ] = 1.;
                 col[i++] = O.column("x", t);
 
@@ -1023,123 +1040,146 @@ bool csp_dispatch_opt::optimize()
                 //cycle startup and operation cannot coincide (valid for sub-hourly model Delta < 1)
                 if (P["delta"] < 1)
                 {
-                    row[0] = 1.;
-                    col[0] = O.column("ycsu", t);
+                    i = 0;
+                    row[i  ] = 1.;
+                    col[i++] = O.column("ycsu", t);
 
-                    row[1] = 1.;
-                    col[1] = O.column("y", t);
+                    row[i  ] = 1.;
+                    col[i++] = O.column("y", t);
 
-                    add_constraintex(lp, 2, row, col, LE, 1.);
+                    add_constraintex(lp, i, row, col, LE, 1.);
                 }
 
                 //cycle startup can't be enabled after a time step where the cycle was operating
-                if(t>0)
+                if (t > 0)
                 {
-                    row[0] = 1.;
-                    col[0] = O.column("ycsu", t);
+                    i = 0;
+                    row[i  ] = 1.;
+                    col[i++] = O.column("ycsu", t);
 
-                    row[1] = 1.;
-                    col[1] = O.column("y", t-1);
+                    row[i  ] = 1.;
+                    col[i++] = O.column("y", t - 1);
 
-                    add_constraintex(lp, 2, row, col, LE, 1.);
+                    add_constraintex(lp, i, row, col, LE, 1.);
                 }
 
 
                 //Standby mode entry
-                i=0;
-                row[i  ] = 1.;
-                col[i++] = O.column("ycsb", t);
+                if (params.can_cycle_use_standby) {
+                    i = 0;
+                    row[i  ] = 1.;
+                    col[i++] = O.column("ycsb", t);
 
-                if(t>0)
-                {
-                    row[i  ] = -1.;
-                    col[i++] = O.column("y", t-1);
+                    if (t > 0)
+                    {
+                        row[i  ] = -1.;
+                        col[i++] = O.column("y", t - 1);
 
-                    row[i  ] = -1.;
-                    col[i++] = O.column("ycsb", t-1);
+                        row[i  ] = -1.;
+                        col[i++] = O.column("ycsb", t - 1);
 
-                    add_constraintex(lp, i, row, col, LE, 0);
+                        add_constraintex(lp, i, row, col, LE, 0);
+                    }
+                    else
+                    {
+                        add_constraintex(lp, i, row, col, LE, P["ycsb0"] + P["y0"]);
+                    }
+                
+                    i = 0;
+                    row[i  ] = 1.;
+                    col[i++] = O.column("y", t);
+
+                    row[i  ] = 1.;
+                    col[i++] = O.column("ycsb", t);    
+
+                    add_constraintex(lp, i, row, col, LE, 1);   
+
+                    //set partitioning constraint (with cycle off state)
+                    if (P["delta"] >= 1)    // hourly model
+                    {
+                        //cycle start-up and standby can't coincide
+                        i = 0;
+                        row[i  ] = 1.;
+                        col[i++] = O.column("ycsu", t);
+
+                        row[i  ] = 1.;
+                        col[i++] = O.column("ycsb", t);
+                        //add extra variable
+
+                        add_constraintex(lp, i, row, col, LE, 1);
+
+                        i = 0;
+                        row[i  ] = 1.;
+                        col[i++] = O.column("y", t);
+
+                        row[i  ] = 1.;
+                        col[i++] = O.column("ycsb", t);
+
+                        row[i  ] = 1.;
+                        col[i++] = O.column("yoff", t);
+
+                        add_constraintex(lp, i, row, col, EQ, 1);
+                    }
+                    else
+                    {
+                        // sub-hourly model
+                        i = 0;
+                        row[i  ] = 1.;
+                        col[i++] = O.column("ycsu", t);
+
+                        row[i  ] = 1.;
+                        col[i++] = O.column("y", t);
+
+                        row[i  ] = 1.;
+                        col[i++] = O.column("ycsb", t);
+
+                        row[i  ] = 1.;
+                        col[i++] = O.column("yoff", t);
+
+                        add_constraintex(lp, i, row, col, EQ, 1);
+                    }
+
+                    //Standby cut
+                    i = 0;
+                    row[i  ] = 1.;
+                    col[i++] = O.column("ycsb", t);
+
+                    row[i  ] = 1.0 / P["Qu"];
+                    col[i++] = O.column("x", t);
+
+                    add_constraintex(lp, i, row, col, LE, 1);
                 }
-                else
-                {
-                    add_constraintex(lp, i, row, col, LE, P["ycsb0"] + P["y0"]);
-                }
-
-                //row[0] = 1.;
-                //col[0] = O.column("y", t);
-                //row[1] = 1.;
-                //col[1] = O.column("ycsb", t);    
-
-                //add_constraintex(lp, 2, row, col, LE, 1);   
-
-                //set partitioning constraint (with cycle off state)
-                if (P["delta"] >= 1)    // hourly model
-                {
-                    //cycle start-up and standby can't coincide
-                    row[0] = 1.;
-                    col[0] = O.column("ycsu", t);
-                    row[1] = 1.;
-                    col[1] = O.column("ycsb", t);
-                    //add extra variable
-
-                    add_constraintex(lp, 2, row, col, LE, 1);
-
-                    row[0] = 1.;
-                    col[0] = O.column("y", t);
-                    row[1] = 1.;
-                    col[1] = O.column("ycsb", t);
-                    row[2] = 1.;
-                    col[2] = O.column("yoff", t);
-
-                    add_constraintex(lp, 3, row, col, EQ, 1);
-                }
-                else
-                {
-                    // sub-hourly model
-                    row[0] = 1.;
-                    col[0] = O.column("ycsu", t);
-                    row[1] = 1.;
-                    col[1] = O.column("y", t);
-                    row[2] = 1.;
-                    col[2] = O.column("ycsb", t);
-                    row[3] = 1.;
-                    col[3] = O.column("yoff", t);
-
-                    add_constraintex(lp, 4, row, col, EQ, 1);
-                }
-
-                //Standby cut
-                row[0] = 1.;
-                col[0] = O.column("ycsb", t);
-                row[1] = 1.0 / P["Qu"];
-                col[1] = O.column("x", t);
-                add_constraintex(lp, 2, row, col, LE, 1);
 
                 if (t > 0)
                 {
                     //cycle start penalty
-                    row[0] = 1.;
-                    col[0] = O.column("ycsup", t);
+                    i = 0;
+                    row[i  ] = 1.;
+                    col[i++] = O.column("ycsup", t);
 
-                    row[1] = -1.;
-                    col[1] = O.column("ycsu", t);
+                    row[i  ] = -1.;
+                    col[i++] = O.column("ycsu", t);
 
-                    row[2] = 1.;
-                    col[2] = O.column("ycsu", t - 1);
+                    row[i  ] = 1.;
+                    col[i++] = O.column("ycsu", t - 1);
 
-                    add_constraintex(lp, 3, row, col, GE, 0.);
+                    add_constraintex(lp, i, row, col, GE, 0.);
 
                     //cycle standby start penalty
-                    row[0] = 1.;
-                    col[0] = O.column("ychsp", t);
+                    if (params.can_cycle_use_standby) {
+                        i = 0;
+                        row[i  ] = 1.;
+                        col[i++] = O.column("ychsp", t);
 
-                    row[1] = -1.;
-                    col[1] = O.column("y", t);
+                        row[i  ] = -1.;
+                        col[i++] = O.column("y", t);
 
-                    row[2] = -1.;
-                    col[2] = O.column("ycsb", t - 1);
+                        row[i  ] = -1.;
+                        col[i++] = O.column("ycsb", t - 1);
 
-                    add_constraintex(lp, 3, row, col, GE, -1.);
+                        add_constraintex(lp, i, row, col, GE, -1.);
+                    }
+
 
                 #ifdef MOD_CYCLE_SHUTDOWN
                     //cycle shutdown energy penalty
@@ -1183,11 +1223,13 @@ bool csp_dispatch_opt::optimize()
                     col[i++] = O.column("qeh", t);
                 }
 
+                if (params.can_cycle_use_standby) {
+                    row[i  ] = -P["delta"]*P["Qb"]; 
+                    col[i++] = O.column("ycsb", t);
+                }
+
                 row[i  ] = -P["delta"]*P["Qc"];
                 col[i++] = O.column("ycsu", t);
-                
-                row[i  ] = -P["delta"]*P["Qb"]; 
-                col[i++] = O.column("ycsb", t);
                 
                 row[i  ] = -P["delta"];
                 col[i++] = O.column("x", t);
@@ -1220,11 +1262,11 @@ bool csp_dispatch_opt::optimize()
 
             for(int t=0; t<nt; t++)
             {
-                
-                row[0] = 1.;
-                col[0] = O.column("s", t);
+                int i = 0;
+                row[i  ] = 1.;
+                col[i++] = O.column("s", t);
 
-                add_constraintex(lp, 1, row, col, LE, P["Eu"]);
+                add_constraintex(lp, i, row, col, LE, P["Eu"]);
 
 				//max cycle thermal input in time periods where cycle operates and receiver is starting up
                 //outputs.delta_rs.resize(nt);
@@ -1235,28 +1277,30 @@ bool csp_dispatch_opt::optimize()
 					double t_rec_startup = params.delta_rs.at(t) * P["delta"];
 					//double large = 5.0*params.q_pb_max; //Can we make this tighter?
                     double large = (std::max)(params.q_pb_max,params.q_pb_standby); //tighter formulation
-					int i = 0;
 
-					row[i] = 1.;
+                    i = 0;
+					row[i  ] = 1.;
 					col[i++] = O.column("x", t + 1);
 
-					row[i] = params.q_pb_standby + large;
-					col[i++] = O.column("ycsb", t + 1);
-
-					row[i] = -1. / t_rec_startup;
+					row[i  ] = -1. / t_rec_startup;
 					col[i++] = O.column("s", t);
 
-					row[i] = large;
+					row[i  ] = large;
 					col[i++] = O.column("yrsu", t + 1);
 
-					row[i] = large;
+					row[i  ] = large;
 					col[i++] = O.column("y", t + 1);
 
-					row[i] = large;
+					row[i  ] = large;
 					col[i++] = O.column("y", t);
 
-					row[i] = large;
-					col[i++] = O.column("ycsb", t);
+                    if (params.can_cycle_use_standby) {
+                        row[i  ] = params.q_pb_standby + large;
+                        col[i++] = O.column("ycsb", t + 1);
+
+                        row[i  ] = large;
+                        col[i++] = O.column("ycsb", t);
+                    }
 
 					add_constraintex(lp, i, row, col, LE, 3.0*large);
 				}
@@ -1271,10 +1315,11 @@ bool csp_dispatch_opt::optimize()
 
             for( int t = 0; t<nt; t++ )
             {
-                row[0] = 1.;
-                col[0] = O.column("wdot", t);
+                int i = 0;
+                row[i  ] = 1.;
+                col[i++] = O.column("wdot", t);
 
-				add_constraintex(lp, 1, row, col, LE, params.f_pb_op_limit.at(t) * P["W_dot_cycle"]);
+				add_constraintex(lp, i, row, col, LE, params.f_pb_op_limit.at(t) * P["W_dot_cycle"]);
             }
         }
 
@@ -1292,46 +1337,48 @@ bool csp_dispatch_opt::optimize()
                     if(params.w_lim.at(t) > 0)
                         pointers.messages->add_message(C_csp_messages::NOTICE, "Power cycle operation not possible at time "+ util::to_string(t+1) + ": power limit below minimum operation");                    
                     params.w_lim.at(t) = 0.;
-                    
                 }
 
 				if (params.w_lim.at(t) > 0.)	// Power cycle operation is possible
 				{
 					int i = 0;
 
-					row[i] = 1.0-params.w_condf_expected.at(t);
+					row[i  ] = 1.0-params.w_condf_expected.at(t);
 					col[i++] = O.column("wdot", t);
 
-					row[i] = -params.w_rec_pump;
+					row[i  ] = -params.w_rec_pump;
 					col[i++] = O.column("xr", t);
 
-					row[i] = -params.w_rec_pump;
+					row[i  ] = -params.w_rec_pump;
 					col[i++] = O.column("xrsu", t);
 
-					row[i] = -(params.w_rec_ht / params.dt) - (params.w_stow / params.dt);	//kWe
+					row[i  ] = -(params.w_rec_ht / params.dt) - (params.w_stow / params.dt);	//kWe
 					col[i++] = O.column("yrsu", t);
 
-					row[i] = -params.w_track;
+					row[i  ] = -params.w_track;
 					col[i++] = O.column("yr", t);
 
-					row[i] = -params.w_cycle_standby;
-					col[i++] = O.column("ycsb", t);
+                    if (params.can_cycle_use_standby) {
+                        row[i  ] = -params.w_cycle_standby;
+                        col[i++] = O.column("ycsb", t);
+                    }
 
-					row[i] = -params.w_cycle_pump;
+					row[i  ] = -params.w_cycle_pump;
 					col[i++] = O.column("x", t);
 
-					//row[i] = -(params.w_rec_pump*params.q_rec_min) - (params.w_stow / params.dt); //kWe
+					//row[i  ] = -(params.w_rec_pump*params.q_rec_min) - (params.w_stow / params.dt); //kWe
 					//col[i++] = O.column("yrsb", t);
-					//row[i] - params.w_stow / params.dt;	//kWe
+					//row[i  ] - params.w_stow / params.dt;	//kWe
 					//col[i++] = O.column("yrsd", t);
 
-					add_constraintex(lp, 7, row, col, LE, params.w_lim.at(t));
+					add_constraintex(lp, i, row, col, LE, params.w_lim.at(t));
 				}
 				else // Power cycle operation is impossible at current constrained wlim
 				{
-					row[0] = 1.0;
-					col[0] = O.column("wdot", t);
-					add_constraintex(lp, 1, row, col, EQ, 0.);
+                    int i = 0;
+					row[i  ] = 1.0;
+					col[i++] = O.column("wdot", t);
+					add_constraintex(lp, i, row, col, EQ, 0.);
 				}
 			}
 		}
@@ -1620,58 +1667,55 @@ void csp_dispatch_opt::set_outputs_from_lp_solution(lprec* lp, unordered_map<std
 
         int t = atoi(ind);
 
-        if (strcmp(root, "ycsb") == 0)  //Cycle standby
-        {
-            outputs.pb_standby.at(t) = vars[c - 1] == 1.;
-        }
-        else if (strcmp(root, "ycsu") == 0)     //Cycle start up
+        if (strcmp(root, "ycsu") == 0)     //Cycle start up
         {
             bool su = (fabs(1 - vars[c - 1]) < 0.001);
             outputs.pb_operation.at(t) = outputs.pb_operation.at(t) || su;
             outputs.q_pb_startup.at(t) = su ? model_params["Qc"] : 0.;
         }
-        else if (strcmp(root, "y") == 0)     //Cycle operation
+        else if (strcmp(root, "y") == 0)  // is cycle operating
         {
             outputs.pb_operation.at(t) = outputs.pb_operation.at(t) || (fabs(1. - vars[c - 1]) < 0.001);
         }
-        else if (strcmp(root, "x") == 0)     //Cycle thermal energy consumption
+        else if (strcmp(root, "x") == 0)  // cycle thermal energy consumption
         {
             outputs.q_pb_target.at(t) = vars[c - 1];
         }
-        else if (strcmp(root, "yrsu") == 0)     //Receiver start up
+        else if (strcmp(root, "yrsu") == 0)  // is receiver starting
         {
             outputs.rec_operation.at(t) = outputs.rec_operation.at(t) || (fabs(1 - vars[c - 1]) < 0.001);
         }
-        else if (strcmp(root, "xrsu") == 0)
+        else if (strcmp(root, "xrsu") == 0)  // receiver startup energy
         {
             outputs.q_rec_startup.at(t) = vars[c - 1];
         }
-        else if (strcmp(root, "yr") == 0)
+        else if (strcmp(root, "yr") == 0)  // is receiver operating
         {
             outputs.rec_operation.at(t) = outputs.rec_operation.at(t) || (fabs(1 - vars[c - 1]) < 0.001);
         }
-        else if (strcmp(root, "s") == 0)         //Thermal storage charge state
+        else if (strcmp(root, "s") == 0)  // thermal storage charge state
         {
             outputs.tes_charge_expected.at(t) = vars[c - 1];
         }
-        else if (strcmp(root, "xr") == 0)   //receiver production
+        else if (strcmp(root, "xr") == 0)  // receiver production
         {
             outputs.q_sf_expected.at(t) = vars[c - 1];
         }
-        else if (strcmp(root, "wdot") == 0) //electricity production
+        else if (strcmp(root, "wdot") == 0)  // electricity production
         {
             outputs.w_pb_target.at(t) = vars[c - 1];
         }
-        else if (params.is_parallel_heater)
+        else if (strcmp(root, "ycsb") == 0)  // cycle standby
         {
-            if (strcmp(root, "yeh") == 0)
-            {
-                outputs.htr_operation.at(t) = outputs.htr_operation.at(t) || (fabs(1 - vars[c - 1]) < 0.001);
-            }
-            else if (strcmp(root, "qeh") == 0)
-            {
-                outputs.q_eh_target.at(t) = vars[c - 1];
-            }
+            outputs.pb_standby.at(t) = vars[c - 1] == 1.;
+        }
+        else if (strcmp(root, "yeh") == 0)  // is parallel heater on
+        {
+            outputs.htr_operation.at(t) = outputs.htr_operation.at(t) || (fabs(1 - vars[c - 1]) < 0.001);
+        }
+        else if (strcmp(root, "qeh") == 0)  // heater target power
+        {
+            outputs.q_eh_target.at(t) = vars[c - 1];
         }
     }
 

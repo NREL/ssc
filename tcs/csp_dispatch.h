@@ -67,7 +67,8 @@ public:
         double pen_delta_w;                 //[$/kWe-change] Cycle production change penalty
         double q_rec_standby;               //[kWt] Receiver standby thermal power consumption fraction
 
-        bool is_parallel_heater;            //[-] Is there a heater parallel to the receiver
+        bool can_cycle_use_standby;         //[-] Can the cycle use standby operation?
+        bool is_parallel_heater;            //[-] Is there a heater parallel to the receiver?
         double q_eh_max;                    //[kWt] Maximum allowable power delivery by the electrical heaters when operating
         double q_eh_min;                    //[kWt] Minimum allowable power delivery by the electrical heaters when operating
 
@@ -126,6 +127,7 @@ public:
             is_parallel_heater = false;
             q_eh_max = 0.0;
             q_eh_min = 0.0;
+            can_cycle_use_standby = false;
         }
 
         void clear()
@@ -141,10 +143,11 @@ public:
             eta_sf_expected.clear();
         }
 
-        void set_user_params(double disp_time_weighting,
+        void set_user_params(bool cycle_use_standby, double disp_time_weighting,
             double disp_rsu_cost, double disp_csu_cost, double disp_pen_delta_w, double disp_inventory_incentive,
             double rec_standby_loss, double rec_heattrace)
         {
+            can_cycle_use_standby = cycle_use_standby;
             time_weighting = disp_time_weighting;
             rsu_cost = disp_rsu_cost;
             csu_cost = disp_csu_cost;
