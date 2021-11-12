@@ -635,7 +635,8 @@ dispatch_automatic_t::dispatch_automatic_t(
     double interconnection_limit,
     bool chargeOnlySystemExceedLoad,
     bool dischargeOnlyLoadExceedSystem,
-    double SOC_min_outage
+    bool behindTheMeterDischargeToGrid,
+    double SOC_min_outage    
 	) : dispatch_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max_kwdc, Pd_max_kwdc, Pc_max_kwac, Pd_max_kwac,
 
     t_min, dispatch_mode, pv_dispatch, interconnection_limit, chargeOnlySystemExceedLoad, dischargeOnlyLoadExceedSystem, SOC_min_outage)
@@ -664,6 +665,7 @@ dispatch_automatic_t::dispatch_automatic_t(
 	m_batteryPower->canGridCharge = can_grid_charge;
 	m_batteryPower->canFuelCellCharge = can_fuelcell_charge;
 	m_batteryPower->canDischarge = true;
+    m_batteryPower->canDischargeToGrid = behindTheMeterDischargeToGrid;
     m_battReplacementCostPerKWH = battReplacementCostPerkWh;
     m_battCycleCostChoice = battCycleCostChoice;
     cycle_costs_by_year = battCycleCost;
@@ -836,7 +838,7 @@ bool dispatch_automatic_t::check_constraints(double& I, size_t count)
 					I -= (m_batteryPower->powerSystemToGrid  / fabs(m_batteryPower->powerBatteryAC)) *fabs(I);
 			}
 			// Don't let battery export to the grid if behind the meter
-			else if (m_batteryPower->powerBatteryToGrid > tolerance)
+			else if (m_batteryPower->powerBatteryToGrid > tolerance && !m_batteryPower->canDischargeToGrid)
 			{
                 if (fabs(m_batteryPower->powerBatteryAC) < tolerance) {
                     I -= (m_batteryPower->powerBatteryToGrid * util::kilowatt_to_watt / _Battery->V());

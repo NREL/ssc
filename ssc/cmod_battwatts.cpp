@@ -242,6 +242,8 @@ battwatts_create(size_t n_recs, size_t n_years, int chem, int meter_pos, double 
     }
     batt_vars->batt_dispatch_auto_can_charge = true;
     batt_vars->batt_dispatch_auto_can_gridcharge = true;
+    batt_vars->batt_dispatch_auto_btm_can_discharge_to_grid = true;
+    batt_vars->batt_dispatch_auto_can_clipcharge = false; // Clip charging is not relevant to the battwatts algorithm set (peak shaving and custom)
     batt_vars->batt_dispatch_charge_only_system_exceeds_load = false;
     batt_vars->batt_dispatch_discharge_only_load_exceeds_system = false;
 

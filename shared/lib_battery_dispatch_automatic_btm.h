@@ -81,6 +81,7 @@ public:
         double interconnection_limit,
         bool chargeOnlySystemExceedLoad,
         bool dischargeOnlyLoadExceedSystem,
+        bool behindTheMeterDischargeToGrid,
         double SOC_min_outage
 		);
 
