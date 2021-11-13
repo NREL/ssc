@@ -423,6 +423,9 @@ public:
 
 	// Physical characteristics
 	double groundCoverageRatio;			// The ground coverage ratio [0 - 1]
+    double crossAxisSlope;              // Cross axis slope [degrees]
+    double slopeTilt;                   // Angle of sloped terrain [degrees]
+    double slopeAzm;                    // azimuth of sloped terrain relative to tracker azimuth [degrees]
 	double tiltDegrees;					// The surface tilt [degrees]
 	double azimuthDegrees;				// The surface azimuth [degrees]
 	int trackMode;						// The tracking mode [0 = fixed, 1 = single-axis tracking, 2 = two-axis tracking, 3 = azimuth-axis tracking, 4 = seasonal-tilt
@@ -468,7 +471,7 @@ public:
 		double surfaceAzimuthDegrees; /// The azimuth of the subarray after tracking [degrees]
 		double nonlinearDCShadingDerate; /// The DC loss due to non-linear shading [%]
 		bool usePOAFromWF;     /// Flag indicating whether or not to use POA input from the weatherfile
-		int poaShadWarningCount; /// A counter to track warnings related to POA
+		int poaShadWarningCount = 0; /// A counter to track warnings related to POA
 		std::unique_ptr<poaDecompReq> poaAll; /// A structure containing POA decompositions into the three irrradiance components from input POA
 	} poa;
 

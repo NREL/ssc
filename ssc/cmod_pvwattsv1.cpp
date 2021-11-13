@@ -279,7 +279,7 @@ public:
             irr.set_beam_diffuse(wf.dn, wf.df);
             irr.set_surface(track_mode, tilt, azimuth, rlim,
                 shade_mode_1x == 1, // backtracking mode
-                gcr, false, 0.0);
+                gcr, 0, 0, false, 0.0);
 
             double ibeam, iskydiff, ignddiff;
             double solazi = 0, solzen = 0, solalt = 0, aoi, stilt, sazi, rot, btd;
@@ -314,7 +314,7 @@ public:
                 if (sunup > 0 && track_mode == 1
                     && shade_mode_1x == 0) // selfshaded mode
                 {
-                    double shad1xf = shadeFraction1x(solazi, solzen, tilt, azimuth, gcr, rot);
+                    double shad1xf = shadeFraction1x(solazi, solzen, tilt, azimuth, gcr, rot, 0.0, 0.0);
                     p_shad_beam[i] *= (ssc_number_t)(1 - shad1xf);
 
                     if (fd > 0 && shade_mode_1x == 0 && iskydiff > 0)

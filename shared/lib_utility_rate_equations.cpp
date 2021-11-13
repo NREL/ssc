@@ -129,11 +129,13 @@ rate_data::rate_data() :
 	dc_hourly_peak(),
 	monthly_dc_fixed(12),
 	monthly_dc_tou(12),
-    en_ec_billing_demand(false),
+    uses_billing_demand(false),
+    en_billing_demand_lookback(false),
     prev_peak_demand(12),
-    ec_bd_lookback_percents(12),
-    ec_bd_minimum(0.0),
-    ec_bd_lookback_months(1),
+    bd_lookback_percents(12),
+    bd_minimum(0.0),
+    bd_lookback_months(1),
+    bd_tou_periods(),
     billing_demand(12),
 	tou_demand_single_peak(false),
     enable_nm(false),
@@ -160,11 +162,13 @@ rate_data::rate_data(const rate_data& tmp) :
 	dc_hourly_peak(tmp.dc_hourly_peak),
 	monthly_dc_fixed(tmp.monthly_dc_fixed),
 	monthly_dc_tou(tmp.monthly_dc_tou),
-    en_ec_billing_demand(tmp.en_ec_billing_demand),
+    uses_billing_demand(tmp.uses_billing_demand),
+    en_billing_demand_lookback(tmp.en_billing_demand_lookback),
     prev_peak_demand(tmp.prev_peak_demand),
-    ec_bd_lookback_percents(tmp.ec_bd_lookback_percents),
-    ec_bd_minimum(tmp.ec_bd_minimum),
-    ec_bd_lookback_months(tmp.ec_bd_lookback_months),
+    bd_lookback_percents(tmp.bd_lookback_percents),
+    bd_minimum(tmp.bd_minimum),
+    bd_lookback_months(tmp.bd_lookback_months),
+    bd_tou_periods(tmp.bd_tou_periods),
     billing_demand(tmp.billing_demand),
 	tou_demand_single_peak(tmp.tou_demand_single_peak),
     enable_nm(tmp.enable_nm),
@@ -215,11 +219,11 @@ bool rate_data::check_for_kwh_per_kw_rate(int units) {
 
 double rate_data::get_billing_demand(int month) {
     int m = 0;
-    double billing_demand = ec_bd_minimum;
-    int prev_yr_lookback = 11 - (ec_bd_lookback_months - month); // What month do we stop looking back in the prev yr?
+    double billing_demand = bd_minimum;
+    int prev_yr_lookback = 11 - (bd_lookback_months - month); // What month do we stop looking back in the prev yr?
 
     for (m = 11; m >= prev_yr_lookback && m >= 0; m--) {
-        double ratchet_percent = ec_bd_lookback_percents[m] * 0.01;
+        double ratchet_percent = bd_lookback_percents[m] * 0.01;
         double months_demand = prev_peak_demand[m] * ratchet_percent;
         if (months_demand > billing_demand) {
             billing_demand = months_demand;
@@ -227,23 +231,50 @@ double rate_data::get_billing_demand(int month) {
     }
 
     int start_month = 0;
-    if (month >= ec_bd_lookback_months) {
-        start_month = month - ec_bd_lookback_months;
+    if (month >= bd_lookback_months) {
+        start_month = month - bd_lookback_months;
     }
 
+    int idx = 0;
     for (m = start_month; m <= month; m++) {
-        double ratchet_percent = ec_bd_lookback_percents[m] * 0.01;
-        double months_demand = m_month[m].dc_flat_peak * ratchet_percent;
-        if (months_demand > billing_demand) {
-            billing_demand = months_demand;
+        idx = 0;
+        for (int p : m_month[m].dc_periods) {
+            if (bd_tou_periods.at(p)) {
+                double ratchet_percent = bd_lookback_percents[m] * 0.01;
+                double months_demand = m_month[m].dc_tou_peak[idx] * ratchet_percent;
+                if (months_demand > billing_demand) {
+                    billing_demand = months_demand;
+                }
+            }
+            idx++;
         }
     }
 
-    if (m_month[month].dc_flat_peak > billing_demand && m_month[month].use_current_month_ratchet) {
-        billing_demand = m_month[month].dc_flat_peak;
+    if (m_month[month].use_current_month_ratchet) {
+        idx = 0;
+        for (int p : m_month[month].dc_periods) {
+            if (bd_tou_periods.at(p)) {
+                double months_demand = m_month[month].dc_tou_peak[idx];
+                if (months_demand > billing_demand) {
+                    billing_demand = months_demand;
+                }
+            }
+            idx++;
+        }
     }
 
     return billing_demand;
+}
+
+void rate_data::set_billing_demands() {
+    for (int m = 0; m < (int) m_month.size(); m++) {
+        double flat_peak = m_month[m].dc_flat_peak;
+        if (en_billing_demand_lookback) {
+            // If ratchets are present the peak used here might be the actual peak, or something based on a previous month.
+            flat_peak = get_billing_demand(m);
+        }
+        billing_demand[m] = flat_peak;
+    }
 }
 
 void rate_data::setup_prev_demand(ssc_number_t* prev_demand) {
@@ -277,13 +308,8 @@ void rate_data::init_energy_rates(bool gen_only) {
                 std::vector<size_t> tier_numbers;
                 std::vector<double> tier_kwh;
 
-				// track monthly peak to determine which kWh/kW tier
-                double flat_peak = m_month[m].dc_flat_peak;
-                if (en_ec_billing_demand) {
-                    // If ratchets are present the peak used here might be the actual peak, or something based on a previous month.
-                    flat_peak = get_billing_demand(m);
-                }
-                billing_demand[m] = flat_peak;
+				// Monthly billing demand is computed prior to this loop
+                double flat_peak = billing_demand[m];
 
                 // get kWh/kW break points based on actual demand
                 for (size_t i_tier = 0; i_tier < m_month[m].ec_tou_units.ncols(); i_tier++)
@@ -805,7 +831,7 @@ void rate_data::setup_demand_charges(ssc_number_t* dc_weekday, ssc_number_t* dc_
 	}
 }
 
-void rate_data::setup_ratcheting_demand(ssc_number_t* ratchet_percent_matrix)
+void rate_data::setup_ratcheting_demand(ssc_number_t* ratchet_percent_matrix, ssc_number_t* bd_tou_period_matrix)
 {
     // Error checked in SSC variables
     size_t nrows = 12;
@@ -814,10 +840,16 @@ void rate_data::setup_ratcheting_demand(ssc_number_t* ratchet_percent_matrix)
     ratchet_matrix.assign(ratchet_percent_matrix, nrows, ncols);
 
     for (int i = 0; i < nrows; i++) {
-        ec_bd_lookback_percents[i] = ratchet_matrix.at(i, 0);
+        bd_lookback_percents[i] = ratchet_matrix.at(i, 0);
         m_month[i].use_current_month_ratchet = ratchet_matrix.at(i, 1) == 1;
     }
 
+    nrows = m_dc_tou_periods.size();
+    util::matrix_t<double> tou_matrix(nrows, ncols);
+    tou_matrix.assign(bd_tou_period_matrix, nrows, ncols);
+    for (int i = 0; i < nrows; i++) {
+        bd_tou_periods.emplace((int) tou_matrix.at(i, 0), tou_matrix.at(i, 1) == 1.0);
+    }
 }
 
 void rate_data::sort_energy_to_periods(int month, double energy, size_t step) {
@@ -881,7 +913,7 @@ ssc_number_t rate_data::get_demand_charge(int month, size_t year)
 	ssc_number_t charge = 0;
 	ssc_number_t d_lower = 0;
 	ssc_number_t total_charge = 0;
-	ssc_number_t demand = curr_month.dc_flat_peak;
+	ssc_number_t demand = billing_demand[month];
 	bool found = false;
 	for (tier = 0; tier < (int)curr_month.dc_flat_ub.size() && !found; tier++)
 	{
@@ -915,11 +947,19 @@ ssc_number_t rate_data::get_demand_charge(int month, size_t year)
 		d_lower = 0;
 		if (tou_demand_single_peak)
 		{
-			demand = curr_month.dc_flat_peak;
+            // If billing demand lookback is not enabled, this will be the flat peak
+			demand = billing_demand[month];
 			if (curr_month.dc_flat_peak_hour != curr_month.dc_tou_peak_hour[period]) continue; // only one peak per month.
 		}
-		else if (period < curr_month.dc_periods.size())
-			demand = curr_month.dc_tou_peak[period];
+        else if (period < curr_month.dc_periods.size()) {
+            int period_num = curr_month.dc_periods[period];
+            if (en_billing_demand_lookback && bd_tou_periods.at(period_num)) {
+                demand = billing_demand[month];
+            }
+            else {
+                demand = curr_month.dc_tou_peak[period];
+            }
+        }
 		// find tier corresponding to peak demand
 		found = false;
 		for (tier = 0; tier < (int)curr_month.dc_tou_ub.ncols() && !found; tier++)

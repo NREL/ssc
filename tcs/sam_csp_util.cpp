@@ -1313,6 +1313,38 @@ double CSP::FricFactor_Iter(double rel_rough, double Re) {
     return 0;
 }
 
+void CSP::mspt_piping_design(HTFProperties& htfProps,
+    double h_tower /*m*/, double pipe_length_mult /*-*/,
+    double pipe_length_add /*m*/, double piping_loss_coefficient /*W/m2-K*/,
+    double T_htf_hot_des /*K*/, double T_htf_cold_des /*K*/,
+    double m_dot_htf_des /*kg/s*/,
+    double& piping_length /*m*/, double& d_inner_piping /*m*/, double& q_dot_piping_loss /*Wt*/)
+{
+    piping_length = h_tower*pipe_length_mult + pipe_length_add;     //[m]
+
+    double V_piping_target = 3.0;       //[m/s]
+    double T_amb_rec_des = 20.0 + 273.15;                //[K]
+    double rho_htf_des = htfProps.dens((T_htf_hot_des + T_htf_cold_des) / 2.0, std::numeric_limits<double>::quiet_NaN());
+    double A_cs_piping = m_dot_htf_des / (V_piping_target * rho_htf_des);    //[m2]
+    double r_piping = sqrt(A_cs_piping / CSP::pi);     //[m]
+    d_inner_piping = 2.*r_piping;   //[m]
+    double circ_piping = 2. * CSP::pi * r_piping;        //[m]
+    double A_surface_piping = circ_piping * piping_length;   //[m2]
+
+    //double h_loss_scale = 13.0; //[W/m2-K] // calculate to get heat loss equal to m_pipe_loss_per_m: 2.0 * m_pipe_loss_per_m / (circ_piping * (m_T_htf_cold_des + m_T_htf_hot_des - 2. * T_amb_rec_des));  //[W/m2-K]
+    // 8.10.2015 twn: Calculate constant thermal losses to the environment
+    //if(m_pipe_loss_per_m > 0.0 && m_pipe_length_mult > 0.0)
+    //	m_Q_dot_piping_loss = m_pipe_loss_per_m*(m_h_tower*m_pipe_length_mult + m_pipe_length_add);		//[Wt]
+    //else
+    //	m_Q_dot_piping_loss = 0.0;
+
+    double q_dot_piping_loss_cold = piping_loss_coefficient * circ_piping * piping_length / 2.0 * (T_htf_cold_des - T_amb_rec_des);    //[Wt]
+    double q_dot_piping_loss_hot = piping_loss_coefficient * circ_piping * piping_length / 2.0 * (T_htf_hot_des - T_amb_rec_des);    //[Wt]
+    q_dot_piping_loss = q_dot_piping_loss_cold + q_dot_piping_loss_hot;   //[Wt]
+
+    return;
+}
+
 //template <typename T, typename A>
 //T mode(std::vector<T,A> const& v) {
 double mode(std::vector<double> v) {
@@ -2514,7 +2546,7 @@ void Evacuated_Receiver::EvacReceiver(double T_1_in, double m_dot, double T_amb,
 
 	double T_upper_max = std::numeric_limits<double>::quiet_NaN();
 
-	if( reguess )
+	if( reguess || m_is_always_reguess )
 	{
 		if( m_Glazing_intact.at(hn,hv) )
 		{

@@ -333,8 +333,6 @@ void generic_singleowner_battery_60min(ssc_data_t &data)
 	ssc_data_set_number( data, "pbi_oth_tax_sta", 1 );
 	ssc_number_t p_degradation[1] ={ 0 };
 	ssc_data_set_array( data, "degradation", p_degradation, 1 );
-	ssc_number_t p_roe_input[1] ={ 0 };
-	ssc_data_set_array( data, "roe_input", p_roe_input, 1 );
 	ssc_data_set_number( data, "loan_moratorium", 0 );
 	ssc_data_set_number( data, "system_use_recapitalization", 0 );
 	ssc_data_set_number( data, "ppa_multiplier_model", 0 );
@@ -522,6 +520,8 @@ void generic_commerical_battery_60min(ssc_data_t &data)
 	ssc_data_set_array(data, "dispatch_manual_discharge", p_dispatch_manual_discharge, 6);
 	ssc_number_t p_dispatch_manual_gridcharge[6] = { 0, 1, 0, 0, 0, 0 };
 	ssc_data_set_array(data, "dispatch_manual_gridcharge", p_dispatch_manual_gridcharge, 6);
+    ssc_number_t p_dispatch_manual_discharge_to_grid[6] = { 0, 0, 0, 0, 0, 0 };
+    ssc_data_set_array(data, "dispatch_manual_btm_discharge_to_grid", p_dispatch_manual_discharge_to_grid, 6);
 	ssc_number_t p_dispatch_manual_percent_discharge[2] = { 25, 0 };
 	ssc_data_set_array(data, "dispatch_manual_percent_discharge", p_dispatch_manual_percent_discharge, 2);
 	ssc_number_t p_dispatch_manual_percent_gridcharge[2] = { 100, 0 };
