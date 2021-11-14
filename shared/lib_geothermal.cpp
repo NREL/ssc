@@ -515,19 +515,15 @@ double CGeothermalAnalyzer::PlantGrossPowerkW(void)
 	double dPlantBrineEfficiency = 0;  // plant Brine Efficiency as a function of temperature
 	switch (me_makeup)
 	{
+    case MA_EGS_BINARY:
 	case MA_BINARY:
 		//dPlantBrineEfficiency = MaxSecondLawEfficiency() * FractionOfMaxEfficiency() * ((geothermal::IMITATE_GETEM) ? GetAEBinary() : GetAE());				//MaxSecondLawEfficiency() * FractionOfMaxEfficiency() * GetAEBinaryAtTemp(md_WorkingTemperatureC);
         dPlantBrineEfficiency = MaxSecondLawEfficiency() * mo_geo_in.md_PlantEfficiency * FractionOfMaxEfficiency() * GetAEBinaryAtTemp(md_WorkingTemperatureC - mo_geo_in.md_dtProdWell);	
 		break;
-
+    case MA_EGS_FLASH:
 	case MA_FLASH:
 		dPlantBrineEfficiency = MaxSecondLawEfficiency() * FractionOfMaxEfficiency() * GetAEFlashAtTemp(md_WorkingTemperatureC-mo_geo_in.md_dtProdWell);
-		break;
-
-	case MA_EGS:
-		dPlantBrineEfficiency = MaxSecondLawEfficiency() * FractionOfMaxEfficiency() * GetAEBinaryAtTemp(md_WorkingTemperatureC);
-		break;
-
+        break;
 	default: ms_ErrorString = ("Invalid make up technology in CGeothermalAnalyzer::PlantGrossPowerkW"); return 0;
 	}
 
@@ -541,10 +537,10 @@ double CGeothermalAnalyzer::MaxSecondLawEfficiency()
 	// this leads to Plant brine effectiveness higher than input values
 	// which leads to actual plant output(after pumping losses) > design output (before pump losses) ??
 	// which leads to relative revenue > 1 ??
-	double dGetemAEForSecondLaw = (me_makeup == MA_BINARY) ? GetAEBinary() : GetAE(); // GETEM uses the correct ambient temperature, but it always uses Binary constants, even if flash is chosen as the conversion technology
+	double dGetemAEForSecondLaw = (me_makeup == MA_BINARY || me_makeup == MA_EGS_BINARY) ? GetAEBinary() : GetAE(); // GETEM uses the correct ambient temperature, but it always uses Binary constants, even if flash is chosen as the conversion technology
     //double dGetemAEForSecondLaw = GetAEBinary();
     mp_geo_out->eff_secondlaw = GetPlantBrineEffectiveness() / dGetemAEForSecondLaw;	//2nd law efficiency used in direct plant cost calculations. This is NOT the same as the MAX 2nd law efficiency.
-	if (me_makeup == MA_BINARY)
+	if (me_makeup == MA_BINARY || me_makeup == MA_EGS_BINARY)
 		return (mp_geo_out->max_secondlaw);
 	else
 		return (GetPlantBrineEffectiveness() / dGetemAEForSecondLaw);
@@ -554,14 +550,11 @@ double CGeothermalAnalyzer::MaxSecondLawEfficiency()
 double CGeothermalAnalyzer::FractionOfMaxEfficiency()
 {
 	double dTemperatureRatio = 0.0;
-	if (me_makeup == MA_EGS)
-		dTemperatureRatio = physics::CelciusToKelvin(mo_geo_in.md_TemperatureEGSAmbientC) / physics::CelciusToKelvin(md_LastProductionTemperatureC);
-	else
-		dTemperatureRatio = physics::CelciusToKelvin(mo_geo_in.md_TemperatureEGSAmbientC) / physics::CelciusToKelvin(md_WorkingTemperatureC);
+	dTemperatureRatio = physics::CelciusToKelvin(mo_geo_in.md_TemperatureEGSAmbientC) / physics::CelciusToKelvin(md_WorkingTemperatureC);
     double carnot_eff_initial = 1 - physics::CelciusToKelvin(mo_geo_in.md_TemperatureEGSAmbientC) / physics::CelciusToKelvin(GetTemperaturePlantDesignC());
     double carnot_eff = 1 - dTemperatureRatio;
     double carnot_ratio = carnot_eff / carnot_eff_initial;
-	if (me_makeup == MA_FLASH)
+	if (me_makeup == MA_FLASH || me_makeup == MA_EGS_FLASH)
 	{
 		switch (mo_geo_in.me_ft)
 		{
@@ -595,7 +588,7 @@ bool CGeothermalAnalyzer::CanReplaceReservoir(double dTimePassedInYears)
 
 void CGeothermalAnalyzer::CalculateNewTemperature(double dElapsedTimeInYears)
 {
-	if (me_makeup != MA_EGS)
+	if (me_makeup != MA_EGS_FLASH || me_makeup != MA_EGS_BINARY)
 		md_WorkingTemperatureC = md_WorkingTemperatureC * (1 - (mo_geo_in.md_TemperatureDeclineRate / 12));
 	else
 	{
@@ -743,7 +736,7 @@ void CGeothermalAnalyzer::ReplaceReservoir(double dElapsedTimeInYears)
 	mi_ReservoirReplacements++;
 	md_WorkingTemperatureC = GetResourceTemperatureC();
 
-	if (me_makeup == MA_EGS)
+	if (me_makeup == MA_EGS_FLASH || me_makeup == MA_EGS_BINARY)
 	{	// have to keep track of the last temperature of the working fluid, and the last time the reservoir was "replaced" (re-drilled)
 		md_LastProductionTemperatureC = md_WorkingTemperatureC;
 		double dYearsAtNextTimeStep = dElapsedTimeInYears + (1.0 / 12.0);
@@ -1570,10 +1563,10 @@ bool CGeothermalAnalyzer::determineMakeupAlgorithm()
 	}
 	else if (mo_geo_in.me_tdm == CALCULATE_RATE)
 	{	// this temperature decline can only be calculated for Binary conversion systems with EGS resources
-		if ((mo_geo_in.me_rt == EGS) && (mo_geo_in.me_ct == BINARY))
-			me_makeup = MA_EGS;
-		else
-			ms_ErrorString = ("Fluid temperature decline rate can only be calculated for an EGS resource using a binary plant");
+        if ((mo_geo_in.me_rt == EGS) && (mo_geo_in.me_ct == BINARY))
+            me_makeup = MA_EGS_BINARY;
+        else if ((mo_geo_in.me_rt == EGS) && (mo_geo_in.me_ct == FLASH))
+            me_makeup = MA_EGS_FLASH;
 	}
 	else
 		ms_ErrorString = ("Fluid temperature decline method not recognized in CGeoHourlyBaseInputs::determineMakeupAlgorithm.");
