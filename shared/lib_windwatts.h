@@ -52,7 +52,8 @@ private:
 public:
 	windTurbine* windTurb;
 	size_t nTurbines;
-	double turbulenceIntensity;	
+	double turbulenceIntensity;
+    int MAX_WIND_TURBINES = 300;
 	windPowerCalculator() {
 		//m_dShearExponent = 1.0/7.0;
 		// check classes are initialized
@@ -61,7 +62,6 @@ public:
 		errDetails="";
 	}
 	
-	static const int MAX_WIND_TURBINES = 300;	// Max turbines in the farm
 	static const int MIN_DIAM_EV = 2;			// Minimum number of rotor diameters between turbines for EV wake modeling to work
 	static const int EV_SCALE = 1;				// Uo or 1.0 depending on how you read Ainslie 1988
 
@@ -73,6 +73,7 @@ public:
 	std::vector<double> XCoords, YCoords;
 
 	size_t GetMaxTurbines() {return MAX_WIND_TURBINES;}
+    void SetMaxTurbines(int x) { MAX_WIND_TURBINES = x; }
 	bool InitializeModel(std::shared_ptr<wakeModelBase>selectedWakeModel);
 	std::string GetWakeModelName();
 	std::string GetErrorDetails() { return errDetails; }
