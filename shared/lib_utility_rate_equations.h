@@ -170,6 +170,11 @@ public:
 
     bool has_kwh_per_kw_rate(int month);
 
+    // Functions for calculating hourly net metering costs
+    std::vector<double> get_composite_tou_buy_rate(int month, size_t year, double expected_load);
+    std::vector<double> get_composite_tou_sell_rate(int month, size_t year, double expected_gen);
+    double getEnergyChargeNetMetering(int month, std::vector<double>& buy_rates, std::vector<double>& sell_rates);
+
 private:
     bool check_for_kwh_per_kw_rate(int units);
 
