@@ -2111,9 +2111,19 @@ public:
         if (as_boolean("en_batt") || as_boolean("en_standalone_batt"))
         {
             std::vector<ssc_number_t> power_input_lifetime;
+            std::vector<ssc_number_t> load_lifetime, load_year_one;
+            size_t nload;
+            bool use_lifetime = as_boolean("system_use_lifetime_output");
             // System generation output, which is lifetime (if system_lifetime_output == true);
             if (as_boolean("en_standalone_batt")) {
-                power_input_lifetime.resize(8760.0 * as_integer("analysis_period"), 0.0);
+                if (is_assigned("load")) {
+                    load_year_one = as_vector_ssc_number_t("load");
+                    nload = load_year_one.size();
+                    power_input_lifetime.resize(nload * as_integer("analysis_period"), 0.0);
+                }
+                else {
+                    power_input_lifetime.resize(8760.0 * as_integer("analysis_period"), 0.0);
+                }
                 ssc_number_t* p_gen = allocate("gen", power_input_lifetime.size());
                 for (size_t i = 0; i < power_input_lifetime.size(); i++)
                     p_gen[i] = power_input_lifetime[i];
@@ -2121,9 +2131,7 @@ public:
             else
                 power_input_lifetime = as_vector_ssc_number_t("gen");
 
-            std::vector<ssc_number_t> load_lifetime, load_year_one;
             size_t n_rec_lifetime = power_input_lifetime.size();
-            bool use_lifetime = as_boolean("system_use_lifetime_output");
             size_t analysis_period = (size_t)as_integer("analysis_period");
 
             if (use_lifetime && (double)(util::hours_per_year * analysis_period) / n_rec_lifetime > 1)
@@ -2131,7 +2139,6 @@ public:
 
             size_t n_rec_single_year = use_lifetime ? n_rec_lifetime / analysis_period : n_rec_lifetime;
             double dt_hour_gen = (double)(util::hours_per_year) / n_rec_single_year;
-            size_t nload;
             if (is_assigned("load")) {
                 load_year_one = as_vector_ssc_number_t("load");
                 nload = load_year_one.size();
