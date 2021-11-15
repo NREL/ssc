@@ -527,7 +527,8 @@ static var_info _cm_vtab_saleleaseback[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,       "cf_energy_net",            "Energy produced",                     "kWh",      "",                      "Sale Leaseback",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,       "cf_ppa_price",            "PPA price",                     "cents/kWh",      "",                      "Sale Leaseback",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,       "cf_energy_value",         "PPA revenue",                     "$",      "",                      "Sale Leaseback",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fixed_expense",      "O&M fixed expense",                  "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "cf_energy_purchases_value",              "PPA revenue lost to self-consumption","$",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fixed_expense",      "O&M fixed expense",                  "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_production_expense", "O&M production-based expense",       "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_capacity_expense",   "O&M capacity-based expense",         "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fuel_expense",       "O&M fuel expense",                   "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -2987,6 +2988,7 @@ public:
 	save_cf( CF_tax_investor_pretax_cashflow, nyears, "cf_tax_investor_pretax_cashflow" );
 
 	save_cf( CF_energy_value, nyears, "cf_energy_value" );
+    save_cf( CF_energy_purchases_value, nyears, "cf_energy_purchases_value");
 	save_cf( CF_ppa_price, nyears, "cf_ppa_price" );
 	save_cf( CF_om_fixed_expense, nyears, "cf_om_fixed_expense" );
 	save_cf( CF_om_production_expense, nyears, "cf_om_production_expense" );

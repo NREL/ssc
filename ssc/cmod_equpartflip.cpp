@@ -549,7 +549,8 @@ static var_info _cm_vtab_equpartflip[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,       "cf_energy_net",            "Energy produced",                     "kWh",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,       "cf_ppa_price",            "PPA price",                     "cents/kWh",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,       "cf_energy_value",         "PPA revenue",                     "$",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fixed_expense",      "O&M fixed expense",                  "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_purchases_value",              "PPA revenue lost to self-consumption","$",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fixed_expense",      "O&M fixed expense",                  "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_production_expense", "O&M production-based expense",       "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_capacity_expense",   "O&M capacity-based expense",         "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fuel_expense",       "O&M fuel expense",                   "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -920,7 +921,7 @@ public:
 		int i = 0;
 
         if (is_assigned("en_electricity_rates") && as_number("en_electricity_rates") == 0 && as_number("ppa_soln_mode") == 0)
-            throw exec_error("singleowner", "PPA price from which to calculate parasitic load costs is not specified. Check inputs for Revenue and Electricity Purchases.");
+            throw exec_error("equpartflip", "PPA price from which to calculate parasitic load costs is not specified. Check inputs for Revenue and Electricity Purchases.");
 
 		// cash flow initialization
 		int nyears = as_integer("analysis_period");
@@ -2890,6 +2891,7 @@ public:
 
 
 		save_cf( CF_energy_value, nyears, "cf_energy_value" );
+        save_cf(CF_energy_purchases_value, nyears, "cf_energy_purchases_value");
 		save_cf( CF_ppa_price, nyears, "cf_ppa_price" );
 		save_cf( CF_om_fixed_expense, nyears, "cf_om_fixed_expense" );
 		save_cf( CF_om_production_expense, nyears, "cf_om_production_expense" );

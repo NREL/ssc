@@ -2756,7 +2756,7 @@ public:
 		host_lcoe_real /= host_npv_energy_real;
 
 	double host_npv_energy_nom = npv(CF_energy_sales, nyears, host_nom_discount_rate);
-	double host_lcoe_nom = -(cf.at(CF_after_tax_net_equity_cost_flow, 0) + npv(CF_after_tax_net_equity_cost_flow, nyears, host_nom_discount_rate)) * 100;
+	double host_lcoe_nom = -(cf.at(CF_after_tax_net_equity_cost_flow, 0) + npv(CF_after_tax_net_equity_cost_flow, nyears, host_nom_discount_rate) + npv(CF_parasitic_cost, nyears, nom_discount_rate)) * 100;
 	if (host_npv_energy_nom == 0.0)
 		host_lcoe_nom = std::numeric_limits<double>::quiet_NaN();
 	else

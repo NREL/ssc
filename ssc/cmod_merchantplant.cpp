@@ -410,7 +410,8 @@ static var_info _cm_vtab_merchantplant[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_net",                          "Energy produced",                     "kWh",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
 { SSC_OUTPUT,       SSC_ARRAY,      "cf_thermal_value",                        "Thermal revenue",                     "$",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
 { SSC_OUTPUT,       SSC_ARRAY,      "cf_om_fixed_expense",                    "O&M fixed expense",                  "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_om_production_expense",               "O&M production-based expense",       "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_purchases_value",              "PPA revenue lost to self-consumption","$",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_om_production_expense",               "O&M production-based expense",       "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_om_capacity_expense",                 "O&M capacity-based expense",         "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_om_fuel_expense",                     "O&M fuel expense",                   "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
@@ -1530,6 +1531,7 @@ public:
 				+ cf.at(CF_battery_replacement_cost,i)
 				+ cf.at(CF_fuelcell_replacement_cost, i)
 				+ cf.at(CF_utility_bill,i)
+                + cf.at(CF_energy_purchases_value,i)
 				+ cf.at(CF_Recapitalization,i);
 		}
 
@@ -3122,6 +3124,7 @@ public:
 		save_cf( CF_om_fixed_expense, nyears, "cf_om_fixed_expense" );
 		save_cf( CF_om_production_expense, nyears, "cf_om_production_expense" );
 		save_cf( CF_om_capacity_expense, nyears, "cf_om_capacity_expense" );
+        save_cf( CF_energy_purchases_value, nyears, "cf_energy_purchases_value");
 
         if (add_om_num_types > 0) {
             save_cf(CF_om_fixed1_expense, nyears, "cf_om_fixed1_expense");

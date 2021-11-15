@@ -540,7 +540,8 @@ static var_info _cm_vtab_levpartflip[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,       "cf_energy_net",            "Energy produced",                     "kWh",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,       "cf_ppa_price",            "PPA price",                     "cents/kWh",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,       "cf_energy_value",         "PPA revenue to project",                     "$",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fixed_expense",      "O&M fixed expense",                  "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "cf_energy_purchases_value",              "PPA revenue lost to self-consumption","$",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fixed_expense",      "O&M fixed expense",                  "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_production_expense", "O&M production-based expense",       "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_capacity_expense",   "O&M capacity-based expense",         "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fuel_expense",       "O&M fuel expense",                   "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -2911,7 +2912,6 @@ public:
 			+ cf.at(CF_reserve_interest, i)
 			- cf.at(CF_disbursement_debtservice, i) // note sign is negative for positive disbursement
 			- cf.at(CF_disbursement_om, i) // note sign is negative for positive disbursement
-            + cf.at(CF_energy_purchases_value, i)
 			+ cf.at(CF_net_salvage_value, i); // benefit to cost reduction so that project revenue based on PPA revenue and not total revenue per 7/16/15 meeting
 	}
 	// year 1 add total ITC (net benefit) so that project return = project revenue - project cost
@@ -3253,6 +3253,7 @@ public:
 		save_cf( CF_debt_balance, nyears, "cf_debt_balance" );
 
 		save_cf( CF_energy_value, nyears, "cf_energy_value" );
+        save_cf( CF_energy_purchases_value, nyears, "cf_energy_purchases_value");
 		save_cf( CF_ppa_price, nyears, "cf_ppa_price" );
 		save_cf( CF_om_fixed_expense, nyears, "cf_om_fixed_expense" );
 		save_cf( CF_om_production_expense, nyears, "cf_om_production_expense" );
