@@ -2112,17 +2112,27 @@ public:
         {
             std::vector<ssc_number_t> power_input_lifetime;
             std::vector<ssc_number_t> load_lifetime, load_year_one;
+            std::vector<ssc_number_t> grid_curtailment;
             size_t nload;
+            size_t ngrid;
             bool use_lifetime = as_boolean("system_use_lifetime_output");
             // System generation output, which is lifetime (if system_lifetime_output == true);
             if (as_boolean("en_standalone_batt")) {
                 if (is_assigned("load")) {
                     load_year_one = as_vector_ssc_number_t("load");
                     nload = load_year_one.size();
-                    power_input_lifetime.resize(nload * as_integer("analysis_period"), 0.0);
+                    if (use_lifetime)
+                        power_input_lifetime.resize(nload * as_integer("analysis_period"), 0.0);
+                    else
+                        power_input_lifetime.resize(nload, 0.0);
                 }
                 else {
-                    power_input_lifetime.resize(8760.0 * as_integer("analysis_period"), 0.0);
+                    grid_curtailment = as_vector_ssc_number_t("grid_curtailment");
+                    ngrid = grid_curtailment.size();
+                    if (use_lifetime)
+                        power_input_lifetime.resize(ngrid * as_integer("analysis_period"), 0.0);
+                    else
+                        power_input_lifetime.resize(ngrid, 0.0);
                 }
                 ssc_number_t* p_gen = allocate("gen", power_input_lifetime.size());
                 for (size_t i = 0; i < power_input_lifetime.size(); i++)
