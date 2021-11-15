@@ -138,11 +138,10 @@ private:
 	double acc_c11 = 0.005950211;
 	double acc_c12 = -0.001200635;
 	double acc_c13 = 0.000005657483;
-	//double acc_c20 = 3.582461;
-    double acc_c20 = 15.52712;
-    double acc_c21 = 0.005950211;
-    double acc_c22 = -0.001200635;
-    double acc_c23 = 0.000005657483;
+	double acc_c20 = 3.582461;
+    double acc_c21 = -0.05107826;
+    double acc_c22 = 0.000277465;
+    double acc_c23 = -2.549939E-7;
 	double acc_0;
 	double acc_1;
 	double acc_2;
@@ -163,7 +162,7 @@ private:
 	double wf_c12 = 0.000671;
 	double wf_c20 = -0.33297;
 	double wf_c21 = 0.055929;
-	double wf_c22 = -0.002;
+	double wf_c22 = -0.000198;
 	double pcc_1;
 	double pcc_2;
 	double pcc_c;	//ref wf pump cost
@@ -414,7 +413,7 @@ public:
 
 			//Cooling Tower Cost:
 			condenser_heat_rejected = GF_flowrate * qRejectTotal / 1000;
-			cooling_tower_cost = 7200 * (pow(condenser_heat_rejected, 0.8));		//Reference Equipment Cost
+			cooling_tower_cost = 7800 * (pow(condenser_heat_rejected, 0.8));		//Reference Equipment Cost
 			current_tower_cost = cooling_tower_cost * process_equip_ppi[20];
 
 			//Condenser Cost: 
