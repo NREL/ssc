@@ -515,6 +515,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 	double progress_msg_frac_current = progress_msg_interval_frac;
 	double V_hot_tank_frac_initial;
 
+    double pc_heat_prev = 0.;   // [MWt] Heat into power cycle in previous time step
 	double pc_state_persist = 0.;  // Time [hr] that current pc operating state (on/off/standby) has persisted
 	double rec_state_persist = 0.;  // Time [hr] that current receiver operating state (on/off/standby) has persisted
 	//int prev_pc_state = mc_power_cycle.get_operating_state();
@@ -717,7 +718,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
         double q_dot_elec_to_PAR_HTR = std::numeric_limits<double>::quiet_NaN();
 
         calc_timestep_plant_control_and_targets(
-            f_turbine_tou, q_pc_min, q_dot_tes_ch, pc_state_persist,
+            f_turbine_tou, q_pc_min, q_dot_tes_ch, pc_heat_prev, pc_state_persist,
             pc_operating_state_to_controller, purchase_mult, pricing_mult,
             calc_frac_current, baseline_step,
             is_q_dot_pc_target_overwrite,
@@ -948,6 +949,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 			mc_tes.charge_avail_est(m_cycle_T_htf_hot_des, mc_kernel.mc_sim_info.ms_ts.m_step, e_tes_ch, mdot_ch, Tch);
 			mcold_avail = mdot_ch * mc_kernel.mc_sim_info.ms_ts.m_step;  //kg
         }
+
+        pc_heat_prev = mc_pc_out_solver.m_q_dot_htf;
 
 		// Update the cycle state persistance
 		if (mc_power_cycle.get_operating_state() == pc_operating_state_prev)
@@ -1248,7 +1251,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 }	// End simulate() method
 
 void C_csp_solver::calc_timestep_plant_control_and_targets(
-    double f_turbine_tou /*-*/, double q_dot_pc_min /*MWt*/, double q_dot_tes_ch /*MWt*/, double pc_state_persist /*hours*/,
+    double f_turbine_tou /*-*/, double q_dot_pc_min /*MWt*/, double q_dot_tes_ch /*MWt*/, double pc_heat_prev /*MWt*/,  double pc_state_persist /*hours*/,
     C_csp_power_cycle::E_csp_power_cycle_modes pc_operating_state, double purchase_mult /*-*/, double sale_mult /*-*/,
     double calc_frac_current /*-*/, double baseline_step /*s*/,
     bool& is_q_dot_pc_target_overwrite,
@@ -1399,7 +1402,7 @@ void C_csp_solver::calc_timestep_plant_control_and_targets(
             if (!mc_dispatch.update_horizon_parameters(mc_tou)) {
                 throw(C_csp_exception("Dispatch failed to update horizon parameter values"));
             }
-            mc_dispatch.update_initial_conditions(mc_pc_out_solver.m_q_dot_htf, m_T_htf_cold_des, pc_state_persist);
+            mc_dispatch.update_initial_conditions(pc_heat_prev, m_T_htf_cold_des, pc_state_persist);
 
             //predict performance for the time horizon
             if (
