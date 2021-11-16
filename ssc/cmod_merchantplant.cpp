@@ -1053,7 +1053,7 @@ public:
             battery_discharged.push_back(0);
             fuelcell_discharged.push_back(0);
         }
-        //throw exec_error("singleowner", "Checkpoint 1");
+
         if (add_om_num_types > 0) //PV Battery
         {
             escal_or_annual(CF_om_fixed1_expense, nyears, "om_batt_fixed_cost", inflation_rate, 1.0, false, as_double("om_fixed_escal") * 0.01);
@@ -1354,8 +1354,6 @@ public:
                 }
                 if (!ppa_purchases) {
                     cf.at(CF_energy_purchases_value, i) = 0.0;
-                    // Recompute this variable because the ppa_gen values (hourly_net) were all positve until now 
-                    //cf.at(CF_energy_net, i) = cf.at(CF_energy_sales, i) + cf.at(CF_energy_purchases, i); // Adding a positive and negative number
                 }
             }
         }
@@ -1371,8 +1369,6 @@ public:
                 }
                 if (!ppa_purchases) {
                     cf.at(CF_energy_purchases_value, i) = 0.0;
-                    // Recompute this variable because the ppa_gen values (hourly_net) were all positve until now 
-                    //cf.at(CF_energy_net, i) = cf.at(CF_energy_sales, i) + cf.at(CF_energy_purchases, i); // Adding a positive and negative number
                 }
             }
         }
