@@ -3105,6 +3105,7 @@ void C_cavity_receiver::call(const C_csp_weatherreader::S_outputs& weather,
         ms_outputs.m_Q_thermal = 0.0;       //[MWt]
         ms_outputs.m_T_salt_hot = m_T_htf_cold_des - 273.15;    //[C] convert from K
         ms_outputs.m_q_dot_rec_inc = 0.0;   //[MWt]
+        ms_outputs.m_q_dot_refl_loss = 0.0; //[MWt]
         ms_outputs.m_m_dot_ss = 0.0;        //[kg/hr]
         ms_outputs.m_q_dot_ss = 0.0;        //[MWt]
         ms_outputs.m_Q_thermal_csky_ss = 0.0;   //[MWt]
@@ -3120,6 +3121,7 @@ void C_cavity_receiver::call(const C_csp_weatherreader::S_outputs& weather,
         ms_outputs.m_Q_thermal = q_dot_thermal_tower_out / 1.E6;      //[MWt] convert from W
         ms_outputs.m_T_salt_hot = T_htf_tower_out_calc - 273.15;               //[C] convert from K
         ms_outputs.m_q_dot_rec_inc = q_dot_inc/1.E6;        //[MWt]
+        ms_outputs.m_q_dot_refl_loss = q_dot_refl_losses/1.E6;   //[MWt]
         ms_outputs.m_T_salt_cold = T_salt_cold_in - 273.15; //[C] convert from K
         ms_outputs.m_m_dot_ss = std::numeric_limits<double>::quiet_NaN();
         ms_outputs.m_q_dot_ss = std::numeric_limits<double>::quiet_NaN();
