@@ -99,6 +99,9 @@ enum {
 	
 	CF_nte,
 
+    CF_energy_sales,
+    CF_energy_purchases,
+
 	CF_max };
 
 
@@ -157,32 +160,41 @@ public:
 
 		// energy
 		hourly_energy_calcs.calculate(this);
+        double first_year_energy = 0.0;
+        double first_year_sales = 0.0;
+        double first_year_purchases = 0.0;
 
-		if (as_integer("system_use_lifetime_output") == 0)
-		{
-			double first_year_energy = 0.0;
-			for (int i = 0; i < 8760; i++)
-				first_year_energy += hourly_energy_calcs.hourly_energy()[i];
-			for (size_t y = 1; y <= nyears; y++)
-				cf.at(CF_energy_net, y) = first_year_energy * cf.at(CF_degradation, y);
-		}
-		else
-		{
-			for (size_t y = 1; y <= nyears; y++)
-			{
-				cf.at(CF_energy_net, y) = 0;
-				int i = 0;
-				for (int m = 0; m<12; m++)
-					for (size_t d = 0; d<util::nday[m]; d++)
-						for (int h = 0; h<24; h++)
-							if (i<8760)
-							{
-					cf.at(CF_energy_net, y) += hourly_energy_calcs.hourly_energy()[(y - 1) * 8760 + i] * cf.at(CF_degradation, y);
-					i++;
-							}
-			}
+        // dispatch
+        if (as_integer("system_use_lifetime_output") == 1)
+        {
+            // hourly_enet includes all curtailment, availability
+            for (size_t y = 1; y <= (size_t)nyears; y++)
+            {
+                for (size_t h = 0; h < 8760; h++)
+                {
+                    cf.at(CF_energy_net, y) += hourly_energy_calcs.hourly_energy()[(y - 1) * 8760 + h] * cf.at(CF_degradation, y);
+                    cf.at(CF_energy_sales, y) += hourly_energy_calcs.hourly_sales()[(y - 1) * 8760 + h] * cf.at(CF_degradation, y);
+                    cf.at(CF_energy_purchases, y) += hourly_energy_calcs.hourly_purchases()[(y - 1) * 8760 + h] * cf.at(CF_degradation, y);
+                }
+            }
+        }
+        else
+        {
+            for (i = 0; i < 8760; i++) {
+                first_year_energy += hourly_energy_calcs.hourly_energy()[i]; // sum up hourly kWh to get total annual kWh first year production includes first year curtailment, availability
+                first_year_sales += hourly_energy_calcs.hourly_sales()[i];
+                first_year_purchases += hourly_energy_calcs.hourly_purchases()[i];
+            }
+            cf.at(CF_energy_net, 1) = first_year_energy;
+            cf.at(CF_energy_sales, 1) = first_year_sales;
+            cf.at(CF_energy_purchases, 1) = first_year_purchases;
+            for (i = 1; i <= nyears; i++) {
+                cf.at(CF_energy_net, i) = first_year_energy * cf.at(CF_degradation, i);
+                cf.at(CF_energy_sales, i) = first_year_sales * cf.at(CF_degradation, i);
+                cf.at(CF_energy_purchases, i) = first_year_purchases * cf.at(CF_degradation, i);
+            }
 
-		}
+        }
 		// output from utility rate already nyears+1 - no offset
 		arrp = as_array("annual_energy_value", &count);
 		if (count != nyears+1)
@@ -241,14 +253,14 @@ public:
 	
 		}
 		
-		double npv_energy_real = npv( CF_energy_net, nyears, real_discount_rate );
+		double npv_energy_real = npv( CF_energy_sales, nyears, real_discount_rate );
 		double lcoe_real = -( cf.at(CF_after_tax_net_equity_cost_flow,0) + npv(CF_after_tax_net_equity_cost_flow, nyears, nom_discount_rate) ) * 100;
 		if (npv_energy_real == 0.0) 
 			lcoe_real = std::numeric_limits<double>::quiet_NaN();
 		else
 			lcoe_real /= npv_energy_real;
 
-		double npv_energy_nom = npv( CF_energy_net, nyears, nom_discount_rate );
+		double npv_energy_nom = npv( CF_energy_sales, nyears, nom_discount_rate );
 		double lcoe_nom = -( cf.at(CF_after_tax_net_equity_cost_flow,0) + npv(CF_after_tax_net_equity_cost_flow, nyears, nom_discount_rate) ) * 100;
 		if (npv_energy_nom == 0.0) 
 			lcoe_nom = std::numeric_limits<double>::quiet_NaN();
@@ -271,7 +283,7 @@ public:
 		double lnte_real = npv(  CF_nte, nyears, nom_discount_rate ); 
 
 		for (i = 0; i < (int)count; i++)
-			if (cf.at(CF_energy_net,i) > 0) cf.at(CF_nte,i) /= cf.at(CF_energy_net,i);
+			if (cf.at(CF_energy_sales,i) > 0) cf.at(CF_nte,i) /= cf.at(CF_energy_sales,i);
 
 		double lnte_nom = lnte_real;
 		if (npv_energy_real == 0.0) 

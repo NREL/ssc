@@ -207,7 +207,7 @@ int singleowner_common(ssc_data_t &data)
 	ssc_data_set_number(data, "cp_battery_nameplate", 0);
 	ssc_data_set_array(data, "cp_capacity_credit_percent", p_ppa_price_input, 1);
 	ssc_data_set_array(data, "cp_capacity_payment_amount", p_ppa_price_input, 1);
-	ssc_data_set_number(data, "ppa_soln_mode", 0);
+	ssc_data_set_number(data, "ppa_soln_mode", 1);
 	ssc_data_set_number( data, "ppa_escalation", 1 );
 	ssc_data_set_number( data, "construction_financing_cost", 14805000 );
 	ssc_data_set_number( data, "term_tenor", 18 );
