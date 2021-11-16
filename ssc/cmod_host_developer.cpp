@@ -2720,30 +2720,55 @@ public:
     size_t n_year1_hourly_dc;
     ssc_number_t* year1_hourly_ec = as_array("year1_hourly_ec_with_system", &n_year1_hourly_ec);
     ssc_number_t* year1_hourly_dc = as_array("year1_hourly_dc_with_system", &n_year1_hourly_dc);
+    size_t n_gen_purchases;
+    ssc_number_t* gen_purchases = as_array("gen_purchases", &n_gen_purchases);
     if (is_assigned("rate_escalation")) //Create rate escalation nyears array with inflation and specified rate escalation %
         escal_or_annual(CF_util_escal_rate, nyears, "rate_escalation", inflation_rate, 0.01, true, 0);
     save_cf(CF_util_escal_rate, nyears, "cf_util_escal_rate");
     cf.at(CF_parasitic_cost, 0) = 0;
     double monthly_hourly_purchases = 0;
     double monthly_hourly_fromgrid = 0;
+    int n_steps_per_hour = n_year1_hourly_ec / 8760;
     for (int a = 1; a <= nyears; a++) {
-        for (size_t m = 1; m <= 12; m++) {
-            monthly_hourly_purchases = 0;
-            monthly_hourly_fromgrid = 0;
-            for (size_t d = 1; d <= util::days_in_month(int(m - 1)); d++) {
-                for (size_t h = 0; h < 24; h++) { //monthly iteration for each year
-                    if (year1_hourly_e_from_grid[h] != 0.0) {
-                        //cf.at(CF_charging_cost_grid_month, a) += monthly_grid_to_batt[m] / (monthly_grid_to_batt[m] + monthly_grid_to_load[m]) * monthly_energy_charge[m] * charged_grid[a] / charged_grid[1] * cf.at(CF_util_escal_rate, a);
-                        monthly_hourly_purchases += -hourly_energy_calcs.hourly_purchases()[util::hour_of_year(m, d, h)] * cf.at(CF_degradation, a);
-                        monthly_hourly_fromgrid += year1_hourly_e_from_grid[h];
-                        cf.at(CF_parasitic_cost, a) += -hourly_energy_calcs.hourly_purchases()[util::hour_of_year(m, d, h)] * cf.at(CF_degradation, a) / year1_hourly_e_from_grid[h] * (year1_hourly_ec[h] + year1_hourly_dc[h]) * cf.at(CF_util_escal_rate, a); //use the electricity rate data by year (also trueup) //* charged_grid[a] / charged_grid[1] * cf.at(CF_util_escal_rate, a);
+        if (as_integer("system_use_lifetime_output") == 1) {
+            for (size_t m = 1; m <= 12; m++) {
+                monthly_hourly_purchases = 0;
+                monthly_hourly_fromgrid = 0;
+                for (size_t d = 1; d <= util::days_in_month(int(m - 1)); d++) {
+                    for (size_t h = 0; h < 24; h++) { //monthly iteration for each year
+                        for (size_t n = 0; n < n_steps_per_hour; n++) {
+                            monthly_e_fromgrid[m - 1] += year1_hourly_e_from_grid[util::hour_of_year(m, d, h) * n_steps_per_hour + n];
+                            monthly_gen_purchases[(a - 1) * 12 + m - 1] += -gen_purchases[(size_t(a) - 1) * 8760 * n_steps_per_hour + n_steps_per_hour * util::hour_of_year(m, d, h) + n];
+                            if (year1_hourly_e_from_grid[h] != 0.0) {
+                                //cf.at(CF_charging_cost_grid_month, a) += monthly_grid_to_batt[m] / (monthly_grid_to_batt[m] + monthly_grid_to_load[m]) * monthly_energy_charge[m] * charged_grid[a] / charged_grid[1] * cf.at(CF_util_escal_rate, a);
+                                cf.at(CF_parasitic_cost, a) += -gen_purchases[(size_t(a) - 1) * 8760 * n_steps_per_hour + n_steps_per_hour * util::hour_of_year(m, d, h) + n] * cf.at(CF_degradation, a) / year1_hourly_e_from_grid[h] * (year1_hourly_ec[h * n_steps_per_hour + n] + year1_hourly_dc[h * n_steps_per_hour + n]) * cf.at(CF_util_escal_rate, a); //use the electricity rate data by year (also trueup) //* charged_grid[a] / charged_grid[1] * cf.at(CF_util_escal_rate, a);
+                            }
+                            if (d == util::days_in_month(int(m - 1)) && h == 23 && monthly_e_fromgrid[m - 1] > 0) cf.at(CF_parasitic_cost, a) += -monthly_gen_purchases[(size_t(a) - 1) * 12 + m - 1] / monthly_e_fromgrid[m - 1] * (net_annual_true_up.at(a, m - 1) + net_billing_credit.at(a, m - 1) + net_metering_credit.at(a, m - 1));
+                        }
                     }
-                    if (d == util::days_in_month(int(m - 1)) && h == 23) cf.at(CF_parasitic_cost, a) += -monthly_gen_purchases[(size_t(a) - 1) * 12 + m - 1] / monthly_e_fromgrid[m - 1] * (net_annual_true_up.at(a, m) + net_billing_credit.at(a, m) + net_metering_credit.at(a, m));
-
                 }
             }
-
         }
+        else {
+            for (size_t m = 1; m <= 12; m++) {
+                monthly_hourly_purchases = 0;
+                monthly_hourly_fromgrid = 0;
+                for (size_t d = 1; d <= util::days_in_month(int(m - 1)); d++) {
+                    for (size_t h = 0; h < 24; h++) { //monthly iteration for each year
+                        for (size_t n = 0; n < n_steps_per_hour; n++) {
+                            monthly_e_fromgrid[m] += year1_hourly_e_from_grid[util::hour_of_year(m, d, h) * n_steps_per_hour + n];
+                            monthly_gen_purchases[(a - 1) * 12 + m] += -gen_purchases[n_steps_per_hour * util::hour_of_year(m, d, h) + n];
+                            if (year1_hourly_e_from_grid[h] != 0.0) {
+                                //cf.at(CF_charging_cost_grid_month, a) += monthly_grid_to_batt[m] / (monthly_grid_to_batt[m] + monthly_grid_to_load[m]) * monthly_energy_charge[m] * charged_grid[a] / charged_grid[1] * cf.at(CF_util_escal_rate, a);
+                                cf.at(CF_parasitic_cost, a) += -gen_purchases[n_steps_per_hour * util::hour_of_year(m, d, h) + n] * cf.at(CF_degradation, a) / year1_hourly_e_from_grid[h] * (year1_hourly_ec[h * n_steps_per_hour + n] + year1_hourly_dc[h * n_steps_per_hour + n]) * cf.at(CF_util_escal_rate, a); //use the electricity rate data by year (also trueup) //* charged_grid[a] / charged_grid[1] * cf.at(CF_util_escal_rate, a);
+                            }
+                            if (d == util::days_in_month(int(m - 1)) && h == 23 && monthly_e_fromgrid[m - 1] > 0) cf.at(CF_parasitic_cost, a) += -monthly_gen_purchases[(size_t(a) - 1) * 12 + m - 1] / monthly_e_fromgrid[m - 1] * (net_annual_true_up.at(a, m - 1) + net_billing_credit.at(a, m - 1) + net_metering_credit.at(a, m - 1));
+                        }
+                    }
+                }
+            }
+        }
+        
     }
 
     save_cf(CF_parasitic_cost, nyears, "cf_parasitic_cost");
