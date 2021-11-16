@@ -357,7 +357,7 @@ void generic_singleowner_battery_60min(ssc_data_t &data)
 	ssc_data_set_number( data, "equip_reserve_depr_sta", 0 );
 	ssc_data_set_number( data, "equip_reserve_depr_fed", 0 );
 	ssc_data_set_number( data, "salvage_percentage", 0 );
-	ssc_data_set_number( data, "ppa_soln_mode", 0 );
+	ssc_data_set_number( data, "ppa_soln_mode", 1 );
 	ssc_data_set_number( data, "ppa_escalation", 1 );
 	ssc_data_set_number( data, "construction_financing_cost", 0 );
 	ssc_data_set_number( data, "term_tenor", 0 );

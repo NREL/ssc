@@ -37,8 +37,8 @@ static var_info _cm_vtab_singleowner[] = {
 // 3 additional variables for PPA Buy rate
 // optional output from battery model
 	{ SSC_INPUT,        SSC_NUMBER,      "en_batt",                                    "Enable battery storage model",                            "0/1",     "",                     "BatterySystem",       "?=0",                                 "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "en_electricity_rates",                       "Enable electricity rates for grid purchase",              "0/1",     "",                     "Electricity Rates",       "?=0",                                 "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_meter_position",                        "Position of battery relative to electric meter",          "",        "",                     "BatterySystem",       "",                           "",                              "" },
+    { SSC_INPUT,        SSC_NUMBER,      "en_electricity_rates",                       "Enable electricity rates for grid purchase",              "0/1",     "",                     "Electricity Rates",       "?=0",                                 "",                              "" },
+    { SSC_INPUT,        SSC_NUMBER,      "batt_meter_position",                        "Position of battery relative to electric meter",          "",        "",                     "BatterySystem",       "",                           "",                              "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "revenue_gen",                                "Electricity to grid",                                     "kW",      "",                       "System Output",       "",                           "",                              "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "gen_purchases",                              "Electricity from grid",                                    "kW",      "",                       "System Output",       "",                           "",                              "" },
 
@@ -921,6 +921,10 @@ public:
 	{
 		int i = 0;
 
+        if (is_assigned("en_electricity_rates") && as_number("en_electricity_rates") == 0 && as_number("ppa_soln_mode") == 0)
+            throw exec_error("singleowner", "PPA price from which to calculate parasitic load costs is not specified. Check inputs for Revenue and Electricity Purchases.");
+
+
 		// cash flow initialization
 		int nyears = as_integer("analysis_period");
 		cf.resize_fill(CF_max, nyears + 1, 0.0);
@@ -1353,7 +1357,7 @@ public:
                 cf.at(CF_om_production_expense, i) *= cf.at(CF_energy_without_battery, i);
             }
             else {
-                cf.at(CF_om_production_expense, i) *= cf.at(CF_energy_net, i);
+                cf.at(CF_om_production_expense, i) *= cf.at(CF_energy_sales, i);
             }
 			cf.at(CF_om_capacity_expense, i) *= nameplate;
 			cf.at(CF_om_capacity1_expense, i) *= nameplate1;
@@ -1368,7 +1372,7 @@ public:
 			cf.at(CF_om_opt_fuel_2_expense,i) *= om_opt_fuel_2_usage;
 		}
 
-
+        //Commenting out to test forced retail rate cost calculations
 		size_t count_ppa_price_input;
 		ssc_number_t* ppa_price_input = as_array("ppa_price_input", &count_ppa_price_input);
 		double ppa = 0;
@@ -1376,6 +1380,64 @@ public:
 //		double ppa = as_double("ppa_price_input")*100.0; // either initial guess for ppa_mode=1 or final ppa for ppa_mode=0
 		if (ppa_mode == 0) ppa = 0; // initial guess for target irr mode
 
+        // Use PPA values to calculate revenue from purchases and sales
+        size_t n_multipliers;
+
+        ssc_number_t* ppa_multipliers = as_array("ppa_multipliers", &n_multipliers);
+        bool ppa_purchases = !(is_assigned("en_electricity_rates") && as_number("en_electricity_rates") == 1);
+        if (as_integer("system_use_lifetime_output") == 1)
+        {
+            // hourly_enet includes all curtailment, availability
+            for (size_t i = 1; i <= nyears; i++) {
+                
+                // Project partial income statement			
+                    // energy_value = DHF Total PPA Revenue (cents/kWh)
+                if ((ppa_mode == 1) && (count_ppa_price_input > 1))
+                {
+                    if (i <= (int)count_ppa_price_input)
+                        cf.at(CF_ppa_price, i) = ppa_price_input[i - 1] * 100.0; // $/kWh to cents/kWh
+                    else
+                        cf.at(CF_ppa_price, i) = 0;
+                }
+                else
+                    cf.at(CF_ppa_price, i) = ppa * pow(1 + ppa_escalation, i - 1); // ppa_mode==0 or single value 
+                double ppa_value = cf.at(CF_ppa_price, i);
+                for (size_t h = 0; h < 8760; h++) {
+                    cf.at(CF_energy_sales_value, i) += hourly_energy_calcs.hourly_sales()[(i - 1) * 8760 + h] * cf.at(CF_degradation, i) * ppa_value / 100.0 * ppa_multipliers[h];
+                    if (ppa_purchases) {
+                        cf.at(CF_energy_purchases_value, i) += -hourly_energy_calcs.hourly_purchases()[(i - 1) * 8760 + h] * cf.at(CF_degradation, i) * ppa_value / 100.0 * ppa_multipliers[h];
+                    }
+                }
+                if (!ppa_purchases) {
+                    cf.at(CF_energy_purchases_value, i) = 0.0;
+                }
+            }
+        }
+        else
+        {
+            for (size_t i = 1; i <= nyears; i++) {
+                if ((ppa_mode == 1) && (count_ppa_price_input > 1))
+                {
+                    if (i <= (int)count_ppa_price_input)
+                        cf.at(CF_ppa_price, i) = ppa_price_input[i - 1] * 100.0; // $/kWh to cents/kWh
+                    else
+                        cf.at(CF_ppa_price, i) = 0;
+                }
+                else
+                    cf.at(CF_ppa_price, i) = ppa * pow(1 + ppa_escalation, i - 1); // ppa_mode==0 or single value 
+                double ppa_value = cf.at(CF_ppa_price, i);
+                for (size_t h = 0; h < 8760; h++) {
+                    cf.at(CF_energy_sales_value, i) += hourly_energy_calcs.hourly_sales()[h] * cf.at(CF_degradation, i) * ppa_value / 100.0 * ppa_multipliers[h];
+                    if (ppa_purchases) {
+                        cf.at(CF_energy_purchases_value, i) += -hourly_energy_calcs.hourly_purchases()[h] * cf.at(CF_degradation, i) * ppa_value / 100.0 * ppa_multipliers[h];
+                    }
+                }
+                if (!ppa_purchases) {
+                    cf.at(CF_energy_purchases_value, i) = 0.0;
+                }
+            }
+        }
+        
 		double property_tax_assessed_value = cost_prefinancing * as_double("prop_tax_cost_assessed_percent") * 0.01;
 		double property_tax_decline_percentage = as_double("prop_tax_assessed_decline");
 		double property_tax_rate = as_double("property_tax_rate")*0.01;
@@ -1511,24 +1573,25 @@ public:
 					 *  pow((1 + inflation_rate + recapitalization_escalation ), i-1 );
 			}
 			 
-			cf.at(CF_operating_expenses,i) = 
-				+cf.at(CF_om_fixed_expense, i)
-				+ cf.at(CF_om_production_expense, i)
-				+ cf.at(CF_om_capacity_expense, i)
-				+ cf.at(CF_om_fixed1_expense, i)
-				+ cf.at(CF_om_production1_expense, i)
-				+ cf.at(CF_om_capacity1_expense, i)
-				+ cf.at(CF_om_fixed2_expense, i)
-				+ cf.at(CF_om_production2_expense, i)
-				+ cf.at(CF_om_capacity2_expense, i)
-				+ cf.at(CF_om_fuel_expense,i)
-				+ cf.at(CF_om_opt_fuel_1_expense,i)
-				+ cf.at(CF_om_opt_fuel_2_expense,i)
-				+ cf.at(CF_property_tax_expense,i)
-				+ cf.at(CF_insurance_expense,i)
-				+ cf.at(CF_battery_replacement_cost,i)
-				+ cf.at(CF_fuelcell_replacement_cost, i)
-				+ cf.at(CF_utility_bill,i)
+            cf.at(CF_operating_expenses, i) =
+                +cf.at(CF_om_fixed_expense, i)
+                + cf.at(CF_om_production_expense, i)
+                + cf.at(CF_om_capacity_expense, i)
+                + cf.at(CF_om_fixed1_expense, i)
+                + cf.at(CF_om_production1_expense, i)
+                + cf.at(CF_om_capacity1_expense, i)
+                + cf.at(CF_om_fixed2_expense, i)
+                + cf.at(CF_om_production2_expense, i)
+                + cf.at(CF_om_capacity2_expense, i)
+                + cf.at(CF_om_fuel_expense, i)
+                + cf.at(CF_om_opt_fuel_1_expense, i)
+                + cf.at(CF_om_opt_fuel_2_expense, i)
+                + cf.at(CF_property_tax_expense, i)
+                + cf.at(CF_insurance_expense, i)
+                + cf.at(CF_battery_replacement_cost, i)
+                + cf.at(CF_fuelcell_replacement_cost, i)
+                + cf.at(CF_utility_bill, i)
+                + cf.at(CF_energy_purchases_value, i)
 				+ cf.at(CF_Recapitalization,i);
 		}
 
@@ -2233,6 +2296,8 @@ public:
 			cf.at(CF_energy_value, i) = cf.at(CF_ppa_price, i) / 100.0 *(
 				m_disp_calcs.tod_energy_value(i));
 
+            cf.at(CF_energy_sales_value, i) = cf.at(CF_ppa_price, i) / 100 * (m_disp_calcs.tod_energy_value(i));
+
 //			log(util::format("year %d : energy value =%lg", i, m_disp_calcs.tod_energy_value(i)), SSC_WARNING);
 			// total revenue
 			cf.at(CF_total_revenue,i) = cf.at(CF_energy_value,i) + 
@@ -2876,48 +2941,8 @@ public:
 
 //	log(util::format("after loop  - size of debt =%lg .", size_of_debt), SSC_WARNING);
 
-    
-
-    // Use PPA values to calculate revenue from purchases and sales
-    size_t n_multipliers;
-    
-    ssc_number_t* ppa_multipliers = as_array("ppa_multipliers", &n_multipliers);
-    bool ppa_purchases = !(is_assigned("en_electricity_rates") && as_number("en_electricity_rates") == 1);
-    if (as_integer("system_use_lifetime_output") == 1)
-    {
-        // hourly_enet includes all curtailment, availability
-        for (size_t i = 1; i <= nyears; i++) {
-            double ppa_value = cf.at(CF_ppa_price, i);
-            for (size_t h = 0; h < 8760; h++) {
-                cf.at(CF_energy_sales_value, i) += hourly_energy_calcs.hourly_sales()[(i - 1) * 8760 + h] * cf.at(CF_degradation, i) * ppa_value / 100.0 * ppa_multipliers[h];
-                if (ppa_purchases) {
-                    cf.at(CF_energy_purchases_value, i) += hourly_energy_calcs.hourly_purchases()[(i - 1) * 8760 + h] * cf.at(CF_degradation, i) * ppa_value / 100.0 * ppa_multipliers[h];
-                }
-            }
-            if (!ppa_purchases) {
-                cf.at(CF_energy_purchases_value, i) = 0.0;
-                // Recompute this variable because the ppa_gen values (hourly_net) were all positve until now 
-                cf.at(CF_energy_net, i) = cf.at(CF_energy_sales, i) + cf.at(CF_energy_purchases, i); // Adding a positive and negative number
-            }
-        }   
-    }
-    else
-    {
-        for (size_t i = 1; i <= nyears; i++) {
-            double ppa_value = cf.at(CF_ppa_price, i);
-            for (size_t h = 0; h < 8760; h++) {
-                cf.at(CF_energy_sales_value, i) += hourly_energy_calcs.hourly_sales()[h] * cf.at(CF_degradation, i) * ppa_value / 100.0 * ppa_multipliers[h];
-                if (ppa_purchases) {
-                    cf.at(CF_energy_purchases_value, i) += hourly_energy_calcs.hourly_purchases()[h] * cf.at(CF_degradation, i) * ppa_value / 100.0 * ppa_multipliers[h];
-                }
-            }
-            if (!ppa_purchases) {
-                cf.at(CF_energy_purchases_value, i) = 0.0;
-                // Recompute this variable because the ppa_gen values (hourly_net) were all positve until now 
-                cf.at(CF_energy_net, i) = cf.at(CF_energy_sales, i) + cf.at(CF_energy_purchases, i); // Adding a positive and negative number
-            }
-        }
-    }
+    for (size_t i = 1; i <= nyears; i++) 
+        cf.at(CF_energy_net, i) = cf.at(CF_energy_sales, i) + cf.at(CF_energy_purchases, i); // Adding a positive and negative number
 
 	assign("flip_target_year", var_data((ssc_number_t) flip_target_year ));
 	assign("flip_target_irr", var_data((ssc_number_t)  flip_target_percent ));
@@ -2964,11 +2989,11 @@ public:
 	// Thermal value not included in LPPA calculation but in total revenue.
 	double npv_ppa_revenue = npv(CF_energy_value, nyears, nom_discount_rate);
 //	double npv_ppa_revenue = npv(CF_total_revenue, nyears, nom_discount_rate);
-	double npv_energy_nom = npv(CF_energy_net, nyears, nom_discount_rate);
+	double npv_energy_nom = npv(CF_energy_sales, nyears, nom_discount_rate);
 	double lppa_nom = 0;
 	if (npv_energy_nom != 0) lppa_nom = npv_ppa_revenue / npv_energy_nom * 100.0;
 	double lppa_real = 0;
-	double npv_energy_real = npv(CF_energy_net,nyears,disc_real);
+	double npv_energy_real = npv(CF_energy_sales,nyears,disc_real);
 	if (npv_energy_real != 0) lppa_real = npv_ppa_revenue / npv_energy_real * 100.0;
 
 	// update LCOE calculations 
@@ -2979,27 +3004,27 @@ public:
 	cf.at(CF_Annual_Costs, 0) = -issuance_of_equity;
 	for (i = 1; i <= nyears; i++)
 	{
-		cf.at(CF_Annual_Costs, i) =
-			cf.at(CF_pbi_total, i)
-			+ cf.at(CF_statax, i)
-			+ cf.at(CF_fedtax, i)
-			- cf.at(CF_debt_payment_interest, i)
-			- cf.at(CF_debt_payment_principal, i)
-			- cf.at(CF_operating_expenses, i)
-			// incentives (cbi and ibi in installed cost and itc in year 1 below
-			// TODO - check PBI
-			+ cf.at(CF_ptc_fed, i)
-			+ cf.at(CF_ptc_sta, i)
-			// reserve accounts
-			- cf.at(CF_funding_equip1, i)
-			- cf.at(CF_funding_equip2, i)
-			- cf.at(CF_funding_equip3, i)
-			- cf.at(CF_funding_om, i)
-			- cf.at(CF_funding_receivables, i)
-			- cf.at(CF_funding_debtservice, i)
-			+ cf.at(CF_reserve_interest, i)
-			- cf.at(CF_disbursement_debtservice, i) // note sign is negative for positive disbursement
-			- cf.at(CF_disbursement_om, i) // note sign is negative for positive disbursement
+        cf.at(CF_Annual_Costs, i) =
+            cf.at(CF_pbi_total, i)
+            + cf.at(CF_statax, i)
+            + cf.at(CF_fedtax, i)
+            - cf.at(CF_debt_payment_interest, i)
+            - cf.at(CF_debt_payment_principal, i)
+            - cf.at(CF_operating_expenses, i)
+            // incentives (cbi and ibi in installed cost and itc in year 1 below
+            // TODO - check PBI
+            + cf.at(CF_ptc_fed, i)
+            + cf.at(CF_ptc_sta, i)
+            // reserve accounts
+            - cf.at(CF_funding_equip1, i)
+            - cf.at(CF_funding_equip2, i)
+            - cf.at(CF_funding_equip3, i)
+            - cf.at(CF_funding_om, i)
+            - cf.at(CF_funding_receivables, i)
+            - cf.at(CF_funding_debtservice, i)
+            + cf.at(CF_reserve_interest, i)
+            - cf.at(CF_disbursement_debtservice, i) // note sign is negative for positive disbursement
+            - cf.at(CF_disbursement_om, i) // note sign is negative for positive disbursement
 			+ cf.at(CF_net_salvage_value, i); // benefit to cost reduction so that project revenue based on PPA revenue and not total revenue per 7/16/15 meeting
 	}
 	// year 1 add total ITC (net benefit) so that project return = project revenue - project cost

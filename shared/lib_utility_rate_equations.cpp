@@ -941,6 +941,7 @@ ssc_number_t rate_data::get_demand_charge(int month, size_t year)
 	d_lower = 0;
 	int peak_hour = 0;
 	curr_month.dc_tou_charge.clear();
+    monthly_dc_tou[month] = 0;
 	for (period = 0; period < (int)curr_month.dc_tou_ub.nrows(); period++)
 	{
 		charge = 0;
@@ -1056,6 +1057,132 @@ void rate_data::compute_surplus(ur_month& curr_month)
         else
             curr_month.ec_energy_use.at(ir, 0) = -curr_month.ec_energy_use.at(ir, 0);
     }
+}
+
+std::vector<double> rate_data::get_composite_tou_buy_rate(int month, size_t year, double expected_load) {
+    ur_month& curr_month = m_month[month];
+    ssc_number_t rate_esc = rate_scale[year];
+
+    std::vector<double> next_composite_buy_rates;
+
+    size_t num_per = curr_month.ec_tou_br.nrows();
+    if (expected_load > 0)
+    {
+        for (size_t ir = 0; ir < num_per; ir++)
+        {
+            bool done = false;
+            double periodCost = 0;
+            for (size_t ic = 0; ic < curr_month.ec_tou_ub.ncols() && !done; ic++)
+            {
+                ssc_number_t ub_tier = curr_month.ec_tou_ub.at(ir, ic);
+                ssc_number_t prev_tier = 0;
+                if (ic > 0)
+                {
+                    prev_tier = curr_month.ec_tou_ub.at(ir, ic - 1);
+                }
+
+                if (expected_load > ub_tier)
+                {
+                    periodCost += (ub_tier - prev_tier) / expected_load * curr_month.ec_tou_br.at(ir, ic) * rate_esc;
+                }
+                else
+                {
+                    periodCost += (expected_load - prev_tier) / expected_load * curr_month.ec_tou_br.at(ir, ic) * rate_esc;
+                    done = true;
+                }
+
+            }
+            next_composite_buy_rates.push_back(periodCost);
+        }
+    }
+    else
+    {
+        for (size_t ir = 0; ir < num_per; ir++)
+        {
+            double periodBuyRate = curr_month.ec_tou_br.at(ir, 0) * rate_esc;
+            next_composite_buy_rates.push_back(periodBuyRate);
+        }
+    }
+
+    return next_composite_buy_rates;
+}
+
+std::vector<double> rate_data::get_composite_tou_sell_rate(int month, size_t year, double expected_gen) {
+    ur_month& curr_month = m_month[month];
+    ssc_number_t rate_esc = rate_scale[year];
+
+    std::vector<double> next_composite_sell_rates;
+
+    size_t num_per = curr_month.ec_tou_sr.nrows();
+
+    if (expected_gen > 0)
+    {
+        for (size_t ir = 0; ir < num_per; ir++)
+        {
+            bool done = false;
+            double periodSellRate = 0;
+            // Including the NM credits in the cost function can skew the price signals, causing periods to appear to have higher cost than they actually do. Assume $0 sell rate for NM
+            if (nm_credits_w_rollover)
+            {
+                for (size_t ic = 0; ic < curr_month.ec_tou_ub.ncols() && !done; ic++)
+                {
+                    ssc_number_t ub_tier = curr_month.ec_tou_ub.at(ir, ic);
+                    ssc_number_t prev_tier = 0;
+                    if (ic > 0)
+                    {
+                        prev_tier = curr_month.ec_tou_ub.at(ir, ic - 1);
+                    }
+
+                    if (expected_gen > ub_tier)
+                    {
+                        periodSellRate += (ub_tier - prev_tier) / expected_gen * curr_month.ec_tou_sr.at(ir, ic) * rate_esc;
+                    }
+                    else
+                    {
+                        periodSellRate += (expected_gen - prev_tier) / expected_gen * curr_month.ec_tou_sr.at(ir, ic) * rate_esc;
+                        done = true;
+                    }
+                }
+            }
+            next_composite_sell_rates.push_back(periodSellRate);
+        }
+    }
+    else
+    {
+        for (size_t ir = 0; ir < num_per; ir++)
+        {
+            double periodSellRate = 0;
+            // Including the NM credits in the cost function can skew the price signals, causing periods to appear to have higher cost than they actually do. Assume $0 sell rate for NM
+            if (nm_credits_w_rollover)
+            {
+                periodSellRate = curr_month.ec_tou_sr.at(ir, 0) * rate_esc;
+            }
+            next_composite_sell_rates.push_back(periodSellRate);
+        }
+    }
+
+    return next_composite_sell_rates;
+}
+
+double rate_data::getEnergyChargeNetMetering(int month, std::vector<double>& buy_rates, std::vector<double>& sell_rates)
+{
+    double cost = 0;
+    ur_month& curr_month = m_month[month];
+    ssc_number_t num_per = (ssc_number_t)curr_month.ec_energy_use.nrows();
+    for (size_t ir = 0; ir < num_per; ir++)
+    {
+        ssc_number_t per_energy = curr_month.ec_energy_use.at(ir, 0);
+        if (per_energy < 0 && !en_ts_buy_rate)
+        {
+            cost += buy_rates[ir] * -per_energy;
+        }
+        else if (!en_ts_sell_rate)
+        {
+            cost -= sell_rates[ir] * per_energy;
+        }
+    }
+
+    return cost;
 }
 
 bool rate_data::has_kwh_per_kw_rate(int month) {
