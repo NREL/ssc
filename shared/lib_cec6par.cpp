@@ -78,7 +78,7 @@ bool cec6par_module_t::operator() ( pvinput_t &input, double TcellC, double opvo
 			input.Tilt,
 			input.Ibeam,
 			input.Idiff,
-			input.Ignd, false);
+			input.Ignd, true);
 
 		Geff_total = Geff_front_total + input.Irear;
 
@@ -179,7 +179,7 @@ bool noct_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 			input.Tilt,
 			input.Ibeam,
 			input.Idiff,
-			input.Ignd, false );
+			input.Ignd, true );
 
 		if (G_total > 0)
 			tau_al *= Geff_total/G_total;
