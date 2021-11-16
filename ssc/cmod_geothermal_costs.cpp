@@ -79,7 +79,7 @@ private:
 	std::vector<double> pump_ppi{ 0.853394181,0.872219053,0.899600685,0.924130063,0.936679977,0.950370793,0.976041072,1.000000000,1.010838562,1.039931546,1.093553908,1.142042213,1.213348545,1.278379920,1.314318311,1.324586423,1.324586423,1.349115801,1.339418140,1.366799772,1.391899601,1.411294923,1.438106104,0.000000000 }; //Pump Cost Index Normalized to 2001, 2002, 2007, 2010 and 2012; Beginning Year = 1995; Final Year = 2016;
 	std::vector<double> turbine_ppi{ 0.882850242,0.896135266,0.917874396,0.934782609,0.960144928,0.969202899,0.980072464,1.000000000,1.013285024,1.018719807,1.017512077,1.050120773,1.106884058,1.245169082,1.350241546,1.340579710,1.359903382,1.349637681,1.376811594,1.411835749,1.399154589,1.403046162,1.346947738,1.327974034 }; //Turbine-Generator Cost Index Normalized to 2001, 2002, 2007, 2010 and 2012; Beginning Year = 1995; Final Year = 2016;
 	std::vector<double> construction_ppi{ 0.790555556,0.816666667,0.842222222,0.872777778,0.909444444,0.933333333,0.957777778,1.000000000,1.039444444,1.067222222,1.088888889,1.129444444,1.170000000,1.221666667,1.277777778,1.320000000,1.357777778,1.361666667,1.374444444,1.426666667,1.475000000,1.528333333,1.594444444,0.000000000 };
-	double user_adjust = 1;
+	double user_adjust = 1; //User Adjustment (Constant)
 	double size_ratio;
 	//double scaling_factor ;	//for the GF HX
 	double ref_plant_size = 10000;	//kW
@@ -124,11 +124,11 @@ private:
 	double sf_3 = 0;
 	double hx_c10 = 5.95;
 	double hx_c11 = 2163827753;
-	double hx_c12 = -3.810541361;
+	double hx_c12 = -3.8105414;
 	double hx_c20 = -22.09917;
 	double hx_c21 = 0.4275955;
 	double hx_c22 = -0.002356472;
-	double hx_c23 = 4.244622e-06;
+	double hx_c23 = 4.24462e-06;
 
 	//Coefficients for Air Cooled Condenser (ACC) Cost Calculations:
 	double acc_c0 = 47;
@@ -139,9 +139,9 @@ private:
 	double acc_c12 = -0.001200635;
 	double acc_c13 = 0.000005657483;
 	double acc_c20 = 3.582461;
-	double acc_c21 = -0.05107826;
-	double acc_c22 = 0.000277465;
-	double acc_c23 = -2.549391e-07;
+    double acc_c21 = -0.05107826;
+    double acc_c22 = 0.000277465;
+    double acc_c23 = -2.549939E-7;
 	double acc_0;
 	double acc_1;
 	double acc_2;
@@ -157,12 +157,12 @@ private:
 	double wf_sf_c1 = 0.029802;
 	double wf_sf_c2 = -0.00019008;
 	double wf_sf_c3 = 3.872e-07;
-	double wf_c10 = 32.0607143;
-	double wf_c11 = -0.2537857;
-	double wf_c12 = 0.0006714;
-	double wf_c20 = -0.3329714;
-	double wf_c21 = 0.0559291;
-	double wf_c22 = -0.0001977;
+	double wf_c10 = 32.066071;
+	double wf_c11 = -0.25379;
+	double wf_c12 = 0.000671;
+	double wf_c20 = -0.33297;
+	double wf_c21 = 0.055929;
+	double wf_c22 = -0.000198;
 	double pcc_1;
 	double pcc_2;
 	double pcc_c;	//ref wf pump cost
@@ -173,13 +173,13 @@ private:
 	double turbine_sf_c1 = 0.0003589091;
 	double turbine_sf_c2 = -2.0218e-06;
 	double sf_turbine;
-	double turbine_c0 = 0.79664761905;
-	double turbine_c1 = -0.00977366138;
-	double turbine_c2 = 0.00004244825;
-	double turbine_c3 = -5.321e-08;
-	double turbine_c10 = -24.62889285714;
-	double turbine_c11 = 0.49768131746;
-	double turbine_c12 = -0.00296254476;
+	double turbine_c0 = 0.796647619;
+	double turbine_c1 = -0.009773661;
+	double turbine_c2 = 0.0000424483;
+	double turbine_c3 = -5.32e-08;
+	double turbine_c10 = -24.62889286;
+	double turbine_c11 = 0.497681317;
+	double turbine_c12 = -0.002962545;
 	double turbine_c13 = 5.52551e-06;
 	double ppc_0;
 	double ppc_1;
@@ -289,7 +289,9 @@ public:
 			size_ratio = unit_plant / ref_plant_size;
 			sf_hx = (sf_3 * pow(design_temp, 3)) + (sf_2 * pow(design_temp, 2)) + (sf_1 * design_temp) + sf_0;
 			hx_gf_c1 = hx_c10 + (hx_c11 * pow(design_temp, hx_c12));
-			hx_gf_c2 = hx_c20 + (hx_c21 * design_temp) + (hx_c22 * pow(design_temp, 2)) + (hx_c23 * pow(design_temp, 3));
+			//hx_gf_c2 = hx_c20 + (hx_c21 * design_temp) + (hx_c22 * pow(design_temp, 2)) + (hx_c23 * pow(design_temp, 3));
+            hx_gf_c2 = hx_c20 + pow(hx_c21, pow(design_temp, 2)) + pow(hx_c23, pow(design_temp, 3)); //Took out hx_c22 per Parangat report -MP 6/14/21
+
 			hx_gf_c = hx_gf_c1 * exp(hx_gf_c2 * eff);
 			current_cost_ref_hx = hx_gf_c * hx_ppi[20];
 
@@ -411,7 +413,7 @@ public:
 
 			//Cooling Tower Cost:
 			condenser_heat_rejected = GF_flowrate * qRejectTotal / 1000;
-			cooling_tower_cost = 7200 * (pow(condenser_heat_rejected, 0.8));		//Reference Equipment Cost
+			cooling_tower_cost = 7800 * (pow(condenser_heat_rejected, 0.8));		//Reference Equipment Cost
 			current_tower_cost = cooling_tower_cost * process_equip_ppi[20];
 
 			//Condenser Cost: 
