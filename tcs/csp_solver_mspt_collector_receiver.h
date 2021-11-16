@@ -46,13 +46,14 @@ public:
 		
 		E_Q_DOT_INC,			//[MWt] Receiver incident thermal power
 		E_ETA_THERMAL,			//[-] Receiver thermal efficiency
-		E_Q_DOT_THERMAL,		//[MWt] Field incident thermal power
+		E_Q_DOT_THERMAL,		//[MWt] Receiver thermal power to HTF less piping loss
 		E_M_DOT_HTF,			//[kg/hr] Receiver mass flow rate
 		E_Q_DOT_STARTUP,		//[MWt] Receiver startup thermal power consumed
 		E_T_HTF_IN,				//[C] Receiver HTF inlet temperature
 		E_T_HTF_OUT,			//[C] Receiver HTF outlet temperature
 		E_Q_DOT_PIPE_LOSS,		//[MWt] Tower piping losses
         E_Q_DOT_LOSS,           //[MWt] Receiver convection and radiation losses
+        E_Q_DOT_REFL_LOSS,      //[MWt] Receiver reflection losses (0 for external)
 		E_P_HEATTRACE,			//[MWe] Receiver heat trace parasitic
 		E_T_HTF_OUT_END,		//[C] Instantaneous receiver HTF outlet temperature at the end of the time step
 		E_T_HTF_OUT_MAX,		//[C] Receiver maximum HTF outlet temperature at any point during time step
