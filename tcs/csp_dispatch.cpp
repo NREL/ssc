@@ -1100,16 +1100,16 @@ bool csp_dispatch_opt::optimize()
                 {
                     double rhs = 0.;
                     i = 0;
-                    col[i] = O.column("delta_w", t);
-                    row[i++] = 1.;
+                    row[i] = 1.;
+                    col[i++] = O.column("delta_w", t);
 
-                    col[i] = O.column("wdot", t);
-                    row[i++] = -1.;
+                    row[i] = -1.;
+                    col[i++] = O.column("wdot", t);
 
                     if (t > 0)
                     {
-                        col[i] = O.column("wdot", t - 1);
-                        row[i++] = 1.;
+                        row[i] = 1.;
+                        col[i++] = O.column("wdot", t - 1);
                     }
                     else
                     {
