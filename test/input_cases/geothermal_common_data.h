@@ -59,6 +59,7 @@ static void geothermal_singleowner_default(ssc_data_t &data)
 	ssc_data_set_number(data, "decline_type", 0);
 	ssc_data_set_number(data, "temp_decline_rate", 0.5);
 	ssc_data_set_number(data, "temp_decline_max", 30);
+    ssc_data_set_number(data, "dt_prod_well", 0.0);
 	ssc_data_set_number(data, "wet_bulb_temp", 15);
 	ssc_data_set_number(data, "ambient_pressure", 14.699999809265137);
 	ssc_data_set_number(data, "well_flow_rate", 110);
