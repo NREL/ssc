@@ -551,7 +551,7 @@ public:
             escal_or_annual(CF_om_production1_expense, nyears, "om_batt_variable_cost", inflation_rate, 0.001, false, as_double("om_production_escal") * 0.01); //$/MWh
             escal_or_annual(CF_om_capacity1_expense, nyears, "om_batt_capacity_cost", inflation_rate, 1.0, false, as_double("om_capacity_escal") * 0.01);
             nameplate1 = as_number("om_batt_nameplate");
-            if (as_integer("en_batt") == 1)
+            if (as_integer("en_batt") == 1 || as_integer("en_standalone_batt") == 1)
                 battery_discharged = as_vector_double("batt_annual_discharge_energy");
 		}
 		if (add_om_num_types > 1)
@@ -564,7 +564,7 @@ public:
 		}
 
         // battery cost - replacement from lifetime analysis
-        if ((as_integer("en_batt") == 1) && (as_integer("batt_replacement_option") > 0))
+        if ((as_integer("en_batt") == 1 || as_integer("en_standalone_batt") == 1) && (as_integer("batt_replacement_option") > 0))
         {
             ssc_number_t* batt_rep = 0;
             std::vector<ssc_number_t> replacement_percent;
@@ -1163,7 +1163,7 @@ public:
     }
     /////////////////////////////////////////////////////////////////////////////////////////
 
-    if (as_integer("en_batt") == 1) {
+    if (as_integer("en_batt") == 1 || as_integer("en_standalone_batt") == 1) {
         update_battery_outputs(this, nyears);
     }
 
@@ -1272,7 +1272,7 @@ public:
 		save_cf( CF_property_tax_expense, nyears, "cf_property_tax_expense" );
 		save_cf( CF_insurance_expense, nyears, "cf_insurance_expense" );
 		save_cf( CF_net_salvage_value, nyears, "cf_net_salvage_value" );
-        if (as_integer("en_batt") == 1) {
+        if (as_integer("en_batt") == 1 || as_integer("en_standalone_batt") == 1) {
             save_cf(CF_battery_replacement_cost, nyears, "cf_battery_replacement_cost");
             save_cf(CF_battery_replacement_cost_schedule, nyears, "cf_battery_replacement_cost_schedule");
         }

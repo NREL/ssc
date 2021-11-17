@@ -47,7 +47,7 @@ static var_info _cm_vtab_singleowner[] = {
     { SSC_INPUT,        SSC_ARRAY,      "gen_without_battery",                          "Electricity to or from the renewable system, without the battery", "kW", "",                     "System Output", "", "", "" },
 
 	{ SSC_INPUT,        SSC_ARRAY, "degradation", "Annual energy degradation", "", "", "System Output", "*", "", "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "system_capacity",			              "System nameplate capacity",		                               "kW",                "",                        "System Output",             "*",					   "MIN=1e-3",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "system_capacity",			              "System nameplate capacity",		                               "kW",                "",                        "System Output",             "?=0",					   "",                      "" },
     
 	/* PPA Buy Rate values */
 	{ SSC_INPUT, SSC_ARRAY, "utility_bill_w_sys", "Electricity bill with system", "$", "", "Utility Bill", "", "", "" },
@@ -1054,7 +1054,7 @@ public:
 			escal_or_annual(CF_om_production1_expense, nyears, "om_batt_variable_cost", inflation_rate, 0.001, false, as_double("om_production_escal")*0.01); //$/MWh
 			escal_or_annual(CF_om_capacity1_expense, nyears, "om_batt_capacity_cost", inflation_rate, 1.0, false, as_double("om_capacity_escal")*0.01);
 			nameplate1 = as_number("om_batt_nameplate");
-            if (as_integer("en_batt") == 1)
+            if (as_integer("en_batt") == 1 || as_integer("en_standalone_batt") == 1)
                 battery_discharged = as_vector_double("batt_annual_discharge_energy");
 		}
 		if (add_om_num_types > 1) // PV Battery Fuel Cell
@@ -1068,7 +1068,7 @@ public:
 
 
         // battery cost - replacement from lifetime analysis
-        if ((as_integer("en_batt") == 1) && (as_integer("batt_replacement_option") > 0))
+        if ((as_integer("en_batt") == 1 || as_integer("en_standalone_batt") == 1) && (as_integer("batt_replacement_option") > 0))
         {
             ssc_number_t* batt_rep = 0;
             std::vector<ssc_number_t> replacement_percent;
@@ -3056,7 +3056,7 @@ public:
     }
     /////////////////////////////////////////////////////////////////////////////////////////
 
-    if (as_integer("en_batt") == 1) {
+    if (as_integer("en_batt") == 1 || as_integer("en_standalone_batt") == 1) {
         update_battery_outputs(this, nyears);
     }
 
@@ -3361,7 +3361,7 @@ public:
 		save_cf( CF_property_tax_assessed_value, nyears, "cf_property_tax_assessed_value" );
 		save_cf( CF_property_tax_expense, nyears, "cf_property_tax_expense" );
 		save_cf( CF_insurance_expense, nyears, "cf_insurance_expense" );
-        if (as_integer("en_batt") == 1) {
+        if (as_integer("en_batt") == 1 || as_integer("en_standalone_batt") == 1) {
             save_cf(CF_battery_replacement_cost, nyears, "cf_battery_replacement_cost");
             save_cf(CF_battery_replacement_cost_schedule, nyears, "cf_battery_replacement_cost_schedule");
         }
