@@ -130,6 +130,12 @@ var_info vtab_oandm[] = {
 { SSC_INPUT,SSC_ARRAY   , "om_fuelcell_capacity_cost"                         , "Fuel cell capacity-based System Costs amount"                   , "$/kWcap"                                , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
 { SSC_INPUT, SSC_ARRAY,   "fuelcell_annual_energy_discharged",  "Annual energy from fuelcell",    "kWh",        "",                 "System Costs",                  "?=0",                        "",                              "" },
 
+// optional land lease
+{ SSC_INPUT,        SSC_NUMBER,     "land_area",                      "Total land area",	                                                "acres",                "",                        "Land Lease",            "?=0",					   "",                              "" },
+{ SSC_INPUT,        SSC_ARRAY,      "om_land_lease",	                    "Land lease cost",	                                                "$/acre",               "",                        "Land Lease",            "?=0",					   "",                              "" },
+{ SSC_INPUT,        SSC_NUMBER,     "om_land_lease_escal",                  "Land lease cost escalation",	                                    "%/yr",                 "",                        "Land Lease",            "?=0",					   "",                              "" },
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_land_lease_expense",                "Land lease expense",                                       "$",                    "",                         "Land Lease",            "", "LENGTH_EQUAL=cf_length", "" },
+
 var_info_invalid };
 
 var_info vtab_equip_reserve[] = {

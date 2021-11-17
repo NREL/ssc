@@ -728,6 +728,8 @@ enum {
 	CF_om_opt_fuel_2_expense,
 	CF_om_opt_fuel_1_expense,
 
+    CF_land_lease_expense,
+
 	CF_federal_tax_frac,
 	CF_state_tax_frac,
 	CF_effective_tax_frac,
@@ -1027,6 +1029,9 @@ public:
 		escal_or_annual( CF_om_opt_fuel_1_expense, nyears, "om_opt_fuel_1_cost", inflation_rate, 1.0, false, as_double("om_opt_fuel_1_cost_escal")*0.01 );  
 		escal_or_annual( CF_om_opt_fuel_2_expense, nyears, "om_opt_fuel_2_cost", inflation_rate, 1.0, false, as_double("om_opt_fuel_2_cost_escal")*0.01 );  
 
+        ssc_number_t total_land_area = as_double("land_area");
+        escal_or_annual(CF_land_lease_expense, nyears, "om_land_lease", inflation_rate, total_land_area, false, as_double("om_land_lease_escal") * 0.01);
+
 		double om_opt_fuel_1_usage = as_double("om_opt_fuel_1_usage");
 		double om_opt_fuel_2_usage = as_double("om_opt_fuel_2_usage");
 
@@ -1319,6 +1324,7 @@ public:
 				+ cf.at(CF_om_fuel_expense,i)
 				+ cf.at(CF_om_opt_fuel_1_expense,i)
 				+ cf.at(CF_om_opt_fuel_2_expense,i)
+                + cf.at(CF_land_lease_expense, i)
 				+ cf.at(CF_property_tax_expense,i)
 				+ cf.at(CF_insurance_expense,i)
 				+ cf.at(CF_sponsor_margin,i)
@@ -2289,7 +2295,7 @@ public:
 			if (i==1) cf.at(CF_stadepr_total,i) += ( depr_stabas_macrs_5_bonus +depr_stabas_macrs_15_bonus + depr_stabas_sl_5_bonus + depr_stabas_sl_15_bonus + depr_stabas_sl_20_bonus + depr_stabas_sl_39_bonus + depr_stabas_custom_bonus);
 			cf.at(CF_sponsor_statax_income_prior_incentives,i)=
 				cf.at(CF_energy_value,i) + cf.at(CF_reserve_interest,i) + cf.at(CF_reserve_leasepayment_interest,i)
-				- (cf.at(CF_om_fixed_expense,i) + cf.at(CF_om_capacity_expense,i) + cf.at(CF_om_production_expense,i) + cf.at(CF_om_fuel_expense,i) + cf.at(CF_om_opt_fuel_1_expense,0) + cf.at(CF_om_opt_fuel_2_expense,0) + cf.at(CF_insurance_expense,i) + cf.at(CF_property_tax_expense,i) )
+				- (cf.at(CF_om_fixed_expense,i) + cf.at(CF_om_capacity_expense,i) + cf.at(CF_om_production_expense,i) + cf.at(CF_om_fuel_expense,i) + cf.at(CF_om_opt_fuel_1_expense,0) + cf.at(CF_om_opt_fuel_2_expense,0) + cf.at(CF_land_lease_expense,0) + cf.at(CF_insurance_expense,i) + cf.at(CF_property_tax_expense,i) )
 				- cf.at(CF_pretax_operating_cashflow,i);
 
 			// 5/1/11
@@ -2318,7 +2324,7 @@ public:
 			if (i==1) cf.at(CF_feddepr_total,i) += ( depr_fedbas_macrs_5_bonus +depr_fedbas_macrs_15_bonus + depr_fedbas_sl_5_bonus + depr_fedbas_sl_15_bonus + depr_fedbas_sl_20_bonus + depr_fedbas_sl_39_bonus + depr_fedbas_custom_bonus);
 			cf.at(CF_sponsor_fedtax_income_prior_incentives,i)=
 				cf.at(CF_energy_value,i) + cf.at(CF_reserve_interest,i) + cf.at(CF_reserve_leasepayment_interest,i)
-				- (cf.at(CF_om_fixed_expense,i) + cf.at(CF_om_capacity_expense,i) + cf.at(CF_om_production_expense,i) + cf.at(CF_om_fuel_expense,i) + cf.at(CF_om_opt_fuel_1_expense,0) + cf.at(CF_om_opt_fuel_2_expense,0) + cf.at(CF_insurance_expense,i) + cf.at(CF_property_tax_expense,i) )
+				- (cf.at(CF_om_fixed_expense,i) + cf.at(CF_om_capacity_expense,i) + cf.at(CF_om_production_expense,i) + cf.at(CF_om_fuel_expense,i) + cf.at(CF_om_opt_fuel_1_expense,0) + cf.at(CF_om_opt_fuel_2_expense,0) + cf.at(CF_land_lease_expense,i) + cf.at(CF_insurance_expense,i) + cf.at(CF_property_tax_expense,i) )
 				- cf.at(CF_pretax_operating_cashflow,i) + cf.at(CF_sponsor_statax,i);
 			// 5/1/11
 			cf.at(CF_sponsor_fedtax_income_with_incentives,i) = cf.at(CF_sponsor_fedtax_income_prior_incentives,i) + cf.at(CF_sponsor_fedtax_taxable_incentives,i);
@@ -2884,6 +2890,7 @@ public:
 	save_cf( CF_om_fuel_expense, nyears, "cf_om_fuel_expense" );
 	save_cf( CF_om_opt_fuel_1_expense, nyears, "cf_om_opt_fuel_1_expense" );
 	save_cf( CF_om_opt_fuel_2_expense, nyears, "cf_om_opt_fuel_2_expense" );
+    save_cf(CF_land_lease_expense, nyears, "cf_land_lease_expense");
     if (as_integer("en_batt") == 1) {
         save_cf(CF_battery_replacement_cost, nyears, "cf_battery_replacement_cost");
         save_cf(CF_battery_replacement_cost_schedule, nyears, "cf_battery_replacement_cost_schedule");
