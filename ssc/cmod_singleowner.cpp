@@ -533,7 +533,6 @@ static var_info _cm_vtab_singleowner[] = {
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_ppa_price",                           "PPA price",                     "cents/kWh",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_value",                        "PPA revenue net",                     "$",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_sales_value",                  "PPA revenue gross",                   "$",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
-    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_purchases_value",              "PPA revenue lost to self-consumption","$",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_thermal_value",                       "Thermal revenue",                     "$",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_om_fixed_expense",                    "O&M fixed expense",                  "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_om_production_expense",               "O&M production-based expense",       "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -1139,13 +1138,11 @@ public:
 
 			for ( i = 0; i <= nyears; i++)
 				cf.at(CF_utility_bill, i) = ub_arr[i];
-			save_cf(CF_utility_bill, nyears, "cf_utility_bill");
 		}
         else
         {
             for (i = 0; i <= nyears; i++)
                 cf.at(CF_utility_bill, i) = 0;
-            save_cf(CF_utility_bill, nyears, "cf_utility_bill");
         }
 
 
@@ -1410,11 +1407,8 @@ public:
                 for (size_t h = 0; h < 8760; h++) {
                     cf.at(CF_energy_sales_value, i) += hourly_energy_calcs.hourly_sales()[(i - 1) * 8760 + h] * cf.at(CF_degradation, i) * ppa_value / 100.0 * ppa_multipliers[h];
                     if (ppa_purchases) {
-                        cf.at(CF_energy_purchases_value, i) += -hourly_energy_calcs.hourly_purchases()[(i - 1) * 8760 + h] * cf.at(CF_degradation, i) * ppa_value / 100.0 * ppa_multipliers[h];
+                        cf.at(CF_utility_bill, i) += -hourly_energy_calcs.hourly_purchases()[(i - 1) * 8760 + h] * cf.at(CF_degradation, i) * ppa_value / 100.0 * ppa_multipliers[h];
                     }
-                }
-                if (!ppa_purchases) {
-                    cf.at(CF_energy_purchases_value, i) = 0.0;
                 }
             }
         }
@@ -1434,14 +1428,12 @@ public:
                 for (size_t h = 0; h < 8760; h++) {
                     cf.at(CF_energy_sales_value, i) += hourly_energy_calcs.hourly_sales()[h] * cf.at(CF_degradation, i) * ppa_value / 100.0 * ppa_multipliers[h];
                     if (ppa_purchases) {
-                        cf.at(CF_energy_purchases_value, i) += -hourly_energy_calcs.hourly_purchases()[h] * cf.at(CF_degradation, i) * ppa_value / 100.0 * ppa_multipliers[h];
+                        cf.at(CF_utility_bill, i) += -hourly_energy_calcs.hourly_purchases()[h] * cf.at(CF_degradation, i) * ppa_value / 100.0 * ppa_multipliers[h];
                     }
-                }
-                if (!ppa_purchases) {
-                    cf.at(CF_energy_purchases_value, i) = 0.0;
                 }
             }
         }
+        save_cf(CF_utility_bill, nyears, "cf_utility_bill");
 
 		double property_tax_assessed_value = cost_prefinancing * as_double("prop_tax_cost_assessed_percent") * 0.01;
 		double property_tax_decline_percentage = as_double("prop_tax_assessed_decline");
@@ -1597,7 +1589,6 @@ public:
                 + cf.at(CF_battery_replacement_cost, i)
                 + cf.at(CF_fuelcell_replacement_cost, i)
                 + cf.at(CF_utility_bill, i)
-                + cf.at(CF_energy_purchases_value, i)
 				+ cf.at(CF_Recapitalization,i);
 		}
 
@@ -3340,7 +3331,6 @@ public:
 
 		save_cf(CF_energy_value, nyears, "cf_energy_value");
         save_cf(CF_energy_sales_value, nyears, "cf_energy_sales_value");
-        save_cf(CF_energy_purchases_value, nyears, "cf_energy_purchases_value");
 		save_cf(CF_thermal_value, nyears, "cf_thermal_value");
 		save_cf(CF_curtailment_value, nyears, "cf_curtailment_value");
 		save_cf(CF_capacity_payment, nyears, "cf_capacity_payment");
