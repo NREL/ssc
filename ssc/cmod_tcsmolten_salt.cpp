@@ -338,6 +338,8 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 
 
     // Financial inputs
+    { SSC_INPUT,     SSC_NUMBER, "ppa_soln_mode",                      "PPA solution mode (0=Specify IRR target, 1=Specify PPA price)",                                                                           "",             "",                                  "Financial Solution Mode",                  "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1",       "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "en_electricity_rates",               "Enable electricity rates for grid purchase",                                                                                              "0/1",          "",                                  "Electricity Rates",                        "?=0",                                                              "",              ""},
     { SSC_INPUT,     SSC_MATRIX, "dispatch_sched_weekday",             "PPA pricing weekday schedule, 12x24",                                                                                                     "",             "",                                  "Time of Delivery Factors",                 "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1",       "",              ""},
     { SSC_INPUT,     SSC_MATRIX, "dispatch_sched_weekend",             "PPA pricing weekend schedule, 12x24",                                                                                                     "",             "",                                  "Time of Delivery Factors",                 "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1",       "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "dispatch_factor1",                   "Dispatch payment factor 1",                                                                                                               "",             "",                                  "Time of Delivery Factors",                 "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1",       "",              ""},
@@ -353,7 +355,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,     SSC_ARRAY,  "dispatch_series",                    "Time series dispatch factors",                                                                                                            "",             "",                                  "System Control",                           "",                                                                 "",              ""},
     { SSC_INPUT,     SSC_MATRIX, "mp_energy_market_revenue",           "Energy market revenue input",                                                                                                             "",             "Lifetime x 2[Cleared Capacity(MW),Price($/MWh)]", "Revenue",                    "csp_financial_model=6&is_dispatch=1",                              "",              ""},
 
-// Inputs required for user defined SF performance
+    // Inputs required for user defined SF performance
     { SSC_INPUT,     SSC_NUMBER, "A_sf_in",                            "Solar field area",                                                                                                                        "m^2",          "",                                  "Heliostat Field",                          "",                                                                 "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "A_sf",                               "Solar field area",                                                                                                                        "m^2",          "",                                  "",                                         "*",                                                                "",              ""},
 
@@ -1673,6 +1675,21 @@ public:
         bool is_dispatch = as_boolean("is_dispatch");
         if (csp_financial_model > 0 && csp_financial_model < 5) {   // Single Owner financial models
 
+            int ppa_soln_mode = as_integer("ppa_soln_mode");    // PPA solution mode (0=Specify IRR target, 1=Specify PPA price)
+            if (ppa_soln_mode == 0 && is_dispatch) {
+                throw exec_error("tcsmolten_salt", "\n\nYou selected dispatch optimization and the Specify IRR Target financial solution mode, "
+                    "but dispatch optimization requires known absolute electricity prices. Dispatch optimization requires "
+                    "the Specify PPA Price financial solution mode. You can continue using dispatch optimization and iteratively "
+                    "solve for the PPA that results in a target IRR by running a SAM Parametric analysis or script.\n");
+            }
+
+            int en_electricity_rates = as_integer("en_electricity_rates");  // 0 = Use PPA, 1 = Use Retail
+            if (en_electricity_rates == 1 && is_dispatch) {
+                throw exec_error("tcsmolten_salt", "\n\nYou selected dispatch optimization and the option to Use Retail Electricity Rates on the Electricity Purchases page, "
+                    "but the dispatch optimization model currently does not accept separate buy and sell prices. Please use the Use PPA or Market Prices option "
+                    "on the Electricity Purchases page.\n");
+            }
+
             // Time-of-Delivery factors by time step:
             int ppa_mult_model = as_integer("ppa_multiplier_model");
             if (ppa_mult_model == 1)        // use dispatch_ts input
@@ -1690,7 +1707,7 @@ public:
                     tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed, -1.0);
                 }
             }
-            else if (ppa_mult_model == 0) // standard diuranal input
+            else if (ppa_mult_model == 0) // standard diurnal input
             {
                 tou_params->mc_pricing.mv_is_diurnal = true;
 
@@ -1718,6 +1735,7 @@ public:
                     tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][8] = as_double("dispatch_factor9");
                 }
                 else {
+                    // If electricity pricing data is not available, then dispatch to a uniform schedule
                     tou_params->mc_pricing.mc_weekdays.resize_fill(12, 24, 1.);
                     tou_params->mc_pricing.mc_weekends.resize_fill(12, 24, 1.);
                     tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(9, -1.0);
