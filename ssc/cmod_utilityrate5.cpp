@@ -174,10 +174,10 @@ static var_info vtab_utility_rate5[] = {
     { SSC_OUTPUT, SSC_ARRAY, "year1_true_up_credits",  "Net annual true-up payments", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
 
     // Outputs for billing demand calculations
-    { SSC_OUTPUT, SSC_MATRIX, "billing_demand_w_sys_ym",     "Billing demand for kWh/kW rates with system", "kW", "", "Charges by Month", "", "", "COL_LABEL=MONTHS,GROUP=UR_AM" },
-    { SSC_OUTPUT, SSC_ARRAY, "year1_billing_demand_w_sys",  "Billing demand for kWh/kW rates with system", "kW", "", "Monthly", "", "LENGTH=12", "" },
-    { SSC_OUTPUT, SSC_MATRIX, "billing_demand_wo_sys_ym",     "Billing demand for kWh/kW rates without system", "kW", "", "Charges by Month", "", "", "COL_LABEL=MONTHS,GROUP=UR_AM" },
-    { SSC_OUTPUT, SSC_ARRAY, "year1_billing_demand_wo_sys",  "Billing demand for kWh/kW rates without system", "kW", "", "Monthly", "", "LENGTH=12", "" },
+    { SSC_OUTPUT, SSC_MATRIX, "billing_demand_w_sys_ym",     "Billing demand with system", "kW", "", "Charges by Month", "", "", "COL_LABEL=MONTHS,GROUP=UR_AM" },
+    { SSC_OUTPUT, SSC_ARRAY, "year1_billing_demand_w_sys",  "Billing demand with system", "kW", "", "Monthly", "", "LENGTH=12", "" },
+    { SSC_OUTPUT, SSC_MATRIX, "billing_demand_wo_sys_ym",     "Billing demand without system", "kW", "", "Charges by Month", "", "", "COL_LABEL=MONTHS,GROUP=UR_AM" },
+    { SSC_OUTPUT, SSC_ARRAY, "year1_billing_demand_wo_sys",  "Billing demand without system", "kW", "", "Monthly", "", "LENGTH=12", "" },
 
 
 // for Pablo at IRENA 8/8/15
@@ -403,22 +403,34 @@ void rate_setup::setup(var_table* vt, int num_recs_yearly, size_t nyears, rate_d
     rate.net_metering_credit_month = (int)vt->as_number("ur_nm_credit_month");
     rate.nm_credit_sell_rate = vt->as_number("ur_nm_yearend_sell_rate");
 
-    ssc_number_t* ratchet_matrix = NULL;
-    bool ratchets_enabled = vt->as_boolean("ur_ec_enable_billing_demand");
+    ssc_number_t* ratchet_matrix = NULL; ssc_number_t* bd_tou_matrix = NULL;
+    bool ratchets_enabled = vt->as_boolean("ur_enable_billing_demand");
     if (ratchets_enabled) {
-        rate.en_ec_billing_demand = ratchets_enabled;
-        rate.ec_bd_minimum = vt->as_number("ur_ec_billing_demand_minimum");
-        rate.ec_bd_lookback_months = vt->as_integer("ur_ec_billing_demand_lookback_period");
+        rate.en_billing_demand_lookback = ratchets_enabled;
+        rate.bd_minimum = vt->as_number("ur_billing_demand_minimum");
+        rate.bd_lookback_months = vt->as_integer("ur_billing_demand_lookback_period");
 
-        ratchet_matrix = vt->as_matrix("ur_ec_billing_demand_lookback_percentages", &nrows, &ncols);
+        ratchet_matrix = vt->as_matrix("ur_billing_demand_lookback_percentages", &nrows, &ncols);
         if (nrows != 12 || ncols != 2)
         {
             std::ostringstream ss;
-            ss << "The ur_ec_billing_demand_lookback_percentages matrix should have 12 rows and 2 columns. Instead it has " << nrows << " rows and " << ncols << " columns.";
+            ss << "The ur_billing_demand_lookback_percentages matrix should have 12 rows and 2 columns. Instead it has " << nrows << " rows and " << ncols << " columns.";
             throw exec_error(cm_name, ss.str());
         }
 
-        rate.setup_ratcheting_demand(ratchet_matrix);
+        bd_tou_matrix = vt->as_matrix("ur_dc_billing_demand_periods", &nrows, &ncols);
+        if (ncols != 2) {
+            std::ostringstream ss;
+            ss << "The ur_dc_billing_demand_periods matrix should have 2 columns. Instead it has " << ncols << " columns.";
+            throw exec_error(cm_name, ss.str());
+        }
+        else if (nrows != rate.m_dc_tou_periods.size()) {
+            std::ostringstream ss;
+            ss << "The ur_dc_billing_demand_periods matrix should have " << rate.m_dc_tou_periods.size() << " rows, to match the number of TOU periods. Instead it has " << nrows << " rows.";
+            throw exec_error(cm_name, ss.str());
+        }
+
+        rate.setup_ratcheting_demand(ratchet_matrix, bd_tou_matrix);
     }
     
 
@@ -570,22 +582,23 @@ public:
 			demand_charge_wo_sys(m_num_rec_yearly), energy_charge_wo_sys(m_num_rec_yearly),
 			ec_tou_sched(m_num_rec_yearly), dc_tou_sched(m_num_rec_yearly), load(m_num_rec_yearly),
 			e_tofromgrid(m_num_rec_yearly), p_tofromgrid(m_num_rec_yearly), salespurchases(m_num_rec_yearly);
-		std::vector<ssc_number_t> monthly_revenue_w_sys(12), monthly_revenue_wo_sys(12),
-			monthly_fixed_charges(12), monthly_minimum_charges(12),
-			monthly_ec_charges(12),
-			monthly_ec_charges_gross(12),
-			monthly_nm_dollars_applied(12),
-			monthly_excess_dollars_earned(12),
-			monthly_excess_kwhs_earned(12),
+        std::vector<ssc_number_t> monthly_revenue_w_sys(12), monthly_revenue_wo_sys(12),
+            monthly_fixed_charges(12), monthly_minimum_charges(12),
+            monthly_ec_charges(12),
+            monthly_ec_charges_gross(12),
+            monthly_nm_dollars_applied(12),
+            monthly_excess_dollars_earned(12),
+            monthly_excess_kwhs_earned(12),
             monthly_net_billing_credits(12),
-			monthly_ec_rates(12),
-			monthly_salespurchases(12),
-			monthly_load(12), monthly_system_generation(12), monthly_elec_to_grid(12),
-			monthly_elec_needed_from_grid(12),
-			monthly_cumulative_excess_energy(12), monthly_cumulative_excess_dollars(12), monthly_bill(12), monthly_test(12),
+            monthly_ec_rates(12),
+            monthly_salespurchases(12),
+            monthly_load(12), monthly_system_generation(12), monthly_elec_to_grid(12),
+            monthly_elec_needed_from_grid(12),
+            monthly_cumulative_excess_energy(12), monthly_cumulative_excess_dollars(12), monthly_bill(12), monthly_test(12),
             monthly_two_meter_sales(12),
             monthly_peak_wo_sys(12), monthly_peak_w_sys(12), // can't re-use these due to their role in billing demand
-            monthly_true_up_credits(12); // Realistically only one true-up month will be non-zero, but track them all for monthly outputs
+            monthly_true_up_credits(12), // Realistically only one true-up month will be non-zero, but track them all for monthly outputs
+            monthly_billing_demand_peaks_wo_sys(12), monthly_billing_demand_peaks_w_sys(12); // Peaks used for billing demand calculations - sometimes does not include dc_flat_peak
 
 		/* allocate outputs */
 		ssc_number_t *annual_net_revenue = allocate("annual_energy_value", nyears+1);
@@ -826,11 +839,12 @@ public:
 			throw exec_error("utilityrate5", "Time series rates are not compatible with net metering. Please disable time series rates or change to net billing / buy all - sell all");
 		}
 
+        bool dc_enabled = as_boolean("ur_dc_enable");
         // Assume if the kwh per kw rate exists in January that it exists in all of the months
-        bool has_kwh_per_kw = rate.has_kwh_per_kw_rate(0);
+        rate.uses_billing_demand = rate.has_kwh_per_kw_rate(0) || dc_enabled;
         ssc_number_t* billing_demand_w_sys_ym = NULL;
         ssc_number_t* billing_demand_wo_sys_ym = NULL;
-        if (has_kwh_per_kw) {
+        if (rate.uses_billing_demand) {
             billing_demand_w_sys_ym = allocate("billing_demand_w_sys_ym", nyears + 1, 12);
             billing_demand_wo_sys_ym = allocate("billing_demand_wo_sys_ym", nyears + 1, 12);
         }
@@ -838,12 +852,12 @@ public:
         // If billing demand ratchets - populate monthly_peaks with what the user specified as year zero:
         ssc_number_t* year_zero_peaks = NULL;
         size_t nrows;
-        bool ratchets_enabled = as_boolean("ur_ec_enable_billing_demand");
+        bool ratchets_enabled = as_boolean("ur_enable_billing_demand");
         if (ratchets_enabled) {
 
-            if (!has_kwh_per_kw) {
+            if (!rate.uses_billing_demand) {
                 std::ostringstream ss;
-                ss << "The option ur_ec_enable_billing_demand is only relevant when the energy rates have kWh/kW or kWh/kW daily units, please add those units to your rates structure or set ur_ec_enable_billing_demand to false";
+                ss << "The option ur_enable_billing_demand is only relevant when the energy rates have kWh/kW or kWh/kW daily units, please add those units to your rates structure or set ur_ec_enable_billing_demand to false";
                 throw exec_error("utilityrate5", ss.str());
             }
 
@@ -856,8 +870,8 @@ public:
             }
 
             for (i = 0; i < nrows; i++) {
-                monthly_peak_w_sys[i] = year_zero_peaks[i];
-                monthly_peak_wo_sys[i] = year_zero_peaks[i];
+                monthly_billing_demand_peaks_wo_sys[i] = year_zero_peaks[i];
+                monthly_billing_demand_peaks_w_sys[i] = year_zero_peaks[i];
             }
         }
 
@@ -949,7 +963,7 @@ public:
 					&monthly_cumulative_excess_dollars[0], &monthly_bill[0],
                     &monthly_two_meter_sales[0],
                     &monthly_true_up_credits[0],
-                    &monthly_peak_wo_sys[0],
+                    &monthly_billing_demand_peaks_wo_sys[0],
                     rate.rate_scale[i], i,
 					last_excess_dollars);
 			}
@@ -966,7 +980,7 @@ public:
 					&rate.dc_hourly_peak[0], &monthly_cumulative_excess_energy[0],
 					&monthly_cumulative_excess_dollars[0], &monthly_bill[0],
                     &monthly_true_up_credits[0],
-                    &monthly_peak_wo_sys[0],
+                    &monthly_billing_demand_peaks_wo_sys[0],
                     rate.rate_scale[i], i,
 					&last_month, last_excess_energy, last_excess_dollars);
 			}
@@ -981,8 +995,19 @@ public:
 				ch_wo_sys_fixed_ym[(i + 1) * 12 + j] = monthly_fixed_charges[j];
 				ch_wo_sys_minimum_ym[(i + 1) * 12 + j] = monthly_minimum_charges[j];
 
-                if (has_kwh_per_kw) {
+                if (rate.uses_billing_demand) {
                     billing_demand_wo_sys_ym[(i + 1) * 12 + j] = rate.billing_demand[j];
+                }
+                if (rate.en_billing_demand_lookback) {
+                    double monthly_peak_demand = 0.0;
+                    std::vector<int> dc_periods = rate.m_month[j].dc_periods;
+                    for (size_t p = 0; p < dc_periods.size(); p++) {
+                        double tou_demand = rate.m_month[j].dc_tou_peak[p];
+                        if (rate.bd_tou_periods.at(dc_periods[p]) && tou_demand > monthly_peak_demand) {
+                            monthly_peak_demand = tou_demand;
+                        }
+                    }
+                    monthly_billing_demand_peaks_wo_sys[j] = monthly_peak_demand;
                 }
 
 				utility_bill_wo_sys[i + 1] += monthly_bill[j];
@@ -1037,6 +1062,7 @@ public:
                                     monthly_tou_demand_peak_wo_sys.at(irow, icol) = rate.m_month[irow - 1].dc_tou_peak[ndx];
                                 if (ndx > -1 && ndx < (int)rate.m_month[irow - 1].dc_tou_charge.size())
                                     monthly_tou_demand_charge_wo_sys.at(irow, icol) = (float)rate.m_month[irow - 1].dc_tou_charge[ndx];
+
                             }
                         }
                     }
@@ -1050,7 +1076,7 @@ public:
 				assign( "year1_monthly_dc_tou_without_system", var_data(&rate.monthly_dc_tou[0], 12) );
 				assign("year1_monthly_ec_charge_without_system", var_data(&monthly_ec_charges[0], 12));
 
-                if (has_kwh_per_kw) {
+                if (rate.uses_billing_demand) {
                     assign("year1_billing_demand_wo_sys", var_data(&rate.billing_demand[0], 12));
                 }
 
@@ -1082,11 +1108,11 @@ public:
 				assign("year1_monthly_fixed_without_system", var_data(&monthly_fixed_charges[0], 12));
 				assign("year1_monthly_minimum_without_system", var_data(&monthly_minimum_charges[0], 12));
 
-				// peak demand and testing energy use
+				// testing energy use
 				for (int ii = 0; ii < 12; ii++)
 				{
-                    monthly_peak_wo_sys[ii] = rate.m_month[ii].dc_flat_peak;
 					monthly_test[ii] = -rate.m_month[ii].energy_net;
+                    monthly_peak_wo_sys[ii] = rate.m_month[ii].dc_flat_peak;
 				}
 				assign("year1_monthly_peak_wo_system", var_data(&monthly_peak_wo_sys[0], 12));
 				assign("year1_monthly_use_wo_system", var_data(&monthly_test[0], 12));
@@ -1109,7 +1135,7 @@ public:
                         &monthly_net_billing_credits[0],
 						&rate.dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0],
                         &monthly_two_meter_sales[0], &monthly_true_up_credits[0],
-                        &monthly_peak_w_sys[0],
+                        &monthly_billing_demand_peaks_w_sys[0],
                         rate.rate_scale[i],
 						i, last_excess_dollars, false, false, true);
 				}
@@ -1127,7 +1153,7 @@ public:
 						&rate.dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0],
 						&monthly_bill[0], &monthly_two_meter_sales[0],
                         &monthly_true_up_credits[0],
-                        &monthly_peak_w_sys[0],
+                        &monthly_billing_demand_peaks_w_sys[0],
                         rate.rate_scale[i], i, last_excess_dollars);
 				}
 			}
@@ -1146,7 +1172,7 @@ public:
 					&monthly_excess_kwhs_earned[0],
 					&rate.dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0],
 					&monthly_bill[0], &monthly_true_up_credits[0],
-                    &monthly_peak_w_sys[0],
+                    &monthly_billing_demand_peaks_w_sys[0],
                     rate.rate_scale[i], i,
 					&last_month, last_excess_energy, last_excess_dollars);
 			}
@@ -1386,7 +1412,7 @@ public:
 				assign("year1_monthly_peak_w_system", var_data(&monthly_peak_w_sys[0], 12));
 				assign("year1_monthly_use_w_system", var_data(&monthly_test[0], 12));
 
-                if (has_kwh_per_kw) {
+                if (rate.uses_billing_demand) {
                     assign("year1_billing_demand_w_sys", var_data(&rate.billing_demand[0], 12));
                 }
 
@@ -1431,8 +1457,19 @@ public:
 				ch_w_sys_fixed_ym[(i + 1) * 12 + j] = monthly_fixed_charges[j];
 				ch_w_sys_minimum_ym[(i + 1) * 12 + j] = monthly_minimum_charges[j];
 
-                if (has_kwh_per_kw) {
+                if (rate.uses_billing_demand) {
                     billing_demand_w_sys_ym[(i + 1) * 12 + j] = rate.billing_demand[j];
+                }
+                if (rate.en_billing_demand_lookback) {
+                    double monthly_peak_demand = 0.0;
+                    std::vector<int> dc_periods = rate.m_month[j].dc_periods;
+                    for (size_t p = 0; p < dc_periods.size(); p++) {
+                        double tou_demand = rate.m_month[j].dc_tou_peak[p];
+                        if (rate.bd_tou_periods.at(dc_periods[p]) && tou_demand > monthly_peak_demand) {
+                            monthly_peak_demand = tou_demand;
+                        }
+                    }
+                    monthly_billing_demand_peaks_w_sys[j] = monthly_peak_demand;
                 }
 
 				utility_bill_w_sys[i + 1] += monthly_bill[j];
@@ -1451,7 +1488,7 @@ public:
 		assign("elec_cost_without_system_year1", annual_elec_cost_wo_sys[1]);
 		assign("savings_year1", annual_elec_cost_wo_sys[1] - annual_elec_cost_w_sys[1]);
 
-        bool dc_enabled = as_boolean("ur_dc_enable");
+
         if (!dc_enabled) {
             unassign("monthly_tou_demand_peak_w_sys");
             unassign("monthly_tou_demand_peak_wo_sys");
@@ -1571,10 +1608,30 @@ public:
 		int m, h, s, period, tier;
 		size_t d;
 		int c = 0;
+        ssc_number_t prev_demand_charge = 0.0;
+        ssc_number_t curr_demand_charge = 0.0;
+
+        if (rate.uses_billing_demand) {
+            if (rate.en_billing_demand_lookback) {
+                rate.setup_prev_demand(prev_monthly_peaks);
+            }
+        }
+
 		for (m = 0; m < (int)rate.m_month.size(); m++)
 		{
 			ur_month& curr_month = rate.m_month[m];
             curr_month.reset();
+            
+            if (dc_enabled) {
+                rate.init_dc_peak_vectors(m);
+                if (rate.en_billing_demand_lookback) {
+                    rate.billing_demand[m] = rate.get_billing_demand(m);
+                }
+                else {
+                    rate.billing_demand[m] = 0.0;
+                }
+            }
+            
 			for (d = 0; d < util::nday[m]; d++)
 			{
 				for (h = 0; h < 24; h++)
@@ -1582,6 +1639,20 @@ public:
 					for (s = 0; s < (int)steps_per_hour && c < (int)m_num_rec_yearly; s++)
 					{
 						curr_month.update_net_and_peak(e_in[c], p_in[c], c);
+                        if (dc_enabled) {
+                            // set peak per period - no tier accumulation
+                            rate.find_dc_tou_peak(m, p_in[c], c);
+
+                            if (rate.en_billing_demand_lookback) {
+                                rate.billing_demand[m] = rate.get_billing_demand(m);
+                            }
+                            else {
+                                rate.billing_demand[m] = curr_month.dc_flat_peak;
+                            }
+                            curr_demand_charge = rate.get_demand_charge(m, year);
+                            demand_charge[c] = curr_demand_charge - prev_demand_charge;
+                            prev_demand_charge = curr_demand_charge;
+                        }
 						c++;
 					}
 				}
@@ -1634,37 +1705,24 @@ public:
 			}
 		}
 
-
 		if (ec_enabled)
 		{
-            if (rate.en_ec_billing_demand) {
-                rate.setup_prev_demand(prev_monthly_peaks);
-            }
-
 			// calculate the monthly net energy per tier and period based on units
 			rate.init_energy_rates(gen_only);
 			c = 0;
 			for (m = 0; m < (int)rate.m_month.size(); m++)
 			{
 				ur_month& curr_month = rate.m_month[m];
-				for (d = 0; d < util::nday[m]; d++)
-				{
-					for (h = 0; h < 24; h++)
-					{
-						for (s = 0; s < (int)steps_per_hour && c < (int)m_num_rec_yearly; s++)
-						{
-							rate.sort_energy_to_periods(m, e_in[c], c);
-							c++;
-						}
-					}
-				}
 
-				bool skip_rollover = (m == 0 && year == 0) || (m == net_metering_credit_month + 1) || (m == 0 && net_metering_credit_month == 11);
-				
-				// rollover energy from correct period - matching time of day 
-				if (!skip_rollover && enable_nm && !excess_monthly_dollars)
-				{
-					ur_month& prev_month = (m == 0) ? *prev_dec : rate.m_month[m - 1];
+                std::vector<double> composite_buy_rate = rate.get_composite_tou_buy_rate(m, year, curr_month.energy_net);
+                std::vector<double> composite_sell_rate = rate.get_composite_tou_sell_rate(m, year, curr_month.energy_net);
+
+                bool skip_rollover = (m == 0 && year == 0) || (m == net_metering_credit_month + 1) || (m == 0 && net_metering_credit_month == 11);
+
+                // rollover energy from correct period - matching time of day 
+                if (!skip_rollover && enable_nm && !excess_monthly_dollars)
+                {
+                    ur_month& prev_month = (m == 0) ? *prev_dec : rate.m_month[m - 1];
                     int errorCode = rate.transfer_surplus(curr_month, prev_month);
                     if (errorCode > 0)
                     {
@@ -1677,6 +1735,22 @@ public:
                         ss << "year:" << year << "utilityrate5: Unable to determine period for energy charge rollover: Period " << errorCode % 100 << " does not exist for 12 am, 6 am, 12 pm or 6 pm in the current month, which is " << util::schedule_int_to_month(errorMonth) << ".";
                         log(ss.str(), SSC_NOTICE);
                     }
+                }
+
+                ssc_number_t prev_cost = 0;
+				for (d = 0; d < util::nday[m]; d++)
+				{
+					for (h = 0; h < 24; h++)
+					{
+						for (s = 0; s < (int)steps_per_hour && c < (int)m_num_rec_yearly; s++)
+						{
+							rate.sort_energy_to_periods(m, e_in[c], c);
+                            ssc_number_t curr_cost = rate.getEnergyChargeNetMetering(m, composite_buy_rate, composite_sell_rate);
+                            energy_charge[c] = curr_cost - prev_cost;
+                            prev_cost = curr_cost;
+							c++;
+						}
+					}
 				}
 
                 rate.compute_surplus(curr_month);
@@ -1754,30 +1828,6 @@ public:
 			} // end month
 		}
 
-		// set peak per period - no tier accumulation
-		if (dc_enabled)
-		{
-			c = 0;
-			for (m = 0; m < (int)rate.m_month.size(); m++)
-			{
-				rate.init_dc_peak_vectors(m);
-				for (d = 0; d < util::nday[m]; d++)
-				{
-					for (h = 0; h < 24; h++)
-					{
-						for (s = 0; s < (int)steps_per_hour && c < (int)m_num_rec_yearly; s++)
-						{
-							rate.find_dc_tou_peak(m, p_in[c], c);
-							c++;
-						}
-					}
-				}
-			}
-		}
-
-
-
-
 // main loop
 		c = 0;
 		// process one month at a time
@@ -1806,8 +1856,6 @@ public:
 									{
 										ssc_number_t cr = curr_month.ec_energy_surplus.at(period, tier) * curr_month.ec_tou_sr.at(period, tier) * rate_esc;
 
-//										excess_kwhs_earned[m] += m_month[m].ec_energy_surplus.at(period, tier);
-
 										if (!enable_nm)
 										{
 											credit_amt += cr;
@@ -1816,14 +1864,6 @@ public:
 										else if (excess_monthly_dollars)
 											monthly_cumulative_excess_dollars[m] += cr;
 
-										/*
-										if (!enable_nm || excess_monthly_kwhs)
-										{
-										credit_amt += cr;
-										if (!excess_monthly_kwhs)
-										m_month[m].ec_charge.at(period, tier) = -cr;
-										}
-										*/
 									}
 								}
 								monthly_ec_charges[m] -= credit_amt;
@@ -1844,13 +1884,7 @@ public:
 								if (enable_nm)
 								{
 									payment[c] += monthly_ec_charges[m];
-									/*
-									if (monthly_ec_charges[m] < 0)
-									{
-									monthly_cumulative_excess_kwhs[m] = -monthly_ec_charges[m];
-									payment[c] += monthly_ec_charges[m];
-									}
-									*/
+
 								}
 								else // non-net metering - no rollover
 								{
@@ -1860,8 +1894,6 @@ public:
 										income[c] -= monthly_ec_charges[m]; // charge is negative for income!
 								}
 
-								energy_charge[c] += monthly_ec_charges[m];
-
 								// end of energy charge
 
 							}
@@ -1870,8 +1902,6 @@ public:
 							if (dc_enabled)
 							{
 								ssc_number_t charge = rate.get_demand_charge(m, year);
-
-								demand_charge[c] = charge;
 								payment[c] += charge; // apply to last hour of the month
 							}
 
@@ -2115,25 +2145,57 @@ public:
         size_t surplus_tier = 0, deficit_tier = 0;
 		size_t d;
 		size_t c = 0;
-		for (m = 0; m < (int)rate.m_month.size(); m++)
-		{
-			ur_month& curr_month = rate.m_month[m];
-			curr_month.energy_net = 0;
-			curr_month.hours_per_month = 0;
-			curr_month.dc_flat_peak = 0;
-			curr_month.dc_flat_peak_hour = 0;
-			for (d = 0; d < util::nday[m]; d++)
-			{
-				for (h = 0; h < 24; h++)
-				{
-					for (s = 0; s < (int)steps_per_hour && c < (int)m_num_rec_yearly; s++)
-					{
-						curr_month.update_net_and_peak(e_in[c], p_in[c], c);
-						c++;
-					}
-				}
-			}
-		}
+
+        ssc_number_t prev_demand_charge = 0.0;
+        ssc_number_t curr_demand_charge = 0.0;
+
+        if (rate.uses_billing_demand) {
+            if (rate.en_billing_demand_lookback) {
+                rate.setup_prev_demand(prev_monthly_peaks);
+            }
+        }
+
+        for (m = 0; m < (int)rate.m_month.size(); m++)
+        {
+            ur_month& curr_month = rate.m_month[m];
+            curr_month.reset();
+
+            if (dc_enabled) {
+                rate.init_dc_peak_vectors(m);
+                if (rate.en_billing_demand_lookback) {
+                    rate.billing_demand[m] = rate.get_billing_demand(m);
+                }
+                else {
+                    rate.billing_demand[m] = 0.0;
+                }
+            }
+
+            for (d = 0; d < util::nday[m]; d++)
+            {
+                for (h = 0; h < 24; h++)
+                {
+                    for (s = 0; s < (int)steps_per_hour && c < (int)m_num_rec_yearly; s++)
+                    {
+                        curr_month.update_net_and_peak(e_in[c], p_in[c], c);
+                        if (dc_enabled) {
+                            // set peak per period - no tier accumulation
+                            rate.find_dc_tou_peak(m, p_in[c], c);
+
+                            if (rate.en_billing_demand_lookback) {
+                                rate.billing_demand[m] = rate.get_billing_demand(m);
+                            }
+                            else {
+                                rate.billing_demand[m] = curr_month.dc_flat_peak;
+                            }
+                            curr_demand_charge = rate.get_demand_charge(m, year);
+                            demand_charge[c] = curr_demand_charge - prev_demand_charge;
+                            prev_demand_charge = curr_demand_charge;
+                        }
+                        c++;
+                    }
+                }
+            }
+        }
 
 		// excess earned
 		for (m = 0; m < 12; m++)
@@ -2143,35 +2205,9 @@ public:
 				excess_kwhs_earned[m] = rate.m_month[m].energy_net;
 		}
 
-        if (rate.en_ec_billing_demand) {
-            rate.setup_prev_demand(prev_monthly_peaks);
-        }
-
 		if (ec_enabled)
 		{
 			rate.init_energy_rates(gen_only);
-		}
-
-
-		// set peak per period - no tier accumulation
-		if (dc_enabled)
-		{
-			c = 0;
-			for (m = 0; m < (int)rate.m_month.size(); m++)
-			{
-				rate.init_dc_peak_vectors(m);
-				for (d = 0; d < util::nday[m]; d++)
-				{
-					for (h = 0; h < 24; h++)
-					{
-						for (s = 0; s < (int)steps_per_hour && c < (int)m_num_rec_yearly; s++)
-						{
-							rate.find_dc_tou_peak(m, p_in[c], c);
-							c++;
-						}
-					}
-				}
-			}
 		}
 
 // main loop
@@ -2306,6 +2342,7 @@ public:
                                     if (c < rate.m_ec_ts_buy_rate.size()) {
                                         tier_energy = energy_deficit;
                                         br = rate.m_ec_ts_buy_rate[c];
+                                        tier_charge = tier_energy * br * rate_esc;
                                         charge_amt = tier_energy * br * rate_esc;
                                         curr_month.ec_energy_use.at(row, deficit_tier) += (ssc_number_t)tier_energy;
                                         curr_month.ec_charge.at(row, deficit_tier) += (ssc_number_t)charge_amt;
@@ -2366,7 +2403,6 @@ public:
 							if (dc_enabled)
 							{
 								ssc_number_t charge = rate.get_demand_charge(m, year);
-								demand_charge[c] = charge;
 								payment[c] += charge; // apply to last hour of the month
 
 							} // if demand charges enabled (dc_enabled)

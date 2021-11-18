@@ -81,6 +81,9 @@ struct batt_variables
 	/*! Determines if the battery is allowed to charge from fuel cell using automated control*/
 	bool batt_dispatch_auto_can_fuelcellcharge;
 
+    /*! Determines if behind the meter batteries can discharge to grid */
+    bool batt_dispatch_auto_btm_can_discharge_to_grid;
+
     /*! Determines if the battery is allowed to charge only when the system output exceeds load (false is more flexible)
         Applies to both automated and manual dispatch */
     bool batt_dispatch_charge_only_system_exceeds_load;
@@ -97,6 +100,9 @@ struct batt_variables
 
 	/*! Vector of periods and if battery can discharge*/
 	std::vector<bool> batt_can_discharge;
+
+    /*! Vector of periods and if behind the meter battery can discharge to grid*/
+    std::vector<bool> batt_btm_can_discharge_to_grid;
 
 	/*! Vector of periods and if battery can charge from the grid*/
 	std::vector<bool> batt_can_gridcharge;
@@ -165,6 +171,7 @@ struct batt_variables
 	double batt_initial_SOC;
 	double batt_maximum_SOC;
 	double batt_minimum_SOC;
+    double batt_minimum_outage_SOC;
 	double batt_current_charge_max;
 	double batt_current_discharge_max;
 	double batt_power_charge_max_kwdc;
@@ -255,7 +262,7 @@ struct battstor
 	void initialize_time(size_t year, size_t hour_of_year, size_t step);
 
 	/// Run the battery for the current timestep, given the System power, load, and clipped power
-	void advance(var_table *vt, double P_gen, double V_gen=0, double P_load=0, double P_crit_load=0, double P_gen_clipped=0);
+	void advance(var_table *vt, double P_gen, double V_gen=0, double P_load=0, double P_crit_load=0, double ac_loss_percent=0, double P_gen_clipped=0);
 
 	/// Given a DC connected battery, set the shared system (typically PV) and battery inverter
 	void setSharedInverter(SharedInverter * sharedInverter);
@@ -265,6 +272,7 @@ struct battstor
 	void metrics();
 	void update_grid_power(compute_module &cm, double P_gen_ac, double P_load_ac, size_t index);
     bool is_outage_step(size_t index);
+    bool is_offline(size_t index); // Must be run after advance to get valid answer
 
 	/*! Manual dispatch*/
 	bool manual_dispatch = false;
@@ -385,12 +393,14 @@ struct battstor
         * outFuelCellToBatt,
         * outSystemToGrid,
         * outBatteryToGrid,
+        * outBatteryToSystemLoad,
         * outFuelCellToGrid,
         * outBatteryConversionPowerLoss,
         * outBatterySystemLoss,
 		* outInterconnectionLoss,
 		* outCritLoadUnmet,
         * outCritLoad,
+        * outUnmetLosses,
         * outAnnualSystemChargeEnergy,
         * outAnnualGridChargeEnergy,
         * outAnnualChargeEnergy,

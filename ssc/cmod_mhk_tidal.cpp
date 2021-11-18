@@ -141,32 +141,49 @@ public:
         min_velocity = tidal_resource_matrix.at(0, 0);
         max_velocity = tidal_resource_matrix.at(size_t(number_rows) - 1, 0);
 
-		for (int i = 0; i < number_rows; i++) {
+        for (int i = 0; i < number_rows; i++) {
             size_t n = i;
-            if (tidal_resource_matrix.at(n, 1) != 0 && tidal_resource_matrix.at(n - 1, 1) == 0 && n != 0)
-            {
-                tidal_resource_start_velocity = tidal_resource_matrix.at(n, 0);
+            if (i != 0) {
+                if (tidal_resource_matrix.at(n, 1) != 0 && tidal_resource_matrix.at(n - 1, 1) == 0)
+                {
+                    tidal_resource_start_velocity = tidal_resource_matrix.at(n, 0);
+                }
+                if (tidal_power_curve.at(n, 1) != 0 && tidal_power_curve.at(n - 1, 1) == 0 && n != 0)
+                {
+                    tidal_power_start_velocity = tidal_power_curve.at(n, 0);
+                }
             }
-            if (tidal_power_curve.at(n, 1) != 0 && tidal_power_curve.at(n - 1, 1) == 0 && n != 0)
-            {
-                tidal_power_start_velocity = tidal_power_curve.at(n, 0);
+            else {
+                if (tidal_resource_matrix.at(n, 1) != 0)
+                {
+                    tidal_resource_start_velocity = tidal_resource_matrix.at(n, 0);
+                }
+                if (tidal_power_curve.at(n, 1) != 0)
+                {
+                    tidal_power_start_velocity = tidal_power_curve.at(n, 0);
+                }
             }
-            if (tidal_resource_matrix.at(n, 1) != 0 && tidal_resource_matrix.at(n + 1, 1) == 0 && n != 0)
-            {
-                tidal_resource_end_velocity = tidal_resource_matrix.at(n, 0);
+            if (i != number_rows - 1) {
+                if (tidal_resource_matrix.at(n, 1) != 0 && tidal_resource_matrix.at(n + 1, 1) == 0 && n != 0)
+                {
+                    tidal_resource_end_velocity = tidal_resource_matrix.at(n, 0);
+                }
+                if (tidal_power_curve.at(n, 1) != 0 && tidal_power_curve.at(n + 1, 1) == 0 && n != 0)
+                {
+                    tidal_power_end_velocity = tidal_power_curve.at(n, 0);
+                }
             }
-            if (i == number_rows - 1 && tidal_resource_end_velocity == 0)
-            {
-                tidal_resource_end_velocity = tidal_resource_matrix.at(n, 0);
+            else {
+                if (i == number_rows - 1 && tidal_resource_end_velocity == 0)
+                {
+                    tidal_resource_end_velocity = tidal_resource_matrix.at(n, 0);
+                }
+                if (i == number_rows - 1 && tidal_power_end_velocity == 0)
+                {
+                    tidal_power_end_velocity = tidal_power_curve.at(n, 0);
+                }
             }
-            if (tidal_power_curve.at(n, 1) != 0 && tidal_power_curve.at(n + 1, 1) == 0 && n != 0)
-            {
-                tidal_power_end_velocity = tidal_power_curve.at(n, 0);
-            }
-            if (i == number_rows - 1 && tidal_power_end_velocity == 0)
-            {
-                tidal_power_end_velocity = tidal_power_curve.at(n, 0);
-            }
+            
 			_speed_vect[i] = tidal_resource_matrix.at(i, 0);	
 			_probability_vect[i] = tidal_resource_matrix.at(i, 1); //*******************again need to modify to handle different depths
 			_power_vect[i] = tidal_power_curve.at(i, 1);
@@ -185,11 +202,8 @@ public:
 			//Add current annual energy bin to total annual energy
 			annual_energy += p_annual_energy_dist[i];
 
-			//Calculate the cumulative energy probability distribution
-			if (i == 0)
-				p_annual_cumulative_energy_dist[i] = p_annual_energy_dist[i];
-			else
-				p_annual_cumulative_energy_dist[i] = p_annual_energy_dist[i] + p_annual_cumulative_energy_dist[i - 1];
+			
+		    p_annual_cumulative_energy_dist[i] = p_annual_energy_dist[i] + p_annual_cumulative_energy_dist[i - 1];
 			
 			//Contribution to Average Power from this speed bin 
 			device_average_power += _power_vect[i] * _probability_vect[i];

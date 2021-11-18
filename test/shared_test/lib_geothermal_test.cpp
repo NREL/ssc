@@ -40,6 +40,6 @@ TEST_F(GeothermalPlantAnalyzer, TestFlashPlant_lib_geothermal) {
 	GeothermalPlantAnalyzer::SetUp();
 
 	EXPECT_EQ(geoPlant_outputs.flash_count, 2);	//Dual Flash (Constrained) Plant Type
-	EXPECT_NEAR(geoPlant_outputs.md_GrossPlantOutputMW, 33.978, 1);	//Expected value of 33.978 taken from GETEM
+	EXPECT_NEAR(geoPlant_outputs.md_GrossPlantOutputMW, 31.512, 1);	//Expected value of 33.978 taken from GETEM
 	EXPECT_NEAR(geoPlant_outputs.max_secondlaw, 0.5, 0.3);
 }

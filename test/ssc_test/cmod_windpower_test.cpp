@@ -24,9 +24,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <gtest/gtest.h>
 #include <vector>
 
-#include "../rapidjson/document.h"
-#include "../rapidjson/istreamwrapper.h"
-
+#include <json/json.h>
 #include <lib_util.h>
 #include "../ssc/sscapi.h"
 #include "vartab.h"
@@ -363,6 +361,33 @@ TEST_F(CMWindPowerIntegration, IcingAndLowTempCutoff_cmod_windpower) {
     free_winddata_array(windresourcedata);
 }
 
+/// Override for number of wind turbines with wake model
+TEST_F(CMWindPowerIntegration, WakeModelMaxTurbineOverride) {
+    // set up 310 turbines
+    ssc_number_t xcoord[310];
+    ssc_number_t ycoord[310];
+    for (int i = 0; i < 310; i++) {
+        double x = i % 20;
+        xcoord[i] = (ssc_number_t)x;
+        double y = floor(i / 30);
+        ycoord[i] = (ssc_number_t)y;
+    }
+    ssc_data_set_array(data, "wind_farm_xCoordinates", xcoord, 310);
+    ssc_data_set_array(data, "wind_farm_yCoordinates", ycoord, 310);
+
+    // should fail with an error for 310 turbines
+    ssc_module_t module = ssc_module_create("windpower");
+    ASSERT_FALSE(ssc_module_exec(module, data));
+
+    // set new override input and test that it works
+    ssc_data_set_number(data, "max_turbine_override", 315);
+    ssc_module_exec(module, data);
+    ssc_number_t annual_energy;
+    ssc_data_get_number(data, "annual_energy", &annual_energy);
+    EXPECT_NEAR(annual_energy, 31636868.6, 1) << "Turbine override";
+}
+
+
 /// Testing Turbine powercurve calculation
 TEST(Turbine_powercurve_cmod_windpower_eqns, NoData) {
     ASSERT_FALSE(Turbine_calculate_powercurve(nullptr));
@@ -508,8 +533,8 @@ TEST(windpower_landbosse, SetupPython) {
 	if (!setup_python())
 	    return;
 
-    rapidjson::Document python_config_root;
-    std::string configPath = std::string(get_python_path()) + "python_config.json";
+	Json::Value python_config_root;
+	std::string configPath = std::string(get_python_path()) + "python_config.json";
     if (configPath.empty())
         return;
 
@@ -519,32 +544,27 @@ TEST(windpower_landbosse, SetupPython) {
 	    return;
 	}
 
-//    rapidjson::IStreamWrapper iswd(python_config_doc);
-//    python_config_root.ParseStream(iswd);
-    std::ostringstream tmp;
-    tmp << python_config_doc.rdbuf();
-    python_config_root.Parse(tmp.str().c_str());
+	python_config_doc >> python_config_root;
 
-
-	if (!python_config_root.HasMember("miniconda_version"))
+	if (!python_config_root.isMember("miniconda_version"))
 		throw std::runtime_error("Missing key 'miniconda_version' in " + configPath);
-	if (!python_config_root.HasMember("python_version"))
+	if (!python_config_root.isMember("python_version"))
 		throw std::runtime_error("Missing key 'python_version' in " + configPath);
-	if (!python_config_root.HasMember("exec_path"))
+	if (!python_config_root.isMember("exec_path"))
 		throw std::runtime_error("Missing key 'exec_path' in " + configPath);
-	if (!python_config_root.HasMember("pip_path"))
+	if (!python_config_root.isMember("pip_path"))
 		throw std::runtime_error("Missing key 'pip_path' in " + configPath);
-	if (!python_config_root.HasMember("packages"))
+	if (!python_config_root.isMember("packages"))
 		throw std::runtime_error("Missing key 'packages' in " + configPath);
 
 	std::vector<std::string> packages;
-    for (auto& i : python_config_root["packages"].GetArray())
-        packages.push_back(i.GetString());
+	for (auto &i : python_config_root["packages"])
+		packages.push_back(i.asString());
 
-	std::vector<std::string> config = { python_config_root["python_version"].GetString(),
-						   python_config_root["miniconda_version"].GetString(),
-						   python_config_root["exec_path"].GetString(),
-						   python_config_root["pip_path"].GetString()
+	std::vector<std::string> config = { python_config_root["python_version"].asString(),
+						   python_config_root["miniconda_version"].asString(),
+						   python_config_root["exec_path"].asString(),
+						   python_config_root["pip_path"].asString()
 						    };
 
 }
@@ -559,14 +579,9 @@ bool check_Python_setup() {
         return false;
 
     std::ifstream python_config_doc(configPath);
-    rapidjson::Document python_config_root;
-//    rapidjson::IStreamWrapper iswc(python_config_doc);
-//    python_config_root.ParseStream(iswc);
-    std::ostringstream tmp;
-    tmp << python_config_doc.rdbuf();
-    python_config_root.Parse(tmp.str().c_str());
-
-    if (!python_config_root["exec_path"].GetString()) {
+    Json::Value python_config_root;
+    python_config_doc >> python_config_root;
+    if (python_config_root["exec_path"].asString().empty()) {
         std::cerr << "Python not configured.";
         return false;
     }

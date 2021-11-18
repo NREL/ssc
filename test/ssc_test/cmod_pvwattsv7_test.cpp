@@ -1,25 +1,3 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
-
 #include <gtest/gtest.h>
 
 #include "../ssc/core.h"
@@ -250,6 +228,71 @@ TEST_F(CMPvwattsV7Integration_cmod_pvwattsv7, BifacialTest_cmod_pvwattsv7) {
     EXPECT_GT(annual_energy_bi / annual_energy_mono, 1.04);
 }
 
+TEST_F(CMPvwattsV7Integration_cmod_pvwattsv7, SnowModelTests_cmod_pvwattsv7) {
+
+    // Snow loss for fixed tilt system*********************************
+    ssc_data_set_number(data, "array_type", 0);
+    ssc_data_set_number(data, "en_snowloss", 1);
+
+    compute();
+
+    // Snow events in January, February, April, October, and December
+    ssc_number_t january_energy;
+    january_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[0]; //retrieve only january's value
+    EXPECT_NEAR((double)january_energy, 414.836, 0.01) << "Fixed tilt energy in January after snow loss";
+
+    int count;
+    ssc_number_t* hourly_snowderate = ssc_data_get_array(data, "dcsnowderate", &count);
+    ASSERT_EQ(8760, count);
+
+    // Starting at 6 AM Jan. 12th
+    // Snow derate should be non-zero during a snow event, and on a fixed system will always be 0, 0.5, or 1.0 due to the assumption of a 2-up installation
+    EXPECT_NEAR((double)hourly_snowderate[270], 0.0, error_tolerance);
+    EXPECT_NEAR((double)hourly_snowderate[271], 0.5, error_tolerance);
+    EXPECT_NEAR((double)hourly_snowderate[272], 0.5, error_tolerance);
+    // ...
+    EXPECT_NEAR((double)hourly_snowderate[275], 0.5, error_tolerance);
+    EXPECT_NEAR((double)hourly_snowderate[276], 0.5, error_tolerance);
+    EXPECT_NEAR((double)hourly_snowderate[277], 1.0, error_tolerance);
+
+
+    // Snow loss for single-axis system********************************
+    ssc_data_set_number(data, "array_type", 2);
+    ssc_data_set_number(data, "en_snowloss", 1);
+
+    compute();
+
+    // Snow events in January, February, April, October, and December
+    january_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[0]; //retrieve only january's value
+    EXPECT_NEAR((double)january_energy, 507.336, 0.01) << "Single-axis tracker energy in January after snow loss";
+
+    // A tracker row is assumed to be nx1 panels, so all derates should be either 0 or 1
+    hourly_snowderate = ssc_data_get_array(data, "dcsnowderate", nullptr);
+    for (int hour = 0; hour < 300; hour++) //check throughout a known snow event but don't need to check the whole year
+    {
+        EXPECT_TRUE(hourly_snowderate[hour] == 0 || hourly_snowderate[hour] == 1);
+    }
+
+
+    // Snow loss for backtracking system*******************************
+    ssc_data_set_number(data, "array_type", 3);
+    ssc_data_set_number(data, "en_snowloss", 1);
+
+    compute();
+
+    // Snow events in January, February, April, October, and December
+    january_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[0]; //retrieve only january's value
+    EXPECT_NEAR((double)january_energy, 503.084, 0.01) << "Backtracking energy in January after snow loss";
+
+    // A tracker row is assumed to be nx1 panels, so all derates should be either 0 or 1
+    hourly_snowderate = ssc_data_get_array(data, "dcsnowderate", nullptr);
+    for (int hour = 0; hour < 300; hour++) //check throughout a known snow event but don't need to check the whole year
+    {
+        EXPECT_TRUE(hourly_snowderate[hour] == 0 || hourly_snowderate[hour] == 1);
+    }
+}
+
+
 /* this test isn't passing currently even though it's working in the UI, so commenting out for now
 /// Test PVWattsV7 with snow model
 TEST_F(CMPvwattsV7Integration, SnowModelTest_cmod_pvwattsv7) {
@@ -298,19 +341,10 @@ TEST_F(CMPvwattsV7Integration_cmod_pvwattsv7, IntermediateOutputTesting)
     //run the tests
     EXPECT_FALSE(run_module(data, "pvwattsv7"));
 
-    ssc_number_t shad_beam_factor, ss_beam, ss_sky_diffuse, ss_gnd_diffuse, aoi, poa, tpoa, tcell, dc, ac;
+    ssc_number_t shad_beam_factor, aoi, poa, tpoa, tcell, dc, ac;
 
     shad_beam_factor = ssc_data_get_array(data, "shad_beam_factor", nullptr)[12];
-    EXPECT_NEAR(shad_beam_factor, 1.000, 0.01) << "External beam shading factor at noon";
-
-    ss_beam = ssc_data_get_array(data, "ss_beam_factor", nullptr)[12];
-    EXPECT_NEAR(ss_beam, 1.000, 0.01) << "Calculated self-shading beam shading factor at noon";
-
-    ss_sky_diffuse = ssc_data_get_array(data, "ss_sky_diffuse_factor", nullptr)[12];
-    EXPECT_NEAR(ss_sky_diffuse, 0.981, 0.01) << "Calculated self-shading sky diffuse shading factor at noon";
-
-    ss_gnd_diffuse = ssc_data_get_array(data, "ss_gnd_diffuse_factor", nullptr)[12];
-    EXPECT_NEAR(ss_gnd_diffuse, 0.265, 0.01) << "Calculated self-shading ground-reflected diffuse shading factor at noon";
+    EXPECT_NEAR(shad_beam_factor, 1.000, 0.01) << "Beam Shading factor at noon";
 
     aoi = ssc_data_get_array(data, "aoi", nullptr)[12];
     EXPECT_NEAR(aoi, 32.195, 0.01) << "Angle of incidence at noon";

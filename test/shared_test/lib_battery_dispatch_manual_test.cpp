@@ -31,8 +31,8 @@ TEST_F(ManualTest_lib_battery_dispatch, PowerLimitsDispatchManualAC) {
                                            currentDischargeMax, powerChargeMax, powerDischargeMax, powerChargeMax,
                                            powerDischargeMax, minimumModeTime,
                                            dispatchChoice, meterPosition, scheduleWeekday, scheduleWeekend, canCharge,
-                                           canDischarge, canGridcharge, canGridcharge, percentDischarge,
-                                           percentGridcharge, interconnection_limit);
+                                           canDischarge, canGridcharge, canDischargeToGrid, canGridcharge, percentDischarge,
+                                           percentGridcharge, canClipCharge, interconnection_limit);
 
     batteryPower = dispatchManual->getBatteryPower();
     batteryPower->connectionMode = ChargeController::AC_CONNECTED;
@@ -59,11 +59,11 @@ TEST_F(ManualTest_lib_battery_dispatch, PowerLimitsDispatchManualAC) {
 
 TEST_F(ManualTest_lib_battery_dispatch, PowerLimitsDispatchManualDC) {
     dispatchManual = new dispatch_manual_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice, currentChargeMax,
-                                           currentDischargeMax, powerChargeMax, powerDischargeMax, powerChargeMax,
-                                           powerDischargeMax, minimumModeTime,
-                                           dispatchChoice, meterPosition, scheduleWeekday, scheduleWeekend, canCharge,
-                                           canDischarge, canGridcharge, canGridcharge, percentDischarge,
-                                           percentGridcharge, interconnection_limit);
+        currentDischargeMax, powerChargeMax, powerDischargeMax, powerChargeMax,
+        powerDischargeMax, minimumModeTime,
+        dispatchChoice, meterPosition, scheduleWeekday, scheduleWeekend, canCharge,
+        canDischarge, canGridcharge, canDischargeToGrid, canGridcharge, percentDischarge,
+        percentGridcharge, canClipCharge, interconnection_limit);
 
     batteryPower = dispatchManual->getBatteryPower();
     batteryPower->connectionMode = ChargeController::DC_CONNECTED;
@@ -88,11 +88,11 @@ TEST_F(ManualTest_lib_battery_dispatch, CurrentLimitsDispatchManualAC) {
     double testChargeMax = 20;
     double testDischargeMax = 20;
     dispatchManual = new dispatch_manual_t(batteryModel, dtHour, SOC_min, SOC_max, testChoice, testChargeMax,
-                                           testDischargeMax, powerChargeMax, powerDischargeMax, powerChargeMax,
-                                           powerDischargeMax, minimumModeTime,
-                                           dispatchChoice, meterPosition, scheduleWeekday, scheduleWeekend, canCharge,
-                                           canDischarge, canGridcharge, canGridcharge, percentDischarge,
-                                           percentGridcharge, interconnection_limit);
+        testDischargeMax, powerChargeMax, powerDischargeMax, powerChargeMax,
+        powerDischargeMax, minimumModeTime,
+        dispatchChoice, meterPosition, scheduleWeekday, scheduleWeekend, canCharge,
+        canDischarge, canGridcharge, canDischargeToGrid, canGridcharge, percentDischarge,
+        percentGridcharge, canClipCharge, interconnection_limit);
 
     batteryPower = dispatchManual->getBatteryPower();
     batteryPower->connectionMode = ChargeController::AC_CONNECTED;
@@ -118,11 +118,11 @@ TEST_F(ManualTest_lib_battery_dispatch, CurrentLimitsDispatchManualDC) {
     double testChargeMax = 20;
     double testDischargeMax = 20;
     dispatchManual = new dispatch_manual_t(batteryModel, dtHour, SOC_min, SOC_max, testChoice, testChargeMax,
-                                           testDischargeMax, powerChargeMax, powerDischargeMax, powerChargeMax,
-                                           powerDischargeMax, minimumModeTime,
-                                           dispatchChoice, meterPosition, scheduleWeekday, scheduleWeekend, canCharge,
-                                           canDischarge, canGridcharge, canGridcharge, percentDischarge,
-                                           percentGridcharge, interconnection_limit);
+        testDischargeMax, powerChargeMax, powerDischargeMax, powerChargeMax,
+        powerDischargeMax, minimumModeTime,
+        dispatchChoice, meterPosition, scheduleWeekday, scheduleWeekend, canCharge,
+        canDischarge, canGridcharge, canDischargeToGrid, canGridcharge, percentDischarge,
+        percentGridcharge, canClipCharge, interconnection_limit);
 
     batteryPower = dispatchManual->getBatteryPower();
     batteryPower->connectionMode = ChargeController::DC_CONNECTED;
@@ -151,11 +151,11 @@ TEST_F(ManualTest_lib_battery_dispatch, BothLimitsDispatchManualAC) {
     double testDischargeMaxPower = 11; // kW
     double testChargeMaxPower = 12; // kW
     dispatchManual = new dispatch_manual_t(batteryModel, dtHour, SOC_min, SOC_max, testChoice, testChargeMax,
-                                           testDischargeMax, testChargeMaxPower, testDischargeMaxPower,
-                                           testChargeMaxPower, testDischargeMaxPower, minimumModeTime,
-                                           dispatchChoice, meterPosition, scheduleWeekday, scheduleWeekend, canCharge,
-                                           canDischarge, canGridcharge, canGridcharge, percentDischarge,
-                                           percentGridcharge, interconnection_limit);
+        testDischargeMax, testChargeMaxPower, testDischargeMaxPower, testChargeMaxPower,
+        testDischargeMaxPower, minimumModeTime,
+        dispatchChoice, meterPosition, scheduleWeekday, scheduleWeekend, canCharge,
+        canDischarge, canGridcharge, canDischargeToGrid, canGridcharge, percentDischarge,
+        percentGridcharge, canClipCharge, interconnection_limit);
 
     batteryPower = dispatchManual->getBatteryPower();
     batteryPower->connectionMode = ChargeController::AC_CONNECTED;
@@ -202,11 +202,11 @@ TEST_F(ManualTest_lib_battery_dispatch, BothLimitsDispatchManualDC) {
     double testDischargeMaxPower = 11; // kW
     double testChargeMaxPower = 11; // kW
     dispatchManual = new dispatch_manual_t(batteryModel, dtHour, SOC_min, SOC_max, testChoice, testChargeMax,
-                                           testDischargeMax, testChargeMaxPower, testDischargeMaxPower, powerChargeMax,
-                                           powerDischargeMax, minimumModeTime,
-                                           dispatchChoice, meterPosition, scheduleWeekday, scheduleWeekend, canCharge,
-                                           canDischarge, canGridcharge, canGridcharge, percentDischarge,
-                                           percentGridcharge, interconnection_limit);
+        testDischargeMax, testChargeMaxPower, testDischargeMaxPower, powerChargeMax,
+        powerDischargeMax, minimumModeTime,
+        dispatchChoice, meterPosition, scheduleWeekday, scheduleWeekend, canCharge,
+        canDischarge, canGridcharge, canDischargeToGrid, canGridcharge, percentDischarge,
+        percentGridcharge, canClipCharge, interconnection_limit);
 
     batteryPower = dispatchManual->getBatteryPower();
     batteryPower->connectionMode = ChargeController::DC_CONNECTED;
@@ -251,12 +251,12 @@ TEST_F(ManualTest_lib_battery_dispatch, BothLimitsDispatchManualDC) {
 TEST_F(ManualTest_lib_battery_dispatch, DispatchChangeFrequency) {
     double testTimestep = 1.0 / 60.0; // Minute timesteps
     double testMinTime = 4.0; // Only allow dispatch to change every 3 mins
-    dispatchManual = new dispatch_manual_t(batteryModel, testTimestep, SOC_min, SOC_max, currentChoice,
-                                           currentChargeMax, currentDischargeMax, powerChargeMax, powerDischargeMax,
-                                           powerChargeMax, powerDischargeMax, testMinTime,
-                                           dispatchChoice, meterPosition, scheduleWeekday, scheduleWeekend, canCharge,
-                                           canDischarge, canGridcharge, canGridcharge, percentDischarge,
-                                           percentGridcharge, interconnection_limit);
+    dispatchManual = new dispatch_manual_t(batteryModel, testTimestep, SOC_min, SOC_max, currentChoice, currentChargeMax,
+        currentDischargeMax, powerChargeMax, powerDischargeMax, powerChargeMax,
+        powerDischargeMax, testMinTime,
+        dispatchChoice, meterPosition, scheduleWeekday, scheduleWeekend, canCharge,
+        canDischarge, canGridcharge, canDischargeToGrid, canGridcharge, percentDischarge,
+        percentGridcharge, canClipCharge, interconnection_limit);
 
     batteryPower = dispatchManual->getBatteryPower();
     batteryPower->connectionMode = ChargeController::AC_CONNECTED;
@@ -299,11 +299,11 @@ TEST_F(ManualTest_lib_battery_dispatch, DispatchChangeFrequency) {
 TEST_F(ManualTest_lib_battery_dispatch, SOCLimitsOnDispatch) {
     hour_of_year = 0; step_of_hour = 0;
     dispatchManual = new dispatch_manual_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice, currentChargeMax,
-                                           currentDischargeMax, powerChargeMax, powerDischargeMax, powerChargeMax,
-                                           powerDischargeMax, minimumModeTime,
-                                           dispatchChoice, meterPosition, scheduleWeekday, scheduleWeekend, canCharge,
-                                           canDischarge, canGridcharge, canGridcharge, percentDischarge,
-                                           percentGridcharge, interconnection_limit);
+        currentDischargeMax, powerChargeMax, powerDischargeMax, powerChargeMax,
+        powerDischargeMax, minimumModeTime,
+        dispatchChoice, meterPosition, scheduleWeekday, scheduleWeekend, canCharge,
+        canDischarge, canGridcharge, canDischargeToGrid, canGridcharge, percentDischarge,
+        percentGridcharge, canClipCharge, interconnection_limit);
 
     batteryPower = dispatchManual->getBatteryPower();
     batteryPower->connectionMode = ChargeController::AC_CONNECTED;
@@ -357,8 +357,12 @@ TEST_F(ManualTest_lib_battery_dispatch, SOCLimitsOnDispatch) {
 TEST_F(ManualTest_lib_battery_dispatch, ManualGridChargingOffTest)
 {
     // canGridCharge is false by default
-    dispatchManual = new dispatch_manual_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice, currentChargeMax, currentDischargeMax, powerChargeMax, powerDischargeMax, powerChargeMax, powerDischargeMax, minimumModeTime,
-                                           dispatchChoice, meterPosition, scheduleWeekday, scheduleWeekend, canCharge, canDischarge, canGridcharge, canGridcharge, percentDischarge, percentGridcharge, interconnection_limit);
+    dispatchManual = new dispatch_manual_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice, currentChargeMax,
+        currentDischargeMax, powerChargeMax, powerDischargeMax, powerChargeMax,
+        powerDischargeMax, minimumModeTime,
+        dispatchChoice, meterPosition, scheduleWeekday, scheduleWeekend, canCharge,
+        canDischarge, canGridcharge, canDischargeToGrid, canGridcharge, percentDischarge,
+        percentGridcharge, canClipCharge, interconnection_limit);
 
     batteryPower = dispatchManual->getBatteryPower();
     batteryPower->connectionMode = ChargeController::DC_CONNECTED;
@@ -379,8 +383,12 @@ TEST_F(ManualTest_lib_battery_dispatch, ManualGridChargingOnTest)
         testCanGridcharge.push_back(1);
         testPercentGridCharge[p] = 100;
     }
-    dispatchManual = new dispatch_manual_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice, currentChargeMax, currentDischargeMax, powerChargeMax, powerDischargeMax, powerChargeMax, powerDischargeMax, minimumModeTime,
-                                           dispatchChoice, meterPosition, scheduleWeekday, scheduleWeekend, canCharge, canDischarge, testCanGridcharge, canGridcharge, percentDischarge, testPercentGridCharge, interconnection_limit);
+    dispatchManual = new dispatch_manual_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice, currentChargeMax,
+        currentDischargeMax, powerChargeMax, powerDischargeMax, powerChargeMax,
+        powerDischargeMax, minimumModeTime,
+        dispatchChoice, meterPosition, scheduleWeekday, scheduleWeekend, canCharge,
+        canDischarge, testCanGridcharge, canDischargeToGrid, canGridcharge, percentDischarge,
+        testPercentGridCharge, canClipCharge, interconnection_limit);
 
     batteryPower = dispatchManual->getBatteryPower();
     batteryPower->connectionMode = ChargeController::AC_CONNECTED;
@@ -401,8 +409,12 @@ TEST_F(ManualTest_lib_battery_dispatch, ManualGridChargingOnDCConnectedTest)
         testCanGridcharge.push_back(1);
         testPercentGridCharge[p] = 100;
     }
-    dispatchManual = new dispatch_manual_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice, currentChargeMax, currentDischargeMax, powerChargeMax, powerDischargeMax, powerChargeMax, powerDischargeMax, minimumModeTime,
-        dispatchChoice, meterPosition, scheduleWeekday, scheduleWeekend, canCharge, canDischarge, testCanGridcharge, canGridcharge, percentDischarge, testPercentGridCharge, interconnection_limit);
+    dispatchManual = new dispatch_manual_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice, currentChargeMax,
+        currentDischargeMax, powerChargeMax, powerDischargeMax, powerChargeMax,
+        powerDischargeMax, minimumModeTime,
+        dispatchChoice, meterPosition, scheduleWeekday, scheduleWeekend, canCharge,
+        canDischarge, testCanGridcharge, canDischargeToGrid, canGridcharge, percentDischarge,
+        testPercentGridCharge, canClipCharge, interconnection_limit);
 
     batteryPower = dispatchManual->getBatteryPower();
     batteryPower->connectionMode = ChargeController::DC_CONNECTED;
@@ -424,8 +436,12 @@ TEST_F(ManualTest_lib_battery_dispatch, NoGridChargingWhilePVIsOnTest)
         testCanGridcharge.push_back(1);
         testPercentGridCharge[p] = 100;
     }
-    dispatchManual = new dispatch_manual_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice, currentChargeMax, currentDischargeMax, powerChargeMax, powerDischargeMax, powerChargeMax, powerDischargeMax, minimumModeTime,
-                                           dispatchChoice, meterPosition, scheduleWeekday, scheduleWeekend, canCharge, canDischarge, testCanGridcharge, canGridcharge, percentDischarge, testPercentGridCharge, interconnection_limit);
+    dispatchManual = new dispatch_manual_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice, currentChargeMax,
+        currentDischargeMax, powerChargeMax, powerDischargeMax, powerChargeMax,
+        powerDischargeMax, minimumModeTime,
+        dispatchChoice, meterPosition, scheduleWeekday, scheduleWeekend, canCharge,
+        canDischarge, testCanGridcharge, canDischargeToGrid, canGridcharge, percentDischarge,
+        testPercentGridCharge, canClipCharge, interconnection_limit);
 
     batteryPower = dispatchManual->getBatteryPower();
     batteryPower->connectionMode = ChargeController::AC_CONNECTED;
@@ -439,8 +455,12 @@ TEST_F(ManualTest_lib_battery_dispatch, NoGridChargingWhilePVIsOnTest)
 
 TEST_F(ManualTest_lib_battery_dispatch, EfficiencyLimitsDispatchManualDC)
 {
-    dispatchManual = new dispatch_manual_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice, currentChargeMax, currentDischargeMax, powerChargeMax, powerDischargeMax, powerChargeMax, powerDischargeMax, minimumModeTime,
-                                           dispatchChoice, meterPosition, scheduleWeekday, scheduleWeekend, canCharge, canDischarge, canGridcharge, canGridcharge, percentDischarge, percentGridcharge, interconnection_limit);
+    dispatchManual = new dispatch_manual_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice, currentChargeMax,
+        currentDischargeMax, powerChargeMax, powerDischargeMax, powerChargeMax,
+        powerDischargeMax, minimumModeTime,
+        dispatchChoice, meterPosition, scheduleWeekday, scheduleWeekend, canCharge,
+        canDischarge, canGridcharge, canDischargeToGrid, canGridcharge, percentDischarge,
+        percentGridcharge, canClipCharge, interconnection_limit);
 
     batteryPower = dispatchManual->getBatteryPower();
     batteryPower->connectionMode = ChargeController::DC_CONNECTED;
@@ -467,8 +487,11 @@ TEST_F(ManualTest_lib_battery_dispatch, InverterEfficiencyCutoffDC)
     }
     testPercentGridCharge[1] = 1;
     testPercentGridCharge[3] = 100;
-    dispatchManual = new dispatch_manual_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice, currentChargeMax, currentDischargeMax, powerChargeMax, powerDischargeMax, powerChargeMax, powerDischargeMax, minimumModeTime,
-                                           dispatchChoice, meterPosition, scheduleWeekday, scheduleWeekend, canCharge, canDischarge, testCanGridcharge, canGridcharge, testPercentGridCharge, testPercentGridCharge, interconnection_limit);
+    dispatchManual = new dispatch_manual_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice, currentChargeMax,
+        currentDischargeMax, powerChargeMax, powerDischargeMax, powerChargeMax,
+        powerDischargeMax, minimumModeTime,
+        dispatchChoice, meterPosition, scheduleWeekday, scheduleWeekend, canCharge,
+        canDischarge, testCanGridcharge, canDischargeToGrid, canGridcharge, testPercentGridCharge, testPercentGridCharge, canClipCharge, interconnection_limit);
 
     batteryPower = dispatchManual->getBatteryPower();
     batteryPower->connectionMode = ChargeController::DC_CONNECTED;
@@ -506,8 +529,12 @@ TEST_F(ManualTest_lib_battery_dispatch, InverterEfficiencyCutoffDC)
 
 TEST_F(ManualTest_lib_battery_dispatch_losses, TestLossesWithDispatch)
 {
-    dispatchManual = new dispatch_manual_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice, currentChargeMax, currentDischargeMax, powerChargeMax, powerDischargeMax, powerChargeMax, powerDischargeMax, minimumModeTime,
-        dispatchChoice, meterPosition, scheduleWeekday, scheduleWeekend, canCharge, canDischarge, canGridcharge, canGridcharge, percentDischarge, percentGridcharge, interconnection_limit);
+    dispatchManual = new dispatch_manual_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice, currentChargeMax,
+        currentDischargeMax, powerChargeMax, powerDischargeMax, powerChargeMax,
+        powerDischargeMax, minimumModeTime,
+        dispatchChoice, meterPosition, scheduleWeekday, scheduleWeekend, canCharge,
+        canDischarge, canGridcharge, canDischargeToGrid, canGridcharge, percentDischarge,
+        percentGridcharge, canClipCharge, interconnection_limit);
 
     batteryPower = dispatchManual->getBatteryPower();
     batteryPower->connectionMode = ChargeController::DC_CONNECTED;
@@ -523,4 +550,125 @@ TEST_F(ManualTest_lib_battery_dispatch_losses, TestLossesWithDispatch)
     dispatchManual->dispatch(year, hour_of_year, step_of_hour);
     EXPECT_NEAR(batteryPower->powerGeneratedBySystem, batteryPower->powerLoad, 0.5); // Constraints drive efficiency lower, meaning some grid power is used to meet load (<0.5 kW)
     EXPECT_NEAR(batteryPower->powerBatteryToLoad, batteryPower->powerLoad, 0.5);
+}
+
+TEST_F(ManualTest_lib_battery_dispatch, TestDischargeToGrid)
+{
+    std::vector<bool> testCanDischargeToGrid;
+    for (int p = 0; p < 6; p++) {
+        testCanDischargeToGrid.push_back(1);
+    }
+    dispatchManual = new dispatch_manual_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice, currentChargeMax,
+        currentDischargeMax, powerChargeMax, powerDischargeMax, powerChargeMax,
+        powerDischargeMax, minimumModeTime,
+        dispatchChoice, meterPosition, scheduleWeekday, scheduleWeekend, canCharge,
+        canDischarge, canGridcharge, canGridcharge, testCanDischargeToGrid, percentDischarge,
+        percentGridcharge, canClipCharge, interconnection_limit);
+
+    batteryPower = dispatchManual->getBatteryPower();
+    batteryPower->connectionMode = ChargeController::AC_CONNECTED;
+    batteryPower->inverterEfficiencyCutoff = 0;
+
+    // Test discharge to grid
+    batteryPower->powerSystem = 0; batteryPower->powerLoad = 30; batteryPower->voltageSystem = 600; batteryPower->powerBatteryDC = 1000;
+    dispatchManual->dispatch(year, hour_of_year, step_of_hour);
+    EXPECT_NEAR(batteryPower->powerBatteryDC, powerDischargeMax, 1.0);
+    EXPECT_NEAR(batteryPower->powerBatteryToLoad, batteryPower->powerLoad, 2.0);
+    EXPECT_NEAR(batteryPower->powerBatteryToGrid, powerDischargeMax * batteryPower->singlePointEfficiencyDCToAC - batteryPower->powerLoad, 2.0);
+}
+
+TEST_F(ManualTest_lib_battery_dispatch, TestClipCharging)
+{
+    std::vector<bool> testDoNothingExceptClipCharge;
+    for (int p = 0; p < 6; p++) {
+        testDoNothingExceptClipCharge.push_back(0);
+    }
+    canClipCharge = true;
+    dispatchManual = new dispatch_manual_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice, currentChargeMax,
+        currentDischargeMax, powerChargeMax, powerDischargeMax, powerChargeMax,
+        powerDischargeMax, minimumModeTime,
+        dispatchChoice, meterPosition, scheduleWeekday, scheduleWeekend, testDoNothingExceptClipCharge,
+        testDoNothingExceptClipCharge, testDoNothingExceptClipCharge, testDoNothingExceptClipCharge, testDoNothingExceptClipCharge, percentDischarge,
+        percentGridcharge, canClipCharge, interconnection_limit);
+
+    batteryPower = dispatchManual->getBatteryPower();
+    batteryPower->connectionMode = ChargeController::DC_CONNECTED;
+    batteryPower->setSharedInverter(m_sharedInverter);
+
+    // Test discharge to grid
+    double clipped_power = 10;
+    batteryPower->powerSystem = 100; batteryPower->powerLoad = 30; batteryPower->voltageSystem = 600; batteryPower->powerSystemClipped = clipped_power; batteryPower->powerBatteryDC = -clipped_power;
+    dispatchManual->dispatch(year, hour_of_year, step_of_hour);
+    EXPECT_NEAR(batteryPower->powerBatteryDC, -clipped_power, 0.1);
+    EXPECT_NEAR(batteryPower->powerSystemToLoad, batteryPower->powerLoad, 0.1);
+    EXPECT_NEAR(batteryPower->powerSystemToBattery, clipped_power / batteryPower->singlePointEfficiencyDCToDC, 0.1);
+}
+
+TEST_F(ManualTest_lib_battery_dispatch, OutageWithManualDispatch) {
+    hour_of_year = 0; step_of_hour = 0;
+    dispatchManual = new dispatch_manual_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice, currentChargeMax,
+        currentDischargeMax, powerChargeMax, powerDischargeMax, powerChargeMax,
+        powerDischargeMax, minimumModeTime,
+        dispatchChoice, meterPosition, scheduleWeekday, scheduleWeekend, canCharge,
+        canDischarge, canGridcharge, canGridcharge, canGridcharge, percentDischarge,
+        percentGridcharge, canClipCharge, interconnection_limit);
+
+    batteryPower = dispatchManual->getBatteryPower();
+    batteryPower->connectionMode = ChargeController::AC_CONNECTED;
+    double soc = dispatchManual->battery_soc();
+    EXPECT_NEAR(dispatchManual->battery_soc(), 50, 0.1);
+
+    // Test dispatch iterations to dishcarge during outage
+
+    while (soc > 0.5 && hour_of_year < 100) {
+        batteryPower->powerLoad = 50;
+        batteryPower->powerSystem = 0;
+        batteryPower->isOutageStep = true;
+        batteryPower->powerCritLoad = 50;
+        dispatchManual->dispatch(year, hour_of_year, step_of_hour);
+        hour_of_year += 1;
+        EXPECT_LT(dispatchManual->battery_soc(), soc);
+        soc = dispatchManual->battery_soc();
+    }
+    EXPECT_NEAR(0.1, dispatchManual->battery_soc(), 0.1);
+    EXPECT_NEAR(6, hour_of_year, 0.1);
+
+    // Attempt dispatch one more time after outage, should not discharge
+    batteryPower->isOutageStep = false;
+    dispatchManual->dispatch(year, hour_of_year, step_of_hour);
+    hour_of_year += 1;
+    EXPECT_NEAR(batteryPower->powerBatteryDC, 0.0, 0.1);
+
+    // Can charge below min SOC
+    batteryPower->powerSystem = 700;
+    batteryPower->powerLoad = 50;
+    dispatchManual->dispatch(year, hour_of_year, step_of_hour);
+    hour_of_year += 1;
+    EXPECT_NEAR(batteryPower->powerBatteryDC, -50.0, 0.1);
+
+    // Turn outage back on, should charge to 100%
+    batteryPower->powerSystem = 700; batteryPower->voltageSystem = 600; batteryPower->powerLoad = 50;
+    batteryPower->powerCritLoad = 50; batteryPower->isOutageStep = true;
+    while (soc < 95 + tolerance && hour_of_year < 100) {
+        dispatchManual->dispatch(year, hour_of_year, step_of_hour);
+        hour_of_year += 1;
+        soc = dispatchManual->battery_soc();
+    }
+    EXPECT_NEAR(100, dispatchManual->battery_soc(), 0.1);
+    EXPECT_NEAR(17, hour_of_year, 0.1);
+
+    // With outage off, can discharge above max SOC
+    batteryPower->powerSystem = 0; batteryPower->voltageSystem = 600; batteryPower->powerLoad = 14;
+    batteryPower->powerCritLoad = 14; batteryPower->isOutageStep = false;
+    dispatchManual->dispatch(year, hour_of_year, step_of_hour);
+    hour_of_year += 1;
+    EXPECT_NEAR(batteryPower->powerBatteryDC, 14.6, 0.1);
+
+    // With outage off, cannot charge above max soc
+    EXPECT_NEAR(95, dispatchManual->battery_soc(), 0.1);
+    batteryPower->powerSystem = 700; batteryPower->voltageSystem = 600; batteryPower->powerLoad = 14;
+    batteryPower->powerCritLoad = 14; batteryPower->isOutageStep = false;
+    dispatchManual->dispatch(year, hour_of_year, step_of_hour);
+    hour_of_year += 1;
+    EXPECT_NEAR(batteryPower->powerBatteryDC, 0.0, 0.1);
 }

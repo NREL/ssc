@@ -21,6 +21,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <gtest/gtest.h>
+#include <cmath>
 
 #include "cmod_pvsamv1_eqns.h"
 #include "cmod_pvsamv1_test.h"

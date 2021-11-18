@@ -123,6 +123,12 @@ namespace CSP
     // Friction factor (iterative, helper function)
     double FricFactor_Iter(double rel_rough, double Re);
 
+    void mspt_piping_design(HTFProperties& htfProps,
+        double h_tower /*m*/, double pipe_length_mult /*-*/,
+        double pipe_length_add /*m*/, double piping_loss_coefficient /*W/m2-K*/,
+        double T_htf_hot_des /*K*/, double T_htf_cold_des /*K*/,
+        double m_dot_htf_des /*kg/s*/,
+        double& piping_length /*m*/, double& d_inner_piping /*m*/, double& q_dot_piping_loss /*Wt*/);
 };
     // Statistical mode
     //template <typename T, typename A>  // need to specify an allocator 'A'
@@ -505,6 +511,8 @@ private:
 
 	// Saved between calls
 	util::matrix_t<double> m_T_save;
+
+    bool m_is_always_reguess;
 	
 
 public:
@@ -512,6 +520,8 @@ public:
 	{
 		mv_reguess_args.resize(3);
 		std::fill(mv_reguess_args.begin(), mv_reguess_args.end(), std::numeric_limits<double>::quiet_NaN());
+
+        m_is_always_reguess = true;
 	};
 
 	~Evacuated_Receiver(){};
