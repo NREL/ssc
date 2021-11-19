@@ -332,7 +332,7 @@ ssc_data_t tcsmolten_salt_defaults()
     ssc_data_set_number(data, "const_per_upfront_rate5", 0);
     ssc_data_set_number(data, "adjust:constant", 4);
     ssc_data_set_number(data, "sf_adjust:constant", 0);
-
+    ssc_data_set_number(data, "ppa_soln_mode", 0);
     return data;
 }
 

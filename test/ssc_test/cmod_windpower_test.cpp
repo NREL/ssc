@@ -24,7 +24,9 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <gtest/gtest.h>
 #include <vector>
 
-#include <json/json.h>
+#include "../rapidjson/document.h"
+#include "../rapidjson/istreamwrapper.h"
+
 #include <lib_util.h>
 #include "../ssc/sscapi.h"
 #include "vartab.h"
@@ -533,8 +535,8 @@ TEST(windpower_landbosse, SetupPython) {
 	if (!setup_python())
 	    return;
 
-	Json::Value python_config_root;
-	std::string configPath = std::string(get_python_path()) + "python_config.json";
+    rapidjson::Document python_config_root;
+    std::string configPath = std::string(get_python_path()) + "python_config.json";
     if (configPath.empty())
         return;
 
@@ -544,27 +546,32 @@ TEST(windpower_landbosse, SetupPython) {
 	    return;
 	}
 
-	python_config_doc >> python_config_root;
+//    rapidjson::IStreamWrapper iswd(python_config_doc);
+//    python_config_root.ParseStream(iswd);
+    std::ostringstream tmp;
+    tmp << python_config_doc.rdbuf();
+    python_config_root.Parse(tmp.str().c_str());
 
-	if (!python_config_root.isMember("miniconda_version"))
+
+	if (!python_config_root.HasMember("miniconda_version"))
 		throw std::runtime_error("Missing key 'miniconda_version' in " + configPath);
-	if (!python_config_root.isMember("python_version"))
+	if (!python_config_root.HasMember("python_version"))
 		throw std::runtime_error("Missing key 'python_version' in " + configPath);
-	if (!python_config_root.isMember("exec_path"))
+	if (!python_config_root.HasMember("exec_path"))
 		throw std::runtime_error("Missing key 'exec_path' in " + configPath);
-	if (!python_config_root.isMember("pip_path"))
+	if (!python_config_root.HasMember("pip_path"))
 		throw std::runtime_error("Missing key 'pip_path' in " + configPath);
-	if (!python_config_root.isMember("packages"))
+	if (!python_config_root.HasMember("packages"))
 		throw std::runtime_error("Missing key 'packages' in " + configPath);
 
 	std::vector<std::string> packages;
-	for (auto &i : python_config_root["packages"])
-		packages.push_back(i.asString());
+    for (auto& i : python_config_root["packages"].GetArray())
+        packages.push_back(i.GetString());
 
-	std::vector<std::string> config = { python_config_root["python_version"].asString(),
-						   python_config_root["miniconda_version"].asString(),
-						   python_config_root["exec_path"].asString(),
-						   python_config_root["pip_path"].asString()
+	std::vector<std::string> config = { python_config_root["python_version"].GetString(),
+						   python_config_root["miniconda_version"].GetString(),
+						   python_config_root["exec_path"].GetString(),
+						   python_config_root["pip_path"].GetString()
 						    };
 
 }
@@ -579,9 +586,14 @@ bool check_Python_setup() {
         return false;
 
     std::ifstream python_config_doc(configPath);
-    Json::Value python_config_root;
-    python_config_doc >> python_config_root;
-    if (python_config_root["exec_path"].asString().empty()) {
+    rapidjson::Document python_config_root;
+//    rapidjson::IStreamWrapper iswc(python_config_doc);
+//    python_config_root.ParseStream(iswc);
+    std::ostringstream tmp;
+    tmp << python_config_doc.rdbuf();
+    python_config_root.Parse(tmp.str().c_str());
+
+    if (!python_config_root["exec_path"].GetString()) {
         std::cerr << "Python not configured.";
         return false;
     }
