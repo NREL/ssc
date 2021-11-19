@@ -343,7 +343,6 @@ bool etes_dispatch_opt::optimize()
         O.add_var("qeh", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0., P["Qehu"]);
         O.add_var("ucsu", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0., P["Ec"] * 1.0001);
         O.add_var("uhsu", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0., P["Eeh"] * 1.0001);
-        O.add_var("zcsu", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0., P["Qu"]);
         O.add_var("zhsu", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0., P["Qehu"]);
 
         O.add_var("y", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_T, nt);
@@ -616,6 +615,25 @@ bool etes_dispatch_opt::optimize()
                     add_constraintex(lp, i, row, col, LE, rhs);
                 }
 
+                // Limits the thermal power to the cycle during periods of startup
+                /* NOTE: This is not accurate in terms of thermal power delivered to the power cycle (which should be Qu after start up is completed).
+                    However, in practice this constraint (in addition to providing adding startup power to heat target) provides the dispatch model a disincentive to
+                    start-up on high value periods as fraction of production is lost due to startup time.  Therefore, it better to startup the hour before a high value period. */
+                // qdot[t] + Qcsu * ycsu[t] <= Qu * y[t]
+                {
+                    i = 0;
+                    row[i] = 1.;
+                    col[i++] = O.column("qdot", t);
+
+                    row[i] = P["Qcsu"];
+                    col[i++] = O.column("ycsu", t);
+
+                    row[i] = -P["Qu"];
+                    col[i++] = O.column("y", t);
+
+                    add_constraintex(lp, i, row, col, LE, 0.);
+                }
+
                 // Cycle maximum operation limit
                 // qdot[t] <= Qu * y[t]
                 {
@@ -866,7 +884,7 @@ bool etes_dispatch_opt::optimize()
                 int i = 0; // row and col index, reset for every constraint
 
                 // Energy in, out, and stored in the TES system must balance.
-                // delta * qeh[t] - delta_hsu * zhsu[t] - delta * qdot[t] + delta_csu * zcsu[t] - delta * Qcsu * ycsu[t] = s[t] - s[t-1]
+                // delta * qeh[t] - delta_hsu * zhsu[t] - delta * qdot[t] - delta * Qcsu * ycsu[t] = s[t] - s[t-1]
                 {
                     double rhs = 0.;
                     row[i] = P["delta"];
@@ -877,9 +895,6 @@ bool etes_dispatch_opt::optimize()
 
                     row[i] = -P["delta"];
                     col[i++] = O.column("qdot", t);
-
-                    row[i] = P["delta_csu"];
-                    col[i++] = O.column("zcsu", t);
 
                     row[i] = -P["delta"] * P["Qcsu"];
                     col[i++] = O.column("ycsu", t);
@@ -968,54 +983,6 @@ bool etes_dispatch_opt::optimize()
                         col[i++] = O.column("yhsu", t);
 
                         add_constraintex(lp, i, row, col, GE, -P["Qehu"]);
-                    }
-                }
-
-                //******* linearization of zcsu[t] = qdot[t] * ycsu[t] ******
-                {
-                    // Upper bound with Qu
-                    // zcsu[t] <= Qu * ycsu[t]
-                    {
-                        i = 0;
-
-                        row[i] = 1.;
-                        col[i++] = O.column("zcsu", t);
-
-                        row[i] = -P["Qu"];
-                        col[i++] = O.column("ycsu", t);
-
-                        add_constraintex(lp, i, row, col, LE, 0);
-                    }
-
-                    // Upper bound with qdot[t]
-                    // zcsu[t] <= qdot[t]
-                    {
-                        i = 0;
-
-                        row[i] = 1.;
-                        col[i++] = O.column("zcsu", t);
-
-                        row[i] = -1;
-                        col[i++] = O.column("qdot", t);
-
-                        add_constraintex(lp, i, row, col, LE, 0);
-                    }
-
-                    // Lower bound
-                    // zcsu[t] >= qdot[t] - Qu * ( 1 - ycsu[t] )
-                    {
-                        i = 0;
-
-                        row[i] = 1.;
-                        col[i++] = O.column("zcsu", t);
-
-                        row[i] = -1;
-                        col[i++] = O.column("qdot", t);
-
-                        row[i] = -P["Qu"];
-                        col[i++] = O.column("ycsu", t);
-
-                        add_constraintex(lp, i, row, col, GE, -P["Qu"]);
                     }
                 }
             }
@@ -1148,7 +1115,7 @@ void etes_dispatch_opt::set_outputs_from_lp_solution(lprec* lp, unordered_map<st
         }
         else if (strcmp(root, "qeh") == 0)   //receiver production
         {
-            outputs.q_sf_expected.at(t) = vars[c - 1];
+            outputs.q_sf_expected.at(t) = vars[c - 1] * 1.0001;  // small increase to ensure heater starts when minimum power is applied
         }
         else if (strcmp(root, "wdot") == 0) //electricity production
         {
@@ -1171,7 +1138,7 @@ bool etes_dispatch_opt::set_dispatch_outputs()
         disp_outputs.is_pc_sb_allowed = outputs.pb_standby.at(m_current_read_step);
         disp_outputs.is_pc_su_allowed = outputs.pb_operation.at(m_current_read_step) || disp_outputs.is_pc_sb_allowed;
 
-        disp_outputs.q_pc_target = outputs.q_pb_target.at(m_current_read_step);
+        disp_outputs.q_pc_target = outputs.q_pb_target.at(m_current_read_step) + outputs.q_pb_startup.at(m_current_read_step);
         disp_outputs.q_dot_elec_to_CR_heat = outputs.q_sf_expected.at(m_current_read_step);
 
         if (disp_outputs.q_pc_target + 1.e-5 < params.q_pb_min)
@@ -1180,7 +1147,7 @@ bool etes_dispatch_opt::set_dispatch_outputs()
             disp_outputs.q_pc_target = 0.0;
         }
 
-        disp_outputs.q_dot_pc_max = params.q_pb_max;  //TODO: Talk to ty about this
+        disp_outputs.q_dot_pc_max = params.q_pb_max;
         disp_outputs.etasf_expect = 0.0;
         disp_outputs.qsf_expect = 0.0;
         disp_outputs.qsfprod_expect = outputs.q_sf_expected.at(m_current_read_step);

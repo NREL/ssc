@@ -813,13 +813,17 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 mmax += m_m_dot_pc_max / (1.0 - tol_mode_switching);
             }
 
-			if (q_dot_cr_on > qmax || m_dot_cr_on > mmax)  // Receiver will need to be defocused
-			{
-				double df = fmin(qmax / q_dot_cr_on, mmax / m_dot_cr_on);
-				mc_collector_receiver.on(mc_weather.ms_outputs, mc_cr_htf_state_in, q_dot_elec_to_CR_heat, df, mc_cr_out_solver, mc_kernel.mc_sim_info);
-				if (mc_cr_out_solver.m_q_thermal == 0.0)  // Receiver solution wasn't successful 
-					is_rec_su_allowed = false;
-			}
+            if (q_dot_cr_on > qmax || m_dot_cr_on > mmax)  // Receiver will need to be defocused
+            {
+                double df = fmin(qmax / q_dot_cr_on, mmax / m_dot_cr_on);
+                if (q_dot_elec_to_CR_heat > 0. && !m_is_parallel_heater) //Heater is on and not the CSP+ETES case
+                {
+                    q_dot_elec_to_CR_heat = q_dot_cr_on;  // Setting to the max and allowing controller to defocus
+                }
+                mc_collector_receiver.on(mc_weather.ms_outputs, mc_cr_htf_state_in, q_dot_elec_to_CR_heat, df, mc_cr_out_solver, mc_kernel.mc_sim_info);
+                if (mc_cr_out_solver.m_q_thermal == 0.0)  // Receiver solution wasn't successful 
+                    is_rec_su_allowed = false;
+            }
 
 		}
 
