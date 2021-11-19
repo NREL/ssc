@@ -279,8 +279,9 @@ std::string cm_wind_landbosse::call_python_module_windows(const std::string& inp
         unsigned long bread;   //bytes read
         unsigned long bread_last = 0;
         unsigned long avail;   //bytes available
-
-        for (;;) {
+        size_t i = 0;
+        size_t n_timeout_max = 10000;
+        for (i=0;i<n_timeout_max;i++) {
             PeekNamedPipe(stdout_rd, buf, BUFSIZE - 1, &bread, &avail, NULL);
             //check to see if there is any data to read from stdout
             if (bread != 0) {
@@ -296,6 +297,10 @@ std::string cm_wind_landbosse::call_python_module_windows(const std::string& inp
 
         CloseHandle(pi.hThread);
         CloseHandle(pi.hProcess);
+
+        if (i>=n_timeout_max)
+            throw exec_error("wind_landbosse", "LandBOSSE error. Timeout while running.");
+
     }
     done:
     std::vector<HANDLE> handles = {stdin_rd, stdin_wr, stdout_rd, stdout_wr, stderr_rd, stderr_wr};
