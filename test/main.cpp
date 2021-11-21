@@ -68,6 +68,7 @@ GTEST_API_ int main(int argc, char **argv) {
 //    ::testing::GTEST_FLAG(filter) = "save_as_JSON_test_run*";
 //    ::testing::GTEST_FLAG(filter) = "csp_tower*";
 //    ::testing::GTEST_FLAG(filter) = "csp_trough.PowerTroughCmod*";
+    ::testing::GTEST_FLAG(filter) = "save_as_JSON_test.pvwatts*";
 
 
 	int status = RUN_ALL_TESTS();
