@@ -818,9 +818,9 @@ public:
             double om_cost_kw = om_cost / system_capacity;
             assign("total_capital_cost_per_kw", var_data(ssc_number_t(capital_cost_kw)));
             assign("total_device_cost_per_kw", var_data(ssc_number_t(device_cost_kw)));
-            assign("total_bos_cost_per_kw", var_data(ssc_number_t(device_cost_kw)));
-            assign("total_financial_cost_per_kw", var_data(ssc_number_t(device_cost_kw)));
-            assign("total_operations_cost_per_kw", var_data(ssc_number_t(device_cost_kw)));
+            assign("total_bos_cost_per_kw", var_data(ssc_number_t(bos_cost_kw)));
+            assign("total_financial_cost_per_kw", var_data(ssc_number_t(financial_cost_kw)));
+            assign("total_operations_cost_per_kw", var_data(ssc_number_t(om_cost_kw)));
         }
 
 		//Calculating capacity factor:
