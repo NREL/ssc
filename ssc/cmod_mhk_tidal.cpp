@@ -226,46 +226,47 @@ public:
 		//Factoring in losses in total annual energy production:
 		annual_energy *= (1 - (total_loss / 100 ));
 		// leave device power without losses
+        if (is_assigned("device_costs_total")) {
+            //TEST cost metrics in tidal page rather than cost page
+            double device_cost = as_double("device_costs_total");
+            double bos_cost = as_double("balance_of_system_cost_total");
+            double financial_cost = as_double("financial_cost_total");
+            double om_cost = as_double("total_operating_cost");
+            double fcr = as_double("fixed_charge_rate");
+            double total_capital_cost_kwh = fcr * (device_cost + bos_cost + financial_cost) / annual_energy;
+            double total_device_cost_kwh = fcr * device_cost / annual_energy;
+            double total_bos_cost_kwh = fcr * bos_cost / annual_energy;
+            double total_financial_cost_kwh = fcr * financial_cost / annual_energy;
+            double total_om_cost_kwh = om_cost / annual_energy;
+            double total_capital_cost_lcoe = (fcr * (device_cost + bos_cost + financial_cost)) / (fcr * (device_cost + bos_cost + financial_cost) + om_cost) * 100;
+            double total_device_cost_lcoe = (fcr * device_cost) / (fcr * (device_cost + bos_cost + financial_cost) + om_cost) * 100;
+            double total_bos_cost_lcoe = (fcr * bos_cost) / (fcr * (device_cost + bos_cost + financial_cost) + om_cost) * 100;
+            double total_financial_cost_lcoe = (fcr * financial_cost) / (fcr * (device_cost + bos_cost + financial_cost) + om_cost) * 100;
+            double total_om_cost_lcoe = (om_cost) / (fcr * (device_cost + bos_cost + financial_cost) + om_cost) * 100;
+            assign("total_capital_cost_kwh", var_data((ssc_number_t)total_capital_cost_kwh));
+            assign("total_device_cost_kwh", var_data((ssc_number_t)total_device_cost_kwh));
+            assign("total_bos_cost_kwh", var_data((ssc_number_t)total_bos_cost_kwh));
+            assign("total_financial_cost_kwh", var_data((ssc_number_t)total_financial_cost_kwh));
+            assign("total_om_cost_kwh", var_data((ssc_number_t)total_om_cost_kwh));
+            assign("total_capital_cost_lcoe", var_data((ssc_number_t)total_capital_cost_lcoe));
+            assign("total_device_cost_lcoe", var_data((ssc_number_t)total_device_cost_lcoe));
+            assign("total_bos_cost_lcoe", var_data((ssc_number_t)total_bos_cost_lcoe));
+            assign("total_financial_cost_lcoe", var_data((ssc_number_t)total_financial_cost_lcoe));
+            assign("total_om_cost_lcoe", var_data((ssc_number_t)total_om_cost_lcoe));
 
-        //TEST cost metrics in tidal page rather than cost page
-        double device_cost = as_double("device_costs_total");
-        double bos_cost = as_double("balance_of_system_cost_total");
-        double financial_cost = as_double("financial_cost_total");
-        double om_cost = as_double("total_operating_cost");
-        double fcr = as_double("fixed_charge_rate");
-        double total_capital_cost_kwh = fcr*(device_cost + bos_cost + financial_cost) / annual_energy;
-        double total_device_cost_kwh = fcr*device_cost / annual_energy;
-        double total_bos_cost_kwh = fcr*bos_cost / annual_energy;
-        double total_financial_cost_kwh = fcr*financial_cost / annual_energy;
-        double total_om_cost_kwh = om_cost / annual_energy;
-        double total_capital_cost_lcoe = (fcr * (device_cost + bos_cost + financial_cost)) / (fcr * (device_cost + bos_cost + financial_cost) + om_cost)*100;
-        double total_device_cost_lcoe = (fcr*device_cost)/ (fcr * (device_cost + bos_cost + financial_cost) + om_cost)*100;
-        double total_bos_cost_lcoe = (fcr*bos_cost)/ (fcr * (device_cost + bos_cost + financial_cost) + om_cost)*100;
-        double total_financial_cost_lcoe = (fcr * financial_cost) / (fcr * (device_cost + bos_cost + financial_cost) + om_cost)*100;
-        double total_om_cost_lcoe = (om_cost)/ (fcr * (device_cost + bos_cost + financial_cost) + om_cost)*100;
-        assign("total_capital_cost_kwh", var_data((ssc_number_t)total_capital_cost_kwh));
-        assign("total_device_cost_kwh", var_data((ssc_number_t)total_device_cost_kwh));
-        assign("total_bos_cost_kwh", var_data((ssc_number_t)total_bos_cost_kwh));
-        assign("total_financial_cost_kwh", var_data((ssc_number_t)total_financial_cost_kwh));
-        assign("total_om_cost_kwh", var_data((ssc_number_t)total_om_cost_kwh));
-        assign("total_capital_cost_lcoe", var_data((ssc_number_t)total_capital_cost_lcoe));
-        assign("total_device_cost_lcoe", var_data((ssc_number_t)total_device_cost_lcoe));
-        assign("total_bos_cost_lcoe", var_data((ssc_number_t)total_bos_cost_lcoe));
-        assign("total_financial_cost_lcoe", var_data((ssc_number_t)total_financial_cost_lcoe));
-        assign("total_om_cost_lcoe", var_data((ssc_number_t)total_om_cost_lcoe));
-
-        //Cost per kW system capacity
-        double system_capacity = as_double("system_capacity");
-        double capital_cost_kw = (device_cost + bos_cost + financial_cost) / system_capacity;
-        double device_cost_kw = device_cost / system_capacity;
-        double bos_cost_kw = bos_cost / system_capacity;
-        double financial_cost_kw = financial_cost / system_capacity;
-        double om_cost_kw = om_cost / system_capacity;
-        assign("total_capital_cost_per_kw", var_data(ssc_number_t(capital_cost_kw)));
-        assign("total_device_cost_per_kw", var_data(ssc_number_t(device_cost_kw)));
-        assign("total_bos_cost_per_kw", var_data(ssc_number_t(bos_cost_kw)));
-        assign("total_financial_cost_per_kw", var_data(ssc_number_t(financial_cost_kw)));
-        assign("total_operations_cost_per_kw", var_data(ssc_number_t(om_cost_kw)));
+            //Cost per kW system capacity
+            double system_capacity = as_double("system_capacity");
+            double capital_cost_kw = (device_cost + bos_cost + financial_cost) / system_capacity;
+            double device_cost_kw = device_cost / system_capacity;
+            double bos_cost_kw = bos_cost / system_capacity;
+            double financial_cost_kw = financial_cost / system_capacity;
+            double om_cost_kw = om_cost / system_capacity;
+            assign("total_capital_cost_per_kw", var_data(ssc_number_t(capital_cost_kw)));
+            assign("total_device_cost_per_kw", var_data(ssc_number_t(device_cost_kw)));
+            assign("total_bos_cost_per_kw", var_data(ssc_number_t(bos_cost_kw)));
+            assign("total_financial_cost_per_kw", var_data(ssc_number_t(financial_cost_kw)));
+            assign("total_operations_cost_per_kw", var_data(ssc_number_t(om_cost_kw)));
+        }
 
 		//Calculating capacity factor:
 		capacity_factor = annual_energy / (device_rated_capacity * number_devices * 8760);
