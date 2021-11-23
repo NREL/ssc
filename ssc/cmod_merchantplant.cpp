@@ -410,7 +410,6 @@ static var_info _cm_vtab_merchantplant[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_net",                          "Energy produced",                     "kWh",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
 { SSC_OUTPUT,       SSC_ARRAY,      "cf_thermal_value",                        "Thermal revenue",                     "$",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
 { SSC_OUTPUT,       SSC_ARRAY,      "cf_om_fixed_expense",                    "O&M fixed expense",                  "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-{ SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_purchases_value",              "PPA revenue lost to self-consumption","$",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
 { SSC_OUTPUT,       SSC_ARRAY,      "cf_om_production_expense",               "O&M production-based expense",       "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_om_capacity_expense",                 "O&M capacity-based expense",         "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_om_fuel_expense",                     "O&M fuel expense",                   "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -638,6 +637,8 @@ enum {
 
 	CF_om_opt_fuel_2_expense,
 	CF_om_opt_fuel_1_expense,
+
+    CF_land_lease_expense,
 
 	CF_federal_tax_frac,
 	CF_state_tax_frac,
@@ -1040,6 +1041,9 @@ public:
 		escal_or_annual( CF_om_opt_fuel_1_expense, nyears, "om_opt_fuel_1_cost", inflation_rate, 1.0, false, as_double("om_opt_fuel_1_cost_escal")*0.01 );  
 		escal_or_annual( CF_om_opt_fuel_2_expense, nyears, "om_opt_fuel_2_cost", inflation_rate, 1.0, false, as_double("om_opt_fuel_2_cost_escal")*0.01 );  
 
+        ssc_number_t total_land_area = as_double("land_area");
+        escal_or_annual(CF_land_lease_expense, nyears, "om_land_lease", inflation_rate, total_land_area, false, as_double("om_land_lease_escal") * 0.01);
+
 		double om_opt_fuel_1_usage = as_double("om_opt_fuel_1_usage");
 		double om_opt_fuel_2_usage = as_double("om_opt_fuel_2_usage");
 
@@ -1134,7 +1138,6 @@ public:
 
 			for ( i = 0; i <= nyears; i++)
 				cf.at(CF_utility_bill, i) = ub_arr[i];
-			save_cf(CF_utility_bill, nyears, "cf_utility_bill");
 		}
 
 
@@ -1349,11 +1352,8 @@ public:
                 for (size_t h = 0; h < 8760; h++) {
                     cf.at(CF_energy_sales_value, i) += hourly_energy_calcs.hourly_sales()[(i - 1) * 8760 + h] * cf.at(CF_degradation, i) * mp_energy_market_price[(i - 1) * 8760 + h];
                     if (ppa_purchases) {
-                        cf.at(CF_energy_purchases_value, i) += -hourly_energy_calcs.hourly_purchases()[(i - 1) * 8760 + h] * cf.at(CF_degradation, i) * mp_energy_market_price[(i -1) * 8760 + h];
+                        cf.at(CF_utility_bill, i) += -hourly_energy_calcs.hourly_purchases()[(i - 1) * 8760 + h] * cf.at(CF_degradation, i) * mp_energy_market_price[(i -1) * 8760 + h];
                     }
-                }
-                if (!ppa_purchases) {
-                    cf.at(CF_energy_purchases_value, i) = 0.0;
                 }
             }
         }
@@ -1364,14 +1364,12 @@ public:
                 for (size_t h = 0; h < 8760; h++) {
                     cf.at(CF_energy_sales_value, i) += hourly_energy_calcs.hourly_sales()[h] * cf.at(CF_degradation, i) * mp_energy_market_price[h]/1000;
                     if (ppa_purchases) {
-                        cf.at(CF_energy_purchases_value, i) += -hourly_energy_calcs.hourly_purchases()[h] * cf.at(CF_degradation, i) * mp_energy_market_price[h];
+                        cf.at(CF_utility_bill, i) += -hourly_energy_calcs.hourly_purchases()[h] * cf.at(CF_degradation, i) * mp_energy_market_price[h];
                     }
-                }
-                if (!ppa_purchases) {
-                    cf.at(CF_energy_purchases_value, i) = 0.0;
                 }
             }
         }
+        save_cf(CF_utility_bill, nyears, "cf_utility_bill");
 
 		double property_tax_assessed_value = cost_prefinancing * as_double("prop_tax_cost_assessed_percent") * 0.01;
 		double property_tax_decline_percentage = as_double("prop_tax_assessed_decline");
@@ -1522,12 +1520,12 @@ public:
 				+ cf.at(CF_om_fuel_expense,i)
 				+ cf.at(CF_om_opt_fuel_1_expense,i)
 				+ cf.at(CF_om_opt_fuel_2_expense,i)
+                + cf.at(CF_land_lease_expense, i)
 				+ cf.at(CF_property_tax_expense,i)
 				+ cf.at(CF_insurance_expense,i)
 				+ cf.at(CF_battery_replacement_cost,i)
 				+ cf.at(CF_fuelcell_replacement_cost, i)
 				+ cf.at(CF_utility_bill,i)
-                + cf.at(CF_energy_purchases_value,i)
 				+ cf.at(CF_Recapitalization,i);
 		}
 
@@ -3120,7 +3118,6 @@ public:
 		save_cf( CF_om_fixed_expense, nyears, "cf_om_fixed_expense" );
 		save_cf( CF_om_production_expense, nyears, "cf_om_production_expense" );
 		save_cf( CF_om_capacity_expense, nyears, "cf_om_capacity_expense" );
-        save_cf( CF_energy_purchases_value, nyears, "cf_energy_purchases_value");
 
         if (add_om_num_types > 0) {
             save_cf(CF_om_fixed1_expense, nyears, "cf_om_fixed1_expense");
@@ -3137,6 +3134,7 @@ public:
 		save_cf( CF_om_fuel_expense, nyears, "cf_om_fuel_expense" );
 		save_cf( CF_om_opt_fuel_1_expense, nyears, "cf_om_opt_fuel_1_expense" );
 		save_cf( CF_om_opt_fuel_2_expense, nyears, "cf_om_opt_fuel_2_expense" );
+        save_cf(CF_land_lease_expense, nyears, "cf_land_lease_expense");
 		save_cf( CF_property_tax_assessed_value, nyears, "cf_property_tax_assessed_value" );
 		save_cf( CF_property_tax_expense, nyears, "cf_property_tax_expense" );
 		save_cf( CF_insurance_expense, nyears, "cf_insurance_expense" );

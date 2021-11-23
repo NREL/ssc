@@ -1091,7 +1091,7 @@ public:
         double npv_energy_real = npv(CF_energy_sales, nyears, real_discount_rate);
 //		if (npv_energy_real == 0.0) throw general_error("lcoe real failed because energy npv is zero");
 //		double lcoe_real = -( cf.at(CF_after_tax_net_equity_cost_flow,0) + npv(CF_after_tax_net_equity_cost_flow, nyears, nom_discount_rate) ) * 100 / npv_energy_real;
-		double lcoe_real = -( cf.at(CF_after_tax_net_equity_cost_flow,0) + npv(CF_after_tax_net_equity_cost_flow, nyears, nom_discount_rate) + npv(CF_parasitic_cost, nyears, nom_discount_rate) ) * 100;
+		double lcoe_real = -( cf.at(CF_after_tax_net_equity_cost_flow,0) + npv(CF_after_tax_net_equity_cost_flow, nyears, nom_discount_rate) - npv(CF_parasitic_cost, nyears, nom_discount_rate) ) * 100;
 		if (npv_energy_real == 0.0) 
 		{
 			lcoe_real = std::numeric_limits<double>::quiet_NaN();
@@ -1104,7 +1104,7 @@ public:
 		double npv_energy_nom = npv( CF_energy_sales, nyears, nom_discount_rate );
 //		if (npv_energy_nom == 0.0) throw general_error("lcoe nom failed because energy npv is zero");
 //		double lcoe_nom = -( cf.at(CF_after_tax_net_equity_cost_flow,0) + npv(CF_after_tax_net_equity_cost_flow, nyears, nom_discount_rate) ) * 100 / npv_energy_nom;
-		double lcoe_nom = -( cf.at(CF_after_tax_net_equity_cost_flow,0) + npv(CF_after_tax_net_equity_cost_flow, nyears, nom_discount_rate) + npv(CF_parasitic_cost, nyears, nom_discount_rate)) * 100;
+		double lcoe_nom = -( cf.at(CF_after_tax_net_equity_cost_flow,0) + npv(CF_after_tax_net_equity_cost_flow, nyears, nom_discount_rate) - npv(CF_parasitic_cost, nyears, nom_discount_rate)) * 100;
 		if (npv_energy_nom == 0.0) 
 		{
 			lcoe_nom = std::numeric_limits<double>::quiet_NaN();
