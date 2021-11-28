@@ -1205,17 +1205,20 @@ public:
 				{
 
 					// for each month add the wo system charge and energy
-					// not that first row contains tier num and first column contains period numbers in the charge_wo_sys_ec and energy_wo_sys_ec matrices
+					// note that first row contains tier num and first column contains period numbers in the charge_wo_sys_ec and energy_wo_sys_ec matrices
+                    // for github ssc issue 539, check that the kWh are not maxed out before adding to same tier
 					for (int m = 0; m < (int)rate.m_month.size(); m++)
 					{
 						ur_month& curr_month = rate.m_month[m];
-						for (int ir = 0; ir < (int)curr_month.ec_charge.nrows(); ir++)
+						for (size_t ir = 0; ir < curr_month.ec_charge.nrows(); ir++)
 						{
-							for (int ic = 0; ic < (int)curr_month.ec_charge.ncols(); ic++)
+                            ssc_number_t energy_above_ub_total = 0;
+                            ssc_number_t prev_upper_bound = 0;
+                            for (size_t  ic = 0; ic < curr_month.ec_charge.ncols(); ic++)
 							{
-								ssc_number_t charge_adj = 0;
-								ssc_number_t energy_adj = 0;
-								switch (m)
+                                ssc_number_t charge_adj = 0;
+                                ssc_number_t energy_adj = 0;
+                                switch (m)
 								{
 								case 0:
 									charge_adj = charge_wo_sys_ec_jan_tp.at(ir + 1, ic + 1);
@@ -1265,10 +1268,33 @@ public:
 									charge_adj = charge_wo_sys_ec_dec_tp.at(ir + 1, ic + 1);
 									energy_adj = energy_wo_sys_ec_dec_tp.at(ir + 1, ic + 1);
 									break;
+                                default: // should never reach here!
+                                    energy_adj = 0;
+                                    charge_adj = 0;
 								}
-								curr_month.ec_charge.at(ir, ic) += charge_adj;
-								curr_month.ec_energy_use.at(ir, ic) += energy_adj;
-							}
+                                curr_month.ec_charge.at(ir, ic) += charge_adj;
+                                curr_month.ec_energy_use.at(ir, ic) += energy_adj;
+                                ssc_number_t energy_above_ub = curr_month.ec_energy_use.at(ir, ic) + prev_upper_bound - curr_month.ec_tou_ub(ir, ic);
+                                if (energy_above_ub > 0) {
+                                    curr_month.ec_energy_use.at(ir, ic) = curr_month.ec_tou_ub(ir, ic) - prev_upper_bound;
+                                    curr_month.ec_charge.at(ir, ic) = curr_month.ec_energy_use.at(ir, ic) * curr_month.ec_tou_br(ir, ic);
+                                    energy_above_ub_total += energy_above_ub;
+                                }
+                                else if (energy_above_ub_total > 0) {
+                                    ssc_number_t additional_energy_for_tier = energy_above_ub_total + energy_above_ub;
+                                    if (additional_energy_for_tier > 0) {
+                                        curr_month.ec_energy_use.at(ir, ic) -= energy_above_ub; // subtracting a negative number
+                                        curr_month.ec_charge.at(ir, ic) -= energy_above_ub * curr_month.ec_tou_br(ir, ic);
+                                        energy_above_ub_total = additional_energy_for_tier;
+                                    }
+                                    else { // apply all energy_above_ub_total to this tier
+                                        curr_month.ec_energy_use.at(ir, ic) += energy_above_ub_total;
+                                        curr_month.ec_charge.at(ir, ic) += energy_above_ub_total * curr_month.ec_tou_br(ir, ic);
+                                        energy_above_ub_total = 0;
+                                    }
+                                }
+                                prev_upper_bound = curr_month.ec_tou_ub(ir, ic);
+                            }
 						}
 					}
 				} // i==0 (first year matrix outputs)
