@@ -71,6 +71,7 @@ GTEST_API_ int main(int argc, char **argv) {
 //    ::testing::GTEST_FLAG(filter) = "save_as_JSON_test.pvwatts*";
 //	::testing::GTEST_FLAG(filter) = "CMPvwattsv8Integration_cmod_pvwattsv8*";
 //    CMPvwattsv8Integration_cmod_pvwattsv8
+    ::testing::GTEST_FLAG(filter) = "CMPvsamv1BatteryIntegration_cmod_pvsamv1.ResidentialDCBatteryModelPriceSignalDispatch";
 
 	int status = RUN_ALL_TESTS();
 
