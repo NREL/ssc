@@ -28,6 +28,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define AOI_MIN 0.5
 #define AOI_MAX 89.5
 
+
+// reference: De Soto, W., S. A. Klein and W. A. Beckman (2006). “Improvement and validation of a model for photovoltaic array performance.” Solar Energy 80(1): 78-88.
 static const double n_glass = 1.526;   // !refractive index of glass
 static const double l_glass = 0.002;   // !thickness of glass cover
 static const double k_glass = 4; // proportionality constant for glass
@@ -42,8 +44,8 @@ double transmittance(double theta1_deg, /* incidence angle of incoming radiation
 	double n_cover,  /* refractive index of cover material, n_glass = 1.586 */
 	double n_incoming, /* refractive index of incoming material, typically n_air = 1.0 */
 	double k,        /* proportionality constant assumed to be 4 (1/m) for derivation of Bouguer's law (set to zero to skip bougeur's law */
-	double l_thick,  /* material thickness (set to zero to skip Bouguer's law */
-	double *_theta2_deg = 0); /* thickness of cover material (m), usually 2 mm for typical module */
+	double l_thick,  /* thickness of cover material (m), usually 2 mm for typical module (set to zero to skip Bouguer's law) */
+	double *_theta2_deg = 0); /* returns angle of refraction in degrees */
 
 double iam(double theta_deg, bool ar_glass); // incidence angle modifier factor relative to normal incidence
 

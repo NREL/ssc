@@ -95,13 +95,15 @@ bool cec6par_module_t::operator() ( pvinput_t &input, double TcellC, double opvo
 
 		Geff_total *= air_mass_modifier( theta_z, input.Elev, amavec );
 	
-	} else { // Even though we're using POA ref. data, we may still need to use the decomposed poa
+	}
+    else { // Even though we're using POA ref. data, we may still need to use the decomposed poa
 		if( input.usePOAFromWF)
 			G_total = Geff_total = input.poaIrr;
 		else{
 			G_total = input.poaIrr;
 			Geff_total = input.Ibeam + input.Idiff + input.Ignd + input.Irear;
 		}
+        out.AOIModifier = 1.0; // there are no additional reflection losses to apply if we're using POA from a reference cell
 
 	}
 

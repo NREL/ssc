@@ -281,17 +281,17 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelModuleAndInverter
 //This test can be expanded when we allow different combinations of thermal, spectral, and reflection models with different module models
 TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelModuleThermalSpectralReflection)
 {
-    std::vector<double> annual_energy_expected = { 8857, 8749 };
+    std::vector<double> annual_energy_expected = { 8894, 8857 };
     std::map<std::string, double> pairs;
     size_t count = 0;
+    int pvsam_errors = 1;
 
     // Module thermal models: NOCT, Heat Transfer Method
-    for (int cec_temp_corr_mode = 0; cec_temp_corr_mode < 1; cec_temp_corr_mode++)
+    for (int cec_temp_corr_mode = 1; cec_temp_corr_mode >= 0; cec_temp_corr_mode--) //decrement counter to avoid re-running with default (0) in next test
     {
         pairs["cec_temp_corr_mode"] = cec_temp_corr_mode;
-        int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+        pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
         EXPECT_FALSE(pvsam_errors);
-
         if (!pvsam_errors)
         {
             ssc_number_t annual_energy;
@@ -299,6 +299,24 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelModuleThermalSpec
             EXPECT_NEAR(annual_energy, annual_energy_expected[count], m_error_tolerance_hi) << "Annual energy.";
         }
         count++;
+    }
+
+    // Test reflection (IAM) loss for fixed tilt
+    ssc_number_t reflection_loss = 0;
+    if (!pvsam_errors)
+    {
+        ssc_data_get_number(data, "annual_poa_cover_loss_percent", &reflection_loss);
+        EXPECT_NEAR(reflection_loss, 1.041, 0.01);
+    }
+    // Test reflection (IAM) loss for one-axis tracker
+    pairs["subarray1_track_mode"] = 1;
+    pairs["subarray1_tilt"] = 0;
+    pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+    EXPECT_FALSE(pvsam_errors);
+    if (!pvsam_errors)
+    {
+        ssc_data_get_number(data, "annual_poa_cover_loss_percent", &reflection_loss);
+        EXPECT_NEAR(reflection_loss, 0.05, 0.01);
     }
 }
 
