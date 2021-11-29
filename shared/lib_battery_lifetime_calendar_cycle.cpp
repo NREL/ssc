@@ -54,7 +54,7 @@ void lifetime_cycle_t::init_cycle_counts() {
             DOD_levels.push_back(dod);
         }
     }
-    std::sort(DOD_levels.begin(), DOD_levels.end());
+    std::stable_sort(DOD_levels.begin(), DOD_levels.end());
     state->cycle->cycle_counts.resize_fill(DOD_levels.size(), 2, 0.0);
     for (size_t i = 0; i < DOD_levels.size(); i++) {
         state->cycle->cycle_counts.set_value(DOD_levels[i], i, cycle_state::DOD);
