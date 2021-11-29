@@ -133,9 +133,13 @@ double calculateIrradianceThroughCoverDeSoto(
 	double tau_gnd = transmittance(theta_gnd, n_glass, 1.0, k_glass, l_glass);
 
 	// calculate component incidence angle modifiers, D&B Chap. 5 eqn 5.12.1, DeSoto'04
+    // check that the component incidence angle modifiers are not > 1, which may result for ARC glass due to some model assumptions
 	double Kta_beam = tau_beam / tau_norm;
+    if (Kta_beam > 1.0) Kta_beam = 1.0;
 	double Kta_sky = tau_sky / tau_norm;
+    if (Kta_sky > 1.0) Kta_sky = 1.0;
 	double Kta_gnd = tau_gnd / tau_norm;
+    if (Kta_gnd > 1.0) Kta_gnd = 1.0;
 
 	// total effective irradiance absorbed by solar cell
 	double Geff_total = G_beam * Kta_beam + G_sky * Kta_sky + G_gnd * Kta_gnd;
