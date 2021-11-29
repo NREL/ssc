@@ -348,6 +348,9 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialDCBatteryModelIntegr
     ssc_number_t peakCycles[3] = { 1, 1, 1 };
     ssc_number_t avgCycles[3] = { 1.0, 1.0, 0.4794 };
 
+    ssc_number_t q_rel[3] = { 97.198, 97.178, 97.239 };
+    ssc_number_t cyc_avg[3] = { 33.73, 33.942, 12.381 };
+
     // Test peak shaving look ahead, peak shaving look behind, and automated grid power target. Others require additional input data
     for (int i = 0; i < 3; i++) {
         switch (i) {
@@ -395,6 +398,11 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialDCBatteryModelIntegr
             EXPECT_NEAR(batt_stats.peakKwDischarge, peakKwDischarge[i], m_error_tolerance_lo);
             EXPECT_NEAR(batt_stats.peakCycles, peakCycles[i], m_error_tolerance_lo);
             EXPECT_NEAR(batt_stats.avgCycles, avgCycles[i], 0.0001);
+
+            auto batt_q_rel = data_vtab->as_vector_ssc_number_t("batt_capacity_percent");
+            auto batt_cyc_avg = data_vtab->as_vector_ssc_number_t("batt_DOD_cycle_average");
+            EXPECT_NEAR(batt_q_rel.back(), q_rel[i], 2e-2) << " with dispatch mode " << i;
+            EXPECT_NEAR(batt_cyc_avg.back(), cyc_avg[i], m_error_tolerance_lo) << " with dispatch mode " << i;
         }
     }
 }
@@ -702,6 +710,11 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, CommercialMultipleSubarrayBatte
         EXPECT_NEAR(batt_stats.peakKwDischarge, peakKwDischarge, m_error_tolerance_lo);
         EXPECT_NEAR(batt_stats.peakCycles, peakCycles, m_error_tolerance_lo);
         EXPECT_NEAR(batt_stats.avgCycles, avgCycles, 0.0001);
+
+        auto batt_q_rel = data_vtab->as_vector_ssc_number_t("batt_capacity_percent");
+        auto batt_cyc_avg = data_vtab->as_vector_ssc_number_t("batt_DOD_cycle_average");
+        EXPECT_NEAR(batt_q_rel.back(), 99.221, 2e-2);
+        EXPECT_NEAR(batt_cyc_avg.back(), 10.68, m_error_tolerance_lo);
     }
 
 }
@@ -863,6 +876,11 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_CustomDispatchBatteryModelD
         EXPECT_NEAR(batt_stats.peakKwDischarge, peakKwDischarge, peakKwDischarge * 0.01);
         EXPECT_NEAR(batt_stats.peakCycles, peakCycles, m_error_tolerance_lo);
         EXPECT_NEAR(batt_stats.avgCycles, avgCycles, 0.05);
+
+        auto batt_q_rel = data_vtab->as_vector_ssc_number_t("batt_capacity_percent");
+        auto batt_cyc_avg = data_vtab->as_vector_ssc_number_t("batt_DOD_cycle_average");
+        EXPECT_NEAR(batt_q_rel.back(), 84.485, 2e-2);
+        EXPECT_NEAR(batt_cyc_avg.back(), 22.11, m_error_tolerance_lo);
     }
 
 }
