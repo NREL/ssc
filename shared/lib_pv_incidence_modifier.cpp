@@ -101,7 +101,6 @@ double iamSjerpsKoomen(double n2, double incidenceAngleRadians)
 ///DeSoto IAM model used by CEC model
 double calculateIrradianceThroughCoverDeSoto(
     double theta,   /* incidence angle in degrees */
-    double theta_z, /* zenith angle in degrees */
     double tilt,    /* tilt angle in degrees */
     double G_beam,  /* poa beam */
     double G_sky,   /* poa sky diffuse */
@@ -111,8 +110,6 @@ double calculateIrradianceThroughCoverDeSoto(
 	// establish limits on incidence angle and zenith angle
 	if (theta < 1) theta = 1.0;
 	if (theta > 89) theta = 89.0;
-	if (theta_z > 86.0) theta_z = 86.0; // !Zenith angle must be < 90 (?? why 86?)
-	if (theta_z < 0) theta_z = 0; 
 
 	// transmittance at angle normal to surface (0 deg), use 1 (deg) to avoid numerical probs.
 	double tau_norm = transmittance(1.0, n_glass, 1.0, k_glass, l_glass);

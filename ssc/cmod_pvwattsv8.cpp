@@ -1179,7 +1179,7 @@ public:
                     if (aoi > AOI_MIN && aoi < AOI_MAX && poa_front > 0)
                     {
                         tpoa = calculateIrradianceThroughCoverDeSoto(
-                            aoi, solzen, stilt, ibeam, iskydiff, ignddiff, en_mlm == 0 && module.ar_glass);
+                            aoi, stilt, ibeam, iskydiff, ignddiff, en_mlm == 0 && module.ar_glass);
                         if (tpoa < 0.0) tpoa = 0.0;
                         if (tpoa > poa) tpoa = poa_front;
                     }

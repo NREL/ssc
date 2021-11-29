@@ -68,7 +68,7 @@ double iam_nonorm(double theta_deg, bool ar_glass);  // non-normalized cover los
 double iamSjerpsKoomen(double n, double incidenceAngleRadians);
 
 /// Calculate Irradiance through the cover using the DeSoto model
-double calculateIrradianceThroughCoverDeSoto(double incidenceAngleDegrees, double zenithAngleDegrees, double tiltDegrees,
+double calculateIrradianceThroughCoverDeSoto(double incidenceAngleDegrees, double tiltDegrees,
 		double poaBeam, double poaSkyDiffuse, double poaGroundReflected, bool antiReflectiveGlass);
 
 static const double MarionAOICorrectionFactorsGlass[] = 
