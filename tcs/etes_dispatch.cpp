@@ -343,7 +343,6 @@ bool etes_dispatch_opt::optimize()
         O.add_var("qeh", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0., P["Qehu"]);
         O.add_var("ucsu", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0., P["Ec"] * 1.0001);
         O.add_var("uhsu", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0., P["Eeh"] * 1.0001);
-        O.add_var("zcsu", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0., P["Qu"]);
         O.add_var("zhsu", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0., P["Qehu"]);
 
         O.add_var("y", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_T, nt);
@@ -378,23 +377,23 @@ bool etes_dispatch_opt::optimize()
             for(int t=0; t<nt; t++)
             {
                 i = 0;
-                col[ t + nt*(i  ) ] = O.column("wdot", t);
-                row[ t + nt*(i++) ] = P["delta"] * tadj * params.sell_price.at(t)*(1.-params.w_condf_expected.at(t));
+                row[t + nt * (i)] = P["delta"] * tadj * params.sell_price.at(t) * (1. - params.w_condf_expected.at(t));
+                col[t + nt * (i++)] = O.column("wdot", t);
 
-                col[ t + nt*(i  ) ] = O.column("qeh", t);
-                row[ t + nt*(i++) ] = - (P["delta"] * (1 / tadj) * params.buy_price.at(t) * ( 1 / P["eta_eh"]));
+                row[t + nt * (i)] = -(P["delta"] * (1 / tadj) * params.buy_price.at(t) * (1 / P["eta_eh"]));
+                col[t + nt * (i++)] = O.column("qeh", t);
 
-                col[ t + nt*(i  ) ] = O.column("yhsu", t);
-                row[ t + nt*(i++) ] = - (P["delta"] * (1 / tadj) * params.buy_price.at(t) * (1 / P["eta_eh"]) * P["Qhsu"]);
+                row[t + nt * (i)] = -(P["delta"] * (1 / tadj) * params.buy_price.at(t) * (1 / P["eta_eh"]) * P["Qhsu"]);
+                col[t + nt * (i++)] = O.column("yhsu", t);
 
-                col[ t + nt*(i  ) ] = O.column("ycsup", t);
-                row[ t + nt*(i++) ] = - (1/tadj) * P["csu_cost"];
+                row[t + nt * (i)] = -(1 / tadj) * P["csu_cost"];
+                col[t + nt * (i++)] = O.column("ycsup", t);
 
-                col[ t + nt*(i  ) ] = O.column("delta_w", t);
-                row[ t + nt*(i++) ] = - (1/tadj) * P["pen_delta_w"];
+                row[t + nt * (i)] = -(1 / tadj) * P["pen_delta_w"];
+                col[t + nt * (i++)] = O.column("delta_w", t);
 
-                col[t + nt * (i)] = O.column("yhsu", t);
-                row[t + nt * (i++)] = -(1 / tadj) * P["hsu_cost"];
+                row[t + nt * (i)] = -(1 / tadj) * P["hsu_cost"];
+                col[t + nt * (i++)] = O.column("yhsu", t);
 
                 tadj *= P["disp_time_weighting"];
             }
@@ -419,486 +418,353 @@ bool etes_dispatch_opt::optimize()
 
             for (int t = 0; t < nt; t++)
             {
-                //Electric heater startup inventory
-                int i = 0;
+                int i = 0; // row and col index, reset for every constraint
 
-                row[i] = 1.;
-                col[i++] = O.column("uhsu", t);
-
-                row[i] = -P["delta"] * P["Qhsu"];
-                col[i++] = O.column("yhsu", t);
-
-                if (t > 0)
+                // Electric heater startup inventory
+                // uhsu[t] <= uhsu[t-1] + delta * Qhsu * yhsu[t]
                 {
-                    row[i] = -1.;
-                    col[i++] = O.column("uhsu", t - 1);
+                    double rhs = 0.;
+                    i = 0;
 
-                    add_constraintex(lp, i, row, col, LE, 0);
+                    row[i] = 1.;
+                    col[i++] = O.column("uhsu", t);
+
+                    row[i] = -P["delta"] * P["Qhsu"];
+                    col[i++] = O.column("yhsu", t);
+
+                    if (t > 0)
+                    {
+                        row[i] = -1.;
+                        col[i++] = O.column("uhsu", t - 1);
+                    }
+                    else
+                    {
+                        rhs += P["uhsu0"];
+                    }
+                    add_constraintex(lp, i, row, col, LE, rhs);
                 }
-                else
+
+                // Heater inventory nonzero
+                // uhsu[t] <= Eeh * yhsu[t]
                 {
-                    add_constraintex(lp, i, row, col, LE, P["uhsu0"]);
-                }
+                    i = 0;
+                    row[i] = 1.;
+                    col[i++] = O.column("uhsu", t);
 
-                //inventory nonzero
-                i = 0;
-                row[i  ] = 1.;
-                col[i++] = O.column("uhsu", t);
-
-                row[i  ] = -P["Eeh"]*1.00001;
-                col[i++] = O.column("yhsu", t);
-
-                add_constraintex(lp, i, row, col, LE, 0.);
-
-                //Heaters operation allowed when:
-                i = 0;
-                row[i  ] = P["Eeh"];
-                col[i++] = O.column("yeh", t);
-
-                row[i  ] = -1.0;
-                col[i++] = O.column("uhsu", t);
-
-                if (t > 0)
-                {
-                    row[i  ] = - P["Eeh"];
-                    col[i++] = O.column("yeh", t - 1);
+                    row[i] = -P["Eeh"] * 1.00001;
+                    col[i++] = O.column("yhsu", t);
 
                     add_constraintex(lp, i, row, col, LE, 0.);
                 }
-                else
+
+                // Heater operation allowed when:
+                // yeh[t] <= uhsu[t] / Eeh + yeh[t-1]
                 {
-                    add_constraintex(lp, i, row, col, LE, P["Eeh"] * P["yeh0"]);
+                    double rhs = 0.;
+                    i = 0;
+                    row[i] = P["Eeh"];
+                    col[i++] = O.column("yeh", t);
+
+                    row[i] = -1.0;
+                    col[i++] = O.column("uhsu", t);
+
+                    if (t > 0)
+                    {
+                        row[i] = -P["Eeh"];
+                        col[i++] = O.column("yeh", t - 1);
+                    }
+                    else
+                    {
+                        rhs += P["Eeh"] * P["yeh0"];
+                    }
+                    add_constraintex(lp, i, row, col, LE, rhs);
                 }
 
-                //Heater power limit
-                i = 0;
-                row[i  ] = 1.;
-                col[i++] = O.column("qeh", t);
-
-                row[i  ] = -P["Qehu"];
-                col[i++] = O.column("yeh", t);
-                
-                add_constraintex(lp, i, row, col, LE, 0.);
-
-                //Heater minimum operation requirement
-                i = 0;
-                row[i  ] = 1.;
-                col[i++] = O.column("qeh", t);
-
-                row[i  ] = -P["Qehl"];
-                col[i++] = O.column("yeh", t);
-
-                add_constraintex(lp, i, row, col, GE, 0.);
-
-                //Heaters startup can't be enabled after a time step where the heaters was operating
-                i = 0;
-                row[i  ] = 1.;
-                col[i++] = O.column("yhsu", t);
-
-                if(t>0)
+                // Heater power limit
+                // qeh[t] <= Qehu * yeh[t]
                 {
-                    row[i  ] = 1.;
-                    col[i++] = O.column("yeh", t-1);
+                    i = 0;
+                    row[i] = 1.;
+                    col[i++] = O.column("qeh", t);
+
+                    row[i] = -P["Qehu"];
+                    col[i++] = O.column("yeh", t);
+
+                    add_constraintex(lp, i, row, col, LE, 0.);
+                }
+
+                // Heater minimum operation requirement
+                // qeh[t] >= Qehl * yeh[t]
+                {
+                    i = 0;
+                    row[i] = 1.;
+                    col[i++] = O.column("qeh", t);
+
+                    row[i] = -P["Qehl"];
+                    col[i++] = O.column("yeh", t);
+
+                    add_constraintex(lp, i, row, col, GE, 0.);
+                }
+
+                // Heater startup can't be enabled after a time step where the heaters was operating
+                // yhsu[t] + yeh[t-1] <= 1
+                {
+                    double rhs = 1.;
+                    i = 0;
+                    row[i] = 1.;
+                    col[i++] = O.column("yhsu", t);
+
+                    if (t > 0)
+                    {
+                        row[i] = 1.;
+                        col[i++] = O.column("yeh", t - 1);
+                    }
+                    else
+                    {
+                        rhs += -P["yeh0"];
+                    }
+                    add_constraintex(lp, i, row, col, LE, rhs);
+                }
+
+                // Heater and cycle cannot coincide
+                // yeh[t] + y[t] <= 1
+                {
+                    i = 0;
+                    row[i] = 1.;
+                    col[i++] = O.column("yeh", t);
+
+                    row[i] = 1.;
+                    col[i++] = O.column("y", t);
 
                     add_constraintex(lp, i, row, col, LE, 1.);
                 }
-                else
-                {
-                    add_constraintex(lp, i, row, col, LE, 1. - P["yeh0"]);
-                }
-
-                //Heaters and cycle cannot coincide
-                i = 0;
-                row[i  ] = 1.;
-                col[i++] = O.column("yeh", t);
-
-                row[i  ] = 1.;
-                col[i++] = O.column("y", t);
-
-                add_constraintex(lp, i, row, col, LE, 1.);
             }
         }
         
         // ******************** Power cycle constraints *******************
         {
-            REAL row[3];
-            int col[3];
+            REAL row[7];
+            int col[7];
 
-            //cycle production change
             for (int t = 0; t < nt; t++)
             {
-                // Ramp up
-                int i = 0;
-                row[i] = 1.;
-                col[i++] = O.column("delta_w", t);
+                int i = 0; // row and col index, reset for every constraint
 
-                row[i] = -1.;
-                col[i++] = O.column("wdot", t);
-
-                if (t > 0)
+                // Startup Inventory balance
+                // ucsu[t] <= ucsu[t] + delta * Qcsu * ycsu[t]
                 {
+                    double rhs = 0.;
                     row[i] = 1.;
-                    col[i++] = O.column("wdot", t - 1);
+                    col[i++] = O.column("ucsu", t);
 
-                    add_constraintex(lp, i, row, col, GE, 0.);
-                }
-                else
-                {
-                    add_constraintex(lp, i, row, col, GE, -P["Wdot0"]);
-                }
-            }
+                    row[i] = -P["delta"] * P["Qcsu"];
+                    col[i++] = O.column("ycsu", t);
 
-            //for (int t = 0; t < nt; t++)
-            //{
-            //    // Ramp down
-            //    int i = 0;
-
-            //    row[i] = 1.;
-            //    col[i++] = O.column("delta_w", t);
-
-            //    row[i] = 1.;
-            //    col[i++] = O.column("wdot", t);
-
-            //    if (t > 0)
-            //    {
-            //        row[i] = -1.;
-            //        col[i++] = O.column("wdot", t - 1);
-
-            //        add_constraintex(lp, i, row, col, GE, 0.);
-            //    }
-            //    else
-            //    {
-            //        add_constraintex(lp, i, row, col, GE, P["Wdot0"]);
-            //    }
-            //}
-        }
-
-        //Linearization of the implementation of the piecewise efficiency equation 
-        {
-            REAL row[3];
-            int col[3];
-
-            for (int t = 0; t < nt; t++)
-            {
-                //power production curve
-                int i = 0;
-                row[i] = 1.;
-                col[i++] = O.column("wdot", t);
-
-                row[i] = -P["etap"] * params.eta_pb_expected.at(t) / params.eta_pb_des;
-                col[i++] = O.column("qdot", t);
-
-                row[i] = -(P["Wdotu"] - P["etap"] * P["Qu"]) * params.eta_pb_expected.at(t) / params.eta_pb_des;
-                col[i++] = O.column("y", t);
-
-                //add_constraintex(lp, i, row, col, EQ, 0.);
-                add_constraintex(lp, i, row, col, LE, 0.);
-            }
-        }
-
-        // Power cycle startup and operations
-        {
-            REAL row[5];
-            int col[5];
-
-
-            for(int t=0; t<nt; t++)
-            {
-
-                int i=0;
-                //Startup Inventory balance
-                row[i  ] = 1.;
-                col[i++] = O.column("ucsu", t);
-                
-                row[i  ] = - P["delta"] * P["Qcsu"];
-                col[i++] = O.column("ycsu", t);
-
-                if(t>0)
-                {
-                    row[i  ] = -1.;
-                    col[i++] = O.column("ucsu", t-1);
+                    if (t > 0)
+                    {
+                        row[i] = -1.;
+                        col[i++] = O.column("ucsu", t - 1);
+                    }
 
                     add_constraintex(lp, i, row, col, LE, 0.);
                 }
-                else
-                {
-                    add_constraintex(lp, i, row, col, LE, P["ucsu0"]);
-                }
 
-                //Inventory nonzero
-                i = 0;
-                row[i  ] = 1.;
-                col[i++] = O.column("ucsu", t);
-
-                row[i  ] = -P["Ec"]*1.00001; //tighter formulation
-                col[i++] = O.column("ycsu", t);
-
-                add_constraintex(lp, i, row, col, LE, 0.);
-
-                //Cycle operation allowed when:
-                i = 0;
-                row[i  ] = P["Ec"];
-                col[i++] = O.column("y", t);
-
-                row[i  ] = -1.0;
-                if (P["delta"] >= 1.)
-                {
-                    col[i++] = O.column("ucsu", t);                 // for hourly model (delta = 1)
-                }
-                else
-                {
-                    col[i++] = O.column("ucsu", t - 1);             // for sub-hourly model (delta < 1)
-                }
-
-                if (t > 0)
-                {
-                    row[i  ] = -P["Ec"];
-                    col[i++] = O.column("y", t - 1);
-
-                    add_constraintex(lp, i, row, col, LE, 0.);
-                }
-                else
-                {
-                    add_constraintex(lp, i, row, col, LE, P["Ec"] * P["y0"]);
-                }
-
-                //Cycle consumption limit (valid only for hourly model -> Delta == 1)
-                if (P["delta"] >= 1.)
+                // Inventory nonzero
+                // ucsu[t] <= Ec * ycsu[t]
                 {
                     i = 0;
-                    row[i  ] = 1.;
+                    row[i] = 1.;
+                    col[i++] = O.column("ucsu", t);
+
+                    row[i] = -P["Ec"] * 1.00001; //tighter formulation
+                    col[i++] = O.column("ycsu", t);
+
+                    add_constraintex(lp, i, row, col, LE, 0.);
+                }
+
+                // Cycle operation allowed when startup is complete or already operating or in standby
+                // hourly:    y[t] <=  ucsu[t  ] / Ec + y[t-1] + ycsb[t-1]
+                // subhourly: y[t] <=  ucsu[t-1] / Ec + y[t-1] + ycsb[t-1]   (startup and production cannot coincide)
+                {
+                    i = 0;
+                    row[i] = P["Ec"];
+                    col[i++] = O.column("y", t);
+
+                    row[i] = -1.0;
+                    if (P["delta"] >= 1.)
+                    {
+                        col[i++] = O.column("ucsu", t);                 // for hourly model (delta = 1)
+                    }
+                    else
+                    {
+                        col[i++] = O.column("ucsu", t - 1);             // for sub-hourly model (delta < 1)
+                    }
+
+                    double rhs = 0.;
+
+                    if (t > 0)
+                    {
+                        row[i] = -P["Ec"];
+                        col[i++] = O.column("y", t - 1);
+                    }
+                    else
+                    {
+                        rhs += P["Ec"] * P["y0"];
+                    }
+
+                    add_constraintex(lp, i, row, col, LE, rhs);
+                }
+
+                // Limits the thermal power to the cycle during periods of startup
+                /* NOTE: This is not accurate in terms of thermal power delivered to the power cycle (which should be Qu after start up is completed).
+                    However, in practice this constraint (in addition to providing adding startup power to heat target) provides the dispatch model a disincentive to
+                    start-up on high value periods as fraction of production is lost due to startup time.  Therefore, it better to startup the hour before a high value period. */
+                // qdot[t] + Qcsu * ycsu[t] <= Qu * y[t]
+                {
+                    i = 0;
+                    row[i] = 1.;
                     col[i++] = O.column("qdot", t);
 
-                    //row[i  ] = P["Qcsu"];
-                    //col[i++] = O.column("ycsu", t);
+                    row[i] = P["Qcsu"];
+                    col[i++] = O.column("ycsu", t);
 
-                    row[i  ] = -P["Qu"];
+                    row[i] = -P["Qu"];
                     col[i++] = O.column("y", t);
 
                     add_constraintex(lp, i, row, col, LE, 0.);
                 }
 
-                //cycle operation mode requirement //TODO: This constraint seems redundant
-                //i = 0;
-                //row[i  ] = 1.;
-                //col[i++] = O.column("qdot", t);
-
-                //row[i  ] = -P["Qu"];
-                //col[i++] = O.column("y", t);
-
-                //add_constraintex(lp, i, row, col, LE, 0.);
-
-                //Minimum cycle energy contribution
-                i=0;
-                row[i  ] = 1.;
-                col[i++] = O.column("qdot", t);
-
-                row[i  ] = -P["Ql"];
-                col[i++] = O.column("y", t);
-
-                add_constraintex(lp, i, row, col, GE, 0);
-
-                //cycle startup and operation cannot coincide (valid for sub-hourly model Delta < 1)
-                //if (P["delta"] < 1)
-                //{
-                //    i = 0;
-                //    row[i  ] = 1.;
-                //    col[i++] = O.column("ycsu", t);
-
-                //    row[i  ] = 1.;
-                //    col[i++] = O.column("y", t);
-
-                //    add_constraintex(lp, i, row, col, LE, 1.);
-                //}
-
-                //cycle startup can't be enabled after a time step where the cycle was operating
-                i = 0;
-                row[i  ] = 1.;
-                col[i++] = O.column("ycsu", t);
-
-                if (t > 0)
+                // Cycle maximum operation limit
+                // qdot[t] <= Qu * y[t]
                 {
-                    row[i  ] = 1.;
-                    col[i++] = O.column("y", t-1);
+                    i = 0;
+                    row[i] = 1.;
+                    col[i++] = O.column("qdot", t);
 
-                    add_constraintex(lp, i, row, col, LE, 1.);
-                }
-                else
-                {
-                    add_constraintex(lp, i, row, col, LE, 1 - P["y0"]);
+                    row[i] = -P["Qu"];
+                    col[i++] = O.column("y", t);
+
+                    add_constraintex(lp, i, row, col, LE, 0.);
                 }
 
-                //cycle start penalty
-                i = 0;
-                row[i  ] = 1.;
-                col[i++] = O.column("ycsup", t);
-
-                row[i  ] = -1.;
-                col[i++] = O.column("ycsu", t);
-
-                if (t > 0)
+                // Cycle minimum operation limit
+                // qdot[t] >= Ql * y[t]
                 {
-                    row[i  ] = 1.;
-                    col[i++] = O.column("ycsu", t-1);
+                    i = 0;
+                    row[i] = 1.;
+                    col[i++] = O.column("qdot", t);
 
-                    add_constraintex(lp, i, row, col, GE, 0.);
+                    row[i] = -P["Ql"];
+                    col[i++] = O.column("y", t);
+
+                    add_constraintex(lp, i, row, col, GE, 0);
                 }
-                else
+
+                // Power production linearization (power as function of heat input)
+                // wdot[t] = eta_amb[t]/eta_des * ( etap * qdot[t] + ( Wdotu - etap * Qu ) * y[t] )
                 {
-                    add_constraintex(lp, i, row, col, GE, -P["ycsu0"]);
-                }
-            }
-        }
+                    i = 0;
+                    row[i] = 1.;
+                    col[i++] = O.column("wdot", t);
 
-        //Energy balance constraint
-        {
-            REAL row[7];
-            int col[7];
+                    row[i] = -P["etap"] * params.eta_pb_expected.at(t) / params.eta_pb_des;
+                    col[i++] = O.column("qdot", t);
 
-            for(int t=0; t<nt; t++)
-            {
-                int i=0;
+                    row[i] = -(P["Wdotu"] - P["etap"] * P["Qu"]) * params.eta_pb_expected.at(t) / params.eta_pb_des;
+                    col[i++] = O.column("y", t);
 
-                row[i  ] = P["delta"];
-                col[i++] = O.column("qeh", t);
-
-                row[i] = -P["delta_hsu"];
-                col[i++] = O.column("zhsu", t);
-
-                row[i  ] = -P["delta"];
-                col[i++] = O.column("qdot", t);
-
-                row[i] = P["delta_csu"];
-                col[i++] = O.column("zcsu", t);
-                
-                row[i  ] = -P["delta"]*P["Qcsu"];
-                col[i++] = O.column("ycsu", t);
-                
-                row[i  ] = -1.;
-                col[i++] = O.column("s", t);
-                
-                if(t>0)
-                {
-                    row[i  ] = 1.;
-                    col[i++] = O.column("s", t-1);
-
-                    // Heat loss term would need to be on the RHS +
                     add_constraintex(lp, i, row, col, EQ, 0.);
+                    //add_constraintex(lp, i, row, col, LE, 0.);
                 }
-                else
+
+                // Cycle positive production change (i.e., ramping) We might want to penalize thermal ramping instead to remove the ambient correction
+                // delta_w[t] >= wdot[t] - wdot[t-1]
                 {
-                    add_constraintex(lp, i, row, col, EQ, -P["s0"]);  //initial storage state (kWh)
+                    double rhs = 0.;
+                    i = 0;
+                    row[i] = 1.;
+                    col[i++] = O.column("delta_w", t);
+
+                    row[i] = -1.;
+                    col[i++] = O.column("wdot", t);
+
+                    if (t > 0)
+                    {
+                        row[i] = 1.;
+                        col[i++] = O.column("wdot", t - 1);
+                    }
+                    else
+                    {
+                        rhs += -P["Wdot0"];
+                    }
+                    add_constraintex(lp, i, row, col, GE, rhs);
                 }
-            }
-        }
-        // Auxiliary variable for heaters start-up
-        {
-            REAL row[3];
-            int col[3];
 
-            for (int t = 0; t < nt; t++)
-            {
-                int i = 0;
+                // Cycle negative production change (i.e., ramping) We might want to penalize thermal ramping instead to remove the ambient correction
+                // delta_w[t] >= wdot[t-1] - wdot[t]
+                /*{
+                    double rhs = 0.;
+                    i = 0;
+                    row[i] = 1.;
+                    col[i++] = O.column("delta_w", t);
 
-                row[i] = 1.;
-                col[i++] = O.column("zhsu", t);
+                    row[i] = 1.;
+                    col[i++] = O.column("wdot", t);
 
-                row[i] = -P["Qehu"];
-                col[i++] = O.column("yhsu", t);
+                    if (t > 0)
+                    {
+                        row[i] = -1.;
+                        col[i++] = O.column("wdot", t - 1);
+                    }
+                    else
+                    {
+                        rhs += P["Wdot0"];
+                    }
+                    add_constraintex(lp, i, row, col, GE, rhs);
+                }*/
 
-                add_constraintex(lp, i, row, col, LE, 0);
-            }
+                // Cycle startup can't be enabled after a time step where the cycle was operating
+                // ycsu[t] + y[t-1] <= 1
+                {
+                    double rhs = 1.;
+                    i = 0;
+                    row[i] = 1.;
+                    col[i++] = O.column("ycsu", t);
 
-            for (int t = 0; t < nt; t++)
-            {
-                int i = 0;
+                    if (t > 0)
+                    {
+                        row[i] = 1.;
+                        col[i++] = O.column("y", t - 1);
+                    }
+                    else
+                    {
+                        rhs += -P["y0"];
+                    }
+                    add_constraintex(lp, i, row, col, LE, rhs);
+                }
 
-                row[i] = 1.;
-                col[i++] = O.column("zhsu", t);
+                // Cycle start penalty
+                // ycsup[t] >= ycsu[t] - ycsu[t-1]
+                {
+                    double rhs = 0.;
+                    i = 0;
+                    row[i] = 1.;
+                    col[i++] = O.column("ycsup", t);
 
-                row[i] = -1;
-                col[i++] = O.column("qeh", t);
+                    row[i] = -1.;
+                    col[i++] = O.column("ycsu", t);
 
-                add_constraintex(lp, i, row, col, LE, 0);
-            }
-
-            for (int t = 0; t < nt; t++)
-            {
-                int i = 0;
-
-                row[i] = 1.;
-                col[i++] = O.column("zhsu", t);
-
-                row[i] = -1;
-                col[i++] = O.column("qeh", t);
-
-                row[i] = -P["Qehu"];
-                col[i++] = O.column("yhsu", t);
-
-                add_constraintex(lp, i, row, col, GE, -P["Qehu"]);
-            }
-        }
-        // Auxiliary variable for cycle start-up
-        {
-            REAL row[3];
-            int col[3];
-
-            for (int t = 0; t < nt; t++)
-            {
-                int i = 0;
-
-                row[i] = 1.;
-                col[i++] = O.column("zcsu", t);
-
-                row[i] = -P["Qu"];
-                col[i++] = O.column("ycsu", t);
-
-                add_constraintex(lp, i, row, col, LE, 0);
-            }
-
-            for (int t = 0; t < nt; t++)
-            {
-                int i = 0;
-
-                row[i] = 1.;
-                col[i++] = O.column("zcsu", t);
-
-                row[i] = -1;
-                col[i++] = O.column("qdot", t);
-
-                add_constraintex(lp, i, row, col, LE, 0);
-            }
-
-            for (int t = 0; t < nt; t++)
-            {
-                int i = 0;
-
-                row[i] = 1.;
-                col[i++] = O.column("zcsu", t);
-
-                row[i] = -1;
-                col[i++] = O.column("qdot", t);
-
-                row[i] = -P["Qu"];
-                col[i++] = O.column("ycsu", t);
-
-                add_constraintex(lp, i, row, col, GE, -P["Qu"]);
-            }
-        }
-
-        //Energy in storage must be within limits
-        {
-            REAL row[2];
-            int col[2];
-
-            for(int t=0; t<nt; t++)
-            {
-                int i = 0;
-
-                row[i  ] = 1.;
-                col[i++] = O.column("s", t);
-
-                add_constraintex(lp, i, row, col, LE, P["Eu"]);
+                    if (t > 0)
+                    {
+                        row[i] = 1.;
+                        col[i++] = O.column("ycsu", t - 1);
+                    }
+                    else
+                    {
+                        rhs += -P["ycsu0"];
+                    }
+                    add_constraintex(lp, i, row, col, GE, rhs);
+                }
             }
         }
 
@@ -910,27 +776,28 @@ bool etes_dispatch_opt::optimize()
             // binary logic when switching power cycle state
             for (int t = 0; t < nt; t++)
             {
+                double rhs = 0.;
                 int i = 0;
-                row[i  ] = 1.;
+
+                row[i] = 1.;
                 col[i++] = O.column("ycgb", t);
 
-                row[i  ] = -1.;
+                row[i] = -1.;
                 col[i++] = O.column("ycge", t);
 
-                row[i  ] = -1.;
+                row[i] = -1.;
                 col[i++] = O.column("y", t);
 
                 if (t > 0)
                 {
-                    row[i  ] = 1.;
+                    row[i] = 1.;
                     col[i++] = O.column("y", t - 1);
-
-                    add_constraintex(lp, i, row, col, EQ, 0.);
                 }
                 else
                 {
-                    add_constraintex(lp, i, row, col, EQ, -P["y0"]);
+                    rhs += -P["y0"];
                 }
+                add_constraintex(lp, i, row, col, EQ, rhs);
             }
 
             // minimum up-time constraint
@@ -938,8 +805,8 @@ bool etes_dispatch_opt::optimize()
             {
                 if (params.time_elapsed.at(t) > (P["Yu"] - P["Yu0"])* P["y0"])
                 {
-                    REAL* row = new REAL[nt+2];
-                    int* col = new int[nt+2]; 
+                    REAL* row = new REAL[nt + 2];
+                    int* col = new int[nt + 2];
 
                     int i = 0;
                     for (int tp = 0; tp < nt; tp++)
@@ -947,11 +814,11 @@ bool etes_dispatch_opt::optimize()
                         double delta_time = params.time_elapsed.at(t) - params.time_elapsed.at(tp);
                         if ((delta_time >= 0) && (delta_time < P["Yu"]))
                         {
-                            row[i  ] = 1.;
+                            row[i] = 1.;
                             col[i++] = O.column("ycgb", tp);
                         }
                     }
-                    row[i  ] = -1.;
+                    row[i] = -1.;
                     col[i++] = O.column("y", t);
 
                     add_constraintex(lp, i, row, col, LE, 0.);
@@ -964,7 +831,7 @@ bool etes_dispatch_opt::optimize()
             // minimum down-time constraint
             for (int t = 0; t < nt; t++)
             {
-                if (params.time_elapsed.at(t) > (P["Yd"] - P["Yd0"]) * (1 - P["y0"]))
+                if (params.time_elapsed.at(t) > (P["Yd"] - P["Yd0"])* (1 - P["y0"]))
                 {
                     REAL* row = new REAL[nt + 2];
                     int* col = new int[nt + 2];
@@ -975,11 +842,11 @@ bool etes_dispatch_opt::optimize()
                         double delta_time = params.time_elapsed.at(t) - params.time_elapsed.at(tp);
                         if ((delta_time >= 0) && (delta_time < P["Yd"]))
                         {
-                            row[i  ] = 1.;
+                            row[i] = 1.;
                             col[i++] = O.column("ycge", tp);
                         }
                     }
-                    row[i  ] = 1.;
+                    row[i] = 1.;
                     col[i++] = O.column("y", t);
 
                     add_constraintex(lp, i, row, col, LE, 1.);
@@ -995,7 +862,7 @@ bool etes_dispatch_opt::optimize()
                 if (params.time_elapsed.at(t) <= std::max((P["Yu"] - P["Yu0"]) * P["y0"], (P["Yd"] - P["Yd0"]) * (1 - P["y0"])))
                 {
                     int i = 0;
-                    row[i  ] = 1.;
+                    row[i] = 1.;
                     col[i++] = O.column("y", t);
 
                     add_constraintex(lp, i, row, col, EQ, P["y0"]);
@@ -1003,6 +870,120 @@ bool etes_dispatch_opt::optimize()
                 else
                 {
                     break;
+                }
+            }
+        }
+
+        // ******************** TES Balance constraints *******************
+        {
+            REAL row[7];
+            int col[7];
+
+            for(int t=0; t<nt; t++)
+            {
+                int i = 0; // row and col index, reset for every constraint
+
+                // Energy in, out, and stored in the TES system must balance.
+                // delta * qeh[t] - delta_hsu * zhsu[t] - delta * qdot[t] - delta * Qcsu * ycsu[t] = s[t] - s[t-1]
+                {
+                    double rhs = 0.;
+                    row[i] = P["delta"];
+                    col[i++] = O.column("qeh", t);
+
+                    row[i] = -P["delta_hsu"];
+                    col[i++] = O.column("zhsu", t);
+
+                    row[i] = -P["delta"];
+                    col[i++] = O.column("qdot", t);
+
+                    row[i] = -P["delta"] * P["Qcsu"];
+                    col[i++] = O.column("ycsu", t);
+
+                    row[i] = -1.;
+                    col[i++] = O.column("s", t);
+
+                    if (t > 0)
+                    {
+                        row[i] = 1.;
+                        col[i++] = O.column("s", t - 1);
+
+                        // Heat loss term would need to be on the RHS +
+                    }
+                    else
+                    {
+                        rhs += -P["s0"]; //initial storage state (kWh)
+                    }
+                    add_constraintex(lp, i, row, col, EQ, rhs);
+                }
+
+                // Storage maximium limit
+                // s[t] <= Eu
+                {
+                    i = 0;
+
+                    row[i] = 1.;
+                    col[i++] = O.column("s", t);
+
+                    add_constraintex(lp, i, row, col, LE, P["Eu"]);
+                }
+            }
+        }
+
+        // ****************** Auxiliary variables constraints ***************
+        {
+            REAL row[4];
+            int col[4];
+
+            for (int t = 0; t < nt; t++)
+            {
+                int i = 0;  // row and col index, reset for every constraint
+
+                //******* linearization of zhsu[t] = qeh[t] * yhsu[t] ******
+                {
+                    // Upper bound with Qehu
+                    // zhsu[t] <= Qehu * yhsu[t]
+                    {
+                        i = 0;
+
+                        row[i] = 1.;
+                        col[i++] = O.column("zhsu", t);
+
+                        row[i] = -P["Qehu"];
+                        col[i++] = O.column("yhsu", t);
+
+                        add_constraintex(lp, i, row, col, LE, 0);
+                    }
+
+                    // Upper bound with qeh[t]
+                    // zhsu[t] <= qeh[t]
+                    {
+                        i = 0;
+
+                        row[i] = 1.;
+                        col[i++] = O.column("zhsu", t);
+
+                        row[i] = -1;
+                        col[i++] = O.column("qeh", t);
+
+                        add_constraintex(lp, i, row, col, LE, 0);
+                    }
+
+                    // Lower bound
+                    // zhsu[t] >= qeh[t] - Qehu * ( 1 - yhsu[t] )
+                    {
+                        i = 0;
+
+                        row[i] = 1.;
+                        col[i++] = O.column("zhsu", t);
+
+                        row[i] = -1;
+                        col[i++] = O.column("qeh", t);
+
+                        row[i] = -P["Qehu"];
+                        col[i++] = O.column("yhsu", t);
+
+                        add_constraintex(lp, i, row, col, GE, -P["Qehu"]);
+                    }
                 }
             }
         }
@@ -1134,7 +1115,7 @@ void etes_dispatch_opt::set_outputs_from_lp_solution(lprec* lp, unordered_map<st
         }
         else if (strcmp(root, "qeh") == 0)   //receiver production
         {
-            outputs.q_sf_expected.at(t) = vars[c - 1];
+            outputs.q_sf_expected.at(t) = vars[c - 1] * 1.0001;  // small increase to ensure heater starts when minimum power is applied
         }
         else if (strcmp(root, "wdot") == 0) //electricity production
         {
@@ -1168,7 +1149,7 @@ bool etes_dispatch_opt::set_dispatch_outputs()
         disp_outputs.is_pc_sb_allowed = outputs.pb_standby.at(m_current_read_step);
         disp_outputs.is_pc_su_allowed = outputs.pb_operation.at(m_current_read_step) || disp_outputs.is_pc_sb_allowed;
 
-        disp_outputs.q_pc_target = outputs.q_pb_target.at(m_current_read_step);
+        disp_outputs.q_pc_target = outputs.q_pb_target.at(m_current_read_step) + outputs.q_pb_startup.at(m_current_read_step);
         disp_outputs.q_dot_elec_to_CR_heat = outputs.q_sf_expected.at(m_current_read_step);
 
         if (disp_outputs.q_pc_target + 1.e-5 < params.q_pb_min)
@@ -1177,7 +1158,7 @@ bool etes_dispatch_opt::set_dispatch_outputs()
             disp_outputs.q_pc_target = 0.0;
         }
 
-        disp_outputs.q_dot_pc_max = params.q_pb_max;  //TODO: Talk to ty about this
+        disp_outputs.q_dot_pc_max = params.q_pb_max;
         disp_outputs.etasf_expect = 0.0;
         disp_outputs.qsf_expect = 0.0;
         disp_outputs.qsfprod_expect = outputs.q_sf_expected.at(m_current_read_step);
