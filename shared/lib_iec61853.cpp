@@ -887,9 +887,11 @@ bool iec61853_module_t::operator() ( pvinput_t &input, double TcellC, double opv
 	} 
 	else if(input.usePOAFromWF){ // Check if decomposed POA is required, if not use weather file POA directly
 		tpoa = poa = input.poaIrr;
+        AOIModifier = 1.0;
 	} 
 	else { // Otherwise use decomposed POA
 		tpoa = poa = input.Ibeam + input.Idiff + input.Ignd;
+        AOIModifier = 1.0;
 	}
 	
 	double Tc = input.Tdry + 273.15;
