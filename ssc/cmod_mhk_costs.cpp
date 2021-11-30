@@ -38,7 +38,6 @@ static var_info _cm_vtab_mhk_costs[] = {
 	{ SSC_INPUT,			SSC_NUMBER,			"marine_energy_tech",						"Marine energy technology",								"0/1",			"0=Wave,1=Tidal",				"MHKCosts",			"*",					"MIN=0,MAX=1",				"" },
 	{ SSC_INPUT,			SSC_NUMBER,			"library_or_input_wec",						"Wave library or user input",								"",			"0=Library,1=User",				"MHKCosts",			"marine_energy_tech=0",					"",				"" },
 	{ SSC_INPUT,			SSC_STRING,			"lib_wave_device",							"Wave library name",								"",			"",				"MHKCosts",			"marine_energy_tech=0",					"",				"" },
-
 	{ SSC_INPUT,			SSC_NUMBER,			"inter_array_cable_length",					"Inter-array cable length",								"m",			"",								"MHKCosts",			"*",					"MIN=0",					"" },
 	{ SSC_INPUT,			SSC_NUMBER,			"riser_cable_length",						"Riser cable length",									"m",			"",								"MHKCosts",			"*",					"MIN=0",					"" },
 	{ SSC_INPUT,			SSC_NUMBER,			"export_cable_length",						"Export cable length",									"m",			"",								"MHKCosts",			"*",					"MIN=0",					"" },
@@ -103,9 +102,7 @@ static var_info _cm_vtab_mhk_costs[] = {
 	//O and M costs
 	{ SSC_OUTPUT,			SSC_NUMBER,			"operations_cost",							"Operations cost",										"$",			"",								"MHKCosts",			"",						"",							"" },
 	{ SSC_OUTPUT,			SSC_NUMBER,			"maintenance_cost",							"Maintenance cost",										"$",			"",								"MHKCosts",			"",						"",							"" },
-	
-
-	var_info_invalid };
+    var_info_invalid };
 
 
 
@@ -338,6 +335,8 @@ public:
 		project_contingency = 0.05 * capex;
 		insurance_during_construction = 0.01 * capex;
 		reserve_accounts = 0.03 * capex;
+
+        
 
 		// Assign the CapEx-dependent outputs
 		assign("plant_commissioning_cost_modeled", var_data(static_cast<ssc_number_t>(plant_commissioning)));
