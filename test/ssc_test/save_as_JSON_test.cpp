@@ -136,7 +136,7 @@ TEST(save_as_JSON_test_run, pvwatts_mechant_plant_rapidjson_read_file_run_pvwatt
     EXPECT_TRUE(success);
     ssc_number_t annual_energy;
     ssc_data_get_number(data, "annual_energy", &annual_energy);
-    EXPECT_NEAR(annual_energy, 87969659, 87969659 / 1e6);
+    EXPECT_NEAR(annual_energy, 88017907, 88017907 / 1e6);
 }
 
 
@@ -179,7 +179,7 @@ TEST(save_as_JSON_test_run, pv_batt_mechant_plant_rapidjson) {
     EXPECT_TRUE(success);
     ssc_number_t npv;
     ssc_data_get_number(data, "project_return_aftertax_npv", &npv);
-    EXPECT_NEAR(npv, -94535880, fabs(-94535880) / 1e6);
+    EXPECT_NEAR(npv, -94521027, fabs(-94521027) / 1e6);
 }
 
 TEST(save_as_JSON_test_run, pt_mechant_plant_rapidjson) {
