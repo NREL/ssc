@@ -3545,7 +3545,7 @@ void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double
                                 }
                             }
                         }
-                        cf.at(CF_charging_cost_grid_lcos, a) += -monthly_grid_to_batt[m - 1] / monthly_e_fromgrid[m - 1] * (net_annual_true_up.at(a, m - 1) + net_billing_credit.at(a, m - 1) + net_metering_credit.at(a, m - 1));
+                        if (a != 0 && monthly_e_fromgrid[m - 1] > 0) cf.at(CF_charging_cost_grid_lcos, a) += -monthly_grid_to_batt[m - 1] / monthly_e_fromgrid[m - 1] * (net_annual_true_up.at(a, m - 1) + net_billing_credit.at(a, m - 1) + net_metering_credit.at(a, m - 1));
                         if (std::isnan(cf.at(CF_charging_cost_grid_lcos, a))) throw exec_error("Lcos_calculation", "grid charging cost nan error");
                     }
                 }
@@ -3564,6 +3564,9 @@ void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double
                                 }
                             }
                         }
+                        if (a != 0 && monthly_e_fromgrid[m - 1] > 0) cf.at(CF_charging_cost_grid_lcos, a) += -monthly_grid_to_batt[m - 1] / monthly_e_fromgrid[m - 1] * (net_annual_true_up.at(a, m - 1) + net_billing_credit.at(a, m - 1) + net_metering_credit.at(a, m - 1));
+                        if (std::isnan(cf.at(CF_charging_cost_grid_lcos, a))) throw exec_error("Lcos_calculation", "grid charging cost nan error");
+
                     }
                 }
             }
