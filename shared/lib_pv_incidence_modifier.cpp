@@ -112,11 +112,19 @@ double calculateIrradianceThroughCoverDeSoto(
 	if (theta > 89) theta = 89.0;
 
 	// transmittance at angle normal to surface (0 deg), use 1 (deg) to avoid numerical probs.
-	double tau_norm = transmittance(1.0, n_glass, 1.0, k_glass, l_glass);
+    // need to check for anti-reflective coating on glass here in order to avoid IAM > 1 below
+    double tau_norm = 1.0; //start with a factor of 1 to be modified
+    double theta_norm_after_coating = 1.0; //initialize this to an angle of 1.0 degrees for the calculation of tau_norm without AR coating
+    if (antiReflectiveGlass)
+    {
+        double tau_coating = transmittance(1.0, n_arc, 1.0, k_arc, l_arc, &theta_norm_after_coating);
+        tau_norm *= tau_coating;
+    }
+	tau_norm *= transmittance(theta_norm_after_coating, n_glass, 1.0, k_glass, l_glass);
 
 	// transmittance of beam radiation, at incidence angle
-	double theta_after_coating = theta;
-	double tau_beam = 1.0;
+	double tau_beam = 1.0; //start with a factor of 1 to be modified
+    double theta_after_coating = theta;
 	if (antiReflectiveGlass)
 	{
 		double tau_coating = transmittance(theta, n_arc, 1.0, k_arc, l_arc, &theta_after_coating);
@@ -133,7 +141,7 @@ double calculateIrradianceThroughCoverDeSoto(
 	double tau_gnd = transmittance(theta_gnd, n_glass, 1.0, k_glass, l_glass);
 
 	// calculate component incidence angle modifiers, D&B Chap. 5 eqn 5.12.1, DeSoto'04
-    // check that the component incidence angle modifiers are not > 1, which may result for ARC glass due to some model assumptions
+    // check that the component incidence angle modifiers are not > 1 in case there's some funkiness with the calculations
 	double Kta_beam = tau_beam / tau_norm;
     if (Kta_beam > 1.0) Kta_beam = 1.0;
 	double Kta_sky = tau_sky / tau_norm;
