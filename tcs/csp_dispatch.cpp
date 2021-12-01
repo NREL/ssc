@@ -338,6 +338,7 @@ static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::s
             pars["Qehu"] = optinst->params.q_eh_max;
             pars["Qehl"] = optinst->params.q_eh_min;
             pars["eta_eh"] = 1.0;
+            pars["hsu_cost"] = optinst->params.hsu_cost;
         }
 
         // Initial conditions
@@ -454,6 +455,7 @@ bool csp_dispatch_opt::optimize()
     ======= When parallel heater is enbled =========
     yeh             1 if electrical heaters are operating at time t; 0 otherwise
     yreh            1 if receiver and electrical heaters are operating at time t; 0 otherwise (for defocusing rule)
+    yhsup           1 if electrical heaters startup cost is enforced at time t; 0 otherwise
 
     -------------------------------------------------------------
     */
@@ -500,6 +502,7 @@ bool csp_dispatch_opt::optimize()
             O.add_var("qeh", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0., P["Qehu"]);
             O.add_var("yeh", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_T, nt);
             O.add_var("yreh", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_T, nt);
+            O.add_var("yhsup", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_T, nt);
         }
         
         // Construct LP model and set up variable properties
@@ -511,8 +514,8 @@ bool csp_dispatch_opt::optimize()
         --------------------------------------------------------------------------------
         */
 		{
-            REAL* row = new REAL[12 * nt + 1];
-            int *col = new int[12 * nt + 1];
+            REAL* row = new REAL[14 * nt + 1];
+            int *col = new int[14 * nt + 1];
             double tadj = P["disp_time_weighting"];
             int i = 0;
 
@@ -563,6 +566,9 @@ bool csp_dispatch_opt::optimize()
                 if (params.is_parallel_heater) {
                     row[t + nt * (i)] = -(P["delta"] * params.sell_price.at(t) * (1 / tadj) * (1 / P["eta_eh"]));
                     col[t + nt * (i++)] = O.column("qeh", t);
+
+                    row[t + nt * (i)] = -(1 / tadj) * P["hsu_cost"];
+                    col[t + nt * (i++)] = O.column("yhsup", t);
                 }
 
                 tadj *= P["disp_time_weighting"];
@@ -947,6 +953,25 @@ bool csp_dispatch_opt::optimize()
                     col[i++] = O.column("yeh", t);
 
                     add_constraintex(lp, i, row, col, GE, -1);
+                }
+
+                // Heater startup penalty
+                // yhsup[t] >= yeh[t] - yeh[t-1]
+                {
+                    i = 0;
+                    row[i] = 1.;
+                    col[i++] = O.column("yhsup", t);
+
+                    row[i] = -1.;
+                    col[i++] = O.column("yeh", t);
+
+                    if (t > 0)
+                    {
+                        row[i] = 1.;
+                        col[i++] = O.column("yeh", t - 1);
+                    }
+
+                    add_constraintex(lp, i, row, col, GE, 0.);
                 }
             }
         }

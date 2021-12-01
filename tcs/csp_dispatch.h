@@ -71,6 +71,7 @@ public:
         bool is_parallel_heater;            //[-] Is there a heater parallel to the receiver?
         double q_eh_max;                    //[kWt] Maximum allowable power delivery by the electrical heaters when operating
         double q_eh_min;                    //[kWt] Minimum allowable power delivery by the electrical heaters when operating
+        double hsu_cost;                    //[$/start] Heater startup cost
 
         // Initial Conditions
         bool is_rec_operating0;             //receiver is operating at the initial time step
@@ -127,6 +128,7 @@ public:
             is_parallel_heater = false;
             q_eh_max = 0.0;
             q_eh_min = 0.0;
+            hsu_cost = 10.;
             can_cycle_use_standby = false;
         }
 
@@ -144,12 +146,13 @@ public:
         }
 
         void set_user_params(bool cycle_use_standby, double disp_time_weighting,
-            double disp_rsu_cost, double disp_csu_cost, double disp_pen_delta_w, double disp_inventory_incentive,
+            double disp_rsu_cost, double disp_hsu_cost, double disp_csu_cost, double disp_pen_delta_w, double disp_inventory_incentive,
             double rec_standby_loss, double rec_heattrace)
         {
             can_cycle_use_standby = cycle_use_standby;
             time_weighting = disp_time_weighting;
             rsu_cost = disp_rsu_cost;
+            hsu_cost = disp_hsu_cost;
             csu_cost = disp_csu_cost;
             pen_delta_w = disp_pen_delta_w;
             inventory_incentive = disp_inventory_incentive;
