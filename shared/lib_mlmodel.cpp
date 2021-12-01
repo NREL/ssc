@@ -1,51 +1,23 @@
 /*******************************************************************************************************
-*  Copyright 2017 - pvyield GmbH / Timo Richert
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright 2017 - pvyield GmbH / Timo Richert
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************************************/
 
 /*******************************************************************************************************
@@ -214,19 +186,31 @@ bool mlmodel_module_t::operator() (pvinput_t &input, double T_C, double opvoltag
 	}
 
 	// Total effective irradiance
-	double S;
+	double S_front, S_total, S_eff_front, S_eff_total;
 	if(input.radmode != 3){ // Skip module cover effects if using POA reference cell data
-		S = (f_IAM_beam * input.Ibeam + f_IAM_diff * input.Idiff + groundRelfectionFraction * f_IAM_gnd * input.Ignd) * f_AM;
+		S_front = input.Ibeam + input.Idiff + input.Ignd;
+		S_total = S_front + input.Irear;  // Note the rear irradiance has already taken bifaciality into consideration
+		S_eff_front = (f_IAM_beam * input.Ibeam + f_IAM_diff * input.Idiff + groundRelfectionFraction * f_IAM_gnd * input.Ignd) * f_AM;
+		S_eff_total = S_eff_front + input.Irear * f_AM;
+        if (S_front > 1e-8) {  // TODO: should sunup catch this?
+            out.AOIModifier = S_eff_front / S_front;
+        }
+        else {
+            out.AOIModifier = 1.0;
+        }
     }
     else if(input.usePOAFromWF){ // Check if decomposed POA is required, if not use weather file POA directly
-		S = input.poaIrr;
+		S_total = S_eff_total = input.poaIrr;
+		out.AOIModifier = 1.0;
 	}
     else { // Otherwise use decomposed POA
-		S = (f_IAM_beam * input.Ibeam + f_IAM_diff * input.Idiff + groundRelfectionFraction * f_IAM_gnd * input.Ignd) * f_AM;
+		S_total = input.poaIrr;
+		S_eff_total = input.Ibeam + input.Idiff + input.Ignd + input.Irear;
+		out.AOIModifier = 1.0;
 	}
 
 	// Single diode model acc. to [1]
-	if (S >= 1)
+	if (S_eff_total >= 1)
 	{
 		double n=0.0, a=0.0, I_L=0.0, I_0=0.0, R_sh=0.0, I_sc=0.0;
 		double V_oc = V_oc_ref; // V_oc_ref as initial guess
@@ -245,16 +229,16 @@ bool mlmodel_module_t::operator() (pvinput_t &input, double T_C, double opvoltag
 		for (int i = 1; i <= iterations; i = i + 1) {
 			if (T_mode == T_MODE_FAIMAN) {
 				// T_cell = input.Tdry + (T_c_fa_alpha * G_total * (1 - eff)) / (T_c_fa_U0 + input.Wspd * T_c_fa_U1);
-				T_cell = input.Tdry + (T_c_fa_alpha * S * (1 - eff)) / (T_c_fa_U0 + input.Wspd * T_c_fa_U1);
+				T_cell = input.Tdry + (T_c_fa_alpha * S_eff_total* (1 - eff)) / (T_c_fa_U0 + input.Wspd * T_c_fa_U1);
 			}
 
 			n = n_0 + mu_n * (T_cell - T_ref);
 			a = N_series * k * (T_cell + T_0) * n / q;
-			I_L = (S / S_ref) * (I_Lref + alpha_isc * (T_cell - T_ref));
-			//I_L = (S / S_ref) * (I_Lref + alpha_isc / N_parallel * (T_cell - T_ref));
+			I_L = (S_eff_total/ S_ref) * (I_Lref + alpha_isc * (T_cell - T_ref));
+			//I_L = (S_eff_total/ S_ref) * (I_Lref + alpha_isc / N_parallel * (T_cell - T_ref));
 			I_0 = I_0ref * pow(((T_cell + T_0) / (T_ref + T_0)), 3) * exp((q * E_g) / (n * k) * (1 / (T_ref + T_0) - 1 / (T_cell + T_0)));
 
-			R_sh = R_shref + (R_sh0 - R_shref) * exp(-R_shexp * (S / S_ref));
+			R_sh = R_shref + (R_sh0 - R_shref) * exp(-R_shexp * (S_eff_total/ S_ref));
 
 			V_oc = openvoltage_5par_rec(V_oc, a, I_L, I_0, R_sh, D2MuTau, Vbi);
 			I_sc = I_L / (1 + R_s / R_sh);
@@ -271,7 +255,7 @@ bool mlmodel_module_t::operator() (pvinput_t &input, double T_C, double opvoltag
 				else I = current_5par_rec(V, 0.9*I_L, a, I_L, I_0, R_s, R_sh, D2MuTau, Vbi);
 				P = V*I;
 			}
-			eff = P / ((Width * Length) * (input.Ibeam + input.Idiff + input.Ignd));
+			eff = P / ((Width * Length) * S_total);
 		}
 
 		out.Power = P;
@@ -281,7 +265,6 @@ bool mlmodel_module_t::operator() (pvinput_t &input, double T_C, double opvoltag
 		out.Voc_oper = V_oc;
 		out.Isc_oper = I_sc;
 		out.CellTemp = T_cell;
-		out.AOIModifier = S / (input.Ibeam + input.Idiff + input.Ignd);
 	}
 
 	return out.Power >= 0;

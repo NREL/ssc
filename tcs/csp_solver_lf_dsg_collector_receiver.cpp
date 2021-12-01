@@ -980,7 +980,10 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	{
 		if (m_HLCharType.at(i, 0) == 2)
 		{
-			htfProps.SetFluid(21);
+            // Evacuated tube model assumes sensible fluid for internal convective heat transfer coefficient
+            // So hardcode to Therminol_VP1 here
+            // When calling evacuated tube model, set mass flow to a large value to approximate high heat transfer coefficient of boiling
+            htfProps.SetFluid(21);
 			evac_tube_model.Initialize_Receiver(m_GlazingIntactIn, m_P_a, m_D_5, m_D_4, m_D_3, m_D_2, m_D_p, m_opteff_des, m_Dirt_HCE, m_Shadowing, m_Tau_envelope, m_alpha_abs,
 				m_alpha_env, &eps_abs, m_AnnulusGas, m_AbsorberMaterial, m_EPSILON_4, m_EPSILON_5, m_L_col, &htfProps, m_A_cs, m_D_h, m_Flow_type);
 		}
@@ -1032,12 +1035,21 @@ double C_csp_lf_dsg_collector_receiver::get_pumping_parasitic_coef()
 
 	return std::numeric_limits<double>::quiet_NaN();
 }
+
 double C_csp_lf_dsg_collector_receiver::get_min_power_delivery()
 {
 	throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::write_output_intervals() is not complete"));
 
 
 	return std::numeric_limits<double>::quiet_NaN();
+}
+
+double C_csp_lf_dsg_collector_receiver::get_max_power_delivery(double T_cold_in)
+{
+    throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::get_max_power_delivery() is not complete"));
+
+
+    return std::numeric_limits<double>::quiet_NaN();
 }
 
 double C_csp_lf_dsg_collector_receiver::get_tracking_power()
@@ -1689,9 +1701,10 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 		on_success = false;
 	}
 
+    double diff_m_dot_min = (mc_sca_out_t_end[m_nModTot - 1].m_enth - h_sca_out_target) / h_sca_out_target;     //[-]
 	// If the outlet enthalpy (of final SCA in loop!) is greater than the target (considering some convergence tolerance)
 		// then adjust mass flow rate and see what happens
-	if( (mc_sca_out_t_end[m_nModTot-1].m_enth - h_sca_out_target)/h_sca_out_target > 0.001 && on_success )
+	if( diff_m_dot_min > 0.001 && on_success )
 	{
 		// Next, try the maximum mass flow rate
 		m_dot_loop = m_m_dot_max;		//[kg/s]
@@ -1729,9 +1742,10 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 			on_success = false;
 		}
 
+        double diff_m_dot_max = (mc_sca_out_t_end[m_nModTot - 1].m_enth - h_sca_out_target) / h_sca_out_target;    //[-]
 		// Is the outlet enthalpy (of the final SCA in the loop!) greater than the target (considering some convergence tolerance)?
 			// then need to defocus
-		if( (mc_sca_out_t_end[m_nModTot - 1].m_enth - h_sca_out_target) / h_sca_out_target > 0.001 && on_success )
+		if( diff_m_dot_max > 0.001 && on_success )
 		{
 			C_mono_eq_defocus c_defocus_eq(this, weather, T_cold_in, P_field_out, m_dot_loop, h_sca_out_target, sim_info);
 			C_monotonic_eq_solver c_defocus_solver(c_defocus_eq);
@@ -1790,9 +1804,13 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 			double m_dot_upper = m_m_dot_max;		//[kg/s]
 			double m_dot_lower = m_m_dot_min;		//[kg/s]
 
-			// Set guess values... can be smarter about this, maybe
-			double m_dot_guess_upper = 0.75*m_dot_upper + 0.25*m_dot_lower;	//[kg/s]
-			double m_dot_guess_lower = 0.25*m_dot_upper + 0.75*m_dot_lower;	//[kg/s]
+            C_monotonic_eq_solver::S_xy_pair xy_m_dot_min;
+            xy_m_dot_min.x = m_m_dot_min;
+            xy_m_dot_min.y = diff_m_dot_min;
+
+            C_monotonic_eq_solver::S_xy_pair xy_m_dot_max;
+            xy_m_dot_max.x = m_m_dot_max;
+            xy_m_dot_max.y = diff_m_dot_max;
 
 			// Set solver settings
 			c_h_out_target_solver.settings(0.001, 30, m_dot_lower, m_dot_upper, false);
@@ -1803,7 +1821,7 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 			int m_dot_code = 0;
 			try
 			{
-				m_dot_code = c_h_out_target_solver.solve(m_dot_guess_lower, m_dot_guess_upper, 0.0,
+				m_dot_code = c_h_out_target_solver.solve(xy_m_dot_min, xy_m_dot_max, 0.0,
 													m_dot_loop, tol_solved, iter_solved);
 			}
 			catch( C_csp_exception & )
@@ -2516,7 +2534,8 @@ int C_csp_lf_dsg_collector_receiver::once_thru_loop_energy_balance_T_t_int(const
 		mc_sca_out_t_int[i].m_pres = mc_sca_out_t_end[i].m_pres = mc_sca_in_t_int[i].m_pres;	//[bar]
 
 		transient_energy_bal_numeric_int_ave(mc_sca_in_t_int[i].m_enth, mc_sca_out_t_int[i].m_pres*100.0, m_q_abs[i], m_m_dot_loop,
-			mc_sca_out_t_end_last[i].m_temp, m_C_thermal, sim_info.ms_ts.m_step, mc_sca_out_t_end[i].m_enth, mc_sca_out_t_int[i].m_enth);
+			mc_sca_out_t_end_last[i].m_temp, mc_sca_out_t_end_last[i].m_enth,
+            m_C_thermal, sim_info.ms_ts.m_step, mc_sca_out_t_end[i].m_enth, mc_sca_out_t_int[i].m_enth);
 
 		wp_code = water_PH(mc_sca_out_t_end[i].m_pres*100.0, mc_sca_out_t_end[i].m_enth, &wp);
 		if( wp_code != 0 )
@@ -2609,8 +2628,8 @@ int C_csp_lf_dsg_collector_receiver::once_thru_loop_energy_balance_T_t_int(const
 		// Q_dot out of system
 	m_q_dot_to_sink_subts = m_m_dot_loop*double(m_nLoops)*(mc_sys_hot_out_t_int.m_enth - mc_sys_cold_in_t_int.m_enth)*1.E-3;	//[MWt]
 
-	//double E_bal = m_q_dot_sca_abs_summed_subts - m_q_dot_HR_cold_loss_subts - m_q_dot_HR_hot_loss_subts -
-	//				m_q_dot_to_sink_subts - m_E_dot_sca_summed_subts;
+	double E_bal = m_q_dot_sca_abs_summed_subts - m_q_dot_HR_cold_loss_subts - m_q_dot_HR_hot_loss_subts -
+					m_q_dot_to_sink_subts - m_E_dot_sca_summed_subts;
 
 	// *********************************************************
 	// Calculate total losses and energy balances
@@ -2632,24 +2651,71 @@ int C_csp_lf_dsg_collector_receiver::once_thru_loop_energy_balance_T_t_int(const
 
 void C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int_ave(double h_in /*kJ/kg*/, double P_in /*kPa*/,
 	double q_dot_abs /*kWt*/, double m_dot /*kg/s*/,
-	double T_out_t_end_prev /*K*/,
+	double T_out_t_end_prev /*K*/, double h_out_t_end_prev /*kJ/K*/,
 	double C_thermal /*kJ/K*/, double step /*s*/,
 	double & h_out_t_end /*kJ/K*/, double & h_out_t_int /*kJ/K*/)
 {
 	int n_steps = n_integration_steps;	//[-]
 	double step_subts = step / (double)n_steps;	//[s]
 
+    // Check whether 'T_out_t_end_prev' corresponds to boiling temperature of 'P_in'
+    int water_prop_error = water_PQ(P_in, 0.0, &wp);
+    if (water_prop_error != 0)
+    {
+        throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int",
+            "water_TP error trying to find boiling temperature", water_prop_error));
+    }
+    double T_x0_at_P_in = wp.temp;		//[K]
+
+    double deltaT_tol = 0.001 * T_x0_at_P_in;	//[K]
+    double deltaT = T_out_t_end_prev - T_x0_at_P_in;	//[K]
+
+    double h_out_t_start_local = std::numeric_limits<double>::quiet_NaN();
+    if (fabs(deltaT) >= deltaT_tol)
+    {   // If inlet pressure and initial temperature are not 2-phase, then use properties at water_TP to calculate enthalpy
+        water_prop_error = water_TP(T_out_t_end_prev, P_in, &wp);
+        if (water_prop_error != 0)
+        {
+            throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int",
+                "water_TP error at T_out_t_end_prev and P_in", water_prop_error));
+        }
+        h_out_t_start_local = wp.enth;		//[kJ/kg]
+    }
+    else
+    {   // Inlet pressure and inlet temperature are at or very near 2-phase, so need different method to calculate enthalpy
+        water_prop_error = water_TQ(T_out_t_end_prev + deltaT, 1.0, &wp);
+        if (water_prop_error != 0)
+        {
+            throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int",
+                "water_TQ T_out_t_end_prev q = 0", water_prop_error));
+        }
+        double h_x1 = wp.enth;	//[kJ/kg]
+
+        water_prop_error = water_TQ(T_out_t_end_prev + deltaT, 0.0, &wp);
+        if (water_prop_error != 0)
+        {
+            throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int",
+                "water_TQ T_out_t_end_prev q = 0", water_prop_error));
+        }
+        double h_x0 = wp.enth;	//[kJ/kg]
+
+        // Use enthalpy at end of previous timestep if between x0 and x1
+        // Otherwise, use bound
+        h_out_t_start_local = max(h_x0, min(h_out_t_end_prev, h_x1));   //[kJ/K]
+    }
+
 	double h_out_t_int_sum = 0.0;		//[kJ/K]
 	double h_out_t_end_local = 0.0;		//[kJ/K]
 	double T_out_t_end_prev_local = T_out_t_end_prev;		//[K]
-	double h_out_t_start_local = 0.0;
 	double T_out_t_end_local = 0.0;
 	for(int i = 0; i < n_steps; i++)
 	{
 		try
 		{
-			transient_energy_bal_numeric_int(h_in, P_in, q_dot_abs, m_dot, T_out_t_end_prev_local, C_thermal,
-				step_subts, h_out_t_start_local, h_out_t_end_local, T_out_t_end_local);
+            transient_energy_bal_numeric_int(h_in, P_in, q_dot_abs, m_dot,
+                T_out_t_end_prev_local, h_out_t_start_local,
+                C_thermal, step_subts,
+                h_out_t_end_local, T_out_t_end_local);
 		}
 		catch (C_csp_exception &csp_except)
 		{
@@ -2671,22 +2737,23 @@ void C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int_ave(doubl
 			for (int j = 0; j < n_steps_lx; j++)
 			{
 
-				transient_energy_bal_numeric_int(h_in, P_in, q_dot_abs, m_dot, T_out_t_end_prev_local, C_thermal,
-					steps_subts_local, h_out_t_start_lx, h_out_t_end_lx, T_out_t_end_lx);
+				transient_energy_bal_numeric_int(h_in, P_in, q_dot_abs, m_dot,
+                    T_out_t_end_prev_local, h_out_t_start_local,
+                    C_thermal, steps_subts_local,
+                    h_out_t_end_lx, T_out_t_end_lx);
 
-				h_out_t_int_sum_lx += 0.5*(h_out_t_start_lx + h_out_t_end_lx);
+				h_out_t_int_sum_lx += h_out_t_end_lx;
 				T_out_t_end_prev_local = T_out_t_end_lx;
 			}
 
 			h_out_t_end_local = h_out_t_end_lx;
 			double h_out_t_int_lx = h_out_t_int_sum_lx / (double)n_steps;
-			h_out_t_start_local = 2.0*h_out_t_int_lx - h_out_t_end_local;
 			T_out_t_end_local = T_out_t_end_lx;
 		}
 
-		h_out_t_int_sum += 0.5*(h_out_t_start_local + h_out_t_end_local);	//[kJ/K]
+        h_out_t_int_sum += h_out_t_end_local;   //[kJ/K] if using Backward Euler, then base integrated average on end of subtimestep values
 		T_out_t_end_prev_local = T_out_t_end_local;		//[K]
-
+        h_out_t_start_local = h_out_t_end_local;    //[kJ/K]
 	}
 
 	h_out_t_int = h_out_t_int_sum / (double)n_steps;	//[kJ/K]
@@ -2697,62 +2764,10 @@ void C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int_ave(doubl
 
 void C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int(double h_in /*kJ/kg*/, double P_in /*kPa*/,
 	double q_dot_abs /*kWt*/, double m_dot /*kg/s*/,
-	double T_out_t_end_prev /*K*/,
+	double T_out_t_end_prev /*K*/, double h_out_t_end_prev /*kJ/K*/,
 	double C_thermal /*kJ/K*/, double step /*s*/,
-	double & h_out_t_end_prev /*kJ/K*/, double & h_out_t_end /*kJ/K*/, double & T_out_t_end /*K*/)
+	double & h_out_t_end /*kJ/K*/, double & T_out_t_end /*K*/)
 {
-	// Check whether 'T_out_t_end_prev' corresponds to boiling temperature of 'P_in'
-	int water_prop_error = water_PQ(P_in, 0.0, &wp);
-	if(water_prop_error != 0)
-	{
-		throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int",
-			"water_TP error trying to find boiling temperature", water_prop_error));
-	}
-	double T_x0_at_P_in = wp.temp;		//[K]
-
-	double deltaT_tol = 0.001*T_x0_at_P_in;	//[K]
-	double deltaT = T_out_t_end_prev - T_x0_at_P_in;	//[K]
-
-	if (fabs(deltaT) >= deltaT_tol)
-	{
-		water_prop_error = water_TP(T_out_t_end_prev, P_in, &wp);
-		if (water_prop_error != 0)
-		{
-			throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int",
-				"water_TP error at T_out_t_end_prev and P_in", water_prop_error));
-		}
-		h_out_t_end_prev = wp.enth;		//[kJ/kg]
-	}
-	else
-	{
-		double f_deltaT = fabs(deltaT) / deltaT_tol;	//[-]
-
-		if (T_out_t_end_prev > T_x0_at_P_in)
-		{
-			water_prop_error = water_TQ(T_out_t_end_prev + deltaT, 1.0, &wp);
-			if (water_prop_error != 0)
-			{
-				throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int",
-					"water_TQ T_out_t_end_prev q = 0", water_prop_error));
-			}
-			double h_1phase = wp.enth;	//[kJ/kg]
-
-			h_out_t_end_prev = (1.0 - f_deltaT)*h_in + f_deltaT * h_1phase;		//[kJ/kg]
-		}
-		else
-		{
-			water_prop_error = water_TQ(T_out_t_end_prev + deltaT, 0.0, &wp);
-			if (water_prop_error != 0)
-			{
-				throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int",
-					"water_TQ T_out_t_end_prev q = 0", water_prop_error));
-			}
-			double h_1phase = wp.enth;	//[kJ/kg]
-
-			h_out_t_end_prev = (1.0 - f_deltaT)*h_in + f_deltaT * h_1phase;	//[kJ/kg]
-		}
-	}
-
 	// Guess2: outlet enthalpy is from a steady state calculation
 	double h_out_t_end_guess2 = h_in + q_dot_abs/m_dot;		//[kJ/kg]
 
@@ -2775,7 +2790,7 @@ void C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int(double h_
 	C_monotonic_eq_solver c_h_out_t_end_solver(c_transient_energy_bal);
 
 	// Get minimum enthalpy at this pressure
-	water_prop_error = water_TP(m_wp_min_temp*1.01, P_in, &wp);
+	int water_prop_error = water_TP(m_wp_min_temp*1.01, P_in, &wp);
 	if(water_prop_error != 0)
 	{
 		throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int",
@@ -2814,11 +2829,7 @@ void C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int(double h_
 
 	if( h_out_t_end_code != C_monotonic_eq_solver::CONVERGED )
 	{
-		if( tol_solved == tol_solved && tol_solved < 0.1 )
-		{
-			double blah = 1.23;
-		}
-		else
+		if ( !(h_out_t_end_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) <= 0.1))
 		{
 			throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int monotonic solver failed to reach convergence","",5));
 		}
@@ -2837,10 +2848,14 @@ int C_csp_lf_dsg_collector_receiver::C_mono_eq_transient_energy_bal::operator()(
 	}
 	m_T_out_t_end = mc_wp.temp;	//[K]
 
-	double dTdt_prev = (m_q_dot_abs + m_m_dot*(m_h_in - m_h_out_t_end_prev));
 	double dTdt_next = (m_q_dot_abs + m_m_dot*(m_h_in - h_out_t_end));
 
-	double T_out_t_end_calc = m_T_out_t_end_prev + 0.5*m_step/m_C_thermal*(dTdt_prev + dTdt_next);	//[K]
+    // Crank-Nicolson method
+    //double dTdt_prev = (m_q_dot_abs + m_m_dot*(m_h_in - m_h_out_t_end_prev));
+	//double T_out_t_end_calc = m_T_out_t_end_prev + 0.5*m_step/m_C_thermal*(dTdt_prev + dTdt_next);	//[K]
+
+    // Backward Euler method
+    double T_out_t_end_calc = m_T_out_t_end_prev + m_step / m_C_thermal * dTdt_next;	//[K]
 
 	*diff_T_out_t_end = (m_T_out_t_end - T_out_t_end_calc) / m_T_out_t_end_prev;		//[-]
 

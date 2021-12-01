@@ -31,6 +31,7 @@ struct BatteryPower;
 class BatteryPowerFlow;
 class UtilityRate;
 class UtilityRateCalculator;
+class outage_manager;
 
 namespace battery_dispatch
 {
@@ -68,7 +69,10 @@ public:
 		double t_min,
 		int dispatch_mode,
 		int meter_position,
-        double interconnection_limit);
+        double interconnection_limit,
+        bool chargeOnlySystemExceedLoad = true, // Optional so FOM doesn't have to specify them
+        bool dischargeOnlyLoadExceedSystem = true,
+        double SOC_min_outage = 0.0);
 
 	// deep copy constructor (new memory), from dispatch to this
 	dispatch_t(const dispatch_t& dispatch);
@@ -106,11 +110,14 @@ public:
 	double power_fuelcell_to_batt();
 	double power_pv_to_grid();
 	double power_battery_to_grid();
+    double power_battery_to_system_load();
 	double power_fuelcell_to_grid();
 	double power_conversion_loss();
 	double power_system_loss();
     double power_interconnection_loss();
     double power_crit_load_unmet();
+    double power_crit_load();
+    double power_losses_unmet();
 
 	virtual double power_grid_target(){	return 0;}
 	virtual double power_batt_target(){ return 0.;}
@@ -129,10 +136,12 @@ public:
 	/// Return a pointer to the object which calculates the battery power flow
 	BatteryPowerFlow * getBatteryPowerFlow();
 
+    double _min_outage_soc;
+
 protected:
 
 	/// Helper function to run common dispatch tasks.  Requires that m_batteryPower->powerBattery is previously defined
-	virtual void runDispatch(size_t year, size_t hour, size_t step);
+	virtual void runDispatch(size_t lifetimeIndex);
 
 	// Initialization help
 	void init(battery_t * Battery,
@@ -148,6 +157,10 @@ protected:
 	bool restrict_current(double &I);
 	bool restrict_power(double &I);
 
+    void run_outage_step(size_t lifetimeIndex);
+    void dispatch_dc_outage_step(size_t lifetimeIndex);
+    void dispatch_ac_outage_step(size_t lifetimeIndex);
+
 	battery_t * _Battery;
 	battery_t * _Battery_initial;
 
@@ -155,8 +168,8 @@ protected:
 
 	/**
 	The dispatch mode.
-	For behind-the-meter dispatch: 0 = LOOK_AHEAD, 1 = LOOK_BEHIND, 2 = MAINTAIN_TARGET, 3 = CUSTOM, 4 = MANUAL, 5 = FORECAST
-	For front-of-meter dispatch: 0 = FOM_LOOK_AHEAD, 1 = FOM_LOOK_BEHIND, 2 = INPUT FORECAST, 3 = CUSTOM, 4 = MANUAL, 5 = PV Smoothing
+	For behind-the-meter dispatch: 0 = PEAK_SHAVING, 1 = MAINTAIN_TARGET, 2 = CUSTOM, 3 = MANUAL, 4 = FORECAST
+	For front-of-meter dispatch: 0 = FOM_AUTOMATED_ECONOMIC, 1 = FOM_PV_SMOOTHING, 2 = FOM_CUSTOM_DISPATCH, 3 = FOM_MANUAL
 	*/
 	int _mode;
 
@@ -165,6 +178,8 @@ protected:
 
 	// managed by BatteryPowerFlow
 	BatteryPower * m_batteryPower;
+
+    std::unique_ptr<outage_manager> m_outage_manager;
 
 	// Charge & current limits controllers
 	int _current_choice;
@@ -177,7 +192,41 @@ protected:
 	bool _charging;
 	bool _prev_charging;
 	bool _grid_recharge;
+};
 
+/*! Class responsible for changing and storing outage related variables for when the grid goes out or comes back */
+class outage_manager
+{
+public:
+    outage_manager(BatteryPower* batteryPower, battery_t* battery);
+
+    ~outage_manager();
+
+    // Use this to copy member variables other than the m_batteryPower pointer. Use the pointer created by dispatch_t's copy constructor.
+    void copy(const outage_manager& tmp);
+
+    void update(bool isAutomated, double min_outage_soc);
+
+    void startOutage(double min_outage_soc);
+
+    void endOutage(bool isAutomated);
+
+    bool recover_from_outage; // Tells the dispatch algorithms to re-plan given outage recovery
+
+private:
+    // Managed by dispatch_t::m_batteryPowerFlow
+    BatteryPower* m_batteryPower;
+    battery_t* _Battery; // Managed by dispatch_t
+
+    bool canSystemChargeWhenGrid;	///< A boolean specifying whether the battery is allowed to charge from PV when the grid is on
+    bool canClipChargeWhenGrid;	///< A boolean specifying whether the battery is allowed to charge from otherwise clipped PV when the grid is on
+    bool canGridChargeWhenGrid; ///< A boolean specifying whether the battery is allowed to charge from the Grid when the grid is on
+    bool canDischargeWhenGrid;  ///< A boolean specifying whether the battery is allowed to discharge when the grid is on
+
+    double stateOfChargeMaxWhenGrid;   ///< The maximum state of charge when the grid is on (0-100)
+    double stateOfChargeMinWhenGrid;   ///< The minimum state of charge when the grid is on (0-100)
+
+    bool last_step_was_outage; // Used by outage manager to determine when to call endOutage
 };
 
 /*! Class containing calculated grid power at a single time step */
@@ -257,7 +306,11 @@ public:
         std::vector<double> battReplacementCostPerkWh,
         int battCycleCostChoice,
         std::vector<double> battCycleCost,
-        double interconnection_limit
+        double interconnection_limit,
+        bool chargeOnlySystemExceedLoad = true,  // Optional so FOM doesn't have to specify them
+        bool dischargeOnlyLoadExceedSystem = true,
+        bool behindTheMeterDischargeToGrid = true,
+        double SOC_min_outage = 0.0
 		);
 
 	virtual ~dispatch_automatic_t(){};

@@ -1,3 +1,25 @@
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 #include <cmath>
 #include <iterator>
 #include <vector>
@@ -189,11 +211,12 @@ double UtilityRateForecast::forecastCost(std::vector<double>& predicted_loads, s
     }
 
 	// Get previous peak cost - may need to run two months
+    rate->set_billing_demands();
 	double previousDemandCharge = rate->get_demand_charge(month, year);
     double previousEnergyCharge = 0;
     if (rate->enable_nm)
     {
-        previousEnergyCharge = getEnergyChargeNetMetering(month, current_composite_buy_rates, current_composite_sell_rates);
+        previousEnergyCharge = rate->getEnergyChargeNetMetering(month, current_composite_buy_rates, current_composite_sell_rates);
     }
 	if (crossing_month)
 	{
@@ -215,7 +238,7 @@ double UtilityRateForecast::forecastCost(std::vector<double>& predicted_loads, s
             if (rate->enable_nm)
             {
                 // restartMonth will change the sign of energyUse from what getEnergyCharge expects, so compute that first
-                newEnergyCharge += getEnergyChargeNetMetering(month, current_composite_buy_rates, current_composite_sell_rates);
+                newEnergyCharge += rate->getEnergyChargeNetMetering(month, current_composite_buy_rates, current_composite_sell_rates);
             }
 			// This handles net metering carryover
 			restartMonth(month, current_month, year_at_end);
@@ -246,13 +269,14 @@ double UtilityRateForecast::forecastCost(std::vector<double>& predicted_loads, s
 	}
 
     // Compute new peak cost - may need to run two months
+    rate->set_billing_demands();
     double newDemandCharge = rate->get_demand_charge(month, year);
     // If forecast length is 1, restartMonth won't be triggered on the next forecast. Trigger it now
     if (crossing_month && n == 1)
     {
         if (rate->enable_nm)
         {
-            newEnergyCharge += getEnergyChargeNetMetering(month, current_composite_buy_rates, current_composite_sell_rates);
+            newEnergyCharge += rate->getEnergyChargeNetMetering(month, current_composite_buy_rates, current_composite_sell_rates);
         }
         restartMonth(month, month_at_end, year_at_end);
         copyTOUForecast();
@@ -263,12 +287,12 @@ double UtilityRateForecast::forecastCost(std::vector<double>& predicted_loads, s
 		newDemandCharge += rate->get_demand_charge(month_at_end, year_at_end);
         if (rate->enable_nm)
         {
-            newEnergyCharge += getEnergyChargeNetMetering(month_at_end, next_composite_buy_rates, next_composite_sell_rates);
+            newEnergyCharge += rate->getEnergyChargeNetMetering(month_at_end, next_composite_buy_rates, next_composite_sell_rates);
         }
 	}
     else if(rate->enable_nm)
     {
-        newEnergyCharge += getEnergyChargeNetMetering(month, current_composite_buy_rates, current_composite_sell_rates);
+        newEnergyCharge += rate->getEnergyChargeNetMetering(month, current_composite_buy_rates, current_composite_sell_rates);
     }
 
 	cost += newDemandCharge + newEnergyCharge - previousDemandCharge - previousEnergyCharge;
@@ -279,100 +303,15 @@ double UtilityRateForecast::forecastCost(std::vector<double>& predicted_loads, s
 // Year indexes from 0
 void UtilityRateForecast::compute_next_composite_tou(int month, size_t year)
 {
-	ur_month& curr_month = rate->m_month[month];
 	double expected_load = m_monthly_load_forecast[year * 12 + (size_t) month];
-	ssc_number_t rate_esc = rate->rate_scale[year];
+	
 	next_composite_buy_rates.clear();
-
-	ssc_number_t num_per = (ssc_number_t)curr_month.ec_tou_br.nrows();
-	if (expected_load > 0)
-	{
-		for (size_t ir = 0; ir < num_per; ir++)
-		{
-			bool done = false;
-			double periodCost = 0;
-			for (size_t ic = 0; ic < curr_month.ec_tou_ub.ncols() && !done; ic++)
-			{
-				ssc_number_t ub_tier = curr_month.ec_tou_ub.at(ir, ic);
-				ssc_number_t prev_tier = 0;
-				if (ic > 0)
-				{
-					prev_tier = curr_month.ec_tou_ub.at(ir, ic - 1);
-				}
-
-				if (expected_load > ub_tier)
-				{
-					periodCost += (ub_tier - prev_tier) / expected_load * curr_month.ec_tou_br.at(ir, ic) * rate_esc;
-				}
-				else
-				{
-					periodCost += (expected_load - prev_tier) / expected_load * curr_month.ec_tou_br.at(ir, ic) * rate_esc;
-					done = true;
-				}
-				
-			}
-			next_composite_buy_rates.push_back(periodCost);
-		}
-	}
-	else
-	{
-		for (size_t ir = 0; ir < num_per; ir++)
-		{
-			double periodBuyRate = curr_month.ec_tou_br.at(ir, 0) * rate_esc;
-			next_composite_buy_rates.push_back(periodBuyRate);
-		}
-	}
+    next_composite_buy_rates = rate->get_composite_tou_buy_rate(month, year, expected_load);
 
 	// repeat for surplus
 	double expected_gen = m_monthly_gen_forecast[year * 12 + month];
 	next_composite_sell_rates.clear();
-	num_per = (ssc_number_t)curr_month.ec_tou_sr.nrows();
-
-	if (expected_gen > 0)
-	{
-		for (size_t ir = 0; ir < num_per; ir++)
-		{
-			bool done = false;
-			double periodSellRate = 0;
-            // Including the NM credits in the cost function can skew the price signals, causing periods to appear to have higher cost than they actually do. Assume $0 sell rate for NM
-            if (!rate->nm_credits_w_rollover)
-            {
-                for (size_t ic = 0; ic < curr_month.ec_tou_ub.ncols() && !done; ic++)
-                {
-                    ssc_number_t ub_tier = curr_month.ec_tou_ub.at(ir, ic);
-                    ssc_number_t prev_tier = 0;
-                    if (ic > 0)
-                    {
-                        prev_tier = curr_month.ec_tou_ub.at(ir, ic - 1);
-                    }
-
-                    if (expected_gen > ub_tier)
-                    {
-                        periodSellRate += (ub_tier - prev_tier) / expected_gen * curr_month.ec_tou_sr.at(ir, ic) * rate_esc;
-                    }
-                    else
-                    {
-                        periodSellRate += (expected_gen - prev_tier) / expected_gen * curr_month.ec_tou_sr.at(ir, ic) * rate_esc;
-                        done = true;
-                    }
-                }
-            }
-			next_composite_sell_rates.push_back(periodSellRate);
-		}
-	}
-	else
-	{
-		for (size_t ir = 0; ir < num_per; ir++)
-		{
-            double periodSellRate = 0; 
-            // Including the NM credits in the cost function can skew the price signals, causing periods to appear to have higher cost than they actually do. Assume $0 sell rate for NM
-            if (!rate->nm_credits_w_rollover)
-            {
-                periodSellRate = curr_month.ec_tou_sr.at(ir, 0)* rate_esc;
-            }
-			next_composite_sell_rates.push_back(periodSellRate);
-		}
-	}
+    next_composite_sell_rates = rate->get_composite_tou_sell_rate(month, year, expected_gen);
 }
 
 void UtilityRateForecast::initializeMonth(int month, size_t year)
@@ -415,27 +354,6 @@ void UtilityRateForecast::restartMonth(int prevMonth, int currentMonth, size_t y
         rate->transfer_surplus(curr_month, prev_month);
     }
     prev_month.reset();
-}
-
-double UtilityRateForecast::getEnergyChargeNetMetering(int month, std::vector<double>& buy_rates, std::vector<double>& sell_rates)
-{
-    double cost = 0;
-    ur_month& curr_month = rate->m_month[month];
-    ssc_number_t num_per = (ssc_number_t)curr_month.ec_energy_use.nrows();
-    for (size_t ir = 0; ir < num_per; ir++)
-    {
-        ssc_number_t per_energy = curr_month.ec_energy_use.at(ir, 0);
-        if (per_energy < 0 && !rate->en_ts_buy_rate)
-        {
-            cost += buy_rates[ir] * -per_energy;
-        }
-        else if (!rate->en_ts_sell_rate)
-        {
-            cost -= sell_rates[ir] * per_energy;
-        }
-    }
-
-	return cost;
 }
 
 double UtilityRateForecast::getEnergyChargeNetBillingOrTimeSeries(double energy, size_t year_one_index, int current_month, size_t year, bool use_next_month)

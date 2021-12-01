@@ -38,7 +38,7 @@ enum conversionTypes { NO_CONVERSION_TYPE, BINARY, FLASH }; //}
 enum resourceTypes { NO_RESOURCE_TYPE, HYDROTHERMAL, EGS };
 enum flashTypes { NO_FLASH_SUBTYPE, SINGLE_FLASH_NO_TEMP_CONSTRAINT, SINGLE_FLASH_WITH_TEMP_CONSTRAINT, DUAL_FLASH_NO_TEMP_CONSTRAINT, DUAL_FLASH_WITH_TEMP_CONSTRAINT };
 enum tempDeclineMethod { NO_TEMPERATURE_DECLINE_METHOD, ENTER_RATE, CALCULATE_RATE };
-enum makeupAlgorithmType { NO_MAKEUP_ALGORITHM, MA_BINARY, MA_FLASH, MA_EGS }; //}
+enum makeupAlgorithmType { NO_MAKEUP_ALGORITHM, MA_BINARY, MA_FLASH, MA_EGS_BINARY, MA_EGS_FLASH }; //}
 enum condenserTypes { NO_CONDENSER_TYPE, SURFACE, DIRECT_CONTACT };
 enum ncgRemovalTypes { NO_NCG_TYPE, JET, VAC_PUMP, HYBRID };
 enum wellCostCurveChoices { NO_COST_CURVE, LOW, MED, HIGH };
@@ -61,6 +61,7 @@ struct SGeothermal_Inputs
 		md_WaterLossPercent = md_EGSFractureAperature = md_EGSNumberOfFractures = md_EGSFractureWidthM = md_EGSFractureAngle = 0.0;
 		md_TemperatureEGSAmbientC = md_RatioInjectionToProduction = 0.0;
 		md_AdditionalPressure = 1.0;
+        md_dtProdWell = 0.0;
 	}
 
 	calculationBasis me_cb;									// { NO_CALCULATION_BASIS, POWER_SALES, NUMBER_OF_WELLS };
@@ -113,6 +114,7 @@ struct SGeothermal_Inputs
 	double md_EGSFractureAngle;								// default 15 degrees
 	double md_RatioInjectionToProduction;					// used in non-cost equation, so it needs to be an input
 	double md_AdditionalPressure;							// manually enter additional psi for injection pumps
+    double md_dtProdWell;                                   // degrees C, temperature loss in production well
 
 
 	const char * mc_WeatherFileName;
@@ -303,7 +305,7 @@ private:
 
 	// turbine output
 	double calculateX(double enthalpyIn, double temperatureF);
-	double enthalpyChangeTurbine(double dEnthalpyDeltaInitial, double dEnthalpyTurbineG); // I65-I80, I87-I102
+    double enthalpyChangeTurbine(double dEnthalpyDeltaInitial, double dEnthalpyTurbineG, double dCondF, double dCondG); // I65-I80, I87-I102
 
 	// Flash Turbine 1 - high pressure
 	double turbine1dHInitial(void); // I65
@@ -353,7 +355,8 @@ private:
 
 
 	int FlashCount(void);
-	double calculateDH(double pressureIn);
+	double calculateDH1(double pressureIn);
+    double calculateDH2(double pressureIn);
 	double TemperatureWetBulbF(void);
 	double temperatureCondF(void); // D72 - deg F
 	double pressureSaturation(void); // D72 - psi
@@ -437,6 +440,9 @@ private:
 	double pressureDualLowConstrained(void);  // T65
 	double pressureDualLowToTest(void); // R65 or T65
 	double pressureDualLow(void); // P65
+    double pressureDualFlashTempHigh(void);
+    double pressureDualFlashTempLow(void);
+    double pressureSingleFlash(void);
 
 
 	// weather file opening, reading, checking inputs, etc.

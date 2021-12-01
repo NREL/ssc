@@ -157,6 +157,7 @@ void N_mspt::calculate_mspt_etes_costs(
             receiver_cost,
             tes_cost,
             power_cycle_cost,
+            heater_cost,
             rad_field_totcost,
             rad_fluid_totcost,
             rad_storage_totcost,
@@ -573,6 +574,7 @@ double N_mspt::direct_capital_precontingency_cost(double site_improvement_cost /
 	double receiver_cost /*$*/,
 	double tes_cost /*$*/,
 	double power_cycle_cost /*$*/,
+    double heater_cost /*$*/,
 	double rad_field_totcost /*$*/,
 	double rad_fluid_totcost /*$*/,
 	double rad_storage_totcost /*$*/,
@@ -585,6 +587,7 @@ double N_mspt::direct_capital_precontingency_cost(double site_improvement_cost /
 		receiver_cost +
 		tes_cost +
 		power_cycle_cost +
+        heater_cost +
 		rad_field_totcost +
 		rad_fluid_totcost +
 		rad_storage_totcost +

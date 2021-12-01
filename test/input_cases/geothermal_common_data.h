@@ -1,3 +1,26 @@
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+
 #ifndef _GEOTHERMAL_COMMON_DATA_H_
 #define _GEOTHERMAL_COMMON_DATA_H_
 
@@ -36,6 +59,7 @@ static void geothermal_singleowner_default(ssc_data_t &data)
 	ssc_data_set_number(data, "decline_type", 0);
 	ssc_data_set_number(data, "temp_decline_rate", 0.5);
 	ssc_data_set_number(data, "temp_decline_max", 30);
+    ssc_data_set_number(data, "dt_prod_well", 0.0);
 	ssc_data_set_number(data, "wet_bulb_temp", 15);
 	ssc_data_set_number(data, "ambient_pressure", 14.699999809265137);
 	ssc_data_set_number(data, "well_flow_rate", 110);
@@ -236,8 +260,6 @@ static void geothermal_singleowner_default(ssc_data_t &data)
 	ssc_data_set_array(data, "gen", p_gen, 1);
 	ssc_number_t p_degradation[1] = { 0 };
 	ssc_data_set_array(data, "degradation", p_degradation, 1);
-	ssc_number_t p_roe_input[1] = { 0 };
-	ssc_data_set_array(data, "roe_input", p_roe_input, 1);
 	ssc_data_set_number(data, "loan_moratorium", 0);
 	ssc_data_set_number(data, "system_use_recapitalization", 1);
 	ssc_data_set_number(data, "system_recapitalization_cost", 18771578);
@@ -268,7 +290,7 @@ static void geothermal_singleowner_default(ssc_data_t &data)
 	ssc_data_set_number(data, "equip_reserve_depr_sta", 0);
 	ssc_data_set_number(data, "equip_reserve_depr_fed", 0);
 	ssc_data_set_number(data, "salvage_percentage", 0);
-	ssc_data_set_number(data, "ppa_soln_mode", 0);
+	ssc_data_set_number(data, "ppa_soln_mode", 1);
 	ssc_number_t p_ppa_price_input[1] = { 0 };
 	ssc_data_set_array(data, "ppa_price_input", p_ppa_price_input, 1);
 	ssc_data_set_number(data, "cp_capacity_payment_esc", 0);

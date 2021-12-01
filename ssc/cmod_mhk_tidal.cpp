@@ -1,52 +1,24 @@
-/*******************************************************************************************************
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (�Alliance�) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as �System Advisor Model� or �SAM�. Except
-*  to comply with the foregoing, the terms �System Advisor Model�, �SAM�, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************************************/
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #include "core.h"
 #include "common.h"
@@ -62,6 +34,7 @@ static var_info _cm_vtab_mhk_tidal[] = {
     { SSC_INPUT,			SSC_NUMBER,			"balance_of_system_cost_total",						"BOS costs",									"$",				"",             "MHKTidal",         "?=1",                      "",				"" },
     { SSC_INPUT,			SSC_NUMBER,			"financial_cost_total",						"Financial costs",									"$",				"",             "MHKTidal",         "?=1",                      "",				"" },
     { SSC_INPUT,			SSC_NUMBER,			"total_operating_cost",						"O&M costs",									"$",				"",             "MHKTidal",         "?=1",                      "",				"" },
+    { SSC_INPUT,			SSC_NUMBER,			"system_capacity",						"System Nameplate Capacity",										"kW",			"",				"MHKTidal",			"?=0",						"",							"" },
 
 
 	// losses
@@ -93,6 +66,12 @@ static var_info _cm_vtab_mhk_tidal[] = {
     { SSC_OUTPUT,			SSC_NUMBER,			"total_bos_cost_lcoe",                  "BOS cost",		"%",			"",				"MHKTidal",			"*",						"",						"" },
     { SSC_OUTPUT,			SSC_NUMBER,			"total_financial_cost_lcoe",            "Financial cost",		"%",			"",				"MHKTidal",			"*",						"",						"" },
     { SSC_OUTPUT,			SSC_NUMBER,			"total_om_cost_lcoe",                   "O&M cost (annual)",		"%",			"",				"MHKTidal",			"*",						"",						"" },
+    //Cost per KW
+    { SSC_OUTPUT,			SSC_NUMBER,			"total_capital_cost_per_kw",							"Capital cost per kW",										"$/kW",			"",								"MHKCosts",			"",						"",							"" },
+    { SSC_OUTPUT,			SSC_NUMBER,			"total_device_cost_per_kw",							"Device cost per kW",										"$/kW",			"",								"MHKCosts",			"",						"",							"" },
+    { SSC_OUTPUT,			SSC_NUMBER,			"total_bos_cost_per_kw",							"Balance of Systems cost per kW",										"$/kW",			"",								"MHKCosts",			"",						"",							"" },
+    { SSC_OUTPUT,			SSC_NUMBER,			"total_financial_cost_per_kw",							"Financial cost per kW",										"$/kW",			"",								"MHKCosts",			"",						"",							"" },
+    { SSC_OUTPUT,			SSC_NUMBER,			"total_operations_cost_per_kw",							"O&M cost per kW",										"$/kW",			"",								"MHKCosts",			"",						"",							"" },
 
     var_info_invalid
 };
@@ -169,32 +148,49 @@ public:
         min_velocity = tidal_resource_matrix.at(0, 0);
         max_velocity = tidal_resource_matrix.at(size_t(number_rows) - 1, 0);
 
-		for (int i = 0; i < number_rows; i++) {
+        for (int i = 0; i < number_rows; i++) {
             size_t n = i;
-            if (tidal_resource_matrix.at(n, 1) != 0 && tidal_resource_matrix.at(n - 1, 1) == 0 && n != 0)
-            {
-                tidal_resource_start_velocity = tidal_resource_matrix.at(n, 0);
+            if (i != 0) {
+                if (tidal_resource_matrix.at(n, 1) != 0 && tidal_resource_matrix.at(n - 1, 1) == 0)
+                {
+                    tidal_resource_start_velocity = tidal_resource_matrix.at(n, 0);
+                }
+                if (tidal_power_curve.at(n, 1) != 0 && tidal_power_curve.at(n - 1, 1) == 0 && n != 0)
+                {
+                    tidal_power_start_velocity = tidal_power_curve.at(n, 0);
+                }
             }
-            if (tidal_power_curve.at(n, 1) != 0 && tidal_power_curve.at(n - 1, 1) == 0 && n != 0)
-            {
-                tidal_power_start_velocity = tidal_power_curve.at(n, 0);
+            else {
+                if (tidal_resource_matrix.at(n, 1) != 0)
+                {
+                    tidal_resource_start_velocity = tidal_resource_matrix.at(n, 0);
+                }
+                if (tidal_power_curve.at(n, 1) != 0)
+                {
+                    tidal_power_start_velocity = tidal_power_curve.at(n, 0);
+                }
             }
-            if (tidal_resource_matrix.at(n, 1) != 0 && tidal_resource_matrix.at(n + 1, 1) == 0 && n != 0)
-            {
-                tidal_resource_end_velocity = tidal_resource_matrix.at(n, 0);
+            if (i != number_rows - 1) {
+                if (tidal_resource_matrix.at(n, 1) != 0 && tidal_resource_matrix.at(n + 1, 1) == 0 && n != 0)
+                {
+                    tidal_resource_end_velocity = tidal_resource_matrix.at(n, 0);
+                }
+                if (tidal_power_curve.at(n, 1) != 0 && tidal_power_curve.at(n + 1, 1) == 0 && n != 0)
+                {
+                    tidal_power_end_velocity = tidal_power_curve.at(n, 0);
+                }
             }
-            if (i == number_rows - 1 && tidal_resource_end_velocity == 0)
-            {
-                tidal_resource_end_velocity = tidal_resource_matrix.at(n, 0);
+            else {
+                if (i == number_rows - 1 && tidal_resource_end_velocity == 0)
+                {
+                    tidal_resource_end_velocity = tidal_resource_matrix.at(n, 0);
+                }
+                if (i == number_rows - 1 && tidal_power_end_velocity == 0)
+                {
+                    tidal_power_end_velocity = tidal_power_curve.at(n, 0);
+                }
             }
-            if (tidal_power_curve.at(n, 1) != 0 && tidal_power_curve.at(n + 1, 1) == 0 && n != 0)
-            {
-                tidal_power_end_velocity = tidal_power_curve.at(n, 0);
-            }
-            if (i == number_rows - 1 && tidal_power_end_velocity == 0)
-            {
-                tidal_power_end_velocity = tidal_power_curve.at(n, 0);
-            }
+            
 			_speed_vect[i] = tidal_resource_matrix.at(i, 0);	
 			_probability_vect[i] = tidal_resource_matrix.at(i, 1); //*******************again need to modify to handle different depths
 			_power_vect[i] = tidal_power_curve.at(i, 1);
@@ -213,11 +209,8 @@ public:
 			//Add current annual energy bin to total annual energy
 			annual_energy += p_annual_energy_dist[i];
 
-			//Calculate the cumulative energy probability distribution
-			if (i == 0)
-				p_annual_cumulative_energy_dist[i] = p_annual_energy_dist[i];
-			else
-				p_annual_cumulative_energy_dist[i] = p_annual_energy_dist[i] + p_annual_cumulative_energy_dist[i - 1];
+			
+		    p_annual_cumulative_energy_dist[i] = p_annual_energy_dist[i] + p_annual_cumulative_energy_dist[i - 1];
 			
 			//Contribution to Average Power from this speed bin 
 			device_average_power += _power_vect[i] * _probability_vect[i];
@@ -233,33 +226,47 @@ public:
 		//Factoring in losses in total annual energy production:
 		annual_energy *= (1 - (total_loss / 100 ));
 		// leave device power without losses
+        if (is_assigned("device_costs_total")) {
+            //TEST cost metrics in tidal page rather than cost page
+            double device_cost = as_double("device_costs_total");
+            double bos_cost = as_double("balance_of_system_cost_total");
+            double financial_cost = as_double("financial_cost_total");
+            double om_cost = as_double("total_operating_cost");
+            double fcr = as_double("fixed_charge_rate");
+            double total_capital_cost_kwh = fcr * (device_cost + bos_cost + financial_cost) / annual_energy;
+            double total_device_cost_kwh = fcr * device_cost / annual_energy;
+            double total_bos_cost_kwh = fcr * bos_cost / annual_energy;
+            double total_financial_cost_kwh = fcr * financial_cost / annual_energy;
+            double total_om_cost_kwh = om_cost / annual_energy;
+            double total_capital_cost_lcoe = (fcr * (device_cost + bos_cost + financial_cost)) / (fcr * (device_cost + bos_cost + financial_cost) + om_cost) * 100;
+            double total_device_cost_lcoe = (fcr * device_cost) / (fcr * (device_cost + bos_cost + financial_cost) + om_cost) * 100;
+            double total_bos_cost_lcoe = (fcr * bos_cost) / (fcr * (device_cost + bos_cost + financial_cost) + om_cost) * 100;
+            double total_financial_cost_lcoe = (fcr * financial_cost) / (fcr * (device_cost + bos_cost + financial_cost) + om_cost) * 100;
+            double total_om_cost_lcoe = (om_cost) / (fcr * (device_cost + bos_cost + financial_cost) + om_cost) * 100;
+            assign("total_capital_cost_kwh", var_data((ssc_number_t)total_capital_cost_kwh));
+            assign("total_device_cost_kwh", var_data((ssc_number_t)total_device_cost_kwh));
+            assign("total_bos_cost_kwh", var_data((ssc_number_t)total_bos_cost_kwh));
+            assign("total_financial_cost_kwh", var_data((ssc_number_t)total_financial_cost_kwh));
+            assign("total_om_cost_kwh", var_data((ssc_number_t)total_om_cost_kwh));
+            assign("total_capital_cost_lcoe", var_data((ssc_number_t)total_capital_cost_lcoe));
+            assign("total_device_cost_lcoe", var_data((ssc_number_t)total_device_cost_lcoe));
+            assign("total_bos_cost_lcoe", var_data((ssc_number_t)total_bos_cost_lcoe));
+            assign("total_financial_cost_lcoe", var_data((ssc_number_t)total_financial_cost_lcoe));
+            assign("total_om_cost_lcoe", var_data((ssc_number_t)total_om_cost_lcoe));
 
-        //TEST cost metrics in tidal page rather than cost page
-        double device_cost = as_double("device_costs_total");
-        double bos_cost = as_double("balance_of_system_cost_total");
-        double financial_cost = as_double("financial_cost_total");
-        double om_cost = as_double("total_operating_cost");
-        double fcr = as_double("fixed_charge_rate");
-        double total_capital_cost_kwh = fcr*(device_cost + bos_cost + financial_cost) / annual_energy;
-        double total_device_cost_kwh = fcr*device_cost / annual_energy;
-        double total_bos_cost_kwh = fcr*bos_cost / annual_energy;
-        double total_financial_cost_kwh = fcr*financial_cost / annual_energy;
-        double total_om_cost_kwh = om_cost / annual_energy;
-        double total_capital_cost_lcoe = (fcr * (device_cost + bos_cost + financial_cost)) / (fcr * (device_cost + bos_cost + financial_cost) + om_cost)*100;
-        double total_device_cost_lcoe = (fcr*device_cost)/ (fcr * (device_cost + bos_cost + financial_cost) + om_cost)*100;
-        double total_bos_cost_lcoe = (fcr*bos_cost)/ (fcr * (device_cost + bos_cost + financial_cost) + om_cost)*100;
-        double total_financial_cost_lcoe = (fcr * financial_cost) / (fcr * (device_cost + bos_cost + financial_cost) + om_cost)*100;
-        double total_om_cost_lcoe = (om_cost)/ (fcr * (device_cost + bos_cost + financial_cost) + om_cost)*100;
-        assign("total_capital_cost_kwh", var_data((ssc_number_t)total_capital_cost_kwh));
-        assign("total_device_cost_kwh", var_data((ssc_number_t)total_device_cost_kwh));
-        assign("total_bos_cost_kwh", var_data((ssc_number_t)total_bos_cost_kwh));
-        assign("total_financial_cost_kwh", var_data((ssc_number_t)total_financial_cost_kwh));
-        assign("total_om_cost_kwh", var_data((ssc_number_t)total_om_cost_kwh));
-        assign("total_capital_cost_lcoe", var_data((ssc_number_t)total_capital_cost_lcoe));
-        assign("total_device_cost_lcoe", var_data((ssc_number_t)total_device_cost_lcoe));
-        assign("total_bos_cost_lcoe", var_data((ssc_number_t)total_bos_cost_lcoe));
-        assign("total_financial_cost_lcoe", var_data((ssc_number_t)total_financial_cost_lcoe));
-        assign("total_om_cost_lcoe", var_data((ssc_number_t)total_om_cost_lcoe));
+            //Cost per kW system capacity
+            double system_capacity = as_double("system_capacity");
+            double capital_cost_kw = (device_cost + bos_cost + financial_cost) / system_capacity;
+            double device_cost_kw = device_cost / system_capacity;
+            double bos_cost_kw = bos_cost / system_capacity;
+            double financial_cost_kw = financial_cost / system_capacity;
+            double om_cost_kw = om_cost / system_capacity;
+            assign("total_capital_cost_per_kw", var_data(ssc_number_t(capital_cost_kw)));
+            assign("total_device_cost_per_kw", var_data(ssc_number_t(device_cost_kw)));
+            assign("total_bos_cost_per_kw", var_data(ssc_number_t(bos_cost_kw)));
+            assign("total_financial_cost_per_kw", var_data(ssc_number_t(financial_cost_kw)));
+            assign("total_operations_cost_per_kw", var_data(ssc_number_t(om_cost_kw)));
+        }
 
 		//Calculating capacity factor:
 		capacity_factor = annual_energy / (device_rated_capacity * number_devices * 8760);

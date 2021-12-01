@@ -1,3 +1,26 @@
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+
 #ifndef _BATTERY_COMMON_DATA_H_
 #define _BATTERY_COMMON_DATA_H_
 
@@ -102,6 +125,8 @@ namespace {
 		ssc_data_set_array(data, "dispatch_manual_charge", p_dispatch_manual_charge, 6);
 		ssc_number_t p_dispatch_manual_discharge[6] = { 0, 0, 1, 0, 0, 0 };
 		ssc_data_set_array(data, "dispatch_manual_discharge", p_dispatch_manual_discharge, 6);
+        ssc_number_t p_dispatch_manual_discharge_to_grid[6] = { 0, 0, 0, 0, 0, 0 };
+        ssc_data_set_array(data, "dispatch_manual_btm_discharge_to_grid", p_dispatch_manual_discharge_to_grid, 6);
 		ssc_number_t p_dispatch_manual_gridcharge[6] = { 0, 1, 0, 0, 0, 0 };
 		ssc_data_set_array(data, "dispatch_manual_gridcharge", p_dispatch_manual_gridcharge, 6);
 		ssc_number_t p_dispatch_manual_percent_discharge[2] = { 25, 0 };
@@ -125,6 +150,9 @@ namespace {
 		ssc_number_t p_ur_ec_tou_mat[24] = { 1, 1, 200, 1, 0.21174600720405579, 0.028000000864267349, 1, 2, 400, 1, 0.057693801820278168, 0.028000000864267349, 1, 3, 600, 1, 0.052770901471376419, 0.028000000864267349, 1, 4, 10000, 1, 0.049003798514604568, 0.028000000864267349 };
 		ssc_data_set_matrix(data, "ur_ec_tou_mat", p_ur_ec_tou_mat, 4, 6);
         ssc_data_set_number(data, "batt_cycle_cost_choice", 0);
+        ssc_data_set_number(data, "batt_dispatch_charge_only_system_exceeds_load", 1);
+        ssc_data_set_number(data, "batt_dispatch_discharge_only_load_exceeds_system", 1);
+        ssc_data_set_number(data, "batt_dispatch_auto_btm_can_discharge_to_grid", 0);
 	}
 }
 #endif

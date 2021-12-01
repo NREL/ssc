@@ -1,51 +1,24 @@
-/*******************************************************************************************************
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (�Alliance�) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as �System Advisor Model� or �SAM�. Except
-*  to comply with the foregoing, the terms �System Advisor Model�, �SAM�, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************************************/
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #ifndef __irradproc_h
 #define __irradproc_h
@@ -735,6 +708,8 @@ void solarpos_spa(int year, int month, int day, int hour, double minute, double 
 * \param[in] azm sun azimuth in radians, measured east from north
 * \param[in] en_backtrack enable backtracking, using Ground coverage ratio ( below )
 * \param[in] gcr  ground coverage ratio ( used for backtracking )
+* \param[in] slope_tilt tilt angle of sloped terrain in radians
+* \param[in] slope_azm azimuth angle of slopted terrain relative to tracker azimuth in radians
 * \param[in] force_to_stow: force the single-axis tracking array to the stow angle specified in the next input
 * \param[in] stow_angle_deg: the angle to force the single-axis tracking array to stow to, in degrees
 * \param[out] angle array of elements to return angles to calling function
@@ -744,7 +719,7 @@ void solarpos_spa(int year, int month, int day, int hour, double minute, double 
 * \param[out] angle[3] tracking axis rotation angle in radians, measured from surface normal of unrotating axis (only for 1 axis trackers)
 * \param[out] angle[4] backtracking difference (rot - ideal_rot) will be zero except in case of backtracking for 1 axis tracking
 */
-void incidence(int mode, double tilt, double sazm, double rlim, double zen, double azm, bool en_backtrack, double gcr, bool force_to_stow, double stow_angle_deg, double angle[5]);
+void incidence(int mode, double tilt, double sazm, double rlim, double zen, double azm, bool en_backtrack, double gcr, double slope_tilt, double slope_azm, bool force_to_stow, double stow_angle_deg, double angle[5]);
 
 
 /**
@@ -886,9 +861,11 @@ void ModifiedDISC(const double kt[3], const double kt1[3], const double g[3], co
 * \param[in] axis_azimuth axis azimuth in degrees, measured east from north
 * \param[in] gcr ground coverage ratio of system
 * \param[in] rotation tracking axis rotation angle in degrees
+* \param[in] slope_tilt tilt angle of terrain slope in degrees
+* \param[in] slope_azimuth azimuth angle of terrain slope measured East of North in degrees
 * \return fraction shaded (0-1) if system is shaded (0 for unshaded)
 */
-double shadeFraction1x(double solar_azimuth, double solar_zenith, double axis_tilt, double axis_azimuth, double gcr, double rotation);
+double shadeFraction1x(double solar_azimuth, double solar_zenith, double axis_tilt, double axis_azimuth, double gcr, double rotation, double slope_tilt, double slope_azimuth);
 
 /**
 * truetrack calculates the tracker rotation that minimizes the angle of incidence betweem direct irradiance and the module front surface normal
@@ -906,10 +883,21 @@ double truetrack(double solar_azimuth, double solar_zenith, double axis_tilt, do
 *
 * \param[in] ideal (true-tracking) axis rotation angle in degrees, not adjusted for physical limits or stow
 * \param[in] gcr ground coverage ratio (0-1) of array
+* \param[in] axis_slope cross axis slope of terrain in degrees
 * \return updated rotation angle in degrees after backtracking
 */
-double backtrack(double truetracking_rotation, double gcr);
+double backtrack(double truetracking_rotation, double gcr, double axis_slope);
 
+/**
+* cross_axis_slope finds the cross axis tilt angle of the sloped terrain
+*
+* \param[in] slope_tilt tilt angle of the sloped terrain in degrees
+* \param[in] axis_azimuth azimuth angle of the tracker axis in degrees
+* \param[in] slope_azimuth azimuth angle of the sloped terrain relative to the axis azimuth in degrees
+* \return cross axis tilt angle in degrees
+*/
+
+double calc_cross_axis_slope(double slope_tilt, double axis_azimuth, double slope_azimuth);
 
 /**
 * \class irrad
@@ -946,6 +934,8 @@ protected:
     double rotationLimitDegrees;	///< Rotation limit for subarray in degrees
     double stowAngleDegrees;		///< Optional stow angle for the subarray in degrees
     double groundCoverageRatio;		///< Ground coverage ratio of subarray
+    double slopeTilt;
+    double slopeAzm;
     poaDecompReq* poaAll;			///< Data required to decompose input plane-of-array irradiance
 
     // Input Front-Side Irradiation components 
@@ -984,7 +974,7 @@ public:
         int skyModel, int radiationModeIn, int trackModeIn,
         bool useWeatherFileAlbedo, bool instantaneousWeather, bool backtrackingEnabled, bool forceToStowIn,
         double dtHour, double tiltDegrees, double azimuthDegrees, double trackerRotationLimitDegrees, double stowAngleDegreesIn,
-        double groundCoverageRatio, std::vector<double> monthlyTiltDegrees, std::vector<double> userSpecifiedAlbedo,
+        double groundCoverageRatio, double slopeTilt, double slopeAzm, std::vector<double> monthlyTiltDegrees, std::vector<double> userSpecifiedAlbedo,
         poaDecompReq* poaAllIn);
 
     /// Construct the irrad class with an Irradiance_IO() object and Subarray_IO() object
@@ -1009,7 +999,7 @@ public:
     void set_sky_model(int skymodel, double albedo);
 
     /// Set the surface orientation for the irradiance processor
-    void set_surface(int tracking, double tilt_deg, double azimuth_deg, double rotlim_deg, bool en_backtrack, double gcr, bool forceToStowFlag, double stowAngle);
+    void set_surface(int tracking, double tilt_deg, double azimuth_deg, double rotlim_deg, bool en_backtrack, double gcr, double slope_tilt, double slope_azm, bool forceToStowFlag, double stowAngle);
 
     /// Set the direct normal and diffuse horizontal components of irradiation
     void set_beam_diffuse(double beam, double diffuse);

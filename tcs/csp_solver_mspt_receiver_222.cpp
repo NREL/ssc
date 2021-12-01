@@ -37,7 +37,8 @@ C_mspt_receiver_222::C_mspt_receiver_222()
 	m_hl_ffact = std::numeric_limits<double>::quiet_NaN();
 	m_A_sf = std::numeric_limits<double>::quiet_NaN();
 
-	m_pipe_loss_per_m = std::numeric_limits<double>::quiet_NaN();
+	//m_pipe_loss_per_m = std::numeric_limits<double>::quiet_NaN();
+    m_piping_loss_coefficient = std::numeric_limits<double>::quiet_NaN();
 	m_pipe_length_add = std::numeric_limits<double>::quiet_NaN();
 	m_pipe_length_mult = std::numeric_limits<double>::quiet_NaN();
 
@@ -62,7 +63,6 @@ C_mspt_receiver_222::C_mspt_receiver_222()
 	m_A_node = std::numeric_limits<double>::quiet_NaN();
 
 	m_Q_dot_piping_loss = std::numeric_limits<double>::quiet_NaN();
-	m_piping_loss_coeff = std::numeric_limits<double>::quiet_NaN();
 	m_m_dot_htf_max = std::numeric_limits<double>::quiet_NaN();
 
 	m_itermode = -1;
@@ -201,7 +201,7 @@ void C_mspt_receiver_222::init()
     // If no startup requirements, then receiver is always ON
         // ... in the sense that the controller doesn't need to worry about startup
     if (m_E_su_prev == 0.0 && m_t_su_prev == 0.0) {
-        m_mode_prev = C_csp_collector_receiver::ON;					//[-] 0 = requires startup, 1 = starting up, 2 = running
+        m_mode_prev = C_csp_collector_receiver::OFF_NO_SU_REQ;					//[-] 0 = requires startup, 1 = starting up, 2 = running
     }
     else {
         m_mode_prev = C_csp_collector_receiver::OFF;					//[-] 0 = requires startup, 1 = starting up, 2 = running
@@ -210,13 +210,15 @@ void C_mspt_receiver_222::init()
 	m_eta_field_iter_prev = 1.0;				//[-] Set to largest possible value
 
 	m_T_salt_hot_target += 273.15;			//[K] convert from C
-	
-	// 8.10.2015 twn: Calculate constant thermal losses to the environment
-	if(m_pipe_loss_per_m > 0.0 && m_pipe_length_mult > 0.0)
-		m_Q_dot_piping_loss = m_pipe_loss_per_m*(m_h_tower*m_pipe_length_mult + m_pipe_length_add);		//[Wt]
-	else
-		m_Q_dot_piping_loss = 0.0;
 
+    double L_piping = std::numeric_limits<double>::quiet_NaN();     //[m]
+    double d_inner_piping = std::numeric_limits<double>::quiet_NaN();   //[m]
+    CSP::mspt_piping_design(field_htfProps,
+        m_h_tower, m_pipe_length_mult,
+        m_pipe_length_add, m_piping_loss_coefficient,
+        m_T_htf_hot_des, m_T_htf_cold_des,
+        m_m_dot_htf_des,
+        L_piping, d_inner_piping, m_Q_dot_piping_loss);
 
 	// *******************************************************************
 	// *******************************************************************
@@ -687,7 +689,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 			// GOTO 900
 			// Steady State always reports q_thermal (even when much less than min) because model is letting receiver begin startup with this energy
 			// Should be a way to communicate to controller that q_thermal is less than q_min without losing this functionality
-			if(m_mode != C_csp_collector_receiver::STEADY_STATE || m_mode_prev == C_csp_collector_receiver::ON)
+			if(m_mode != C_csp_collector_receiver::STEADY_STATE || m_mode_prev == C_csp_collector_receiver::ON || m_mode_prev == C_csp_collector_receiver::OFF_NO_SU_REQ)
 				rec_is_off = true;
 		}
 	}
@@ -816,7 +818,7 @@ void C_mspt_receiver_222::converged()
         // If no startup requirements, then receiver is always ON
         // ... in the sense that the controller doesn't need to worry about startup
         if (m_E_su == 0.0 && m_t_su == 0.0) {
-            m_mode = C_csp_collector_receiver::ON;
+            m_mode = C_csp_collector_receiver::OFF_NO_SU_REQ;
         }
 	}
 
@@ -1158,14 +1160,7 @@ void C_mspt_receiver_222::calculate_steady_state_soln(s_steady_state_soln &soln,
 		{
 			double m_dot_salt_tot_temp = soln.m_dot_salt * m_n_lines;		//[kg/s]
 
-			if (m_piping_loss_coeff != m_piping_loss_coeff)   // Calculate piping loss from constant loss per m (m_Q_dot_piping_loss)
-				soln.Q_dot_piping_loss = m_Q_dot_piping_loss;
-			else
-			{
-				double riser_loss = 2.0*CSP::pi * (soln.T_salt_cold_in - T_amb) / m_Rtot_riser; //[W/m]
-				double downc_loss = 2.0*CSP::pi * (soln.T_salt_hot - T_amb) / m_Rtot_downc; //[W/m]
-				soln.Q_dot_piping_loss = 0.5*(riser_loss + downc_loss) * (m_h_tower*m_pipe_length_mult + m_pipe_length_add); // Total piping thermal loss [W]
-			}
+			soln.Q_dot_piping_loss = m_Q_dot_piping_loss;
 			double delta_T_piping = soln.Q_dot_piping_loss / (m_dot_salt_tot_temp*c_p_coolant);	//[K]
 			soln.T_salt_hot_rec = soln.T_salt_hot;
 			soln.T_salt_hot -= delta_T_piping;	//[K]

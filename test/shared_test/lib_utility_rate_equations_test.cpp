@@ -1,3 +1,25 @@
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 #include <gtest/gtest.h>
 #include <lib_utility_rate_equations.h>
 
@@ -119,6 +141,9 @@ TEST(lib_utility_rate_equations_test, test_seasonal_demand_charges)
                                         11, 1, 9.9999999999999998e+37, 0 };
     size_t dc_flat_rows = 12;
 
+    ssc_number_t prev_monthly_peaks[12] = { 5, 5, 5, 5, 5, 5,
+                                    5, 5, 5, 5, 5, 5 };
+
     rate_data data;
     data.m_num_rec_yearly = 8760;
     data.rate_scale = { 1 };
@@ -126,6 +151,8 @@ TEST(lib_utility_rate_equations_test, test_seasonal_demand_charges)
     data.setup_demand_charges(&p_ur_dc_sched_weekday[0], &p_ur_dc_sched_weekend[0], dc_tou_rows, &p_ur_dc_tou_mat[0], dc_flat_rows, &p_ur_dc_flat_mat[0]);
     data.setup_energy_rates(&p_ur_ec_sched_weekday[0], &p_ur_ec_sched_weekend[0], tou_rows, &p_ur_ec_tou_mat[0], sell_eq_buy);
     data.init_energy_rates(false);
+    data.uses_billing_demand = true;
+    data.en_billing_demand_lookback = false;
     data.init_dc_peak_vectors(0);
 
     // Peak period 1: 5 kW, peak period 2: 10 kW
@@ -144,14 +171,11 @@ TEST(lib_utility_rate_equations_test, test_seasonal_demand_charges)
         data.sort_energy_to_periods(month, power, step + base_step);
         data.find_dc_tou_peak(month, power, step + base_step);
     }
-    // No demand charges in January
-    ASSERT_NEAR(0.0, data.get_demand_charge(0, 0), 0.1);
 
     data.init_dc_peak_vectors(5);
     base_step = 3648; // 12 am June 1st
     month = 5;
     ur_month& month_5 = data.m_month[month];
-    
     for (step = 0; step < day_one_power.size(); step++)
     {
         double power = day_one_power.at(step);
@@ -160,6 +184,23 @@ TEST(lib_utility_rate_equations_test, test_seasonal_demand_charges)
         data.sort_energy_to_periods(month, power, step + base_step);
         data.find_dc_tou_peak(month, power, step + base_step);
     }
+
+    if (data.uses_billing_demand) {
+        if (data.en_billing_demand_lookback) {
+            data.setup_prev_demand(prev_monthly_peaks);
+        }
+        for (int m = 0; m < (int)data.m_month.size(); m++) {
+            double flat_peak = data.m_month[m].dc_flat_peak;
+            if (data.en_billing_demand_lookback) {
+                // If ratchets are present the peak used here might be the actual peak, or something based on a previous month.
+                flat_peak = data.get_billing_demand(m);
+            }
+            data.billing_demand[m] = flat_peak;
+        }
+    }
+
+    // No demand charges in January
+    ASSERT_NEAR(0.0, data.get_demand_charge(0, 0), 0.1);
 
     // Same profile provides demand charges in June
     ASSERT_NEAR(10.0, data.get_demand_charge(5, 0), 0.1);
@@ -209,6 +250,10 @@ TEST(lib_utility_rate_equations_test, test_block_step_tiers)
 
     size_t dc_flat_rows = 12;
 
+    ssc_number_t prev_monthly_peaks[12] = { 500, 500, 500, 500, 500, 500,
+                                        500, 500, 500, 500, 500, 500 };
+
+
     rate_data data;
     data.m_num_rec_yearly = 8760;
     data.rate_scale = { 1 };
@@ -217,6 +262,8 @@ TEST(lib_utility_rate_equations_test, test_block_step_tiers)
     data.setup_energy_rates(&p_ur_ec_sched_weekday[0], &p_ur_ec_sched_weekend[0], tou_rows, &p_ur_ec_tou_mat[0], sell_eq_buy);
     data.init_energy_rates(false); // This gets called once to set up all the vectors
     data.init_dc_peak_vectors(0);
+    data.uses_billing_demand = true;
+    data.en_billing_demand_lookback = false;
 
     // Only really need one power number to set up the peak, but include a couple extras as a test
     std::vector<double> day_one_power = { -500, -600, -658, };
@@ -231,6 +278,33 @@ TEST(lib_utility_rate_equations_test, test_block_step_tiers)
         // Hourly, so power and energy are the same number
         curr_month.update_net_and_peak(power, power, step + base_step);
     }
+
+    day_one_power = { -500, -1413, -1000, };
+    data.init_dc_peak_vectors(5);
+    base_step = 3648; // 12 am June 1st
+    month = 5;
+    ur_month& month_5 = data.m_month[month];
+    for (step = 0; step < day_one_power.size(); step++)
+    {
+        double power = day_one_power.at(step);
+        // Hourly, so power and energy are the same number
+        month_5.update_net_and_peak(power, power, step + base_step);
+    }
+
+    if (data.uses_billing_demand) {
+        if (data.en_billing_demand_lookback) {
+            data.setup_prev_demand(prev_monthly_peaks);
+        }
+        for (int m = 0; m < (int)data.m_month.size(); m++) {
+            double flat_peak = data.m_month[m].dc_flat_peak;
+            if (data.en_billing_demand_lookback) {
+                // If ratchets are present the peak used here might be the actual peak, or something based on a previous month.
+                flat_peak = data.get_billing_demand(m);
+            }
+            data.billing_demand[m] = flat_peak;
+        }
+    }
+
     // Recompute the tiers based on actual peaks
     data.init_energy_rates(false);
 
@@ -248,21 +322,6 @@ TEST(lib_utility_rate_equations_test, test_block_step_tiers)
     EXPECT_NEAR(0.013627, curr_month.ec_tou_br.at(0, 3), 0.0001);
     EXPECT_NEAR(0.010275, curr_month.ec_tou_br.at(0, 4), 0.0001);
     EXPECT_NEAR(0.00771, curr_month.ec_tou_br.at(0, 5), 0.0001);
-
-
-    day_one_power = { -500, -1413, -1000, };
-    data.init_dc_peak_vectors(5);
-    base_step = 3648; // 12 am June 1st
-    month = 5;
-    ur_month& month_5 = data.m_month[month];
-    for (step = 0; step < day_one_power.size(); step++)
-    {
-        double power = day_one_power.at(step);
-        // Hourly, so power and energy are the same number
-        month_5.update_net_and_peak(power, power, step + base_step);
-    }
-    // Recompute the tiers based on actual peaks
-    data.init_energy_rates(false);
 
     EXPECT_NEAR(3000, month_5.ec_tou_ub.at(0, 0), 0.1);
     EXPECT_NEAR(10000, month_5.ec_tou_ub.at(0, 1), 0.1);
@@ -316,6 +375,9 @@ TEST(lib_utility_rate_equations_test, test_kwh_per_kw_only)
 
     size_t dc_flat_rows = 12;
 
+    ssc_number_t prev_monthly_peaks[12] = { -500, -500, -500, -500, -500, -500,
+                                            -500, -500, -500, -500, -500, -500 };
+
     rate_data data;
     data.m_num_rec_yearly = 8760;
     data.rate_scale = { 1 };
@@ -324,6 +386,8 @@ TEST(lib_utility_rate_equations_test, test_kwh_per_kw_only)
     data.setup_energy_rates(&p_ur_ec_sched_weekday[0], &p_ur_ec_sched_weekend[0], tou_rows, &p_ur_ec_tou_mat[0], sell_eq_buy);
     data.init_energy_rates(false); // This gets called once to set up all the vectors
     data.init_dc_peak_vectors(0);
+    data.uses_billing_demand = true;
+    data.en_billing_demand_lookback = false;
 
     // Only really need one power number to set up the peak, but include a couple extras as a test
     std::vector<double> day_one_power = { -500, -600, -658, };
@@ -338,6 +402,33 @@ TEST(lib_utility_rate_equations_test, test_kwh_per_kw_only)
         // Hourly, so power and energy are the same number
         curr_month.update_net_and_peak(power, power, step + base_step);
     }
+
+    day_one_power = { -500, -1413, -1000, };
+    data.init_dc_peak_vectors(5);
+    base_step = 3648; // 12 am June 1st
+    month = 5;
+    ur_month& month_5 = data.m_month[month];
+    for (step = 0; step < day_one_power.size(); step++)
+    {
+        double power = day_one_power.at(step);
+        // Hourly, so power and energy are the same number
+        month_5.update_net_and_peak(power, power, step + base_step);
+    }
+
+    if (data.uses_billing_demand) {
+        if (data.en_billing_demand_lookback) {
+            data.setup_prev_demand(prev_monthly_peaks);
+        }
+        for (int m = 0; m < (int)data.m_month.size(); m++) {
+            double flat_peak = data.m_month[m].dc_flat_peak;
+            if (data.en_billing_demand_lookback) {
+                // If ratchets are present the peak used here might be the actual peak, or something based on a previous month.
+                flat_peak = data.get_billing_demand(m);
+            }
+            data.billing_demand[m] = flat_peak;
+        }
+    }
+
     // Recompute the tiers based on actual peaks
     data.init_energy_rates(false);
 
@@ -351,21 +442,6 @@ TEST(lib_utility_rate_equations_test, test_kwh_per_kw_only)
     EXPECT_NEAR(0.013627, curr_month.ec_tou_br.at(0, 1), 0.0001);
     EXPECT_NEAR(0.010275, curr_month.ec_tou_br.at(0, 2), 0.0001);
     EXPECT_NEAR(0.00771, curr_month.ec_tou_br.at(0, 3), 0.0001);
-
-
-    day_one_power = { -500, -1413, -1000, };
-    data.init_dc_peak_vectors(5);
-    base_step = 3648; // 12 am June 1st
-    month = 5;
-    ur_month& month_5 = data.m_month[month];
-    for (step = 0; step < day_one_power.size(); step++)
-    {
-        double power = day_one_power.at(step);
-        // Hourly, so power and energy are the same number
-        month_5.update_net_and_peak(power, power, step + base_step);
-    }
-    // Recompute the tiers based on actual peaks
-    data.init_energy_rates(false);
 
     EXPECT_NEAR(282600, month_5.ec_tou_ub.at(0, 0), 0.1);
     EXPECT_NEAR(565200, month_5.ec_tou_ub.at(0, 1), 0.1);
@@ -420,7 +496,9 @@ TEST(lib_utility_rate_equations_test, test_billing_demand_calcs)
     data.setup_demand_charges(&p_ur_dc_sched_weekday[0], &p_ur_dc_sched_weekend[0], dc_tou_rows, &p_ur_dc_tou_mat[0], dc_flat_rows, &p_ur_dc_flat_mat[0]);
     data.setup_energy_rates(&p_ur_ec_sched_weekday[0], &p_ur_ec_sched_weekend[0], tou_rows, &p_ur_ec_tou_mat[0], sell_eq_buy);
     data.init_energy_rates(false); // This gets called once to set up all the vectors
-    data.init_dc_peak_vectors(0);
+    for (size_t i = 0; i < 12; i++) {
+        data.init_dc_peak_vectors(i);
+    }
 
     // Only need one power number per month to set up the peak
     ssc_number_t year_zero_power[12] = { 1200,
@@ -449,10 +527,13 @@ TEST(lib_utility_rate_equations_test, test_billing_demand_calcs)
                                           60, 0,
                                           60, 0 };
 
-    data.setup_ratcheting_demand(p_ur_ec_billing_demand_lookback_percentages);
-    data.ec_bd_minimum = 500;
-    data.en_ec_billing_demand = true;
-    data.ec_bd_lookback_months = 11;
+    ssc_number_t p_ur_billing_demand_tou_matrix[2] = { 1, 1 };
+
+    data.setup_ratcheting_demand(p_ur_ec_billing_demand_lookback_percentages, p_ur_billing_demand_tou_matrix);
+    data.bd_minimum = 500;
+    data.en_billing_demand_lookback = true;
+    data.uses_billing_demand = true;
+    data.bd_lookback_months = 11;
 
     std::vector<ssc_number_t> year_one_power = {  -1200,
                                             -1100,
@@ -477,6 +558,7 @@ TEST(lib_utility_rate_equations_test, test_billing_demand_calcs)
         curr_month = data.m_month[month];
         curr_month.update_net_and_peak(power, power, step);
         data.m_month[month] = curr_month;
+        data.find_dc_tou_peak(month, power, step);
     }
 
     data.setup_prev_demand(year_zero_power);
@@ -496,6 +578,128 @@ TEST(lib_utility_rate_equations_test, test_billing_demand_calcs)
 
     for (month = 0; month < year_one_power.size(); month++)
     {
-        EXPECT_NEAR(billing_demands[month], data.get_billing_demand(month), 0.1);
+        EXPECT_NEAR(billing_demands[month], data.get_billing_demand(month), 0.1) << " at month " << month;
     }
+}
+
+// APS large rate: https://openei.org/apps/IURDB/rate/view/5caf91045457a3c4357780e3
+// https://www.aps.com/-/media/APS/APSCOM-PDFs/Utility/Regulatory-and-Legal/Regulatory-Plan-Details-Tariffs/Business/TOU-Business-NonRes-Plans/e32_TimeOfUseLarge.ashx?la=en
+TEST(lib_utility_rate_equations_test, test_billing_demand_calcs_w_tou)
+{
+   
+    ssc_number_t p_ur_ec_sched_weekday[288] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1 };
+    ssc_number_t p_ur_ec_sched_weekend[288] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+    ssc_number_t p_ur_ec_tou_mat[24] = { 1, 1, 9.9999999999999998e+37, 0, 0.044822000000000001, 0,
+                                         2, 1, 9.9999999999999998e+37, 0, 0.057702000000000003, 0,
+                                         3, 1, 9.9999999999999998e+37, 0, 0.059481999999999993, 0,
+                                         4, 1, 9.9999999999999998e+37, 0, 0.07236200000000001, 0 };
+
+    size_t tou_rows = 4;
+    bool sell_eq_buy = false;
+
+    ssc_number_t p_ur_dc_sched_weekday[288] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1 };
+    ssc_number_t p_ur_dc_sched_weekend[288] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+    ssc_number_t p_ur_dc_tou_mat[16] = { 1, 1, 100, 6.6539999999999999,
+                                         1, 2, 9.9999999999999998e+37, 3.6280000000000001,
+                                         2, 1, 100, 17.765999999999998,
+                                         2, 2, 9.9999999999999998e+37, 12.053000000000001 };
+    size_t dc_tou_rows = 4;
+
+    ssc_number_t p_ur_dc_flat_mat[48] = { 0, 1, 9.9999999999999998e+37, 0,
+                                          1, 1, 9.9999999999999998e+37, 0,
+                                          2, 1, 9.9999999999999998e+37, 0,
+                                          3, 1, 9.9999999999999998e+37, 0,
+                                          4, 1, 9.9999999999999998e+37, 0,
+                                          5, 1, 9.9999999999999998e+37, 0,
+                                          6, 1, 9.9999999999999998e+37, 0,
+                                          7, 1, 9.9999999999999998e+37, 0,
+                                          8, 1, 9.9999999999999998e+37, 0,
+                                          9, 1, 9.9999999999999998e+37, 0,
+                                          10, 1, 9.9999999999999998e+37, 0,
+                                          11, 1, 9.9999999999999998e+37, 0 };
+    
+
+    size_t dc_flat_rows = 12;
+
+    rate_data data;
+    data.m_num_rec_yearly = 8760;
+    data.rate_scale = { 1 };
+    data.init(8760);
+    data.setup_demand_charges(&p_ur_dc_sched_weekday[0], &p_ur_dc_sched_weekend[0], dc_tou_rows, &p_ur_dc_tou_mat[0], dc_flat_rows, &p_ur_dc_flat_mat[0]);
+    data.setup_energy_rates(&p_ur_ec_sched_weekday[0], &p_ur_ec_sched_weekend[0], tou_rows, &p_ur_ec_tou_mat[0], sell_eq_buy);
+    data.init_energy_rates(false); // This gets called once to set up all the vectors
+    for (size_t i = 0; i < 12; i++) {
+        data.init_dc_peak_vectors(i);
+    }
+    data.enable_nm = false;
+    data.nm_credits_w_rollover = false;
+
+    ssc_number_t p_ur_billing_demand_lookback_percentages[24] = { 0, 1,
+                                                                  0, 1,
+                                                                  0, 1,
+                                                                  0, 1,
+                                                                  80, 1,
+                                                                  80, 1,
+                                                                  80, 1,
+                                                                  80, 1,
+                                                                  80, 1,
+                                                                  80, 1,
+                                                                  0, 1,
+                                                                  0, 1 };
+
+    ssc_number_t p_ur_billing_demand_tou_matrix[4] = { 1, 0,
+                                                   2, 1 };
+
+    data.setup_ratcheting_demand(p_ur_billing_demand_lookback_percentages, p_ur_billing_demand_tou_matrix);
+    data.bd_minimum = 500;
+    data.en_billing_demand_lookback = true;
+    data.uses_billing_demand = true;
+    data.bd_lookback_months = 11;
+
+    ssc_number_t year_zero_power[12] = { 1200,
+                                            1100,
+                                            900,
+                                            700,
+                                            800,
+                                            950,
+                                            1050,
+                                            1300, // 80% of this is 1040 kW, which is higher than the peak in Jan (below)
+                                            850,
+                                            400,
+                                            600,
+                                            750 };
+
+    // Peak period 1: 900 kW, peak period 2: 1000 kW
+    std::vector<double> day_one_power = { -100, -100, -200, -300, -400, -500, // Period 1
+                                            -600, -700, -800, -900, -800, -900, // Period 1
+                                            -800, -700, -600, -1000, -950, -900, // first 3 period 1, last 3 period 2
+                                            -850, -800, -700, -500, -500, -500 }; // First 3 period 2, last 3 period 1
+
+    ASSERT_EQ(24, day_one_power.size());
+    int step = 24; // Jan 1st is a Sunday, need to hit on peak period on Monday
+    int month = 0;
+    ur_month& curr_month = data.m_month[month];
+    for (int i = 0; i < day_one_power.size(); i++)
+    {
+        curr_month.update_net_and_peak(day_one_power.at(i), day_one_power.at(i), step + i);
+        // Hourly, so power and energy are the same number
+        data.sort_energy_to_periods(month, day_one_power.at(i), step + i);
+        data.find_dc_tou_peak(month, day_one_power.at(i), step + i);
+    }
+
+    if (data.uses_billing_demand) {
+        if (data.en_billing_demand_lookback) {
+            data.setup_prev_demand(year_zero_power);
+        }
+        for (int m = 0; m < (int)data.m_month.size(); m++) {
+            double flat_peak = data.m_month[m].dc_flat_peak;
+            if (data.en_billing_demand_lookback) {
+                // If ratchets are present the peak used here might be the actual peak, or something based on a previous month.
+                flat_peak = data.get_billing_demand(m);
+            }
+            data.billing_demand[m] = flat_peak;
+        }
+    }
+
+    ASSERT_NEAR(16674.22, data.get_demand_charge(0, 0), 0.01);
 }

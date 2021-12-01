@@ -1,9 +1,9 @@
+#include <gtest/gtest.h>
+#include <cmath>
 #include <string>
 #include <vector>
 #include <memory>
-#include <cmath>
 
-#include <gtest/gtest.h>
 #include "../input_cases/weather_inputs.h"
 
 #include "../ssc/common.h"
@@ -13,19 +13,22 @@
 #include "../tcs/csp_solver_pc_Rankine_indirect_224.h"
 #include "../tcs/csp_solver_two_tank_tes.h"
 #include "../tcs/csp_solver_tou_block_schedules.h"
-
+#include "../tcs/csp_dispatch.h"
 /**
  * This class tests the C_csp_weatherreader's functions and ensures that the interface is the
  * same using weatherfile & weatherdata as weather inputs. The test also tests for variable
  * access and memory.
  */
-
+/* removes definition of isnan _isnan in lp_lib.h line 65 so that std::isnan works on all platforms */
+#ifdef WIN32
+#define _isnan isnan
+#endif
 
 class CspWeatherReaderTest : public ::testing::Test {
 protected:
     C_csp_weatherreader wr;
     C_csp_solver_sim_info sim_info;
-    double e;		//epsilon for double comparison
+    double e;       //epsilon for double comparison
 
     virtual void SetUp() {
         e = 0.0001;
@@ -122,7 +125,6 @@ TEST_F(UsingFileCaseWeatherReader, IntegrationTest_csp_solver_core) {
     EXPECT_EQ(wr.ms_outputs.m_day, 1);
     EXPECT_EQ(wr.ms_outputs.m_hour, 11);
     EXPECT_EQ(wr.ms_outputs.m_minute, 30) << "Originally empty, minute column should be set to 30 by weatherfile";
-
     EXPECT_TRUE(std::isnan(wr.ms_outputs.m_global)) << "Global not in weatherfile\n";
     EXPECT_NEAR(wr.ms_outputs.m_beam, 602, e);
     EXPECT_NEAR(wr.ms_outputs.m_diffuse, 315, e);
@@ -219,7 +221,7 @@ TEST_F(UsingDataCaseWeatherReader, IntegrationTest_csp_solver_core) {
 }
 
 /**
- *	Integration & Execution Time test
+ *  Integration & Execution Time test
  */
 class CspSolverCoreTest : public ::testing::Test {
 protected:
@@ -233,6 +235,7 @@ protected:
     C_csp_tou_block_schedules tou;
     C_csp_solver::S_sim_setup sim_setup;
     C_csp_solver::S_csp_system_params system;
+    csp_dispatch_opt dispatch;
     C_csp_solver* solver;
 
     void SetUp() {
@@ -241,7 +244,7 @@ protected:
         sim_setup.m_sim_time_start = 0;
         sim_setup.m_sim_time_start = 31536000;
         sim_setup.m_report_step = 3600.0;
-        solver = new C_csp_solver(wr, *cr, *pc, tes, tou, system, ssc_cmod_update, (void*)0);
+        solver = new C_csp_solver(wr, *cr, *pc, tes, tou, dispatch, system, NULL, ssc_cmod_update, (void*)0);
     }
 };
 
@@ -258,7 +261,7 @@ protected:
     void SetUp() {
         CspSolverCoreTest::SetUp();
         // adjust heliostatfield parameters
-        tou.mc_dispatch_params.m_dispatch_optimize = 1;
+        dispatch.solver_params.dispatch_optimize = 1;
         solver->Ssimulate(sim_setup);
     }
 };

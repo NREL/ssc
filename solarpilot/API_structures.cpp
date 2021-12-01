@@ -29,7 +29,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using namespace std;
 
 // ----------------- optimize --------------------
-void sp_optimize::getOptimizationSimulationHistory(vector<vector<double> > &sim_points, vector<double> &obj_values, vector<double> &flux_values)
+void sp_optimize::getOptimizationSimulationHistory(vector<vector<double> > &sim_points, vector<double> &obj_values, vector< vector< double > > &flux_values)
 {
 	/* 
 	Return the addresses of the optimization simulation history data, if applicable.
@@ -39,7 +39,7 @@ void sp_optimize::getOptimizationSimulationHistory(vector<vector<double> > &sim_
 	flux_values = _optimization_fluxes;
 }
 
-void sp_optimize::setOptimizationSimulationHistory(vector<vector<double> > &sim_points, vector<double> &obj_values, vector<double> &flux_values)
+void sp_optimize::setOptimizationSimulationHistory(vector<vector<double> > &sim_points, vector<double> &obj_values, vector< vector<double> > &flux_values)
 {
 	//Create local copies
 	_optimization_sim_points = sim_points;

@@ -44,6 +44,7 @@ class SolarField;
 class Ambient;
 
 typedef std::vector<Heliostat*> Hvector;
+typedef std::vector<Receiver*> Rvector;
 
 class Random
 {
@@ -114,7 +115,7 @@ class Flux
 	matrix_t<double> hermitePoly( double x );	//This will return a vector<double> of hermite coefficients
 
 	//moments of sunshape distribution. If user-defined, also requires specification of the _user_sun vector
-	void hermiteSunCoefs(var_map &V, matrix_t<double> &mSun);
+	void hermiteSunCoefs(var_map &V, Ambient& A, matrix_t<double> &mSun);
 
 	//moments of the error distribution
 	void hermiteErrDistCoefs(block_t<double> &errDM);
@@ -137,16 +138,17 @@ class Flux
 	double imagePlaneIntercept(var_map &V, Heliostat &H, Receiver *Rec, Vect *Sun);
 
 	//An algorithm to initialize the polynomial coefficients
-	void initHermiteCoefs(var_map &V);
+	void initHermiteCoefs(var_map &V, Ambient& A);
 
 	//A method to calculate the flux density given a map of values and a solar field
-	void fluxDensity(simulation_info *siminfo, FluxSurface &flux_surface, Hvector &helios, bool clear_grid = true, bool norm_grid = true, bool show_progress=false);
+	void fluxDensity(simulation_info *siminfo, FluxSurface &flux_surface, Hvector &helios, double tht, bool clear_grid = true, bool norm_grid = true, bool show_progress=false, double *total_flux=0);
 
 	double hermiteFluxEval(Heliostat *H, double xs, double ys);
 
 	//-------------End DELSOL3 methods--------------------
 
-	void calcBestReceiverTarget(Heliostat *H, std::vector<Receiver*> *Recs, double tht, int &rec_index, Vect *rtoh=0);
+	void calcBestReceiverTarget(Heliostat *H, Rvector *Recs, double tht, int &rec_index, Vect *rtoh=0);
+    void calcReceiverTargetOrder(SolarField &SF);
 
 	void simpleAimPoint(sp_point *Aim, sp_point *AimF, Heliostat &H, SolarField &SF);
 	void simpleAimPoint(Heliostat &H, SolarField &SF);	//Method for quick calculation of the aim point to maximize intercept

@@ -1,3 +1,26 @@
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+
 #ifndef _CMOD_CSP_TROUGH_EQNS_H_
 #define _CMOD_CSP_TROUGH_EQNS_H_
 
@@ -17,7 +40,7 @@ extern "C" {
         "     'csp_dtr_pwrb_nameplate' - double [MWe]\\n"
         "     'q_pb_design' - double [MWt]";
 
-    SSCEXPORT void Physical_Trough_System_Design_Equations(ssc_data_t data);
+    SSCEXPORT bool Physical_Trough_System_Design_Equations(ssc_data_t data);
 
 
     static const char* Physical_Trough_Solar_Field_Equations_doc =
@@ -85,7 +108,7 @@ extern "C" {
         "     'L_cpnt' - double [m]\\n"
         "     'Type_cpnt' - double [-]\\n";
 
-    SSCEXPORT void Physical_Trough_Solar_Field_Equations(ssc_data_t data);
+    SSCEXPORT bool Physical_Trough_Solar_Field_Equations(ssc_data_t data);
 
 
     static const char* Physical_Trough_Collector_Type_Equations_doc =
@@ -110,7 +133,7 @@ extern "C" {
         "     'csp_dtr_sca_calc_end_losses' - double []\\n"
         "     'csp_dtr_sca_calc_iams' - double [-]\\n";
 
-    SSCEXPORT void Physical_Trough_Collector_Type_Equations(ssc_data_t data);
+    SSCEXPORT bool Physical_Trough_Collector_Type_Equations(ssc_data_t data);
 
 
     static const char* Physical_Trough_Collector_Type_UI_Only_Equations_doc =
@@ -135,7 +158,7 @@ extern "C" {
         "     'csp_dtr_sca_calc_end_losses' - double []\\n"
         "     'csp_dtr_sca_calc_iams' - double [-]\\n";
 
-    SSCEXPORT void Physical_Trough_Collector_Type_UI_Only_Equations(ssc_data_t data);
+    SSCEXPORT bool Physical_Trough_Collector_Type_UI_Only_Equations(ssc_data_t data);
 
 
     static const char* Physical_Trough_System_Control_Equations_doc =
@@ -149,7 +172,7 @@ extern "C" {
         "     'disp_wlim_max' - double [MWe]\\n"
         "     'wlim_series' - double [kWe]\\n";
 
-    SSCEXPORT void Physical_Trough_System_Control_Equations(ssc_data_t data);
+    SSCEXPORT bool Physical_Trough_System_Control_Equations(ssc_data_t data);
 
 #ifdef __cplusplus
 }

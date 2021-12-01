@@ -1,3 +1,25 @@
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 #include <algorithm>
 #include <set>
 
@@ -60,8 +82,10 @@ bool try_get_rate_structure(var_table* vt, const std::string& ssc_name, bool pow
                 rate_data.table.assign("unit", var_data("kWh"));
             else if (unit_type == 2)
                 rate_data.table.assign("unit", var_data("kWh daily"));
-            else
-                throw(std::runtime_error("ElectricityRates_format_as_URDBv7 error. Unit type in " + ssc_name + " not allowed."));
+            else{
+                vt->assign("error", var_data("ElectricityRates_format_as_URDBv7 error. Unit type in " + ssc_name + " not allowed."));
+                return false;
+            }
             rate_data.table.assign("sell", sell);
         }
         else{
@@ -75,10 +99,10 @@ bool try_get_rate_structure(var_table* vt, const std::string& ssc_name, bool pow
     return true;
 }
 
-SSCEXPORT void ElectricityRates_format_as_URDBv7(ssc_data_t data) {
+SSCEXPORT bool ElectricityRates_format_as_URDBv7(ssc_data_t data) {
     auto vt = static_cast<var_table*>(data);
     if (!vt){
-        throw std::runtime_error("ssc_data_t data invalid");
+        return false;
     }
     auto urdb_data = var_table();
     std::string log;
@@ -100,7 +124,7 @@ SSCEXPORT void ElectricityRates_format_as_URDBv7(ssc_data_t data) {
             dgrules = "Buy All Sell All";
             break;
         default:
-            throw(std::runtime_error("ElectricityRates_format_as_URDBv7 error. ur_net_metering_option not recognized."));
+            vt->assign("error", var_data("ElectricityRates_format_as_URDBv7 error. ur_net_metering_option not recognized."));
     }
     urdb_data.assign("dgrules", dgrules);
 
@@ -214,5 +238,9 @@ SSCEXPORT void ElectricityRates_format_as_URDBv7(ssc_data_t data) {
     if (try_get_rate_structure(vt, "ur_dc_tou_mat", true, rate_structure))
         urdb_data.assign("demandratestructure", rate_structure);
 
+    if (vt->is_assigned("error"))
+        return false;
+
     vt->assign("urdb_data", urdb_data);
+    return true;
 }

@@ -137,7 +137,7 @@ void C_pc_steam_heat_sink::init(C_csp_power_cycle::S_solved_params &solved_param
 
 }
 
-int C_pc_steam_heat_sink::get_operating_state()
+C_csp_power_cycle::E_csp_power_cycle_modes C_pc_steam_heat_sink::get_operating_state()
 {
 	// Assume heat sink is always able to accept thermal power from solar field/TES
 	return C_csp_power_cycle::ON;

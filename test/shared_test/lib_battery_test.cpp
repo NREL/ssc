@@ -1,3 +1,25 @@
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 #include <cmath>
 #include <gtest/gtest.h>
 
@@ -255,17 +277,17 @@ TEST_F(lib_battery_test, runTestCycleAt1C){
     }
 //    std::cerr <<  idx << ": soc " << batteryModel->SOC() << ", cap " << capacity_passed << "\n";
     // the SOC isn't at 5 so it means the controller is not able to calculate a current/voltage at which to discharge to 5
-    s.capacity = {50.33, 920.36, 883.54, 8.941, 0, 5.70, 6.71, 2};
-    s.batt_voltage = 470.35;
+    s.capacity = { 45.62, 920.29, 883.48, 8.995, 0, 5.164, 6.182, 2};
+    s.batt_voltage = 465.54;
     s.lifetime.q_relative = 93.08;
-    s.lifetime.cycle->q_relative_cycle = 92.04;
+    s.lifetime.cycle->q_relative_cycle = 92.03;
     s.lifetime.n_cycles = 399;
-    s.lifetime.cycle_range = 89.04;
-    s.lifetime.average_range = 88.85;
-    s.lifetime.cycle->rainflow_Xlt = 89.06;
-    s.lifetime.cycle->rainflow_Ylt = 89.30;
+    s.lifetime.cycle_range = 89.58;
+    s.lifetime.average_range = 88.80;
+    s.lifetime.cycle->rainflow_Xlt = 89.60;
+    s.lifetime.cycle->rainflow_Ylt = 89.84;
     s.lifetime.cycle->rainflow_jlt = 3;
-    s.lifetime.day_age_of_battery = 2739.96;
+    s.lifetime.day_age_of_battery = 2757.54;
     s.lifetime.calendar->q_relative_calendar = 98.0;
     s.lifetime.calendar->dq_relative_calendar_old = 0.039;
     s.thermal = {96.0, 20.00, 20};
@@ -327,25 +349,25 @@ TEST_F(lib_battery_test, runTestCycleAt3C){
     }
 //    std::cerr <<  idx << ": soc " << batteryModel->SOC() << ", cap " << capacity_passed << "\n";
     // the SOC isn't at 5 so it means the controller is not able to calculate a current/voltage at which to discharge to 5
-    s.capacity = {52.06, 920.37, 883.56, 8.94, 0, 5.89, 6.90, 2};
-    s.batt_voltage = 472.02;
+    s.capacity = { 47.09, 920.30, 883.49, 9.08, 0, 5.33, 6.36, 2};
+    s.batt_voltage = 467.09;
     s.lifetime.q_relative = 93.08;
-    s.lifetime.day_age_of_battery = 2644;
+    s.lifetime.day_age_of_battery = 2591.17;
     s.lifetime.cycle->q_relative_cycle = 92.08;
     s.lifetime.n_cycles = 399;
-    s.lifetime.cycle_range = 89.07;
-    s.lifetime.average_range = 89.00;
-    s.lifetime.cycle->rainflow_Xlt = 89.09;
-    s.lifetime.cycle->rainflow_Ylt = 89.11;
+    s.lifetime.cycle_range = 89.38;
+    s.lifetime.average_range = 88.95;
+    s.lifetime.cycle->rainflow_Xlt = 89.41;
+    s.lifetime.cycle->rainflow_Ylt = 89.67;
     s.lifetime.cycle->rainflow_jlt = 3;
     s.lifetime.cycle->q_relative_cycle = 92.04;
-    s.lifetime.calendar->q_relative_calendar = 98.08;
+    s.lifetime.calendar->q_relative_calendar = 98.11;
     s.lifetime.calendar->dq_relative_calendar_old = 0.0393;
     s.thermal = {96.01, 20, 20};
     s.last_idx = 32991;
     compareState(batteryModel, s, "runTest: 3");
 
-    EXPECT_NEAR(capacity_passed, 357859, 100) << "Current passing through cell";
+    EXPECT_NEAR(capacity_passed, 357702, 100) << "Current passing through cell";
     double qmax = fmax(s.capacity.qmax_lifetime, s.capacity.qmax_thermal);
     EXPECT_NEAR(qmax/q, 0.9209, 0.01) << "capacity relative to max capacity";
 }
@@ -681,9 +703,9 @@ TEST_F(lib_battery_test, AdaptiveTimestep) {
 
     }
 
-    EXPECT_NEAR(batteryModel->charge_maximum(), 576.93, 1e-2);
-    EXPECT_NEAR(batt_subhourly->charge_maximum(), 576.95, 1e-2);
-    EXPECT_NEAR(batt_adaptive->charge_maximum(), 576.95, 1e-2);
+    EXPECT_NEAR(batteryModel->charge_maximum(), 577.31, 1e-2);
+    EXPECT_NEAR(batt_subhourly->charge_maximum(), 577.22, 1e-2);
+    EXPECT_NEAR(batt_adaptive->charge_maximum(), 577.26, 1e-2);
 
     EXPECT_NEAR(batteryModel->SOC(), 94.98, 1e-2);
     EXPECT_NEAR(batt_subhourly->SOC(), 94.95, 1e-2);

@@ -1,52 +1,24 @@
-/*******************************************************************************************************
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (�Alliance�) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as �System Advisor Model� or �SAM�. Except
-*  to comply with the foregoing, the terms �System Advisor Model�, �SAM�, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************************************/
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #include "core.h"
 #include "common.h"
@@ -74,7 +46,8 @@ static var_info _cm_vtab_mhk_wave[] = {
     { SSC_INPUT,			SSC_NUMBER,			"balance_of_system_cost_total",						"BOS costs",									"$",				"",             "MHKWave",         "?=1",                      "",				"" },
     { SSC_INPUT,			SSC_NUMBER,			"financial_cost_total",						"Financial costs",									"$",				"",             "MHKWave",         "?=1",                      "",				"" },
     { SSC_INPUT,			SSC_NUMBER,			"total_operating_cost",						"O&M costs",									"$",				"",             "MHKWave",         "?=1",                      "",				"" },
-	// losses
+
+    // losses
 	{ SSC_INPUT,			SSC_NUMBER,			"loss_array_spacing",				"Array spacing loss",													"%",			"",				"MHKWave",			"*",		"",						"" },
 	{ SSC_INPUT,			SSC_NUMBER,			"loss_resource_overprediction",				"Resource overprediction loss",													"%",			"",				"MHKWave",			"*",		"",						"" },
 	{ SSC_INPUT,			SSC_NUMBER,			"loss_transmission",				"Transmission losses",													"%",			"",				"MHKWave",			"*",		"",						"" },
@@ -90,7 +63,7 @@ static var_info _cm_vtab_mhk_wave[] = {
 
 	{ SSC_OUTPUT,			SSC_NUMBER,			"device_average_power",					"Average power production of a single device",											"kW",			"",				"MHKWave",			"*",						"",							"" },
 	{ SSC_OUTPUT,			SSC_NUMBER,			"annual_energy",						"Annual energy production of array",											"kWh",			"",				"MHKWave",			"*",						"",							"" },
-    { SSC_OUTPUT,           SSC_ARRAY,          "hourly_energy",                        "Hourly energy production of device",                                            "kWh",          "", "Time Series",          "wave_resource_model_choice=1",                        "",          "" },
+    { SSC_OUTPUT,           SSC_ARRAY,          "energy_hourly_kWh",                        "Energy production of array",                                            "kWh",          "", "Time Series",          "wave_resource_model_choice=1",                        "",          "" },
     { SSC_OUTPUT,           SSC_ARRAY,          "gen",                        "System power generated",                                            "kW",          "", "Time Series",          "",                        "",          "" },
 
     { SSC_OUTPUT,           SSC_ARRAY,          "sig_wave_height_index_mat",            "Wave height index locations for time series",                      "m",                         "", "MHKWave",          "wave_resource_model_choice=1",                        "",          "" },
@@ -104,8 +77,8 @@ static var_info _cm_vtab_mhk_wave[] = {
     { SSC_OUTPUT,			SSC_NUMBER,			"numberRecords",						"Number of Records",													"",			"",				"MHKWave",			"",						"",							"" },
     { SSC_OUTPUT,			SSC_NUMBER,			"numberHours",						"Number of Hours",													"",			"",				"MHKWave",			"",						"",							"" },
 
-    { SSC_OUTPUT,			SSC_MATRIX,			"annual_energy_distribution",			"Annual energy production as function of Hs and Te",				"",				"",				"MHKWave",			"",						"",							"" },
-    { SSC_OUTPUT,			SSC_MATRIX,			"annual_energy_distribution_time",			"Annual energy production as function of Time",				"",				"",				"MHKWave",			"",						"",							"" },
+    { SSC_OUTPUT,			SSC_MATRIX,			"annual_energy_distribution",			"Annual energy production as function of Hs and Te",				"kWh",				"",				"MHKWave",			"",						"",							"" },
+    { SSC_OUTPUT,			SSC_MATRIX,			"annual_energy_distribution_time",			"Annual energy production as function of Time",				"kWh",				"",				"MHKWave",			"",						"",							"" },
 
     { SSC_OUTPUT,			SSC_NUMBER,			"wave_resource_start_height",			"Wave height at which first non-zero wave resource value occurs (m)",				"",				"",				"MHKWave",			"wave_resource_model_choice=0",						"",							"" },
     { SSC_OUTPUT,			SSC_NUMBER,			"wave_resource_start_period",			"Wave period at which first non-zero wave resource value occurs (s)",				"",				"",				"MHKWave",			"wave_resource_model_choice=0",						"",							"" },
@@ -116,16 +89,23 @@ static var_info _cm_vtab_mhk_wave[] = {
     { SSC_OUTPUT,			SSC_NUMBER,			"wave_power_end_height",			"Wave height at which last non-zero WEC power output occurs (m)",				"",				"",				"MHKWave",			"wave_resource_model_choice=0",						"",							"" },
     { SSC_OUTPUT,			SSC_NUMBER,			"wave_power_end_period",			"Wave period at which last non-zero WEC power output occurs (s)",				"",				"",				"MHKWave",			"wave_resource_model_choice=0",						"",							"" },
 
-    { SSC_OUTPUT,			SSC_NUMBER,			"total_capital_cost_kwh",           "Capital costs per unit annual energy",		"$/kWh",			"",				"MHKWave",			"*",						"",						"" },
-    { SSC_OUTPUT,			SSC_NUMBER,			"total_device_cost_kwh",            "Device costs per unit annual energy",		"$/kWh",			"",				"MHKWave",			"*",						"",						"" },
-    { SSC_OUTPUT,			SSC_NUMBER,			"total_bos_cost_kwh",               "Balance of system costs per unit annual energy",		"$/kWh",			"",				"MHKWave",			"*",						"",						"" },
-    { SSC_OUTPUT,			SSC_NUMBER,			"total_financial_cost_kwh",         "Financial costs per unit annual energy",		"$/kWh",			"",				"MHKWave",			"*",						"",						"" },
-    { SSC_OUTPUT,			SSC_NUMBER,			"total_om_cost_kwh",                "O&M costs per unit annual energy",		"$/kWh",			"",				"MHKWave",			"*",						"",						"" },
-    { SSC_OUTPUT,			SSC_NUMBER,			"total_capital_cost_lcoe",          "Capital cost as percentage of overall LCOE",		"%",			"",				"MHKWave",			"*",						"",						"" },
-    { SSC_OUTPUT,			SSC_NUMBER,			"total_device_cost_lcoe",           "Device cost",		"%",			"",				"MHKWave",			"*",						"",						"" },
-    { SSC_OUTPUT,			SSC_NUMBER,			"total_bos_cost_lcoe",              "BOS cost",		"%",			"",				"MHKWave",			"*",						"",						"" },
-    { SSC_OUTPUT,			SSC_NUMBER,			"total_financial_cost_lcoe",        "Financial cost",		"%",			"",				"MHKWave",			"*",						"",						"" },
-    { SSC_OUTPUT,			SSC_NUMBER,			"total_om_cost_lcoe",               "O&M cost (annual)",		"%",			"",				"MHKWave",			"*",						"",						"" },
+    { SSC_OUTPUT,			SSC_NUMBER,			"total_capital_cost_kwh",           "Capital costs per unit annual energy",		"$/kWh",			"",				"MHKWave",			"",						"",						"" },
+    { SSC_OUTPUT,			SSC_NUMBER,			"total_device_cost_kwh",            "Device costs per unit annual energy",		"$/kWh",			"",				"MHKWave",			"",						"",						"" },
+    { SSC_OUTPUT,			SSC_NUMBER,			"total_bos_cost_kwh",               "Balance of system costs per unit annual energy",		"$/kWh",			"",				"MHKWave",			"",						"",						"" },
+    { SSC_OUTPUT,			SSC_NUMBER,			"total_financial_cost_kwh",         "Financial costs per unit annual energy",		"$/kWh",			"",				"MHKWave",			"",						"",						"" },
+    { SSC_OUTPUT,			SSC_NUMBER,			"total_om_cost_kwh",                "O&M costs per unit annual energy",		"$/kWh",			"",				"MHKWave",			"",						"",						"" },
+    { SSC_OUTPUT,			SSC_NUMBER,			"total_capital_cost_lcoe",          "Capital cost as percentage of overall LCOE",		"%",			"",				"MHKWave",			"",						"",						"" },
+    { SSC_OUTPUT,			SSC_NUMBER,			"total_device_cost_lcoe",           "Device cost",		"%",			"",				"MHKWave",			"",						"",						"" },
+    { SSC_OUTPUT,			SSC_NUMBER,			"total_bos_cost_lcoe",              "BOS cost",		"%",			"",				"MHKWave",			"",						"",						"" },
+    { SSC_OUTPUT,			SSC_NUMBER,			"total_financial_cost_lcoe",        "Financial cost",		"%",			"",				"MHKWave",			"",						"",						"" },
+    { SSC_OUTPUT,			SSC_NUMBER,			"total_om_cost_lcoe",               "O&M cost (annual)",		"%",			"",				"MHKWave",			"",						"",						"" },
+    //Cost per KW
+    { SSC_OUTPUT,			SSC_NUMBER,			"total_capital_cost_per_kw",							"Capital cost per kW",										"$/kW",			"",								"MHKCosts",			"",						"",							"" },
+    { SSC_OUTPUT,			SSC_NUMBER,			"total_device_cost_per_kw",							"Device cost per kW",										"$/kW",			"",								"MHKCosts",			"",						"",							"" },
+    { SSC_OUTPUT,			SSC_NUMBER,			"total_bos_cost_per_kw",							"Balance of Systems cost per kW",										"$/kW",			"",								"MHKCosts",			"",						"",							"" },
+    { SSC_OUTPUT,			SSC_NUMBER,			"total_financial_cost_per_kw",							"Financial cost per kW",										"$/kW",			"",								"MHKCosts",			"",						"",							"" },
+    { SSC_OUTPUT,			SSC_NUMBER,			"total_operations_cost_per_kw",							"O&M cost per kW",										"$/kW",			"",								"MHKCosts",			"",						"",							"" },
+
     var_info_invalid
 };
 
@@ -408,7 +388,7 @@ public:
 
         util::matrix_t<double>  wave_power_matrix = as_matrix("wave_power_matrix"); //Power matrix at various wave heights and periods
         //Get the system capacity
-        //double system_capacity = as_double("system_capacity");
+        double system_capacity = as_double("system_capacity");
         double annual_energy = 0, device_rated_capacity = 0, device_average_power = 0, capacity_factor = 0;
         //User either sets device_rated_capacity in the UI, or allows cmod to determine from power curve:
         device_rated_capacity = as_double("device_rated_power"); //Rated power of 1 Wave energy converter device (derived from power matrix)
@@ -551,7 +531,7 @@ public:
             else if (!is_assigned("significant_wave_height") || !is_assigned("energy_period")) //Both heights and periods must be assigned
                 throw exec_error("mhk_wave", "Wave height and Energy period arrays of equal length must be assigned");
 
-            ssc_number_t* energy_hourly = allocate("hourly_energy", number_records);
+            ssc_number_t* energy_hourly_kWh = allocate("energy_hourly_kWh", number_records);
             ssc_number_t* energy_hourly_gen = allocate("gen", number_records);
             ssc_number_t* sig_wave_height_index_mat = allocate("sig_wave_height_index_mat", number_records);
             ssc_number_t* sig_wave_height_data = allocate("sig_wave_height_data", number_records);
@@ -592,25 +572,58 @@ public:
             for (size_t i = 0; i < size_t(number_records); i++) {
                 ts_significant_wave_height = wave_height_input[i];
                 ts_energy_period = wave_period_input[i];
-                for (ssc_number_t j = 0; j < (ssc_number_t)wave_power_matrix.nrows(); j++) {
-                    if (abs(ts_significant_wave_height - wave_power_matrix.at(size_t(j), 0)) <= 0.25) { //Find which height is closest to height at current timestep
-                        sig_wave_height_index = j;
-                        sig_wave_height_index_mat[i] = sig_wave_height_index; //Store height index location in time series array
-
-
+                sig_wave_height_index = 0;
+                energy_period_index = 0;
+                //Significant Wave Height
+                if (ts_significant_wave_height < 0) {
+                    sig_wave_height_index = 1;
+                    sig_wave_height_index_mat[i] = 1;
+                }
+                else if (ts_significant_wave_height > 9.75) {
+                    sig_wave_height_index = wave_power_matrix.nrows() - 1;
+                    sig_wave_height_index_mat[i] = wave_power_matrix.nrows() - 1;
+                }
+                else {
+                    for (ssc_number_t j = 1; j < (ssc_number_t)wave_power_matrix.nrows(); j++) {
+                        if (abs(ts_significant_wave_height - wave_power_matrix.at(size_t(j), 0)) <= 0.25) { //Find which height is closest to height at current timestep
+                            sig_wave_height_index = j;
+                            sig_wave_height_index_mat[i] = sig_wave_height_index; //Store height index location in time series array
+                        }
                     }
                 }
-                for (ssc_number_t m = 0; m < (ssc_number_t)wave_power_matrix.ncols(); m++) {
-                    if (abs(ts_energy_period - wave_power_matrix.at(0, size_t(m))) <= 0.50) {
-                        energy_period_index = m;
-                        energy_period_index_mat[i] = energy_period_index;
+                //Energy Period
+                if (ts_energy_period < 0) {
+                    energy_period_index = 1;
+                    energy_period_index_mat[i] = 1;
+                }
+                else if (ts_energy_period > 20.5) {
+                    energy_period_index = wave_power_matrix.ncols() - 1;
+                    energy_period_index_mat[i] = wave_power_matrix.ncols() - 1;
+                }
+                else {
+                    for (ssc_number_t m = 1; m < (ssc_number_t)wave_power_matrix.ncols(); m++) {
+                        if (abs(ts_energy_period - wave_power_matrix.at(0, size_t(m))) <= 0.50) {
+                            energy_period_index = m;
+                            energy_period_index_mat[i] = energy_period_index;
+                        }
                     }
                 }
+
+                if (sig_wave_height_index == 0 || energy_period_index == 0) {
+                    throw exec_error("mhk_wave", "The wave conditions at timestep" + to_string(i) + "were not able to be located in the power matrix. Please check your resource file");
+                }
+                
 
                 //n-hour energy based on wave power matrix value at height and period best matching the time series inputs * number devices * size multiplier
-                energy_hourly[i] = (ssc_number_t)(wave_power_matrix.at(size_t(sig_wave_height_index), size_t(energy_period_index))) * hour_step * (1 - total_loss / 100) * number_devices;
-                p_annual_energy_dist[size_t(sig_wave_height_index) * 22 + size_t(energy_period_index)] += energy_hourly[i]; //Add energy for given time step to height x period distribution matrix at specified grid point
-                energy_hourly_gen[i] = energy_hourly[i]; //Store in gen to use in heatmap output (probably don't need two variables)
+                //First check that indexed power does not exceed maximum system power
+                if (wave_power_matrix.at(size_t(sig_wave_height_index), size_t(energy_period_index)) > device_rated_capacity)
+                    throw exec_error("mhk_wave", "The device power calculated from the wave height and wave period exceeds the maximum power matrix value at index" + to_string(i) + ". Please check the wave conditions.");
+                energy_hourly_kWh[i] = (ssc_number_t)(wave_power_matrix.at(size_t(sig_wave_height_index), size_t(energy_period_index))) * hour_step * (1 - total_loss / 100) * number_devices;
+                p_annual_energy_dist[size_t(sig_wave_height_index) * 22 + size_t(energy_period_index)] += energy_hourly_kWh[i]; //Add energy for given time step to height x period distribution matrix at specified grid point
+                energy_hourly_gen[i] = (ssc_number_t)(wave_power_matrix.at(size_t(sig_wave_height_index), size_t(energy_period_index))) * (1 - total_loss / 100) * number_devices; //Store in gen to use in heatmap output (probably don't need two variables)
+                //energy_hourly_gen[i*3+1] = energy_hourly[i]; //Store in gen to use in heatmap output (probably don't need two variables)
+                //energy_hourly_gen[i*3+2] = energy_hourly[i]; //Store in gen to use in heatmap output (probably don't need two variables)
+
                 //iday = floor(double(i * 3) / 24); //Calculate day of year
                 if (month[i] == 1)
                     iday = day[i];
@@ -621,7 +634,7 @@ public:
                 for (size_t d = 0; d < days_in_year; d++) {
                     for (size_t h = 0; h < 9; h++) {
                         if (iday == d && ihour == size_t(3 * (h - 1))) {
-                            p_annual_energy_dist_time[h * days_in_year + d] += energy_hourly[i]; //Add energy for time step to time distribution matrix at day and hour of current timestep
+                            p_annual_energy_dist_time[h * days_in_year + d] += energy_hourly_kWh[i]; //Add energy for time step to time distribution matrix at day and hour of current timestep
                             break; //Get out of loop once day and hour match is found
                         }
                     }
@@ -631,9 +644,9 @@ public:
                 energy_period_index_mat[i] = (ssc_number_t)(wave_power_matrix.at(0, size_t(energy_period_index))); //Store wave period values closest to those in time series input array
                 energy_period_data[i] = ts_energy_period;
                 wave_power_index_mat[i] = (ssc_number_t)(wave_power_matrix.at(size_t(sig_wave_height_index), size_t(energy_period_index))); //Store wave power used in each time step based on closest height and period from time series input arrays
-                annual_energy += energy_hourly[i]; //Sum up to annual energy
+                annual_energy += energy_hourly_kWh[i]; //Sum up to annual energy
                 //device_average_power += energy_hourly[i] / 8760;
-                device_average_power += energy_hourly[i] / (number_hours * (1 - total_loss / 100) * number_devices); //Average for device average power
+                device_average_power += energy_hourly_kWh[i] / (number_hours * (1 - total_loss / 100) * number_devices); //Average for device average power
 
 
             }
@@ -762,36 +775,53 @@ public:
         assign("wave_power_end_period", var_data((ssc_number_t)wave_power_end_period));
         //End of start height and period to potentially remove
 
-        //Cost category totals for LCOE contribution calculations
-        double device_cost = as_double("device_costs_total");
-        double bos_cost = as_double("balance_of_system_cost_total");
-        double financial_cost = as_double("financial_cost_total");
-        double om_cost = as_double("total_operating_cost");
-        double fcr = as_double("fixed_charge_rate");
+        if (is_assigned("device_costs_total")) {
+            //Cost category totals for LCOE contribution calculations
+            double device_cost = as_double("device_costs_total");
+            double bos_cost = as_double("balance_of_system_cost_total");
+            double financial_cost = as_double("financial_cost_total");
+            double om_cost = as_double("total_operating_cost");
+            double fcr = as_double("fixed_charge_rate");
 
-        //Cost per kwh Annual Energy
-        double total_capital_cost_kwh = fcr*(device_cost + bos_cost + financial_cost) / annual_energy;
-        double total_device_cost_kwh = fcr*device_cost / annual_energy;
-        double total_bos_cost_kwh = fcr*bos_cost / annual_energy;
-        double total_financial_cost_kwh = fcr*financial_cost / annual_energy;
-        double total_om_cost_kwh = om_cost / annual_energy;
+            //Cost per kwh Annual Energy
+            double total_capital_cost_kwh = fcr * (device_cost + bos_cost + financial_cost) / annual_energy;
+            double total_device_cost_kwh = fcr * device_cost / annual_energy;
+            double total_bos_cost_kwh = fcr * bos_cost / annual_energy;
+            double total_financial_cost_kwh = fcr * financial_cost / annual_energy;
+            double total_om_cost_kwh = om_cost / annual_energy;
 
-        //LCOE cost components
-        double total_capital_cost_lcoe = (fcr * (device_cost + bos_cost + financial_cost)) / (fcr * (device_cost + bos_cost + financial_cost) + om_cost) * 100;
-        double total_device_cost_lcoe = (fcr * device_cost) / (fcr * (device_cost + bos_cost + financial_cost) + om_cost) * 100;
-        double total_bos_cost_lcoe = (fcr * bos_cost) / (fcr * (device_cost + bos_cost + financial_cost) + om_cost) * 100;
-        double total_financial_cost_lcoe = (fcr * financial_cost) / (fcr * (device_cost + bos_cost + financial_cost) + om_cost) * 100;
-        double total_om_cost_lcoe = (om_cost) / (fcr * (device_cost + bos_cost + financial_cost) + om_cost) * 100;
-        assign("total_capital_cost_kwh", var_data((ssc_number_t)total_capital_cost_kwh));
-        assign("total_device_cost_kwh", var_data((ssc_number_t)total_device_cost_kwh));
-        assign("total_bos_cost_kwh", var_data((ssc_number_t)total_bos_cost_kwh));
-        assign("total_financial_cost_kwh", var_data((ssc_number_t)total_financial_cost_kwh));
-        assign("total_om_cost_kwh", var_data((ssc_number_t)total_om_cost_kwh));
-        assign("total_capital_cost_lcoe", var_data((ssc_number_t)total_capital_cost_lcoe));
-        assign("total_device_cost_lcoe", var_data((ssc_number_t)total_device_cost_lcoe));
-        assign("total_bos_cost_lcoe", var_data((ssc_number_t)total_bos_cost_lcoe));
-        assign("total_financial_cost_lcoe", var_data((ssc_number_t)total_financial_cost_lcoe));
-        assign("total_om_cost_lcoe", var_data((ssc_number_t)total_om_cost_lcoe));
+
+
+
+            //LCOE cost components
+            double total_capital_cost_lcoe = (fcr * (device_cost + bos_cost + financial_cost)) / (fcr * (device_cost + bos_cost + financial_cost) + om_cost) * 100;
+            double total_device_cost_lcoe = (fcr * device_cost) / (fcr * (device_cost + bos_cost + financial_cost) + om_cost) * 100;
+            double total_bos_cost_lcoe = (fcr * bos_cost) / (fcr * (device_cost + bos_cost + financial_cost) + om_cost) * 100;
+            double total_financial_cost_lcoe = (fcr * financial_cost) / (fcr * (device_cost + bos_cost + financial_cost) + om_cost) * 100;
+            double total_om_cost_lcoe = (om_cost) / (fcr * (device_cost + bos_cost + financial_cost) + om_cost) * 100;
+            assign("total_capital_cost_kwh", var_data((ssc_number_t)total_capital_cost_kwh));
+            assign("total_device_cost_kwh", var_data((ssc_number_t)total_device_cost_kwh));
+            assign("total_bos_cost_kwh", var_data((ssc_number_t)total_bos_cost_kwh));
+            assign("total_financial_cost_kwh", var_data((ssc_number_t)total_financial_cost_kwh));
+            assign("total_om_cost_kwh", var_data((ssc_number_t)total_om_cost_kwh));
+            assign("total_capital_cost_lcoe", var_data((ssc_number_t)total_capital_cost_lcoe));
+            assign("total_device_cost_lcoe", var_data((ssc_number_t)total_device_cost_lcoe));
+            assign("total_bos_cost_lcoe", var_data((ssc_number_t)total_bos_cost_lcoe));
+            assign("total_financial_cost_lcoe", var_data((ssc_number_t)total_financial_cost_lcoe));
+            assign("total_om_cost_lcoe", var_data((ssc_number_t)total_om_cost_lcoe));
+
+            //Cost per kW system capacity
+            double capital_cost_kw = (device_cost + bos_cost + financial_cost) / system_capacity;
+            double device_cost_kw = device_cost / system_capacity;
+            double bos_cost_kw = bos_cost / system_capacity;
+            double financial_cost_kw = financial_cost / system_capacity;
+            double om_cost_kw = om_cost / system_capacity;
+            assign("total_capital_cost_per_kw", var_data(ssc_number_t(capital_cost_kw)));
+            assign("total_device_cost_per_kw", var_data(ssc_number_t(device_cost_kw)));
+            assign("total_bos_cost_per_kw", var_data(ssc_number_t(bos_cost_kw)));
+            assign("total_financial_cost_per_kw", var_data(ssc_number_t(financial_cost_kw)));
+            assign("total_operations_cost_per_kw", var_data(ssc_number_t(om_cost_kw)));
+        }
 
 		//Calculating capacity factor:
 		capacity_factor = annual_energy / (device_rated_capacity * number_devices * 8760);

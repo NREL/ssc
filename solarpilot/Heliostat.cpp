@@ -61,6 +61,9 @@ double Heliostat::getEfficiencyCloudiness(){return eff_data.eta_cloud;}
 double Heliostat::getPowerToReceiver(){return eff_data.power_to_rec;}
 double Heliostat::getPowerValue(){return eff_data.power_value;}
 double Heliostat::getRankingMetricValue(){return eff_data.rank_metric;}
+double Heliostat::getEnergyValue() { return eff_data.energy_value; }
+double Heliostat::getAnnualEnergy() { return eff_data.energy_annual; }
+double Heliostat::getAnnualEfficiency() { return eff_data.eta_annual; }
 double Heliostat::getAzimuthTrack(){return _azimuth;}
 double Heliostat::getZenithTrack(){return _zenith;}
 double Heliostat::getCollisionRadius(){return _r_collision;}
@@ -80,12 +83,15 @@ void Heliostat::getImageSize(double &sigx_n, double &sigy_n){ sigx_n = _image_si
 string *Heliostat::getHeliostatName(){return &_helio_name;}
 Heliostat* Heliostat::getMasterTemplate(){return _master_template;}
 var_heliostat* Heliostat::getVarMap(){return _var_helio;}
+unordered_map<Receiver*, double>& Heliostat::getReceiverPowerAlloc() { return _rec_power_alloc; }
 
 bool Heliostat::IsUserCant(){return _is_user_canted;} //Fetch
 void Heliostat::IsUserCant(bool setting){_is_user_canted = setting;} //Set
 bool Heliostat::IsEnabled(){return _is_enabled;}
 bool Heliostat::IsInLayout(){return _in_layout;}
+bool Heliostat::IsMultiReceiverAssigned() { return _has_multi_rec_assignment; }
 void Heliostat::IsEnabled(bool enable){_is_enabled = enable;}
+void Heliostat::IsMultiReceiverAssigned(bool assigned) { _has_multi_rec_assignment = assigned; }
 
 void Heliostat::setId(int id){_id = id;}
 void Heliostat::setGroupId(int row, int col){_group[0] = row; _group[1] = col;}
@@ -99,6 +105,9 @@ void Heliostat::setEfficiencyShading(double eta_shadow){eff_data.eta_shadow = et
 void Heliostat::setEfficiencyCloudiness(double eta_cloud){eff_data.eta_cloud = eta_cloud;}
 void Heliostat::setEfficiencyTotal(double eta_tot){eff_data.eta_tot = eta_tot;}
 void Heliostat::setRankingMetricValue(double rval){eff_data.rank_metric = rval;}
+void Heliostat::setEnergyValue(double rval) { eff_data.energy_value = rval; }
+void Heliostat::setAnnualEnergy(double p_annual) { eff_data.energy_annual = p_annual; }
+void Heliostat::setAnnualEfficiency(double rval) { eff_data.eta_annual = rval; }
 void Heliostat::setAimPointFluxPlane(sp_point &Aim){_aim_fluxplane.Set( Aim.x, Aim.y, Aim.z );}
 void Heliostat::setAimPointFluxPlane(double x, double y, double z){ _aim_fluxplane.Set(x, y, z); }
 void Heliostat::setTrackVector(Vect &tr){ _track = tr; }	//Set the tracking vector
@@ -133,6 +142,8 @@ void Heliostat::resetMetrics(){
 
 void Heliostat::Create(var_map &V, int htnum)
 {
+    _has_multi_rec_assignment = false;  //initialize
+
     _var_helio = &V.hels.at(htnum);
 	//set some defaults for local values
     _helio_name = _var_helio->helio_name.val;
@@ -190,7 +201,8 @@ void Heliostat::updateCalculatedParameters(var_map &Vm, int htnum)
 	err_reflect_y = V->err_reflect_y.val;
 	double err_tot = sqrt( pow(2.*err_elevation, 2) + pow(2.*err_azimuth, 2) + pow(2.*err_surface_x, 2) + 
 		pow(2.*err_surface_y, 2) + pow(err_reflect_x, 2) + pow(err_reflect_y, 2));
-    
+    err_tot *= 0.7071;  //1/sqrt(2) accounts for translation from 2 dimensions to 1
+
     V->err_total.Setval( err_tot );
 
     //Calculate the total optical reflectivity to report back
@@ -625,14 +637,19 @@ void Heliostat::calcAndSetAimPointFluxPlane(sp_point &aimpos_abs, Receiver &Rec,
     
     sp_point aimpos(aimpos_abs);    
     PointVect NV;
-	Rec.CalculateNormalVector(*H.getLocation(), NV);	//Get the receiver normal vector
+
+    sp_point h_loc_adj = *H.getLocation();
+    var_receiver* rv = Rec.getVarMap();
+    h_loc_adj.Add(-rv->rec_offset_x_global.Val(), -rv->rec_offset_y_global.Val(), -rv->rec_offset_z_global.Val());
+
+	Rec.CalculateNormalVector(h_loc_adj, NV);	//Get the receiver normal vector
 
     double az = atan2(NV.i, NV.j);
     double el = atan2(NV.k*NV.k, NV.i*NV.i + NV.j*NV.j); 
 
     //rotate into flux plane coordinates
-    Toolbox::rotation(PI - az,2,aimpos);
-	Toolbox::rotation(PI/2. - el,0,aimpos);
+    Toolbox::rotation(PI - az, 2, aimpos);
+	Toolbox::rotation(PI/2. - el, 0, aimpos);
 	//The z component should be very small, so zero out
 	if( fabs(aimpos.z) < 1.e-6 ) aimpos.z = 0.;
 	//The X and Y coordinates now indicate the image plane position

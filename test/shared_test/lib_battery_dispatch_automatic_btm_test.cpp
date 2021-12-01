@@ -1,3 +1,25 @@
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 #include "lib_battery_dispatch_automatic_btm_test.h"
 #include "code_generator_utilities.h"
 
@@ -8,15 +30,16 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMGridCharging) {
     CreateBattery(dtHour);
 
     dispatchAutoBTM = new dispatch_automatic_behind_the_meter_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice,
-                                                                max_current,
-                                                                max_current, max_power, max_power, max_power, max_power,
-                                                                0, dispatch_t::BTM_MODES::PEAK_SHAVING, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1, true,
-                                                                true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit);
+        max_current,
+        max_current, max_power, max_power, max_power, max_power,
+        0, dispatch_t::BTM_MODES::PEAK_SHAVING, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1, true,
+        true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit, chargeOnlySystemExceedLoad,
+        dischargeOnlyLoadExceedSystem, dischargeToGrid, min_outage_soc);
 
     // Setup pv and load signal for peak shaving algorithm
     for (size_t h = 0; h < 24; h++) {
         pv_prediction.push_back(0); // Set detailed PV later
-        if (h < 4) {
+        if (h < 5) {
             load_prediction.push_back(600);
         }
         else {
@@ -26,9 +49,10 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMGridCharging) {
 
     // Set detailed PV
     pv_prediction[0] = 500;
-    pv_prediction[1] = 400;
-    pv_prediction[2] = 300;
-    pv_prediction[3] = 200;
+    pv_prediction[1] = 500;
+    pv_prediction[2] = 400;
+    pv_prediction[3] = 300;
+    pv_prediction[4] = 200;
     dispatchAutoBTM->update_load_data(load_prediction);
     dispatchAutoBTM->update_pv_data(pv_prediction);
 
@@ -38,16 +62,13 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMGridCharging) {
     EXPECT_EQ(batteryPower->powerBatteryChargeMaxAC, 50);
 
     // TEST 1: Verify no grid charging since disallowed  (_P_battery_use target is ~ -50)
-    dispatchAutoBTM->update_dispatch(0, 0, 0, 0);
-
     dispatchAutoBTM->dispatch(0, 0, 0);     // original target for battery power is
     EXPECT_EQ(batteryPower->powerGridToBattery, 0);
     EXPECT_NEAR(batteryPower->powerBatteryDC, 0, 0.02);
 
     // TEST 2: Now, allow grid charging, should charge up to Max Charge Power (enforced by restrict_power)
     batteryPower->canGridCharge = true;
-    dispatchAutoBTM->update_dispatch(0, 0, 0, 0);
-    dispatchAutoBTM->dispatch(0, 0, 0);
+    dispatchAutoBTM->dispatch(0, 1, 0);
     EXPECT_NEAR(batteryPower->powerGridToBattery, 50, 1);
     EXPECT_NEAR(batteryPower->powerBatteryDC, -48, 1);
 }
@@ -57,10 +78,10 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMPVCharging) {
     CreateBattery(dtHour);
 
     dispatchAutoBTM = new dispatch_automatic_behind_the_meter_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice,
-                                                                max_current,
-                                                                max_current, max_power, max_power, max_power, max_power,
-                                                                0, dispatch_t::BTM_MODES::PEAK_SHAVING, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1, true,
-                                                                true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit);
+        max_current,
+        max_current, max_power, max_power, max_power, max_power,
+        0, dispatch_t::BTM_MODES::PEAK_SHAVING, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1, true,
+        true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit, chargeOnlySystemExceedLoad, dischargeOnlyLoadExceedSystem, dischargeToGrid, min_outage_soc);
 
     // Setup pv and load signal for peak shaving algorithm
     for (size_t h = 0; h < 24; h++) {
@@ -103,8 +124,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMPVChargeAndDischarge) {
                                                                 max_current,
                                                                 max_current, max_power, max_power, max_power, max_power,
                                                                 0, dispatch_t::BTM_MODES::PEAK_SHAVING, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1, true,
-                                                                true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit);
-
+                                                                true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit, chargeOnlySystemExceedLoad, dischargeOnlyLoadExceedSystem, dischargeToGrid, min_outage_soc);
     // Setup pv and load signal for peak shaving algorithm
     for (size_t h = 0; h < 24; h++) {
         if (h > 6 && h < 18) {
@@ -153,7 +173,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMPVChargeAndDischargeSubh
                                                                 max_current,
                                                                 max_current, max_power, max_power, max_power, max_power,
                                                                 0, dispatch_t::BTM_MODES::PEAK_SHAVING, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1, true,
-                                                                true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit);
+                                                                true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit, chargeOnlySystemExceedLoad, dischargeOnlyLoadExceedSystem, dischargeToGrid, min_outage_soc);
 
     // Setup pv and load signal for peak shaving algorithm
     for (size_t h = 0; h < 24; h++) {
@@ -217,10 +237,10 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMDCClipCharge) {
 
     // Only charge from clipped power
     dispatchAutoBTM = new dispatch_automatic_behind_the_meter_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice,
-                                                                max_current,
-                                                                max_current, max_power, max_power, max_power, max_power,
-                                                                0, dispatch_t::BTM_MODES::PEAK_SHAVING, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1,
-                                                                false, true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit);
+        max_current,
+        max_current, max_power, max_power, max_power, max_power,
+        0, dispatch_t::BTM_MODES::PEAK_SHAVING, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1,
+        false, true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit, chargeOnlySystemExceedLoad, dischargeOnlyLoadExceedSystem, dischargeToGrid, min_outage_soc);
 
     // Setup pv and load signal for peak shaving algorithm
     for (size_t h = 0; h < 24; h++) {
@@ -273,7 +293,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, TestBasicForecast) {
         max_current,
         max_current, max_power, max_power, max_power, max_power,
         0, dispatch_t::BTM_MODES::FORECAST, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1, true,
-        true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit);
+        true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit, chargeOnlySystemExceedLoad, dischargeOnlyLoadExceedSystem, dischargeToGrid, min_outage_soc);
 
     // Setup pv and load signal for peak shaving algorithm
     for (size_t h = 0; h < 48; h++) {
@@ -326,7 +346,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, TestSummerPeak) {
         max_current,
         max_current, max_power, max_power, max_power, max_power,
         0, dispatch_t::BTM_MODES::FORECAST, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1, true,
-        true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit);
+        true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit, chargeOnlySystemExceedLoad, dischargeOnlyLoadExceedSystem, dischargeToGrid, min_outage_soc);
 
     load_prediction = { 1.44289, 1.27067, 1.1681, 1.09342, 1.12921, 1.39345, 1.57299, 1.63055, 1.85622, 2.44991, 2.61812, 2.90909, 3.29601, 3.64366, 3.88232, 3.99237, 4.09673, 4.11102, 4.09175, 4.13445, 3.91011, 3.27815, 2.67845, 2.11802, 1.78025, 1.57142, 1.42908, 1.32466,
                             1.34971, 1.65378, 1.80832, 1.89189, 2.15165, 2.83263, 2.98228, 3.22567, 3.50516, 3.83516, 3.92251, 4.05548, 4.13676, 4.13277, 4.0915, 4.19724, 4.00006, 3.34509, 2.68845, 2.08509, 1.7126, };
@@ -363,7 +383,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, TestSummerPeakNetMeteringCredits) {
         max_current,
         max_current, max_power, max_power, max_power, max_power,
         0, dispatch_t::BTM_MODES::FORECAST, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1, true,
-        true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit);
+        true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit, chargeOnlySystemExceedLoad, dischargeOnlyLoadExceedSystem, dischargeToGrid, min_outage_soc);
 
     load_prediction = { 1.44289, 1.27067, 1.1681, 1.09342, 1.12921, 1.39345, 1.57299, 1.63055, 1.85622, 2.44991, 2.61812, 2.90909, 3.29601, 3.64366, 3.88232, 3.99237, 4.09673, 4.11102, 4.09175, 4.13445, 3.91011, 3.27815, 2.67845, 2.11802, 1.78025, 1.57142, 1.42908, 1.32466,
                             1.34971, 1.65378, 1.80832, 1.89189, 2.15165, 2.83263, 2.98228, 3.22567, 3.50516, 3.83516, 3.92251, 4.05548, 4.13676, 4.13277, 4.0915, 4.19724, 4.00006, 3.34509, 2.68845, 2.08509, 1.7126, };
@@ -400,7 +420,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, TestSummerPeakGridCharging) {
         max_current,
         max_current, max_power, max_power, max_power, max_power,
         0, dispatch_t::BTM_MODES::FORECAST, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1, true,
-        true, canGridCharge, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit);
+        true, canGridCharge, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit, chargeOnlySystemExceedLoad, dischargeOnlyLoadExceedSystem, dischargeToGrid, min_outage_soc);
 
     load_prediction = { 1.44289, 1.27067, 1.1681, 1.09342, 1.12921, 1.39345, 1.57299, 1.63055, 1.85622, 2.44991, 2.61812, 2.90909, 3.29601, 3.64366, 3.88232, 3.99237, 4.09673, 4.11102, 4.09175, 4.13445, 3.91011, 3.27815, 2.67845, 2.11802, 1.78025, 1.57142, 1.42908, 1.32466,
                             1.34971, 1.65378, 1.80832, 1.89189, 2.15165, 2.83263, 2.98228, 3.22567, 3.50516, 3.83516, 3.92251, 4.05548, 4.13676, 4.13277, 4.0915, 4.19724, 4.00006, 3.34509, 2.68845, 2.08509, 1.7126, };
@@ -438,7 +458,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, TestSummerPeakGridChargingSubhourly) {
         max_current,
         max_current, max_power, max_power, max_power, max_power,
         0, dispatch_t::BTM_MODES::FORECAST, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1, true,
-        true, canGridCharge, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit);
+        true, canGridCharge, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit, chargeOnlySystemExceedLoad, dischargeOnlyLoadExceedSystem, dischargeToGrid, min_outage_soc);
 
     load_prediction = { 1.44289, 1.27067, 1.1681, 1.09342, 1.12921, 1.39345, 1.57299, 1.63055, 1.85622, 2.44991, 2.61812, 2.90909, 3.29601, 3.64366, 3.88232, 3.99237, 4.09673, 4.11102, 4.09175, 4.13445, 3.91011, 3.27815, 2.67845, 2.11802, 1.78025, 1.57142, 1.42908, 1.32466,
                             1.34971, 1.65378, 1.80832, 1.89189, 2.15165, 2.83263, 2.98228, 3.22567, 3.50516, 3.83516, 3.92251, 4.05548, 4.13676, 4.13277, 4.0915, 4.19724, 4.00006, 3.34509, 2.68845, 2.08509, 1.7126, };
@@ -490,7 +510,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, TestCommercialPeakForecasting) {
         max_current,
         max_current, max_power, max_power, max_power, max_power,
         0, dispatch_t::BTM_MODES::FORECAST, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1, true,
-        true, true, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit);
+        true, true, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit, chargeOnlySystemExceedLoad, dischargeOnlyLoadExceedSystem, dischargeToGrid, min_outage_soc);
 
     load_prediction = { 49.9898, 42.4037, 42.1935, 43.3778, 39.4545, 59.3723, 84.6907, 180.423, 180.836, 186.225, 197.275, 205.302, 231.362,
                         240.712, 249.681, 263.722, 249.91, 188.621, 173.452, 134.803, 121.631, 56.1207, 57.5053, 50.6343, 49.1768, 44.4999, 44.3999,
@@ -531,7 +551,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMPVChargeAndDischargeSmal
         max_current,
         max_current, max_power, max_power, max_power, max_power,
         0, dispatch_t::BTM_MODES::PEAK_SHAVING, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1, true,
-        true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit);
+        true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit, chargeOnlySystemExceedLoad, dischargeOnlyLoadExceedSystem, dischargeToGrid, min_outage_soc);
 
     // Setup pv and load signal for peak shaving algorithm
     for (size_t h = 0; h < 24; h++) {
@@ -581,7 +601,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMPVChargeAndDischargeSmal
         max_current,
         max_current, max_power, max_power, max_power, max_power,
         0, dispatch_t::BTM_MODES::PEAK_SHAVING, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1, true,
-        true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit);
+        true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit, chargeOnlySystemExceedLoad, dischargeOnlyLoadExceedSystem, dischargeToGrid, min_outage_soc);
 
     // Setup pv and load signal for peak shaving algorithm
     for (size_t h = 0; h < 24; h++) {
@@ -631,11 +651,46 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMCustomDispatch) {
         max_current,
         max_current, max_power, max_power, max_power, max_power,
         0, dispatch_t::BTM_MODES::CUSTOM_DISPATCH, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1, true,
-        true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit);
+        true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit, chargeOnlySystemExceedLoad, dischargeOnlyLoadExceedSystem, dischargeToGrid, min_outage_soc);
 
     // Setup custom dispatch signal - signal and expected AC power are the same without losses
     std::vector<double> expectedPower = { 0, 0, 0, 0, 0, 0, 0, -50, -50, -50, -50, -50, -1.63, 0, 0, 0, 0, 0, 0, 9.479, 9.479,
                                      9.479, 9.479, 9.479, 9.479, 9.479, 9.479 };
+    dispatchAutoBTM->set_custom_dispatch(expectedPower);
+
+
+    batteryPower = dispatchAutoBTM->getBatteryPower();
+    batteryPower->connectionMode = ChargeController::AC_CONNECTED;
+
+    for (size_t h = 0; h < 24; h++) {
+        batteryPower->powerLoad = 30;
+        batteryPower->powerSystem = 0;
+        if (h > 6 && h < 18) {
+            batteryPower->powerSystem = 100; // Match the predicted PV
+        }
+        else if (h > 18) {
+            batteryPower->powerLoad = 40; // Match the predicted load
+        }
+        dispatchAutoBTM->dispatch(0, h, 0);
+        EXPECT_NEAR(batteryPower->powerBatteryAC, expectedPower[h], 0.5) << " error in expected at hour " << h;
+    }
+}
+
+TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMCustomDispatchDischargeToGrid) {
+    double dtHour = 1;
+    CreateBattery(dtHour);
+
+    dischargeToGrid = true;
+
+    dispatchAutoBTM = new dispatch_automatic_behind_the_meter_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice,
+        max_current,
+        max_current, max_power, max_power, max_power, max_power ,
+        0, dispatch_t::BTM_MODES::CUSTOM_DISPATCH, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1, true,
+        true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit, chargeOnlySystemExceedLoad, dischargeOnlyLoadExceedSystem, dischargeToGrid, min_outage_soc);
+
+    // Setup custom dispatch signal - signal and expected AC power are the same without losses. Load is 40 kW, so this will exceed load by 8 kW
+    std::vector<double> expectedPower = { 0, 0, 0, 0, 0, 0, 0, -50, -50, -50, -50, -50, -1.63, 0, 0, 0, 0, 0, 0, 48, 48,
+                                      48, 48, 48, 0, 0, 0 };
     dispatchAutoBTM->set_custom_dispatch(expectedPower);
 
 
@@ -664,7 +719,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMCustomDispatchWithLosses
         max_current,
         max_current, max_power, max_power, max_power, max_power,
         0, dispatch_t::BTM_MODES::CUSTOM_DISPATCH, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1, true,
-        true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit);
+        true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit, chargeOnlySystemExceedLoad, dischargeOnlyLoadExceedSystem, dischargeToGrid, min_outage_soc);
 
     // Setup custom dispatch signal - need to account for losses when discharging
     std::vector<double> dispatchedPower = { 0, 0, 0, 0, 0, 0, 0, -50, -50, -50, -50, -50, -1.63, 0, 0, 0, 0, 0, 0, 9.479, 9.479,
@@ -699,7 +754,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMCustomWExcessPV) {
         max_current,
         max_current, max_power, max_power, max_power, max_power,
         0, dispatch_t::BTM_MODES::CUSTOM_DISPATCH, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1, true,
-        true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit);
+        true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit, chargeOnlySystemExceedLoad, dischargeOnlyLoadExceedSystem, dischargeToGrid, min_outage_soc);
 
     // Setup custom dispatch signal - signal is greater than expected power since constraints should prevent dispatch hours 13 through 17
     std::vector<double> expectedPower = { 0, 0, 0, 0, 0, 0,
@@ -728,5 +783,498 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMCustomWExcessPV) {
         }
         dispatchAutoBTM->dispatch(0, h, 0);
         EXPECT_NEAR(batteryPower->powerBatteryAC, expectedPower[h], 0.5) << " error in expected at hour " << h;
+    }
+}
+
+TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMGridOutagePeakShavingDaily) {
+    double dtHour = 1;
+    CreateBattery(dtHour);
+    double defaultEff = 0.96;
+
+    dispatchAutoBTM = new dispatch_automatic_behind_the_meter_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice,
+        max_current,
+        max_current, max_power * defaultEff, max_power / defaultEff, max_power, max_power,
+        0, dispatch_t::BTM_MODES::PEAK_SHAVING, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1, true,
+        true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit, chargeOnlySystemExceedLoad, dischargeOnlyLoadExceedSystem, dischargeToGrid, min_outage_soc);
+
+    // Setup pv and load signal for peak shaving algorithm
+    for (size_t h = 0; h < 24; h++) {
+        if (h > 6 && h < 18) {
+            pv_prediction.push_back(700);
+        }
+        else {
+            pv_prediction.push_back(0);
+        }
+
+        if (h > 18) {
+            load_prediction.push_back(600);
+        }
+        else {
+            load_prediction.push_back(500);
+        }
+    }
+
+    dispatchAutoBTM->update_load_data(load_prediction);
+    dispatchAutoBTM->update_pv_data(pv_prediction);
+
+    batteryPower = dispatchAutoBTM->getBatteryPower();
+    batteryPower->connectionMode = ChargeController::AC_CONNECTED;
+
+    // Battery will discharge as much as possible for the outage, charge when PV is available, then discharge when load increases at 7 pm
+    std::vector<double> expectedPower = { 52.1, 52.1, 52.1, 52.1, 39.4, 3.7,
+                                           0, -48, -48, -48, -48, -48, // Able to charge when SOC at 0
+                                        -48, -48, -48, -48.0, -11, 0, 0, 46.5, 46.5, 46.5,
+                                         46.5, 46.5, 46.5, 46.5, 46.5, 46.5 };
+
+    std::vector<double> expectedCritLoadUnmet = { 0, 0, 0, 0, 12.2, 46.5, // Fixing https://github.com/NREL/ssc/issues/569 could probably get the crit load unmet in step 5 to zero
+                                                0, 0, 0, 0, 0, 0,
+                                                0, 0, 0, 0, 0, 0,
+                                                0, 0, 0, 0, 0, 0 };
+
+    for (size_t h = 0; h < 24; h++) {
+        batteryPower->powerLoad = 500;
+        batteryPower->powerSystem = 0;
+        if (h < 6) {
+            batteryPower->isOutageStep = true;
+            batteryPower->powerCritLoad = 50;
+        }
+        else {
+            batteryPower->isOutageStep = false;
+        }
+
+        if (h > 6 && h < 18) {
+            batteryPower->powerSystem = 700; // Match the predicted PV
+        }
+        else if (h > 18) {
+            batteryPower->powerLoad = 600; // Match the predicted load
+        }
+        dispatchAutoBTM->dispatch(0, h, 0);
+        EXPECT_NEAR(batteryPower->powerBatteryDC, expectedPower[h], 0.1) << " error in power at hour " << h;
+        EXPECT_NEAR(batteryPower->powerCritLoadUnmet, expectedCritLoadUnmet[h], 0.1) << " error in crit load at hour " << h;
+    }
+}
+
+TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMGridOutagePeakShavingEmptyAndFull) {
+    double dtHour = 1;
+    CreateBattery(dtHour);
+
+    double defaultEff = 0.96;
+
+    dispatchAutoBTM = new dispatch_automatic_behind_the_meter_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice,
+        max_current,
+        max_current, max_power * defaultEff, max_power / defaultEff, max_power, max_power,
+        0, dispatch_t::BTM_MODES::PEAK_SHAVING, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1, true,
+        true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit, chargeOnlySystemExceedLoad, dischargeOnlyLoadExceedSystem, dischargeToGrid, min_outage_soc);
+
+    // Setup pv and load signal for peak shaving algorithm
+    for (size_t h = 0; h < 24; h++) {
+        if (h > 6 && h < 16) {
+            pv_prediction.push_back(700);
+        }
+        else if (h == 18) {
+            pv_prediction.push_back(750);
+        }
+        else {
+            pv_prediction.push_back(0);
+        }
+
+        if (h == 6) {
+            load_prediction.push_back(600);
+        }
+        else if (h > 16) {
+            load_prediction.push_back(700);
+        }
+        else {
+            load_prediction.push_back(500);
+        }
+    }
+
+    dispatchAutoBTM->update_load_data(load_prediction);
+    dispatchAutoBTM->update_pv_data(pv_prediction);
+
+    batteryPower = dispatchAutoBTM->getBatteryPower();
+    batteryPower->connectionMode = ChargeController::AC_CONNECTED;
+
+    h = 0;
+    double SOC = batteryModel->SOC();
+    while (SOC > 0.5 && h < 100) {
+        batteryPower->powerLoad = 500;
+        batteryPower->powerSystem = 0;
+        batteryPower->isOutageStep = true;
+        batteryPower->powerCritLoad = 50;
+        dispatchAutoBTM->dispatch(0, h, 0);
+        SOC = batteryModel->SOC();
+        h++;
+    }
+
+    EXPECT_EQ(h, 6);
+
+    // Battery should not discharge even with increase in load
+    batteryPower->powerLoad = 600;
+    batteryPower->powerSystem = 0;
+    batteryPower->isOutageStep = false;
+    batteryPower->powerCritLoad = 50;
+    dispatchAutoBTM->dispatch(0, h, 0);
+    h++;
+
+    EXPECT_NEAR(batteryPower->powerBatteryDC, 0.0, 0.01) << " error in expected at hour " << h;
+
+    // Battery can charge below min SOC
+    batteryPower->powerLoad = 500;
+    batteryPower->powerSystem = 700;
+    batteryPower->isOutageStep = false;
+    batteryPower->powerCritLoad = 50;
+    dispatchAutoBTM->dispatch(0, h, 0);
+    h++;
+
+    EXPECT_NEAR(batteryPower->powerBatteryDC, -48.0, 0.5) << " error in expected at hour " << h;
+
+    SOC = batteryModel->SOC();
+    // Turn grid off again, charge to full
+    while (SOC < 95 && h < 100) {
+        batteryPower->powerLoad = 500;
+        batteryPower->powerSystem = 700;
+        batteryPower->isOutageStep = true;
+        batteryPower->powerCritLoad = 50;
+        dispatchAutoBTM->dispatch(0, h, 0);
+        h++;
+        SOC = batteryModel->SOC();
+    }
+
+    EXPECT_NEAR(batteryModel->SOC(), 100, 0.01);
+    EXPECT_EQ(h, 17);
+
+    // Show that the battery can discharge above max SOC after outage
+    batteryPower->powerLoad = 700;
+    batteryPower->powerSystem = 0;
+    batteryPower->isOutageStep = false;
+    batteryPower->powerCritLoad = 50;
+    dispatchAutoBTM->dispatch(0, h, 0);
+    h++;
+
+    EXPECT_NEAR(batteryPower->powerBatteryDC, 14.0, 0.5) << " error in expected at hour " << h;
+
+    EXPECT_NEAR(batteryModel->SOC(), 95, 0.01);
+
+    // Battery cannot charge above max SOC
+    batteryPower->powerLoad = 700;
+    batteryPower->powerSystem = 750;
+    batteryPower->isOutageStep = false;
+    batteryPower->powerCritLoad = 50;
+    dispatchAutoBTM->dispatch(0, h, 0);
+    h++;
+
+    EXPECT_NEAR(batteryPower->powerBatteryDC, 0.0, 0.01) << " error in expected at hour " << h;
+
+}
+
+TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMGridOutagePriceSignalsEmptyAndFull) {
+    double dtHour = 1;
+    CreateBattery(dtHour);
+
+    util_rate = new rate_data();
+    set_up_default_commercial_rate_data(*util_rate);
+
+    double defaultEff = 0.96;
+
+    dispatchAutoBTM = new dispatch_automatic_behind_the_meter_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice,
+        max_current,
+        max_current, max_power * defaultEff, max_power / defaultEff, max_power, max_power,
+        0, dispatch_t::BTM_MODES::FORECAST, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1, true,
+        true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit, chargeOnlySystemExceedLoad, dischargeOnlyLoadExceedSystem, dischargeToGrid, min_outage_soc);
+
+    // Setup pv and load signal for peak shaving algorithm
+    for (size_t h = 0; h < 24; h++) {
+        if (h > 6 && h < 16) {
+            pv_prediction.push_back(700);
+        }
+        else if (h == 18) {
+            pv_prediction.push_back(750);
+        }
+        else {
+            pv_prediction.push_back(0);
+        }
+
+        if (h == 6) {
+            load_prediction.push_back(600);
+        }
+        else if (h > 16) {
+            load_prediction.push_back(700);
+        }
+        else {
+            load_prediction.push_back(50);
+        }
+    }
+
+    dispatchAutoBTM->update_load_data(load_prediction);
+    dispatchAutoBTM->update_pv_data(pv_prediction);
+    dispatchAutoBTM->setup_rate_forecast();
+
+    batteryPower = dispatchAutoBTM->getBatteryPower();
+    batteryPower->connectionMode = ChargeController::AC_CONNECTED;
+
+    h = 0;
+    double SOC = batteryModel->SOC();
+    while (SOC > 0.5 && h < 100) {
+        batteryPower->powerLoad = 50;
+        batteryPower->powerSystem = 0;
+        batteryPower->isOutageStep = true;
+        batteryPower->powerCritLoad = 50;
+        dispatchAutoBTM->dispatch(0, h, 0);
+        SOC = batteryModel->SOC();
+        h++;
+    }
+
+    EXPECT_EQ(h, 6);
+
+    // Battery should not discharge even with increase in load
+    batteryPower->powerLoad = 600;
+    batteryPower->powerSystem = 0;
+    batteryPower->isOutageStep = false;
+    batteryPower->powerCritLoad = 50;
+    dispatchAutoBTM->dispatch(0, h, 0);
+    h++;
+
+    EXPECT_NEAR(batteryPower->powerBatteryDC, 0.0, 0.01) << " error in expected at hour " << h;
+
+    // Battery can charge below min SOC
+    batteryPower->powerLoad = 50;
+    batteryPower->powerSystem = 700;
+    batteryPower->isOutageStep = false;
+    batteryPower->powerCritLoad = 50;
+    dispatchAutoBTM->dispatch(0, h, 0); // Plan doesn't charge on the first step
+    h++;
+    dispatchAutoBTM->dispatch(0, h, 0);
+    h++;
+
+    EXPECT_NEAR(batteryPower->powerBatteryDC, -48.0, 0.5) << " error in expected at hour " << h;
+
+    SOC = batteryModel->SOC();
+    // Turn grid off again, charge to full
+    while (SOC < 95 && h < 100) {
+        batteryPower->powerLoad = 500;
+        batteryPower->powerSystem = 700;
+        batteryPower->isOutageStep = true;
+        batteryPower->powerCritLoad = 50;
+        dispatchAutoBTM->dispatch(0, h, 0);
+        h++;
+        SOC = batteryModel->SOC();
+    }
+
+    EXPECT_NEAR(batteryModel->SOC(), 100, 0.01);
+    EXPECT_EQ(h, 18);
+
+    // Show that the battery can discharge above max SOC after outage
+    batteryPower->powerLoad = 14;
+    batteryPower->powerSystem = 0;
+    batteryPower->isOutageStep = false;
+    batteryPower->powerCritLoad = 50;
+    dispatchAutoBTM->dispatch(0, h, 0);
+    h++;
+
+    EXPECT_NEAR(batteryPower->powerBatteryDC, 14.6, 0.5) << " error in expected at hour " << h;
+
+    EXPECT_NEAR(batteryModel->SOC(), 95, 0.01);
+
+    // Battery cannot charge above max SOC
+    batteryPower->powerLoad = 700;
+    batteryPower->powerSystem = 750;
+    batteryPower->isOutageStep = false;
+    batteryPower->powerCritLoad = 50;
+    dispatchAutoBTM->dispatch(0, h, 0);
+    h++;
+
+    EXPECT_NEAR(batteryPower->powerBatteryDC, 0.0, 0.01) << " error in expected at hour " << h;
+
+}
+
+TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMGridOutageCustomEmptyAndFull) {
+    double dtHour = 1;
+    CreateBattery(dtHour);
+
+    double defaultEff = 0.96;
+
+    dispatchAutoBTM = new dispatch_automatic_behind_the_meter_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice,
+        max_current,
+        max_current, max_power * defaultEff, max_power / defaultEff, max_power, max_power,
+        0, dispatch_t::BTM_MODES::CUSTOM_DISPATCH, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1, true,
+        true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit, chargeOnlySystemExceedLoad, dischargeOnlyLoadExceedSystem, dischargeToGrid, min_outage_soc);
+
+    // Setup pv and load signal for peak shaving algorithm
+    for (size_t h = 0; h < 24; h++) {
+        if (h > 6 && h < 16) {
+            pv_prediction.push_back(700);
+        }
+        else if (h == 18) {
+            pv_prediction.push_back(750);
+        }
+        else {
+            pv_prediction.push_back(0);
+        }
+
+        if (h == 6) {
+            load_prediction.push_back(600);
+        }
+        else if (h > 16) {
+            load_prediction.push_back(700);
+        }
+        else {
+            load_prediction.push_back(500);
+        }
+    }
+
+    dispatchAutoBTM->update_load_data(load_prediction);
+    dispatchAutoBTM->update_pv_data(pv_prediction);
+
+    std::vector<double> customDispatch = { 50, 50, 50, 50, 0, 0, // 5
+                                      50, -50, -50, -50, -50, -1.63, 0,
+                                      9.479, 9.479, 9.479, 9.479, 14, -14, 9.479, 9.479,
+                             9.479, 9.479, 9.479, 9.479, 9.479, 9.479 };
+    dispatchAutoBTM->set_custom_dispatch(customDispatch);
+
+    batteryPower = dispatchAutoBTM->getBatteryPower();
+    batteryPower->connectionMode = ChargeController::AC_CONNECTED;
+
+    h = 0;
+    double SOC = batteryModel->SOC();
+    while (SOC > 0.5 && h < 100) {
+        batteryPower->powerLoad = 500;
+        batteryPower->powerSystem = 0;
+        batteryPower->isOutageStep = true;
+        batteryPower->powerCritLoad = 50;
+        dispatchAutoBTM->dispatch(0, h, 0);
+        SOC = batteryModel->SOC();
+        h++;
+    }
+
+    EXPECT_EQ(h, 6);
+
+    // Battery should not discharge even with increase in load
+    batteryPower->powerLoad = 600;
+    batteryPower->powerSystem = 0;
+    batteryPower->isOutageStep = false;
+    batteryPower->powerCritLoad = 50;
+    dispatchAutoBTM->dispatch(0, h, 0);
+    h++;
+
+    EXPECT_NEAR(batteryPower->powerBatteryDC, 0.0, 0.01) << " error in expected at hour " << h;
+
+    // Battery can charge below min SOC
+    batteryPower->powerLoad = 500;
+    batteryPower->powerSystem = 700;
+    batteryPower->isOutageStep = false;
+    batteryPower->powerCritLoad = 50;
+    dispatchAutoBTM->dispatch(0, h, 0);
+    h++;
+
+    EXPECT_NEAR(batteryPower->powerBatteryDC, -48.0, 0.5) << " error in expected at hour " << h;
+
+    SOC = batteryModel->SOC();
+    // Turn grid off again, charge to full
+    while (SOC < 95 && h < 100) {
+        batteryPower->powerLoad = 500;
+        batteryPower->powerSystem = 700;
+        batteryPower->isOutageStep = true;
+        batteryPower->powerCritLoad = 50;
+        dispatchAutoBTM->dispatch(0, h, 0);
+        h++;
+        SOC = batteryModel->SOC();
+    }
+
+    EXPECT_NEAR(batteryModel->SOC(), 100, 0.01);
+    EXPECT_EQ(h, 17);
+
+    // Show that the battery can discharge above max SOC after outage
+    batteryPower->powerLoad = 700;
+    batteryPower->powerSystem = 0;
+    batteryPower->isOutageStep = false;
+    batteryPower->powerCritLoad = 50;
+    dispatchAutoBTM->dispatch(0, h, 0);
+    h++;
+
+    EXPECT_NEAR(batteryPower->powerBatteryDC, 14.8, 0.5) << " error in expected at hour " << h;
+
+    EXPECT_NEAR(batteryModel->SOC(), 95, 0.01);
+
+    // Battery cannot charge above max SOC
+    batteryPower->powerLoad = 700;
+    batteryPower->powerSystem = 750;
+    batteryPower->isOutageStep = false;
+    batteryPower->powerCritLoad = 50;
+    dispatchAutoBTM->dispatch(0, h, 0);
+    h++;
+
+    EXPECT_NEAR(batteryPower->powerBatteryDC, 0.0, 0.01) << " error in expected at hour " << h;
+
+}
+
+TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMGridOutagePeakShavingDC) {
+    double dtHour = 1;
+    CreateResidentialBattery(dtHour);
+    double defaultEff = 0.96;
+
+    max_power = 60; // Increase to deal with lower efficiency of inverter
+
+    dispatchAutoBTM = new dispatch_automatic_behind_the_meter_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice,
+        max_current,
+        max_current, max_power * defaultEff, max_power / defaultEff, max_power, max_power,
+        0, dispatch_t::BTM_MODES::PEAK_SHAVING, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1, true,
+        true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost, interconnection_limit, chargeOnlySystemExceedLoad, dischargeOnlyLoadExceedSystem, dischargeToGrid, min_outage_soc);
+
+    // Setup pv and load signal for peak shaving algorithm
+    for (size_t h = 0; h < 24; h++) {
+        if (h > 6 && h < 18) {
+            pv_prediction.push_back(700);
+        }
+        else {
+            pv_prediction.push_back(0);
+        }
+
+        if (h > 18) {
+            load_prediction.push_back(600);
+        }
+        else {
+            load_prediction.push_back(500);
+        }
+    }
+
+    dispatchAutoBTM->update_load_data(load_prediction);
+    dispatchAutoBTM->update_pv_data(pv_prediction);
+
+    batteryPower = dispatchAutoBTM->getBatteryPower();
+    batteryPower->connectionMode = ChargeController::DC_CONNECTED;
+    batteryPower->setSharedInverter(m_sharedInverter);
+
+    // Battery will discharge as much as possible for the outage, charge when PV is available, then discharge when load increases at 7 pm
+    std::vector<double> expectedPower = { 53.7, 53.7, 53.7, 53.7, 33.9, 3.2,
+                                           0, -57.6, -57.6, -57.6, -57.6, -57.6, // Able to charge when SOC at 0
+                                        -57.6, -57.6, -57.6, -57.6, -1.1, 0, 0, 62.6, 62.6, 62.6,
+                                         62.6, 62.6, 62.6, 62.6, 62.6, 62.6 };
+
+    std::vector<double> expectedCritLoadUnmet = { 0, 0, 0, 0, 19.4, 49.7, // Fixing https://github.com/NREL/ssc/issues/569 could probably get the crit load unmet in step 4 to zero
+                                                50, 0, 0, 0, 0, 0,
+                                                0, 0, 0, 0, 0, 0,
+                                                0, 0, 0, 0, 0, 0 };
+
+    for (size_t h = 0; h < 24; h++) {
+        batteryPower->powerLoad = 500;
+        batteryPower->powerSystem = 0;
+        if (h < 12) {
+            batteryPower->isOutageStep = true;
+            batteryPower->powerCritLoad = 50;
+        }
+        else {
+            batteryPower->isOutageStep = false;
+        }
+
+        if (h > 6 && h < 18) {
+            batteryPower->powerSystem = 700; // Match the predicted PV
+        }
+        else if (h > 18) {
+            batteryPower->powerLoad = 600; // Match the predicted load
+        }
+        dispatchAutoBTM->dispatch(0, h, 0);
+        EXPECT_NEAR(batteryPower->powerBatteryDC, expectedPower[h], 0.1) << " error in power at hour " << h;
+        EXPECT_NEAR(batteryPower->powerCritLoadUnmet, expectedCritLoadUnmet[h], 0.1) << " error in crit load at hour " << h;
     }
 }

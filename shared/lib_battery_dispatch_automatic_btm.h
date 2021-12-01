@@ -78,7 +78,11 @@ public:
         std::vector<double> battReplacementCostPerkWh,
         int battCycleCostChoice,
         std::vector<double> battCycleCost,
-        double interconnection_limit
+        double interconnection_limit,
+        bool chargeOnlySystemExceedLoad,
+        bool dischargeOnlyLoadExceedSystem,
+        bool behindTheMeterDischargeToGrid,
+        double SOC_min_outage
 		);
 
 	~dispatch_automatic_behind_the_meter_t() override {};

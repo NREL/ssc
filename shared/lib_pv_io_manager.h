@@ -1,3 +1,26 @@
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+
 #ifndef __LIB_PV_IO_MANAGER_H__
 #define __LIB_PV_IO_MANAGER_H__
 
@@ -400,6 +423,9 @@ public:
 
 	// Physical characteristics
 	double groundCoverageRatio;			// The ground coverage ratio [0 - 1]
+    double crossAxisSlope;              // Cross axis slope [degrees]
+    double slopeTilt;                   // Angle of sloped terrain [degrees]
+    double slopeAzm;                    // azimuth of sloped terrain relative to tracker azimuth [degrees]
 	double tiltDegrees;					// The surface tilt [degrees]
 	double azimuthDegrees;				// The surface azimuth [degrees]
 	int trackMode;						// The tracking mode [0 = fixed, 1 = single-axis tracking, 2 = two-axis tracking, 3 = azimuth-axis tracking, 4 = seasonal-tilt
@@ -445,7 +471,7 @@ public:
 		double surfaceAzimuthDegrees; /// The azimuth of the subarray after tracking [degrees]
 		double nonlinearDCShadingDerate; /// The DC loss due to non-linear shading [%]
 		bool usePOAFromWF;     /// Flag indicating whether or not to use POA input from the weatherfile
-		int poaShadWarningCount; /// A counter to track warnings related to POA
+		int poaShadWarningCount = 0; /// A counter to track warnings related to POA
 		std::unique_ptr<poaDecompReq> poaAll; /// A structure containing POA decompositions into the three irrradiance components from input POA
 	} poa;
 
