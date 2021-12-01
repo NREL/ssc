@@ -480,19 +480,6 @@ bool etes_dispatch_opt::optimize()
                     add_constraintex(lp, i, row, col, LE, rhs);
                 }
 
-                // Heater power limit
-                // qeh[t] <= Qehu * yeh[t]
-                {
-                    i = 0;
-                    row[i] = 1.;
-                    col[i++] = O.column("qeh", t);
-
-                    row[i] = -P["Qehu"];
-                    col[i++] = O.column("yeh", t);
-
-                    add_constraintex(lp, i, row, col, LE, 0.);
-                }
-
                 // Heater minimum operation requirement
                 // qeh[t] >= Qehl * yeh[t]
                 {
@@ -504,6 +491,19 @@ bool etes_dispatch_opt::optimize()
                     col[i++] = O.column("yeh", t);
 
                     add_constraintex(lp, i, row, col, GE, 0.);
+                }
+
+                // Heater power limit
+                // qeh[t] <= Qehu * yeh[t]
+                {
+                    i = 0;
+                    row[i] = 1.;
+                    col[i++] = O.column("qeh", t);
+
+                    row[i] = -P["Qehu"];
+                    col[i++] = O.column("yeh", t);
+
+                    add_constraintex(lp, i, row, col, LE, 0.);
                 }
 
                 // Heater startup can't be enabled after a time step where the heaters was operating
@@ -551,7 +551,7 @@ bool etes_dispatch_opt::optimize()
                 int i = 0; // row and col index, reset for every constraint
 
                 // Startup Inventory balance
-                // ucsu[t] <= ucsu[t] + delta * Qcsu * ycsu[t]
+                // ucsu[t] <= ucsu[t-1] + delta * Qcsu * ycsu[t]
                 {
                     double rhs = 0.;
                     row[i] = 1.;
@@ -582,9 +582,9 @@ bool etes_dispatch_opt::optimize()
                     add_constraintex(lp, i, row, col, LE, 0.);
                 }
 
-                // Cycle operation allowed when startup is complete or already operating or in standby
-                // hourly:    y[t] <=  ucsu[t  ] / Ec + y[t-1] + ycsb[t-1]
-                // subhourly: y[t] <=  ucsu[t-1] / Ec + y[t-1] + ycsb[t-1]   (startup and production cannot coincide)
+                // Cycle operation allowed when startup is complete or already operating
+                // hourly:    y[t] <=  ucsu[t  ] / Ec + y[t-1]
+                // subhourly: y[t] <=  ucsu[t-1] / Ec + y[t-1]   (startup and production cannot coincide)
                 {
                     i = 0;
                     row[i] = P["Ec"];
@@ -774,6 +774,7 @@ bool etes_dispatch_opt::optimize()
             int col[4];
 
             // binary logic when switching power cycle state
+            // ycgb[t] - ycge[t] = y[t] - y[t-1]
             for (int t = 0; t < nt; t++)
             {
                 double rhs = 0.;
@@ -801,9 +802,10 @@ bool etes_dispatch_opt::optimize()
             }
 
             // minimum up-time constraint
+            // sum{tp in Tau : 0 <= deltaE[t] - deltaE[tp] <= Yu} ycgb[tp] <= y[t] forall t in Tau : deltaE[t] > (Yu-Yu0)*y0
             for (int t = 0; t < nt; t++)
             {
-                if (params.time_elapsed.at(t) > (P["Yu"] - P["Yu0"])* P["y0"])
+                if (params.time_elapsed.at(t) > (P["Yu"] - P["Yu0"]) * P["y0"])
                 {
                     REAL* row = new REAL[nt + 2];
                     int* col = new int[nt + 2];
@@ -829,6 +831,7 @@ bool etes_dispatch_opt::optimize()
             }
 
             // minimum down-time constraint
+            // sum{tp in Tau : 0 <= deltaE[t] - deltaE[tp] <= Yd} ycge[tp] <= 1 - y[t] forall t in Tau : deltaE[t] > (Yd-Yd0)*(1-y0)
             for (int t = 0; t < nt; t++)
             {
                 if (params.time_elapsed.at(t) > (P["Yd"] - P["Yd0"])* (1 - P["y0"]))
@@ -857,6 +860,7 @@ bool etes_dispatch_opt::optimize()
             }
 
             // cycle minimum up time initial enforcement
+            // y[t] = y0 forall t in Tau : deltaE[t] <= max{ (Yu - Yu0) * y0 , (Yd - Yd0) * (1 - y0) }
             for (int t = 0; t < nt; t++)
             {
                 if (params.time_elapsed.at(t) <= std::max((P["Yu"] - P["Yu0"]) * P["y0"], (P["Yd"] - P["Yd0"]) * (1 - P["y0"])))
