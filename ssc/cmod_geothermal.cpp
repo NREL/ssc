@@ -457,7 +457,10 @@ public:
 			adjustment_factors haf(this, "adjust");
 			if (!haf.setup())
 				throw exec_error("geothermal", "failed to setup adjustment factors: " + haf.error());
-
+            double haf_input[8760];
+            for (int i = 0; i < 8760; i++)
+                haf_input[i] = haf(i);
+            geo_inputs.haf = haf_input;
 
 			// running
 			if (RunGeothermalAnalysis(my_update_function, this, err_msg, pbp, pbInputs, geo_inputs, geo_outputs) != 0)
