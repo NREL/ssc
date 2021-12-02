@@ -1277,11 +1277,11 @@ public:
                 p_poa[idx] = (ssc_number_t)poa; // W/m2
                 p_tpoa[idx] = (ssc_number_t)tpoa;  // W/m2
                 p_tmod[idx] = (ssc_number_t)tmod;
-                p_dc[idx] = (ssc_number_t)(dc * haf(hour_of_year)); // power, Watts
+                p_dc[idx] = (ssc_number_t)dc; // power, Watts
                 p_ac[idx] = (ssc_number_t)(ac * haf(hour_of_year)); // power, Watts
 
                 // accumulate hourly energy (kWh) (was initialized to zero when allocated)
-                p_gen[idx_life] = (ssc_number_t)(ac * util::watt_to_kilowatt);
+                p_gen[idx_life] = (ssc_number_t)(p_ac[idx] * util::watt_to_kilowatt);
 
 
                 if (y == 0 && wdprov->annualSimulation()) { //report first year annual energy
