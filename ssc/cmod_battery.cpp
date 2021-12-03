@@ -1675,6 +1675,14 @@ battstor::battstor(const battstor& orig) {
     }
 }
 
+bool battstor::uses_forecast() {
+    if (batt_vars->batt_meter_position == dispatch_t::FRONT) {
+        return batt_vars->batt_dispatch == dispatch_t::FOM_AUTOMATED_ECONOMIC || batt_vars->batt_dispatch == dispatch_t::FOM_PV_SMOOTHING;
+    }
+    else {
+        return batt_vars->batt_dispatch == dispatch_t::FORECAST || dispatch_t::PEAK_SHAVING;
+    }
+}
 
 void battstor::check_replacement_schedule()
 {
@@ -2215,8 +2223,8 @@ public:
                 p_pv_ac_forecast = as_vector_ssc_number_t("batt_pv_ac_forecast");
                 // Annual simulation is enforced above
                 if (p_pv_ac_forecast.size() < dt_hour_gen * 8760) {
-                    if (batt_forecast_choice == dispatch_t::WEATHER_FORECAST_CHOICE::WF_CUSTOM) {
-                        throw exec_error("battery", "batt_pv_clipping_forecast forecast length is " + std::to_string(p_pv_ac_forecast.size()) + " when custom weather file forecast is selected. Change batt_dispatch_wf_forecast_choice or provide a forecast of at least length " + std::to_string(dt_hour_gen * 8760));
+                    if (batt_forecast_choice == dispatch_t::WEATHER_FORECAST_CHOICE::WF_CUSTOM && batt->uses_forecast()) {
+                        throw exec_error("battery", "batt_pv_ac_forecast forecast length is " + std::to_string(p_pv_ac_forecast.size()) + " when custom weather file forecast is selected. Change batt_dispatch_wf_forecast_choice or provide a forecast of at least length " + std::to_string(dt_hour_gen * 8760));
                     }
                     else {
                         // Using look ahead or look behind, and need to clear inputs from lk
@@ -2235,7 +2243,7 @@ public:
             {
                 p_load_forecast_in = as_vector_ssc_number_t("batt_load_ac_forecast");
                 size_t nload = p_load_forecast_in.size();
-                if (nload == 1) {
+                if (nload == 1 || !batt->uses_forecast()) {
                     // Length 1 is "empty" to UI lk
                     p_load_forecast_in.clear();
                 }
