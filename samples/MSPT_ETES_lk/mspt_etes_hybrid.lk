@@ -19,7 +19,7 @@ var( 'disp_hsu_cost', 10.0 );
 
 var( 'can_cycle_use_standby', 0);  // Toggles cycle standby option in dispatch
 var( 'is_dispatch', 1 );
-var( 'disp_max_iter', 140000 );
+var( 'disp_max_iter', 450000 );
 var( 'disp_timeout', 30 );
 var( 'disp_time_weighting', 0.999 ); //0.989999999999
 var( 'disp_pen_delta_w', 1.5 ); // Scaled to MW (Old: 0.1) 
@@ -523,8 +523,10 @@ run('grid');
 run('singleowner');
 
 output_vars = ["dispatch_factors_ts", "pricing_mult", 
-				"P_out_net", "q_dc_tes", "q_ch_tes", "e_ch_tes", "gen", "defocus",
+				"P_out_net", "gen", "defocus", "Q_thermal", "q_startup",
 				"P_cycle", "q_pb", "eta", "q_dot_pc_startup", "q_pc_startup", 
+				"q_dot_heater_to_htf", "q_dot_heater_startup", 
+				"q_dc_tes", "q_ch_tes", "e_ch_tes",
 				//Dispatch outputs
 				"q_dot_pc_target", "is_rec_su_allowed", "is_pc_su_allowed", "is_pc_sb_allowed", "is_PAR_HTR_allowed", 
 				"q_dot_elec_to_PAR_HTR", "disp_qsf_expected", "disp_qsfprod_expected",
@@ -594,7 +596,7 @@ for (t = 1; t < #startup_heat; t++) {
 
 // Calculating number of equipment starts
 heater_start_count = 0;
-startup_heat = var("q_dot_elec_to_PAR_HTR");
+startup_heat = var("q_dot_heater_startup");
 for (t = 1; t < #startup_heat; t++) {
 	if (startup_heat[t] > 0 && startup_heat[t-1] == 0) {
 		heater_start_count ++;
@@ -605,7 +607,14 @@ outln("Annual revenue ", revenue);
 outln('Annual cycle starts ' + cycle_start_count);
 outln('Annual receiver starts ' + receiver_start_count);
 outln('Annual heater starts ' + heater_start_count);
+
+outln('Annual heater load (dispatched) ' + sum(var('q_dot_elec_to_PAR_HTR')));
+outln('Annual heater load ' + sum(var('q_dot_heater_to_htf')));
+outln('Annual cycle gross (dispatched) ' + sum(var('disp_wpb_expected')));
 outln('Annual cycle gross ' + var('annual_W_cycle_gross'));
+outln('Annual receiver generation (dispatched)' + sum(var('disp_qsfprod_expected')));
+outln('Annual receiver generation ' + sum(var('Q_thermal')));
+
 outln('Annual energy (year 1) ' + var('annual_energy'));
 outln('Capacity factor (year 1) ' + var('capacity_factor'));
 outln('Annual Water Usage ' + var('annual_total_water_use'));
