@@ -2755,8 +2755,8 @@ public:
                 for (size_t d = 1; d <= util::days_in_month(int(m - 1)); d++) {
                     for (size_t h = 0; h < 24; h++) { //monthly iteration for each year
                         for (size_t n = 0; n < n_steps_per_hour; n++) {
-                            monthly_e_fromgrid[m] += year1_hourly_e_from_grid[util::hour_of_year(m, d, h) * n_steps_per_hour + n];
-                            monthly_gen_purchases[(a - 1) * 12 + m] += -gen_purchases[n_steps_per_hour * util::hour_of_year(m, d, h) + n];
+                            monthly_e_fromgrid[m-1] += year1_hourly_e_from_grid[util::hour_of_year(m, d, h) * n_steps_per_hour + n];
+                            monthly_gen_purchases[(a - 1) * 12 + m-1] += -gen_purchases[n_steps_per_hour * util::hour_of_year(m, d, h) + n];
                             if (year1_hourly_e_from_grid[h] != 0.0) {
                                 cf.at(CF_parasitic_cost, a) += -gen_purchases[n_steps_per_hour * util::hour_of_year(m, d, h) + n] * cf.at(CF_degradation, a) / year1_hourly_e_from_grid[h] * (year1_hourly_ec[h * n_steps_per_hour + n] + year1_hourly_dc[h * n_steps_per_hour + n]) * cf.at(CF_util_escal_rate, a); //use the electricity rate data by year (also trueup) //* charged_grid[a] / charged_grid[1] * cf.at(CF_util_escal_rate, a);
                             }
