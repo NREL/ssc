@@ -625,6 +625,11 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
                     if (batt_vars->batt_target_choice == dispatch_automatic_behind_the_meter_t::TARGET_SINGLE_MONTHLY)
                     {
                         target_power_monthly = batt_vars->target_power_monthly;
+
+                        if (target_power_monthly.size() != 12) {
+                            throw exec_error("battery", "batt_target_power_monthly must have 12 entries if batt_target_choice is target_single_monthly (0).");
+                        }
+
                         target_power.clear();
                         target_power.reserve(8760 * step_per_hour);
                         for (size_t month = 0; month != 12; month++)

@@ -1103,6 +1103,10 @@ void cm_pvsamv1::exec()
         if (!Simulation->annualSimulation)
             throw exec_error("pvsamv1", "The PV+Battery configuration requires a simulation period that is continuous over one or more years.");
 
+        batt = std::make_shared<battstor>(*m_vartab, en_batt, nrec, ts_hour);
+        batt->setSharedInverter(sharedInverter);
+        batt_topology = batt->batt_vars->batt_topology;
+
         if (is_assigned("batt_load_ac_forecast"))
         {
             p_load_forecast_in = as_vector_ssc_number_t("batt_load_ac_forecast");
@@ -1143,10 +1147,6 @@ void cm_pvsamv1::exec()
                 }
             }
         }
-
-        batt = std::make_shared<battstor>(*m_vartab, en_batt, nrec, ts_hour);
-        batt->setSharedInverter(sharedInverter);
-        batt_topology = batt->batt_vars->batt_topology;
 
         // Multiple MPPT inverters not enabled with DC-connected batteries
         if (PVSystem->Inverter->nMpptInputs > 1 && en_batt && batt_topology == ChargeController::DC_CONNECTED)
