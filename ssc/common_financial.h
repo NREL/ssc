@@ -27,9 +27,24 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "core.h"
 
 
+double Const_per_principal(double const_per_percent /*%*/, double total_installed_cost /*$*/);		// [$]
+
+double Const_per_interest(double const_per_principal /*$*/, double const_per_interest_rate /*$*/,
+	double const_per_months /*months*/);		// [$]
+
+double Const_per_total(double const_per_interest /*$*/, double const_per_principal /*$*/,
+	double const_per_upfront_rate /*%*/);		// [$]
+
+
 void save_cf(compute_module *cm, util::matrix_t<double>& mat, int cf_line, int nyears, const std::string &name);
+void save_cf(int cf_line, int nyears, const std::string& name, util::matrix_t<double> cf, compute_module* cm); //LCOS version
 
+extern var_info vtab_lcos_inputs[]; //LCOS var table
 
+void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double nom_discount_rate, double inflation_rate, double lcoe_real, double total_cost, double real_discount_rate, int grid_charging_cost_version); //LCOS function
+
+// Prepend the 0 to relevant outputs
+void update_battery_outputs(compute_module* cm, size_t nyears);
 
 class dispatch_calculations
 {
@@ -42,10 +57,10 @@ private:
 	std::vector<double> m_hourly_energy;
 	int m_nyears;
 	bool m_timestep;
-	ssc_number_t *m_gen;
-	ssc_number_t *m_multipliers;
-	size_t m_ngen;
-	size_t m_nmultipliers;
+	ssc_number_t *m_gen; // Time series power
+	ssc_number_t *m_multipliers; // Time series ppa multiplers
+	size_t m_ngen; // Number of records in gen
+	size_t m_nmultipliers; // Number of records in m_multipliers
 
 public:
 	dispatch_calculations() {};
@@ -74,16 +89,31 @@ class hourly_energy_calculation
 {
 private:
 	compute_module *m_cm;
-	std::vector<double> m_hourly_energy;
+	std::vector<double> m_hourly_energy; // Energy used in PPA calculations
+    std::vector<double> m_energy_sales; // Hourly gen values > 0
+    std::vector<double> m_energy_purchases; // Hourly gen values < 0
+    std::vector<double> m_energy_without_battery;
 	std::string m_error;
 	size_t m_nyears;
+    ssc_number_t m_ts_hour_gen;
+    size_t m_step_per_hour_gen;
 
 public:
 	bool calculate(compute_module *cm);
 	std::vector<double>& hourly_energy() {
 		return m_hourly_energy;
 	}
+    std::vector<double>& hourly_sales() {
+        return m_energy_sales;
+    }
+    std::vector<double>& hourly_purchases() {
+        return m_energy_purchases;
+    }
+    std::vector<double>& hourly_energy_without_battery() {
+        return m_energy_without_battery;
+    }
 	std::string error() { return m_error; }
+    void sum_ts_to_hourly(ssc_number_t* timestep_power, std::vector<double>& hourly);
 };
 
 

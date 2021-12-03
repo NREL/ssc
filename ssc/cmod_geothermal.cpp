@@ -36,6 +36,7 @@ static var_info _cm_vtab_geothermal[] = {
     { SSC_INPUT,        SSC_NUMBER,      "ui_calculations_only",               "If = 1, only run UI calculations",             "",               "",             "GeoHourly",        "*",                        "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",          "Geothermal lifetime simulation",              "0/1",     "0=SingleYearRepeated,1=RunEveryYear",     "GeoHourly",             "?=0",           "BOOLEAN",                        "" },
 
+    //{ SSC_INOUT,        SSC_NUMBER,      "baseline_cost",          "Baseline cost",              "$/kW",     "",     "GeoHourly",             "?=0",           "",                        "" },
 
     // climate and resource inputs		 								       											   				     
     { SSC_INPUT,        SSC_STRING,      "file_name",                          "local weather file path",                      "",               "",             "GeoHourly",        "ui_calculations_only=0",   "LOCAL_FILE",      "" },
@@ -60,6 +61,8 @@ static var_info _cm_vtab_geothermal[] = {
     { SSC_INPUT,        SSC_NUMBER,      "decline_type",                       "Temp decline Type",                            "",               "",             "GeoHourly",        "*",                        "INTEGER",         "" },
     { SSC_INPUT,        SSC_NUMBER,      "temp_decline_rate",                  "Temperature decline rate",                     "%/yr",           "",             "GeoHourly",        "*",                        "",                "" },
     { SSC_INPUT,        SSC_NUMBER,      "temp_decline_max",                   "Maximum temperature decline",                  "C",              "",             "GeoHourly",        "*",                        "",                "" },
+    { SSC_INPUT,        SSC_NUMBER,      "dt_prod_well",                   "Temperature loss in production well",                  "C",              "",             "GeoHourly",        "*",                        "",                "" },
+
     { SSC_INPUT,        SSC_NUMBER,      "wet_bulb_temp",                      "Wet Bulb Temperature",                         "C",              "",             "GeoHourly",        "*",                        "",                "" },
     { SSC_INPUT,        SSC_NUMBER,      "ambient_pressure",                   "Ambient pressure",                             "psi",            "",             "GeoHourly",        "*",                        "",                "" },
     { SSC_INPUT,        SSC_NUMBER,      "well_flow_rate",                     "Production flow rate per well",                "kg/s",           "",             "GeoHourly",        "*",                        "",                "" },
@@ -147,7 +150,9 @@ static var_info _cm_vtab_geothermal[] = {
     // With hourly analysis, there are still monthly results, but there are hourly (over the whole lifetime of the project) results as well.														             
 //	{ SSC_OUTPUT, SSC_ARRAY, "annual_replacements", "Resource replacement? (1=yes)", "kWhac", "", "GeoHourly", "ui_calculations_only=0", "", "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "gen",                                "System power generated",                              "kW",                      "GeoHourly",        "",                         "",                "",                               "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "system_lifetime_recapitalize",       "Resource replacement? (1=yes)", "", "", "GeoHourly", "ui_calculations_only=0", "", "" },
+    { SSC_OUTPUT, SSC_MATRIX,			"annual_energy_distribution_time",			"Annual energy production as function of Time",				"",				"",				"Heatmaps",			"",						"",							"" },
+
+    { SSC_OUTPUT,       SSC_ARRAY,      "system_lifetime_recapitalize",       "Resource replacement? (1=yes)", "", "", "GeoHourly", "ui_calculations_only=0", "", "" },
 
     { SSC_OUTPUT,       SSC_ARRAY,      "monthly_resource_temperature",       "Monthly avg resource temperature",                    "C",       "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "monthly_power",                      "Monthly power",                                       "kW",      "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
@@ -253,6 +258,7 @@ public:
 			geo_inputs.me_tdm = CALCULATE_RATE;
 		geo_inputs.md_TemperatureDeclineRate = as_double("temp_decline_rate")/100;
 		geo_inputs.md_MaxTempDeclineC = as_double("temp_decline_max");
+        geo_inputs.md_dtProdWell = as_double("dt_prod_well");
 
 		// flash inputs
 		geo_inputs.md_TemperatureWetBulbC = as_double("wet_bulb_temp");
@@ -451,7 +457,10 @@ public:
 			adjustment_factors haf(this, "adjust");
 			if (!haf.setup())
 				throw exec_error("geothermal", "failed to setup adjustment factors: " + haf.error());
-
+            double haf_input[8760];
+            for (int i = 0; i < 8760; i++)
+                haf_input[i] = haf(i);
+            geo_inputs.haf = haf_input;
 
 			// running
 			if (RunGeothermalAnalysis(my_update_function, this, err_msg, pbp, pbInputs, geo_inputs, geo_outputs) != 0)
@@ -557,12 +566,16 @@ public:
 			double nameplate = geo_inputs.md_DesiredSalesCapacityKW; // Was md_GrossPlantOutputMW*1000 -> now it is md_DesiredSalesCapacityKW
 			double annual_energy = 0.0;
 
+
 			//Loop calculates total energy generation over entire project lifetime (in kWh) 
 			// Why?  Is the annual energy changing from year to year?
 			for (size_t i = 0; i <n_rec ; i++)	{
 				annual_energy += geo_outputs.maf_hourly_power[i];
-				p_gen[i] = geo_outputs.maf_hourly_power[i];
+                p_gen[i] = geo_outputs.maf_hourly_power[i];
 			}
+
+
+            gen_heatmap(this, 1);
 
 			if (nameplate > 0) kWhperkW = annual_energy / nameplate;
 			capacity_fac = total_energy / nameplate;

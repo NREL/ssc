@@ -46,7 +46,7 @@ C_pc_sco2::C_pc_sco2()
 		m_startup_time_remain_prev = m_startup_energy_remain_prev =
 		m_startup_time_remain_calc = m_startup_energy_remain_calc = std::numeric_limits<double>::quiet_NaN();
 
-	m_standby_control_prev = m_standby_control_calc = -1;
+	m_standby_control_prev = m_standby_control_calc = C_csp_power_cycle::E_csp_power_cycle_modes::OFF;
 
 	mc_reported_outputs.construct(S_output_info);
 }
@@ -119,10 +119,12 @@ void C_pc_sco2::init(C_csp_power_cycle::S_solved_params &solved_params)
 	m_standby_control_prev = OFF;			// Assume power cycle is off when simulation begins
 	m_startup_energy_remain_prev = m_startup_energy_required;		//[kWt-hr]
 	m_startup_time_remain_prev = ms_params.m_startup_time;			//[hr]
-
+    if (ms_params.m_startup_frac == 0.0 && ms_params.m_startup_time == 0.0 && m_standby_control_prev == OFF) {
+        m_standby_control_prev = OFF_NO_SU_REQ;
+    }
 }
 
-int C_pc_sco2::get_operating_state()
+C_csp_power_cycle::E_csp_power_cycle_modes C_pc_sco2::get_operating_state()
 {
 	if( ms_params.m_startup_frac == 0.0 && ms_params.m_startup_time == 0.0 )
 	{
@@ -235,7 +237,7 @@ void C_pc_sco2::call(const C_csp_weatherreader::S_outputs &weather,
 	double m_dot_htf = inputs.m_m_dot;				//[kg/hr]
 	
 	int standby_control = inputs.m_standby_control;			//[-] 1: On, 2: Standby, 3: Off
-	m_standby_control_calc = standby_control;
+	m_standby_control_calc = static_cast<C_csp_power_cycle::E_csp_power_cycle_modes>(standby_control);
 
 	double P_cycle, eta, T_htf_cold, m_dot_demand, W_cool_par;
 	P_cycle = eta = T_htf_cold = m_dot_demand = W_cool_par = std::numeric_limits<double>::quiet_NaN();
@@ -306,16 +308,17 @@ void C_pc_sco2::call(const C_csp_weatherreader::S_outputs &weather,
 			sco2_rc_od_par.m_T_amb = weather.m_tdry+273.15;		//[K]
             sco2_rc_od_par.m_T_t_in_mode = C_sco2_cycle_core::E_SOLVE_PHX;  //[-]
 
-			int od_strategy = C_sco2_phx_air_cooler::E_TARGET_POWER_ETA_MAX;
+			C_sco2_phx_air_cooler::E_off_design_strategies od_strategy = C_sco2_phx_air_cooler::E_TARGET_POWER_ETA_MAX;
 
 			int off_design_code = 0;
 			try
 			{
-				off_design_code = mc_sco2_recomp.optimize_off_design(sco2_rc_od_par, 
+				off_design_code = mc_sco2_recomp.off_design__constant_N__T_mc_in_P_LP_in__objective(sco2_rc_od_par,
+                                                            true, 1.0,
                                                             true, 1.0,
                                                             true, 1.0,
                                                             false, std::numeric_limits<double>::quiet_NaN(),
-                                                            od_strategy);
+                                                            od_strategy, 1.E-3, 1.E-3);
 			}
 			catch( C_csp_exception &csp_exception )
 			{
@@ -496,6 +499,10 @@ void C_pc_sco2::converged()
 	m_standby_control_prev = m_standby_control_calc;
 	m_startup_time_remain_prev = m_startup_time_remain_calc;
 	m_startup_energy_remain_prev = m_startup_energy_remain_calc;
+
+    if (ms_params.m_startup_frac == 0.0 && ms_params.m_startup_time == 0.0 && m_standby_control_prev == OFF) {
+        m_standby_control_prev = OFF_NO_SU_REQ;
+    }
 
 	mc_reported_outputs.set_timestep_outputs();
 }

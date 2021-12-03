@@ -48,8 +48,6 @@ private:
 	void check_double_params_are_set();
 
 public:
-	// Class to save messages for up stream classes
-	C_csp_messages mc_csp_messages;
 
 	water_state mc_water_props;
 
@@ -82,7 +80,7 @@ public:
 
 	virtual void init(C_csp_power_cycle::S_solved_params &solved_params);
 
-	virtual int get_operating_state();
+	virtual C_csp_power_cycle::E_csp_power_cycle_modes get_operating_state();
 
 	virtual double get_cold_startup_time();
 	virtual double get_warm_startup_time();

@@ -47,11 +47,11 @@ private:
 	double m_T_htf_cold_des;				//[K]
 	double m_m_dot_htf_des;					//[kg/hr]
 
-	int m_standby_control_prev;				//[-]
+    C_csp_power_cycle::E_csp_power_cycle_modes m_standby_control_prev;				//[-]
 	double m_startup_time_remain_prev;		//[hr]
 	double m_startup_energy_remain_prev;	//[kW-hr]
 
-	int m_standby_control_calc;				//[-]
+    C_csp_power_cycle::E_csp_power_cycle_modes m_standby_control_calc;				//[-]
 	double m_startup_time_remain_calc;		//[hr]
 	double m_startup_energy_remain_calc;	//[kW-hr]
 
@@ -70,9 +70,6 @@ public:
 	};
 	
 	C_csp_reported_outputs mc_reported_outputs;
-
-	// Class to save messages for up stream classes
-	C_csp_messages mc_csp_messages;
 
 	struct S_des_par
 	{
@@ -99,7 +96,7 @@ public:
 
 	virtual void init(C_csp_power_cycle::S_solved_params &solved_params);
 
-	virtual int get_operating_state();
+	virtual C_csp_power_cycle::E_csp_power_cycle_modes get_operating_state();
 
 	virtual double get_cold_startup_time();
 	virtual double get_warm_startup_time();

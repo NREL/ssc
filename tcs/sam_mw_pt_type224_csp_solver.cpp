@@ -258,39 +258,8 @@ public:
 		}
 		else
 		{
-			
-			p_params->m_T_amb_des = value(P_UD_T_AMB_DES);						//[C]
 			p_params->m_W_dot_cooling_des = value(P_UD_F_W_DOT_COOL_DES)/100.0*p_params->m_P_ref;	//[MWe]
 			p_params->m_m_dot_water_des = value(P_UD_M_DOT_WATER_COOL_DES);		//[kg/s]
-
-			// Set lower and upper levels for the 3 independent variables...
-			p_params->m_T_htf_low = value(P_UD_T_HTF_LOW);		//[C]
-			p_params->m_T_htf_high = value(P_UD_T_HTF_HIGH);	//[C]
-			p_params->m_T_amb_low = value(P_UD_T_AMB_LOW);		//[C]
-			p_params->m_T_amb_high = value(P_UD_T_AMB_HIGH);	//[C]
-			p_params->m_m_dot_htf_low = value(P_UD_M_DOT_HTF_LOW);	//[-]
-			p_params->m_m_dot_htf_high = value(P_UD_M_DOT_HTF_HIGH);//[-]
-
-			n_rows = n_cols = -1;
-			double *p_T_htf_ind = value(P_UD_T_HTF_IND_OD, &n_rows, &n_cols);
-			p_params->mc_T_htf_ind.resize(n_rows, n_cols);
-			for( int r = 0; r < n_rows; r++ )
-				for( int c = 0; c < n_cols; c++ )
-					p_params->mc_T_htf_ind(r,c) = TCS_MATRIX_INDEX(var(P_UD_T_HTF_IND_OD),r,c);
-
-			n_rows = n_cols = -1;
-			double *p_T_amb_ind = value(P_UD_T_AMB_IND_OD, &n_rows, &n_cols);
-			p_params->mc_T_amb_ind.resize(n_rows, n_cols);
-			for( int r = 0; r < n_rows; r++ )
-				for( int c = 0; c < n_cols; c++ )
-					p_params->mc_T_amb_ind(r,c) = TCS_MATRIX_INDEX(var(P_UD_T_AMB_IND_OD),r,c);
-
-			n_rows = n_cols = -1;
-			double *p_m_dot_htf_ind = value(P_UD_M_DOT_HTF_IND_OD, &n_rows, &n_cols);
-			p_params->mc_m_dot_htf_ind.resize(n_rows, n_cols);
-			for( int r = 0; r < n_rows; r++ )
-				for( int c = 0; c < n_cols; c++ )
-					p_params->mc_m_dot_htf_ind(r,c) = TCS_MATRIX_INDEX(var(P_UD_M_DOT_HTF_IND_OD),r,c);
 
             n_rows = n_cols = -1;
             double *p_ind = value(P_UD_IND_OD, &n_rows, &n_cols);
@@ -298,7 +267,6 @@ public:
             for (int r = 0; r < n_rows; r++)
                 for (int c = 0; c < n_cols; c++)
                     p_params->mc_combined_ind(r, c) = TCS_MATRIX_INDEX(var(P_UD_IND_OD), r, c);
-
 		}
 
 		int out_type = -1;
@@ -342,7 +310,7 @@ public:
 		ms_htf_state_in.m_temp = value(I_T_HTF_HOT);	//Hot HTF inlet temperature, from storage tank [C]
 		ms_inputs.m_m_dot = value(I_M_DOT_HTF);			//HTF mass flow rate [kg/hr]
 		ms_weather.m_twet = value(I_T_WB);				//Ambient wet bulb temperature [C]
-		ms_inputs.m_standby_control = (int)value(I_STANDBY_CONTROL);		//Control signal indicating standby mode [none]
+		ms_inputs.m_standby_control = static_cast<C_csp_power_cycle::E_csp_power_cycle_modes>((int)value(I_STANDBY_CONTROL));		//Control signal indicating standby mode [none]
 		ms_weather.m_tdry = value(I_T_DB);				//Ambient dry bulb temperature [C]
 		ms_weather.m_pres = value(I_P_AMB);				//Ambient pressure [mbar]
 			//ms_inputs.m_tou = (int)value(I_TOU);		

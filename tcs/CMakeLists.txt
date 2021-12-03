@@ -1,33 +1,21 @@
 #####################################################################################################################
 #
-# CMake and System Settings
+# Project Settings
 #
 #####################################################################################################################
-
-set(CMAKE_VERBOSE_MAKEFILE ON)
-
-if(APPLE)
-    set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version")
-endif()
-
-
-#####################################################################################################################
-#
-# Project Settings 
-#
-#####################################################################################################################
-
-Project(tcs)
 
 include_directories(. ../nlopt ../shared ../splinter ../lpsolve ../solarpilot)
 
 set(TCS_SRC
 		atmospheric_aod.cpp
+		base_dispatch.cpp
 		co2_compressor_library.cpp
 		CO2_properties.cpp
 		csp_dispatch.cpp
 		csp_radiator.cpp
+		csp_solver_cavity_receiver.cpp
 		csp_solver_core.cpp
+		csp_solver_cr_electric_resistance.cpp
 		csp_solver_gen_collector_receiver.cpp
 		csp_solver_lf_dsg_collector_receiver.cpp
 		csp_solver_mono_eq_methods.cpp
@@ -50,6 +38,8 @@ set(TCS_SRC
 		csp_solver_weatherreader.cpp
 		csp_system_costs.cpp
 		direct_steam_receivers.cpp
+		dispatch_builder.cpp
+		etes_dispatch.cpp
 		fmin.cpp
 		fmin_callbacks.cpp
 		heat_exchangers.cpp
@@ -58,7 +48,6 @@ set(TCS_SRC
 		nlopt_callbacks.cpp
 		numeric_solvers.cpp
 		sam_mw_pt_heliostatfield_csp_solver.cpp
-		sam_sco2_recomp_type424.cpp
 		sam_type250_input_generator.cpp
 		sco2_cycle_components.cpp
 		sco2_partialcooling_cycle.cpp
@@ -113,6 +102,7 @@ set(TCS_SRC
 		tou_translator.cpp
 		flat_plate_solar_collector.cpp
 		atmospheric_aod.h
+		base_dispatch.h
 		cavity_calcs.h
 		co2props_nn1.h
 		co2_compressor_library.h
@@ -120,7 +110,9 @@ set(TCS_SRC
 		co2_testing.h
 		csp_dispatch.h
 		csp_radiator.h
+		csp_solver_cavity_receiver.h
 		csp_solver_core.h
+		csp_solver_cr_electric_resistance.h
 		csp_solver_gen_collector_receiver.h
 		csp_solver_lf_dsg_collector_receiver.h
 		csp_solver_mspt_collector_receiver.h
@@ -141,6 +133,8 @@ set(TCS_SRC
 		csp_solver_util.h
 		csp_system_costs.h
 		direct_steam_receivers.h
+		dispatch_builder.h
+		etes_dispatch.h
 		flat_plate_solar_collector.h
 		fmin.h
 		fmin_callbacks.h
@@ -174,38 +168,6 @@ set(TCS_SRC
 
 #####################################################################################################################
 #
-# Compile Options per Platform
-#
-#####################################################################################################################
-
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-
-if(MSVC)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
-	add_compile_options(/MP /W0)
-    add_compile_definitions( __64BIT__ __WINDOWS__ _WINDOWS _CRT_SECURE_NO_WARNINGS LPWINAPP )
-    foreach (flag_var CMAKE_C_FLAGS_DEBUG CMAKE_CXX_FLAGS_DEBUG)
-		set(${flag_var} "${${flag_var}} /D_DEBUG" CACHE STRING "compile flags" FORCE)
-	endforeach()
-else(MSVC)
-	if (APPLE)
-		add_compile_options(-arch x86_64 -fno-common)
-  		add_definitions(-DWX_PRECOMP)
-	else()
-		add_definitions(-D__64BIT__)
-	endif()
-	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11" )
-	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-unknown-pragmas -Wno-sign-compare -Wno-unused-variable -Wno-uninitialized -Wno-int-to-pointer-cast ")
-	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-		add_compile_definitions(_DEBUG)
-	else()
-		SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DNDEBUG" )
-	endif()
-endif(MSVC)
-
-
-#####################################################################################################################
-# 
 # CMake Targets
 #
 #####################################################################################################################
@@ -216,6 +178,12 @@ set_target_properties(tcs
     DEBUG_POSTFIX "d"
 	PREFIX ""
 	)
+
+set_default_compile_options(tcs)
+set_no_warnings(tcs)
+if (MSVC)
+    set_additional_compile_options(tcs "/bigobj")
+endif ()
 
 
 #####################################################################################################################

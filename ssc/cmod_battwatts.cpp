@@ -1,22 +1,22 @@
 /**
 BSD-3-Clause
 Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
 that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
 and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
 and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
 or promote products derived from this software without specific prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
@@ -37,7 +37,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 var_info vtab_battwatts[] = {
 	/*   VARTYPE           DATATYPE         NAME                               LABEL                                    UNITS      META                   GROUP                  REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-	{ SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",        "PV lifetime simulation",                 "0/1",     "0=SingleYearRepeated,1=RunEveryYear",                     "Lifetime",             "?=0",                        "BOOLEAN",                        "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",        "Enable lifetime simulation",                 "0/1",     "0=SingleYearRepeated,1=RunEveryYear",                     "Lifetime",             "?=0",                        "BOOLEAN",                        "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                   "Lifetime analysis period",               "years",   "The number of years in the simulation",                   "Lifetime",             "system_use_lifetime_output=1",   "",                               "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_simple_enable",                "Enable Battery",                         "0/1",     "",                 "Battery",                  "?=0",                        "BOOLEAN",                       "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_simple_kwh",                   "Battery Capacity",                       "kWh",     "",                 "Battery",                  "?=0",                        "",                              "" },
@@ -50,13 +50,16 @@ var_info vtab_battwatts[] = {
 	{ SSC_INPUT,        SSC_ARRAY,       "ac",							     "AC inverter power",                      "W",       "",                 "Battery",                           "",                           "",                              "" },
     { SSC_INPUT,		SSC_ARRAY,	     "load",			                     "Electricity load (year 1)",              "kW",	   "",		           "Battery",                           "",	                         "",	                          "" },
     { SSC_INPUT,		SSC_ARRAY,	     "crit_load",			             "Critical electricity load (year 1)",     "kW",	   "",		           "Battery",                           "",	                         "",	                          "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inverter_efficiency",               "Inverter Efficiency",                     "%",      "",                  "Battery",                          "",                           "MIN=0,MAX=100",                               "" },
+    { SSC_INPUT,        SSC_ARRAY,       "grid_outage",                      "Timesteps with grid outage",             "0/1",     "0=GridAvailable,1=GridUnavailable,Length=load", "Load",    "",                       "",                               "" },
+    { SSC_INPUT,        SSC_NUMBER,      "run_resiliency_calcs",             "Enable resilence calculations for every timestep",           "0/1",     "0=DisableCalcs,1=EnableCalcs",                  "Load",    "?=0",                    "",                               "" },
+    { SSC_INPUT,        SSC_ARRAY,       "load_escalation",                  "Annual load escalation",                 "%/year",   "",                 "Load",                              "?=0",                       "",                              "" },
+    { SSC_INPUT,        SSC_NUMBER,      "inverter_efficiency",               "Inverter Efficiency",                     "%",      "",                  "Battery",                          "",                           "MIN=0,MAX=100",                               "" },
 
 var_info_invalid  };
 
 std::shared_ptr<batt_variables>
 battwatts_create(size_t n_recs, size_t n_years, int chem, int meter_pos, double size_kwh, double size_kw, double inv_eff,
-                 int dispatch, std::vector<double> dispatch_custom){
+                 int dispatch, std::vector<double> dispatch_custom, double interconnection_limit, std::vector<double> curtailment_limit){
     auto batt_vars = std::make_shared<batt_variables>();
 
     // allocate vectors
@@ -73,7 +76,7 @@ battwatts_create(size_t n_recs, size_t n_years, int chem, int meter_pos, double 
     double voltage_guess = 0;
 
     // lithium ion NMC
-    if (batt_vars->batt_chem == battery_t::LITHIUM_ION)
+    if (batt_vars->batt_chem == battery_params::LITHIUM_ION)
     {
         // Voltage properties
         voltage_guess = 500;
@@ -81,12 +84,14 @@ battwatts_create(size_t n_recs, size_t n_years, int chem, int meter_pos, double 
         batt_vars->batt_Vfull = 4.1;
         batt_vars->batt_Vexp = 4.05;
         batt_vars->batt_Vnom = 3.4;
+        batt_vars->batt_Vcut = 0;
         batt_vars->batt_Qfull = 2.25;
         batt_vars->batt_Qfull_flow = 0;
         batt_vars->batt_Qexp = 0.178 * batt_vars->batt_Qfull;
         batt_vars->batt_Qnom = 0.889 * batt_vars->batt_Qfull;
         batt_vars->batt_C_rate = 0.2;
         batt_vars->batt_resistance = 0.1;
+
 
         // Battery lifetime
         lifetime_matrix->push_back(20); lifetime_matrix->push_back(0); lifetime_matrix->push_back(100);
@@ -117,7 +122,7 @@ battwatts_create(size_t n_recs, size_t n_years, int chem, int meter_pos, double 
         batt_specific_energy_per_volume = 501.25; // Wh/L
     }
         // Lead acid AGM defaults
-    else if (batt_vars->batt_chem == battery_t::LEAD_ACID)
+    else if (batt_vars->batt_chem == battery_params::LEAD_ACID)
     {
 
         // Voltage properties
@@ -126,6 +131,7 @@ battwatts_create(size_t n_recs, size_t n_years, int chem, int meter_pos, double 
         batt_vars->batt_Vfull = 2.2;
         batt_vars->batt_Vexp = 2.06;
         batt_vars->batt_Vnom = 2.03;
+        batt_vars->batt_Vcut = 0;
         batt_vars->batt_Qfull = 20;
         batt_vars->batt_Qexp = 0.025 * batt_vars->batt_Qfull;
         batt_vars->batt_Qnom = 0.90 * batt_vars->batt_Qfull;
@@ -168,7 +174,7 @@ battwatts_create(size_t n_recs, size_t n_years, int chem, int meter_pos, double 
     batt_vars->batt_computed_strings = (int)std::ceil((batt_vars->batt_kwh * 1000.) / (batt_vars->batt_Qfull * batt_vars->batt_computed_series * batt_vars->batt_Vnom_default)) - 1;
     batt_vars->batt_kwh = batt_vars->batt_computed_strings * batt_vars->batt_Qfull * batt_vars->batt_computed_series * batt_vars->batt_Vnom_default / 1000.;
 
-    if (batt_vars->batt_chem == battery_t::LEAD_ACID){
+    if (batt_vars->batt_chem == battery_params::LEAD_ACID){
         // Capacity properties
         double LeadAcid_q20 = 100;
         double LeadAcid_q10 = 93.2;
@@ -182,8 +188,15 @@ battwatts_create(size_t n_recs, size_t n_years, int chem, int meter_pos, double 
     }
 
     // Common Voltage properties
-    batt_vars->batt_voltage_choice = voltage_t::VOLTAGE_MODEL;
+    batt_vars->batt_voltage_choice = voltage_params::MODEL;
     batt_vars->batt_voltage_matrix = util::matrix_t<double>();
+
+    // Power converters and topology
+    batt_vars->batt_topology = ChargeController::AC_CONNECTED;
+    batt_vars->batt_ac_dc_efficiency = 96;
+    batt_vars->batt_dc_ac_efficiency = 96;
+    batt_vars->batt_dc_dc_bms_efficiency = 99;
+    batt_vars->pv_dc_dc_mppt_efficiency = 99;
 
     // Current and Capacity
     double batt_time_hour = batt_vars->batt_kwh / batt_vars->batt_kw;
@@ -196,25 +209,32 @@ battwatts_create(size_t n_recs, size_t n_years, int chem, int meter_pos, double 
     batt_vars->batt_power_charge_max_kwdc = batt_vars->batt_kw / (batt_vars->batt_dc_ac_efficiency * 0.01);
     batt_vars->batt_power_discharge_max_kwdc = batt_vars->batt_kw / (batt_vars->batt_ac_dc_efficiency * 0.01);
 
-    // Power converters and topology
-    batt_vars->batt_topology = ChargeController::AC_CONNECTED;
-    batt_vars->batt_ac_dc_efficiency = 96;
-    batt_vars->batt_dc_ac_efficiency = 96;
-    batt_vars->batt_dc_dc_bms_efficiency = 99;
-    batt_vars->pv_dc_dc_mppt_efficiency = 99;
-
     // Charge limits and priority
     batt_vars->batt_initial_SOC = 50.;
     batt_vars->batt_maximum_SOC = 95.;
     batt_vars->batt_minimum_SOC = 15.;
+    batt_vars->batt_minimum_outage_SOC = 10.;
     batt_vars->batt_minimum_modetime = 10;
+
+    // Interconnection and curtailment
+    batt_vars->gridCurtailmentLifetime_MW = curtailment_limit;
+    batt_vars->grid_interconnection_limit_kW = interconnection_limit;
+    if (interconnection_limit < 1e+38) {
+        batt_vars->enable_interconnection_limit = true;
+    }
 
     // Storage dispatch controllers
     switch (dispatch){
         default:
-        case 0: batt_vars->batt_dispatch = dispatch_t::LOOK_AHEAD;
+        case 0:
+            batt_vars->batt_dispatch = dispatch_t::PEAK_SHAVING;
+            batt_vars->batt_dispatch_wf_forecast = dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD;
+            batt_vars->batt_dispatch_load_forecast = dispatch_t::LOAD_LOOK_AHEAD;
             break;
-        case 1: batt_vars->batt_dispatch = dispatch_t::LOOK_BEHIND;
+        case 1:
+            batt_vars->batt_dispatch = dispatch_t::PEAK_SHAVING;
+            batt_vars->batt_dispatch_wf_forecast = dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_BEHIND;
+            batt_vars->batt_dispatch_load_forecast = dispatch_t::LOAD_LOOK_BEHIND;
             break;
         case 2: batt_vars->batt_dispatch = dispatch_t::CUSTOM_DISPATCH;
             batt_vars->batt_custom_dispatch = std::move(dispatch_custom);
@@ -222,24 +242,26 @@ battwatts_create(size_t n_recs, size_t n_years, int chem, int meter_pos, double 
     }
     batt_vars->batt_dispatch_auto_can_charge = true;
     batt_vars->batt_dispatch_auto_can_gridcharge = true;
+    batt_vars->batt_dispatch_auto_btm_can_discharge_to_grid = true;
+    batt_vars->batt_dispatch_auto_can_clipcharge = false; // Clip charging is not relevant to the battwatts algorithm set (peak shaving and custom)
+    batt_vars->batt_dispatch_charge_only_system_exceeds_load = false;
+    batt_vars->batt_dispatch_discharge_only_load_exceeds_system = false;
 
     // Battery bank replacement
     batt_vars->batt_replacement_capacity = 0.;
 
     // Battery lifetime
-    batt_vars->batt_calendar_choice = lifetime_calendar_t::NONE;
+    batt_vars->batt_calendar_choice = calendar_cycle_params::CALENDAR_CHOICE::NONE;
     batt_vars->batt_calendar_lifetime_matrix = util::matrix_t<double>();
     batt_vars->batt_calendar_q0 = 1.0;
 
     // Common Thermal behavior
     batt_vars->batt_mass = batt_vars->batt_kwh * 1000 / batt_specific_energy_per_mass;
     double batt_volume = batt_vars->batt_kwh / batt_specific_energy_per_volume;
-    batt_vars->batt_length = std::pow(batt_volume, 1. / 3.);
-    batt_vars->batt_width = std::pow(batt_volume, 1. / 3.);
-    batt_vars->batt_height = std::pow(batt_volume, 1. / 3.);
+    batt_vars->batt_surface_area = std::pow(batt_volume, 2. / 3.) * 6;
 
     // Losses
-    batt_vars->batt_loss_choice = losses_t::MONTHLY;
+    batt_vars->batt_loss_choice = losses_params::MONTHLY;
     batt_vars->batt_losses_charging.emplace_back(0);
     batt_vars->batt_losses_discharging.emplace_back(0);
     batt_vars->batt_losses_idle.emplace_back(0);
@@ -255,18 +277,21 @@ battwatts_create(size_t n_recs, size_t n_years, int chem, int meter_pos, double 
     return batt_vars;
 }
 
+// Set up SSC_OUTPUT variables using cmod_battery's tables
 cm_battwatts::cm_battwatts()
 {
     add_var_info(vtab_battwatts);
     add_var_info(vtab_battery_outputs);
     add_var_info(vtab_technology_outputs);
     add_var_info(vtab_resilience_outputs);
+    add_var_info(vtab_grid_curtailment);
 }
 
 std::shared_ptr<batt_variables> cm_battwatts::setup_variables(size_t n_recs)
 {
     size_t nyears = 1;
-    if (as_boolean("system_use_lifetime_output"))
+    bool system_use_lifetime_output = as_boolean("system_use_lifetime_output");
+    if (system_use_lifetime_output)
         nyears = (size_t)as_double("analysis_period");
     int chem = as_integer("batt_simple_chemistry");
     int pos = as_integer("batt_simple_meter_position");
@@ -280,7 +305,37 @@ std::shared_ptr<batt_variables> cm_battwatts::setup_variables(size_t n_recs)
         if (dispatch_custom.size()!=n_recs) throw exec_error("battwatts",
                 "'batt_custom_dispatch' length must be equal to length of 'ac'.");
     }
-    return battwatts_create(n_recs, nyears, chem, pos, kwh, kw, inv_eff, dispatch, dispatch_custom);
+    // Interconnection and curtailment
+    std::vector<double> scaleFactors(nyears, 1.0); // No scaling factors for curtailment
+
+    std::vector<double> curtailment_year_one;
+    std::vector<double> curtailment_lifetime;
+    if (is_assigned("grid_curtailment")) {
+        curtailment_year_one = as_vector_double("grid_curtailment");
+        double interpolation_factor = 1.0;
+        double dt_hour = 8760.0 / (double)n_recs;
+        single_year_to_lifetime_interpolated<double>(
+            system_use_lifetime_output,
+            (size_t)nyears,
+            n_recs * nyears,
+            curtailment_year_one,
+            scaleFactors,
+            interpolation_factor,
+            curtailment_lifetime,
+            n_recs,
+            dt_hour);
+    }
+
+    bool enable_interconnection_limit = false;
+    double interconnection_limit = 1e+38;
+    if (is_assigned("enable_interconnection_limit")) {
+        enable_interconnection_limit = as_boolean("enable_interconnection_limit");
+        if (enable_interconnection_limit && is_assigned("grid_interconnection_limit_kwac")) {
+            interconnection_limit = as_double("grid_interconnection_limit_kwac");
+        }
+    }
+
+    return battwatts_create(n_recs, nyears, chem, pos, kwh, kw, inv_eff, dispatch, dispatch_custom, interconnection_limit, curtailment_lifetime);
 }
 
 
@@ -304,14 +359,23 @@ void cm_battwatts::exec()
         std::shared_ptr<batt_variables> batt_vars = setup_variables(p_ac.size());
         size_t n_rec_lifetime = p_ac.size();
 
+        size_t analysis_period = (size_t)as_integer("analysis_period");
+
+        scalefactors scale_calculator(m_vartab);
+        // compute load (electric demand) annual escalation multipliers
+        std::vector<ssc_number_t> load_scale = scale_calculator.get_factors("load_escalation");
+
         std::vector<ssc_number_t> load_lifetime;
         size_t n_rec_single_year;
         double dt_hour_gen;
+        double interpolation_factor = 1.0;
         single_year_to_lifetime_interpolated<ssc_number_t>(
                 (bool)as_integer("system_use_lifetime_output"),
-                (size_t)as_integer("analysis_period"),
+                analysis_period,
                 n_rec_lifetime,
                 p_load,
+                load_scale,
+                interpolation_factor,
                 load_lifetime,
                 n_rec_single_year,
                 dt_hour_gen);
@@ -322,18 +386,44 @@ void cm_battwatts::exec()
 
         std::unique_ptr<resilience_runner> resilience = nullptr;
         std::vector<ssc_number_t> p_crit_load;
+        std::vector<ssc_number_t> p_crit_load_full; p_crit_load_full.reserve(n_rec_lifetime);
+        bool run_resilience = as_boolean("run_resiliency_calcs");
         if (is_assigned("crit_load")){
             p_crit_load = as_vector_ssc_number_t("crit_load");
             if (p_crit_load.size() != p_load.size())
                 throw exec_error("battwatts", "critical electric load profile must have same number of values as load");
-            if (!p_crit_load.empty() && *std::max_element(p_crit_load.begin(), p_crit_load.end()) > 0){
-                resilience = std::unique_ptr<resilience_runner>(new resilience_runner(batt));
-                auto logs = resilience->get_logs();
-                if (!logs.empty()){
-                    log(logs[0], SSC_WARNING);
+            bool crit_load_specified = !p_crit_load.empty() && *std::max_element(p_crit_load.begin(), p_crit_load.end()) > 0;
+            if (run_resilience) {
+                if (crit_load_specified) {
+                    resilience = std::unique_ptr<resilience_runner>(new resilience_runner(batt));
+                    auto logs = resilience->get_logs();
+                    if (!logs.empty()) {
+                        log(logs[0], SSC_WARNING);
+                    }
+                }
+                else {
+                    throw exec_error("battwatts", "If run_resiliency_calcs is 1, crit_load must have length > 0 and values > 0");
                 }
             }
+            if (!crit_load_specified && batt->analyze_outage) {
+                throw exec_error("battery", "If grid_outage is specified in any time step, crit_load must have length > 0 and values > 0");
+            }
         }
+
+        // compute critical load (electric demand) annual escalation multipliers
+        std::vector<ssc_number_t> crit_load_scale = scale_calculator.get_factors("crit_load_escalation");
+
+        interpolation_factor = 1.0;
+        single_year_to_lifetime_interpolated<ssc_number_t>(
+            (bool)as_integer("system_use_lifetime_output"),
+            analysis_period,
+            n_rec_lifetime,
+            p_crit_load,
+            crit_load_scale,
+            interpolation_factor,
+            p_crit_load_full,
+            n_rec_single_year,
+            dt_hour_gen);
 
         /* *********************************************************************************************
         Run Simulation
@@ -352,20 +442,22 @@ void cm_battwatts::exec()
 
                     if (resilience){
                         resilience->add_battery_at_outage_timestep(*batt->dispatch_model, count);
-                        resilience->run_surviving_batteries(p_crit_load[count % n_rec_single_year], p_ac[count]);
+                        resilience->run_surviving_batteries(p_crit_load_full[count], p_ac[count]);
                     }
 
-                    batt->advance(m_vartab, p_ac[count], voltage, p_load[count]);
+                    batt->outGenWithoutBattery[count] = p_ac[count];
+                    batt->advance(m_vartab, p_ac[count], voltage, load_lifetime[count], p_crit_load_full[count]);
                     p_gen[count] = batt->outGenPower[count];
                     count++;
                 }
             }
         }
-        process_messages(batt, this);
         batt->calculate_monthly_and_annual_outputs(*this);
+        gen_heatmap(this, double(n_rec_single_year / 8760));
+
 
         if (resilience) {
-            resilience->run_surviving_batteries_by_looping(&p_crit_load[0], &p_ac[0]);
+            resilience->run_surviving_batteries_by_looping(&p_crit_load_full[0], &p_ac[0]);
             calculate_resilience_outputs(this, resilience);
         }
     }

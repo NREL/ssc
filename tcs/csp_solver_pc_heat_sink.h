@@ -55,8 +55,6 @@ private:
 	void check_double_params_are_set();
 
 public:
-	// Class to save messages for up stream classes
-	C_csp_messages mc_csp_messages;
 
 	struct S_params
 	{
@@ -64,6 +62,8 @@ public:
 		double m_T_htf_hot_des;		//[C]
 		double m_q_dot_des;			//[MWt]
 		double m_htf_pump_coef;		//[kW/kg/s] Pumping power to move 1 kg/s of HTF through power cycle
+
+        double m_max_frac;      //[-] max heat sink input (from TOD fracs)
 
 		int m_pc_fl;				//[-] integer flag identifying Heat Transfer Fluid (HTF) in power block {1-27}
 		util::matrix_t<double> m_pc_fl_props;
@@ -83,7 +83,7 @@ public:
 
 	virtual void init(C_csp_power_cycle::S_solved_params &solved_params);
 
-	virtual int get_operating_state();
+	virtual C_csp_power_cycle::E_csp_power_cycle_modes get_operating_state();
 
 	virtual double get_cold_startup_time();
 	virtual double get_warm_startup_time();

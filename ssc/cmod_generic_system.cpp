@@ -40,7 +40,7 @@ static var_info _cm_vtab_generic_system[] = {
 	// optional for lifetime analysis
 	{ SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",                  "Generic lifetime simulation",                               "0/1",      "",                              "Lifetime",             "?=0",                        "INTEGER,MIN=0,MAX=1",          "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                             "Lifetime analysis period",                             "years",    "",                              "Lifetime",             "system_use_lifetime_output=1",   "",                             "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "generic_degradation",                              "Annual module degradation",                            "%/year",   "",                              "Lifetime",             "system_use_lifetime_output=1",   "",                             "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "generic_degradation",                              "Annual AC degradation",                            "%/year",   "",                              "Lifetime",             "system_use_lifetime_output=1",   "",                             "" },
 
 
 //    OUTPUTS ----------------------------------------------------------------------------								      														   
@@ -69,7 +69,6 @@ public:
 		add_var_info( _cm_vtab_generic_system );
 
 		// performance adjustment factors
-		add_var_info(vtab_dc_adjustment_factors);
 		add_var_info(vtab_adjustment_factors);
 		add_var_info(vtab_technology_outputs);
 	}
@@ -213,6 +212,8 @@ public:
 				}
 			}
 		}
+
+        ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, steps_per_hour);
 
 		accumulate_monthly_for_year("gen", "monthly_energy", ts_hour, steps_per_hour);
 		annual_output = accumulate_annual_for_year("gen", "annual_energy", ts_hour, steps_per_hour);

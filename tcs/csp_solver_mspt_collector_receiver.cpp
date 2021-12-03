@@ -38,7 +38,8 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 	{C_csp_mspt_collector_receiver::E_T_HTF_IN, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 	{C_csp_mspt_collector_receiver::E_T_HTF_OUT, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 	{C_csp_mspt_collector_receiver::E_Q_DOT_PIPE_LOSS, C_csp_reported_outputs::TS_WEIGHTED_AVE},
-	{C_csp_mspt_collector_receiver::E_Q_DOT_LOSS, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+    {C_csp_mspt_collector_receiver::E_Q_DOT_LOSS, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+    {C_csp_mspt_collector_receiver::E_Q_DOT_REFL_LOSS, C_csp_reported_outputs::TS_WEIGHTED_AVE},
     // from transient model:
 	{ C_csp_mspt_collector_receiver::E_P_HEATTRACE, C_csp_reported_outputs::TS_WEIGHTED_AVE },
 	{ C_csp_mspt_collector_receiver::E_T_HTF_OUT_END, C_csp_reported_outputs::TS_LAST },
@@ -49,6 +50,9 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 	{ C_csp_mspt_collector_receiver::E_T_RISER, C_csp_reported_outputs::TS_LAST },
 	{ C_csp_mspt_collector_receiver::E_T_DOWNC, C_csp_reported_outputs::TS_LAST },
 
+	{ C_csp_mspt_collector_receiver::E_CLEARSKY, C_csp_reported_outputs::TS_WEIGHTED_AVE },
+	{ C_csp_mspt_collector_receiver::E_Q_DOT_THERMAL_CSKY_SS, C_csp_reported_outputs::TS_WEIGHTED_AVE },
+	{ C_csp_mspt_collector_receiver::E_Q_DOT_THERMAL_SS, C_csp_reported_outputs::TS_WEIGHTED_AVE },
 	csp_info_invalid	
 };
 
@@ -76,7 +80,7 @@ void C_csp_mspt_collector_receiver::init(const C_csp_collector_receiver::S_csp_c
 	return;
 }
 
-int C_csp_mspt_collector_receiver::get_operating_state()
+C_csp_collector_receiver::E_csp_cr_modes C_csp_mspt_collector_receiver::get_operating_state()
 {
 	return mc_pt_receiver.get_operating_state();
 }
@@ -101,6 +105,10 @@ double C_csp_mspt_collector_receiver::get_min_power_delivery()    //MWt
     return mc_pt_receiver.m_f_rec_min * mc_pt_receiver.m_q_rec_des*1.e-6;
 }
 
+double C_csp_mspt_collector_receiver::get_max_power_delivery(double T_htf_cold_in /*C*/)    //MWt
+{
+    return mc_pt_receiver.m_m_dot_htf_max_frac * mc_pt_receiver.m_q_rec_des * 1.e-6;
+}
 
 double C_csp_mspt_collector_receiver::get_tracking_power()
 {
@@ -155,7 +163,7 @@ void C_csp_mspt_collector_receiver::call(const C_csp_weatherreader::S_outputs &w
 	cr_out_solver.m_W_dot_col_tracking = mc_pt_heliostatfield.ms_outputs.m_pparasi;		//[MWe]
 
 	cr_out_solver.m_time_required_su = mc_pt_receiver.ms_outputs.m_time_required_su;	//[s]
-	cr_out_solver.m_q_rec_heattrace = mc_pt_receiver.ms_outputs.m_q_heattrace / (mc_pt_receiver.ms_outputs.m_time_required_su / 3600.0);		//[MWt])
+	cr_out_solver.m_q_dot_heater = mc_pt_receiver.ms_outputs.m_q_heattrace / (mc_pt_receiver.ms_outputs.m_time_required_su / 3600.0);		//[MWt])
 
 
 	mc_reported_outputs.value(E_FIELD_Q_DOT_INC, mc_pt_heliostatfield.ms_outputs.m_q_dot_field_inc);	//[MWt]
@@ -171,6 +179,7 @@ void C_csp_mspt_collector_receiver::call(const C_csp_weatherreader::S_outputs &w
 	mc_reported_outputs.value(E_T_HTF_IN, htf_state_in.m_temp);									//[C]
 	mc_reported_outputs.value(E_T_HTF_OUT, mc_pt_receiver.ms_outputs.m_T_salt_hot);		//[C]
 	mc_reported_outputs.value(E_Q_DOT_PIPE_LOSS, mc_pt_receiver.ms_outputs.m_q_dot_piping_loss);	//[MWt]
+    mc_reported_outputs.value(E_Q_DOT_REFL_LOSS, mc_pt_receiver.ms_outputs.m_q_dot_refl_loss);      //[MWt]
     mc_reported_outputs.value(E_Q_DOT_LOSS, mc_pt_receiver.ms_outputs.m_q_rad_sum + mc_pt_receiver.ms_outputs.m_q_conv_sum ); //MWt
     // from transient model:
 	mc_reported_outputs.value(E_P_HEATTRACE, mc_pt_receiver.ms_outputs.m_q_heattrace / (mc_pt_receiver.ms_outputs.m_time_required_su / 3600.0));		//[MWt])
@@ -182,6 +191,10 @@ void C_csp_mspt_collector_receiver::call(const C_csp_weatherreader::S_outputs &w
 	mc_reported_outputs.value(E_T_WALL_OUTLET, mc_pt_receiver.ms_outputs.m_Twall_outlet);	//[C]
 	mc_reported_outputs.value(E_T_RISER, mc_pt_receiver.ms_outputs.m_Triser);	//[C]
 	mc_reported_outputs.value(E_T_DOWNC, mc_pt_receiver.ms_outputs.m_Tdownc);	//[C]
+
+	mc_reported_outputs.value(E_CLEARSKY, mc_pt_receiver.ms_outputs.m_clearsky);
+	mc_reported_outputs.value(E_Q_DOT_THERMAL_CSKY_SS, mc_pt_receiver.ms_outputs.m_Q_thermal_csky_ss); //[MWt]
+	mc_reported_outputs.value(E_Q_DOT_THERMAL_SS, mc_pt_receiver.ms_outputs.m_Q_thermal_ss); //[MWt]
 }
 
 void C_csp_mspt_collector_receiver::off(const C_csp_weatherreader::S_outputs &weather,
@@ -215,7 +228,7 @@ void C_csp_mspt_collector_receiver::off(const C_csp_weatherreader::S_outputs &we
 	cr_out_solver.m_W_dot_htf_pump = mc_pt_receiver.ms_outputs.m_W_dot_pump;			 //[MWe]
 		// Not sure that we want 'startup time required' calculated in 'off' call
 	cr_out_solver.m_time_required_su = mc_pt_receiver.ms_outputs.m_time_required_su;	 //[s]
-	cr_out_solver.m_q_rec_heattrace = mc_pt_receiver.ms_outputs.m_q_heattrace / (mc_pt_receiver.ms_outputs.m_time_required_su / 3600.0);		//[MWt])
+	cr_out_solver.m_q_dot_heater = mc_pt_receiver.ms_outputs.m_q_heattrace / (mc_pt_receiver.ms_outputs.m_time_required_su / 3600.0);		//[MWt])
 
 	mc_reported_outputs.value(E_FIELD_Q_DOT_INC, mc_pt_heliostatfield.ms_outputs.m_q_dot_field_inc);	//[MWt]
 	mc_reported_outputs.value(E_FIELD_ETA_OPT, mc_pt_heliostatfield.ms_outputs.m_eta_field);			//[-]
@@ -230,6 +243,7 @@ void C_csp_mspt_collector_receiver::off(const C_csp_weatherreader::S_outputs &we
 	mc_reported_outputs.value(E_T_HTF_IN, htf_state_in.m_temp);									//[C]
 	mc_reported_outputs.value(E_T_HTF_OUT, mc_pt_receiver.ms_outputs.m_T_salt_hot);		//[C]
 	mc_reported_outputs.value(E_Q_DOT_PIPE_LOSS, mc_pt_receiver.ms_outputs.m_q_dot_piping_loss);	//[MWt]
+    mc_reported_outputs.value(E_Q_DOT_REFL_LOSS, mc_pt_receiver.ms_outputs.m_q_dot_refl_loss);      //[MWt]
     mc_reported_outputs.value(E_Q_DOT_LOSS, mc_pt_receiver.ms_outputs.m_q_rad_sum + mc_pt_receiver.ms_outputs.m_q_conv_sum ); //MWt
     // from transient model:
 	mc_reported_outputs.value(E_P_HEATTRACE, mc_pt_receiver.ms_outputs.m_q_heattrace / (mc_pt_receiver.ms_outputs.m_time_required_su / 3600.0));		//[MWt])
@@ -241,6 +255,10 @@ void C_csp_mspt_collector_receiver::off(const C_csp_weatherreader::S_outputs &we
 	mc_reported_outputs.value(E_T_WALL_OUTLET, mc_pt_receiver.ms_outputs.m_Twall_outlet);	//[C]
 	mc_reported_outputs.value(E_T_RISER, mc_pt_receiver.ms_outputs.m_Triser);	//[C]
 	mc_reported_outputs.value(E_T_DOWNC, mc_pt_receiver.ms_outputs.m_Tdownc);	//[C]
+
+	mc_reported_outputs.value(E_CLEARSKY, mc_pt_receiver.ms_outputs.m_clearsky);
+	mc_reported_outputs.value(E_Q_DOT_THERMAL_CSKY_SS, mc_pt_receiver.ms_outputs.m_Q_thermal_csky_ss); //[MWt]
+	mc_reported_outputs.value(E_Q_DOT_THERMAL_SS, mc_pt_receiver.ms_outputs.m_Q_thermal_ss); //[MWt]
 
 	return;
 }
@@ -263,9 +281,8 @@ void C_csp_mspt_collector_receiver::startup(const C_csp_weatherreader::S_outputs
 
 void C_csp_mspt_collector_receiver::on(const C_csp_weatherreader::S_outputs &weather,
 	const C_csp_solver_htf_1state &htf_state_in,
-	double field_control,
+    double q_dot_elec_to_CR_heat /*MWt*/, double field_control,
 	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
-	//C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
 	const C_csp_solver_sim_info &sim_info)
 {
 	// For now, define on(...) shell that calls call() with operation mode defined.
@@ -297,7 +314,7 @@ void C_csp_mspt_collector_receiver::estimates(const C_csp_weatherreader::S_outpu
 
 	int mode = get_operating_state();
 
-	if( mode == C_csp_collector_receiver::ON )
+	if( mode == C_csp_collector_receiver::ON || mode == C_csp_collector_receiver::OFF_NO_SU_REQ)
 	{
 		est_out.m_q_dot_avail = cr_out_solver.m_q_thermal;			//[MWt]
 		est_out.m_m_dot_avail = cr_out_solver.m_m_dot_salt_tot;		//[kg/hr]

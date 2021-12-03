@@ -1,3 +1,25 @@
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 #ifndef __LIB_BATTERY_PROPERTIES_H__
 #define __LIB_BATTERY_PROPERTIES_H__
 
@@ -19,10 +41,9 @@ public:
 	double SOC_init;
 
 	// voltage
-	int n_series;
-	int n_strings;
 	double Vnom_default;
 	double Vfull;
+    double Vcut;
 	double Vexp;
 	double Vnom;
 	double Qfull;
@@ -35,14 +56,15 @@ public:
 	util::matrix_t<double> cycleLifeMatrix;
 	util::matrix_t<double> calendarLifeMatrix;
 	int calendarChoice;
-	int replacementOption;
-	double replacementCapacity;
+	int replacementOption = 0;
+	double replacementCapacity = 0;
+	double calendar_q0 = 1.02;
+	double calendar_a = 2.66e-3;
+	double calendar_b = -7280;
+	double calendar_c = 930;
 
 	// thermal
 	double mass;
-	double length;
-	double width;
-	double height;
 	double Cp;
 	double h;
 	std::vector<double> T_room;
@@ -56,48 +78,43 @@ public:
 
 	// battery
 	int chemistry;
-	double dtHour;
 
 	void SetUp() override
 	{
-		// capacity
-		q = 1000;
+		// cell capacity
+		q = 2.25;
 		SOC_init = 50;
 		SOC_min = 15;
 		SOC_max = 95;
 
 		// voltage
-		n_series = 139;
-		n_strings = 89;
 		Vnom_default = 3.6;
 		Vfull = 4.1;
 		Vexp = 4.05;
 		Vnom = 3.4;
+        Vcut = 0.66 * Vfull;
 		Qfull = 2.25;
 		Qexp = 0.04;
 		Qnom = 2.0;
 		C_rate = 0.2;
-		resistance = 0.2;
+		resistance = 0.0002;
 
 		// lifetime
 		double vals[] = { 20, 0, 100, 20, 5000, 80, 20, 10000, 60, 80, 0, 100, 80, 1000, 80, 80, 2000, 60 };
 		cycleLifeMatrix.assign(vals, 6, 3);
 		double vals2[] = { 0, 100, 3650, 80, 7300, 50 };
 		calendarLifeMatrix.assign(vals2, 3, 2);
-		calendarChoice = 1;
-		replacementOption = 0;
+
+		calendarChoice = calendar_cycle_params::CALENDAR_CHOICE::MODEL;
 
 		// thermal
 		mass = 507;
-		length = 0.58;
-		width = 0.58;
-		height = 0.58;
 		Cp = 1004;
-		h = 500;
+		h = 20;
 		for (size_t i = 0; i < 8760; i++) {
-			T_room.push_back(20 + 273.15);
+			T_room.push_back(20);
 		}
-		double vals3[] = { -10, 60, 0, 80, 25, 100, 40, 100 };
+		double vals3[] = { 0, 60, 1, 100, 25, 100, 40, 100 };
 		capacityVsTemperature.assign(vals3, 4, 2);
 
 		// losses
@@ -110,16 +127,11 @@ public:
 		for (size_t i = 0; i < 8760 * 60; i++) {
 			fullLossesMinute.push_back(0);
 		}
-		lossChoice = 0;
+		lossChoice = losses_params::MONTHLY;
 
 		// battery
 		chemistry = 1;
-		dtHour = 1.0;
 	}
-
-	// nothing to do
-	void TearDown(){}
-
 };
 
 #endif

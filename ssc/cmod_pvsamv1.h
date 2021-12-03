@@ -70,7 +70,7 @@ public:
 	void setup_noct_model(const std::string &prefix, noct_celltemp_t &noct_tc);
 	
 	//! Run the PV model
-	void exec() throw (general_error);
+	void exec();
 	
 	//! Return the module efficiency
 	double module_eff(int mod_type);
@@ -80,6 +80,11 @@ public:
 
 	//! Check the inverter size and the associated clipping
 	void inverter_size_check();
+
+private:
+
+    double transformerLoss(double powerkW, double transformerLoadLossFraction, double transformerRatingkW, double& xfmr_ll, double xfmr_nll);
+
 };
 
 #endif // !_CMOD_PVAMV1_H_

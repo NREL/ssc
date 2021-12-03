@@ -113,7 +113,8 @@ private:
 	double m_opt_eta_des;		//[-] Design point optical efficiency (theta = 0) from the solar field
 		// Energy and mass balance calcs
 	double m_q_dot_abs_tot_des;	//[kWt] SYSTEM total thermal power absorbed by steam at design
-	double m_m_dot_min;			//[kg/s] LOOP min mass flow rate - max of field & PC bases
+    double m_q_dot_loss_tot_des;//[kWt]
+    double m_m_dot_min;			//[kg/s] LOOP min mass flow rate - max of field & PC bases
 	double m_m_dot_max;			//[kg/s] LOOP max mass flow rate - min of field & PC bases
 	double m_m_dot_b_max;		//[kg/s] LOOP max mass flow rate through boiler (m_m_dot_max/x_b_des)
 	double m_m_dot_b_des;		//[kg/s] SYSTEM mass flow rate at power cycle design
@@ -128,8 +129,8 @@ private:
 	// *******************************************
 	// Timestep Calculations
 		// Control & operation
-	int m_operating_mode_converged;
-	int m_operating_mode;
+    C_csp_collector_receiver::E_csp_cr_modes m_operating_mode_converged;
+    C_csp_collector_receiver::E_csp_cr_modes m_operating_mode;
 	int m_ncall;
 		// *********************************************
 		// CSP Solver Temperature Tracking
@@ -380,12 +381,13 @@ public:
 	virtual void init(const C_csp_collector_receiver::S_csp_cr_init_inputs init_inputs,
 		C_csp_collector_receiver::S_csp_cr_solved_params & solved_params);
 
-	virtual int get_operating_state();
+	virtual C_csp_collector_receiver::E_csp_cr_modes get_operating_state();
 
 	virtual double get_startup_time();
 	virtual double get_startup_energy(); //MWh
 	virtual double get_pumping_parasitic_coef();  //MWe/MWt
 	virtual double get_min_power_delivery();    //MWt
+    virtual double get_max_power_delivery(double T_cold_in);    //MWt
 	virtual double get_tracking_power();		//MWe
 	virtual double get_col_startup_power();		//MWe-hr
 
@@ -401,7 +403,7 @@ public:
 
 	virtual void on(const C_csp_weatherreader::S_outputs &weather,
 		const C_csp_solver_htf_1state &htf_state_in,
-		double field_control,
+        double q_dot_elec_to_CR_heat /*MWt*/, double field_control,
 		C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
 		const C_csp_solver_sim_info &sim_info);
 
@@ -457,15 +459,15 @@ public:
 
 	void transient_energy_bal_numeric_int_ave(double h_in /*kJ/kg*/, double P_in /*kPa*/,
 		double q_dot_abs /*kWt*/, double m_dot /*kg/s*/, 
-		double T_out_t_end_prev /*K*/,
+		double T_out_t_end_prev /*K*/, double h_out_t_end_prev /*kJ/K*/,
 		double C_thermal /*kJ/K*/, double step /*s*/, 
 		double & h_out_t_end /*kJ/K*/, double & h_out_t_int /*kJ/K*/);
 
 	void transient_energy_bal_numeric_int(double h_in /*kJ/kg*/, double P_in /*kPa*/,
 			double q_dot_abs /*kWt*/, double m_dot /*kg/s*/, 
-			double T_out_t_end_prev /*K*/,
+			double T_out_t_end_prev /*K*/, double h_out_t_end_prev /*kJ/K*/,
 			double C_thermal /*kJ/K*/, double step /*s*/, 
-			double & h_out_t_end_prev /*kJ/K*/, double & h_out_t_end /*kJ/K*/, double & T_out_t_end /*K*/);
+			double & h_out_t_end /*kJ/K*/, double & T_out_t_end /*K*/);
 
 	int once_thru_loop_energy_balance_T_t_int(const C_csp_weatherreader::S_outputs &weather,
 		double T_cold_in /*K*/, double P_field_out /*bar*/, double m_dot_loop /*kg/s*/, double h_sca_out_target /*kJ/kg*/,

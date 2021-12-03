@@ -6,13 +6,14 @@
 
 #include "numeric_solvers.h"
 #include "CO2_properties.h"
+#include "interpolation_routines.h"
 
-void calculate_turbomachinery_outlet_1(double T_in /*K*/, double P_in /*kPa*/, double P_out /*kPa*/, 
-	double eta_isen /*-*/, bool is_comp, int & error_code, 
-	double & enth_in /*kJ/kg*/, double & entr_in /*kJ/kg-K*/, double & dens_in /*kg/m3*/, double & temp_out /*K*/, 
+void calculate_turbomachinery_outlet_1(double T_in /*K*/, double P_in /*kPa*/, double P_out /*kPa*/,
+	double eta_isen /*-*/, bool is_comp, int & error_code,
+	double & enth_in /*kJ/kg*/, double & entr_in /*kJ/kg-K*/, double & dens_in /*kg/m3*/, double & temp_out /*K*/,
 	double & enth_out /*kJ/kg*/, double & entr_out /*kJ/kg-K*/, double & dens_out /*kg/m3*/, double & spec_work /*kJ/kg*/);
 
-void calculate_turbomachinery_outlet_1(double T_in /*K*/, double P_in /*kPa*/, double P_out /*kPa*/, 
+void calculate_turbomachinery_outlet_1(double T_in /*K*/, double P_in /*kPa*/, double P_out /*kPa*/,
 	double eta_isen /*-*/, bool is_comp, int & error_code, double & spec_work /*kJ/kg*/);
 
 void isen_eta_from_poly_eta(double T_in /*K*/, double P_in /*kPa*/, double P_out /*kPa*/, double poly_eta /*-*/, bool is_comp, int & error_code, double & isen_eta);
@@ -73,7 +74,7 @@ int Ph_dome(double P_low /*MPa*/, std::vector<double> & P_data /*MPa*/, std::vec
 class C_MEQ_CO2_props_at_2phase_P : public C_monotonic_equation
 {
 private:
-	
+
 
 public:
 	C_MEQ_CO2_props_at_2phase_P(){}
@@ -131,14 +132,14 @@ public:
 class C_turbine
 {
 public:
-	
+
 	double m_r_W_dot_scale;		//[-] W_dot_cycle / W_dot_comp_basis (10 MWe)
 
 	int m_cost_model;		//[-]
 
 	enum
 	{
-		// Techno-Economic Comparison of Solar-Driven SCO2 Brayton Cycles Using 
+		// Techno-Economic Comparison of Solar-Driven SCO2 Brayton Cycles Using
 		// Component Cost Models Baselined with Vendor Data and Estimates
 		// ASME ES 2017
 		E_CARLSON_17
@@ -150,8 +151,8 @@ public:
 		double m_N_comp_design_if_linked;	//[rpm] compressor shaft speed
 		// Turbine inlet state
 		double m_P_in;						//[kPa]
-		double m_T_in;						//[K] 
-		double m_D_in;						//[kg/m^3] 
+		double m_T_in;						//[K]
+		double m_D_in;						//[kg/m^3]
 		double m_h_in;						//[kJ/kg]
 		double m_s_in;						//[kJ/kg-K]
 		// Turbine outlet state
@@ -174,8 +175,11 @@ public:
 		double m_D_rotor;					//[m] Turbine diameter
 		double m_A_nozzle;					//[m^2] Effective nozzle area
 		double m_w_tip_ratio;				//[-] ratio of tip speed to local speed of sound
-		double m_eta;						//[-] 
+		double m_eta;						//[-]
 		double m_N_design;					//[rpm] shaft speed
+
+		double m_delta_h_isen;		//[kJ/kg] Isentropic specific work
+		double m_rho_in;			//[kg/m3] Turbine inlet density
 
 		double m_W_dot;				//[kWe] Turbine power
 
@@ -183,8 +187,9 @@ public:
 
 		S_design_solved()
 		{
-			m_nu_design = m_D_rotor = m_A_nozzle = m_w_tip_ratio = 
+			m_nu_design = m_D_rotor = m_A_nozzle = m_w_tip_ratio =
 				m_eta = m_N_design =
+				m_delta_h_isen = m_rho_in =
 				m_W_dot = m_cost = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
@@ -196,6 +201,9 @@ public:
 		double m_w_tip_ratio;				//[-] ratio of the tip speed to the local (turbine inlet) speed of sound
 		double m_N;							//[rpm] off-design turbine shaft speed
         double m_m_dot;                     //[kg/s] mass flow rate
+
+		double m_delta_h_isen;		//[kJ/kg] Isentropic specific work
+		double m_rho_in;			//[kg/m3] Turbine inlet density
 
 		double m_W_dot_out;			//[kW] Turbine power output, expected to be positive (cycle, not basis)
 
@@ -247,9 +255,9 @@ class C_comp__psi_eta_vs_phi
 {
 public:
 
-    enum E_comp_models 
+    enum E_comp_models
     {
-        E_snl_radial_via_Dyreby
+        E_snl_radial_via_Dyreby,
     };
 
     struct S_des_solved
@@ -323,49 +331,56 @@ public:
             m_eta = m_phi = m_psi = m_w_tip_ratio = m_N =
                 m_W_dot_in = m_surge_safety = std::numeric_limits<double>::quiet_NaN();
         }
-    };          
+    };
 
     C_comp__psi_eta_vs_phi(){}
+
+    virtual ~C_comp__psi_eta_vs_phi(){}
 
     S_des_solved ms_des_solved;
     S_od_solved ms_od_solved;
 
     int design_given_shaft_speed(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
-        double N_rpm /*rpm*/, double eta_isen /*-*/, double & P_out /*kPa*/, double & T_out /*K*/, double & tip_ratio /*-*/);    
+        double N_rpm /*rpm*/, double eta_isen /*-*/, double & P_out /*kPa*/, double & T_out /*K*/, double & tip_ratio /*-*/);
 
     int design_given_performance(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
         double T_out /*K*/, double P_out /*K*/);
-    
+
     int off_design_given_N(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/, double N_rpm /*rpm*/,
         double & T_out /*K*/, double & P_out /*kPa*/);
 
-    int calc_N_from_phi(double T_in /*K*/, double P_in /*kPa*/, 
+    int calc_N_from_phi(double T_in /*K*/, double P_in /*kPa*/,
                         double m_dot /*kg/s*/, double phi_in /*-*/, double & N_rpm /*rpm*/);
 
     int calc_m_dot__phi_des(double T_in /*K*/, double P_in /*kPa*/, double N_rpm /*rpm*/, double & m_dot /*kg/s*/);
-    
+
     static std::unique_ptr<C_comp__psi_eta_vs_phi> construct_derived_C_comp__psi_eta_vs_phi(int comp_model_code);
 
+    virtual void set_design_solution(double phi /*-*/, double T_comp_in_des /*K*/, double P_comp_in /*kPa*/) = 0;
+
+    virtual void report_phi_psi_eta_vectors(std::vector<double> & phi, 
+        std::vector<double> & psi, std::vector<double> & eta, double & eta_norm_design) = 0;
+    
     virtual double calc_phi_min(double T_comp_in /*K*/, double P_comp_in /*kPa*/) = 0;
 
     virtual double calc_phi_design(double T_comp_in /*K*/, double P_comp_in /*kPa*/) = 0;
-    
+
     virtual double calc_phi_max(double T_comp_in /*K*/, double P_comp_in /*kPa*/) = 0;
-    
+
     virtual double calc_psi_isen_design(double T_comp_in /*K*/, double P_comp_in /*kPa*/) = 0;    //[-]
-    
+
     virtual double calc_psi_isen(double phi /*-*/, double N_des_over_N_od /*-*/, double T_comp_in /*K*/, double P_comp_in /*kPa*/) = 0;
 
-    virtual double calc_eta_normalized(double phi /*-*/, double N_des_over_N_od /*-*/, double T_comp_in /*K*/, double P_comp_in /*kPa*/) = 0;
+    virtual double calc_eta_OD_normalized(double phi /*-*/, double N_des_over_N_od /*-*/, double T_comp_in /*K*/, double P_comp_in /*kPa*/) = 0;
 };
 
 class C_comp__snl_radial_via_Dyreby : public C_comp__psi_eta_vs_phi
 {
-public: 
+public:
 
     double m_phi_design;            //[-]
     double m_phi_min;               //[-]
-    double m_phi_max;               //[-]  
+    double m_phi_max;               //[-]
 
     C_comp__snl_radial_via_Dyreby()
     {
@@ -376,17 +391,56 @@ public:
 
     double adjust_phi_for_N(double phi /*-*/, double N_des_over_N_od /*-*/);
 
+    virtual void set_design_solution(double phi /*-*/, double T_comp_in_des /*K*/, double P_comp_in /*kPa*/);
+
+    virtual void report_phi_psi_eta_vectors(std::vector<double> & phi, 
+        std::vector<double> & psi, std::vector<double> & eta, double & eta_norm_design);
+
     virtual double calc_phi_min(double T_comp_in /*K*/, double P_comp_in /*kPa*/);
 
     virtual double calc_phi_design(double T_comp_in /*K*/, double P_comp_in /*kPa*/);
-    
+
     virtual double calc_phi_max(double T_comp_in /*K*/, double P_comp_in /*kPa*/);
 
     virtual double calc_psi_isen_design(double T_comp_in /*K*/, double P_comp_in /*kPa*/);
-    
+
     virtual double calc_psi_isen(double phi /*-*/, double N_des_over_N_od /*-*/, double T_comp_in /*K*/, double P_comp_in /*kPa*/);
 
-    virtual double calc_eta_normalized(double phi /*-*/, double N_des_over_N_od /*-*/, double T_comp_in /*K*/, double P_comp_in /*kPa*/);
+    virtual double calc_eta_OD_normalized(double phi /*-*/, double N_des_over_N_od /*-*/, double T_comp_in /*K*/, double P_comp_in /*kPa*/);
+};
+
+class C_comp__compA__PT_map_template : public C_comp__psi_eta_vs_phi
+{
+public:
+
+    Linear_Interp mc_data_at_PT;
+
+    double m_P_mc_in;       //[kPa]
+    double m_T_mc_in;       //[K]
+
+    double m_phi_design;    //[-]
+    double m_phi_min;       //[-]
+    double m_phi_max;       //[-]  
+    double m_eta_isen_norm; //[-]
+
+    C_comp__compA__PT_map_template(){}
+
+    virtual void set_design_solution(double phi /*-*/, double T_comp_in_des /*K*/, double P_comp_in /*kPa*/);
+
+    virtual void report_phi_psi_eta_vectors(std::vector<double> & phi,
+        std::vector<double> & psi, std::vector<double> & eta, double & eta_norm_design);
+    
+    virtual double calc_phi_min(double T_comp_in /*K*/, double P_comp_in /*kPa*/);
+
+    virtual double calc_phi_design(double T_comp_in /*K*/, double P_comp_in /*kPa*/);
+
+    virtual double calc_phi_max(double T_comp_in /*K*/, double P_comp_in /*kPa*/);
+
+    virtual double calc_psi_isen_design(double T_comp_in /*K*/, double P_comp_in /*kPa*/);
+
+    virtual double calc_psi_isen(double phi /*-*/, double N_des_over_N_od /*-*/, double T_comp_in /*K*/, double P_comp_in /*kPa*/);
+
+    virtual double calc_eta_OD_normalized(double phi /*-*/, double N_des_over_N_od /*-*/, double T_comp_in /*K*/, double P_comp_in /*kPa*/);    
 };
 
 class C_comp_multi_stage
@@ -402,10 +456,10 @@ public:
 
 	enum
 	{
-		// Techno-Economic Comparison of Solar-Driven SCO2 Brayton Cycles Using 
+		// Techno-Economic Comparison of Solar-Driven SCO2 Brayton Cycles Using
 		// Component Cost Models Baselined with Vendor Data and Estimates
 		// ASME ES 2017
-		E_CARLSON_17			
+		E_CARLSON_17
 	};
 
 	struct S_des_solved
@@ -421,13 +475,13 @@ public:
 		double m_P_out;			//[kPa]
 		double m_h_out;			//[kJ/kg]
 		double m_D_out;			//[kg/m^3]
-		
+
 		double m_isen_spec_work;	//[kJ/kg]
 
 		double m_m_dot;			//[kg/s] (cycle not basis)
 		double m_W_dot;			//[kWe] power required by compressor
 
-		// Cost		
+		// Cost
 		double m_cost;			//[M$]
 
 		// Stage Metrics
@@ -447,14 +501,14 @@ public:
 
 		S_des_solved()
 		{
-			m_n_stages = -1;			
+			m_n_stages = -1;
 
 			m_T_in = m_P_in = m_D_in = m_h_in = m_s_in =
 				m_T_out = m_P_out = m_h_out = m_D_out =
 				m_isen_spec_work =
 				m_m_dot = m_W_dot =
 				m_cost =
-				m_tip_ratio_max = 
+				m_tip_ratio_max =
 				m_N_design = m_phi_des =
                 m_psi_des = m_phi_surge = std::numeric_limits<double>::quiet_NaN();
 		}
@@ -532,16 +586,19 @@ public:
 		double m_P_in;	//[kPa]
 		double m_P_out;	//[kPa]
 		double m_m_dot_basis;	//[kg/s]
+        double m_tol_in;   //[-] Convergence tolerance
 
 	public:
 		C_MEQ_eta_isen__h_out(C_comp_multi_stage *pc_multi_stage,
-			double T_in /*K*/, double P_in /*kPa*/, double P_out /*kPa*/, double m_dot_basis /*kg/s*/)
+			double T_in /*K*/, double P_in /*kPa*/, double P_out /*kPa*/, double m_dot_basis /*kg/s*/,
+            double tol /*-*/)
 		{
 			mpc_multi_stage = pc_multi_stage;
 			m_T_in = T_in;
 			m_P_in = P_in;
 			m_P_out = P_out;
 			m_m_dot_basis = m_dot_basis;
+            m_tol_in = tol;
 		}
 
 		virtual int operator()(double eta_isen /*-*/, double *h_comp_out /*kJ/kg*/);
@@ -595,7 +652,7 @@ public:
 		double T_out /*K*/, double P_out /*kPa*/, double W_dot /*kWe*/);
 
 	int design_given_outlet_state(int comp_model_code, double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
-		double T_out /*K*/, double P_out /*K*/);
+		double T_out /*K*/, double P_out /*K*/, double tol /*-*/);
 
 	void off_design_given_N(double T_in /*K*/, double P_in /*kPa*/, double m_dot_cycle /*kg/s*/, double N_rpm /*rpm*/,
 		int & error_code, double & T_out /*K*/, double & P_out /*kPa*/);
@@ -604,7 +661,7 @@ public:
 		int & error_code, double & T_out /*K*/, double & P_out /*kPa*/);
 
 	void off_design_given_P_out(double T_in /*K*/, double P_in /*kPa*/, double m_dot_cycle /*kg/s*/,
-		double P_out /*kPa*/, int & error_code, double & T_out /*K*/);
+		double P_out /*kPa*/, double tol /*-*/, int & error_code, double & T_out /*K*/);
 
 	int calc_m_dot__N_des__phi_des_first_stage(double T_in /*K*/, double P_in /*kPa*/, double & m_dot_cycle /*kg/s*/);
 };

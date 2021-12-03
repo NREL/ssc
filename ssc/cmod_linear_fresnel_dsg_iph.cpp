@@ -32,6 +32,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "csp_solver_pc_steam_heat_sink.h"
 #include "csp_solver_tou_block_schedules.h"
 #include "csp_solver_two_tank_tes.h"
+#include "csp_dispatch.h"
 
 static var_info _cm_vtab_linear_fresnel_dsg_iph[] = {
 
@@ -181,6 +182,9 @@ static var_info _cm_vtab_linear_fresnel_dsg_iph[] = {
 	{ SSC_OUTPUT,   SSC_NUMBER,  "annual_thermal_consumption",      "Annual thermal freeze protection required",                "kWt-hr",   "",   "Post-process",     "*",       "",   "" },
 	{ SSC_OUTPUT,   SSC_NUMBER,  "annual_electricity_consumption",  "Annual electricity consumptoin w/ avail derate",           "kWe-hr",   "",   "Post-process",     "*",       "",   "" },
 	{ SSC_OUTPUT,   SSC_NUMBER,  "annual_total_water_use",          "Total Annual Water Usage",                                 "m^3",      "",   "Post-process",     "*",       "",   "" },
+	{ SSC_OUTPUT,   SSC_NUMBER,  "capacity_factor",					"Capacity factor",											"%",        "",   "Post-process",     "*",       "",   "" },
+	{ SSC_OUTPUT,   SSC_NUMBER,  "kwh_per_kw",						"First year kWh/kW",										"kWht/kWt", "",   "Post-process",     "*",       "",   "" },
+
 
 	var_info_invalid };
 
@@ -419,7 +423,6 @@ public:
 		// ********************************
 		C_csp_tou_block_schedules tou;
 		tou.setup_block_uniform_tod();
-		tou.mc_dispatch_params.m_dispatch_optimize = false;
 
 		// System parameters
 		C_csp_solver::S_csp_system_params system;
@@ -429,6 +432,12 @@ public:
 		system.m_bop_par_0 = 0.0;
 		system.m_bop_par_1 = 0.0;
 		system.m_bop_par_2 = 0.0;
+        system.m_is_field_freeze_protection_electric = false;
+
+        // *****************************************************
+        // System dispatch
+        csp_dispatch_opt dispatch;
+        dispatch.solver_params.dispatch_optimize = false;
 
 		// ********************************
 		// ********************************
@@ -443,8 +452,10 @@ public:
 								c_lf_dsg, 
 								steam_heat_sink, 
 								storage, 
-								tou, 
+								tou,
+                                dispatch,
 								system,
+                                NULL,
 								ssc_cmod_update,
 								(void*)(this));
 
@@ -541,6 +552,8 @@ public:
 			p_W_dot_par_tot_haf[i] = (ssc_number_t)(p_W_dot_parasitic_tot[i] * haf(hour) * 1.E3);		//[kWe]
 		}
 
+        ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, steps_per_hour);
+
 
 		accumulate_annual_for_year("gen", "annual_field_energy", sim_setup.m_report_step / 3600.0, steps_per_hour);	//[kWt-hr]
 		accumulate_annual_for_year("W_dot_par_tot_haf", "annual_electricity_consumption", sim_setup.m_report_step / 3600.0, steps_per_hour);	//[kWe-hr]
@@ -555,6 +568,11 @@ public:
 		double V_water_mirrors = as_double("csp.lf.sf.water_per_wash") / 1000.0*A_aper_tot*as_double("csp.lf.sf.washes_per_year");
 		assign("annual_total_water_use", (ssc_number_t)V_water_mirrors);		//[m3]
 
+		ssc_number_t ae = as_number("annual_energy");			//[kWt-hr]
+		double nameplate = as_double("q_pb_des") * 1.e3;		//[kWt]
+		double kWh_per_kW = ae / nameplate;
+		assign("capacity_factor", (ssc_number_t)(kWh_per_kW / 8760. * 100.));
+		assign("kwh_per_kw", (ssc_number_t)kWh_per_kW);
 	}
 
 };

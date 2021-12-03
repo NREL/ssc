@@ -1,4 +1,27 @@
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 #include <algorithm>
+#include <set>
 
 #include "vartab.h"
 #include "cmod_utilityrate5_eqns.h"
@@ -55,12 +78,14 @@ bool try_get_rate_structure(var_table* vt, const std::string& ssc_name, bool pow
             int unit_type = row[3];
             buy = row[4];
             double sell = row[5];
-            if (unit_type == 0)
-                rate_data.table.assign("unit", var_data("kW"));
+            if (unit_type == 0 || ((unit_type == -1 && max > 1e36)))
+                rate_data.table.assign("unit", var_data("kWh"));
             else if (unit_type == 2)
-                rate_data.table.assign("unit", var_data("kW daily"));
-            else
-                throw(std::runtime_error("ElectricityRates_format_as_URDBv7 error. Unit type in " + ssc_name + " not allowed."));
+                rate_data.table.assign("unit", var_data("kWh daily"));
+            else{
+                vt->assign("error", var_data("ElectricityRates_format_as_URDBv7 error. Unit type in " + ssc_name + " not allowed."));
+                return false;
+            }
             rate_data.table.assign("sell", sell);
         }
         else{
@@ -74,10 +99,10 @@ bool try_get_rate_structure(var_table* vt, const std::string& ssc_name, bool pow
     return true;
 }
 
-SSCEXPORT void ElectricityRates_format_as_URDBv7(ssc_data_t data) {
+SSCEXPORT bool ElectricityRates_format_as_URDBv7(ssc_data_t data) {
     auto vt = static_cast<var_table*>(data);
     if (!vt){
-        throw std::runtime_error("ssc_data_t data invalid");
+        return false;
     }
     auto urdb_data = var_table();
     std::string log;
@@ -99,7 +124,7 @@ SSCEXPORT void ElectricityRates_format_as_URDBv7(ssc_data_t data) {
             dgrules = "Buy All Sell All";
             break;
         default:
-            throw(std::runtime_error("ElectricityRates_format_as_URDBv7 error. ur_net_metering_option not recognized."));
+            vt->assign("error", var_data("ElectricityRates_format_as_URDBv7 error. ur_net_metering_option not recognized."));
     }
     urdb_data.assign("dgrules", dgrules);
 
@@ -127,18 +152,81 @@ SSCEXPORT void ElectricityRates_format_as_URDBv7(ssc_data_t data) {
     if (try_get_rate_structure(vt, "ur_ec_tou_mat", false, rate_structure))
         urdb_data.assign("energyratestructure", rate_structure);
 
-    // flat demand
+    // flat demand structure
     sched_matrix.clear();
     if (vt->is_assigned("ur_dc_flat_mat")){
         sched_matrix = vt->lookup("ur_dc_flat_mat")->num;
-        if (sched_matrix.nrows() != 12)
-            throw(std::runtime_error("ElectricityRates_format_as_URDBv7 error. ur_dc_flat_mat must have 12 entries."));
 
-        std::vector<double> dc_flat;
-        dc_flat.resize(12);
-        for (size_t i = 0; i < 12; i++)
-            dc_flat.insert(dc_flat.begin() + sched_matrix[0], sched_matrix[3]);
-        urdb_data.assign("flatdemandstructure", dc_flat);
+        size_t n_rows = sched_matrix.nrows();
+        std::vector<std::vector<double>> flatdemand;
+        for (size_t i = 0; i < n_rows; i++){
+            std::vector<double> row;
+            row.push_back(sched_matrix.at(i, 0));
+            row.push_back(sched_matrix.at(i, 1));
+            row.push_back(sched_matrix.at(i, 2));
+            row.push_back(sched_matrix.at(i, 3));
+            flatdemand.emplace_back(row);
+        }
+
+        std::vector<std::vector<var_data>> flat_demand_structure;
+        std::vector<double> flat_demand_months;
+        flat_demand_months.resize(12);
+
+        // pull out first tier of periods
+        for (size_t i = 0; i < n_rows; i++){
+            double tier = sched_matrix.at(i, 1);
+
+            if (tier != 1)
+                continue;
+
+            double month = sched_matrix.at(i, 0);
+            double max = sched_matrix.at(i, 2);
+            double charge = sched_matrix.at(i, 3);
+            std::vector<var_data> row;
+
+            // see if a period with a matching first tier exists
+            size_t period = -1;
+            for (size_t j = 0; j < flat_demand_structure.size(); j++){
+                double j_max = flat_demand_structure[j][0].table.lookup("max")->num[0];
+                double j_charge = flat_demand_structure[j][0].table.lookup("rate")->num[0];
+                if (abs(max - j_max) < 1e-3 && abs(charge - j_charge) < 1e-3){
+                    period = j;
+                    break;
+                }
+            }
+            // doesn't exist so add it
+            if (period == -1){
+                var_data rate_data;
+                rate_data.type = SSC_TABLE;
+                rate_data.table.assign("max", max);
+                rate_data.table.assign("rate", charge);
+                row.emplace_back(rate_data);
+                flat_demand_structure.emplace_back(row);
+                period = flat_demand_structure.size() - 1;
+            }
+            flat_demand_months[month] = period;
+        }
+        // do other tiers
+        for (size_t i = 0; i < n_rows; i++){
+            double tier = sched_matrix.at(i, 1);
+
+            if (tier == 1)
+                continue;
+
+            double month = sched_matrix.at(i, 0);
+            double max = sched_matrix.at(i, 2);
+            double charge = sched_matrix.at(i, 3);
+
+            // see if a period with a matching first tier exists
+            double period = flat_demand_months[month];
+            var_data rate_data;
+            rate_data.type = SSC_TABLE;
+            rate_data.table.assign("max", max);
+            rate_data.table.assign("rate", charge);
+            flat_demand_structure[period].emplace_back(rate_data);
+        }
+        urdb_data.assign("flatdemandstructure", flat_demand_structure);
+        urdb_data.assign("flatdemandmonths", flat_demand_months);
     }
 
     // tou
@@ -150,5 +238,9 @@ SSCEXPORT void ElectricityRates_format_as_URDBv7(ssc_data_t data) {
     if (try_get_rate_structure(vt, "ur_dc_tou_mat", true, rate_structure))
         urdb_data.assign("demandratestructure", rate_structure);
 
+    if (vt->is_assigned("error"))
+        return false;
+
     vt->assign("urdb_data", urdb_data);
+    return true;
 }

@@ -1,8 +1,30 @@
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 #include "lib_time.h"
 
 /**
-*  \function  single_year_to_lifetime_interpolated 
-*  
+*  \function  single_year_to_lifetime_interpolated
+*
 *  Takes information about the desired lifetime vector, a single-year vector, and returns the single-year vector
 *  as a lifetime length vector, interpolated as needed.  As an example, consider that solar generation is passed in
 *  as a 15-minute, 25 year vector, and the electric load is currently a single-year and hourly.  The function will
@@ -12,6 +34,8 @@
 * \param[in] n_years (1 - 100)
 * \param[in] n_lifetime (length of desired lifetime vector)
 * \param[in] singleyear_vector (the single year vector to scale to lifetime and interpolate)
+* \param[in] scale_factor (scaling factors for years 2 through n, must be length n prior to calling this function)
+* \param[in] interpolation_factor (scaling as needed between single year records and the interpolated records. Given annual data, should be 1 for power, and 1/dt_hour for energy)
 * \param[out] lifetime_from_singleyear_vector (the lifetime, interpolated vector)
 * \param[out] n_rec_single_year (the length of a single year vector, interpolated at the lifetime vector timescale)
 * \param[out] dt_hour (the time step in hours)
@@ -22,13 +46,14 @@ void single_year_to_lifetime_interpolated(
 	size_t n_years,
 	size_t n_rec_lifetime,
 	std::vector<T> singleyear_vector,
+	std::vector<T> scale_factor,
+    double interpolation_factor,
 	std::vector<T> &lifetime_from_singleyear_vector,
 	size_t &n_rec_single_year,
 	double &dt_hour)
 {
 	// Parse lifetime properties
 	n_rec_single_year = n_rec_lifetime;
-
 	if (is_lifetime) {
 		n_rec_single_year = n_rec_lifetime / n_years;
 	}
@@ -36,19 +61,22 @@ void single_year_to_lifetime_interpolated(
 		n_years = 1;
 	}
 	dt_hour = (double)(util::hours_per_year * n_years) / n_rec_lifetime;
-	size_t step_per_hour = (size_t)(1 / dt_hour);
-	lifetime_from_singleyear_vector.reserve(n_rec_lifetime);
 
+	lifetime_from_singleyear_vector.reserve(n_rec_lifetime);
     if (singleyear_vector.empty() ) {
         for (size_t i = 0; i < n_rec_lifetime; i++)
             lifetime_from_singleyear_vector.emplace_back(0);
         return;
     }
 
+	auto step_per_hour = (size_t)(1 / dt_hour);
+	if (step_per_hour == 0)
+	    throw std::runtime_error("single_year_to_lifetime_interpolated error: Calculated step_per_hour was 0.");
+
 	// Parse single year properties
 	double dt_hour_singleyear_input = (double)(util::hours_per_year) / (double)(singleyear_vector.size());
-	size_t step_per_hour_singleyear_input = (size_t)(1 / dt_hour_singleyear_input);
-	T interpolation_factor = (T)step_per_hour / (T)step_per_hour_singleyear_input;
+	auto step_per_hour_singleyear_input = (size_t)(1 / dt_hour_singleyear_input);
+	T step_factor = (T)step_per_hour / (T)step_per_hour_singleyear_input;
 
 	// Possible that there is no single year vector
 	if (singleyear_vector.size() > 1)
@@ -59,7 +87,7 @@ void single_year_to_lifetime_interpolated(
 			size_t sy_idx = 0;
 			for (size_t h = 0; h < util::hours_per_year; h++) {
 				for (size_t sy = 0; sy < step_per_hour_singleyear_input; sy++) {
-					for (size_t i = 0; i < (size_t)interpolation_factor; i++) {
+					for (size_t i = 0; i < (size_t)step_factor; i++) {
 						singleyear_sampled.push_back(singleyear_vector[sy_idx] / interpolation_factor);
 					}
 					sy_idx++;
@@ -72,7 +100,7 @@ void single_year_to_lifetime_interpolated(
 			for (size_t h = 0; h < util::hours_per_year; h++) {
 				for (size_t sy = 0; sy < step_per_hour; sy++) {
 					// eventually add more sophisticated downsampling, ignoring information
-					singleyear_sampled.push_back(singleyear_vector[(size_t)(sy_idx/interpolation_factor)] / interpolation_factor);
+					singleyear_sampled.push_back(singleyear_vector[(size_t)(sy_idx/step_factor)] / interpolation_factor);
 					sy_idx++;
 				}
 			}
@@ -81,18 +109,21 @@ void single_year_to_lifetime_interpolated(
 		// Scale single year interpolated vector to lifetime
 		for (size_t y = 0; y < n_years; y++) {
 			for (size_t i = 0; i < n_rec_single_year; i++) {
-				lifetime_from_singleyear_vector.push_back(singleyear_sampled[i]);
+				lifetime_from_singleyear_vector.push_back(singleyear_sampled[i] * scale_factor[y]);
 			}
 		}
 	}
 	else if (singleyear_vector.size() == 1) {
-	    for (size_t i = 0; i < n_rec_lifetime; i++)
-	        lifetime_from_singleyear_vector.push_back(singleyear_vector[0]);
+        for (size_t y = 0; y < n_years; y++) {
+            for (size_t i = 0; i < n_rec_single_year; i++) {
+	            lifetime_from_singleyear_vector.push_back(singleyear_vector[0] * scale_factor[y]);
+            }
+        }
 	}
 }
 
-template void single_year_to_lifetime_interpolated<double>(bool, size_t, size_t,std::vector<double>, std::vector<double> &, size_t &, double &);
-template void single_year_to_lifetime_interpolated<float>(bool, size_t, size_t, std::vector<float>, std::vector<float> &, size_t &, double &);
+template void single_year_to_lifetime_interpolated<double>(bool, size_t, size_t,std::vector<double>, std::vector<double>, double, std::vector<double> &, size_t &, double &);
+template void single_year_to_lifetime_interpolated<float>(bool, size_t, size_t, std::vector<float>, std::vector<float>, double, std::vector<float> &, size_t &, double &);
 
 
 
@@ -107,7 +138,7 @@ template void single_year_to_lifetime_interpolated<float>(bool, size_t, size_t, 
 * \param[in] steps_per_hour - Number of time steps per hour
 * \param[in] period_values - the value assigned to each period number
 * \param[in] multiplier - a multiplier on the period value
-* \param[out] flat_vector - The 8760*steps per hour values at each hour 
+* \param[out] flat_vector - The 8760*steps per hour values at each hour
 */
 template <class T>
 std::vector<T> flatten_diurnal(util::matrix_t<size_t> weekday_schedule, util::matrix_t<size_t> weekend_schedule, size_t steps_per_hour, std::vector<T> period_values, T multiplier)

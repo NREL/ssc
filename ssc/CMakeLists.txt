@@ -1,24 +1,10 @@
 #####################################################################################################################
 #
-# CMake and System Settings
+# Project Settings
 #
 #####################################################################################################################
 
-set(CMAKE_VERBOSE_MAKEFILE ON)
-
-if(APPLE)
-    set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version")
-	set(CMAKE_MACOSX_RPATH 1)
-endif()
-
-
-#####################################################################################################################
-#
-# Project Settings 
-#
-#####################################################################################################################
-
-Project(ssc)
+# For CMake build option `SAMAPI_EXPORT`, see ../CMakeLists.txt
 
 include_directories(. ../splinter ../shared ../nlopt ../lpsolve ../solarpilot ../tcs ../ssc)
 
@@ -27,6 +13,10 @@ set(SSC_SRC
 		cmod_annualoutput.cpp
 		cmod_battery.cpp
 		cmod_battery.h
+		cmod_battery_eqns.cpp
+		cmod_battery_eqns.h
+        cmod_battery_stateful.cpp
+        cmod_battery_stateful.h
 		cmod_battwatts.cpp
 		cmod_battwatts.h
 		cmod_belpe.cpp
@@ -39,8 +29,13 @@ set(SSC_SRC
 		cmod_csp_common_eqns.h
 		cmod_csp_tower_eqns.cpp
 		cmod_csp_tower_eqns.h
+        cmod_csp_trough_eqns.cpp
+		cmod_csp_trough_eqns.h
 		cmod_dsg_flux_preprocess.cpp
+		cmod_etes_electric_resistance.cpp
 		cmod_equpartflip.cpp
+		cmod_financial_eqns.cpp
+		cmod_financial_eqns.h
 		cmod_fossilgen.cpp
 		cmod_fuelcell.cpp
 		cmod_fuelcell.h
@@ -85,14 +80,14 @@ set(SSC_SRC
 		cmod_pvwattsv1_poa.cpp
 		cmod_pvwattsv5.cpp
 		cmod_pvwattsv7.cpp
+		cmod_pvwattsv8.cpp
 		cmod_saleleaseback.cpp
 		cmod_sco2_air_cooler.cpp
 		cmod_sco2_csp_system.cpp
 		cmod_sco2_csp_ud_pc_tables.cpp
-		cmod_sco2_design_cycle.cpp
-		cmod_sco2_design_point.cpp
 		cmod_singlediode.cpp
 		cmod_singleowner.cpp
+		cmod_communitysolar.cpp
 		cmod_snowmodel.cpp
 		cmod_solarpilot.cpp
 		cmod_swh.cpp
@@ -120,8 +115,9 @@ set(SSC_SRC
 		cmod_utilityrate3.cpp
 		cmod_utilityrate4.cpp
 		cmod_utilityrate5.cpp
+		cmod_utilityrate5.h
 		cmod_wavefile.cpp
-		cmod_utilityrate5_eqns.cpp 
+		cmod_utilityrate5_eqns.cpp
 		cmod_utilityrate5_eqns.h
 		cmod_wfcheck.cpp
 		cmod_wfcsv.cpp
@@ -134,6 +130,8 @@ set(SSC_SRC
 		cmod_windpower.h
 		cmod_windpower_eqns.cpp
 		cmod_windpower_eqns.h
+        cmod_wind_landbosse.cpp
+        cmod_wind_landbosse.h
 		common.cpp
 		common.h
 		common_financial.cpp
@@ -143,7 +141,7 @@ set(SSC_SRC
 		csp_common.cpp
 		csp_common.h
 		ssc_equations.h
-		sscapi.cpp
+        sscapi.cpp
 		sscapi.h
 		tckernel.cpp
 		tckernel.h
@@ -151,40 +149,17 @@ set(SSC_SRC
 		vartab.h
 		)
 
-
-#####################################################################################################################
-#
-# Compile Options per Platform
-#
-#####################################################################################################################
-
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-set(CMAKE_CXX_STANDARD 11)
-
 if(MSVC)
-	add_compile_options(/MP /W4 /w44191 /w44242  /w44266 /w44302 /w44388 /w44826 /w44905 /w44906 /w44928)
-    add_compile_definitions( __DLL__ __64BIT__ __WINDOWS__ _CRT_SECURE_NO_WARNINGS __VISUALC__ )
-    foreach (flag_var CMAKE_C_FLAGS_DEBUG CMAKE_CXX_FLAGS_DEBUG)
-		set(${flag_var} "${${flag_var}} /D_DEBUG" CACHE STRING "compile flags" FORCE)
-	endforeach()
-else(MSVC)
-	if (APPLE)
-		add_compile_options(-arch x86_64 -fno-common)
-		add_definitions(-D__MACOSX__ -DWX_PRECOMP)
-	else ()
-		add_definitions(-D__UNIX__)
-	endif()
-	add_definitions(-D__64BIT__)
-	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-unknown-pragmas -Wno-deprecated -std=c++11" )
-	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-		add_compile_definitions(_DEBUG)
-	else()
-		SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3" )
-	endif()
+	set	(SSC_SRC
+		${SSC_SRC}
+		vbapi.cpp
+		vbapi.h
+		)
 endif(MSVC)
 
+
 #####################################################################################################################
-# 
+#
 # CMake Targets
 #
 #####################################################################################################################
@@ -196,6 +171,25 @@ set_target_properties(ssc
     DEBUG_POSTFIX "d"
 	)
 
+set_disabled_warnings(ssc)
+set_default_compile_options(ssc)
+
+if(MSVC)
+    set_additional_compile_options(ssc "-D__DLL__ -D__VISUALC__")
+else()
+    set(SRC_UNUSED_VARS
+            cmod_mhk_eqns.cpp
+            cmod_csp_tower_eqns.cpp
+            cmod_csp_trough_eqns.cpp
+            cmod_merchantplant.cpp
+            cmod_merchantplant_eqns.cpp
+            cmod_pvsamv1_eqns.cpp
+            cmod_csp_common_eqns.cpp
+            cmod_financial_eqns.cpp
+            cmod_windpower_eqns.cpp
+            cmod_utilityrate5_eqns.cpp)
+    set_source_files_properties(${SRC_UNUSED_VARS} PROPERTIES COMPILE_FLAGS -Wno-unused-variable)
+endif()
 
 # dltest executable for checking ssc library
 if(UNIX AND NOT SAMAPI_EXPORT)
@@ -205,7 +199,7 @@ if(UNIX AND NOT SAMAPI_EXPORT)
 	endif()
 	add_custom_command(
 		TARGET ssc
-		POST_BUILD 
+		POST_BUILD
 		COMMAND dltest $<TARGET_FILE:ssc>)
 endif()
 
@@ -216,12 +210,13 @@ if(UNIX)
 		set_property(TARGET ssc PROPERTY PREFIX "lib")
 		set(CMAKE_SHARED_LIBRARY_SUFFIX ".so")
 		if (APPLE)
-			add_custom_command(
+            SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmacosx-version-min=10.9")
+            add_custom_command(
 				TARGET ssc
 				POST_BUILD
-				COMMAND install_name_tool -id @rpath/libssc.so $<TARGET_FILE:ssc>
+				COMMAND install_name_tool -id @rpath/libssc$<$<CONFIG:Debug>:d>.so $<TARGET_FILE:ssc>
 			)
-		endif()
+        endif()
 	endif()
 endif()
 
@@ -233,7 +228,7 @@ endif()
 #####################################################################################################################
 
 set( DEPENDENCIES
-	solarpilot
+	solarpilot_core
 	tcs
 	nlopt
 	shared
@@ -245,7 +240,7 @@ foreach( name ${DEPENDENCIES} )
 endforeach()
 
 if (UNIX)
-	target_link_libraries(ssc -lm -ldl -lstdc++)
+	target_link_libraries(ssc -lpthread -lm -ldl -lstdc++)
 endif()
 
 
@@ -258,17 +253,22 @@ endif()
 if (MSVC)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:WINDOWS")
 	set(SSC_LIB $<TARGET_FILE_DIR:ssc>/$<TARGET_FILE_BASE_NAME:ssc>.lib)
+	set(SSC_H ${CMAKE_CURRENT_LIST_DIR}/sscapi.h)
 
 	set(TESTDIR ${CMAKE_CURRENT_BINARY_DIR}/../test/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>)
 
-	add_custom_command(
-		TARGET ssc
-		POST_BUILD
-		COMMAND ${CMAKE_COMMAND}
-		ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} $ENV{SAMNTDIR}/deploy/x64
-		COMMAND ${CMAKE_COMMAND}
-		ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${TESTDIR}
-		)
+	if(DEFINED ENV{SAMNTDIR})
+		add_custom_command(
+			TARGET ssc
+			POST_BUILD
+			COMMAND ${CMAKE_COMMAND}
+			ARGS -E make_directory $ENV{SAMNTDIR}/deploy/x64
+			COMMAND ${CMAKE_COMMAND}
+			ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${SSC_H} $ENV{SAMNTDIR}/deploy/x64
+			COMMAND ${CMAKE_COMMAND}
+			ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${TESTDIR}
+			)
+	endif()
 
 	set (SDKTOOLDIR ${CMAKE_CURRENT_BINARY_DIR}/../sdktool/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>)
 	if (EXISTS ${SDKTOOLDIR})
@@ -290,7 +290,7 @@ if (MSVC)
 			)
 	endif()
 
-	if (NOT skip_api)
+	if (SAMAPI_EXPORT)
 		if (${CMAKE_PROJECT_NAME} STREQUAL system_advisor_model)
 			set(APIGENDIR ${CMAKE_CURRENT_BINARY_DIR}/../../sam/api/api_autogen/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>)
 			add_custom_command(
@@ -300,13 +300,15 @@ if (MSVC)
 				ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${APIGENDIR}
 				)
 		else()
-			set(APIGENDIR $ENV{SAMNTDIR}/build_msvc/api/api_autogen/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>)
-			add_custom_command(
-				TARGET ssc
-				POST_BUILD
-				COMMAND ${CMAKE_COMMAND}
-				ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${APIGENDIR}
-				)
+			set(APIGENDIR $ENV{SAMNTDIR}/build/api/api_autogen/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>)
+            if (EXISTS ${APIGENDIR})
+			    add_custom_command(
+				    TARGET ssc
+				    POST_BUILD
+				    COMMAND ${CMAKE_COMMAND}
+				    ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${APIGENDIR}
+				    )
+               endif()
 		endif()
 	endif()
 

@@ -1,3 +1,25 @@
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 #include "lib_battery_dispatch.h"
 #include "lib_battery_powerflow.h"
 #include "lib_power_electronics.h"
@@ -44,15 +66,15 @@ ACBatteryController::ACBatteryController(dispatch_t * dispatch, battery_metrics_
 
 void ACBatteryController::run(size_t year, size_t hour_of_year, size_t step_of_hour, size_t)
 {
-	if (m_batteryPower->powerPV < 0)
+	if (m_batteryPower->powerSystem < 0)
 	{
-		m_batteryPower->powerPVInverterDraw = m_batteryPower->powerPV;
-		m_batteryPower->powerPV = 0;
+		m_batteryPower->powerPVInverterDraw = m_batteryPower->powerSystem;
+		m_batteryPower->powerSystem = 0;
 	}
 
 	// For AC connected system, there is no power going through shared inverter
-	m_batteryPower->powerPVThroughSharedInverter = 0;
-	m_batteryPower->powerPVClipped = 0;
+	m_batteryPower->powerSystemThroughSharedInverter = 0;
+	m_batteryPower->powerSystemClipped = 0;
 
 	// Dispatch the battery
 	m_dispatch->dispatch(year, hour_of_year, step_of_hour);
@@ -79,12 +101,12 @@ void DCBatteryController::setSharedInverter(SharedInverter * sharedInverter)
 
 void DCBatteryController::run(size_t year, size_t hour_of_year, size_t step_of_hour, size_t)
 {
-	if (m_batteryPower->powerPV < 0){
-		m_batteryPower->powerPV = 0;
+	if (m_batteryPower->powerSystem < 0){
+		m_batteryPower->powerSystem = 0;
 	}
 
 	// For DC connected system, there is potentially full PV power going through shared inverter
-	m_batteryPower->powerPVThroughSharedInverter = m_batteryPower->powerPV;
+	m_batteryPower->powerSystemThroughSharedInverter = m_batteryPower->powerSystem;
 
 	// Dispatch the battery
 	m_dispatch->dispatch(year, hour_of_year, step_of_hour);

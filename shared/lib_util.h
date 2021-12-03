@@ -120,6 +120,7 @@ namespace util
 	
 	size_t hours_in_month(size_t month); /* returns the number of hours in a month, as used in month_of() */
 	size_t hour_of_day(size_t hour_of_year); /* return the hour of day (0 - 23) given the hour of year (0 - 8759) */
+	size_t hour_of_year(size_t month, size_t day, size_t hour); /* returns the hour of the year (0-8759) given the current month, date, and time */
 	double percent_of_year(int month, int hours); /* returns the fraction of a year, based on months and hours */
 	int month_of(double time); /* hour: 0 = jan 1st 12am-1am, returns 1-12 */
 	int day_of(double time); /* hour: 0 = jan 1st Monday 12am-1am, returns 0-6 */
@@ -812,6 +813,7 @@ namespace util
 	double bilinear( double rowval, double colval, const matrix_t<double> &mat );
 	double interpolate(double x1, double y1, double x2, double y2, double xValueToGetYValueFor);
 	double linterp_col( const matrix_t<double> &mat, size_t ixcol, double xval, size_t iycol );
+    size_t nearest_col_index(const matrix_t<double>& mat, size_t col, double val);
 	bool translate_schedule(int tod[8760], const matrix_t<double> &wkday, const matrix_t<double> &wkend, int min_val, int max_val);
 
 	std::vector<double> frequency_table(double* values, size_t n_vals, double bin_width);

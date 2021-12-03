@@ -1,79 +1,58 @@
-/*******************************************************************************************************
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (�Alliance�) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as �System Advisor Model� or �SAM�. Except
-*  to comply with the foregoing, the terms �System Advisor Model�, �SAM�, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************************************/
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #include <stdio.h>
 #include <cstring>
 #include <iostream>
 #include <vector>
 
+#include "lib_util.h"
 #include "core.h"
 #include "sscapi.h"
+
+#include "../rapidjson/document.h"
+#include "../rapidjson/error/en.h" // parser errors returned as char strings
+#include "../rapidjson/stringbuffer.h"
+#include "../rapidjson/writer.h"
 
 #pragma warning (disable : 4706 )
 
 SSCEXPORT int ssc_version()
 {
-	return 237;
+	return 267;
 }
- 
+
 SSCEXPORT const char *ssc_build_info()
 {
 	static const char *_bi = __PLATFORM__ " " __ARCH__ " " __COMPILER__ " " __DATE__ " " __TIME__;
 	return _bi;
 }
 
-/* to add new computation modules, 
+/* to add new computation modules,
 	specify an extern module entry,
 	and add it to 'module_table'
 */
 
-extern module_entry_info 
+extern module_entry_info
 /* extern declarations of modules for linking */
 	cm_entry_singlediode,
 	cm_entry_singlediodeparams,
@@ -87,6 +66,7 @@ extern module_entry_info
 	cm_entry_pvwattsv1_poa,
 	cm_entry_pvwattsv5,
 	cm_entry_pvwattsv7,
+    cm_entry_pvwattsv8,
 	cm_entry_pvwattsv5_1ts,
 	cm_entry_pv6parmod,
 	cm_entry_pvsandiainv,
@@ -105,8 +85,9 @@ extern module_entry_info
 	cm_entry_levpartflip,
 	cm_entry_equpartflip,
 	cm_entry_saleleaseback,
-	cm_entry_singleowner,
-	cm_entry_merchantplant,
+    cm_entry_singleowner,
+    cm_entry_communitysolar,
+    cm_entry_merchantplant,
 	cm_entry_host_developer,
 	cm_entry_swh,
 	cm_entry_geothermal,
@@ -124,28 +105,27 @@ extern module_entry_info
 	cm_entry_iph_to_lcoefcr,
 	cm_entry_tcsgeneric_solar,
 	cm_entry_tcsmolten_salt,
-	cm_entry_tcsdirect_steam,
 	cm_entry_tcslinear_fresnel,
 	cm_entry_linear_fresnel_dsg_iph,
-	cm_entry_tcsdish,
-	cm_entry_tcsiscc,
 	cm_entry_tcsmslf,
+    cm_entry_etes_electric_resistance,
 	cm_entry_hcpv,
-	cm_entry_wind_file_reader,
 	cm_entry_wfcheck,
+	cm_entry_wind_file_reader,
 	cm_entry_windbos,
 	cm_entry_wind_obos,
 	cm_entry_windcsm,
+	cm_entry_wind_landbosse,
 	cm_entry_biomass,
 	cm_entry_solarpilot,
 	cm_entry_belpe,
 	cm_entry_dsg_flux_preprocess,
 	cm_entry_layoutarea,
-	cm_entry_sco2_design_point,
-	cm_entry_sco2_design_cycle,
 	cm_entry_sco2_csp_system,
 	cm_entry_sco2_csp_ud_pc_tables,
 	cm_entry_sco2_air_cooler,
+    cm_entry_sco2_comp_curves,
+    cm_entry_test_ud_power_cycle,
 	cm_entry_user_htf_comparison,
 	cm_entry_ui_tes_calcs,
     cm_entry_ui_udpc_checks,
@@ -164,7 +144,9 @@ extern module_entry_info
 	cm_entry_mhk_wave,
 	cm_entry_mhk_costs,
 	cm_entry_wave_file_reader,
-	cm_entry_grid;
+	cm_entry_grid,
+	cm_entry_battery_stateful
+	;
 
 /* official module table */
 static module_entry_info *module_table[] = {
@@ -181,6 +163,7 @@ static module_entry_info *module_table[] = {
 	&cm_entry_pvwattsv1_poa,
 	&cm_entry_pvwattsv5,
 	&cm_entry_pvwattsv7,
+    &cm_entry_pvwattsv8,
 	&cm_entry_pvwattsv5_1ts,
 	&cm_entry_pvsandiainv,
 	&cm_entry_wfreader,
@@ -198,8 +181,9 @@ static module_entry_info *module_table[] = {
 	&cm_entry_levpartflip,
 	&cm_entry_equpartflip,
 	&cm_entry_saleleaseback,
-	&cm_entry_singleowner,
-	&cm_entry_merchantplant,
+    &cm_entry_singleowner,
+    &cm_entry_communitysolar,
+    &cm_entry_merchantplant,
 	&cm_entry_host_developer,
 	&cm_entry_swh,
 	&cm_entry_geothermal,
@@ -217,28 +201,27 @@ static module_entry_info *module_table[] = {
 	&cm_entry_iph_to_lcoefcr,
 	&cm_entry_tcsgeneric_solar,
 	&cm_entry_tcsmolten_salt,
-	&cm_entry_tcsdirect_steam,
 	&cm_entry_tcslinear_fresnel,
 	&cm_entry_linear_fresnel_dsg_iph,
-	&cm_entry_tcsdish,
-	&cm_entry_tcsiscc,
 	&cm_entry_tcsmslf,
+    &cm_entry_etes_electric_resistance,
 	&cm_entry_hcpv,
 	&cm_entry_wind_file_reader,
 	&cm_entry_wfcheck,
 	&cm_entry_windbos,
 	&cm_entry_wind_obos,
 	&cm_entry_windcsm,
+	&cm_entry_wind_landbosse,
 	&cm_entry_biomass,
 	&cm_entry_solarpilot,
 	&cm_entry_belpe,
 	&cm_entry_dsg_flux_preprocess,
 	&cm_entry_layoutarea,
-	&cm_entry_sco2_design_point,
-	&cm_entry_sco2_design_cycle,
 	&cm_entry_sco2_csp_system,
 	&cm_entry_sco2_csp_ud_pc_tables,
 	&cm_entry_sco2_air_cooler,
+    &cm_entry_sco2_comp_curves,
+    &cm_entry_test_ud_power_cycle,
 	&cm_entry_user_htf_comparison,
 	&cm_entry_ui_tes_calcs,
     &cm_entry_ui_udpc_checks,
@@ -258,6 +241,7 @@ static module_entry_info *module_table[] = {
 	&cm_entry_mhk_costs,
 	&cm_entry_wave_file_reader,
 	&cm_entry_grid,
+	&cm_entry_battery_stateful,
 	0 };
 
 SSCEXPORT ssc_module_t ssc_module_create( const char *name )
@@ -621,7 +605,7 @@ SSCEXPORT const char *ssc_data_get_string( ssc_data_t p_data, const char *name )
 	if (!vt) return 0;
 	var_data *dat = vt->lookup(name);
 	if (!dat || dat->type != SSC_STRING) return 0;
-	return dat->str.c_str();	
+	return dat->str.c_str();
 }
 
 SSCEXPORT ssc_bool_t ssc_data_get_number( ssc_data_t p_data, const char *name, ssc_number_t *value )
@@ -632,7 +616,7 @@ SSCEXPORT ssc_bool_t ssc_data_get_number( ssc_data_t p_data, const char *name, s
 	var_data *dat = vt->lookup(name);
 	if (!dat || dat->type != SSC_NUMBER) return 0;
 	*value = dat->num;
-	return 1;	
+	return 1;
 }
 
 SSCEXPORT ssc_number_t *ssc_data_get_array(ssc_data_t p_data,  const char *name, int *length )
@@ -691,6 +675,316 @@ SSCEXPORT ssc_var_t ssc_data_get_data_matrix(ssc_data_t p_data, const char *name
     }
     return dat;
 }
+/*
+void json_to_ssc_var(const Json::Value& json_val, ssc_var_t ssc_val){
+    if (!ssc_val)
+        return;
+    auto vd = static_cast<var_data*>(ssc_val);
+    vd->clear();
+
+    using namespace Json;
+    Json::Value::Members members;
+    bool is_arr, is_mat;
+    std::vector<ssc_number_t> vec;
+    std::vector<var_data>* vd_arr;
+    var_table* vd_tab;
+
+    auto is_numerical = [](const Json::Value& json_val){
+        bool is_num = true;
+        for (const auto & value : json_val){
+            if (!value.isDouble() && !value.isBool()){
+                is_num = false;
+                break;
+            }
+        }
+        return is_num;
+    };
+
+    switch (json_val.type()){
+        default:
+        case ValueType::nullValue:
+            return;
+        case ValueType::intValue:
+        case ValueType::uintValue:
+        case ValueType::booleanValue:
+        case ValueType::realValue:
+            vd->type = SSC_NUMBER;
+            vd->num[0] = json_val.asDouble();
+            return;
+        case ValueType::stringValue:
+            vd->type = SSC_STRING;
+            vd->str = json_val.asString();
+            return;
+        case ValueType::arrayValue:
+            // determine if SSC_ARRAY
+            is_arr = is_numerical(json_val);
+            if (is_arr){
+                vd->type = SSC_ARRAY;
+				if (json_val.empty())
+					return;
+                for (const auto & row : json_val){
+                    vec.push_back(row.asDouble());
+                }
+                vd->num.assign(&vec[0], vec.size());
+                return;
+            }
+            // SSC_MATRIX
+            is_mat = true;
+            for (const auto & value : json_val){
+                if (value.type() != ValueType::arrayValue || !is_numerical(value)){
+                    is_mat = false;
+                    break;
+                }
+            }
+            if (is_mat){
+                vd->type = SSC_MATRIX;
+				if (json_val.empty())
+					return;
+                for (const auto & row : json_val){
+                    for (const auto & value : row){
+                        vec.push_back(value.asDouble());
+                    }
+                }
+                vd->num.assign(&vec[0], json_val.size(), json_val[0].size());
+                return;
+            }
+            // SSC_DATARR
+            vd_arr = &vd->vec;
+            for (const auto & value : json_val){
+                vd_arr->emplace_back(var_data());
+                auto entry = &vd_arr->back();
+                json_to_ssc_var(value, entry);
+            }
+            vd->type = SSC_DATARR;
+            return;
+        case ValueType::objectValue:
+            vd_tab = &vd->table;
+            members = json_val.getMemberNames();
+            for (auto const &name : members) {
+                auto entry = vd_tab->assign(name, var_data());
+                json_to_ssc_var(json_val[name], entry);
+            }
+            vd->type = SSC_TABLE;
+    }
+}
+
+SSCEXPORT ssc_data_t json_to_ssc_data(const char* json_str){
+    auto vt = new var_table;
+    const std::string rawJson(json_str);
+    const auto rawJsonLength = static_cast<int>(rawJson.length());
+    JSONCPP_STRING err;
+    Json::Value root;
+    Json::CharReaderBuilder builder;
+    const std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
+    if (!reader->parse(rawJson.c_str(), rawJson.c_str() + rawJsonLength, &root,
+                       &err)) {
+        vt->assign("error", err);
+        return dynamic_cast<ssc_data_t>(vt);
+    }
+
+    Json::Value::Members members = root.getMemberNames();
+    for (auto const &name : members) {
+        var_data ssc_val;
+        json_to_ssc_var(root[name], &ssc_val);
+        vt->assign(name, ssc_val);
+    }
+    return vt;
+}
+
+*/
+
+
+
+//////////////  RapidJSON testing
+
+void json_to_ssc_var(const rapidjson::Value& json_val, ssc_var_t ssc_val) {
+    if (!ssc_val)
+        return;
+    auto vd = static_cast<var_data*>(ssc_val);
+    vd->clear();
+    //using namespace Json;
+    //Json::Value::Members members;
+    bool is_arr, is_mat;
+    std::vector<ssc_number_t> vec;
+    std::vector<var_data>* vd_arr;
+    var_table* vd_tab;
+    
+    auto is_numerical = [](const rapidjson::Value& json_val) {
+        bool is_num = true;
+        for (rapidjson::SizeType i = 0; i < json_val.Size(); i++) {
+            if (!json_val[i].IsNumber() && !json_val[i].IsBool()) {
+                is_num = false;
+                break;
+            }
+        }
+        return is_num;
+    };
+    
+    switch (json_val.GetType()) {
+    default:
+    case rapidjson::Type::kNullType:
+        return;
+    case rapidjson::Type::kNumberType:
+    case rapidjson::Type::kFalseType:
+    case rapidjson::Type::kTrueType:
+        vd->type = SSC_NUMBER;
+        vd->num[0] = json_val.GetDouble();
+        return;
+    case rapidjson::Type::kStringType:
+        vd->type = SSC_STRING;
+        vd->str = json_val.GetString();
+        return;
+    case rapidjson::Type::kArrayType:
+        // determine if SSC_ARRAY
+        is_arr = is_numerical(json_val);
+        if (is_arr) {
+            vd->type = SSC_ARRAY;
+            if (json_val.Size() == 0) {
+                vec.push_back(0.0);
+            }
+            else {
+                for (rapidjson::SizeType i = 0; i < json_val.Size(); i++) {
+                    vec.push_back(json_val[i].GetDouble());
+                }
+            }
+            vd->num.assign(&vec[0], vec.size());
+            return;
+        }
+        // SSC_MATRIX
+        is_mat = true;
+        for (rapidjson::SizeType i = 0; i < json_val.Size(); i++) {
+            if (json_val[i].GetType() != rapidjson::Type::kArrayType || !is_numerical(json_val[i])) {
+                is_mat = false;
+                break;
+            }
+        }
+        if (is_mat) {
+            vd->type = SSC_MATRIX;
+            if (json_val.Size() == 0) {
+                return;
+            }
+            for (rapidjson::SizeType irow = 0; irow < json_val.Size(); irow++) {
+                for (rapidjson::SizeType icol = 0; icol < json_val[irow].Size(); icol++) {
+                    vec.push_back(json_val[irow][icol].GetDouble());
+                }
+            }
+            vd->num.assign(&vec[0], json_val.Size(), json_val[0].Size());
+            return;
+        }
+        // SSC_DATARR
+        vd_arr = &vd->vec;
+        for (rapidjson::SizeType i = 0; i < json_val.Size(); i++) {
+            vd_arr->emplace_back(var_data());
+            auto entry = &vd_arr->back();
+            json_to_ssc_var(json_val[i], entry);
+        }
+        vd->type = SSC_DATARR;
+        return;
+    case rapidjson::Type::kObjectType:
+        vd_tab = &vd->table;
+        for (rapidjson::Value::ConstMemberIterator itr = json_val.MemberBegin(); itr != json_val.MemberEnd(); ++itr) {
+            auto entry = vd_tab->assign(itr->name.GetString(), var_data());
+            json_to_ssc_var(itr->value, entry);
+        }
+        vd->type = SSC_TABLE;
+    }
+}
+
+SSCEXPORT ssc_data_t json_to_ssc_data(const char* json_str) {
+    auto vt = new var_table;
+    rapidjson::Document document;
+    document.Parse(json_str);
+    if (document.HasParseError()) {
+        std::string s = rapidjson::GetParseError_En(document.GetParseError());
+        vt->assign("error", s);
+        return dynamic_cast<ssc_data_t>(vt);
+    }
+//    static const char* kTypeNames[] = { "Null", "False", "True", "Object", "Array", "String", "Number" };
+    for (rapidjson::Value::ConstMemberIterator itr = document.MemberBegin(); itr != document.MemberEnd(); ++itr) {
+        //printf("Type of member %s is %s\n", itr->name.GetString(), kTypeNames[itr->value.GetType()]);
+        var_data ssc_val;
+        json_to_ssc_var(itr->value, &ssc_val);
+        vt->assign(itr->name.GetString(), ssc_val);
+    }
+    return vt;
+}
+
+
+
+
+rapidjson::Value ssc_var_to_json(var_data* vd, rapidjson::Document& d) {
+    rapidjson::Value json_val;
+    switch (vd->type) {
+    default:
+    case SSC_INVALID:
+        return json_val;
+    case SSC_NUMBER:
+        json_val = vd->num[0];
+        return json_val;
+    case SSC_STRING:
+        json_val.SetString(vd->str.c_str(),d.GetAllocator());
+        return json_val;
+    case SSC_ARRAY:
+        json_val.SetArray();
+        for (size_t i = 0; i < vd->num.ncols(); i++) {
+            json_val.PushBack(rapidjson::Value(vd->num[i]), d.GetAllocator());
+        }
+        return json_val;
+    case SSC_MATRIX:
+        json_val.SetArray();
+        for (size_t i = 0; i < vd->num.nrows(); i++) {
+            json_val.PushBack(rapidjson::Value(rapidjson::kArrayType), d.GetAllocator());
+            for (size_t j = 0; j < vd->num.ncols(); j++) {
+                json_val[(rapidjson::SizeType)i].PushBack(vd->num.at(i, j),d.GetAllocator());
+            }
+        }
+        return json_val;
+    case SSC_DATARR:
+        json_val.SetArray();
+        for (auto& dat : vd->vec) {
+            json_val.PushBack(ssc_var_to_json(&dat,d),d.GetAllocator());
+        }
+        return json_val;
+    case SSC_DATMAT:
+        json_val.SetArray();
+        for (auto& row : vd->mat) {
+            auto json_row =rapidjson::Value(rapidjson::kArrayType);
+            for (auto& dat : row) {
+                json_row.PushBack(ssc_var_to_json(&dat,d), d.GetAllocator());
+            }
+            json_val.PushBack(json_row, d.GetAllocator());
+        }
+        return json_val;
+    case SSC_TABLE:
+        json_val.SetObject();
+        for (auto const& it : *vd->table.get_hash()) {
+            json_val.AddMember(rapidjson::Value(it.first.c_str(), d.GetAllocator()).Move(), ssc_var_to_json(it.second, d).Move(), d.GetAllocator());
+        }
+        return json_val;
+    }
+}
+
+SSCEXPORT const char* ssc_data_to_json(ssc_data_t p_data) {
+    auto vt = static_cast<var_table*>(p_data);
+    if (!vt) return nullptr;
+
+    rapidjson::Document root;
+    root.SetObject();
+    for (auto const& it : *vt->get_hash()) {
+        root.AddMember(rapidjson::Value(it.first.c_str(), it.first.size(), root.GetAllocator()).Move(), ssc_var_to_json(it.second, root).Move(), root.GetAllocator());
+    }
+    rapidjson::StringBuffer buffer;
+    buffer.Clear();
+    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+    root.Accept(writer);
+
+    return strdup(buffer.GetString());
+}
+ 
+
+
+
+
 
 SSCEXPORT ssc_entry_t ssc_module_entry( int index )
 {
@@ -803,7 +1097,7 @@ public:
 */
 
 static ssc_bool_t default_internal_handler_no_print( ssc_module_t /*p_mod*/, ssc_handler_t /*p_handler*/,
-	int /*action_type*/, float /*f0*/, float /*f1*/, 
+	int /*action_type*/, float /*f0*/, float /*f1*/,
 	const char * /*s0*/, const char * /*s1*/,
 	void * /*p_data*/ )
 {
@@ -813,7 +1107,7 @@ static ssc_bool_t default_internal_handler_no_print( ssc_module_t /*p_mod*/, ssc
 }
 
 static ssc_bool_t default_internal_handler( ssc_module_t /*p_mod*/, ssc_handler_t /*p_handler*/,
-	int action_type, float f0, float f1, 
+	int action_type, float f0, float f1,
 	const char *s0, const char * /*s1*/,
 	void * /*p_data*/ )
 {
@@ -844,7 +1138,7 @@ SSCEXPORT ssc_bool_t ssc_module_exec_simple( const char *name, ssc_data_t p_data
 {
 	ssc_module_t p_mod = ssc_module_create( name );
 	if ( !p_mod ) return 0;
-	
+
 	ssc_bool_t result = ssc_module_exec( p_mod, p_data );
 
 	ssc_module_free( p_mod );
@@ -916,24 +1210,24 @@ public:
 	virtual void on_log( const std::string &text, int type, float time )
 	{
 		if (!m_hfunc) return;
-		(*m_hfunc)( static_cast<ssc_module_t>( module() ), 
-					static_cast<ssc_handler_t>( static_cast<handler_interface*>(this) ), 
+		(*m_hfunc)( static_cast<ssc_module_t>( module() ),
+					static_cast<ssc_handler_t>( static_cast<handler_interface*>(this) ),
 					SSC_LOG, (float)type, time, text.c_str(), 0, m_hdata );
 	}
 
 	virtual bool on_update( const std::string &text, float percent, float time )
 	{
 		if (!m_hfunc) return true;
-		
+
 		return (*m_hfunc)( static_cast<ssc_module_t>( module() ),
-					static_cast<ssc_handler_t>( static_cast<handler_interface*>(this) ), 
+					static_cast<ssc_handler_t>( static_cast<handler_interface*>(this) ),
 					SSC_UPDATE, percent, time, text.c_str(), 0, m_hdata ) ? 1 : 0;
 	}
 };
 
-SSCEXPORT ssc_bool_t ssc_module_exec_with_handler( 
-	ssc_module_t p_mod, 
-	ssc_data_t p_data, 
+SSCEXPORT ssc_bool_t ssc_module_exec_with_handler(
+	ssc_module_t p_mod,
+	ssc_data_t p_data,
 	ssc_bool_t (*pf_handler)( ssc_module_t, ssc_handler_t, int, float, float, const char*, const char *, void * ),
 	void *pf_user_data )
 {
@@ -946,7 +1240,7 @@ SSCEXPORT ssc_bool_t ssc_module_exec_with_handler(
 		cm->log("invalid data object provided", SSC_ERROR);
 		return 0;
 	}
-	
+
 	default_exec_handler h( cm, pf_handler, pf_user_data );
 	return cm->compute( &h, vt ) ? 1 : 0;
 }
@@ -976,4 +1270,48 @@ SSCEXPORT void __ssc_segfault()
 {
 	std::string *pstr = 0;
 	std::string mystr = *pstr;
+}
+
+static std::string* s_python_path;
+
+SSCEXPORT int set_python_path(const char* abs_path) {
+    if (util::dir_exists(abs_path)){
+        delete s_python_path;
+        s_python_path = new std::string(abs_path);
+        return 1;
+    }
+    else
+        return 0;
+}
+
+SSCEXPORT const char *get_python_path() {
+    if (s_python_path)
+        return s_python_path->c_str();
+    else
+        return nullptr;
+}
+
+SSCEXPORT int ssc_stateful_module_setup(ssc_module_t p_mod, ssc_data_t p_data) {
+    auto cm = static_cast<compute_module*>(p_mod);
+    if (!cm)
+        return 0;
+
+    auto vt = static_cast<var_table*>(p_data);
+    if (!vt)
+        cm->log("p_data invalid.");
+
+    std::string lname = cm->get_name();
+    int i = 0;
+    while ( module_table[i] != nullptr && module_table[i]->f_create != nullptr ) {
+        if ( lname == util::lower_case( module_table[i]->name ) ) {
+            if (module_table[i]->f_setup_stateful)
+                return (*(module_table[i]->f_setup_stateful))(cm, vt);
+            else {
+                cm->log("This module is not stateful. `setup` does not need to be called.");
+                return 0;
+            }
+        }
+        i++;
+    }
+    return 0;
 }

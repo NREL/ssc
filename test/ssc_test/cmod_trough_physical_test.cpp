@@ -1,110 +1,57 @@
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 #include <gtest/gtest.h>
+#include "trough_physical_defaults.h"
+#include "csp_common_test.h"
+#include "vs_google_test_explorer_namespace.h"
 
-#include "cmod_trough_physical_test.h"
-#include "../tcs_test/trough_physical_cases.h"
-#include "../input_cases/weather_inputs.h"
+namespace csp_trough {}
+using namespace csp_trough;
 
-/// Test trough_physical with all defaults and no-financial model
-TEST_F(CMTroughPhysical, DefaultNoFinancialModel_cmod_trough_physical){
-	
-	int test_errors = run_module(data, "trough_physical");
+//========Tests===================================================================================
+NAMESPACE_TEST(csp_trough, PowerTroughCmod, Default_NoFinancial)
+{
+    ssc_data_t defaults = trough_physical_defaults();
+    CmodUnderTest power_trough = CmodUnderTest("trough_physical", defaults);
+    int errors = power_trough.RunModule();
+    EXPECT_FALSE(errors);
+    if (!errors) {
+        EXPECT_NEAR_FRAC(power_trough.GetOutput("annual_energy"), 369272759, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_trough.GetOutput("annual_thermal_consumption"), 638999, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_trough.GetOutput("annual_tes_freeze_protection"), 600961, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_trough.GetOutput("annual_field_freeze_protection"), 38042, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_trough.GetOutput("capacity_factor"), 42.20, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_trough.GetOutput("annual_W_cycle_gross"), 420379150, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_trough.GetOutput("kwh_per_kw"), 3696, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_trough.GetOutput("conversion_factor"), 87.84, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_trough.GetOutput("annual_total_water_use"), 80708, kErrorToleranceHi);
+    }
 
-	EXPECT_FALSE(test_errors);
-	if (!test_errors)
-	{
-        //ssc_number_t annual_gross_energy;
-        //ssc_data_get_number(data, "annual_gross_energy", &annual_gross_energy);
-        //EXPECT_NEAR(annual_gross_energy, 3.671e8, 3.671e8 * m_error_tolerance_lo) << "Annual Gross Thermal Energy Production";
-
-        ssc_number_t annual_energy;
-        ssc_data_get_number(data, "annual_energy", &annual_energy);
-        EXPECT_NEAR(annual_energy, 372982608., 372982608. * m_error_tolerance_hi) << "Annual Net Thermal Energy Production";
-
-        ssc_number_t annual_thermal_consumption;
-        ssc_data_get_number(data, "annual_thermal_consumption", &annual_thermal_consumption);
-        EXPECT_NEAR(annual_thermal_consumption, 404528.651833, 404528.651833 * m_error_tolerance_hi) << "Annual Thermal Freeze Protection";
-
-        ssc_number_t annual_tes_freeze_protection;
-        ssc_data_get_number(data, "annual_tes_freeze_protection", &annual_tes_freeze_protection);
-        EXPECT_NEAR(annual_tes_freeze_protection, 366491.965635, 366491.965635 * m_error_tolerance_hi) << "Annual TES Freeze Protection";
-
-        ssc_number_t annual_field_freeze_protection;
-        ssc_data_get_number(data, "annual_field_freeze_protection", &annual_field_freeze_protection);
-        EXPECT_NEAR(annual_field_freeze_protection, 38036.686198, 38036.686198 * m_error_tolerance_hi) << "Annual Field Freeze Protection";
-
-        ssc_number_t capacity_factor;
-        ssc_data_get_number(data, "capacity_factor", &capacity_factor);
-        EXPECT_NEAR(capacity_factor, 42.62, 42.62 * m_error_tolerance_hi) << "Capacity factor";
-
-        ssc_number_t annual_W_cycle_gross;
-        ssc_data_get_number(data, "annual_W_cycle_gross", &annual_W_cycle_gross);
-        EXPECT_NEAR(annual_W_cycle_gross, 424232748.142327, 424232748.142327 * m_error_tolerance_hi) << "Power cycle gross electrical output";
-
-        ssc_number_t kwh_per_kw;
-        ssc_data_get_number(data, "kwh_per_kw", &kwh_per_kw);
-        EXPECT_NEAR(kwh_per_kw, 3733.6, 3733.6 * m_error_tolerance_hi) << "First year kWh/kW";
-
-        ssc_number_t conversion_factor;
-        ssc_data_get_number(data, "conversion_factor", &conversion_factor);
-        EXPECT_NEAR(conversion_factor, 87.92, 87.92 * m_error_tolerance_hi) << "Gross to Net Conversion Factor";
-
-        ssc_number_t annual_total_water_use;
-        ssc_data_get_number(data, "annual_total_water_use", &annual_total_water_use);
-        EXPECT_NEAR(annual_total_water_use, 81059.873491, 81059.873491 * m_error_tolerance_hi) << "Annual Total Water Use";
-
-		//ssc_number_t VARIABLE;
-		//ssc_data_get_number(data, "VARIABLE", &VARIABLE);
-		//EXPECT_NEAR(VARIABLE, EXP_VAL, EXP_VAL * m_error_tolerance_lo) << "DESCRIPTION";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
-	}
+    //ssc_data_t defaults = singleowner_defaults();
+    //CmodUnderTest singleowner = CmodUnderTest("singleowner", defaults);
+    //int errors = singleowner.RunModule();
+    //EXPECT_FALSE(errors);
+    //if (!errors) {
+    //    EXPECT_NEAR_FRAC(singleowner.GetOutput(""), , kErrorToleranceLo);
+    //}
 }
-
-/// Test trough_physical with all defaults and the financial model in the LCOH Calculator
-//TEST_F(CMTroughPhysical, DefaultLCOHFinancialModel) {
-//
-//    ssc_data_t data = ssc_data_create();
-//    int test_errors = trough_physical_tucson(data);
-//
-//    EXPECT_FALSE(test_errors);
-//    if (!test_errors)
-//    {
-//        ssc_number_t annual_gross_energy;
-//        ssc_data_get_number(data, "annual_gross_energy", &annual_gross_energy);
-//        EXPECT_NEAR(annual_gross_energy, 2.44933e7, 2.44933e7 * m_error_tolerance_lo) << "Annual Gross Energy";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
-//
-//        ssc_number_t annual_energy;
-//        ssc_data_get_number(data, "annual_energy", &annual_energy);
-//        EXPECT_NEAR(annual_energy, 2.44931e7, 2.44931e7 * m_error_tolerance_lo) << "Annual Energy";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
-//
-//        ssc_number_t annual_electricity_consumption;
-//        ssc_data_get_number(data, "annual_electricity_consumption", &annual_electricity_consumption);
-//        EXPECT_NEAR(annual_electricity_consumption, 122659, 122659 * m_error_tolerance_lo) << "Annual Electricity Consumption";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
-//
-//        ssc_number_t fixed_operating_cost;
-//        ssc_data_get_number(data, "fixed_operating_cost", &fixed_operating_cost);
-//        EXPECT_NEAR(fixed_operating_cost, 111118, 111118 * m_error_tolerance_lo) << "Fixed Operating Cost";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
-//
-//        ssc_number_t annual_thermal_consumption;
-//        ssc_data_get_number(data, "annual_thermal_consumption", &annual_thermal_consumption);
-//        EXPECT_NEAR(annual_thermal_consumption, 236.609, 236.609 * m_error_tolerance_lo) << "Annual Thermal Consumption";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
-//
-//        ssc_number_t annual_tes_freeze_protection;
-//        ssc_data_get_number(data, "annual_tes_freeze_protection", &annual_tes_freeze_protection);
-//        EXPECT_NEAR(annual_tes_freeze_protection, 236.609, 236.609 * m_error_tolerance_lo) << "Annual TES Freeze Protection";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
-//
-//        ssc_number_t annual_field_freeze_protection;
-//        ssc_data_get_number(data, "annual_field_freeze_protection", &annual_field_freeze_protection);
-//        EXPECT_NEAR(annual_field_freeze_protection, 0., m_error_tolerance_lo) << "Annual Field Freeze Protection";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
-//
-//        ssc_number_t lcoe_fcr;
-//        ssc_data_get_number(data, "lcoe_fcr", &lcoe_fcr);
-//        EXPECT_NEAR(lcoe_fcr, 0.0375859, 0.0375859 * m_error_tolerance_lo) << "LCOE FCR";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
-//
-//        ssc_number_t annual_total_water_use;
-//        ssc_data_get_number(data, "annual_total_water_use", &annual_total_water_use);
-//        EXPECT_NEAR(annual_total_water_use, 176.333, 176.333 * m_error_tolerance_lo) << "Annual Total Water Use";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
-//
-//        //ssc_number_t VARIABLE;
-//        //ssc_data_get_number(data, "VARIABLE", &VARIABLE);
-//        //EXPECT_NEAR(VARIABLE, EXP_VAL, EXP_VAL * m_error_tolerance_lo) << "DESCRIPTION";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
-//    }
-//}
