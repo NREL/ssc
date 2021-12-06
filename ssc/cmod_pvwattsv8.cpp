@@ -110,6 +110,7 @@ static var_info _cm_vtab_pvwattsv8[] = {
         { SSC_INPUT,        SSC_STRING,      "solar_resource_file",            "Weather file path",                          "",           "",                                             "Solar Resource",      "",                       "",                              "" },
         { SSC_INPUT,        SSC_TABLE,       "solar_resource_data",            "Weather data",                               "",           "dn,df,tdry,wspd,lat,lon,tz,elev",              "Solar Resource",      "",                       "",                              "" },
         { SSC_INPUT,        SSC_ARRAY,       "albedo",                         "Albedo",                                     "frac",       "if provided, will overwrite weather file albedo","Solar Resource",    "",                        "",                              "" },
+        { SSC_INPUT,        SSC_NUMBER,      "use_wf_albedo",                  "Use albedo from weather file",               "0/1",        "will use weather file albedo instead of albedo input","Solar Resource","?=0",                    "BOOLEAN",          "" },
 
         { SSC_INOUT,        SSC_NUMBER,      "system_use_lifetime_output",     "Run lifetime simulation",                    "0/1",        "",                                             "Lifetime",            "?=0",                        "",                              "" },
         { SSC_INPUT,        SSC_NUMBER,      "analysis_period",                "Analysis period",                            "years",      "",                                             "Lifetime",            "system_use_lifetime_output=1", "",                          "" },
@@ -130,7 +131,7 @@ static var_info _cm_vtab_pvwattsv8[] = {
         { SSC_INPUT,        SSC_ARRAY,       "soiling",                        "Soiling loss",                                "%",         "",                                             "System Design",      "?",                       "",                              "" },
         { SSC_INPUT,        SSC_NUMBER,      "losses",						   "Other DC losses",                             "%",         "Total system losses",                          "System Design",      "*",                       "MIN=-5,MAX=99",                 "" },
 
-        { SSC_INPUT,        SSC_NUMBER,      "enable_wind_stow",               "Enable tracker stow at high wind speeds",     "0/1",       "",                                             "System Design",      "?=0",                     "",                              "" },
+        { SSC_INPUT,        SSC_NUMBER,      "enable_wind_stow",               "Enable tracker stow at high wind speeds",     "0/1",       "",                                             "System Design",      "?=0",                     "BOOLEAN",                              "" },
         { SSC_INPUT,        SSC_NUMBER,      "stow_wspd",                      "Tracker stow wind speed threshold",           "m/s",       "",                                             "System Design",      "?=10",                    "",                              "" },
         { SSC_INPUT,        SSC_NUMBER,      "gust_factor",                    "Wind gust estimation factor",                 "",          "",                                             "System Design",      "?",                       "",                              "" },
         { SSC_INPUT,        SSC_NUMBER,      "wind_stow_angle",                "Tracker angle for wind stow",                 "deg",       "",                                             "System Design",      "?=30.0",                  "",                              "" },
@@ -382,6 +383,7 @@ public:
         {
             albedo = as_array("albedo", &albedo_len);
         }
+        bool use_wf_albedo = as_boolean("use_wf_albedo");
 
         pv.dc_loss_percent = as_double("losses");
         pv.tilt = pv.azimuth = std::numeric_limits<double>::quiet_NaN();
@@ -685,9 +687,9 @@ public:
             nyears = as_unsigned_long("analysis_period");
             std::vector<double> dc_degradation = as_vector_double("dc_degradation");
             if (dc_degradation.size() == 1) {
-                degradationFactor.push_back(1.0);
+                degradationFactor.push_back(1.0); // assume zero degradation in year 1
                 for (size_t y = 1; y < nyears; y++) {
-                    degradationFactor.push_back(pow((1.0 - dc_degradation[0] / 100.0), y));
+                    degradationFactor.push_back(1.0 - (dc_degradation[0] * y) / 100.0);
                 }
             }
             else {
@@ -819,9 +821,10 @@ public:
                 else if (is_assigned("albedo"))
                     log(util::format("Albedo array was assigned but is not the correct length (1, 12, or %d entries). Using default value.", nrec), SSC_WARNING);
 
-                // if the user hasn't specified an albedo, and the weather file contains hourly albedo, use that instead
+                // if the user hasn't specified an albedo, or has specified to use wf albedo, and the weather file contains hourly albedo, use that instead
+                // but make sure that the weather file albedo is realistic
                 // albedo_len will be zero if the albedo input isn't assigned
-                if (std::isfinite(wf.alb) && wf.alb > 0 && wf.alb < 1 && albedo_len == 0)
+                if (std::isfinite(wf.alb) && wf.alb > 0 && wf.alb < 1 && (albedo_len == 0 || use_wf_albedo))
                     alb = wf.alb;
 
 
@@ -854,7 +857,7 @@ public:
 
                 irr.set_surface(track_mode, pv.tilt, pv.azimuth, pv.rotlim,
                     pv.type == ONE_AXIS_BACKTRACKING, // backtracking mode
-                    pv.gcr, false, 0.0);
+                    pv.gcr, 0.0, 0.0, false, 0.0);
 
                 int code = irr.calc();
 
@@ -925,7 +928,7 @@ public:
                                 // because the force to stow flag only fixes one rotation angle, not both
                                 irr.set_surface(irrad::FIXED_TILT, // tracking 0=fixed
                                     0, 180, // tilt, azimuth
-                                    0, 0, 0.4, false, 0.0); // rotlim, bt, gcr, force to stow, stow angle
+                                    0, 0, 0.4, 0.0, 0.0, false, 0.0); // rotlim, bt, gcr, force to stow, stow angle
                             }
                             else
                             {
@@ -937,7 +940,7 @@ public:
                                 irr.set_surface(irrad::SINGLE_AXIS, pv.tilt, pv.azimuth,
                                     stow_angle, // rotation angle limit, the forced stow position
                                     false, // backtracking mode
-                                    pv.gcr,
+                                    pv.gcr, 0.0, 0.0,
                                     true, stow_angle  // force tracker to the rotation limit (stow_angle here)
                                 );
                             }
@@ -993,7 +996,7 @@ public:
                         double shad1xf = 0.0; // default: zero shade fraction
                         if (pv.type == ONE_AXIS)
                         {
-                            shad1xf = shadeFraction1x(solazi, solzen, pv.tilt, pv.azimuth, pv.gcr, rot);
+                            shad1xf = shadeFraction1x(solazi, solzen, pv.tilt, pv.azimuth, pv.gcr, rot, 0.0, 0.0);
                         }
 
                         // run self-shading calculations for both FIXED_RACK and ONE_AXIS because the non-linear derate applies in both cases (below)
@@ -1176,7 +1179,7 @@ public:
                     if (aoi > AOI_MIN && aoi < AOI_MAX && poa_front > 0)
                     {
                         tpoa = calculateIrradianceThroughCoverDeSoto(
-                            aoi, solzen, stilt, ibeam, iskydiff, ignddiff, en_mlm == 0 && module.ar_glass);
+                            aoi, stilt, ibeam, iskydiff, ignddiff, en_mlm == 0 && module.ar_glass);
                         if (tpoa < 0.0) tpoa = 0.0;
                         if (tpoa > poa) tpoa = poa_front;
                     }
@@ -1275,10 +1278,11 @@ public:
                 p_tpoa[idx] = (ssc_number_t)tpoa;  // W/m2
                 p_tmod[idx] = (ssc_number_t)tmod;
                 p_dc[idx] = (ssc_number_t)dc; // power, Watts
-                p_ac[idx] = (ssc_number_t)ac; // power, Watts
+                p_ac[idx] = (ssc_number_t)(ac * haf(hour_of_year)); // power, Watts
 
                 // accumulate hourly energy (kWh) (was initialized to zero when allocated)
-                p_gen[idx_life] = (ssc_number_t)(ac * haf(hour_of_year) * util::watt_to_kilowatt);
+                p_gen[idx_life] = (ssc_number_t)(p_ac[idx] * util::watt_to_kilowatt);
+
 
                 if (y == 0 && wdprov->annualSimulation()) { //report first year annual energy
                     annual_kwh += p_gen[idx] / step_per_hour;

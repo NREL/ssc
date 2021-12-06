@@ -21,6 +21,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "common_financial.h"
+#include "common.h"
 #include "lib_financial.h"
 using namespace libfin;
 #include <sstream>
@@ -39,6 +40,18 @@ static var_info _cm_vtab_host_developer[] = {
 	{ SSC_INPUT,        SSC_ARRAY,       "elec_cost_without_system",             "Host energy bill without system",                       "$",            "",                      "Host",      "*",                       "",                                         "" },
 	{ SSC_INPUT,        SSC_NUMBER,       "host_real_discount_rate",             "Host real discount rate",                       "%",            "",                      "Host",      "*",                       "",                                         "" },
 
+    { SSC_INPUT, SSC_ARRAY, "year1_hourly_ec_with_system", "Energy charge with system (year 1 hourly)", "$", "", "Time Series", "*", "", "" },
+    { SSC_INPUT, SSC_ARRAY, "year1_hourly_dc_with_system", "Demand charge with system (year 1 hourly)", "$", "", "Time Series", "*", "", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_parasitic_cost", "Parasitic load costs", "$", "", "Cash Flow", "*", "LENGTH_EQUAL=cf_length", "" },
+
+    { SSC_OUTPUT,       SSC_ARRAY,       "gen_purchases",                              "Electricity from grid",                                    "kW",      "",                       "System Output",       "",                           "",                              "" },
+    { SSC_INPUT, SSC_MATRIX, "charge_w_sys_fixed_ym", "Fixed monthly charge with system", "$", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
+
+    { SSC_INPUT, SSC_ARRAY, "year1_hourly_e_fromgrid", "Electricity from grid (year 1 hourly)", "kWh", "", "Time Series", "*", "", "" },
+    { SSC_INPUT, SSC_MATRIX,           "charge_w_sys_ec_ym", "Energy charge with system", "$", "", "Charges by Month", "", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
+    { SSC_INPUT, SSC_MATRIX,           "true_up_credits_ym",     "Net annual true-up payments", "$", "", "Charges by Month", "", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
+    { SSC_INPUT, SSC_MATRIX, "nm_dollars_applied_ym", "Net metering credit", "$", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
+    { SSC_INPUT, SSC_MATRIX, "net_billing_credits_ym", "Net billing credit", "$", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_agreement_cost",      "Host agreement cost",                  "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_after_tax_net_equity_cost_flow",        "Host after-tax annual costs",           "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_after_tax_cash_flow",                   "Host after-tax cash flow",                      "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -55,19 +68,6 @@ static var_info _cm_vtab_host_developer[] = {
 // -------------------
 	{ SSC_INPUT, SSC_ARRAY, "degradation", "Annual energy degradation", "", "", "System Output", "*", "", "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "system_capacity",			              "System nameplate capacity",		                               "kW",                "",                        "System Output",             "*",					   "MIN=1e-3",                      "" },
-    
-	/* return on equity from SAM for India */
-	{ SSC_INPUT, SSC_ARRAY, "roe_input", "Return on equity", "", "", "Return on Equity", "?=20", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "cf_return_on_equity", "Return on equity", "$/kWh", "", "Return on Equity", "*", "LENGTH_EQUAL=cf_length", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "cf_return_on_equity_input", "Return on equity input", "%", "", "Return on Equity", "*", "LENGTH_EQUAL=cf_length", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "cf_return_on_equity_dollars", "Return on equity dollars", "$", "", "Return on Equity", "*", "LENGTH_EQUAL=cf_length", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "cf_lcog_costs", "Total LCOG costs", "$", "", "Return on Equity", "*", "LENGTH_EQUAL=cf_length", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "lcog_om", "LCOG O and M", "cents/kWh", "", "Return on Equity", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "lcog_depr", "LCOG depreciation", "cents/kWh", "", "Return on Equity", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "lcog_loan_int", "LCOG loan interest", "cents/kWh", "", "Return on Equity", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "lcog_wc_int", "LCOG working capital interest", "cents/kWh", "", "Return on Equity", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "lcog_roe", "LCOG return on equity", "cents/kWh", "", "Return on Equity", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "lcog", "LCOG Levelized cost of generation", "cents/kWh", "", "Return on Equity", "*", "", "" },
 
 	/*loan moratorium from Sara for India Documentation\India\Loan Moratorum
 	assumptions:
@@ -83,7 +83,7 @@ static var_info _cm_vtab_host_developer[] = {
 	{ SSC_INOUT,        SSC_NUMBER,     "system_use_recapitalization",	          "Recapitalization expenses",	                                   "0/1",               "0=None,1=Recapitalize",   "Recapitalization",          "?=0",					   "INTEGER,MIN=0",                 "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "system_recapitalization_cost",	          "Recapitalization cost",	                                       "$",                 "",                        "Recapitalization",          "?=0",					   "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "system_recapitalization_escalation",     "Recapitalization escalation (above inflation)",	               "%",	                "",					       "Recapitalization",          "?=0",                     "MIN=0,MAX=100",      		    "" },
-	{ SSC_INPUT,        SSC_ARRAY,      "system_lifetime_recapitalize",		      "Recapitalization boolean",	                                   "",                  "",                        "Recapitalization",          "?=0",					   "",                              "" },
+	{ SSC_INOUT,        SSC_ARRAY,      "system_lifetime_recapitalize",		      "Recapitalization boolean",	                                   "",                  "",                        "Recapitalization",          "?=0",					   "",                              "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_recapitalization",	                  "Recapitalization operating expense",	                           "$",                 "",                        "Recapitalization",          "*",					   "LENGTH_EQUAL=cf_length",        "" },
                                                                                   															       
 /* Dispatch */                                                                    															       
@@ -824,16 +824,17 @@ enum {
 	CF_Recapitalization,
 	CF_Recapitalization_boolean,
 
-	CF_return_on_equity_input,
-	CF_return_on_equity_dollars,
-	CF_return_on_equity,
-	CF_lcog_costs,
 
 	CF_Annual_Costs,
 	CF_pretax_dscr,
 
 	CF_battery_replacement_cost_schedule,
 	CF_battery_replacement_cost,
+
+    CF_energy_sales,
+    CF_energy_sales_value,
+    CF_energy_purchases,
+    CF_energy_purchases_value,
 // Host
 	CF_agreement_cost,
 	CF_after_tax_net_equity_cost_flow,
@@ -855,6 +856,9 @@ enum {
     CF_investment_cost_lcos,
     CF_annual_cost_lcos,
     CF_util_escal_rate,
+
+    CF_utility_bill,
+    CF_parasitic_cost,
 
     CF_max,
  };
@@ -993,14 +997,14 @@ public:
             battery_discharged.push_back(0);
             fuelcell_discharged.push_back(0);
         }
-        //throw exec_error("singleowner", "Checkpoint 1");
+
         if (add_om_num_types > 0) //PV Battery
         {
             escal_or_annual(CF_om_fixed1_expense, nyears, "om_batt_fixed_cost", inflation_rate, 1.0, false, as_double("om_fixed_escal") * 0.01);
             escal_or_annual(CF_om_production1_expense, nyears, "om_batt_variable_cost", inflation_rate, 0.001, false, as_double("om_production_escal") * 0.01); //$/MWh
             escal_or_annual(CF_om_capacity1_expense, nyears, "om_batt_capacity_cost", inflation_rate, 1.0, false, as_double("om_capacity_escal") * 0.01);
             nameplate1 = as_number("om_batt_nameplate");
-            if (as_integer("en_batt") == 1)
+            if (as_integer("en_batt") == 1 || as_integer("en_standalone_batt") == 1)
                 battery_discharged = as_vector_double("batt_annual_discharge_energy");
         }
         if (add_om_num_types > 1) // PV Battery Fuel Cell
@@ -1013,7 +1017,7 @@ public:
         }
 
         // battery cost - replacement from lifetime analysis
-        if ((as_integer("en_batt") == 1) && (as_integer("batt_replacement_option") > 0))
+        if ((as_integer("en_batt") == 1 || as_integer("en_standalone_batt") == 1) && (as_integer("batt_replacement_option") > 0))
         {
             ssc_number_t* batt_rep = 0;
             std::vector<ssc_number_t> replacement_percent;
@@ -1044,56 +1048,84 @@ public:
 		// initialize energy
 		// differs from samsim - accumulate hourly energy
 		//double first_year_energy = as_double("energy_net");
-		double first_year_energy = 0.0;
+        double first_year_energy = 0.0;
+        double first_year_sales = 0.0;
+        double first_year_purchases = 0.0;
 
 
-		// degradation
-		// degradation starts in year 2 for single value degradation - no degradation in year 1 - degradation =1.0
-		// lifetime degradation applied in technology compute modules
-		if (as_integer("system_use_lifetime_output") == 1)
-		{
-			for (i = 1; i <= nyears; i++) cf.at(CF_degradation, i) = 1.0;
-		}
-		else
-		{
-			size_t count_degrad = 0;
-			ssc_number_t *degrad = 0;
-			degrad = as_array("degradation", &count_degrad);
+        // degradation
+        // degradation starts in year 2 for single value degradation - no degradation in year 1 - degradation =1.0
+        // lifetime degradation applied in technology compute modules
+        if (as_integer("system_use_lifetime_output") == 1)
+        {
+            for (i = 1; i <= nyears; i++) cf.at(CF_degradation, i) = 1.0;
+        }
+        else
+        {
+            size_t count_degrad = 0;
+            ssc_number_t* degrad = 0;
+            degrad = as_array("degradation", &count_degrad);
 
-			if (count_degrad == 1)
-			{
-				for (i = 1; i <= nyears; i++) cf.at(CF_degradation, i) = pow((1.0 - degrad[0] / 100.0), i - 1);
-			}
-			else if (count_degrad > 0)
-			{
-				for (i = 0; i < nyears && i < (int)count_degrad; i++) cf.at(CF_degradation, i + 1) = (1.0 - degrad[i] / 100.0);
-			}
-		}
-
-
-
-		hourly_energy_calcs.calculate(this);
+            if (count_degrad == 1)
+            {
+                for (i = 1; i <= nyears; i++) cf.at(CF_degradation, i) = pow((1.0 - degrad[0] / 100.0), i - 1);
+            }
+            else if (count_degrad > 0)
+            {
+                for (i = 0; i < nyears && i < (int)count_degrad; i++) cf.at(CF_degradation, i + 1) = (1.0 - degrad[i] / 100.0);
+            }
+        }
 
 
-		// dispatch
-		if (as_integer("system_use_lifetime_output") == 1)
-		{
-			// hourly_enet includes all curtailment, availability
-			for (size_t y = 1; y <= (size_t)nyears; y++)
-			{
-				for (size_t h = 0; h<8760; h++)
-				{
-					cf.at(CF_energy_net, y) += hourly_energy_calcs.hourly_energy()[(y - 1) * 8760 + h] * cf.at(CF_degradation, y);
-				}
-			}
-		}
-		else
-		{
-			for (i = 0; i<8760; i++) first_year_energy += hourly_energy_calcs.hourly_energy()[i]; // sum up hourly kWh to get total annual kWh first year production includes first year curtailment, availability 
-			cf.at(CF_energy_net, 1) = first_year_energy;
-			for (i = 1; i <= nyears; i++)
-				cf.at(CF_energy_net, i) = first_year_energy * cf.at(CF_degradation, i);
-		}
+
+        hourly_energy_calcs.calculate(this);
+
+        // dispatch
+        if (as_integer("system_use_lifetime_output") == 1)
+        {
+            // hourly_enet includes all curtailment, availability
+            for (size_t y = 1; y <= (size_t)nyears; y++)
+            {
+                for (size_t h = 0; h < 8760; h++)
+                {
+                    cf.at(CF_energy_net, y) += hourly_energy_calcs.hourly_energy()[(y - 1) * 8760 + h] * cf.at(CF_degradation, y);
+                    cf.at(CF_energy_sales, y) += hourly_energy_calcs.hourly_sales()[(y - 1) * 8760 + h] * cf.at(CF_degradation, y);
+                    cf.at(CF_energy_purchases, y) += hourly_energy_calcs.hourly_purchases()[(y - 1) * 8760 + h] * cf.at(CF_degradation, y);
+                }
+            }
+        }
+        else
+        {
+            for (i = 0; i < 8760; i++) {
+                first_year_energy += hourly_energy_calcs.hourly_energy()[i]; // sum up hourly kWh to get total annual kWh first year production includes first year curtailment, availability
+                first_year_sales += hourly_energy_calcs.hourly_sales()[i];
+                first_year_purchases += hourly_energy_calcs.hourly_purchases()[i];
+            }
+            cf.at(CF_energy_net, 1) = first_year_energy;
+            cf.at(CF_energy_sales, 1) = first_year_sales;
+            cf.at(CF_energy_purchases, 1) = first_year_purchases;
+            for (i = 1; i <= nyears; i++) {
+                cf.at(CF_energy_net, i) = first_year_energy * cf.at(CF_degradation, i);
+                cf.at(CF_energy_sales, i) = first_year_sales * cf.at(CF_degradation, i);
+                cf.at(CF_energy_purchases, i) = first_year_purchases * cf.at(CF_degradation, i);
+            }
+
+        }
+        size_t n_e_fromgrid;
+        ssc_number_t* year1_hourly_e_from_grid = as_array("year1_hourly_e_fromgrid", &n_e_fromgrid);
+        ssc_number_t* monthly_gen_purchases = allocate("monthly_gen_purchases", 12 * nyears);
+        ssc_number_t* monthly_e_fromgrid = allocate("monthly_e_from_grid", 12);
+        for (size_t y = 1; y <= (size_t)nyears; y++) {
+            for (size_t m = 0; m < (size_t)12; m++) {
+                for (size_t d = 0; d < (size_t)util::days_in_month((int)m); d++) {
+                    for (size_t h = 0; h < 24; h++) {
+                        monthly_gen_purchases[(y - 1) * 12 + m] += hourly_energy_calcs.hourly_purchases()[util::hour_of_year(m + 1, d + 1, h)];
+                        if (y == 1) monthly_e_fromgrid[m] += year1_hourly_e_from_grid[util::hour_of_year(m + 1, d + 1, h)];
+
+                    }
+                }
+            }
+        }
 
 		first_year_energy = cf.at(CF_energy_net, 1);
 
@@ -1111,12 +1143,12 @@ public:
 
 		for (i=1;i<=nyears;i++)
 		{
-			cf.at(CF_om_production_expense,i) *= cf.at(CF_energy_net,i);
+			cf.at(CF_om_production_expense,i) *= cf.at(CF_energy_sales,i);
 			cf.at(CF_om_capacity_expense,i) *= nameplate;
 			cf.at(CF_om_fuel_expense,i) *= year1_fuel_use;
 
             //Battery Production OM Costs
-            cf.at(CF_om_production1_expense, i) *= battery_discharged[i]; //$/MWh * 0.001 MWh/kWh * kWh = $
+            cf.at(CF_om_production1_expense, i) *= battery_discharged[i - 1]; //$/MWh * 0.001 MWh/kWh * kWh = $
             cf.at(CF_om_production2_expense, i) *= fuelcell_discharged[i];
 
 			cf.at(CF_om_opt_fuel_1_expense,i) *= om_opt_fuel_1_usage;
@@ -1148,8 +1180,10 @@ public:
 		int term_tenor = as_integer("term_tenor");
 		int loan_moratorium = as_integer("loan_moratorium");
 		double term_int_rate = as_double("term_int_rate")*0.01;
-		double dscr = as_double("dscr");
-		double dscr_reserve_months = as_double("dscr_reserve_months");
+		double dscr_input = as_double("dscr");
+        bool dscr_limit_debt_fraction = as_boolean("dscr_limit_debt_fraction");
+        double dscr_maximum_debt_fraction = as_double("dscr_maximum_debt_fraction") * 0.01;
+        double dscr_reserve_months = as_double("dscr_reserve_months");
 		double cash_for_debt_service=0;
 		double pv_cafds=0;
 		double size_of_debt=0;
@@ -1246,24 +1280,7 @@ public:
 			{
 				for (i=0;i<nyears && i<(int)recap_boolean_count;i++) cf.at(CF_Recapitalization_boolean,i+1) = recap_boolean[i];
 			}
-		}
-
-		// return on equity based on workbook and emails from Sara Turner for SAM for India
-		size_t roe_count;
-		ssc_number_t *roe_input = 0;
-		roe_input = as_array("roe_input", &roe_count);
-		if (roe_count > 0)
-		{
-			if (roe_count == 1) // single value input
-			{
-				for (i = 0; i < nyears; i++)
-					cf.at(CF_return_on_equity_input, i + 1) = roe_input[0]/100.0;
-			}
-			else // schedule
-			{
-				for (i = 0; i < nyears && i < (int)roe_count; i++) 
-					cf.at(CF_return_on_equity_input, i + 1) = roe_input[i]/100.0;
-			}
+            prepend_to_output(this, "system_lifetime_recapitalize", nyears + 1, 0.0);
 		}
 
 
@@ -1293,6 +1310,7 @@ public:
 				+ cf.at(CF_property_tax_expense,i)
 				+ cf.at(CF_insurance_expense,i)
 				+ cf.at(CF_battery_replacement_cost,i)
+                //+ cf.at(CF_utility_bill, i)
 				+ cf.at(CF_Recapitalization,i);
 		}
 
@@ -1758,10 +1776,35 @@ public:
 		double ppa_old=ppa;
 
 
-		// debt fraction input
-		if (!constant_dscr_mode)
-		{
-			double debt_frac = as_double("debt_percent")*0.01;
+        if (constant_dscr_mode) {
+            // initial installed_cost estimate
+            cost_financing =
+                cost_debt_closing +
+                cost_debt_fee_frac * cost_prefinancing + //estimate until final size of debt known
+                cost_other_financing +
+                // cf.at(CF_reserve_debtservice, 0) +  // estimate until debt size for each year is known
+                constr_total_financing +
+                cf.at(CF_reserve_om, 0) +
+                cf.at(CF_reserve_receivables, 0);
+
+            cost_installed = cost_prefinancing + cost_financing
+                - ibi_fed_amount
+                - ibi_sta_amount
+                - ibi_uti_amount
+                - ibi_oth_amount
+                - ibi_fed_per
+                - ibi_sta_per
+                - ibi_uti_per
+                - ibi_oth_per
+                - cbi_fed_amount
+                - cbi_sta_amount
+                - cbi_uti_amount
+                - cbi_oth_amount;
+
+        }
+        else
+        { // debt fraction input
+            double debt_frac = as_double("debt_percent")*0.01;
 
 			cost_installed = 
 				cost_prefinancing 
@@ -1934,6 +1977,8 @@ public:
 
 //		log(util::format("before loop  - size of debt =%lg .",	size_of_debt),	SSC_WARNING);
 
+        double dscr = dscr_input; // reset to input and limit to max debt fraction if necessary line 2298 and Github issue 550
+
 
 
 
@@ -1945,7 +1990,10 @@ public:
 		flip_year=-1;
 		cash_for_debt_service=0;
 		pv_cafds=0;
-		if (constant_dscr_mode)	size_of_debt=0;
+        if (constant_dscr_mode) {
+            dscr = dscr_input;
+            size_of_debt = 0;
+        }
 		if (ppa_interval_found)	ppa = (w0*x1+w1*x0)/(w0 + w1);
 
 		// debt pre calculation
@@ -2015,6 +2063,26 @@ public:
 				}
 			}
 		}
+        /* Github issue 550 update dscr if necessary with limit on maximum debt fraction */
+        if (constant_dscr_mode && dscr_limit_debt_fraction /* && (size_of_debt > 0)*/) {
+            // TODO - determine if we are going to allow negative DSCR values for coverage when PPA fixed price is too low to cover expenses
+            if ((fabs(size_of_debt) > (cost_installed * dscr_maximum_debt_fraction)) || (size_of_debt < 0)) {
+                if (/*(size_of_debt > 0) &&*/ (cost_installed > 0) && (dscr_maximum_debt_fraction > 0)) {
+                    //                    dscr = fabs(size_of_debt) / (cost_installed * dscr_maximum_debt_fraction) * dscr_input;
+                    dscr = size_of_debt / (cost_installed * dscr_maximum_debt_fraction) * dscr_input;
+                    // recalculate debt size with constrained dscr
+                    size_of_debt = 0.0;
+                    for (i = 0; i <= nyears; i++) {
+                        if (dscr != 0)
+                            cf.at(CF_debt_size, i) = cf.at(CF_pv_cash_for_ds, i) / dscr;
+                        else
+                            cf.at(CF_debt_size, i) = 0.0; // default behavior of initialization of cash flow line items
+                        size_of_debt += cf.at(CF_debt_size, i);
+                    }
+
+                }
+            }
+        }
 
 		/*
 		// DSCR calculations
@@ -2338,10 +2406,6 @@ public:
 
 		for (i=0; i<=nyears; i++)
 		{
-//			cf.at(CF_return_on_equity_dollars, i) = issuance_of_equity * cf.at(CF_return_on_equity_input, i);
-			cf.at(CF_return_on_equity_dollars, i) = (issuance_of_equity - cf.at(CF_reserve_receivables,0)) * cf.at(CF_return_on_equity_input, i);
-			if (cf.at(CF_energy_net, i) != 0)
-				cf.at(CF_return_on_equity, i) = cf.at(CF_return_on_equity_dollars, i) / cf.at(CF_energy_net, i);
 			//			cf.at(CF_project_operating_activities,i) = cf.at(CF_ebitda,i) + cf.at(CF_pbi_total,i) + cf.at(CF_reserve_interest,i) - cf.at(CF_debt_payment_interest,i);
 			cf.at(CF_project_operating_activities,i) = cf.at(CF_ebitda,i) + cf.at(CF_reserve_interest,i) - cf.at(CF_debt_payment_interest,i) +
 				(1.0 - pbi_fed_for_ds_frac) * cf.at(CF_pbi_fed,i) +
@@ -2643,17 +2707,79 @@ public:
 			+ cf.at(CF_payback_with_expenses, i);
 	}
 
+    util::matrix_t<double> monthly_energy_charge; //monthly energy charges at 12 month x nyears matrix ($)
+    util::matrix_t<double> net_annual_true_up; //net annual true up payments as 12 month x nyears matrix ($)
+    util::matrix_t<double> net_billing_credit; //net annual true up payments as 12 month x nyears matrix ($)
+    util::matrix_t<double> net_metering_credit;
+    size_t n_steps_per_year = 8760; //Initialize number of timesteps per year (calculated based on lifetime choice and nstep of weather file
+    //ssc_number_t* monthly_batt_to_grid = as_array("monthly_batt_to_grid", &n_monthly_grid_to_load);
+    net_annual_true_up = as_matrix("true_up_credits_ym"); //Use net annual true up payments regardless of billing mode ($)
+    net_billing_credit = as_matrix("net_billing_credits_ym"); //Use net annual true up payments regardless of billing mode ($)
+    net_metering_credit = as_matrix("nm_dollars_applied_ym");
+    size_t n_year1_hourly_ec;
+    size_t n_year1_hourly_dc;
+    ssc_number_t* year1_hourly_ec = as_array("year1_hourly_ec_with_system", &n_year1_hourly_ec);
+    ssc_number_t* year1_hourly_dc = as_array("year1_hourly_dc_with_system", &n_year1_hourly_dc);
+    size_t n_gen_purchases;
+    ssc_number_t* gen_purchases = as_array("gen_purchases", &n_gen_purchases);
+    if (is_assigned("rate_escalation")) //Create rate escalation nyears array with inflation and specified rate escalation %
+        escal_or_annual(CF_util_escal_rate, nyears, "rate_escalation", inflation_rate, 0.01, true, 0);
+    save_cf(CF_util_escal_rate, nyears, "cf_util_escal_rate");
+    cf.at(CF_parasitic_cost, 0) = 0;
+    double monthly_hourly_purchases = 0;
+    double monthly_hourly_fromgrid = 0;
+    int n_steps_per_hour = n_year1_hourly_ec / 8760;
+    for (int a = 1; a <= nyears; a++) {
+        if (as_integer("system_use_lifetime_output") == 1) {
+            for (size_t m = 1; m <= 12; m++) {
+                monthly_hourly_purchases = 0;
+                monthly_hourly_fromgrid = 0;
+                for (size_t d = 1; d <= util::days_in_month(int(m - 1)); d++) {
+                    for (size_t h = 0; h < 24; h++) { //monthly iteration for each year
+                        for (size_t n = 0; n < n_steps_per_hour; n++) {
+                            monthly_e_fromgrid[m - 1] += year1_hourly_e_from_grid[util::hour_of_year(m, d, h) * n_steps_per_hour + n];
+                            monthly_gen_purchases[(a - 1) * 12 + m - 1] += -gen_purchases[(size_t(a) - 1) * 8760 * n_steps_per_hour + n_steps_per_hour * util::hour_of_year(m, d, h) + n];
+                            if (year1_hourly_e_from_grid[h] != 0.0) {
+                                cf.at(CF_parasitic_cost, a) += -gen_purchases[(size_t(a) - 1) * 8760 * n_steps_per_hour + n_steps_per_hour * util::hour_of_year(m, d, h) + n] * cf.at(CF_degradation, a) / year1_hourly_e_from_grid[h] * (year1_hourly_ec[h * n_steps_per_hour + n] + year1_hourly_dc[h * n_steps_per_hour + n]) * cf.at(CF_util_escal_rate, a); //use the electricity rate data by year (also trueup) //* charged_grid[a] / charged_grid[1] * cf.at(CF_util_escal_rate, a);
+                            }
+                            if (d == util::days_in_month(int(m - 1)) && h == 23 && monthly_e_fromgrid[m - 1] > 0) cf.at(CF_parasitic_cost, a) += -monthly_gen_purchases[(size_t(a) - 1) * 12 + m - 1] / monthly_e_fromgrid[m - 1] * (net_annual_true_up.at(a, m - 1) + net_billing_credit.at(a, m - 1) + net_metering_credit.at(a, m - 1));
+                        }
+                    }
+                }
+            }
+        }
+        else {
+            for (size_t m = 1; m <= 12; m++) {
+                monthly_hourly_purchases = 0;
+                monthly_hourly_fromgrid = 0;
+                for (size_t d = 1; d <= util::days_in_month(int(m - 1)); d++) {
+                    for (size_t h = 0; h < 24; h++) { //monthly iteration for each year
+                        for (size_t n = 0; n < n_steps_per_hour; n++) {
+                            monthly_e_fromgrid[m-1] += year1_hourly_e_from_grid[util::hour_of_year(m, d, h) * n_steps_per_hour + n];
+                            monthly_gen_purchases[(a - 1) * 12 + m-1] += -gen_purchases[n_steps_per_hour * util::hour_of_year(m, d, h) + n];
+                            if (year1_hourly_e_from_grid[h] != 0.0) {
+                                cf.at(CF_parasitic_cost, a) += -gen_purchases[n_steps_per_hour * util::hour_of_year(m, d, h) + n] * cf.at(CF_degradation, a) / year1_hourly_e_from_grid[h] * (year1_hourly_ec[h * n_steps_per_hour + n] + year1_hourly_dc[h * n_steps_per_hour + n]) * cf.at(CF_util_escal_rate, a); //use the electricity rate data by year (also trueup) //* charged_grid[a] / charged_grid[1] * cf.at(CF_util_escal_rate, a);
+                            }
+                            if (d == util::days_in_month(int(m - 1)) && h == 23 && monthly_e_fromgrid[m - 1] > 0) cf.at(CF_parasitic_cost, a) += -monthly_gen_purchases[(size_t(a) - 1) * 12 + m - 1] / monthly_e_fromgrid[m - 1] * (net_annual_true_up.at(a, m - 1) + net_billing_credit.at(a, m - 1) + net_metering_credit.at(a, m - 1));
+                        }
+                    }
+                }
+            }
+        }
+        
+    }
 
+    save_cf(CF_parasitic_cost, nyears, "cf_parasitic_cost");
 
-	double host_npv_energy_real = npv(CF_energy_net, nyears, host_disc_real);
-	double host_lcoe_real = -(cf.at(CF_after_tax_net_equity_cost_flow, 0) + npv(CF_after_tax_net_equity_cost_flow, nyears, host_nom_discount_rate)) * 100;
+	double host_npv_energy_real = npv(CF_energy_sales, nyears, host_disc_real);
+	double host_lcoe_real = -(cf.at(CF_after_tax_net_equity_cost_flow, 0) + npv(CF_after_tax_net_equity_cost_flow, nyears, host_nom_discount_rate) - npv(CF_parasitic_cost, nyears, nom_discount_rate)) * 100;
 	if (host_npv_energy_real == 0.0)
 		host_lcoe_real = std::numeric_limits<double>::quiet_NaN();
 	else
 		host_lcoe_real /= host_npv_energy_real;
 
-	double host_npv_energy_nom = npv(CF_energy_net, nyears, host_nom_discount_rate);
-	double host_lcoe_nom = -(cf.at(CF_after_tax_net_equity_cost_flow, 0) + npv(CF_after_tax_net_equity_cost_flow, nyears, host_nom_discount_rate)) * 100;
+	double host_npv_energy_nom = npv(CF_energy_sales, nyears, host_nom_discount_rate);
+	double host_lcoe_nom = -(cf.at(CF_after_tax_net_equity_cost_flow, 0) + npv(CF_after_tax_net_equity_cost_flow, nyears, host_nom_discount_rate) - npv(CF_parasitic_cost, nyears, nom_discount_rate)) * 100;
 	if (host_npv_energy_nom == 0.0)
 		host_lcoe_nom = std::numeric_limits<double>::quiet_NaN();
 	else
@@ -2720,11 +2846,11 @@ public:
 	// fixed price PPA - LPPA independent of salvage value per 7/16/15 meeting
 	double npv_ppa_revenue = npv(CF_energy_value, nyears, nom_discount_rate);
 //	double npv_ppa_revenue = npv(CF_total_revenue, nyears, nom_discount_rate);
-	double npv_energy_nom = npv(CF_energy_net,nyears,nom_discount_rate);
+	double npv_energy_nom = npv(CF_energy_sales,nyears,nom_discount_rate);
 	double lppa_nom = 0;
 	if (npv_energy_nom != 0) lppa_nom = npv_ppa_revenue / npv_energy_nom * 100.0;
 	double lppa_real = 0;
-	double npv_energy_real = npv(CF_energy_net,nyears,disc_real);
+	double npv_energy_real = npv(CF_energy_sales,nyears,disc_real);
 	if (npv_energy_real != 0) lppa_real = npv_ppa_revenue / npv_energy_real * 100.0;
 
 	// update LCOE calculations 
@@ -2782,117 +2908,13 @@ public:
         }
         int grid_charging_cost_version = 0;
         lcos_calc(this, cf_lcos, nyears, nom_discount_rate, inflation_rate, lcoe_real, cost_prefinancing, disc_real, grid_charging_cost_version);
-        /*
-        double lcos_investment_cost = as_double("battery_total_cost_lcos"); //does not include replacement costs
-        double lcos_om_cost = npv(CF_om_capacity1_expense, nyears, nom_discount_rate); //Todo: include variable om due to charging
-        std::vector<double> charged_grid = as_vector_double("batt_annual_charge_from_grid");
-        std::vector<double> charged_pv = as_vector_double("batt_annual_charge_from_system");
-        std::vector<double> charged_total = as_vector_double("batt_annual_charge_energy");
-        std::vector<double> lcos_energy_discharged = as_vector_double("batt_annual_discharge_energy");
-        //std::vector<double> grid_to_batt = as_vector_double("grid_to_batt");
-        size_t n_monthly_grid_to_batt, n_monthly_grid_to_load, n_monthly_energy_charge;
-        ssc_number_t* monthly_grid_to_batt = as_array("monthly_grid_to_batt", &n_monthly_grid_to_batt);
-        ssc_number_t* monthly_grid_to_load = as_array("monthly_grid_to_load", &n_monthly_grid_to_load);
-        //ssc_number_t* monthly_energy_charge = as_array("year1_monthly_ec_charge_with_system", &n_monthly_energy_charge); //Power from grid to battery in kW (needs to be changed to kwh)
-        util::matrix_t<double> monthly_energy_charge = as_matrix("charge_w_sys_ec_ym");
-        util::matrix_t<double> net_annual_true_up = as_matrix("true_up_credits_ym");
-        size_t n_grid_to_batt;
-        ssc_number_t* grid_to_batt = as_array("grid_to_batt", &n_grid_to_batt); //Power from grid to battery in kW (needs to be changed to kwh)
-        size_t n_steps_per_year = n_grid_to_batt / nyears;
-        cf.at(CF_charging_cost_grid, 0) = 0;
-        std::vector<double> elec_purchases = as_vector_double("year1_hourly_salespurchases_with_system");
-        std::vector<double> elec_from_grid = as_vector_double("year1_hourly_e_fromgrid");
-
-        if (is_assigned("rate_escalation"))
-            escal_or_annual(CF_util_escal_rate, nyears, "rate_escalation", inflation_rate, 0.01, true, 0);
-        save_cf(CF_util_escal_rate, nyears, "cf_util_escal_rate");
-
-        double capex_lcoe_ratio = 1 / 0.8; //ratio of capex ratio between PV+batt / PV to LCOE ratio PV+batt/ PV (assumed based on table)
-        double lcoe_real_lcos = lcoe_real * capex_lcoe_ratio * (cost_prefinancing - lcos_investment_cost) / cost_prefinancing; //cents/kWh
-
-        for (int a = 0; a <= nyears; a++) {
-
-            if (as_integer("system_use_lifetime_output") == 1)
-            {
-
-
-                for (size_t m = 0; m < 12; m++) {
-                    if (a != 0) {
-                        //cf.at(CF_charging_cost_grid_month, a) += monthly_grid_to_batt[m] / (monthly_grid_to_batt[m] + monthly_grid_to_load[m]) * monthly_energy_charge[m] * charged_grid[a] / charged_grid[1] * cf.at(CF_util_escal_rate, a);
-                        cf.at(CF_charging_cost_grid, a) += monthly_grid_to_batt[m] / (monthly_grid_to_batt[m] + monthly_grid_to_load[m]) * monthly_energy_charge.at(a, m) + net_annual_true_up.at(a, m);
-
-                    }
-                }
-
-
-
-            }
-            else
-            {
-
-
-                for (size_t m = 0; m < 12; m++) {
-                    if (a != 0) {
-                        cf.at(CF_charging_cost_grid, a) += monthly_grid_to_batt[m] / (monthly_grid_to_load[m] + monthly_grid_to_batt[m]) * monthly_energy_charge.at(a, m) + net_annual_true_up.at(a, m);
-                    }
-                }
-
-
-            }
-
-            if (as_integer("system_use_lifetime_output") == 1) {
-                cf.at(CF_charging_cost_pv, a) = charged_pv[a] * lcoe_real_lcos / 100 * pow(1 + inflation_rate, a - 1);
-                cf.at(CF_om_production1_expense, a) *= charged_total[a];
-                cf.at(CF_energy_discharged, a) = lcos_energy_discharged[a];
-
-            }
-            else {
-                cf.at(CF_charging_cost_pv, a) = charged_pv[0] * lcoe_real_lcos / 100 * pow(1 + inflation_rate, a - 1);
-                cf.at(CF_om_production1_expense, a) *= charged_total[0];
-                cf.at(CF_energy_discharged, a) = lcos_energy_discharged[0];
-            }
-            //cf.at(CF_charging_cost_grid, a) = charged_grid[a] * cf.at(CF_ppa_price, a) / 100;
-            
-            //charged_total[a] = charged_grid[a] + charged_pv[a];
-            cf.at(CF_energy_charged_grid, a) = cf.at(CF_charging_cost_grid, a) + cf.at(CF_charging_cost_pv, a);
-            cf.at(CF_annual_cost_lcos, a) = -cf.at(CF_charging_cost_grid, a) +
-                -cf.at(CF_charging_cost_pv, a) + -cf.at(CF_om_fixed1_expense, a) +
-                -cf.at(CF_om_capacity1_expense, a) + -cf.at(CF_om_production1_expense, a) +
-                -cf.at(CF_battery_replacement_cost, a);
-
-        }
-        cf.at(CF_annual_cost_lcos, 0) += -lcos_investment_cost; //add initial investment to year 0
-        lcos_om_cost += npv(CF_om_production1_expense, nyears, nom_discount_rate);
-        lcos_om_cost += npv(CF_om_fixed1_expense, nyears, nom_discount_rate);
-        double lcos_charging_cost = npv(CF_energy_charged_grid, nyears, nom_discount_rate);
-        double batt_salvage_value_frac = as_double("batt_salvage_percentage") * 0.01;
-        double lcos_salvage_value = lcos_investment_cost * batt_salvage_value_frac / pow(1 + nom_discount_rate, nyears + 1); //set as a percentage or direct salvage value
-        cf.at(CF_salvage_cost_lcos, nyears) = lcos_salvage_value;
-        cf.at(CF_annual_cost_lcos, nyears) -= cf.at(CF_salvage_cost_lcos, nyears);
-        double lcos_denominator = npv(CF_energy_discharged, nyears, nom_discount_rate);
-        double lcos_denominator_real = npv(CF_energy_discharged, nyears, disc_real);
-        //double lcos_numerator = (lcos_investment_cost + lcos_om_cost + lcos_charging_cost + lcos_salvage_value);
-        double lcos_numerator = -(npv(CF_annual_cost_lcos, nyears, nom_discount_rate)) - cf.at(CF_annual_cost_lcos, 0);
-        assign("npv_annual_costs_lcos", var_data((ssc_number_t)lcos_numerator));
-        save_cf(CF_annual_cost_lcos, nyears, "cf_annual_cost_lcos");
-        save_cf(CF_energy_discharged, nyears, "cf_annual_discharge_lcos");
-        save_cf(CF_charging_cost_grid, nyears, "cf_charging_cost_grid");
-        save_cf(CF_charging_cost_pv, nyears, "cf_charging_cost_pv");
-        save_cf(CF_om_capacity1_expense, nyears, "cf_om_batt_capacity_expense");
-        save_cf(CF_om_production1_expense, nyears, "cf_om_batt_production_expense");
-        save_cf(CF_om_fixed1_expense, nyears, "cf_om_batt_fixed_expense");
-        save_cf(CF_battery_replacement_cost, nyears, "cf_batt_replacement_cost");
-        save_cf(CF_salvage_cost_lcos, nyears, "cf_salvage_cost_lcos");
-        double lcos_nom = lcos_numerator / lcos_denominator * 100.0; // cent/kWh
-        double lcos_real = lcos_numerator / lcos_denominator_real * 100.0; // cents/kWh
-        assign("lcos_nom", var_data((ssc_number_t)lcos_nom));
-        assign("lcos_real", var_data((ssc_number_t)lcos_real));
-        assign("npv_energy_lcos_nom", var_data((ssc_number_t)lcos_denominator));
-        assign("npv_energy_lcos_real", var_data((ssc_number_t)lcos_denominator_real));
-        */
+       
     }
     /////////////////////////////////////////////////////////////////////////////////////////
 
+    if (as_integer("en_batt") == 1 || as_integer("en_standalone_batt") == 1) {
+        update_battery_outputs(this, nyears);
+    }
 
 	// DSCR calculations
 	for (i = 0; i <= nyears; i++)
@@ -3176,7 +3198,7 @@ public:
 		save_cf( CF_property_tax_assessed_value, nyears, "cf_property_tax_assessed_value" );
 		save_cf( CF_property_tax_expense, nyears, "cf_property_tax_expense" );
 		save_cf( CF_insurance_expense, nyears, "cf_insurance_expense" );
-        if (as_integer("en_batt") == 1) {
+        if (as_integer("en_batt") == 1 || as_integer("en_standalone_batt") == 1) {
             save_cf(CF_battery_replacement_cost, nyears, "cf_battery_replacement_cost");
             save_cf(CF_battery_replacement_cost_schedule, nyears, "cf_battery_replacement_cost_schedule");
         }
@@ -3210,48 +3232,6 @@ public:
 		save_cf( CF_reserve_interest, nyears, "cf_reserve_interest" );
 
 		save_cf(CF_Recapitalization, nyears, "cf_recapitalization");
-
-		save_cf(CF_return_on_equity_input, nyears, "cf_return_on_equity_input");
-		save_cf(CF_return_on_equity_dollars, nyears, "cf_return_on_equity_dollars");
-		save_cf(CF_return_on_equity, nyears, "cf_return_on_equity");
-
-
-		for (i = 0; i <= nyears; i++)
-		{
-			cf.at(CF_lcog_costs, i) = cf.at(CF_om_capacity_expense, i)
-				+ cf.at(CF_feddepr_total, i) 
-				+ cf.at(CF_debt_payment_interest, i)
-				+ cf.at(CF_reserve_interest, i)
-				+ cf.at(CF_return_on_equity_dollars, i);
-		}
-		save_cf(CF_lcog_costs, nyears, "cf_lcog_costs");
-
-		double lcog_om = npv(CF_om_capacity_expense, nyears, nom_discount_rate);
-		if (npv_energy_nom != 0) lcog_om = lcog_om * 100.0 / npv_energy_nom;
-		assign("lcog_om", var_data((ssc_number_t)lcog_om));
-
-		double lcog_depr = npv(CF_feddepr_total, nyears, nom_discount_rate);
-		if (npv_energy_nom != 0) lcog_depr = lcog_depr * 100.0 / npv_energy_nom;
-		assign("lcog_depr", var_data((ssc_number_t)lcog_depr));
-
-		double lcog_loan_int = npv(CF_debt_payment_interest, nyears, nom_discount_rate);
-		if (npv_energy_nom != 0) lcog_loan_int = lcog_loan_int * 100.0 / npv_energy_nom;
-		assign("lcog_loan_int", var_data((ssc_number_t)lcog_loan_int));
-
-		double lcog_wc_int = npv(CF_reserve_interest, nyears, nom_discount_rate);
-		if (npv_energy_nom != 0) lcog_wc_int = lcog_wc_int * 100.0 / npv_energy_nom;
-		assign("lcog_wc_int", var_data((ssc_number_t)lcog_wc_int));
-
-		double lcog_roe = npv(CF_return_on_equity_dollars, nyears, nom_discount_rate);
-		if (npv_energy_nom != 0) lcog_roe = lcog_roe * 100.0 / npv_energy_nom;
-		assign("lcog_roe", var_data((ssc_number_t)lcog_roe));
-
-		double lcog_nom = npv(CF_lcog_costs, nyears, nom_discount_rate);
-		if (npv_energy_nom != 0) lcog_nom = lcog_nom * 100.0 / npv_energy_nom;
-		assign("lcog", var_data((ssc_number_t)lcog_nom));
-
-
-
 
 		// dispatch
 		std::vector<double> ppa_cf;

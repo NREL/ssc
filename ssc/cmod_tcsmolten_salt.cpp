@@ -181,10 +181,12 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,     SSC_NUMBER, "rec_qf_delay",                       "Energy-based receiver startup delay (fraction of rated thermal power)",                                                                   "",             "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "csp.pt.rec.max_oper_frac",           "Maximum receiver mass flow rate fraction",                                                                                                "",             "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "eta_pump",                           "Receiver HTF pump efficiency",                                                                                                            "",             "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "piping_loss",                        "Thermal loss per meter of piping",                                                                                                        "Wt/m",         "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "piping_length_mult",                 "Piping length multiplier",                                                                                                                "",             "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "piping_length_const",                "Piping constant length",                                                                                                                  "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
-	
+
+    // New variables replacing deprecated variable "piping_loss". Variable currently not required so exec() can check if assigned and throw a more detailed error
+    { SSC_INPUT,     SSC_NUMBER, "piping_loss_coefficient",            "Thermal loss per meter of piping",                                                                                                        "Wt/m2-K",      "",                                  "Tower and Receiver",                       "",                                                                 "",              ""},
+
 	{ SSC_INPUT,     SSC_NUMBER, "rec_clearsky_model",				   "Clearsky model: None = -1, User-defined data = 0, Meinel = 1; Hottel = 2; Allen = 3; Moon = 4",											  "",             "",                                  "Tower and Receiver",                       "?=-1",															   "",              ""},
 	{ SSC_INPUT,     SSC_ARRAY,  "rec_clearsky_dni",					"User-defined clear-sky DNI",																											  "W/m2",         "",                                  "Tower and Receiver",                       "rec_clearsky_model=0",											   "",              ""},
 	{ SSC_INPUT,     SSC_NUMBER, "rec_clearsky_fraction",               "Weighting fraction on clear-sky DNI for receiver flow control",                                                                          "",             "",                                  "Tower and Receiver",                       "?=0.0",                                                            "",              ""},
@@ -338,6 +340,8 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 
 
     // Financial inputs
+    { SSC_INPUT,     SSC_NUMBER, "ppa_soln_mode",                      "PPA solution mode (0=Specify IRR target, 1=Specify PPA price)",                                                                           "",             "",                                  "Financial Solution Mode",                  "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1",       "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "en_electricity_rates",               "Enable electricity rates for grid purchase",                                                                                              "0/1",          "",                                  "Electricity Rates",                        "?=0",                                                              "",              ""},
     { SSC_INPUT,     SSC_MATRIX, "dispatch_sched_weekday",             "PPA pricing weekday schedule, 12x24",                                                                                                     "",             "",                                  "Time of Delivery Factors",                 "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1",       "",              ""},
     { SSC_INPUT,     SSC_MATRIX, "dispatch_sched_weekend",             "PPA pricing weekend schedule, 12x24",                                                                                                     "",             "",                                  "Time of Delivery Factors",                 "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1",       "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "dispatch_factor1",                   "Dispatch payment factor 1",                                                                                                               "",             "",                                  "Time of Delivery Factors",                 "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1",       "",              ""},
@@ -353,7 +357,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,     SSC_ARRAY,  "dispatch_series",                    "Time series dispatch factors",                                                                                                            "",             "",                                  "System Control",                           "",                                                                 "",              ""},
     { SSC_INPUT,     SSC_MATRIX, "mp_energy_market_revenue",           "Energy market revenue input",                                                                                                             "",             "Lifetime x 2[Cleared Capacity(MW),Price($/MWh)]", "Revenue",                    "csp_financial_model=6&is_dispatch=1",                              "",              ""},
 
-// Inputs required for user defined SF performance
+    // Inputs required for user defined SF performance
     { SSC_INPUT,     SSC_NUMBER, "A_sf_in",                            "Solar field area",                                                                                                                        "m^2",          "",                                  "Heliostat Field",                          "",                                                                 "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "A_sf",                               "Solar field area",                                                                                                                        "m^2",          "",                                  "",                                         "*",                                                                "",              ""},
 
@@ -430,6 +434,11 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_OUTPUT,    SSC_NUMBER, "const_per_interest_total",           "Total interest costs, all loans",                                                                                                         "$",            "",                                  "Financial Parameters",                     "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "construction_financing_cost",        "Total construction financing cost",                                                                                                       "$",            "",                                  "Financial Parameters",                     "*",                                                                "",              ""},
 
+    // ****************************************************************************************************************************************
+    //     DEPRECATED INPUTS -- exec() checks if a) variable is assigned and b) if replacement variable is assigned. throws exception if a=true and b=false
+    // ****************************************************************************************************************************************
+    { SSC_INPUT,     SSC_NUMBER, "piping_loss",                        "Thermal loss per meter of piping",                                                                                                        "Wt/m",         "",                                  "Tower and Receiver",                       "",                                                                 "",              "" },
+
 
 
     // ****************************************************************************************************************************************
@@ -464,7 +473,8 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_OUTPUT,    SSC_ARRAY,  "T_rec_in",                           "Receiver HTF inlet temperature",                                                                                                          "C",            "",                                  "",                                         "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_ARRAY,  "T_rec_out",                          "Receiver HTF outlet temperature",                                                                                                         "C",            "",                                  "",                                         "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_ARRAY,  "q_piping_losses",                    "Receiver header/tower piping losses",                                                                                                     "MWt",          "",                                  "",                                         "*",                                                                "",              ""},
-    { SSC_OUTPUT,    SSC_ARRAY,  "q_thermal_loss",                     "Receiver convection and emission losses",                                                                                                 "MWt",          "",                                  "",                                         "*",                                                                "",              ""},
+    { SSC_OUTPUT,    SSC_ARRAY,  "q_thermal_loss",                     "Receiver convection and emission losses",                                                                                                 "MWt",          "",                                  "",                                         "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "q_dot_reflection_loss",              "Receiver reflection losses",                                                                                                              "MWt",          "",                                  "",                                         "receiver_type=1",                                                  "",              ""},
     
     { SSC_OUTPUT,    SSC_ARRAY,  "T_rec_out_end",                      "Receiver HTF outlet temperature at end of timestep",                                                                                      "C",            "",								   "CR",                                       "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_ARRAY,  "T_rec_out_max",                      "Receiver maximum HTF outlet temperature during timestep",                                                                                 "C",            "",                                  "CR",                                       "*",                                                                "",              ""},
@@ -638,6 +648,21 @@ public:
 	void exec() override
 	{
         std::clock_t clock_start = std::clock();
+
+        // *****************************************************
+        // Check deprecated variables
+        bool is_piping_loss_assigned = is_assigned("piping_loss");
+        bool is_piping_loss_coefficient_assigned = is_assigned("piping_loss_coefficient");
+
+        if (is_piping_loss_assigned && is_piping_loss_coefficient_assigned) {
+            log("We replaced the functionality of input variable piping_loss with new input variable piping_loss_coefficient,"
+                " so the model does not use your piping_loss input.");
+        }
+        else if (is_piping_loss_assigned) {
+            throw exec_error("tcsmolten_salt", "We replaced the functionality of input variable piping_loss [Wt/m] with new input variable piping_loss_coefficient [Wt/m2-K]."
+                " The new input scales piping thermal losses as a function of receiver thermal power and design-point temperatures."
+                " Please define piping_loss_coefficient in your script.");
+        }
 
         // *****************************************************
         // System Design Parameters
@@ -1356,7 +1381,7 @@ public:
                 rec_span, topLipHeight, botLipHeight,
                 e_act_sol, e_pass_sol, e_act_therm, e_pass_therm,
                 active_surface_mesh_type, floor_and_cover_mesh_type, lips_mesh_type,
-                as_double("piping_loss"), as_double("piping_length_const"), as_double("piping_length_mult"),
+                as_double("piping_loss_coefficient"), as_double("piping_length_const"), as_double("piping_length_mult"),
                 as_double("A_sf"), as_double("h_tower"), as_double("T_htf_hot_des"),
                 as_double("T_htf_cold_des"), as_double("f_rec_min"), q_dot_rec_des,
                 as_double("rec_su_delay"), as_double("rec_qf_delay"), as_double("csp.pt.rec.max_oper_frac"),
@@ -1390,7 +1415,7 @@ public:
                 ss_receiver->m_crossover_shift = as_integer("crossover_shift");
                 ss_receiver->m_hl_ffact = as_double("hl_ffact");
                 ss_receiver->m_A_sf = as_double("A_sf");
-                ss_receiver->m_pipe_loss_per_m = as_double("piping_loss");                      //[Wt/m]
+                ss_receiver->m_piping_loss_coefficient = as_double("piping_loss_coefficient");
                 ss_receiver->m_pipe_length_add = as_double("piping_length_const");  //[m]
                 ss_receiver->m_pipe_length_mult = as_double("piping_length_mult");      //[-]
                 ss_receiver->m_n_flux_x = as_integer("n_flux_x");
@@ -1418,7 +1443,7 @@ public:
                 trans_receiver->m_crossover_shift = as_integer("crossover_shift");
                 trans_receiver->m_hl_ffact = as_double("hl_ffact");
                 trans_receiver->m_A_sf = as_double("A_sf");
-                trans_receiver->m_pipe_loss_per_m = as_double("piping_loss");                       //[Wt/m]
+                trans_receiver->m_piping_loss_coeff = as_double("piping_loss_coefficient");                       //[Wt/m]
                 trans_receiver->m_pipe_length_add = as_double("piping_length_const");   //[m]
                 trans_receiver->m_pipe_length_mult = as_double("piping_length_mult");       //[-]
                 trans_receiver->m_n_flux_x = as_integer("n_flux_x");
@@ -1517,6 +1542,10 @@ public:
         collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_T_HTF_OUT, allocate("T_rec_out", n_steps_fixed), n_steps_fixed);
         collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_Q_DOT_PIPE_LOSS, allocate("q_piping_losses", n_steps_fixed), n_steps_fixed);
         collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_Q_DOT_LOSS, allocate("q_thermal_loss", n_steps_fixed), n_steps_fixed);
+            // Cavity-specific outputs
+        if (rec_type == 1) {
+            collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_Q_DOT_REFL_LOSS, allocate("q_dot_reflection_loss", n_steps_fixed), n_steps_fixed);
+        }
 
         collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_P_HEATTRACE, allocate("P_rec_heattrace", n_steps_fixed), n_steps_fixed);
         collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_T_HTF_OUT_END, allocate("T_rec_out_end", n_steps_fixed), n_steps_fixed);
@@ -1653,6 +1682,21 @@ public:
         bool is_dispatch = as_boolean("is_dispatch");
         if (csp_financial_model > 0 && csp_financial_model < 5) {   // Single Owner financial models
 
+            int ppa_soln_mode = as_integer("ppa_soln_mode");    // PPA solution mode (0=Specify IRR target, 1=Specify PPA price)
+            if (ppa_soln_mode == 0 && is_dispatch) {
+                throw exec_error("tcsmolten_salt", "\n\nYou selected dispatch optimization and the Specify IRR Target financial solution mode, "
+                    "but dispatch optimization requires known absolute electricity prices. Dispatch optimization requires "
+                    "the Specify PPA Price financial solution mode. You can continue using dispatch optimization and iteratively "
+                    "solve for the PPA that results in a target IRR by running a SAM Parametric analysis or script.\n");
+            }
+
+            int en_electricity_rates = as_integer("en_electricity_rates");  // 0 = Use PPA, 1 = Use Retail
+            if (en_electricity_rates == 1 && is_dispatch) {
+                throw exec_error("tcsmolten_salt", "\n\nYou selected dispatch optimization and the option to Use Retail Electricity Rates on the Electricity Purchases page, "
+                    "but the dispatch optimization model currently does not accept separate buy and sell prices. Please use the Use PPA or Market Prices option "
+                    "on the Electricity Purchases page.\n");
+            }
+
             // Time-of-Delivery factors by time step:
             int ppa_mult_model = as_integer("ppa_multiplier_model");
             if (ppa_mult_model == 1)        // use dispatch_ts input
@@ -1670,7 +1714,7 @@ public:
                     tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed, -1.0);
                 }
             }
-            else if (ppa_mult_model == 0) // standard diuranal input
+            else if (ppa_mult_model == 0) // standard diurnal input
             {
                 tou_params->mc_pricing.mv_is_diurnal = true;
 
@@ -1698,6 +1742,7 @@ public:
                     tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][8] = as_double("dispatch_factor9");
                 }
                 else {
+                    // If electricity pricing data is not available, then dispatch to a uniform schedule
                     tou_params->mc_pricing.mc_weekdays.resize_fill(12, 24, 1.);
                     tou_params->mc_pricing.mc_weekends.resize_fill(12, 24, 1.);
                     tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(9, -1.0);
@@ -1756,6 +1801,7 @@ public:
                 as_integer("disp_max_iter"), as_double("disp_mip_gap"), as_double("disp_timeout"),
                 as_integer("disp_spec_presolve"), as_integer("disp_spec_bb"), as_integer("disp_spec_scaling"), as_integer("disp_reporting"),
                 as_boolean("is_write_ampl_dat"), as_boolean("is_ampl_engine"), as_string("ampl_data_dir"), as_string("ampl_exec_call"));
+
             dispatch.params.set_user_params(as_boolean("can_cycle_use_standby"), as_double("disp_time_weighting"),
                 as_double("disp_rsu_cost"), heater_startup_cost, as_double("disp_csu_cost"), as_double("disp_pen_delta_w"),
                 as_double("disp_inventory_incentive"), as_double("q_rec_standby"), as_double("q_rec_heattrace"));

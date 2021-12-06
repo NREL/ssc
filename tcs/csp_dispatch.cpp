@@ -96,7 +96,6 @@ void csp_dispatch_opt::init(double cycle_q_dot_des, double cycle_eta_des)
 
     params.eff_table_load.init_linear_cycle_efficiency_table(params.q_pb_min, params.q_pb_des, params.eta_pb_des, pointers.mpc_pc);
     params.eff_table_Tdb.init_efficiency_ambient_temp_table(params.eta_pb_des, w_pb_des, pointers.mpc_pc, &params.wcondcoef_table_Tdb);
-
 }
 
 void csp_dispatch_opt::set_default_solver_parameters()
@@ -622,6 +621,7 @@ bool csp_dispatch_opt::optimize()
                 // ursu[t] <= Er * yrsu[t]
                 {
                     i = 0;
+
                     row[i] = 1.;
                     col[i++] = O.column("ursu", t);
 
@@ -750,7 +750,6 @@ bool csp_dispatch_opt::optimize()
                 {
                     if (t > 0)
                     {
-
                         i = 0;
                         row[i] = 1.;
                         col[i++] = O.column("yrsup", t);

@@ -16,8 +16,7 @@ iter = 35000;  //35000
 var( 'ppa_soln_min', 0);
 var( 'ppa_soln_max', 100);
 
-//var( 'dispatch_factors_ts', real_array(read_text_file('PPA_mults_v1.csv')));
-var( 'dispatch_factors_ts', real_array(read_text_file('C:/Users/WHamilt2/Documents/SAM/Analysis/etes_dispatch_abs_prices/LCGS_price_per_kWh.csv')));
+var( 'dispatch_factors_ts', real_array(read_text_file('PPA_mults_v1.csv')));
 outln(var('dispatch_factors_ts'));
 
 //tshours = [4., 6., 8., 10., 12., 14., 16., 18., 20.];
@@ -87,7 +86,6 @@ for (i = 0; i< #tshours; i++)
 				var( 'tes_fl_code', 17 );
 				var( 'ud_tes_fl_props', 
 				[ [ 0, 0, 0, 0, 0, 0, 0 ] ] );
-
 
 				var( 'dispatch_sched_weekday', 
 				[ [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 ], 

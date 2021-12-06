@@ -817,7 +817,7 @@ public:
 
                 irr.set_surface(track_mode, pv.tilt, pv.azimuth, pv.rotlim,
                     pv.type == ONE_AXIS_BACKTRACKING, // backtracking mode
-                    pv.gcr, false, 0.0);
+                    pv.gcr, 0, 0, false, 0.0);
 
                 int code = irr.calc();
 
@@ -889,7 +889,7 @@ public:
                                 // because the force to stow flag only fixes one rotation angle, not both
                                 irr.set_surface(irrad::FIXED_TILT, // tracking 0=fixed
                                     0, 180, // tilt, azimuth
-                                    0, 0, 0.4, false, 0.0); // rotlim, bt, gcr, force to stow, stow angle
+                                    0, 0, 0.4, 0, 0, false, 0.0); // rotlim, bt, gcr, force to stow, stow angle
                             }
                             else
                             {
@@ -901,7 +901,7 @@ public:
                                 irr.set_surface(irrad::SINGLE_AXIS, pv.tilt, pv.azimuth,
                                     stow_angle, // rotation angle limit, the forced stow position
                                     false, // backtracking mode
-                                    pv.gcr,
+                                    pv.gcr, 0, 0,
                                     true, stow_angle  // force tracker to the rotation limit (stow_angle here)
                                 );
                             }
@@ -957,7 +957,7 @@ public:
                         double shad1xf = 0.0; // default: zero shade fraction
                         if (pv.type == ONE_AXIS)
                         {
-                            shad1xf = shadeFraction1x(solazi, solzen, pv.tilt, pv.azimuth, pv.gcr, rot);
+                            shad1xf = shadeFraction1x(solazi, solzen, pv.tilt, pv.azimuth, pv.gcr, rot, 0.0, 0.0);
                         }
 
                         // run self-shading calculations for both FIXED_RACK and ONE_AXIS because the non-linear derate applies in both cases (below)
@@ -1096,7 +1096,7 @@ public:
                         double tpoa = poa - ( 1.0 - modifier )*wf.dn*cosd(aoi); */ // previous PVWatts method, skips diffuse calc
 
                         tpoa = calculateIrradianceThroughCoverDeSoto(
-                            aoi, solzen, stilt, ibeam, iskydiff, ignddiff, en_sdm == 0 && module.ar_glass);
+                            aoi, stilt, ibeam, iskydiff, ignddiff, en_sdm == 0 && module.ar_glass);
                         if (tpoa < 0.0) tpoa = 0.0;
                         if (tpoa > poa) tpoa = poa_front;
 
@@ -1237,10 +1237,10 @@ public:
                 p_tpoa[idx] = (ssc_number_t)tpoa;  // W/m2
                 p_tmod[idx] = (ssc_number_t)tmod;
                 p_dc[idx] = (ssc_number_t)dc; // power, Watts
-                p_ac[idx] = (ssc_number_t)ac; // power, Watts
+                p_ac[idx] = (ssc_number_t)(ac * haf(hour_of_year)); // power, Watts
 
                 // accumulate hourly energy (kWh) (was initialized to zero when allocated)
-                p_gen[idx_life] = (ssc_number_t)(ac * haf(hour_of_year) * util::watt_to_kilowatt);
+                p_gen[idx_life] = (ssc_number_t)(p_ac[idx]* util::watt_to_kilowatt);
 
                 if (y == 0 && wdprov->annualSimulation()) { //report first year annual energy
                     annual_kwh += p_gen[idx] / step_per_hour;

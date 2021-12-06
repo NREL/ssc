@@ -34,6 +34,7 @@ static var_info _cm_vtab_mhk_tidal[] = {
     { SSC_INPUT,			SSC_NUMBER,			"balance_of_system_cost_total",						"BOS costs",									"$",				"",             "MHKTidal",         "?=1",                      "",				"" },
     { SSC_INPUT,			SSC_NUMBER,			"financial_cost_total",						"Financial costs",									"$",				"",             "MHKTidal",         "?=1",                      "",				"" },
     { SSC_INPUT,			SSC_NUMBER,			"total_operating_cost",						"O&M costs",									"$",				"",             "MHKTidal",         "?=1",                      "",				"" },
+    { SSC_INPUT,			SSC_NUMBER,			"system_capacity",						"System Nameplate Capacity",										"kW",			"",				"MHKTidal",			"?=0",						"",							"" },
 
 
 	// losses
@@ -65,6 +66,12 @@ static var_info _cm_vtab_mhk_tidal[] = {
     { SSC_OUTPUT,			SSC_NUMBER,			"total_bos_cost_lcoe",                  "BOS cost",		"%",			"",				"MHKTidal",			"*",						"",						"" },
     { SSC_OUTPUT,			SSC_NUMBER,			"total_financial_cost_lcoe",            "Financial cost",		"%",			"",				"MHKTidal",			"*",						"",						"" },
     { SSC_OUTPUT,			SSC_NUMBER,			"total_om_cost_lcoe",                   "O&M cost (annual)",		"%",			"",				"MHKTidal",			"*",						"",						"" },
+    //Cost per KW
+    { SSC_OUTPUT,			SSC_NUMBER,			"total_capital_cost_per_kw",							"Capital cost per kW",										"$/kW",			"",								"MHKCosts",			"",						"",							"" },
+    { SSC_OUTPUT,			SSC_NUMBER,			"total_device_cost_per_kw",							"Device cost per kW",										"$/kW",			"",								"MHKCosts",			"",						"",							"" },
+    { SSC_OUTPUT,			SSC_NUMBER,			"total_bos_cost_per_kw",							"Balance of Systems cost per kW",										"$/kW",			"",								"MHKCosts",			"",						"",							"" },
+    { SSC_OUTPUT,			SSC_NUMBER,			"total_financial_cost_per_kw",							"Financial cost per kW",										"$/kW",			"",								"MHKCosts",			"",						"",							"" },
+    { SSC_OUTPUT,			SSC_NUMBER,			"total_operations_cost_per_kw",							"O&M cost per kW",										"$/kW",			"",								"MHKCosts",			"",						"",							"" },
 
     var_info_invalid
 };
@@ -141,32 +148,49 @@ public:
         min_velocity = tidal_resource_matrix.at(0, 0);
         max_velocity = tidal_resource_matrix.at(size_t(number_rows) - 1, 0);
 
-		for (int i = 0; i < number_rows; i++) {
+        for (int i = 0; i < number_rows; i++) {
             size_t n = i;
-            if (tidal_resource_matrix.at(n, 1) != 0 && tidal_resource_matrix.at(n - 1, 1) == 0 && n != 0)
-            {
-                tidal_resource_start_velocity = tidal_resource_matrix.at(n, 0);
+            if (i != 0) {
+                if (tidal_resource_matrix.at(n, 1) != 0 && tidal_resource_matrix.at(n - 1, 1) == 0)
+                {
+                    tidal_resource_start_velocity = tidal_resource_matrix.at(n, 0);
+                }
+                if (tidal_power_curve.at(n, 1) != 0 && tidal_power_curve.at(n - 1, 1) == 0 && n != 0)
+                {
+                    tidal_power_start_velocity = tidal_power_curve.at(n, 0);
+                }
             }
-            if (tidal_power_curve.at(n, 1) != 0 && tidal_power_curve.at(n - 1, 1) == 0 && n != 0)
-            {
-                tidal_power_start_velocity = tidal_power_curve.at(n, 0);
+            else {
+                if (tidal_resource_matrix.at(n, 1) != 0)
+                {
+                    tidal_resource_start_velocity = tidal_resource_matrix.at(n, 0);
+                }
+                if (tidal_power_curve.at(n, 1) != 0)
+                {
+                    tidal_power_start_velocity = tidal_power_curve.at(n, 0);
+                }
             }
-            if (tidal_resource_matrix.at(n, 1) != 0 && tidal_resource_matrix.at(n + 1, 1) == 0 && n != 0)
-            {
-                tidal_resource_end_velocity = tidal_resource_matrix.at(n, 0);
+            if (i != number_rows - 1) {
+                if (tidal_resource_matrix.at(n, 1) != 0 && tidal_resource_matrix.at(n + 1, 1) == 0 && n != 0)
+                {
+                    tidal_resource_end_velocity = tidal_resource_matrix.at(n, 0);
+                }
+                if (tidal_power_curve.at(n, 1) != 0 && tidal_power_curve.at(n + 1, 1) == 0 && n != 0)
+                {
+                    tidal_power_end_velocity = tidal_power_curve.at(n, 0);
+                }
             }
-            if (i == number_rows - 1 && tidal_resource_end_velocity == 0)
-            {
-                tidal_resource_end_velocity = tidal_resource_matrix.at(n, 0);
+            else {
+                if (i == number_rows - 1 && tidal_resource_end_velocity == 0)
+                {
+                    tidal_resource_end_velocity = tidal_resource_matrix.at(n, 0);
+                }
+                if (i == number_rows - 1 && tidal_power_end_velocity == 0)
+                {
+                    tidal_power_end_velocity = tidal_power_curve.at(n, 0);
+                }
             }
-            if (tidal_power_curve.at(n, 1) != 0 && tidal_power_curve.at(n + 1, 1) == 0 && n != 0)
-            {
-                tidal_power_end_velocity = tidal_power_curve.at(n, 0);
-            }
-            if (i == number_rows - 1 && tidal_power_end_velocity == 0)
-            {
-                tidal_power_end_velocity = tidal_power_curve.at(n, 0);
-            }
+            
 			_speed_vect[i] = tidal_resource_matrix.at(i, 0);	
 			_probability_vect[i] = tidal_resource_matrix.at(i, 1); //*******************again need to modify to handle different depths
 			_power_vect[i] = tidal_power_curve.at(i, 1);
@@ -185,11 +209,8 @@ public:
 			//Add current annual energy bin to total annual energy
 			annual_energy += p_annual_energy_dist[i];
 
-			//Calculate the cumulative energy probability distribution
-			if (i == 0)
-				p_annual_cumulative_energy_dist[i] = p_annual_energy_dist[i];
-			else
-				p_annual_cumulative_energy_dist[i] = p_annual_energy_dist[i] + p_annual_cumulative_energy_dist[i - 1];
+			
+		    p_annual_cumulative_energy_dist[i] = p_annual_energy_dist[i] + p_annual_cumulative_energy_dist[i - 1];
 			
 			//Contribution to Average Power from this speed bin 
 			device_average_power += _power_vect[i] * _probability_vect[i];
@@ -205,33 +226,47 @@ public:
 		//Factoring in losses in total annual energy production:
 		annual_energy *= (1 - (total_loss / 100 ));
 		// leave device power without losses
+        if (is_assigned("device_costs_total")) {
+            //TEST cost metrics in tidal page rather than cost page
+            double device_cost = as_double("device_costs_total");
+            double bos_cost = as_double("balance_of_system_cost_total");
+            double financial_cost = as_double("financial_cost_total");
+            double om_cost = as_double("total_operating_cost");
+            double fcr = as_double("fixed_charge_rate");
+            double total_capital_cost_kwh = fcr * (device_cost + bos_cost + financial_cost) / annual_energy;
+            double total_device_cost_kwh = fcr * device_cost / annual_energy;
+            double total_bos_cost_kwh = fcr * bos_cost / annual_energy;
+            double total_financial_cost_kwh = fcr * financial_cost / annual_energy;
+            double total_om_cost_kwh = om_cost / annual_energy;
+            double total_capital_cost_lcoe = (fcr * (device_cost + bos_cost + financial_cost)) / (fcr * (device_cost + bos_cost + financial_cost) + om_cost) * 100;
+            double total_device_cost_lcoe = (fcr * device_cost) / (fcr * (device_cost + bos_cost + financial_cost) + om_cost) * 100;
+            double total_bos_cost_lcoe = (fcr * bos_cost) / (fcr * (device_cost + bos_cost + financial_cost) + om_cost) * 100;
+            double total_financial_cost_lcoe = (fcr * financial_cost) / (fcr * (device_cost + bos_cost + financial_cost) + om_cost) * 100;
+            double total_om_cost_lcoe = (om_cost) / (fcr * (device_cost + bos_cost + financial_cost) + om_cost) * 100;
+            assign("total_capital_cost_kwh", var_data((ssc_number_t)total_capital_cost_kwh));
+            assign("total_device_cost_kwh", var_data((ssc_number_t)total_device_cost_kwh));
+            assign("total_bos_cost_kwh", var_data((ssc_number_t)total_bos_cost_kwh));
+            assign("total_financial_cost_kwh", var_data((ssc_number_t)total_financial_cost_kwh));
+            assign("total_om_cost_kwh", var_data((ssc_number_t)total_om_cost_kwh));
+            assign("total_capital_cost_lcoe", var_data((ssc_number_t)total_capital_cost_lcoe));
+            assign("total_device_cost_lcoe", var_data((ssc_number_t)total_device_cost_lcoe));
+            assign("total_bos_cost_lcoe", var_data((ssc_number_t)total_bos_cost_lcoe));
+            assign("total_financial_cost_lcoe", var_data((ssc_number_t)total_financial_cost_lcoe));
+            assign("total_om_cost_lcoe", var_data((ssc_number_t)total_om_cost_lcoe));
 
-        //TEST cost metrics in tidal page rather than cost page
-        double device_cost = as_double("device_costs_total");
-        double bos_cost = as_double("balance_of_system_cost_total");
-        double financial_cost = as_double("financial_cost_total");
-        double om_cost = as_double("total_operating_cost");
-        double fcr = as_double("fixed_charge_rate");
-        double total_capital_cost_kwh = fcr*(device_cost + bos_cost + financial_cost) / annual_energy;
-        double total_device_cost_kwh = fcr*device_cost / annual_energy;
-        double total_bos_cost_kwh = fcr*bos_cost / annual_energy;
-        double total_financial_cost_kwh = fcr*financial_cost / annual_energy;
-        double total_om_cost_kwh = om_cost / annual_energy;
-        double total_capital_cost_lcoe = (fcr * (device_cost + bos_cost + financial_cost)) / (fcr * (device_cost + bos_cost + financial_cost) + om_cost)*100;
-        double total_device_cost_lcoe = (fcr*device_cost)/ (fcr * (device_cost + bos_cost + financial_cost) + om_cost)*100;
-        double total_bos_cost_lcoe = (fcr*bos_cost)/ (fcr * (device_cost + bos_cost + financial_cost) + om_cost)*100;
-        double total_financial_cost_lcoe = (fcr * financial_cost) / (fcr * (device_cost + bos_cost + financial_cost) + om_cost)*100;
-        double total_om_cost_lcoe = (om_cost)/ (fcr * (device_cost + bos_cost + financial_cost) + om_cost)*100;
-        assign("total_capital_cost_kwh", var_data((ssc_number_t)total_capital_cost_kwh));
-        assign("total_device_cost_kwh", var_data((ssc_number_t)total_device_cost_kwh));
-        assign("total_bos_cost_kwh", var_data((ssc_number_t)total_bos_cost_kwh));
-        assign("total_financial_cost_kwh", var_data((ssc_number_t)total_financial_cost_kwh));
-        assign("total_om_cost_kwh", var_data((ssc_number_t)total_om_cost_kwh));
-        assign("total_capital_cost_lcoe", var_data((ssc_number_t)total_capital_cost_lcoe));
-        assign("total_device_cost_lcoe", var_data((ssc_number_t)total_device_cost_lcoe));
-        assign("total_bos_cost_lcoe", var_data((ssc_number_t)total_bos_cost_lcoe));
-        assign("total_financial_cost_lcoe", var_data((ssc_number_t)total_financial_cost_lcoe));
-        assign("total_om_cost_lcoe", var_data((ssc_number_t)total_om_cost_lcoe));
+            //Cost per kW system capacity
+            double system_capacity = as_double("system_capacity");
+            double capital_cost_kw = (device_cost + bos_cost + financial_cost) / system_capacity;
+            double device_cost_kw = device_cost / system_capacity;
+            double bos_cost_kw = bos_cost / system_capacity;
+            double financial_cost_kw = financial_cost / system_capacity;
+            double om_cost_kw = om_cost / system_capacity;
+            assign("total_capital_cost_per_kw", var_data(ssc_number_t(capital_cost_kw)));
+            assign("total_device_cost_per_kw", var_data(ssc_number_t(device_cost_kw)));
+            assign("total_bos_cost_per_kw", var_data(ssc_number_t(bos_cost_kw)));
+            assign("total_financial_cost_per_kw", var_data(ssc_number_t(financial_cost_kw)));
+            assign("total_operations_cost_per_kw", var_data(ssc_number_t(om_cost_kw)));
+        }
 
 		//Calculating capacity factor:
 		capacity_factor = annual_energy / (device_rated_capacity * number_devices * 8760);

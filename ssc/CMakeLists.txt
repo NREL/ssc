@@ -87,6 +87,7 @@ set(SSC_SRC
 		cmod_sco2_csp_ud_pc_tables.cpp
 		cmod_singlediode.cpp
 		cmod_singleowner.cpp
+		cmod_communitysolar.cpp
 		cmod_snowmodel.cpp
 		cmod_solarpilot.cpp
 		cmod_swh.cpp
@@ -233,7 +234,6 @@ set( DEPENDENCIES
 	shared
 	lpsolve
 	splinter
-	jsoncpp_lib
 	)
 foreach( name ${DEPENDENCIES} )
 	target_link_libraries(ssc ${name})

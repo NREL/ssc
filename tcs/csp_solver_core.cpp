@@ -1375,10 +1375,6 @@ void C_csp_solver::calc_timestep_plant_control_and_targets(
         q_dot_elec_to_PAR_HTR = 0.0;
         is_PAR_HTR_allowed = false;
 
-        //if (m_is_parallel_heater) {
-        //    throw(C_csp_exception("Dispatch optimization not available for parallel heater configs"));
-        //}
-
         //time to reoptimize
         //reoptimize when the time is equal to multiples of the first time step
         if ((int)mc_kernel.mc_sim_info.ms_ts.m_time % (int)(3600. * mc_dispatch.solver_params.optimize_frequency) == baseline_step
@@ -1447,7 +1443,6 @@ void C_csp_solver::calc_timestep_plant_control_and_targets(
         q_dot_pc_target = mc_dispatch.disp_outputs.q_pc_target;
         q_dot_elec_to_CR_heat = mc_dispatch.disp_outputs.q_dot_elec_to_CR_heat;
         q_dot_pc_max = mc_dispatch.disp_outputs.q_dot_pc_max;
-
         is_PAR_HTR_allowed = mc_dispatch.disp_outputs.is_eh_su_allowed;
         q_dot_elec_to_PAR_HTR = mc_dispatch.disp_outputs.q_eh_target;
     }

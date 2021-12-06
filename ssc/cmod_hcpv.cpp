@@ -410,7 +410,7 @@ public:
             irr.set_optional(wFile.elev(), wf.pres, wf.tdry);
             irr.set_sky_model(0, 0.2); // isotropic sky, 0.2 albedo (doesn't matter for CPV) and diffuse shading factor not enabled (set to 1.0 by default)
             irr.set_beam_diffuse(wf.dn, wf.df);
-            irr.set_surface(2, 0, 0, 90, true, -1, false, 0.0); // 2 axis tracking, other parameters don't matter
+            irr.set_surface(2, 0, 0, 90, true, -1, 0, 0, false, 0.0); // 2 axis tracking, other parameters don't matter
             int code = irr.calc();
 
             if (code < 0)

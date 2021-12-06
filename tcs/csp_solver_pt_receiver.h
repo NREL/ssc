@@ -79,7 +79,14 @@ public:
         double m_T_salt_hot;			//[C] HTF outlet temperature
         double m_field_eff_adj;			//[-] heliostat field efficiency including component defocus
         double m_component_defocus;		//[-] defocus applied by receiver to stay within mass flow or other constraints
-        double m_q_dot_rec_inc;			//[MWt] receiver incident thermal power (after reflection losses)
+
+        //[MWt] receiver incident thermal power
+        // -- external receiver applies reflection to flux maps, so m_q_dot_rec_inc is after reflection losses
+        // -- cavity receiver applies reflection in receiver thermal model, so m_q_dot_rec_inc is before reflection losses
+        double m_q_dot_rec_inc;
+
+        double m_q_dot_refl_loss;       //[MWt] Reflection losses (0 for external receiver - instead included in opt efficiency)
+
         double m_q_startup;				//[MWt-hr] thermal energy used to start receiver
         double m_dP_receiver;			//[bar] receiver pressure drop
         double m_dP_total;				//[bar] total pressure drop

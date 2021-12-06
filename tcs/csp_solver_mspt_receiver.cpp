@@ -39,7 +39,7 @@ C_mspt_receiver::C_mspt_receiver()
 	m_hl_ffact = std::numeric_limits<double>::quiet_NaN();
 	m_A_sf = std::numeric_limits<double>::quiet_NaN();
 
-	m_pipe_loss_per_m = std::numeric_limits<double>::quiet_NaN();
+	m_piping_loss_coeff = std::numeric_limits<double>::quiet_NaN();
 	m_pipe_length_add = std::numeric_limits<double>::quiet_NaN();
 	m_pipe_length_mult = std::numeric_limits<double>::quiet_NaN();
 
@@ -243,11 +243,14 @@ void C_mspt_receiver::init()
 
 	m_T_salt_hot_target += 273.15;			//[K] convert from C
 	
-	// 8.10.2015 twn: Calculate constant thermal losses to the environment
-	if(m_pipe_loss_per_m > 0.0 && m_pipe_length_mult > 0.0)
-		m_Q_dot_piping_loss = m_pipe_loss_per_m*(m_h_tower*m_pipe_length_mult + m_pipe_length_add);		//[Wt]
-	else
-		m_Q_dot_piping_loss = 0.0;
+    double L_piping = std::numeric_limits<double>::quiet_NaN();     //[m]
+    double d_inner_piping = std::numeric_limits<double>::quiet_NaN();   //[m]
+    CSP::mspt_piping_design(field_htfProps,
+        m_h_tower, m_pipe_length_mult,
+        m_pipe_length_add, m_piping_loss_coeff,
+        m_T_htf_hot_des, m_T_htf_cold_des,
+        m_m_dot_htf_des,
+        L_piping, d_inner_piping, m_Q_dot_piping_loss);
 
 
 	// *******************************************************************
@@ -350,7 +353,7 @@ void C_mspt_receiver::initialize_transient_parameters()
 
 
 	// Riser/downcomer thermal loss coefficients
-	m_piping_loss_coeff = m_pipe_loss_per_m / (0.5*CSP::pi * (m_id_downc*(m_T_htf_hot_des - 298.) + m_id_riser * (m_T_htf_cold_des - 298.))); // Piping wetted loss coefficient (W/m2/K) to reproduce user-specified total piping loss (W/m)	
+	//m_piping_loss_coeff = m_pipe_loss_per_m / (0.5*CSP::pi * (m_id_downc*(m_T_htf_hot_des - 298.) + m_id_riser * (m_T_htf_cold_des - 298.))); // Piping wetted loss coefficient (W/m2/K) to reproduce user-specified total piping loss (W/m)	
 	m_piping_loss_coeff = fmax(1.e-4, m_piping_loss_coeff);
 	m_Rtot_riser = 1.0 / (m_piping_loss_coeff * 0.5 * m_id_riser);  // Riser total thermal resistance between fluid and ambient [K*m/W]
 	m_Rtot_downc = 1.0 / (m_piping_loss_coeff * 0.5 * m_id_downc);  // Downcomer total thermal resistance between fluid and ambient [K*m/W]

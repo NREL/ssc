@@ -46,28 +46,28 @@ TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, DefaultNoFinancialModel_cmod_pvwat
     //v5 is 6909.79, decrease of 2.4%: decreases due to shading, module cover losses, and spectral losses
     //v7 prior to module coeff changes is 6750.4236, increase of 3.7% due to improved tempco for standard module
     //v7 final version is 6999.0158, decrease of 0.4% due to model updates
-    EXPECT_NEAR(tmp, 6969.8105, error_tolerance) << "Annual energy.";
+    EXPECT_NEAR(tmp, 7070.4729, error_tolerance) << "Annual energy.";
 
-    EXPECT_NEAR((double)monthly_energy[0], 436.644, error_tolerance) << "Monthly energy of January";
-    EXPECT_NEAR((double)monthly_energy[1], 482.808, error_tolerance) << "Monthly energy of February";
-    EXPECT_NEAR((double)monthly_energy[2], 595.285, error_tolerance) << "Monthly energy of March";
-    EXPECT_NEAR((double)monthly_energy[3], 677.821, error_tolerance) << "Monthly energy of April";
-    EXPECT_NEAR((double)monthly_energy[4], 722.2122, error_tolerance) << "Monthly energy of May";
-    EXPECT_NEAR((double)monthly_energy[5], 674.160, error_tolerance) << "Monthly energy of June";
-    EXPECT_NEAR((double)monthly_energy[6], 672.685, error_tolerance) << "Monthly energy of July";
-    EXPECT_NEAR((double)monthly_energy[7], 655.924, error_tolerance) << "Monthly energy of August";
-    EXPECT_NEAR((double)monthly_energy[8], 604.110, error_tolerance) << "Monthly energy of September";
-    EXPECT_NEAR((double)monthly_energy[9], 576.940, error_tolerance) << "Monthly energy of October";
-    EXPECT_NEAR((double)monthly_energy[10], 456.670, error_tolerance) << "Monthly energy of November";
-    EXPECT_NEAR((double)monthly_energy[11], 414.551, error_tolerance) << "Month energy of December";
+    EXPECT_NEAR((double)monthly_energy[0], 443.923, error_tolerance) << "Monthly energy of January";
+    EXPECT_NEAR((double)monthly_energy[1], 490.128, error_tolerance) << "Monthly energy of February";
+    EXPECT_NEAR((double)monthly_energy[2], 603.546, error_tolerance) << "Monthly energy of March";
+    EXPECT_NEAR((double)monthly_energy[3], 686.946, error_tolerance) << "Monthly energy of April";
+    EXPECT_NEAR((double)monthly_energy[4], 732.064, error_tolerance) << "Monthly energy of May";
+    EXPECT_NEAR((double)monthly_energy[5], 683.545, error_tolerance) << "Monthly energy of June";
+    EXPECT_NEAR((double)monthly_energy[6], 681.598, error_tolerance) << "Monthly energy of July";
+    EXPECT_NEAR((double)monthly_energy[7], 664.526, error_tolerance) << "Monthly energy of August";
+    EXPECT_NEAR((double)monthly_energy[8], 612.192, error_tolerance) << "Monthly energy of September";
+    EXPECT_NEAR((double)monthly_energy[9], 585.354, error_tolerance) << "Monthly energy of October";
+    EXPECT_NEAR((double)monthly_energy[10], 464.264, error_tolerance) << "Monthly energy of November";
+    EXPECT_NEAR((double)monthly_energy[11], 422.388, error_tolerance) << "Month energy of December";
 
     ssc_number_t capacity_factor;
     ssc_data_get_number(data, "capacity_factor", &capacity_factor);
-    EXPECT_NEAR(capacity_factor, 19.891, error_tolerance) << "Capacity factor";
+    EXPECT_NEAR(capacity_factor, 20.178, error_tolerance) << "Capacity factor";
 
     ssc_number_t kwh_per_kw;
     ssc_data_get_number(data, "kwh_per_kw", &kwh_per_kw);
-    EXPECT_NEAR(kwh_per_kw, 1742.453, error_tolerance) << "Energy yield";
+    EXPECT_NEAR(kwh_per_kw, 1767.618, error_tolerance) << "Energy yield";
 
 }
 
@@ -77,12 +77,15 @@ TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, DifferentTechnologyInputs_cmod_pvw
 	//PVWattsV5 results: annual_energy_expected = { 6909.79, 7123.32, 7336.478, 6909.79, 6804.376, 8601.011, 8727.704, 9690.735};
 	//V7 prior to module coefficient updates: std::vector<double> annual_energy_expected = { 6750.42, 7034.39, 7166.88, 6750.42, 6693.49, 8514.26, 8441.60, 9631.76 };
 	//standard fixed -2.4%, premium fixed -1.3%, thinfilm fixed -2.4%, standard fixed -2.4%, standard roof -1.7%, standard 1-axis -1.0%, standard backtrack -3.4%, standard 2-axis -0.6%
-    //V7 final version:
+    //V7 in 2020.11.29 release:
     //annual_energy_expected = { 6999.01, 7030.26, 7077.07,6999.01, 6971.04, 8785.40, 8725.66, 9861.27 };
 	//standard fixed +3.6%, premium fixed 0%, thinfilm fixed -1.2%, standard fixed +3.6%, standard roof +4.0%, standard 1-axis +3.3%, standard backtrack +3.3%, standard 2-axis +2.6%
-    //V8 results
-    std::vector<double> annual_energy_expected = { 6969.81, 6967.37, 7025.19, 6969.81, 6948.78, 8816.15, 8752.55, 9895.99 };
-    //wrt V7 final results: standard fixed -0.4%, premium fixed -0.9%, thinfilm fixed -0.7%, standard fixed -0.4%, standard roof -0.3%, standard 1-axis +0.4%, standard backtrack +0.3%, standard 2-axis +0.4%
+    //V7 after fix for AR glass:
+    //annual_energy_expected = { 7001.83, 7032.99, 7079.73, 7001.83, 6969.07, 8754.11, 8696.94, 9861.27 };
+   //V8 results
+    std::vector<double> annual_energy_expected = { 7070.47, 7068.35, 7126.57, 7070.47, 7049.49, 8856.67, 8800.49, 9933.89 };
+    //wrt V7 after AR fix: standard fixed +1.0%, premium fixed +0.5%, thinfilm fixed +0.7%, standard fixed +1.0%, standard roof +1.2%, standard 1-axis +1.2%, standard backtrack +1.2%, standard 2-axis +0.7%
+    //v8 wrt v7 in 2020.11.29 release: standard fixed +1.0%, premium fixed +0.5%, thinfilm fixed +0.7%, standard fixed +1.0%, standard roof +1.1%, standard 1-axis +0.8%, standard backtrack +0.9%, standard 2-axis +0.7%
 
     std::map<std::string, double> pairs;
     size_t count = 0;
@@ -130,7 +133,7 @@ TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, LargeSystem_cmod_pvwattsv8)
 	//PVWattsV5 results: std::vector<double> annual_energy_expected = { 1727447.4, 1701094.0, 2150252.8, 2181925.8, 2422683.7 };
 	//PVWattsV7 prior to module coeff updates: std::vector<double> annual_energy_expected = { 1686353.2, 1673371.8, 2123603.8, 2105794.1, 2407940.7 };
 	//PVWattsV7 final results: std::vector<double> annual_energy_expected = { 1747992.2, 1742760.1, 2190219.7, 2175654.8,  2465319.2};
-    std::vector<double> annual_energy_expected = { 1740560.2, 1737195.4, 2198704.7, 2183168.2,  2473998.4 };
+    std::vector<double> annual_energy_expected = { 1765685.4, 1762371.4, 2208742.5, 2195064.6,  2483471.3 };
 
     std::map<std::string, double> pairs;
     size_t count = 0;
@@ -173,11 +176,11 @@ TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, SubhourlyWeather_cmod_pvwattsv8) {
         ssc_number_t annual_energy;
         ssc_data_get_number(data, "annual_energy", &annual_energy);
         //EXPECT_NEAR(annual_energy, 6523.727, error_tolerance) << "Annual energy.";
-        EXPECT_NEAR(annual_energy, 6498.656, error_tolerance) << "Annual energy.";
+        EXPECT_NEAR(annual_energy, 6590.761, error_tolerance) << "Annual energy.";
 
         ssc_number_t capacity_factor;
         ssc_data_get_number(data, "capacity_factor", &capacity_factor);
-        EXPECT_NEAR(capacity_factor, 18.62, 0.1) << "Capacity factor";
+        EXPECT_NEAR(capacity_factor, 18.87, 0.1) << "Capacity factor";
 
     }
 }
@@ -202,7 +205,7 @@ TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, LifetimeModeTest_cmod_pvwattsv8) {
     {
         ssc_number_t annual_energy;
         ssc_data_get_number(data, "annual_energy", &annual_energy);
-        EXPECT_NEAR(annual_energy, 6969.810, error_tolerance) << "Annual energy degradation array length 1.";
+        EXPECT_NEAR(annual_energy, 7070.4729, error_tolerance) << "Annual energy degradation array length 1.";
     }
 
     // next, test degradation array with length the same as analysis period, which should also work
@@ -217,7 +220,7 @@ TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, LifetimeModeTest_cmod_pvwattsv8) {
     {
         ssc_number_t annual_energy;
         ssc_data_get_number(data, "annual_energy", &annual_energy);
-        EXPECT_NEAR(annual_energy, 6934.980, error_tolerance) << "Annual energy degradation array length 25.";
+        EXPECT_NEAR(annual_energy, 7035.163, error_tolerance) << "Annual energy degradation array length 25.";
     }
 
     // lastly, test degradation array with the wrong length, which should fail
@@ -243,7 +246,6 @@ TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, BifacialTest_cmod_pvwattsv8) {
     if (!pvwatts_errors)
     {
         ssc_data_get_number(data, "annual_energy", &annual_energy_mono);
-        EXPECT_NEAR(annual_energy_mono, 6969.8, 1) << "System with bifaciality";
     }
 
     pairs["bifaciality"] = 0.65;
@@ -255,6 +257,70 @@ TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, BifacialTest_cmod_pvwattsv8) {
     }
 
     EXPECT_GT(annual_energy_bi / annual_energy_mono, 1.027);
+}
+
+TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, SnowModelTests_cmod_pvwattsv8) {
+
+    // Snow loss for fixed tilt system*********************************
+    ssc_data_set_number(data, "array_type", 0);
+    ssc_data_set_number(data, "en_snowloss", 1);
+
+    compute();
+
+    // Snow events in January, February, April, October, and December
+    ssc_number_t january_energy;
+    january_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[0]; //retrieve only january's value
+    EXPECT_NEAR((double)january_energy, 419.110, 0.01) << "Fixed tilt energy in January after snow loss";
+
+    int count;
+    ssc_number_t* hourly_snowderate = ssc_data_get_array(data, "dcsnowderate", &count);
+    ASSERT_EQ(8760, count);
+
+    // Starting at 6 AM Jan. 12th
+    // Snow derate should be non-zero during a snow event, and on a fixed system will always be 0, 0.5, or 1.0 due to the assumption of a 2-up installation
+    EXPECT_NEAR((double)hourly_snowderate[270], 0.0, error_tolerance);
+    EXPECT_NEAR((double)hourly_snowderate[271], 0.5, error_tolerance);
+    EXPECT_NEAR((double)hourly_snowderate[272], 0.5, error_tolerance);
+    // ...
+    EXPECT_NEAR((double)hourly_snowderate[275], 0.5, error_tolerance);
+    EXPECT_NEAR((double)hourly_snowderate[276], 0.5, error_tolerance);
+    EXPECT_NEAR((double)hourly_snowderate[277], 1.0, error_tolerance);
+
+
+    // Snow loss for single-axis system********************************
+    ssc_data_set_number(data, "array_type", 2);
+    ssc_data_set_number(data, "en_snowloss", 1);
+
+    compute();
+
+    // Snow events in January, February, April, October, and December
+    january_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[0]; //retrieve only january's value
+    EXPECT_NEAR((double)january_energy, 512.287, 0.01) << "Single-axis tracker energy in January after snow loss";
+
+    // A tracker row is assumed to be nx1 panels, so all derates should be either 0 or 1
+    hourly_snowderate = ssc_data_get_array(data, "dcsnowderate", nullptr);
+    for (int hour = 0; hour < 300; hour++) //check throughout a known snow event but don't need to check the whole year
+    {
+        EXPECT_TRUE(hourly_snowderate[hour] == 0 || hourly_snowderate[hour] == 1);
+    }
+
+
+    // Snow loss for backtracking system*******************************
+    ssc_data_set_number(data, "array_type", 3);
+    ssc_data_set_number(data, "en_snowloss", 1);
+
+    compute();
+
+    // Snow events in January, February, April, October, and December
+    january_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[0]; //retrieve only january's value
+    EXPECT_NEAR((double)january_energy, 508.062, 0.01) << "Backtracking energy in January after snow loss";
+
+    // A tracker row is assumed to be nx1 panels, so all derates should be either 0 or 1
+    hourly_snowderate = ssc_data_get_array(data, "dcsnowderate", nullptr);
+    for (int hour = 0; hour < 300; hour++) //check throughout a known snow event but don't need to check the whole year
+    {
+        EXPECT_TRUE(hourly_snowderate[hour] == 0 || hourly_snowderate[hour] == 1);
+    }
 }
 
 /* this test isn't passing currently even though it's working in the UI, so commenting out for now
@@ -287,10 +353,10 @@ TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, NonAnnual)
 
     ssc_number_t dc, gen;
     dc = ssc_data_get_array(data, "dc", nullptr)[12];
-    EXPECT_NEAR(dc, 2509.045, 0.01) << "DC Energy at noon";
+    EXPECT_NEAR(dc, 2529.615, 0.01) << "DC Energy at noon";
 
     gen = ssc_data_get_array(data, "gen", nullptr)[12];
-    EXPECT_NEAR(gen, 2.417, 0.01) << "Gen at noon";
+    EXPECT_NEAR(gen, 2.428, 0.01) << "Gen at noon";
     free_weatherdata_array(weather_data);
 }
 
@@ -326,16 +392,16 @@ TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, IntermediateOutputTesting)
     EXPECT_NEAR(poa, 828.570, 0.01) << "POA at noon"; //this shouldn't have changed, and code comparison shows no differences, so why are we now getting 828.570????
 
     tpoa = ssc_data_get_array(data, "tpoa", nullptr)[12];
-    EXPECT_NEAR(tpoa, 823.560, 0.01) << "Transmitted POA at noon";
+    EXPECT_NEAR(tpoa, 819.591, 0.01) << "Transmitted POA at noon";
 
     tcell = ssc_data_get_array(data, "tcell", nullptr)[12];
-    EXPECT_NEAR(tcell, 48.861, 0.01) << "Cell temp at noon";
+    EXPECT_NEAR(tcell, 48.903, 0.01) << "Cell temp at noon";
 
     dc = ssc_data_get_array(data, "dc", nullptr)[12];
-    EXPECT_NEAR(dc, 2509.045, 0.01) << "DC Energy at noon";
+    EXPECT_NEAR(dc, 2529.615, 0.01) << "DC Energy at noon";
 
     ac = ssc_data_get_array(data, "ac", nullptr)[12];
-    EXPECT_NEAR(ac, 2408.683, 0.01) << "AC Energy at noon";
+    EXPECT_NEAR(ac, 2428.431, 0.01) << "AC Energy at noon";
 
     free_weatherdata_array(weather_data);
 }

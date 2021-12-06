@@ -110,11 +110,6 @@ double Csp_pt_rec_htf_c_avg(double csp_pt_rec_htf_t_avg /*C*/, int rec_htf /*-*/
 
 double Rec_aspect(double D_rec /*m*/, double rec_height /*m*/);     // [-]
 
-double Piping_length(double h_tower /*m*/, double piping_length_mult /*-*/, double piping_length_const /*m*/);      // [m]
-
-double Piping_loss_tot(double piping_length /*m*/, double piping_loss /*Wt/m*/);        // [kWt]
-
-
 
 // Originally from 'MSPT System Control'
 double Csp_pt_par_calc_bop(double bop_par /*MWe/MWcap*/, double bop_par_f /*-*/, double bop_par_0 /*-*/,

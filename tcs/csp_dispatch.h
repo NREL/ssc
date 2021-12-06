@@ -115,6 +115,7 @@ public:
             eta_pb_des = std::numeric_limits<double>::quiet_NaN();
             inventory_incentive = 0.;
             sf_effadj = 1.;
+
             time_weighting = 0.99;
             rsu_cost = 952.;
             csu_cost = 10000;

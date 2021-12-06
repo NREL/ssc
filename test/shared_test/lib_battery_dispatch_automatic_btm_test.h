@@ -62,6 +62,9 @@ protected:
 
     bool chargeOnlySystemExceedLoad = true;
     bool dischargeOnlyLoadExceedSystem = true;
+    bool dischargeToGrid = false;
+
+    double min_outage_soc = 0.0;
 
     /*! Variables to store forecast data */
     std::vector<double> pv_prediction;

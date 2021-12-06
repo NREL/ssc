@@ -1,9 +1,9 @@
+#include <gtest/gtest.h>
+#include <cmath>
 #include <string>
 #include <vector>
 #include <memory>
-#include <cmath>
 
-#include <gtest/gtest.h>
 #include "../input_cases/weather_inputs.h"
 
 #include "../ssc/common.h"
@@ -20,13 +20,16 @@
  * same using weatherfile & weatherdata as weather inputs. The test also tests for variable
  * access and memory.
  */
-
+/* removes definition of isnan _isnan in lp_lib.h line 65 so that std::isnan works on all platforms */
+#ifdef WIN32
+#define _isnan isnan
+#endif
 
 class CspWeatherReaderTest : public ::testing::Test {
 protected:
     C_csp_weatherreader wr;
     C_csp_solver_sim_info sim_info;
-    double e;		//epsilon for double comparison
+    double e;       //epsilon for double comparison
 
     virtual void SetUp() {
         e = 0.0001;
@@ -123,8 +126,12 @@ TEST_F(UsingFileCaseWeatherReader, IntegrationTest_csp_solver_core) {
     EXPECT_EQ(wr.ms_outputs.m_day, 1);
     EXPECT_EQ(wr.ms_outputs.m_hour, 11);
     EXPECT_EQ(wr.ms_outputs.m_minute, 30) << "Originally empty, minute column should be set to 30 by weatherfile";
+<<<<<<< HEAD
 
     EXPECT_TRUE(isnan(wr.ms_outputs.m_global)) << "Global not in weatherfile\n";
+=======
+    EXPECT_TRUE(std::isnan(wr.ms_outputs.m_global)) << "Global not in weatherfile\n";
+>>>>>>> develop
     EXPECT_NEAR(wr.ms_outputs.m_beam, 602, e);
     EXPECT_NEAR(wr.ms_outputs.m_diffuse, 315, e);
     EXPECT_NEAR(wr.ms_outputs.m_tdry, 30.6, e);
@@ -220,7 +227,7 @@ TEST_F(UsingDataCaseWeatherReader, IntegrationTest_csp_solver_core) {
 }
 
 /**
- *	Integration & Execution Time test
+ *  Integration & Execution Time test
  */
 class CspSolverCoreTest : public ::testing::Test {
 protected:
