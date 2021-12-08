@@ -39,8 +39,7 @@ jobs:
          path: ssc
 
     - name: Configure CMake
-      # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
-      # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
+      # Configure cmake to build ssc tests but not tools
       run: |
         mkdir ${SSCDIR}/build
         cd ${SSCDIR}/build
@@ -51,12 +50,10 @@ jobs:
       run: |
         cd ${SSCDIR}/build
         make -j4
-        ls
-        cd ${SSCDIR}/build/test
-        ls
 
     - name: Test
-      # Execute tests defined by the CMake configuration.  
-      # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
-      run: ${SSCDIR}/build/test/Test
-      
+      # Turn off fast fail for when the landbosse tests write to cerr
+      run: |
+        set -e
+        ${SSCDIR}/build/test/Test
+      shell: bash
