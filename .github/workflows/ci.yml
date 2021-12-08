@@ -20,7 +20,7 @@ jobs:
     - name: Clone Gtest
       uses: actions/checkout@v2
       with:
-        name: google/googletest
+        repository: google/googletest
         path: googletest
     
     - name: build Gtest
