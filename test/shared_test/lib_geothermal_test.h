@@ -85,6 +85,7 @@ protected:
 	int geothermal_analysis_period;
 	int resource_potential;
 	int tou[8760];
+    double haf_inputs[8760];
 			  
 	//Initializing all 4 structs to defualt values in SAM 2018.11.11:
 		SPowerBlockParameters SPBP;
@@ -138,6 +139,10 @@ public:
 		fracture_angle = 15;
 		geothermal_analysis_period = 30;
 		resource_potential = 210;
+        haf_inputs[8760];
+        for (int i = 0; i < 8760; i++) {
+            haf_inputs[i] = 0.0;
+        }
 		
 		//Following block intializes all 4 Structs (to default values in SAM 2018.11.11) that are used
 		//as formal parameters in constructing the CGeothermalAnalyzer Class:
@@ -278,6 +283,9 @@ public:
 				geoPlant_inputs.mia_tou = tou;
 				geoPlant_inputs.mi_MakeupCalculationsPerYear = (geoPlant_inputs.mi_ModelChoice == 2) ? 8760 : 12;
 				geoPlant_inputs.mi_TotalMakeupCalculations = geoPlant_inputs.mi_ProjectLifeYears * geoPlant_inputs.mi_MakeupCalculationsPerYear;
+
+                //Adjustment factors
+                geoPlant_inputs.haf = haf_inputs;
 
 		//====================================================================================================================================================================
 				//Initializing SGeothermal_Outputs:
