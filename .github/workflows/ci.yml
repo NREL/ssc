@@ -7,8 +7,8 @@ on:
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
-  GTEST: ${{ env.GITHUB_WORKSPACE }}/googletest
-  SSCDIR: ${{ env.GITHUB_WORKSPACE }}/ssc
+  GTEST: $GITHUB_WORKSPACE/googletest
+  SSCDIR: $GITHUB_WORKSPACE/ssc
 
 jobs:
   build:
