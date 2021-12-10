@@ -55,12 +55,13 @@ jobs:
 
     - name: Test
       # Turn off fast fail for when the landbosse tests write to cerr
+      shell: bash
       run: |
         set -e
         ${SSCDIR}/build/test/Test
-      shell: bash
+
       
- build-on-mac:
+  build-on-mac:
     runs-on: macos-latest
 
     steps:
