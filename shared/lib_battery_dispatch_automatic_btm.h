@@ -129,11 +129,12 @@ protected:
 	void check_debug(size_t hour_of_year, size_t idx, FILE*& p, bool& debug);
     bool check_new_month(size_t hour_of_year, size_t step);
     void compute_energy(double& E_max, FILE* p = NULL, const bool debug = false);
-    void set_battery_power(size_t idx, FILE* p = NULL, const bool debug = false);
+    void set_battery_power(size_t idx, size_t day_index, FILE* p = NULL, const bool debug = false);
 
     /*! Functions used by grid power target algorithms (peak shaving, input grid power targets) */
     void sort_grid(size_t idx, FILE *p = NULL, const bool debug = false);
     void target_power(double E_max, size_t idx, FILE* p = NULL, bool debug = false);
+    void apply_target_power(size_t day_index);
 
     /*! Functions used by price signal dispatch */
     double compute_costs(size_t idx, size_t year, size_t hour_of_year, FILE* p = NULL, bool debug = false); // Initial computation of no-dispatch costs, assigned hourly to grid points
