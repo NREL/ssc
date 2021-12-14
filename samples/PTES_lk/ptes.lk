@@ -1,0 +1,6 @@
+var( 'solar_resource_file', '../../test/input_cases/moltensalt_data/daggett_ca_34.865371_-116.783023_psmv3_60_tmy.csv' );
+
+var( 'time_start', 0 );
+var( 'time_stop', 31536000 );
+
+run('etes_ptes');

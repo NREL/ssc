@@ -16,6 +16,7 @@ set(TCS_SRC
 		csp_solver_cavity_receiver.cpp
 		csp_solver_core.cpp
 		csp_solver_cr_electric_resistance.cpp
+		csp_solver_cr_heat_pump.cpp
 		csp_solver_gen_collector_receiver.cpp
 		csp_solver_lf_dsg_collector_receiver.cpp
 		csp_solver_mono_eq_methods.cpp
@@ -24,6 +25,7 @@ set(TCS_SRC
 		csp_solver_mspt_receiver_222.cpp
 		csp_solver_pc_gen.cpp
 		csp_solver_pc_heat_sink.cpp
+		csp_solver_pc_ptes.cpp
 		csp_solver_pc_Rankine_indirect_224.cpp
 		csp_solver_pc_sco2.cpp
 		csp_solver_pc_steam_heat_sink.cpp
@@ -113,6 +115,7 @@ set(TCS_SRC
 		csp_solver_cavity_receiver.h
 		csp_solver_core.h
 		csp_solver_cr_electric_resistance.h
+		csp_solver_cr_heat_pump.h
 		csp_solver_gen_collector_receiver.h
 		csp_solver_lf_dsg_collector_receiver.h
 		csp_solver_mspt_collector_receiver.h
@@ -120,6 +123,7 @@ set(TCS_SRC
 		csp_solver_mspt_receiver_222.h
 		csp_solver_pc_gen.h
 		csp_solver_pc_heat_sink.h
+		csp_solver_pc_ptes.h
 		csp_solver_pc_Rankine_indirect_224.h
 		csp_solver_pc_sco2.h
 		csp_solver_pc_steam_heat_sink.h

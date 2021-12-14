@@ -379,7 +379,6 @@ public:
 
         // System Design Calcs
         double q_dot_pc_des = W_dot_cycle_des / eta_cycle;      //[MWt]
-        double Q_tes = q_dot_pc_des * tshours;                  //[MWt-hr]
         double q_dot_heater_des = q_dot_pc_des * heater_mult;   //[MWt]
         double system_capacity = W_dot_cycle_des * gross_net_conversion_factor * 1.E3; //[kWe]
         double Q_tes_des = q_dot_pc_des * tshours;              //[MWt-hr] TES thermal capacity at design
@@ -875,7 +874,7 @@ public:
             direct_capital_precontingency_cost = contingency_cost = total_direct_cost = total_land_cost =
             epc_and_owner_cost = sales_tax_cost = total_indirect_cost = total_installed_cost = estimated_installed_cost_per_cap = std::numeric_limits<double>::quiet_NaN();
 
-        N_mspt::calculate_etes_costs(Q_tes, tes_spec_cost, W_dot_cycle_des, power_cycle_spec_cost,
+        N_mspt::calculate_etes_costs(Q_tes_des, tes_spec_cost, W_dot_cycle_des, power_cycle_spec_cost,
             q_dot_heater_des, heater_spec_cost, bop_spec_cost, contingency_rate,
             plant_net_capacity, EPC_perc_direct_cost, EPC_per_power_cost, EPC_fixed_cost,
             total_land_perc_direct_cost, total_land_per_power_cost, total_land_fixed_cost,

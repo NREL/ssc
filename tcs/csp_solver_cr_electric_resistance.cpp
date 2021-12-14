@@ -417,6 +417,6 @@ double C_csp_cr_electric_resistance::calculate_thermal_efficiency_approx(const C
 
 double C_csp_cr_electric_resistance::get_collector_area()
 {
-    // Used by dispatch model
-    return 0.0;
+    // Collector area is not a relevant metric for an electric resistance heater
+    return std::numeric_limits<double>::quiet_NaN();
 }
