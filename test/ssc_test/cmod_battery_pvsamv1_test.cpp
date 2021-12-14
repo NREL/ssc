@@ -110,8 +110,8 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACBatteryModelIntegr
     ssc_number_t expectedBatteryChargeEnergy[3] = { 1442, 1443, 258 };
     ssc_number_t expectedBatteryDischargeEnergy[3] = { 1321, 1323, 233 };
 
-    ssc_number_t peakKwCharge[3] = { -2.91, -3.02, -2.25 };
-    ssc_number_t peakKwDischarge[3] = { 1.39, 1.30, 0.97 };
+    ssc_number_t peakKwCharge[3] = { -2.91, -2.66, -2.25 };
+    ssc_number_t peakKwDischarge[3] = { 1.39, 1.73, 0.97 };
     ssc_number_t peakCycles[3] = { 1, 1, 1 };
     ssc_number_t avgCycles[3] = { 1, 1, 0.4904 };
 
@@ -344,7 +344,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialDCBatteryModelIntegr
     ssc_number_t expectedBatteryDischargeEnergy[3] = { 1283.8, 1285.88, 226.3 };
 
     ssc_number_t peakKwCharge[3] = { -3.21, -2.96, -2.69 };
-    ssc_number_t peakKwDischarge[3] = { 1.40, 1.31, 0.967 };
+    ssc_number_t peakKwDischarge[3] = { 1.40, 1.74, 0.967 };
     ssc_number_t peakCycles[3] = { 1, 1, 1 };
     ssc_number_t avgCycles[3] = { 1.0, 1.0, 0.4794 };
 
@@ -451,7 +451,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, LCOS_test_cashloan)
 
     ssc_number_t lcos_real;
     ssc_data_get_number(data, "lcos_real", &lcos_real);
-    EXPECT_NEAR(lcos_real, 571.88, 0.1);
+    EXPECT_NEAR(lcos_real, 588.71, 0.1);
 }
 
 /// Test PVSAMv1 with all defaults and battery enabled with 3 automatic dispatch methods
@@ -664,18 +664,18 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_CustomDispatchBatteryModelD
 /// Test PVSAMv1 clipping with multiple subarrays
 TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, CommercialMultipleSubarrayBatteryIntegration)
 {
-    commercial_multiarray_default(data);
+    commercial_multiarray_default(data); // AC connected
 
     std::map<std::string, double> pairs;
     pairs["analysis_period"] = 1;
 
     ssc_number_t expectedEnergy = 543888;
-    ssc_number_t expectedBatteryChargeEnergy = 929;
-    ssc_number_t expectedBatteryDischargeEnergy = 849;
+    ssc_number_t expectedBatteryChargeEnergy = 785.1;
+    ssc_number_t expectedBatteryDischargeEnergy = 715.1;
     ssc_number_t expectedClipLoss = 590.8;
 
-    ssc_number_t peakKwCharge = -10.12;
-    ssc_number_t peakKwDischarge = 1.39;
+    ssc_number_t peakKwCharge = -9.93;
+    ssc_number_t peakKwDischarge = 1.24;
     ssc_number_t peakCycles = 1;
     ssc_number_t avgCycles = 1;
 
@@ -713,14 +713,14 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, CommercialMultipleSubarrayBatte
 
         auto batt_q_rel = data_vtab->as_vector_ssc_number_t("batt_capacity_percent");
         auto batt_cyc_avg = data_vtab->as_vector_ssc_number_t("batt_DOD_cycle_average");
-        EXPECT_NEAR(batt_q_rel.back(), 99.221, 2e-2);
-        EXPECT_NEAR(batt_cyc_avg.back(), 10.68, m_error_tolerance_lo);
+        EXPECT_NEAR(batt_q_rel.back(), 99.344, 2e-2);
+        EXPECT_NEAR(batt_cyc_avg.back(), 8.97, m_error_tolerance_lo);
     }
 
 }
 
 /// Test Clipping forecast and dispatch
-TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ClippingForecastTest1_DC_FOM_Dispatch)
+TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ClippingForecastTest1_DC_Dispatch)
 {
     commercial_multiarray_default(data);
 
@@ -733,7 +733,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ClippingForecastTest1_DC_FOM_Di
     ssc_number_t expectedBatteryDischargeEnergy = 343.96;
     ssc_number_t expectedClipLoss = 590.8;
 
-    ssc_number_t peakKwCharge = -9.488;
+    ssc_number_t peakKwCharge = -9.238;
     ssc_number_t peakKwDischarge = 1.1;
     ssc_number_t peakCycles = 1;
     ssc_number_t avgCycles = 1;
@@ -772,7 +772,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ClippingForecastTest1_DC_FOM_Di
 
 }
 
-TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ClippingForecastTest2_DC_FOM_Dispatch_w_forecast)
+TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ClippingForecastTest2_DC_Dispatch_w_forecast)
 {
     commercial_multiarray_default(data);
 
@@ -780,13 +780,14 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ClippingForecastTest2_DC_FOM_Di
     pairs["analysis_period"] = 1;
     pairs["batt_ac_or_dc"] = 0;
     set_array(data, "batt_pv_clipping_forecast", clipping_forecast, 8760);
+    // TODO: consider changing the dispatch algorithm for this and the previous test. Peak shaving does not use clipped energy, meaning the results are the same for this and the previous test
 
     ssc_number_t expectedEnergy = 543485;
     ssc_number_t expectedBatteryChargeEnergy = 929;
     ssc_number_t expectedBatteryDischargeEnergy = 343.96;
     ssc_number_t expectedClipLoss = 590.8;
 
-    ssc_number_t peakKwCharge = -9.488;
+    ssc_number_t peakKwCharge = -9.238;
     ssc_number_t peakKwDischarge = 1.1;
     ssc_number_t peakCycles = 1;
     ssc_number_t avgCycles = 1;
@@ -936,7 +937,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialDCBatteryModelPriceS
         auto batt_q_rel = data_vtab->as_vector_ssc_number_t("batt_capacity_percent");
         auto batt_cyc_avg = data_vtab->as_vector_ssc_number_t("batt_DOD_cycle_average");
         EXPECT_NEAR(batt_q_rel.back(), 97.958, 2e-2);
-        EXPECT_NEAR(batt_cyc_avg.back(), 25.94, 0.5); // High tolerance due to ~ 1% dispatch difference between linux and windows. Tighten in the future by improving the algorithm.
+        EXPECT_NEAR(batt_cyc_avg.back(), 25.94, 1.0); // High tolerance due to ~ 1% dispatch difference between linux and windows. Tighten in the future by improving the algorithm.
     }
 }
 

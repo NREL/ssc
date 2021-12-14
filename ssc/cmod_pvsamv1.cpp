@@ -1089,18 +1089,6 @@ void cm_pvsamv1::exec()
         if (nload != nrec && nload != 8760)
             throw exec_error("pvsamv1", "The critical electric load profile must have either same number of time steps as the weather file, or 8760 time steps.");
     }
-    if (is_assigned("batt_load_ac_forecast"))
-    {
-        p_load_forecast_in = as_vector_ssc_number_t("batt_load_ac_forecast");
-        nload = p_load_forecast_in.size();
-        if (nload == 1) {
-            // Length 1 is "empty" to UI lk
-            p_load_forecast_in.clear();
-        }
-        else if (nload != nrec && nload != 8760) {
-            throw exec_error("pvsamv1", "The electric load forecast profile must have either same number of time steps as the weather file, or 8760 time steps.");
-        }
-    }
 
     // resilience metrics for battery
     std::unique_ptr<resilience_runner> resilience = nullptr;
@@ -1115,6 +1103,23 @@ void cm_pvsamv1::exec()
         if (!Simulation->annualSimulation)
             throw exec_error("pvsamv1", "The PV+Battery configuration requires a simulation period that is continuous over one or more years.");
 
+        batt = std::make_shared<battstor>(*m_vartab, en_batt, nrec, ts_hour);
+        batt->setSharedInverter(sharedInverter);
+        batt_topology = batt->batt_vars->batt_topology;
+
+        if (is_assigned("batt_load_ac_forecast"))
+        {
+            p_load_forecast_in = as_vector_ssc_number_t("batt_load_ac_forecast");
+            nload = p_load_forecast_in.size();
+            if (nload == 1 || !batt->uses_forecast()) {
+                // Length 1 is "empty" to UI lk
+                p_load_forecast_in.clear();
+            }
+            else if (nload != nrec && nload != 8760) {
+                throw exec_error("pvsamv1", "The electric load forecast profile must have either same number of time steps as the weather file, or 8760 time steps.");
+            }
+        }
+
         p_load_forecast_full.reserve(nlifetime);
 
         int batt_forecast_choice = as_integer("batt_dispatch_wf_forecast_choice");
@@ -1122,20 +1127,26 @@ void cm_pvsamv1::exec()
             p_pv_clipping_forecast = as_vector_ssc_number_t("batt_pv_clipping_forecast");
             // Annual simulation is enforced above
             if (p_pv_clipping_forecast.size() < step_per_hour * 8760 && batt_forecast_choice == dispatch_t::WEATHER_FORECAST_CHOICE::WF_CUSTOM) {
-                throw exec_error("pvsamv1", "batt_pv_clipping_forecast forecast length is " + std::to_string(p_pv_clipping_forecast.size()) + " when custom weather file forecast is selected. Change batt_dispatch_wf_forecast_choice or provide a forecast of at least length " + std::to_string(step_per_hour * 8760));
+                if (batt->uses_forecast()) {
+                    throw exec_error("pvsamv1", "batt_pv_clipping_forecast forecast length is " + std::to_string(p_pv_clipping_forecast.size()) + " when custom weather file forecast is selected. Change batt_dispatch_wf_forecast_choice or provide a forecast of at least length " + std::to_string(step_per_hour * 8760));
+                }
+                else {
+                    p_pv_clipping_forecast.clear();
+                }
             }
         }
         if (is_assigned("batt_pv_ac_forecast")) {
             p_pv_ac_forecast = as_vector_ssc_number_t("batt_pv_ac_forecast");
             // Annual simulation is enforced above
             if (p_pv_ac_forecast.size() < step_per_hour * 8760 && batt_forecast_choice == dispatch_t::WEATHER_FORECAST_CHOICE::WF_CUSTOM) {
-                throw exec_error("pvsamv1", "batt_pv_clipping_forecast forecast length is " + std::to_string(p_pv_ac_forecast.size()) + " when custom weather file forecast is selected. Change batt_dispatch_wf_forecast_choice or provide a forecast of at least length " + std::to_string(step_per_hour * 8760));
+                if (batt->uses_forecast()) {
+                    throw exec_error("pvsamv1", "batt_pv_ac_forecast forecast length is " + std::to_string(p_pv_ac_forecast.size()) + " when custom weather file forecast is selected. Change batt_dispatch_wf_forecast_choice or provide a forecast of at least length " + std::to_string(step_per_hour * 8760));
+                }
+                else {
+                    p_pv_ac_forecast.clear();
+                }
             }
         }
-
-        batt = std::make_shared<battstor>(*m_vartab, en_batt, nrec, ts_hour);
-        batt->setSharedInverter(sharedInverter);
-        batt_topology = batt->batt_vars->batt_topology;
 
         // Multiple MPPT inverters not enabled with DC-connected batteries
         if (PVSystem->Inverter->nMpptInputs > 1 && en_batt && batt_topology == ChargeController::DC_CONNECTED)

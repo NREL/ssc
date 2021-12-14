@@ -238,11 +238,10 @@ void dispatch_automatic_behind_the_meter_t::update_dispatch(size_t year, size_t 
             double no_dispatch_cost = compute_costs(idx, year, hour_of_year, p, debug);
 
             compute_energy(E_max, p, debug);
-            cost_based_target_power(idx, year, hour_of_year, no_dispatch_cost, E_max, p, debug);
-
-            // Set battery power profile
-            set_battery_power(idx, p, debug);            
+            cost_based_target_power(idx, year, hour_of_year, no_dispatch_cost, E_max, p, debug);         
         }
+        // Set battery power profile
+        set_battery_power(idx, _day_index, p, debug);
         m_batteryPower->powerBatteryTarget = _P_battery_use[step];
     }
 	else if (_mode != dispatch_t::CUSTOM_DISPATCH)
@@ -261,10 +260,10 @@ void dispatch_automatic_behind_the_meter_t::update_dispatch(size_t year, size_t 
 			// Peak shaving scheme
 			compute_energy(E_max, p, debug);
 			target_power(E_max, idx, p, debug);
-
-			// Set battery power profile
-			set_battery_power(idx, p, debug);
 		}
+        // Set battery power profile
+        apply_target_power(_day_index); // Account for actual grid usage at this step
+        set_battery_power(idx, _day_index, p, debug); // Account for efficiencies and losses
 		// save for extraction
 		_P_target_current = _P_target_use[_day_index];
 		m_batteryPower->powerBatteryTarget = _P_battery_use[_day_index];
@@ -566,8 +565,18 @@ void dispatch_automatic_behind_the_meter_t::target_power(double E_useful, size_t
 		for (size_t i = 0; i != num_steps; i++)
 			_P_target_use[i] = P_target;
 	}
-    for (size_t i = 0; i != _P_battery_use.size(); i++)
-        _P_battery_use[i] = grid[i].Grid() - _P_target_use[i];
+
+}
+
+void dispatch_automatic_behind_the_meter_t::apply_target_power(size_t day_index)
+{
+    double pv_ac_power = m_batteryPower->powerSystem; // True for AC connected
+    if (m_batteryPower->connectionMode == m_batteryPower->DC_CONNECTED) {
+        m_batteryPower->sharedInverter->calculateACPower(m_batteryPower->powerSystem, m_batteryPower->voltageSystem, m_batteryPower->sharedInverter->Tdry_C);
+        pv_ac_power = m_batteryPower->sharedInverter->powerAC_kW;
+    }
+    double grid_power = m_batteryPower->powerLoad - pv_ac_power;
+    _P_battery_use[day_index] = grid_power - _P_target_use[day_index];
 }
 
 void dispatch_automatic_behind_the_meter_t::cost_based_target_power(size_t idx, size_t year, size_t hour_of_year, double no_dispatch_cost, double E_max, FILE* p, const bool debug)
@@ -847,21 +856,18 @@ void dispatch_automatic_behind_the_meter_t::check_power_restrictions(double& pow
     power = desiredCurrent * _Battery->V() * util::watt_to_kilowatt;
 }
 
-void dispatch_automatic_behind_the_meter_t::set_battery_power(size_t idx, FILE *p, const bool debug)
+void dispatch_automatic_behind_the_meter_t::set_battery_power(size_t idx, size_t day_index, FILE *p, const bool debug)
 {
-	for (size_t i = 0; i != _P_target_use.size(); i++) {
+    double loss_kw = _Battery->calculate_loss(_P_battery_use[day_index], idx); // Units are kWac for AC connected batteries, and kWdc for DC connected
 
-        double loss_kw = _Battery->calculate_loss(_P_battery_use[i], idx + i); // Units are kWac for AC connected batteries, and kWdc for DC connected
-
-		// At this point the target power is expressed in AC, must convert to DC for battery
-		if (m_batteryPower->connectionMode == m_batteryPower->AC_CONNECTED) {
-            _P_battery_use[i] = m_batteryPower->adjustForACEfficiencies(_P_battery_use[i], loss_kw);
-		}
-        else {
-            _P_battery_use[i] = m_batteryPower->adjustForDCEfficiencies(_P_battery_use[i], loss_kw);
-        }
+	// At this point the target power is expressed in AC, must convert to DC for battery
+	if (m_batteryPower->connectionMode == m_batteryPower->AC_CONNECTED) {
+        _P_battery_use[day_index] = m_batteryPower->adjustForACEfficiencies(_P_battery_use[day_index], loss_kw);
 	}
-
+    else {
+        _P_battery_use[day_index] = m_batteryPower->adjustForDCEfficiencies(_P_battery_use[day_index], loss_kw);
+    }
+	
 	if (debug)
 	{
 		for (size_t i = 0; i != _P_target_use.size(); i++)
