@@ -49,7 +49,7 @@ static const char *ElectricityRates_format_as_URDBv7_doc =
         "     'urdb_data' - table, data formatted as URDB v7 response\\n"
         "     'log' - string";
 
-SSCEXPORT void ElectricityRates_format_as_URDBv7(ssc_data_t data);
+SSCEXPORT bool ElectricityRates_format_as_URDBv7(ssc_data_t data);
 
 }
 

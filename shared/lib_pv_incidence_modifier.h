@@ -1,3 +1,25 @@
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 #ifndef _LIB_PV_INCIDENCE_MODIFIER_H_
 #define _LIB_PV_INCIDENCE_MODIFIER_H_
 
@@ -6,6 +28,8 @@
 #define AOI_MIN 0.5
 #define AOI_MAX 89.5
 
+
+// reference: De Soto, W., S. A. Klein and W. A. Beckman (2006). “Improvement and validation of a model for photovoltaic array performance.” Solar Energy 80(1): 78-88.
 static const double n_glass = 1.526;   // !refractive index of glass
 static const double l_glass = 0.002;   // !thickness of glass cover
 static const double k_glass = 4; // proportionality constant for glass
@@ -20,8 +44,8 @@ double transmittance(double theta1_deg, /* incidence angle of incoming radiation
 	double n_cover,  /* refractive index of cover material, n_glass = 1.586 */
 	double n_incoming, /* refractive index of incoming material, typically n_air = 1.0 */
 	double k,        /* proportionality constant assumed to be 4 (1/m) for derivation of Bouguer's law (set to zero to skip bougeur's law */
-	double l_thick,  /* material thickness (set to zero to skip Bouguer's law */
-	double *_theta2_deg = 0); /* thickness of cover material (m), usually 2 mm for typical module */
+	double l_thick,  /* thickness of cover material (m), usually 2 mm for typical module (set to zero to skip Bouguer's law) */
+	double *_theta2_deg = 0); /* returns angle of refraction in degrees */
 
 double iam(double theta_deg, bool ar_glass); // incidence angle modifier factor relative to normal incidence
 
@@ -44,7 +68,7 @@ double iam_nonorm(double theta_deg, bool ar_glass);  // non-normalized cover los
 double iamSjerpsKoomen(double n, double incidenceAngleRadians);
 
 /// Calculate Irradiance through the cover using the DeSoto model
-double calculateIrradianceThroughCoverDeSoto(double incidenceAngleDegrees, double zenithAngleDegrees, double tiltDegrees,
+double calculateIrradianceThroughCoverDeSoto(double incidenceAngleDegrees, double tiltDegrees,
 		double poaBeam, double poaSkyDiffuse, double poaGroundReflected, bool antiReflectiveGlass);
 
 static const double MarionAOICorrectionFactorsGlass[] = 

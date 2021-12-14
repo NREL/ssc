@@ -29,13 +29,16 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "core.h"
 #include "sscapi.h"
 
-#include <json/json.h>
+#include "../rapidjson/document.h"
+#include "../rapidjson/error/en.h" // parser errors returned as char strings
+#include "../rapidjson/stringbuffer.h"
+#include "../rapidjson/writer.h"
 
 #pragma warning (disable : 4706 )
 
 SSCEXPORT int ssc_version()
 {
-	return 259;
+	return 267;
 }
 
 SSCEXPORT const char *ssc_build_info()
@@ -63,6 +66,7 @@ extern module_entry_info
 	cm_entry_pvwattsv1_poa,
 	cm_entry_pvwattsv5,
 	cm_entry_pvwattsv7,
+    cm_entry_pvwattsv8,
 	cm_entry_pvwattsv5_1ts,
 	cm_entry_pv6parmod,
 	cm_entry_pvsandiainv,
@@ -81,8 +85,9 @@ extern module_entry_info
 	cm_entry_levpartflip,
 	cm_entry_equpartflip,
 	cm_entry_saleleaseback,
-	cm_entry_singleowner,
-	cm_entry_merchantplant,
+    cm_entry_singleowner,
+    cm_entry_communitysolar,
+    cm_entry_merchantplant,
 	cm_entry_host_developer,
 	cm_entry_swh,
 	cm_entry_geothermal,
@@ -158,6 +163,7 @@ static module_entry_info *module_table[] = {
 	&cm_entry_pvwattsv1_poa,
 	&cm_entry_pvwattsv5,
 	&cm_entry_pvwattsv7,
+    &cm_entry_pvwattsv8,
 	&cm_entry_pvwattsv5_1ts,
 	&cm_entry_pvsandiainv,
 	&cm_entry_wfreader,
@@ -175,8 +181,9 @@ static module_entry_info *module_table[] = {
 	&cm_entry_levpartflip,
 	&cm_entry_equpartflip,
 	&cm_entry_saleleaseback,
-	&cm_entry_singleowner,
-	&cm_entry_merchantplant,
+    &cm_entry_singleowner,
+    &cm_entry_communitysolar,
+    &cm_entry_merchantplant,
 	&cm_entry_host_developer,
 	&cm_entry_swh,
 	&cm_entry_geothermal,
@@ -668,7 +675,7 @@ SSCEXPORT ssc_var_t ssc_data_get_data_matrix(ssc_data_t p_data, const char *name
     }
     return dat;
 }
-
+/*
 void json_to_ssc_var(const Json::Value& json_val, ssc_var_t ssc_val){
     if (!ssc_val)
         return;
@@ -784,67 +791,199 @@ SSCEXPORT ssc_data_t json_to_ssc_data(const char* json_str){
     return vt;
 }
 
-Json::Value ssc_var_to_json(var_data* vd){
-    Json::Value json_val;
-    switch (vd->type){
-        default:
-        case SSC_INVALID:
-            return json_val;
-        case SSC_NUMBER:
-            json_val = vd->num[0];
-            return json_val;
-        case SSC_STRING:
-            json_val = vd->str;
-            return json_val;
-        case SSC_ARRAY:
-            for (Json::ArrayIndex i = 0; i < vd->num.ncols(); i++){
-                json_val.append(Json::Value(vd->num[i]));
+*/
+
+
+
+//////////////  RapidJSON testing
+
+void json_to_ssc_var(const rapidjson::Value& json_val, ssc_var_t ssc_val) {
+    if (!ssc_val)
+        return;
+    auto vd = static_cast<var_data*>(ssc_val);
+    vd->clear();
+    //using namespace Json;
+    //Json::Value::Members members;
+    bool is_arr, is_mat;
+    std::vector<ssc_number_t> vec;
+    std::vector<var_data>* vd_arr;
+    var_table* vd_tab;
+    
+    auto is_numerical = [](const rapidjson::Value& json_val) {
+        bool is_num = true;
+        for (rapidjson::SizeType i = 0; i < json_val.Size(); i++) {
+            if (!json_val[i].IsNumber() && !json_val[i].IsBool()) {
+                is_num = false;
+                break;
             }
-            return json_val;
-        case SSC_MATRIX:
-            json_val.resize((Json::ArrayIndex)vd->num.nrows());
-            for (Json::ArrayIndex i = 0; i < json_val.size(); i++){
-                for (Json::ArrayIndex j = 0; j < vd->num.ncols(); j++){
-                    json_val[i].append(vd->num.at(i, j));
+        }
+        return is_num;
+    };
+    
+    switch (json_val.GetType()) {
+    default:
+    case rapidjson::Type::kNullType:
+        return;
+    case rapidjson::Type::kNumberType:
+    case rapidjson::Type::kFalseType:
+    case rapidjson::Type::kTrueType:
+        vd->type = SSC_NUMBER;
+        vd->num[0] = json_val.GetDouble();
+        return;
+    case rapidjson::Type::kStringType:
+        vd->type = SSC_STRING;
+        vd->str = json_val.GetString();
+        return;
+    case rapidjson::Type::kArrayType:
+        // determine if SSC_ARRAY
+        is_arr = is_numerical(json_val);
+        if (is_arr) {
+            vd->type = SSC_ARRAY;
+            if (json_val.Size() == 0) {
+                vec.push_back(0.0);
+            }
+            else {
+                for (rapidjson::SizeType i = 0; i < json_val.Size(); i++) {
+                    vec.push_back(json_val[i].GetDouble());
                 }
             }
-            return json_val;
-        case SSC_DATARR:
-            for (auto& dat : vd->vec){
-                json_val.append(ssc_var_to_json(&dat));
+            vd->num.assign(&vec[0], vec.size());
+            return;
+        }
+        // SSC_MATRIX
+        is_mat = true;
+        for (rapidjson::SizeType i = 0; i < json_val.Size(); i++) {
+            if (json_val[i].GetType() != rapidjson::Type::kArrayType || !is_numerical(json_val[i])) {
+                is_mat = false;
+                break;
             }
-            return json_val;
-        case SSC_DATMAT:
-            for (auto& row : vd->mat){
-                auto& json_row = json_val.append(Json::Value(Json::ValueType::arrayValue));
-                for (auto& dat : row){
-                    json_row.append(ssc_var_to_json(&dat));
+        }
+        if (is_mat) {
+            vd->type = SSC_MATRIX;
+            if (json_val.Size() == 0) {
+                return;
+            }
+            for (rapidjson::SizeType irow = 0; irow < json_val.Size(); irow++) {
+                for (rapidjson::SizeType icol = 0; icol < json_val[irow].Size(); icol++) {
+                    vec.push_back(json_val[irow][icol].GetDouble());
                 }
             }
-            return json_val;
-        case SSC_TABLE:
-            for (auto const &it : *vd->table.get_hash()){
-                json_val[it.first] = ssc_var_to_json(it.second);
-            }
-            return json_val;
+            vd->num.assign(&vec[0], json_val.Size(), json_val[0].Size());
+            return;
+        }
+        // SSC_DATARR
+        vd_arr = &vd->vec;
+        for (rapidjson::SizeType i = 0; i < json_val.Size(); i++) {
+            vd_arr->emplace_back(var_data());
+            auto entry = &vd_arr->back();
+            json_to_ssc_var(json_val[i], entry);
+        }
+        vd->type = SSC_DATARR;
+        return;
+    case rapidjson::Type::kObjectType:
+        vd_tab = &vd->table;
+        for (rapidjson::Value::ConstMemberIterator itr = json_val.MemberBegin(); itr != json_val.MemberEnd(); ++itr) {
+            auto entry = vd_tab->assign(itr->name.GetString(), var_data());
+            json_to_ssc_var(itr->value, entry);
+        }
+        vd->type = SSC_TABLE;
     }
 }
 
-SSCEXPORT const char* ssc_data_to_json(ssc_data_t p_data){
+SSCEXPORT ssc_data_t json_to_ssc_data(const char* json_str) {
+    auto vt = new var_table;
+    rapidjson::Document document;
+    document.Parse(json_str);
+    if (document.HasParseError()) {
+        std::string s = rapidjson::GetParseError_En(document.GetParseError());
+        vt->assign("error", s);
+        return dynamic_cast<ssc_data_t>(vt);
+    }
+//    static const char* kTypeNames[] = { "Null", "False", "True", "Object", "Array", "String", "Number" };
+    for (rapidjson::Value::ConstMemberIterator itr = document.MemberBegin(); itr != document.MemberEnd(); ++itr) {
+        //printf("Type of member %s is %s\n", itr->name.GetString(), kTypeNames[itr->value.GetType()]);
+        var_data ssc_val;
+        json_to_ssc_var(itr->value, &ssc_val);
+        vt->assign(itr->name.GetString(), ssc_val);
+    }
+    return vt;
+}
+
+
+
+
+rapidjson::Value ssc_var_to_json(var_data* vd, rapidjson::Document& d) {
+    rapidjson::Value json_val;
+    switch (vd->type) {
+    default:
+    case SSC_INVALID:
+        return json_val;
+    case SSC_NUMBER:
+        json_val = vd->num[0];
+        return json_val;
+    case SSC_STRING:
+        json_val.SetString(vd->str.c_str(),d.GetAllocator());
+        return json_val;
+    case SSC_ARRAY:
+        json_val.SetArray();
+        for (size_t i = 0; i < vd->num.ncols(); i++) {
+            json_val.PushBack(rapidjson::Value(vd->num[i]), d.GetAllocator());
+        }
+        return json_val;
+    case SSC_MATRIX:
+        json_val.SetArray();
+        for (size_t i = 0; i < vd->num.nrows(); i++) {
+            json_val.PushBack(rapidjson::Value(rapidjson::kArrayType), d.GetAllocator());
+            for (size_t j = 0; j < vd->num.ncols(); j++) {
+                json_val[(rapidjson::SizeType)i].PushBack(vd->num.at(i, j),d.GetAllocator());
+            }
+        }
+        return json_val;
+    case SSC_DATARR:
+        json_val.SetArray();
+        for (auto& dat : vd->vec) {
+            json_val.PushBack(ssc_var_to_json(&dat,d),d.GetAllocator());
+        }
+        return json_val;
+    case SSC_DATMAT:
+        json_val.SetArray();
+        for (auto& row : vd->mat) {
+            auto json_row =rapidjson::Value(rapidjson::kArrayType);
+            for (auto& dat : row) {
+                json_row.PushBack(ssc_var_to_json(&dat,d), d.GetAllocator());
+            }
+            json_val.PushBack(json_row, d.GetAllocator());
+        }
+        return json_val;
+    case SSC_TABLE:
+        json_val.SetObject();
+        for (auto const& it : *vd->table.get_hash()) {
+            json_val.AddMember(rapidjson::Value(it.first.c_str(), d.GetAllocator()).Move(), ssc_var_to_json(it.second, d).Move(), d.GetAllocator());
+        }
+        return json_val;
+    }
+}
+
+SSCEXPORT const char* ssc_data_to_json(ssc_data_t p_data) {
     auto vt = static_cast<var_table*>(p_data);
     if (!vt) return nullptr;
 
-    Json::Value root;
-    for (auto const &it : *vt->get_hash()){
-        root[it.first] = ssc_var_to_json(it.second);
+    rapidjson::Document root;
+    root.SetObject();
+    for (auto const& it : *vt->get_hash()) {
+        root.AddMember(rapidjson::Value(it.first.c_str(), it.first.size(), root.GetAllocator()).Move(), ssc_var_to_json(it.second, root).Move(), root.GetAllocator());
     }
-    Json::StreamWriterBuilder builder;
-    builder.settings_["indentation"] = "";
-    const std::string json_file = Json::writeString(builder, root);
-    char *arr = (char*)malloc(strlen(json_file.c_str()) + 1);;
-    strcpy(arr, json_file.c_str());
-    return arr;
+    rapidjson::StringBuffer buffer;
+    buffer.Clear();
+    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+    root.Accept(writer);
+
+    return strdup(buffer.GetString());
 }
+ 
+
+
+
 
 
 SSCEXPORT ssc_entry_t ssc_module_entry( int index )

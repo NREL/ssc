@@ -40,7 +40,7 @@ static const char* me_array_cable_length_doc =
     "Output: key-value pairs added to var_table\\n"
     "     'inter_array_cable_length' - double [m]\\n";
 
-SSCEXPORT void me_array_cable_length(ssc_data_t data);
+SSCEXPORT bool me_array_cable_length(ssc_data_t data);
 
 
 #ifdef __cplusplus

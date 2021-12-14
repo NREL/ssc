@@ -13,6 +13,8 @@ set(SSC_SRC
 		cmod_annualoutput.cpp
 		cmod_battery.cpp
 		cmod_battery.h
+		cmod_battery_eqns.cpp
+		cmod_battery_eqns.h
         cmod_battery_stateful.cpp
         cmod_battery_stateful.h
 		cmod_battwatts.cpp
@@ -78,12 +80,14 @@ set(SSC_SRC
 		cmod_pvwattsv1_poa.cpp
 		cmod_pvwattsv5.cpp
 		cmod_pvwattsv7.cpp
+		cmod_pvwattsv8.cpp
 		cmod_saleleaseback.cpp
 		cmod_sco2_air_cooler.cpp
 		cmod_sco2_csp_system.cpp
 		cmod_sco2_csp_ud_pc_tables.cpp
 		cmod_singlediode.cpp
 		cmod_singleowner.cpp
+		cmod_communitysolar.cpp
 		cmod_snowmodel.cpp
 		cmod_solarpilot.cpp
 		cmod_swh.cpp
@@ -224,13 +228,12 @@ endif()
 #####################################################################################################################
 
 set( DEPENDENCIES
-	solarpilot
+	solarpilot_core
 	tcs
 	nlopt
 	shared
 	lpsolve
 	splinter
-	jsoncpp_lib
 	)
 foreach( name ${DEPENDENCIES} )
 	target_link_libraries(ssc ${name})

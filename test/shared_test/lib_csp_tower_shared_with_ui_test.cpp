@@ -99,8 +99,6 @@ NAMESPACE_TEST(csp_common, TowerSharedWithUi, SolarPilotField) {
     ASSERT_NEAR_FRAC(GetNum(vd, "land_max_calc"), 1837.85, kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "land_min_calc"), 145.094, kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "n_hel"), 8790., kErrorToleranceHi);
-    ASSERT_NEAR_FRAC(GetNum(vd, "opt_algorithm"), 1., kErrorToleranceHi);
-    ASSERT_NEAR_FRAC(GetNum(vd, "opt_flux_penalty"), 0.25, kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "q_design"), 670., kErrorToleranceHi);
 }
 
@@ -145,8 +143,6 @@ NAMESPACE_TEST(csp_common, TowerSharedWithUi, SolarPilotFieldWithPeriodUse) {
     ASSERT_NEAR_FRAC(GetNum(vd, "land_max_calc"), 1837.85, kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "land_min_calc"), 145.094, kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "n_hel"), 8790., kErrorToleranceHi);
-    ASSERT_NEAR_FRAC(GetNum(vd, "opt_algorithm"), 1., kErrorToleranceHi);
-    ASSERT_NEAR_FRAC(GetNum(vd, "opt_flux_penalty"), 0.25, kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "q_design"), 670., kErrorToleranceHi);
 }
 
@@ -165,7 +161,7 @@ NAMESPACE_TEST(csp_common, TowerSharedWithUi, Receiver) {
     vd->assign("h_tower", 193.458);
     vd->assign("piping_length_mult", 2.6);
     vd->assign("piping_length_const", 0.);
-    vd->assign("piping_loss", 10200.);
+    vd->assign("piping_loss_coefficient", 2.);
     std::vector<double> field_fluid_properties{ 1, 7, 0, 0, 0, 0, 0, 0, 0 };
     util::matrix_t<double> field_fl_props(1, 9, &field_fluid_properties);
     vd->assign("field_fl_props", field_fl_props);
@@ -175,10 +171,9 @@ NAMESPACE_TEST(csp_common, TowerSharedWithUi, Receiver) {
     ASSERT_NEAR_FRAC(GetNum(vd, "csp_pt_rec_htf_t_avg"), 432., kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "csp_pt_rec_htf_c_avg"), 1.5066, kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "csp_pt_rec_max_flow_to_rec"), 1853.5, kErrorToleranceHi);
-    ASSERT_NEAR_FRAC(GetNum(vd, "csp_pt_rec_cav_ap_height"), 18., kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "rec_aspect"), 1.349, kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "piping_length"), 502.991, kErrorToleranceHi);
-    ASSERT_NEAR_FRAC(GetNum(vd, "piping_loss_tot"), 5130.51, kErrorToleranceHi);
+    ASSERT_NEAR_FRAC(GetNum(vd, "piping_loss_tot"), 789.262, kErrorToleranceHi);
 }
 
 NAMESPACE_TEST(csp_common, TowerSharedWithUi, ReceiverWithPeriodUse) {
@@ -196,7 +191,7 @@ NAMESPACE_TEST(csp_common, TowerSharedWithUi, ReceiverWithPeriodUse) {
     vd->assign("h_tower", 193.458);
     vd->assign("piping_length_mult", 2.6);
     vd->assign("piping_length_const", 0.);
-    vd->assign("piping_loss", 10200.);
+    vd->assign("piping_loss_coefficient", 2.);
     std::vector<double> field_fluid_properties{ 1, 7, 0, 0, 0, 0, 0, 0, 0 };
     util::matrix_t<double> field_fl_props(1, 9, &field_fluid_properties);
     vd->assign("field_fl_props", field_fl_props);
@@ -206,10 +201,9 @@ NAMESPACE_TEST(csp_common, TowerSharedWithUi, ReceiverWithPeriodUse) {
     ASSERT_NEAR_FRAC(GetNum(vd, "csp_pt_rec_htf_t_avg"), 432., kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "csp_pt_rec_htf_c_avg"), 1.5066, kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "csp_pt_rec_max_flow_to_rec"), 1853.5, kErrorToleranceHi);
-    ASSERT_NEAR_FRAC(GetNum(vd, "csp_pt_rec_cav_ap_height"), 18., kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "rec_aspect"), 1.349, kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "piping_length"), 502.991, kErrorToleranceHi);
-    ASSERT_NEAR_FRAC(GetNum(vd, "piping_loss_tot"), 5130.51, kErrorToleranceHi);
+    ASSERT_NEAR_FRAC(GetNum(vd, "piping_loss_tot"), 789.262, kErrorToleranceHi);
 }
 
 NAMESPACE_TEST(csp_common, TowerSharedWithUi, Tes) {
@@ -222,14 +216,17 @@ NAMESPACE_TEST(csp_common, TowerSharedWithUi, Tes) {
     data_vtab->assign("tshours", 10.);
     data_vtab->assign("T_htf_hot_des", 574.);
     data_vtab->assign("T_htf_cold_des", 290.);
-    data_vtab->assign("rec_htf", 17);
+    data_vtab->assign("store_fluid", 17);
     std::vector<double> field_fluid_properties{ 1, 7, 0, 0, 0, 0, 0, 0, 0 };
     util::matrix_t<double> field_fl_props(1, 9, &field_fluid_properties);
-    data_vtab->assign("field_fl_props", field_fl_props);
+    data_vtab->assign("store_fl_props", field_fl_props);
     data_vtab->assign("h_tank_min", 1.);
     data_vtab->assign("h_tank", 12.);
     data_vtab->assign("tank_pairs", 1.);
     data_vtab->assign("u_tank", 0.4);
+    data_vtab->assign("field_fluid", 17);
+    data_vtab->assign("field_fl_props", field_fl_props);
+    data_vtab->assign("dt_hot", 5);
 
     int errors = run_module(data, "ui_tes_calcs");
     EXPECT_FALSE(errors);
@@ -252,14 +249,17 @@ NAMESPACE_TEST(csp_common, TowerSharedWithUi, TesWithPeriodUse) {
     data_vtab->assign("tshours", 10.);
     data_vtab->assign("T_htf_hot_des", 574.);
     data_vtab->assign("T_htf_cold_des", 290.);
-    data_vtab->assign("rec_htf", 17);
+    data_vtab->assign("store_fluid", 17);
     std::vector<double> field_fluid_properties{ 1, 7, 0, 0, 0, 0, 0, 0, 0 };
     util::matrix_t<double> field_fl_props(1, 9, &field_fluid_properties);
-    data_vtab->assign("field_fl_props", field_fl_props);
+    data_vtab->assign("store_fl_props", field_fl_props);
     data_vtab->assign("h_tank_min", 1.);
     data_vtab->assign("h_tank", 12.);
     data_vtab->assign("tank_pairs", 1.);
     data_vtab->assign("u_tank", 0.4);
+    data_vtab->assign("field_fluid", 17);
+    data_vtab->assign("field_fl_props", field_fl_props);
+    data_vtab->assign("dt_hot", 5);
 
     int errors = run_module(data, "ui_tes_calcs");
     EXPECT_FALSE(errors);

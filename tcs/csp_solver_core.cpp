@@ -25,10 +25,14 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "lib_util.h"
 #include "csp_dispatch.h"
+#include "etes_dispatch.h"
 
 #include <algorithm>
 
 #include <sstream>
+
+#undef min
+#undef max
 
 void C_timestep_fixed::init(double time_start /*s*/, double step /*s*/)
 {
@@ -160,7 +164,9 @@ static C_csp_reported_outputs::S_output_info S_solver_output_info[] =
 	{C_csp_solver::C_solver_outputs::CTRL_OP_MODE_SEQ_A, C_csp_reported_outputs::TS_1ST},		  //[-] First 3 operating modes tried
 	{C_csp_solver::C_solver_outputs::CTRL_OP_MODE_SEQ_B, C_csp_reported_outputs::TS_1ST},		  //[-] Next 3 operating modes tried
 	{C_csp_solver::C_solver_outputs::CTRL_OP_MODE_SEQ_C, C_csp_reported_outputs::TS_1ST},		  //[-] Final 3 operating modes tried
+	{C_csp_solver::C_solver_outputs::DISPATCH_REL_MIP_GAP, C_csp_reported_outputs::TS_1ST},		      //[-] Relative MIP gap from optimization solver
 	{C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_STATE, C_csp_reported_outputs::TS_1ST},		  //[-] The status of the dispatch optimization solver
+    {C_csp_solver::C_solver_outputs::DISPATCH_SUBOPT_FLAG, C_csp_reported_outputs::TS_1ST},		  //[-] Flag specifing information about LPSolve suboptimal result
 	{C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_ITER, C_csp_reported_outputs::TS_1ST},		  //[-] Number of iterations before completing dispatch optimization
 	{C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_OBJ, C_csp_reported_outputs::TS_1ST},		  //[?] Objective function value achieved by the dispatch optimization solver
 	{C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_OBJ_RELAX, C_csp_reported_outputs::TS_1ST},	  //[?] Objective function value for the relaxed continuous problem 
@@ -223,7 +229,9 @@ C_csp_solver::C_csp_solver(C_csp_weatherreader &weather,
 	C_csp_power_cycle &power_cycle,
 	C_csp_tes &tes,
 	C_csp_tou &tou,
+    base_dispatch_opt &dispatch,
 	S_csp_system_params &system,
+    C_csp_collector_receiver* heater,
 	bool(*pf_callback)(std::string &log_msg, std::string &progress_msg, void *data, double progress, int out_type),
 	void *p_cmod_active) :
 	mc_weather(weather), 
@@ -231,8 +239,21 @@ C_csp_solver::C_csp_solver(C_csp_weatherreader &weather,
 	mc_power_cycle(power_cycle),
 	mc_tes(tes),
 	mc_tou(tou),
+    mc_dispatch(dispatch),
 	ms_system_params(system)
 {
+    // Assign remaining member data
+    mp_heater = heater;
+    mpf_callback = pf_callback;
+    mp_cmod_active = p_cmod_active;
+
+    // Default to a system without a parallel heater
+    if (mp_heater == NULL) {
+        m_is_parallel_heater = false;
+    }
+    else {
+        m_is_parallel_heater = true;
+    }
 
 	// Hierarchy logic
 	//reset_hierarchy_logic();
@@ -241,11 +262,12 @@ C_csp_solver::C_csp_solver(C_csp_weatherreader &weather,
 	// Inititalize non-reference member data
 	m_T_htf_cold_des = m_P_cold_des = m_x_cold_des =
 		m_q_dot_rec_des = m_A_aperture =
+        m_PAR_HTR_T_htf_cold_des = m_PAR_HTR_P_cold_des = m_PAR_HTR_x_cold_des = m_PAR_HTR_q_dot_rec_des = m_PAR_HTR_A_aperture =
 		m_cycle_W_dot_des = m_cycle_eta_des = m_cycle_q_dot_des = m_cycle_max_frac = m_cycle_cutoff_frac =
 		m_cycle_sb_frac_des = m_cycle_T_htf_hot_des =
 		m_cycle_P_hot_des = m_cycle_x_hot_des = 
 		m_m_dot_pc_des = m_m_dot_pc_min =
-        m_m_dot_pc_max = m_m_dot_pc_max_startup = m_T_htf_pc_cold_est = std::numeric_limits<double>::quiet_NaN();
+        m_m_dot_pc_max = m_m_dot_pc_max_startup = m_W_dot_bop_design = m_T_htf_pc_cold_est = std::numeric_limits<double>::quiet_NaN();
 
     m_is_cr_config_recirc = true;
 
@@ -266,8 +288,7 @@ C_csp_solver::C_csp_solver(C_csp_weatherreader &weather,
 
 	mv_time_local.reserve(10);
 
-	mpf_callback = pf_callback;
-	mp_cmod_active = p_cmod_active;
+	
 
 	// Solved Controller Variables
 	m_defocus = std::numeric_limits<double>::quiet_NaN();
@@ -326,6 +347,21 @@ void C_csp_solver::init()
 	m_x_cold_des = cr_solved_params.m_x_cold_des;				//[-]
 	m_q_dot_rec_des = cr_solved_params.m_q_dot_rec_des;			//[MW]
 	m_A_aperture = cr_solved_params.m_A_aper_total;				//[m2]
+
+        // Parallel Heater
+    if (m_is_parallel_heater) {
+        C_csp_collector_receiver::S_csp_cr_solved_params par_htr_solved_params;
+
+        mp_heater->init(init_inputs, par_htr_solved_params);
+        mc_csp_messages.transfer_messages(mp_heater->mc_csp_messages);
+
+        m_PAR_HTR_T_htf_cold_des = par_htr_solved_params.m_T_htf_cold_des;      //[K]
+        m_PAR_HTR_P_cold_des = par_htr_solved_params.m_P_cold_des;              //[kPa]
+        m_PAR_HTR_x_cold_des = par_htr_solved_params.m_x_cold_des;              //[-]
+        m_PAR_HTR_q_dot_rec_des = par_htr_solved_params.m_q_dot_rec_des;        //[MWt]
+        m_PAR_HTR_A_aperture = par_htr_solved_params.m_A_aper_total;            //[m2]
+    }
+
 		// Power cycle
 	C_csp_power_cycle::S_solved_params pc_solved_params;
 	mc_power_cycle.init(pc_solved_params);
@@ -350,10 +386,11 @@ void C_csp_solver::init()
     tes_init_inputs.T_from_cr_at_des = cr_solved_params.m_T_htf_hot_des;
     tes_init_inputs.P_to_cr_at_des = cr_solved_params.m_dP_sf;
 	mc_tes.init(tes_init_inputs);
+    mc_csp_messages.transfer_messages(mc_tes.mc_csp_messages);
 		// TOU
     mc_tou.mc_dispatch_params.m_isleapyear = mc_weather.ms_solved_params.m_leapyear;
 	mc_tou.init();
-	mc_tou.init_parent();
+	mc_tou.init_parent(mc_dispatch.solver_params.dispatch_optimize);
 		// Thermal Storage
 	m_is_tes = mc_tes.does_tes_exist();
     bool m_does_tes_enable_cr_to_cold_tank = mc_tes.is_cr_to_cold_allowed();
@@ -374,8 +411,14 @@ void C_csp_solver::init()
 
     m_is_cr_config_recirc = true;
 
-    if (!mc_tou.mc_dispatch_params.m_is_block_dispatch && !mc_tou.mc_dispatch_params.m_dispatch_optimize && !mc_tou.mc_dispatch_params.m_is_arbitrage_policy) {
+    if (!mc_tou.mc_dispatch_params.m_is_block_dispatch && !mc_dispatch.solver_params.dispatch_optimize && !mc_tou.mc_dispatch_params.m_is_arbitrage_policy) {
         throw(C_csp_exception("Either block dispatch or dispatch optimization must be specified", "CSP Solver"));
+    }
+
+    if (mc_dispatch.solver_params.dispatch_optimize)
+    {
+        mc_dispatch.pointers.set_pointers(mc_weather, &mc_collector_receiver, &mc_power_cycle, &mc_tes, &mc_csp_messages, &mc_kernel.mc_sim_info);
+        mc_dispatch.init(m_cycle_q_dot_des, m_cycle_eta_des);
     }
 
     // Value helps solver get out of T_field_htf_cold iteration when weird conditions cause the solution to be a very cold value
@@ -383,11 +426,22 @@ void C_csp_solver::init()
     m_T_field_cold_limit = -100.0;      //[C]
     m_T_field_in_hot_limit = (0.9*m_cycle_T_htf_hot_des + 0.1*m_T_htf_cold_des) - 273.15;   //[C]
 
+    double W_dot_ratio_des = 1.0;       //[-]
+    m_W_dot_bop_design = m_cycle_W_dot_des * ms_system_params.m_bop_par * ms_system_params.m_bop_par_f *
+        (ms_system_params.m_bop_par_0 + ms_system_params.m_bop_par_1 * W_dot_ratio_des + ms_system_params.m_bop_par_2 * pow(W_dot_ratio_des, 2));   //[MWe]
 
 	if( mc_collector_receiver.m_is_sensible_htf != mc_power_cycle.m_is_sensible_htf )
 	{
 		throw(C_csp_exception("The collector-receiver and power cycle models have incompatible HTF - direct/indirect assumptions", "CSP Solver"));
 	}
+
+    if (!mc_collector_receiver.m_is_sensible_htf && m_is_parallel_heater) {
+        throw(C_csp_exception("Model does not allow parallel heater with latent heat receivers", "CSP Solver"));
+    }
+
+    if (m_is_parallel_heater && m_is_rec_to_coldtank_allowed) {
+        throw(C_csp_exception("Model does not allow parallel heater when receiver is configured to send HTF to cold tank", "CSP Solver"));
+    }
 
     /* 
     If no TES exists, initialize values to zero. They won't be touched again
@@ -411,6 +465,11 @@ void C_csp_solver::init()
 	}
 }
 
+void C_csp_solver::get_design_parameters(double& W_dot_bop_design /*MWe*/)
+{
+    W_dot_bop_design = m_W_dot_bop_design;      //[MWe]
+}
+
 int C_csp_solver::steps_per_hour()
 {
 	// Get number of records in weather file
@@ -423,7 +482,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 {
 	// Get number of records in weather file
 	int n_wf_records = (int)mc_weather.m_weather_data_provider->nrecords();
-	int step_per_hour = n_wf_records / 8760;
+	int step_per_hour = n_wf_records / 8760;    // TODO: this is in multiple places (here and dispatch (moved over from tou))
 
 	double wf_step = 3600.0 / step_per_hour;	//[s] Weather file time step - would like to check this against weather file, some day
 	
@@ -432,119 +491,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 	// Check the collector-receiver model for a maximum step
 	if(mc_collector_receiver.m_max_step > 0.0)
 	{
-		baseline_step = max(m_step_tolerance, min(baseline_step, mc_collector_receiver.m_max_step));
+		baseline_step = std::max(m_step_tolerance, std::min(baseline_step, mc_collector_receiver.m_max_step));
 	}
 	
 	mc_kernel.init(sim_setup, wf_step, baseline_step, mc_csp_messages);
-
-    //instantiate dispatch optimization object
-    csp_dispatch_opt dispatch;
-    //load parameters used by dispatch algorithm
-    //-------------------------------    
     
-	if( mc_tou.mc_dispatch_params.m_dispatch_optimize )
-	{
-		dispatch.copy_weather_data(mc_weather);
-		dispatch.params.col_rec = &mc_collector_receiver;
-		dispatch.params.mpc_pc = &mc_power_cycle;
-		dispatch.params.siminfo = &mc_kernel.mc_sim_info;
-		dispatch.params.messages = &mc_csp_messages;
-
-		dispatch.params.dt = 1./(double)mc_tou.mc_dispatch_params.m_disp_steps_per_hour;  //hr
-		dispatch.params.dt_pb_startup_cold = mc_power_cycle.get_cold_startup_time();
-		dispatch.params.dt_pb_startup_hot = mc_power_cycle.get_hot_startup_time();
-		dispatch.params.q_pb_standby = mc_power_cycle.get_standby_energy_requirement()*1000.;
-		dispatch.params.e_pb_startup_cold = mc_power_cycle.get_cold_startup_energy()*1000.;
-		dispatch.params.e_pb_startup_hot = mc_power_cycle.get_hot_startup_energy()*1000.;
-
-		dispatch.params.dt_rec_startup = mc_collector_receiver.get_startup_time() / 3600.;
-		dispatch.params.e_rec_startup = mc_collector_receiver.get_startup_energy() * 1000;
-		dispatch.params.q_rec_min = mc_collector_receiver.get_min_power_delivery()*1000.;
-		dispatch.params.w_rec_pump = mc_collector_receiver.get_pumping_parasitic_coef();
-
-
-		dispatch.params.e_tes_init = mc_tes.get_initial_charge_energy() * 1000;
-		dispatch.params.e_tes_min = mc_tes.get_min_charge_energy() * 1000;
-		dispatch.params.e_tes_max = mc_tes.get_max_charge_energy() * 1000;
-		dispatch.params.tes_degrade_rate = mc_tes.get_degradation_rate();
-
-		dispatch.params.q_pb_max = mc_power_cycle.get_max_thermal_power() * 1000;
-		dispatch.params.q_pb_min = mc_power_cycle.get_min_thermal_power() * 1000;
-		dispatch.params.q_pb_des = m_cycle_q_dot_des*1000.;
-		dispatch.params.eta_cycle_ref = mc_power_cycle.get_efficiency_at_load(1.);
-
-        dispatch.params.disp_time_weighting = mc_tou.mc_dispatch_params.m_disp_time_weighting;
-		dispatch.params.rsu_cost = mc_tou.mc_dispatch_params.m_rsu_cost;
-		dispatch.params.csu_cost = mc_tou.mc_dispatch_params.m_csu_cost;
-		dispatch.params.pen_delta_w = mc_tou.mc_dispatch_params.m_pen_delta_w;
-        dispatch.params.disp_inventory_incentive = mc_tou.mc_dispatch_params.m_disp_inventory_incentive;
-		dispatch.params.q_rec_standby = mc_tou.mc_dispatch_params.m_q_rec_standby;
-		
-		dispatch.params.w_rec_ht = mc_tou.mc_dispatch_params.m_w_rec_ht;
-		dispatch.params.w_track = mc_collector_receiver.get_tracking_power()*1000.0;	//kWe
-		dispatch.params.w_stow = mc_collector_receiver.get_col_startup_power()*1000.0;	//kWe-hr
-		dispatch.params.w_cycle_pump = mc_power_cycle.get_htf_pumping_parasitic_coef();// kWe/kWt
-		dispatch.params.w_cycle_standby = dispatch.params.q_pb_standby*dispatch.params.w_cycle_pump; //kWe
-
-		//Cycle efficiency
-		dispatch.params.eff_table_load.clear();
-		//add zero point
-		dispatch.params.eff_table_load.add_point(0., 0.);    //this is required to allow the model to converge
-
-		int neff = 2;   //mjw: if using something other than 2, the linear approximation assumption and associated code in csp_dispatch.cpp/calculate_parameters() needs to be reformulated.
-		for(int i=0; i<neff; i++)
-		{
-			double x = dispatch.params.q_pb_min + (dispatch.params.q_pb_max - dispatch.params.q_pb_min)/(double)(neff - 1)*i;
-			double xf = x * 1.e-3/m_cycle_q_dot_des;  //MW
-
-			double eta;
-        
-			//eta = 0.86 + xf * 0.28 - xf*xf * 0.14;  //Equation from curve fit of power tower steam rankine Type 224
-			//eta *= m_cycle_eta_des;
-			eta = mc_power_cycle.get_efficiency_at_load(xf);
-
-			dispatch.params.eff_table_load.add_point(x, eta);
-		}
-
-		//cycle efficiency vs temperature
-		dispatch.params.eff_table_Tdb.clear();
-        dispatch.params.wcondcoef_table_Tdb.clear();
-		int neffT = 40;
-
-		for(int i=0; i<neffT; i++)
-		{
-			double T = -10. + 60./(double)(neffT - 1) * i;
-            double wcond;
-			double eta = mc_power_cycle.get_efficiency_at_TPH(T, 1., 30., &wcond) / m_cycle_eta_des;  
-
-			dispatch.params.eff_table_Tdb.add_point(T, eta);
-            dispatch.params.wcondcoef_table_Tdb.add_point(T, wcond/m_cycle_W_dot_des); //fraction of rated gross gen
-		}
-
-	}
-    
-
-        //solver parameters
-    dispatch.solver_params.max_bb_iter = mc_tou.mc_dispatch_params.m_max_iterations;
-    dispatch.solver_params.mip_gap = mc_tou.mc_dispatch_params.m_mip_gap;
-    dispatch.solver_params.solution_timeout = mc_tou.mc_dispatch_params.m_solver_timeout;
-    dispatch.solver_params.bb_type = mc_tou.mc_dispatch_params.m_bb_type;
-    dispatch.solver_params.disp_reporting = mc_tou.mc_dispatch_params.m_disp_reporting;
-    dispatch.solver_params.scaling_type = mc_tou.mc_dispatch_params.m_scaling_type;
-    dispatch.solver_params.presolve_type = mc_tou.mc_dispatch_params.m_presolve_type;
-    dispatch.solver_params.is_write_ampl_dat = mc_tou.mc_dispatch_params.m_is_write_ampl_dat;
-    dispatch.solver_params.is_ampl_engine = mc_tou.mc_dispatch_params.m_is_ampl_engine;
-    dispatch.solver_params.ampl_data_dir = mc_tou.mc_dispatch_params.m_ampl_data_dir;
-    dispatch.solver_params.ampl_exec_call = mc_tou.mc_dispatch_params.m_ampl_exec_call;
-    //-------------------------------
-
-        
-    C_csp_collector_receiver::E_csp_cr_modes cr_operating_state = C_csp_collector_receiver::OFF;
-	int pc_operating_state = C_csp_power_cycle::OFF;
-
-	
 	double tol_mode_switching = 0.10;		// Give buffer to account for uncertainty in estimates
-
 
 	// Reset vector that tracks operating modes
 	m_op_mode_tracking.resize(0);
@@ -561,39 +513,17 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 	double progress_msg_frac_current = progress_msg_interval_frac;
 	double V_hot_tank_frac_initial;
 
-
+    double pc_heat_prev = 0.;   // [MWt] Heat into power cycle in previous time step
 	double pc_state_persist = 0.;  // Time [hr] that current pc operating state (on/off/standby) has persisted
 	double rec_state_persist = 0.;  // Time [hr] that current receiver operating state (on/off/standby) has persisted
-	int prev_pc_state = mc_power_cycle.get_operating_state();
-	int prev_rec_state = mc_collector_receiver.get_operating_state();
+	//int prev_pc_state = mc_power_cycle.get_operating_state();
+	//int prev_rec_state = mc_collector_receiver.get_operating_state();
 
 	double q_pb_last = 0.0;   // Cycle thermal input at end of last time step [kWt]
 	double w_pb_last = 0.0;   // Cycle gross generation at end of last time step [kWt]
 	double f_op_last = 0.0;	  // Fraction of last time step that cycle was operating or in standby
 
-
-    /* 
-    ************************** MAIN TIME-SERIES LOOP **************************
-    */
-
-    double disp_time_last = -9999.;
-
-    //values to report later on the dispatch algorithm
-    double disp_qsf_expect = 0.;
-    double disp_qsfprod_expect = 0.;
-    double disp_qsfsu_expect = 0.;
-    double disp_tes_expect = 0.;
-    double disp_etasf_expect = 0.;
-    double disp_etapb_expect = 0.;
-    double disp_qpbsu_expect = 0.;
-    double disp_wpb_expect = 0.;
-    double disp_rev_expect = 0.;
-    //field efficiency learning parameters
-    double disp_qsf_last = 0.;
-    double disp_qsf_effadj = 1.;
-    double disp_effadj_weight = 0.;
-    //int disp_effadj_count = 0;
-
+    //************************** MAIN TIME-SERIES LOOP **************************
 	// Block dispatch saved variables
 	bool is_q_dot_pc_target_overwrite = false;
 
@@ -634,16 +564,29 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
 		// Get collector/receiver & power cycle operating states at start of time step (end of last time step)
             // collector/receiver
-		cr_operating_state = mc_collector_receiver.get_operating_state();
-		if( cr_operating_state < C_csp_collector_receiver::OFF ||
-			cr_operating_state > C_csp_collector_receiver::ON )
+        C_csp_collector_receiver::E_csp_cr_modes cr_operating_state_prev = mc_collector_receiver.get_operating_state();
+		if( cr_operating_state_prev < C_csp_collector_receiver::OFF ||
+			cr_operating_state_prev > C_csp_collector_receiver::ON )
 		{
 			std::string msg = util::format("The collector-receiver operating state at time %lg [hr] is %d. Recognized"
-				" values are from %d to %d\n", mc_kernel.mc_sim_info.ms_ts.m_step/ 3600.0, cr_operating_state, C_csp_collector_receiver::OFF, C_csp_collector_receiver::ON);
+				" values are from %d to %d\n", mc_kernel.mc_sim_info.ms_ts.m_step/ 3600.0, cr_operating_state_prev, C_csp_collector_receiver::OFF, C_csp_collector_receiver::ON);
 			throw(C_csp_exception(msg,"CSP Solver Core"));
 		}
+        C_csp_collector_receiver::E_csp_cr_modes cr_operating_state_to_controller = cr_operating_state_prev;
+        // If component is off but does not require startup to switch to on,
+        // Then for the purposed of the controller hierarchy, the component is on
+        if (cr_operating_state_to_controller == C_csp_collector_receiver::OFF_NO_SU_REQ) {
+            cr_operating_state_to_controller = C_csp_collector_receiver::ON;
+        }
+
             // power cycle
-		pc_operating_state = mc_power_cycle.get_operating_state();
+        C_csp_power_cycle::E_csp_power_cycle_modes pc_operating_state_prev = mc_power_cycle.get_operating_state();
+        C_csp_power_cycle::E_csp_power_cycle_modes pc_operating_state_to_controller = pc_operating_state_prev;
+        // If component is off but does not require startup to switch to on,
+        // Then for the purposed of the controller hierarchy, the component is on
+        if (pc_operating_state_to_controller == C_csp_power_cycle::OFF_NO_SU_REQ) {
+            pc_operating_state_to_controller = C_csp_power_cycle::ON;
+        }
 
 		double q_pb_last = mc_pc_out_solver.m_q_dot_htf * 1000.; //[kWt]
 		double w_pb_last = mc_pc_out_solver.m_P_cycle * 1000.;   //[kWt]
@@ -652,7 +595,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		double q_dot_pc_su_max = mc_power_cycle.get_max_q_pc_startup();		//[MWt]
 
 		// Get weather at this timestep. Should only be called once per timestep. (Except converged() function)
-		mc_weather.timestep_call(mc_kernel.mc_sim_info);
+        mc_weather.timestep_call(mc_kernel.mc_sim_info);
 
 		// Get volume of hot tank, for debugging
 		V_hot_tank_frac_initial = mc_tes.get_hot_tank_vol_frac();
@@ -695,16 +638,27 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		double q_dot_cr_on = est_out.m_q_dot_avail;     //[MWt]
 		double m_dot_cr_on = est_out.m_m_dot_avail;		//[kg/hr]
 		double T_htf_hot_cr_on = est_out.m_T_htf_hot;	//[C]
-		if (cr_operating_state != C_csp_collector_receiver::ON)
+		if (cr_operating_state_to_controller != C_csp_collector_receiver::ON)
 			T_htf_hot_cr_on = m_cycle_T_htf_hot_des - 273.15;	//[C]
 
         // Is receiver on and will it likely remain on
-        if (cr_operating_state == C_csp_collector_receiver::ON && m_dot_cr_on > 0.0
+        if (cr_operating_state_to_controller == C_csp_collector_receiver::ON && m_dot_cr_on > 0.0
             && m_is_rec_to_coldtank_allowed
             && T_htf_hot_cr_on < m_T_htf_hot_tank_in_min) {
             is_rec_outlet_to_hottank = false;
         }
 
+        // If parallel heater, estimate performance
+        double q_dot_PAR_HTR_on = std::numeric_limits<double>::quiet_NaN(); //[MWt]
+        if (m_is_parallel_heater) {
+            C_csp_collector_receiver::S_csp_cr_est_out par_htr_est_out;
+            mp_heater->estimates(mc_weather.ms_outputs,
+                mc_cr_htf_state_in,
+                par_htr_est_out,
+                mc_kernel.mc_sim_info);
+
+            q_dot_PAR_HTR_on = par_htr_est_out.m_q_dot_avail;   //[MWt]
+        }
 
 		// Get TES operating state info at end of last time step
 		double q_dot_tes_dc, q_dot_tes_ch;      //[MWt]
@@ -738,15 +692,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		// Can add the following code to simulate with no storage charge/discharge, but IDLE calcs
 		//q_dot_tes_dc = q_dot_tes_ch = 0.0;
 
-
-
-
         // Get standby fraction and min operating fraction
             // Could eventually be a method in PC class...
         double cycle_sb_frac = m_cycle_sb_frac_des;				//[-]
 
-            // *** If standby not allowed, then reset q_pc_sb = q_pc_min ?? *** 
-                //or is this too confusing and not helpful enough?
+        // *** If standby not allowed, then reset q_pc_sb = q_pc_min ?? *** 
+            //or is this too confusing and not helpful enough?
         double q_pc_sb = cycle_sb_frac * m_cycle_q_dot_des;		//[MW]
         double q_pc_min = m_cycle_cutoff_frac * m_cycle_q_dot_des;	//[MW]
 
@@ -758,320 +709,35 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
         bool is_rec_su_allowed = false;
         bool is_pc_su_allowed = false;
         bool is_pc_sb_allowed = false;
+        bool is_PAR_HTR_allowed = false;
 
         double q_dot_elec_to_CR_heat = std::numeric_limits<double>::quiet_NaN();    //[MWt]
+        double q_dot_pc_max = std::numeric_limits<double>::quiet_NaN();     //[MWt]
+        double q_dot_elec_to_PAR_HTR = std::numeric_limits<double>::quiet_NaN();
 
-		// Optional rules for TOD Block Plant Control
-		if( mc_tou.mc_dispatch_params.m_is_block_dispatch )
-		{
-            is_rec_su_allowed = true;
-            is_pc_su_allowed = true;
-            is_pc_sb_allowed = true;
+        calc_timestep_plant_control_and_targets(
+            f_turbine_tou, q_pc_min, q_dot_tes_ch, pc_heat_prev, pc_state_persist,
+            pc_operating_state_to_controller, purchase_mult, pricing_mult,
+            calc_frac_current, baseline_step,
+            is_q_dot_pc_target_overwrite,
+            q_pc_target, q_dot_pc_max, q_dot_elec_to_CR_heat,
+            is_rec_su_allowed, is_pc_su_allowed, is_pc_sb_allowed,
+            q_dot_elec_to_PAR_HTR, is_PAR_HTR_allowed);
 
-            // Set PC target and max thermal power
-            q_pc_target = f_turbine_tou * m_cycle_q_dot_des;	//[MW]
-            if (mc_tou.mc_dispatch_params.m_is_tod_pc_target_also_pc_max) {
-                m_q_dot_pc_max = q_pc_target;     //[MW]
-            }
-            else {
-                m_q_dot_pc_max = m_cycle_max_frac * m_cycle_q_dot_des;		//[MWt]
-            }
-
-			// Rule 1: if the sun sets (or does not rise) in __ [hours], then do not allow power cycle standby
-				//double standby_time_buffer = 2.0;
-			if( mc_tou.mc_dispatch_params.m_use_rule_1 &&
-				(mc_weather.ms_outputs.m_hour + mc_tou.mc_dispatch_params.m_standby_off_buffer <= mc_weather.ms_outputs.m_time_rise ||
-				mc_weather.ms_outputs.m_hour + mc_tou.mc_dispatch_params.m_standby_off_buffer >= mc_weather.ms_outputs.m_time_set))
-			{
-				is_pc_sb_allowed = false;
-			}
-
-			// Rule 2:
-			if( mc_tou.mc_dispatch_params.m_use_rule_2 &&
-				((q_pc_target < q_pc_min && q_dot_tes_ch < m_q_dot_rec_des*mc_tou.mc_dispatch_params.m_q_dot_rec_des_mult) ||
-				is_q_dot_pc_target_overwrite) )
-			{
-				// If overwrite was previously true, but now power cycle is off, set to false
-				if( is_q_dot_pc_target_overwrite && 
-				(pc_operating_state == C_csp_power_cycle::OFF || q_pc_target >= q_pc_min) )
-				{
-					is_q_dot_pc_target_overwrite = false;
-				}
-				else
-				{
-					is_q_dot_pc_target_overwrite = true;
-				}
-
-				if( is_q_dot_pc_target_overwrite )
-				{
-					q_pc_target = mc_tou.mc_dispatch_params.m_f_q_dot_pc_overwrite*m_cycle_q_dot_des;
-				}
-			}
-
-            // After rules, reset booleans if necessary
-		    if( q_pc_target < q_pc_min || q_pc_target <= 0. )
-		    {
-			    is_pc_su_allowed = false;
-			    is_pc_sb_allowed = false;
-			    q_pc_target = 0.0;
-		    }
-		}
-        // use simply policy to govern arbitrage operation
-        else if (mc_tou.mc_dispatch_params.m_is_arbitrage_policy) {
-
-            // Check purchase multiplier
-            // If less than 1, then allow charging
-            if (purchase_mult < 1.0 && q_dot_tes_ch > 0.0) {
-                is_rec_su_allowed = true;
-                q_dot_elec_to_CR_heat = m_q_dot_rec_des;    //[MWt]
-            }
-            else {
-                is_rec_su_allowed = false;
-                q_dot_elec_to_CR_heat = 0.0;
-            }
-
-            // Check (sale) price multiplier
-            // If greater than 1, the allow discharging
-            if (pricing_mult > 1.0) {
-                is_pc_su_allowed = true;
-                is_pc_sb_allowed = false;
-
-                q_pc_target = m_cycle_q_dot_des;	//[MWt]
-                if (mc_tou.mc_dispatch_params.m_is_tod_pc_target_also_pc_max) {
-                    m_q_dot_pc_max = q_pc_target;     //[MWt]
-                }
-                else {
-                    m_q_dot_pc_max = m_cycle_max_frac * m_cycle_q_dot_des;		//[MWt]
-                }
-            }
-            else {
-                is_pc_su_allowed = false;
-                is_pc_sb_allowed = false;
-
-                q_pc_target = 0.0;
-                m_q_dot_pc_max = 0.0;
-            }
-
-            // Do we need to reset q_cr_on for control logic?
-
-            double abce = 1.23;
-
-        }
-        // Run dispatch optimization?
-        else if(mc_tou.mc_dispatch_params.m_dispatch_optimize)
-        {
-
-            //time to reoptimize
-            int opt_horizon = mc_tou.mc_dispatch_params.m_optimize_horizon;
-
-            double hour_now = mc_kernel.mc_sim_info.ms_ts.m_time/3600.;
-
-            //reoptimize when the time is equal to multiples of the first time step
-			if( (int)mc_kernel.mc_sim_info.ms_ts.m_time % (int)(3600.*mc_tou.mc_dispatch_params.m_optimize_frequency) == baseline_step
-				&& disp_time_last != mc_kernel.mc_sim_info.ms_ts.m_time
-                )
-            {
-                //if this is the last day of the year, update the optimization horizon to be no more than the last 24 hours. 
-				
-                if( hour_now >= (8760 - opt_horizon) )
-                    opt_horizon = (int)min((double)opt_horizon, (double)(8761-hour_now));
-
-                //message
-                stringstream ss;
-                ss << "Optimizing thermal energy dispatch profile for time window " 
-					<< (int)(mc_kernel.mc_sim_info.ms_ts.m_time / 3600.) << " - "
-					<< (int)(mc_kernel.mc_sim_info.ms_ts.m_time / 3600.) + mc_tou.mc_dispatch_params.m_optimize_frequency;
-                
-                mc_csp_messages.add_message(C_csp_messages::NOTICE, ss.str());
-
-				send_callback((float)calc_frac_current*100.f);
-
-                ss.flush();
-
-                //get the new price signal
-                dispatch.price_signal.clear();
-                dispatch.price_signal.resize(opt_horizon*mc_tou.mc_dispatch_params.m_disp_steps_per_hour, 1.);
-
-                for(int t=0; t<opt_horizon*mc_tou.mc_dispatch_params.m_disp_steps_per_hour; t++)
-                {
-					mc_tou.call(mc_kernel.mc_sim_info.ms_ts.m_time + t * 3600./(double)mc_tou.mc_dispatch_params.m_disp_steps_per_hour, mc_tou_outputs);
-		            dispatch.price_signal.at(t) = mc_tou_outputs.m_price_mult;
-                }
-
-				// get the new electricity generation limits
-				dispatch.w_lim.clear();
-				dispatch.w_lim.resize(opt_horizon*mc_tou.mc_dispatch_params.m_disp_steps_per_hour, 1.e99);
-				int hour_start = (int)(ceil (mc_kernel.mc_sim_info.ms_ts.m_time / 3600. - 1.e-6)) - 1;
-				for (int t = 0; t<opt_horizon; t++)
-				{
-					for (int d = 0; d < mc_tou.mc_dispatch_params.m_disp_steps_per_hour; d++)
-						dispatch.w_lim.at(t*mc_tou.mc_dispatch_params.m_disp_steps_per_hour+d) = mc_tou.mc_dispatch_params.m_w_lim_full.at(hour_start + t);
-				}
-
-
-                //note the states of the power cycle and receiver
-                dispatch.params.is_pb_operating0 = mc_power_cycle.get_operating_state() == 1;
-                dispatch.params.is_pb_standby0 = mc_power_cycle.get_operating_state() == 2;
-                dispatch.params.is_rec_operating0 = mc_collector_receiver.get_operating_state() == C_csp_collector_receiver::ON;
-                dispatch.params.q_pb0 = mc_pc_out_solver.m_q_dot_htf * 1000.;
-
-                if(dispatch.params.q_pb0 != dispatch.params.q_pb0 )
-                    dispatch.params.q_pb0 = 0.;
-            
-                //time
-                dispatch.params.info_time = mc_kernel.mc_sim_info.ms_ts.m_time; //s
-
-                //Note the state of the thermal energy storage system
-                double q_disch, m_dot_disch, T_tes_return;
-				mc_tes.discharge_avail_est(m_T_htf_cold_des, mc_kernel.mc_sim_info.ms_ts.m_step, q_disch, m_dot_disch, T_tes_return);
-				dispatch.params.e_tes_init = q_disch * 1000. * mc_kernel.mc_sim_info.ms_ts.m_step / 3600. + dispatch.params.e_tes_min;        //kWh
-		        if(dispatch.params.e_tes_init < dispatch.params.e_tes_min )
-                    dispatch.params.e_tes_init = dispatch.params.e_tes_min;
-                if(dispatch.params.e_tes_init > dispatch.params.e_tes_max )
-                    dispatch.params.e_tes_init = dispatch.params.e_tes_max;
-
-                //predict performance for the time horizon
-                if( 
-                    dispatch.predict_performance((int)
-                            (mc_kernel.mc_sim_info.ms_ts.m_time/ baseline_step - 1), 
-                            (int)(opt_horizon * mc_tou.mc_dispatch_params.m_disp_steps_per_hour), 
-                            (int)((3600./baseline_step)/mc_tou.mc_dispatch_params.m_disp_steps_per_hour)
-                            ) 
-                    )
-                {
-                    
-                    //call the optimize method
-                    bool opt_complete = dispatch.m_last_opt_successful = 
-                        dispatch.optimize();
-                    
-                    if(dispatch.solver_params.disp_reporting && (! dispatch.solver_params.log_message.empty()) )
-                        mc_csp_messages.add_message(C_csp_messages::NOTICE, dispatch.solver_params.log_message.c_str() );
-                    
-					//mc_csp_messages.add_message(C_csp_messages::NOTICE, dispatch.solver_params.log_message.c_str());
-
-                    dispatch.m_current_read_step = 0;   //reset
-                }
-
-                //call again to go back to original state
-                mc_tou.call(mc_kernel.mc_sim_info.ms_ts.m_time, mc_tou_outputs);
-
-            }
-
-            //running from the optimized profile 
-            if(
-                dispatch.m_last_opt_successful 
-                && dispatch.m_current_read_step < (int)dispatch.outputs.q_pb_target.size()
-                )
-            {
-
-                //update the learned field efficiency adjustment factor
-                if(disp_qsf_last > 0.)
-                {
-                    double qopt_last = dispatch.outputs.q_sf_expected.at( dispatch.m_current_read_step )*1.e-3;     //mw
-
-                    double etanew = disp_qsf_last / qopt_last;
-
-                    disp_effadj_weight += disp_qsf_last;
-                    //disp_effadj_count ++;
-
-                    //double wfact = disp_effadj_weight / (double)disp_effadj_count;
-                    
-                    disp_qsf_effadj =+ (1. - etanew)/(min(disp_effadj_weight/disp_qsf_last, 5.));
-                }
-
-                //read in other values
-
-                //calculate the current read step, account for number of dispatch steps per hour and the simulation time step
-                dispatch.m_current_read_step = (int)(mc_kernel.mc_sim_info.ms_ts.m_time * mc_tou.mc_dispatch_params.m_disp_steps_per_hour / 3600. - .001) 
-                    % (mc_tou.mc_dispatch_params.m_optimize_frequency * mc_tou.mc_dispatch_params.m_disp_steps_per_hour ); 
-
-                is_rec_su_allowed = dispatch.outputs.rec_operation.at( dispatch.m_current_read_step );
-                is_pc_sb_allowed = dispatch.outputs.pb_standby.at( dispatch.m_current_read_step );
-                is_pc_su_allowed = dispatch.outputs.pb_operation.at( dispatch.m_current_read_step ) || is_pc_sb_allowed;
-
-                q_pc_target = (dispatch.outputs.q_pb_target.at( dispatch.m_current_read_step ) 
-                    + dispatch.outputs.q_pb_startup.at( dispatch.m_current_read_step ) )
-                    / 1000. ;
-
-                //quality checks
-				/*
-                if(!is_pc_sb_allowed && (q_pc_target + 1.e-5 < q_pc_min))
-                    is_pc_su_allowed = false;
-                if(is_pc_sb_allowed)
-                    q_pc_target = dispatch.params.q_pb_standby*1.e-3; 
-				*/
-
-
-				if (q_pc_target + 1.e-5 < q_pc_min)
-				{
-					is_pc_su_allowed = false;
-					//is_pc_sb_allowed = false;
-					q_pc_target = 0.0;
-				}
-                
-				// Calculate approximate upper limit for power cycle thermal input at current electricity generation limit
-				if (dispatch.w_lim.at(dispatch.m_current_read_step) < 1.e-6)
-                    m_q_dot_pc_max = 0.0;
-				else
-				{
-					double wcond;
-					double eta_corr = mc_power_cycle.get_efficiency_at_TPH(mc_weather.ms_outputs.m_tdry, 1., 30., &wcond) / m_cycle_eta_des; 
-					double eta_calc = dispatch.params.eta_cycle_ref * eta_corr;
-					double eta_diff = 1.;
-					int i = 0;
-					while (eta_diff > 0.001 && i<20)
-					{
-						double q_pc_est = dispatch.w_lim.at(dispatch.m_current_read_step)*1.e-3 / eta_calc;			// Estimated power cycle thermal input at w_lim
-						double eta_new = mc_power_cycle.get_efficiency_at_load(q_pc_est / m_cycle_q_dot_des) * eta_corr;		// Calculated power cycle efficiency
-						eta_diff = fabs(eta_calc - eta_new);
-						eta_calc = eta_new;
-						i++;
-					}
-					m_q_dot_pc_max = fmin(m_q_dot_pc_max, dispatch.w_lim.at(dispatch.m_current_read_step)*1.e-3 / eta_calc); // Restrict max pc thermal input to *approximate* current allowable value (doesn't yet account for parasitics)
-					m_q_dot_pc_max = fmax(m_q_dot_pc_max, q_pc_target);													// calculated q_pc_target accounts for parasitics --> can be higher than approximate limit 
-				}
-
-                //q_pc_sb = dispatch.outputs.q_pb_standby.at( dispatch.m_current_read_step ) / 1000. ;
-
-                //disp_etapb_expect = dispatch.outputs.eta_pb_expected.at( dispatch.m_current_read_step ) 
-                //                    /** m_cycle_eta_des*/ * ( dispatch.outputs.pb_operation.at( dispatch.m_current_read_step ) ? 1. : 0. );
-                disp_etasf_expect = dispatch.outputs.eta_sf_expected.at( dispatch.m_current_read_step );
-                disp_qsf_expect = dispatch.outputs.q_sfavail_expected.at( dispatch.m_current_read_step )*1.e-3;
-                disp_qsfprod_expect = dispatch.outputs.q_sf_expected.at( dispatch.m_current_read_step )*1.e-3;
-                disp_qsfsu_expect = dispatch.outputs.q_rec_startup.at( dispatch.m_current_read_step )*1.e-3;
-                disp_tes_expect = dispatch.outputs.tes_charge_expected.at( dispatch.m_current_read_step )*1.e-3;
-                disp_qpbsu_expect = dispatch.outputs.q_pb_startup.at( dispatch.m_current_read_step )*1.e-3;
-                //disp_wpb_expect = dispatch.outputs.q_pb_target.at(dispatch.m_current_read_step ) * disp_etapb_expect *1.e-3;  
-                disp_wpb_expect = dispatch.outputs.w_pb_target.at( dispatch.m_current_read_step )*1.e-3;
-                disp_rev_expect = disp_wpb_expect * dispatch.price_signal.at( dispatch.m_current_read_step );
-                disp_etapb_expect = disp_wpb_expect / max(1.e-6, dispatch.outputs.q_pb_target.at( dispatch.m_current_read_step ))* 1.e3 
-                                        * ( dispatch.outputs.pb_operation.at( dispatch.m_current_read_step ) ? 1. : 0. );
-
-                //if( is_sim_timestep_complete ) // disp_time_last != mc_kernel.mc_sim_info.ms_ts.ms_ts.m_time)
-                //    dispatch.m_current_read_step++;
-
-                if(dispatch.m_current_read_step > mc_tou.mc_dispatch_params.m_optimize_frequency * mc_tou.mc_dispatch_params.m_disp_steps_per_hour)
-                    throw C_csp_exception("Counter synchronization error in dispatch optimization routine.", "dispatch");
-            }
-            
-            disp_time_last = mc_kernel.mc_sim_info.ms_ts.m_time;
-                        
-        }
+        // Avoid setting member data in method, so set here
+        m_q_dot_pc_max = q_dot_pc_max;
 
         // Split up reported q_dot_pc target into 'startup' and 'on' so input dispatch can specify both for a single full timestep
         double q_dot_pc_su_target_reporting = 0.0;
         double q_dot_pc_on_target_reporting = 0.0;
-        if (pc_operating_state == C_csp_power_cycle::OFF || pc_operating_state == C_csp_power_cycle::STARTUP) {
+        if (pc_operating_state_to_controller == C_csp_power_cycle::OFF || pc_operating_state_to_controller == C_csp_power_cycle::STARTUP) {
             q_dot_pc_su_target_reporting = q_pc_target;
         }
         else {
             q_dot_pc_on_target_reporting = q_pc_target;
         }
 
-
-        /* 
-        ------------ Controller/Solver iteration loop -------------
-        */
+        //------------ Controller/Solver iteration loop -------------
 
 		bool are_models_converged = false;
 
@@ -1084,7 +750,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		// Check if CR startup should be solved before entering hierarchy
 		double q_dot_tes_dc_t_CR_su = 0.0;
 		double m_dot_tes_dc_t_CR_su = 0.0;
-		if( (cr_operating_state == C_csp_collector_receiver::OFF || cr_operating_state == C_csp_collector_receiver::STARTUP) &&
+		if( (cr_operating_state_to_controller == C_csp_collector_receiver::OFF || cr_operating_state_to_controller == C_csp_collector_receiver::STARTUP) &&
 			q_dot_cr_startup > 0.0 &&
 			is_rec_su_allowed && 
 			m_is_tes )
@@ -1129,13 +795,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 			} 
 		}
 
-
 		// Check if receiver can be defocused enough to stay under cycle+TES max thermal power and mass flow (if cold recirculation is not enabled)
         // (this will usually be the case unless using clear-sky control or constrained cycle thermal input)
-		if (cr_operating_state == C_csp_collector_receiver::ON && (q_dot_cr_on >0.0 || m_dot_cr_on > 0.0) && is_rec_su_allowed && is_rec_outlet_to_hottank && m_is_tes)
+		if (cr_operating_state_to_controller == C_csp_collector_receiver::ON && (q_dot_cr_on >0.0 || m_dot_cr_on > 0.0) && is_rec_su_allowed && is_rec_outlet_to_hottank && m_is_tes)
 		{
 			double qpcmax = m_q_dot_pc_max;
-			if (pc_operating_state == C_csp_power_cycle::OFF || C_csp_power_cycle::STARTUP)
+			if (pc_operating_state_to_controller == C_csp_power_cycle::OFF || C_csp_power_cycle::STARTUP)
 				qpcmax = q_dot_pc_su_max;
 
             double qmax = q_dot_tes_ch / (1.0 - tol_mode_switching);
@@ -1146,16 +811,19 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 mmax += m_m_dot_pc_max / (1.0 - tol_mode_switching);
             }
 
-			if (q_dot_cr_on > qmax || m_dot_cr_on > mmax)  // Receiver will need to be defocused
-			{
-				double df = fmin(qmax / q_dot_cr_on, mmax / m_dot_cr_on);
-				mc_collector_receiver.on(mc_weather.ms_outputs, mc_cr_htf_state_in, q_dot_elec_to_CR_heat, df, mc_cr_out_solver, mc_kernel.mc_sim_info);
-				if (mc_cr_out_solver.m_q_thermal == 0.0)  // Receiver solution wasn't successful 
-					is_rec_su_allowed = false;
-			}
+            if (q_dot_cr_on > qmax || m_dot_cr_on > mmax)  // Receiver will need to be defocused
+            {
+                double df = fmin(qmax / q_dot_cr_on, mmax / m_dot_cr_on);
+                if (q_dot_elec_to_CR_heat > 0. && !m_is_parallel_heater) //Heater is on and not the CSP+ETES case
+                {
+                    q_dot_elec_to_CR_heat = q_dot_cr_on;  // Setting to the max and allowing controller to defocus
+                }
+                mc_collector_receiver.on(mc_weather.ms_outputs, mc_cr_htf_state_in, q_dot_elec_to_CR_heat, df, mc_cr_out_solver, mc_kernel.mc_sim_info);
+                if (mc_cr_out_solver.m_q_thermal == 0.0)  // Receiver solution wasn't successful 
+                    is_rec_su_allowed = false;
+            }
 
 		}
-
 
 		while(!are_models_converged)		// Solve for correct operating mode and performance in following loop:
 		{
@@ -1163,632 +831,20 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 			mc_kernel.mc_sim_info.ms_ts.m_time = mc_kernel.get_baseline_end_time();
 			mc_kernel.mc_sim_info.ms_ts.m_step = mc_kernel.mc_sim_info.ms_ts.m_time - mc_kernel.mc_sim_info.ms_ts.m_time_start;
 
-			if( (cr_operating_state == C_csp_collector_receiver::OFF || cr_operating_state == C_csp_collector_receiver::STARTUP)
-				&& (pc_operating_state == C_csp_power_cycle::OFF || pc_operating_state == C_csp_power_cycle::STARTUP) )
-			{	// At start of this timestep, are power cycle AND collector/receiver off?
-
-				if( q_dot_cr_startup > 0.0 && is_rec_su_allowed &&
-                    mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_SU__PC_OFF__TES_OFF__AUX_OFF))
-				{	// Receiver startup is allowed and possible (will generate net energy)
-
-					if( q_dot_tes_dc > 0.0 && is_pc_su_allowed &&
-                        mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_SU__PC_SU__TES_DC__AUX_OFF))
-					{
-						operating_mode = C_system_operating_modes::CR_SU__PC_SU__TES_DC__AUX_OFF;
-					}
-					else
-					{
-						operating_mode = C_system_operating_modes::CR_SU__PC_OFF__TES_OFF__AUX_OFF;
-					}
-				}
-				else
-				{
-					if( q_dot_tes_dc > 0.0 && is_pc_su_allowed &&
-                        mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_OFF__PC_SU__TES_DC__AUX_OFF))
-					{
-						operating_mode = C_system_operating_modes::CR_OFF__PC_SU__TES_DC__AUX_OFF;
-					}
-					else
-					{
-						operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-					}
-				}
-			}	// End logic for CR_state == OFF or STARTUP    AND     PC_state == OFF or STARTUP
-
-			else if( cr_operating_state == C_csp_collector_receiver::ON &&
-				(pc_operating_state == C_csp_power_cycle::OFF || pc_operating_state == C_csp_power_cycle::STARTUP) )
-			{
-				if( q_dot_cr_on > 0.0 && is_rec_su_allowed && is_rec_outlet_to_hottank )
-				{	// Receiver is allowed to remain on, and it can produce useful energy. Now, need to find a home for it
-
-					if( is_pc_su_allowed &&
-                        mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_ON__PC_SU__TES_OFF__AUX_OFF)) // Can receiver output go to power cycle?
-					{   
-						if( q_dot_tes_ch > 0.0 )
-						{
-							if( ( (q_dot_cr_on - q_dot_tes_ch)*(1.0+tol_mode_switching) > q_dot_pc_su_max 
-								|| (m_dot_cr_on - m_dot_tes_ch_est)*(1.0+tol_mode_switching) > m_m_dot_pc_max ) &&
-                                mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_DF__PC_SU__TES_FULL__AUX_OFF))
-							{
-								operating_mode = C_system_operating_modes::CR_DF__PC_SU__TES_FULL__AUX_OFF;
-							}
-							else if( ( q_dot_cr_on*(1.0+tol_mode_switching) > q_dot_pc_su_max 
-								|| m_dot_cr_on*(1.0 + tol_mode_switching) > m_m_dot_pc_max ) &&
-                                mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_ON__PC_SU__TES_CH__AUX_OFF))
-							{
-								operating_mode = C_system_operating_modes::CR_ON__PC_SU__TES_CH__AUX_OFF;
-							}
-							else
-							{
-								operating_mode = C_system_operating_modes::CR_ON__PC_SU__TES_OFF__AUX_OFF;
-							}
-						}
-						else
-						{
-							if( (q_dot_cr_on*(1.0+tol_mode_switching) > q_dot_pc_su_max ||
-								m_dot_cr_on*(1.0+tol_mode_switching) > m_m_dot_pc_max) 
-                                && mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_DF__PC_SU__TES_OFF__AUX_OFF))
-							{
-								operating_mode = C_system_operating_modes::CR_DF__PC_SU__TES_OFF__AUX_OFF;
-							}
-							else
-							{
-								operating_mode = C_system_operating_modes::CR_ON__PC_SU__TES_OFF__AUX_OFF;
-							}							
-						}						
-					}
-					else if( q_dot_tes_ch > 0.0 )
-					{
-						if( q_dot_cr_on*(1.0 - tol_mode_switching) < q_dot_tes_ch &&
-                            mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_ON__PC_OFF__TES_CH__AUX_OFF))
-						{
-							operating_mode = C_system_operating_modes::CR_ON__PC_OFF__TES_CH__AUX_OFF;
-						}
-						else if(mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF)) // m_is_CR_DF__PC_OFF__TES_FULL__AUX_OFF_avail)
-						{
-							operating_mode = C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF;
-						}
-						else
-						{
-							operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-						}
-					}
-					else
-					{
-						operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-					}
-				}
-                else 
-                {
-                    if ((q_dot_cr_on >0.0 || m_dot_cr_on>0.0)  && is_rec_su_allowed)
-                    {
-                        if (q_dot_tes_dc > 0.0 && is_pc_su_allowed &&
-                            mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_TO_COLD__PC_SU__TES_DC__AUX_OFF))
-				        {	// Can power cycle startup using TES?
-
-                            operating_mode = C_system_operating_modes::CR_TO_COLD__PC_SU__TES_DC__AUX_OFF;
-                        }
-                        else if(mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF)) // m_is_CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF_avail)
-                        {
-                            operating_mode = C_system_operating_modes::CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF;
-                        }
-                        else
-                        {
-                            operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-                        }
-                    }
-                    else
-                    {
-                        if (q_dot_tes_dc > 0.0 && is_pc_su_allowed &&
-                            mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_OFF__PC_SU__TES_DC__AUX_OFF))
-                        {	// Can power cycle startup using TES?
-
-					        operating_mode = C_system_operating_modes::CR_OFF__PC_SU__TES_DC__AUX_OFF;
-				        }
-				        else
-				        {
-					        operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-				        }
-			        }
-                }
-			}
-
-			else if( (cr_operating_state == C_csp_collector_receiver::OFF || cr_operating_state == C_csp_collector_receiver::STARTUP) &&
-				(pc_operating_state == C_csp_power_cycle::ON || pc_operating_state == C_csp_power_cycle::STANDBY) )
-			{
-				if( q_dot_cr_startup > 0.0 && is_rec_su_allowed )
-				{	// Receiver startup is allowed and possible (will generate net energy) - determine if power cycle can remain on
-
-					if( is_pc_su_allowed || is_pc_sb_allowed )
-					{					
-						if( ( (q_dot_tes_dc_t_CR_su*(1.0 + tol_mode_switching) > q_pc_target
-							&& m_dot_tes_dc_t_CR_su*(1.0 + tol_mode_switching) > m_m_dot_pc_min)
-							|| m_dot_tes_dc_t_CR_su*(1.0 + tol_mode_switching) > m_m_dot_pc_max )
-							&& is_pc_su_allowed &&
-                            mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_SU__PC_TARGET__TES_DC__AUX_OFF))
-						{	// Tolerance is applied so that if TES is *close* to matching target, the controller tries that mode
-
-							operating_mode = C_system_operating_modes::CR_SU__PC_TARGET__TES_DC__AUX_OFF;
-						}
-						else if( q_dot_tes_dc_t_CR_su*(1.0 + tol_mode_switching) > q_pc_min 
-							&& m_dot_tes_dc_t_CR_su*(1.0 + tol_mode_switching) > m_m_dot_pc_min
-							&& is_pc_su_allowed &&
-                            mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_SU__PC_RM_LO__TES_EMPTY__AUX_OFF))
-						{	// Tolerance is applied so that if TES is *close* to reaching min fraction, the controller tries that mode
-
-							operating_mode = C_system_operating_modes::CR_SU__PC_RM_LO__TES_EMPTY__AUX_OFF;
-						}
-						else if( q_dot_tes_dc_t_CR_su*(1.0 + tol_mode_switching) > q_pc_sb 
-							&& m_dot_tes_dc_t_CR_su*(1.0 + tol_mode_switching) > m_m_dot_pc_min
-							&& is_pc_sb_allowed &&
-                            mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_SU__PC_SB__TES_DC__AUX_OFF))
-						{	// Tolerance is applied so that if TES is *close* to reaching min fraction, the controller tries that mode
-
-							operating_mode = C_system_operating_modes::CR_SU__PC_SB__TES_DC__AUX_OFF;
-						}
-						else if( q_dot_tes_dc_t_CR_su > 0.0 && is_pc_su_allowed &&
-                            mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_SU__PC_MIN__TES_EMPTY__AUX_OFF))
-						{
-							operating_mode = C_system_operating_modes::CR_SU__PC_MIN__TES_EMPTY__AUX_OFF;
-						}
-						else if( mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_SU__PC_OFF__TES_OFF__AUX_OFF)) // m_is_CR_SU__PC_OFF__TES_OFF__AUX_OFF_avail )
-						{
-							operating_mode = C_system_operating_modes::CR_SU__PC_OFF__TES_OFF__AUX_OFF;
-						}
-						else
-						{
-							operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-						}
-					}	// End 'is_pc_su_allowed' logic
-					else
-					{	// power cycle startup/operation not allowed
-						
-						if( mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_SU__PC_OFF__TES_OFF__AUX_OFF)) // m_is_CR_SU__PC_OFF__TES_OFF__AUX_OFF_avail )
-						{
-							operating_mode = C_system_operating_modes::CR_SU__PC_OFF__TES_OFF__AUX_OFF;
-						}
-						else
-						{
-							operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-						}
-					}
-				}
-				else	// Receiver remains OFF - determine if power cycle can remain on
-				{
-					if( is_pc_su_allowed || is_pc_sb_allowed )
-					{
-					
-						if( ( (q_dot_tes_dc*(1.0 + tol_mode_switching) > q_pc_target
-							&& m_dot_tes_dc_est*(1.0 + tol_mode_switching) > m_m_dot_pc_min)
-							|| m_dot_tes_dc_est*(1.0 + tol_mode_switching) > m_m_dot_pc_max )
-							&& is_pc_su_allowed &&
-                            mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_OFF__PC_TARGET__TES_DC__AUX_OFF))
-						{	// Tolerance is applied so that if TES is *close* to matching target, the controller tries that mode
-
-							operating_mode = C_system_operating_modes::CR_OFF__PC_TARGET__TES_DC__AUX_OFF;
-						}
-						else if( q_dot_tes_dc*(1.0 + tol_mode_switching) > q_pc_min 
-								&& m_dot_tes_dc_est*(1.0 + tol_mode_switching) > m_m_dot_pc_min
-								&& is_pc_su_allowed &&
-                                mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF))
-						{	// Tolerance is applied so that if TES is *close* to reaching min fraction, the controller tries that mode
-
-							operating_mode = C_system_operating_modes::CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF;
-						}
-						else if( q_dot_tes_dc*(1.0 + tol_mode_switching) > q_pc_sb
-								&& m_dot_tes_dc_est*(1.0 + tol_mode_switching) > m_m_dot_pc_min
-								&& is_pc_sb_allowed &&
-                                mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_OFF__PC_SB__TES_DC__AUX_OFF))
-						{	// Tolerance is applied so that if TES is *close* to reaching min fraction, the controller tries that mode
-
-							operating_mode = C_system_operating_modes::CR_OFF__PC_SB__TES_DC__AUX_OFF;
-						}
-						else if( q_dot_tes_dc > 0.0 && is_pc_su_allowed &&
-                                mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF))
-						{
-							operating_mode = C_system_operating_modes::CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF;
-						}
-						else
-						{
-							operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-						}
-					}	// end logic on 'is_pc_su_allowed'
-					else
-					{
-
-						operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-					}
-				}
-			}
-
-			else if( cr_operating_state == C_csp_collector_receiver::ON &&
-				(pc_operating_state == C_csp_power_cycle::ON || pc_operating_state == C_csp_power_cycle::STANDBY) )
-			{
-				if( q_dot_cr_on > 0.0 && is_rec_su_allowed && is_rec_outlet_to_hottank )
-				{	// Receiver operation is allowed and possible - find a home for output
-
-					if( is_pc_su_allowed || is_pc_sb_allowed )
-					{
-						if( (q_dot_cr_on*(1.0 + tol_mode_switching) > q_pc_target || m_dot_cr_on*(1.0 + tol_mode_switching) > m_m_dot_pc_max) && 
-							is_pc_su_allowed &&
-                            mc_operating_modes.is_LO_SIDE_mode_avail(C_system_operating_modes::CR_ON__PC_RM_HI__TES_OFF__AUX_OFF) &&
-                            mc_operating_modes.is_LO_SIDE_mode_avail(C_system_operating_modes::CR_ON__PC_TARGET__TES_CH__AUX_OFF))
-						{	// The power cycle cannot accept the entire receiver output
-							// Tolerance is applied so that if CR is *close* to reaching the PC target, the controller tries modes that fill TES
-
-							// Can storage be charged?
-							if( q_dot_tes_ch > 0.0 )
-							{
-								// 1) Try to fill storage while hitting power cycle target
-								if( (q_dot_cr_on - q_dot_tes_ch)*(1.0 - tol_mode_switching) < q_pc_target 
-									&& (m_dot_cr_on - m_dot_tes_ch_est)*(1.0 - tol_mode_switching) < m_m_dot_pc_max &&
-                                    mc_operating_modes.is_HI_SIDE_mode_avail(C_system_operating_modes::CR_ON__PC_TARGET__TES_CH__AUX_OFF))
-								{	// Storage can accept the remaining receiver output
-									// Tolerance is applied so that if CR + TES is *close* to reaching PC target, the controller tries that mode
-
-									operating_mode = C_system_operating_modes::CR_ON__PC_TARGET__TES_CH__AUX_OFF;
-								}
-
-								// 2) Try operating power cycle at maximum capacity
-								// Assume we want to completely fill storage, so the power cycle operation should float to meet that condition
-								else if( (q_dot_cr_on - q_dot_tes_ch)*(1.0 - tol_mode_switching) < m_q_dot_pc_max
-									&& (m_dot_cr_on - m_dot_tes_ch_est)*(1.0 - tol_mode_switching) < m_m_dot_pc_max &&
-                                    mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_ON__PC_RM_HI__TES_FULL__AUX_OFF))
-								{	// Storage and the power cycle operating between target and max can accept the remaining receiver output
-									// Tolerance is applied so that if CR + TES is *close* to reaching PC  max, the controller tries that mode
-
-									operating_mode = C_system_operating_modes::CR_ON__PC_RM_HI__TES_FULL__AUX_OFF;
-								}
-
-								// 3) Try defocusing the CR and operating the power cycle at maximum capacity
-								else if( mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_DF__PC_MAX__TES_FULL__AUX_OFF))  // m_is_CR_DF__PC_MAX__TES_FULL__AUX_OFF_avail )
-								{
-									
-									operating_mode = C_system_operating_modes::CR_DF__PC_MAX__TES_FULL__AUX_OFF;
-								}
-								else
-								{
-									operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;;
-								}
-							}	// End if(q_dot_tes_ch > 0.0) logic
-
-							else
-							{	// No storage available for dispatch
-
-								// 1) Try operating power cycle at maximum capacity
-								if( (q_dot_cr_on*(1.0 - tol_mode_switching) < m_q_dot_pc_max && m_dot_cr_on*(1.0 - tol_mode_switching)) &&
-                                    mc_operating_modes.is_HI_SIDE_mode_avail(C_system_operating_modes::CR_ON__PC_RM_HI__TES_OFF__AUX_OFF))
-								{	// Tolerance is applied so that if CR + TES is *close* to reaching PC  max, the controller tries that mode
-
-									operating_mode = C_system_operating_modes::CR_ON__PC_RM_HI__TES_OFF__AUX_OFF;
-								}
-								else if( mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_DF__PC_MAX__TES_OFF__AUX_OFF))   // m_is_CR_DF__PC_MAX__TES_OFF__AUX_OFF_avail )
-								{
-									operating_mode = C_system_operating_modes::CR_DF__PC_MAX__TES_OFF__AUX_OFF;
-								}
-								else
-								{
-									operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-								}
-							}	// End else 'no storage available for dispatch'
-						}
-						else
-						{	// Power cycle is asking for more output than the receiver can supply
-
-							if( q_dot_tes_dc > 0.0 )
-							{	// Storage dispatch is available
-
-								if( ( ( (q_dot_cr_on + q_dot_tes_dc)*(1.0 + tol_mode_switching) > q_pc_target 
-									&& (m_dot_cr_on + m_dot_tes_dc_est)*(1.0 + tol_mode_switching) > m_m_dot_pc_min  )
-									|| (m_dot_cr_on + m_dot_tes_dc_est)*(1.0 + tol_mode_switching) > m_m_dot_pc_max )
-									&& is_pc_su_allowed &&
-                                    mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_ON__PC_TARGET__TES_DC__AUX_OFF))
-								{	// Storage can provide enough dispatch to reach power cycle target
-									// Tolerance is applied so that if CR + TES is *close* to reaching PC target, the controller tries that mode
-
-									operating_mode = C_system_operating_modes::CR_ON__PC_TARGET__TES_DC__AUX_OFF;
-								}
-								else if( (q_dot_cr_on + q_dot_tes_dc)*(1.0 + tol_mode_switching) > q_pc_min 
-									&& is_pc_su_allowed 
-									&& (m_dot_cr_on + m_dot_tes_dc_est)*(1.0 + tol_mode_switching) > m_m_dot_pc_min &&
-                                    mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF))
-								{	// Storage can provide enough dispatch to at least meet power cycle minimum operation fraction
-									// Run at highest possible PC fraction by dispatch all remaining storage
-									// Tolerance is applied so that if CR + TES is *close* to reaching PC min, the controller tries that mode
-
-									operating_mode = C_system_operating_modes::CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF;
-								}
-								else if( q_dot_cr_on*(1.0 + tol_mode_switching) > q_pc_sb 
-									&& m_dot_cr_on*(1.0 + tol_mode_switching) > m_m_dot_pc_min
-									&& is_pc_sb_allowed &&
-                                    mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_ON__PC_SB__TES_OFF__AUX_OFF) &&
-                                    mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_ON__PC_SB__TES_CH__AUX_OFF) )
-								{
-									if( q_dot_tes_ch > 0.0 )
-									{
-										if( ( (q_dot_cr_on - q_dot_tes_ch)*(1.0 + tol_mode_switching) > q_pc_sb 
-											|| (m_dot_cr_on - m_dot_tes_ch_est)*(1.0 + tol_mode_switching) > m_m_dot_pc_min ) &&
-                                            mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_ON__PC_SB__TES_FULL__AUX_OFF))
-										{	// Tolerance is applied so that if CR output is *close* to operating at standby AND completely filling storage, controller tries that mode
-
-											operating_mode = C_system_operating_modes::CR_ON__PC_SB__TES_FULL__AUX_OFF;
-										}
-										else
-										{
-											operating_mode = C_system_operating_modes::CR_ON__PC_SB__TES_CH__AUX_OFF;
-										}
-									}
-									else
-									{
-										// This could *technically* use defocus, but can argue the energy is just being thrown away in power cycle anyway
-										operating_mode = C_system_operating_modes::CR_ON__PC_SB__TES_OFF__AUX_OFF;
-									}
-								}
-								else if( (q_dot_cr_on + q_dot_tes_dc)*(1.0 + tol_mode_switching) > q_pc_sb 
-									&& (m_dot_cr_on + m_dot_tes_dc_est)*(1.0 + tol_mode_switching) > m_m_dot_pc_min
-									&& is_pc_sb_allowed &&
-                                    mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_ON__PC_SB__TES_DC__AUX_OFF))
-								{
-									operating_mode = C_system_operating_modes::CR_ON__PC_SB__TES_DC__AUX_OFF;
-								}
-								else if( is_pc_su_allowed && mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_ON__PC_MIN__TES_EMPTY__AUX_OFF))
-								{
-									operating_mode = C_system_operating_modes::CR_ON__PC_MIN__TES_EMPTY__AUX_OFF;
-								}
-								else if (q_dot_tes_ch > 0.0)
-								{
-									if (q_dot_cr_on * (1.0 - tol_mode_switching) < q_dot_tes_ch &&
-                                        mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_ON__PC_OFF__TES_CH__AUX_OFF))
-									{	// Tolerance is applied so that if CR is *close* to being less than a full TES charge, the controller tries normal operation (no defocus)
-
-										operating_mode = C_system_operating_modes::CR_ON__PC_OFF__TES_CH__AUX_OFF;
-									}
-									else if (mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF))
-									{	// The CR output will overcharge storage, so it needs to defocus.
-										// However, because the CR output is already part-load, it may be close to shutting down before defocus...
-
-										operating_mode = C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF;
-									}
-									else
-									{
-										operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-									}
-								}
-								else
-								{	// No home for receiver output, and not enough thermal power for power cycle
-
-									operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-								}
-							}
-							else
-							{	// Storage dispatch is not available
-
-								// Can the power cycle operate at or above the minimum operation fraction?
-								if( ( (q_dot_cr_on*(1.0 + tol_mode_switching) > q_pc_min 
-									&& m_dot_cr_on*(1.0 + tol_mode_switching) > m_m_dot_pc_min)
-									|| m_dot_cr_on*(1.0 + tol_mode_switching) > m_m_dot_pc_max)
-									&& is_pc_su_allowed &&
-                                    mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_ON__PC_RM_LO__TES_OFF__AUX_OFF))
-								{	// Tolerance is applied so that if CR is *close* to reaching PC min, the controller tries that mode
-
-									operating_mode = C_system_operating_modes::CR_ON__PC_RM_LO__TES_OFF__AUX_OFF;
-								}
-								else if( is_pc_sb_allowed 
-									&& q_dot_cr_on*(1.0 + tol_mode_switching) > q_pc_sb 
-									&& m_dot_cr_on*(1.0 + tol_mode_switching) > m_m_dot_pc_min &&
-                                    mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_ON__PC_SB__TES_OFF__AUX_OFF) &&
-                                    mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_ON__PC_SB__TES_CH__AUX_OFF))
-								{	// Receiver can likely operate in standby
-									// Tolerance is applied so that if CR is *close* to reaching PC standby, the controller tries that mode
-
-									if( q_dot_tes_ch > 0.0 )
-									{
-										if( ( (q_dot_cr_on - q_dot_tes_ch)*(1.0+tol_mode_switching) > q_pc_sb
-											|| (m_dot_cr_on - m_dot_tes_ch_est)*(1.0+tol_mode_switching) > m_m_dot_pc_min ) &&
-                                            mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_ON__PC_SB__TES_FULL__AUX_OFF))
-										{	// Tolerance is applied so that if CR output is *close* to operating at standby AND completely filling storage, controller tries that mode
-
-											operating_mode = C_system_operating_modes::CR_ON__PC_SB__TES_FULL__AUX_OFF;
-										}
-										else
-										{
-											operating_mode = C_system_operating_modes::CR_ON__PC_SB__TES_CH__AUX_OFF;
-										}
-									}
-									else
-									{
-										// This could *technically* use defocus, but can argue the energy is just being thrown away in power cycle anyway
-										operating_mode = C_system_operating_modes::CR_ON__PC_SB__TES_OFF__AUX_OFF;
-									}
-								}
-								else if( q_dot_tes_ch > 0.0 )
-								{	// Charge storage with receiver output
-
-									if( q_dot_cr_on*(1.0 - tol_mode_switching) < q_dot_tes_ch &&
-                                        mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_ON__PC_OFF__TES_CH__AUX_OFF))
-									{	// Tolerance is applied so that if CR is *close* to being less than a full TES charge, the controller tries normal operation (no defocus)
-
-										operating_mode = C_system_operating_modes::CR_ON__PC_OFF__TES_CH__AUX_OFF;
-									}
-									else if( mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF)) 
-									{	// The CR output will overcharge storage, so it needs to defocus.
-										// However, because the CR output is already part-load, it may be close to shutting down before defocus...
-
-										operating_mode = C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF;
-									}
-									else
-									{
-										operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-									}
-								}
-								else
-								{	// No home for receiver output, and not enough thermal power for power cycle
-
-									operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-								}
-							}	// End logic else 'storage dispatch not available'
-						}	// End logic else 'power cycle requires more q_dot than receiver can supply'				
-					}	// End logic if(is_rec_su_allowed)
-					else
-					{	// Power cycle startup is not allowed - see if receiver output can go to storage
-
-						if( q_dot_tes_ch > 0.0 )
-						{
-							if( q_dot_cr_on*(1.0 - tol_mode_switching) < q_dot_tes_ch &&
-                                mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_ON__PC_OFF__TES_CH__AUX_OFF))
-							{
-								operating_mode = C_system_operating_modes::CR_ON__PC_OFF__TES_CH__AUX_OFF;
-							}
-							else if( mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF) )
-							{
-								operating_mode = C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF;
-							}
-							else
-							{
-								operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-							}
-						}
-						else
-						{
-							operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-						}
-
-					}	// End logic else 'pc su is NOT allowed'		
-				}	// End logic if(q_dot_cr_output > 0.0 && is_rec_su_allowed)
-
-                // 'else if' loop for receiver 'on' but sending htf to cold tank
-                else if ((q_dot_cr_on > 0.0 || m_dot_cr_on > 0.0)&& is_rec_su_allowed) {
-
-                    if (is_pc_su_allowed || is_pc_sb_allowed)
-                    {
-                        if (q_dot_tes_dc > 0.0)
-                        {	// Storage dispatch is available
-
-                            if (((q_dot_tes_dc * (1.0 + tol_mode_switching) > q_pc_target
-                                && m_dot_tes_dc_est * (1.0 + tol_mode_switching) > m_m_dot_pc_min)
-                                || m_dot_tes_dc_est * (1.0 + tol_mode_switching) > m_m_dot_pc_max)
-                                && is_pc_su_allowed &&
-                                mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_TO_COLD__PC_TARGET__TES_DC__AUX_OFF))
-                            {	// Storage can provide enough dispatch to reach power cycle target
-                                // Tolerance is applied so that if TES is *close* to reaching PC target, the controller tries that mode
-
-                                operating_mode = C_system_operating_modes::CR_TO_COLD__PC_TARGET__TES_DC__AUX_OFF;
-                            }
-                            else if (q_dot_tes_dc * (1.0 + tol_mode_switching) > q_pc_min
-                                && m_dot_tes_dc_est * (1.0 + tol_mode_switching) > m_m_dot_pc_min
-                                && is_pc_su_allowed &&
-                                mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_TO_COLD__PC_RM_LO__TES_EMPTY__AUX_OFF))
-                            {	// Storage can provide enough dispatch to at least meet power cycle minimum operation fraction
-                                // Run at highest possible PC fraction by dispatching all remaining storage
-                                // Tolerance is applied so that if CR + TES is *close* to reaching PC min, the controller tries that mode
-
-                                operating_mode = C_system_operating_modes::CR_TO_COLD__PC_RM_LO__TES_EMPTY__AUX_OFF;
-                            }
-                            else if (q_dot_tes_dc * (1.0 + tol_mode_switching) > q_pc_sb
-                                && m_dot_tes_dc_est * (1.0 + tol_mode_switching) > m_m_dot_pc_min
-                                && is_pc_sb_allowed &&
-                                mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_TO_COLD__PC_SB__TES_DC__AUX_OFF))
-                            {	// Tolerance is applied so that if CR + TES is *close* to reaching standby, the controller tries that mode
-
-                                operating_mode = C_system_operating_modes::CR_TO_COLD__PC_SB__TES_DC__AUX_OFF;
-                            }
-                            else if (is_pc_su_allowed && mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_TO_COLD__PC_MIN__TES_EMPTY__AUX_OFF))
-                            {	// If not enough thermal power to stay in standby, then run at min PC load until TES is fully discharged
-
-                                operating_mode = C_system_operating_modes::CR_TO_COLD__PC_MIN__TES_EMPTY__AUX_OFF;
-                            }
-                            else if (mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF) )
-                            {
-                                operating_mode = C_system_operating_modes::CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF;
-                            }
-                            else
-                            {
-                                operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-                            }
-                        }	// End logic for if( q_dot_tes_dc > 0.0 )
-                        else if( mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF) ) 
-                        {	// Storage dispatch is not available
-
-                            // No thermal power available to power cycle
-                            operating_mode = C_system_operating_modes::CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF;
-                        }
-                        else
-                        {
-                            operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-                        }
-                    }	// End logic if( is_pc_su_allowed )
-                    else if ( mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF) )
-                    {	// If neither receiver nor power cycle operation is allowed, then shut everything off
-
-                        operating_mode = C_system_operating_modes::CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF;
-                    }
-                    else
-                    {
-                        operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-                    }
-
-                }           
-				else	// Receiver is off - determine if power cycle can remain on
-				{
-					if( is_pc_su_allowed || is_pc_sb_allowed )
-					{
-						if( q_dot_tes_dc > 0.0 )
-						{	// Storage dispatch is available
-
-							if( ( (q_dot_tes_dc*(1.0 + tol_mode_switching) > q_pc_target
-								&& m_dot_tes_dc_est*(1.0 + tol_mode_switching) > m_m_dot_pc_min)
-								|| m_dot_tes_dc_est*(1.0 + tol_mode_switching) > m_m_dot_pc_max )
-								&& is_pc_su_allowed &&
-                                mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_OFF__PC_TARGET__TES_DC__AUX_OFF))
-							{	// Storage can provide enough dispatch to reach power cycle target
-								// Tolerance is applied so that if TES is *close* to reaching PC target, the controller tries that mode
-
-								operating_mode = C_system_operating_modes::CR_OFF__PC_TARGET__TES_DC__AUX_OFF;
-							}
-							else if( q_dot_tes_dc*(1.0 + tol_mode_switching) > q_pc_min 
-									&& m_dot_tes_dc_est*(1.0 + tol_mode_switching) > m_m_dot_pc_min
-									&& is_pc_su_allowed &&
-                                    mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF))
-							{	// Storage can provide enough dispatch to at least meet power cycle minimum operation fraction
-								// Run at highest possible PC fraction by dispatching all remaining storage
-								// Tolerance is applied so that if CR + TES is *close* to reaching PC min, the controller tries that mode
-
-								operating_mode = C_system_operating_modes::CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF;
-							}
-							else if( q_dot_tes_dc*(1.0 + tol_mode_switching) > q_pc_sb 
-									&& m_dot_tes_dc_est*(1.0 + tol_mode_switching) > m_m_dot_pc_min
-									&& is_pc_sb_allowed &&
-                                    mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_OFF__PC_SB__TES_DC__AUX_OFF))
-							{	// Tolerance is applied so that if CR + TES is *close* to reaching standby, the controller tries that mode
-								
-								operating_mode = C_system_operating_modes::CR_OFF__PC_SB__TES_DC__AUX_OFF;
-							}
-							else if( is_pc_su_allowed && mc_operating_modes.is_mode_avail(C_system_operating_modes::CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF))
-							{	// If not enough thermal power to stay in standby, then run at min PC load until TES is fully discharged
-
-								operating_mode = C_system_operating_modes::CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF;
-							}
-							else
-							{
-								operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-							}
-						}	// End logic for if( q_dot_tes_dc > 0.0 )
-						else
-						{	// Storage dispatch is not available
-
-							// No thermal power available to power cycle
-							operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-						}
-					}	// End logic if( is_pc_su_allowed )
-					else
-					{	// If neither receiver nor power cycle operation is allowed, then shut everything off
-
-						operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-					}
-				}	// End logic for else 'receiver not on'
-
-			}
-			// End operating state mode for CR ON, PC ON/STANDBY
+            operating_mode = mc_operating_modes.find_operating_mode(
+                cr_operating_state_to_controller, pc_operating_state_to_controller,
+                q_dot_cr_startup /*MWt*/, q_dot_tes_dc /*MWt*/,
+                q_dot_cr_on /*MWt*/, q_dot_tes_ch /*MWt*/,
+                q_dot_pc_su_max /*MWt*/, q_pc_target /*MWt*/,
+                q_dot_tes_dc_t_CR_su /*MWt*/, q_pc_min /*MWt*/,
+                q_pc_sb /*MWt*/, q_dot_pc_max,
+                m_dot_cr_on /*kg/s*/, m_dot_tes_ch_est /*kg/s*/,
+                m_m_dot_pc_max /*kg/s*/, m_dot_tes_dc_t_CR_su /*kg/s*/,
+                m_m_dot_pc_min /*kg/s*/, m_dot_tes_dc_est /*kg/s*/,
+                tol_mode_switching /*-*/,
+                is_rec_su_allowed, is_pc_su_allowed,
+                is_rec_outlet_to_hottank, is_pc_sb_allowed,
+                q_dot_PAR_HTR_on, is_PAR_HTR_allowed);
 
 			// Store operating mode
 			m_op_mode_tracking.push_back((int)operating_mode);
@@ -1804,7 +860,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 q_pc_target, q_dot_pc_su_max, q_pc_sb,
                 q_pc_min, m_q_dot_pc_max, q_dot_pc_su_max,
                 m_m_dot_pc_max_startup, m_m_dot_pc_max, m_m_dot_pc_min,
-                q_dot_elec_to_CR_heat, 1.E-3,
+                q_dot_elec_to_CR_heat, q_dot_elec_to_PAR_HTR, 1.E-3,
                 defocus_solved, is_op_mode_avail, is_turn_off_plant, is_turn_off_rec_su);
             if (is_turn_off_rec_su) {
                 is_rec_su_allowed = false;
@@ -1852,11 +908,19 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
             W_dot_cr_freeze_protection = mc_cr_out_solver.m_q_dot_heater;
         }
 
+        double W_dot_par_htr_elec_load = 0.0;
+        if (m_is_parallel_heater) {
+            W_dot_par_htr_elec_load = mc_par_htr_out_solver.m_W_dot_col_tracking +
+                                    mc_par_htr_out_solver.m_W_dot_htf_pump +
+                                    mc_par_htr_out_solver.m_q_dot_heater;       //[MWe]
+        }
+
 		double W_dot_net = mc_pc_out_solver.m_P_cycle - 
 			mc_cr_out_solver.m_W_dot_col_tracking -
 			mc_cr_out_solver.m_W_dot_htf_pump - 
 			(mc_pc_out_solver.m_W_dot_htf_pump + W_dot_tes_pump) -
 			W_dot_cr_freeze_protection -
+            W_dot_par_htr_elec_load -
 			mc_pc_out_solver.m_W_cool_par -
 			mc_tes_outputs.m_q_heater - 
 			W_dot_fixed -
@@ -1867,10 +931,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		mc_collector_receiver.converged();
 		mc_power_cycle.converged();
 		mc_tes.converged();
+        if (m_is_parallel_heater) {
+            mp_heater->converged();
+        }
 		
-        //update the tracked field generation
-        disp_qsf_last = mc_cr_out_solver.m_q_startup > 0. ? mc_cr_out_solver.m_q_thermal : 0.;    //only count if not starting up
-
         //Update the estimated thermal energy storage charge state
         double e_tes_disch = 0.;
 		double mhot_avail = 0.;
@@ -1888,31 +952,23 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 			mcold_avail = mdot_ch * mc_kernel.mc_sim_info.ms_ts.m_step;  //kg
         }
 
+        pc_heat_prev = mc_pc_out_solver.m_q_dot_htf;
+
 		// Update the cycle state persistance
-		if (mc_power_cycle.get_operating_state() == prev_pc_state)
-			pc_state_persist += mc_kernel.mc_sim_info.ms_ts.m_step / 3600.;
+		if (mc_power_cycle.get_operating_state() == pc_operating_state_prev)
+			pc_state_persist += mc_kernel.mc_sim_info.ms_ts.m_step / 3600.; //[hr]
 		else
 		{
 			pc_state_persist = 0.;
-			prev_pc_state = mc_power_cycle.get_operating_state();
 		}
 
 		// Update the receiver state persistance
-		if (mc_collector_receiver.get_operating_state() == prev_rec_state)
+		if (mc_collector_receiver.get_operating_state() == cr_operating_state_prev)
 			rec_state_persist += mc_kernel.mc_sim_info.ms_ts.m_step / 3600.;
 		else
 		{
 			rec_state_persist = 0.;
-			prev_rec_state = mc_collector_receiver.get_operating_state();
 		}
-
-
-
-		double f_op_last = 0.0;
-		if (mc_power_cycle.get_operating_state() == C_csp_power_cycle::ON || mc_power_cycle.get_operating_state() == C_csp_power_cycle::STANDBY)
-			f_op_last = mc_kernel.mc_sim_info.ms_ts.m_step / baseline_step;   // Fraction of timestep cycle was in this state
-
-
 
 		// Save timestep outputs
 		// This is after timestep convergence, so be sure convergence() methods don't unexpectedly change outputs
@@ -1975,19 +1031,29 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
             m_dot_cr_out_to_tes_hot = 0.0;
         }
 
-		double m_dot_bal_hot = (m_dot_cr_out_to_tes_hot +
+        double m_dot_par_htr_out_to_tes_hot = 0.0;      //[kg/hr]
+        if (m_is_parallel_heater) {
+            m_dot_par_htr_out_to_tes_hot = mc_par_htr_out_solver.m_m_dot_salt_tot;  //[kg/hr]
+        }
+
+		double m_dot_bal_hot = (m_dot_cr_out_to_tes_hot + m_dot_par_htr_out_to_tes_hot +
 							mc_tes_outputs.m_m_dot_tes_hot_out*3600.0 -
 							mc_pc_inputs.m_m_dot -
 							mc_tes_outputs.m_m_dot_cr_to_tes_hot*3600.0) / m_m_dot_pc_des;		//[-]
 
 		double m_dot_bal_cold = (m_dot_cr_out_to_tes_cold + mc_pc_inputs.m_m_dot +
 							mc_tes_outputs.m_m_dot_tes_cold_out*3600.0 -
-							mc_cr_out_solver.m_m_dot_salt_tot - 
+							mc_cr_out_solver.m_m_dot_salt_tot - m_dot_par_htr_out_to_tes_hot -
 							mc_tes_outputs.m_m_dot_tes_cold_in*3600.0) / m_m_dot_pc_des;	//[-]
 
-		double m_dot_bal_max = max(fabs(m_dot_bal_hot), fabs(m_dot_bal_cold));
+		double m_dot_bal_max = std::max(fabs(m_dot_bal_hot), fabs(m_dot_bal_cold));
 
-		double q_dot_bal = (mc_cr_out_solver.m_q_thermal +
+        double q_dot_par_htr = 0.0;
+        if (m_is_parallel_heater) {
+            q_dot_par_htr = mc_par_htr_out_solver.m_q_thermal;  //[MWt]
+        }
+
+		double q_dot_bal = (mc_cr_out_solver.m_q_thermal + q_dot_par_htr +
 							mc_tes_outputs.m_q_dot_dc_to_htf -
 							mc_pc_out_solver.m_q_dot_htf -
 							mc_tes_outputs.m_q_dot_ch_from_htf) / m_cycle_q_dot_des;	//[-]
@@ -2031,22 +1097,24 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		mc_reported_outputs.value(C_solver_outputs::W_DOT_NET, W_dot_net);								//[MWe] Total electric power output to grid        
 		
             //Dispatch optimization outputs
-		mc_reported_outputs.value(C_solver_outputs::DISPATCH_SOLVE_STATE, dispatch.outputs.solve_state);
-		mc_reported_outputs.value(C_solver_outputs::DISPATCH_SOLVE_ITER, dispatch.outputs.solve_iter);
-		mc_reported_outputs.value(C_solver_outputs::DISPATCH_SOLVE_OBJ, dispatch.outputs.objective);
-		mc_reported_outputs.value(C_solver_outputs::DISPATCH_SOLVE_OBJ_RELAX, dispatch.outputs.objective_relaxed);
-		mc_reported_outputs.value(C_solver_outputs::DISPATCH_QSF_EXPECT, disp_qsf_expect);
-		mc_reported_outputs.value(C_solver_outputs::DISPATCH_QSFPROD_EXPECT, disp_qsfprod_expect);
-		mc_reported_outputs.value(C_solver_outputs::DISPATCH_QSFSU_EXPECT, disp_qsfsu_expect);
-		mc_reported_outputs.value(C_solver_outputs::DISPATCH_TES_EXPECT, disp_tes_expect);
-		mc_reported_outputs.value(C_solver_outputs::DISPATCH_PCEFF_EXPECT, disp_etapb_expect);
-		mc_reported_outputs.value(C_solver_outputs::DISPATCH_SFEFF_EXPECT, disp_etasf_expect);
-		mc_reported_outputs.value(C_solver_outputs::DISPATCH_QPBSU_EXPECT, disp_qpbsu_expect);
-		mc_reported_outputs.value(C_solver_outputs::DISPATCH_WPB_EXPECT, disp_wpb_expect);
-		mc_reported_outputs.value(C_solver_outputs::DISPATCH_REV_EXPECT, disp_rev_expect);
-		mc_reported_outputs.value(C_solver_outputs::DISPATCH_PRES_NCONSTR, dispatch.outputs.presolve_nconstr);
-		mc_reported_outputs.value(C_solver_outputs::DISPATCH_PRES_NVAR, dispatch.outputs.presolve_nvar);
-		mc_reported_outputs.value(C_solver_outputs::DISPATCH_SOLVE_TIME, dispatch.outputs.solve_time);
+		mc_reported_outputs.value(C_solver_outputs::DISPATCH_REL_MIP_GAP, mc_dispatch.lp_outputs.rel_mip_gap);
+		mc_reported_outputs.value(C_solver_outputs::DISPATCH_SOLVE_STATE, mc_dispatch.lp_outputs.solve_state);
+		mc_reported_outputs.value(C_solver_outputs::DISPATCH_SUBOPT_FLAG, mc_dispatch.lp_outputs.subopt_flag);
+		mc_reported_outputs.value(C_solver_outputs::DISPATCH_SOLVE_ITER, mc_dispatch.lp_outputs.solve_iter);
+		mc_reported_outputs.value(C_solver_outputs::DISPATCH_SOLVE_OBJ, mc_dispatch.lp_outputs.objective);
+		mc_reported_outputs.value(C_solver_outputs::DISPATCH_SOLVE_OBJ_RELAX, mc_dispatch.lp_outputs.objective_relaxed);
+		mc_reported_outputs.value(C_solver_outputs::DISPATCH_QSF_EXPECT, mc_dispatch.disp_outputs.qsf_expect);
+		mc_reported_outputs.value(C_solver_outputs::DISPATCH_QSFPROD_EXPECT, mc_dispatch.disp_outputs.qsfprod_expect);
+		mc_reported_outputs.value(C_solver_outputs::DISPATCH_QSFSU_EXPECT, mc_dispatch.disp_outputs.qsfsu_expect);
+		mc_reported_outputs.value(C_solver_outputs::DISPATCH_TES_EXPECT, mc_dispatch.disp_outputs.tes_expect);
+		mc_reported_outputs.value(C_solver_outputs::DISPATCH_PCEFF_EXPECT, mc_dispatch.disp_outputs.etapb_expect);
+		mc_reported_outputs.value(C_solver_outputs::DISPATCH_SFEFF_EXPECT, mc_dispatch.disp_outputs.etasf_expect);
+		mc_reported_outputs.value(C_solver_outputs::DISPATCH_QPBSU_EXPECT, mc_dispatch.disp_outputs.qpbsu_expect);
+		mc_reported_outputs.value(C_solver_outputs::DISPATCH_WPB_EXPECT, mc_dispatch.disp_outputs.wpb_expect);
+		mc_reported_outputs.value(C_solver_outputs::DISPATCH_REV_EXPECT, mc_dispatch.disp_outputs.rev_expect);
+		mc_reported_outputs.value(C_solver_outputs::DISPATCH_PRES_NCONSTR, mc_dispatch.lp_outputs.presolve_nconstr);
+		mc_reported_outputs.value(C_solver_outputs::DISPATCH_PRES_NVAR, mc_dispatch.lp_outputs.presolve_nvar);
+		mc_reported_outputs.value(C_solver_outputs::DISPATCH_SOLVE_TIME, mc_dispatch.lp_outputs.solve_time);
 
 		// Report series of operating modes attempted during the timestep as a 'double' so can see in hourly outputs
         // Key will start with 1 then add two digits for each operating mode. Single digits enumerations will add a 0 before the number
@@ -2079,7 +1147,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
 		mc_reported_outputs.set_timestep_outputs();
 
-
 		// ****************************************************
 		//          End saving timestep outputs
 		// ****************************************************
@@ -2092,6 +1159,9 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				mc_collector_receiver.write_output_intervals(m_report_time_start, mv_time_local, m_report_time_end);
 				mc_power_cycle.write_output_intervals(m_report_time_start, mv_time_local, m_report_time_end);
 				mc_tes.write_output_intervals(m_report_time_start, mv_time_local, m_report_time_end);
+                if (m_is_parallel_heater) {
+                    mp_heater->write_output_intervals(m_report_time_start, mv_time_local, m_report_time_end);
+                }
 
 				// Overwrite TIME_FINAL
 				mc_reported_outputs.overwrite_most_recent_timestep(C_solver_outputs::TIME_FINAL, m_report_time_end / 3600.0);	//[hr]
@@ -2180,17 +1250,212 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
 }	// End simulate() method
 
+void C_csp_solver::calc_timestep_plant_control_and_targets(
+    double f_turbine_tou /*-*/, double q_dot_pc_min /*MWt*/, double q_dot_tes_ch /*MWt*/, double pc_heat_prev /*MWt*/,  double pc_state_persist /*hours*/,
+    C_csp_power_cycle::E_csp_power_cycle_modes pc_operating_state, double purchase_mult /*-*/, double sale_mult /*-*/,
+    double calc_frac_current /*-*/, double baseline_step /*s*/,
+    bool& is_q_dot_pc_target_overwrite,
+    double& q_dot_pc_target /*MWt*/, double& q_dot_pc_max /*MWt*/, double& q_dot_elec_to_CR_heat /*MWt*/,
+    bool& is_rec_su_allowed, bool& is_pc_su_allowed, bool& is_pc_sb_allowed,
+    double& q_dot_elec_to_PAR_HTR /*MWt*/, bool& is_PAR_HTR_allowed)
+{
+    // Optional rules for TOD Block Plant Control
+    if (mc_tou.mc_dispatch_params.m_is_block_dispatch)
+    {
+        is_rec_su_allowed = true;
+        is_pc_su_allowed = true;
+        is_pc_sb_allowed = true;
 
-void C_csp_tou::init_parent()
+        // Set PC target and max thermal power
+        q_dot_pc_target = f_turbine_tou * m_cycle_q_dot_des;	//[MW]
+        if (mc_tou.mc_dispatch_params.m_is_tod_pc_target_also_pc_max) {
+            q_dot_pc_max = q_dot_pc_target;     //[MW]
+        }
+        else {
+            q_dot_pc_max = m_cycle_max_frac * m_cycle_q_dot_des;		//[MWt]
+        }
+
+        // Rule 1: if the sun sets (or does not rise) in __ [hours], then do not allow power cycle standby
+            //double standby_time_buffer = 2.0;
+        if (mc_tou.mc_dispatch_params.m_use_rule_1 &&
+            (mc_weather.ms_outputs.m_hour + mc_tou.mc_dispatch_params.m_standby_off_buffer <= mc_weather.ms_outputs.m_time_rise ||
+                mc_weather.ms_outputs.m_hour + mc_tou.mc_dispatch_params.m_standby_off_buffer >= mc_weather.ms_outputs.m_time_set))
+        {
+            is_pc_sb_allowed = false;
+        }
+
+        // Rule 2:
+        if (mc_tou.mc_dispatch_params.m_use_rule_2 &&
+            ((q_dot_pc_target < q_dot_pc_min && q_dot_tes_ch < m_q_dot_rec_des * mc_tou.mc_dispatch_params.m_q_dot_rec_des_mult) ||
+                is_q_dot_pc_target_overwrite))
+        {
+            // If overwrite was previously true, but now power cycle is off, set to false
+            if (is_q_dot_pc_target_overwrite &&
+                (pc_operating_state == C_csp_power_cycle::OFF || q_dot_pc_target >= q_dot_pc_min))
+            {
+                is_q_dot_pc_target_overwrite = false;
+            }
+            else
+            {
+                is_q_dot_pc_target_overwrite = true;
+            }
+
+            if (is_q_dot_pc_target_overwrite)
+            {
+                q_dot_pc_target = mc_tou.mc_dispatch_params.m_f_q_dot_pc_overwrite * m_cycle_q_dot_des;
+            }
+        }
+
+        // After rules, reset booleans if necessary
+        if (q_dot_pc_target < q_dot_pc_min || q_dot_pc_target <= 0.)
+        {
+            is_pc_su_allowed = false;
+            is_pc_sb_allowed = false;
+            q_dot_pc_target = 0.0;
+        }
+
+        q_dot_elec_to_PAR_HTR = 0.0;
+        is_PAR_HTR_allowed = false;
+        if (m_is_parallel_heater && !is_pc_su_allowed && !is_pc_sb_allowed &&
+            purchase_mult < 1.0 && q_dot_tes_ch > 0.0) {
+
+            is_PAR_HTR_allowed = true;
+            q_dot_elec_to_PAR_HTR = m_PAR_HTR_q_dot_rec_des;    //[MWt]
+        }
+    }
+    // use simply policy to govern arbitrage operation
+    else if (mc_tou.mc_dispatch_params.m_is_arbitrage_policy) {
+
+        // Check purchase multiplier
+        // If less than 1, then allow charging
+        q_dot_elec_to_PAR_HTR = 0.0;
+        is_PAR_HTR_allowed = false;
+        if (purchase_mult < 1.0 && q_dot_tes_ch > 0.0) {
+            is_rec_su_allowed = true;
+            q_dot_elec_to_CR_heat = m_q_dot_rec_des;    //[MWt]
+            if (m_is_parallel_heater) {
+                is_PAR_HTR_allowed = true;
+                q_dot_elec_to_PAR_HTR = m_PAR_HTR_q_dot_rec_des;    //[MWt]
+            }
+        }
+        else {
+            is_rec_su_allowed = false;
+            q_dot_elec_to_CR_heat = 0.0;
+        }
+
+        // Check (sale) price multiplier
+        // If greater than 1, the allow discharging
+        if (sale_mult > 1.0) {
+            is_pc_su_allowed = true;
+            is_pc_sb_allowed = false;
+
+            q_dot_pc_target = m_cycle_q_dot_des;	//[MWt]
+            if (mc_tou.mc_dispatch_params.m_is_tod_pc_target_also_pc_max) {
+                q_dot_pc_max = q_dot_pc_target;     //[MWt]
+            }
+            else {
+                q_dot_pc_max = m_cycle_max_frac * m_cycle_q_dot_des;		//[MWt]
+            }
+        }
+        else {
+            is_pc_su_allowed = false;
+            is_pc_sb_allowed = false;
+
+            q_dot_pc_target = 0.0;
+            q_dot_pc_max = 0.0;
+        }
+    }
+    // Run dispatch optimization?
+    else if (mc_dispatch.solver_params.dispatch_optimize)
+    {
+        q_dot_elec_to_PAR_HTR = 0.0;
+        is_PAR_HTR_allowed = false;
+
+        if (m_is_parallel_heater) {
+            throw(C_csp_exception("Dispatch optimization not available for parallel heater configs"));
+        }
+
+        //time to reoptimize
+        //reoptimize when the time is equal to multiples of the first time step
+        if ((int)mc_kernel.mc_sim_info.ms_ts.m_time % (int)(3600. * mc_dispatch.solver_params.optimize_frequency) == baseline_step
+            && mc_dispatch.disp_outputs.time_last != mc_kernel.mc_sim_info.ms_ts.m_time
+            )
+        {
+            int opt_horizon = mc_dispatch.solver_params.optimize_horizon;
+            double hour_now = mc_kernel.mc_sim_info.ms_ts.m_time / 3600.;
+
+            //if this is the last day of the year, update the optimization horizon to be no more than the last 24 hours. 
+            if (hour_now >= (8760. - opt_horizon))
+                mc_dispatch.solver_params.optimize_horizon = (int)std::min((double)opt_horizon, (double)(8761. - hour_now));
+
+            //message
+            std::stringstream ss;
+            ss << "Optimizing thermal energy dispatch profile for time window "
+                << (int)(mc_kernel.mc_sim_info.ms_ts.m_time / 3600.) << " - "
+                << (int)(mc_kernel.mc_sim_info.ms_ts.m_time / 3600.) + mc_dispatch.solver_params.optimize_frequency;
+
+            mc_csp_messages.add_message(C_csp_messages::NOTICE, ss.str());
+            send_callback((float)calc_frac_current * 100.f);
+            ss.flush();
+
+            // Update horizon parameter values and inital conition parameters
+            if (!mc_dispatch.update_horizon_parameters(mc_tou)) {
+                throw(C_csp_exception("Dispatch failed to update horizon parameter values"));
+            }
+            mc_dispatch.update_initial_conditions(pc_heat_prev, m_T_htf_cold_des, pc_state_persist);
+
+            //predict performance for the time horizon
+            if (
+                mc_dispatch.predict_performance((int)
+                    (mc_kernel.mc_sim_info.ms_ts.m_time / baseline_step - 1),
+                    (int)(mc_dispatch.solver_params.optimize_horizon * mc_dispatch.solver_params.steps_per_hour),
+                    (int)((3600. / baseline_step) / mc_dispatch.solver_params.steps_per_hour)
+                )
+                )
+            {
+                //call the optimize method
+                bool opt_complete = mc_dispatch.lp_outputs.last_opt_successful = mc_dispatch.optimize();
+
+                if (mc_dispatch.solver_params.disp_reporting && (!mc_dispatch.solver_params.log_message.empty()))
+                {
+                    mc_csp_messages.add_message(C_csp_messages::NOTICE, mc_dispatch.solver_params.log_message.c_str());
+                    send_callback((float)calc_frac_current * 100.f);
+                }
+
+                mc_dispatch.m_current_read_step = 0;   //reset
+            }
+            else
+            {
+                throw(C_csp_exception("Dispatch failed to predict performance over the dispatch horizon"));
+            }
+
+            //call again to go back to original state
+            mc_tou.call(mc_kernel.mc_sim_info.ms_ts.m_time, mc_tou_outputs);
+        }
+
+        //running from the optimized profile
+        mc_dispatch.set_dispatch_outputs();
+
+        //setting binaries and targets
+        is_rec_su_allowed = mc_dispatch.disp_outputs.is_rec_su_allowed;
+        is_pc_sb_allowed = mc_dispatch.disp_outputs.is_pc_sb_allowed;
+        is_pc_su_allowed = mc_dispatch.disp_outputs.is_pc_su_allowed;
+        q_dot_pc_target = mc_dispatch.disp_outputs.q_pc_target;
+        q_dot_elec_to_CR_heat = mc_dispatch.disp_outputs.q_dot_elec_to_CR_heat;
+        q_dot_pc_max = mc_dispatch.disp_outputs.q_dot_pc_max;
+    }
+}
+
+void C_csp_tou::init_parent(bool dispatch_optimize)
 {
 	// Check that dispatch logic is reasonable
-	if( !(mc_dispatch_params.m_dispatch_optimize || mc_dispatch_params.m_is_block_dispatch || mc_dispatch_params.m_is_arbitrage_policy) )
+	if( !(dispatch_optimize || mc_dispatch_params.m_is_block_dispatch || mc_dispatch_params.m_is_arbitrage_policy) )
 	{
 		throw(C_csp_exception("Must select a plant control strategy", "TOU initialization"));
 	}
 
-	if( (mc_dispatch_params.m_dispatch_optimize && mc_dispatch_params.m_is_block_dispatch) ||
-        (mc_dispatch_params.m_dispatch_optimize && mc_dispatch_params.m_is_arbitrage_policy) ||
+	if( (dispatch_optimize && mc_dispatch_params.m_is_block_dispatch) ||
+        (dispatch_optimize && mc_dispatch_params.m_is_arbitrage_policy) ||
         (mc_dispatch_params.m_is_block_dispatch && mc_dispatch_params.m_is_arbitrage_policy) )
 	{
 		throw(C_csp_exception("Multiple plant control strategies were selected. Please select one.", "TOU initialization"));
@@ -2251,6 +1516,32 @@ C_csp_solver::C_operating_mode_core::C_operating_mode_core(C_csp_collector_recei
     m_cycle_target_type = cycle_target_type;
     m_is_sensible_htf_only = is_sensible_htf_only;
 
+    m_htr_mode = C_csp_collector_receiver::E_csp_cr_modes::OFF;
+
+    turn_on_mode_availability();
+}
+
+C_csp_solver::C_operating_mode_core::C_operating_mode_core(C_csp_collector_receiver::E_csp_cr_modes cr_mode,
+    C_csp_power_cycle::E_csp_power_cycle_modes pc_mode,
+    C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode,
+    C_MEQ__timestep::E_timestep_target_modes step_target_mode,
+    bool is_defocus,
+    std::string op_mode_name,
+    cycle_targets cycle_target_type,
+    bool is_sensible_htf_only,
+    C_csp_collector_receiver::E_csp_cr_modes htr_mode)
+{
+    m_cr_mode = cr_mode;
+    m_pc_mode = pc_mode;
+    m_solver_mode = solver_mode;
+    m_step_target_mode = step_target_mode;
+    m_is_defocus = is_defocus;
+    m_op_mode_name = op_mode_name;
+    m_cycle_target_type = cycle_target_type;
+    m_is_sensible_htf_only = is_sensible_htf_only;
+
+    m_htr_mode = htr_mode;
+
     turn_on_mode_availability();
 }
 
@@ -2276,7 +1567,7 @@ bool C_csp_solver::C_operating_mode_core::solve(C_csp_solver* pc_csp_solver, boo
     double q_dot_pc_on_dispatch_target /*MWt*/, double q_dot_pc_startup /*MWt*/, double q_dot_pc_standby /*MWt*/,
     double q_dot_pc_min /*MWt*/, double q_dot_pc_max /*MWt*/, double q_dot_pc_startup_max /*MWt*/,
     double m_dot_pc_startup_max /*kg/hr*/, double m_dot_pc_max /*kg/hr*/, double m_dot_pc_min /*kg/hr*/,
-    double q_dot_elec_to_CR_heat /*MWt*/, double limit_comp_tol /*-*/,
+    double q_dot_elec_to_CR_heat /*MWt*/, double q_dot_elec_to_PAR_HTR /*MWt*/, double limit_comp_tol /*-*/,
     double& defocus_solved, bool& is_op_mode_avail /*-*/, bool& is_turn_off_plant, bool& is_turn_off_rec_su)
 {
     if (!pc_csp_solver->mc_collector_receiver.m_is_sensible_htf && m_is_sensible_htf_only) {
@@ -2323,9 +1614,11 @@ bool C_csp_solver::C_operating_mode_core::solve(C_csp_solver* pc_csp_solver, boo
         throw(C_csp_exception("Unknown cycle target type"));
     }
 
-    int solve_error_code = pc_csp_solver->solve_operating_mode(m_cr_mode, m_pc_mode, m_solver_mode,
-        m_step_target_mode, q_dot_pc_solve, m_is_defocus, is_rec_outlet_to_hottank,
-        q_dot_elec_to_CR_heat,
+    int solve_error_code = pc_csp_solver->solve_operating_mode(m_cr_mode,
+        m_pc_mode, m_htr_mode,
+        m_solver_mode, m_step_target_mode,
+        q_dot_pc_solve, m_is_defocus, is_rec_outlet_to_hottank,
+        q_dot_elec_to_CR_heat, q_dot_elec_to_PAR_HTR,
         m_op_mode_name, defocus_solved);
 
     bool is_converged = true;
@@ -3639,6 +2932,18 @@ C_csp_solver::C_operating_mode_core* C_csp_solver::C_system_operating_modes::get
         return &mc_CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF;
     case CR_TO_COLD__PC_SU__TES_DC__AUX_OFF:
         return &mc_CR_TO_COLD__PC_SU__TES_DC__AUX_OFF;
+    case CR_OFF__PC_OFF__TES_CH__HTR_ON:
+        return &mc_CR_OFF__PC_OFF__TES_CH__HTR_ON;
+    case CR_SU__PC_OFF__TES_CH__HTR_ON:
+        return &mc_CR_SU__PC_OFF__TES_CH__HTR_ON;
+    case CR_ON__PC_OFF__TES_CH__HTR_ON:
+        return &mc_CR_ON__PC_OFF__TES_CH__HTR_ON;
+    case CR_OFF__PC_OFF__TES_FULL__HTR_DF:
+        return &mc_CR_OFF__PC_OFF__TES_FULL__HTR_DF;
+    case CR_ON__PC_OFF__TES_FULL__HTR_DF:
+        return &mc_CR_ON__PC_OFF__TES_FULL__HTR_DF;
+    case CR_SU__PC_OFF__TES_FULL__HTR_DF:
+        return &mc_CR_SU__PC_OFF__TES_FULL__HTR_DF;
     default:
         throw(C_csp_exception("Operating mode class not defined"));
     }
@@ -3648,14 +2953,14 @@ bool C_csp_solver::C_system_operating_modes::solve(C_system_operating_modes::E_o
     double q_dot_pc_on_target /*MWt*/, double q_dot_pc_startup /*MWt*/, double q_dot_pc_standby /*MWt*/,
     double q_dot_pc_min /*MWt*/, double q_dot_pc_max /*MWt*/, double q_dot_pc_startup_max /*MWt*/,
     double m_dot_pc_startup_max /*kg/hr*/, double m_dot_pc_max /*kg/hr*/, double m_dot_pc_min /*kg/hr*/,
-    double q_dot_elec_to_CR_heat /*MWt*/, double limit_comp_tol /*-*/,
+    double q_dot_elec_to_CR_heat /*MWt*/, double q_dot_elec_to_PAR_HTR /*MWt*/, double limit_comp_tol /*-*/,
     double& defocus_solved, bool& is_op_mode_avail /*-*/, bool& is_turn_off_plant, bool& is_turn_off_rec_su)
 {
     return get_pointer_to_op_mode(op_mode)->solve(pc_csp_solver, is_rec_outlet_to_hottank,
         q_dot_pc_on_target, q_dot_pc_startup, q_dot_pc_standby,
         q_dot_pc_min, q_dot_pc_max, q_dot_pc_startup_max,
         m_dot_pc_startup_max, m_dot_pc_max, m_dot_pc_min,
-        q_dot_elec_to_CR_heat, limit_comp_tol,
+        q_dot_elec_to_CR_heat, q_dot_elec_to_PAR_HTR, limit_comp_tol,
         defocus_solved, is_op_mode_avail, is_turn_off_plant, is_turn_off_rec_su);
 }
 
@@ -3672,4 +2977,798 @@ void C_csp_solver::C_system_operating_modes::turn_off_plant()
         get_pointer_to_op_mode(static_cast<E_operating_modes>(it))->turn_off_mode_availability();
     }
 
+}
+
+C_csp_solver::C_system_operating_modes::E_operating_modes C_csp_solver::C_system_operating_modes::cr_and_pc_stay_off__try_htr
+(double q_dot_tes_ch /*MWt*/, double tol_mode_switching /*-*/,
+ bool is_PAR_HTR_allowed, double q_dot_PAR_HTR_on /*MWt*/)
+{
+    C_csp_solver::C_system_operating_modes::E_operating_modes operating_mode;
+
+    if (is_PAR_HTR_allowed && q_dot_PAR_HTR_on > 0.0 && q_dot_tes_ch > 0.0) {
+        if (q_dot_PAR_HTR_on * (1. - tol_mode_switching) < q_dot_tes_ch &&
+            is_mode_avail(CR_OFF__PC_OFF__TES_CH__HTR_ON)) {
+
+            operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_CH__HTR_ON;
+        }
+        else if (is_mode_avail(CR_OFF__PC_OFF__TES_FULL__HTR_DF)) {
+
+            operating_mode = CR_OFF__PC_OFF__TES_FULL__HTR_DF;
+        }
+        else {
+            operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+        }
+    }
+    else {
+        operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+    }
+
+    return operating_mode;
+}
+
+C_csp_solver::C_system_operating_modes::E_operating_modes C_csp_solver::C_system_operating_modes::pc_off__try_cr_su_with_htr_combs
+(double q_dot_tes_ch /*MWt*/, double tol_mode_switching /*-*/,
+ bool is_PAR_HTR_allowed, double q_dot_PAR_HTR_on /*MWt*/)
+{
+    C_csp_solver::C_system_operating_modes::E_operating_modes operating_mode;
+
+    if (is_PAR_HTR_allowed && q_dot_tes_ch > 0.0 && q_dot_PAR_HTR_on > 0.0 &&
+    is_mode_avail(C_system_operating_modes::CR_SU__PC_OFF__TES_CH__HTR_ON))
+    {
+        if (q_dot_PAR_HTR_on * (1. + tol_mode_switching) > q_dot_tes_ch &&
+            is_mode_avail(C_system_operating_modes::CR_SU__PC_OFF__TES_FULL__HTR_DF)) {
+
+            operating_mode = C_system_operating_modes::CR_SU__PC_OFF__TES_FULL__HTR_DF;
+        }
+        else {
+            operating_mode = C_system_operating_modes::CR_SU__PC_OFF__TES_CH__HTR_ON;
+        }
+    }
+    else
+    {
+        operating_mode = C_system_operating_modes::CR_SU__PC_OFF__TES_OFF__AUX_OFF;
+    }
+
+    return operating_mode;
+}
+
+C_csp_solver::C_system_operating_modes::E_operating_modes C_csp_solver::C_system_operating_modes::cr_on_pc_off_tes_ch_avail__try_htr
+(double q_dot_cr_on /*MWt*/, double q_dot_tes_ch /*MWt*/, double tol_mode_switching /*-*/,
+ bool is_PAR_HTR_allowed, double q_dot_PAR_HTR_on /*MWt*/)
+{
+    C_csp_solver::C_system_operating_modes::E_operating_modes operating_mode;
+
+    if (is_PAR_HTR_allowed && q_dot_PAR_HTR_on > 0.0 &&
+        is_mode_avail(C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF)) {
+
+        if ((q_dot_cr_on + q_dot_PAR_HTR_on) * (1.0 - tol_mode_switching) < q_dot_tes_ch &&
+            is_mode_avail(C_system_operating_modes::CR_ON__PC_OFF__TES_CH__HTR_ON)) {
+
+            operating_mode = C_system_operating_modes::CR_ON__PC_OFF__TES_CH__HTR_ON;
+        }
+        else if (q_dot_cr_on * (1. - tol_mode_switching) < q_dot_tes_ch &&
+            is_mode_avail(C_system_operating_modes::CR_ON__PC_OFF__TES_FULL__HTR_DF)) {
+
+            operating_mode = C_system_operating_modes::CR_ON__PC_OFF__TES_FULL__HTR_DF;
+        }
+        else {
+            operating_mode = C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF;
+        }
+    }
+    else {
+        if (q_dot_cr_on * (1.0 - tol_mode_switching) < q_dot_tes_ch &&
+            is_mode_avail(C_system_operating_modes::CR_ON__PC_OFF__TES_CH__AUX_OFF))
+        {
+            operating_mode = C_system_operating_modes::CR_ON__PC_OFF__TES_CH__AUX_OFF;
+        }
+        else if (is_mode_avail(C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF)) // m_is_CR_DF__PC_OFF__TES_FULL__AUX_OFF_avail)
+        {
+            operating_mode = C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF;
+        }
+        else
+        {
+            operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+        }
+    }
+
+    return operating_mode;
+}
+
+C_csp_solver::C_system_operating_modes::E_operating_modes C_csp_solver::C_system_operating_modes::find_operating_mode
+(C_csp_collector_receiver::E_csp_cr_modes cr_operating_state,
+    C_csp_power_cycle::E_csp_power_cycle_modes pc_operating_state,
+    double q_dot_cr_startup /*MWt*/, double q_dot_tes_dc /*MWt*/,
+    double q_dot_cr_on /*MWt*/, double q_dot_tes_ch /*MWt*/,
+    double q_dot_pc_su_max /*MWt*/, double q_dot_pc_target /*MWt*/,
+    double q_dot_tes_dc_t_CR_su /*MWt*/, double q_dot_pc_min /*MWt*/,
+    double q_dot_pc_sb /*MWt*/, double q_dot_pc_max /*MWt*/,
+    double m_dot_cr_on /*kg/s*/, double m_dot_tes_ch_est /*kg/s*/,
+    double m_dot_pc_max /*kg/s*/, double m_dot_tes_dc_t_CR_su /*kg/s*/,
+    double m_dot_pc_min /*kg/s*/, double m_dot_tes_dc_est /*kg/s*/,
+    double tol_mode_switching /*-*/,
+    bool is_rec_su_allowed, bool is_pc_su_allowed,
+    bool is_rec_outlet_to_hottank, bool is_pc_sb_allowed,
+    double q_dot_PAR_HTR_on /*MWt*/, bool is_PAR_HTR_allowed)
+{
+    C_system_operating_modes::E_operating_modes operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+
+    if ((cr_operating_state == C_csp_collector_receiver::OFF || cr_operating_state == C_csp_collector_receiver::STARTUP)
+        && (pc_operating_state == C_csp_power_cycle::OFF || pc_operating_state == C_csp_power_cycle::STARTUP))
+    {	// At start of this timestep, are power cycle AND collector/receiver off?
+
+        if (q_dot_cr_startup > 0.0 && is_rec_su_allowed &&
+            is_mode_avail(C_system_operating_modes::CR_SU__PC_OFF__TES_OFF__AUX_OFF))
+        {	// Receiver startup is allowed and possible (will generate net energy)
+
+            if (q_dot_tes_dc > 0.0 && is_pc_su_allowed &&
+                is_mode_avail(C_system_operating_modes::CR_SU__PC_SU__TES_DC__AUX_OFF))
+            {
+                operating_mode = C_system_operating_modes::CR_SU__PC_SU__TES_DC__AUX_OFF;
+            }
+            else {
+                operating_mode = pc_off__try_cr_su_with_htr_combs(q_dot_tes_ch, tol_mode_switching, is_PAR_HTR_allowed, q_dot_PAR_HTR_on);
+            }
+            //else if (is_PAR_HTR_allowed && q_dot_tes_ch > 0.0 && q_dot_PAR_HTR_on > 0.0 &&
+            //    is_mode_avail(C_system_operating_modes::CR_SU__PC_OFF__TES_CH__HTR_ON))
+            //{
+            //    if (q_dot_PAR_HTR_on * (1. + tol_mode_switching) > q_dot_tes_ch &&
+            //        is_mode_avail(C_system_operating_modes::CR_SU__PC_OFF__TES_FULL__HTR_DF)) {
+            //
+            //        operating_mode = C_system_operating_modes::CR_SU__PC_OFF__TES_FULL__HTR_DF;
+            //    }
+            //    else {
+            //        operating_mode = C_system_operating_modes::CR_SU__PC_OFF__TES_CH__HTR_ON;
+            //    }
+            //}
+            //else
+            //{
+            //    operating_mode = C_system_operating_modes::CR_SU__PC_OFF__TES_OFF__AUX_OFF;
+            //}
+        }
+        else
+        {
+            if (q_dot_tes_dc > 0.0 && is_pc_su_allowed &&
+                is_mode_avail(C_system_operating_modes::CR_OFF__PC_SU__TES_DC__AUX_OFF))
+            {
+                operating_mode = C_system_operating_modes::CR_OFF__PC_SU__TES_DC__AUX_OFF;
+            }
+            else {
+                operating_mode = cr_and_pc_stay_off__try_htr(q_dot_tes_ch, tol_mode_switching, is_PAR_HTR_allowed, q_dot_PAR_HTR_on);
+                //if (is_PAR_HTR_allowed && q_dot_PAR_HTR_on > 0.0 && q_dot_tes_ch > 0.0) {
+                //    if (q_dot_PAR_HTR_on * (1. - tol_mode_switching) < q_dot_tes_ch &&
+                //        is_mode_avail(CR_OFF__PC_OFF__TES_CH__HTR_ON)) {
+                //
+                //        operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_CH__HTR_ON;
+                //    }
+                //    else if (is_mode_avail(CR_OFF__PC_OFF__TES_FULL__HTR_DF)) {
+                //        operating_mode = CR_OFF__PC_OFF__TES_FULL__HTR_DF;
+                //    }
+                //    else {
+                //        operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+                //    }
+                //}
+                //else {
+                //    operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+                //}
+            }
+        }
+    }	// End logic for CR_state == OFF or STARTUP    AND     PC_state == OFF or STARTUP
+
+    else if (cr_operating_state == C_csp_collector_receiver::ON &&
+        (pc_operating_state == C_csp_power_cycle::OFF || pc_operating_state == C_csp_power_cycle::STARTUP))
+    {
+        if (q_dot_cr_on > 0.0 && is_rec_su_allowed && is_rec_outlet_to_hottank)
+        {	// Receiver is allowed to remain on, and it can produce useful energy. Now, need to find a home for it
+
+            if (is_pc_su_allowed &&
+                is_mode_avail(C_system_operating_modes::CR_ON__PC_SU__TES_OFF__AUX_OFF)) // Can receiver output go to power cycle?
+            {
+                if (q_dot_tes_ch > 0.0)
+                {
+                    if (((q_dot_cr_on - q_dot_tes_ch) * (1.0 + tol_mode_switching) > q_dot_pc_su_max
+                        || (m_dot_cr_on - m_dot_tes_ch_est) * (1.0 + tol_mode_switching) > m_dot_pc_max) &&
+                        is_mode_avail(C_system_operating_modes::CR_DF__PC_SU__TES_FULL__AUX_OFF))
+                    {
+                        operating_mode = C_system_operating_modes::CR_DF__PC_SU__TES_FULL__AUX_OFF;
+                    }
+                    else if ((q_dot_cr_on * (1.0 + tol_mode_switching) > q_dot_pc_su_max
+                        || m_dot_cr_on * (1.0 + tol_mode_switching) > m_dot_pc_max) &&
+                        is_mode_avail(C_system_operating_modes::CR_ON__PC_SU__TES_CH__AUX_OFF))
+                    {
+                        operating_mode = C_system_operating_modes::CR_ON__PC_SU__TES_CH__AUX_OFF;
+                    }
+                    else
+                    {
+                        operating_mode = C_system_operating_modes::CR_ON__PC_SU__TES_OFF__AUX_OFF;
+                    }
+                }
+                else
+                {
+                    if ((q_dot_cr_on * (1.0 + tol_mode_switching) > q_dot_pc_su_max ||
+                        m_dot_cr_on * (1.0 + tol_mode_switching) > m_dot_pc_max) &&
+                        is_mode_avail(C_system_operating_modes::CR_DF__PC_SU__TES_OFF__AUX_OFF))
+                    {
+                        operating_mode = C_system_operating_modes::CR_DF__PC_SU__TES_OFF__AUX_OFF;
+                    }
+                    else
+                    {
+                        operating_mode = C_system_operating_modes::CR_ON__PC_SU__TES_OFF__AUX_OFF;
+                    }
+                }
+            }
+            else if (q_dot_tes_ch > 0.0)
+            {
+                operating_mode = cr_on_pc_off_tes_ch_avail__try_htr(q_dot_cr_on, q_dot_tes_ch, tol_mode_switching,
+                    is_PAR_HTR_allowed, q_dot_PAR_HTR_on);
+
+                //if (is_PAR_HTR_allowed && q_dot_PAR_HTR_on > 0.0 &&
+                //    is_mode_avail(C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF)) {
+                //
+                //    if ((q_dot_cr_on + q_dot_PAR_HTR_on) * (1.0 - tol_mode_switching) < q_dot_tes_ch &&
+                //        is_mode_avail(C_system_operating_modes::CR_ON__PC_OFF__TES_CH__HTR_ON)) {
+                //
+                //        operating_mode = C_system_operating_modes::CR_ON__PC_OFF__TES_CH__HTR_ON;
+                //    }
+                //    else if (q_dot_cr_on * (1. - tol_mode_switching) < q_dot_tes_ch &&
+                //        is_mode_avail(C_system_operating_modes::CR_ON__PC_OFF__TES_FULL__HTR_DF)) {
+                //
+                //        operating_mode = C_system_operating_modes::CR_ON__PC_OFF__TES_FULL__HTR_DF;
+                //    }
+                //    else {
+                //        operating_mode = C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF;
+                //    }
+                //}
+                //else {
+                //    if (q_dot_cr_on * (1.0 - tol_mode_switching) < q_dot_tes_ch &&
+                //        is_mode_avail(C_system_operating_modes::CR_ON__PC_OFF__TES_CH__AUX_OFF))
+                //    {
+                //        operating_mode = C_system_operating_modes::CR_ON__PC_OFF__TES_CH__AUX_OFF;
+                //    }
+                //    else if (is_mode_avail(C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF)) // m_is_CR_DF__PC_OFF__TES_FULL__AUX_OFF_avail)
+                //    {
+                //        operating_mode = C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF;
+                //    }
+                //    else
+                //    {
+                //        operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+                //    }
+                //}
+            }
+            else
+            {
+                operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+            }
+        }
+        else
+        {
+            if ((q_dot_cr_on > 0.0 || m_dot_cr_on > 0.0) && is_rec_su_allowed)
+            {
+                if (q_dot_tes_dc > 0.0 && is_pc_su_allowed &&
+                    is_mode_avail(C_system_operating_modes::CR_TO_COLD__PC_SU__TES_DC__AUX_OFF))
+                {	// Can power cycle startup using TES?
+
+                    operating_mode = C_system_operating_modes::CR_TO_COLD__PC_SU__TES_DC__AUX_OFF;
+                }
+                else if (is_mode_avail(C_system_operating_modes::CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF)) // m_is_CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF_avail)
+                {
+                    operating_mode = C_system_operating_modes::CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF;
+                }
+                else
+                {
+                    operating_mode = cr_and_pc_stay_off__try_htr(q_dot_tes_ch, tol_mode_switching, is_PAR_HTR_allowed, q_dot_PAR_HTR_on);
+                }
+            }
+            else
+            {
+                if (q_dot_tes_dc > 0.0 && is_pc_su_allowed &&
+                    is_mode_avail(C_system_operating_modes::CR_OFF__PC_SU__TES_DC__AUX_OFF))
+                {	// Can power cycle startup using TES?
+
+                    operating_mode = C_system_operating_modes::CR_OFF__PC_SU__TES_DC__AUX_OFF;
+                }
+                else
+                {
+                    operating_mode = cr_and_pc_stay_off__try_htr(q_dot_tes_ch, tol_mode_switching, is_PAR_HTR_allowed, q_dot_PAR_HTR_on);
+                }
+            }
+        }
+    }
+
+    else if ((cr_operating_state == C_csp_collector_receiver::OFF || cr_operating_state == C_csp_collector_receiver::STARTUP) &&
+    (pc_operating_state == C_csp_power_cycle::ON || pc_operating_state == C_csp_power_cycle::STANDBY))
+    {
+        if (q_dot_cr_startup > 0.0 && is_rec_su_allowed &&
+            is_mode_avail(C_system_operating_modes::CR_SU__PC_OFF__TES_OFF__AUX_OFF))
+        {	// Receiver startup is allowed and possible (will generate net energy) - determine if power cycle can remain on
+
+            if ((is_pc_su_allowed || is_pc_sb_allowed))
+            {
+                if (((q_dot_tes_dc_t_CR_su * (1.0 + tol_mode_switching) > q_dot_pc_target
+                    && m_dot_tes_dc_t_CR_su * (1.0 + tol_mode_switching) > m_dot_pc_min)
+                    || m_dot_tes_dc_t_CR_su * (1.0 + tol_mode_switching) > m_dot_pc_max)
+                    && is_pc_su_allowed &&
+                    is_mode_avail(C_system_operating_modes::CR_SU__PC_TARGET__TES_DC__AUX_OFF))
+                {	// Tolerance is applied so that if TES is *close* to matching target, the controller tries that mode
+
+                    operating_mode = C_system_operating_modes::CR_SU__PC_TARGET__TES_DC__AUX_OFF;
+                }
+                else if (q_dot_tes_dc_t_CR_su * (1.0 + tol_mode_switching) > q_dot_pc_min
+                    && m_dot_tes_dc_t_CR_su * (1.0 + tol_mode_switching) > m_dot_pc_min
+                    && is_pc_su_allowed &&
+                    is_mode_avail(C_system_operating_modes::CR_SU__PC_RM_LO__TES_EMPTY__AUX_OFF))
+                {	// Tolerance is applied so that if TES is *close* to reaching min fraction, the controller tries that mode
+
+                    operating_mode = C_system_operating_modes::CR_SU__PC_RM_LO__TES_EMPTY__AUX_OFF;
+                }
+                else if (q_dot_tes_dc_t_CR_su * (1.0 + tol_mode_switching) > q_dot_pc_sb
+                    && m_dot_tes_dc_t_CR_su * (1.0 + tol_mode_switching) > m_dot_pc_min
+                    && is_pc_sb_allowed &&
+                    is_mode_avail(C_system_operating_modes::CR_SU__PC_SB__TES_DC__AUX_OFF))
+                {	// Tolerance is applied so that if TES is *close* to reaching min fraction, the controller tries that mode
+
+                    operating_mode = C_system_operating_modes::CR_SU__PC_SB__TES_DC__AUX_OFF;
+                }
+                else if (q_dot_tes_dc_t_CR_su > 0.0 && is_pc_su_allowed &&
+                    is_mode_avail(C_system_operating_modes::CR_SU__PC_MIN__TES_EMPTY__AUX_OFF))
+                {
+                    operating_mode = C_system_operating_modes::CR_SU__PC_MIN__TES_EMPTY__AUX_OFF;
+                }
+                else {
+                    operating_mode = pc_off__try_cr_su_with_htr_combs(q_dot_tes_ch, tol_mode_switching, is_PAR_HTR_allowed, q_dot_PAR_HTR_on);
+                }
+                //else if (is_mode_avail(C_system_operating_modes::CR_SU__PC_OFF__TES_OFF__AUX_OFF)) // m_is_CR_SU__PC_OFF__TES_OFF__AUX_OFF_avail )
+                //{
+                //    operating_mode = C_system_operating_modes::CR_SU__PC_OFF__TES_OFF__AUX_OFF;
+                //}
+                // If no solutions in this branch, return to 'is_rec_su_allowed' branch and try NO path
+            }	// End 'is_pc_su_allowed' logic
+            else
+            {	// power cycle startup/operation not allowed
+                operating_mode = pc_off__try_cr_su_with_htr_combs(q_dot_tes_ch, tol_mode_switching, is_PAR_HTR_allowed, q_dot_PAR_HTR_on);
+                //if (is_mode_avail(C_system_operating_modes::CR_SU__PC_OFF__TES_OFF__AUX_OFF)) // m_is_CR_SU__PC_OFF__TES_OFF__AUX_OFF_avail )
+                //{
+                //    operating_mode = C_system_operating_modes::CR_SU__PC_OFF__TES_OFF__AUX_OFF;
+                //}
+                // If no solutions in this branch, return to 'is_rec_su_allowed' branch and try NO path
+            }
+        }
+        else	// Receiver remains OFF - determine if power cycle can remain on
+        {
+            if (is_pc_su_allowed || is_pc_sb_allowed)
+            {
+
+                if (((q_dot_tes_dc * (1.0 + tol_mode_switching) > q_dot_pc_target
+                    && m_dot_tes_dc_est * (1.0 + tol_mode_switching) > m_dot_pc_min)
+                    || m_dot_tes_dc_est * (1.0 + tol_mode_switching) > m_dot_pc_max)
+                    && is_pc_su_allowed &&
+                    is_mode_avail(C_system_operating_modes::CR_OFF__PC_TARGET__TES_DC__AUX_OFF))
+                {	// Tolerance is applied so that if TES is *close* to matching target, the controller tries that mode
+
+                    operating_mode = C_system_operating_modes::CR_OFF__PC_TARGET__TES_DC__AUX_OFF;
+                }
+                else if (q_dot_tes_dc * (1.0 + tol_mode_switching) > q_dot_pc_min
+                    && m_dot_tes_dc_est * (1.0 + tol_mode_switching) > m_dot_pc_min
+                    && is_pc_su_allowed &&
+                    is_mode_avail(C_system_operating_modes::CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF))
+                {	// Tolerance is applied so that if TES is *close* to reaching min fraction, the controller tries that mode
+
+                    operating_mode = C_system_operating_modes::CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF;
+                }
+                else if (q_dot_tes_dc * (1.0 + tol_mode_switching) > q_dot_pc_sb
+                    && m_dot_tes_dc_est * (1.0 + tol_mode_switching) > m_dot_pc_min
+                    && is_pc_sb_allowed &&
+                    is_mode_avail(C_system_operating_modes::CR_OFF__PC_SB__TES_DC__AUX_OFF))
+                {	// Tolerance is applied so that if TES is *close* to reaching min fraction, the controller tries that mode
+
+                    operating_mode = C_system_operating_modes::CR_OFF__PC_SB__TES_DC__AUX_OFF;
+                }
+                else if (q_dot_tes_dc > 0.0 && is_pc_su_allowed &&
+                    is_mode_avail(C_system_operating_modes::CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF))
+                {
+                    operating_mode = C_system_operating_modes::CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF;
+                }
+                else
+                {
+                    operating_mode = cr_and_pc_stay_off__try_htr(q_dot_tes_ch, tol_mode_switching, is_PAR_HTR_allowed, q_dot_PAR_HTR_on);
+                }
+            }	// end logic on 'is_pc_su_allowed'
+            else
+            {
+
+                operating_mode = cr_and_pc_stay_off__try_htr(q_dot_tes_ch, tol_mode_switching, is_PAR_HTR_allowed, q_dot_PAR_HTR_on);
+            }
+        }
+    }
+
+    else if (cr_operating_state == C_csp_collector_receiver::ON &&
+        (pc_operating_state == C_csp_power_cycle::ON || pc_operating_state == C_csp_power_cycle::STANDBY))
+    {
+        if (q_dot_cr_on > 0.0 && is_rec_su_allowed && is_rec_outlet_to_hottank)
+        {	// Receiver operation is allowed and possible - find a home for output
+
+            if (is_pc_su_allowed || is_pc_sb_allowed)
+            {
+                if ((q_dot_cr_on * (1.0 + tol_mode_switching) > q_dot_pc_target || m_dot_cr_on * (1.0 + tol_mode_switching) > m_dot_pc_max) &&
+                    is_pc_su_allowed &&
+                    is_LO_SIDE_mode_avail(C_system_operating_modes::CR_ON__PC_RM_HI__TES_OFF__AUX_OFF) &&
+                    is_LO_SIDE_mode_avail(C_system_operating_modes::CR_ON__PC_TARGET__TES_CH__AUX_OFF))
+                {	// The power cycle cannot accept the entire receiver output
+                    // Tolerance is applied so that if CR is *close* to reaching the PC target, the controller tries modes that fill TES
+
+                    // Can storage be charged?
+                    if (q_dot_tes_ch > 0.0)
+                    {
+                        // 1) Try to fill storage while hitting power cycle target
+                        if ((q_dot_cr_on - q_dot_tes_ch) * (1.0 - tol_mode_switching) < q_dot_pc_target
+                            && (m_dot_cr_on - m_dot_tes_ch_est) * (1.0 - tol_mode_switching) < m_dot_pc_max &&
+                            is_HI_SIDE_mode_avail(C_system_operating_modes::CR_ON__PC_TARGET__TES_CH__AUX_OFF))
+                        {	// Storage can accept the remaining receiver output
+                            // Tolerance is applied so that if CR + TES is *close* to reaching PC target, the controller tries that mode
+
+                            operating_mode = C_system_operating_modes::CR_ON__PC_TARGET__TES_CH__AUX_OFF;
+                        }
+
+                        // 2) Try operating power cycle at maximum capacity
+                        // Assume we want to completely fill storage, so the power cycle operation should float to meet that condition
+                        else if ((q_dot_cr_on - q_dot_tes_ch) * (1.0 - tol_mode_switching) < q_dot_pc_max
+                            && (m_dot_cr_on - m_dot_tes_ch_est) * (1.0 - tol_mode_switching) < m_dot_pc_max &&
+                            is_mode_avail(C_system_operating_modes::CR_ON__PC_RM_HI__TES_FULL__AUX_OFF))
+                        {	// Storage and the power cycle operating between target and max can accept the remaining receiver output
+                            // Tolerance is applied so that if CR + TES is *close* to reaching PC  max, the controller tries that mode
+
+                            operating_mode = C_system_operating_modes::CR_ON__PC_RM_HI__TES_FULL__AUX_OFF;
+                        }
+
+                        // 3) Try defocusing the CR and operating the power cycle at maximum capacity
+                        else if (is_mode_avail(C_system_operating_modes::CR_DF__PC_MAX__TES_FULL__AUX_OFF))  // m_is_CR_DF__PC_MAX__TES_FULL__AUX_OFF_avail )
+                        {
+
+                            operating_mode = C_system_operating_modes::CR_DF__PC_MAX__TES_FULL__AUX_OFF;
+                        }
+                        else
+                        {
+                            operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;;
+                        }
+                    }	// End if(q_dot_tes_ch > 0.0) logic
+
+                    else
+                    {	// No storage available for dispatch
+
+                        // 1) Try operating power cycle at maximum capacity
+                        if ((q_dot_cr_on * (1.0 - tol_mode_switching) < q_dot_pc_max && m_dot_cr_on * (1.0 - tol_mode_switching)) &&
+                            is_HI_SIDE_mode_avail(C_system_operating_modes::CR_ON__PC_RM_HI__TES_OFF__AUX_OFF))
+                        {	// Tolerance is applied so that if CR + TES is *close* to reaching PC  max, the controller tries that mode
+
+                            operating_mode = C_system_operating_modes::CR_ON__PC_RM_HI__TES_OFF__AUX_OFF;
+                        }
+                        else if (is_mode_avail(C_system_operating_modes::CR_DF__PC_MAX__TES_OFF__AUX_OFF))   // m_is_CR_DF__PC_MAX__TES_OFF__AUX_OFF_avail )
+                        {
+                            operating_mode = C_system_operating_modes::CR_DF__PC_MAX__TES_OFF__AUX_OFF;
+                        }
+                        else
+                        {
+                            operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+                        }
+                    }	// End else 'no storage available for dispatch'
+                }
+                else
+                {	// Power cycle is asking for more output than the receiver can supply
+
+                    if (q_dot_tes_dc > 0.0)
+                    {	// Storage dispatch is available
+
+                        if ((((q_dot_cr_on + q_dot_tes_dc) * (1.0 + tol_mode_switching) > q_dot_pc_target
+                            && (m_dot_cr_on + m_dot_tes_dc_est) * (1.0 + tol_mode_switching) > m_dot_pc_min)
+                            || (m_dot_cr_on + m_dot_tes_dc_est) * (1.0 + tol_mode_switching) > m_dot_pc_max)
+                            && is_pc_su_allowed &&
+                            is_mode_avail(C_system_operating_modes::CR_ON__PC_TARGET__TES_DC__AUX_OFF))
+                        {	// Storage can provide enough dispatch to reach power cycle target
+                            // Tolerance is applied so that if CR + TES is *close* to reaching PC target, the controller tries that mode
+
+                            operating_mode = C_system_operating_modes::CR_ON__PC_TARGET__TES_DC__AUX_OFF;
+                        }
+                        else if ((q_dot_cr_on + q_dot_tes_dc) * (1.0 + tol_mode_switching) > q_dot_pc_min
+                            && is_pc_su_allowed
+                            && (m_dot_cr_on + m_dot_tes_dc_est) * (1.0 + tol_mode_switching) > m_dot_pc_min &&
+                            is_mode_avail(C_system_operating_modes::CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF))
+                        {	// Storage can provide enough dispatch to at least meet power cycle minimum operation fraction
+                            // Run at highest possible PC fraction by dispatch all remaining storage
+                            // Tolerance is applied so that if CR + TES is *close* to reaching PC min, the controller tries that mode
+
+                            operating_mode = C_system_operating_modes::CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF;
+                        }
+                        else if (q_dot_cr_on * (1.0 + tol_mode_switching) > q_dot_pc_sb
+                            && m_dot_cr_on * (1.0 + tol_mode_switching) > m_dot_pc_min
+                            && is_pc_sb_allowed &&
+                            is_mode_avail(C_system_operating_modes::CR_ON__PC_SB__TES_OFF__AUX_OFF) &&
+                            is_mode_avail(C_system_operating_modes::CR_ON__PC_SB__TES_CH__AUX_OFF))
+                        {
+                            if (q_dot_tes_ch > 0.0)
+                            {
+                                if (((q_dot_cr_on - q_dot_tes_ch) * (1.0 + tol_mode_switching) > q_dot_pc_sb
+                                    || (m_dot_cr_on - m_dot_tes_ch_est) * (1.0 + tol_mode_switching) > m_dot_pc_min) &&
+                                    is_mode_avail(C_system_operating_modes::CR_ON__PC_SB__TES_FULL__AUX_OFF))
+                                {	// Tolerance is applied so that if CR output is *close* to operating at standby AND completely filling storage, controller tries that mode
+
+                                    operating_mode = C_system_operating_modes::CR_ON__PC_SB__TES_FULL__AUX_OFF;
+                                }
+                                else
+                                {
+                                    operating_mode = C_system_operating_modes::CR_ON__PC_SB__TES_CH__AUX_OFF;
+                                }
+                            }
+                            else
+                            {
+                                // This could *technically* use defocus, but can argue the energy is just being thrown away in power cycle anyway
+                                operating_mode = C_system_operating_modes::CR_ON__PC_SB__TES_OFF__AUX_OFF;
+                            }
+                        }
+                        else if ((q_dot_cr_on + q_dot_tes_dc) * (1.0 + tol_mode_switching) > q_dot_pc_sb
+                            && (m_dot_cr_on + m_dot_tes_dc_est) * (1.0 + tol_mode_switching) > m_dot_pc_min
+                            && is_pc_sb_allowed &&
+                            is_mode_avail(C_system_operating_modes::CR_ON__PC_SB__TES_DC__AUX_OFF))
+                        {
+                            operating_mode = C_system_operating_modes::CR_ON__PC_SB__TES_DC__AUX_OFF;
+                        }
+                        else if (is_pc_su_allowed && is_mode_avail(C_system_operating_modes::CR_ON__PC_MIN__TES_EMPTY__AUX_OFF))
+                        {
+                            operating_mode = C_system_operating_modes::CR_ON__PC_MIN__TES_EMPTY__AUX_OFF;
+                        }
+                        else if (q_dot_tes_ch > 0.0)
+                        {
+                            if (q_dot_cr_on * (1.0 - tol_mode_switching) < q_dot_tes_ch &&
+                                is_mode_avail(C_system_operating_modes::CR_ON__PC_OFF__TES_CH__AUX_OFF))
+                            {	// Tolerance is applied so that if CR is *close* to being less than a full TES charge, the controller tries normal operation (no defocus)
+
+                                operating_mode = C_system_operating_modes::CR_ON__PC_OFF__TES_CH__AUX_OFF;
+                            }
+                            else if (is_mode_avail(C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF))
+                            {	// The CR output will overcharge storage, so it needs to defocus.
+                                // However, because the CR output is already part-load, it may be close to shutting down before defocus...
+
+                                operating_mode = C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF;
+                            }
+                            else
+                            {
+                                operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+                            }
+                        }
+                        else
+                        {	// No home for receiver output, and not enough thermal power for power cycle
+
+                            operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+                        }
+                    }
+                    else
+                    {	// Storage dispatch is not available
+
+                        // Can the power cycle operate at or above the minimum operation fraction?
+                        if (((q_dot_cr_on * (1.0 + tol_mode_switching) > q_dot_pc_min
+                            && m_dot_cr_on * (1.0 + tol_mode_switching) > m_dot_pc_min)
+                            || m_dot_cr_on * (1.0 + tol_mode_switching) > m_dot_pc_max)
+                            && is_pc_su_allowed &&
+                            is_mode_avail(C_system_operating_modes::CR_ON__PC_RM_LO__TES_OFF__AUX_OFF))
+                        {	// Tolerance is applied so that if CR is *close* to reaching PC min, the controller tries that mode
+
+                            operating_mode = C_system_operating_modes::CR_ON__PC_RM_LO__TES_OFF__AUX_OFF;
+                        }
+                        else if (is_pc_sb_allowed
+                            && q_dot_cr_on * (1.0 + tol_mode_switching) > q_dot_pc_sb
+                            && m_dot_cr_on * (1.0 + tol_mode_switching) > m_dot_pc_min &&
+                            is_mode_avail(C_system_operating_modes::CR_ON__PC_SB__TES_OFF__AUX_OFF) &&
+                            is_mode_avail(C_system_operating_modes::CR_ON__PC_SB__TES_CH__AUX_OFF))
+                        {	// Receiver can likely operate in standby
+                            // Tolerance is applied so that if CR is *close* to reaching PC standby, the controller tries that mode
+
+                            if (q_dot_tes_ch > 0.0)
+                            {
+                                if (((q_dot_cr_on - q_dot_tes_ch) * (1.0 + tol_mode_switching) > q_dot_pc_sb
+                                    || (m_dot_cr_on - m_dot_tes_ch_est) * (1.0 + tol_mode_switching) > m_dot_pc_min) &&
+                                    is_mode_avail(C_system_operating_modes::CR_ON__PC_SB__TES_FULL__AUX_OFF))
+                                {	// Tolerance is applied so that if CR output is *close* to operating at standby AND completely filling storage, controller tries that mode
+
+                                    operating_mode = C_system_operating_modes::CR_ON__PC_SB__TES_FULL__AUX_OFF;
+                                }
+                                else
+                                {
+                                    operating_mode = C_system_operating_modes::CR_ON__PC_SB__TES_CH__AUX_OFF;
+                                }
+                            }
+                            else
+                            {
+                                // This could *technically* use defocus, but can argue the energy is just being thrown away in power cycle anyway
+                                operating_mode = C_system_operating_modes::CR_ON__PC_SB__TES_OFF__AUX_OFF;
+                            }
+                        }
+                        else if (q_dot_tes_ch > 0.0)
+                        {	// Charge storage with receiver output
+
+                            if (q_dot_cr_on * (1.0 - tol_mode_switching) < q_dot_tes_ch &&
+                                is_mode_avail(C_system_operating_modes::CR_ON__PC_OFF__TES_CH__AUX_OFF))
+                            {	// Tolerance is applied so that if CR is *close* to being less than a full TES charge, the controller tries normal operation (no defocus)
+
+                                operating_mode = C_system_operating_modes::CR_ON__PC_OFF__TES_CH__AUX_OFF;
+                            }
+                            else if (is_mode_avail(C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF))
+                            {	// The CR output will overcharge storage, so it needs to defocus.
+                                // However, because the CR output is already part-load, it may be close to shutting down before defocus...
+
+                                operating_mode = C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF;
+                            }
+                            else
+                            {
+                                operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+                            }
+                        }
+                        else
+                        {	// No home for receiver output, and not enough thermal power for power cycle
+
+                            operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+                        }
+                    }	// End logic else 'storage dispatch not available'
+                }	// End logic else 'power cycle requires more q_dot than receiver can supply'				
+            }	// End logic if(is_rec_su_allowed)
+            else
+            {	// Power cycle startup is not allowed - see if receiver output can go to storage
+
+                if (q_dot_tes_ch > 0.0)
+                {
+                    operating_mode = cr_on_pc_off_tes_ch_avail__try_htr(q_dot_cr_on, q_dot_tes_ch, tol_mode_switching,
+                        is_PAR_HTR_allowed, q_dot_PAR_HTR_on);
+
+                    //if (q_dot_cr_on * (1.0 - tol_mode_switching) < q_dot_tes_ch &&          
+                    //    is_mode_avail(C_system_operating_modes::CR_ON__PC_OFF__TES_CH__AUX_OFF))
+                    //{
+                    //    operating_mode = C_system_operating_modes::CR_ON__PC_OFF__TES_CH__AUX_OFF;
+                    //}
+                    //else if (is_mode_avail(C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF))
+                    //{
+                    //    operating_mode = C_system_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF;
+                    //}
+                    //else
+                    //{
+                    //    operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+                    //}
+                }
+                else
+                {
+                    operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+                }
+
+            }	// End logic else 'pc su is NOT allowed'		
+        }	// End logic if(q_dot_cr_output > 0.0 && is_rec_su_allowed)
+
+        // 'else if' loop for receiver 'on' but sending htf to cold tank
+        else if ((q_dot_cr_on > 0.0 || m_dot_cr_on > 0.0) && is_rec_su_allowed) {
+
+            if (is_pc_su_allowed || is_pc_sb_allowed)
+            {
+                if (q_dot_tes_dc > 0.0)
+                {	// Storage dispatch is available
+
+                    if (((q_dot_tes_dc * (1.0 + tol_mode_switching) > q_dot_pc_target
+                        && m_dot_tes_dc_est * (1.0 + tol_mode_switching) > m_dot_pc_min)
+                        || m_dot_tes_dc_est * (1.0 + tol_mode_switching) > m_dot_pc_max)
+                        && is_pc_su_allowed &&
+                        is_mode_avail(C_system_operating_modes::CR_TO_COLD__PC_TARGET__TES_DC__AUX_OFF))
+                    {	// Storage can provide enough dispatch to reach power cycle target
+                        // Tolerance is applied so that if TES is *close* to reaching PC target, the controller tries that mode
+
+                        operating_mode = C_system_operating_modes::CR_TO_COLD__PC_TARGET__TES_DC__AUX_OFF;
+                    }
+                    else if (q_dot_tes_dc * (1.0 + tol_mode_switching) > q_dot_pc_min
+                        && m_dot_tes_dc_est * (1.0 + tol_mode_switching) > m_dot_pc_min
+                        && is_pc_su_allowed &&
+                        is_mode_avail(C_system_operating_modes::CR_TO_COLD__PC_RM_LO__TES_EMPTY__AUX_OFF))
+                    {	// Storage can provide enough dispatch to at least meet power cycle minimum operation fraction
+                        // Run at highest possible PC fraction by dispatching all remaining storage
+                        // Tolerance is applied so that if CR + TES is *close* to reaching PC min, the controller tries that mode
+
+                        operating_mode = C_system_operating_modes::CR_TO_COLD__PC_RM_LO__TES_EMPTY__AUX_OFF;
+                    }
+                    else if (q_dot_tes_dc * (1.0 + tol_mode_switching) > q_dot_pc_sb
+                        && m_dot_tes_dc_est * (1.0 + tol_mode_switching) > m_dot_pc_min
+                        && is_pc_sb_allowed &&
+                        is_mode_avail(C_system_operating_modes::CR_TO_COLD__PC_SB__TES_DC__AUX_OFF))
+                    {	// Tolerance is applied so that if CR + TES is *close* to reaching standby, the controller tries that mode
+
+                        operating_mode = C_system_operating_modes::CR_TO_COLD__PC_SB__TES_DC__AUX_OFF;
+                    }
+                    else if (is_pc_su_allowed && is_mode_avail(C_system_operating_modes::CR_TO_COLD__PC_MIN__TES_EMPTY__AUX_OFF))
+                    {	// If not enough thermal power to stay in standby, then run at min PC load until TES is fully discharged
+
+                        operating_mode = C_system_operating_modes::CR_TO_COLD__PC_MIN__TES_EMPTY__AUX_OFF;
+                    }
+                    else if (is_mode_avail(C_system_operating_modes::CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF))
+                    {
+                        operating_mode = C_system_operating_modes::CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF;
+                    }
+                    else
+                    {
+                        operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+                    }
+                }	// End logic for if( q_dot_tes_dc > 0.0 )
+                else if (is_mode_avail(C_system_operating_modes::CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF))
+                {	// Storage dispatch is not available
+
+                    // No thermal power available to power cycle
+                    operating_mode = C_system_operating_modes::CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF;
+                }
+                else
+                {
+                    operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+                }
+            }	// End logic if( is_pc_su_allowed )
+            else if (is_mode_avail(C_system_operating_modes::CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF))
+            {	// If neither receiver nor power cycle operation is allowed, then shut everything off
+
+                operating_mode = C_system_operating_modes::CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF;
+            }
+            else
+            {
+                operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+            }
+
+        }
+        else	// Receiver is off - determine if power cycle can remain on
+        {
+            if (is_pc_su_allowed || is_pc_sb_allowed)
+            {
+                if (q_dot_tes_dc > 0.0)
+                {	// Storage dispatch is available
+
+                    if (((q_dot_tes_dc * (1.0 + tol_mode_switching) > q_dot_pc_target
+                        && m_dot_tes_dc_est * (1.0 + tol_mode_switching) > m_dot_pc_min)
+                        || m_dot_tes_dc_est * (1.0 + tol_mode_switching) > m_dot_pc_max)
+                        && is_pc_su_allowed &&
+                        is_mode_avail(C_system_operating_modes::CR_OFF__PC_TARGET__TES_DC__AUX_OFF))
+                    {	// Storage can provide enough dispatch to reach power cycle target
+                        // Tolerance is applied so that if TES is *close* to reaching PC target, the controller tries that mode
+
+                        operating_mode = C_system_operating_modes::CR_OFF__PC_TARGET__TES_DC__AUX_OFF;
+                    }
+                    else if (q_dot_tes_dc * (1.0 + tol_mode_switching) > q_dot_pc_min
+                        && m_dot_tes_dc_est * (1.0 + tol_mode_switching) > m_dot_pc_min
+                        && is_pc_su_allowed &&
+                        is_mode_avail(C_system_operating_modes::CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF))
+                    {	// Storage can provide enough dispatch to at least meet power cycle minimum operation fraction
+                        // Run at highest possible PC fraction by dispatching all remaining storage
+                        // Tolerance is applied so that if CR + TES is *close* to reaching PC min, the controller tries that mode
+
+                        operating_mode = C_system_operating_modes::CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF;
+                    }
+                    else if (q_dot_tes_dc * (1.0 + tol_mode_switching) > q_dot_pc_sb
+                        && m_dot_tes_dc_est * (1.0 + tol_mode_switching) > m_dot_pc_min
+                        && is_pc_sb_allowed &&
+                        is_mode_avail(C_system_operating_modes::CR_OFF__PC_SB__TES_DC__AUX_OFF))
+                    {	// Tolerance is applied so that if CR + TES is *close* to reaching standby, the controller tries that mode
+
+                        operating_mode = C_system_operating_modes::CR_OFF__PC_SB__TES_DC__AUX_OFF;
+                    }
+                    else if (is_pc_su_allowed && is_mode_avail(C_system_operating_modes::CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF))
+                    {	// If not enough thermal power to stay in standby, then run at min PC load until TES is fully discharged
+
+                        operating_mode = C_system_operating_modes::CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF;
+                    }
+                    else
+                    {
+                        operating_mode = cr_and_pc_stay_off__try_htr(q_dot_tes_ch, tol_mode_switching, is_PAR_HTR_allowed, q_dot_PAR_HTR_on);
+                    }
+                }	// End logic for if( q_dot_tes_dc > 0.0 )
+                else
+                {	// Storage dispatch is not available
+
+                    // No thermal power available to power cycle
+                    operating_mode = cr_and_pc_stay_off__try_htr(q_dot_tes_ch, tol_mode_switching, is_PAR_HTR_allowed, q_dot_PAR_HTR_on);
+                }
+            }	// End logic if( is_pc_su_allowed )
+            else
+            {	// If neither receiver nor power cycle operation is allowed, then shut everything off
+
+                operating_mode = cr_and_pc_stay_off__try_htr(q_dot_tes_ch, tol_mode_switching, is_PAR_HTR_allowed, q_dot_PAR_HTR_on);
+            }
+        }
+    }
+
+    return operating_mode;
 }

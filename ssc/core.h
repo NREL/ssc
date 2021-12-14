@@ -228,6 +228,8 @@ public:
     ssc_number_t *allocate( const std::string &name, size_t length );
 	ssc_number_t *allocate( const std::string &name, size_t nrows, size_t ncols );
 	util::matrix_t<ssc_number_t>& allocate_matrix( const std::string &name, size_t nrows, size_t ncols );
+    ssc_number_t* resize_array(const std::string& name, size_t length);
+    ssc_number_t* resize_matrix(const std::string& name, size_t n_rows, size_t n_cols);
 	var_data &value( const std::string &name );
 	bool is_assigned( const std::string &name );
 	size_t as_unsigned_long(const std::string &name);
@@ -328,5 +330,8 @@ struct module_entry_info
 	int (*f_setup_stateful)(compute_module*, var_table*);       // return 1 for success, otherwise 0 with errors in log
 };
 
+void dump_ssc_variable(FILE* fp, ssc_data_t p_data, const char* name);
+
+bool write_cmod_to_lk_script(FILE* fp, ssc_data_t p_data);
 
 #endif

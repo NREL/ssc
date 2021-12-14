@@ -26,11 +26,11 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma warning(disable: 4297)  // ignore warning: 'function assumed not to throw an exception but does'
 
-void Financial_Construction_Financing_Equations(ssc_data_t data)
+bool Financial_Construction_Financing_Equations(ssc_data_t data)
 {
     auto vt = static_cast<var_table*>(data);
     if (!vt) {
-        throw std::runtime_error("ssc_data_t data invalid");
+        return false;
     }
     double total_installed_cost,
         const_per_percent1, const_per_principal1,
@@ -121,17 +121,18 @@ void Financial_Construction_Financing_Equations(ssc_data_t data)
     vt->assign("const_per_percent_total", const_per_percent_total);
     vt->assign("construction_financing_cost", construction_financing_cost);
     vt->assign("const_per_interest_total", const_per_interest_total);
-};
+}
 
-void Financial_Capacity_Payments_Equations(ssc_data_t data)
+bool Financial_Capacity_Payments_Equations(ssc_data_t data)
 {
     auto vt = static_cast<var_table*>(data);
     if (!vt) {
-        throw std::runtime_error("ssc_data_t data invalid");
+        return false;
     }
 
     double system_capacity, cp_system_nameplate;
     vt_get_number(vt, "system_capacity", &system_capacity);
     cp_system_nameplate = system_capacity / 1000.;
     vt->assign("cp_system_nameplate", cp_system_nameplate);
-};
+    return true;
+}

@@ -387,6 +387,7 @@ public:
 	virtual double get_startup_energy(); //MWh
 	virtual double get_pumping_parasitic_coef();  //MWe/MWt
 	virtual double get_min_power_delivery();    //MWt
+    virtual double get_max_power_delivery(double T_cold_in);    //MWt
 	virtual double get_tracking_power();		//MWe
 	virtual double get_col_startup_power();		//MWe-hr
 
@@ -458,15 +459,15 @@ public:
 
 	void transient_energy_bal_numeric_int_ave(double h_in /*kJ/kg*/, double P_in /*kPa*/,
 		double q_dot_abs /*kWt*/, double m_dot /*kg/s*/, 
-		double T_out_t_end_prev /*K*/,
+		double T_out_t_end_prev /*K*/, double h_out_t_end_prev /*kJ/K*/,
 		double C_thermal /*kJ/K*/, double step /*s*/, 
 		double & h_out_t_end /*kJ/K*/, double & h_out_t_int /*kJ/K*/);
 
 	void transient_energy_bal_numeric_int(double h_in /*kJ/kg*/, double P_in /*kPa*/,
 			double q_dot_abs /*kWt*/, double m_dot /*kg/s*/, 
-			double T_out_t_end_prev /*K*/,
+			double T_out_t_end_prev /*K*/, double h_out_t_end_prev /*kJ/K*/,
 			double C_thermal /*kJ/K*/, double step /*s*/, 
-			double & h_out_t_end_prev /*kJ/K*/, double & h_out_t_end /*kJ/K*/, double & T_out_t_end /*K*/);
+			double & h_out_t_end /*kJ/K*/, double & T_out_t_end /*K*/);
 
 	int once_thru_loop_energy_balance_T_t_int(const C_csp_weatherreader::S_outputs &weather,
 		double T_cold_in /*K*/, double P_field_out /*bar*/, double m_dot_loop /*kg/s*/, double h_sca_out_target /*kJ/kg*/,

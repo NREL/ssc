@@ -35,6 +35,7 @@ class Heliostat;	//Forward declaration
 class SolarField;
 class WeatherData;
 typedef std::vector<Heliostat*> Hvector;	//Needs declaring here
+typedef std::vector<Receiver*> Rvector;
 
 
 class LayoutSimThread 

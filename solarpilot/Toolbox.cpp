@@ -320,10 +320,10 @@ void DateTime::SetMonthLengths(const int year){
 	/* Calculate the number of days in each month and assign the result to the monthLength[] array.
 	Provide special handling for 4-year, 100-year, and 400-year leap years.*/
 	//Initialize the array of month lengths (accounting for leap year)
-	for (int i=0; i<12; i+=2){ monthLength[i]=31; };
-	for (int i=1; i<12; i+=2){ monthLength[i]=30; };
+    std::vector<int> tmp = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+    for (int i = 0; i < 12; i++)
+        monthLength[i] = tmp[i];
 	//Given the year, determine how many days are in Feb.
-	monthLength[1]=28; //Default
 	if(year%4==0) {monthLength[1]=29;} //All years divisible by 4 are leap years
 	if(year%100==0){ //All years divisible by 100 are not leap years, unless...
 		if(year%400 == 0){monthLength[1]=29;} //.. the year is also divisible by 400.
@@ -390,7 +390,11 @@ void DateTime::hours_to_date(double hours, int &month, int &day_of_month){
 	int dsum=0; 
 	for(int i=0; i<12; i++){
 		dsum += monthLength[i];
-		if(days <= dsum){month = i+1; break;}
+		if(days <= dsum)
+        {
+            month = i+1; 
+            break;
+        }
 	}
 	day_of_month = (int)floor(days - (dsum - monthLength[month-1]))+1;
 

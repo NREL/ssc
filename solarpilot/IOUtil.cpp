@@ -331,6 +331,7 @@ void ioutil::parseXMLInputFile(const string &fname,var_map &V, parametric &par_d
     
     vector<int> rec_insts;
     vector<int> hel_insts;
+    std::map< int, std::string > rec_offset_assignments;  //we'll need to save this info for after all templates have been loaded
 
 	//Read in all of the variables
 	xml_node<> *var_node = top_node->first_node("variable");
@@ -357,6 +358,8 @@ void ioutil::parseXMLInputFile(const string &fname,var_map &V, parametric &par_d
                     rec_insts.push_back( inst );
                 }
             }
+            if (varname == "rec_offset_reference")
+                rec_offset_assignments[inst] = var_node->first_node("value")->value();
         }
         if(component == "heliostat")
         {
@@ -399,6 +402,28 @@ void ioutil::parseXMLInputFile(const string &fname,var_map &V, parametric &par_d
 
 		var_node = var_node->next_sibling("variable");
 	}
+
+    //backwards compatibility for rec_offset_reference
+    if (rec_offset_assignments.size() == 0)
+        for (size_t i = 0; i < V.recs.size(); i++)
+            rec_offset_assignments[V.recs[i].id.val] = "Tower";
+
+    //clean up template based parameters that may not have loaded correctly
+    for (size_t i = 0; i < V.recs.size(); i++)
+    {
+        V.recs[i].rec_offset_reference.combo_clear();
+        V.recs[i].rec_offset_reference.combo_add_choice("Tower", std::to_string(var_receiver::REC_OFFSET_REFERENCE::TOWER));
+
+        for (size_t j = 0; j < V.recs.size(); j++)
+        {
+            if (i == j)
+                continue;
+
+            V.recs[i].rec_offset_reference.combo_add_choice(V.recs[j].rec_name.as_string(), V.recs[j].id.as_string());
+        }
+        
+        V.recs[i].rec_offset_reference.combo_select(rec_offset_assignments[V.recs[i].id.val]);
+    }
 
 	//Read in any parametric data
 	par_data.clear();
