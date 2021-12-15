@@ -1041,8 +1041,7 @@ public:
         escal_or_annual(CF_land_lease_expense, nyears, "om_land_lease", inflation_rate, total_land_area, false, as_double("om_land_lease_escal") * 0.01);
 
 		double om_opt_fuel_1_usage = as_double("om_opt_fuel_1_usage");
-		double om_opt_fuel_2_usage = as_double("om_opt_fuel_2_usage");
-        double total_land_area = as_double("total_land_area");
+		double om_opt_fuel_2_usage = as_double("om_opt_fuel_2_usage");;
 
 		// additional o and m sub types (e.g. batteries and fuel cells)
 		int add_om_num_types = as_integer("add_om_num_types");

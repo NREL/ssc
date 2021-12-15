@@ -304,6 +304,7 @@ enum {
 
     CF_utility_bill,
     CF_parasitic_cost,
+    CF_om_land_expense,
 
     CF_max,
 };
