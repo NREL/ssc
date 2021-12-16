@@ -25,6 +25,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "csp_solver_core.h"
 
+#include "htf_props.h"
+
 class C_csp_cr_heat_pump : public C_csp_collector_receiver
 {
 
@@ -33,22 +35,69 @@ private:
     // Defined in constructor
     double m_COP_heat_des;      //[-]
     double m_q_dot_hot_out_des; //[MWt]
-    double m_T_HT_HTF_hot;      //[C] High temp HTF hot temperature
-    double m_T_HT_HTF_cold;     //[C] High temp HTF cold temperature
-    double m_T_CT_HTF_cold;     //[C] Cold temp HTF cold temperature
-    double m_T_CT_HTF_hot;      //[C] Cold temp HTF hot temperature
+    double m_f_elec_consume_vs_W_dot_thermo_des;    //[-]
+    double m_T_HT_HTF_hot_des;      //[C] High temp HTF hot temperature
+    double m_T_HT_HTF_cold_des;     //[C] High temp HTF cold temperature
+    double m_T_CT_HTF_cold_des;     //[C] Cold temp HTF cold temperature
+    double m_T_CT_HTF_hot_des;      //[C] Cold temp HTF hot temperature
 
-    double m_q_dot_min;         //[MWt] min allowable heater output
+    double m_q_dot_min_des;         //[MWt] min allowable heater output
 
     double m_f_q_dot_des_allowable_su;  //[-] fraction of design thermal power allowed for startup
     double m_hrs_startup_at_max_rate;   //[hr]
+
+    double m_heat_pump_HT_htf_pump_coef;  //[kW/kg/s]
+    double m_heat_pump_CT_htf_pump_coef;  //[kW/kg/s]
 
     int m_HT_htf_code;
     util::matrix_t<double> m_HT_ud_htf_props;
 
     int m_CT_htf_code;
     util::matrix_t<double> m_CT_ud_htf_props;
-    // ***************************************
+    // *******************************************
+    // *******************************************
+
+
+    // *******************************************
+    // *******************************************
+    // Calculated system design parameters
+    double m_W_dot_in_thermo_des;   //[MWe] power into cycle working fluid. does not consider electric parasitics (e.g. cooling fan, motor inefficiencies, etc.)
+    double m_q_dot_cold_in_des;     //[MWt]
+    double m_W_dot_consume_elec_des;//[MWe]
+    double m_W_dot_in_net_des;      //[MWe]
+    double m_COP_net_des;           //[-]
+
+    double m_T_HT_HTF_avg_des;      //[C]
+    double m_cp_HT_HTF_des;         //[kJ/kg-K]
+    double m_T_CT_HTF_avg_des;      //[C]
+    double m_cp_CT_HTF_des;         //[kJ/kg-K]
+
+    double m_m_dot_HT_des;          //[kg/s]
+    double m_W_dot_HT_htf_pump_des; //[MWe]
+
+    double m_m_dot_CT_des;          //[kg/s]
+    double m_W_dot_CT_htf_pump_des; //[MWe]
+
+    double m_q_dot_su_max;          //[MWt]
+    double m_E_su_des;              //[MWt-hr]
+    double m_t_su_des;              //[hr]
+
+    // Member points/classes
+    std::unique_ptr<HTFProperties> m_HT_htfProps;
+    std::unique_ptr<HTFProperties> m_CT_htfProps;
+    // *******************************************
+    // *******************************************
+
+
+    // *******************************************
+    // *******************************************
+    // Timestep state variables
+    C_csp_collector_receiver::E_csp_cr_modes m_operating_mode_converged;
+    C_csp_collector_receiver::E_csp_cr_modes m_operating_mode;
+
+    double m_E_su_initial;      //[MWt-hr] Startup energy at beginning of timestep
+    double m_E_su_calculated;   //[MWt-hr] Startup energy at end of timestep
+
 
 
 public:
@@ -56,8 +105,10 @@ public:
     C_csp_reported_outputs mc_reported_outputs;
 
     C_csp_cr_heat_pump(double COP_heat_des /*-*/, double q_dot_hot_out_des /*MWt*/,
+        double f_elec_consume_vs_W_dot_thermo /*-*/,
         double T_HT_HTF_hot /*C*/, double T_HT_HTF_cold /*C*/, double T_CT_HTF_cold /*C*/, double T_CT_HTF_hot /*C*/,
         double f_q_dot_min /*-*/, double f_q_dot_des_allowable_su /*-*/, double hrs_startup_at_max_rate /*hr*/,
+        double heat_pump_HT_htf_pump_coef /*kW/kg/s*/, double heat_pump_LT_htf_pump_coef /*kW/kg/s*/,
         int HT_htf_code /*-*/, util::matrix_t<double> HT_ud_htf_props,
         int CT_htf_code /*-*/, util::matrix_t<double> CT_ud_htf_props);
 

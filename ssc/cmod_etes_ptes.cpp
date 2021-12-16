@@ -25,6 +25,9 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "common.h"
 #include "csp_solver_core.h"
 
+#include "csp_solver_pc_ptes.h"
+#include "csp_solver_cr_heat_pump.h"
+
 static var_info _cm_vtab_etes_ptes[] = {
 
     // Resource Data
@@ -36,6 +39,31 @@ static var_info _cm_vtab_etes_ptes[] = {
     { SSC_INPUT,  SSC_NUMBER, "time_stop",                     "Simulation stop time",                                           "s",            "",                                  "System Control",                           "?=31536000",                                                       "",              "SIMULATION_PARAMETER"},
     { SSC_INPUT,  SSC_NUMBER, "time_steps_per_hour",           "Number of simulation time steps per hour",                       "",             "",                                  "System Control",                           "?=-1",                                                             "",              "SIMULATION_PARAMETER"},
     { SSC_INPUT,  SSC_NUMBER, "vacuum_arrays",                 "Allocate arrays for only the required number of steps",          "",             "",                                  "System Control",                           "?=0",                                                              "",              "SIMULATION_PARAMETER"},
+
+
+    // HTFs
+    { SSC_INPUT,  SSC_NUMBER, "hot_htf_code",                  "Hot HTF code - see htf_props.h for list",                        "",             "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
+    { SSC_INPUT,  SSC_MATRIX, "ud_hot_htf_props",              "User-defined Hot HTF fluid property data",                       "-",            "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "cold_htf_code",                 "Cold HTF code - see htf_props.h for list",                       "",             "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
+    { SSC_INPUT,  SSC_MATRIX, "ud_cold_htf_props",             "User-defined Cold HTF fluid property data",                      "-",            "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
+
+
+    // Heat Pump
+    { SSC_INPUT,  SSC_NUMBER, "f_q_dot_des_allowable_su",      "Fraction of design power allowed during startup",                "-",            "",                                  "Heater",                                   "*",                                                                "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "hrs_startup_at_max_rate",       "Duration of startup at max startup power",                       "hr",           "",                                  "Heater",                                   "*",                                                                "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "f_q_dot_heater_min",            "Minimum allowable heater output as fraction of design",          "",             "",                                  "Heater",                                   "*",                                                                "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "heat_pump_HT_HTF_pump_coef",    "High temp HX pumping power to move 1 kg/s",                      "kW/kg/s",      "",                                  "Power Cycle",                              "*",                                                                "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "heat_pump_CT_HTF_pump_coef",    "Low temp HX pumping power to move 1 kg/s",                       "kW/kg/s",      "",                                  "Power Cycle",                              "*",                                                                "",              ""},
+
+
+    // Power Cycle
+        // General
+    { SSC_INPUT,  SSC_NUMBER, "pb_pump_coef",                  "Pumping power to move 1kg of HTF through PB loop",               "kW/kg/s",      "",                                  "Power Cycle",                              "*",                                                                "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "startup_time",                  "Time needed for power block startup",                            "hr",           "",                                  "Power Cycle",                              "*",                                                                "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "startup_frac",                  "Fraction of design thermal power needed for startup",            "none",         "",                                  "Power Cycle",                              "*",                                                                "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "cycle_max_frac",                "Maximum turbine over design operation fraction",                 "",             "",                                  "Power Cycle",                              "*",                                                                "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "cycle_cutoff_frac",             "Minimum turbine operation fraction before shutdown",             "",             "",                                  "Power Cycle",                              "*",                                                                "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "q_sby_frac",                    "Fraction of thermal power required for standby",                 "",             "",                                  "Power Cycle",                              "*",                                                                "",              ""},
 
 
     var_info_invalid };
@@ -58,34 +86,41 @@ public:
             throw exec_error("etes_ptes", sim_type_msg);
         }
 
-        // *****************************************************
-        // Define generation cycle power/heat flows
-            // Design parameters for capacity and efficiency
-        double W_dot_gen = 100.0;   //[MWe]
-        double eta_gen = 0.5;       //[-]
-            // Calculate heat input
-        double q_dot_hot_in_gen = W_dot_gen / eta_gen;  //[MWt]
-            // Calculating q_dot_cold from power out and efficiency means that
-            //      we're not accounting for cycle electrical parasitics...
-            // Maybe W_dot_gen and eta should just represent "mechanical" power
-            //      and account for electricity consumption as derate?
-        double q_dot_cold_out_gen = W_dot_gen*(1./eta_gen - 1.0);   //[MWt]
+        // Define generation mechanical, electrical, and thermal power
+        // Need to break out thermodynamic cycle so that net output, heat input, heat output, and efficiency are consistent
+        // Important because: 1) ideal gas cycles could have significant compressor loads and 2) important to capture heat rejection for CT storage
+        double W_dot_gen_thermo = 100.0;   //[MWe]
+        double W_dot_gen_used_elec = 10.0;   //[MWe]
+        double W_dot_gen_net = W_dot_gen_thermo - W_dot_gen_used_elec;  //[MWe]
+        double eta_therm_mech = 0.5;     //[-]
+        double q_dot_hot_in_gen = W_dot_gen_thermo / eta_therm_mech;    //[MWt]
+        double q_dot_cold_out_gen = W_dot_gen_thermo*(1./eta_therm_mech - 1.);     //[MWt]
+        double eta_overall = W_dot_gen_net / q_dot_hot_in_gen;      //[-]
 
-        // Define heat pump power/heaer flows
+        // Define heat pump power/heat flows
             // Design parameters
         double heater_mult = 1.0;
-        double COP_heat_charge = 1.5;  //[-]
+        double COP_heat_charge_therm = 1.5;     //[-]
+        double f_elec_consume_vs_W_dot_thermo = 0.05;   //[-]
             // Calculate heat and power 
         double q_dot_hot_out_charge = q_dot_hot_in_gen*heater_mult; //[MWt]
-        double W_dot_in_charge = q_dot_hot_out_charge / COP_heat_charge;    //[MWe]
-        double q_dot_cold_in_charge = W_dot_in_charge*(COP_heat_charge - 1.0);  //[MWt]
+        double W_dot_in_charge_thermo = q_dot_hot_out_charge / COP_heat_charge_therm;       //[MWe] COP_heat = q_dot_hot_out_charge / W_dot_in_charge_thermo
+        double q_dot_cold_in_charge = W_dot_in_charge_thermo*(COP_heat_charge_therm - 1.0); //[MWt]
+        double W_dot_in_charge_elec = f_elec_consume_vs_W_dot_thermo*W_dot_in_charge_thermo;  //[MWe]
+        double W_dot_charge_net = W_dot_in_charge_thermo + W_dot_in_charge_elec;        //[MWe]
+        double COP_heat_charge_net = q_dot_hot_out_charge / W_dot_charge_net;           //[-]
 
         // Check RTE and cold q dots
-        double RTE = eta_gen * COP_heat_charge;     //[-]
-            // is, considering heater mult, the gen q_dot_cold > the charge q_dot_cold?
-        double r_q_dot__out_gen__in_charge = q_dot_cold_out_gen / (heater_mult * q_dot_cold_in_charge); //[-]
-        double q_dot_cold_out_reject_gen = q_dot_cold_out_gen - heater_mult*q_dot_cold_in_charge;   //[MWt]
+        double fixed__q_dot_cold__to__q_dot_warm = q_dot_cold_in_charge / q_dot_hot_out_charge;
 
+        double RTE_therm = eta_therm_mech * COP_heat_charge_therm;     //[-]
+
+        double q_dot_cold_out_gen_to_CTES = fixed__q_dot_cold__to__q_dot_warm * q_dot_hot_in_gen;   //[MWt]
+        double q_dot_cold_out_gen_to_surr = q_dot_cold_out_gen - q_dot_cold_out_gen_to_CTES;        //[MWt]
+
+            // is, considering heater mult, the gen q_dot_cold > the charge q_dot_cold?
+        //double r_q_dot__out_gen__in_charge = q_dot_cold_out_gen / (heater_mult * q_dot_cold_in_charge); //[-]
+        //double q_dot_cold_out_reject_gen = q_dot_cold_out_gen - heater_mult*q_dot_cold_in_charge;   //[MWt]
         // *****************************************************
         // *****************************************************
         // --- Either ----
@@ -175,10 +210,71 @@ public:
         // *****************************************************
         // *****************************************************
 
+        // Get HTF inputs here
+        int HT_htf_code = as_integer("hot_htf_code");
+        util::matrix_t<double> ud_HT_htf_props = as_matrix("ud_hot_htf_props");
+        int CT_htf_code = as_integer("cold_htf_code");
+        util::matrix_t<double> ud_CT_htf_props = as_matrix("ud_cold_htf_props");
 
         // *****************************************************
         // Power cycle
+        double cycle_max_frac = as_double("cycle_max_frac");        //[-]
+        double cycle_cutoff_frac = as_double("cycle_cutoff_frac");  //[-]
+        double q_sby_frac = as_double("q_sby_frac");                //[-]
+        double htf_pump_coef = as_double("pb_pump_coef");           //[kW/kg/s]
+        double startup_time = as_double("startup_time");            //[hr]
+        double startup_frac = as_double("startup_frac");            //[-]
 
+        C_pc_ptes c_pc(W_dot_gen_thermo, eta_therm_mech,
+            W_dot_gen_used_elec, fixed__q_dot_cold__to__q_dot_warm,
+            T_HT_hot_TES, T_HT_cold_TES, T_CT_cold_TES, T_CT_hot_TES,
+            cycle_max_frac, cycle_cutoff_frac, q_sby_frac,
+            startup_time, startup_frac,
+            htf_pump_coef,
+            HT_htf_code, ud_HT_htf_props,
+            CT_htf_code, ud_CT_htf_props);
+
+        C_csp_power_cycle::S_solved_params pc_solved_params;
+        
+        try {
+            c_pc.init(pc_solved_params);
+        }
+        catch (C_csp_exception& csp_exception) {
+
+            int out_type = -1;
+            std::string out_msg = "";
+            // Report warning before exiting with error
+            while (c_pc.mc_csp_messages.get_message(&out_type, &out_msg))
+            {
+                log(out_msg, out_type);
+            }
+
+            throw exec_error("etes_electric_resistance", csp_exception.m_error_message);
+        }
+        // **********************************************************
+        // **********************************************************
+
+        // **********************************************************
+        // Heat pump
+        double f_q_dot_des_allowable_su = as_double("f_q_dot_des_allowable_su");    //[-] fraction of design power allowed during startup
+        double hrs_startup_at_max_rate = as_double("hrs_startup_at_max_rate");      //[hr] duration of startup at max startup power
+        double f_heater_min = as_double("f_q_dot_heater_min");                      //[-] minimum allowable heater output as fraction of design
+
+        double heat_pump_HT_htf_pump_coef = as_double("heat_pump_HT_HTF_pump_coef");           //[kW/kg/s]
+        double heat_pump_CT_htf_pump_coef = as_double("heat_pump_CT_HTF_pump_coef");           //[kW/kg/s]
+
+        C_csp_cr_heat_pump c_heat_pump(COP_heat_charge_therm, q_dot_hot_out_charge,
+            f_elec_consume_vs_W_dot_thermo,
+            T_HT_hot_TES, T_HT_cold_TES, T_CT_cold_TES, T_CT_hot_TES,
+            f_heater_min, f_q_dot_des_allowable_su, hrs_startup_at_max_rate,
+            heat_pump_HT_htf_pump_coef, heat_pump_CT_htf_pump_coef,
+            HT_htf_code, ud_HT_htf_props,
+            CT_htf_code, ud_CT_htf_props);
+
+        C_csp_collector_receiver::S_csp_cr_init_inputs heat_pump_init_inputs;
+        C_csp_collector_receiver::S_csp_cr_solved_params heat_pump_solved_params;
+
+        c_heat_pump.init(heat_pump_init_inputs, heat_pump_solved_params);
 
         return;
     }

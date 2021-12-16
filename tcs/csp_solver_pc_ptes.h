@@ -25,14 +25,76 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "csp_solver_core.h"
 
+#include "htf_props.h"
+
 class C_pc_ptes : public C_csp_power_cycle
 {
 private:
 
     // Defined in constructor
-    double m_W_dot_out_des;     //[MWe]
-    double m_eta_des;           //[-]
-    double m_f_q_dot_cold_is_reject_des;    //[-]
+    double m_W_dot_thermo_des;          //[MWe]
+    double m_eta_therm_mech_des;        //[-]
+    double m_W_dot_consume_elec_des;    //[MWe]
+    double m_fixed__q_dot_cold__to__q_dot_warm /*-*/;      //[-]
+    double m_T_HT_HTF_hot_des;          //[C]
+    double m_T_HT_HTF_cold_des;         //[C]
+    double m_T_CT_HTF_cold_des;         //[C]
+    double m_T_CT_HTF_hot_des;          //[C]
+    double m_cycle_max_frac_des;        //[-]
+    double m_cycle_cutoff_frac_des;     //[-]
+    double m_q_sby_frac_des;            //[-]
+    double m_startup_time_des;          //[hr]
+    double m_startup_frac_des;          //[-]
+    double m_htf_pump_coef_des;         //[kW/kg/s]
+
+    int m_HT_htf_code;
+    util::matrix_t<double> m_HT_ud_htf_props;
+
+    int m_CT_htf_code;
+    util::matrix_t<double> m_CT_ud_htf_props;
+    // *******************************************
+    // *******************************************
+
+
+    // *******************************************
+    // *******************************************
+    // Calculated system design parameters
+    double m_W_dot_net_des;             //[MWe]
+    double m_q_dot_hot_in_des;          //[MWt]
+    double m_q_dot_cold_out_thermo_des; //[MWt]
+    double m_eta_overall_des;           //[-]
+    double m_q_dot_cold_to_CTES;        //[MWt]
+    double m_q_dot_cold_to_surroundings;    //[MWt]
+
+    double m_T_HT_HTF_avg_des;          //[C]
+    double m_cp_HT_HTF_des;             //[kJ/kg-K]
+    double m_T_CT_HTF_avg_des;          //[C]
+    double m_cp_CT_HTF_des;             //[kJ/kg-K]
+
+    double m_m_dot_HT_des;              //[kg/s]
+    double m_m_dot_HT_min;              //[kg/s]
+    double m_m_dot_HT_max;              //[kg/s]
+    double m_m_dot_CT_des;              //[kg/s]
+
+    double m_E_su_des;                  //[MWt]
+
+    // Member points/classes
+    std::unique_ptr<HTFProperties> m_HT_htfProps;
+    std::unique_ptr<HTFProperties> m_CT_htfProps;
+    // *******************************************
+    // *******************************************
+
+
+    // *******************************************
+    // *******************************************
+    // State variables
+    C_csp_power_cycle::E_csp_power_cycle_modes m_operating_mode_prev;
+    double m_startup_time_remain_prev;		//[hr]
+    double m_startup_energy_remain_prev;	//[MWt-hr]
+
+    C_csp_power_cycle::E_csp_power_cycle_modes m_operating_mode_calc;
+    double m_startup_time_remain_calc;      //[hr]
+    double m_startup_energy_remain_calc;    //[MWt-hr]
 
 public:
 
@@ -41,10 +103,11 @@ public:
     // ***********************
     // Inherited methods
     // ***********************
-    C_pc_ptes(double W_dot_out_des /*MWe*/, double eta_des /*-*/, double f_q_dot_cold_is_reject_des /*-*/,
+    C_pc_ptes(double W_dot_gen_thermo /*MWe*/, double eta_therm_mech /*-*/,
+        double W_dot_gen_use_elec /*MWe*/, double fixed__q_dot_cold__to__q_dot_warm /*-*/,
         double T_HT_HTF_hot /*C*/, double T_HT_HTF_cold /*C*/, double T_CT_HTF_cold /*C*/, double T_CT_HTF_hot /*C*/,
         double cycle_max_frac /*-*/, double cycle_cutoff_frac /*-*/, double q_sby_frac /*-*/,
-        double startup_time /*hr*/, double startup_frac /*hr*/,
+        double startup_time /*hr*/, double startup_frac /*-*/,
         double htf_pump_coef /*kW/kg/s*/,
         int HT_htf_code /*-*/, util::matrix_t<double> HT_ud_htf_props,
         int CT_htf_code /*-*/, util::matrix_t<double> CT_ud_htf_props);
@@ -77,7 +140,6 @@ public:
         C_csp_solver_htf_1state& htf_state_in,
         const C_csp_power_cycle::S_control_inputs& inputs,
         C_csp_power_cycle::S_csp_pc_out_solver& out_solver,
-        //C_csp_power_cycle::S_csp_pc_out_report &out_report,
         const C_csp_solver_sim_info& sim_info);
 
     virtual void converged();
@@ -91,5 +153,12 @@ public:
     // ********************************************************
 };
 
+namespace pc_ptes_helpers
+{
+    void high_level_design_calcs(double W_dot_thermo /*MWe*/, double W_dot_consume_elec /*MWe*/,
+        double eta_therm_mech /*-*/, double fixed__q_dot_cold__to__q_dot_warm /*-*/,
+        double& W_dot_net /*MWe*/, double& q_dot_hot_in /*MWt*/, double& q_dot_cold_out_thermo /*MWt*/,
+        double& eta_net /*-*/, double& q_dot_cold_to_CTES, double& q_dot_reject_to_surroundings /*MWt*/);
+}
 
 #endif // !__csp_solver_pc_ptes_

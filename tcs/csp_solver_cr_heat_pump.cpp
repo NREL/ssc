@@ -24,28 +24,61 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "csp_solver_core.h"
 
 C_csp_cr_heat_pump::C_csp_cr_heat_pump(double COP_heat_des /*-*/, double q_dot_hot_out_des /*MWt*/,
+    double f_elec_consume_vs_W_dot_thermo /*-*/,
     double T_HT_HTF_hot /*C*/, double T_HT_HTF_cold /*C*/, double T_CT_HTF_cold /*C*/, double T_CT_HTF_hot /*C*/,
     double f_q_dot_min /*-*/, double f_q_dot_des_allowable_su /*-*/, double hrs_startup_at_max_rate /*hr*/,
+    double heat_pump_HT_htf_pump_coef /*kW/kg/s*/, double heat_pump_CT_htf_pump_coef /*kW/kg/s*/,
     int HT_htf_code /*-*/, util::matrix_t<double> HT_ud_htf_props,
     int CT_htf_code /*-*/, util::matrix_t<double> CT_ud_htf_props)
 {
+    // Defined in constructor
     m_COP_heat_des = COP_heat_des;              //[-]
     m_q_dot_hot_out_des = q_dot_hot_out_des;    //[MWt]
-    m_T_HT_HTF_hot = T_HT_HTF_hot;              //[C]
-    m_T_HT_HTF_cold = T_HT_HTF_cold;            //[C]
-    m_T_CT_HTF_cold = T_CT_HTF_cold;            //[C]
-    m_T_CT_HTF_hot = T_CT_HTF_hot;              //[C]
+    m_f_elec_consume_vs_W_dot_thermo_des = f_elec_consume_vs_W_dot_thermo;  //[-]
+    m_T_HT_HTF_hot_des = T_HT_HTF_hot;              //[C]
+    m_T_HT_HTF_cold_des = T_HT_HTF_cold;            //[C]
+    m_T_CT_HTF_cold_des = T_CT_HTF_cold;            //[C]
+    m_T_CT_HTF_hot_des = T_CT_HTF_hot;              //[C]
 
-    m_q_dot_min = f_q_dot_min*m_q_dot_hot_out_des;  //[MWt]
+    m_q_dot_min_des = f_q_dot_min*m_q_dot_hot_out_des;  //[MWt]
 
     m_f_q_dot_des_allowable_su = f_q_dot_des_allowable_su;  //[-]
     m_hrs_startup_at_max_rate = hrs_startup_at_max_rate;    //[hr]
+
+    m_heat_pump_HT_htf_pump_coef = heat_pump_HT_htf_pump_coef;  //[kW/kg/s]
+    m_heat_pump_CT_htf_pump_coef = heat_pump_CT_htf_pump_coef;  //[kW/kg/s]
 
     m_HT_htf_code = HT_htf_code;
     m_HT_ud_htf_props = HT_ud_htf_props;
 
     m_CT_htf_code = CT_htf_code;
     m_CT_ud_htf_props = CT_ud_htf_props;
+
+    // Initialize calculated member variables to nan
+    m_W_dot_in_thermo_des = std::numeric_limits<double>::quiet_NaN();
+    m_q_dot_cold_in_des = std::numeric_limits<double>::quiet_NaN();
+    m_W_dot_consume_elec_des = std::numeric_limits<double>::quiet_NaN();
+    m_W_dot_in_net_des = std::numeric_limits<double>::quiet_NaN();
+    m_COP_net_des = std::numeric_limits<double>::quiet_NaN();
+
+    m_T_HT_HTF_avg_des = std::numeric_limits<double>::quiet_NaN();
+    m_cp_HT_HTF_des = std::numeric_limits<double>::quiet_NaN();
+    m_T_CT_HTF_avg_des = std::numeric_limits<double>::quiet_NaN();
+    m_cp_CT_HTF_des = std::numeric_limits<double>::quiet_NaN();
+
+    m_m_dot_HT_des = std::numeric_limits<double>::quiet_NaN();
+    m_W_dot_HT_htf_pump_des = std::numeric_limits<double>::quiet_NaN();
+
+    m_m_dot_CT_des = std::numeric_limits<double>::quiet_NaN();
+    m_W_dot_CT_htf_pump_des = std::numeric_limits<double>::quiet_NaN();
+
+    m_q_dot_su_max = std::numeric_limits<double>::quiet_NaN();
+    m_E_su_des = std::numeric_limits<double>::quiet_NaN();
+    m_t_su_des = std::numeric_limits<double>::quiet_NaN();
+
+    // Timestep state variables
+    m_E_su_initial = std::numeric_limits<double>::quiet_NaN();
+    m_E_su_calculated = std::numeric_limits<double>::quiet_NaN();
 }
 
 C_csp_cr_heat_pump::~C_csp_cr_heat_pump(){}
@@ -53,53 +86,104 @@ C_csp_cr_heat_pump::~C_csp_cr_heat_pump(){}
 // ***********************
 // Inherited methods
 // ***********************
-void init(const C_csp_collector_receiver::S_csp_cr_init_inputs init_inputs,
+void C_csp_cr_heat_pump::init(const C_csp_collector_receiver::S_csp_cr_init_inputs init_inputs,
     C_csp_collector_receiver::S_csp_cr_solved_params& solved_params)
 {
-    throw(C_csp_exception("C_csp_cr_heat_pump::init() is not complete"));
+    m_W_dot_in_thermo_des = m_q_dot_hot_out_des/m_COP_heat_des;  //[MWe]
+    m_q_dot_cold_in_des = m_W_dot_in_thermo_des*(m_COP_heat_des - 1.0);   //[MWt]
+    m_W_dot_consume_elec_des = m_f_elec_consume_vs_W_dot_thermo_des *m_W_dot_in_thermo_des;  //[MWe]
+    m_W_dot_in_net_des = m_W_dot_in_thermo_des + m_W_dot_consume_elec_des;   //[MWe]
+    m_COP_net_des = m_q_dot_hot_out_des / m_W_dot_in_net_des;           //[-]
+
+    std::unique_ptr<HTFProperties> HT_htfProps(new HTFProperties());
+    m_HT_htfProps = std::move(HT_htfProps);
+    m_HT_htfProps->Initialize(m_HT_htf_code, m_HT_ud_htf_props);
+
+    std::unique_ptr<HTFProperties> CT_htfProps(new HTFProperties());
+    m_CT_htfProps = std::move(CT_htfProps);
+    m_CT_htfProps->Initialize(m_CT_htf_code, m_CT_ud_htf_props);
+
+    double eta_htf_pump = 0.85;     //[-] used to back out pressure drop
+
+    m_T_HT_HTF_avg_des = 0.5 * (m_T_HT_HTF_cold_des + m_T_HT_HTF_hot_des);    //[C]
+    m_cp_HT_HTF_des = m_HT_htfProps->Cp(m_T_HT_HTF_avg_des + 273.15);         //[kJ/kg-K]
+    double rho_HT_htf_des = m_HT_htfProps->dens(m_T_HT_HTF_avg_des + 273.15,1.0);   //[kg/m3]  
+    m_m_dot_HT_des = m_q_dot_hot_out_des * 1.E3 / (m_cp_HT_HTF_des * (m_T_HT_HTF_hot_des - m_T_HT_HTF_cold_des));    //[kg/s]
+    m_W_dot_HT_htf_pump_des = m_heat_pump_HT_htf_pump_coef*m_m_dot_HT_des*1.E-3;        //[MWe]
+    double HT_htf_deltaP = m_W_dot_HT_htf_pump_des*rho_HT_htf_des/m_m_dot_HT_des*eta_htf_pump;   //[MPa]
+
+    m_T_CT_HTF_avg_des = 0.5 * (m_T_CT_HTF_cold_des + m_T_CT_HTF_hot_des);    //[C]
+    m_cp_CT_HTF_des = m_CT_htfProps->Cp(m_T_CT_HTF_avg_des + 273.15);         //[kJ/kg-K]
+    double rho_CT_htf_des = m_CT_htfProps->dens(m_T_CT_HTF_avg_des + 273.15,1.0);   //[kg/m3]
+    m_m_dot_CT_des = m_q_dot_cold_in_des*1.E3/(m_cp_CT_HTF_des*(m_T_CT_HTF_hot_des-m_T_CT_HTF_cold_des));  //[kg/s]
+    m_W_dot_CT_htf_pump_des = m_heat_pump_CT_htf_pump_coef*m_m_dot_CT_des*1.E-3;        //[MWe]
+    double CT_htf_deltaP = m_W_dot_CT_htf_pump_des*rho_CT_htf_des/m_m_dot_CT_des*eta_htf_pump;  //[MWe]
+
+    // Check startup parameters
+    m_f_q_dot_des_allowable_su = std::max(0.0, m_f_q_dot_des_allowable_su); //[-]
+    m_hrs_startup_at_max_rate = std::max(0.0, m_hrs_startup_at_max_rate);   //[hr]
+
+    // Calculate design startup requirements
+        // Base startup on q_dot_hot even though it's heat out of cycle and to TES
+        // Probably the most critical HX in system. also analogous to q_dot_rec?
+    m_q_dot_su_max = m_q_dot_hot_out_des * m_f_q_dot_des_allowable_su;  //[MWt]
+    m_E_su_des = m_q_dot_su_max * m_hrs_startup_at_max_rate;   //[MWt-hr] 
+    m_t_su_des = m_E_su_des / m_q_dot_su_max;   //[hr]
+
+    solved_params.m_T_htf_cold_des = m_T_HT_HTF_cold_des + 273.15; //[K]
+    solved_params.m_P_cold_des = std::numeric_limits<double>::quiet_NaN();  //[kPa]
+    solved_params.m_x_cold_des = std::numeric_limits<double>::quiet_NaN();  //[-]
+    solved_params.m_T_htf_hot_des = m_T_HT_HTF_hot_des + 273.15;   //[K]
+    solved_params.m_q_dot_rec_des = m_q_dot_hot_out_des;         //[MWt]
+    solved_params.m_A_aper_total = 0.0;                         //[m2]
+    solved_params.m_dP_sf = HT_htf_deltaP*1.E1;                //[bar] convert from MPa
+
+    m_operating_mode_converged = C_csp_collector_receiver::OFF;					//
+
+    return;
 }
 
-C_csp_collector_receiver::E_csp_cr_modes get_operating_state()
+C_csp_collector_receiver::E_csp_cr_modes C_csp_cr_heat_pump::get_operating_state()
 {
     throw(C_csp_exception("C_csp_cr_heat_pump::get_operating_state() is not complete"));
 }
 
-double get_startup_time()
+double C_csp_cr_heat_pump::get_startup_time()
 {
     throw(C_csp_exception("C_csp_cr_heat_pump::get_startup_time() is not complete"));
 }
 
-double get_startup_energy() //MWh
+double C_csp_cr_heat_pump::get_startup_energy() //MWh
 {
     throw(C_csp_exception("C_csp_cr_heat_pump::get_startup_energy() is not complete"));
 }
 
-double get_pumping_parasitic_coef()  //MWe/MWt
+double C_csp_cr_heat_pump::get_pumping_parasitic_coef()  //MWe/MWt
 {
     throw(C_csp_exception("C_csp_cr_heat_pump::get_pumping_parasitic_coef() is not complete"));
 }
 
-double get_min_power_delivery()    //MWt
+double C_csp_cr_heat_pump::get_min_power_delivery()    //MWt
 {
     throw(C_csp_exception("C_csp_cr_heat_pump::get_min_power_delivery() is not complete"));
 }
 
-double get_max_power_delivery(double T_cold_in)   //MWt
+double C_csp_cr_heat_pump::get_max_power_delivery(double T_cold_in)   //MWt
 {
     throw(C_csp_exception("C_csp_cr_heat_pump::get_max_power_delivery() is not complete"));
 }
 
-double get_tracking_power()		//MWe
+double C_csp_cr_heat_pump::get_tracking_power()		//MWe
 {
     throw(C_csp_exception("C_csp_cr_heat_pump::get_tracking_power() is not complete"));
 }
 
-double get_col_startup_power()		//MWe-hr
+double C_csp_cr_heat_pump::get_col_startup_power()		//MWe-hr
 {
     throw(C_csp_exception("C_csp_cr_heat_pump::get_col_startup_power() is not complete"));
 }
 
-void off(const C_csp_weatherreader::S_outputs& weather,
+void C_csp_cr_heat_pump::off(const C_csp_weatherreader::S_outputs& weather,
     const C_csp_solver_htf_1state& htf_state_in,
     C_csp_collector_receiver::S_csp_cr_out_solver& cr_out_solver,
     const C_csp_solver_sim_info& sim_info)
@@ -107,7 +191,7 @@ void off(const C_csp_weatherreader::S_outputs& weather,
     throw(C_csp_exception("C_csp_cr_heat_pump::off() is not complete"));
 }
 
-void startup(const C_csp_weatherreader::S_outputs& weather,
+void C_csp_cr_heat_pump::startup(const C_csp_weatherreader::S_outputs& weather,
     const C_csp_solver_htf_1state& htf_state_in,
     C_csp_collector_receiver::S_csp_cr_out_solver& cr_out_solver,
     const C_csp_solver_sim_info& sim_info)
@@ -115,7 +199,7 @@ void startup(const C_csp_weatherreader::S_outputs& weather,
     throw(C_csp_exception("C_csp_cr_heat_pump::startup() is not complete"));
 }
 
-void on(const C_csp_weatherreader::S_outputs& weather,
+void C_csp_cr_heat_pump::on(const C_csp_weatherreader::S_outputs& weather,
     const C_csp_solver_htf_1state& htf_state_in,
     double q_dot_elec_to_CR_heat /*MWt*/, double field_control,
     C_csp_collector_receiver::S_csp_cr_out_solver& cr_out_solver,
@@ -124,7 +208,7 @@ void on(const C_csp_weatherreader::S_outputs& weather,
     throw(C_csp_exception("C_csp_cr_heat_pump::on() is not complete"));
 }
 
-void estimates(const C_csp_weatherreader::S_outputs& weather,
+void C_csp_cr_heat_pump::estimates(const C_csp_weatherreader::S_outputs& weather,
     const C_csp_solver_htf_1state& htf_state_in,
     C_csp_collector_receiver::S_csp_cr_est_out& est_out,
     const C_csp_solver_sim_info& sim_info)
@@ -132,28 +216,28 @@ void estimates(const C_csp_weatherreader::S_outputs& weather,
     throw(C_csp_exception("C_csp_cr_heat_pump::estimates() is not complete"));
 }
 
-void converged()
+void C_csp_cr_heat_pump::converged()
 {
     throw(C_csp_exception("C_csp_cr_heat_pump::converged() is not complete"));
 }
 
-void write_output_intervals(double report_time_start,
+void C_csp_cr_heat_pump::write_output_intervals(double report_time_start,
     const std::vector<double>& v_temp_ts_time_end, double report_time_end)
 {
     throw(C_csp_exception("C_csp_cr_heat_pump::write_output_intervals() is not complete"));
 }
 
-double calculate_optical_efficiency(const C_csp_weatherreader::S_outputs& weather, const C_csp_solver_sim_info& sim)
+double C_csp_cr_heat_pump::calculate_optical_efficiency(const C_csp_weatherreader::S_outputs& weather, const C_csp_solver_sim_info& sim)
 {
     throw(C_csp_exception("C_csp_cr_heat_pump::calculate_optical_efficiency() is not complete"));
 }
 
-double calculate_thermal_efficiency_approx(const C_csp_weatherreader::S_outputs& weather, double q_incident /*MW*/)
+double C_csp_cr_heat_pump::calculate_thermal_efficiency_approx(const C_csp_weatherreader::S_outputs& weather, double q_incident /*MW*/)
 {
     throw(C_csp_exception("C_csp_cr_heat_pump::calculate_thermal_efficiency() is not complete"));
 }
 
-double get_collector_area()
+double C_csp_cr_heat_pump::get_collector_area()
 {
     // Collector area is not a relevant metric for a heat pump
     return std::numeric_limits<double>::quiet_NaN();
