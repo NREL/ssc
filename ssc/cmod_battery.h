@@ -301,6 +301,8 @@ struct battstor
 	/*! Use user-input battery dispatch */
 	bool input_custom_dispatch = false;
 
+    bool uses_forecast();
+
 	// for user schedule
 	void check_replacement_schedule();
 	void calculate_monthly_and_annual_outputs( compute_module &cm );
