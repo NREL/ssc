@@ -210,7 +210,7 @@ if(UNIX)
 		set_property(TARGET ssc PROPERTY PREFIX "lib")
 		set(CMAKE_SHARED_LIBRARY_SUFFIX ".so")
 		if (APPLE)
-            SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmacosx-version-min=10.10")
+            SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmacosx-version-min=10.15")
             add_custom_command(
 				TARGET ssc
 				POST_BUILD
