@@ -89,6 +89,8 @@ C_csp_cr_heat_pump::~C_csp_cr_heat_pump(){}
 void C_csp_cr_heat_pump::init(const C_csp_collector_receiver::S_csp_cr_init_inputs init_inputs,
     C_csp_collector_receiver::S_csp_cr_solved_params& solved_params)
 {
+    // Not using init_inputs because the parameters are relevant to solar energy
+
     m_W_dot_in_thermo_des = m_q_dot_hot_out_des/m_COP_heat_des;  //[MWe]
     m_q_dot_cold_in_des = m_W_dot_in_thermo_des*(m_COP_heat_des - 1.0);   //[MWt]
     m_W_dot_consume_elec_des = m_f_elec_consume_vs_W_dot_thermo_des *m_W_dot_in_thermo_des;  //[MWe]

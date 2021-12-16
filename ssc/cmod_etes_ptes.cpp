@@ -27,6 +27,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "csp_solver_pc_ptes.h"
 #include "csp_solver_cr_heat_pump.h"
+#include "csp_solver_two_tank_tes.h"
 
 static var_info _cm_vtab_etes_ptes[] = {
 
@@ -53,7 +54,7 @@ static var_info _cm_vtab_etes_ptes[] = {
     { SSC_INPUT,  SSC_NUMBER, "hrs_startup_at_max_rate",       "Duration of startup at max startup power",                       "hr",           "",                                  "Heater",                                   "*",                                                                "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "f_q_dot_heater_min",            "Minimum allowable heater output as fraction of design",          "",             "",                                  "Heater",                                   "*",                                                                "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "heat_pump_HT_HTF_pump_coef",    "High temp HX pumping power to move 1 kg/s",                      "kW/kg/s",      "",                                  "Power Cycle",                              "*",                                                                "",              ""},
-    { SSC_INPUT,  SSC_NUMBER, "heat_pump_CT_HTF_pump_coef",    "Low temp HX pumping power to move 1 kg/s",                       "kW/kg/s",      "",                                  "Power Cycle",                              "*",                                                                "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "heat_pump_CT_HTF_pump_coef",    "Cold temp HX pumping power to move 1 kg/s",                      "kW/kg/s",      "",                                  "Power Cycle",                              "*",                                                                "",              ""},
 
 
     // Power Cycle
@@ -64,6 +65,31 @@ static var_info _cm_vtab_etes_ptes[] = {
     { SSC_INPUT,  SSC_NUMBER, "cycle_max_frac",                "Maximum turbine over design operation fraction",                 "",             "",                                  "Power Cycle",                              "*",                                                                "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "cycle_cutoff_frac",             "Minimum turbine operation fraction before shutdown",             "",             "",                                  "Power Cycle",                              "*",                                                                "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "q_sby_frac",                    "Fraction of thermal power required for standby",                 "",             "",                                  "Power Cycle",                              "*",                                                                "",              ""},
+
+
+    // High Temp Two-Tank TES
+    { SSC_INPUT,  SSC_NUMBER, "tes_init_hot_htf_percent",      "HOT TES Initial fraction of available volume that is hot",       "%",            "",                                  "Hot Thermal Storage",                      "*",                                                                "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "h_tank",                        "HOT TES Total height of tank (height of HTF when tank is full)", "m",            "",                                  "Hot Thermal Storage",                      "*",                                                                "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "cold_tank_max_heat",            "HOT TES Rated heater capacity for cold tank heating",            "MW",           "",                                  "Hot Thermal Storage",                      "*",                                                                "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "u_tank",                        "HOT TES Loss coefficient from the tank",                         "W/m2-K",       "",                                  "Hot Thermal Storage",                      "*",                                                                "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "tank_pairs",                    "HOT TES Number of equivalent tank pairs",                        "",             "",                                  "Hot Thermal Storage",                      "*",                                                                "INTEGER",       ""},
+    { SSC_INPUT,  SSC_NUMBER, "cold_tank_Thtr",                "HOT TES Minimum allowable cold tank HTF temperature",            "C",            "",                                  "Hot Thermal Storage",                      "*",                                                                "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "h_tank_min",                    "HOT TES Minimum allowable HTF height in storage tank",           "m",            "",                                  "Hot Thermal Storage",                      "*",                                                                "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "hot_tank_Thtr",                 "HOT TES Minimum allowable hot tank HTF temperature",             "C",            "",                                  "Hot Thermal Storage",                      "*",                                                                "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "hot_tank_max_heat",             "HOT TES Rated heater capacity for hot tank heating",             "MW",           "",                                  "Hot Thermal Storage",                      "*",                                                                "",              ""},
+
+
+    // COLD Temp Two-Tank TES
+    { SSC_INPUT,  SSC_NUMBER, "CT_tes_init_hot_htf_percent",   "COLD TES Initial fraction of available volume that is hot",      "%",            "",                                  "Cold Thermal Storage",                     "*",                                                                "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "CT_h_tank",                     "COLD TES Total height of tank (height of HTF when tank is full)","m",            "",                                  "Cold Thermal Storage",                     "*",                                                                "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "CT_u_tank",                     "COLD TES Loss coefficient from the tank",                        "W/m2-K",       "",                                  "Cold Thermal Storage",                     "*",                                                                "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "CT_tank_pairs",                 "COLD TES Number of equivalent tank pairs",                       "",             "",                                  "Cold Thermal Storage",                     "*",                                                                "INTEGER",       ""},
+    { SSC_INPUT,  SSC_NUMBER, "CT_h_tank_min",                 "COLD TES Minimum allowable HTF height in storage tank",          "m",            "",                                  "Cold Thermal Storage",                     "*",                                                                "",              ""},
+
+    //{ SSC_INPUT,  SSC_NUMBER, "CT_cold_tank_max_heat",         "COLD TES Rated heater capacity for cold tank heating",           "MW",           "",                                  "Cold Thermal Storage",                     "*",                                                                "",              ""},
+    //{ SSC_INPUT,  SSC_NUMBER, "CT_cold_tank_Thtr",             "COLD TES Minimum allowable cold tank HTF temperature",           "C",            "",                                  "Cold Thermal Storage",                     "*",                                                                "",              ""},
+    //{ SSC_INPUT,  SSC_NUMBER, "CT_hot_tank_Thtr",              "COLD TES Minimum allowable hot tank HTF temperature",            "C",            "",                                  "Cold Thermal Storage",                     "*",                                                                "",              ""},
+    //{ SSC_INPUT,  SSC_NUMBER, "CT_hot_tank_max_heat",          "COLD TES Rated heater capacity for hot tank heating",            "MW",           "",                                  "Cold Thermal Storage",                     "*",                                                                "",              ""},
 
 
     var_info_invalid };
@@ -271,10 +297,93 @@ public:
             HT_htf_code, ud_HT_htf_props,
             CT_htf_code, ud_CT_htf_props);
 
-        C_csp_collector_receiver::S_csp_cr_init_inputs heat_pump_init_inputs;
-        C_csp_collector_receiver::S_csp_cr_solved_params heat_pump_solved_params;
+        // **********************************************************
+        // **********************************************************
 
-        c_heat_pump.init(heat_pump_init_inputs, heat_pump_solved_params);
+        // **********************************************************
+        // High temp TES
+        C_csp_two_tank_tes c_HT_TES;
+        {
+            C_csp_two_tank_tes::S_params* tes = &c_HT_TES.ms_params;
+            tes->m_field_fl = HT_htf_code;
+            tes->m_field_fl_props = ud_HT_htf_props;
+            tes->m_tes_fl = HT_htf_code;
+            tes->m_tes_fl_props = ud_HT_htf_props;
+            tes->m_W_dot_pc_design = W_dot_gen_thermo;  //[MWe]
+            tes->m_eta_pc = eta_therm_mech;             //[-]
+            tes->m_solarm = heater_mult;                //[-]
+            tes->m_ts_hours = tshours;                  //[hr]
+            tes->m_h_tank = as_double("h_tank");
+            tes->m_u_tank = as_double("u_tank");
+            tes->m_tank_pairs = as_integer("tank_pairs");
+            tes->m_hot_tank_Thtr = as_double("hot_tank_Thtr");
+            tes->m_hot_tank_max_heat = as_double("hot_tank_max_heat");
+            tes->m_cold_tank_Thtr = as_double("cold_tank_Thtr");
+            tes->m_cold_tank_max_heat = as_double("cold_tank_max_heat");
+            tes->m_dt_hot = 0.0;                        // MSPT assumes direct storage, so no user input here: hardcode = 0.0
+            tes->m_T_field_in_des = T_HT_cold_TES;      //[C]
+            tes->m_T_field_out_des = T_HT_hot_TES;      //[C]
+            tes->m_T_tank_hot_ini = T_HT_hot_TES;       //[C]
+            tes->m_T_tank_cold_ini = T_HT_cold_TES;     //[C]
+            tes->m_h_tank_min = as_double("h_tank_min");
+            tes->m_f_V_hot_ini = as_double("tes_init_hot_htf_percent");
+            tes->m_htf_pump_coef = 0.0;         //[kW/kg/s] No htf pump losses in direct TES
+            tes->tanks_in_parallel = false;     //[-] False: Field HTF always goes to TES. PC HTF always comes from TES. ETES should not simultaneously operate heater and cycle
+            tes->V_tes_des = 1.85;              //[m/s]
+            tes->calc_design_pipe_vals = false; // for now, to get 'tanks_in_parallel' to work
+        }
+
+        // **********************************************************
+        // **********************************************************
+
+        // **********************************************************
+        // Cold temp TES
+        C_csp_two_tank_tes c_CT_TES;
+        {
+            C_csp_two_tank_tes::S_params* ctes = &c_CT_TES.ms_params;
+            ctes->m_field_fl = CT_htf_code;
+            ctes->m_field_fl_props = ud_CT_htf_props;
+            ctes->m_tes_fl = CT_htf_code;
+            ctes->m_tes_fl_props = ud_CT_htf_props;
+            // Power/effiency relationship doesn't hold for cold tank, so just fake it with power = heat and eta = 1
+            ctes->m_W_dot_pc_design = q_dot_cold_in_charge;     //[MWt]
+            ctes->m_eta_pc = 1.0;                               //[-]
+                // *************************************************
+            ctes->m_solarm = heater_mult;                //[-]
+            ctes->m_ts_hours = tshours;                  //[hr]
+            ctes->m_h_tank = as_double("CT_h_tank");
+            ctes->m_u_tank = as_double("CT_u_tank");
+            ctes->m_tank_pairs = as_integer("CT_tank_pairs");
+            // If CTES is colder than ambient, then heaters aren't going to do much?
+            ctes->m_hot_tank_Thtr = -200.0;         //[C]
+            ctes->m_hot_tank_max_heat = 0.0;        //[MWt]
+            ctes->m_cold_tank_Thtr = -200.0;        //[C]
+            ctes->m_cold_tank_max_heat = 0.0;       //[MWt]
+                // so do we want these inputs from cmod?
+                // do we need a tank cooler? Close enough to ambient (we expect?) to have minor heat loss?
+                // ctes->m_hot_tank_Thtr = as_double("CT_hot_tank_Thtr");
+                // ctes->m_hot_tank_max_heat = as_double("CT_hot_tank_max_heat");
+                // ctes->m_cold_tank_Thtr = as_double("CT_cold_tank_Thtr");
+                // ctes->m_cold_tank_max_heat = as_double("CT_cold_tank_max_heat");
+            // ********************************************************************
+            ctes->m_dt_hot = 0.0;                        // MSPT assumes direct storage, so no user input here: hardcode = 0.0
+            ctes->m_T_field_in_des = T_CT_cold_TES;      //[C]
+            ctes->m_T_field_out_des = T_CT_hot_TES;      //[C]
+            ctes->m_T_tank_hot_ini = T_CT_hot_TES;       //[C]
+            ctes->m_T_tank_cold_ini = T_CT_cold_TES;     //[C]
+            ctes->m_h_tank_min = as_double("CT_h_tank_min");
+            ctes->m_f_V_hot_ini = as_double("CT_tes_init_hot_htf_percent");
+            ctes->m_htf_pump_coef = 0.0;            //[kW/kg/s] No htf pump losses in direct TES
+            ctes->tanks_in_parallel = false;        //[-] False: Field HTF always goes to TES. PC HTF always comes from TES. ETES should not simultaneously operate heater and cycle
+            ctes->V_tes_des = 1.85;                 //[m/s]
+            ctes->calc_design_pipe_vals = false;    // for now, to get 'tanks_in_parallel' to work
+        }
+
+        // **********************************************************
+        // **********************************************************
+
+        // **********************************************************
+
 
         return;
     }
