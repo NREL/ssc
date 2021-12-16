@@ -28,6 +28,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "csp_solver_pc_ptes.h"
 #include "csp_solver_cr_heat_pump.h"
 #include "csp_solver_two_tank_tes.h"
+#include "csp_solver_tou_block_schedules.h"
+#include "etes_dispatch.h"
 
 static var_info _cm_vtab_etes_ptes[] = {
 
@@ -35,7 +37,9 @@ static var_info _cm_vtab_etes_ptes[] = {
     { SSC_INPUT,  SSC_STRING, "solar_resource_file",           "Local weather file path",                                        "",             "",                                  "Solar Resource",                           "?",                                                                "LOCAL_FILE",    ""},
 
     // Simulation Parameters
+    { SSC_INPUT,  SSC_NUMBER, "is_dispatch",                   "Allow dispatch optimization?",                                   "",             "",                                  "System Control",                           "?=0",                                                              "",               ""},
     { SSC_INPUT,  SSC_NUMBER, "sim_type",                      "1 (default): timeseries, 2: design only",                        "",             "",                                  "System Control",                           "?=1",                                                              "",              "SIMULATION_PARAMETER"},
+    { SSC_INPUT,  SSC_NUMBER, "etes_financial_model",          "",                                                               "1-8",          "",                                  "Financial Model",                          "?=1",                                                              "INTEGER,MIN=0", ""},
     { SSC_INPUT,  SSC_NUMBER, "time_start",                    "Simulation start time",                                          "s",            "",                                  "System Control",                           "?=0",                                                              "",              "SIMULATION_PARAMETER"},
     { SSC_INPUT,  SSC_NUMBER, "time_stop",                     "Simulation stop time",                                           "s",            "",                                  "System Control",                           "?=31536000",                                                       "",              "SIMULATION_PARAMETER"},
     { SSC_INPUT,  SSC_NUMBER, "time_steps_per_hour",           "Number of simulation time steps per hour",                       "",             "",                                  "System Control",                           "?=-1",                                                             "",              "SIMULATION_PARAMETER"},
@@ -85,11 +89,37 @@ static var_info _cm_vtab_etes_ptes[] = {
     { SSC_INPUT,  SSC_NUMBER, "CT_u_tank",                     "COLD TES Loss coefficient from the tank",                        "W/m2-K",       "",                                  "Cold Thermal Storage",                     "*",                                                                "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "CT_tank_pairs",                 "COLD TES Number of equivalent tank pairs",                       "",             "",                                  "Cold Thermal Storage",                     "*",                                                                "INTEGER",       ""},
     { SSC_INPUT,  SSC_NUMBER, "CT_h_tank_min",                 "COLD TES Minimum allowable HTF height in storage tank",          "m",            "",                                  "Cold Thermal Storage",                     "*",                                                                "",              ""},
-
     //{ SSC_INPUT,  SSC_NUMBER, "CT_cold_tank_max_heat",         "COLD TES Rated heater capacity for cold tank heating",           "MW",           "",                                  "Cold Thermal Storage",                     "*",                                                                "",              ""},
     //{ SSC_INPUT,  SSC_NUMBER, "CT_cold_tank_Thtr",             "COLD TES Minimum allowable cold tank HTF temperature",           "C",            "",                                  "Cold Thermal Storage",                     "*",                                                                "",              ""},
     //{ SSC_INPUT,  SSC_NUMBER, "CT_hot_tank_Thtr",              "COLD TES Minimum allowable hot tank HTF temperature",            "C",            "",                                  "Cold Thermal Storage",                     "*",                                                                "",              ""},
     //{ SSC_INPUT,  SSC_NUMBER, "CT_hot_tank_max_heat",          "COLD TES Rated heater capacity for hot tank heating",            "MW",           "",                                  "Cold Thermal Storage",                     "*",                                                                "",              ""},
+
+
+    // Pricing schedules and multipliers
+    { SSC_INPUT,  SSC_NUMBER, "ppa_multiplier_model",          "PPA multiplier model",                                          "0/1",          "0=diurnal,1=timestep",              "Time of Delivery Factors",                 "?=0",                                                              "INTEGER,MIN=0", "SIMULATION_PARAMETER"},
+    { SSC_INPUT,  SSC_ARRAY,  "dispatch_factors_ts",           "Dispatch payment factor timeseries array",                      "",             "",                                  "Time of Delivery Factors",                 "ppa_multiplier_model=1&etes_financial_model<5&is_dispatch=1&sim_type=1",      "",              "SIMULATION_PARAMETER"},
+    { SSC_INPUT,  SSC_MATRIX, "dispatch_sched_weekday",        "PPA pricing weekday schedule, 12x24",                           "",             "",                                  "Time of Delivery Factors",                 "ppa_multiplier_model=0&etes_financial_model<5&is_dispatch=1&sim_type=1",      "",              "SIMULATION_PARAMETER"},
+    { SSC_INPUT,  SSC_MATRIX, "dispatch_sched_weekend",        "PPA pricing weekend schedule, 12x24",                           "",             "",                                  "Time of Delivery Factors",                 "ppa_multiplier_model=0&etes_financial_model<5&is_dispatch=1&sim_type=1",      "",              "SIMULATION_PARAMETER"},
+    { SSC_INPUT,  SSC_NUMBER, "dispatch_factor1",              "Dispatch payment factor 1",                                     "",             "",                                  "Time of Delivery Factors",                 "ppa_multiplier_model=0&etes_financial_model<5&is_dispatch=1&sim_type=1",      "",              "SIMULATION_PARAMETER"},
+    { SSC_INPUT,  SSC_NUMBER, "dispatch_factor2",              "Dispatch payment factor 2",                                     "",             "",                                  "Time of Delivery Factors",                 "ppa_multiplier_model=0&etes_financial_model<5&is_dispatch=1&sim_type=1",      "",              "SIMULATION_PARAMETER"},
+    { SSC_INPUT,  SSC_NUMBER, "dispatch_factor3",              "Dispatch payment factor 3",                                     "",             "",                                  "Time of Delivery Factors",                 "ppa_multiplier_model=0&etes_financial_model<5&is_dispatch=1&sim_type=1",      "",              "SIMULATION_PARAMETER"},
+    { SSC_INPUT,  SSC_NUMBER, "dispatch_factor4",              "Dispatch payment factor 4",                                     "",             "",                                  "Time of Delivery Factors",                 "ppa_multiplier_model=0&etes_financial_model<5&is_dispatch=1&sim_type=1",      "",              "SIMULATION_PARAMETER"},
+    { SSC_INPUT,  SSC_NUMBER, "dispatch_factor5",              "Dispatch payment factor 5",                                     "",             "",                                  "Time of Delivery Factors",                 "ppa_multiplier_model=0&etes_financial_model<5&is_dispatch=1&sim_type=1",      "",              "SIMULATION_PARAMETER"},
+    { SSC_INPUT,  SSC_NUMBER, "dispatch_factor6",              "Dispatch payment factor 6",                                     "",             "",                                  "Time of Delivery Factors",                 "ppa_multiplier_model=0&etes_financial_model<5&is_dispatch=1&sim_type=1",      "",              "SIMULATION_PARAMETER"},
+    { SSC_INPUT,  SSC_NUMBER, "dispatch_factor7",              "Dispatch payment factor 7",                                     "",             "",                                  "Time of Delivery Factors",                 "ppa_multiplier_model=0&etes_financial_model<5&is_dispatch=1&sim_type=1",      "",              "SIMULATION_PARAMETER"},
+    { SSC_INPUT,  SSC_NUMBER, "dispatch_factor8",              "Dispatch payment factor 8",                                     "",             "",                                  "Time of Delivery Factors",                 "ppa_multiplier_model=0&etes_financial_model<5&is_dispatch=1&sim_type=1",      "",              "SIMULATION_PARAMETER"},
+    { SSC_INPUT,  SSC_NUMBER, "dispatch_factor9",              "Dispatch payment factor 9",                                     "",             "",                                  "Time of Delivery Factors",                 "ppa_multiplier_model=0&etes_financial_model<5&is_dispatch=1&sim_type=1",      "",              "SIMULATION_PARAMETER"},
+    { SSC_INPUT,  SSC_ARRAY,  "ppa_price_input",			   "PPA prices - yearly",			                                "$/kWh",	    "",	                                 "Revenue",			                         "ppa_multiplier_model=0&etes_financial_model<5&is_dispatch=1&sim_type=1",      "",      	     "SIMULATION_PARAMETER"},
+
+
+    // System performance
+    { SSC_INPUT,  SSC_NUMBER, "pb_fixed_par",                  "Fixed parasitic load that don't generate heat - runs at all times","MWe/MWcap", "",                                  "System Control",                           "*",                                                                "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "bop_par",                       "Balance of plant parasitic power fraction",                        "MWe/MWcap", "",                                  "System Control",                           "*",                                                                "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "bop_par_f",                     "Balance of plant parasitic power fraction - mult frac",            "",          "",                                  "System Control",                           "*",                                                                "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "bop_par_0",                     "Balance of plant parasitic power fraction - const coeff",          "",          "",                                  "System Control",                           "*",                                                                "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "bop_par_1",                     "Balance of plant parasitic power fraction - linear coeff",         "",          "",                                  "System Control",                           "*",                                                                "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "bop_par_2",                     "Balance of plant parasitic power fraction - quadratic coeff",      "",          "",                                  "System Control",                           "*",                                                                "",              ""},
+
 
 
     var_info_invalid };
@@ -383,6 +413,183 @@ public:
         // **********************************************************
 
         // **********************************************************
+        // Pricing and operation schedules
+        C_csp_tou_block_schedules tou;
+        C_csp_tou_block_schedules::S_params* tou_params = &tou.ms_params;
+
+        // Still need to define mc_csp_ops blocks and fractions although we're not using them
+        tou_params->mc_csp_ops.mc_weekdays.resize_fill(12, 24, 1.0);
+        tou_params->mc_csp_ops.mc_weekends.resize_fill(12, 24, 1.0);
+        tou_params->mc_csp_ops.mvv_tou_arrays[C_block_schedule_csp_ops::TURB_FRAC].resize(2, std::numeric_limits<double>::quiet_NaN());
+
+        tou.mc_dispatch_params.m_is_tod_pc_target_also_pc_max = true;
+        tou.mc_dispatch_params.m_is_block_dispatch = false;
+        tou.mc_dispatch_params.m_is_arbitrage_policy = !as_boolean("is_dispatch");
+        tou.mc_dispatch_params.m_use_rule_1 = false;
+        tou.mc_dispatch_params.m_standby_off_buffer = 2.0;          //[hr] Applies if m_use_rule_1 is true
+        tou.mc_dispatch_params.m_use_rule_2 = false;
+        tou.mc_dispatch_params.m_q_dot_rec_des_mult = -1.23;        //[-] Applies if m_use_rule_2 is true
+        tou.mc_dispatch_params.m_f_q_dot_pc_overwrite = -1.23;      //[-] Applies if m_use_rule_2 is true
+
+        int etes_financial_model = as_integer("etes_financial_model");
+        bool is_dispatch = as_boolean("is_dispatch");
+
+        double ppa_price_year1 = std::numeric_limits<double>::quiet_NaN();
+        if (sim_type == 1) {    // if sim_type = 2, skip this until ui call back is ironed out
+            if (etes_financial_model > 0 && etes_financial_model < 5) { // Single Owner financial models
+
+                // Get first year base ppa price
+                size_t count_ppa_price_input;
+                ssc_number_t* ppa_price_input_array = as_array("ppa_price_input", &count_ppa_price_input);
+                ppa_price_year1 = (double)ppa_price_input_array[0];  // [$/kWh]
+
+                // Time-of-Delivery factors by time step:
+                int ppa_mult_model = as_integer("ppa_multiplier_model");
+                if (ppa_mult_model == 1) {   // use dispatch_ts input
+
+                    tou_params->mc_pricing.mv_is_diurnal = false;
+
+                    if (is_assigned("dispatch_factors_ts") || is_dispatch) {
+                        size_t nmultipliers;
+                        ssc_number_t* multipliers = as_array("dispatch_factors_ts", &nmultipliers);
+                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(nmultipliers, 0.0);
+                        for (size_t ii = 0; ii < nmultipliers; ii++)
+                            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][ii] = multipliers[ii];
+                    }
+                    else { // if no dispatch optimization, don't need an input pricing schedule
+                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed, -1.0);
+                    }
+                }
+                else if (ppa_mult_model == 0) { // standard diuranal input
+
+                    tou_params->mc_pricing.mv_is_diurnal = true;
+
+                    bool are_all_assigned = is_assigned("dispatch_sched_weekday") || is_assigned("dispatch_sched_weekend")
+                        || is_assigned("dispatch_factor1") || is_assigned("dispatch_factor2") || is_assigned("dispatch_factor3")
+                        || is_assigned("dispatch_factor4") || is_assigned("dispatch_factor5") || is_assigned("dispatch_factor6")
+                        || is_assigned("dispatch_factor7") || is_assigned("dispatch_factor8") || is_assigned("dispatch_factor9");
+
+                    if (are_all_assigned || is_dispatch) {
+                        tou_params->mc_pricing.mc_weekdays = as_matrix("dispatch_sched_weekday");
+                        if (tou_params->mc_pricing.mc_weekdays.ncells() == 1) { tou_params->mc_pricing.mc_weekdays.resize_fill(12, 24, 1.); };
+                        tou_params->mc_pricing.mc_weekends = as_matrix("dispatch_sched_weekend");
+                        if (tou_params->mc_pricing.mc_weekends.ncells() == 1) { tou_params->mc_pricing.mc_weekends.resize_fill(12, 24, 1.); };
+
+
+                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(9, 0.0);
+                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][0] = as_double("dispatch_factor1");
+                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][1] = as_double("dispatch_factor2");
+                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][2] = as_double("dispatch_factor3");
+                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][3] = as_double("dispatch_factor4");
+                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][4] = as_double("dispatch_factor5");
+                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][5] = as_double("dispatch_factor6");
+                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][6] = as_double("dispatch_factor7");
+                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][7] = as_double("dispatch_factor8");
+                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][8] = as_double("dispatch_factor9");
+                    }
+                    else {
+                        tou_params->mc_pricing.mc_weekdays.resize_fill(12, 24, 1.);
+                        tou_params->mc_pricing.mc_weekends.resize_fill(12, 24, 1.);
+                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(9, -1.0);
+                    }
+                }
+            }
+            else {
+                throw exec_error("etes_electric_resistsance", "etes_financial_model must be 1, 2, 3, or 4");
+            }
+        }
+        else if (sim_type == 2) { // if sim_type = 2, skip this until ui call back is ironed out
+            tou_params->mc_pricing.mv_is_diurnal = false;
+
+            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed, -1.0);
+        }
+        // *****************************************************
+        // *****************************************************
+
+
+        // *****************************************************
+        // System performance
+        C_csp_solver::S_csp_system_params system;
+        system.m_pb_fixed_par = as_double("pb_fixed_par");
+        system.m_bop_par = as_double("bop_par");
+        system.m_bop_par_f = as_double("bop_par_f");
+        system.m_bop_par_0 = as_double("bop_par_0");
+        system.m_bop_par_1 = as_double("bop_par_1");
+        system.m_bop_par_2 = as_double("bop_par_2");
+
+        // *****************************************************
+        // *****************************************************
+
+
+        // *****************************************************
+        // System dispatch
+        etes_dispatch_opt dispatch;
+
+        if (as_boolean("is_dispatch")) {
+            dispatch.solver_params.set_user_inputs(as_boolean("is_dispatch"), as_integer("disp_steps_per_hour"), as_integer("disp_frequency"), as_integer("disp_horizon"),
+                as_integer("disp_max_iter"), as_double("disp_mip_gap"), as_double("disp_timeout"),
+                as_integer("disp_spec_presolve"), as_integer("disp_spec_bb"), as_integer("disp_spec_scaling"), as_integer("disp_reporting"),
+                false, false, "", "");
+            dispatch.params.set_user_params(as_double("disp_time_weighting"), as_double("disp_csu_cost")*W_dot_gen_thermo, as_double("disp_pen_delta_w"),
+                as_double("disp_hsu_cost")*q_dot_hot_out_charge, as_double("disp_down_time_min"), as_double("disp_up_time_min"), ppa_price_year1);
+        }
+        else {
+            dispatch.solver_params.dispatch_optimize = false;
+        }
+
+        // *****************************************************
+        // *****************************************************
+
+        // *****************************************************
+        // Construct System Simulation
+        C_csp_solver csp_solver(weather_reader,
+            c_heat_pump,
+            c_pc,
+            c_HT_TES,
+            tou,        // TODO: can we refactor tou to a dispatch struct?
+            dispatch,
+            system,
+            NULL,
+            ssc_cmod_update,
+            (void*)(this));
+
+        // *****************************************************
+        // *****************************************************
+
+
+        // *****************************************************
+        // Initialize
+        update("Initialize ETES PTES model...", 0.0);
+
+        int out_type = -1;
+        std::string out_msg = "";
+        try
+        {
+            // Initialize Solver
+            csp_solver.init();
+        }
+        catch (C_csp_exception& csp_exception)
+        {
+            // Report warning before exiting with error
+            while (csp_solver.mc_csp_messages.get_message(&out_type, &out_msg))
+            {
+                log(out_msg, out_type);
+            }
+
+            throw exec_error("etes_electric_resistance", csp_exception.m_error_message);
+        }
+
+        // If no exception, then report messages
+        while (csp_solver.mc_csp_messages.get_message(&out_type, &out_msg))
+        {
+            log(out_msg, out_type);
+        }
+        // *****************************************************
+        // *****************************************************
+
+
+        // *****************************************************
+        // System design is complete, get design parameters from component models as necessary
 
 
         return;

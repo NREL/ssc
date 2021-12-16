@@ -4,6 +4,16 @@ var( 'solar_resource_file', '../../test/input_cases/moltensalt_data/daggett_ca_3
 var( 'time_start', 0 );
 var( 'time_stop', 31536000 );
 
+// PPA schedule option
+// 0: Simple step-change TOU block schedule (dispatch_sched_weekday, dispatch_sched_weekend, dispatch_factorX)
+// 1: Hourly schedule (dispatch_factor_ts)
+var( 'ppa_multiplier_model', 1 );
+var( 'is_dispatch', 0 );
+var( 'ppa_price_input', [ 0.1 ] );  // 0.053889  for LCGS_price_multipliers
+
+// Normalized prices
+var('dispatch_factors_ts', real_array(read_text_file('../ETES_lk/LCGS_price_multipliers.csv')));
+
 // HTF
 var( 'hot_htf_code', 17);
 var('ud_hot_htf_props', [[0,0,0]]);
@@ -50,6 +60,16 @@ var( 'CT_h_tank_min', 1 );
 //var( 'cold_tank_Thtr', 280 );
 //var( 'hot_tank_Thtr', 500 );
 //var( 'hot_tank_max_heat', 30 );
+
+
+// System
+var( 'pb_fixed_par', 0.0054999999999999997 );
+var( 'bop_par', 0 );
+var( 'bop_par_f', 1 );
+var( 'bop_par_0', 0 );
+var( 'bop_par_1', 0.48299999999999998 );
+var( 'bop_par_2', 0 );
+
 
 
 run('etes_ptes');
