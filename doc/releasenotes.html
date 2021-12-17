@@ -4,7 +4,7 @@
  <title>SAM Simulation Core (SSC) Release Notes</title>
 </head>
 <body>
-<p>SSC Version ## (placeholder for Fall 2021 release)
+<p>SSC Version 267 (SAM version 2021.12.02, PySAM version 3.0.0)
 <ul>
 <li>Battery model:
 <ul>
@@ -29,14 +29,58 @@
 </li>
 </ul>
 </li>
- <li> Forecast is now controlled by new variables <code>batt_dispatch_wf_forecast_choice</code> and <code>batt_dispatch_load_forecast_choice</code>:
+ <li> Forecast is now controlled by new variables <code>batt_dispatch_wf_forecast_choice</code> and <code>batt_dispatch_load_forecast_choice</code></li>
 <ul>
 <li> 0 - Perfect look ahead </li>
 <li> 1 - One day look behind </li>
  <li> 2 - Custom (using <code>batt_pv_clipping_forecast</code> and <code>batt_pv_ac_forecast</code> for weather and <code>batt_load_ac_forecast</code> and <code>batt_load_ac_forecast_escalation</code> for load </li>
 </ul>
+ <li> New behind the meter dispatch and power flow variables including:
+ <ul>
+   <li> <code>batt_dispatch_auto_can_clipcharge - clip charging for DC connected batteries</code> </li>
+   <li> <code>batt_dispatch_auto_btm_can_discharge_to_grid - discharging to grid for custom dispatch</code> </li>
+   <li> <code>batt_dispatch_charge_only_system_exceeds_load - For AC connected batteries, 0 means the battery can charge while the grid meets the load. (1 is prior behavior)</code> </li>
+   <li> <code>batt_dispatch_discharge_only_load_exceeds_system - For behind the meter batteries - 0 means the system discharge the battery while generation is sold to the grid. (1 is prior behavior)</code> </li>
+   <li> <code>dispatch_manual_btm_discharge_to_grid - a matrix specifying the schedule of when manual dispatch can discharge to the grid</code> </li>
+ </ul>
+ </li>
+  <li> New grid outage variables including:
+ <ul>
+   <li> <code>grid_outage - array of timesteps when the grid is unavailable (1) or available (0)</code> </li>
+   <li> <code>batt_minimum_outage_SOC - minimum SOC variable used when grid_outage[t] is 1</code> </li>
+   <li> <code>crit_load_escalation - array of annual escalation factors for critical load</code> </li>
+ </ul>
+ </li>
+  <li> <code>en_standalone_batt - automatically specifies an array of zeroes for gen</code></li>
 </ul>
 </li>
+</li>
+<li> BatteryStateful model:
+  <ul>
+    <li>New <code>cycle_counts</code> variable, a 2xn matrix used for rainflow counting when <code>batt_life</code> is set to 0.</li>
+  </ul>
+</li>
+<li>UtilityRate5 model:
+<ul>
+<li>Front of meter configurations (Equpartflip, Levpartflip, Merchantplant, Saleleasback, Singleowner) now use the utility rate module to compute grid charging and parastics costs </li>
+<li><code>ur_ec_enable_billing_demand</code> is now <code>ur_enable_billing_demand</code> </li>
+<li><code>ur_ec_billing_demand_lookback_percentages</code> is now <code>ur_billing_demand_lookback_percentages</code> </li>
+<li><code>ur_ec_billing_demand_lookback_period</code> is now <code>ur_billing_demand_lookback_period</code> </li>
+<li><code>ur_ec_billing_demand_minimum</code> is now <code>ur_billing_demand_minimum</code> </li>
+<li> New variable <code>ur_dc_billing_demand_periods</code>, specifying for which demand charge periods billing demand is calculated </li>
+</li>
+</ul>
+<li>Front of meter financial configurations:
+<ul>
+<li>New variables including:
+<ul>
+<li><code>en_electricity_rates</code> - specify whether the system pays for battery charging or system loads (parasitcs) using a retail rate (1) or the PPA price (0)</li>
+<li><code>om_land_lease</code></li>
+<li><code>om_land_lease_escal</code> </li>
+<li><code>uland_area</code> </li>
+</ul>
+</li>
+</ul>
 </li>
 </ul>
 </p>
