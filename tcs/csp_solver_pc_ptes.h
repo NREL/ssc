@@ -34,7 +34,7 @@ private:
     // Defined in constructor
     double m_W_dot_thermo_des;          //[MWe]
     double m_eta_therm_mech_des;        //[-]
-    double m_W_dot_consume_elec_des;    //[MWe]
+    double m_f_elec_consume_vs_gen;     //[-] Fraction of thermo generation that cycle uses for parasitics (motors, generators, cooling)
     double m_fixed__q_dot_cold__to__q_dot_warm /*-*/;      //[-]
     double m_T_HT_HTF_hot_des;          //[C]
     double m_T_HT_HTF_cold_des;         //[C]
@@ -62,6 +62,7 @@ private:
     double m_W_dot_net_des;             //[MWe]
     double m_q_dot_hot_in_des;          //[MWt]
     double m_q_dot_cold_out_thermo_des; //[MWt]
+    double m_W_dot_elec_parasitic;      //[MWe]
     double m_eta_overall_des;           //[-]
     double m_q_dot_cold_to_CTES;        //[MWt]
     double m_q_dot_cold_to_surroundings;    //[MWt]
@@ -76,7 +77,7 @@ private:
     double m_m_dot_HT_max;              //[kg/s]
     double m_m_dot_CT_des;              //[kg/s]
 
-    double m_E_su_des;                  //[MWt]
+    double m_E_su_des;                  //[MWt-hr]
 
     // Member points/classes
     std::unique_ptr<HTFProperties> m_HT_htfProps;
@@ -104,7 +105,7 @@ public:
     // Inherited methods
     // ***********************
     C_pc_ptes(double W_dot_gen_thermo /*MWe*/, double eta_therm_mech /*-*/,
-        double W_dot_gen_use_elec /*MWe*/, double fixed__q_dot_cold__to__q_dot_warm /*-*/,
+        double f_elec_consume_vs_gen /*-*/, double fixed__q_dot_cold__to__q_dot_warm /*-*/,
         double T_HT_HTF_hot /*C*/, double T_HT_HTF_cold /*C*/, double T_CT_HTF_cold /*C*/, double T_CT_HTF_hot /*C*/,
         double cycle_max_frac /*-*/, double cycle_cutoff_frac /*-*/, double q_sby_frac /*-*/,
         double startup_time /*hr*/, double startup_frac /*-*/,
@@ -151,14 +152,30 @@ public:
 
     // ********************************************************
     // ********************************************************
+
+    void get_design_parameters(double& W_dot_net /*MWe*/, double& q_dot_hot_in /*MWt*/,
+        double& q_dot_cold_out_thermo /*MWt*/, double& W_dot_elec_parasitic /*MWe*/,
+        double& eta_net /*-*/, double& q_dot_cold_to_CTES /*MWt*/, double& q_dot_cold_to_surr /*MWt*/,
+        double& m_dot_HT_htf /*kg/s*/, double& cp_HT_htf /*kJ/kg-K*/,
+        double& m_dot_CT_htf /*kg/s*/, double& cp_CT_htf /*kJ/kg-K*/);
 };
 
 namespace pc_ptes_helpers
 {
-    void high_level_design_calcs(double W_dot_thermo /*MWe*/, double W_dot_consume_elec /*MWe*/,
+    void design_calcs__all(double W_dot_thermo /*MWe*/, double f_elec_consume_vs_gen /*-*/,
         double eta_therm_mech /*-*/, double fixed__q_dot_cold__to__q_dot_warm /*-*/,
-        double& W_dot_net /*MWe*/, double& q_dot_hot_in /*MWt*/, double& q_dot_cold_out_thermo /*MWt*/,
-        double& eta_net /*-*/, double& q_dot_cold_to_CTES, double& q_dot_reject_to_surroundings /*MWt*/);
+        double& W_dot_net /*MWe*/, double& W_dot_consume_elec /*MWe*/,
+        double& q_dot_hot_in /*MWt*/, double& q_dot_cold_out_thermo /*MWt*/, double& eta_net /*-*/,
+        double& q_dot_cold_to_CTES, double& q_dot_reject_to_surroundings /*MWt*/);
+
+    void design_calcs__no_ctes(double W_dot_thermo /*MWe*/, double f_elec_consume_vs_gen /*-*/,
+        double eta_therm_mech /*-*/,
+        double& W_dot_net /*MWe*/, double& W_dot_consume_elec /*MWe*/,
+        double& q_dot_hot_in /*MWt*/, double& q_dot_cold_out_thermo /*MWt*/, double& eta_net /*-*/);
+
+    void design_calcs__q_dot_ctes(double q_dot_hot_in /*MWt*/, double fixed__q_dot_cold__to__q_dot_warm /*-*/,
+        double q_dot_cold_out_thermo /*MWt*/,
+        double& q_dot_cold_to_CTES, double& q_dot_reject_to_surroundings /*MWt*/);
 }
 
 #endif // !__csp_solver_pc_ptes_

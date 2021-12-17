@@ -134,6 +134,9 @@ public:
 
     void exec() override
     {
+        //FILE* fp = fopen("etes_cmod_to_lk.lk", "w");
+        //write_cmod_to_lk_script(fp, m_vartab);
+
         // First, check sim type
         int sim_type = as_integer("sim_type");
         if (sim_type != 1 && sim_type != 2) {
@@ -142,41 +145,54 @@ public:
             throw exec_error("etes_ptes", sim_type_msg);
         }
 
+        // System design calcs
+        // Need more information than typical because cycle and heat pump design are related
+        // And we want all component calcs to live in component methods/helpers
+        double heater_mult = 1.0;               //[-]
+        double tshours = 10.0;      //[-]
+
         // Define generation mechanical, electrical, and thermal power
         // Need to break out thermodynamic cycle so that net output, heat input, heat output, and efficiency are consistent
-        // Important because: 1) ideal gas cycles could have significant compressor loads and 2) important to capture heat rejection for CT storage
-        double W_dot_gen_thermo = 100.0;   //[MWe]
-        double W_dot_gen_used_elec = 10.0;   //[MWe]
-        double W_dot_gen_net = W_dot_gen_thermo - W_dot_gen_used_elec;  //[MWe]
-        double eta_therm_mech = 0.5;     //[-]
-        double q_dot_hot_in_gen = W_dot_gen_thermo / eta_therm_mech;    //[MWt]
-        double q_dot_cold_out_gen = W_dot_gen_thermo*(1./eta_therm_mech - 1.);     //[MWt]
-        double eta_overall = W_dot_gen_net / q_dot_hot_in_gen;      //[-]
+        // Important because: 1) important to capture exact heat rejection for CT storage and net efficiency includes electrical parasitics that don't apply to cycle working fluid
+        double W_dot_gen_thermo = 100.0;    //[MWe]
+        double f_elec_consume_vs_gen = 0.1; //[-] Fraction of thermo generation that cycle uses for parasitics (motors, generators, cooling)
+        double eta_therm_mech = 0.5;        //[-]
+        double W_dot_gen_net, W_dot_gen_elec_parasitic, q_dot_hot_in_gen, q_dot_cold_out_gen, eta_gen_net;
+        W_dot_gen_net = W_dot_gen_elec_parasitic = q_dot_hot_in_gen = q_dot_cold_out_gen = eta_gen_net = std::numeric_limits<double>::quiet_NaN();
+        pc_ptes_helpers::design_calcs__no_ctes(W_dot_gen_thermo, f_elec_consume_vs_gen,
+            eta_therm_mech,
+            W_dot_gen_net, W_dot_gen_elec_parasitic,
+            q_dot_hot_in_gen, q_dot_cold_out_gen, eta_gen_net);
 
         // Define heat pump power/heat flows
             // Design parameters
-        double heater_mult = 1.0;
         double COP_heat_charge_therm = 1.5;     //[-]
         double f_elec_consume_vs_W_dot_thermo = 0.05;   //[-]
             // Calculate heat and power 
         double q_dot_hot_out_charge = q_dot_hot_in_gen*heater_mult; //[MWt]
-        double W_dot_in_charge_thermo = q_dot_hot_out_charge / COP_heat_charge_therm;       //[MWe] COP_heat = q_dot_hot_out_charge / W_dot_in_charge_thermo
-        double q_dot_cold_in_charge = W_dot_in_charge_thermo*(COP_heat_charge_therm - 1.0); //[MWt]
-        double W_dot_in_charge_elec = f_elec_consume_vs_W_dot_thermo*W_dot_in_charge_thermo;  //[MWe]
-        double W_dot_charge_net = W_dot_in_charge_thermo + W_dot_in_charge_elec;        //[MWe]
-        double COP_heat_charge_net = q_dot_hot_out_charge / W_dot_charge_net;           //[-]
+            // Call heat pump high-level design method
+        double W_dot_in_charge_thermo, q_dot_cold_in_charge, W_dot_in_charge_elec, W_dot_charge_net, COP_heat_charge_net;
+        W_dot_in_charge_thermo = q_dot_cold_in_charge = W_dot_in_charge_elec = W_dot_charge_net = COP_heat_charge_net = std::numeric_limits<double>::quiet_NaN();
+        heat_pump_helpers::design_calcs(q_dot_hot_out_charge, COP_heat_charge_therm, f_elec_consume_vs_W_dot_thermo,
+            W_dot_in_charge_thermo, q_dot_cold_in_charge, W_dot_in_charge_elec, W_dot_charge_net, COP_heat_charge_net);
 
-        // Check RTE and cold q dots
-        double fixed__q_dot_cold__to__q_dot_warm = q_dot_cold_in_charge / q_dot_hot_out_charge;
+        // Ratio to heat pump q_dot_cold to q_dot_hot
+        // Power cycle model uses this to fix ratios of CT and HT TES mass flow rates
+        // So that CT and HT availability moves together
+        // (could also use COP but thought this value was more general)
+        double fixed__q_dot_cold__to__q_dot_warm = q_dot_cold_in_charge / q_dot_hot_out_charge;     //[-]
+        // Now can solve cycle split between CT TES and rejection to ambient
+        double q_dot_cold_out_gen_to_CTES = std::numeric_limits<double>::quiet_NaN();       //[MWt]
+        double q_dot_cold_out_gen_to_surr = std::numeric_limits<double>::quiet_NaN();       //[MWt]
+        pc_ptes_helpers::design_calcs__q_dot_ctes(q_dot_hot_in_gen, fixed__q_dot_cold__to__q_dot_warm, q_dot_cold_out_gen,
+                                    q_dot_cold_out_gen_to_CTES, q_dot_cold_out_gen_to_surr);
 
-        double RTE_therm = eta_therm_mech * COP_heat_charge_therm;     //[-]
+        // Calculate some RTE terms
+        // Probably want some "true" net RTE that includes all parasitics
+        // ... e.g. these don't include pumping power or BOP & fixed system parasitics
+        double RTE_therm = eta_therm_mech * COP_heat_charge_therm;      //[-]
+        double RTE_cycles_net = eta_gen_net * COP_heat_charge_net;      //[-]
 
-        double q_dot_cold_out_gen_to_CTES = fixed__q_dot_cold__to__q_dot_warm * q_dot_hot_in_gen;   //[MWt]
-        double q_dot_cold_out_gen_to_surr = q_dot_cold_out_gen - q_dot_cold_out_gen_to_CTES;        //[MWt]
-
-            // is, considering heater mult, the gen q_dot_cold > the charge q_dot_cold?
-        //double r_q_dot__out_gen__in_charge = q_dot_cold_out_gen / (heater_mult * q_dot_cold_in_charge); //[-]
-        //double q_dot_cold_out_reject_gen = q_dot_cold_out_gen - heater_mult*q_dot_cold_in_charge;   //[MWt]
         // *****************************************************
         // *****************************************************
         // --- Either ----
@@ -213,13 +229,6 @@ public:
         double T_HT_cold_TES = 305.0;   //[C]
         double T_CT_cold_TES = -45.0;   //[C]
         double T_CT_hot_TES = 55.0;     //[C]
-        // *****************************************************
-
-        // *****************************************************
-        // System Design Calcs
-        double tshours = 10.0;      //[-]
-        double Q_HT_tes = q_dot_hot_out_charge*tshours;     //[MWt-hr]
-        double Q_CT_tes = q_dot_cold_in_charge*tshours;     //[MWt-hr]
         // *****************************************************
         // *****************************************************
 
@@ -282,7 +291,7 @@ public:
         double startup_frac = as_double("startup_frac");            //[-]
 
         C_pc_ptes c_pc(W_dot_gen_thermo, eta_therm_mech,
-            W_dot_gen_used_elec, fixed__q_dot_cold__to__q_dot_warm,
+            f_elec_consume_vs_gen, fixed__q_dot_cold__to__q_dot_warm,
             T_HT_hot_TES, T_HT_cold_TES, T_CT_cold_TES, T_CT_hot_TES,
             cycle_max_frac, cycle_cutoff_frac, q_sby_frac,
             startup_time, startup_frac,
@@ -591,6 +600,62 @@ public:
 
         // *****************************************************
         // System design is complete, get design parameters from component models as necessary
+
+            // Cycle
+        double W_dot_net_gen_calc;      //[MWe]
+        double q_dot_hot_in_gen_calc;   //[MWt]
+        double q_dot_cold_out_thermo_gen_calc;  //[MWt]
+        double W_dot_elec_parasitic_gen_calc;   //[MWe]
+        double eta_net_gen_calc;        //[MWe]
+        double q_dot_cold_to_CTES_calc; //[MWt]
+        double q_dot_cold_to_surr_calc; //[MWt]
+
+        double m_dot_HT_htf_gen_calc;   //[kg/s]
+        double cp_HT_htf_gen_calc;      //[kJ/kg-K]
+        double m_dot_CT_htf_gen_calc;   //[kg/s] to CT TES
+        double cp_CT_htf_gen_calc;      //[kJ/kg-K]
+
+        c_pc.get_design_parameters(W_dot_net_gen_calc, q_dot_hot_in_gen_calc,
+                        q_dot_cold_out_thermo_gen_calc, W_dot_elec_parasitic_gen_calc,
+                        eta_net_gen_calc, q_dot_cold_to_CTES_calc, q_dot_cold_to_surr_calc,
+                        m_dot_HT_htf_gen_calc, cp_HT_htf_gen_calc,
+                        m_dot_CT_htf_gen_calc, cp_CT_htf_gen_calc);
+
+            // Heat Pump
+        double W_dot_in_charge_calc;        //[MWe] power into cycle working fluid. does not consider electric parasitics (e.g. cooling fan, motor inefficiencies, etc.)
+        double q_dot_cold_in_charge_calc;   //[MWt]
+        double W_dot_elec_parasitic_charge_calc;    //[MWe]
+        double W_dot_in_net_charge_calc;    //[MWe]
+        double COP_net_calc;                //[-]
+
+        // cp should be same as cycle?
+        // but mass flow rates should be a bit different
+        //  ... hot should scale w/ heater_mult and cold should also include the rte effect
+        double m_dot_HT_htf_charge_calc;    //[kg/s]
+        double cp_HT_htf_charge_calc;       //[kJ/kg-K]
+        double m_dot_CT_htf_charge_calc;    //[kg/s]
+        double cp_CT_htf_charge_calc;       //[kJ/kg-K]
+
+        double E_su_charge_calc;            //[MWt-hr]
+
+        c_heat_pump.get_design_parameters(W_dot_in_charge_calc, q_dot_cold_in_charge_calc,
+                        W_dot_elec_parasitic_charge_calc, W_dot_in_net_charge_calc,
+                        COP_net_calc,
+                        m_dot_HT_htf_charge_calc, cp_HT_htf_charge_calc,
+                        m_dot_CT_htf_charge_calc, cp_CT_htf_charge_calc,
+                        E_su_charge_calc);
+
+            // HT TES
+
+
+            // CT TES
+
+            // System
+
+
+        // *****************************************************
+        // System design is complete, so calculate final design outputs like cost, capacity, etc.
+
 
 
         return;

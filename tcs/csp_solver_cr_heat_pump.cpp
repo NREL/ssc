@@ -91,11 +91,11 @@ void C_csp_cr_heat_pump::init(const C_csp_collector_receiver::S_csp_cr_init_inpu
 {
     // Not using init_inputs because the parameters are relevant to solar energy
 
-    m_W_dot_in_thermo_des = m_q_dot_hot_out_des/m_COP_heat_des;  //[MWe]
-    m_q_dot_cold_in_des = m_W_dot_in_thermo_des*(m_COP_heat_des - 1.0);   //[MWt]
-    m_W_dot_consume_elec_des = m_f_elec_consume_vs_W_dot_thermo_des *m_W_dot_in_thermo_des;  //[MWe]
-    m_W_dot_in_net_des = m_W_dot_in_thermo_des + m_W_dot_consume_elec_des;   //[MWe]
-    m_COP_net_des = m_q_dot_hot_out_des / m_W_dot_in_net_des;           //[-]
+    heat_pump_helpers::design_calcs(m_q_dot_hot_out_des, m_COP_heat_des,
+        m_f_elec_consume_vs_W_dot_thermo_des,
+        m_W_dot_in_thermo_des, m_q_dot_cold_in_des,
+        m_W_dot_consume_elec_des, m_W_dot_in_net_des,
+        m_COP_net_des);
 
     std::unique_ptr<HTFProperties> HT_htfProps(new HTFProperties());
     m_HT_htfProps = std::move(HT_htfProps);
@@ -245,5 +245,39 @@ double C_csp_cr_heat_pump::get_collector_area()
     return std::numeric_limits<double>::quiet_NaN();
 }
 
+void C_csp_cr_heat_pump::get_design_parameters(double& W_dot_in /*MWe*/, double& q_dot_cold_in /*MWt*/,
+    double& W_dot_elec_parasitic /*MWe*/, double& W_dot_in_net /*MWe*/,
+    double& COP_net /*-*/,
+    double& m_dot_HT_htf /*kg/s*/, double& cp_HT_htf /*kJ/kg-K*/,
+    double& m_dot_CT_htf /*kg/s*/, double& cp_CT_htf /*kJ/kg-K*/,
+    double& E_su /*MWt-hr*/)
+{
+    W_dot_in = m_W_dot_in_thermo_des;       //[MWe]
+    q_dot_cold_in = m_q_dot_cold_in_des;    //[MWt]
+    W_dot_elec_parasitic = m_W_dot_consume_elec_des;    //[MWe]
+    W_dot_in_net = m_W_dot_in_net_des;      //[MWe]
+    COP_net = m_COP_net_des;                //[-]
+
+    m_dot_HT_htf = m_m_dot_HT_des;          //[kg/s]
+    cp_HT_htf = m_cp_HT_HTF_des;            //[kJ/kg-K]
+    m_dot_CT_htf = m_m_dot_CT_des;          //[kg/s]
+    cp_CT_htf = m_cp_CT_HTF_des;            //[kJ/kg-K]
+
+    E_su = m_E_su_des;                      //[MWt-hr]
+}
+
 // ***************************************************************
 // ***************************************************************
+
+void heat_pump_helpers::design_calcs(double q_dot_hot_out /*MWt*/, double COP_heat /*-*/,
+    double f_elec_consume_vs_W_dot_thermo /*-*/,
+    double& W_dot_in_thermo /*MWe*/, double& q_dot_cold_in /*MWt*/,
+    double& W_dot_consume_elec /*MWe*/, double& W_dot_in_net /*MWe*/,
+    double& COP_heat_net /*-*/)
+{
+    W_dot_in_thermo = q_dot_hot_out / COP_heat;             //[MWe]
+    q_dot_cold_in = W_dot_in_thermo * (COP_heat - 1.0);     //[MWt]
+    W_dot_consume_elec = f_elec_consume_vs_W_dot_thermo * W_dot_in_thermo;  //[MWe]
+    W_dot_in_net = W_dot_in_thermo + W_dot_consume_elec;    //[MWe]
+    COP_heat_net = q_dot_hot_out / W_dot_in_net;            //[-]
+}

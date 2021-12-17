@@ -165,7 +165,21 @@ public:
     // ***************************************************************
     // ***************************************************************
 
-
+    void get_design_parameters(double& W_dot_in /*MWe*/, double& q_dot_cold_in /*MWt*/,
+            double& W_dot_elec_parasitic /*MWe*/, double& W_dot_in_net /*MWe*/,
+            double& COP_net /*-*/,
+            double& m_dot_HT_htf /*kg/s*/, double& cp_HT_htf /*kJ/kg-K*/,
+            double& m_dot_CT_htf /*kg/s*/, double& cp_CT_htf /*kJ/kg-K*/,
+            double& E_su /*MWt-hr*/);
 };
+
+namespace heat_pump_helpers
+{
+    void design_calcs(double q_dot_hot_out /*MWt*/, double COP_heat /*-*/,
+            double f_elec_consume_vs_W_dot_thermo /*-*/,
+            double& W_dot_in_thermo /*MWe*/, double& q_dot_cold_in /*MWt*/,
+            double& W_dot_consume_elec /*MWe*/, double& W_dot_in_net /*MWe*/,
+            double& COP_heat_net /*-*/);
+}
 
 #endif // !__csp_solver_cr_heat_pump

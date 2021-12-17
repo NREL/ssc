@@ -27,7 +27,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Inherited methods
 // ***********************
 C_pc_ptes::C_pc_ptes(double W_dot_thermo /*MWe*/, double eta_therm_mech /*-*/,
-    double W_dot_consume_elec /*MWe*/, double fixed__q_dot_cold__to__q_dot_warm /*-*/,
+    double f_elec_consume_vs_gen /*-*/, double fixed__q_dot_cold__to__q_dot_warm /*-*/,
     double T_HT_HTF_hot /*C*/, double T_HT_HTF_cold /*C*/, double T_CT_HTF_cold /*C*/, double T_CT_HTF_hot /*C*/,
     double cycle_max_frac /*-*/, double cycle_cutoff_frac /*-*/, double q_sby_frac /*-*/,
     double startup_time /*hr*/, double startup_frac /*-*/,
@@ -36,8 +36,8 @@ C_pc_ptes::C_pc_ptes(double W_dot_thermo /*MWe*/, double eta_therm_mech /*-*/,
     int CT_htf_code /*-*/, util::matrix_t<double> CT_ud_htf_props)
 {
     m_W_dot_thermo_des = W_dot_thermo;      //[MWe]
-    m_eta_therm_mech_des = eta_therm_mech;          //[-]
-    m_W_dot_consume_elec_des = W_dot_consume_elec;  //[MWe]
+    m_eta_therm_mech_des = eta_therm_mech;              //[-]
+    m_f_elec_consume_vs_gen = f_elec_consume_vs_gen;    //[-]
     m_fixed__q_dot_cold__to__q_dot_warm = fixed__q_dot_cold__to__q_dot_warm;  //[-]
     m_T_HT_HTF_hot_des = T_HT_HTF_hot;              //[C]
     m_T_HT_HTF_cold_des = T_HT_HTF_cold;            //[C]
@@ -60,6 +60,7 @@ C_pc_ptes::C_pc_ptes(double W_dot_thermo /*MWe*/, double eta_therm_mech /*-*/,
     m_W_dot_net_des = std::numeric_limits<double>::quiet_NaN();
     m_q_dot_hot_in_des = std::numeric_limits<double>::quiet_NaN();
     m_q_dot_cold_out_thermo_des = std::numeric_limits<double>::quiet_NaN();
+    m_W_dot_elec_parasitic = std::numeric_limits<double>::quiet_NaN();
     m_eta_overall_des = std::numeric_limits<double>::quiet_NaN();
     m_q_dot_cold_to_CTES = std::numeric_limits<double>::quiet_NaN();
     m_q_dot_cold_to_surroundings = std::numeric_limits<double>::quiet_NaN();
@@ -79,10 +80,11 @@ C_pc_ptes::C_pc_ptes(double W_dot_thermo /*MWe*/, double eta_therm_mech /*-*/,
 
 void C_pc_ptes::init(C_csp_power_cycle::S_solved_params& solved_params)
 {
-    pc_ptes_helpers::high_level_design_calcs(m_W_dot_thermo_des, m_W_dot_consume_elec_des,
+    pc_ptes_helpers::design_calcs__all(m_W_dot_thermo_des, m_f_elec_consume_vs_gen,
                                         m_eta_therm_mech_des, m_fixed__q_dot_cold__to__q_dot_warm,
-                                        m_W_dot_net_des, m_q_dot_hot_in_des, m_q_dot_cold_out_thermo_des,
-                                        m_eta_overall_des, m_q_dot_cold_to_CTES, m_q_dot_cold_to_surroundings);
+                                        m_W_dot_net_des, m_W_dot_elec_parasitic,
+                                        m_q_dot_hot_in_des, m_q_dot_cold_out_thermo_des, m_eta_overall_des,
+                                        m_q_dot_cold_to_CTES, m_q_dot_cold_to_surroundings);
 
     std::unique_ptr<HTFProperties> HT_htfProps(new HTFProperties());
     m_HT_htfProps = std::move(HT_htfProps);
@@ -232,15 +234,57 @@ void C_pc_ptes::assign(int index, double* p_reporting_ts_array, size_t n_reporti
     throw(C_csp_exception("C_pc_tes::assign() is not complete"));
 }
 
-void pc_ptes_helpers::high_level_design_calcs(double W_dot_thermo /*MWe*/, double W_dot_consume_elec /*MWe*/,
-    double eta_therm_mech /*-*/, double fixed__q_dot_cold__to__q_dot_warm /*-*/,
-    double& W_dot_net /*MWe*/, double& q_dot_hot_in /*MWt*/, double& q_dot_cold_out_thermo /*MWt*/,
-    double& eta_net /*-*/, double& q_dot_cold_to_CTES, double& q_dot_reject_to_surroundings /*MWt*/)
+void C_pc_ptes::get_design_parameters(double& W_dot_net /*MWe*/, double& q_dot_hot_in /*MWt*/,
+    double& q_dot_cold_out_thermo /*MWt*/, double& W_dot_elec_parasitic /*MWe*/,
+    double& eta_net /*-*/, double& q_dot_cold_to_CTES /*MWt*/, double& q_dot_cold_to_surr /*MWt*/,
+    double& m_dot_HT_htf /*kg/s*/, double& cp_HT_htf /*kJ/kg-K*/,
+    double& m_dot_CT_htf /*kg/s*/, double& cp_CT_htf /*kJ/kg-K*/)
 {
+    W_dot_net = m_W_dot_net_des;        //[MWe]
+    q_dot_hot_in = m_q_dot_hot_in_des;  //[MWt]
+    q_dot_cold_out_thermo = m_q_dot_cold_out_thermo_des;    //[MWt]
+    W_dot_elec_parasitic = m_W_dot_elec_parasitic;          //[MWe]
+    eta_net = m_eta_overall_des;        //[-]
+    q_dot_cold_to_CTES = m_q_dot_cold_to_CTES;              //[MWt]
+    q_dot_cold_to_surr = m_q_dot_cold_to_surroundings;      //[MWt]
+
+    m_dot_HT_htf = m_m_dot_HT_des;      //[kg/s]
+    cp_HT_htf = m_cp_HT_HTF_des;        //[kJ/kg-K]
+    m_dot_CT_htf = m_m_dot_CT_des;      //[kg/s]
+    cp_CT_htf = m_cp_CT_HTF_des;        //[kJ/kg-K]
+}
+
+void pc_ptes_helpers::design_calcs__all(double W_dot_thermo /*MWe*/, double f_elec_consume_vs_gen /*-*/,
+    double eta_therm_mech /*-*/, double fixed__q_dot_cold__to__q_dot_warm /*-*/,
+    double& W_dot_net /*MWe*/, double& W_dot_consume_elec /*MWe*/,
+    double& q_dot_hot_in /*MWt*/, double& q_dot_cold_out_thermo /*MWt*/, double& eta_net /*-*/,
+    double& q_dot_cold_to_CTES, double& q_dot_reject_to_surroundings /*MWt*/)
+{
+    design_calcs__no_ctes(W_dot_thermo, f_elec_consume_vs_gen,
+        eta_therm_mech,
+        W_dot_net, W_dot_consume_elec,
+        q_dot_hot_in, q_dot_cold_out_thermo, eta_net);
+
+    design_calcs__q_dot_ctes(q_dot_hot_in, fixed__q_dot_cold__to__q_dot_warm, q_dot_cold_out_thermo,
+        q_dot_cold_to_CTES, q_dot_reject_to_surroundings);
+}
+
+void pc_ptes_helpers::design_calcs__no_ctes(double W_dot_thermo /*MWe*/, double f_elec_consume_vs_gen /*-*/,
+    double eta_therm_mech /*-*/,
+    double& W_dot_net /*MWe*/, double& W_dot_consume_elec /*MWe*/,
+    double& q_dot_hot_in /*MWt*/, double& q_dot_cold_out_thermo /*MWt*/, double& eta_net /*-*/)
+{
+    W_dot_consume_elec = W_dot_thermo * f_elec_consume_vs_gen;  //[MWe]
     W_dot_net = W_dot_thermo - W_dot_consume_elec;      //[MWe]
     q_dot_hot_in = W_dot_thermo / eta_therm_mech;       //[MWt]
-    q_dot_cold_out_thermo = W_dot_thermo*(1./eta_therm_mech - 1.);   //[MWt]
-    eta_net = W_dot_net / q_dot_hot_in;                 //[-]
+    q_dot_cold_out_thermo = W_dot_thermo * (1. / eta_therm_mech - 1.);   //[MWt]
+    eta_net = W_dot_net / q_dot_hot_in;
+}
+
+void pc_ptes_helpers::design_calcs__q_dot_ctes(double q_dot_hot_in /*MWt*/, double fixed__q_dot_cold__to__q_dot_warm /*-*/,
+    double q_dot_cold_out_thermo /*MWt*/,
+    double& q_dot_cold_to_CTES, double& q_dot_reject_to_surroundings /*MWt*/)
+{
     q_dot_cold_to_CTES = fixed__q_dot_cold__to__q_dot_warm * q_dot_hot_in;  //[MWt]
     q_dot_reject_to_surroundings = q_dot_cold_out_thermo - q_dot_cold_to_CTES;    //[MWt]
 }
