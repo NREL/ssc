@@ -234,6 +234,7 @@ C_csp_solver::C_csp_solver(C_csp_weatherreader &weather,
     base_dispatch_opt &dispatch,
 	S_csp_system_params &system,
     C_csp_collector_receiver* heater,
+    std::shared_ptr<C_csp_tes> c_CT_tes,
 	bool(*pf_callback)(std::string &log_msg, std::string &progress_msg, void *data, double progress, int out_type),
 	void *p_cmod_active) :
 	mc_weather(weather), 
@@ -246,6 +247,7 @@ C_csp_solver::C_csp_solver(C_csp_weatherreader &weather,
 {
     // Assign remaining member data
     mp_heater = heater;
+    mc_CT_tes = c_CT_tes;
     mpf_callback = pf_callback;
     mp_cmod_active = p_cmod_active;
 
@@ -389,6 +391,11 @@ void C_csp_solver::init()
     tes_init_inputs.P_to_cr_at_des = cr_solved_params.m_dP_sf;
 	mc_tes.init(tes_init_inputs);
     mc_csp_messages.transfer_messages(mc_tes.mc_csp_messages);
+        // Check Cold TES
+    bool is_CT_tes = false;
+    if (mc_CT_tes.get() != nullptr) {
+        is_CT_tes = true;
+    }
 		// TOU
     mc_tou.mc_dispatch_params.m_isleapyear = mc_weather.ms_solved_params.m_leapyear;
 	mc_tou.init();

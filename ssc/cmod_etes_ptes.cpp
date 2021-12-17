@@ -332,7 +332,7 @@ public:
 
         // **********************************************************
         // High temp TES
-        C_csp_two_tank_tes c_HT_TES;
+         C_csp_two_tank_tes c_HT_TES;
         {
             C_csp_two_tank_tes::S_params* tes = &c_HT_TES.ms_params;
             tes->m_field_fl = HT_htf_code;
@@ -368,9 +368,9 @@ public:
 
         // **********************************************************
         // Cold temp TES
-        C_csp_two_tank_tes c_CT_TES;
+        std::shared_ptr<C_csp_two_tank_tes> c_CT_TES(new C_csp_two_tank_tes());
         {
-            C_csp_two_tank_tes::S_params* ctes = &c_CT_TES.ms_params;
+            C_csp_two_tank_tes::S_params* ctes = &c_CT_TES->ms_params;
             ctes->m_field_fl = CT_htf_code;
             ctes->m_field_fl_props = ud_CT_htf_props;
             ctes->m_tes_fl = CT_htf_code;
@@ -550,6 +550,7 @@ public:
             dispatch,
             system,
             NULL,
+            nullptr,
             ssc_cmod_update,
             (void*)(this));
 

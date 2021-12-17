@@ -1819,6 +1819,7 @@ public:
                         dispatch,
                         system,
                         p_heater,
+                        nullptr,
                         ssc_cmod_update,
                         (void*)(this));
 
