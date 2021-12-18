@@ -31,6 +31,7 @@ var( 'heat_pump_CT_HTF_pump_coef', 0.55);	//[kW/kg/s]
 
 // Generation cycle
 var( 'pb_pump_coef', 0.55000000000000004 );
+var( 'CT_pb_pump_coef', 0.55 );
 var( 'startup_time', 0.5 );
 var( 'startup_frac', 0.5 );
 var( 'cycle_max_frac', 1.05 );
@@ -69,6 +70,23 @@ var( 'bop_par_f', 1 );
 var( 'bop_par_0', 0 );
 var( 'bop_par_1', 0.48299999999999998 );
 var( 'bop_par_2', 0 );
+
+
+// System costs
+var( 'cycle_spec_cost', 1040 );
+var( 'heat_pump_spec_cost', var('cycle_spec_cost')*0.1); // ?
+var( 'tes_spec_cost', 22 );
+var( 'CT_tes_spec_cost', 2 );		// ?
+var( 'bop_spec_cost', 0.0 );
+var( 'contingency_rate', 7 );
+var( 'sales_tax_rate', 5 );
+var( 'sales_tax_frac', 80 );
+var( 'epc_cost_perc_of_direct', 13 );
+var( 'epc_cost_per_watt', 0 );
+var( 'epc_cost_fixed', 0 );
+var( 'land_cost_perc_of_direct', 0 );
+var( 'land_cost_per_watt', 0 );
+var( 'land_cost_fixed', 0 );
 
 
 

@@ -395,6 +395,10 @@ void C_csp_solver::init()
     bool is_CT_tes = false;
     if (mc_CT_tes.get() != nullptr) {
         is_CT_tes = true;
+
+        C_csp_tes::S_csp_tes_init_inputs CT_tes_init_inputs;
+        mc_CT_tes->init(CT_tes_init_inputs);
+        mc_csp_messages.transfer_messages(mc_CT_tes->mc_csp_messages);
     }
 		// TOU
     mc_tou.mc_dispatch_params.m_isleapyear = mc_weather.ms_solved_params.m_leapyear;

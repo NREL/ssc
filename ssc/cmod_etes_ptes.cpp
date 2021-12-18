@@ -63,7 +63,8 @@ static var_info _cm_vtab_etes_ptes[] = {
 
     // Power Cycle
         // General
-    { SSC_INPUT,  SSC_NUMBER, "pb_pump_coef",                  "Pumping power to move 1kg of HTF through PB loop",               "kW/kg/s",      "",                                  "Power Cycle",                              "*",                                                                "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "pb_pump_coef",                  "COLD TES pumping power to move 1kg of HTF through PB loop",      "kW/kg/s",      "",                                  "Power Cycle",                              "*",                                                                "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "CT_pb_pump_coef",               "COLD TES pumping power to move 1kg of HTF through PB loop",      "kW/kg/s",      "",                                  "Power Cycle",                              "*",                                                                "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "startup_time",                  "Time needed for power block startup",                            "hr",           "",                                  "Power Cycle",                              "*",                                                                "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "startup_frac",                  "Fraction of design thermal power needed for startup",            "none",         "",                                  "Power Cycle",                              "*",                                                                "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "cycle_max_frac",                "Maximum turbine over design operation fraction",                 "",             "",                                  "Power Cycle",                              "*",                                                                "",              ""},
@@ -119,6 +120,25 @@ static var_info _cm_vtab_etes_ptes[] = {
     { SSC_INPUT,  SSC_NUMBER, "bop_par_0",                     "Balance of plant parasitic power fraction - const coeff",          "",          "",                                  "System Control",                           "*",                                                                "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "bop_par_1",                     "Balance of plant parasitic power fraction - linear coeff",         "",          "",                                  "System Control",                           "*",                                                                "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "bop_par_2",                     "Balance of plant parasitic power fraction - quadratic coeff",      "",          "",                                  "System Control",                           "*",                                                                "",              ""},
+
+    // System costs
+    { SSC_INPUT,  SSC_NUMBER, "cycle_spec_cost",               "Power cycle specific cost",                                     "$/kWe",        "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_INPUT,  SSC_NUMBER, "tes_spec_cost",                 "Hot Temp thermal energy storage specific cost",                 "$/kWht",       "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_INPUT,  SSC_NUMBER, "CT_tes_spec_cost",              "Cold Temp thermal energy storage specific cost",                "$/kWht",       "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_INPUT,  SSC_NUMBER, "heat_pump_spec_cost",           "Heater pump specific cost",                                     "$/kWht",       "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_INPUT,  SSC_NUMBER, "bop_spec_cost",                 "Balance of plant specific cost",                                "$/kWe",        "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_INPUT,  SSC_NUMBER, "contingency_rate",              "Contingency for cost overrun",                                  "%",            "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_INPUT,  SSC_NUMBER, "sales_tax_frac",                "Percent of cost to which sales tax applies",                    "%",            "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_INPUT,  SSC_NUMBER, "epc_cost_perc_of_direct",       "EPC cost percent of direct",                                    "%",            "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_INPUT,  SSC_NUMBER, "epc_cost_per_watt",             "EPC cost per watt",                                             "$/W",          "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_INPUT,  SSC_NUMBER, "epc_cost_fixed",                "EPC fixed",                                                     "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_INPUT,  SSC_NUMBER, "land_cost_perc_of_direct",      "Land cost percent of direct",                                   "%",            "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_INPUT,  SSC_NUMBER, "land_cost_per_watt",            "Land cost per watt",                                            "$/W",          "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_INPUT,  SSC_NUMBER, "land_cost_fixed",               "Land fixed",                                                    "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
+
+
+    // Financial Parameters
+    { SSC_INPUT,  SSC_NUMBER, "sales_tax_rate",                "Sales tax rate",                                                "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
 
 
 
@@ -286,7 +306,8 @@ public:
         double cycle_max_frac = as_double("cycle_max_frac");        //[-]
         double cycle_cutoff_frac = as_double("cycle_cutoff_frac");  //[-]
         double q_sby_frac = as_double("q_sby_frac");                //[-]
-        double htf_pump_coef = as_double("pb_pump_coef");           //[kW/kg/s]
+        double HT_htf_pump_coef = as_double("pb_pump_coef");        //[kW/kg/s]
+        double CT_htf_pump_coef = as_double("CT_pb_pump_coef");     //[kW/kg/s]
         double startup_time = as_double("startup_time");            //[hr]
         double startup_frac = as_double("startup_frac");            //[-]
 
@@ -295,7 +316,7 @@ public:
             T_HT_hot_TES, T_HT_cold_TES, T_CT_cold_TES, T_CT_hot_TES,
             cycle_max_frac, cycle_cutoff_frac, q_sby_frac,
             startup_time, startup_frac,
-            htf_pump_coef,
+            HT_htf_pump_coef, CT_htf_pump_coef,
             HT_htf_code, ud_HT_htf_props,
             CT_htf_code, ud_CT_htf_props);
 
@@ -559,7 +580,7 @@ public:
             dispatch,
             system,
             NULL,
-            nullptr,
+            c_CT_TES,
             ssc_cmod_update,
             (void*)(this));
 
@@ -646,15 +667,44 @@ public:
                         E_su_charge_calc);
 
             // HT TES
+        double V_tes_htf_avail_calc /*m3*/, V_tes_htf_total_calc /*m3*/,
+            d_tank_calc /*m*/, q_dot_loss_tes_des_calc /*MWt*/, dens_store_htf_at_T_ave_calc /*kg/m3*/,
+            Q_tes_des_calc /*MWt-hr*/;
 
+        c_HT_TES.get_design_parameters(V_tes_htf_avail_calc, V_tes_htf_total_calc,
+            d_tank_calc, q_dot_loss_tes_des_calc, dens_store_htf_at_T_ave_calc, Q_tes_des_calc);
 
             // CT TES
+        double CT_V_tes_htf_avail_calc /*m3*/, CT_V_tes_htf_total_calc /*m3*/,
+            CT_d_tank_calc /*m*/, CT_q_dot_loss_tes_des_calc /*MWt*/, CT_dens_store_htf_at_T_ave_calc /*kg/m3*/,
+            CT_Q_tes_des_calc /*MWt-hr*/;
+
+        c_CT_TES->get_design_parameters(CT_V_tes_htf_avail_calc, CT_V_tes_htf_total_calc,
+            CT_d_tank_calc, CT_q_dot_loss_tes_des_calc, CT_dens_store_htf_at_T_ave_calc,
+            CT_Q_tes_des_calc);
 
             // System
-
+        double W_dot_bop_design;    //[MWe]
+        csp_solver.get_design_parameters(W_dot_bop_design);
 
         // *****************************************************
         // System design is complete, so calculate final design outputs like cost, capacity, etc.
+        double HT_tes_spec_cost = as_double("tes_spec_cost");           //[$/kWh]
+        double CT_tes_spec_cost = as_double("CT_tes_spec_cost");        //[$/kWh]
+        double power_cycle_spec_cost = as_double("cycle_spec_cost");    //[$/kWe]
+        double heat_pump_spec_cost = as_double("heat_pump_spec_cost");  //[$/kWe]
+        double bop_spec_cost = as_double("bop_spec_cost");              //[$/kWe]
+        double contingency_rate = as_double("contingency_rate");        //[%]
+
+        //double plant_net_capacity = system_capacity / 1000.0;         //[MWe], convert from kWe
+        //double EPC_perc_direct_cost = as_double("epc_cost_perc_of_direct");
+        //double EPC_per_power_cost = as_double("epc_cost_per_watt");
+        //double EPC_fixed_cost = as_double("epc_cost_fixed");
+        //double total_land_perc_direct_cost = as_double("land_cost_perc_of_direct");
+        //double total_land_per_power_cost = as_double("land_cost_per_watt");
+        //double total_land_fixed_cost = as_double("land_cost_fixed");
+        //double sales_tax_basis = as_double("sales_tax_frac");
+        //double sales_tax_rate = as_double("sales_tax_rate");
 
 
 

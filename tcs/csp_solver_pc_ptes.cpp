@@ -31,7 +31,7 @@ C_pc_ptes::C_pc_ptes(double W_dot_thermo /*MWe*/, double eta_therm_mech /*-*/,
     double T_HT_HTF_hot /*C*/, double T_HT_HTF_cold /*C*/, double T_CT_HTF_cold /*C*/, double T_CT_HTF_hot /*C*/,
     double cycle_max_frac /*-*/, double cycle_cutoff_frac /*-*/, double q_sby_frac /*-*/,
     double startup_time /*hr*/, double startup_frac /*-*/,
-    double htf_pump_coef /*kW/kg/s*/,
+    double HT_htf_pump_coef /*kW/kg/s*/, double CT_htf_pump_coef /*kW/kg/s*/,
     int HT_htf_code /*-*/, util::matrix_t<double> HT_ud_htf_props,
     int CT_htf_code /*-*/, util::matrix_t<double> CT_ud_htf_props)
 {
@@ -48,7 +48,8 @@ C_pc_ptes::C_pc_ptes(double W_dot_thermo /*MWe*/, double eta_therm_mech /*-*/,
     m_q_sby_frac_des = q_sby_frac;                  //[-]
     m_startup_time_des = startup_time;              //[hr]
     m_startup_frac_des = startup_frac;              //[-]
-    m_htf_pump_coef_des = htf_pump_coef;            //[kW/kg/s]
+    m_HT_htf_pump_coef_des = HT_htf_pump_coef;      //[kW/kg/s]
+    m_CT_htf_pump_coef_des = CT_htf_pump_coef;      //[kW/kg/s]
 
     m_HT_htf_code = HT_htf_code;
     m_HT_ud_htf_props = HT_ud_htf_props;
