@@ -2002,6 +2002,10 @@ public:
         double Q_storage = as_double("P_ref") / as_double("design_eff")*as_double("tshours");
         double tes_spec_cost = as_double("tes_spec_cost");
 
+        // no Cold Temp TES, so set those cost model inputs to 0
+        double Q_CT_tes = 0.0;
+        double CT_tes_spec_cost = 0.0;
+
         double W_dot_design = as_double("P_ref");
         double power_cycle_spec_cost = as_double("plant_spec_cost");
 
@@ -2059,12 +2063,12 @@ public:
         double sales_tax_basis = as_double("sales_tax_frac");
         double sales_tax_rate = as_double("sales_tax_rate");
 
-        double site_improvement_cost, heliostat_cost, tower_cost, receiver_cost, tes_cost, power_cycle_cost,
+        double site_improvement_cost, heliostat_cost, tower_cost, receiver_cost, tes_cost, CT_tes_cost, power_cycle_cost,
         heater_cost, rad_field_totcost, rad_fluid_totcost, rad_storage_totcost, bop_cost, fossil_backup_cost,
         direct_capital_precontingency_cost, contingency_cost, total_direct_cost, epc_and_owner_cost, total_land_cost,
         sales_tax_cost, total_indirect_cost, total_installed_cost, estimated_installed_cost_per_cap;
 
-        site_improvement_cost = heliostat_cost = tower_cost = receiver_cost = tes_cost = power_cycle_cost =
+        site_improvement_cost = heliostat_cost = tower_cost = receiver_cost = tes_cost = CT_tes_cost = power_cycle_cost =
             heater_cost = rad_field_totcost = rad_fluid_totcost = rad_storage_totcost = bop_cost = fossil_backup_cost =
             direct_capital_precontingency_cost = contingency_cost = total_direct_cost = epc_and_owner_cost = total_land_cost =
             sales_tax_cost = total_indirect_cost = total_installed_cost = estimated_installed_cost_per_cap = std::numeric_limits<double>::quiet_NaN();
@@ -2088,6 +2092,9 @@ public:
 
             Q_storage,
             tes_spec_cost,
+
+            Q_CT_tes,
+            CT_tes_spec_cost,
 
             W_dot_design,
             power_cycle_spec_cost,
@@ -2128,6 +2135,7 @@ public:
             tower_cost,
             receiver_cost,
             tes_cost,
+            CT_tes_cost,
             power_cycle_cost,
             heater_cost,
             rad_field_totcost,

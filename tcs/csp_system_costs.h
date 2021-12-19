@@ -51,6 +51,10 @@ namespace N_mspt
         double Q_storage,				//[MWt-hr] Storage capacity
         double tes_spec_cost,			//[$/kWt-hr] TES specific cost
 
+        // Cold Temp TES
+        double Q_CT_tes,                //[MWt-hr] Cold Temp Storage capacity
+        double CT_tes_spec_cost,        //[$/kWt-hr] CT TES specific cost
+
         // Power Cycle
         double W_dot_design,			//[MWe] Power cycle design output (w/o subtracting plant parasitics)
         double power_cycle_spec_cost,	//[$/kWe] Power cycle specific cost
@@ -98,6 +102,7 @@ namespace N_mspt
         double& tower_cost,                             //[$]
         double& receiver_cost,                          //[$]
         double& tes_cost,                               //[$]
+        double& CT_tes_cost,                            //[$]
         double& power_cycle_cost,                       //[$]
         double& heater_cost,                            //[$]
         double& rad_field_totcost,                      //[$]
@@ -193,6 +198,10 @@ namespace N_mspt
         double Q_storage,				//[MWt-hr] Storage capacity
         double tes_spec_cost,			//[$/kWt-hr] TES specific cost
 
+        // Cold Temp TES
+        double Q_CT_tes,                //[MWt-hr] Cold Temp Storage capacity
+        double CT_tes_spec_cost,        //[$/kWt-hr] CT TES specific cost
+
         // Power Cycle
         double W_dot_design,			//[MWe] Power cycle design output (w/o subtracting plant parasitics)
         double power_cycle_spec_cost,	//[$/kWe] Power cycle specific cost
@@ -220,6 +229,7 @@ namespace N_mspt
 
         // Calculated Outputs
         double& tes_cost,                               //[$]
+        double& CT_tes_cost,                            //[$]
         double& power_cycle_cost,                       //[$]
         double& heater_cost,                            //[$]
         double& bop_cost,                               //[$]
@@ -261,6 +271,7 @@ namespace N_mspt
 		double tower_cost /*$*/,
 		double receiver_cost /*$*/,
 		double tes_cost /*$*/,
+        double CT_tes_cost /*$*/,
 		double power_cycle_cost /*$*/,
         double heater_cost /*$*/,
 		double rad_field_totcost /*$*/,

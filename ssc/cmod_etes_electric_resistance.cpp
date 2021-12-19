@@ -859,6 +859,10 @@ public:
         double bop_spec_cost = as_double("bop_spec_cost");
         double contingency_rate = as_double("contingency_rate");
 
+        // no Cold Temp TES, so set those cost model inputs to 0
+        double Q_CT_tes = 0.0;
+        double CT_tes_spec_cost = 0.0;
+
         double plant_net_capacity = system_capacity / 1000.0;         //[MWe], convert from kWe
         double EPC_perc_direct_cost = as_double("epc_cost_perc_of_direct");
         double EPC_per_power_cost = as_double("epc_cost_per_watt");
@@ -870,19 +874,20 @@ public:
         double sales_tax_rate = as_double("sales_tax_rate");
 
         // Cost model outputs
-        double tes_cost, power_cycle_cost, heater_cost, bop_cost, fossil_backup_cost,
+        double tes_cost, CT_tes_cost, power_cycle_cost, heater_cost, bop_cost, fossil_backup_cost,
             direct_capital_precontingency_cost, contingency_cost, total_direct_cost, total_land_cost,
             epc_and_owner_cost, sales_tax_cost, total_indirect_cost, total_installed_cost, estimated_installed_cost_per_cap;
-        tes_cost = power_cycle_cost = heater_cost = bop_cost = fossil_backup_cost =
+        tes_cost = CT_tes_cost = power_cycle_cost = heater_cost = bop_cost = fossil_backup_cost =
             direct_capital_precontingency_cost = contingency_cost = total_direct_cost = total_land_cost =
             epc_and_owner_cost = sales_tax_cost = total_indirect_cost = total_installed_cost = estimated_installed_cost_per_cap = std::numeric_limits<double>::quiet_NaN();
 
-        N_mspt::calculate_etes_costs(Q_tes_des, tes_spec_cost, W_dot_cycle_des, power_cycle_spec_cost,
+        N_mspt::calculate_etes_costs(Q_tes_des, tes_spec_cost, Q_CT_tes, CT_tes_spec_cost,
+            W_dot_cycle_des, power_cycle_spec_cost,
             q_dot_heater_des, heater_spec_cost, bop_spec_cost, contingency_rate,
             plant_net_capacity, EPC_perc_direct_cost, EPC_per_power_cost, EPC_fixed_cost,
             total_land_perc_direct_cost, total_land_per_power_cost, total_land_fixed_cost,
             sales_tax_basis, sales_tax_rate,
-            tes_cost, power_cycle_cost, heater_cost, bop_cost, direct_capital_precontingency_cost,
+            tes_cost, CT_tes_cost, power_cycle_cost, heater_cost, bop_cost, direct_capital_precontingency_cost,
             contingency_cost, total_direct_cost, total_land_cost, epc_and_owner_cost,
             sales_tax_cost, total_indirect_cost, total_installed_cost, estimated_installed_cost_per_cap);
 

@@ -88,6 +88,29 @@ var( 'land_cost_perc_of_direct', 0 );
 var( 'land_cost_per_watt', 0 );
 var( 'land_cost_fixed', 0 );
 
+var( 'const_per_interest_rate1', 4 );
+var( 'const_per_interest_rate2', 0 );
+var( 'const_per_interest_rate3', 0 );
+var( 'const_per_interest_rate4', 0 );
+var( 'const_per_interest_rate5', 0 );
+var( 'const_per_months1', 24 );
+var( 'const_per_months2', 0 );
+var( 'const_per_months3', 0 );
+var( 'const_per_months4', 0 );
+var( 'const_per_months5', 0 );
+var( 'const_per_percent1', 100 );
+var( 'const_per_percent2', 0 );
+var( 'const_per_percent3', 0 );
+var( 'const_per_percent4', 0 );
+var( 'const_per_percent5', 0 );
+var( 'const_per_upfront_rate1', 1 );
+var( 'const_per_upfront_rate2', 0 );
+var( 'const_per_upfront_rate3', 0 );
+var( 'const_per_upfront_rate4', 0 );
+var( 'const_per_upfront_rate5', 0 );
+
 
 
 run('etes_ptes');
+
+outln("system capacity = ", var('system_capacity'), " kWe");

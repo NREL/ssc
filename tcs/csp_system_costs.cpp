@@ -49,6 +49,10 @@ void N_mspt::calculate_mspt_etes_costs(
     double Q_storage,				//[MWt-hr] Storage capacity
     double tes_spec_cost,			//[$/kWt-hr] TES specific cost
 
+    // Cold Temp TES
+    double Q_CT_tes,                //[MWt-hr] Cold Temp Storage capacity
+    double CT_tes_spec_cost,        //[$/kWt-hr] CT TES specific cost
+
     // Power Cycle
     double W_dot_design,			//[MWe] Power cycle design output (w/o subtracting plant parasitics)
     double power_cycle_spec_cost,	//[$/kWe] Power cycle specific cost
@@ -96,6 +100,7 @@ void N_mspt::calculate_mspt_etes_costs(
     double& tower_cost,
     double& receiver_cost,
     double& tes_cost,
+    double& CT_tes_cost,
     double& power_cycle_cost,
     double& heater_cost,
     double& rad_field_totcost,
@@ -128,6 +133,9 @@ void N_mspt::calculate_mspt_etes_costs(
     tes_cost =
         N_mspt::tes_cost(Q_storage, tes_spec_cost);
 
+    CT_tes_cost =
+        N_mspt::tes_cost(Q_CT_tes, CT_tes_spec_cost);
+
     power_cycle_cost =
         N_mspt::power_cycle_cost(W_dot_design, power_cycle_spec_cost);
 
@@ -156,6 +164,7 @@ void N_mspt::calculate_mspt_etes_costs(
             tower_cost,
             receiver_cost,
             tes_cost,
+            CT_tes_cost,
             power_cycle_cost,
             heater_cost,
             rad_field_totcost,
@@ -267,6 +276,10 @@ void N_mspt::calculate_mspt__no_rad_cool__costs(
     double q_dot_heater_design = 0.0;
     double heater_spec_cost = 0.0;
 
+    // no cold temp TES
+    double Q_CT_tes = 0.0;
+    double CT_tes_spec_cost = 0.0;
+
     double rad_fluidcost = 0.0;
     double rad_installcost = 0.0;
     double rad_unitcost = 0.0;
@@ -278,6 +291,7 @@ void N_mspt::calculate_mspt__no_rad_cool__costs(
 
     // Unused outputs
     double heater_cost, rad_field_totcost, rad_fluid_totcost, rad_storage_totcost;
+    double CT_tes_cost;
 
     N_mspt::calculate_mspt_etes_costs(
         A_sf_refl,
@@ -298,6 +312,9 @@ void N_mspt::calculate_mspt__no_rad_cool__costs(
 
         Q_storage,
         tes_spec_cost,
+
+        Q_CT_tes,
+        CT_tes_spec_cost,
 
         W_dot_design,
         power_cycle_spec_cost,
@@ -338,6 +355,7 @@ void N_mspt::calculate_mspt__no_rad_cool__costs(
         tower_cost,
         receiver_cost,
         tes_cost,
+        CT_tes_cost,
         power_cycle_cost,
         heater_cost,
         rad_field_totcost,
@@ -363,6 +381,10 @@ void N_mspt::calculate_etes_costs(
     // TES
     double Q_storage,				//[MWt-hr] Storage capacity
     double tes_spec_cost,			//[$/kWt-hr] TES specific cost
+
+    // Cold Temp TES
+    double Q_CT_tes,                //[MWt-hr] Cold Temp Storage capacity
+    double CT_tes_spec_cost,        //[$/kWt-hr] CT TES specific cost
 
     // Power Cycle
     double W_dot_design,			//[MWe] Power cycle design output (w/o subtracting plant parasitics)
@@ -391,6 +413,7 @@ void N_mspt::calculate_etes_costs(
 
     // Calculated Outputs
     double& tes_cost,                               //[$]
+    double& CT_tes_cost,                            //[$]
     double& power_cycle_cost,                       //[$]
     double& heater_cost,                            //[$]
     double& bop_cost,                               //[$]
@@ -449,6 +472,9 @@ void N_mspt::calculate_etes_costs(
         Q_storage,
         tes_spec_cost,
 
+        Q_CT_tes,
+        CT_tes_spec_cost,
+
         W_dot_design,
         power_cycle_spec_cost,
 
@@ -488,6 +514,7 @@ void N_mspt::calculate_etes_costs(
         tower_cost,
         receiver_cost,
         tes_cost,
+        CT_tes_cost,
         power_cycle_cost,
         heater_cost,
         rad_field_totcost,
@@ -573,6 +600,7 @@ double N_mspt::direct_capital_precontingency_cost(double site_improvement_cost /
 	double tower_cost /*$*/,
 	double receiver_cost /*$*/,
 	double tes_cost /*$*/,
+    double CT_tes_cost /*$*/,
 	double power_cycle_cost /*$*/,
     double heater_cost /*$*/,
 	double rad_field_totcost /*$*/,
@@ -586,6 +614,7 @@ double N_mspt::direct_capital_precontingency_cost(double site_improvement_cost /
 		tower_cost +
 		receiver_cost +
 		tes_cost +
+        CT_tes_cost +
 		power_cycle_cost +
         heater_cost +
 		rad_field_totcost +
