@@ -271,7 +271,8 @@ C_csp_solver::C_csp_solver(C_csp_weatherreader &weather,
 		m_cycle_sb_frac_des = m_cycle_T_htf_hot_des =
 		m_cycle_P_hot_des = m_cycle_x_hot_des = 
 		m_m_dot_pc_des = m_m_dot_pc_min =
-        m_m_dot_pc_max = m_m_dot_pc_max_startup = m_W_dot_bop_design = m_T_htf_pc_cold_est = std::numeric_limits<double>::quiet_NaN();
+        m_m_dot_pc_max = m_m_dot_pc_max_startup =
+        m_W_dot_bop_design = m_W_dot_fixed_design = m_T_htf_pc_cold_est = std::numeric_limits<double>::quiet_NaN();
 
     m_is_cr_config_recirc = true;
 
@@ -443,6 +444,8 @@ void C_csp_solver::init()
     m_W_dot_bop_design = m_cycle_W_dot_des * ms_system_params.m_bop_par * ms_system_params.m_bop_par_f *
         (ms_system_params.m_bop_par_0 + ms_system_params.m_bop_par_1 * W_dot_ratio_des + ms_system_params.m_bop_par_2 * pow(W_dot_ratio_des, 2));   //[MWe]
 
+    m_W_dot_fixed_design = ms_system_params.m_pb_fixed_par* m_cycle_W_dot_des;			//[MWe]
+
 	if( mc_collector_receiver.m_is_sensible_htf != mc_power_cycle.m_is_sensible_htf )
 	{
 		throw(C_csp_exception("The collector-receiver and power cycle models have incompatible HTF - direct/indirect assumptions", "CSP Solver"));
@@ -478,9 +481,11 @@ void C_csp_solver::init()
 	}
 }
 
-void C_csp_solver::get_design_parameters(double& W_dot_bop_design /*MWe*/)
+void C_csp_solver::get_design_parameters(double& W_dot_bop_design /*MWe*/,
+                                    double& W_dot_fixed_design /*MWe*/)
 {
     W_dot_bop_design = m_W_dot_bop_design;      //[MWe]
+    W_dot_fixed_design = m_W_dot_fixed_design;  //[MWe]
 }
 
 int C_csp_solver::steps_per_hour()
@@ -893,7 +898,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
         */
 
 		// Calculate system-level parasitics: can happen after controller/solver converges
-		double W_dot_fixed = ms_system_params.m_pb_fixed_par*m_cycle_W_dot_des;			//[MWe]
+		//double W_dot_fixed = ms_system_params.m_pb_fixed_par*m_cycle_W_dot_des;			//[MWe]
 
 		double W_dot_ratio = mc_pc_out_solver.m_P_cycle / fmax(0.001, m_cycle_W_dot_des);		//[-]
 
@@ -936,7 +941,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
             W_dot_par_htr_elec_load -
 			mc_pc_out_solver.m_W_cool_par -
 			mc_tes_outputs.m_q_heater - 
-			W_dot_fixed -
+			m_W_dot_fixed_design -
 			W_dot_bop;	//[MWe]
 
 
@@ -1107,7 +1112,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		mc_reported_outputs.value(C_solver_outputs::CR_W_DOT_PUMP, mc_cr_out_solver.m_W_dot_htf_pump);          //[MWe] Receiver/tower HTF pumping power   
 		mc_reported_outputs.value(C_solver_outputs::SYS_W_DOT_PUMP, (mc_pc_out_solver.m_W_dot_htf_pump + W_dot_tes_pump ));    //[MWe] TES & PC HTF pumping power (Receiver - PC side HTF)  
 		mc_reported_outputs.value(C_solver_outputs::PC_W_DOT_COOLING, mc_pc_out_solver.m_W_cool_par);           //[MWe] Power cycle cooling power consumption (fan, pumps, etc.)
-		mc_reported_outputs.value(C_solver_outputs::SYS_W_DOT_FIXED, W_dot_fixed);								//[MWe] Fixed electric parasitic power load 
+		mc_reported_outputs.value(C_solver_outputs::SYS_W_DOT_FIXED, m_W_dot_fixed_design);						//[MWe] Fixed electric parasitic power load 
 		mc_reported_outputs.value(C_solver_outputs::SYS_W_DOT_BOP, W_dot_bop);									//[MWe] Balance-of-plant electric parasitic power load   
 		mc_reported_outputs.value(C_solver_outputs::W_DOT_NET, W_dot_net);								//[MWe] Total electric power output to grid        
 		

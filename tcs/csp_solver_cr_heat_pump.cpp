@@ -248,8 +248,8 @@ double C_csp_cr_heat_pump::get_collector_area()
 void C_csp_cr_heat_pump::get_design_parameters(double& W_dot_in /*MWe*/, double& q_dot_cold_in /*MWt*/,
     double& W_dot_elec_parasitic /*MWe*/, double& W_dot_in_net /*MWe*/,
     double& COP_net /*-*/,
-    double& m_dot_HT_htf /*kg/s*/, double& cp_HT_htf /*kJ/kg-K*/,
-    double& m_dot_CT_htf /*kg/s*/, double& cp_CT_htf /*kJ/kg-K*/,
+    double& m_dot_HT_htf /*kg/s*/, double& cp_HT_htf /*kJ/kg-K*/, double& W_dot_HT_htf_pump /*MWe*/,
+    double& m_dot_CT_htf /*kg/s*/, double& cp_CT_htf /*kJ/kg-K*/, double& W_dot_CT_htf_pump /*MWe*/,
     double& E_su /*MWt-hr*/)
 {
     W_dot_in = m_W_dot_in_thermo_des;       //[MWe]
@@ -260,8 +260,11 @@ void C_csp_cr_heat_pump::get_design_parameters(double& W_dot_in /*MWe*/, double&
 
     m_dot_HT_htf = m_m_dot_HT_des;          //[kg/s]
     cp_HT_htf = m_cp_HT_HTF_des;            //[kJ/kg-K]
+    W_dot_HT_htf_pump = m_W_dot_HT_htf_pump_des;    //[MWe]
+
     m_dot_CT_htf = m_m_dot_CT_des;          //[kg/s]
     cp_CT_htf = m_cp_CT_HTF_des;            //[kJ/kg-K]
+    W_dot_CT_htf_pump = m_W_dot_CT_htf_pump_des;    //[MWe]
 
     E_su = m_E_su_des;                      //[MWt-hr]
 }

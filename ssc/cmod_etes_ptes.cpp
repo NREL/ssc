@@ -633,14 +633,16 @@ public:
 
         double m_dot_HT_htf_gen_calc;   //[kg/s]
         double cp_HT_htf_gen_calc;      //[kJ/kg-K]
+        double W_dot_HT_htf_pump_gen_calc;  //[MWe]
         double m_dot_CT_htf_gen_calc;   //[kg/s] to CT TES
         double cp_CT_htf_gen_calc;      //[kJ/kg-K]
+        double W_dot_CT_htf_pump_gen_calc;   //[MWe]
 
         c_pc.get_design_parameters(W_dot_net_gen_calc, q_dot_hot_in_gen_calc,
                         q_dot_cold_out_thermo_gen_calc, W_dot_elec_parasitic_gen_calc,
                         eta_net_gen_calc, q_dot_cold_to_CTES_calc, q_dot_cold_to_surr_calc,
-                        m_dot_HT_htf_gen_calc, cp_HT_htf_gen_calc,
-                        m_dot_CT_htf_gen_calc, cp_CT_htf_gen_calc);
+                        m_dot_HT_htf_gen_calc, cp_HT_htf_gen_calc, W_dot_HT_htf_pump_gen_calc,
+                        m_dot_CT_htf_gen_calc, cp_CT_htf_gen_calc, W_dot_CT_htf_pump_gen_calc);
 
             // Heat Pump
         double W_dot_in_charge_calc;        //[MWe] power into cycle working fluid. does not consider electric parasitics (e.g. cooling fan, motor inefficiencies, etc.)
@@ -654,16 +656,18 @@ public:
         //  ... hot should scale w/ heater_mult and cold should also include the rte effect
         double m_dot_HT_htf_charge_calc;    //[kg/s]
         double cp_HT_htf_charge_calc;       //[kJ/kg-K]
+        double W_dot_HT_htf_pump_charge_calc;   //[MWe]
         double m_dot_CT_htf_charge_calc;    //[kg/s]
         double cp_CT_htf_charge_calc;       //[kJ/kg-K]
+        double W_dot_CT_htf_pump_charge_calc;   //[MWe]
 
         double E_su_charge_calc;            //[MWt-hr]
 
         c_heat_pump.get_design_parameters(W_dot_in_charge_calc, q_dot_cold_in_charge_calc,
                         W_dot_elec_parasitic_charge_calc, W_dot_in_net_charge_calc,
                         COP_net_calc,
-                        m_dot_HT_htf_charge_calc, cp_HT_htf_charge_calc,
-                        m_dot_CT_htf_charge_calc, cp_CT_htf_charge_calc,
+                        m_dot_HT_htf_charge_calc, cp_HT_htf_charge_calc, W_dot_HT_htf_pump_charge_calc,
+                        m_dot_CT_htf_charge_calc, cp_CT_htf_charge_calc, W_dot_CT_htf_pump_charge_calc,
                         E_su_charge_calc);
 
             // HT TES
@@ -684,27 +688,33 @@ public:
             CT_Q_tes_des_calc);
 
             // System
-        double W_dot_bop_design;    //[MWe]
-        csp_solver.get_design_parameters(W_dot_bop_design);
+        double W_dot_bop_design, W_dot_fixed_parasitic_design;    //[MWe]
+        csp_solver.get_design_parameters(W_dot_bop_design, W_dot_fixed_parasitic_design);
+
+            // Calculate net system *generation* capacity including HTF pumps and system parasitics
+            //     use 'gen_thermo' instead of 'gen_net' so we can see all parasitics together
+        double system_capacity = W_dot_gen_thermo - W_dot_gen_elec_parasitic -
+                                W_dot_HT_htf_pump_gen_calc - W_dot_CT_htf_pump_gen_calc -
+                                W_dot_bop_design - W_dot_fixed_parasitic_design;    //[MWe]
 
         // *****************************************************
         // System design is complete, so calculate final design outputs like cost, capacity, etc.
         double HT_tes_spec_cost = as_double("tes_spec_cost");           //[$/kWh]
         double CT_tes_spec_cost = as_double("CT_tes_spec_cost");        //[$/kWh]
         double power_cycle_spec_cost = as_double("cycle_spec_cost");    //[$/kWe]
-        double heat_pump_spec_cost = as_double("heat_pump_spec_cost");  //[$/kWe]
+        double heat_pump_spec_cost = as_double("heat_pump_spec_cost");  //[$/kWt]
         double bop_spec_cost = as_double("bop_spec_cost");              //[$/kWe]
         double contingency_rate = as_double("contingency_rate");        //[%]
 
-        //double plant_net_capacity = system_capacity / 1000.0;         //[MWe], convert from kWe
-        //double EPC_perc_direct_cost = as_double("epc_cost_perc_of_direct");
-        //double EPC_per_power_cost = as_double("epc_cost_per_watt");
-        //double EPC_fixed_cost = as_double("epc_cost_fixed");
-        //double total_land_perc_direct_cost = as_double("land_cost_perc_of_direct");
-        //double total_land_per_power_cost = as_double("land_cost_per_watt");
-        //double total_land_fixed_cost = as_double("land_cost_fixed");
-        //double sales_tax_basis = as_double("sales_tax_frac");
-        //double sales_tax_rate = as_double("sales_tax_rate");
+        double plant_net_capacity = system_capacity / 1000.0;         //[MWe], convert from kWe
+        double EPC_perc_direct_cost = as_double("epc_cost_perc_of_direct");
+        double EPC_per_power_cost = as_double("epc_cost_per_watt");
+        double EPC_fixed_cost = as_double("epc_cost_fixed");
+        double total_land_perc_direct_cost = as_double("land_cost_perc_of_direct");
+        double total_land_per_power_cost = as_double("land_cost_per_watt");
+        double total_land_fixed_cost = as_double("land_cost_fixed");
+        double sales_tax_basis = as_double("sales_tax_frac");
+        double sales_tax_rate = as_double("sales_tax_rate");
 
 
 

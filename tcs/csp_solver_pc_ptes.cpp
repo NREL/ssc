@@ -48,6 +48,7 @@ C_pc_ptes::C_pc_ptes(double W_dot_thermo /*MWe*/, double eta_therm_mech /*-*/,
     m_q_sby_frac_des = q_sby_frac;                  //[-]
     m_startup_time_des = startup_time;              //[hr]
     m_startup_frac_des = startup_frac;              //[-]
+
     m_HT_htf_pump_coef_des = HT_htf_pump_coef;      //[kW/kg/s]
     m_CT_htf_pump_coef_des = CT_htf_pump_coef;      //[kW/kg/s]
 
@@ -74,7 +75,11 @@ C_pc_ptes::C_pc_ptes(double W_dot_thermo /*MWe*/, double eta_therm_mech /*-*/,
     m_m_dot_HT_des = std::numeric_limits<double>::quiet_NaN();
     m_m_dot_HT_min = std::numeric_limits<double>::quiet_NaN();
     m_m_dot_HT_max = std::numeric_limits<double>::quiet_NaN();
+    m_W_dot_HT_htf_pump_des = std::numeric_limits<double>::quiet_NaN();
+
     m_m_dot_CT_des = std::numeric_limits<double>::quiet_NaN();
+    m_W_dot_CT_htf_pump_des = std::numeric_limits<double>::quiet_NaN();
+
 
     m_E_su_des = std::numeric_limits<double>::quiet_NaN();
 }
@@ -95,16 +100,26 @@ void C_pc_ptes::init(C_csp_power_cycle::S_solved_params& solved_params)
     m_CT_htfProps = std::move(CT_htfProps);
     m_CT_htfProps->Initialize(m_CT_htf_code, m_CT_ud_htf_props);
 
+    double eta_htf_pump = 0.85;     //[-] used to back out pressure drop
+
     m_T_HT_HTF_avg_des = 0.5*(m_T_HT_HTF_cold_des + m_T_HT_HTF_hot_des);    //[C]
     m_cp_HT_HTF_des = m_HT_htfProps->Cp(m_T_HT_HTF_avg_des+273.15);         //[kJ/kg-K]
+    m_m_dot_HT_des = m_q_dot_hot_in_des * 1.E3 / (m_cp_HT_HTF_des * (m_T_HT_HTF_hot_des - m_T_HT_HTF_cold_des));    //[kg/s]
+    double rho_HT_htf_des = m_HT_htfProps->dens(m_T_HT_HTF_avg_des + 273.15, 1.0);   //[kg/m3]  
+    m_W_dot_HT_htf_pump_des = m_HT_htf_pump_coef_des * m_m_dot_HT_des * 1.E-3;        //[MWe]
+    double HT_htf_deltaP = m_W_dot_HT_htf_pump_des * rho_HT_htf_des / m_m_dot_HT_des * eta_htf_pump;   //[MPa]
+
     m_T_CT_HTF_avg_des = 0.5*(m_T_CT_HTF_cold_des + m_T_CT_HTF_hot_des);    //[C]
     m_cp_CT_HTF_des = m_CT_htfProps->Cp(m_T_CT_HTF_avg_des+273.15);         //[kJ/kg-K]
-
-    m_m_dot_HT_des = m_q_dot_hot_in_des*1.E3/(m_cp_HT_HTF_des*(m_T_HT_HTF_hot_des-m_T_HT_HTF_cold_des));    //[kg/s]
-    m_m_dot_HT_min = m_cycle_cutoff_frac_des*m_m_dot_HT_des;    //[kg/s]
-    m_m_dot_HT_max = m_cycle_max_frac_des*m_m_dot_HT_des;       //[kg/s]
-
     m_m_dot_CT_des = m_q_dot_cold_to_CTES*1.E3/(m_cp_CT_HTF_des*(m_T_CT_HTF_hot_des-m_T_CT_HTF_cold_des));  //[kg/s]
+    double rho_CT_htf_des = m_CT_htfProps->dens(m_T_CT_HTF_avg_des + 273.15, 1.0);   //[kg/m3]
+    m_W_dot_CT_htf_pump_des = m_CT_htf_pump_coef_des * m_m_dot_CT_des * 1.E-3;        //[MWe]
+    double CT_htf_deltaP = m_W_dot_CT_htf_pump_des * rho_CT_htf_des / m_m_dot_CT_des * eta_htf_pump;  //[MWe]
+
+    // Apply min/max fractions
+    m_m_dot_HT_min = m_cycle_cutoff_frac_des * m_m_dot_HT_des;    //[kg/s]
+    m_m_dot_HT_max = m_cycle_max_frac_des * m_m_dot_HT_des;       //[kg/s]
+
 
     // Startup energy
     m_E_su_des = m_startup_frac_des*m_q_dot_hot_in_des;     //[MWt-hr]
@@ -238,8 +253,8 @@ void C_pc_ptes::assign(int index, double* p_reporting_ts_array, size_t n_reporti
 void C_pc_ptes::get_design_parameters(double& W_dot_net /*MWe*/, double& q_dot_hot_in /*MWt*/,
     double& q_dot_cold_out_thermo /*MWt*/, double& W_dot_elec_parasitic /*MWe*/,
     double& eta_net /*-*/, double& q_dot_cold_to_CTES /*MWt*/, double& q_dot_cold_to_surr /*MWt*/,
-    double& m_dot_HT_htf /*kg/s*/, double& cp_HT_htf /*kJ/kg-K*/,
-    double& m_dot_CT_htf /*kg/s*/, double& cp_CT_htf /*kJ/kg-K*/)
+    double& m_dot_HT_htf /*kg/s*/, double& cp_HT_htf /*kJ/kg-K*/, double& W_dot_HT_htf_pump /*MWe*/,
+    double& m_dot_CT_htf /*kg/s*/, double& cp_CT_htf /*kJ/kg-K*/, double& W_dot_CT_htf_pump /*MWe*/)
 {
     W_dot_net = m_W_dot_net_des;        //[MWe]
     q_dot_hot_in = m_q_dot_hot_in_des;  //[MWt]
@@ -251,8 +266,10 @@ void C_pc_ptes::get_design_parameters(double& W_dot_net /*MWe*/, double& q_dot_h
 
     m_dot_HT_htf = m_m_dot_HT_des;      //[kg/s]
     cp_HT_htf = m_cp_HT_HTF_des;        //[kJ/kg-K]
+    W_dot_HT_htf_pump = m_W_dot_HT_htf_pump_des;    //[MWe]
     m_dot_CT_htf = m_m_dot_CT_des;      //[kg/s]
     cp_CT_htf = m_cp_CT_HTF_des;        //[kJ/kg-K]
+    W_dot_CT_htf_pump = m_W_dot_CT_htf_pump_des;    //[MWe]
 }
 
 void pc_ptes_helpers::design_calcs__all(double W_dot_thermo /*MWe*/, double f_elec_consume_vs_gen /*-*/,

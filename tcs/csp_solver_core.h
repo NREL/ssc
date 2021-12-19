@@ -982,6 +982,7 @@ private:
         
         // System design
     double m_W_dot_bop_design;      //[MWe]
+    double m_W_dot_fixed_design;    //[MWe]
 
         // Field-side HTF
     double m_T_field_cold_limit;    //[C]
@@ -1051,7 +1052,8 @@ public:
 
 	double get_cr_aperture_area();
 
-    void get_design_parameters(double& W_dot_bop_design /*MWe*/);
+    void get_design_parameters(double& W_dot_bop_design /*MWe*/,
+                        double& W_dot_fixed_design /*MWe*/);
 
 	// Output vectors
 	// Need to be sure these are always up-to-date as multiple operating modes are tested during one timestep

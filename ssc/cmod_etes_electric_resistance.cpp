@@ -848,7 +848,8 @@ public:
 
             // System
         double W_dot_bop_design;    //[MWe]
-        csp_solver.get_design_parameters(W_dot_bop_design);
+        double W_dot_fixed_parasitic_design;    //[MWe]
+        csp_solver.get_design_parameters(W_dot_bop_design, W_dot_fixed_parasitic_design);
 
         // *****************************************************
         // System design is complete, so calculate final design outputs like cost, capacity, etc.

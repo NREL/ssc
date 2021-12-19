@@ -76,7 +76,10 @@ private:
     double m_m_dot_HT_des;              //[kg/s]
     double m_m_dot_HT_min;              //[kg/s]
     double m_m_dot_HT_max;              //[kg/s]
+    double m_W_dot_HT_htf_pump_des;     //[MWe]
+
     double m_m_dot_CT_des;              //[kg/s]
+    double m_W_dot_CT_htf_pump_des;     //[MWe]
 
     double m_E_su_des;                  //[MWt-hr]
 
@@ -157,8 +160,8 @@ public:
     void get_design_parameters(double& W_dot_net /*MWe*/, double& q_dot_hot_in /*MWt*/,
         double& q_dot_cold_out_thermo /*MWt*/, double& W_dot_elec_parasitic /*MWe*/,
         double& eta_net /*-*/, double& q_dot_cold_to_CTES /*MWt*/, double& q_dot_cold_to_surr /*MWt*/,
-        double& m_dot_HT_htf /*kg/s*/, double& cp_HT_htf /*kJ/kg-K*/,
-        double& m_dot_CT_htf /*kg/s*/, double& cp_CT_htf /*kJ/kg-K*/);
+        double& m_dot_HT_htf /*kg/s*/, double& cp_HT_htf /*kJ/kg-K*/, double& W_dot_HT_htf_pump /*MWe*/,
+        double& m_dot_CT_htf /*kg/s*/, double& cp_CT_htf /*kJ/kg-K*/, double& W_dot_CT_htf_pump /*MWe*/);
 };
 
 namespace pc_ptes_helpers
