@@ -171,6 +171,7 @@ static var_info _cm_vtab_etes_ptes[] = {
         // ****************************************************************************************************************************************
             // System
     { SSC_OUTPUT, SSC_NUMBER, "system_capacity",             "System capacity",                         "kWe",          "",                                  "System Design Calc",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "nameplate",                   "Nameplate capacity",                      "MWe",          "",                                  "System Design Calc",                             "*",                                                                "",              "" },
 
 
 
@@ -730,6 +731,11 @@ public:
                                 W_dot_bop_design - W_dot_fixed_parasitic_design;    //[MWe]
         double system_capacity = plant_net_capacity*1.E3;         //[kWe], convert from MWe
 
+            // Calculate net system *charging* metrics
+        //double plant_charging_power_in = W_dot_in_charge_calc - W_dot_elec_parasitic_charge_calc -
+        //                        W_dot_HT_htf_pump_charge_calc - W_dot_CT_htf_pump_charge_calc -
+        //                        W_dot_b
+
         // *****************************************************
         // System design is complete, so calculate final design outputs like cost, capacity, etc.
         double HT_tes_spec_cost = as_double("tes_spec_cost");           //[$/kWh]
@@ -812,7 +818,7 @@ public:
         // Assign cmod variables that are required by downstream models or represent design-point
             // System
         assign("system_capacity", (ssc_number_t)system_capacity);           //[kWe]
-
+        assign("nameplate", (ssc_number_t)plant_net_capacity);              //[MWe]
 
         return;
     }
