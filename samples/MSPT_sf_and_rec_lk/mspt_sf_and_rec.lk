@@ -1,0 +1,3 @@
+var("T_htf_cold_des", 290);		//[C]
+var("T_htf_hot_des", 560);		//[C]
+run("mspt_sf_and_rec_isolated");
