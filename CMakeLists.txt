@@ -4,7 +4,7 @@
 #
 #####################################################################################################################
 
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.19)
 
 if(POLICY CMP0077)
     cmake_policy(SET CMP0077 NEW)
@@ -91,7 +91,8 @@ function(set_default_compile_options target)
     else(MSVC)
         SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
         if (APPLE)
-            set(MAIN_CFLAGS "${MAIN_CFLAGS} -arch x86_64 -fno-common -DWX_PRECOMP -D__MACOSX__")
+#            set(MAIN_CFLAGS "${MAIN_CFLAGS} -arch x86_64 -fno-common -DWX_PRECOMP -D__MACOSX__")
+            set(MAIN_CFLAGS "${MAIN_CFLAGS} -fno-common -DWX_PRECOMP -D__MACOSX__")
         else()
             set(MAIN_CFLAGS "${MAIN_CFLAGS} -D__UNIX__")
         endif()
