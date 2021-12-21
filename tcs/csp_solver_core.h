@@ -635,8 +635,10 @@ public:
 
 	struct S_csp_tes_outputs
 	{
-		double m_q_heater;			//[MWe]  Heating power required to keep tanks at a minimum temperature
-		double m_q_dot_dc_to_htf;	//[MWt]  Thermal power to the HTF from storage
+		double m_q_heater;			//[MWe] Heating power required to keep tanks at a minimum temperature
+        double m_W_dot_elec_in_tot; //[MWe] Total TES electricity consumption - used upstream in plant net electricity calculation
+
+        double m_q_dot_dc_to_htf;	//[MWt]  Thermal power to the HTF from storage
 		double m_q_dot_ch_from_htf;	//[MWt]  Thermal power from the HTF to storage
 		
 		double m_m_dot_cr_to_tes_hot;	//[kg/s]
@@ -655,9 +657,11 @@ public:
 
 		S_csp_tes_outputs()
 		{
-			m_q_heater =  m_q_dot_dc_to_htf = m_q_dot_ch_from_htf = 
-			m_m_dot_cr_to_tes_hot = m_m_dot_cr_to_tes_cold = m_m_dot_pc_to_tes_cold = m_m_dot_pc_to_tes_cold =
-			m_m_dot_tes_cold_out = m_m_dot_tes_cold_in = m_m_dot_field_to_cycle = m_m_dot_cycle_to_field =
+			m_q_heater = m_W_dot_elec_in_tot =
+            m_q_dot_dc_to_htf = m_q_dot_ch_from_htf = 
+			m_m_dot_cr_to_tes_hot = m_m_dot_cr_to_tes_cold = m_m_dot_tes_hot_out =
+            m_m_dot_pc_to_tes_cold = m_m_dot_pc_to_tes_cold = m_m_dot_tes_cold_out =
+            m_m_dot_tes_cold_in = m_m_dot_field_to_cycle = m_m_dot_cycle_to_field =
             m_T_tes_cold_in = 
             m_m_dot_cold_tank_to_hot_tank = std::numeric_limits<double>::quiet_NaN();
 		}
