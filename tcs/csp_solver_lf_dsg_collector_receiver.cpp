@@ -1354,8 +1354,9 @@ void C_csp_lf_dsg_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 	cr_out_solver.m_T_salt_hot = T_sys_hot_out_t_int_ts_ave - 273.15;	//[C] Average timestep field outlet temperature
 	cr_out_solver.m_component_defocus = 1.0;		//[-]
 
-	cr_out_solver.m_W_dot_col_tracking = m_W_dot_sca_tracking;	//[MWe]
-	cr_out_solver.m_W_dot_htf_pump = m_W_dot_pump;				//[MWe]
+	//cr_out_solver.m_W_dot_col_tracking = m_W_dot_sca_tracking;	//[MWe]
+	//cr_out_solver.m_W_dot_htf_pump = m_W_dot_pump;				//[MWe]
+    cr_out_solver.m_W_dot_elec_in_tot = m_W_dot_sca_tracking + m_W_dot_pump;    //[MWe]
     cr_out_solver.m_q_dot_heater = m_q_dot_freeze_protection;   //[MWt]
 
 	cr_out_solver.m_standby_control = -1;
@@ -1566,8 +1567,9 @@ void C_csp_lf_dsg_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 	cr_out_solver.m_component_defocus = 1.0;
 
 		// Shouldn't need freeze protection if in startup, but may want a check on this
-	cr_out_solver.m_W_dot_col_tracking = m_W_dot_sca_tracking;	//[MWe]
-	cr_out_solver.m_W_dot_htf_pump = m_W_dot_pump;				//[MWe]
+	//cr_out_solver.m_W_dot_col_tracking = m_W_dot_sca_tracking;	//[MWe]
+	//cr_out_solver.m_W_dot_htf_pump = m_W_dot_pump;				//[MWe]
+    cr_out_solver.m_W_dot_elec_in_tot = m_W_dot_sca_tracking + m_W_dot_pump;    //[MWe]
     cr_out_solver.m_q_dot_heater = m_q_dot_freeze_protection;	//[MWt]
 
 	cr_out_solver.m_standby_control = -1;
@@ -1899,8 +1901,9 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 		cr_out_solver.m_component_defocus = m_component_defocus;
 
 		// For now, set parasitic outputs to 0
-		cr_out_solver.m_W_dot_col_tracking = m_W_dot_sca_tracking;	//[MWe]
-		cr_out_solver.m_W_dot_htf_pump = m_W_dot_pump;				//[MWe]
+		//cr_out_solver.m_W_dot_col_tracking = m_W_dot_sca_tracking;	//[MWe]
+		//cr_out_solver.m_W_dot_htf_pump = m_W_dot_pump;				//[MWe]
+        cr_out_solver.m_W_dot_elec_in_tot = m_W_dot_sca_tracking + m_W_dot_pump;    //[MWe]
         cr_out_solver.m_q_dot_heater = 0.0;			//[MWt]
 
 		cr_out_solver.m_standby_control = -1;		//[-]
@@ -1930,8 +1933,9 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 		cr_out_solver.m_T_salt_hot = 0.0;			//[C]
 		cr_out_solver.m_component_defocus = 1.0;	//[-]
 
-		cr_out_solver.m_W_dot_col_tracking = 0.0;	//[MWe]
-		cr_out_solver.m_W_dot_htf_pump = 0.0;		//[MWe]
+		//cr_out_solver.m_W_dot_col_tracking = 0.0;	//[MWe]
+		//cr_out_solver.m_W_dot_htf_pump = 0.0;		//[MWe]
+        cr_out_solver.m_W_dot_elec_in_tot = 0.0;    //[MWe]
         cr_out_solver.m_q_dot_heater = 0.0;			//[MW]
 
 		cr_out_solver.m_standby_control = -1;		//[-]
@@ -4008,9 +4012,11 @@ void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 	cr_out_solver.m_standby_control = standby_control;			//[-]
 	cr_out_solver.m_dP_sf_sh = dP_sf_sh;						//[bar]
 
-	cr_out_solver.m_W_dot_col_tracking = W_dot_col;				//[MWe]
-	cr_out_solver.m_W_dot_htf_pump = W_dot_aux + W_dot_bop + W_dot_fixed + W_dot_pump;	//[MWe]
-	//cr_out_solver.m_W_dot_par_tot = W_dot_aux + W_dot_bop + W_dot_col + W_dot_fixed + W_dot_pump;	//[MWe]
+	//cr_out_solver.m_W_dot_col_tracking = W_dot_col;				//[MWe]
+	//cr_out_solver.m_W_dot_htf_pump = W_dot_aux + W_dot_bop + W_dot_fixed + W_dot_pump;	//[MWe]
+    cr_out_solver.m_W_dot_elec_in_tot = W_dot_col + W_dot_aux + W_dot_bop + W_dot_fixed + W_dot_pump;    //[MWe]
+
+    //cr_out_solver.m_W_dot_par_tot = W_dot_aux + W_dot_bop + W_dot_col + W_dot_fixed + W_dot_pump;	//[MWe]
 	//value(O_CYCLE_PL_CONTROL, cycle_pl_control);        //[none] Part-load control flag - used by Type224
 	//value(O_DP_TOT, dP_tot);							  //[bar] Total HTF pressure drop
 	//value(O_DP_HDR_C, dP_hdr_c);						  //[bar] Average cold header pressure drop

@@ -384,11 +384,10 @@ public:
         bool m_is_recirculating;        //[-] Is field/receiver recirculating?
 			
 		// These are used for the parasitic class call(), so could be zero...
-		//double m_E_fp_total;			//[MW] Solar field freeze protection power
-		double m_W_dot_col_tracking;	//[MWe] Collector tracking power
-		double m_W_dot_htf_pump;		//[MWe] HTF pumping power
+        double m_W_dot_elec_in_tot;     //[MWe] Total component electricity consumption - used upstream in plant net electricity calculation
+        //double m_W_dot_col_tracking;	//[MWe] Collector tracking power
+		//double m_W_dot_htf_pump;		//[MWe] HTF pumping power
         double m_dP_sf;                 //[bar] Total field pressure drop
-		//double m_q_rec_heattrace;		//[MW] Receiver heat trace parasitic power
 
         double m_q_dot_heater;          //[MWt] 'external' heat delivered to receiver, e.g. heat trace
 
@@ -401,8 +400,9 @@ public:
 			
 		S_csp_cr_out_solver()
 		{
-			m_q_thermal = m_q_startup = m_m_dot_salt_tot = m_T_salt_hot = m_W_dot_htf_pump =
-				m_W_dot_col_tracking = m_time_required_su = // m_E_fp_total =
+			m_q_thermal = m_q_startup = m_m_dot_salt_tot = m_T_salt_hot =
+                m_W_dot_elec_in_tot = /*m_W_dot_htf_pump =*/
+				/*m_W_dot_col_tracking =*/ m_time_required_su = m_dP_sf =
 				m_dP_sf_sh = m_h_htf_hot = m_xb_htf_hot = m_P_htf_hot = std::numeric_limits<double>::quiet_NaN();
 
             m_q_dot_heater = 0.0;
@@ -804,8 +804,8 @@ public:
 			M_DOT_CYCLE_TO_FIELD, //[kg/s]
 			//TES_M_DOT_DC,         //[MWt] TES discharge mass flow rate
 			//TES_M_DOT_CH,         //[MWt] TES charge mass flow rate
-			COL_W_DOT_TRACK,      //[MWe] Parasitic collector tracking, startup, stow power consumption
-			CR_W_DOT_PUMP,        //[MWe] Parasitic tower HTF pump power
+			//COL_W_DOT_TRACK,      //[MWe] Parasitic collector tracking, startup, stow power consumption
+			//CR_W_DOT_PUMP,        //[MWe] Parasitic tower HTF pump power
 			SYS_W_DOT_PUMP,       //[MWe] Parasitic PC and TES HTF pump power
 			PC_W_DOT_COOLING,     //[MWe] Parasitic condenser operation power
 			SYS_W_DOT_FIXED,      //[MWe] Parasitic fixed power consumption

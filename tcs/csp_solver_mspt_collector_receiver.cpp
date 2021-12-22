@@ -40,6 +40,9 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 	{C_csp_mspt_collector_receiver::E_Q_DOT_PIPE_LOSS, C_csp_reported_outputs::TS_WEIGHTED_AVE},
     {C_csp_mspt_collector_receiver::E_Q_DOT_LOSS, C_csp_reported_outputs::TS_WEIGHTED_AVE},
     {C_csp_mspt_collector_receiver::E_Q_DOT_REFL_LOSS, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+    {C_csp_mspt_collector_receiver::E_W_DOT_TRACKING, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+    {C_csp_mspt_collector_receiver::E_W_DOT_PUMP, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+
     // from transient model:
 	{ C_csp_mspt_collector_receiver::E_P_HEATTRACE, C_csp_reported_outputs::TS_WEIGHTED_AVE },
 	{ C_csp_mspt_collector_receiver::E_T_HTF_OUT_END, C_csp_reported_outputs::TS_LAST },
@@ -159,8 +162,9 @@ void C_csp_mspt_collector_receiver::call(const C_csp_weatherreader::S_outputs &w
 	
 	cr_out_solver.m_component_defocus = mc_pt_receiver.ms_outputs.m_component_defocus;	//[-]
 	
-	cr_out_solver.m_W_dot_htf_pump = mc_pt_receiver.ms_outputs.m_W_dot_pump;			//[MWe]
-	cr_out_solver.m_W_dot_col_tracking = mc_pt_heliostatfield.ms_outputs.m_pparasi;		//[MWe]
+	//cr_out_solver.m_W_dot_htf_pump = mc_pt_receiver.ms_outputs.m_W_dot_pump;			//[MWe]
+	//cr_out_solver.m_W_dot_col_tracking = mc_pt_heliostatfield.ms_outputs.m_pparasi;		//[MWe]
+    cr_out_solver.m_W_dot_elec_in_tot = mc_pt_heliostatfield.ms_outputs.m_pparasi + mc_pt_receiver.ms_outputs.m_W_dot_pump;    //[MWe]
 
 	cr_out_solver.m_time_required_su = mc_pt_receiver.ms_outputs.m_time_required_su;	//[s]
 	cr_out_solver.m_q_dot_heater = mc_pt_receiver.ms_outputs.m_q_heattrace / (mc_pt_receiver.ms_outputs.m_time_required_su / 3600.0);		//[MWt])
@@ -181,6 +185,9 @@ void C_csp_mspt_collector_receiver::call(const C_csp_weatherreader::S_outputs &w
 	mc_reported_outputs.value(E_Q_DOT_PIPE_LOSS, mc_pt_receiver.ms_outputs.m_q_dot_piping_loss);	//[MWt]
     mc_reported_outputs.value(E_Q_DOT_REFL_LOSS, mc_pt_receiver.ms_outputs.m_q_dot_refl_loss);      //[MWt]
     mc_reported_outputs.value(E_Q_DOT_LOSS, mc_pt_receiver.ms_outputs.m_q_rad_sum + mc_pt_receiver.ms_outputs.m_q_conv_sum ); //MWt
+    mc_reported_outputs.value(E_W_DOT_TRACKING, mc_pt_heliostatfield.ms_outputs.m_pparasi);         //[MWe]
+    mc_reported_outputs.value(E_W_DOT_PUMP, mc_pt_receiver.ms_outputs.m_W_dot_pump);                //[MWe]
+
     // from transient model:
 	mc_reported_outputs.value(E_P_HEATTRACE, mc_pt_receiver.ms_outputs.m_q_heattrace / (mc_pt_receiver.ms_outputs.m_time_required_su / 3600.0));		//[MWt])
 	mc_reported_outputs.value(E_T_HTF_OUT_END, mc_pt_receiver.ms_outputs.m_inst_T_salt_hot);	//[C]
@@ -211,7 +218,7 @@ void C_csp_mspt_collector_receiver::off(const C_csp_weatherreader::S_outputs &we
 	//cr_out_report.m_eta_field = mc_pt_heliostatfield.ms_outputs.m_eta_field;				//[-]
     //cr_out_report.m_sf_adjust_out = mc_pt_heliostatfield.ms_outputs.m_sf_adjust_out;
 	//cr_out_report.m_q_dot_field_inc = mc_pt_heliostatfield.ms_outputs.m_q_dot_field_inc;	//[MWt]
-	cr_out_solver.m_W_dot_col_tracking = mc_pt_heliostatfield.ms_outputs.m_pparasi;			//[MWe]
+	//cr_out_solver.m_W_dot_col_tracking = mc_pt_heliostatfield.ms_outputs.m_pparasi;			//[MWe]
 
 	// Now, call the tower-receiver model
 	mc_pt_receiver.off(weather, htf_state_in, sim_info);
@@ -225,7 +232,10 @@ void C_csp_mspt_collector_receiver::off(const C_csp_weatherreader::S_outputs &we
 	cr_out_solver.m_m_dot_salt_tot = mc_pt_receiver.ms_outputs.m_m_dot_salt_tot;		 //[kg/hr]
 	cr_out_solver.m_T_salt_hot = mc_pt_receiver.ms_outputs.m_T_salt_hot;				 //[C]
 	cr_out_solver.m_component_defocus = 1.0;	//[-]
-	cr_out_solver.m_W_dot_htf_pump = mc_pt_receiver.ms_outputs.m_W_dot_pump;			 //[MWe]
+	//cr_out_solver.m_W_dot_htf_pump = mc_pt_receiver.ms_outputs.m_W_dot_pump;			 //[MWe]
+
+    cr_out_solver.m_W_dot_elec_in_tot = mc_pt_heliostatfield.ms_outputs.m_pparasi + mc_pt_receiver.ms_outputs.m_W_dot_pump;    //[MWe]
+
 		// Not sure that we want 'startup time required' calculated in 'off' call
 	cr_out_solver.m_time_required_su = mc_pt_receiver.ms_outputs.m_time_required_su;	 //[s]
 	cr_out_solver.m_q_dot_heater = mc_pt_receiver.ms_outputs.m_q_heattrace / (mc_pt_receiver.ms_outputs.m_time_required_su / 3600.0);		//[MWt])
@@ -245,6 +255,9 @@ void C_csp_mspt_collector_receiver::off(const C_csp_weatherreader::S_outputs &we
 	mc_reported_outputs.value(E_Q_DOT_PIPE_LOSS, mc_pt_receiver.ms_outputs.m_q_dot_piping_loss);	//[MWt]
     mc_reported_outputs.value(E_Q_DOT_REFL_LOSS, mc_pt_receiver.ms_outputs.m_q_dot_refl_loss);      //[MWt]
     mc_reported_outputs.value(E_Q_DOT_LOSS, mc_pt_receiver.ms_outputs.m_q_rad_sum + mc_pt_receiver.ms_outputs.m_q_conv_sum ); //MWt
+    mc_reported_outputs.value(E_W_DOT_TRACKING, mc_pt_heliostatfield.ms_outputs.m_pparasi);         //[MWe]
+    mc_reported_outputs.value(E_W_DOT_PUMP, mc_pt_receiver.ms_outputs.m_W_dot_pump);                //[MWe]
+
     // from transient model:
 	mc_reported_outputs.value(E_P_HEATTRACE, mc_pt_receiver.ms_outputs.m_q_heattrace / (mc_pt_receiver.ms_outputs.m_time_required_su / 3600.0));		//[MWt])
 	mc_reported_outputs.value(E_T_HTF_OUT_END, mc_pt_receiver.ms_outputs.m_inst_T_salt_hot);	//[C]
