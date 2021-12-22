@@ -893,6 +893,11 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
             W_dot_cr_freeze_protection = mc_cr_out_solver.m_q_dot_heater;       //[MWe]
         }
 
+        double W_dot_tes_pump = 0.0;        //[MWe]
+        if (m_is_tes) {
+            W_dot_tes_pump = mc_tes_outputs.m_W_dot_elec_in_tot;    //[MWe]
+        }
+
         double W_dot_par_htr_elec_load = 0.0;
         if (m_is_parallel_heater) {
             W_dot_par_htr_elec_load = mc_par_htr_out_solver.m_W_dot_col_tracking +
@@ -904,7 +909,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 			mc_cr_out_solver.m_W_dot_col_tracking -
 			mc_cr_out_solver.m_W_dot_htf_pump -
             mc_pc_out_solver.m_W_dot_htf_pump -
-            mc_tes_outputs.m_W_dot_elec_in_tot -
+            W_dot_tes_pump -
 			W_dot_cr_freeze_protection -
             W_dot_par_htr_elec_load -
 			mc_pc_out_solver.m_W_cool_par -
