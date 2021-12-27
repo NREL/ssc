@@ -31,7 +31,9 @@ static var_info _cm_vtab_geothermal_costs[] = {
 	/*   VARTYPE			DATATYPE         NAME                              LABEL                                                       UNITS		META                      GROUP                   REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 
 		{ SSC_INPUT,        SSC_NUMBER,     "conversion_type",					"Conversion Type",											"",			"",						"GeoHourly",			    "*",                        "INTEGER",					    "" },
-		// Binary Plant Type Inputs:		
+        { SSC_INPUT,        SSC_NUMBER,     "ppi_base_year",					"PPI Base Year",											"",			"",						"GeoHourly",			    "*",                        "INTEGER",					    "" },
+
+        // Binary Plant Type Inputs:		
 		{ SSC_INPUT,		SSC_NUMBER,     "gross_output",						"Gross output from GETEM",									"kW",		"",						"GeoHourly",				"*",						"",								"" },
 		{ SSC_INPUT,		SSC_NUMBER,		"design_temp",						"Power block design temperature",							"C",        "",						"GeoHourly",				"*",						"",								"" },
 		{ SSC_INPUT,        SSC_NUMBER,     "eff_secondlaw",					"Second Law Efficiency",									"%",		"",						"GeoHourly",				"*",						"",								"" },
@@ -72,13 +74,13 @@ class cm_geothermal_costs : public compute_module
 private:
 
 	//Inputs for Binary Type Plant (Note: Some variables might be common to both plant types - Binary and Flash)
-	std::vector<double> hx_ppi{ 0.890669720,0.919862622,0.938752147,0.957069262,0.963938180,0.972524327,0.983400114,1.000000000,0.998855180,1.066399542,1.226674299,1.333142530,1.377790498,1.438465942,1.414997138,1.423583286,1.464224385,1.513451631,1.535203205,1.555237550,1.604464797,1.643961076,1.657698912, 0.000000000 };		//HX Cost Index Normalized to 2001, 2002, 2007, 2010 and 2012; Beginning Year = 1995; Final Year = 2016;
-	std::vector<double> steel_ppi{ 1.128834356,1.102541630,1.108676599,1.073619632,0.999123576,1.021910605,0.961437336,1.000000000,1.064855390,1.423312883,1.499561788,1.634531113,1.762489045,2.159509202,1.612620508,1.958808063,2.219106047,2.109553024,1.984224365,2.034180543,1.714285714,1.638913234,1.858019281,0.000000000 };	//Steel Cost Index Normalized to 2001, 2002, 2007, 2010 and 2012; Beginning Year = 1995; Final Year = 2016;
-	std::vector<double> process_equip_ppi{ 0.884044412,0.907406542,0.926150373,0.942470679,0.956807105,0.967657025,0.985381166,1.000000000,1.014742613,1.077732637,1.155135271,1.222672817,1.304587248,1.382668341,1.403383400,1.411178107,1.455344223,1.509492085,1.533628545,1.638936512,1.656479161,1.653172080,1.679672296,0.000000000 }; //Process Equipment Cost Index Normalized to 2001, 2002, 2007, 2010 and 2012; Beginning Year = 1995; Final Year = 2016;
-	std::vector<double> engineering_ppi{ 0.779879622,0.810834050,0.859415305,0.888650043,0.913585555,0.954428203,0.975924334,1.000000000,1.048581255,1.081685297,1.102751505,1.136285469,1.210232158,1.275150473,1.329750645,1.392089424,1.362424764,1.365004299,1.388650043,1.433791917,1.486242476,1.503869304,1.558039553,0.000000000 }; // Engineering Cost Index Normalized to 2001, 2002, 2007, 2010 and 2012; Beginning Year = 1995; Final Year = 2016;
-	std::vector<double> pump_ppi{ 0.853394181,0.872219053,0.899600685,0.924130063,0.936679977,0.950370793,0.976041072,1.000000000,1.010838562,1.039931546,1.093553908,1.142042213,1.213348545,1.278379920,1.314318311,1.324586423,1.324586423,1.349115801,1.339418140,1.366799772,1.391899601,1.411294923,1.438106104,0.000000000 }; //Pump Cost Index Normalized to 2001, 2002, 2007, 2010 and 2012; Beginning Year = 1995; Final Year = 2016;
-	std::vector<double> turbine_ppi{ 0.882850242,0.896135266,0.917874396,0.934782609,0.960144928,0.969202899,0.980072464,1.000000000,1.013285024,1.018719807,1.017512077,1.050120773,1.106884058,1.245169082,1.350241546,1.340579710,1.359903382,1.349637681,1.376811594,1.411835749,1.399154589,1.403046162,1.346947738,1.327974034 }; //Turbine-Generator Cost Index Normalized to 2001, 2002, 2007, 2010 and 2012; Beginning Year = 1995; Final Year = 2016;
-	std::vector<double> construction_ppi{ 0.790555556,0.816666667,0.842222222,0.872777778,0.909444444,0.933333333,0.957777778,1.000000000,1.039444444,1.067222222,1.088888889,1.129444444,1.170000000,1.221666667,1.277777778,1.320000000,1.357777778,1.361666667,1.374444444,1.426666667,1.475000000,1.528333333,1.594444444,0.000000000 };
+	std::vector<double> hx_ppi{ 0.891,0.92,0.939,0.957,0.964,0.972,0.983,1,0.998,1.066,1.227,1.333,1.378,1.438,1.415,1.423,1.464,1.513,1.535,1.555,1.604,1.644,1.658,1.743,1.797,1 };		//HX Cost Index Normalized to 2001, 2002, 2007, 2010 and 2012; Beginning Year = 1995; Final Year = 2016;
+	std::vector<double> steel_ppi{ 1.129,1.103,1.109,1.074,1,1.022,0.962,1,1.065,1.424,1.5,1.635,1.763,2.16,1.613,1.96,2.22,2.11,1.985,2.035,1.714,1.639,1.858,2.084,1.947,1 };	//Steel Cost Index Normalized to 2001, 2002, 2007, 2010 and 2012; Beginning Year = 1995; Final Year = 2016;
+	std::vector<double> process_equip_ppi{ 0.884,0.907,0.926,0.943,0.957,0.968,0.985,1,1.015,1.078,1.155,1.223,1.305,1.383,1.404,1.411,1.456,1.51,1.534,1.639,1.656,1.653,1.68,1.741,1.794,1 }; //Process Equipment Cost Index Normalized to 2001, 2002, 2007, 2010 and 2012; Beginning Year = 1995; Final Year = 2016;
+	std::vector<double> engineering_ppi{ 0.78,0.811,0.859,0.889,0.913,0.954,0.976,1,1.048,1.082,1.102,1.136,1.209,1.275,1.33,1.392,1.362,1.365,1.388,1.433,1.486,1.504,1.558,1.602,1.611,1 }; // Engineering Cost Index Normalized to 2001, 2002, 2007, 2010 and 2012; Beginning Year = 1995; Final Year = 2016;
+	std::vector<double> pump_ppi{ 0.853,0.872,0.899,0.924,0.936,0.95,0.976,1,1.011,1.04,1.093,1.142,1.213,1.278,1.314,1.324,1.325,1.349,1.339,1.367,1.392,1.411,1.438,1.489,1.553,1 }; //Pump Cost Index Normalized to 2001, 2002, 2007, 2010 and 2012; Beginning Year = 1995; Final Year = 2016;
+	std::vector<double> turbine_ppi{ 0.883,0.896,0.918,0.935,0.96,0.969,0.98,1,1.013,1.019,1.018,1.05,1.107,1.245,1.35,1.34,1.36,1.35,1.377,1.412,1.399,1.403,1.347,1.332,1.408,1 }; //Turbine-Generator Cost Index Normalized to 2001, 2002, 2007, 2010 and 2012; Beginning Year = 1995; Final Year = 2016;
+	std::vector<double> construction_ppi{ 0.789,0.815,0.841,0.871,0.908,0.933,0.957,1,1.038,1.066,1.087,1.128,1.168,1.222,1.279,1.32,1.357,1.362,1.377,1.429,1.475,1.528,1.594,1.653,1.676,1 };
 	double user_adjust = 1; //User Adjustment (Constant)
 	double size_ratio;
 	//double scaling_factor ;	//for the GF HX
@@ -275,7 +277,7 @@ public:
 	{
 		SGeothermal_Inputs geo_inputs;
 		int conversion_type = as_integer("conversion_type");
-
+        int ppi = as_integer("ppi_base_year"); //PPI from GETEM spreadsheet (1995 - 2020)
 		if (conversion_type == 0) {
 			//geo_inputs.me_ct = BINARY;
 
@@ -284,7 +286,6 @@ public:
 			double design_temp = as_double("design_temp");
 			double eff = as_double("eff_secondlaw");	// w-h/lb
 			double unit_plant = as_double("gross_output");
-
 			//Geofluid Heat Exchangers Equipment Cost Calculations:				
 			size_ratio = unit_plant / ref_plant_size;
 			sf_hx = (sf_3 * pow(design_temp, 3)) + (sf_2 * pow(design_temp, 2)) + (sf_1 * design_temp) + sf_0;
@@ -293,9 +294,9 @@ public:
             hx_gf_c2 = hx_c20 + pow(hx_c21, pow(design_temp, 2)) + pow(hx_c23, pow(design_temp, 3)); //Took out hx_c22 per Parangat report -MP 6/14/21
 
 			hx_gf_c = hx_gf_c1 * exp(hx_gf_c2 * eff);
-			current_cost_ref_hx = hx_gf_c * hx_ppi[20];
+			current_cost_ref_hx = hx_gf_c * hx_ppi[ppi];
 
-			hx_cost = user_adjust * pow(size_ratio, sf_hx)*((ref_plant_size*hx_gf_c*hx_ppi[20]) / unit_plant);
+			hx_cost = user_adjust * pow(size_ratio, sf_hx)*((ref_plant_size*hx_gf_c*hx_ppi[ppi]) / unit_plant);
 
 
 			//Air Cooled Condenser Cost Calculations:
@@ -305,8 +306,8 @@ public:
 			accc_2 = exp((acc_c23*pow(design_temp, 3)) + (acc_c22*pow(design_temp, 2)) + (acc_c21*design_temp) + acc_c20);
 			acc_c = accc_1 * pow(eff, accc_2) + accc_0;
 			//acc_c = 183.65;
-			current_cost_ref_acc = acc_c * hx_ppi[20];
-			condenser_cost = user_adjust * pow(size_ratio, sf_condenser)*((ref_plant_size * acc_c * hx_ppi[20]) / unit_plant);
+			current_cost_ref_acc = acc_c * hx_ppi[ppi];
+			condenser_cost = user_adjust * pow(size_ratio, sf_condenser)*((ref_plant_size * acc_c * hx_ppi[ppi]) / unit_plant);
 
 
 
@@ -315,8 +316,8 @@ public:
 			pcc_1 = (wf_c12 * pow(design_temp, 2)) + (wf_c11 * design_temp) + wf_c10;
 			pcc_2 = (wf_c22 * pow(design_temp, 2)) + (wf_c21 * design_temp) + wf_c20;
 			pcc_c = pcc_1 * exp(pcc_2*eff);
-			current_cost_ref_pcc = pcc_c * pump_ppi[20];
-			wf_pump_cost = user_adjust * pow(size_ratio, sf_wf)*((ref_plant_size * pcc_c * pump_ppi[20]) / unit_plant);
+			current_cost_ref_pcc = pcc_c * pump_ppi[ppi];
+			wf_pump_cost = user_adjust * pow(size_ratio, sf_wf)*((ref_plant_size * pcc_c * pump_ppi[ppi]) / unit_plant);
 
 
 			//Turbine-Generator (TG) Cost Calculation:
@@ -343,15 +344,15 @@ public:
 
 			generator_c = ((1800 * pow(tg_size, 0.67))) / ref_plant_size;
 			tg_cost = ref_turbine_cost + generator_c;
-			current_cost_ref_tg = tg_cost * turbine_ppi[20];
-			turbine_cost = user_adjust * pow(size_ratio, sf_turbine)*((ref_plant_size * tg_cost * turbine_ppi[20]) / unit_plant);
+			current_cost_ref_tg = tg_cost * turbine_ppi[ppi];
+			turbine_cost = user_adjust * pow(size_ratio, sf_turbine)*((ref_plant_size * tg_cost * turbine_ppi[ppi]) / unit_plant);
 
 
 			//Calculating Direct Construction Cost Multiplier:
 			escalation_equip_cost = (current_cost_ref_acc + current_cost_ref_hx + current_cost_ref_pcc + current_cost_ref_tg) / (hx_gf_c + acc_c + pcc_c + tg_cost);
-			corrected_labor = ((labor_cost_multiplier*engineering_ppi[20]) / escalation_equip_cost)*(1 + labor_fringe_benefits);
-			corrected_construct_malts = (const_matls_rentals * process_equip_ppi[20]) / escalation_equip_cost;
-			corrected_total_material_mult = ((steel*steel_ppi[20]) + ((total_material_cost_multiplier - 1 - steel)*process_equip_ppi[20]))*(1 / escalation_equip_cost) + 1;
+			corrected_labor = ((labor_cost_multiplier*engineering_ppi[ppi]) / escalation_equip_cost)*(1 + labor_fringe_benefits);
+			corrected_construct_malts = (const_matls_rentals * process_equip_ppi[ppi]) / escalation_equip_cost;
+			corrected_total_material_mult = ((steel*steel_ppi[ppi]) + ((total_material_cost_multiplier - 1 - steel)*process_equip_ppi[ppi]))*(1 / escalation_equip_cost) + 1;
 			multiplier_input_year = corrected_total_material_mult + corrected_labor + corrected_construct_malts;
 			plant_size_adjustment = 1.02875*pow((unit_plant / 1000), -0.01226);
 			direct_installation_multiplier = plant_size_adjustment * multiplier_input_year;
@@ -408,19 +409,19 @@ public:
 
 			//T-G Cost:
 			tg_cost = (tg_sets_num * (2830 * (pow((unit_plant / tg_sets_num), 0.745)))) + (3685 * (pow((unit_plant / tg_sets_num), 0.617)));	//Reference Equipment Cost
-			current_tg_cost = tg_cost * turbine_ppi[20];
+			current_tg_cost = tg_cost * turbine_ppi[ppi];
 
 
 			//Cooling Tower Cost:
 			condenser_heat_rejected = GF_flowrate * qRejectTotal / 1000;
 			cooling_tower_cost = 7800 * (pow(condenser_heat_rejected, 0.8));		//Reference Equipment Cost
-			current_tower_cost = cooling_tower_cost * process_equip_ppi[20];
+			current_tower_cost = cooling_tower_cost * process_equip_ppi[ppi];
 
 			//Condenser Cost: 
 			lmtd = (condenser_pinch_pt - (condenser_pinch_pt + dtCooling_water)) / (std::log(condenser_pinch_pt / (condenser_pinch_pt + dtCooling_water)));
 			area = (q_Condenser*GF_flowrate / 1000) * 1000000 / (lmtd*condenser_u);
 			condenser_cost_flash = 102 * pow(area, 0.85);		//Reference Equipment Cost
-			current_condenser_cost = condenser_cost_flash * hx_ppi[20];
+			current_condenser_cost = condenser_cost_flash * hx_ppi[ppi];
 
 			//Flash Vessel Calculation:
 			//HP Flash Cost Calculation:
@@ -449,7 +450,7 @@ public:
 
 			//Total Flash Vessel Cost:
 			flash_vessel_cost = hp_flash_cost + lp_flash_cost;		//Reference Equipment Cost
-			current_vessel_cost = flash_vessel_cost * process_equip_ppi[20];
+			current_vessel_cost = flash_vessel_cost * process_equip_ppi[ppi];
 
 
 			//NCG Removal System Cost: //Reference Equipment Cost
@@ -476,7 +477,7 @@ public:
 
 			//NCG total cost:	
 			ncg_cost = vacuum_pump + condenser_ncg + pump_ncg + ejector_ncg;		//Reference Equipment Cost
-			current_ncg_cost = ncg_cost * process_equip_ppi[20];
+			current_ncg_cost = ncg_cost * process_equip_ppi[ppi];
 
 			//Pump Cost Calculation:
 			condensate_pump = (GF_flowrate / 1000) * (condensate_pump_power * 1.34102);		//condensate_pump_power * 1.34102 is conversion from kW to hp
@@ -484,13 +485,13 @@ public:
 			cw_pump_power = (GF_flowrate / 1000) * ((((cwflow / 60)*(cw_pump_head)) / 33000) / 0.7);
 			cooling_water = 2.35 * 1185 * pow(cw_pump_power, 0.767);
 			pump_cost = condensate + cooling_water;		//Reference Equipment Cost
-			current_pump_cost = pump_cost * pump_ppi[20];
+			current_pump_cost = pump_cost * pump_ppi[ppi];
 
 
 			//H2S Removal System Cost Calculation:
 			h2s_flow = h2s_level * GF_flowrate / 1000000;
 			h2s_cost = 115000 * pow(h2s_flow, 0.58);		//Reference Equipment Cost
-			current_h2s_cost = h2s_cost * process_equip_ppi[20];
+			current_h2s_cost = h2s_cost * process_equip_ppi[ppi];
 
 			//Total Equipment Cost: 
 			equip_cost_flash = tg_cost + cooling_tower_cost + condenser_cost_flash + flash_vessel_cost + ncg_cost + pump_cost + h2s_cost;
@@ -498,9 +499,9 @@ public:
 			escalation_ppi = current_cost_flash / equip_cost_flash;
 
 			//Calculating Direct Construction Cost Multiplier:
-			material_multiplier = 1 + ((8.65* pow(design_temp, -0.297)) - 1) * (process_equip_ppi[20] / escalation_ppi);
-			labor_multiplier = ((42.65 * pow(design_temp, -0.923)) * 1.45) * construction_ppi[20] / escalation_ppi;
-			construction_multiplier = (16.177*pow(design_temp, -0.827)) * process_equip_ppi[20] / escalation_ppi;
+			material_multiplier = 1 + ((8.65* pow(design_temp, -0.297)) - 1) * (process_equip_ppi[ppi] / escalation_ppi);
+			labor_multiplier = ((42.65 * pow(design_temp, -0.923)) * 1.45) * construction_ppi[ppi] / escalation_ppi;
+			construction_multiplier = (16.177*pow(design_temp, -0.827)) * process_equip_ppi[ppi] / escalation_ppi;
 			direct_multiplier_2002 = material_multiplier + labor_multiplier + construction_multiplier;
 			tax = (material_multiplier + construction_multiplier) * sales_tax;
 			freight_flash = (material_multiplier + construction_multiplier) * freight;
