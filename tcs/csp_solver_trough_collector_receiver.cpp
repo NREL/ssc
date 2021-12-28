@@ -2195,8 +2195,6 @@ void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 	cr_out_solver.m_component_defocus = 1.0;
     cr_out_solver.m_is_recirculating = m_is_m_dot_recirc;
 
-	//cr_out_solver.m_W_dot_col_tracking = m_W_dot_sca_tracking;	//[MWe]
-	//cr_out_solver.m_W_dot_htf_pump = m_W_dot_pump;				//[MWe]
     cr_out_solver.m_W_dot_elec_in_tot = m_W_dot_sca_tracking + m_W_dot_pump;    //[MWe]
     cr_out_solver.m_q_dot_heater = m_q_dot_freeze_protection;   //[MWt]
 
@@ -2374,11 +2372,6 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 	cr_out_solver.m_component_defocus = 1.0;	//[-]
     cr_out_solver.m_is_recirculating = m_is_m_dot_recirc;
 
-		
-		// Is this calculated in the 'optical' method, or a TBD 'metrics' method?
-	//cr_out_solver.m_W_dot_col_tracking = m_W_dot_sca_tracking;	//[MWe]
-		// Is this calculated in the 'energy balance' method, or a TBD 'metrics' method?
-	//cr_out_solver.m_W_dot_htf_pump = m_W_dot_pump;				//[MWe]
     cr_out_solver.m_W_dot_elec_in_tot = m_W_dot_sca_tracking + m_W_dot_pump;    //[MWe]
         // Shouldn't need freeze protection if in startup, but may want a check on this
     cr_out_solver.m_q_dot_heater = m_q_dot_freeze_protection;    //[MWt]
@@ -2639,8 +2632,6 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 		// ***********************************************************
 
 		// For now, set parasitic outputs to 0
-		//cr_out_solver.m_W_dot_col_tracking = m_W_dot_sca_tracking;	//[MWe]
-		//cr_out_solver.m_W_dot_htf_pump = m_W_dot_pump;				//[MWe]
         cr_out_solver.m_W_dot_elec_in_tot = m_W_dot_sca_tracking + m_W_dot_pump;    //[MWe]
         cr_out_solver.m_dP_sf = m_dP_total;         //[bar]
         cr_out_solver.m_q_dot_heater = m_q_dot_freeze_protection;    //[MWt]
@@ -2666,8 +2657,6 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 		cr_out_solver.m_T_salt_hot = 0.0;			//[C]
 		cr_out_solver.m_component_defocus = 1.0;	//[-]
         cr_out_solver.m_is_recirculating = false;
-		//cr_out_solver.m_W_dot_col_tracking = 0.0;
-		//cr_out_solver.m_W_dot_htf_pump = 0.0;
         m_W_dot_sca_tracking = 0.0;
         m_W_dot_pump = 0.0;
         cr_out_solver.m_W_dot_elec_in_tot = m_W_dot_sca_tracking + m_W_dot_pump;    //[MWe]

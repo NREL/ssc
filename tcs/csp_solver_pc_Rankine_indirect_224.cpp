@@ -1614,14 +1614,12 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 	out_solver.m_P_cycle = P_cycle/1000.0;				//[MWe] Cycle power output, convert from kWe
 	mc_reported_outputs.value(E_W_DOT, P_cycle/1000.0);	//[MWe] Cycle power output, convert from kWe
 
-	//out_report.m_eta = eta;							//[-] Cycle thermal efficiency
 	mc_reported_outputs.value(E_ETA_THERMAL, eta);	//[-] Cycle thermal efficiency
 
 	out_solver.m_T_htf_cold = T_htf_cold;				//[C] HTF outlet temperature
 	mc_reported_outputs.value(E_T_HTF_OUT, T_htf_cold);	//[C] HTF outlet temperature
 	mc_reported_outputs.value(E_T_HTF_IN, T_htf_hot);	//[C] HTF inlet temperature
 
-	//out_report.m_m_dot_makeup = (m_dot_water_cooling + m_dot_st_bd)*3600.0;		//[kg/hr] Cooling water makeup flow rate, convert from kg/s
 	mc_reported_outputs.value(E_M_DOT_WATER, (m_dot_water_cooling + m_dot_st_bd)*3600.0);		//[kg/hr] Cooling water makeup flow rate, convert from kg/s
 	mc_reported_outputs.value(E_T_COND_OUT, T_cond_out);										//[C] Cooling water outlet temperature from condenser
 
@@ -1646,21 +1644,15 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 	out_solver.m_m_dot_htf = m_dot_htf;					//[kg/hr] Actual HTF flow rate passing through the power cycle
 	mc_reported_outputs.value(E_M_DOT_HTF,m_dot_htf);	//[kg/hr] Actual HTF flow rate passing through the power cycle
 
-	//out_report.m_m_dot_htf_ref = m_dot_htf_ref;		//[kg/hr] Calculated reference HTF flow rate at design
 	mc_reported_outputs.value(E_M_DOT_HTF_REF, m_dot_htf_ref);	//[kg/hr]
 	out_solver.m_W_cool_par = W_cool_par+W_radpump;				//[MWe] Cooling system parasitic load
     mc_reported_outputs.value(E_W_DOT_COOLER);              //[MWe] Cooling parasitic
-	//out_report.m_P_ref = ms_params.m_P_ref / 1000.0;		//[MWe] Reference power level output at design, convert from kWe
-	//out_report.m_f_hrsys = f_hrsys;					//[-] Fraction of operating heat rejection system
-	//out_report.m_P_cond = P_cond;						//[Pa] Condenser pressure
 
-	//outputs.m_q_startup = q_startup / 1.E3;					//[MWt-hr] Startup energy
 	double q_dot_startup = 0.0;
 	if( q_startup > 0.0 )
 		q_dot_startup = q_startup / 1.E3 / time_required_su;	//[MWt] Startup thermal power
 	else
 		q_dot_startup = 0.0;
-	//out_report.m_q_startup = q_dot_startup;						//[MWt] Startup thermal power
 	mc_reported_outputs.value(E_Q_DOT_STARTUP, q_dot_startup);	//[MWt] Startup thermal power
 
 	out_solver.m_time_required_su = time_required_su*3600.0;	//[s]

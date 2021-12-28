@@ -196,6 +196,7 @@ public:
 		{
 			m_year = m_month = m_day = m_hour = -1;
 
+            m_minute =
 			m_global = m_beam = m_hor_beam = m_diffuse = m_tdry = m_twet = m_tdew = m_wspd = 
 				m_wdir = m_rhum = m_pres = m_snow = m_albedo =
 				m_poa = m_solazi = m_solzen = m_lat = m_lon = m_tz = m_shift = m_elev =
@@ -516,6 +517,7 @@ public:
 		S_control_inputs()
 		{
             m_standby_control = E_csp_power_cycle_modes::OFF;
+            m_m_dot = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -541,7 +543,8 @@ public:
 		{
 			m_W_dot_des = m_eta_des = m_q_dot_des = m_q_startup = m_max_frac = m_cutoff_frac = 
 				m_sb_frac = m_T_htf_hot_ref = 
-				m_m_dot_design = m_m_dot_max = m_m_dot_min = std::numeric_limits<double>::quiet_NaN();
+				m_m_dot_design = m_m_dot_max = m_m_dot_min =
+                m_P_hot_des = m_x_hot_des = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -808,12 +811,6 @@ public:
             M_DOT_TES_COLD_IN,    //[kg/s]
 			M_DOT_FIELD_TO_CYCLE, //[kg/s]
 			M_DOT_CYCLE_TO_FIELD, //[kg/s]
-			//TES_M_DOT_DC,         //[MWt] TES discharge mass flow rate
-			//TES_M_DOT_CH,         //[MWt] TES charge mass flow rate
-			//COL_W_DOT_TRACK,      //[MWe] Parasitic collector tracking, startup, stow power consumption
-			//CR_W_DOT_PUMP,        //[MWe] Parasitic tower HTF pump power
-			//SYS_W_DOT_PUMP,       //[MWe] Parasitic PC and TES HTF pump power
-			//PC_W_DOT_COOLING,     //[MWe] Parasitic condenser operation power
 			SYS_W_DOT_FIXED,      //[MWe] Parasitic fixed power consumption
 			SYS_W_DOT_BOP,        //[MWe] Parasitic BOP power consumption
 			W_DOT_NET             //[MWe] System total electric power to grid

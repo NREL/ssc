@@ -148,22 +148,13 @@ void C_csp_mspt_collector_receiver::call(const C_csp_weatherreader::S_outputs &w
 	mc_pt_receiver.call(weather, htf_state_in, receiver_inputs, sim_info);
 		
 	// Set collector/receiver parent class outputs and return
-	//cr_out_report.m_eta_field = mc_pt_heliostatfield.ms_outputs.m_eta_field;				//[-]
-    //cr_out_report.m_sf_adjust_out = mc_pt_heliostatfield.ms_outputs.m_sf_adjust_out;
-	//cr_out_report.m_q_dot_field_inc = mc_pt_heliostatfield.ms_outputs.m_q_dot_field_inc;	//[MWt]
-
-	//cr_out_report.m_q_dot_rec_inc = mc_pt_receiver.ms_outputs.m_q_dot_rec_inc;		//[MWt]
-	//cr_out_report.m_eta_thermal = mc_pt_receiver.ms_outputs.m_eta_therm;				//[-]
 	cr_out_solver.m_q_thermal = mc_pt_receiver.ms_outputs.m_Q_thermal;				//[MW]
 	cr_out_solver.m_q_startup = mc_pt_receiver.ms_outputs.m_q_startup;				//[MWt-hr]
-	//cr_out_report.m_q_dot_piping_loss = mc_pt_receiver.ms_outputs.m_q_dot_piping_loss;	//[MWt]
 	cr_out_solver.m_m_dot_salt_tot = mc_pt_receiver.ms_outputs.m_m_dot_salt_tot;		//[kg/hr]
 	cr_out_solver.m_T_salt_hot = mc_pt_receiver.ms_outputs.m_T_salt_hot;				//[C]
 	
 	cr_out_solver.m_component_defocus = mc_pt_receiver.ms_outputs.m_component_defocus;	//[-]
 	
-	//cr_out_solver.m_W_dot_htf_pump = mc_pt_receiver.ms_outputs.m_W_dot_pump;			//[MWe]
-	//cr_out_solver.m_W_dot_col_tracking = mc_pt_heliostatfield.ms_outputs.m_pparasi;		//[MWe]
     cr_out_solver.m_W_dot_elec_in_tot = mc_pt_heliostatfield.ms_outputs.m_pparasi + mc_pt_receiver.ms_outputs.m_W_dot_pump;    //[MWe]
 
 	cr_out_solver.m_time_required_su = mc_pt_receiver.ms_outputs.m_time_required_su;	//[s]
@@ -214,25 +205,15 @@ void C_csp_mspt_collector_receiver::off(const C_csp_weatherreader::S_outputs &we
 	// In OFF call, looking specifically for weather STOW parasitics apply
 	mc_pt_heliostatfield.off(sim_info);
 
-	// Set collector/receiver parent class outputs from field model
-	//cr_out_report.m_eta_field = mc_pt_heliostatfield.ms_outputs.m_eta_field;				//[-]
-    //cr_out_report.m_sf_adjust_out = mc_pt_heliostatfield.ms_outputs.m_sf_adjust_out;
-	//cr_out_report.m_q_dot_field_inc = mc_pt_heliostatfield.ms_outputs.m_q_dot_field_inc;	//[MWt]
-	//cr_out_solver.m_W_dot_col_tracking = mc_pt_heliostatfield.ms_outputs.m_pparasi;			//[MWe]
-
 	// Now, call the tower-receiver model
 	mc_pt_receiver.off(weather, htf_state_in, sim_info);
 
 	// Set collector/receiver parent class outputs from field model
-	//cr_out_report.m_q_dot_rec_inc = mc_pt_receiver.ms_outputs.m_q_dot_rec_inc;		 //[MWt]
-	//cr_out_report.m_eta_thermal = mc_pt_receiver.ms_outputs.m_eta_therm;				 //[-]
 	cr_out_solver.m_q_thermal = mc_pt_receiver.ms_outputs.m_Q_thermal;				 //[MW]
 	cr_out_solver.m_q_startup = mc_pt_receiver.ms_outputs.m_q_startup;				 //[MWt-hr]
-	//cr_out_report.m_q_dot_piping_loss = mc_pt_receiver.ms_outputs.m_q_dot_piping_loss; //[MWt]
 	cr_out_solver.m_m_dot_salt_tot = mc_pt_receiver.ms_outputs.m_m_dot_salt_tot;		 //[kg/hr]
 	cr_out_solver.m_T_salt_hot = mc_pt_receiver.ms_outputs.m_T_salt_hot;				 //[C]
 	cr_out_solver.m_component_defocus = 1.0;	//[-]
-	//cr_out_solver.m_W_dot_htf_pump = mc_pt_receiver.ms_outputs.m_W_dot_pump;			 //[MWe]
 
     cr_out_solver.m_W_dot_elec_in_tot = mc_pt_heliostatfield.ms_outputs.m_pparasi + mc_pt_receiver.ms_outputs.m_W_dot_pump;    //[MWe]
 
