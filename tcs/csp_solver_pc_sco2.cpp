@@ -475,7 +475,7 @@ void C_pc_sco2::call(const C_csp_weatherreader::S_outputs &weather,
 	//out_report.m_m_dot_demand = m_dot_demand;			//[kg/hr] HTF required flow rate to meet power load
 	out_solver.m_m_dot_htf = m_dot_htf;					//[kg/hr] Actual HTF flow rate passing through the power cycle
 	//out_report.m_m_dot_htf_ref = m_m_dot_htf_des;		//[kg/hr] Calculated reference HTF flow rate at design
-	out_solver.m_W_cool_par = W_cool_par;				//[MWe] Cooling system parasitic load
+	//out_solver.m_W_cool_par = W_cool_par;				//[MWe] Cooling system parasitic load
 	//out_report.m_P_ref = m_W_dot_des;					//[MWe] Reference power level output at design not counting cooling parasitics
 	//out_report.m_f_hrsys = 0.0;							//[-] Fraction of operating heat rejection system
 	//out_report.m_P_cond = 0.0;							//[Pa] Condenser pressure
@@ -489,7 +489,8 @@ void C_pc_sco2::call(const C_csp_weatherreader::S_outputs &weather,
 
 	out_solver.m_time_required_su = time_required_su*3600.0;	//[s]
 	out_solver.m_q_dot_htf = q_dot_htf;						//[MWt] Thermal power from HTF (= thermal power into cycle)
-	out_solver.m_W_dot_htf_pump = ms_params.m_htf_pump_coef*(m_dot_htf / 3.6E6);	//[MW] HTF pumping power, convert from [kW/kg/s]*[kg/hr]    
+	double W_dot_htf_pump = ms_params.m_htf_pump_coef*(m_dot_htf / 3.6E6);	//[MWe] HTF pumping power, convert from [kW/kg/s]*[kg/hr]    
+    out_solver.m_W_dot_elec_parasitics_tot = W_cool_par + W_dot_htf_pump;   //[MWe]
 
 	out_solver.m_was_method_successful = was_method_successful;	//[-]
 }

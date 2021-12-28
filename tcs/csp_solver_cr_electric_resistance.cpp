@@ -207,8 +207,6 @@ void C_csp_cr_electric_resistance::off(const C_csp_weatherreader::S_outputs& wea
     cr_out_solver.m_component_defocus = 1.0;        //[-]
     cr_out_solver.m_is_recirculating = false;       //[-]
 
-    cr_out_solver.m_W_dot_col_tracking = 0.0;       //[MWe]
-    cr_out_solver.m_W_dot_htf_pump = 0.0;           //[MWe]
     cr_out_solver.m_q_dot_heater = 0.0;             //[MWt]
 
     m_operating_mode = C_csp_collector_receiver::OFF;
@@ -263,8 +261,6 @@ void C_csp_cr_electric_resistance::startup(const C_csp_weatherreader::S_outputs&
     cr_out_solver.m_component_defocus = 1.0;                //[-]
     cr_out_solver.m_is_recirculating = false;               //[-]
 
-    cr_out_solver.m_W_dot_col_tracking = 0.0;               //[MWe]
-    cr_out_solver.m_W_dot_htf_pump = 0.0;                   //[MWe]
     cr_out_solver.m_q_dot_heater = m_q_dot_su_max;          //[MWt]
 
     // Set reported outputs
@@ -327,8 +323,6 @@ void C_csp_cr_electric_resistance::on(const C_csp_weatherreader::S_outputs& weat
     cr_out_solver.m_T_salt_hot = m_T_htf_hot_des;   //[C]
     cr_out_solver.m_component_defocus = heater_turn_down;   //[-]
 
-    cr_out_solver.m_W_dot_col_tracking = 0.0;  //[MWe]
-    cr_out_solver.m_W_dot_htf_pump = 0.0;      //[MWe]
     cr_out_solver.m_q_dot_heater = q_dot_elec + q_dot_startup; //[MWt]
 
     // Set reported outputs
