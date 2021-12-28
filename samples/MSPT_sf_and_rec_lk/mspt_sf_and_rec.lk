@@ -1,3 +1,33 @@
 var("T_htf_cold_des", 290);		//[C]
 var("T_htf_hot_des", 560);		//[C]
+var("q_dot_rec_des", 670);		//[MWt]
+
+var( 'N_panels', 20 );
+
+var( 'd_tube_out', 40 );
+var( 'th_tube', 1.25 );
+var( 'mat_tube', 2 );
+var( 'rec_height', 21.6 );
+var( 'D_rec', 17.6 );
+var( 'h_tower', 193.458 );
+
+var( 'rec_htf', 17 );
+var( 'field_fl_props', 
+[ [ 0, 0, 0, 0, 0, 0, 0 ] ] );
+var( 'Flow_type', 1 );
+var( 'epsilon', 0.88 );
+var( 'hl_ffact', 1 );
+var( 'f_rec_min', 0.25 );
+var( 'rec_su_delay', 0.20000000000000001 );
+var( 'rec_qf_delay', 0.25 );
+var( 'csp.pt.rec.max_oper_frac', 1.2 );
+var( 'eta_pump', 0.84999999999999998 );
+var( 'piping_length_mult', 2.6000000000000001 );
+var( 'piping_length_const', 0 );
+var( 'piping_loss_coefficient', 2 );
+
+
+var( 'is_rec_startup_trans', 0 );
+
+
 run("mspt_sf_and_rec_isolated");

@@ -34,6 +34,8 @@ static var_info _cm_vtab_mspt_sf_and_rec_isolated[] = {
     { SSC_INPUT,  SSC_NUMBER, "q_dot_rec_des",                      "Receiver thermal power to HTF at design",                                                               "MWt",          "",              "Tower and Receiver",                       "*",                                  "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "T_htf_cold_des",                     "Cold HTF inlet temperature at design conditions",                                                       "C",            "",              "Tower and Receiver",                       "*",                                  "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "T_htf_hot_des",                      "Hot HTF outlet temperature at design conditions",                                                       "C",            "",              "Tower and Receiver",                       "*",                                  "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "rec_height",                         "Receiver height",                                                                                       "m",            "",              "Tower and Receiver",                       "*",                                  "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "D_rec",                              "The overall outer diameter of the receiver",                                                            "m",            "",              "Tower and Receiver",                       "*",                                  "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "N_panels",                           "Number of individual panels on the receiver",                                                           "",             "",              "Tower and Receiver",                       "*",                                  "INTEGER",       ""},
     { SSC_INPUT,  SSC_NUMBER, "d_tube_out",                         "The outer diameter of an individual receiver tube",                                                     "mm",           "",              "Tower and Receiver",                       "*",                                  "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "th_tube",                            "The wall thickness of a single receiver tube",                                                          "mm",           "",              "Tower and Receiver",                       "*",                                  "",              ""},
@@ -94,8 +96,9 @@ public:
         std::unique_ptr<C_pt_receiver> receiver;
 
         double H_rec = as_double("rec_height");
-        double rec_aspect = as_double("rec_aspect");
-        double D_rec = H_rec / rec_aspect;
+        double D_rec = as_double("D_rec");
+
+        //double D_rec = H_rec / rec_aspect;
 
         // Transient model
         if (is_rec_model_trans || is_rec_startup_trans) {
@@ -164,6 +167,17 @@ public:
             //    receiver->m_clearsky_data.at(i) = (double)csky[i];
         }
 
+        // Receiver/tower design options
+        // 1) import through cmod
+        // 2) generate through solarpilot?
+
+        // Initialization options
+        // 1) Default
+        // 2) Import through cmod
+        // 3) Steady state (implies transient simulation?)
+
+        // Do we want an input that allows absolute values for flux maps instead of normalized values?
+        // Passing through A_sf to MSPT model to dimensionalize the flux map, which is annoying
 
 
 
