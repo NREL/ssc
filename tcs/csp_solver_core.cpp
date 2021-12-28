@@ -215,8 +215,8 @@ static C_csp_reported_outputs::S_output_info S_solver_output_info[] =
 	
 	//{C_csp_solver::C_solver_outputs::COL_W_DOT_TRACK, C_csp_reported_outputs::TS_WEIGHTED_AVE},	  //[MWe] Parasitic collector tracking, startup, stow power consumption
 	//{C_csp_solver::C_solver_outputs::CR_W_DOT_PUMP, C_csp_reported_outputs::TS_WEIGHTED_AVE},		  //[MWe] Parasitic tower HTF pump power
-	{C_csp_solver::C_solver_outputs::SYS_W_DOT_PUMP, C_csp_reported_outputs::TS_WEIGHTED_AVE},		  //[MWe] Parasitic PC and TES HTF pump power
-	{C_csp_solver::C_solver_outputs::PC_W_DOT_COOLING, C_csp_reported_outputs::TS_WEIGHTED_AVE},	  //[MWe] Parasitic condenser operation power
+	//{C_csp_solver::C_solver_outputs::SYS_W_DOT_PUMP, C_csp_reported_outputs::TS_WEIGHTED_AVE},		  //[MWe] Parasitic PC and TES HTF pump power
+	//{C_csp_solver::C_solver_outputs::PC_W_DOT_COOLING, C_csp_reported_outputs::TS_WEIGHTED_AVE},	  //[MWe] Parasitic condenser operation power
 	{C_csp_solver::C_solver_outputs::SYS_W_DOT_FIXED, C_csp_reported_outputs::TS_WEIGHTED_AVE},	  //[MWe] Parasitic fixed power consumption
 	{C_csp_solver::C_solver_outputs::SYS_W_DOT_BOP, C_csp_reported_outputs::TS_WEIGHTED_AVE},		  //[MWe] Parasitic BOP power consumption
 	{C_csp_solver::C_solver_outputs::W_DOT_NET, C_csp_reported_outputs::TS_WEIGHTED_AVE},			  //[MWe] System total electric power to grid
@@ -906,15 +906,16 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                                     mc_par_htr_out_solver.m_q_dot_heater;       //[MWe]
         }
 
-		double W_dot_net = mc_pc_out_solver.m_P_cycle -
+        double W_dot_net = mc_pc_out_solver.m_P_cycle -
             mc_cr_out_solver.m_W_dot_elec_in_tot -
-			/*mc_cr_out_solver.m_W_dot_col_tracking -
-			mc_cr_out_solver.m_W_dot_htf_pump - */
-            mc_pc_out_solver.m_W_dot_htf_pump -
+            /*mc_cr_out_solver.m_W_dot_col_tracking -
+            mc_cr_out_solver.m_W_dot_htf_pump - */
+            //mc_pc_out_solver.m_W_dot_htf_pump -
+            mc_pc_out_solver.m_W_dot_elec_parasitics_tot -
             W_dot_tes_pump -
 			W_dot_cr_freeze_protection -
             W_dot_par_htr_elec_load -
-			mc_pc_out_solver.m_W_cool_par -
+			//mc_pc_out_solver.m_W_cool_par -
 			mc_tes_outputs.m_q_heater - 
 			W_dot_fixed -
 			W_dot_bop;	//[MWe]
@@ -1083,8 +1084,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 			// Parasitics outputs
 		//mc_reported_outputs.value(C_solver_outputs::COL_W_DOT_TRACK, -1.23 /*mc_cr_out_solver.m_W_dot_col_tracking*/);    //[MWe] Collector tracking, startup, stow power consumption 
 		//mc_reported_outputs.value(C_solver_outputs::CR_W_DOT_PUMP, -1.23 /*mc_cr_out_solver.m_W_dot_htf_pump*/);          //[MWe] Receiver/tower HTF pumping power   
-		mc_reported_outputs.value(C_solver_outputs::SYS_W_DOT_PUMP, (mc_pc_out_solver.m_W_dot_htf_pump + mc_tes_outputs.m_W_dot_elec_in_tot ));    //[MWe] TES & PC HTF pumping power (Receiver - PC side HTF)  
-		mc_reported_outputs.value(C_solver_outputs::PC_W_DOT_COOLING, mc_pc_out_solver.m_W_cool_par);           //[MWe] Power cycle cooling power consumption (fan, pumps, etc.)
+		//mc_reported_outputs.value(C_solver_outputs::SYS_W_DOT_PUMP, (mc_pc_out_solver.m_W_dot_htf_pump + mc_tes_outputs.m_W_dot_elec_in_tot ));    //[MWe] TES & PC HTF pumping power (Receiver - PC side HTF)  
+		//mc_reported_outputs.value(C_solver_outputs::PC_W_DOT_COOLING, -1.23 /*mc_pc_out_solver.m_W_cool_par*/);           //[MWe] Power cycle cooling power consumption (fan, pumps, etc.)
 		mc_reported_outputs.value(C_solver_outputs::SYS_W_DOT_FIXED, W_dot_fixed);								//[MWe] Fixed electric parasitic power load 
 		mc_reported_outputs.value(C_solver_outputs::SYS_W_DOT_BOP, W_dot_bop);									//[MWe] Balance-of-plant electric parasitic power load   
 		mc_reported_outputs.value(C_solver_outputs::W_DOT_NET, W_dot_net);								//[MWe] Total electric power output to grid        

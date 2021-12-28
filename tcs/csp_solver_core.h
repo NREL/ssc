@@ -557,7 +557,12 @@ public:
 		double m_m_dot_htf;			//[kg/hr] Actual HTF flow rate passing through the power cycle
 
 			// Parasitics, plant net power equation
-		double m_W_dot_htf_pump;	//[MWe] HTF pumping power
+        double m_W_dot_elec_parasitics_tot; //[MWe] Total TES electricity consumption that doesn't contribute to cycle working fluid
+
+            // Want to only report total aggregate parasitics in m_W_dot_elec_parasitics total
+            //    but need to keep m_W_cool_par because sam_mw_pt_type224_csp_solver needs it
+            //    until we straighten out HTF pump power in Type 251 or preferably move MSLF to CSP Solver
+        //double m_W_dot_htf_pump;	//[MWe] HTF pumping power
 		double m_W_cool_par;		//[MWe] Cooling system parasitic load
 
 		bool m_was_method_successful;	//[-] Return false if method did not solve as expected but can be handled by solver/controller
@@ -565,7 +570,8 @@ public:
 		S_csp_pc_out_solver()
 		{
 			m_time_required_su = m_time_required_max = m_P_cycle = m_T_htf_cold = m_q_dot_htf = m_m_dot_htf =
-				m_W_dot_htf_pump = m_W_cool_par = std::numeric_limits<double>::quiet_NaN();
+                m_W_dot_elec_parasitics_tot =
+                /*m_W_dot_htf_pump =*/ m_W_cool_par = std::numeric_limits<double>::quiet_NaN();
 
 			m_was_method_successful = false;
 		}
@@ -806,8 +812,8 @@ public:
 			//TES_M_DOT_CH,         //[MWt] TES charge mass flow rate
 			//COL_W_DOT_TRACK,      //[MWe] Parasitic collector tracking, startup, stow power consumption
 			//CR_W_DOT_PUMP,        //[MWe] Parasitic tower HTF pump power
-			SYS_W_DOT_PUMP,       //[MWe] Parasitic PC and TES HTF pump power
-			PC_W_DOT_COOLING,     //[MWe] Parasitic condenser operation power
+			//SYS_W_DOT_PUMP,       //[MWe] Parasitic PC and TES HTF pump power
+			//PC_W_DOT_COOLING,     //[MWe] Parasitic condenser operation power
 			SYS_W_DOT_FIXED,      //[MWe] Parasitic fixed power consumption
 			SYS_W_DOT_BOP,        //[MWe] Parasitic BOP power consumption
 			W_DOT_NET             //[MWe] System total electric power to grid

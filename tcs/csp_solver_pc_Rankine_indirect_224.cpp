@@ -52,6 +52,9 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 	{C_pc_Rankine_indirect_224::E_M_DOT_WATER, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 	{C_pc_Rankine_indirect_224::E_P_COND,C_csp_reported_outputs::TS_LAST },
 	{ C_pc_Rankine_indirect_224::E_RADCOOL_CNTRL,C_csp_reported_outputs::TS_WEIGHTED_AVE },
+    {C_pc_Rankine_indirect_224::E_W_DOT_HTF_PUMP, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+    {C_pc_Rankine_indirect_224::E_W_DOT_COOLER, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+
 	{C_pc_Rankine_indirect_224::E_M_DOT_HTF_REF, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 
 	csp_info_invalid
@@ -1646,6 +1649,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 	//out_report.m_m_dot_htf_ref = m_dot_htf_ref;		//[kg/hr] Calculated reference HTF flow rate at design
 	mc_reported_outputs.value(E_M_DOT_HTF_REF, m_dot_htf_ref);	//[kg/hr]
 	out_solver.m_W_cool_par = W_cool_par+W_radpump;				//[MWe] Cooling system parasitic load
+    mc_reported_outputs.value(E_W_DOT_COOLER);              //[MWe] Cooling parasitic
 	//out_report.m_P_ref = ms_params.m_P_ref / 1000.0;		//[MWe] Reference power level output at design, convert from kWe
 	//out_report.m_f_hrsys = f_hrsys;					//[-] Fraction of operating heat rejection system
 	//out_report.m_P_cond = P_cond;						//[Pa] Condenser pressure
@@ -1665,7 +1669,10 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 	out_solver.m_q_dot_htf = q_dot_htf;					//[MWt] Thermal power from HTF (= thermal power into cycle)
 	mc_reported_outputs.value(E_Q_DOT_HTF, q_dot_htf);	//[MWt] Thermal power from HTF (= thermal power into cycle)
 
-	out_solver.m_W_dot_htf_pump = ms_params.m_htf_pump_coef*(m_dot_htf / 3.6E6);	//[MW] HTF pumping power, convert from [kW/kg/s]*[kg/hr]
+	double W_dot_htf_pump = ms_params.m_htf_pump_coef*(m_dot_htf / 3.6E6);	//[MW] HTF pumping power, convert from [kW/kg/s]*[kg/hr]
+    mc_reported_outputs.value(E_W_DOT_HTF_PUMP, W_dot_htf_pump);            //[MWe]
+
+    out_solver.m_W_dot_elec_parasitics_tot = out_solver.m_W_cool_par + W_dot_htf_pump; //[MWe]
 
 	out_solver.m_was_method_successful = was_method_successful;	//[-]
 }
