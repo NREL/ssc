@@ -119,6 +119,8 @@ public:
 		E_M_DOT_WATER,		//[kg/hr] Cycle water consumption: makeup + cooling	
 		E_P_COND,			//[Pa] Cycle condensing pressure
 		E_RADCOOL_CNTRL,	//Code showing the status of radiative cooling with cold storage
+        E_W_DOT_HTF_PUMP,   //[MWe] HTF pump power
+        E_W_DOT_COOLER,     //[MWe] Cooling parasitic
 
 		// Variables added for backwards compatability with TCS
 		E_M_DOT_HTF_REF		//[kg/hr] HTF mass flow rate at design
