@@ -307,11 +307,8 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 	double step = sim_info.ms_ts.m_step;			//[s]
 	double time = sim_info.ms_ts.m_time;	//[s]
 
-	// Get applicable htf state info
-	double T_salt_cold_in = htf_state_in.m_temp;		//[C]
-
 	// Complete necessary conversions/calculations of input variables
-	T_salt_cold_in += 273.15;				//[K] Cold salt inlet temp, convert from C
+	double T_salt_cold_in = htf_state_in.m_temp + 273.15;	//[K] Cold salt inlet temp, convert from C
 	double P_amb = weather.m_pres*100.0;	//[Pa] Ambient pressure, convert from mbar
 	double hour = time / 3600.0;			//[hr] Hour of the year
 	double T_dp = weather.m_tdew + 273.15;	//[K] Dewpoint temperature, convert from C
@@ -322,7 +319,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 	double zenith = weather.m_solzen;
 	double azimuth = weather.m_solazi;
 	double v_wind_10 = weather.m_wspd;
-	double I_bn = weather.m_beam;
+	double I_bn = weather.m_beam;           //[W/m2]
 
 
 	int n_flux_y = (int)flux_map_input->nrows();
@@ -413,9 +410,9 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 	soln.v_wind_10 = weather.m_wspd;
 	soln.p_amb = weather.m_pres * 100.0;
 
-	soln.dni = I_bn;
-	soln.field_eff = field_eff;
-	soln.T_salt_cold_in = T_salt_cold_in;	
+	soln.dni = I_bn;                //[W/m2]
+	soln.field_eff = field_eff;     //[-]
+	soln.T_salt_cold_in = T_salt_cold_in;   //[K]	
 	soln.od_control = m_od_control;         // Initial defocus control (may be adjusted during the solution)
     soln.mode = input_operation_mode;
     soln.itermode = m_itermode;
@@ -621,7 +618,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 
 				if( m_E_su + m_t_su > 0.0 )
 				{
-					m_mode = C_csp_collector_receiver::STARTUP;		// If either are greater than 0, we're staring up but not finished
+					m_mode = C_csp_collector_receiver::STARTUP;		// If either are greater than 0, we're starting up but not finished
 					
 					// 4.28.15 twn: Startup energy also needs to consider energy consumed during time requirement, if that is greater than energy requirement
 						//q_startup = (m_E_su_prev - m_E_su) / (step / 3600.0)*1.E-6;
@@ -725,20 +722,20 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 	}
 
 	outputs.m_m_dot_salt_tot = m_dot_salt_tot*3600.0;		//[kg/hr] convert from kg/s
-	outputs.m_eta_therm = eta_therm;							//[-] RECEIVER thermal efficiency (includes radiation and convective losses. reflection losses are contained in receiver flux model)
+	outputs.m_eta_therm = eta_therm;						//[-] RECEIVER thermal efficiency (includes radiation and convective losses. reflection losses are contained in receiver flux model)
 	outputs.m_W_dot_pump = W_dot_pump / 1.E6;				//[MW] convert from W
 	outputs.m_q_conv_sum = q_conv_sum / 1.E6;				//[MW] convert from W
 	outputs.m_q_rad_sum = q_rad_sum / 1.E6;					//[MW] convert from W
 	outputs.m_Q_thermal = q_thermal / 1.E6;					//[MW] convert from W
 	outputs.m_T_salt_hot = T_salt_hot - 273.15;				//[C] convert from K
-	outputs.m_field_eff_adj = field_eff_adj;					//[-]
+	outputs.m_field_eff_adj = field_eff_adj;				//[-]
 	outputs.m_component_defocus = m_od_control;				//[-]
 	outputs.m_q_dot_rec_inc = q_dot_inc_sum / 1.E6;			//[MW] convert from W
 	outputs.m_q_startup = q_startup/1.E6;					//[MW-hr] convert from W-hr
 	outputs.m_dP_receiver = DELTAP*m_n_panels / m_n_lines / 1.E5;	//[bar] receiver pressure drop, convert from Pa
 	outputs.m_dP_total = Pres_D*10.0;						//[bar] total pressure drop, convert from MPa
 	outputs.m_vel_htf = u_coolant;							//[m/s]
-	outputs.m_T_salt_cold = T_salt_cold_in - 273.15;			//[C] convert from K
+	outputs.m_T_salt_cold = T_salt_cold_in - 273.15;		//[C] convert from K
 	outputs.m_m_dot_ss = m_dot_salt_tot_ss*3600.0;			//[kg/hr] convert from kg/s
 	outputs.m_q_dot_ss = q_thermal_ss / 1.E6;				//[MW] convert from W
 	outputs.m_f_timestep = f_rec_timestep;					//[-]

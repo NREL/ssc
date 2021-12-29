@@ -101,7 +101,7 @@ private:
 		double v_wind_10;			// Wind speed at 10m (m/s)
 		double p_amb;				// Ambient pressure (Pa)
 
-		double dni;					// DNI for this solution
+		double dni;					// DNI for this solution (W/m2)
 		double field_eff;			// Field efficiency for this solution
 
 		double od_control;          // Defocus control
@@ -159,7 +159,8 @@ private:
 	s_steady_state_soln m_mflow_soln_csky_prev;  // Steady state solution using clear-sky DNI from the last call to the model
 
 	bool use_previous_solution(const s_steady_state_soln& soln, const s_steady_state_soln& soln_prev);
-	util::matrix_t<double> calculate_flux_profiles(double dni, double field_eff, double od_control, const util::matrix_t<double> *flux_map_input);
+	util::matrix_t<double> calculate_flux_profiles(double dni /*W/m2*/, double field_eff /*-*/,
+                            double od_control /*-*/, const util::matrix_t<double>* flux_map_input);
 	void calculate_steady_state_soln(s_steady_state_soln &soln, double tol, int max_iter = 50);
 	void solve_for_mass_flow(s_steady_state_soln &soln);
 	void solve_for_mass_flow_and_defocus(s_steady_state_soln &soln, double m_dot_htf_max, const util::matrix_t<double> *flux_map_input);
