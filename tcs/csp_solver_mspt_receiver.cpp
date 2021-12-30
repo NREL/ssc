@@ -2058,7 +2058,7 @@ void C_mspt_receiver::solve_for_mass_flow_and_defocus(s_steady_state_soln &soln,
 			if (err_od < m_tol_od)
 			{
 				soln.itermode = 1;
-				soln.od_control = 1.0;
+				//soln.od_control = 1.0;
 				rec_is_defocusing = false;
 			}
 			else

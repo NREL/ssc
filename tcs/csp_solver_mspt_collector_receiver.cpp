@@ -30,7 +30,8 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 	{C_csp_mspt_collector_receiver::E_FIELD_ETA_OPT, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 	{C_csp_mspt_collector_receiver::E_FIELD_ADJUST, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 
-	{C_csp_mspt_collector_receiver::E_Q_DOT_INC, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+    {C_csp_mspt_collector_receiver::E_REC_DEFOCUS, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+    {C_csp_mspt_collector_receiver::E_Q_DOT_INC, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 	{C_csp_mspt_collector_receiver::E_ETA_THERMAL, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 	{C_csp_mspt_collector_receiver::E_Q_DOT_THERMAL, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 	{C_csp_mspt_collector_receiver::E_M_DOT_HTF, C_csp_reported_outputs::TS_WEIGHTED_AVE},
@@ -165,7 +166,8 @@ void C_csp_mspt_collector_receiver::call(const C_csp_weatherreader::S_outputs &w
 	mc_reported_outputs.value(E_FIELD_ETA_OPT, mc_pt_heliostatfield.ms_outputs.m_eta_field);			//[-]
 	mc_reported_outputs.value(E_FIELD_ADJUST, mc_pt_heliostatfield.ms_outputs.m_sf_adjust_out);			//[-]
 
-	mc_reported_outputs.value(E_Q_DOT_INC, mc_pt_receiver.ms_outputs.m_q_dot_rec_inc);	//[MWt]
+    mc_reported_outputs.value(E_REC_DEFOCUS, mc_pt_receiver.ms_outputs.m_component_defocus);    //[-]
+    mc_reported_outputs.value(E_Q_DOT_INC, mc_pt_receiver.ms_outputs.m_q_dot_rec_inc);	//[MWt]
 	mc_reported_outputs.value(E_ETA_THERMAL, mc_pt_receiver.ms_outputs.m_eta_therm);		//[-]
 	mc_reported_outputs.value(E_Q_DOT_THERMAL, mc_pt_receiver.ms_outputs.m_Q_thermal);	//[MWt]
 	mc_reported_outputs.value(E_M_DOT_HTF, mc_pt_receiver.ms_outputs.m_m_dot_salt_tot);	//[kg/hr]
@@ -225,7 +227,8 @@ void C_csp_mspt_collector_receiver::off(const C_csp_weatherreader::S_outputs &we
 	mc_reported_outputs.value(E_FIELD_ETA_OPT, mc_pt_heliostatfield.ms_outputs.m_eta_field);			//[-]
 	mc_reported_outputs.value(E_FIELD_ADJUST, mc_pt_heliostatfield.ms_outputs.m_sf_adjust_out);			//[-]
 
-	mc_reported_outputs.value(E_Q_DOT_INC, mc_pt_receiver.ms_outputs.m_q_dot_rec_inc);	//[MWt]
+    mc_reported_outputs.value(E_REC_DEFOCUS, mc_pt_receiver.ms_outputs.m_component_defocus);    //[-]
+    mc_reported_outputs.value(E_Q_DOT_INC, mc_pt_receiver.ms_outputs.m_q_dot_rec_inc);	//[MWt]
 	mc_reported_outputs.value(E_ETA_THERMAL, mc_pt_receiver.ms_outputs.m_eta_therm);		//[-]
 	mc_reported_outputs.value(E_Q_DOT_THERMAL, mc_pt_receiver.ms_outputs.m_Q_thermal);	//[MWt]
 	mc_reported_outputs.value(E_M_DOT_HTF, mc_pt_receiver.ms_outputs.m_m_dot_salt_tot);	//[kg/hr]
