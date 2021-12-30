@@ -170,8 +170,24 @@ static var_info _cm_vtab_etes_ptes[] = {
         // Design Outputs here:
         // ****************************************************************************************************************************************
             // System
-    { SSC_OUTPUT, SSC_NUMBER, "system_capacity",             "System capacity",                         "kWe",          "",                                  "System Design Calc",                             "*",                                                                "",              "" },
-    { SSC_OUTPUT, SSC_NUMBER, "nameplate",                   "Nameplate capacity",                      "MWe",          "",                                  "System Design Calc",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "system_capacity",                 "System capacity (discharge)",                         "kWe",          "",                                  "System Design Calc",             "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "nameplate",                       "Nameplate capacity (discharge)",                      "MWe",          "",                                  "System Design Calc",             "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "rte_thermo",                      "Round-trip efficiency of working fluid cycles",       "MWe",          "",                                  "System Design Calc",             "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "rte_net",                         "Net round-trip efficiency considering all parasitics","MWe",          "",                                  "System Design Calc",             "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "charge_capacity",                 "Total electricity consumption at design-point charge","MWe",          "",                                  "System Design Calc",             "*",                                                                "",              "" },
+                                                                 
+            // Heater                                            
+    { SSC_OUTPUT, SSC_NUMBER, "W_dot_in_thermo_charge_des",      "Heat pump power into working fluid",                  "MWe",          "",                                  "Heat Pump",                      "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "q_dot_hot_out_charge_des",        "Heat pump heat output",                               "MWt",          "",                                  "Heat Pump",                      "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "q_dot_cold_in_charge_des",        "Heat pump heat input",                                "MWt",          "",                                  "Heat Pump",                      "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "W_dot_elec_parasitic_charge_des", "Heat pump parasitic power",                           "MWe",          "",                                  "Heat Pump",                      "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "W_dot_in_charge_net_des",         "Heat pump total power consumption",                   "MWe",          "",                                  "Heat Pump",                      "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "COP_net_des",                     "Heat pump net COP",                                   "MWe",          "",                                  "Heat Pump",                      "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "m_dot_HT_htf_charge_des",         "Heat pump HT HTF mass flow rate",                     "kg/s",         "",                                  "Heat Pump",                      "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "W_dot_HT_htf_pump_des",           "Heat pump HT HTF pump power",                         "MWe",          "",                                  "Heat Pump",                      "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "m_dot_CT_htf_charge_des",         "Heat pump CT HTF mass flow rate",                     "kg/s",         "",                                  "Heat Pump",                      "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "W_dot_CT_htf_pump_des",           "Heat pump CT HTF pump power",                         "MWe",          "",                                  "Heat Pump",                      "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "E_heater_su_des",                 "Heat pump startup energy",                            "MWt-hr",       "",                                  "Heat Pump",                      "*",                                                                "",              "" },
 
 
 
@@ -678,7 +694,7 @@ public:
                         m_dot_CT_htf_gen_calc, cp_CT_htf_gen_calc, W_dot_CT_htf_pump_gen_calc);
 
             // Heat Pump
-        double W_dot_in_charge_calc;        //[MWe] power into cycle working fluid. does not consider electric parasitics (e.g. cooling fan, motor inefficiencies, etc.)
+        double W_dot_in_thermo_charge_calc;        //[MWe] power into cycle working fluid. does not consider electric parasitics (e.g. cooling fan, motor inefficiencies, etc.)
         double q_dot_cold_in_charge_calc;   //[MWt]
         double W_dot_elec_parasitic_charge_calc;    //[MWe]
         double W_dot_in_net_charge_calc;    //[MWe]
@@ -696,7 +712,7 @@ public:
 
         double E_su_charge_calc;            //[MWt-hr]
 
-        c_heat_pump.get_design_parameters(W_dot_in_charge_calc, q_dot_cold_in_charge_calc,
+        c_heat_pump.get_design_parameters(W_dot_in_thermo_charge_calc, q_dot_cold_in_charge_calc,
                         W_dot_elec_parasitic_charge_calc, W_dot_in_net_charge_calc,
                         COP_net_calc,
                         m_dot_HT_htf_charge_calc, cp_HT_htf_charge_calc, W_dot_HT_htf_pump_charge_calc,
@@ -732,9 +748,14 @@ public:
         double system_capacity = plant_net_capacity*1.E3;         //[kWe], convert from MWe
 
             // Calculate net system *charging* metrics
-        //double plant_charging_power_in = W_dot_in_charge_calc - W_dot_elec_parasitic_charge_calc -
-        //                        W_dot_HT_htf_pump_charge_calc - W_dot_CT_htf_pump_charge_calc -
-        //                        W_dot_b
+            // *** Currently model does NOT calculate BOP during charging
+            //       should consider adding this for PTES ***
+        double plant_charging_power_in = W_dot_in_thermo_charge_calc + W_dot_elec_parasitic_charge_calc +
+                                W_dot_HT_htf_pump_charge_calc + W_dot_CT_htf_pump_charge_calc +
+                                W_dot_fixed_parasitic_design;   //[MWe]
+
+            // Calculate net RTE
+        double RTE_net = plant_net_capacity / (plant_charging_power_in / heater_mult);      //[-]
 
         // *****************************************************
         // System design is complete, so calculate final design outputs like cost, capacity, etc.
@@ -817,8 +838,26 @@ public:
 
         // Assign cmod variables that are required by downstream models or represent design-point
             // System
-        assign("system_capacity", (ssc_number_t)system_capacity);           //[kWe]
-        assign("nameplate", (ssc_number_t)plant_net_capacity);              //[MWe]
+        assign("system_capacity", (ssc_number_t)system_capacity);           //[kWe] Discharge capacity
+        assign("nameplate", (ssc_number_t)plant_net_capacity);              //[MWe] Discharge capacity
+        assign("rte_thermo", (ssc_number_t)RTE_therm);                      //[-] Round-trip efficiency of working fluid cycles
+        assign("rte_net", (ssc_number_t)RTE_net);                           //[-] Round-trip efficiency considering all parasitics
+        assign("charge_capacity", (ssc_number_t)plant_charging_power_in);   //[MWe] Total electricity consumption at design-point charge
+
+            // Heater
+        assign("W_dot_in_thermo_charge_des", W_dot_in_thermo_charge_calc);  //[MWe]
+        assign("q_dot_hot_out_charge_des", q_dot_hot_in_gen_calc);          //[MWt]
+        assign("q_dot_cold_in_charge_des", q_dot_cold_in_charge_calc);      //[MWt]
+        assign("W_dot_elec_parasitic_charge_des", W_dot_elec_parasitic_charge_calc);    //[MWe]
+        assign("W_dot_in_charge_net_des", W_dot_in_net_charge_calc);        //[MWe]
+        assign("COP_net_des", COP_net_calc);                                //[-]
+        assign("m_dot_HT_htf_charge_des", m_dot_HT_htf_charge_calc);        //[kg/s]
+        assign("W_dot_HT_htf_pump_des", W_dot_HT_htf_pump_charge_calc);     //[MWe]
+        assign("m_dot_CT_htf_charge_des", m_dot_CT_htf_charge_calc);        //[kg/s]
+        assign("W_dot_CT_htf_pump_des", W_dot_CT_htf_pump_charge_calc);     //[MWe]
+        assign("E_heater_su_des", E_su_charge_calc);                        //[MWt-hr]
+
+
 
         return;
     }
