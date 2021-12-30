@@ -281,8 +281,7 @@ void C_pc_gen::call(const C_csp_weatherreader::S_outputs &weather,
 	out_solver.m_q_dot_htf = q_to_pb;				//[MWt]
 	out_solver.m_m_dot_htf = m_dot*3600.0;			//[kg/hr]
 	
-	out_solver.m_W_dot_htf_pump = 0.0;		//[MWe]
-	out_solver.m_W_cool_par = 0.0;			//[MWe]
+    out_solver.m_W_dot_elec_parasitics_tot = 0.0;   //[MWe]
 
 	mc_reported_outputs.value(E_ETA_THERMAL, eta_cycle);	//[-]
 

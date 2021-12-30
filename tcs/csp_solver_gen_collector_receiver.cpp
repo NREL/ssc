@@ -532,9 +532,6 @@ void C_csp_gen_collector_receiver::call(const C_csp_weatherreader::S_outputs &we
 	cr_out_solver.m_q_thermal = q_sf;							//[MWt]
 	cr_out_solver.m_T_salt_hot = m_T_htf_hot_fixed-273.15;		//[C]
 	
-	cr_out_solver.m_W_dot_col_tracking = 0.0;		//[MWe]
-	cr_out_solver.m_W_dot_htf_pump = 0.0;			//[MWe]
-
     mc_reported_outputs.value(E_Q_DOT_FIELD_INC, q_dot_field_inc);  //[MWt]
 	mc_reported_outputs.value(E_ETA_FIELD, eta_opt_sf);		//[-]
 	mc_reported_outputs.value(E_Q_DOT_REC_INC, q_dot_rec_inc);	//[-]
@@ -579,8 +576,6 @@ void C_csp_gen_collector_receiver::off(const C_csp_weatherreader::S_outputs &wea
 	cr_out_solver.m_m_dot_salt_tot = 0.0;		//[kg/hr]
 	cr_out_solver.m_q_thermal = 0.0;			//[MWt]
 	cr_out_solver.m_T_salt_hot = 0.0;			//[C]
-	cr_out_solver.m_W_dot_col_tracking = 0.0;	//[MWe]
-	cr_out_solver.m_W_dot_htf_pump = 0.0;		//[MWe]
 	cr_out_solver.m_component_defocus = 1.0;	//[-]
 
 	mc_reported_outputs.value(E_Q_DOT_FIELD_INC, 0.0);	//[MWt]
@@ -590,13 +585,6 @@ void C_csp_gen_collector_receiver::off(const C_csp_weatherreader::S_outputs &wea
 	mc_reported_outputs.value(E_F_SFHL_QDNI, 0.0);		//[-]
 	mc_reported_outputs.value(E_F_SFHL_QWSPD, 0.0);		//[-]
 	mc_reported_outputs.value(E_F_SFHL_QTDRY, 0.0);		//[-]
-
-
-	//cr_out_report.m_q_dot_field_inc = 0.0;		//[MWt]
-	//cr_out_report.m_eta_field = 0.0;			//[-]
-	//cr_out_report.m_q_dot_rec_inc = 0.0;		//[MWt]
-	//cr_out_report.m_eta_thermal = 0.0;			//[-]
-	//cr_out_report.m_q_dot_piping_loss = 0.0;	//[MWt]
 
 	return;
 }
