@@ -121,7 +121,7 @@ public:
             ss_receiver->m_flow_type = as_integer("Flow_type");                 //[-]
             ss_receiver->m_crossover_shift = as_integer("crossover_shift");     //[-]
             ss_receiver->m_hl_ffact = as_double("hl_ffact");                    //[-]
-            ss_receiver->m_A_sf = as_double("A_sf");                            //[m2]
+            //ss_receiver->m_A_sf = as_double("A_sf");                            //[m2]
             ss_receiver->m_piping_loss_coefficient = as_double("piping_loss_coefficient");  //[W/m2-K]
             ss_receiver->m_pipe_length_add = as_double("piping_length_const");      //[m]
             ss_receiver->m_pipe_length_mult = as_double("piping_length_mult");      //[-]

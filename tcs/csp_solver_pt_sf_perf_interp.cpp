@@ -313,6 +313,14 @@ void C_pt_sf_perf_interp::call(const C_csp_weatherreader::S_outputs &weather, do
 
 	}
 
+    for (int j = 0; j < m_n_flux_y; j++)
+    {
+        for (int i = 0; i < m_n_flux_x; i++)
+        {
+            ms_outputs.m_flux_map_out(j, i) *= ms_params.m_A_sf;
+        }
+    }
+
 	ms_outputs.m_q_dot_field_inc = weather.m_beam*ms_params.m_A_sf*1.E-6;		//[MWt]
 
 	ms_outputs.m_pparasi = pparasi / 1.E3;		//[MW], convert from kJ/hr: Parasitic power for tracking

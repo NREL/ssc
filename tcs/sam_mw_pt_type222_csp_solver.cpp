@@ -223,7 +223,7 @@ public:
 		mspt_receiver.m_rec_qf_delay = value(P_rec_qf_delay);		//[-] Energy-based receiver startup delay (fraction of rated thermal power)
 		mspt_receiver.m_m_dot_htf_max = value(P_m_dot_htf_max);		//[kg/hr] Maximum mass flow rate through receiver
 		mspt_receiver.m_m_dot_htf_max_frac = std::numeric_limits<double>::quiet_NaN();
-		mspt_receiver.m_A_sf = value(P_A_sf);						//[m^2] Solar field area
+		//mspt_receiver.m_A_sf = value(P_A_sf);						//[m^2] Solar field area
 
 		// 8.12.15 twn: have added tower piping thermal losses to receiver performance model
 		//  ....... if we want to be consistent with old model, need to set these parameters to 0 here

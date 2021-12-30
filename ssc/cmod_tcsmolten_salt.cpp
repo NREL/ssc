@@ -1382,7 +1382,8 @@ public:
                 e_act_sol, e_pass_sol, e_act_therm, e_pass_therm,
                 active_surface_mesh_type, floor_and_cover_mesh_type, lips_mesh_type,
                 as_double("piping_loss_coefficient"), as_double("piping_length_const"), as_double("piping_length_mult"),
-                as_double("A_sf"), as_double("h_tower"), as_double("T_htf_hot_des"),
+                //as_double("A_sf"),
+                as_double("h_tower"), as_double("T_htf_hot_des"),
                 as_double("T_htf_cold_des"), as_double("f_rec_min"), q_dot_rec_des,
                 as_double("rec_su_delay"), as_double("rec_qf_delay"), as_double("csp.pt.rec.max_oper_frac"),
                 as_double("eta_pump") ));
@@ -1414,7 +1415,7 @@ public:
                 ss_receiver->m_flow_type = as_integer("Flow_type");
                 ss_receiver->m_crossover_shift = as_integer("crossover_shift");
                 ss_receiver->m_hl_ffact = as_double("hl_ffact");
-                ss_receiver->m_A_sf = as_double("A_sf");
+                //ss_receiver->m_A_sf = as_double("A_sf");
                 ss_receiver->m_piping_loss_coefficient = as_double("piping_loss_coefficient");
                 ss_receiver->m_pipe_length_add = as_double("piping_length_const");  //[m]
                 ss_receiver->m_pipe_length_mult = as_double("piping_length_mult");      //[-]
@@ -1442,7 +1443,7 @@ public:
                 trans_receiver->m_flow_type = as_integer("Flow_type");
                 trans_receiver->m_crossover_shift = as_integer("crossover_shift");
                 trans_receiver->m_hl_ffact = as_double("hl_ffact");
-                trans_receiver->m_A_sf = as_double("A_sf");
+                //trans_receiver->m_A_sf = as_double("A_sf");
                 trans_receiver->m_piping_loss_coeff = as_double("piping_loss_coefficient");                       //[Wt/m]
                 trans_receiver->m_pipe_length_add = as_double("piping_length_const");   //[m]
                 trans_receiver->m_pipe_length_mult = as_double("piping_length_mult");       //[-]

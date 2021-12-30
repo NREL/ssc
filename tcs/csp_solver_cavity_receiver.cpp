@@ -58,7 +58,8 @@ C_cavity_receiver::C_cavity_receiver(double dni_des /*W/m2*/, double hel_stow_de
     double eps_active_sol /*-*/, double eps_passive_sol /*-*/, double eps_active_therm /*-*/, double eps_passive_therm /*-*/,
     E_mesh_types active_surface_mesh_type, E_mesh_types floor_and_cover_mesh_type, E_mesh_types lips_mesh_type,
     double piping_loss_coefficient /*Wt/m2-K*/, double pipe_length_add /*m*/, double pipe_length_mult /*-*/,
-    double A_sf /*m2*/, double h_tower /*m*/, double T_htf_hot_des /*C*/,
+    //double A_sf /*m2*/,
+    double h_tower /*m*/, double T_htf_hot_des /*C*/,
     double T_htf_cold_des /*C*/, double f_rec_min /*-*/, double q_dot_rec_des /*MWt*/,
     double rec_su_delay /*hr*/, double rec_qf_delay /*-*/, double m_dot_htf_max_frac /*-*/,
     double eta_pump /*-*/)
@@ -92,7 +93,7 @@ C_cavity_receiver::C_cavity_receiver(double dni_des /*W/m2*/, double hel_stow_de
     m_pipe_length_add = pipe_length_add;    //[m]
     m_pipe_length_mult = pipe_length_mult;  //[-]
 
-    m_A_sf = A_sf;      //[m2]
+    //m_A_sf = A_sf;      //[m2]
 
     m_area_active_total = std::numeric_limits<double>::quiet_NaN();
     m_d_in_rec_tube = std::numeric_limits<double>::quiet_NaN();
@@ -3001,7 +3002,8 @@ void C_cavity_receiver::call(const C_csp_weatherreader::S_outputs& weather,
             throw(C_csp_exception("cavity model currently requires that flux map contains 1 value per panel"));
         }
 
-        double flux_scale_geometry = m_A_sf/(m_area_active_total/((double)n_flux_x * (double)n_flux_y));
+        //double flux_scale_geometry = m_A_sf/(m_area_active_total/((double)n_flux_x * (double)n_flux_y));
+        double flux_scale_geometry = 1.0/(m_area_active_total/((double)n_flux_x * (double)n_flux_y));
 
         Eigen::MatrixXd EsolarFlux(mE_areas.rows(), 1);
         EsolarFlux.setConstant(0.0);
@@ -3711,7 +3713,8 @@ void cavity_receiver_helpers::test_cavity_case() {
         e_act_sol /*-*/, e_pass_sol /*-*/, e_act_therm /*-*/, e_pass_therm /*-*/,
         active_surface_mesh_type, floor_and_cover_mesh_type, lips_mesh_type,
         piping_loss /*Wt/m*/, piping_length_const /*m*/, piping_length_mult /*-*/,
-        A_sf /*m2*/, h_tower /*m*/, T_htf_hot_des /*C*/,
+        //A_sf /*m2*/,
+        h_tower /*m*/, T_htf_hot_des /*C*/,
         T_htf_cold_des /*C*/, f_rec_min /*-*/, q_dot_rec_des /*MWt*/,
         rec_su_delay /*hr*/, rec_qf_delay /*-*/, m_dot_htf_max_frac /*-*/,
         eta_pump /*-*/);

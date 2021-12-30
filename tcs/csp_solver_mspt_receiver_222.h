@@ -177,7 +177,7 @@ public:
 	double m_od_tube;				//[mm], convert to [m] in init()
 	double m_th_tube;				//[mm], convert to [m] in init()
 	double m_hl_ffact;				//[-]
-	double m_A_sf;					//[m2]
+	//double m_A_sf;					//[m2]
 
 	// 8.10.2015 twn: add tower piping thermal losses to receiver performance
 	//double m_pipe_loss_per_m;		//[Wt/m]
