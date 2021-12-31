@@ -627,10 +627,25 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 	}
     
 	
-	if (field_eff < m_eta_field_iter_prev && m_od_control < 1.0)
-	{	// Suggests controller applied defocus, so reset *controller* defocus
-		m_od_control = fmin(m_od_control + (1.0 - field_eff / m_eta_field_iter_prev), 1.0);
-	}
+    //if (field_eff < m_eta_field_iter_prev && m_od_control < 1.0)
+    //{	// In a prior call-iteration this timestep, the component control was set < 1.0
+    //    //     indicating that receiver requested defocus due to mass flow rate constraint
+    //    // This call, the plant requests the field to defocus. Under the new plant defocus
+    //    //     the corresponding required *component* defocus decreases, because less flux on receiver
+    //    // So this line helps "correctly" allocate defocus from the component to the controller
+    //    // But, this likely makes the defocus iteration trickier because the iterator
+    //    //    won't see a reponse in output mass flow or heat until m_od_control is back to 1.0
+    //    // Component defocus also depends on inlet temperature, which can make current method tricky
+    //    //    because the mass_flow_and_defocus code will only adjust m_od_control down, not up
+    //    //    and then following calls-iterations use the previous m_od_control as a baseline
+    //    //    unless adjusted here.
+    //	m_od_control = fmin(m_od_control + (1.0 - field_eff / m_eta_field_iter_prev), 1.0);
+    //}
+    // So maybe just try resetting m_od_control each call?
+    //      This will also force correct allocation of defocus. Might be a bit slower because it's calling
+    //           the mspt component defocus method more frequently, but seems more straight-forward
+    //           and might make the upstream problem easier to solve or at least easier to understand
+    m_od_control = 1.0;
 
 
 	s_steady_state_soln soln, soln_actual, soln_clearsky;
