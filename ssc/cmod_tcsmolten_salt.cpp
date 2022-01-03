@@ -683,6 +683,7 @@ public:
 			if (weather_reader.m_weather_data_provider->has_message()) log(weather_reader.m_weather_data_provider->message(), SSC_WARNING);
 		}
 
+        size_t n_steps_full = weather_reader.m_weather_data_provider->nrecords(); //steps_per_hour * 8760;
         weather_reader.m_trackmode = 0;
         weather_reader.m_tilt = 0.0;
         weather_reader.m_azimuth = 0.0;
@@ -1261,57 +1262,6 @@ public:
             }
         }
 
-        //heliostat field class
-        C_pt_sf_perf_interp heliostatfield;
-
-        heliostatfield.ms_params.m_p_start = as_double("p_start");      //[kWe-hr] Heliostat startup energy
-        heliostatfield.ms_params.m_p_track = as_double("p_track");      //[kWe] Heliostat tracking power
-        heliostatfield.ms_params.m_hel_stow_deploy = as_double("hel_stow_deploy");  // N/A
-        heliostatfield.ms_params.m_v_wind_max = as_double("v_wind_max");            // N/A
-        if (rec_type == 0) {
-            heliostatfield.ms_params.m_n_flux_x = (int)as_double("n_flux_x");      // sp match
-        }
-        else if (rec_type == 1) {
-            heliostatfield.ms_params.m_n_flux_x = mt_flux_maps.ncols();     // for multi-surface cav receiver, these values need to match
-        }
-        heliostatfield.ms_params.m_n_flux_y = (int) as_double("n_flux_y");      // sp match
-
-        if (field_model_type != 3)
-        {
-            heliostatfield.ms_params.m_eta_map = mt_eta_map;
-            heliostatfield.ms_params.m_eta_map_aod_format = false;
-            heliostatfield.ms_params.m_flux_maps = mt_flux_maps;
-            heliostatfield.ms_params.m_N_hel = as_integer("N_hel");
-            heliostatfield.ms_params.m_A_sf = as_double("A_sf");        //[m2]
-        }
-        else
-        {
-            heliostatfield.ms_params.m_eta_map = as_matrix("eta_map");
-            heliostatfield.ms_params.m_eta_map_aod_format = as_boolean("eta_map_aod_format");
-            heliostatfield.ms_params.m_flux_maps = as_matrix("flux_maps");
-            heliostatfield.ms_params.m_N_hel = as_integer("N_hel");
-            heliostatfield.ms_params.m_A_sf = as_double("A_sf");        //[m2]
-        }
-
-
-
-        //Load the solar field adjustment factors
-        sf_adjustment_factors sf_haf(this);
-        size_t n_steps_full = weather_reader.m_weather_data_provider->nrecords(); //steps_per_hour * 8760;
-        if (!sf_haf.setup((int)n_steps_full))
-            throw exec_error("tcsmolten_salt", "failed to setup sf adjustment factors: " + sf_haf.error());
-        //allocate array to pass to tcs
-        heliostatfield.ms_params.m_sf_adjust.resize( sf_haf.size() );
-        for( int i=0; i<sf_haf.size(); i++)     
-            heliostatfield.ms_params.m_sf_adjust.at(i) = sf_haf(i);
-
-        // Set callback information
-        heliostatfield.mf_callback = ssc_cmod_solarpilot_callback;
-        heliostatfield.m_cdata = (void*)this;
-
-        // Try running pt heliostat init() call just for funsies
-            // What happens when no callback to reference?
-        //heliostatfield.init();
 
 
         //// *********************************************************
@@ -1329,10 +1279,10 @@ public:
         // Calculate external receiver area, height, diameter here
         // Calculate cavity receiver area and height below. Don't set diameter or aspect ratio for cavity receiver
         if(rec_type == 0){
-            H_rec = as_double("rec_height");
-            double rec_aspect = as_double("rec_aspect");
-            D_rec = H_rec / rec_aspect;
-            A_rec = H_rec * D_rec * 3.1415926;
+            H_rec = as_double("rec_height");                //[m]
+            double rec_aspect = as_double("rec_aspect");    //[-]
+            D_rec = H_rec / rec_aspect;                     //[m]
+            A_rec = H_rec * D_rec * 3.1415926;              //[m2]
         }
 
         std::unique_ptr<C_pt_receiver> receiver;
@@ -1525,6 +1475,62 @@ public:
 
         // Test mspt_receiver initialization
         //receiver.init();
+
+
+        // *******************************
+        // *******************************
+        // Construct heliostat field class after receiver
+        //    so it can use the active receiver area
+        C_pt_sf_perf_interp heliostatfield(A_rec);
+
+        heliostatfield.ms_params.m_p_start = as_double("p_start");      //[kWe-hr] Heliostat startup energy
+        heliostatfield.ms_params.m_p_track = as_double("p_track");      //[kWe] Heliostat tracking power
+        heliostatfield.ms_params.m_hel_stow_deploy = as_double("hel_stow_deploy");  // N/A
+        heliostatfield.ms_params.m_v_wind_max = as_double("v_wind_max");            // N/A
+        if (rec_type == 0) {
+            heliostatfield.ms_params.m_n_flux_x = (int)as_double("n_flux_x");      // sp match
+        }
+        else if (rec_type == 1) {
+            heliostatfield.ms_params.m_n_flux_x = mt_flux_maps.ncols();     // for multi-surface cav receiver, these values need to match
+        }
+        heliostatfield.ms_params.m_n_flux_y = (int)as_double("n_flux_y");      // sp match
+
+        if (field_model_type != 3)
+        {
+            heliostatfield.ms_params.m_eta_map = mt_eta_map;
+            heliostatfield.ms_params.m_eta_map_aod_format = false;
+            heliostatfield.ms_params.m_flux_maps = mt_flux_maps;
+            heliostatfield.ms_params.m_N_hel = as_integer("N_hel");
+            heliostatfield.ms_params.m_A_sf = as_double("A_sf");        //[m2]
+        }
+        else
+        {
+            heliostatfield.ms_params.m_eta_map = as_matrix("eta_map");
+            heliostatfield.ms_params.m_eta_map_aod_format = as_boolean("eta_map_aod_format");
+            heliostatfield.ms_params.m_flux_maps = as_matrix("flux_maps");
+            heliostatfield.ms_params.m_N_hel = as_integer("N_hel");
+            heliostatfield.ms_params.m_A_sf = as_double("A_sf");        //[m2]
+        }
+
+
+
+        //Load the solar field adjustment factors
+        sf_adjustment_factors sf_haf(this);
+        if (!sf_haf.setup((int)n_steps_full))
+            throw exec_error("tcsmolten_salt", "failed to setup sf adjustment factors: " + sf_haf.error());
+        //allocate array to pass to tcs
+        heliostatfield.ms_params.m_sf_adjust.resize(sf_haf.size());
+        for (int i = 0; i < sf_haf.size(); i++)
+            heliostatfield.ms_params.m_sf_adjust.at(i) = sf_haf(i);
+
+        // Set callback information
+        heliostatfield.mf_callback = ssc_cmod_solarpilot_callback;
+        heliostatfield.m_cdata = (void*)this;
+
+        // Try running pt heliostat init() call just for funsies
+            // What happens when no callback to reference?
+        //heliostatfield.init();
+
 
         // Now try to instantiate mspt_collector_receiver
         C_csp_mspt_collector_receiver collector_receiver(heliostatfield, *receiver);

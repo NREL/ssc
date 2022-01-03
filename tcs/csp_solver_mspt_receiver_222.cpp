@@ -893,7 +893,7 @@ util::matrix_t<double> C_mspt_receiver_222::calculate_flux_profiles(double dni /
 			for (int i = 0; i<n_flux_y; i++)
 			{
                 //flux.at(j) += (*flux_map_input)(i, j) * dni * field_eff_adj * m_A_sf / 1000. / (CSP::pi * m_h_rec * m_d_rec / (double)n_flux_x);	//[kW/m^2];
-                flux.at(j) += (*flux_map_input)(i, j) * dni * total_defocus / 1000. / (CSP::pi*m_h_rec*m_d_rec / (double)n_flux_x);	//[kW/m^2];
+                flux.at(j) += (*flux_map_input)(i, j) * dni * total_defocus / 1000.; // / (CSP::pi*m_h_rec*m_d_rec / (double)n_flux_x);	//[kW/m^2];
 			}
 		}
 	}
