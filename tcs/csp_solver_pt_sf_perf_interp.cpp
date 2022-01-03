@@ -269,7 +269,8 @@ void C_pt_sf_perf_interp::call(const C_csp_weatherreader::S_outputs &weather, do
         }
 
 		eta_field = field_efficiency_table->interp(sunpos) * eff_scale;
-		eta_field = fmin(fmax(eta_field, 0.0), 1.0) * field_control * sf_adjust;		// Ensure physical behavior 
+        //eta_field = fmin(fmax(eta_field, 0.0), 1.0) * field_control * sf_adjust;		// Ensure physical behavior 
+        eta_field = fmin(fmax(eta_field, 0.0), 1.0) * sf_adjust;		// Ensure physical behavior and apply sf_adjust
 
 		//Set the active flux map
 		VectDoub pos_now(sunpos);
@@ -317,16 +318,16 @@ void C_pt_sf_perf_interp::call(const C_csp_weatherreader::S_outputs &weather, do
     {
         for (int i = 0; i < m_n_flux_x; i++)
         {
-            ms_outputs.m_flux_map_out(j, i) *= ms_params.m_A_sf;
+            ms_outputs.m_flux_map_out(j, i) *= ms_params.m_A_sf*eta_field;
         }
     }
 
 	ms_outputs.m_q_dot_field_inc = weather.m_beam*ms_params.m_A_sf*1.E-6;		//[MWt]
 
 	ms_outputs.m_pparasi = pparasi / 1.E3;		//[MW], convert from kJ/hr: Parasitic power for tracking
-	ms_outputs.m_eta_field = eta_field;			//[-], field efficiency
+	ms_outputs.m_eta_field = eta_field;			//[-], field efficiency * sf_adjust. plant defocus not applied
     ms_outputs.m_sf_adjust_out = sf_adjust;
-
+    ms_outputs.m_plant_defocus_out = field_control; //[-] plant defocus including field control events (e.g. wind stow speed)
 }
 
 void C_pt_sf_perf_interp::off(const C_csp_solver_sim_info &sim_info)

@@ -143,7 +143,8 @@ void C_csp_mspt_collector_receiver::call(const C_csp_weatherreader::S_outputs &w
 
 	// Get heliostat field outputs and set corresponding receiver inputs
 	C_pt_receiver::S_inputs receiver_inputs;
-	receiver_inputs.m_field_eff = mc_pt_heliostatfield.ms_outputs.m_eta_field;
+	//receiver_inputs.m_field_eff = mc_pt_heliostatfield.ms_outputs.m_eta_field;
+    receiver_inputs.m_plant_defocus = mc_pt_heliostatfield.ms_outputs.m_plant_defocus_out;  //[-]
 	receiver_inputs.m_input_operation_mode = inputs.m_input_operation_mode;
 	receiver_inputs.m_flux_map_input = &mc_pt_heliostatfield.ms_outputs.m_flux_map_out;
 	mc_pt_receiver.call(weather, htf_state_in, receiver_inputs, sim_info);

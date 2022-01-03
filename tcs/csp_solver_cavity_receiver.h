@@ -158,7 +158,7 @@ private:
 
     // ************************************
     // Call variables
-    double m_eta_field_iter_prev;	//[-] Efficiency from heliostat on last iteration. Maybe change if CR gets defocus signal from controller
+    //double m_eta_field_iter_prev;	//[-] Efficiency from heliostat on last iteration. Maybe change if CR gets defocus signal from controller
     double m_od_control;            //[-]
 
     // ************************************
