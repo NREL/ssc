@@ -2905,7 +2905,6 @@ void C_cavity_receiver::call(const C_csp_weatherreader::S_outputs& weather,
 	const C_csp_solver_sim_info& sim_info)
 {
     // Get inputs
-    //double field_eff = inputs.m_field_eff;					//[-]
     double plant_defocus = inputs.m_plant_defocus;      //[-]
     const util::matrix_t<double>* flux_map_input = inputs.m_flux_map_input;
     C_csp_collector_receiver::E_csp_cr_modes input_operation_mode = inputs.m_input_operation_mode;
@@ -2939,7 +2938,6 @@ void C_cavity_receiver::call(const C_csp_weatherreader::S_outputs& weather,
 
     bool rec_is_off = false;
     bool rec_is_defocusing = false;
-    //double field_eff_adj = 0.0;
 
     // Do an initial check to make sure the solar position called is valid
     // If it's not, return the output equal to zeros. Also check to make sure
@@ -3001,7 +2999,6 @@ void C_cavity_receiver::call(const C_csp_weatherreader::S_outputs& weather,
 
         // Adjust input field efficiency w/ component defocus, m_od_control
         // m_od_control will always = 1 until component (max mass flow rate) defocus loop built
-        //field_eff_adj = field_eff * m_od_control;
         double total_defocus = plant_defocus * m_od_control;    //[-]
 
         // *************************************************
@@ -3019,16 +3016,13 @@ void C_cavity_receiver::call(const C_csp_weatherreader::S_outputs& weather,
             throw(C_csp_exception("cavity model currently requires that flux map contains the same number of x nodes as number of panels"));
         }
 
-        //double flux_scale_geometry = m_A_sf/(m_area_active_total/((double)n_flux_x * (double)n_flux_y));
-        double flux_scale_geometry = 1.0/(m_area_active_total/((double)n_flux_x * (double)n_flux_y));
-
         Eigen::MatrixXd EsolarFlux(mE_areas.rows(), 1);
         EsolarFlux.setConstant(0.0);
         q_dot_inc = 0.0;
         for (size_t i_surf = 0; i_surf < mv_rec_surfs.size(); i_surf++) {
             if (std::isfinite(mv_rec_surfs[i_surf].vertices(0, 0)) && mv_rec_surfs[i_surf].is_active_surf) {
                 for (size_t i = 0; i < m_v_elems[i_surf].nrows(); i++) {
-                    EsolarFlux(m_surfIDs[i_surf](i, 0), 0) = (*flux_map_input)(0, i_surf) * total_defocus*1.E3;  // *I_bn; //*flux_scale_geometry; //[W/m2]
+                    EsolarFlux(m_surfIDs[i_surf](i, 0), 0) = (*flux_map_input)(0, i_surf) * total_defocus*1.E3;  // [W/m2]
                     q_dot_inc += EsolarFlux(m_surfIDs[i_surf](i, 0), 0)*mE_areas(m_surfIDs[i_surf](i,0));   //[W]
                 }
             }
@@ -3149,7 +3143,6 @@ void C_cavity_receiver::call(const C_csp_weatherreader::S_outputs& weather,
     }
 
     ms_outputs.m_W_dot_pump = W_dot_pump;                   //[MWe]
-    //ms_outputs.m_field_eff_adj = field_eff_adj;             //[-]
     ms_outputs.m_component_defocus = m_od_control;          //[-]
     ms_outputs.m_q_startup = q_startup / 1.E6;              //[MW-hr] convert from [W-hr]
     ms_outputs.m_dP_receiver = std::numeric_limits<double>::quiet_NaN();    //[bar]
@@ -3166,8 +3159,6 @@ void C_cavity_receiver::call(const C_csp_weatherreader::S_outputs& weather,
 
     ms_outputs.m_q_heattrace = 0.0;
     ms_outputs.m_clearsky = std::numeric_limits<double>::quiet_NaN();
-
-    //m_eta_field_iter_prev = field_eff;	//[-]
 
 	return;
 }
@@ -3187,7 +3178,6 @@ void C_cavity_receiver::off(const C_csp_weatherreader::S_outputs& weather,
     ms_outputs.m_q_rad_sum = 0.0;			//[MW] convert from W
     ms_outputs.m_Q_thermal = 0.0;			//[MW] convert from W
     ms_outputs.m_T_salt_hot = 0.0;			//[C] convert from K
-    //ms_outputs.m_field_eff_adj = 0.0;		//[-]
     ms_outputs.m_component_defocus = 1.0;	//[-]
     ms_outputs.m_q_dot_rec_inc = 0.0;		//[MW] convert from kW
     ms_outputs.m_q_startup = 0.0;			//[MW-hr] convert from W-hr
@@ -3235,7 +3225,6 @@ void C_cavity_receiver::converged()
 
     // Reset call variables
     m_od_control = 1.0;             //[-]
-    //m_eta_field_iter_prev = 1.0;    //[-]
 }
 
 double C_cavity_receiver::get_pumping_parasitic_coef()

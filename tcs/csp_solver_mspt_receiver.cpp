@@ -67,8 +67,6 @@ C_mspt_receiver::C_mspt_receiver()
 	m_m_dot_htf_max = std::numeric_limits<double>::quiet_NaN();
 
 	m_itermode = -1;
-	m_od_control = std::numeric_limits<double>::quiet_NaN();
-	//m_eta_field_iter_prev = std::numeric_limits<double>::quiet_NaN();
 	m_tol_od = std::numeric_limits<double>::quiet_NaN();
 	m_q_dot_inc_min = std::numeric_limits<double>::quiet_NaN();
 
@@ -217,7 +215,6 @@ void C_mspt_receiver::init()
 
 	m_mode = C_csp_collector_receiver::OFF;					//[-] 0 = requires startup, 1 = starting up, 2 = running
 	m_itermode = 1;			//[-] 1: Solve for design temp, 2: solve to match mass flow restriction
-	m_od_control = 1.0;			//[-] Additional defocusing for over-design conditions
 	m_tol_od = 0.001;		//[-] Tolerance for over-design iteration
 
 	double c_htf_des = field_htfProps.Cp((m_T_htf_hot_des + m_T_htf_cold_des) / 2.0)*1000.0;		//[J/kg-K] Specific heat at design conditions
@@ -239,7 +236,6 @@ void C_mspt_receiver::init()
 	m_mode_prev = m_mode;
 	m_E_su_prev = m_q_rec_des * m_rec_qf_delay;	//[W-hr] Startup energy
 	m_t_su_prev = m_rec_su_delay;				//[hr] Startup time requirement
-	//m_eta_field_iter_prev = 1.0;				//[-] Set to largest possible value
 
 	m_T_salt_hot_target += 273.15;			//[K] convert from C
 	
@@ -514,7 +510,6 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 	m_ncall++;
 	
 	// Get inputs
-	//double field_eff = inputs.m_field_eff;					//[-]
     double plant_defocus = inputs.m_plant_defocus;       //[-]
 	const util::matrix_t<double> *flux_map_input = inputs.m_flux_map_input;
 		// When this function is called from TCS solver, input_operation_mode should always be == 2
@@ -577,7 +572,6 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 
 	bool rec_is_off = false;
 	bool rec_is_defocusing = false;
-	//double field_eff_adj = 0.0;
 
 	double panel_req_preheat = m_tube_flux_preheat * m_od_tube * m_h_rec * m_n_t*1000;					// Panel absorbed solar energy required to meet preheat flux requirement (W)
 	double total_req_preheat = (m_tube_flux_preheat * m_od_tube * m_h_rec * m_n_t) * m_n_panels*1000;	// Total absorbed solar energy on all panels (W) required to meet preheat flux requirement
@@ -646,7 +640,7 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
     //      This will also force correct allocation of defocus. Might be a bit slower because it's calling
     //           the mspt component defocus method more frequently, but seems more straight-forward
     //           and might make the upstream problem easier to solve or at least easier to understand
-    m_od_control = 1.0;
+    double od_control = 1.0;
 
 
 	s_steady_state_soln soln, soln_actual, soln_clearsky;
@@ -657,10 +651,9 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 	soln.p_amb = weather.m_pres * 100.0;
 
 	soln.dni = I_bn;
-	//soln.field_eff = field_eff;
     soln.plant_defocus = plant_defocus;
 	soln.T_salt_cold_in = T_salt_cold_in;	// Cold salt inlet temperature (K)
-	soln.od_control = m_od_control;         // Initial defocus control (will be adjusted during the solution)
+	soln.od_control = od_control;           //[-] Initial defocus control (will be adjusted during the solution)
     soln.mode = input_operation_mode;
 	soln.itermode = m_itermode;
 	soln.rec_is_off = rec_is_off;
@@ -755,8 +748,7 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 	rec_is_off = soln.rec_is_off;
 	m_mode = soln.mode;
 	m_itermode = soln.itermode;
-	m_od_control = soln.od_control;
-	//field_eff_adj = field_eff * soln.od_control;
+	od_control = soln.od_control;
 
 	m_dot_salt_tot = soln.m_dot_salt_tot;
 	T_salt_hot = soln.T_salt_hot;
@@ -1342,7 +1334,7 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 		q_thermal_csky = q_thermal_steadystate = 0.0;
 
 		// Reset m_od_control
-		m_od_control = 1.0;		//[-]
+		od_control = 1.0;		//[-]
 
 		if (m_is_transient || m_is_startup_transient)
 		{
@@ -1357,14 +1349,13 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 
 	// Steady state outputs
 	outputs.m_m_dot_salt_tot = m_dot_salt_tot*3600.0;		//[kg/hr] convert from kg/s
-	outputs.m_eta_therm = eta_therm;							//[-] RECEIVER thermal efficiency (includes radiation and convective losses. reflection losses are contained in receiver flux model)
+	outputs.m_eta_therm = eta_therm;						//[-] RECEIVER thermal efficiency (includes radiation and convective losses. reflection losses are contained in receiver flux model)
 	outputs.m_W_dot_pump = W_dot_pump / 1.E6;				//[MW] convert from W
 	outputs.m_q_conv_sum = q_conv_sum / 1.E6;				//[MW] convert from W
 	outputs.m_q_rad_sum = q_rad_sum / 1.E6;					//[MW] convert from W
 	outputs.m_Q_thermal = q_thermal / 1.E6;					//[MW] convert from W
-	outputs.m_T_salt_hot = T_salt_hot - 273.15;		//[C] convert from K
-	//outputs.m_field_eff_adj = field_eff_adj;					//[-]
-	outputs.m_component_defocus = m_od_control;				//[-]
+	outputs.m_T_salt_hot = T_salt_hot - 273.15;		        //[C] convert from K
+	outputs.m_component_defocus = od_control;				//[-]
 	outputs.m_q_dot_rec_inc = q_dot_inc_sum / 1.E6;			//[MW] convert from W
 	outputs.m_q_startup = q_startup/1.E6;					//[MW-hr] convert from W-hr
 	outputs.m_dP_receiver = DELTAP*m_n_panels / m_n_lines / 1.E5;	//[bar] receiver pressure drop, convert from Pa
@@ -1422,7 +1413,6 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 
     ms_outputs = outputs;
 
-	//m_eta_field_iter_prev = field_eff;	//[-]
 }
 
 
@@ -1441,7 +1431,6 @@ void C_mspt_receiver::off(const C_csp_weatherreader::S_outputs &weather,
 	outputs.m_q_rad_sum = 0.0;			//[MW] convert from W
 	outputs.m_Q_thermal = 0.0;			//[MW] convert from W
 	outputs.m_T_salt_hot = 0.0;			//[C] convert from K
-	//outputs.m_field_eff_adj = 0.0;		//[-]
 	outputs.m_component_defocus = 1.0;	//[-]
 	outputs.m_q_dot_rec_inc = 0.0;		//[MW] convert from kW
 	outputs.m_q_startup = 0.0;			//[MW-hr] convert from W-hr
@@ -1543,8 +1532,6 @@ void C_mspt_receiver::converged()
 	m_t_su_prev = m_t_su;
 
 	m_itermode = 1;
-	m_od_control = 1.0;
-	//m_eta_field_iter_prev = 1.0;		//[-]
 
 	m_ncall = -1;
 
@@ -1567,7 +1554,6 @@ bool C_mspt_receiver::use_previous_solution(const s_steady_state_soln& soln, con
 	if (!soln_prev.rec_is_off &&
 		soln.dni == soln_prev.dni &&
 		soln.T_salt_cold_in == soln_prev.T_salt_cold_in &&
-		//soln.field_eff == soln_prev.field_eff &&
         soln.plant_defocus == soln_prev.plant_defocus &&
 		soln.od_control == soln_prev.od_control &&
 		soln.T_amb == soln_prev.T_amb &&
@@ -1589,7 +1575,6 @@ util::matrix_t<double> C_mspt_receiver::calculate_flux_profiles(double dni, doub
 	util::matrix_t<double> q_dot_inc, flux;
 	q_dot_inc.resize_fill(m_n_panels, 0.0);
 
-	//double field_eff_adj = field_eff * od_control;
     double total_defocus = plant_defocus * od_control;   //[-]
 
 	// Set flux at flux map resolution
@@ -1604,8 +1589,7 @@ util::matrix_t<double> C_mspt_receiver::calculate_flux_profiles(double dni, doub
 			flux.at(j) = 0.;
 			for (int i = 0; i<n_flux_y; i++)
 			{
-				//flux.at(j) += (*flux_map_input)(i, j) * dni * field_eff_adj*m_A_sf / 1000. / (CSP::pi*m_h_rec*m_d_rec / (double)n_flux_x);	//[kW/m^2];
-                flux.at(j) += (*flux_map_input)(i, j) * total_defocus; // *dni* / 1000.; // / (CSP::pi*m_h_rec*m_d_rec / (double)n_flux_x);	//[kW/m^2];
+                flux.at(j) += (*flux_map_input)(i, j) * total_defocus; //[kW/m^2];
 			}
 		}
 	}

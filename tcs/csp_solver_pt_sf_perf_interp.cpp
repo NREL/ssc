@@ -272,8 +272,10 @@ void C_pt_sf_perf_interp::call(const C_csp_weatherreader::S_outputs &weather, do
         }
 
 		eta_field = field_efficiency_table->interp(sunpos) * eff_scale;
-        //eta_field = fmin(fmax(eta_field, 0.0), 1.0) * field_control * sf_adjust;		// Ensure physical behavior 
-        eta_field = fmin(fmax(eta_field, 0.0), 1.0) * sf_adjust;		// Ensure physical behavior and apply sf_adjust
+
+        // Ensure physical behavior and apply sf_adjust
+        // Plant defocus is applied in receiver model
+        eta_field = fmin(fmax(eta_field, 0.0), 1.0) * sf_adjust;		
 
 		//Set the active flux map
 		VectDoub pos_now(sunpos);
