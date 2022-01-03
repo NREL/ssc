@@ -651,6 +651,7 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 	soln.p_amb = weather.m_pres * 100.0;
 
 	soln.dni = I_bn;
+    soln.dni_applied_to_measured = 1.0;     //[-]
     soln.plant_defocus = plant_defocus;
 	soln.T_salt_cold_in = T_salt_cold_in;	// Cold salt inlet temperature (K)
 	soln.od_control = od_control;           //[-] Initial defocus control (will be adjusted during the solution)
@@ -672,6 +673,8 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 		{
 			soln_actual = soln;  // Sets initial solution properties (inlet T, initial defocus control, etc.)
 			soln_actual.dni = I_bn;
+            soln_actual.dni_applied_to_measured = 1.0;  //[-]
+
 			if (use_previous_solution(soln_actual, m_mflow_soln_prev))  // Same conditions were solved in the previous call to this method
 				soln_actual = m_mflow_soln_prev;
 			else
@@ -687,6 +690,8 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 			{
 				soln_clearsky = soln;
 				soln_clearsky.dni = clearsky_adj;
+                soln_clearsky.dni_applied_to_measured = clearsky_adj / soln.dni;    //[-]
+
 				if (use_previous_solution(soln_clearsky, m_mflow_soln_csky_prev))  // Same conditions were solved in the previous call to this method
 					soln_clearsky = m_mflow_soln_csky_prev;
 				else
@@ -713,7 +718,7 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 		{
 			soln.m_dot_salt = soln_clearsky.m_dot_salt;
 			soln.rec_is_off = soln_clearsky.rec_is_off;
-			soln.q_dot_inc = calculate_flux_profiles(I_bn, plant_defocus, soln_clearsky.od_control, flux_map_input);  // Absorbed flux profiles at actual DNI and clear-sky defocus
+			soln.q_dot_inc = calculate_flux_profiles(I_bn, 1.0, plant_defocus, soln_clearsky.od_control, flux_map_input);  // Absorbed flux profiles at actual DNI and clear-sky defocus
 			calculate_steady_state_soln(soln, 0.00025);  // Solve energy balances at clearsky mass flow rate and actual DNI conditions
 		}
 
@@ -1553,6 +1558,7 @@ bool C_mspt_receiver::use_previous_solution(const s_steady_state_soln& soln, con
 	// Are these conditions identical to those used in the last solution?
 	if (!soln_prev.rec_is_off &&
 		soln.dni == soln_prev.dni &&
+        soln.dni_applied_to_measured == soln_prev.dni_applied_to_measured &&
 		soln.T_salt_cold_in == soln_prev.T_salt_cold_in &&
         soln.plant_defocus == soln_prev.plant_defocus &&
 		soln.od_control == soln_prev.od_control &&
@@ -1569,7 +1575,7 @@ bool C_mspt_receiver::use_previous_solution(const s_steady_state_soln& soln, con
 
 
 // Calculate flux profiles (interpolated to receiver panels at specified DNI) -> Same as C_mspt_receiver_222::calculate_flux_profiles
-util::matrix_t<double> C_mspt_receiver::calculate_flux_profiles(double dni, double plant_defocus,
+util::matrix_t<double> C_mspt_receiver::calculate_flux_profiles(double dni, double dni_scale /*-*/, double plant_defocus,
                                 double od_control, const util::matrix_t<double> *flux_map_input)
 {
 	util::matrix_t<double> q_dot_inc, flux;
@@ -1589,7 +1595,7 @@ util::matrix_t<double> C_mspt_receiver::calculate_flux_profiles(double dni, doub
 			flux.at(j) = 0.;
 			for (int i = 0; i<n_flux_y; i++)
 			{
-                flux.at(j) += (*flux_map_input)(i, j) * total_defocus; //[kW/m^2];
+                flux.at(j) += (*flux_map_input)(i, j) * total_defocus * dni_scale; //[kW/m^2];
 			}
 		}
 	}
@@ -2045,7 +2051,7 @@ void C_mspt_receiver::solve_for_mass_flow_and_defocus(s_steady_state_soln &soln,
 		if (soln.rec_is_off)
 			break;
 
-		soln.q_dot_inc = calculate_flux_profiles(soln.dni, soln.plant_defocus, soln.od_control, flux_map_input);  // Calculate flux profiles
+		soln.q_dot_inc = calculate_flux_profiles(soln.dni, soln.dni_applied_to_measured, soln.plant_defocus, soln.od_control, flux_map_input);  // Calculate flux profiles
 		solve_for_mass_flow(soln);	// Iterative calculation of mass flow to produce target outlet temperature
 
 		if (soln.rec_is_off)
@@ -2097,7 +2103,7 @@ void C_mspt_receiver::solve_for_defocus_given_flow(s_steady_state_soln &soln, co
 	{
 		soln.od_control = od;
 		if (odprev != odprev)
-			soln.q_dot_inc = calculate_flux_profiles(soln.dni, soln.plant_defocus, soln.od_control, flux_map_input);
+			soln.q_dot_inc = calculate_flux_profiles(soln.dni, soln.dni_applied_to_measured, soln.plant_defocus, soln.od_control, flux_map_input);
 		else
 			soln.q_dot_inc = soln.q_dot_inc * soln.od_control / odprev; // Calculate flux profiles (note flux is directly proportional to defocus control)
 

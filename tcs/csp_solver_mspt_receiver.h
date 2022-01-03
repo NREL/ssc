@@ -93,6 +93,7 @@ private:
 		double p_amb;				// Ambient pressure (Pa)
 
 		double dni;					// DNI for this solution
+        double dni_applied_to_measured; //[-] Ratio of DNI used to measured DNI
         double plant_defocus;       // Plant defocus
 
 		double od_control;          // Defocus control
@@ -247,7 +248,7 @@ private:
 
 	void initialize_transient_parameters();
 	bool use_previous_solution(const s_steady_state_soln& soln, const s_steady_state_soln& soln_prev);
-	util::matrix_t<double> calculate_flux_profiles(double dni, double plant_defocus /*-*/,
+	util::matrix_t<double> calculate_flux_profiles(double dni, double dni_scale /*-*/, double plant_defocus /*-*/,
                                 double od_control, const util::matrix_t<double> *flux_map_input);
 	void calculate_steady_state_soln(s_steady_state_soln &soln, double tol, int max_iter = 50);
 	void solve_for_mass_flow(s_steady_state_soln &soln);

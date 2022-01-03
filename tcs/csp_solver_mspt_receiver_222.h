@@ -100,7 +100,7 @@ private:
 		double p_amb;				// Ambient pressure (Pa)
 
 		double dni;					// DNI for this solution (W/m2)
-        double dni_applied_to_measured; //[-] Ratio of clearsky DNI to measured DNI
+        double dni_applied_to_measured; //[-] Ratio of DNI used to measured DNI
         double plant_defocus;       // plant defocus
 
 		double od_control;          // Defocus control
