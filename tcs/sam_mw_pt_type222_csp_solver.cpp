@@ -223,7 +223,7 @@ public:
 		mspt_receiver.m_rec_qf_delay = value(P_rec_qf_delay);		//[-] Energy-based receiver startup delay (fraction of rated thermal power)
 		mspt_receiver.m_m_dot_htf_max = value(P_m_dot_htf_max);		//[kg/hr] Maximum mass flow rate through receiver
 		mspt_receiver.m_m_dot_htf_max_frac = std::numeric_limits<double>::quiet_NaN();
-		mspt_receiver.m_A_sf = value(P_A_sf);						//[m^2] Solar field area
+		//mspt_receiver.m_A_sf = value(P_A_sf);						//[m^2] Solar field area
 
 		// 8.12.15 twn: have added tower piping thermal losses to receiver performance model
 		//  ....... if we want to be consistent with old model, need to set these parameters to 0 here
@@ -297,7 +297,7 @@ public:
 	
 		ms_weather.m_tdew = value(I_T_dp);					//[K] Dewpoint temperature, convert from C
 		ms_weather.m_beam = value(I_I_bn);					//[W/m^2-K] Beam normal radiation
-		ms_inputs.m_field_eff = value(I_field_eff);			//[-] Field efficiency value
+		//ms_inputs.m_field_eff = value(I_field_eff);			//[-] Field efficiency value
 		ms_weather.m_tdry = value(I_T_db);						//[K] Dry bulb temperature, convert from C
 
 		//get the flux map
@@ -366,7 +366,7 @@ public:
 		value(O_q_rad_sum, mspt_receiver.ms_outputs.m_q_rad_sum);				//[MW]
 		value(O_Q_thermal, mspt_receiver.ms_outputs.m_Q_thermal);				//[MW]
 		value(O_T_salt_hot, mspt_receiver.ms_outputs.m_T_salt_hot);			//[C] 
-		value(O_field_eff_adj, mspt_receiver.ms_outputs.m_field_eff_adj);		//[-]
+		//value(O_field_eff_adj, mspt_receiver.ms_outputs.m_field_eff_adj);		//[-]
 		value(O_q_solar_total, mspt_receiver.ms_outputs.m_q_dot_rec_inc);		//[MW]
 		value(O_q_startup, mspt_receiver.ms_outputs.m_q_startup);				//[MW]
 		value(O_dP_receiver, mspt_receiver.ms_outputs.m_dP_receiver);			//[bar]

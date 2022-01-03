@@ -58,7 +58,8 @@ C_cavity_receiver::C_cavity_receiver(double dni_des /*W/m2*/, double hel_stow_de
     double eps_active_sol /*-*/, double eps_passive_sol /*-*/, double eps_active_therm /*-*/, double eps_passive_therm /*-*/,
     E_mesh_types active_surface_mesh_type, E_mesh_types floor_and_cover_mesh_type, E_mesh_types lips_mesh_type,
     double piping_loss_coefficient /*Wt/m2-K*/, double pipe_length_add /*m*/, double pipe_length_mult /*-*/,
-    double A_sf /*m2*/, double h_tower /*m*/, double T_htf_hot_des /*C*/,
+    //double A_sf /*m2*/,
+    double h_tower /*m*/, double T_htf_hot_des /*C*/,
     double T_htf_cold_des /*C*/, double f_rec_min /*-*/, double q_dot_rec_des /*MWt*/,
     double rec_su_delay /*hr*/, double rec_qf_delay /*-*/, double m_dot_htf_max_frac /*-*/,
     double eta_pump /*-*/)
@@ -92,7 +93,7 @@ C_cavity_receiver::C_cavity_receiver(double dni_des /*W/m2*/, double hel_stow_de
     m_pipe_length_add = pipe_length_add;    //[m]
     m_pipe_length_mult = pipe_length_mult;  //[-]
 
-    m_A_sf = A_sf;      //[m2]
+    //m_A_sf = A_sf;      //[m2]
 
     m_area_active_total = std::numeric_limits<double>::quiet_NaN();
     m_d_in_rec_tube = std::numeric_limits<double>::quiet_NaN();
@@ -2904,7 +2905,7 @@ void C_cavity_receiver::call(const C_csp_weatherreader::S_outputs& weather,
 	const C_csp_solver_sim_info& sim_info)
 {
     // Get inputs
-    double field_eff = inputs.m_field_eff;					//[-]
+    double plant_defocus = inputs.m_plant_defocus;      //[-]
     const util::matrix_t<double>* flux_map_input = inputs.m_flux_map_input;
     C_csp_collector_receiver::E_csp_cr_modes input_operation_mode = inputs.m_input_operation_mode;
 
@@ -2937,7 +2938,6 @@ void C_cavity_receiver::call(const C_csp_weatherreader::S_outputs& weather,
 
     bool rec_is_off = false;
     bool rec_is_defocusing = false;
-    double field_eff_adj = 0.0;
 
     // Do an initial check to make sure the solar position called is valid
     // If it's not, return the output equal to zeros. Also check to make sure
@@ -2959,10 +2959,25 @@ void C_cavity_receiver::call(const C_csp_weatherreader::S_outputs& weather,
     double W_dot_pump, DELTAP, Pres_D, u_coolant;
     W_dot_pump = DELTAP = Pres_D = u_coolant = std::numeric_limits<double>::quiet_NaN();
 
-    if (field_eff < m_eta_field_iter_prev && m_od_control < 1.0)
-    {	// Suggests controller applied defocus, so reset *controller* defocus
-        m_od_control = fmin(m_od_control + (1.0 - field_eff / m_eta_field_iter_prev), 1.0);
-    }
+    //if (field_eff < m_eta_field_iter_prev && m_od_control < 1.0)
+    //{	// In a prior call-iteration this timestep, the component control was set < 1.0
+    //    //     indicating that receiver requested defocus due to mass flow rate constraint
+    //    // This call, the plant requests the field to defocus. Under the new plant defocus
+    //    //     the corresponding required *component* defocus decreases, because less flux on receiver
+    //    // So this line helps "correctly" allocate defocus from the component to the controller
+    //    // But, this likely makes the defocus iteration trickier because the iterator
+    //    //    won't see a reponse in output mass flow or heat until m_od_control is back to 1.0
+    //    // Component defocus also depends on inlet temperature, which can make current method tricky
+    //    //    because the mass_flow_and_defocus code will only adjust m_od_control down, not up
+    //    //    and then following calls-iterations use the previous m_od_control as a baseline
+    //    //    unless adjusted here.
+    //	m_od_control = fmin(m_od_control + (1.0 - field_eff / m_eta_field_iter_prev), 1.0);
+    //}
+    // So maybe just try resetting m_od_control each call?
+    //      This will also force correct allocation of defocus. Might be a bit slower because it's calling
+    //           the mspt component defocus method more frequently, but seems more straight-forward
+    //           and might make the upstream problem easier to solve or at least easier to understand
+    m_od_control = 1.0;
 
     double m_dot_htf_tot = std::numeric_limits<double>::quiet_NaN();        //[kg/s]
     double T_htf_tower_out_calc = std::numeric_limits<double>::quiet_NaN();       //[K]
@@ -2984,7 +2999,7 @@ void C_cavity_receiver::call(const C_csp_weatherreader::S_outputs& weather,
 
         // Adjust input field efficiency w/ component defocus, m_od_control
         // m_od_control will always = 1 until component (max mass flow rate) defocus loop built
-        field_eff_adj = field_eff * m_od_control;
+        double total_defocus = plant_defocus * m_od_control;    //[-]
 
         // *************************************************
         // *************************************************
@@ -2998,10 +3013,8 @@ void C_cavity_receiver::call(const C_csp_weatherreader::S_outputs& weather,
         }
         int n_flux_x = (int)flux_map_input->ncols();
         if (n_flux_x != m_nPanels) {
-            throw(C_csp_exception("cavity model currently requires that flux map contains 1 value per panel"));
+            throw(C_csp_exception("cavity model currently requires that flux map contains the same number of x nodes as number of panels"));
         }
-
-        double flux_scale_geometry = m_A_sf/(m_area_active_total/((double)n_flux_x * (double)n_flux_y));
 
         Eigen::MatrixXd EsolarFlux(mE_areas.rows(), 1);
         EsolarFlux.setConstant(0.0);
@@ -3009,8 +3022,8 @@ void C_cavity_receiver::call(const C_csp_weatherreader::S_outputs& weather,
         for (size_t i_surf = 0; i_surf < mv_rec_surfs.size(); i_surf++) {
             if (std::isfinite(mv_rec_surfs[i_surf].vertices(0, 0)) && mv_rec_surfs[i_surf].is_active_surf) {
                 for (size_t i = 0; i < m_v_elems[i_surf].nrows(); i++) {
-                    EsolarFlux(m_surfIDs[i_surf](i, 0), 0) = (*flux_map_input)(0,i_surf)*I_bn*field_eff_adj*flux_scale_geometry; //[W/m2]
-                    q_dot_inc += EsolarFlux(m_surfIDs[i_surf](i, 0), 0)*mE_areas(m_surfIDs[i_surf](i,0));   //[kW]
+                    EsolarFlux(m_surfIDs[i_surf](i, 0), 0) = (*flux_map_input)(0, i_surf) * total_defocus*1.E3;  // [W/m2]
+                    q_dot_inc += EsolarFlux(m_surfIDs[i_surf](i, 0), 0)*mE_areas(m_surfIDs[i_surf](i,0));   //[W]
                 }
             }
         }
@@ -3130,7 +3143,6 @@ void C_cavity_receiver::call(const C_csp_weatherreader::S_outputs& weather,
     }
 
     ms_outputs.m_W_dot_pump = W_dot_pump;                   //[MWe]
-    ms_outputs.m_field_eff_adj = field_eff_adj;             //[-]
     ms_outputs.m_component_defocus = m_od_control;          //[-]
     ms_outputs.m_q_startup = q_startup / 1.E6;              //[MW-hr] convert from [W-hr]
     ms_outputs.m_dP_receiver = std::numeric_limits<double>::quiet_NaN();    //[bar]
@@ -3147,8 +3159,6 @@ void C_cavity_receiver::call(const C_csp_weatherreader::S_outputs& weather,
 
     ms_outputs.m_q_heattrace = 0.0;
     ms_outputs.m_clearsky = std::numeric_limits<double>::quiet_NaN();
-
-    m_eta_field_iter_prev = field_eff;	//[-]
 
 	return;
 }
@@ -3168,7 +3178,6 @@ void C_cavity_receiver::off(const C_csp_weatherreader::S_outputs& weather,
     ms_outputs.m_q_rad_sum = 0.0;			//[MW] convert from W
     ms_outputs.m_Q_thermal = 0.0;			//[MW] convert from W
     ms_outputs.m_T_salt_hot = 0.0;			//[C] convert from K
-    ms_outputs.m_field_eff_adj = 0.0;		//[-]
     ms_outputs.m_component_defocus = 1.0;	//[-]
     ms_outputs.m_q_dot_rec_inc = 0.0;		//[MW] convert from kW
     ms_outputs.m_q_startup = 0.0;			//[MW-hr] convert from W-hr
@@ -3216,7 +3225,6 @@ void C_cavity_receiver::converged()
 
     // Reset call variables
     m_od_control = 1.0;             //[-]
-    m_eta_field_iter_prev = 1.0;    //[-]
 }
 
 double C_cavity_receiver::get_pumping_parasitic_coef()
@@ -3711,7 +3719,8 @@ void cavity_receiver_helpers::test_cavity_case() {
         e_act_sol /*-*/, e_pass_sol /*-*/, e_act_therm /*-*/, e_pass_therm /*-*/,
         active_surface_mesh_type, floor_and_cover_mesh_type, lips_mesh_type,
         piping_loss /*Wt/m*/, piping_length_const /*m*/, piping_length_mult /*-*/,
-        A_sf /*m2*/, h_tower /*m*/, T_htf_hot_des /*C*/,
+        //A_sf /*m2*/,
+        h_tower /*m*/, T_htf_hot_des /*C*/,
         T_htf_cold_des /*C*/, f_rec_min /*-*/, q_dot_rec_des /*MWt*/,
         rec_su_delay /*hr*/, rec_qf_delay /*-*/, m_dot_htf_max_frac /*-*/,
         eta_pump /*-*/);

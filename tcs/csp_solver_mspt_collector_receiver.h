@@ -44,7 +44,8 @@ public:
 		E_FIELD_ETA_OPT,		//[-] Optical efficiency including receiver refl
 		E_FIELD_ADJUST,			//[-] Field adjustment factor
 		
-		E_Q_DOT_INC,			//[MWt] Receiver incident thermal power
+        E_REC_DEFOCUS,          //[-] Receiver component defocus (to satisfy max mass flow rates or flux limits)
+        E_Q_DOT_INC,			//[MWt] Receiver incident thermal power
 		E_ETA_THERMAL,			//[-] Receiver thermal efficiency
 		E_Q_DOT_THERMAL,		//[MWt] Receiver thermal power to HTF less piping loss
 		E_M_DOT_HTF,			//[kg/hr] Receiver mass flow rate

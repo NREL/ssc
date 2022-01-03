@@ -57,13 +57,13 @@ public:
 
     struct S_inputs
     {
-        double m_field_eff;					                //[-] = (irradiance on receiver) / (I_bn * area of all heliostats)
+        double m_plant_defocus;     //[-] plant defocus signal
         C_csp_collector_receiver::E_csp_cr_modes m_input_operation_mode;			                //[-] operating mode of collector receiver, corresponding to enum C_csp_collector_receiver::E_csp_cr_modes
         const util::matrix_t<double> *m_flux_map_input;		//[-] flux values for each receiver surface node, as fraction of an evenly distributed irradiance
 
         S_inputs()
         {
-            m_field_eff = std::numeric_limits<double>::quiet_NaN();
+            m_plant_defocus = std::numeric_limits<double>::quiet_NaN();
             m_input_operation_mode = C_csp_collector_receiver::E_csp_cr_modes::OFF;
         }
     };
@@ -77,7 +77,6 @@ public:
         double m_q_rad_sum;				//[MW] total receiver radiation losses
         double m_Q_thermal;				//[MW] thermal power delivered to TES/PC: subtracts piping losses (q_dot_rec - q_dot_piping_losses)
         double m_T_salt_hot;			//[C] HTF outlet temperature
-        double m_field_eff_adj;			//[-] heliostat field efficiency including component defocus
         double m_component_defocus;		//[-] defocus applied by receiver to stay within mass flow or other constraints
 
         //[MWt] receiver incident thermal power
@@ -119,7 +118,7 @@ public:
         void clear()
         {
             m_m_dot_salt_tot = m_eta_therm = m_W_dot_pump = m_q_conv_sum = m_q_rad_sum = m_Q_thermal =
-                m_T_salt_hot = m_field_eff_adj = m_component_defocus = m_q_dot_rec_inc = m_q_startup =
+                m_T_salt_hot = m_component_defocus = m_q_dot_rec_inc = m_q_startup =
                 m_dP_receiver = m_dP_total = m_vel_htf = m_T_salt_cold = m_m_dot_ss = m_q_dot_ss = m_f_timestep =
                 m_time_required_su = m_q_dot_piping_loss = m_q_heattrace = std::numeric_limits<double>::quiet_NaN();
 

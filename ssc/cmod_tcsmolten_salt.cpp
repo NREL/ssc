@@ -462,6 +462,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_OUTPUT,    SSC_ARRAY,  "eta_field",                          "Field optical efficiency",                                                                                                                "",             "",                                  "",                                         "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_ARRAY,  "defocus",                            "Field optical focus fraction",                                                                                                            "",             "",                                  "",                                         "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_ARRAY,  "sf_adjust_out",                      "Field availability adjustment factor",                                                                                                    "",             "",                                  "",                                         "*",                                                                "",              ""},
+    { SSC_OUTPUT,    SSC_ARRAY,  "rec_defocus",                        "Receiver component defocus",                                                                                                              "",             "",                                  "",                                         "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_ARRAY,  "q_dot_rec_inc",                      "Receiver incident thermal power",                                                                                                         "MWt",          "",                                  "",                                         "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_ARRAY,  "eta_therm",                          "Receiver thermal efficiency",                                                                                                             "",             "",                                  "",                                         "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_ARRAY,  "Q_thermal",                          "Receiver thermal power to HTF less piping loss",                                                                                          "MWt",          "",                                  "",                                         "*",                                                                "",              ""},
@@ -484,9 +485,9 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_OUTPUT,    SSC_ARRAY,  "T_wall_riser",                       "Receiver riser wall temperature at end of timestep",                                                                                      "C",            "",                                  "CR",                                       "is_rec_model_trans=1",                                             "",              ""},    
     { SSC_OUTPUT,    SSC_ARRAY,  "T_wall_downcomer",                   "Receiver downcomer wall temperature at end of timestep",                                                                                  "C",            "",                                  "CR",                                       "is_rec_model_trans=1",                                             "",              ""},    
                                                                                                                                                                                                                                                                                                                     
-	{ SSC_OUTPUT,    SSC_ARRAY,  "clearsky",						   "Predicted clear-sky beam normal irradiance",																							  "W/m2",         "",                                  "CR",                                       "is_rec_model_trans=1",                                             "",              "" },
+	{ SSC_OUTPUT,    SSC_ARRAY,  "clearsky",						   "Predicted clear-sky beam normal irradiance",																							  "W/m2",         "",                                  "CR",                                       "rec_clearsky_fraction>0",                                          "",              "" },
 	{ SSC_OUTPUT,    SSC_ARRAY,  "Q_thermal_ss",					   "Receiver thermal power to HTF less piping loss (steady state)",																			  "MWt",          "",                                  "CR",                                       "is_rec_model_trans=1",                                             "",              "" },
-	{ SSC_OUTPUT,    SSC_ARRAY,  "Q_thermal_ss_csky",				   "Receiver thermal power to HTF less piping loss under clear-sky conditions (steady state)",												  "MWt",          "",                                  "CR",                                       "is_rec_model_trans=1",                                             "",              "" },
+	{ SSC_OUTPUT,    SSC_ARRAY,  "Q_thermal_ss_csky",				   "Receiver thermal power to HTF less piping loss under clear-sky conditions (steady state)",												  "MWt",          "",                                  "CR",                                       "rec_clearsky_fraction>0",                                          "",              "" },
 
         // Heater outputs is_parallel_htr
     { SSC_OUTPUT,    SSC_ARRAY,  "W_dot_heater",                       "Parallel heater electricity consumption",                                                                                                 "MWe",          "",                                  "Parallel Heater",                          "is_parallel_htr=1",                                                "",              "" },
@@ -682,6 +683,7 @@ public:
 			if (weather_reader.m_weather_data_provider->has_message()) log(weather_reader.m_weather_data_provider->message(), SSC_WARNING);
 		}
 
+        size_t n_steps_full = weather_reader.m_weather_data_provider->nrecords(); //steps_per_hour * 8760;
         weather_reader.m_trackmode = 0;
         weather_reader.m_tilt = 0.0;
         weather_reader.m_azimuth = 0.0;
@@ -1260,59 +1262,6 @@ public:
             }
         }
 
-        //heliostat field class
-        C_pt_sf_perf_interp heliostatfield;
-
-        heliostatfield.ms_params.m_p_start = as_double("p_start");      //[kWe-hr] Heliostat startup energy
-        heliostatfield.ms_params.m_p_track = as_double("p_track");      //[kWe] Heliostat tracking power
-        heliostatfield.ms_params.m_hel_stow_deploy = as_double("hel_stow_deploy");  // N/A
-        heliostatfield.ms_params.m_v_wind_max = as_double("v_wind_max");            // N/A
-        if (rec_type == 0) {
-            heliostatfield.ms_params.m_n_flux_x = (int)as_double("n_flux_x");      // sp match
-        }
-        else if (rec_type == 1) {
-            heliostatfield.ms_params.m_n_flux_x = mt_flux_maps.ncols();     // for multi-surface cav receiver, these values need to match
-        }
-        heliostatfield.ms_params.m_n_flux_y = (int) as_double("n_flux_y");      // sp match
-
-        if (field_model_type != 3)
-        {
-            heliostatfield.ms_params.m_eta_map = mt_eta_map;
-            heliostatfield.ms_params.m_eta_map_aod_format = false;
-            heliostatfield.ms_params.m_flux_maps = mt_flux_maps;
-            heliostatfield.ms_params.m_N_hel = as_integer("N_hel");
-            heliostatfield.ms_params.m_A_sf = as_double("A_sf");        //[m2]
-        }
-        else
-        {
-            heliostatfield.ms_params.m_eta_map = as_matrix("eta_map");
-            heliostatfield.ms_params.m_eta_map_aod_format = as_boolean("eta_map_aod_format");
-            heliostatfield.ms_params.m_flux_maps = as_matrix("flux_maps");
-            heliostatfield.ms_params.m_N_hel = as_integer("N_hel");
-            heliostatfield.ms_params.m_A_sf = as_double("A_sf");        //[m2]
-        }
-
-
-
-        //Load the solar field adjustment factors
-        sf_adjustment_factors sf_haf(this);
-        size_t n_steps_full = weather_reader.m_weather_data_provider->nrecords(); //steps_per_hour * 8760;
-        if (!sf_haf.setup((int)n_steps_full))
-            throw exec_error("tcsmolten_salt", "failed to setup sf adjustment factors: " + sf_haf.error());
-        //allocate array to pass to tcs
-        heliostatfield.ms_params.m_sf_adjust.resize( sf_haf.size() );
-        for( int i=0; i<sf_haf.size(); i++)     
-            heliostatfield.ms_params.m_sf_adjust.at(i) = sf_haf(i);
-
-        // Set callback information
-        heliostatfield.mf_callback = ssc_cmod_solarpilot_callback;
-        heliostatfield.m_cdata = (void*)this;
-
-        // Try running pt heliostat init() call just for funsies
-            // What happens when no callback to reference?
-        //heliostatfield.init();
-
-
         //// *********************************************************
         //// *********************************************************
         //// *********************************************************
@@ -1328,19 +1277,23 @@ public:
         // Calculate external receiver area, height, diameter here
         // Calculate cavity receiver area and height below. Don't set diameter or aspect ratio for cavity receiver
         if(rec_type == 0){
-            H_rec = as_double("rec_height");
-            double rec_aspect = as_double("rec_aspect");
-            D_rec = H_rec / rec_aspect;
-            A_rec = H_rec * D_rec * 3.1415926;
+            H_rec = as_double("rec_height");                //[m]
+            double rec_aspect = as_double("rec_aspect");    //[-]
+            D_rec = H_rec / rec_aspect;                     //[m]
+            A_rec = H_rec * D_rec * 3.1415926;              //[m2]
         }
 
         std::unique_ptr<C_pt_receiver> receiver;
         bool is_rec_model_trans = as_boolean("is_rec_model_trans");
+        bool is_rec_model_clearsky = as_double("rec_clearsky_fraction") > 0.0;
 
         if (rec_type == 1) {    // Cavity receiver
 
             // No transient model available for cavity receiver
             is_rec_model_trans = false;
+
+            // No clear sky model available for cavity receiver
+            is_rec_model_clearsky = false;
 
             double hel_stow_deploy = as_double("hel_stow_deploy");          //[deg]
 
@@ -1382,7 +1335,8 @@ public:
                 e_act_sol, e_pass_sol, e_act_therm, e_pass_therm,
                 active_surface_mesh_type, floor_and_cover_mesh_type, lips_mesh_type,
                 as_double("piping_loss_coefficient"), as_double("piping_length_const"), as_double("piping_length_mult"),
-                as_double("A_sf"), as_double("h_tower"), as_double("T_htf_hot_des"),
+                //as_double("A_sf"),
+                as_double("h_tower"), as_double("T_htf_hot_des"),
                 as_double("T_htf_cold_des"), as_double("f_rec_min"), q_dot_rec_des,
                 as_double("rec_su_delay"), as_double("rec_qf_delay"), as_double("csp.pt.rec.max_oper_frac"),
                 as_double("eta_pump") ));
@@ -1414,7 +1368,7 @@ public:
                 ss_receiver->m_flow_type = as_integer("Flow_type");
                 ss_receiver->m_crossover_shift = as_integer("crossover_shift");
                 ss_receiver->m_hl_ffact = as_double("hl_ffact");
-                ss_receiver->m_A_sf = as_double("A_sf");
+                //ss_receiver->m_A_sf = as_double("A_sf");
                 ss_receiver->m_piping_loss_coefficient = as_double("piping_loss_coefficient");
                 ss_receiver->m_pipe_length_add = as_double("piping_length_const");  //[m]
                 ss_receiver->m_pipe_length_mult = as_double("piping_length_mult");      //[-]
@@ -1442,7 +1396,7 @@ public:
                 trans_receiver->m_flow_type = as_integer("Flow_type");
                 trans_receiver->m_crossover_shift = as_integer("crossover_shift");
                 trans_receiver->m_hl_ffact = as_double("hl_ffact");
-                trans_receiver->m_A_sf = as_double("A_sf");
+                //trans_receiver->m_A_sf = as_double("A_sf");
                 trans_receiver->m_piping_loss_coeff = as_double("piping_loss_coefficient");                       //[Wt/m]
                 trans_receiver->m_pipe_length_add = as_double("piping_length_const");   //[m]
                 trans_receiver->m_pipe_length_mult = as_double("piping_length_mult");       //[-]
@@ -1520,6 +1474,61 @@ public:
         // Test mspt_receiver initialization
         //receiver.init();
 
+        // *******************************
+        // *******************************
+        // Construct heliostat field class after receiver
+        //    so it can use the active receiver area
+        C_pt_sf_perf_interp heliostatfield(A_rec);
+
+        heliostatfield.ms_params.m_p_start = as_double("p_start");      //[kWe-hr] Heliostat startup energy
+        heliostatfield.ms_params.m_p_track = as_double("p_track");      //[kWe] Heliostat tracking power
+        heliostatfield.ms_params.m_hel_stow_deploy = as_double("hel_stow_deploy");  // N/A
+        heliostatfield.ms_params.m_v_wind_max = as_double("v_wind_max");            // N/A
+        if (rec_type == 0) {
+            heliostatfield.ms_params.m_n_flux_x = (int)as_double("n_flux_x");      // sp match
+        }
+        else if (rec_type == 1) {
+            heliostatfield.ms_params.m_n_flux_x = mt_flux_maps.ncols();     // for multi-surface cav receiver, these values need to match
+        }
+        heliostatfield.ms_params.m_n_flux_y = (int)as_double("n_flux_y");      // sp match
+
+        if (field_model_type != 3)
+        {
+            heliostatfield.ms_params.m_eta_map = mt_eta_map;
+            heliostatfield.ms_params.m_eta_map_aod_format = false;
+            heliostatfield.ms_params.m_flux_maps = mt_flux_maps;
+            heliostatfield.ms_params.m_N_hel = as_integer("N_hel");
+            heliostatfield.ms_params.m_A_sf = as_double("A_sf");        //[m2]
+        }
+        else
+        {
+            heliostatfield.ms_params.m_eta_map = as_matrix("eta_map");
+            heliostatfield.ms_params.m_eta_map_aod_format = as_boolean("eta_map_aod_format");
+            heliostatfield.ms_params.m_flux_maps = as_matrix("flux_maps");
+            heliostatfield.ms_params.m_N_hel = as_integer("N_hel");
+            heliostatfield.ms_params.m_A_sf = as_double("A_sf");        //[m2]
+        }
+
+
+
+        //Load the solar field adjustment factors
+        sf_adjustment_factors sf_haf(this);
+        if (!sf_haf.setup((int)n_steps_full))
+            throw exec_error("tcsmolten_salt", "failed to setup sf adjustment factors: " + sf_haf.error());
+        //allocate array to pass to tcs
+        heliostatfield.ms_params.m_sf_adjust.resize(sf_haf.size());
+        for (int i = 0; i < sf_haf.size(); i++)
+            heliostatfield.ms_params.m_sf_adjust.at(i) = sf_haf(i);
+
+        // Set callback information
+        heliostatfield.mf_callback = ssc_cmod_solarpilot_callback;
+        heliostatfield.m_cdata = (void*)this;
+
+        // Try running pt heliostat init() call just for funsies
+            // What happens when no callback to reference?
+        //heliostatfield.init();
+
+
         // Now try to instantiate mspt_collector_receiver
         C_csp_mspt_collector_receiver collector_receiver(heliostatfield, *receiver);
         // Then try init() call here, which should call inits from both classes
@@ -1533,6 +1542,7 @@ public:
         collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_FIELD_ETA_OPT, allocate("eta_field", n_steps_fixed), n_steps_fixed);
         collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_FIELD_ADJUST, allocate("sf_adjust_out", n_steps_fixed), n_steps_fixed);
 
+        collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_REC_DEFOCUS, allocate("rec_defocus", n_steps_fixed), n_steps_fixed);
         collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_Q_DOT_INC, allocate("q_dot_rec_inc", n_steps_fixed), n_steps_fixed);
         collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_ETA_THERMAL, allocate("eta_therm", n_steps_fixed), n_steps_fixed);
         collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_Q_DOT_THERMAL, allocate("Q_thermal", n_steps_fixed), n_steps_fixed);
@@ -1561,9 +1571,11 @@ public:
             collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_T_RISER, allocate("T_wall_riser", n_steps_fixed), n_steps_fixed);
             collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_T_DOWNC, allocate("T_wall_downcomer", n_steps_fixed), n_steps_fixed);
 
+            collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_Q_DOT_THERMAL_SS, allocate("Q_thermal_ss", n_steps_fixed), n_steps_fixed);
+        }
+        if (is_rec_model_clearsky) {
             collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_CLEARSKY, allocate("clearsky", n_steps_fixed), n_steps_fixed);
             collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_Q_DOT_THERMAL_CSKY_SS, allocate("Q_thermal_ss_csky", n_steps_fixed), n_steps_fixed);
-            collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_Q_DOT_THERMAL_SS, allocate("Q_thermal_ss", n_steps_fixed), n_steps_fixed);
         }
 
         // Check if system configuration includes a heater parallel to primary collector receiver
