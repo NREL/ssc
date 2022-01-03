@@ -321,7 +321,7 @@ void C_pt_sf_perf_interp::call(const C_csp_weatherreader::S_outputs &weather, do
     {
         for (int i = 0; i < m_n_flux_x; i++)
         {
-            ms_outputs.m_flux_map_out(j, i) *= ms_params.m_A_sf*eta_field/m_A_rec_flux_node;
+            ms_outputs.m_flux_map_out(j, i) *= ms_params.m_A_sf*eta_field/m_A_rec_flux_node*weather.m_beam*1.E-3;  //[kW/m2]
         }
     }
 

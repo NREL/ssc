@@ -3028,8 +3028,8 @@ void C_cavity_receiver::call(const C_csp_weatherreader::S_outputs& weather,
         for (size_t i_surf = 0; i_surf < mv_rec_surfs.size(); i_surf++) {
             if (std::isfinite(mv_rec_surfs[i_surf].vertices(0, 0)) && mv_rec_surfs[i_surf].is_active_surf) {
                 for (size_t i = 0; i < m_v_elems[i_surf].nrows(); i++) {
-                    EsolarFlux(m_surfIDs[i_surf](i, 0), 0) = (*flux_map_input)(0, i_surf) * I_bn * total_defocus; //*flux_scale_geometry; //[W/m2]
-                    q_dot_inc += EsolarFlux(m_surfIDs[i_surf](i, 0), 0)*mE_areas(m_surfIDs[i_surf](i,0));   //[kW]
+                    EsolarFlux(m_surfIDs[i_surf](i, 0), 0) = (*flux_map_input)(0, i_surf) * total_defocus*1.E3;  // *I_bn; //*flux_scale_geometry; //[W/m2]
+                    q_dot_inc += EsolarFlux(m_surfIDs[i_surf](i, 0), 0)*mE_areas(m_surfIDs[i_surf](i,0));   //[W]
                 }
             }
         }
