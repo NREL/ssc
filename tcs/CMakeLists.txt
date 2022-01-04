@@ -74,15 +74,12 @@ set(TCS_SRC
 		pump.cpp
 		sam_csp_util.cpp
 		sam_dsg_controller_type265.cpp
-		sam_iscc_parasitics.cpp
-		sam_iscc_powerblock.cpp
 		sam_lf_st_pt_type232.cpp
 		sam_mw_csp_SumCalcs.cpp
 		sam_mw_gen_Type260_csp_solver.cpp
 		sam_mw_lf_type261_steam.cpp
 		sam_mw_lf_type261_Wnet.cpp
 		sam_mw_lf_type262_salt.cpp
-		sam_mw_pt_type222_csp_solver.cpp
 		sam_mw_pt_type224_csp_solver.cpp
 		sam_mw_pt_type228.cpp
 		sam_mw_trough_type250.cpp
