@@ -290,8 +290,8 @@ public:
 			size_ratio = unit_plant / ref_plant_size;
 			sf_hx = (sf_3 * pow(design_temp, 3)) + (sf_2 * pow(design_temp, 2)) + (sf_1 * design_temp) + sf_0;
 			hx_gf_c1 = hx_c10 + (hx_c11 * pow(design_temp, hx_c12));
-			//hx_gf_c2 = hx_c20 + (hx_c21 * design_temp) + (hx_c22 * pow(design_temp, 2)) + (hx_c23 * pow(design_temp, 3));
-            hx_gf_c2 = hx_c20 + pow(hx_c21, pow(design_temp, 2)) + pow(hx_c23, pow(design_temp, 3)); //Took out hx_c22 per Parangat report -MP 6/14/21
+			hx_gf_c2 = hx_c20 + (hx_c21 * design_temp) + (hx_c22 * pow(design_temp, 2)) + (hx_c23 * pow(design_temp, 3));
+            //hx_gf_c2 = hx_c20 + pow(hx_c21, pow(design_temp, 2)) + pow(hx_c23, pow(design_temp, 3)); //Took out hx_c22 per Parangat report -MP 6/14/21
 
 			hx_gf_c = hx_gf_c1 * exp(hx_gf_c2 * eff);
 			current_cost_ref_hx = hx_gf_c * hx_ppi[ppi];
