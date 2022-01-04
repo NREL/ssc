@@ -184,11 +184,30 @@ static var_info _cm_vtab_etes_ptes[] = {
     { SSC_OUTPUT, SSC_NUMBER, "W_dot_in_charge_net_des",         "Heat pump total power consumption",                   "MWe",          "",                                  "Heat Pump",                      "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "COP_net_des",                     "Heat pump net COP",                                   "MWe",          "",                                  "Heat Pump",                      "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "m_dot_HT_htf_charge_des",         "Heat pump HT HTF mass flow rate",                     "kg/s",         "",                                  "Heat Pump",                      "*",                                                                "",              "" },
-    { SSC_OUTPUT, SSC_NUMBER, "W_dot_HT_htf_pump_des",           "Heat pump HT HTF pump power",                         "MWe",          "",                                  "Heat Pump",                      "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "W_dot_HT_htf_pump_charge_des",    "Heat pump HT HTF pump power",                         "MWe",          "",                                  "Heat Pump",                      "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "m_dot_CT_htf_charge_des",         "Heat pump CT HTF mass flow rate",                     "kg/s",         "",                                  "Heat Pump",                      "*",                                                                "",              "" },
-    { SSC_OUTPUT, SSC_NUMBER, "W_dot_CT_htf_pump_des",           "Heat pump CT HTF pump power",                         "MWe",          "",                                  "Heat Pump",                      "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "W_dot_CT_htf_pump_charge_des",    "Heat pump CT HTF pump power",                         "MWe",          "",                                  "Heat Pump",                      "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "E_heater_su_des",                 "Heat pump startup energy",                            "MWt-hr",       "",                                  "Heat Pump",                      "*",                                                                "",              "" },
 
+            // Cycle
+    { SSC_OUTPUT, SSC_NUMBER, "q_dot_hot_in_gen_des",            "Cycle heat input",                                    "MWt",          "",                                  "Cycle",                          "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "q_dot_cold_out_thermo_gen_des",   "Cycle total heat rejection",                          "MWt",          "",                                  "Cycle",                          "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "W_dot_elec_parasitic_gen_des",    "Cycle parasitic power",                               "MWe",          "",                                  "Cycle",                          "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "W_dot_gen_net_des",               "Cycle net power generation",                          "MWe",          "",                                  "Cycle",                          "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "eta_net_gen_des",                 "Cycle net efficiency",                                "-",            "",                                  "Cycle",                          "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "q_dot_cold_to_CTES_gen_des",      "Cycle heat to cold TES",                              "MWt",          "",                                  "Cycle",                          "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "q_dot_cold_to_surroundings_gen_des", "Cycle heat to surroundings",                       "MWt",          "",                                  "Cycle",                          "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "m_dot_HT_htf_gen_des",            "Cycle HT HTF mass flow rate",                         "kg/s",         "",                                  "Cycle",                          "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "W_dot_HT_htf_pump_gen_des",       "Cycle HT HTF pump power",                             "MWe",          "",                                  "Cycle",                          "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "m_dot_CT_htf_gen_des",            "Cycle CT HTF mass flow rate",                         "kg/s",         "",                                  "Cycle",                          "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "W_dot_CT_htf_pump_gen_des",       "Cycle CT HTF pump power",                             "MWe",          "",                                  "Cycle",                          "*",                                                                "",              "" },
+
+            // TES
+    { SSC_OUTPUT, SSC_NUMBER, "Q_tes_des",                       "TES design capacity",                                 "MWt-hr",       "",                                  "TES Design Calc",                "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "V_tes_htf_avail",                 "Volume of TES HTF available for heat transfer",       "m3",           "",                                  "TES Design Calc",                "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "V_tes_htf_total",                 "Total TES HTF volume",                                "m3",           "",                                  "TES Design Calc",                "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "d_tank_tes",                      "Diameter of TES tank",                                "m",            "",                                  "TES Design Calc",                "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "q_dot_loss_tes_des",              "TES thermal loss at design",                          "MWt",          "",                                  "TES Design Calc",                "*",                                                                "",              "" },
 
 
     var_info_invalid };
@@ -852,11 +871,31 @@ public:
         assign("W_dot_in_charge_net_des", W_dot_in_net_charge_calc);        //[MWe]
         assign("COP_net_des", COP_net_calc);                                //[-]
         assign("m_dot_HT_htf_charge_des", m_dot_HT_htf_charge_calc);        //[kg/s]
-        assign("W_dot_HT_htf_pump_des", W_dot_HT_htf_pump_charge_calc);     //[MWe]
-        assign("m_dot_CT_htf_charge_des", m_dot_CT_htf_charge_calc);        //[kg/s]
-        assign("W_dot_CT_htf_pump_des", W_dot_CT_htf_pump_charge_calc);     //[MWe]
+        assign("W_dot_HT_htf_pump_charge_des", W_dot_HT_htf_pump_charge_calc);     //[MWe]
+        assign("m_dot_CT_htf_charge_des", m_dot_CT_htf_charge_calc);                //[kg/s]
+        assign("W_dot_CT_htf_pump_charge_des", W_dot_CT_htf_pump_charge_calc);     //[MWe]
         assign("E_heater_su_des", E_su_charge_calc);                        //[MWt-hr]
 
+            // Cycle
+        assign("q_dot_hot_in_gen_des", q_dot_hot_in_gen_calc);                      //[MWt]
+        assign("q_dot_cold_out_thermo_gen_des", q_dot_cold_out_thermo_gen_calc);    //[MWt]
+        assign("W_dot_elec_parasitic_gen_des", W_dot_elec_parasitic_gen_calc);      //[MWe]
+        assign("W_dot_gen_net_des", W_dot_net_gen_calc);                            //[MWe]
+        assign("eta_net_gen_des", eta_net_gen_calc);                                //[-]
+        assign("q_dot_cold_to_CTES_gen_des", q_dot_cold_to_CTES_calc);              //[MWt]
+        assign("q_dot_cold_to_surroundings_gen_des", q_dot_cold_to_surr_calc);      //[MWt]
+        assign("m_dot_HT_htf_gen_des", m_dot_HT_htf_gen_calc);                      //[kg/s]
+        assign("W_dot_HT_htf_pump_gen_des", W_dot_HT_htf_pump_gen_calc);            //[MWe]
+        assign("m_dot_CT_htf_gen_des", m_dot_CT_htf_gen_calc);                      //[kg/s]
+        assign("W_dot_CT_htf_pump_gen_des", W_dot_CT_htf_pump_gen_calc);            //[MWe]
+
+
+            // TES
+        assign("Q_tes_des", Q_tes_des_calc);                //[MWt-hr]
+        assign("V_tes_htf_avail", V_tes_htf_avail_calc);    //[m3]
+        assign("V_tes_htf_total", V_tes_htf_total_calc);    //[m3]
+        assign("d_tank_tes", d_tank_calc);                  //[m3]
+        assign("q_dot_loss_tes_des", q_dot_loss_tes_des_calc);  //[MWt]
 
 
         return;
