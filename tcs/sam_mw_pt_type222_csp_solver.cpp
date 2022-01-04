@@ -244,9 +244,9 @@ public:
 		double *p_i_flux_map = allocate(I_flux_map, mspt_receiver.m_n_flux_y, mspt_receiver.m_n_flux_x);
 
 		// Are we modeling a direct ISCC case?
-		mspt_receiver.m_is_iscc = value(P_IS_DIRECT_ISCC) == 1;
+		//mspt_receiver.m_is_iscc = value(P_IS_DIRECT_ISCC) == 1;
 		// Set cycle configuration in class
-		mspt_receiver.m_cycle_config = (int)value(P_CYCLE_CONFIG);
+		//mspt_receiver.m_cycle_config = (int)value(P_CYCLE_CONFIG);
 		
 		
 
@@ -373,9 +373,9 @@ public:
 		value(O_dP_total, mspt_receiver.ms_outputs.m_dP_total);				//[bar]
 		value(O_vel_htf, mspt_receiver.ms_outputs.m_vel_htf);					//[m/s]
 		value(O_T_salt_in, mspt_receiver.ms_outputs.m_T_salt_cold);			//[C]
-		value(O_M_DOT_SS, mspt_receiver.ms_outputs.m_m_dot_ss);				//[kg/hr]
-		value(O_Q_DOT_SS, mspt_receiver.ms_outputs.m_q_dot_ss);				//[MW]
-		value(O_F_TIMESTEP, mspt_receiver.ms_outputs.m_f_timestep);			//[-]
+		//value(O_M_DOT_SS, mspt_receiver.ms_outputs.m_m_dot_ss);				//[kg/hr]
+		//value(O_Q_DOT_SS, mspt_receiver.ms_outputs.m_q_dot_ss);				//[MW]
+		//value(O_F_TIMESTEP, mspt_receiver.ms_outputs.m_f_timestep);			//[-]
 
 		return 0;
 	}

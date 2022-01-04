@@ -1376,7 +1376,6 @@ public:
                 ss_receiver->m_n_flux_y = as_integer("n_flux_y");
                 ss_receiver->m_T_salt_hot_target = as_double("T_htf_hot_des");
                 ss_receiver->m_hel_stow_deploy = as_double("hel_stow_deploy");
-                ss_receiver->m_is_iscc = false;    // Set parameters that were set with TCS defaults
                 ss_receiver->m_csky_frac = as_double("rec_clearsky_fraction");
 
                 receiver = std::move(ss_receiver);
@@ -1404,7 +1403,6 @@ public:
                 trans_receiver->m_n_flux_y = as_integer("n_flux_y");
                 trans_receiver->m_T_salt_hot_target = as_double("T_htf_hot_des");
                 trans_receiver->m_hel_stow_deploy = as_double("hel_stow_deploy");
-                trans_receiver->m_is_iscc = false;    // Set parameters that were set with TCS defaults
                 trans_receiver->m_csky_frac = as_double("rec_clearsky_fraction");
 
 

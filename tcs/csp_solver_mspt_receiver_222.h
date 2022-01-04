@@ -26,7 +26,6 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "csp_solver_util.h"
 
 #include "htf_props.h"
-#include "ngcc_powerblock.h"
 #include "csp_solver_core.h"
 #include "csp_solver_pt_receiver.h"
 
@@ -35,7 +34,6 @@ class C_mspt_receiver_222 : public C_pt_receiver
 // The steady-state receiver (as opposed to the transient, for example)
 
 private:
-	ngcc_power_cycle cycle_calcs;
 
 	double m_id_tube;
 	double m_A_tube;
@@ -73,13 +71,6 @@ private:
 	double m_m_mixed;
 	double m_LoverD;
 	double m_RelRough;
-
-	// ISCC-specific
-	double m_T_amb_low;
-	double m_T_amb_high;
-	double m_P_amb_low;
-	double m_P_amb_high;
-	double m_q_iscc_max;
 
 	// track number of calls per timestep, reset = -1 in converged() call
 	int m_ncall;
@@ -202,10 +193,6 @@ public:
 	int m_mat_tube;
 	int m_flow_type;
     int m_crossover_shift;
-
-	// ISCC specific
-	bool m_is_iscc;
-	int m_cycle_config;
 
 	// Flow control
 	double m_csky_frac;
