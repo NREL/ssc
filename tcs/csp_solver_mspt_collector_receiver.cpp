@@ -341,11 +341,6 @@ double C_csp_mspt_collector_receiver::calculate_optical_efficiency( const C_csp_
 
 double C_csp_mspt_collector_receiver::get_collector_area()
 {
-    //C_pt_heliostatfield::S_params *p = &mc_pt_heliostatfield.ms_params;
-
-    //return p->m_dens_mirror * p->m_helio_height * p->m_helio_width * (double)p->m_helio_positions.nrows();
-
-    //return mc_pt_receiver.m_A_sf;
     return mc_pt_heliostatfield.ms_params.m_A_sf;
 }
 

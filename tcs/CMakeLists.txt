@@ -27,7 +27,6 @@ set(TCS_SRC
 		csp_solver_pc_Rankine_indirect_224.cpp
 		csp_solver_pc_sco2.cpp
 		csp_solver_pc_steam_heat_sink.cpp
-		csp_solver_pt_heliostatfield.cpp
 		csp_solver_pt_receiver.cpp
 		csp_solver_pt_sf_perf_interp.cpp
 		csp_solver_stratified_tes.cpp
@@ -47,7 +46,6 @@ set(TCS_SRC
 		interconnect.cpp
 		nlopt_callbacks.cpp
 		numeric_solvers.cpp
-		sam_mw_pt_heliostatfield_csp_solver.cpp
 		sam_type250_input_generator.cpp
 		sco2_cycle_components.cpp
 		sco2_partialcooling_cycle.cpp
@@ -120,7 +118,6 @@ set(TCS_SRC
 		csp_solver_pc_Rankine_indirect_224.h
 		csp_solver_pc_sco2.h
 		csp_solver_pc_steam_heat_sink.h
-		csp_solver_pt_heliostatfield.h
 		csp_solver_pt_receiver.h
 		csp_solver_pt_sf_perf_interp.h
 		csp_solver_stratified_tes.h
