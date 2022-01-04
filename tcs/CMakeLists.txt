@@ -25,7 +25,6 @@ set(TCS_SRC
 		csp_solver_pc_gen.cpp
 		csp_solver_pc_heat_sink.cpp
 		csp_solver_pc_Rankine_indirect_224.cpp
-		csp_solver_pc_sco2.cpp
 		csp_solver_pc_steam_heat_sink.cpp
 		csp_solver_pt_receiver.cpp
 		csp_solver_pt_sf_perf_interp.cpp
@@ -116,7 +115,6 @@ set(TCS_SRC
 		csp_solver_pc_gen.h
 		csp_solver_pc_heat_sink.h
 		csp_solver_pc_Rankine_indirect_224.h
-		csp_solver_pc_sco2.h
 		csp_solver_pc_steam_heat_sink.h
 		csp_solver_pt_receiver.h
 		csp_solver_pt_sf_perf_interp.h
