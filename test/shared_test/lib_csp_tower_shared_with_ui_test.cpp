@@ -235,7 +235,7 @@ NAMESPACE_TEST(csp_common, TowerSharedWithUi, Tes) {
     ASSERT_NEAR_FRAC(GetNum(data, "tes_avail_vol"), 12986., kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(data, "vol_tank"), 14166., kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(data, "csp_pt_tes_tank_diameter"), 38.8, kErrorToleranceHi);
-    ASSERT_NEAR_FRAC(GetNum(data, "q_dot_tes_est"), 0.73, kErrorToleranceHi);
+    ASSERT_NEAR_FRAC(GetNum(data, "q_dot_tes_est"), 0.88141, kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(data, "csp_pt_tes_htf_density"), 1808.48, kErrorToleranceHi);
 }
 
@@ -268,7 +268,7 @@ NAMESPACE_TEST(csp_common, TowerSharedWithUi, TesWithPeriodUse) {
     ASSERT_NEAR_FRAC(GetNum(data, "tes_avail_vol"), 12986., kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(data, "vol_tank"), 14166., kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(data, "csp_pt_tes_tank_diameter"), 38.8, kErrorToleranceHi);
-    ASSERT_NEAR_FRAC(GetNum(data, "q_dot_tes_est"), 0.73, kErrorToleranceHi);
+    ASSERT_NEAR_FRAC(GetNum(data, "q_dot_tes_est"), 0.88141, kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(data, "csp_pt_tes_htf_density"), 1808.48, kErrorToleranceHi);
 }
 
