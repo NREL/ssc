@@ -2005,9 +2005,12 @@ void two_tank_tes_sizing(HTFProperties &tes_htf_props, double Q_tes_des /*MWt-hr
 
 	d_tank = pow(A_cs / CSP::pi, 0.5)*2.0;			//[m] Diameter of a single tank
 
-	double UA_tank = u_tank*(A_cs + CSP::pi*d_tank*h_tank)*tank_pairs;		//[W/K]
+	double UA_tanks_one_temp = u_tank*(A_cs + CSP::pi*d_tank*h_tank)*tank_pairs;		//[W/K]
 
-	q_dot_loss_des = UA_tank*(T_tes_ave - 15.0)*1.E-6;	//[MWt]
+    double T_amb_des = 15.0 + 273.15;       //[K]
+    double q_dot_loss_cold = UA_tanks_one_temp*(T_tes_cold - T_amb_des)*1.E-6;	//[MWt]
+    double q_dot_loss_hot = UA_tanks_one_temp*(T_tes_hot - T_amb_des)*1.E-6;	//[MWt]
+	q_dot_loss_des = q_dot_loss_cold + q_dot_loss_hot;	//[MWt]
 		
 }
 
