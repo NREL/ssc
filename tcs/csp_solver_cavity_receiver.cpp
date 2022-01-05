@@ -3119,8 +3119,6 @@ void C_cavity_receiver::call(const C_csp_weatherreader::S_outputs& weather,
         ms_outputs.m_T_salt_hot = m_T_htf_cold_des - 273.15;    //[C] convert from K
         ms_outputs.m_q_dot_rec_inc = 0.0;   //[MWt]
         ms_outputs.m_q_dot_refl_loss = 0.0; //[MWt]
-        ms_outputs.m_m_dot_ss = 0.0;        //[kg/hr]
-        ms_outputs.m_q_dot_ss = 0.0;        //[MWt]
         ms_outputs.m_Q_thermal_csky_ss = 0.0;   //[MWt]
         ms_outputs.m_Q_thermal_ss = 0.0;
 
@@ -3136,8 +3134,6 @@ void C_cavity_receiver::call(const C_csp_weatherreader::S_outputs& weather,
         ms_outputs.m_q_dot_rec_inc = q_dot_inc/1.E6;        //[MWt]
         ms_outputs.m_q_dot_refl_loss = q_dot_refl_losses/1.E6;   //[MWt]
         ms_outputs.m_T_salt_cold = T_salt_cold_in - 273.15; //[C] convert from K
-        ms_outputs.m_m_dot_ss = std::numeric_limits<double>::quiet_NaN();
-        ms_outputs.m_q_dot_ss = std::numeric_limits<double>::quiet_NaN();
         ms_outputs.m_Q_thermal_csky_ss = std::numeric_limits<double>::quiet_NaN();
         ms_outputs.m_Q_thermal_ss = std::numeric_limits<double>::quiet_NaN();
     }
@@ -3148,7 +3144,6 @@ void C_cavity_receiver::call(const C_csp_weatherreader::S_outputs& weather,
     ms_outputs.m_dP_receiver = std::numeric_limits<double>::quiet_NaN();    //[bar]
     ms_outputs.m_dP_total = std::numeric_limits<double>::quiet_NaN();       //[bar]
     ms_outputs.m_vel_htf = std::numeric_limits<double>::quiet_NaN();        //[m/s]
-    ms_outputs.m_f_timestep = std::numeric_limits<double>::quiet_NaN();
     ms_outputs.m_time_required_su = time_required_su * 3600.0;        //[s], convert from hr
     if (q_dot_thermal_tower_out > 0.0) {
         ms_outputs.m_q_dot_piping_loss = q_dot_piping_losses/1.E6;       //[MWt]
@@ -3185,9 +3180,6 @@ void C_cavity_receiver::off(const C_csp_weatherreader::S_outputs& weather,
     ms_outputs.m_dP_total = 0.0;			//[bar] total pressure drop, convert from MPa
     ms_outputs.m_vel_htf = 0.0;				//[m/s]
     ms_outputs.m_T_salt_cold = 0.0;			//[C] convert from K
-    ms_outputs.m_m_dot_ss = 0.0;			//[kg/hr] convert from kg/s
-    ms_outputs.m_q_dot_ss = 0.0;			//[MW] convert from W
-    ms_outputs.m_f_timestep = 0.0;			//[-]
     ms_outputs.m_time_required_su = sim_info.ms_ts.m_step;	//[s], convert from hr in code
     ms_outputs.m_q_dot_piping_loss = 0.0;	//[MWt]
     ms_outputs.m_q_heattrace = 0.0;

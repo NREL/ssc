@@ -91,9 +91,6 @@ public:
         double m_dP_total;				//[bar] total pressure drop
         double m_vel_htf;				//[m/s] HTF flow velocity through receiver tubes
         double m_T_salt_cold;			//[C] HTF inlet temperature
-        double m_m_dot_ss;				//[kg/hr] HTF mass flow during steady-state operation (e.g., not equal to m_m_dot_salt_tot during startup)
-        double m_q_dot_ss;				//[MW] thermal power delivered to TES/PC during steady-state operation (e.g., not equal to m_Q_thermal during startup)
-        double m_f_timestep;			//[-] fraction of nominal timestep the receiver is not starting up
         double m_time_required_su;		//[s] time it took receiver to startup
         double m_q_dot_piping_loss;		//[MWt] thermal power lost from piping to surroundings
         double m_q_heattrace;			//[MWt-hr] Power required for heat tracing
@@ -119,7 +116,7 @@ public:
         {
             m_m_dot_salt_tot = m_eta_therm = m_W_dot_pump = m_q_conv_sum = m_q_rad_sum = m_Q_thermal =
                 m_T_salt_hot = m_component_defocus = m_q_dot_rec_inc = m_q_startup =
-                m_dP_receiver = m_dP_total = m_vel_htf = m_T_salt_cold = m_m_dot_ss = m_q_dot_ss = m_f_timestep =
+                m_dP_receiver = m_dP_total = m_vel_htf = m_T_salt_cold =
                 m_time_required_su = m_q_dot_piping_loss = m_q_heattrace = std::numeric_limits<double>::quiet_NaN();
 
 			m_inst_T_salt_hot = m_max_T_salt_hot = m_min_T_salt_hot = m_max_rec_tout = m_Twall_inlet = m_Twall_outlet = 

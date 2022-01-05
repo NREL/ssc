@@ -82,16 +82,6 @@ C_mspt_receiver::C_mspt_receiver()
 	m_LoverD = std::numeric_limits<double>::quiet_NaN();
 	m_RelRough = std::numeric_limits<double>::quiet_NaN();
 
-	m_is_iscc = false;
-	m_cycle_config = 1;
-
-	m_T_amb_low = std::numeric_limits<double>::quiet_NaN();
-	m_T_amb_high = std::numeric_limits<double>::quiet_NaN();
-	m_P_amb_low = std::numeric_limits<double>::quiet_NaN();
-	m_P_amb_high = std::numeric_limits<double>::quiet_NaN();
-
-	m_q_iscc_max = std::numeric_limits<double>::quiet_NaN();
-	
 	m_ncall = -1;
 
 	//Transient model parameters
@@ -296,15 +286,6 @@ void C_mspt_receiver::init()
 	m_LoverD = m_h_rec / m_id_tube;
 	m_RelRough = (4.5e-5) / m_id_tube;	//[-] Relative roughness of the tubes. http:www.efunda.com/formulae/fluids/roughness.cfm
 
-	if(m_is_iscc)
-	{
-		// Set cycle configuration in class
-		cycle_calcs.set_cycle_config(m_cycle_config);
-
-		// Get table limits
-		cycle_calcs.get_table_range(m_T_amb_low, m_T_amb_high, m_P_amb_low, m_P_amb_high);
-	}
-    
 	m_ncall = -1;
 
 	m_Rtot_riser = 0.0;
@@ -566,8 +547,8 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 
 	double c_p_coolant, rho_coolant, f, u_coolant, q_conv_sum, q_rad_sum, q_dot_inc_sum, q_dot_inc_min_panel, q_dot_piping_loss;
 	c_p_coolant = rho_coolant = f = u_coolant = q_conv_sum = q_rad_sum = q_dot_inc_sum = q_dot_inc_min_panel = std::numeric_limits<double>::quiet_NaN();
-	double eta_therm, m_dot_salt_tot, T_salt_hot, m_dot_salt_tot_ss, T_salt_hot_rec;
-	eta_therm = m_dot_salt_tot = T_salt_hot = m_dot_salt_tot_ss = T_salt_hot_rec = std::numeric_limits<double>::quiet_NaN();
+	double eta_therm, m_dot_salt_tot, T_salt_hot, T_salt_hot_rec;
+	eta_therm = m_dot_salt_tot = T_salt_hot = T_salt_hot_rec = std::numeric_limits<double>::quiet_NaN();
 	double clearsky = std::numeric_limits<double>::quiet_NaN();
 
 	bool rec_is_off = false;
@@ -576,11 +557,6 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 	double panel_req_preheat = m_tube_flux_preheat * m_od_tube * m_h_rec * m_n_t*1000;					// Panel absorbed solar energy required to meet preheat flux requirement (W)
 	double total_req_preheat = (m_tube_flux_preheat * m_od_tube * m_h_rec * m_n_t) * m_n_panels*1000;	// Total absorbed solar energy on all panels (W) required to meet preheat flux requirement
 	bool startup_low_flux = false;
-
-	// ************* Outputs for ISCC model ****************
-	double q_thermal_ss = 0.0;
-	double f_rec_timestep = 1.0;
-	// *****************************************************
 
 	// Do an initial check to make sure the solar position called is valid
 	// If it's not, return the output equal to zeros. Also check to make sure
@@ -606,22 +582,6 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 	double T_coolant_prop = (m_T_salt_hot_target + T_salt_cold_in) / 2.0;		//[K] The temperature at which the coolant properties are evaluated. Validated as constant (mjw)
 	c_p_coolant = field_htfProps.Cp(T_coolant_prop)*1000.0;						//[J/kg-K] Specific heat of the coolant
 
-	double m_dot_htf_max = m_m_dot_htf_max;
-    
-	if( m_is_iscc )
-	{
-		if( m_ncall == 0 )
-		{
-			double T_amb_C = fmax(m_P_amb_low, fmin(m_T_amb_high, T_amb - 273.15));
-			double P_amb_bar = fmax(m_P_amb_low, fmin(m_P_amb_high, P_amb / 1.E5));
-			m_q_iscc_max = cycle_calcs.get_ngcc_data(0.0, T_amb_C, P_amb_bar, ngcc_power_cycle::E_solar_heat_max)*1.E6;	// W-th, convert from MWth
-		}
-
-		double m_dot_iscc_max = m_q_iscc_max / (c_p_coolant*(m_T_salt_hot_target - T_salt_cold_in));		// [kg/s]
-		m_dot_htf_max = fmin(m_m_dot_htf_max, m_dot_iscc_max);
-	}
-    
-	
     //if (field_eff < m_eta_field_iter_prev && m_od_control < 1.0)
     //{	// In a prior call-iteration this timestep, the component control was set < 1.0
     //    //     indicating that receiver requested defocus due to mass flow rate constraint
@@ -678,7 +638,7 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 			if (use_previous_solution(soln_actual, m_mflow_soln_prev))  // Same conditions were solved in the previous call to this method
 				soln_actual = m_mflow_soln_prev;
 			else
-				solve_for_mass_flow_and_defocus(soln_actual, m_dot_htf_max, flux_map_input);
+				solve_for_mass_flow_and_defocus(soln_actual, m_m_dot_htf_max, flux_map_input);
 
 		}
 
@@ -695,14 +655,13 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 				if (use_previous_solution(soln_clearsky, m_mflow_soln_csky_prev))  // Same conditions were solved in the previous call to this method
 					soln_clearsky = m_mflow_soln_csky_prev;
 				else
-					solve_for_mass_flow_and_defocus(soln_clearsky, m_dot_htf_max, flux_map_input);
+					solve_for_mass_flow_and_defocus(soln_clearsky, m_m_dot_htf_max, flux_map_input);
 			}
 		}
 
 		//--- Save steady state solution for mass flow for next iteration
 		m_mflow_soln_prev = soln_actual;
 		m_mflow_soln_csky_prev = soln_clearsky;
-
 
 		//--- Set mass flow and calculate final solution
 		if (fabs(I_bn - clearsky_adj) < 0.001 || m_csky_frac < 0.0001)  // Flow control based on actual DNI
@@ -838,7 +797,6 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 
 	if( !rec_is_off )
 	{
-		m_dot_salt_tot_ss = m_dot_salt_tot;
 		double m_dot_rec_des = m_q_rec_des / (c_p_coolant*(m_T_htf_hot_des - m_T_htf_cold_des)); // Design point receiver mass flow rate (kg/s)
 
 		switch( input_operation_mode )
@@ -1206,7 +1164,6 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 						//q_startup = (m_E_su_prev - m_E_su) / (step / 3600.0)*1.E-6;
 						q_startup = m_dot_salt_tot*c_p_coolant*(T_salt_hot - T_salt_cold_in)*step / 3600.0;
 						rec_is_off = true;
-						f_rec_timestep = 0.0;
 					}
 					else
 					{
@@ -1218,7 +1175,6 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 
 						// Adjust the available mass flow to reflect startup
 						m_dot_salt_tot = fmin((1.0 - m_t_su_prev / (step / 3600.0))*m_dot_salt_tot, m_dot_salt_tot - m_E_su_prev / ((step / 3600.0)*c_p_coolant*(T_salt_hot - T_salt_cold_in)));
-						f_rec_timestep = fmax(0.0, fmin(1.0 - m_t_su_prev / (step / 3600.0), 1.0 - m_E_su_prev / (m_dot_salt_tot*c_p_coolant*(T_salt_hot - T_salt_cold_in))));
 					}
 					//4.28.15 twn: Startup energy needs to consider
 					//q_startup = (m_E_su_prev - m_E_su) / (step / 3600.0)*1.E-6;
@@ -1242,7 +1198,6 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 					}
 				}
 				q_thermal = m_dot_salt_tot*c_p_coolant*(T_salt_hot - T_salt_cold_in);
-				q_thermal_ss = m_dot_salt_tot_ss*c_p_coolant*(T_salt_hot - T_salt_cold_in);
 				calc_pump_performance(rho_coolant, m_dot_salt_tot, f, Pres_D, W_dot_pump);
 
 				if (m_mode == C_csp_collector_receiver::ON && m_is_startup_from_solved_profile)  // Calculate temperature profile
@@ -1261,7 +1216,6 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 				q_startup = 0.0;
 				m_mode = C_csp_collector_receiver::ON;
 				q_thermal = m_dot_salt_tot*c_p_coolant*(T_salt_hot - T_salt_cold_in);			// Steady state thermal power (W)
-				q_thermal_ss = m_dot_salt_tot_ss*c_p_coolant*(T_salt_hot - T_salt_cold_in);
 				calc_pump_performance(rho_coolant, m_dot_salt_tot, f, Pres_D, W_dot_pump);
 
 				if (q_dot_inc_sum < m_q_dot_inc_min)				// Receiver is not allowed to operate
@@ -1290,10 +1244,8 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 		case C_csp_collector_receiver::STEADY_STATE:
 
 			m_mode = C_csp_collector_receiver::STEADY_STATE;
-			f_rec_timestep = 1.0;
 			calc_pump_performance(rho_coolant, m_dot_salt_tot, f, Pres_D, W_dot_pump);
 			q_thermal = m_dot_salt_tot*c_p_coolant*(T_salt_hot - T_salt_cold_in);
-			q_thermal_ss = m_dot_salt_tot_ss*c_p_coolant*(T_salt_hot - T_salt_cold_in);
 
 			if (m_is_startup_transient && startup_low_flux)    // Incident flux is high enough for startup but not for steady state operation. Report nonzero q_thermal to allow startup
 				q_thermal = q_dot_inc_sum;
@@ -1334,8 +1286,6 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 		/*DELTAP = 0.0; Pres_D = 0.0; u_coolant = 0.0;*/
 		// Set receiver startup energy to 0
 		// q_startup = 0.0;
-		// ISCC outputs
-		m_dot_salt_tot_ss = 0.0; f_rec_timestep = 0.0; q_thermal_ss = 0.0;
 		q_thermal_csky = q_thermal_steadystate = 0.0;
 
 		// Reset m_od_control
@@ -1367,9 +1317,6 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 	outputs.m_dP_total = Pres_D*10.0;						//[bar] total pressure drop, convert from MPa
 	outputs.m_vel_htf = u_coolant;							//[m/s]
 	outputs.m_T_salt_cold = T_salt_cold_in - 273.15;			//[C] convert from K
-	outputs.m_m_dot_ss = m_dot_salt_tot_ss*3600.0;			//[kg/hr] convert from kg/s
-	outputs.m_q_dot_ss = q_thermal_ss / 1.E6;				//[MW] convert from W
-	outputs.m_f_timestep = f_rec_timestep;					//[-]
 	outputs.m_time_required_su = time_required_su*3600.0;	//[s], convert from hr in code
 	if(q_thermal > 0.0)
 		outputs.m_q_dot_piping_loss = q_dot_piping_loss/1.E6;	//[MWt]
@@ -1443,9 +1390,6 @@ void C_mspt_receiver::off(const C_csp_weatherreader::S_outputs &weather,
 	outputs.m_dP_total = 0.0;			//[bar] total pressure drop, convert from MPa
 	outputs.m_vel_htf = 0.0;				//[m/s]
 	outputs.m_T_salt_cold = 0.0;			//[C] convert from K
-	outputs.m_m_dot_ss = 0.0;			//[kg/hr] convert from kg/s
-	outputs.m_q_dot_ss = 0.0;			//[MW] convert from W
-	outputs.m_f_timestep = 0.0;			//[-]
 	outputs.m_time_required_su = sim_info.ms_ts.m_step;	//[s], convert from hr in code
 	outputs.m_q_dot_piping_loss = 0.0;	//[MWt]
 	
