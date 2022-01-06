@@ -197,10 +197,11 @@ if(UNIX AND NOT SAMAPI_EXPORT)
 	if (NOT APPLE)
 		target_link_libraries(dltest -ldl -Wl,--no-as-needed)
 	endif()
-#	add_custom_command(
-#		TARGET ssc
-#		POST_BUILD
-#		COMMAND dltest $<TARGET_FILE:ssc>)
+	add_custom_command(
+		TARGET ssc
+		POST_BUILD
+		COMMAND codesign --force --deep --sign - $<TARGET_FILE:ssc>
+		COMMAND dltest $<TARGET_FILE:ssc>)
 endif()
 
 # libssc for PySAM
