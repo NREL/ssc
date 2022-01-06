@@ -1,9 +1,11 @@
 # SAM Simulation Core (SSC)
 
-This is the gh-pages branch for NREL's SAM Simulation Core (SSC). The main SSC code respository is at https://github.com/NREL/SSC/tree/develop.
+The gh-pages branch is a special branch off of master for documentation of NREL's SAM Simulation Core (SSC). It currently only contains release notes.
+
+Use this URL to display the SSC release notes from a web browser: https://nrel.github.io/ssc/doc/releasenotes.html.
+
+To revise the release notes, edit the HTML in https://github.com/NREL/ssc/blob/gh-pages/doc/releasenotes.html
 
 See pages settings at https://github.com/NREL/ssc/settings/pages.
 
-This is a special branch off of master to store documentation for SSC that can be displayed as a website.
-
-HTML from this repository can be accessed as a website via a URL like https://nrel.github.io/ssc/doc/releasenotes.html.
+(The main SSC code repository is at https://github.com/NREL/SSC/tree/develop.)
