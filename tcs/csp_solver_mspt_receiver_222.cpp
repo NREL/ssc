@@ -36,9 +36,7 @@ C_mspt_receiver_222::C_mspt_receiver_222()
 	m_od_tube = std::numeric_limits<double>::quiet_NaN();
 	m_th_tube = std::numeric_limits<double>::quiet_NaN();
 	m_hl_ffact = std::numeric_limits<double>::quiet_NaN();
-	//m_A_sf = std::numeric_limits<double>::quiet_NaN();
 
-	//m_pipe_loss_per_m = std::numeric_limits<double>::quiet_NaN();
     m_piping_loss_coefficient = std::numeric_limits<double>::quiet_NaN();
 	m_pipe_length_add = std::numeric_limits<double>::quiet_NaN();
 	m_pipe_length_mult = std::numeric_limits<double>::quiet_NaN();
@@ -46,13 +44,10 @@ C_mspt_receiver_222::C_mspt_receiver_222()
 	m_id_tube = std::numeric_limits<double>::quiet_NaN();
 	m_A_tube = std::numeric_limits<double>::quiet_NaN();
 	m_n_t = -1;
-	m_n_flux_x = 0;
-	m_n_flux_y = 0;
 
 	m_T_salt_hot_target = std::numeric_limits<double>::quiet_NaN();
 	m_eta_pump = std::numeric_limits<double>::quiet_NaN();
 	m_night_recirc = -1;
-	m_hel_stow_deploy = std::numeric_limits<double>::quiet_NaN();
 
 		// Added for csp_solver/tcs wrapper
 	m_field_fl = -1;
@@ -337,7 +332,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 		rec_is_off = true;
 	}
 
-	if( zenith>(90.0 - m_hel_stow_deploy) || I_bn <= 1.E-6 || (zenith == 0.0 && azimuth == 180.0) )
+	if( plant_defocus == 0.0 || I_bn <= 1.E-6 || (zenith == 0.0 && azimuth == 180.0) )
 	{
 		if( m_night_recirc == 1 )
 		{
@@ -834,11 +829,11 @@ util::matrix_t<double> C_mspt_receiver_222::calculate_flux_profiles(double dni /
 		flux.fill(0.0);
 	}
 
-	double n_flux_x_d = (double)m_n_flux_x;
+	double n_flux_x_d = (double)n_flux_x;
 	double n_panels_d = (double)m_n_panels;
 
 	// Translate flux to panels
-	if (m_n_panels >= m_n_flux_x)
+	if (m_n_panels >= n_flux_x)
 	{
 		// Translate to the number of panels, so each panel has its own linearly interpolated flux value
 		for (int i = 0; i < m_n_panels; i++)
@@ -847,7 +842,7 @@ util::matrix_t<double> C_mspt_receiver_222::calculate_flux_profiles(double dni /
 			int flo = (int)floor(ppos);
 			int ceiling = (int)ceil(ppos);
 			double ind = (int)((ppos - flo) / fmax((double)ceiling - (double)flo, 1.e-6));
-			if (ceiling > m_n_flux_x - 1) ceiling = 0;
+			if (ceiling > n_flux_x - 1) ceiling = 0;
 
 			double psp_field = (ind*(flux.at(ceiling) - flux.at(flo)) + flux.at(flo));		//[kW/m^2] Average area-specific power for each node			
 			q_dot_inc.at(i) = m_A_node * psp_field*1000;									//[W] The power incident on each node
@@ -887,7 +882,7 @@ util::matrix_t<double> C_mspt_receiver_222::calculate_flux_profiles(double dni /
 
 			for (int j = index_start; j<index_stop + 1; j++)
 			{
-				if (j == m_n_flux_x)
+				if (j == n_flux_x)
 				{
 					if (leftovers > 0.)
 					{

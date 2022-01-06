@@ -121,14 +121,10 @@ public:
             ss_receiver->m_flow_type = as_integer("Flow_type");                 //[-]
             ss_receiver->m_crossover_shift = as_integer("crossover_shift");     //[-]
             ss_receiver->m_hl_ffact = as_double("hl_ffact");                    //[-]
-            //ss_receiver->m_A_sf = as_double("A_sf");                            //[m2]
             ss_receiver->m_piping_loss_coefficient = as_double("piping_loss_coefficient");  //[W/m2-K]
             ss_receiver->m_pipe_length_add = as_double("piping_length_const");      //[m]
             ss_receiver->m_pipe_length_mult = as_double("piping_length_mult");      //[-]
-            ss_receiver->m_n_flux_x = as_integer("n_flux_x");                   //[-]
-            ss_receiver->m_n_flux_y = as_integer("n_flux_y");                   //[-]
             ss_receiver->m_T_salt_hot_target = as_double("T_htf_hot_des");      //[C]
-            ss_receiver->m_hel_stow_deploy = as_double("hel_stow_deploy");
             ss_receiver->m_csky_frac = as_double("rec_clearsky_fraction");
 
             receiver = std::move(ss_receiver);
@@ -165,6 +161,8 @@ public:
             //for (size_t i = 0; i < n_steps_full; i++)
             //    receiver->m_clearsky_data.at(i) = (double)csky[i];
         }
+
+        receiver->init();
 
         // Receiver/tower design options
         // 1) import through cmod

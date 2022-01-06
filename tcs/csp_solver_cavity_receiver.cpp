@@ -50,7 +50,7 @@ bool sort_pair_ascending(pair<double,double> i, pair<double, double> j)
     }
 }
 
-C_cavity_receiver::C_cavity_receiver(double dni_des /*W/m2*/, double hel_stow_deploy /*-*/,
+C_cavity_receiver::C_cavity_receiver(double dni_des /*W/m2*/,
     int field_fl /*-*/, util::matrix_t<double> field_fl_props,
     double od_rec_tube /*m*/, double th_rec_tube /*m*/, int tube_mat_code /*-*/,
     size_t nPanels /*-*/, double rec_height /*m*/, double rec_width /*m*/,
@@ -65,7 +65,6 @@ C_cavity_receiver::C_cavity_receiver(double dni_des /*W/m2*/, double hel_stow_de
     double eta_pump /*-*/)
 {
     m_dni_des = dni_des;                    //[W/m2]
-    m_hel_stow_deploy = hel_stow_deploy;    //[deg]
     m_field_fl = field_fl;                  //[-]
     m_field_fl_props = field_fl_props;      //[-]
 
@@ -2947,7 +2946,7 @@ void C_cavity_receiver::call(const C_csp_weatherreader::S_outputs& weather,
         rec_is_off = true;
     }
 
-    if (zenith > (90.0 - m_hel_stow_deploy) || I_bn <= m_f_rec_min*m_dni_des || (zenith == 0.0 && azimuth == 180.0))
+    if (plant_defocus == 0.0 || I_bn <= m_f_rec_min*m_dni_des || (zenith == 0.0 && azimuth == 180.0))
     {
         m_mode = C_csp_collector_receiver::OFF;
         rec_is_off = true;
@@ -3663,7 +3662,6 @@ double cavity_receiver_helpers::calc_total_receiver_absorber_area(double rec_hei
 void cavity_receiver_helpers::test_cavity_case() {
 
     double dni_des = 950;           //[W/m2]
-    double hel_stow_deploy = 8;     //[deg]
     int rec_htf = 17;               //[-]
     util::matrix_t<double> ud_rec_htf;
 
@@ -3703,7 +3701,7 @@ void cavity_receiver_helpers::test_cavity_case() {
     double rec_qf_delay = 0.0;
     double m_dot_htf_max_frac = 0.0;
 
-    C_cavity_receiver c_cav(dni_des /*W/m2*/, hel_stow_deploy /*deg*/,
+    C_cavity_receiver c_cav(dni_des /*W/m2*/,
         rec_htf /*-*/, ud_rec_htf,
         od_rec_tube /*m*/, th_rec_tube /*m*/, mat_tube /*-*/,
         nPanels /*-*/, receiverHeight /*m*/, receiverWidth /*m*/,

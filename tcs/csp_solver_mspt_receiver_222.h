@@ -179,13 +179,8 @@ public:
 	// 7.13.17 twn: keep this public for now so iscc can calculate
 	double m_m_dot_htf_max;			//[kg/s]
 
-
-	int m_n_flux_x;
-	int m_n_flux_y;
-
 	// 4.17.15 twn: former TCS inputs, moved to member data because are constant throughout simulation
 	double m_T_salt_hot_target;			//[C], convert to K in init() call
-	double m_hel_stow_deploy;			//[-]
 
 	// Added for csp_solver/tcs wrappers:
 	int m_field_fl;

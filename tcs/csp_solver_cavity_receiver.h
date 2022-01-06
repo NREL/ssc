@@ -77,7 +77,6 @@ private:
     util::matrix_t<double> m_field_fl_props;
 
     double m_dni_des;               //[W/m2]
-    double m_hel_stow_deploy;		//[deg]
 
     size_t m_nPanels;       //[-]
     size_t m_pipeWindings;  //[-]
@@ -172,7 +171,7 @@ private:
 public:
 
 	// Methods
-	C_cavity_receiver(double dni_des /*W/m2*/, double hel_stow_deploy /*deg*/,
+	C_cavity_receiver(double dni_des /*W/m2*/,
         int field_fl /*-*/, util::matrix_t<double> field_fl_props,
         double od_rec_tube /*m*/, double th_rec_tube /*m*/, int tube_mat_code /*-*/,
         size_t nPanels /*-*/, double rec_height /*m*/, double rec_width /*m*/,

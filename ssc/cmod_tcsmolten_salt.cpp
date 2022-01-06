@@ -1295,8 +1295,6 @@ public:
             // No clear sky model available for cavity receiver
             is_rec_model_clearsky = false;
 
-            double hel_stow_deploy = as_double("hel_stow_deploy");          //[deg]
-
             double od_rec_tube = as_double("d_tube_out")*1.E-3;         //[m] convert from cmod units of mm
             double th_rec_tube = as_double("th_tube") * 1.E-3;          //[m] convert from cmod units of mm
             double receiverHeight = as_double("cav_rec_height");        //[m]
@@ -1327,7 +1325,7 @@ public:
             // ***************************************************************************************
             // ***************************************************************************************
 
-            std::unique_ptr<C_cavity_receiver> c_cav_rec = std::unique_ptr<C_cavity_receiver>(new C_cavity_receiver(as_double("dni_des"), hel_stow_deploy,
+            std::unique_ptr<C_cavity_receiver> c_cav_rec = std::unique_ptr<C_cavity_receiver>(new C_cavity_receiver(as_double("dni_des"),
                 as_integer("rec_htf"), as_matrix("field_fl_props"),
                 od_rec_tube, th_rec_tube, as_integer("mat_tube"),
                 nPanels, receiverHeight, receiverWidth,
@@ -1368,14 +1366,10 @@ public:
                 ss_receiver->m_flow_type = as_integer("Flow_type");
                 ss_receiver->m_crossover_shift = as_integer("crossover_shift");
                 ss_receiver->m_hl_ffact = as_double("hl_ffact");
-                //ss_receiver->m_A_sf = as_double("A_sf");
                 ss_receiver->m_piping_loss_coefficient = as_double("piping_loss_coefficient");
                 ss_receiver->m_pipe_length_add = as_double("piping_length_const");  //[m]
                 ss_receiver->m_pipe_length_mult = as_double("piping_length_mult");      //[-]
-                ss_receiver->m_n_flux_x = as_integer("n_flux_x");
-                ss_receiver->m_n_flux_y = as_integer("n_flux_y");
                 ss_receiver->m_T_salt_hot_target = as_double("T_htf_hot_des");
-                ss_receiver->m_hel_stow_deploy = as_double("hel_stow_deploy");
                 ss_receiver->m_csky_frac = as_double("rec_clearsky_fraction");
 
                 receiver = std::move(ss_receiver);
@@ -1395,14 +1389,10 @@ public:
                 trans_receiver->m_flow_type = as_integer("Flow_type");
                 trans_receiver->m_crossover_shift = as_integer("crossover_shift");
                 trans_receiver->m_hl_ffact = as_double("hl_ffact");
-                //trans_receiver->m_A_sf = as_double("A_sf");
                 trans_receiver->m_piping_loss_coeff = as_double("piping_loss_coefficient");                       //[Wt/m]
                 trans_receiver->m_pipe_length_add = as_double("piping_length_const");   //[m]
                 trans_receiver->m_pipe_length_mult = as_double("piping_length_mult");       //[-]
-                trans_receiver->m_n_flux_x = as_integer("n_flux_x");
-                trans_receiver->m_n_flux_y = as_integer("n_flux_y");
                 trans_receiver->m_T_salt_hot_target = as_double("T_htf_hot_des");
-                trans_receiver->m_hel_stow_deploy = as_double("hel_stow_deploy");
                 trans_receiver->m_csky_frac = as_double("rec_clearsky_fraction");
 
 
