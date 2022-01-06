@@ -1,89 +1,999 @@
 <!DOCTYPE html>
 
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" version="XHTML+RDFa" 1.0="" dir="ltr"><head profile="http://www.w3.org/1999/xhtml/vocab"><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
- <title>SAM Simulation Core (SSC) Release Notes</title>
-</head>
+
+<title>SAM Simulation Core (SSC) Release Notes</title>
+
+<style>
+h1 {
+background-color: #0072C6;
+color: white;
+font-family: Segoe UI,sans-serif;
+font-weight: normal;
+font-size: 16pt;
+padding: 10px;}
+
+h2 {
+font-family: Segoe UI,sans-serif;
+font-weight: normal;
+background-color: #B8CCE4;
+color: #0072C6;
+font-size: 14pt;
+padding: 5px;}
+
+h3 {
+font-family: Segoe UI,sans-serif;
+font-weight: bold;
+font-size: 12pt;
+padding: 0px 5px 0px 5px;}
+
+p,li {
+font-family: Segoe UI,sans-serif;
+font-size: 11pt;
+padding: 0px 5px 0px 10px;}
+
+table {
+font-family: Segoe UI,sans-serif;
+border-collapse: collapse;
+margin-left:auto;
+margin-right:auto;}
+
+td, th {
+border: 1px solid #dddddd;
+padding: 8px;
+vertical-align:top;
+}
+
+td {text-align: left;}
+th {text-align: center;}
+
+{background-color: #dddddd;}
+
+ </style>
+ </head>
+ 
 <body>
-<p>SSC Version 267 (SAM version 2021.12.02, PySAM version 3.0.0)
+
+<p style="font-family:Segoe UI,sans-serif;font-size:20pt;text-align:center;color:#0072C6;">SAM Simulation Core(SSC) Release Notes</p>
+
+<p>The following is a list of changes to SSC variables for programmers using the <a href="https://sam.nrel.gov/software-development-kit-sdk.html">SAM Software Development Kit (SDK)</a>, including the <a href="https://sam.nrel.gov/software-development-kit-sdk/pysam.html">PySAM</a> Python package. If you have a question about these release notes, please post it on the <a href="https://sam.nrel.gov/forum/forum-sdk.html">SAM SDK forum</a>.</p>
+
+<p>Additional references:</p>
+
 <ul>
-<li>Battery model:
-<ul>
-<li> Refactor the battery dispatch options such that forecast and dispatch algorithm are seperate options. New options for <code>batt_dispatch_choice</code> are:
-<ul>
-<li> Front of meter:
-<ul>
-<li> 0 - Economic Dispatch </li>
-<li> 1 - PV Smoothing Dispatch </li>
-<li> 2 - Custom Dispatch </li>
-<li> 3 - Manual Dispatch </li>
+<li><a href="https://nrel.github.io/SAM/doc/releasenotes.html">SAM release notes</a></li>
+<li><a href="https://nrel-pysam.readthedocs.io/en/master/#release-notes-version-changes">PySAM release notes</a></li>
 </ul>
-</li>
-<li> Behind the meter:
+
+<h1>SSC Version 267 (SAM version 2021.12.02, PySAM version 3.0.0)</h1>
+
+<h2>List of variables whose definition changed in SSC 267</h2>
+
+<h3>Battery</h3>
+
+<p>Refactor the battery dispatch options such that forecast and dispatch algorithm are seperate options. New options for <code>batt_dispatch_choice</code> are:</p>
+
 <ul>
-<li> 0 - Automatic Peak Shaving Dispatch </li>
-<li> 1 - Input Grid Power Target </li>
-<li> 2 - Custom Dispatch </li>
-<li> 3 - Manual Dispatch </li>
-<li> 4 - Price Signals Dispatch </li>
+<li>Front of meter:
+                <ul>
+                    <li>0 - Economic Dispatch</li>
+                    <li>1 - PV Smoothing Dispatch</li>
+                    <li>2 - Custom Dispatch</li>
+                    <li>3 - Manual Dispatch</li>
+                </ul>
+            </li>
+            <li>Behind the meter:
+                <ul>
+                    <li>0 - Automatic Peak Shaving Dispatch</li>
+                    <li>1 - Input Grid Power Target</li>
+                    <li>2 - Custom Dispatch</li>
+                    <li>3 - Manual Dispatch</li>
+                    <li>4 - Price Signals Dispatch</li>
+                </ul>
+            </li>
 </ul>
-</li>
-</ul>
-</li>
- <li> Forecast is now controlled by new variables <code>batt_dispatch_wf_forecast_choice</code> and <code>batt_dispatch_load_forecast_choice</code></li>
+
+<p>Forecast is now controlled by new variables <code>batt_dispatch_wf_forecast_choice</code> and <code>batt_dispatch_load_forecast_choice</code>:</p>
+
 <ul>
-<li> 0 - Perfect look ahead </li>
-<li> 1 - One day look behind </li>
- <li> 2 - Custom (using <code>batt_pv_clipping_forecast</code> and <code>batt_pv_ac_forecast</code> for weather and <code>batt_load_ac_forecast</code> and <code>batt_load_ac_forecast_escalation</code> for load </li>
+<li>0 - Perfect look ahead</li>
+<li>1 - One day look behind</li>
+<li>2 - Custom (using <code>batt_pv_clipping_forecast</code> and <code>batt_pv_ac_forecast</code> for weather and <code>batt_load_ac_forecast</code> and <code>batt_load_ac_forecast_escalation</code> for load</li>
 </ul>
- <li> New behind the meter dispatch and power flow variables including:
- <ul>
-   <li> <code>batt_dispatch_auto_can_clipcharge - clip charging for DC connected batteries</code> </li>
-   <li> <code>batt_dispatch_auto_btm_can_discharge_to_grid - discharging to grid for custom dispatch</code> </li>
-   <li> <code>batt_dispatch_charge_only_system_exceeds_load - For AC connected batteries, 0 means the battery can charge while the grid meets the load. (1 is prior behavior)</code> </li>
-   <li> <code>batt_dispatch_discharge_only_load_exceeds_system - For behind the meter batteries - 0 means the system discharge the battery while generation is sold to the grid. (1 is prior behavior)</code> </li>
-   <li> <code>dispatch_manual_btm_discharge_to_grid - a matrix specifying the schedule of when manual dispatch can discharge to the grid</code> </li>
- </ul>
- </li>
-  <li> New grid outage variables including:
- <ul>
-   <li> <code>grid_outage - array of timesteps when the grid is unavailable (1) or available (0)</code> </li>
-   <li> <code>batt_minimum_outage_SOC - minimum SOC variable used when grid_outage[t] is 1</code> </li>
-   <li> <code>crit_load_escalation - array of annual escalation factors for critical load</code> </li>
- </ul>
- </li>
-  <li> <code>en_standalone_batt - automatically specifies an array of zeroes for gen</code></li>
-</ul>
-</li>
-</li>
-<li> BatteryStateful model:
-  <ul>
-    <li>New <code>cycle_counts</code> variable, a 2xn matrix used for rainflow counting when <code>batt_life</code> is set to 0.</li>
-  </ul>
-</li>
-<li>UtilityRate5 model:
+
+<p>Variables for new behind-the-meter dispatch and power flow calculations:</p>
+
 <ul>
-<li>Front of meter configurations (Equpartflip, Levpartflip, Merchantplant, Saleleasback, Singleowner) now use the utility rate module to compute grid charging and parastics costs </li>
-<li><code>ur_ec_enable_billing_demand</code> is now <code>ur_enable_billing_demand</code> </li>
-<li><code>ur_ec_billing_demand_lookback_percentages</code> is now <code>ur_billing_demand_lookback_percentages</code> </li>
-<li><code>ur_ec_billing_demand_lookback_period</code> is now <code>ur_billing_demand_lookback_period</code> </li>
-<li><code>ur_ec_billing_demand_minimum</code> is now <code>ur_billing_demand_minimum</code> </li>
-<li> New variable <code>ur_dc_billing_demand_periods</code>, specifying for which demand charge periods billing demand is calculated </li>
-</li>
+<li><code>batt_dispatch_auto_can_clipcharge</code>: Clip charging for DC connected batteries.</li>
+<li><code>batt_dispatch_auto_btm_can_discharge_to_grid</code>: Discharging to grid for custom dispatch.</li>
+<li><code>batt_dispatch_charge_only_system_exceeds_load</code>: For AC connected batteries, 0 means the battery can charge while the grid meets the load. (1 is prior behavior).</li>
+<li><code>batt_dispatch_discharge_only_load_exceeds_system</code>: For behind-the-meter batteries, 0 means the system discharge the battery while generation is sold to the grid. (1 is prior behavior).</li>
+<li><code>dispatch_manual_btm_discharge_to_grid</code>: A matrix specifying the schedule of when manual dispatch can discharge to the grid.</li>
 </ul>
-<li>Front of meter financial configurations:
+
+<p>Variables for new grid outage calculations:</p>
+
 <ul>
-<li>New variables including:
+<li><code>grid_outage</code>: Array of timesteps when the grid is unavailable (1) or available (0).</li>
+<li><code>batt_minimum_outage_SOC</code>: Minimum SOC variable used when grid_outage[t] is 1.</li>
+<li><code>crit_load_escalation</code>: Array of annual escalation factors for critical load.</li>
+</ul>
+
+<p>New option to enable standalone battery:</p>
 <ul>
-<li><code>en_electricity_rates</code> - specify whether the system pays for battery charging or system loads (parasitcs) using a retail rate (1) or the PPA price (0)</li>
-<li><code>om_land_lease</code></li>
-<li><code>om_land_lease_escal</code> </li>
-<li><code>uland_area</code> </li>
+<li><code>en_standalone_batt</code>: Automatically assigns an array of zeroes to <code>gen</code>.</li> 
 </ul>
-</li>
+
+<h3>BatteryStateful</h3>
+
+<p>New <code>cycle_counts</code> variable, a 2xn matrix used for rainflow counting when <code>batt_life</code> is set to 0.</p>
+
+<h3>UtilityRate5</h3>
+
+<p>Front-of-meter financial models (Equpartflip, Levpartflip, Merchantplant, Saleleasback, Singleowner) now use the utility rate module to calculate grid charging and parastics costs.</p>
+
+<p>The following variable names have been changed:</p>
+
+<ul>
+<li><code>ur_ec_enable_billing_demand</code> is now <code>ur_enable_billing_demand</code></li>
+<li><code>ur_ec_billing_demand_lookback_percentages</code> is now <code>ur_billing_demand_lookback_percentages</code></li>
+<li><code>ur_ec_billing_demand_lookback_period</code> is now <code>ur_billing_demand_lookback_period</code></li>
+<li><code>ur_ec_billing_demand_minimum</code> is now <code>ur_billing_demand_minimum</code></li>
 </ul>
-</li>
-</p>
-Detailed Table of New and Removed Variables for Compute Modules
-<table border="1"><tr><th>Battery</th><td><table border="1"><tr><th>Added variables</th><td><ul><li>batt_Vcut</li><li>batt_dispatch_auto_btm_can_discharge_to_grid</li><li>batt_dispatch_charge_only_system_exceeds_load</li><li>batt_dispatch_discharge_only_load_exceeds_system</li><li>batt_dispatch_load_forecast_choice</li><li>batt_dispatch_pvs_ac_lb</li><li>batt_dispatch_pvs_ac_lb_enable</li><li>batt_dispatch_pvs_ac_ub</li><li>batt_dispatch_pvs_ac_ub_enable</li><li>batt_dispatch_pvs_curtail_as_control</li><li>batt_dispatch_pvs_curtail_if_violation</li><li>batt_dispatch_pvs_forecast_shift_periods</li><li>batt_dispatch_pvs_kf</li><li>batt_dispatch_pvs_ki</li><li>batt_dispatch_pvs_kp</li><li>batt_dispatch_pvs_max_ramp</li><li>batt_dispatch_pvs_nameplate_ac</li><li>batt_dispatch_pvs_short_forecast_enable</li><li>batt_dispatch_pvs_soc_rest</li><li>batt_dispatch_pvs_timestep_multiplier</li><li>batt_dispatch_wf_forecast_choice</li><li>batt_load_ac_forecast</li><li>batt_load_ac_forecast_escalation</li><li>batt_minimum_outage_SOC</li><li>crit_load_escalation</li><li>dispatch_manual_btm_discharge_to_grid</li><li>en_standalone_batt</li><li>enable_interconnection_limit</li><li>grid_curtailment</li><li>grid_interconnection_limit_kwac</li><li>grid_outage</li><li>om_batt_replacement_cost</li><li>om_replacement_cost_escal</li><li>run_resiliency_calcs</li><li>ur_billing_demand_lookback_percentages</li><li>ur_billing_demand_lookback_period</li><li>ur_billing_demand_minimum</li><li>ur_dc_billing_demand_periods</li><li>ur_enable_billing_demand</li><li>ur_yearzero_usage_peaks</li></ul></td></tr><tr><th>Removed variables</th><td><ul><li>batt_auto_gridcharge_max_daily</li></ul></td></tr></table></td></tr><tr><th>BatteryStateful</th><td><table border="1"><tr><th>Added variables</th><td><ul><li>DOD_max</li><li>DOD_min</li><li>EFC</li><li>EFC_dt</li><li>Vcut</li><li>b1_dt</li><li>b2_dt</li><li>b3_dt</li><li>c0_dt</li><li>c2_dt</li><li>cum_dt</li><li>cycle_DOD</li><li>cycle_DOD_max</li><li>cycle_DOD_range</li><li>cycle_counts</li><li>cycle_range</li><li>dq_relative_cal</li><li>dq_relative_cyc</li><li>dq_relative_li1</li><li>dq_relative_li2</li><li>dq_relative_li3</li><li>dq_relative_neg</li><li>q_relative_li</li><li>q_relative_neg</li><li>temp_avg</li></ul></td></tr><tr><th>Removed variables</th><td><ul><li>range</li></ul></td></tr></table></td></tr><tr><th>Battwatts</th><td><table border="1"><tr><th>Added variables</th><td><ul><li>enable_interconnection_limit</li><li>grid_curtailment</li><li>grid_interconnection_limit_kwac</li><li>grid_outage</li><li>run_resiliency_calcs</li></ul></td></tr></table></td></tr><tr><th>Cashloan</th><td><table border="1"><tr><th>Added variables</th><td><ul><li>batt_annual_charge_energy</li><li>batt_annual_charge_from_system</li><li>batt_annual_discharge_energy</li><li>batt_capacity_percent</li><li>batt_salvage_percentage</li><li>battery_total_cost_lcos</li><li>charge_w_sys_dc_tou_ym</li><li>charge_w_sys_ec_ym</li><li>charge_w_sys_fixed_ym</li><li>en_standalone_batt</li><li>fuelcell_annual_energy_discharged</li><li>gen_purchases</li><li>grid_to_batt</li><li>land_area</li><li>monthly_batt_to_grid</li><li>monthly_grid_to_batt</li><li>monthly_grid_to_load</li><li>monthly_system_to_grid</li><li>net_billing_credits_ym</li><li>nm_dollars_applied_ym</li><li>om_batt_capacity_cost</li><li>om_batt_fixed_cost</li><li>om_batt_nameplate</li><li>om_batt_replacement_cost</li><li>om_batt_variable_cost</li><li>om_fuelcell_capacity_cost</li><li>om_fuelcell_fixed_cost</li><li>om_fuelcell_nameplate</li><li>om_fuelcell_replacement_cost</li><li>om_fuelcell_variable_cost</li><li>om_land_lease</li><li>om_land_lease_escal</li><li>true_up_credits_ym</li><li>utility_bill_w_sys</li><li>year1_hourly_dc_with_system</li><li>year1_hourly_e_fromgrid</li><li>year1_hourly_ec_with_system</li><li>year1_monthly_ec_charge_gross_with_system</li><li>year1_monthly_ec_charge_with_system</li><li>year1_monthly_electricity_to_grid</li></ul></td></tr><tr><th>Removed variables</th><td><ul><li>om_capacity1</li><li>om_capacity1_nameplate</li><li>om_capacity2</li><li>om_capacity2_nameplate</li><li>om_fixed1</li><li>om_fixed2</li><li>om_production1</li><li>om_production2</li><li>om_replacement_cost1</li><li>om_replacement_cost2</li></ul></td></tr></table></td></tr><tr><th>Equpartflip</th><td><table border="1"><tr><th>Added variables</th><td><ul><li>batt_annual_charge_energy</li><li>batt_annual_charge_from_system</li><li>batt_annual_discharge_energy</li><li>batt_capacity_percent</li><li>batt_salvage_percentage</li><li>battery_total_cost_lcos</li><li>charge_w_sys_ec_ym</li><li>en_electricity_rates</li><li>en_standalone_batt</li><li>fuelcell_annual_energy_discharged</li><li>gen_purchases</li><li>grid_to_batt</li><li>land_area</li><li>monthly_batt_to_grid</li><li>monthly_grid_to_batt</li><li>monthly_grid_to_load</li><li>monthly_system_to_grid</li><li>net_billing_credits_ym</li><li>nm_dollars_applied_ym</li><li>om_batt_capacity_cost</li><li>om_batt_fixed_cost</li><li>om_batt_nameplate</li><li>om_batt_replacement_cost</li><li>om_batt_variable_cost</li><li>om_fuelcell_capacity_cost</li><li>om_fuelcell_fixed_cost</li><li>om_fuelcell_nameplate</li><li>om_fuelcell_replacement_cost</li><li>om_fuelcell_variable_cost</li><li>om_land_lease</li><li>om_land_lease_escal</li><li>true_up_credits_ym</li><li>utility_bill_w_sys</li><li>year1_monthly_ec_charge_gross_with_system</li><li>year1_monthly_ec_charge_with_system</li><li>year1_monthly_electricity_to_grid</li></ul></td></tr><tr><th>Removed variables</th><td><ul><li>om_capacity1</li><li>om_capacity1_nameplate</li><li>om_capacity2</li><li>om_capacity2_nameplate</li><li>om_fixed1</li><li>om_fixed2</li><li>om_production1</li><li>om_production2</li><li>om_replacement_cost1</li><li>om_replacement_cost2</li></ul></td></tr></table></td></tr><tr><th>Geothermal</th><td><table border="1"><tr><th>Added variables</th><td><ul><li>dt_prod_well</li></ul></td></tr></table></td></tr><tr><th>Grid</th><td><table border="1"><tr><th>Added variables</th><td><ul><li>crit_load</li><li>grid_outage</li></ul></td></tr></table></td></tr><tr><th>HostDeveloper</th><td><table border="1"><tr><th>Added variables</th><td><ul><li>batt_annual_charge_energy</li><li>batt_annual_charge_from_system</li><li>batt_annual_discharge_energy</li><li>batt_capacity_percent</li><li>batt_salvage_percentage</li><li>battery_total_cost_lcos</li><li>charge_w_sys_ec_ym</li><li>charge_w_sys_fixed_ym</li><li>dscr_limit_debt_fraction</li><li>dscr_maximum_debt_fraction</li><li>en_standalone_batt</li><li>fuelcell_annual_energy_discharged</li><li>gen_purchases</li><li>grid_to_batt</li><li>land_area</li><li>monthly_batt_to_grid</li><li>monthly_grid_to_batt</li><li>monthly_grid_to_load</li><li>monthly_system_to_grid</li><li>net_billing_credits_ym</li><li>nm_dollars_applied_ym</li><li>om_batt_capacity_cost</li><li>om_batt_fixed_cost</li><li>om_batt_nameplate</li><li>om_batt_replacement_cost</li><li>om_batt_variable_cost</li><li>om_fuelcell_capacity_cost</li><li>om_fuelcell_fixed_cost</li><li>om_fuelcell_nameplate</li><li>om_fuelcell_replacement_cost</li><li>om_fuelcell_variable_cost</li><li>om_land_lease</li><li>om_land_lease_escal</li><li>true_up_credits_ym</li><li>year1_hourly_dc_with_system</li><li>year1_hourly_e_fromgrid</li><li>year1_hourly_ec_with_system</li><li>year1_monthly_ec_charge_gross_with_system</li><li>year1_monthly_ec_charge_with_system</li><li>year1_monthly_electricity_to_grid</li></ul></td></tr><tr><th>Removed variables</th><td><ul><li>gen</li><li>om_capacity1</li><li>om_capacity1_nameplate</li><li>om_capacity2</li><li>om_capacity2_nameplate</li><li>om_fixed1</li><li>om_fixed2</li><li>om_production1</li><li>om_production2</li><li>om_replacement_cost1</li><li>om_replacement_cost2</li><li>roe_input</li></ul></td></tr></table></td></tr><tr><th>Ippppa</th><td><table border="1"><tr><th>Added variables</th><td><ul><li>fuelcell_annual_energy_discharged</li><li>land_area</li><li>om_batt_capacity_cost</li><li>om_batt_fixed_cost</li><li>om_batt_nameplate</li><li>om_batt_replacement_cost</li><li>om_batt_variable_cost</li><li>om_fuelcell_capacity_cost</li><li>om_fuelcell_fixed_cost</li><li>om_fuelcell_nameplate</li><li>om_fuelcell_replacement_cost</li><li>om_fuelcell_variable_cost</li><li>om_land_lease</li><li>om_land_lease_escal</li></ul></td></tr><tr><th>Removed variables</th><td><ul><li>om_capacity1</li><li>om_capacity1_nameplate</li><li>om_capacity2</li><li>om_capacity2_nameplate</li><li>om_fixed1</li><li>om_fixed2</li><li>om_production1</li><li>om_production2</li><li>om_replacement_cost1</li><li>om_replacement_cost2</li></ul></td></tr></table></td></tr><tr><th>Irradproc</th><td><table border="1"><tr><th>Added variables</th><td><ul><li>diff</li><li>glob</li><li>slope_azm</li><li>slope_tilt</li></ul></td></tr><tr><th>Removed variables</th><td><ul><li>diffuse</li><li>global</li></ul></td></tr></table></td></tr><tr><th>Levpartflip</th><td><table border="1"><tr><th>Added variables</th><td><ul><li>batt_annual_charge_energy</li><li>batt_annual_charge_from_system</li><li>batt_annual_discharge_energy</li><li>batt_capacity_percent</li><li>batt_salvage_percentage</li><li>battery_total_cost_lcos</li><li>charge_w_sys_ec_ym</li><li>dscr_limit_debt_fraction</li><li>dscr_maximum_debt_fraction</li><li>en_electricity_rates</li><li>en_standalone_batt</li><li>fuelcell_annual_energy_discharged</li><li>gen_purchases</li><li>grid_to_batt</li><li>land_area</li><li>monthly_batt_to_grid</li><li>monthly_grid_to_batt</li><li>monthly_grid_to_load</li><li>monthly_system_to_grid</li><li>net_billing_credits_ym</li><li>nm_dollars_applied_ym</li><li>om_batt_capacity_cost</li><li>om_batt_fixed_cost</li><li>om_batt_nameplate</li><li>om_batt_replacement_cost</li><li>om_batt_variable_cost</li><li>om_fuelcell_capacity_cost</li><li>om_fuelcell_fixed_cost</li><li>om_fuelcell_nameplate</li><li>om_fuelcell_replacement_cost</li><li>om_fuelcell_variable_cost</li><li>om_land_lease</li><li>om_land_lease_escal</li><li>true_up_credits_ym</li><li>utility_bill_w_sys</li><li>year1_monthly_ec_charge_gross_with_system</li><li>year1_monthly_ec_charge_with_system</li><li>year1_monthly_electricity_to_grid</li></ul></td></tr><tr><th>Removed variables</th><td><ul><li>om_capacity1</li><li>om_capacity1_nameplate</li><li>om_capacity2</li><li>om_capacity2_nameplate</li><li>om_fixed1</li><li>om_fixed2</li><li>om_production1</li><li>om_production2</li><li>om_replacement_cost1</li><li>om_replacement_cost2</li></ul></td></tr></table></td></tr><tr><th>Merchantplant</th><td><table border="1"><tr><th>Added variables</th><td><ul><li>batt_annual_charge_energy</li><li>batt_annual_charge_from_system</li><li>batt_annual_discharge_energy</li><li>batt_capacity_percent</li><li>batt_salvage_percentage</li><li>battery_total_cost_lcos</li><li>charge_w_sys_ec_ym</li><li>dscr_limit_debt_fraction</li><li>dscr_maximum_debt_fraction</li><li>en_electricity_rates</li><li>en_standalone_batt</li><li>fuelcell_annual_energy_discharged</li><li>gen_purchases</li><li>land_area</li><li>monthly_batt_to_grid</li><li>monthly_grid_to_batt</li><li>monthly_grid_to_load</li><li>monthly_system_to_grid</li><li>mp_ancserv1_percent_gen</li><li>mp_ancserv1_revenue_single</li><li>mp_ancserv2_percent_gen</li><li>mp_ancserv2_revenue_single</li><li>mp_ancserv3_percent_gen</li><li>mp_ancserv3_revenue_single</li><li>mp_ancserv4_percent_gen</li><li>mp_ancserv4_revenue_single</li><li>mp_enable_ancserv1_percent_gen</li><li>mp_enable_ancserv2_percent_gen</li><li>mp_enable_ancserv3_percent_gen</li><li>mp_enable_ancserv4_percent_gen</li><li>mp_enable_market_percent_gen</li><li>mp_energy_market_revenue_single</li><li>mp_market_percent_gen</li><li>net_billing_credits_ym</li><li>nm_dollars_applied_ym</li><li>om_batt_capacity_cost</li><li>om_batt_fixed_cost</li><li>om_batt_nameplate</li><li>om_batt_replacement_cost</li><li>om_batt_variable_cost</li><li>om_fuelcell_capacity_cost</li><li>om_fuelcell_fixed_cost</li><li>om_fuelcell_nameplate</li><li>om_fuelcell_replacement_cost</li><li>om_fuelcell_variable_cost</li><li>om_land_lease</li><li>om_land_lease_escal</li><li>true_up_credits_ym</li><li>year1_monthly_ec_charge_gross_with_system</li><li>year1_monthly_ec_charge_with_system</li><li>year1_monthly_electricity_to_grid</li></ul></td></tr><tr><th>Removed variables</th><td><ul><li>om_capacity1</li><li>om_capacity1_nameplate</li><li>om_capacity2</li><li>om_capacity2_nameplate</li><li>om_fixed1</li><li>om_fixed2</li><li>om_production1</li><li>om_production2</li><li>om_replacement_cost1</li><li>om_replacement_cost2</li><li>roe_input</li></ul></td></tr></table></td></tr><tr><th>MhkTidal</th><td><table border="1"><tr><th>Added variables</th><td><ul><li>system_capacity</li></ul></td></tr></table></td></tr><tr><th>MhkWave</th><td><table border="1"><tr><th>Added variables</th><td><ul><li>day</li><li>energy_period</li><li>hour</li><li>minute</li><li>month</li><li>number_hours</li><li>number_records</li><li>significant_wave_height</li><li>wave_resource_data</li><li>wave_resource_model_choice</li><li>year</li></ul></td></tr></table></td></tr><tr><th>Pvsamv1</th><td><table border="1"><tr><th>Added variables</th><td><ul><li>batt_Vcut</li><li>batt_dispatch_auto_btm_can_discharge_to_grid</li><li>batt_dispatch_charge_only_system_exceeds_load</li><li>batt_dispatch_discharge_only_load_exceeds_system</li><li>batt_dispatch_load_forecast_choice</li><li>batt_dispatch_pvs_ac_lb</li><li>batt_dispatch_pvs_ac_lb_enable</li><li>batt_dispatch_pvs_ac_ub</li><li>batt_dispatch_pvs_ac_ub_enable</li><li>batt_dispatch_pvs_curtail_as_control</li><li>batt_dispatch_pvs_curtail_if_violation</li><li>batt_dispatch_pvs_forecast_shift_periods</li><li>batt_dispatch_pvs_kf</li><li>batt_dispatch_pvs_ki</li><li>batt_dispatch_pvs_kp</li><li>batt_dispatch_pvs_max_ramp</li><li>batt_dispatch_pvs_nameplate_ac</li><li>batt_dispatch_pvs_short_forecast_enable</li><li>batt_dispatch_pvs_soc_rest</li><li>batt_dispatch_pvs_timestep_multiplier</li><li>batt_dispatch_wf_forecast_choice</li><li>batt_load_ac_forecast</li><li>batt_load_ac_forecast_escalation</li><li>batt_minimum_outage_SOC</li><li>crit_load_escalation</li><li>dispatch_manual_btm_discharge_to_grid</li><li>en_standalone_batt</li><li>enable_interconnection_limit</li><li>grid_curtailment</li><li>grid_interconnection_limit_kwac</li><li>grid_outage</li><li>mlm_bifacial_ground_clearance_height</li><li>mlm_bifacial_transmission_factor</li><li>mlm_bifaciality</li><li>mlm_is_bifacial</li><li>om_batt_replacement_cost</li><li>om_replacement_cost_escal</li><li>run_resiliency_calcs</li><li>subarray1_slope_azm</li><li>subarray1_slope_tilt</li><li>subarray2_slope_azm</li><li>subarray2_slope_tilt</li><li>subarray3_slope_azm</li><li>subarray3_slope_tilt</li><li>subarray4_slope_azm</li><li>subarray4_slope_tilt</li><li>ur_billing_demand_lookback_percentages</li><li>ur_billing_demand_lookback_period</li><li>ur_billing_demand_minimum</li><li>ur_dc_billing_demand_periods</li><li>ur_enable_billing_demand</li><li>ur_yearzero_usage_peaks</li></ul></td></tr><tr><th>Removed variables</th><td><ul><li>batt_auto_gridcharge_max_daily</li></ul></td></tr></table></td></tr><tr><th>Saleleaseback</th><td><table border="1"><tr><th>Added variables</th><td><ul><li>batt_annual_charge_energy</li><li>batt_annual_charge_from_system</li><li>batt_annual_discharge_energy</li><li>batt_capacity_percent</li><li>batt_salvage_percentage</li><li>battery_total_cost_lcos</li><li>charge_w_sys_ec_ym</li><li>en_electricity_rates</li><li>en_standalone_batt</li><li>fuelcell_annual_energy_discharged</li><li>gen_purchases</li><li>grid_to_batt</li><li>land_area</li><li>monthly_batt_to_grid</li><li>monthly_grid_to_batt</li><li>monthly_grid_to_load</li><li>monthly_system_to_grid</li><li>net_billing_credits_ym</li><li>nm_dollars_applied_ym</li><li>om_batt_capacity_cost</li><li>om_batt_fixed_cost</li><li>om_batt_nameplate</li><li>om_batt_replacement_cost</li><li>om_batt_variable_cost</li><li>om_fuelcell_capacity_cost</li><li>om_fuelcell_fixed_cost</li><li>om_fuelcell_nameplate</li><li>om_fuelcell_replacement_cost</li><li>om_fuelcell_variable_cost</li><li>om_land_lease</li><li>om_land_lease_escal</li><li>true_up_credits_ym</li><li>utility_bill_w_sys</li><li>year1_monthly_ec_charge_gross_with_system</li><li>year1_monthly_ec_charge_with_system</li><li>year1_monthly_electricity_to_grid</li></ul></td></tr><tr><th>Removed variables</th><td><ul><li>om_capacity1</li><li>om_capacity1_nameplate</li><li>om_capacity2</li><li>om_capacity2_nameplate</li><li>om_fixed1</li><li>om_fixed2</li><li>om_production1</li><li>om_production2</li><li>om_replacement_cost1</li><li>om_replacement_cost2</li></ul></td></tr></table></td></tr><tr><th>Singleowner</th><td><table border="1"><tr><th>Added variables</th><td><ul><li>batt_annual_charge_energy</li><li>batt_annual_charge_from_system</li><li>batt_annual_discharge_energy</li><li>batt_capacity_percent</li><li>batt_salvage_percentage</li><li>battery_total_cost_lcos</li><li>charge_w_sys_ec_ym</li><li>dscr_limit_debt_fraction</li><li>dscr_maximum_debt_fraction</li><li>en_standalone_batt</li><li>fuelcell_annual_energy_discharged</li><li>gen_purchases</li><li>grid_to_batt</li><li>land_area</li><li>monthly_batt_to_grid</li><li>monthly_grid_to_batt</li><li>monthly_grid_to_load</li><li>monthly_system_to_grid</li><li>net_billing_credits_ym</li><li>nm_dollars_applied_ym</li><li>om_batt_capacity_cost</li><li>om_batt_fixed_cost</li><li>om_batt_nameplate</li><li>om_batt_replacement_cost</li><li>om_batt_variable_cost</li><li>om_fuelcell_capacity_cost</li><li>om_fuelcell_fixed_cost</li><li>om_fuelcell_nameplate</li><li>om_fuelcell_replacement_cost</li><li>om_fuelcell_variable_cost</li><li>om_land_lease</li><li>om_land_lease_escal</li><li>true_up_credits_ym</li><li>year1_monthly_ec_charge_gross_with_system</li><li>year1_monthly_ec_charge_with_system</li><li>year1_monthly_electricity_to_grid</li></ul></td></tr><tr><th>Removed variables</th><td><ul><li>om_capacity1</li><li>om_capacity1_nameplate</li><li>om_capacity2</li><li>om_capacity2_nameplate</li><li>om_fixed1</li><li>om_fixed2</li><li>om_production1</li><li>om_production2</li><li>om_replacement_cost1</li><li>om_replacement_cost2</li><li>roe_input</li></ul></td></tr></table></td></tr><tr><th>Solarpilot</th><td><table border="1"><tr><th>Added variables</th><td><ul><li>cav_rec_height</li><li>cav_rec_span</li><li>cav_rec_width</li><li>n_cav_rec_panels</li><li>receiver_type</li></ul></td></tr></table></td></tr><tr><th>TcsmoltenSalt</th><td><table border="1"><tr><th>Added variables</th><td><ul><li>cav_rec_height</li><li>cav_rec_passive_abs</li><li>cav_rec_passive_eps</li><li>cav_rec_span</li><li>cav_rec_width</li><li>csp_financial_model</li><li>en_electricity_rates</li><li>f_q_dot_des_allowable_su</li><li>f_q_dot_heater_min</li><li>heater_mult</li><li>hrs_startup_at_max_rate</li><li>is_parallel_htr</li><li>mp_energy_market_revenue</li><li>n_cav_rec_panels</li><li>piping_loss_coefficient</li><li>ppa_soln_mode</li><li>receiver_type</li><li>timestep_load_fractions</li></ul></td></tr><tr><th>Removed variables</th><td><ul><li>P_high_limit</li><li>_sco2_P_high_limit</li><li>_sco2_P_ref</li><li>_sco2_T_amb_des</li><li>_sco2_T_approach</li><li>_sco2_T_htf_hot_des</li><li>_sco2_deltaT_PHX</li><li>_sco2_design_eff</li><li>_sco2_eta_c</li><li>_sco2_eta_t</li><li>_sco2_recup_eff_max</li><li>deltaT_PHX</li><li>eta_c</li><li>eta_t</li><li>fan_power_perc_net</li><li>is_sco2_preprocess</li><li>recup_eff_max</li><li>sco2_T_amb_des</li><li>sco2_T_approach</li><li>sco2_cycle_config</li><li>sco2ud_T_amb_high</li><li>sco2ud_T_amb_ind_od</li><li>sco2ud_T_amb_low</li><li>sco2ud_T_htf_cold_calc</li><li>sco2ud_T_htf_high</li><li>sco2ud_T_htf_ind_od</li><li>sco2ud_T_htf_low</li><li>sco2ud_m_dot_htf_high</li><li>sco2ud_m_dot_htf_ind_od</li><li>sco2ud_m_dot_htf_low</li></ul></td></tr></table></td></tr><tr><th>TroughPhysical</th><td><table border="1"><tr><th>Added variables</th><td><ul><li>csp_financial_model</li><li>disp_inventory_incentive</li><li>disp_wlim_maxspec</li><li>en_electricity_rates</li><li>mp_energy_market_revenue</li><li>non_solar_field_land_area_multiplier</li><li>ppa_soln_mode</li><li>specified_solar_multiple</li><li>specified_total_aperture</li><li>timestep_load_fractions</li><li>trough_loop_control</li><li>use_solar_mult_or_aperture_area</li></ul></td></tr><tr><th>Removed variables</th><td><ul><li>SCADefocusArray</li><li>SCAInfoArray</li><li>is_hx</li><li>solar_mult</li></ul></td></tr></table></td></tr><tr><th>TroughPhysicalProcessHeat</th><td><table border="1"><tr><th>Added variables</th><td><ul><li>disp_inventory_incentive</li><li>disp_wlim_maxspec</li><li>non_solar_field_land_area_multiplier</li><li>specified_solar_multiple</li><li>timestep_load_fractions</li><li>trough_loop_control</li></ul></td></tr><tr><th>Removed variables</th><td><ul><li>SCADefocusArray</li><li>SCAInfoArray</li><li>solar_mult</li></ul></td></tr></table></td></tr><tr><th>UiTesCalcs</th><td><table border="1"><tr><th>Added variables</th><td><ul><li>dt_hot</li><li>field_fluid</li><li>store_fl_props</li><li>store_fluid</li></ul></td></tr><tr><th>Removed variables</th><td><ul><li>rec_htf</li></ul></td></tr></table></td></tr><tr><th>UiUdpcChecks</th><td><table border="1"><tr><th>Added variables</th><td><ul><li>T_htf_des_in</li></ul></td></tr></table></td></tr><tr><th>Utilityrate5</th><td><table border="1"><tr><th>Added variables</th><td><ul><li>ur_billing_demand_lookback_percentages</li><li>ur_billing_demand_lookback_period</li><li>ur_billing_demand_minimum</li><li>ur_dc_billing_demand_periods</li><li>ur_enable_billing_demand</li><li>ur_yearzero_usage_peaks</li></ul></td></tr></table></td></tr><tr><th>WaveFileReader</th><td><table border="1"><tr><th>Added variables</th><td><ul><li>wave_resource_filename_ts</li><li>wave_resource_model_choice</li></ul></td></tr></table></td></tr><tr><th>Windpower</th><td><table border="1"><tr><th>Added variables</th><td><ul><li>max_turbine_override</li></ul></td></tr></table></td></tr></table></ul>
+
+<p>The new variable <code>ur_dc_billing_demand_periods</code> specifies the demand charge periods used to calculate billing demand.</p>
+
+<h2>List of variables that have been added or removed for SSC 267</h2>
+
+<table style="width:100%">
+<tr>
+<th style="width:25%">Model</th>
+<th>Variables</th>
+</tr>
+<tr>
+<td>Battery</td>
+<td>Added:
+<ul>
+<li>batt_Vcut</li>
+<li>batt_dispatch_auto_btm_can_discharge_to_grid</li>
+<li>batt_dispatch_charge_only_system_exceeds_load</li>
+<li>batt_dispatch_discharge_only_load_exceeds_system</li>
+<li>batt_dispatch_load_forecast_choice</li>
+<li>batt_dispatch_pvs_ac_lb</li>
+<li>batt_dispatch_pvs_ac_lb_enable</li>
+<li>batt_dispatch_pvs_ac_ub</li>
+<li>batt_dispatch_pvs_ac_ub_enable</li>
+<li>batt_dispatch_pvs_curtail_as_control</li>
+<li>batt_dispatch_pvs_curtail_if_violation</li>
+<li>batt_dispatch_pvs_forecast_shift_periods</li>
+<li>batt_dispatch_pvs_kf</li>
+<li>batt_dispatch_pvs_ki</li>
+<li>batt_dispatch_pvs_kp</li>
+<li>batt_dispatch_pvs_max_ramp</li>
+<li>batt_dispatch_pvs_nameplate_ac</li>
+<li>batt_dispatch_pvs_short_forecast_enable</li>
+<li>batt_dispatch_pvs_soc_rest</li>
+<li>batt_dispatch_pvs_timestep_multiplier</li>
+<li>batt_dispatch_wf_forecast_choice</li>
+<li>batt_load_ac_forecast</li>
+<li>batt_load_ac_forecast_escalation</li>
+<li>batt_minimum_outage_SOC</li>
+<li>crit_load_escalation</li>
+<li>dispatch_manual_btm_discharge_to_grid</li>
+<li>en_standalone_batt</li>
+<li>enable_interconnection_limit</li>
+<li>grid_curtailment</li>
+<li>grid_interconnection_limit_kwac</li>
+<li>grid_outage</li>
+<li>om_batt_replacement_cost</li>
+<li>om_replacement_cost_escal</li>
+<li>run_resiliency_calcs</li>
+<li>ur_billing_demand_lookback_percentages</li>
+<li>ur_billing_demand_lookback_period</li>
+<li>ur_billing_demand_minimum</li>
+<li>ur_dc_billing_demand_periods</li>
+<li>ur_enable_billing_demand</li>
+<li>ur_yearzero_usage_peaks</li>
+</ul>
+Removed:
+<ul>
+<li>batt_auto_gridcharge_max_daily</li>
+</ul>
+</td>
+</tr>
+<tr>
+<td>BatteryStateful</td>
+<td>Added:
+<ul>
+<li>DOD_max</li>
+<li>DOD_min</li>
+<li>EFC</li>
+<li>EFC_dt</li>
+<li>Vcut</li>
+<li>b1_dt</li>
+<li>b2_dt</li>
+<li>b3_dt</li>
+<li>c0_dt</li>
+<li>c2_dt</li>
+<li>cum_dt</li>
+<li>cycle_DOD</li>
+<li>cycle_DOD_max</li>
+<li>cycle_DOD_range</li>
+<li>cycle_counts</li>
+<li>cycle_range</li>
+<li>dq_relative_cal</li>
+<li>dq_relative_cyc</li>
+<li>dq_relative_li1</li>
+<li>dq_relative_li2</li>
+<li>dq_relative_li3</li>
+<li>dq_relative_neg</li>
+<li>q_relative_li</li>
+<li>q_relative_neg</li>
+<li>temp_avg</li>
+</ul>
+Removed:
+<ul>
+<li>range</li>
+</ul>
+</td>
+</tr>
+<tr>
+<td>Battwatts</td>
+<td>Added:
+<ul>
+<li>enable_interconnection_limit</li>
+<li>grid_curtailment</li>
+<li>grid_interconnection_limit_kwac</li>
+<li>grid_outage</li>
+<li>run_resiliency_calcs</li>
+</ul>
+</td>
+</tr>
+<tr>
+<td>Cashloan</td>
+<td>Added:
+<ul>
+<li>batt_annual_charge_energy</li>
+<li>batt_annual_charge_from_system</li>
+<li>batt_annual_discharge_energy</li>
+<li>batt_capacity_percent</li>
+<li>batt_salvage_percentage</li>
+<li>battery_total_cost_lcos</li>
+<li>charge_w_sys_dc_tou_ym</li>
+<li>charge_w_sys_ec_ym</li>
+<li>charge_w_sys_fixed_ym</li>
+<li>en_standalone_batt</li>
+<li>fuelcell_annual_energy_discharged</li>
+<li>gen_purchases</li>
+<li>grid_to_batt</li>
+<li>land_area</li>
+<li>monthly_batt_to_grid</li>
+<li>monthly_grid_to_batt</li>
+<li>monthly_grid_to_load</li>
+<li>monthly_system_to_grid</li>
+<li>net_billing_credits_ym</li>
+<li>nm_dollars_applied_ym</li>
+<li>om_batt_capacity_cost</li>
+<li>om_batt_fixed_cost</li>
+<li>om_batt_nameplate</li>
+<li>om_batt_replacement_cost</li>
+<li>om_batt_variable_cost</li>
+<li>om_fuelcell_capacity_cost</li>
+<li>om_fuelcell_fixed_cost</li>
+<li>om_fuelcell_nameplate</li>
+<li>om_fuelcell_replacement_cost</li>
+<li>om_fuelcell_variable_cost</li>
+<li>om_land_lease</li>
+<li>om_land_lease_escal</li>
+<li>true_up_credits_ym</li>
+<li>utility_bill_w_sys</li>
+<li>year1_hourly_dc_with_system</li>
+<li>year1_hourly_e_fromgrid</li>
+<li>year1_hourly_ec_with_system</li>
+<li>year1_monthly_ec_charge_gross_with_system</li>
+<li>year1_monthly_ec_charge_with_system</li>
+<li>year1_monthly_electricity_to_grid</li>
+</ul>
+Removed:
+<ul>
+<li>om_capacity1</li>
+<li>om_capacity1_nameplate</li>
+<li>om_capacity2</li>
+<li>om_capacity2_nameplate</li>
+<li>om_fixed1</li>
+<li>om_fixed2</li>
+<li>om_production1</li>
+<li>om_production2</li>
+<li>om_replacement_cost1</li>
+<li>om_replacement_cost2</li>
+</ul>
+</td>
+</tr>
+<tr>
+<td>Equpartflip</td>
+<td>Added:
+<ul>
+<li>batt_annual_charge_energy</li>
+<li>batt_annual_charge_from_system</li>
+<li>batt_annual_discharge_energy</li>
+<li>batt_capacity_percent</li>
+<li>batt_salvage_percentage</li>
+<li>battery_total_cost_lcos</li>
+<li>charge_w_sys_ec_ym</li>
+<li>en_electricity_rates</li>
+<li>en_standalone_batt</li>
+<li>fuelcell_annual_energy_discharged</li>
+<li>gen_purchases</li>
+<li>grid_to_batt</li>
+<li>land_area</li>
+<li>monthly_batt_to_grid</li>
+<li>monthly_grid_to_batt</li>
+<li>monthly_grid_to_load</li>
+<li>monthly_system_to_grid</li>
+<li>net_billing_credits_ym</li>
+<li>nm_dollars_applied_ym</li>
+<li>om_batt_capacity_cost</li>
+<li>om_batt_fixed_cost</li>
+<li>om_batt_nameplate</li>
+<li>om_batt_replacement_cost</li>
+<li>om_batt_variable_cost</li>
+<li>om_fuelcell_capacity_cost</li>
+<li>om_fuelcell_fixed_cost</li>
+<li>om_fuelcell_nameplate</li>
+<li>om_fuelcell_replacement_cost</li>
+<li>om_fuelcell_variable_cost</li>
+<li>om_land_lease</li>
+<li>om_land_lease_escal</li>
+<li>true_up_credits_ym</li>
+<li>utility_bill_w_sys</li>
+<li>year1_monthly_ec_charge_gross_with_system</li>
+<li>year1_monthly_ec_charge_with_system</li>
+<li>year1_monthly_electricity_to_grid</li>
+</ul>
+Removed:
+<ul>
+<li>om_capacity1</li>
+<li>om_capacity1_nameplate</li>
+<li>om_capacity2</li>
+<li>om_capacity2_nameplate</li>
+<li>om_fixed1</li>
+<li>om_fixed2</li>
+<li>om_production1</li>
+<li>om_production2</li>
+<li>om_replacement_cost1</li>
+<li>om_replacement_cost2</li>
+</ul>
+</td>
+</tr>
+<tr>
+<td>Geothermal</td>
+<td>Added:
+<ul>
+<li>dt_prod_well</li>
+</ul>
+</td>
+</tr>
+<tr>
+<td>Grid</td>
+<td>Added:
+<ul>
+<li>crit_load</li>
+<li>grid_outage</li>
+</ul>
+</td>
+</tr>
+<tr>
+<td>HostDeveloper</td>
+<td>Added:
+<ul>
+<li>batt_annual_charge_energy</li>
+<li>batt_annual_charge_from_system</li>
+<li>batt_annual_discharge_energy</li>
+<li>batt_capacity_percent</li>
+<li>batt_salvage_percentage</li>
+<li>battery_total_cost_lcos</li>
+<li>charge_w_sys_ec_ym</li>
+<li>charge_w_sys_fixed_ym</li>
+<li>dscr_limit_debt_fraction</li>
+<li>dscr_maximum_debt_fraction</li>
+<li>en_standalone_batt</li>
+<li>fuelcell_annual_energy_discharged</li>
+<li>gen_purchases</li>
+<li>grid_to_batt</li>
+<li>land_area</li>
+<li>monthly_batt_to_grid</li>
+<li>monthly_grid_to_batt</li>
+<li>monthly_grid_to_load</li>
+<li>monthly_system_to_grid</li>
+<li>net_billing_credits_ym</li>
+<li>nm_dollars_applied_ym</li>
+<li>om_batt_capacity_cost</li>
+<li>om_batt_fixed_cost</li>
+<li>om_batt_nameplate</li>
+<li>om_batt_replacement_cost</li>
+<li>om_batt_variable_cost</li>
+<li>om_fuelcell_capacity_cost</li>
+<li>om_fuelcell_fixed_cost</li>
+<li>om_fuelcell_nameplate</li>
+<li>om_fuelcell_replacement_cost</li>
+<li>om_fuelcell_variable_cost</li>
+<li>om_land_lease</li>
+<li>om_land_lease_escal</li>
+<li>true_up_credits_ym</li>
+<li>year1_hourly_dc_with_system</li>
+<li>year1_hourly_e_fromgrid</li>
+<li>year1_hourly_ec_with_system</li>
+<li>year1_monthly_ec_charge_gross_with_system</li>
+<li>year1_monthly_ec_charge_with_system</li>
+<li>year1_monthly_electricity_to_grid</li>
+</ul>
+Removed:
+<ul>
+<li>gen</li>
+<li>om_capacity1</li>
+<li>om_capacity1_nameplate</li>
+<li>om_capacity2</li>
+<li>om_capacity2_nameplate</li>
+<li>om_fixed1</li>
+<li>om_fixed2</li>
+<li>om_production1</li>
+<li>om_production2</li>
+<li>om_replacement_cost1</li>
+<li>om_replacement_cost2</li>
+<li>roe_input</li>
+</ul>
+</td>
+</tr>
+<tr>
+<td>Ippppa</td>
+<td>Added:
+<ul>
+<li>fuelcell_annual_energy_discharged</li>
+<li>land_area</li>
+<li>om_batt_capacity_cost</li>
+<li>om_batt_fixed_cost</li>
+<li>om_batt_nameplate</li>
+<li>om_batt_replacement_cost</li>
+<li>om_batt_variable_cost</li>
+<li>om_fuelcell_capacity_cost</li>
+<li>om_fuelcell_fixed_cost</li>
+<li>om_fuelcell_nameplate</li>
+<li>om_fuelcell_replacement_cost</li>
+<li>om_fuelcell_variable_cost</li>
+<li>om_land_lease</li>
+<li>om_land_lease_escal</li>
+</ul>
+Removed:
+<ul>
+<li>om_capacity1</li>
+<li>om_capacity1_nameplate</li>
+<li>om_capacity2</li>
+<li>om_capacity2_nameplate</li>
+<li>om_fixed1</li>
+<li>om_fixed2</li>
+<li>om_production1</li>
+<li>om_production2</li>
+<li>om_replacement_cost1</li>
+<li>om_replacement_cost2</li>
+</ul>
+</td>
+</tr>
+<tr>
+<td>Irradproc</td>
+<td>Added:
+<ul>
+<li>diff</li>
+<li>glob</li>
+<li>slope_azm</li>
+<li>slope_tilt</li>
+</ul>
+Removed:
+<ul>
+<li>diffuse</li>
+<li>global</li>
+</ul>
+</td>
+</tr>
+<tr>
+<td>Levpartflip</td>
+<td>Added:
+<ul>
+<li>batt_annual_charge_energy</li>
+<li>batt_annual_charge_from_system</li>
+<li>batt_annual_discharge_energy</li>
+<li>batt_capacity_percent</li>
+<li>batt_salvage_percentage</li>
+<li>battery_total_cost_lcos</li>
+<li>charge_w_sys_ec_ym</li>
+<li>dscr_limit_debt_fraction</li>
+<li>dscr_maximum_debt_fraction</li>
+<li>en_electricity_rates</li>
+<li>en_standalone_batt</li>
+<li>fuelcell_annual_energy_discharged</li>
+<li>gen_purchases</li>
+<li>grid_to_batt</li>
+<li>land_area</li>
+<li>monthly_batt_to_grid</li>
+<li>monthly_grid_to_batt</li>
+<li>monthly_grid_to_load</li>
+<li>monthly_system_to_grid</li>
+<li>net_billing_credits_ym</li>
+<li>nm_dollars_applied_ym</li>
+<li>om_batt_capacity_cost</li>
+<li>om_batt_fixed_cost</li>
+<li>om_batt_nameplate</li>
+<li>om_batt_replacement_cost</li>
+<li>om_batt_variable_cost</li>
+<li>om_fuelcell_capacity_cost</li>
+<li>om_fuelcell_fixed_cost</li>
+<li>om_fuelcell_nameplate</li>
+<li>om_fuelcell_replacement_cost</li>
+<li>om_fuelcell_variable_cost</li>
+<li>om_land_lease</li>
+<li>om_land_lease_escal</li>
+<li>true_up_credits_ym</li>
+<li>utility_bill_w_sys</li>
+<li>year1_monthly_ec_charge_gross_with_system</li>
+<li>year1_monthly_ec_charge_with_system</li>
+<li>year1_monthly_electricity_to_grid</li>
+</ul>
+Removed:
+<ul>
+<li>om_capacity1</li>
+<li>om_capacity1_nameplate</li>
+<li>om_capacity2</li>
+<li>om_capacity2_nameplate</li>
+<li>om_fixed1</li>
+<li>om_fixed2</li>
+<li>om_production1</li>
+<li>om_production2</li>
+<li>om_replacement_cost1</li>
+<li>om_replacement_cost2</li>
+</ul>
+</td>
+</tr>
+<tr>
+<td>Merchantplant</td>
+<td>Added:
+<ul>
+<li>batt_annual_charge_energy</li>
+<li>batt_annual_charge_from_system</li>
+<li>batt_annual_discharge_energy</li>
+<li>batt_capacity_percent</li>
+<li>batt_salvage_percentage</li>
+<li>battery_total_cost_lcos</li>
+<li>charge_w_sys_ec_ym</li>
+<li>dscr_limit_debt_fraction</li>
+<li>dscr_maximum_debt_fraction</li>
+<li>en_electricity_rates</li>
+<li>en_standalone_batt</li>
+<li>fuelcell_annual_energy_discharged</li>
+<li>gen_purchases</li>
+<li>land_area</li>
+<li>monthly_batt_to_grid</li>
+<li>monthly_grid_to_batt</li>
+<li>monthly_grid_to_load</li>
+<li>monthly_system_to_grid</li>
+<li>mp_ancserv1_percent_gen</li>
+<li>mp_ancserv1_revenue_single</li>
+<li>mp_ancserv2_percent_gen</li>
+<li>mp_ancserv2_revenue_single</li>
+<li>mp_ancserv3_percent_gen</li>
+<li>mp_ancserv3_revenue_single</li>
+<li>mp_ancserv4_percent_gen</li>
+<li>mp_ancserv4_revenue_single</li>
+<li>mp_enable_ancserv1_percent_gen</li>
+<li>mp_enable_ancserv2_percent_gen</li>
+<li>mp_enable_ancserv3_percent_gen</li>
+<li>mp_enable_ancserv4_percent_gen</li>
+<li>mp_enable_market_percent_gen</li>
+<li>mp_energy_market_revenue_single</li>
+<li>mp_market_percent_gen</li>
+<li>net_billing_credits_ym</li>
+<li>nm_dollars_applied_ym</li>
+<li>om_batt_capacity_cost</li>
+<li>om_batt_fixed_cost</li>
+<li>om_batt_nameplate</li>
+<li>om_batt_replacement_cost</li>
+<li>om_batt_variable_cost</li>
+<li>om_fuelcell_capacity_cost</li>
+<li>om_fuelcell_fixed_cost</li>
+<li>om_fuelcell_nameplate</li>
+<li>om_fuelcell_replacement_cost</li>
+<li>om_fuelcell_variable_cost</li>
+<li>om_land_lease</li>
+<li>om_land_lease_escal</li>
+<li>true_up_credits_ym</li>
+<li>year1_monthly_ec_charge_gross_with_system</li>
+<li>year1_monthly_ec_charge_with_system</li>
+<li>year1_monthly_electricity_to_grid</li>
+</ul>
+Removed:
+<ul>
+<li>om_capacity1</li>
+<li>om_capacity1_nameplate</li>
+<li>om_capacity2</li>
+<li>om_capacity2_nameplate</li>
+<li>om_fixed1</li>
+<li>om_fixed2</li>
+<li>om_production1</li>
+<li>om_production2</li>
+<li>om_replacement_cost1</li>
+<li>om_replacement_cost2</li>
+<li>roe_input</li>
+</ul>
+</td>
+</tr>
+<tr>
+<td>MhkTidal</td>
+<td>Added:
+<ul>
+<li>system_capacity</li>
+</ul>
+</td>
+</tr>
+<tr>
+<td>MhkWave</td>
+<td>Added:
+<ul>
+<li>day</li>
+<li>energy_period</li>
+<li>hour</li>
+<li>minute</li>
+<li>month</li>
+<li>number_hours</li>
+<li>number_records</li>
+<li>significant_wave_height</li>
+<li>wave_resource_data</li>
+<li>wave_resource_model_choice</li>
+<li>year</li>
+</ul>
+</td>
+</tr>
+<tr>
+<td>Pvsamv1</td>
+<td>Added:
+<ul>
+<li>batt_Vcut</li>
+<li>batt_dispatch_auto_btm_can_discharge_to_grid</li>
+<li>batt_dispatch_charge_only_system_exceeds_load</li>
+<li>batt_dispatch_discharge_only_load_exceeds_system</li>
+<li>batt_dispatch_load_forecast_choice</li>
+<li>batt_dispatch_pvs_ac_lb</li>
+<li>batt_dispatch_pvs_ac_lb_enable</li>
+<li>batt_dispatch_pvs_ac_ub</li>
+<li>batt_dispatch_pvs_ac_ub_enable</li>
+<li>batt_dispatch_pvs_curtail_as_control</li>
+<li>batt_dispatch_pvs_curtail_if_violation</li>
+<li>batt_dispatch_pvs_forecast_shift_periods</li>
+<li>batt_dispatch_pvs_kf</li>
+<li>batt_dispatch_pvs_ki</li>
+<li>batt_dispatch_pvs_kp</li>
+<li>batt_dispatch_pvs_max_ramp</li>
+<li>batt_dispatch_pvs_nameplate_ac</li>
+<li>batt_dispatch_pvs_short_forecast_enable</li>
+<li>batt_dispatch_pvs_soc_rest</li>
+<li>batt_dispatch_pvs_timestep_multiplier</li>
+<li>batt_dispatch_wf_forecast_choice</li>
+<li>batt_load_ac_forecast</li>
+<li>batt_load_ac_forecast_escalation</li>
+<li>batt_minimum_outage_SOC</li>
+<li>crit_load_escalation</li>
+<li>dispatch_manual_btm_discharge_to_grid</li>
+<li>en_standalone_batt</li>
+<li>enable_interconnection_limit</li>
+<li>grid_curtailment</li>
+<li>grid_interconnection_limit_kwac</li>
+<li>grid_outage</li>
+<li>mlm_bifacial_ground_clearance_height</li>
+<li>mlm_bifacial_transmission_factor</li>
+<li>mlm_bifaciality</li>
+<li>mlm_is_bifacial</li>
+<li>om_batt_replacement_cost</li>
+<li>om_replacement_cost_escal</li>
+<li>run_resiliency_calcs</li>
+<li>subarray1_slope_azm</li>
+<li>subarray1_slope_tilt</li>
+<li>subarray2_slope_azm</li>
+<li>subarray2_slope_tilt</li>
+<li>subarray3_slope_azm</li>
+<li>subarray3_slope_tilt</li>
+<li>subarray4_slope_azm</li>
+<li>subarray4_slope_tilt</li>
+<li>ur_billing_demand_lookback_percentages</li>
+<li>ur_billing_demand_lookback_period</li>
+<li>ur_billing_demand_minimum</li>
+<li>ur_dc_billing_demand_periods</li>
+<li>ur_enable_billing_demand</li>
+<li>ur_yearzero_usage_peaks</li>
+</ul>
+Removed:
+<ul>
+<li>batt_auto_gridcharge_max_daily</li>
+</ul>
+</td>
+</tr>
+<tr>
+<td>Saleleaseback</td>
+<td>Added:
+<ul>
+<li>batt_annual_charge_energy</li>
+<li>batt_annual_charge_from_system</li>
+<li>batt_annual_discharge_energy</li>
+<li>batt_capacity_percent</li>
+<li>batt_salvage_percentage</li>
+<li>battery_total_cost_lcos</li>
+<li>charge_w_sys_ec_ym</li>
+<li>en_electricity_rates</li>
+<li>en_standalone_batt</li>
+<li>fuelcell_annual_energy_discharged</li>
+<li>gen_purchases</li>
+<li>grid_to_batt</li>
+<li>land_area</li>
+<li>monthly_batt_to_grid</li>
+<li>monthly_grid_to_batt</li>
+<li>monthly_grid_to_load</li>
+<li>monthly_system_to_grid</li>
+<li>net_billing_credits_ym</li>
+<li>nm_dollars_applied_ym</li>
+<li>om_batt_capacity_cost</li>
+<li>om_batt_fixed_cost</li>
+<li>om_batt_nameplate</li>
+<li>om_batt_replacement_cost</li>
+<li>om_batt_variable_cost</li>
+<li>om_fuelcell_capacity_cost</li>
+<li>om_fuelcell_fixed_cost</li>
+<li>om_fuelcell_nameplate</li>
+<li>om_fuelcell_replacement_cost</li>
+<li>om_fuelcell_variable_cost</li>
+<li>om_land_lease</li>
+<li>om_land_lease_escal</li>
+<li>true_up_credits_ym</li>
+<li>utility_bill_w_sys</li>
+<li>year1_monthly_ec_charge_gross_with_system</li>
+<li>year1_monthly_ec_charge_with_system</li>
+<li>year1_monthly_electricity_to_grid</li>
+</ul>
+Removed:
+<ul>
+<li>om_capacity1</li>
+<li>om_capacity1_nameplate</li>
+<li>om_capacity2</li>
+<li>om_capacity2_nameplate</li>
+<li>om_fixed1</li>
+<li>om_fixed2</li>
+<li>om_production1</li>
+<li>om_production2</li>
+<li>om_replacement_cost1</li>
+<li>om_replacement_cost2</li>
+</ul>
+</td>
+</tr>
+<tr>
+<td>Singleowner</td>
+<td>Added:
+<ul>
+<li>batt_annual_charge_energy</li>
+<li>batt_annual_charge_from_system</li>
+<li>batt_annual_discharge_energy</li>
+<li>batt_capacity_percent</li>
+<li>batt_salvage_percentage</li>
+<li>battery_total_cost_lcos</li>
+<li>charge_w_sys_ec_ym</li>
+<li>dscr_limit_debt_fraction</li>
+<li>dscr_maximum_debt_fraction</li>
+<li>en_standalone_batt</li>
+<li>fuelcell_annual_energy_discharged</li>
+<li>gen_purchases</li>
+<li>grid_to_batt</li>
+<li>land_area</li>
+<li>monthly_batt_to_grid</li>
+<li>monthly_grid_to_batt</li>
+<li>monthly_grid_to_load</li>
+<li>monthly_system_to_grid</li>
+<li>net_billing_credits_ym</li>
+<li>nm_dollars_applied_ym</li>
+<li>om_batt_capacity_cost</li>
+<li>om_batt_fixed_cost</li>
+<li>om_batt_nameplate</li>
+<li>om_batt_replacement_cost</li>
+<li>om_batt_variable_cost</li>
+<li>om_fuelcell_capacity_cost</li>
+<li>om_fuelcell_fixed_cost</li>
+<li>om_fuelcell_nameplate</li>
+<li>om_fuelcell_replacement_cost</li>
+<li>om_fuelcell_variable_cost</li>
+<li>om_land_lease</li>
+<li>om_land_lease_escal</li>
+<li>true_up_credits_ym</li>
+<li>year1_monthly_ec_charge_gross_with_system</li>
+<li>year1_monthly_ec_charge_with_system</li>
+<li>year1_monthly_electricity_to_grid</li>
+</ul>
+Removed:
+<ul>
+<li>om_capacity1</li>
+<li>om_capacity1_nameplate</li>
+<li>om_capacity2</li>
+<li>om_capacity2_nameplate</li>
+<li>om_fixed1</li>
+<li>om_fixed2</li>
+<li>om_production1</li>
+<li>om_production2</li>
+<li>om_replacement_cost1</li>
+<li>om_replacement_cost2</li>
+<li>roe_input</li>
+</ul>
+</td>
+</tr>
+<tr>
+<td>Solarpilot</td>
+<td>Added:
+<ul>
+<li>cav_rec_height</li>
+<li>cav_rec_span</li>
+<li>cav_rec_width</li>
+<li>n_cav_rec_panels</li>
+<li>receiver_type</li>
+</ul>
+</td>
+</tr>
+<tr>
+<td>TcsmoltenSalt</td>
+<td>Added:
+<ul>
+<li>cav_rec_height</li>
+<li>cav_rec_passive_abs</li>
+<li>cav_rec_passive_eps</li>
+<li>cav_rec_span</li>
+<li>cav_rec_width</li>
+<li>csp_financial_model</li>
+<li>en_electricity_rates</li>
+<li>f_q_dot_des_allowable_su</li>
+<li>f_q_dot_heater_min</li>
+<li>heater_mult</li>
+<li>hrs_startup_at_max_rate</li>
+<li>is_parallel_htr</li>
+<li>mp_energy_market_revenue</li>
+<li>n_cav_rec_panels</li>
+<li>piping_loss_coefficient</li>
+<li>ppa_soln_mode</li>
+<li>receiver_type</li>
+<li>timestep_load_fractions</li>
+</ul>
+Removed:
+<ul>
+<li>P_high_limit</li>
+<li>_sco2_P_high_limit</li>
+<li>_sco2_P_ref</li>
+<li>_sco2_T_amb_des</li>
+<li>_sco2_T_approach</li>
+<li>_sco2_T_htf_hot_des</li>
+<li>_sco2_deltaT_PHX</li>
+<li>_sco2_design_eff</li>
+<li>_sco2_eta_c</li>
+<li>_sco2_eta_t</li>
+<li>_sco2_recup_eff_max</li>
+<li>deltaT_PHX</li>
+<li>eta_c</li>
+<li>eta_t</li>
+<li>fan_power_perc_net</li>
+<li>is_sco2_preprocess</li>
+<li>recup_eff_max</li>
+<li>sco2_T_amb_des</li>
+<li>sco2_T_approach</li>
+<li>sco2_cycle_config</li>
+<li>sco2ud_T_amb_high</li>
+<li>sco2ud_T_amb_ind_od</li>
+<li>sco2ud_T_amb_low</li>
+<li>sco2ud_T_htf_cold_calc</li>
+<li>sco2ud_T_htf_high</li>
+<li>sco2ud_T_htf_ind_od</li>
+<li>sco2ud_T_htf_low</li>
+<li>sco2ud_m_dot_htf_high</li>
+<li>sco2ud_m_dot_htf_ind_od</li>
+<li>sco2ud_m_dot_htf_low</li>
+</ul>
+</td>
+</tr>
+<tr>
+<td>TroughPhysical</td>
+<td>Added:
+<ul>
+<li>csp_financial_model</li>
+<li>disp_inventory_incentive</li>
+<li>disp_wlim_maxspec</li>
+<li>en_electricity_rates</li>
+<li>mp_energy_market_revenue</li>
+<li>non_solar_field_land_area_multiplier</li>
+<li>ppa_soln_mode</li>
+<li>specified_solar_multiple</li>
+<li>specified_total_aperture</li>
+<li>timestep_load_fractions</li>
+<li>trough_loop_control</li>
+<li>use_solar_mult_or_aperture_area</li>
+</ul>
+Removed:
+<ul>
+<li>SCADefocusArray</li>
+<li>SCAInfoArray</li>
+<li>is_hx</li>
+<li>solar_mult</li>
+</ul>
+</td>
+</tr>
+<tr>
+<td>TroughPhysicalProcessHeat</td>
+<td>Added:
+<ul>
+<li>disp_inventory_incentive</li>
+<li>disp_wlim_maxspec</li>
+<li>non_solar_field_land_area_multiplier</li>
+<li>specified_solar_multiple</li>
+<li>timestep_load_fractions</li>
+<li>trough_loop_control</li>
+</ul>
+Removed:
+<ul>
+<li>SCADefocusArray</li>
+<li>SCAInfoArray</li>
+<li>solar_mult</li>
+</ul>
+</td>
+</tr>
+<tr>
+<td>UiTesCalcs</td>
+<td>Added:
+<ul>
+<li>dt_hot</li>
+<li>field_fluid</li>
+<li>store_fl_props</li>
+<li>store_fluid</li>
+</ul>
+Removed:
+<ul>
+<li>rec_htf</li>
+</ul>
+</td>
+</tr>
+<tr>
+<td>UiUdpcChecks</td>
+<td>Added:
+<ul>
+<li>T_htf_des_in</li>
+</ul>
+</td>
+</tr>
+<tr>
+<td>Utilityrate5</td>
+<td>Added:
+<ul>
+<li>ur_billing_demand_lookback_percentages</li>
+<li>ur_billing_demand_lookback_period</li>
+<li>ur_billing_demand_minimum</li>
+<li>ur_dc_billing_demand_periods</li>
+<li>ur_enable_billing_demand</li>
+<li>ur_yearzero_usage_peaks</li>
+</ul>
+</td>
+</tr>
+<tr>
+<td>WaveFileReader</td>
+<td>Added:
+<ul>
+<li>wave_resource_filename_ts</li>
+<li>wave_resource_model_choice</li>
+</ul>
+</td>
+</tr>
+<tr>
+<td>Windpower</td>
+<td>Added:
+<ul>
+<li>max_turbine_override</li>
+</ul>
+</td>
+</tr>
+</table>
 </body>
 </html>
