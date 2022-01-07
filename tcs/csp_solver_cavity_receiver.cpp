@@ -58,11 +58,16 @@ C_cavity_receiver::C_cavity_receiver(double dni_des /*W/m2*/,
     double eps_active_sol /*-*/, double eps_passive_sol /*-*/, double eps_active_therm /*-*/, double eps_passive_therm /*-*/,
     E_mesh_types active_surface_mesh_type, E_mesh_types floor_and_cover_mesh_type, E_mesh_types lips_mesh_type,
     double piping_loss_coefficient /*Wt/m2-K*/, double pipe_length_add /*m*/, double pipe_length_mult /*-*/,
-    //double A_sf /*m2*/,
     double h_tower /*m*/, double T_htf_hot_des /*C*/,
     double T_htf_cold_des /*C*/, double f_rec_min /*-*/, double q_dot_rec_des /*MWt*/,
     double rec_su_delay /*hr*/, double rec_qf_delay /*-*/, double m_dot_htf_max_frac /*-*/,
-    double eta_pump /*-*/)
+    double eta_pump /*-*/) : C_pt_receiver(h_tower, std::numeric_limits<double>::quiet_NaN(),
+        T_htf_hot_des, T_htf_cold_des,
+        f_rec_min, q_dot_rec_des,
+        rec_su_delay, rec_qf_delay,
+        m_dot_htf_max_frac, eta_pump,
+        -1, -1,
+        std::vector<double>({std::numeric_limits<double>::quiet_NaN()}))
 {
     m_dni_des = dni_des;                    //[W/m2]
     m_field_fl = field_fl;                  //[-]
@@ -113,6 +118,10 @@ C_cavity_receiver::C_cavity_receiver(double dni_des /*W/m2*/,
     m_rec_qf_delay = rec_qf_delay;      //[-]
     m_m_dot_htf_max_frac = m_dot_htf_max_frac;  //[-]
     m_eta_pump = eta_pump;              //[-]
+
+    // m_epsilon used in base class estimate_thermal_efficiency
+    //    to estimate radiative heat loss
+    m_epsilon = m_e_act_therm;      //[-]
 
     // Hardcode parent class member data not used in cavity model
     m_epsilon = std::numeric_limits<double>::quiet_NaN();

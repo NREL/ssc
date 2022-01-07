@@ -195,7 +195,13 @@ public:
 	S_outputs outputs;
 
 	// Methods
-	C_mspt_receiver_222();
+	C_mspt_receiver_222(double h_tower /*m*/, double epsilon /*-*/,
+        double T_htf_hot_des /*C*/, double T_htf_cold_des /*C*/,
+        double f_rec_min /*-*/, double q_dot_rec_des /*MWt*/,
+        double rec_su_delay /*hr*/, double rec_qf_delay /*-*/,
+        double m_dot_htf_max_frac /*-*/, double eta_pump /*-*/,
+        int night_recirc /*-*/, int clearsky_model /*-*/,
+        std::vector<double> clearsky_data);
 
 	~C_mspt_receiver_222(){};
 

@@ -85,7 +85,6 @@ private:
     bool m_is_bottomUpFlow;     //[-]
     bool m_is_centerOutFlow;    //[-]
     double m_rec_span;      //[rad]
-    //double m_offset;        //[m]
 
     double m_od_rec_tube;   //[m] single tube outer diameter
     double m_th_rec_tube;   //[m] single tube wall thickness
@@ -100,12 +99,9 @@ private:
     double m_e_act_therm;   //[-] Emissivity in long wave range for active surfaces
     double m_e_pass_therm;  //[-] Emissivity in long wave range for passive surfaces
 
-    //double m_pipe_loss_per_m;		//[Wt/m]
     double m_piping_loss_coefficient;   //[Wt/m2-K]
     double m_pipe_length_add;		//[m]
     double m_pipe_length_mult;		//[-]
-
-    //double m_A_sf;                  //[m2]
 
     E_mesh_types m_active_surface_mesh_type;
     E_mesh_types m_floor_and_cover_mesh_type;
@@ -115,6 +111,7 @@ private:
 
     // ************************************
     // Calculated stored parameters
+
     std::vector<C_rec_surface> mv_rec_surfs;    // vector of surface classes for each surface in cavity model
     std::vector<util::matrix_t<int>> m_v_elems; // each vector index is a surface; each row lists the nodes that define a mesh element
     util::matrix_t<double> m_nodesGlobal;       // each row lists x,y,z coordinates of each node

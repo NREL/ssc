@@ -77,8 +77,8 @@ void C_csp_mspt_collector_receiver::init(const C_csp_collector_receiver::S_csp_c
 	mc_pt_heliostatfield.init();
 	mc_pt_receiver.init();
 
-	solved_params.m_T_htf_cold_des = mc_pt_receiver.m_T_htf_cold_des;       //[K]
-	solved_params.m_q_dot_rec_des = mc_pt_receiver.m_q_rec_des / 1.E6;		//[MW]
+    solved_params.m_T_htf_cold_des = mc_pt_receiver.get_T_htf_cold_des();   // mc_pt_receiver.m_T_htf_cold_des;       //[K]
+    solved_params.m_q_dot_rec_des = mc_pt_receiver.get_q_dot_rec_des();     // mc_pt_receiver.m_q_rec_des / 1.E6;		//[MW]
 	solved_params.m_A_aper_total = mc_pt_heliostatfield.ms_params.m_A_sf;	//[m^2]
 
 	return;
@@ -106,12 +106,14 @@ double C_csp_mspt_collector_receiver::get_pumping_parasitic_coef()  //MWe/MWt
 
 double C_csp_mspt_collector_receiver::get_min_power_delivery()    //MWt
 {
-    return mc_pt_receiver.m_f_rec_min * mc_pt_receiver.m_q_rec_des*1.e-6;
+    //return mc_pt_receiver.m_f_rec_min * mc_pt_receiver.m_q_rec_des*1.e-6;
+    return mc_pt_receiver.get_min_power_delivery();     //[MWt]
 }
 
 double C_csp_mspt_collector_receiver::get_max_power_delivery(double T_htf_cold_in /*C*/)    //MWt
 {
-    return mc_pt_receiver.m_m_dot_htf_max_frac * mc_pt_receiver.m_q_rec_des * 1.e-6;
+    //return mc_pt_receiver.m_m_dot_htf_max_frac * mc_pt_receiver.m_q_rec_des * 1.e-6;
+    return mc_pt_receiver.get_max_power_delivery();     //[MWt]
 }
 
 double C_csp_mspt_collector_receiver::get_tracking_power()
@@ -350,26 +352,27 @@ double C_csp_mspt_collector_receiver::calculate_thermal_efficiency_approx( const
     A very approximate thermal efficiency used for quick optimization performance projections
     */
 
-    double T_eff = (mc_pt_receiver.m_T_htf_cold_des + mc_pt_receiver.m_T_htf_hot_des)*.55;
+    //double T_eff = (mc_pt_receiver.m_T_htf_cold_des + mc_pt_receiver.m_T_htf_hot_des)*.55;
+    //
+    //double T_amb = weather.m_tdry + 273.15;
+    //double T_eff4 = T_eff * T_eff;
+    //T_eff4 *= T_eff4;
+    //double T_amb4 = T_amb * T_amb;
+    //T_amb4 *= T_amb4;
+    //
+    //double Arec = mc_pt_receiver.area_proj();
+    //
+    //double q_rad = 5.67e-8*mc_pt_receiver.m_epsilon * Arec * (T_eff4 - T_amb4) * 1.e-6;   //MWt
+    //
+    //double v = weather.m_wspd;
+    //double v2 = v*v;
+    //double v3 = v2*v;
+    //
+    //double q_conv = q_rad/2. * (-0.001129*v3 + 0.031229*v2 - 0.01822*v +0.962476);  //convection is about half radiation, scale by wind speed. surrogate regression from molten salt run.
+    //
+    //return max(1. - (q_rad + q_conv)/q_inc, 0.);
 
-    double T_amb = weather.m_tdry + 273.15;
-    double T_eff4 = T_eff * T_eff;
-    T_eff4 *= T_eff4;
-    double T_amb4 = T_amb * T_amb;
-    T_amb4 *= T_amb4;
-
-    double Arec = mc_pt_receiver.area_proj();
-
-    double q_rad = 5.67e-8*mc_pt_receiver.m_epsilon * Arec * (T_eff4 - T_amb4) * 1.e-6;   //MWt
-
-    double v = weather.m_wspd;
-    double v2 = v*v;
-    double v3 = v2*v;
-
-    double q_conv = q_rad/2. * (-0.001129*v3 + 0.031229*v2 - 0.01822*v +0.962476);  //convection is about half radiation, scale by wind speed. surrogate regression from molten salt run.
-
-    return max(1. - (q_rad + q_conv)/q_inc, 0.);
-
+    return mc_pt_receiver.estimate_thermal_efficiency(weather, q_inc);
 }
 
 

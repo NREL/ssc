@@ -37,23 +37,10 @@ public:
 
     C_csp_messages csp_messages;        // Class to save messages for upstream classes
 
-    double m_h_tower;				    //[m] height of the tower
-    double m_epsilon;				    //[-] emissivity of the receiver panels
-    double m_T_htf_hot_des;			    //[C] hot outlet HTF temperature at design, converted to [K] in init()
-    double m_T_htf_cold_des;		    //[C] cold inlet HTF temperature at design, converted to [K] in init()
-    double m_f_rec_min;				    //[-] minimum receiver thermal output as fraction of design
-    double m_q_rec_des;				    //[MW] design recever thermal output, converted to [W] in init()
-    double m_rec_su_delay;			    //[hr] required startup time
-    double m_rec_qf_delay;			    //[-] required startup energy as fraction of design thermal output
-    double m_m_dot_htf_max_frac;	    //[-] maximum receiver HTF mass flow as fraction of design mass flow
 
     double m_q_dot_inc_min;             //[Wt] minimum receiver thermal power
 
-    double m_eta_pump;					//[-] HTF pump efficiency
-    int m_night_recirc;					//[-] 1=receiver is circulating HTF at night, otherwise not
 	
-	int m_clearsky_model;
-	std::vector<double> m_clearsky_data;
 
     struct S_inputs
     {
@@ -151,8 +138,45 @@ public:
 
     virtual double area_proj() = 0; //[m^2]
 
+    double estimate_thermal_efficiency(const C_csp_weatherreader::S_outputs& weather, double q_inc);
+
+    double get_min_power_delivery(); //[MWt]
+
+    double get_max_power_delivery(); //[MWt]
+
+    double get_T_htf_cold_des();    //[K]
+
+    double get_q_dot_rec_des();     //[MWt]
+
 protected:
-    C_pt_receiver();
+
+    C_pt_receiver(double h_tower /*m*/, double m_epsilon /*-*/,
+                double T_htf_hot_des /*C*/, double T_htf_cold_des /*C*/,
+                double f_rec_min /*-*/, double q_dot_rec_des /*MWt*/,
+                double rec_su_delay /*hr*/, double rec_qf_delay /*-*/,
+                double m_dot_htf_max_frac /*-*/, double eta_pump /*-*/,
+                int night_recirc /*-*/, int clearsky_model /*-*/,
+                std::vector<double> clearsky_data);
+
+    // Base class design parameters
+    double m_h_tower;				    //[m] height of the tower
+    double m_epsilon;				    //[-] emissivity of the receiver panels
+    double m_T_htf_hot_des;			    //[C] hot outlet HTF temperature at design, converted to [K] in init()
+    double m_T_htf_cold_des;		    //[C] cold inlet HTF temperature at design, converted to [K] in init()
+    double m_f_rec_min;				    //[-] minimum receiver thermal output as fraction of design
+    double m_q_rec_des;				    //[MW] design recever thermal output, converted to [W] in init()
+    double m_rec_su_delay;			    //[hr] required startup time
+    double m_rec_qf_delay;			    //[-] required startup energy as fraction of design thermal output
+    double m_m_dot_htf_max_frac;	    //[-] maximum receiver HTF mass flow as fraction of design mass flow
+    double m_eta_pump;					//[-] HTF pump efficiency
+
+    int m_night_recirc;					//[-] 1=receiver is circulating HTF at night, otherwise not
+
+    int m_clearsky_model;
+    std::vector<double> m_clearsky_data;
+
+    // *******************************************
+
     HTFProperties field_htfProps;       // heat transfer fluid properties
     HTFProperties tube_material;		// receiver tube material
     HTFProperties ambient_air;			// ambient air properties

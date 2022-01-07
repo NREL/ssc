@@ -98,18 +98,57 @@ public:
 
         double H_rec = as_double("rec_height");
         double D_rec = as_double("D_rec");
-
         //double D_rec = H_rec / rec_aspect;
+
+        double q_dot_rec_des = as_double("q_dot_rec_des");  //[MWt]
+
+        int rec_night_recirc = 0;
+        int rec_clearsky_model = as_integer("rec_clearsky_model");
+
+        if (rec_clearsky_model > 4)
+            throw exec_error("tcsmolten_salt", "Invalid specification for 'rec_clearsky_model'");
+        if (rec_clearsky_model == -1 && as_double("rec_clearsky_fraction") >= 0.0001)
+            throw exec_error("tcsmolten_salt", "'rec_clearsky_model' must be specified when 'rec_clearsky_fraction' > 0.0.");
+
+        std::vector<double> clearsky_data;
+        if (rec_clearsky_model == 0)
+        {
+            //size_t n_csky = 0;
+            //ssc_number_t* csky = as_array("rec_clearsky_dni", &n_csky);
+            //if (n_csky != n_steps_full)
+            //throw exec_error("tcsmolten_salt", "Invalid clear-sky DNI data. Array must have " + util::to_string((int)n_steps_full) + " rows.");
+            throw exec_error("tcsmolten_salt", "Cleary-sky data not ready");
+            //
+            //receiver->m_clearsky_data.resize(n_steps_full);
+            //for (size_t i = 0; i < n_steps_full; i++)
+            //    receiver->m_clearsky_data.at(i) = (double)csky[i];
+        }
 
         // Transient model
         if (is_rec_model_trans || is_rec_startup_trans) {
 
-            std::unique_ptr<C_mspt_receiver> trans_receiver = std::unique_ptr<C_mspt_receiver>(new C_mspt_receiver());    // transient receiver
+            std::unique_ptr<C_mspt_receiver> trans_receiver = std::unique_ptr<C_mspt_receiver>(new C_mspt_receiver(
+                as_double("h_tower"), as_double("epsilon"),
+                as_double("T_htf_hot_des"), as_double("T_htf_cold_des"),
+                as_double("f_rec_min"), q_dot_rec_des,
+                as_double("rec_su_delay"), as_double("rec_qf_delay"),
+                as_double("csp.pt.rec.max_oper_frac"), as_double("eta_pump"),
+                rec_night_recirc, rec_clearsky_model,
+                clearsky_data
+                ));    // transient receiver
 
         }
         else { // Steady state model
 
-            std::unique_ptr<C_mspt_receiver_222> ss_receiver = std::unique_ptr<C_mspt_receiver_222>(new C_mspt_receiver_222());   // steady-state receiver
+            std::unique_ptr<C_mspt_receiver_222> ss_receiver = std::unique_ptr<C_mspt_receiver_222>(new C_mspt_receiver_222(
+                as_double("h_tower"), as_double("epsilon"),
+                as_double("T_htf_hot_des"), as_double("T_htf_cold_des"),
+                as_double("f_rec_min"), q_dot_rec_des,
+                as_double("rec_su_delay"), as_double("rec_qf_delay"),
+                as_double("csp.pt.rec.max_oper_frac"), as_double("eta_pump"),
+                rec_night_recirc, rec_clearsky_model,
+                clearsky_data
+                ));   // steady-state receiver
 
             ss_receiver->m_n_panels = as_integer("N_panels");                   //[-]
             ss_receiver->m_d_rec = D_rec;                                       //[m]
@@ -129,38 +168,6 @@ public:
             ss_receiver->m_csky_frac = as_double("rec_clearsky_fraction");
 
             receiver = std::move(ss_receiver);
-        }
-
-        // Parent class member data
-        receiver->m_h_tower = as_double("h_tower");                 //[m]
-        receiver->m_epsilon = as_double("epsilon");                 //[-]
-        receiver->m_T_htf_hot_des = as_double("T_htf_hot_des");     //[C]
-        receiver->m_T_htf_cold_des = as_double("T_htf_cold_des");   //[C]
-        receiver->m_f_rec_min = as_double("f_rec_min");             //[-]
-        receiver->m_q_rec_des = as_double("q_dot_rec_des");         //[MWt] 
-        receiver->m_rec_su_delay = as_double("rec_su_delay");       //[hr]
-        receiver->m_rec_qf_delay = as_double("rec_qf_delay");       //[-]
-        receiver->m_m_dot_htf_max_frac = as_double("csp.pt.rec.max_oper_frac"); //[-]
-        receiver->m_eta_pump = as_double("eta_pump");               //[-]
-        receiver->m_night_recirc = 0;
-
-        receiver->m_clearsky_model = as_integer("rec_clearsky_model");
-        if (receiver->m_clearsky_model > 4)
-            throw exec_error("tcsmolten_salt", "Invalid specification for 'rec_clearsky_model'");
-        if (receiver->m_clearsky_model == -1 && as_double("rec_clearsky_fraction") >= 0.0001)
-            throw exec_error("tcsmolten_salt", "'rec_clearsky_model' must be specified when 'rec_clearsky_fraction' > 0.0.");
-
-        if (receiver->m_clearsky_model == 0)
-        {
-            //size_t n_csky = 0;
-            //ssc_number_t* csky = as_array("rec_clearsky_dni", &n_csky);
-            //if (n_csky != n_steps_full)
-            //throw exec_error("tcsmolten_salt", "Invalid clear-sky DNI data. Array must have " + util::to_string((int)n_steps_full) + " rows.");
-            throw exec_error("tcsmolten_salt", "Cleary-sky data not ready");
-            //
-            //receiver->m_clearsky_data.resize(n_steps_full);
-            //for (size_t i = 0; i < n_steps_full; i++)
-            //    receiver->m_clearsky_data.at(i) = (double)csky[i];
         }
 
         receiver->init();

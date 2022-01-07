@@ -28,7 +28,19 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Ambient.h"
 #include "definitions.h"
 
-C_mspt_receiver::C_mspt_receiver()
+C_mspt_receiver::C_mspt_receiver(double h_tower /*m*/, double epsilon /*-*/,
+    double T_htf_hot_des /*C*/, double T_htf_cold_des /*C*/,
+    double f_rec_min /*-*/, double q_dot_rec_des /*MWt*/,
+    double rec_su_delay /*hr*/, double rec_qf_delay /*-*/,
+    double m_dot_htf_max_frac /*-*/, double eta_pump /*-*/,
+    int night_recirc /*-*/, int clearsky_model /*-*/,
+    std::vector<double> clearsky_data) : C_pt_receiver(h_tower, epsilon,
+        T_htf_hot_des, T_htf_cold_des,
+        f_rec_min, q_dot_rec_des,
+        rec_su_delay, rec_qf_delay,
+        m_dot_htf_max_frac, eta_pump,
+        night_recirc, clearsky_model,
+        clearsky_data)
 {    
     m_n_panels = -1;
 
@@ -47,8 +59,6 @@ C_mspt_receiver::C_mspt_receiver()
 	m_n_t = -1;
 
 	m_T_salt_hot_target = std::numeric_limits<double>::quiet_NaN();
-	m_eta_pump = std::numeric_limits<double>::quiet_NaN();
-	m_night_recirc = -1;
 
 		// Added for csp_solver/tcs wrapper
 	m_field_fl = -1;

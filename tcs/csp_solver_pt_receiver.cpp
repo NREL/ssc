@@ -26,28 +26,36 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Ambient.h"
 #include "definitions.h"
 
-C_pt_receiver::C_pt_receiver()
+C_pt_receiver::C_pt_receiver(double h_tower /*m*/, double epsilon /*-*/,
+    double T_htf_hot_des /*C*/, double T_htf_cold_des /*C*/,
+    double f_rec_min /*-*/, double q_dot_rec_des /*MWt*/,
+    double rec_su_delay /*hr*/, double rec_qf_delay /*-*/,
+    double m_dot_htf_max_frac /*-*/, double eta_pump /*-*/,
+    int night_recirc /*-*/, int clearsky_model /*-*/,
+    std::vector<double> clearsky_data)
 {
-	m_h_tower = std::numeric_limits<double>::quiet_NaN();
-    m_epsilon = std::numeric_limits<double>::quiet_NaN();
-	m_T_htf_hot_des = std::numeric_limits<double>::quiet_NaN();
-	m_T_htf_cold_des = std::numeric_limits<double>::quiet_NaN();
-	m_f_rec_min = std::numeric_limits<double>::quiet_NaN();
-	m_q_rec_des = std::numeric_limits<double>::quiet_NaN();
-	m_rec_su_delay = std::numeric_limits<double>::quiet_NaN();
-	m_rec_qf_delay = std::numeric_limits<double>::quiet_NaN();
-	m_m_dot_htf_max_frac = std::numeric_limits<double>::quiet_NaN();
+    // Design parameters
+    m_h_tower = h_tower;    //[m]
+    m_epsilon = epsilon;    //[-]
+    m_T_htf_hot_des = T_htf_hot_des;   //[C]
+    m_T_htf_cold_des = T_htf_cold_des;   //[C]
+    m_f_rec_min = f_rec_min;    //[-]
+    m_q_rec_des = q_dot_rec_des;    //[MWt]
+    m_rec_su_delay = rec_su_delay;  //[hr]
+    m_rec_qf_delay = rec_qf_delay;  //[-]
+    m_m_dot_htf_max_frac = m_dot_htf_max_frac;  //[-]
+    m_eta_pump = eta_pump;  //[-]
 
-    m_eta_pump = std::numeric_limits<double>::quiet_NaN();
-	m_night_recirc = -1;
+    m_night_recirc = night_recirc;  //[-]
+    m_clearsky_model = clearsky_model;   //[-]
+    m_clearsky_data = clearsky_data;
 
-	error_msg = "";
-	m_m_dot_htf_des = std::numeric_limits<double>::quiet_NaN();
+    // State variables
     m_mode = C_csp_collector_receiver::E_csp_cr_modes::OFF;
     m_mode_prev = C_csp_collector_receiver::E_csp_cr_modes::OFF;
 
-	m_clearsky_model = -1;
-	m_clearsky_data.resize(0);
+	error_msg = "";
+	m_m_dot_htf_des = std::numeric_limits<double>::quiet_NaN();
 }
 
 C_csp_collector_receiver::E_csp_cr_modes C_pt_receiver::get_operating_state()
@@ -124,4 +132,52 @@ double C_pt_receiver::get_clearsky(const C_csp_weatherreader::S_outputs &weather
 	}
 
 	return clearsky;
+}
+
+double C_pt_receiver::estimate_thermal_efficiency(const C_csp_weatherreader::S_outputs& weather, double q_inc)
+{
+    /*
+    A very approximate thermal efficiency used for quick optimization performance projections
+    */
+
+    double T_eff = (m_T_htf_cold_des + m_T_htf_hot_des) * .55;  //[K]
+
+    double T_amb = weather.m_tdry + 273.15;
+    double T_eff4 = T_eff * T_eff;
+    T_eff4 *= T_eff4;
+    double T_amb4 = T_amb * T_amb;
+    T_amb4 *= T_amb4;
+
+    double Arec = area_proj();
+
+    double q_rad = 5.67e-8 * m_epsilon * Arec * (T_eff4 - T_amb4) * 1.e-6;   //MWt
+
+    double v = weather.m_wspd;
+    double v2 = v * v;
+    double v3 = v2 * v;
+
+    double q_conv = q_rad / 2. * (-0.001129 * v3 + 0.031229 * v2 - 0.01822 * v + 0.962476);  //convection is about half radiation, scale by wind speed. surrogate regression from molten salt run.
+
+    return std::max(1. - (q_rad + q_conv) / q_inc, 0.);
+
+}
+
+double C_pt_receiver::get_min_power_delivery() //[MWt]
+{
+    return m_f_rec_min * m_q_rec_des * 1.E-6;   //[MWt]
+}
+
+double C_pt_receiver::get_max_power_delivery() //[MWt]
+{
+    return m_m_dot_htf_max_frac * m_q_rec_des * 1.E-6;  //[MWt]
+}
+
+double C_pt_receiver::get_T_htf_cold_des()    //[K]
+{
+    return m_T_htf_cold_des;    //[K]
+}
+
+double C_pt_receiver::get_q_dot_rec_des()     //[MWt]
+{
+    return m_q_rec_des * 1.E-6;     //[MWt]
 }
