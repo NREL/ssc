@@ -1381,6 +1381,7 @@ public:
                     as_double("f_rec_min"), q_dot_rec_des,
                     as_double("rec_su_delay"), as_double("rec_qf_delay"),
                     as_double("csp.pt.rec.max_oper_frac"), as_double("eta_pump"),
+                    as_integer("rec_htf"), as_matrix("field_fl_props"),
                     rec_night_recirc, rec_clearsky_model,
                     clearsky_data
                     ));   // steady-state receiver
@@ -1412,6 +1413,7 @@ public:
                     as_double("f_rec_min"), q_dot_rec_des,
                     as_double("rec_su_delay"), as_double("rec_qf_delay"),
                     as_double("csp.pt.rec.max_oper_frac"), as_double("eta_pump"),
+                    as_integer("rec_htf"), as_matrix("field_fl_props"),
                     rec_night_recirc, rec_clearsky_model,
                     clearsky_data
                     ));    // transient receiver

@@ -168,10 +168,7 @@ public:
 	double m_od_tube;				//[mm], convert to [m] in init()
 	double m_th_tube;				//[mm], convert to [m] in init()
 	double m_hl_ffact;				//[-]
-	//double m_A_sf;					//[m2]
 
-	// 8.10.2015 twn: add tower piping thermal losses to receiver performance
-	//double m_pipe_loss_per_m;		//[Wt/m]
     double m_piping_loss_coefficient;   //[Wt/m2-K]
     double m_pipe_length_add;		//[m]
 	double m_pipe_length_mult;		//[-]
@@ -200,6 +197,7 @@ public:
         double f_rec_min /*-*/, double q_dot_rec_des /*MWt*/,
         double rec_su_delay /*hr*/, double rec_qf_delay /*-*/,
         double m_dot_htf_max_frac /*-*/, double eta_pump /*-*/,
+        int field_fl, util::matrix_t<double> field_fl_props,
         int night_recirc /*-*/, int clearsky_model /*-*/,
         std::vector<double> clearsky_data);
 

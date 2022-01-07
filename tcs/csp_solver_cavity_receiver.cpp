@@ -61,17 +61,16 @@ C_cavity_receiver::C_cavity_receiver(double dni_des /*W/m2*/,
     double h_tower /*m*/, double T_htf_hot_des /*C*/,
     double T_htf_cold_des /*C*/, double f_rec_min /*-*/, double q_dot_rec_des /*MWt*/,
     double rec_su_delay /*hr*/, double rec_qf_delay /*-*/, double m_dot_htf_max_frac /*-*/,
-    double eta_pump /*-*/) : C_pt_receiver(h_tower, std::numeric_limits<double>::quiet_NaN(),
+    double eta_pump /*-*/) : C_pt_receiver(h_tower, eps_active_therm,
         T_htf_hot_des, T_htf_cold_des,
         f_rec_min, q_dot_rec_des,
         rec_su_delay, rec_qf_delay,
         m_dot_htf_max_frac, eta_pump,
+        field_fl, field_fl_props,
         -1, -1,
         std::vector<double>({std::numeric_limits<double>::quiet_NaN()}))
 {
     m_dni_des = dni_des;                    //[W/m2]
-    m_field_fl = field_fl;                  //[-]
-    m_field_fl_props = field_fl_props;      //[-]
 
     m_od_rec_tube = od_rec_tube;            //[m]
     m_th_rec_tube = th_rec_tube;            //[m]
@@ -92,12 +91,9 @@ C_cavity_receiver::C_cavity_receiver(double dni_des /*W/m2*/,
     m_floor_and_cover_mesh_type = floor_and_cover_mesh_type;
     m_lips_mesh_type = lips_mesh_type;
 
-    //m_pipe_loss_per_m = pipe_loss_per_m;    //[Wt/m]
     m_piping_loss_coefficient = piping_loss_coefficient;    //[Wt/m2-K]
     m_pipe_length_add = pipe_length_add;    //[m]
     m_pipe_length_mult = pipe_length_mult;  //[-]
-
-    //m_A_sf = A_sf;      //[m2]
 
     m_area_active_total = std::numeric_limits<double>::quiet_NaN();
     m_d_in_rec_tube = std::numeric_limits<double>::quiet_NaN();
@@ -107,25 +103,6 @@ C_cavity_receiver::C_cavity_receiver(double dni_des /*W/m2*/,
     m_rel_roughness = std::numeric_limits<double>::quiet_NaN();
     m_A_aper = std::numeric_limits<double>::quiet_NaN();
     m_eta_therm_des = std::numeric_limits<double>::quiet_NaN();
-
-    // Set parent class member data
-    m_h_tower = h_tower;        //[m]
-    m_T_htf_hot_des = T_htf_hot_des;    //[C] convert to K in init()
-    m_T_htf_cold_des = T_htf_cold_des;  //[C] convert to K in init()
-    m_f_rec_min = f_rec_min;            //[-]
-    m_q_rec_des = q_dot_rec_des;        //[MWt] convert to W in init()
-    m_rec_su_delay = rec_su_delay;      //[hr]
-    m_rec_qf_delay = rec_qf_delay;      //[-]
-    m_m_dot_htf_max_frac = m_dot_htf_max_frac;  //[-]
-    m_eta_pump = eta_pump;              //[-]
-
-    // m_epsilon used in base class estimate_thermal_efficiency
-    //    to estimate radiative heat loss
-    m_epsilon = m_e_act_therm;      //[-]
-
-    // Hardcode parent class member data not used in cavity model
-    m_epsilon = std::numeric_limits<double>::quiet_NaN();
-    m_clearsky_model = -1;
 }
 
 void C_cavity_receiver::genOctCavity()
@@ -2767,13 +2744,6 @@ void C_cavity_receiver::tube_UA_and_deltaP(std::vector<double> m_dot_paths /*kg/
 void C_cavity_receiver::init()
 {
     // ******************************************
-    // Unit conversions
-    // ******************************************
-    m_T_htf_hot_des += 273.15;	//[K] Convert from input in [C]
-    m_T_htf_cold_des += 273.15;	//[K] Convert from input in [C]
-    m_q_rec_des *= 1.E6;		//[W] Convert from input in [MW]
-
-    // ******************************************
     // Set up cavity geometry and view factors
     // ******************************************  
     m_pipeWindings = 2;   //[-] Probably needs to be >= 2 to avoid inconsistencies in mesh calcs
@@ -2837,36 +2807,7 @@ void C_cavity_receiver::init()
     ambient_air.SetFluid(ambient_air.Air);
 
     // Declare instance of fluid class for FIELD fluid
-    if (m_field_fl != HTFProperties::User_defined && m_field_fl < HTFProperties::End_Library_Fluids)
-    {
-        if (!field_htfProps.SetFluid(m_field_fl))
-        {
-            throw(C_csp_exception("Receiver HTF code is not recognized", "MSPT receiver"));
-        }
-    }
-    else if (m_field_fl == HTFProperties::User_defined)
-    {
-        // Check that 'm_field_fl_props' is allocated and correct dimensions
-        int n_rows = (int)m_field_fl_props.nrows();
-        int n_cols = (int)m_field_fl_props.ncols();
-        if (n_rows > 2 && n_cols == 7)
-        {
-            if (!field_htfProps.SetUserDefinedFluid(m_field_fl_props))
-            {
-                error_msg = util::format(field_htfProps.UserFluidErrMessage(), n_rows, n_cols);
-                throw(C_csp_exception(error_msg, "MSPT receiver"));
-            }
-        }
-        else
-        {
-            error_msg = util::format("The user defined field HTF table must contain at least 3 rows and exactly 7 columns. The current table contains %d row(s) and %d column(s)", n_rows, n_cols);
-            throw(C_csp_exception(error_msg, "MSPT receiver"));
-        }
-    }
-    else
-    {
-        throw(C_csp_exception("Receiver HTF code is not recognized", "MSPT receiver"));
-    }
+    C_pt_receiver::init();
 
     // Declare instance of htf class for receiver tube material
     if (m_tube_mat_code == HTFProperties::Stainless_AISI316 || m_tube_mat_code == HTFProperties::T91_Steel ||

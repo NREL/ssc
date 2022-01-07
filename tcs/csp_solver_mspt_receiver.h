@@ -346,6 +346,7 @@ public:
         double f_rec_min /*-*/, double q_dot_rec_des /*MWt*/,
         double rec_su_delay /*hr*/, double rec_qf_delay /*-*/,
         double m_dot_htf_max_frac /*-*/, double eta_pump /*-*/,
+        int field_fl, util::matrix_t<double> field_fl_props,
         int night_recirc /*-*/, int clearsky_model /*-*/,
         std::vector<double> clearsky_data);
 

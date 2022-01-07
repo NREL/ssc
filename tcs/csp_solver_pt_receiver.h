@@ -113,7 +113,7 @@ public:
 
     S_outputs ms_outputs;
 
-    virtual void init() = 0;
+    virtual void init();
 
     C_csp_collector_receiver::E_csp_cr_modes get_operating_state();
 
@@ -155,14 +155,16 @@ protected:
                 double f_rec_min /*-*/, double q_dot_rec_des /*MWt*/,
                 double rec_su_delay /*hr*/, double rec_qf_delay /*-*/,
                 double m_dot_htf_max_frac /*-*/, double eta_pump /*-*/,
+                int field_fl, util::matrix_t<double> field_fl_props,
                 int night_recirc /*-*/, int clearsky_model /*-*/,
                 std::vector<double> clearsky_data);
 
+    // *******************************************
     // Base class design parameters
     double m_h_tower;				    //[m] height of the tower
     double m_epsilon;				    //[-] emissivity of the receiver panels
-    double m_T_htf_hot_des;			    //[C] hot outlet HTF temperature at design, converted to [K] in init()
-    double m_T_htf_cold_des;		    //[C] cold inlet HTF temperature at design, converted to [K] in init()
+    double m_T_htf_hot_des;			    //[K] hot outlet HTF temperature at design, converted from C in constructor
+    double m_T_htf_cold_des;		    //[K] cold inlet HTF temperature at design, converted from C in constructor
     double m_f_rec_min;				    //[-] minimum receiver thermal output as fraction of design
     double m_q_rec_des;				    //[MW] design recever thermal output, converted to [W] in init()
     double m_rec_su_delay;			    //[hr] required startup time
@@ -170,11 +172,15 @@ protected:
     double m_m_dot_htf_max_frac;	    //[-] maximum receiver HTF mass flow as fraction of design mass flow
     double m_eta_pump;					//[-] HTF pump efficiency
 
+    int m_field_fl;
+    util::matrix_t<double> m_field_fl_props;
+
     int m_night_recirc;					//[-] 1=receiver is circulating HTF at night, otherwise not
 
     int m_clearsky_model;
     std::vector<double> m_clearsky_data;
 
+    // *******************************************
     // *******************************************
 
     HTFProperties field_htfProps;       // heat transfer fluid properties

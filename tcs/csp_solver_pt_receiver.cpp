@@ -31,20 +31,24 @@ C_pt_receiver::C_pt_receiver(double h_tower /*m*/, double epsilon /*-*/,
     double f_rec_min /*-*/, double q_dot_rec_des /*MWt*/,
     double rec_su_delay /*hr*/, double rec_qf_delay /*-*/,
     double m_dot_htf_max_frac /*-*/, double eta_pump /*-*/,
+    int field_fl, util::matrix_t<double> field_fl_props,
     int night_recirc /*-*/, int clearsky_model /*-*/,
     std::vector<double> clearsky_data)
 {
     // Design parameters
     m_h_tower = h_tower;    //[m]
     m_epsilon = epsilon;    //[-]
-    m_T_htf_hot_des = T_htf_hot_des;   //[C]
-    m_T_htf_cold_des = T_htf_cold_des;   //[C]
+    m_T_htf_hot_des = T_htf_hot_des + 273.15;       //[K] convert from C
+    m_T_htf_cold_des = T_htf_cold_des + 273.15;     //[K] convert from C
     m_f_rec_min = f_rec_min;    //[-]
-    m_q_rec_des = q_dot_rec_des;    //[MWt]
+    m_q_rec_des = q_dot_rec_des*1.E6;       //[Wt] convert from MWt
     m_rec_su_delay = rec_su_delay;  //[hr]
     m_rec_qf_delay = rec_qf_delay;  //[-]
     m_m_dot_htf_max_frac = m_dot_htf_max_frac;  //[-]
     m_eta_pump = eta_pump;  //[-]
+
+    m_field_fl = field_fl;  //[-]
+    m_field_fl_props = field_fl_props;
 
     m_night_recirc = night_recirc;  //[-]
     m_clearsky_model = clearsky_model;   //[-]
@@ -61,6 +65,43 @@ C_pt_receiver::C_pt_receiver(double h_tower /*m*/, double epsilon /*-*/,
 C_csp_collector_receiver::E_csp_cr_modes C_pt_receiver::get_operating_state()
 {
     return m_mode_prev;
+}
+
+void C_pt_receiver::init()
+{
+    // Declare instance of fluid class for FIELD fluid
+    if (m_field_fl != HTFProperties::User_defined && m_field_fl < HTFProperties::End_Library_Fluids)
+    {
+        if (!field_htfProps.SetFluid(m_field_fl))
+        {
+            throw(C_csp_exception("Receiver HTF code is not recognized", "MSPT receiver"));
+        }
+    }
+    else if (m_field_fl == HTFProperties::User_defined)
+    {
+        // Check that 'm_field_fl_props' is allocated and correct dimensions
+        int n_rows = (int)m_field_fl_props.nrows();
+        int n_cols = (int)m_field_fl_props.ncols();
+        if (n_rows > 2 && n_cols == 7)
+        {
+            if (!field_htfProps.SetUserDefinedFluid(m_field_fl_props))
+            {
+                error_msg = util::format(field_htfProps.UserFluidErrMessage(), n_rows, n_cols);
+                throw(C_csp_exception(error_msg, "MSPT receiver"));
+            }
+        }
+        else
+        {
+            error_msg = util::format("The user defined field HTF table must contain at least 3 rows and exactly 7 columns. The current table contains %d row(s) and %d column(s)", n_rows, n_cols);
+            throw(C_csp_exception(error_msg, "MSPT receiver"));
+        }
+    }
+    else
+    {
+        throw(C_csp_exception("Receiver HTF code is not recognized", "MSPT receiver"));
+    }
+
+    return;
 }
 
 HTFProperties *C_pt_receiver::get_htf_property_object()

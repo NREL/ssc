@@ -32,12 +32,14 @@ C_mspt_receiver_222::C_mspt_receiver_222(double h_tower /*m*/, double epsilon /*
     double f_rec_min /*-*/, double q_dot_rec_des /*MWt*/,
     double rec_su_delay /*hr*/, double rec_qf_delay /*-*/,
     double m_dot_htf_max_frac /*-*/, double eta_pump /*-*/,
+    int field_fl, util::matrix_t<double> field_fl_props,
     int night_recirc /*-*/, int clearsky_model /*-*/,
     std::vector<double> clearsky_data) : C_pt_receiver(h_tower, epsilon,
         T_htf_hot_des, T_htf_cold_des,
         f_rec_min, q_dot_rec_des,
         rec_su_delay, rec_qf_delay,
         m_dot_htf_max_frac, eta_pump,
+        field_fl, field_fl_props,
         night_recirc, clearsky_model,
         clearsky_data)
 {
@@ -60,7 +62,6 @@ C_mspt_receiver_222::C_mspt_receiver_222(double h_tower /*m*/, double epsilon /*
 	m_T_salt_hot_target = std::numeric_limits<double>::quiet_NaN();
 
 		// Added for csp_solver/tcs wrapper
-	m_field_fl = -1;
 	m_mat_tube = -1;
 	m_flow_type = -1;
     m_crossover_shift = 0;
@@ -97,37 +98,7 @@ void C_mspt_receiver_222::init()
 	ambient_air.SetFluid(ambient_air.Air);
 
 	// Declare instance of fluid class for FIELD fluid
-	if( m_field_fl != HTFProperties::User_defined && m_field_fl < HTFProperties::End_Library_Fluids )
-	{
-		if( !field_htfProps.SetFluid( m_field_fl ) )
-		{
-			throw(C_csp_exception("Receiver HTF code is not recognized", "MSPT receiver"));
-		}
-	}
-	else if( m_field_fl == HTFProperties::User_defined )
-	{
-		// Check that 'm_field_fl_props' is allocated and correct dimensions
-		int n_rows = (int)m_field_fl_props.nrows();
-		int n_cols = (int)m_field_fl_props.ncols();
-		if( n_rows > 2 && n_cols == 7 )
-		{
-			if( !field_htfProps.SetUserDefinedFluid(m_field_fl_props) )
-			{
-				error_msg = util::format(field_htfProps.UserFluidErrMessage(), n_rows, n_cols);
-				throw(C_csp_exception(error_msg, "MSPT receiver"));
-			}
-		}
-		else
-		{
-			error_msg = util::format("The user defined field HTF table must contain at least 3 rows and exactly 7 columns. The current table contains %d row(s) and %d column(s)", n_rows, n_cols);
-			throw(C_csp_exception(error_msg, "MSPT receiver"));
-		}
-	}
-	else
-	{
-		throw(C_csp_exception("Receiver HTF code is not recognized", "MSPT receiver"));
-	}
-
+    C_pt_receiver::init();
 	
 	// Declare instance of htf class for receiver tube material
 	if( m_mat_tube == HTFProperties::Stainless_AISI316 || m_mat_tube == HTFProperties::T91_Steel ||
@@ -151,9 +122,6 @@ void C_mspt_receiver_222::init()
 	// Unit Conversions
 	m_od_tube /= 1.E3;			//[m] Convert from input in [mm]
 	m_th_tube /= 1.E3;			//[m] Convert from input in [mm]
-	m_T_htf_hot_des += 273.15;	//[K] Convert from input in [C]
-	m_T_htf_cold_des += 273.15;	//[K] Convert from input in [C]
-	m_q_rec_des *= 1.E6;		//[W] Convert from input in [MW]
 
 	m_id_tube = m_od_tube - 2 * m_th_tube;			//[m] Inner diameter of receiver tube
 	m_A_tube = CSP::pi*m_od_tube / 2.0*m_h_rec;	//[m^2] Outer surface area of each tube
