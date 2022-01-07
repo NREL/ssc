@@ -200,7 +200,9 @@ if(UNIX AND NOT SAMAPI_EXPORT)
 	add_custom_command(
 		TARGET ssc
 		POST_BUILD
-		COMMAND codesign --force --deep --sign - $<TARGET_FILE:ssc>
+		if (APPLE)
+			COMMAND codesign --force --deep --sign - $<TARGET_FILE:ssc>
+		endif()
 		COMMAND dltest $<TARGET_FILE:ssc>)
 endif()
 
