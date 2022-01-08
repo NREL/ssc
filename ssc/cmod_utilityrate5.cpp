@@ -292,7 +292,7 @@ void rate_setup::setup(var_table* vt, int num_recs_yearly, size_t nyears, rate_d
         for (i = 0; i < nyears; i++)
             rate_scale[i] = (ssc_number_t)(1 + parr[i] * 0.01);
     }
-    rate.rate_scale = rate_scale; 
+    rate.rate_scale = rate_scale;
 
     if (rate.en_ts_buy_rate)
     {
@@ -432,7 +432,7 @@ void rate_setup::setup(var_table* vt, int num_recs_yearly, size_t nyears, rate_d
 
         rate.setup_ratcheting_demand(ratchet_matrix, bd_tou_matrix);
     }
-    
+
 
     rate.init_energy_rates(false); // TODO: update if rate forecast needs to support two meter
 };
@@ -857,7 +857,7 @@ public:
 
             if (!rate.uses_billing_demand) {
                 std::ostringstream ss;
-                ss << "The option ur_enable_billing_demand is only relevant when the energy rates have kWh/kW or kWh/kW daily units, please add those units to your rates structure or set ur_ec_enable_billing_demand to false";
+                ss << "The option ur_enable_billing_demand is only relevant when the energy rates have kWh/kW or kWh/kW daily units, please add those units to your rates structure or set ur_enable_billing_demand to false";
                 throw exec_error("utilityrate5", ss.str());
             }
 
@@ -880,7 +880,7 @@ public:
 		ur_month last_month;
 		ssc_number_t last_excess_energy = 0;
 		ssc_number_t last_excess_dollars = 0;
-		
+
 
 		idx = 0;
 		for (i=0;i<nyears;i++)
@@ -959,7 +959,7 @@ public:
 					&monthly_excess_dollars_earned[0],
 					&monthly_excess_kwhs_earned[0],
                     &monthly_net_billing_credits[0],
-					&rate.dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], 
+					&rate.dc_hourly_peak[0], &monthly_cumulative_excess_energy[0],
 					&monthly_cumulative_excess_dollars[0], &monthly_bill[0],
                     &monthly_two_meter_sales[0],
                     &monthly_true_up_credits[0],
@@ -1647,7 +1647,7 @@ public:
 		{
 			ur_month& curr_month = rate.m_month[m];
             curr_month.reset();
-            
+
             if (dc_enabled) {
                 rate.init_dc_peak_vectors(m);
                 if (rate.en_billing_demand_lookback) {
@@ -1657,7 +1657,7 @@ public:
                     rate.billing_demand[m] = 0.0;
                 }
             }
-            
+
 			for (d = 0; d < util::nday[m]; d++)
 			{
 				for (h = 0; h < 24; h++)
@@ -1745,7 +1745,7 @@ public:
 
                 bool skip_rollover = (m == 0 && year == 0) || (m == net_metering_credit_month + 1) || (m == 0 && net_metering_credit_month == 11);
 
-                // rollover energy from correct period - matching time of day 
+                // rollover energy from correct period - matching time of day
                 if (!skip_rollover && enable_nm && !excess_monthly_dollars)
                 {
                     ur_month& prev_month = (m == 0) ? *prev_dec : rate.m_month[m - 1];
@@ -1975,7 +1975,7 @@ public:
 					{
 						monthly_cumulative_excess_dollars[m] -= monthly_ec_charges[m];
 					}
-					
+
 					payment[c - 1] -= monthly_ec_charges[m];; // keep demand charges
 					monthly_ec_charges[m] = 0;
 				}
@@ -2248,7 +2248,7 @@ public:
                 surplus_tier = 0;
                 deficit_tier = 0;
             }
-                
+
 			for (d = 0; d<util::nday[m]; d++)
 			{
 				daily_surplus_energy = 0;
@@ -2265,7 +2265,7 @@ public:
 						if (ec_enabled)
 						{
 							int row = rate.get_tou_row(c, m);
-                            
+
                             step_surplus_energy = 0.0;
                             step_deficit_energy = 0.0;
 
@@ -2308,7 +2308,7 @@ public:
                                         curr_month.ec_energy_surplus.at(row, surplus_tier) += (ssc_number_t)step_surplus_energy;
 
                                         ssc_number_t upper_tier_energy = energy_surplus - step_surplus_energy;
-                                        
+
                                         surplus_tier++;
                                         if (surplus_tier >= (int)curr_month.ec_tou_ub.ncols())
                                             surplus_tier = (int)curr_month.ec_tou_ub.ncols() - 1;
@@ -2324,7 +2324,7 @@ public:
                                         tier_credit = tier_energy * sr * rate_esc;
                                         curr_month.ec_energy_surplus.at(row, surplus_tier) += (ssc_number_t)tier_energy;
                                     }
-                                }								
+                                }
 
 								credit_amt = tier_credit;
 
@@ -2445,7 +2445,7 @@ public:
 
 			excess_dollars_earned[m] = monthly_cumulative_excess_dollars[m];
 
-			
+
 			ssc_number_t dollars_applied = 0;
 			// apply previous month rollover kwhs
 			if (excess_monthly_dollars)
@@ -2476,7 +2476,7 @@ public:
                 if (monthly_ec_charges_gross[m] < dollars_applied) dollars_applied = monthly_ec_charges_gross[m];
                 net_billing_credits[m] = dollars_applied;
 			}
-			
+
 			monthly_bill[m] = monthly_ec_charges[m] + rate.monthly_dc_fixed[m] + rate.monthly_dc_tou[m];
 		} // end of month m (m loop)
 
@@ -2530,7 +2530,7 @@ public:
 										payment[c] += ann_min_charge - ann_bill;
 									}
 								}
-							} 
+							}
 
 							if (m == excess_dollars_credit_month)
 							{

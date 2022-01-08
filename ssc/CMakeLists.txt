@@ -54,7 +54,6 @@ set(SSC_SRC
 		cmod_iph_to_lcoefcr.cpp
 		cmod_ippppa.cpp
 		cmod_irradproc.cpp
-		cmod_iscc_design_point.cpp
 		cmod_layoutarea.cpp
 		cmod_lcoefcr.cpp
 		cmod_levpartflip.cpp
@@ -67,6 +66,7 @@ set(SSC_SRC
 		cmod_mhk_eqns.h
 		cmod_mhk_tidal.cpp
 		cmod_mhk_wave.cpp
+		cmod_mspt_sf_and_rec_isolated.cpp
 		cmod_poacalib.cpp
 		cmod_pv6parmod.cpp
 		cmod_pv_get_shade_loss_mpp.cpp
@@ -92,10 +92,8 @@ set(SSC_SRC
 		cmod_snowmodel.cpp
 		cmod_solarpilot.cpp
 		cmod_swh.cpp
-		cmod_tcsdirect_steam.cpp
 		cmod_tcsdish.cpp
 		cmod_tcsgeneric_solar.cpp
-		cmod_tcsiscc.cpp
 		cmod_tcslinear_fresnel.cpp
 		cmod_tcsmolten_salt.cpp
 		cmod_tcsmslf.cpp
