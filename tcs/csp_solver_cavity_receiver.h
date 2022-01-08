@@ -88,7 +88,6 @@ private:
 
     double m_od_rec_tube;   //[m] single tube outer diameter
     double m_th_rec_tube;   //[m] single tube wall thickness
-    int m_tube_mat_code;    //[-]
 
     double m_receiverHeight; //[m] Receiver opening height in meters
     double m_receiverWidth; //[m] Reciever opening width in meters

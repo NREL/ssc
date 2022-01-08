@@ -290,7 +290,6 @@ public:
 	double m_od_tube;				//[mm], convert to [m] in init()
 	double m_th_tube;				//[mm], convert to [m] in init()
 	double m_hl_ffact;				//[-]
-	//double m_A_sf;					//[m2]
 
 	// 8.10.2015 twn: add tower piping thermal losses to receiver performance
     double m_piping_loss_coeff;		//[W/m2/K]
@@ -325,16 +324,9 @@ public:
 	double m_T_salt_hot_target;			//[C], convert to K in init() call
 
 	// Added for csp_solver/tcs wrappers:
-	int m_field_fl;
-	util::matrix_t<double> m_field_fl_props;	
-	int m_mat_tube;
 	int m_flow_type;
     int m_crossover_shift;
 
-	// ISCC specific
-	//bool m_is_iscc;
-	//int m_cycle_config;
-	
 	// Flow control
 	double m_csky_frac;
 
@@ -347,6 +339,7 @@ public:
         double rec_su_delay /*hr*/, double rec_qf_delay /*-*/,
         double m_dot_htf_max_frac /*-*/, double eta_pump /*-*/,
         int field_fl, util::matrix_t<double> field_fl_props,
+        int tube_mat_code /*-*/,
         int night_recirc /*-*/, int clearsky_model /*-*/,
         std::vector<double> clearsky_data);
 

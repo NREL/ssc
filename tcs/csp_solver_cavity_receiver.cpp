@@ -67,6 +67,7 @@ C_cavity_receiver::C_cavity_receiver(double dni_des /*W/m2*/,
         rec_su_delay, rec_qf_delay,
         m_dot_htf_max_frac, eta_pump,
         field_fl, field_fl_props,
+        tube_mat_code,
         -1, -1,
         std::vector<double>({std::numeric_limits<double>::quiet_NaN()}))
 {
@@ -74,7 +75,6 @@ C_cavity_receiver::C_cavity_receiver(double dni_des /*W/m2*/,
 
     m_od_rec_tube = od_rec_tube;            //[m]
     m_th_rec_tube = th_rec_tube;            //[m]
-    m_tube_mat_code = tube_mat_code;        //[-]
 
     m_nPanels = nPanels;                    //[-]
     m_receiverHeight = rec_height;          //[m]
@@ -2804,29 +2804,8 @@ void C_cavity_receiver::init()
     // ********************************************
     // Complete receiver initialization
 
-    ambient_air.SetFluid(ambient_air.Air);
-
     // Declare instance of fluid class for FIELD fluid
     C_pt_receiver::init();
-
-    // Declare instance of htf class for receiver tube material
-    if (m_tube_mat_code == HTFProperties::Stainless_AISI316 || m_tube_mat_code == HTFProperties::T91_Steel ||
-        m_tube_mat_code == HTFProperties::N06230 || m_tube_mat_code == HTFProperties::N07740)
-    {
-        if (!tube_material.SetFluid(m_tube_mat_code))
-        {
-            throw(C_csp_exception("Tube material code not recognized", "MSPT receiver"));
-        }
-    }
-    else if (m_tube_mat_code == HTFProperties::User_defined)
-    {
-        throw(C_csp_exception("Receiver material currently does not accept user defined properties", "MSPT receiver"));
-    }
-    else
-    {
-        error_msg = util::format("Receiver material code, %d, is not recognized", m_tube_mat_code);
-        throw(C_csp_exception(error_msg, "MSPT receiver"));
-    }
 
     double c_htf_des = field_htfProps.Cp((m_T_htf_hot_des + m_T_htf_cold_des) / 2.0) * 1000.0;		//[J/kg-K] Specific heat at design conditions
     m_m_dot_htf_des = m_q_rec_des / (c_htf_des*(m_T_htf_hot_des - m_T_htf_cold_des));   //[kg/s]

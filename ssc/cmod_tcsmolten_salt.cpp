@@ -1382,6 +1382,7 @@ public:
                     as_double("rec_su_delay"), as_double("rec_qf_delay"),
                     as_double("csp.pt.rec.max_oper_frac"), as_double("eta_pump"),
                     as_integer("rec_htf"), as_matrix("field_fl_props"),
+                    as_integer("mat_tube"),
                     rec_night_recirc, rec_clearsky_model,
                     clearsky_data
                     ));   // steady-state receiver
@@ -1391,9 +1392,6 @@ public:
                 ss_receiver->m_h_rec = H_rec;
                 ss_receiver->m_od_tube = as_double("d_tube_out");
                 ss_receiver->m_th_tube = as_double("th_tube");
-                ss_receiver->m_mat_tube = as_integer("mat_tube");
-                ss_receiver->m_field_fl = as_integer("rec_htf");
-                ss_receiver->m_field_fl_props = as_matrix("field_fl_props");
                 ss_receiver->m_flow_type = as_integer("Flow_type");
                 ss_receiver->m_crossover_shift = as_integer("crossover_shift");
                 ss_receiver->m_hl_ffact = as_double("hl_ffact");
@@ -1414,6 +1412,7 @@ public:
                     as_double("rec_su_delay"), as_double("rec_qf_delay"),
                     as_double("csp.pt.rec.max_oper_frac"), as_double("eta_pump"),
                     as_integer("rec_htf"), as_matrix("field_fl_props"),
+                    as_integer("mat_tube"),
                     rec_night_recirc, rec_clearsky_model,
                     clearsky_data
                     ));    // transient receiver
@@ -1423,9 +1422,6 @@ public:
                 trans_receiver->m_h_rec = H_rec;
                 trans_receiver->m_od_tube = as_double("d_tube_out");
                 trans_receiver->m_th_tube = as_double("th_tube");
-                trans_receiver->m_mat_tube = as_integer("mat_tube");
-                trans_receiver->m_field_fl = as_integer("rec_htf");
-                trans_receiver->m_field_fl_props = as_matrix("field_fl_props");
                 trans_receiver->m_flow_type = as_integer("Flow_type");
                 trans_receiver->m_crossover_shift = as_integer("crossover_shift");
                 trans_receiver->m_hl_ffact = as_double("hl_ffact");

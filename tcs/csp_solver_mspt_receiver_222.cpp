@@ -33,6 +33,7 @@ C_mspt_receiver_222::C_mspt_receiver_222(double h_tower /*m*/, double epsilon /*
     double rec_su_delay /*hr*/, double rec_qf_delay /*-*/,
     double m_dot_htf_max_frac /*-*/, double eta_pump /*-*/,
     int field_fl, util::matrix_t<double> field_fl_props,
+    int tube_mat_code /*-*/,
     int night_recirc /*-*/, int clearsky_model /*-*/,
     std::vector<double> clearsky_data) : C_pt_receiver(h_tower, epsilon,
         T_htf_hot_des, T_htf_cold_des,
@@ -40,6 +41,7 @@ C_mspt_receiver_222::C_mspt_receiver_222(double h_tower /*m*/, double epsilon /*
         rec_su_delay, rec_qf_delay,
         m_dot_htf_max_frac, eta_pump,
         field_fl, field_fl_props,
+        tube_mat_code,
         night_recirc, clearsky_model,
         clearsky_data)
 {
@@ -62,7 +64,6 @@ C_mspt_receiver_222::C_mspt_receiver_222(double h_tower /*m*/, double epsilon /*
 	m_T_salt_hot_target = std::numeric_limits<double>::quiet_NaN();
 
 		// Added for csp_solver/tcs wrapper
-	m_mat_tube = -1;
 	m_flow_type = -1;
     m_crossover_shift = 0;
 
@@ -95,29 +96,7 @@ C_mspt_receiver_222::C_mspt_receiver_222(double h_tower /*m*/, double epsilon /*
 
 void C_mspt_receiver_222::init()
 {
-	ambient_air.SetFluid(ambient_air.Air);
-
-	// Declare instance of fluid class for FIELD fluid
     C_pt_receiver::init();
-	
-	// Declare instance of htf class for receiver tube material
-	if( m_mat_tube == HTFProperties::Stainless_AISI316 || m_mat_tube == HTFProperties::T91_Steel ||
-        m_mat_tube == HTFProperties::N06230 || m_mat_tube == HTFProperties::N07740)
-	{
-		if( !tube_material.SetFluid(m_mat_tube) )
-		{
-			throw(C_csp_exception("Tube material code not recognized", "MSPT receiver"));
-		}
-	}
-	else if( m_mat_tube == HTFProperties::User_defined )
-	{
-		throw(C_csp_exception("Receiver material currently does not accept user defined properties", "MSPT receiver"));
-	}
-	else
-	{
-		error_msg = util::format("Receiver material code, %d, is not recognized", m_mat_tube);
-		throw(C_csp_exception(error_msg, "MSPT receiver"));
-	}
 
 	// Unit Conversions
 	m_od_tube /= 1.E3;			//[m] Convert from input in [mm]

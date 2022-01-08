@@ -180,9 +180,6 @@ public:
 	double m_T_salt_hot_target;			//[C], convert to K in init() call
 
 	// Added for csp_solver/tcs wrappers:
-	int m_field_fl;
-	util::matrix_t<double> m_field_fl_props;	
-	int m_mat_tube;
 	int m_flow_type;
     int m_crossover_shift;
 
@@ -198,6 +195,7 @@ public:
         double rec_su_delay /*hr*/, double rec_qf_delay /*-*/,
         double m_dot_htf_max_frac /*-*/, double eta_pump /*-*/,
         int field_fl, util::matrix_t<double> field_fl_props,
+        int tube_mat_code /*-*/,
         int night_recirc /*-*/, int clearsky_model /*-*/,
         std::vector<double> clearsky_data);
 

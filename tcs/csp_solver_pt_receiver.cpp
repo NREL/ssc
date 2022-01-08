@@ -31,7 +31,8 @@ C_pt_receiver::C_pt_receiver(double h_tower /*m*/, double epsilon /*-*/,
     double f_rec_min /*-*/, double q_dot_rec_des /*MWt*/,
     double rec_su_delay /*hr*/, double rec_qf_delay /*-*/,
     double m_dot_htf_max_frac /*-*/, double eta_pump /*-*/,
-    int field_fl, util::matrix_t<double> field_fl_props,
+    int field_fl /*-*/, util::matrix_t<double> field_fl_props,
+    int tube_mat_code /*-*/,
     int night_recirc /*-*/, int clearsky_model /*-*/,
     std::vector<double> clearsky_data)
 {
@@ -49,6 +50,8 @@ C_pt_receiver::C_pt_receiver(double h_tower /*m*/, double epsilon /*-*/,
 
     m_field_fl = field_fl;  //[-]
     m_field_fl_props = field_fl_props;
+
+    m_tube_mat_code = tube_mat_code;    //[-]
 
     m_night_recirc = night_recirc;  //[-]
     m_clearsky_model = clearsky_model;   //[-]
@@ -69,6 +72,8 @@ C_csp_collector_receiver::E_csp_cr_modes C_pt_receiver::get_operating_state()
 
 void C_pt_receiver::init()
 {
+    ambient_air.SetFluid(ambient_air.Air);
+
     // Declare instance of fluid class for FIELD fluid
     if (m_field_fl != HTFProperties::User_defined && m_field_fl < HTFProperties::End_Library_Fluids)
     {
@@ -99,6 +104,25 @@ void C_pt_receiver::init()
     else
     {
         throw(C_csp_exception("Receiver HTF code is not recognized", "MSPT receiver"));
+    }
+
+    // Declare instance of htf class for receiver tube material
+    if (m_tube_mat_code == HTFProperties::Stainless_AISI316 || m_tube_mat_code == HTFProperties::T91_Steel ||
+        m_tube_mat_code == HTFProperties::N06230 || m_tube_mat_code == HTFProperties::N07740)
+    {
+        if (!tube_material.SetFluid(m_tube_mat_code))
+        {
+            throw(C_csp_exception("Tube material code not recognized", "MSPT receiver"));
+        }
+    }
+    else if (m_tube_mat_code == HTFProperties::User_defined)
+    {
+        throw(C_csp_exception("Receiver material currently does not accept user defined properties", "MSPT receiver"));
+    }
+    else
+    {
+        error_msg = util::format("Receiver material code, %d, is not recognized", m_tube_mat_code);
+        throw(C_csp_exception(error_msg, "MSPT receiver"));
     }
 
     return;
