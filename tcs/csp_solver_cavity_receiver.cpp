@@ -52,7 +52,7 @@ bool sort_pair_ascending(pair<double,double> i, pair<double, double> j)
 
 C_cavity_receiver::C_cavity_receiver(double dni_des /*W/m2*/,
     int field_fl /*-*/, util::matrix_t<double> field_fl_props,
-    double od_rec_tube /*m*/, double th_rec_tube /*m*/, int tube_mat_code /*-*/,
+    double od_rec_tube /*mm*/, double th_rec_tube /*mm*/, int tube_mat_code /*-*/,
     size_t nPanels /*-*/, double rec_height /*m*/, double rec_width /*m*/,
     double rec_span /*rad*/, double toplip_height /*m*/, double botlip_height /*m*/,
     double eps_active_sol /*-*/, double eps_passive_sol /*-*/, double eps_active_therm /*-*/, double eps_passive_therm /*-*/,
@@ -66,15 +66,15 @@ C_cavity_receiver::C_cavity_receiver(double dni_des /*W/m2*/,
         f_rec_min, q_dot_rec_des,
         rec_su_delay, rec_qf_delay,
         m_dot_htf_max_frac, eta_pump,
+        od_rec_tube, th_rec_tube,
+        piping_loss_coefficient, pipe_length_add,
+        pipe_length_mult,
         field_fl, field_fl_props,
         tube_mat_code,
         -1, -1,
         std::vector<double>({std::numeric_limits<double>::quiet_NaN()}))
 {
     m_dni_des = dni_des;                    //[W/m2]
-
-    m_od_rec_tube = od_rec_tube;            //[m]
-    m_th_rec_tube = th_rec_tube;            //[m]
 
     m_nPanels = nPanels;                    //[-]
     m_receiverHeight = rec_height;          //[m]
@@ -90,10 +90,6 @@ C_cavity_receiver::C_cavity_receiver(double dni_des /*W/m2*/,
     m_active_surface_mesh_type = active_surface_mesh_type;
     m_floor_and_cover_mesh_type = floor_and_cover_mesh_type;
     m_lips_mesh_type = lips_mesh_type;
-
-    m_piping_loss_coefficient = piping_loss_coefficient;    //[Wt/m2-K]
-    m_pipe_length_add = pipe_length_add;    //[m]
-    m_pipe_length_mult = pipe_length_mult;  //[-]
 
     m_area_active_total = std::numeric_limits<double>::quiet_NaN();
     m_d_in_rec_tube = std::numeric_limits<double>::quiet_NaN();
@@ -2712,7 +2708,7 @@ void C_cavity_receiver::tube_UA_and_deltaP(std::vector<double> m_dot_paths /*kg/
             CSP::PipeFlow(Re, Pr, lTotal / m_d_in_rec_tube, m_rel_roughness, Nu, f);
 
             double h = Nu * k / m_d_in_rec_tube;    //[W/m2-K]
-            double Rcond = log(m_od_rec_tube/m_d_in_rec_tube)/(CSP::pi*l*ktube*m_Ntubes);
+            double Rcond = log(m_od_tube/m_d_in_rec_tube)/(CSP::pi*l*ktube*m_Ntubes);
             double Rconv = 2.0/(h*m_Ntubes*l*m_d_in_rec_tube*CSP::pi);
             UA(stepID,0) = 1.0/(Rcond + Rconv);     //[W/K]
 
@@ -2766,14 +2762,14 @@ void C_cavity_receiver::init()
     meshGeometry();
 
     // Tube geometry calcs
-    m_d_in_rec_tube = m_od_rec_tube - 2.0 * m_th_rec_tube;      //[m]
+    m_d_in_rec_tube = m_od_tube - 2.0 * m_th_tube;      //[m]
     m_A_cs_tube = 0.25*CSP::pi*pow(m_d_in_rec_tube,2);          //[m2]
     m_rel_roughness = surface_roughness / m_d_in_rec_tube;      //[-]
     m_A_aper = m_receiverHeight * m_receiverWidth;              //[m2]
 
     // choose number of HTF tubes per route based on available space
     //    assumes each receiver panel is same area and uses same dimension tube
-    m_Ntubes = std::floor(mv_rec_surfs[0].surf_elem_size*m_modelRes/m_od_rec_tube);
+    m_Ntubes = std::floor(mv_rec_surfs[0].surf_elem_size*m_modelRes/m_od_tube);
 
     // Make global elements and calculate element centroids and areas
     makeGlobalElems();

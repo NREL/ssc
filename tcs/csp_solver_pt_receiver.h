@@ -155,6 +155,9 @@ protected:
                 double f_rec_min /*-*/, double q_dot_rec_des /*MWt*/,
                 double rec_su_delay /*hr*/, double rec_qf_delay /*-*/,
                 double m_dot_htf_max_frac /*-*/, double eta_pump /*-*/,
+                double od_tube /*mm*/, double th_tube /*mm*/,
+                double piping_loss_coef /*Wt/m2-K*/, double pipe_length_add /*m*/,
+                double pipe_length_mult /*-*/,
                 int field_fl /*-*/, util::matrix_t<double> field_fl_props,
                 int tube_mat_code /*-*/,
                 int night_recirc /*-*/, int clearsky_model /*-*/,
@@ -172,6 +175,12 @@ protected:
     double m_rec_qf_delay;			    //[-] required startup energy as fraction of design thermal output
     double m_m_dot_htf_max_frac;	    //[-] maximum receiver HTF mass flow as fraction of design mass flow
     double m_eta_pump;					//[-] HTF pump efficiency
+    double m_od_tube;				    //[m], converted from mm in constructor
+    double m_th_tube;				    //[m], converted from mm in constructor
+
+    double m_piping_loss_coefficient;   //[Wt/m2-K]
+    double m_pipe_length_add;		//[m]
+    double m_pipe_length_mult;		//[-]
 
     int m_field_fl;
     util::matrix_t<double> m_field_fl_props;

@@ -86,9 +86,6 @@ private:
     bool m_is_centerOutFlow;    //[-]
     double m_rec_span;      //[rad]
 
-    double m_od_rec_tube;   //[m] single tube outer diameter
-    double m_th_rec_tube;   //[m] single tube wall thickness
-
     double m_receiverHeight; //[m] Receiver opening height in meters
     double m_receiverWidth; //[m] Reciever opening width in meters
     double m_topLipHeight;  //[m] Height of top lip in meters
@@ -97,10 +94,6 @@ private:
     double m_e_pass_sol;    //[-] Absorbtivity in short wave range for passive surfaces
     double m_e_act_therm;   //[-] Emissivity in long wave range for active surfaces
     double m_e_pass_therm;  //[-] Emissivity in long wave range for passive surfaces
-
-    double m_piping_loss_coefficient;   //[Wt/m2-K]
-    double m_pipe_length_add;		//[m]
-    double m_pipe_length_mult;		//[-]
 
     E_mesh_types m_active_surface_mesh_type;
     E_mesh_types m_floor_and_cover_mesh_type;
@@ -175,7 +168,6 @@ public:
         double eps_active_sol /*-*/, double eps_passive_sol /*-*/, double eps_active_therm /*-*/, double eps_passive_therm /*-*/,
         E_mesh_types active_surface_mesh_type, E_mesh_types floor_and_cover_mesh_type,  E_mesh_types lips_mesh_type,
         double piping_loss_coefficient /*Wt/m2-K*/, double pipe_length_add /*m*/, double pipe_length_mult /*-*/,
-        //double A_sf /*m2*/,
         double h_tower /*m*/, double T_htf_hot_des /*C*/,
         double T_htf_cold_des /*C*/, double f_rec_min /*-*/, double q_dot_rec_des /*MWt*/,
         double rec_su_delay /*hr*/, double rec_qf_delay /*-*/, double m_dot_htf_max_frac /*-*/,

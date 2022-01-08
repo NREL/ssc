@@ -33,6 +33,8 @@ C_mspt_receiver::C_mspt_receiver(double h_tower /*m*/, double epsilon /*-*/,
     double f_rec_min /*-*/, double q_dot_rec_des /*MWt*/,
     double rec_su_delay /*hr*/, double rec_qf_delay /*-*/,
     double m_dot_htf_max_frac /*-*/, double eta_pump /*-*/,
+    double od_tube /*mm*/, double th_tube /*mm*/,
+    double piping_loss_coefficient /*Wt/m2-K*/, double pipe_length_add /*m*/, double pipe_length_mult /*-*/,
     int field_fl, util::matrix_t<double> field_fl_props,
     int tube_mat_code /*-*/,
     int night_recirc /*-*/, int clearsky_model /*-*/,
@@ -41,6 +43,9 @@ C_mspt_receiver::C_mspt_receiver(double h_tower /*m*/, double epsilon /*-*/,
         f_rec_min, q_dot_rec_des,
         rec_su_delay, rec_qf_delay,
         m_dot_htf_max_frac, eta_pump,
+        od_tube, th_tube,
+        piping_loss_coefficient, pipe_length_add,
+        pipe_length_mult,
         field_fl, field_fl_props,
         tube_mat_code,
         night_recirc, clearsky_model,
@@ -50,13 +55,7 @@ C_mspt_receiver::C_mspt_receiver(double h_tower /*m*/, double epsilon /*-*/,
 
 	m_d_rec = std::numeric_limits<double>::quiet_NaN();
 	m_h_rec = std::numeric_limits<double>::quiet_NaN();
-	m_od_tube = std::numeric_limits<double>::quiet_NaN();
-	m_th_tube = std::numeric_limits<double>::quiet_NaN();
 	m_hl_ffact = std::numeric_limits<double>::quiet_NaN();
-
-	m_piping_loss_coeff = std::numeric_limits<double>::quiet_NaN();
-	m_pipe_length_add = std::numeric_limits<double>::quiet_NaN();
-	m_pipe_length_mult = std::numeric_limits<double>::quiet_NaN();
 
 	m_id_tube = std::numeric_limits<double>::quiet_NaN();
 	m_A_tube = std::numeric_limits<double>::quiet_NaN();
@@ -99,7 +98,6 @@ C_mspt_receiver::C_mspt_receiver(double h_tower /*m*/, double epsilon /*-*/,
 	m_u_riser = std::numeric_limits<double>::quiet_NaN();
 	m_th_riser = std::numeric_limits<double>::quiet_NaN();
 	m_th_downc = std::numeric_limits<double>::quiet_NaN();
-	m_piping_loss_coeff = std::numeric_limits<double>::quiet_NaN();
 	m_riser_tm_mult = std::numeric_limits<double>::quiet_NaN();
 	m_downc_tm_mult = std::numeric_limits<double>::quiet_NaN();
 	m_id_riser = std::numeric_limits<double>::quiet_NaN();
@@ -144,10 +142,6 @@ void C_mspt_receiver::init()
 {
     C_pt_receiver::init();
 
-	// Unit Conversions
-	m_od_tube /= 1.E3;			//[m] Convert from input in [mm]
-	m_th_tube /= 1.E3;			//[m] Convert from input in [mm]
-
 	m_id_tube = m_od_tube - 2 * m_th_tube;			//[m] Inner diameter of receiver tube
 	m_A_tube = CSP::pi*m_od_tube / 2.0*m_h_rec;	//[m^2] Outer surface area of each tube
 	m_n_t = (int)(CSP::pi*m_d_rec / (m_od_tube*m_n_panels));	// The number of tubes per panel, as a function of the number of panels and the desired diameter of the receiver
@@ -186,7 +180,7 @@ void C_mspt_receiver::init()
     double d_inner_piping = std::numeric_limits<double>::quiet_NaN();   //[m]
     CSP::mspt_piping_design(field_htfProps,
         m_h_tower, m_pipe_length_mult,
-        m_pipe_length_add, m_piping_loss_coeff,
+        m_pipe_length_add, m_piping_loss_coefficient,
         m_T_htf_hot_des, m_T_htf_cold_des,
         m_m_dot_htf_des,
         L_piping, d_inner_piping, m_Q_dot_piping_loss);
@@ -284,9 +278,9 @@ void C_mspt_receiver::initialize_transient_parameters()
 
 	// Riser/downcomer thermal loss coefficients
 	//m_piping_loss_coeff = m_pipe_loss_per_m / (0.5*CSP::pi * (m_id_downc*(m_T_htf_hot_des - 298.) + m_id_riser * (m_T_htf_cold_des - 298.))); // Piping wetted loss coefficient (W/m2/K) to reproduce user-specified total piping loss (W/m)	
-	m_piping_loss_coeff = fmax(1.e-4, m_piping_loss_coeff);
-	m_Rtot_riser = 1.0 / (m_piping_loss_coeff * 0.5 * m_id_riser);  // Riser total thermal resistance between fluid and ambient [K*m/W]
-	m_Rtot_downc = 1.0 / (m_piping_loss_coeff * 0.5 * m_id_downc);  // Downcomer total thermal resistance between fluid and ambient [K*m/W]
+	m_piping_loss_coefficient = fmax(1.e-4, m_piping_loss_coefficient);
+	m_Rtot_riser = 1.0 / (m_piping_loss_coefficient * 0.5 * m_id_riser);  // Riser total thermal resistance between fluid and ambient [K*m/W]
+	m_Rtot_downc = 1.0 / (m_piping_loss_coefficient * 0.5 * m_id_downc);  // Downcomer total thermal resistance between fluid and ambient [K*m/W]
 
 	
 																	
@@ -1775,7 +1769,7 @@ void C_mspt_receiver::calculate_steady_state_soln(s_steady_state_soln &soln, dou
 		{
 			double m_dot_salt_tot_temp = soln.m_dot_salt * m_n_lines;		//[kg/s]
 
-			if (m_piping_loss_coeff != m_piping_loss_coeff)   // Calculate piping loss from constant loss per m (m_Q_dot_piping_loss)
+			if (m_piping_loss_coefficient != m_piping_loss_coefficient)   // Calculate piping loss from constant loss per m (m_Q_dot_piping_loss)
 				soln.Q_dot_piping_loss = m_Q_dot_piping_loss;
 			else
 			{

@@ -32,14 +32,19 @@ C_mspt_receiver_222::C_mspt_receiver_222(double h_tower /*m*/, double epsilon /*
     double f_rec_min /*-*/, double q_dot_rec_des /*MWt*/,
     double rec_su_delay /*hr*/, double rec_qf_delay /*-*/,
     double m_dot_htf_max_frac /*-*/, double eta_pump /*-*/,
+    double od_tube /*mm*/, double th_tube /*mm*/,
+    double piping_loss_coefficient /*Wt/m2-K*/, double pipe_length_add /*m*/, double pipe_length_mult /*-*/,
     int field_fl, util::matrix_t<double> field_fl_props,
     int tube_mat_code /*-*/,
-    int night_recirc /*-*/, int clearsky_model /*-*/,
+    int night_recirc /*-*/, int clearsky_model /*-*/,    
     std::vector<double> clearsky_data) : C_pt_receiver(h_tower, epsilon,
         T_htf_hot_des, T_htf_cold_des,
         f_rec_min, q_dot_rec_des,
         rec_su_delay, rec_qf_delay,
         m_dot_htf_max_frac, eta_pump,
+        od_tube, th_tube,
+        piping_loss_coefficient, pipe_length_add,
+        pipe_length_mult,
         field_fl, field_fl_props,
         tube_mat_code,
         night_recirc, clearsky_model,
@@ -49,13 +54,7 @@ C_mspt_receiver_222::C_mspt_receiver_222(double h_tower /*m*/, double epsilon /*
 
 	m_d_rec = std::numeric_limits<double>::quiet_NaN();
 	m_h_rec = std::numeric_limits<double>::quiet_NaN();
-	m_od_tube = std::numeric_limits<double>::quiet_NaN();
-	m_th_tube = std::numeric_limits<double>::quiet_NaN();
 	m_hl_ffact = std::numeric_limits<double>::quiet_NaN();
-
-    m_piping_loss_coefficient = std::numeric_limits<double>::quiet_NaN();
-	m_pipe_length_add = std::numeric_limits<double>::quiet_NaN();
-	m_pipe_length_mult = std::numeric_limits<double>::quiet_NaN();
 
 	m_id_tube = std::numeric_limits<double>::quiet_NaN();
 	m_A_tube = std::numeric_limits<double>::quiet_NaN();
@@ -97,10 +96,6 @@ C_mspt_receiver_222::C_mspt_receiver_222(double h_tower /*m*/, double epsilon /*
 void C_mspt_receiver_222::init()
 {
     C_pt_receiver::init();
-
-	// Unit Conversions
-	m_od_tube /= 1.E3;			//[m] Convert from input in [mm]
-	m_th_tube /= 1.E3;			//[m] Convert from input in [mm]
 
 	m_id_tube = m_od_tube - 2 * m_th_tube;			//[m] Inner diameter of receiver tube
 	m_A_tube = CSP::pi*m_od_tube / 2.0*m_h_rec;	//[m^2] Outer surface area of each tube

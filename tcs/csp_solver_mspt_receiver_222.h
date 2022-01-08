@@ -165,13 +165,7 @@ public:
 	int m_n_panels;					//[-]
 	double m_d_rec;					//[m]
 	double m_h_rec;					//[m]
-	double m_od_tube;				//[mm], convert to [m] in init()
-	double m_th_tube;				//[mm], convert to [m] in init()
 	double m_hl_ffact;				//[-]
-
-    double m_piping_loss_coefficient;   //[Wt/m2-K]
-    double m_pipe_length_add;		//[m]
-	double m_pipe_length_mult;		//[-]
 
 	// 7.13.17 twn: keep this public for now so iscc can calculate
 	double m_m_dot_htf_max;			//[kg/s]
@@ -194,6 +188,8 @@ public:
         double f_rec_min /*-*/, double q_dot_rec_des /*MWt*/,
         double rec_su_delay /*hr*/, double rec_qf_delay /*-*/,
         double m_dot_htf_max_frac /*-*/, double eta_pump /*-*/,
+        double od_tube /*mm*/, double th_tube /*mm*/,
+        double piping_loss_coefficient /*Wt/m2-K*/, double pipe_length_add /*m*/, double pipe_length_mult /*-*/,
         int field_fl, util::matrix_t<double> field_fl_props,
         int tube_mat_code /*-*/,
         int night_recirc /*-*/, int clearsky_model /*-*/,

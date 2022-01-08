@@ -133,6 +133,9 @@ public:
                 as_double("f_rec_min"), q_dot_rec_des,
                 as_double("rec_su_delay"), as_double("rec_qf_delay"),
                 as_double("csp.pt.rec.max_oper_frac"), as_double("eta_pump"),
+                as_double("d_tube_out"), as_double("th_tube"),
+                as_double("piping_loss_coefficient"), as_double("piping_length_const"),
+                as_double("piping_length_mult"),
                 as_integer("rec_htf"), as_matrix("field_fl_props"),
                 as_integer("mat_tube"),
                 rec_night_recirc, rec_clearsky_model,
@@ -148,6 +151,9 @@ public:
                 as_double("f_rec_min"), q_dot_rec_des,
                 as_double("rec_su_delay"), as_double("rec_qf_delay"),
                 as_double("csp.pt.rec.max_oper_frac"), as_double("eta_pump"),
+                as_double("d_tube_out"), as_double("th_tube"),
+                as_double("piping_loss_coefficient"), as_double("piping_length_const"),
+                as_double("piping_length_mult"),
                 as_integer("rec_htf"), as_matrix("field_fl_props"),
                 as_integer("mat_tube"),
                 rec_night_recirc, rec_clearsky_model,
@@ -157,14 +163,9 @@ public:
             ss_receiver->m_n_panels = as_integer("N_panels");                   //[-]
             ss_receiver->m_d_rec = D_rec;                                       //[m]
             ss_receiver->m_h_rec = H_rec;                                       //[m]
-            ss_receiver->m_od_tube = as_double("d_tube_out");                   //[mm]
-            ss_receiver->m_th_tube = as_double("th_tube");                      //[mm]
             ss_receiver->m_flow_type = as_integer("Flow_type");                 //[-]
             ss_receiver->m_crossover_shift = as_integer("crossover_shift");     //[-]
             ss_receiver->m_hl_ffact = as_double("hl_ffact");                    //[-]
-            ss_receiver->m_piping_loss_coefficient = as_double("piping_loss_coefficient");  //[W/m2-K]
-            ss_receiver->m_pipe_length_add = as_double("piping_length_const");      //[m]
-            ss_receiver->m_pipe_length_mult = as_double("piping_length_mult");      //[-]
             ss_receiver->m_T_salt_hot_target = as_double("T_htf_hot_des");      //[C]
             ss_receiver->m_csky_frac = as_double("rec_clearsky_fraction");
 

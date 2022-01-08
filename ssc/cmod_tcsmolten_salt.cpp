@@ -1295,8 +1295,8 @@ public:
             // No clear sky model available for cavity receiver
             is_rec_model_clearsky = false;
 
-            double od_rec_tube = as_double("d_tube_out")*1.E-3;         //[m] convert from cmod units of mm
-            double th_rec_tube = as_double("th_tube") * 1.E-3;          //[m] convert from cmod units of mm
+            double od_rec_tube = as_double("d_tube_out");           //[mm]
+            double th_rec_tube = as_double("th_tube");              //[mm]
             double receiverHeight = as_double("cav_rec_height");        //[m]
             double receiverWidth = as_double("cav_rec_width");          //[m]
             double rec_span = as_double("cav_rec_span")*CSP::pi/180.0;  //[rad] convert from cmod units of deg
@@ -1381,6 +1381,9 @@ public:
                     as_double("f_rec_min"), q_dot_rec_des,
                     as_double("rec_su_delay"), as_double("rec_qf_delay"),
                     as_double("csp.pt.rec.max_oper_frac"), as_double("eta_pump"),
+                    as_double("d_tube_out"), as_double("th_tube"),
+                    as_double("piping_loss_coefficient"), as_double("piping_length_const"),
+                    as_double("piping_length_mult"),
                     as_integer("rec_htf"), as_matrix("field_fl_props"),
                     as_integer("mat_tube"),
                     rec_night_recirc, rec_clearsky_model,
@@ -1390,14 +1393,9 @@ public:
                 ss_receiver->m_n_panels = as_integer("N_panels");
                 ss_receiver->m_d_rec = D_rec;
                 ss_receiver->m_h_rec = H_rec;
-                ss_receiver->m_od_tube = as_double("d_tube_out");
-                ss_receiver->m_th_tube = as_double("th_tube");
                 ss_receiver->m_flow_type = as_integer("Flow_type");
                 ss_receiver->m_crossover_shift = as_integer("crossover_shift");
                 ss_receiver->m_hl_ffact = as_double("hl_ffact");
-                ss_receiver->m_piping_loss_coefficient = as_double("piping_loss_coefficient");
-                ss_receiver->m_pipe_length_add = as_double("piping_length_const");  //[m]
-                ss_receiver->m_pipe_length_mult = as_double("piping_length_mult");      //[-]
                 ss_receiver->m_T_salt_hot_target = as_double("T_htf_hot_des");
                 ss_receiver->m_csky_frac = as_double("rec_clearsky_fraction");
 
@@ -1411,6 +1409,9 @@ public:
                     as_double("f_rec_min"), q_dot_rec_des,
                     as_double("rec_su_delay"), as_double("rec_qf_delay"),
                     as_double("csp.pt.rec.max_oper_frac"), as_double("eta_pump"),
+                    as_double("d_tube_out"), as_double("th_tube"),
+                    as_double("piping_loss_coefficient"), as_double("piping_length_const"),
+                    as_double("piping_length_mult"),
                     as_integer("rec_htf"), as_matrix("field_fl_props"),
                     as_integer("mat_tube"),
                     rec_night_recirc, rec_clearsky_model,
@@ -1420,14 +1421,9 @@ public:
                 trans_receiver->m_n_panels = as_integer("N_panels");
                 trans_receiver->m_d_rec = D_rec;
                 trans_receiver->m_h_rec = H_rec;
-                trans_receiver->m_od_tube = as_double("d_tube_out");
-                trans_receiver->m_th_tube = as_double("th_tube");
                 trans_receiver->m_flow_type = as_integer("Flow_type");
                 trans_receiver->m_crossover_shift = as_integer("crossover_shift");
                 trans_receiver->m_hl_ffact = as_double("hl_ffact");
-                trans_receiver->m_piping_loss_coeff = as_double("piping_loss_coefficient");                       //[Wt/m]
-                trans_receiver->m_pipe_length_add = as_double("piping_length_const");   //[m]
-                trans_receiver->m_pipe_length_mult = as_double("piping_length_mult");       //[-]
                 trans_receiver->m_T_salt_hot_target = as_double("T_htf_hot_des");
                 trans_receiver->m_csky_frac = as_double("rec_clearsky_fraction");
 

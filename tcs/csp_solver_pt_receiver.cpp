@@ -31,6 +31,9 @@ C_pt_receiver::C_pt_receiver(double h_tower /*m*/, double epsilon /*-*/,
     double f_rec_min /*-*/, double q_dot_rec_des /*MWt*/,
     double rec_su_delay /*hr*/, double rec_qf_delay /*-*/,
     double m_dot_htf_max_frac /*-*/, double eta_pump /*-*/,
+    double od_tube /*mm*/, double th_tube /*mm*/,
+    double piping_loss_coef /*Wt/m2-K*/, double pipe_length_add /*m*/,
+    double pipe_length_mult /*-*/,
     int field_fl /*-*/, util::matrix_t<double> field_fl_props,
     int tube_mat_code /*-*/,
     int night_recirc /*-*/, int clearsky_model /*-*/,
@@ -47,6 +50,12 @@ C_pt_receiver::C_pt_receiver(double h_tower /*m*/, double epsilon /*-*/,
     m_rec_qf_delay = rec_qf_delay;  //[-]
     m_m_dot_htf_max_frac = m_dot_htf_max_frac;  //[-]
     m_eta_pump = eta_pump;  //[-]
+    m_od_tube = od_tube*1.E-3;  //[m] convert from mm
+    m_th_tube = th_tube*1.E-3;  //[m] convert from mm
+
+    m_piping_loss_coefficient = piping_loss_coef;    //[Wt/m2-K]
+    m_pipe_length_add = pipe_length_add;    //[m]
+    m_pipe_length_mult = pipe_length_mult;  //[-]
 
     m_field_fl = field_fl;  //[-]
     m_field_fl_props = field_fl_props;
