@@ -202,12 +202,51 @@ static var_info _cm_vtab_etes_ptes[] = {
     { SSC_OUTPUT, SSC_NUMBER, "m_dot_CT_htf_gen_des",            "Cycle CT HTF mass flow rate",                         "kg/s",         "",                                  "Cycle",                          "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "W_dot_CT_htf_pump_gen_des",       "Cycle CT HTF pump power",                             "MWe",          "",                                  "Cycle",                          "*",                                                                "",              "" },
 
-            // TES
+            // Hot TES
     { SSC_OUTPUT, SSC_NUMBER, "Q_tes_des",                       "TES design capacity",                                 "MWt-hr",       "",                                  "TES Design Calc",                "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "V_tes_htf_avail",                 "Volume of TES HTF available for heat transfer",       "m3",           "",                                  "TES Design Calc",                "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "V_tes_htf_total",                 "Total TES HTF volume",                                "m3",           "",                                  "TES Design Calc",                "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "d_tank_tes",                      "Diameter of TES tank",                                "m",            "",                                  "TES Design Calc",                "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "q_dot_loss_tes_des",              "TES thermal loss at design",                          "MWt",          "",                                  "TES Design Calc",                "*",                                                                "",              "" },
+
+            // Cold TES
+    { SSC_OUTPUT, SSC_NUMBER, "Q_CT_tes_des",                    "TES design capacity",                                 "MWt-hr",       "",                                  "TES Design Calc",                "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "V_CT_tes_htf_avail",              "Volume of TES HTF available for heat transfer",       "m3",           "",                                  "TES Design Calc",                "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "V_CT_tes_htf_total",              "Total TES HTF volume",                                "m3",           "",                                  "TES Design Calc",                "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "d_CT_tank_tes",                   "Diameter of TES tank",                                "m",            "",                                  "TES Design Calc",                "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "q_dot_loss_CT_tes_des",           "TES thermal loss at design",                          "MWt",          "",                                  "TES Design Calc",                "*",                                                                "",              "" },
+
+            // Balance of Plant
+    { SSC_OUTPUT, SSC_NUMBER, "W_dot_bop_design",                "BOP parasitics at design",                            "MWe",          "",                                  "Balance of Plant",               "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "W_dot_fixed",                     "Fixed parasitic at design",                           "MWe",          "",                                  "Balance of Plant",               "*",                                                                "",              "" },
+
+            // Costs
+    { SSC_OUTPUT, SSC_NUMBER, "heater_cost_calc",                "Heater cost",                             "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "tes_cost_calc",                   "TES cost",                                "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "CT_tes_cost_calc",                "Cold TES cost",                           "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "bop_cost_calc",                   "BOP cost",                                "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "cycle_cost_calc",                 "Cycle cost",                              "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "direct_subtotal_cost_calc",       "Direct subtotal cost",                    "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "contingency_cost_calc",           "Contingency cost",                        "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "total_direct_cost_calc",          "Total direct cost",                       "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "epc_cost_calc",                   "EPC cost",                                "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "land_cost_calc",                  "Land cost",                               "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "sales_tax_cost_calc",             "Sales tax cost",                          "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "total_indirect_cost_calc",        "Total indirect cost",                     "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "installed_per_cap_cost_calc",     "Installed cost per capacity",             "$/kWe",        "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "total_installed_cost",            "Total installed cost",                    "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "construction_financing_cost",     "Total construction financing cost",       "$",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+
+    // ****************************************************************************************************************************************
+    // Timeseries Simulation Outputs here:
+    // ****************************************************************************************************************************************
+            // Simulation outputs
+
+
+            // ETES settings for financial model
+    { SSC_OUTPUT, SSC_NUMBER, "ppa_soln_mode",                 "PPA solution mode",                                             "0/1",          "0 = solve ppa,1 = specify ppa",     "Revenue",                                  "sim_type=1",                                                                "INTEGER,MIN = 0,MAX = 1", "" },
+    { SSC_OUTPUT, SSC_NUMBER, "flip_target_percent",		   "After-tax IRR target",		                                    "%",	        "",					                 "Revenue",                                  "sim_type=1",					                                              "MIN=0,MAX=100",     	     "" },
+
 
 
     var_info_invalid };
@@ -889,13 +928,44 @@ public:
         assign("m_dot_CT_htf_gen_des", m_dot_CT_htf_gen_calc);                      //[kg/s]
         assign("W_dot_CT_htf_pump_gen_des", W_dot_CT_htf_pump_gen_calc);            //[MWe]
 
-
-            // TES
+            // Hot TES
         assign("Q_tes_des", Q_tes_des_calc);                //[MWt-hr]
         assign("V_tes_htf_avail", V_tes_htf_avail_calc);    //[m3]
         assign("V_tes_htf_total", V_tes_htf_total_calc);    //[m3]
-        assign("d_tank_tes", d_tank_calc);                  //[m3]
+        assign("d_tank_tes", d_tank_calc);                  //[m]
         assign("q_dot_loss_tes_des", q_dot_loss_tes_des_calc);  //[MWt]
+
+            // Cold TES
+        assign("Q_CT_tes_des", CT_Q_tes_des_calc);              //[MWt-hr]
+        assign("V_CT_tes_htf_avail", CT_V_tes_htf_avail_calc);  //[m3]
+        assign("V_CT_tes_htf_total", CT_V_tes_htf_total_calc);  //[m3]
+        assign("d_CT_tank_tes", CT_d_tank_calc);                //[m]
+        assign("q_dot_loss_CT_tes_des", CT_q_dot_loss_tes_des_calc);    //[MWt]
+
+            // Balance of Plant
+        assign("W_dot_bop_design", W_dot_bop_design);           //[MWe]
+        assign("W_dot_fixed", W_dot_fixed_parasitic_design);    //[MWe]
+
+            // Costs
+        assign("heater_cost_calc", heater_cost);        //[$]
+        assign("tes_cost_calc", tes_cost);              //[$]
+        assign("CT_tes_cost_calc", CT_tes_cost);        //[$]
+        assign("bop_cost_calc", bop_cost);              //[$]
+        assign("cycle_cost_calc", power_cycle_cost);    //[$]
+        assign("direct_subtotal_cost_calc", direct_capital_precontingency_cost);    //[$]
+        assign("contingency_cost_calc", contingency_cost);  //[$]
+        assign("total_direct_cost_calc", total_direct_cost);//[$]
+        assign("epc_cost_calc", epc_and_owner_cost);        //[$]
+        assign("land_cost_calc", total_land_cost);          //[$]
+        assign("sales_tax_cost_calc", sales_tax_cost);      //[$]
+        assign("total_indirect_cost_calc", total_indirect_cost);    //[$]
+        assign("installed_per_cap_cost_calc", (ssc_number_t)(total_installed_cost / system_capacity));  //[$/kWe]
+        assign("total_installed_cost", (ssc_number_t)total_installed_cost);                 //[$]
+        assign("construction_financing_cost", (ssc_number_t)construction_financing_cost);   //[$]
+
+            // Financial
+        assign("ppa_soln_mode", 1);         // Only allow dispatch model to use fixed ppa mode so dispatch model knows absolute prices
+        assign("flip_target_percent", 0.0); //[%] fixed ppa mode shouldn't use this input, so set it to a value that, if used, will give weird results
 
 
         return;
