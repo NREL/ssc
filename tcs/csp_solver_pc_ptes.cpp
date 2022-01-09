@@ -228,9 +228,282 @@ void C_pc_ptes::call(const C_csp_weatherreader::S_outputs& weather,
     C_csp_solver_htf_1state& htf_state_in,
     const C_csp_power_cycle::S_control_inputs& inputs,
     C_csp_power_cycle::S_csp_pc_out_solver& out_solver,
-    //C_csp_power_cycle::S_csp_pc_out_report &out_report,
     const C_csp_solver_sim_info& sim_info)
 {
+    // Get sim info
+    double time = sim_info.ms_ts.m_time;			//[s]
+    double step_sec = sim_info.ms_ts.m_step;		//[s]
+
+    // Get inputs
+    double T_htf_hot = htf_state_in.m_temp;		//[C]
+    double m_dot_htf = inputs.m_m_dot;			//[kg/hr]
+    int standby_control = inputs.m_standby_control;	//[-] 1: On, 2: Standby, 3: Off
+
+    double time_required_su = 0.0;
+    double time_required_max = 0.0;
+
+    m_operating_mode_calc = (C_csp_power_cycle::E_csp_power_cycle_modes)standby_control;
+
+    // cycle operating method output variables
+    double q_startup = std::numeric_limits<double>::quiet_NaN();                //[kWt-hr]
+    double q_dot_htf = std::numeric_limits<double>::quiet_NaN();                //[MWt]
+    double W_dot_thermo = std::numeric_limits<double>::quiet_NaN();             //[MWe]
+    double eta_thermo = std::numeric_limits<double>::quiet_NaN();               //[-]
+    double T_HT_htf_cold = std::numeric_limits<double>::quiet_NaN();            //[C]
+    double T_CT_htf_hot = std::numeric_limits<double>::quiet_NaN();             //[C]
+    double W_dot_cycle_parasitics = std::numeric_limits<double>::quiet_NaN();   //[MWe]
+    bool was_method_successful = false;
+
+    switch (standby_control)
+    {
+    case STARTUP:
+        {
+            double time_required_su_energy = m_startup_energy_remain_prev*1.E3 / (m_dot_htf*m_cp_HT_HTF_des*(T_htf_hot - m_T_HT_HTF_cold_des) / 3600.0);	//[hr]
+            double time_required_su_ramping = m_startup_time_remain_prev;	//[hr]
+
+            time_required_max = fmax(time_required_su_energy, time_required_su_ramping);	//[hr]
+
+            double time_step_hrs = step_sec / 3600.0;	//[hr]
+
+            if (time_required_max > time_step_hrs)
+            {
+                time_required_su = time_step_hrs;		//[hr]
+                m_operating_mode_calc = STARTUP;	//[-] Power cycle requires additional startup next timestep
+                q_startup = m_dot_htf * m_cp_HT_HTF_des * (T_htf_hot - m_T_HT_HTF_cold_des) * time_step_hrs / 3600.0;	//[kW-hr]
+            }
+            else
+            {
+                time_required_su = time_required_max;	//[hr]
+                m_operating_mode_calc = ON;	//[-] Power cycle has started up, next time step it will be ON
+
+                double q_startup_energy_req = m_startup_energy_remain_prev;	//[kWt-hr]
+                double q_startup_ramping_req = m_dot_htf * m_cp_HT_HTF_des * (T_htf_hot - m_T_HT_HTF_cold_des) * m_startup_time_remain_prev / 3600.0;	//[kWt-hr]
+                q_startup = fmax(q_startup_energy_req, q_startup_ramping_req);	//[kWt-hr]
+            }
+
+            m_startup_time_remain_calc = fmax(m_startup_time_remain_prev - time_required_su, 0.0);	//[hr]
+            m_startup_energy_remain_calc = fmax(m_startup_energy_remain_prev - q_startup*1.E-3, 0.0);		//[MWt-hr]
+        }
+
+        // Set output variabless
+        q_dot_htf = q_startup / 1000.0 / (time_required_su);	//[kWt-hr] * [MW/kW] * [1/hr] = [MWt]
+        W_dot_thermo = 0.0;     //[MWe]
+        eta_thermo = 0.0;       //[-]
+        T_HT_htf_cold = m_T_HT_HTF_cold_des;    //[C]
+        T_CT_htf_hot = m_T_CT_HTF_hot_des;      //[C]
+        W_dot_cycle_parasitics = 0.0;           //[MWe]
+
+        was_method_successful = true;
+
+        break;
+
+    case ON:
+
+        //else
+        //{
+        //    // User-defined power cycle model
+
+        //    // Calculate non-dimensional mass flow rate relative to design point
+        //    double m_dot_htf_ND = m_dot_htf / m_m_dot_design;         //[-]
+
+        //    // Get ND performance at off-design / part-load conditions
+        //    P_cycle = ms_params.m_P_ref * mc_user_defined_pc.get_W_dot_gross_ND(T_htf_hot, T_db - 273.15, m_dot_htf_ND);	//[kW]
+
+        //    q_dot_htf = m_q_dot_design * mc_user_defined_pc.get_Q_dot_HTF_ND(T_htf_hot, T_db - 273.15, m_dot_htf_ND);		//[MWt]
+
+        //    W_cool_par = ms_params.m_W_dot_cooling_des * mc_user_defined_pc.get_W_dot_cooling_ND(T_htf_hot, T_db - 273.15, m_dot_htf_ND);	//[MW]
+
+        //    m_dot_water_cooling = ms_params.m_m_dot_water_des * mc_user_defined_pc.get_m_dot_water_ND(T_htf_hot, T_db - 273.15, m_dot_htf_ND);	//[kg/hr]
+
+        //    // Check power cycle outputs to be sure that they are reasonable. If not, return zeros
+        //    if (((eta > 1.0) || (eta < 0.0)) || ((T_htf_cold > T_htf_hot) || (T_htf_cold < ms_params.m_T_htf_cold_ref - 100.0)))
+        //    {
+        //        P_cycle = 0.0;
+        //        eta = 0.0;
+        //        T_htf_cold = ms_params.m_T_htf_cold_ref;
+        //        W_cool_par = 0.0;
+        //        m_dot_water_cooling = 0.0;
+        //        q_dot_htf = 0.0;
+
+        //        // 7.17.16 twn: don't want the controller/solver to key off P_cyle == 0, so add boolean
+        //        was_method_successful = false;
+        //    }
+        //    else
+        //    {
+        //        // Calculate other important metrics
+        //        eta = P_cycle / 1.E3 / q_dot_htf;		//[-]
+
+        //        // Want to iterate to fine more accurate cp_htf?
+        //        T_htf_cold = T_htf_hot - q_dot_htf / (m_dot_htf / 3600.0 * m_cp_htf_design / 1.E3);		//[MJ/s * hr/kg * s/hr * kg-K/kJ * MJ/kJ] = C/K
+
+        //        was_method_successful = true;
+        //    }
+
+        //    if (W_cool_par < 0.0)
+        //    {
+        //        W_cool_par = 0.0;
+        //    }
+
+        //    if (m_dot_water_cooling < 0.0)
+        //    {
+        //        m_dot_water_cooling = 0.0;
+        //    }
+
+        //    m_dot_st_bd = 0.0;					//[kg/hr]
+        //    m_dot_htf_ref = m_m_dot_design;		//[kg/hr]
+
+        //    f_hrsys = 0.0;		//[-] Not captured in User-defined power cycle model
+        //    P_cond = 0.0;		//[Pa] Not captured in User-defined power cycle model
+        //    m_dot_demand = 0.0;	//[kg/hr] Not captured in User-defined power cycle model
+        //}
+
+        break;
+
+    case STANDBY:
+        {
+            //double c_htf = mc_pc_htfProps.Cp(physics::CelciusToKelvin((T_htf_hot + ms_params.m_T_htf_cold_ref) / 2.0));	//[kJ/kg-K]
+            //// double c_htf = specheat(m_pbp.HTF, physics::CelciusToKelvin((m_pbi.T_htf_hot + m_pbp.T_htf_cold_ref)/2.0), 1.0);
+            //double q_tot = ms_params.m_P_ref / ms_params.m_eta_ref;
+
+            //// Calculate the actual q_sby_needed from the reference flows
+            //double q_sby_needed = q_tot * ms_params.m_q_sby_frac;
+
+            //// now calculate the mass flow rate knowing the inlet temperature of the salt,
+            //// ..and holding the outlet temperature at the reference outlet temperature
+            //double m_dot_sby = q_sby_needed / (c_htf * (T_htf_hot - ms_params.m_T_htf_cold_ref)) * 3600.0;
+
+            //// Set other output values
+            //P_cycle = 0.0;
+            //eta = 0.0;
+            //T_htf_cold = ms_params.m_T_htf_cold_ref;
+
+            //m_dot_demand = m_dot_sby;
+            //m_dot_st_bd = 0.0;
+            //m_dot_water_cooling = 0.0;
+            //W_cool_par = 0.0;
+            //f_hrsys = 0.0;
+            //P_cond = 0.0;
+
+            //q_dot_htf = m_dot_htf / 3600.0 * c_htf * (T_htf_hot - T_htf_cold) / 1000.0;		//[MWt]
+
+            //was_method_successful = true;
+
+        }
+
+    break;
+
+    case OFF:
+
+        //// Set other output values
+        //P_cycle = 0.0;
+        //eta = 0.0;
+        //T_htf_cold = ms_params.m_T_htf_cold_ref;
+
+        //m_dot_demand = 0.0;
+        //m_dot_water_cooling = 0.0;
+        //m_dot_st_bd = 0.0;
+        //W_cool_par = 0.0;
+        //f_hrsys = 0.0;
+        //P_cond = 0.0;
+
+        //q_dot_htf = 0.0;
+
+        //// Cycle is off, so reset startup parameters!
+        //m_startup_time_remain_calc = ms_params.m_startup_time;			//[hr]
+        //m_startup_energy_remain_calc = m_startup_energy_required;		//[kWt-hr]
+
+        //was_method_successful = true;
+
+        break;
+
+    case STARTUP_CONTROLLED:
+        // Thermal input can be controlled (e.g. TES mass flow rate is adjustable, rather than direct connection
+        //     to the receiver), so find the mass flow rate that results in the required energy input can be achieved
+        //     simultaneously with the required startup time. If the timestep is less than the required startup time
+        //     scale the mass flow rate appropriately
+
+        //double c_htf = mc_pc_htfProps.Cp(physics::CelciusToKelvin((T_htf_hot + ms_params.m_T_htf_cold_ref) / 2.0));		//[kJ/kg-K]
+
+        //    // Maximum thermal power to power cycle based on heat input constraint parameters:
+        //double q_dot_to_pc_max_q_constraint = ms_params.m_cycle_max_frac * ms_params.m_P_ref / ms_params.m_eta_ref;	//[kWt]
+        //    // Maximum thermal power to power cycle based on mass flow rate constraint parameters:
+        //double q_dot_to_pc_max_m_constraint = m_m_dot_max / 3600.0 * c_htf * (T_htf_hot - ms_params.m_T_htf_cold_ref);	//[kWt]
+        //    // Choose smaller of two values
+        //double q_dot_to_pc_max = fmin(q_dot_to_pc_max_q_constraint, q_dot_to_pc_max_m_constraint);	//[kWt]
+
+        //double time_required_su_energy = m_startup_energy_remain_prev / q_dot_to_pc_max;		//[hr]
+        //double time_required_su_ramping = m_startup_time_remain_prev;		//[hr]
+
+        //time_required_max = fmax(time_required_su_energy, time_required_su_ramping);	//[hr]
+
+        //double q_dot_to_pc = std::numeric_limits<double>::quiet_NaN();
+
+        //if (time_required_su_energy > time_required_su_ramping)	// Meeting energy requirements (at design thermal input) will require more time than time requirements
+        //{
+        //    // Can the power cycle startup within the timestep?
+        //    if (time_required_su_energy > step_sec / 3600.0)	// No: the power cycle startup will require another timestep
+        //    {
+        //        time_required_su = step_sec / 3600.0;	//[hr]
+        //        m_operating_mode_calc = STARTUP;		//[-] Power cycle requires additional startup next timestep
+
+        //    }
+        //    else	// Yes: the power cycle will complete startup within this timestep
+        //    {
+        //        time_required_su = time_required_su_energy;	//[hr]
+        //        m_operating_mode_calc = ON;				//[-] Power cycle has started up, next time step it will be ON
+        //    }
+        //    // If the thermal energy requirement is the limiting factor, then send max q_dot to power cycle
+        //    q_dot_to_pc = q_dot_to_pc_max;		//[kWt]
+        //}
+        //else		// Meeting time requirements will require more time than energy requirements (at design thermal input)
+        //{
+        //    // Can the power cycle startup within the timestep?
+        //    if (time_required_su_ramping > step_sec / 3600.0)	// No: the power cycle startup will require another timestep
+        //    {
+        //        time_required_su = step_sec / 3600.0;			//[hr]
+        //        m_operating_mode_calc = STARTUP;		//[-] Power cycle requires additional startup next timestep
+        //    }
+        //    else	// Yes: the power cycle will complete startup within this timestep
+        //    {
+        //        time_required_su = time_required_su_ramping;	//[hr]
+        //        m_operating_mode_calc = ON;					//[-] Power cycle has started up, next time step it will be ON
+        //    }
+
+        //    // 2.27.17 twn: now need to recalculate q_dot_to_pc based on having more time to deliver energy requirement
+        //    // 3.28.17 twn: use 'time_required_su_ramping' insteand of 'time_required_su'
+        //    q_dot_to_pc = m_startup_energy_remain_prev / time_required_su_ramping;		//[kWt]
+        //}
+        //q_startup = q_dot_to_pc * time_required_su;	//[kWt-hr]
+
+        //double m_dot_htf_required = (q_startup / time_required_su) / (c_htf * (T_htf_hot - ms_params.m_T_htf_cold_ref));	//[kg/s]
+        //double m_dot_htf_req_kg_s = m_dot_htf_required * 3600.0;	//[kg/hr], convert from kg/s
+
+        //m_startup_time_remain_calc = fmax(m_startup_time_remain_prev - time_required_su, 0.0);	//[hr]
+        //m_startup_energy_remain_calc = fmax(m_startup_energy_remain_prev - q_startup, 0.0);		//[kWt-hr]
+
+
+        //// Set other output values
+        //P_cycle = 0.0;
+        //eta = 0.0;
+        //T_htf_cold = ms_params.m_T_htf_cold_ref;
+
+        //m_dot_htf = m_dot_htf_req_kg_s;		//[kg/hr]
+        ////m_dot_demand = m_dot_htf_required*3600.0;		//[kg/hr], convert from kg/s
+        //m_dot_water_cooling = 0.0;
+        //m_dot_st_bd = 0.0;
+        //W_cool_par = 0.0;
+        //f_hrsys = 0.0;
+        //P_cond = 0.0;
+
+        //q_dot_htf = m_dot_htf_required * c_htf * (T_htf_hot - ms_params.m_T_htf_cold_ref) / 1000.0;	//[MWt]
+
+        //was_method_successful = true;
+
+        break;
+
+    }	// end switch() on standby control
+
+
     throw(C_csp_exception("C_pc_tes::call() is not complete"));
 }
 

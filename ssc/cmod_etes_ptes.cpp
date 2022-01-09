@@ -967,6 +967,22 @@ public:
         assign("ppa_soln_mode", 1);         // Only allow dispatch model to use fixed ppa mode so dispatch model knows absolute prices
         assign("flip_target_percent", 0.0); //[%] fixed ppa mode shouldn't use this input, so set it to a value that, if used, will give weird results
 
+        // *****************************************************
+        // *****************************************************
+
+        // *****************************************************
+        // If calling cmod to run design only, return here
+        if (as_double("sim_type") != 1) {
+            return;
+        }
+        // *****************************************************
+        // *****************************************************
+
+
+        // *****************************************************
+        // Run timeseries simulation
+        update("Begin timeseries simulation...", 0.0);
+
 
         return;
     }
