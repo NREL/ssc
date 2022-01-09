@@ -27,6 +27,49 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "htf_props.h"
 
+
+namespace pc_ptes_helpers
+{
+    void design_calcs__all(double W_dot_thermo /*MWe*/, double f_elec_consume_vs_gen /*-*/,
+        double eta_therm_mech /*-*/, double fixed__q_dot_cold__to__q_dot_warm /*-*/,
+        double& W_dot_net /*MWe*/, double& W_dot_consume_elec /*MWe*/,
+        double& q_dot_hot_in /*MWt*/, double& q_dot_cold_out_thermo /*MWt*/, double& eta_net /*-*/,
+        double& q_dot_cold_to_CTES, double& q_dot_reject_to_surroundings /*MWt*/);
+
+    void design_calcs__no_ctes(double W_dot_thermo /*MWe*/, double f_elec_consume_vs_gen /*-*/,
+        double eta_therm_mech /*-*/,
+        double& W_dot_net /*MWe*/, double& W_dot_consume_elec /*MWe*/,
+        double& q_dot_hot_in /*MWt*/, double& q_dot_cold_out_thermo /*MWt*/, double& eta_net /*-*/);
+
+    void design_calcs__q_dot_ctes(double q_dot_hot_in /*MWt*/, double fixed__q_dot_cold__to__q_dot_warm /*-*/,
+        double q_dot_cold_out_thermo /*MWt*/,
+        double& q_dot_cold_to_CTES, double& q_dot_reject_to_surroundings /*MWt*/);
+
+    class C_endo_reversible_cycle
+    {
+    private:
+
+        double m_T_HT_hot_des;      //[C]
+        double m_T_HT_cold_des;     //[C]
+        double m_T_CT_hot_des;      //[C]
+        double m_T_CT_cold_des;     //[C]
+        double m_eta_endo_des;      //[-]
+
+    public:
+
+        C_endo_reversible_cycle(double T_HT_hot_des /*C*/, double T_HT_cold_des /*C*/,
+            double T_CT_hot_des /*C*/, double T_CT_cold_des /*C*/);
+
+        double eta_endo(double T_HT_hot /*C*/, double T_HT_cold /*C*/,
+            double T_CT_hot /*C*/, double T_CT_cold /*C*/);
+
+        void performance(double T_HT_hot /*C*/, double m_dot_HT_ND /*-*/, double T_CT_cold /*C*/,
+            double& W_dot_gross_ND /*-*/, double& Q_dot_ND /*-*/,
+            double& T_HT_cold /*C*/, double& T_CT_hot /*C*/);
+
+    };
+}
+
 class C_pc_ptes : public C_csp_power_cycle
 {
 private:
@@ -63,7 +106,7 @@ private:
     double m_W_dot_net_des;             //[MWe]
     double m_q_dot_hot_in_des;          //[MWt]
     double m_q_dot_cold_out_thermo_des; //[MWt]
-    double m_W_dot_elec_parasitic;      //[MWe]
+    double m_W_dot_elec_parasitic_des;  //[MWe]
     double m_eta_overall_des;           //[-]
     double m_q_dot_cold_to_CTES;        //[MWt]
     double m_q_dot_cold_to_surroundings;    //[MWt]
@@ -78,14 +121,21 @@ private:
     double m_m_dot_HT_max;              //[kg/s]
     double m_W_dot_HT_htf_pump_des;     //[MWe]
 
+    double m_q_dot_HT_max;              //[MWt]
+    double m_q_dot_HT_min;              //[MWt]
+
     double m_m_dot_CT_des;              //[kg/s]
     double m_W_dot_CT_htf_pump_des;     //[MWe]
+
+    double m_m_dot_CT_to_HT_ratio;      //[-]
 
     double m_E_su_des;                  //[MWt-hr]
 
     // Member points/classes
     std::unique_ptr<HTFProperties> m_HT_htfProps;
     std::unique_ptr<HTFProperties> m_CT_htfProps;
+
+    std::unique_ptr<pc_ptes_helpers::C_endo_reversible_cycle> mp_endo_reverse;
     // *******************************************
     // *******************************************
 
@@ -102,6 +152,11 @@ private:
     double m_startup_energy_remain_calc;    //[MWt-hr]
 
 public:
+
+    enum
+    {
+        E_W_DOT_THERMO      //[MWe] Cycle thermodynamic output (not including motor/generator losses, cooling parasitics, or HTF pumps
+    };
 
     C_csp_reported_outputs mc_reported_outputs;
 
@@ -164,22 +219,6 @@ public:
         double& m_dot_CT_htf /*kg/s*/, double& cp_CT_htf /*kJ/kg-K*/, double& W_dot_CT_htf_pump /*MWe*/);
 };
 
-namespace pc_ptes_helpers
-{
-    void design_calcs__all(double W_dot_thermo /*MWe*/, double f_elec_consume_vs_gen /*-*/,
-        double eta_therm_mech /*-*/, double fixed__q_dot_cold__to__q_dot_warm /*-*/,
-        double& W_dot_net /*MWe*/, double& W_dot_consume_elec /*MWe*/,
-        double& q_dot_hot_in /*MWt*/, double& q_dot_cold_out_thermo /*MWt*/, double& eta_net /*-*/,
-        double& q_dot_cold_to_CTES, double& q_dot_reject_to_surroundings /*MWt*/);
 
-    void design_calcs__no_ctes(double W_dot_thermo /*MWe*/, double f_elec_consume_vs_gen /*-*/,
-        double eta_therm_mech /*-*/,
-        double& W_dot_net /*MWe*/, double& W_dot_consume_elec /*MWe*/,
-        double& q_dot_hot_in /*MWt*/, double& q_dot_cold_out_thermo /*MWt*/, double& eta_net /*-*/);
-
-    void design_calcs__q_dot_ctes(double q_dot_hot_in /*MWt*/, double fixed__q_dot_cold__to__q_dot_warm /*-*/,
-        double q_dot_cold_out_thermo /*MWt*/,
-        double& q_dot_cold_to_CTES, double& q_dot_reject_to_surroundings /*MWt*/);
-}
 
 #endif // !__csp_solver_pc_ptes_
