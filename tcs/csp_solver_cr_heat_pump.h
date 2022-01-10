@@ -41,7 +41,7 @@ private:
     double m_T_CT_HTF_cold_des;     //[C] Cold temp HTF cold temperature
     double m_T_CT_HTF_hot_des;      //[C] Cold temp HTF hot temperature
 
-    double m_q_dot_min_des;         //[MWt] min allowable heater output
+    double m_f_q_dot_min;           //[-] min allowable heater output (fraction of des)
 
     double m_f_q_dot_des_allowable_su;  //[-] fraction of design thermal power allowed for startup
     double m_hrs_startup_at_max_rate;   //[hr]
@@ -65,7 +65,7 @@ private:
     double m_q_dot_cold_in_des;     //[MWt]
     double m_W_dot_consume_elec_des;//[MWe]
     double m_W_dot_in_net_des;      //[MWe]
-    double m_COP_net_des;           //[-]
+    double m_COP_net_des;           //[-] q_dot_hot_out / W_dot_in_thermo
 
     double m_T_HT_HTF_avg_des;      //[C]
     double m_cp_HT_HTF_des;         //[kJ/kg-K]
@@ -78,8 +78,12 @@ private:
     double m_m_dot_CT_des;          //[kg/s]
     double m_W_dot_CT_htf_pump_des; //[MWe]
 
+    double m_q_dot_min_des;         //[MWt]
+
     double m_q_dot_su_max;          //[MWt]
+    double m_W_dot_su_max;          //[MWe]
     double m_E_su_des;              //[MWt-hr]
+    double m_E_W_dot_su_des;        //[MWe-hr]
     double m_t_su_des;              //[hr]
 
     // Member points/classes

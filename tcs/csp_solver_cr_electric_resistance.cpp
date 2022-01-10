@@ -236,6 +236,7 @@ void C_csp_cr_electric_resistance::startup(const C_csp_weatherreader::S_outputs&
 
     double step_hrs = sim_info.ms_ts.m_step / 3600.0;    //[hr]
 
+    // Assume startup is always at max startup rate
     double time_remaining_su = m_E_su_initial / m_q_dot_su_max; //[hr]
 
     double time_required_su = std::numeric_limits<double>::quiet_NaN();
