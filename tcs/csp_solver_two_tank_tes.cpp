@@ -697,6 +697,7 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 	{C_csp_two_tank_tes::E_MASS_COLD_TANK, C_csp_reported_outputs::TS_LAST},			//[kg] Mass in cold tank at end of timestep		
 	{C_csp_two_tank_tes::E_MASS_HOT_TANK, C_csp_reported_outputs::TS_LAST},				//[kg] Mass in hot tank at end of timestep
     {C_csp_two_tank_tes::E_HOT_TANK_HTF_PERC_FINAL, C_csp_reported_outputs::TS_LAST},	//[%] Final percent fill of available hot tank mass
+    {C_csp_two_tank_tes::E_W_DOT_HTF_PUMP, C_csp_reported_outputs::TS_WEIGHTED_AVE},	//[MWe] 
 
 	csp_info_invalid
 };
@@ -1391,7 +1392,14 @@ int C_csp_two_tank_tes::solve_tes_off_design(double timestep /*s*/, double  T_am
 
     }
 
+    // Solve pumping power here
+    double W_dot_htf_pump = pumping_power(m_dot_cr_to_cv_hot, m_dot_cv_hot_to_cycle, std::abs(m_dot_cold_tank_to_hot_tank),
+                            T_cr_in_cold, T_cr_out_hot, T_cycle_htf_in_hot, T_cycle_out_cold,
+                            false);     //[-] C_MEQ__m_dot_tes will not send cr_m_dot to TES if recirculating
+
     s_outputs.m_q_heater = q_dot_heater;
+    s_outputs.m_W_dot_elec_in_tot = W_dot_htf_pump;             //[MWe]
+
     s_outputs.m_q_dot_dc_to_htf = q_dot_dc_to_htf;
     s_outputs.m_q_dot_ch_from_htf = q_dot_ch_from_htf;
     s_outputs.m_m_dot_cr_to_tes_hot = m_dot_cr_to_tes_hot;		//[kg/s]
@@ -1414,6 +1422,7 @@ int C_csp_two_tank_tes::solve_tes_off_design(double timestep /*s*/, double  T_am
     mc_reported_outputs.value(E_M_DOT_TANK_TO_TANK, m_dot_cold_tank_to_hot_tank);	//[kg/s]
     mc_reported_outputs.value(E_MASS_COLD_TANK, mc_cold_tank.get_m_m_calc());		//[kg]
     mc_reported_outputs.value(E_MASS_HOT_TANK, mc_hot_tank.get_m_m_calc());			//[kg]
+    mc_reported_outputs.value(E_W_DOT_HTF_PUMP, W_dot_htf_pump);    //[MWe]
 
     return 0;
 }
@@ -1934,8 +1943,8 @@ int C_csp_two_tank_tes::pressure_drops(double m_dot_sf, double m_dot_pb,
     return 0;
 }
 
-double C_csp_two_tank_tes::pumping_power(double m_dot_sf, double m_dot_pb, double m_dot_tank,
-    double T_sf_in, double T_sf_out, double T_pb_in, double T_pb_out, bool recirculating)
+double /*MWe*/ C_csp_two_tank_tes::pumping_power(double m_dot_sf /*kg/s*/, double m_dot_pb /*kg/s*/, double m_dot_tank /*kg/s*/,
+    double T_sf_in /*K*/, double T_sf_out /*K*/, double T_pb_in /*K*/, double T_pb_out /*K*/, bool recirculating)
 {
     double htf_pump_power = 0.;
     double rho_sf, rho_pb;
@@ -2005,9 +2014,12 @@ void two_tank_tes_sizing(HTFProperties &tes_htf_props, double Q_tes_des /*MWt-hr
 
 	d_tank = pow(A_cs / CSP::pi, 0.5)*2.0;			//[m] Diameter of a single tank
 
-	double UA_tank = u_tank*(A_cs + CSP::pi*d_tank*h_tank)*tank_pairs;		//[W/K]
+	double UA_tanks_one_temp = u_tank*(A_cs + CSP::pi*d_tank*h_tank)*tank_pairs;		//[W/K]
 
-	q_dot_loss_des = UA_tank*(T_tes_ave - 15.0)*1.E-6;	//[MWt]
+    double T_amb_des = 15.0 + 273.15;       //[K]
+    double q_dot_loss_cold = UA_tanks_one_temp*(T_tes_cold - T_amb_des)*1.E-6;	//[MWt]
+    double q_dot_loss_hot = UA_tanks_one_temp*(T_tes_hot - T_amb_des)*1.E-6;	//[MWt]
+	q_dot_loss_des = q_dot_loss_cold + q_dot_loss_hot;	//[MWt]
 		
 }
 

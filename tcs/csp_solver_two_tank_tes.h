@@ -174,7 +174,8 @@ public:
 		E_M_DOT_TANK_TO_TANK,	//[kg/s] Tank to tank mass flow rate (indirect TES)
 		E_MASS_COLD_TANK,	//[kg] Mass in cold tank at end of timestep
 		E_MASS_HOT_TANK,		//[kg] Mass in hot tank at end of timestep
-        E_HOT_TANK_HTF_PERC_FINAL   //[%] Final percent fill of available hot tank mass
+        E_HOT_TANK_HTF_PERC_FINAL,   //[%] Final percent fill of available hot tank mass
+        E_W_DOT_HTF_PUMP    //[MWe]
 	};
 
 	C_csp_reported_outputs mc_reported_outputs;
@@ -326,8 +327,8 @@ public:
         double T_sf_in, double T_sf_out, double T_pb_in, double T_pb_out, bool recirculating,
         double &P_drop_col, double &P_drop_gen);
 
-    virtual double pumping_power(double m_dot_sf, double m_dot_pb, double m_dot_tank,
-        double T_sf_in, double T_sf_out, double T_pb_in, double T_pb_out, bool recirculating);
+    virtual /*MWe*/ double pumping_power(double m_dot_sf /*kg/s*/, double m_dot_pb /*kg/s*/, double m_dot_tank /*kg/s*/,
+        double T_sf_in /*K*/, double T_sf_out /*K*/, double T_pb_in /*K*/, double T_pb_out /*K*/, bool recirculating);
 
     void get_design_parameters(double& vol_one_temp_avail /*m3*/, double& vol_one_temp_total /*m3*/, double& d_tank /*m*/,
         double& q_dot_loss_des /*MWt*/, double& dens_store_htf_at_T_ave /*kg/m3*/);
