@@ -620,7 +620,7 @@ void tcLayoutCtrl::OnLeftDown( wxMouseEvent &evt )
 			wxClientDC dc( this );
 			wxDCOverlay overlaydc( m_overlay, &dc );
 			overlaydc.Clear();
-			m_overlay.Reset();
+//			m_overlay.Reset();
 #endif
 		}
 		else
@@ -686,7 +686,7 @@ void tcLayoutCtrl::OnLeftUp( wxMouseEvent &evt )
 		wxClientDC dc( this );
 		wxDCOverlay overlaydc( m_overlay, &dc );
 		overlaydc.Clear();
-		m_overlay.Reset();
+//		m_overlay.Reset();
 #endif
 		Modify();
 		Refresh();
@@ -705,7 +705,7 @@ void tcLayoutCtrl::OnLeftUp( wxMouseEvent &evt )
 		wxClientDC dc( this );
 		wxDCOverlay overlaydc( m_overlay, &dc );
 		overlaydc.Clear();
-		m_overlay.Reset();
+//		m_overlay.Reset();
 #endif
 		Modify();
 		Refresh();
