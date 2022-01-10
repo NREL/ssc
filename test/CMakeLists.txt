@@ -10,7 +10,7 @@ elseif (DEFINED ENV{GTEST})
     set(GTDIR $ENV{GTEST})
 endif()
 
-include_directories(${GTDIR}/include ${GTDIR}/googletest/include . input_cases shared_test ssc_test tcs_test
+include_directories(${GTDIR}/include ${GTDIR}/googletest/include ${GTDIR}/googletest/include/gtest . input_cases shared_test ssc_test tcs_test
 						../ssc ../tcs ../solarpilot ../shared ../splinter ../jsoncpp/include )
 
 file(GLOB SSC_TESTS ssc_test/*.cpp)
