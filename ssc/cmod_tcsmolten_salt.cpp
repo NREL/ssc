@@ -1387,17 +1387,11 @@ public:
                     as_integer("rec_htf"), as_matrix("field_fl_props"),
                     as_integer("mat_tube"),
                     rec_night_recirc, rec_clearsky_model,
-                    clearsky_data
+                    clearsky_data,
+                    as_integer("N_panels"), D_rec, H_rec,
+                    as_integer("Flow_type"), as_integer("crossover_shift"), as_double("hl_ffact"),
+                    as_double("T_htf_hot_des"), as_double("rec_clearsky_fraction")
                     ));   // steady-state receiver
-
-                ss_receiver->m_n_panels = as_integer("N_panels");
-                ss_receiver->m_d_rec = D_rec;
-                ss_receiver->m_h_rec = H_rec;
-                ss_receiver->m_flow_type = as_integer("Flow_type");
-                ss_receiver->m_crossover_shift = as_integer("crossover_shift");
-                ss_receiver->m_hl_ffact = as_double("hl_ffact");
-                ss_receiver->m_T_salt_hot_target = as_double("T_htf_hot_des");
-                ss_receiver->m_csky_frac = as_double("rec_clearsky_fraction");
 
                 receiver = std::move(ss_receiver);
             }
@@ -1415,18 +1409,11 @@ public:
                     as_integer("rec_htf"), as_matrix("field_fl_props"),
                     as_integer("mat_tube"),
                     rec_night_recirc, rec_clearsky_model,
-                    clearsky_data
+                    clearsky_data,
+                    as_integer("N_panels"), D_rec, H_rec,
+                    as_integer("Flow_type"), as_integer("crossover_shift"), as_double("hl_ffact"),
+                    as_double("T_htf_hot_des"), as_double("rec_clearsky_fraction")
                     ));    // transient receiver
-
-                trans_receiver->m_n_panels = as_integer("N_panels");
-                trans_receiver->m_d_rec = D_rec;
-                trans_receiver->m_h_rec = H_rec;
-                trans_receiver->m_flow_type = as_integer("Flow_type");
-                trans_receiver->m_crossover_shift = as_integer("crossover_shift");
-                trans_receiver->m_hl_ffact = as_double("hl_ffact");
-                trans_receiver->m_T_salt_hot_target = as_double("T_htf_hot_des");
-                trans_receiver->m_csky_frac = as_double("rec_clearsky_fraction");
-
 
                 // Inputs for transient receiver model
                 trans_receiver->m_is_transient = as_boolean("is_rec_model_trans");

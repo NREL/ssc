@@ -38,7 +38,10 @@ C_mspt_receiver::C_mspt_receiver(double h_tower /*m*/, double epsilon /*-*/,
     int field_fl, util::matrix_t<double> field_fl_props,
     int tube_mat_code /*-*/,
     int night_recirc /*-*/, int clearsky_model /*-*/,
-    std::vector<double> clearsky_data) : C_pt_receiver(h_tower, epsilon,
+    std::vector<double> clearsky_data,
+    int n_panels /*-*/, double d_rec /*m*/, double h_rec /*m*/,
+    int flow_type /*-*/, int crossover_shift /*-*/, double hl_ffact /*-*/,
+    double T_salt_hot_target /*C*/, double csky_frac /*-*/) : C_mspt_receiver_222(h_tower, epsilon,
         T_htf_hot_des, T_htf_cold_des,
         f_rec_min, q_dot_rec_des,
         rec_su_delay, rec_qf_delay,
@@ -49,31 +52,14 @@ C_mspt_receiver::C_mspt_receiver(double h_tower /*m*/, double epsilon /*-*/,
         field_fl, field_fl_props,
         tube_mat_code,
         night_recirc, clearsky_model,
-        clearsky_data)
+        clearsky_data,
+        n_panels, d_rec, h_rec,
+        flow_type, crossover_shift, hl_ffact,
+        T_salt_hot_target, csky_frac)
 {    
-    m_n_panels = -1;
-
-	m_d_rec = std::numeric_limits<double>::quiet_NaN();
-	m_h_rec = std::numeric_limits<double>::quiet_NaN();
-	m_hl_ffact = std::numeric_limits<double>::quiet_NaN();
-
-	m_id_tube = std::numeric_limits<double>::quiet_NaN();
-	m_A_tube = std::numeric_limits<double>::quiet_NaN();
-	m_n_t = -1;
-
-	m_T_salt_hot_target = std::numeric_limits<double>::quiet_NaN();
-
-		// Added for csp_solver/tcs wrapper
-	m_flow_type = -1;
-    m_crossover_shift = 0;
-
-	m_A_rec_proj = std::numeric_limits<double>::quiet_NaN();
-	m_A_node = std::numeric_limits<double>::quiet_NaN();
-
 	m_Q_dot_piping_loss = std::numeric_limits<double>::quiet_NaN();
 	m_m_dot_htf_max = std::numeric_limits<double>::quiet_NaN();
 
-	m_itermode = -1;
 	m_tol_od = std::numeric_limits<double>::quiet_NaN();
 	m_q_dot_inc_min = std::numeric_limits<double>::quiet_NaN();
 
@@ -133,8 +119,6 @@ C_mspt_receiver::C_mspt_receiver(double h_tower /*m*/, double epsilon /*-*/,
 	m_total_fill_time = std::numeric_limits<double>::quiet_NaN();
 	m_crossover_index = -1;
 
-	m_csky_frac = std::numeric_limits<double>::quiet_NaN();
-
 }
 
 // Identical to C_mspt_receiver_222::init() except for last line (initialize_transient_parameters())
@@ -142,16 +126,16 @@ void C_mspt_receiver::init()
 {
     C_pt_receiver::init();
 
-	m_id_tube = m_od_tube - 2 * m_th_tube;			//[m] Inner diameter of receiver tube
-	m_A_tube = CSP::pi*m_od_tube / 2.0*m_h_rec;	//[m^2] Outer surface area of each tube
-	m_n_t = (int)(CSP::pi*m_d_rec / (m_od_tube*m_n_panels));	// The number of tubes per panel, as a function of the number of panels and the desired diameter of the receiver
-	
-	int n_tubes = m_n_t * m_n_panels;				//[-] Number of tubes in the system
-	m_A_rec_proj = m_od_tube*m_h_rec*n_tubes;		//[m^2] The projected area of the tubes on a plane parallel to the center lines of the tubes
-	m_A_node = CSP::pi*m_d_rec / m_n_panels*m_h_rec; //[m^2] The area associated with each node
+    init_mspt_common();
+	//m_id_tube = m_od_tube - 2 * m_th_tube;			//[m] Inner diameter of receiver tube
+	//m_A_tube = CSP::pi*m_od_tube / 2.0*m_h_rec;	//[m^2] Outer surface area of each tube
+	//m_n_t = (int)(CSP::pi*m_d_rec / (m_od_tube*m_n_panels));	// The number of tubes per panel, as a function of the number of panels and the desired diameter of the receiver
+	//
+	//int n_tubes = m_n_t * m_n_panels;				//[-] Number of tubes in the system
+	//m_A_rec_proj = m_od_tube*m_h_rec*n_tubes;		//[m^2] The projected area of the tubes on a plane parallel to the center lines of the tubes
+	//m_A_node = CSP::pi*m_d_rec / m_n_panels*m_h_rec; //[m^2] The area associated with each node
 
 	m_mode = C_csp_collector_receiver::OFF;					//[-] 0 = requires startup, 1 = starting up, 2 = running
-	m_itermode = 1;			//[-] 1: Solve for design temp, 2: solve to match mass flow restriction
 	m_tol_od = 0.001;		//[-] Tolerance for over-design iteration
 
 	double c_htf_des = field_htfProps.Cp((m_T_htf_hot_des + m_T_htf_cold_des) / 2.0)*1000.0;		//[J/kg-K] Specific heat at design conditions
@@ -174,8 +158,6 @@ void C_mspt_receiver::init()
 	m_E_su_prev = m_q_rec_des * m_rec_qf_delay;	//[W-hr] Startup energy
 	m_t_su_prev = m_rec_su_delay;				//[hr] Startup time requirement
 
-	m_T_salt_hot_target += 273.15;			//[K] convert from C
-	
     double L_piping = std::numeric_limits<double>::quiet_NaN();     //[m]
     double d_inner_piping = std::numeric_limits<double>::quiet_NaN();   //[m]
     CSP::mspt_piping_design(field_htfProps,
@@ -488,8 +470,6 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 	m_E_su = std::numeric_limits<double>::quiet_NaN();
 	m_t_su = std::numeric_limits<double>::quiet_NaN();
 
-	m_itermode = 1;
-
 	double v_wind = log((m_h_tower + m_h_rec / 2) / 0.003) / log(10.0 / 0.003)*v_wind_10;
 
 	double c_p_coolant, rho_coolant, f, u_coolant, q_conv_sum, q_rad_sum, q_dot_inc_sum, q_dot_inc_min_panel, q_dot_piping_loss;
@@ -563,7 +543,6 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 	soln.T_salt_cold_in = T_salt_cold_in;	// Cold salt inlet temperature (K)
 	soln.od_control = od_control;           //[-] Initial defocus control (will be adjusted during the solution)
     soln.mode = input_operation_mode;
-	soln.itermode = m_itermode;
 	soln.rec_is_off = rec_is_off;
 
 	clearsky = get_clearsky(weather, hour);
@@ -658,7 +637,6 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 	// Set variables for use in the rest of the solution
 	rec_is_off = soln.rec_is_off;
 	m_mode = soln.mode;
-	m_itermode = soln.itermode;
 	od_control = soln.od_control;
 
 	m_dot_salt_tot = soln.m_dot_salt_tot;
@@ -1427,8 +1405,6 @@ void C_mspt_receiver::converged()
 	m_E_su_prev = m_E_su;
 	m_t_su_prev = m_t_su;
 
-	m_itermode = 1;
-
 	m_ncall = -1;
 
 	m_startup_mode_initial = m_startup_mode;
@@ -1953,19 +1929,16 @@ void C_mspt_receiver::solve_for_mass_flow_and_defocus(s_steady_state_soln &soln,
 
 																	// Limit the HTF mass flow rate to the maximum, if needed
 		rec_is_defocusing = false;
-		if ((m_dot_salt_tot > m_dot_htf_max) || soln.itermode == 2)
+		if ((m_dot_salt_tot > m_dot_htf_max))
 		{
 			double err_od = (m_dot_salt_tot - m_dot_htf_max) / m_dot_htf_max;
 			if (err_od < m_tol_od)
 			{
-				soln.itermode = 1;
-				//soln.od_control = 1.0;
 				rec_is_defocusing = false;
 			}
 			else
 			{
 				soln.od_control = soln.od_control * pow((m_dot_htf_max / m_dot_salt_tot), 0.8);	//[-] Adjust the over-design defocus control by modifying the current value
-				soln.itermode = 2;
 				rec_is_defocusing = true;
 			}
 		}

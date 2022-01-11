@@ -33,17 +33,97 @@ class C_mspt_receiver_222 : public C_pt_receiver
 {
 // The steady-state receiver (as opposed to the transient, for example)
 
-private:
+protected:
 
-	double m_id_tube;
+    struct s_steady_state_soln
+    {
+        C_csp_collector_receiver::E_csp_cr_modes mode;
+        bool rec_is_off;
+        //int itermode;
+
+        double hour;				// Hour of the year 
+        double T_amb;				// Dry bulb temperature (K)
+        double T_dp;				// Dewpoint temperature (K)
+        double v_wind_10;			// Wind speed at 10m (m/s)
+        double p_amb;				// Ambient pressure (Pa)
+
+        double dni;					// DNI for this solution (W/m2)
+        double dni_applied_to_measured; //[-] Ratio of DNI used to measured DNI
+        double plant_defocus;       // plant defocus
+
+        double od_control;          // Defocus control
+
+        double m_dot_salt;			// Salt mass flow per path (kg/s)
+        double m_dot_salt_tot;      // Total salt mass flow (kg/s)
+        double T_salt_cold_in;		// Cold salt inlet temperature (K)
+        double T_salt_hot;			// Receiver outlet T including piping loss (K)
+        double T_salt_hot_rec;      // Receiver outlet T before piping loss (K)
+        double T_salt_props;		// Temperature at which salt properties are evaluated
+
+        double u_salt;				// Salt velocity (m/s)
+        double f;					// Friction factor
+
+        double Q_inc_sum;			// Total absorbed solar energy (W)
+        double Q_conv_sum;			// Total convection loss (W)
+        double Q_rad_sum;			// Total radiation loss (W)
+        double Q_abs_sum;			// Total energy transferred to HTF, not including piping loss (W)
+        double Q_dot_piping_loss;   // Piping loss (W)
+        double Q_inc_min;			// Minimum absorbed solar energy on any panel (W)
+        double Q_thermal;			// Thermal power delivered to fluid (less piping loss) (W)
+
+        double eta_therm;			// Receiver thermal efficiency (energy to HTF not including piping loss / Absorbed solar energy)
+
+        util::matrix_t<double> T_s;			// Average external tube T (K)
+        util::matrix_t<double> T_panel_out; // Panel HTF outlet T (K)
+        util::matrix_t<double> T_panel_in;	// Panel HTF inlet T (K)
+        util::matrix_t<double> T_panel_ave; // Panel average HTF T (k)
+
+        util::matrix_t<double> q_dot_inc;  // Panel absorbed solar energy (W)
+        util::matrix_t<double> q_dot_conv; // Panel convection loss (W)
+        util::matrix_t<double> q_dot_rad;  // Panel radiation loss (W)
+        util::matrix_t<double> q_dot_loss; // Panel convection + radiation loss (W)
+        util::matrix_t<double> q_dot_abs;  // Panel energy to HTF (W)
+
+        s_steady_state_soln()
+        {
+            clear();
+        }
+
+        void clear()
+        {
+            hour = T_amb = T_dp = v_wind_10 = p_amb = std::numeric_limits<double>::quiet_NaN();
+            dni = dni_applied_to_measured = od_control = plant_defocus =
+                m_dot_salt = m_dot_salt_tot = T_salt_cold_in = T_salt_hot = T_salt_hot_rec = T_salt_props = std::numeric_limits<double>::quiet_NaN();
+            u_salt = f = Q_inc_sum = Q_conv_sum = Q_rad_sum = Q_abs_sum = Q_dot_piping_loss = Q_inc_min = Q_thermal = eta_therm = std::numeric_limits<double>::quiet_NaN();
+
+            mode = C_csp_collector_receiver::E_csp_cr_modes::OFF;
+            //itermode = -1;
+            rec_is_off = true;
+        }
+    };
+
+    // Input parameters defined in constructor
+    int m_n_panels;			    //[-]
+    double m_d_rec;			    //[m]
+    double m_h_rec;			    //[m]
+    double m_hl_ffact;		    //[-]
+    int m_flow_type;            //[-]
+    int m_crossover_shift;      //[-]
+    double m_T_salt_hot_target; //[K], converted from C in constructor
+    double m_csky_frac;         //[-]
+
+    // Calculated parameters
+    // MSPT common external (steady state and transient)
+    double m_id_tube;
 	double m_A_tube;
 	int m_n_t;
 	double m_A_rec_proj;
 	double m_A_node;
-	
+
+private:
+
 	double m_Q_dot_piping_loss;		//[Wt] = Constant thermal losses from piping to env. = (THT*length_mult + length_add) * piping_loss_coef
 
-	int m_itermode;
 	double m_tol_od;
 
 	/* declare storage variables here */
@@ -78,74 +158,6 @@ private:
 	double m_Rtot_riser;
 	double m_Rtot_downc;
 
-	struct s_steady_state_soln
-	{
-		C_csp_collector_receiver::E_csp_cr_modes mode;
-		bool rec_is_off;
-		int itermode;
-
-		double hour;				// Hour of the year 
-		double T_amb;				// Dry bulb temperature (K)
-		double T_dp;				// Dewpoint temperature (K)
-		double v_wind_10;			// Wind speed at 10m (m/s)
-		double p_amb;				// Ambient pressure (Pa)
-
-		double dni;					// DNI for this solution (W/m2)
-        double dni_applied_to_measured; //[-] Ratio of DNI used to measured DNI
-        double plant_defocus;       // plant defocus
-
-		double od_control;          // Defocus control
-
-		double m_dot_salt;			// Salt mass flow per path (kg/s)
-		double m_dot_salt_tot;      // Total salt mass flow (kg/s)
-		double T_salt_cold_in;		// Cold salt inlet temperature (K)
-		double T_salt_hot;			// Receiver outlet T including piping loss (K)
-		double T_salt_hot_rec;      // Receiver outlet T before piping loss (K)
-		double T_salt_props;		// Temperature at which salt properties are evaluated
-
-		double u_salt;				// Salt velocity (m/s)
-		double f;					// Friction factor
-
-		double Q_inc_sum;			// Total absorbed solar energy (W)
-		double Q_conv_sum;			// Total convection loss (W)
-		double Q_rad_sum;			// Total radiation loss (W)
-		double Q_abs_sum;			// Total energy transferred to HTF, not including piping loss (W)
-		double Q_dot_piping_loss;   // Piping loss (W)
-		double Q_inc_min;			// Minimum absorbed solar energy on any panel (W)
-		double Q_thermal;			// Thermal power delivered to fluid (less piping loss) (W)
-
-		double eta_therm;			// Receiver thermal efficiency (energy to HTF not including piping loss / Absorbed solar energy)
-
-		util::matrix_t<double> T_s;			// Average external tube T (K)
-		util::matrix_t<double> T_panel_out; // Panel HTF outlet T (K)
-		util::matrix_t<double> T_panel_in;	// Panel HTF inlet T (K)
-		util::matrix_t<double> T_panel_ave; // Panel average HTF T (k)
-
-		util::matrix_t<double> q_dot_inc;  // Panel absorbed solar energy (W)
-		util::matrix_t<double> q_dot_conv; // Panel convection loss (W)
-		util::matrix_t<double> q_dot_rad;  // Panel radiation loss (W)
-		util::matrix_t<double> q_dot_loss; // Panel convection + radiation loss (W)
-		util::matrix_t<double> q_dot_abs;  // Panel energy to HTF (W)
-
-		s_steady_state_soln()
-		{
-			clear();
-		}
-
-		void clear()
-		{
-			hour = T_amb = T_dp = v_wind_10 = p_amb = std::numeric_limits<double>::quiet_NaN();
-			dni = dni_applied_to_measured = od_control = plant_defocus =
-            m_dot_salt = m_dot_salt_tot = T_salt_cold_in = T_salt_hot = T_salt_hot_rec = T_salt_props = std::numeric_limits<double>::quiet_NaN();
-			u_salt = f = Q_inc_sum = Q_conv_sum = Q_rad_sum = Q_abs_sum = Q_dot_piping_loss = Q_inc_min = Q_thermal = eta_therm = std::numeric_limits<double>::quiet_NaN();
-
-            mode = C_csp_collector_receiver::E_csp_cr_modes::OFF;
-            itermode = -1;
-			rec_is_off = true;
-		}
-
-	};
-
 	s_steady_state_soln m_mflow_soln_prev;  // Steady state solution using actual DNI from the last call to the model
 	s_steady_state_soln m_mflow_soln_csky_prev;  // Steady state solution using clear-sky DNI from the last call to the model
 
@@ -157,28 +169,20 @@ private:
 	void solve_for_mass_flow_and_defocus(s_steady_state_soln &soln, double m_dot_htf_max, const util::matrix_t<double> *flux_map_input);
 	void solve_for_defocus_given_flow(s_steady_state_soln &soln, const util::matrix_t<double> *flux_map_input);
 
+protected:
+    void init_mspt_common();
+
 public:
 	// Class to save messages for up stream classes
 	C_csp_messages csp_messages;
 
 	// Data
-	int m_n_panels;					//[-]
-	double m_d_rec;					//[m]
-	double m_h_rec;					//[m]
-	double m_hl_ffact;				//[-]
+	
 
 	// 7.13.17 twn: keep this public for now so iscc can calculate
 	double m_m_dot_htf_max;			//[kg/s]
 
-	// 4.17.15 twn: former TCS inputs, moved to member data because are constant throughout simulation
-	double m_T_salt_hot_target;			//[C], convert to K in init() call
-
-	// Added for csp_solver/tcs wrappers:
-	int m_flow_type;
-    int m_crossover_shift;
-
-	// Flow control
-	double m_csky_frac;
+	
 	
 	S_outputs outputs;
 
@@ -193,7 +197,10 @@ public:
         int field_fl, util::matrix_t<double> field_fl_props,
         int tube_mat_code /*-*/,
         int night_recirc /*-*/, int clearsky_model /*-*/,
-        std::vector<double> clearsky_data);
+        std::vector<double> clearsky_data,
+        int n_panels /*-*/, double d_rec /*m*/, double h_rec /*m*/,
+        int flow_type /*-*/, int crossover_shift /*-*/, double hl_ffact /*-*/,
+        double T_salt_hot_target /*C*/, double csky_frac /*-*/);
 
 	~C_mspt_receiver_222(){};
 
