@@ -33,6 +33,9 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ///Default PVWattsv8, but with TMY2 instead of TMY3
 TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, DefaultNoFinancialModel_cmod_pvwattsv8) {
+    data = ssc_data_create();
+    int errors = pvwatts_nofinancial_testfile(data);
+    EXPECT_FALSE(errors); //make sure that the test ran ok
     compute();
 
     double tmp = 0;
@@ -68,6 +71,8 @@ TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, DefaultNoFinancialModel_cmod_pvwat
     ssc_number_t kwh_per_kw;
     ssc_data_get_number(data, "kwh_per_kw", &kwh_per_kw);
     EXPECT_NEAR(kwh_per_kw, 1767.618, error_tolerance) << "Energy yield";
+    
+    ssc_data_free(data);
 
 }
 
@@ -94,18 +99,44 @@ TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, DifferentTechnologyInputs_cmod_pvw
     // Module types: Standard, Premium, Thin Film
     for (int module_type = 0; module_type < 3; module_type++)
     {
+        /*
         pairs["module_type"] = module_type;
+         
         int pvwatts_errors = modify_ssc_data_and_run_module(data, "pvwattsv8", pairs);
         EXPECT_FALSE(pvwatts_errors);
-
+         
         if (!pvwatts_errors)
         {
             ssc_number_t annual_energy;
             ssc_data_get_number(data, "annual_energy", &annual_energy);
             EXPECT_NEAR(annual_energy, annual_energy_expected[count], error_tolerance) << "Annual energy.";
         }
+         */
+        /* No LEAKS */
+        ssc_data_free(data);
+        data = ssc_data_create();
+        int errors = pvwatts_nofinancial_testfile(data);
+        EXPECT_FALSE(errors); //make sure that the test ran ok
+        
+        ssc_data_set_number(data, "module_type" , module_type);
+        compute();
+        ssc_number_t annual_energy;
+        ssc_data_get_number(data, "annual_energy", &annual_energy);
+        EXPECT_NEAR(annual_energy, annual_energy_expected[count], error_tolerance) << "Annual energy.";
+        
+        /* NO Leaks
+        for (auto& p:pairs){
+        ssc_data_set_number(data, p.first.c_str() , p.second);
+        compute();
+        ssc_number_t annual_energy;
+        ssc_data_get_number(data, "annual_energy", &annual_energy);
+        EXPECT_NEAR(annual_energy, annual_energy_expected[count], error_tolerance) << "Annual energy.";
+        }
+         */
+
         count++;
     }
+    /*
     pairs["module_type"] = 0; //reset module type to its default value
 
     // Array types: Fixed open rack, fixed roof mount, 1-axis tracking, 1-axis backtracking, 2-axis tracking
@@ -124,7 +155,7 @@ TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, DifferentTechnologyInputs_cmod_pvw
         count++;
     }
     pairs["array_type"] = 0; //reset array type to fixed open rack
-
+     */
 }
 
 /// PVWattsv8 using a larger system size
@@ -260,6 +291,9 @@ TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, BifacialTest_cmod_pvwattsv8) {
 }
 
 TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, SnowModelTests_cmod_pvwattsv8) {
+    data = ssc_data_create();
+    int errors = pvwatts_nofinancial_testfile(data);
+    EXPECT_FALSE(errors); //make sure that the test ran ok
 
     // Snow loss for fixed tilt system*********************************
     ssc_data_set_number(data, "array_type", 0);
@@ -321,6 +355,8 @@ TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, SnowModelTests_cmod_pvwattsv8) {
     {
         EXPECT_TRUE(hourly_snowderate[hour] == 0 || hourly_snowderate[hour] == 1);
     }
+    ssc_data_free(data);
+
 }
 
 /* this test isn't passing currently even though it's working in the UI, so commenting out for now
