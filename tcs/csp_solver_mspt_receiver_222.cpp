@@ -229,7 +229,6 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 		csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 	}
 	int n_flux_x = (int)flux_map_input->ncols();
-	m_flux_in.resize(n_flux_x);
 
 	double T_sky = CSP::skytemp(T_amb, T_dp, hour);
 

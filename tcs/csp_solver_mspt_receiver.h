@@ -34,29 +34,7 @@ private:
 	
 	/* declare storage variables here */
 	double m_E_su;
-	//double m_E_su_prev;
 	double m_t_su;
-	//double m_t_su_prev;
-
-	//util::matrix_t<int> m_flow_pattern;
-	//int m_n_lines;
-
-	util::matrix_t<double> m_flux_in;
-
-	//util::matrix_t<double> m_q_dot_inc;
-
-	//util::matrix_t<double> m_T_s;
-	//util::matrix_t<double> m_T_panel_out;
-	//util::matrix_t<double> m_T_panel_in;
-	//util::matrix_t<double> m_T_panel_ave;
-	//util::matrix_t<double> m_q_dot_conv;
-	//util::matrix_t<double> m_q_dot_rad;
-	//util::matrix_t<double> m_q_dot_loss;
-	//util::matrix_t<double> m_q_dot_abs;
-
-	//double m_m_mixed;
-	//double m_LoverD;
-	//double m_RelRough;
 
 	// track number of calls per timestep, reset = -1 in converged() call
 	int m_ncall;
@@ -162,9 +140,6 @@ private:
 
 
 	void initialize_transient_parameters();
-	bool use_previous_solution(const s_steady_state_soln& soln, const s_steady_state_soln& soln_prev);
-	util::matrix_t<double> calculate_flux_profiles(double dni, double dni_scale /*-*/, double plant_defocus /*-*/,
-                                double od_control, const util::matrix_t<double> *flux_map_input);
 	void calculate_steady_state_soln(s_steady_state_soln &soln, double tol, int max_iter = 50);
 	void solve_for_mass_flow(s_steady_state_soln &soln);
 	void solve_for_mass_flow_and_defocus(s_steady_state_soln &soln, double m_dot_htf_max, const util::matrix_t<double> *flux_map_input);
