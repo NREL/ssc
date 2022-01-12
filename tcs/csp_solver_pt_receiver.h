@@ -38,7 +38,6 @@ public:
     C_csp_messages csp_messages;        // Class to save messages for upstream classes
 
 
-    double m_q_dot_inc_min;             //[Wt] minimum receiver thermal power
 
 	
 
@@ -200,6 +199,8 @@ protected:
     HTFProperties ambient_air;			// ambient air properties
 
     double m_m_dot_htf_des;             //[kg/s] receiver HTF mass flow at design
+    double m_q_dot_inc_min;             //[Wt] minimum receiver thermal power
+
     C_csp_collector_receiver::E_csp_cr_modes m_mode;                         //[-] current operating mode of receiver
     C_csp_collector_receiver::E_csp_cr_modes m_mode_prev;                    //[-] operating mode of receiver at end of last converged timestep
 

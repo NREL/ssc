@@ -32,35 +32,31 @@ class C_mspt_receiver : public C_mspt_receiver_222
 
 private:
 	
-	double m_Q_dot_piping_loss;		//[Wt] = Constant thermal losses from piping to env. = (THT*length_mult + length_add) * piping_loss_coef
-
-	double m_tol_od;
-
 	/* declare storage variables here */
 	double m_E_su;
-	double m_E_su_prev;
+	//double m_E_su_prev;
 	double m_t_su;
-	double m_t_su_prev;
+	//double m_t_su_prev;
 
-	util::matrix_t<int> m_flow_pattern;
-	int m_n_lines;
+	//util::matrix_t<int> m_flow_pattern;
+	//int m_n_lines;
 
 	util::matrix_t<double> m_flux_in;
 
-	util::matrix_t<double> m_q_dot_inc;
+	//util::matrix_t<double> m_q_dot_inc;
 
-	util::matrix_t<double> m_T_s;
-	util::matrix_t<double> m_T_panel_out;
-	util::matrix_t<double> m_T_panel_in;
-	util::matrix_t<double> m_T_panel_ave;
-	util::matrix_t<double> m_q_dot_conv;
-	util::matrix_t<double> m_q_dot_rad;
-	util::matrix_t<double> m_q_dot_loss;
-	util::matrix_t<double> m_q_dot_abs;
+	//util::matrix_t<double> m_T_s;
+	//util::matrix_t<double> m_T_panel_out;
+	//util::matrix_t<double> m_T_panel_in;
+	//util::matrix_t<double> m_T_panel_ave;
+	//util::matrix_t<double> m_q_dot_conv;
+	//util::matrix_t<double> m_q_dot_rad;
+	//util::matrix_t<double> m_q_dot_loss;
+	//util::matrix_t<double> m_q_dot_abs;
 
-	double m_m_mixed;
-	double m_LoverD;
-	double m_RelRough;
+	//double m_m_mixed;
+	//double m_LoverD;
+	//double m_RelRough;
 
 	// track number of calls per timestep, reset = -1 in converged() call
 	int m_ncall;
@@ -210,9 +206,6 @@ private:
 public:
 	// Class to save messages for up stream classes
 	C_csp_messages csp_messages;
-
-	// 7.13.17 twn: keep this public for now so iscc can calculate
-	double m_m_dot_htf_max;			//[kg/s]
 
 	// Transient model 
 	bool m_is_transient;			// Use transient model?

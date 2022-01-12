@@ -63,6 +63,11 @@ C_mspt_receiver_222::C_mspt_receiver_222(double h_tower /*m*/, double epsilon /*
     m_T_salt_hot_target = T_salt_hot_target + 273.15;   //[K] convert from C
     m_csky_frac = csky_frac;    //[-]
 
+    // Hardcoded (for now?) parameters
+    m_tol_od = 0.001;		//[-] Tolerance for over-design iteration
+    m_eta_therm_des = 0.9;  //[-] used to calculate min incident flux
+    m_m_mixed = 3.2;        //[-] Exponential for calculating mixed convection
+
     // Calculated parameters
     m_id_tube = std::numeric_limits<double>::quiet_NaN();
 	m_A_tube = std::numeric_limits<double>::quiet_NaN();
@@ -70,24 +75,22 @@ C_mspt_receiver_222::C_mspt_receiver_222(double h_tower /*m*/, double epsilon /*
 	m_A_rec_proj = std::numeric_limits<double>::quiet_NaN();
 	m_A_node = std::numeric_limits<double>::quiet_NaN();
 
-	m_Q_dot_piping_loss = std::numeric_limits<double>::quiet_NaN();
-	m_m_dot_htf_max = std::numeric_limits<double>::quiet_NaN();
+    m_m_dot_htf_max = std::numeric_limits<double>::quiet_NaN();
 
-	m_tol_od = std::numeric_limits<double>::quiet_NaN();
-	m_q_dot_inc_min = std::numeric_limits<double>::quiet_NaN();
+    m_Q_dot_piping_loss = std::numeric_limits<double>::quiet_NaN();
 
-	m_E_su = std::numeric_limits<double>::quiet_NaN();
-	m_E_su_prev = std::numeric_limits<double>::quiet_NaN();
-	m_t_su = std::numeric_limits<double>::quiet_NaN();
-	m_t_su_prev = std::numeric_limits<double>::quiet_NaN();
-
-	m_flow_pattern = 0;
+    m_flow_pattern = 0;
 	m_n_lines = -1;
 
-	m_m_mixed = std::numeric_limits<double>::quiet_NaN();
 	m_LoverD = std::numeric_limits<double>::quiet_NaN();
 	m_RelRough = std::numeric_limits<double>::quiet_NaN();
 
+    // State variables
+    m_E_su_prev = std::numeric_limits<double>::quiet_NaN();
+    m_t_su_prev = std::numeric_limits<double>::quiet_NaN();
+
+    m_E_su = std::numeric_limits<double>::quiet_NaN();
+	m_t_su = std::numeric_limits<double>::quiet_NaN();
 
 	m_ncall = -1;
 }
@@ -101,55 +104,12 @@ void C_mspt_receiver_222::init_mspt_common()
     int n_tubes = m_n_t * m_n_panels;				//[-] Number of tubes in the system
     m_A_rec_proj = m_od_tube * m_h_rec * n_tubes;		    //[m^2] The projected area of the tubes on a plane parallel to the center lines of the tubes
     m_A_node = CSP::pi * m_d_rec / m_n_panels * m_h_rec;    //[m^2] The area associated with each node
-}
 
-void C_mspt_receiver_222::init()
-{
-    C_pt_receiver::init();
+    double c_htf_des = field_htfProps.Cp((m_T_htf_hot_des + m_T_htf_cold_des) / 2.0) * 1000.0;		//[J/kg-K] Specific heat at design conditions
+    m_m_dot_htf_des = m_q_rec_des / (c_htf_des * (m_T_htf_hot_des - m_T_htf_cold_des));					//[kg/s]
+    m_q_dot_inc_min = m_q_rec_des * m_f_rec_min / m_eta_therm_des;	//[W] Minimum receiver thermal power
 
-    init_mspt_common();
-
-	//m_id_tube = m_od_tube - 2 * m_th_tube;			//[m] Inner diameter of receiver tube
-	//m_A_tube = CSP::pi*m_od_tube / 2.0*m_h_rec;	//[m^2] Outer surface area of each tube
-	//m_n_t = (int)(CSP::pi*m_d_rec / (m_od_tube*m_n_panels));	// The number of tubes per panel, as a function of the number of panels and the desired diameter of the receiver
-	//
-	//int n_tubes = m_n_t * m_n_panels;				//[-] Number of tubes in the system
-	//m_A_rec_proj = m_od_tube*m_h_rec*n_tubes;		//[m^2] The projected area of the tubes on a plane parallel to the center lines of the tubes
-	//m_A_node = CSP::pi*m_d_rec / m_n_panels*m_h_rec; //[m^2] The area associated with each node
-
-	m_tol_od = 0.001;		//[-] Tolerance for over-design iteration
-
-	double c_htf_des = field_htfProps.Cp((m_T_htf_hot_des + m_T_htf_cold_des) / 2.0)*1000.0;		//[J/kg-K] Specific heat at design conditions
-	m_m_dot_htf_des = m_q_rec_des / (c_htf_des*(m_T_htf_hot_des - m_T_htf_cold_des));					//[kg/s]
-	double eta_therm_des = 0.9;
-	m_q_dot_inc_min = m_q_rec_des * m_f_rec_min / eta_therm_des;	//[W] Minimum receiver thermal power
-
-	if (m_m_dot_htf_max_frac != m_m_dot_htf_max_frac)
-	{
-		// if max frac not set, then max mass flow (absolute) needs to be defined
-		if (m_m_dot_htf_max != m_m_dot_htf_max)
-		{
-			throw(C_csp_exception("maximum rec htf mass flow rate not defined", "MSPT receiver"));
-		}
-		m_m_dot_htf_max /= 3600.0;	//[kg/s] Convert from input in [kg/hr]
-	}
-	m_m_dot_htf_max = m_m_dot_htf_max_frac * m_m_dot_htf_des;	//[kg/s]
-
-    // Check startup parameters for negative value
-    m_rec_qf_delay = std::max(0.0, m_rec_qf_delay);
-    m_rec_su_delay = std::max(0.0, m_rec_su_delay);
-
-	m_E_su_prev = m_q_rec_des * m_rec_qf_delay;	//[W-hr] Startup energy
-	m_t_su_prev = m_rec_su_delay;				//[hr] Startup time requirement
-
-    // If no startup requirements, then receiver is always ON
-        // ... in the sense that the controller doesn't need to worry about startup
-    if (m_E_su_prev == 0.0 && m_t_su_prev == 0.0) {
-        m_mode_prev = C_csp_collector_receiver::OFF_NO_SU_REQ;					//[-] 0 = requires startup, 1 = starting up, 2 = running
-    }
-    else {
-        m_mode_prev = C_csp_collector_receiver::OFF;					//[-] 0 = requires startup, 1 = starting up, 2 = running
-    }
+    m_m_dot_htf_max = m_m_dot_htf_max_frac * m_m_dot_htf_des;	//[kg/s]
 
     double L_piping = std::numeric_limits<double>::quiet_NaN();     //[m]
     double d_inner_piping = std::numeric_limits<double>::quiet_NaN();   //[m]
@@ -160,55 +120,63 @@ void C_mspt_receiver_222::init()
         m_m_dot_htf_des,
         L_piping, d_inner_piping, m_Q_dot_piping_loss);
 
-	// *******************************************************************
-	// *******************************************************************
-	//      Allocate the input array for the flux map!?!?!??! (line 418 type222)
-	// *******************************************************************
-	// *******************************************************************
+    m_E_su_prev = m_q_rec_des * m_rec_qf_delay;	//[W-hr] Startup energy
+    m_t_su_prev = m_rec_su_delay;				//[hr] Startup time requirement
 
-	std::string flow_msg;
-	if( !CSP::flow_patterns(m_n_panels, m_crossover_shift, m_flow_type, m_n_lines, m_flow_pattern, &flow_msg) )
-	{
-		throw(C_csp_exception(flow_msg, "MSPT receiver initialization"));
-	}
+    // If no startup requirements, then receiver is always ON
+        // ... in the sense that the controller doesn't need to worry about startup
+    if (m_E_su_prev == 0.0 && m_t_su_prev == 0.0) {
+        m_mode_prev = C_csp_collector_receiver::OFF_NO_SU_REQ;					//[-] 0 = requires startup, 1 = starting up, 2 = running
+    }
+    else {
+        m_mode_prev = C_csp_collector_receiver::OFF;					//[-] 0 = requires startup, 1 = starting up, 2 = running
+    }
 
-	m_q_dot_inc.resize(m_n_panels);
-	m_q_dot_inc.fill(0.0);
+    std::string flow_msg;
+    if (!CSP::flow_patterns(m_n_panels, m_crossover_shift, m_flow_type, m_n_lines, m_flow_pattern, &flow_msg))
+    {
+        throw(C_csp_exception(flow_msg, "MSPT receiver initialization"));
+    }
 
+    m_LoverD = m_h_rec / m_id_tube;     //[-]
+    m_RelRough = (4.5e-5) / m_id_tube;	//[-] Relative roughness of the tubes. http:www.efunda.com/formulae/fluids/roughness.cfm
 
-	m_T_s.resize(m_n_panels);
-	m_T_s.fill(0.0);
+    // Initialize output arrays
+    m_q_dot_inc.resize(m_n_panels);
+    m_q_dot_inc.fill(0.0);
 
-	m_T_panel_out.resize(m_n_panels);
-	m_T_panel_out.fill(0.0);
+    m_T_s.resize(m_n_panels);
+    m_T_s.fill(0.0);
 
-	m_T_panel_in.resize(m_n_panels);
-	m_T_panel_in.fill(0.0);
+    m_T_panel_out.resize(m_n_panels);
+    m_T_panel_out.fill(0.0);
 
-	m_T_panel_ave.resize(m_n_panels);
-	m_T_panel_ave.fill(0.0);
+    m_T_panel_in.resize(m_n_panels);
+    m_T_panel_in.fill(0.0);
 
-	m_q_dot_conv.resize(m_n_panels);
-	m_q_dot_conv.fill(0.0);
+    m_T_panel_ave.resize(m_n_panels);
+    m_T_panel_ave.fill(0.0);
 
-	m_q_dot_rad.resize(m_n_panels);
-	m_q_dot_rad.fill(0.0);
+    m_q_dot_conv.resize(m_n_panels);
+    m_q_dot_conv.fill(0.0);
 
-	m_q_dot_loss.resize(m_n_panels);
-	m_q_dot_loss.fill(0.0);
+    m_q_dot_rad.resize(m_n_panels);
+    m_q_dot_rad.fill(0.0);
 
-	m_q_dot_abs.resize(m_n_panels);
-	m_q_dot_abs.fill(0.0);
+    m_q_dot_loss.resize(m_n_panels);
+    m_q_dot_loss.fill(0.0);
 
-	m_m_mixed = 3.2;	//[-] Exponential for calculating mixed convection
+    m_q_dot_abs.resize(m_n_panels);
+    m_q_dot_abs.fill(0.0);
+}
 
-	m_LoverD = m_h_rec / m_id_tube;
-	m_RelRough = (4.5e-5) / m_id_tube;	//[-] Relative roughness of the tubes. http:www.efunda.com/formulae/fluids/roughness.cfm
+void C_mspt_receiver_222::init()
+{
+    C_pt_receiver::init();
 
+    init_mspt_common();
+	
 	m_ncall = -1;
-
-	m_Rtot_riser = 0.0;
-	m_Rtot_downc = 0.0;
 
 	return;
 }

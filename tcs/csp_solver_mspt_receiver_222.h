@@ -112,51 +112,60 @@ protected:
     double m_T_salt_hot_target; //[K], converted from C in constructor
     double m_csky_frac;         //[-]
 
+    // Hardcoded parameters
+    double m_tol_od;            //[-]
+    double m_eta_therm_des;     //[-]
+
     // Calculated parameters
     // MSPT common external (steady state and transient)
-    double m_id_tube;
-	double m_A_tube;
-	int m_n_t;
-	double m_A_rec_proj;
-	double m_A_node;
+    double m_id_tube;           //[m]
+	double m_A_tube;            //[m2]
+	int m_n_t;                  //[-]
+	double m_A_rec_proj;        //[m2]
+	double m_A_node;            //[m2]
+    double m_m_dot_htf_max;	    //[kg/s]
+    double m_Q_dot_piping_loss;		//[Wt] = Constant thermal losses from piping to env. = (THT*length_mult + length_add) * piping_loss_coef
+
+    util::matrix_t<int> m_flow_pattern;     //[-] 
+    int m_n_lines;                          //[-]
+
+    double m_m_mixed;       //[-] Exponential for calculating mixed convection
+    double m_LoverD;        //[-]
+    double m_RelRough;      //[-]
+
+    // State variables
+    double m_E_su_prev;         //[W-hr] startup energy
+    double m_t_su_prev;         //[hr] startup time requirement
+
+    // Model output arrays
+    // Member variables so don't waste time constructing each call?
+    util::matrix_t<double> m_q_dot_inc;
+    util::matrix_t<double> m_T_s;
+    util::matrix_t<double> m_T_panel_out;
+    util::matrix_t<double> m_T_panel_in;
+    util::matrix_t<double> m_T_panel_ave;
+    util::matrix_t<double> m_q_dot_conv;
+    util::matrix_t<double> m_q_dot_rad;
+    util::matrix_t<double> m_q_dot_loss;
+    util::matrix_t<double> m_q_dot_abs;
 
 private:
 
-	double m_Q_dot_piping_loss;		//[Wt] = Constant thermal losses from piping to env. = (THT*length_mult + length_add) * piping_loss_coef
-
-	double m_tol_od;
 
 	/* declare storage variables here */
 	double m_E_su;
-	double m_E_su_prev;
 	double m_t_su;
-	double m_t_su_prev;
 
-	util::matrix_t<int> m_flow_pattern;
-	int m_n_lines;
+	
 
 	util::matrix_t<double> m_flux_in;
 
-	util::matrix_t<double> m_q_dot_inc;
+	
 
-	util::matrix_t<double> m_T_s;
-	util::matrix_t<double> m_T_panel_out;
-	util::matrix_t<double> m_T_panel_in;
-	util::matrix_t<double> m_T_panel_ave;
-	util::matrix_t<double> m_q_dot_conv;
-	util::matrix_t<double> m_q_dot_rad;
-	util::matrix_t<double> m_q_dot_loss;
-	util::matrix_t<double> m_q_dot_abs;
-
-	double m_m_mixed;
-	double m_LoverD;
-	double m_RelRough;
+	
 
 	// track number of calls per timestep, reset = -1 in converged() call
 	int m_ncall;
-
-	double m_Rtot_riser;
-	double m_Rtot_downc;
 
 	s_steady_state_soln m_mflow_soln_prev;  // Steady state solution using actual DNI from the last call to the model
 	s_steady_state_soln m_mflow_soln_csky_prev;  // Steady state solution using clear-sky DNI from the last call to the model
@@ -176,14 +185,6 @@ public:
 	// Class to save messages for up stream classes
 	C_csp_messages csp_messages;
 
-	// Data
-	
-
-	// 7.13.17 twn: keep this public for now so iscc can calculate
-	double m_m_dot_htf_max;			//[kg/s]
-
-	
-	
 	S_outputs outputs;
 
 	// Methods

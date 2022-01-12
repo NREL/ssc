@@ -46,8 +46,8 @@ C_pt_receiver::C_pt_receiver(double h_tower /*m*/, double epsilon /*-*/,
     m_T_htf_cold_des = T_htf_cold_des + 273.15;     //[K] convert from C
     m_f_rec_min = f_rec_min;    //[-]
     m_q_rec_des = q_dot_rec_des*1.E6;       //[Wt] convert from MWt
-    m_rec_su_delay = rec_su_delay;  //[hr]
-    m_rec_qf_delay = rec_qf_delay;  //[-]
+    m_rec_su_delay = std::max(0.0, rec_su_delay);  //[hr]
+    m_rec_qf_delay = std::max(0.0, rec_qf_delay);  //[-]
     m_m_dot_htf_max_frac = m_dot_htf_max_frac;  //[-]
     m_eta_pump = eta_pump;  //[-]
     m_od_tube = od_tube*1.E-3;  //[m] convert from mm
