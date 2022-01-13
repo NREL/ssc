@@ -22,10 +22,10 @@ var( 'is_dispatch', 1 );
 var( 'disp_max_iter', 450000 );
 var( 'disp_timeout', 30 );
 var( 'disp_time_weighting', 0.999 ); //0.989999999999
-var( 'disp_pen_delta_w', 1.0 ); // Scaled to MW
+var( 'disp_pen_ramping', 1.0 ); // Scaled to MW
 var( 'disp_rsu_cost_rel', 1.7 );
 var( 'disp_csu_cost_rel', 87 );
-var( 'disp_hsu_cost', 0.015 );
+var( 'disp_hsu_cost_rel', 0.015 );
 var( 'dispatch_factors_ts', real_array(read_text_file('LCGS_price_multipliers.csv')));
 
 var( 'tshours', 10 );
