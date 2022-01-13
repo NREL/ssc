@@ -241,6 +241,7 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "is_dispatch_series",        "Use time-series dispatch factors",                                                 "",             "",               "tou",                     "?=1",                                                       "",             "" },
     { SSC_INPUT,        SSC_ARRAY,       "dispatch_series",           "Time series dispatch factors",                                                     "",             "",               "tou",                     "",                                                          "",             "" },
     { SSC_INPUT,        SSC_ARRAY,       "timestep_load_fractions",   "Turbine load fraction for each timestep, alternative to block dispatch",           "",             "",               "tou",                     "?",                                                         "",             "" },
+    { SSC_INPUT,        SSC_ARRAY,       "ppa_price_input",			  "PPA prices - yearly",			                                                  "$/kWh",	      "",	            "Revenue",			       "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1","",      	    "" },
     { SSC_INPUT,        SSC_MATRIX,      "mp_energy_market_revenue",  "Energy market revenue input",                                                      "",             "Lifetime x 2[Cleared Capacity(MW),Price($/MWh)]", "Revenue", "csp_financial_model=6&is_dispatch=1",      "",             "" },
 
     // System
@@ -1005,7 +1006,14 @@ public:
 
         int csp_financial_model = as_integer("csp_financial_model");
         bool is_dispatch = as_boolean("is_dispatch");
+
+        double ppa_price_year1 = std::numeric_limits<double>::quiet_NaN();
         if (csp_financial_model > 0 && csp_financial_model < 5) {   // Single Owner financial models
+
+            // Get first year base ppa price
+            size_t count_ppa_price_input;
+            ssc_number_t* ppa_price_input_array = as_array("ppa_price_input", &count_ppa_price_input);
+            ppa_price_year1 = (double)ppa_price_input_array[0];  // [$/kWh]
 
             int ppa_soln_mode = as_integer("ppa_soln_mode");    // PPA solution mode (0=Specify IRR target, 1=Specify PPA price)
             if (ppa_soln_mode == 0 && is_dispatch) {
