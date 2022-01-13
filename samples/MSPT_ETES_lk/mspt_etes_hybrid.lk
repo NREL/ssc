@@ -114,7 +114,7 @@ var( 'rec_su_delay', 0.20000000000000001 );
 var( 'rec_qf_delay', 0.25 );
 var( 'csp.pt.rec.max_oper_frac', 1.2 );
 var( 'eta_pump', 0.84999999999999998 );
-var( 'piping_loss', 10200 );
+var( 'piping_loss_coefficient', 2 );
 var( 'piping_length_mult', 2.6000000000000001 );
 var( 'piping_length_const', 0 );
 var( 'is_rec_model_trans', 0 );
