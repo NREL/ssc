@@ -139,7 +139,6 @@ public:
 		fracture_angle = 15;
 		geothermal_analysis_period = 30;
 		resource_potential = 210;
-        haf_inputs[8760];
         for (int i = 0; i < 8760; i++) {
             haf_inputs[i] = 0.0;
         }

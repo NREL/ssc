@@ -193,13 +193,19 @@ endif()
 # dltest executable for checking ssc library
 if(UNIX AND NOT SAMAPI_EXPORT)
 	add_executable(dltest ../build_resources/dltest.c)
-	if (NOT APPLE)
+	if (APPLE)
+		add_custom_command(
+			TARGET ssc
+			POST_BUILD
+			COMMAND codesign --force --deep --sign - $<TARGET_FILE:ssc>
+			COMMAND dltest $<TARGET_FILE:ssc>)
+	else()
 		target_link_libraries(dltest -ldl -Wl,--no-as-needed)
+		add_custom_command(
+			TARGET ssc
+			POST_BUILD
+			COMMAND dltest $<TARGET_FILE:ssc>)
 	endif()
-	add_custom_command(
-		TARGET ssc
-		POST_BUILD
-		COMMAND dltest $<TARGET_FILE:ssc>)
 endif()
 
 # libssc for PySAM
@@ -209,7 +215,7 @@ if(UNIX)
 		set_property(TARGET ssc PROPERTY PREFIX "lib")
 		set(CMAKE_SHARED_LIBRARY_SUFFIX ".so")
 		if (APPLE)
-            SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmacosx-version-min=10.9")
+            SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmacosx-version-min=10.15")
             add_custom_command(
 				TARGET ssc
 				POST_BUILD
