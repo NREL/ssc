@@ -28,6 +28,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lib_util.h"
 
 #define SOS_NONE
+//#define ALT_ETES_FORM
 
 #undef min
 #undef max
@@ -345,6 +346,11 @@ bool etes_dispatch_opt::optimize()
         O.add_var("uhsu", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0., P["Eeh"] * 1.0001);
         O.add_var("zhsu", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0., P["Qehu"]);
 
+#ifdef ALT_ETES_FORM
+        O.add_var("zcsu", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0., P["Qu"]);
+        O.add_var("zwcsu", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0., P["Wdotu"] * 1.1);
+#endif
+
         O.add_var("y", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_T, nt);
         O.add_var("ycgb", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_T, nt);
         O.add_var("ycge", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_T, nt);
@@ -379,6 +385,11 @@ bool etes_dispatch_opt::optimize()
                 i = 0;
                 row[t + nt * (i)] = P["delta"] * tadj * params.sell_price.at(t) * (1. - params.w_condf_expected.at(t));
                 col[t + nt * (i++)] = O.column("wdot", t);
+
+#ifdef ALT_ETES_FORM
+                row[t + nt * (i)] = -P["delta_csu"] * tadj * params.sell_price.at(t) * (1. - params.w_condf_expected.at(t));
+                col[t + nt * (i++)] = O.column("zwcsu", t);
+#endif
 
                 row[t + nt * (i)] = -(P["delta"] * (1 / tadj) * params.buy_price.at(t) * (1 / P["eta_eh"]));
                 col[t + nt * (i++)] = O.column("qeh", t);
@@ -620,6 +631,7 @@ bool etes_dispatch_opt::optimize()
                     However, in practice this constraint (in addition to providing adding startup power to heat target) provides the dispatch model a disincentive to
                     start-up on high value periods as fraction of production is lost due to startup time.  Therefore, it better to startup the hour before a high value period. */
                 // qdot[t] + Qcsu * ycsu[t] <= Qu * y[t]
+#ifndef ALT_ETES_FORM
                 {
                     i = 0;
                     row[i] = 1.;
@@ -633,6 +645,7 @@ bool etes_dispatch_opt::optimize()
 
                     add_constraintex(lp, i, row, col, LE, 0.);
                 }
+#endif
 
                 // Cycle maximum operation limit
                 // qdot[t] <= Qu * y[t]
@@ -880,8 +893,8 @@ bool etes_dispatch_opt::optimize()
 
         // ******************** TES Balance constraints *******************
         {
-            REAL row[7];
-            int col[7];
+            REAL row[8];
+            int col[8];
 
             for(int t=0; t<nt; t++)
             {
@@ -896,6 +909,11 @@ bool etes_dispatch_opt::optimize()
 
                     row[i] = -P["delta_hsu"];
                     col[i++] = O.column("zhsu", t);
+
+#ifdef ALT_ETES_FORM
+                    row[i] = P["delta_csu"];
+                    col[i++] = O.column("zcsu", t);
+#endif
 
                     row[i] = -P["delta"];
                     col[i++] = O.column("qdot", t);
@@ -989,6 +1007,104 @@ bool etes_dispatch_opt::optimize()
                         add_constraintex(lp, i, row, col, GE, -P["Qehu"]);
                     }
                 }
+
+#ifdef ALT_ETES_FORM
+                //******* linearization of zcsu[t] = qdot[t] * ycsu[t] ******
+                {
+                    // Upper bound with Qu
+                    // zcsu[t] <= Qu * ycsu[t]
+                    {
+                        i = 0;
+
+                        row[i] = 1.;
+                        col[i++] = O.column("zcsu", t);
+
+                        row[i] = -P["Qu"];
+                        col[i++] = O.column("ycsu", t);
+
+                        add_constraintex(lp, i, row, col, LE, 0);
+                    }
+
+                    // Upper bound with qdot[t]
+                    // zcsu[t] <= qdot[t]
+                    {
+                        i = 0;
+
+                        row[i] = 1.;
+                        col[i++] = O.column("zcsu", t);
+
+                        row[i] = -1;
+                        col[i++] = O.column("qdot", t);
+
+                        add_constraintex(lp, i, row, col, LE, 0);
+                    }
+
+                    // Lower bound
+                    // zcsu[t] >= qdot[t] - Qu * ( 1 - ycsu[t] )
+                    {
+                        i = 0;
+
+                        row[i] = 1.;
+                        col[i++] = O.column("zcsu", t);
+
+                        row[i] = -1;
+                        col[i++] = O.column("qdot", t);
+
+                        row[i] = -P["Qu"];
+                        col[i++] = O.column("ycsu", t);
+
+                        add_constraintex(lp, i, row, col, GE, -P["Qu"]);
+                    }
+                }
+
+                //******* linearization of zwcsu[t] = wdot[t] * ycsu[t] ******
+                {
+                    // Upper bound with Qu
+                    // zwcsu[t] <= (eta^amb / eta^des) Wdotu * ycsu[t]
+                    {
+                        i = 0;
+
+                        row[i] = 1.;
+                        col[i++] = O.column("zcsu", t);
+
+                        row[i] = -(params.eta_pb_expected.at(t) / params.eta_pb_des) * P["Wdotu"];
+                        col[i++] = O.column("ycsu", t);
+
+                        add_constraintex(lp, i, row, col, LE, 0);
+                    }
+
+                    // Upper bound with wdot[t]
+                    // zwcsu[t] <= wdot[t]
+                    {
+                        i = 0;
+
+                        row[i] = 1.;
+                        col[i++] = O.column("zwcsu", t);
+
+                        row[i] = -1;
+                        col[i++] = O.column("wdot", t);
+
+                        add_constraintex(lp, i, row, col, LE, 0);
+                    }
+
+                    // Lower bound
+                    // zwcsu[t] >= wdot[t] - (eta^amb / eta^des) Wdotu * ( 1 - ycsu[t] )
+                    {
+                        i = 0;
+
+                        row[i] = 1.;
+                        col[i++] = O.column("zwcsu", t);
+
+                        row[i] = -1;
+                        col[i++] = O.column("wdot", t);
+
+                        row[i] = -(params.eta_pb_expected.at(t) / params.eta_pb_des) * P["Wdotu"];
+                        col[i++] = O.column("ycsu", t);
+
+                        add_constraintex(lp, i, row, col, GE, -(params.eta_pb_expected.at(t) / params.eta_pb_des) * P["Wdotu"]);
+                    }
+                }
+#endif
             }
         }
         
@@ -1142,7 +1258,10 @@ bool etes_dispatch_opt::set_dispatch_outputs()
         disp_outputs.is_pc_sb_allowed = outputs.pb_standby.at(m_current_read_step);
         disp_outputs.is_pc_su_allowed = outputs.pb_operation.at(m_current_read_step) || disp_outputs.is_pc_sb_allowed;
 
-        disp_outputs.q_pc_target = outputs.q_pb_target.at(m_current_read_step) + outputs.q_pb_startup.at(m_current_read_step);
+        disp_outputs.q_pc_target = outputs.q_pb_target.at(m_current_read_step);
+#ifndef ALT_ETES_FORM
+        disp_outputs.q_pc_target += outputs.q_pb_startup.at(m_current_read_step);
+#endif
         disp_outputs.q_dot_elec_to_CR_heat = outputs.q_sf_expected.at(m_current_read_step);
 
         if (disp_outputs.q_pc_target + 1.e-5 < params.q_pb_min)
