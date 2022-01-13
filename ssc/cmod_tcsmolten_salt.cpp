@@ -1856,6 +1856,8 @@ public:
         csp_dispatch_opt dispatch;
 
         if (as_boolean("is_dispatch")){
+
+
             double heater_startup_cost = 0.0;
             if (is_parallel_heater) {
                 double heater_mult = as_double("heater_mult");            //[-]
@@ -1872,7 +1874,7 @@ public:
             double disp_rsu_cost_calc = as_double("disp_rsu_cost_rel")*q_dot_rec_des;   //[$/start]
             dispatch.params.set_user_params(as_boolean("can_cycle_use_standby"), as_double("disp_time_weighting"),
                 disp_rsu_cost_calc, heater_startup_cost, disp_csu_cost_calc, as_double("disp_pen_delta_w"),
-                as_double("disp_inventory_incentive"), as_double("q_rec_standby"), as_double("q_rec_heattrace"));
+                as_double("disp_inventory_incentive"), as_double("q_rec_standby"), as_double("q_rec_heattrace"), ppa_price_year1);
         }
         else {
             dispatch.solver_params.dispatch_optimize = false;
