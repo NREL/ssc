@@ -212,8 +212,8 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "disp_reporting",            "Dispatch optimization reporting level",                                            "-",            "",               "tou",            "?=-1",                    "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "disp_spec_scaling",         "Dispatch optimization scaling heuristic",                                          "-",            "",               "tou",            "?=-1",                    "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "disp_time_weighting",       "Dispatch optimization future time discounting factor",                             "-",            "",               "tou",            "?=0.99",                  "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "disp_rsu_cost",             "Receiver startup cost",                                                            "$",            "",               "tou",            "is_dispatch=1",           "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "disp_csu_cost",             "Cycle startup cost",                                                               "$",            "",               "tou",            "is_dispatch=1",           "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "disp_rsu_cost_rel",         "Receiver startup cost",                                                            "$/MWt/start",  "",               "tou",            "is_dispatch=1",           "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "disp_csu_cost_rel",         "Cycle startup cost",                                                               "$/MWe-cycle/start", "",          "tou",            "is_dispatch=1",           "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "disp_pen_delta_w",          "Dispatch cycle production change penalty",                                         "$/kWe-change", "",               "tou",            "is_dispatch=1",           "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "disp_inventory_incentive",  "Dispatch storage terminal inventory incentive multiplier",                         "",             "",               "System Control", "?=0.0",                   "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "q_rec_standby",             "Receiver standby energy consumption",                                              "kWt",          "",               "tou",            "?=9e99",                  "",                      "" },
@@ -299,6 +299,14 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "non_solar_field_land_area_multiplier", "non_solar_field_land_area_multiplier",                                  "-",            "",               "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "trough_loop_control",                 "trough_loop_control",                                                    "-",            "",               "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "disp_wlim_maxspec",                   "disp_wlim_maxspec",                                                      "-",            "",               "controller",     "*",                       "",                      "" },
+
+
+    // ****************************************************************************************************************************************
+    //     DEPRECATED INPUTS -- exec() checks if a) variable is assigned and b) if replacement variable is assigned. throws exception if a=true and b=false
+    // ****************************************************************************************************************************************
+    { SSC_INPUT,        SSC_NUMBER,      "piping_loss",                         "Thermal loss per meter of piping",                                                                                                        "Wt/m",         "",                                  "Tower and Receiver",                       "",                                                                 "",              "" },
+    { SSC_INPUT,        SSC_NUMBER,      "disp_csu_cost",                       "Cycle startup cost",                                                                                                                      "$",            "",                                  "System Control",                           "",                                                                 "",              "" },
+    { SSC_INPUT,        SSC_NUMBER,      "disp_rsu_cost",                       "Receiver startup cost",                                                                                                                   "$",            "",                                  "System Control",                           "",                                                                 "",              "" },
 
 
 
@@ -513,6 +521,49 @@ public:
 
     void exec( )
     {   
+        // *****************************************************
+        // Check deprecated variables
+            // Cycle startup cost disp_csu_cost
+        bool is_disp_csu_cost_assigned = is_assigned("disp_csu_cost");
+        bool is_disp_csu_cost_rel_assigned = is_assigned("disp_csu_cost_rel");
+
+        if (is_disp_csu_cost_assigned && is_disp_csu_cost_rel_assigned) {
+            log("We replaced the functionality of input variable disp_csu_cost with new input variable disp_csu_cost_rel,"
+                " so the model does not use your disp_csu_cost input.");
+        }
+        else if (is_disp_csu_cost_assigned) {
+            throw exec_error("tcsmolten_salt", "We replaced the functionality of input variable disp_csu_cost [$/start] with new input variable disp_csu_cost_rel [$/MWe-cycle/start]."
+                " The new input represents cycle startup costs normalized by the cycle design capacity."
+                " Please define disp_csu_cost_rel in your script.");
+        }
+
+            // Receiver startup cost disp_rsu_cost
+        bool is_disp_rsu_cost_assigned = is_assigned("disp_rsu_cost");
+        bool is_disp_rsu_cost_rel_assigned = is_assigned("disp_rsu_cost_rel");
+
+        if (is_disp_rsu_cost_assigned && is_disp_rsu_cost_rel_assigned) {
+            log("We replaced the funcationality of input variable disp_rsu_cost with new input variable disp_rsu_cost_rel,"
+                " so the model does not use your disp_rsu_cost input.");
+        }
+        else if (is_disp_rsu_cost_assigned) {
+            throw exec_error("tcsmolten_salt", "We replaced the functionality of input variable disp_rsu_cost [$/start] with new input variable disp_rsu_cost_rel [$/MWe-cycle/start]."
+                " The new input represents receiver startup costs normalized by the receiver design thermal power."
+                " Please define disp_rsu_cost_rel in your script.");
+        }
+
+        // *****************************************************
+        // *****************************************************
+
+
+        // *****************************************************
+        // System Design Parameters
+        double W_dot_cycle_des = as_double("P_ref");    //[MWe]
+        double eta_cycle = as_double("eta_ref");        //[-]
+
+        // System Design Calcs
+        double q_dot_cycle_des = W_dot_cycle_des / eta_cycle;   //[MWt]
+        double q_dot_rec_des = q_dot_cycle_des*as_double("solar_mult"); //[MWt]
+
         // ********************************
         // ********************************
         // Weather reader
@@ -815,6 +866,7 @@ public:
         // Steam Rankine and User Defined power cycle classes
         C_pc_Rankine_indirect_224 rankine_pc;
 
+
         int pb_tech_type = as_integer("pc_config");
         if ( !(pb_tech_type == 0 || pb_tech_type == 1) )  // 0 = Rankine, 1 = UDPC
         {
@@ -909,7 +961,7 @@ public:
         tes->m_field_fl_props     = c_trough.m_field_fl_props;              //[-]
         tes->m_tes_fl             = as_integer("store_fluid");              //[-]
         tes->m_tes_fl_props       = as_matrix("store_fl_props");            //[-]
-        tes->m_W_dot_pc_design    = as_double("P_ref");                     //[MWt]
+        tes->m_W_dot_pc_design    = as_double("P_ref");                     //[MWe]
         tes->m_eta_pc             = as_double("eta_ref");                   //[-]
         tes->m_solarm             = as_double("solar_mult");                //[-]  (set during verify() using cmod_csp_trough_eqns.cpp)
         tes->m_ts_hours           = as_double("tshours");                   //[hr]
@@ -1146,8 +1198,10 @@ public:
                 as_integer("disp_spec_presolve"), as_integer("disp_spec_bb"), as_integer("disp_spec_scaling"), as_integer("disp_reporting"),
                 as_boolean("is_write_ampl_dat"), as_boolean("is_ampl_engine"), as_string("ampl_data_dir"), as_string("ampl_exec_call"));
 
+            double disp_csu_cost_calc = as_double("disp_csu_cost_rel")*W_dot_cycle_des; //[$/start]
+            double disp_rsu_cost_calc = as_double("disp_rsu_cost_rel")*q_dot_rec_des;   //[$/start]
             dispatch.params.set_user_params(as_boolean("can_cycle_use_standby"), as_double("disp_time_weighting"),
-                as_double("disp_rsu_cost"), 0.0, as_double("disp_csu_cost"), as_double("disp_pen_delta_w"),
+                disp_rsu_cost_calc, 0.0, disp_csu_cost_calc, as_double("disp_pen_delta_w"),
                 as_double("disp_inventory_incentive"), as_double("q_rec_standby"), as_double("q_rec_heattrace"));
         }
         else {

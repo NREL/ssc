@@ -328,9 +328,9 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,     SSC_STRING, "ampl_data_dir",                      "AMPL data file directory",                                                                                                                "",             "",                                  "System Control",                           "?=''",                                                             "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "is_ampl_engine",                     "Run dispatch optimization with external AMPL engine",                                                                                     "",             "",                                  "System Control",                           "?=0",                                                              "",              ""},
     { SSC_INPUT,     SSC_STRING, "ampl_exec_call",                     "System command to run AMPL code",                                                                                                         "",             "",                                  "System Control",                           "?='ampl sdk_solution.run'",                                        "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "disp_rsu_cost",                      "Receiver startup cost",                                                                                                                   "$",            "",                                  "System Control",                           "is_dispatch=1",                                                    "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "disp_rsu_cost_rel",                  "Receiver startup cost",                                                                                                                   "$/MWt/start",  "",                                  "System Control",                           "is_dispatch=1",                                                    "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "disp_hsu_cost",                      "Heater startup cost",                                                                                                                     "$/MWt/start",  "",                                  "System Control",                           "?=10.0",                                                           "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "disp_csu_cost",                      "Cycle startup cost",                                                                                                                      "$",            "",                                  "System Control",                           "is_dispatch=1",                                                    "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "disp_csu_cost_rel",                  "Cycle startup cost",                                                                                                                      "$/MWe-cycle/start", "",                             "System Control",                           "is_dispatch=1",                                                    "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "disp_pen_delta_w",                   "Dispatch cycle production change penalty",                                                                                                "$/kWe-change", "",                                  "System Control",                           "is_dispatch=1",                                                    "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "disp_inventory_incentive",           "Dispatch storage terminal inventory incentive multiplier",                                                                                "",             "",                                  "System Control",                           "?=0.0",                                                            "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "q_rec_standby",                      "Receiver standby energy consumption",                                                                                                     "kWt",          "",                                  "System Control",                           "?=9e99",                                                           "",              ""},
@@ -439,6 +439,8 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     //     DEPRECATED INPUTS -- exec() checks if a) variable is assigned and b) if replacement variable is assigned. throws exception if a=true and b=false
     // ****************************************************************************************************************************************
     { SSC_INPUT,     SSC_NUMBER, "piping_loss",                        "Thermal loss per meter of piping",                                                                                                        "Wt/m",         "",                                  "Tower and Receiver",                       "",                                                                 "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "disp_csu_cost",                      "Cycle startup cost",                                                                                                                      "$",            "",                                  "System Control",                           "",                                                                 "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "disp_rsu_cost",                      "Receiver startup cost",                                                                                                                   "$",            "",                                  "System Control",                           "",                                                                 "",              "" },
 
 
 
@@ -654,6 +656,7 @@ public:
 
         // *****************************************************
         // Check deprecated variables
+            // Piping loss coefficient
         bool is_piping_loss_assigned = is_assigned("piping_loss");
         bool is_piping_loss_coefficient_assigned = is_assigned("piping_loss_coefficient");
 
@@ -666,6 +669,38 @@ public:
                 " The new input scales piping thermal losses as a function of receiver thermal power and design-point temperatures."
                 " Please define piping_loss_coefficient in your script.");
         }
+
+            // Cycle startup cost disp_csu_cost
+        bool is_disp_csu_cost_assigned = is_assigned("disp_csu_cost");
+        bool is_disp_csu_cost_rel_assigned = is_assigned("disp_csu_cost_rel");
+
+        if (is_disp_csu_cost_assigned && is_disp_csu_cost_rel_assigned) {
+            log("We replaced the functionality of input variable disp_csu_cost with new input variable disp_csu_cost_rel,"
+                " so the model does not use your disp_csu_cost input.");
+        }
+        else if (is_disp_csu_cost_assigned) {
+            throw exec_error("tcsmolten_salt", "We replaced the functionality of input variable disp_csu_cost [$/start] with new input variable disp_csu_cost_rel [$/MWe-cycle/start]."
+                " The new input represents cycle startup costs normalized by the cycle design capacity."
+                " Please define disp_csu_cost_rel in your script.");
+        }
+
+            // Receiver startup cost disp_rsu_cost
+        bool is_disp_rsu_cost_assigned = is_assigned("disp_rsu_cost");
+        bool is_disp_rsu_cost_rel_assigned = is_assigned("disp_rsu_cost_rel");
+
+        if (is_disp_rsu_cost_assigned && is_disp_rsu_cost_rel_assigned) {
+            log("We replaced the funcationality of input variable disp_rsu_cost with new input variable disp_rsu_cost_rel,"
+                " so the model does not use your disp_rsu_cost input.");
+        }
+        else if (is_disp_rsu_cost_assigned) {
+            throw exec_error("tcsmolten_salt", "We replaced the functionality of input variable disp_rsu_cost [$/start] with new input variable disp_rsu_cost_rel [$/MWe-cycle/start]."
+                " The new input represents receiver startup costs normalized by the receiver design thermal power."
+                " Please define disp_rsu_cost_rel in your script.");
+        }
+
+        // *****************************************************
+        // *****************************************************
+
 
         // *****************************************************
         // System Design Parameters
@@ -1833,8 +1868,10 @@ public:
                 as_integer("disp_spec_presolve"), as_integer("disp_spec_bb"), as_integer("disp_spec_scaling"), as_integer("disp_reporting"),
                 as_boolean("is_write_ampl_dat"), as_boolean("is_ampl_engine"), as_string("ampl_data_dir"), as_string("ampl_exec_call"));
 
+            double disp_csu_cost_calc = as_double("disp_csu_cost_rel")*W_dot_cycle_des; //[$/start]
+            double disp_rsu_cost_calc = as_double("disp_rsu_cost_rel")*q_dot_rec_des;   //[$/start]
             dispatch.params.set_user_params(as_boolean("can_cycle_use_standby"), as_double("disp_time_weighting"),
-                as_double("disp_rsu_cost"), heater_startup_cost, as_double("disp_csu_cost"), as_double("disp_pen_delta_w"),
+                disp_rsu_cost_calc, heater_startup_cost, disp_csu_cost_calc, as_double("disp_pen_delta_w"),
                 as_double("disp_inventory_incentive"), as_double("q_rec_standby"), as_double("q_rec_heattrace"));
         }
         else {
