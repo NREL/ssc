@@ -52,8 +52,6 @@ private:
 	double m_od_riser;				//[m]
 	double m_id_downc;				//[m]
 	double m_od_downc;				//[m]
-	double m_Rtot_riser;		//[K*m/W]
-	double m_Rtot_downc;		//[K*m/W]
 	double m_total_startup_time; // [s]
 	double m_total_startup_time_initial; //[s]
 	double m_minimum_startup_time; //s
@@ -140,8 +138,6 @@ private:
 
 
 	void initialize_transient_parameters();
-	void calculate_steady_state_soln(s_steady_state_soln &soln, double tol, int max_iter = 50);
-	void solve_for_mass_flow(s_steady_state_soln &soln);
 	void solve_for_mass_flow_and_defocus(s_steady_state_soln &soln, double m_dot_htf_max, const util::matrix_t<double> *flux_map_input);
 	void solve_for_defocus_given_flow(s_steady_state_soln &soln, const util::matrix_t<double> *flux_map_input);
 

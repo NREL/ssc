@@ -115,6 +115,8 @@ protected:
     // Hardcoded parameters
     double m_tol_od;            //[-]
     double m_eta_therm_des;     //[-]
+        // Derived class should overwrite
+    bool m_use_constant_piping_loss;
 
     // Calculated parameters
     // MSPT common external (steady state and transient)
@@ -125,6 +127,8 @@ protected:
 	double m_A_node;            //[m2]
     double m_m_dot_htf_max;	    //[kg/s]
     double m_Q_dot_piping_loss;		//[Wt] = Constant thermal losses from piping to env. = (THT*length_mult + length_add) * piping_loss_coef
+    double m_Rtot_riser;		//[K*m/W]
+    double m_Rtot_downc;		//[K*m/W]
 
     util::matrix_t<int> m_flow_pattern;     //[-] 
     int m_n_lines;                          //[-]
@@ -158,11 +162,11 @@ private:
 	// track number of calls per timestep, reset = -1 in converged() call
 	int m_ncall;
 
+    
+
 	s_steady_state_soln m_mflow_soln_prev;  // Steady state solution using actual DNI from the last call to the model
 	s_steady_state_soln m_mflow_soln_csky_prev;  // Steady state solution using clear-sky DNI from the last call to the model
 
-	void calculate_steady_state_soln(s_steady_state_soln &soln, double tol, int max_iter = 50);
-	void solve_for_mass_flow(s_steady_state_soln &soln);
 	void solve_for_mass_flow_and_defocus(s_steady_state_soln &soln, double m_dot_htf_max, const util::matrix_t<double> *flux_map_input);
 	void solve_for_defocus_given_flow(s_steady_state_soln &soln, const util::matrix_t<double> *flux_map_input);
 
@@ -172,6 +176,9 @@ protected:
     bool use_previous_solution(const s_steady_state_soln& soln, const s_steady_state_soln& soln_prev);
     util::matrix_t<double> calculate_flux_profiles(double dni /*W/m2*/, double dni_scale /*-*/, double plant_defocus /*-*/,
         double od_control /*-*/, const util::matrix_t<double>* flux_map_input);
+    void calculate_steady_state_soln(s_steady_state_soln& soln, double tol, bool use_constant_piping_loss, int max_iter = 50);
+    void solve_for_mass_flow(s_steady_state_soln& soln);
+
 
 public:
 	// Class to save messages for up stream classes

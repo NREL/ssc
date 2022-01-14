@@ -74,6 +74,8 @@ C_mspt_receiver_222::C_mspt_receiver_222(double h_tower /*m*/, double epsilon /*
 	m_n_t = -1;
 	m_A_rec_proj = std::numeric_limits<double>::quiet_NaN();
 	m_A_node = std::numeric_limits<double>::quiet_NaN();
+    m_Rtot_riser = std::numeric_limits<double>::quiet_NaN();
+    m_Rtot_downc = std::numeric_limits<double>::quiet_NaN();
 
     m_m_dot_htf_max = std::numeric_limits<double>::quiet_NaN();
 
@@ -89,10 +91,14 @@ C_mspt_receiver_222::C_mspt_receiver_222(double h_tower /*m*/, double epsilon /*
     m_E_su_prev = std::numeric_limits<double>::quiet_NaN();
     m_t_su_prev = std::numeric_limits<double>::quiet_NaN();
 
+
+    // Private
     m_E_su = std::numeric_limits<double>::quiet_NaN();
 	m_t_su = std::numeric_limits<double>::quiet_NaN();
 
 	m_ncall = -1;
+
+    m_use_constant_piping_loss = true;
 }
 
 void C_mspt_receiver_222::init_mspt_common()
@@ -368,7 +374,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 			soln.rec_is_off = soln_clearsky.rec_is_off;
 			soln.od_control = soln_clearsky.od_control;
 			soln.q_dot_inc = calculate_flux_profiles(I_bn, 1.0, plant_defocus, soln_clearsky.od_control, flux_map_input);  // Absorbed flux profiles at actual DNI and clear-sky defocus
-			calculate_steady_state_soln(soln, 0.00025);  // Solve energy balances at clearsky mass flow rate and actual DNI conditions
+			calculate_steady_state_soln(soln, 0.00025, m_use_constant_piping_loss);  // Solve energy balances at clearsky mass flow rate and actual DNI conditions
 		}
 		
 		else  // Receiver can operate and flow control based on a weighted average of clear-sky and actual DNI
@@ -387,7 +393,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 			{
 				soln.od_control = soln_clearsky.od_control;
 				soln.q_dot_inc = soln_actual.q_dot_inc;
-				calculate_steady_state_soln(soln, 0.00025); // Solve energy balances at this mass flow rate and actual DNI conditions
+				calculate_steady_state_soln(soln, 0.00025, m_use_constant_piping_loss); // Solve energy balances at this mass flow rate and actual DNI conditions
 			}
 			else  
 			{
@@ -841,7 +847,7 @@ util::matrix_t<double> C_mspt_receiver_222::calculate_flux_profiles(double dni /
 }
 
 // Calculate steady state temperature and heat loss profiles for a given mass flow and incident flux
-void C_mspt_receiver_222::calculate_steady_state_soln(s_steady_state_soln &soln, double tol, int max_iter)
+void C_mspt_receiver_222::calculate_steady_state_soln(s_steady_state_soln &soln, double tol, bool use_constant_piping_loss, int max_iter)
 {
 
 	double P_amb = soln.p_amb;	
@@ -1024,10 +1030,17 @@ void C_mspt_receiver_222::calculate_steady_state_soln(s_steady_state_soln &soln,
 		{
 			double m_dot_salt_tot_temp = soln.m_dot_salt * m_n_lines;		//[kg/s]
 
-			soln.Q_dot_piping_loss = m_Q_dot_piping_loss;
-			double delta_T_piping = soln.Q_dot_piping_loss / (m_dot_salt_tot_temp*c_p_coolant);	//[K]
-			soln.T_salt_hot_rec = soln.T_salt_hot;
-			soln.T_salt_hot -= delta_T_piping;	//[K]
+            if (use_constant_piping_loss)   // Calculate piping loss from constant loss per m (m_Q_dot_piping_loss)
+                soln.Q_dot_piping_loss = m_Q_dot_piping_loss;
+            else
+            {
+                double riser_loss = 2.0 * CSP::pi * (soln.T_salt_cold_in - T_amb) / m_Rtot_riser; //[W/m]
+                double downc_loss = 2.0 * CSP::pi * (soln.T_salt_hot - T_amb) / m_Rtot_downc; //[W/m]
+                soln.Q_dot_piping_loss = 0.5 * (riser_loss + downc_loss) * (m_h_tower * m_pipe_length_mult + m_pipe_length_add); // Total piping thermal loss [W]
+            }
+            double delta_T_piping = soln.Q_dot_piping_loss / (m_dot_salt_tot_temp * c_p_coolant);	//[K]
+            soln.T_salt_hot_rec = soln.T_salt_hot;
+            soln.T_salt_hot -= delta_T_piping;	//[K]
 		}
 		
 		
@@ -1149,7 +1162,7 @@ void C_mspt_receiver_222::solve_for_mass_flow(s_steady_state_soln &soln)
 
 		soln.m_dot_salt = m_dot_salt_guess;
 		double tolT = tol;
-		calculate_steady_state_soln(soln, tolT, 50);   // Solve steady state thermal model		
+		calculate_steady_state_soln(soln, tolT, m_use_constant_piping_loss, 50);   // Solve steady state thermal model		
 		err = (soln.T_salt_hot - m_T_salt_hot_target) / m_T_salt_hot_target;
 		
 		if (soln.rec_is_off)  // SS solution was unsuccessful or resulted in an infeasible exit temperature -> remove outlet T for solution to start next iteration from the default intial guess
@@ -1243,7 +1256,7 @@ void C_mspt_receiver_222::solve_for_defocus_given_flow(s_steady_state_soln &soln
 		else
 			soln.q_dot_inc = soln.q_dot_inc * soln.od_control / odprev; // Calculate flux profiles (note flux is directly proportional to defocus control)
 		
-		calculate_steady_state_soln(soln, tolT);     // Solve steady state thermal model 
+		calculate_steady_state_soln(soln, tolT, m_use_constant_piping_loss);     // Solve steady state thermal model 
 
 		if (soln.od_control > 0.9999 && soln.T_salt_hot < m_T_salt_hot_target)  // Impossible for solution to achieve temperature target
 			break;
