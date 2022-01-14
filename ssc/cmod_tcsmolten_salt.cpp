@@ -1761,9 +1761,19 @@ public:
         if (csp_financial_model > 0 && csp_financial_model < 5) {   // Single Owner financial models
 
             // Get first year base ppa price
-            size_t count_ppa_price_input;
-            ssc_number_t* ppa_price_input_array = as_array("ppa_price_input", &count_ppa_price_input);
-            ppa_price_year1 = (double)ppa_price_input_array[0];  // [$/kWh]
+            bool is_ppa_price_input_assigned = is_assigned("ppa_price_input");
+            if (is_dispatch && !is_ppa_price_input_assigned) {
+                throw exec_error("tcsmolten_salt", "\n\nYou selected dispatch optimization which requires that the array input ppa_price_input is defined\n");
+            }
+
+            if (is_ppa_price_input_assigned) {
+                size_t count_ppa_price_input;
+                ssc_number_t* ppa_price_input_array = as_array("ppa_price_input", &count_ppa_price_input);
+                ppa_price_year1 = (double)ppa_price_input_array[0];  // [$/kWh]
+            }
+            else {
+                ppa_price_year1 = 1.0;      //[-] don't need ppa multiplier if not optimizing
+            }
 
             int ppa_soln_mode = as_integer("ppa_soln_mode");    // PPA solution mode (0=Specify IRR target, 1=Specify PPA price)
             if (ppa_soln_mode == 0 && is_dispatch) {

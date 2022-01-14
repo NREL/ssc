@@ -536,7 +536,7 @@ public:
                     " so the model does not use your disp_csu_cost input.");
             }
             else if (is_disp_csu_cost_assigned) {
-                throw exec_error("tcsmolten_salt", "We replaced the functionality of input variable disp_csu_cost [$/start] with new input variable disp_csu_cost_rel [$/MWe-cycle/start]."
+                throw exec_error("trough_physical", "We replaced the functionality of input variable disp_csu_cost [$/start] with new input variable disp_csu_cost_rel [$/MWe-cycle/start]."
                     " The new input represents cycle startup costs normalized by the cycle design capacity."
                     " Please define disp_csu_cost_rel in your script.");
             }
@@ -550,7 +550,7 @@ public:
                     " so the model does not use your disp_rsu_cost input.");
             }
             else if (is_disp_rsu_cost_assigned) {
-                throw exec_error("tcsmolten_salt", "We replaced the functionality of input variable disp_rsu_cost [$/start] with new input variable disp_rsu_cost_rel [$/MWe-cycle/start]."
+                throw exec_error("trough_physical", "We replaced the functionality of input variable disp_rsu_cost [$/start] with new input variable disp_rsu_cost_rel [$/MWe-cycle/start]."
                     " The new input represents receiver startup costs normalized by the receiver design thermal power."
                     " Please define disp_rsu_cost_rel in your script.");
             }
@@ -563,7 +563,7 @@ public:
                     " so the model does not use your disp_pen_delta_w input");
             }
             else if (is_disp_pen_delta_w_assigned) {
-                throw exec_error("tcsmolten_salt", "We replaced the functionality of input variable disp_pen_delta_w [$/kWe-change] with new input variable disp_pen_ramping [$/MWe-change]."
+                throw exec_error("trough_physical", "We replaced the functionality of input variable disp_pen_delta_w [$/kWe-change] with new input variable disp_pen_ramping [$/MWe-change]."
                     " The new input represents the receiver startup costs in an optimization model that uses absolute grid prices."
                     " Please define disp_pen_ramping in your script. SAM's default value in the molten salt power tower model is 1.0");
             }
@@ -1079,13 +1079,23 @@ public:
         if (csp_financial_model > 0 && csp_financial_model < 5) {   // Single Owner financial models
 
             // Get first year base ppa price
-            size_t count_ppa_price_input;
-            ssc_number_t* ppa_price_input_array = as_array("ppa_price_input", &count_ppa_price_input);
-            ppa_price_year1 = (double)ppa_price_input_array[0];  // [$/kWh]
+            bool is_ppa_price_input_assigned = is_assigned("ppa_price_input");
+            if (is_dispatch && !is_ppa_price_input_assigned) {
+                throw exec_error("trough_physical", "\n\nYou selected dispatch optimization which requires that the array input ppa_price_input is defined\n");
+            }
+
+            if (is_ppa_price_input_assigned) {
+                size_t count_ppa_price_input;
+                ssc_number_t* ppa_price_input_array = as_array("ppa_price_input", &count_ppa_price_input);
+                ppa_price_year1 = (double)ppa_price_input_array[0];  // [$/kWh]
+            }
+            else {
+                ppa_price_year1 = 1.0;      //[-] don't need ppa multiplier if not optimizing
+            }
 
             int ppa_soln_mode = as_integer("ppa_soln_mode");    // PPA solution mode (0=Specify IRR target, 1=Specify PPA price)
             if (ppa_soln_mode == 0 && is_dispatch) {
-                throw exec_error("tcsmolten_salt", "\n\nYou selected dispatch optimization and the Specify IRR Target financial solution mode, "
+                throw exec_error("trough_physical", "\n\nYou selected dispatch optimization and the Specify IRR Target financial solution mode, "
                     "but dispatch optimization requires known absolute electricity prices. Dispatch optimization requires "
                     "the Specify PPA Price financial solution mode. You can continue using dispatch optimization and iteratively "
                     "solve for the PPA that results in a target IRR by running a SAM Parametric analysis or script.\n");
@@ -1093,7 +1103,7 @@ public:
 
             int en_electricity_rates = as_integer("en_electricity_rates");  // 0 = Use PPA, 1 = Use Retail
             if (en_electricity_rates == 1 && is_dispatch) {
-                throw exec_error("tcsmolten_salt", "\n\nYou selected dispatch optimization and the option to Use Retail Electricity Rates on the Electricity Purchases page, "
+                throw exec_error("trough_physical", "\n\nYou selected dispatch optimization and the option to Use Retail Electricity Rates on the Electricity Purchases page, "
                     "but the dispatch optimization model currently does not accept separate buy and sell prices. Please use the Use PPA or Market Prices option "
                     "on the Electricity Purchases page.\n");
             }
