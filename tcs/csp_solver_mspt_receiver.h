@@ -32,10 +32,6 @@ class C_mspt_receiver : public C_mspt_receiver_222
 
 private:
 	
-	/* declare storage variables here */
-	double m_E_su;
-	double m_t_su;
-
 	// track number of calls per timestep, reset = -1 in converged() call
 	int m_ncall;
 

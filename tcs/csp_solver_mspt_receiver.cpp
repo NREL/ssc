@@ -57,9 +57,6 @@ C_mspt_receiver::C_mspt_receiver(double h_tower /*m*/, double epsilon /*-*/,
         flow_type, crossover_shift, hl_ffact,
         T_salt_hot_target, csky_frac)
 {    
-	m_E_su = std::numeric_limits<double>::quiet_NaN();
-	m_t_su = std::numeric_limits<double>::quiet_NaN();
-
 	m_ncall = -1;
 
     // *** Overwrites value set in parent class constructor ***
@@ -1278,28 +1275,8 @@ void C_mspt_receiver::off(const C_csp_weatherreader::S_outputs &weather,
 
 void C_mspt_receiver::converged()
 {
-	// Check HTF props?
-	//!MJW 9.8.2010 :: Call the property range check subroutine with the inlet and outlet HTF temps to make sure they're in the valid range
-	//call check_htf(Coolant,T_salt_hot)
-	//call check_htf(Coolant,T_salt_cold)
-
-	if( m_mode == C_csp_collector_receiver::STEADY_STATE )
-	{
-		throw(C_csp_exception("Receiver should only be run at STEADY STATE mode for estimating output. It must be run at a different mode before exiting a timestep",
-			"MSPT receiver converged method"));
-	}
-
-	if( m_mode == C_csp_collector_receiver::OFF )
-	{
-		m_E_su = m_q_rec_des * m_rec_qf_delay;
-		m_t_su = m_rec_su_delay;
-	}
-
-	m_mode_prev = m_mode;
-	m_E_su_prev = m_E_su;
-	m_t_su_prev = m_t_su;
-
-	m_ncall = -1;
+    // Call common (steady state) converged method
+    C_mspt_receiver_222::converged();
 
 	m_startup_mode_initial = m_startup_mode;
 	m_n_call_fill_initial = m_n_call_fill;
@@ -1310,8 +1287,6 @@ void C_mspt_receiver::converged()
 
 	m_tinit = trans_outputs.t_profile;
 	m_tinit_wall = trans_outputs.t_profile_wall;
-
-    ms_outputs = outputs;
 }
 
 void C_mspt_receiver::calc_pump_performance(double rho_f, double mdot, double ffact, double &PresDrop_calc, double &WdotPump_calc)
