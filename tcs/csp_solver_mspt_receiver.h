@@ -225,11 +225,6 @@ public:
 
 	virtual void converged();
 
-    void calc_pump_performance(double rho_f, double mdot, double ffact, double &PresDrop_calc,
-        double &WdotPump_calc);
-
-    virtual double get_pumping_parasitic_coef();
-
 	void est_startup_time_energy(double fract, double &est_time, double &est_energy);
 
 	double est_heattrace_energy();
@@ -237,8 +232,6 @@ public:
     virtual double get_startup_time();
 
     virtual double get_startup_energy();
-
-    virtual double area_proj();
 };
 
 #endif // __csp_solver_mspt_receiver_222_

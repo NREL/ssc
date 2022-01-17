@@ -1289,62 +1289,6 @@ void C_mspt_receiver::converged()
 	m_tinit_wall = trans_outputs.t_profile_wall;
 }
 
-void C_mspt_receiver::calc_pump_performance(double rho_f, double mdot, double ffact, double &PresDrop_calc, double &WdotPump_calc)
-{
-
-    // Pressure drop calculations
-	double mpertube = mdot / ((double)m_n_lines * (double)m_n_t);
-	double u_coolant = mpertube / (rho_f* m_id_tube * m_id_tube * 0.25 * CSP::pi);	//[m/s] Average velocity of the coolant through the receiver tubes
-
-	double L_e_45 = 16.0;						// The equivalent length produced by the 45 degree bends in the tubes - Into to Fluid Mechanics, Fox et al.
-	double L_e_90 = 30.0;						// The equivalent length produced by the 90 degree bends in the tubes
-	double DELTAP_tube = rho_f*(ffact*m_h_rec / m_id_tube*pow(u_coolant, 2) / 2.0);	//[Pa] Pressure drop across the tube, straight length
-	double DELTAP_45 = rho_f*(ffact*L_e_45*pow(u_coolant, 2) / 2.0);					//[Pa] Pressure drop across 45 degree bends
-	double DELTAP_90 = rho_f*(ffact*L_e_90*pow(u_coolant, 2) / 2.0);					//[Pa] Pressure drop across 90 degree bends
-	double DELTAP = DELTAP_tube + 2 * DELTAP_45 + 4 * DELTAP_90;						//[Pa] Total pressure drop across the tube with (4) 90 degree bends, (2) 45 degree bends
-	double DELTAP_h_tower = rho_f*m_h_tower*CSP::grav;						//[Pa] The pressure drop from pumping up to the receiver
-	double DELTAP_net = DELTAP*m_n_panels / (double)m_n_lines + DELTAP_h_tower;		//[Pa] The new pressure drop across the receiver panels
-	PresDrop_calc = DELTAP_net*1.E-6;			//[MPa]
-	double est_load = fmax(0.25, mdot / m_m_dot_htf_des) * 100;		//[%] Relative pump load. Limit to 25%
-	double eta_pump_adj = m_eta_pump*(-2.8825E-9*pow(est_load, 4) + 6.0231E-7*pow(est_load, 3) - 1.3867E-4*pow(est_load, 2) + 2.0683E-2*est_load);	//[-] Adjusted pump efficiency
-	WdotPump_calc = DELTAP_net*mdot / rho_f / eta_pump_adj;
-
-}
-
-double C_mspt_receiver::get_pumping_parasitic_coef()
-{
-    double Tavg = (m_T_htf_cold_des + m_T_htf_hot_des) / 2.;
-
-    double mu_coolant = field_htfProps.visc(Tavg);				//[kg/m-s] Absolute viscosity of the coolant
-    double k_coolant = field_htfProps.cond(Tavg);				//[W/m-K] Conductivity of the coolant
-    double rho_coolant = field_htfProps.dens(Tavg, 1.0);        //[kg/m^3] Density of the coolant
-    double c_p_coolant = field_htfProps.Cp(Tavg)*1e3;           //[J/kg-K] Specific heat
-
-    double m_dot_salt = m_q_rec_des / (c_p_coolant * (m_T_htf_hot_des - m_T_htf_cold_des));
-
-    double n_t = (int)(CSP::pi*m_d_rec / (m_od_tube*m_n_panels));   // The number of tubes per panel, as a function of the number of panels and the desired diameter of the receiver
-    double id_tube = m_od_tube - 2 * m_th_tube;                 //[m] Inner diameter of receiver tube
-
-
-    double u_coolant = m_dot_salt / (n_t*rho_coolant*pow((id_tube / 2.0), 2)*CSP::pi);	//[m/s] Average velocity of the coolant through the receiver tubes
-    double Re_inner = rho_coolant * u_coolant*id_tube / mu_coolant;				        //[-] Reynolds number of internal flow
-    double Pr_inner = c_p_coolant * mu_coolant / k_coolant;						        //[-] Prandtl number of internal flow
-    double Nusselt_t, f;
-    double LoverD = m_h_rec / id_tube;
-    double RelRough = (4.5e-5) / id_tube;   //[-] Relative roughness of the tubes. http:www.efunda.com/formulae/fluids/roughness.cfm
-    CSP::PipeFlow(Re_inner, Pr_inner, LoverD, RelRough, Nusselt_t, f);
-
-    double deltap, wdot;
-    calc_pump_performance(rho_coolant, m_dot_salt, f, deltap, wdot);
-
-    return wdot / m_q_rec_des;
-}
-
-double C_mspt_receiver::area_proj()
-{
-    return CSP::pi * m_d_rec * m_h_rec; //[m^2] projected or aperture area of the receiver
-}
-
 double C_mspt_receiver::calc_external_convection_coeff(double T_amb, double P_amb, double wspd, double Twall)
 {
 
