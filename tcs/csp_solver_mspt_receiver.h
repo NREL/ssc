@@ -138,9 +138,6 @@ private:
 
 
 	void initialize_transient_parameters();
-	void solve_for_mass_flow_and_defocus(s_steady_state_soln &soln, double m_dot_htf_max, const util::matrix_t<double> *flux_map_input);
-	void solve_for_defocus_given_flow(s_steady_state_soln &soln, const util::matrix_t<double> *flux_map_input);
-
 
 
 	double calc_external_convection_coeff(double T_amb, double P_amb, double wspd, double Twall);

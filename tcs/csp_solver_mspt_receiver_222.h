@@ -167,8 +167,6 @@ private:
 	s_steady_state_soln m_mflow_soln_prev;  // Steady state solution using actual DNI from the last call to the model
 	s_steady_state_soln m_mflow_soln_csky_prev;  // Steady state solution using clear-sky DNI from the last call to the model
 
-	void solve_for_mass_flow_and_defocus(s_steady_state_soln &soln, double m_dot_htf_max, const util::matrix_t<double> *flux_map_input);
-	void solve_for_defocus_given_flow(s_steady_state_soln &soln, const util::matrix_t<double> *flux_map_input);
 
 protected:
 
@@ -178,6 +176,8 @@ protected:
         double od_control /*-*/, const util::matrix_t<double>* flux_map_input);
     void calculate_steady_state_soln(s_steady_state_soln& soln, double tol, bool use_constant_piping_loss, int max_iter = 50);
     void solve_for_mass_flow(s_steady_state_soln& soln);
+    void solve_for_mass_flow_and_defocus(s_steady_state_soln& soln, double m_dot_htf_max, const util::matrix_t<double>* flux_map_input);
+    void solve_for_defocus_given_flow(s_steady_state_soln& soln, const util::matrix_t<double>* flux_map_input);
 
 
 public:
