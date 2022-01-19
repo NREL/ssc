@@ -178,5 +178,7 @@ bool Turbine_calculate_powercurve(ssc_data_t data)
     vt->assign( "wind_turbine_powercurve_powerout", powerout);
     vt->assign( "rated_wind_speed", rated_wind_speed );
     vt->assign( "hub_efficiency", hub_eff );
+    sprintf(errmsg, "None");
+    vt->assign("error", std::string(errmsg));
     return true;
 }
