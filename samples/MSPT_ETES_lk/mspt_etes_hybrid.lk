@@ -15,7 +15,7 @@ var( 'heater_mult', 2.0);
 var( 'f_q_dot_des_allowable_su', 1.0);
 var( 'hrs_startup_at_max_rate', 0.25);
 var( 'f_q_dot_heater_min', 0.25);
-
+var( 'heater_spec_cost', 104.);		//[$/kWt] new var added 1.20.22
 
 var( 'can_cycle_use_standby', 0);  // Toggles cycle standby option in dispatch
 var( 'is_dispatch', 1 );

@@ -214,6 +214,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,     SSC_NUMBER, "hrs_startup_at_max_rate",            "Duration of startup at max startup power",                                                                                                "hr",           "",                                  "Parallel Heater",                          "is_parallel_htr=1",                                                "",              "" },
     { SSC_INPUT,     SSC_NUMBER, "f_q_dot_heater_min",                 "Minimum allowable heater output as fraction of design",                                                                                   "",             "",                                  "Parallel Heater",                          "is_parallel_htr=1",                                                "",              "" },
     { SSC_INPUT,     SSC_NUMBER, "disp_hsu_cost_rel",                  "Heater startup cost",                                                                                                                     "$/MWt/start",  "",                                  "System Control",                           "is_dispatch=1&is_parallel_htr=1",                                  "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "heater_spec_cost",                   "Heater specific cost",                                                                                                                    "$/kWht",       "",                                  "System Costs",                             "is_parallel_htr=1",                                                "",              "" },
 
 
     // TES parameters - general
@@ -378,6 +379,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_OUTPUT,    SSC_NUMBER, "csp.pt.cost.receiver",               "Receiver cost",                                                                                                                           "$",            "",                                  "System Costs",                             "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "csp.pt.cost.storage",                "TES cost",                                                                                                                                "$",            "",                                  "System Costs",                             "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "csp.pt.cost.power_block",            "Power cycle cost",                                                                                                                        "$",            "",                                  "System Costs",                             "*",                                                                "",              ""},
+    { SSC_OUTPUT,    SSC_NUMBER, "heater_cost",                        "Heater cost",                                                                                                                             "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "csp.pt.cost.rad_field",              "Radiative field cost"                                                                                                                     "$",            "",                                  "System Costs",                             "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "csp.pt.cost.rad_fluid",              "Radiative fluid cost"                                                                                                                     "$",            "",                                  "System Costs",                             "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "csp.pt.cost.rad_storage",            "Cold storage cost"                                                                                                                        "$",            "",                                  "System Costs",                             "*",                                                                "",              ""},
@@ -1641,10 +1643,14 @@ public:
         C_csp_collector_receiver* p_heater;
         C_csp_cr_electric_resistance* p_electric_resistance = NULL;
         bool is_parallel_heater = as_boolean("is_parallel_htr");    // defaults to false
+        double q_dot_heater_des = 0.0;  //[MWt]
+        double heater_spec_cost = 0.0;
         if (is_parallel_heater) {
 
-            double heater_mult = as_double("heater_mult");          //[-]
-            double q_dot_heater_des = q_dot_pc_des*heater_mult;     //[MWt]
+            double heater_mult = as_double("heater_mult");      //[-]
+            heater_spec_cost = as_double("heater_spec_cost");   //[$/kWt]
+
+            q_dot_heater_des = q_dot_pc_des*heater_mult;     //[MWt]
             //double q_dot_heater_des = receiver->m_q_rec_des * 2.0;  // / 4.0;      //[MWt]
 
             double f_q_dot_des_allowable_su = as_double("f_q_dot_des_allowable_su");    //[-] fraction of design power allowed during startup
@@ -2102,8 +2108,7 @@ public:
         double W_dot_design = as_double("P_ref");
         double power_cycle_spec_cost = as_double("plant_spec_cost");
 
-        double q_dot_heater_design = 0.0;
-        double heater_spec_cost = 0.0;
+        // Set heater thermal power and cost above, because they're dependent on is_heater boolean
 
         double rad_fluidcost = 0.0;
         double rad_installcost = 0.0;
@@ -2192,7 +2197,7 @@ public:
             W_dot_design,
             power_cycle_spec_cost,
 
-            q_dot_heater_design,
+            q_dot_heater_des,       //[MWt]
             heater_spec_cost,
 
             radfield_area,
@@ -2256,6 +2261,7 @@ public:
         assign("csp.pt.cost.receiver", (ssc_number_t)receiver_cost);
         assign("csp.pt.cost.storage", (ssc_number_t)tes_cost);
         assign("csp.pt.cost.power_block", (ssc_number_t)power_cycle_cost);
+        assign("heater_cost", (ssc_number_t)heater_cost);
         
         if (pb_tech_type == 0) {
             if (rankine_pc.ms_params.m_CT == 4) {

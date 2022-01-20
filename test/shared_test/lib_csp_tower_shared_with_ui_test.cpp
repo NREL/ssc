@@ -50,6 +50,8 @@ NAMESPACE_TEST(csp_common, TowerSharedWithUi, SystemDesign) {
     vd->assign("P_ref", 115.);
     vd->assign("solarm", 2.4);
     vd->assign("tshours", 10.);
+    vd->assign("heater_mult", 1.0);
+    vd->assign("is_parallel_htr", 0);
 
     MSPT_System_Design_Equations(vd);
 
@@ -357,6 +359,10 @@ NAMESPACE_TEST(csp_common, TowerSharedWithUi, CapitalCosts) {
     vd->assign("plant_spec_cost", 1040.);
     vd->assign("bop_spec_cost", 290.);
     vd->assign("fossil_spec_cost", 0.);
+
+    vd->assign("q_dot_heater_des_calc", 0.0);   //[MWt]
+    vd->assign("heater_spec_cost", 0.0);        //[$/kWt]
+
     vd->assign("contingency_rate", 7.);
     vd->assign("csp_pt_sf_total_land_area", 1892.);
     vd->assign("nameplate", 104.);
