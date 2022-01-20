@@ -387,11 +387,11 @@ void SharedInverter::convertOutputsToKWandScale(double tempLoss, double powerAC_
 double SharedInverter::getMaxPowerEfficiency()
 {
     if (m_inverterType == SANDIA_INVERTER || m_inverterType == DATASHEET_INVERTER || m_inverterType == COEFFICIENT_GENERATOR)
-        calculateACPower(m_sandiaInverter->Paco * util::watt_to_kilowatt, m_sandiaInverter->Vdco, 0.0);
+        calculateACPower(m_sandiaInverter->Paco * util::watt_to_kilowatt * m_numInverters, m_sandiaInverter->Vdco, 0.0);
     else if (m_inverterType == PARTLOAD_INVERTER)
-        calculateACPower(m_partloadInverter->Paco * util::watt_to_kilowatt, m_partloadInverter->Vdco, 0.0);
+        calculateACPower(m_partloadInverter->Paco * util::watt_to_kilowatt * m_numInverters, m_partloadInverter->Vdco, 0.0);
     else if (m_inverterType == OND_INVERTER)
-        calculateACPower(m_ondInverter->PMaxOUT * util::watt_to_kilowatt, m_ondInverter->VAbsMax, 0.0);
+        calculateACPower(m_ondInverter->PMaxOUT * util::watt_to_kilowatt * m_numInverters, m_ondInverter->VAbsMax, 0.0);
 
     return efficiencyAC;
 }
