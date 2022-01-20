@@ -168,6 +168,9 @@ public:
     int transfer_surplus(ur_month& curr_month, ur_month& prev_month); // For net metering rollovers, used between months to copy data
     void compute_surplus(ur_month& curr_month); // For net metering rollovers, used within a single month prior to cost calculations
 
+    // Checks all months for kWh/kW rate
+    bool has_kwh_per_kw_rate();
+    // Only call if you want to know for a specific month. If you want to know for the rate generally, use the above function
     bool has_kwh_per_kw_rate(int month);
 
     // Functions for calculating hourly net metering costs
