@@ -42,14 +42,14 @@ protected: //doesn't really matter if this is protected or public, but you need 
 
 	bool compute();
 	void SetUp() { //if you always want to set up with the same default case, this can go in the class. otherwise it probably makes sense in the test itself.
-//		data = ssc_data_create();
-//		int errors = pvwatts_nofinancial_testfile(data);
-//		EXPECT_FALSE(errors); //make sure that the test ran ok
+		data = ssc_data_create();
+		int errors = pvwatts_nofinancial_testfile(data);
+		EXPECT_FALSE(errors); //make sure that the test ran ok
 	}
 	void TearDown()
 	{
-//		ssc_data_free(data);
-//		data = nullptr;
+		ssc_data_free(data);
+		data = nullptr;
 	} 
 };
 

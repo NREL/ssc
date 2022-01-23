@@ -127,7 +127,8 @@ static int run_module(ssc_data_t & data, std::string module_name, bool printErro
 		if (printErrors){ printf("error: out of memory.");}
 		return -1;
 	}
-	ssc_module_t module = ssc_module_create(const_cast<char*>(module_name.c_str()));
+	ssc_module_t module;
+	module = ssc_module_create(const_cast<char*>(module_name.c_str()));
 	if (NULL == module)
 	{
 		if (printErrors){ printf("error: could not create module.");}
@@ -156,7 +157,7 @@ static int run_module(ssc_data_t & data, std::string module_name, bool printErro
 	}
 	
 	ssc_module_free(module);
-//	module = nullptr;
+	module = nullptr;
 	return 0;
 }
 

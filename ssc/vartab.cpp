@@ -220,8 +220,9 @@ var_table &var_table::operator=( const var_table &rhs )
 
 void var_table::clear()
 {
-	for (var_hash::iterator it = m_hash.begin(); it != m_hash.begin(); ++it)
-	{
+//    for (var_hash::iterator it = m_hash.begin(); it != m_hash.begin(); ++it)
+    for (var_hash::iterator it = m_hash.begin(); it != m_hash.end(); ++it)
+    {
 		// debug heap corruption
         it->second->clear();
 		delete it->second; // delete the var_data object
