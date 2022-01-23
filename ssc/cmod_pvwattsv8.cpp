@@ -1296,7 +1296,9 @@ public:
 
             wdprov->rewind();
         }
-        ssc_number_t *p_annual_energy_dist_time = gen_heatmap(this, (double)step_per_hour);
+
+        if (wdprov->nrecords() > 8760) // check this
+            ssc_number_t *p_annual_energy_dist_time = gen_heatmap(this, (double)step_per_hour);
         // monthly and annual outputs
         if (wdprov->annualSimulation())
         {
