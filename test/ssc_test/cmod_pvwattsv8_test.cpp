@@ -349,9 +349,9 @@ TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, NonAnnual)
     //set up a weather data array and unassign the solar resource file
 
     auto weather_data = create_weatherdata_array(24);
-    /*
+    
     ssc_data_unassign(data, "solar_resource_file");
-    ssc_data_set_table(data, "solar_resource_data", &weather_data->table);
+    ssc_data_set_table(data, "solar_resource_data", weather_data);
 
     //run the tests
     EXPECT_FALSE(run_module(data, "pvwattsv8"));
@@ -362,8 +362,8 @@ TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, NonAnnual)
 
     gen = ssc_data_get_array(data, "gen", nullptr)[12];
     EXPECT_NEAR(gen, 2.428, 0.01) << "Gen at noon";
-    */
-    //free_weatherdata_array(weather_data);
+    
+    free_weatherdata_array(weather_data);
 }
 
 
@@ -373,7 +373,7 @@ TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, IntermediateOutputTesting)
 
     auto weather_data = create_weatherdata_array(24);
     ssc_data_unassign(data, "solar_resource_file");
-    ssc_data_set_table(data, "solar_resource_data", &weather_data->table);
+    ssc_data_set_table(data, "solar_resource_data", weather_data);
 
     //run the tests
     EXPECT_FALSE(run_module(data, "pvwattsv8"));
