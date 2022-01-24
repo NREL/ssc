@@ -65,7 +65,7 @@ TEST_F(CMPvwattsV5Integration_cmod_pvwattsv5, DefaultNoFinancialModel) {
 TEST_F(CMPvwattsV5Integration_cmod_pvwattsv5, UsingData) {
     auto weather_data = create_weatherdata_array(8760);
     ssc_data_unassign(data, "solar_resource_file");
-    ssc_data_set_table(data, "solar_resource_data", &weather_data->table);
+    ssc_data_set_table(data, "solar_resource_data", weather_data);
     compute();
     //delete weather_data;
 
@@ -172,25 +172,30 @@ TEST_F(CMPvwattsV5Integration_cmod_pvwattsv5, singleTS) {
     ssc_data_set_number(data_1ts, "module_type", 0);
     ssc_data_set_number(data_1ts, "system_capacity", 720);
     ssc_data_set_number(data_1ts, "tilt", 0);
-
+    
     auto mod = ssc_module_create("pvwattsv5_1ts");
-
+    
     // without previous tcell & poa
     EXPECT_TRUE(ssc_module_exec(mod, data_1ts));
-
+    
     double val;
     ssc_data_get_number(data_1ts, "poa", &val);
     EXPECT_NEAR(val, 140.21, .1);
+    ssc_data_set_number(data_1ts, "poa", 140.21);
     ssc_data_get_number(data_1ts, "tcell", &val);
     EXPECT_NEAR(val, 12.77, .1);
+    ssc_data_set_number(data_1ts, "tcell", 12.77);
     ssc_data_get_number(data_1ts, "dc", &val);
     EXPECT_NEAR(val, 106739, 1);
     ssc_data_get_number(data_1ts, "ac", &val);
     EXPECT_NEAR(val, 100852, 1);
+   
+ //   ssc_module_free(mod);
+ //   mod = ssc_module_create("pvwattsv5_1ts");
 
     // tcell & poa are assigned from above exec call
     EXPECT_TRUE(ssc_module_exec(mod, data_1ts));
-
+    
     ssc_data_get_number(data_1ts, "poa", &val);
     EXPECT_NEAR(val, 140.21, .1);
     ssc_data_get_number(data_1ts, "tcell", &val);
@@ -203,6 +208,10 @@ TEST_F(CMPvwattsV5Integration_cmod_pvwattsv5, singleTS) {
     // add some shading
     ssc_data_set_number(data_1ts, "shaded_percent", 50);
 
+
+ //   ssc_module_free(mod);
+ //   mod = ssc_module_create("pvwattsv5_1ts");
+
     EXPECT_TRUE(ssc_module_exec(mod, data_1ts));
 
     ssc_data_get_number(data_1ts, "poa", &val);
@@ -214,5 +223,6 @@ TEST_F(CMPvwattsV5Integration_cmod_pvwattsv5, singleTS) {
     ssc_data_get_number(data_1ts, "ac", &val);
     EXPECT_NEAR(val, 100464, 1);
 
+    ssc_module_free(mod);
     ssc_data_free(data_1ts);
 }
