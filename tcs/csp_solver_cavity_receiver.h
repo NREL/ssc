@@ -106,7 +106,7 @@ private:
     double m_pipe_length_add;		//[m]
     double m_pipe_length_mult;		//[-]
 
-    double m_A_sf;                  //[m2]
+    //double m_A_sf;                  //[m2]
 
     E_mesh_types m_active_surface_mesh_type;
     E_mesh_types m_floor_and_cover_mesh_type;
@@ -158,7 +158,6 @@ private:
 
     // ************************************
     // Call variables
-    double m_eta_field_iter_prev;	//[-] Efficiency from heliostat on last iteration. Maybe change if CR gets defocus signal from controller
     double m_od_control;            //[-]
 
     // ************************************
@@ -181,7 +180,8 @@ public:
         double eps_active_sol /*-*/, double eps_passive_sol /*-*/, double eps_active_therm /*-*/, double eps_passive_therm /*-*/,
         E_mesh_types active_surface_mesh_type, E_mesh_types floor_and_cover_mesh_type,  E_mesh_types lips_mesh_type,
         double piping_loss_coefficient /*Wt/m2-K*/, double pipe_length_add /*m*/, double pipe_length_mult /*-*/,
-        double A_sf /*m2*/, double h_tower /*m*/, double T_htf_hot_des /*C*/,
+        //double A_sf /*m2*/,
+        double h_tower /*m*/, double T_htf_hot_des /*C*/,
         double T_htf_cold_des /*C*/, double f_rec_min /*-*/, double q_dot_rec_des /*MWt*/,
         double rec_su_delay /*hr*/, double rec_qf_delay /*-*/, double m_dot_htf_max_frac /*-*/,
         double eta_pump /*-*/);

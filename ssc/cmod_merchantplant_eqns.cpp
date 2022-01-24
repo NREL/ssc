@@ -470,7 +470,7 @@ bool mp_ancillary_services(ssc_data_t data)
 								error = util::format("ancillary services 4 market cleared capacity %g is less than zero at timestep %d", ancillary_services4_capacity[i], int(i));
 								break;
 							}
-							else */  if ((cleared_capacity_sum[i] > 0) && (abs(cleared_capacity_sum[i] - system_generation[i]) > 1e-7 * abs(system_generation[i]) ))
+							else */  if ((cleared_capacity_sum[i] > 0) && ((cleared_capacity_sum[i] - system_generation[i]) > 1e-7 * abs(system_generation[i]) ))
 							{
 								error = util::format("sum of cleared capacity %g MW does not match system capacity %g MW at timestep %d", cleared_capacity_sum[i], system_generation[i], int(i));
 								break;

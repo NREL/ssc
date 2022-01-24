@@ -53,7 +53,6 @@ set(SSC_SRC
 		cmod_iph_to_lcoefcr.cpp
 		cmod_ippppa.cpp
 		cmod_irradproc.cpp
-		cmod_iscc_design_point.cpp
 		cmod_layoutarea.cpp
 		cmod_lcoefcr.cpp
 		cmod_levpartflip.cpp
@@ -66,6 +65,7 @@ set(SSC_SRC
 		cmod_mhk_eqns.h
 		cmod_mhk_tidal.cpp
 		cmod_mhk_wave.cpp
+		cmod_mspt_sf_and_rec_isolated.cpp
 		cmod_poacalib.cpp
 		cmod_pv6parmod.cpp
 		cmod_pv_get_shade_loss_mpp.cpp
@@ -91,10 +91,8 @@ set(SSC_SRC
 		cmod_snowmodel.cpp
 		cmod_solarpilot.cpp
 		cmod_swh.cpp
-		cmod_tcsdirect_steam.cpp
 		cmod_tcsdish.cpp
 		cmod_tcsgeneric_solar.cpp
-		cmod_tcsiscc.cpp
 		cmod_tcslinear_fresnel.cpp
 		cmod_tcsmolten_salt.cpp
 		cmod_tcsmslf.cpp
@@ -194,13 +192,19 @@ endif()
 # dltest executable for checking ssc library
 if(UNIX AND NOT SAMAPI_EXPORT)
 	add_executable(dltest ../build_resources/dltest.c)
-	if (NOT APPLE)
+	if (APPLE)
+		add_custom_command(
+			TARGET ssc
+			POST_BUILD
+			COMMAND codesign --force --deep --sign - $<TARGET_FILE:ssc>
+			COMMAND dltest $<TARGET_FILE:ssc>)
+	else()
 		target_link_libraries(dltest -ldl -Wl,--no-as-needed)
+		add_custom_command(
+			TARGET ssc
+			POST_BUILD
+			COMMAND dltest $<TARGET_FILE:ssc>)
 	endif()
-	add_custom_command(
-		TARGET ssc
-		POST_BUILD
-		COMMAND dltest $<TARGET_FILE:ssc>)
 endif()
 
 # libssc for PySAM
@@ -210,7 +214,7 @@ if(UNIX)
 		set_property(TARGET ssc PROPERTY PREFIX "lib")
 		set(CMAKE_SHARED_LIBRARY_SUFFIX ".so")
 		if (APPLE)
-            SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmacosx-version-min=10.9")
+            SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmacosx-version-min=10.15")
             add_custom_command(
 				TARGET ssc
 				POST_BUILD

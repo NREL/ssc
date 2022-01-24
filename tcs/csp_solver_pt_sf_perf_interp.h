@@ -47,6 +47,10 @@ private:
 	int m_n_flux_x;		//[-]
 	int m_n_flux_y;		//[-]
 
+        // receiver target values
+    double m_A_rec_active_total;    //[m2]
+    double m_A_rec_flux_node;       //[m2]
+
 	//Stored Variables
     bool m_is_field_tracking;
     bool m_is_field_tracking_prev;
@@ -63,7 +67,7 @@ public:
 	// Class to save messages for up stream classes
 	C_csp_messages mc_csp_messages;
 
-	C_pt_sf_perf_interp();
+	C_pt_sf_perf_interp(double m_A_rec_active_total /*m2*/);
 
 	~C_pt_sf_perf_interp();
 
@@ -117,12 +121,14 @@ public:
 
 		util::matrix_t<double> m_flux_map_out;
 		double m_pparasi;		//[MWe]
-		double m_eta_field;		//[-]
+		double m_eta_field;		//[-] field efficiency * sf_adjust. plant defocus not applied
         double m_sf_adjust_out;
+        double m_plant_defocus_out; //[-] plant defocus input adjusted for field control events
 
 		S_outputs()
 		{
-			m_q_dot_field_inc = m_pparasi = m_eta_field = m_sf_adjust_out =  std::numeric_limits<double>::quiet_NaN();
+			m_q_dot_field_inc = m_pparasi =
+                m_eta_field = m_sf_adjust_out = m_plant_defocus_out = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 

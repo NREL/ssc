@@ -219,14 +219,14 @@ bool rate_data::check_for_kwh_per_kw_rate(int units) {
 
 double rate_data::get_billing_demand(int month) {
     int m = 0;
-    double billing_demand = bd_minimum;
+    double curr_billing_demand = bd_minimum;
     int prev_yr_lookback = 11 - (bd_lookback_months - month); // What month do we stop looking back in the prev yr?
 
     for (m = 11; m >= prev_yr_lookback && m >= 0; m--) {
         double ratchet_percent = bd_lookback_percents[m] * 0.01;
         double months_demand = prev_peak_demand[m] * ratchet_percent;
-        if (months_demand > billing_demand) {
-            billing_demand = months_demand;
+        if (months_demand > curr_billing_demand) {
+            curr_billing_demand = months_demand;
         }
     }
 
@@ -237,33 +237,49 @@ double rate_data::get_billing_demand(int month) {
 
     int idx = 0;
     for (m = start_month; m <= month; m++) {
-        idx = 0;
-        for (int p : m_month[m].dc_periods) {
-            if (bd_tou_periods.at(p)) {
-                double ratchet_percent = bd_lookback_percents[m] * 0.01;
-                double months_demand = m_month[m].dc_tou_peak[idx] * ratchet_percent;
-                if (months_demand > billing_demand) {
-                    billing_demand = months_demand;
-                }
+        double ratchet_percent = bd_lookback_percents[m] * 0.01;
+        if (m_month[m].dc_periods.size() == 0) {
+            double months_demand = m_month[m].dc_flat_peak * ratchet_percent;
+            if (months_demand > curr_billing_demand) {
+                curr_billing_demand = months_demand;
             }
-            idx++;
+        }
+        else {
+            idx = 0;
+            for (int p : m_month[m].dc_periods) {
+                if (bd_tou_periods.at(p)) {
+                    double months_demand = m_month[m].dc_tou_peak[idx] * ratchet_percent;
+                    if (months_demand > curr_billing_demand) {
+                        curr_billing_demand = months_demand;
+                    }
+                }
+                idx++;
+            }
         }
     }
 
     if (m_month[month].use_current_month_ratchet) {
-        idx = 0;
-        for (int p : m_month[month].dc_periods) {
-            if (bd_tou_periods.at(p)) {
-                double months_demand = m_month[month].dc_tou_peak[idx];
-                if (months_demand > billing_demand) {
-                    billing_demand = months_demand;
-                }
+        if (m_month[month].dc_periods.size() == 0) {
+            double months_demand = m_month[month].dc_flat_peak;
+            if (months_demand > curr_billing_demand) {
+                curr_billing_demand = months_demand;
             }
-            idx++;
+        }
+        else {
+            idx = 0;
+            for (int p : m_month[month].dc_periods) {
+                if (bd_tou_periods.at(p)) {
+                    double months_demand = m_month[month].dc_tou_peak[idx];
+                    if (months_demand > curr_billing_demand) {
+                        curr_billing_demand = months_demand;
+                    }
+                }
+                idx++;
+            }
         }
     }
 
-    return billing_demand;
+    return curr_billing_demand;
 }
 
 void rate_data::set_billing_demands() {
@@ -380,14 +396,15 @@ void rate_data::init_energy_rates(bool gen_only) {
 				util::matrix_t<double> sr(num_periods, num_tiers);
 				util::matrix_t<double> ub(num_periods, num_tiers);
 				// assign appropriate values.
-				for (size_t period = 0; period < num_periods; period++)
+				for (size_t period_idx = 0; period_idx < num_periods; period_idx++)
 				{
 					for (size_t tier = 0; tier < num_tiers; tier++)
 					{
-						br.at(period, tier) = m_month[m].ec_tou_br_init.at(period, tier_numbers[tier]);
-						sr.at(period, tier) = m_month[m].ec_tou_sr_init.at(period, tier_numbers[tier]);
-						ub.at(period, tier) = tier_kwh[tier];
+						br.at(period_idx, tier) = m_month[m].ec_tou_br_init.at(period_idx, tier_numbers[tier]);
+						sr.at(period_idx, tier) = m_month[m].ec_tou_sr_init.at(period_idx, tier_numbers[tier]);
+						ub.at(period_idx, tier) = tier_kwh[tier];
 						// update for correct tier number column headings
+                        int period = m_month[m].ec_periods[period_idx] - 1;
 						m_month[m].ec_periods_tiers[period][tier] = (int) (m_ec_periods_tiers_init[period][tier_numbers[tier]]);
 					}
 				}
@@ -839,7 +856,7 @@ void rate_data::setup_ratcheting_demand(ssc_number_t* ratchet_percent_matrix, ss
     util::matrix_t<double> ratchet_matrix(nrows, ncols);
     ratchet_matrix.assign(ratchet_percent_matrix, nrows, ncols);
 
-    for (int i = 0; i < nrows; i++) {
+    for (size_t i = 0; i < nrows; i++) {
         bd_lookback_percents[i] = ratchet_matrix.at(i, 0);
         m_month[i].use_current_month_ratchet = ratchet_matrix.at(i, 1) == 1;
     }
@@ -847,7 +864,7 @@ void rate_data::setup_ratcheting_demand(ssc_number_t* ratchet_percent_matrix, ss
     nrows = m_dc_tou_periods.size();
     util::matrix_t<double> tou_matrix(nrows, ncols);
     tou_matrix.assign(bd_tou_period_matrix, nrows, ncols);
-    for (int i = 0; i < nrows; i++) {
+    for (size_t i = 0; i < nrows; i++) {
         bd_tou_periods.emplace((int) tou_matrix.at(i, 0), tou_matrix.at(i, 1) == 1.0);
     }
 }
@@ -1188,4 +1205,16 @@ double rate_data::getEnergyChargeNetMetering(int month, std::vector<double>& buy
 bool rate_data::has_kwh_per_kw_rate(int month) {
     return (m_month[month].ec_tou_units.ncols() > 0 && m_month[month].ec_tou_units.nrows() > 0)
         && check_for_kwh_per_kw_rate(m_month[month].ec_tou_units.at(0, 0));
+}
+
+bool rate_data::has_kwh_per_kw_rate() {
+    bool has_rate = false;
+    for (size_t month = 0; month < 12; month++) {
+        has_rate = (m_month[month].ec_tou_units.ncols() > 0 && m_month[month].ec_tou_units.nrows() > 0)
+            && check_for_kwh_per_kw_rate(m_month[month].ec_tou_units.at(0, 0));
+        if (has_rate) {
+            return has_rate;
+        }
+    }
+    return has_rate;
 }

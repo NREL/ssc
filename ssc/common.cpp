@@ -731,7 +731,7 @@ bool forecast_price_signal::setup(size_t nsteps)
 		as_revenue.clear();
 		as_revenue.reserve(n_marketrevenue_per_year);
 		for (size_t j = 0; j < n_marketrevenue_per_year; j++)
-			as_revenue.push_back(mp_energy_market_revenue_mat.at(j, 0) * mp_energy_market_revenue_mat.at(j, 1) / step_per_hour);
+			as_revenue.push_back(mp_energy_market_revenue_mat.at(j, 1) / step_per_hour / 1000.0);
 		as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
 		std::transform(m_forecast_price.begin(), m_forecast_price.end(), as_revenue_extrapolated.begin(), m_forecast_price.begin(), std::plus<double>());
 
@@ -739,7 +739,7 @@ bool forecast_price_signal::setup(size_t nsteps)
 		as_revenue.clear();
 		as_revenue.reserve(n_ancserv_1_revenue_per_year);
 		for (size_t j = 0; j < n_ancserv_1_revenue_per_year; j++)
-			as_revenue.push_back(mp_ancserv_1_revenue_mat.at(j, 0) * mp_ancserv_1_revenue_mat.at(j, 1) / step_per_hour);
+			as_revenue.push_back(mp_ancserv_1_revenue_mat.at(j, 1) / step_per_hour / 1000.0);
 		as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
 		std::transform(m_forecast_price.begin(), m_forecast_price.end(), as_revenue_extrapolated.begin(), m_forecast_price.begin(), std::plus<double>());
 
@@ -747,7 +747,7 @@ bool forecast_price_signal::setup(size_t nsteps)
 		as_revenue.clear();
 		as_revenue.reserve(n_ancserv_2_revenue_per_year);
 		for (size_t j = 0; j < n_ancserv_2_revenue_per_year; j++)
-			as_revenue.push_back(mp_ancserv_2_revenue_mat.at(j, 0) * mp_ancserv_2_revenue_mat.at(j, 1) / step_per_hour);
+			as_revenue.push_back(mp_ancserv_2_revenue_mat.at(j, 1) / step_per_hour / 1000.0);
 		as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
 		std::transform(m_forecast_price.begin(), m_forecast_price.end(), as_revenue_extrapolated.begin(), m_forecast_price.begin(), std::plus<double>());
 
@@ -755,7 +755,7 @@ bool forecast_price_signal::setup(size_t nsteps)
 		as_revenue.clear();
 		as_revenue.reserve(n_ancserv_3_revenue_per_year);
 		for (size_t j = 0; j < n_ancserv_3_revenue_per_year; j++)
-			as_revenue.push_back(mp_ancserv_3_revenue_mat.at(j, 0) * mp_ancserv_3_revenue_mat.at(j, 1) / step_per_hour);
+			as_revenue.push_back(mp_ancserv_3_revenue_mat.at(j, 1) / step_per_hour / 1000.0);
 		as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
 		std::transform(m_forecast_price.begin(), m_forecast_price.end(), as_revenue_extrapolated.begin(), m_forecast_price.begin(), std::plus<double>());
 
@@ -763,7 +763,7 @@ bool forecast_price_signal::setup(size_t nsteps)
 		as_revenue.clear();
 		as_revenue.reserve(n_ancserv_4_revenue_per_year);
 		for (size_t j = 0; j < n_ancserv_4_revenue_per_year; j++)
-			as_revenue.push_back(mp_ancserv_4_revenue_mat.at(j, 0) * mp_ancserv_4_revenue_mat.at(j, 1) / step_per_hour);
+			as_revenue.push_back(mp_ancserv_4_revenue_mat.at(j, 1) / step_per_hour / 1000.0);
 		as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
 		std::transform(m_forecast_price.begin(), m_forecast_price.end(), as_revenue_extrapolated.begin(), m_forecast_price.begin(), std::plus<double>());
 	}
