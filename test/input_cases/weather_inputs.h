@@ -29,9 +29,6 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * Creates resources as var_data, as opposed to resources from files, for testing use through SDK
  */
 
-//var_data* create_weatherdata_array(int length);
-
-//void free_weatherdata_array(var_data* data);
 var_table* create_weatherdata_array(size_t length);
 
 void free_weatherdata_array(var_table* data);
@@ -40,8 +37,11 @@ void free_weatherdata_array(var_table* data);
  * intervalsPerHour: 1 for hourly, 2 for 30m, etc
  * nMeasurementHeights: starts at 80m, increases by 10m for next height; pres, tmp, spd, dir also increases linearly
  */
-var_data* create_winddata_array(int intervalsPerHour, int nMeasurementHeights);
+//var_data* create_winddata_array(int intervalsPerHour, int nMeasurementHeights);
 
-void free_winddata_array(var_data* data);
+//void free_winddata_array(var_data* data);
+var_table* create_winddata_array(size_t intervalsPerHour, size_t nMeasurementHeights);
+
+void free_winddata_array(var_table* data);
 
 #endif

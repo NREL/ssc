@@ -36,9 +36,14 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 TEST_F(CMWindPowerIntegration, HubHeightInterpolation_cmod_windpower) {
     // Case 1: hubheight is 200, error
     ssc_data_unassign(data, "wind_resource_filename");
-    var_data *windresourcedata = create_winddata_array(1, 1);
-    var_table *vt = static_cast<var_table *>(data);
-    vt->assign("wind_resource_data", *windresourcedata);
+//    var_data* windresourcedata = create_winddata_array(1, 1);
+//    var_table* vt = static_cast<var_table*>(data);
+//    vt->assign("wind_resource_data", *windresourcedata);
+    var_table* vt = static_cast<var_table*>(data);
+
+    auto windresourcedata = create_winddata_array(1, 1);
+    ssc_data_set_table(data, "wind_resource_data", windresourcedata);
+
     vt->assign("wind_turbine_hub_ht", 200);
 
     bool completed = compute(false);
@@ -182,9 +187,13 @@ TEST_F(CMWindPowerIntegration, UsingInterpolatedSubhourly_cmod_windpower) {
 TEST_F(CMWindPowerIntegration, UsingDataArray_cmod_windpower) {
     // using hourly data
     ssc_data_unassign(data, "wind_resource_filename");
-    var_data *windresourcedata = create_winddata_array(1, 1);
     var_table *vt = static_cast<var_table *>(data);
-    vt->assign("wind_resource_data", *windresourcedata);
+//    var_data* windresourcedata = create_winddata_array(1, 1);
+//    vt->assign("wind_resource_data", *windresourcedata);
+
+    auto windresourcedata = create_winddata_array(1, 1);
+    ssc_data_set_table(data, "wind_resource_data", windresourcedata);
+
 
     compute();
     double expectedAnnualEnergy = 4219481;
@@ -328,16 +337,20 @@ TEST_F(CMWindPowerIntegration, WindDist3_cmod_windpower) {
 TEST_F(CMWindPowerIntegration, IcingAndLowTempCutoff_cmod_windpower) {
     //modify test inputs
     ssc_data_unassign(data, "wind_resource_filename");
-    var_data *windresourcedata = create_winddata_array(1, 1);
+//    var_data *windresourcedata = create_winddata_array(1, 1);
+    auto windresourcedata = create_winddata_array(1, 1);
+
     double rh[8760];
     for (unsigned int i = 0; i < 8760; i++) {
         if (i % 2 == 0) rh[i] = 0.75f;
         else rh[i] = 0.0f;
     }
     var_data rh_vd = var_data(rh, 8760);
-    windresourcedata->table.assign("rh", rh_vd);
+//    windresourcedata->table.assign("rh", rh_vd);
+    windresourcedata->assign("rh", rh_vd);
     auto *vt = static_cast<var_table *>(data);
-    vt->assign("wind_resource_data", *windresourcedata);
+//    vt->assign("wind_resource_data", *windresourcedata);
+    ssc_data_set_table(data, "wind_resource_data", windresourcedata);
     vt->assign("en_low_temp_cutoff", 1);
     vt->assign("en_icing_cutoff", 1);
     vt->assign("low_temp_cutoff", 40.f);
@@ -387,6 +400,8 @@ TEST_F(CMWindPowerIntegration, WakeModelMaxTurbineOverride) {
     ssc_number_t annual_energy;
     ssc_data_get_number(data, "annual_energy", &annual_energy);
     EXPECT_NEAR(annual_energy, 31636868.6, 1) << "Turbine override";
+
+    ssc_module_free(module);
 }
 
 
@@ -729,3 +744,4 @@ TEST(windpower_landbosse, NegativeInputFail) {
     EXPECT_EQ(err, "Error in NegativeInputError: User entered a negative value for depth. This is an invalid entry");
 
 }
+
