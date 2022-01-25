@@ -212,7 +212,8 @@ public:
 
     void initialize_cell_temp(double ts_hour, double last_tcell = -9999, double last_poa = -9999)
     {
-        tccalc = std::make_unique< pvwatts_celltemp>(inoct + 273.15, PVWATTS_HEIGHT, ts_hour);
+//        tccalc = std::make_unique< pvwatts_celltemp>(inoct + 273.15, PVWATTS_HEIGHT, ts_hour); c++14
+        tccalc = std::unique_ptr< pvwatts_celltemp>(new pvwatts_celltemp(inoct + 273.15, PVWATTS_HEIGHT, ts_hour));
         if (last_tcell > -99 && last_poa >= 0)
             tccalc->set_last_values(last_tcell, last_poa);
     }
