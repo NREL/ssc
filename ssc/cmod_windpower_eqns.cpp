@@ -123,9 +123,8 @@ bool Turbine_calculate_powercurve(ssc_data_t data)
 	                * max_cp * pow(wind_at_omegaT, 2))) * 1000.0 * (rated_hub_power-power_at_omegaT)) + wind_at_omegaT);
 
 	if ( omegaT > omega_m ) {
-		sprintf( errmsg, "Turbine inputs are not valid, please adjust the inputs. omegaT: %f, omegaM: %f", omegaT, omega_m );
+		sprintf( errmsg, "Warning: Turbine inputs may not be valid, please check the inputs. omegaT: %f, omegaM: %f", omegaT, omega_m );
         vt->assign( "error", std::string(errmsg ));
-        return false;
     }
 
 	double step = 0.25;
