@@ -1272,12 +1272,13 @@ SSCEXPORT void __ssc_segfault()
 	std::string mystr = *pstr;
 }
 
-static std::string* s_python_path;
+//static std::string* s_python_path
+static std::unique_ptr<std::string> s_python_path;
 
 SSCEXPORT int set_python_path(const char* abs_path) {
     if (util::dir_exists(abs_path)){
-        delete s_python_path;
-        s_python_path = new std::string(abs_path);
+//        delete s_python_path;
+        s_python_path = std::unique_ptr<std::string>( new std::string(abs_path));
         return 1;
     }
     else
