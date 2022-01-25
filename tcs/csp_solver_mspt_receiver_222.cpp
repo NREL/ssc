@@ -500,57 +500,25 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 
 		case C_csp_collector_receiver::ON:
 			
-			if( m_E_su_prev > 0.0 || m_t_su_prev > 0.0 )
+			m_E_su = m_E_su_prev;
+			m_t_su = m_t_su_prev;
+			m_mode = C_csp_collector_receiver::ON;
+			q_startup = 0.0;
+
+			q_thermal = m_dot_salt_tot*c_p_coolant*(T_salt_hot - T_salt_cold_in);
+
+			//if( q_thermal < m_q_rec_min )
+			if(q_dot_inc_sum < m_q_dot_inc_min)
 			{
-				
-				m_E_su = fmax(0.0, m_E_su_prev - m_dot_salt_tot*c_p_coolant*(T_salt_hot - T_salt_cold_in)*step / 3600.0);	//[W-hr]
-				m_t_su = fmax(0.0, m_t_su_prev - step / 3600.0);	//[hr]
+				// If output here is less than specified allowed minimum, then need to shut off receiver
+				m_mode = C_csp_collector_receiver::OFF;
 
-				if( m_E_su + m_t_su > 0.0 )
-				{
-					m_mode = C_csp_collector_receiver::STARTUP;		// If either are greater than 0, we're starting up but not finished
-					
-					// 4.28.15 twn: Startup energy also needs to consider energy consumed during time requirement, if that is greater than energy requirement
-						//q_startup = (m_E_su_prev - m_E_su) / (step / 3600.0)*1.E-6;
-					q_startup = m_dot_salt_tot*c_p_coolant*(T_salt_hot - T_salt_cold_in)*step / 3600.0;
-
-					rec_is_off = true;
-				}
-				else
-				{
-					m_mode = C_csp_collector_receiver::ON;
-
-					double q_startup_energy_req = m_E_su_prev;	//[W-hr]
-					double q_startup_ramping_req = m_dot_salt_tot*c_p_coolant*(T_salt_hot - T_salt_cold_in)*m_t_su;	//[W-hr]
-					q_startup = fmax(q_startup_energy_req, q_startup_ramping_req);
-
-					// Adjust the available mass flow to reflect startup
-					m_dot_salt_tot = fmin((1.0 - m_t_su_prev / (step / 3600.0))*m_dot_salt_tot, m_dot_salt_tot - m_E_su_prev / ((step / 3600.0)*c_p_coolant*(T_salt_hot - T_salt_cold_in)));
-				}
-					//4.28.15 twn: Startup energy needs to consider
-				//q_startup = (m_E_su_prev - m_E_su) / (step / 3600.0)*1.E-6;
+				// Include here outputs that are ONLY set to zero if receiver completely off, and not attempting to start-up
+				W_dot_pump = 0.0;
+				// Pressure drops
+				DELTAP = 0.0; Pres_D = 0.0; u_coolant = 0.0;
 			}
-			else
-			{
-				m_E_su = m_E_su_prev;
-				m_t_su = m_t_su_prev;
-				m_mode = C_csp_collector_receiver::ON;
-				q_startup = 0.0;
-
-				q_thermal = m_dot_salt_tot*c_p_coolant*(T_salt_hot - T_salt_cold_in);
-
-				//if( q_thermal < m_q_rec_min )
-				if(q_dot_inc_sum < m_q_dot_inc_min)
-				{
-					// If output here is less than specified allowed minimum, then need to shut off receiver
-					m_mode = C_csp_collector_receiver::OFF;
-
-					// Include here outputs that are ONLY set to zero if receiver completely off, and not attempting to start-up
-					W_dot_pump = 0.0;
-					// Pressure drops
-					DELTAP = 0.0; Pres_D = 0.0; u_coolant = 0.0;
-				}
-			}
+			
 			break;
 
 		case C_csp_collector_receiver::STEADY_STATE:

@@ -143,6 +143,10 @@ protected:
     double m_t_su;              //[hr] startup time
     double m_t_su_prev;         //[hr] startup time requirement
 
+    // Stored solutions
+    s_steady_state_soln m_mflow_soln_prev;  // Steady state solution using actual DNI from the last call to the model
+    s_steady_state_soln m_mflow_soln_csky_prev;  // Steady state solution using clear-sky DNI from the last call to the model
+
     // Model output arrays
     // Member variables so don't waste time constructing each call?
     util::matrix_t<double> m_q_dot_inc;
@@ -159,10 +163,6 @@ private:
 
 	// track number of calls per timestep, reset = -1 in converged() call
 	int m_ncall;
-
-	s_steady_state_soln m_mflow_soln_prev;  // Steady state solution using actual DNI from the last call to the model
-	s_steady_state_soln m_mflow_soln_csky_prev;  // Steady state solution using clear-sky DNI from the last call to the model
-
 
 protected:
 

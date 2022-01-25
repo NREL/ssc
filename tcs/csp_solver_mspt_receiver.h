@@ -35,8 +35,8 @@ private:
 	// track number of calls per timestep, reset = -1 in converged() call
 	int m_ncall;
 
-	s_steady_state_soln m_mflow_soln_prev;  // Steady state solution using actual DNI from the last call to the model
-	s_steady_state_soln m_mflow_soln_csky_prev;  // Steady state solution using clear-sky DNI from the last call to the model
+	//s_steady_state_soln m_mflow_soln_prev;  // Steady state solution using actual DNI from the last call to the model
+	//s_steady_state_soln m_mflow_soln_csky_prev;  // Steady state solution using clear-sky DNI from the last call to the model
 
 	//-------------------
 	//Transient model parameters

@@ -372,10 +372,7 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 	bool rec_is_off = false;
 	bool rec_is_defocusing = false;
 
-	double panel_req_preheat = m_tube_flux_preheat * m_od_tube * m_h_rec * m_n_t*1000;					// Panel absorbed solar energy required to meet preheat flux requirement (W)
-	double total_req_preheat = (m_tube_flux_preheat * m_od_tube * m_h_rec * m_n_t) * m_n_panels*1000;	// Total absorbed solar energy on all panels (W) required to meet preheat flux requirement
-	bool startup_low_flux = false;
-
+	
 	// Do an initial check to make sure the solar position called is valid
 	// If it's not, return the output equal to zeros. Also check to make sure
 	// the solar flux is at a certain level, otherwise the correlations aren't valid
@@ -457,6 +454,8 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 			else
 				solve_for_mass_flow_and_defocus(soln_actual, m_m_dot_htf_max, flux_map_input);
 
+            m_mflow_soln_prev = soln_actual;
+
 		}
 
 		if (m_csky_frac >= 0.0001) // Solve for mass flow at clear-sky DNI?
@@ -473,12 +472,12 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 					soln_clearsky = m_mflow_soln_csky_prev;
 				else
 					solve_for_mass_flow_and_defocus(soln_clearsky, m_m_dot_htf_max, flux_map_input);
-			}
+            }
+
+            m_mflow_soln_csky_prev = soln_clearsky;
 		}
 
 		//--- Save steady state solution for mass flow for next iteration
-		m_mflow_soln_prev = soln_actual;
-		m_mflow_soln_csky_prev = soln_clearsky;
 
 		//--- Set mass flow and calculate final solution
 		if (fabs(I_bn - clearsky_adj) < 0.001 || m_csky_frac < 0.0001)  // Flow control based on actual DNI
@@ -576,11 +575,13 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 		q_thermal_csky = soln_clearsky.Q_thermal;  // Steady state thermal power with clearsky DNI
 
 
-
-
-
 	double DELTAP, Pres_D, W_dot_pump, q_thermal, q_startup;
 	DELTAP = Pres_D = W_dot_pump = q_thermal = q_startup = std::numeric_limits<double>::quiet_NaN();
+
+
+    double panel_req_preheat = m_tube_flux_preheat * m_od_tube * m_h_rec * m_n_t * 1000;					// Panel absorbed solar energy required to meet preheat flux requirement (W)
+    double total_req_preheat = (m_tube_flux_preheat * m_od_tube * m_h_rec * m_n_t) * m_n_panels * 1000;	// Total absorbed solar energy on all panels (W) required to meet preheat flux requirement
+    bool startup_low_flux = false;
 
 	// Adjust receiver state if SS mass flow calculation did not converge, but incident flux is sufficient to begin startup
 	if (m_is_startup_transient)
@@ -967,52 +968,22 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 			// Steady state receiver model
 			if (!m_is_transient)
 			{
-				if (m_E_su_prev > 0.0 || m_t_su_prev > 0.0)
+				m_E_su = m_E_su_prev;
+				m_t_su = m_t_su_prev;
+				m_mode = C_csp_collector_receiver::ON;
+				q_startup = 0.0;
+
+				if (q_dot_inc_sum < m_q_dot_inc_min)
 				{
-					m_E_su = fmax(0.0, m_E_su_prev - m_dot_salt_tot*c_p_coolant*(T_salt_hot - T_salt_cold_in)*step / 3600.0);	//[W-hr]
-					m_t_su = fmax(0.0, m_t_su_prev - step / 3600.0);	//[hr]
+					// If output here is less than specified allowed minimum, then need to shut off receiver
+					m_mode = C_csp_collector_receiver::OFF;
 
-					if (m_E_su + m_t_su > 0.0)
-					{
-						m_mode = C_csp_collector_receiver::STARTUP;		// If either are greater than 0, we're staring up but not finished
-
-						// 4.28.15 twn: Startup energy also needs to consider energy consumed during time requirement, if that is greater than energy requirement
-						//q_startup = (m_E_su_prev - m_E_su) / (step / 3600.0)*1.E-6;
-						q_startup = m_dot_salt_tot*c_p_coolant*(T_salt_hot - T_salt_cold_in)*step / 3600.0;
-						rec_is_off = true;
-					}
-					else
-					{
-						m_mode = C_csp_collector_receiver::ON;
-
-						double q_startup_energy_req = m_E_su_prev;	//[W-hr]
-						double q_startup_ramping_req = m_dot_salt_tot*c_p_coolant*(T_salt_hot - T_salt_cold_in)*m_t_su;	//[W-hr]
-						q_startup = fmax(q_startup_energy_req, q_startup_ramping_req);
-
-						// Adjust the available mass flow to reflect startup
-						m_dot_salt_tot = fmin((1.0 - m_t_su_prev / (step / 3600.0))*m_dot_salt_tot, m_dot_salt_tot - m_E_su_prev / ((step / 3600.0)*c_p_coolant*(T_salt_hot - T_salt_cold_in)));
-					}
-					//4.28.15 twn: Startup energy needs to consider
-					//q_startup = (m_E_su_prev - m_E_su) / (step / 3600.0)*1.E-6;
+					// Include here outputs that are ONLY set to zero if receiver completely off, and not attempting to start-up
+					W_dot_pump = 0.0;
+					// Pressure drops
+					DELTAP = 0.0; Pres_D = 0.0; u_coolant = 0.0;
 				}
-				else
-				{
-					m_E_su = m_E_su_prev;
-					m_t_su = m_t_su_prev;
-					m_mode = C_csp_collector_receiver::ON;
-					q_startup = 0.0;
-
-					if (q_dot_inc_sum < m_q_dot_inc_min)
-					{
-						// If output here is less than specified allowed minimum, then need to shut off receiver
-						m_mode = C_csp_collector_receiver::OFF;
-
-						// Include here outputs that are ONLY set to zero if receiver completely off, and not attempting to start-up
-						W_dot_pump = 0.0;
-						// Pressure drops
-						DELTAP = 0.0; Pres_D = 0.0; u_coolant = 0.0;
-					}
-				}
+				
 				q_thermal = m_dot_salt_tot*c_p_coolant*(T_salt_hot - T_salt_cold_in);
 				calc_pump_performance(rho_coolant, m_dot_salt_tot, f, Pres_D, W_dot_pump);
 
