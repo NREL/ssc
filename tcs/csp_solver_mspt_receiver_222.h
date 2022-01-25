@@ -176,6 +176,23 @@ protected:
     void solve_for_mass_flow_and_defocus(s_steady_state_soln& soln, double m_dot_htf_max, const util::matrix_t<double>* flux_map_input);
     void solve_for_defocus_given_flow(s_steady_state_soln& soln, const util::matrix_t<double>* flux_map_input);
 
+    void call_common(const C_csp_weatherreader::S_outputs& weather,
+        const C_csp_solver_htf_1state& htf_state_in,
+        const C_mspt_receiver_222::S_inputs& inputs,
+        const C_csp_solver_sim_info& sim_info,
+        // outputs:
+        bool& rec_is_off, C_csp_collector_receiver::E_csp_cr_modes& input_operation_mode,
+        double& eta_therm /*-*/, double& m_dot_salt_tot /*kg/s*/,
+        double& T_salt_hot /*K*/, double& T_salt_cold_in /*K*/,
+        double& T_coolant_prop /*K*/, double& T_salt_hot_rec /*K*/,
+        double& c_p_coolant /*J/kg-K*/, double& u_coolant /*m/s*/,
+        double& rho_coolant /*kg/m3*/, double& f /*-*/,
+        double& q_dot_inc_sum /*Wt*/, double& q_conv_sum /*Wt*/,
+        double& q_rad_sum /*Wt*/, double& q_dot_piping_loss /*Wt*/,
+        double& q_dot_inc_min_panel /*Wt*/,
+        double& q_thermal_cksy /*Wt*/, double& q_thermal_steadystate /*Wt*/,
+        double& od_control /*-*/, double& clearsky /*W/m2*/,
+        s_steady_state_soln& soln);
 
 public:
 	// Class to save messages for up stream classes
