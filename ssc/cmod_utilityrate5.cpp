@@ -1657,6 +1657,7 @@ public:
 		{
 			ur_month& curr_month = rate.m_month[m];
             curr_month.reset();
+            prev_demand_charge = 0.0;
             
             if (dc_enabled || rate.uses_billing_demand) {
                 rate.init_dc_peak_vectors(m);
@@ -1694,6 +1695,9 @@ public:
 					}
 				}
 			}
+            if (dc_enabled) {
+                rate.set_demand_peak_hours(m);
+            }
 		}
 
 		// monthly cumulative excess energy (positive = excess energy, negative = excess load)
@@ -2196,6 +2200,7 @@ public:
         {
             ur_month& curr_month = rate.m_month[m];
             curr_month.reset();
+            prev_demand_charge = 0.0;
 
             if (dc_enabled || rate.uses_billing_demand) {
                 rate.init_dc_peak_vectors(m);
@@ -2233,6 +2238,9 @@ public:
                         c++;
                     }
                 }
+            }
+            if (dc_enabled) {
+                rate.set_demand_peak_hours(m);
             }
         }
 
