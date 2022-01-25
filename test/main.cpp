@@ -91,6 +91,9 @@ GTEST_API_ int main(int argc, char **argv) {
     
  //  ::testing::GTEST_FLAG(filter) = "CMPvwattsv8Integration_cmod_pvwattsv8.DefaultNoFinancialModel_cmod_pvwattsv8:CMPvwattsv8Integration_cmod_pvwattsv8.NonAnnual:CMPvwattsv8Integration_cmod_pvwattsv8.IntermediateOutputTesting";
     //    ::testing::GTEST_FLAG(filter) = "CMPvwattsv8Integration_cmod_pvwattsv8.DefaultNoFinancialModel_cmod_pvwattsv8";
+    //
+    //
+    // 
 //    ::testing::GTEST_FLAG(filter) = "CMPvwattsv8Integration_cmod_pvwattsv8.*"; //all 11 pass without mem leaks Windows 10
 //    ::testing::GTEST_FLAG(filter) = "CMPvwattsV7Integration_cmod_pvwattsv7.*"; //all 9 pass without mem leaks Windows 10
 //    ::testing::GTEST_FLAG(filter) = "CMPvwattsV5Integration_cmod_pvwattsv5.*"; //all 5 pass without mem leaks Windows 10
@@ -99,9 +102,11 @@ GTEST_API_ int main(int argc, char **argv) {
  //       ::testing::GTEST_FLAG(filter) = "CMPvwattsv8Integration_cmod_pvwattsv8.NonAnnual:CMPvwattsv8Integration_cmod_pvwattsv8.IntermediateOutputTesting";
 //   ::testing::GTEST_FLAG(filter) = "CMPvwattsv8Integration_cmod_pvwattsv8.NonAnnual";
 //    ::testing::GTEST_FLAG(filter) = "CMPvsamv1PowerIntegration_cmod_pvsamv1.*"; //all 21 pass with mem leaks Windows 10
+//    ::testing::GTEST_FLAG(filter) = "CMWindPowerIntegration.*"; //all 10 pass without mem leaks Windows 10
     // memory leak
-    ::testing::GTEST_FLAG(filter) = "CMWindPowerIntegration.*"; //all 5 pass without mem leaks Windows 10
-     
+    ::testing::GTEST_FLAG(filter) = "Turbine_powercurve_cmod_windpower_eqns.*"; //all 6 pass with mem leaks Windows 10
+//    ::testing::GTEST_FLAG(filter) = "Turbine_powercurve_cmod_windpower_eqns.Case1"; //all 6 pass with mem leaks Windows 10
+    
 	int status = RUN_ALL_TESTS();
 
 /*

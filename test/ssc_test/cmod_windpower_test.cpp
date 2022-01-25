@@ -413,6 +413,7 @@ TEST(Turbine_powercurve_cmod_windpower_eqns, NoData) {
 TEST(Turbine_powercurve_cmod_windpower_eqns, MissingVariables) {
     var_table *vd = new var_table;
     ASSERT_FALSE(Turbine_calculate_powercurve(vd));
+    delete vd;
 }
 
 TEST(Turbine_powercurve_cmod_windpower_eqns, Case1) {
@@ -441,6 +442,8 @@ TEST(Turbine_powercurve_cmod_windpower_eqns, Case1) {
     ASSERT_NEAR(power[100], 0., 1e-2);
     ASSERT_NEAR(ws[100], 25., 1e-2);
     ASSERT_NEAR(rated_wx, 11.204, 1e-2);
+
+    delete vd;
 }
 
 TEST(Turbine_powercurve_cmod_windpower_eqns, Case2) {
@@ -469,6 +472,8 @@ TEST(Turbine_powercurve_cmod_windpower_eqns, Case2) {
     ASSERT_NEAR(power[100], 0., 1e-2);
     ASSERT_NEAR(ws[100], 25., 1e-2);
     ASSERT_NEAR(rated_wx, 11.27, 1e-2);
+
+    delete vd;
 }
 
 TEST(Turbine_powercurve_cmod_windpower_eqns, Case3) {
@@ -497,6 +502,8 @@ TEST(Turbine_powercurve_cmod_windpower_eqns, Case3) {
     ASSERT_NEAR(power[100], 0., 1e-2);
     ASSERT_NEAR(ws[100], 25., 1e-2);
     ASSERT_NEAR(rated_wx, 11.30, 1e-2);
+
+    delete vd;
 }
 
 TEST(Turbine_powercurve_cmod_windpower_eqns, Case4) {
@@ -525,6 +532,9 @@ TEST(Turbine_powercurve_cmod_windpower_eqns, Case4) {
     ASSERT_NEAR(power[100], 0., 1e-2);
     ASSERT_NEAR(ws[100], 25., 1e-2);
     ASSERT_NEAR(rated_wx, 11.21, 1e-2);
+
+    delete vd;
+
 }
 
 bool setup_python() {
