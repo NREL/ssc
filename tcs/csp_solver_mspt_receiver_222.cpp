@@ -604,20 +604,20 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 
 	if( rec_is_off )
 	{
-		// 900 continue	// Receiver isn't producing usable energy
-		m_dot_salt_tot = 0.0; eta_therm = 0.0; /*W_dot_pump = 0.0;*/
-		q_conv_sum = 0.0; q_rad_sum = 0.0; m_T_s.fill(0.0); q_thermal = 0.0;
-		// Set the receiver outlet temperature equal to the inlet design temperature
+		m_dot_salt_tot = 0.0;
+        eta_therm = 0.0;
+		q_conv_sum = 0.0;
+        q_rad_sum = 0.0;
+        m_T_s.fill(0.0);
+        q_thermal = 0.0;
+
+        // Set the receiver outlet temperature equal to the inlet design temperature
 		T_salt_hot = m_T_htf_cold_des;
-		q_dot_inc_sum = 0.0;
-		// Pressure drops
-		/*DELTAP = 0.0; Pres_D = 0.0; u_coolant = 0.0;*/
-		// Set receiver startup energy to 0
-		// q_startup = 0.0;
+
+        q_dot_inc_sum = 0.0;
 		q_thermal_csky = q_thermal_steadystate = 0.0;
 		
-
-		// Reset m_od_control
+		// Reset m_od_control (for reporting)
 		od_control = 1.0;		//[-]
 	}
 
