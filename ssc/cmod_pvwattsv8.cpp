@@ -649,6 +649,8 @@ public:
 
         weather_header hdr;
         wdprov->header(&hdr);
+        if (wdprov->has_message())
+            throw exec_error("pvwattsv8", wdprov->message());
 
         // assumes instantaneous values, unless hourly file with no minute column specified- same code as lib_pv_io_manager.cpp. can we make this one set of code somehow?
         double ts_shift_hours = 0.0;
