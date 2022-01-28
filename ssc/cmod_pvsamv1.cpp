@@ -2358,7 +2358,10 @@ void cm_pvsamv1::exec()
             }
 
 
-            // Apply transformer loss
+            // Apply transformer loss - reset variables after DC connected calculations
+            transformerRatingkW = static_cast<ssc_number_t>(PVSystem->ratedACOutput * util::watt_to_kilowatt);
+            xfmr_ll = PVSystem->transformerLoadLossFraction / step_per_hour;
+            xfmr_nll = PVSystem->transformerNoLoadLossFraction * static_cast<ssc_number_t>(ts_hour * transformerRatingkW);
 			// total load loss
             ssc_number_t xfmr_loss = transformerLoss(PVSystem->p_systemACPower[idx], PVSystem->transformerLoadLossFraction, transformerRatingkW, xfmr_ll, xfmr_nll);
 
