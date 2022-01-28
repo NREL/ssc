@@ -365,15 +365,18 @@ void cm_wind_landbosse::exec() {
 #else
     std::string output_json = call_python_module(input_dict_as_text);
 #endif
+//    delete input_json;
 
 	cleanOutputString(output_json);
     auto output_data = static_cast<var_table*>(json_to_ssc_data(output_json.c_str()));
     if (output_data->is_assigned("error")){
         m_vartab->assign("errors", output_json);
+        ssc_data_free(output_data);
         return;
     }
 
     m_vartab->merge(*output_data, false);
+    ssc_data_free(output_data);
 
     auto error_vd = m_vartab->lookup("errors");
     if (error_vd && error_vd->type == SSC_ARRAY)
