@@ -27,18 +27,24 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../ssc/vartab.h"
 
 TEST(sscapi_test, json_to_ssc_data) {
+
+    
     std::string json_string = R"({"num": 5})";
     ssc_data_t dat = json_to_ssc_data(json_string.c_str());
     auto vt = static_cast<var_table *>(dat);
     EXPECT_EQ(vt->lookup("num")->num[0], 5);
     ssc_data_free(dat);
 
+
+
+    
     json_string = R"({"str": "string"})";
     dat = json_to_ssc_data(json_string.c_str());
     vt = static_cast<var_table *>(dat);
     EXPECT_STRCASEEQ(vt->lookup("str")->str.c_str(), "string");
     ssc_data_free(dat);
 
+    
     json_string = R"({"arr": [1, 2]})";
     dat = json_to_ssc_data(json_string.c_str());
     vt = static_cast<var_table *>(dat);
@@ -46,6 +52,7 @@ TEST(sscapi_test, json_to_ssc_data) {
     EXPECT_EQ(vt->lookup("arr")->num[1], 2);
     ssc_data_free(dat);
 
+    
     json_string = R"({"mat": [[1, 2], [3, 4]]})";
     dat = json_to_ssc_data(json_string.c_str());
     vt = static_cast<var_table *>(dat);
@@ -55,6 +62,7 @@ TEST(sscapi_test, json_to_ssc_data) {
     EXPECT_EQ(vt->lookup("mat")->num[3], 4);
     ssc_data_free(dat);
 
+    
     json_string = R"({"datarr": ["one", 2]})";
     dat = json_to_ssc_data(json_string.c_str());
     vt = static_cast<var_table *>(dat);
@@ -62,6 +70,7 @@ TEST(sscapi_test, json_to_ssc_data) {
     EXPECT_EQ(vt->lookup("datarr")->vec[1].num[0], 2);
     ssc_data_free(dat);
 
+    
     json_string = R"({"datmat": [["one", 2], [3, {"four": 4}]]})";
     dat = json_to_ssc_data(json_string.c_str());
     vt = static_cast<var_table *>(dat);
@@ -71,27 +80,24 @@ TEST(sscapi_test, json_to_ssc_data) {
     EXPECT_EQ(vt->lookup("datmat")->vec[1].vec[1].table.lookup("four")->num[0], 4);
     ssc_data_free(dat);
 
+
+    
     json_string = R"({"table": {"entry": 1}})";
     dat = json_to_ssc_data(json_string.c_str());
     vt = static_cast<var_table *>(dat);
     EXPECT_EQ(vt->lookup("table")->table.lookup("entry")->num[0], 1);
     ssc_data_free(dat);
 
+
     json_string = R"({"wrong": format})";
     dat = json_to_ssc_data(json_string.c_str());
     vt = static_cast<var_table *>(dat);
     EXPECT_GT(vt->lookup("error")->str.size(), 0);
+    ssc_data_free(dat);
+    
 }
 
-
-
-
-
-
-
-
-
-
+/*
 
 
 
@@ -146,7 +152,7 @@ TEST(sscapi_test, ssc_data_to_json) {
 
 }
 
-
+/*
 
 ////////////////////////////  RapidJSON testing
 TEST(sscapi_test, rapidjson_to_ssc_data) {
@@ -194,7 +200,7 @@ TEST(sscapi_test, rapidjson_to_ssc_data) {
     EXPECT_EQ(vt->lookup("datmat")->vec[1].vec[1].table.lookup("four")->num[0], 4);
     ssc_data_free(dat);
 
-   /* parse error returned because of malformed json (extra "}" at end) not caught by jsoncpp */
+   // parse error returned because of malformed json (extra "}" at end) not caught by jsoncpp 
     json_string = R"({"table": {"entry": 1}}})";
     dat = json_to_ssc_data(json_string.c_str());
     vt = static_cast<var_table*>(dat);
@@ -273,3 +279,4 @@ TEST(sscapi_test, ssc_data_to_rapidjson) {
 }
 
 
+*/
