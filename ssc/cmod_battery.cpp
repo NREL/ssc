@@ -1952,7 +1952,7 @@ bool battstor::is_offline(size_t index) {
     
     double min_soc = dispatch_model->getBatteryPower()->stateOfChargeMin;
 
-    return ((soc - min_soc) < tolerance) && ((prev_soc - min_soc) < tolerance);
+    return ((soc - min_soc) < low_tolerance) && ((prev_soc - min_soc) < low_tolerance);
 }
 
 void battstor::calculate_monthly_and_annual_outputs(compute_module& cm)

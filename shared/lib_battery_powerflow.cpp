@@ -737,13 +737,16 @@ void BatteryPowerFlow::calculateDCConnected()
             P_gen_dc = 0.0;
         }
 
+        // Run this first - sharedInverter->getMaxPowerEfficiency will overwrite the values from calculateACPower
+        double max_eff = m_BatteryPower->sharedInverter->getMaxPowerEfficiency();
+
         // convert the DC power to AC
         m_BatteryPower->sharedInverter->calculateACPower(P_gen_dc, voltage, m_BatteryPower->sharedInverter->Tdry_C);
         efficiencyDCAC = m_BatteryPower->sharedInverter->efficiencyAC * 0.01;
         P_gen_ac = m_BatteryPower->sharedInverter->powerAC_kW;
 
         if (m_BatteryPower->isOutageStep && P_gen_ac < 0.0) {
-            P_gen_ac -= P_unmet_losses / (m_BatteryPower->sharedInverter->getMaxPowerEfficiency() * 0.01);
+            P_gen_ac -= P_unmet_losses / (max_eff * 0.01);
         }
 
         if (pv_handles_loss) {
