@@ -86,8 +86,8 @@ static var_info vtab_utility_rate5[] = {
 	{ SSC_OUTPUT, SSC_ARRAY, "year1_hourly_ec_with_system", "Energy charge with system (year 1 hourly)", "$", "", "Time Series", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "year1_hourly_ec_without_system", "Energy charge without system (year 1 hourly)", "$", "", "Time Series", "*", "", "" },
 
-	{ SSC_OUTPUT, SSC_ARRAY, "year1_hourly_dc_with_system", "Demand charge with system (year 1 hourly)", "$", "", "Time Series", "*", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "year1_hourly_dc_without_system", "Demand charge without system (year 1 hourly)", "$", "", "Time Series", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "year1_hourly_dc_with_system", "Incremental demand charge with system (year 1 hourly)", "$", "", "Time Series", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "year1_hourly_dc_without_system", "Incremental demand charge without system (year 1 hourly)", "$", "", "Time Series", "*", "", "" },
 
 	{ SSC_OUTPUT, SSC_ARRAY, "year1_hourly_ec_tou_schedule", "TOU period for energy charges (year 1 hourly)", "", "", "Time Series", "*", "", "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_dc_tou_schedule",       "TOU period for demand charges (year 1 hourly)", "", "", "Time Series", "*", "", "" },
