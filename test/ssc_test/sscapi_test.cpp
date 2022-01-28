@@ -97,7 +97,7 @@ TEST(sscapi_test, json_to_ssc_data) {
     
 }
 
-/*
+
 
 
 
@@ -128,20 +128,21 @@ TEST(sscapi_test, ssc_data_to_json) {
     EXPECT_STRCASEEQ(json_string, "{\"mat\":[[1.0,2.0],[3.0,4.0]]}");
     vt.clear();
     delete json_string;
-
+    
     std::vector<var_data> vars = { var_data("one"), 2 };
     vt.assign("datarr", vars);
     json_string = ssc_data_to_json(&vt);
     EXPECT_STRCASEEQ(json_string, "{\"datarr\":[\"one\",2.0]}");
     vt.clear();
     delete json_string;
-
+    
     std::vector<std::vector<var_data>> vars_mat = { vars, std::vector<var_data>({3, 4}) };
     vt.assign("datmat", vars_mat);
     json_string = ssc_data_to_json(&vt);
     EXPECT_STRCASEEQ(json_string, "{\"datmat\":[[\"one\",2.0],[3.0,4.0]]}");
     vt.clear();
-
+    delete json_string;
+    
     var_table tab;
     tab.assign("entry", 1);
     vt.assign("table", tab);
@@ -152,7 +153,7 @@ TEST(sscapi_test, ssc_data_to_json) {
 
 }
 
-/*
+
 
 ////////////////////////////  RapidJSON testing
 TEST(sscapi_test, rapidjson_to_ssc_data) {
@@ -223,7 +224,8 @@ TEST(sscapi_test, rapidjson_to_ssc_data) {
     dat = json_to_ssc_data(json_string.c_str());
     vt = static_cast<var_table*>(dat);
     EXPECT_GT(vt->lookup("error")->str.size(), 0);
-    
+    ssc_data_free(dat);
+
 }
 
 
@@ -235,7 +237,7 @@ TEST(sscapi_test, ssc_data_to_rapidjson) {
     EXPECT_STRCASEEQ(json_string, "{\"num\":1.0}");
     vt.clear();
     delete json_string;
-
+    
     vt.assign("str", var_data("string"));
     json_string = ssc_data_to_json(&vt);
     EXPECT_STRCASEEQ(json_string, "{\"str\":\"string\"}");
@@ -254,29 +256,31 @@ TEST(sscapi_test, ssc_data_to_rapidjson) {
     EXPECT_STRCASEEQ(json_string, "{\"mat\":[[1.0,2.0],[3.0,4.0]]}");
     vt.clear();
     delete json_string;
-
+    
     std::vector<var_data> vars = { var_data("one"), 2 };
     vt.assign("datarr", vars);
     json_string = ssc_data_to_json(&vt);
     EXPECT_STRCASEEQ(json_string, "{\"datarr\":[\"one\",2.0]}");
     vt.clear();
     delete json_string;
-
+    
     std::vector<std::vector<var_data>> vars_mat = { vars, std::vector<var_data>({3, 4}) };
     vt.assign("datmat", vars_mat);
     json_string = ssc_data_to_json(&vt);
     EXPECT_STRCASEEQ(json_string, "{\"datmat\":[[\"one\",2.0],[3.0,4.0]]}");
     vt.clear();
-
+    delete json_string;
+    
     var_table tab;
     tab.assign("entry", 1);
     vt.assign("table", tab);
     json_string = ssc_data_to_json(&vt);
     EXPECT_STRCASEEQ(json_string, "{\"table\":{\"entry\":1.0}}");
     vt.clear();
+    tab.clear();
     delete json_string;
-
+    
 }
 
 
-*/
+
