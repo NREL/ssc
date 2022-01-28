@@ -113,6 +113,7 @@ void cm_wind_landbosse::load_config(){
         throw exec_error("wind_landbosse", "Path to SAM python configuration directory not set. "
                                            "Use 'set_python_path' function in sscapi.h to point to the correct folder.");
 
+ 
     // load python configuration
     rapidjson::Document python_config_root;
     std::ifstream python_config_doc(python_config_path + "/python_config.json");
@@ -130,6 +131,7 @@ void cm_wind_landbosse::load_config(){
         python_config_doc.seekg(0);
     }
 #endif
+
     std::ostringstream tmp;
     tmp << python_config_doc.rdbuf();
     python_config_root.Parse(tmp.str().c_str());
@@ -142,6 +144,9 @@ void cm_wind_landbosse::load_config(){
 
 
     python_exec_path = python_config_root["exec_path"].GetString();
+    if (python_exec_path.empty())
+        throw exec_error("wind_landbosse", "Missing key 'exec_path' in 'python_config.json'.");
+
     auto str_python = std::string(get_python_path()) + "/" + python_exec_path;
     if (!util::file_exists( str_python.c_str()))
         throw exec_error("wind_landbosse", "Missing python executable 'exe_path' in 'python_config.json'.");
@@ -347,8 +352,11 @@ void cm_wind_landbosse::exec() {
     input_data.assign_match_case("hub_height_meters", *m_vartab->lookup("wind_turbine_hub_ht"));
     input_data.assign_match_case("rotor_diameter_m", *m_vartab->lookup("wind_turbine_rotor_diameter"));
 
+    // memory leak
     std::string input_json = ssc_data_to_json(&input_data);
 	std::string input_dict_as_text = input_json;
+
+
 	std::replace(input_dict_as_text.begin(), input_dict_as_text.end(), '\"', '\'');
 
     load_config();
@@ -372,6 +380,8 @@ void cm_wind_landbosse::exec() {
         m_vartab->assign("errors", std::to_string(int(0)));
     if (error_vd && error_vd->type == SSC_DATARR)
         m_vartab->assign("errors", error_vd->vec[0].str);
+
+
 }
 
 DEFINE_MODULE_ENTRY( wind_landbosse, "Land-based Balance-of-System Systems Engineering (LandBOSSE) cost model", 1 )

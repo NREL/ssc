@@ -36,9 +36,6 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 TEST_F(CMWindPowerIntegration, HubHeightInterpolation_cmod_windpower) {
     // Case 1: hubheight is 200, error
     ssc_data_unassign(data, "wind_resource_filename");
-//    var_data* windresourcedata = create_winddata_array(1, 1);
-//    var_table* vt = static_cast<var_table*>(data);
-//    vt->assign("wind_resource_data", *windresourcedata);
     var_table* vt = static_cast<var_table*>(data);
 
     auto windresourcedata = create_winddata_array(1, 1);
@@ -188,9 +185,6 @@ TEST_F(CMWindPowerIntegration, UsingDataArray_cmod_windpower) {
     // using hourly data
     ssc_data_unassign(data, "wind_resource_filename");
     var_table *vt = static_cast<var_table *>(data);
-//    var_data* windresourcedata = create_winddata_array(1, 1);
-//    vt->assign("wind_resource_data", *windresourcedata);
-
     auto windresourcedata = create_winddata_array(1, 1);
     ssc_data_set_table(data, "wind_resource_data", windresourcedata);
 
@@ -346,10 +340,8 @@ TEST_F(CMWindPowerIntegration, IcingAndLowTempCutoff_cmod_windpower) {
         else rh[i] = 0.0f;
     }
     var_data rh_vd = var_data(rh, 8760);
-//    windresourcedata->table.assign("rh", rh_vd);
     windresourcedata->assign("rh", rh_vd);
     auto *vt = static_cast<var_table *>(data);
-//    vt->assign("wind_resource_data", *windresourcedata);
     ssc_data_set_table(data, "wind_resource_data", windresourcedata);
     vt->assign("en_low_temp_cutoff", 1);
     vt->assign("en_icing_cutoff", 1);
@@ -571,8 +563,6 @@ TEST(windpower_landbosse, SetupPython) {
 	    return;
 	}
 
-//    rapidjson::IStreamWrapper iswd(python_config_doc);
-//    python_config_root.ParseStream(iswd);
     std::ostringstream tmp;
     tmp << python_config_doc.rdbuf();
     python_config_root.Parse(tmp.str().c_str());
@@ -612,8 +602,6 @@ bool check_Python_setup() {
 
     std::ifstream python_config_doc(configPath);
     rapidjson::Document python_config_root;
-//    rapidjson::IStreamWrapper iswc(python_config_doc);
-//    python_config_root.ParseStream(iswc);
     std::ostringstream tmp;
     tmp << python_config_doc.rdbuf();
     python_config_root.Parse(tmp.str().c_str());
@@ -629,7 +617,7 @@ TEST(windpower_landbosse, RunSuccess) {
     if (!check_Python_setup())
         return;
     
-    char file[256];
+    char file[1024];
     sprintf(file, "%s/test/input_docs/AR Northwestern-Flat Lands.srw", SSCDIR);
 
     auto *vd = new var_table;
@@ -653,7 +641,7 @@ TEST(windpower_landbosse, RunSuccess) {
     auto landbosse = ssc_module_create("wind_landbosse");
     
     ssc_module_exec(landbosse, vd); // memory leaks
-    /*
+    
     ASSERT_EQ(vd->lookup("errors")->str, "0");
     EXPECT_NEAR(vd->lookup("total_collection_cost")->num[0], 4202342, 1e2);
     EXPECT_NEAR(vd->lookup("total_development_cost")->num[0], 150000, 1e2);
@@ -681,9 +669,8 @@ TEST(windpower_landbosse, RunSuccess) {
     for (auto& i : all_outputs){
         EXPECT_GE(vd->lookup(i)->num[0], 0) << i;
     }
-    */
+   
     ssc_module_free(landbosse);
-    
     delete vd;
     
 }
