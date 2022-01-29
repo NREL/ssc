@@ -352,39 +352,43 @@ void cm_wind_landbosse::exec() {
     input_data.assign_match_case("hub_height_meters", *m_vartab->lookup("wind_turbine_hub_ht"));
     input_data.assign_match_case("rotor_diameter_m", *m_vartab->lookup("wind_turbine_rotor_diameter"));
 
-    // memory leak
-    std::string input_json = ssc_data_to_json(&input_data);
+    auto input_json = ssc_data_to_json(&input_data);
 	std::string input_dict_as_text = input_json;
 
 
 	std::replace(input_dict_as_text.begin(), input_dict_as_text.end(), '\"', '\'');
 
-    load_config();
+    try {
+        load_config();
 #ifdef __WINDOWS__
-	std::string output_json = call_python_module_windows(input_dict_as_text);
+        std::string output_json = call_python_module_windows(input_dict_as_text);
 #else
-    std::string output_json = call_python_module(input_dict_as_text);
+        std::string output_json = call_python_module(input_dict_as_text);
 #endif
-//    delete input_json;
+        //    delete input_json;
 
-	cleanOutputString(output_json);
-    auto output_data = static_cast<var_table*>(json_to_ssc_data(output_json.c_str()));
-    if (output_data->is_assigned("error")){
-        m_vartab->assign("errors", output_json);
+        cleanOutputString(output_json);
+        auto output_data = static_cast<var_table*>(json_to_ssc_data(output_json.c_str()));
+        if (output_data->is_assigned("error")) {
+            m_vartab->assign("errors", output_json);
+            ssc_data_free(output_data);
+            return;
+        }
+
+        m_vartab->merge(*output_data, false);
         ssc_data_free(output_data);
-        return;
+
+        auto error_vd = m_vartab->lookup("errors");
+        if (error_vd && error_vd->type == SSC_ARRAY)
+            m_vartab->assign("errors", std::to_string(int(0)));
+        if (error_vd && error_vd->type == SSC_DATARR)
+            m_vartab->assign("errors", error_vd->vec[0].str);
+
     }
-
-    m_vartab->merge(*output_data, false);
-    ssc_data_free(output_data);
-
-    auto error_vd = m_vartab->lookup("errors");
-    if (error_vd && error_vd->type == SSC_ARRAY)
-        m_vartab->assign("errors", std::to_string(int(0)));
-    if (error_vd && error_vd->type == SSC_DATARR)
-        m_vartab->assign("errors", error_vd->vec[0].str);
-
-
+    catch (exec_error& e) {
+        m_vartab->assign("errors", e.err_text);
+        delete input_json;
+    }
 }
 
 DEFINE_MODULE_ENTRY( wind_landbosse, "Land-based Balance-of-System Systems Engineering (LandBOSSE) cost model", 1 )

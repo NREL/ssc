@@ -104,13 +104,17 @@ GTEST_API_ int main(int argc, char **argv) {
 //    ::testing::GTEST_FLAG(filter) = "Turbine_powercurve_cmod_windpower_eqns.*"; //all 6 pass without mem leaks Windows 10
 //    ::testing::GTEST_FLAG(filter) = "sscapi_test.*"; //all 4 pass without mem leaks Windows 10
 
+ //   _CrtMemState memoryState = { 0 };
+ //   _CrtMemCheckpoint(&memoryState);
+
     // memory leak
     ::testing::GTEST_FLAG(filter) = "windpower_landbosse.RunSuccess"; //all 4 pass with mem leaks Windows 10
-	int status = RUN_ALL_TESTS();
+
+     int status = RUN_ALL_TESTS();
 
 /*
 #if defined( _WINDOWS) && defined(_DEBUG)
-    _CrtDumpMemoryLeaks();
+    _CrtMemDumpAllObjectsSince(&memoryState);
 #endif
 */
 	if (!status)
