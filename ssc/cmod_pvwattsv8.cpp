@@ -179,10 +179,11 @@ static var_info _cm_vtab_pvwattsv8[] = {
         { SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",                 "Monthly energy",                              "kWh",       "",                                             "Monthly",          "",                       "LENGTH=12",                          "" },
         { SSC_OUTPUT,	    SSC_MATRIX,		 "annual_energy_distribution_time","Annual energy production as function of Time",				"",				"",				"Heatmaps",			"",						"",							"" },
 
-        { SSC_OUTPUT,       SSC_NUMBER,      "solrad_annual",                  "Daily average solar irradiance",              "kWh/m2/day","",                                             "Annual",      "",                       "",                          "" },
-        { SSC_OUTPUT,       SSC_NUMBER,      "ac_annual",                      "Annual AC output",                     "kWh",       "",                                             "Annual",      "",                       "",                          "" },
-        { SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",                  "Annual energy",                               "kWh",       "",                                             "Annual",      "",                       "",                          "" },
-        { SSC_OUTPUT,       SSC_NUMBER,      "capacity_factor",                "Capacity factor",                             "%",         "",                                             "Annual",        "",                       "",                          "" },
+        { SSC_OUTPUT,       SSC_NUMBER,      "solrad_annual",                  "Daily average solar irradiance",              "kWh/m2/day","",                                              "Annual",      "",                       "",                          "" },
+        { SSC_OUTPUT,       SSC_NUMBER,      "ac_annual",                      "Annual AC output",                     "kWh",       "",                                                     "Annual",      "",                       "",                          "" },
+        { SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",                  "Annual energy",                               "kWh",       "",                                              "Annual",      "",                       "",                          "" },
+        { SSC_OUTPUT,       SSC_NUMBER,      "capacity_factor",                "Capacity factor based on DC system capacity",    "%",         "",                                           "Annual",        "",                       "",                          "" },
+        { SSC_OUTPUT,       SSC_NUMBER,      "capacity_factor_ac",             "Capacity factor based on AC system capacity",    "%",         "",                                           "Annual",        "",                       "",                          "" },
         { SSC_OUTPUT,       SSC_NUMBER,      "kwh_per_kw",                     "Energy yield",                           "kWh/kW",          "",                                             "Annual",        "",                       "",                          "" },
 
         { SSC_OUTPUT,       SSC_STRING,      "location",                       "Location ID",                                 "",          "",                                             "Location",      "*",                       "",                          "" },
@@ -1323,6 +1324,7 @@ public:
             double kWhperkW = util::kilowatt_to_watt * annual_kwh / pv.dc_nameplate;
             assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
             assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6))); //convert from kWh/kW to percent, so divide by 8760 hours and multiply by 100 percent
+            assign("capacity_factor_ac", var_data((ssc_number_t)util::kilowatt_to_watt* annual_kwh / pv.ac_nameplate / 87.6)); //same conversion as above
         }
 
         // location outputs

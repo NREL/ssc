@@ -65,9 +65,11 @@ TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, DefaultNoFinancialModel_cmod_pvwat
     EXPECT_NEAR((double)monthly_energy[10], 464.264, error_tolerance) << "Monthly energy of November";
     EXPECT_NEAR((double)monthly_energy[11], 422.388, error_tolerance) << "Month energy of December";
 
-    ssc_number_t capacity_factor;
+    ssc_number_t capacity_factor, capacity_factor_ac;
     ssc_data_get_number(data, "capacity_factor", &capacity_factor);
-    EXPECT_NEAR(capacity_factor, 20.178, error_tolerance) << "Capacity factor";
+    EXPECT_NEAR(capacity_factor, 20.178, error_tolerance) << "DC Capacity factor";
+    ssc_data_get_number(data, "capacity_factor_ac", &capacity_factor_ac);
+    EXPECT_NEAR(capacity_factor_ac, 24.214, error_tolerance) << "AC Capacity factor";
 
     ssc_number_t kwh_per_kw;
     ssc_data_get_number(data, "kwh_per_kw", &kwh_per_kw);
@@ -182,9 +184,11 @@ TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, SubhourlyWeather_cmod_pvwattsv8) {
         //EXPECT_NEAR(annual_energy, 6523.727, error_tolerance) << "Annual energy.";
         EXPECT_NEAR(annual_energy, 6590.761, error_tolerance) << "Annual energy.";
 
-        ssc_number_t capacity_factor;
+        ssc_number_t capacity_factor, capacity_factor_ac;
         ssc_data_get_number(data, "capacity_factor", &capacity_factor);
-        EXPECT_NEAR(capacity_factor, 18.87, 0.1) << "Capacity factor";
+        EXPECT_NEAR(capacity_factor, 18.87, 0.1) << "DC Capacity factor";
+        ssc_data_get_number(data, "capacity_factor_ac", &capacity_factor_ac);
+        EXPECT_NEAR(capacity_factor_ac, 22.57, 0.1) << "AC Capacity factor";
 
     }
 }
