@@ -86,8 +86,8 @@ static var_info vtab_utility_rate5[] = {
 	{ SSC_OUTPUT, SSC_ARRAY, "year1_hourly_ec_with_system", "Energy charge with system (year 1 hourly)", "$", "", "Time Series", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "year1_hourly_ec_without_system", "Energy charge without system (year 1 hourly)", "$", "", "Time Series", "*", "", "" },
 
-	{ SSC_OUTPUT, SSC_ARRAY, "year1_hourly_dc_with_system", "Demand charge with system (year 1 hourly)", "$", "", "Time Series", "*", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "year1_hourly_dc_without_system", "Demand charge without system (year 1 hourly)", "$", "", "Time Series", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "year1_hourly_dc_with_system", "Incremental demand charge with system (year 1 hourly)", "$", "", "Time Series", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "year1_hourly_dc_without_system", "Incremental demand charge without system (year 1 hourly)", "$", "", "Time Series", "*", "", "" },
 
 	{ SSC_OUTPUT, SSC_ARRAY, "year1_hourly_ec_tou_schedule", "TOU period for energy charges (year 1 hourly)", "", "", "Time Series", "*", "", "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_dc_tou_schedule",       "TOU period for demand charges (year 1 hourly)", "", "", "Time Series", "*", "", "" },
@@ -424,7 +424,7 @@ void rate_setup::setup(var_table* vt, int num_recs_yearly, size_t nyears, rate_d
             ss << "The ur_dc_billing_demand_periods matrix should have 2 columns. Instead it has " << ncols << " columns.";
             throw exec_error(cm_name, ss.str());
         }
-        else if (nrows != rate.m_dc_tou_periods.size()) {
+        else if (dc_enabled && nrows != rate.m_dc_tou_periods.size()) {
             std::ostringstream ss;
             ss << "The ur_dc_billing_demand_periods matrix should have " << rate.m_dc_tou_periods.size() << " rows, to match the number of TOU periods. Instead it has " << nrows << " rows.";
             throw exec_error(cm_name, ss.str());
@@ -671,13 +671,14 @@ public:
             if (units == 0 || units == 2) {
                 for (i = 0; i < month.ec_periods.size(); i++)
                 {
-                    std::vector<int> tiers = month.ec_periods_tiers[i];
+                    int period = month.ec_periods[i] - 1;
+                    std::vector<int> tiers = month.ec_periods_tiers[period];
                     for (j = 0; j < tiers.size(); j++)
                     {
                         units = month.ec_tou_units.at(i, j);
                         if (units == 1 || units == 3) {
                             log_msg = true;
-                            e_period = (int) i;
+                            e_period = period;
                             e_tier = (int) j;
                             break;
                         }
@@ -840,8 +841,7 @@ public:
 		}
 
         bool dc_enabled = as_boolean("ur_dc_enable");
-        // Assume if the kwh per kw rate exists in January that it exists in all of the months
-        rate.uses_billing_demand = rate.has_kwh_per_kw_rate(0) || dc_enabled;
+        rate.uses_billing_demand = rate.has_kwh_per_kw_rate() || dc_enabled;
         ssc_number_t* billing_demand_w_sys_ym = NULL;
         ssc_number_t* billing_demand_wo_sys_ym = NULL;
         if (rate.uses_billing_demand) {
@@ -1001,10 +1001,15 @@ public:
                 if (rate.en_billing_demand_lookback) {
                     double monthly_peak_demand = 0.0;
                     std::vector<int> dc_periods = rate.m_month[j].dc_periods;
-                    for (size_t p = 0; p < dc_periods.size(); p++) {
-                        double tou_demand = rate.m_month[j].dc_tou_peak[p];
-                        if (rate.bd_tou_periods.at(dc_periods[p]) && tou_demand > monthly_peak_demand) {
-                            monthly_peak_demand = tou_demand;
+                    if (dc_periods.size() == 0) {
+                        monthly_peak_demand = rate.m_month[j].dc_flat_peak;
+                    }
+                    else {
+                        for (size_t p = 0; p < dc_periods.size(); p++) {
+                            double tou_demand = rate.m_month[j].dc_tou_peak[p];
+                            if (rate.bd_tou_periods.at(dc_periods[p]) && tou_demand > monthly_peak_demand) {
+                                monthly_peak_demand = tou_demand;
+                            }
                         }
                     }
                     monthly_billing_demand_peaks_wo_sys[j] = monthly_peak_demand;
@@ -1489,10 +1494,15 @@ public:
                 if (rate.en_billing_demand_lookback) {
                     double monthly_peak_demand = 0.0;
                     std::vector<int> dc_periods = rate.m_month[j].dc_periods;
-                    for (size_t p = 0; p < dc_periods.size(); p++) {
-                        double tou_demand = rate.m_month[j].dc_tou_peak[p];
-                        if (rate.bd_tou_periods.at(dc_periods[p]) && tou_demand > monthly_peak_demand) {
-                            monthly_peak_demand = tou_demand;
+                    if (dc_periods.size() == 0) {
+                        monthly_peak_demand = rate.m_month[j].dc_flat_peak;
+                    }
+                    else {
+                        for (size_t p = 0; p < dc_periods.size(); p++) {
+                            double tou_demand = rate.m_month[j].dc_tou_peak[p];
+                            if (rate.bd_tou_periods.at(dc_periods[p]) && tou_demand > monthly_peak_demand) {
+                                monthly_peak_demand = tou_demand;
+                            }
                         }
                     }
                     monthly_billing_demand_peaks_w_sys[j] = monthly_peak_demand;
@@ -1647,8 +1657,9 @@ public:
 		{
 			ur_month& curr_month = rate.m_month[m];
             curr_month.reset();
+            prev_demand_charge = 0.0;
             
-            if (dc_enabled) {
+            if (dc_enabled || rate.uses_billing_demand) {
                 rate.init_dc_peak_vectors(m);
                 if (rate.en_billing_demand_lookback) {
                     rate.billing_demand[m] = rate.get_billing_demand(m);
@@ -1665,16 +1676,17 @@ public:
 					for (s = 0; s < (int)steps_per_hour && c < (int)m_num_rec_yearly; s++)
 					{
 						curr_month.update_net_and_peak(e_in[c], p_in[c], c);
-                        if (dc_enabled) {
-                            // set peak per period - no tier accumulation
-                            rate.find_dc_tou_peak(m, p_in[c], c);
+                        // set peak per period - no tier accumulation
+                        rate.find_dc_tou_peak(m, p_in[c], c);
 
-                            if (rate.en_billing_demand_lookback) {
-                                rate.billing_demand[m] = rate.get_billing_demand(m);
-                            }
-                            else {
-                                rate.billing_demand[m] = curr_month.dc_flat_peak;
-                            }
+                        if (rate.en_billing_demand_lookback) {
+                            rate.billing_demand[m] = rate.get_billing_demand(m);
+                        }
+                        else {
+                            rate.billing_demand[m] = curr_month.dc_flat_peak;
+                        }
+
+                        if (dc_enabled) {
                             curr_demand_charge = rate.get_demand_charge(m, year);
                             demand_charge[c] = curr_demand_charge - prev_demand_charge;
                             prev_demand_charge = curr_demand_charge;
@@ -1683,6 +1695,9 @@ public:
 					}
 				}
 			}
+            if (dc_enabled) {
+                rate.set_demand_peak_hours(m);
+            }
 		}
 
 		// monthly cumulative excess energy (positive = excess energy, negative = excess load)
@@ -2185,8 +2200,9 @@ public:
         {
             ur_month& curr_month = rate.m_month[m];
             curr_month.reset();
+            prev_demand_charge = 0.0;
 
-            if (dc_enabled) {
+            if (dc_enabled || rate.uses_billing_demand) {
                 rate.init_dc_peak_vectors(m);
                 if (rate.en_billing_demand_lookback) {
                     rate.billing_demand[m] = rate.get_billing_demand(m);
@@ -2203,16 +2219,18 @@ public:
                     for (s = 0; s < (int)steps_per_hour && c < (int)m_num_rec_yearly; s++)
                     {
                         curr_month.update_net_and_peak(e_in[c], p_in[c], c);
-                        if (dc_enabled) {
-                            // set peak per period - no tier accumulation
-                            rate.find_dc_tou_peak(m, p_in[c], c);
 
-                            if (rate.en_billing_demand_lookback) {
-                                rate.billing_demand[m] = rate.get_billing_demand(m);
-                            }
-                            else {
-                                rate.billing_demand[m] = curr_month.dc_flat_peak;
-                            }
+                        // set peak per period - no tier accumulation
+                        rate.find_dc_tou_peak(m, p_in[c], c);
+
+                        if (rate.en_billing_demand_lookback) {
+                            rate.billing_demand[m] = rate.get_billing_demand(m);
+                        }
+                        else {
+                            rate.billing_demand[m] = curr_month.dc_flat_peak;
+                        }
+
+                        if (dc_enabled) {
                             curr_demand_charge = rate.get_demand_charge(m, year);
                             demand_charge[c] = curr_demand_charge - prev_demand_charge;
                             prev_demand_charge = curr_demand_charge;
@@ -2220,6 +2238,9 @@ public:
                         c++;
                     }
                 }
+            }
+            if (dc_enabled) {
+                rate.set_demand_peak_hours(m);
             }
         }
 

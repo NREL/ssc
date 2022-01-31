@@ -478,18 +478,23 @@ void dispatch_t::dispatch_dc_outage_step(size_t lifetimeIndex) {
 
     if ((pv_kwac - batt_losses) * (1 - ac_loss_percent) > crit_load_kwac) {
         double remaining_kwdc = -(pv_kwac * (1 - ac_loss_percent) - crit_load_kwac) / dc_ac_eff + pv_clipped;
-        remaining_kwdc = fmax((remaining_kwdc + batt_losses) / dc_dc_eff, max_charge_kwdc);
+        remaining_kwdc = fmax((remaining_kwdc + batt_losses), max_charge_kwdc);
         m_batteryPower->powerBatteryTarget = remaining_kwdc;
         m_batteryPower->powerBatteryDC = remaining_kwdc;
         runDispatch(lifetimeIndex);
+        double dc_input = pv_kwdc + remaining_kwdc;
+        double est_crit_load_unmet = m_batteryPower->powerCritLoadUnmet;
         while (m_batteryPower->powerCritLoadUnmet > tolerance) {
             _Battery->set_state(Battery_initial);
+            dc_input = pv_kwdc + remaining_kwdc + (m_batteryPower->powerCritLoadUnmet) / dc_ac_eff;
             // remaining_kw_dc is a negative number, so add it to pv_kwdc to reduce inverter dc power
-            m_batteryPower->sharedInverter->calculateACPower(pv_kwdc + remaining_kwdc, V_pv, m_batteryPower->sharedInverter->Tdry_C);
+            m_batteryPower->sharedInverter->calculateACPower(dc_input, V_pv, m_batteryPower->sharedInverter->Tdry_C);
             dc_ac_eff = m_batteryPower->sharedInverter->efficiencyAC * 0.01;
-            pv_kwac = m_batteryPower->sharedInverter->powerAC_kW;
-            remaining_kwdc = -(pv_kwac * (1 - ac_loss_percent) - crit_load_kwac) / dc_ac_eff + pv_clipped;
-            remaining_kwdc = fmax((remaining_kwdc + batt_losses) / dc_dc_eff, max_charge_kwdc);
+            pv_kwac = m_batteryPower->sharedInverter->powerAC_kW; // Re-estimate AC output based on new input power
+            est_crit_load_unmet = fmax(m_batteryPower->powerCritLoad - pv_kwac * (1 - ac_loss_percent), 0.0);
+            remaining_kwdc = (dc_input - pv_kwdc) + (est_crit_load_unmet) / dc_ac_eff + pv_clipped; // Reduce remaining_kwdc by any errors between crit load and pv output
+            remaining_kwdc = fmax((remaining_kwdc + batt_losses), max_charge_kwdc);
+            remaining_kwdc = fmin(remaining_kwdc, 0.0);
             m_batteryPower->powerBatteryTarget = remaining_kwdc;
             m_batteryPower->powerBatteryDC = remaining_kwdc;
             runDispatch(lifetimeIndex);

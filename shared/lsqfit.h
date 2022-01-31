@@ -244,6 +244,10 @@ int linlsqfit(double *slope, double *intercept, double *xdata, double *ydata, si
 #elif defined(_IOS_VER) && _IOS_VER
 #define mpfinite(x) isfinite(x)
 
+/* macOS has isfinite */
+#elif defined(__clang__) && __clang__
+#define mpfinite(x) isfinite(x)
+
 /* Default is to assume that compiler/library has finite() function */
 #else
 #define mpfinite(x) finite(x)
