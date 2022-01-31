@@ -86,8 +86,8 @@ static var_info vtab_utility_rate5[] = {
 	{ SSC_OUTPUT, SSC_ARRAY, "year1_hourly_ec_with_system", "Energy charge with system (year 1 hourly)", "$", "", "Time Series", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "year1_hourly_ec_without_system", "Energy charge without system (year 1 hourly)", "$", "", "Time Series", "*", "", "" },
 
-	{ SSC_OUTPUT, SSC_ARRAY, "year1_hourly_dc_with_system", "Demand charge with system (year 1 hourly)", "$", "", "Time Series", "*", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "year1_hourly_dc_without_system", "Demand charge without system (year 1 hourly)", "$", "", "Time Series", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "year1_hourly_dc_with_system", "Incremental demand charge with system (year 1 hourly)", "$", "", "Time Series", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "year1_hourly_dc_without_system", "Incremental demand charge without system (year 1 hourly)", "$", "", "Time Series", "*", "", "" },
 
 	{ SSC_OUTPUT, SSC_ARRAY, "year1_hourly_ec_tou_schedule", "TOU period for energy charges (year 1 hourly)", "", "", "Time Series", "*", "", "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_dc_tou_schedule",       "TOU period for demand charges (year 1 hourly)", "", "", "Time Series", "*", "", "" },
@@ -1657,6 +1657,7 @@ public:
 		{
 			ur_month& curr_month = rate.m_month[m];
             curr_month.reset();
+            prev_demand_charge = 0.0;
             
             if (dc_enabled || rate.uses_billing_demand) {
                 rate.init_dc_peak_vectors(m);
@@ -1694,6 +1695,9 @@ public:
 					}
 				}
 			}
+            if (dc_enabled) {
+                rate.set_demand_peak_hours(m);
+            }
 		}
 
 		// monthly cumulative excess energy (positive = excess energy, negative = excess load)
@@ -2196,6 +2200,7 @@ public:
         {
             ur_month& curr_month = rate.m_month[m];
             curr_month.reset();
+            prev_demand_charge = 0.0;
 
             if (dc_enabled || rate.uses_billing_demand) {
                 rate.init_dc_peak_vectors(m);
@@ -2233,6 +2238,9 @@ public:
                         c++;
                     }
                 }
+            }
+            if (dc_enabled) {
+                rate.set_demand_peak_hours(m);
             }
         }
 
