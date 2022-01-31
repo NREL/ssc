@@ -1520,6 +1520,7 @@ battstor::~battstor()
     delete battery_metrics;
     delete dispatch_model;
     delete charge_control;
+    if (util_rate_data != NULL) delete util_rate_data;
 }
 
 battstor::battstor(const battstor& orig) {
