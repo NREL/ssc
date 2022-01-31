@@ -472,7 +472,7 @@ void BatteryPowerFlow::calculateACConnected()
 
     double P_loss_coverage = 0;
     if (m_BatteryPower->isOutageStep) {
-        P_loss_coverage = P_gen_ac - P_batt_to_load_ac - P_pv_to_load_ac - P_fuelcell_to_load_ac - P_ac_losses;
+        P_loss_coverage = P_gen_ac - P_batt_to_load_ac - P_pv_to_load_ac - P_fuelcell_to_load_ac + P_ac_losses;
         // If gen is greater than load and losses, then there's curtailment and we don't need to worry about it
         if (P_loss_coverage > 0) {
             P_loss_coverage = 0;
@@ -484,6 +484,9 @@ void BatteryPowerFlow::calculateACConnected()
         }
         P_grid_to_load_ac = 0;
         P_grid_ac = P_gen_ac - P_crit_load_ac - P_interconnection_loss_ac + P_crit_load_unmet_ac + P_unmet_losses; // This should be zero, but if it's not the error checking below will fix it
+        if (P_gen_ac < 0.0 && P_unmet_losses > 0.0) {
+            P_gen_ac += P_unmet_losses; // Unmet losses should be categorized as such, not in gen
+        }
     }
     else {
         P_grid_to_load_ac = P_load_ac - P_pv_to_load_ac - P_batt_to_load_ac - P_fuelcell_to_load_ac;
@@ -825,7 +828,7 @@ void BatteryPowerFlow::calculateDCConnected()
     
 
     if (m_BatteryPower->isOutageStep) {
-        double P_loss_coverage = P_gen_ac - P_batt_to_load_ac - P_pv_to_load_ac - P_ac_losses;
+        double P_loss_coverage = P_gen_ac - P_batt_to_load_ac - P_pv_to_load_ac + P_ac_losses;
         // If gen is greater than load and losses, then there's curtailment and we don't need to worry about it
         if (P_loss_coverage > 0) {
             P_loss_coverage = 0;
@@ -835,6 +838,9 @@ void BatteryPowerFlow::calculateDCConnected()
         if (P_crit_load_unmet_ac > P_crit_load_ac) {
             P_unmet_losses = P_crit_load_unmet_ac - P_crit_load_ac;
             P_crit_load_unmet_ac = P_crit_load_ac;
+            if (P_gen_ac < 0.0 && P_unmet_losses > 0.0) {
+                P_gen_ac += P_unmet_losses; // Unmet losses should be categorized as such, not in gen
+            }
         }
         P_grid_to_load_ac = 0;
         P_grid_ac = 0;
