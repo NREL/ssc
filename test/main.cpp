@@ -108,7 +108,10 @@ GTEST_API_ int main(int argc, char **argv) {
  //   _CrtMemCheckpoint(&memoryState);
 
     // memory leak
-    ::testing::GTEST_FLAG(filter) = "windpower_landbosse.RunSuccess"; //all 4 pass with mem leaks Windows 10
+//    ::testing::GTEST_FLAG(filter) = "windpower_landbosse.RunSuccess"; //all 4 pass with mem leaks from GoogleTest FAIL Windows 10
+ //     ::testing::GTEST_FLAG(filter) = "CMPvsamv1BatteryIntegration_cmod_pvsamv1.*"; // all 18 of 20 pass with no memory leaks  windows 10
+//    ::testing::GTEST_FLAG(filter) = "CMPvsamv1BatteryIntegration_cmod_pvsamv1.LCOS_test_cashloan"; // pass with many memory leaks  windows 10
+    ::testing::GTEST_FLAG(filter) = "CMPvsamv1BatteryIntegration_cmod_pvsamv1.ResidentialDCBatteryModelPriceSignalDispatch"; // pass with many memory leaks  windows 10
 
      int status = RUN_ALL_TESTS();
 
