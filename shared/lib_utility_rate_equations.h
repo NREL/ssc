@@ -164,6 +164,7 @@ public:
 	// Runs each month
 	void init_dc_peak_vectors(int month); // Reinitialize vectors for re-use of memory year to year
 	ssc_number_t get_demand_charge(int month, size_t year);  // Sum time of use and flat demand charges to return total cost. If the mismatch between int month and size_t year looks wierd to you, you're going to have to change lib_util to fix it. Good luck.
+    void set_demand_peak_hours(int month);
     // Returns error codes so compute module can print errors. 0: no error, 10x: error in previous month, 20x: error in current month. x is the period where the error occured
     int transfer_surplus(ur_month& curr_month, ur_month& prev_month); // For net metering rollovers, used between months to copy data
     void compute_surplus(ur_month& curr_month); // For net metering rollovers, used within a single month prior to cost calculations
