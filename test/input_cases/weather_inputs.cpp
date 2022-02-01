@@ -35,8 +35,6 @@ var_table* create_winddata_array(size_t intervalsPerHour, size_t nMeasurementHei
     auto heights = vt->allocate("heights", 4 * nMeasurementHeights);
     auto fields = vt->allocate("fields", 4 * nMeasurementHeights);
 
-
-//    double* year_data = new double[4 * timeLength * nMeasurementHeights];
     for (size_t i = 0; i < timeLength; i++) {
         for (size_t j = 0; j < nMeasurementHeights; j++) {
             size_t index = i * 4 * nMeasurementHeights + j * 4;
@@ -47,8 +45,6 @@ var_table* create_winddata_array(size_t intervalsPerHour, size_t nMeasurementHei
         }
     }
 
-//    double* height = new double[4 * nMeasurementHeights];
-//    double* fields = new double[4 * nMeasurementHeights];				// (temp=1,pres=2,speed=3,dir=4)
     for (size_t i = 0; i < nMeasurementHeights; i++) {
         for (size_t j = 0; j < 4; j++) {
             heights[i * 4 + j] = (double)(80 + i * 10);
@@ -58,66 +54,7 @@ var_table* create_winddata_array(size_t intervalsPerHour, size_t nMeasurementHei
 
 
     return vt;
-/*
-    var_data data_vd = var_data(year_data, (int)timeLength, 4 * nMeasurementHeights);
-    var_data height_vd = var_data(height, 4 * nMeasurementHeights);
-    var_data fields_vd = var_data(fields, 4 * nMeasurementHeights);
-
-    var_table* vt = new var_table;
-    vt->assign("heights", height_vd);
-    vt->assign("data", data_vd);
-    vt->assign("fields", fields_vd);
-
-    var_data* input = new var_data;
-    input->type = SSC_TABLE;
-    input->table = *vt;
-    return input;
-    */
 }
-/*
-
-var_data* create_winddata_array(int intervalsPerHour, int nMeasurementHeights){
-	size_t timeLength = 8760 * intervalsPerHour;
-	double* year_data = new double[4 * timeLength * nMeasurementHeights];
-	for (int i = 0; i < (int)timeLength; i++){
-		for (int j = 0; j < nMeasurementHeights; j++){
-			int index = i * 4 * nMeasurementHeights + j * 4;
-			year_data[index] = (double)(50 + 5 * j);											// temp
-			year_data[index + 1] = (double)(0.95 + 0.05 * j);								// pres
-			year_data[index + 2] = (double)(5*((double)i / (double)timeLength) + 5 * j);		// spd
-			year_data[index + 3] = (double)(180 + 20 * j);									// dir
-		}
-	}
-
-	double* height = new double[4 * nMeasurementHeights];
-	double* fields = new double[4 * nMeasurementHeights];				// (temp=1,pres=2,speed=3,dir=4)
-	for (int i = 0; i < nMeasurementHeights; i++){
-		for (int j = 0; j < 4; j++){
-			height[i * 4 + j] = (double)(80 + i*10);
-			fields[i * 4 + j] = (double)j+1;
-		}
-	}
-	var_data data_vd = var_data(year_data, (int)timeLength, 4 * nMeasurementHeights);
-	var_data height_vd = var_data(height, 4 * nMeasurementHeights);
-	var_data fields_vd = var_data(fields, 4 * nMeasurementHeights);
-
-	var_table* vt = new var_table;
-	vt->assign("heights", height_vd);
-	vt->assign("data", data_vd);
-	vt->assign("fields", fields_vd);
-
-	var_data* input = new var_data;
-	input->type = SSC_TABLE;
-	input->table = *vt;
-	return input;
-}
-
-void free_winddata_array(var_data* data){
-	data->table.unassign("heights");
-	data->table.unassign("data");
-	data->table.unassign("fields");
-}
-*/
 void free_winddata_array(var_table* data) {
 
     data->clear();

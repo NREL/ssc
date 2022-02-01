@@ -46,7 +46,7 @@ GTEST_API_ int main(int argc, char **argv) {
 //	  ::testing::GTEST_FLAG(filter) = "splinterTests*";
 //	  ::testing::GTEST_FLAG(filter) = "SunsetCaseIrradProc*";
 //	  ::testing::GTEST_FLAG(filter) = "BatteryPowerFlowTest*";
-//	::testing::GTEST_FLAG(filter) = "CMGeneric*";
+	::testing::GTEST_FLAG(filter) = "CMGeneric*";
 //	::testing::GTEST_FLAG(filter) = "CMGeothermal*";
 //		::testing::GTEST_FLAG(filter) = "CMPvsamv1PowerIntegration.NoFinancialModelShading";
 //	::testing::GTEST_FLAG(filter) = "CMPvwattsV5Integration.DifferentTechnologyInputs";
@@ -71,7 +71,6 @@ GTEST_API_ int main(int argc, char **argv) {
 //	::testing::GTEST_FLAG(filter) = "BatteryPowerFlowTest_lib_battery_powerflow.TestDCConnected";
 //	::testing::GTEST_FLAG(filter) = "CMPvwattsV7Integration_cmod_pvwattsv7.IntermediateOutputTesting";
 //	::testing::GTEST_FLAG(filter) = "CmodCashLoanTest*";
-//    ::testing::GTEST_FLAG(filter) = "CM_MHKWave*";
 //    ::testing::GTEST_FLAG(filter) = "windpower_landbosse*";
 //    ::testing::GTEST_FLAG(filter) = "save_as_JSON_test_run*";
 //    ::testing::GTEST_FLAG(filter) = "csp_tower*";
@@ -103,16 +102,15 @@ GTEST_API_ int main(int argc, char **argv) {
 //    ::testing::GTEST_FLAG(filter) = "CMWindPowerIntegration.*"; //all 10 pass without mem leaks Windows 10
 //    ::testing::GTEST_FLAG(filter) = "Turbine_powercurve_cmod_windpower_eqns.*"; //all 6 pass without mem leaks Windows 10
 //    ::testing::GTEST_FLAG(filter) = "sscapi_test.*"; //all 4 pass without mem leaks Windows 10
+//    ::testing::GTEST_FLAG(filter) = "CMPvsamv1BatteryIntegration_cmod_pvsamv1.*"; // all 20 pass with no memory leaks  windows 10 and macOS 12.0.1
 
  //   _CrtMemState memoryState = { 0 };
  //   _CrtMemCheckpoint(&memoryState);
 
     // memory leak
- //   ::testing::GTEST_FLAG(filter) = "windpower_landbosse.RunSuccess"; //all 4 pass with mem leaks from GoogleTest FAIL Windows 10
-      ::testing::GTEST_FLAG(filter) = "CMPvsamv1BatteryIntegration_cmod_pvsamv1.*"; // all 18 of 20 pass with no memory leaks  windows 10
- //   ::testing::GTEST_FLAG(filter) = "CMPvsamv1BatteryIntegration_cmod_pvsamv1.LCOS_test_cashloan:CMPvsamv1BatteryIntegration_cmod_pvsamv1.ResidentialDCBatteryModelPriceSignalDispatch:CMWindPowerIntegration.*"; // pass with many memory leaks  windows 10
-//    ::testing::GTEST_FLAG(filter) = "CMPvsamv1BatteryIntegration_cmod_pvsamv1.ResidentialDCBatteryModelPriceSignalDispatch"; // pass with many memory leaks  windows 10
 //     ::testing::GTEST_FLAG(filter) = "windpower_landbosse.*"; //all 4 pass with mem leaks from GoogleTest FAIL Windows 10
+    ::testing::GTEST_FLAG(filter) = "CM_MHKWave*"; // 2 of 8 pass with no mem leaks in Windows 10
+
 
      int status = RUN_ALL_TESTS();
 
