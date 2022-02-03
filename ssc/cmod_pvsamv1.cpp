@@ -58,6 +58,9 @@ static var_info _cm_vtab_pvsamv1[] = {
         {SSC_INPUT, SSC_NUMBER,   "inverter_count",                       "Number of inverters",                                 "",       "",                                                                                                                                                                                      "System Design",                                         "*",                                  "INTEGER,POSITIVE",    "" },
         {SSC_INPUT, SSC_NUMBER,   "enable_mismatch_vmax_calc",            "Enable mismatched subarray Vmax calculation",         "",       "",                                                                                                                                                                                      "System Design",                                         "?=0",                                "BOOLEAN",             "" },
 
+        {SSC_INPUT, SSC_NUMBER,   "use_measured_temp",                    "Use measured temperatures",         "0/1",       "",                                                                                                                                                                                      "System Design",                                         "?=0",                                "INTEGER,MIN=0,MAX=1",             "" },
+        {SSC_INPUT, SSC_ARRAY,    "measured_temp_array",                   "Lifetime daily AC losses",                            "%",      "",                                                                                                                                                                                      "Lifetime",                                              "en_ac_lifetime_losses=1",            "",                    "" },
+
         // subarray 1
         {SSC_INPUT, SSC_NUMBER,   "subarray1_nstrings",                   "Sub-array 1 Number of parallel strings",              "",       "",                                                                                                                                                                                      "System Design",                                         "",                                   "INTEGER",             "" },
         {SSC_INPUT, SSC_NUMBER,   "subarray1_modules_per_string",         "Sub-array 1 Modules per string",                      "",       "",                                                                                                                                                                                      "System Design",                                         "*",                                  "INTEGER,POSITIVE",    "" },
@@ -985,6 +988,16 @@ void cm_pvsamv1::exec()
     double module_watts_stc = Subarrays[0]->Module->moduleWattsSTC;
     SharedInverter* sharedInverter = PVSystem->m_sharedInverter.get();
 
+    std::vector<ssc_number_t> measured_temp; measured_temp.reserve(nlifetime);
+    size_t measured_temp_size;
+    int use_measured_temp = (as_integer("use_measured_temp") == 1 && is_assigned("measured_temp_array"));
+    if (as_integer("use_measured_temp") == 1 && is_assigned("measured_temp_array")) {
+        measured_temp = as_vector_ssc_number_t("measured_temp_array");
+        measured_temp_size = measured_temp.size();
+        if (measured_temp_size != nlifetime)
+            throw exec_error("pvsamv1", "The measured temperature array must be the size of nyears * nrecords per year");
+    }
+
     //overwrite tilt with latitude if flag is set- can't do this in PVIOManager because need latitude from weather file
     //also check here for tilt > 0 for tracking systems, since this is a very uncommon configuration but an easy mistake to make
     for (size_t nn = 0; nn < num_subarrays; nn++)
@@ -1494,7 +1507,10 @@ void cm_pvsamv1::exec()
                             ((double)wf.hour) + wf.minute / 60.0,
                             radmode, Subarrays[nn]->poa.usePOAFromWF);
                         // voltage set to -1 for max power
-                        (*Subarrays[nn]->Module->cellTempModel)(in, *Subarrays[nn]->Module->moduleModel, -1.0, tcell);
+                        if (use_measured_temp == 1)
+                            tcell = measured_temp[idx];
+                        else
+                            (*Subarrays[nn]->Module->cellTempModel)(in, *Subarrays[nn]->Module->moduleModel, -1.0, tcell);
                     }
                     double shadedb_str_vmp_stc = Subarrays[nn]->nModulesPerString * Subarrays[nn]->Module->voltageMaxPower;
                     double shadedb_mppt_lo = PVSystem->Inverter->mpptLowVoltage;
@@ -1792,7 +1808,10 @@ void cm_pvsamv1::exec()
                             {
                                 double tcell = wf.tdry;
                                 // calculate cell temperature using selected temperature model
-                                (*Subarrays[nn]->Module->cellTempModel)(in, *Subarrays[nn]->Module->moduleModel, V, tcell);
+                                if (use_measured_temp == 1)
+                                    tcell = measured_temp[idx];
+                                else
+                                    (*Subarrays[nn]->Module->cellTempModel)(in, *Subarrays[nn]->Module->moduleModel, V, tcell);
                                 // calculate module power output using conversion model previously specified
                                 (*Subarrays[nn]->Module->moduleModel)(in, tcell, V, out);
                             }
@@ -1839,7 +1858,10 @@ void cm_pvsamv1::exec()
                         if (stringVoltage != -1) module_voltage = stringVoltage / (double)Subarrays[nn]->nModulesPerString;
                         // calculate cell temperature using selected temperature model
                         // calculate module power output using conversion model previously specified
-                        (*Subarrays[nn]->Module->cellTempModel)(in[nn], *Subarrays[nn]->Module->moduleModel, module_voltage, tcell);
+                        if (use_measured_temp == 1)
+                            tcell = measured_temp[idx];
+                        else
+                            (*Subarrays[nn]->Module->cellTempModel)(in[nn], *Subarrays[nn]->Module->moduleModel, module_voltage, tcell);
 
                         // begin Transient Thermal model
                         // steady state cell temperature - confirm modification from module model to cell temp
@@ -1955,7 +1977,10 @@ void cm_pvsamv1::exec()
 
                                 //recalculate power at the correct voltage
                                 double module_voltage = avgVoltage / (double)Subarrays[nn]->nModulesPerString;
-                                (*Subarrays[nn]->Module->cellTempModel)(in[nn], *Subarrays[nn]->Module->moduleModel, module_voltage, tcell);
+                                if (use_measured_temp == 1)
+                                    tcell = measured_temp[idx];
+                                else
+                                    (*Subarrays[nn]->Module->cellTempModel)(in[nn], *Subarrays[nn]->Module->moduleModel, module_voltage, tcell);
                                 (*Subarrays[nn]->Module->moduleModel)(in[nn], tcell, module_voltage, out[nn]);
 
                                 if (iyear == 0 || save_full_lifetime_variables == 1)	mpptVoltageClipping[nn] -= out[nn].Power; //subtract the power that remains after voltage clipping in order to get the total loss. if no power was lost, all the power will be subtracted away again.
