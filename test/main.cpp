@@ -46,7 +46,7 @@ GTEST_API_ int main(int argc, char **argv) {
 //	  ::testing::GTEST_FLAG(filter) = "splinterTests*";
 //	  ::testing::GTEST_FLAG(filter) = "SunsetCaseIrradProc*";
 //	  ::testing::GTEST_FLAG(filter) = "BatteryPowerFlowTest*";
-	::testing::GTEST_FLAG(filter) = "CMGeneric*";
+//	::testing::GTEST_FLAG(filter) = "CMGeneric*";
 //	::testing::GTEST_FLAG(filter) = "CMGeothermal*";
 //		::testing::GTEST_FLAG(filter) = "CMPvsamv1PowerIntegration.NoFinancialModelShading";
 //	::testing::GTEST_FLAG(filter) = "CMPvwattsV5Integration.DifferentTechnologyInputs";
@@ -109,7 +109,7 @@ GTEST_API_ int main(int argc, char **argv) {
 
     // memory leak
 //     ::testing::GTEST_FLAG(filter) = "windpower_landbosse.*"; //all 4 pass with mem leaks from GoogleTest FAIL Windows 10
-    ::testing::GTEST_FLAG(filter) = "CM_MHKWave*"; // 2 of 8 pass with no mem leaks in Windows 10
+    ::testing::GTEST_FLAG(filter) = "CM_MHKWave*:CmodCashLoanTest*:CMWindPowerIntegration.*"; // 2 of 8 pass with no mem leaks in Windows 10
 
 
      int status = RUN_ALL_TESTS();
