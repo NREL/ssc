@@ -239,7 +239,12 @@ bool solarpilot_invoke::run(std::shared_ptr<weather_data_provider> wdata)
 
 	weather_header hdr;
 	wdata->header(&hdr);
-		
+
+    // If cavity in southern hemisphere, then receiver faces south
+    if (rec_type == 1 && hdr.lat < 0) {
+        rf->rec_azimuth.val = 180;
+    }
+
     amb.latitude.val = hdr.lat;
 	amb.longitude.val = hdr.lon;
 	amb.time_zone.val = hdr.tz;
