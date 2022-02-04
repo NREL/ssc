@@ -110,8 +110,9 @@ GTEST_API_ int main(int argc, char **argv) {
     // memory leak
 //     ::testing::GTEST_FLAG(filter) = "windpower_landbosse.*"; //all 4 pass with mem leaks from GoogleTest FAIL Windows 10
     //   ::testing::GTEST_FLAG(filter) = "CM_MHKWave*:CmodCashLoanTest*:CMWindPowerIntegration.*"; // 2 of 8 pass with no mem leaks in Windows 10
-         ::testing::GTEST_FLAG(filter) = "AutoBTMTest*:CMWindPowerIntegration.*"; //all 4 pass with mem leaks from
-
+ //        ::testing::GTEST_FLAG(filter) = "AutoBTMTest*:CMWindPowerIntegration.*"; //all 4 pass with mem leaks from
+    ::testing::GTEST_FLAG(filter) = "-SixParSolve_6par_solve*:UsingFileCaseWeatherReader*:UsingDataCaseWeatherReader*:LiIon_lib_battery_capacity_test*:KiBam_lib_battery_capacity_test*:AutoBTMTest_lib_battery_dispatch*:AutoFOM_lib_battery_dispatch*:ManualTest_lib_battery_dispatch*:ManualTest_lib_battery_dispatch_losses*:PVSmoothing_lib_battery_dispatch*:lib_battery_lifetime_lmolto_test*:lib_battery_lifetime_nmc_test*:lib_battery_lifetime_cycle_test*:lib_battery_lifetime_calendar_matrix_test*:lib_battery_lifetime_calendar_model_test*:lib_battery_lifetime_test*:BatteryPowerFlowTest_lib_battery_powerflow*:lib_battery_thermal_test*:lib_battery_losses_test*";
+    
      int status = RUN_ALL_TESTS();
 
 /*
