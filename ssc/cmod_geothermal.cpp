@@ -379,7 +379,7 @@ public:
 
 			// weather file and time-of-use data
 			geo_inputs.mc_WeatherFileName = as_string("file_name");
-			geo_inputs.mia_tou = tou;
+			geo_inputs.mia_tou = std::vector<int>(tou,tou+sizeof(tou) /sizeof(tou[0]));
 
 
 			// Set power block parameters (parameters don't change hourly)
@@ -424,43 +424,54 @@ public:
 
 			// allocate lifetime annual arrays (one element per year, over lifetime of project)
 //			geo_outputs.maf_ReplacementsByYear = allocate("annual_replacements", geo_inputs.mi_ProjectLifeYears);
-			geo_outputs.maf_ReplacementsByYear = allocate("system_lifetime_recapitalize", geo_inputs.mi_ProjectLifeYears);
+            auto recap = allocate("system_lifetime_recapitalize", geo_inputs.mi_ProjectLifeYears);
+			geo_outputs.maf_ReplacementsByYear = std::vector<double>(recap, recap + geo_inputs.mi_ProjectLifeYears / sizeof(recap[0]));
 			//ssc_number_t *annual_replacements = allocate( "annual_replacements", geo_inputs.mi_ProjectLifeYears);
 
 			// allocate lifetime monthly arrays (one element per month, over lifetime of project)
-			geo_outputs.maf_monthly_resource_temp = allocate("monthly_resource_temperature", 12 * geo_inputs.mi_ProjectLifeYears);
-			geo_outputs.maf_monthly_power = allocate("monthly_power", 12 * geo_inputs.mi_ProjectLifeYears);
-			geo_outputs.maf_monthly_energy = allocate("monthly_energy", 12 * geo_inputs.mi_ProjectLifeYears);
+            auto temp = allocate("monthly_resource_temperature", 12 * geo_inputs.mi_ProjectLifeYears);
+			geo_outputs.maf_monthly_resource_temp = std::vector<double>(temp, temp + 12 * geo_inputs.mi_ProjectLifeYears/  sizeof(temp[0]));
+            auto power = allocate("monthly_power", 12 * geo_inputs.mi_ProjectLifeYears);
+			geo_outputs.maf_monthly_power = std::vector<double>(power, power + 12 * geo_inputs.mi_ProjectLifeYears/ sizeof( power[0]));
+            auto energy = allocate("monthly_energy", 12 * geo_inputs.mi_ProjectLifeYears);
+			geo_outputs.maf_monthly_energy = std::vector<double>(energy, energy + 12 * geo_inputs.mi_ProjectLifeYears/ sizeof( energy[0]));
 
 			// allocate lifetime timestep arrays (one element per timestep, over lifetime of project)
 			// if this is a monthly analysis, these are redundant with monthly arrays that track same outputs
 			geo_inputs.mi_MakeupCalculationsPerYear = (geo_inputs.mi_ModelChoice == 2) ? 8760 : 12;
 			geo_inputs.mi_TotalMakeupCalculations = geo_inputs.mi_ProjectLifeYears * geo_inputs.mi_MakeupCalculationsPerYear;
 
-			geo_outputs.maf_timestep_resource_temp = allocate("timestep_resource_temperature", geo_inputs.mi_TotalMakeupCalculations);
-			geo_outputs.maf_timestep_power = allocate("timestep_power", geo_inputs.mi_TotalMakeupCalculations);
-			geo_outputs.maf_timestep_test_values = allocate("timestep_test_values", geo_inputs.mi_TotalMakeupCalculations);
+            auto resource_temp = allocate("timestep_resource_temperature", geo_inputs.mi_TotalMakeupCalculations);
+			geo_outputs.maf_timestep_resource_temp = std::vector<double>(resource_temp, resource_temp + geo_inputs.mi_TotalMakeupCalculations/sizeof(resource_temp[0]));
+            auto ts_power = allocate("timestep_power", geo_inputs.mi_TotalMakeupCalculations);
+			geo_outputs.maf_timestep_power = std::vector<double>(ts_power, ts_power+geo_inputs.mi_TotalMakeupCalculations / sizeof(ts_power[0]));
+            auto ts_test =allocate("timestep_test_values", geo_inputs.mi_TotalMakeupCalculations);
+			geo_outputs.maf_timestep_test_values = std::vector<double>(ts_test, ts_test+geo_inputs.mi_TotalMakeupCalculations / sizeof(ts_test[0]));
 
-			geo_outputs.maf_timestep_pressure = allocate("timestep_pressure", geo_inputs.mi_TotalMakeupCalculations);
-			geo_outputs.maf_timestep_dry_bulb = allocate("timestep_dry_bulb", geo_inputs.mi_TotalMakeupCalculations);
-			geo_outputs.maf_timestep_wet_bulb = allocate("timestep_wet_bulb", geo_inputs.mi_TotalMakeupCalculations);
+            
+            auto ts_pressure =allocate("timestep_pressure", geo_inputs.mi_TotalMakeupCalculations);
+			geo_outputs.maf_timestep_pressure = std::vector<double>(ts_pressure, ts_pressure+geo_inputs.mi_TotalMakeupCalculations / sizeof(ts_pressure[0]));
+            auto ts_dry =allocate("timestep_dry_bulb", geo_inputs.mi_TotalMakeupCalculations);
+			geo_outputs.maf_timestep_dry_bulb = std::vector<double>(ts_dry, ts_dry+geo_inputs.mi_TotalMakeupCalculations / sizeof(ts_dry[0]));
+            auto ts_wet =allocate("timestep_wet_bulb", geo_inputs.mi_TotalMakeupCalculations);
+			geo_outputs.maf_timestep_wet_bulb = std::vector<double>(ts_wet, ts_wet+geo_inputs.mi_TotalMakeupCalculations / sizeof(ts_wet[0]));
 
 			size_t n_rec = 8760;
 			if (as_boolean("system_use_lifetime_output")){
 				n_rec *= geo_inputs.mi_ProjectLifeYears;
 			}
-	
-			geo_outputs.maf_hourly_power = allocate("tmp", n_rec);
+            auto tmp =allocate("tmp", n_rec);
+			geo_outputs.maf_hourly_power = std::vector<double>(tmp, tmp +n_rec/sizeof(tmp));
 			ssc_number_t * p_gen = allocate("gen", n_rec);
 
-			// TODO - implement performance factors 
+ 			// TODO - implement performance factors
 			adjustment_factors haf(this, "adjust");
 			if (!haf.setup())
 				throw exec_error("geothermal", "failed to setup adjustment factors: " + haf.error());
             double haf_input[8760];
             for (int i = 0; i < 8760; i++)
                 haf_input[i] = haf(i);
-            geo_inputs.haf = haf_input;
+            geo_inputs.haf = std::vector<double>(haf_input, haf_input+sizeof(haf_input)/sizeof(haf_input[0]));
 
 			// running
 			if (RunGeothermalAnalysis(my_update_function, this, err_msg, pbp, pbInputs, geo_inputs, geo_outputs) != 0)

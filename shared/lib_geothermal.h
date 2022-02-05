@@ -118,8 +118,10 @@ struct SGeothermal_Inputs
 
 
 	const char * mc_WeatherFileName;
-	int * mia_tou;											// time of use array
-    double* haf;                                            // adjustment factor array
+//    int * mia_tou;                                            // time of use array
+//    double* haf;                                            // adjustment factor array
+    std::vector<int> mia_tou;                                            // time of use array
+    std::vector<double> haf;                                            // adjustment factor array
 };
 
 struct SGeothermal_Outputs
@@ -129,10 +131,10 @@ struct SGeothermal_Outputs
 		md_PumpWorkKW = md_NumberOfWells = md_FlashBrineEffectiveness = md_PressureHPFlashPSI = md_PressureLPFlashPSI = 0.0;
 		md_GrossPlantOutputMW = md_PlantBrineEffectiveness = md_PressureChangeAcrossReservoir = md_AverageReservoirTemperatureF = 0;
 		md_PumpDepthFt = md_PumpHorsePower = md_BottomHolePressure = 0;
-		maf_ReplacementsByYear = maf_monthly_resource_temp = maf_monthly_power = maf_monthly_energy = maf_timestep_resource_temp = NULL;
-		maf_timestep_power = maf_timestep_test_values = maf_timestep_pressure = maf_timestep_dry_bulb = maf_timestep_wet_bulb = NULL;
+//		maf_ReplacementsByYear = maf_monthly_resource_temp = maf_monthly_power = maf_monthly_energy = maf_timestep_resource_temp = NULL;
+//		maf_timestep_power = maf_timestep_test_values = maf_timestep_pressure = maf_timestep_dry_bulb = maf_timestep_wet_bulb = NULL;
 		mb_BrineEffectivenessCalculated = mb_FlashPressuresCalculated = false;
-		maf_hourly_power = NULL;
+//		maf_hourly_power = NULL;
 
 	}
 
@@ -183,17 +185,17 @@ struct SGeothermal_Outputs
 	double md_BottomHolePressure; //double GetBottomHolePressure(void) { return moPPC.GetBottomHolePressure(); }
 
 	// output arrays
-	double * maf_ReplacementsByYear;			// array of ones and zero's over time, ones representing years where reservoirs are replaced
-	double * maf_monthly_resource_temp;
-	double * maf_monthly_power;				// monthly values, even if timestep is hourly
-	double * maf_monthly_energy;
-	double * maf_timestep_resource_temp;
-	double * maf_timestep_power;				// could be hourly or monthly, depending on timestep
-	double * maf_timestep_test_values;
-	double * maf_timestep_pressure;
-	double * maf_timestep_dry_bulb;
-	double * maf_timestep_wet_bulb;
-	double * maf_hourly_power;				// hourly values even if the timestep is monthly
+    std::vector<double> maf_ReplacementsByYear;			// array of ones and zero's over time, ones representing years where reservoirs are replaced
+    std::vector<double> maf_monthly_resource_temp;
+    std::vector<double> maf_monthly_power;				// monthly values, even if timestep is hourly
+    std::vector<double> maf_monthly_energy;
+    std::vector<double> maf_timestep_resource_temp;
+    std::vector<double> maf_timestep_power;				// could be hourly or monthly, depending on timestep
+    std::vector<double> maf_timestep_test_values;
+    std::vector<double> maf_timestep_pressure;
+    std::vector<double> maf_timestep_dry_bulb;
+    std::vector<double> maf_timestep_wet_bulb;
+    std::vector<double> maf_hourly_power;				// hourly values even if the timestep is monthly
 };
 
 //******************************************************************************************************************************************************************************
