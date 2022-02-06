@@ -916,7 +916,8 @@ TEST_F(lib_battery_test, AdaptiveTimestepNMC) {
     EXPECT_NEAR(batt_subhourly->SOC(), 86.15, 1e-2);
     EXPECT_NEAR(batt_adaptive->SOC(), 86.28, 1e-2);
     
-  
+    delete batt_adaptive;
+    delete batt_subhourly;
 }
 
 TEST_F(lib_battery_test, AdaptiveTimestepNonIntegerStep) {
@@ -1063,5 +1064,6 @@ TEST_F(lib_battery_test, AdaptiveTimestepLMOLTO) {
     EXPECT_NEAR(batt_subhourly->SOC(), 95, 1e-2);
     EXPECT_NEAR(batt_adaptive->SOC(), 95, 1e-2);
     
-  
+    delete batt_adaptive;
+    delete batt_subhourly;
 }
