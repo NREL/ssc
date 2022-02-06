@@ -294,6 +294,9 @@ TEST(URDBv7_cmod_utilityrate5_eqns, ElectricityRates_format_as_URDBv7){
     EXPECT_NEAR(period[0].table.lookup("rate")->num, 8.09, 1e-3);
     EXPECT_GT(period[1].table.lookup("max")->num[0], 9.99e+33);
     EXPECT_NEAR(period[1].table.lookup("rate")->num, 4.676, 1e-3);
+    
+    ssc_data_free(data);
+
 }
 
 TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates) {
@@ -324,6 +327,9 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates) {
     ssc_number_t* excess_dollars = ssc_data_get_array(data, "year1_true_up_credits", &length);
     float dec_dollars = excess_dollars[length - 1];
     EXPECT_NEAR(75.9, dec_dollars, 0.1);
+    
+    ssc_data_free(data);
+
 }
 
 TEST(cmod_utilityrate5_eqns, Test_Residential_net_metering_credits_in_may) {
@@ -365,6 +371,9 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_net_metering_credits_in_may) {
 
     double may_year_1 = bill_matrix.at((size_t)1, (size_t)credit_month);
     EXPECT_NEAR(-50.28, may_year_1, 0.1);
+    
+    ssc_data_free(data);
+
 }
 
 TEST(cmod_utilityrate5_eqns, Test_Residential_net_metering_credits_in_may_with_rollover) {
@@ -412,6 +421,9 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_net_metering_credits_in_may_with_r
 
     double may_year_1 = bill_matrix.at((size_t)1, (size_t)credit_month);
     EXPECT_NEAR(0.0, may_year_1, 0.1);
+    
+    ssc_data_free(data);
+
 }
 
 TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_subhourly_gen) {
@@ -437,6 +449,8 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_subhourly_gen) {
     ssc_number_t cost_with_system;
     ssc_data_get_number(data, "elec_cost_with_system_year1", &cost_with_system);
     EXPECT_NEAR(-27.94, cost_with_system, 0.1);
+    
+    ssc_data_free(data);
 }
 
 TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_subhourly_gen_and_load) {
@@ -462,6 +476,9 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_subhourly_gen_and_load) 
     ssc_number_t cost_with_system;
     ssc_data_get_number(data, "elec_cost_with_system_year1", &cost_with_system);
     EXPECT_NEAR(-27.94, cost_with_system, 0.1);
+    
+    ssc_data_free(data);
+
 }
 
 TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_metering_credits) {
@@ -534,6 +551,9 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing) {
 
     double dec_year_1_credits = credits_matrix.at((size_t)1, (size_t)11);
     EXPECT_NEAR(0, dec_year_1_credits, 0.1);
+    
+    ssc_data_free(data);
+
 }
 
 TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_w_sell_rates) {
@@ -574,6 +594,9 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_w_sell_rates
 
     double dec_year_1_credits = credits_matrix.at((size_t)1, (size_t)11);
     EXPECT_NEAR(34.47, dec_year_1_credits, 0.1);
+    
+    ssc_data_free(data);
+
 }
 TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_subhourly_gen_and_load) {
     ssc_data_t data = new var_table;
@@ -599,6 +622,9 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_subhourly_ge
     ssc_number_t cost_with_system;
     ssc_data_get_number(data, "elec_cost_with_system_year1", &cost_with_system);
     EXPECT_NEAR(441.4, cost_with_system, 0.1);
+    
+    ssc_data_free(data);
+
 }
 
 TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_subhourly_gen_and_load_w_sell_rates) {
@@ -630,6 +656,9 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_subhourly_ge
     ssc_number_t cost_with_system;
     ssc_data_get_number(data, "elec_cost_with_system_year1", &cost_with_system);
     EXPECT_NEAR(-156.95, cost_with_system, 0.1); // Subhourly data allows for increased sales - consistent with net metering
+    
+    ssc_data_free(data);
+
 }
 
 // If these results change, validate with https://github.com/NREL/SAM-documentation/blob/master/Unit%20Testing/Utility%20Rates/SAM%202020.11.29%20Rollover%20Month%20Tests/2020.11.29_net_billing_carryover.xlsx
@@ -685,6 +714,9 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_carryover) {
 
     double jan_year_2_credits = credits_matrix.at((size_t)2, (size_t)0);
     EXPECT_NEAR(0, jan_year_2_credits, 0.1);
+    
+    ssc_data_free(data);
+
 }
 
 // If these results change, validate with https://github.com/NREL/SAM-documentation/blob/master/Unit%20Testing/Utility%20Rates/SAM%202020.11.29%20Rollover%20Month%20Tests/2020.11.29_net_billing_carryover.xlsx
@@ -747,6 +779,8 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_carryover_ap
 
     double apr_year_1_credits = true_up_credits_matrix.at((size_t)1, (size_t)3);
     EXPECT_NEAR(122.19, apr_year_1_credits, 0.1);
+    
+    ssc_data_free(data);
 }
 
 // If these results change, validate with https://github.com/NREL/SAM-documentation/blob/master/Unit%20Testing/Utility%20Rates/SAM%202020.11.29%20Rollover%20Month%20Tests/2020.11.29_net_billing_carryover.xlsx
@@ -807,6 +841,9 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_carryover_ja
 
     double jan_year_2_credits = true_up_credits_matrix.at((size_t)2, (size_t)0);
     EXPECT_NEAR(175.92, jan_year_2_credits, 0.1);
+    
+    ssc_data_free(data);
+
 }
 
 // If these results change, validate with https://github.com/NREL/SAM-documentation/blob/master/Unit%20Testing/Utility%20Rates/SAM%202020.11.29%20Rollover%20Month%20Tests/2020.11.29_net_billing_carryover.xlsx
@@ -862,6 +899,9 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_carryover_lo
 
     double dec_year_1_credits = true_up_credits_matrix.at((size_t)1, (size_t)11);
     EXPECT_NEAR(21.80, dec_year_1_credits, 0.1);
+    
+    ssc_data_free(data);
+
 }
 
 TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_carryover_monthly_min) {
@@ -927,6 +967,9 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_carryover_mo
 
     double april_year_1_min = min_matrix.at((size_t)1, (size_t)3);
     EXPECT_NEAR(10.0, april_year_1_min, 0.001);
+    
+    ssc_data_free(data);
+
 }
 
 TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_carryover_annual_min) {
@@ -995,6 +1038,9 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_carryover_an
 
     double dec_year_1_min = min_matrix.at((size_t)1, (size_t)11);
     EXPECT_NEAR(68.25, dec_year_1_min, 0.001);
+    
+    ssc_data_free(data);
+
 }
 
 TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_carryover_incorrect_month) {
@@ -1017,6 +1063,9 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_carryover_in
 
     int status = run_module(data, "utilityrate5");
     EXPECT_TRUE(status);
+    
+    ssc_data_free(data);
+
 }
 
 TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_buyall_sellall) {
@@ -1058,6 +1107,9 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_buyall_sellall) {
 
     double dec_year_1_credits = credits_matrix.at((size_t)1, (size_t)11);
     EXPECT_NEAR(45.49, dec_year_1_credits, 0.1);
+    
+    ssc_data_free(data);
+
 }
 
 TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_no_credit) {
@@ -1084,6 +1136,9 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_no_credit) {
     ssc_number_t cost_with_system;
     ssc_data_get_number(data, "elec_cost_with_system_year1", &cost_with_system);
     EXPECT_NEAR(64.03, cost_with_system, 0.1);
+    
+    ssc_data_free(data);
+
 }
 
 TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_annual_minimum) {
@@ -1111,6 +1166,9 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_annual_minimum) {
     ssc_number_t cost_with_system;
     ssc_data_get_number(data, "elec_cost_with_system_year1", &cost_with_system);
     EXPECT_NEAR(100.0, cost_with_system, 0.1);
+    
+    ssc_data_free(data);
+
 }
 TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_w_tiers) {
     ssc_data_t data = new var_table;
@@ -1168,6 +1226,9 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_w_tiers) {
     ssc_number_t cost_with_system;
     ssc_data_get_number(data, "elec_cost_with_system_year1", &cost_with_system);
     EXPECT_NEAR(286.2, cost_with_system, 0.1);
+    
+    ssc_data_free(data);
+
 }
 
 TEST(cmod_utilityrate5_eqns, Test_Commercial_Demand_Charges) {
@@ -1225,7 +1286,12 @@ TEST(cmod_utilityrate5_eqns, Test_Commercial_Demand_Charges) {
     ssc_number_t cost_with_system;
     ssc_data_get_number(data, "elec_cost_with_system_year1", &cost_with_system);
     EXPECT_NEAR(92538.1, cost_with_system, 0.1);
+
+    ssc_data_free(data);
+
 }
+
+
 
 TEST(cmod_utilityrate5_eqns, Test_Commercial_kWh_per_kW_charges) {
     ssc_data_t data = new var_table;
@@ -1339,6 +1405,9 @@ TEST(cmod_utilityrate5_eqns, Test_Commercial_kWh_per_kW_charges) {
     EXPECT_NEAR(121603.13, tier_matrix.at((size_t)1, 3), 0.01);
     EXPECT_NEAR(131603.13, tier_matrix.at((size_t)1, 4), 0.01);
     EXPECT_NEAR(103255.44, tier_matrix.at((size_t)1, 5), 0.01);
+
+    ssc_data_free(data);
+
 }
 
 TEST(cmod_utilityrate5_eqns, Test_Commercial_Energy_Tiers_net_billing) {
@@ -1419,6 +1488,9 @@ TEST(cmod_utilityrate5_eqns, Test_Commercial_Energy_Tiers_net_billing) {
     }
     tier_usage = tier_matrix.at((size_t)1, (size_t)6);
     EXPECT_NEAR(3014.93, tier_usage, 0.001);
+    
+    ssc_data_free(data);
+
 }
 
 TEST(cmod_utilityrate5_eqns, Test_Commercial_kWh_per_kW_charges_with_billing_demand_percents) {
@@ -1566,6 +1638,9 @@ TEST(cmod_utilityrate5_eqns, Test_Commercial_kWh_per_kW_charges_with_billing_dem
     EXPECT_NEAR(131851.63, tier_matrix.at((size_t)1, 3), 0.01);
     EXPECT_NEAR(141851.63, tier_matrix.at((size_t)1, 4), 0.01);
     EXPECT_NEAR(100466.35, tier_matrix.at((size_t)1, 5), 0.01);
+    
+    ssc_data_free(data);
+
 }
 
 TEST(cmod_utilityrate5_eqns, Test_seasonal_per_kw_charge_w_no_demand_charge) {
@@ -1689,4 +1764,7 @@ TEST(cmod_utilityrate5_eqns, Test_seasonal_per_kw_charge_w_no_demand_charge) {
     EXPECT_NEAR(131851.63, tier_matrix.at((size_t)1, 3), 0.01);
     EXPECT_NEAR(141851.63, tier_matrix.at((size_t)1, 4), 0.01);
     EXPECT_NEAR(100466.35, tier_matrix.at((size_t)1, 5), 0.01);
+    
+    ssc_data_free(data);
+
 }
