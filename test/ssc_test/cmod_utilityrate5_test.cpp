@@ -497,6 +497,8 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_metering_credits) {
 
     double dec_year_1_credits = credits_matrix.at((size_t)1, (size_t)11);
     EXPECT_NEAR(0, dec_year_1_credits, 0.1);
+    
+    ssc_data_free(data);
 }
 
 TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing) {
