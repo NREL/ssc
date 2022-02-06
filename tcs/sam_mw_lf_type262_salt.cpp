@@ -697,13 +697,13 @@ public:
 	}
 
 	virtual ~sam_mw_lf_type262(){
-		/* Clean up on simulation terminate 
-		for(int i=0; i<nHCEt; i++){
-			for(int j=0; j<nRecVar; j++){
+		// Clean up on simulation terminate
+		for(int i=0; i<AbsorberPropMat.nrows(); i++){
+			for(int j=0; j<AbsorberPropMat.ncols(); j++){
 				delete AbsorberPropMat(i,j);
 				delete AnnulusGasMat(i,j);
 			}
-		}*/
+		}
 	}
 
 	virtual int init(){
