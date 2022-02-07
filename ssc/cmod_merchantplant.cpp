@@ -802,9 +802,7 @@ enum {
 	CF_utility_bill,
 
     CF_energy_sales,
-    CF_energy_sales_value,
     CF_energy_purchases,
-    CF_energy_purchases_value,
 
     CF_energy_charged_grid,
     CF_energy_charged_pv,
@@ -1350,7 +1348,6 @@ public:
                 
                 
                 for (size_t h = 0; h < 8760; h++) {
-                    cf.at(CF_energy_sales_value, i) += hourly_energy_calcs.hourly_sales()[(i - 1) * 8760 + h] * cf.at(CF_degradation, i) * mp_energy_market_price[(i - 1) * 8760 + h];
                     if (ppa_purchases) {
                         cf.at(CF_utility_bill, i) += -hourly_energy_calcs.hourly_purchases()[(i - 1) * 8760 + h] * cf.at(CF_degradation, i) * mp_energy_market_price[(i -1) * 8760 + h];
                     }
@@ -1362,7 +1359,6 @@ public:
             for (size_t i = 1; i <= nyears; i++) {
                
                 for (size_t h = 0; h < 8760; h++) {
-                    cf.at(CF_energy_sales_value, i) += hourly_energy_calcs.hourly_sales()[h] * cf.at(CF_degradation, i) * mp_energy_market_price[h]/1000;
                     if (ppa_purchases) {
                         cf.at(CF_utility_bill, i) += -hourly_energy_calcs.hourly_purchases()[h] * cf.at(CF_degradation, i) * mp_energy_market_price[h];
                     }

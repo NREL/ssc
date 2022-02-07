@@ -274,9 +274,7 @@ enum {
 	CF_fuelcell_replacement_cost,
 
     CF_energy_sales,
-    CF_energy_sales_value,
     CF_energy_purchases,
-    CF_energy_purchases_value,
 
 	CF_nte,
 

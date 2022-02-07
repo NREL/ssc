@@ -832,9 +832,7 @@ enum {
 	CF_battery_replacement_cost,
 
     CF_energy_sales,
-    CF_energy_sales_value,
     CF_energy_purchases,
-    CF_energy_purchases_value,
 // Host
 	CF_agreement_cost,
 	CF_after_tax_net_equity_cost_flow,
