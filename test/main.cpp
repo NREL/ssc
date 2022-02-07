@@ -115,6 +115,7 @@ GTEST_API_ int main(int argc, char **argv) {
         
 //    ::testing::GTEST_FLAG(filter) = "lib_battery_test.*"; // all 20 pass with no memory leaks  windows 10 and macOS 12.0.1
 //    ::testing::GTEST_FLAG(filter) = "CMGeothermal*";
+//    ::testing::GTEST_FLAG(filter) = "GeothermalPlantAnalyzer*";
 //    ::testing::GTEST_FLAG(filter) = "windDataProviderCalculatorTest*";
      int status = RUN_ALL_TESTS();
 

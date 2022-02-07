@@ -26,8 +26,9 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 TEST_F(GeothermalPlantAnalyzer, TestBinaryPlant_lib_geothermal)
 {
-	conversion_type = 0;	
-	GeothermalPlantAnalyzer::SetUp();
+    GeothermalPlantAnalyzer::TearDown(); // delete first setup instance to prevent memory leaks (setup and teardown called at start and end of test)
+	conversion_type = 0;
+	GeothermalPlantAnalyzer::SetUp(); // uses values set (conversion_type)
 
 	EXPECT_NEAR(geoPlant_outputs.max_secondlaw, 0.4, 0.2);
 	EXPECT_NEAR(geoPlant_outputs.md_GrossPlantOutputMW, 33.159, 3);
@@ -36,8 +37,9 @@ TEST_F(GeothermalPlantAnalyzer, TestBinaryPlant_lib_geothermal)
 
 
 TEST_F(GeothermalPlantAnalyzer, TestFlashPlant_lib_geothermal) {
-	conversion_type = 1;	
-	GeothermalPlantAnalyzer::SetUp();
+    GeothermalPlantAnalyzer::TearDown(); // delete first setup instance to prevent memory leaks (setup and teardown called at start and end of test)
+	conversion_type = 1;
+	GeothermalPlantAnalyzer::SetUp(); // uses values set (conversion_type)
 
 	EXPECT_EQ(geoPlant_outputs.flash_count, 2);	//Dual Flash (Constrained) Plant Type
 	EXPECT_NEAR(geoPlant_outputs.md_GrossPlantOutputMW, 31.512, 1);	//Expected value of 33.978 taken from GETEM
