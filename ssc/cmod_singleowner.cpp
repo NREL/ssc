@@ -2293,8 +2293,6 @@ public:
 			cf.at(CF_energy_value, i) = cf.at(CF_ppa_price, i) / 100.0 *(
 				m_disp_calcs.tod_energy_value(i));
 
-            cf.at(CF_energy_sales_value, i) = cf.at(CF_ppa_price, i) / 100 * (m_disp_calcs.tod_energy_value(i));
-
 //			log(util::format("year %d : energy value =%lg", i, m_disp_calcs.tod_energy_value(i)), SSC_WARNING);
 			// total revenue
 			cf.at(CF_total_revenue,i) = cf.at(CF_energy_value,i) +
