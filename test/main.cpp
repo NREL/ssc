@@ -118,12 +118,9 @@ GTEST_API_ int main(int argc, char **argv) {
 //    ::testing::GTEST_FLAG(filter) = "windDataProviderCalculatorTest*";
      int status = RUN_ALL_TESTS();
 
-/*
-#if defined( _WINDOWS) && defined(_DEBUG)
-    _CrtMemDumpAllObjectsSince(&memoryState);
-#endif
-*/
-	if (!status)
+//    sleep(10); //used for single test instruments leak detector on macOS
+	
+    if (!status)
 		printf("Tests Pass!\n");
 	return status;
 }
