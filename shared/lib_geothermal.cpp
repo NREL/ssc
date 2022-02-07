@@ -478,13 +478,13 @@ namespace geothermal
 //******************************************************************************************************************************************************************************
 //******************************************************************************************************************************************************************************
 CGeothermalAnalyzer::CGeothermalAnalyzer(const SGeothermal_Inputs& gti, SGeothermal_Outputs& gto)
-	: mp_geo_out(&gto)//, mo_geo_in(gti)
+	: mp_geo_out(&gto), mo_geo_in(gti)
 {
 	init();
 }
 
 CGeothermalAnalyzer::CGeothermalAnalyzer(const SPowerBlockParameters& pbp, SPowerBlockInputs& pbi, const SGeothermal_Inputs& gti, SGeothermal_Outputs& gto)
-	: mp_geo_out(&gto),/* mo_geo_in(gti),*/ mo_pb_p(pbp), mo_pb_in(pbi)
+	: mp_geo_out(&gto), mo_geo_in(gti), mo_pb_p(pbp), mo_pb_in(pbi)
 {
 	init();
 }
@@ -1632,12 +1632,9 @@ bool CGeothermalAnalyzer::ReadyToAnalyze()
 
 	if (!OpenWeatherFile(mo_geo_in.mc_WeatherFileName)) return false;
 
-    if (mp_geo_out->maf_ReplacementsByYear.size() ==0 || mp_geo_out->maf_monthly_resource_temp.size() ==0  || mp_geo_out->maf_monthly_power.size() ==0  || mp_geo_out->maf_monthly_energy.size() ==0  || mp_geo_out->maf_timestep_resource_temp.size() ==0  ||
-        mp_geo_out->maf_timestep_power.size() ==0  || mp_geo_out->maf_timestep_test_values.size() ==0  || mp_geo_out->maf_timestep_pressure.size() ==0  || mp_geo_out->maf_timestep_dry_bulb.size() ==0  || mp_geo_out->maf_timestep_wet_bulb.size() ==0 )
-/*
-        if (!mp_geo_out->maf_ReplacementsByYear || !mp_geo_out->maf_monthly_resource_temp || !mp_geo_out->maf_monthly_power || !mp_geo_out->maf_monthly_energy || !mp_geo_out->maf_timestep_resource_temp ||
-            !mp_geo_out->maf_timestep_power || !mp_geo_out->maf_timestep_test_values || !mp_geo_out->maf_timestep_pressure || !mp_geo_out->maf_timestep_dry_bulb || !mp_geo_out->maf_timestep_wet_bulb)
-*/
+	if (!mp_geo_out->maf_ReplacementsByYear || !mp_geo_out->maf_monthly_resource_temp || !mp_geo_out->maf_monthly_power || !mp_geo_out->maf_monthly_energy || !mp_geo_out->maf_timestep_resource_temp ||
+		!mp_geo_out->maf_timestep_power || !mp_geo_out->maf_timestep_test_values || !mp_geo_out->maf_timestep_pressure || !mp_geo_out->maf_timestep_dry_bulb || !mp_geo_out->maf_timestep_wet_bulb)
+
 	{
 		ms_ErrorString = "One of the output arrays was not initialized in the geothermal hourly model.";
 		return false;
