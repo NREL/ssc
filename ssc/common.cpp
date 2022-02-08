@@ -725,7 +725,7 @@ bool forecast_price_signal::setup(size_t nsteps)
 		as_revenue.clear();
 		as_revenue.reserve(n_marketrevenue_per_year);
 		for (size_t j = 0; j < n_marketrevenue_per_year; j++)
-			as_revenue.push_back(mp_energy_market_revenue_mat.at(j, 0) * mp_energy_market_revenue_mat.at(j, 1) / step_per_hour);
+			as_revenue.push_back(mp_energy_market_revenue_mat.at(j, 1) / step_per_hour / 1000.0);
 		as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
 		std::transform(m_forecast_price.begin(), m_forecast_price.end(), as_revenue_extrapolated.begin(), m_forecast_price.begin(), std::plus<double>());
 
@@ -733,7 +733,7 @@ bool forecast_price_signal::setup(size_t nsteps)
 		as_revenue.clear();
 		as_revenue.reserve(n_ancserv_1_revenue_per_year);
 		for (size_t j = 0; j < n_ancserv_1_revenue_per_year; j++)
-			as_revenue.push_back(mp_ancserv_1_revenue_mat.at(j, 0) * mp_ancserv_1_revenue_mat.at(j, 1) / step_per_hour);
+			as_revenue.push_back(mp_ancserv_1_revenue_mat.at(j, 1) / step_per_hour / 1000.0);
 		as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
 		std::transform(m_forecast_price.begin(), m_forecast_price.end(), as_revenue_extrapolated.begin(), m_forecast_price.begin(), std::plus<double>());
 
@@ -741,7 +741,7 @@ bool forecast_price_signal::setup(size_t nsteps)
 		as_revenue.clear();
 		as_revenue.reserve(n_ancserv_2_revenue_per_year);
 		for (size_t j = 0; j < n_ancserv_2_revenue_per_year; j++)
-			as_revenue.push_back(mp_ancserv_2_revenue_mat.at(j, 0) * mp_ancserv_2_revenue_mat.at(j, 1) / step_per_hour);
+			as_revenue.push_back(mp_ancserv_2_revenue_mat.at(j, 1) / step_per_hour / 1000.0);
 		as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
 		std::transform(m_forecast_price.begin(), m_forecast_price.end(), as_revenue_extrapolated.begin(), m_forecast_price.begin(), std::plus<double>());
 
@@ -749,7 +749,7 @@ bool forecast_price_signal::setup(size_t nsteps)
 		as_revenue.clear();
 		as_revenue.reserve(n_ancserv_3_revenue_per_year);
 		for (size_t j = 0; j < n_ancserv_3_revenue_per_year; j++)
-			as_revenue.push_back(mp_ancserv_3_revenue_mat.at(j, 0) * mp_ancserv_3_revenue_mat.at(j, 1) / step_per_hour);
+			as_revenue.push_back(mp_ancserv_3_revenue_mat.at(j, 1) / step_per_hour / 1000.0);
 		as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
 		std::transform(m_forecast_price.begin(), m_forecast_price.end(), as_revenue_extrapolated.begin(), m_forecast_price.begin(), std::plus<double>());
 
@@ -757,7 +757,7 @@ bool forecast_price_signal::setup(size_t nsteps)
 		as_revenue.clear();
 		as_revenue.reserve(n_ancserv_4_revenue_per_year);
 		for (size_t j = 0; j < n_ancserv_4_revenue_per_year; j++)
-			as_revenue.push_back(mp_ancserv_4_revenue_mat.at(j, 0) * mp_ancserv_4_revenue_mat.at(j, 1) / step_per_hour);
+			as_revenue.push_back(mp_ancserv_4_revenue_mat.at(j, 1) / step_per_hour / 1000.0);
 		as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
 		std::transform(m_forecast_price.begin(), m_forecast_price.end(), as_revenue_extrapolated.begin(), m_forecast_price.begin(), std::plus<double>());
 	}
@@ -797,15 +797,15 @@ ssc_number_t forecast_price_signal::operator()(size_t time)
 }
 
 var_info vtab_resilience_outputs[] = {
-{ SSC_OUTPUT, SSC_ARRAY  , "resilience_hrs"                       , "Hours of autonomy during outage at each timestep for resilience"       , "hr"                                     , ""                                                         , "Resilience"          , ""               , ""                      , ""},
-{ SSC_OUTPUT, SSC_NUMBER , "resilience_hrs_min"                   , "Min hours of autonomy for resilience "                                 , "hr"                                     , ""                                                         , "Resilience"          , ""               , "MIN=0"                 , ""},
-{ SSC_OUTPUT, SSC_NUMBER , "resilience_hrs_max"                   , "Max hours of autonomy for resilience"                                  , "hr"                                     , ""                                                         , "Resilience"          , ""               , "MIN=0"                 , ""},
-{ SSC_OUTPUT, SSC_NUMBER , "resilience_hrs_avg"                   , "Avg hours of autonomy for resilience"                                  , "hr"                                     , ""                                                         , "Resilience"          , ""               , "MIN=0"                 , ""},
-{ SSC_OUTPUT, SSC_ARRAY  , "outage_durations"                     , "List of autonomous hours for resilience from min to max"               , "hr"                                     , "Hours from resilience_hrs_min to resilience_hrs_max"      , "Resilience"          , ""               , ""                      , ""},
-{ SSC_OUTPUT, SSC_ARRAY  , "pdf_of_surviving"                     , "Probabilities of autonomous hours for resilience "                     , ""                                       , "Hours from resilience_hrs_min to resilience_hrs_max"      , "Resilience"          , ""               , "MIN=0,MAX=1"           , ""},
-{ SSC_OUTPUT, SSC_ARRAY  , "cdf_of_surviving"                     , "Cumulative probabilities of autonomous hours for resilience"           , ""                                       , "Prob surviving at least x hrs; hrs from min to max"       , "Resilience"          , ""               , "MIN=0,MAX=1"           , ""},
-{ SSC_OUTPUT, SSC_ARRAY  , "survival_function"                    , "Survival function of autonomous hours for resilience"                  , ""                                       , "Prob surviving greater than x hours; hrs from min to max" , "Resilience"          , ""               , "MIN=0,MAX=1"           , ""},
-{ SSC_OUTPUT, SSC_NUMBER , "avg_critical_load"                    , "Average critical load met for resilience"                              , "kWh"                                    , ""                                                         , "Resilience"          , ""               , "MIN=0"                 , ""},
+{ SSC_OUTPUT, SSC_ARRAY  , "resilience_hrs"     , "Hours of autonomy during grid outage at each timestep"            , "hr"  , ""                                                         , "Resilience" , ""  , ""             , ""},
+{ SSC_OUTPUT, SSC_NUMBER , "resilience_hrs_min" , "Hours of autonomy during grid outage minimum"                     , "hr"  , ""                                                         , "Resilience" , ""  , "MIN=0"        , ""},
+{ SSC_OUTPUT, SSC_NUMBER , "resilience_hrs_max" , "Hours of autonomy during grid outage maximum"                     , "hr"  , ""                                                         , "Resilience" , ""  , "MIN=0"        , ""},
+{ SSC_OUTPUT, SSC_NUMBER , "resilience_hrs_avg" , "Hours of autonomy during grid outage average"                     , "hr"  , ""                                                         , "Resilience" , ""  , "MIN=0"        , ""},
+{ SSC_OUTPUT, SSC_ARRAY  , "outage_durations"   , "Hours of autonomy during grid outage hour list from min to max"   , "hr"  , "Hours from resilience_hrs_min to resilience_hrs_max"      , "Resilience" , ""  , ""             , ""},
+{ SSC_OUTPUT, SSC_ARRAY  , "pdf_of_surviving"   , "Hours of autonomy during grid outage probabilities"               , ""    , "Hours from resilience_hrs_min to resilience_hrs_max"      , "Resilience" , ""  , "MIN=0,MAX=1"  , ""},
+{ SSC_OUTPUT, SSC_ARRAY  , "cdf_of_surviving"   , "Hours of autonomy during grid outage cumulative probabilities"    , ""    , "Prob surviving at least x hrs; hrs from min to max"       , "Resilience" , ""  , "MIN=0,MAX=1"  , ""},
+{ SSC_OUTPUT, SSC_ARRAY  , "survival_function"  , "Hours of autonomy during grid outage survival function"           , ""    , "Prob surviving greater than x hours; hrs from min to max" , "Resilience" , ""  , "MIN=0,MAX=1"  , ""},
+{ SSC_OUTPUT, SSC_NUMBER , "avg_critical_load"  , "Hours of autonomy during grid outage critical load met"           , "kWh" , ""                                                         , "Resilience" , ""  , "MIN=0"        , ""},
         var_info_invalid
 };
 

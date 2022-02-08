@@ -874,7 +874,7 @@ static var_info _cm_vtab_pvsamv1[] = {
                 { SSC_OUTPUT,        SSC_NUMBER,     "6par_Adj",                                    "CEC 6-parameter: Adj",      "",       "", "Module CEC 6-parameter model parameters",       "*",                    "",                              "" },
 
                 { SSC_OUTPUT,        SSC_NUMBER,     "performance_ratio",                           "Performance ratio",         "",       "",  "Annual (Year 1)",       "",                    "",                              "" },
-                { SSC_OUTPUT,        SSC_NUMBER,     "capacity_factor",                             "Capacity factor",           "%",      "",  "Annual (Year 1)", "", "", "" },
+                { SSC_OUTPUT,        SSC_NUMBER,     "capacity_factor",                             "Capacity factor based on DC system capacity",           "%",      "",  "Annual (Year 1)", "", "", "" },
                 { SSC_OUTPUT,        SSC_NUMBER,     "capacity_factor_ac",                          "Capacity factor based on AC system capacity",           "%",      "",  "Annual (Year 1)", "", "", "" },
                 { SSC_OUTPUT,        SSC_NUMBER,     "kwh_per_kw",                                  "Energy yield", "kWh/kW", "",	"Annual (Year 1)", "", "", "" },
 
@@ -2358,7 +2358,10 @@ void cm_pvsamv1::exec()
             }
 
 
-            // Apply transformer loss
+            // Apply transformer loss - reset variables after DC connected calculations
+            transformerRatingkW = static_cast<ssc_number_t>(PVSystem->ratedACOutput * util::watt_to_kilowatt);
+            xfmr_ll = PVSystem->transformerLoadLossFraction / step_per_hour;
+            xfmr_nll = PVSystem->transformerNoLoadLossFraction * static_cast<ssc_number_t>(ts_hour * transformerRatingkW);
 			// total load loss
             ssc_number_t xfmr_loss = transformerLoss(PVSystem->p_systemACPower[idx], PVSystem->transformerLoadLossFraction, transformerRatingkW, xfmr_ll, xfmr_nll);
 
