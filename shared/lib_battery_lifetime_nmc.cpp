@@ -101,8 +101,6 @@ double lifetime_nmc_t::calculate_Voc(double SOC) {
 }
 
 double lifetime_nmc_t::runQli(double T_battery_K) {
-    size_t dn_cycles = state->cycle->cycle_DOD_range.size();
-
     double b1 = state->nmc_li_neg->b1_dt;
     double b2 = state->nmc_li_neg->b2_dt;
     double b3 = state->nmc_li_neg->b3_dt;
@@ -122,7 +120,11 @@ double lifetime_nmc_t::runQli(double T_battery_K) {
     }
     else
         dQLi1dt = 0.5 * b1 * b1 / state->nmc_li_neg->dq_relative_li1;
-    double dQLi2dt = b2 * (double)dn_cycles;
+    double dQLi2dt = 0;
+    for (auto & DOD : state->cycle->cycle_DOD_range){
+        dQLi2dt += pow(DOD * 1e-2, 2);
+    }
+    dQLi2dt = b2 * sqrt(dQLi2dt);
     double dQLi3dt = fmax(0.0, b3 - state->nmc_li_neg->dq_relative_li3) / tau_b3;
 
     state->nmc_li_neg->dq_relative_li1 += dQLi1dt;
