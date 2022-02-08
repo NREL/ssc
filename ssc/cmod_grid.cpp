@@ -39,7 +39,7 @@ var_info vtab_grid_input[] = {
 	{ SSC_INOUT,        SSC_ARRAY,       "gen",								  "System power generated",                "kW",        "Lifetime system generation",          "System Output",                  "",                        "",                              "" },
 	{ SSC_INOUT,		SSC_ARRAY,	     "load",			                  "Electricity load (year 1)",             "kW",	    "",                                    "Load",	                       "",	                      "",	                           "" },
     { SSC_INPUT,		SSC_ARRAY,	     "crit_load",			              "Critical electricity load (year 1)",    "kW",	        "",				        "Load",                             "",	                      "",	                            "" },
-    { SSC_INPUT,        SSC_ARRAY,       "grid_outage",                       "Timesteps with grid outage",            "0/1",        "0=GridAvailable,1=GridUnavailable,Length=load", "Load",    "",                       "",                               "" },
+    { SSC_INOUT,        SSC_ARRAY,       "grid_outage",                       "Timesteps with grid outage",            "0/1",        "0=GridAvailable,1=GridUnavailable,Length=load", "Load",    "",                       "",                               "" },
     { SSC_INPUT,        SSC_ARRAY,       "load_escalation",                   "Annual load escalation",                "%/year",    "",                                    "Load",                        "?=0",                      "",                            "" },
 
 var_info_invalid };
@@ -145,6 +145,8 @@ void cm_grid::exec()
                 load_kw_out[i] = static_cast<ssc_number_t>(load_year_one[i]);
             }
         }
+        // No conversion from std::vector<bool> to var_data - worth adding?
+        assign("grid_outage", as_vector_integer("grid_outage"));
     }
 
     scalefactors scale_calculator(m_vartab);
