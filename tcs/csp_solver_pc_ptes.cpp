@@ -580,6 +580,9 @@ void pc_ptes_helpers::C_endo_reversible_cycle::performance(double T_HT_hot /*C*/
     Q_dot_ND = m_dot_HT_ND * deltaT_HT_ND;
 
     // Assume T_CT_hot is always equal to design
+    // This equation doesn't overconstrain energy balance
+    //    because m_dot_CT_HTF is variable - a fixed part goes to CTES and the balance goes to ambient
+    // Perhaps worth revisiting this when testing system model
     T_CT_hot = m_T_CT_hot_des;       //[C]
 
     // Calculate new endo-reversible efficiency and adjust for part-load

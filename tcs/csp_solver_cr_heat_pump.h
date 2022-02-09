@@ -27,6 +27,93 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "htf_props.h"
 
+namespace heat_pump_helpers
+{
+    void design_calcs(double q_dot_hot_out /*MWt*/, double COP_heat /*-*/,
+        double f_elec_consume_vs_W_dot_thermo /*-*/,
+        double& W_dot_in_thermo /*MWe*/, double& q_dot_cold_in /*MWt*/,
+        double& W_dot_consume_elec /*MWe*/, double& W_dot_in_net /*MWe*/,
+        double& COP_heat_net /*-*/);
+
+    class C_carnot_heat_pump
+    {
+    private:
+
+        double m_T_HT_hot_des;      //[C]
+        double m_T_HT_cold_des;     //[C]
+        double m_T_CT_hot_des;      //[C]
+        double m_T_CT_cold_des;     //[C]
+        double m_cop_carnot_des;    //[-]
+
+    public:
+
+        C_carnot_heat_pump(double T_HT_hot_des /*C*/, double T_HT_cold_des /*C*/,
+            double T_CT_hot_des /*C*/, double T_CT_cold_des /*C*/);
+
+        double cop_carnot(double T_HT_hot /*C*/, double T_HT_cold /*C*/,
+            double T_CT_hot /*C*/, double T_CT_cold /*C*/);
+
+        int performance(double T_HT_hot /*C*/, double m_dot_HT_ND /*-*/,
+            double T_CT_hot /*C*/, double m_dot_CT_ND /*-*/,
+            double& W_dot_gross_ND /*-*/, double& Q_dot_ND /*-*/,
+            double& Q_dot_cold_in_ND /*-*/,
+            double& T_HT_cold /*C*/, double& T_CT_cold /*C*/);
+
+        double get_cop_des()
+        {
+            return m_cop_carnot_des;
+        }
+    };
+
+    class C_MEQ__T_CT_cold : public C_monotonic_equation
+    {
+    private:
+        //std::shared_ptr<heat_pump_helpers::C_carnot_heat_pump> mpc_carnot_heat_pump;
+        heat_pump_helpers::C_carnot_heat_pump* mpc_carnot_heat_pump;
+
+        double m_T_HT_hot;      //[C]
+        double m_T_HT_cold;     //[C]
+        double m_m_dot_HT_ND;   //[-]
+        double m_T_CT_hot;     //[C]
+        double m_m_dot_CT_ND;   //[-]
+        double m_Q_dot_hot_out_ND;  //[-]
+
+        double m_deltaT_CT_des;     //[C]
+        double m_cop_des;           //[-]
+
+    public:
+
+        double m_W_dot_gross_ND;    //[-]
+        double m_Q_dot_cold_ND;     //[-]
+        double m_T_CT_cold_calc;    //[C]
+
+        C_MEQ__T_CT_cold(heat_pump_helpers::C_carnot_heat_pump* pc_carnot_heat_pump,
+            double T_HT_hot /*C*/, double T_HT_cold /*C*/, double m_dot_HT_ND /*-*/,
+            double T_CT_hot /*C*/, double m_dot_CT_ND /*-*/,
+            double Q_dot_hot_out_ND /*-*/,
+            double deltaT_CT_des /*C*/)
+        {
+            mpc_carnot_heat_pump = pc_carnot_heat_pump;
+            m_T_HT_hot = T_HT_hot;      //[C]
+            m_T_HT_cold = T_HT_cold;    //[C]
+            m_m_dot_HT_ND = m_dot_HT_ND;    //[-]
+            m_T_CT_hot = T_CT_hot;          //[C]
+            m_m_dot_CT_ND = m_dot_CT_ND;    //[-]
+            m_Q_dot_hot_out_ND = Q_dot_hot_out_ND;  //[-]
+
+            m_deltaT_CT_des = deltaT_CT_des;    //[C]
+
+            m_cop_des = mpc_carnot_heat_pump->get_cop_des();    //[-]
+
+            m_W_dot_gross_ND = std::numeric_limits<double>::quiet_NaN();
+            m_Q_dot_cold_ND = std::numeric_limits<double>::quiet_NaN();
+            m_T_CT_cold_calc = std::numeric_limits<double>::quiet_NaN();
+        }
+
+        virtual int operator()(double T_CT_cold /*C*/, double* diff_T_CT_cold /*C*/);
+    };
+}
+
 class C_csp_cr_heat_pump : public C_csp_collector_receiver
 {
 
@@ -78,6 +165,8 @@ private:
     double m_m_dot_CT_des;          //[kg/s]
     double m_W_dot_CT_htf_pump_des; //[MWe]
 
+    double m_m_dot_CT_to_HT_ratio;  //[-]
+
     double m_q_dot_min_des;         //[MWt]
 
     double m_q_dot_su_max;          //[MWt]
@@ -89,6 +178,8 @@ private:
     // Member points/classes
     std::unique_ptr<HTFProperties> m_HT_htfProps;
     std::unique_ptr<HTFProperties> m_CT_htfProps;
+
+    std::shared_ptr<heat_pump_helpers::C_carnot_heat_pump> mp_carnot_heat_pump;
     // *******************************************
     // *******************************************
 
@@ -177,13 +268,6 @@ public:
             double& E_su /*MWt-hr*/);
 };
 
-namespace heat_pump_helpers
-{
-    void design_calcs(double q_dot_hot_out /*MWt*/, double COP_heat /*-*/,
-            double f_elec_consume_vs_W_dot_thermo /*-*/,
-            double& W_dot_in_thermo /*MWe*/, double& q_dot_cold_in /*MWt*/,
-            double& W_dot_consume_elec /*MWe*/, double& W_dot_in_net /*MWe*/,
-            double& COP_heat_net /*-*/);
-}
+
 
 #endif // !__csp_solver_cr_heat_pump
