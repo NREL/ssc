@@ -299,9 +299,11 @@ void C_csp_cr_electric_resistance::on(const C_csp_weatherreader::S_outputs& weat
     if (q_dot_elec < m_q_dot_min) {
         m_operating_mode = C_csp_collector_receiver::OFF;
         q_dot_elec = 0.0;       //[MWt]
+        m_E_su_calculated = m_E_su_des;     //[MWt-hr]
     }
     else {
         m_operating_mode = C_csp_collector_receiver::ON;
+        m_E_su_calculated = 0.0;        //[MWt-hr]
     }
 
     double W_dot_heater = q_dot_elec;       //[MWe]
@@ -317,8 +319,6 @@ void C_csp_cr_electric_resistance::on(const C_csp_weatherreader::S_outputs& weat
         q_dot_startup = q_startup / (sim_info.ms_ts.m_step / 3600.0);   //[MWt]
         W_dot_startup = q_dot_startup;      //[MWt]
     }
-
-    m_E_su_calculated = 0.0;        //[MWt-hr]
 
     // Set solver outputs and return
     cr_out_solver.m_q_startup = q_startup;        //[MWt-hr]
@@ -380,17 +380,16 @@ void C_csp_cr_electric_resistance::converged()
 {
     m_operating_mode_converged = m_operating_mode;
 
+    // Operating mode methods should handle this, but can check here too
+    if (m_operating_mode_converged == OFF) {
+
+        m_E_su_calculated = m_E_su_des;
+    }
+
     if ((m_startup_mode == INSTANTANEOUS_NO_MAX_ELEC_IN || m_E_su_des == 0.0)
         && m_operating_mode_converged == OFF) {
         m_operating_mode_converged = OFF_NO_SU_REQ;
     }
-
-    //if (m_E_su_calculated == 0.0 || m_startup_mode == INSTANTANEOUS_NO_MAX_ELEC_IN) {
-    //    m_operating_mode_converged = C_csp_collector_receiver::ON;
-    //}
-    //else {
-    //    m_operating_mode_converged = m_operating_mode;		
-    //}
 
     m_E_su_initial = m_E_su_calculated;
 
