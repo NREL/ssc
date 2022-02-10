@@ -45,7 +45,7 @@ GTEST_API_ int main(int argc, char **argv) {
     //    ::testing::GTEST_FLAG(filter) = "CMTcsMoltenSalt*";
 
     //    filter to exclude
-    //    ::testing::GTEST_FLAG(filter) = "CMTcsMoltenSalt*";
+    //    ::testing::GTEST_FLAG(filter) = "-CMTcsMoltenSalt*";
 
     // run multiple test
     //    ::testing::GTEST_FLAG(filter) = "CMPvwattsv8Integration_cmod_pvwattsv8.DefaultNoFinancialModel_cmod_pvwattsv8:CMPvwattsv8Integration_cmod_pvwattsv8.NonAnnual";
