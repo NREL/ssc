@@ -188,14 +188,14 @@ TEST(save_as_JSON_test_run, pv_batt_mechant_plant_rapidjson) {
     EXPECT_TRUE(success);
     ssc_number_t npv;
     ssc_data_get_number(data, "project_return_aftertax_npv", &npv);
-    EXPECT_NEAR(npv, -81248213, fabs(-81248213) / 1e6);
-    
+    EXPECT_NEAR(npv, -81154037, fabs(-81154037) / 1e6);
+   
     ssc_module_free(mod_pv);
     ssc_module_free(mod_grid);
     ssc_module_free(mod_mp);
     ssc_data_free(data);
 
-}
+   
 
 TEST(save_as_JSON_test_run, pt_mechant_plant_rapidjson) {
     std::ifstream test(inputs_as_JSON3);
