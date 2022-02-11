@@ -329,7 +329,8 @@ var_info vtab_battery_outputs[] = {
 battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, const std::shared_ptr<batt_variables>& batt_vars_in)
 {
     make_vars = false;
-
+    utilityRate = NULL;
+    util_rate_data = NULL;
     // time quantities
     _dt_hour = dt_hr;
     step_per_hour = static_cast<size_t>(1. / _dt_hour);
@@ -609,7 +610,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             // Automated behind-the-meter
             else
             {
-                // For automated behind the meter with electricity rates
+                 // For automated behind the meter with electricity rates
                 batt_vars->ec_rate_defined = false;
                 if (vt.is_assigned("ur_ec_tou_mat")) { // Some tests don't have this assigned, ensure it is before setting up forecast rate
                     batt_vars->ec_rate_defined = true;
@@ -1198,7 +1199,6 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
         }
 
         // Create UtilityRate object only if utility rate is defined
-        utilityRate = NULL;
         if (batt_vars->ec_rate_defined) {
             utilityRate = new UtilityRate(batt_vars->ec_use_realtime, batt_vars->ec_weekday_schedule, batt_vars->ec_weekend_schedule, batt_vars->ec_tou_matrix, batt_vars->ec_realtime_buy);
         }
@@ -1252,8 +1252,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
     /*! Behind-the-meter automated dispatch for peak shaving */
     else
     {
-        util_rate_data = NULL;
-        if (batt_vars->ec_rate_defined) {
+         if (batt_vars->ec_rate_defined) {
             util_rate_data = new rate_data();
             rate_setup::setup(&vt, (int)step_per_year, batt_vars->analysis_period, *util_rate_data, "cmod_battery");
         }
@@ -1520,6 +1519,12 @@ battstor::~battstor()
     delete battery_metrics;
     delete dispatch_model;
     delete charge_control;
+    if (util_rate_data != NULL) {
+        delete util_rate_data;
+    }
+    if (utilityRate != NULL) {
+        delete utilityRate;
+    }
 }
 
 battstor::battstor(const battstor& orig) {
@@ -1678,6 +1683,13 @@ battstor::battstor(const battstor& orig) {
             battery_model = nullptr;
         }
     }
+    utilityRate = NULL;
+    if (orig.utilityRate)
+        utilityRate = new UtilityRate(*orig.utilityRate);
+    util_rate_data = NULL;
+    if (orig.util_rate_data)
+        util_rate_data = new rate_data(*orig.util_rate_data);
+
 }
 
 bool battstor::uses_forecast() {

@@ -53,9 +53,11 @@ TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, TestStep) {
     EXPECT_NEAR(SOC, 46.94, 1e-2);
 
     // make a copy
-    std::string js = ssc_data_to_json(data);
-    auto copy = json_to_ssc_data(js.c_str());
+    auto js = ssc_data_to_json(data);
+    auto copy = json_to_ssc_data(js);
 
+    delete js;
+    
     ssc_module_exec(mod, data);
     ssc_data_get_number(data, "last_idx", &last_idx);
     ssc_data_get_number(data, "V", &V);
@@ -100,6 +102,8 @@ TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, TestStep) {
     EXPECT_NEAR(P_d, 3.34, 1e-2);
     EXPECT_NEAR(P_c, -5.89, 1e-2);
     EXPECT_NEAR(SOC, 41.79, 1e-2);
+    
+    ssc_data_free(copy);
 }
 
 TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, SubMinute) {
@@ -119,9 +123,11 @@ TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, SubMinute) {
     EXPECT_NEAR(SOC, 52.07, 1e-2);
 
     // make a copy
-    std::string js = ssc_data_to_json(data);
-    auto copy = json_to_ssc_data(js.c_str());
+    auto js = ssc_data_to_json(data);
+    auto copy = json_to_ssc_data(js);
 
+    delete js;
+    
     ssc_module_exec(mod, data);
     ssc_data_get_number(data, "last_idx", &last_idx);
     ssc_data_get_number(data, "I", &current);
@@ -146,6 +152,8 @@ TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, SubMinute) {
     EXPECT_NEAR(P, 0.551, 1e-2);
     EXPECT_NEAR(V, 552.87, 1e-2);
     EXPECT_NEAR(SOC, 52.05, 1e-2);
+    
+    ssc_data_free(copy);
 }
 
 TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, ReadJson) {
@@ -167,6 +175,9 @@ TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, ReadJson) {
     EXPECT_EQ(length, 1);
 
     EXPECT_TRUE(1);     // means the variable retrievals all succeeded
+    
+    ssc_data_free(copy);
+
 }
 
 TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, RunCurrentControl) {
@@ -264,10 +275,12 @@ TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, AdaptiveTimestep) {
         ssc_module_exec(adaptive_batt, &data_copy);
         ssc_data_get_number(&data_copy, "P", &P);
         adaptive_E += P / (double)steps_per_hour;
-        std::string js = ssc_data_to_json(data);
-        std::string js_adaptive = ssc_data_to_json(&data_copy);
-        printf("%s\n", js.c_str());
-        printf("%s\n", js_adaptive.c_str());
+        auto js = ssc_data_to_json(data);
+        auto js_adaptive = ssc_data_to_json(&data_copy);
+        printf("%s\n", js);
+        printf("%s\n", js_adaptive);
+        delete js;
+        delete js_adaptive;
 
     }
 
@@ -281,11 +294,13 @@ TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, AdaptiveTimestep) {
     ssc_data_get_number(&data_copy, "P", &P);
     adaptive_E += P;
 
-    std::string js = ssc_data_to_json(data);
-    std::string js_adaptive = ssc_data_to_json(&data_copy);
-    printf("%s\n", js.c_str());
-    printf("%s\n", js_adaptive.c_str());
-
+    auto js = ssc_data_to_json(data);
+    auto js_adaptive = ssc_data_to_json(&data_copy);
+    printf("%s\n", js);
+    printf("%s\n", js_adaptive);
+    delete js;
+    delete js_adaptive;
+    
     double hourly_SOC, adaptive_SOC;
     ssc_data_get_number(data, "SOC", &hourly_SOC);
     ssc_data_get_number(&data_copy, "SOC", &adaptive_SOC);
@@ -294,6 +309,8 @@ TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, AdaptiveTimestep) {
     EXPECT_NEAR(adaptive_E, 2.995, 1e-3);
     EXPECT_NEAR(hourly_SOC, 23.614, 1e-3);
     EXPECT_NEAR(adaptive_SOC, 23.657, 1e-3);
+
+    ssc_module_free(adaptive_batt);
 }
 
 TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, TestCycleCount) {
@@ -302,7 +319,9 @@ TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, TestCycleCount) {
 
     mod = ssc_module_create("battery_stateful");
     EXPECT_TRUE(ssc_stateful_module_setup(mod, data));
-
+    
+    ssc_data_free(data);
+    
     data = json_to_ssc_data(js.c_str()); // Refresh the vtable data since setup overwrites some of the history
 
     var_table* vt = static_cast<var_table*>(data);

@@ -184,6 +184,11 @@ protected:
 	var_data* input;
 	double e;		//epsilon for double comparison
 
+    ~weatherdataTest(){
+        delete vt;
+        delete input;
+    }
+    
 	void SetUp(){
 		e = 0.001;
 		vt->assign("lat", 1);

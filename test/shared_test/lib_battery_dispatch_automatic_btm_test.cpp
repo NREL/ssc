@@ -163,7 +163,8 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMPVChargeAndDischarge) {
         dispatchAutoBTM->dispatch(0, h, 0);
         EXPECT_NEAR(batteryPower->powerBatteryDC, expectedPower[h], 0.5) << " error in expected at hour " << h;
     }
-}
+    
+ }
 
 TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMPVChargeAndDischargeSubhourly) {
     double dtHour = 0.25;
@@ -334,6 +335,8 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, TestBasicForecast) {
         dispatchAutoBTM->dispatch(0, h, 0);
         EXPECT_NEAR(batteryPower->powerBatteryDC, expectedPower[h], 0.5) << " error in expected at hour " << h;
     }
+    delete util_rate;
+
 }
 
 TEST_F(AutoBTMTest_lib_battery_dispatch, TestSummerPeak) {
@@ -370,6 +373,8 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, TestSummerPeak) {
         dispatchAutoBTM->dispatch(0, h, 0);
         EXPECT_NEAR(batteryPower->powerBatteryDC, expectedPower[h], 0.5) << " error in expected at hour " << h;
     }
+    delete util_rate;
+
 }
 
 TEST_F(AutoBTMTest_lib_battery_dispatch, TestSummerPeakNetMeteringCredits) {
@@ -407,6 +412,8 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, TestSummerPeakNetMeteringCredits) {
         dispatchAutoBTM->dispatch(0, h, 0);
         EXPECT_NEAR(batteryPower->powerBatteryDC, expectedPower[h], 0.1) << " error in expected at hour " << h;
     }
+    delete util_rate;
+
 }
 
 TEST_F(AutoBTMTest_lib_battery_dispatch, TestSummerPeakGridCharging) {
@@ -445,6 +452,8 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, TestSummerPeakGridCharging) {
         dispatchAutoBTM->dispatch(0, h, 0);
         EXPECT_NEAR(batteryPower->powerBatteryDC, expectedPower[h], 0.1) << " error in expected at hour " << h;
     }
+    delete util_rate;
+
 }
 
 TEST_F(AutoBTMTest_lib_battery_dispatch, TestSummerPeakGridChargingSubhourly) {
@@ -498,6 +507,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, TestSummerPeakGridChargingSubhourly) {
             EXPECT_NEAR(batteryPower->powerBatteryDC, expectedPower[h], 0.1) << " error in expected at hour " << h << " step " << j;
         }
     }
+    delete util_rate;
 }
 
 TEST_F(AutoBTMTest_lib_battery_dispatch, TestCommercialPeakForecasting) {
@@ -541,6 +551,8 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, TestCommercialPeakForecasting) {
         dispatchAutoBTM->dispatch(0, h, 0);
         EXPECT_NEAR(batteryPower->powerBatteryDC, expectedPower[h], 0.5) << " error in expected at hour " << h;
     }
+    delete util_rate;
+
 }
 
 TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMPVChargeAndDischargeSmallLoad) {
@@ -1086,6 +1098,8 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMGridOutagePriceSignalsEm
 
     EXPECT_NEAR(batteryPower->powerBatteryDC, 0.0, 0.01) << " error in expected at hour " << h;
 
+    delete util_rate;
+
 }
 
 TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMGridOutageCustomEmptyAndFull) {
@@ -1278,3 +1292,4 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMGridOutagePeakShavingDC)
         EXPECT_NEAR(batteryPower->powerCritLoadUnmet, expectedCritLoadUnmet[h], 0.1) << " error in crit load at hour " << h;
     }
 }
+

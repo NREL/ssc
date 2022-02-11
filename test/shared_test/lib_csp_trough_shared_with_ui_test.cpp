@@ -45,6 +45,9 @@ NAMESPACE_TEST(csp_common, TroughSharedWithUi, SystemDesign) {
 
     ASSERT_NEAR_FRAC(GetNum(vd, "csp_dtr_pwrb_nameplate"), 99.9, kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "q_pb_design"), 311.8, kErrorToleranceHi);
+    
+    delete vd;
+
 }
 
 NAMESPACE_TEST(csp_common, TroughSharedWithUi, SolarField) {
@@ -152,6 +155,8 @@ NAMESPACE_TEST(csp_common, TroughSharedWithUi, SolarField) {
     ASSERT_NEAR_FRAC(L_cpnt.ncells(), 121, kErrorToleranceHi);
     util::matrix_t<ssc_number_t> Type_cpnt = vd->lookup("Type_cpnt")->num;
     ASSERT_NEAR_FRAC(Type_cpnt.ncells(), 121, kErrorToleranceHi);
+    
+    delete vd;
 }
 
 NAMESPACE_TEST(csp_common, TroughSharedWithUi, CollectorType) {
@@ -188,6 +193,9 @@ NAMESPACE_TEST(csp_common, TroughSharedWithUi, CollectorType) {
     ASSERT_NEAR_FRAC(csp_dtr_sca_calc_end_losses.at(0,0), 0.9996, kErrorToleranceHi);
     util::matrix_t<ssc_number_t> csp_dtr_sca_calc_iams = vd->lookup("csp_dtr_sca_calc_iams")->num;
     ASSERT_NEAR_FRAC(csp_dtr_sca_calc_iams.at(0,0), 1.0019, kErrorToleranceHi);
+    
+    delete vd;
+
 }
 
 NAMESPACE_TEST(csp_common, TroughSharedWithUi, SystemControl) {
@@ -204,4 +212,7 @@ NAMESPACE_TEST(csp_common, TroughSharedWithUi, SystemControl) {
     util::matrix_t<ssc_number_t> wlim_series = vd->lookup("wlim_series")->num;
     ASSERT_NEAR_FRAC(wlim_series.ncells(), 8760, 0.);
     ASSERT_NEAR_FRAC(wlim_series.at(0, 0), 9.6e40, kErrorToleranceHi);
+    
+    delete vd;
+
 }
