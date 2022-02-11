@@ -91,9 +91,9 @@ static var_info vtab_cashloan[] = {
     { SSC_OUTPUT, SSC_NUMBER, "total_cost", "Total installed cost", "$", "", "Financial Metrics", "*", "", "" },
 		
 
-    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_net",            "Electricity to grid net",       "kWh", "", "Cash Flow Electricity", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_sales",          "Electricity to grid",           "kWh", "", "Cash Flow Electricity", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_purchases",      "Electricity from grid",         "kWh", "", "Cash Flow Electricity", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_net",            "Electricity net generation",       "kWh", "", "Cash Flow Electricity", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_sales",          "Electricity generation",           "kWh", "", "Cash Flow Electricity", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_purchases",      "Electricity from grid to system",         "kWh", "", "Cash Flow Electricity", "*", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_without_battery","Electricity generated without the battery or curtailment", "kWh", "", "Cash Flow Electricity", "",  "LENGTH_EQUAL=cf_length", "" },
 
     { SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_value",      "Value of electricity savings",                  "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -1472,12 +1472,12 @@ public:
 		if (len == 1)
 		{
 			for (int i=1;i<=nyears;i++)
-				cf.at(cf_line, i) = (i <= term) ? parr[0] * cf.at(CF_energy_net,i) * pow(1 + escal, i-1) : 0.0;
+				cf.at(cf_line, i) = (i <= term) ? parr[0] * cf.at(CF_energy_sales,i) * pow(1 + escal, i-1) : 0.0;
 		}
 		else
 		{
 			for (int i=1;i<=nyears && i <= (int)len;i++)
-				cf.at(cf_line, i) = parr[i-1]*cf.at(CF_energy_net,i);
+				cf.at(cf_line, i) = parr[i-1]*cf.at(CF_energy_sales,i);
 		}
 	}
 
@@ -1492,12 +1492,12 @@ public:
 		if (len == 1)
 		{
 			for (int i=1;i<=nyears;i++)
-				cf.at(cf_line, i) = (i <= term) ? cf.at(CF_energy_net,i) / 1000.0 * round_irs(1000.0 * parr[0] * pow(1 + escal, i-1)) : 0.0;
+				cf.at(cf_line, i) = (i <= term) ? cf.at(CF_energy_sales,i) / 1000.0 * round_irs(1000.0 * parr[0] * pow(1 + escal, i-1)) : 0.0;
 		}
 		else
 		{
 			for (int i=1;i<=nyears && i <= (int)len;i++)
-				cf.at(cf_line, i) = parr[i-1]*cf.at(CF_energy_net,i);
+				cf.at(cf_line, i) = parr[i-1]*cf.at(CF_energy_sales,i);
 		}
 	}
 

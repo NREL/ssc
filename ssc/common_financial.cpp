@@ -3232,12 +3232,7 @@ bool hourly_energy_calculation::calculate(compute_module *cm)
     m_energy_purchases.clear();
     m_energy_without_battery.clear();
 
-	// assign hourly values for "gen"
-    ssc_number_t* ppa_gen;
-    // Choose which variable goes through the hourly PPA process. If electricity purchases are through a utility rate, use only the positive revenue (revenue_gen), otherwise use gen
-    ppa_gen = revenue_gen;
-
-    sum_ts_to_hourly(ppa_gen, m_hourly_energy);
+    sum_ts_to_hourly(pgen, m_hourly_energy);
     sum_ts_to_hourly(revenue_gen, m_energy_sales);
     sum_ts_to_hourly(gen_purchases, m_energy_purchases);
 

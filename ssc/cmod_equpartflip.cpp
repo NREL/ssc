@@ -1201,7 +1201,7 @@ public:
 		{
 			degrade_cf.push_back(cf.at(CF_degradation, i));
 		}
-		m_disp_calcs.init(this, degrade_cf, hourly_energy_calcs.hourly_energy());
+		m_disp_calcs.init(this, degrade_cf, hourly_energy_calcs.hourly_sales());
 
 
 
@@ -2557,9 +2557,6 @@ public:
 
 /***************** end iterative solution *********************************************************************/
 
-    for (size_t i = 1; i <= nyears; i++)
-        cf.at(CF_energy_net, i) = cf.at(CF_energy_sales, i) + cf.at(CF_energy_purchases, i); // Adding a positive and negative number
-
     assign("flip_target_year", var_data((ssc_number_t) flip_target_year ));
 	assign("flip_target_irr", var_data((ssc_number_t)  flip_target_percent ));
 /*	assign("flip_actual_year", var_data((ssc_number_t) flip_year));
@@ -3688,12 +3685,12 @@ public:
 		if (len == 1)
 		{
 			for (int i=1;i<=nyears;i++)
-				cf.at(cf_line, i) = (i <= term) ? parr[0] * cf.at(CF_energy_net,i) * pow(1 + escal, i-1) : 0.0;
+				cf.at(cf_line, i) = (i <= term) ? parr[0] * cf.at(CF_energy_sales,i) * pow(1 + escal, i-1) : 0.0;
 		}
 		else
 		{
 			for (int i=1;i<=nyears && i <= (int)len;i++)
-				cf.at(cf_line, i) = parr[i-1]*cf.at(CF_energy_net,i);
+				cf.at(cf_line, i) = parr[i-1]*cf.at(CF_energy_sales,i);
 		}
 	}
 
@@ -3708,12 +3705,12 @@ public:
 		if (len == 1)
 		{
 			for (int i=1;i<=nyears;i++)
-				cf.at(cf_line, i) = (i <= term) ? cf.at(CF_energy_net,i) / 1000.0 * round_irs(1000.0 * parr[0] * pow(1 + escal, i-1)) : 0.0;
+				cf.at(cf_line, i) = (i <= term) ? cf.at(CF_energy_sales,i) / 1000.0 * round_irs(1000.0 * parr[0] * pow(1 + escal, i-1)) : 0.0;
 		}
 		else
 		{
 			for (int i=1;i<=nyears && i <= (int)len;i++)
-				cf.at(cf_line, i) = parr[i-1]*cf.at(CF_energy_net,i);
+				cf.at(cf_line, i) = parr[i-1]*cf.at(CF_energy_sales,i);
 		}
 	}
 

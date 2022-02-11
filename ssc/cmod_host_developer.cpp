@@ -540,9 +540,9 @@ static var_info _cm_vtab_host_developer[] = {
 /* Production - input as energy_net above */
 
 /* Partial Income Statement: Project */
-    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_net",             "Electricity to grid net",       "kWh", "", "Cash Flow Electricity", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_sales",           "Electricity to grid",           "kWh", "", "Cash Flow Electricity", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_purchases",       "Electricity from grid",         "kWh", "", "Cash Flow Electricity", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_net",             "Electricity net generation",       "kWh", "", "Cash Flow Electricity", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_sales",           "Electricity generation",           "kWh", "", "Cash Flow Electricity", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_purchases",       "Electricity from grid to system",  "kWh", "", "Cash Flow Electricity", "*", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_without_battery", "Electricity generated without the battery or curtailment", "kWh", "", "Cash Flow Electricity", "",  "LENGTH_EQUAL=cf_length", "" },
 
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_ppa_price",                           "PPA price",                     "cents/kWh",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
@@ -1176,7 +1176,7 @@ public:
 		{
 			degrade_cf.push_back(cf.at(CF_degradation, i));
 		}
-		m_disp_calcs.init(this, degrade_cf, hourly_energy_calcs.hourly_energy());
+		m_disp_calcs.init(this, degrade_cf, hourly_energy_calcs.hourly_sales());
 		// end of energy and dispatch initialization
 
 
@@ -3999,12 +3999,12 @@ public:
 		if (len == 1)
 		{
 			for (int i=1;i<=nyears;i++)
-				cf.at(cf_line, i) = (i <= term) ? parr[0] * cf.at(CF_energy_net,i) * pow(1 + escal, i-1) : 0.0;
+				cf.at(cf_line, i) = (i <= term) ? parr[0] * cf.at(CF_energy_sales,i) * pow(1 + escal, i-1) : 0.0;
 		}
 		else
 		{
 			for (int i=1;i<=nyears && i <= (int)len;i++)
-				cf.at(cf_line, i) = parr[i-1]*cf.at(CF_energy_net,i);
+				cf.at(cf_line, i) = parr[i-1]*cf.at(CF_energy_sales,i);
 		}
 	}
 
@@ -4019,12 +4019,12 @@ public:
 		if (len == 1)
 		{
 			for (int i=1;i<=nyears;i++)
-				cf.at(cf_line, i) = (i <= term) ? cf.at(CF_energy_net,i) / 1000.0 * round_irs(1000.0 * parr[0] * pow(1 + escal, i-1)) : 0.0;
+				cf.at(cf_line, i) = (i <= term) ? cf.at(CF_energy_sales,i) / 1000.0 * round_irs(1000.0 * parr[0] * pow(1 + escal, i-1)) : 0.0;
 		}
 		else
 		{
 			for (int i=1;i<=nyears && i <= (int)len;i++)
-				cf.at(cf_line, i) = parr[i-1]*cf.at(CF_energy_net,i);
+				cf.at(cf_line, i) = parr[i-1]*cf.at(CF_energy_sales,i);
 		}
 	}
 

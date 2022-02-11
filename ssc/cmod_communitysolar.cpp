@@ -1578,7 +1578,6 @@ public:
 		{
 			degrade_cf.push_back(cf.at(CF_degradation, i));
 		}
-		//m_disp_calcs.init(this, degrade_cf, hourly_energy_calcs.hourly_energy());
 		// end of energy and dispatch initialization
 
        
@@ -2697,10 +2696,7 @@ public:
 			}
 			else
 				cf.at(CF_ppa_price, i) = ppa * pow(1 + ppa_escalation, i - 1); // ppa_mode==0 or single value 
-//			cf.at(CF_energy_value,i) = cf.at(CF_energy_net,i) * cf.at(CF_ppa_price,i) /100.0;
-			// dispatch
-//			cf.at(CF_energy_value, i) = cf.at(CF_ppa_price, i) / 100.0 *(
-//				m_disp_calcs.tod_energy_value(i));
+
 
 //			log(util::format("year %d : energy value =%lg", i, m_disp_calcs.tod_energy_value(i)), SSC_WARNING);
 			// total revenue
@@ -3337,47 +3333,7 @@ public:
 
 //	log(util::format("after loop  - size of debt =%lg .", size_of_debt), SSC_WARNING);
 
-    
-    /*
-    // Use PPA values to calculate revenue from purchases and sales
-    size_t n_multipliers;
-    
-    ssc_number_t* ppa_multipliers = as_array("ppa_multipliers", &n_multipliers);
-    bool ppa_purchases = !(is_assigned("en_electricity_rates") && as_number("en_electricity_rates") == 1);
-    if (as_integer("system_use_lifetime_output") == 1)
-    {
-        // hourly_enet includes all curtailment, availability
-        for (size_t i = 1; i <= nyears; i++) {
-            double ppa_value = cf.at(CF_ppa_price, i);
-            for (size_t h = 0; h < 8760; h++) {
-                if (ppa_purchases) {
-                    cf.at(CF_energy_purchases_value, i) += hourly_energy_calcs.hourly_purchases()[(i - 1) * 8760 + h] * cf.at(CF_degradation, i) * ppa_value / 100.0 * ppa_multipliers[h];
-                }
-            }
-            if (!ppa_purchases) {
-                cf.at(CF_energy_purchases_value, i) = 0.0;
-                // Recompute this variable because the ppa_gen values (hourly_net) were all positve until now 
-                cf.at(CF_energy_net, i) = cf.at(CF_energy_sales, i) + cf.at(CF_energy_purchases, i); // Adding a positive and negative number
-            }
-        }   
-    }
-    else
-    {
-        for (size_t i = 1; i <= nyears; i++) {
-            double ppa_value = cf.at(CF_ppa_price, i);
-            for (size_t h = 0; h < 8760; h++) {
-                if (ppa_purchases) {
-                    cf.at(CF_energy_purchases_value, i) += hourly_energy_calcs.hourly_purchases()[h] * cf.at(CF_degradation, i) * ppa_value / 100.0 * ppa_multipliers[h];
-                }
-            }
-            if (!ppa_purchases) {
-                cf.at(CF_energy_purchases_value, i) = 0.0;
-                // Recompute this variable because the ppa_gen values (hourly_net) were all positve until now 
-                cf.at(CF_energy_net, i) = cf.at(CF_energy_sales, i) + cf.at(CF_energy_purchases, i); // Adding a positive and negative number
-            }
-        }
-    }
-    */
+   
 
 	// NPV of revenue components for stacked bar chart
 	/*
@@ -4645,12 +4601,12 @@ public:
 		if (len == 1)
 		{
 			for (int i=1;i<=nyears;i++)
-				cf.at(cf_line, i) = (i <= term) ? parr[0] * cf.at(CF_energy_net,i) * pow(1 + escal, i-1) : 0.0;
+				cf.at(cf_line, i) = (i <= term) ? parr[0] * cf.at(CF_energy_sales,i) * pow(1 + escal, i-1) : 0.0;
 		}
 		else
 		{
 			for (int i=1;i<=nyears && i <= (int)len;i++)
-				cf.at(cf_line, i) = parr[i-1]*cf.at(CF_energy_net,i);
+				cf.at(cf_line, i) = parr[i-1]*cf.at(CF_energy_sales,i);
 		}
 	}
 
@@ -4665,12 +4621,12 @@ public:
 		if (len == 1)
 		{
 			for (int i=1;i<=nyears;i++)
-				cf.at(cf_line, i) = (i <= term) ? cf.at(CF_energy_net,i) / 1000.0 * round_irs(1000.0 * parr[0] * pow(1 + escal, i-1)) : 0.0;
+				cf.at(cf_line, i) = (i <= term) ? cf.at(CF_energy_sales,i) / 1000.0 * round_irs(1000.0 * parr[0] * pow(1 + escal, i-1)) : 0.0;
 		}
 		else
 		{
 			for (int i=1;i<=nyears && i <= (int)len;i++)
-				cf.at(cf_line, i) = parr[i-1]*cf.at(CF_energy_net,i);
+				cf.at(cf_line, i) = parr[i-1]*cf.at(CF_energy_sales,i);
 		}
 	}
 
