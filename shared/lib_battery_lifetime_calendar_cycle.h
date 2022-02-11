@@ -56,7 +56,7 @@ struct calendar_cycle_params {
     enum CALENDAR_COLUMNS {
         DAYS, CAPACITY_CAL
     };
-
+    
     friend std::ostream &operator<<(std::ostream &os, const calendar_cycle_params &p);
 };
 

@@ -98,6 +98,8 @@ protected:
 
     void TearDown() override {
         delete vartab;
+        if (inverter)
+            delete inverter;
     }
 };
 

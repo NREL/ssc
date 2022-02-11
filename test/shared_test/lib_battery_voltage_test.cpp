@@ -671,7 +671,7 @@ TEST_F(voltage_table_lib_battery_voltage_test, calculateMaxChargeHourly1){
     max_current_calc = model->calculate_current_for_target_w(power + 1, cap->q0(), cap->qmax(), 0);
     EXPECT_NEAR(max_current_calc, -4.99, 1e-2);
     cap->updateCapacity(max_current_calc, dt_hour);
-    EXPECT_NEAR(cap->SOC(), 99.99, 1e-2);
+    EXPECT_NEAR(cap->SOC(), 99.99, 2e-2);
     EXPECT_NEAR(cap->I() * model->battery_voltage(), -2564, 1);
 }
 
@@ -702,11 +702,11 @@ TEST_F(voltage_table_lib_battery_voltage_test, calculateMaxChargeHourly2){
     EXPECT_NEAR(power, -569, 1);
 
     max_current_calc = model->calculate_current_for_target_w(power + 1, cap->q0(), cap->qmax(), 0);
-    EXPECT_NEAR(max_current_calc, -0.998, 1e-3);
+    EXPECT_NEAR(max_current_calc, -0.998, 2e-3);
 
     // max current reduced to enforce SOC
     cap->updateCapacity(max_current_calc, dt_hour);
-    EXPECT_NEAR(cap->SOC(), 99.984, 1e-3);
+    EXPECT_NEAR(cap->SOC(), 99.984, 2e-2); // for Apple Silicon
     EXPECT_NEAR(cap->I() * model->battery_voltage(), -512, 1);
 
     // start at empty SOC
@@ -753,8 +753,8 @@ TEST_F(voltage_table_lib_battery_voltage_test, calculateMaxChargeHourly3){
 
     // max current reduced to enforce SOC
     cap->updateCapacity(max_current_calc, dt_hour);
-    EXPECT_NEAR(cap->SOC(), 99.99, 1e-2);
-    EXPECT_NEAR(cap->I() * model->battery_voltage(), -4615, 1);
+    EXPECT_NEAR(cap->SOC(), 99.99, 2e-2);
+    EXPECT_NEAR(cap->I() * model->battery_voltage(), -4615, 2);
 }
 
 TEST_F(voltage_table_lib_battery_voltage_test, calculateMaxChargeSubHourly1){
@@ -783,8 +783,8 @@ TEST_F(voltage_table_lib_battery_voltage_test, calculateMaxChargeSubHourly1){
     EXPECT_NEAR(max_current_calc, -9.999, 1e-3);
     // max current reduced to enforce SOC
     cap->updateCapacity(max_current_calc, dt_hour);
-    EXPECT_NEAR(cap->SOC(), 99.99, 1e-2);
-    EXPECT_NEAR(cap->I() * model->battery_voltage(), -5128, 1);
+    EXPECT_NEAR(cap->SOC(), 99.99, 2e-2);
+    EXPECT_NEAR(cap->I() * model->battery_voltage(), -5128, 2);
 }
 
 TEST_F(voltage_table_lib_battery_voltage_test, calculateMaxChargeSubHourly2){
@@ -817,7 +817,7 @@ TEST_F(voltage_table_lib_battery_voltage_test, calculateMaxChargeSubHourly2){
     EXPECT_NEAR(max_current_calc, -2, 1e-2);
 
     cap->updateCapacity(max_current_calc, dt_hour);
-    EXPECT_NEAR(cap->SOC(), 99.99, 1e-2);
+    EXPECT_NEAR(cap->SOC(), 99.99, 2e-2);
     EXPECT_NEAR(cap->I() * model->battery_voltage(), -1025, 1);
 
     // start at empty SOC

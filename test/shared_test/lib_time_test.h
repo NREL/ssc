@@ -98,6 +98,11 @@ protected:
 		schedule.assign(sched, 12, 24);
 
 	}
+    
+    void TearDown() {
+        if (sched)
+            delete [] sched;
+    }
 };
 
 

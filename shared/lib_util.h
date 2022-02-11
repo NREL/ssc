@@ -327,8 +327,8 @@ namespace util
 
 		virtual ~matrix_t()
 		{
-			if (t_array) delete [] t_array;
-		}
+            if (t_array) delete[] t_array;
+        }
 		
 		void clear()
 		{
