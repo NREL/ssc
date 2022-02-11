@@ -210,11 +210,11 @@ static var_info _cm_vtab_etes_ptes[] = {
     { SSC_OUTPUT, SSC_NUMBER, "q_dot_loss_tes_des",              "TES thermal loss at design",                          "MWt",          "",                                  "TES Design Calc",                "*",                                                                "",              "" },
 
             // Cold TES
-    { SSC_OUTPUT, SSC_NUMBER, "Q_CT_tes_des",                    "TES design capacity",                                 "MWt-hr",       "",                                  "TES Design Calc",                "*",                                                                "",              "" },
-    { SSC_OUTPUT, SSC_NUMBER, "V_CT_tes_htf_avail",              "Volume of TES HTF available for heat transfer",       "m3",           "",                                  "TES Design Calc",                "*",                                                                "",              "" },
-    { SSC_OUTPUT, SSC_NUMBER, "V_CT_tes_htf_total",              "Total TES HTF volume",                                "m3",           "",                                  "TES Design Calc",                "*",                                                                "",              "" },
-    { SSC_OUTPUT, SSC_NUMBER, "d_CT_tank_tes",                   "Diameter of TES tank",                                "m",            "",                                  "TES Design Calc",                "*",                                                                "",              "" },
-    { SSC_OUTPUT, SSC_NUMBER, "q_dot_loss_CT_tes_des",           "TES thermal loss at design",                          "MWt",          "",                                  "TES Design Calc",                "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "Q_CT_tes_des",                    "Cold TES design capacity",                            "MWt-hr",       "",                                  "TES Design Calc",                "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "V_CT_tes_htf_avail",              "Volume of cold TES HTF available for heat transfer",  "m3",           "",                                  "TES Design Calc",                "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "V_CT_tes_htf_total",              "Total cold TES HTF volume",                           "m3",           "",                                  "TES Design Calc",                "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "d_CT_tank_tes",                   "Diameter of cold TES tank",                           "m",            "",                                  "TES Design Calc",                "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "q_dot_loss_CT_tes_des",           "Cold TES thermal loss at design",                     "MWt",          "",                                  "TES Design Calc",                "*",                                                                "",              "" },
 
             // Balance of Plant
     { SSC_OUTPUT, SSC_NUMBER, "W_dot_bop_design",                "BOP parasitics at design",                            "MWe",          "",                                  "Balance of Plant",               "*",                                                                "",              "" },
@@ -241,6 +241,45 @@ static var_info _cm_vtab_etes_ptes[] = {
     // Timeseries Simulation Outputs here:
     // ****************************************************************************************************************************************
             // Simulation outputs
+    { SSC_OUTPUT, SSC_ARRAY,  "time_hr",                       "Time at end of timestep",                                       "hr",           "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "elec_purchase_price_mult",      "Electricity purchase price multiplier",                         "",             "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "tou_period",                    "Time of use period",                                            "",             "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "tdry",                          "Resource dry Bulb temperature",                                 "C",            "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "twet",                          "Resource wet Bulb temperature",                                 "C",            "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+
+            // Hot TES outputs
+    { SSC_OUTPUT, SSC_ARRAY,  "q_dot_dc_tes",                  "TES discharge thermal power",                                   "MWt",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "q_dot_ch_tes",                  "TES charge thermal power",                                      "MWt",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "e_ch_tes",                      "TES charge state",                                              "MWht",         "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "q_dot_tes_losses",              "TES thermal losses",                                            "MWt",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "q_dot_tes_heater",              "TES freeze protection power",                                   "MWe",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "T_tes_hot",                     "TES hot temperature",                                           "C",            "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "T_tes_cold",                    "TES cold temperature",                                          "C",            "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "mass_tes_cold",                 "TES cold tank mass (end)",                                      "kg",           "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "mass_tes_hot",                  "TES hot tank mass (end)",                                       "kg",           "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+
+            // Cold TES outputs
+    { SSC_OUTPUT, SSC_ARRAY,  "q_dot_CT_tes_losses",              "TES thermal losses",                                            "MWt",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "q_dot_CT_tes_heater",              "TES freeze protection power",                                   "MWe",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "T_CT_tes_hot",                     "TES hot temperature",                                           "C",            "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "T_CT_tes_cold",                    "TES cold temperature",                                          "C",            "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "mass_CT_tes_cold",                 "TES cold tank mass (end)",                                      "kg",           "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "mass_CT_tes_hot",                  "TES hot tank mass (end)",                                       "kg",           "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+
+
+            // System outputs
+    { SSC_OUTPUT, SSC_ARRAY,  "W_dot_fixed_parasitics",        "Parasitic power plant fixed load",                              "MWe",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "W_dot_bop_parasitics",          "Parasitic power plant generation-dependent laod",               "MWe",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "W_dot_out_net",                 "Total electric power to grid",                                  "MWe",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+
+            // Controller outputs
+    { SSC_OUTPUT, SSC_ARRAY,  "n_op_modes",                    "Operating modes in reporting timestep",                         "",             "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "op_mode_1",                     "1st operating mode",                                            "",             "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "op_mode_2",                     "2nd operating mode, if applicable",                             "",             "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "op_mode_3",                     "3rd operating mode, if applicable",                             "",             "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "m_dot_balance",                 "Relative mass flow balance error",                              "",             "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "q_balance",                     "Relative energy balance error",                                 "",             "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "q_pc_target",                   "Controller target pc heat input",                               "MWt",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
 
 
             // ETES settings for financial model
@@ -500,6 +539,15 @@ public:
             tes->calc_design_pipe_vals = false; // for now, to get 'tanks_in_parallel' to work
         }
 
+            // Set TES cmod outputs
+        c_HT_TES.mc_reported_outputs.assign(C_csp_two_tank_tes::E_Q_DOT_LOSS, allocate("q_dot_tes_losses", n_steps_fixed), n_steps_fixed);
+        c_HT_TES.mc_reported_outputs.assign(C_csp_two_tank_tes::E_W_DOT_HEATER, allocate("q_dot_tes_heater", n_steps_fixed), n_steps_fixed);
+        c_HT_TES.mc_reported_outputs.assign(C_csp_two_tank_tes::E_TES_T_HOT, allocate("T_tes_hot", n_steps_fixed), n_steps_fixed);
+        c_HT_TES.mc_reported_outputs.assign(C_csp_two_tank_tes::E_TES_T_COLD, allocate("T_tes_cold", n_steps_fixed), n_steps_fixed);
+        c_HT_TES.mc_reported_outputs.assign(C_csp_two_tank_tes::E_MASS_COLD_TANK, allocate("mass_tes_cold", n_steps_fixed), n_steps_fixed);
+        c_HT_TES.mc_reported_outputs.assign(C_csp_two_tank_tes::E_MASS_HOT_TANK, allocate("mass_tes_hot", n_steps_fixed), n_steps_fixed);
+
+
         // **********************************************************
         // **********************************************************
 
@@ -545,6 +593,15 @@ public:
             ctes->V_tes_des = 1.85;                 //[m/s]
             ctes->calc_design_pipe_vals = false;    // for now, to get 'tanks_in_parallel' to work
         }
+
+            // Set Cold TES cmod outputs
+        c_CT_TES->mc_reported_outputs.assign(C_csp_two_tank_tes::E_Q_DOT_LOSS, allocate("q_dot_CT_tes_losses", n_steps_fixed), n_steps_fixed);
+        c_CT_TES->mc_reported_outputs.assign(C_csp_two_tank_tes::E_W_DOT_HEATER, allocate("q_dot_CT_tes_heater", n_steps_fixed), n_steps_fixed);
+        c_CT_TES->mc_reported_outputs.assign(C_csp_two_tank_tes::E_TES_T_HOT, allocate("T_CT_tes_hot", n_steps_fixed), n_steps_fixed);
+        c_CT_TES->mc_reported_outputs.assign(C_csp_two_tank_tes::E_TES_T_COLD, allocate("T_CT_tes_cold", n_steps_fixed), n_steps_fixed);
+        c_CT_TES->mc_reported_outputs.assign(C_csp_two_tank_tes::E_MASS_COLD_TANK, allocate("mass_CT_tes_cold", n_steps_fixed), n_steps_fixed);
+        c_CT_TES->mc_reported_outputs.assign(C_csp_two_tank_tes::E_MASS_HOT_TANK, allocate("mass_CT_tes_hot", n_steps_fixed), n_steps_fixed);
+
 
         // **********************************************************
         // **********************************************************
@@ -690,6 +747,33 @@ public:
             c_CT_TES,
             ssc_cmod_update,
             (void*)(this));
+
+            // Set system cmod outputs
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TIME_FINAL, allocate("time_hr", n_steps_fixed), n_steps_fixed);
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::PRICING_MULT, allocate("elec_purchase_price_mult", n_steps_fixed), n_steps_fixed);
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TOU_PERIOD, allocate("tou_period", n_steps_fixed), n_steps_fixed);
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TDRY, allocate("tdry", n_steps_fixed), n_steps_fixed);
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TWET, allocate("twet", n_steps_fixed), n_steps_fixed);
+
+            // TES
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TES_Q_DOT_DC, allocate("q_dot_dc_tes", n_steps_fixed), n_steps_fixed);
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TES_Q_DOT_CH, allocate("q_dot_ch_tes", n_steps_fixed), n_steps_fixed);
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TES_E_CH_STATE, allocate("e_ch_tes", n_steps_fixed), n_steps_fixed);
+
+            // Plant
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::W_DOT_NET, allocate("W_dot_out_net", n_steps_fixed), n_steps_fixed);
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::SYS_W_DOT_FIXED, allocate("W_dot_fixed_parasitics", n_steps_fixed), n_steps_fixed);
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::SYS_W_DOT_BOP, allocate("W_dot_bop_parasitics", n_steps_fixed), n_steps_fixed);
+
+            // Controller
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::ERR_M_DOT, allocate("m_dot_balance", n_steps_fixed), n_steps_fixed);
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::ERR_Q_DOT, allocate("q_balance", n_steps_fixed), n_steps_fixed);
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::N_OP_MODES, allocate("n_op_modes", n_steps_fixed), n_steps_fixed);
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::OP_MODE_1, allocate("op_mode_1", n_steps_fixed), n_steps_fixed);
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::OP_MODE_2, allocate("op_mode_2", n_steps_fixed), n_steps_fixed);
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::OP_MODE_3, allocate("op_mode_3", n_steps_fixed), n_steps_fixed);
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::PC_Q_DOT_TARGET, allocate("q_pc_target", n_steps_fixed), n_steps_fixed);
+
 
         // *****************************************************
         // *****************************************************
@@ -983,6 +1067,33 @@ public:
         // Run timeseries simulation
         update("Begin timeseries simulation...", 0.0);
 
+        try
+        {
+            // Simulate !
+            csp_solver.Ssimulate(sim_setup);
+        }
+        catch (C_csp_exception& csp_exception)
+        {
+            // Report warning before exiting with error
+            while (csp_solver.mc_csp_messages.get_message(&out_type, &out_msg))
+            {
+                log(out_msg);
+            }
+
+            throw exec_error("etes_electric_resistance", csp_exception.m_error_message);
+        }
+
+        // If no exception, then report messages
+        while (csp_solver.mc_csp_messages.get_message(&out_type, &out_msg))
+        {
+            log(out_msg, out_type);
+        }
+        // *****************************************************
+        // *****************************************************
+
+
+        // *****************************************************
+        // Post-process
 
         return;
     }

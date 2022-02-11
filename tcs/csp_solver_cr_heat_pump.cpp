@@ -23,6 +23,13 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "csp_solver_cr_heat_pump.h"
 #include "csp_solver_core.h"
 
+static C_csp_reported_outputs::S_output_info S_cr_heat_pump_output_info[] =
+{
+    {C_csp_cr_heat_pump::E_T_HTF_IN, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+
+    csp_info_invalid
+};
+
 C_csp_cr_heat_pump::C_csp_cr_heat_pump(double COP_heat_des /*-*/, double q_dot_hot_out_des /*MWt*/,
     double f_elec_consume_vs_W_dot_thermo /*-*/,
     double T_HT_HTF_hot /*C*/, double T_HT_HTF_cold /*C*/, double T_CT_HTF_cold /*C*/, double T_CT_HTF_hot /*C*/,
@@ -85,6 +92,8 @@ C_csp_cr_heat_pump::C_csp_cr_heat_pump(double COP_heat_des /*-*/, double q_dot_h
     // Timestep state variables
     m_E_su_initial = std::numeric_limits<double>::quiet_NaN();
     m_E_su_calculated = std::numeric_limits<double>::quiet_NaN();
+
+    mc_reported_outputs.construct(S_cr_heat_pump_output_info);
 }
 
 C_csp_cr_heat_pump::~C_csp_cr_heat_pump(){}
@@ -225,6 +234,9 @@ void C_csp_cr_heat_pump::off(const C_csp_weatherreader::S_outputs& weather,
     m_operating_mode = C_csp_collector_receiver::OFF;
     m_E_su_calculated = m_E_su_des;     //[MWt-hr]
 
+    // Set reported outputs
+    mc_reported_outputs.value(E_T_HTF_IN, m_T_HT_HTF_cold_des); //[C]
+
     return;
 }
 
@@ -271,6 +283,9 @@ void C_csp_cr_heat_pump::startup(const C_csp_weatherreader::S_outputs& weather,
     cr_out_solver.m_q_dot_heater = 0.0;             //[MWt]
 
     cr_out_solver.m_W_dot_elec_in_tot = W_dot_in_thermo + W_dot_htf_pumps;        //[MWe]
+
+    // Set reported outputs
+    mc_reported_outputs.value(E_T_HTF_IN, m_T_HT_HTF_cold_des);     //[C]
 
     return;
 }
@@ -349,7 +364,7 @@ void C_csp_cr_heat_pump::on(const C_csp_weatherreader::S_outputs& weather,
         cop_thermo = q_dot_HT_htf / W_dot_thermo;                       //[-]
         W_dot_cycle_parasitics = m_W_dot_consume_elec_des * W_dot_gross_ND;     //[MWe]
 
-        q_dot_CT_htf = m_dot_CT_htf * m_cp_CT_HTF_des * (T_CT_HTF_hot_in - T_CT_HTF_cold_out);      //[kWt]
+        q_dot_CT_htf = m_dot_CT_htf*m_cp_CT_HTF_des*(T_CT_HTF_hot_in - T_CT_HTF_cold_out)*1.E-3;    //[kWt]
 
         double q_dot_CT_htf_ND_check = q_dot_CT_htf / m_q_dot_cold_in_des;
     }
@@ -371,6 +386,8 @@ void C_csp_cr_heat_pump::on(const C_csp_weatherreader::S_outputs& weather,
 
     cr_out_solver.m_W_dot_elec_in_tot = W_dot_heater;       //[MWe]
 
+    // Set reported outputs
+    mc_reported_outputs.value(E_T_HTF_IN, T_HT_HTF_cold_in);    //[C]
 }
 
 void C_csp_cr_heat_pump::estimates(const C_csp_weatherreader::S_outputs& weather,
@@ -410,6 +427,12 @@ void C_csp_cr_heat_pump::converged()
 {
     m_operating_mode_converged = m_operating_mode;
 
+    // Operating mode methods should handle this, but can check here too
+    if (m_operating_mode_converged == OFF) {
+
+        m_E_su_calculated = m_E_su_des;
+    }
+
     m_E_su_initial = m_E_su_calculated;
 
     mc_reported_outputs.set_timestep_outputs();
@@ -418,7 +441,8 @@ void C_csp_cr_heat_pump::converged()
 void C_csp_cr_heat_pump::write_output_intervals(double report_time_start,
     const std::vector<double>& v_temp_ts_time_end, double report_time_end)
 {
-    throw(C_csp_exception("C_csp_cr_heat_pump::write_output_intervals() is not complete"));
+    mc_reported_outputs.send_to_reporting_ts_array(report_time_start,
+        v_temp_ts_time_end, report_time_end);
 }
 
 double C_csp_cr_heat_pump::calculate_optical_efficiency(const C_csp_weatherreader::S_outputs& weather, const C_csp_solver_sim_info& sim)
@@ -512,7 +536,7 @@ int heat_pump_helpers::C_carnot_heat_pump::performance(double T_HT_hot /*C*/, do
     Q_dot_hot_out_ND = m_dot_HT_ND * deltaT_HT_ND;
 
     double deltaT_CT_des = m_T_CT_hot_des - m_T_CT_cold_des;    //[C]
-    // Guess T_CT_hot
+    // Guess T_CT_cold
     // This 1) constraints q_dot_cold_in, which then sets W_dot_in and COP
     // and 2) allows calculation of carnot COP
     //       and COP allows us to calculate W_dot_in, q_dot_cold_in, and T_CT_hot
@@ -524,51 +548,51 @@ int heat_pump_helpers::C_carnot_heat_pump::performance(double T_HT_hot /*C*/, do
 
     C_monotonic_eq_solver c_solver(c_eq);
 
-    double T_CT_hot_guess = m_T_CT_hot_des;     //[C]
-    double diff_T_CT_hot = std::numeric_limits<double>::quiet_NaN();
-    int T_CT_hot_code = c_solver.test_member_function(T_CT_hot_guess, &diff_T_CT_hot);
+    double T_CT_cold_guess = m_T_CT_cold_des;     //[C]
+    double diff_T_CT_cold = std::numeric_limits<double>::quiet_NaN();
+    int T_CT_cold_code = c_solver.test_member_function(T_CT_cold_guess, &diff_T_CT_cold);
 
-    if (T_CT_hot_code != 0) {
+    if (T_CT_cold_code != 0) {
         return -1;
     }
 
-    double tol_T_CT_hot = 0.1;  //[C]
+    double tol_T_CT_cold = 0.1;  //[C]
 
-    if (abs(diff_T_CT_hot) > tol_T_CT_hot) {
+    if (abs(diff_T_CT_cold) > tol_T_CT_cold) {
 
-        double T_CT_hot_guess_2 = c_eq.m_T_CT_cold_calc;    //[C]
-        double diff_T_CT_hot_guess_2 = std::numeric_limits<double>::quiet_NaN();
-        int T_CT_hot_code2 = c_solver.test_member_function(T_CT_hot_guess_2, &diff_T_CT_hot_guess_2);
+        double T_CT_cold_guess_2 = c_eq.m_T_CT_cold_calc;    //[C]
+        double diff_T_CT_cold_guess_2 = std::numeric_limits<double>::quiet_NaN();
+        int T_CT_cold_code2 = c_solver.test_member_function(T_CT_cold_guess_2, &diff_T_CT_cold_guess_2);
 
-        if (T_CT_hot_code2 != 0) {
+        if (T_CT_cold_code2 != 0) {
             return -1;
         }
 
-        if (abs(diff_T_CT_hot_guess_2) > tol_T_CT_hot) {
+        if (abs(diff_T_CT_cold_guess_2) > tol_T_CT_cold) {
 
             C_monotonic_eq_solver::S_xy_pair xy1;
-            xy1.x = T_CT_hot_guess;
-            xy1.y = diff_T_CT_hot;
+            xy1.x = T_CT_cold_guess;
+            xy1.y = diff_T_CT_cold;
 
             C_monotonic_eq_solver::S_xy_pair xy2;
-            xy2.x = T_CT_hot_guess_2;
-            xy2.y = diff_T_CT_hot_guess_2;
+            xy2.x = T_CT_cold_guess_2;
+            xy2.y = diff_T_CT_cold_guess_2;
 
-            c_solver.settings(tol_T_CT_hot, 50, std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(), false);
+            c_solver.settings(tol_T_CT_cold, 50, std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(), false);
 
-            double T_CT_hot_solved, tol_solved;
-            T_CT_hot_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
-            int T_CT_hot_solve_code = -1;
+            double T_CT_cold_solved, tol_solved;
+            T_CT_cold_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
+            int T_CT_cold_solve_code = -1;
             int iter_solved = -1;
 
             try {
-                T_CT_hot_solve_code = c_solver.solve(xy1, xy2, 0.0, T_CT_hot_solved, tol_solved, iter_solved);
+                T_CT_cold_solve_code = c_solver.solve(xy1, xy2, 0.0, T_CT_cold_solved, tol_solved, iter_solved);
             }
             catch (C_csp_exception){
                 return -2;
             }
 
-            if (T_CT_hot_solve_code != C_monotonic_eq_solver::CONVERGED){
+            if (T_CT_cold_solve_code != C_monotonic_eq_solver::CONVERGED){
                 return -3;
             }
         }
@@ -576,7 +600,7 @@ int heat_pump_helpers::C_carnot_heat_pump::performance(double T_HT_hot /*C*/, do
 
     W_dot_gross_ND = c_eq.m_W_dot_gross_ND;     //[-]
     Q_dot_cold_in_ND = c_eq.m_Q_dot_cold_ND;    //[-]
-    T_CT_hot = c_eq.m_T_CT_cold_calc;           //[C]
+    T_CT_cold = c_eq.m_T_CT_cold_calc;          //[C]
 
     return 0;
 

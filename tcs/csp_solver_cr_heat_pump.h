@@ -197,6 +197,10 @@ private:
 
 public:
 
+    enum {
+        E_T_HTF_IN          //[C] HTF inlet temperature
+    };
+
     C_csp_reported_outputs mc_reported_outputs;
 
     C_csp_cr_heat_pump(double COP_heat_des /*-*/, double q_dot_hot_out_des /*MWt*/,

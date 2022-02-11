@@ -93,6 +93,8 @@ C_pc_ptes::C_pc_ptes(double W_dot_thermo /*MWe*/, double eta_therm_mech /*-*/,
     m_m_dot_CT_to_HT_ratio = std::numeric_limits<double>::quiet_NaN();
 
     m_E_su_des = std::numeric_limits<double>::quiet_NaN();
+
+    mc_reported_outputs.construct(S_ptes_output_info);
 }
 
 void C_pc_ptes::init(C_csp_power_cycle::S_solved_params& solved_params)
@@ -218,28 +220,40 @@ double C_pc_ptes::get_min_thermal_power()     //[MWt]
 
 void C_pc_ptes::get_max_power_output_operation_constraints(double T_amb /*C*/, double& m_dot_HTF_ND_max, double& W_dot_ND_max)	//[-] Normalized over design power
 {
-    throw(C_csp_exception("C_pc_tes::get_max_power_output_operation_constraints() is not complete"));
+    m_dot_HTF_ND_max = m_cycle_max_frac_des;	//[-]
+    W_dot_ND_max = m_dot_HTF_ND_max;
 }
 
 double C_pc_ptes::get_efficiency_at_TPH(double T_degC, double P_atm, double relhum_pct, double* w_dot_condenser)
 {
-    throw(C_csp_exception("C_pc_tes::get_efficiency_at_TPH() is not complete"));
+    throw(C_csp_exception("C_pc_ptes::get_efficiency_at_TPH() is not complete"));
 }
 
 double C_pc_ptes::get_efficiency_at_load(double load_frac, double* w_dot_condenser)
 {
-    throw(C_csp_exception("C_pc_tes::get_efficiency_at_load() is not complete"));
+    throw(C_csp_exception("C_pc_ptes::get_efficiency_at_load() is not complete"));
 }
 
 double C_pc_ptes::get_htf_pumping_parasitic_coef()		//[kWe/kWt]
 {
-    throw(C_csp_exception("C_pc_tes::get_htf_pumping_parasitic_coef() is not complete"));
+    throw(C_csp_exception("C_pc_ptes::get_htf_pumping_parasitic_coef() is not complete"));
 }
 
 // This can vary between timesteps for Type224, depending on remaining startup energy and time
 double C_pc_ptes::get_max_q_pc_startup()		//[MWt]
 {
-    throw(C_csp_exception("C_pc_tes::get_max_q_pc_startup() is not complete"));
+    if (m_startup_time_remain_prev > 0.0) {
+        return fmin(m_q_dot_HT_max,
+            m_startup_energy_remain_prev / 1.E3 / m_startup_time_remain_prev);		//[MWt]
+    }
+    else if (m_startup_energy_remain_prev > 0.0)
+    {
+        return m_q_dot_HT_max;    //[MWt]
+    }
+    else
+    {
+        return 0.0;
+    }
 }
 
 void C_pc_ptes::call(const C_csp_weatherreader::S_outputs& weather,
@@ -334,6 +348,7 @@ void C_pc_ptes::call(const C_csp_weatherreader::S_outputs& weather,
             eta_thermo = W_dot_thermo / q_dot_HT_htf;
             W_dot_cycle_parasitics = m_W_dot_elec_parasitic_des * W_dot_thermo_ND;  //[MWe]
 
+            was_method_successful = true;
         }
 
         break;
@@ -347,6 +362,8 @@ void C_pc_ptes::call(const C_csp_weatherreader::S_outputs& weather,
         T_HT_htf_cold = m_T_HT_HTF_cold_des;    //[C]
         T_CT_htf_hot = m_T_CT_HTF_hot_des;      //[C]
         W_dot_cycle_parasitics = 0.0;           //[MWe]
+
+        was_method_successful = true;
 
         break;
 
@@ -377,7 +394,7 @@ void C_pc_ptes::call(const C_csp_weatherreader::S_outputs& weather,
             // Maximum thermal power to power cycle based on heat input constraint parameters:
         double q_dot_to_pc_max_q_constraint = m_cycle_max_frac_des * m_W_dot_thermo_des / m_eta_therm_mech_des;	//[MWt]
         //    // Maximum thermal power to power cycle based on mass flow rate constraint parameters:
-        double q_dot_to_pc_max_m_constraint = m_m_dot_HT_max * m_cp_HT_HTF_des * (T_HT_htf_hot - m_T_HT_HTF_cold_des);	//[MWt]
+        double q_dot_to_pc_max_m_constraint = m_m_dot_HT_max*m_cp_HT_HTF_des*(T_HT_htf_hot - m_T_HT_HTF_cold_des)*1.E-3;	//[MWt]
         //    // Choose smaller of two values
         double q_dot_to_pc_max = fmin(q_dot_to_pc_max_q_constraint, q_dot_to_pc_max_m_constraint);	//[MWt]
 
