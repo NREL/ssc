@@ -24,7 +24,9 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cmath>
 #include "../rapidjson/document.h"
 #include "../rapidjson/istreamwrapper.h"
-
+#include "../rapidjson/filewritestream.h"
+#include "../rapidjson/prettywriter.h"
+#include <cstdio>
 #include <fstream>
 #include <algorithm>
 
@@ -310,7 +312,7 @@ TEST_F(lib_battery_lifetime_nmc_test, CyclingHighTemp) {
     EXPECT_EQ(state.n_cycles, 8699);
     EXPECT_EQ(state.cycle_range, 40);
     EXPECT_EQ(state.cycle_DOD, 70);
-    EXPECT_NEAR(state.nmc_li_neg->q_relative_li, 82.11, 0.5);
+    EXPECT_NEAR(state.nmc_li_neg->q_relative_li, 86.91, 0.5);
     EXPECT_NEAR(state.nmc_li_neg->q_relative_neg, 103.49, 0.5);
     EXPECT_NEAR(state.day_age_of_battery, 8700, 1e-3);
 }
@@ -481,7 +483,7 @@ TEST_F(lib_battery_lifetime_nmc_test, IrregularTimeStep) {
     state = model->get_state();
 
     EXPECT_EQ(state.n_cycles, 87);
-    EXPECT_NEAR(state.nmc_li_neg->q_relative_li, 104.553, 1e-3);
+    EXPECT_NEAR(state.nmc_li_neg->q_relative_li, 104.60, 1e-3);
     EXPECT_NEAR(state.nmc_li_neg->q_relative_neg, 103.92, 1e-3);
     EXPECT_NEAR(state.day_age_of_battery, 88, 1e-3);
 
@@ -527,7 +529,7 @@ TEST_F(lib_battery_lifetime_nmc_test, IrregularTimeStep) {
     state = subhourly_model->get_state();
 
     EXPECT_EQ(state.n_cycles, 87);
-    EXPECT_NEAR(state.nmc_li_neg->q_relative_li, 104.523, 1e-3);
+    EXPECT_NEAR(state.nmc_li_neg->q_relative_li, 104.57, 1e-3);
     EXPECT_NEAR(state.nmc_li_neg->q_relative_neg, 103.92, 1e-3);
     EXPECT_NEAR(state.day_age_of_battery, 88, 1e-3);
 }
@@ -621,8 +623,24 @@ TEST_F(lib_battery_lifetime_nmc_test, TestAgainstKokamData) {
             sam_cap_cycles.push_back(i.GetDouble());
 
         for (size_t n = 0; n < life_model_caps.size(); n++) {
-            EXPECT_NEAR(sam_cap_Ah[n], life_model_caps[n], 1e-3) << "cell" << cell;
-            EXPECT_NEAR(sam_cap_cycles[n], cycs[n], 1e-3) << "cell" << cell;
+            EXPECT_NEAR(sam_cap_Ah[n], life_model_caps[n], 1e-3) << "cell " << cell << ", n " << n;
+            EXPECT_NEAR(sam_cap_cycles[n], cycs[n], 1e-3) << "cell " << cell << ", n" << n;
+        }
+
+        if (false) {
+            for (size_t n = 0; n < life_model_caps.size(); n++){
+                root["sam_cap_Ah"][n] = life_model_caps[n];
+            }
+
+            FILE* fp = std::fopen(file_path.c_str(), "w");
+
+            char writeBuffer[6553634];
+            rapidjson::FileWriteStream os(fp, writeBuffer, sizeof(writeBuffer));
+            rapidjson::PrettyWriter<rapidjson::FileWriteStream> writer(os);
+
+            // write
+            root.Accept(writer);
+            std::fclose(fp);
         }
     }
 }
@@ -648,14 +666,14 @@ TEST_F(lib_battery_lifetime_nmc_test, replaceBatteryTest) {
 
     auto s = model->get_state();
 
-    EXPECT_NEAR(s.nmc_li_neg->q_relative_li, 87.90, tol);
+    EXPECT_NEAR(s.nmc_li_neg->q_relative_li, 88.51, tol);
     EXPECT_NEAR(s.nmc_li_neg->q_relative_neg, 97.15, tol);
 
     model->replaceBattery(10);
     s = model->get_state();
-    EXPECT_NEAR(s.nmc_li_neg->q_relative_li, 97.90, tol);
+    EXPECT_NEAR(s.nmc_li_neg->q_relative_li, 98.51, tol);
     EXPECT_NEAR(s.nmc_li_neg->q_relative_neg, 100, tol);
-    EXPECT_NEAR(s.q_relative, 97.90, tol);
+    EXPECT_NEAR(s.q_relative, 98.51, tol);
     EXPECT_NEAR(s.cycle->rainflow_Xlt, 0, tol);
     EXPECT_NEAR(s.cycle->rainflow_Ylt, 0, tol);
     EXPECT_NEAR(s.cycle->rainflow_jlt, 0, tol);
