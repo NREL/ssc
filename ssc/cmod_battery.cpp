@@ -1044,7 +1044,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
     }
 
     if (batt_vars->T_room.size() != nrec) {
-        throw exec_error("battery", "Environment temperature input length must equal number of weather file records.");
+        throw exec_error("battery", "Environment temperature input length must equal number of weather file and/or electric load data records.");
     }
 
     if (batt_vars->batt_life_model == lifetime_params::NMC) {
