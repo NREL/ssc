@@ -57,6 +57,9 @@ NAMESPACE_TEST(csp_common, TowerSharedWithUi, SystemDesign) {
     ASSERT_NEAR_FRAC(GetNum(vd, "q_pb_design"), 279., kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "q_rec_des"), 670., kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "tshours_sf"), 4.16667, kErrorToleranceHi);
+    
+    delete vd;
+
 }
 
 NAMESPACE_TEST(csp_common, TowerSharedWithUi, SolarPilotField) {
@@ -100,6 +103,9 @@ NAMESPACE_TEST(csp_common, TowerSharedWithUi, SolarPilotField) {
     ASSERT_NEAR_FRAC(GetNum(vd, "land_min_calc"), 145.094, kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "n_hel"), 8790., kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "q_design"), 670., kErrorToleranceHi);
+    
+    delete vd;
+
 }
 
 NAMESPACE_TEST(csp_common, TowerSharedWithUi, SolarPilotFieldWithPeriodUse) {
@@ -144,6 +150,9 @@ NAMESPACE_TEST(csp_common, TowerSharedWithUi, SolarPilotFieldWithPeriodUse) {
     ASSERT_NEAR_FRAC(GetNum(vd, "land_min_calc"), 145.094, kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "n_hel"), 8790., kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "q_design"), 670., kErrorToleranceHi);
+    
+    delete vd;
+
 }
 
 NAMESPACE_TEST(csp_common, TowerSharedWithUi, Receiver) {
@@ -174,6 +183,9 @@ NAMESPACE_TEST(csp_common, TowerSharedWithUi, Receiver) {
     ASSERT_NEAR_FRAC(GetNum(vd, "rec_aspect"), 1.349, kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "piping_length"), 502.991, kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "piping_loss_tot"), 789.262, kErrorToleranceHi);
+    
+    delete vd;
+
 }
 
 NAMESPACE_TEST(csp_common, TowerSharedWithUi, ReceiverWithPeriodUse) {
@@ -204,6 +216,8 @@ NAMESPACE_TEST(csp_common, TowerSharedWithUi, ReceiverWithPeriodUse) {
     ASSERT_NEAR_FRAC(GetNum(vd, "rec_aspect"), 1.349, kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "piping_length"), 502.991, kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "piping_loss_tot"), 789.262, kErrorToleranceHi);
+    
+    delete vd;
 }
 
 NAMESPACE_TEST(csp_common, TowerSharedWithUi, Tes) {
@@ -237,8 +251,8 @@ NAMESPACE_TEST(csp_common, TowerSharedWithUi, Tes) {
     ASSERT_NEAR_FRAC(GetNum(data, "csp_pt_tes_tank_diameter"), 38.8, kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(data, "q_dot_tes_est"), 0.88141, kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(data, "csp_pt_tes_htf_density"), 1808.48, kErrorToleranceHi);
+    ssc_data_free(data);
 }
-
 NAMESPACE_TEST(csp_common, TowerSharedWithUi, TesWithPeriodUse) {
     double error_tolerance = 0.01;
     ssc_data_t data = ssc_data_create();
@@ -270,6 +284,8 @@ NAMESPACE_TEST(csp_common, TowerSharedWithUi, TesWithPeriodUse) {
     ASSERT_NEAR_FRAC(GetNum(data, "csp_pt_tes_tank_diameter"), 38.8, kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(data, "q_dot_tes_est"), 0.88141, kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(data, "csp_pt_tes_htf_density"), 1808.48, kErrorToleranceHi);
+    
+    ssc_data_free(data);
 }
 
 NAMESPACE_TEST(csp_common, TowerSharedWithUi, SystemControl) {
@@ -297,6 +313,9 @@ NAMESPACE_TEST(csp_common, TowerSharedWithUi, SystemControl) {
     ASSERT_NEAR_FRAC(GetNum(vd, "disp_wlim_max"), 0.96, kErrorToleranceHi);
     ASSERT_NEAR_FRAC(wlim_series.ncells(), 8760, 0.);
     ASSERT_NEAR_FRAC(wlim_series.at(0, 0), 960., kErrorToleranceHi);
+    
+    delete vd;
+
 }
 
 NAMESPACE_TEST(csp_common, TowerSharedWithUi, SystemControlWithPeriods) {
@@ -324,6 +343,9 @@ NAMESPACE_TEST(csp_common, TowerSharedWithUi, SystemControlWithPeriods) {
     ASSERT_NEAR_FRAC(GetNum(vd, "disp_wlim_max"), 0.96, kErrorToleranceHi);
     ASSERT_NEAR_FRAC(wlim_series.ncells(), 8760, 0.);
     ASSERT_NEAR_FRAC(wlim_series.at(0, 0), 960., kErrorToleranceHi);
+    
+    delete vd;
+
 }
 
 NAMESPACE_TEST(csp_common, TowerSharedWithUi, CapitalCosts) {
@@ -393,6 +415,9 @@ NAMESPACE_TEST(csp_common, TowerSharedWithUi, CapitalCosts) {
     ASSERT_NEAR_FRAC(GetNum(vd, "total_indirect_cost"), 114025224., kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "total_installed_cost"), 673465472., kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "csp_pt_cost_installed_per_capacity"), 6506.91, kErrorToleranceHi);
+    
+    delete vd;
+
 }
 
 NAMESPACE_TEST(csp_common, TowerSharedWithUi, CapitalCostsWithPeriods) {
@@ -462,6 +487,8 @@ NAMESPACE_TEST(csp_common, TowerSharedWithUi, CapitalCostsWithPeriods) {
     ASSERT_NEAR_FRAC(GetNum(vd, "total_indirect_cost"), 114025224., kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "total_installed_cost"), 673465472., kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "csp_pt_cost_installed_per_capacity"), 6506.91, kErrorToleranceHi);
+    
+    delete vd;
 }
 
 //======Financial Equations=======================================================================
@@ -521,6 +548,9 @@ NAMESPACE_TEST(csp_common, TowerSharedWithUi, FinancialCase1) {
     ASSERT_NEAR_FRAC(GetNum(vd, "const_per_principal_total"), 673465472., kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "const_per_interest_total"), 26938618., kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "construction_financing_cost"), 33673272., kErrorToleranceHi);
+    
+    delete vd;
+
 }
 
 NAMESPACE_TEST(csp_common, TowerSharedWithUi, FinancialCase2) {
@@ -532,6 +562,9 @@ NAMESPACE_TEST(csp_common, TowerSharedWithUi, FinancialCase2) {
 
     //double cp_system_nameplate = vd->lookup("cp_system_nameplate")->num;
     ASSERT_NEAR_FRAC(GetNum(vd, "cp_system_nameplate"), 103.5, kErrorToleranceHi);
+    
+    delete vd;
+
 }
 
 //======/Testing Molten Salt Power Tower UI Equations=============================================

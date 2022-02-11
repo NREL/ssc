@@ -48,8 +48,10 @@ public:
 
 TEST_F(windDataProviderCalculatorTest, FindClosestUsingData_lib_windfile_test) {
 	// measurement heights: 80, 90
-	var_data* windresourcedata = create_winddata_array(1,2);
-	windDataProvider = new winddata(windresourcedata);
+    auto table = create_winddata_array(1, 2);
+    var_data windresourcedata = var_data(*table);
+
+    windDataProvider = new winddata(&windresourcedata);
 
 	//// Case 1: hubheight: 85, can interpolate
 	double pres, temp, spd, dir, heightOfClosestMeasuredSpd, heightOfClosestMeasuredDir;
@@ -67,4 +69,6 @@ TEST_F(windDataProviderCalculatorTest, FindClosestUsingData_lib_windfile_test) {
 	EXPECT_NEAR(spd, 5, e) << "case 2";
 	EXPECT_NEAR(dir, 200, e) << "case 2";
 	EXPECT_NEAR(heightOfClosestMeasuredSpd, 90, e) << "case 2";
+
+    free_winddata_array(table);
 }

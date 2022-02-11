@@ -145,6 +145,8 @@ NAMESPACE_TEST(csp_tower, PowerTowerCmod, CopyingVarTable) {
 
     ASSERT_DOUBLE_EQ(test_value, test_value_from_orig_table_after_copied);
     ASSERT_DOUBLE_EQ(test_value, test_value_from_orig_table_after_copied_and_fun_returned);
+    
+    ssc_data_free(data);
 }
 
 /// Test tcsmolten_salt with alternative condenser type: Evaporative
