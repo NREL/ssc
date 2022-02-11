@@ -1964,7 +1964,7 @@ bool battstor::is_offline(size_t index) {
     
     double min_soc = dispatch_model->getBatteryPower()->stateOfChargeMin;
 
-    return ((soc - min_soc) < tolerance) && ((prev_soc - min_soc) < tolerance);
+    return ((soc - min_soc) < low_tolerance) && ((prev_soc - min_soc) < low_tolerance);
 }
 
 void battstor::calculate_monthly_and_annual_outputs(compute_module& cm)
@@ -2106,7 +2106,7 @@ static var_info _cm_vtab_battery[] = {
     { SSC_INPUT,		SSC_ARRAY,	     "crit_load",			                       "Critical electricity load (year 1)",                      "kW",	        "",				        "Load",                             "",	                      "",	                            "" },
     { SSC_INPUT,        SSC_ARRAY,       "load_escalation",                            "Annual load escalation",                                  "%/year",     "",                     "Load",                             "?=0",                    "",                               "" },
     { SSC_INPUT,        SSC_ARRAY,       "crit_load_escalation",                       "Annual critical load escalation",                         "%/year",     "",                     "Load",                             "?=0",                    "",                    "" },
-    { SSC_INPUT,        SSC_ARRAY,       "grid_outage",                                "Timesteps with grid outage",                              "0/1",        "0=GridAvailable,1=GridUnavailable,Length=load", "Load",    "",                       "",                               "" },
+    { SSC_INPUT,        SSC_ARRAY,       "grid_outage",                                "Grid outage in this time step",                              "0/1",        "0=GridAvailable,1=GridUnavailable,Length=load", "Load",    "",                       "",                               "" },
     { SSC_INPUT,        SSC_NUMBER,      "run_resiliency_calcs",                       "Enable resilence calculations for every timestep",        "0/1",        "0=DisableCalcs,1=EnableCalcs",                  "Load",    "?=0",                    "",                               "" },
     { SSC_INOUT,        SSC_NUMBER,      "capacity_factor",                            "Capacity factor",                                         "%",          "",                     "System Output",                             "?=0",                    "",                               "" },
     { SSC_INOUT,        SSC_NUMBER,      "annual_energy",                              "Annual Energy",                                           "kWh",        "",                     "System Output",                      "?=0",                    "",                               "" },
