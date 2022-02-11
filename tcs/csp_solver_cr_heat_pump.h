@@ -53,11 +53,11 @@ namespace heat_pump_helpers
         double cop_carnot(double T_HT_hot /*C*/, double T_HT_cold /*C*/,
             double T_CT_hot /*C*/, double T_CT_cold /*C*/);
 
-        int performance(double T_HT_hot /*C*/, double m_dot_HT_ND /*-*/,
+        int performance(double T_HT_cold_in /*C*/, double m_dot_HT_ND /*-*/,
             double T_CT_hot /*C*/, double m_dot_CT_ND /*-*/,
             double& W_dot_gross_ND /*-*/, double& Q_dot_ND /*-*/,
             double& Q_dot_cold_in_ND /*-*/,
-            double& T_HT_cold /*C*/, double& T_CT_cold /*C*/);
+            double& T_HT_hot_out /*C*/, double& T_CT_cold /*C*/);
 
         double get_cop_des()
         {
@@ -198,7 +198,20 @@ private:
 public:
 
     enum {
-        E_T_HTF_IN          //[C] HTF inlet temperature
+        E_T_HT_HTF_IN,         //[C] HT HTF inlet temperature
+        E_T_HT_HTF_OUT,        //[C] HT HTF outlet temperature
+        E_T_CT_HTF_IN,         //[C] Cold HTF inlet temperature
+        E_T_CT_HTF_OUT,        //[C] Cold HTF outlet temperature
+        E_M_DOT_HT_HTF,     //[kg/s] HT HTF mass flow rate
+        E_M_DOT_CT_HTF,     //[kg/s] CT HTF mass flow rate
+        E_Q_DOT_STARTUP,    //[MWt] Heat consumed during startup
+        E_Q_DOT_HOT_OUT,    //[MWt] Heat to HT HTF
+        E_Q_DOT_COLD_IN,    //[MWt] Heat to CT HTF
+        E_W_DOT_IN_THERMO,  //[MWe] Power to thermo cycle
+        E_W_DOT_CYCLE_PARASITICS,   //[MWe] Thermo parasitics (e.g. motors, generator losses
+        E_W_DOT_HT_HTF_PUMP,    //[MWe] HT HTF pump
+        E_W_DOT_CT_HTF_PUMP,    //[MWe] CT HTF pump
+        E_W_DOT_HEATER          //[MWe] Total power consumed by heat pump
     };
 
     C_csp_reported_outputs mc_reported_outputs;

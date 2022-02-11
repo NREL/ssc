@@ -259,12 +259,12 @@ static var_info _cm_vtab_etes_ptes[] = {
     { SSC_OUTPUT, SSC_ARRAY,  "mass_tes_hot",                  "TES hot tank mass (end)",                                       "kg",           "",                                  "",                                         "sim_type=1",                                                                "",              "" },
 
             // Cold TES outputs
-    { SSC_OUTPUT, SSC_ARRAY,  "q_dot_CT_tes_losses",              "TES thermal losses",                                            "MWt",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
-    { SSC_OUTPUT, SSC_ARRAY,  "q_dot_CT_tes_heater",              "TES freeze protection power",                                   "MWe",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
-    { SSC_OUTPUT, SSC_ARRAY,  "T_CT_tes_hot",                     "TES hot temperature",                                           "C",            "",                                  "",                                         "sim_type=1",                                                                "",              "" },
-    { SSC_OUTPUT, SSC_ARRAY,  "T_CT_tes_cold",                    "TES cold temperature",                                          "C",            "",                                  "",                                         "sim_type=1",                                                                "",              "" },
-    { SSC_OUTPUT, SSC_ARRAY,  "mass_CT_tes_cold",                 "TES cold tank mass (end)",                                      "kg",           "",                                  "",                                         "sim_type=1",                                                                "",              "" },
-    { SSC_OUTPUT, SSC_ARRAY,  "mass_CT_tes_hot",                  "TES hot tank mass (end)",                                       "kg",           "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    //{ SSC_OUTPUT, SSC_ARRAY,  "q_dot_CT_tes_losses",              "TES thermal losses",                                            "MWt",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    //{ SSC_OUTPUT, SSC_ARRAY,  "q_dot_CT_tes_heater",              "TES freeze protection power",                                   "MWe",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    //{ SSC_OUTPUT, SSC_ARRAY,  "T_CT_tes_hot",                     "TES hot temperature",                                           "C",            "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    //{ SSC_OUTPUT, SSC_ARRAY,  "T_CT_tes_cold",                    "TES cold temperature",                                          "C",            "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    //{ SSC_OUTPUT, SSC_ARRAY,  "mass_CT_tes_cold",                 "TES cold tank mass (end)",                                      "kg",           "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    //{ SSC_OUTPUT, SSC_ARRAY,  "mass_CT_tes_hot",                  "TES hot tank mass (end)",                                       "kg",           "",                                  "",                                         "sim_type=1",                                                                "",              "" },
 
 
             // System outputs
@@ -595,12 +595,12 @@ public:
         }
 
             // Set Cold TES cmod outputs
-        c_CT_TES->mc_reported_outputs.assign(C_csp_two_tank_tes::E_Q_DOT_LOSS, allocate("q_dot_CT_tes_losses", n_steps_fixed), n_steps_fixed);
-        c_CT_TES->mc_reported_outputs.assign(C_csp_two_tank_tes::E_W_DOT_HEATER, allocate("q_dot_CT_tes_heater", n_steps_fixed), n_steps_fixed);
-        c_CT_TES->mc_reported_outputs.assign(C_csp_two_tank_tes::E_TES_T_HOT, allocate("T_CT_tes_hot", n_steps_fixed), n_steps_fixed);
-        c_CT_TES->mc_reported_outputs.assign(C_csp_two_tank_tes::E_TES_T_COLD, allocate("T_CT_tes_cold", n_steps_fixed), n_steps_fixed);
-        c_CT_TES->mc_reported_outputs.assign(C_csp_two_tank_tes::E_MASS_COLD_TANK, allocate("mass_CT_tes_cold", n_steps_fixed), n_steps_fixed);
-        c_CT_TES->mc_reported_outputs.assign(C_csp_two_tank_tes::E_MASS_HOT_TANK, allocate("mass_CT_tes_hot", n_steps_fixed), n_steps_fixed);
+        //c_CT_TES->mc_reported_outputs.assign(C_csp_two_tank_tes::E_Q_DOT_LOSS, allocate("q_dot_CT_tes_losses", n_steps_fixed), n_steps_fixed);
+        //c_CT_TES->mc_reported_outputs.assign(C_csp_two_tank_tes::E_W_DOT_HEATER, allocate("q_dot_CT_tes_heater", n_steps_fixed), n_steps_fixed);
+        //c_CT_TES->mc_reported_outputs.assign(C_csp_two_tank_tes::E_TES_T_HOT, allocate("T_CT_tes_hot", n_steps_fixed), n_steps_fixed);
+        //c_CT_TES->mc_reported_outputs.assign(C_csp_two_tank_tes::E_TES_T_COLD, allocate("T_CT_tes_cold", n_steps_fixed), n_steps_fixed);
+        //c_CT_TES->mc_reported_outputs.assign(C_csp_two_tank_tes::E_MASS_COLD_TANK, allocate("mass_CT_tes_cold", n_steps_fixed), n_steps_fixed);
+        //c_CT_TES->mc_reported_outputs.assign(C_csp_two_tank_tes::E_MASS_HOT_TANK, allocate("mass_CT_tes_hot", n_steps_fixed), n_steps_fixed);
 
 
         // **********************************************************
