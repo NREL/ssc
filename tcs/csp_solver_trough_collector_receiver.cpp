@@ -66,6 +66,9 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 	csp_info_invalid
 };
 
+
+
+
 C_csp_trough_collector_receiver::C_csp_trough_collector_receiver()
 { 
 	mc_reported_outputs.construct(S_output_info);
@@ -227,6 +230,16 @@ C_csp_trough_collector_receiver::C_csp_trough_collector_receiver()
 	m_AnnulusGasMat.fill(NULL);
 	m_AbsorberPropMat.fill(NULL);
 
+}
+
+C_csp_trough_collector_receiver::~C_csp_trough_collector_receiver()
+{
+    for(int i=0; i<m_AbsorberPropMat.nrows(); i++){
+        for(int j=0; j<m_AbsorberPropMat.ncols(); j++){
+            delete m_AbsorberPropMat(i,j);
+            delete m_AnnulusGasMat(i,j);
+        }
+    }
 }
 
 void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp_cr_init_inputs init_inputs, 

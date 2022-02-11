@@ -1143,7 +1143,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, AC_outage_ExcessLoad) {
     EXPECT_NEAR(m_batteryPower->powerGrid, 0.0, error);
     EXPECT_NEAR(m_batteryPower->powerLossesUnmet, 1.0, error);
 
-    gen = m_batteryPower->powerSystem + m_batteryPower->powerBatteryAC + m_batteryPower->powerPVInverterDraw - m_batteryPower->powerSystemLoss;
+    gen = m_batteryPower->powerSystem + m_batteryPower->powerBatteryAC + m_batteryPower->powerPVInverterDraw - m_batteryPower->powerSystemLoss + m_batteryPower->powerLossesUnmet;
     EXPECT_NEAR(m_batteryPower->powerGeneratedBySystem, gen, error);
     EXPECT_NEAR(m_batteryPower->powerLoad, 50, error);
 }

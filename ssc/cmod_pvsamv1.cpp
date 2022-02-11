@@ -503,7 +503,7 @@ static var_info _cm_vtab_pvsamv1[] = {
         { SSC_INPUT, SSC_NUMBER,   "en_standalone_batt",                   "Enable standalone battery storage model",             "0/1",    "",                     "BatterySystem",                      "?=0",                    "",                               "" },
         { SSC_INPUT, SSC_ARRAY,    "load",                                 "Electricity load (year 1)",                           "kW",     "",                                                                                                                                                                                      "Load",                                               "?",                                  "",                    "" },
         { SSC_INPUT, SSC_ARRAY,    "crit_load",                            "Critical Electricity load (year 1)",                  "kW",     "",                                                                                                                                                                                      "Load",                                               "",                                   "",                    "" },
-        { SSC_INPUT, SSC_ARRAY,    "grid_outage",                          "Timesteps with grid outage",                          "0/1",    "0=GridAvailable,1=GridUnavailable,Length=load", "Load",    "",                       "",                               "" },
+        { SSC_INPUT, SSC_ARRAY,    "grid_outage",                          "Grid outage in this time step",                          "0/1",    "0=GridAvailable,1=GridUnavailable,Length=load", "Load",    "",                       "",                               "" },
         { SSC_INPUT, SSC_NUMBER,   "run_resiliency_calcs",                 "Enable resilence calculations for every timestep",    "0/1",    "0=DisableCalcs,1=EnableCalcs",                  "Load",    "?=0",                    "",                               "" },
         { SSC_INPUT, SSC_ARRAY,    "load_escalation",                      "Annual load escalation",                              "%/year", "",                                                                                                                                                                                      "Load",                                               "?=0",                                "",                    "" },
         { SSC_INPUT, SSC_ARRAY,    "crit_load_escalation",                 "Annual critical load escalation",                     "%/year", "",                                                                                                                                                                                      "Load",                                               "?=0",                                "",                    "" },
@@ -2559,7 +2559,8 @@ void cm_pvsamv1::exec()
         }
         wdprov->rewind();
     }
-    ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, 1 / ts_hour);
+    if (wdprov->annualSimulation())
+        ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, 1 / ts_hour);
     // Check the snow models and if neccessary report a warning
     //  *This only needs to be done for subarray1 since all of the activated subarrays should
     //   have the same number of bad values

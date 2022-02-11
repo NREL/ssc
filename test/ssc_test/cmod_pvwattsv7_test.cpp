@@ -318,7 +318,7 @@ TEST_F(CMPvwattsV7Integration_cmod_pvwattsv7, NonAnnual)
 
     auto weather_data = create_weatherdata_array(24);
     ssc_data_unassign(data, "solar_resource_file");
-    ssc_data_set_table(data, "solar_resource_data", &weather_data->table);
+    ssc_data_set_table(data, "solar_resource_data", weather_data);
 
     //run the tests
     EXPECT_FALSE(run_module(data, "pvwattsv7"));
@@ -338,7 +338,7 @@ TEST_F(CMPvwattsV7Integration_cmod_pvwattsv7, IntermediateOutputTesting)
 
     auto weather_data = create_weatherdata_array(24);
     ssc_data_unassign(data, "solar_resource_file");
-    ssc_data_set_table(data, "solar_resource_data", &weather_data->table);
+    ssc_data_set_table(data, "solar_resource_data", weather_data);
 
     //run the tests
     EXPECT_FALSE(run_module(data, "pvwattsv7"));
