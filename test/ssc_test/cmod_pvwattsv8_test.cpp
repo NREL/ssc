@@ -30,6 +30,10 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "cmod_pvwattsv8_test.h"
 
 
+TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, DefaultSetup) {
+//    compute();
+    ssc_data_set_number(data, "analysis_period", 25);
+}
 
 ///Default PVWattsv8, but with TMY2 instead of TMY3
 TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, DefaultNoFinancialModel_cmod_pvwattsv8) {
@@ -327,9 +331,9 @@ TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, SnowModelTests_cmod_pvwattsv8) {
     }
 }
 
-/* this test isn't passing currently even though it's working in the UI, so commenting out for now
+/* this test isn't passing currently even though it's working in the UI, so commenting out for now */
 /// Test PVWattsv8 with snow model
-TEST_F(CMPvwattsv8Integration, SnowModelTest_cmod_pvwattsv8) {
+TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, SnowModelTest_cmod_pvwattsv8) {
 
     // enable snow model
     std::map<std::string, double> pairs;
@@ -340,17 +344,18 @@ TEST_F(CMPvwattsv8Integration, SnowModelTest_cmod_pvwattsv8) {
     int b = sprintf(nosnow, "%s/test/input_cases/pvsamv1_data/phoenix_az_33.450495_-111.983688_psmv3_60_tmy.csv", SSCDIR);
     ssc_data_set_string(data, "solar_resource_file", nosnow); //file set above
     int pvwatts_errors = modify_ssc_data_and_run_module(data, "pvwattsv8", pairs);
-    EXPECT_TRUE(pvwatts_errors);
+    EXPECT_FALSE(pvwatts_errors);
 
-}*/
+}
 
 TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, NonAnnual)
 {
     //set up a weather data array and unassign the solar resource file
 
     auto weather_data = create_weatherdata_array(24);
+    
     ssc_data_unassign(data, "solar_resource_file");
-    ssc_data_set_table(data, "solar_resource_data", &weather_data->table);
+    ssc_data_set_table(data, "solar_resource_data", weather_data);
 
     //run the tests
     EXPECT_FALSE(run_module(data, "pvwattsv8"));
@@ -361,8 +366,10 @@ TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, NonAnnual)
 
     gen = ssc_data_get_array(data, "gen", nullptr)[12];
     EXPECT_NEAR(gen, 2.428, 0.01) << "Gen at noon";
+    
     free_weatherdata_array(weather_data);
 }
+
 
 TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, IntermediateOutputTesting)
 {
@@ -370,7 +377,7 @@ TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, IntermediateOutputTesting)
 
     auto weather_data = create_weatherdata_array(24);
     ssc_data_unassign(data, "solar_resource_file");
-    ssc_data_set_table(data, "solar_resource_data", &weather_data->table);
+    ssc_data_set_table(data, "solar_resource_data", weather_data);
 
     //run the tests
     EXPECT_FALSE(run_module(data, "pvwattsv8"));
@@ -409,4 +416,5 @@ TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, IntermediateOutputTesting)
 
     free_weatherdata_array(weather_data);
 }
+
 
