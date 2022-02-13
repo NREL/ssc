@@ -43,6 +43,7 @@ GTEST_API_ int main(int argc, char **argv) {
     
     //    filter to include
     //    ::testing::GTEST_FLAG(filter) = "CMTcsMoltenSalt*";
+       ::testing::GTEST_FLAG(filter) = "PVSmoothing_lib_battery_dispatch*";
 
     //    filter to exclude
     //    ::testing::GTEST_FLAG(filter) = "-CMTcsMoltenSalt*";
