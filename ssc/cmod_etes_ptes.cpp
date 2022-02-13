@@ -247,6 +247,23 @@ static var_info _cm_vtab_etes_ptes[] = {
     { SSC_OUTPUT, SSC_ARRAY,  "tdry",                          "Resource dry Bulb temperature",                                 "C",            "",                                  "",                                         "sim_type=1",                                                                "",              "" },
     { SSC_OUTPUT, SSC_ARRAY,  "twet",                          "Resource wet Bulb temperature",                                 "C",            "",                                  "",                                         "sim_type=1",                                                                "",              "" },
 
+            // Heat pump outputs
+    { SSC_OUTPUT, SSC_ARRAY,  "T_hp_HT_htf_cold_in",           "Heat pump hot tes HTF inlet temperature",                       "C",            "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "T_hp_HT_htf_hot_out",           "Heat pump hot tes HTF outlet temperature",                      "C",            "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "T_hp_CT_htf_hot_in",            "Heat pump cold tes HTF inlet temperature",                      "C",            "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "T_hp_CT_htf_cold_out",          "Heat pump cold tes HTF outlet temperature",                     "C",            "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "m_dot_HT_htf",                  "Heat pump hot tes HTF mass flow rate",                          "kg/s"          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "m_dot_CT_htf",                  "Heat pump cold tes HTF mass flow rate",                         "kg/s",         "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "q_dot_hp_startup",              "Heat pump startup power",                                       "MWt",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "q_dot_to_HT_htf",               "Heat pump thermal power to hot tes HTF",                        "MWt",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "q_dot_from_CT_htf",             "Heat pump thermal power from cold tes HTF",                     "MWt",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "W_dot_hp_thermo",               "Heat pump thermodynamic power in",                              "MWe",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "W_dot_hp_parasitics",           "Heat pump thermodynamic parasitics",                            "MWe",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "W_dot_hp_HT_htf_pump",          "Heat pump hot tes HTF pump power",                              "MWe",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "W_dot_hp_CT_htf_pump",          "Heat pump cold tes HTF pump power",                             "MWe",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "W_dot_hp_net",                  "Heat pump total power in",                                      "MWe",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+
+
             // Hot TES outputs
     { SSC_OUTPUT, SSC_ARRAY,  "q_dot_dc_tes",                  "TES discharge thermal power",                                   "MWt",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
     { SSC_OUTPUT, SSC_ARRAY,  "q_dot_ch_tes",                  "TES charge thermal power",                                      "MWt",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
@@ -502,6 +519,22 @@ public:
             heat_pump_HT_htf_pump_coef, heat_pump_CT_htf_pump_coef,
             HT_htf_code, ud_HT_htf_props,
             CT_htf_code, ud_CT_htf_props);
+
+
+        c_heat_pump.mc_reported_outputs.assign(C_csp_cr_heat_pump::E_T_HT_HTF_IN, allocate("T_hp_HT_htf_cold_in", n_steps_fixed), n_steps_fixed);
+        c_heat_pump.mc_reported_outputs.assign(C_csp_cr_heat_pump::E_T_HT_HTF_OUT, allocate("T_hp_HT_htf_hot_out", n_steps_fixed), n_steps_fixed);
+        c_heat_pump.mc_reported_outputs.assign(C_csp_cr_heat_pump::E_T_CT_HTF_IN, allocate("T_hp_CT_htf_hot_in", n_steps_fixed), n_steps_fixed);
+        c_heat_pump.mc_reported_outputs.assign(C_csp_cr_heat_pump::E_T_CT_HTF_OUT, allocate("T_hp_CT_htf_cold_out", n_steps_fixed), n_steps_fixed);
+        c_heat_pump.mc_reported_outputs.assign(C_csp_cr_heat_pump::E_M_DOT_HT_HTF, allocate("m_dot_HT_htf", n_steps_fixed), n_steps_fixed);
+        c_heat_pump.mc_reported_outputs.assign(C_csp_cr_heat_pump::E_M_DOT_CT_HTF, allocate("m_dot_CT_htf", n_steps_fixed), n_steps_fixed);
+        c_heat_pump.mc_reported_outputs.assign(C_csp_cr_heat_pump::E_Q_DOT_STARTUP, allocate("q_dot_hp_startup", n_steps_fixed), n_steps_fixed);
+        c_heat_pump.mc_reported_outputs.assign(C_csp_cr_heat_pump::E_Q_DOT_HOT_OUT, allocate("q_dot_to_HT_htf", n_steps_fixed), n_steps_fixed);
+        c_heat_pump.mc_reported_outputs.assign(C_csp_cr_heat_pump::E_Q_DOT_COLD_IN, allocate("q_dot_from_CT_htf", n_steps_fixed), n_steps_fixed);
+        c_heat_pump.mc_reported_outputs.assign(C_csp_cr_heat_pump::E_W_DOT_IN_THERMO, allocate("W_dot_hp_thermo", n_steps_fixed), n_steps_fixed);
+        c_heat_pump.mc_reported_outputs.assign(C_csp_cr_heat_pump::E_W_DOT_CYCLE_PARASITICS, allocate("W_dot_hp_parasitics", n_steps_fixed), n_steps_fixed);
+        c_heat_pump.mc_reported_outputs.assign(C_csp_cr_heat_pump::E_W_DOT_HT_HTF_PUMP, allocate("W_dot_hp_HT_htf_pump", n_steps_fixed), n_steps_fixed);
+        c_heat_pump.mc_reported_outputs.assign(C_csp_cr_heat_pump::E_W_DOT_CT_HTF_PUMP, allocate("W_dot_hp_CT_htf_pump", n_steps_fixed), n_steps_fixed);
+        c_heat_pump.mc_reported_outputs.assign(C_csp_cr_heat_pump::E_W_DOT_HEATER, allocate("W_dot_hp_net", n_steps_fixed), n_steps_fixed);
 
         // **********************************************************
         // **********************************************************
