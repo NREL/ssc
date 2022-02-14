@@ -42,11 +42,10 @@ GTEST_API_ int main(int argc, char **argv) {
 	testing::InitGoogleTest(&argc, argv);
     
     //    filter to include
-    //    ::testing::GTEST_FLAG(filter) = "CMTcsMoltenSalt*";
-       ::testing::GTEST_FLAG(filter) = "PVSmoothing_lib_battery_dispatch*";
-
+    //    ::testing::GTEST_FLAG(filter) = "CmodCashLoanTest*";
+    
     //    filter to exclude
-    //    ::testing::GTEST_FLAG(filter) = "-CMTcsMoltenSalt*";
+        ::testing::GTEST_FLAG(filter) = "-PVSmoothing_lib_battery_dispatch*";
 
     // run multiple test
     //    ::testing::GTEST_FLAG(filter) = "CMPvwattsv8Integration_cmod_pvwattsv8.DefaultNoFinancialModel_cmod_pvwattsv8:CMPvwattsv8Integration_cmod_pvwattsv8.NonAnnual";
