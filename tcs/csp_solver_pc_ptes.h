@@ -155,7 +155,21 @@ public:
 
     enum
     {
-        E_W_DOT_THERMO      //[MWe] Cycle thermodynamic output (not including motor/generator losses, cooling parasitics, or HTF pumps
+        E_T_HT_HTF_HOT_IN,      //[C] HT HTF hot inlet temperature
+        E_T_HT_HTF_COLD_OUT,    //[C] HT HTF cold outlet temperature
+        E_T_CT_HTF_COLD_IN,     //[C] Cold HTF cold inlet temperature
+        E_T_CT_HTF_HOT_OUT,     //[C] Cold HTF hot outlet temperature
+        E_M_DOT_HT_HTF,         //[kg/s] HT HTF mass flow rate
+        E_M_DOT_CT_HTF,         //[kg/s] CT HTF mass flow rate
+        E_Q_DOT_STARTUP,        //[MWt] Heat consumed during startup
+        E_Q_DOT_HOT_IN,         //[MWt] Heat from HT HTF
+        E_Q_DOT_THERMO_OUT_TOTAL,   //[MWt] Total heat leaving the thermodynamic cycle
+        E_Q_DOT_TO_COLD_TES,    //[MWt] Heat to CT HTF
+        E_Q_DOT_REJECTED,       //[MWt] Heat rejected to ambient
+        E_W_DOT_THERMO,         //[MWe] Cycle thermodynamic output (not including motor/generator losses, cooling parasitics, or HTF pumps
+        E_W_DOT_CYCLE_PARASITICS,   //[MWe] Thermo parasitics (e.g. *cooling power*, motors, generator losses)
+        E_W_DOT_HT_HTF_PUMP,    //[MWe] HT HTF pump
+        E_W_DOT_CT_HTF_PUMP     //[MWe] CT HTF pump
     };
 
     C_csp_reported_outputs mc_reported_outputs;

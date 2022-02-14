@@ -206,7 +206,7 @@ public:
         E_M_DOT_CT_HTF,     //[kg/s] CT HTF mass flow rate
         E_Q_DOT_STARTUP,    //[MWt] Heat consumed during startup
         E_Q_DOT_HOT_OUT,    //[MWt] Heat to HT HTF
-        E_Q_DOT_COLD_IN,    //[MWt] Heat to CT HTF
+        E_Q_DOT_COLD_IN,    //[MWt] Heat from CT HTF
         E_W_DOT_IN_THERMO,  //[MWe] Power to thermo cycle
         E_W_DOT_CYCLE_PARASITICS,   //[MWe] Thermo parasitics (e.g. motors, generator losses
         E_W_DOT_HT_HTF_PUMP,    //[MWe] HT HTF pump

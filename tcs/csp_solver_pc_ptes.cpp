@@ -25,7 +25,21 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static C_csp_reported_outputs::S_output_info S_ptes_output_info[] =
 {
+    {C_pc_ptes::E_T_HT_HTF_HOT_IN, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+    {C_pc_ptes::E_T_HT_HTF_COLD_OUT, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+    {C_pc_ptes::E_T_CT_HTF_COLD_IN, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+    {C_pc_ptes::E_T_CT_HTF_HOT_OUT, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+    {C_pc_ptes::E_M_DOT_HT_HTF, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+    {C_pc_ptes::E_M_DOT_CT_HTF, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+    {C_pc_ptes::E_Q_DOT_STARTUP, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+    {C_pc_ptes::E_Q_DOT_HOT_IN, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+    {C_pc_ptes::E_Q_DOT_THERMO_OUT_TOTAL, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+    {C_pc_ptes::E_Q_DOT_TO_COLD_TES, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+    {C_pc_ptes::E_Q_DOT_REJECTED, C_csp_reported_outputs::TS_WEIGHTED_AVE},
     {C_pc_ptes::E_W_DOT_THERMO, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+    {C_pc_ptes::E_W_DOT_CYCLE_PARASITICS, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+    {C_pc_ptes::E_W_DOT_HT_HTF_PUMP, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+    {C_pc_ptes::E_W_DOT_CT_HTF_PUMP, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 
     csp_info_invalid
 };
@@ -271,7 +285,7 @@ void C_pc_ptes::call(const C_csp_weatherreader::S_outputs& weather,
     double m_dot_HT_htf = inputs.m_m_dot/3600.0;	//[kg/s]
     int standby_control = inputs.m_standby_control;	//[-] 1: On, 2: Standby, 3: Off
 
-    double T_CT_cold = m_T_CT_HTF_cold_des; //[C]
+    double T_CT_htf_cold = m_T_CT_HTF_cold_des; //[C]
 
     // Cold temp HTF mass flow rate is always constrained to design ratio of input high temp HTF mass flow rate
     double m_dot_CT_htf = m_dot_HT_htf * m_m_dot_CT_to_HT_ratio;
@@ -290,6 +304,10 @@ void C_pc_ptes::call(const C_csp_weatherreader::S_outputs& weather,
     double T_HT_htf_cold = std::numeric_limits<double>::quiet_NaN();            //[C]
     double T_CT_htf_hot = std::numeric_limits<double>::quiet_NaN();             //[C]
     double W_dot_cycle_parasitics = std::numeric_limits<double>::quiet_NaN();   //[MWe]
+
+    double q_dot_to_cold_htf = std::numeric_limits<double>::quiet_NaN();    //[MWt]
+    double q_dot_rejected = std::numeric_limits<double>::quiet_NaN();       //[MWt]
+
     bool was_method_successful = false;
 
     switch (standby_control)
@@ -331,6 +349,10 @@ void C_pc_ptes::call(const C_csp_weatherreader::S_outputs& weather,
         T_CT_htf_hot = m_T_CT_HTF_hot_des;      //[C]
         W_dot_cycle_parasitics = 0.0;           //[MWe]
 
+        q_dot_to_cold_htf = m_dot_CT_htf*m_cp_CT_HTF_des*(T_CT_htf_hot - T_CT_htf_cold);    //[MWt]
+            // Assume balance of q_dot_HT_htf goes to internal energy of components
+        q_dot_rejected = 0.0;       //[MWt]
+
         was_method_successful = true;
 
         break;
@@ -340,13 +362,19 @@ void C_pc_ptes::call(const C_csp_weatherreader::S_outputs& weather,
         {
             double m_dot_HT_htf_ND = m_dot_HT_htf / m_m_dot_HT_des;     //[-]
             double W_dot_thermo_ND, Q_dot_ND;
-            mp_endo_reverse->performance(T_HT_htf_hot, m_dot_HT_htf_ND, T_CT_cold, W_dot_thermo_ND, Q_dot_ND,
+            mp_endo_reverse->performance(T_HT_htf_hot, m_dot_HT_htf_ND, T_CT_htf_cold, W_dot_thermo_ND, Q_dot_ND,
                                 T_HT_htf_cold, T_CT_htf_hot);
 
             q_dot_HT_htf = m_dot_HT_htf*m_cp_HT_HTF_des*(T_HT_htf_hot - T_HT_htf_cold)*1.E-3;      //[MWt]
-            W_dot_thermo = m_W_dot_thermo_des * W_dot_thermo_ND;    //[-]
+            W_dot_thermo = m_W_dot_thermo_des * W_dot_thermo_ND;    //[MWe]
             eta_thermo = W_dot_thermo / q_dot_HT_htf;
             W_dot_cycle_parasitics = m_W_dot_elec_parasitic_des * W_dot_thermo_ND;  //[MWe]
+
+            q_startup = 0.0;    //[MWt-hr]
+
+            double q_dot_out_thermo = q_dot_HT_htf - W_dot_thermo;  //[MWt]
+            q_dot_to_cold_htf = m_dot_CT_htf*m_cp_CT_HTF_des*(T_CT_htf_hot - T_CT_htf_cold);    //[MWt]
+            q_dot_rejected = q_dot_out_thermo - q_dot_to_cold_htf;  //[MWt]
 
             was_method_successful = true;
         }
@@ -362,6 +390,12 @@ void C_pc_ptes::call(const C_csp_weatherreader::S_outputs& weather,
         T_HT_htf_cold = m_T_HT_HTF_cold_des;    //[C]
         T_CT_htf_hot = m_T_CT_HTF_hot_des;      //[C]
         W_dot_cycle_parasitics = 0.0;           //[MWe]
+
+        q_startup = 0.0;    //[MWt-hr]
+
+        q_dot_to_cold_htf = m_dot_CT_htf * m_cp_CT_HTF_des * (T_CT_htf_hot - T_CT_htf_cold);    //[MWt]
+            // modeling standby as steady state to need to reject balance heat
+        q_dot_rejected = q_dot_HT_htf - q_dot_to_cold_htf;       //[MWt]
 
         was_method_successful = true;
 
@@ -380,6 +414,11 @@ void C_pc_ptes::call(const C_csp_weatherreader::S_outputs& weather,
         // Cycle is off, so reset startup parameters!
         m_startup_time_remain_calc = m_startup_time_des;    //[hr]
         m_startup_energy_remain_calc = m_E_su_des;		    //[MWt-hr]
+
+        q_startup = 0.0;    //[MWt-hr]
+
+        q_dot_to_cold_htf = 0.0;    //[MWt-hr]
+        q_dot_rejected = 0.0;       //[MWt-hr]
 
         was_method_successful = true;
 
@@ -454,8 +493,11 @@ void C_pc_ptes::call(const C_csp_weatherreader::S_outputs& weather,
         T_CT_htf_hot = m_T_CT_HTF_hot_des;      //[C]
         W_dot_cycle_parasitics = 0.0;           //[MWe]
 
-        was_method_successful = true;
+        q_dot_to_cold_htf = m_dot_CT_htf * m_cp_CT_HTF_des * (T_CT_htf_hot - T_CT_htf_cold);    //[MWt]
+            // Assume balance of q_dot_HT_htf goes to internal energy of components
+        q_dot_rejected = 0.0;       //[MWt]
 
+        was_method_successful = true;
 
         break;
 
@@ -465,7 +507,22 @@ void C_pc_ptes::call(const C_csp_weatherreader::S_outputs& weather,
     double W_dot_HT_htf_pump = m_HT_htf_pump_coef_des * m_dot_HT_htf * 1.E-3;       //[MWe]
     double W_dot_CT_htf_pump = m_CT_htf_pump_coef_des * m_dot_CT_htf * 1.E-3;       //[MWe]
 
+    // Post-process calcs
+    // ***********************************
+    double q_dot_startup = 0.0;     //[MWt]
+    if (q_startup > 0.0) {
+        q_dot_startup = q_startup / time_required_su;   //[MWt]
+    }
+    else {
+        q_dot_startup = 0.0;
+    }
+
+    double q_dot_thermo_out_total = q_dot_to_cold_htf + q_dot_rejected; //[MWt]
+    // ***********************************
+
+
     // Set outputs required by solver
+    // ***********************************
     out_solver.m_P_cycle = W_dot_thermo;                //[MWe]
     out_solver.m_T_htf_cold = T_HT_htf_cold;            //[C]
     out_solver.m_m_dot_htf = m_dot_HT_htf*3600.0;       //[kg/hr]
@@ -475,9 +532,24 @@ void C_pc_ptes::call(const C_csp_weatherreader::S_outputs& weather,
     out_solver.m_q_dot_htf = q_dot_HT_htf;			    //[MWt] Thermal power from HTF (= thermal power into cycle)
     out_solver.m_W_dot_elec_parasitics_tot = out_solver.m_W_cool_par + W_dot_CT_htf_pump + W_dot_HT_htf_pump; //[MWe]
     out_solver.m_was_method_successful = was_method_successful;	//[-]
+    // ***********************************
 
     // Set reported outputs
-    mc_reported_outputs.value(E_W_DOT_THERMO, W_dot_thermo);    //[MWe]
+    mc_reported_outputs.value(E_T_HT_HTF_HOT_IN, T_HT_htf_hot);     //[C]
+    mc_reported_outputs.value(E_T_HT_HTF_COLD_OUT, T_HT_htf_cold);  //[C]
+    mc_reported_outputs.value(E_T_CT_HTF_COLD_IN, T_CT_htf_cold);   //[C]
+    mc_reported_outputs.value(E_T_CT_HTF_HOT_OUT, T_CT_htf_hot);    //[C]
+    mc_reported_outputs.value(E_M_DOT_HT_HTF, m_dot_HT_htf);        //[kg/s]
+    mc_reported_outputs.value(E_M_DOT_CT_HTF, m_dot_CT_htf);        //[kg/s]
+    mc_reported_outputs.value(E_Q_DOT_STARTUP, q_dot_startup);      //[MWt]
+    mc_reported_outputs.value(E_Q_DOT_HOT_IN, q_dot_HT_htf);        //[MWt]
+    mc_reported_outputs.value(E_Q_DOT_THERMO_OUT_TOTAL, q_dot_thermo_out_total);      //[MWt]
+    mc_reported_outputs.value(E_Q_DOT_TO_COLD_TES, q_dot_to_cold_htf);  //[MWt]
+    mc_reported_outputs.value(E_Q_DOT_REJECTED, q_dot_rejected);        //[MWt]
+    mc_reported_outputs.value(E_W_DOT_THERMO, W_dot_thermo);            //[MWe]
+    mc_reported_outputs.value(E_W_DOT_CYCLE_PARASITICS, W_dot_cycle_parasitics);    //[MWe]
+    mc_reported_outputs.value(E_W_DOT_HT_HTF_PUMP, W_dot_HT_htf_pump);  //[MWe]
+    mc_reported_outputs.value(E_W_DOT_CT_HTF_PUMP, W_dot_CT_htf_pump);  //[MWe]
 
     return;
 }
