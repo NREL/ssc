@@ -151,7 +151,7 @@ TEST_F(PVSmoothing_lib_battery_dispatch, FuelCell_PV_Phoenix_all_on) {
         EXPECT_NEAR(violation_count, 5, 0.001);
         EXPECT_NEAR(violation_percent, 0.0095, 0.001);
         EXPECT_NEAR(grid_percent, 99.92, 0.01);
-        EXPECT_NEAR(grid_percent_sam, 99.92, 0.01);
+        EXPECT_NEAR(grid_percent_sam, 99.94, 0.01);
     }
     ssc_data_free(dat);
     dat = nullptr;

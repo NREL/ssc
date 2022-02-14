@@ -45,14 +45,14 @@ GTEST_API_ int main(int argc, char **argv) {
     //    ::testing::GTEST_FLAG(filter) = "CmodCashLoanTest*";
     
     //    filter to exclude
-        ::testing::GTEST_FLAG(filter) = "-PVSmoothing_lib_battery_dispatch*";
+    //    ::testing::GTEST_FLAG(filter) = "-PVSmoothing_lib_battery_dispatch.FuelCell_PV_Phoenix_all_on";
 
     // run multiple test
     //    ::testing::GTEST_FLAG(filter) = "CMPvwattsv8Integration_cmod_pvwattsv8.DefaultNoFinancialModel_cmod_pvwattsv8:CMPvwattsv8Integration_cmod_pvwattsv8.NonAnnual";
 
     int status = RUN_ALL_TESTS();
 
-//    sleep(10); //used for single test instruments leak detector on macOS
+    sleep(10); //used for single test instruments leak detector on macOS
 	
     if (!status)
 		printf("Tests Pass!\n");
