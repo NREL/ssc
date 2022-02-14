@@ -540,10 +540,10 @@ static var_info _cm_vtab_host_developer[] = {
 /* Production - input as energy_net above */
 
 /* Partial Income Statement: Project */
-    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_net",             "Electricity net generation",       "kWh", "", "Cash Flow Electricity", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_sales",           "Electricity generation",           "kWh", "", "Cash Flow Electricity", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_purchases",       "Electricity from grid to system",  "kWh", "", "Cash Flow Electricity", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_without_battery", "Electricity generated without the battery or curtailment", "kWh", "", "Cash Flow Electricity", "",  "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_net",             "Electricity net generation",            "kWh", "", "Cash Flow Electricity", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_sales",           "Electricity generation",                "kWh", "", "Cash Flow Electricity", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_purchases",       "Electricity from grid to system",       "kWh", "", "Cash Flow Electricity", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_without_battery", "Electricity generated without storage", "kWh", "", "Cash Flow Electricity", "",  "LENGTH_EQUAL=cf_length", "" },
 
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_ppa_price",                           "PPA price",                     "cents/kWh",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_value",                        "PPA revenue",                     "$",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
