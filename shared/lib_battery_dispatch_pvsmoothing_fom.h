@@ -114,27 +114,14 @@ public:
     double batt_dispatch_pvs_forecast_pv_energy() { return  m_batt_dispatch_pvs_nameplate_ac * m_batt_dispatch_pvs_forecast_pv_energy ;  };
 
 
-    /*
-    // validation outputs at ramp interval - use for debugging and remove for release
-    double_vec batt_dispatch_pvs_outpower_vec() { return m_batt_dispatch_pvs_outpower_vec; };
-    double_vec batt_dispatch_pvs_battpower_vec() { return  m_batt_dispatch_pvs_battpower_vec; };
-    double_vec batt_dispatch_pvs_battsoc_vec() { return m_batt_dispatch_pvs_battsoc_vec; };
-    double_vec batt_dispatch_pvs_curtail_vec() { return  m_batt_dispatch_pvs_curtail_vec; };
-    double_vec batt_dispatch_pvs_violation_list_vec() { return m_batt_dispatch_pvs_violation_list_vec; };
-    double_vec batt_dispatch_pvs_PV_ramp_interval_vec() { return m_pv_power_input_sampled_vec; };
-    double_vec batt_dispatch_pvs_forecast_pv_energy_vec() { return m_forecast_pv_energy_vec; };
-    */
-protected:
+ protected:
 
 	void init_with_pointer(const dispatch_pvsmoothing_front_of_meter_t* tmp);
 
     /*! Calculate the cost to cycle per kWh */
     void costToCycle();
 
-    /*! Setup PV smoothing ramp interval vectors */
-    //void setup_pvsmoothing_ramp_interval_vectors();
-
-	/*! Inverter AC power limit */
+ 	/*! Inverter AC power limit */
 	double _inverter_paco;
 
 	/*! Efficiencies of the charge and discharge of the battery*/
@@ -172,16 +159,6 @@ protected:
     size_t m_batt_dispatch_pvs_timestep_multiplier;
     double m_batt_dispatch_pvs_initial_SOC;
 
-    /*
-    // PV Smoothing validation and local ramp interval vectors calculated in setup_pvsmoothing_ramp_interval_vectors
-    double_vec m_pv_power_input_sampled_vec;
-    double_vec m_forecast_pv_energy_vec;
-    double_vec m_batt_dispatch_pvs_outpower_vec;
-    double_vec m_batt_dispatch_pvs_battpower_vec;
-    double_vec m_batt_dispatch_pvs_battsoc_vec;
-    double_vec m_batt_dispatch_pvs_curtail_vec;
-    double_vec m_batt_dispatch_pvs_violation_list_vec;
-    */
 };
 
 #endif // __LIB_BATTERY_DISPATCH_PVSMOOTHING_FOM_H__
