@@ -389,13 +389,15 @@ void C_csp_solver::init()
 	mc_tes.init(tes_init_inputs);
     mc_csp_messages.transfer_messages(mc_tes.mc_csp_messages);
         // Check Cold TES
-    bool is_CT_tes = false;
     if (mc_CT_tes.get() != nullptr) {
-        is_CT_tes = true;
+        m_is_CT_tes = true;
 
         C_csp_tes::S_csp_tes_init_inputs CT_tes_init_inputs;
         mc_CT_tes->init(CT_tes_init_inputs);
         mc_csp_messages.transfer_messages(mc_CT_tes->mc_csp_messages);
+    }
+    else {
+        m_is_CT_tes = false;
     }
 		// TOU
     mc_tou.mc_dispatch_params.m_isleapyear = mc_weather.ms_solved_params.m_leapyear;
@@ -936,6 +938,9 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
         if (m_is_parallel_heater) {
             mp_heater->converged();
         }
+        if (m_is_CT_tes) {
+            mc_CT_tes->converged();
+        }
 		
         //Update the estimated thermal energy storage charge state
         double e_tes_disch = 0.;
@@ -1162,6 +1167,9 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				mc_tes.write_output_intervals(m_report_time_start, mv_time_local, m_report_time_end);
                 if (m_is_parallel_heater) {
                     mp_heater->write_output_intervals(m_report_time_start, mv_time_local, m_report_time_end);
+                }
+                if (m_is_CT_tes) {
+                    mc_CT_tes->write_output_intervals(m_report_time_start, mv_time_local, m_report_time_end);
                 }
 
 				// Overwrite TIME_FINAL

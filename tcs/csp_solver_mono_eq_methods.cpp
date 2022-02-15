@@ -1052,6 +1052,23 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
             *diff_target = std::numeric_limits<double>::quiet_NaN();
             return -3;
         }
+
+        if (mpc_csp_solver->m_is_CT_tes) {
+
+            double T_CT_hot_htf_out, T_CT_cold_htf_out;
+            T_CT_hot_htf_out = T_CT_cold_htf_out = std::numeric_limits<double>::quiet_NaN();
+
+            int CT_tes_code = mpc_csp_solver->mc_CT_tes->solve_tes_off_design(mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step,
+                mpc_csp_solver->mc_weather.ms_outputs.m_tdry + 273.15,
+                0.0, 0.0, 0.0,
+                T_htf_hot_cr_mixed + 273.15, mpc_csp_solver->mc_pc_out_solver.m_T_htf_cold + 273.15,
+                T_CT_hot_htf_out, T_CT_cold_htf_out,
+                mpc_csp_solver->mc_CT_tes_outputs);
+
+            if (CT_tes_code != 0) {
+                throw(C_csp_exception(util::format("At time = %lg, C_MEQ__timestep CT TES failed", mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time), ""));
+            }
+        }
     }
     else
     {

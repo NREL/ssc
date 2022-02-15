@@ -8,7 +8,7 @@ var( 'time_stop', 31536000 );
 // 0: Simple step-change TOU block schedule (dispatch_sched_weekday, dispatch_sched_weekend, dispatch_factorX)
 // 1: Hourly schedule (dispatch_factor_ts)
 var( 'ppa_multiplier_model', 1 );
-var( 'is_dispatch', 1 );
+var( 'is_dispatch', 0 );
 var( 'ppa_price_input', [ 0.1 ] );  // 0.053889  for LCGS_price_multipliers
 
 // Normalized prices

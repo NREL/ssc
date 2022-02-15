@@ -935,6 +935,7 @@ private:
 	C_csp_power_cycle::S_csp_pc_out_solver mc_pc_out_solver;
 
 	C_csp_tes::S_csp_tes_outputs mc_tes_outputs;
+    C_csp_tes::S_csp_tes_outputs mc_CT_tes_outputs;
 
     C_csp_tou::S_csp_tou_outputs mc_tou_outputs;
 
@@ -978,6 +979,7 @@ private:
 		// Storage logic
 	bool m_is_tes;			    //[-] True: plant has storage
     bool m_is_cr_config_recirc; //[-] True: Receiver "off" and "startup" are recirculated from outlet to inlet
+    bool m_is_CT_tes;           //[-] True: plant has cold temp storage
 
         // System control logic
         // Checks if mp_heater is defined. if True, then solves system for CSP+ETES
