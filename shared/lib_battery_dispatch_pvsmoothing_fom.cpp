@@ -102,6 +102,7 @@ dispatch_pvsmoothing_front_of_meter_t::dispatch_pvsmoothing_front_of_meter_t(
 	m_etaDischarge = etaDischarge * 0.01;
 
     m_batt_dispatch_pvs_outpower = m_batt_dispatch_pvs_battpower = m_batt_dispatch_pvs_curtail = m_batt_dispatch_pvs_violation_list = 0.0;
+    m_batt_dispatch_pvs_battsoc = m_batt_dispatch_pvs_initial_SOC;
 
     costToCycle();
 }
