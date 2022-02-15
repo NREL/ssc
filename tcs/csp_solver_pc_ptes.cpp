@@ -349,7 +349,7 @@ void C_pc_ptes::call(const C_csp_weatherreader::S_outputs& weather,
         T_CT_htf_hot = m_T_CT_HTF_hot_des;      //[C]
         W_dot_cycle_parasitics = 0.0;           //[MWe]
 
-        q_dot_to_cold_htf = m_dot_CT_htf*m_cp_CT_HTF_des*(T_CT_htf_hot - T_CT_htf_cold);    //[MWt]
+        q_dot_to_cold_htf = m_dot_CT_htf*m_cp_CT_HTF_des*(T_CT_htf_hot - T_CT_htf_cold)*1.E-3;    //[MWt] convert from kWt
             // Assume balance of q_dot_HT_htf goes to internal energy of components
         q_dot_rejected = 0.0;       //[MWt]
 
@@ -373,7 +373,7 @@ void C_pc_ptes::call(const C_csp_weatherreader::S_outputs& weather,
             q_startup = 0.0;    //[MWt-hr]
 
             double q_dot_out_thermo = q_dot_HT_htf - W_dot_thermo;  //[MWt]
-            q_dot_to_cold_htf = m_dot_CT_htf*m_cp_CT_HTF_des*(T_CT_htf_hot - T_CT_htf_cold);    //[MWt]
+            q_dot_to_cold_htf = m_dot_CT_htf*m_cp_CT_HTF_des*(T_CT_htf_hot - T_CT_htf_cold)*1.E-3;    //[MWt]
             q_dot_rejected = q_dot_out_thermo - q_dot_to_cold_htf;  //[MWt]
 
             was_method_successful = true;
@@ -393,7 +393,7 @@ void C_pc_ptes::call(const C_csp_weatherreader::S_outputs& weather,
 
         q_startup = 0.0;    //[MWt-hr]
 
-        q_dot_to_cold_htf = m_dot_CT_htf * m_cp_CT_HTF_des * (T_CT_htf_hot - T_CT_htf_cold);    //[MWt]
+        q_dot_to_cold_htf = m_dot_CT_htf*m_cp_CT_HTF_des*(T_CT_htf_hot - T_CT_htf_cold)*1.E-3;    //[MWt] convert from kWt
             // modeling standby as steady state to need to reject balance heat
         q_dot_rejected = q_dot_HT_htf - q_dot_to_cold_htf;       //[MWt]
 
@@ -493,7 +493,7 @@ void C_pc_ptes::call(const C_csp_weatherreader::S_outputs& weather,
         T_CT_htf_hot = m_T_CT_HTF_hot_des;      //[C]
         W_dot_cycle_parasitics = 0.0;           //[MWe]
 
-        q_dot_to_cold_htf = m_dot_CT_htf * m_cp_CT_HTF_des * (T_CT_htf_hot - T_CT_htf_cold);    //[MWt]
+        q_dot_to_cold_htf = m_dot_CT_htf*m_cp_CT_HTF_des*(T_CT_htf_hot - T_CT_htf_cold)*1.E-3;    //[MWt] convert from kWt
             // Assume balance of q_dot_HT_htf goes to internal energy of components
         q_dot_rejected = 0.0;       //[MWt]
 

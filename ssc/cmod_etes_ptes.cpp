@@ -264,7 +264,21 @@ static var_info _cm_vtab_etes_ptes[] = {
     { SSC_OUTPUT, SSC_ARRAY,  "W_dot_hp_net",                  "Heat pump total power in",                                      "MWe",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
 
             // Power cycle outputs
-
+    { SSC_OUTPUT, SSC_ARRAY,  "T_pc_HT_htf_hot_in",            "PC hot tes HTF inlet temperature",                              "C",            "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "T_pc_HT_htf_cold_out",          "PC hot tes HTF outlet temperature",                             "C",            "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "T_pc_CT_htf_cold_in",           "PC cold tes HTF inlet temperature",                             "C",            "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "T_pc_CT_htf_hot_out",           "PC cold tes HTF outlet temperature",                            "C",            "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "m_dot_pc_HT_htf",               "PC hot tes HTF mass flow rate",                                 "kg/s"          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "m_dot_pc_CT_htf",               "PC cold tes HTF mass flow rate",                                "kg/s",         "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "q_dot_pc_startup",              "PC startup power",                                              "MWt",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "q_dot_pc_from_HT_htf",          "PC thermal power from hot tes HTF",                             "MWt",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "q_dot_pc_thermo_out",           "PC total heat leaving cycle",                                   "MWt",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "q_dot_pc_to_CT_htf",            "PC thermal power to cold tes HTF",                              "MWt",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "q_dot_pc_rejected",             "PC thermal power rejected to surroundings",                     "MWt",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "W_dot_pc_thermo_out",           "PC thermodynamic power out",                                    "MWe",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "W_dot_pc_parasitics",           "PC parasitics including cooling power",                         "MWe",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "W_dot_pc_HT_htf_pump",          "PC hot tes HTF pump power",                                     "MWe",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "W_dot_pc_CT_htf_pump",          "PC cold tes HTF pump power",                                    "MWe",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
 
             // Hot TES outputs
     { SSC_OUTPUT, SSC_ARRAY,  "q_dot_dc_tes",                  "TES discharge thermal power",                                   "MWt",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
@@ -502,6 +516,24 @@ public:
 
             throw exec_error("etes_electric_resistance", csp_exception.m_error_message);
         }
+
+            // Set power cycle outputs
+        c_pc.mc_reported_outputs.assign(C_pc_ptes::E_T_HT_HTF_HOT_IN, allocate("T_pc_HT_htf_hot_in", n_steps_fixed), n_steps_fixed);
+        c_pc.mc_reported_outputs.assign(C_pc_ptes::E_T_HT_HTF_COLD_OUT, allocate("T_pc_HT_htf_cold_out", n_steps_fixed), n_steps_fixed);
+        c_pc.mc_reported_outputs.assign(C_pc_ptes::E_T_CT_HTF_COLD_IN, allocate("T_pc_CT_htf_cold_in", n_steps_fixed), n_steps_fixed);
+        c_pc.mc_reported_outputs.assign(C_pc_ptes::E_T_CT_HTF_HOT_OUT, allocate("T_pc_CT_htf_hot_out", n_steps_fixed), n_steps_fixed);
+        c_pc.mc_reported_outputs.assign(C_pc_ptes::E_M_DOT_HT_HTF, allocate("m_dot_pc_HT_htf", n_steps_fixed), n_steps_fixed);
+        c_pc.mc_reported_outputs.assign(C_pc_ptes::E_M_DOT_CT_HTF, allocate("m_dot_pc_CT_htf", n_steps_fixed), n_steps_fixed);
+        c_pc.mc_reported_outputs.assign(C_pc_ptes::E_Q_DOT_STARTUP, allocate("q_dot_pc_startup", n_steps_fixed), n_steps_fixed);
+        c_pc.mc_reported_outputs.assign(C_pc_ptes::E_Q_DOT_HOT_IN, allocate("q_dot_pc_from_HT_htf", n_steps_fixed), n_steps_fixed);
+        c_pc.mc_reported_outputs.assign(C_pc_ptes::E_Q_DOT_THERMO_OUT_TOTAL, allocate("q_dot_pc_thermo_out", n_steps_fixed), n_steps_fixed);
+        c_pc.mc_reported_outputs.assign(C_pc_ptes::E_Q_DOT_TO_COLD_TES, allocate("q_dot_pc_to_CT_htf", n_steps_fixed), n_steps_fixed);
+        c_pc.mc_reported_outputs.assign(C_pc_ptes::E_Q_DOT_REJECTED, allocate("q_dot_pc_rejected", n_steps_fixed), n_steps_fixed);
+        c_pc.mc_reported_outputs.assign(C_pc_ptes::E_W_DOT_THERMO, allocate("W_dot_pc_thermo_out", n_steps_fixed), n_steps_fixed);
+        c_pc.mc_reported_outputs.assign(C_pc_ptes::E_W_DOT_CYCLE_PARASITICS, allocate("W_dot_pc_parasitics", n_steps_fixed), n_steps_fixed);
+        c_pc.mc_reported_outputs.assign(C_pc_ptes::E_W_DOT_HT_HTF_PUMP, allocate("W_dot_pc_HT_htf_pump", n_steps_fixed), n_steps_fixed);
+        c_pc.mc_reported_outputs.assign(C_pc_ptes::E_W_DOT_CT_HTF_PUMP, allocate("W_dot_pc_CT_htf_pump",n_steps_fixed), n_steps_fixed);
+
         // **********************************************************
         // **********************************************************
 
