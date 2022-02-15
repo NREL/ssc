@@ -130,6 +130,7 @@ private:
     double m_m_dot_CT_to_HT_ratio;      //[-]
 
     double m_E_su_des;                  //[MWt-hr]
+    double m_E_standby_des;             //[MWt-hr]
 
     // Member points/classes
     std::unique_ptr<HTFProperties> m_HT_htfProps;

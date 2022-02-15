@@ -98,6 +98,25 @@ static var_info _cm_vtab_etes_ptes[] = {
     //{ SSC_INPUT,  SSC_NUMBER, "CT_hot_tank_max_heat",          "COLD TES Rated heater capacity for hot tank heating",            "MW",           "",                                  "Cold Thermal Storage",                     "*",                                                                "",              ""},
 
 
+    // System control
+    { SSC_INPUT,  SSC_NUMBER, "disp_horizon",                  "Time horizon for dispatch optimization",                        "hour",         "",                                  "System Control",                           "is_dispatch=1",                                                    "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "disp_frequency",                "Frequency for dispatch optimization calculations",              "hour",         "",                                  "System Control",                           "is_dispatch=1",                                                    "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "disp_steps_per_hour",           "Time steps per hour for dispatch optimization calculations",    "",             "",                                  "System Control",                           "?=1",                                                              "",              "SIMULATION_PARAMETER"},
+    { SSC_INPUT,  SSC_NUMBER, "disp_max_iter",                 "Max number of dispatch optimization iterations",                "",             "",                                  "System Control",                           "is_dispatch=1",                                                    "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "disp_timeout",                  "Max dispatch optimization solve duration",                      "s",            "",                                  "System Control",                           "is_dispatch=1",                                                    "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "disp_mip_gap",                  "Dispatch optimization solution tolerance",                      "",             "",                                  "System Control",                           "is_dispatch=1",                                                    "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "disp_spec_bb",                  "Dispatch optimization B&B heuristic",                           "",             "",                                  "System Control",                           "?=-1",                                                             "",              "SIMULATION_PARAMETER"},
+    { SSC_INPUT,  SSC_NUMBER, "disp_reporting",                "Dispatch optimization reporting level",                         "",             "",                                  "System Control",                           "?=-1",                                                             "",              "SIMULATION_PARAMETER"},
+    { SSC_INPUT,  SSC_NUMBER, "disp_spec_presolve",            "Dispatch optimization presolve heuristic",                      "",             "",                                  "System Control",                           "?=-1",                                                             "",              "SIMULATION_PARAMETER"},
+    { SSC_INPUT,  SSC_NUMBER, "disp_spec_scaling",             "Dispatch optimization scaling heuristic",                       "",             "",                                  "System Control",                           "?=-1",                                                             "",              "SIMULATION_PARAMETER"},
+    { SSC_INPUT,  SSC_NUMBER, "disp_pen_delta_w",              "Dispatch cycle production change penalty",                      "$/MWe-change", "",                                  "System Control",                           "is_dispatch=1",                                                    "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "disp_csu_cost",                 "Cycle startup cost",                                            "$/MWe-cycle/start", "",                             "System Control",                           "is_dispatch=1",                                                    "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "disp_hsu_cost",                 "Heater startup cost",                                           "$/MWe-cycle/start", "",                             "System Control",                           "is_dispatch=1",                                                    "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "disp_time_weighting",           "Dispatch optimization future time discounting factor",          "",             "",                                  "System Control",                           "is_dispatch=1",                                                    "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "disp_down_time_min",            "Minimum time requirement for cycle to not generate power",      "hr",           "",                                  "System Control",                           "is_dispatch=1",                                                    "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "disp_up_time_min",              "Minimum time requirement for cycle to generate power",          "hr",           "",                                  "System Control",                           "is_dispatch=1",                                                    "",              ""},
+
+
     // Pricing schedules and multipliers
     { SSC_INPUT,  SSC_NUMBER, "ppa_multiplier_model",          "PPA multiplier model",                                          "0/1",          "0=diurnal,1=timestep",              "Time of Delivery Factors",                 "?=0",                                                              "INTEGER,MIN=0", "SIMULATION_PARAMETER"},
     { SSC_INPUT,  SSC_ARRAY,  "dispatch_factors_ts",           "Dispatch payment factor timeseries array",                      "",             "",                                  "Time of Delivery Factors",                 "ppa_multiplier_model=1&etes_financial_model<5&is_dispatch=1&sim_type=1",      "",              "SIMULATION_PARAMETER"},
@@ -304,6 +323,7 @@ static var_info _cm_vtab_etes_ptes[] = {
     { SSC_OUTPUT, SSC_ARRAY,  "W_dot_fixed_parasitics",        "Parasitic power plant fixed load",                              "MWe",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
     { SSC_OUTPUT, SSC_ARRAY,  "W_dot_bop_parasitics",          "Parasitic power plant generation-dependent laod",               "MWe",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
     { SSC_OUTPUT, SSC_ARRAY,  "W_dot_out_net",                 "Total electric power to grid",                                  "MWe",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "gen",                           "Total electric power to grid with available derate",            "kWe",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
 
             // Controller outputs
     { SSC_OUTPUT, SSC_ARRAY,  "n_op_modes",                    "Operating modes in reporting timestep",                         "",             "",                                  "",                                         "sim_type=1",                                                                "",              "" },
@@ -313,6 +333,9 @@ static var_info _cm_vtab_etes_ptes[] = {
     { SSC_OUTPUT, SSC_ARRAY,  "m_dot_balance",                 "Relative mass flow balance error",                              "",             "",                                  "",                                         "sim_type=1",                                                                "",              "" },
     { SSC_OUTPUT, SSC_ARRAY,  "q_balance",                     "Relative energy balance error",                                 "",             "",                                  "",                                         "sim_type=1",                                                                "",              "" },
     { SSC_OUTPUT, SSC_ARRAY,  "q_pc_target",                   "Controller target pc heat input",                               "MWt",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+
+            // Annual single-value outputs
+    { SSC_OUTPUT, SSC_NUMBER, "annual_energy",                 "Annual total electric power to grid",                           "kWhe",         "",                                  "",                                         "sim_type=1",                                                                "",              "" },
 
 
             // ETES settings for financial model
@@ -329,6 +352,7 @@ public:
     cm_etes_ptes()
     {
         add_var_info(_cm_vtab_etes_ptes);
+        add_var_info(vtab_adjustment_factors);
     }
 
     void exec() override
@@ -1145,6 +1169,27 @@ public:
 
         // *****************************************************
         // Post-process
+        size_t count;
+        ssc_number_t* p_W_dot_net = as_array("W_dot_out_net", &count);
+        ssc_number_t* p_time_final_hr = as_array("time_hr", &count);
+
+        // 'adjustment_factors' class stores factors in hourly array, so need to index as such
+        adjustment_factors haf(this, "adjust");
+        if (!haf.setup())
+            throw exec_error("etes_electric_resistance", "failed to setup adjustment factors: " + haf.error());
+
+        ssc_number_t* p_gen = allocate("gen", count);
+        for (size_t i = 0; i < count; i++)
+        {
+            size_t hour = (size_t)ceil(p_time_final_hr[i]);
+            p_gen[i] = (ssc_number_t)(p_W_dot_net[i] * 1.E3 * haf(hour));           //[kWe]
+        }
+        // *****************************************************
+        // *****************************************************
+
+        // Annual metrics
+        accumulate_annual_for_year("gen", "annual_energy", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour);
+
 
         return;
     }

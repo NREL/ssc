@@ -107,6 +107,7 @@ C_pc_ptes::C_pc_ptes(double W_dot_thermo /*MWe*/, double eta_therm_mech /*-*/,
     m_m_dot_CT_to_HT_ratio = std::numeric_limits<double>::quiet_NaN();
 
     m_E_su_des = std::numeric_limits<double>::quiet_NaN();
+    m_E_standby_des = std::numeric_limits<double>::quiet_NaN();
 
     mc_reported_outputs.construct(S_ptes_output_info);
 }
@@ -152,7 +153,8 @@ void C_pc_ptes::init(C_csp_power_cycle::S_solved_params& solved_params)
     m_q_dot_HT_max = m_cycle_max_frac_des * m_q_dot_hot_in_des;     //[MWt]
 
     // Startup energy
-    m_E_su_des = m_startup_frac_des*m_q_dot_hot_in_des;     //[MWt-hr]
+    m_E_su_des = m_startup_frac_des*m_q_dot_hot_in_des;     //[MWt-hr] (implies 1 hr baked into this calc)
+    m_E_standby_des = m_q_sby_frac_des*m_q_dot_hot_in_des;  //[MWt]
 
     // Initialize state variables
     m_operating_mode_prev = OFF;        // Assume cycle is off when simulation begins
@@ -189,37 +191,37 @@ C_csp_power_cycle::E_csp_power_cycle_modes C_pc_ptes::get_operating_state()
 
 double C_pc_ptes::get_cold_startup_time()
 {
-    throw(C_csp_exception("C_pc_tes::get_cold_startup_time() is not complete"));
+    return m_startup_time_des;  //[hr]
 }
 
 double C_pc_ptes::get_warm_startup_time()
 {
-    throw(C_csp_exception("C_pc_tes::get_warm_startup_time() is not complete"));
+    return m_startup_time_des;  //[hr]
 }
 
 double C_pc_ptes::get_hot_startup_time()
 {
-    throw(C_csp_exception("C_pc_tes::get_hot_startup_time() is not complete"));
+    return m_startup_time_des;  //[hr]
 }
 
 double C_pc_ptes::get_standby_energy_requirement()    //[MW]
 {
-    throw(C_csp_exception("C_pc_tes::get_standby_energy_requirement() is not complete"));
+    return m_E_standby_des;     //[MWt]
 }
 
 double C_pc_ptes::get_cold_startup_energy()    //[MWh]
 {
-    throw(C_csp_exception("C_pc_tes::get_cold_startup_energy() is not complete"));
+    return m_E_su_des;  //[MWt-hr]
 }
 
 double C_pc_ptes::get_warm_startup_energy()    //[MWh]
 {
-    throw(C_csp_exception("C_pc_tes::get_warm_startup_energy() is not complete"));
+    return m_E_su_des;  //[MWt-hr]
 }
 
 double C_pc_ptes::get_hot_startup_energy()    //[MWh]
 {
-    throw(C_csp_exception("C_pc_tes::get_hot_startup_energy() is not complete"));
+    return m_E_su_des;  //[MWt-hr]
 }
 
 double C_pc_ptes::get_max_thermal_power()     //[MWt]
@@ -240,17 +242,54 @@ void C_pc_ptes::get_max_power_output_operation_constraints(double T_amb /*C*/, d
 
 double C_pc_ptes::get_efficiency_at_TPH(double T_degC, double P_atm, double relhum_pct, double* w_dot_condenser)
 {
-    throw(C_csp_exception("C_pc_ptes::get_efficiency_at_TPH() is not complete"));
+    // Assumptions
+    // 1) Design HT mass flow rate
+    // 2) Design HT hot inlet temp
+    // 3) Design CT cold inlet temp
+    double m_dot_HT_htf_ND = 1.0;     //[-]
+    double T_HT_htf_hot = m_T_HT_HTF_hot_des;       //[C]
+    double T_CT_htf_cold = m_T_CT_HTF_cold_des;     //[C]
+    double W_dot_thermo_ND, Q_dot_ND, T_HT_htf_cold, T_CT_htf_hot;
+    mp_endo_reverse->performance(T_HT_htf_hot, m_dot_HT_htf_ND, T_CT_htf_cold, W_dot_thermo_ND, Q_dot_ND,
+        T_HT_htf_cold, T_CT_htf_hot);
+
+    double m_dot_HT_htf = m_dot_HT_htf_ND * m_m_dot_HT_des; //[kg/s]
+    double q_dot_HT_htf = m_dot_HT_htf * m_cp_HT_HTF_des * (T_HT_htf_hot - T_HT_htf_cold) * 1.E-3;      //[MWt]
+    double W_dot_thermo = m_W_dot_thermo_des * W_dot_thermo_ND;    //[MWe]
+    double eta_thermo = W_dot_thermo / q_dot_HT_htf;
+    if (w_dot_condenser != 0)
+        *w_dot_condenser = m_W_dot_elec_parasitic_des * W_dot_thermo_ND;
+
+    return eta_thermo;
 }
 
 double C_pc_ptes::get_efficiency_at_load(double load_frac, double* w_dot_condenser)
 {
-    throw(C_csp_exception("C_pc_ptes::get_efficiency_at_load() is not complete"));
+    // Assumptions
+    // 1) Design ambient temperature
+    // 2) Design HT hot inlet temp
+    // 3) Design CT cold inlet temp
+    double m_dot_HT_htf_ND = load_frac;     //[-]
+    double T_HT_htf_hot = m_T_HT_HTF_hot_des;       //[C]
+    double T_CT_htf_cold = m_T_CT_HTF_cold_des;     //[C]
+    double W_dot_thermo_ND, Q_dot_ND, T_HT_htf_cold, T_CT_htf_hot;
+    mp_endo_reverse->performance(T_HT_htf_hot, m_dot_HT_htf_ND, T_CT_htf_cold, W_dot_thermo_ND, Q_dot_ND,
+        T_HT_htf_cold, T_CT_htf_hot);
+
+    double m_dot_HT_htf = m_dot_HT_htf_ND * m_m_dot_HT_des; //[kg/s]
+    double q_dot_HT_htf = m_dot_HT_htf * m_cp_HT_HTF_des * (T_HT_htf_hot - T_HT_htf_cold) * 1.E-3;      //[MWt]
+    double W_dot_thermo = m_W_dot_thermo_des * W_dot_thermo_ND;    //[MWe]
+    double eta_thermo = W_dot_thermo / q_dot_HT_htf;
+    if (w_dot_condenser != 0)
+        *w_dot_condenser = m_W_dot_elec_parasitic_des * W_dot_thermo_ND;
+
+    return eta_thermo;
 }
 
 double C_pc_ptes::get_htf_pumping_parasitic_coef()		//[kWe/kWt]
 {
-    throw(C_csp_exception("C_pc_ptes::get_htf_pumping_parasitic_coef() is not complete"));
+    // Need to include both HT and CT pumps
+    return (m_HT_htf_pump_coef_des*m_m_dot_HT_des + m_CT_htf_pump_coef_des*m_m_dot_CT_des) / (m_q_dot_hot_in_des * 1.E3);   //[kWe/kWt]
 }
 
 // This can vary between timesteps for Type224, depending on remaining startup energy and time
