@@ -47,6 +47,18 @@ static var_info _cm_vtab_etes_ptes[] = {
     { SSC_INPUT,  SSC_NUMBER, "time_steps_per_hour",           "Number of simulation time steps per hour",                       "",             "",                                  "System Control",                           "?=-1",                                                             "",              "SIMULATION_PARAMETER"},
     { SSC_INPUT,  SSC_NUMBER, "vacuum_arrays",                 "Allocate arrays for only the required number of steps",          "",             "",                                  "System Control",                           "?=0",                                                              "",              "SIMULATION_PARAMETER"},
 
+    // System Parameters
+    { SSC_INPUT,  SSC_NUMBER, "heater_mult",                   "Heater multiple relative to design cycle thermal power",         "-",            "",                                  "System Design",                            "*",                                                                "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "tshours",                       "Equivalent full-load thermal storage hours",                     "hr",           "",                                  "System Design",                            "*",                                                                "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "W_dot_pc_thermo_des",           "PC design thermodynamic power",                                  "MWe",          "",                                  "System Design",                            "*",                                                                "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "eta_pc_thermo_des",             "PC design thermodynamic efficiency",                             "-",            "",                                  "System Design",                            "*",                                                                "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "f_pc_parasitic_des",            "PC parasitics as fraction of design thermo power out",           "-",            "",                                  "System Design",                            "*",                                                                "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "cop_hp_thermo_des",             "Heat pump design thermodynamic heat COP",                        "-",            "",                                  "System Design",                            "*",                                                                "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "f_hp_parasitic_des",            "Heat pump parasitics as fraction of design thermo power in",     "-",            "",                                  "System Design",                            "*",                                                                "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "T_HT_hot_htf_des",              "HT TES hot temperature",                                         "C",            "",                                  "System Design",                            "*",                                                                "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "T_HT_cold_htf_des",             "HT TES cold temperature",                                        "C",            "",                                  "System Design",                            "*",                                                                "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "T_CT_cold_htf_des",             "CT TES cold temperature",                                        "C",            "",                                  "System Design",                            "*",                                                                "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "T_CT_hot_htf_des",              "CT TES hot temperature",                                         "C",            "",                                  "System Design",                            "*",                                                                "",              ""},
 
     // HTFs
     { SSC_INPUT,  SSC_NUMBER, "hot_htf_code",                  "Hot HTF code - see htf_props.h for list",                        "",             "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
@@ -371,15 +383,15 @@ public:
         // System design calcs
         // Need more information than typical because cycle and heat pump design are related
         // And we want all component calcs to live in component methods/helpers
-        double heater_mult = 1.0;               //[-]
-        double tshours = 10.0;      //[-]
+        double heater_mult = as_double("heater_mult");      //[-]
+        double tshours = as_double("tshours");              //[-]
 
         // Define generation mechanical, electrical, and thermal power
         // Need to break out thermodynamic cycle so that net output, heat input, heat output, and efficiency are consistent
         // Important because: 1) important to capture exact heat rejection for CT storage and net efficiency includes electrical parasitics that don't apply to cycle working fluid
-        double W_dot_gen_thermo = 100.0;    //[MWe]
-        double f_elec_consume_vs_gen = 0.1; //[-] Fraction of thermo generation that cycle uses for parasitics (motors, generators, cooling)
-        double eta_therm_mech = 0.5;        //[-]
+        double W_dot_gen_thermo = as_double("W_dot_pc_thermo_des");     //  100.0;    //[MWe]
+        double f_elec_consume_vs_gen = as_double("f_pc_parasitic_des"); // 0.1; //[-] Fraction of thermo generation that cycle uses for parasitics (motors, generators, cooling)
+        double eta_therm_mech = as_double("eta_pc_thermo_des");         // 0.5;        //[-]
         double W_dot_gen_net, W_dot_gen_elec_parasitic, q_dot_hot_in_gen, q_dot_cold_out_gen, eta_gen_net;
         W_dot_gen_net = W_dot_gen_elec_parasitic = q_dot_hot_in_gen = q_dot_cold_out_gen = eta_gen_net = std::numeric_limits<double>::quiet_NaN();
         pc_ptes_helpers::design_calcs__no_ctes(W_dot_gen_thermo, f_elec_consume_vs_gen,
@@ -389,8 +401,8 @@ public:
 
         // Define heat pump power/heat flows
             // Design parameters
-        double COP_heat_charge_therm = 1.5;     //[-]
-        double f_elec_consume_vs_W_dot_thermo = 0.05;   //[-]
+        double COP_heat_charge_therm = as_double("cop_hp_thermo_des");              // 1.5;     //[-]
+        double f_elec_consume_vs_W_dot_thermo = as_double("f_hp_parasitic_des");    // 0.05;   //[-]
             // Calculate heat and power 
         double q_dot_hot_out_charge = q_dot_hot_in_gen*heater_mult; //[MWt]
             // Call heat pump high-level design method
@@ -448,10 +460,10 @@ public:
         // *****************************************************
         // --- OR ----
         // Define TES temps only. Assume direct storage. Heat pump and cycle model off-design uses HTF temps
-        double T_HT_hot_TES = 560.0;    //[C]
-        double T_HT_cold_TES = 305.0;   //[C]
-        double T_CT_cold_TES = -45.0;   //[C]
-        double T_CT_hot_TES = 55.0;     //[C]
+        double T_HT_hot_TES = as_double("T_HT_hot_htf_des");        // 560.0;    //[C]
+        double T_HT_cold_TES = as_double("T_HT_cold_htf_des");      // 305.0;   //[C]
+        double T_CT_cold_TES = as_double("T_CT_cold_htf_des");      // -45.0;   //[C]
+        double T_CT_hot_TES = as_double("T_CT_hot_htf_des");        // 55.0;     //[C]
         // *****************************************************
         // *****************************************************
 

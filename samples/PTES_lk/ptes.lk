@@ -14,6 +14,21 @@ var( 'ppa_price_input', [ 0.1 ] );  // 0.053889  for LCGS_price_multipliers
 // Normalized prices
 var('dispatch_factors_ts', real_array(read_text_file('../ETES_lk/LCGS_price_multipliers.csv')));
 
+// System Design Parameters
+var( 'heater_mult', 1.0);
+var( 'tshours', 10.0);
+var( "W_dot_pc_thermo_des", 100.0);
+var( "eta_pc_thermo_des", 0.5);
+var( "f_pc_parasitic_des", 0.1);
+var( "cop_hp_thermo_des", 1.5);
+var( "f_hp_parasitic_des", 0.05);
+var( "T_HT_hot_htf_des", 560.0);
+var( "T_HT_cold_htf_des", 305.0);
+var( "T_CT_cold_htf_des", -45.0);
+var( "T_CT_hot_htf_des", 55.0);
+
+
+
 // HTF
 var( 'hot_htf_code', 17);
 var('ud_hot_htf_props', [[0,0,0]]);
