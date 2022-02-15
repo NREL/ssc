@@ -37,6 +37,10 @@ static var_info _cm_vtab_pvsamv1[] = {
         {SSC_INPUT, SSC_NUMBER,   "transformer_no_load_loss",             "Power transformer no load loss",                      "%",      "",                                                                                                                                                                                      "Losses",                                                "?=0",                                "",                    "" },
         {SSC_INPUT, SSC_NUMBER,   "transformer_load_loss",                "Power transformer load loss",                         "%",      "",                                                                                                                                                                                      "Losses",                                                "?=0",                                "",                    "" },
 
+        { SSC_INOUT,        SSC_NUMBER,      "annual_tdry",             "Average dry bulb temperature",     "'C",           "",                "Weather Reader",      "",                        "",     "" },
+        { SSC_INOUT, SSC_NUMBER, "annual_wspd", "Average wind speed", "m/s", "", "Weather Reader", "", "", "" },
+
+
             // optional for lifetime analysis
         {SSC_INPUT, SSC_NUMBER,   "system_use_lifetime_output",           "PV lifetime simulation",                              "0/1",    "",                                                                                                                                                                                      "Lifetime",                                              "?=0",                                "INTEGER,MIN=0,MAX=1", "" },
         {SSC_INPUT, SSC_NUMBER,   "analysis_period",                      "Lifetime analysis period",                            "years",  "",                                                                                                                                                                                      "Lifetime",                                              "system_use_lifetime_output=1",       "",                    "" },
@@ -3012,6 +3016,14 @@ void cm_pvsamv1::exec()
             PVSystem->p_mpptVoltage[0], PVSystem->p_inverterClipLoss, Irradiance->p_weatherFileAmbientTemp);
         calculate_resilience_outputs(this, resilience);
     }
+    double amb_temp_avg = 0;
+    double wind_spd_avg = 0;
+    for (size_t i = 0; i < 8760; i++) {
+        amb_temp_avg += Irradiance->p_weatherFileAmbientTemp[i];
+        wind_spd_avg += Irradiance->p_weatherFileWindSpeed[i];
+    }
+    assign("annual_tdry", amb_temp_avg / 8760);
+    assign("annual_wspd", wind_spd_avg / 8760);
 }
 
 double cm_pvsamv1::module_eff(int mod_type)
