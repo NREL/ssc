@@ -500,22 +500,6 @@ public:
             CT_htf_code, ud_CT_htf_props);
 
         C_csp_power_cycle::S_solved_params pc_solved_params;
-        
-        try {
-            c_pc.init(pc_solved_params);
-        }
-        catch (C_csp_exception& csp_exception) {
-
-            int out_type = -1;
-            std::string out_msg = "";
-            // Report warning before exiting with error
-            while (c_pc.mc_csp_messages.get_message(&out_type, &out_msg))
-            {
-                log(out_msg, out_type);
-            }
-
-            throw exec_error("etes_electric_resistance", csp_exception.m_error_message);
-        }
 
             // Set power cycle outputs
         c_pc.mc_reported_outputs.assign(C_pc_ptes::E_T_HT_HTF_HOT_IN, allocate("T_pc_HT_htf_hot_in", n_steps_fixed), n_steps_fixed);
