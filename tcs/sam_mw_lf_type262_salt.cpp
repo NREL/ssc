@@ -1889,24 +1889,33 @@ post_convergence_flag: //11 continue
 				}
 			}
 			else if(fthrctrl == 1){
-				//Partial defocusing in the sequence specified by the SCADefocusArray
+				//Partial defocusing in the sequence specified by the SCADefocusArray.
+                // Incrementally subtract the full SCA heat gains (i.e., fully defocus) until
+                //  loop heat gain is less than max allowed
 				int j;
 				for(j=0; j<nMod; j++){
-					//Incrementally subtract the losses, but limit to positive absorption values to avoid 
-					//accounting for losses from previously defocused SCA's
-					//q_check = q_check - min(max(q_abs_SCAtot(SCADefocusArray[j])-q_loss_SCAtot(SCADefocusArray[j]), 0.0),q_check-q_abs_maxOT)
-					//4/9/11, TN: Don't need to subtract losses: see equation for q_check above
-					q_check += -max(q_abs_SCAtot[(int)SCADefocusArray[j]-1], 0.0);
+					q_check -= max(q_abs_SCAtot[(int)SCADefocusArray[j]-1], 0.0);
 					if(q_check <= q_abs_maxOT) break;
 				}
         
-				//Reassign the flux on each SCA
+				// Zero the flux on each fully-defocused SCA collector
 				for(int i=0; i<j; i++){
 					q_SCA[(int)SCADefocusArray[i]-1] = 0.0;
 				}
+
+                // Tally the absorbed energy from the non-defocused collectors
 				double tsum = 0.;
-				for(int k=j+1; k<nMod; k++){ tsum += q_abs_SCAtot[(int)SCADefocusArray[k]-1]; }
-				q_SCA[(int)SCADefocusArray[j]-1] *= (q_check-tsum)/q_abs_SCAtot[(int)SCADefocusArray[j]-1];
+				for(int k=j+1; k<nMod; k++){
+                    tsum += q_abs_SCAtot[(int)SCADefocusArray[k]-1];
+                }
+
+                // Partially defocus last non-defocused collector
+                if (q_abs_SCAtot[(int)SCADefocusArray[j] - 1] > 0) {
+                    q_SCA[(int)SCADefocusArray[j] - 1] *= (q_check - tsum) / q_abs_SCAtot[(int)SCADefocusArray[j] - 1];
+                }
+                else {
+                    q_SCA[(int)SCADefocusArray[j] - 1] = 0.;
+                }
 			}
 			else if(fthrctrl == 2){
 			
