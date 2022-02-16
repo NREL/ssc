@@ -80,7 +80,8 @@ public:
         double batt_dispatch_pvs_soc_rest,
         size_t batt_dispatch_pvs_timestep_multiplier,
         double batt_dispatch_pvs_initial_SOC,
-        double interconnection_limit
+        double interconnection_limit,
+        double average_roundtrip_efficiency
 		);
 
 	~dispatch_pvsmoothing_front_of_meter_t();
@@ -158,7 +159,7 @@ public:
     double m_batt_dispatch_pvs_soc_rest;
     size_t m_batt_dispatch_pvs_timestep_multiplier;
     double m_batt_dispatch_pvs_initial_SOC;
-
+    double m_batt_dispatch_pvs_average_roundtrip_efficiency;
 };
 
 #endif // __LIB_BATTERY_DISPATCH_PVSMOOTHING_FOM_H__

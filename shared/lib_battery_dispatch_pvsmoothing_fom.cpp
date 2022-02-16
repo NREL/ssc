@@ -72,7 +72,8 @@ dispatch_pvsmoothing_front_of_meter_t::dispatch_pvsmoothing_front_of_meter_t(
     double batt_dispatch_pvs_soc_rest,
     size_t batt_dispatch_pvs_timestep_multiplier,
     double batt_dispatch_pvs_initial_SOC,
-    double interconnection_limit
+    double interconnection_limit,
+    double average_roundtrip_efficiency
 
 ) : dispatch_automatic_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max_kwdc, Pd_max_kwdc, Pc_max_kwac, Pd_max_kwac,
 		t_min, dispatch_mode, weather_forecast_mode, pv_dispatch, nyears, look_ahead_hours, dispatch_update_frequency_hours, can_charge, can_clip_charge, can_grid_charge, can_fuelcell_charge,
@@ -92,7 +93,8 @@ dispatch_pvsmoothing_front_of_meter_t::dispatch_pvsmoothing_front_of_meter_t(
     m_batt_dispatch_pvs_short_forecast_enable(batt_dispatch_pvs_short_forecast_enable),
     m_batt_dispatch_pvs_soc_rest(batt_dispatch_pvs_soc_rest),
     m_batt_dispatch_pvs_timestep_multiplier(batt_dispatch_pvs_timestep_multiplier),
-    m_batt_dispatch_pvs_initial_SOC(batt_dispatch_pvs_initial_SOC)
+    m_batt_dispatch_pvs_initial_SOC(batt_dispatch_pvs_initial_SOC),
+    m_batt_dispatch_pvs_average_roundtrip_efficiency(average_roundtrip_efficiency)
 {
 
 	_inverter_paco = inverter_paco;
@@ -132,7 +134,7 @@ void dispatch_pvsmoothing_front_of_meter_t::init_with_pointer(const dispatch_pvs
     m_batt_dispatch_pvs_short_forecast_enable = tmp->m_batt_dispatch_pvs_short_forecast_enable;
     m_batt_dispatch_pvs_soc_rest = tmp->m_batt_dispatch_pvs_soc_rest;
     m_batt_dispatch_pvs_timestep_multiplier = tmp->m_batt_dispatch_pvs_timestep_multiplier;
-
+    m_batt_dispatch_pvs_average_roundtrip_efficiency = tmp->m_batt_dispatch_pvs_average_roundtrip_efficiency;
 }
 
 
@@ -233,7 +235,9 @@ void dispatch_pvsmoothing_front_of_meter_t::update_dispatch(size_t year, size_t 
             ssc_number_t previous_power = m_batt_dispatch_pvs_outpower;
             ssc_number_t battery_soc = m_batt_dispatch_pvs_battsoc;
             ssc_number_t battery_energy = _Battery->energy_nominal();
-            ssc_number_t batt_half_round_trip_eff = sqrt(m_etaDischarge * m_etaPVCharge);
+//            ssc_number_t batt_half_round_trip_eff = sqrt(m_etaDischarge * m_etaPVCharge);
+            // TODO - verify this value
+            ssc_number_t batt_half_round_trip_eff = sqrt(m_batt_dispatch_pvs_average_roundtrip_efficiency/100.0);
             ssc_number_t battery_power = m_batteryPower->powerBatteryChargeMaxAC;
             // scale by nameplate per ERPI code
             battery_energy = m_batt_dispatch_pvs_nameplate_ac > 0 ? battery_energy / m_batt_dispatch_pvs_nameplate_ac : battery_energy;

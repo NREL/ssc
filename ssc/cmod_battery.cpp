@@ -1220,7 +1220,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
                 batt_vars->batt_dispatch_pvs_ac_ub_enable, batt_vars->batt_dispatch_pvs_curtail_as_control, batt_vars->batt_dispatch_pvs_curtail_if_violation,
                 batt_vars->batt_dispatch_pvs_forecast_shift_periods, batt_vars->batt_dispatch_pvs_kf, batt_vars->batt_dispatch_pvs_ki, batt_vars->batt_dispatch_pvs_kp,
                 batt_vars->batt_dispatch_pvs_max_ramp, batt_vars->batt_dispatch_pvs_short_forecast_enable,
-                batt_vars->batt_dispatch_pvs_soc_rest, batt_vars->batt_dispatch_pvs_timestep_multiplier,batt_vars->batt_initial_SOC, batt_vars->grid_interconnection_limit_kW);
+                batt_vars->batt_dispatch_pvs_soc_rest, batt_vars->batt_dispatch_pvs_timestep_multiplier,batt_vars->batt_initial_SOC, batt_vars->grid_interconnection_limit_kW, battery_metrics->average_battery_roundtrip_efficiency());
 
         }
         else {
