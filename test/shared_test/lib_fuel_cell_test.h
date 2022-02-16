@@ -176,14 +176,22 @@ public:
 */	}
 	void TearDown()
 	{
-		if (fuelCell) {
-			delete fuelCell;
-			fuelCell = nullptr;
-		}
-		if (fuelCellDispatch) {
-			delete fuelCellDispatch;
-			fuelCellDispatch = nullptr;
-		}
+        if (fuelCell) {
+            delete fuelCell;
+            fuelCell = nullptr;
+        }
+        if (fuelCellDispatch) {
+            delete fuelCellDispatch;
+            fuelCellDispatch = nullptr;
+        }
+        if (fuelCellSubHourly) {
+            delete fuelCellSubHourly;
+            fuelCellSubHourly = nullptr;
+        }
+        if (fuelCellDispatchSubhourly) {
+            delete fuelCellDispatchSubhourly;
+            fuelCellDispatchSubhourly = nullptr;
+        }
 		if (fuelCellDispatchMultiple) {
 			delete fuelCellDispatchMultiple;
 			fuelCellDispatchMultiple = nullptr;

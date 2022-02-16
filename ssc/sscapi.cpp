@@ -893,13 +893,16 @@ void json_to_ssc_var(const rapidjson::Value& json_val, ssc_var_t ssc_val) {
 }
 
 SSCEXPORT ssc_data_t json_to_ssc_data(const char* json_str) {
+        // memory leak if calling program does not do garbage collection
     auto vt = new var_table;
+//    std::unique_ptr<var_table> vt = std::unique_ptr<var_table>(new var_table);
     rapidjson::Document document;
     document.Parse(json_str);
     if (document.HasParseError()) {
         std::string s = rapidjson::GetParseError_En(document.GetParseError());
         vt->assign("error", s);
-        return dynamic_cast<ssc_data_t>(vt);
+//        return dynamic_cast<ssc_data_t>(vt);
+        return vt;
     }
 //    static const char* kTypeNames[] = { "Null", "False", "True", "Object", "Array", "String", "Number" };
     for (rapidjson::Value::ConstMemberIterator itr = document.MemberBegin(); itr != document.MemberEnd(); ++itr) {
@@ -1274,12 +1277,13 @@ SSCEXPORT void __ssc_segfault()
 	std::string mystr = *pstr;
 }
 
-static std::string* s_python_path;
+//static std::string* s_python_path
+static std::unique_ptr<std::string> s_python_path;
 
 SSCEXPORT int set_python_path(const char* abs_path) {
     if (util::dir_exists(abs_path)){
-        delete s_python_path;
-        s_python_path = new std::string(abs_path);
+//        delete s_python_path;
+        s_python_path = std::unique_ptr<std::string>( new std::string(abs_path));
         return 1;
     }
     else

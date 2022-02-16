@@ -58,16 +58,19 @@ protected:
 
 class UsingDataCaseWeatherReader : public CspWeatherReaderTest {
     var_data* data;
+    var_table* table;
 protected:
     void SetUp() {
         CspWeatherReaderTest::SetUp();
         sim_info.ms_ts.m_step = 3600;
         sim_info.ms_ts.m_time_start = 0;
-        data = create_weatherdata_array(8760); // allocates memory for weatherdata
-        wr.m_weather_data_provider = make_shared<weatherdata>(data);
+        table = create_weatherdata_array(8760); // allocates memory for weatherdata
+        data = new var_data(*table);
+        wr.m_weather_data_provider = make_shared<weatherdata>((data));
     }
     void TearDown() {
-        free_weatherdata_array(data);
+        free_weatherdata_array(table);
+        delete data;
     }
 };
 
