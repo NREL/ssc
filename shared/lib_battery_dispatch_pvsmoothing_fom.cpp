@@ -231,7 +231,7 @@ void dispatch_pvsmoothing_front_of_meter_t::update_dispatch(size_t year, size_t 
             ssc_number_t battery_power_terminal = 0;
             ssc_number_t forecast_power = 0;
             ssc_number_t previous_power = m_batt_dispatch_pvs_outpower;
-            ssc_number_t battery_soc = m_batt_dispatch_pvs_battsoc;
+            ssc_number_t battery_soc = _Battery->SOC()/100.0;
             ssc_number_t battery_energy = _Battery->energy_nominal();
             ssc_number_t batt_half_round_trip_eff = sqrt(m_etaDischarge * m_etaPVCharge);
             ssc_number_t battery_power = m_batteryPower->powerBatteryChargeMaxAC;
