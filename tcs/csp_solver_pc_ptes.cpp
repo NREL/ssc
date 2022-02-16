@@ -570,6 +570,10 @@ void C_pc_ptes::call(const C_csp_weatherreader::S_outputs& weather,
     out_solver.m_time_required_max = time_required_max * 3600.0;	//[s]
     out_solver.m_q_dot_htf = q_dot_HT_htf;			    //[MWt] Thermal power from HTF (= thermal power into cycle)
     out_solver.m_W_dot_elec_parasitics_tot = out_solver.m_W_cool_par + W_dot_CT_htf_pump + W_dot_HT_htf_pump; //[MWe]
+
+    out_solver.m_T_CT_htf_hot_out = T_CT_htf_hot;       //[C]
+    out_solver.m_m_dot_CT_htf = m_dot_CT_htf*3600.0;    //[kg/hr]
+
     out_solver.m_was_method_successful = was_method_successful;	//[-]
     // ***********************************
 

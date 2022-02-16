@@ -179,6 +179,8 @@ void C_csp_cr_heat_pump::init(const C_csp_collector_receiver::S_csp_cr_init_inpu
     solved_params.m_A_aper_total = 0.0;                         //[m2]
     solved_params.m_dP_sf = HT_htf_deltaP*1.E1;                //[bar] convert from MPa
 
+    solved_params.m_CT_to_HT_m_dot_ratio = m_m_dot_CT_to_HT_ratio;  //[-]
+
     // State variables
     m_E_su_initial = m_E_su_des;        //[MWt-hr]
     m_operating_mode_converged = C_csp_collector_receiver::OFF;					//
@@ -245,6 +247,9 @@ void C_csp_cr_heat_pump::off(const C_csp_weatherreader::S_outputs& weather,
     cr_out_solver.m_q_dot_heater = 0.0;             //[MWt]
 
     cr_out_solver.m_W_dot_elec_in_tot = 0.0;        //[MWe]
+
+    cr_out_solver.m_T_CT_htf_cold_out = m_T_CT_HTF_cold_des;    //[C]
+    cr_out_solver.m_m_dot_CT_htf = m_dot_CT_htf*3600.0;            //[kg/s]
 
     m_operating_mode = C_csp_collector_receiver::OFF;
     m_E_su_calculated = m_E_su_des;     //[MWt-hr]
@@ -316,6 +321,9 @@ void C_csp_cr_heat_pump::startup(const C_csp_weatherreader::S_outputs& weather,
     cr_out_solver.m_q_dot_heater = 0.0;             //[MWt]
 
     cr_out_solver.m_W_dot_elec_in_tot = W_dot_in_thermo + W_dot_in_parasitics + W_dot_htf_pumps;        //[MWe]
+
+    cr_out_solver.m_T_CT_htf_cold_out = m_T_CT_HTF_cold_des;      //[C]
+    cr_out_solver.m_m_dot_CT_htf = m_dot_CT_htf*3600.0;       //[kg/s]
 
     // Set reported outputs
     mc_reported_outputs.value(E_T_HT_HTF_IN, m_T_HT_HTF_cold_des);      //[C]
@@ -438,6 +446,9 @@ void C_csp_cr_heat_pump::on(const C_csp_weatherreader::S_outputs& weather,
     cr_out_solver.m_q_dot_heater = 0.0;
 
     cr_out_solver.m_W_dot_elec_in_tot = W_dot_heater;       //[MWe]
+
+    cr_out_solver.m_T_CT_htf_cold_out = T_CT_HTF_cold_out;  //[C]
+    cr_out_solver.m_m_dot_CT_htf = m_dot_CT_htf*3600.0;     //[kg/hr]
 
     // Set reported outputs
     mc_reported_outputs.value(E_T_HT_HTF_IN, T_HT_HTF_cold_in);      //[C]

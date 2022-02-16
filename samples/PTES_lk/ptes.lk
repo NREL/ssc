@@ -67,7 +67,6 @@ var( 'hot_tank_max_heat', 30 );
 
  
 // Cold Temp TES
-var( 'CT_tes_init_hot_htf_percent', 0.0 );
 var( 'CT_h_tank', 12 );
 var( 'CT_u_tank', 0.40000000000000002 );
 var( 'CT_tank_pairs', 1 );

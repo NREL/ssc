@@ -359,6 +359,10 @@ public:
 		  std::numeric_limits<double>::quiet_NaN();
 	  	double m_dP_sf =                 	//[bar] Total field pressure drop
 		  std::numeric_limits<double>::quiet_NaN();
+
+        // only define for heat pump or systems that interface with both hot and cold stores
+        double m_CT_to_HT_m_dot_ratio =     //[-]
+            std::numeric_limits<double>::quiet_NaN();
 	};
 
 	struct S_csp_cr_inputs
@@ -386,11 +390,13 @@ public:
 			
 		// These are used for the parasitic class call(), so could be zero...
         double m_W_dot_elec_in_tot;     //[MWe] Total component electricity consumption - used upstream in plant net electricity calculation
-        //double m_W_dot_col_tracking;	//[MWe] Collector tracking power
-		//double m_W_dot_htf_pump;		//[MWe] HTF pumping power
         double m_dP_sf;                 //[bar] Total field pressure drop
 
         double m_q_dot_heater;          //[MWt] 'external' heat delivered to receiver, e.g. heat trace
+
+        // Outputs for CR designs that integrate with cold TES
+        double m_T_CT_htf_cold_out; //[C]
+        double m_m_dot_CT_htf;      //[kg/hr]
 
 		// 07/08/2016, GZ: add new variables for DSG LF 
 		int m_standby_control;		//[-]
@@ -402,12 +408,12 @@ public:
 		S_csp_cr_out_solver()
 		{
 			m_q_thermal = m_q_startup = m_m_dot_salt_tot = m_T_salt_hot =
-                m_W_dot_elec_in_tot = /*m_W_dot_htf_pump =*/
-				/*m_W_dot_col_tracking =*/ m_time_required_su = m_dP_sf =
+                m_W_dot_elec_in_tot = m_time_required_su = m_dP_sf =
 				m_dP_sf_sh = m_h_htf_hot = m_xb_htf_hot = m_P_htf_hot = std::numeric_limits<double>::quiet_NaN();
 
             m_q_dot_heater = 0.0;
-			//m_q_rec_heattrace = 0.0;
+
+            m_T_CT_htf_cold_out = m_m_dot_CT_htf = std::numeric_limits<double>::quiet_NaN();
 
 			m_component_defocus = 1.0;
 
@@ -568,6 +574,10 @@ public:
         //double m_W_dot_htf_pump;	//[MWe] HTF pumping power
 		double m_W_cool_par;		//[MWe] Cooling system parasitic load
 
+        // Outputs for CR designs that integrate with cold TES
+        double m_T_CT_htf_hot_out;  //[C]
+        double m_m_dot_CT_htf;      //[kg/hr]
+
 		bool m_was_method_successful;	//[-] Return false if method did not solve as expected but can be handled by solver/controller
 
 		S_csp_pc_out_solver()
@@ -575,6 +585,8 @@ public:
 			m_time_required_su = m_time_required_max = m_P_cycle = m_T_htf_cold = m_q_dot_htf = m_m_dot_htf =
                 m_W_dot_elec_parasitics_tot =
                 /*m_W_dot_htf_pump =*/ m_W_cool_par = std::numeric_limits<double>::quiet_NaN();
+
+            m_T_CT_htf_hot_out = m_m_dot_CT_htf = std::numeric_limits<double>::quiet_NaN();
 
 			m_was_method_successful = false;
 		}
@@ -950,6 +962,7 @@ private:
 	double m_x_cold_des;				//[-]
 	double m_q_dot_rec_des;				//[MW]
 	double m_A_aperture;				//[m2]
+    double m_CT_to_HT_m_dot_ratio;      //[-]
 
         // Parallel heater design parameters
     double m_PAR_HTR_T_htf_cold_des;			//[K]

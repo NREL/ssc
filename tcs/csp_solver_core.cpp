@@ -261,7 +261,7 @@ C_csp_solver::C_csp_solver(C_csp_weatherreader &weather,
 
 	// Inititalize non-reference member data
 	m_T_htf_cold_des = m_P_cold_des = m_x_cold_des =
-		m_q_dot_rec_des = m_A_aperture =
+		m_q_dot_rec_des = m_A_aperture = m_CT_to_HT_m_dot_ratio =
         m_PAR_HTR_T_htf_cold_des = m_PAR_HTR_P_cold_des = m_PAR_HTR_x_cold_des = m_PAR_HTR_q_dot_rec_des = m_PAR_HTR_A_aperture =
 		m_cycle_W_dot_des = m_cycle_eta_des = m_cycle_q_dot_des = m_cycle_max_frac = m_cycle_cutoff_frac =
 		m_cycle_sb_frac_des = m_cycle_T_htf_hot_des =
@@ -395,6 +395,8 @@ void C_csp_solver::init()
         C_csp_tes::S_csp_tes_init_inputs CT_tes_init_inputs;
         mc_CT_tes->init(CT_tes_init_inputs);
         mc_csp_messages.transfer_messages(mc_CT_tes->mc_csp_messages);
+
+        m_CT_to_HT_m_dot_ratio = cr_solved_params.m_CT_to_HT_m_dot_ratio;   //[-]
     }
     else {
         m_is_CT_tes = false;

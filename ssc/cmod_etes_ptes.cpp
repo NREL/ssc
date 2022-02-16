@@ -99,7 +99,6 @@ static var_info _cm_vtab_etes_ptes[] = {
 
 
     // COLD Temp Two-Tank TES
-    { SSC_INPUT,  SSC_NUMBER, "CT_tes_init_hot_htf_percent",   "COLD TES Initial fraction of available volume that is hot",      "%",            "",                                  "Cold Thermal Storage",                     "*",                                                                "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "CT_h_tank",                     "COLD TES Total height of tank (height of HTF when tank is full)","m",            "",                                  "Cold Thermal Storage",                     "*",                                                                "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "CT_u_tank",                     "COLD TES Loss coefficient from the tank",                        "W/m2-K",       "",                                  "Cold Thermal Storage",                     "*",                                                                "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "CT_tank_pairs",                 "COLD TES Number of equivalent tank pairs",                       "",             "",                                  "Cold Thermal Storage",                     "*",                                                                "INTEGER",       ""},
@@ -674,7 +673,7 @@ public:
             ctes->m_T_tank_hot_ini = T_CT_hot_TES;       //[C]
             ctes->m_T_tank_cold_ini = T_CT_cold_TES;     //[C]
             ctes->m_h_tank_min = as_double("CT_h_tank_min");
-            ctes->m_f_V_hot_ini = as_double("CT_tes_init_hot_htf_percent");
+            ctes->m_f_V_hot_ini = 100.0 - as_double("tes_init_hot_htf_percent");   //[-] Cold storage is charged when cold tank is full
             ctes->m_htf_pump_coef = 0.0;            //[kW/kg/s] No htf pump losses in direct TES
             ctes->tanks_in_parallel = false;        //[-] False: Field HTF always goes to TES. PC HTF always comes from TES. ETES should not simultaneously operate heater and cycle
             ctes->V_tes_des = 1.85;                 //[m/s]
@@ -922,6 +921,8 @@ public:
                         m_dot_HT_htf_gen_calc, cp_HT_htf_gen_calc, W_dot_HT_htf_pump_gen_calc,
                         m_dot_CT_htf_gen_calc, cp_CT_htf_gen_calc, W_dot_CT_htf_pump_gen_calc);
 
+        double CT_to_HT_m_dot_ratio_pc = m_dot_CT_htf_gen_calc / m_dot_HT_htf_gen_calc;
+
             // Heat Pump
         double W_dot_in_thermo_charge_calc;        //[MWe] power into cycle working fluid. does not consider electric parasitics (e.g. cooling fan, motor inefficiencies, etc.)
         double q_dot_cold_in_charge_calc;   //[MWt]
@@ -947,6 +948,14 @@ public:
                         m_dot_HT_htf_charge_calc, cp_HT_htf_charge_calc, W_dot_HT_htf_pump_charge_calc,
                         m_dot_CT_htf_charge_calc, cp_CT_htf_charge_calc, W_dot_CT_htf_pump_charge_calc,
                         E_su_charge_calc);
+
+        double CT_to_HT_m_dot_ratio_hp = m_dot_CT_htf_charge_calc / m_dot_HT_htf_charge_calc;
+
+        double m_dot_ratio_ratio = CT_to_HT_m_dot_ratio_hp / CT_to_HT_m_dot_ratio_pc;
+
+        if (abs(m_dot_ratio_ratio - 1.0) > 1.E-6) {
+            throw exec_error("etes_electric_resistance", "CT to HT htf mass flow ratios from heat pump and power cycle don't match");
+        }
 
             // HT TES
         double V_tes_htf_avail_calc /*m3*/, V_tes_htf_total_calc /*m3*/,
