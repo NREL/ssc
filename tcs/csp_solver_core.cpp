@@ -131,6 +131,34 @@ void C_csp_solver::C_csp_solver_kernel::baseline_step_forward()
 	mc_ts_sim_baseline.step_forward();
 }
 
+void C_csp_collector_receiver::on(const C_csp_weatherreader::S_outputs& weather,
+    const C_csp_solver_htf_1state& htf_state_in,
+    double T_CT_htf_hot_in /*C*/,
+    double q_dot_elec_to_CR_heat /*MWt*/, double field_control,
+    C_csp_collector_receiver::S_csp_cr_out_solver& cr_out_solver,
+    const C_csp_solver_sim_info& sim_info)
+{
+    on(weather,
+        htf_state_in,
+        q_dot_elec_to_CR_heat, field_control,
+        cr_out_solver,
+        sim_info);
+}
+
+void C_csp_power_cycle::call(const C_csp_weatherreader::S_outputs& weather,
+    C_csp_solver_htf_1state& htf_state_in,
+    double T_CT_htf_cold_in /*C*/,
+    const C_csp_power_cycle::S_control_inputs& inputs,
+    C_csp_power_cycle::S_csp_pc_out_solver& out_solver,
+    const C_csp_solver_sim_info& sim_info)
+{
+    call(weather,
+        htf_state_in,
+        inputs,
+        out_solver,
+        sim_info);
+}
+
 static C_csp_reported_outputs::S_output_info S_solver_output_info[] =
 {
 	// Ouputs that are NOT reported as weighted averages
@@ -634,12 +662,18 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		mc_pc_inputs.m_standby_control = C_csp_power_cycle::ON;
 		//mc_pc_inputs.m_tou = tou_timestep;
 		// Performance Call
+
+        double T_CT_htf_cold_in = std::numeric_limits<double>::quiet_NaN();
+        if (m_is_CT_tes) {
+            T_CT_htf_cold_in = mc_CT_tes->get_cold_temp() - 273.15;    //[C] convert from K
+        }
+
 		mc_power_cycle.call(mc_weather.ms_outputs,
 			mc_pc_htf_state_in,
+            T_CT_htf_cold_in,
 			mc_pc_inputs,
 			mc_pc_out_solver,
 			mc_kernel.mc_sim_info);
-
 
         // Next, estimate receiver performance using estimated power cycle performance
         // If the return temperature is hotter than design, then the mass flow from the receiver will be bigger than expected
@@ -836,7 +870,13 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 {
                     q_dot_elec_to_CR_heat = q_dot_cr_on;  // Setting to the max and allowing controller to defocus
                 }
-                mc_collector_receiver.on(mc_weather.ms_outputs, mc_cr_htf_state_in, q_dot_elec_to_CR_heat, df, mc_cr_out_solver, mc_kernel.mc_sim_info);
+
+                double T_CT_htf_hot_in = std::numeric_limits<double>::quiet_NaN();
+                if (m_is_CT_tes) {
+                    T_CT_htf_hot_in = mc_CT_tes->get_hot_temp() - 273.15;    //[C] convert from K
+                }
+
+                mc_collector_receiver.on(mc_weather.ms_outputs, mc_cr_htf_state_in, T_CT_htf_hot_in, q_dot_elec_to_CR_heat, df, mc_cr_out_solver, mc_kernel.mc_sim_info);
                 if (mc_cr_out_solver.m_q_thermal == 0.0)  // Receiver solution wasn't successful 
                     is_rec_su_allowed = false;
             }

@@ -455,6 +455,15 @@ public:
 		C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
 		const C_csp_solver_sim_info &sim_info) = 0;
 
+    // Not a pure virtual method
+    // Base class implementation cuts out T_CT_htf_hot_in and calls other 'on'
+    virtual void on(const C_csp_weatherreader::S_outputs& weather,
+        const C_csp_solver_htf_1state& htf_state_in,
+        double T_CT_htf_hot_in /*C*/,
+        double q_dot_elec_to_CR_heat /*MWt*/, double field_control,
+        C_csp_collector_receiver::S_csp_cr_out_solver& cr_out_solver,
+        const C_csp_solver_sim_info& sim_info);
+
 	struct S_csp_cr_est_out
 	{
 		double m_q_startup_avail;	//[MWt] Estimate startup thermal power. Only > 0 if solar avail AND cr is OFF or Starting Up
@@ -618,8 +627,14 @@ public:
 		C_csp_solver_htf_1state &htf_state_in,
 		const C_csp_power_cycle::S_control_inputs &inputs,
 		C_csp_power_cycle::S_csp_pc_out_solver &out_solver,
-		//C_csp_power_cycle::S_csp_pc_out_report &out_report,
 		const C_csp_solver_sim_info &sim_info) = 0;
+
+    virtual void call(const C_csp_weatherreader::S_outputs& weather,
+        C_csp_solver_htf_1state& htf_state_in,
+        double T_CT_htf_cold_in /*C*/,
+        const C_csp_power_cycle::S_control_inputs& inputs,
+        C_csp_power_cycle::S_csp_pc_out_solver& out_solver,
+        const C_csp_solver_sim_info& sim_info);
 
 	virtual void converged() = 0;
 

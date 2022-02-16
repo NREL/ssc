@@ -315,6 +315,16 @@ void C_pc_ptes::call(const C_csp_weatherreader::S_outputs& weather,
     C_csp_power_cycle::S_csp_pc_out_solver& out_solver,
     const C_csp_solver_sim_info& sim_info)
 {
+    throw(C_csp_exception("C_pc_ptes must use 'call' method with T_CT_htf_cold_in argument"));
+}
+
+void C_pc_ptes::call(const C_csp_weatherreader::S_outputs& weather,
+    C_csp_solver_htf_1state& htf_state_in,
+    double T_CT_htf_cold_in /*C*/,
+    const C_csp_power_cycle::S_control_inputs& inputs,
+    C_csp_power_cycle::S_csp_pc_out_solver& out_solver,
+    const C_csp_solver_sim_info& sim_info)
+{
     // Get sim info
     double time = sim_info.ms_ts.m_time;			//[s]
     double step_sec = sim_info.ms_ts.m_step;		//[s]
@@ -324,7 +334,7 @@ void C_pc_ptes::call(const C_csp_weatherreader::S_outputs& weather,
     double m_dot_HT_htf = inputs.m_m_dot/3600.0;	//[kg/s]
     int standby_control = inputs.m_standby_control;	//[-] 1: On, 2: Standby, 3: Off
 
-    double T_CT_htf_cold = m_T_CT_HTF_cold_des; //[C]
+    //double T_CT_htf_cold = m_T_CT_HTF_cold_des; //[C]
 
     // Cold temp HTF mass flow rate is always constrained to design ratio of input high temp HTF mass flow rate
     double m_dot_CT_htf = m_dot_HT_htf * m_m_dot_CT_to_HT_ratio;
@@ -388,7 +398,7 @@ void C_pc_ptes::call(const C_csp_weatherreader::S_outputs& weather,
         T_CT_htf_hot = m_T_CT_HTF_hot_des;      //[C]
         W_dot_cycle_parasitics = 0.0;           //[MWe]
 
-        q_dot_to_cold_htf = m_dot_CT_htf*m_cp_CT_HTF_des*(T_CT_htf_hot - T_CT_htf_cold)*1.E-3;    //[MWt] convert from kWt
+        q_dot_to_cold_htf = m_dot_CT_htf*m_cp_CT_HTF_des*(T_CT_htf_hot - T_CT_htf_cold_in)*1.E-3;    //[MWt] convert from kWt
             // Assume balance of q_dot_HT_htf goes to internal energy of components
         q_dot_rejected = 0.0;       //[MWt]
 
@@ -401,7 +411,7 @@ void C_pc_ptes::call(const C_csp_weatherreader::S_outputs& weather,
         {
             double m_dot_HT_htf_ND = m_dot_HT_htf / m_m_dot_HT_des;     //[-]
             double W_dot_thermo_ND, Q_dot_ND;
-            mp_endo_reverse->performance(T_HT_htf_hot, m_dot_HT_htf_ND, T_CT_htf_cold, W_dot_thermo_ND, Q_dot_ND,
+            mp_endo_reverse->performance(T_HT_htf_hot, m_dot_HT_htf_ND, T_CT_htf_cold_in, W_dot_thermo_ND, Q_dot_ND,
                                 T_HT_htf_cold, T_CT_htf_hot);
 
             q_dot_HT_htf = m_dot_HT_htf*m_cp_HT_HTF_des*(T_HT_htf_hot - T_HT_htf_cold)*1.E-3;      //[MWt]
@@ -412,7 +422,7 @@ void C_pc_ptes::call(const C_csp_weatherreader::S_outputs& weather,
             q_startup = 0.0;    //[MWt-hr]
 
             double q_dot_out_thermo = q_dot_HT_htf - W_dot_thermo;  //[MWt]
-            q_dot_to_cold_htf = m_dot_CT_htf*m_cp_CT_HTF_des*(T_CT_htf_hot - T_CT_htf_cold)*1.E-3;    //[MWt]
+            q_dot_to_cold_htf = m_dot_CT_htf*m_cp_CT_HTF_des*(T_CT_htf_hot - T_CT_htf_cold_in)*1.E-3;    //[MWt]
             q_dot_rejected = q_dot_out_thermo - q_dot_to_cold_htf;  //[MWt]
 
             was_method_successful = true;
@@ -432,7 +442,7 @@ void C_pc_ptes::call(const C_csp_weatherreader::S_outputs& weather,
 
         q_startup = 0.0;    //[MWt-hr]
 
-        q_dot_to_cold_htf = m_dot_CT_htf*m_cp_CT_HTF_des*(T_CT_htf_hot - T_CT_htf_cold)*1.E-3;    //[MWt] convert from kWt
+        q_dot_to_cold_htf = m_dot_CT_htf*m_cp_CT_HTF_des*(T_CT_htf_hot - T_CT_htf_cold_in)*1.E-3;    //[MWt] convert from kWt
             // modeling standby as steady state to need to reject balance heat
         q_dot_rejected = q_dot_HT_htf - q_dot_to_cold_htf;       //[MWt]
 
@@ -532,7 +542,7 @@ void C_pc_ptes::call(const C_csp_weatherreader::S_outputs& weather,
         T_CT_htf_hot = m_T_CT_HTF_hot_des;      //[C]
         W_dot_cycle_parasitics = 0.0;           //[MWe]
 
-        q_dot_to_cold_htf = m_dot_CT_htf*m_cp_CT_HTF_des*(T_CT_htf_hot - T_CT_htf_cold)*1.E-3;    //[MWt] convert from kWt
+        q_dot_to_cold_htf = m_dot_CT_htf*m_cp_CT_HTF_des*(T_CT_htf_hot - T_CT_htf_cold_in)*1.E-3;    //[MWt] convert from kWt
             // Assume balance of q_dot_HT_htf goes to internal energy of components
         q_dot_rejected = 0.0;       //[MWt]
 
@@ -580,7 +590,7 @@ void C_pc_ptes::call(const C_csp_weatherreader::S_outputs& weather,
     // Set reported outputs
     mc_reported_outputs.value(E_T_HT_HTF_HOT_IN, T_HT_htf_hot);     //[C]
     mc_reported_outputs.value(E_T_HT_HTF_COLD_OUT, T_HT_htf_cold);  //[C]
-    mc_reported_outputs.value(E_T_CT_HTF_COLD_IN, T_CT_htf_cold);   //[C]
+    mc_reported_outputs.value(E_T_CT_HTF_COLD_IN, T_CT_htf_cold_in);   //[C]
     mc_reported_outputs.value(E_T_CT_HTF_HOT_OUT, T_CT_htf_hot);    //[C]
     mc_reported_outputs.value(E_M_DOT_HT_HTF, m_dot_HT_htf);        //[kg/s]
     mc_reported_outputs.value(E_M_DOT_CT_HTF, m_dot_CT_htf);        //[kg/s]

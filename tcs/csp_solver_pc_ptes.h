@@ -217,6 +217,13 @@ public:
         C_csp_power_cycle::S_csp_pc_out_solver& out_solver,
         const C_csp_solver_sim_info& sim_info);
 
+    virtual void call(const C_csp_weatherreader::S_outputs& weather,
+        C_csp_solver_htf_1state& htf_state_in,
+        double T_CT_htf_cold_in /*C*/,
+        const C_csp_power_cycle::S_control_inputs& inputs,
+        C_csp_power_cycle::S_csp_pc_out_solver& out_solver,
+        const C_csp_solver_sim_info& sim_info) override;
+
     virtual void converged();
 
     virtual void write_output_intervals(double report_time_start,

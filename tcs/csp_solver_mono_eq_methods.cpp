@@ -674,6 +674,14 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
     mpc_csp_solver->mc_cr_htf_state_in.m_pres = m_P_field_in;	//[kPa]
     mpc_csp_solver->mc_cr_htf_state_in.m_qual = m_x_field_in;	//[-]
 
+    // For now, use initial state of CT TES hot tank
+    // If tank temp is ~around ambient (and two-tank system)
+    //   then this is a fairly good assumption
+    double T_CT_htf_hot_in = std::numeric_limits<double>::quiet_NaN();
+    if (mpc_csp_solver->m_is_CT_tes) {
+        T_CT_htf_hot_in = mpc_csp_solver->mc_CT_tes->get_hot_temp() - 273.15;    //[C] convert from K
+    }
+
     double m_dot_cr_out = std::numeric_limits<double>::quiet_NaN();     //[kg/hr]
     double m_dot_cr_out_to_cold_tank = 0.0;                              //[kg/hr]
     double t_ts_cr_su = m_t_ts_in;
@@ -681,6 +689,7 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
     {
         mpc_csp_solver->mc_collector_receiver.on(mpc_csp_solver->mc_weather.ms_outputs,
             mpc_csp_solver->mc_cr_htf_state_in,
+            T_CT_htf_hot_in,
             m_q_dot_elec_to_CR_heat,
             m_defocus,            
             mpc_csp_solver->mc_cr_out_solver,
@@ -988,6 +997,7 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
     //    to get the cycle inlet temperature
     double T_cycle_hot = std::numeric_limits<double>::quiet_NaN();          //[K]
     double T_field_cold_calc = std::numeric_limits<double>::quiet_NaN();    //[K]
+    double T_CT_cold_htf_out = std::numeric_limits<double>::quiet_NaN();    //[K]
     if (mpc_csp_solver->m_is_tes)
     {
         int tes_code = mpc_csp_solver->mc_tes.solve_tes_off_design(mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step,
@@ -1005,8 +1015,8 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
 
         if (mpc_csp_solver->m_is_CT_tes) {
 
-            double T_CT_hot_htf_out, T_CT_cold_htf_out;
-            T_CT_hot_htf_out = T_CT_cold_htf_out = std::numeric_limits<double>::quiet_NaN();
+            double T_CT_hot_htf_out;
+            T_CT_hot_htf_out = std::numeric_limits<double>::quiet_NaN();
 
             // CT_to_HT_m_dot_ratio is a system level parameter
             // It is also used/enforced in the ptes heat pump and cycle models
@@ -1046,6 +1056,7 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
     // Performance Call
     mpc_csp_solver->mc_power_cycle.call(mpc_csp_solver->mc_weather.ms_outputs,
         mpc_csp_solver->mc_pc_htf_state_in,
+        T_CT_cold_htf_out - 273.15,
         mpc_csp_solver->mc_pc_inputs,
         mpc_csp_solver->mc_pc_out_solver,
         mpc_csp_solver->mc_kernel.mc_sim_info);
@@ -1081,8 +1092,8 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
 
         if (mpc_csp_solver->m_is_CT_tes) {
 
-            double T_CT_hot_htf_out, T_CT_cold_htf_out;
-            T_CT_hot_htf_out = T_CT_cold_htf_out = std::numeric_limits<double>::quiet_NaN();
+            double T_CT_hot_htf_out;
+            T_CT_hot_htf_out = std::numeric_limits<double>::quiet_NaN();
 
             // CT_to_HT_m_dot_ratio is a system level parameter
             // It is also used/enforced in the ptes heat pump and cycle models

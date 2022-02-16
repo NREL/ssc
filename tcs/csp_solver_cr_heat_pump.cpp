@@ -351,8 +351,18 @@ void C_csp_cr_heat_pump::on(const C_csp_weatherreader::S_outputs& weather,
     C_csp_collector_receiver::S_csp_cr_out_solver& cr_out_solver,
     const C_csp_solver_sim_info& sim_info)
 {
+    throw(C_csp_exception("C_csp_cr_heat_pump must use 'on' method with T_CT_htf_hot_in argument"));
+}
+
+void C_csp_cr_heat_pump::on(const C_csp_weatherreader::S_outputs& weather,
+    const C_csp_solver_htf_1state& htf_state_in,
+    double T_CT_HTF_hot_in /*C*/,
+    double q_dot_elec_to_CR_heat /*MWt*/, double field_control,
+    C_csp_collector_receiver::S_csp_cr_out_solver& cr_out_solver,
+    const C_csp_solver_sim_info& sim_info)
+{
     double T_HT_HTF_cold_in = htf_state_in.m_temp;      //[C]
-    double T_CT_HTF_hot_in = m_T_CT_HTF_hot_des;        //[C]
+    //double T_CT_HTF_hot_in = m_T_CT_HTF_hot_des;        //[C]
 
     // Assume:
     // 1) no dependence between available heater output and weather (for now)
