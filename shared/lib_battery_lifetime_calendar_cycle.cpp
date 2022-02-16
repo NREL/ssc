@@ -55,9 +55,8 @@ void lifetime_cycle_t::init_cycle_counts() {
         }
     }
     std::sort(DOD_levels.begin(), DOD_levels.end());
-    state->cycle->cycle_counts.resize_fill(DOD_levels.size(), 2, 0.0);
-    for (size_t i = 0; i < DOD_levels.size(); i++) {
-        state->cycle->cycle_counts.set_value(DOD_levels[i], i, cycle_state::DOD);
+    for (double & DOD_level : DOD_levels) {
+        state->cycle->cycle_counts.push_back({DOD_level, 0});
     }
 }
 
@@ -179,12 +178,13 @@ int lifetime_cycle_t::rainflow_compareRanges() {
 
         int cycles_at_range = state->n_cycles;
 
-        // Update cycle matrix with latest DOD - size 1 is uninitalized (NMC or LMO/LTO models)
-        if (state->cycle->cycle_counts.ncells() > 1) {
+        // Update cycle matrix with latest DOD
+        if (params->model_choice == lifetime_params::CALCYC) {
             size_t cycle_index = util::nearest_col_index(state->cycle->cycle_counts, cycle_state::DOD, state->cycle_range);
-            cycles_at_range = state->cycle->cycle_counts.at(cycle_index, cycle_state::CYCLES);
-            cycles_at_range += 1;
-            state->cycle->cycle_counts.set_value(cycles_at_range, cycle_index, cycle_state::CYCLES);
+            state->cycle->cycle_counts[cycle_index][cycle_state::CYCLES] += 1;
+        }
+        else if (params->model_choice == lifetime_params::NMC) {
+            state->cycle->cycle_counts.push_back({state->cycle_range, 1});
         }
 
         // the capacity percent cannot increase
@@ -220,9 +220,9 @@ void lifetime_cycle_t::replaceBattery(double replacement_percent) {
         state->cycle_range = 0;
         state->cycle_DOD = 0;
         state->average_range = 0;
-        if (state->cycle->cycle_counts.ncells() > 1) {
-            for (size_t i = 0; i < state->cycle->cycle_counts.nrows(); i++) {
-                state->cycle->cycle_counts.set_value(0.0, i, cycle_state::CYCLES);
+        if (state->cycle->cycle_counts.size() > 1) {
+            for (auto & cycle_count : state->cycle->cycle_counts) {
+                cycle_count[cycle_state::CYCLES] = 0;
             }
         }
     }

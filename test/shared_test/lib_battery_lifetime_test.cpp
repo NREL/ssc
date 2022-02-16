@@ -147,6 +147,8 @@ TEST_F(lib_battery_lifetime_cycle_test, runCycleLifetimeTestWithNoise) {
     EXPECT_NEAR(s.cycle_range, 90.6, tol_high);
     EXPECT_NEAR(s.average_range, 90.02, tol_high);
     EXPECT_NEAR(s.n_cycles, 245, 10);
+    EXPECT_NEAR(s.cycle->cycle_counts[0][1], 0, 0);
+    EXPECT_NEAR(s.cycle->cycle_counts[1][1], 249, 0);
 }
 
 TEST_F(lib_battery_lifetime_cycle_test, replaceBatteryTest) {

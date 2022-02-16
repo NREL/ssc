@@ -21,6 +21,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <lib_battery_capacity.h>
+#include "lib_util.h"
 #include "common.h"
 #include "vartab.h"
 #include "core.h"
@@ -245,7 +246,10 @@ void write_battery_state(const battery_state& state, var_table* vt) {
     if (choice == lifetime_params::CALCYC) {
         vt->assign_match_case("q_relative_calendar", lifetime->calendar->q_relative_calendar);
         vt->assign_match_case("dq_relative_calendar_old", lifetime->calendar->dq_relative_calendar_old);
-        vt->assign_match_case("cycle_counts", lifetime->cycle->cycle_counts);
+        if (!lifetime->cycle->cycle_counts.empty())
+            vt->assign_match_case("cycle_counts", util::matrix_t<ssc_number_t>(lifetime->cycle->cycle_counts.size(),
+                                  lifetime->cycle->cycle_counts[0].size(),
+                                      reinterpret_cast<const vector<double> *>(&lifetime->cycle->cycle_counts)));
     }
     else {
         vt->assign_match_case("cum_dt", lifetime->cycle->cum_dt);
@@ -357,7 +361,9 @@ void read_battery_state(battery_state& state, var_table* vt) {
     if (choice == lifetime_params::CALCYC) {
         vt_get_number(vt, "q_relative_calendar", &lifetime->calendar->q_relative_calendar);
         vt_get_number(vt, "dq_relative_calendar_old", &lifetime->calendar->dq_relative_calendar_old);
-        vt_get_matrix(vt, "cycle_counts", lifetime->cycle->cycle_counts);
+        util::matrix_t<double> cycle_counts;
+        vt_get_matrix(vt, "cycle_counts", cycle_counts);
+        lifetime->cycle->cycle_counts = util::matrix_to_vector(cycle_counts);
     }
     else {
         vt_get_number(vt, "cum_dt", &lifetime->cycle->cum_dt);

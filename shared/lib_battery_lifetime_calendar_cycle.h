@@ -70,7 +70,7 @@ struct cycle_state {
     int rainflow_jlt;                       // last index in Peaks, i.e, if Peaks = [0,1], then jlt = 1
     std::vector<double> rainflow_peaks;
 
-    util::matrix_t<double> cycle_counts;   // Cycles, sorted by DOD bins provided in cycling_matrix
+    std::vector<std::vector<double>> cycle_counts;   // Cycles, sorted by DOD bins provided in cycling_matrix
     enum CYCLE_COUNTS_COLUMNS {
         DOD,
         CYCLES
