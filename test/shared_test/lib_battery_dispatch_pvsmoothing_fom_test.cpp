@@ -64,9 +64,9 @@ TEST_F(PVSmoothing_lib_battery_dispatch, PV_Phoenix_all_on) {
         ssc_data_get_number(dat, "batt_pvs_energy_to_grid_percent_sam", &grid_percent_sam);
 
         // values from Phoenix_Validation_testing.py EPRI code
-        EXPECT_NEAR(violation_count, 14, 0.001);
-        EXPECT_NEAR(violation_percent, 0.0267, 0.001);
-        EXPECT_NEAR(grid_percent, 99.89, 0.01);
+        EXPECT_NEAR(violation_count, 10, 0.001);
+        EXPECT_NEAR(violation_percent, 0.0190, 0.001);
+        EXPECT_NEAR(grid_percent, 99.96, 0.01);
         EXPECT_NEAR(grid_percent_sam, 98.89, 0.01);
     }
     ssc_data_free(dat);
@@ -106,7 +106,7 @@ TEST_F(PVSmoothing_lib_battery_dispatch, Generic_w_PV_input_all_on) {
         // values from Phoenix_Validation_testing.py EPRI code
         EXPECT_NEAR(violation_count, 11, 0.001);
         EXPECT_NEAR(violation_percent, 0.021, 0.001);
-        EXPECT_NEAR(grid_percent, 99.90, 0.01);
+        EXPECT_NEAR(grid_percent, 99.96, 0.01);
         EXPECT_NEAR(grid_percent_sam, 99.90, 0.01);
     }
     ssc_data_free(dat);
@@ -150,7 +150,7 @@ TEST_F(PVSmoothing_lib_battery_dispatch, FuelCell_PV_Phoenix_all_on) {
         // values from Phoenix_FuelCell_Validation_testing.sam
         EXPECT_NEAR(violation_count, 5, 0.001);
         EXPECT_NEAR(violation_percent, 0.0095, 0.001);
-        EXPECT_NEAR(grid_percent, 99.92, 0.01);
+        EXPECT_NEAR(grid_percent, 99.98, 0.01);
         EXPECT_NEAR(grid_percent_sam, 99.94, 0.01);
     }
     ssc_data_free(dat);
