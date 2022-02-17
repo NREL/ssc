@@ -238,6 +238,7 @@ void dispatch_pvsmoothing_front_of_meter_t::update_dispatch(size_t year, size_t 
             // scale by nameplate per ERPI code
             battery_energy = m_batt_dispatch_pvs_nameplate_ac > 0 ? battery_energy / m_batt_dispatch_pvs_nameplate_ac : battery_energy;
             battery_power = m_batt_dispatch_pvs_nameplate_ac > 0 ? battery_power / m_batt_dispatch_pvs_nameplate_ac : battery_power;
+            battery_soc = battery_soc * battery_energy;
 
             forecast_power = forecast_pv_energy;
 
@@ -317,17 +318,10 @@ void dispatch_pvsmoothing_front_of_meter_t::update_dispatch(size_t year, size_t 
                 }
             }
 
-
-            // update memory variables
-            if (battery_power_terminal > 0)// discharging - efficiency loss increases the amount of energy drawn from the battery
-                battery_soc = battery_soc - battery_power_terminal * power_to_energy_conversion_factor / batt_half_round_trip_eff;
-            else if (battery_power_terminal < 0)// charging - efficiency loss decreases the amount of energy put into the battery
-                battery_soc = battery_soc - battery_power_terminal * batt_half_round_trip_eff * power_to_energy_conversion_factor;
-
             // unscaled in public functions
             m_batt_dispatch_pvs_outpower = out_power;
             m_batt_dispatch_pvs_battpower = battery_power_terminal;
-             m_batt_dispatch_pvs_battsoc = battery_soc; // plot scaling from Python code
+             m_batt_dispatch_pvs_battsoc = battery_soc / battery_energy; // plot scaling from Python code
             m_batt_dispatch_pvs_violation_list = violation;
             m_batt_dispatch_pvs_curtail = curtail_power;
 
