@@ -818,7 +818,7 @@ namespace util
             std::vector<T> row;
             for (size_t c = 0; c < mat_in.ncols(); c++)
                 row.push_back(mat_in.at(r, c));
-            M.template emplace_back(row);
+            M.emplace_back(row);
         }
         return M;
     }
