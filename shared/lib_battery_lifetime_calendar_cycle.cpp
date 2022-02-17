@@ -185,6 +185,7 @@ int lifetime_cycle_t::rainflow_compareRanges() {
         }
         else if (params->model_choice == lifetime_params::NMC) {
             state->cycle->cycle_counts.push_back({state->cycle_range, 1});
+            state->cycle->cycle_DOD_max.push_back(state->cycle_DOD);
         }
 
         // the capacity percent cannot increase
@@ -248,7 +249,7 @@ void lifetime_cycle_t::resetDailyCycles() {
     state->cycle->DOD_max = -1;
     state->cycle->cum_dt = 0;
     state->cycle->cycle_DOD_max.clear();
-    state->cycle->cycle_DOD_range.clear();
+    state->cycle->cycle_counts.clear();
 }
 
 void lifetime_cycle_t::updateDailyCycles(double &prev_DOD, double &DOD, bool charge_changed) {
@@ -266,21 +267,19 @@ void lifetime_cycle_t::updateDailyCycles(double &prev_DOD, double &DOD, bool cha
     if (charge_changed){
         size_t n_cyc_prev = state->n_cycles;
         rainflow(prev_DOD);
-        if (state->n_cycles > n_cyc_prev) {
-            state->cycle->cycle_DOD_range.push_back(state->cycle_range);
-            state->cycle->cycle_DOD_max.push_back(state->cycle_DOD);
-        }
     }
 }
 
-double lifetime_cycle_t::predictDODRng() {
-    // if no cycles have yet elapsed, try to predict range of coming cycle
+double lifetime_cycle_t::predictDODMax() {
+    // if no cycles have yet elapsed, try to predict max range of coming cycle
     double DOD_range = state->cycle->DOD_max - state->cycle->DOD_min;
-    // otherwise, use average DOD range of cycles so far this day
-    if (!state->cycle->cycle_DOD_range.empty()) {
-        DOD_range = fmax(DOD_range, std::accumulate(state->cycle->cycle_DOD_range.begin(),
-                                                    state->cycle->cycle_DOD_range.end(), 0.)
-                                    * 0.01 / (double)state->cycle->cycle_DOD_range.size());
+    // otherwise, use DOD of cycles so far this day
+    if (!state->cycle->cycle_counts.empty()) {
+        auto DOD_max = *std::max_element(state->cycle->cycle_counts.begin(),
+                                        state->cycle->cycle_counts.end(),
+                                        [] (std::vector<double> lhs, std::vector<double> rhs) {
+                                            return lhs[0] < rhs[0];});
+        DOD_range = fmax(DOD_range, DOD_max[0] * 1e-2);
     }
     return DOD_range;
 }
@@ -295,7 +294,7 @@ double lifetime_cycle_t::predictAvgSOC(double DOD) {
     else {
         for (size_t i = 0; i < state->cycle->cycle_DOD_max.size(); i++) {
             double cycle_DOD_max = state->cycle->cycle_DOD_max[i] * 0.01;
-            double cycle_DOD_rng = state->cycle->cycle_DOD_range[i] * 0.01;
+            double cycle_DOD_rng = state->cycle->cycle_counts[i][0] * 0.01;
             SOC_avg += 1 - (cycle_DOD_max + (cycle_DOD_max - cycle_DOD_rng)) / 2;
         }
         SOC_avg /= (double)state->cycle->cycle_DOD_max.size();

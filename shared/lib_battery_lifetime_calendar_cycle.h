@@ -56,7 +56,7 @@ struct calendar_cycle_params {
     enum CALENDAR_COLUMNS {
         DAYS, CAPACITY_CAL
     };
-    
+
     friend std::ostream &operator<<(std::ostream &os, const calendar_cycle_params &p);
 };
 
@@ -137,7 +137,7 @@ public:
     void updateDailyCycles(double &prev_DOD, double &DOD, bool charge_changed);
 
     /// Predicts average DOD range of cycles in current eay
-    double predictDODRng();
+    double predictDODMax();
 
     /// Predicts average SOCs of cycles in current day
     double predictAvgSOC(double DOD);
