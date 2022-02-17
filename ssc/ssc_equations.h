@@ -89,16 +89,16 @@ static ssc_equation_entry ssc_equation_table [] = {
         // Battery
         {"Calculate_thermal_params", Calculate_thermal_params,
             "Battery", calculate_thermal_params_doc,
-            false, true},
+            false, false},
 
         // Battery stateful
         {"Calculate_thermal_params", Calculate_thermal_params,
             "battery_stateful", calculate_thermal_params_doc,
-            false, true},
+            false, false},
 
         {"Size_batterystateful", Size_batterystateful,
             "battery_stateful", size_batterystateful_doc,
-            false, true},
+            false, false},
 
         // Wind
         {"Turbine_calculate_powercurve", Turbine_calculate_powercurve,

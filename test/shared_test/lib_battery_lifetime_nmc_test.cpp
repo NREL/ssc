@@ -484,7 +484,7 @@ TEST_F(lib_battery_lifetime_nmc_test, IrregularTimeStep) {
 
     EXPECT_EQ(state.n_cycles, 87);
     EXPECT_NEAR(state.nmc_li_neg->q_relative_li, 104.43, 1e-3);
-    EXPECT_NEAR(state.nmc_li_neg->q_relative_neg, 103.89, 1e-3);
+    EXPECT_NEAR(state.nmc_li_neg->q_relative_neg, 103.894, 1e-3);
     EXPECT_NEAR(state.day_age_of_battery, 88, 1e-3);
 
     // Now compare with: run 30min timesteps for 23.5 hours then hourly for 24, then 1 0.5 hr time idx
