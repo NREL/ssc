@@ -329,7 +329,7 @@ namespace util
 		{
             if (t_array) delete[] t_array;
         }
-		
+
 		void clear()
 		{
 			if (t_array) delete [] t_array;
@@ -813,15 +813,26 @@ namespace util
     template <class T>
     std::vector<std::vector<T>> matrix_to_vector(matrix_t<T> mat_in)
     {
-        size_t n = mat_in.nrows();
-        size_t m = mat_in.ncols();
         std::vector<std::vector<T>> M;
-        for (size_t r = 0; r < n; r++) {
+        for (size_t r = 0; r < mat_in.nrows(); r++) {
             std::vector<T> row;
-            for (size_t c = 0; c < m; c++)
+            for (size_t c = 0; c < mat_in.ncols(); c++)
                 row.push_back(mat_in.at(r, c));
             M.template emplace_back(row);
         }
+        return M;
+    }
+
+    template <class T>
+    matrix_t<T> vector_to_matrix(std::vector<std::vector<T>> mat_in)
+    {
+        if (mat_in.size() < 1)
+            return matrix_t<T>();
+        matrix_t<T> M;
+        M.resize(mat_in.size(), mat_in[0].size());
+        for (size_t r = 0; r < mat_in.size(); r++)
+            for (size_t c = 0; c < mat_in[0].size(); c++)
+                M.set_value(mat_in[r][c], r, c);
         return M;
     }
 

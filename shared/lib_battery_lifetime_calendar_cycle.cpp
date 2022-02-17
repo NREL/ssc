@@ -294,6 +294,9 @@ double lifetime_cycle_t::predictAvgSOC(double DOD) {
     }
     // otherwise, get average SOCs of each cycle
     else {
+        if (state->cycle->cycle_DOD_max.size() != state->cycle->cycle_counts.size())
+            throw std::runtime_error("lifetime_cycle_t error: `cycle_DOD_max` and `cycle_counts` lengths must be the same. ");
+
         for (size_t i = 0; i < state->cycle->cycle_DOD_max.size(); i++) {
             double cycle_DOD_max = state->cycle->cycle_DOD_max[i] * 0.01;
             double cycle_DOD_rng = state->cycle->cycle_counts[i][0] * 0.01;

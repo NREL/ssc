@@ -21,7 +21,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <lib_battery_capacity.h>
-#include "lib_util.h"
+#include <lib_util.h>
 #include "common.h"
 #include "vartab.h"
 #include "core.h"
@@ -243,16 +243,14 @@ void write_battery_state(const battery_state& state, var_table* vt) {
     vt->assign_match_case("rainflow_Xlt", lifetime->cycle->rainflow_Xlt);
     vt->assign_match_case("rainflow_Ylt", lifetime->cycle->rainflow_Ylt);
     vt->assign_match_case("rainflow_jlt", lifetime->cycle->rainflow_jlt);
+    if (!lifetime->cycle->cycle_counts.empty())
+        vt->assign_match_case("cycle_counts", util::vector_to_matrix(lifetime->cycle->cycle_counts));
+    else {
+        vt->unassign("cycle_counts");
+    }
     if (choice == lifetime_params::CALCYC) {
         vt->assign_match_case("q_relative_calendar", lifetime->calendar->q_relative_calendar);
         vt->assign_match_case("dq_relative_calendar_old", lifetime->calendar->dq_relative_calendar_old);
-        if (!lifetime->cycle->cycle_counts.empty())
-            vt->assign_match_case("cycle_counts", util::matrix_t<ssc_number_t>(lifetime->cycle->cycle_counts.size(),
-                                  lifetime->cycle->cycle_counts[0].size(),
-                                      reinterpret_cast<const vector<double> *>(&lifetime->cycle->cycle_counts)));
-        else {
-            vt->unassign("cycle_counts");
-        }
     }
     else {
         vt->assign_match_case("cum_dt", lifetime->cycle->cum_dt);
