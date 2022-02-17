@@ -79,7 +79,6 @@ public:
         bool batt_dispatch_pvs_short_forecast_enable,
         double batt_dispatch_pvs_soc_rest,
         size_t batt_dispatch_pvs_timestep_multiplier,
-        double batt_dispatch_pvs_initial_SOC,
         double interconnection_limit
 		);
 
@@ -157,7 +156,6 @@ public:
     bool m_batt_dispatch_pvs_short_forecast_enable;
     double m_batt_dispatch_pvs_soc_rest;
     size_t m_batt_dispatch_pvs_timestep_multiplier;
-    double m_batt_dispatch_pvs_initial_SOC;
 
 };
 

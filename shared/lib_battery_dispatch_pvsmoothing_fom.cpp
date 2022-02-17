@@ -71,7 +71,6 @@ dispatch_pvsmoothing_front_of_meter_t::dispatch_pvsmoothing_front_of_meter_t(
     bool batt_dispatch_pvs_short_forecast_enable,
     double batt_dispatch_pvs_soc_rest,
     size_t batt_dispatch_pvs_timestep_multiplier,
-    double batt_dispatch_pvs_initial_SOC,
     double interconnection_limit
 
 ) : dispatch_automatic_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max_kwdc, Pd_max_kwdc, Pc_max_kwac, Pd_max_kwac,
@@ -91,8 +90,7 @@ dispatch_pvsmoothing_front_of_meter_t::dispatch_pvsmoothing_front_of_meter_t(
     m_batt_dispatch_pvs_max_ramp(batt_dispatch_pvs_max_ramp),
     m_batt_dispatch_pvs_short_forecast_enable(batt_dispatch_pvs_short_forecast_enable),
     m_batt_dispatch_pvs_soc_rest(batt_dispatch_pvs_soc_rest),
-    m_batt_dispatch_pvs_timestep_multiplier(batt_dispatch_pvs_timestep_multiplier),
-    m_batt_dispatch_pvs_initial_SOC(batt_dispatch_pvs_initial_SOC)
+    m_batt_dispatch_pvs_timestep_multiplier(batt_dispatch_pvs_timestep_multiplier)
 {
 
 	_inverter_paco = inverter_paco;
