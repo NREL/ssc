@@ -250,6 +250,9 @@ void write_battery_state(const battery_state& state, var_table* vt) {
             vt->assign_match_case("cycle_counts", util::matrix_t<ssc_number_t>(lifetime->cycle->cycle_counts.size(),
                                   lifetime->cycle->cycle_counts[0].size(),
                                       reinterpret_cast<const vector<double> *>(&lifetime->cycle->cycle_counts)));
+        else {
+            vt->unassign("cycle_counts");
+        }
     }
     else {
         vt->assign_match_case("cum_dt", lifetime->cycle->cum_dt);
@@ -260,12 +263,6 @@ void write_battery_state(const battery_state& state, var_table* vt) {
         }
         else {
             vt->unassign("cycle_DOD_max");
-        }
-        if (!lifetime->cycle->cycle_DOD_range.empty()) {
-            vt->assign_match_case("cycle_DOD_range", lifetime->cycle->cycle_DOD_range);
-        }
-        else {
-            vt->unassign("cycle_DOD_range");
         }
         if (choice == lifetime_params::NMC) {
             vt->assign_match_case("q_relative_li", lifetime->nmc_li_neg->q_relative_li);
@@ -358,24 +355,19 @@ void read_battery_state(battery_state& state, var_table* vt) {
     else {
         lifetime->cycle->rainflow_peaks.clear();
     }
-    if (choice == lifetime_params::CALCYC) {
-        vt_get_number(vt, "q_relative_calendar", &lifetime->calendar->q_relative_calendar);
-        vt_get_number(vt, "dq_relative_calendar_old", &lifetime->calendar->dq_relative_calendar_old);
+    if (vt->is_assigned("cycle_counts")) {
         util::matrix_t<double> cycle_counts;
         vt_get_matrix(vt, "cycle_counts", cycle_counts);
         lifetime->cycle->cycle_counts = util::matrix_to_vector(cycle_counts);
+    }
+    if (choice == lifetime_params::CALCYC) {
+        vt_get_number(vt, "q_relative_calendar", &lifetime->calendar->q_relative_calendar);
+        vt_get_number(vt, "dq_relative_calendar_old", &lifetime->calendar->dq_relative_calendar_old);
     }
     else {
         vt_get_number(vt, "cum_dt", &lifetime->cycle->cum_dt);
         vt_get_number(vt, "DOD_min", &lifetime->cycle->DOD_min);
         vt_get_number(vt, "DOD_max", &lifetime->cycle->DOD_max);
-        if (vt->is_assigned("cycle_DOD_range"))
-        {
-            vt_get_array_vec(vt, "cycle_DOD_range", lifetime->cycle->cycle_DOD_range);
-        }
-        else {
-            lifetime->cycle->cycle_DOD_range.clear();
-        }
         if (vt->is_assigned("cycle_DOD_max"))
         {
             vt_get_array_vec(vt, "cycle_DOD_max", lifetime->cycle->cycle_DOD_max);
@@ -383,6 +375,8 @@ void read_battery_state(battery_state& state, var_table* vt) {
         else {
             lifetime->cycle->cycle_DOD_max.clear();
         }
+        if (!vt->is_assigned("cycle_counts"))
+            lifetime->cycle->cycle_counts.clear();
         if (choice == lifetime_params::NMC) {
             vt_get_number(vt, "q_relative_li", &lifetime->nmc_li_neg->q_relative_li);
             vt_get_number(vt, "q_relative_neg", &lifetime->nmc_li_neg->q_relative_neg);

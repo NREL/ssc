@@ -42,8 +42,10 @@ void lifetime_cycle_t::initialize() {
     state->cycle->rainflow_Xlt = 0;
     state->cycle->rainflow_Ylt = 0;
     state->cycle->rainflow_peaks.clear();
-    init_cycle_counts();
-    resetDailyCycles();
+    if (params->model_choice == lifetime_params::CALCYC)
+        init_cycle_counts();
+    else
+        resetDailyCycles();
 }
 
 void lifetime_cycle_t::init_cycle_counts() {

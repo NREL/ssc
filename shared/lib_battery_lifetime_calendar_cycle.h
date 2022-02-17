@@ -81,7 +81,6 @@ struct cycle_state {
     double DOD_max;                         // max DOD of battery for current day, [0-1]
     double DOD_min;                         // min DOD of battery for current day, [0-1]
     std::vector<double> cycle_DOD_max;      // max DODs of cycles concluded in current day, %
-    std::vector<double> cycle_DOD_range;    // DOD cycle_range of each cycle, %
 
     friend std::ostream &operator<<(std::ostream &os, const cycle_state &p);
 };
