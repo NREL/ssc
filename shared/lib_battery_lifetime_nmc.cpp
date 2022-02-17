@@ -128,7 +128,7 @@ double lifetime_nmc_t::runQli(double T_battery_K) {
         dQLi1dt = 0.5 * b1 * b1 / state->nmc_li_neg->dq_relative_li1;
     double dQLi2dt = 0;
     for (auto & DOD : state->cycle->cycle_counts){
-        dQLi2dt += pow(b2 * DOD[0] * 1e-2 * DOD[1], 2);
+        dQLi2dt += pow(b2 * DOD[cycle_state::DOD] * 1e-2 * DOD[1], 2);
     }
     dQLi2dt = b2_ref * b2 * sqrt(dQLi2dt);
     double dQLi3dt = fmax(0.0, b3 - state->nmc_li_neg->dq_relative_li3) / tau_b3;
@@ -146,7 +146,7 @@ double lifetime_nmc_t::runQneg() {
     double c0 = state->nmc_li_neg->c0_dt;
     double c2 = 0;
     for (auto & DOD : state->cycle->cycle_counts){
-        c2 += pow(DOD[0] * 0.01, beta_c2) * DOD[1];
+        c2 += pow(DOD[cycle_state::DOD] * 0.01, beta_c2) * DOD[cycle_state::CYCLES];
     }
     c2 = state->nmc_li_neg->c2_dt * std::sqrt(c2);
 

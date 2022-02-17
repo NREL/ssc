@@ -58,7 +58,10 @@ void lifetime_cycle_t::init_cycle_counts() {
     }
     std::sort(DOD_levels.begin(), DOD_levels.end());
     for (double & DOD_level : DOD_levels) {
-        state->cycle->cycle_counts.push_back({DOD_level, 0});
+        std::vector<double> row(2);
+        row[cycle_state::DOD] = DOD_level;
+        row[cycle_state::CYCLES] = 0;
+        state->cycle->cycle_counts.emplace_back(row);
     }
 }
 
@@ -186,7 +189,10 @@ int lifetime_cycle_t::rainflow_compareRanges() {
             state->cycle->cycle_counts[cycle_index][cycle_state::CYCLES] += 1;
         }
         else if (params->model_choice == lifetime_params::NMC) {
-            state->cycle->cycle_counts.push_back({state->cycle_range, 1});
+            std::vector<double> row(2);
+            row[cycle_state::DOD] = state->cycle_range;
+            row[cycle_state::CYCLES] = 1;
+            state->cycle->cycle_counts.emplace_back(row);
             state->cycle->cycle_DOD_max.push_back(state->cycle_DOD);
         }
 
@@ -280,8 +286,8 @@ double lifetime_cycle_t::predictDODMax() {
         auto DOD_max = *std::max_element(state->cycle->cycle_counts.begin(),
                                         state->cycle->cycle_counts.end(),
                                         [] (std::vector<double> lhs, std::vector<double> rhs) {
-                                            return lhs[0] < rhs[0];});
-        DOD_range = fmax(DOD_range, DOD_max[0] * 1e-2);
+                                            return lhs[cycle_state::DOD] < rhs[cycle_state::DOD];});
+        DOD_range = fmax(DOD_range, DOD_max[cycle_state::DOD] * 1e-2);
     }
     return DOD_range;
 }
@@ -299,7 +305,7 @@ double lifetime_cycle_t::predictAvgSOC(double DOD) {
 
         for (size_t i = 0; i < state->cycle->cycle_DOD_max.size(); i++) {
             double cycle_DOD_max = state->cycle->cycle_DOD_max[i] * 0.01;
-            double cycle_DOD_rng = state->cycle->cycle_counts[i][0] * 0.01;
+            double cycle_DOD_rng = state->cycle->cycle_counts[i][cycle_state::DOD] * 0.01;
             SOC_avg += 1 - (cycle_DOD_max + (cycle_DOD_max - cycle_DOD_rng)) / 2;
         }
         SOC_avg /= (double)state->cycle->cycle_DOD_max.size();
