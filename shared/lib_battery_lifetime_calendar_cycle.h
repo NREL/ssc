@@ -70,7 +70,10 @@ struct cycle_state {
     int rainflow_jlt;                       // last index in Peaks, i.e, if Peaks = [0,1], then jlt = 1
     std::vector<double> rainflow_peaks;
 
-    std::vector<std::vector<double>> cycle_counts;   // Cycles, sorted by DOD bins provided in cycling_matrix
+    // Cycles' DOD and Count
+    // CALCYC model: tracks all cycles in simulation, frequency is binned by DODs provided in cycling_matrix
+    // NMCGR model: tracks each cycle completed in a single day, recording each cycle as row; aligns with cycle_DOD_max
+    std::vector<std::vector<double>> cycle_counts;
     enum CYCLE_COUNTS_COLUMNS {
         DOD,
         CYCLES
