@@ -116,7 +116,7 @@ std::ostream &operator<<(std::ostream &os, const cycle_state &p) {
             p.rainflow_Xlt, p.rainflow_Ylt, p.rainflow_jlt);
     os << buf << p.rainflow_peaks;
     os << ", cum_dt: " << p.cum_dt << ", DOD_max: " << p.DOD_max << ", DOD_min:" <<  p.DOD_min << ", ";
-    os << R"("cycle_DOD_max": ")" << p.cycle_DOD_max << R"(", cycle_DOD_range": ")" << p.cycle_DOD_range << "}";
+    os << R"("cycle_DOD_max": ")" << p.cycle_DOD_max << "}";
     return os;
 }
 
