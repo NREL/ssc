@@ -1022,7 +1022,7 @@ public:
             epc_and_owner_cost = sales_tax_cost = total_indirect_cost = total_installed_cost = estimated_installed_cost_per_cap = std::numeric_limits<double>::quiet_NaN();
 
         N_mspt::calculate_etes_costs(Q_tes_des_calc, HT_tes_spec_cost, CT_Q_tes_des_calc, CT_tes_spec_cost,
-            W_dot_in_charge_thermo, power_cycle_spec_cost,
+            W_dot_gen_thermo, power_cycle_spec_cost,
             q_dot_hot_out_charge, heat_pump_spec_cost, bop_spec_cost, contingency_rate,
             plant_net_capacity, EPC_perc_direct_cost, EPC_per_power_cost, EPC_fixed_cost,
             total_land_perc_direct_cost, total_land_per_power_cost, total_land_fixed_cost,
