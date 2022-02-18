@@ -31,7 +31,7 @@ void lifetime_nmc_t::initialize() {
     // cycle model for counting cycles only, no cycle-only degradation
     cycle_model = std::unique_ptr<lifetime_cycle_t>(new lifetime_cycle_t(params, state));
     cycle_model->resetDailyCycles();
-    state->nmc_li_neg->temp_K = 0;
+    state->nmc_li_neg->temp_dt = 0;
     state->nmc_li_neg->dq_relative_li1 = 0;
     state->nmc_li_neg->dq_relative_li2 = 0;
     state->nmc_li_neg->dq_relative_li3 = 0;
@@ -167,7 +167,7 @@ void lifetime_nmc_t::integrateDegParams(double dt_day, double DOD, double T_batt
     double SOC_avg = cycle_model->predictAvgSOC(DOD);
     double V_oc = calculate_Voc(SOC_avg);
 
-    state->nmc_li_neg->temp_K += T_battery * dt_day;
+    state->nmc_li_neg->temp_dt += T_battery * dt_day;
 
     // multiply by timestep in days and populate corresponding vectors
     double Arr_b1 = exp(-(Ea_b1 / Rug) * (1. / T_battery - 1. / T_ref));
@@ -196,13 +196,13 @@ void lifetime_nmc_t::integrateDegParams(double dt_day, double DOD, double T_batt
 }
 
 void lifetime_nmc_t::integrateDegLoss() {
-    state->nmc_li_neg->q_relative_li = runQli(state->nmc_li_neg->temp_K);
+    state->nmc_li_neg->q_relative_li = runQli(state->nmc_li_neg->temp_dt);
     state->nmc_li_neg->q_relative_neg = runQneg();
     state->q_relative = fmin(state->nmc_li_neg->q_relative_li, state->nmc_li_neg->q_relative_neg);
 
     // reset cycle tracking
     state->cycle->cum_dt = 0;
-    state->nmc_li_neg->temp_K = 0;
+    state->nmc_li_neg->temp_dt = 0;
     cycle_model->resetDailyCycles();
 }
 
