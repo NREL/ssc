@@ -205,13 +205,14 @@ static var_info _cm_vtab_etes_ptes[] = {
     { SSC_OUTPUT, SSC_NUMBER, "rte_thermo",                      "Round-trip efficiency of working fluid cycles",       "MWe",          "",                                  "System Design Calc",             "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "rte_net",                         "Net round-trip efficiency considering all parasitics","MWe",          "",                                  "System Design Calc",             "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "charge_capacity",                 "Total electricity consumption at design-point charge","MWe",          "",                                  "System Design Calc",             "*",                                                                "",              "" },
-                                                                 
+    { SSC_OUTPUT, SSC_NUMBER, "tshours_heater",                  "Hours of TES relative to heater output",              "hr",           "",                                  "System Design Calc",                             "*",                                                                "",              "" },
+
             // Heat pump                                            
     { SSC_OUTPUT, SSC_NUMBER, "W_dot_hp_in_thermo_des",          "Heat pump power into working fluid",                  "MWe",          "",                                  "Heat Pump",                      "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "q_dot_hp_hot_out_des",            "Heat pump heat output",                               "MWt",          "",                                  "Heat Pump",                      "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "q_dot_hp_cold_in_des",            "Heat pump heat input",                                "MWt",          "",                                  "Heat Pump",                      "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "W_dot_hp_elec_parasitic_des",     "Heat pump parasitic power",                           "MWe",          "",                                  "Heat Pump",                      "*",                                                                "",              "" },
-    { SSC_OUTPUT, SSC_NUMBER, "W_dot_hp_elec_parasitic_des",     "Heat pump total power consumption",                   "MWe",          "",                                  "Heat Pump",                      "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "W_dot_hp_in_net_des",             "Heat pump total power consumption",                   "MWe",          "",                                  "Heat Pump",                      "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "COP_net_des",                     "Heat pump net COP",                                   "MWe",          "",                                  "Heat Pump",                      "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "m_dot_hp_HT_htf_des",             "Heat pump HT HTF mass flow rate",                     "kg/s",         "",                                  "Heat Pump",                      "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "W_dot_hp_HT_htf_pump_des",        "Heat pump HT HTF pump power",                         "MWe",          "",                                  "Heat Pump",                      "*",                                                                "",              "" },
@@ -1081,6 +1082,7 @@ public:
         assign("rte_thermo", (ssc_number_t)RTE_therm);                      //[-] Round-trip efficiency of working fluid cycles
         assign("rte_net", (ssc_number_t)RTE_net);                           //[-] Round-trip efficiency considering all parasitics
         assign("charge_capacity", (ssc_number_t)plant_charging_power_in);   //[MWe] Total electricity consumption at design-point charge
+        assign("tshours_heater", (ssc_number_t)(tshours / heater_mult));    //[hr]
 
             // Heater
         assign("W_dot_hp_in_thermo_des", W_dot_in_thermo_charge_calc);  //[MWe]
