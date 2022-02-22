@@ -290,12 +290,15 @@ SSCEXPORT bool Reopt_size_battery_params(ssc_data_t data) {
     reopt_load.assign("loads_kw", var_data(&vec[0], sim_len));
     reopt_load.assign("loads_kw_is_net", false);
 
-	vt_get_array_vec(vt, "crit_load", vec);
-	if (vec.size() != sim_len) {
-	    vt->assign("error", var_data("Critical load profile's length must be same as for load."));
-	    return false;
+    vd = vt->lookup("crit_load");
+    if (vd) {
+        vt_get_array_vec(vt, "crit_load", vec);
+        if (vec.size() != sim_len) {
+            vt->assign("error", var_data("Critical load profile's length must be same as for load."));
+            return false;
+        }
+        reopt_load.assign("critical_loads_kw", var_data(&vec[0], vec.size()));
     }
-    reopt_load.assign("critical_loads_kw", var_data(&vec[0], vec.size()));
 
     // assign the reopt parameter table and log messages
     reopt_electric.assign_match_case("urdb_response", reopt_utility);

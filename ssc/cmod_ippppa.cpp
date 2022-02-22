@@ -577,7 +577,7 @@ public:
 			{
 				degrade_cf.push_back(cf.at(CF_degradation, i));
 			}
-			m_disp_calcs.init(this, degrade_cf, hourly_energy_calcs.hourly_energy());
+			m_disp_calcs.init(this, degrade_cf, hourly_energy_calcs.hourly_sales());
 		}
 
 		for (i = 1; i <= nyears; i++)
