@@ -416,11 +416,11 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 		m_dot_htf_max = fmin(m_m_dot_htf_max, m_dot_iscc_max);
 	}
 
-	if (field_eff < m_eta_field_iter_prev && m_od_control < 1.0)
-	{	// Suggests controller applied defocus, so reset *controller* defocus
-		m_od_control = fmin(m_od_control + (1.0 - field_eff / m_eta_field_iter_prev), 1.0);
-	}
-
+	//if (field_eff < m_eta_field_iter_prev && m_od_control < 1.0)
+	//{	// Suggests controller applied defocus, so reset *controller* defocus
+	//	m_od_control = fmin(m_od_control + (1.0 - field_eff / m_eta_field_iter_prev), 1.0);
+	//}
+    m_od_control = 1.0;
 
     // Get user-defined mass flow at this time step
     std::vector<double> mflow(m_n_lines, 0.0);
@@ -1479,7 +1479,7 @@ void C_mspt_receiver_222::solve_for_mass_flow_and_defocus(s_steady_state_soln &s
 			if (err_od < m_tol_od)
 			{
 				soln.itermode = 1;
-				soln.od_control = 1.0;
+				//soln.od_control = 1.0;
 				rec_is_defocusing = false;
 			}
 			else
