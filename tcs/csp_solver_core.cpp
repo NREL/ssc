@@ -2807,7 +2807,7 @@ void C_csp_solver::C_CR_OFF__PC_TARGET__TES_DC__AUX_OFF::check_system_limits(C_c
     }
     else if ((q_dot_pc_solved - q_dot_pc_on_dispatch_target) / q_dot_pc_on_dispatch_target < -limit_comp_tol)
     {
-        if (m_dot_pc_solved < m_dot_pc_max)
+        if ((m_dot_pc_solved - m_dot_pc_max) / m_dot_pc_max < - limit_comp_tol)
         {	// TES cannot provide enough thermal power - step down to next operating mode
 
             m_is_mode_available = false;
@@ -3218,7 +3218,7 @@ void C_csp_solver::C_CR_SU__PC_TARGET__TES_DC__AUX_OFF::check_system_limits(C_cs
     }
     else if ((q_dot_pc_solved - q_dot_pc_on_dispatch_target) / q_dot_pc_on_dispatch_target < -limit_comp_tol)
     {
-        if (m_dot_pc_solved < m_dot_pc_max)
+        if ((m_dot_pc_solved - m_dot_pc_max) / m_dot_pc_max < -limit_comp_tol)
         {	// TES cannot provide enough thermal power - step down to next operating mode
 
             m_is_mode_available = false;
@@ -3396,7 +3396,7 @@ void C_csp_solver::C_CR_OFF__PC_SB__TES_DC__AUX_OFF::check_system_limits(C_csp_s
     }
     else if ((q_dot_pc_solved - q_dot_pc_sb) / q_dot_pc_sb < -1.E-3)
     {
-        if (m_dot_pc_solved < m_dot_pc_max)
+        if ((m_dot_pc_solved - m_dot_pc_max) / m_dot_pc_max < -limit_comp_tol)
         {	// TES cannot provide enough thermal power - step down to next operating mode
             m_is_mode_available = false;
             is_model_converged = false;
@@ -3632,7 +3632,7 @@ void C_csp_solver::C_CR_SU__PC_SB__TES_DC__AUX_OFF::check_system_limits(C_csp_so
     }
     else if ((q_dot_pc_solved - q_dot_pc_sb) / q_dot_pc_sb < -limit_comp_tol)
     {
-        if (m_dot_pc_solved < m_dot_pc_max)
+        if ((m_dot_pc_solved - m_dot_pc_max) / m_dot_pc_max < -limit_comp_tol)
         {	// TES cannot provide enough thermal power - step down to next operating mode
             m_is_mode_available = false;
             is_model_converged = false;
@@ -3862,7 +3862,7 @@ void C_csp_solver::C_CR_TO_COLD__PC_TARGET__TES_DC__AUX_OFF::check_system_limits
     }
     else if ((q_dot_pc_solved - q_dot_pc_on_dispatch_target) / q_dot_pc_on_dispatch_target < -limit_comp_tol)
     {
-        if (m_dot_pc_solved < m_dot_pc_max)
+        if ((m_dot_pc_solved - m_dot_pc_max) / m_dot_pc_max < -limit_comp_tol)
         {	// TES cannot provide enough thermal power - step down to next operating mode
             m_is_mode_available = false;
             is_model_converged = false;
@@ -3917,7 +3917,7 @@ void C_csp_solver::C_CR_TO_COLD__PC_SB__TES_DC__AUX_OFF::check_system_limits(C_c
     }
     else if ((q_dot_pc_solved - q_dot_pc_sb) / q_dot_pc_sb < -limit_comp_tol)
     {
-        if (m_dot_pc_solved < m_dot_pc_max)
+        if ((m_dot_pc_solved - m_dot_pc_max) / m_dot_pc_max < -limit_comp_tol)
         {	// TES cannot provide enough thermal power - step down to next operating mode
 
             m_is_mode_available = false;
