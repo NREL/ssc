@@ -90,6 +90,7 @@ public:
 	double Wgap;  // gap width spacing (m)
 	double TbackInteg;  // back surface temperature for integrated modules ('C)
     double Lsc; //Lacunarity length scale for spatial heterogeneity (m)
+    int track_mode;
     double h_lacunarity; //heat transfer coefficient from lacunarity scale experiments (W/m2K)
     double ground_clearance_height; //Ground clearance height used in Calaf heat transfer coefficient h fit
     double GCR;
