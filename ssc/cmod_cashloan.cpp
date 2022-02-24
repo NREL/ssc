@@ -69,14 +69,14 @@ static var_info vtab_cashloan[] = {
 	/* financial outputs */
 	{ SSC_OUTPUT,        SSC_NUMBER,     "cf_length",                "Number of periods in cash flow",      "",             "",                      "Cash Flow",      "*",                       "INTEGER",                                  "" },
 
-	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoe_real",                "Real LCOE",                          "cents/kWh",    "",                      "Cash Flow",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoe_real",                "LCOE Levelized cost of energy real",                          "cents/kWh",    "",                      "Cash Flow",      "*",                       "",                                         "" },
 
-    { SSC_OUTPUT,        SSC_NUMBER,     "lcoe_nom",                 "Nominal LCOE",                       "cents/kWh",    "",                      "Cash Flow",      "*",                       "",                                         "" },
+    { SSC_OUTPUT,        SSC_NUMBER,     "lcoe_nom",                 "LCOE Levelized cost of energy nominal",                       "cents/kWh",    "",                      "Cash Flow",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "payback",                  "Payback period",                            "years",        "",                      "Cash Flow",      "*",                       "",                                         "" },
 	// added 9/26/16 for Owen Zinaman Mexico
 	{ SSC_OUTPUT, SSC_NUMBER, "discounted_payback", "Discounted payback period", "years", "", "Cash Flow", "*", "", "" },
     
-    { SSC_OUTPUT, SSC_NUMBER, "npv", "Net present value", "$", "", "Cash Flow", "*", "", "" },
+    { SSC_OUTPUT, SSC_NUMBER, "npv", "NPV Net present value", "$", "", "Cash Flow", "*", "", "" },
 
 	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_oandm",                      "Present value of O&M expenses",				   "$",            "",                      "Financial Metrics",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_oandm_nonfuel",              "Present value of non-fuel O&M expenses",				   "$",            "",                      "Financial Metrics",      "*",                       "",                                         "" },

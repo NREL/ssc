@@ -57,7 +57,7 @@ static var_info _cm_vtab_host_developer[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_after_tax_cash_flow",                   "Host after-tax cash flow",                      "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_payback_with_expenses",                 "Host simple payback with expenses",                    "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_cumulative_payback_with_expenses",      "Host cumulative simple payback with expenses",         "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "npv",                      "Host net present value",				   "$",            "",                      "Cash Flow",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "npv",                      "Host NPV Net present value",				   "$",            "",                      "Cash Flow",      "*",                       "",                                         "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_nte",      "Host indifference point by year",         "cents/kWh",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "host_nominal_discount_rate",                  "Host nominal discount rate",            "%",     "",					  "Intermediate Costs",			 "*",                         "",                             "" },
@@ -638,8 +638,8 @@ static var_info _cm_vtab_host_developer[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_project_return_aftertax_npv",         "After-tax project cumulative NPV",  "$", "",                      "Cash Flow After Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 	// metrics table
-    { SSC_OUTPUT,       SSC_NUMBER,     "project_return_aftertax_irr",            "Internal rate of return (after-tax)",       "%",                   "", "Metrics", "*", "", "" },
-    { SSC_OUTPUT,       SSC_NUMBER,     "project_return_aftertax_npv",            "Net present value (after-tax)",             "$",                   "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "project_return_aftertax_irr",            "IRR Internal rate of return",       "%",                   "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "project_return_aftertax_npv",            "NPV Net present value",             "$",                   "", "Metrics", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_annual_costs", "Annual costs", "$", "", "LCOE calculations", "*", "LENGTH_EQUAL=cf_length", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "npv_annual_costs", "Present value of annual costs", "$", "", "LCOE calculations", "*", "", "" },
 
