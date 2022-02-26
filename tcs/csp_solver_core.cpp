@@ -1713,18 +1713,19 @@ void C_csp_solver::C_CR_ON__PC_SU__TES_OFF__AUX_OFF::check_system_limits(C_csp_s
     bool& is_model_converged, bool& is_turn_off_plant)
 {
     // Compare q_dot_to_pc to q_dot_pc_su_max
-    if (pc_csp_solver->mc_cr_out_solver.m_q_thermal > q_dot_pc_su_max || pc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot > m_dot_pc_max_startup)
+    
+    if (pc_csp_solver->mc_pc_out_solver.m_q_dot_htf > q_dot_pc_su_max || pc_csp_solver->mc_pc_out_solver.m_m_dot_htf > m_dot_pc_max_startup)
     {
         std::string error_msg;
-        if (pc_csp_solver->mc_cr_out_solver.m_q_thermal > q_dot_pc_su_max)
+        if (pc_csp_solver->mc_pc_out_solver.m_q_dot_htf > q_dot_pc_su_max)
         {
             error_msg = time_and_op_mode_to_string(pc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time) + " method converged to a power cycle";
-            error_msg += util::format(" thermal input, %lg [MWt], greater than the target %lg [MWt].", pc_csp_solver->mc_cr_out_solver.m_q_thermal, q_dot_pc_su_max);
+            error_msg += util::format(" thermal input, %lg [MWt], greater than the target %lg [MWt].", pc_csp_solver->mc_pc_out_solver.m_q_dot_htf, q_dot_pc_su_max);
         }
-        if (pc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot > m_dot_pc_max_startup)
+        if (pc_csp_solver->mc_pc_out_solver.m_m_dot_htf > m_dot_pc_max_startup)
         {
             error_msg = time_and_op_mode_to_string(pc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time) + " method converged to a power cycle";
-            error_msg += util::format(" mass flow rate input, %lg [kg/s], greater than the maximum allowable %lg [kg/s].", pc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot / 3600.0, pc_csp_solver->m_m_dot_pc_max_startup / 3600.0);
+            error_msg += util::format(" mass flow rate input, %lg [kg/s], greater than the maximum allowable %lg [kg/s].", pc_csp_solver->mc_pc_out_solver.m_m_dot_htf / 3600.0, pc_csp_solver->m_m_dot_pc_max_startup / 3600.0);
         }
         pc_csp_solver->mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
     }
@@ -1870,7 +1871,7 @@ void C_csp_solver::C_CR_ON__PC_RM_LO__TES_OFF__AUX_OFF::check_system_limits(C_cs
     double limit_comp_tol /*-*/,
     bool& is_model_converged, bool& is_turn_off_plant)
 {
-    if (pc_csp_solver->mc_cr_out_solver.m_q_thermal < q_dot_pc_min)
+    if (pc_csp_solver->mc_pc_out_solver.m_q_dot_htf < q_dot_pc_min)
     {
         m_is_mode_available = false;
         is_model_converged = false;
@@ -2628,13 +2629,13 @@ void C_csp_solver::C_CR_ON__PC_SB__TES_OFF__AUX_OFF::check_system_limits(C_csp_s
     bool& is_model_converged, bool& is_turn_off_plant)
 {
     // Check that cr and pc mass flow rates balance
-    if (fabs(pc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot - pc_csp_solver->mc_pc_out_solver.m_m_dot_htf) / pc_csp_solver->m_m_dot_pc_des > limit_comp_tol / 10.)
-    {
-        m_is_mode_available = false;
-        is_model_converged = false;
-        is_turn_off_plant = false;
-        return;
-    }
+    //if (fabs(pc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot - pc_csp_solver->mc_pc_out_solver.m_m_dot_htf) / pc_csp_solver->m_m_dot_pc_des > limit_comp_tol / 10.)
+    //{
+    //    m_is_mode_available = false;
+    //    is_model_converged = false;
+    //    is_turn_off_plant = false;
+    //    return;
+    //}
 
     // Check if solved thermal power is greater than target
     if ((pc_csp_solver->mc_pc_out_solver.m_q_dot_htf - q_dot_pc_max) > limit_comp_tol)
