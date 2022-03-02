@@ -698,8 +698,8 @@ static var_info _cm_vtab_communitysolar[] = {
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_project_return_aftertax_npv",         "After-tax cumulative NPV",  "$", "",                      "Cash Flow Total and Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 	// metrics table
-    { SSC_OUTPUT,       SSC_NUMBER,     "project_return_aftertax_irr",            "Internal rate of return (IRR, after-tax)",       "%",                   "", "Metrics", "*", "", "" },
-    { SSC_OUTPUT,       SSC_NUMBER,     "project_return_aftertax_npv",            "Net present value (NPV, after-tax)",             "$",                   "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "project_return_aftertax_irr",            "IRR Internal rate of return",       "%",                   "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "project_return_aftertax_npv",            "NPV Net present value",             "$",                   "", "Metrics", "*", "", "" },
 
     { SSC_OUTPUT, SSC_ARRAY, "cf_annual_costs", "Annual costs", "$", "", "LCOE calculations", "*", "LENGTH_EQUAL=cf_length", "" },
 
@@ -804,10 +804,10 @@ static var_info _cm_vtab_communitysolar[] = {
     { SSC_OUTPUT,       SSC_NUMBER,     "community_solar_upfront_cost",   "Community solar total up-front cost",              "$",                   "", "Metrics", "*", "", "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "community_solar_upfront_revenue",   "Revenue from total up-front payments",              "$",                   "", "Metrics", "*", "", "" },
 
-    { SSC_OUTPUT,       SSC_NUMBER,     "subscriber1_npv",            "Subscriber 1 Net present value (NPV)",             "$",                   "", "Metrics", "*", "", "" },
-    { SSC_OUTPUT,       SSC_NUMBER,     "subscriber2_npv",            "Subscriber 2 Net present value (NPV)",             "$",                   "", "Metrics", "*", "", "" },
-    { SSC_OUTPUT,       SSC_NUMBER,     "subscriber3_npv",            "Subscriber 3 Net present value (NPV)",             "$",                   "", "Metrics", "*", "", "" },
-    { SSC_OUTPUT,       SSC_NUMBER,     "subscriber4_npv",            "Subscriber 4 Net present value (NPV)",             "$",                   "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "subscriber1_npv",            "Subscriber 1 NPV Net present value",             "$",                   "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "subscriber2_npv",            "Subscriber 2 NPV Net present value",             "$",                   "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "subscriber3_npv",            "Subscriber 3 NPV Net present value",             "$",                   "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "subscriber4_npv",            "Subscriber 4 NPV Net present value",             "$",                   "", "Metrics", "*", "", "" },
 
 
 var_info_invalid };
