@@ -60,6 +60,13 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 	csp_info_invalid
 };
 
+static C_csp_reported_outputs::S_dependent_output_info S_dependent_output_info[] =
+{
+    {C_pc_Rankine_indirect_224::E_TEST_DEP_ETA, C_pc_Rankine_indirect_224::E_W_DOT, C_pc_Rankine_indirect_224::E_Q_DOT_HTF, C_csp_reported_outputs::AoverB},
+
+    csp_dep_info_invalid
+};
+
 C_pc_Rankine_indirect_224::C_pc_Rankine_indirect_224()
 {
 	m_is_initialized = false;
@@ -74,7 +81,7 @@ C_pc_Rankine_indirect_224::C_pc_Rankine_indirect_224()
 
 	m_ncall = -1;
 
-	mc_reported_outputs.construct(S_output_info);
+	mc_reported_outputs.construct(S_output_info, S_dependent_output_info);
 }
 
 void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_params)

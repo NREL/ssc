@@ -123,7 +123,10 @@ public:
         E_W_DOT_COOLER,     //[MWe] Cooling parasitic
 
 		// Variables added for backwards compatability with TCS
-		E_M_DOT_HTF_REF		//[kg/hr] HTF mass flow rate at design
+		E_M_DOT_HTF_REF,		//[kg/hr] HTF mass flow rate at design
+
+        // Dependent output variables
+        E_TEST_DEP_ETA
 	};
 
 	C_csp_reported_outputs mc_reported_outputs;
