@@ -36,7 +36,6 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static C_csp_reported_outputs::S_output_info S_output_info[] =
 {
-	{C_pc_Rankine_indirect_224::E_ETA_THERMAL, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 	{C_pc_Rankine_indirect_224::E_Q_DOT_HTF, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 	{C_pc_Rankine_indirect_224::E_M_DOT_HTF, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 	{C_pc_Rankine_indirect_224::E_Q_DOT_STARTUP, C_csp_reported_outputs::TS_WEIGHTED_AVE},
@@ -62,7 +61,7 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 
 static C_csp_reported_outputs::S_dependent_output_info S_dependent_output_info[] =
 {
-    {C_pc_Rankine_indirect_224::E_TEST_DEP_ETA, C_pc_Rankine_indirect_224::E_W_DOT, C_pc_Rankine_indirect_224::E_Q_DOT_HTF, C_csp_reported_outputs::AoverB},
+    {C_pc_Rankine_indirect_224::E_ETA_THERMAL, C_pc_Rankine_indirect_224::E_W_DOT, C_pc_Rankine_indirect_224::E_Q_DOT_HTF, C_csp_reported_outputs::AoverB},
 
     csp_dep_info_invalid
 };
@@ -1621,7 +1620,8 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 	out_solver.m_P_cycle = P_cycle/1000.0;				//[MWe] Cycle power output, convert from kWe
 	mc_reported_outputs.value(E_W_DOT, P_cycle/1000.0);	//[MWe] Cycle power output, convert from kWe
 
-	mc_reported_outputs.value(E_ETA_THERMAL, eta);	//[-] Cycle thermal efficiency
+    //22.03.04 twn: post-process thermal efficiency at end of timestep reporting
+	//mc_reported_outputs.value(E_ETA_THERMAL, eta);	//[-] Cycle thermal efficiency
 
 	out_solver.m_T_htf_cold = T_htf_cold;				//[C] HTF outlet temperature
 	mc_reported_outputs.value(E_T_HTF_OUT, T_htf_cold);	//[C] HTF outlet temperature

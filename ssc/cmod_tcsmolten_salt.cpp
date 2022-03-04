@@ -501,7 +501,6 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 
         // Power cycle outputs
     { SSC_OUTPUT,    SSC_ARRAY,  "eta",                                "PC efficiency, gross",                                                                                                                    "",             "",                                  "",                                         "*",                                                                "",              ""},
-    { SSC_OUTPUT,    SSC_ARRAY,  "eta_test",                           "PC TEST efficiency, gross",                                                                                                               "",             "",                                  "",                                         "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_ARRAY,  "q_pb",                               "PC input energy",                                                                                                                         "MWt",          "",                                  "",                                         "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_ARRAY,  "m_dot_pc",                           "PC HTF mass flow rate",                                                                                                                   "kg/s",         "",                                  "",                                         "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_ARRAY,  "q_pc_startup",                       "PC startup thermal energy",                                                                                                               "MWht",         "",                                  "",                                         "*",                                                                "",              ""},
@@ -1242,7 +1241,6 @@ public:
         }
 
         // Set power cycle outputs common to all power cycle technologies
-        p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_TEST_DEP_ETA, allocate("eta_test", n_steps_fixed), n_steps_fixed);
         p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_Q_DOT_HTF, allocate("q_pb", n_steps_fixed), n_steps_fixed);
         p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_M_DOT_HTF, allocate("m_dot_pc", n_steps_fixed), n_steps_fixed);
         p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_Q_DOT_STARTUP, allocate("q_dot_pc_startup", n_steps_fixed), n_steps_fixed);
@@ -1253,6 +1251,8 @@ public:
         p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_T_COND_OUT, allocate("T_cond_out", n_steps_fixed), n_steps_fixed);
         p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_W_DOT_HTF_PUMP, allocate("cycle_htf_pump_power", n_steps_fixed), n_steps_fixed);
         p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_W_DOT_COOLER, allocate("P_cooling_tower_tot", n_steps_fixed), n_steps_fixed);
+
+        p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_ETA_THERMAL, allocate("eta", n_steps_fixed), n_steps_fixed);
 
         if (pb_tech_type == 0) {
             if (rankine_pc.ms_params.m_CT == 4) {
@@ -2244,14 +2244,14 @@ public:
 
         // Do unit post-processing here
         double *p_q_pc_startup = allocate("q_pc_startup", n_steps_fixed);
-        double* p_q_pc_eta = allocate("eta", n_steps_fixed);
+        //double* p_q_pc_eta = allocate("eta", n_steps_fixed);
         size_t count_pc_su = 0;
-        size_t count_pc_q_dot = 0;
-        size_t count_pc_W_dot_gross = 0;
+        //size_t count_pc_q_dot = 0;
+        //size_t count_pc_W_dot_gross = 0;
         ssc_number_t *p_q_dot_pc_startup = as_array("q_dot_pc_startup", &count_pc_su);
-        ssc_number_t* p_q_dot = as_array("q_pb", &count_pc_q_dot);
-        ssc_number_t* p_W_dot_cycle = as_array("P_cycle", &count_pc_W_dot_gross);
-        if( count_pc_su != n_steps_fixed || (int)count_pc_q_dot != n_steps_fixed || (int)count_pc_W_dot_gross != n_steps_fixed)
+        //ssc_number_t* p_q_dot = as_array("q_pb", &count_pc_q_dot);
+        //ssc_number_t* p_W_dot_cycle = as_array("P_cycle", &count_pc_W_dot_gross);
+        if( count_pc_su != n_steps_fixed )
         {
             log("q_dot_pc_startup array is a different length than 'n_steps_fixed'.", SSC_WARNING);
             return;
@@ -2259,12 +2259,6 @@ public:
         for( size_t i = 0; i < n_steps_fixed; i++ )
         {
             p_q_pc_startup[i] = (float)(p_q_dot_pc_startup[i] * (sim_setup.m_report_step / 3600.0));    //[MWh]
-            if (p_q_dot[i] > 0.0) {
-                p_q_pc_eta[i] = (float)(p_W_dot_cycle[i] / p_q_dot[i]);   //[-]
-            }
-            else {
-                p_q_pc_eta[i] = 0.0;    //[-]
-            }
         }
 
         // Convert mass flow rates from [kg/hr] to [kg/s]
