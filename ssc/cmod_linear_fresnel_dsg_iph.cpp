@@ -47,10 +47,11 @@ static var_info _cm_vtab_linear_fresnel_dsg_iph[] = {
     { SSC_INPUT,        SSC_NUMBER,      "I_bn_des",          "Design point irradiation value",                                                      "W/m2",          "",            "solarfield",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_cold_ref",        "Reference HTF outlet temperature at design",                                          "C",             "",            "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "P_turb_des",        "Design-point turbine inlet pressure",                                                 "bar",           "",            "solarfield",     "*",                       "",                      "" },
-    //{ SSC_INPUT,        SSC_NUMBER,      "T_hot",             "Hot HTF inlet temperature, from storage tank",                                        "C",             "",            "powerblock",     "*",                       "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "x_b_des",           "Design point boiler outlet steam quality",                                            "none",          "",            "solarfield",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "q_pb_des",          "Design heat input to the power block",                                                "MW",            "",            "solarfield",     "*",                       "",                      "" },
-	
+    { SSC_INPUT,        SSC_NUMBER,      "use_quality_or_subcooled", "0 = 2 phase outlet, 1 = subcooled",                                            "",              "",            "solarfield",     "?=0",                     "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "deltaT_subcooled",         "Subcooled temperature difference from saturation temp",                        "C",             "",            "solarfield",     "?=1.23",                  "",                      "" },
+
 
 	// Type 261 (solar field collector) parameters
     { SSC_INPUT,        SSC_NUMBER,      "fP_hdr_c",          "Average design-point cold header pressure drop fraction",                             "none",          "",            "solarfield",     "*",                       "",                      "" },
@@ -243,7 +244,10 @@ public:
         double x_b_des = as_double("x_b_des");
         bool is_target_single_phase = false;
 
-        if (x_b_des < 0.0) {
+        bool is_subcooled = as_boolean("use_quality_or_subcooled");
+        double deltaT_subcooled = as_double("deltaT_subcooled");
+
+        if (is_subcooled) {
 
             is_target_single_phase = true;
             water_state wp;
@@ -254,8 +258,8 @@ public:
                 throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::init", "Design point water_PQ failed", wp_code));
             }
 
-            // Add negative quality to get subcooled outlet temp
-            T_field_out_des = wp.temp + x_b_des;	//[K]
+            // Apply subcooled deltaT
+            T_field_out_des = wp.temp - deltaT_subcooled;	//[K]
 
             // need to set to 'real' quality to avoid tripping checks in LF class
             x_b_des = 0.5;      //[-]

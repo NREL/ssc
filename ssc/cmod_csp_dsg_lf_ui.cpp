@@ -27,10 +27,13 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static var_info _cm_vtab_csp_dsg_lf_ui[] = {
 
-    /*   VARTYPE   DATATYPE         NAME               LABEL                                            UNITS     META  GROUP REQUIRED_IF CONSTRAINTS         UI_HINTS*/
-    { SSC_INPUT,   SSC_NUMBER,   "P_boil",           "Boiling pressure",                             "bar",    "", "",  "*",  "", "" },
+    /*   VARTYPE   DATATYPE         NAME               LABEL                                                     UNITS     META  GROUP REQUIRED_IF CONSTRAINTS         UI_HINTS*/
+    { SSC_INPUT,   SSC_NUMBER,   "P_boil",           "Boiling pressure",                                      "bar",    "", "",  "*",  "", "" },
+    { SSC_INPUT,   SSC_NUMBER,   "use_quality_or_subcooled", "0 = 2 phase outlet, 1 = subcooled",             "",       "", "",  "*",  "", "" },
+    { SSC_INPUT,   SSC_NUMBER,   "deltaT_subcooled", "Subcooled temperature difference from saturation temp", "C",    "", "",  "*",  "", "" },
 
     { SSC_OUTPUT,  SSC_NUMBER,   "T_saturation",     "Saturation pressure",                          "C",      "", "",  "*",  "", "" },
+    { SSC_OUTPUT,  SSC_NUMBER,   "T_hot_out_target", "Target outlet temperature",                    "C",      "", "",  "*",  "", "" },
 
     var_info_invalid };
 
@@ -48,6 +51,8 @@ public:
         water_state wp;
 
         double P_boil = as_double("P_boil") * 100.0;    //[kPa]
+        bool is_subcooled = as_boolean("use_quality_or_subcooled");
+        double deltaT_subcooled = as_double("deltaT_subcooled");
 
         int wp_code = water_PQ(P_boil, 0.0, &wp);
 
@@ -59,7 +64,13 @@ public:
             T_sat = wp.temp - 273.15;   //[C]
         }
 
-        assign("T_saturation", (ssc_number_t)T_sat);
+        double T_hot_out_target = T_sat;    //[C]
+        if (is_subcooled) {
+            T_hot_out_target = T_sat - deltaT_subcooled;    //[C]
+        }
+
+        assign("T_saturation", (ssc_number_t)T_sat);                //[C]
+        assign("T_hot_out_target", (ssc_number_t)T_hot_out_target); //[C]
 
         return;
     }
