@@ -2244,13 +2244,8 @@ public:
 
         // Do unit post-processing here
         double *p_q_pc_startup = allocate("q_pc_startup", n_steps_fixed);
-        //double* p_q_pc_eta = allocate("eta", n_steps_fixed);
         size_t count_pc_su = 0;
-        //size_t count_pc_q_dot = 0;
-        //size_t count_pc_W_dot_gross = 0;
         ssc_number_t *p_q_dot_pc_startup = as_array("q_dot_pc_startup", &count_pc_su);
-        //ssc_number_t* p_q_dot = as_array("q_pb", &count_pc_q_dot);
-        //ssc_number_t* p_W_dot_cycle = as_array("P_cycle", &count_pc_W_dot_gross);
         if( count_pc_su != n_steps_fixed )
         {
             log("q_dot_pc_startup array is a different length than 'n_steps_fixed'.", SSC_WARNING);
