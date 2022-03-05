@@ -59,14 +59,23 @@ jobs:
       run: |
         set -e
         ${SSCDIR}/build/test/Test
-        
+    
+    - name: Check paths for upload
+      run: |
+        echo "SSC Root"
+        ls ${{env.SSCDIR}}
+        echo "Build Dir"
+        ls ${{env.SSCDIR}}/build
+        echo "Build/SSC"
+        ls ${{env.SSCDIR}}/build/ssc
+    
     - name: Upload Artifacts
       uses: actions/upload-artifact@v3
       with:
           name: SSC Linux Shared Libraries
           path: |
-            ${SSCDIR}/build/ssc/libssc.so
-            ${SSCDIR}/build/ssc/ssc.so
+            ${{env.SSCDIR}}/build/ssc/libssc.so
+            ${{env.SSCDIR}}/build/ssc/ssc.so
       
   build-on-mac:
     runs-on: macos-11
@@ -118,12 +127,22 @@ jobs:
         set -e
         ${SSCDIR}/build/test/Test
       shell: bash
-      
+    
+    - name: Check paths for upload
+      run: |
+        echo "SSC Root"
+        ls ${{env.SSCDIR}}
+        echo "Build Dir"
+        ls ${{env.SSCDIR}}/build
+        echo "Build/SSC"
+        ls ${{env.SSCDIR}}/build/ssc
+        
+    
     - name: Upload Artifacts
       uses: actions/upload-artifact@v3
       with:
           name: SSC Mac Shared Libraries
           path: |
-            ${SSCDIR}/build/ssc/libssc.dylib
-            ${SSCDIR}/build/ssc/ssc.dylib 
+            ${{env.SSCDIR}}/build/ssc/libssc.dylib
+            ${{env.SSCDIR}}/build/ssc/ssc.dylib 
 
