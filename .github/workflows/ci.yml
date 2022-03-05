@@ -59,7 +59,14 @@ jobs:
       run: |
         set -e
         ${SSCDIR}/build/test/Test
-
+        
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+          name: SSC Linux Shared Libraries
+          path: |
+            ${SSCDIR}/build/ssc/libssc.so
+            ${SSCDIR}/build/ssc/ssc.so
       
   build-on-mac:
     runs-on: macos-11
@@ -111,4 +118,12 @@ jobs:
         set -e
         ${SSCDIR}/build/test/Test
       shell: bash
+      
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+          name: SSC Mac Shared Libraries
+          path: |
+            ${SSCDIR}/build/ssc/libssc.dylib
+            ${SSCDIR}/build/ssc/ssc.dylib 
 
