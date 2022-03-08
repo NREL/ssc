@@ -121,6 +121,7 @@ bool Financial_Construction_Financing_Equations(ssc_data_t data)
     vt->assign("const_per_percent_total", const_per_percent_total);
     vt->assign("construction_financing_cost", construction_financing_cost);
     vt->assign("const_per_interest_total", const_per_interest_total);
+    return true;
 }
 
 bool Financial_Capacity_Payments_Equations(ssc_data_t data)

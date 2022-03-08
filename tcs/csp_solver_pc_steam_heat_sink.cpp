@@ -50,10 +50,10 @@ void C_pc_steam_heat_sink::check_double_params_are_set()
 	{
 		throw(C_csp_exception("The following parameter was not set prior to calling the C_pc_heat_sink init() method: ", "m_x_hot_des"));
 	}
-	if( !check_double(ms_params.m_T_hot_des) )
-	{
-		throw(C_csp_exception("The following parameter was not set prior to calling the C_pc_heat_sink init() method: ", "m_T_hot_des"));
-	}
+	//if( !check_double(ms_params.m_T_hot_des) )
+	//{
+	//	throw(C_csp_exception("The following parameter was not set prior to calling the C_pc_heat_sink init() method: ", "m_T_hot_des"));
+	//}
 	if( !check_double(ms_params.m_P_hot_des) )
 	{
 		throw(C_csp_exception("The following parameter was not set prior to calling the C_pc_heat_sink init() method: ", "m_P_hot_des"));
