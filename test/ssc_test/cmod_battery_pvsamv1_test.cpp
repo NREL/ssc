@@ -626,7 +626,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_CustomDispatchBatteryModelD
     ssc_number_t peakKwCharge = -948.6;
     ssc_number_t peakKwDischarge = 652.0;
     ssc_number_t peakCycles = 3;
-    ssc_number_t avgCycles = 1.1941;
+    ssc_number_t avgCycles = 1.194;
 
     ssc_data_set_number(data, "batt_dispatch_choice", 2);
     ssc_data_set_number(data, "batt_ac_or_dc", 0);
@@ -880,8 +880,8 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_CustomDispatchBatteryModelD
 
         auto batt_q_rel = data_vtab->as_vector_ssc_number_t("batt_capacity_percent");
         auto batt_cyc_avg = data_vtab->as_vector_ssc_number_t("batt_DOD_cycle_average");
-        EXPECT_NEAR(batt_q_rel.back(), 84.485, 2e-2);
-        EXPECT_NEAR(batt_cyc_avg.back(), 22.11, m_error_tolerance_lo);
+        EXPECT_NEAR(batt_q_rel.back(), 85.759, 2e-2);
+        EXPECT_NEAR(batt_cyc_avg.back(), 21.92, m_error_tolerance_lo);
     }
 
 }

@@ -336,7 +336,7 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
         // ETES settings for financial model
     { SSC_OUTPUT, SSC_NUMBER, "ppa_soln_mode",                 "PPA solution mode",                                             "0/1",          "0 = solve ppa,1 = specify ppa",     "Revenue",                                  "sim_type=1",                                                                "INTEGER,MIN = 0,MAX = 1", "" },
     { SSC_OUTPUT, SSC_NUMBER, "flip_target_percent",		   "After-tax IRR target",		                                    "%",	        "",					                 "Revenue",                                  "sim_type=1",					                                              "MIN=0,MAX=100",     	     "" },
-
+    { SSC_OUTPUT, SSC_NUMBER, "total_land_area",               "Total land area",                                               "acre",         "",                                  "System Costs",                             "*",                                                                         "",              "" },
 
     var_info_invalid };
 
@@ -979,7 +979,9 @@ public:
             // Financial
         assign("ppa_soln_mode", 1);     // Only allow dispatch model to use fixed ppa mode so dispatch model knows absolute prices
         assign("flip_target_percent", 0.0); //[%] fixed ppa mode shouldn't use this input, so set it to a value that, if used, will give weird results
-            
+            // ETES model assumes no land area. Can calculate land costs based on % or absolute values
+        assign("total_land_area", 0);   //[acre]
+
         // *****************************************************
         // *****************************************************
 

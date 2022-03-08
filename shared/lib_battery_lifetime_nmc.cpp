@@ -31,6 +31,7 @@ void lifetime_nmc_t::initialize() {
     // cycle model for counting cycles only, no cycle-only degradation
     cycle_model = std::unique_ptr<lifetime_cycle_t>(new lifetime_cycle_t(params, state));
     cycle_model->resetDailyCycles();
+    state->nmc_li_neg->temp_dt = 0;
     state->nmc_li_neg->dq_relative_li1 = 0;
     state->nmc_li_neg->dq_relative_li2 = 0;
     state->nmc_li_neg->dq_relative_li3 = 0;
@@ -109,6 +110,11 @@ double lifetime_nmc_t::runQli(double T_battery_K) {
     state->nmc_li_neg->b2_dt = 0;
     state->nmc_li_neg->b3_dt = 0;
 
+    double DOD_range = cycle_model->predictDODMax();
+    double U_neg = calculate_Uneg(cycle_model->predictAvgSOC(DOD_range));
+    double Tfl_b1 = exp((alpha_a_b1 * F / Rug) * (U_neg / T_battery_K - Uneg_ref / T_ref));
+    b1 *= Tfl_b1 * exp(gamma * pow(DOD_range, beta_b1));
+
     // Reversible thermal capacity dependence
     double d0_t = d0_ref * exp(-(Ea_d0_1 / Rug) * (1 / T_battery_K - 1 / T_ref) -
                       (Ea_d0_2 / Rug) * pow(1 / T_battery_K - 1 / T_ref, 2));
@@ -121,10 +127,10 @@ double lifetime_nmc_t::runQli(double T_battery_K) {
     else
         dQLi1dt = 0.5 * b1 * b1 / state->nmc_li_neg->dq_relative_li1;
     double dQLi2dt = 0;
-    for (auto & DOD : state->cycle->cycle_DOD_range){
-        dQLi2dt += pow(DOD * 1e-2, 2);
+    for (auto & DOD : state->cycle->cycle_counts){
+        dQLi2dt += pow(b2 * DOD[cycle_state::DOD] * 1e-2 * DOD[1], 2);
     }
-    dQLi2dt = b2 * sqrt(dQLi2dt);
+    dQLi2dt = b2_ref * b2 * sqrt(dQLi2dt);
     double dQLi3dt = fmax(0.0, b3 - state->nmc_li_neg->dq_relative_li3) / tau_b3;
 
     state->nmc_li_neg->dq_relative_li1 += dQLi1dt;
@@ -139,10 +145,10 @@ double lifetime_nmc_t::runQneg() {
 
     double c0 = state->nmc_li_neg->c0_dt;
     double c2 = 0;
-    for (double i : state->cycle->cycle_DOD_range) {
-        c2 += pow(i * 0.01, beta_c2);
+    for (auto & DOD : state->cycle->cycle_counts){
+        c2 += pow(DOD[cycle_state::DOD] * 0.01, beta_c2) * DOD[cycle_state::CYCLES];
     }
-    c2 *= state->nmc_li_neg->c2_dt;
+    c2 = state->nmc_li_neg->c2_dt * std::sqrt(c2);
 
     state->nmc_li_neg->c0_dt = 0;
     state->nmc_li_neg->c2_dt = 0;
@@ -157,23 +163,23 @@ double lifetime_nmc_t::runQneg() {
 }
 
 void lifetime_nmc_t::integrateDegParams(double dt_day, double DOD, double T_battery) {
-    double DOD_range = cycle_model->predictDODRng();
+    double DOD_max = cycle_model->predictDODMax();
     double SOC_avg = cycle_model->predictAvgSOC(DOD);
-    double U_neg = calculate_Uneg(SOC_avg);
     double V_oc = calculate_Voc(SOC_avg);
+
+    state->nmc_li_neg->temp_dt += T_battery * dt_day;
 
     // multiply by timestep in days and populate corresponding vectors
     double Arr_b1 = exp(-(Ea_b1 / Rug) * (1. / T_battery - 1. / T_ref));
-    double Tfl_b1 = exp((alpha_a_b1 * F / Rug) * (U_neg / T_battery - Uneg_ref / T_ref));
-    double b1_dt_el = b1_ref * Arr_b1 * Tfl_b1 * exp(gamma * pow(DOD_range, beta_b1)) * dt_day;
+    double b1_dt_el = b1_ref * Arr_b1 * dt_day;
 
     double Arr_b2 = exp(-(Ea_b2 / Rug) * (1. / T_battery - 1. / T_ref));
-    double b2_dt_el = b2_ref * Arr_b2 * dt_day;
+    double b2_dt_el = Arr_b2 * dt_day;
 
     double Arr_b3 = exp(-(Ea_b3 / Rug) * (1. / T_battery - 1. / T_ref));
     double Tfl_b3 = exp((alpha_a_b3 * F / Rug) * (V_oc / T_battery - V_ref / T_ref));
     double b3_dt_el = b3_ref * Arr_b3 * Tfl_b3
-                      * (1 + theta * DOD_range) * dt_day;
+                      * (1 + theta * DOD_max) * dt_day;
 
     state->nmc_li_neg->b1_dt += b1_dt_el;
     state->nmc_li_neg->b2_dt += b2_dt_el;
@@ -189,13 +195,14 @@ void lifetime_nmc_t::integrateDegParams(double dt_day, double DOD, double T_batt
     state->cycle->cum_dt += dt_day;
 }
 
-void lifetime_nmc_t::integrateDegLoss(double T_battery) {
-    state->nmc_li_neg->q_relative_li = runQli(T_battery);
+void lifetime_nmc_t::integrateDegLoss() {
+    state->nmc_li_neg->q_relative_li = runQli(state->nmc_li_neg->temp_dt);
     state->nmc_li_neg->q_relative_neg = runQneg();
     state->q_relative = fmin(state->nmc_li_neg->q_relative_li, state->nmc_li_neg->q_relative_neg);
 
     // reset cycle tracking
     state->cycle->cum_dt = 0;
+    state->nmc_li_neg->temp_dt = 0;
     cycle_model->resetDailyCycles();
 }
 
@@ -216,7 +223,7 @@ void lifetime_nmc_t::runLifetimeModels(size_t _, bool charge_changed, double pre
         state->day_age_of_battery += dt_day_to_end_of_day;
 
         integrateDegParams(dt_day_to_end_of_day, DOD_at_end_of_day, T_battery);
-        integrateDegLoss(T_battery);
+        integrateDegLoss();
 
         dt_day = new_cum_dt - 1;
     }
@@ -225,7 +232,7 @@ void lifetime_nmc_t::runLifetimeModels(size_t _, bool charge_changed, double pre
     integrateDegParams(dt_day, DOD, T_battery);
 
     if (fabs(state->cycle->cum_dt - 1.) < 1e-7) {
-        integrateDegLoss(T_battery);
+        integrateDegLoss();
     }
 }
 
