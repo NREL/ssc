@@ -1002,15 +1002,16 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
                 
                                                                             //double Re_forced  = MAX(0.1,rho_air*V_cover*L_char/mu_air) ; //  !Reynolds number of wind moving across module
                 //double Re_forced = MAX(0.1, rho_air * V_cover * Lsc / mu_air); //  !Reynolds number of wind moving across module
-                if (track_mode == 1)
+                if (track_mode == 1 && h_lacunarity != 0)
                     Lsc = 0.0256 * input.Tilt + 4.1799;
                 double Re_forced = MAX(0.1, rho_air_test * V_cover * Lsc / mu_air_test);
                 double Re_forced_old = MAX(0.1, rho_air * V_cover * L_char / mu_air);
                 double Nu_forced  = 0.037 * pow(Re_forced_old,4./5.) * pow(Pr_air, 1./3.) ; //  !Nusselt Number (Incropera et al., 2006)
                 double h_forced = 0;
-                if (Lsc == 0 && track_mode != 1)
+                if (Lsc == 0)
                     h_forced   = Nu_forced * k_air / L_char;
                 //double h_forced   = h_lacunarity;
+
                 else
                     h_forced   = (k_air_test / (ground_clearance_height + 2.0 * Length * sind(input.Tilt))) * pow(10, (0.090125 * pow(Re_forced, 1. / 5.) * pow(Pr_air_test, 1. / 12.) + 1.8617));
 				double h_sky      = (TC*TC+T_sky*T_sky)*(TC+T_sky);
