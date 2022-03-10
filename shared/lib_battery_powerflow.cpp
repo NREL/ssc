@@ -472,12 +472,18 @@ void BatteryPowerFlow::calculateACConnected()
 
     double P_loss_coverage = 0;
     if (m_BatteryPower->isOutageStep) {
-        P_loss_coverage = P_gen_ac - P_batt_to_load_ac - P_pv_to_load_ac - P_fuelcell_to_load_ac + P_ac_losses;
+        if (P_ac_losses < 0) {
+            P_ac_losses = 0; // Inverter losses are already counted in gen, don't double count below. PVSAMV1 code will do the right thing after this calc
+        }
+        double gen_for_ac_losses = P_gen_ac - P_batt_to_load_ac - P_pv_to_load_ac - P_fuelcell_to_load_ac;
         // If gen is greater than load and losses, then there's curtailment and we don't need to worry about it
-        if (P_loss_coverage > 0) {
+        if (gen_for_ac_losses > P_ac_losses) {
             P_loss_coverage = 0;
         }
-        P_crit_load_unmet_ac = P_crit_load_ac - P_pv_to_load_ac - P_batt_to_load_ac - P_fuelcell_to_load_ac - P_loss_coverage;
+        else {
+            P_loss_coverage = P_ac_losses - gen_for_ac_losses;
+        }
+        P_crit_load_unmet_ac = P_crit_load_ac - P_pv_to_load_ac - P_batt_to_load_ac - P_fuelcell_to_load_ac + P_loss_coverage;
         if (P_crit_load_unmet_ac > P_crit_load_ac) {
             P_unmet_losses = P_crit_load_unmet_ac - P_crit_load_ac;
             P_crit_load_unmet_ac = P_crit_load_ac;
@@ -826,21 +832,27 @@ void BatteryPowerFlow::calculateDCConnected()
 
     P_ac_losses = P_gen_ac * ac_loss_percent;
     
-
+    double P_loss_coverage = 0;
     if (m_BatteryPower->isOutageStep) {
-        double P_loss_coverage = P_gen_ac - P_batt_to_load_ac - P_pv_to_load_ac + P_ac_losses;
+        if (P_ac_losses < 0) {
+            P_ac_losses = 0; // Inverter losses are already counted in gen, don't double count below. PVSAMV1 code will do the right thing after this calc
+        }
+        double gen_for_ac_losses = P_gen_ac - P_batt_to_load_ac - P_pv_to_load_ac;
         // If gen is greater than load and losses, then there's curtailment and we don't need to worry about it
-        if (P_loss_coverage > 0) {
+        if (gen_for_ac_losses > P_ac_losses) {
             P_loss_coverage = 0;
         }
-        // Won't reach this line if P_batt_to_grid_ac is positive. If negative, it's the AC losses we need to account for
-        P_crit_load_unmet_ac = P_crit_load_ac - P_pv_to_load_ac - P_batt_to_load_ac - P_loss_coverage;
+        else {
+            P_loss_coverage = P_ac_losses - gen_for_ac_losses;
+        }
+        P_crit_load_unmet_ac = P_crit_load_ac - P_pv_to_load_ac - P_batt_to_load_ac + P_loss_coverage;
         if (P_crit_load_unmet_ac > P_crit_load_ac) {
             P_unmet_losses = P_crit_load_unmet_ac - P_crit_load_ac;
             P_crit_load_unmet_ac = P_crit_load_ac;
-            if (P_gen_ac < 0.0 && P_unmet_losses > 0.0) {
-                P_gen_ac += P_unmet_losses; // Unmet losses should be categorized as such, not in gen
-            }
+        }
+        P_grid_to_load_ac = 0;
+        if (P_gen_ac < 0.0 && P_unmet_losses > 0.0) {
+            P_gen_ac += P_unmet_losses; // Unmet losses should be categorized as such, not in gen
         }
         P_grid_to_load_ac = 0;
         P_grid_ac = 0;
