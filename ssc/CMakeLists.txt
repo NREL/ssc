@@ -27,6 +27,7 @@ set(SSC_SRC
 		cmod_cb_mspt_system_costs.cpp
 		cmod_csp_common_eqns.cpp
 		cmod_csp_common_eqns.h
+		cmod_csp_dsg_lf_ui.cpp
 		cmod_csp_tower_eqns.cpp
 		cmod_csp_tower_eqns.h
         cmod_csp_trough_eqns.cpp

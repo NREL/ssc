@@ -56,7 +56,7 @@ static var_info vtab_thirdpartyownership[] = {
 
 	//{ SSC_OUTPUT,        SSC_NUMBER,     "lcoe_real",                "Real LCOE",                          "cents/kWh",    "",                      "Cash Flow",      "*",                       "",                                         "" },
 	//{ SSC_OUTPUT,        SSC_NUMBER,     "lcoe_nom",                 "Nominal LCOE",                       "cents/kWh",    "",                      "Cash Flow",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "npv",                      "Net present value",				   "$",            "",                      "Financial Metrics",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "npv",                      "NPV Net present value",				   "$",            "",                      "Financial Metrics",      "*",                       "",                                         "" },
 
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_net",            "Electricity net generation",       "kWh", "", "Cash Flow Electricity", "*", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_sales",          "Electricity generation",           "kWh", "", "Cash Flow Electricity", "*", "LENGTH_EQUAL=cf_length", "" },
