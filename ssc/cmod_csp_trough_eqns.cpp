@@ -295,7 +295,7 @@ bool Physical_Trough_Collector_Type_Equations(ssc_data_t data)
     if (!vt) {
         return false;
     }
-
+    return true;
 }
 
 bool Physical_Trough_Collector_Type_UI_Only_Equations(ssc_data_t data)

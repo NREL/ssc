@@ -140,6 +140,10 @@ set_disabled_warnings(shared)
 #
 #####################################################################################################################
 
+set( DEPENDENCIES
+	splinter
+	)
+
 if (UNIX)
     set(CMAKE_SHARED_LINKER_FLAGS "-lm")
 endif ()
