@@ -25,8 +25,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 static var_info vtab_iph_to_lcoefcr[] = 
 {	
 /*   VARTYPE            DATATYPE         NAME                        LABEL                             UNITS     META      GROUP          REQUIRED_IF    CONSTRAINTS UI_HINTS*/
-	{ SSC_INPUT,       SSC_NUMBER,      "annual_electricity_consumption",  "Annual electricity consumptoin w/ avail derate",            "kWe-hr", "",   "IPH LCOH",     "*",       "",   "" },
-	{ SSC_INPUT,       SSC_NUMBER,      "electricity_rate",                "Cost of electricity used to operate pumps/trackers",        "$/kWe",  "",   "IPH LCOH",     "*",       "",   "" },
+	{ SSC_INPUT,       SSC_NUMBER,      "annual_electricity_consumption",  "Annual electricity consumption with avail derate",            "kWe-hr", "",   "IPH LCOH",     "*",       "",   "" },
+	{ SSC_INPUT,       SSC_NUMBER,      "electricity_rate",                "Cost of electricity used to operate pumps and trackers",        "$/kWe",  "",   "IPH LCOH",     "*",       "",   "" },
 
 	{ SSC_INOUT,       SSC_NUMBER,      "fixed_operating_cost",     "Annual fixed operating cost",    "$/kW",   "",       "Simple LCOE", "*",           "",         "" },
 

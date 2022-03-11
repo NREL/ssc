@@ -94,7 +94,7 @@ static const char *Reopt_size_battery_params_doc =
         "         'ur_ec_sched_weekend': matrix [tiers], Energy charge weekend schedule, count starts at 1, 12mx24hr\\n"
         "         'ur_ec_tou_mat': matrix [[period, tier, kw, $], Demand rates (TOU), each row provides period, tier, peak power, and charge\\n"
         "         'load': array [kW], Electricity load (year 1)\\n"
-        "         'crit_load': array [kW], Critical electricity load (year 1)\\n"
+        "         'crit_load': optional array [kW], Critical electricity load (year 1)\\n"
         "     ++ Financial inputs ++\\n"
         "         'analysis_period': double [years]\\n"
         "         'rate_escalation': double [%/year], Annual electricity rate escalation, 0-100\\n"

@@ -53,9 +53,11 @@ TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, TestStep) {
     EXPECT_NEAR(SOC, 46.94, 1e-2);
 
     // make a copy
-    std::string js = ssc_data_to_json(data);
-    auto copy = json_to_ssc_data(js.c_str());
+    auto js = ssc_data_to_json(data);
+    auto copy = json_to_ssc_data(js);
 
+    delete js;
+    
     ssc_module_exec(mod, data);
     ssc_data_get_number(data, "last_idx", &last_idx);
     ssc_data_get_number(data, "V", &V);
@@ -100,6 +102,8 @@ TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, TestStep) {
     EXPECT_NEAR(P_d, 3.34, 1e-2);
     EXPECT_NEAR(P_c, -5.89, 1e-2);
     EXPECT_NEAR(SOC, 41.79, 1e-2);
+    
+    ssc_data_free(copy);
 }
 
 TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, SubMinute) {
@@ -119,9 +123,11 @@ TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, SubMinute) {
     EXPECT_NEAR(SOC, 52.07, 1e-2);
 
     // make a copy
-    std::string js = ssc_data_to_json(data);
-    auto copy = json_to_ssc_data(js.c_str());
+    auto js = ssc_data_to_json(data);
+    auto copy = json_to_ssc_data(js);
 
+    delete js;
+    
     ssc_module_exec(mod, data);
     ssc_data_get_number(data, "last_idx", &last_idx);
     ssc_data_get_number(data, "I", &current);
@@ -146,6 +152,8 @@ TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, SubMinute) {
     EXPECT_NEAR(P, 0.551, 1e-2);
     EXPECT_NEAR(V, 552.87, 1e-2);
     EXPECT_NEAR(SOC, 52.05, 1e-2);
+    
+    ssc_data_free(copy);
 }
 
 TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, ReadJson) {
@@ -167,6 +175,9 @@ TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, ReadJson) {
     EXPECT_EQ(length, 1);
 
     EXPECT_TRUE(1);     // means the variable retrievals all succeeded
+    
+    ssc_data_free(copy);
+
 }
 
 TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, RunCurrentControl) {
@@ -264,10 +275,12 @@ TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, AdaptiveTimestep) {
         ssc_module_exec(adaptive_batt, &data_copy);
         ssc_data_get_number(&data_copy, "P", &P);
         adaptive_E += P / (double)steps_per_hour;
-        std::string js = ssc_data_to_json(data);
-        std::string js_adaptive = ssc_data_to_json(&data_copy);
-        printf("%s\n", js.c_str());
-        printf("%s\n", js_adaptive.c_str());
+        auto js = ssc_data_to_json(data);
+        auto js_adaptive = ssc_data_to_json(&data_copy);
+        printf("%s\n", js);
+        printf("%s\n", js_adaptive);
+        delete js;
+        delete js_adaptive;
 
     }
 
@@ -281,11 +294,13 @@ TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, AdaptiveTimestep) {
     ssc_data_get_number(&data_copy, "P", &P);
     adaptive_E += P;
 
-    std::string js = ssc_data_to_json(data);
-    std::string js_adaptive = ssc_data_to_json(&data_copy);
-    printf("%s\n", js.c_str());
-    printf("%s\n", js_adaptive.c_str());
-
+    auto js = ssc_data_to_json(data);
+    auto js_adaptive = ssc_data_to_json(&data_copy);
+    printf("%s\n", js);
+    printf("%s\n", js_adaptive);
+    delete js;
+    delete js_adaptive;
+    
     double hourly_SOC, adaptive_SOC;
     ssc_data_get_number(data, "SOC", &hourly_SOC);
     ssc_data_get_number(&data_copy, "SOC", &adaptive_SOC);
@@ -294,26 +309,30 @@ TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, AdaptiveTimestep) {
     EXPECT_NEAR(adaptive_E, 2.995, 1e-3);
     EXPECT_NEAR(hourly_SOC, 23.614, 1e-3);
     EXPECT_NEAR(adaptive_SOC, 23.657, 1e-3);
+
+    ssc_module_free(adaptive_batt);
 }
 
 TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, TestCycleCount) {
-    std::string js = "{\"control_mode\": 0.0, \"dt_hr\": 0.002777777777777778, \"input_current\": 0.0, \"C_rate\": 0.2, \"Qexp\": 60.75, \"Qfull\": 75.56, \"Qnom\": 73.58, \"Vcut\": 3.0, \"Vexp\": 3.529, \"Vfull\": 4.2, \"Vnom\": 3.35, \"Vnom_default\": 3.6, \"chem\": 1.0, \"initial_SOC\": 66.0, \"life_model\": 1.0, \"maximum_SOC\": 100.0, \"minimum_SOC\": 0.0, \"resistance\": 0.001155, \"voltage_choice\": 0.0, \"Cp\": 980.0, \"T_room_init\": 29.69998526573181, \"h\": 8.066, \"loss_choice\": 0.0, \"mass\": 1.55417, \"monthly_charge_loss\": [0.0], \"monthly_discharge_loss\": [0.0], \"monthly_idle_loss\": [0.0], \"nominal_energy\": 0.272, \"nominal_voltage\": 3.6, \"replacement_option\": 0.0, \"schedule_loss\": [0.0], \"surface_area\": 0.1548, \"I\": 0.0, \"I_chargeable\": -8045.99999999998, \"I_dischargeable\": 643.841000000002, \"P\": 0.0, \"P_chargeable\": -108.70616176055955, \"P_dischargeable\": 1.9341550347606316, \"Q\": 53.21000000000006, \"Q_max\": 75.56, \"SOC\": 70.42085759661204, \"T_batt\": 30.07627155118435, \"T_room\": 29.69998526573181, \"V\": 3.7667917861703755, \"heat_dissipated\": 0.0004698373776256373, \"indices_replaced\": [0.0], \"last_idx\": 8639.0, \"loss_kw\": 0.0, \"n_replacements\": 0.0, \"DOD_max\": 1.0, \"DOD_min\": 0.0, \"I_loss\": 0.0, \"SOC_prev\": 70.42085759661204, \"T_batt_prev\": 30.0747312729467, \"average_range\": 33.594321796748574, \"b1_dt\": 0.008196217640552396, \"b2_dt\": 1.1539245050321905e-05, \"b3_dt\": 0.0421665242517969, \"c0_dt\": 76.8158487840016, \"c2_dt\": 3.772090139902601e-05, \"cell_current\": 0.0, \"cell_voltage\": 3.7667917861703755, \"chargeChange\": 0.0, \"charge_mode\": 1.0, \"cum_dt\": 0.9998842592591438, \"cycle_DOD\": 100.0, \"cycle_DOD_max\": [0.0, 100.0, 100.0, 100.0], \"cycle_DOD_range\": [0.0, 0.16094315625949207, 100.0, 0.6220222339862289], \"cycle_range\": 0.6220222339862289, \"day_age_of_battery\": 0.9998842592591438, \"dq_relative_li1\": 0.0, \"dq_relative_li2\": 0.0, \"dq_relative_li3\": 0.0, \"dq_relative_neg\": 0.0, \"n_cycles\": 3.0, \"prev_charge\": 2.0, \"q0\": 53.21000000000006, \"q_relative\": 100.0, \"q_relative_cycle\": 0.0, \"q_relative_li\": 100.0, \"q_relative_neg\": 100.0, \"q_relative_thermal\": 100.0, \"qmax_lifetime\": 75.56, \"qmax_thermal\": 75.56, \"rainflow_Xlt\": 0.6220222339862431, \"rainflow_Ylt\": 20.103229221810423, \"rainflow_jlt\": 4.0, \"rainflow_peaks\": [100.0, 0.0, 20.103229221810423, 19.48120698782418]}";
+    std::string js = "{\"control_mode\": 0.0, \"dt_hr\": 0.002777777777777778, \"input_current\": 0.0, \"C_rate\": 0.2, \"Qexp\": 60.75, \"Qfull\": 75.56, \"Qnom\": 73.58, \"Vcut\": 3.0, \"Vexp\": 3.529, \"Vfull\": 4.2, \"Vnom\": 3.35, \"Vnom_default\": 3.6, \"chem\": 1.0, \"initial_SOC\": 66.0, \"life_model\": 1.0, \"maximum_SOC\": 100.0, \"minimum_SOC\": 0.0, \"resistance\": 0.001155, \"voltage_choice\": 0.0, \"Cp\": 980.0, \"T_room_init\": 29.69998526573181, \"h\": 8.066, \"loss_choice\": 0.0, \"mass\": 1.55417, \"monthly_charge_loss\": [0.0], \"monthly_discharge_loss\": [0.0], \"monthly_idle_loss\": [0.0], \"nominal_energy\": 0.272, \"nominal_voltage\": 3.6, \"replacement_option\": 0.0, \"schedule_loss\": [0.0], \"surface_area\": 0.1548, \"I\": 0.0, \"I_chargeable\": -8045.99999999998, \"I_dischargeable\": 643.841000000002, \"P\": 0.0, \"P_chargeable\": -108.70616176055955, \"P_dischargeable\": 1.9341550347606316, \"Q\": 53.21000000000006, \"Q_max\": 75.56, \"SOC\": 70.42085759661204, \"T_batt\": 30.07627155118435, \"T_room\": 29.69998526573181, \"V\": 3.7667917861703755, \"heat_dissipated\": 0.0004698373776256373, \"indices_replaced\": [0.0], \"last_idx\": 8639.0, \"loss_kw\": 0.0, \"n_replacements\": 0.0, \"DOD_max\": 1.0, \"DOD_min\": 0.0, \"I_loss\": 0.0, \"SOC_prev\": 70.42085759661204, \"T_batt_prev\": 30.0747312729467, \"average_range\": 33.594321796748574, \"b1_dt\": 0.008196217640552396, \"b2_dt\": 1.1539245050321905e-05, \"b3_dt\": 0.0421665242517969, \"c0_dt\": 76.8158487840016, \"c2_dt\": 3.772090139902601e-05, \"cell_current\": 0.0, \"cell_voltage\": 3.7667917861703755, \"chargeChange\": 0.0, \"charge_mode\": 1.0, \"cum_dt\": 0.9998842592591438, \"temp_dt\": 291.947118, \"cycle_DOD\": 100.0, \"cycle_DOD_max\": [0.0, 100.0, 100.0, 100.0], \"cycle_counts\": [[0.0, 1], [0.16094315625949207, 1], [100.0, 1], [0.6220222339862289, 1]], \"cycle_range\": 0.6220222339862289, \"day_age_of_battery\": 0.9998842592591438, \"dq_relative_li1\": 0.0, \"dq_relative_li2\": 0.0, \"dq_relative_li3\": 0.0, \"dq_relative_neg\": 0.0, \"n_cycles\": 3.0, \"prev_charge\": 2.0, \"q0\": 53.21000000000006, \"q_relative\": 100.0, \"q_relative_cycle\": 0.0, \"q_relative_li\": 100.0, \"q_relative_neg\": 100.0, \"q_relative_thermal\": 100.0, \"qmax_lifetime\": 75.56, \"qmax_thermal\": 75.56, \"rainflow_Xlt\": 0.6220222339862431, \"rainflow_Ylt\": 20.103229221810423, \"rainflow_jlt\": 4.0, \"rainflow_peaks\": [100.0, 0.0, 20.103229221810423, 19.48120698782418]}";
     data = json_to_ssc_data(js.c_str());
 
     mod = ssc_module_create("battery_stateful");
     EXPECT_TRUE(ssc_stateful_module_setup(mod, data));
-
+    
+    ssc_data_free(data);
+    
     data = json_to_ssc_data(js.c_str()); // Refresh the vtable data since setup overwrites some of the history
 
     var_table* vt = static_cast<var_table*>(data);
 
-    EXPECT_TRUE(vt->is_assigned("cycle_DOD_range"));
+    EXPECT_TRUE(vt->is_assigned("cycle_counts"));
     EXPECT_TRUE(vt->is_assigned("cycle_DOD_max"));
 
     EXPECT_TRUE(ssc_module_exec(mod, data)); // Executing one step with 0 input_current (default) will trip the next day using the nmc lifetime model
 
     vt = static_cast<var_table*>(data);
-    EXPECT_FALSE(vt->is_assigned("cycle_DOD_range"));
+    EXPECT_FALSE(vt->is_assigned("cycle_counts"));
     EXPECT_FALSE(vt->is_assigned("cycle_DOD_max"));
 
 }

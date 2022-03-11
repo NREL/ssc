@@ -919,9 +919,9 @@ size_t util::hour_of_year(size_t month, size_t day, size_t hour)
 		h += hour;
 	else ok = false;
 	if (hour > 8759)
-	    throw std::runtime_error("hour_of_year range is (0-8759) but calculated hour is > 8759.");
+	    throw std::runtime_error("hour_of_year range is (0-8759) but calculated hour is > 8759: " + std::to_string(hour));
 	if (!ok)
-		throw std::runtime_error("hour_of_year input month, day, or hour out of correct range");
+		throw std::runtime_error("hour_of_year input month, day, or hour out of correct range for m-d-h: " + std::to_string(month) + "-" + std::to_string(day) + "-" + std::to_string(hour));
 	return h;
 }
 
@@ -1175,6 +1175,28 @@ size_t util::nearest_col_index(const matrix_t<double>& mat, size_t col, double v
     std::vector<double> values;
     for (size_t i = 0; i < mat.nrows(); i++) {
         values.push_back(mat.at(i, col));
+    }
+
+    auto iter = std::lower_bound(values.begin(), values.end(), val);
+
+    if (iter == values.begin()) {
+        return 0;
+    }
+    if (iter == values.end()) {
+        return iter - values.begin() - 1;
+    }
+
+    double a = *(iter - 1);
+    double b = *(iter);
+
+    return fabs(val - a) < fabs(val - b) ? (iter - values.begin() - 1) : (iter - values.begin());
+}
+
+size_t util::nearest_col_index(const std::vector<std::vector<double>>& mat, size_t col, double val) {
+    std::vector<double> values;
+    values.reserve(mat.size());
+    for (const auto & i : mat) {
+        values.push_back(i[col]);
     }
 
     auto iter = std::lower_bound(values.begin(), values.end(), val);

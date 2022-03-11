@@ -256,6 +256,8 @@ void cm_windpower::exec()
 	wt.measurementHeight = wt.hubHeight;
 	wt.rotorDiameter = as_double("wind_turbine_rotor_diameter");
 	ssc_number_t *pc_w = as_array("wind_turbine_powercurve_windspeeds", &wt.powerCurveArrayLength);
+    if (wt.powerCurveArrayLength == 1)
+        throw exec_error("windpower", util::format("The wind turbine power curves has insufficient data. Consider changing the turbine design parameters"));
 	ssc_number_t *pc_p = as_array("wind_turbine_powercurve_powerout", NULL);
 	std::vector<double> windSpeeds(wt.powerCurveArrayLength), powerOutput(wt.powerCurveArrayLength);
 	for (size_t i = 0; i < wt.powerCurveArrayLength; i++){

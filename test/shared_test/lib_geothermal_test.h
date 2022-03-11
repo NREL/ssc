@@ -374,67 +374,19 @@ public:
 
 
 	void TearDown() {
-		
-		if (geoTester != nullptr) {
-			delete geoTester;
-			geoTester = nullptr;
-		}
-		
-		if (geoPlant_outputs.maf_hourly_power != nullptr) {
-			delete[] geoPlant_outputs.maf_hourly_power;
-			geoPlant_outputs.maf_hourly_power = nullptr;
-		}
-		
-		if (geoPlant_outputs.maf_timestep_wet_bulb != nullptr) {
-			delete[] geoPlant_outputs.maf_timestep_wet_bulb;
-			geoPlant_outputs.maf_timestep_wet_bulb = nullptr;
-		}
-		
-		if (geoPlant_outputs.maf_timestep_dry_bulb != nullptr) {
-			delete[] geoPlant_outputs.maf_timestep_dry_bulb;
-			geoPlant_outputs.maf_timestep_dry_bulb = nullptr;
-		}
-		
-		if (geoPlant_outputs.maf_timestep_pressure != nullptr) {
-			delete[] geoPlant_outputs.maf_timestep_pressure;
-			geoPlant_outputs.maf_timestep_pressure = nullptr;
-		}
-		
-		if (geoPlant_outputs.maf_timestep_test_values != nullptr) {
-			delete[] geoPlant_outputs.maf_timestep_test_values;
-			geoPlant_outputs.maf_timestep_test_values = nullptr;
-		}
-		
-		if (geoPlant_outputs.maf_timestep_power != nullptr) {
-			delete[] geoPlant_outputs.maf_timestep_power;
-			geoPlant_outputs.maf_timestep_power = nullptr;
-		}
-		
-		if (geoPlant_outputs.maf_timestep_resource_temp != nullptr) {
-			delete[] geoPlant_outputs.maf_timestep_resource_temp;
-			geoPlant_outputs.maf_timestep_resource_temp = nullptr;
-		}
-		
-		if (geoPlant_outputs.maf_monthly_energy != nullptr) {
-			delete[] geoPlant_outputs.maf_monthly_energy;
-			geoPlant_outputs.maf_monthly_energy = nullptr;
-		}
-		
-		if (geoPlant_outputs.maf_monthly_power != nullptr) {
-			delete[] geoPlant_outputs.maf_monthly_power;
-			geoPlant_outputs.maf_monthly_power = nullptr;
-		}
-		
-		if (geoPlant_outputs.maf_monthly_resource_temp != nullptr) {
-			delete[] geoPlant_outputs.maf_monthly_resource_temp;
-			geoPlant_outputs.maf_monthly_resource_temp = nullptr;
-		}
-		
-		if (geoPlant_outputs.maf_ReplacementsByYear != nullptr) {
-			delete[] geoPlant_outputs.maf_ReplacementsByYear;
-			geoPlant_outputs.maf_ReplacementsByYear = nullptr;
-		}
-			   		 
+			delete [] geoPlant_outputs.maf_hourly_power;
+			delete [] geoPlant_outputs.maf_timestep_wet_bulb;
+			delete [] geoPlant_outputs.maf_timestep_dry_bulb;
+			delete [] geoPlant_outputs.maf_timestep_pressure;
+			delete [] geoPlant_outputs.maf_timestep_test_values;
+			delete [] geoPlant_outputs.maf_timestep_power;
+			delete [] geoPlant_outputs.maf_timestep_resource_temp;
+			delete [] geoPlant_outputs.maf_monthly_energy;
+			delete [] geoPlant_outputs.maf_monthly_power;
+			delete [] geoPlant_outputs.maf_monthly_resource_temp;
+			delete [] geoPlant_outputs.maf_ReplacementsByYear;
+            delete geoTester;
+
 	}
 
 };

@@ -448,7 +448,12 @@ tcskernel::tcskernel( tcstypeprovider *prov )
 
 tcskernel::~tcskernel()
 {
-	// nothing to do
+   for (size_t i=0;i<m_units.size();i++)
+    {
+    // free matrix, arrays, and strings
+        for (auto& v: m_units[i].values)
+            tcsvalue_free(&v);
+    }
 }
 
 int tcskernel::version()

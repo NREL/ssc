@@ -50,10 +50,10 @@ TEST_F(CmodCashLoanTest, DiscountedPayback) {
 
     // Run with fixed output
     int errors = run_module(dat, "pvwattsv7");
-    errors = run_module(dat, "belpe");
-    errors = run_module(dat, "grid");
-    errors = run_module(dat, "utilityrate5");
-    errors = run_module(dat, "cashloan");
+    errors += run_module(dat, "belpe");
+    errors += run_module(dat, "grid");
+    errors += run_module(dat, "utilityrate5");
+    errors += run_module(dat, "cashloan");
 
     EXPECT_FALSE(errors);
     if (!errors)

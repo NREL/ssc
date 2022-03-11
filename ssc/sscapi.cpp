@@ -38,7 +38,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 SSCEXPORT int ssc_version()
 {
-	return 267;
+	return 268;
 }
 
 SSCEXPORT const char *ssc_build_info()
@@ -133,6 +133,7 @@ extern module_entry_info
 	cm_entry_cb_mspt_system_costs,
 	cm_entry_cb_construction_financing,
 	cm_entry_cb_empirical_hce_heat_loss,
+    cm_entry_csp_dsg_lf_ui,
 	cm_entry_battery,
 	cm_entry_battwatts,
 	cm_entry_fuelcell,
@@ -229,6 +230,7 @@ static module_entry_info *module_table[] = {
 	&cm_entry_cb_mspt_system_costs,
 	&cm_entry_cb_construction_financing,
 	&cm_entry_cb_empirical_hce_heat_loss,
+    &cm_entry_csp_dsg_lf_ui,
 	&cm_entry_battery,
 	&cm_entry_battwatts,
 	&cm_entry_fuelcell,
@@ -891,13 +893,16 @@ void json_to_ssc_var(const rapidjson::Value& json_val, ssc_var_t ssc_val) {
 }
 
 SSCEXPORT ssc_data_t json_to_ssc_data(const char* json_str) {
+        // memory leak if calling program does not do garbage collection
     auto vt = new var_table;
+//    std::unique_ptr<var_table> vt = std::unique_ptr<var_table>(new var_table);
     rapidjson::Document document;
     document.Parse(json_str);
     if (document.HasParseError()) {
         std::string s = rapidjson::GetParseError_En(document.GetParseError());
         vt->assign("error", s);
-        return dynamic_cast<ssc_data_t>(vt);
+//        return dynamic_cast<ssc_data_t>(vt);
+        return vt;
     }
 //    static const char* kTypeNames[] = { "Null", "False", "True", "Object", "Array", "String", "Number" };
     for (rapidjson::Value::ConstMemberIterator itr = document.MemberBegin(); itr != document.MemberEnd(); ++itr) {
@@ -1272,12 +1277,13 @@ SSCEXPORT void __ssc_segfault()
 	std::string mystr = *pstr;
 }
 
-static std::string* s_python_path;
+//static std::string* s_python_path
+static std::unique_ptr<std::string> s_python_path;
 
 SSCEXPORT int set_python_path(const char* abs_path) {
     if (util::dir_exists(abs_path)){
-        delete s_python_path;
-        s_python_path = new std::string(abs_path);
+//        delete s_python_path;
+        s_python_path = std::unique_ptr<std::string>( new std::string(abs_path));
         return 1;
     }
     else

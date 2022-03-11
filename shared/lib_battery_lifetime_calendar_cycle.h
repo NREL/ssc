@@ -70,7 +70,10 @@ struct cycle_state {
     int rainflow_jlt;                       // last index in Peaks, i.e, if Peaks = [0,1], then jlt = 1
     std::vector<double> rainflow_peaks;
 
-    util::matrix_t<double> cycle_counts;   // Cycles, sorted by DOD bins provided in cycling_matrix
+    // Cycles' DOD and Count
+    // CALCYC model: tracks all cycles in simulation, frequency is binned by DODs provided in cycling_matrix
+    // NMCGR model: tracks each cycle completed in a single day, recording each cycle as row; aligns with cycle_DOD_max
+    std::vector<std::vector<double>> cycle_counts;
     enum CYCLE_COUNTS_COLUMNS {
         DOD,
         CYCLES
@@ -81,7 +84,6 @@ struct cycle_state {
     double DOD_max;                         // max DOD of battery for current day, [0-1]
     double DOD_min;                         // min DOD of battery for current day, [0-1]
     std::vector<double> cycle_DOD_max;      // max DODs of cycles concluded in current day, %
-    std::vector<double> cycle_DOD_range;    // DOD cycle_range of each cycle, %
 
     friend std::ostream &operator<<(std::ostream &os, const cycle_state &p);
 };
@@ -137,7 +139,7 @@ public:
     void updateDailyCycles(double &prev_DOD, double &DOD, bool charge_changed);
 
     /// Predicts average DOD range of cycles in current eay
-    double predictDODRng();
+    double predictDODMax();
 
     /// Predicts average SOCs of cycles in current day
     double predictAvgSOC(double DOD);
