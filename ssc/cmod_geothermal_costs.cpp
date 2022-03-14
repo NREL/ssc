@@ -31,7 +31,9 @@ static var_info _cm_vtab_geothermal_costs[] = {
 	/*   VARTYPE			DATATYPE         NAME                              LABEL                                                       UNITS		META                      GROUP                   REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 
 		{ SSC_INPUT,        SSC_NUMBER,     "conversion_type",					"Conversion Type",											"",			"",						"GeoHourly",			    "*",                        "INTEGER",					    "" },
-		// Binary Plant Type Inputs:		
+        { SSC_INPUT,        SSC_NUMBER,     "ppi_base_year",					"PPI Base Year",									"",		"",						"GeoHourly",				"?=19",						"",								"" },
+
+        // Binary Plant Type Inputs:		
 		{ SSC_INPUT,		SSC_NUMBER,     "gross_output",						"Gross output from GETEM",									"kW",		"",						"GeoHourly",				"*",						"",								"" },
 		{ SSC_INPUT,		SSC_NUMBER,		"design_temp",						"Power block design temperature",							"C",        "",						"GeoHourly",				"*",						"",								"" },
 		{ SSC_INPUT,        SSC_NUMBER,     "eff_secondlaw",					"Second Law Efficiency",									"%",		"",						"GeoHourly",				"*",						"",								"" },
@@ -276,6 +278,8 @@ public:
 		SGeothermal_Inputs geo_inputs;
 		int conversion_type = as_integer("conversion_type");
 
+        int ppi_base_year = as_integer("ppi_base_year");
+
 		if (conversion_type == 0) {
 			//geo_inputs.me_ct = BINARY;
 
@@ -293,9 +297,9 @@ public:
             hx_gf_c2 = hx_c20 + pow(hx_c21, pow(design_temp, 2)) + pow(hx_c23, pow(design_temp, 3)); //Took out hx_c22 per Parangat report -MP 6/14/21
 
 			hx_gf_c = hx_gf_c1 * exp(hx_gf_c2 * eff);
-			current_cost_ref_hx = hx_gf_c * hx_ppi[20];
+			current_cost_ref_hx = hx_gf_c * hx_ppi[ppi_base_year];
 
-			hx_cost = user_adjust * pow(size_ratio, sf_hx)*((ref_plant_size*hx_gf_c*hx_ppi[20]) / unit_plant);
+			hx_cost = user_adjust * pow(size_ratio, sf_hx)*((ref_plant_size*hx_gf_c*hx_ppi[ppi_base_year]) / unit_plant);
 
 
 			//Air Cooled Condenser Cost Calculations:
@@ -305,8 +309,8 @@ public:
 			accc_2 = exp((acc_c23*pow(design_temp, 3)) + (acc_c22*pow(design_temp, 2)) + (acc_c21*design_temp) + acc_c20);
 			acc_c = accc_1 * pow(eff, accc_2) + accc_0;
 			//acc_c = 183.65;
-			current_cost_ref_acc = acc_c * hx_ppi[20];
-			condenser_cost = user_adjust * pow(size_ratio, sf_condenser)*((ref_plant_size * acc_c * hx_ppi[20]) / unit_plant);
+			current_cost_ref_acc = acc_c * hx_ppi[ppi_base_year];
+			condenser_cost = user_adjust * pow(size_ratio, sf_condenser)*((ref_plant_size * acc_c * hx_ppi[ppi_base_year]) / unit_plant);
 
 
 
@@ -315,8 +319,8 @@ public:
 			pcc_1 = (wf_c12 * pow(design_temp, 2)) + (wf_c11 * design_temp) + wf_c10;
 			pcc_2 = (wf_c22 * pow(design_temp, 2)) + (wf_c21 * design_temp) + wf_c20;
 			pcc_c = pcc_1 * exp(pcc_2*eff);
-			current_cost_ref_pcc = pcc_c * pump_ppi[20];
-			wf_pump_cost = user_adjust * pow(size_ratio, sf_wf)*((ref_plant_size * pcc_c * pump_ppi[20]) / unit_plant);
+			current_cost_ref_pcc = pcc_c * pump_ppi[ppi_base_year];
+			wf_pump_cost = user_adjust * pow(size_ratio, sf_wf)*((ref_plant_size * pcc_c * pump_ppi[ppi_base_year]) / unit_plant);
 
 
 			//Turbine-Generator (TG) Cost Calculation:
@@ -343,15 +347,15 @@ public:
 
 			generator_c = ((1800 * pow(tg_size, 0.67))) / ref_plant_size;
 			tg_cost = ref_turbine_cost + generator_c;
-			current_cost_ref_tg = tg_cost * turbine_ppi[20];
-			turbine_cost = user_adjust * pow(size_ratio, sf_turbine)*((ref_plant_size * tg_cost * turbine_ppi[20]) / unit_plant);
+			current_cost_ref_tg = tg_cost * turbine_ppi[ppi_base_year];
+			turbine_cost = user_adjust * pow(size_ratio, sf_turbine)*((ref_plant_size * tg_cost * turbine_ppi[ppi_base_year]) / unit_plant);
 
 
 			//Calculating Direct Construction Cost Multiplier:
 			escalation_equip_cost = (current_cost_ref_acc + current_cost_ref_hx + current_cost_ref_pcc + current_cost_ref_tg) / (hx_gf_c + acc_c + pcc_c + tg_cost);
-			corrected_labor = ((labor_cost_multiplier*engineering_ppi[20]) / escalation_equip_cost)*(1 + labor_fringe_benefits);
-			corrected_construct_malts = (const_matls_rentals * process_equip_ppi[20]) / escalation_equip_cost;
-			corrected_total_material_mult = ((steel*steel_ppi[20]) + ((total_material_cost_multiplier - 1 - steel)*process_equip_ppi[20]))*(1 / escalation_equip_cost) + 1;
+			corrected_labor = ((labor_cost_multiplier*engineering_ppi[ppi_base_year]) / escalation_equip_cost)*(1 + labor_fringe_benefits);
+			corrected_construct_malts = (const_matls_rentals * process_equip_ppi[ppi_base_year]) / escalation_equip_cost;
+			corrected_total_material_mult = ((steel*steel_ppi[ppi_base_year]) + ((total_material_cost_multiplier - 1 - steel)*process_equip_ppi[ppi_base_year]))*(1 / escalation_equip_cost) + 1;
 			multiplier_input_year = corrected_total_material_mult + corrected_labor + corrected_construct_malts;
 			plant_size_adjustment = 1.02875*pow((unit_plant / 1000), -0.01226);
 			direct_installation_multiplier = plant_size_adjustment * multiplier_input_year;
@@ -408,19 +412,19 @@ public:
 
 			//T-G Cost:
 			tg_cost = (tg_sets_num * (2830 * (pow((unit_plant / tg_sets_num), 0.745)))) + (3685 * (pow((unit_plant / tg_sets_num), 0.617)));	//Reference Equipment Cost
-			current_tg_cost = tg_cost * turbine_ppi[20];
+			current_tg_cost = tg_cost * turbine_ppi[ppi_base_year];
 
 
 			//Cooling Tower Cost:
 			condenser_heat_rejected = GF_flowrate * qRejectTotal / 1000;
 			cooling_tower_cost = 7800 * (pow(condenser_heat_rejected, 0.8));		//Reference Equipment Cost
-			current_tower_cost = cooling_tower_cost * process_equip_ppi[20];
+			current_tower_cost = cooling_tower_cost * process_equip_ppi[ppi_base_year];
 
 			//Condenser Cost: 
 			lmtd = (condenser_pinch_pt - (condenser_pinch_pt + dtCooling_water)) / (std::log(condenser_pinch_pt / (condenser_pinch_pt + dtCooling_water)));
 			area = (q_Condenser*GF_flowrate / 1000) * 1000000 / (lmtd*condenser_u);
 			condenser_cost_flash = 102 * pow(area, 0.85);		//Reference Equipment Cost
-			current_condenser_cost = condenser_cost_flash * hx_ppi[20];
+			current_condenser_cost = condenser_cost_flash * hx_ppi[ppi_base_year];
 
 			//Flash Vessel Calculation:
 			//HP Flash Cost Calculation:
@@ -449,7 +453,7 @@ public:
 
 			//Total Flash Vessel Cost:
 			flash_vessel_cost = hp_flash_cost + lp_flash_cost;		//Reference Equipment Cost
-			current_vessel_cost = flash_vessel_cost * process_equip_ppi[20];
+			current_vessel_cost = flash_vessel_cost * process_equip_ppi[ppi_base_year];
 
 
 			//NCG Removal System Cost: //Reference Equipment Cost
@@ -476,7 +480,7 @@ public:
 
 			//NCG total cost:	
 			ncg_cost = vacuum_pump + condenser_ncg + pump_ncg + ejector_ncg;		//Reference Equipment Cost
-			current_ncg_cost = ncg_cost * process_equip_ppi[20];
+			current_ncg_cost = ncg_cost * process_equip_ppi[ppi_base_year];
 
 			//Pump Cost Calculation:
 			condensate_pump = (GF_flowrate / 1000) * (condensate_pump_power * 1.34102);		//condensate_pump_power * 1.34102 is conversion from kW to hp
@@ -484,13 +488,13 @@ public:
 			cw_pump_power = (GF_flowrate / 1000) * ((((cwflow / 60)*(cw_pump_head)) / 33000) / 0.7);
 			cooling_water = 2.35 * 1185 * pow(cw_pump_power, 0.767);
 			pump_cost = condensate + cooling_water;		//Reference Equipment Cost
-			current_pump_cost = pump_cost * pump_ppi[20];
+			current_pump_cost = pump_cost * pump_ppi[ppi_base_year];
 
 
 			//H2S Removal System Cost Calculation:
 			h2s_flow = h2s_level * GF_flowrate / 1000000;
 			h2s_cost = 115000 * pow(h2s_flow, 0.58);		//Reference Equipment Cost
-			current_h2s_cost = h2s_cost * process_equip_ppi[20];
+			current_h2s_cost = h2s_cost * process_equip_ppi[ppi_base_year];
 
 			//Total Equipment Cost: 
 			equip_cost_flash = tg_cost + cooling_tower_cost + condenser_cost_flash + flash_vessel_cost + ncg_cost + pump_cost + h2s_cost;
@@ -498,9 +502,9 @@ public:
 			escalation_ppi = current_cost_flash / equip_cost_flash;
 
 			//Calculating Direct Construction Cost Multiplier:
-			material_multiplier = 1 + ((8.65* pow(design_temp, -0.297)) - 1) * (process_equip_ppi[20] / escalation_ppi);
-			labor_multiplier = ((42.65 * pow(design_temp, -0.923)) * 1.45) * construction_ppi[20] / escalation_ppi;
-			construction_multiplier = (16.177*pow(design_temp, -0.827)) * process_equip_ppi[20] / escalation_ppi;
+			material_multiplier = 1 + ((8.65* pow(design_temp, -0.297)) - 1) * (process_equip_ppi[ppi_base_year] / escalation_ppi);
+			labor_multiplier = ((42.65 * pow(design_temp, -0.923)) * 1.45) * construction_ppi[ppi_base_year] / escalation_ppi;
+			construction_multiplier = (16.177*pow(design_temp, -0.827)) * process_equip_ppi[ppi_base_year] / escalation_ppi;
 			direct_multiplier_2002 = material_multiplier + labor_multiplier + construction_multiplier;
 			tax = (material_multiplier + construction_multiplier) * sales_tax;
 			freight_flash = (material_multiplier + construction_multiplier) * freight;
