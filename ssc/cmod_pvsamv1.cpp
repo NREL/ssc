@@ -676,6 +676,9 @@ static var_info _cm_vtab_pvsamv1[] = {
         { SSC_OUTPUT,        SSC_ARRAY,      "dc_snow_loss",                         "DC power loss due to snow",						 "kW",   "",   "Time Series (Array)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "dc_net",                               "Inverter DC input power",                                       "kW",   "",   "Time Series (Array)",       "*",                    "",                              "" },
 
+        // DC Daily losses
+        { SSC_OUTPUT,        SSC_ARRAY,     "dc_lifetime_loss",                       "DC lifetime daily loss",                                     "kW", "",    "Time Series (DC Loss)",                 "",                     "",                   "" },
+
         //mppt outputs
         { SSC_OUTPUT,        SSC_ARRAY,      "inverterMPPT1_DCVoltage",              "Inverter MPPT 1 Nominal DC voltage",                  "V",    "",  "Time Series (MPPT)",           "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "inverterMPPT2_DCVoltage",              "Inverter MPPT 2 Nominal DC voltage",                  "V",    "",  "Time Series (MPPT)",           "",                    "",                              "" },
@@ -2099,7 +2102,11 @@ void cm_pvsamv1::exec()
                 {
                     //current index of the lifetime daily DC losses is the number of years that have passed (iyear, because it is 0-indexed) * the number of days + the number of complete days that have passed
                     int dc_loss_index = (int)iyear * 365 + (int)floor(hour_of_year / 24); //in units of days
-                    if (iyear == 0) annual_dc_lifetime_loss += dcPowerNetPerSubarray[nn] * (PVSystem->dcLifetimeLosses[dc_loss_index] / 100) * util::watt_to_kilowatt * ts_hour; //this loss is still in percent, only keep track of it for year 0, convert from power W to energy kWh
+                    ssc_number_t dc_lifetime_loss = dcPowerNetPerSubarray[nn] * (PVSystem->dcLifetimeLosses[dc_loss_index] / 100) * util::watt_to_kilowatt * ts_hour; //this loss is still in percent, convert to energy kWh
+                    if (iyear == 0 || save_full_lifetime_variables == 1) {
+                        PVSystem->p_dcLifetimeLoss[idx] = dc_lifetime_loss;
+                    }
+                    if (iyear == 0) annual_dc_lifetime_loss += dc_lifetime_loss;
                     dcPowerNetPerSubarray[nn] *= (100 - PVSystem->dcLifetimeLosses[dc_loss_index]) / 100;
                 }
 
