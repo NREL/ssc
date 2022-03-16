@@ -333,6 +333,8 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
     { SSC_OUTPUT, SSC_NUMBER, "disp_solve_time_ann",           "Annual sum of dispatch solver time",                             "sec",         "",                                  "",                                         "sim_type=1",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "disp_solve_state_ann",          "Annual sum of dispatch solve state",                                "",         "",                                  "",                                         "sim_type=1",                                                                "",              "" },
 
+    { SSC_OUTPUT, SSC_NUMBER, "sim_cpu_run_time",              "Simulation duration clock time",                                   "s",         "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+
         // ETES settings for financial model
     { SSC_OUTPUT, SSC_NUMBER, "ppa_soln_mode",                 "PPA solution mode",                                             "0/1",          "0 = solve ppa,1 = specify ppa",     "Revenue",                                  "sim_type=1",                                                                "INTEGER,MIN = 0,MAX = 1", "" },
     { SSC_OUTPUT, SSC_NUMBER, "flip_target_percent",		   "After-tax IRR target",		                                    "%",	        "",					                 "Revenue",                                  "sim_type=1",					                                              "MIN=0,MAX=100",     	     "" },
@@ -354,6 +356,8 @@ public:
     {
         //FILE* fp = fopen("etes_cmod_to_lk.lk", "w");
         //write_cmod_to_lk_script(fp, m_vartab);
+
+        std::clock_t clock_start = std::clock();
 
         // First, check sim type
         int sim_type = as_integer("sim_type");
@@ -1108,6 +1112,9 @@ public:
 
         double q_balance_rel = (Q_heater_to_htf + Q_tes_heater - Q_tes_losses - Q_cycle_thermal_in) / Q_cycle_thermal_in;
 
+        std::clock_t clock_end = std::clock();
+        double sim_cpu_run_time = (clock_end - clock_start) / (double)CLOCKS_PER_SEC;		//[s]
+        assign("sim_cpu_run_time", sim_cpu_run_time);   //[s]
     }
 };
 
