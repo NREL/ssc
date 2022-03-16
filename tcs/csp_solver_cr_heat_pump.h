@@ -211,7 +211,10 @@ public:
         E_W_DOT_CYCLE_PARASITICS,   //[MWe] Thermo parasitics (e.g. motors, generator losses
         E_W_DOT_HT_HTF_PUMP,    //[MWe] HT HTF pump
         E_W_DOT_CT_HTF_PUMP,    //[MWe] CT HTF pump
-        E_W_DOT_HEATER          //[MWe] Total power consumed by heat pump
+        E_W_DOT_HEATER,          //[MWe] Total power consumed by heat pump
+
+        // Dependent output variables
+        E_COP_HOT_THERMO,		//[-] Cycle thermal efficiency (gross)
     };
 
     C_csp_reported_outputs mc_reported_outputs;

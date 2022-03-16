@@ -170,7 +170,10 @@ public:
         E_W_DOT_THERMO,         //[MWe] Cycle thermodynamic output (not including motor/generator losses, cooling parasitics, or HTF pumps
         E_W_DOT_CYCLE_PARASITICS,   //[MWe] Thermo parasitics (e.g. *cooling power*, motors, generator losses)
         E_W_DOT_HT_HTF_PUMP,    //[MWe] HT HTF pump
-        E_W_DOT_CT_HTF_PUMP     //[MWe] CT HTF pump
+        E_W_DOT_CT_HTF_PUMP,     //[MWe] CT HTF pump
+
+        // Dependent output variables
+        E_ETA_THERMAL,		//[-] Cycle thermal efficiency (gross)
     };
 
     C_csp_reported_outputs mc_reported_outputs;

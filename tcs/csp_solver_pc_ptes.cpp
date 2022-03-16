@@ -44,6 +44,13 @@ static C_csp_reported_outputs::S_output_info S_ptes_output_info[] =
     csp_info_invalid
 };
 
+static C_csp_reported_outputs::S_dependent_output_info S_ptes_dependent_output_info[] =
+{
+    {C_pc_ptes::E_ETA_THERMAL, C_pc_ptes::E_W_DOT_THERMO, C_pc_ptes::E_Q_DOT_HOT_IN, C_csp_reported_outputs::AoverB},
+
+    csp_dep_info_invalid
+};
+
 // ***********************
 // Inherited methods
 // ***********************
@@ -109,7 +116,7 @@ C_pc_ptes::C_pc_ptes(double W_dot_thermo /*MWe*/, double eta_therm_mech /*-*/,
     m_E_su_des = std::numeric_limits<double>::quiet_NaN();
     m_E_standby_des = std::numeric_limits<double>::quiet_NaN();
 
-    mc_reported_outputs.construct(S_ptes_output_info);
+    mc_reported_outputs.construct(S_ptes_output_info, S_ptes_dependent_output_info);
 }
 
 void C_pc_ptes::init(C_csp_power_cycle::S_solved_params& solved_params)

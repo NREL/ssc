@@ -293,6 +293,7 @@ static var_info _cm_vtab_etes_ptes[] = {
     { SSC_OUTPUT, SSC_ARRAY,  "W_dot_hp_HT_htf_pump",          "Heat pump hot tes HTF pump power",                              "MWe",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
     { SSC_OUTPUT, SSC_ARRAY,  "W_dot_hp_CT_htf_pump",          "Heat pump cold tes HTF pump power",                             "MWe",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
     { SSC_OUTPUT, SSC_ARRAY,  "W_dot_hp_net",                  "Heat pump total power in",                                      "MWe",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "cop_hot_hp_thermo",             "Heat pump thermodynamic hot COP",                               "",             "",                                  "",                                         "sim_type=1",                                                                "",              "" },
 
             // Power cycle outputs
     { SSC_OUTPUT, SSC_ARRAY,  "T_pc_HT_htf_hot_in",            "PC hot tes HTF inlet temperature",                              "C",            "",                                  "",                                         "sim_type=1",                                                                "",              "" },
@@ -310,6 +311,7 @@ static var_info _cm_vtab_etes_ptes[] = {
     { SSC_OUTPUT, SSC_ARRAY,  "W_dot_pc_parasitics",           "PC parasitics including cooling power",                         "MWe",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
     { SSC_OUTPUT, SSC_ARRAY,  "W_dot_pc_HT_htf_pump",          "PC hot tes HTF pump power",                                     "MWe",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
     { SSC_OUTPUT, SSC_ARRAY,  "W_dot_pc_CT_htf_pump",          "PC cold tes HTF pump power",                                    "MWe",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "eta_pc_thermo",                 "PC thermodynamic efficiency",                                   "",             "",                                  "",                                         "sim_type=1",                                                                "",              "" },
 
             // Hot TES outputs
     { SSC_OUTPUT, SSC_ARRAY,  "q_dot_dc_tes",                  "TES discharge thermal power",                                   "MWt",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
@@ -554,6 +556,7 @@ public:
         c_pc.mc_reported_outputs.assign(C_pc_ptes::E_W_DOT_HT_HTF_PUMP, allocate("W_dot_pc_HT_htf_pump", n_steps_fixed), n_steps_fixed);
         c_pc.mc_reported_outputs.assign(C_pc_ptes::E_W_DOT_CT_HTF_PUMP, allocate("W_dot_pc_CT_htf_pump",n_steps_fixed), n_steps_fixed);
 
+        c_pc.mc_reported_outputs.assign(C_pc_ptes::E_ETA_THERMAL, allocate("eta_pc_thermo", n_steps_fixed), n_steps_fixed);
         // **********************************************************
         // **********************************************************
 
@@ -590,6 +593,7 @@ public:
         c_heat_pump.mc_reported_outputs.assign(C_csp_cr_heat_pump::E_W_DOT_CT_HTF_PUMP, allocate("W_dot_hp_CT_htf_pump", n_steps_fixed), n_steps_fixed);
         c_heat_pump.mc_reported_outputs.assign(C_csp_cr_heat_pump::E_W_DOT_HEATER, allocate("W_dot_hp_net", n_steps_fixed), n_steps_fixed);
 
+        c_heat_pump.mc_reported_outputs.assign(C_csp_cr_heat_pump::E_COP_HOT_THERMO, allocate("cop_hot_hp_thermo", n_steps_fixed), n_steps_fixed);
         // **********************************************************
         // **********************************************************
 

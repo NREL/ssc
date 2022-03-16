@@ -43,6 +43,13 @@ static C_csp_reported_outputs::S_output_info S_cr_heat_pump_output_info[] =
     csp_info_invalid
 };
 
+static C_csp_reported_outputs::S_dependent_output_info S_heat_pump_dependent_output_info[] =
+{
+    {C_csp_cr_heat_pump::E_COP_HOT_THERMO, C_csp_cr_heat_pump::E_Q_DOT_HOT_OUT, C_csp_cr_heat_pump::E_W_DOT_IN_THERMO, C_csp_reported_outputs::AoverB},
+
+    csp_dep_info_invalid
+};
+
 C_csp_cr_heat_pump::C_csp_cr_heat_pump(double COP_heat_des /*-*/, double q_dot_hot_out_des /*MWt*/,
     double f_elec_consume_vs_W_dot_thermo /*-*/,
     double T_HT_HTF_hot /*C*/, double T_HT_HTF_cold /*C*/, double T_CT_HTF_cold /*C*/, double T_CT_HTF_hot /*C*/,
@@ -106,7 +113,7 @@ C_csp_cr_heat_pump::C_csp_cr_heat_pump(double COP_heat_des /*-*/, double q_dot_h
     m_E_su_initial = std::numeric_limits<double>::quiet_NaN();
     m_E_su_calculated = std::numeric_limits<double>::quiet_NaN();
 
-    mc_reported_outputs.construct(S_cr_heat_pump_output_info);
+    mc_reported_outputs.construct(S_cr_heat_pump_output_info, S_heat_pump_dependent_output_info);
 }
 
 C_csp_cr_heat_pump::~C_csp_cr_heat_pump(){}
