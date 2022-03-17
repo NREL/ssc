@@ -447,8 +447,14 @@ void Tower_SolarPilot_Capital_Costs_Equations(ssc_data_t data)
     ssc_data_t_get_number(data, "rec_cost_exp", &rec_cost_scaling_exp);
     ssc_data_t_get_number(data, "csp.pt.cost.storage_mwht", &Q_storage);         // calculation specific to each tech
     ssc_data_t_get_number(data, "tes_spec_cost", &tes_spec_cost);
+
     ssc_data_t_get_number(data, "csp.pt.cost.power_block_mwe", &W_dot_design);   // calculation specific to each tech
     ssc_data_t_get_number(data, "plant_spec_cost", &power_cycle_spec_cost);
+
+    double q_dot_heater_des_calc, heater_spec_cost;
+    ssc_data_t_get_number(data, "q_dot_heater_des_calc", &q_dot_heater_des_calc);   //[MWt]
+    ssc_data_t_get_number(data, "heater_spec_cost", &heater_spec_cost);
+
     ssc_data_t_get_number(data, "bop_spec_cost", &bop_spec_cost);
     ssc_data_t_get_number(data, "fossil_spec_cost", &fossil_backup_spec_cost);
     ssc_data_t_get_number(data, "contingency_rate", &contingency_rate);
@@ -466,18 +472,21 @@ void Tower_SolarPilot_Capital_Costs_Equations(ssc_data_t data)
     ssc_data_t_get_number(data, "sales_tax_rate", &sales_tax_rate);
 
 
-    double site_improvement_cost, heliostat_cost, tower_cost, receiver_cost, tes_cost, power_cycle_cost,
+    double site_improvement_cost, heliostat_cost, tower_cost, receiver_cost, tes_cost, CT_tes_cost, power_cycle_cost, heater_cost,
         bop_cost, fossil_backup_cost,
         direct_capital_precontingency_cost, contingency_cost, total_direct_cost, epc_and_owner_cost, total_land_cost,
         sales_tax_cost, total_indirect_cost, total_installed_cost, estimated_installed_cost_per_cap;
 
-    site_improvement_cost = heliostat_cost = tower_cost = receiver_cost = tes_cost = power_cycle_cost =
+    site_improvement_cost = heliostat_cost = tower_cost = receiver_cost = tes_cost = CT_tes_cost = power_cycle_cost = heater_cost =
         bop_cost = fossil_backup_cost =
         direct_capital_precontingency_cost = contingency_cost = total_direct_cost = epc_and_owner_cost = total_land_cost =
         sales_tax_cost = total_indirect_cost = total_installed_cost = estimated_installed_cost_per_cap = std::numeric_limits<double>::quiet_NaN();
 
+    // Hybrid MSPT-ETES currently not configured for PTES
+    double Q_CT_tes = 0.0;
+    double CT_tes_spec_cost = 0.0;
 
-    N_mspt::calculate_mspt__no_rad_cool__costs(
+    N_mspt::calculate_mspt_etes__no_rad_cool__costs(
         A_sf_refl,
         site_improv_spec_cost,
         heliostat_spec_cost,
@@ -497,8 +506,14 @@ void Tower_SolarPilot_Capital_Costs_Equations(ssc_data_t data)
         Q_storage,
         tes_spec_cost,
 
+        Q_CT_tes,
+        CT_tes_spec_cost,
+
         W_dot_design,
         power_cycle_spec_cost,
+
+        q_dot_heater_des_calc,
+        heater_spec_cost,
 
         bop_spec_cost,
 
@@ -524,7 +539,9 @@ void Tower_SolarPilot_Capital_Costs_Equations(ssc_data_t data)
         tower_cost,
         receiver_cost,
         tes_cost,
+        CT_tes_cost,
         power_cycle_cost,
+        heater_cost,
         bop_cost,
         fossil_backup_cost,
         direct_capital_precontingency_cost,
@@ -544,6 +561,7 @@ void Tower_SolarPilot_Capital_Costs_Equations(ssc_data_t data)
     ssc_data_t_set_number(data, "csp.pt.cost.receiver", (ssc_number_t)receiver_cost);
     ssc_data_t_set_number(data, "csp.pt.cost.storage", (ssc_number_t)tes_cost);
     ssc_data_t_set_number(data, "csp.pt.cost.power_block", (ssc_number_t)power_cycle_cost);
+    ssc_data_t_set_number(data, "heater_cost_calc", (ssc_number_t)heater_cost);
     ssc_data_t_set_number(data, "csp.pt.cost.bop", (ssc_number_t)bop_cost);
     ssc_data_t_set_number(data, "csp.pt.cost.fossil", (ssc_number_t)fossil_backup_cost);
     ssc_data_t_set_number(data, "ui_direct_subtotal", (ssc_number_t)direct_capital_precontingency_cost);
