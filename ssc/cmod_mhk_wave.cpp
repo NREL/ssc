@@ -64,6 +64,8 @@ static var_info _cm_vtab_mhk_wave[] = {
 	{ SSC_OUTPUT,			SSC_NUMBER,			"device_average_power",					"Average power production of a single device",											"kW",			"",				"MHKWave",			"*",						"",							"" },
 	{ SSC_OUTPUT,			SSC_NUMBER,			"annual_energy",						"Annual energy production of array",											"kWh",			"",				"MHKWave",			"*",						"",							"" },
     { SSC_OUTPUT,           SSC_ARRAY,          "energy_hourly_kWh",                        "Energy production of array",                                            "kWh",          "", "Time Series",          "wave_resource_model_choice=1",                        "",          "" },
+    { SSC_OUTPUT,           SSC_ARRAY,          "energy_hourly_kW",                        "Power output of array",                                            "kW",          "", "Time Series",          "wave_resource_model_choice=1",                        "",          "" },
+
     { SSC_OUTPUT,           SSC_ARRAY,          "gen",                        "System power generated",                                            "kW",          "", "Time Series",          "",                        "",          "" },
 
     { SSC_OUTPUT,           SSC_ARRAY,          "sig_wave_height_index_mat",            "Wave height index locations for time series",                      "m",                         "", "MHKWave",          "wave_resource_model_choice=1",                        "",          "" },
@@ -521,6 +523,7 @@ public:
                 throw exec_error("mhk_wave", "Wave height and Energy period arrays of equal length must be assigned");
 
             ssc_number_t* energy_hourly_kWh = allocate("energy_hourly_kWh", number_records);
+            ssc_number_t* energy_hourly_kW = allocate("energy_hourly_kW", number_records * 3); //8760 of kW values
             ssc_number_t* energy_hourly_gen = allocate("gen", number_records);
             ssc_number_t* sig_wave_height_index_mat = allocate("sig_wave_height_index_mat", number_records);
             ssc_number_t* sig_wave_height_data = allocate("sig_wave_height_data", number_records);
@@ -612,7 +615,9 @@ public:
                 energy_hourly_gen[i] = (ssc_number_t)(wave_power_matrix.at(size_t(sig_wave_height_index), size_t(energy_period_index))) * (1 - total_loss / 100) * number_devices; //Store in gen to use in heatmap output (probably don't need two variables)
                 //energy_hourly_gen[i*3+1] = energy_hourly[i]; //Store in gen to use in heatmap output (probably don't need two variables)
                 //energy_hourly_gen[i*3+2] = energy_hourly[i]; //Store in gen to use in heatmap output (probably don't need two variables)
-
+                energy_hourly_kW[i * 3] = energy_hourly_gen[i];
+                energy_hourly_kW[i * 3 + 1] = energy_hourly_gen[i];
+                energy_hourly_kW[i * 3 + 2] = energy_hourly_gen[i];
                 //iday = floor(double(i * 3) / 24); //Calculate day of year
                 if (month[i] == 1)
                     iday = day[i];
