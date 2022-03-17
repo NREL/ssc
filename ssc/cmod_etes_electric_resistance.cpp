@@ -32,6 +32,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "csp_system_costs.h"
 
+#include <ctime>
+
 static var_info _cm_vtab_etes_electric_resistance[] = {
 
     // Resource Data
