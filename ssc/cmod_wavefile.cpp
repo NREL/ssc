@@ -27,7 +27,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static var_info _cm_wave_file_reader[] = {
 /*   VARTYPE           DATATYPE         NAME                           LABEL                                        UNITS     META                      GROUP                 REQUIRED_IF                CONSTRAINTS        UI_HINTS*/
-    { SSC_INPUT,         SSC_NUMBER,      "wave_resource_model_choice",           "Joint PDF or 3-hour wave resource data",                                 "0/1",             "",             "Weather Reader",          "?=0",                         "INTEGER",                  "" },
+    { SSC_INPUT,         SSC_NUMBER,      "wave_resource_model_choice",           "Joint PDF or 3-hour wave resource data",                                 "0/1",             "",             "Weather Reader",          "?=1",                         "INTEGER",                  "" },
     { SSC_INPUT,         SSC_STRING,      "wave_resource_filename",               "File path with Wave Height x Period Distribution as 2-D PDF",                     "",       "",                      "Weather Reader",      "wave_resource_model_choice=0",                       "LOCAL_FILE",      "" },
     { SSC_INPUT,         SSC_STRING,      "wave_resource_filename_ts",               "File path with 3-hour Wave Height and Period data as Time Series array",                     "",       "",                      "Weather Reader",      "wave_resource_model_choice=1",                       "LOCAL_FILE",      "" },
 
