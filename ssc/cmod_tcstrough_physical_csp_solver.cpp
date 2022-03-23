@@ -867,13 +867,19 @@ public:
         // System dispatch
         csp_dispatch_opt dispatch;
 
+        // Get first year base ppa price
+        size_t count_ppa_price_input;
+        ssc_number_t* ppa_price_input_array = as_array("ppa_price_input", &count_ppa_price_input);
+        double ppa_price_year1 = (double)ppa_price_input_array[0];  // [$/kWh]
+
         dispatch.solver_params.set_user_inputs(false, as_integer("disp_steps_per_hour"), as_integer("disp_frequency"), as_integer("disp_horizon"),
             as_integer("disp_max_iter"), as_double("disp_mip_gap"), as_double("disp_timeout"),
             as_integer("disp_spec_presolve"), as_integer("disp_spec_bb"), as_integer("disp_spec_scaling"), as_integer("disp_reporting"),
             as_boolean("is_write_ampl_dat"), as_boolean("is_ampl_engine"), as_string("ampl_data_dir"), as_string("ampl_exec_call"));
-        dispatch.params.set_user_params(as_double("disp_time_weighting"),
-            as_double("disp_rsu_cost"), as_double("disp_csu_cost"), as_double("disp_pen_delta_w"), as_double("disp_inventory_incentive"),
-            as_double("q_rec_standby"), as_double("q_rec_heattrace"));
+
+        dispatch.params.set_user_params(as_boolean("can_cycle_use_standby"), as_double("disp_time_weighting"),
+            as_double("disp_rsu_cost"), 0.0, as_double("disp_csu_cost"), as_double("disp_pen_delta_w"),
+            as_double("disp_inventory_incentive"), as_double("q_rec_standby"), as_double("q_rec_heattrace"), ppa_price_year1);
 
 		// Instantiate Solver
 		C_csp_solver csp_solver(weather_reader,
@@ -883,7 +889,8 @@ public:
             tou,
             dispatch,
             system,
-            NULL);
+            NULL,
+            nullptr);
 
 		// Set solver reporting outputs
 		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TIME_FINAL, allocate("time_hr", n_steps_fixed), n_steps_fixed);

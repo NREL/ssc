@@ -61,6 +61,21 @@ bool MSPT_System_Design_Equations(ssc_data_t data)
     ssc_data_t_get_number(data, "solarm", &solarm);
     tshours_sf = Tshours_sf(tshours, solarm);
     ssc_data_t_set_number(data, "tshours_sf", tshours_sf);
+
+    // heater
+    double heater_mult, is_parallel_htr_dbl;
+    ssc_data_t_get_number(data, "is_parallel_htr", &is_parallel_htr_dbl);
+    bool is_parallel_htr = (bool)is_parallel_htr_dbl;
+    ssc_data_t_get_number(data, "heater_mult", &heater_mult);
+    double tshours_heater = 0.0;
+    double q_dot_heater_des_calc = 0.0;
+    if (is_parallel_htr) {
+        tshours_heater = tshours / heater_mult;      //[hr]
+        q_dot_heater_des_calc = heater_mult * q_pb_design;   //[MWt]
+    }
+    ssc_data_t_set_number(data, "tshours_heater", tshours_heater);
+    ssc_data_t_set_number(data, "q_dot_heater_des_calc", q_dot_heater_des_calc);    //[MWt]
+
     return true;
 }
 
@@ -388,6 +403,7 @@ bool Tower_SolarPilot_Capital_Costs_MSPT_Equations(ssc_data_t data)
     ssc_data_t_set_number(data, "csp.pt.cost.power_block_mwe", csp_pt_cost_power_block_mwe);
 
     Tower_SolarPilot_Capital_Costs_Equations(data);
+
     return true;
 }
 

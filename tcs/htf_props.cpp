@@ -32,6 +32,40 @@ HTFProperties::HTFProperties()
 	m_is_temp_enth_avail = false;
 }
 
+void HTFProperties::Initialize(int htf_code, util::matrix_t<double> ud_htf_props)
+{
+    if (htf_code != HTFProperties::User_defined && htf_code < HTFProperties::End_Library_Fluids)
+    {
+        if (!SetFluid(htf_code))
+        {
+            throw(C_csp_exception("C_csp_cr_electric_resistance::init HTF code is not recognized"));
+        }
+    }
+    else if (htf_code == HTFProperties::User_defined)
+    {
+        // Check that 'm_field_fl_props' is allocated and correct dimensions
+        int n_rows = (int)ud_htf_props.nrows();
+        int n_cols = (int)ud_htf_props.ncols();
+        if (n_rows > 2 && n_cols == 7)
+        {
+            if (!SetUserDefinedFluid(ud_htf_props))
+            {
+                std::string error_msg = util::format(UserFluidErrMessage(), n_rows, n_cols);
+                throw(C_csp_exception(error_msg, "Heat Sink Initialization"));
+            }
+        }
+        else
+        {
+            std::string error_msg = util::format("The user defined field HTF table must contain at least 3 rows and exactly 7 columns. The current table contains %d row(s) and %d column(s)", n_rows, n_cols);
+            throw(C_csp_exception(error_msg, "Heat Sink Initialization"));
+        }
+    }
+    else
+    {
+        throw(C_csp_exception("Power cycle HTF code is not recognized", "Heat Sink Initialization"));
+    }
+}
+
 bool HTFProperties::SetUserDefinedFluid(const util::matrix_t<double> &table, bool calc_temp_enth_table)
 {
 	m_is_temp_enth_avail = calc_temp_enth_table;

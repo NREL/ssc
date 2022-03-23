@@ -52,12 +52,13 @@ public:
 
     struct S_pointers
     {
-        C_csp_weatherreader m_weather;      //Pointer to weather file
+        C_csp_weatherreader m_weather;       //Pointer to weather file
         C_csp_solver_sim_info *siminfo;      //Pointer to existing simulation info object
         C_csp_collector_receiver *col_rec;   //Pointer to collector/receiver object
 		C_csp_power_cycle *mpc_pc;	         //Pointer to csp power cycle class object
         C_csp_tes *tes;                      //Pointer to tes class object
 		C_csp_messages *messages;            //Pointer to message structure
+        C_csp_collector_receiver* par_htr;   //Pointer to parallel heater if it exist, else NULL
 
         S_pointers()
         {
@@ -67,6 +68,7 @@ public:
             mpc_pc = nullptr;
             tes = nullptr;
             messages = nullptr;
+            par_htr = nullptr;
         }
 
         void set_pointers(C_csp_weatherreader &weather,
@@ -74,7 +76,8 @@ public:
             C_csp_power_cycle *power_cycle,
             C_csp_tes *thermal_es,
             C_csp_messages *csp_messages,
-            C_csp_solver_sim_info *sim_info)
+            C_csp_solver_sim_info *sim_info,
+            C_csp_collector_receiver *heater)
         {
             m_weather = weather;    // Todo: technically not a pointer
             col_rec = collector_receiver;
@@ -82,6 +85,7 @@ public:
             tes = thermal_es;
             messages = csp_messages;
             siminfo = sim_info;
+            par_htr = heater;
         }
 
     } pointers;
@@ -139,6 +143,9 @@ public:
         double wpb_expect = 0.;
         double rev_expect = 0.;
 
+        bool is_eh_su_allowed = false;
+        double q_eh_target = 0.;
+
     } disp_outputs;
 
     //----- public member functions ----
@@ -192,8 +199,11 @@ public:
     // Parse column name to get variable name (root) and index (ind)
     bool parse_column_name(char* colname, char* root, char* ind);
 
-    //simple string compare
+    // simple string compare
     bool strcompare(std::string a, std::string b);
+
+    // Print dispatch solver log to file for debugging solver
+    void print_log_to_file();
 };
 
 struct s_efftable
