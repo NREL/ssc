@@ -115,15 +115,17 @@ public:
         std::vector<double> clearsky_data;
         if (rec_clearsky_model == 0)
         {
-            //size_t n_csky = 0;
-            //ssc_number_t* csky = as_array("rec_clearsky_dni", &n_csky);
+            size_t n_csky = 0;
+            ssc_number_t* csky = as_array("rec_clearsky_dni", &n_csky);
+
             //if (n_csky != n_steps_full)
             //throw exec_error("tcsmolten_salt", "Invalid clear-sky DNI data. Array must have " + util::to_string((int)n_steps_full) + " rows.");
+
             throw exec_error("tcsmolten_salt", "Cleary-sky data not ready");
             //
-            //receiver->m_clearsky_data.resize(n_steps_full);
-            //for (size_t i = 0; i < n_steps_full; i++)
-            //    receiver->m_clearsky_data.at(i) = (double)csky[i];
+            clearsky_data.resize(n_csky);
+            for (size_t i = 0; i < n_csky; i++)
+                clearsky_data.at(i) = (double)csky[i];
         }
 
         // Transient model
