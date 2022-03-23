@@ -39,15 +39,39 @@ private:
 	//s_steady_state_soln m_mflow_soln_csky_prev;  // Steady state solution using clear-sky DNI from the last call to the model
 
 	//-------------------
-	//Transient model parameters
+    // Set in constructor
+    bool m_is_transient;			// Use transient model?
+    bool m_is_startup_transient;	// Use transient startup model?
+    double m_rec_tm_mult;			//[-], receiver thermal mass multiplier
+    double m_u_riser;				//[m/s], 
+    double m_th_riser;				//[mm], convert to [m] in init()
+    double m_riser_tm_mult;			//[-], riser thermal mass multiplier
+    double m_downc_tm_mult;			//[-], downcomer thermal mass multiplier
+    double m_heat_trace_power;		//[kW/m], convert to [W/m] in init()
+    double m_tube_flux_preheat;		//[kW/m2]
+    double m_min_preheat_time;      //[s] Minimum time required in preheat startup stage
+    double m_fill_time;				//[s] Time requirement to fill receiver
+    double m_flux_ramp_time;		//[s] 
+    double m_preheat_target;		//[K]
+    double m_startup_target_delta;	//[C/K], (target temperature at end of startup) - (steady state temperature at current conditions )
+    double m_initial_temperature;	//[K]
+
+    bool m_is_startup_from_solved_profile;  // Begin receiver startup from solved temperature profiles?
+    bool m_is_enforce_min_startup;		// Always enforce minimum startup time?  If false, minimum startup time is ignored when receiver starts above preheat temperature
+
+    // Transient model parameters
 	int m_startup_mode;
 	int m_startup_mode_initial;
 	int m_n_call_fill;
 	int m_n_call_fill_initial;
+
+
 	double m_id_riser;				//[m]
 	double m_od_riser;				//[m]
 	double m_id_downc;				//[m]
 	double m_od_downc;				//[m]
+    double m_th_downc;				//[m]
+
 	double m_total_startup_time; // [s]
 	double m_total_startup_time_initial; //[s]
 	double m_minimum_startup_time; //s
@@ -172,26 +196,7 @@ public:
 	C_csp_messages csp_messages;
 
 	// Transient model 
-	bool m_is_transient;			// Use transient model?
-	bool m_is_startup_transient;	// Use transient startup model?
-	double m_rec_tm_mult;			//[-], receiver thermal mass multiplier
-	double m_u_riser;				//[m/s], 
-	double m_th_riser;				//[mm], convert to [m] in init()
-	double m_th_downc;				//[mm], convert to [m] in init()
-	double m_riser_tm_mult;			//[-], riser thermal mass multiplier
-	double m_downc_tm_mult;			//[-], downcomer thermal mass multiplier
-	double m_heat_trace_power;		//[kW/m], convert to [W/m] in init()
-	double m_tube_flux_preheat;		//[kW/m2]
-	double m_min_preheat_time;      //[hr], convert to [s] in init(), Minimum time required in preheat startup stage
-	double m_fill_time;				//[hr], convert to [s] in init(), Time requirement to fill receiver
-	double m_flux_ramp_time;		//[hr], convert to [s] in init()
-	double m_preheat_target;		//[C], convert to [k] in init()
-	double m_startup_target_delta;	//[C], (target temperature at end of startup) - (steady state temperature at current conditions )
-	double m_initial_temperature;	//[C], convert to [K] in init()
-
-	bool m_is_startup_from_solved_profile;  // Begin receiver startup from solved temperature profiles?
-	bool m_is_enforce_min_startup;		// Always enforce minimum startup time?  If false, minimum startup time is ignored when receiver starts above preheat temperature
-
+	
 	S_outputs outputs;
 
 	// Methods
@@ -208,7 +213,16 @@ public:
         std::vector<double> clearsky_data,
         int n_panels /*-*/, double d_rec /*m*/, double h_rec /*m*/,
         int flow_type /*-*/, int crossover_shift /*-*/, double hl_ffact /*-*/,
-        double T_salt_hot_target /*C*/, double csky_frac /*-*/);
+        double T_salt_hot_target /*C*/, double csky_frac /*-*/,
+        bool is_transient /*-*/, bool is_startup_transient /*-*/,
+        double rec_tm_mult /*-*/, double u_riser /*m/s*/,
+        double th_riser /*mm*/, double riser_tm_mult /*-*/,
+        double downc_tm_mult /*-*/, double heat_trace_power /*kW/m*/,
+        double tube_flux_preheat /*kW/m2*/, double min_preheat_time /*hr*/,
+        double fill_time /*hr*/, double flux_ramp_time /*hr*/,
+        double preheat_target /*C*/, double startup_target_delta /*C*/,
+        double initial_temperature /*C*/,
+        bool is_startup_from_solved_profile, bool is_enforce_min_startup);
 
 	~C_mspt_receiver(){};
 

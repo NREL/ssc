@@ -41,7 +41,16 @@ C_mspt_receiver::C_mspt_receiver(double h_tower /*m*/, double epsilon /*-*/,
     std::vector<double> clearsky_data,
     int n_panels /*-*/, double d_rec /*m*/, double h_rec /*m*/,
     int flow_type /*-*/, int crossover_shift /*-*/, double hl_ffact /*-*/,
-    double T_salt_hot_target /*C*/, double csky_frac /*-*/) : C_mspt_receiver_222(h_tower, epsilon,
+    double T_salt_hot_target /*C*/, double csky_frac /*-*/,
+    bool is_transient /*-*/, bool is_startup_transient,
+    double rec_tm_mult /*-*/, double u_riser /*m/s*/,
+    double th_riser /*mm*/, double riser_tm_mult /*-*/,
+    double downc_tm_mult /*-*/, double heat_trace_power /*kW/m*/,
+    double tube_flux_preheat /*kW/m2*/, double min_preheat_time /*hr*/,
+    double fill_time /*hr*/, double flux_ramp_time /*hr*/,
+    double preheat_target /*C*/, double startup_target_delta /*C*/,
+    double initial_temperature /*C*/,
+    bool is_startup_from_solved_profile, bool is_enforce_min_startup) : C_mspt_receiver_222(h_tower, epsilon,
         T_htf_hot_des, T_htf_cold_des,
         f_rec_min, q_dot_rec_des,
         rec_su_delay, rec_qf_delay,
@@ -63,27 +72,33 @@ C_mspt_receiver::C_mspt_receiver(double h_tower /*m*/, double epsilon /*-*/,
     m_use_constant_piping_loss = false;
 
 	//Transient model parameters
-	m_is_transient = 0;
-	m_is_startup_transient = 0;
-	m_rec_tm_mult = std::numeric_limits<double>::quiet_NaN();
-	m_u_riser = std::numeric_limits<double>::quiet_NaN();
-	m_th_riser = std::numeric_limits<double>::quiet_NaN();
-	m_th_downc = std::numeric_limits<double>::quiet_NaN();
-	m_riser_tm_mult = std::numeric_limits<double>::quiet_NaN();
-	m_downc_tm_mult = std::numeric_limits<double>::quiet_NaN();
-	m_id_riser = std::numeric_limits<double>::quiet_NaN();
+    m_is_transient = is_transient;                  //[-]
+    m_is_startup_transient = is_startup_transient;  //[-]
+    m_rec_tm_mult = rec_tm_mult;                    //[-]
+    m_u_riser = u_riser;                //[m/s]
+    m_th_riser = th_riser*1.E-3;        //[m] convert from [mm]
+    m_riser_tm_mult = riser_tm_mult;    //[-]
+    m_downc_tm_mult = downc_tm_mult;    //[-]
+    m_heat_trace_power = heat_trace_power*1.e3;  //[W/m2] convert from kW/m2
+    m_tube_flux_preheat = tube_flux_preheat;    //[kW/m]
+    m_min_preheat_time = min_preheat_time*3600.;    //[s], convert from input in [hr]
+    m_fill_time = fill_time*3600.0;                 //[s], convert from input in [hr]
+    m_flux_ramp_time = flux_ramp_time*3600.0;       //[s], convert from input in [hr]
+    m_preheat_target = preheat_target + 273.15;		//[K], convert from input in [C]
+    m_startup_target_delta = startup_target_delta;  //[C/K]
+    m_initial_temperature = initial_temperature + 273.15;  //[K], convert from input in [C]
+
+    m_is_startup_from_solved_profile = is_startup_from_solved_profile;
+    m_is_enforce_min_startup = is_enforce_min_startup;
+
+
+    // Values set through public members
+    m_id_riser = std::numeric_limits<double>::quiet_NaN();
 	m_od_riser = std::numeric_limits<double>::quiet_NaN();
 	m_id_downc = std::numeric_limits<double>::quiet_NaN();
 	m_od_downc = std::numeric_limits<double>::quiet_NaN();
-	m_tube_flux_preheat = std::numeric_limits<double>::quiet_NaN();
-	m_fill_time = std::numeric_limits<double>::quiet_NaN();
-	m_flux_ramp_time = std::numeric_limits<double>::quiet_NaN();
-	m_heat_trace_power = std::numeric_limits<double>::quiet_NaN();
-	m_preheat_target = std::numeric_limits<double>::quiet_NaN();
-	m_startup_target_delta = std::numeric_limits<double>::quiet_NaN();
+    m_th_downc = std::numeric_limits<double>::quiet_NaN();
 
-	m_is_startup_from_solved_profile = 0;
-	m_is_enforce_min_startup = 1;
 
 	m_n_elem = 0;
 	m_nz_tot = 0;
@@ -121,15 +136,7 @@ void C_mspt_receiver::init()
 void C_mspt_receiver::initialize_transient_parameters()
 {
 	//************** Transient model parameters  **************************
-	m_flux_ramp_time *= 3600.0;  //[s], convert from input in [hr]
-	m_fill_time *= 3600.0;  //[s], convert from input in [hr]
-	m_min_preheat_time *= 3600.;  //[s], convert from input in [hr]
-
-	m_th_riser /= 1.E3;				//[m], Riser wall thickness, convert from input in [mm]
 	m_th_downc = m_th_riser;		//[m], Downcomer wall thickness, convert from input in [mm]
-	m_heat_trace_power *= 1.e3;		//[W/m-length], Heat trace power for riser and downcomer during startup, convert from input in [kW/m]
-	m_initial_temperature += 273.15;  // Initial temperature at start of simulation [K], convert from input in [C]
-	m_preheat_target += 273.15;		// Preheat target temperature [K], convert from input in [C]
 
 	// HTF properties
 	double rho_htf_inlet = field_htfProps.dens(m_T_htf_cold_des, 1.0);

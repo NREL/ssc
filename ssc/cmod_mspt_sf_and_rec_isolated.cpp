@@ -26,6 +26,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "csp_solver_mspt_receiver.h"
 #include "csp_solver_mspt_receiver_222.h"
 
+#include <algorithm>
+
 static var_info _cm_vtab_mspt_sf_and_rec_isolated[] = {
 
     // Simulation options
@@ -127,6 +129,19 @@ public:
         // Transient model
         if (is_rec_model_trans || is_rec_startup_trans) {
 
+            bool is_enforce_min_startup = as_boolean("is_rec_enforce_min_startup");
+
+            //trans_receiver->m_is_startup_from_solved_profile = as_boolean("is_rec_startup_from_T_soln");
+            if (as_boolean("is_rec_startup_trans") && as_boolean("is_rec_startup_from_T_soln"))
+                throw exec_error("tcsmolten_salt", "Receiver startup from solved temperature profiles is only available when receiver transient startup model is enabled");
+
+            //trans_receiver->m_is_enforce_min_startup = as_boolean("is_rec_enforce_min_startup");
+            if (as_boolean("is_rec_startup_trans") && !as_boolean("is_rec_startup_from_T_soln") && !is_enforce_min_startup)
+            {
+                log("Both 'is_rec_enforce_min_startup' and 'is_rec_startup_from_T_soln' were set to 'false'. Minimum startup time will always be enforced unless 'is_rec_startup_from_T_soln' is set to 'true'", SSC_WARNING);
+                is_enforce_min_startup = true;
+            }
+
             std::unique_ptr<C_mspt_receiver> trans_receiver = std::unique_ptr<C_mspt_receiver>(new C_mspt_receiver(
                 as_double("h_tower"), as_double("epsilon"),
                 as_double("T_htf_hot_des"), as_double("T_htf_cold_des"),
@@ -142,7 +157,16 @@ public:
                 clearsky_data,
                 as_integer("N_panels"), D_rec, H_rec,
                 as_integer("Flow_type"), as_integer("crossover_shift"), as_double("hl_ffact"),
-                as_double("T_htf_hot_des"), as_double("rec_clearsky_fraction")
+                as_double("T_htf_hot_des"), as_double("rec_clearsky_fraction"),
+                is_rec_model_trans, is_rec_startup_trans,
+                as_double("rec_tm_mult"), as_double("u_riser"),
+                as_double("th_riser"), as_double("riser_tm_mult"),
+                as_double("downc_tm_mult"), as_double("heat_trace_power"),
+                as_double("preheat_flux"), as_double("min_preheat_time"),
+                as_double("min_fill_time"), as_double("startup_ramp_time"),
+                as_double("T_htf_cold_des"), std::min(0.0, as_double("startup_target_Tdiff")),
+                5.0,
+                as_boolean("is_rec_startup_from_T_soln"), is_enforce_min_startup
                 ));    // transient receiver
 
         }
