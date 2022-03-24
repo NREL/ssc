@@ -3135,7 +3135,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, DC_system_w_ac_losses) {
     m_batteryPower->powerBatteryDC = 50;
     m_batteryPowerFlow->calculate();
 
-    EXPECT_NEAR(m_batteryPower->powerBatteryAC, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerBatteryAC, 46.26, error);
     EXPECT_NEAR(m_batteryPower->powerSystemToLoad, 0, error);
     EXPECT_NEAR(m_batteryPower->powerSystemToBattery, 0, error);
     EXPECT_NEAR(m_batteryPower->powerGridToBattery, 0, error);
@@ -3152,7 +3152,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, DC_system_w_ac_losses) {
     m_batteryPower->powerBatteryDC = 50;
     m_batteryPowerFlow->calculate();
 
-    EXPECT_NEAR(m_batteryPower->powerBatteryAC, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerBatteryAC, 46.26, error);
     EXPECT_NEAR(m_batteryPower->powerSystemToLoad, 0, error);
     EXPECT_NEAR(m_batteryPower->powerSystemToBattery, 0, error);
     EXPECT_NEAR(m_batteryPower->powerGridToBattery, 0, error);
@@ -3170,7 +3170,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, DC_system_w_ac_losses) {
     m_batteryPower->powerBatteryDC = 50;
     m_batteryPowerFlow->calculate();
 
-    EXPECT_NEAR(m_batteryPower->powerBatteryAC, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerBatteryAC, 46.26, error);
     EXPECT_NEAR(m_batteryPower->powerSystemToLoad, 0, error);
     EXPECT_NEAR(m_batteryPower->powerSystemToBattery, 0, error);
     EXPECT_NEAR(m_batteryPower->powerGridToBattery, 0, error);
@@ -3188,7 +3188,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, DC_system_w_ac_losses) {
     m_batteryPower->powerBatteryDC = 50;
     m_batteryPowerFlow->calculate();
 
-    EXPECT_NEAR(m_batteryPower->powerBatteryAC, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerBatteryAC, 46.26, error);
     EXPECT_NEAR(m_batteryPower->powerSystemToLoad, 0, error);
     EXPECT_NEAR(m_batteryPower->powerSystemToBattery, 0, error);
     EXPECT_NEAR(m_batteryPower->powerGridToBattery, 0, error);
