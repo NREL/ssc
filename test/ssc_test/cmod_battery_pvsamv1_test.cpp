@@ -619,11 +619,11 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_CustomDispatchBatteryModelD
 
     //ssc_number_t expectedEnergy = 37264228;
     ssc_number_t expectedEnergy = 37762919;
-    ssc_number_t expectedBatteryChargeEnergy = 418833;
+    ssc_number_t expectedBatteryChargeEnergy = 416050;
     ssc_number_t expectedBatteryDischargeEnergy = 348966;
     ssc_number_t roundtripEfficiency = 80.6;
 
-    ssc_number_t peakKwCharge = -948.6;
+    ssc_number_t peakKwCharge = -939.14;
     ssc_number_t peakKwDischarge = 652.0;
     ssc_number_t peakCycles = 3;
     ssc_number_t avgCycles = 1.194;
@@ -906,7 +906,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialDCBatteryModelPriceS
     ssc_number_t peakKwCharge = -3.709;
     ssc_number_t peakKwDischarge = 1.99;
     ssc_number_t peakCycles = 1;
-    ssc_number_t avgCycles = 0.3178;
+    ssc_number_t avgCycles = 0.3205;
 
     pairs["batt_dispatch_choice"] = 4;
 

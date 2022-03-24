@@ -2273,10 +2273,14 @@ void cm_pvsamv1::exec()
             if (en_batt && (batt_topology == ChargeController::DC_CONNECTED)) // DC-connected battery
             {
                 // Add up AC loss percents for DC connected batteries
+                // TODO - split these
                 double delivered_percent = 1 - (PVSystem->acLossPercent + PVSystem->transmissionLossPercent) * 0.01; // These are both multipled by acpwr_gross
 
                 ssc_number_t xfmr_loss_percent = transformerLoss(PVSystem->p_systemACPower[idx], PVSystem->transformerLoadLossFraction, transformerRatingkW, xfmr_ll, xfmr_nll) / PVSystem->p_systemACPower[idx];
                 delivered_percent *= (1 - xfmr_loss_percent);
+
+                ssc_number_t dc_loss_post_inverter = 1 - delivered_percent;
+                delivered_percent = 1; // Re-use variable for post batt losses
 
                 ssc_number_t adj_factor = haf(hour_of_year);
                 delivered_percent *= adj_factor;
@@ -2284,7 +2288,7 @@ void cm_pvsamv1::exec()
                     int ac_loss_index = (int)iyear * 365 + (int)floor(hour_of_year / 24); //in units of days
                     delivered_percent *= (1 - PVSystem->acLifetimeLosses[ac_loss_index] / 100);
                 }
-                ssc_number_t dc_loss_percent = 1 - delivered_percent;
+                ssc_number_t dc_loss_post_battery = 1 - delivered_percent;
 
 				// Compute PV clipping before adding battery
 				sharedInverter->calculateACPower(dcPower_kW, dcVoltagePerMppt[0], Irradiance->weatherRecord.tdry); //DC batteries not allowed with multiple MPPT, so can just use MPPT 1's voltage
@@ -2297,7 +2301,7 @@ void cm_pvsamv1::exec()
                 }
 
                 // Run PV plus battery through sharedInverter, returns AC power
-                batt->advance(m_vartab, dcPower_kW, dcVoltagePerMppt[0], cur_load, p_crit_load_full[idx], dc_loss_percent, sharedInverter->powerClipLoss_kW);
+                batt->advance(m_vartab, dcPower_kW, dcVoltagePerMppt[0], cur_load, p_crit_load_full[idx], dc_loss_post_inverter, dc_loss_post_battery, sharedInverter->powerClipLoss_kW);
                 acpwr_gross = batt->outGenPower[idx];
             }
             else if (PVSystem->Inverter->inverterType == INVERTER_PVYIELD) //PVyield inverter model not currently enabled for multiple MPPT
@@ -2481,7 +2485,8 @@ void cm_pvsamv1::exec()
                     int ac_loss_index = (int)iyear * 365 + (int)floor(hour_of_year / 24); //in units of days
                     delivered_percent *= (1 - PVSystem->acLifetimeLosses[ac_loss_index] / 100); // loss in kWac
                 }
-                double ac_loss_percent = 1 - delivered_percent;
+                double ac_loss_post_inverter = 0; // Already accounted for in pv AC power
+                double ac_loss_post_batt = 1 - delivered_percent;
 
                 // calculate timestep in hour for battery models
                 // jj represents which timestep within the hour you're on, 0-indexed
@@ -2496,7 +2501,7 @@ void cm_pvsamv1::exec()
                     resilience->run_surviving_batteries(p_crit_load_full[idx], PVSystem->p_systemACPower[idx], 0, 0, 0, 0);
                 }
 
-				batt->advance(m_vartab, PVSystem->p_systemACPower[idx], 0, p_load_full[idx], p_crit_load_full[idx], ac_loss_percent);
+				batt->advance(m_vartab, PVSystem->p_systemACPower[idx], 0, p_load_full[idx], p_crit_load_full[idx], ac_loss_post_inverter, ac_loss_post_batt);
                 batt->outGenWithoutBattery[idx] = PVSystem->p_systemACPower[idx];
                 PVSystem->p_systemACPower[idx] = batt->outGenPower[idx];
 

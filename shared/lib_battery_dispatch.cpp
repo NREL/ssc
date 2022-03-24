@@ -461,7 +461,7 @@ void dispatch_t::dispatch_dc_outage_step(size_t lifetimeIndex) {
     double V_pv = m_batteryPower->voltageSystem;
     double pv_clipped = m_batteryPower->powerSystemClipped;
     double crit_load_kwac = m_batteryPower->powerCritLoad;
-    double ac_loss_percent = m_batteryPower->acLossPercent;
+    double ac_loss_percent = m_batteryPower->acLossPostBattery;
 
     m_batteryPower->sharedInverter->calculateACPower(pv_kwdc, V_pv, m_batteryPower->sharedInverter->Tdry_C);
     double dc_ac_eff = m_batteryPower->sharedInverter->efficiencyAC * 0.01;
@@ -536,9 +536,8 @@ void dispatch_t::dispatch_dc_outage_step(size_t lifetimeIndex) {
 void dispatch_t::dispatch_ac_outage_step(size_t lifetimeIndex) {
     double crit_load_kwac = m_batteryPower->powerCritLoad;
     double pv_kwac = m_batteryPower->powerSystem;
-    double ac_loss_percent = m_batteryPower->acLossPercent;
+    double ac_loss_percent = m_batteryPower->acLossPostBattery;
 
-    double battery_dispatched_kwac = 0;
     double max_discharge_kwdc = _Battery->calculate_max_discharge_kw();
     max_discharge_kwdc = std::fmin(max_discharge_kwdc, m_batteryPower->powerBatteryDischargeMaxDC);
     double max_discharge_kwac = max_discharge_kwdc * m_batteryPower->singlePointEfficiencyDCToDC;
