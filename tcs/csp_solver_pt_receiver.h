@@ -206,8 +206,12 @@ protected:
 
     std::string error_msg;              // member string for exception messages
 	
-	virtual double get_clearsky(const C_csp_weatherreader::S_outputs &weather, double hour);
+	double get_clearsky(const C_csp_weatherreader::S_outputs &weather, double hour);
 
+    double get_clearsky(double hour,
+        double solzen /*deg*/, double azimuth /*deg*/,
+        int day /*-*/, int month_1_base /*-*/, double elev /*m*/,
+        double P_amb /*mbar*/, double T_dp /*C*/);
 };
 
 #endif  // __csp_solver_pt_receiver_

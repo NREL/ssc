@@ -79,6 +79,9 @@ static var_info _cm_vtab_mspt_sf_and_rec_isolated[] = {
     { SSC_INPUT,  SSC_NUMBER, "is_rec_startup_from_T_soln",         "Begin receiver startup from solved temperature profiles?",                                              "",             "",              "Tower and Receiver",                       "is_rec_model_trans=1",               "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "is_rec_enforce_min_startup",         "Always enforce minimum startup time",                                                                   "",             "",              "Tower and Receiver",                       "is_rec_model_trans=1",               "",              ""},
 
+    // Receiver design
+    { SSC_OUTPUT, SSC_NUMBER, "m_dot_rec_des",                      "Receiver design mass flow rate",                                                                        "kg/s",         "",              "Tower and Receiver",                       "*",                                  "",              ""},
+
 
     var_info_invalid };
 
@@ -96,7 +99,8 @@ public:
         bool is_rec_model_trans = as_boolean("is_rec_model_trans");
         bool is_rec_startup_trans = as_boolean("is_rec_startup_trans");
 
-        std::unique_ptr<C_pt_receiver> receiver;
+        std::shared_ptr<C_pt_receiver> cr_receiver;
+        std::shared_ptr<C_mspt_receiver_222> mspt_base;
 
         double H_rec = as_double("rec_height");
         double D_rec = as_double("D_rec");
@@ -144,7 +148,7 @@ public:
                 is_enforce_min_startup = true;
             }
 
-            std::unique_ptr<C_mspt_receiver> trans_receiver = std::unique_ptr<C_mspt_receiver>(new C_mspt_receiver(
+            std::shared_ptr<C_mspt_receiver> trans_receiver = std::shared_ptr<C_mspt_receiver>(new C_mspt_receiver(
                 as_double("h_tower"), as_double("epsilon"),
                 as_double("T_htf_hot_des"), as_double("T_htf_cold_des"),
                 as_double("f_rec_min"), q_dot_rec_des,
@@ -171,10 +175,12 @@ public:
                 as_boolean("is_rec_startup_from_T_soln"), is_enforce_min_startup
                 ));    // transient receiver
 
+            cr_receiver = trans_receiver;
+            mspt_base = trans_receiver;
         }
         else { // Steady state model
 
-            std::unique_ptr<C_mspt_receiver_222> ss_receiver = std::unique_ptr<C_mspt_receiver_222>(new C_mspt_receiver_222(
+            std::shared_ptr<C_mspt_receiver_222> ss_receiver = std::shared_ptr<C_mspt_receiver_222>(new C_mspt_receiver_222(
                 as_double("h_tower"), as_double("epsilon"),
                 as_double("T_htf_hot_des"), as_double("T_htf_cold_des"),
                 as_double("f_rec_min"), q_dot_rec_des,
@@ -192,11 +198,18 @@ public:
                 as_double("T_htf_hot_des"), as_double("rec_clearsky_fraction")
                 ));   // steady-state receiver
 
-            receiver = std::move(ss_receiver);
+            cr_receiver = ss_receiver; // std::copy(ss_receiver);
+            mspt_base = ss_receiver;
         }
 
-        receiver->init();
+        cr_receiver->init();
 
+        double m_dot_rec_des = std::numeric_limits<double>::quiet_NaN();
+        mspt_base->get_solved_design_common(m_dot_rec_des);
+
+        assign("m_dot_rec_des", m_dot_rec_des);
+
+        double blahadas = 1.23;
         // Receiver/tower design options
         // 1) import through cmod
         // 2) generate through solarpilot?

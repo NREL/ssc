@@ -152,9 +152,21 @@ double C_pt_receiver::get_startup_energy()
     return m_rec_qf_delay * m_q_rec_des * 1.e-6;  // MWh
 }
 
-double C_pt_receiver::get_clearsky(const C_csp_weatherreader::S_outputs &weather, double hour)
+double C_pt_receiver::get_clearsky(const C_csp_weatherreader::S_outputs& weather, double hour)
 {
-	if (m_clearsky_model == -1 || weather.m_solzen >= 90.0)
+    return get_clearsky(hour,
+        weather.m_solzen, weather.m_solazi,
+        weather.m_day, weather.m_month, weather.m_elev,
+        weather.m_pres, weather.m_tdew);
+
+}
+
+double C_pt_receiver::get_clearsky(double hour,
+                        double solzen /*deg*/, double azimuth_in /*deg*/,
+                        int day_of_year /*-*/, int month_1_base /*-*/, double elev /*m*/,
+                        double P_amb /*mbar*/, double T_dp /*C*/)
+{
+	if (m_clearsky_model == -1 || solzen >= 90.0)
 		return 0.0;
 
 	double clearsky;
@@ -169,21 +181,21 @@ double C_pt_receiver::get_clearsky(const C_csp_weatherreader::S_outputs &weather
 	else  // use methods in SolarPILOT
 	{ 
 		std::vector<int> monthlen{ 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
-		int doy = weather.m_day;
-		int m = weather.m_month - 1;
+		int doy = day_of_year;
+		int m = month_1_base - 1;
 		for (int j = 0; j < m; j++)
 			doy += monthlen[j];
 
-		double pres = weather.m_pres;
+		double pres = P_amb;                 //[mbar]
 		if (pres < 20. && pres > 1.0)				// Some weather files seem to have inconsistent pressure units... make sure that value is of correct order of magnitude
-			pres = weather.m_pres * 100.;			// convert to mbar
+			pres = pres * 100.;			// convert to mbar
 		double dpres = pres * 1.e-3 * 0.986923;		// Ambient pressure in atm
-		double del_h2o = exp(0.058 * weather.m_tdew + 2.413);  // Correlation for precipitable water in mm H20 (from Choudhoury INTERNATIONAL JOURNAL OF CLIMATOLOGY, VOL. 16, 663-475 (1996))
+		double del_h2o = exp(0.058 * T_dp + 2.413);  // Correlation for precipitable water in mm H20 (from Choudhoury INTERNATIONAL JOURNAL OF CLIMATOLOGY, VOL. 16, 663-475 (1996))
 
 		// Methods taken from SolarPilot Ambient class
 		double S0 = 1.353 * (1. + .0335 * cos(2. * PI * (doy + 10.) / 365.));
-		double zenith = weather.m_solzen * 3.14159 / 180.;
-		double azimuth = weather.m_solazi * 3.14159 / 180.;
+		double zenith = solzen * 3.14159 / 180.;
+		double azimuth = azimuth_in * 3.14159 / 180.;
 		double szen = sin(zenith);
 		double czen = cos(zenith);
 		double save2 = 90. - atan2(szen, czen) * R2D;
@@ -191,7 +203,7 @@ double C_pt_receiver::get_clearsky(const C_csp_weatherreader::S_outputs &weather
 		if (save2 <= 30.)
 			save = save - 41.972213 * pow(save2, (-2.0936381 - 0.04117341 * save2 + 0.000849854 * pow(save2, 2)));
 
-		double alt = weather.m_elev / 1000.;
+		double alt = elev / 1000.;
 		double csky = 0.0;
 		if (m_clearsky_model == 1)  // Meinel
 			csky = (1. - .14 * alt) * exp(-.357 / pow(czen, .678)) + .14 * alt;

@@ -168,6 +168,8 @@ protected:
 
     void init_mspt_common();
 
+    
+
     bool use_previous_solution(const s_steady_state_soln& soln, const s_steady_state_soln& soln_prev);
     util::matrix_t<double> calculate_flux_profiles(double dni /*W/m2*/, double dni_scale /*-*/, double plant_defocus /*-*/,
         double od_control /*-*/, const util::matrix_t<double>* flux_map_input);
@@ -184,6 +186,28 @@ protected:
         bool& rec_is_off, C_csp_collector_receiver::E_csp_cr_modes& input_operation_mode,
         double& eta_therm /*-*/, double& m_dot_salt_tot /*kg/s*/,
         double& T_salt_hot /*K*/, double& T_salt_cold_in /*K*/,
+        double& T_coolant_prop /*K*/, double& T_salt_hot_rec /*K*/,
+        double& c_p_coolant /*J/kg-K*/, double& u_coolant /*m/s*/,
+        double& rho_coolant /*kg/m3*/, double& f /*-*/,
+        double& q_dot_inc_sum /*Wt*/, double& q_conv_sum /*Wt*/,
+        double& q_rad_sum /*Wt*/, double& q_dot_piping_loss /*Wt*/,
+        double& q_dot_inc_min_panel /*Wt*/,
+        double& q_thermal_cksy /*Wt*/, double& q_thermal_steadystate /*Wt*/,
+        double& od_control /*-*/, double& clearsky /*W/m2*/,
+        s_steady_state_soln& soln);
+
+    void call_common(double P_amb /*Pa*/, double T_dp /*K*/, double T_amb /*K*/,
+        double zenith /*deg*/, double azimuth /*deg*/, double I_bn /*W/m2*/, double v_wind_10 /*m/s*/,
+        int day /*-*/, int month_1_base /*-*/, double elev /*m*/,
+        double T_salt_cold_in /*K*/,
+        double plant_defocus /*-*/,
+        const util::matrix_t<double>* flux_map_input,
+        C_csp_collector_receiver::E_csp_cr_modes input_operation_mode,
+        double step /*s*/, double time /*s*/,
+        // outputs:
+        bool& rec_is_off,
+        double& eta_therm /*-*/, double& m_dot_salt_tot /*kg/s*/,
+        double& T_salt_hot /*K*/,
         double& T_coolant_prop /*K*/, double& T_salt_hot_rec /*K*/,
         double& c_p_coolant /*J/kg-K*/, double& u_coolant /*m/s*/,
         double& rho_coolant /*kg/m3*/, double& f /*-*/,
@@ -225,6 +249,8 @@ public:
 		const C_pt_receiver::S_inputs &inputs,
 		const C_csp_solver_sim_info &sim_info);
 
+    //void call(double step /*s*/, double time /*s*/);
+
 	virtual void off(const C_csp_weatherreader::S_outputs &weather,
 		const C_csp_solver_htf_1state &htf_state_in,
 		const C_csp_solver_sim_info &sim_info);
@@ -236,6 +262,8 @@ public:
     virtual double get_pumping_parasitic_coef();
 
     virtual double area_proj();
+
+    void get_solved_design_common(double& m_dot_rec_total /*kg/s*/);
 
 };
 
