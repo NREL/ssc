@@ -192,69 +192,6 @@ void C_mspt_receiver_222::init()
 	return;
 }
 
-void C_mspt_receiver_222::call_common(const C_csp_weatherreader::S_outputs& weather,
-    const C_csp_solver_htf_1state& htf_state_in,
-    const C_mspt_receiver_222::S_inputs& inputs,
-    const C_csp_solver_sim_info& sim_info,
-    // outputs:
-    bool& rec_is_off, C_csp_collector_receiver::E_csp_cr_modes& input_operation_mode,
-    double& eta_therm /*-*/, double& m_dot_salt_tot /*kg/s*/,
-    double& T_salt_hot /*K*/, double& T_salt_cold_in /*K*/,
-    double& T_coolant_prop /*K*/, double& T_salt_hot_rec /*K*/,
-    double& c_p_coolant /*J/kg-K*/, double& u_coolant /*m/s*/,
-    double& rho_coolant /*kg/m3*/, double& f /*-*/,
-    double& q_dot_inc_sum /*Wt*/, double& q_conv_sum /*Wt*/,
-    double& q_rad_sum /*Wt*/, double& q_dot_piping_loss /*Wt*/,
-    double& q_dot_inc_min_panel /*Wt*/,
-    double& q_thermal_csky /*Wt*/, double& q_thermal_steadystate /*Wt*/,
-    double& od_control /*-*/, double& clearsky /*W/m2*/,
-    s_steady_state_soln& soln)
-{
-    double P_amb = weather.m_pres * 100.0;	//[Pa] Ambient pressure, convert from mbar
-    double T_dp = weather.m_tdew + 273.15;	//[K] Dewpoint temperature, convert from C
-    double T_amb = weather.m_tdry + 273.15;	//[K] Dry bulb temperature, convert from C
-    double zenith = weather.m_solzen;       //[deg]
-    double azimuth = weather.m_solazi;      //[deg]
-    double I_bn = weather.m_beam;           //[W/m2]
-    double v_wind_10 = weather.m_wspd;      //[m/s]
-
-    T_salt_cold_in = htf_state_in.m_temp + 273.15;	//[K] Cold salt inlet temp, convert from C
-
-    double plant_defocus = inputs.m_plant_defocus;          //[-]
-    const util::matrix_t<double>* flux_map_input = inputs.m_flux_map_input;
-    input_operation_mode = inputs.m_input_operation_mode;
-
-    double step = sim_info.ms_ts.m_step;	//[s]
-    double time = sim_info.ms_ts.m_time;	//[s]
-
-    call_common(P_amb, T_dp, T_amb,
-        zenith, azimuth, I_bn, v_wind_10,
-        weather.m_day, weather.m_month, weather.m_elev,
-        T_salt_cold_in,
-        plant_defocus,
-        flux_map_input,
-        input_operation_mode,
-        step, time,
-        //weather,
-        //htf_state_in,
-        //inputs,
-        //sim_info,
-        rec_is_off, 
-        eta_therm /*-*/, m_dot_salt_tot /*kg/s*/,
-        T_salt_hot /*K*/, 
-        T_coolant_prop /*K*/, T_salt_hot_rec /*K*/,
-        c_p_coolant /*J/kg-K*/, u_coolant /*m/s*/,
-        rho_coolant /*kg/m3*/, f /*-*/,
-        q_dot_inc_sum /*Wt*/, q_conv_sum /*Wt*/,
-        q_rad_sum /*Wt*/, q_dot_piping_loss /*Wt*/,
-        q_dot_inc_min_panel /*Wt*/,
-        q_thermal_csky /*Wt*/, q_thermal_steadystate /*Wt*/,
-        od_control /*-*/, clearsky /*W/m2*/,
-        soln);
-
-    return;
-}
-
 void C_mspt_receiver_222::call_common(double P_amb /*Pa*/, double T_dp /*K*/, double T_amb /*K*/,
     double zenith /*deg*/, double azimuth /*deg*/, double I_bn /*W/m2*/, double v_wind_10 /*m/s*/,
     int day /*-*/, int month_1_base /*-*/, double elev /*m*/,
@@ -277,36 +214,13 @@ void C_mspt_receiver_222::call_common(double P_amb /*Pa*/, double T_dp /*K*/, do
     double& od_control /*-*/, double& clearsky /*W/m2*/,
     s_steady_state_soln& soln)
 {
-    // Get inputs
-    //double plant_defocus = inputs.m_plant_defocus;          //[-]
-    //const util::matrix_t<double>* flux_map_input = inputs.m_flux_map_input;
-    // When this function is called from TCS solver, input_operation_mode should always be == 2
-    //input_operation_mode = inputs.m_input_operation_mode;
-
     if (input_operation_mode < C_csp_collector_receiver::OFF || input_operation_mode > C_csp_collector_receiver::STEADY_STATE)
     {
         error_msg = util::format("Input operation mode must be either [0,1,2], but value is %d", input_operation_mode);
         throw(C_csp_exception(error_msg, "MSPT receiver timestep performance call"));
     }
 
-    // Get sim info 
-    //double step = sim_info.ms_ts.m_step;	//[s]
-    //double time = sim_info.ms_ts.m_time;	//[s]
-
-    // Complete necessary conversions/calculations of input variables
-    //T_salt_cold_in = htf_state_in.m_temp + 273.15;	//[K] Cold salt inlet temp, convert from C
-    //double P_amb = weather.m_pres * 100.0;	//[Pa] Ambient pressure, convert from mbar
     double hour = time / 3600.0;			//[hr] Hour of the year
-    //double T_dp = weather.m_tdew + 273.15;	//[K] Dewpoint temperature, convert from C
-    //double T_amb = weather.m_tdry + 273.15;	//[K] Dry bulb temperature, convert from C
-    // **************************************************************************************
-
-    // Read in remaining weather inputs from weather output structure
-    //double zenith = weather.m_solzen;
-    //double azimuth = weather.m_solazi;
-    //double v_wind_10 = weather.m_wspd;
-    //double I_bn = weather.m_beam;           //[W/m2]
-
 
     int n_flux_y = (int)flux_map_input->nrows();
     if (n_flux_y > 1)
@@ -394,15 +308,12 @@ void C_mspt_receiver_222::call_common(double P_amb /*Pa*/, double T_dp /*K*/, do
     soln.mode = input_operation_mode;
     soln.rec_is_off = rec_is_off;
 
-    //clearsky = get_clearsky(weather, hour);
     clearsky = get_clearsky(hour,
                     zenith, azimuth,
                     day, month_1_base, elev,
                     P_amb*1.E-2, T_dp-273.15);
         
-
     double clearsky_adj = std::fmax(clearsky, I_bn);   // Set clear-sky DNI to actual DNI if actual value is higher
-
 
     if (rec_is_off)
         soln.q_dot_inc.resize_fill(m_n_panels, 0.0);
@@ -559,26 +470,48 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs& weather,
     bool rec_is_off = false;
     C_csp_collector_receiver::E_csp_cr_modes input_operation_mode;
 
-    double eta_therm, m_dot_salt_tot, T_salt_hot, T_salt_cold_in, T_coolant_prop, T_salt_hot_rec, c_p_coolant, u_coolant, rho_coolant, f;
-    eta_therm = m_dot_salt_tot = T_salt_hot = T_salt_cold_in = T_coolant_prop = T_salt_hot_rec = c_p_coolant = u_coolant = rho_coolant = f = std::numeric_limits<double>::quiet_NaN();
+    double eta_therm, m_dot_salt_tot, T_salt_hot, T_coolant_prop, T_salt_hot_rec, c_p_coolant, u_coolant, rho_coolant, f;
+    eta_therm = m_dot_salt_tot = T_salt_hot = T_coolant_prop = T_salt_hot_rec = c_p_coolant = u_coolant = rho_coolant = f = std::numeric_limits<double>::quiet_NaN();
     double q_dot_inc_sum, q_conv_sum, q_rad_sum, q_dot_piping_loss, q_dot_inc_min_panel, q_thermal_csky, q_thermal_steadystate, clearsky;
     q_dot_inc_sum = q_conv_sum = q_rad_sum = q_dot_piping_loss = q_dot_inc_min_panel = q_thermal_csky = q_thermal_steadystate = clearsky = std::numeric_limits<double>::quiet_NaN();
 
     double od_control = std::numeric_limits<double>::quiet_NaN();
     s_steady_state_soln soln;
 
-    call_common(weather, htf_state_in, inputs, sim_info,
-        rec_is_off, input_operation_mode,
-        eta_therm, m_dot_salt_tot,
-        T_salt_hot, T_salt_cold_in,
-        T_coolant_prop, T_salt_hot_rec,
-        c_p_coolant, u_coolant,
-        rho_coolant, f,
-        q_dot_inc_sum, q_conv_sum,
-        q_rad_sum, q_dot_piping_loss,
-        q_dot_inc_min_panel,
-        q_thermal_csky, q_thermal_steadystate,
-        od_control, clearsky,
+    double P_amb = weather.m_pres * 100.0;	//[Pa] Ambient pressure, convert from mbar
+    double T_dp = weather.m_tdew + 273.15;	//[K] Dewpoint temperature, convert from C
+    double T_amb = weather.m_tdry + 273.15;	//[K] Dry bulb temperature, convert from C
+    double zenith = weather.m_solzen;       //[deg]
+    double azimuth = weather.m_solazi;      //[deg]
+    double I_bn = weather.m_beam;           //[W/m2]
+    double v_wind_10 = weather.m_wspd;      //[m/s]
+
+    double T_salt_cold_in = htf_state_in.m_temp + 273.15;	//[K] Cold salt inlet temp, convert from C
+
+    double plant_defocus = inputs.m_plant_defocus;          //[-]
+    const util::matrix_t<double>* flux_map_input = inputs.m_flux_map_input;
+    input_operation_mode = inputs.m_input_operation_mode;
+
+    call_common(P_amb, T_dp, T_amb,
+        zenith, azimuth, I_bn, v_wind_10,
+        weather.m_day, weather.m_month, weather.m_elev,
+        T_salt_cold_in,
+        plant_defocus,
+        flux_map_input,
+        input_operation_mode,
+        step, time,
+        // outputs
+        rec_is_off,
+        eta_therm /*-*/, m_dot_salt_tot /*kg/s*/,
+        T_salt_hot /*K*/,
+        T_coolant_prop /*K*/, T_salt_hot_rec /*K*/,
+        c_p_coolant /*J/kg-K*/, u_coolant /*m/s*/,
+        rho_coolant /*kg/m3*/, f /*-*/,
+        q_dot_inc_sum /*Wt*/, q_conv_sum /*Wt*/,
+        q_rad_sum /*Wt*/, q_dot_piping_loss /*Wt*/,
+        q_dot_inc_min_panel /*Wt*/,
+        q_thermal_csky /*Wt*/, q_thermal_steadystate /*Wt*/,
+        od_control /*-*/, clearsky /*W/m2*/,
         soln);
 
 	double DELTAP, Pres_D, W_dot_pump, q_thermal, q_startup;
