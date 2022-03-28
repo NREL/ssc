@@ -306,23 +306,19 @@ void C_mspt_receiver::initialize_transient_parameters()
 	return; 
 }
 
-void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather, 
-	const C_csp_solver_htf_1state &htf_state_in,
-	const C_mspt_receiver::S_inputs &inputs,
-	const C_csp_solver_sim_info &sim_info)
+void C_mspt_receiver::call(double step /*s*/, double time /*s*/,
+    double P_amb /*Pa*/, double T_dp /*K*/, double T_amb /*K*/,
+    double I_bn /*W/m2*/, double v_wind_10 /*m/s*/,
+    double clearsky_dni /*W/m2*/, double plant_defocus /*-*/,
+    const util::matrix_t<double>* flux_map_input, C_csp_collector_receiver::E_csp_cr_modes input_operation_mode,
+    double T_salt_cold_in /*K*/)
 {
 	// Increase call-per-timestep counter
 	// Converge() sets it to -1, so on first call this line will adjust it = 0
 	m_ncall++;
 
-    // Get sim info 
-    double step = sim_info.ms_ts.m_step;	//[s]
-    double time = sim_info.ms_ts.m_time;	//[s]
-    double T_amb = weather.m_tdry + 273.15;	//[K] Dry bulb temperature, convert from C
-
     // Variables set in common call
     bool rec_is_off = false;
-    C_csp_collector_receiver::E_csp_cr_modes input_operation_mode;
 
     double eta_therm, m_dot_salt_tot, T_salt_hot, T_coolant_prop, T_salt_hot_rec, c_p_coolant, u_coolant, rho_coolant, f;
     eta_therm = m_dot_salt_tot = T_salt_hot = T_coolant_prop = T_salt_hot_rec = c_p_coolant = u_coolant = rho_coolant = f = std::numeric_limits<double>::quiet_NaN();
@@ -332,23 +328,9 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
     double od_control = std::numeric_limits<double>::quiet_NaN();
     s_steady_state_soln soln;
 
-    double P_amb = weather.m_pres * 100.0;	//[Pa] Ambient pressure, convert from mbar
-    double T_dp = weather.m_tdew + 273.15;	//[K] Dewpoint temperature, convert from C
-    double zenith = weather.m_solzen;       //[deg]
-    double azimuth = weather.m_solazi;      //[deg]
-    double I_bn = weather.m_beam;           //[W/m2]
-    double v_wind_10 = weather.m_wspd;      //[m/s]
-
-    double T_salt_cold_in = htf_state_in.m_temp + 273.15;	//[K] Cold salt inlet temp, convert from C
-
-    double plant_defocus = inputs.m_plant_defocus;          //[-]
-    const util::matrix_t<double>* flux_map_input = inputs.m_flux_map_input;
-    input_operation_mode = inputs.m_input_operation_mode;
-
     call_common(P_amb, T_dp, T_amb,
-        zenith, azimuth, I_bn, v_wind_10,
-        //weather.m_day, weather.m_month, weather.m_elev,
-        inputs.m_clearsky_dni,
+        I_bn, v_wind_10,
+        clearsky_dni,
         T_salt_cold_in,
         plant_defocus,
         flux_map_input,

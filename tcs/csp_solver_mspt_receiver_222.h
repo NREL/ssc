@@ -179,8 +179,7 @@ protected:
     void solve_for_defocus_given_flow(s_steady_state_soln& soln, const util::matrix_t<double>* flux_map_input);
 
     void call_common(double P_amb /*Pa*/, double T_dp /*K*/, double T_amb /*K*/,
-        double zenith /*deg*/, double azimuth /*deg*/, double I_bn /*W/m2*/, double v_wind_10 /*m/s*/,
-        //int day /*-*/, int month_1_base /*-*/, double elev /*m*/,
+        double I_bn /*W/m2*/, double v_wind_10 /*m/s*/,
         double clearsky_dni /*W/m2*/,
         double T_salt_cold_in /*K*/,
         double plant_defocus /*-*/,
@@ -232,7 +231,12 @@ public:
 		const C_pt_receiver::S_inputs &inputs,
 		const C_csp_solver_sim_info &sim_info);
 
-    //void call(double step /*s*/, double time /*s*/);
+    virtual void call(double step /*s*/, double time /*s*/,
+        double P_amb /*Pa*/, double T_dp /*K*/, double T_amb /*K*/,
+        double I_bn /*W/m2*/, double v_wind_10 /*m/s*/,
+        double clearsky_dni /*W/m2*/, double plant_defocus /*-*/,
+        const util::matrix_t<double>* flux_map_input, C_csp_collector_receiver::E_csp_cr_modes input_operation_mode,
+        double T_salt_cold_in /*K*/);
 
 	virtual void off(const C_csp_weatherreader::S_outputs &weather,
 		const C_csp_solver_htf_1state &htf_state_in,

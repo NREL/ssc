@@ -228,10 +228,12 @@ public:
 
 	virtual void init();
 
-	virtual void call(const C_csp_weatherreader::S_outputs &weather, 
-		const C_csp_solver_htf_1state &htf_state_in, 
-		const C_pt_receiver::S_inputs &inputs,
-		const C_csp_solver_sim_info &sim_info);
+    void call(double step /*s*/, double time /*s*/,
+        double P_amb /*Pa*/, double T_dp /*K*/, double T_amb /*K*/,
+        double I_bn /*W/m2*/, double v_wind_10 /*m/s*/,
+        double clearsky_dni /*W/m2*/, double plant_defocus /*-*/,
+        const util::matrix_t<double>* flux_map_input, C_csp_collector_receiver::E_csp_cr_modes input_operation_mode,
+        double T_salt_cold_in /*K*/) override;
 
 	virtual void off(const C_csp_weatherreader::S_outputs &weather,
 		const C_csp_solver_htf_1state &htf_state_in,
