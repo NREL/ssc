@@ -31,6 +31,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 static var_info _cm_vtab_mspt_sf_and_rec_isolated[] = {
 
     // Simulation options
+    { SSC_INPUT,  SSC_NUMBER, "sim_type",                           "1 (default): timeseries, 2: design only",                                                               "",             "",              "Simulation",                               "?=1",                                "",              "SIMULATION_PARAMETER"},
 
     // Receiver design parameters
     { SSC_INPUT,  SSC_NUMBER, "q_dot_rec_des",                      "Receiver thermal power to HTF at design",                                                               "MWt",          "",              "Tower and Receiver",                       "*",                                  "",              ""},
@@ -81,6 +82,10 @@ static var_info _cm_vtab_mspt_sf_and_rec_isolated[] = {
 
     // Receiver design
     { SSC_OUTPUT, SSC_NUMBER, "m_dot_rec_des",                      "Receiver design mass flow rate",                                                                        "kg/s",         "",              "Tower and Receiver",                       "*",                                  "",              ""},
+
+    // Timeseries outputs
+    { SSC_OUTPUT, SSC_ARRAY,  "m_dot_rec_od",                       "Receiver mass flow rate",                                                                               "kg/s",         "",              "Tower and Receiver",                       "sim_type=1",                         "",              ""},
+    { SSC_OUTPUT, SSC_ARRAY,  "eta_rec_od",                         "Receiver thermal efficiency",                                                                           "kg/s",         "",              "Tower and Receiver",                       "sim_type=1",                         "",              ""},
 
 
     var_info_invalid };
@@ -181,21 +186,69 @@ public:
         cr_receiver->init();
 
         double m_dot_rec_des = std::numeric_limits<double>::quiet_NaN();
-        mspt_base->get_solved_design_common(m_dot_rec_des);
+        double T_htf_cold_des = std::numeric_limits<double>::quiet_NaN();
+        int n_panels = -1;
+        mspt_base->get_solved_design_common(m_dot_rec_des, T_htf_cold_des, n_panels);
 
         assign("m_dot_rec_des", m_dot_rec_des);
 
-        // For now... Set receiver to "on" through some rec method that sets E_su and t_su to 0
+        // If only simulating receiver design then get out here
+        int sim_type = as_integer("sim_type");
+        if (sim_type == 2) {
+            return;
+        }
+        // ******************************************************
 
-        double blahadas = 1.23;
-        // Receiver/tower design options
-        // 1) import through cmod
-        // 2) generate through solarpilot?
+        int n_runs = 2;
 
-        // Initialization options
-        // 1) Default
-        // 2) Import through cmod
-        // 3) Steady state (implies transient simulation?)
+        // Allocate timeseries outputs
+        ssc_number_t* p_m_dot_rec_od = allocate("m_dot_rec_od", n_runs);
+        ssc_number_t* p_eta_rec_od = allocate("eta_rec_od", n_runs);
+
+        for (int n_run = 0; n_run < n_runs; n_run++) {
+
+            double step = 3600.0;       //[s]
+            double P_amb = 101325.0;    //[Pa]
+            double T_amb = 25.0 + 273.15;   //[K]
+            double T_sky = T_amb - 15.0;    //[K]
+            double I_bn = 950.0;        //[W/m2]
+            double v_wind_10 = 3.0;     //[m/s]
+            double clearsky_dni = std::numeric_limits<double>::quiet_NaN(); //[W/m2]
+            double plant_defocus = 1.0; //[-]
+            double T_salt_cold_in = T_htf_cold_des;     //[K]
+
+            util::matrix_t<double> flux_map_input;
+            flux_map_input.resize(1, n_panels);
+            double dni_od = 550.0;
+            for (int i = 0; i < n_panels; i++) {
+                flux_map_input(0, i) = dni_od + 200*n_run;    //[W/m2]
+            }
+
+            C_csp_collector_receiver::E_csp_cr_modes input_operation_mode = C_csp_collector_receiver::E_csp_cr_modes::ON;
+
+            // For now... Set receiver to "on" through some rec method that sets E_su and t_su to 0
+            mspt_base->overwrite_startup_requirements_to_on();
+
+            mspt_base->call(step, P_amb, T_amb, T_sky,
+                I_bn, v_wind_10, clearsky_dni, plant_defocus,
+                &flux_map_input, input_operation_mode,
+                T_salt_cold_in);
+
+            double m_dot_rec_od = mspt_base->ms_outputs.m_m_dot_salt_tot / 3600.0;  //[kg/s]
+            double eta_rec_od = mspt_base->ms_outputs.m_eta_therm;                  //[-]
+
+            p_m_dot_rec_od[n_run] = (ssc_number_t)m_dot_rec_od; //[kg/s]
+            p_eta_rec_od[n_run] = (ssc_number_t)eta_rec_od;     //[kg/s]
+
+            // Receiver/tower design options
+            // 1) import through cmod
+            // 2) generate through solarpilot?
+
+            // Initialization options
+            // 1) Default
+            // 2) Import through cmod
+            // 3) Steady state (implies transient simulation?)
+        }
 
 
 

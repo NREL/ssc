@@ -45,6 +45,8 @@ protected:
         double p_amb;				// Ambient pressure (Pa)
         double T_sky;               // Sky temperature (K)
 
+        double flux_sum;            // Flux map summed (W/m2)
+
         double dni;					// DNI for this solution (W/m2)
         double dni_applied_to_measured; //[-] Ratio of DNI used to measured DNI
         double plant_defocus;       // plant defocus
@@ -246,8 +248,10 @@ public:
 
     double area_proj() override;
 
-    void get_solved_design_common(double& m_dot_rec_total /*kg/s*/);
+    void get_solved_design_common(double& m_dot_rec_total /*kg/s*/,
+        double& T_htf_cold_des /*K*/, int& n_panels);
 
+    void overwrite_startup_requirements_to_on();
 };
 
 #endif // __csp_solver_mspt_receiver_222_

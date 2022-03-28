@@ -99,9 +99,12 @@ C_mspt_receiver_222::C_mspt_receiver_222(double h_tower /*m*/, double epsilon /*
     m_use_constant_piping_loss = true;
 }
 
-void C_mspt_receiver_222::get_solved_design_common(double& m_dot_rec_total /*kg/s*/)
+void C_mspt_receiver_222::get_solved_design_common(double& m_dot_rec_total /*kg/s*/,
+    double& T_htf_cold_des /*K*/, int& n_panels)
 {
     m_dot_rec_total = m_m_dot_htf_des;      //[kg/s]
+    T_htf_cold_des = m_T_htf_cold_des;      //[K]
+    n_panels = m_n_panels;                  //[-]
 }
 
 void C_mspt_receiver_222::init_mspt_common()
@@ -227,6 +230,13 @@ void C_mspt_receiver_222::call_common(double P_amb /*Pa*/, double T_amb /*K*/,
     }
     int n_flux_x = (int)flux_map_input->ncols();
 
+    double flux_sum = 0.0;
+    for (int i = 0; i < n_flux_y; i++) {
+        for (int j = 0; j < n_flux_x; j++) {
+            flux_sum += flux_map_input->at(i, j);
+        }
+    }
+
     // Set current timestep stored values to NaN so we know that code solved for them
     m_mode = C_csp_collector_receiver::OFF;
     m_E_su = std::numeric_limits<double>::quiet_NaN();
@@ -291,6 +301,8 @@ void C_mspt_receiver_222::call_common(double P_amb /*Pa*/, double T_amb /*K*/,
     soln.v_wind_10 = v_wind_10;     //[m/s]
     soln.p_amb = P_amb;             //[Pa]
     soln.T_sky = T_sky;             //[K]
+
+    soln.flux_sum = flux_sum;       //[W/m2]
 
     soln.dni = I_bn;                //[W/m2]
     soln.dni_applied_to_measured = 1.0;     //[-]
@@ -699,6 +711,13 @@ void C_mspt_receiver_222::off(const C_csp_weatherreader::S_outputs &weather,
 	return;
 }
 
+void C_mspt_receiver_222::overwrite_startup_requirements_to_on()
+{
+    m_mode_prev = C_csp_collector_receiver::ON;
+    m_E_su_prev = 0.0;
+    m_t_su_prev = 0.0;
+}
+
 void C_mspt_receiver_222::converged()
 {
 	// Check HTF props?
@@ -746,7 +765,8 @@ bool C_mspt_receiver_222::use_previous_solution(const s_steady_state_soln& soln,
 		soln.T_amb == soln_prev.T_amb && 
 		soln.v_wind_10 == soln_prev.v_wind_10 &&
 		soln.p_amb == soln_prev.p_amb &&
-        soln.T_sky == soln_prev.T_sky)
+        soln.T_sky == soln_prev.T_sky &&
+        soln.flux_sum == soln_prev.flux_sum)
 	{
 		return true;
 	}
