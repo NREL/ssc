@@ -35,9 +35,6 @@ private:
 	// track number of calls per timestep, reset = -1 in converged() call
 	int m_ncall;
 
-	//s_steady_state_soln m_mflow_soln_prev;  // Steady state solution using actual DNI from the last call to the model
-	//s_steady_state_soln m_mflow_soln_csky_prev;  // Steady state solution using clear-sky DNI from the last call to the model
-
 	//-------------------
     // Set in constructor
     bool m_is_transient;			// Use transient model?
@@ -227,9 +224,9 @@ public:
 
 	void init() override;
 
-    void call(double step /*s*/, double time /*s*/,
-        double P_amb /*Pa*/, double T_dp /*K*/, double T_amb /*K*/,
-        double I_bn /*W/m2*/, double v_wind_10 /*m/s*/,
+    void call(double step /*s*/,
+        double P_amb /*Pa*/, double T_amb /*K*/, double T_sky /*K*/,
+        double I_bn /*W/m2*/, double v_wind_10 /*m/s*/, 
         double clearsky_dni /*W/m2*/, double plant_defocus /*-*/,
         const util::matrix_t<double>* flux_map_input, C_csp_collector_receiver::E_csp_cr_modes input_operation_mode,
         double T_salt_cold_in /*K*/) override;

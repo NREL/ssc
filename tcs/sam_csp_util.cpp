@@ -317,7 +317,7 @@ double CSP::skytemp(double T_amb_K, double T_dp_K, double hour){
 	T_dpC = T_dp_K-273.15;
 
 	//The sky temperature relationship
-	return T_amb_K*pow(.711+.0056*T_dpC+.000073*T_dpC*T_dpC+.013*cos(time), .25);
+	return T_amb_K*pow(.711+.0056*T_dpC+.000073*T_dpC*T_dpC+.013*cos(time), .25);   //[K]
 };
 
 double CSP::get_clearsky(int clearsky_model /*-*/, const std::vector<double>& clearsky_data,

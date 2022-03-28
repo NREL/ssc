@@ -190,14 +190,14 @@ void C_mspt_receiver_222::init()
 	return;
 }
 
-void C_mspt_receiver_222::call_common(double P_amb /*Pa*/, double T_dp /*K*/, double T_amb /*K*/,
-    double I_bn /*W/m2*/, double v_wind_10 /*m/s*/,
+void C_mspt_receiver_222::call_common(double P_amb /*Pa*/, double T_amb /*K*/,
+    double I_bn /*W/m2*/, double v_wind_10 /*m/s*/, double T_sky /*K*/,
     double clearsky_dni /*W/m2*/,
     double T_salt_cold_in /*K*/,
     double plant_defocus /*-*/,
     const util::matrix_t<double>* flux_map_input,
     C_csp_collector_receiver::E_csp_cr_modes input_operation_mode,
-    double step /*s*/, double time /*s*/,
+    double step /*s*/,
     // outputs:
     bool& rec_is_off,   
     double& eta_therm /*-*/, double& m_dot_salt_tot /*kg/s*/,
@@ -218,8 +218,6 @@ void C_mspt_receiver_222::call_common(double P_amb /*Pa*/, double T_dp /*K*/, do
         throw(C_csp_exception(error_msg, "MSPT receiver timestep performance call"));
     }
 
-    double hour = time / 3600.0;			//[hr] Hour of the year
-
     int n_flux_y = (int)flux_map_input->nrows();
     if (n_flux_y > 1)
     {
@@ -228,8 +226,6 @@ void C_mspt_receiver_222::call_common(double P_amb /*Pa*/, double T_dp /*K*/, do
         csp_messages.add_message(C_csp_messages::WARNING, error_msg);
     }
     int n_flux_x = (int)flux_map_input->ncols();
-
-    double T_sky = CSP::skytemp(T_amb, T_dp, hour);
 
     // Set current timestep stored values to NaN so we know that code solved for them
     m_mode = C_csp_collector_receiver::OFF;
@@ -253,7 +249,7 @@ void C_mspt_receiver_222::call_common(double P_amb /*Pa*/, double T_dp /*K*/, do
         rec_is_off = true;
     }
 
-    if (plant_defocus == 0.0 || I_bn <= 1.E-6) // || (zenith == 0.0 && azimuth == 180.0))
+    if (plant_defocus == 0.0 || I_bn <= 1.E-6)
     {
         if (m_night_recirc == 1)
         {
@@ -291,11 +287,10 @@ void C_mspt_receiver_222::call_common(double P_amb /*Pa*/, double T_dp /*K*/, do
 
     // Initialize steady state solutions with current weather, DNI, field efficiency, and inlet conditions
     s_steady_state_soln soln_actual, soln_clearsky;
-    soln.hour = time / 3600.0;
     soln.T_amb = T_amb;             //[K]
-    soln.T_dp = T_dp;               //[K]
     soln.v_wind_10 = v_wind_10;     //[m/s]
     soln.p_amb = P_amb;             //[Pa]
+    soln.T_sky = T_sky;             //[K]
 
     soln.dni = I_bn;                //[W/m2]
     soln.dni_applied_to_measured = 1.0;     //[-]
@@ -469,16 +464,19 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs& weather,
     double I_bn = weather.m_beam;           //[W/m2]
     double v_wind_10 = weather.m_wspd;      //[m/s]
 
-    call(step, time,
-        P_amb, T_dp, T_amb,
+    double hour = time / 3600.0;			//[hr] Hour of the year
+    double T_sky = CSP::skytemp(T_amb, T_dp, hour);     //[K]
+
+    call(step,
+        P_amb, T_amb, T_sky,
         I_bn, v_wind_10,
         clearsky_dni, plant_defocus,
         flux_map_input, input_operation_mode,
         T_salt_cold_in);
 }
 
-void C_mspt_receiver_222::call(double step /*s*/, double time /*s*/,
-    double P_amb /*Pa*/, double T_dp /*K*/, double T_amb /*K*/,
+void C_mspt_receiver_222::call(double step /*s*/,
+    double P_amb /*Pa*/, double T_amb /*K*/, double T_sky /*K*/,
     double I_bn /*W/m2*/, double v_wind_10 /*m/s*/,
     double clearsky_dni /*W/m2*/, double plant_defocus /*-*/,
     const util::matrix_t<double>* flux_map_input, C_csp_collector_receiver::E_csp_cr_modes input_operation_mode,
@@ -499,14 +497,14 @@ void C_mspt_receiver_222::call(double step /*s*/, double time /*s*/,
     double od_control = std::numeric_limits<double>::quiet_NaN();
     s_steady_state_soln soln;
 
-    call_common(P_amb, T_dp, T_amb,
-        I_bn, v_wind_10,
+    call_common(P_amb, T_amb,
+        I_bn, v_wind_10, T_sky,
         clearsky_dni,
         T_salt_cold_in,
         plant_defocus,
         flux_map_input,
         input_operation_mode,
-        step, time,
+        step,
         // outputs
         rec_is_off,
         eta_therm /*-*/, m_dot_salt_tot /*kg/s*/,
@@ -746,9 +744,9 @@ bool C_mspt_receiver_222::use_previous_solution(const s_steady_state_soln& soln,
         soln.plant_defocus == soln_prev.plant_defocus &&
 		soln.od_control == soln_prev.od_control &&
 		soln.T_amb == soln_prev.T_amb && 
-		soln.T_dp == soln_prev.T_dp &&
 		soln.v_wind_10 == soln_prev.v_wind_10 &&
-		soln.p_amb == soln_prev.p_amb)
+		soln.p_amb == soln_prev.p_amb &&
+        soln.T_sky == soln_prev.T_sky)
 	{
 		return true;
 	}
@@ -881,13 +879,10 @@ util::matrix_t<double> C_mspt_receiver_222::calculate_flux_profiles(double dni /
 // Calculate steady state temperature and heat loss profiles for a given mass flow and incident flux
 void C_mspt_receiver_222::calculate_steady_state_soln(s_steady_state_soln &soln, double tol, bool use_constant_piping_loss, int max_iter)
 {
-
 	double P_amb = soln.p_amb;	
-	double hour = soln.hour;			
-	double T_dp = soln.T_dp;	
 	double T_amb = soln.T_amb;	
 	double v_wind_10 = soln.v_wind_10;
-	double T_sky = CSP::skytemp(T_amb, T_dp, hour);
+	double T_sky = soln.T_sky;
 	double v_wind = log((m_h_tower + m_h_rec / 2) / 0.003) / log(10.0 / 0.003)*v_wind_10;
 
 	util::matrix_t<double> T_s_guess(m_n_panels);

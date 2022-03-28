@@ -37,10 +37,6 @@ public:
 
     C_csp_messages csp_messages;        // Class to save messages for upstream classes
 
-
-
-	
-
     struct S_inputs
     {
         double m_plant_defocus;     //[-] plant defocus signal

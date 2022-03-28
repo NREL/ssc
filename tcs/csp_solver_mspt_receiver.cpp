@@ -304,8 +304,8 @@ void C_mspt_receiver::initialize_transient_parameters()
 	return; 
 }
 
-void C_mspt_receiver::call(double step /*s*/, double time /*s*/,
-    double P_amb /*Pa*/, double T_dp /*K*/, double T_amb /*K*/,
+void C_mspt_receiver::call(double step /*s*/,
+    double P_amb /*Pa*/, double T_amb /*K*/, double T_sky /*K*/,
     double I_bn /*W/m2*/, double v_wind_10 /*m/s*/,
     double clearsky_dni /*W/m2*/, double plant_defocus /*-*/,
     const util::matrix_t<double>* flux_map_input, C_csp_collector_receiver::E_csp_cr_modes input_operation_mode,
@@ -326,14 +326,14 @@ void C_mspt_receiver::call(double step /*s*/, double time /*s*/,
     double od_control = std::numeric_limits<double>::quiet_NaN();
     s_steady_state_soln soln;
 
-    call_common(P_amb, T_dp, T_amb,
-        I_bn, v_wind_10,
+    call_common(P_amb, T_amb,
+        I_bn, v_wind_10, T_sky,
         clearsky_dni,
         T_salt_cold_in,
         plant_defocus,
         flux_map_input,
         input_operation_mode,
-        step, time,
+        step,
         // outputs
         rec_is_off,
         eta_therm /*-*/, m_dot_salt_tot /*kg/s*/,
@@ -2092,11 +2092,9 @@ void C_mspt_receiver::initialize_transient_param_inputs(const s_steady_state_sol
 	// Initialize values of transient model parameter inputs (pinputs) from steady state solution, current weather, and current time
 
 	double P_amb = soln.p_amb;	//[Pa] Ambient pressure
-	double hour = soln.hour;	//[hr] Hour of the year
-	double T_dp = soln.T_dp;	//[K] Dewpoint temperature
 	double T_amb = soln.T_amb;	//[K] Dry bulb temperature
 	double v_wind_10 = soln.v_wind_10;
-	double T_sky = CSP::skytemp(T_amb, T_dp, hour);
+    double T_sky = soln.T_sky;  //[K] 
 
 	double T_coolant_prop = (soln.T_salt_hot + soln.T_salt_cold_in) / 2.0;
 	pinputs.mflow_tot = soln.m_dot_salt_tot;
@@ -2863,9 +2861,10 @@ void C_mspt_receiver::est_startup_time_energy(double fract, double &est_time, do
 	weather.m_wspd = 5.0; //m/s
 
 	s_steady_state_soln soln;
-	soln.hour = 182.0 * 24.0 + 8.0;
+	double hour = 182.0 * 24.0 + 8.0;
 	soln.T_amb = Tamb;
-	soln.T_dp = 2.0+273.15;
+	double T_dp = 2.0+273.15;
+    soln.T_sky = CSP::skytemp(soln.T_amb, T_dp, hour);     //[K]
 	soln.v_wind_10 = 5.0;
 	soln.p_amb = 101325.;
 	soln.T_salt_cold_in = m_T_htf_cold_des;

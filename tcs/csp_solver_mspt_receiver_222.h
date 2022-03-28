@@ -39,13 +39,11 @@ protected:
     {
         C_csp_collector_receiver::E_csp_cr_modes mode;
         bool rec_is_off;
-        //int itermode;
 
-        double hour;				// Hour of the year 
         double T_amb;				// Dry bulb temperature (K)
-        double T_dp;				// Dewpoint temperature (K)
         double v_wind_10;			// Wind speed at 10m (m/s)
         double p_amb;				// Ambient pressure (Pa)
+        double T_sky;               // Sky temperature (K)
 
         double dni;					// DNI for this solution (W/m2)
         double dni_applied_to_measured; //[-] Ratio of DNI used to measured DNI
@@ -91,13 +89,12 @@ protected:
 
         void clear()
         {
-            hour = T_amb = T_dp = v_wind_10 = p_amb = std::numeric_limits<double>::quiet_NaN();
+            T_amb = v_wind_10 = p_amb = T_sky = std::numeric_limits<double>::quiet_NaN();
             dni = dni_applied_to_measured = od_control = plant_defocus =
                 m_dot_salt = m_dot_salt_tot = T_salt_cold_in = T_salt_hot = T_salt_hot_rec = T_salt_props = std::numeric_limits<double>::quiet_NaN();
             u_salt = f = Q_inc_sum = Q_conv_sum = Q_rad_sum = Q_abs_sum = Q_dot_piping_loss = Q_inc_min = Q_thermal = eta_therm = std::numeric_limits<double>::quiet_NaN();
 
             mode = C_csp_collector_receiver::E_csp_cr_modes::OFF;
-            //itermode = -1;
             rec_is_off = true;
         }
     };
@@ -178,14 +175,14 @@ protected:
     void solve_for_mass_flow_and_defocus(s_steady_state_soln& soln, double m_dot_htf_max, const util::matrix_t<double>* flux_map_input);
     void solve_for_defocus_given_flow(s_steady_state_soln& soln, const util::matrix_t<double>* flux_map_input);
 
-    void call_common(double P_amb /*Pa*/, double T_dp /*K*/, double T_amb /*K*/,
-        double I_bn /*W/m2*/, double v_wind_10 /*m/s*/,
+    void call_common(double P_amb /*Pa*/, double T_amb /*K*/,
+        double I_bn /*W/m2*/, double v_wind_10 /*m/s*/, double T_sky /*K*/,
         double clearsky_dni /*W/m2*/,
         double T_salt_cold_in /*K*/,
         double plant_defocus /*-*/,
         const util::matrix_t<double>* flux_map_input,
         C_csp_collector_receiver::E_csp_cr_modes input_operation_mode,
-        double step /*s*/, double time /*s*/,
+        double step /*s*/,
         // outputs:
         bool& rec_is_off,
         double& eta_therm /*-*/, double& m_dot_salt_tot /*kg/s*/,
@@ -230,8 +227,8 @@ public:
 		const C_pt_receiver::S_inputs &inputs,
 		const C_csp_solver_sim_info &sim_info) override;
 
-    virtual void call(double step /*s*/, double time /*s*/,
-        double P_amb /*Pa*/, double T_dp /*K*/, double T_amb /*K*/,
+    virtual void call(double step /*s*/,
+        double P_amb /*Pa*/, double T_amb /*K*/, double T_sky /*K*/,
         double I_bn /*W/m2*/, double v_wind_10 /*m/s*/,
         double clearsky_dni /*W/m2*/, double plant_defocus /*-*/,
         const util::matrix_t<double>* flux_map_input, C_csp_collector_receiver::E_csp_cr_modes input_operation_mode,
