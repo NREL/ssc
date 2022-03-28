@@ -36,8 +36,7 @@ C_mspt_receiver_222::C_mspt_receiver_222(double h_tower /*m*/, double epsilon /*
     double piping_loss_coefficient /*Wt/m2-K*/, double pipe_length_add /*m*/, double pipe_length_mult /*-*/,
     int field_fl, util::matrix_t<double> field_fl_props,
     int tube_mat_code /*-*/,
-    int night_recirc /*-*/, int clearsky_model /*-*/,    
-    std::vector<double> clearsky_data,
+    int night_recirc /*-*/,
     int n_panels /*-*/, double d_rec /*m*/, double h_rec /*m*/,
     int flow_type /*-*/, int crossover_shift /*-*/, double hl_ffact /*-*/,
     double T_salt_hot_target /*C*/, double csky_frac /*-*/) : C_pt_receiver(h_tower, epsilon,
@@ -50,8 +49,7 @@ C_mspt_receiver_222::C_mspt_receiver_222(double h_tower /*m*/, double epsilon /*
         pipe_length_mult,
         field_fl, field_fl_props,
         tube_mat_code,
-        night_recirc, clearsky_model,
-        clearsky_data)
+        night_recirc)
 {
     // Parameters not shared upstream with C_pt_receiver
     m_n_panels = n_panels;      //[-]
@@ -211,7 +209,7 @@ void C_mspt_receiver_222::call_common(double P_amb /*Pa*/, double T_dp /*K*/, do
     double& q_rad_sum /*Wt*/, double& q_dot_piping_loss /*Wt*/,
     double& q_dot_inc_min_panel /*Wt*/,
     double& q_thermal_csky /*Wt*/, double& q_thermal_steadystate /*Wt*/,
-    double& od_control /*-*/, double& clearsky /*W/m2*/,
+    double& od_control /*-*/,
     s_steady_state_soln& soln)
 {
     if (input_operation_mode < C_csp_collector_receiver::OFF || input_operation_mode > C_csp_collector_receiver::STEADY_STATE)
@@ -244,7 +242,6 @@ void C_mspt_receiver_222::call_common(double P_amb /*Pa*/, double T_dp /*K*/, do
 
     c_p_coolant = rho_coolant = f = u_coolant = q_conv_sum = q_rad_sum = q_dot_inc_sum = q_dot_piping_loss = q_dot_inc_min_panel = std::numeric_limits<double>::quiet_NaN();
     T_salt_hot_rec = std::numeric_limits<double>::quiet_NaN();
-    clearsky = std::numeric_limits<double>::quiet_NaN();
 
     bool rec_is_defocusing = false;
 
@@ -308,9 +305,10 @@ void C_mspt_receiver_222::call_common(double P_amb /*Pa*/, double T_dp /*K*/, do
     soln.mode = input_operation_mode;
     soln.rec_is_off = rec_is_off;
 
-    clearsky = clearsky_dni;
-        
-    double clearsky_adj = std::fmax(clearsky, I_bn);   // Set clear-sky DNI to actual DNI if actual value is higher
+    if(std::isnan(clearsky_dni) && m_csky_frac > 0.0001)
+        throw(C_csp_exception("Clearsky DNI is NaN but required in the clearsky receiver model"));
+
+    double clearsky_adj = std::fmax(clearsky_dni, I_bn);   // Set clear-sky DNI to actual DNI if actual value is higher
 
     if (rec_is_off)
         soln.q_dot_inc.resize_fill(m_n_panels, 0.0);
@@ -495,8 +493,8 @@ void C_mspt_receiver_222::call(double step /*s*/, double time /*s*/,
 
     double eta_therm, m_dot_salt_tot, T_salt_hot, T_coolant_prop, T_salt_hot_rec, c_p_coolant, u_coolant, rho_coolant, f;
     eta_therm = m_dot_salt_tot = T_salt_hot = T_coolant_prop = T_salt_hot_rec = c_p_coolant = u_coolant = rho_coolant = f = std::numeric_limits<double>::quiet_NaN();
-    double q_dot_inc_sum, q_conv_sum, q_rad_sum, q_dot_piping_loss, q_dot_inc_min_panel, q_thermal_csky, q_thermal_steadystate, clearsky;
-    q_dot_inc_sum = q_conv_sum = q_rad_sum = q_dot_piping_loss = q_dot_inc_min_panel = q_thermal_csky = q_thermal_steadystate = clearsky = std::numeric_limits<double>::quiet_NaN();
+    double q_dot_inc_sum, q_conv_sum, q_rad_sum, q_dot_piping_loss, q_dot_inc_min_panel, q_thermal_csky, q_thermal_steadystate;
+    q_dot_inc_sum = q_conv_sum = q_rad_sum = q_dot_piping_loss = q_dot_inc_min_panel = q_thermal_csky = q_thermal_steadystate = std::numeric_limits<double>::quiet_NaN();
 
     double od_control = std::numeric_limits<double>::quiet_NaN();
     s_steady_state_soln soln;
@@ -520,7 +518,7 @@ void C_mspt_receiver_222::call(double step /*s*/, double time /*s*/,
         q_rad_sum /*Wt*/, q_dot_piping_loss /*Wt*/,
         q_dot_inc_min_panel /*Wt*/,
         q_thermal_csky /*Wt*/, q_thermal_steadystate /*Wt*/,
-        od_control /*-*/, clearsky /*W/m2*/,
+        od_control /*-*/,
         soln);
 
 	double DELTAP, Pres_D, W_dot_pump, q_thermal, q_startup;

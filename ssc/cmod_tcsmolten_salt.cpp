@@ -1428,19 +1428,6 @@ public:
             if (rec_clearsky_model == -1 && as_double("rec_clearsky_fraction") >= 0.0001)
                 throw exec_error("tcsmolten_salt", "'rec_clearsky_model' must be specified when 'rec_clearsky_fraction' > 0.0.");
 
-            std::vector<double> clearsky_data;
-            if (rec_clearsky_model == 0)
-            {
-                size_t n_csky = 0;
-                ssc_number_t* csky = as_array("rec_clearsky_dni", &n_csky);
-                if (n_csky != n_steps_full)
-                    throw exec_error("tcsmolten_salt", "Invalid clear-sky DNI data. Array must have " + util::to_string((int)n_steps_full) + " rows.");
-
-                clearsky_data.resize(n_steps_full);
-                for (size_t i = 0; i < n_steps_full; i++)
-                    clearsky_data.at(i) = (double)csky[i];
-            }
-
             if (!as_boolean("is_rec_model_trans") && !as_boolean("is_rec_startup_trans")) {
                 //std::unique_ptr<C_mspt_receiver_222> ss_receiver = std::make_unique<C_mspt_receiver_222>();   // new to C++14
                 std::unique_ptr<C_mspt_receiver_222> ss_receiver = std::unique_ptr<C_mspt_receiver_222>(new C_mspt_receiver_222(
@@ -1454,8 +1441,7 @@ public:
                     as_double("piping_length_mult"),
                     as_integer("rec_htf"), as_matrix("field_fl_props"),
                     as_integer("mat_tube"),
-                    rec_night_recirc, rec_clearsky_model,
-                    clearsky_data,
+                    rec_night_recirc,
                     as_integer("N_panels"), D_rec, H_rec,
                     as_integer("Flow_type"), as_integer("crossover_shift"), as_double("hl_ffact"),
                     as_double("T_htf_hot_des"), as_double("rec_clearsky_fraction")
@@ -1490,8 +1476,7 @@ public:
                     as_double("piping_length_mult"),
                     as_integer("rec_htf"), as_matrix("field_fl_props"),
                     as_integer("mat_tube"),
-                    rec_night_recirc, rec_clearsky_model,
-                    clearsky_data,
+                    rec_night_recirc,
                     as_integer("N_panels"), D_rec, H_rec,
                     as_integer("Flow_type"), as_integer("crossover_shift"), as_double("hl_ffact"),
                     as_double("T_htf_hot_des"), as_double("rec_clearsky_fraction"),

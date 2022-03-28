@@ -36,8 +36,7 @@ C_pt_receiver::C_pt_receiver(double h_tower /*m*/, double epsilon /*-*/,
     double pipe_length_mult /*-*/,
     int field_fl /*-*/, util::matrix_t<double> field_fl_props,
     int tube_mat_code /*-*/,
-    int night_recirc /*-*/, int clearsky_model /*-*/,
-    std::vector<double> clearsky_data)
+    int night_recirc /*-*/)
 {
     // Design parameters
     m_h_tower = h_tower;    //[m]
@@ -63,8 +62,6 @@ C_pt_receiver::C_pt_receiver(double h_tower /*m*/, double epsilon /*-*/,
     m_tube_mat_code = tube_mat_code;    //[-]
 
     m_night_recirc = night_recirc;  //[-]
-    m_clearsky_model = clearsky_model;   //[-]
-    m_clearsky_data = clearsky_data;
 
     // State variables
     m_mode = C_csp_collector_receiver::E_csp_cr_modes::OFF;

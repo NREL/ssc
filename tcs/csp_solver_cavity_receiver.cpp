@@ -71,8 +71,7 @@ C_cavity_receiver::C_cavity_receiver(double dni_des /*W/m2*/,
         pipe_length_mult,
         field_fl, field_fl_props,
         tube_mat_code,
-        -1, -1,
-        std::vector<double>({std::numeric_limits<double>::quiet_NaN()}))
+        -1)
 {
     m_dni_des = dni_des;                    //[W/m2]
 

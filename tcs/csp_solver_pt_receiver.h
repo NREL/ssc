@@ -160,8 +160,7 @@ protected:
                 double pipe_length_mult /*-*/,
                 int field_fl /*-*/, util::matrix_t<double> field_fl_props,
                 int tube_mat_code /*-*/,
-                int night_recirc /*-*/, int clearsky_model /*-*/,
-                std::vector<double> clearsky_data);
+                int night_recirc /*-*/);
 
     // *******************************************
     // Base class design parameters
@@ -188,9 +187,6 @@ protected:
     int m_tube_mat_code;                //[-]
 
     int m_night_recirc;					//[-] 1=receiver is circulating HTF at night, otherwise not
-
-    int m_clearsky_model;
-    std::vector<double> m_clearsky_data;
 
     // *******************************************
     // *******************************************

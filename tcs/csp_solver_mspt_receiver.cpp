@@ -37,8 +37,7 @@ C_mspt_receiver::C_mspt_receiver(double h_tower /*m*/, double epsilon /*-*/,
     double piping_loss_coefficient /*Wt/m2-K*/, double pipe_length_add /*m*/, double pipe_length_mult /*-*/,
     int field_fl, util::matrix_t<double> field_fl_props,
     int tube_mat_code /*-*/,
-    int night_recirc /*-*/, int clearsky_model /*-*/,
-    std::vector<double> clearsky_data,
+    int night_recirc /*-*/,
     int n_panels /*-*/, double d_rec /*m*/, double h_rec /*m*/,
     int flow_type /*-*/, int crossover_shift /*-*/, double hl_ffact /*-*/,
     double T_salt_hot_target /*C*/, double csky_frac /*-*/,
@@ -60,8 +59,7 @@ C_mspt_receiver::C_mspt_receiver(double h_tower /*m*/, double epsilon /*-*/,
         pipe_length_mult,
         field_fl, field_fl_props,
         tube_mat_code,
-        night_recirc, clearsky_model,
-        clearsky_data,
+        night_recirc,
         n_panels, d_rec, h_rec,
         flow_type, crossover_shift, hl_ffact,
         T_salt_hot_target, csky_frac)
@@ -322,8 +320,8 @@ void C_mspt_receiver::call(double step /*s*/, double time /*s*/,
 
     double eta_therm, m_dot_salt_tot, T_salt_hot, T_coolant_prop, T_salt_hot_rec, c_p_coolant, u_coolant, rho_coolant, f;
     eta_therm = m_dot_salt_tot = T_salt_hot = T_coolant_prop = T_salt_hot_rec = c_p_coolant = u_coolant = rho_coolant = f = std::numeric_limits<double>::quiet_NaN();
-    double q_dot_inc_sum, q_conv_sum, q_rad_sum, q_dot_piping_loss, q_dot_inc_min_panel, q_thermal_csky, q_thermal_steadystate, clearsky;
-    q_dot_inc_sum = q_conv_sum = q_rad_sum = q_dot_piping_loss = q_dot_inc_min_panel = q_thermal_csky = q_thermal_steadystate = clearsky = std::numeric_limits<double>::quiet_NaN();
+    double q_dot_inc_sum, q_conv_sum, q_rad_sum, q_dot_piping_loss, q_dot_inc_min_panel, q_thermal_csky, q_thermal_steadystate;
+    q_dot_inc_sum = q_conv_sum = q_rad_sum = q_dot_piping_loss = q_dot_inc_min_panel = q_thermal_csky = q_thermal_steadystate = std::numeric_limits<double>::quiet_NaN();
 
     double od_control = std::numeric_limits<double>::quiet_NaN();
     s_steady_state_soln soln;
@@ -347,7 +345,7 @@ void C_mspt_receiver::call(double step /*s*/, double time /*s*/,
         q_rad_sum /*Wt*/, q_dot_piping_loss /*Wt*/,
         q_dot_inc_min_panel /*Wt*/,
         q_thermal_csky /*Wt*/, q_thermal_steadystate /*Wt*/,
-        od_control /*-*/, clearsky /*W/m2*/,
+        od_control /*-*/,
         soln);
 
 	double DELTAP, Pres_D, W_dot_pump, q_thermal, q_startup;

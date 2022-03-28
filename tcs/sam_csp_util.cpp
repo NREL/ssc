@@ -326,7 +326,10 @@ double CSP::get_clearsky(int clearsky_model /*-*/, const std::vector<double>& cl
     int day_of_year /*-*/, int month_1_base /*-*/, double elev /*m*/,
     double P_amb /*mbar*/, double T_dp /*C*/)
 {
-    if (clearsky_model == -1 || solzen >= 90.0)
+    if (clearsky_model == -1)
+        return std::numeric_limits<double>::quiet_NaN();
+
+    if (solzen >= 90.0)
         return 0.0;
 
     double clearsky;
