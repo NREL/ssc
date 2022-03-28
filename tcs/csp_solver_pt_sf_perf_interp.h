@@ -147,7 +147,8 @@ public:
 		double field_control_in, 
 		const C_csp_solver_sim_info &sim_info);
 
-	void off(const C_csp_solver_sim_info &sim_info);
+	void off(const C_csp_weatherreader::S_outputs& weather,
+        const C_csp_solver_sim_info &sim_info);
 
 	void converged();
 

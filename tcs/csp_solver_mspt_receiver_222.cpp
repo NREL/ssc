@@ -662,7 +662,6 @@ void C_mspt_receiver_222::call(double step /*s*/, double time /*s*/,
 		outputs.m_q_dot_piping_loss = 0.0;		//[MWt]
     outputs.m_q_heattrace = 0.0;
 
-	outputs.m_clearsky = clearsky;  // W/m2
 	outputs.m_Q_thermal_csky_ss = q_thermal_csky / 1.e6; //[MWt]
 	outputs.m_Q_thermal_ss = q_thermal_steadystate / 1.e6; //[MWt]
 
@@ -696,7 +695,6 @@ void C_mspt_receiver_222::off(const C_csp_weatherreader::S_outputs &weather,
 	outputs.m_q_dot_piping_loss = 0.0;	//[MWt]
     outputs.m_q_heattrace = 0.0;
 	
-	outputs.m_clearsky = get_clearsky(weather, sim_info.ms_ts.m_time / 3600.);  // clear-sky DNI (set to actual DNI if actual DNI is higher than computed clear-sky value)
 	outputs.m_Q_thermal_csky_ss = 0.0; //[MWt]
 	outputs.m_Q_thermal_ss = 0.0; //[MWt]
 

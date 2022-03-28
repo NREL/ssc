@@ -3077,7 +3077,6 @@ void C_cavity_receiver::call(const C_csp_weatherreader::S_outputs& weather,
     }
 
     ms_outputs.m_q_heattrace = 0.0;
-    ms_outputs.m_clearsky = std::numeric_limits<double>::quiet_NaN();
 
 	return;
 }
@@ -3108,7 +3107,6 @@ void C_cavity_receiver::off(const C_csp_weatherreader::S_outputs& weather,
     ms_outputs.m_q_dot_piping_loss = 0.0;	//[MWt]
     ms_outputs.m_q_heattrace = 0.0;
     
-    ms_outputs.m_clearsky = get_clearsky(weather, sim_info.ms_ts.m_time / 3600.);  // clear-sky DNI (set to actual DNI if actual DNI is higher than computed clear-sky value)
     ms_outputs.m_Q_thermal_csky_ss = 0.0; //[MWt]
     ms_outputs.m_Q_thermal_ss = 0.0; //[MWt]
 

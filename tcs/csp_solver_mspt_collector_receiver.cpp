@@ -194,7 +194,7 @@ void C_csp_mspt_collector_receiver::call(const C_csp_weatherreader::S_outputs &w
 	mc_reported_outputs.value(E_T_RISER, mc_pt_receiver.ms_outputs.m_Triser);	//[C]
 	mc_reported_outputs.value(E_T_DOWNC, mc_pt_receiver.ms_outputs.m_Tdownc);	//[C]
 
-	mc_reported_outputs.value(E_CLEARSKY, mc_pt_receiver.ms_outputs.m_clearsky);
+	mc_reported_outputs.value(E_CLEARSKY, mc_pt_heliostatfield.ms_outputs.m_clearsky_dni);
 	mc_reported_outputs.value(E_Q_DOT_THERMAL_CSKY_SS, mc_pt_receiver.ms_outputs.m_Q_thermal_csky_ss); //[MWt]
 	mc_reported_outputs.value(E_Q_DOT_THERMAL_SS, mc_pt_receiver.ms_outputs.m_Q_thermal_ss); //[MWt]
 }
@@ -202,12 +202,11 @@ void C_csp_mspt_collector_receiver::call(const C_csp_weatherreader::S_outputs &w
 void C_csp_mspt_collector_receiver::off(const C_csp_weatherreader::S_outputs &weather,
 	const C_csp_solver_htf_1state &htf_state_in,
 	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
-	//C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
 	const C_csp_solver_sim_info &sim_info)
 {
 	// First call heliostat field class
 	// In OFF call, looking specifically for weather STOW parasitics apply
-	mc_pt_heliostatfield.off(sim_info);
+	mc_pt_heliostatfield.off(weather, sim_info);
 
 	// Now, call the tower-receiver model
 	mc_pt_receiver.off(weather, htf_state_in, sim_info);
@@ -255,7 +254,7 @@ void C_csp_mspt_collector_receiver::off(const C_csp_weatherreader::S_outputs &we
 	mc_reported_outputs.value(E_T_RISER, mc_pt_receiver.ms_outputs.m_Triser);	//[C]
 	mc_reported_outputs.value(E_T_DOWNC, mc_pt_receiver.ms_outputs.m_Tdownc);	//[C]
 
-	mc_reported_outputs.value(E_CLEARSKY, mc_pt_receiver.ms_outputs.m_clearsky);
+	mc_reported_outputs.value(E_CLEARSKY, mc_pt_heliostatfield.ms_outputs.m_clearsky_dni);
 	mc_reported_outputs.value(E_Q_DOT_THERMAL_CSKY_SS, mc_pt_receiver.ms_outputs.m_Q_thermal_csky_ss); //[MWt]
 	mc_reported_outputs.value(E_Q_DOT_THERMAL_SS, mc_pt_receiver.ms_outputs.m_Q_thermal_ss); //[MWt]
 

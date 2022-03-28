@@ -91,7 +91,6 @@ public:
         double m_Triser;				//[C] Average riser wall temperature at inlet
         double m_Tdownc;				//[C] Average downcomer wall temperature at outlet
 
-		double m_clearsky;				//[W/m2] Clear-sky DNI used in receiver flow control 
 		double m_Q_thermal_csky_ss;		//[MWt]  Steady-state thermal power delivered to TES/PC if DNI is equal to clear-sky DNI 
 		double m_Q_thermal_ss;			//[MWt] Steady-state thermal power delivered to TES/PC 
 
@@ -108,7 +107,7 @@ public:
                 m_time_required_su = m_q_dot_piping_loss = m_q_heattrace = std::numeric_limits<double>::quiet_NaN();
 
 			m_inst_T_salt_hot = m_max_T_salt_hot = m_min_T_salt_hot = m_max_rec_tout = m_Twall_inlet = m_Twall_outlet = 
-				m_Triser = m_Tdownc = m_clearsky = m_Q_thermal_csky_ss = m_Q_thermal_ss = std::numeric_limits<double>::quiet_NaN();
+				m_Triser = m_Tdownc = m_Q_thermal_csky_ss = m_Q_thermal_ss = std::numeric_limits<double>::quiet_NaN();
         }
     };
 
@@ -207,13 +206,7 @@ protected:
     C_csp_collector_receiver::E_csp_cr_modes m_mode_prev;                    //[-] operating mode of receiver at end of last converged timestep
 
     std::string error_msg;              // member string for exception messages
-	
-	double get_clearsky(const C_csp_weatherreader::S_outputs &weather, double hour);
 
-    double get_clearsky(double hour,
-        double solzen /*deg*/, double azimuth /*deg*/,
-        int day /*-*/, int month_1_base /*-*/, double elev /*m*/,
-        double P_amb /*mbar*/, double T_dp /*C*/);
 };
 
 #endif  // __csp_solver_pt_receiver_

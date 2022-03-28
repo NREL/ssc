@@ -224,12 +224,12 @@ public:
 
 	~C_mspt_receiver_222(){};
 
-	virtual void init();
+	virtual void init() override;
 
 	virtual void call(const C_csp_weatherreader::S_outputs &weather, 
 		const C_csp_solver_htf_1state &htf_state_in, 
 		const C_pt_receiver::S_inputs &inputs,
-		const C_csp_solver_sim_info &sim_info);
+		const C_csp_solver_sim_info &sim_info) override;
 
     virtual void call(double step /*s*/, double time /*s*/,
         double P_amb /*Pa*/, double T_dp /*K*/, double T_amb /*K*/,
@@ -240,15 +240,15 @@ public:
 
 	virtual void off(const C_csp_weatherreader::S_outputs &weather,
 		const C_csp_solver_htf_1state &htf_state_in,
-		const C_csp_solver_sim_info &sim_info);
+		const C_csp_solver_sim_info &sim_info) override;
 
-	virtual void converged();
+	virtual void converged() override;
 
     void calc_pump_performance(double rho_f, double mdot, double ffact, double &PresDrop_calc, double &WdotPump_calc);
 
-    virtual double get_pumping_parasitic_coef();
+    double get_pumping_parasitic_coef() override;
 
-    virtual double area_proj();
+    double area_proj() override;
 
     void get_solved_design_common(double& m_dot_rec_total /*kg/s*/);
 
