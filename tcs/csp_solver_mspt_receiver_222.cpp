@@ -194,7 +194,8 @@ void C_mspt_receiver_222::init()
 
 void C_mspt_receiver_222::call_common(double P_amb /*Pa*/, double T_dp /*K*/, double T_amb /*K*/,
     double zenith /*deg*/, double azimuth /*deg*/, double I_bn /*W/m2*/, double v_wind_10 /*m/s*/,
-    int day /*-*/, int month_1_base /*-*/, double elev /*m*/,
+    //int day /*-*/, int month_1_base /*-*/, double elev /*m*/,
+    double clearsky_dni /*W/m2*/,
     double T_salt_cold_in /*K*/,
     double plant_defocus /*-*/,
     const util::matrix_t<double>* flux_map_input,
@@ -308,10 +309,11 @@ void C_mspt_receiver_222::call_common(double P_amb /*Pa*/, double T_dp /*K*/, do
     soln.mode = input_operation_mode;
     soln.rec_is_off = rec_is_off;
 
-    clearsky = get_clearsky(hour,
-                    zenith, azimuth,
-                    day, month_1_base, elev,
-                    P_amb*1.E-2, T_dp-273.15);
+    //clearsky = get_clearsky(hour,
+    //                zenith, azimuth,
+    //                day, month_1_base, elev,
+    //                P_amb*1.E-2, T_dp-273.15);
+    clearsky = clearsky_dni;
         
     double clearsky_adj = std::fmax(clearsky, I_bn);   // Set clear-sky DNI to actual DNI if actual value is higher
 
@@ -494,7 +496,8 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs& weather,
 
     call_common(P_amb, T_dp, T_amb,
         zenith, azimuth, I_bn, v_wind_10,
-        weather.m_day, weather.m_month, weather.m_elev,
+        //weather.m_day, weather.m_month, weather.m_elev,
+        inputs.m_clearsky_dni,
         T_salt_cold_in,
         plant_defocus,
         flux_map_input,

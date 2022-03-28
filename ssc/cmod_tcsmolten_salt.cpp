@@ -1548,7 +1548,21 @@ public:
             heliostatfield.ms_params.m_A_sf = as_double("A_sf");        //[m2]
         }
 
+        heliostatfield.ms_params.m_clearsky_model = as_integer("rec_clearsky_model");
 
+        std::vector<double> clearsky_data;
+        if (heliostatfield.ms_params.m_clearsky_model == 0)
+        {
+            size_t n_csky = 0;
+            ssc_number_t* csky = as_array("rec_clearsky_dni", &n_csky);
+            if (n_csky != n_steps_full)
+                throw exec_error("tcsmolten_salt", "Invalid clear-sky DNI data. Array must have " + util::to_string((int)n_steps_full) + " rows.");
+
+            clearsky_data.resize(n_steps_full);
+            for (size_t i = 0; i < n_steps_full; i++)
+                clearsky_data.at(i) = (double)csky[i];
+        }
+        heliostatfield.ms_params.mv_clearsky_data = clearsky_data;
 
         //Load the solar field adjustment factors
         sf_adjustment_factors sf_haf(this);

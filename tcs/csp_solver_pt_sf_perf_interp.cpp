@@ -198,6 +198,15 @@ void C_pt_sf_perf_interp::init()
 	m_ncall = -1;
 }
 
+double C_pt_sf_perf_interp::get_clearsky(const C_csp_weatherreader::S_outputs& weather, double hour)
+{
+    return CSP::get_clearsky(ms_params.m_clearsky_model, ms_params.mv_clearsky_data,
+        hour,
+        weather.m_solzen, weather.m_solazi,
+        weather.m_day, weather.m_month, weather.m_elev,
+        weather.m_pres, weather.m_tdew);
+}
+
 void C_pt_sf_perf_interp::call(const C_csp_weatherreader::S_outputs &weather, double field_control_in, const C_csp_solver_sim_info &sim_info)
 {
 	// Increase call-per-timestep counter
@@ -234,6 +243,9 @@ void C_pt_sf_perf_interp::call(const C_csp_weatherreader::S_outputs &weather, do
     }
 
 	double solaz = weather.m_solazi*CSP::pi / 180.0;
+
+    double hour = time / 3600.0;    //[hr]
+    ms_outputs.m_clearsky_dni = get_clearsky(weather, hour);
 
 	// clear out the existing flux map
 	ms_outputs.m_flux_map_out.fill(0.0);

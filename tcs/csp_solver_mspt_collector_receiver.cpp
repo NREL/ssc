@@ -126,7 +126,6 @@ double C_csp_mspt_collector_receiver::get_col_startup_power()
 	return mc_pt_heliostatfield.ms_params.m_p_start * mc_pt_heliostatfield.ms_params.m_N_hel *1.e-3;	//MWe-hr
 }
 
-
 void C_csp_mspt_collector_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 	const C_csp_solver_htf_1state &htf_state_in,
 	const C_csp_collector_receiver::S_csp_cr_inputs &inputs,
@@ -148,6 +147,7 @@ void C_csp_mspt_collector_receiver::call(const C_csp_weatherreader::S_outputs &w
     receiver_inputs.m_plant_defocus = mc_pt_heliostatfield.ms_outputs.m_plant_defocus_out;  //[-]
 	receiver_inputs.m_input_operation_mode = inputs.m_input_operation_mode;
 	receiver_inputs.m_flux_map_input = &mc_pt_heliostatfield.ms_outputs.m_flux_map_out;
+    receiver_inputs.m_clearsky_dni = mc_pt_heliostatfield.ms_outputs.m_clearsky_dni;        //[W/m2]
 	mc_pt_receiver.call(weather, htf_state_in, receiver_inputs, sim_info);
 		
 	// Set collector/receiver parent class outputs and return

@@ -46,11 +46,13 @@ public:
         double m_plant_defocus;     //[-] plant defocus signal
         C_csp_collector_receiver::E_csp_cr_modes m_input_operation_mode;			                //[-] operating mode of collector receiver, corresponding to enum C_csp_collector_receiver::E_csp_cr_modes
         const util::matrix_t<double> *m_flux_map_input;		//[-] flux values for each receiver surface node, as fraction of an evenly distributed irradiance
+        double m_clearsky_dni;      //[W/m2]
 
         S_inputs()
         {
             m_plant_defocus = std::numeric_limits<double>::quiet_NaN();
             m_input_operation_mode = C_csp_collector_receiver::E_csp_cr_modes::OFF;
+            m_clearsky_dni = std::numeric_limits<double>::quiet_NaN();
         }
     };
 

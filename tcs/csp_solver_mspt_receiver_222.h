@@ -180,7 +180,8 @@ protected:
 
     void call_common(double P_amb /*Pa*/, double T_dp /*K*/, double T_amb /*K*/,
         double zenith /*deg*/, double azimuth /*deg*/, double I_bn /*W/m2*/, double v_wind_10 /*m/s*/,
-        int day /*-*/, int month_1_base /*-*/, double elev /*m*/,
+        //int day /*-*/, int month_1_base /*-*/, double elev /*m*/,
+        double clearsky_dni /*W/m2*/,
         double T_salt_cold_in /*K*/,
         double plant_defocus /*-*/,
         const util::matrix_t<double>* flux_map_input,

@@ -101,10 +101,14 @@ public:
 
 		double m_A_sf;		//[m2]
 
+        int m_clearsky_model;
+
+        std::vector<double> mv_clearsky_data;
+
 		S_params()
 		{
 			// Integers
-			m_n_flux_x = m_n_flux_y = m_N_hel = -1;
+			m_n_flux_x = m_n_flux_y = m_N_hel = m_clearsky_model = -1;
 
 			// Doubles
 			m_p_start = m_p_track = m_hel_stow_deploy = m_v_wind_max = 
@@ -125,10 +129,13 @@ public:
         double m_sf_adjust_out;
         double m_plant_defocus_out; //[-] plant defocus input adjusted for field control events
 
+        double m_clearsky_dni;    //[W/m2]
+
 		S_outputs()
 		{
 			m_q_dot_field_inc = m_pparasi =
-                m_eta_field = m_sf_adjust_out = m_plant_defocus_out = std::numeric_limits<double>::quiet_NaN();
+                m_eta_field = m_sf_adjust_out = m_plant_defocus_out =
+                m_clearsky_dni = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -143,6 +150,8 @@ public:
 	void off(const C_csp_solver_sim_info &sim_info);
 
 	void converged();
+
+    double get_clearsky(const C_csp_weatherreader::S_outputs& weather, double hour);
 };
 
 
