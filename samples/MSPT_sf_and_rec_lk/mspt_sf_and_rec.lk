@@ -29,5 +29,11 @@ var( 'piping_loss_coefficient', 2 );
 
 var( 'is_rec_startup_trans', 0 );
 
+var( 'timestep_od', [3600] );	//[s]
+var( 'flux_map_od', [[500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500],[ 700, 700, 700, 700, 700, 700, 700, 700, 700, 700, 700, 700, 700, 700, 700, 700, 700, 700, 700, 700,]]);
+var( 'P_amb_od', [1000] );		//[mbar]
+var( 'T_amb_od', [25] );		//[C]
+var( 'deltaT_sky_od', [15] );	//[C]
+var( 'I_bn_od', [950] );		//[W/m2]
 
 run("mspt_sf_and_rec_isolated");

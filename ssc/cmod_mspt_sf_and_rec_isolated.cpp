@@ -83,6 +83,15 @@ static var_info _cm_vtab_mspt_sf_and_rec_isolated[] = {
     // Receiver design
     { SSC_OUTPUT, SSC_NUMBER, "m_dot_rec_des",                      "Receiver design mass flow rate",                                                                        "kg/s",         "",              "Tower and Receiver",                       "*",                                  "",              ""},
 
+    // Timeseries inputs
+    { SSC_INPUT, SSC_ARRAY,   "timestep_od",                        "Timestep",                                                                                              "s",            "",              "Timeseries",                               "sim_type=1",                         "",              ""},
+    { SSC_INPUT, SSC_MATRIX,  "flux_map_od",                        "rows: timestep, columns: panels",                                                                       "W/m2",         "",              "Flux",                                     "sim_type=1",                         "",              ""},
+    { SSC_INPUT, SSC_ARRAY,   "P_amb_od",                           "Ambient pressure",                                                                                      "mbar",         "",              "Weather",                                  "sim_type=1",                         "",              ""},
+    { SSC_INPUT, SSC_ARRAY,   "T_amb_od",                           "Ambient temperature",                                                                                   "C",            "",              "Weather",                                  "sim_type=1",                         "",              ""},
+    { SSC_INPUT, SSC_ARRAY,   "deltaT_sky_od",                      "Sky temperature less than ambient",                                                                     "C",            "",              "Weather",                                  "sim_type=1",                         "",              ""},
+    { SSC_INPUT, SSC_ARRAY,   "I_bn_od",                            "Beam normal",                                                                                           "W/m2",         "",              "Weather",                                  "sim_type=1",                         "",              ""},
+
+
     // Timeseries outputs
     { SSC_OUTPUT, SSC_ARRAY,  "m_dot_rec_od",                       "Receiver mass flow rate",                                                                               "kg/s",         "",              "Tower and Receiver",                       "sim_type=1",                         "",              ""},
     { SSC_OUTPUT, SSC_ARRAY,  "eta_rec_od",                         "Receiver thermal efficiency",                                                                           "kg/s",         "",              "Tower and Receiver",                       "sim_type=1",                         "",              ""},
@@ -199,7 +208,71 @@ public:
         }
         // ******************************************************
 
-        int n_runs = 2;
+        size_t n_runs = 0;
+
+        // Get timeseries inputs
+        size_t n_timestep_od;
+        ssc_number_t* p_timestep_od = as_array("timestep_od", &n_timestep_od);
+        n_runs = std::max(n_runs, n_timestep_od);
+
+        util::matrix_t<double> flux_map_matrix = as_matrix("flux_map_od");
+        size_t n_flux_map_od = flux_map_matrix.nrows();
+        size_t n_flux_map_panels = flux_map_matrix.ncols();
+        n_runs = std::max(n_runs, n_flux_map_od);
+
+        size_t n_P_amb_od;
+        ssc_number_t* p_P_amb_od = as_array("P_amb_od", &n_P_amb_od);
+        n_runs = std::max(n_runs, n_P_amb_od);
+
+        size_t n_T_amb_od;
+        ssc_number_t* p_T_amb_od = as_array("T_amb_od", &n_T_amb_od);
+        n_runs = std::max(n_runs, n_T_amb_od);
+
+        size_t n_deltaT_sky_od;
+        ssc_number_t* p_deltaT_sky_od = as_array("deltaT_sky_od", &n_deltaT_sky_od);
+        n_runs = std::max(n_runs, n_deltaT_sky_od);
+
+        size_t n_I_bn_od;
+        ssc_number_t* p_I_bn_od = as_array("I_bn_od", &n_I_bn_od);
+        n_runs = std::max(n_runs, n_I_bn_od);
+
+
+        // Check length of timeseries input arrays
+        if (n_runs % n_timestep_od != 0) {
+            std::string err_msg = util::format("The longest input array contains %d elements. It must be a multiple of the"
+                " timestep_od input that contains %d elements.", n_runs, n_timestep_od);
+            throw exec_error("standalone_mspt", err_msg);
+        }
+
+        if (n_runs % n_flux_map_od != 0) {
+            std::string err_msg = util::format("The longest input array contains %d elements. It must be a multiple of the"
+                " flux_map_od input that contains %d elements.", n_runs, n_flux_map_od);
+            throw exec_error("standalone_mspt", err_msg);
+        }
+
+        if (n_runs % n_P_amb_od != 0) {
+            std::string err_msg = util::format("The longest input array contains %d elements. It must be a multiple of the"
+                " P_amb_od input that contains %d elements.", n_runs, n_P_amb_od);
+            throw exec_error("standalone_mspt", err_msg);
+        }
+
+        if (n_runs % n_T_amb_od != 0) {
+            std::string err_msg = util::format("The longest input array contains %d elements. It must be a multiple of the"
+                " T_amb_od input that contains %d elements.", n_runs, n_T_amb_od);
+            throw exec_error("standalone_mspt", err_msg);
+        }
+
+        if (n_runs % n_deltaT_sky_od != 0) {
+            std::string err_msg = util::format("The longest input array contains %d elements. It must be a multiple of the"
+                " deltaT_sky_od input that contains %d elements.", n_runs, n_deltaT_sky_od);
+            throw exec_error("standalone_mspt", err_msg);
+        }
+
+        if (n_runs % n_I_bn_od != 0) {
+            std::string err_msg = util::format("The longest input array contains %d elements. It must be a multiple of the"
+                " I_bn_od input that contains %d elements.", n_runs, n_I_bn_od);
+            throw exec_error("standalone_mspt", err_msg);
+        }
 
         // Allocate timeseries outputs
         ssc_number_t* p_m_dot_rec_od = allocate("m_dot_rec_od", n_runs);
@@ -207,21 +280,33 @@ public:
 
         for (int n_run = 0; n_run < n_runs; n_run++) {
 
-            double step = 3600.0;       //[s]
-            double P_amb = 101325.0;    //[Pa]
-            double T_amb = 25.0 + 273.15;   //[K]
-            double T_sky = T_amb - 15.0;    //[K]
-            double I_bn = 950.0;        //[W/m2]
+            size_t i_timestep_od = floor(n_timestep_od / (double)n_runs * n_run);
+            size_t i_flux_map_od = floor(n_flux_map_od / (double)n_runs * n_run);
+            size_t i_P_amb_od = floor(n_P_amb_od / (double)n_runs * n_run);
+            size_t i_T_amb_od = floor(n_T_amb_od / (double)n_runs * n_run);
+            size_t i_deltaT_sky_od = floor(n_deltaT_sky_od / (double)n_runs * n_run);
+            size_t i_I_bn_od = floor(n_I_bn_od / (double)n_runs * n_run);
+
+            double step = p_timestep_od[i_timestep_od];      //3600.0;       //[s]
+
+            double P_amb = p_P_amb_od[i_P_amb_od] * 100.0;    //[Pa] convert from mbar
+            double T_amb = p_T_amb_od[i_T_amb_od] + 273.15;   //[K] convert from C
+            double T_sky = T_amb - p_deltaT_sky_od[i_deltaT_sky_od];    //[K]
             double v_wind_10 = 3.0;     //[m/s]
             double clearsky_dni = std::numeric_limits<double>::quiet_NaN(); //[W/m2]
             double plant_defocus = 1.0; //[-]
             double T_salt_cold_in = T_htf_cold_des;     //[K]
 
+            // Only needed if 1) using flux_map_input and 2) not using clearsky control
+            double I_bn = p_I_bn_od[i_I_bn_od];         //  950.0;        //[W/m2]
+
+
             util::matrix_t<double> flux_map_input;
-            flux_map_input.resize(1, n_panels);
+            flux_map_input.resize(1, n_flux_map_panels);
             double dni_od = 550.0;
             for (int i = 0; i < n_panels; i++) {
-                flux_map_input(0, i) = dni_od + 200*n_run;    //[W/m2]
+                flux_map_input(0, i) = flux_map_matrix(i_flux_map_od, i);       //[W/m2]
+                //flux_map_input(0, i) = dni_od + 200*n_run;    //[W/m2]
             }
 
             C_csp_collector_receiver::E_csp_cr_modes input_operation_mode = C_csp_collector_receiver::E_csp_cr_modes::ON;
