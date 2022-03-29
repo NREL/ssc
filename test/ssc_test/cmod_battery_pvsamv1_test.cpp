@@ -1166,7 +1166,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACBatteryModelGridOu
 
 }
 
-/* - Commented out until we better define the effects of availability loss on the battery
+/* - Commented out until we better define the effects of availability loss on the battery targeted for the Fall 2022 release
 TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACBatteryModelGridOutageWAvailabilityLoss)
 {
     pvsamv_nofinancial_default(data);

@@ -445,6 +445,7 @@ void BatteryPowerFlow::calculateACConnected()
             if (P_battery_ac - P_batt_to_load_ac < -1.0 * P_inverter_draw_ac) {
                 double diff = -1.0 * P_inverter_draw_ac - (P_battery_ac - P_batt_to_load_ac);
                 P_batt_to_load_ac -= diff;
+                P_batt_to_load_ac = fmax(P_batt_to_load_ac, 0.0); // Prevent small discharges from driving this number negative
             }
             P_batt_to_pv_inverter = -1.0 * P_inverter_draw_ac;
             P_interconnection_loss_ac = P_pv_to_grid_ac + P_fuelcell_to_grid_ac;
@@ -747,7 +748,7 @@ void BatteryPowerFlow::calculateDCConnected()
 
         // In this case, we have a combo of Battery DC power from the PV array, and potentially AC power from the grid
         if (P_pv_to_batt_dc + P_grid_to_batt_ac > 0) {
-            P_battery_ac = -(P_pv_to_batt_dc + P_grid_to_batt_ac); // TODO: add eff after tests pass - one bug at a time!
+            P_battery_ac = -(P_pv_to_batt_dc + P_grid_to_batt_ac); // TODO: add eff when addressing https://github.com/NREL/ssc/issues/784
         }
 
         if (fabs(P_battery_ac) < tolerance) {
@@ -755,7 +756,7 @@ void BatteryPowerFlow::calculateDCConnected()
         }
 
         // Assign AC value using current inverter efficency
-        P_pv_to_batt_ac = P_pv_to_batt_dc; // TODO: add eff after tests pass
+        P_pv_to_batt_ac = P_pv_to_batt_dc; // TODO: add eff when addressing https://github.com/NREL/ssc/issues/784
         P_battery_ac_post_loss = P_battery_ac;
     }
     else
