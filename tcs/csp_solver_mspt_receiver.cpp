@@ -321,8 +321,8 @@ void C_mspt_receiver::call(double step /*s*/,
 
     double eta_therm, m_dot_salt_tot, T_salt_hot, T_coolant_prop, T_salt_hot_rec, c_p_coolant, u_coolant, rho_coolant, f;
     eta_therm = m_dot_salt_tot = T_salt_hot = T_coolant_prop = T_salt_hot_rec = c_p_coolant = u_coolant = rho_coolant = f = std::numeric_limits<double>::quiet_NaN();
-    double q_dot_inc_sum, q_conv_sum, q_rad_sum, q_dot_piping_loss, q_dot_inc_min_panel, q_thermal_csky, q_thermal_steadystate;
-    q_dot_inc_sum = q_conv_sum = q_rad_sum = q_dot_piping_loss = q_dot_inc_min_panel = q_thermal_csky = q_thermal_steadystate = std::numeric_limits<double>::quiet_NaN();
+    double q_dot_inc_pre_defocus, q_dot_inc_sum, q_conv_sum, q_rad_sum, q_dot_piping_loss, q_dot_inc_min_panel, q_thermal_csky, q_thermal_steadystate;
+    q_dot_inc_pre_defocus = q_dot_inc_sum = q_conv_sum = q_rad_sum = q_dot_piping_loss = q_dot_inc_min_panel = q_thermal_csky = q_thermal_steadystate = std::numeric_limits<double>::quiet_NaN();
 
     double od_control = std::numeric_limits<double>::quiet_NaN();
     s_steady_state_soln soln;
@@ -342,6 +342,7 @@ void C_mspt_receiver::call(double step /*s*/,
         T_coolant_prop /*K*/, T_salt_hot_rec /*K*/,
         c_p_coolant /*J/kg-K*/, u_coolant /*m/s*/,
         rho_coolant /*kg/m3*/, f /*-*/,
+        q_dot_inc_pre_defocus /*Wt*/,
         q_dot_inc_sum /*Wt*/, q_conv_sum /*Wt*/,
         q_rad_sum /*Wt*/, q_dot_piping_loss /*Wt*/,
         q_dot_inc_min_panel /*Wt*/,
@@ -842,7 +843,7 @@ void C_mspt_receiver::call(double step /*s*/,
 		// Set the receiver outlet temperature equal to the inlet design temperature
 		T_salt_hot = m_T_htf_cold_des;
 		T_salt_hot_rec = m_T_htf_cold_des;
-		q_dot_inc_sum = 0.0;
+		q_dot_inc_sum = q_dot_inc_pre_defocus = 0.0;
 		// Pressure drops
 		/*DELTAP = 0.0; Pres_D = 0.0; u_coolant = 0.0;*/
 		// Set receiver startup energy to 0
@@ -872,7 +873,8 @@ void C_mspt_receiver::call(double step /*s*/,
 	outputs.m_Q_thermal = q_thermal / 1.E6;					//[MW] convert from W
 	outputs.m_T_salt_hot = T_salt_hot - 273.15;		        //[C] convert from K
 	outputs.m_component_defocus = od_control;				//[-]
-	outputs.m_q_dot_rec_inc = q_dot_inc_sum / 1.E6;			//[MW] convert from W
+    outputs.m_q_dot_rec_inc_pre_defocus = q_dot_inc_pre_defocus / 1.E6;    //[MWt]
+    outputs.m_q_dot_rec_inc = q_dot_inc_sum / 1.E6;			//[MW] convert from W
 	outputs.m_q_startup = q_startup/1.E6;					//[MW-hr] convert from W-hr
 	outputs.m_dP_receiver = DELTAP*m_n_panels / m_n_lines / 1.E5;	//[bar] receiver pressure drop, convert from Pa
 	outputs.m_dP_total = Pres_D*10.0;						//[bar] total pressure drop, convert from MPa

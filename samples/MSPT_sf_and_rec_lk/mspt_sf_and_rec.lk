@@ -35,5 +35,10 @@ var( 'P_amb_od', [1000] );		//[mbar]
 var( 'T_amb_od', [25] );		//[C]
 var( 'deltaT_sky_od', [15] );	//[C]
 var( 'I_bn_od', [950] );		//[W/m2]
+var( 'v_wind_10_od', [3] );		//[m/s]
+var( 'clearsky_to_measured_dni_od', [-999] );
+
+var( 'plant_defocus_od', [1] );							//[-]
+var( 'T_htf_cold_in_od', [var('T_htf_cold_des')] );		//[C]
 
 run("mspt_sf_and_rec_isolated");

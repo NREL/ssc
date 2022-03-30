@@ -56,18 +56,25 @@ public:
     {
         double m_m_dot_salt_tot;		//[kg/hr] HTF mass flow through receiver
         double m_eta_therm;				//[-] receiver thermal efficiency
-        double m_W_dot_pump;			//[MW] HTF pumping power
-        double m_q_conv_sum;			//[MW] total receiver convection losses
-        double m_q_rad_sum;				//[MW] total receiver radiation losses
-        double m_Q_thermal;				//[MW] thermal power delivered to TES/PC: subtracts piping losses (q_dot_rec - q_dot_piping_losses)
-        double m_T_salt_hot;			//[C] HTF outlet temperature
+        double m_W_dot_pump;			//[MWe] HTF pumping power
+        double m_q_conv_sum;			//[MWt] total receiver convection losses
+        double m_q_rad_sum;				//[MWt] total receiver radiation losses
+        double m_Q_thermal;				//[MWt] thermal power delivered to TES/PC: subtracts piping losses (q_dot_rec - q_dot_piping_losses)
+        double m_T_salt_hot;			//[C] HTF outlet temperature, includes downcomer piping losses
         double m_component_defocus;		//[-] defocus applied by receiver to stay within mass flow or other constraints
 
-        //[MWt] receiver incident thermal power
+        //[MWt] receiver incident thermal power before defocus
+        // -- *cavity* receiver currently reports this as nan
+        double m_q_dot_rec_inc_pre_defocus;
+
+        //[MWt] receiver incident thermal power after all defocus
         // -- external receiver applies reflection to flux maps, so m_q_dot_rec_inc is after reflection losses
         // -- cavity receiver applies reflection in receiver thermal model, so m_q_dot_rec_inc is before reflection losses
         double m_q_dot_rec_inc;
 
+        //[MWt] receiver reflection losses
+        // -- external receiver applies reflection to flux maps, so reports this value as 0
+        // -- cavity receiver applies reflection in receiver thermal model, so reports this value
         double m_q_dot_refl_loss;       //[MWt] Reflection losses (0 for external receiver - instead included in opt efficiency)
 
         double m_q_startup;				//[MWt-hr] thermal energy used to start receiver
@@ -98,7 +105,8 @@ public:
         void clear()
         {
             m_m_dot_salt_tot = m_eta_therm = m_W_dot_pump = m_q_conv_sum = m_q_rad_sum = m_Q_thermal =
-                m_T_salt_hot = m_component_defocus = m_q_dot_rec_inc = m_q_startup =
+                m_T_salt_hot = m_component_defocus =
+                m_q_dot_rec_inc_pre_defocus = m_q_dot_rec_inc = m_q_startup =
                 m_dP_receiver = m_dP_total = m_vel_htf = m_T_salt_cold =
                 m_time_required_su = m_q_dot_piping_loss = m_q_heattrace = std::numeric_limits<double>::quiet_NaN();
 

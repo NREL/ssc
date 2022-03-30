@@ -194,6 +194,7 @@ protected:
         double& T_coolant_prop /*K*/, double& T_salt_hot_rec /*K*/,
         double& c_p_coolant /*J/kg-K*/, double& u_coolant /*m/s*/,
         double& rho_coolant /*kg/m3*/, double& f /*-*/,
+        double& q_dot_inc_pre_defocus /*Wt*/,
         double& q_dot_inc_sum /*Wt*/, double& q_conv_sum /*Wt*/,
         double& q_rad_sum /*Wt*/, double& q_dot_piping_loss /*Wt*/,
         double& q_dot_inc_min_panel /*Wt*/,

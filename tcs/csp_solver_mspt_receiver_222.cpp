@@ -208,6 +208,7 @@ void C_mspt_receiver_222::call_common(double P_amb /*Pa*/, double T_amb /*K*/,
     double& T_coolant_prop /*K*/, double& T_salt_hot_rec /*K*/,
     double& c_p_coolant /*J/kg-K*/, double& u_coolant /*m/s*/,
     double& rho_coolant /*kg/m3*/, double& f /*-*/,
+    double& q_dot_inc_pre_defocus /*Wt*/,
     double& q_dot_inc_sum /*Wt*/, double& q_conv_sum /*Wt*/,
     double& q_rad_sum /*Wt*/, double& q_dot_piping_loss /*Wt*/,
     double& q_dot_inc_min_panel /*Wt*/,
@@ -317,6 +318,12 @@ void C_mspt_receiver_222::call_common(double P_amb /*Pa*/, double T_amb /*K*/,
     if(std::isnan(clearsky_to_input_dni) && m_csky_frac > 0.0001)
         throw(C_csp_exception("Clearsky DNI is NaN but required in the clearsky receiver model"));
 
+    // Get total incident flux before defocus is applied
+    util::matrix_t<double> mt_q_dot_inc_pre_defocus = calculate_flux_profiles(flux_sum, 1.0, 1.0, 1.0, flux_map_input);
+    q_dot_inc_pre_defocus = 0.0;
+    for (int i = 0; i < m_n_panels; i++) {
+        q_dot_inc_pre_defocus += mt_q_dot_inc_pre_defocus.at(i);
+    }
 
     if (rec_is_off)
         soln.q_dot_inc.resize_fill(m_n_panels, 0.0);
@@ -511,8 +518,8 @@ void C_mspt_receiver_222::call(double step /*s*/,
 
     double eta_therm, m_dot_salt_tot, T_salt_hot, T_coolant_prop, T_salt_hot_rec, c_p_coolant, u_coolant, rho_coolant, f;
     eta_therm = m_dot_salt_tot = T_salt_hot = T_coolant_prop = T_salt_hot_rec = c_p_coolant = u_coolant = rho_coolant = f = std::numeric_limits<double>::quiet_NaN();
-    double q_dot_inc_sum, q_conv_sum, q_rad_sum, q_dot_piping_loss, q_dot_inc_min_panel, q_thermal_csky, q_thermal_steadystate;
-    q_dot_inc_sum = q_conv_sum = q_rad_sum = q_dot_piping_loss = q_dot_inc_min_panel = q_thermal_csky = q_thermal_steadystate = std::numeric_limits<double>::quiet_NaN();
+    double q_dot_inc_pre_defocus, q_dot_inc_sum, q_conv_sum, q_rad_sum, q_dot_piping_loss, q_dot_inc_min_panel, q_thermal_csky, q_thermal_steadystate;
+    q_dot_inc_pre_defocus = q_dot_inc_sum = q_conv_sum = q_rad_sum = q_dot_piping_loss = q_dot_inc_min_panel = q_thermal_csky = q_thermal_steadystate = std::numeric_limits<double>::quiet_NaN();
 
     double od_control = std::numeric_limits<double>::quiet_NaN();
     s_steady_state_soln soln;
@@ -532,6 +539,7 @@ void C_mspt_receiver_222::call(double step /*s*/,
         T_coolant_prop /*K*/, T_salt_hot_rec /*K*/,
         c_p_coolant /*J/kg-K*/, u_coolant /*m/s*/,
         rho_coolant /*kg/m3*/, f /*-*/,
+        q_dot_inc_pre_defocus /*Wt*/,
         q_dot_inc_sum /*Wt*/, q_conv_sum /*Wt*/,
         q_rad_sum /*Wt*/, q_dot_piping_loss /*Wt*/,
         q_dot_inc_min_panel /*Wt*/,
@@ -650,6 +658,7 @@ void C_mspt_receiver_222::call(double step /*s*/,
         // Set the receiver outlet temperature equal to the inlet design temperature
 		T_salt_hot = m_T_htf_cold_des;
 
+        q_dot_inc_pre_defocus = 0.0;
         q_dot_inc_sum = 0.0;
 		q_thermal_csky = q_thermal_steadystate = 0.0;
 		
@@ -665,6 +674,7 @@ void C_mspt_receiver_222::call(double step /*s*/,
 	outputs.m_Q_thermal = q_thermal / 1.E6;					//[MW] convert from W
 	outputs.m_T_salt_hot = T_salt_hot - 273.15;				//[C] convert from K
 	outputs.m_component_defocus = od_control;				//[-]
+    outputs.m_q_dot_rec_inc_pre_defocus = q_dot_inc_pre_defocus / 1.E6;    //[MWt]
 	outputs.m_q_dot_rec_inc = q_dot_inc_sum / 1.E6;			//[MW] convert from W
 	outputs.m_q_startup = q_startup/1.E6;					//[MW-hr] convert from W-hr
 	outputs.m_dP_receiver = DELTAP*m_n_panels / m_n_lines / 1.E5;	//[bar] receiver pressure drop, convert from Pa

@@ -85,15 +85,31 @@ static var_info _cm_vtab_mspt_sf_and_rec_isolated[] = {
 
     // Timeseries inputs
     { SSC_INPUT, SSC_ARRAY,   "timestep_od",                        "Timestep",                                                                                              "s",            "",              "Timeseries",                               "sim_type=1",                         "",              ""},
-    { SSC_INPUT, SSC_MATRIX,  "flux_map_od",                        "rows: timestep, columns: panels",                                                                       "W/m2",         "",              "Flux",                                     "sim_type=1",                         "",              ""},
+    { SSC_INPUT, SSC_MATRIX,  "flux_map_od",                        "rows: timestep, columns: panels. Flux *after* rec reflectance losses",                                  "W/m2",         "",              "Flux",                                     "sim_type=1",                         "",              ""},
     { SSC_INPUT, SSC_ARRAY,   "P_amb_od",                           "Ambient pressure",                                                                                      "mbar",         "",              "Weather",                                  "sim_type=1",                         "",              ""},
     { SSC_INPUT, SSC_ARRAY,   "T_amb_od",                           "Ambient temperature",                                                                                   "C",            "",              "Weather",                                  "sim_type=1",                         "",              ""},
     { SSC_INPUT, SSC_ARRAY,   "deltaT_sky_od",                      "Sky temperature less than ambient",                                                                     "C",            "",              "Weather",                                  "sim_type=1",                         "",              ""},
+    { SSC_INPUT, SSC_ARRAY,   "v_wind_10_od",                       "Wind speed at 10 meters",                                                                               "m/s",          "",              "Weather",                                  "sim_type=1",                         "",              ""},
+    { SSC_INPUT, SSC_ARRAY,   "clearsky_to_measured_dni_od",        "Ratio of clearsky to measured DNI",                                                                     "",             "",              "Weather",                                  "sim_type=1",                         "",              ""},
+    { SSC_INPUT, SSC_ARRAY,   "plant_defocus_od",                   "Plant defocus",                                                                                         "",             "",              "Weather",                                  "sim_type=1",                         "",              ""},
+    { SSC_INPUT, SSC_ARRAY,   "T_htf_cold_in_od",                   "HTF inlet temperature",                                                                                 "C",            "",              "Weather",                                  "sim_type=1",                         "",              ""},
 
 
     // Timeseries outputs
     { SSC_OUTPUT, SSC_ARRAY,  "m_dot_rec_od",                       "Receiver mass flow rate",                                                                               "kg/s",         "",              "Tower and Receiver",                       "sim_type=1",                         "",              ""},
+    { SSC_OUTPUT, SSC_ARRAY,  "T_htf_rec_out_od",                   "Receiver outlet temperature after piping losses",                                                       "C",            "",              "Tower and Receiver",                       "sim_type=1",                         "",              ""},
+    { SSC_OUTPUT, SSC_ARRAY,  "q_dot_htf_od",                       "Receiver thermal power to HTF after piping losses",                                                     "MWt",          "",              "Tower and Receiver",                       "sim_type=1",                         "",              ""},
     { SSC_OUTPUT, SSC_ARRAY,  "eta_rec_od",                         "Receiver thermal efficiency",                                                                           "kg/s",         "",              "Tower and Receiver",                       "sim_type=1",                         "",              ""},
+    { SSC_OUTPUT, SSC_ARRAY,  "W_dot_pump_od",                      "Receiver pumping power",                                                                                "MWe",          "",              "Tower and Receiver",                       "sim_type=1",                         "",              ""},
+
+
+    { SSC_OUTPUT, SSC_ARRAY,  "q_dot_rec_inc_pre_defocus",          "Receiver incident flux, pre-defocus, post-reflection",                                                  "kg/s",         "",              "Tower and Receiver",                       "sim_type=1",                         "",              ""},
+    { SSC_OUTPUT, SSC_ARRAY,  "q_dot_rec_inc",                      "Receiver incident flux, post defocus and reflection",                                                   "kg/s",         "",              "Tower and Receiver",                       "sim_type=1",                         "",              ""},
+    { SSC_OUTPUT, SSC_ARRAY,  "q_dot_rec_rad_loss",                 "Receiver radiative losses",                                                                             "kg/s",         "",              "Tower and Receiver",                       "sim_type=1",                         "",              ""},
+    { SSC_OUTPUT, SSC_ARRAY,  "q_dot_rec_conv_loss",                "Receiver convective losses",                                                                            "kg/s",         "",              "Tower and Receiver",                       "sim_type=1",                         "",              ""},
+    { SSC_OUTPUT, SSC_ARRAY,  "q_dot_rec_piping_loss",              "Receiver piping thermal losses",                                                                        "kg/s",         "",              "Tower and Receiver",                       "sim_type=1",                         "",              ""},
+
+
 
 
     var_info_invalid };
@@ -231,6 +247,22 @@ public:
         ssc_number_t* p_deltaT_sky_od = as_array("deltaT_sky_od", &n_deltaT_sky_od);
         n_runs = std::max(n_runs, n_deltaT_sky_od);
 
+        size_t n_v_wind_10_od;
+        ssc_number_t* p_v_wind_10_od = as_array("v_wind_10_od", &n_v_wind_10_od);
+        n_runs = std::max(n_runs, n_v_wind_10_od);
+
+        size_t n_clearsky_to_measured_dni_od;
+        ssc_number_t* p_clearsky_to_measured_dni_od = as_array("clearsky_to_measured_dni_od", &n_clearsky_to_measured_dni_od);
+        n_runs = std::max(n_runs, n_clearsky_to_measured_dni_od);
+
+        size_t n_plant_defocus_od;
+        ssc_number_t* p_plant_defocus_od = as_array("plant_defocus_od", &n_plant_defocus_od);
+        n_runs = std::max(n_runs, n_plant_defocus_od);
+
+        size_t n_T_htf_cold_in_od;
+        ssc_number_t* p_T_htf_cold_in_od = as_array("T_htf_cold_in_od", &n_T_htf_cold_in_od);
+        n_runs = std::max(n_runs, n_T_htf_cold_in_od);
+
 
         // Check length of timeseries input arrays
         if (n_runs % n_timestep_od != 0) {
@@ -263,9 +295,43 @@ public:
             throw exec_error("standalone_mspt", err_msg);
         }
 
+        if (n_runs % n_v_wind_10_od != 0) {
+            std::string err_msg = util::format("The longest input array contains %d elements. It must be a multiple of the"
+                " v_wind_10_od input that contains %d elements.", n_runs, n_v_wind_10_od);
+            throw exec_error("standalone_mspt", err_msg);
+        }
+
+        if (n_runs % n_clearsky_to_measured_dni_od != 0) {
+            std::string err_msg = util::format("The longest input array contains %d elements. It must be a multiple of the"
+                " clearsky_to_measured_dni_od input that contains %d elements.", n_runs, n_clearsky_to_measured_dni_od);
+            throw exec_error("standalone_mspt", err_msg);
+        }
+
+        if (n_runs % n_plant_defocus_od != 0) {
+            std::string err_msg = util::format("The longest input array contains %d elements. It must be a multiple of the"
+                " plant_defocus_od input that contains %d elements.", n_runs, n_plant_defocus_od);
+            throw exec_error("standalone_mspt", err_msg);
+        }
+
+        if (n_runs % n_T_htf_cold_in_od != 0) {
+            std::string err_msg = util::format("The longest input array contains %d elements. It must be a multiple of the"
+                " T_htf_cold_in_od input that contains %d elements.", n_runs, n_T_htf_cold_in_od);
+            throw exec_error("standalone_mspt", err_msg);
+        }
+
         // Allocate timeseries outputs
         ssc_number_t* p_m_dot_rec_od = allocate("m_dot_rec_od", n_runs);
+        ssc_number_t* p_T_htf_rec_out_od = allocate("T_htf_rec_out_od", n_runs);
+        ssc_number_t* p_q_dot_htf_od = allocate("q_dot_htf_od", n_runs);
         ssc_number_t* p_eta_rec_od = allocate("eta_rec_od", n_runs);
+        ssc_number_t* p_W_dot_pump_od = allocate("W_dot_pump_od", n_runs);
+
+        ssc_number_t* p_q_dot_rec_inc_pre_defocus = allocate("q_dot_rec_inc_pre_defocus", n_runs);
+        ssc_number_t* p_q_dot_rec_inc = allocate("q_dot_rec_inc", n_runs);
+        ssc_number_t* p_q_dot_rec_rad_loss = allocate("q_dot_rec_rad_loss", n_runs);
+        ssc_number_t* p_q_dot_rec_conv_loss = allocate("q_dot_rec_conv_loss", n_runs);
+        ssc_number_t* p_q_dot_rec_piping_loss = allocate("q_dot_rec_piping_loss", n_runs);
+
 
         for (int n_run = 0; n_run < n_runs; n_run++) {
 
@@ -274,19 +340,22 @@ public:
             size_t i_P_amb_od = floor(n_P_amb_od / (double)n_runs * n_run);
             size_t i_T_amb_od = floor(n_T_amb_od / (double)n_runs * n_run);
             size_t i_deltaT_sky_od = floor(n_deltaT_sky_od / (double)n_runs * n_run);
+            size_t i_v_wind_10_od = floor(n_v_wind_10_od / (double)n_runs * n_run);
+            size_t i_clearsky_to_measured_dni_od = floor(n_clearsky_to_measured_dni_od / (double)n_runs * n_run);
+            size_t i_plant_defocus_od = floor(n_plant_defocus_od / (double)n_runs * n_run);
+            size_t i_T_htf_cold_in_od = floor(n_T_htf_cold_in_od / (double)n_runs * n_run);
 
-            double step = p_timestep_od[i_timestep_od];      //3600.0;       //[s]
+            double step = p_timestep_od[i_timestep_od];         //[s]
 
-            double P_amb = p_P_amb_od[i_P_amb_od] * 100.0;    //[Pa] convert from mbar
-            double T_amb = p_T_amb_od[i_T_amb_od] + 273.15;   //[K] convert from C
-            double T_sky = T_amb - p_deltaT_sky_od[i_deltaT_sky_od];    //[K]
-            double v_wind_10 = 3.0;     //[m/s]
-            double clearsky_to_input_dni = std::numeric_limits<double>::quiet_NaN(); //[W/m2]
-            double plant_defocus = 1.0; //[-]
-            double T_salt_cold_in = T_htf_cold_des;     //[K]
+            double P_amb = p_P_amb_od[i_P_amb_od] * 100.0;      //[Pa] convert from mbar
+            double T_amb = p_T_amb_od[i_T_amb_od] + 273.15;     //[K] convert from C
+            double T_sky = T_amb - p_deltaT_sky_od[i_deltaT_sky_od];        //[K]
+            double v_wind_10 = p_v_wind_10_od[i_v_wind_10_od];              //[m/s]
+            double plant_defocus = p_plant_defocus_od[i_plant_defocus_od];  //[-]
+            double T_salt_cold_in = p_T_htf_cold_in_od[i_T_htf_cold_in_od] + 273.15; //[K]
 
             // Only needed if 1) using flux_map_input and 2) not using clearsky control
-            //double I_bn = p_I_bn_od[i_I_bn_od];         //  950.0;        //[W/m2]
+            double clearsky_to_measured_dni = p_clearsky_to_measured_dni_od[i_clearsky_to_measured_dni_od];     //[-]
 
 
             util::matrix_t<double> flux_map_input;
@@ -294,7 +363,6 @@ public:
             double dni_od = 550.0;
             for (int i = 0; i < n_panels; i++) {
                 flux_map_input(0, i) = flux_map_matrix(i_flux_map_od, i);       //[W/m2]
-                //flux_map_input(0, i) = dni_od + 200*n_run;    //[W/m2]
             }
 
             C_csp_collector_receiver::E_csp_cr_modes input_operation_mode = C_csp_collector_receiver::E_csp_cr_modes::ON;
@@ -303,16 +371,41 @@ public:
             mspt_base->overwrite_startup_requirements_to_on();
 
             mspt_base->call(step, P_amb, T_amb, T_sky,
-                clearsky_to_input_dni,
+                clearsky_to_measured_dni,
                 v_wind_10, plant_defocus,
                 &flux_map_input, input_operation_mode,
                 T_salt_cold_in);
 
+            // Essential outputs
             double m_dot_rec_od = mspt_base->ms_outputs.m_m_dot_salt_tot / 3600.0;  //[kg/s]
+            double T_htf_rec_out_od = mspt_base->ms_outputs.m_T_salt_hot;              //[C] temperature after downcomer losses
+            double q_dot_htf_od = mspt_base->ms_outputs.m_Q_thermal;                   //[MWt] total 'component' heat, subtracts downcomer losses: m_dot_salt_tot*c_p_coolant*(T_salt_hot - T_salt_cold_in)
             double eta_rec_od = mspt_base->ms_outputs.m_eta_therm;                  //[-]
+            double W_dot_pump_od = mspt_base->ms_outputs.m_W_dot_pump;              //[MWe]
 
-            p_m_dot_rec_od[n_run] = (ssc_number_t)m_dot_rec_od; //[kg/s]
-            p_eta_rec_od[n_run] = (ssc_number_t)eta_rec_od;     //[kg/s]
+            p_m_dot_rec_od[n_run] = (ssc_number_t)m_dot_rec_od;         //[kg/s]
+            p_T_htf_rec_out_od[n_run] = (ssc_number_t)T_htf_rec_out_od; //[C]
+            p_q_dot_htf_od[n_run] = (ssc_number_t)q_dot_htf_od;         //[MWt]
+            p_eta_rec_od[n_run] = (ssc_number_t)eta_rec_od;             //[kg/s]
+            p_W_dot_pump_od[n_run] = (ssc_number_t)W_dot_pump_od;       //[MWe]
+
+            // Energy balance outputs
+            double q_dot_rec_inc_pre_defocus = mspt_base->ms_outputs.m_q_dot_rec_inc_pre_defocus;   //[MWt]
+            double q_dot_rec_inc = mspt_base->ms_outputs.m_q_dot_rec_inc;               //[MWt] Absorbed by panel surface. Does not include flux lost from reflectance or defocus
+            double q_dot_rec_rad_loss = mspt_base->ms_outputs.m_q_rad_sum;              //[MWt]
+            double q_dot_rec_conv_loss = mspt_base->ms_outputs.m_q_conv_sum;            //[MWt]
+            double q_dot_rec_piping_loss = mspt_base->ms_outputs.m_q_dot_piping_loss;   //[MWt]
+
+            p_q_dot_rec_inc_pre_defocus[n_run] = q_dot_rec_inc_pre_defocus;     //[MWt]
+            p_q_dot_rec_inc[n_run] = q_dot_rec_inc;                             //[MWt]
+            p_q_dot_rec_rad_loss[n_run] = q_dot_rec_rad_loss;                   //[MWt]
+            p_q_dot_rec_conv_loss[n_run] = q_dot_rec_conv_loss;                 //[MWt]
+            p_q_dot_rec_piping_loss[n_run] = q_dot_rec_piping_loss;             //[MWt]
+
+            double afaf = 1.23;
+
+
+
 
             // Receiver/tower design options
             // 1) import through cmod
