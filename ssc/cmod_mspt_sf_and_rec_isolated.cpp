@@ -89,7 +89,6 @@ static var_info _cm_vtab_mspt_sf_and_rec_isolated[] = {
     { SSC_INPUT, SSC_ARRAY,   "P_amb_od",                           "Ambient pressure",                                                                                      "mbar",         "",              "Weather",                                  "sim_type=1",                         "",              ""},
     { SSC_INPUT, SSC_ARRAY,   "T_amb_od",                           "Ambient temperature",                                                                                   "C",            "",              "Weather",                                  "sim_type=1",                         "",              ""},
     { SSC_INPUT, SSC_ARRAY,   "deltaT_sky_od",                      "Sky temperature less than ambient",                                                                     "C",            "",              "Weather",                                  "sim_type=1",                         "",              ""},
-    { SSC_INPUT, SSC_ARRAY,   "I_bn_od",                            "Beam normal",                                                                                           "W/m2",         "",              "Weather",                                  "sim_type=1",                         "",              ""},
 
 
     // Timeseries outputs
@@ -232,10 +231,6 @@ public:
         ssc_number_t* p_deltaT_sky_od = as_array("deltaT_sky_od", &n_deltaT_sky_od);
         n_runs = std::max(n_runs, n_deltaT_sky_od);
 
-        size_t n_I_bn_od;
-        ssc_number_t* p_I_bn_od = as_array("I_bn_od", &n_I_bn_od);
-        n_runs = std::max(n_runs, n_I_bn_od);
-
 
         // Check length of timeseries input arrays
         if (n_runs % n_timestep_od != 0) {
@@ -268,12 +263,6 @@ public:
             throw exec_error("standalone_mspt", err_msg);
         }
 
-        if (n_runs % n_I_bn_od != 0) {
-            std::string err_msg = util::format("The longest input array contains %d elements. It must be a multiple of the"
-                " I_bn_od input that contains %d elements.", n_runs, n_I_bn_od);
-            throw exec_error("standalone_mspt", err_msg);
-        }
-
         // Allocate timeseries outputs
         ssc_number_t* p_m_dot_rec_od = allocate("m_dot_rec_od", n_runs);
         ssc_number_t* p_eta_rec_od = allocate("eta_rec_od", n_runs);
@@ -285,7 +274,6 @@ public:
             size_t i_P_amb_od = floor(n_P_amb_od / (double)n_runs * n_run);
             size_t i_T_amb_od = floor(n_T_amb_od / (double)n_runs * n_run);
             size_t i_deltaT_sky_od = floor(n_deltaT_sky_od / (double)n_runs * n_run);
-            size_t i_I_bn_od = floor(n_I_bn_od / (double)n_runs * n_run);
 
             double step = p_timestep_od[i_timestep_od];      //3600.0;       //[s]
 
@@ -293,12 +281,12 @@ public:
             double T_amb = p_T_amb_od[i_T_amb_od] + 273.15;   //[K] convert from C
             double T_sky = T_amb - p_deltaT_sky_od[i_deltaT_sky_od];    //[K]
             double v_wind_10 = 3.0;     //[m/s]
-            double clearsky_dni = std::numeric_limits<double>::quiet_NaN(); //[W/m2]
+            double clearsky_to_input_dni = std::numeric_limits<double>::quiet_NaN(); //[W/m2]
             double plant_defocus = 1.0; //[-]
             double T_salt_cold_in = T_htf_cold_des;     //[K]
 
             // Only needed if 1) using flux_map_input and 2) not using clearsky control
-            double I_bn = p_I_bn_od[i_I_bn_od];         //  950.0;        //[W/m2]
+            //double I_bn = p_I_bn_od[i_I_bn_od];         //  950.0;        //[W/m2]
 
 
             util::matrix_t<double> flux_map_input;
@@ -315,7 +303,8 @@ public:
             mspt_base->overwrite_startup_requirements_to_on();
 
             mspt_base->call(step, P_amb, T_amb, T_sky,
-                I_bn, v_wind_10, clearsky_dni, plant_defocus,
+                clearsky_to_input_dni,
+                v_wind_10, plant_defocus,
                 &flux_map_input, input_operation_mode,
                 T_salt_cold_in);
 

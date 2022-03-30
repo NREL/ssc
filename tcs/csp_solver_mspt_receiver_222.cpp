@@ -194,8 +194,8 @@ void C_mspt_receiver_222::init()
 }
 
 void C_mspt_receiver_222::call_common(double P_amb /*Pa*/, double T_amb /*K*/,
-    double I_bn /*W/m2*/, double v_wind_10 /*m/s*/, double T_sky /*K*/,
-    double clearsky_dni /*W/m2*/,
+    double clearsky_to_input_dni /*-*/,
+    double v_wind_10 /*m/s*/, double T_sky /*K*/,
     double T_salt_cold_in /*K*/,
     double plant_defocus /*-*/,
     const util::matrix_t<double>* flux_map_input,
@@ -259,11 +259,11 @@ void C_mspt_receiver_222::call_common(double P_amb /*Pa*/, double T_amb /*K*/,
         rec_is_off = true;
     }
 
-    if (plant_defocus == 0.0 || I_bn <= 1.E-6)
+    if (plant_defocus == 0.0 || flux_sum <= 1.E-6) // I_bn <= 1.E-6)
     {
         if (m_night_recirc == 1)
         {
-            I_bn = 0.0;
+            flux_sum = 0.0;
         }
         else
         {
@@ -304,30 +304,30 @@ void C_mspt_receiver_222::call_common(double P_amb /*Pa*/, double T_amb /*K*/,
 
     soln.flux_sum = flux_sum;       //[W/m2]
 
-    soln.dni = I_bn;                //[W/m2]
+    //soln.dni = I_bn;                //[W/m2]
     soln.dni_applied_to_measured = 1.0;     //[-]
     soln.plant_defocus = plant_defocus;     //[-]
+    soln.clearsky_to_input_dni = clearsky_to_input_dni;     // clearsky_adj / I_bn;   //[-]
     soln.T_salt_cold_in = T_salt_cold_in;   //[K]	
     soln.od_control = od_control;           //[-] Initial defocus control (may be adjusted during the solution)
     soln.mode = input_operation_mode;
     soln.rec_is_off = rec_is_off;
 
-    if(std::isnan(clearsky_dni) && m_csky_frac > 0.0001)
+    //if (std::isnan(clearsky_dni) && m_csky_frac > 0.0001)
+    if(std::isnan(clearsky_to_input_dni) && m_csky_frac > 0.0001)
         throw(C_csp_exception("Clearsky DNI is NaN but required in the clearsky receiver model"));
 
-    double clearsky_adj = std::fmax(clearsky_dni, I_bn);   // Set clear-sky DNI to actual DNI if actual value is higher
 
     if (rec_is_off)
         soln.q_dot_inc.resize_fill(m_n_panels, 0.0);
 
     else
     {
-
         //--- Solve for mass flow at actual and/or clear-sky DNI extremes
-        if (m_csky_frac <= 0.9999 || fabs(I_bn - clearsky_adj) < 0.001)  // Solve for mass flow at actual DNI?
+        if (m_csky_frac <= 0.9999 || clearsky_to_input_dni < 1.0001) // Solve for mass flow at actual DNI?
         {
             soln_actual = soln;  // Sets initial solution properties (inlet T, initial defocus control, etc.)
-            soln_actual.dni = I_bn;
+            //soln_actual.dni = I_bn;
             soln_actual.dni_applied_to_measured = 1.0;
 
             if (use_previous_solution(soln_actual, m_mflow_soln_prev))  // Same conditions were solved in the previous call to this method
@@ -340,13 +340,13 @@ void C_mspt_receiver_222::call_common(double P_amb /*Pa*/, double T_amb /*K*/,
 
         if (m_csky_frac >= 0.0001) // Solve for mass flow at clear-sky DNI?
         {
-            if (fabs(I_bn - clearsky_adj) < 0.001)
+            if (clearsky_to_input_dni < 1.0001) 
                 soln_clearsky = soln_actual;
             else
             {
                 soln_clearsky = soln;
-                soln_clearsky.dni = clearsky_adj;
-                soln_clearsky.dni_applied_to_measured = clearsky_adj / soln.dni;    //[-]
+                //soln_clearsky.dni = clearsky_adj;
+                soln_clearsky.dni_applied_to_measured = soln.clearsky_to_input_dni;     // clearsky_adj / soln.dni;    //[-]
 
                 if (use_previous_solution(soln_clearsky, m_mflow_soln_csky_prev))  // Same conditions were solved in the previous call to this method
                     soln_clearsky = m_mflow_soln_csky_prev;
@@ -358,7 +358,7 @@ void C_mspt_receiver_222::call_common(double P_amb /*Pa*/, double T_amb /*K*/,
         }
 
         //--- Set mass flow and calculate final solution
-        if (fabs(I_bn - clearsky_adj) < 0.001 || m_csky_frac < 0.0001)  // Flow control based on actual DNI
+        if ( clearsky_to_input_dni < 1.0001 || m_csky_frac < 0.0001)  // Flow control based on actual DNI
             soln = soln_actual;
 
         else if (soln_clearsky.rec_is_off)    // Receiver can't operate at this time point 
@@ -372,7 +372,7 @@ void C_mspt_receiver_222::call_common(double P_amb /*Pa*/, double T_amb /*K*/,
             soln.m_dot_salt = soln_clearsky.m_dot_salt;
             soln.rec_is_off = soln_clearsky.rec_is_off;
             soln.od_control = soln_clearsky.od_control;
-            soln.q_dot_inc = calculate_flux_profiles(I_bn, 1.0, plant_defocus, soln_clearsky.od_control, flux_map_input);  // Absorbed flux profiles at actual DNI and clear-sky defocus
+            soln.q_dot_inc = calculate_flux_profiles(flux_sum, 1.0, plant_defocus, soln_clearsky.od_control, flux_map_input);  // Absorbed flux profiles at actual DNI and clear-sky defocus
             calculate_steady_state_soln(soln, 0.00025, m_use_constant_piping_loss);  // Solve energy balances at clearsky mass flow rate and actual DNI conditions
         }
 
@@ -479,18 +479,26 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs& weather,
     double hour = time / 3600.0;			//[hr] Hour of the year
     double T_sky = CSP::skytemp(T_amb, T_dp, hour);     //[K]
 
+    double clearsky_adj = std::fmax(clearsky_dni, I_bn);
+    double clearsky_to_input_dni = clearsky_adj / I_bn;
+    if (I_bn < 1.E-6) {
+        clearsky_to_input_dni = 1.0;
+    }
+
     call(step,
         P_amb, T_amb, T_sky,
-        I_bn, v_wind_10,
-        clearsky_dni, plant_defocus,
+        clearsky_to_input_dni,
+        v_wind_10,
+        plant_defocus,
         flux_map_input, input_operation_mode,
         T_salt_cold_in);
 }
 
 void C_mspt_receiver_222::call(double step /*s*/,
     double P_amb /*Pa*/, double T_amb /*K*/, double T_sky /*K*/,
-    double I_bn /*W/m2*/, double v_wind_10 /*m/s*/,
-    double clearsky_dni /*W/m2*/, double plant_defocus /*-*/,
+    double clearsky_to_input_dni /*-*/,
+    double v_wind_10 /*m/s*/,
+    double plant_defocus /*-*/,
     const util::matrix_t<double>* flux_map_input, C_csp_collector_receiver::E_csp_cr_modes input_operation_mode,
     double T_salt_cold_in /*K*/)
 {
@@ -510,8 +518,8 @@ void C_mspt_receiver_222::call(double step /*s*/,
     s_steady_state_soln soln;
 
     call_common(P_amb, T_amb,
-        I_bn, v_wind_10, T_sky,
-        clearsky_dni,
+        clearsky_to_input_dni,
+        v_wind_10, T_sky,
         T_salt_cold_in,
         plant_defocus,
         flux_map_input,
@@ -757,7 +765,7 @@ bool C_mspt_receiver_222::use_previous_solution(const s_steady_state_soln& soln,
 {
 	// Are these conditions identical to those used in the last solution?
 	if (!soln_prev.rec_is_off && 
-		soln.dni == soln_prev.dni &&
+		//soln.dni == soln_prev.dni &&
         soln.dni_applied_to_measured == soln_prev.dni_applied_to_measured &&
 		soln.T_salt_cold_in == soln_prev.T_salt_cold_in &&
         soln.plant_defocus == soln_prev.plant_defocus &&
@@ -766,7 +774,7 @@ bool C_mspt_receiver_222::use_previous_solution(const s_steady_state_soln& soln,
 		soln.v_wind_10 == soln_prev.v_wind_10 &&
 		soln.p_amb == soln_prev.p_amb &&
         soln.T_sky == soln_prev.T_sky &&
-        soln.flux_sum == soln_prev.flux_sum)
+        soln.flux_sum == soln_prev.flux_sum )
 	{
 		return true;
 	}
@@ -776,7 +784,7 @@ bool C_mspt_receiver_222::use_previous_solution(const s_steady_state_soln& soln,
 
 
 // Calculate flux profiles (interpolated to receiver panels at specified DNI)
-util::matrix_t<double> C_mspt_receiver_222::calculate_flux_profiles(double dni /*W/m2*/, double dni_scale /*-*/, double plant_defocus /*-*/,
+util::matrix_t<double> C_mspt_receiver_222::calculate_flux_profiles(double flux_sum /*W/m2*/, double flux_scale /*-*/, double plant_defocus /*-*/,
                                         double od_control, const util::matrix_t<double> *flux_map_input)
 {
 	util::matrix_t<double> q_dot_inc, flux;
@@ -789,14 +797,14 @@ util::matrix_t<double> C_mspt_receiver_222::calculate_flux_profiles(double dni /
 	int n_flux_x = (int)flux_map_input->ncols();
 	flux.resize_fill(n_flux_x, 0.0);
 
-	if (dni > 1.0)
+	if (flux_sum > 1.0)
 	{
 		for (int j = 0; j<n_flux_x; j++)
 		{
 			flux.at(j) = 0.;
 			for (int i = 0; i<n_flux_y; i++)
 			{
-                flux.at(j) += (*flux_map_input)(i, j) * total_defocus * dni_scale; //[kW/m^2];
+                flux.at(j) += (*flux_map_input)(i, j) * total_defocus * flux_scale; //[kW/m^2];
 			}
 		}
 	}
@@ -1165,7 +1173,7 @@ void C_mspt_receiver_222::solve_for_mass_flow(s_steady_state_soln &soln)
 
 		double c_guess = field_htfProps.Cp((m_T_salt_hot_target + soln.T_salt_cold_in) / 2.0)*1000.;	//[kJ/kg-K] Estimate the specific heat of the fluid in receiver
 
-		if (soln.dni > 1.E-6)
+		if(soln.flux_sum > 1.E-6) // (soln.dni > 1.E-6)
 		{
 			double q_guess = 0.85*q_dot_inc_sum;		//[kW] Estimate the thermal power produced by the receiver			
 			m_dot_salt_guess = q_guess / (c_guess*(m_T_salt_hot_target - soln.T_salt_cold_in)*m_n_lines);	//[kg/s] Mass flow rate for each flow path			
@@ -1250,7 +1258,7 @@ void C_mspt_receiver_222::solve_for_mass_flow_and_defocus(s_steady_state_soln &s
 		if (soln.rec_is_off)
 			break;
 
-		soln.q_dot_inc = calculate_flux_profiles(soln.dni, soln.dni_applied_to_measured, soln.plant_defocus, soln.od_control, flux_map_input);  // Calculate flux profiles
+		soln.q_dot_inc = calculate_flux_profiles(soln.flux_sum, soln.dni_applied_to_measured, soln.plant_defocus, soln.od_control, flux_map_input);  // Calculate flux profiles
 		solve_for_mass_flow(soln);	// Iterative calculation of mass flow to produce target outlet temperature
 
 		if (soln.rec_is_off)
@@ -1299,7 +1307,7 @@ void C_mspt_receiver_222::solve_for_defocus_given_flow(s_steady_state_soln &soln
 	{
 		soln.od_control = od;
 		if (odprev != odprev)
-			soln.q_dot_inc = calculate_flux_profiles(soln.dni, soln.dni_applied_to_measured, soln.plant_defocus, soln.od_control, flux_map_input);
+			soln.q_dot_inc = calculate_flux_profiles(soln.flux_sum, soln.dni_applied_to_measured, soln.plant_defocus, soln.od_control, flux_map_input);
 		else
 			soln.q_dot_inc = soln.q_dot_inc * soln.od_control / odprev; // Calculate flux profiles (note flux is directly proportional to defocus control)
 		

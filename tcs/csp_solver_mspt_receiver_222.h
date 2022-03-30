@@ -47,9 +47,9 @@ protected:
 
         double flux_sum;            // Flux map summed (W/m2)
 
-        double dni;					// DNI for this solution (W/m2)
         double dni_applied_to_measured; //[-] Ratio of DNI used to measured DNI
         double plant_defocus;       // plant defocus
+        double clearsky_to_input_dni;   //[-]
 
         double od_control;          // Defocus control
 
@@ -92,7 +92,7 @@ protected:
         void clear()
         {
             T_amb = v_wind_10 = p_amb = T_sky = std::numeric_limits<double>::quiet_NaN();
-            dni = dni_applied_to_measured = od_control = plant_defocus =
+            dni_applied_to_measured = od_control = plant_defocus = clearsky_to_input_dni =
                 m_dot_salt = m_dot_salt_tot = T_salt_cold_in = T_salt_hot = T_salt_hot_rec = T_salt_props = std::numeric_limits<double>::quiet_NaN();
             u_salt = f = Q_inc_sum = Q_conv_sum = Q_rad_sum = Q_abs_sum = Q_dot_piping_loss = Q_inc_min = Q_thermal = eta_therm = std::numeric_limits<double>::quiet_NaN();
 
@@ -170,7 +170,7 @@ protected:
     
 
     bool use_previous_solution(const s_steady_state_soln& soln, const s_steady_state_soln& soln_prev);
-    util::matrix_t<double> calculate_flux_profiles(double dni /*W/m2*/, double dni_scale /*-*/, double plant_defocus /*-*/,
+    util::matrix_t<double> calculate_flux_profiles(double flux_sum /*W/m2*/, double dni_scale /*-*/, double plant_defocus /*-*/,
         double od_control /*-*/, const util::matrix_t<double>* flux_map_input);
     void calculate_steady_state_soln(s_steady_state_soln& soln, double tol, bool use_constant_piping_loss, int max_iter = 50);
     void solve_for_mass_flow(s_steady_state_soln& soln);
@@ -178,8 +178,10 @@ protected:
     void solve_for_defocus_given_flow(s_steady_state_soln& soln, const util::matrix_t<double>* flux_map_input);
 
     void call_common(double P_amb /*Pa*/, double T_amb /*K*/,
-        double I_bn /*W/m2*/, double v_wind_10 /*m/s*/, double T_sky /*K*/,
-        double clearsky_dni /*W/m2*/,
+        //double I_bn /*W/m2*/,
+        double clearsky_to_input_dni /*-*/,
+        double v_wind_10 /*m/s*/, double T_sky /*K*/,
+        //double clearsky_dni /*W/m2*/,
         double T_salt_cold_in /*K*/,
         double plant_defocus /*-*/,
         const util::matrix_t<double>* flux_map_input,
@@ -231,8 +233,9 @@ public:
 
     virtual void call(double step /*s*/,
         double P_amb /*Pa*/, double T_amb /*K*/, double T_sky /*K*/,
-        double I_bn /*W/m2*/, double v_wind_10 /*m/s*/,
-        double clearsky_dni /*W/m2*/, double plant_defocus /*-*/,
+        double clearsky_to_input_dni /*-*/,
+        double v_wind_10 /*m/s*/,
+        double plant_defocus /*-*/,
         const util::matrix_t<double>* flux_map_input, C_csp_collector_receiver::E_csp_cr_modes input_operation_mode,
         double T_salt_cold_in /*K*/);
 

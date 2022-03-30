@@ -226,8 +226,9 @@ public:
 
     void call(double step /*s*/,
         double P_amb /*Pa*/, double T_amb /*K*/, double T_sky /*K*/,
-        double I_bn /*W/m2*/, double v_wind_10 /*m/s*/, 
-        double clearsky_dni /*W/m2*/, double plant_defocus /*-*/,
+        double clearsky_to_input_dni /*-*/,
+        double v_wind_10 /*m/s*/, 
+        double plant_defocus /*-*/,
         const util::matrix_t<double>* flux_map_input, C_csp_collector_receiver::E_csp_cr_modes input_operation_mode,
         double T_salt_cold_in /*K*/) override;
 

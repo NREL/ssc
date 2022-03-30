@@ -306,8 +306,9 @@ void C_mspt_receiver::initialize_transient_parameters()
 
 void C_mspt_receiver::call(double step /*s*/,
     double P_amb /*Pa*/, double T_amb /*K*/, double T_sky /*K*/,
-    double I_bn /*W/m2*/, double v_wind_10 /*m/s*/,
-    double clearsky_dni /*W/m2*/, double plant_defocus /*-*/,
+    double clearsky_to_input_dni /*-*/,
+    double v_wind_10 /*m/s*/,
+    double plant_defocus /*-*/,
     const util::matrix_t<double>* flux_map_input, C_csp_collector_receiver::E_csp_cr_modes input_operation_mode,
     double T_salt_cold_in /*K*/)
 {
@@ -327,8 +328,8 @@ void C_mspt_receiver::call(double step /*s*/,
     s_steady_state_soln soln;
 
     call_common(P_amb, T_amb,
-        I_bn, v_wind_10, T_sky,
-        clearsky_dni,
+        clearsky_to_input_dni,
+        v_wind_10, T_sky,
         T_salt_cold_in,
         plant_defocus,
         flux_map_input,
@@ -2873,7 +2874,8 @@ void C_mspt_receiver::est_startup_time_energy(double fract, double &est_time, do
 
 
 
-	soln.dni = 500.;   // Not used, just need >0
+	//soln.dni = 500.;   // Not used, just need >0
+    soln.flux_sum = 500.0;    // Not used, just need > 1
 	solve_for_mass_flow(soln);
 	initialize_transient_param_inputs(soln, param_inputs);
 	param_inputs.tm = m_tm;
