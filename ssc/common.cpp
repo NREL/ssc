@@ -618,6 +618,20 @@ var_info vtab_forecast_price_signal[] = {
 	{ SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv4",							"Enable ancillary services 4 revenue",   "0/1",   "",    "Price Signal",  "forecast_price_signal_model=1",	"INTEGER,MIN=0,MAX=1",      "" },
 	{ SSC_INPUT,		SSC_MATRIX,		"mp_ancserv4_revenue",							"Ancillary services 4 revenue input", " [MW, $/MW]", "","Price Signal", "en_batt=1&batt_meter_position=1&forecast_price_signal_model=1", ""},
 
+    // percent generation matrices (1-column)
+    { SSC_INPUT, SSC_MATRIX, "mp_energy_market_revenue_single", "Energy market revenue input", "", "Lifetime x 1 [Price($/MWh)]","Revenue", "mp_enable_market_percent_gen=1", "", "" },
+    { SSC_INPUT, SSC_MATRIX, "mp_ancserv1_revenue_single", "Ancillary services 1 revenue input", "", "Lifetime x 1[Price($/MWh)]","Revenue", "mp_enable_ancserv1_percent_gen=1", "", "" },
+    { SSC_INPUT, SSC_MATRIX, "mp_ancserv2_revenue_single", "Ancillary services 2 revenue input", "", "Lifetime x 1[Price($/MWh)]","Revenue", "mp_enable_ancserv2_percent_gen=1", "", "" },
+    { SSC_INPUT, SSC_MATRIX, "mp_ancserv3_revenue_single", "Ancillary services 3 revenue input", "", "Lifetime x 1[Price($/MWh)]","Revenue", "mp_enable_ancserv3_percent_gen=1", "", "" },
+    { SSC_INPUT, SSC_MATRIX, "mp_ancserv4_revenue_single", "Ancillary services 4 revenue input", "", "Lifetime x 1[Price($/MWh)]","Revenue", "mp_enable_ancserv4_percent_gen=1", "", "" },
+
+    // percent generation variables
+    { SSC_INPUT,        SSC_NUMBER,     "mp_enable_market_percent_gen",		      "Enable percent demand cleared capacity option for market revenue",   "0/1",   "",    "Revenue",  "*",	"INTEGER,MIN=0,MAX=1",      "" },
+    { SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv1_percent_gen",		      "Enable percent demand cleared capacity option for ancillary service 1",   "0/1",   "",    "Revenue",  "*",	"INTEGER,MIN=0,MAX=1",      "" },
+    { SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv2_percent_gen",		      "Enable percent demand cleared capacity option for ancillary service 2",   "0/1",   "",    "Revenue",  "*",	"INTEGER,MIN=0,MAX=1",      "" },
+    { SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv3_percent_gen",		      "Enable percent demand cleared capacity option for ancillary service 3",   "0/1",   "",    "Revenue",  "*",	"INTEGER,MIN=0,MAX=1",      "" },
+    { SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv4_percent_gen",		      "Enable percent demand cleared capacity option for ancillary service 4",   "0/1",   "",    "Revenue",  "*",	"INTEGER,MIN=0,MAX=1",      "" },
+
 var_info_invalid };
 
 forecast_price_signal::forecast_price_signal(var_table *vt)
@@ -641,18 +655,30 @@ bool forecast_price_signal::setup(size_t step_per_hour)
 		bool en_mp_ancserv2 = (vartab->as_integer("mp_enable_ancserv2") == 1);
 		bool en_mp_ancserv3 = (vartab->as_integer("mp_enable_ancserv3") == 1);
 		bool en_mp_ancserv4 = (vartab->as_integer("mp_enable_ancserv4") == 1);
+
+        int mp_enable_market_percent_gen = vartab->as_integer("mp_enable_market_percent_gen");
+        int mp_enable_ancserv1_percent_gen = vartab->as_integer("mp_enable_ancserv1_percent_gen");
+        int mp_enable_ancserv2_percent_gen = vartab->as_integer("mp_enable_ancserv2_percent_gen");
+        int mp_enable_ancserv3_percent_gen = vartab->as_integer("mp_enable_ancserv3_percent_gen");
+        int mp_enable_ancserv4_percent_gen = vartab->as_integer("mp_enable_ancserv4_percent_gen");
+
 		// cleared capacity and price columns
 		// assume cleared capacities valid and use as generation for forecasting - will verify after generation in the financial models.
 		size_t nrows, ncols;
 		util::matrix_t<double> mp_energy_market_revenue_mat(1, 2, 0.0);
 		if (en_mp_energy_market)
 		{
-			ssc_number_t *mp_energy_market_revenue_in = vartab->as_matrix("mp_energy_market_revenue", &nrows, &ncols);
-			if (ncols != 2)
+            bool percent_gen = mp_enable_market_percent_gen > 0.5;
+			ssc_number_t *mp_energy_market_revenue_in = vartab->as_matrix("mp_energy_market_revenue" + std::string((percent_gen) ? "_single" : ""), &nrows, &ncols);
+			if (ncols != 2 && !percent_gen)
 			{
 				m_error = util::format("The energy market revenue table must have 2 columns. Instead it has %d columns.", (int)ncols);
 				return false;
 			}
+            else if (percent_gen && ncols != 1) {
+                m_error = util::format("The energy market revenue table must have 1 column. Instead it has %d columns.", (int)ncols);
+                return false;
+            }
 			mp_energy_market_revenue_mat.resize(nrows, ncols);
 			mp_energy_market_revenue_mat.assign(mp_energy_market_revenue_in, nrows, ncols);
 		}
@@ -660,12 +686,17 @@ bool forecast_price_signal::setup(size_t step_per_hour)
 		util::matrix_t<double> mp_ancserv_1_revenue_mat(1, 2, 0.0);
 		if (en_mp_ancserv1)
 		{
-			ssc_number_t *mp_ancserv1_revenue_in = vartab->as_matrix("mp_ancserv1_revenue", &nrows, &ncols);
-			if (ncols != 2)
+            bool percent_gen = mp_enable_ancserv1_percent_gen > 0.5;
+			ssc_number_t *mp_ancserv1_revenue_in = vartab->as_matrix("mp_ancserv1_revenue" + std::string((percent_gen) ? "_single" : ""), &nrows, &ncols);
+			if (ncols != 2 && !percent_gen)
 			{
 				m_error = util::format("The ancillary services revenue 1 table must have 2 columns. Instead it has %d columns.", (int)ncols);
 				return false;
 			}
+            else if (percent_gen && ncols != 1) {
+                m_error = util::format("The  ancillary services revenue 1 table must have 1 column. Instead it has %d columns.", (int)ncols);
+                return false;
+            }
 			mp_ancserv_1_revenue_mat.resize(nrows, ncols);
 			mp_ancserv_1_revenue_mat.assign(mp_ancserv1_revenue_in, nrows, ncols);
 		}
@@ -673,12 +704,18 @@ bool forecast_price_signal::setup(size_t step_per_hour)
 		util::matrix_t<double> mp_ancserv_2_revenue_mat(1, 2, 0.0);
 		if (en_mp_ancserv2)
 		{
-			ssc_number_t *mp_ancserv2_revenue_in = vartab->as_matrix("mp_ancserv2_revenue", &nrows, &ncols);
-			if (ncols != 2)
+            bool percent_gen = mp_enable_ancserv2_percent_gen > 0.5;
+
+			ssc_number_t *mp_ancserv2_revenue_in = vartab->as_matrix("mp_ancserv2_revenue" + std::string((percent_gen) ? "_single" : ""), &nrows, &ncols);
+			if (ncols != 2 && !percent_gen)
 			{
 				m_error = util::format("The ancillary services revenue 2 table must have 2 columns. Instead it has %d columns.", (int)ncols);
 				return false;
 			}
+            else if (percent_gen && ncols != 1) {
+                m_error = util::format("The  ancillary services revenue 2 table must have 1 column. Instead it has %d columns.", (int)ncols);
+                return false;
+            }
 			mp_ancserv_2_revenue_mat.resize(nrows, ncols);
 			mp_ancserv_2_revenue_mat.assign(mp_ancserv2_revenue_in, nrows, ncols);
 		}
@@ -686,12 +723,18 @@ bool forecast_price_signal::setup(size_t step_per_hour)
 		util::matrix_t<double> mp_ancserv_3_revenue_mat(1, 2, 0.0);
 		if (en_mp_ancserv3)
 		{
-			ssc_number_t *mp_ancserv3_revenue_in = vartab->as_matrix("mp_ancserv3_revenue", &nrows, &ncols);
-			if (ncols != 2)
+            bool percent_gen = mp_enable_ancserv3_percent_gen > 0.5;
+
+			ssc_number_t *mp_ancserv3_revenue_in = vartab->as_matrix("mp_ancserv3_revenue" + std::string((percent_gen) ? "_single" : ""), &nrows, &ncols);
+			if (ncols != 2 && !percent_gen)
 			{
 				m_error = util::format("The ancillary services revenue 3 table must have 2 columns. Instead it has %d columns.", (int)ncols);
 				return false;
 			}
+            else if (percent_gen && ncols != 1) {
+                m_error = util::format("The  ancillary services revenue 3 table must have 1 column. Instead it has %d columns.", (int)ncols);
+                return false;
+            }
 			mp_ancserv_3_revenue_mat.resize(nrows, ncols);
 			mp_ancserv_3_revenue_mat.assign(mp_ancserv3_revenue_in, nrows, ncols);
 		}
@@ -699,12 +742,18 @@ bool forecast_price_signal::setup(size_t step_per_hour)
 		util::matrix_t<double> mp_ancserv_4_revenue_mat(1, 2, 0.0);
 		if (en_mp_ancserv4)
 		{
-			ssc_number_t *mp_ancserv4_revenue_in = vartab->as_matrix("mp_ancserv4_revenue", &nrows, &ncols);
-			if (ncols != 2)
+            bool percent_gen = mp_enable_ancserv4_percent_gen > 0.5;
+
+			ssc_number_t *mp_ancserv4_revenue_in = vartab->as_matrix("mp_ancserv4_revenue" + std::string((percent_gen) ? "_single" : ""), &nrows, &ncols);
+			if (ncols != 2 && !percent_gen)
 			{
 				m_error = util::format("The ancillary services revenue 4 table must have 2 columns. Instead it has %d columns.", (int)ncols);
 				return false;
 			}
+            else if (percent_gen && ncols != 1) {
+                m_error = util::format("The  ancillary services revenue 4 table must have 1 column. Instead it has %d columns.", (int)ncols);
+                return false;
+            }
 			mp_ancserv_4_revenue_mat.resize(nrows, ncols);
 			mp_ancserv_4_revenue_mat.assign(mp_ancserv4_revenue_in, nrows, ncols);
 		}
