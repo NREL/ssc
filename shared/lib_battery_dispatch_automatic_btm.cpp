@@ -571,11 +571,12 @@ void dispatch_automatic_behind_the_meter_t::target_power(double E_useful, size_t
 void dispatch_automatic_behind_the_meter_t::apply_target_power(size_t day_index)
 {
     double pv_ac_power = m_batteryPower->powerSystem; // True for AC connected
+    double fuel_cell_power = m_batteryPower->powerFuelCell;
     if (m_batteryPower->connectionMode == m_batteryPower->DC_CONNECTED) {
         m_batteryPower->sharedInverter->calculateACPower(m_batteryPower->powerSystem, m_batteryPower->voltageSystem, m_batteryPower->sharedInverter->Tdry_C);
         pv_ac_power = m_batteryPower->sharedInverter->powerAC_kW;
     }
-    double grid_power = m_batteryPower->powerLoad - pv_ac_power;
+    double grid_power = m_batteryPower->powerLoad - pv_ac_power - fuel_cell_power;
     _P_battery_use[day_index] = grid_power - _P_target_use[day_index];
 }
 
