@@ -599,9 +599,10 @@ var_info vtab_forecast_price_signal[] = {
 	{ SSC_INPUT,        SSC_NUMBER,     "forecast_price_signal_model",					"Forecast price signal model selected",   "0/1",   "0=PPA based,1=Merchant Plant",    "Price Signal",  "?=0",	"INTEGER,MIN=0,MAX=1",      "" },
 
 	// PPA financial inputs
-	{ SSC_INPUT,        SSC_ARRAY,      "ppa_price_input",		                        "PPA Price Input",	                                        "",      "",                  "Price Signal", "forecast_price_signal_model=0&en_batt=1&batt_meter_position=1"   "",          "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "ppa_price_input",		                        "PPA Price Input",	                                        "$/kWh",      "",               "Price Signal", "forecast_price_signal_model=0&en_batt=1&batt_meter_position=1"   "",          "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ppa_multiplier_model",                         "PPA multiplier model",                                    "0/1",    "0=diurnal,1=timestep","Price Signal", "forecast_price_signal_model=0&en_batt=1&batt_meter_position=1",                                                  "INTEGER,MIN=0", "" },
-	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_factors_ts",                          "Dispatch payment factor time step",                        "",      "",                  "Price Signal", "forecast_price_signal_model=0&en_batt=1&batt_meter_position=1&ppa_multiplier_model=1", "", "" },
+    { SSC_INPUT,        SSC_NUMBER,      "ppa_escalation",		                        "PPA escalation rate",	                                    "%/year",      "",            "Price Signal", "forecast_price_signal_model=0&en_batt=1&batt_meter_position=1"   "",          "" },
+    { SSC_INPUT,        SSC_ARRAY,      "dispatch_factors_ts",                          "Dispatch payment factor time step",                        "",      "",                  "Price Signal", "forecast_price_signal_model=0&en_batt=1&batt_meter_position=1&ppa_multiplier_model=1", "", "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_tod_factors",		                    "TOD factors for periods 1-9",	                            "",      "",                  "Price Signal", "en_batt=1&batt_meter_position=1&forecast_price_signal_model=0&ppa_multiplier_model=0"   "",          "" },
 	{ SSC_INPUT,        SSC_MATRIX,     "dispatch_sched_weekday",                       "Diurnal weekday TOD periods",                              "1..9",  "12 x 24 matrix",    "Price Signal", "en_batt=1&batt_meter_position=1&forecast_price_signal_model=0&ppa_multiplier_model=0",  "",          "" },
 	{ SSC_INPUT,        SSC_MATRIX,     "dispatch_sched_weekend",                       "Diurnal weekend TOD periods",                              "1..9",  "12 x 24 matrix",    "Price Signal", "en_batt=1&batt_meter_position=1&forecast_price_signal_model=0&ppa_multiplier_model=0",  "",          "" },
@@ -624,20 +625,12 @@ forecast_price_signal::forecast_price_signal(var_table *vt)
 {
 }
 
-bool forecast_price_signal::setup(size_t nsteps)
+bool forecast_price_signal::setup(size_t step_per_hour)
 {
-	size_t step_per_hour = 1;
-	if (nsteps > 8760) step_per_hour = nsteps / 8760;
-	if (step_per_hour < 1 || step_per_hour > 60 || step_per_hour * 8760 != nsteps)
-	{
-		m_error = util::format("The requested number of timesteps must be a multiple of 8760. Instead requested timesteps is %d.", (int)nsteps);
-		return false;
-	}
-	m_forecast_price.reserve(nsteps);
-	for (size_t i = 0; i < nsteps; i++)
-		m_forecast_price.push_back(0.0);
+    size_t nsteps = 8760 * step_per_hour;;
 
 	int forecast_price_signal_model = vartab->as_integer("forecast_price_signal_model");
+    size_t nyears = vartab->as_unsigned_long("analysis_period");
 
 	if (forecast_price_signal_model == 1)
 	{
@@ -716,52 +709,65 @@ bool forecast_price_signal::setup(size_t nsteps)
 			mp_ancserv_4_revenue_mat.assign(mp_ancserv4_revenue_in, nrows, ncols);
 		}
 
-		int nyears = vartab->as_integer("analysis_period");
-		// calculate revenue for first year only and consolidate to m_forecast_price
+        if ( nsteps > 8760 * nyears) step_per_hour = nsteps / (8760 * nyears);
+        if (step_per_hour < 1 || step_per_hour > 60 || step_per_hour * 8760 != nsteps)
+        {
+            m_error = util::format("The requested number of timesteps must be a multiple of 8760. Instead requested timesteps is %d.", (int)nsteps);
+            return false;
+        }
+        m_forecast_price.reserve(nsteps * nyears);
+        for (size_t i = 0; i < nsteps * nyears; i++)
+            m_forecast_price.push_back(0.0);
+
+		// calculate revenue and consolidate to m_forecast_price
 		std::vector<double> as_revenue;
 		std::vector<double> as_revenue_extrapolated(nsteps,0.0);
 
-		size_t n_marketrevenue_per_year = mp_energy_market_revenue_mat.nrows() / (size_t)nyears;
-		as_revenue.clear();
-		as_revenue.reserve(n_marketrevenue_per_year);
-		for (size_t j = 0; j < n_marketrevenue_per_year; j++)
-			as_revenue.push_back(mp_energy_market_revenue_mat.at(j, 1) / step_per_hour / 1000.0);
-		as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
-		std::transform(m_forecast_price.begin(), m_forecast_price.end(), as_revenue_extrapolated.begin(), m_forecast_price.begin(), std::plus<double>());
+        for (size_t y = 0; y < nyears; y++) {
+            size_t forecast_start = y * nsteps;
+            size_t forecast_end = (y + 1) * nsteps;
+            size_t n_marketrevenue_per_year = mp_energy_market_revenue_mat.nrows() / (size_t)nyears;
+            as_revenue.clear();
+            as_revenue.reserve(n_marketrevenue_per_year);
+            for (size_t j = y * n_marketrevenue_per_year; j < (y + 1) * n_marketrevenue_per_year; j++)
+                as_revenue.push_back(mp_energy_market_revenue_mat.at(j, 1) / 1000.0);
+            as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
+            std::transform(m_forecast_price.begin() + forecast_start, m_forecast_price.begin() + forecast_end, as_revenue_extrapolated.begin(), m_forecast_price.begin() + forecast_start, std::plus<double>());
 
-		size_t n_ancserv_1_revenue_per_year = mp_ancserv_1_revenue_mat.nrows() / (size_t)nyears;
-		as_revenue.clear();
-		as_revenue.reserve(n_ancserv_1_revenue_per_year);
-		for (size_t j = 0; j < n_ancserv_1_revenue_per_year; j++)
-			as_revenue.push_back(mp_ancserv_1_revenue_mat.at(j, 1) / step_per_hour / 1000.0);
-		as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
-		std::transform(m_forecast_price.begin(), m_forecast_price.end(), as_revenue_extrapolated.begin(), m_forecast_price.begin(), std::plus<double>());
+            size_t n_ancserv_1_revenue_per_year = mp_ancserv_1_revenue_mat.nrows() / (size_t)nyears;
+            as_revenue.clear();
+            as_revenue.reserve(n_ancserv_1_revenue_per_year);
+            for (size_t j = y * n_ancserv_1_revenue_per_year; j < (y + 1) * n_ancserv_1_revenue_per_year; j++)
+                as_revenue.push_back(mp_ancserv_1_revenue_mat.at(j, 1) / 1000.0);
+            as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
+            std::transform(m_forecast_price.begin() + forecast_start, m_forecast_price.begin() + forecast_end, as_revenue_extrapolated.begin(), m_forecast_price.begin() + forecast_start, std::plus<double>());
 
-		size_t n_ancserv_2_revenue_per_year = mp_ancserv_2_revenue_mat.nrows() / (size_t)nyears;
-		as_revenue.clear();
-		as_revenue.reserve(n_ancserv_2_revenue_per_year);
-		for (size_t j = 0; j < n_ancserv_2_revenue_per_year; j++)
-			as_revenue.push_back(mp_ancserv_2_revenue_mat.at(j, 1) / step_per_hour / 1000.0);
-		as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
-		std::transform(m_forecast_price.begin(), m_forecast_price.end(), as_revenue_extrapolated.begin(), m_forecast_price.begin(), std::plus<double>());
+            size_t n_ancserv_2_revenue_per_year = mp_ancserv_2_revenue_mat.nrows() / (size_t)nyears;
+            as_revenue.clear();
+            as_revenue.reserve(n_ancserv_2_revenue_per_year);
+            for (size_t j = y * n_ancserv_2_revenue_per_year; j < (y + 1) * n_ancserv_2_revenue_per_year; j++)
+                as_revenue.push_back(mp_ancserv_2_revenue_mat.at(j, 1) / 1000.0);
+            as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
+            std::transform(m_forecast_price.begin() + forecast_start, m_forecast_price.begin() + forecast_end, as_revenue_extrapolated.begin(), m_forecast_price.begin() + forecast_start, std::plus<double>());
 
-		size_t n_ancserv_3_revenue_per_year = mp_ancserv_3_revenue_mat.nrows() / (size_t)nyears;
-		as_revenue.clear();
-		as_revenue.reserve(n_ancserv_3_revenue_per_year);
-		for (size_t j = 0; j < n_ancserv_3_revenue_per_year; j++)
-			as_revenue.push_back(mp_ancserv_3_revenue_mat.at(j, 1) / step_per_hour / 1000.0);
-		as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
-		std::transform(m_forecast_price.begin(), m_forecast_price.end(), as_revenue_extrapolated.begin(), m_forecast_price.begin(), std::plus<double>());
+            size_t n_ancserv_3_revenue_per_year = mp_ancserv_3_revenue_mat.nrows() / (size_t)nyears;
+            as_revenue.clear();
+            as_revenue.reserve(n_ancserv_3_revenue_per_year);
+            for (size_t j = y * n_ancserv_3_revenue_per_year; j < (y + 1) * n_ancserv_3_revenue_per_year; j++)
+                as_revenue.push_back(mp_ancserv_3_revenue_mat.at(j, 1) / 1000.0);
+            as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
+            std::transform(m_forecast_price.begin() + forecast_start, m_forecast_price.begin() + forecast_end, as_revenue_extrapolated.begin(), m_forecast_price.begin() + forecast_start, std::plus<double>());
 
-		size_t n_ancserv_4_revenue_per_year = mp_ancserv_4_revenue_mat.nrows() / (size_t)nyears;
-		as_revenue.clear();
-		as_revenue.reserve(n_ancserv_4_revenue_per_year);
-		for (size_t j = 0; j < n_ancserv_4_revenue_per_year; j++)
-			as_revenue.push_back(mp_ancserv_4_revenue_mat.at(j, 1) / step_per_hour / 1000.0);
-		as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
-		std::transform(m_forecast_price.begin(), m_forecast_price.end(), as_revenue_extrapolated.begin(), m_forecast_price.begin(), std::plus<double>());
+            size_t n_ancserv_4_revenue_per_year = mp_ancserv_4_revenue_mat.nrows() / (size_t)nyears;
+            as_revenue.clear();
+            as_revenue.reserve(n_ancserv_4_revenue_per_year);
+            for (size_t j = y * n_ancserv_4_revenue_per_year; j < (y + 1) * n_ancserv_4_revenue_per_year; j++)
+                as_revenue.push_back(mp_ancserv_4_revenue_mat.at(j, 1) / 1000.0);
+            as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
+            std::transform(m_forecast_price.begin() + forecast_start, m_forecast_price.begin() + forecast_end, as_revenue_extrapolated.begin(), m_forecast_price.begin() + forecast_start, std::plus<double>());
+        }
 	}
-	else // TODO verify that return value is $/timestep (units of dollar) and NOT $/kWh
+	else
 	{
 		int ppa_multiplier_mode = vartab->as_integer("ppa_multiplier_model");
 		size_t count_ppa_price_input;
@@ -772,19 +778,50 @@ bool forecast_price_signal::setup(size_t nsteps)
 			return false;
 		}
 
-		if (ppa_multiplier_mode == 0)
-		{
-			m_forecast_price = flatten_diurnal(
+        double ppa_escalation = vartab->as_double("ppa_escalation") * 0.01;
+        double ppa = ppa_price[0];
+
+        m_forecast_price.reserve(nsteps* nyears);
+        for (size_t i = 0; i < nsteps * nyears; i++)
+            m_forecast_price.push_back(0.0);
+        std::vector<double> as_revenue;
+
+        for (size_t y = 0; y < nyears; y++) {
+            size_t forecast_start = y * nsteps;
+            size_t forecast_end = (y + 1) * nsteps;
+
+            as_revenue.clear();
+            as_revenue.reserve(nsteps);
+
+            if (count_ppa_price_input > 1) {
+                if (y < (int)count_ppa_price_input) {
+                    ppa_price[y];
+                }
+                else {
+                    ppa = 0; // Match convention in single owner 
+                }
+            }
+            else {
+                ppa = ppa_price[0] * pow(1 + ppa_escalation, y);
+            }
+
+            if (ppa_multiplier_mode == 0)
+            {
+                as_revenue = flatten_diurnal(
                     vartab->as_matrix_unsigned_long("dispatch_sched_weekday"),
                     vartab->as_matrix_unsigned_long("dispatch_sched_weekend"),
-				step_per_hour,
-                    vartab->as_vector_double("dispatch_tod_factors"), ppa_price[0] / step_per_hour);
-		}
-		else
-		{ // assumption on size - check that is requested size.
-			std::vector<double> factors = vartab->as_vector_double("dispatch_factors_ts");
-			m_forecast_price = extrapolate_timeseries(factors, step_per_hour, ppa_price[0] / step_per_hour);
-		}
+                    step_per_hour,
+                    vartab->as_vector_double("dispatch_tod_factors"), ppa);
+            }
+            else
+            { // assumption on size - check that is requested size.
+                std::vector<double> factors = vartab->as_vector_double("dispatch_factors_ts");
+                as_revenue = extrapolate_timeseries(factors, step_per_hour, ppa);
+            }
+
+            std::transform(m_forecast_price.begin() + forecast_start, m_forecast_price.begin() + forecast_end, as_revenue.begin(), m_forecast_price.begin() + forecast_start, std::plus<double>());
+
+        }
 	}
 
 	return true;
