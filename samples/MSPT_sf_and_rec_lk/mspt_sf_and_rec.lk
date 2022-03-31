@@ -26,25 +26,17 @@ var( 'piping_length_mult', 2.6000000000000001 );
 var( 'piping_length_const', 0 );
 var( 'piping_loss_coefficient', 2 );
 
-var( 'is_rec_model_trans', 1);
-var( 'is_rec_startup_trans', 0 );
+var( 'is_rec_model_trans', 0);
 var( "rec_tm_mult", 1.0);         
 var( "riser_tm_mult", 1.0);        
 var( "downc_tm_mult", 1.0);      
 var( "u_riser", 4.0);      
-var( "th_riser", 15.0);            
-var( "heat_trace_power", 500.0);         
-var( "preheat_flux", 50.0); 
-var( "min_preheat_time", 0.0);      
-var( "min_fill_time", 0.1333);   
-var( "startup_ramp_time", 0.1333);   
-var( "startup_target_Tdiff", -5.0);
-var( "is_rec_startup_from_T_soln", 0);
-var( "is_rec_enforce_min_startup", 1);
+var( "th_riser", 15.0); 
 
+var( 'is_rec_clearsky_control', 0);
+var( 'rec_clearsky_fraction', 0.5);
 
-
-flux_uniform = [900, 400, 900];
+flux_uniform = [700, 340, 700];
 flux_map_od = [];
 for(i = 0; i < #flux_uniform; i++){
 	flux_map_od[i] = [];
@@ -60,7 +52,8 @@ var( 'P_amb_od', [1000] );		//[mbar]
 var( 'T_amb_od', [25] );		//[C]
 var( 'deltaT_sky_od', [15] );	//[C]
 var( 'v_wind_10_od', [3] );		//[m/s]
-var( 'clearsky_to_measured_dni_od', [-999] );
+// only required if using clearsky control
+var( 'clearsky_to_measured_dni_od', [1.0, 2.0, 1.0] );
 
 var( 'plant_defocus_od', [1] );							//[-]
 var( 'T_htf_cold_in_od', [var('T_htf_cold_des')] );		//[C]

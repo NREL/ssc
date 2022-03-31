@@ -315,8 +315,8 @@ void C_mspt_receiver_222::call_common(double P_amb /*Pa*/, double T_amb /*K*/,
     soln.rec_is_off = rec_is_off;
 
     //if (std::isnan(clearsky_dni) && m_csky_frac > 0.0001)
-    if(std::isnan(clearsky_to_input_dni) && m_csky_frac > 0.0001)
-        throw(C_csp_exception("Clearsky DNI is NaN but required in the clearsky receiver model"));
+    if((std::isnan(clearsky_to_input_dni) || clearsky_to_input_dni < 0.9999) && m_csky_frac > 0.0001)
+        throw(C_csp_exception("Clearsky DNI to measured is NaN or less than 1 but is required >= 1 in the clearsky receiver model"));
 
     // Get total incident flux before defocus is applied
     util::matrix_t<double> mt_q_dot_inc_pre_defocus = calculate_flux_profiles(flux_sum, 1.0, 1.0, 1.0, flux_map_input);

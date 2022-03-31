@@ -59,48 +59,57 @@ static var_info _cm_vtab_mspt_sf_and_rec_isolated[] = {
     { SSC_INPUT,  SSC_NUMBER, "piping_length_const",                "Piping constant length",                                                                                "m",            "",              "Tower and Receiver",                       "*",                                  "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "piping_loss_coefficient",            "Thermal loss per meter of piping",                                                                      "Wt/m2-K",      "",              "Tower and Receiver",                       "",                                   "",              ""},
 
-    { SSC_INPUT,  SSC_NUMBER, "rec_clearsky_model",				    "Clearsky model: None = -1, User-defined data = 0, Meinel = 1; Hottel = 2; Allen = 3; Moon = 4",         "",             "",              "Tower and Receiver",                       "?=-1",                               "",              ""},
-    { SSC_INPUT,  SSC_ARRAY,  "rec_clearsky_dni",					"User-defined clear-sky DNI",                                                                            "W/m2",         "",              "Tower and Receiver",                       "rec_clearsky_model=0",               "",              ""},
-    { SSC_INPUT,  SSC_NUMBER, "rec_clearsky_fraction",              "Weighting fraction on clear-sky DNI for receiver flow control",                                         "",             "",              "Tower and Receiver",                       "?=0.0",                              "",              ""},
-
     // Transient receiver parameters
     { SSC_INPUT,  SSC_NUMBER, "is_rec_model_trans",                 "Formulate receiver model as transient?",                                                                "",             "",              "Tower and Receiver",                       "?=0",                                "",              ""},
-    { SSC_INPUT,  SSC_NUMBER, "is_rec_startup_trans",               "Formulate receiver startup model as transient?",                                                        "",             "",              "Tower and Receiver",                       "is_rec_model_trans=1",               "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "rec_tm_mult",                        "Receiver thermal mass multiplier",                                                                      "",             "",              "Tower and Receiver",                       "is_rec_model_trans=1",               "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "riser_tm_mult",                      "Riser thermal mass multiplier",                                                                         "",             "",              "Tower and Receiver",                       "is_rec_model_trans=1",               "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "downc_tm_mult",                      "Downcomer thermal mass multiplier",                                                                     "",             "",              "Tower and Receiver",                       "is_rec_model_trans=1",               "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "u_riser",                            "Design point HTF velocity in riser",                                                                    "m/s",          "",              "Tower and Receiver",                       "is_rec_model_trans=1",               "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "th_riser",                           "Riser or downcomer tube wall thickness",                                                                "mm",           "",              "Tower and Receiver",                       "is_rec_model_trans=1",               "",              ""},
-    { SSC_INPUT,  SSC_NUMBER, "heat_trace_power",                   "Riser/downcomer heat trace power during startup",                                                       "kW/m",         "",              "Tower and Receiver",                       "is_rec_model_trans=1",               "",              ""},
-    { SSC_INPUT,  SSC_NUMBER, "preheat_flux",                       "Tube absorbed solar flux during preheat",                                                               "kW/m2",        "",              "Tower and Receiver",                       "is_rec_model_trans=1",               "",              ""},
-    { SSC_INPUT,  SSC_NUMBER, "min_preheat_time",                   "Minimum time required in preheat startup stage",                                                        "hr",			 "",              "Tower and Receiver",                       "is_rec_model_trans=1",               "",              ""},
-    { SSC_INPUT,  SSC_NUMBER, "min_fill_time",                      "Startup time delay for filling the receiver/piping",                                                    "hr",			 "",              "Tower and Receiver",                       "is_rec_model_trans=1",               "",              ""},
-    { SSC_INPUT,  SSC_NUMBER, "startup_ramp_time",                  "Time required to reach full flux during receiver startup",                                              "hr",           "",              "Tower and Receiver",                       "is_rec_model_trans=1",               "",              ""},
-    { SSC_INPUT,  SSC_NUMBER, "startup_target_Tdiff",               "Target HTF T at end of startup - steady state hot HTF temperature",                                     "C",            "",              "Tower and Receiver",                       "is_rec_model_trans=1",               "",              ""},
-    { SSC_INPUT,  SSC_NUMBER, "is_rec_startup_from_T_soln",         "Begin receiver startup from solved temperature profiles?",                                              "",             "",              "Tower and Receiver",                       "is_rec_model_trans=1",               "",              ""},
-    { SSC_INPUT,  SSC_NUMBER, "is_rec_enforce_min_startup",         "Always enforce minimum startup time",                                                                   "",             "",              "Tower and Receiver",                       "is_rec_model_trans=1",               "",              ""},
 
-    // Receiver design
-    { SSC_OUTPUT, SSC_NUMBER, "m_dot_rec_des",                      "Receiver design mass flow rate",                                                                        "kg/s",         "",              "Tower and Receiver",                       "*",                                  "",              ""},
 
+    // Solution modes/configurations
+    { SSC_INPUT,  SSC_NUMBER, "is_rec_clearsky_control",            "0: use measured dni, 1: use clear-sky control w/ rec_clearsky_frac input",                              "",             "",              "Tower and Receiver",                       "?=0",                                "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "rec_clearsky_fraction",              "Weighting fraction on clear-sky DNI for receiver flow control",                                         "",             "",              "Receiver control",                         "is_rec_clearsky_control=1",          "",            ""},
+
+
+    // ***********************************
     // Timeseries inputs
+        // Time
     { SSC_INPUT, SSC_ARRAY,   "timestep_od",                        "Timestep",                                                                                              "s",            "",              "Timeseries",                               "sim_type=1",                         "",              ""},
-    { SSC_INPUT, SSC_MATRIX,  "flux_map_od",                        "rows: timestep, columns: panels. Flux *after* rec reflectance losses",                                  "W/m2",         "",              "Flux",                                     "sim_type=1",                         "",              ""},
+        // Weather
     { SSC_INPUT, SSC_ARRAY,   "P_amb_od",                           "Ambient pressure",                                                                                      "mbar",         "",              "Weather",                                  "sim_type=1",                         "",              ""},
     { SSC_INPUT, SSC_ARRAY,   "T_amb_od",                           "Ambient temperature",                                                                                   "C",            "",              "Weather",                                  "sim_type=1",                         "",              ""},
     { SSC_INPUT, SSC_ARRAY,   "deltaT_sky_od",                      "Sky temperature less than ambient",                                                                     "C",            "",              "Weather",                                  "sim_type=1",                         "",              ""},
     { SSC_INPUT, SSC_ARRAY,   "v_wind_10_od",                       "Wind speed at 10 meters",                                                                               "m/s",          "",              "Weather",                                  "sim_type=1",                         "",              ""},
-    { SSC_INPUT, SSC_ARRAY,   "clearsky_to_measured_dni_od",        "Ratio of clearsky to measured DNI",                                                                     "",             "",              "Weather",                                  "sim_type=1",                         "",              ""},
-    { SSC_INPUT, SSC_ARRAY,   "plant_defocus_od",                   "Plant defocus",                                                                                         "",             "",              "Weather",                                  "sim_type=1",                         "",              ""},
-    { SSC_INPUT, SSC_ARRAY,   "T_htf_cold_in_od",                   "HTF inlet temperature",                                                                                 "C",            "",              "Weather",                                  "sim_type=1",                         "",              ""},
+    { SSC_INPUT, SSC_ARRAY,   "clearsky_to_measured_dni_od",        "Ratio of clearsky to measured DNI",                                                                     "",             "",              "Weather",                                  "sim_type=1&is_rec_clearsky_control=1", "",            ""},
+        // Flux
+    { SSC_INPUT, SSC_MATRIX,  "flux_map_od",                        "rows: timestep, columns: panels. Flux *after* rec reflectance losses",                                  "W/m2",         "",              "Flux",                                     "sim_type=1",                         "",              ""},
+        // Receiver control
+    { SSC_INPUT, SSC_ARRAY,   "T_htf_cold_in_od",                   "HTF inlet temperature",                                                                                 "C",            "",              "Receiver control",                         "sim_type=1",                         "",              ""},
+    { SSC_INPUT, SSC_ARRAY,   "plant_defocus_od",                   "Plant defocus",                                                                                         "",             "",              "Receiver control",                         "sim_type=1",                         "",              ""},
 
 
+    // **********************************************
+
+    // OUTPUTS
+
+    // **********************************************
+
+    
+    // **********************************************
+    // Receiver design
+    { SSC_OUTPUT, SSC_NUMBER, "m_dot_rec_des",                      "Receiver design mass flow rate",                                                                        "kg/s",         "",              "Tower and Receiver",                       "*",                                  "",              ""},
+
+
+    // **********************************************
     // Timeseries outputs
     { SSC_OUTPUT, SSC_ARRAY,  "m_dot_rec_od",                       "Receiver mass flow rate",                                                                               "kg/s",         "",              "Tower and Receiver",                       "sim_type=1",                         "",              ""},
     { SSC_OUTPUT, SSC_ARRAY,  "T_htf_rec_out_od",                   "Receiver outlet temperature after piping losses",                                                       "C",            "",              "Tower and Receiver",                       "sim_type=1",                         "",              ""},
     { SSC_OUTPUT, SSC_ARRAY,  "q_dot_htf_od",                       "Receiver thermal power to HTF after piping losses",                                                     "MWt",          "",              "Tower and Receiver",                       "sim_type=1",                         "",              ""},
     { SSC_OUTPUT, SSC_ARRAY,  "eta_rec_od",                         "Receiver thermal efficiency",                                                                           "kg/s",         "",              "Tower and Receiver",                       "sim_type=1",                         "",              ""},
     { SSC_OUTPUT, SSC_ARRAY,  "W_dot_pump_od",                      "Receiver pumping power",                                                                                "MWe",          "",              "Tower and Receiver",                       "sim_type=1",                         "",              ""},
+    { SSC_OUTPUT, SSC_ARRAY,  "rec_component_defocus_od",           "Receiver component defocus",                                                                            "",             "",              "Tower and Receiver",                       "sim_type=1",                         "",              ""},
 
 
     { SSC_OUTPUT, SSC_ARRAY,  "q_dot_rec_inc_pre_defocus",          "Receiver incident flux, pre-defocus, post-reflection",                                                  "kg/s",         "",              "Tower and Receiver",                       "sim_type=1",                         "",              ""},
@@ -126,30 +135,46 @@ public:
     void exec() override
     {
         bool is_rec_model_trans = as_boolean("is_rec_model_trans");
-        bool is_rec_startup_trans = as_boolean("is_rec_startup_trans");
+        bool is_rec_startup_trans = false;
 
         std::shared_ptr<C_pt_receiver> cr_receiver;
         std::shared_ptr<C_mspt_receiver_222> mspt_base;
 
         double H_rec = as_double("rec_height");
         double D_rec = as_double("D_rec");
-        //double D_rec = H_rec / rec_aspect;
 
         double q_dot_rec_des = as_double("q_dot_rec_des");  //[MWt]
 
         int rec_night_recirc = 0;
 
+        bool is_rec_clearsky_control = as_boolean("is_rec_clearsky_control");
+        double rec_clearsky_fraction = 0.0;
+        if (is_rec_clearsky_control) {
+            rec_clearsky_fraction = as_double("rec_clearsky_fraction");
+        }
+
+        bool is__clearsky_to_measured_dni_od__required = false;
+        if (is_rec_clearsky_control) {
+            is__clearsky_to_measured_dni_od__required = true;
+        }
+
         // Transient model
         if (is_rec_model_trans || is_rec_startup_trans) {
 
-            bool is_enforce_min_startup = as_boolean("is_rec_enforce_min_startup");
+            // This compute module currently does not support receiver startup, so hardcode garbage startup parameters
+            bool is_enforce_min_startup = true;
+            double heat_trace_power = std::numeric_limits<double>::quiet_NaN();
+            double preheat_flux = std::numeric_limits<double>::quiet_NaN();
+            double min_preheat_time = std::numeric_limits<double>::quiet_NaN();
+            double min_fill_time = std::numeric_limits<double>::quiet_NaN();
+            double startup_ramp_time = std::numeric_limits<double>::quiet_NaN();
+            double startup_target_Tdiff = std::numeric_limits<double>::quiet_NaN();
+            bool is_rec_startup_from_T_soln = false;
 
-            //trans_receiver->m_is_startup_from_solved_profile = as_boolean("is_rec_startup_from_T_soln");
-            if (as_boolean("is_rec_startup_trans") && as_boolean("is_rec_startup_from_T_soln"))
+            if (is_rec_startup_trans && is_rec_startup_from_T_soln)
                 throw exec_error("tcsmolten_salt", "Receiver startup from solved temperature profiles is only available when receiver transient startup model is enabled");
 
-            //trans_receiver->m_is_enforce_min_startup = as_boolean("is_rec_enforce_min_startup");
-            if (as_boolean("is_rec_startup_trans") && !as_boolean("is_rec_startup_from_T_soln") && !is_enforce_min_startup)
+            if (is_rec_startup_trans && !is_rec_startup_from_T_soln && !is_enforce_min_startup)
             {
                 log("Both 'is_rec_enforce_min_startup' and 'is_rec_startup_from_T_soln' were set to 'false'. Minimum startup time will always be enforced unless 'is_rec_startup_from_T_soln' is set to 'true'", SSC_WARNING);
                 is_enforce_min_startup = true;
@@ -169,16 +194,16 @@ public:
                 rec_night_recirc,
                 as_integer("N_panels"), D_rec, H_rec,
                 as_integer("Flow_type"), as_integer("crossover_shift"), as_double("hl_ffact"),
-                as_double("T_htf_hot_des"), as_double("rec_clearsky_fraction"),
+                as_double("T_htf_hot_des"), rec_clearsky_fraction,
                 is_rec_model_trans, is_rec_startup_trans,
                 as_double("rec_tm_mult"), as_double("u_riser"),
                 as_double("th_riser"), as_double("riser_tm_mult"),
-                as_double("downc_tm_mult"), as_double("heat_trace_power"),
-                as_double("preheat_flux"), as_double("min_preheat_time"),
-                as_double("min_fill_time"), as_double("startup_ramp_time"),
-                as_double("T_htf_cold_des"), std::min(0.0, as_double("startup_target_Tdiff")),
+                as_double("downc_tm_mult"), heat_trace_power,
+                preheat_flux, min_preheat_time,
+                min_fill_time, startup_ramp_time,
+                as_double("T_htf_cold_des"), std::min(0.0, startup_target_Tdiff),
                 as_double("T_htf_cold_des"),
-                as_boolean("is_rec_startup_from_T_soln"), is_enforce_min_startup
+                is_rec_startup_from_T_soln, is_enforce_min_startup
                 ));    // transient receiver
 
             cr_receiver = trans_receiver;
@@ -200,7 +225,7 @@ public:
                 rec_night_recirc,
                 as_integer("N_panels"), D_rec, H_rec,
                 as_integer("Flow_type"), as_integer("crossover_shift"), as_double("hl_ffact"),
-                as_double("T_htf_hot_des"), as_double("rec_clearsky_fraction")
+                as_double("T_htf_hot_des"), rec_clearsky_fraction
                 ));   // steady-state receiver
 
             cr_receiver = ss_receiver; // std::copy(ss_receiver);
@@ -251,9 +276,13 @@ public:
         ssc_number_t* p_v_wind_10_od = as_array("v_wind_10_od", &n_v_wind_10_od);
         n_runs = std::max(n_runs, n_v_wind_10_od);
 
-        size_t n_clearsky_to_measured_dni_od;
-        ssc_number_t* p_clearsky_to_measured_dni_od = as_array("clearsky_to_measured_dni_od", &n_clearsky_to_measured_dni_od);
-        n_runs = std::max(n_runs, n_clearsky_to_measured_dni_od);
+        size_t n_clearsky_to_measured_dni_od = 0;
+        ssc_number_t* p_clearsky_to_measured_dni_od;
+        if (is__clearsky_to_measured_dni_od__required) {
+            p_clearsky_to_measured_dni_od = as_array("clearsky_to_measured_dni_od", &n_clearsky_to_measured_dni_od);
+            n_runs = std::max(n_runs, n_clearsky_to_measured_dni_od);
+        }
+
 
         size_t n_plant_defocus_od;
         ssc_number_t* p_plant_defocus_od = as_array("plant_defocus_od", &n_plant_defocus_od);
@@ -301,7 +330,7 @@ public:
             throw exec_error("standalone_mspt", err_msg);
         }
 
-        if (n_runs % n_clearsky_to_measured_dni_od != 0) {
+        if (is__clearsky_to_measured_dni_od__required && n_runs % n_clearsky_to_measured_dni_od != 0) {
             std::string err_msg = util::format("The longest input array contains %d elements. It must be a multiple of the"
                 " clearsky_to_measured_dni_od input that contains %d elements.", n_runs, n_clearsky_to_measured_dni_od);
             throw exec_error("standalone_mspt", err_msg);
@@ -325,6 +354,7 @@ public:
         ssc_number_t* p_q_dot_htf_od = allocate("q_dot_htf_od", n_runs);
         ssc_number_t* p_eta_rec_od = allocate("eta_rec_od", n_runs);
         ssc_number_t* p_W_dot_pump_od = allocate("W_dot_pump_od", n_runs);
+        ssc_number_t* p_rec_component_defocus_od = allocate("rec_component_defocus_od", n_runs);
 
         ssc_number_t* p_q_dot_rec_inc_pre_defocus = allocate("q_dot_rec_inc_pre_defocus", n_runs);
         ssc_number_t* p_q_dot_rec_inc = allocate("q_dot_rec_inc", n_runs);
@@ -355,7 +385,10 @@ public:
             double T_salt_cold_in = p_T_htf_cold_in_od[i_T_htf_cold_in_od] + 273.15; //[K]
 
             // Only needed if 1) using flux_map_input and 2) not using clearsky control
-            double clearsky_to_measured_dni = p_clearsky_to_measured_dni_od[i_clearsky_to_measured_dni_od];     //[-]
+            double clearsky_to_measured_dni = std::numeric_limits<double>::quiet_NaN();
+            if (is__clearsky_to_measured_dni_od__required) {
+                clearsky_to_measured_dni = p_clearsky_to_measured_dni_od[i_clearsky_to_measured_dni_od];     //[-]
+            }
 
 
             util::matrix_t<double> flux_map_input;
@@ -370,11 +403,26 @@ public:
             // For now... Set receiver to "on" through some rec method that sets E_su and t_su to 0
             mspt_base->overwrite_startup_requirements_to_on();
 
-            mspt_base->call(step, P_amb, T_amb, T_sky,
-                clearsky_to_measured_dni,
-                v_wind_10, plant_defocus,
-                &flux_map_input, input_operation_mode,
-                T_salt_cold_in);
+            int out_type = -1;
+            std::string out_msg = "";
+            try
+            {
+                mspt_base->call(step, P_amb, T_amb, T_sky,
+                    clearsky_to_measured_dni,
+                    v_wind_10, plant_defocus,
+                    &flux_map_input, input_operation_mode,
+                    T_salt_cold_in);
+            }
+            catch (C_csp_exception& csp_exception)
+            {
+                // Report warning before exiting with error
+                while (mspt_base->csp_messages.get_message(&out_type, &out_msg))
+                {
+                    log(out_msg, out_type);
+                }
+
+                throw exec_error("etes_electric_resistance", csp_exception.m_error_message);
+            }
 
             mspt_base->converged();
 
@@ -384,12 +432,14 @@ public:
             double q_dot_htf_od = mspt_base->ms_outputs.m_Q_thermal;                   //[MWt] total 'component' heat, subtracts downcomer losses: m_dot_salt_tot*c_p_coolant*(T_salt_hot - T_salt_cold_in)
             double eta_rec_od = mspt_base->ms_outputs.m_eta_therm;                  //[-]
             double W_dot_pump_od = mspt_base->ms_outputs.m_W_dot_pump;              //[MWe]
+            double rec_component_defocus_od = mspt_base->ms_outputs.m_component_defocus;    //[-]
 
             p_m_dot_rec_od[n_run] = (ssc_number_t)m_dot_rec_od;         //[kg/s]
             p_T_htf_rec_out_od[n_run] = (ssc_number_t)T_htf_rec_out_od; //[C]
             p_q_dot_htf_od[n_run] = (ssc_number_t)q_dot_htf_od;         //[MWt]
             p_eta_rec_od[n_run] = (ssc_number_t)eta_rec_od;             //[kg/s]
             p_W_dot_pump_od[n_run] = (ssc_number_t)W_dot_pump_od;       //[MWe]
+            p_rec_component_defocus_od[n_run] = (ssc_number_t)rec_component_defocus_od; //[-]
 
             // Energy balance outputs
             double q_dot_rec_inc_pre_defocus = mspt_base->ms_outputs.m_q_dot_rec_inc_pre_defocus;   //[MWt]

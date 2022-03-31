@@ -189,8 +189,6 @@ private:
 
 
 public:
-	// Class to save messages for up stream classes
-	C_csp_messages csp_messages;
 
 	// Methods
 	C_mspt_receiver(double h_tower, double epsilon /*-*/,
