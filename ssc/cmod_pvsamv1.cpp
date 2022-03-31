@@ -2273,11 +2273,11 @@ void cm_pvsamv1::exec()
             if (en_batt && (batt_topology == ChargeController::DC_CONNECTED)) // DC-connected battery
             {
                 // Add up AC loss percents for DC connected batteries
-                // TODO - split these
-                double delivered_percent = 1 - (PVSystem->acLossPercent + PVSystem->transmissionLossPercent) * 0.01; // These are both multipled by acpwr_gross
+                double delivered_percent = 1 - PVSystem->acLossPercent * 0.01;
 
                 ssc_number_t xfmr_loss_percent = transformerLoss(PVSystem->p_systemACPower[idx], PVSystem->transformerLoadLossFraction, transformerRatingkW, xfmr_ll, xfmr_nll) / PVSystem->p_systemACPower[idx];
                 delivered_percent *= (1 - xfmr_loss_percent);
+                delivered_percent *= 1 - PVSystem->transmissionLossPercent * 0.01;
 
                 ssc_number_t dc_loss_post_inverter = 1 - delivered_percent;
                 delivered_percent = 1; // Re-use variable for post batt losses
@@ -2325,7 +2325,6 @@ void cm_pvsamv1::exec()
             }
 
             ac_wiringloss = fabs(acpwr_gross) * PVSystem->acLossPercent * 0.01;
-            transmissionloss = fabs(acpwr_gross) * PVSystem->transmissionLossPercent * 0.01;
 
             // accumulate first year annual energy
             if (iyear == 0)
@@ -2343,7 +2342,6 @@ void cm_pvsamv1::exec()
                 PVSystem->p_inverterPowerConsumptionLoss[idx] = (ssc_number_t)(sharedInverter->powerConsumptionLoss_kW);
                 PVSystem->p_inverterThermalLoss[idx] = (ssc_number_t)(sharedInverter->powerTempLoss_kW);
                 PVSystem->p_acWiringLoss[idx] = (ssc_number_t)(ac_wiringloss);
-                PVSystem->p_transmissionLoss[idx] = (ssc_number_t)(transmissionloss);
                 
                 if (offline) {
                     PVSystem->p_inverterNightTimeLoss[idx] = 0.0;
@@ -2388,6 +2386,7 @@ void cm_pvsamv1::exec()
 
 			// transmission loss if AC power is produced
 			if (PVSystem->p_systemACPower[idx] > 0){
+                transmissionloss = fabs(PVSystem->p_systemACPower[idx]) * PVSystem->transmissionLossPercent * 0.01;
 				PVSystem->p_systemACPower[idx] -= (ssc_number_t)(transmissionloss);
 
                 if (en_batt && (batt_topology == ChargeController::DC_CONNECTED)) {
@@ -2423,6 +2422,7 @@ void cm_pvsamv1::exec()
                 PVSystem->p_transformerNoLoadLoss[idx] = xfmr_nll / ts_hour;
                 PVSystem->p_transformerLoadLoss[idx] = xfmr_ll / ts_hour;
                 PVSystem->p_transformerLoss[idx] = xfmr_loss / ts_hour;
+                PVSystem->p_transmissionLoss[idx] = (ssc_number_t)(transmissionloss);
             }
         }
 
