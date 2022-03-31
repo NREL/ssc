@@ -381,6 +381,7 @@ struct PVSystem_IO
 	ssc_number_t *p_transmissionLoss; // kWac
     ssc_number_t *p_acPerfAdjLoss; // kWac
     ssc_number_t *p_acLifetimeLoss; // kWac
+    ssc_number_t *p_dcLifetimeLoss; // kWdc
 
 	ssc_number_t *p_systemDCPower; // kWdc
 	ssc_number_t *p_systemACPower; // kWac
