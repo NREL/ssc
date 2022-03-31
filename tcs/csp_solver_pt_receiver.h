@@ -115,6 +115,7 @@ public:
         }
     };
 
+    S_outputs outputs;
     S_outputs ms_outputs;
 
     virtual void init();

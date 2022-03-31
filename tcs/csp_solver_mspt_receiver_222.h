@@ -206,8 +206,6 @@ public:
 	// Class to save messages for up stream classes
 	C_csp_messages csp_messages;
 
-	S_outputs outputs;
-
 	// Methods
 	C_mspt_receiver_222(double h_tower /*m*/, double epsilon /*-*/,
         double T_htf_hot_des /*C*/, double T_htf_cold_des /*C*/,

@@ -177,7 +177,7 @@ public:
                 as_double("preheat_flux"), as_double("min_preheat_time"),
                 as_double("min_fill_time"), as_double("startup_ramp_time"),
                 as_double("T_htf_cold_des"), std::min(0.0, as_double("startup_target_Tdiff")),
-                5.0,
+                as_double("T_htf_cold_des"),
                 as_boolean("is_rec_startup_from_T_soln"), is_enforce_min_startup
                 ));    // transient receiver
 
@@ -375,6 +375,8 @@ public:
                 v_wind_10, plant_defocus,
                 &flux_map_input, input_operation_mode,
                 T_salt_cold_in);
+
+            mspt_base->converged();
 
             // Essential outputs
             double m_dot_rec_od = mspt_base->ms_outputs.m_m_dot_salt_tot / 3600.0;  //[kg/s]
