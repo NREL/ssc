@@ -262,7 +262,7 @@ struct battstor
 	void initialize_time(size_t year, size_t hour_of_year, size_t step);
 
 	/// Run the battery for the current timestep, given the System power, load, and clipped power
-	void advance(var_table *vt, double P_gen, double V_gen=0, double P_load=0, double P_crit_load=0, double ac_loss_percent=0, double P_gen_clipped=0);
+	void advance(var_table *vt, double P_gen, double V_gen=0, double P_load=0, double P_crit_load=0, double ac_loss_post_inverter=0, double ac_loss_post_battery=0, double P_gen_clipped=0);
 
 	/// Given a DC connected battery, set the shared system (typically PV) and battery inverter
 	void setSharedInverter(SharedInverter * sharedInverter);
