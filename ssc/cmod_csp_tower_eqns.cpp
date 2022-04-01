@@ -205,7 +205,12 @@ bool MSPT_Receiver_Equations(ssc_data_t data)
     ssc_data_t_get_number(data, "csp.pt.rec.htf_t_avg", &csp_pt_rec_htf_t_avg);
     ssc_data_t_get_number(data, "rec_htf", &rec_htf);
     ssc_data_t_get_matrix(vt, "field_fl_props", field_fl_props);
-    csp_pt_rec_htf_c_avg = Csp_pt_rec_htf_c_avg(csp_pt_rec_htf_t_avg, (int)rec_htf, field_fl_props);
+    try {
+        csp_pt_rec_htf_c_avg = Csp_pt_rec_htf_c_avg(csp_pt_rec_htf_t_avg, (int)rec_htf, field_fl_props);
+    }
+    catch (...) {
+        return false;
+    }
     ssc_data_t_set_number(data, "csp.pt.rec.htf_c_avg", csp_pt_rec_htf_c_avg);
 
     // Get HTFProperties class
