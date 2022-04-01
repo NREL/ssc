@@ -80,7 +80,7 @@ static var_info _cm_vtab_mspt_sf_and_rec_isolated[] = {
         // Weather
     { SSC_INPUT, SSC_ARRAY,   "P_amb_od",                           "Ambient pressure",                                                                                      "mbar",         "",              "Weather",                                  "sim_type=1",                         "",              ""},
     { SSC_INPUT, SSC_ARRAY,   "T_amb_od",                           "Ambient temperature",                                                                                   "C",            "",              "Weather",                                  "sim_type=1",                         "",              ""},
-    { SSC_INPUT, SSC_ARRAY,   "deltaT_sky_od",                      "Sky temperature less than ambient",                                                                     "C",            "",              "Weather",                                  "sim_type=1",                         "",              ""},
+    { SSC_INPUT, SSC_ARRAY,   "deltaT_sky_od",                      "Difference between ambient and sky temps",                                                              "C",            "",              "Weather",                                  "sim_type=1",                         "",              ""},
     { SSC_INPUT, SSC_ARRAY,   "v_wind_10_od",                       "Wind speed at 10 meters",                                                                               "m/s",          "",              "Weather",                                  "sim_type=1",                         "",              ""},
     { SSC_INPUT, SSC_ARRAY,   "clearsky_to_measured_dni_od",        "Ratio of clearsky to measured DNI",                                                                     "",             "",              "Weather",                                  "sim_type=1&is_rec_clearsky_control=1", "",            ""},
         // Flux
@@ -171,6 +171,9 @@ public:
             double startup_target_Tdiff = std::numeric_limits<double>::quiet_NaN();
             bool is_rec_startup_from_T_soln = false;
 
+            // Want to call transient model from "on", so set initial temperature to something warm
+            double T_initial = as_double("T_htf_cold_des");         //[C]
+
             if (is_rec_startup_trans && is_rec_startup_from_T_soln)
                 throw exec_error("tcsmolten_salt", "Receiver startup from solved temperature profiles is only available when receiver transient startup model is enabled");
 
@@ -202,7 +205,7 @@ public:
                 preheat_flux, min_preheat_time,
                 min_fill_time, startup_ramp_time,
                 as_double("T_htf_cold_des"), std::min(0.0, startup_target_Tdiff),
-                as_double("T_htf_cold_des"),
+                T_initial,
                 is_rec_startup_from_T_soln, is_enforce_min_startup
                 ));    // transient receiver
 
@@ -232,7 +235,7 @@ public:
             mspt_base = ss_receiver;
         }
 
-        cr_receiver->init();
+        mspt_base->init();
 
         double m_dot_rec_des = std::numeric_limits<double>::quiet_NaN();
         double T_htf_cold_des = std::numeric_limits<double>::quiet_NaN();
