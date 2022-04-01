@@ -136,7 +136,13 @@ bool Physical_Trough_Solar_Field_Equations(ssc_data_t data)
     ssc_data_t_get_number(data, "T_loop_out", &T_loop_out);
     ssc_data_t_get_number(data, "Fluid", &Fluid);
     ssc_data_t_get_matrix(vt, "field_fl_props", field_fl_props);
-    field_htf_cp_avg = Field_htf_cp_avg(T_loop_in_des, T_loop_out, (int)Fluid, field_fl_props);      // [kJ/kg-K]
+    try {
+        field_htf_cp_avg = Field_htf_cp_avg(T_loop_in_des, T_loop_out, (int)Fluid, field_fl_props);      // [kJ/kg-K]
+    }
+    catch (...) {
+        return false;
+    }
+
     ssc_data_t_set_number(data, "field_htf_cp_avg", field_htf_cp_avg);
 
     // single_loop_aperature
