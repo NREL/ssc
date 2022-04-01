@@ -179,7 +179,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t year, size_t ho
         auto charge_ppa_cost = ppa_prices[discharge_hours];
         size_t hours_available = (size_t)std::ceil(discharge_hours * _Battery->SOC() * 0.01);
         hours_available == 0 ? 1 : hours_available; // Next line needs a value of 1 or greater to get the max element
-        auto discharge_ppa_cost = ppa_prices[ppa_prices.size() - hours_available]; // Only use the last hour of discharging at the most expensive time
+        auto discharge_ppa_cost = ppa_prices[ppa_prices.size() - discharge_hours]; // Only use the last hour of discharging at the most expensive time
         double ppa_cost = _forecast_price_rt_series[lifetimeIndex];
 
         /*! Cost to purchase electricity from the utility */
@@ -252,8 +252,8 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t year, size_t ho
         double energyNeededToFillBattery = _Battery->energy_to_fill(m_batteryPower->stateOfChargeMax);
 
         /* Booleans to assist decisions */
-        bool highDischargeValuePeriod = ppa_cost >= discharge_ppa_cost;
-        bool highChargeValuePeriod = ppa_cost <= charge_ppa_cost;
+        bool highDischargeValuePeriod = ppa_cost >= discharge_ppa_cost && ppa_cost > charge_ppa_cost;
+        bool highChargeValuePeriod = ppa_cost <= charge_ppa_cost && ppa_cost < discharge_ppa_cost;
         bool excessAcCapacity = _inverter_paco > m_batteryPower->powerSystemThroughSharedInverter;
         bool batteryHasDischargeCapacity = _Battery->SOC() >= m_batteryPower->stateOfChargeMin + 1.0;
 
