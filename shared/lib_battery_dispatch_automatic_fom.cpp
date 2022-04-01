@@ -81,7 +81,7 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 
 	revenueToClipCharge = revenueToDischarge = revenueToGridCharge = revenueToPVCharge = 0;
 
-    discharge_hours = (size_t) std::floor(_Battery->energy_max(m_batteryPower->stateOfChargeMax, m_batteryPower->stateOfChargeMin) / m_batteryPower->powerBatteryDischargeMaxDC);
+    discharge_hours = (size_t) std::ceil(_Battery->energy_max(m_batteryPower->stateOfChargeMax, m_batteryPower->stateOfChargeMin) / m_batteryPower->powerBatteryDischargeMaxDC);
 
     costToCycle();
 	setup_cost_forecast_vector();
@@ -170,13 +170,16 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t year, size_t ho
 
         // Compute forecast variables
         size_t idx_lookahead = _forecast_hours * _steps_per_hour;
-        
-        std::copy(_forecast_price_rt_series.begin() + lifetimeIndex, _forecast_price_rt_series.begin() + lifetimeIndex + idx_lookahead, ppa_prices.begin());
+
+        ppa_prices.clear();
+        size_t hours_available = (size_t) std::ceil(discharge_hours * _Battery->SOC() * 0.01);
+        std::copy(_forecast_price_rt_series.begin() + lifetimeIndex, _forecast_price_rt_series.begin() + lifetimeIndex + idx_lookahead, std::back_inserter(ppa_prices));
         std::sort(ppa_prices.begin(), ppa_prices.end());
         auto max_ppa_cost = std::max_element(_forecast_price_rt_series.begin() + lifetimeIndex, _forecast_price_rt_series.begin() + lifetimeIndex + idx_lookahead);
         auto min_ppa_cost = std::min_element(_forecast_price_rt_series.begin() + lifetimeIndex, _forecast_price_rt_series.begin() + lifetimeIndex + idx_lookahead);
-        auto discharge_ppa_cost = ppa_prices[ppa_prices.size() - discharge_hours];
-        auto charge_ppa_cost = ppa_prices[discharge_hours];
+        auto charge_ppa_cost = ppa_prices[discharge_hours - hours_available];
+        hours_available == 0 ? 1 : hours_available; // Next line needs a value of 1 or greater to get the max element
+        auto discharge_ppa_cost = ppa_prices[ppa_prices.size() - hours_available]; // Only use the last hour of discharging at the most expensive time
         double ppa_cost = _forecast_price_rt_series[lifetimeIndex];
 
         /*! Cost to purchase electricity from the utility */
