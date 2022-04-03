@@ -881,10 +881,6 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
     }
 
 }
-void PVSystem_IO::AssignOutputs(compute_module* cm)
-{
-    cm->assign("ac_loss", var_data((ssc_number_t)(acLossPercent + transmissionLossPercent)));
-}
 
 Module_IO::Module_IO(compute_module* cm, std::string cmName, double dcLoss)
 {

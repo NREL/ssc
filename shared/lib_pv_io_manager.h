@@ -265,7 +265,6 @@ struct PVSystem_IO
 	PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO * SimulationIO, Irradiance_IO * IrradianceIO, std::vector<Subarray_IO*> Subarrays, Inverter_IO * InverterIO);
 
 	void AllocateOutputs(compute_module *cm);
-	void AssignOutputs(compute_module *cm);
 	void SetupPOAInput();
 
 	size_t numberOfSubarrays;
