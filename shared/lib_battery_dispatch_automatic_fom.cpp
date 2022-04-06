@@ -177,8 +177,6 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t year, size_t ho
         auto max_ppa_cost = std::max_element(_forecast_price_rt_series.begin() + lifetimeIndex, _forecast_price_rt_series.begin() + lifetimeIndex + idx_lookahead);
         auto min_ppa_cost = std::min_element(_forecast_price_rt_series.begin() + lifetimeIndex, _forecast_price_rt_series.begin() + lifetimeIndex + idx_lookahead);
         auto charge_ppa_cost = ppa_prices[discharge_hours];
-        size_t hours_available = (size_t)std::ceil(discharge_hours * _Battery->SOC() * 0.01);
-        hours_available == 0 ? 1 : hours_available; // Next line needs a value of 1 or greater to get the max element
         auto discharge_ppa_cost = ppa_prices[ppa_prices.size() - discharge_hours]; // Only use the last hour of discharging at the most expensive time
         double ppa_cost = _forecast_price_rt_series[lifetimeIndex];
 
