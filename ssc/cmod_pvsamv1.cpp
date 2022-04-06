@@ -2518,6 +2518,22 @@ void cm_pvsamv1::exec()
                 }
             }
 
+            //apply lifetime daily AC losses only if they are enabled
+            if (system_use_lifetime_output && PVSystem->enableACLifetimeLosses)
+            {
+                //current index of the lifetime daily AC losses is the number of years that have passed (iyear, because it is 0-indexed) * days in a year + the number of complete days that have passed
+                int ac_loss_index = (int)iyear * 365 + (int)floor(hour_of_year / 24); //in units of days
+                ssc_number_t ac_lifetime_loss = PVSystem->p_systemACPower[idx] * (PVSystem->acLifetimeLosses[ac_loss_index] / 100); // loss in kWac
+                if (iyear == 0 || save_full_lifetime_variables == 1) {
+                    PVSystem->p_acLifetimeLoss[idx] = ac_lifetime_loss;
+                }
+                if (iyear == 0) annual_ac_lifetime_loss += ac_lifetime_loss * ts_hour; // convert to kWh for yr 1 annual sum
+                PVSystem->p_systemACPower[idx] *= (100 - PVSystem->acLifetimeLosses[ac_loss_index]) / 100;
+                if (en_batt) {
+                    batt->outGenWithoutBattery[idx] *= (100 - PVSystem->acLifetimeLosses[ac_loss_index]) / 100;
+                }
+            }
+
             // accumulate system generation before curtailment and availability
             if (iyear == 0) {
                 annual_ac_pre_avail += PVSystem->p_systemACPower[idx] * ts_hour;
@@ -2532,21 +2548,6 @@ void cm_pvsamv1::exec()
                 batt->outGenWithoutBattery[idx] *= adj_factor;
             }
 
-			//apply lifetime daily AC losses only if they are enabled
-			if (system_use_lifetime_output && PVSystem->enableACLifetimeLosses)
-			{
-				//current index of the lifetime daily AC losses is the number of years that have passed (iyear, because it is 0-indexed) * days in a year + the number of complete days that have passed
-				int ac_loss_index = (int)iyear * 365 + (int)floor(hour_of_year / 24); //in units of days
-                ssc_number_t ac_lifetime_loss = PVSystem->p_systemACPower[idx] * (PVSystem->acLifetimeLosses[ac_loss_index] / 100); // loss in kWac
-                if (iyear == 0 || save_full_lifetime_variables == 1) {
-                    PVSystem->p_acLifetimeLoss[idx] = ac_lifetime_loss;
-                }
-                if (iyear == 0) annual_ac_lifetime_loss += ac_lifetime_loss * ts_hour; // convert to kWh for yr 1 annual sum
-				PVSystem->p_systemACPower[idx] *= (100 - PVSystem->acLifetimeLosses[ac_loss_index]) / 100;
-                if (en_batt) {
-                    batt->outGenWithoutBattery[idx] *= (100 - PVSystem->acLifetimeLosses[ac_loss_index]) / 100;
-                }
-			}
 			// Update battery with final gen to compute grid power
             if (en_batt) {
                 if (batt->is_outage_step(idx % nrec)) {
