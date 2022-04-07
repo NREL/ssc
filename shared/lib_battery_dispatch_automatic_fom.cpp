@@ -121,6 +121,10 @@ void dispatch_automatic_front_of_meter_t::setup_cost_forecast_vector()
 	_forecast_price_rt_series = ppa_price_series;
 
     ppa_prices.reserve(_forecast_hours * _steps_per_hour);
+    if (discharge_hours >= _forecast_hours * _steps_per_hour) {
+        // -1 for 0 indexed arrays, additional -1 to ensure there is always a charging price lower than the discharing price if the forecast hours is = to battery capacity in hourrs
+        discharge_hours = _forecast_hours * _steps_per_hour - 2; 
+    }
 }
 
 // deep copy from dispatch to this
@@ -177,7 +181,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t year, size_t ho
         auto max_ppa_cost = std::max_element(_forecast_price_rt_series.begin() + lifetimeIndex, _forecast_price_rt_series.begin() + lifetimeIndex + idx_lookahead);
         auto min_ppa_cost = std::min_element(_forecast_price_rt_series.begin() + lifetimeIndex, _forecast_price_rt_series.begin() + lifetimeIndex + idx_lookahead);
         auto charge_ppa_cost = ppa_prices[discharge_hours];
-        auto discharge_ppa_cost = ppa_prices[ppa_prices.size() - discharge_hours]; // Only use the last hour of discharging at the most expensive time
+        auto discharge_ppa_cost = ppa_prices[ppa_prices.size() - discharge_hours]; 
         double ppa_cost = _forecast_price_rt_series[lifetimeIndex];
 
         /*! Cost to purchase electricity from the utility */
