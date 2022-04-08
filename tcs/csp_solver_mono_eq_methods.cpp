@@ -682,6 +682,7 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
         T_CT_htf_hot_in = mpc_csp_solver->mc_CT_tes->get_hot_temp() - 273.15;    //[C] convert from K
     }
 
+    double T_htf_cr_out = std::numeric_limits<double>::quiet_NaN();     //[C]
     double m_dot_cr_out = std::numeric_limits<double>::quiet_NaN();     //[kg/hr]
     double m_dot_cr_out_to_cold_tank = 0.0;                              //[kg/hr]
     double t_ts_cr_su = m_t_ts_in;
@@ -701,6 +702,7 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
             return -1;
         }
 
+        T_htf_cr_out = mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot;      //[C]
         if (m_is_rec_outlet_to_hottank) {
             m_dot_cr_out = mpc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot;     //[kg/hr]
             m_dot_cr_out_to_cold_tank = 0.0;
@@ -723,9 +725,11 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
             return -1;
         }
 
+        T_htf_cr_out = mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot;      //[C]
         if (mpc_csp_solver->m_is_cr_config_recirc)
         {
-            m_dot_cr_out = 0.0;  //[kg/hr]
+            m_dot_cr_out = 0.0;                     //[kg/hr]
+            T_htf_cr_out = m_T_field_cold_guess;    //[C]
         }
 
         t_ts_cr_su = mpc_csp_solver->mc_cr_out_solver.m_time_required_su;       //[s]
@@ -740,6 +744,7 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
         if (mpc_csp_solver->m_is_cr_config_recirc)
         {
             m_dot_cr_out = 0.0;  //[kg/hr]
+            T_htf_cr_out = m_T_field_cold_guess;    //[C]
         }
     }
 
@@ -798,16 +803,16 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
 
         if (m_dot_htf_par_htr > 0.0) {
             m_dot_field_out = m_dot_cr_out + m_dot_htf_par_htr;     //[kg/hr]
-            T_htf_hot_cr_mixed = (m_dot_cr_out*mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot + m_dot_htf_par_htr*T_htf_hot_par_htr)/m_dot_field_out;    //[C]
+            T_htf_hot_cr_mixed = (m_dot_cr_out*T_htf_cr_out + m_dot_htf_par_htr*T_htf_hot_par_htr)/m_dot_field_out;    //[C]
         }
         else {
             m_dot_field_out = m_dot_cr_out;
-            T_htf_hot_cr_mixed = mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot;     //[C]
+            T_htf_hot_cr_mixed = T_htf_cr_out;     //[C]
         }
     }
     else {   // No parallel heater, so set mixed field outputs to cr outputs
 
-        T_htf_hot_cr_mixed = mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot;      //[C]
+        T_htf_hot_cr_mixed = T_htf_cr_out;      //[C]
 
         m_dot_field_out = m_dot_cr_out;     //[kg/hr]
         m_dot_field_out_to_cold_tank = m_dot_cr_out_to_cold_tank;                              //[kg/hr]
