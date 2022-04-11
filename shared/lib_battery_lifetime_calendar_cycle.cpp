@@ -418,7 +418,7 @@ double lifetime_cycle_t::bilinear(double DOD, int cycle_number) {
         }
 
         util::matrix_t<double> C_n_low(n_rows_lo, n_cols, &C_n_low_vect);
-        util::matrix_t<double> C_n_high(n_rows_lo, n_cols, &C_n_high_vect);
+        util::matrix_t<double> C_n_high(n_rows_hi, n_cols, &C_n_high_vect);
 
         // Compute C(D_lo, n), C(D_hi, n)
         double C_Dlo = util::linterp_col(C_n_low, 0, cycle_number, 1);
