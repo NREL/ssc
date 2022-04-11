@@ -674,6 +674,14 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
     mpc_csp_solver->mc_cr_htf_state_in.m_pres = m_P_field_in;	//[kPa]
     mpc_csp_solver->mc_cr_htf_state_in.m_qual = m_x_field_in;	//[-]
 
+    // For now, use initial state of CT TES hot tank
+    // If tank temp is ~around ambient (and two-tank system)
+    //   then this is a fairly good assumption
+    double T_CT_htf_hot_in = std::numeric_limits<double>::quiet_NaN();
+    if (mpc_csp_solver->m_is_CT_tes) {
+        T_CT_htf_hot_in = mpc_csp_solver->mc_CT_tes->get_hot_temp() - 273.15;    //[C] convert from K
+    }
+
     double T_htf_cr_out = std::numeric_limits<double>::quiet_NaN();     //[C]
     double m_dot_cr_out = std::numeric_limits<double>::quiet_NaN();     //[kg/hr]
     double m_dot_cr_out_to_cold_tank = 0.0;                              //[kg/hr]
