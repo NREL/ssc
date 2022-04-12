@@ -199,7 +199,8 @@ void dispatch_automatic_behind_the_meter_t::setup_rate_forecast()
             }
 
             if (rate->dc_enabled) {
-                int dc_tou_period = rate->get_dc_tou_row(step % (8760 * _steps_per_hour), curr_month);
+                rate->init_dc_peak_vectors(curr_month - 1);
+                int dc_tou_period = rate->get_dc_tou_row(step % (8760 * _steps_per_hour), curr_month - 1);
                 size_t month_idx = year * 12 + (curr_month - 1);
                 double peak = monthly_peaks.at(month_idx, dc_tou_period);
                 if (-1.0 * grid_power > peak) {
@@ -223,7 +224,7 @@ void dispatch_automatic_behind_the_meter_t::setup_rate_forecast()
             }
         }
 
-        rate_forecast = std::shared_ptr<UtilityRateForecast>(new UtilityRateForecast(rate.get(), _steps_per_hour, monthly_net_load, monthly_gen, monthly_gross_load, _nyears));
+        rate_forecast = std::shared_ptr<UtilityRateForecast>(new UtilityRateForecast(rate.get(), _steps_per_hour, monthly_net_load, monthly_gen, monthly_gross_load, _nyears, monthly_peaks));
         rate_forecast->initializeMonth(0, 0);
         rate_forecast->copyTOUForecast();
     }

@@ -896,6 +896,7 @@ void rate_data::sort_energy_to_periods(int month, double energy, size_t step) {
 void rate_data::init_dc_peak_vectors(int month)
 {
 	ur_month& curr_month = m_month[month];
+    curr_month.dc_flat_peak = 0;
 	curr_month.dc_tou_peak.clear();
 	curr_month.dc_tou_peak_hour.clear();
 	
