@@ -129,6 +129,7 @@ rate_data::rate_data() :
 	dc_hourly_peak(),
 	monthly_dc_fixed(12),
 	monthly_dc_tou(12),
+    dc_enabled(false),
     uses_billing_demand(false),
     en_billing_demand_lookback(false),
     prev_peak_demand(12),
@@ -162,6 +163,7 @@ rate_data::rate_data(const rate_data& tmp) :
 	dc_hourly_peak(tmp.dc_hourly_peak),
 	monthly_dc_fixed(tmp.monthly_dc_fixed),
 	monthly_dc_tou(tmp.monthly_dc_tou),
+    dc_enabled(tmp.dc_enabled),
     uses_billing_demand(tmp.uses_billing_demand),
     en_billing_demand_lookback(tmp.en_billing_demand_lookback),
     prev_peak_demand(tmp.prev_peak_demand),
@@ -1031,6 +1033,22 @@ int rate_data::get_tou_row(size_t year_one_index, int month)
 		throw exec_error("lib_utility_rate_equations", ss.str());
 	}
 	return (int)(per_num - curr_month.ec_periods.begin());
+}
+
+int rate_data::get_dc_tou_row(size_t year_one_index, int month)
+{
+    int period = m_dc_tou_sched[year_one_index];
+    ur_month& curr_month = m_month[month];
+    // find corresponding monthly period
+    // check for valid period
+    std::vector<int>::iterator per_num = std::find(curr_month.dc_periods.begin(), curr_month.dc_periods.end(), period);
+    if (per_num == curr_month.dc_periods.end())
+    {
+        std::ostringstream ss;
+        ss << "Demand rate Period " << period << " not found for Month " << month << ".";
+        throw exec_error("lib_utility_rate_equations", ss.str());
+    }
+    return (int)(per_num - curr_month.dc_periods.begin());
 }
 
 int rate_data::transfer_surplus(ur_month& curr_month, ur_month& prev_month)

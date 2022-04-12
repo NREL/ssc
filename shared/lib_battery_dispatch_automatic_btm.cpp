@@ -159,18 +159,19 @@ void dispatch_automatic_behind_the_meter_t::setup_rate_forecast()
 {
     if (_mode == dispatch_t::FORECAST)
     {
-        // Process load and pv forecasts to get _monthly_ expected gen, load, and peak
-        // Do we need new member variables, or can these just be passed off to UtilityRateForecast?
+        // Process load and pv forecasts to get _monthly_ expected gen, load, net loads, and peak
         std::vector<double> monthly_gross_load;
         std::vector<double> monthly_gen;
         std::vector<double> monthly_net_load;
+        util::matrix_t<double> monthly_peaks; // By TOU period
 
         // Load here is every step for the full analysis period. Load escalation has already been applied (TODO in compute modules)
         size_t num_recs = util::hours_per_year * _steps_per_hour * _nyears;
-        size_t step = 0; size_t hour_of_year = 0;
+        size_t step = 0; size_t hour_of_year = 0; size_t year = 0;
         int curr_month = 1;
         double load_during_month = 0.0; double gen_during_month = 0.0; double gross_load_during_month = 0.0;
         size_t array_size = std::min(_P_pv_ac.size(), _P_load_ac.size()); // Cover smaller arrays to make testing easier
+        monthly_peaks.resize_fill(_nyears * 12, rate->m_dc_tou_periods_tiers.size(), 0.0);
         for (size_t idx = 0; idx < num_recs && idx < array_size; idx++)
         {
             double grid_power = _P_pv_ac[idx] - _P_load_ac[idx];
@@ -196,6 +197,16 @@ void dispatch_automatic_behind_the_meter_t::setup_rate_forecast()
                     hour_of_year = 0;
                 }
             }
+
+            if (rate->dc_enabled) {
+                int dc_tou_period = rate->get_dc_tou_row(step % (8760 * _steps_per_hour), curr_month);
+                size_t month_idx = year * 12 + (curr_month - 1);
+                double peak = monthly_peaks.at(month_idx, dc_tou_period);
+                if (-1.0 * grid_power > peak) {
+                    monthly_peaks.set_value(-1.0 * grid_power, month_idx, dc_tou_period);
+                }
+            }
+
             if (util::month_of((double) hour_of_year) != curr_month || (idx == array_size - (size_t) 1))
             {
                 // Push back vectors
@@ -205,6 +216,9 @@ void dispatch_automatic_behind_the_meter_t::setup_rate_forecast()
                 monthly_gen.push_back(gen_during_month);
 
                 gross_load_during_month = 0.0; load_during_month = 0.0; gen_during_month = 0.0;
+                if (curr_month == 12) {
+                    year++;
+                }
                 curr_month < 12 ? curr_month++ : curr_month = 1;
             }
         }
