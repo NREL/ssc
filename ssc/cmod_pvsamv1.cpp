@@ -694,6 +694,7 @@ static var_info _cm_vtab_pvsamv1[] = {
         { SSC_OUTPUT,        SSC_ARRAY,      "inv_tdcloss",                       	 "Inverter thermal derate DC power loss",                "kW",   "",   "Time Series (Inverter)",      "*",             "",                   "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "inv_total_loss",                       "Inverter total power loss",                            "kW",   "",   "Time Series (Inverter)",      "*",             "",                   "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "ac_wiring_loss",                       "AC wiring loss",                                       "kW",   "",   "Time Series (Inverter)",      "*",                        "",                   "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "ac_gross",                             "Inverter AC output power",                                       "kW",   "",   "Time Series (Array)",       "*",                    "",                              "" },
 
         // transformer model outputs
         { SSC_OUTPUT,        SSC_ARRAY,      "xfmr_nll_ts",                          "Transformer no load loss",                              "kW", "",    "Time Series (Transformer)", "", "", "" },
@@ -2332,6 +2333,7 @@ void cm_pvsamv1::exec()
 
             if (iyear == 0 || save_full_lifetime_variables == 1)
             {
+                PVSystem->p_inverterACOutputPreLoss[idx] = acpwr_gross;
                 PVSystem->p_inverterEfficiency[idx] = (ssc_number_t)(sharedInverter->efficiencyAC);
                 PVSystem->p_inverterClipLoss[idx] = (ssc_number_t)(sharedInverter->powerClipLoss_kW);
                 PVSystem->p_inverterPowerConsumptionLoss[idx] = (ssc_number_t)(sharedInverter->powerConsumptionLoss_kW);
@@ -3137,7 +3139,7 @@ void cm_pvsamv1::inverter_size_check()
     ratedACOutput = ratedACOutput * util::watt_to_kilowatt; // W to kW to compare to hourly output
     ratedDCOutput = ratedDCOutput * util::watt_to_kilowatt; // W to kW to compare to hourly output
 
-    acPower = as_array("gen", &acCount);
+    acPower = as_array("ac_gross", &acCount);
     dcPower = as_array("dc_net", &dcCount);
     if (acCount == dcCount)
     {

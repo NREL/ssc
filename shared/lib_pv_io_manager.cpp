@@ -871,6 +871,7 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
     p_inverterThermalLoss = cm->allocate("inv_tdcloss", numberOfWeatherFileRecords);
     p_inverterTotalLoss = cm->allocate("inv_total_loss", numberOfWeatherFileRecords);
 
+    p_inverterACOutputPreLoss = cm->allocate("ac_gross", numberOfWeatherFileRecords);
     p_acWiringLoss = cm->allocate("ac_wiring_loss", numberOfWeatherFileRecords);
     p_transmissionLoss = cm->allocate("ac_transmission_loss", numberOfWeatherFileRecords);
     p_acPerfAdjLoss = cm->allocate("ac_perf_adj_loss", numberOfWeatherFileRecords);

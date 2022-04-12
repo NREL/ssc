@@ -376,6 +376,7 @@ struct PVSystem_IO
 	ssc_number_t *p_inverterThermalLoss;
 	ssc_number_t *p_inverterTotalLoss;
 
+    ssc_number_t* p_inverterACOutputPreLoss; // kWac
 	ssc_number_t *p_acWiringLoss; // kWac
 	ssc_number_t *p_transmissionLoss; // kWac
     ssc_number_t *p_acPerfAdjLoss; // kWac
