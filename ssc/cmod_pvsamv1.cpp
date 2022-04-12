@@ -46,7 +46,7 @@ static var_info _cm_vtab_pvsamv1[] = {
         {SSC_INPUT, SSC_ARRAY,    "dc_lifetime_losses",                   "Lifetime daily DC losses",                            "%",      "",                                                                                                                                                                                      "Lifetime",                                              "en_dc_lifetime_losses=1",            "",                    "" },
         {SSC_INPUT, SSC_NUMBER,   "en_ac_lifetime_losses",                "Enable lifetime daily AC losses",                     "0/1",    "",                                                                                                                                                                                      "Lifetime",                                              "?=0",                                "INTEGER,MIN=0,MAX=1", "" },
         {SSC_INPUT, SSC_ARRAY,    "ac_lifetime_losses",                   "Lifetime daily AC losses",                            "%",      "",                                                                                                                                                                                      "Lifetime",                                              "en_ac_lifetime_losses=1",            "",                    "" },
-        {SSC_INPUT, SSC_NUMBER,   "save_full_lifetime_variables",         "Save and display vars for full lifetime",             "0/1",    "",                                                                                                                                                                                      "Lifetime",                                              "system_use_lifetime_output=1",       "INTEGER,MIN=0,MAX=1", "" },
+        {SSC_INPUT, SSC_NUMBER,   "save_full_lifetime_variables",         "Save and display vars for full lifetime",             "0/1",    "",                                                                                                                                                                                      "Lifetime",                                              "?=1",       "INTEGER,MIN=0,MAX=1", "" },
 
         // misc inputs
         {SSC_INPUT, SSC_NUMBER,   "en_snow_model",                        "Toggle snow loss estimation",                         "0/1",    "",                                                                                                                                                                                      "Losses",                                                "?=0",                                "BOOLEAN",             "" },
@@ -1356,7 +1356,7 @@ void cm_pvsamv1::exec()
                         wf.year, wf.month, wf.day, wf.hour, wf.minute), SSC_NOTICE, (float)idx);
 
                 // p_irrad_calc is only weather file records long...
-                if (iyear == 0)
+                if (iyear == 0 || save_full_lifetime_variables == 1)
                 {
                     if (radmode == irrad::POA_R || radmode == irrad::POA_P) {
                         double gh_temp, df_temp, dn_temp;
@@ -1401,14 +1401,14 @@ void cm_pvsamv1::exec()
                 irr.get_poa(&ibeam, &iskydiff, &ignddiff, 0, 0, 0);
                 alb = irr.getAlbedo();
 
-                if (iyear == 0)
+                if (iyear == 0 || save_full_lifetime_variables == 1)
                     Irradiance->p_sunPositionTime[idx] = (ssc_number_t)irr.get_sunpos_calc_hour();
 
                 // save weather file beam, diffuse, and global for output and for use later in pvsamv1- year 1 only
                 /*jmf 2016: these calculations are currently redundant with calculations in irrad.calc() because ibeam and idiff in that function are DNI and DHI, **NOT** in the plane of array
                 we'll have to fix this redundancy in the pvsamv1 rewrite. it will require allowing irradproc to report the errors below
                 and deciding what to do if the weather file DOES contain the third component but it's not being used in the calculations.*/
-                if (iyear == 0)
+                if (iyear == 0 || save_full_lifetime_variables == 1)
                 {
                     // Apply all irradiance component data from weather file (if it exists)
                     Irradiance->p_weatherFilePOA[0][idx] = (ssc_number_t)wf.poa;
@@ -1884,7 +1884,7 @@ void cm_pvsamv1::exec()
                             {
                                 size_t wma_ti = 60 * wma_timestep_minutes * (wma_i); //number of seconds in the past
                                 ssc_number_t wma_weight = std::exp(0.0 - wma_P * (ssc_number_t)wma_ti);
-                                size_t wma_ts_idx = (idx - iyear * Irradiance->numberOfWeatherFileRecords);
+                                size_t wma_ts_idx = (idx - iyear * Simulation->numberOfWeatherFileRecords);
                                 // limited to first year only
 
                                 if (wma_ts_idx > wma_i)
@@ -2112,7 +2112,7 @@ void cm_pvsamv1::exec()
             }
 
             // save other array-level environmental and irradiance outputs	- year 1 only outputs
-            if (iyear == 0)
+            if (iyear == 0 || save_full_lifetime_variables == 1)
             {
                 Irradiance->p_weatherFileWindSpeed[idx] = (ssc_number_t)wf.wspd;
                 Irradiance->p_weatherFileAmbientTemp[idx] = (ssc_number_t)wf.tdry;

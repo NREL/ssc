@@ -267,6 +267,10 @@ void Irradiance_IO::checkWeatherFile(compute_module* cm, std::string cmName)
 
 void Irradiance_IO::AllocateOutputs(compute_module* cm)
 {
+    if (cm->as_integer("save_full_lifetime_variables") == 1 && cm->is_assigned("analysis_period")) {
+        numberOfWeatherFileRecords *= cm->as_integer("analysis_period");
+    }
+
     p_weatherFileGHI = cm->allocate("gh", numberOfWeatherFileRecords);
     p_weatherFileDNI = cm->allocate("dn", numberOfWeatherFileRecords);
     p_weatherFileDHI = cm->allocate("df", numberOfWeatherFileRecords);
