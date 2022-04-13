@@ -194,7 +194,7 @@ void dispatch_automatic_behind_the_meter_t::setup_rate_forecast()
             if (rate->dc_enabled) {
                 int dc_tou_period = rate->get_dc_tou_row(step % (8760 * _steps_per_hour), curr_month - 1);
                 size_t month_idx = year * 12 + (curr_month - 1);
-                double peak = monthly_peaks.at(month_idx, dc_tou_period);
+                double peak = monthly_peaks.at(month_idx, dc_tou_period) - m_batteryPower->powerBatteryDischargeMaxAC; // Peak for dispatch calcs: peak minus battery capacity
                 if (-1.0 * grid_power > peak) {
                     monthly_peaks.set_value(-1.0 * grid_power, month_idx, dc_tou_period);
                 }

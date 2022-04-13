@@ -335,6 +335,10 @@ void UtilityRateForecast::initializeMonth(int month, size_t year)
                     curr_month.dc_flat_peak = tou_peak;
                 }
             }
+            double avg_load = m_monthly_avg_load_forecast[year * 12 + month];
+            if (avg_load > curr_month.dc_flat_peak) {
+                curr_month.dc_flat_peak = avg_load; // Choose greater of average load or peak minus battery discharge capacity
+            }
 
         }
         else { // Standard demand charges
