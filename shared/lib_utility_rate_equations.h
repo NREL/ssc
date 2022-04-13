@@ -155,7 +155,8 @@ public:
 
     /* Populate ur_month objects from those filled out in setup_energy_rates. Called annually in cmod_utility_rate5, other classes may reset ur_month directly
        Can be called right away to create the vectors, but for kWh/kW rates needs to be called once after ur_month.update_net_and_peak to be accurate */
-    void init_energy_rates(bool gen_only);
+    void init_energy_rates_all_months(bool gen_only);
+    void init_energy_rates(bool gen_only, int m);
 
 	// Runs each step
 	void sort_energy_to_periods(int month, double energy, size_t step); // Net metering only

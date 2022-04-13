@@ -347,7 +347,7 @@ void UtilityRateForecast::initializeMonth(int month, size_t year)
             }
         }
 
-        rate->init_energy_rates(false);
+        rate->init_energy_rates(false, month);
         compute_next_composite_tou(month, year);
         last_month_init = month;
 	}

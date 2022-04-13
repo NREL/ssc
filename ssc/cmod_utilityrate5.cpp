@@ -434,7 +434,7 @@ void rate_setup::setup(var_table* vt, int num_recs_yearly, size_t nyears, rate_d
     }
     
 
-    rate.init_energy_rates(false); // TODO: update if rate forecast needs to support two meter
+    rate.init_energy_rates_all_months(false); // TODO: update if rate forecast needs to support two meter
 };
 
 class cm_utilityrate5 : public compute_module
@@ -1749,7 +1749,7 @@ public:
 		if (ec_enabled)
 		{
 			// calculate the monthly net energy per tier and period based on units
-			rate.init_energy_rates(gen_only);
+			rate.init_energy_rates_all_months(gen_only);
 			c = 0;
 			for (m = 0; m < (int)rate.m_month.size(); m++)
 			{
@@ -2254,7 +2254,7 @@ public:
 
 		if (ec_enabled)
 		{
-			rate.init_energy_rates(gen_only);
+			rate.init_energy_rates_all_months(gen_only);
 		}
 
 // main loop
