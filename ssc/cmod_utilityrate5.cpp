@@ -263,7 +263,7 @@ static var_info vtab_utility_rate5[] = {
 	var_info_invalid };
 
 void rate_setup::setup(var_table* vt, int num_recs_yearly, size_t nyears, rate_data& rate, std::string cm_name) {
-    bool dc_enabled = vt->as_boolean("ur_dc_enable");
+    rate.dc_enabled = vt->as_boolean("ur_dc_enable");
     rate.en_ts_buy_rate = vt->as_boolean("ur_en_ts_buy_rate");
     rate.en_ts_sell_rate = vt->as_boolean("ur_en_ts_sell_rate");
 
@@ -359,7 +359,7 @@ void rate_setup::setup(var_table* vt, int num_recs_yearly, size_t nyears, rate_d
     ssc_number_t* dc_weekday = NULL; ssc_number_t* dc_weekend = NULL; ssc_number_t* dc_tou_in = NULL; ssc_number_t* dc_flat_in = NULL;
     size_t dc_tier_rows = 0; size_t dc_flat_rows = 0;
 
-    if (dc_enabled)
+    if (rate.dc_enabled)
     {
         dc_weekday = vt->as_matrix("ur_dc_sched_weekday", &nrows, &ncols);
         if (nrows != 12 || ncols != 24)
@@ -424,7 +424,7 @@ void rate_setup::setup(var_table* vt, int num_recs_yearly, size_t nyears, rate_d
             ss << "The ur_dc_billing_demand_periods matrix should have 2 columns. Instead it has " << ncols << " columns.";
             throw exec_error(cm_name, ss.str());
         }
-        else if (dc_enabled && nrows != rate.m_dc_tou_periods.size()) {
+        else if (rate.dc_enabled && nrows != rate.m_dc_tou_periods.size()) {
             std::ostringstream ss;
             ss << "The ur_dc_billing_demand_periods matrix should have " << rate.m_dc_tou_periods.size() << " rows, to match the number of TOU periods. Instead it has " << nrows << " rows.";
             throw exec_error(cm_name, ss.str());
@@ -434,7 +434,7 @@ void rate_setup::setup(var_table* vt, int num_recs_yearly, size_t nyears, rate_d
     }
     
 
-    rate.init_energy_rates(false); // TODO: update if rate forecast needs to support two meter
+    rate.init_energy_rates_all_months(false); // TODO: update if rate forecast needs to support two meter
 };
 
 class cm_utilityrate5 : public compute_module
@@ -1749,7 +1749,7 @@ public:
 		if (ec_enabled)
 		{
 			// calculate the monthly net energy per tier and period based on units
-			rate.init_energy_rates(gen_only);
+			rate.init_energy_rates_all_months(gen_only);
 			c = 0;
 			for (m = 0; m < (int)rate.m_month.size(); m++)
 			{
@@ -2254,7 +2254,7 @@ public:
 
 		if (ec_enabled)
 		{
-			rate.init_energy_rates(gen_only);
+			rate.init_energy_rates_all_months(gen_only);
 		}
 
 // main loop
