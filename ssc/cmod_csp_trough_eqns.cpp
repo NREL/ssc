@@ -100,6 +100,8 @@ bool Physical_Trough_Solar_Field_Equations(ssc_data_t data)
 
 
     // Outputs
+    double field_htf_min_operating_temp = std::numeric_limits<double>::quiet_NaN();
+    double field_htf_max_operating_temp = std::numeric_limits<double>::quiet_NaN();
     double field_htf_cp_avg = std::numeric_limits<double>::quiet_NaN();
     double single_loop_aperature = std::numeric_limits<double>::quiet_NaN();
     double min_inner_diameter = std::numeric_limits<double>::quiet_NaN();
@@ -131,11 +133,29 @@ bool Physical_Trough_Solar_Field_Equations(ssc_data_t data)
 
 
 
+    // field_htf_min_operating_temp
+    ssc_data_t_get_number(data, "Fluid", &Fluid);
+    ssc_data_t_get_matrix(vt, "field_fl_props", field_fl_props);
+    try {
+        field_htf_min_operating_temp = Min_htf_temp((int)Fluid, field_fl_props);
+    }
+    catch (...) {
+        field_htf_min_operating_temp = std::numeric_limits<double>::quiet_NaN();
+    }
+    ssc_data_t_set_number(data, "field_htf_min_operating_temp", field_htf_min_operating_temp);
+
+    // field_htf_max_operating_temp
+    try {
+        field_htf_max_operating_temp = Max_htf_temp((int)Fluid, field_fl_props);
+    }
+    catch (...) {
+        field_htf_max_operating_temp = std::numeric_limits<double>::quiet_NaN();
+    }
+    ssc_data_t_set_number(data, "field_htf_max_operating_temp", field_htf_max_operating_temp);
+
     // field_htf_cp_avg
     ssc_data_t_get_number(data, "T_loop_in_des", &T_loop_in_des);
     ssc_data_t_get_number(data, "T_loop_out", &T_loop_out);
-    ssc_data_t_get_number(data, "Fluid", &Fluid);
-    ssc_data_t_get_matrix(vt, "field_fl_props", field_fl_props);
     try {
         field_htf_cp_avg = Field_htf_cp_avg(T_loop_in_des, T_loop_out, (int)Fluid, field_fl_props);      // [kJ/kg-K]
     }
