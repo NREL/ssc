@@ -111,7 +111,16 @@ public:
             }
             else {
                 std::string error_msg = util::format("The user defined field HTF table must contain at least 3 rows and exactly 7 columns. The current table contains %d row(s) and %d column(s)", n_rows, n_cols);
-                throw exec_error("ui_tes_calcs", error_msg);
+                assign("are_htfs_equal", std::numeric_limits<ssc_number_t>::quiet_NaN());
+                assign("q_tes", std::numeric_limits<ssc_number_t>::quiet_NaN());
+                assign("tes_avail_vol", std::numeric_limits<ssc_number_t>::quiet_NaN());
+                assign("vol_tank", std::numeric_limits<ssc_number_t>::quiet_NaN());
+                assign("q_dot_tes_est", std::numeric_limits<ssc_number_t>::quiet_NaN());
+                assign("csp_pt_tes_tank_diameter", std::numeric_limits<ssc_number_t>::quiet_NaN());
+                assign("csp.pt.tes.tank_diameter", std::numeric_limits<ssc_number_t>::quiet_NaN());
+                assign("csp_pt_tes_htf_density", std::numeric_limits<ssc_number_t>::quiet_NaN());
+                assign("csp.pt.tes.htf_density", std::numeric_limits<ssc_number_t>::quiet_NaN());
+                return;
             }
         }
         else {
