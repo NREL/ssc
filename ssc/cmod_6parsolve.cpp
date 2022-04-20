@@ -78,7 +78,7 @@ public:
         else if (stype.find("cdte") != std::string::npos) tech_id = module6par::CdTe;
         else if (stype.find("amor") != std::string::npos) tech_id = module6par::Amorphous;
         else
-            throw general_error("could not determine cell type (mono,multi,cis,cigs,cdte,amorphous)");
+            throw general_error("Could not determine cell type (mono,multi/poly,cis,cigs,cdte,amorphous)");
 
         double Vmp = as_double("Vmp");
         double Imp = as_double("Imp");
