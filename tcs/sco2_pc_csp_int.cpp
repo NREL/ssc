@@ -88,11 +88,14 @@ void C_sco2_phx_air_cooler::design_core()
 
     double eta_generator = 1.0;
 
+    double T_mc_in = ms_des_par.m_T_amb_des + ms_des_par.m_dt_mc_approach;	//[K]
+
 	if (ms_des_par.m_cycle_config == 2)
 	{
         std::unique_ptr<C_PartialCooling_Cycle> c_pc_cycle = std::unique_ptr<C_PartialCooling_Cycle>(new C_PartialCooling_Cycle(
             turbo_gen_motor_config,
-            eta_generator));
+            eta_generator,
+            T_mc_in));
 
 		s_cycle_config = "partial cooling";
 
@@ -102,7 +105,8 @@ void C_sco2_phx_air_cooler::design_core()
 	{
         std::unique_ptr<C_RecompCycle> c_rc_cycle = std::unique_ptr<C_RecompCycle>(new C_RecompCycle(
             turbo_gen_motor_config,
-            eta_generator));
+            eta_generator,
+            T_mc_in));
 
 		s_cycle_config = "recompression";
 
@@ -118,15 +122,15 @@ void C_sco2_phx_air_cooler::design_core()
 		// Define sCO2 cycle design parameter structure
 		ms_cycle_des_par.m_W_dot_net = ms_des_par.m_W_dot_net;		//[kWe]
 		ms_cycle_des_par.m_eta_thermal = ms_des_par.m_eta_thermal;	//[-]
-		ms_cycle_des_par.m_T_mc_in = ms_des_par.m_T_amb_des + ms_des_par.m_dt_mc_approach;	//[K]
-		if (ms_cycle_des_par.m_T_mc_in < m_T_mc_in_min)
+		//ms_cycle_des_par.m_T_mc_in = ms_des_par.m_T_amb_des + ms_des_par.m_dt_mc_approach;	//[K]
+		if (T_mc_in < m_T_mc_in_min)
 		{
 			std::string msg = util::format("The input design main compressor inlet temperature is %lg [C]."
 				" The sCO2 cycle design code reset it to the minimum allowable design main compressor inlet temperature: %lg [C].",
-				ms_cycle_des_par.m_T_mc_in - 273.15,
+				T_mc_in - 273.15,
 				m_T_mc_in_min - 273.15);
 		}
-		ms_cycle_des_par.m_T_pc_in = ms_cycle_des_par.m_T_mc_in;		//[K]
+		ms_cycle_des_par.m_T_pc_in = T_mc_in;		//[K]
 		ms_cycle_des_par.m_T_t_in = ms_des_par.m_T_htf_hot_in - ms_des_par.m_phx_dt_hot_approach;	//[K]
 		ms_cycle_des_par.m_DP_LT = ms_des_par.m_DP_LT;
 		ms_cycle_des_par.m_DP_HT = ms_des_par.m_DP_HT;
@@ -198,15 +202,15 @@ void C_sco2_phx_air_cooler::design_core()
 		
 		C_sco2_cycle_core::S_auto_opt_design_parameters des_params;
 		des_params.m_W_dot_net = ms_des_par.m_W_dot_net;		//[kWe]
-		des_params.m_T_mc_in = ms_des_par.m_T_amb_des + ms_des_par.m_dt_mc_approach;	//[K]
-		if (ms_cycle_des_par.m_T_mc_in < m_T_mc_in_min)
+		//des_params.m_T_mc_in = ms_des_par.m_T_amb_des + ms_des_par.m_dt_mc_approach;	//[K]
+		if (T_mc_in < m_T_mc_in_min)
 		{
 			std::string msg = util::format("The input design main compressor inlet temperature is %lg [C]."
 				" The sCO2 cycle design code reset it to the minimum allowable design main compressor inlet temperature: %lg [C].",
-				ms_cycle_des_par.m_T_mc_in - 273.15,
+				T_mc_in - 273.15,
 				m_T_mc_in_min - 273.15);
 		}
-		des_params.m_T_pc_in = des_params.m_T_mc_in;		//[K]
+		des_params.m_T_pc_in = T_mc_in;		//[K]
 		des_params.m_T_t_in = ms_des_par.m_T_htf_hot_in - ms_des_par.m_phx_dt_hot_approach;	//[K]
 		des_params.m_DP_LTR = ms_des_par.m_DP_LT;
 		des_params.m_DP_HTR = ms_des_par.m_DP_HT;

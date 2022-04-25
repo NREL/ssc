@@ -59,7 +59,7 @@ public:
 	struct S_design_parameters
 	{
 		double m_W_dot_net;					//[kW] Target net cycle power
-		double m_T_mc_in;					//[K] Compressor inlet temperature
+		//double m_T_mc_in;					//[K] Compressor inlet temperature
 		double m_T_t_in;					//[K] Turbine inlet temperature
 		double m_P_mc_in;					//[kPa] Compressor inlet pressure
 		double m_P_mc_out;					//[kPa] Compressor outlet pressure
@@ -110,7 +110,9 @@ public:
 
 		S_design_parameters()
 		{
-			m_W_dot_net = m_T_mc_in = m_T_t_in = m_P_mc_in = m_P_mc_out = 
+			m_W_dot_net =
+                //m_T_mc_in =
+                m_T_t_in = m_P_mc_in = m_P_mc_out = 
                 m_LTR_UA = m_LTR_min_dT = m_LTR_eff_target = m_LTR_eff_max =
                 m_HTR_UA = m_HTR_min_dT = m_HTR_eff_target = m_HTR_eff_max = 
                 m_recomp_frac = 
@@ -165,7 +167,7 @@ public:
 	struct S_opt_design_parameters
 	{
 		double m_W_dot_net;					//[kW] Target net cycle power
-		double m_T_mc_in;					//[K] Compressor inlet temperature
+		//double m_T_mc_in;					//[K] Compressor inlet temperature
 		double m_T_t_in;					//[K] Turbine inlet temperature
 		std::vector<double> m_DP_LT;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		std::vector<double> m_DP_HT;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
@@ -226,7 +228,9 @@ public:
 
 		S_opt_design_parameters()
 		{
-			m_W_dot_net = m_T_mc_in = m_T_t_in = m_UA_rec_total = 
+			m_W_dot_net =
+                //m_T_mc_in =
+                m_T_t_in = m_UA_rec_total = 
                 m_LTR_UA = m_LTR_min_dT = m_LTR_eff_target = m_LTR_eff_max =
                 m_HTR_UA = m_HTR_min_dT = m_HTR_eff_target = m_HTR_eff_max = 
 				m_eta_mc = m_eta_rc = m_eta_t = m_P_high_limit = m_des_tol = m_des_opt_tol = m_N_turbine =
@@ -551,8 +555,11 @@ private:
 public:
 
 	C_RecompCycle(C_sco2_cycle_core::E_turbo_gen_motor_config turbo_gen_motor_config,
-        double eta_generator /*-*/) :
-        C_sco2_cycle_core(turbo_gen_motor_config, eta_generator)
+        double eta_generator /*-*/,
+        double T_mc_in /*K*/) :
+        C_sco2_cycle_core(turbo_gen_motor_config,
+            eta_generator,
+            T_mc_in)
 	{
 		m_temp_last.resize(END_SCO2_STATES);
 		std::fill(m_temp_last.begin(), m_temp_last.end(), std::numeric_limits<double>::quiet_NaN());

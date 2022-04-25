@@ -1849,7 +1849,7 @@ void C_RecompCycle::design_core_standard(int & error_code)
 	double m_dot_t, m_dot_mc, m_dot_rc, Q_dot_LT, Q_dot_HT, UA_LT_calc, UA_HT_calc;
 	m_dot_t = m_dot_mc = m_dot_rc = Q_dot_LT = Q_dot_HT = UA_LT_calc = UA_HT_calc = 0.0;
 
-	m_temp_last[MC_IN] = ms_des_par.m_T_mc_in;
+    m_temp_last[MC_IN] = m_T_mc_in;     //[K]
 	m_pres_last[MC_IN] = ms_des_par.m_P_mc_in;
 	m_pres_last[MC_OUT] = ms_des_par.m_P_mc_out;
 	m_temp_last[TURB_IN] = ms_des_par.m_T_t_in;
@@ -2398,7 +2398,7 @@ void C_RecompCycle::opt_design_core(int & error_code)
 {
 	// Map ms_opt_des_par to ms_des_par
 	ms_des_par.m_W_dot_net = ms_opt_des_par.m_W_dot_net;
-	ms_des_par.m_T_mc_in = ms_opt_des_par.m_T_mc_in;
+	//ms_des_par.m_T_mc_in = ms_opt_des_par.m_T_mc_in;
 	ms_des_par.m_T_t_in = ms_opt_des_par.m_T_t_in;
 	ms_des_par.m_DP_LT = ms_opt_des_par.m_DP_LT;
 	ms_des_par.m_DP_HT = ms_opt_des_par.m_DP_HT;
@@ -2683,7 +2683,7 @@ void C_RecompCycle::auto_opt_design_core(int & error_code)
 
 	// map 'auto_opt_des_par_in' to 'ms_auto_opt_des_par'
 	ms_opt_des_par.m_W_dot_net = ms_auto_opt_des_par.m_W_dot_net;
-	ms_opt_des_par.m_T_mc_in = ms_auto_opt_des_par.m_T_mc_in;
+	//ms_opt_des_par.m_T_mc_in = ms_auto_opt_des_par.m_T_mc_in;
 	ms_opt_des_par.m_T_t_in = ms_auto_opt_des_par.m_T_t_in;
 	ms_opt_des_par.m_DP_LT = ms_auto_opt_des_par.m_DP_LTR;
 	ms_opt_des_par.m_DP_HT = ms_auto_opt_des_par.m_DP_HTR;
@@ -2848,7 +2848,7 @@ void C_RecompCycle::auto_opt_design_core(int & error_code)
 int C_RecompCycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_parameters & auto_opt_des_hit_eta_in, string & error_msg)
 {
 	ms_auto_opt_des_par.m_W_dot_net = auto_opt_des_hit_eta_in.m_W_dot_net;				//[kW] Target net cycle power
-	ms_auto_opt_des_par.m_T_mc_in = auto_opt_des_hit_eta_in.m_T_mc_in;					//[K] Compressor inlet temperature
+	//ms_auto_opt_des_par.m_T_mc_in = auto_opt_des_hit_eta_in.m_T_mc_in;					//[K] Compressor inlet temperature
 	ms_auto_opt_des_par.m_T_t_in = auto_opt_des_hit_eta_in.m_T_t_in;					//[K] Turbine inlet temperature
 	ms_auto_opt_des_par.m_DP_LTR = auto_opt_des_hit_eta_in.m_DP_LT;						//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 	ms_auto_opt_des_par.m_DP_HTR = auto_opt_des_hit_eta_in.m_DP_HT;						//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
@@ -2914,23 +2914,23 @@ int C_RecompCycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_parameters 
             "is either between -1 and 0 (fixed recompression fraction) or equal to 1 (recomp allowed)\n"));
     }
 		// Can't operate compressore in 2-phase region
-	if( ms_auto_opt_des_par.m_T_mc_in <= N_co2_props::T_crit )
+	if( m_T_mc_in <= N_co2_props::T_crit )
 	{
 		error_msg.append( util::format("Only single phase cycle operation is allowed in this model." 
 			"The compressor inlet temperature (%lg [C]) must be great than the critical temperature: %lg [C]",
-			ms_auto_opt_des_par.m_T_mc_in - 273.15, ((N_co2_props::T_crit) - 273.15)));
+			m_T_mc_in - 273.15, ((N_co2_props::T_crit) - 273.15)));
 
 		return -1;
 	}
 
 		// "Reasonable" ceiling on compressor inlet temp
 	double T_mc_in_max = 70.0 + 273.15;		//[K] Arbitrary value for max compressor inlet temperature
-	if( ms_auto_opt_des_par.m_T_mc_in > T_mc_in_max )
+	if( m_T_mc_in > T_mc_in_max )
 	{
 		error_msg.append( util::format("The compressor inlet temperature input was %lg [C]. This value was reset internally to the max allowable inlet temperature: %lg [C]\n",
-			ms_auto_opt_des_par.m_T_mc_in - 273.15, T_mc_in_max - 273.15));
+			m_T_mc_in - 273.15, T_mc_in_max - 273.15));
 
-		ms_auto_opt_des_par.m_T_mc_in = T_mc_in_max;
+		m_T_mc_in = T_mc_in_max;
 	}
 
 		// "Reasonable" floor on turbine inlet temp
@@ -2944,10 +2944,10 @@ int C_RecompCycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_parameters 
 	}
 
 		// Turbine inlet temperature must be hotter than compressor outlet temperature
-	if( ms_auto_opt_des_par.m_T_t_in <= ms_auto_opt_des_par.m_T_mc_in )
+	if( ms_auto_opt_des_par.m_T_t_in <= m_T_mc_in )
 	{
 		error_msg.append( util::format("The turbine inlet temperature, %lg [C], is colder than the specified compressor inlet temperature %lg [C]",
-			ms_auto_opt_des_par.m_T_t_in - 273.15, ms_auto_opt_des_par.m_T_mc_in - 273.15));
+			ms_auto_opt_des_par.m_T_t_in - 273.15, m_T_mc_in - 273.15));
 
 		return -1;
 	}
@@ -3058,7 +3058,7 @@ int C_RecompCycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_parameters 
 
 		return -1;
 	}
-	double eta_carnot = 1.0 - ms_auto_opt_des_par.m_T_mc_in / ms_auto_opt_des_par.m_T_t_in;
+	double eta_carnot = 1.0 - m_T_mc_in / ms_auto_opt_des_par.m_T_t_in;
 	if( auto_opt_des_hit_eta_in.m_eta_thermal >= eta_carnot )
 	{
 		error_msg.append(util::format("To solve the cycle within the allowable recuperator conductance, the design cycle thermal efficiency, %lg, must be at least less than the Carnot efficiency: %lg ",
@@ -3177,8 +3177,8 @@ int C_RecompCycle::C_MEQ_sco2_design_hit_eta__UA_total::operator()(double UA_rec
 double C_RecompCycle::opt_eta_fixed_P_high(double P_high_opt /*kPa*/)
 {
 	double PR_mc_guess = 1.1;
-	if(P_high_opt > P_pseudocritical_1(ms_opt_des_par.m_T_mc_in))
-		PR_mc_guess = P_high_opt / P_pseudocritical_1(ms_opt_des_par.m_T_mc_in);
+	if(P_high_opt > P_pseudocritical_1(m_T_mc_in))
+		PR_mc_guess = P_high_opt / P_pseudocritical_1(m_T_mc_in);
 		
 	double local_eta_rc = 0.0;
     double local_eta_s = 0.0;

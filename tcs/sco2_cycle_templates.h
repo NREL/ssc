@@ -103,7 +103,7 @@ public:
 	{
 		double m_W_dot_net;					//[kW] Target net cycle power
 		double m_eta_thermal;				//[-] Cycle thermal efficiency
-		double m_T_mc_in;					//[K] Main compressor inlet temperature
+		//double m_T_mc_in;					//[K] Main compressor inlet temperature
 		double m_T_pc_in;					//[K] Pre-compressor inlet temperature
 		double m_T_t_in;					//[K] Turbine inlet temperature
 		std::vector<double> m_DP_LT;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
@@ -167,7 +167,9 @@ public:
 
 		S_auto_opt_design_hit_eta_parameters()
 		{
-			m_W_dot_net = m_T_mc_in = m_T_pc_in = m_T_t_in = 
+			m_W_dot_net =
+                //m_T_mc_in =
+                m_T_pc_in = m_T_t_in = 
                 m_LTR_UA = m_LTR_min_dT = m_LTR_eff_target = m_LTR_eff_max = 
                 m_HTR_UA = m_HTR_min_dT = m_HTR_eff_target = m_HTR_eff_max =
 				m_eta_mc = m_eta_rc = m_eta_pc = m_eta_t = m_P_high_limit =
@@ -217,7 +219,7 @@ public:
 	struct S_auto_opt_design_parameters
 	{
 		double m_W_dot_net;					//[kWe] Target net cycle power
-		double m_T_mc_in;					//[K] Main compressor inlet temperature
+		//double m_T_mc_in;					//[K] Main compressor inlet temperature
 		double m_T_pc_in;					//[K] Pre-compressor inlet temperature
 		double m_T_t_in;					//[K] Turbine inlet temperature
 		std::vector<double> m_DP_LTR;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
@@ -283,7 +285,9 @@ public:
 
 		S_auto_opt_design_parameters()
 		{
-			m_W_dot_net = m_T_mc_in = m_T_pc_in = m_T_t_in =
+			m_W_dot_net =
+                //m_T_mc_in =
+                m_T_pc_in = m_T_t_in =
 				m_UA_rec_total = 
                 m_LTR_UA = m_LTR_min_dT = m_LTR_eff_target = m_LTR_eff_max = 
                 m_HTR_UA = m_HTR_min_dT = m_HTR_eff_target = m_HTR_eff_max =
@@ -460,15 +464,19 @@ protected:
 	}
 
     C_sco2_cycle_core::E_turbo_gen_motor_config m_turbo_gen_motor_config;
-    double m_eta_generator;   //[-] Mechanical-to-electrical efficiency of generator
+    double m_eta_generator;     //[-] Mechanical-to-electrical efficiency of generator
+    double m_T_mc_in;           //[K] Compressor inlet temperature
 
 public:
 
 	C_sco2_cycle_core(C_sco2_cycle_core::E_turbo_gen_motor_config turbo_gen_motor_config,
-        double eta_generator /*-*/)
+        double eta_generator /*-*/,
+        double T_mc_in /*K*/)
 	{
         m_turbo_gen_motor_config = turbo_gen_motor_config;
         m_eta_generator = eta_generator;    //[-]
+
+        m_T_mc_in = T_mc_in;        //[K]
 
         // Set design limits!!!!
 		ms_des_limits.m_UA_net_power_ratio_max = 2.0;		//[-/K]

@@ -54,7 +54,7 @@ public:
 	struct S_des_params
 	{
 		double m_W_dot_net;					//[kWe] Target net cycle power
-		double m_T_mc_in;					//[K] Main compressor inlet temperature
+		//double m_T_mc_in;					//[K] Main compressor inlet temperature
 		double m_T_pc_in;					//[K] Pre-compressor inlet temperature
 		double m_T_t_in;					//[K] Turbine inlet temperature
 		double m_P_pc_in;					//[kPa] Pre-compressor inlet pressure
@@ -108,7 +108,9 @@ public:
 
 		S_des_params()
 		{
-			m_W_dot_net = m_T_mc_in = m_T_pc_in = m_T_t_in = 
+			m_W_dot_net =
+                //m_T_mc_in =
+                m_T_pc_in = m_T_t_in = 
 				m_P_pc_in = m_P_mc_in = m_P_mc_out = 
                 m_LTR_UA = m_LTR_min_dT = m_LTR_eff_max = m_LTR_eff_target =
                 m_HTR_UA = m_HTR_min_dT = m_HTR_eff_max = m_HTR_eff_target =
@@ -152,7 +154,7 @@ public:
 	struct S_opt_des_params
 	{
 		double m_W_dot_net;					//[kWe] Target net cycle power
-		double m_T_mc_in;					//[K] Main compressor inlet temperature
+		//double m_T_mc_in;					//[K] Main compressor inlet temperature
 		double m_T_pc_in;					//[K] Pre-compressor inlet temperature
 		double m_T_t_in;					//[K] Turbine inlet temperature
 		std::vector<double> m_DP_LTR;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
@@ -217,7 +219,9 @@ public:
 
 		S_opt_des_params()
 		{
-			m_W_dot_net = m_T_mc_in = m_T_pc_in = m_T_t_in =
+			m_W_dot_net =
+                //m_T_mc_in =
+                m_T_pc_in = m_T_t_in =
 				m_UA_rec_total = 
                 m_LTR_UA = m_LTR_min_dT = m_LTR_eff_target = m_LTR_eff_max =
                 m_HTR_UA = m_HTR_min_dT = m_HTR_eff_target = m_HTR_eff_max =
@@ -310,8 +314,11 @@ private:
 public:
 
 	C_PartialCooling_Cycle(C_sco2_cycle_core::E_turbo_gen_motor_config turbo_gen_motor_config,
-        double eta_generator /*-*/) :
-        C_sco2_cycle_core(turbo_gen_motor_config, eta_generator)
+        double eta_generator /*-*/,
+        double T_mc_in /*K*/) :
+        C_sco2_cycle_core(turbo_gen_motor_config,
+            eta_generator,
+            T_mc_in)
 	{
 		m_temp_last.resize(END_SCO2_STATES);
 		std::fill(m_temp_last.begin(), m_temp_last.end(), std::numeric_limits<double>::quiet_NaN());
