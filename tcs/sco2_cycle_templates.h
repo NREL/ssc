@@ -105,7 +105,7 @@ public:
 		double m_eta_thermal;				//[-] Cycle thermal efficiency
 		//double m_T_mc_in;					//[K] Main compressor inlet temperature
 		double m_T_pc_in;					//[K] Pre-compressor inlet temperature
-		double m_T_t_in;					//[K] Turbine inlet temperature
+		//double m_T_t_in;					//[K] Turbine inlet temperature
 		std::vector<double> m_DP_LT;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		std::vector<double> m_DP_HT;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		std::vector<double> m_DP_PC_pre;    //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
@@ -128,9 +128,9 @@ public:
         int m_HTR_N_sub_hxrs;               //[-] Number of sub-hxs to use in hx model
         NS_HX_counterflow_eqs::E_UA_target_type m_HTR_od_UA_target_type;
             //
-        double m_eta_mc;					//[-] design-point efficiency of the main compressor; isentropic if positive, polytropic if negative
+        //double m_eta_mc;					//[-] design-point efficiency of the main compressor; isentropic if positive, polytropic if negative
         int m_mc_comp_model_code;           //[-] Main compressor model - see sco2_cycle_components.h 
-        double m_eta_rc;					//[-] design-point efficiency of the recompressor; isentropic if positive, polytropic if negative
+        //double m_eta_rc;					//[-] design-point efficiency of the recompressor; isentropic if positive, polytropic if negative
 		double m_eta_pc;					//[-] design-point efficiency of the pre-compressor; 
 		double m_eta_t;						//[-] design-point efficiency of the turbine; isentropic if positive, polytropic if negative
 		//int m_N_sub_hxrs;					//[-] Number of sub-heat exchangers to use when calculating UA value for a heat exchanger
@@ -169,10 +169,13 @@ public:
 		{
 			//m_W_dot_net =
                 //m_T_mc_in =
-                m_T_pc_in = m_T_t_in = 
+                m_T_pc_in =
+                //m_T_t_in = 
                 m_LTR_UA = m_LTR_min_dT = m_LTR_eff_target = m_LTR_eff_max = 
                 m_HTR_UA = m_HTR_min_dT = m_HTR_eff_target = m_HTR_eff_max =
-				m_eta_mc = m_eta_rc = m_eta_pc = m_eta_t = m_P_high_limit =
+				//m_eta_mc =
+                //m_eta_rc =
+                m_eta_pc = m_eta_t = m_P_high_limit =
 				m_des_tol = m_des_opt_tol = m_N_turbine =
 				m_frac_fan_power = m_deltaP_cooler_frac = m_T_amb_des = m_elevation = m_eta_fan =
                 m_is_recomp_ok =
@@ -221,7 +224,7 @@ public:
 		//double m_W_dot_net;					//[kWe] Target net cycle power
 		//double m_T_mc_in;					//[K] Main compressor inlet temperature
 		double m_T_pc_in;					//[K] Pre-compressor inlet temperature
-		double m_T_t_in;					//[K] Turbine inlet temperature
+		//double m_T_t_in;					//[K] Turbine inlet temperature
 		std::vector<double> m_DP_LTR;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		std::vector<double> m_DP_HTR;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		std::vector<double> m_DP_PC_pre;    //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
@@ -245,9 +248,9 @@ public:
         int m_HTR_N_sub_hxrs;               //[-] Number of sub-hxs to use in hx model
         NS_HX_counterflow_eqs::E_UA_target_type m_HTR_od_UA_target_type;
             // 
-        double m_eta_mc;					//[-] design-point efficiency of the main compressor; isentropic if positive, polytropic if negative
+        //double m_eta_mc;					//[-] design-point efficiency of the main compressor; isentropic if positive, polytropic if negative
         int m_mc_comp_model_code;           //[-] Recompressor model - see sco2_cycle_components.h 
-        double m_eta_rc;					//[-] design-point efficiency of the recompressor; isentropic if positive, polytropic if negative
+        //double m_eta_rc;					//[-] design-point efficiency of the recompressor; isentropic if positive, polytropic if negative
 		double m_eta_pc;					//[-] design-point efficiency of the pre-compressor; 
 		double m_eta_t;						//[-] design-point efficiency of the turbine; isentropic if positive, polytropic if negative
 
@@ -287,11 +290,14 @@ public:
 		{
 			//m_W_dot_net =
                 //m_T_mc_in =
-                m_T_pc_in = m_T_t_in =
+                m_T_pc_in =
+                //m_T_t_in =
 				m_UA_rec_total = 
                 m_LTR_UA = m_LTR_min_dT = m_LTR_eff_target = m_LTR_eff_max = 
                 m_HTR_UA = m_HTR_min_dT = m_HTR_eff_target = m_HTR_eff_max =
-				m_eta_mc = m_eta_rc = m_eta_pc = m_eta_t = m_P_high_limit = m_des_tol = m_des_opt_tol = m_N_turbine = 
+				//m_eta_mc =
+                //m_eta_rc =
+                m_eta_pc = m_eta_t = m_P_high_limit = m_des_tol = m_des_opt_tol = m_N_turbine = 
 				m_frac_fan_power = m_deltaP_cooler_frac = m_T_amb_des = m_elevation = m_eta_fan =
                 m_is_recomp_ok =
 				m_PR_HP_to_LP_guess = m_f_PR_HP_to_IP_guess = std::numeric_limits<double>::quiet_NaN();
@@ -467,6 +473,11 @@ protected:
     double m_eta_generator;     //[-] Mechanical-to-electrical efficiency of generator
     double m_T_mc_in;           //[K] Compressor inlet temperature
     double m_W_dot_net;			//[kWe] Target net cycle power
+    double m_T_t_in;			//[K] Turbine inlet temperature
+
+    double m_eta_mc;			//[-] design-point efficiency of the main compressor; isentropic if positive, polytropic if negative
+    double m_eta_rc;		    //[-] design-point efficiency of the recompressor; isentropic if positive, polytropic if negative
+    //double m_eta_t;				//[-] design-point efficiency of the turbine; isentropic if positive, polytropic if negative
 
 
 public:
@@ -474,13 +485,19 @@ public:
 	C_sco2_cycle_core(C_sco2_cycle_core::E_turbo_gen_motor_config turbo_gen_motor_config,
         double eta_generator /*-*/,
         double T_mc_in /*K*/,
-        double W_dot_net /*kWe*/)
+        double W_dot_net /*kWe*/,
+        double T_t_in /*K*/,
+        double eta_mc /*-*/, double eta_rc /*-*/)
 	{
         m_turbo_gen_motor_config = turbo_gen_motor_config;
         m_eta_generator = eta_generator;    //[-]
         m_W_dot_net = W_dot_net;            //[kWe]
 
         m_T_mc_in = T_mc_in;        //[K]
+        m_T_t_in = T_t_in;          //[K]
+
+        m_eta_mc = eta_mc;          //[-]
+        m_eta_rc = eta_rc;          //[-]
 
         // Set design limits!!!!
 		ms_des_limits.m_UA_net_power_ratio_max = 2.0;		//[-/K]

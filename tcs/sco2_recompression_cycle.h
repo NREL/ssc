@@ -60,7 +60,7 @@ public:
 	{
 		//double m_W_dot_net;					//[kW] Target net cycle power
 		//double m_T_mc_in;					//[K] Compressor inlet temperature
-		double m_T_t_in;					//[K] Turbine inlet temperature
+		//double m_T_t_in;					//[K] Turbine inlet temperature
 		double m_P_mc_in;					//[kPa] Compressor inlet pressure
 		double m_P_mc_out;					//[kPa] Compressor outlet pressure
 		std::vector<double> m_DP_LT;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
@@ -87,9 +87,9 @@ public:
         NS_HX_counterflow_eqs::E_UA_target_type m_HTR_od_UA_target_type;
 
         double m_recomp_frac;				//[-] Fraction of flow that bypasses the precooler and the main compressor at the design point
-		double m_eta_mc;					//[-] design-point efficiency of the main compressor; isentropic if positive, polytropic if negative
+		//double m_eta_mc;					//[-] design-point efficiency of the main compressor; isentropic if positive, polytropic if negative
         int m_mc_comp_model_code;           //[-] Main compressor model - see sco2_cycle_components.h 
-        double m_eta_rc;					//[-] design-point efficiency of the recompressor; isentropic if positive, polytropic if negative
+        //double m_eta_rc;					//[-] design-point efficiency of the recompressor; isentropic if positive, polytropic if negative
         int m_rc_comp_model_code;           //[-] Recompressor model - see sco2_cycle_components.h 
         double m_eta_t;						//[-] design-point efficiency of the turbine; isentropic if positive, polytropic if negative
 		double m_P_high_limit;				//[kPa] maximum allowable pressure in cycle
@@ -112,11 +112,14 @@ public:
 		{
 			//m_W_dot_net =
                 //m_T_mc_in =
-                m_T_t_in = m_P_mc_in = m_P_mc_out = 
+                //m_T_t_in =
+                m_P_mc_in = m_P_mc_out = 
                 m_LTR_UA = m_LTR_min_dT = m_LTR_eff_target = m_LTR_eff_max =
                 m_HTR_UA = m_HTR_min_dT = m_HTR_eff_target = m_HTR_eff_max = 
                 m_recomp_frac = 
-				m_eta_mc = m_eta_rc = m_eta_t = m_P_high_limit = m_des_tol = m_N_turbine =
+				//m_eta_mc =
+                //m_eta_rc =
+                m_eta_t = m_P_high_limit = m_des_tol = m_N_turbine =
 				m_frac_fan_power = m_deltaP_cooler_frac =
                 m_eta_fan = m_T_amb_des = m_elevation = std::numeric_limits<double>::quiet_NaN();
 			m_LTR_N_sub_hxrs = m_HTR_N_sub_hxrs = -1;
@@ -168,7 +171,7 @@ public:
 	{
 		//double m_W_dot_net;					//[kW] Target net cycle power
 		//double m_T_mc_in;					//[K] Compressor inlet temperature
-		double m_T_t_in;					//[K] Turbine inlet temperature
+		//double m_T_t_in;					//[K] Turbine inlet temperature
 		std::vector<double> m_DP_LT;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		std::vector<double> m_DP_HT;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		std::vector<double> m_DP_PC;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
@@ -191,9 +194,9 @@ public:
         int m_HTR_N_sub_hxrs;               //[-] Number of sub-hxs used to model hx
         NS_HX_counterflow_eqs::E_UA_target_type m_HTR_od_UA_target_type;
             //
-        double m_eta_mc;					//[-] design-point efficiency of the main compressor; isentropic if positive, polytropic if negative
+        //double m_eta_mc;					//[-] design-point efficiency of the main compressor; isentropic if positive, polytropic if negative
         int m_mc_comp_model_code;           //[-] Recompressor model - see sco2_cycle_components.h 
-        double m_eta_rc;					//[-] design-point efficiency of the recompressor; isentropic if positive, polytropic if negative
+        //double m_eta_rc;					//[-] design-point efficiency of the recompressor; isentropic if positive, polytropic if negative
 		double m_eta_t;						//[-] design-point efficiency of the turbine; isentropic if positive, polytropic if negative
 		double m_P_high_limit;				//[kPa] maximum allowable pressure in cycle
 		double m_des_tol;					//[-] Convergence tolerance
@@ -230,10 +233,13 @@ public:
 		{
 			//m_W_dot_net =
                 //m_T_mc_in =
-                m_T_t_in = m_UA_rec_total = 
+                //m_T_t_in =
+                m_UA_rec_total = 
                 m_LTR_UA = m_LTR_min_dT = m_LTR_eff_target = m_LTR_eff_max =
                 m_HTR_UA = m_HTR_min_dT = m_HTR_eff_target = m_HTR_eff_max = 
-				m_eta_mc = m_eta_rc = m_eta_t = m_P_high_limit = m_des_tol = m_des_opt_tol = m_N_turbine =
+				//m_eta_mc =
+                //m_eta_rc =
+                m_eta_t = m_P_high_limit = m_des_tol = m_des_opt_tol = m_N_turbine =
 				m_frac_fan_power = m_deltaP_cooler_frac = m_T_amb_des = m_elevation =
 				m_P_mc_out_guess = m_PR_HP_to_LP_guess = m_recomp_frac_guess = m_LT_frac_guess =
                 m_eta_fan = std::numeric_limits<double>::quiet_NaN();
@@ -557,11 +563,15 @@ public:
 	C_RecompCycle(C_sco2_cycle_core::E_turbo_gen_motor_config turbo_gen_motor_config,
         double eta_generator /*-*/,
         double T_mc_in /*K*/,
-        double W_dot_net /*kWe*/) :
+        double W_dot_net /*kWe*/,
+        double T_t_in /*K*/,
+        double eta_mc /*-*/, double eta_rc /*-*/) :
         C_sco2_cycle_core(turbo_gen_motor_config,
             eta_generator,
             T_mc_in,
-            W_dot_net)
+            W_dot_net,
+            T_t_in,
+            eta_mc, eta_rc)
 	{
 		m_temp_last.resize(END_SCO2_STATES);
 		std::fill(m_temp_last.begin(), m_temp_last.end(), std::numeric_limits<double>::quiet_NaN());

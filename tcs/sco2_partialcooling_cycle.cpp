@@ -61,7 +61,7 @@ int C_PartialCooling_Cycle::design_core()
 	m_pres_last[MC_IN] = ms_des_par.m_P_mc_in;	    //[kPa]
 	m_temp_last[PC_IN] = ms_des_par.m_T_pc_in;	    //[K]
 	m_pres_last[PC_IN] = ms_des_par.m_P_pc_in;	    //[kPa]
-	m_temp_last[TURB_IN] = ms_des_par.m_T_t_in;	    //[K]
+	m_temp_last[TURB_IN] = m_T_t_in;	            //[K]
 	m_pres_last[MC_OUT] = ms_des_par.m_P_mc_out;    //[kPa]
 
 	// Apply design pressure drops to heat exchangers to fully define pressures at all states
@@ -128,24 +128,24 @@ int C_PartialCooling_Cycle::design_core()
 		m_pres_last[TURB_OUT] = m_pres_last[HTR_LP_OUT];
 
 	// Calculate equivalent isentropic efficiencies for turbomachinery, if necessary
-	double eta_mc_isen = ms_des_par.m_eta_mc;		//[-]
-	if (ms_des_par.m_eta_mc < 0.0)
+	double eta_mc_isen = m_eta_mc;		//[-]
+	if (m_eta_mc < 0.0)
 	{
 		int poly_error_code = 0;
 
-		isen_eta_from_poly_eta(m_temp_last[MC_IN], m_pres_last[MC_IN], m_pres_last[MC_OUT], fabs(ms_des_par.m_eta_mc),
+		isen_eta_from_poly_eta(m_temp_last[MC_IN], m_pres_last[MC_IN], m_pres_last[MC_OUT], fabs(m_eta_mc),
 			true, poly_error_code, eta_mc_isen);
 
 		if (poly_error_code != 0)
 			return poly_error_code;
 	}
 
-	double eta_rc_isen = ms_des_par.m_eta_rc;		//[-]
-	if (ms_des_par.m_eta_rc < 0.0)
+	double eta_rc_isen = m_eta_rc;		//[-]
+	if (m_eta_rc < 0.0)
 	{
 		int poly_error_code = 0;
 
-		isen_eta_from_poly_eta(m_temp_last[PC_OUT], m_pres_last[PC_OUT], m_pres_last[RC_OUT], fabs(ms_des_par.m_eta_rc),
+		isen_eta_from_poly_eta(m_temp_last[PC_OUT], m_pres_last[PC_OUT], m_pres_last[RC_OUT], fabs(m_eta_rc),
 			true, poly_error_code, eta_rc_isen);
 
 		if (poly_error_code != 0)
@@ -792,7 +792,7 @@ int C_PartialCooling_Cycle::opt_design_core()
 	//ms_des_par.m_W_dot_net = ms_opt_des_par.m_W_dot_net;	//[kWe]
 	//ms_des_par.m_T_mc_in = ms_opt_des_par.m_T_mc_in;		//[K]
 	ms_des_par.m_T_pc_in = ms_opt_des_par.m_T_pc_in;		//[K]
-	ms_des_par.m_T_t_in = ms_opt_des_par.m_T_t_in;			//[K]
+	//ms_des_par.m_T_t_in = ms_opt_des_par.m_T_t_in;			//[K]
 	ms_des_par.m_DP_LTR = ms_opt_des_par.m_DP_LTR;			//
 	ms_des_par.m_DP_HTR = ms_opt_des_par.m_DP_HTR;			//
 	ms_des_par.m_DP_PC_LP = ms_opt_des_par.m_DP_PC_LP;	//
@@ -813,8 +813,8 @@ int C_PartialCooling_Cycle::opt_design_core()
     ms_des_par.m_HTR_N_sub_hxrs = ms_opt_des_par.m_HTR_N_sub_hxrs;  //[-]
     ms_des_par.m_HTR_od_UA_target_type = ms_opt_des_par.m_HTR_od_UA_target_type;
         //
-	ms_des_par.m_eta_mc = ms_opt_des_par.m_eta_mc;			//[-]
-	ms_des_par.m_eta_rc = ms_opt_des_par.m_eta_rc;			//[-]
+	//ms_des_par.m_eta_mc = ms_opt_des_par.m_eta_mc;			//[-]
+	//ms_des_par.m_eta_rc = ms_opt_des_par.m_eta_rc;			//[-]
 	ms_des_par.m_eta_pc = ms_opt_des_par.m_eta_pc;			//[-]
 	ms_des_par.m_eta_t = ms_opt_des_par.m_eta_t;			//[-]
 	ms_des_par.m_P_high_limit = ms_opt_des_par.m_P_high_limit;	//[kPa]
@@ -976,7 +976,7 @@ int C_PartialCooling_Cycle::auto_opt_design_core()
 	///ms_opt_des_par.m_W_dot_net = ms_auto_opt_des_par.m_W_dot_net;	//[kWe]
 	//ms_opt_des_par.m_T_mc_in = ms_auto_opt_des_par.m_T_mc_in;		//[K]
 	ms_opt_des_par.m_T_pc_in = ms_auto_opt_des_par.m_T_pc_in;		//[K]
-	ms_opt_des_par.m_T_t_in = ms_auto_opt_des_par.m_T_t_in;			//[K]
+	//ms_opt_des_par.m_T_t_in = ms_auto_opt_des_par.m_T_t_in;			//[K]
 	ms_opt_des_par.m_DP_LTR = ms_auto_opt_des_par.m_DP_LTR;			        //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 	ms_opt_des_par.m_DP_HTR = ms_auto_opt_des_par.m_DP_HTR;				    //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 	ms_opt_des_par.m_DP_PC_LP = ms_auto_opt_des_par.m_DP_PC_pre;		    //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
@@ -1000,8 +1000,8 @@ int C_PartialCooling_Cycle::auto_opt_design_core()
     ms_opt_des_par.m_HTR_N_sub_hxrs = ms_auto_opt_des_par.m_HTR_N_sub_hxrs; //[-]
     ms_opt_des_par.m_HTR_od_UA_target_type = ms_auto_opt_des_par.m_HTR_od_UA_target_type;
         //
-	ms_opt_des_par.m_eta_mc = ms_auto_opt_des_par.m_eta_mc;					//[-]
-	ms_opt_des_par.m_eta_rc = ms_auto_opt_des_par.m_eta_rc;					//[-]
+	//ms_opt_des_par.m_eta_mc = ms_auto_opt_des_par.m_eta_mc;					//[-]
+	//ms_opt_des_par.m_eta_rc = ms_auto_opt_des_par.m_eta_rc;					//[-]
 	ms_opt_des_par.m_eta_pc = ms_auto_opt_des_par.m_eta_pc;					//[-]
 	ms_opt_des_par.m_eta_t = ms_auto_opt_des_par.m_eta_t;					//[-]
 	ms_opt_des_par.m_P_high_limit = ms_auto_opt_des_par.m_P_high_limit;		//[kPa]
@@ -1111,7 +1111,7 @@ int C_PartialCooling_Cycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_pa
 	//ms_auto_opt_des_par.m_W_dot_net = auto_opt_des_hit_eta_in.m_W_dot_net;	//[kWe]
 	//ms_auto_opt_des_par.m_T_mc_in = auto_opt_des_hit_eta_in.m_T_mc_in;		//[K]
 	ms_auto_opt_des_par.m_T_pc_in = auto_opt_des_hit_eta_in.m_T_pc_in;		//[K]
-	ms_auto_opt_des_par.m_T_t_in = auto_opt_des_hit_eta_in.m_T_t_in;			//[K]
+	//ms_auto_opt_des_par.m_T_t_in = auto_opt_des_hit_eta_in.m_T_t_in;			//[K]
 	ms_auto_opt_des_par.m_DP_LTR = auto_opt_des_hit_eta_in.m_DP_LT;			        //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 	ms_auto_opt_des_par.m_DP_HTR = auto_opt_des_hit_eta_in.m_DP_HT;				    //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 	ms_auto_opt_des_par.m_DP_PC_pre = auto_opt_des_hit_eta_in.m_DP_PC_pre;		    //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
@@ -1135,8 +1135,8 @@ int C_PartialCooling_Cycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_pa
     ms_auto_opt_des_par.m_HTR_N_sub_hxrs = auto_opt_des_hit_eta_in.m_HTR_N_sub_hxrs;    //[-]
     ms_auto_opt_des_par.m_HTR_od_UA_target_type = auto_opt_des_hit_eta_in.m_HTR_od_UA_target_type;
         //
-	ms_auto_opt_des_par.m_eta_mc = auto_opt_des_hit_eta_in.m_eta_mc;					//[-]
-	ms_auto_opt_des_par.m_eta_rc = auto_opt_des_hit_eta_in.m_eta_rc;					//[-]
+	//ms_auto_opt_des_par.m_eta_mc = auto_opt_des_hit_eta_in.m_eta_mc;					//[-]
+	//ms_auto_opt_des_par.m_eta_rc = auto_opt_des_hit_eta_in.m_eta_rc;					//[-]
 	ms_auto_opt_des_par.m_eta_pc = auto_opt_des_hit_eta_in.m_eta_pc;					//[-]
 	ms_auto_opt_des_par.m_eta_t = auto_opt_des_hit_eta_in.m_eta_t;					//[-]
 	ms_auto_opt_des_par.m_P_high_limit = auto_opt_des_hit_eta_in.m_P_high_limit;		//[kPa]
@@ -1211,55 +1211,55 @@ int C_PartialCooling_Cycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_pa
 
 	// "Reasonable" floor on turbine inlet temp
 	double T_t_in_min = 300.0 + 273.15;		//[K] Arbitrary value for min turbine inlet temperature
-	if (ms_auto_opt_des_par.m_T_t_in < T_t_in_min)
+	if (m_T_t_in < T_t_in_min)
 	{
 		error_msg.append(util::format("The turbine inlet temperature input was %lg [C]. This value was reset internally to the min allowable inlet temperature: %lg [C]\n",
-			ms_auto_opt_des_par.m_T_t_in - 273.15, T_t_in_min - 273.15));
+			m_T_t_in - 273.15, T_t_in_min - 273.15));
 
-		ms_auto_opt_des_par.m_T_t_in = T_t_in_min;
+		m_T_t_in = T_t_in_min;
 	}
 
 	// Turbine inlet temperature must be hotter than main compressor outlet temperature
-	if (ms_auto_opt_des_par.m_T_t_in <= m_T_mc_in)
+	if (m_T_t_in <= m_T_mc_in)
 	{
 		error_msg.append(util::format("The turbine inlet temperature, %lg [C], is colder than the specified main compressor inlet temperature %lg [C]",
-			ms_auto_opt_des_par.m_T_t_in - 273.15, m_T_mc_in - 273.15));
+			m_T_t_in - 273.15, m_T_mc_in - 273.15));
 
 		return -1;
 	}
 
 	// Turbine inlet temperature must be hotter than pre compressor outlet temperature
-	if (ms_auto_opt_des_par.m_T_t_in <= ms_auto_opt_des_par.m_T_pc_in)
+	if (m_T_t_in <= ms_auto_opt_des_par.m_T_pc_in)
 	{
 		error_msg.append(util::format("The turbine inlet temperature, %lg [C], is colder than the specified pre compressor inlet temperature %lg [C]",
-			ms_auto_opt_des_par.m_T_t_in - 273.15, ms_auto_opt_des_par.m_T_pc_in - 273.15));
+			m_T_t_in - 273.15, ms_auto_opt_des_par.m_T_pc_in - 273.15));
 
 		return -1;
 	}
 
 	// Turbine inlet temperature must be colder than property limits
-	if (ms_auto_opt_des_par.m_T_t_in >= N_co2_props::T_upper_limit)
+	if (m_T_t_in >= N_co2_props::T_upper_limit)
 	{
 		error_msg.append(util::format("The turbine inlet temperature, %lg [C], is hotter than the maximum allow temperature in the CO2 property code %lg [C]",
-			ms_auto_opt_des_par.m_T_t_in - 273.15, N_co2_props::T_upper_limit - 273.15));
+			m_T_t_in - 273.15, N_co2_props::T_upper_limit - 273.15));
 
 		return -1;
 	}
 
 	// Check for realistic isentropic efficiencies
-	if (ms_auto_opt_des_par.m_eta_mc > 1.0)
+	if (m_eta_mc > 1.0)
 	{
 		error_msg.append(util::format("The main compressor isentropic efficiency, %lg, was reset to theoretical maximum 1.0\n",
-			ms_auto_opt_des_par.m_eta_mc));
+			m_eta_mc));
 
-		ms_auto_opt_des_par.m_eta_mc = 1.0;
+		m_eta_mc = 1.0;
 	}
-	if (ms_auto_opt_des_par.m_eta_rc > 1.0)
+	if (m_eta_rc > 1.0)
 	{
 		error_msg.append(util::format("The re-compressor isentropic efficiency, %lg, was reset to theoretical maximum 1.0\n",
-			ms_auto_opt_des_par.m_eta_rc));
+			m_eta_rc));
 
-		ms_auto_opt_des_par.m_eta_rc = 1.0;
+		m_eta_rc = 1.0;
 	}
 	if (ms_auto_opt_des_par.m_eta_pc > 1.0)
 	{
@@ -1275,19 +1275,19 @@ int C_PartialCooling_Cycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_pa
 
 		ms_auto_opt_des_par.m_eta_t = 1.0;
 	}
-	if (ms_auto_opt_des_par.m_eta_mc < 0.1)
+	if (m_eta_mc < 0.1)
 	{
 		error_msg.append(util::format("The main compressor isentropic efficiency, %lg, was increased to the internal limit of 0.1 to improve solution stability\n",
-			ms_auto_opt_des_par.m_eta_mc));
+			m_eta_mc));
 
-		ms_auto_opt_des_par.m_eta_mc = 0.1;
+		m_eta_mc = 0.1;
 	}
-	if (ms_auto_opt_des_par.m_eta_rc < 0.1)
+	if (m_eta_rc < 0.1)
 	{
 		error_msg.append(util::format("The re-compressor isentropic efficiency, %lg, was increased to the internal limit of 0.1 to improve solution stability\n",
-			ms_auto_opt_des_par.m_eta_rc));
+			m_eta_rc));
 
-		ms_auto_opt_des_par.m_eta_rc = 0.1;
+		m_eta_rc = 0.1;
 	}
 	if (ms_auto_opt_des_par.m_eta_pc < 0.1)
 	{
@@ -1355,7 +1355,7 @@ int C_PartialCooling_Cycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_pa
 
 		return -1;
 	}
-	double eta_carnot = 1.0 - m_T_mc_in / ms_auto_opt_des_par.m_T_t_in;
+	double eta_carnot = 1.0 - m_T_mc_in / m_T_t_in;
 	if (auto_opt_des_hit_eta_in.m_eta_thermal >= eta_carnot)
 	{
 		error_msg.append(util::format("To solve the cycle within the allowable recuperator conductance, the design cycle thermal efficiency, %lg, must be at least less than the Carnot efficiency: %lg ",

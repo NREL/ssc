@@ -83,13 +83,16 @@ void C_sco2_phx_air_cooler::design_core()
 	int auto_err_code = 0;
 	std::string s_cycle_config = "";
 
+    // *************************************
+    // 4.25.22 Generator inputs - need to thread to cmod
     int tgm_code = 0;
     C_sco2_cycle_core::E_turbo_gen_motor_config turbo_gen_motor_config = static_cast<C_sco2_cycle_core::E_turbo_gen_motor_config>(tgm_code);
 
     double eta_generator = 1.0;
+    // *************************************
 
     double T_mc_in = ms_des_par.m_T_amb_des + ms_des_par.m_dt_mc_approach;	//[K]
-    double W_dot_net = ms_des_par.m_W_dot_net;		//[kWe]
+    double T_t_in = ms_des_par.m_T_htf_hot_in - ms_des_par.m_phx_dt_hot_approach;	//[K]
 
 	if (ms_des_par.m_cycle_config == 2)
 	{
@@ -97,7 +100,9 @@ void C_sco2_phx_air_cooler::design_core()
             turbo_gen_motor_config,
             eta_generator,
             T_mc_in,
-            W_dot_net));
+            ms_des_par.m_W_dot_net,
+            T_t_in,
+            ms_des_par.m_eta_mc, ms_des_par.m_eta_rc));
 
 		s_cycle_config = "partial cooling";
 
@@ -109,7 +114,9 @@ void C_sco2_phx_air_cooler::design_core()
             turbo_gen_motor_config,
             eta_generator,
             T_mc_in,
-            W_dot_net));
+            ms_des_par.m_W_dot_net,
+            T_t_in,
+            ms_des_par.m_eta_mc, ms_des_par.m_eta_rc));
 
 		s_cycle_config = "recompression";
 
@@ -134,7 +141,7 @@ void C_sco2_phx_air_cooler::design_core()
 				m_T_mc_in_min - 273.15);
 		}
 		ms_cycle_des_par.m_T_pc_in = T_mc_in;		//[K]
-		ms_cycle_des_par.m_T_t_in = ms_des_par.m_T_htf_hot_in - ms_des_par.m_phx_dt_hot_approach;	//[K]
+		//ms_cycle_des_par.m_T_t_in = ms_des_par.m_T_htf_hot_in - ms_des_par.m_phx_dt_hot_approach;	//[K]
 		ms_cycle_des_par.m_DP_LT = ms_des_par.m_DP_LT;
 		ms_cycle_des_par.m_DP_HT = ms_des_par.m_DP_HT;
 		ms_cycle_des_par.m_DP_PC_pre = ms_des_par.m_DP_PC;
@@ -157,9 +164,9 @@ void C_sco2_phx_air_cooler::design_core()
         ms_cycle_des_par.m_HTR_N_sub_hxrs = ms_des_par.m_HTR_N_sub_hxrs;    //[-]
         ms_cycle_des_par.m_HTR_od_UA_target_type = ms_des_par.m_HTR_od_UA_target_type;
             //
-		ms_cycle_des_par.m_eta_mc = ms_des_par.m_eta_mc;
+		//ms_cycle_des_par.m_eta_mc = ms_des_par.m_eta_mc;
         ms_cycle_des_par.m_mc_comp_model_code = ms_des_par.m_mc_comp_type;
-		ms_cycle_des_par.m_eta_rc = ms_des_par.m_eta_rc;
+		//ms_cycle_des_par.m_eta_rc = ms_des_par.m_eta_rc;
 		ms_cycle_des_par.m_eta_pc = ms_des_par.m_eta_pc;
 		ms_cycle_des_par.m_eta_t = ms_des_par.m_eta_t;
 		ms_cycle_des_par.m_P_high_limit = ms_des_par.m_P_high_limit;
@@ -214,7 +221,7 @@ void C_sco2_phx_air_cooler::design_core()
 				m_T_mc_in_min - 273.15);
 		}
 		des_params.m_T_pc_in = T_mc_in;		//[K]
-		des_params.m_T_t_in = ms_des_par.m_T_htf_hot_in - ms_des_par.m_phx_dt_hot_approach;	//[K]
+		//des_params.m_T_t_in = ms_des_par.m_T_htf_hot_in - ms_des_par.m_phx_dt_hot_approach;	//[K]
 		des_params.m_DP_LTR = ms_des_par.m_DP_LT;
 		des_params.m_DP_HTR = ms_des_par.m_DP_HT;
 		des_params.m_DP_PC_pre = ms_des_par.m_DP_PC;
@@ -238,9 +245,9 @@ void C_sco2_phx_air_cooler::design_core()
         des_params.m_HTR_N_sub_hxrs = ms_des_par.m_HTR_N_sub_hxrs;  //[-]
         des_params.m_HTR_od_UA_target_type = ms_des_par.m_HTR_od_UA_target_type;
             //
-		des_params.m_eta_mc = ms_des_par.m_eta_mc;
+		//des_params.m_eta_mc = ms_des_par.m_eta_mc;
         des_params.m_mc_comp_model_code = ms_des_par.m_mc_comp_type;
-		des_params.m_eta_rc = ms_des_par.m_eta_rc;
+		//des_params.m_eta_rc = ms_des_par.m_eta_rc;
 		des_params.m_eta_pc = ms_des_par.m_eta_pc;
 		des_params.m_eta_t = ms_des_par.m_eta_t;
 		des_params.m_P_high_limit = ms_des_par.m_P_high_limit;
