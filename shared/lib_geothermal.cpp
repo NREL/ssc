@@ -674,8 +674,8 @@ double CGeothermalAnalyzer::GetPumpWorkWattHrPerLb(void)
 		double dInjectionPumpHeadFt = dInjectionPressure * 144 / InjectionDensity(); // G129
 
 		//dInjectionPumpPower = geothermal::pumpWorkInWattHr(dWaterLoss, dInjectionPumpHeadFt, geothermal::EFFICIENCY_PUMP_GF, ms_ErrorString) * dFractionOfInletGFInjected; // ft-lbs/hr
-		dInjectionPumpPower = geothermal::pumpWorkInWattHr(dWaterLoss, dInjectionPumpHeadFt, mo_geo_in.md_GFPumpEfficiency, ms_ErrorString) * dFractionOfInletGFInjected; // ft-lbs/hr
-
+		//dInjectionPumpPower = geothermal::pumpWorkInWattHr(dWaterLoss, dInjectionPumpHeadFt, mo_geo_in.md_GFPumpEfficiency, ms_ErrorString) * dFractionOfInletGFInjected; // ft-lbs/hr
+        dInjectionPumpPower = geothermal::pumpWorkInWattHr(1, GetInjectionPumpWorkft(), mo_geo_in.md_GFPumpEfficiency, ms_ErrorString); // ft-lbs/hr
 	}
     double retVal = 0;
     if (mo_geo_in.me_ct == FLASH)
@@ -690,6 +690,36 @@ double CGeothermalAnalyzer::GetPumpWorkWattHrPerLb(void)
 	}
 
 	return retVal;
+}
+
+double CGeothermalAnalyzer::GetInjectionPumpWorkft(void)
+{
+    double D_well = mo_geo_in.md_DiameterInjectionWellInches;
+    double D_well_ft = D_well / 12;
+    double A = 3.1415 * pow(D_well_ft, 2) / 4;
+    double L_int = 1640; //Length interval (m), how is this calculated?
+    double surf_rough = 0.02; //different for open hole vs. slotted liner
+    double well_depth_ft = mo_geo_in.md_ResourceDepthM / 3.28083; //ft
+    double well_interval = mo_geo_in.md_ReservoirWidthM; //m
+    double well_interval_ft = well_interval / 3.28083;
+    double L_total = well_depth_ft - L_int;
+    double dT_dL = mo_geo_in.md_dtProdWell / mo_geo_in.md_ResourceDepthM;
+    double T_star = InjectionTemperatureC() + dT_dL * mo_geo_in.md_RatioInjectionToProduction * (L_total + 0.5 * well_interval);
+    double P_sat = geothermal::oPC.evaluate(T_star*1.8 + 32);
+    double rho_sat = geothermal::oSVC.evaluate(T_star * 1.8 + 32);
+    double viscosity = 407.22 * pow((T_star * 1.8 + 32), -1.194);
+    double rho_head = well_interval_ft * rho_sat / 144;
+    double bottom_hole_pressure = pressureInjectionWellBottomHolePSI();
+
+    double reservoir_buildup = mo_geo_in.md_ProductionFlowRateKgPerS * 7936.64 / mo_geo_in.md_RatioInjectionToProduction / 2500; //Injectivity index
+    double excess_pressure = bottom_hole_pressure - pressureHydrostaticPSI();
+    //double reservoir_buildup = GetPressureChangeAcrossReservoir();
+    double injection_pump_head_psi = -excess_pressure + reservoir_buildup + mo_geo_in.md_AdditionalPressure;
+    double injection_pump_head_ft = injection_pump_head_psi * 144 / InjectionDensity();
+    double P_inject_bottomhole_used = injection_pump_head_psi + bottom_hole_pressure;
+    //double pump_inj_hp = (injection_pump_head_ft * (flowRateTotal() / mo_geo_in.md_RatioInjectionToProduction / 2500) / (60 * 33000)) / mo_geo_in.md_GFPumpEfficiency;
+    //double pump_inj_kW = pump_inj_hp * 0.7457;
+    return injection_pump_head_ft;
 }
 
 double CGeothermalAnalyzer::GetCalculatedPumpDepthInFeet(void)
@@ -707,7 +737,7 @@ double CGeothermalAnalyzer::GetCalculatedPumpDepthInFeet(void)
 	double dDiameterProductionWellFt = mo_geo_in.md_DiameterProductionWellInches / 12;
 
 	double areaWell = physics::areaCircle(dDiameterProductionWellFt / 2); // ft^2
-	double velocityWell = productionFlowRate() / areaWell; // [7A.GF Pumps].G70
+	double velocityWell = productionFlowRate() / areaWell; // [7A.GF Pumps].G70al
 	double ReWell = dDiameterProductionWellFt * velocityWell * productionDensity() / productionViscosity();
 	double frictionHeadLossWell = (geothermal::FrictionFactor(ReWell) / dDiameterProductionWellFt)* pow(velocityWell, 2) / (2 * physics::GRAVITY_FTS2);
 
@@ -781,24 +811,37 @@ double CGeothermalAnalyzer::InjectionTemperatureC() // calculate injection tempe
 		ms_ErrorString = ("Resource temperature was not equal to plant design temp in non-EGS analysis in CGeoHourlyBaseInputs::InjectionTemperatureC");
 		return 0;
 	}
+    if (me_makeup == MA_BINARY) {
+        double a = (-0.000655 * GetTemperaturePlantDesignC()) + 1.01964;
+        //double b = (-0.00244 * GetTemperaturePlantDesignC()) - 0.0567;
+        double b = (-0.002954 * GetTemperaturePlantDesignC() - 0.121503);
+        double dPlantBrineEffectiveness = (geothermal::IMITATE_GETEM) ? 10.35 : GetPlantBrineEffectiveness();
+        double eff = dPlantBrineEffectiveness / GetAEBinary(); //available energy based on resource temp
 
-	double a = (-0.000655 * GetTemperaturePlantDesignC()) + 1.01964;
-	double b = (-0.00244 * GetTemperaturePlantDesignC()) - 0.0567;
-	double dPlantBrineEffectiveness = (geothermal::IMITATE_GETEM) ? 10.35 : GetPlantBrineEffectiveness();
-	double eff = dPlantBrineEffectiveness / GetAEBinary(); //available energy based on resource temp
 
+        //double tr = a * exp(b*eff);
+        double tr = 1 + (b * eff);
+        double t1 = physics::KelvinToCelcius(physics::CelciusToKelvin(GetTemperaturePlantDesignC()) * tr);
+        double t2 = GetAmbientTemperatureC() + 27;
 
-	double tr = a * exp(b*eff);
-	double t1 = physics::KelvinToCelcius(physics::CelciusToKelvin(GetTemperaturePlantDesignC()) * tr);
-	double t2 = GetAmbientTemperatureC() + 27;
+        double x = geothermal::evaluatePolynomial(GetTemperaturePlantDesignC(), 4.205944351495, 0.3672417729236, -0.0036294799613, 0.0000706584462, -0.0000001334837, 0, 0);
+        double x1 = geothermal::evaluatePolynomial(x, -0.294394, 0.307616, -0.000119669, -0.00000000425191, 0.0000000000249634, 0, 0);
 
-	double x = geothermal::evaluatePolynomial(GetTemperaturePlantDesignC(), 4.205944351495, 0.3672417729236, -0.0036294799613, 0.0000706584462, -0.0000001334837, 0, 0);
-	double x1 = geothermal::evaluatePolynomial(x, -0.294394, 0.307616, -0.000119669, -0.00000000425191, 0.0000000000249634, 0, 0);
+        double t3 = physics::FarenheitToCelcius(physics::CelciusToFarenheit(x1) + 1);
+        double y = (t1 > t2) ? t1 : t2;
 
-	double t3 = physics::FarenheitToCelcius(physics::CelciusToFarenheit(x1) + 1);
-	double y = (t1 > t2) ? t1 : t2;
-
-	return ((t3 > y) ? t3 : y);
+        return ((t3 > y) ? t3 : y);
+    }
+    else { //Flash
+        double p_flash_out = mp_geo_out->md_PressureLPFlashPSI;
+        double flash_steam_frac = (turbine1Steam() + turbine2Steam()) / geothermal::GEOTHERMAL_FLUID_FOR_FLASH;
+        double x = geothermal::evaluatePolynomial(GetTemperaturePlantDesignC(), 4.205944351495, 0.3672417729236, -0.0036294799613, 0.0000706584462, -0.0000001334837, 0, 0);
+        double sio2 = x / (1 - flash_steam_frac);
+        double x1 = physics::CelciusToFarenheit(geothermal::evaluatePolynomial(sio2, -0.294394, 0.307616, -0.000119669, -0.00000000425191, 0.0000000000249634, 0, 0));
+        double P = geothermal::oPC.evaluate(x1);
+        double flash_T_limit = 0.897 * (GetTemperaturePlantDesignC() + 273) - 57 - 273;
+        return (x1 > flash_T_limit) ? x1 : flash_T_limit;
+    }
 }
 
 
@@ -915,14 +958,17 @@ double CGeothermalAnalyzer::GetPressureChangeAcrossReservoir()
 		// calculate the pressure change across the reservoir using simple fracture flow
 		double dEGSFractureLengthUserAdjusted = EGSFractureLength() * geothermal::FRACTURE_LENGTH_ADJUSTMENT;
 		double effectiveLengthFt = geothermal::MetersToFeet(dEGSFractureLengthUserAdjusted);
-		double fractureFlowArea = geothermal::MetersToFeet(mo_geo_in.md_EGSFractureAperature) * geothermal::MetersToFeet(mo_geo_in.md_EGSFractureWidthM);  // ft^2
-		double hydraulicDiameter = (2 * fractureFlowArea) / (geothermal::MetersToFeet(mo_geo_in.md_EGSFractureAperature) + geothermal::MetersToFeet(mo_geo_in.md_EGSFractureWidthM));  // ft
-		double flowPerFracture = volumetricFlow / mo_geo_in.md_EGSNumberOfFractures; // ft^3 per second
-		double velocity = flowPerFracture / fractureFlowArea; // ft per second
-		double Re = density * velocity * hydraulicDiameter / viscosity;
-		double frictionFactor = 64 / Re;
-		double headLoss = frictionFactor * (effectiveLengthFt / hydraulicDiameter) * pow(velocity, 2) / (2 * physics::GRAVITY_FTS2); // ft
-		md_PressureChangeAcrossReservoir = headLoss * density / 144; // psi
+        double fracperm = pow(mo_geo_in.md_EGSFractureAperature, 2) / 12; //m^2
+        double flowPerFracture = (volumetricFlow * 1 / 35.3147) / mo_geo_in.md_EGSNumberOfFractures; //m^3/s
+		double fractureFlowArea = mo_geo_in.md_EGSFractureAperature * mo_geo_in.md_EGSFractureWidthM;  // ft^2
+        double md_PressureChangeAcrossReservoir = flowPerFracture / (fractureFlowArea * fracperm * (viscosity * 1 / 1.48816)) * EGSFractureLength(); 
+		//double hydraulicDiameter = (2 * fractureFlowArea) / (geothermal::MetersToFeet(mo_geo_in.md_EGSFractureAperature) + geothermal::MetersToFeet(mo_geo_in.md_EGSFractureWidthM));  // ft
+		//double flowPerFracture = volumetricFlow / mo_geo_in.md_EGSNumberOfFractures; // ft^3 per second
+		//double velocity = flowPerFracture / fractureFlowArea; // ft per second
+		//double Re = density * velocity * hydraulicDiameter / viscosity;
+		//double frictionFactor = 64 / Re;
+		//double headLoss = frictionFactor * (effectiveLengthFt / hydraulicDiameter) * pow(velocity, 2) / (2 * physics::GRAVITY_FTS2); // ft
+		//md_PressureChangeAcrossReservoir = headLoss * density / 144; // psi
 	}
 	else {
 		// calculate the change in pressure across reservoir using K*A (from [7B.Reservoir Hydraulics].G70)
@@ -944,6 +990,7 @@ double CGeothermalAnalyzer::pressureInjectionWellBottomHolePSI() // [7B.Reservoi
 	double G23 = pMax + InjectionDensity() * depthFt / 144; // psi
 
 	double flowRate = mo_geo_in.md_ProductionFlowRateKgPerS / mo_geo_in.md_RatioInjectionToProduction / (1 - geothermal::WATER_LOSS_PERCENT); // kg per second
+    //double flowRate = mo_geo_in.md_ProductionFlowRateKgPerS / mo_geo_in.md_RatioInjectionToProduction; // kg per second
 	flowRate = geothermal::KgToLb(flowRate) / InjectionDensity();  // cf per second
 	double dDiameterInjectionWellFt = mo_geo_in.md_DiameterInjectionWellInches / 12;
 	double areaInjectionWell = physics::areaCircle(dDiameterInjectionWellFt / 2); // ft^2
@@ -981,13 +1028,16 @@ double CGeothermalAnalyzer::pressureHydrostaticPSI()
 
 	// hydrostatic pressure at production well depth (GetResourceDepthFt) in bar
 	double d1 = densityAmbient * geothermal::GRAVITY_MS2 * geothermal::CONST_CP;
-	double d2 = (exp(d1 * (GetResourceDepthM() - (0.5 * geothermal::CONST_CT * tempGradient * pow(GetResourceDepthM(), 2)))/100000) - 1);
+	//double d2 = (exp(d1 * (GetResourceDepthM() - (0.5 * geothermal::CONST_CT * tempGradient * pow(GetResourceDepthM(), 2)))/100000) - 1);
+    double ct = 0.0009 / (30.796 * pow(GetResourceTemperatureC(), -0.552));
+    double d2 = (exp(d1 * (GetResourceDepthM() - (0.5 * ct * tempGradient * pow(GetResourceDepthM(), 2))) / 100000) - 1);
+
 	double pressureHydrostaticBar = pressureAmbientBar + (1 / geothermal::CONST_CP) * (d2);
 
 	return geothermal::BarToPsi(pressureHydrostaticBar);
 }
 
-double CGeothermalAnalyzer::pZero(void) { return geothermal::oPC.evaluate(InjectionTemperatureF()); }	// G16 - psi
+double CGeothermalAnalyzer::pZero(void) { return (InjectionTemperatureF() < 100 ) ? 14.7 : geothermal::oPC.evaluate(InjectionTemperatureF()); }	// G16 - psi
 
 
 // wells
