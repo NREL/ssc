@@ -83,15 +83,30 @@ void C_sco2_phx_air_cooler::design_core()
 	int auto_err_code = 0;
 	std::string s_cycle_config = "";
 
+    int tgm_code = 0;
+    C_sco2_cycle_core::E_turbo_gen_motor_config turbo_gen_motor_config = static_cast<C_sco2_cycle_core::E_turbo_gen_motor_config>(tgm_code);
+
+    double eta_generator = 1.0;
+
 	if (ms_des_par.m_cycle_config == 2)
 	{
-		mpc_sco2_cycle = &mc_partialcooling_cycle;
+        std::unique_ptr<C_PartialCooling_Cycle> c_pc_cycle = std::unique_ptr<C_PartialCooling_Cycle>(new C_PartialCooling_Cycle(
+            turbo_gen_motor_config,
+            eta_generator));
+
 		s_cycle_config = "partial cooling";
+
+        mpc_sco2_cycle = std::move(c_pc_cycle);
 	}
 	else
 	{
-		mpc_sco2_cycle = &mc_rc_cycle;
+        std::unique_ptr<C_RecompCycle> c_rc_cycle = std::unique_ptr<C_RecompCycle>(new C_RecompCycle(
+            turbo_gen_motor_config,
+            eta_generator));
+
 		s_cycle_config = "recompression";
+
+        mpc_sco2_cycle = std::move(c_rc_cycle);
 	}
 
 	// Set min temp

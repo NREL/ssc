@@ -309,7 +309,9 @@ private:
 
 public:
 
-	C_PartialCooling_Cycle()
+	C_PartialCooling_Cycle(C_sco2_cycle_core::E_turbo_gen_motor_config turbo_gen_motor_config,
+        double eta_generator /*-*/) :
+        C_sco2_cycle_core(turbo_gen_motor_config, eta_generator)
 	{
 		m_temp_last.resize(END_SCO2_STATES);
 		std::fill(m_temp_last.begin(), m_temp_last.end(), std::numeric_limits<double>::quiet_NaN());

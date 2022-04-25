@@ -67,7 +67,8 @@ public:
 		std::vector<double> m_DP_HT;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		std::vector<double> m_DP_PC;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		std::vector<double> m_DP_PHX;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-		    // LTR thermal design
+
+            // LTR thermal design
         int m_LTR_target_code;              //[-] 1 = UA, 2 = min dT, 3 = effectiveness
         double m_LTR_UA;					//[kW/K] target LTR conductance
         double m_LTR_min_dT;                //[K] target LTR minimum temperature difference
@@ -75,7 +76,8 @@ public:
 		double m_LTR_eff_max;				//[-] Maximum allowable effectiveness in LT recuperator
         int m_LTR_N_sub_hxrs;               //[-] Number of sub-hxs to use in hx model
         NS_HX_counterflow_eqs::E_UA_target_type m_LTR_od_UA_target_type;
-        // HTR thermal design
+
+            // HTR thermal design
         int m_HTR_target_code;              //[-] 1 = UA, 2 = min dT, 3 = effectiveness
         double m_HTR_UA;					//[kW/K] target HTR conductance
         double m_HTR_min_dT;                //[K] target HTR min temperature difference
@@ -83,14 +85,13 @@ public:
         double m_HTR_eff_max;				//[-] Maximum allowable effectiveness in HT recuperator
         int m_HTR_N_sub_hxrs;               //[-] Number of sub-hxs to use in hx model
         NS_HX_counterflow_eqs::E_UA_target_type m_HTR_od_UA_target_type;
-        //
+
         double m_recomp_frac;				//[-] Fraction of flow that bypasses the precooler and the main compressor at the design point
 		double m_eta_mc;					//[-] design-point efficiency of the main compressor; isentropic if positive, polytropic if negative
         int m_mc_comp_model_code;           //[-] Main compressor model - see sco2_cycle_components.h 
         double m_eta_rc;					//[-] design-point efficiency of the recompressor; isentropic if positive, polytropic if negative
         int m_rc_comp_model_code;           //[-] Recompressor model - see sco2_cycle_components.h 
         double m_eta_t;						//[-] design-point efficiency of the turbine; isentropic if positive, polytropic if negative
-		//int m_N_sub_hxrs;					//[-] Number of sub-heat exchangers to use when calculating UA value for a heat exchanger
 		double m_P_high_limit;				//[kPa] maximum allowable pressure in cycle
 		double m_des_tol;						//[-] Convergence tolerance
 		double m_N_turbine;					//[rpm] Turbine shaft speed (negative values link turbine to compressor)
@@ -549,7 +550,9 @@ private:
 
 public:
 
-	C_RecompCycle()
+	C_RecompCycle(C_sco2_cycle_core::E_turbo_gen_motor_config turbo_gen_motor_config,
+        double eta_generator /*-*/) :
+        C_sco2_cycle_core(turbo_gen_motor_config, eta_generator)
 	{
 		m_temp_last.resize(END_SCO2_STATES);
 		std::fill(m_temp_last.begin(), m_temp_last.end(), std::numeric_limits<double>::quiet_NaN());

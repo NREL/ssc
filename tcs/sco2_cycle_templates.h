@@ -35,6 +35,15 @@ public:
         E_SET_T_T_IN        // Model sets turbine inlet temperature to HTF inlet temperature
     };
 
+    enum class E_turbo_gen_motor_config
+    {
+        // Options to apply motor and generator losses
+
+        E_SINGLE_SHAFT,      // Assumes compressors driven by turbine. Generator efficiency applies to net power
+
+        UNSPECIFIED
+    };
+
 	struct S_design_limits
 	{
 		double m_UA_net_power_ratio_max;		//[-/K]
@@ -450,11 +459,18 @@ protected:
 		ms_od_solved = s_od_solved_temp;
 	}
 
+    C_sco2_cycle_core::E_turbo_gen_motor_config m_turbo_gen_motor_config;
+    double m_eta_generator;   //[-] Mechanical-to-electrical efficiency of generator
+
 public:
 
-	C_sco2_cycle_core()
+	C_sco2_cycle_core(C_sco2_cycle_core::E_turbo_gen_motor_config turbo_gen_motor_config,
+        double eta_generator /*-*/)
 	{
-		// Set design limits!!!!
+        m_turbo_gen_motor_config = turbo_gen_motor_config;
+        m_eta_generator = eta_generator;    //[-]
+
+        // Set design limits!!!!
 		ms_des_limits.m_UA_net_power_ratio_max = 2.0;		//[-/K]
 		ms_des_limits.m_UA_net_power_ratio_min = 1.E-5;		//[-/K]
 

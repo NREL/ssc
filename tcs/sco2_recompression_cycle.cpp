@@ -2177,8 +2177,27 @@ int C_RecompCycle::C_mono_eq_LTR_des::operator()(double T_LTR_LP_out /*K*/, doub
 	}
 
 	// Calculate the mass flow required to hit cycle target power
-	m_m_dot_t = mpc_rc_cycle->ms_des_par.m_W_dot_net / (m_w_mc*(1.0 - mpc_rc_cycle->ms_des_par.m_recomp_frac) + m_w_rc*mpc_rc_cycle->ms_des_par.m_recomp_frac + m_w_t);		//[kg/s]
-	if( m_m_dot_t < 0.0 )
+    // 1) generator and motor efficiencies apply to full thermo power of each component
+    // W_dot_net = m_dot_t*(w_mc*(1-f)/eta_motor_mc + w_rc*f/eta_motor_rc + w_t*eta_gen)
+    // 2) generator efficiency applies to net power, implying integrally geared machine or turbocompressors
+    // W_dot_net = m_dot_t*( (w_mc*(1-f) + w_rc*f + w_t)*eta_gen )
+    // 3) generator efficiency applies to w_t + w_mc and motor efficiency applies to w_rc
+    // W_dot_net = m_dot_t*( (w_mc*(1-f) + w_t)*eta_gen + w_rc*f/eta_motor_rc )
+
+    switch (mpc_rc_cycle->m_turbo_gen_motor_config)
+    {
+    case C_sco2_cycle_core::E_turbo_gen_motor_config::E_SINGLE_SHAFT:
+        m_m_dot_t = mpc_rc_cycle->ms_des_par.m_W_dot_net / ( (m_w_mc * (1.0 - mpc_rc_cycle->ms_des_par.m_recomp_frac) +
+            m_w_rc * mpc_rc_cycle->ms_des_par.m_recomp_frac + m_w_t) * mpc_rc_cycle->m_eta_generator) ;		//[kg/s]
+
+        break;
+
+    case C_sco2_cycle_core::E_turbo_gen_motor_config::UNSPECIFIED:
+    default:
+        throw(C_csp_exception("Turbomachinery motor generator configuration for mechanical losses must be specified"));
+    }
+
+    if( m_m_dot_t < 0.0 )
 	{
 		*diff_T_LTR_LP_out = std::numeric_limits<double>::quiet_NaN();
 		return 29;
