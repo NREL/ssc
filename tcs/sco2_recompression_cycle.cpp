@@ -1822,7 +1822,7 @@ using namespace std;
 void C_RecompCycle::design_core_standard(int & error_code)
 {
 	// Apply scaling to the turbomachinery here
-	m_mc_ms.m_r_W_dot_scale = ms_des_par.m_W_dot_net / 10.E3;	//[-]
+	m_mc_ms.m_r_W_dot_scale = m_W_dot_net / 10.E3;	//[-]
 	m_rc_ms.m_r_W_dot_scale = m_mc_ms.m_r_W_dot_scale;			//[-]
 	m_t.m_r_W_dot_scale = m_mc_ms.m_r_W_dot_scale;				//[-]
 
@@ -2187,7 +2187,7 @@ int C_RecompCycle::C_mono_eq_LTR_des::operator()(double T_LTR_LP_out /*K*/, doub
     switch (mpc_rc_cycle->m_turbo_gen_motor_config)
     {
     case C_sco2_cycle_core::E_turbo_gen_motor_config::E_SINGLE_SHAFT:
-        m_m_dot_t = mpc_rc_cycle->ms_des_par.m_W_dot_net / ( (m_w_mc * (1.0 - mpc_rc_cycle->ms_des_par.m_recomp_frac) +
+        m_m_dot_t = mpc_rc_cycle->m_W_dot_net / ( (m_w_mc * (1.0 - mpc_rc_cycle->ms_des_par.m_recomp_frac) +
             m_w_rc * mpc_rc_cycle->ms_des_par.m_recomp_frac + m_w_t) * mpc_rc_cycle->m_eta_generator) ;		//[kg/s]
 
         break;
@@ -2397,7 +2397,7 @@ void C_RecompCycle::opt_design(S_opt_design_parameters & opt_des_par_in, int & e
 void C_RecompCycle::opt_design_core(int & error_code)
 {
 	// Map ms_opt_des_par to ms_des_par
-	ms_des_par.m_W_dot_net = ms_opt_des_par.m_W_dot_net;
+	//ms_des_par.m_W_dot_net = ms_opt_des_par.m_W_dot_net;
 	//ms_des_par.m_T_mc_in = ms_opt_des_par.m_T_mc_in;
 	ms_des_par.m_T_t_in = ms_opt_des_par.m_T_t_in;
 	ms_des_par.m_DP_LT = ms_opt_des_par.m_DP_LT;
@@ -2682,7 +2682,7 @@ void C_RecompCycle::auto_opt_design_core(int & error_code)
 	}
 
 	// map 'auto_opt_des_par_in' to 'ms_auto_opt_des_par'
-	ms_opt_des_par.m_W_dot_net = ms_auto_opt_des_par.m_W_dot_net;
+	//ms_opt_des_par.m_W_dot_net = ms_auto_opt_des_par.m_W_dot_net;
 	//ms_opt_des_par.m_T_mc_in = ms_auto_opt_des_par.m_T_mc_in;
 	ms_opt_des_par.m_T_t_in = ms_auto_opt_des_par.m_T_t_in;
 	ms_opt_des_par.m_DP_LT = ms_auto_opt_des_par.m_DP_LTR;
@@ -2847,7 +2847,7 @@ void C_RecompCycle::auto_opt_design_core(int & error_code)
 
 int C_RecompCycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_parameters & auto_opt_des_hit_eta_in, string & error_msg)
 {
-	ms_auto_opt_des_par.m_W_dot_net = auto_opt_des_hit_eta_in.m_W_dot_net;				//[kW] Target net cycle power
+	//ms_auto_opt_des_par.m_W_dot_net = auto_opt_des_hit_eta_in.m_W_dot_net;				//[kW] Target net cycle power
 	//ms_auto_opt_des_par.m_T_mc_in = auto_opt_des_hit_eta_in.m_T_mc_in;					//[K] Compressor inlet temperature
 	ms_auto_opt_des_par.m_T_t_in = auto_opt_des_hit_eta_in.m_T_t_in;					//[K] Turbine inlet temperature
 	ms_auto_opt_des_par.m_DP_LTR = auto_opt_des_hit_eta_in.m_DP_LT;						//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
@@ -2903,7 +2903,7 @@ int C_RecompCycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_parameters 
 
 	// At this point, 'auto_opt_des_hit_eta_in' should only be used to access the targer thermal efficiency: 'm_eta_thermal'
 
-	double Q_dot_rec_des = ms_auto_opt_des_par.m_W_dot_net / auto_opt_des_hit_eta_in.m_eta_thermal;		//[kWt] Receiver thermal input at design
+	double Q_dot_rec_des = m_W_dot_net / auto_opt_des_hit_eta_in.m_eta_thermal;		//[kWt] Receiver thermal input at design
 
 	error_msg = "";
 
@@ -3085,13 +3085,13 @@ int C_RecompCycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_parameters 
 	C_monotonic_eq_solver c_solver(c_eq);
 
 	// Generate min and max values
-	double UA_recup_total_max = ms_des_limits.m_UA_net_power_ratio_max*ms_auto_opt_des_par.m_W_dot_net;		//[kW/K]
-	double UA_recup_total_min = ms_des_limits.m_UA_net_power_ratio_min*ms_auto_opt_des_par.m_W_dot_net;		//[kW/K]
+	double UA_recup_total_max = ms_des_limits.m_UA_net_power_ratio_max*m_W_dot_net;		//[kW/K]
+	double UA_recup_total_min = ms_des_limits.m_UA_net_power_ratio_min*m_W_dot_net;		//[kW/K]
 		// Set solver settings
 	c_solver.settings(ms_auto_opt_des_par.m_des_tol, 50, UA_recup_total_min, UA_recup_total_max, true);
 
 	// Generate guess values
-	double UA_recups_guess = 0.1*ms_auto_opt_des_par.m_W_dot_net;
+	double UA_recups_guess = 0.1*m_W_dot_net;
 
 	double UA_recup_total_solved, tol_solved;
 	UA_recup_total_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
@@ -3161,7 +3161,7 @@ int C_RecompCycle::C_MEQ_sco2_design_hit_eta__UA_total::operator()(double UA_rec
 	if (mpc_rc_cycle->ms_auto_opt_des_par.mf_callback_log && mpc_rc_cycle->ms_auto_opt_des_par.mp_mf_active)
 	{
 		msg_log = util::format(" Total recuperator conductance = %lg [kW/K per MWe]. Optimized cycle efficiency = %lg [-].  ",
-			UA_recup_total / (mpc_rc_cycle->ms_auto_opt_des_par.m_W_dot_net * 1.E-3), *eta);
+			UA_recup_total / (mpc_rc_cycle->m_W_dot_net * 1.E-3), *eta);
 		if (!mpc_rc_cycle->ms_auto_opt_des_par.mf_callback_log(msg_log, msg_progress, mpc_rc_cycle->ms_auto_opt_des_par.mp_mf_active, 0.0, 2))
 		{
 			std::string error_msg = "User terminated simulation...";
@@ -3442,7 +3442,7 @@ void C_RecompCycle::finalize_design(int & error_code)
 	
 	
 	s_air_cooler_des_par_dep.m_T_hot_out_des = m_temp_last[C_sco2_cycle_core::MC_IN];			//[K]
-	s_air_cooler_des_par_dep.m_W_dot_fan_des = ms_des_par.m_frac_fan_power*ms_des_par.m_W_dot_net / 1000.0;		//[MWe]
+	s_air_cooler_des_par_dep.m_W_dot_fan_des = ms_des_par.m_frac_fan_power*m_W_dot_net / 1000.0;		//[MWe]
 		// Structure for design parameters that are independent of cycle design solution
 	C_CO2_to_air_cooler::S_des_par_ind s_air_cooler_des_par_ind;
 	s_air_cooler_des_par_ind.m_T_amb_des = ms_des_par.m_T_amb_des;		//[K]

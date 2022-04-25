@@ -53,7 +53,7 @@ public:
 
 	struct S_des_params
 	{
-		double m_W_dot_net;					//[kWe] Target net cycle power
+		//double m_W_dot_net;					//[kWe] Target net cycle power
 		//double m_T_mc_in;					//[K] Main compressor inlet temperature
 		double m_T_pc_in;					//[K] Pre-compressor inlet temperature
 		double m_T_t_in;					//[K] Turbine inlet temperature
@@ -108,7 +108,7 @@ public:
 
 		S_des_params()
 		{
-			m_W_dot_net =
+			//m_W_dot_net =
                 //m_T_mc_in =
                 m_T_pc_in = m_T_t_in = 
 				m_P_pc_in = m_P_mc_in = m_P_mc_out = 
@@ -153,7 +153,7 @@ public:
 
 	struct S_opt_des_params
 	{
-		double m_W_dot_net;					//[kWe] Target net cycle power
+		//double m_W_dot_net;					//[kWe] Target net cycle power
 		//double m_T_mc_in;					//[K] Main compressor inlet temperature
 		double m_T_pc_in;					//[K] Pre-compressor inlet temperature
 		double m_T_t_in;					//[K] Turbine inlet temperature
@@ -219,7 +219,7 @@ public:
 
 		S_opt_des_params()
 		{
-			m_W_dot_net =
+			//m_W_dot_net =
                 //m_T_mc_in =
                 m_T_pc_in = m_T_t_in =
 				m_UA_rec_total = 
@@ -315,10 +315,12 @@ public:
 
 	C_PartialCooling_Cycle(C_sco2_cycle_core::E_turbo_gen_motor_config turbo_gen_motor_config,
         double eta_generator /*-*/,
-        double T_mc_in /*K*/) :
+        double T_mc_in /*K*/,
+        double W_dot_net /*kWe*/) :
         C_sco2_cycle_core(turbo_gen_motor_config,
             eta_generator,
-            T_mc_in)
+            T_mc_in,
+            W_dot_net)
 	{
 		m_temp_last.resize(END_SCO2_STATES);
 		std::fill(m_temp_last.begin(), m_temp_last.end(), std::numeric_limits<double>::quiet_NaN());

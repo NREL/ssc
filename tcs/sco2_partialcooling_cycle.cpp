@@ -38,7 +38,7 @@ int C_PartialCooling_Cycle::design(S_des_params & des_par_in)
 int C_PartialCooling_Cycle::design_core()
 {
 	// Apply scaling to the turbomachinery here
-	mc_mc.m_r_W_dot_scale = ms_des_par.m_W_dot_net / 10.E3;	//[-]
+	mc_mc.m_r_W_dot_scale = m_W_dot_net / 10.E3;	//[-]
 	mc_rc.m_r_W_dot_scale = mc_mc.m_r_W_dot_scale;			//[-]
 	mc_pc.m_r_W_dot_scale = mc_mc.m_r_W_dot_scale;			//[-]
 	mc_t.m_r_W_dot_scale = mc_mc.m_r_W_dot_scale;			//[-]
@@ -57,12 +57,12 @@ int C_PartialCooling_Cycle::design_core()
 	mc_HTR.initialize(ms_des_par.m_HTR_N_sub_hxrs, ms_des_par.m_HTR_od_UA_target_type);
 
 	// Initialize known temps and pressures from design parameters
-	m_temp_last[MC_IN] = m_T_mc_in;	//[K]
-	m_pres_last[MC_IN] = ms_des_par.m_P_mc_in;	//[kPa]
-	m_temp_last[PC_IN] = ms_des_par.m_T_pc_in;	//[K]
-	m_pres_last[PC_IN] = ms_des_par.m_P_pc_in;	//[kPa]
-	m_temp_last[TURB_IN] = ms_des_par.m_T_t_in;	//[K]
-	m_pres_last[MC_OUT] = ms_des_par.m_P_mc_out;//[kPa]
+	m_temp_last[MC_IN] = m_T_mc_in;	                //[K]
+	m_pres_last[MC_IN] = ms_des_par.m_P_mc_in;	    //[kPa]
+	m_temp_last[PC_IN] = ms_des_par.m_T_pc_in;	    //[K]
+	m_pres_last[PC_IN] = ms_des_par.m_P_pc_in;	    //[kPa]
+	m_temp_last[TURB_IN] = ms_des_par.m_T_t_in;	    //[K]
+	m_pres_last[MC_OUT] = ms_des_par.m_P_mc_out;    //[kPa]
 
 	// Apply design pressure drops to heat exchangers to fully define pressures at all states
 	if (ms_des_par.m_DP_LTR[0] < 0.0)
@@ -214,7 +214,7 @@ int C_PartialCooling_Cycle::design_core()
 		return comp_error_code;
 
 	// know all turbomachinery specific work, so can calculate mass flow rate required to hit target power
-	m_m_dot_t = ms_des_par.m_W_dot_net / (w_t + w_pc + ms_des_par.m_recomp_frac*w_rc + (1.0 - ms_des_par.m_recomp_frac)*w_mc);	//[kg/s]
+	m_m_dot_t = m_W_dot_net / (w_t + w_pc + ms_des_par.m_recomp_frac*w_rc + (1.0 - ms_des_par.m_recomp_frac)*w_mc);	//[kg/s]
 	
 	if (m_m_dot_t <= 0.0 || !std::isfinite(m_m_dot_t))	// positive net power is impossible; return an error
 		return 25;
@@ -593,7 +593,7 @@ int C_PartialCooling_Cycle::finalize_design()
 
 	s_LP_air_cooler_des_par_dep.m_T_hot_out_des = m_temp_last[C_sco2_cycle_core::PC_IN];			//[K]
 		// Use half the rated fan power on each cooler fan
-	s_LP_air_cooler_des_par_dep.m_W_dot_fan_des = ms_des_par.m_frac_fan_power*(1.0 - f_W_dot_fan_to_IP)*ms_des_par.m_W_dot_net / 1000.0;		//[MWe]
+	s_LP_air_cooler_des_par_dep.m_W_dot_fan_des = ms_des_par.m_frac_fan_power*(1.0 - f_W_dot_fan_to_IP)*m_W_dot_net / 1000.0;		//[MWe]
 		// Structure for design parameters that are independent of cycle design solution
 	C_CO2_to_air_cooler::S_des_par_ind s_LP_air_cooler_des_par_ind;
 	s_LP_air_cooler_des_par_ind.m_T_amb_des = ms_des_par.m_T_amb_des;		//[K]
@@ -623,7 +623,7 @@ int C_PartialCooling_Cycle::finalize_design()
 
 	s_IP_air_cooler_des_par_dep.m_T_hot_out_des = m_temp_last[C_sco2_cycle_core::MC_IN];			//[K]
 		// Use half the rated fan power on each cooler fan
-	s_IP_air_cooler_des_par_dep.m_W_dot_fan_des = ms_des_par.m_frac_fan_power*f_W_dot_fan_to_IP*ms_des_par.m_W_dot_net / 1000.0;		//[MWe]
+	s_IP_air_cooler_des_par_dep.m_W_dot_fan_des = ms_des_par.m_frac_fan_power*f_W_dot_fan_to_IP*m_W_dot_net / 1000.0;		//[MWe]
 		// Structure for design parameters that are independent of cycle design solution
 	C_CO2_to_air_cooler::S_des_par_ind s_IP_air_cooler_des_par_ind;
 	s_IP_air_cooler_des_par_ind.m_T_amb_des = ms_des_par.m_T_amb_des;		//[K]
@@ -789,7 +789,7 @@ double C_PartialCooling_Cycle::design_cycle_return_objective_metric(const std::v
 int C_PartialCooling_Cycle::opt_design_core()
 {
 	// Map ms_opt_des_par to ms_des_par
-	ms_des_par.m_W_dot_net = ms_opt_des_par.m_W_dot_net;	//[kWe]
+	//ms_des_par.m_W_dot_net = ms_opt_des_par.m_W_dot_net;	//[kWe]
 	//ms_des_par.m_T_mc_in = ms_opt_des_par.m_T_mc_in;		//[K]
 	ms_des_par.m_T_pc_in = ms_opt_des_par.m_T_pc_in;		//[K]
 	ms_des_par.m_T_t_in = ms_opt_des_par.m_T_t_in;			//[K]
@@ -973,7 +973,7 @@ int C_PartialCooling_Cycle::auto_opt_design_core()
     }
 
 	// map 'auto_opt_des_par_in' to 'ms_auto_opt_des_par'
-	ms_opt_des_par.m_W_dot_net = ms_auto_opt_des_par.m_W_dot_net;	//[kWe]
+	///ms_opt_des_par.m_W_dot_net = ms_auto_opt_des_par.m_W_dot_net;	//[kWe]
 	//ms_opt_des_par.m_T_mc_in = ms_auto_opt_des_par.m_T_mc_in;		//[K]
 	ms_opt_des_par.m_T_pc_in = ms_auto_opt_des_par.m_T_pc_in;		//[K]
 	ms_opt_des_par.m_T_t_in = ms_auto_opt_des_par.m_T_t_in;			//[K]
@@ -1108,7 +1108,7 @@ int C_PartialCooling_Cycle::auto_opt_design_core()
 
 int C_PartialCooling_Cycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_parameters & auto_opt_des_hit_eta_in, std::string & error_msg)
 {
-	ms_auto_opt_des_par.m_W_dot_net = auto_opt_des_hit_eta_in.m_W_dot_net;	//[kWe]
+	//ms_auto_opt_des_par.m_W_dot_net = auto_opt_des_hit_eta_in.m_W_dot_net;	//[kWe]
 	//ms_auto_opt_des_par.m_T_mc_in = auto_opt_des_hit_eta_in.m_T_mc_in;		//[K]
 	ms_auto_opt_des_par.m_T_pc_in = auto_opt_des_hit_eta_in.m_T_pc_in;		//[K]
 	ms_auto_opt_des_par.m_T_t_in = auto_opt_des_hit_eta_in.m_T_t_in;			//[K]
@@ -1169,7 +1169,7 @@ int C_PartialCooling_Cycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_pa
 
 	// At this point, 'auto_opt_des_hit_eta_in' should only be used to access the targer thermal efficiency: 'm_eta_thermal'
 
-	double Q_dot_rec_des = ms_auto_opt_des_par.m_W_dot_net / auto_opt_des_hit_eta_in.m_eta_thermal;		//[kWt] Receiver thermal input at design
+	double Q_dot_rec_des = m_W_dot_net / auto_opt_des_hit_eta_in.m_eta_thermal;		//[kWt] Receiver thermal input at design
 
 	error_msg = "";
 
@@ -1381,13 +1381,13 @@ int C_PartialCooling_Cycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_pa
 	C_monotonic_eq_solver c_solver(c_eq);
 
 	// Generate min and max values
-	double UA_recup_total_max = ms_des_limits.m_UA_net_power_ratio_max*ms_auto_opt_des_par.m_W_dot_net;		//[kW/K]
-	double UA_recup_total_min = ms_des_limits.m_UA_net_power_ratio_min*ms_auto_opt_des_par.m_W_dot_net;		//[kW/K]
+	double UA_recup_total_max = ms_des_limits.m_UA_net_power_ratio_max*m_W_dot_net;		//[kW/K]
+	double UA_recup_total_min = ms_des_limits.m_UA_net_power_ratio_min*m_W_dot_net;		//[kW/K]
 																											// Set solver settings
 	c_solver.settings(ms_auto_opt_des_par.m_des_tol, 50, UA_recup_total_min, UA_recup_total_max, true);
 
 	// Generate guess values
-	double UA_recups_guess = 0.1*ms_auto_opt_des_par.m_W_dot_net;
+	double UA_recups_guess = 0.1*m_W_dot_net;
 
 	double UA_recup_total_solved, tol_solved;
 	UA_recup_total_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
@@ -1456,7 +1456,7 @@ int C_PartialCooling_Cycle::C_MEQ_sco2_design_hit_eta__UA_total::operator()(doub
 	if (mpc_pc_cycle->ms_auto_opt_des_par.mf_callback_log && mpc_pc_cycle->ms_auto_opt_des_par.mp_mf_active)
 	{
 		msg_log = util::format(" Total recuperator conductance = %lg [kW/K per MWe]. Optimized cycle efficiency = %lg [-].  ",
-			UA_recup_total / (mpc_pc_cycle->ms_auto_opt_des_par.m_W_dot_net * 1.E-3), *eta);
+			UA_recup_total / (mpc_pc_cycle->m_W_dot_net * 1.E-3), *eta);
 		if (!mpc_pc_cycle->ms_auto_opt_des_par.mf_callback_log(msg_log, msg_progress, mpc_pc_cycle->ms_auto_opt_des_par.mp_mf_active, 0.0, 2))
 		{
 			std::string error_msg = "User terminated simulation...";

@@ -101,7 +101,7 @@ public:
 
 	struct S_auto_opt_design_hit_eta_parameters
 	{
-		double m_W_dot_net;					//[kW] Target net cycle power
+		//double m_W_dot_net;					//[kW] Target net cycle power
 		double m_eta_thermal;				//[-] Cycle thermal efficiency
 		//double m_T_mc_in;					//[K] Main compressor inlet temperature
 		double m_T_pc_in;					//[K] Pre-compressor inlet temperature
@@ -167,7 +167,7 @@ public:
 
 		S_auto_opt_design_hit_eta_parameters()
 		{
-			m_W_dot_net =
+			//m_W_dot_net =
                 //m_T_mc_in =
                 m_T_pc_in = m_T_t_in = 
                 m_LTR_UA = m_LTR_min_dT = m_LTR_eff_target = m_LTR_eff_max = 
@@ -218,7 +218,7 @@ public:
 
 	struct S_auto_opt_design_parameters
 	{
-		double m_W_dot_net;					//[kWe] Target net cycle power
+		//double m_W_dot_net;					//[kWe] Target net cycle power
 		//double m_T_mc_in;					//[K] Main compressor inlet temperature
 		double m_T_pc_in;					//[K] Pre-compressor inlet temperature
 		double m_T_t_in;					//[K] Turbine inlet temperature
@@ -285,7 +285,7 @@ public:
 
 		S_auto_opt_design_parameters()
 		{
-			m_W_dot_net =
+			//m_W_dot_net =
                 //m_T_mc_in =
                 m_T_pc_in = m_T_t_in =
 				m_UA_rec_total = 
@@ -466,15 +466,19 @@ protected:
     C_sco2_cycle_core::E_turbo_gen_motor_config m_turbo_gen_motor_config;
     double m_eta_generator;     //[-] Mechanical-to-electrical efficiency of generator
     double m_T_mc_in;           //[K] Compressor inlet temperature
+    double m_W_dot_net;			//[kWe] Target net cycle power
+
 
 public:
 
 	C_sco2_cycle_core(C_sco2_cycle_core::E_turbo_gen_motor_config turbo_gen_motor_config,
         double eta_generator /*-*/,
-        double T_mc_in /*K*/)
+        double T_mc_in /*K*/,
+        double W_dot_net /*kWe*/)
 	{
         m_turbo_gen_motor_config = turbo_gen_motor_config;
         m_eta_generator = eta_generator;    //[-]
+        m_W_dot_net = W_dot_net;            //[kWe]
 
         m_T_mc_in = T_mc_in;        //[K]
 

@@ -89,13 +89,15 @@ void C_sco2_phx_air_cooler::design_core()
     double eta_generator = 1.0;
 
     double T_mc_in = ms_des_par.m_T_amb_des + ms_des_par.m_dt_mc_approach;	//[K]
+    double W_dot_net = ms_des_par.m_W_dot_net;		//[kWe]
 
 	if (ms_des_par.m_cycle_config == 2)
 	{
         std::unique_ptr<C_PartialCooling_Cycle> c_pc_cycle = std::unique_ptr<C_PartialCooling_Cycle>(new C_PartialCooling_Cycle(
             turbo_gen_motor_config,
             eta_generator,
-            T_mc_in));
+            T_mc_in,
+            W_dot_net));
 
 		s_cycle_config = "partial cooling";
 
@@ -106,7 +108,8 @@ void C_sco2_phx_air_cooler::design_core()
         std::unique_ptr<C_RecompCycle> c_rc_cycle = std::unique_ptr<C_RecompCycle>(new C_RecompCycle(
             turbo_gen_motor_config,
             eta_generator,
-            T_mc_in));
+            T_mc_in,
+            W_dot_net));
 
 		s_cycle_config = "recompression";
 
@@ -120,7 +123,7 @@ void C_sco2_phx_air_cooler::design_core()
 	{
 		// Design the cycle to hit a specified efficiency
 		// Define sCO2 cycle design parameter structure
-		ms_cycle_des_par.m_W_dot_net = ms_des_par.m_W_dot_net;		//[kWe]
+		//ms_cycle_des_par.m_W_dot_net = ms_des_par.m_W_dot_net;		//[kWe]
 		ms_cycle_des_par.m_eta_thermal = ms_des_par.m_eta_thermal;	//[-]
 		//ms_cycle_des_par.m_T_mc_in = ms_des_par.m_T_amb_des + ms_des_par.m_dt_mc_approach;	//[K]
 		if (T_mc_in < m_T_mc_in_min)
@@ -201,7 +204,7 @@ void C_sco2_phx_air_cooler::design_core()
 		}
 		
 		C_sco2_cycle_core::S_auto_opt_design_parameters des_params;
-		des_params.m_W_dot_net = ms_des_par.m_W_dot_net;		//[kWe]
+		//des_params.m_W_dot_net = ms_des_par.m_W_dot_net;		//[kWe]
 		//des_params.m_T_mc_in = ms_des_par.m_T_amb_des + ms_des_par.m_dt_mc_approach;	//[K]
 		if (T_mc_in < m_T_mc_in_min)
 		{
