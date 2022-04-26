@@ -99,6 +99,8 @@ public:
 	double Pr( double T_K, double P );
 	double Re( double T_K, double P, double vel, double d );
 	double temp( double H );
+    double min_temp();          // [K]
+    double max_temp();          // [K]
 	double enth( double T_K );
 
 	double temp_lookup( double enth /*kJ/kg*/ );

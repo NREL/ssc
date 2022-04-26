@@ -66,37 +66,53 @@ public:
 		add_var_info( _cm_vtab_6parsolve );
 	}
 	
-	void exec( )
-	{
-		int tech_id = module6par::monoSi;
-		std::string stype = as_string("celltype");
+    void exec()
+    {
+        int tech_id = module6par::monoSi;
+        std::string stype = as_string("celltype");
 
-		if (stype.find("mono") != std::string::npos) tech_id = module6par::monoSi;
-		else if (stype.find("multi") != std::string::npos || stype.find("poly") != std::string::npos) tech_id = module6par::multiSi;
-		else if (stype.find("cis") != std::string::npos) tech_id = module6par::CIS;
-		else if (stype.find("cigs") != std::string::npos) tech_id = module6par::CIGS;
-		else if (stype.find("cdte") != std::string::npos) tech_id = module6par::CdTe;
-		else if (stype.find("amor") != std::string::npos) tech_id = module6par::Amorphous;
-		else
-			throw general_error("could not determine cell type (mono,multi,cis,cigs,cdte,amorphous)");
+        if (stype.find("mono") != std::string::npos) tech_id = module6par::monoSi;
+        else if (stype.find("multi") != std::string::npos || stype.find("poly") != std::string::npos) tech_id = module6par::multiSi;
+        else if (stype.find("cis") != std::string::npos) tech_id = module6par::CIS;
+        else if (stype.find("cigs") != std::string::npos) tech_id = module6par::CIGS;
+        else if (stype.find("cdte") != std::string::npos) tech_id = module6par::CdTe;
+        else if (stype.find("amor") != std::string::npos) tech_id = module6par::Amorphous;
+        else
+            throw general_error("Could not determine cell type (mono,multi/poly,cis,cigs,cdte,amorphous)");
 
-		double Vmp = as_double("Vmp");
-		double Imp = as_double("Imp");
-		double Voc = as_double("Voc");
-		double Isc = as_double("Isc");
-		double bVoc = as_double("beta_voc");
-		double aIsc = as_double("alpha_isc");
-		double gPmp = as_double("gamma_pmp");
-		int nser = as_integer("Nser");
+        double Vmp = as_double("Vmp");
+        double Imp = as_double("Imp");
+        double Voc = as_double("Voc");
+        double Isc = as_double("Isc");
+        double bVoc = as_double("beta_voc");
+        double aIsc = as_double("alpha_isc");
+        double gPmp = as_double("gamma_pmp");
+        int nser = as_integer("Nser");
 
-		double Tref = 25;
-		if ( is_assigned("Tref") )
-			Tref = as_double("Tref");
+        double Tref = 25;
+        if (is_assigned("Tref"))
+            Tref = as_double("Tref");
 
-		module6par m( tech_id, Vmp, Imp, Voc, Isc, bVoc, aIsc, gPmp, nser, Tref+273.15 );
-		int err = m.solve_with_sanity_and_heuristics<double>(300,1e-7);
+        module6par m(tech_id, Vmp, Imp, Voc, Isc, bVoc, aIsc, gPmp, nser, Tref + 273.15);
+        int err = m.solve_with_sanity_and_heuristics<double>(300, 1e-7);
+
+        int err_keys[10] = { -1, -2, -3, -4, -5, -6, -7, -33, -44, -55 };
+        int x;
+        for (int i = 0; i < 10; i++)
+            if (err_keys[i] == err)
+                x = i;
+        std::string err_values[10] = { "a < 0.05 || a > 15.0",
+            "Il < 0.5 || Il > 20.0" ,
+            "Io < 1e-16 || Io > 1e-7",
+            "Rs < 0.001 || Rs > 75.0",
+            "Rsh < 1.0 || Rsh > 100001.0",
+            "Adj < -100.0 || Adj > 100.0",
+            "Imp >= Isc",
+            "abs((P - Pmp) / Pmp) > 0.015",
+            "abs(I) > 0.015 * Imp",
+            "max_slope(0.015 * Voc 0.98 * Voc) > 0" };
 		if (err < 0)
-			throw general_error("could not solve, check inputs");
+			throw general_error("Could not solve, sanity check failed (" + std::to_string(err) + "): " + err_values[x] );
 
 		assign("a", var_data( (ssc_number_t) m.a));
 		assign("Il", var_data( (ssc_number_t) m.Il));
