@@ -103,11 +103,7 @@ public:
 	{
 		double m_eta_thermal;				//[-] Cycle thermal efficiency
 		double m_T_pc_in;					//[K] Pre-compressor inlet temperature
-		std::vector<double> m_DP_LT;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-		std::vector<double> m_DP_HT;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		std::vector<double> m_DP_PC_pre;    //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-		std::vector<double> m_DP_PC_main;   //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-		std::vector<double> m_DP_PHX;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		    // LTR thermal design
         int m_LTR_target_code;              //[-] 1 = UA, 2 = min dT, 3 = effectiveness
         double m_LTR_UA;					//[kW/K] target LTR conductance
@@ -126,7 +122,6 @@ public:
 		double m_eta_pc;					//[-] design-point efficiency of the pre-compressor; 
 		double m_des_tol;					//[-] Convergence tolerance
 		double m_des_opt_tol;				//[-] Optimization tolerance
-		double m_N_turbine;					//[rpm] Turbine shaft speed (negative values link turbine to compressor)
 		
 		// Air cooler parameters
 		bool m_is_des_air_cooler;		//[-] False will skip physical air cooler design. UA will not be available for cost models.
@@ -154,7 +149,7 @@ public:
                 m_LTR_UA = m_LTR_min_dT = m_LTR_eff_target = m_LTR_eff_max = 
                 m_HTR_UA = m_HTR_min_dT = m_HTR_eff_target = m_HTR_eff_max =
                 m_eta_pc = 
-				m_des_tol = m_des_opt_tol = m_N_turbine =
+				m_des_tol = m_des_opt_tol = 
                 m_is_recomp_ok =
 				m_PR_HP_to_LP_guess = m_f_PR_HP_to_IP_guess = std::numeric_limits<double>::quiet_NaN();
 
@@ -178,27 +173,15 @@ public:
 			mf_callback_log = 0;
 			mp_mf_active = 0;
 
-			m_DP_LT.resize(2);
-			std::fill(m_DP_LT.begin(), m_DP_LT.end(), std::numeric_limits<double>::quiet_NaN());
-			m_DP_HT.resize(2);
-			std::fill(m_DP_HT.begin(), m_DP_HT.end(), std::numeric_limits<double>::quiet_NaN());
 			m_DP_PC_pre.resize(2);
 			std::fill(m_DP_PC_pre.begin(), m_DP_PC_pre.end(), std::numeric_limits<double>::quiet_NaN());
-			m_DP_PC_main.resize(2);
-			std::fill(m_DP_PC_main.begin(), m_DP_PC_main.end(), std::numeric_limits<double>::quiet_NaN());
-			m_DP_PHX.resize(2);
-			std::fill(m_DP_PHX.begin(), m_DP_PHX.end(), std::numeric_limits<double>::quiet_NaN());
 		}
 	};
 
 	struct S_auto_opt_design_parameters
 	{
 		double m_T_pc_in;					//[K] Pre-compressor inlet temperature
-		std::vector<double> m_DP_LTR;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-		std::vector<double> m_DP_HTR;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		std::vector<double> m_DP_PC_pre;    //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-		std::vector<double> m_DP_PC_main;   //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-		std::vector<double> m_DP_PHX;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		double m_UA_rec_total;				//[kW/K] Total design-point recuperator UA
             // LTR thermal design
         int m_LTR_target_code;              //[-] 1 = UA, 2 = min dT, 3 = effectiveness
@@ -219,7 +202,6 @@ public:
 
 		double m_des_tol;					//[-] Convergence tolerance
 		double m_des_opt_tol;				//[-] Optimization tolerance
-		double m_N_turbine;					//[rpm] Turbine shaft speed (negative values link turbine to compressor)
 		
 		// Air cooler parameters
 		bool m_is_des_air_cooler;		//[-] False will skip physical air cooler design. UA will not be available for cost models.
@@ -248,7 +230,7 @@ public:
 				m_UA_rec_total = 
                 m_LTR_UA = m_LTR_min_dT = m_LTR_eff_target = m_LTR_eff_max = 
                 m_HTR_UA = m_HTR_min_dT = m_HTR_eff_target = m_HTR_eff_max =
-                m_eta_pc = m_des_tol = m_des_opt_tol = m_N_turbine = 
+                m_eta_pc = m_des_tol = m_des_opt_tol = 
                 m_is_recomp_ok =
 				m_PR_HP_to_LP_guess = m_f_PR_HP_to_IP_guess = std::numeric_limits<double>::quiet_NaN();
 
@@ -272,16 +254,8 @@ public:
 			mf_callback_log = 0;
 			mp_mf_active = 0;
 
-			m_DP_LTR.resize(2);
-			std::fill(m_DP_LTR.begin(), m_DP_LTR.end(), std::numeric_limits<double>::quiet_NaN());
-			m_DP_HTR.resize(2);
-			std::fill(m_DP_HTR.begin(), m_DP_HTR.end(), std::numeric_limits<double>::quiet_NaN());
 			m_DP_PC_pre.resize(2);
 			std::fill(m_DP_PC_pre.begin(), m_DP_PC_pre.end(), std::numeric_limits<double>::quiet_NaN());
-			m_DP_PC_main.resize(2);
-			std::fill(m_DP_PC_main.begin(), m_DP_PC_main.end(), std::numeric_limits<double>::quiet_NaN());
-			m_DP_PHX.resize(2);
-			std::fill(m_DP_PHX.begin(), m_DP_PHX.end(), std::numeric_limits<double>::quiet_NaN());
 		}
 	};
 
@@ -421,6 +395,10 @@ protected:
     double m_W_dot_net;			//[kWe] Target net cycle power
     double m_T_t_in;			//[K] Turbine inlet temperature
     double m_P_high_limit;		//[kPa] maximum allowable pressure in cycle
+    std::vector<double> m_DP_LTR;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+    std::vector<double> m_DP_HTR;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+    std::vector<double> m_DP_PC_main;	//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+    std::vector<double> m_DP_PHX;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 
     int m_LTR_N_sub_hxrs;               //[-] Number of sub-hxs to use in hx model
 
@@ -431,6 +409,7 @@ protected:
     double m_eta_rc;		    //[-] design-point efficiency of the recompressor; isentropic if positive, polytropic if negative
     int m_rc_comp_model_code;   //[-] Recompressor model - see sco2_cycle_components.h 
     double m_eta_t;				//[-] design-point efficiency of the turbine; isentropic if positive, polytropic if negative
+    double m_N_turbine;			//[rpm] Turbine shaft speed (negative values link turbine to compressor)
 
     double m_frac_fan_power;    //[-] Fraction of total cycle power 'S_des_par_cycle_dep.m_W_dot_fan_des' consumed by air fan
     double m_eta_fan;           //[-] Fan isentropic efficiency
@@ -447,9 +426,12 @@ public:
         double T_mc_in /*K*/,
         double W_dot_net /*kWe*/,
         double T_t_in /*K*/, double P_high_limit /*kPa*/,
+        std::vector<double> DP_LTR, std::vector<double> DP_HTR,
+        std::vector<double> DP_PC_main, std::vector<double> DP_PHX,
         int LTR_N_sub_hxrs /*-*/, int HTR_N_sub_hxrs /*-*/,
         double eta_mc /*-*/, int mc_comp_model_code /*-*/,
-        double eta_rc /*-*/, double eta_t /*-*/,
+        double eta_rc /*-*/,
+        double eta_t /*-*/, double N_turbine /*rpm*/,
         double frac_fan_power /*-*/, double eta_fan /*-*/, double deltaP_cooler_frac /*-*/,
         int N_nodes_pass /*-*/,
         double T_amb_des /*K*/, double elevation /*m*/)
@@ -462,6 +444,11 @@ public:
         m_T_t_in = T_t_in;          //[K]
         m_P_high_limit = P_high_limit;  //[kPa]
 
+        m_DP_LTR = DP_LTR;
+        m_DP_HTR = DP_HTR;
+        m_DP_PC_main = DP_PC_main;
+        m_DP_PHX = DP_PHX;
+
         m_LTR_N_sub_hxrs = LTR_N_sub_hxrs;  //[-]
         m_HTR_N_sub_hxrs = HTR_N_sub_hxrs;  //[-]
 
@@ -470,6 +457,7 @@ public:
         m_eta_rc = eta_rc;          //[-]
         m_rc_comp_model_code = C_comp__psi_eta_vs_phi::E_snl_radial_via_Dyreby;
         m_eta_t = eta_t;            //[-]
+        m_N_turbine = N_turbine;    //[rpm]
 
         m_frac_fan_power = frac_fan_power;          //[-]
         m_eta_fan = eta_fan;                        //[-]

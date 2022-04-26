@@ -65,10 +65,10 @@ int C_PartialCooling_Cycle::design_core()
 	m_pres_last[MC_OUT] = ms_des_par.m_P_mc_out;    //[kPa]
 
 	// Apply design pressure drops to heat exchangers to fully define pressures at all states
-	if (ms_des_par.m_DP_LTR[0] < 0.0)
-		m_pres_last[LTR_HP_OUT] = m_pres_last[MC_OUT] * (1.0 - fabs(ms_des_par.m_DP_LTR[0]));	//[kPa]
+	if (m_DP_LTR[0] < 0.0)
+		m_pres_last[LTR_HP_OUT] = m_pres_last[MC_OUT] * (1.0 - fabs(m_DP_LTR[0]));	//[kPa]
 	else
-		m_pres_last[LTR_HP_OUT] = m_pres_last[MC_OUT] - ms_des_par.m_DP_LTR[0];		//[kPa]
+		m_pres_last[LTR_HP_OUT] = m_pres_last[MC_OUT] - m_DP_LTR[0];		//[kPa]
 
 	if ((ms_des_par.m_LTR_target_code == NS_HX_counterflow_eqs::OPTIMIZE_UA && ms_des_par.m_LTR_UA < 1.0E-12)
 		|| (ms_des_par.m_LTR_target_code == NS_HX_counterflow_eqs::TARGET_UA && ms_des_par.m_LTR_UA < 1.0E-12)
@@ -79,10 +79,10 @@ int C_PartialCooling_Cycle::design_core()
 	m_pres_last[MIXER_OUT] = m_pres_last[LTR_HP_OUT];	//[kPa] assume no pressure drop in mixer
 	m_pres_last[RC_OUT] = m_pres_last[LTR_HP_OUT];		//[kPa] assume no pressure drop in mixer
 
-	if (ms_des_par.m_DP_HTR[0] < 0.0)
-		m_pres_last[HTR_HP_OUT] = m_pres_last[MIXER_OUT] * (1.0 - fabs(ms_des_par.m_DP_HTR[0]));	//[kPa]
+	if (m_DP_HTR[0] < 0.0)
+		m_pres_last[HTR_HP_OUT] = m_pres_last[MIXER_OUT] * (1.0 - fabs(m_DP_HTR[0]));	//[kPa]
 	else
-		m_pres_last[HTR_HP_OUT] = m_pres_last[MIXER_OUT] - ms_des_par.m_DP_HTR[0];	//[kPa]
+		m_pres_last[HTR_HP_OUT] = m_pres_last[MIXER_OUT] - m_DP_HTR[0];	//[kPa]
 
 	if ((ms_des_par.m_HTR_target_code == NS_HX_counterflow_eqs::OPTIMIZE_UA && ms_des_par.m_HTR_UA < 1.0E-12)
 		|| (ms_des_par.m_HTR_target_code == NS_HX_counterflow_eqs::TARGET_UA && ms_des_par.m_HTR_UA < 1.0E-12)
@@ -90,25 +90,25 @@ int C_PartialCooling_Cycle::design_core()
 		|| (ms_des_par.m_HTR_target_code == NS_HX_counterflow_eqs::TARGET_EFFECTIVENESS && ms_des_par.m_HTR_eff_target < 1.0E-12))
 		m_pres_last[HTR_HP_OUT] = m_pres_last[MIXER_OUT];	//[kPa] If no HTR then no pressure drop
 
-	if (ms_des_par.m_DP_PHX[0] < 0.0)
-		m_pres_last[TURB_IN] = m_pres_last[HTR_HP_OUT] * (1.0 - fabs(ms_des_par.m_DP_PHX[0]));	//[kPa]
+	if (m_DP_PHX[0] < 0.0)
+		m_pres_last[TURB_IN] = m_pres_last[HTR_HP_OUT] * (1.0 - fabs(m_DP_PHX[0]));	//[kPa]
 	else
-		m_pres_last[TURB_IN] = m_pres_last[HTR_HP_OUT] - ms_des_par.m_DP_PHX[0];	//[kPa]
+		m_pres_last[TURB_IN] = m_pres_last[HTR_HP_OUT] - m_DP_PHX[0];	//[kPa]
 
-	if (ms_des_par.m_DP_PC_IP[1] < 0.0)
-		m_pres_last[PC_OUT] = m_pres_last[MC_IN] / (1.0 - fabs(ms_des_par.m_DP_PC_IP[1]));	//[kPa]
+	if (m_DP_PC_main[1] < 0.0)
+		m_pres_last[PC_OUT] = m_pres_last[MC_IN] / (1.0 - fabs(m_DP_PC_main[1]));	//[kPa]
 	else
-		m_pres_last[PC_OUT] = m_pres_last[MC_IN] + ms_des_par.m_DP_PC_IP[1];	//[kPa]
+		m_pres_last[PC_OUT] = m_pres_last[MC_IN] + m_DP_PC_main[1];	//[kPa]
 
 	if (ms_des_par.m_DP_PC_LP[1] < 0.0)
 		m_pres_last[LTR_LP_OUT] = m_pres_last[PC_IN] / (1.0 - fabs(ms_des_par.m_DP_PC_LP[1]));	//[kPa]
 	else
 		m_pres_last[LTR_LP_OUT] = m_pres_last[PC_IN] + ms_des_par.m_DP_PC_LP[1];	//[kPa]
 
-	if (ms_des_par.m_DP_LTR[1] < 0.0)
-		m_pres_last[HTR_LP_OUT] = m_pres_last[LTR_LP_OUT] / (1.0 - fabs(ms_des_par.m_DP_LTR[1]));	//[kPa]
+	if (m_DP_LTR[1] < 0.0)
+		m_pres_last[HTR_LP_OUT] = m_pres_last[LTR_LP_OUT] / (1.0 - fabs(m_DP_LTR[1]));	//[kPa]
 	else
-		m_pres_last[HTR_LP_OUT] = m_pres_last[LTR_LP_OUT] + ms_des_par.m_DP_LTR[1];		//[kPa]
+		m_pres_last[HTR_LP_OUT] = m_pres_last[LTR_LP_OUT] + m_DP_LTR[1];		//[kPa]
 
 	if ((ms_des_par.m_LTR_target_code == NS_HX_counterflow_eqs::OPTIMIZE_UA && ms_des_par.m_LTR_UA < 1.0E-12)
 		|| (ms_des_par.m_LTR_target_code == NS_HX_counterflow_eqs::TARGET_UA && ms_des_par.m_LTR_UA < 1.0E-12)
@@ -116,10 +116,10 @@ int C_PartialCooling_Cycle::design_core()
 		|| (ms_des_par.m_LTR_target_code == NS_HX_counterflow_eqs::TARGET_EFFECTIVENESS && ms_des_par.m_LTR_eff_target < 1.0E-12))
 		m_pres_last[HTR_LP_OUT] = m_pres_last[LTR_LP_OUT];	//[kPa] if no LTR then no pressure drop
 
-	if (ms_des_par.m_DP_HTR[1] < 0.0)
-		m_pres_last[TURB_OUT] = m_pres_last[HTR_LP_OUT] / (1.0 - fabs(ms_des_par.m_DP_HTR[1]));	//[kPa]
+	if (m_DP_HTR[1] < 0.0)
+		m_pres_last[TURB_OUT] = m_pres_last[HTR_LP_OUT] / (1.0 - fabs(m_DP_HTR[1]));	//[kPa]
 	else
-		m_pres_last[TURB_OUT] = m_pres_last[HTR_LP_OUT] + ms_des_par.m_DP_HTR[1];	//[kPa]
+		m_pres_last[TURB_OUT] = m_pres_last[HTR_LP_OUT] + m_DP_HTR[1];	//[kPa]
 
 	if ((ms_des_par.m_HTR_target_code == NS_HX_counterflow_eqs::OPTIMIZE_UA && ms_des_par.m_HTR_UA < 1.0E-12)
 		|| (ms_des_par.m_HTR_target_code == NS_HX_counterflow_eqs::TARGET_UA && ms_des_par.m_HTR_UA < 1.0E-12)
@@ -550,7 +550,7 @@ int C_PartialCooling_Cycle::finalize_design()
 
 	C_turbine::S_design_parameters t_des_par;
 		// Set turbine shaft speed
-	t_des_par.m_N_design = ms_des_par.m_N_turbine;		//[rpm]
+	t_des_par.m_N_design = m_N_turbine;		//[rpm]
 	t_des_par.m_N_comp_design_if_linked = mc_mc.get_design_solved()->m_N_design;	//[rpm]
 		// Turbine inlet state
 	t_des_par.m_P_in = m_pres_last[TURB_IN];	//[kPa]
@@ -791,11 +791,7 @@ int C_PartialCooling_Cycle::opt_design_core()
 	// Map ms_opt_des_par to ms_des_par
 
 	ms_des_par.m_T_pc_in = ms_opt_des_par.m_T_pc_in;		//[K]
-	ms_des_par.m_DP_LTR = ms_opt_des_par.m_DP_LTR;			//
-	ms_des_par.m_DP_HTR = ms_opt_des_par.m_DP_HTR;			//
 	ms_des_par.m_DP_PC_LP = ms_opt_des_par.m_DP_PC_LP;	//
-	ms_des_par.m_DP_PC_IP = ms_opt_des_par.m_DP_PC_IP;	//
-	ms_des_par.m_DP_PHX = ms_opt_des_par.m_DP_PHX;			//
         // LTR thermal design
     ms_des_par.m_LTR_target_code = ms_opt_des_par.m_LTR_target_code;    //[-]
     ms_des_par.m_LTR_min_dT = ms_opt_des_par.m_LTR_min_dT;      //[K]
@@ -811,7 +807,6 @@ int C_PartialCooling_Cycle::opt_design_core()
         //
 	ms_des_par.m_eta_pc = ms_opt_des_par.m_eta_pc;			//[-]
 	ms_des_par.m_des_tol = ms_opt_des_par.m_des_tol;				//[-]
-	ms_des_par.m_N_turbine = ms_opt_des_par.m_N_turbine;	//[rpm]
 
 	ms_des_par.m_is_des_air_cooler = ms_opt_des_par.m_is_des_air_cooler;	//[-]
 
@@ -961,11 +956,7 @@ int C_PartialCooling_Cycle::auto_opt_design_core()
 	// map 'auto_opt_des_par_in' to 'ms_auto_opt_des_par'
 
 	ms_opt_des_par.m_T_pc_in = ms_auto_opt_des_par.m_T_pc_in;		//[K]
-	ms_opt_des_par.m_DP_LTR = ms_auto_opt_des_par.m_DP_LTR;			        //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-	ms_opt_des_par.m_DP_HTR = ms_auto_opt_des_par.m_DP_HTR;				    //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 	ms_opt_des_par.m_DP_PC_LP = ms_auto_opt_des_par.m_DP_PC_pre;		    //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-	ms_opt_des_par.m_DP_PC_IP = ms_auto_opt_des_par.m_DP_PC_main;   //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-	ms_opt_des_par.m_DP_PHX = ms_auto_opt_des_par.m_DP_PHX;				    //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 	ms_opt_des_par.m_UA_rec_total = ms_auto_opt_des_par.m_UA_rec_total;		//[kW/K]
         // LTR thermal design
     ms_opt_des_par.m_LTR_target_code = ms_auto_opt_des_par.m_LTR_target_code;   //[-]
@@ -985,7 +976,6 @@ int C_PartialCooling_Cycle::auto_opt_design_core()
 	ms_opt_des_par.m_eta_pc = ms_auto_opt_des_par.m_eta_pc;					//[-]
 	ms_opt_des_par.m_des_tol = ms_auto_opt_des_par.m_des_tol;						//[-]
 	ms_opt_des_par.m_des_opt_tol = ms_auto_opt_des_par.m_des_opt_tol;				//[-]
-	ms_opt_des_par.m_N_turbine = ms_auto_opt_des_par.m_N_turbine;			//[rpm] Turbine shaft speed (negative values link turbine to compressor)
 
 	ms_opt_des_par.m_is_des_air_cooler = ms_auto_opt_des_par.m_is_des_air_cooler;	//[-]
 
@@ -1081,11 +1071,7 @@ int C_PartialCooling_Cycle::auto_opt_design_core()
 int C_PartialCooling_Cycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_parameters & auto_opt_des_hit_eta_in, std::string & error_msg)
 {
 	ms_auto_opt_des_par.m_T_pc_in = auto_opt_des_hit_eta_in.m_T_pc_in;		//[K]
-	ms_auto_opt_des_par.m_DP_LTR = auto_opt_des_hit_eta_in.m_DP_LT;			        //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-	ms_auto_opt_des_par.m_DP_HTR = auto_opt_des_hit_eta_in.m_DP_HT;				    //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 	ms_auto_opt_des_par.m_DP_PC_pre = auto_opt_des_hit_eta_in.m_DP_PC_pre;		    //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-	ms_auto_opt_des_par.m_DP_PC_main = auto_opt_des_hit_eta_in.m_DP_PC_main;   //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-	ms_auto_opt_des_par.m_DP_PHX = auto_opt_des_hit_eta_in.m_DP_PHX;				    //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 	ms_auto_opt_des_par.m_UA_rec_total = std::numeric_limits<double>::quiet_NaN();		//[kW/K]  ***** This method finds the UA required to hit the input efficiency! *****
      // LTR thermal design
     ms_auto_opt_des_par.m_LTR_target_code = auto_opt_des_hit_eta_in.m_LTR_target_code;  //[-]
@@ -1105,7 +1091,6 @@ int C_PartialCooling_Cycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_pa
 	ms_auto_opt_des_par.m_eta_pc = auto_opt_des_hit_eta_in.m_eta_pc;					//[-]
 	ms_auto_opt_des_par.m_des_tol = auto_opt_des_hit_eta_in.m_des_tol;						//[-]
 	ms_auto_opt_des_par.m_des_opt_tol = auto_opt_des_hit_eta_in.m_des_opt_tol;				//[-]
-	ms_auto_opt_des_par.m_N_turbine = auto_opt_des_hit_eta_in.m_N_turbine;			//[rpm] Turbine shaft speed (negative values link turbine to compressor)
 	ms_auto_opt_des_par.m_is_recomp_ok = auto_opt_des_hit_eta_in.m_is_recomp_ok;		//[-] 1 = yes, 0 = no, other = invalid
 
 	ms_auto_opt_des_par.m_is_des_air_cooler = auto_opt_des_hit_eta_in.m_is_des_air_cooler;		//[-]

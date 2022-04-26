@@ -57,11 +57,7 @@ public:
 		double m_P_pc_in;					//[kPa] Pre-compressor inlet pressure
 		double m_P_mc_in;					//[kPa] Compressor inlet pressure
 		double m_P_mc_out;					//[kPa] Compressor outlet pressure
-		std::vector<double> m_DP_LTR;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-		std::vector<double> m_DP_HTR;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		std::vector<double> m_DP_PC_LP;     //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-		std::vector<double> m_DP_PC_IP;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-		std::vector<double> m_DP_PHX;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
             // LTR thermal design
         int m_LTR_target_code;              //[-] 1 = UA, 2 = min dT, 3 = effectiveness
         double m_LTR_UA;					//[kW/K] target LTR conductance
@@ -83,7 +79,6 @@ public:
 		double m_eta_pc;					//[-] design-point efficiency of the pre-compressor; 
         int m_pc_comp_model_code;           //[-] Precompressor model - see sco2_cycle_components.h 
 		double m_des_tol;					//[-] Convergence tolerance
-		double m_N_turbine;					//[rpm] Turbine shaft speed (negative values link turbine to compressor)
 
 			// Air cooler parameters
 		bool m_is_des_air_cooler;		//[-] False will skip physical air cooler design. UA will not be available for cost models.
@@ -98,7 +93,7 @@ public:
                 m_LTR_UA = m_LTR_min_dT = m_LTR_eff_max = m_LTR_eff_target =
                 m_HTR_UA = m_HTR_min_dT = m_HTR_eff_max = m_HTR_eff_target =
                 m_recomp_frac =
-                m_eta_pc = m_des_tol = m_N_turbine =
+                m_eta_pc = m_des_tol = 
 				std::numeric_limits<double>::quiet_NaN();
 
 			// Air cooler default
@@ -119,27 +114,15 @@ public:
 			m_des_objective_type = 1;
 			m_min_phx_deltaT = 0.0;		//[C]
 
-			m_DP_LTR.resize(2);
-			std::fill(m_DP_LTR.begin(), m_DP_LTR.end(), std::numeric_limits<double>::quiet_NaN());
-			m_DP_HTR.resize(2);
-			std::fill(m_DP_HTR.begin(), m_DP_HTR.end(), std::numeric_limits<double>::quiet_NaN());
 			m_DP_PC_LP.resize(2);
 			std::fill(m_DP_PC_LP.begin(), m_DP_PC_LP.end(), std::numeric_limits<double>::quiet_NaN());
-			m_DP_PC_IP.resize(2);
-			std::fill(m_DP_PC_IP.begin(), m_DP_PC_IP.end(), std::numeric_limits<double>::quiet_NaN());
-			m_DP_PHX.resize(2);
-			std::fill(m_DP_PHX.begin(), m_DP_PHX.end(), std::numeric_limits<double>::quiet_NaN());
 		}
 	};
 
 	struct S_opt_des_params
 	{
 		double m_T_pc_in;					//[K] Pre-compressor inlet temperature
-		std::vector<double> m_DP_LTR;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-		std::vector<double> m_DP_HTR;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		std::vector<double> m_DP_PC_LP;     //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-		std::vector<double> m_DP_PC_IP;     //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-		std::vector<double> m_DP_PHX;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		double m_UA_rec_total;				//[kW/K] Total design-point recuperator UA
             // LTR thermal design
         int m_LTR_target_code;              //[-] 1 = UA, 2 = min dT, 3 = effectiveness
@@ -159,7 +142,6 @@ public:
 		double m_eta_pc;					//[-] design-point efficiency of the pre-compressor; 
 		double m_des_tol;					//[-] Convergence tolerance
 		double m_des_opt_tol;				//[-] Optimization tolerance
-		double m_N_turbine;					//[rpm] Turbine shaft speed (negative values link turbine to compressor)
 
 			// Air cooler parameters
 		bool m_is_des_air_cooler;		//[-] False will skip physical air cooler design. UA will not be available for cost models.
@@ -189,7 +171,7 @@ public:
                 m_LTR_UA = m_LTR_min_dT = m_LTR_eff_target = m_LTR_eff_max =
                 m_HTR_UA = m_HTR_min_dT = m_HTR_eff_target = m_HTR_eff_max =
                 m_eta_pc = 
-                m_des_tol = m_des_opt_tol = m_N_turbine = 
+                m_des_tol = m_des_opt_tol =  
 				m_P_mc_out_guess = m_PR_total_guess = m_f_PR_mc_guess = 
 				m_recomp_frac_guess = m_LTR_frac_guess = std::numeric_limits<double>::quiet_NaN();
 
@@ -206,16 +188,8 @@ public:
 			m_des_objective_type = 1;
 			m_min_phx_deltaT = 0.0;		//[C]
 
-			m_DP_LTR.resize(2);
-			std::fill(m_DP_LTR.begin(), m_DP_LTR.end(), std::numeric_limits<double>::quiet_NaN());
-			m_DP_HTR.resize(2);
-			std::fill(m_DP_HTR.begin(), m_DP_HTR.end(), std::numeric_limits<double>::quiet_NaN());
 			m_DP_PC_LP.resize(2);
 			std::fill(m_DP_PC_LP.begin(), m_DP_PC_LP.end(), std::numeric_limits<double>::quiet_NaN());
-			m_DP_PC_IP.resize(2);
-			std::fill(m_DP_PC_IP.begin(), m_DP_PC_IP.end(), std::numeric_limits<double>::quiet_NaN());
-			m_DP_PHX.resize(2);
-			std::fill(m_DP_PHX.begin(), m_DP_PHX.end(), std::numeric_limits<double>::quiet_NaN());
 		}
 	};
 
@@ -278,9 +252,12 @@ public:
         double T_mc_in /*K*/,
         double W_dot_net /*kWe*/,
         double T_t_in /*K*/, double P_high_limit /*kPa*/,
+        std::vector<double> DP_LTR, std::vector<double> DP_HTR,
+        std::vector<double> DP_PC_main, std::vector<double> DP_PHX,
         int LTR_N_sub_hxrs /*-*/, int HTR_N_sub_hxrs /*-*/,
         double eta_mc /*-*/, int mc_comp_model_core /*-*/,
-        double eta_rc /*-*/, double eta_t /*-*/,
+        double eta_rc /*-*/,
+        double eta_t /*-*/, double N_turbine /*rpm*/,
         double frac_fan_power /*-*/, double eta_fan /*-*/, double deltaP_cooler_frac /*-*/,
         int N_nodes_pass /*-*/,
         double T_amb_des /*K*/, double elevation /*m*/) :
@@ -289,9 +266,12 @@ public:
             T_mc_in,
             W_dot_net,
             T_t_in, P_high_limit,
+            DP_LTR, DP_HTR,
+            DP_PC_main, DP_PHX,
             LTR_N_sub_hxrs, HTR_N_sub_hxrs,
             eta_mc, mc_comp_model_core,
-            eta_rc, eta_t,
+            eta_rc,
+            eta_t, N_turbine,
             frac_fan_power, eta_fan, deltaP_cooler_frac,
             N_nodes_pass,
             T_amb_des, elevation)

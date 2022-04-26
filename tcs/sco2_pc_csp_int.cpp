@@ -102,9 +102,12 @@ void C_sco2_phx_air_cooler::design_core()
             T_mc_in,
             ms_des_par.m_W_dot_net,
             T_t_in, ms_des_par.m_P_high_limit,
+            ms_des_par.m_DP_LT, ms_des_par.m_DP_HT,
+            ms_des_par.m_DP_PC, ms_des_par.m_DP_PHX,
             ms_des_par.m_LTR_N_sub_hxrs, ms_des_par.m_HTR_N_sub_hxrs,
             ms_des_par.m_eta_mc, ms_des_par.m_mc_comp_type,
-            ms_des_par.m_eta_rc, ms_des_par.m_eta_t,
+            ms_des_par.m_eta_rc,
+            ms_des_par.m_eta_t, ms_des_par.m_N_turbine,
             ms_des_par.m_frac_fan_power, ms_des_par.m_eta_fan, ms_des_par.m_deltaP_cooler_frac,
             ms_des_par.m_N_nodes_pass,
             ms_des_par.m_T_amb_des, ms_des_par.m_elevation));
@@ -121,9 +124,12 @@ void C_sco2_phx_air_cooler::design_core()
             T_mc_in,
             ms_des_par.m_W_dot_net,
             T_t_in, ms_des_par.m_P_high_limit,
+            ms_des_par.m_DP_LT, ms_des_par.m_DP_HT,
+            ms_des_par.m_DP_PC, ms_des_par.m_DP_PHX,
             ms_des_par.m_LTR_N_sub_hxrs, ms_des_par.m_HTR_N_sub_hxrs,
             ms_des_par.m_eta_mc, ms_des_par.m_mc_comp_type,
-            ms_des_par.m_eta_rc, ms_des_par.m_eta_t,
+            ms_des_par.m_eta_rc,
+            ms_des_par.m_eta_t, ms_des_par.m_N_turbine,
             ms_des_par.m_frac_fan_power, ms_des_par.m_eta_fan, ms_des_par.m_deltaP_cooler_frac,
             ms_des_par.m_N_nodes_pass,
             ms_des_par.m_T_amb_des, ms_des_par.m_elevation));
@@ -150,11 +156,7 @@ void C_sco2_phx_air_cooler::design_core()
 				m_T_mc_in_min - 273.15);
 		}
 		ms_cycle_des_par.m_T_pc_in = T_mc_in;		//[K]
-		ms_cycle_des_par.m_DP_LT = ms_des_par.m_DP_LT;
-		ms_cycle_des_par.m_DP_HT = ms_des_par.m_DP_HT;
 		ms_cycle_des_par.m_DP_PC_pre = ms_des_par.m_DP_PC;
-		ms_cycle_des_par.m_DP_PC_main = ms_des_par.m_DP_PC;
-		ms_cycle_des_par.m_DP_PHX = ms_des_par.m_DP_PHX;
             // LTR thermal design
         ms_cycle_des_par.m_LTR_target_code = ms_des_par.m_LTR_target_code;  //[-]
         ms_cycle_des_par.m_LTR_UA = ms_des_par.m_LTR_UA;                    //[kW/K]
@@ -173,7 +175,6 @@ void C_sco2_phx_air_cooler::design_core()
 		ms_cycle_des_par.m_eta_pc = ms_des_par.m_eta_pc;
 		ms_cycle_des_par.m_des_tol = ms_des_par.m_des_tol;
 		ms_cycle_des_par.m_des_opt_tol = ms_des_par.m_des_opt_tol;
-		ms_cycle_des_par.m_N_turbine = ms_des_par.m_N_turbine;
 		ms_cycle_des_par.m_is_recomp_ok = ms_des_par.m_is_recomp_ok;
 
 		ms_cycle_des_par.m_is_des_air_cooler = ms_des_par.m_is_des_air_cooler;		//[-]
@@ -215,11 +216,7 @@ void C_sco2_phx_air_cooler::design_core()
 				m_T_mc_in_min - 273.15);
 		}
 		des_params.m_T_pc_in = T_mc_in;		//[K]
-		des_params.m_DP_LTR = ms_des_par.m_DP_LT;
-		des_params.m_DP_HTR = ms_des_par.m_DP_HT;
 		des_params.m_DP_PC_pre = ms_des_par.m_DP_PC;
-		des_params.m_DP_PC_main = ms_des_par.m_DP_PC;
-		des_params.m_DP_PHX = ms_des_par.m_DP_PHX;
 		des_params.m_UA_rec_total = ms_des_par.m_UA_recup_tot_des;	//[kW/K]
             // LTR thermal design
         des_params.m_LTR_target_code = ms_des_par.m_LTR_target_code;  //[-]
@@ -239,7 +236,6 @@ void C_sco2_phx_air_cooler::design_core()
 		des_params.m_eta_pc = ms_des_par.m_eta_pc;
 		des_params.m_des_tol = ms_des_par.m_des_tol;
 		des_params.m_des_opt_tol = ms_des_par.m_des_opt_tol;
-		des_params.m_N_turbine = ms_des_par.m_N_turbine;
 
 		des_params.m_is_des_air_cooler = ms_des_par.m_is_des_air_cooler;	//[-]
 
