@@ -597,12 +597,12 @@ int C_PartialCooling_Cycle::finalize_design()
 		// Structure for design parameters that are independent of cycle design solution
 	C_CO2_to_air_cooler::S_des_par_ind s_LP_air_cooler_des_par_ind;
 	s_LP_air_cooler_des_par_ind.m_T_amb_des = m_T_amb_des;		//[K]
-	s_LP_air_cooler_des_par_ind.m_elev = ms_des_par.m_elevation;			//[m]
+	s_LP_air_cooler_des_par_ind.m_elev = m_elevation;			//[m]
     s_LP_air_cooler_des_par_ind.m_eta_fan = m_eta_fan;           //[-]
-    s_LP_air_cooler_des_par_ind.m_N_nodes_pass = ms_des_par.m_N_nodes_pass; //[-]
+    s_LP_air_cooler_des_par_ind.m_N_nodes_pass = m_N_nodes_pass; //[-]
 
 	if (ms_des_par.m_is_des_air_cooler && std::isfinite(m_deltaP_cooler_frac) && std::isfinite(m_frac_fan_power)
-		&& std::isfinite(m_T_amb_des) && std::isfinite(ms_des_par.m_elevation) && std::isfinite(m_eta_fan) && ms_des_par.m_N_nodes_pass > 0)
+		&& std::isfinite(m_T_amb_des) && std::isfinite(m_elevation) && std::isfinite(m_eta_fan) && m_N_nodes_pass > 0)
 	{
 		mc_pc_air_cooler.design_hx(s_LP_air_cooler_des_par_ind, s_LP_air_cooler_des_par_dep, ms_des_par.m_des_tol);
 	}
@@ -627,12 +627,12 @@ int C_PartialCooling_Cycle::finalize_design()
 		// Structure for design parameters that are independent of cycle design solution
 	C_CO2_to_air_cooler::S_des_par_ind s_IP_air_cooler_des_par_ind;
 	s_IP_air_cooler_des_par_ind.m_T_amb_des = m_T_amb_des;		//[K]
-	s_IP_air_cooler_des_par_ind.m_elev = ms_des_par.m_elevation;			//[m]
+	s_IP_air_cooler_des_par_ind.m_elev = m_elevation;			//[m]
     s_IP_air_cooler_des_par_ind.m_eta_fan = m_eta_fan;           //[-]
-    s_IP_air_cooler_des_par_ind.m_N_nodes_pass = ms_des_par.m_N_nodes_pass; //[-]
+    s_IP_air_cooler_des_par_ind.m_N_nodes_pass = m_N_nodes_pass; //[-]
 
 	if (ms_des_par.m_is_des_air_cooler && std::isfinite(m_deltaP_cooler_frac) && std::isfinite(m_frac_fan_power)
-		&& std::isfinite(m_T_amb_des) && std::isfinite(ms_des_par.m_elevation) && std::isfinite(m_eta_fan) && ms_des_par.m_N_nodes_pass > 0)
+		&& std::isfinite(m_T_amb_des) && std::isfinite(m_elevation) && std::isfinite(m_eta_fan) && m_N_nodes_pass > 0)
 	{
 		mc_mc_air_cooler.design_hx(s_IP_air_cooler_des_par_ind, s_IP_air_cooler_des_par_dep, ms_des_par.m_des_tol);
 	}
@@ -814,8 +814,6 @@ int C_PartialCooling_Cycle::opt_design_core()
 	ms_des_par.m_N_turbine = ms_opt_des_par.m_N_turbine;	//[rpm]
 
 	ms_des_par.m_is_des_air_cooler = ms_opt_des_par.m_is_des_air_cooler;	//[-]
-	ms_des_par.m_elevation = ms_opt_des_par.m_elevation;					//[m]
-    ms_des_par.m_N_nodes_pass = ms_opt_des_par.m_N_nodes_pass;              //[-]
 
 	ms_des_par.m_des_objective_type = ms_opt_des_par.m_des_objective_type;	//[-]
 	ms_des_par.m_min_phx_deltaT = ms_opt_des_par.m_min_phx_deltaT;			//[K]
@@ -990,8 +988,6 @@ int C_PartialCooling_Cycle::auto_opt_design_core()
 	ms_opt_des_par.m_N_turbine = ms_auto_opt_des_par.m_N_turbine;			//[rpm] Turbine shaft speed (negative values link turbine to compressor)
 
 	ms_opt_des_par.m_is_des_air_cooler = ms_auto_opt_des_par.m_is_des_air_cooler;	//[-]
-	ms_opt_des_par.m_elevation = ms_auto_opt_des_par.m_elevation;					//[m]
-    ms_opt_des_par.m_N_nodes_pass = ms_auto_opt_des_par.m_N_nodes_pass;             //[-]
 
 	ms_opt_des_par.m_des_objective_type = ms_auto_opt_des_par.m_des_objective_type;	//[-]
 	ms_opt_des_par.m_min_phx_deltaT = ms_auto_opt_des_par.m_min_phx_deltaT;			//[C]
@@ -1113,8 +1109,6 @@ int C_PartialCooling_Cycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_pa
 	ms_auto_opt_des_par.m_is_recomp_ok = auto_opt_des_hit_eta_in.m_is_recomp_ok;		//[-] 1 = yes, 0 = no, other = invalid
 
 	ms_auto_opt_des_par.m_is_des_air_cooler = auto_opt_des_hit_eta_in.m_is_des_air_cooler;		//[-]
-	ms_auto_opt_des_par.m_elevation = auto_opt_des_hit_eta_in.m_elevation;					//[m]
-    ms_auto_opt_des_par.m_N_nodes_pass = auto_opt_des_hit_eta_in.m_N_nodes_pass;            //[-]
 
 	ms_auto_opt_des_par.m_des_objective_type = auto_opt_des_hit_eta_in.m_des_objective_type;	//[-]
 	ms_auto_opt_des_par.m_min_phx_deltaT = auto_opt_des_hit_eta_in.m_min_phx_deltaT;			//[C]

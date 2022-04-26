@@ -2414,13 +2414,10 @@ void C_RecompCycle::opt_design_core(int & error_code)
 	ms_des_par.m_HTR_eff_max = ms_opt_des_par.m_HTR_eff_max;    //[-]
     ms_des_par.m_HTR_od_UA_target_type = ms_opt_des_par.m_HTR_od_UA_target_type;
         //
-    ms_des_par.m_mc_comp_model_code = ms_opt_des_par.m_mc_comp_model_code;
 	ms_des_par.m_des_tol = ms_opt_des_par.m_des_tol;
 	ms_des_par.m_N_turbine = ms_opt_des_par.m_N_turbine;
 
 	ms_des_par.m_is_des_air_cooler = ms_opt_des_par.m_is_des_air_cooler;	//[-]
-	ms_des_par.m_elevation = ms_opt_des_par.m_elevation;					//[m]
-    ms_des_par.m_N_nodes_pass = ms_opt_des_par.m_N_nodes_pass;              //[-]
 
 	ms_des_par.m_des_objective_type = ms_opt_des_par.m_des_objective_type;	//[-]
 	ms_des_par.m_min_phx_deltaT = ms_opt_des_par.m_min_phx_deltaT;			//[C]
@@ -2689,14 +2686,11 @@ void C_RecompCycle::auto_opt_design_core(int & error_code)
     ms_opt_des_par.m_HTR_od_UA_target_type = ms_auto_opt_des_par.m_HTR_od_UA_target_type;
         //
 	ms_opt_des_par.m_UA_rec_total = ms_auto_opt_des_par.m_UA_rec_total;
-    ms_opt_des_par.m_mc_comp_model_code = ms_auto_opt_des_par.m_mc_comp_model_code;
 	ms_opt_des_par.m_des_tol = ms_auto_opt_des_par.m_des_tol;
 	ms_opt_des_par.m_des_opt_tol = ms_auto_opt_des_par.m_des_opt_tol;
 	ms_opt_des_par.m_N_turbine = ms_auto_opt_des_par.m_N_turbine;
 
 	ms_opt_des_par.m_is_des_air_cooler = ms_auto_opt_des_par.m_is_des_air_cooler;	//[-]
-	ms_opt_des_par.m_elevation = ms_auto_opt_des_par.m_elevation;					//[m]
-    ms_opt_des_par.m_N_nodes_pass = ms_auto_opt_des_par.m_N_nodes_pass;             //[-]
 
 	ms_opt_des_par.m_des_objective_type = ms_auto_opt_des_par.m_des_objective_type;	//[-]
 	ms_opt_des_par.m_min_phx_deltaT = ms_auto_opt_des_par.m_min_phx_deltaT;			//[C]
@@ -2841,15 +2835,12 @@ int C_RecompCycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_parameters 
     ms_auto_opt_des_par.m_HTR_eff_max = auto_opt_des_hit_eta_in.m_HTR_eff_max;    //[-]
     ms_auto_opt_des_par.m_HTR_od_UA_target_type = auto_opt_des_hit_eta_in.m_HTR_od_UA_target_type;
 	    //
-    ms_auto_opt_des_par.m_mc_comp_model_code = auto_opt_des_hit_eta_in.m_mc_comp_model_code;
 	ms_auto_opt_des_par.m_des_tol = auto_opt_des_hit_eta_in.m_des_tol;					//[-] Convergence tolerance
 	ms_auto_opt_des_par.m_des_opt_tol = auto_opt_des_hit_eta_in.m_des_opt_tol;			//[-] Optimization tolerance
 	ms_auto_opt_des_par.m_N_turbine = auto_opt_des_hit_eta_in.m_N_turbine;				//[rpm] Turbine shaft speed (negative values link turbine to compressor)
 	ms_auto_opt_des_par.m_is_recomp_ok = auto_opt_des_hit_eta_in.m_is_recomp_ok;		//[-] 1 = yes, 0 = no, other = invalid
 
 	ms_auto_opt_des_par.m_is_des_air_cooler = auto_opt_des_hit_eta_in.m_is_des_air_cooler;	//[-]
-	ms_auto_opt_des_par.m_elevation = auto_opt_des_hit_eta_in.m_elevation;					//[m]
-    ms_auto_opt_des_par.m_N_nodes_pass = auto_opt_des_hit_eta_in.m_N_nodes_pass;            //[-]
 
 	ms_auto_opt_des_par.m_des_objective_type = auto_opt_des_hit_eta_in.m_des_objective_type;	//[-]
 	ms_auto_opt_des_par.m_min_phx_deltaT = auto_opt_des_hit_eta_in.m_min_phx_deltaT;			//[C]
@@ -3329,7 +3320,7 @@ void C_RecompCycle::finalize_design(int & error_code)
 {
 	int cpp_offset = 1;
 
-	int mc_design_err = m_mc_ms.design_given_outlet_state(ms_des_par.m_mc_comp_model_code, m_temp_last[MC_IN],
+	int mc_design_err = m_mc_ms.design_given_outlet_state(m_mc_comp_model_code, m_temp_last[MC_IN],
 									m_pres_last[MC_IN],
 									m_m_dot_mc,
 									m_temp_last[MC_OUT],
@@ -3344,7 +3335,7 @@ void C_RecompCycle::finalize_design(int & error_code)
 
 	if( ms_des_par.m_recomp_frac > 0.01 )
 	{
-		int rc_des_err = m_rc_ms.design_given_outlet_state(ms_des_par.m_rc_comp_model_code, m_temp_last[LTR_LP_OUT],
+		int rc_des_err = m_rc_ms.design_given_outlet_state(m_rc_comp_model_code, m_temp_last[LTR_LP_OUT],
 										m_pres_last[LTR_LP_OUT],
 										m_m_dot_rc,
 										m_temp_last[RC_OUT],
@@ -3407,12 +3398,12 @@ void C_RecompCycle::finalize_design(int & error_code)
 		// Structure for design parameters that are independent of cycle design solution
 	C_CO2_to_air_cooler::S_des_par_ind s_air_cooler_des_par_ind;
 	s_air_cooler_des_par_ind.m_T_amb_des = m_T_amb_des;		//[K]
-	s_air_cooler_des_par_ind.m_elev = ms_des_par.m_elevation;			//[m]
+	s_air_cooler_des_par_ind.m_elev = m_elevation;			//[m]
     s_air_cooler_des_par_ind.m_eta_fan = m_eta_fan;          //[-]
-    s_air_cooler_des_par_ind.m_N_nodes_pass = ms_des_par.m_N_nodes_pass;    //[-]
+    s_air_cooler_des_par_ind.m_N_nodes_pass = m_N_nodes_pass;    //[-]
 
 	if (ms_des_par.m_is_des_air_cooler && std::isfinite(m_deltaP_cooler_frac) && std::isfinite(m_frac_fan_power)
-		&& std::isfinite(m_T_amb_des) && std::isfinite(ms_des_par.m_elevation) && std::isfinite(m_eta_fan) && ms_des_par.m_N_nodes_pass > 0)
+		&& std::isfinite(m_T_amb_des) && std::isfinite(m_elevation) && std::isfinite(m_eta_fan) && m_N_nodes_pass > 0)
 	{
 		mc_air_cooler.design_hx(s_air_cooler_des_par_ind, s_air_cooler_des_par_dep, ms_des_par.m_des_tol);
 	}

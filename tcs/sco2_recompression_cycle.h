@@ -82,15 +82,11 @@ public:
         NS_HX_counterflow_eqs::E_UA_target_type m_HTR_od_UA_target_type;
 
         double m_recomp_frac;				//[-] Fraction of flow that bypasses the precooler and the main compressor at the design point
-        int m_mc_comp_model_code;           //[-] Main compressor model - see sco2_cycle_components.h 
-        int m_rc_comp_model_code;           //[-] Recompressor model - see sco2_cycle_components.h 
 		double m_des_tol;						//[-] Convergence tolerance
 		double m_N_turbine;					//[rpm] Turbine shaft speed (negative values link turbine to compressor)
 
 		// Air cooler parameters
 		bool m_is_des_air_cooler;		//[-] False will skip physical air cooler design. UA will not be available for cost models.
-		double m_elevation;				//[m] Elevation (used to calculate ambient pressure)
-        int m_N_nodes_pass;             //[-] Number of nodes per pass
 
 		int m_des_objective_type;		//[2] = min phx deltat then max eta, [else] max eta
 		double m_min_phx_deltaT;		//[C]
@@ -102,24 +98,17 @@ public:
                 m_HTR_UA = m_HTR_min_dT = m_HTR_eff_target = m_HTR_eff_max = 
                 m_recomp_frac = 
                 m_des_tol = m_N_turbine =
-                m_elevation = std::numeric_limits<double>::quiet_NaN();
+                std::numeric_limits<double>::quiet_NaN();
 
             // Compressor model codes
-            m_mc_comp_model_code = C_comp__psi_eta_vs_phi::E_snl_radial_via_Dyreby;
-
-
+            //m_mc_comp_model_code = C_comp__psi_eta_vs_phi::E_snl_radial_via_Dyreby;
             //m_mc_comp_model_code = C_comp__psi_eta_vs_phi::E_compA__P85_T37;
             //m_mc_comp_model_code = C_comp__psi_eta_vs_phi::E_compA__P85_T32;
             //m_mc_comp_model_code = C_comp__psi_eta_vs_phi::E_compA__P80_T37;
             //m_mc_comp_model_code = C_comp__psi_eta_vs_phi::E_compA__P80_T32;
             //m_mc_comp_model_code = C_comp__psi_eta_vs_phi::E_compA__interpolate;
 
-
-
-            //m_mc_comp_model_code = C_comp__psi_eta_vs_phi::E_snl_radial_via_Dyreby;
-
-
-            m_rc_comp_model_code = C_comp__psi_eta_vs_phi::E_snl_radial_via_Dyreby;
+            //m_rc_comp_model_code = C_comp__psi_eta_vs_phi::E_snl_radial_via_Dyreby;
 
 
             // Recuperator design target codes
@@ -134,7 +123,6 @@ public:
 
 			// Air cooler default
 			m_is_des_air_cooler = true;
-            m_N_nodes_pass = -1;
 
 			m_DP_LT.resize(2);
 			std::fill(m_DP_LT.begin(), m_DP_LT.end(), std::numeric_limits<double>::quiet_NaN());
@@ -169,15 +157,12 @@ public:
         double m_HTR_eff_max;				//[-] Maximum allowable effectiveness in HT recuperator
         NS_HX_counterflow_eqs::E_UA_target_type m_HTR_od_UA_target_type;
             //
-        int m_mc_comp_model_code;           //[-] Recompressor model - see sco2_cycle_components.h 
 		double m_des_tol;					//[-] Convergence tolerance
 		double m_des_opt_tol;					//[-] Optimization tolerance
 		double m_N_turbine;					//[rpm] Turbine shaft speed (negative values link turbine to compressor)
 		
 		// Air cooler parameters
 		bool m_is_des_air_cooler;		//[-] False will skip physical air cooler design. UA will not be available for cost models.
-		double m_elevation;				//[m] Elevation (used to calculate ambient pressure)
-        int m_N_nodes_pass;             //[-] Number of nodes per pass
 
 		int m_des_objective_type;			//[2] = min phx deltat then max eta, [else] max eta
 		double m_min_phx_deltaT;			//[C]
@@ -202,11 +187,8 @@ public:
                 m_LTR_UA = m_LTR_min_dT = m_LTR_eff_target = m_LTR_eff_max =
                 m_HTR_UA = m_HTR_min_dT = m_HTR_eff_target = m_HTR_eff_max = 
                 m_des_tol = m_des_opt_tol = m_N_turbine =
-				m_elevation =
 				m_P_mc_out_guess = m_PR_HP_to_LP_guess = m_recomp_frac_guess = m_LT_frac_guess =
                 std::numeric_limits<double>::quiet_NaN();
-
-            m_mc_comp_model_code = C_comp__psi_eta_vs_phi::E_snl_radial_via_Dyreby;
 
             // Recuperator design target codes
             m_LTR_target_code = 1;      // default to target conductance
@@ -216,7 +198,6 @@ public:
 
 			// Air cooler default
 			m_is_des_air_cooler = true;
-            m_N_nodes_pass = -1;
 
 			// Default to standard optimization to maximize cycle efficiency
 			m_des_objective_type = 1;
@@ -526,18 +507,22 @@ public:
         double W_dot_net /*kWe*/,
         double T_t_in /*K*/, double P_high_limit /*kPa*/,
         int LTR_N_sub_hxrs /*-*/, int HTR_N_sub_hxrs /*-*/,
-        double eta_mc /*-*/, double eta_rc /*-*/, double eta_t /*-*/,
+        double eta_mc /*-*/, int mc_comp_model_code /*-*/,
+        double eta_rc /*-*/, double eta_t /*-*/,
         double frac_fan_power /*-*/, double eta_fan /*-*/, double deltaP_cooler_frac /*-*/,
-        double T_amb_des /*K*/) :
+        int N_nodes_pass /*-*/,
+        double T_amb_des /*K*/, double elevation /*m*/) :
         C_sco2_cycle_core(turbo_gen_motor_config,
             eta_generator,
             T_mc_in,
             W_dot_net,
             T_t_in, P_high_limit,
             LTR_N_sub_hxrs, HTR_N_sub_hxrs,
-            eta_mc, eta_rc, eta_t,
+            eta_mc, mc_comp_model_code,
+            eta_rc, eta_t,
             frac_fan_power, eta_fan, deltaP_cooler_frac,
-            T_amb_des)
+            N_nodes_pass,
+            T_amb_des, elevation)
 	{
 		m_temp_last.resize(END_SCO2_STATES);
 		std::fill(m_temp_last.begin(), m_temp_last.end(), std::numeric_limits<double>::quiet_NaN());

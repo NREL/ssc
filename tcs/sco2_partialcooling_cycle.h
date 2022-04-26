@@ -87,8 +87,6 @@ public:
 
 			// Air cooler parameters
 		bool m_is_des_air_cooler;		//[-] False will skip physical air cooler design. UA will not be available for cost models.
-		double m_elevation;				//[m] Elevation (used to calculate ambient pressure)
-        int m_N_nodes_pass;             //[-] Number of nodes per pass
 
 		int m_des_objective_type;		//[2] = min phx deltat then max eta, [else] max eta
 		double m_min_phx_deltaT;		//[C]
@@ -101,11 +99,10 @@ public:
                 m_HTR_UA = m_HTR_min_dT = m_HTR_eff_max = m_HTR_eff_target =
                 m_recomp_frac =
                 m_eta_pc = m_des_tol = m_N_turbine =
-				m_elevation = std::numeric_limits<double>::quiet_NaN();
+				std::numeric_limits<double>::quiet_NaN();
 
 			// Air cooler default
 			m_is_des_air_cooler = true;
-            m_N_nodes_pass = -1;
 
             // Compressor model codes
             m_mc_comp_model_code = C_comp__psi_eta_vs_phi::E_snl_radial_via_Dyreby;
@@ -166,8 +163,6 @@ public:
 
 			// Air cooler parameters
 		bool m_is_des_air_cooler;		//[-] False will skip physical air cooler design. UA will not be available for cost models.
-		double m_elevation;				//[m] Elevation (used to calculate ambient pressure)
-        int m_N_nodes_pass;             //[-] Number of nodes per pass
 
 		int m_des_objective_type;		//[2] = min phx deltat then max eta, [else] max eta
 		double m_min_phx_deltaT;		//[C]
@@ -195,13 +190,11 @@ public:
                 m_HTR_UA = m_HTR_min_dT = m_HTR_eff_target = m_HTR_eff_max =
                 m_eta_pc = 
                 m_des_tol = m_des_opt_tol = m_N_turbine = 
-				m_elevation =
 				m_P_mc_out_guess = m_PR_total_guess = m_f_PR_mc_guess = 
 				m_recomp_frac_guess = m_LTR_frac_guess = std::numeric_limits<double>::quiet_NaN();
 
 			// Air cooler default
 			m_is_des_air_cooler = true;
-            m_N_nodes_pass = -1;
 
             // Recuperator design target codes
             m_LTR_target_code = 1;      // default to target conductance
@@ -286,18 +279,22 @@ public:
         double W_dot_net /*kWe*/,
         double T_t_in /*K*/, double P_high_limit /*kPa*/,
         int LTR_N_sub_hxrs /*-*/, int HTR_N_sub_hxrs /*-*/,
-        double eta_mc /*-*/, double eta_rc /*-*/, double eta_t /*-*/,
+        double eta_mc /*-*/, int mc_comp_model_core /*-*/,
+        double eta_rc /*-*/, double eta_t /*-*/,
         double frac_fan_power /*-*/, double eta_fan /*-*/, double deltaP_cooler_frac /*-*/,
-        double T_amb_des /*K*/) :
+        int N_nodes_pass /*-*/,
+        double T_amb_des /*K*/, double elevation /*m*/) :
         C_sco2_cycle_core(turbo_gen_motor_config,
             eta_generator,
             T_mc_in,
             W_dot_net,
             T_t_in, P_high_limit,
             LTR_N_sub_hxrs, HTR_N_sub_hxrs,
-            eta_mc, eta_rc, eta_t,
+            eta_mc, mc_comp_model_core,
+            eta_rc, eta_t,
             frac_fan_power, eta_fan, deltaP_cooler_frac,
-            T_amb_des)
+            N_nodes_pass,
+            T_amb_des, elevation)
 	{
 		m_temp_last.resize(END_SCO2_STATES);
 		std::fill(m_temp_last.begin(), m_temp_last.end(), std::numeric_limits<double>::quiet_NaN());

@@ -123,7 +123,6 @@ public:
         double m_HTR_eff_max;		        //[-] Maximum allowable effectiveness in HT recuperator
         NS_HX_counterflow_eqs::E_UA_target_type m_HTR_od_UA_target_type;
             //
-        int m_mc_comp_model_code;           //[-] Main compressor model - see sco2_cycle_components.h 
 		double m_eta_pc;					//[-] design-point efficiency of the pre-compressor; 
 		double m_des_tol;					//[-] Convergence tolerance
 		double m_des_opt_tol;				//[-] Optimization tolerance
@@ -131,8 +130,6 @@ public:
 		
 		// Air cooler parameters
 		bool m_is_des_air_cooler;		//[-] False will skip physical air cooler design. UA will not be available for cost models.
-		double m_elevation;				//[m] Elevation (used to calculate ambient pressure)
-        int m_N_nodes_pass;             //[-] Number of nodes per pass
 
 		double m_is_recomp_ok;          //[-] 1 = Yes, 0 = simple cycle only, < 0 = fix f_recomp to abs(input)
 
@@ -158,11 +155,8 @@ public:
                 m_HTR_UA = m_HTR_min_dT = m_HTR_eff_target = m_HTR_eff_max =
                 m_eta_pc = 
 				m_des_tol = m_des_opt_tol = m_N_turbine =
-				m_elevation = 
                 m_is_recomp_ok =
 				m_PR_HP_to_LP_guess = m_f_PR_HP_to_IP_guess = std::numeric_limits<double>::quiet_NaN();
-
-            m_mc_comp_model_code = C_comp__psi_eta_vs_phi::E_snl_radial_via_Dyreby;
 
             // Recuperator design target codes
             m_LTR_target_code = 1;      // default to target conductance
@@ -172,7 +166,6 @@ public:
 
 			// Air cooler default
 			m_is_des_air_cooler = true;
-            m_N_nodes_pass = -1;
 
 			// Default to standard optimization to maximize cycle efficiency
 			m_des_objective_type = 1;
@@ -222,7 +215,6 @@ public:
         double m_HTR_eff_max;			    //[-] Maximum allowable effectiveness in HT recuperator
         NS_HX_counterflow_eqs::E_UA_target_type m_HTR_od_UA_target_type;
             // 
-        int m_mc_comp_model_code;           //[-] Recompressor model - see sco2_cycle_components.h 
 		double m_eta_pc;					//[-] design-point efficiency of the pre-compressor; 
 
 		double m_des_tol;					//[-] Convergence tolerance
@@ -231,8 +223,6 @@ public:
 		
 		// Air cooler parameters
 		bool m_is_des_air_cooler;		//[-] False will skip physical air cooler design. UA will not be available for cost models.
-		double m_elevation;				//[m] Elevation (used to calculate ambient pressure)
-        int m_N_nodes_pass;             //[-] Number of nodes per pass
 
 		double m_is_recomp_ok;			//[-] 1 = Yes, 0 = simple cycle only, < 0 = fix f_recomp to abs(input)
 
@@ -259,7 +249,6 @@ public:
                 m_LTR_UA = m_LTR_min_dT = m_LTR_eff_target = m_LTR_eff_max = 
                 m_HTR_UA = m_HTR_min_dT = m_HTR_eff_target = m_HTR_eff_max =
                 m_eta_pc = m_des_tol = m_des_opt_tol = m_N_turbine = 
-				m_elevation = 
                 m_is_recomp_ok =
 				m_PR_HP_to_LP_guess = m_f_PR_HP_to_IP_guess = std::numeric_limits<double>::quiet_NaN();
 
@@ -269,11 +258,8 @@ public:
             m_HTR_target_code = 1;      // default to target conductance
             m_HTR_od_UA_target_type = NS_HX_counterflow_eqs::E_UA_target_type::E_calc_UA;
 
-            m_mc_comp_model_code = C_comp__psi_eta_vs_phi::E_snl_radial_via_Dyreby;
-
 			// Air cooler default
 			m_is_des_air_cooler = true;
-            m_N_nodes_pass = -1;
 
             m_fixed_P_mc_out = false;       //[-] If false, then should default to optimizing this parameter
             m_fixed_PR_HP_to_LP = false;    //[-] If false, then should default to optimizing this parameter
@@ -441,13 +427,17 @@ protected:
     int m_HTR_N_sub_hxrs;               //[-] Number of sub-hxs to use in hx model
 
     double m_eta_mc;			//[-] design-point efficiency of the main compressor; isentropic if positive, polytropic if negative
+    int m_mc_comp_model_code;   //[-] Main compressor model - see sco2_cycle_components.h 
     double m_eta_rc;		    //[-] design-point efficiency of the recompressor; isentropic if positive, polytropic if negative
+    int m_rc_comp_model_code;   //[-] Recompressor model - see sco2_cycle_components.h 
     double m_eta_t;				//[-] design-point efficiency of the turbine; isentropic if positive, polytropic if negative
 
     double m_frac_fan_power;    //[-] Fraction of total cycle power 'S_des_par_cycle_dep.m_W_dot_fan_des' consumed by air fan
     double m_eta_fan;           //[-] Fan isentropic efficiency
     double m_deltaP_cooler_frac;//[-] Fraction of high side (of cycle, i.e. comp outlet) pressure that is allowed as pressure drop to design the ACC
     double m_T_amb_des;		    //[K] Design point ambient temperature
+    double m_elevation;			//[m] Elevation (used to calculate ambient pressure)
+    int m_N_nodes_pass;         //[-] Number of nodes per pass
 
 
 public:
@@ -458,9 +448,11 @@ public:
         double W_dot_net /*kWe*/,
         double T_t_in /*K*/, double P_high_limit /*kPa*/,
         int LTR_N_sub_hxrs /*-*/, int HTR_N_sub_hxrs /*-*/,
-        double eta_mc /*-*/, double eta_rc /*-*/, double eta_t /*-*/,
+        double eta_mc /*-*/, int mc_comp_model_code /*-*/,
+        double eta_rc /*-*/, double eta_t /*-*/,
         double frac_fan_power /*-*/, double eta_fan /*-*/, double deltaP_cooler_frac /*-*/,
-        double T_amb_des /*K*/)
+        int N_nodes_pass /*-*/,
+        double T_amb_des /*K*/, double elevation /*m*/)
 	{
         m_turbo_gen_motor_config = turbo_gen_motor_config;
         m_eta_generator = eta_generator;    //[-]
@@ -474,13 +466,18 @@ public:
         m_HTR_N_sub_hxrs = HTR_N_sub_hxrs;  //[-]
 
         m_eta_mc = eta_mc;          //[-]
+        m_mc_comp_model_code = mc_comp_model_code;  //[-]
         m_eta_rc = eta_rc;          //[-]
+        m_rc_comp_model_code = C_comp__psi_eta_vs_phi::E_snl_radial_via_Dyreby;
         m_eta_t = eta_t;            //[-]
 
         m_frac_fan_power = frac_fan_power;          //[-]
         m_eta_fan = eta_fan;                        //[-]
         m_deltaP_cooler_frac = deltaP_cooler_frac;  //[-]
+        m_N_nodes_pass = N_nodes_pass;              //[-]
+
         m_T_amb_des = T_amb_des;                    //[K]
+        m_elevation = elevation;                    //[m]
 
         // Set design limits!!!!
 		ms_des_limits.m_UA_net_power_ratio_max = 2.0;		//[-/K]
