@@ -152,7 +152,7 @@ size_t UtilityRateCalculator::getEnergyPeriod(size_t hourOfYear)
 	return period;
 }
 
-UtilityRateForecast::UtilityRateForecast(rate_data* util_rate, size_t stepsPerHour, const std::vector<double>& monthly_load_forecast, const std::vector<double>& monthly_gen_forecast, const std::vector<double>& monthly_avg_load_forecast, size_t analysis_period) :
+UtilityRateForecast::UtilityRateForecast(rate_data* util_rate, size_t stepsPerHour, const std::vector<double>& monthly_load_forecast, const std::vector<double>& monthly_gen_forecast, const std::vector<double>& monthly_avg_load_forecast, size_t analysis_period, const util::matrix_t<double>& monthly_peak_forecast) :
     current_composite_buy_rates(),
     current_composite_sell_rates(),
     next_composite_buy_rates(),
@@ -166,6 +166,7 @@ UtilityRateForecast::UtilityRateForecast(rate_data* util_rate, size_t stepsPerHo
 	m_monthly_load_forecast = monthly_load_forecast;
 	m_monthly_gen_forecast = monthly_gen_forecast;
 	m_monthly_avg_load_forecast = monthly_avg_load_forecast;
+    m_peaks_forecast = monthly_peak_forecast;
     nyears = analysis_period;
 }
 
@@ -176,6 +177,7 @@ UtilityRateForecast::UtilityRateForecast(UtilityRateForecast& tmp) :
 	m_monthly_load_forecast(tmp.m_monthly_load_forecast),
 	m_monthly_gen_forecast(tmp.m_monthly_gen_forecast),
 	m_monthly_avg_load_forecast(tmp.m_monthly_avg_load_forecast),
+    m_peaks_forecast(tmp.m_peaks_forecast),
     current_composite_buy_rates(tmp.current_composite_buy_rates),
     current_composite_sell_rates(tmp.current_composite_sell_rates),
     next_composite_buy_rates(tmp.next_composite_buy_rates),
@@ -314,22 +316,43 @@ void UtilityRateForecast::compute_next_composite_tou(int month, size_t year)
     next_composite_sell_rates = rate->get_composite_tou_sell_rate(month, year, expected_gen);
 }
 
+// Month is zero indexed
 void UtilityRateForecast::initializeMonth(int month, size_t year)
 {
 	if (last_month_init != month)
 	{
 		rate->init_dc_peak_vectors(month);
-		compute_next_composite_tou(month, year);
 
-        // Ignore any peak charges lower than the average gross load - this prevents the price signal from showing demand charges on the first hour of each month when the load is not really a peak
-		double avg_load = m_monthly_avg_load_forecast[year * 12 + month];
+        ur_month& curr_month = rate->m_month[month];
 
-		ur_month& curr_month = rate->m_month[month];
-		curr_month.dc_flat_peak = avg_load;
-		for (int period = 0; period < (int)curr_month.dc_periods.size(); period++)
-		{
-			curr_month.dc_tou_peak[period] = avg_load;
-		}
+        if (rate->has_kwh_per_kw_rate() || rate->en_billing_demand_lookback) {
+            double tou_peak = 0.0;
+            for (int period = 0; period < (int)curr_month.dc_periods.size(); period++)
+            {
+                tou_peak = m_peaks_forecast[year * 12 + month, period];
+                curr_month.dc_tou_peak[period] = tou_peak;
+                if (tou_peak > curr_month.dc_flat_peak) {
+                    curr_month.dc_flat_peak = tou_peak;
+                }
+            }
+            double avg_load = m_monthly_avg_load_forecast[year * 12 + month];
+            if (avg_load > curr_month.dc_flat_peak) {
+                curr_month.dc_flat_peak = avg_load; // Choose greater of average load or peak minus battery discharge capacity
+            }
+
+        }
+        else { // Standard demand charges
+            // Ignore any peak charges lower than the average gross load - this prevents the price signal from showing demand charges on the first hour of each month when the load is not really a peak
+            double avg_load = m_monthly_avg_load_forecast[year * 12 + month];
+            curr_month.dc_flat_peak = avg_load;
+            for (int period = 0; period < (int)curr_month.dc_periods.size(); period++)
+            {
+                curr_month.dc_tou_peak[period] = avg_load;
+            }
+        }
+
+        rate->init_energy_rates(false, month);
+        compute_next_composite_tou(month, year);
         last_month_init = month;
 	}
 }
