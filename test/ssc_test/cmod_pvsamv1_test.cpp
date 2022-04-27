@@ -577,6 +577,39 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelLosses)
     }
 }
 
+/// Test PVSAMv1 with default no-financial model and transmission losses to test interaction of transmission and ac wiring losses
+TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelSequentialLosses)
+{
+    // 0: Default Losses, 1: Modify Point Losses
+    std::vector<double> annual_energy_expected = { 8836, 2226};
+    std::map<std::string, double> pairs;
+
+    // 0: Default losses
+    int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+    EXPECT_FALSE(pvsam_errors);
+    if (!pvsam_errors) {
+        SetCalculated("annual_energy");
+        EXPECT_NEAR(calculated_value, annual_energy_expected[0], m_error_tolerance_hi);
+    }
+
+    // 1: Modify Point Losses
+    pairs["acwiring_loss"] = 50;
+    pairs["transmission_loss"] = 50;
+
+    pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+    EXPECT_FALSE(pvsam_errors);
+    if (!pvsam_errors) {
+        SetCalculated("annual_energy");
+        EXPECT_NEAR(calculated_value, annual_energy_expected[1], m_error_tolerance_hi);
+    }
+
+    SetCalculated("annual_ac_wiring_loss_percent");
+    EXPECT_NEAR(calculated_value, 50, m_error_tolerance_lo);
+    SetCalculated("annual_transmission_loss_percent");
+    EXPECT_NEAR(calculated_value, 25, m_error_tolerance_lo); // Both of these values are compared to ac_gross, so since this is applied second it is lower
+
+}
+
 /// Change half of all temperatures so that inv eff is derated by ~50% for half the year
 /// DC production & inverter efficiency both decrease as result
 TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, InvTempDerate) {
