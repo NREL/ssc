@@ -198,6 +198,15 @@ void C_pt_sf_perf_interp::init()
 	m_ncall = -1;
 }
 
+double C_pt_sf_perf_interp::get_clearsky(const C_csp_weatherreader::S_outputs& weather, double hour)
+{
+    return CSP::get_clearsky(ms_params.m_clearsky_model, ms_params.mv_clearsky_data,
+        hour,
+        weather.m_solzen, weather.m_solazi,
+        weather.m_day, weather.m_month, weather.m_elev,
+        weather.m_pres, weather.m_tdew);
+}
+
 void C_pt_sf_perf_interp::call(const C_csp_weatherreader::S_outputs &weather, double field_control_in, const C_csp_solver_sim_info &sim_info)
 {
 	// Increase call-per-timestep counter
@@ -234,6 +243,9 @@ void C_pt_sf_perf_interp::call(const C_csp_weatherreader::S_outputs &weather, do
     }
 
 	double solaz = weather.m_solazi*CSP::pi / 180.0;
+
+    double hour = time / 3600.0;    //[hr]
+    ms_outputs.m_clearsky_dni = get_clearsky(weather, hour);
 
 	// clear out the existing flux map
 	ms_outputs.m_flux_map_out.fill(0.0);
@@ -335,7 +347,8 @@ void C_pt_sf_perf_interp::call(const C_csp_weatherreader::S_outputs &weather, do
     ms_outputs.m_plant_defocus_out = field_control; //[-] plant defocus including field control events (e.g. wind stow speed)
 }
 
-void C_pt_sf_perf_interp::off(const C_csp_solver_sim_info &sim_info)
+void C_pt_sf_perf_interp::off(const C_csp_weatherreader::S_outputs& weather,
+    const C_csp_solver_sim_info &sim_info)
 {
 	// Increase call-per-timestep counter
 	// Converge() sets it to -1, so on first call this line will adjust it = 0
@@ -352,6 +365,9 @@ void C_pt_sf_perf_interp::off(const C_csp_solver_sim_info &sim_info)
 	if( m_is_field_tracking_prev ) {
 		pparasi = ms_params.m_N_hel * m_p_start / (step / 3600.0);			// [kWe-hr]/[hr] = kWe 
 	}
+
+    double hour = sim_info.ms_ts.m_time / 3600.0;    //[hr]
+    ms_outputs.m_clearsky_dni = get_clearsky(weather, hour);
 
 	ms_outputs.m_pparasi = pparasi / 1.E3;		//[MW], convert from kJ/hr: Parasitic power for tracking
 	// Other outputs

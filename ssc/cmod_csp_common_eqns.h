@@ -160,6 +160,10 @@ double Max_field_flow_velocity(double m_dot_htfmax, double min_inner_diameter,
 double Min_field_flow_velocity(double m_dot_htfmin, double min_inner_diameter,
     double T_in /*C*/, int rec_htf /*-*/, const util::matrix_t<ssc_number_t>& field_fl_props /*-*/);
 
+double Min_htf_temp(int rec_htf /*-*/, const util::matrix_t<ssc_number_t>& field_fl_props /*-*/);   // [C]
+
+double Max_htf_temp(int rec_htf /*-*/, const util::matrix_t<ssc_number_t>& field_fl_props /*-*/);   // [C]
+
 double Field_htf_cp_avg(double T_in /*C*/, double T_out /*C*/, int rec_htf /*-*/,
     const util::matrix_t<ssc_number_t>& field_fl_props /*-*/);      // [kJ/kg-K]
 

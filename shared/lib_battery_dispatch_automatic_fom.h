@@ -110,6 +110,9 @@ protected:
 
 	/*! Market real time and forecast prices */
 	std::vector<double> _forecast_price_rt_series;
+    std::vector<double> ppa_prices; // Smaller vector for copying and sorting
+
+    size_t discharge_hours; // Battery size in hours
 
 	/*! Utility rate information */
     std::shared_ptr<UtilityRateCalculator> m_utilityRateCalculator;

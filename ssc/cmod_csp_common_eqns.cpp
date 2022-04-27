@@ -622,6 +622,18 @@ double Min_field_flow_velocity(double m_dot_htfmin, double min_inner_diameter,
         min_inner_diameter * min_inner_diameter);
 }
 
+double Min_htf_temp(int rec_htf /*-*/, const util::matrix_t<ssc_number_t>& field_fl_props /*-*/)       // [C]
+{
+    HTFProperties htf_properties = GetHtfProperties(rec_htf, field_fl_props);
+    return htf_properties.min_temp() - 273.15;
+}
+
+double Max_htf_temp(int rec_htf /*-*/, const util::matrix_t<ssc_number_t>& field_fl_props /*-*/)       // [C]
+{
+    HTFProperties htf_properties = GetHtfProperties(rec_htf, field_fl_props);
+    return htf_properties.max_temp() - 273.15;
+}
+
 double Field_htf_cp_avg(double T_in /*C*/, double T_out /*C*/, int rec_htf /*-*/,
     const util::matrix_t<ssc_number_t>& field_fl_props /*-*/)      // [kJ/kg-K]
 {

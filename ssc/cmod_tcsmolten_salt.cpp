@@ -331,9 +331,9 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,     SSC_STRING, "ampl_data_dir",                      "AMPL data file directory",                                                                                                                "",             "",                                  "System Control",                           "?=''",                                                             "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "is_ampl_engine",                     "Run dispatch optimization with external AMPL engine",                                                                                     "",             "",                                  "System Control",                           "?=0",                                                              "",              ""},
     { SSC_INPUT,     SSC_STRING, "ampl_exec_call",                     "System command to run AMPL code",                                                                                                         "",             "",                                  "System Control",                           "?='ampl sdk_solution.run'",                                        "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "disp_rsu_cost_rel",                  "Receiver startup cost",                                                                                                                   "$/MWt/start",  "",                                  "System Control",                           "is_dispatch=1",                                                    "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "disp_csu_cost_rel",                  "Cycle startup cost",                                                                                                                      "$/MWe-cycle/start", "",                             "System Control",                           "is_dispatch=1",                                                    "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "disp_pen_ramping",                   "Dispatch cycle production change penalty",                                                                                                "$/MWe-change", "",                                  "System Control",                           "is_dispatch=1",                                                    "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "disp_rsu_cost_rel",                  "Receiver startup cost",                                                                                                                   "$/MWt/start",  "",                                  "System Control",                           "",                                                                 "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "disp_csu_cost_rel",                  "Cycle startup cost",                                                                                                                      "$/MWe-cycle/start", "",                             "System Control",                           "",                                                                 "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "disp_pen_ramping",                   "Dispatch cycle production change penalty",                                                                                                "$/MWe-change", "",                                  "System Control",                           "",                                                                 "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "disp_inventory_incentive",           "Dispatch storage terminal inventory incentive multiplier",                                                                                "",             "",                                  "System Control",                           "?=0.0",                                                            "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "q_rec_standby",                      "Receiver standby energy consumption",                                                                                                     "kWt",          "",                                  "System Control",                           "?=9e99",                                                           "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "q_rec_heattrace",                    "Receiver heat trace energy consumption during startup",                                                                                   "kWe-hr",       "",                                  "System Control",                           "?=0.0",                                                            "",              ""},
@@ -1363,10 +1363,8 @@ public:
             // No clear sky model available for cavity receiver
             is_rec_model_clearsky = false;
 
-            double hel_stow_deploy = as_double("hel_stow_deploy");          //[deg]
-
-            double od_rec_tube = as_double("d_tube_out")*1.E-3;         //[m] convert from cmod units of mm
-            double th_rec_tube = as_double("th_tube") * 1.E-3;          //[m] convert from cmod units of mm
+            double od_rec_tube = as_double("d_tube_out");           //[mm]
+            double th_rec_tube = as_double("th_tube");              //[mm]
             double receiverHeight = as_double("cav_rec_height");        //[m]
             double receiverWidth = as_double("cav_rec_width");          //[m]
             double rec_span = as_double("cav_rec_span")*CSP::pi/180.0;  //[rad] convert from cmod units of deg
@@ -1395,7 +1393,7 @@ public:
             // ***************************************************************************************
             // ***************************************************************************************
 
-            std::unique_ptr<C_cavity_receiver> c_cav_rec = std::unique_ptr<C_cavity_receiver>(new C_cavity_receiver(as_double("dni_des"), hel_stow_deploy,
+            std::unique_ptr<C_cavity_receiver> c_cav_rec = std::unique_ptr<C_cavity_receiver>(new C_cavity_receiver(as_double("dni_des"),
                 as_integer("rec_htf"), as_matrix("field_fl_props"),
                 od_rec_tube, th_rec_tube, as_integer("mat_tube"),
                 nPanels, receiverHeight, receiverWidth,
@@ -1421,119 +1419,79 @@ public:
             H_rec = receiverHeight;     //[m]
         }
         else if (rec_type == 0){
+
+            int rec_night_recirc = 0;
+            int rec_clearsky_model = as_integer("rec_clearsky_model");
+
+            if (rec_clearsky_model > 4)
+                throw exec_error("tcsmolten_salt", "Invalid specification for 'rec_clearsky_model'");
+            if (rec_clearsky_model == -1 && as_double("rec_clearsky_fraction") >= 0.0001)
+                throw exec_error("tcsmolten_salt", "'rec_clearsky_model' must be specified when 'rec_clearsky_fraction' > 0.0.");
+
             if (!as_boolean("is_rec_model_trans") && !as_boolean("is_rec_startup_trans")) {
                 //std::unique_ptr<C_mspt_receiver_222> ss_receiver = std::make_unique<C_mspt_receiver_222>();   // new to C++14
-                std::unique_ptr<C_mspt_receiver_222> ss_receiver = std::unique_ptr<C_mspt_receiver_222>(new C_mspt_receiver_222());   // steady-state receiver
-
-                ss_receiver->m_n_panels = as_integer("N_panels");
-                ss_receiver->m_d_rec = D_rec;
-                ss_receiver->m_h_rec = H_rec;
-                ss_receiver->m_od_tube = as_double("d_tube_out");
-                ss_receiver->m_th_tube = as_double("th_tube");
-                ss_receiver->m_mat_tube = as_integer("mat_tube");
-                ss_receiver->m_field_fl = as_integer("rec_htf");
-                ss_receiver->m_field_fl_props = as_matrix("field_fl_props");
-                ss_receiver->m_flow_type = as_integer("Flow_type");
-                ss_receiver->m_crossover_shift = as_integer("crossover_shift");
-                ss_receiver->m_hl_ffact = as_double("hl_ffact");
-                //ss_receiver->m_A_sf = as_double("A_sf");
-                ss_receiver->m_piping_loss_coefficient = as_double("piping_loss_coefficient");
-                ss_receiver->m_pipe_length_add = as_double("piping_length_const");  //[m]
-                ss_receiver->m_pipe_length_mult = as_double("piping_length_mult");      //[-]
-                ss_receiver->m_n_flux_x = as_integer("n_flux_x");
-                ss_receiver->m_n_flux_y = as_integer("n_flux_y");
-                ss_receiver->m_T_salt_hot_target = as_double("T_htf_hot_des");
-                ss_receiver->m_hel_stow_deploy = as_double("hel_stow_deploy");
-                ss_receiver->m_csky_frac = as_double("rec_clearsky_fraction");
+                std::unique_ptr<C_mspt_receiver_222> ss_receiver = std::unique_ptr<C_mspt_receiver_222>(new C_mspt_receiver_222(
+                    as_double("h_tower"), as_double("epsilon"),
+                    as_double("T_htf_hot_des"), as_double("T_htf_cold_des"),
+                    as_double("f_rec_min"), q_dot_rec_des,
+                    as_double("rec_su_delay"), as_double("rec_qf_delay"),
+                    as_double("csp.pt.rec.max_oper_frac"), as_double("eta_pump"),
+                    as_double("d_tube_out"), as_double("th_tube"),
+                    as_double("piping_loss_coefficient"), as_double("piping_length_const"),
+                    as_double("piping_length_mult"),
+                    as_integer("rec_htf"), as_matrix("field_fl_props"),
+                    as_integer("mat_tube"),
+                    rec_night_recirc,
+                    as_integer("N_panels"), D_rec, H_rec,
+                    as_integer("Flow_type"), as_integer("crossover_shift"), as_double("hl_ffact"),
+                    as_double("T_htf_hot_des"), as_double("rec_clearsky_fraction")
+                    ));   // steady-state receiver
 
                 receiver = std::move(ss_receiver);
             }
             else {
-                //std::unique_ptr<C_mspt_receiver> trans_receiver = std::make_unique<C_mspt_receiver>();    // new to C++14
-                std::unique_ptr<C_mspt_receiver> trans_receiver = std::unique_ptr<C_mspt_receiver>(new C_mspt_receiver());    // transient receiver
 
-                trans_receiver->m_n_panels = as_integer("N_panels");
-                trans_receiver->m_d_rec = D_rec;
-                trans_receiver->m_h_rec = H_rec;
-                trans_receiver->m_od_tube = as_double("d_tube_out");
-                trans_receiver->m_th_tube = as_double("th_tube");
-                trans_receiver->m_mat_tube = as_integer("mat_tube");
-                trans_receiver->m_field_fl = as_integer("rec_htf");
-                trans_receiver->m_field_fl_props = as_matrix("field_fl_props");
-                trans_receiver->m_flow_type = as_integer("Flow_type");
-                trans_receiver->m_crossover_shift = as_integer("crossover_shift");
-                trans_receiver->m_hl_ffact = as_double("hl_ffact");
-                //trans_receiver->m_A_sf = as_double("A_sf");
-                trans_receiver->m_piping_loss_coeff = as_double("piping_loss_coefficient");                       //[Wt/m]
-                trans_receiver->m_pipe_length_add = as_double("piping_length_const");   //[m]
-                trans_receiver->m_pipe_length_mult = as_double("piping_length_mult");       //[-]
-                trans_receiver->m_n_flux_x = as_integer("n_flux_x");
-                trans_receiver->m_n_flux_y = as_integer("n_flux_y");
-                trans_receiver->m_T_salt_hot_target = as_double("T_htf_hot_des");
-                trans_receiver->m_hel_stow_deploy = as_double("hel_stow_deploy");
-                trans_receiver->m_csky_frac = as_double("rec_clearsky_fraction");
+                bool is_enforce_min_startup = as_boolean("is_rec_enforce_min_startup");
 
-
-                // Inputs for transient receiver model
-                trans_receiver->m_is_transient = as_boolean("is_rec_model_trans");
-                trans_receiver->m_is_startup_transient = as_boolean("is_rec_startup_trans");
-                trans_receiver->m_u_riser = as_double("u_riser");                       //[m/s]
-                trans_receiver->m_th_riser = as_double("th_riser");                 //[mm]
-                trans_receiver->m_rec_tm_mult = as_double("rec_tm_mult");
-                trans_receiver->m_riser_tm_mult = as_double("riser_tm_mult");
-                trans_receiver->m_downc_tm_mult = as_double("downc_tm_mult");
-                trans_receiver->m_heat_trace_power = as_double("heat_trace_power");		//[kW/m]
-                trans_receiver->m_tube_flux_preheat = as_double("preheat_flux");        //[kW/m2]
-                trans_receiver->m_min_preheat_time = as_double("min_preheat_time");		//[hr]
-                trans_receiver->m_fill_time = as_double("min_fill_time");				//[hr]
-                trans_receiver->m_flux_ramp_time = as_double("startup_ramp_time");      //[hr]
-                trans_receiver->m_preheat_target = as_double("T_htf_cold_des");
-                trans_receiver->m_startup_target_delta = min(0.0, as_double("startup_target_Tdiff"));
-                trans_receiver->m_initial_temperature = 5.0; //[C]
-
-                trans_receiver->m_is_startup_from_solved_profile = as_boolean("is_rec_startup_from_T_soln");
-                if (!trans_receiver->m_is_startup_transient && trans_receiver->m_is_startup_from_solved_profile)
+                //trans_receiver->m_is_startup_from_solved_profile = as_boolean("is_rec_startup_from_T_soln");
+                if (as_boolean("is_rec_startup_trans") && as_boolean("is_rec_startup_from_T_soln"))
                     throw exec_error("tcsmolten_salt", "Receiver startup from solved temperature profiles is only available when receiver transient startup model is enabled");
 
-                trans_receiver->m_is_enforce_min_startup = as_boolean("is_rec_enforce_min_startup");
-                if (as_boolean("is_rec_startup_trans") && !trans_receiver->m_is_startup_from_solved_profile && !trans_receiver->m_is_enforce_min_startup)
+                //trans_receiver->m_is_enforce_min_startup = as_boolean("is_rec_enforce_min_startup");
+                if (as_boolean("is_rec_startup_trans") && !as_boolean("is_rec_startup_from_T_soln") && !is_enforce_min_startup)
                 {
                     log("Both 'is_rec_enforce_min_startup' and 'is_rec_startup_from_T_soln' were set to 'false'. Minimum startup time will always be enforced unless 'is_rec_startup_from_T_soln' is set to 'true'", SSC_WARNING);
-                    trans_receiver->m_is_enforce_min_startup = 1;
+                    is_enforce_min_startup = true;
                 }
 
+                //std::unique_ptr<C_mspt_receiver> trans_receiver = std::make_unique<C_mspt_receiver>();    // new to C++14
+                std::unique_ptr<C_mspt_receiver> trans_receiver = std::unique_ptr<C_mspt_receiver>(new C_mspt_receiver(
+                    as_double("h_tower"), as_double("epsilon"),
+                    as_double("T_htf_hot_des"), as_double("T_htf_cold_des"),
+                    as_double("f_rec_min"), q_dot_rec_des,
+                    as_double("rec_su_delay"), as_double("rec_qf_delay"),
+                    as_double("csp.pt.rec.max_oper_frac"), as_double("eta_pump"),
+                    as_double("d_tube_out"), as_double("th_tube"),
+                    as_double("piping_loss_coefficient"), as_double("piping_length_const"),
+                    as_double("piping_length_mult"),
+                    as_integer("rec_htf"), as_matrix("field_fl_props"),
+                    as_integer("mat_tube"),
+                    rec_night_recirc,
+                    as_integer("N_panels"), D_rec, H_rec,
+                    as_integer("Flow_type"), as_integer("crossover_shift"), as_double("hl_ffact"),
+                    as_double("T_htf_hot_des"), as_double("rec_clearsky_fraction"),
+                    as_boolean("is_rec_model_trans"), as_boolean("is_rec_startup_trans"),
+                    as_double("rec_tm_mult"), as_double("u_riser"),
+                    as_double("th_riser"), as_double("riser_tm_mult"),
+                    as_double("downc_tm_mult"), as_double("heat_trace_power"),
+                    as_double("preheat_flux"), as_double("min_preheat_time"),
+                    as_double("min_fill_time"), as_double("startup_ramp_time"),
+                    as_double("T_htf_cold_des"), min(0.0, as_double("startup_target_Tdiff")),
+                    5.0,
+                    as_boolean("is_rec_startup_from_T_soln"), is_enforce_min_startup
+                    ));    // transient receiver
+
                 receiver = std::move(trans_receiver);
-            }
-
-            // Parent class member data
-            receiver->m_h_tower = as_double("h_tower");                 //[m]
-            receiver->m_epsilon = as_double("epsilon");                 //[-]
-            receiver->m_T_htf_hot_des = as_double("T_htf_hot_des");     //[C]
-            receiver->m_T_htf_cold_des = as_double("T_htf_cold_des");   //[C]
-            receiver->m_f_rec_min = as_double("f_rec_min");             //[-]
-            receiver->m_q_rec_des = q_dot_rec_des;                      //[MWt] 
-            receiver->m_rec_su_delay = as_double("rec_su_delay");
-            receiver->m_rec_qf_delay = as_double("rec_qf_delay");
-            receiver->m_m_dot_htf_max_frac = as_double("csp.pt.rec.max_oper_frac");
-            receiver->m_eta_pump = as_double("eta_pump");
-            receiver->m_night_recirc = 0;
-
-            receiver->m_clearsky_model = as_integer("rec_clearsky_model");
-            if (receiver->m_clearsky_model > 4)
-                throw exec_error("tcsmolten_salt", "Invalid specification for 'rec_clearsky_model'");
-            if (receiver->m_clearsky_model == -1 && as_double("rec_clearsky_fraction") >= 0.0001)
-                throw exec_error("tcsmolten_salt", "'rec_clearsky_model' must be specified when 'rec_clearsky_fraction' > 0.0.");
-
-            if (receiver->m_clearsky_model == 0)
-            {
-                size_t n_csky = 0;
-                ssc_number_t* csky = as_array("rec_clearsky_dni", &n_csky);
-                if (n_csky != n_steps_full)
-                    throw exec_error("tcsmolten_salt", "Invalid clear-sky DNI data. Array must have " + util::to_string((int)n_steps_full) + " rows.");
-
-                receiver->m_clearsky_data.resize(n_steps_full);
-                for (size_t i = 0; i < n_steps_full; i++)
-                    receiver->m_clearsky_data.at(i) = (double)csky[i];
             }
         }        
 
@@ -1575,7 +1533,21 @@ public:
             heliostatfield.ms_params.m_A_sf = as_double("A_sf");        //[m2]
         }
 
+        heliostatfield.ms_params.m_clearsky_model = as_integer("rec_clearsky_model");
 
+        std::vector<double> clearsky_data;
+        if (heliostatfield.ms_params.m_clearsky_model == 0)
+        {
+            size_t n_csky = 0;
+            ssc_number_t* csky = as_array("rec_clearsky_dni", &n_csky);
+            if (n_csky != n_steps_full)
+                throw exec_error("tcsmolten_salt", "Invalid clear-sky DNI data. Array must have " + util::to_string((int)n_steps_full) + " rows.");
+
+            clearsky_data.resize(n_steps_full);
+            for (size_t i = 0; i < n_steps_full; i++)
+                clearsky_data.at(i) = (double)csky[i];
+        }
+        heliostatfield.ms_params.mv_clearsky_data = clearsky_data;
 
         //Load the solar field adjustment factors
         sf_adjustment_factors sf_haf(this);
@@ -1668,7 +1640,7 @@ public:
             double hrs_startup_at_max_rate = as_double("hrs_startup_at_max_rate");      //[hr] duration of startup at max startup power
             double f_heater_min = as_double("f_q_dot_heater_min");                      //[-] minimum allowable heater output as fraction of design
 
-            p_electric_resistance = new C_csp_cr_electric_resistance(receiver->m_T_htf_cold_des, receiver->m_T_htf_hot_des,
+            p_electric_resistance = new C_csp_cr_electric_resistance(as_double("T_htf_hot_des"), as_double("T_htf_cold_des"),
                 q_dot_heater_des, f_heater_min,
                 f_q_dot_des_allowable_su, hrs_startup_at_max_rate,
                 as_integer("rec_htf"), as_matrix("field_fl_props"), C_csp_cr_electric_resistance::E_elec_resist_startup_mode::INSTANTANEOUS_NO_MAX_ELEC_IN);
