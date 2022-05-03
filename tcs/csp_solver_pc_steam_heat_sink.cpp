@@ -282,16 +282,18 @@ void C_pc_steam_heat_sink::call(const C_csp_weatherreader::S_outputs &weather,
 	out_solver.m_P_cycle = 0.0;							//[MWe] No electricity generation
 	out_solver.m_T_htf_cold = T_steam_cold - 273.15;	//[C] convert from K
 	out_solver.m_m_dot_htf = m_dot_steam*3600.0;		//[kg/hr] Return inlet mass flow rate
-	out_solver.m_W_cool_par = 0.0;			//[MWe] No cooling load
+	double W_dot_cooling_par = 0.0;			//[MWe] No cooling load
 	
 	out_solver.m_time_required_su = 0.0;		//[s] No startup requirements, for now
 	out_solver.m_q_dot_htf = q_dot_steam;	//[MWt] Thermal power form HTF
-	out_solver.m_W_dot_htf_pump = m_dot_steam*(h_steam_cold_comp - h_steam_cold)/1.E3;	//[MWe]
-	
+
+    double W_dot_htf_pump = m_dot_steam*(h_steam_cold_comp - h_steam_cold)/1.E3;	//[MWe]
+    out_solver.m_W_dot_elec_parasitics_tot = W_dot_cooling_par + W_dot_htf_pump;    //[MWe]
+
 	out_solver.m_was_method_successful = true;
 
-	mc_reported_outputs.value(E_Q_DOT_HEAT_SINK, q_dot_steam);					//[MWt]
-	mc_reported_outputs.value(E_W_DOT_PUMPING, out_solver.m_W_dot_htf_pump);	//[MWe]
+	mc_reported_outputs.value(E_Q_DOT_HEAT_SINK, q_dot_steam);		//[MWt]
+	mc_reported_outputs.value(E_W_DOT_PUMPING, W_dot_htf_pump);	    //[MWe]
 
 	return;
 }

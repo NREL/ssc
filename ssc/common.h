@@ -83,7 +83,7 @@ class forecast_price_signal
 	std::string m_error;
 public:
 	forecast_price_signal(var_table *vt);
-	bool setup(size_t nsteps = 8760);
+	bool setup(size_t step_per_hour);
 	std::vector<ssc_number_t> forecast_price() { return m_forecast_price; }
 	ssc_number_t operator()(size_t time);
 	std::string error() { return m_error; }

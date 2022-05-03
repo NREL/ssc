@@ -28,6 +28,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "csp_solver_util.h"
 
+#include "Ambient.h"
+
 using namespace std;
 
 /* 
@@ -315,8 +317,71 @@ double CSP::skytemp(double T_amb_K, double T_dp_K, double hour){
 	T_dpC = T_dp_K-273.15;
 
 	//The sky temperature relationship
-	return T_amb_K*pow(.711+.0056*T_dpC+.000073*T_dpC*T_dpC+.013*cos(time), .25);
+	return T_amb_K*pow(.711+.0056*T_dpC+.000073*T_dpC*T_dpC+.013*cos(time), .25);   //[K]
 };
+
+double CSP::get_clearsky(int clearsky_model /*-*/, const std::vector<double>& clearsky_data,
+    double hour,
+    double solzen /*deg*/, double azimuth_in /*deg*/,
+    int day_of_year /*-*/, int month_1_base /*-*/, double elev /*m*/,
+    double P_amb /*mbar*/, double T_dp /*C*/)
+{
+    if (clearsky_model == -1)
+        return std::numeric_limits<double>::quiet_NaN();
+
+    if (solzen >= 90.0)
+        return 0.0;
+
+    double clearsky;
+    if (clearsky_model == 0)  // Use user-defined array
+    {
+        int nsteps = (int)clearsky_data.size();
+        double baseline_step = 8760. / double(nsteps);  // Weather file time step size (hr)
+        int step = (int)((hour - 1.e-6) / baseline_step);
+        step = std::min(step, nsteps - 1);
+        clearsky = clearsky_data.at(step);
+    }
+    else  // use methods in SolarPILOT
+    {
+        std::vector<int> monthlen{ 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+        int doy = day_of_year;
+        int m = month_1_base - 1;
+        for (int j = 0; j < m; j++)
+            doy += monthlen[j];
+
+        double pres = P_amb;                 //[mbar]
+        if (pres < 20. && pres > 1.0)				// Some weather files seem to have inconsistent pressure units... make sure that value is of correct order of magnitude
+            pres = pres * 100.;			// convert to mbar
+        double dpres = pres * 1.e-3 * 0.986923;		// Ambient pressure in atm
+        double del_h2o = exp(0.058 * T_dp + 2.413);  // Correlation for precipitable water in mm H20 (from Choudhoury INTERNATIONAL JOURNAL OF CLIMATOLOGY, VOL. 16, 663-475 (1996))
+
+        // Methods taken from SolarPilot Ambient class
+        double S0 = 1.353 * (1. + .0335 * cos(2. * PI * (doy + 10.) / 365.));
+        double zenith = solzen * 3.14159 / 180.;
+        double azimuth = azimuth_in * 3.14159 / 180.;
+        double szen = sin(zenith);
+        double czen = cos(zenith);
+        double save2 = 90. - atan2(szen, czen) * R2D;
+        double save = 1.0 / czen;
+        if (save2 <= 30.)
+            save = save - 41.972213 * pow(save2, (-2.0936381 - 0.04117341 * save2 + 0.000849854 * pow(save2, 2)));
+
+        double alt = elev / 1000.;
+        double csky = 0.0;
+        if (clearsky_model == 1)  // Meinel
+            csky = (1. - .14 * alt) * exp(-.357 / pow(czen, .678)) + .14 * alt;
+        else if (clearsky_model == 2)  // Hottel
+            csky = 0.4237 - 0.00821 * pow(6. - alt, 2) + (0.5055 + 0.00595 * pow(6.5 - alt, 2)) * exp(-(0.2711 + 0.01858 * pow(2.5 - alt, 2)) / (czen + .00001));
+        else if (clearsky_model == 3)  // Allen
+            csky = 1.0 - 0.263 * ((del_h2o + 2.72) / (del_h2o + 5.0)) * pow((save * dpres), (0.367 * ((del_h2o + 11.53) / (del_h2o + 7.88))));
+        else if (clearsky_model == 4)  // Moon
+            csky = 0.183 * exp(-save * dpres / 0.48) + 0.715 * exp(-save * dpres / 4.15) + .102;
+
+        clearsky = std::fmax(0.0, csky * S0 * 1000.);
+    }
+
+    return clearsky;
+}
 
 double CSP::sign(double val){
 	if(val < 0.) { return -1.0; }

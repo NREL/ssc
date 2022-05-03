@@ -87,6 +87,7 @@ public:
 	int GetFluid() { return m_fluid; }
 	bool SetUserDefinedFluid( const util::matrix_t<double> &table );
 	bool SetUserDefinedFluid(const util::matrix_t<double> &table, bool calc_temp_enth_table);
+    void Initialize(int htf_code, util::matrix_t<double> ud_htf_props);
 
 	double Cp( double T_K );    //[kJ/kg-K]
 	double dens( double T_K, double P );
@@ -98,6 +99,8 @@ public:
 	double Pr( double T_K, double P );
 	double Re( double T_K, double P, double vel, double d );
 	double temp( double H );
+    double min_temp();          // [K]
+    double max_temp();          // [K]
 	double enth( double T_K );
 
 	double temp_lookup( double enth /*kJ/kg*/ );

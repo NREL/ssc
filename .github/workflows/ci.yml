@@ -26,6 +26,7 @@ jobs:
       with:
         repository: google/googletest
         path: googletest
+        ref: b85864c64758dec007208e56af933fc3f52044ee
     
     - name: build Gtest
       run: | 
@@ -85,6 +86,7 @@ jobs:
       with:
         repository: google/googletest
         path: googletest
+        ref: b85864c64758dec007208e56af933fc3f52044ee
     
     - name: build Gtest
       run: | 

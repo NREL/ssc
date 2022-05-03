@@ -47,6 +47,10 @@ private:
 	int m_n_flux_x;		//[-]
 	int m_n_flux_y;		//[-]
 
+        // receiver target values
+    double m_A_rec_active_total;    //[m2]
+    double m_A_rec_flux_node;       //[m2]
+
 	//Stored Variables
     bool m_is_field_tracking;
     bool m_is_field_tracking_prev;
@@ -63,7 +67,7 @@ public:
 	// Class to save messages for up stream classes
 	C_csp_messages mc_csp_messages;
 
-	C_pt_sf_perf_interp();
+	C_pt_sf_perf_interp(double m_A_rec_active_total /*m2*/);
 
 	~C_pt_sf_perf_interp();
 
@@ -97,10 +101,14 @@ public:
 
 		double m_A_sf;		//[m2]
 
+        int m_clearsky_model;
+
+        std::vector<double> mv_clearsky_data;
+
 		S_params()
 		{
 			// Integers
-			m_n_flux_x = m_n_flux_y = m_N_hel = -1;
+			m_n_flux_x = m_n_flux_y = m_N_hel = m_clearsky_model = -1;
 
 			// Doubles
 			m_p_start = m_p_track = m_hel_stow_deploy = m_v_wind_max = 
@@ -117,12 +125,17 @@ public:
 
 		util::matrix_t<double> m_flux_map_out;
 		double m_pparasi;		//[MWe]
-		double m_eta_field;		//[-]
+		double m_eta_field;		//[-] field efficiency * sf_adjust. plant defocus not applied
         double m_sf_adjust_out;
+        double m_plant_defocus_out; //[-] plant defocus input adjusted for field control events
+
+        double m_clearsky_dni;    //[W/m2]
 
 		S_outputs()
 		{
-			m_q_dot_field_inc = m_pparasi = m_eta_field = m_sf_adjust_out =  std::numeric_limits<double>::quiet_NaN();
+			m_q_dot_field_inc = m_pparasi =
+                m_eta_field = m_sf_adjust_out = m_plant_defocus_out =
+                m_clearsky_dni = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -134,9 +147,12 @@ public:
 		double field_control_in, 
 		const C_csp_solver_sim_info &sim_info);
 
-	void off(const C_csp_solver_sim_info &sim_info);
+	void off(const C_csp_weatherreader::S_outputs& weather,
+        const C_csp_solver_sim_info &sim_info);
 
 	void converged();
+
+    double get_clearsky(const C_csp_weatherreader::S_outputs& weather, double hour);
 };
 
 
