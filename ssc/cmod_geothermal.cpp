@@ -135,6 +135,8 @@ static var_info _cm_vtab_geothermal[] = {
 																																																	             
 	// This first batch of outputs is for calculating UI values																																		             
     { SSC_OUTPUT,       SSC_NUMBER,      "num_wells_getem_output",             "Number of wells calculated by GETEM",                 "",        "",             "GeoHourly",        "ui_calculations_only=1",   "",                "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "num_wells_getem_inj",             "Number of wells calculated by GETEM",                 "",        "",             "GeoHourly",        "ui_calculations_only=1",   "",                "" },
+
     { SSC_OUTPUT,       SSC_NUMBER,      "plant_brine_eff",                    "Plant Brine Efficiency",                              "",        "",             "GeoHourly",        "ui_calculations_only=1",   "",                "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "gross_output",                       "Gross output from GETEM",                             "",        "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "pump_depth_ft",                      "Pump depth calculated by GETEM",                      "ft",      "",             "GeoHourly",        "ui_calculations_only=1",   "",                "" },
@@ -339,6 +341,7 @@ public:
 
 			// assign values for UI results
 			assign("num_wells_getem_output", var_data((ssc_number_t)geo_outputs.md_NumberOfWells));
+            assign("num_wells_getem_inj", var_data((ssc_number_t)geo_outputs.md_NumberOfWellsInj));
 			assign("plant_brine_eff", var_data((ssc_number_t)geo_outputs.md_PlantBrineEffectiveness));
 			assign("gross_output", var_data((ssc_number_t)geo_outputs.md_GrossPlantOutputMW));
 

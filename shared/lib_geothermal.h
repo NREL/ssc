@@ -53,7 +53,7 @@ struct SGeothermal_Inputs
 		me_rt = NO_RESOURCE_TYPE; me_dc = NOT_CHOSEN; me_pc = NO_PC_CHOICE;
 		mi_ModelChoice = -1; mb_CalculatePumpWork = true;
 		mi_ProjectLifeYears = mi_MakeupCalculationsPerYear = mi_TotalMakeupCalculations = 0;
-		md_DesiredSalesCapacityKW = md_NumberOfWells = md_PlantEfficiency = md_TemperatureDeclineRate = md_MaxTempDeclineC = md_TemperatureWetBulbC = 0.0;
+		md_DesiredSalesCapacityKW = md_NumberOfWells = md_NumberofWellsInj = md_PlantEfficiency = md_TemperatureDeclineRate = md_MaxTempDeclineC = md_TemperatureWetBulbC = 0.0;
 		md_PressureAmbientPSI = md_ProductionFlowRateKgPerS = md_GFPumpEfficiency = md_PressureChangeAcrossSurfaceEquipmentPSI = md_ExcessPressureBar = 0.0;
 		md_DiameterProductionWellInches = md_DiameterPumpCasingInches = md_DiameterInjectionWellInches = md_UserSpecifiedPumpWorkKW = 0.0;
 		md_PotentialResourceMW = md_ResourceDepthM = md_TemperatureResourceC = md_TemperaturePlantDesignC = md_EGSThermalConductivity = md_EGSSpecificHeatConstant = 0.0;
@@ -81,6 +81,7 @@ struct SGeothermal_Inputs
 
 	double md_DesiredSalesCapacityKW;						// entered or calculated, linked to 'cb'
 	double md_NumberOfWells;								// entered or calculated, depending on 'cb'
+    double md_NumberofWellsInj;
 	double md_PlantEfficiency;								// not in GETEM - essentially the ratio of plant brine effectiveness to max possible brine effectiveness
 	double md_TemperatureDeclineRate;						// '% per year, 3% is default
 	double md_MaxTempDeclineC;								// degrees C, default = 30
@@ -126,7 +127,7 @@ struct SGeothermal_Outputs
 {
 	SGeothermal_Outputs()
 	{
-		md_PumpWorkKW = md_NumberOfWells = md_FlashBrineEffectiveness = md_PressureHPFlashPSI = md_PressureLPFlashPSI = 0.0;
+		md_PumpWorkKW = md_NumberOfWells = md_NumberOfWellsInj = md_FlashBrineEffectiveness = md_PressureHPFlashPSI = md_PressureLPFlashPSI = 0.0;
 		md_GrossPlantOutputMW = md_PlantBrineEffectiveness = md_PressureChangeAcrossReservoir = md_AverageReservoirTemperatureF = 0;
 		md_PumpDepthFt = md_PumpHorsePower = md_BottomHolePressure = 0;
 		maf_ReplacementsByYear = maf_monthly_resource_temp = maf_monthly_power = maf_monthly_energy = maf_timestep_resource_temp = NULL;
@@ -138,6 +139,7 @@ struct SGeothermal_Outputs
 
 	//Following list of variables used as inputs in cmod_geothermal_costs.cpp for calculating direct geothermal plant cost:
 	double md_NumberOfWells;
+    double md_NumberOfWellsInj;
 	double md_PumpWorkKW;
 	double eff_secondlaw;				//Overall Plant 2nd Law Efficiency 
 	double qRejectedTotal;				//Used in calculating Cooling Tower Cost - Flash Plant Type
@@ -250,6 +252,7 @@ private:
 
 	double GetPumpWorkKW(void);
     double GetInjectionPumpWorkft(void);
+    double GetProductionPumpWorkft(void);
 	double NumberOfReservoirs(void);
 	double CalculatePumpWorkInKW(double flowLbPerHr, double pumpHeadFt);
 	double GetPumpWorkWattHrPerLb(void);
