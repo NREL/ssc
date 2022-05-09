@@ -625,9 +625,12 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 
     { SSC_OUTPUT,    SSC_NUMBER, "conversion_factor",                  "Gross to net conversion factor",                                                                                                          "%",            "",                                  "",                                         "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "capacity_factor",                    "Capacity factor",                                                                                                                         "%",            "",                                  "",                                         "*",                                                                "",              ""},
+    { SSC_OUTPUT,    SSC_NUMBER, "sales_energy_capacity_factor",       "Capacity factor considering only positive net generation periods",                                                                        "%",            "",                                  "",                                         "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "kwh_per_kw",                         "First year kWh/kW",                                                                                                                       "kWh/kW",       "",                                  "",                                         "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "annual_total_water_use",             "Total annual water usage, cycle + mirror washing",                                                                                        "m3",           "",                                  "",                                         "*",                                                                "",              ""},
-
+    { SSC_OUTPUT,    SSC_NUMBER, "capacity_factor_highest_1000_ppas",  "Capacity factor at 1000 highest ppa timesteps",                                                                                           "-",            "",                                  "",                                         "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "capacity_factor_highest_2000_ppas",  "Capacity factor at 2000 highest ppa timesteps",                                                                                           "-",            "",                                  "",                                         "*",                                                                "",              "" },
+        
     { SSC_OUTPUT,    SSC_NUMBER, "disp_objective_ann",                 "Annual sum of dispatch objective function value",                                                                                         "",             "",                                  "",                                         "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "disp_iter_ann",                      "Annual sum of dispatch solver iterations",                                                                                                "",             "",                                  "",                                         "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "disp_presolve_nconstr_ann",          "Annual sum of dispatch problem constraint count",                                                                                         "",             "",                                  "",                                         "*",                                                                "",              ""},
@@ -638,6 +641,10 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_OUTPUT,    SSC_NUMBER, "sim_cpu_run_time",                   "Simulation duration clock time",                                                                                                         "s",             "",                                  "",                                         "*",                                                                "",              ""},
 
     var_info_invalid };
+
+
+bool SortByPPAPrice(const pair<int, double>& lhs,
+    const pair<int, double>& rhs);
 
 class cm_tcsmolten_salt : public compute_module
 {
@@ -2406,13 +2413,16 @@ public:
             throw exec_error("tcsmolten_salt", "failed to setup adjustment factors: " + haf.error());
 
         ssc_number_t *p_gen = allocate("gen", count);
+        ssc_number_t* p_gensales_after_avail = allocate("gensales_after_avail", count);
         for( size_t i = 0; i < count; i++ )
         {
             size_t hour = (size_t)ceil(p_time_final_hr[i]);
             p_gen[i] = (ssc_number_t)(p_W_dot_net[i] * 1.E3 * haf(hour));           //[kWe]
+            p_gensales_after_avail[i] = max(0.0, p_gen[i]);                         //[kWe]
         }
         ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, steps_per_hour);
         accumulate_annual_for_year("gen", "annual_energy", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed/steps_per_hour);
+        accumulate_annual_for_year("gensales_after_avail", "annual_sales_energy", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour);
         
         accumulate_annual_for_year("P_cycle", "annual_W_cycle_gross", 1000.0*sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed/steps_per_hour);        //[kWe-hr]
         accumulate_annual_for_year("P_cooling_tower_tot", "annual_W_cooling_tower", 1000.0*sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour);        //[kWe-hr]
@@ -2438,17 +2448,22 @@ public:
         double V_water_mirrors = as_double("water_usage_per_wash") / 1000.0*as_double("A_sf")*as_double("washing_frequency");
         assign("annual_total_water_use", (ssc_number_t)(V_water_cycle + V_water_mirrors));
 
-        ssc_number_t ae = as_number("annual_energy");
-        ssc_number_t pg = as_number("annual_W_cycle_gross");
+        ssc_number_t ae = as_number("annual_energy");           //[kWe-hr]
+        ssc_number_t pg = as_number("annual_W_cycle_gross");    //[kWe-hr]
+        ssc_number_t annual_sales_energy = as_number("annual_sales_energy");        //[kWe-hr]
         ssc_number_t convfactor = (pg != 0) ? 100 * ae / pg : (ssc_number_t)0.0;
         assign("conversion_factor", convfactor);
 
         double kWh_per_kW = 0.0;
+        double kWh_sales_energy_per_kW_nameplate = 0.0;
         double nameplate = system_capacity;     //[kWe]
-        if(nameplate > 0.0)
+        if (nameplate > 0.0) {
             kWh_per_kW = ae / nameplate;
+            kWh_sales_energy_per_kW_nameplate = annual_sales_energy / nameplate;
+        }
 
         assign("capacity_factor", (ssc_number_t)(kWh_per_kW / ((double)n_steps_fixed / (double)steps_per_hour)*100.));
+        assign("sales_energy_capacity_factor", (ssc_number_t)(kWh_sales_energy_per_kW_nameplate / ((double)n_steps_fixed / (double)steps_per_hour) * 100.));
         assign("kwh_per_kw", (ssc_number_t)kWh_per_kW);
          
         if (pb_tech_type == 0) {
@@ -2457,7 +2472,50 @@ public:
                 assign("A_radfield", (ssc_number_t)A_radfield);
             }
         }
-        //Single value outputs from radiative cooling system
+
+        ssc_number_t* p_pricing_mult = as_array("pricing_mult", &count);
+
+        std::vector<pair<int, double>> ppa_pairs;
+        ppa_pairs.resize(count);
+        for (size_t i = 0; i < count; i++) {
+            ppa_pairs[i].first = i;
+            ppa_pairs[i].second = p_pricing_mult[i];
+        }
+
+        std::sort(ppa_pairs.begin(), ppa_pairs.end(), SortByPPAPrice);
+        int n_ppa_steps = 1000;
+
+        double total_energy_in_sub_period = 0.0;
+        for (size_t i = 0; i < n_ppa_steps; i++) {
+            size_t j = ppa_pairs[i].first;
+            total_energy_in_sub_period += p_gen[j] * sim_setup.m_report_step / 3600.0;     //[kWe-hr]
+        }
+
+        double total_energy_nameplate = nameplate * n_ppa_steps * sim_setup.m_report_step / 3600.0;     //[kWe-hr]
+
+        double cap_fac_highest_1000_ppas = 0.0;
+        if (nameplate > 0.0) {
+            cap_fac_highest_1000_ppas = total_energy_in_sub_period / total_energy_nameplate * 100.0;    //[%]        
+        }
+
+        assign("capacity_factor_highest_1000_ppas", cap_fac_highest_1000_ppas);
+
+        n_ppa_steps = 2000;
+
+        total_energy_in_sub_period = 0.0;
+        for (size_t i = 0; i < n_ppa_steps; i++) {
+            size_t j = ppa_pairs[i].first;
+            total_energy_in_sub_period += p_gen[j] * sim_setup.m_report_step / 3600.0;     //[kWe-hr]
+        }
+
+        total_energy_nameplate = nameplate * n_ppa_steps * sim_setup.m_report_step / 3600.0;     //[kWe-hr]
+
+        double cap_fac_highest_2000_ppas = 0.0;
+        if (nameplate > 0.0) {
+            cap_fac_highest_2000_ppas = total_energy_in_sub_period / total_energy_nameplate * 100.0;    //[%]
+        }
+
+        assign("capacity_factor_highest_2000_ppas", cap_fac_highest_2000_ppas);
 
         if (p_electric_resistance != NULL) {
             delete p_electric_resistance;
@@ -2469,5 +2527,11 @@ public:
 
     }
 };
+
+bool SortByPPAPrice(const pair<int, double>& lhs,
+    const pair<int, double>& rhs)
+{
+    return lhs.second > rhs.second;
+}
 
 DEFINE_MODULE_ENTRY(tcsmolten_salt, "CSP molten salt power tower with hierarchical controller and dispatch optimization", 1)
