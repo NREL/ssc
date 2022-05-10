@@ -155,7 +155,7 @@ bool mp_ancillary_services(ssc_data_t data)
 		std::vector<ssc_number_t> ancillary_services4_revenue(nsteps, 0.0);
 
         if (ancillary_services_success) {
-            warning = "You are running the merchant plant financial market with no revenue streams enabled.";
+            warning = "No source of revenue enabled. The Merchant Plant financial model requires at least one source of revenue. To fix the problem, enable energy market revenue and/or one or more ancillary services.";
         }
 		// cleared capacity and price columns
 		if (analysis_period > 0)
