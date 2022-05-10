@@ -252,7 +252,7 @@ private:
 
 	double GetPumpWorkKW(void);
     double GetInjectionPumpWorkft(void);
-    double GetProductionPumpWorkft(void);
+    double GetProductionPumpWorkft(double injection_pressure);
 	double NumberOfReservoirs(void);
 	double CalculatePumpWorkInKW(double flowLbPerHr, double pumpHeadFt);
 	double GetPumpWorkWattHrPerLb(void);

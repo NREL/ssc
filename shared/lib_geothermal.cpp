@@ -645,7 +645,8 @@ double CGeothermalAnalyzer::CalculatePumpWorkInKW(double dFlowLbPerHr, double dP
 double CGeothermalAnalyzer::GetPumpWorkWattHrPerLb(void)
 {	// Enter 1 for flow to Get power per lb of flow
 	//double dProductionPumpPower = geothermal::pumpWorkInWattHr(1, pumpHeadFt(), geothermal::EFFICIENCY_PUMP_GF, ms_ErrorString);
-	double dProductionPumpPower = geothermal::pumpWorkInWattHr(1, pumpHeadFt(), mo_geo_in.md_GFPumpEfficiency, ms_ErrorString);
+	
+    //double dProductionPumpPower = geothermal::pumpWorkInWattHr(1, GetProductionPumpWorkft(), mo_geo_in.md_GFPumpEfficiency, ms_ErrorString);
 	if (!ms_ErrorString.empty()) return 0;
 
 	double dInjectionPumpPower = 0;
@@ -677,6 +678,11 @@ double CGeothermalAnalyzer::GetPumpWorkWattHrPerLb(void)
 		//dInjectionPumpPower = geothermal::pumpWorkInWattHr(dWaterLoss, dInjectionPumpHeadFt, mo_geo_in.md_GFPumpEfficiency, ms_ErrorString) * dFractionOfInletGFInjected; // ft-lbs/hr
         dInjectionPumpPower = geothermal::pumpWorkInWattHr(1, GetInjectionPumpWorkft(), mo_geo_in.md_GFPumpEfficiency, ms_ErrorString); // ft-lbs/hr
 	}
+
+    double dProductionPumpPower = geothermal::pumpWorkInWattHr(1, pumpHeadFt(), mo_geo_in.md_GFPumpEfficiency, ms_ErrorString);
+    //double dProductionPumpPower = geothermal::pumpWorkInWattHr(1,GetProductionPumpWorkft(GetInjectionPumpWorkft()), mo_geo_in.md_GFPumpEfficiency, ms_ErrorString);
+
+    double check = GetProductionPumpWorkft(dInjectionPumpPower);
     double retVal = 0;
     if (mo_geo_in.me_ct == FLASH)
         retVal = dInjectionPumpPower; // watt-hr per lb of flow
@@ -770,9 +776,9 @@ double CGeothermalAnalyzer::GetInjectionPumpWorkft(void)
     return injection_pump_head_ft;
 }
 
-double CGeothermalAnalyzer::GetProductionPumpWorkft(void)
+double CGeothermalAnalyzer::GetProductionPumpWorkft(double injection_pressure)
 {
-    double P_res = GetInjectionPumpWorkft() * InjectionDensity() / 144 - GetPressureChangeAcrossReservoir() - mo_geo_in.md_AdditionalPressure; 
+    double P_res = pressureHydrostaticPSI();
     double Prod_well_minus_bottomhole = P_res - mo_geo_in.md_ProductionFlowRateKgPerS * 7936.64 / (1000 / 0.4);
     double flow = mo_geo_in.md_ProductionFlowRateKgPerS; //kg/s
     double flow_lbh = flow * 2.20462 * 3600;
@@ -780,8 +786,8 @@ double CGeothermalAnalyzer::GetProductionPumpWorkft(void)
     double D_well = mo_geo_in.md_DiameterPumpCasingInches - 0.4375 * 2;
     double D_well_ft = D_well / 12;
     double A = 3.1415 * pow(D_well_ft, 2) / 4;
-    double L_int = 0.8 * mo_geo_in.md_ResourceDepthM; //Length interval (m), how is this calculated?
-    double surf_rough_casing = 0.00015; //different for open hole vs. slotted liner
+    double L_int = 0.2 * mo_geo_in.md_ResourceDepthM; //Length interval (m), how is this calculated?
+    double surf_rough_casing = 0.02; //different for open hole vs. slotted liner
     double dT_dL = (mo_geo_in.md_dtProdWell) / (mo_geo_in.md_ResourceDepthM);
     double T_star = InjectionTemperatureC() + dT_dL * mo_geo_in.md_RatioInjectionToProduction * (L_int) * 0.5;
     double P_sat = geothermal::oPC.evaluate(T_star * 1.8 + 32);
@@ -812,8 +818,8 @@ double CGeothermalAnalyzer::GetProductionPumpWorkft(void)
     D_well = mo_geo_in.md_DiameterInjectionWellInches;
     D_well_ft = D_well / 12;
     A = 3.1415 * pow(D_well_ft, 2) / 4;
-    L_int = 0.2 * mo_geo_in.md_ResourceDepthM; //Length interval (m), how is this calculated?
-    surf_rough_casing = 0.02; //different for open hole vs. slotted liner
+    L_int = 0.8 * mo_geo_in.md_ResourceDepthM; //Length interval (m), how is this calculated?
+    surf_rough_casing = 0.00015; //different for open hole vs. slotted liner
     //dT_dL = (mo_geo_in.md_dtProdWell * 1.8) / (physics::FT_PER_METER * mo_geo_in.md_ResourceDepthM);
     T_star = InjectionTemperatureC() + dT_dL * mo_geo_in.md_RatioInjectionToProduction * (0.5 * L_int + (mo_geo_in.md_ResourceDepthM - L_int));
     P_sat = geothermal::oPC.evaluate(T_star * 1.8 + 32);
@@ -835,7 +841,7 @@ double CGeothermalAnalyzer::GetProductionPumpWorkft(void)
     friction_head_loss = (f / D_well_ft) * pow(vel_well, 2) / (2 * 32.174);
     friction_head_loss_ft = friction_head_loss * L_int * physics::FT_PER_METER;
     friction_head_psid = friction_head_loss_ft * rho_sat * rho_correction / 144;
-    double P_pump_suction = geothermal::oPC.evaluate(md_WorkingTemperatureC) + mo_geo_in.md_ReservoirDeltaPressure;
+    double P_pump_suction = geothermal::oPC.evaluate(physics::CelciusToFarenheit(GetResourceTemperatureC() - dT_dL * GetResourceDepthM())) +  physics::mBarToPSI(mo_geo_in.md_ExcessPressureBar);
     double P_available = P_upper_bottom_interval - P_pump_suction;
     double P_available_psf = P_available * 144;
     double P_available_head = P_available_psf / rho_sat / (1 + friction_head_loss);
@@ -879,21 +885,9 @@ double CGeothermalAnalyzer::GetProductionPumpWorkft(void)
     double ideal_pumping_power_permin = ideal_pumping_power / 60; //ft-lb/min
     double ideal_pumping_power_hp = ideal_pumping_power_permin / 33000; //hp
     double pumping_power_hp = ideal_pumping_power_hp / mo_geo_in.md_GFPumpEfficiency;
-    double pumping_power_kw = pumping_power_hp * 0.7457; //kW
-    double pumping_power_kw_total = pumping_power_kw * GetNumberOfWells();
-    double P_bottomhole = P_upper_bottom_interval + rho_sat * rho_correction * physics::FT_PER_METER * L_int / 144 - friction_head_psid;
-    double bottom_hole_pressure = pressureInjectionWellBottomHolePSI();
-
-    double reservoir_buildup = mo_geo_in.md_ProductionFlowRateKgPerS * 7936.64 / mo_geo_in.md_RatioInjectionToProduction / 2500; //Injectivity index
-    //double excess_pressure = bottom_hole_pressure - pressureHydrostaticPSI();
-    double excess_pressure = P_bottomhole - pressureHydrostaticPSI();
-    //double reservoir_buildup = GetPressureChangeAcrossReservoir();
-    double injection_pump_head_psi = -excess_pressure + reservoir_buildup + mo_geo_in.md_AdditionalPressure;
-    double injection_pump_head_ft = injection_pump_head_psi * 144 / InjectionDensity();
-    double P_inject_bottomhole_used = injection_pump_head_psi + bottom_hole_pressure;
-    //double pump_inj_hp = (injection_pump_head_ft * (flowRateTotal() / mo_geo_in.md_RatioInjectionToProduction / 2500) / (60 * 33000)) / mo_geo_in.md_GFPumpEfficiency;
-    //double pump_inj_kW = pump_inj_hp * 0.7457;
-    return injection_pump_head_ft;
+    double pumping_power_ft = pumping_power_hp * (60 * 33000); //ft
+    
+    return pumping_power_ft;
 }
 
 
