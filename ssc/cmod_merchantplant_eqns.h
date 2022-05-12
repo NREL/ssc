@@ -50,7 +50,8 @@ static const char* mp_ancillary_services_doc =
     "     'mp_calculate_revenue': boolean [-], 0 is false\\n\\n"
     "Output: key-value pairs added to var_table\\n"
 	"     'mp_capacity_check': boolean\\n"
-	"     'mp_capacity_check_error': string\\n";
+    "     'mp_capacity_check_error': string\\n"
+    "     'mp_capacity_check_warning': string\\n";
 
 SSCEXPORT bool mp_ancillary_services(ssc_data_t data);
 

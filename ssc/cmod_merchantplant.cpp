@@ -911,6 +911,9 @@ public:
 			ss << "The generation is not sufficient to meet the ancillary markets requirements.  Specifically, " << (lookup("mp_ancillary_services_error")->str);
 			throw exec_error("merchant plant", ss.str());
 		}
+        if (lookup("mp_ancillary_services_warning")->str != "") {
+            log(lookup("mp_ancillary_services_warning")->str, SSC_WARNING);
+        }
 		// return lifetime vectors
 		std::vector<double> mp_energy_market_generated_revenue = lookup("mp_energy_market_generated_revenue")->arr_vector();
 		std::vector<double> mp_ancillary_services1_generated_revenue = lookup("mp_ancillary_services1_generated_revenue")->arr_vector();
@@ -1333,7 +1336,9 @@ public:
 			cf.at(CF_om_opt_fuel_2_expense,i) *= om_opt_fuel_2_usage;
 		}
 
-        std::vector<double> mp_energy_market_price = lookup("mp_energy_market_price")->arr_vector();
+        std::vector<double> mp_energy_market_price(8760*nyears, 0.0);
+        if (lookup("mp_energy_market_price"))
+            mp_energy_market_price = lookup("mp_energy_market_price")->arr_vector();
         bool ppa_purchases = !(is_assigned("en_electricity_rates") && as_number("en_electricity_rates") == 1);
 
         if (as_integer("system_use_lifetime_output") == 1)
