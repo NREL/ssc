@@ -2654,10 +2654,11 @@ int C_RecompCycle::auto_opt_design(S_auto_opt_design_parameters & auto_opt_des_p
 void C_RecompCycle::auto_opt_design_core(int & error_code)
 {
 	// Check that simple/recomp flag is set
-	if(ms_auto_opt_des_par.m_is_recomp_ok < -1.0 || (ms_auto_opt_des_par.m_is_recomp_ok > 0 && ms_auto_opt_des_par.m_is_recomp_ok != 1.0) )
+	if(ms_auto_opt_des_par.m_is_recomp_ok < -1.0 || (ms_auto_opt_des_par.m_is_recomp_ok > 0 &&
+        ms_auto_opt_des_par.m_is_recomp_ok != 1.0 && ms_auto_opt_des_par.m_is_recomp_ok != 2.0))
 	{
 		throw(C_csp_exception("C_RecompCycle::auto_opt_design_core(...) requires that ms_auto_opt_des_par.m_is_recomp_ok"
-				"is either between -1 and 0 (fixed recompression fraction) or equal to 1 (recomp allowed)\n"));
+				" is either between -1 and 0 (fixed recompression fraction) or equal to 1 (recomp allowed)\n"));
 	}
 
 	// map 'auto_opt_des_par_in' to 'ms_auto_opt_des_par'
@@ -2845,10 +2846,11 @@ int C_RecompCycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_parameters 
 	error_msg = "";
 
     // Check that simple/recomp flag is set
-    if (ms_auto_opt_des_par.m_is_recomp_ok < -1.0 || (ms_auto_opt_des_par.m_is_recomp_ok > 0 && ms_auto_opt_des_par.m_is_recomp_ok != 1.0))
+    if (ms_auto_opt_des_par.m_is_recomp_ok < -1.0 || (ms_auto_opt_des_par.m_is_recomp_ok > 0 &&
+        ms_auto_opt_des_par.m_is_recomp_ok != 1.0 && ms_auto_opt_des_par.m_is_recomp_ok != 2.0))
     {
         throw(C_csp_exception("C_RecompCycle::auto_opt_design_core(...) requires that ms_auto_opt_des_par.m_is_recomp_ok"
-            "is either between -1 and 0 (fixed recompression fraction) or equal to 1 (recomp allowed)\n"));
+            " is either between -1 and 0 (fixed recompression fraction) or equal to 1 (recomp allowed)\n"));
     }
 		// Can't operate compressore in 2-phase region
 	if( m_T_mc_in <= N_co2_props::T_crit )
