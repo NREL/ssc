@@ -2705,13 +2705,20 @@ void C_RecompCycle::auto_opt_design_core(int & error_code)
 			// ms_des_par_auto_opt
 			// m_objective_metric_auto_opt
 		// So we can update pressure ratio guess
-		PR_mc_guess = ms_des_par_auto_opt.m_P_mc_out / ms_des_par_auto_opt.m_P_mc_in;
+		double PR_mc_guess_calc = ms_des_par_auto_opt.m_P_mc_out / ms_des_par_auto_opt.m_P_mc_in;
+
+        if (std::isfinite(PR_mc_guess_calc)) {
+            PR_mc_guess = PR_mc_guess_calc;
+        }
+        else {
+            best_P_high = m_P_high_limit;       //[kPa]
+        }
 	}
 
 	if( ms_auto_opt_des_par.m_is_recomp_ok != 0 )
 	{
 		// Complete 'ms_opt_des_par' for recompression cycle
-		ms_opt_des_par.m_P_mc_out_guess = m_P_high_limit;
+		ms_opt_des_par.m_P_mc_out_guess = best_P_high;      //[kPa]
 		ms_opt_des_par.m_fixed_P_mc_out = true;
 		
 		if (ms_opt_des_par.m_fixed_PR_HP_to_LP)
@@ -2760,7 +2767,7 @@ void C_RecompCycle::auto_opt_design_core(int & error_code)
     {
 
         // Complete 'ms_opt_des_par' for simple cycle
-        ms_opt_des_par.m_P_mc_out_guess = m_P_high_limit;
+        ms_opt_des_par.m_P_mc_out_guess = best_P_high;      //[kPa]
         ms_opt_des_par.m_fixed_P_mc_out = true;
 
         if (ms_opt_des_par.m_fixed_PR_HP_to_LP)

@@ -995,6 +995,10 @@ int C_PartialCooling_Cycle::auto_opt_design_core()
 		double P_low_limit = std::min(m_P_high_limit, std::max(10.E3, m_P_high_limit*0.2));		//[kPa]
 		best_P_high = fminbr(
 			P_low_limit, m_P_high_limit, &fmin_cb_opt_partialcooling_des_fixed_P_high, this, 1.0);
+
+        if (!std::isfinite(best_P_high)) {
+            best_P_high = m_P_high_limit;
+        }
 	}
 
 	// fminb_cb_opt_partialcooling_des_fixed_P_high should calculate:
@@ -1002,7 +1006,7 @@ int C_PartialCooling_Cycle::auto_opt_design_core()
 		// m_eta_thermal_opt;
 
 		// Complete 'ms_opt_des_par'
-	ms_opt_des_par.m_P_mc_out_guess = m_P_high_limit;	//[kPa]
+	ms_opt_des_par.m_P_mc_out_guess = best_P_high;	//[kPa]
 	ms_opt_des_par.m_fixed_P_mc_out = true;
 
 	if (ms_opt_des_par.m_fixed_PR_total)
