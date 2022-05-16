@@ -233,6 +233,8 @@ void dispatch_pvsmoothing_front_of_meter_t::update_dispatch(size_t year, size_t 
             ssc_number_t battery_energy = _Battery->energy_nominal();
             ssc_number_t batt_half_round_trip_eff = sqrt(m_etaDischarge * m_etaPVCharge);
             ssc_number_t battery_power = m_batteryPower->powerBatteryChargeMaxAC;
+            ssc_number_t soc_min = _Battery->get_params().capacity->minimum_SOC * 0.01;
+            ssc_number_t soc_max = _Battery->get_params().capacity->maximum_SOC * 0.01;
             // scale by nameplate per ERPI code
             battery_energy = m_batt_dispatch_pvs_nameplate_ac > 0 ? battery_energy / m_batt_dispatch_pvs_nameplate_ac : battery_energy;
             battery_power = m_batt_dispatch_pvs_nameplate_ac > 0 ? battery_power / m_batt_dispatch_pvs_nameplate_ac : battery_power;
@@ -270,13 +272,13 @@ void dispatch_pvsmoothing_front_of_meter_t::update_dispatch(size_t year, size_t 
             battery_power_terminal = out_power - pv_power; // positive is power leaving battery(discharging)
 
             // adjust battery power to factor in battery constraints
-            // check SOC limit - reduce battery power if either soc exceeds either 0 or 100 %
+            // check SOC limit - reduce battery power if either soc exceeds either soc_min or soc_max
             // check full
-            if ((battery_soc - battery_power_terminal * batt_half_round_trip_eff * power_to_energy_conversion_factor) > battery_energy)
-                battery_power_terminal = -1.0 * (battery_energy - battery_soc) / power_to_energy_conversion_factor / batt_half_round_trip_eff;
+            if ((battery_soc - battery_power_terminal * batt_half_round_trip_eff * power_to_energy_conversion_factor) > soc_max * battery_energy)
+                battery_power_terminal = -1.0 * (soc_max * battery_energy - battery_soc) / power_to_energy_conversion_factor / batt_half_round_trip_eff;
             // check empty
-            else if ((battery_soc - battery_power_terminal * power_to_energy_conversion_factor) < 0)
-                battery_power_terminal = battery_soc / power_to_energy_conversion_factor / batt_half_round_trip_eff;
+            else if ((battery_soc - battery_power_terminal * power_to_energy_conversion_factor) < soc_min * battery_energy)
+                battery_power_terminal = (battery_soc - soc_min * battery_energy) / power_to_energy_conversion_factor / batt_half_round_trip_eff;
 
             // enforce battery power limits
             // discharging too fast
