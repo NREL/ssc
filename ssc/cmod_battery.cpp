@@ -2104,7 +2104,9 @@ static var_info _cm_vtab_battery[] = {
     { SSC_INPUT,        SSC_ARRAY,       "crit_load_escalation",                       "Annual critical load escalation",                         "%/year",     "",                     "Load",                             "?=0",                    "",                    "" },
     { SSC_INPUT,        SSC_ARRAY,       "grid_outage",                                "Grid outage in this time step",                              "0/1",        "0=GridAvailable,1=GridUnavailable,Length=load", "Load",    "",                       "",                               "" },
     { SSC_INPUT,        SSC_NUMBER,      "run_resiliency_calcs",                       "Enable resilence calculations for every timestep",        "0/1",        "0=DisableCalcs,1=EnableCalcs",                  "Load",    "?=0",                    "",                               "" },
-    { SSC_INOUT,        SSC_NUMBER,      "capacity_factor",                            "Capacity factor",                                         "%",          "",                     "System Output",                             "?=0",                    "",                               "" },
+    { SSC_INOUT,        SSC_NUMBER,      "capacity_factor",                            "Capacity factor",                                         "%",          "",                     "System Output",                             "",                    "",                               "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "capacity_factor_sales",                      "Capacity factor based on energy sales",                                         "%",          "",                     "System Output",                             "",                    "",                               "" },
+
     { SSC_INOUT,        SSC_NUMBER,      "annual_energy",                              "Annual Energy",                                           "kWh",        "",                     "System Output",                      "?=0",                    "",                               "" },
 
     // other variables come from battstor common table
@@ -2313,8 +2315,9 @@ public:
 
             // Prepare outputs
             ssc_number_t* p_gen = allocate("gen", n_rec_lifetime);
-            double capacity_factor_in, annual_energy_in, nameplate_in;
-            capacity_factor_in = annual_energy_in = nameplate_in = 0;
+            double capacity_factor_in, annual_energy_in;
+            capacity_factor_in = annual_energy_in =  0;
+            double nameplate_in = batt->batt_vars->batt_power_discharge_max_kwac;
 
             if (is_assigned("capacity_factor") && is_assigned("annual_energy")) {
                 capacity_factor_in = as_double("capacity_factor");
@@ -2327,6 +2330,7 @@ public:
             Run Simulation
             *********************************************************************************************** */
             double annual_energy = 0;
+            double annual_energy_sales = 0;
             float percent_complete = 0.0;
             float percent = 0.0;
             size_t nStatusUpdates = 50;
@@ -2367,6 +2371,7 @@ public:
                         p_gen[lifetime_idx] = batt->outGenPower[lifetime_idx];
                         if (year == 0) {
                             annual_energy += p_gen[lifetime_idx] * batt->_dt_hour;
+                            if (p_gen[lifetime_idx] > 0) annual_energy_sales += p_gen[lifetime_idx] * batt->_dt_hour;
                         }
                         lifetime_idx++;
                     }
@@ -2377,6 +2382,7 @@ public:
 
             // update capacity factor and annual energy
             assign("capacity_factor", var_data(static_cast<ssc_number_t>(annual_energy * 100.0 / (nameplate_in * util::hours_per_year))));
+            assign("capacity_factor_sales", var_data(static_cast<ssc_number_t>(annual_energy_sales * 100.0 / (nameplate_in * util::hours_per_year))));
             assign("annual_energy", var_data(static_cast<ssc_number_t>(annual_energy)));
             assign("percent_complete", var_data((ssc_number_t)percent));
 
