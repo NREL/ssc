@@ -1,0 +1,2 @@
+Mdot     ,      W (actual)       ,       W (regression)       ,       Error (%)
+0.25,0.190146,0.167876,11.712

@@ -60,6 +60,7 @@ set(TCS_SRC
 		trnsys_weatherreader.cpp
 		typelib.cpp
 		ud_power_cycle.cpp
+        ud_power_cycle_jdm.cpp
 		water_properties.cpp
 		waterprop.cpp
 		weatherreader_csp_solver.cpp
@@ -156,6 +157,7 @@ set(TCS_SRC
 		tcs_debug.h
 		thermocline_tes.h
 		ud_power_cycle.h
+        ud_power_cycle_jdm.h
 		user_defined_power_cycle.h
 		waterprop.h
 		water_properties.h

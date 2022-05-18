@@ -337,10 +337,18 @@ double C_ud_power_cycle::get_m_dot_water_ND(double T_htf_hot /*C*/, double T_amb
 double C_ud_power_cycle::get_interpolated_ND_output(int i_ME /*M.E. table index*/, 
 							double T_htf_hot /*C*/, double T_amb /*C*/, double m_dot_htf_ND /*-*/)
 {
-	
+
+    // Create a log file
+    std::ofstream logfile;
+    logfile.open("get_interpolated_ND_output_log_ORIG.txt");
+
 	double ME_T_htf = mc_T_htf_ind.interpolate_x_col_0(i_ME*3+2, T_htf_hot) - m_Y_at_ref[i_ME];
 	double ME_T_amb = mc_T_amb_ind.interpolate_x_col_0(i_ME*3+2, T_amb) - m_Y_at_ref[i_ME];
 	double ME_m_dot_htf = mc_m_dot_htf_ind.interpolate_x_col_0(i_ME*3+2, m_dot_htf_ND) - m_Y_at_ref[i_ME];
+
+    logfile << "ME_T_htf = " << ME_T_htf << "\n";
+    logfile << "ME_T_amb = " << ME_T_amb << "\n";
+    logfile << "ME_m_dot_htf = " << ME_m_dot_htf <<"\n\n";
 
 	double INT_T_htf_on_T_amb = 0.0;
 	if( T_htf_hot < m_T_htf_ref )
@@ -352,6 +360,8 @@ double C_ud_power_cycle::get_interpolated_ND_output(int i_ME /*M.E. table index*
 		INT_T_htf_on_T_amb = mc_T_htf_on_T_amb.interpolate_x_col_0(i_ME*2+2,T_amb)*(T_htf_hot-m_T_htf_ref)/(m_T_htf_ref-m_T_htf_high);
 	}
 
+    logfile << "INT_T_htf_on_T_amb = " << INT_T_htf_on_T_amb << "\n";
+
 	double INT_T_amb_on_m_dot_htf = 0.0;
 	if( T_amb < m_T_amb_ref )
 	{
@@ -362,6 +372,8 @@ double C_ud_power_cycle::get_interpolated_ND_output(int i_ME /*M.E. table index*
 		INT_T_amb_on_m_dot_htf = mc_T_amb_on_m_dot_htf.interpolate_x_col_0(i_ME*2+2,m_dot_htf_ND)*(T_amb-m_T_amb_ref)/(m_T_amb_ref-m_T_amb_high);
 	}
 
+    logfile << "INT_T_amb_on_m_dot_htf = " << INT_T_amb_on_m_dot_htf << "\n";
+
 	double INT_m_dot_htf_on_T_htf = 0.0;
 	if( m_dot_htf_ND < m_m_dot_htf_ref )
 	{
@@ -371,6 +383,9 @@ double C_ud_power_cycle::get_interpolated_ND_output(int i_ME /*M.E. table index*
 	{
         INT_m_dot_htf_on_T_htf = mc_m_dot_htf_on_T_htf.interpolate_x_col_0(i_ME*2+2,T_htf_hot)*(m_dot_htf_ND-m_m_dot_htf_ref)/(m_m_dot_htf_ref-m_m_dot_htf_high);
 	}
+
+    logfile << "INT_m_dot_htf_on_T_htf = " << INT_m_dot_htf_on_T_htf << "\n";
+    logfile.close();
 
 	return m_Y_at_ref[i_ME] + ME_T_htf + ME_T_amb + ME_m_dot_htf + INT_T_htf_on_T_amb + INT_T_amb_on_m_dot_htf + INT_m_dot_htf_on_T_htf;
 }

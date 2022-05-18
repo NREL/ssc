@@ -1,192 +1,215 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
-or promote products derived from this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
-
 #include "core.h"
 
-#include "ud_power_cycle.h"
+#include "ud_power_cycle_jdm.h"
 
 #include <iostream>
 #include <fstream>
 
-static var_info _cm_vtab_test_ud_power_cycle[] = {
+static var_info _cm_vtab_test_ud_power_cycle_jdm[] = {
 
 	/*   VARTYPE   DATATYPE         NAME               LABEL                                          UNITS     META  GROUP REQUIRED_IF CONSTRAINTS         UI_HINTS*/
 	{SSC_INPUT, SSC_NUMBER, "q_pb_design", "Design point power block thermal power", "MWt", "", "", "", "", ""},
-
-
-	{SSC_OUTPUT, SSC_MATRIX, "udpc_table_out", "udpc table defined in cmod", "", "", "", "", "", ""},
-
     {SSC_INPUT, SSC_NUMBER, "n_T_htf", "Number of levels for HTF", "-", "", "", "*", "", ""},
     
 	{SSC_OUTPUT, SSC_NUMBER, "W_dot_fossil", "Electric output with no solar contribution", "MWe", "", "", "", "", ""},
     {SSC_OUTPUT, SSC_NUMBER, "W_dot_ND_calc", "Non-dimensional Work Output", "-", "", "", "", "", ""},
 
-
 	var_info_invalid};
 
-class cm_test_ud_power_cycle : public compute_module
+class cm_test_ud_power_cycle_jdm : public compute_module
 {
 public:
 
-	cm_test_ud_power_cycle()
+	cm_test_ud_power_cycle_jdm()
 	{
-		add_var_info(_cm_vtab_test_ud_power_cycle);
+		add_var_info(_cm_vtab_test_ud_power_cycle_jdm);
 	}
 
 	void exec() override
 	{
+        // Create a log file
+        std::ofstream logfile;
+        logfile.open("dev_log.txt");
+
+        logfile << "Start program.\n";
+
         // Setup independent variable combinations
             // HTF inlet temperature
-        double T_htf_des_table = 565.0;   //[C]
+        double T_htf_des = 560.0;   //[C]
         double T_htf_low = 545.0;   //[C]
         double T_htf_high = 575.0;  //[C]
         size_t n_T_htf = as_integer("n_T_htf");// = 7;
         double dT_T_htf = (T_htf_high - T_htf_low) / (double)(n_T_htf - 1);
-        std::vector<double> T_htf_levels = std::vector<double>{ T_htf_low, T_htf_des_table, T_htf_high };
+        std::vector<double> T_htf_levels = std::vector<double>{ T_htf_low,T_htf_des,T_htf_high };
+        size_t n_levels_Thtf = T_htf_levels.size();
 
             // HTF mass flow rate
         double m_dot_htf_ND_des = 1.0;     //[-] By definition, ND design mass flow is 1.0
         double m_dot_htf_ND_low = 0.5;     //[-]
         double m_dot_htf_ND_high = 1.5;    //[-]
+        double m_dot_htf_ND_add = 0.75; //[-]
         size_t n_m_dot_htf_ND = 10;
         double dT_m_dot_htf_ND = (m_dot_htf_ND_high - m_dot_htf_ND_low) / (double)(n_m_dot_htf_ND - 1);
-        std::vector<double> m_dot_htf_ND_levels = std::vector<double>{ m_dot_htf_ND_low, m_dot_htf_ND_des, m_dot_htf_ND_high };
+        std::vector<double> m_dot_htf_ND_levels = std::vector<double>{ m_dot_htf_ND_low, 0.75,m_dot_htf_ND_des ,1.25,m_dot_htf_ND_high };
+        //std::vector<double> m_dot_htf_ND_levels = std::vector<double>{ m_dot_htf_ND_low, m_dot_htf_ND_des, m_dot_htf_ND_high };
+        size_t n_levels_mdot = m_dot_htf_ND_levels.size();
 
             // Ambient temperature
-        double T_amb_des_table = 35.0;    //[C]
+        double T_amb_des = 25.0;    //[C]
         double T_amb_low = 0.0;     //[C]
         double T_amb_high = 50.0;   //[C]
         size_t n_T_amb = 10;
         double dT_T_amb = (T_amb_high - T_amb_low) / (double)(n_T_amb - 1);
-        std::vector<double> T_amb_levels = std::vector<double>{ T_amb_low, T_amb_des_table, T_amb_high };
+        std::vector<double> T_amb_levels = std::vector<double>{ T_amb_low,T_amb_des,T_amb_high };
+        size_t n_levels_Tamb = T_amb_levels.size();
+
+        logfile << dT_T_htf << "," << dT_m_dot_htf_ND << "," << dT_T_amb << "\n";
+
+        logfile << "Set up initial data.\n";
 
         size_t n_levels = 3;    // changing levels would require generalizing interpolation routines
-        size_t n_total = n_levels * (n_T_htf + n_m_dot_htf_ND + n_T_amb);
-        util::matrix_t<double> udpc_data_full(n_total, C_ud_power_cycle::E_COL_M_H2O + 1, std::numeric_limits<double>::quiet_NaN());
+        size_t n_total =  n_levels_mdot * n_T_htf + n_levels_Tamb * n_m_dot_htf_ND + n_levels_Thtf * n_T_amb;
+        logfile << n_levels_Thtf << "," << n_T_htf << "," << n_levels_mdot << "," << n_m_dot_htf_ND << "," << n_levels_Tamb << "," << n_T_amb << "\n";
+        util::matrix_t<double> udpc_data_full(n_total, C_ud_power_cycle_jdm::E_COL_M_H2O + 1, std::numeric_limits<double>::quiet_NaN());
+
+        logfile << "Create udpc matrix.\n";
 
         size_t k = 0;
-        for (size_t i = 0; i < n_levels; i++) {
+        for (size_t i = 0; i < n_levels_mdot; i++) {
             for (size_t j = 0; j < n_T_htf; j++) {
-                udpc_data_full(k,C_ud_power_cycle::E_COL_T_HTF) = T_htf_low + j*dT_T_htf;
-                udpc_data_full(k,C_ud_power_cycle::E_COL_M_DOT) = m_dot_htf_ND_levels[i];
-                udpc_data_full(k,C_ud_power_cycle::E_COL_T_AMB) = T_amb_des_table;
+                udpc_data_full(k,C_ud_power_cycle_jdm::E_COL_T_HTF) = T_htf_low + j*dT_T_htf;
+                udpc_data_full(k,C_ud_power_cycle_jdm::E_COL_M_DOT) = m_dot_htf_ND_levels[i];
+                udpc_data_full(k,C_ud_power_cycle_jdm::E_COL_T_AMB) = T_amb_des;
 
                 k++;
             }
         }
 
-
-        for (size_t i = 0; i < n_levels; i++) {
+        //logfile << "Write first set of data into udpc matrix.\n";
+        for (size_t i = 0; i < n_levels_Tamb; i++) {
             for (size_t j = 0; j < n_m_dot_htf_ND; j++) {
-                udpc_data_full(k, C_ud_power_cycle::E_COL_T_HTF) = T_htf_des_table;
-                udpc_data_full(k, C_ud_power_cycle::E_COL_M_DOT) = m_dot_htf_ND_low + j*dT_m_dot_htf_ND;
-                udpc_data_full(k, C_ud_power_cycle::E_COL_T_AMB) = T_amb_levels[i];
+                udpc_data_full(k, C_ud_power_cycle_jdm::E_COL_T_HTF) = T_htf_des;
+                udpc_data_full(k, C_ud_power_cycle_jdm::E_COL_M_DOT) = m_dot_htf_ND_low + j*dT_m_dot_htf_ND;
+                udpc_data_full(k, C_ud_power_cycle_jdm::E_COL_T_AMB) = T_amb_levels[i];
                 k++;
             }
         }
 
-        for (size_t i = 0; i < n_levels; i++) {
+        for (size_t i = 0; i < n_levels_Thtf; i++) {
             for (size_t j = 0; j < n_T_amb; j++) {
-                udpc_data_full(k, C_ud_power_cycle::E_COL_T_HTF) = T_htf_levels[i];
-                udpc_data_full(k, C_ud_power_cycle::E_COL_M_DOT) = m_dot_htf_ND_des;
-                udpc_data_full(k, C_ud_power_cycle::E_COL_T_AMB) = T_amb_low + j*dT_T_amb;
+                udpc_data_full(k, C_ud_power_cycle_jdm::E_COL_T_HTF) = T_htf_levels[i];
+                udpc_data_full(k, C_ud_power_cycle_jdm::E_COL_M_DOT) = m_dot_htf_ND_des;
+                udpc_data_full(k, C_ud_power_cycle_jdm::E_COL_T_AMB) = T_amb_low + j*dT_T_amb;
                 k++;
             }
         }
+
+        logfile << "Enter variable ranges into matrix.\n";
 
         // Check that index counter matches expected number of inputs
         if (k != n_total) {
+            logfile << "udpc setup index counter final value does not match expected: " << k  << "," << n_total;
             throw(C_csp_exception("udpc setup index counter final value does not match expected"));
         }
 
         // Add extra data to test filter
+        /*
         bool is_test_extra_data = true;
         if (is_test_extra_data) {
             size_t n_extra = 1;
-            udpc_data_full.resize_preserve(n_total + n_extra, C_ud_power_cycle::E_COL_M_H2O + 1, std::numeric_limits<double>::quiet_NaN());
-            udpc_data_full(n_total,C_ud_power_cycle::E_COL_T_HTF) = T_htf_low + 0.5*dT_T_htf;
-            udpc_data_full(n_total,C_ud_power_cycle::E_COL_M_DOT) = m_dot_htf_ND_low + 0.5*dT_m_dot_htf_ND;
-            udpc_data_full(n_total,C_ud_power_cycle::E_COL_T_AMB) = T_amb_low + 0.5*dT_T_amb;
+            udpc_data_full.resize_preserve(n_total + n_extra, C_ud_power_cycle_jdm::E_COL_M_H2O + 1, std::numeric_limits<double>::quiet_NaN());
+            udpc_data_full(n_total,C_ud_power_cycle_jdm::E_COL_T_HTF) = T_htf_low + 0.5*dT_T_htf;
+            udpc_data_full(n_total,C_ud_power_cycle_jdm::E_COL_M_DOT) = m_dot_htf_ND_low + 0.5*dT_m_dot_htf_ND;
+            udpc_data_full(n_total,C_ud_power_cycle_jdm::E_COL_T_AMB) = T_amb_low + 0.5*dT_T_amb;
         }
+        */
+
 
         // Use example endo-reversible cycle model to calculate cycle performance
-        double T_htf_des_cycle = T_htf_des_table + 10.0;
-        double T_amb_des_cycle = T_amb_des_table + 10.0;
-        C_endo_rev_cycle c_cycle(T_htf_des_cycle, T_amb_des_cycle);
+        double adjust = 0.0;
+        C_endo_rev_cycle c_cycle(T_htf_des + adjust, T_amb_des + adjust);
+
+        logfile << "Nrows: " << udpc_data_full.nrows() << "  ," << n_total; 
 
         for (size_t i = 0; i < udpc_data_full.nrows(); i++) {
-            c_cycle.performance(udpc_data_full(i, C_ud_power_cycle::E_COL_T_HTF),
-                udpc_data_full(i, C_ud_power_cycle::E_COL_M_DOT),
-                udpc_data_full(i, C_ud_power_cycle::E_COL_T_AMB),
-                udpc_data_full(i, C_ud_power_cycle::E_COL_W_CYL),
-                udpc_data_full(i, C_ud_power_cycle::E_COL_Q_CYL),
-                udpc_data_full(i, C_ud_power_cycle::E_COL_W_COOL),
-                udpc_data_full(i, C_ud_power_cycle::E_COL_M_H2O));
+            logfile << "Iteration #  " << i << "\n";
+            c_cycle.performance(udpc_data_full(i, C_ud_power_cycle_jdm::E_COL_T_HTF),
+                udpc_data_full(i, C_ud_power_cycle_jdm::E_COL_M_DOT),
+                udpc_data_full(i, C_ud_power_cycle_jdm::E_COL_T_AMB),
+                udpc_data_full(i, C_ud_power_cycle_jdm::E_COL_W_CYL),
+                udpc_data_full(i, C_ud_power_cycle_jdm::E_COL_Q_CYL),
+                udpc_data_full(i, C_ud_power_cycle_jdm::E_COL_W_COOL),
+                udpc_data_full(i, C_ud_power_cycle_jdm::E_COL_M_H2O));
         }
 
-        // Set udpc table output to udpc table defined using endo-reversible cycle model
-        util::matrix_t<ssc_number_t>& udpc_out = allocate_matrix("udpc_table_out", udpc_data_full.nrows(), 7);
-        udpc_out = udpc_data_full;
+        logfile << "Calculate performance for each variable set using endo-reversible class.\n";
 
+        // Write out data for testing what script is doing
+        std::ofstream outfile1;
+        outfile1.open("test_output.csv");
 
+        outfile1 << "Row number, T_htf, mdot, T_amb, Power\n";
+        // Write out a list of the coordinates. Not a clever way to do this.
+        for (size_t i = 0; i < udpc_data_full.nrows(); i++) {
+            
+            outfile1 << udpc_data_full(i, C_ud_power_cycle_jdm::E_COL_T_HTF) << "," << udpc_data_full(i, C_ud_power_cycle_jdm::E_COL_M_DOT) << "," << udpc_data_full(i, C_ud_power_cycle_jdm::E_COL_T_AMB) << "," << udpc_data_full(i,C_ud_power_cycle_jdm::E_COL_W_CYL) << "\n";
+        }
+        outfile1 << "\n";
+        outfile1.close();
+        logfile << "Write data out into a file.\n";
+
+        
         // Initialize UDPC model with cycle performance data table
-        C_ud_power_cycle c_udpc;
+        C_ud_power_cycle_jdm c_udpc;
         int n_T_htf_udpc_calc, n_T_amb_udpc_calc, n_m_dot_udpc_calc;
-        double T_htf_ref_udpc_calc, T_htf_low_udpc_calc, T_htf_high_udpc_calc;
-        double T_amb_ref_udpc_calc, T_amb_low_udpc_calc, T_amb_high_udpc_calc;
-        double m_dot_htf_ref_udpc_calc, m_dot_htf_low_udpc_calc, m_dot_htf_high_udpc_calc;
+        double T_htf_ref_udpc_calc;
+        double T_amb_ref_udpc_calc;
+        double m_dot_htf_ref_udpc_calc;
         std::vector<double> Y_at_T_htf_ref, Y_at_T_amb_ref, Y_at_m_dot_htf_ND_ref, Y_avg_at_refs;
+
+        // Define n_variable here 
+        n_T_htf_udpc_calc = n_T_htf;
+        n_T_amb_udpc_calc = n_T_amb;
+        n_m_dot_udpc_calc = n_m_dot_htf_ND;
+
+        // Define design, low and high here, but -- again -- remove later
+        T_htf_ref_udpc_calc = T_htf_des;
+        m_dot_htf_ref_udpc_calc = m_dot_htf_ND_des;
+        T_amb_ref_udpc_calc = T_amb_des;
+        
+        // Have added T_htf_levels,m_dot_htf_ND_levels,T_amb_levels to function call for now
         c_udpc.init(udpc_data_full,
             n_T_htf_udpc_calc, n_T_amb_udpc_calc, n_m_dot_udpc_calc,
-            T_htf_ref_udpc_calc, T_htf_low_udpc_calc, T_htf_high_udpc_calc,
-            T_amb_ref_udpc_calc, T_amb_low_udpc_calc, T_amb_high_udpc_calc,
-            m_dot_htf_ref_udpc_calc, m_dot_htf_low_udpc_calc, m_dot_htf_high_udpc_calc,
-            Y_at_T_htf_ref, Y_at_T_amb_ref, Y_at_m_dot_htf_ND_ref, Y_avg_at_refs);
+            T_htf_ref_udpc_calc, T_amb_ref_udpc_calc, m_dot_htf_ref_udpc_calc, 
+            Y_at_T_htf_ref, Y_at_T_amb_ref, Y_at_m_dot_htf_ND_ref, Y_avg_at_refs,
+            T_htf_levels,m_dot_htf_ND_levels,T_amb_levels);
 
-
-        // Sample UPDC model
-        // at design point
-        double W_dot_ND_calc = c_udpc.get_W_dot_gross_ND(T_htf_des_table+10, T_amb_des_table-5, 0.8);
         
-        int Nsamp = 1;
+
+        
+        // Sample UPDC model
+            // at design point
+        double W_dot_ND_calc = c_udpc.get_W_dot_gross_ND(T_htf_des-10, T_amb_des+5, 0.8);
+        int Nsamp = 100;
         double mdotS = 0;
         double Wact, Q_cyl, W_cool, H2O, errS;
         // Create a results file
         std::ofstream resfile;
-        resfile.open("test_results_orig.txt");
+        resfile.open("test_results_new.txt");
         resfile << "Mdot     ,      W (actual)       ,       W (regression)       ,       Error (%)\n";
 
         for (size_t i = 0; i < Nsamp; i++) {
-            //mdotS = 0.55 + i * (1.6 - 0.55) / double(Nsamp - 1);
-            mdotS = 0.25;
-            W_dot_ND_calc = c_udpc.get_W_dot_gross_ND(T_htf_des_table - 10, T_amb_des_table - 5, mdotS);
-
+            mdotS = 0.25 + i * (1.75 - 0.25) / double(Nsamp - 1);
+            //mdotS = 0.25;
+            W_dot_ND_calc = c_udpc.get_W_dot_gross_ND(T_htf_des - 10, T_amb_des - 5, mdotS);
+            
             // Results from original model
-            c_cycle.performance(T_htf_des_table - 10, mdotS, T_amb_des_table - 5, Wact, Q_cyl, W_cool, H2O);
+            c_cycle.performance(T_htf_des - 10, mdotS, T_amb_des - 5, Wact, Q_cyl, W_cool, H2O);
             errS = 100 * (Wact - W_dot_ND_calc) / Wact;
             resfile << mdotS << "," << Wact << "," << W_dot_ND_calc << "," << errS << "\n";
         }
         resfile.close();
-       
+        
         assign("W_dot_ND_calc", W_dot_ND_calc);     //[kWe]
         /*
         // Now let's be horrible and sample the original model and the regression model over a large number of points
@@ -274,9 +297,11 @@ public:
         outfile2.close();
         outfile3.close();
         outfile4.close();
-        */
+
         double abce = 1.23;
 
+        */
+        logfile.close();
 		/*C_ud_power_cycle c_pc;
 
 		c_pc.init(a_table, a_ref, a_low, a_high,
@@ -305,12 +330,14 @@ public:
 
 					E_reg_less_act[index] = (Y_reg[index] - Y_actual[index])/fmax(Y_actual[index],0.0001);
 
-            // at *cycle* design point
-        W_dot_ND_calc = c_udpc.get_W_dot_gross_ND(T_htf_des_cycle, T_amb_des_cycle, 1.0);
-        m_dot_ND_calc = c_udpc.get_m_dot_water_ND(T_htf_des_cycle, T_amb_des_cycle, 1.0);
-        */
+					if(fabs(E_reg_less_act[index]) > max_err)
+					{
+						max_err = fabs(E_reg_less_act[index]);
+					}
+				}
+			}
+		}*/
 	}
-    
 
     class C_endo_rev_cycle
     {
@@ -341,7 +368,7 @@ public:
         {
             // Set constant cooling and water
             W_dot_cooling_ND = 1.0;
-            m_dot_water_ND = 0.0;
+            m_dot_water_ND = 1.0;
 
             // Assume heat rate proportional to mass flow
             // And no ambient temperature dependence
@@ -366,4 +393,4 @@ public:
 
 };
 
-DEFINE_MODULE_ENTRY(test_ud_power_cycle, "Test user-defined power cylce model", 0)
+DEFINE_MODULE_ENTRY(test_ud_power_cycle_jdm, "Test user-defined power cylce model with JDM mods", 0)
