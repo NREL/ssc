@@ -56,7 +56,7 @@ public:
 	{
         // Setup independent variable combinations
             // HTF inlet temperature
-        double T_htf_des_table = 565.0;   //[C]
+        double T_htf_des_table = 560.0;   //[C]
         double T_htf_low = 545.0;   //[C]
         double T_htf_high = 575.0;  //[C]
         size_t n_T_htf = as_integer("n_T_htf");// = 7;
@@ -72,7 +72,7 @@ public:
         std::vector<double> m_dot_htf_ND_levels = std::vector<double>{ m_dot_htf_ND_low, m_dot_htf_ND_des, m_dot_htf_ND_high };
 
             // Ambient temperature
-        double T_amb_des_table = 35.0;    //[C]
+        double T_amb_des_table = 25.0;    //[C]
         double T_amb_low = 0.0;     //[C]
         double T_amb_high = 50.0;   //[C]
         size_t n_T_amb = 10;
@@ -129,8 +129,8 @@ public:
         }
 
         // Use example endo-reversible cycle model to calculate cycle performance
-        double T_htf_des_cycle = T_htf_des_table + 10.0;
-        double T_amb_des_cycle = T_amb_des_table + 10.0;
+        double T_htf_des_cycle = T_htf_des_table + 0.0;
+        double T_amb_des_cycle = T_amb_des_table + 0.0;
         C_endo_rev_cycle c_cycle(T_htf_des_cycle, T_amb_des_cycle);
 
         for (size_t i = 0; i < udpc_data_full.nrows(); i++) {
@@ -167,7 +167,8 @@ public:
         // at design point
         double W_dot_ND_calc = c_udpc.get_W_dot_gross_ND(T_htf_des_table+10, T_amb_des_table-5, 0.8);
         
-        int Nsamp = 1;
+        
+        int Nsamp = 100;
         double mdotS = 0;
         double Wact, Q_cyl, W_cool, H2O, errS;
         // Create a results file
@@ -176,8 +177,8 @@ public:
         resfile << "Mdot     ,      W (actual)       ,       W (regression)       ,       Error (%)\n";
 
         for (size_t i = 0; i < Nsamp; i++) {
-            //mdotS = 0.55 + i * (1.6 - 0.55) / double(Nsamp - 1);
-            mdotS = 0.25;
+            mdotS = 0.55 + i * (1.6 - 0.55) / double(Nsamp - 1);
+            //mdotS = 0.25;
             W_dot_ND_calc = c_udpc.get_W_dot_gross_ND(T_htf_des_table - 10, T_amb_des_table - 5, mdotS);
 
             // Results from original model
@@ -186,7 +187,7 @@ public:
             resfile << mdotS << "," << Wact << "," << W_dot_ND_calc << "," << errS << "\n";
         }
         resfile.close();
-       
+        
         assign("W_dot_ND_calc", W_dot_ND_calc);     //[kWe]
         /*
         // Now let's be horrible and sample the original model and the regression model over a large number of points

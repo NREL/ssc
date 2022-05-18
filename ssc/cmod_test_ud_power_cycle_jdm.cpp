@@ -189,7 +189,9 @@ public:
         
         // Sample UPDC model
             // at design point
-        double W_dot_ND_calc = c_udpc.get_W_dot_gross_ND(T_htf_des-10, T_amb_des+5, 0.8);
+        double W_dot_ND_calc = c_udpc.get_W_dot_gross_ND(T_htf_des+10, T_amb_des-5, 0.8);
+        
+        
         int Nsamp = 100;
         double mdotS = 0;
         double Wact, Q_cyl, W_cool, H2O, errS;
