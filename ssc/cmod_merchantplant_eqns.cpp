@@ -108,36 +108,41 @@ bool mp_ancillary_services(ssc_data_t data)
         vt_get_matrix(vt, "mp_ancserv4_revenue", mp_ancserv4_revenue);
 
         // resize - truncate or fill with zeros if analysis period has changed - SAM issue 994
+        // TODO check that inout variables handled
         if (analysis_period != analysis_period_old) {
             // for each revenue stream - determine current mode (subhourly, hourly, daily, weekly, monthly, annual or single value), resize to new analysis period
-            size_t  oldSize = mp_energy_market_revenue.nrows();
-            size_t newSize = 1;
-            if (oldSize == 1) {
-                newSize = 1;
+            for (util::matrix_t<ssc_number_t> mat : { mp_energy_market_revenue_single, mp_ancserv1_revenue_single, mp_ancserv2_revenue_single, mp_ancserv3_revenue_single, mp_ancserv4_revenue_single,
+                mp_energy_market_revenue, mp_ancserv1_revenue, mp_ancserv2_revenue, mp_ancserv3_revenue, mp_ancserv4_revenue }) {
+                size_t  oldSize = mat.nrows();
+                size_t newSize = 1;
+                if (oldSize == 1) {
+                    newSize = 1;
+                }
+                else if (oldSize == analysis_period_old) {
+                    newSize = analysis_period;
+                }
+                else if (oldSize == (analysis_period_old * 12)) {
+                    newSize = analysis_period * 12;
+                }
+                else if (oldSize == (analysis_period_old * 52)) {
+                    newSize = analysis_period * 52;
+                }
+                else if (oldSize == (analysis_period_old * 365)) {
+                    newSize = analysis_period * 365;
+                }
+                else if (oldSize == (analysis_period_old * 8760)) {
+                    newSize = analysis_period * 8760;
+                }
+                else {
+                    size_t steps_per_hour = oldSize / analysis_period_old / 8760;
+                    newSize = steps_per_hour * 8760 * analysis_period;
+                }
+                mat.resize_preserve(newSize, mat.ncols(), 0.0);
             }
-            else if (oldSize == analysis_period_old) {
-                newSize = analysis_period;
-            }
-            else if (oldSize == (analysis_period_old * 12)) {
-                newSize = analysis_period * 12;
-            }
-            else if (oldSize == (analysis_period_old * 52)) {
-                newSize = analysis_period * 52;
-            }
-            else if (oldSize == (analysis_period_old * 365)) {
-                newSize = analysis_period * 365;
-            }
-            else if (oldSize == (analysis_period_old * 8760)) {
-                newSize = analysis_period * 8760;
-            }
-            else {
-                size_t steps_per_hour = oldSize / analysis_period_old / 8760;
-                newSize = steps_per_hour * 8760 * analysis_period;
-            }
-            mp_energy_market_revenue.resize_preserve(newSize, mp_energy_market_revenue.ncols(), 0.0);
         }
 
-
+        // TODO handle "single" revenue
+       // if (mp_enable_market_percent_gen > 0.5) 
 
         gen_is_assigned = (vt->lookup("gen") != NULL);
 		if (gen_is_assigned)
