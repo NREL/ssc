@@ -1797,7 +1797,7 @@ double C_HX_counterflow_CRM::calc_max_q_dot_enth(double h_h_in /*kJ/kg*/, double
         T_h_in_q_max, T_c_in_q_max);
 }
 
-double C_HX_counterflow_CRM::calculate_cost(double UA /*kWt/K*/,
+double /*M$*/ C_HX_counterflow_CRM::calculate_equipment_cost(double UA /*kWt/K*/,
     double T_hot_in /*K*/, double P_hot_in /*kPa*/, double m_dot_hot /*kg/s*/,
     double T_cold_in /*K*/, double P_cold_in /*kPa*/, double m_dot_cold /*kg/s*/)
 {
@@ -1805,11 +1805,22 @@ double C_HX_counterflow_CRM::calculate_cost(double UA /*kWt/K*/,
     {
     case C_HX_counterflow_CRM::E_CARLSON_17_RECUP:
         return 1.25*1.E-3*UA;		//[M$] needs UA in kWt/K
+    case C_HX_counterflow_CRM::E_WEILAND_19_RECUP:
+        return 49.45*std::pow(UA*1.E3, 0.7544)*1.E-6;  //[M$] needs UA in Wt/K
     case C_HX_counterflow_CRM::E_CARLSON_17_PHX:
         return 3.5*1.E-3*UA;		//[M$] needs UA in kWt/K
     default:
         return std::numeric_limits<double>::quiet_NaN();
     }
+}
+
+double /*M$*/ C_HX_counterflow_CRM::calculate_bare_erected_cost(double cost_equipment /*M$*/)
+{
+    // Weiland 2019
+    double frac_installation = 0.02;
+    double frac_labor = 0.03;
+
+    return cost_equipment * (1. + frac_installation + frac_labor);
 }
 
 void C_HX_counterflow_CRM::design_calc_UA(C_HX_counterflow_CRM::S_des_calc_UA_par des_par,
@@ -1862,9 +1873,11 @@ void C_HX_counterflow_CRM::design_calc_UA(C_HX_counterflow_CRM::S_des_calc_UA_pa
 	ms_des_solved.m_T_h_out = T_h_out_calc;
 	ms_des_solved.m_T_c_out = T_c_out_calc;
 
-	ms_des_solved.m_cost = calculate_cost(ms_des_solved.m_UA_design,
+	ms_des_solved.m_cost_equipment = calculate_equipment_cost(ms_des_solved.m_UA_design,
 		ms_des_calc_UA_par.m_T_h_in, ms_des_calc_UA_par.m_P_h_in, ms_des_calc_UA_par.m_m_dot_hot_des,
 		ms_des_calc_UA_par.m_T_c_in, ms_des_calc_UA_par.m_P_c_in, ms_des_calc_UA_par.m_m_dot_cold_des);
+
+    ms_des_solved.m_cost_bare_erected = calculate_bare_erected_cost(ms_des_solved.m_cost_equipment);
 
 	// Specify that method solved successfully
 	m_is_HX_designed = true;
@@ -1950,9 +1963,11 @@ void C_HX_counterflow_CRM::design_for_target__calc_outlet(int hx_target_code /*-
     ms_des_solved.m_DP_cold_des = P_c_in - P_c_out;		//[kPa]
     ms_des_solved.m_DP_hot_des = P_h_in - P_h_out;		//[kPa]
 
-    ms_des_solved.m_cost = calculate_cost(ms_des_solved.m_UA_design,
+    ms_des_solved.m_cost_equipment = calculate_equipment_cost(ms_des_solved.m_UA_design,
         T_h_in, P_h_in, m_dot_h,
         T_c_in, P_c_in, m_dot_c);
+
+    ms_des_solved.m_cost_bare_erected = calculate_bare_erected_cost(ms_des_solved.m_cost_equipment);
 }
 
 void C_HX_counterflow_CRM::C_MEQ__hx_total_q_dot::init_calc_member_vars()
@@ -2708,7 +2723,8 @@ C_CO2_to_air_cooler::C_CO2_to_air_cooler()
 
 	mc_air.SetFluid(mc_air.Air);
 
-	m_cost_model = C_CO2_to_air_cooler::E_CARLSON_17;		//[-]
+    //m_cost_model = C_CO2_to_air_cooler::E_CARLSON_17;		//[-]
+    m_cost_model = C_CO2_to_air_cooler::E_WEILAND_19;       //[-]
 }
 
 bool C_CO2_to_air_cooler::design_hx(S_des_par_ind des_par_ind, S_des_par_cycle_dep des_par_cycle_dep, double tol /*-*/)
@@ -2953,8 +2969,10 @@ bool C_CO2_to_air_cooler::design_hx(S_des_par_ind des_par_ind, S_des_par_cycle_d
 
 	ms_hx_des_sol.m_W_dot_fan = ms_des_par_cycle_dep.m_W_dot_fan_des;	//[MWe]
 
-	ms_hx_des_sol.m_cost = calculate_cost(ms_hx_des_sol.m_UA_total*1.E-3, ms_hx_des_sol.m_V_total,
+	ms_hx_des_sol.m_cost_equipment = calculate_equipment_cost(ms_hx_des_sol.m_UA_total*1.E-3, ms_hx_des_sol.m_V_total,
 		ms_hx_des_sol.m_T_in_co2, ms_hx_des_sol.m_P_in_co2, ms_hx_des_sol.m_m_dot_co2);		//[M$]
+
+    ms_hx_des_sol.m_cost_bare_erected = calculate_bare_erected_cost(ms_hx_des_sol.m_cost_equipment);
 
 	return true;
 };
@@ -3538,16 +3556,27 @@ int C_CO2_to_air_cooler::C_MEQ_target_T_hot__width_parallel::operator()(double W
 	return 0;
 }
 
-double C_CO2_to_air_cooler::calculate_cost(double UA /*kWt/K*/, double V_material /*m^3*/,
+double /*M$*/ C_CO2_to_air_cooler::calculate_equipment_cost(double UA /*kWt/K*/, double V_material /*m^3*/,
 	double T_hot_in /*K*/, double P_hot_in /*kPa*/, double m_dot_hot /*kg/s*/)
 {
 	switch (m_cost_model)
 	{
 	case C_CO2_to_air_cooler::E_CARLSON_17:
 		return 2.3*1.E-3*UA;		//[M$] needs UA in kWt/K
+    case C_CO2_to_air_cooler::E_WEILAND_19:
+        return 32.88*std::pow(UA*1.E3, 0.75)*1.E-6; //[M$] needs UA in Wt/K
 	default:
 		return std::numeric_limits<double>::quiet_NaN();
 	}
+}
+
+double /*M$*/ C_CO2_to_air_cooler::calculate_bare_erected_cost(double cost_equipment /*M$*/)
+{
+    // Weiland 2019
+    double frac_installation = 0.08;
+    double frac_labor = 0.12;
+
+    return cost_equipment * (1. + frac_installation + frac_labor);
 }
 
 void C_CO2_to_air_cooler::calc_air_props(double T_amb /*K*/, double P_amb /*Pa*/,
