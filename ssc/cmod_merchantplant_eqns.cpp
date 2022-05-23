@@ -49,10 +49,9 @@ bool mp_ancillary_services(ssc_data_t data)
             mp_enable_ancserv3_percent_gen, mp_enable_ancserv4_percent_gen;
         double mp_market_percent_gen, mp_ancserv1_percent_gen, mp_ancserv2_percent_gen, mp_ancserv3_percent_gen, mp_ancserv4_percent_gen;
 		int mp_calculate_revenue;
-		ssc_number_t analysis_period, system_capacity, analysis_period_old;
+		ssc_number_t analysis_period, system_capacity;
         util::matrix_t<ssc_number_t> mp_energy_market_revenue, mp_ancserv1_revenue, mp_ancserv2_revenue, mp_ancserv3_revenue, mp_ancserv4_revenue, system_gen, degradation;
-        util::matrix_t<ssc_number_t> mp_energy_market_revenue_single, mp_ancserv1_revenue_single, mp_ancserv2_revenue_single, mp_ancserv3_revenue_single, mp_ancserv4_revenue_single;
-        /* also add single matrices in SAM_994 and header file for price only data
+         /* also add single matrices in SAM_994 and header file for price only data
 		{ SSC_INPUT,        SSC_NUMBER,     "mp_enable_energy_market_revenue",		      "Enable energy market revenue",   "0/1",   "",    "",  "*",	"INTEGER,MIN=0,MAX=1",      "" },
 		{ SSC_INPUT, SSC_MATRIX, "mp_energy_market_revenue", "Energy market revenue input", "", "","*", "", ""},
 		{ SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv1",		      "Enable ancillary services 1 revenue",   "0/1",   "",    "",  "*",	"INTEGER,MIN=0,MAX=1",      "" },
@@ -66,7 +65,6 @@ bool mp_ancillary_services(ssc_data_t data)
 		*/
 		vt_get_int(vt, "system_use_lifetime_output", &system_use_lifetime_output);
         vt_get_number(vt, "analysis_period", &analysis_period);
-        vt_get_number(vt, "analysis_period_old", &analysis_period_old);
 
         // percent generation ssc variable retrieval
         vt_get_int(vt, "mp_enable_market_percent_gen", &mp_enable_market_percent_gen);
@@ -86,63 +84,15 @@ bool mp_ancillary_services(ssc_data_t data)
 		vt_get_int(vt, "mp_enable_ancserv3", &mp_enable_ancserv3);
 		vt_get_int(vt, "mp_enable_ancserv4", &mp_enable_ancserv4);
 
-        /*
+        
         // load relevant matrices
         vt_get_matrix(vt, "mp_energy_market_revenue" + std::string((mp_enable_market_percent_gen > 0.5) ? "_single" : ""), mp_energy_market_revenue);
         vt_get_matrix(vt, "mp_ancserv1_revenue" + std::string((mp_enable_ancserv1_percent_gen > 0.5) ? "_single" : ""), mp_ancserv1_revenue);
         vt_get_matrix(vt, "mp_ancserv2_revenue" + std::string((mp_enable_ancserv2_percent_gen > 0.5) ? "_single" : ""), mp_ancserv2_revenue);
         vt_get_matrix(vt, "mp_ancserv3_revenue" + std::string((mp_enable_ancserv3_percent_gen > 0.5) ? "_single" : ""), mp_ancserv3_revenue);
         vt_get_matrix(vt, "mp_ancserv4_revenue" + std::string((mp_enable_ancserv4_percent_gen > 0.5) ? "_single" : ""), mp_ancserv4_revenue);
-        */
+        
 
-        vt_get_matrix(vt, "mp_energy_market_revenue_single", mp_energy_market_revenue_single);
-        vt_get_matrix(vt, "mp_ancserv1_revenue_single", mp_ancserv1_revenue_single);
-        vt_get_matrix(vt, "mp_ancserv2_revenue_single", mp_ancserv2_revenue_single);
-        vt_get_matrix(vt, "mp_ancserv3_revenue_single", mp_ancserv3_revenue_single);
-        vt_get_matrix(vt, "mp_ancserv4_revenue_single", mp_ancserv4_revenue_single);
-
-        vt_get_matrix(vt, "mp_energy_market_revenue", mp_energy_market_revenue);
-        vt_get_matrix(vt, "mp_ancserv1_revenue", mp_ancserv1_revenue);
-        vt_get_matrix(vt, "mp_ancserv2_revenue", mp_ancserv2_revenue);
-        vt_get_matrix(vt, "mp_ancserv3_revenue", mp_ancserv3_revenue);
-        vt_get_matrix(vt, "mp_ancserv4_revenue", mp_ancserv4_revenue);
-
-        // resize - truncate or fill with zeros if analysis period has changed - SAM issue 994
-        // TODO check that inout variables handled
-        if (analysis_period != analysis_period_old) {
-            // for each revenue stream - determine current mode (subhourly, hourly, daily, weekly, monthly, annual or single value), resize to new analysis period
-            for (util::matrix_t<ssc_number_t> mat : { mp_energy_market_revenue_single, mp_ancserv1_revenue_single, mp_ancserv2_revenue_single, mp_ancserv3_revenue_single, mp_ancserv4_revenue_single,
-                mp_energy_market_revenue, mp_ancserv1_revenue, mp_ancserv2_revenue, mp_ancserv3_revenue, mp_ancserv4_revenue }) {
-                size_t  oldSize = mat.nrows();
-                size_t newSize = 1;
-                if (oldSize == 1) {
-                    newSize = 1;
-                }
-                else if (oldSize == analysis_period_old) {
-                    newSize = analysis_period;
-                }
-                else if (oldSize == (analysis_period_old * 12)) {
-                    newSize = analysis_period * 12;
-                }
-                else if (oldSize == (analysis_period_old * 52)) {
-                    newSize = analysis_period * 52;
-                }
-                else if (oldSize == (analysis_period_old * 365)) {
-                    newSize = analysis_period * 365;
-                }
-                else if (oldSize == (analysis_period_old * 8760)) {
-                    newSize = analysis_period * 8760;
-                }
-                else {
-                    size_t steps_per_hour = oldSize / analysis_period_old / 8760;
-                    newSize = steps_per_hour * 8760 * analysis_period;
-                }
-                mat.resize_preserve(newSize, mat.ncols(), 0.0);
-            }
-        }
-
-        // TODO handle "single" revenue
-       // if (mp_enable_market_percent_gen > 0.5) 
 
         gen_is_assigned = (vt->lookup("gen") != NULL);
 		if (gen_is_assigned)
