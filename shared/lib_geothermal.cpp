@@ -783,13 +783,13 @@ double CGeothermalAnalyzer::GetProductionPumpWorkft(double injection_pressure)
     double flow = mo_geo_in.md_ProductionFlowRateKgPerS; //kg/s
     double flow_lbh = flow * 2.20462 * 3600;
     //Upper interval
-    double D_well = mo_geo_in.md_DiameterPumpCasingInches - 0.4375 * 2;
+    double D_well = mo_geo_in.md_DiameterInjectionWellInches;
     double D_well_ft = D_well / 12;
     double A = 3.1415 * pow(D_well_ft, 2) / 4;
     double L_int = 0.2 * mo_geo_in.md_ResourceDepthM; //Length interval (m), how is this calculated?
-    double surf_rough_casing = 0.02; //different for open hole vs. slotted liner
+    double surf_rough_casing = 0.001; //different for open hole vs. slotted liner
     double dT_dL = (mo_geo_in.md_dtProdWell) / (mo_geo_in.md_ResourceDepthM);
-    double T_star = InjectionTemperatureC() + dT_dL * mo_geo_in.md_RatioInjectionToProduction * (L_int) * 0.5;
+    double T_star = GetResourceTemperatureC() - dT_dL * (L_int) * 0.5;
     double P_sat = geothermal::oPC.evaluate(T_star * 1.8 + 32);
     double rho_sat = 1 / geothermal::oSVC.evaluate(T_star * 1.8 + 32);
     double viscosity = 407.22 * pow((T_star * 1.8 + 32), -1.194) / 3600;
@@ -815,13 +815,13 @@ double CGeothermalAnalyzer::GetProductionPumpWorkft(double injection_pressure)
     flow = mo_geo_in.md_ProductionFlowRateKgPerS; //kg/s
     flow_lbh = flow * 2.20462 * 3600;
     //Upper interval
-    D_well = mo_geo_in.md_DiameterInjectionWellInches;
+    D_well = mo_geo_in.md_DiameterPumpCasingInches - 0.4375 * 2;
     D_well_ft = D_well / 12;
     A = 3.1415 * pow(D_well_ft, 2) / 4;
     L_int = 0.8 * mo_geo_in.md_ResourceDepthM; //Length interval (m), how is this calculated?
     surf_rough_casing = 0.00015; //different for open hole vs. slotted liner
     //dT_dL = (mo_geo_in.md_dtProdWell * 1.8) / (physics::FT_PER_METER * mo_geo_in.md_ResourceDepthM);
-    T_star = InjectionTemperatureC() + dT_dL * mo_geo_in.md_RatioInjectionToProduction * (0.5 * L_int + (mo_geo_in.md_ResourceDepthM - L_int));
+    T_star = GetResourceTemperatureC() + dT_dL  * (0.5 * L_int + (mo_geo_in.md_ResourceDepthM - L_int));
     P_sat = geothermal::oPC.evaluate(T_star * 1.8 + 32);
     rho_sat = 1 / geothermal::oSVC.evaluate(T_star * 1.8 + 32);
     viscosity = 407.22 * pow((T_star * 1.8 + 32), -1.194) / 3600;
