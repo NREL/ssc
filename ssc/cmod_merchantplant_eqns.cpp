@@ -50,8 +50,8 @@ bool mp_ancillary_services(ssc_data_t data)
         double mp_market_percent_gen, mp_ancserv1_percent_gen, mp_ancserv2_percent_gen, mp_ancserv3_percent_gen, mp_ancserv4_percent_gen;
 		int mp_calculate_revenue;
 		ssc_number_t analysis_period, system_capacity;
-		util::matrix_t<ssc_number_t> mp_energy_market_revenue, mp_ancserv1_revenue, mp_ancserv2_revenue, mp_ancserv3_revenue, mp_ancserv4_revenue, system_gen, degradation;
-		/*
+        util::matrix_t<ssc_number_t> mp_energy_market_revenue, mp_ancserv1_revenue, mp_ancserv2_revenue, mp_ancserv3_revenue, mp_ancserv4_revenue, system_gen, degradation;
+         /* also add single matrices in SAM_994 and header file for price only data
 		{ SSC_INPUT,        SSC_NUMBER,     "mp_enable_energy_market_revenue",		      "Enable energy market revenue",   "0/1",   "",    "",  "*",	"INTEGER,MIN=0,MAX=1",      "" },
 		{ SSC_INPUT, SSC_MATRIX, "mp_energy_market_revenue", "Energy market revenue input", "", "","*", "", ""},
 		{ SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv1",		      "Enable ancillary services 1 revenue",   "0/1",   "",    "",  "*",	"INTEGER,MIN=0,MAX=1",      "" },
@@ -64,7 +64,7 @@ bool mp_ancillary_services(ssc_data_t data)
 		{ SSC_INPUT, SSC_MATRIX, "mp_ancserv4_revenue", "Ancillary services 4 revenue input", "", "","*", "", "" },
 		*/
 		vt_get_int(vt, "system_use_lifetime_output", &system_use_lifetime_output);
-		vt_get_number(vt, "analysis_period", &analysis_period);
+        vt_get_number(vt, "analysis_period", &analysis_period);
 
         // percent generation ssc variable retrieval
         vt_get_int(vt, "mp_enable_market_percent_gen", &mp_enable_market_percent_gen);
@@ -84,14 +84,17 @@ bool mp_ancillary_services(ssc_data_t data)
 		vt_get_int(vt, "mp_enable_ancserv3", &mp_enable_ancserv3);
 		vt_get_int(vt, "mp_enable_ancserv4", &mp_enable_ancserv4);
 
+        
         // load relevant matrices
         vt_get_matrix(vt, "mp_energy_market_revenue" + std::string((mp_enable_market_percent_gen > 0.5) ? "_single" : ""), mp_energy_market_revenue);
         vt_get_matrix(vt, "mp_ancserv1_revenue" + std::string((mp_enable_ancserv1_percent_gen > 0.5) ? "_single" : ""), mp_ancserv1_revenue);
         vt_get_matrix(vt, "mp_ancserv2_revenue" + std::string((mp_enable_ancserv2_percent_gen > 0.5) ? "_single" : ""), mp_ancserv2_revenue);
         vt_get_matrix(vt, "mp_ancserv3_revenue" + std::string((mp_enable_ancserv3_percent_gen > 0.5) ? "_single" : ""), mp_ancserv3_revenue);
         vt_get_matrix(vt, "mp_ancserv4_revenue" + std::string((mp_enable_ancserv4_percent_gen > 0.5) ? "_single" : ""), mp_ancserv4_revenue);
+        
 
-		gen_is_assigned = (vt->lookup("gen") != NULL);
+
+        gen_is_assigned = (vt->lookup("gen") != NULL);
 		if (gen_is_assigned)
 		{
 			system_capacity = 0.0;
