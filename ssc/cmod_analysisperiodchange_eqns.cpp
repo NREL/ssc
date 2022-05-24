@@ -64,11 +64,9 @@ bool analysisperiodchange(ssc_data_t data)
         // resize - truncate or fill with zeros if analysis period has changed - SAM issue 994
         if (analysis_period != analysis_period_old) {
             // for each revenue stream - determine current mode (subhourly, hourly, daily, weekly, monthly, annual or single value), resize to new analysis period
-            //
-            // note that assignment makes copy!
-  //          for (util::matrix_t<ssc_number_t> mat : { mp_energy_market_revenue_single, mp_ancserv1_revenue_single, mp_ancserv2_revenue_single, mp_ancserv3_revenue_single, mp_ancserv4_revenue_single,
-//                mp_energy_market_revenue, mp_ancserv1_revenue, mp_ancserv2_revenue, mp_ancserv3_revenue, mp_ancserv4_revenue }) {
-                size_t  oldSize = mp_energy_market_revenue.nrows();
+            for (util::matrix_t<ssc_number_t>* pmat : { &mp_energy_market_revenue_single, &mp_ancserv1_revenue_single, &mp_ancserv2_revenue_single, &mp_ancserv3_revenue_single, &mp_ancserv4_revenue_single,
+                &mp_energy_market_revenue, &mp_ancserv1_revenue, &mp_ancserv2_revenue, &mp_ancserv3_revenue, &mp_ancserv4_revenue }) {
+                size_t  oldSize = pmat->nrows();
                 size_t newSize = 1;
                 if (oldSize == 1) {
                     newSize = 1;
@@ -92,14 +90,24 @@ bool analysisperiodchange(ssc_data_t data)
                     size_t steps_per_hour = oldSize / (size_t)analysis_period_old / 8760;
                     newSize = steps_per_hour * 8760 * (size_t)analysis_period;
                 }
-                mp_energy_market_revenue.resize_preserve(newSize, mp_energy_market_revenue.ncols(), 0.0);
+                pmat->resize_preserve(newSize, pmat->ncols(), 0.0);
             }
-  //      }
-//        vt->assign("mp_energy_market_revenue", var_data(mp_energy_market_revenue.data(), mp_energy_market_revenue.nrows(), mp_energy_market_revenue.ncols()));
 
-        vt->assign("mp_energy_market_revenue", var_data(mp_energy_market_revenue));
+            vt->assign("mp_energy_market_revenue", var_data(mp_energy_market_revenue));
+            vt->assign("mp_ancserv1_revenue", var_data(mp_ancserv1_revenue));
+            vt->assign("mp_ancserv2_revenue", var_data(mp_ancserv2_revenue));
+            vt->assign("mp_ancserv3_revenue", var_data(mp_ancserv3_revenue));
+            vt->assign("mp_ancserv4_revenue", var_data(mp_ancserv4_revenue));
+
+            vt->assign("mp_energy_market_revenue_single", var_data(mp_energy_market_revenue_single));
+            vt->assign("mp_ancserv1_revenue_single", var_data(mp_ancserv1_revenue_single));
+            vt->assign("mp_ancserv2_revenue_single", var_data(mp_ancserv2_revenue_single));
+            vt->assign("mp_ancserv3_revenue_single", var_data(mp_ancserv3_revenue_single));
+            vt->assign("mp_ancserv4_revenue_single", var_data(mp_ancserv4_revenue_single));
 
 
+
+        }
     }
     catch (std::exception& e)
     {
