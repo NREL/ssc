@@ -79,7 +79,11 @@ void C_pt_sf_perf_interp::init()
 	m_n_flux_x = ms_params.m_n_flux_x;
 	m_n_flux_y = ms_params.m_n_flux_y;
     m_A_rec_flux_node = m_A_rec_active_total / (double(m_n_flux_x * m_n_flux_y));
-		
+
+    if (m_n_flux_y != 1) {
+        throw(C_csp_exception("n_flux_y must be equal to 1", "heliostat field initialization"));
+    }
+
 	int nfluxpos = eta_map.nrows();
 	int nfposdim = 2;
 

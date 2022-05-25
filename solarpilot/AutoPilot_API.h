@@ -111,7 +111,10 @@ public:
 	bool IsSimulationCancelled();
     //other
     sp_optimize *GetOptimizationObject();
-    
+
+    // Info
+    void GetHeliostatPositions(sp_layout& layout);
+
     struct API_CANT_TYPE { enum A {NONE, ON_AXIS, EQUINOX, SOLSTICE_SUMMER, SOLSTICE_WINTER }; };
 	
 };
