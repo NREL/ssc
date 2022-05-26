@@ -1388,7 +1388,7 @@ public:
                 
                 for (size_t h = 0; h < 8760; h++) {
                     if (ppa_purchases) {
-                        cf.at(CF_utility_bill, i) += -hourly_energy_calcs.hourly_purchases()[(i - 1) * 8760 + h] * cf.at(CF_degradation, i) * mp_energy_market_price[(i -1) * 8760 + h];
+                        cf.at(CF_utility_bill, i) += -hourly_energy_calcs.hourly_purchases()[(i - 1) * 8760 + h] * cf.at(CF_degradation, i) * mp_energy_market_price[(i -1) * 8760 + h] / 1000.0; // $/MWh to $/kWh 
                     }
                 }
             }
@@ -1399,7 +1399,7 @@ public:
                
                 for (size_t h = 0; h < 8760; h++) {
                     if (ppa_purchases) {
-                        cf.at(CF_utility_bill, i) += -hourly_energy_calcs.hourly_purchases()[h] * cf.at(CF_degradation, i) * mp_energy_market_price[h];
+                        cf.at(CF_utility_bill, i) += -hourly_energy_calcs.hourly_purchases()[h] * cf.at(CF_degradation, i) * mp_energy_market_price[h] / 1000.0; // $/MWh to $/kWh 
                     }
                 }
             }
