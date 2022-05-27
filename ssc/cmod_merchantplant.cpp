@@ -593,6 +593,12 @@ static var_info _cm_vtab_merchantplant[] = {
 	{ SSC_OUTPUT, SSC_ARRAY, "mp_ancillary_services4_price", "Ancillary services 4 generated price", "$/MWh", "", "", "*", "", "GROUP=LIFETIME_MP" },
 		// sum of all cleared capacities
 	{ SSC_OUTPUT, SSC_ARRAY, "mp_total_cleared_capacity", "Total cleared capacity", "MW", "", "", "*", "", "GROUP=LIFETIME_MP" },
+        // calculated revenue
+    { SSC_OUTPUT, SSC_ARRAY, "mp_energy_market_consumed_cost", "Energy market electricity purchases", "$", "", "", "*", "", "GROUP=LIFETIME_MP" },
+    { SSC_OUTPUT, SSC_ARRAY, "mp_ancillary_services1_consumed_cost", "Ancillary services 1 electricity purchases", "$", "", "", "*", "", "GROUP=LIFETIME_MP" },
+    { SSC_OUTPUT, SSC_ARRAY, "mp_ancillary_services2_consumed_cost", "Ancillary services 2 electricity purchases", "$", "", "", "*", "", "GROUP=LIFETIME_MP" },
+    { SSC_OUTPUT, SSC_ARRAY, "mp_ancillary_services3_consumed_cost", "Ancillary services 3 electricity purchases", "$", "", "", "*", "", "GROUP=LIFETIME_MP" },
+    { SSC_OUTPUT, SSC_ARRAY, "mp_ancillary_services4_consumed_cost", "Ancillary services 4 electricity purchases", "$", "", "", "*", "", "GROUP=LIFETIME_MP" },
 
 var_info_invalid };
 
@@ -1372,9 +1378,22 @@ public:
 			cf.at(CF_om_opt_fuel_2_expense,i) *= om_opt_fuel_2_usage;
 		}
 
-        std::vector<double> mp_energy_market_price(8760*nyears, 0.0);
-        if (lookup("mp_energy_market_price"))
-            mp_energy_market_price = lookup("mp_energy_market_price")->arr_vector();
+        std::vector<double> mp_energy_market_purchases(8760*nyears, 0.0);
+        std::vector<double> mp_ancillary_services1_purchases(8760*nyears, 0.0);
+        std::vector<double> mp_ancillary_services2_purchases(8760*nyears, 0.0);
+        std::vector<double> mp_ancillary_services3_purchases(8760*nyears, 0.0);
+        std::vector<double> mp_ancillary_services4_purchases(8760*nyears, 0.0);
+        if (lookup("mp_energy_market_consumed_cost"))
+            mp_energy_market_purchases = lookup("mp_energy_market_consumed_cost")->arr_vector();
+        if (lookup("mp_ancillary_services1_consumed_cost"))
+            mp_ancillary_services1_purchases = lookup("mp_ancillary_services1_consumed_cost")->arr_vector();
+        if (lookup("mp_ancillary_services2_consumed_cost"))
+            mp_ancillary_services2_purchases = lookup("mp_ancillary_services2_consumed_cost")->arr_vector();
+        if (lookup("mp_ancillary_services3_consumed_cost"))
+            mp_ancillary_services3_purchases = lookup("mp_ancillary_services3_consumed_cost")->arr_vector();
+        if (lookup("mp_ancillary_services4_consumed_cost"))
+            mp_ancillary_services4_purchases = lookup("mp_ancillary_services4_consumed_cost")->arr_vector();
+
         bool ppa_purchases = !(is_assigned("en_electricity_rates") && as_number("en_electricity_rates") == 1);
 
         if (as_integer("system_use_lifetime_output") == 1)
@@ -1388,7 +1407,7 @@ public:
                 
                 for (size_t h = 0; h < 8760; h++) {
                     if (ppa_purchases) {
-                        cf.at(CF_utility_bill, i) += -hourly_energy_calcs.hourly_purchases()[(i - 1) * 8760 + h] * cf.at(CF_degradation, i) * mp_energy_market_price[(i -1) * 8760 + h] / 1000.0; // $/MWh to $/kWh 
+                        cf.at(CF_utility_bill, i) -= (mp_energy_market_purchases[(i - 1) * 8760 + h] + mp_ancillary_services1_purchases[(i - 1) * 8760 + h] + mp_ancillary_services2_purchases[(i - 1) * 8760 + h] + mp_ancillary_services3_purchases[(i - 1) * 8760 + h] + mp_ancillary_services4_purchases[(i - 1) * 8760 + h]);
                     }
                 }
             }
@@ -1399,7 +1418,7 @@ public:
                
                 for (size_t h = 0; h < 8760; h++) {
                     if (ppa_purchases) {
-                        cf.at(CF_utility_bill, i) += -hourly_energy_calcs.hourly_purchases()[h] * cf.at(CF_degradation, i) * mp_energy_market_price[h] / 1000.0; // $/MWh to $/kWh 
+                        cf.at(CF_utility_bill, i) -= cf.at(CF_degradation, i) * (mp_energy_market_purchases[h] + mp_ancillary_services1_purchases[h] + mp_ancillary_services2_purchases[h] + mp_ancillary_services3_purchases[h] + mp_ancillary_services4_purchases[h]);
                     }
                 }
             }

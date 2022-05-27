@@ -156,6 +156,11 @@ bool mp_ancillary_services(ssc_data_t data)
 		std::vector<ssc_number_t> ancillary_services2_revenue(nsteps, 0.0);
 		std::vector<ssc_number_t> ancillary_services3_revenue(nsteps, 0.0);
 		std::vector<ssc_number_t> ancillary_services4_revenue(nsteps, 0.0);
+        std::vector<ssc_number_t> energy_market_purchases(nsteps, 0.0);
+        std::vector<ssc_number_t> ancillary_services1_purchases(nsteps, 0.0);
+        std::vector<ssc_number_t> ancillary_services2_purchases(nsteps, 0.0);
+        std::vector<ssc_number_t> ancillary_services3_purchases(nsteps, 0.0);
+        std::vector<ssc_number_t> ancillary_services4_purchases(nsteps, 0.0);
 
         if (ancillary_services_success) {
             warning = "No source of revenue enabled. The Merchant Plant financial model requires at least one source of revenue. To fix the problem, enable energy market revenue and/or one or more ancillary services.";
@@ -454,6 +459,12 @@ bool mp_ancillary_services(ssc_data_t data)
 							error = util::format("sum of cleared capacity %g MW does not match system capacity %g MW at timestep %d", cleared_capacity_sum[i], system_generation[i], int(i));
 							break;
 						}
+
+                        if ((cleared_capacity_sum[i] < 0) && ((system_generation[i] - cleared_capacity_sum[i]) > 1e-5 * abs(system_generation[i])))
+                        {
+                            warning = util::format("sum of cleared capacity %g MW does not match system capacity %g MW at timestep %d", cleared_capacity_sum[i], system_generation[i], int(i));
+                            break;
+                        }
 					}
 				}
 
@@ -480,34 +491,53 @@ bool mp_ancillary_services(ssc_data_t data)
                         // Only count positive revenue here. Negative numbers are an operating expense for LCOE
                         if (en_mp_energy_market) {
                             revenue = energy_market_revenue[i] * energy_market_capacity[i] / steps_per_hour;// [MW] * [$/MWh] / fraction per hour [1/h]
-                            energy_market_revenue[i] = revenue > 0 ? revenue : 0.0; 
+                            energy_market_revenue[i] = revenue > 0 ? revenue : 0.0;
+                            energy_market_purchases[i] = revenue < 0 ? revenue : 0.0;
                         }
-                        else
-							energy_market_revenue[i] = 0.0;
+                        else {
+                            energy_market_revenue[i] = 0.0;
+                            energy_market_purchases[i] = 0.0;
+                        }
+
                         if (en_mp_ancserv1) {
                             revenue = ancillary_services1_revenue[i] * ancillary_services1_capacity[i] / steps_per_hour; // [MW] * [$/MWh] / fraction per hour [1/h]
                             ancillary_services1_revenue[i] = revenue > 0 ? revenue : 0.0;
+                            ancillary_services1_purchases[i] = revenue < 0 ? revenue : 0.0;
                         }
-                        else
-							ancillary_services1_revenue[i] = 0.0;
+                        else {
+                            ancillary_services1_revenue[i] = 0.0;
+                            ancillary_services1_purchases[i] = 0.0;
+                        }
+
                         if (en_mp_ancserv2) {
                             revenue = ancillary_services2_revenue[i] * ancillary_services2_capacity[i] / steps_per_hour; // [MW] * [$/MWh] / fraction per hour [1/h]
                             ancillary_services2_revenue[i] = revenue > 0 ? revenue : 0.0;
+                            ancillary_services2_purchases[i] = revenue < 0 ? revenue : 0.0;
                         }
-                        else
-							ancillary_services2_revenue[i] = 0.0;
+                        else {
+                            ancillary_services2_revenue[i] = 0.0;
+                            ancillary_services2_purchases[i] = 0.0;
+                        }
+
                         if (en_mp_ancserv3) {
                             revenue = ancillary_services3_revenue[i] * ancillary_services3_capacity[i] / steps_per_hour; // [MW] * [$/MWh] / fraction per hour [1/h]
                             ancillary_services3_revenue[i] = revenue > 0 ? revenue : 0.0;
+                            ancillary_services3_purchases[i] = revenue < 0 ? revenue : 0.0;
                         }
-                        else
-							ancillary_services3_revenue[i] = 0.0;
+                        else {
+                            ancillary_services3_revenue[i] = 0.0;
+                            ancillary_services3_purchases[i] = 0.0;
+                        }
+
                         if (en_mp_ancserv4) {
                             revenue = ancillary_services4_revenue[i] * ancillary_services4_capacity[i] / steps_per_hour; // [MW] * [$/MWh] / fraction per hour [1/h]
                             ancillary_services4_revenue[i] = revenue > 0 ? revenue : 0.0;
+                            ancillary_services4_purchases[i] = revenue < 0 ? revenue : 0.0;
                         }
-                        else
-							ancillary_services4_revenue[i] = 0.0;
+                        else {
+                            ancillary_services4_revenue[i] = 0.0;
+                            ancillary_services4_purchases[i] = 0.0;
+                        }
 						
 					}
 				}
@@ -525,7 +555,11 @@ bool mp_ancillary_services(ssc_data_t data)
 	    vt->assign("mp_ancillary_services3_generated_revenue", var_data(ancillary_services3_revenue.data(), ancillary_services3_revenue.size()));
 	    vt->assign("mp_ancillary_services4_generated_revenue", var_data(ancillary_services4_revenue.data(), ancillary_services4_revenue.size()));
 
-
+        vt->assign("mp_energy_market_consumed_cost", var_data(energy_market_purchases.data(), energy_market_purchases.size()));
+        vt->assign("mp_ancillary_services1_consumed_cost", var_data(ancillary_services1_purchases.data(), ancillary_services1_purchases.size()));
+        vt->assign("mp_ancillary_services2_consumed_cost", var_data(ancillary_services2_purchases.data(), ancillary_services2_purchases.size()));
+        vt->assign("mp_ancillary_services3_consumed_cost", var_data(ancillary_services3_purchases.data(), ancillary_services3_purchases.size()));
+        vt->assign("mp_ancillary_services4_consumed_cost", var_data(ancillary_services4_purchases.data(), ancillary_services4_purchases.size()));
     }
     catch (std::exception& e)
     {
