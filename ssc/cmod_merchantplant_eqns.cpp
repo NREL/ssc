@@ -460,10 +460,10 @@ bool mp_ancillary_services(ssc_data_t data)
 							break;
 						}
 
-                        if ((cleared_capacity_sum[i] < 0) && ((system_generation[i] - cleared_capacity_sum[i]) > 1e-5 * abs(system_generation[i])))
+                        if ((cleared_capacity_sum[i] < 0) && ((cleared_capacity_sum[i] - system_generation[i]) > 1e-5 * abs(system_generation[i])))
                         {
                             warning = util::format("sum of cleared capacity %g MW does not match system capacity %g MW at timestep %d", cleared_capacity_sum[i], system_generation[i], int(i));
-                            break;
+                            // Don't break in case there's an error at a later step. Note that the current behavior reports the last step at which there was a cleared capacity issue
                         }
 					}
 				}
