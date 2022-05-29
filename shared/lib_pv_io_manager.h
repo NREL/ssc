@@ -265,7 +265,6 @@ struct PVSystem_IO
 	PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO * SimulationIO, Irradiance_IO * IrradianceIO, std::vector<Subarray_IO*> Subarrays, Inverter_IO * InverterIO);
 
 	void AllocateOutputs(compute_module *cm);
-	void AssignOutputs(compute_module *cm);
 	void SetupPOAInput();
 
 	size_t numberOfSubarrays;
@@ -377,6 +376,7 @@ struct PVSystem_IO
 	ssc_number_t *p_inverterThermalLoss;
 	ssc_number_t *p_inverterTotalLoss;
 
+    ssc_number_t* p_inverterACOutputPreLoss; // kWac
 	ssc_number_t *p_acWiringLoss; // kWac
 	ssc_number_t *p_transmissionLoss; // kWac
     ssc_number_t *p_acPerfAdjLoss; // kWac

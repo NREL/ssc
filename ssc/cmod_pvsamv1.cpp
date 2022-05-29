@@ -694,6 +694,7 @@ static var_info _cm_vtab_pvsamv1[] = {
         { SSC_OUTPUT,        SSC_ARRAY,      "inv_tdcloss",                       	 "Inverter thermal derate DC power loss",                "kW",   "",   "Time Series (Inverter)",      "*",             "",                   "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "inv_total_loss",                       "Inverter total power loss",                            "kW",   "",   "Time Series (Inverter)",      "*",             "",                   "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "ac_wiring_loss",                       "AC wiring loss",                                       "kW",   "",   "Time Series (Inverter)",      "*",                        "",                   "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "ac_gross",                             "Inverter AC output power",                                       "kW",   "",   "Time Series (Array)",       "*",                    "",                              "" },
 
         // transformer model outputs
         { SSC_OUTPUT,        SSC_ARRAY,      "xfmr_nll_ts",                          "Transformer no load loss",                              "kW", "",    "Time Series (Transformer)", "", "", "" },
@@ -706,9 +707,7 @@ static var_info _cm_vtab_pvsamv1[] = {
         { SSC_OUTPUT,        SSC_ARRAY,     "ac_perf_adj_loss",                       "AC performance adjustment loss",                             "kW", "",    "Time Series (AC Loss)",                 "",                     "",                   "" },
         { SSC_OUTPUT,        SSC_ARRAY,     "ac_lifetime_loss",                       "AC lifetime daily loss",                                     "kW", "",    "Time Series (AC Loss)",                 "",                     "",                   "" },
 
-        //total losses- not part of loss diagram but now outputs instead of inputs JMF 11/25/15
-        { SSC_OUTPUT,        SSC_NUMBER,     "ac_loss",                              "AC wiring loss",                                       "%",   "",    "Annual (Year 1)",              "",                        "",                   "" },
-        // monthly and annual outputs
+       // monthly and annual outputs
 
         { SSC_OUTPUT,		 SSC_NUMBER,     "annual_energy",						 "Annual AC energy",                                       "kWh",       "",                      "Annual (Year 1)", "", "", "" },
 
@@ -856,16 +855,11 @@ static var_info _cm_vtab_pvsamv1[] = {
             */
             { SSC_OUTPUT, SSC_NUMBER, "annual_ac_wiring_loss", "AC wiring loss", "kWh", "", "Annual (Year 1)", "", "", "" },
             { SSC_OUTPUT, SSC_NUMBER, "annual_transmission_loss", "Transmission loss", "kWh", "", "Annual (Year 1)", "", "", "" },
-            //	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_transformer_loss", "AC step-up transformer loss", "kWh", "", "Annual (Year 1)", "", "", "" },
+            
                 { SSC_OUTPUT, SSC_NUMBER, "annual_dc_optimizer_loss", "DC power optimizer loss", "kWh", "", "Annual (Year 1)", "", "", "" },
 
                 // total loss diagram losses for single year, does not include lifetime losses
                 { SSC_OUTPUT, SSC_NUMBER, "annual_total_loss_percent", "Total loss from nominal POA to net AC", "kWh", "", "Annual (Year 1)", "", "", "" },
-
-                /*
-                { SSC_OUTPUT, SSC_NUMBER, "annual_ac_after_wiring_loss", "AC output after wiring loss", "kWh", "", "Annual (Year 1)", "", "", "" },
-                { SSC_OUTPUT, SSC_NUMBER, "annual_ac_after_transformer_loss", "AC output after step-up transformer loss", "kWh", "", "Annual (Year 1)", "", "", "" },
-                */
 
                 //
 
@@ -1184,7 +1178,7 @@ void cm_pvsamv1::exec()
     size_t irepfreq = insteps / (50 * nyears); //report status updates 50 times per year
 
     // variables used to calculate loss diagram
-    double annual_energy = 0, annual_ac_gross = 0, annual_ac_pre_avail = 0, dc_gross[4] = { 0, 0, 0, 0 }, annualMpptVoltageClipping = 0, annual_dc_adjust_loss = 0, annual_dc_lifetime_loss = 0, annual_ac_lifetime_loss = 0, annual_ac_battery_loss = 0, annual_xfmr_nll = 0, annual_xfmr_ll = 0, annual_xfmr_loss = 0;
+    double annual_energy = 0, annual_ac_gross = 0, annual_ac_pre_avail = 0, dc_gross[4] = { 0, 0, 0, 0 }, annualMpptVoltageClipping = 0, annual_dc_adjust_loss = 0, annual_dc_lifetime_loss = 0, annual_ac_lifetime_loss = 0, annual_ac_battery_loss = 0, annual_xfmr_nll = 0, annual_xfmr_ll = 0, annual_xfmr_loss = 0, annual_ac_wiring_loss = 0, annual_transmission_loss = 0;
 
     /* *********************************************************************************************
     PV DC calculation
@@ -2273,11 +2267,11 @@ void cm_pvsamv1::exec()
             if (en_batt && (batt_topology == ChargeController::DC_CONNECTED)) // DC-connected battery
             {
                 // Add up AC loss percents for DC connected batteries
-                // TODO - split these
-                double delivered_percent = 1 - (PVSystem->acLossPercent + PVSystem->transmissionLossPercent) * 0.01; // These are both multipled by acpwr_gross
+                double delivered_percent = 1 - PVSystem->acLossPercent * 0.01;
 
                 ssc_number_t xfmr_loss_percent = transformerLoss(PVSystem->p_systemACPower[idx], PVSystem->transformerLoadLossFraction, transformerRatingkW, xfmr_ll, xfmr_nll) / PVSystem->p_systemACPower[idx];
                 delivered_percent *= (1 - xfmr_loss_percent);
+                delivered_percent *= 1 - PVSystem->transmissionLossPercent * 0.01;
 
                 ssc_number_t dc_loss_post_inverter = 1 - delivered_percent;
                 delivered_percent = 1; // Re-use variable for post batt losses
@@ -2325,7 +2319,6 @@ void cm_pvsamv1::exec()
             }
 
             ac_wiringloss = fabs(acpwr_gross) * PVSystem->acLossPercent * 0.01;
-            transmissionloss = fabs(acpwr_gross) * PVSystem->transmissionLossPercent * 0.01;
 
             // accumulate first year annual energy
             if (iyear == 0)
@@ -2334,16 +2327,18 @@ void cm_pvsamv1::exec()
 
                 annual_dc_loss_ond += sharedInverter->dcWiringLoss_ond_kW * ts_hour; // (TR)
                 annual_ac_loss_ond += sharedInverter->dcWiringLoss_ond_kW * ts_hour; // (TR)
+
+                annual_ac_wiring_loss += ac_wiringloss;
             }
 
             if (iyear == 0 || save_full_lifetime_variables == 1)
             {
+                PVSystem->p_inverterACOutputPreLoss[idx] = acpwr_gross;
                 PVSystem->p_inverterEfficiency[idx] = (ssc_number_t)(sharedInverter->efficiencyAC);
                 PVSystem->p_inverterClipLoss[idx] = (ssc_number_t)(sharedInverter->powerClipLoss_kW);
                 PVSystem->p_inverterPowerConsumptionLoss[idx] = (ssc_number_t)(sharedInverter->powerConsumptionLoss_kW);
                 PVSystem->p_inverterThermalLoss[idx] = (ssc_number_t)(sharedInverter->powerTempLoss_kW);
                 PVSystem->p_acWiringLoss[idx] = (ssc_number_t)(ac_wiringloss);
-                PVSystem->p_transmissionLoss[idx] = (ssc_number_t)(transmissionloss);
                 
                 if (offline) {
                     PVSystem->p_inverterNightTimeLoss[idx] = 0.0;
@@ -2388,6 +2383,7 @@ void cm_pvsamv1::exec()
 
 			// transmission loss if AC power is produced
 			if (PVSystem->p_systemACPower[idx] > 0){
+                transmissionloss = fabs(PVSystem->p_systemACPower[idx]) * PVSystem->transmissionLossPercent * 0.01;
 				PVSystem->p_systemACPower[idx] -= (ssc_number_t)(transmissionloss);
 
                 if (en_batt && (batt_topology == ChargeController::DC_CONNECTED)) {
@@ -2416,6 +2412,7 @@ void cm_pvsamv1::exec()
                 annual_xfmr_nll += xfmr_nll;
                 annual_xfmr_ll += xfmr_ll;
                 annual_xfmr_loss += xfmr_loss;
+                annual_transmission_loss += transmissionloss;
             }
 
             if (iyear == 0 || save_full_lifetime_variables == 1)
@@ -2423,6 +2420,7 @@ void cm_pvsamv1::exec()
                 PVSystem->p_transformerNoLoadLoss[idx] = xfmr_nll / ts_hour;
                 PVSystem->p_transformerLoadLoss[idx] = xfmr_ll / ts_hour;
                 PVSystem->p_transformerLoss[idx] = xfmr_loss / ts_hour;
+                PVSystem->p_transmissionLoss[idx] = (ssc_number_t)(transmissionloss);
             }
         }
 
@@ -2522,6 +2520,22 @@ void cm_pvsamv1::exec()
                 }
             }
 
+            //apply lifetime daily AC losses only if they are enabled
+            if (system_use_lifetime_output && PVSystem->enableACLifetimeLosses)
+            {
+                //current index of the lifetime daily AC losses is the number of years that have passed (iyear, because it is 0-indexed) * days in a year + the number of complete days that have passed
+                int ac_loss_index = (int)iyear * 365 + (int)floor(hour_of_year / 24); //in units of days
+                ssc_number_t ac_lifetime_loss = PVSystem->p_systemACPower[idx] * (PVSystem->acLifetimeLosses[ac_loss_index] / 100); // loss in kWac
+                if (iyear == 0 || save_full_lifetime_variables == 1) {
+                    PVSystem->p_acLifetimeLoss[idx] = ac_lifetime_loss;
+                }
+                if (iyear == 0) annual_ac_lifetime_loss += ac_lifetime_loss * ts_hour; // convert to kWh for yr 1 annual sum
+                PVSystem->p_systemACPower[idx] *= (100 - PVSystem->acLifetimeLosses[ac_loss_index]) / 100;
+                if (en_batt) {
+                    batt->outGenWithoutBattery[idx] *= (100 - PVSystem->acLifetimeLosses[ac_loss_index]) / 100;
+                }
+            }
+
             // accumulate system generation before curtailment and availability
             if (iyear == 0) {
                 annual_ac_pre_avail += PVSystem->p_systemACPower[idx] * ts_hour;
@@ -2536,21 +2550,6 @@ void cm_pvsamv1::exec()
                 batt->outGenWithoutBattery[idx] *= adj_factor;
             }
 
-			//apply lifetime daily AC losses only if they are enabled
-			if (system_use_lifetime_output && PVSystem->enableACLifetimeLosses)
-			{
-				//current index of the lifetime daily AC losses is the number of years that have passed (iyear, because it is 0-indexed) * days in a year + the number of complete days that have passed
-				int ac_loss_index = (int)iyear * 365 + (int)floor(hour_of_year / 24); //in units of days
-                ssc_number_t ac_lifetime_loss = PVSystem->p_systemACPower[idx] * (PVSystem->acLifetimeLosses[ac_loss_index] / 100); // loss in kWac
-                if (iyear == 0 || save_full_lifetime_variables == 1) {
-                    PVSystem->p_acLifetimeLoss[idx] = ac_lifetime_loss;
-                }
-                if (iyear == 0) annual_ac_lifetime_loss += ac_lifetime_loss * ts_hour; // convert to kWh for yr 1 annual sum
-				PVSystem->p_systemACPower[idx] *= (100 - PVSystem->acLifetimeLosses[ac_loss_index]) / 100;
-                if (en_batt) {
-                    batt->outGenWithoutBattery[idx] *= (100 - PVSystem->acLifetimeLosses[ac_loss_index]) / 100;
-                }
-			}
 			// Update battery with final gen to compute grid power
             if (en_batt) {
                 if (batt->is_outage_step(idx % nrec)) {
@@ -2597,7 +2596,6 @@ void cm_pvsamv1::exec()
 
     Irradiance->AssignOutputs(this);
     Subarrays[0]->AssignOutputs(this);
-    PVSystem->AssignOutputs(this);
 
     //Outputs that are only assigned for annual simulations
     if (Simulation->annualSimulation)
@@ -2657,7 +2655,7 @@ void cm_pvsamv1::exec()
 
         assign("annual_energy", var_data((ssc_number_t)annual_energy));
 
-        double annual_mismatch_loss = 0, annual_diode_loss = 0, annual_wiring_loss = 0, annual_tracking_loss = 0, annual_nameplate_loss = 0, annual_dcopt_loss = 0;
+        double annual_mismatch_loss = 0, annual_diode_loss = 0, annual_dc_wiring_loss = 0, annual_tracking_loss = 0, annual_nameplate_loss = 0, annual_dcopt_loss = 0;
         double annual_dc_gross = 0;
 
         // loop over subarrays
@@ -2684,7 +2682,7 @@ void cm_pvsamv1::exec()
                 }
                 annual_mismatch_loss += mismatch_loss;
                 annual_diode_loss += diode_loss;
-                annual_wiring_loss += wiring_loss;
+                annual_dc_wiring_loss += wiring_loss;
                 annual_tracking_loss += tracking_loss;
                 annual_nameplate_loss += nameplate_loss;
                 annual_dcopt_loss += dcopt_loss;
@@ -2711,7 +2709,7 @@ void cm_pvsamv1::exec()
 
         assign("annual_dc_mismatch_loss", var_data((ssc_number_t)annual_mismatch_loss));
         assign("annual_dc_diodes_loss", var_data((ssc_number_t)annual_diode_loss));
-        assign("annual_dc_wiring_loss", var_data((ssc_number_t)annual_wiring_loss));
+        assign("annual_dc_wiring_loss", var_data((ssc_number_t)annual_dc_wiring_loss));
         assign("annual_dc_tracking_loss", var_data((ssc_number_t)annual_tracking_loss));
         assign("annual_dc_nameplate_loss", var_data((ssc_number_t)annual_nameplate_loss));
         assign("annual_dc_optimizer_loss", var_data((ssc_number_t)annual_dcopt_loss));
@@ -2723,7 +2721,7 @@ void cm_pvsamv1::exec()
         assign("annual_dc_after_mismatch_loss", var_data((ssc_number_t)sys_output));
         sys_output -= annual_diode_loss;
         assign("annual_dc_after_diodes_loss", var_data((ssc_number_t)sys_output));
-        sys_output -= annual_wiring_loss;
+        sys_output -= annual_dc_wiring_loss;
         assign("annual_dc_after_wiring_loss", var_data((ssc_number_t)sys_output));
         sys_output -= annual_tracking_loss;
         assign("annual_dc_after_tracking_loss", var_data((ssc_number_t)sys_output));
@@ -2747,31 +2745,11 @@ void cm_pvsamv1::exec()
         sys_output -= annual_inv_pntloss;
         assign("annual_ac_after_inv_pntloss", var_data((ssc_number_t)sys_output));
 
+        // ac losses
 
-        double acwiring = as_double("acwiring_loss");
-        double transmission = as_double("transmission_loss");
-        //		double transformer = as_double("transformer_loss");
-        double total_percent = acwiring + transmission; // +transformer;
-        double acwiring_loss = 0., transmission_loss = 0.; // , transformer_loss = 0;
-        sys_output = annual_ac_gross;
-        double ac_loss = sys_output * (1.0 - PVSystem->acDerate);
+        assign("annual_ac_wiring_loss", var_data((ssc_number_t)annual_ac_wiring_loss));
 
-        if (total_percent != 0)
-        {
-            acwiring_loss = acwiring / total_percent * ac_loss;
-            transmission_loss = transmission / total_percent * ac_loss;
-            //			transformer_loss = transformer / total_percent * ac_loss;
-        }
-
-        assign("annual_ac_wiring_loss", var_data((ssc_number_t)acwiring_loss));
-        assign("annual_transmission_loss", var_data((ssc_number_t)transmission_loss));
-        //		assign("annual_ac_transformer_loss", var_data((ssc_number_t)transformer_loss));
-
-            // ac losses
-        sys_output -= acwiring_loss;
-        assign("annual_ac_after_wiring_loss", var_data((ssc_number_t)sys_output));
-        //		sys_output -= transformer_loss;
-        //		assign("annual_ac_after_transformer_loss", var_data((ssc_number_t)sys_output));
+        assign("annual_transmission_loss", var_data((ssc_number_t)annual_transmission_loss));
 
         double percent = 0.;
         if (annual_poa_nom > 0) percent = 100 * (annual_poa_nom - annual_poa_shaded) / annual_poa_nom;
@@ -2812,7 +2790,7 @@ void cm_pvsamv1::exec()
         assign("annual_dc_diodes_loss_percent", var_data((ssc_number_t)percent));
 
         percent = 0.;
-        if (annual_dc_gross > 0) percent = 100 * annual_wiring_loss / annual_dc_gross;
+        if (annual_dc_gross > 0) percent = 100 * annual_dc_wiring_loss / annual_dc_gross;
         assign("annual_dc_wiring_loss_percent", var_data((ssc_number_t)percent));
 
         percent = 0.;
@@ -2880,14 +2858,14 @@ void cm_pvsamv1::exec()
         sys_output -= annual_ac_battery_loss;
 
         percent = 0.;
-        if (annual_ac_gross > 0) percent = 100.0 * acwiring_loss / annual_ac_gross;
+        if (annual_ac_gross > 0) percent = 100.0 * annual_ac_wiring_loss / annual_ac_gross;
         assign("annual_ac_wiring_loss_percent", var_data((ssc_number_t)percent));
-        sys_output -= acwiring_loss;
+        sys_output -= annual_ac_wiring_loss;
 
         percent = 0.;
-        if (annual_ac_gross > 0) percent = 100.0 * transmission_loss / annual_ac_gross;
+        if (annual_ac_gross > 0) percent = 100.0 * annual_transmission_loss / annual_ac_gross;
         assign("annual_transmission_loss_percent", var_data((ssc_number_t)percent));
-        sys_output -= transmission_loss;
+        sys_output -= annual_transmission_loss;
         //		percent = 0;
         //		if (annual_ac_gross > 0) percent = 100.0 * transformer_loss / annual_ac_gross;
         //		assign("annual_ac_transformer_loss_percent", var_data((ssc_number_t)percent));
@@ -2930,7 +2908,7 @@ void cm_pvsamv1::exec()
                                                  "annual_ac_inv_clip_loss_percent", "annual_ac_inv_pso_loss_percent",
                                                  "annual_ac_inv_pnt_loss_percent","annual_ac_inv_eff_loss_percent",
                                                  "annual_ac_wiring_loss_percent", "annual_xfmr_loss_percent",
-                                                 "annual_ac_perf_adj_loss_percent" };
+                                                 "annual_transmission_loss_percent", "annual_ac_perf_adj_loss_percent"};
         percent = 1.;
         for (size_t i = 0; i < loss_components.size(); i++) {
             percent *= (1. - as_number(loss_components[i]) / 100.);
@@ -3161,7 +3139,7 @@ void cm_pvsamv1::inverter_size_check()
     ratedACOutput = ratedACOutput * util::watt_to_kilowatt; // W to kW to compare to hourly output
     ratedDCOutput = ratedDCOutput * util::watt_to_kilowatt; // W to kW to compare to hourly output
 
-    acPower = as_array("gen", &acCount);
+    acPower = as_array("ac_gross", &acCount);
     dcPower = as_array("dc_net", &dcCount);
     if (acCount == dcCount)
     {

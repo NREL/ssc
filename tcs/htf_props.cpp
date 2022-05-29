@@ -613,6 +613,112 @@ double HTFProperties::temp(double H)
 	}
 }
 
+double HTFProperties::min_temp()
+{
+    // Outputs: temperature [K]
+
+    double T_C = std::numeric_limits<double>::quiet_NaN();
+
+    switch (m_fluid)
+    {
+    case Nitrate_Salt:
+        T_C = 238.;
+        break;
+    case Caloria_HT_43:
+        T_C = -12.;
+        break;
+    case Hitec_XL:
+        T_C = 120.;
+        break;
+    case Therminol_VP1:
+        T_C = 12.;
+        break;
+    case Hitec:
+        T_C = 142.;
+        break;
+    case Dowtherm_Q:
+        T_C = -35.;
+        break;
+    case Dowtherm_RP:
+        T_C = 0.;
+        break;
+    case Therminol_66:
+        T_C = 0.;
+        break;
+    case Therminol_59:
+        T_C = -45.;
+        break;
+    case Pressurized_Water:
+        T_C = 10.;
+        break;
+    case User_defined:
+        if (m_userTable.nrows() < 2) {
+            T_C = std::numeric_limits<double>::quiet_NaN();
+        }
+        else {
+            T_C = User_Defined_Props.get_min_x_value_x_col_0();
+        }
+        break;
+    default:
+        T_C = std::numeric_limits<double>::quiet_NaN();
+    }
+
+    return T_C + 273.15;
+}
+
+double HTFProperties::max_temp()
+{
+    // Outputs: temperature [K]
+
+    double T_C = std::numeric_limits<double>::quiet_NaN();
+
+    switch (m_fluid)
+    {
+    case Nitrate_Salt:
+        T_C = 593.;
+        break;
+    case Caloria_HT_43:
+        T_C = 315.;
+        break;
+    case Hitec_XL:
+        T_C = 500.;
+        break;
+    case Therminol_VP1:
+        T_C = 400.;
+        break;
+    case Hitec:
+        T_C = 538.;
+        break;
+    case Dowtherm_Q:
+        T_C = 330.;
+        break;
+    case Dowtherm_RP:
+        T_C = 330.;
+        break;
+    case Therminol_66:
+        T_C = 345.;
+        break;
+    case Therminol_59:
+        T_C = 315.;
+        break;
+    case Pressurized_Water:
+        T_C = 220.;
+        break;
+    case User_defined:
+        if (m_userTable.nrows() < 2) {
+            T_C = std::numeric_limits<double>::quiet_NaN();
+        }
+        else {
+            T_C = User_Defined_Props.get_max_x_value_x_col_0();
+        }
+        break;
+    default:
+        T_C =  std::numeric_limits<double>::quiet_NaN();
+    }
+
+    return T_C + 273.15;
+}
+
 double HTFProperties::enth(double T_K)
 {
 	/*Inputs: temperature [K]
