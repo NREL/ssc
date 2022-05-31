@@ -2668,4 +2668,4 @@ public:
 
 };
 
-DEFINE_MODULE_ENTRY(utilityrate5, "Complex utility rate structure net revenue calculator OpenEI Version 4 with net billing", 1);
+DEFINE_MODULE_ENTRY(utilityrate5, "Complex utility rate structure net revenue calculator OpenEI Version 8", 1);
