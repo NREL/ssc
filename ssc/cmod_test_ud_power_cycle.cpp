@@ -165,117 +165,35 @@ public:
 
         // Sample UPDC model
         // at design point
-        double W_dot_ND_calc = c_udpc.get_W_dot_gross_ND(T_htf_des_table+10, T_amb_des_table-5, 0.8);
+        double W_dot_ND_calc = c_udpc.get_W_dot_gross_ND(T_htf_des_table, T_amb_des_table, 1.0);
         
-        
-        int Nsamp = 100;
-        double mdotS = 0;
-        double Wact, Q_cyl, W_cool, H2O, errS;
-        // Create a results file
-        std::ofstream resfile;
-        resfile.open("test_results_orig.txt");
-        resfile << "Mdot     ,      W (actual)       ,       W (regression)       ,       Error (%)\n";
+        // Sample UDPC model over lots of points to compare results to new interpolation method
+        bool isDataWrite = false;
+        if (isDataWrite){
 
-        for (size_t i = 0; i < Nsamp; i++) {
-            mdotS = 0.55 + i * (1.6 - 0.55) / double(Nsamp - 1);
-            //mdotS = 0.25;
-            W_dot_ND_calc = c_udpc.get_W_dot_gross_ND(T_htf_des_table - 10, T_amb_des_table - 5, mdotS);
+            int Nsamp = 100;
+            double mdotS = 0;
+            double Wact, Q_cyl, W_cool, H2O, errS;
+            // Create a results file
+            std::ofstream resfile;
+            resfile.open("test_results_orig.txt");
+            resfile << "Mdot     ,      W (actual)       ,       W (regression)       ,       Error (%)\n";
 
-            // Results from original model
-            c_cycle.performance(T_htf_des_table - 10, mdotS, T_amb_des_table - 5, Wact, Q_cyl, W_cool, H2O);
-            errS = 100 * (Wact - W_dot_ND_calc) / Wact;
-            resfile << mdotS << "," << Wact << "," << W_dot_ND_calc << "," << errS << "\n";
+            for (size_t i = 0; i < Nsamp; i++) {
+                mdotS = 0.55 + i * (1.6 - 0.55) / double(Nsamp - 1);
+                W_dot_ND_calc = c_udpc.get_W_dot_gross_ND(T_htf_des_table - 10, T_amb_des_table - 5, mdotS);
+
+                // Results from original model
+                c_cycle.performance(T_htf_des_table - 10, mdotS, T_amb_des_table - 5, Wact, Q_cyl, W_cool, H2O);
+                errS = 100 * (Wact - W_dot_ND_calc) / Wact;
+                resfile << mdotS << "," << Wact << "," << W_dot_ND_calc << "," << errS << "\n";
+            }
+            resfile.close();
         }
-        resfile.close();
-        
+
+
         assign("W_dot_ND_calc", W_dot_ND_calc);     //[kWe]
-        /*
-        // Now let's be horrible and sample the original model and the regression model over a large number of points
-        size_t const Nsamp = 21; // number of samples PER VARIABLE.
 
-        // array to contain sample data points
-        double sample_points[Nsamp][Nsamp][Nsamp][3];
-        double ThtfS, TambS, mdotS;
-
-        for (size_t i = 0; i < Nsamp; i++) {
-            ThtfS = T_htf_low + i* (T_htf_high - T_htf_low) / (double)(Nsamp - 1);
-            for (size_t j = 0; j < Nsamp; j++) {
-                mdotS = m_dot_htf_ND_low + j * (m_dot_htf_ND_high - m_dot_htf_ND_low) / (double)(Nsamp - 1);
-                for (size_t k = 0; k < Nsamp; k++) {
-                    TambS = T_amb_low + k * (T_amb_high - T_amb_low) / (double)(Nsamp - 1);
-
-                    // Assign points
-                    sample_points[i][j][k][0] = ThtfS;
-                    sample_points[i][j][k][1] = mdotS;
-                    sample_points[i][j][k][2] = TambS;
-                }
-            }
-        }
-
-        // Now calculate the work out at each of these points using the original model and the regression model
-        double endo_work[Nsamp][Nsamp][Nsamp];
-        double reg_work[Nsamp][Nsamp][Nsamp];
-        double err_work[Nsamp][Nsamp][Nsamp]; // Also calculate the error
-        double Q_cyl, W_cool, H2O;
-        for (size_t i = 0; i < Nsamp; i++) {
-            for (size_t j = 0; j < Nsamp; j++) {
-                for (size_t k = 0; k < Nsamp; k++) {
-                    // Results from original model
-                    c_cycle.performance(sample_points[i][j][k][0],
-                        sample_points[i][j][k][1],
-                        sample_points[i][j][k][2],
-                        endo_work[i][j][k],
-                        Q_cyl, W_cool, H2O);// not really interested in these as they're constant. Can I skip?
-
-                    // Results from regression model
-                    reg_work[i][j][k] = c_udpc.get_W_dot_gross_ND(sample_points[i][j][k][0],
-                        sample_points[i][j][k][2],
-                        sample_points[i][j][k][1]);
-
-                    err_work[i][j][k] = 100 * (endo_work[i][j][k] - reg_work[i][j][k]) / endo_work[i][j][k];
-                }
-            }
-        }
-
-        // Write out data
-        std::ofstream outfile1, outfile2, outfile3, outfile4;
-        outfile1.open("coords.csv");
-        outfile2.open("actual_data.csv");
-        outfile3.open("reg_data.csv");
-        outfile4.open("error_data.csv");
-
-        // Write out a list of the coordinates. Not a clever way to do this.
-        for (int i = 0; i < Nsamp; i++) {
-            ThtfS = T_htf_low + i * (T_htf_high - T_htf_low) / (double)(Nsamp - 1);
-            mdotS = m_dot_htf_ND_low + i * (m_dot_htf_ND_high - m_dot_htf_ND_low) / (double)(Nsamp - 1);
-            TambS = T_amb_low + i * (T_amb_high - T_amb_low) / (double)(Nsamp - 1);
-            outfile1 << ThtfS << "," << mdotS << "," << TambS << "\n";
-        }
-
-        for (int i = 0; i < Nsamp; i++) {
-            for (int j = 0; j < Nsamp; j++) {
-                for (int k = 0; k < Nsamp; k++) {
-
-                    outfile2 << endo_work[j][k][i] << ",";
-                    outfile3 << reg_work[j][k][i] << ",";
-                    outfile4 << err_work[j][k][i] << ",";
-
-                }
-                outfile2 << "\n";
-                outfile3 << "\n";
-                outfile4 << "\n";
-            }
-            //outfile2 << "\n";
-            //outfile3 << "\n";
-            //outfile4 << "\n";
-        }
-
-
-        outfile1.close();
-        outfile2.close();
-        outfile3.close();
-        outfile4.close();
-        */
         double abce = 1.23;
 
 		/*C_ud_power_cycle c_pc;
