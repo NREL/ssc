@@ -899,6 +899,6 @@ public:
 
 };
 
-DEFINE_MODULE_ENTRY( utilityrate, "Complex utility rate structure net revenue calculator", 3 );
+DEFINE_MODULE_ENTRY( utilityrate, "Electricity bill calculator (depricated)", 3 );
 
 
