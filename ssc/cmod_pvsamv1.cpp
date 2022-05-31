@@ -871,8 +871,8 @@ static var_info _cm_vtab_pvsamv1[] = {
                 { SSC_OUTPUT,        SSC_NUMBER,     "6par_Adj",                                    "CEC 6-parameter: Adj",      "",       "", "Module CEC 6-parameter model parameters",       "*",                    "",                              "" },
 
                 { SSC_OUTPUT,        SSC_NUMBER,     "performance_ratio",                           "Performance ratio",         "",       "",  "Annual (Year 1)",       "",                    "",                              "" },
-                { SSC_OUTPUT,        SSC_NUMBER,     "capacity_factor",                             "Capacity factor based on DC system capacity",           "%",      "",  "Annual (Year 1)", "", "", "" },
-                { SSC_OUTPUT,        SSC_NUMBER,     "capacity_factor_ac",                          "Capacity factor based on AC system capacity",           "%",      "",  "Annual (Year 1)", "", "", "" },
+                { SSC_OUTPUT,        SSC_NUMBER,     "capacity_factor",                             "Capacity factor based on nameplate DC capacity",           "%",      "",  "Annual (Year 1)", "", "", "" },
+                { SSC_OUTPUT,        SSC_NUMBER,     "capacity_factor_ac",                          "Capacity factor based on total AC capacity",           "%",      "",  "Annual (Year 1)", "", "", "" },
                 { SSC_OUTPUT,        SSC_NUMBER,     "kwh_per_kw",                                  "Energy yield", "kWh/kW", "",	"Annual (Year 1)", "", "", "" },
 
                 //miscellaneous outputs
