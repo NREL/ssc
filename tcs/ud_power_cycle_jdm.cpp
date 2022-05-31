@@ -39,16 +39,15 @@ void C_ud_power_cycle_jdm::init(const util::matrix_t<double>& udpc_table,
     std::vector<double>& Y_at_m_dot_htf_ND_ref, std::vector<double>& Y_avg_at_refs,
     std::vector<double>& T_htf_levels_in, std::vector<double>& m_dot_htf_ND_levels_in, std::vector<double>& T_amb_levels_in)
 {
-    // Create a log file
-    std::ofstream logfile,template_data_file;
-    logfile.open("power_cycle_class_log.txt");
-    template_data_file.open("template_data_file.txt");
-    logfile << "Enter class.\n";
+    // Create a data file to contain all variable permutations - to help user provide the correct data.
+    // By default, this file is not created or written to
+    bool isDataWrite = false;
+    std::ofstream template_data_file;
+    if (isDataWrite) {
+        template_data_file.open("template_data_file.txt");
+    }
     
     util::matrix_t<double> T_htf_ind_table, m_dot_htf_ND_ind_table, T_amb_ind_table;
-
-    logfile << "Create matrices.\n";
-
 
     // We are provided with the following information:
     //  -   The values of each level for each variable, e.g. T_htf_levels_in
@@ -111,61 +110,55 @@ void C_ud_power_cycle_jdm::init(const util::matrix_t<double>& udpc_table,
     double dT_mdot = (m_m_dot_htf_high - m_m_dot_htf_low) / (double)(n_m_dot_pars - 1);
     double dT_T_amb = (m_T_amb_high - m_T_amb_low) / (double)(n_T_amb_pars - 1);
 
-    logfile << dT_T_htf << "," << dT_mdot << "," << dT_T_amb << "\n";
-
-    logfile << "Finish creating various variables.\n";
-
     // This part creates a matrix that simply lists all the variable combinations that the user
     // should provide. This data will be written out to SAM (somehow) and the user must provide
     // data at these data points.
-    util::matrix_t<double> data_template(n_table_rows, 3, std::numeric_limits<double>::quiet_NaN());
-    //logfile << "template info: " << data_template.nrows() << "," << data_template.ncols() << "\n";
-    size_t q = 0;
-    for (size_t i = 0; i < nlevels_mdot; i++) {
-        for (size_t j = 0; j < n_T_htf_pars; j++) {
-            data_template(q, 0) = m_T_htf_low + j * dT_T_htf;
-            data_template(q, 1) = m_dot_htf_ND_levels[i];
-            data_template(q, 2) = m_T_amb_ref;
-            q++;
-        }
-    }
-    for (size_t i = 0; i < nlevels_Tamb; i++) {
-        for (size_t j = 0; j < n_m_dot_pars; j++) {
-            data_template(q, 0) = m_T_htf_ref;
-            data_template(q, 1) = m_m_dot_htf_low + j * dT_mdot;
-            data_template(q, 2) = T_amb_levels[i];
-            q++;
-        }
-    }
-    for (size_t i = 0; i < nlevels_Thtf; i++) {
-        for (size_t j = 0; j < n_T_amb_pars; j++) {
-            data_template(q, 0) = T_htf_levels[i];
-            data_template(q, 1) = m_m_dot_htf_ref;
-            data_template(q, 2) = m_T_amb_low + j * dT_T_amb;
-            q++;
-        }
-    }
+    if (isDataWrite) {
+        util::matrix_t<double> data_template(n_table_rows, 3, std::numeric_limits<double>::quiet_NaN());
 
-    for (size_t i = 0; i < data_template.nrows(); i++) {
-        template_data_file << data_template(i, 0) << "," << data_template(i, 1) << "," << data_template(i, 2) << "\n";
-    }
+        size_t q = 0;
+        for (size_t i = 0; i < nlevels_mdot; i++) {
+            for (size_t j = 0; j < n_T_htf_pars; j++) {
+                data_template(q, 0) = m_T_htf_low + j * dT_T_htf;
+                data_template(q, 1) = m_dot_htf_ND_levels[i];
+                data_template(q, 2) = m_T_amb_ref;
+                q++;
+            }
+        }
+        for (size_t i = 0; i < nlevels_Tamb; i++) {
+            for (size_t j = 0; j < n_m_dot_pars; j++) {
+                data_template(q, 0) = m_T_htf_ref;
+                data_template(q, 1) = m_m_dot_htf_low + j * dT_mdot;
+                data_template(q, 2) = T_amb_levels[i];
+                q++;
+            }
+        }
+        for (size_t i = 0; i < nlevels_Thtf; i++) {
+            for (size_t j = 0; j < n_T_amb_pars; j++) {
+                data_template(q, 0) = T_htf_levels[i];
+                data_template(q, 1) = m_m_dot_htf_ref;
+                data_template(q, 2) = m_T_amb_low + j * dT_T_amb;
+                q++;
+            }
+        }
 
+        for (size_t i = 0; i < data_template.nrows(); i++) {
+            template_data_file << data_template(i, 0) << "," << data_template(i, 1) << "," << data_template(i, 2) << "\n";
+        }
+    }
     // Search through the provided data and pick out the right bit to make the next set of tables that are used
     size_t mode;
     // For each T_htf (i) and mdot level (j) combination...
     N_udpc_common_jdm::fill_data_tables(n_T_htf_pars, nlevels_mdot, n_table_rows, m_T_htf_low,
             dT_T_htf, m_dot_htf_ND_levels, T_amb_ref_calc, udpc_table, T_htf_ind_table, mode = 0);
-    logfile << "Added Thtf mdot variations to matrix.\n\n";
 
     // For each m_dot_htf_ND (i) and T_amb level (j) combination...
     N_udpc_common_jdm::fill_data_tables(n_m_dot_pars, nlevels_Tamb, n_table_rows, m_m_dot_htf_low,
         dT_mdot, T_amb_levels, T_htf_ref_calc, udpc_table, m_dot_htf_ND_ind_table, mode=1);
-    logfile << "Added mdot Tamb variations to matrix.\n\n";
 
     // For each T_amb (i) and T_HTF level (j) combination...
     N_udpc_common_jdm::fill_data_tables(n_T_amb_pars, nlevels_Thtf, n_table_rows, m_T_amb_low,
         dT_T_amb, T_htf_levels, m_dot_htf_ND_ref_calc, udpc_table, T_amb_ind_table, mode=2);
-    logfile << "Added Tamb Thtf variations to matrix.\n\n";
 
     
     // Set up Linear Interp class
@@ -321,7 +314,6 @@ void C_ud_power_cycle_jdm::init(const util::matrix_t<double>& udpc_table,
                 indi = 1;
             }
             m_ME_T_htf(j, i) = mc_T_htf_ind.interpolate_x_col_0(i_col_mdot, T_htf_levels[j + indi]) - m_Y_at_ref[i];
-            logfile << "Thtf ME (new)" << i << " , " << j << " , " << m_ME_T_htf(j, i) << "\n";
         }
 
 
@@ -331,7 +323,6 @@ void C_ud_power_cycle_jdm::init(const util::matrix_t<double>& udpc_table,
                 indi = 1;
             }
             m_ME_T_amb(j, i) = mc_T_amb_ind.interpolate_x_col_0(i_col_Thtf, T_amb_levels[j + indi]) - m_Y_at_ref[i];
-            logfile << "Tamb ME (new)" << i << " , " << j << " , " << m_ME_T_amb(j, i) << "\n";
         }
 
         indi = 0;
@@ -340,13 +331,10 @@ void C_ud_power_cycle_jdm::init(const util::matrix_t<double>& udpc_table,
                 indi = 1;
             }
             m_ME_mdot_htf(j, i) = mc_m_dot_htf_ind.interpolate_x_col_0(i_col_Tamb, m_dot_htf_ND_levels[j + indi]) - m_Y_at_ref[i];
-            logfile << "Mdot ME (new)" << i << " , " << j << " , " << m_ME_mdot_htf(j, i) << "\n";
         }
 
     }
     Y_avg_at_refs = m_Y_at_ref;
-
-    logfile << "Main effects set up.\n";
 
     // Set up 2D tables to store calculated Interactions	
     int n_T_htf_runs = mc_T_htf_ind.get_number_of_rows();
@@ -357,9 +345,6 @@ void C_ud_power_cycle_jdm::init(const util::matrix_t<double>& udpc_table,
     util::matrix_t<double> T_htf_int_on_T_amb(n_T_amb_runs, 1 + 4 * (nlevels_Thtf - 1));
     util::matrix_t<double> T_amb_int_on_m_dot_htf(n_m_dot_htf_runs, 1 + 4 * (nlevels_Tamb - 1));
     util::matrix_t<double> m_dot_htf_int_on_T_htf(n_T_htf_runs, 1 + 4 * (nlevels_mdot - 1));
-
-    logfile << "Matrices for interaction effects set up.\n";
-    
 
     // Initialization will create three new interpolation tables for interaction effects
 
@@ -392,12 +377,9 @@ void C_ud_power_cycle_jdm::init(const util::matrix_t<double>& udpc_table,
                 double bb = m_ME_T_htf(k, i);
                 double cc = mc_T_amb_ind.Get_Value(icolREF, j);
                 T_htf_int_on_T_amb(j, i * (nlevels_Thtf - 1) + k + 1) = -(aa - m_Y_at_ref[i] - bb - (cc - m_Y_at_ref[i]));
-                logfile << T_htf_int_on_T_amb(j, i * (nlevels_Thtf - 1) + k + 1) << " , " ;
             }
-            logfile << "\n";
            
         }
-        logfile << i << " , " << "Thtf on Tamb interactions.\n";
 
         // Ambient temperature interaction on HTF mass flow rate
         for (int j = 0; j < n_m_dot_htf_runs; j++)
@@ -421,14 +403,9 @@ void C_ud_power_cycle_jdm::init(const util::matrix_t<double>& udpc_table,
                 double bb = m_ME_T_amb(k, i);
                 double cc = mc_m_dot_htf_ind.Get_Value(icolREF, j);
                 T_amb_int_on_m_dot_htf(j, i * (nlevels_Tamb - 1) + k + 1) = -(aa - m_Y_at_ref[i] - bb - (cc - m_Y_at_ref[i]));
-                logfile << T_amb_int_on_m_dot_htf(j, i * (nlevels_Tamb - 1) + k + 1) << " , ";
             }
 
-            logfile << "\n";
-
         }
-
-        logfile << i << " , " << "Tamb on mdot interactions.\n";
 
         // HTF mass flow
         for (int j = 0; j < n_T_htf_runs; j++)
@@ -442,7 +419,6 @@ void C_ud_power_cycle_jdm::init(const util::matrix_t<double>& udpc_table,
             // There are (nlevels_Thtf - 1) interactions
             int indi = 0; // This index helps identify the correct column to access
             int icolREF = i * nlevels_mdot + mdot_ref_ind + 1; // The column corresponding to the reference value
-            logfile << icolREF << "\n";
             for (int k = 0; k < nlevels_mdot - 1; k++) {
                 if (k == mdot_ref_ind) {
                     indi = 1;
@@ -454,13 +430,10 @@ void C_ud_power_cycle_jdm::init(const util::matrix_t<double>& udpc_table,
                 double bb = m_ME_mdot_htf(k, i);
                 double cc = mc_T_htf_ind.Get_Value(icolREF, j);
                 m_dot_htf_int_on_T_htf(j, i * (nlevels_mdot - 1) + k + 1) = -(aa - m_Y_at_ref[i] - bb - (cc - m_Y_at_ref[i]));
-                logfile << m_dot_htf_int_on_T_htf(j, i * (nlevels_mdot - 1) + k + 1) << " , ";
             }
-            logfile << "   New \n";
             
         }
 
-        logfile << i << " , " << "mdot on Thtf interactions.\n";
     }
 
     // Initialize Linear_Interp classes for interaction effects
@@ -526,22 +499,10 @@ double C_ud_power_cycle_jdm::get_interpolated_ND_output(int i_ME /*M.E. table in
 							double T_htf_hot /*C*/, double T_amb /*C*/, double m_dot_htf_ND /*-*/)
 {
 
-
-    // Create a log file
-    std::ofstream logfile;
-    logfile.open("get_interpolated_ND_output_log.txt");
-
     double ME_T_htf = mc_T_htf_ind.interpolate_x_col_0(i_ME * nlevels_mdot + mdot_ref_ind + 1, T_htf_hot) - m_Y_at_ref[i_ME];
     double ME_T_amb = mc_T_amb_ind.interpolate_x_col_0(i_ME * nlevels_Thtf + T_htf_ref_ind + 1, T_amb) - m_Y_at_ref[i_ME];
     double ME_m_dot_htf = mc_m_dot_htf_ind.interpolate_x_col_0(i_ME * nlevels_Tamb + T_amb_ref_ind + 1, m_dot_htf_ND) - m_Y_at_ref[i_ME];
 
-    logfile << "Calculate main effects:\n";
-    logfile << "ME_T_htf:  " << ME_T_htf << "\n";
-    logfile << "ME_T_amb:  " << ME_T_amb << "\n";
-    logfile << "ME_m_dot_htf:  " << ME_m_dot_htf << "\n\n";
-
-
-    logfile << "Calculate interaction of Thtf on Tamb:\n";
     // Calculate the interaction of Thtf on Tamb
     double INT_T_htf_on_T_amb = 0.0;
     if (T_htf_hot != m_T_htf_ref){
@@ -552,8 +513,6 @@ double C_ud_power_cycle_jdm::get_interpolated_ND_output(int i_ME /*M.E. table in
         double upper_int = 0;
         size_t lower_flag = 0;
         size_t upper_flag = 0;
-
-        logfile << "zone: " << zone << "\n";
 
         if (zone == 0) {
             zone = 1;
@@ -589,10 +548,6 @@ double C_ud_power_cycle_jdm::get_interpolated_ND_output(int i_ME /*M.E. table in
         }
     }
 
-    logfile << "The interaction effect = " << INT_T_htf_on_T_amb << "\n\n";
-
-
-    logfile << "Calculate interaction of Tamb on mdot:\n";
     // Calculate the interaction of Tamb on mdot
     double INT_T_amb_on_m_dot_htf = 0.0;
     if (T_amb != m_T_amb_ref) {
@@ -603,8 +558,6 @@ double C_ud_power_cycle_jdm::get_interpolated_ND_output(int i_ME /*M.E. table in
         double upper_int = 0;
         size_t lower_flag = 0;
         size_t upper_flag = 0;
-
-        logfile << "zone: " << zone << "\n";
 
         if (zone == 0) {
             zone = 1;
@@ -639,9 +592,7 @@ double C_ud_power_cycle_jdm::get_interpolated_ND_output(int i_ME /*M.E. table in
             INT_T_amb_on_m_dot_htf = (1.0 - frac) * lower_int + frac * upper_int;
         }
     }
-    logfile << "The interaction effect = " << INT_T_amb_on_m_dot_htf << "\n\n";
 
-    logfile << "Calculate interaction of mdot on Thtf:\n";
     // Calculate the interaction of mdot on Thtf
     double INT_m_dot_htf_on_T_htf = 0.0;
     if (m_dot_htf_ND != m_m_dot_htf_ref) {
@@ -653,8 +604,6 @@ double C_ud_power_cycle_jdm::get_interpolated_ND_output(int i_ME /*M.E. table in
         double upper_int = 0;
         size_t lower_flag = 0;
         size_t upper_flag = 0;
-
-        logfile << "zone: " << zone << "\n";
 
         if (zone == 0) {
             zone = 1;
@@ -678,14 +627,6 @@ double C_ud_power_cycle_jdm::get_interpolated_ND_output(int i_ME /*M.E. table in
         lower_int = mc_m_dot_htf_on_T_htf.interpolate_x_col_0(mdot_col_lo, T_htf_hot) * (m_dot_htf_ND - m_m_dot_htf_ref) / (m_m_dot_htf_ref - mdot_bound_lo);
         upper_int = mc_m_dot_htf_on_T_htf.interpolate_x_col_0(mdot_col_hi, T_htf_hot) * (m_dot_htf_ND - m_m_dot_htf_ref) / (m_m_dot_htf_ref - mdot_bound_hi);
 
-        logfile << "mdot_col_lo: " << mdot_col_lo << "\n";
-        logfile << "mdot_bound_lo: " << mdot_bound_lo << "\n";
-        logfile << "lower_int: " << lower_int << "\n";
-
-        logfile << "mdot_col_hi: " << mdot_col_hi << "\n";
-        logfile << "mdot_bound_hi: " << mdot_bound_hi << "\n";
-        logfile << "upper_int: " << upper_int << "\n";
-
         if (mdot_bound_lo == m_m_dot_htf_ref || upper_flag == 1) {
             INT_m_dot_htf_on_T_htf = upper_int;
         }
@@ -696,11 +637,7 @@ double C_ud_power_cycle_jdm::get_interpolated_ND_output(int i_ME /*M.E. table in
             double frac = (m_dot_htf_ND - mdot_bound_lo) / (mdot_bound_hi - mdot_bound_lo);
             INT_m_dot_htf_on_T_htf = (1.0 - frac) * lower_int + frac * upper_int;
         }
-        logfile << "Interaction: " << INT_m_dot_htf_on_T_htf << "\n";
     }
-    logfile << "The interaction effect = " << INT_m_dot_htf_on_T_htf << "\n\n";
-
-    logfile.close();
 
 	return m_Y_at_ref[i_ME] + ME_T_htf + ME_T_amb + ME_m_dot_htf + INT_T_htf_on_T_amb + INT_T_amb_on_m_dot_htf + INT_m_dot_htf_on_T_htf;
 }
