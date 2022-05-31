@@ -1150,6 +1150,13 @@ public:
             A_sf = as_double("helio_height") * as_double("helio_width") * as_double("dens_mirror") * (double)N_hel;
 
             land_area_base = spi.land.land_area.Val();       //[acres] Land area occupied by heliostats
+
+            // *********************************************************************
+            // TEMP until spi.land.land_area.Val() works for field_model_type == 2
+            if (field_model_type == 2) {
+                land_area_base = as_double("land_area_base");
+            }
+            // *********************************************************************
         }
         else if (field_model_type == 3 || field_model_type == 4)
         {
