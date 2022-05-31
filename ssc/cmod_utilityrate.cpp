@@ -899,6 +899,6 @@ public:
 
 };
 
-DEFINE_MODULE_ENTRY( utilityrate, "Electricity bill calculator (depricated)", 3 );
+DEFINE_MODULE_ENTRY( utilityrate, "Electricity bill calculator (deprecated)", 3 );
 
 

@@ -2950,6 +2950,6 @@ public:
 
 };
 
-DEFINE_MODULE_ENTRY( utilityrate4, "Electricity bill calculator based on OpenEI Version 4 (depricated)", 1 );
+DEFINE_MODULE_ENTRY( utilityrate4, "Electricity bill calculator based on OpenEI Version 4 (deprecated)", 1 );
 
 
