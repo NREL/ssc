@@ -245,17 +245,28 @@ bool mp_ancillary_services(ssc_data_t data)
 					}
 					if (en_mp_energy_market)
 					{
-                        current_year_capacity.clear();
                         current_num_per_year = mp_energy_market_revenue.nrows() / (size_t)analysis_period;
-                        current_year_capacity.reserve(current_num_per_year);
-                        for (size_t ic = 0; (ic < current_num_per_year) && ((ic + iyear * current_num_per_year) < mp_energy_market_revenue.nrows()); ic++)
-                            current_year_capacity.push_back(mp_energy_market_revenue(ic + iyear * current_num_per_year, 0));
-                        extrapolated_current_year_capacity = extrapolate_timeseries(current_year_capacity, steps_per_hour);
+                        if (mp_energy_market_revenue.nrows() < 2) current_num_per_year = 1;
 
+                        if (mp_energy_market_revenue.ncols() > 1) {
+                            current_year_capacity.clear();
+                            if (mp_energy_market_revenue.nrows() < 2) {// single value - addresses SAM issue 1004
+                                if (mp_energy_market_revenue.nrows() == 1)
+                                    current_year_capacity.push_back(mp_energy_market_revenue(0, 0));
+                                else
+                                    current_year_capacity.push_back(0.0);
+                            }
+                            else {
+                                current_year_capacity.reserve(current_num_per_year);
+                                for (size_t ic = 0; (ic < current_num_per_year) && ((ic + iyear * current_num_per_year) < mp_energy_market_revenue.nrows()); ic++)
+                                    current_year_capacity.push_back(mp_energy_market_revenue(ic + iyear * current_num_per_year, 0));
+                            }
+                            extrapolated_current_year_capacity = extrapolate_timeseries(current_year_capacity, steps_per_hour);
+                        }
                         if (en_mp_market_percent_gen)
                         {
                             // copy capacity as % of system generation as specified from user input 
-                            for (size_t ic = 0; (ic < extrapolated_current_year_capacity.size()) && ((ic + iyear * current_num_per_year) < cleared_capacity_sum.size()); ic++)
+                            for (size_t ic = 0; (ic + iyear * nsteps_per_year) < cleared_capacity_sum.size(); ic++)
                             {
                                 energy_market_capacity[ic + iyear * nsteps_per_year] = mp_market_gen_factor * system_generation[ic + iyear * nsteps_per_year];
                                 cleared_capacity_sum[ic + iyear * nsteps_per_year] += mp_market_gen_factor * system_generation[ic + iyear * nsteps_per_year];
@@ -263,7 +274,7 @@ bool mp_ancillary_services(ssc_data_t data)
                         }
                         else
                         {
-                            for (size_t ic = 0; (ic < extrapolated_current_year_capacity.size()) && ((ic + iyear * current_num_per_year) < cleared_capacity_sum.size()); ic++)
+                            for (size_t ic = 0; (ic < extrapolated_current_year_capacity.size()) && ((ic + iyear * nsteps_per_year) < cleared_capacity_sum.size()); ic++)
                             {
                                 energy_market_capacity[ic + iyear * nsteps_per_year] = extrapolated_current_year_capacity[ic];
                                 cleared_capacity_sum[ic + iyear * nsteps_per_year] += extrapolated_current_year_capacity[ic];
@@ -275,28 +286,47 @@ bool mp_ancillary_services(ssc_data_t data)
 						if (calculate_revenue)
 						{
 							current_year_revenue.clear();
-							current_year_revenue.reserve(current_num_per_year);
-							for (size_t ic = 0; (ic < current_num_per_year) && ((ic + iyear * current_num_per_year) < mp_energy_market_revenue.nrows()); ic++)
-								current_year_revenue.push_back(mp_energy_market_revenue(ic + iyear * current_num_per_year, price_col));
-							extrapolated_current_year_revenue = extrapolate_timeseries(current_year_revenue, steps_per_hour);
-							for (size_t ic = 0; (ic < extrapolated_current_year_revenue.size()) && ((ic + iyear * current_num_per_year) < energy_market_revenue.size()); ic++)
-								energy_market_revenue[ic + iyear * nsteps_per_year] = extrapolated_current_year_revenue[ic]; // $/MWh
-						}
+                            if (mp_energy_market_revenue.nrows() < 2) {// single value - addresses SAM issue 1004
+                                if (mp_energy_market_revenue.nrows() == 1)
+                                    current_year_revenue.push_back(mp_energy_market_revenue(0, price_col));
+                                else
+                                    current_year_revenue.push_back(0.0);
+                            }
+                            else {
+                                current_year_revenue.reserve(current_num_per_year);
+                                for (size_t ic = 0; (ic < current_num_per_year) && ((ic + iyear * current_num_per_year) < mp_energy_market_revenue.nrows()); ic++)
+                                    current_year_revenue.push_back(mp_energy_market_revenue(ic + iyear * current_num_per_year, price_col));
+                            }
+                            extrapolated_current_year_revenue = extrapolate_timeseries(current_year_revenue, steps_per_hour);
+                            for (size_t ic = 0; (ic < extrapolated_current_year_revenue.size()) && ((ic + iyear * nsteps_per_year) < energy_market_revenue.size()); ic++)
+                                energy_market_revenue[ic + iyear * nsteps_per_year] = extrapolated_current_year_revenue[ic]; // $/MWh
+                        }
 
 					}
-					if (en_mp_ancserv1)
-					{
-						current_year_capacity.clear();
-						current_num_per_year = mp_ancserv1_revenue.nrows() / (size_t)analysis_period;
-						current_year_capacity.reserve(current_num_per_year);
-						for (size_t ic = 0; (ic < current_num_per_year) && ((ic + iyear * current_num_per_year) < mp_ancserv1_revenue.nrows()); ic++)
-							current_year_capacity.push_back(mp_ancserv1_revenue(ic + iyear * current_num_per_year, 0));
-						extrapolated_current_year_capacity = extrapolate_timeseries(current_year_capacity, steps_per_hour);
+                    if (en_mp_ancserv1)
+                    {
+                        current_num_per_year = mp_ancserv1_revenue.nrows() / (size_t)analysis_period;
+                        if (mp_ancserv1_revenue.nrows() < 2) current_num_per_year = 1;
 
+                        if (mp_ancserv1_revenue.ncols() > 1) {
+                            current_year_capacity.clear();
+                            if (mp_ancserv1_revenue.nrows() < 2) {// single value - addresses SAM issue 1004
+                                if (mp_ancserv1_revenue.nrows() == 1)
+                                    current_year_capacity.push_back(mp_ancserv1_revenue(0, 0));
+                                else
+                                    current_year_capacity.push_back(0.0);
+                            }
+                            else {
+                                current_year_capacity.reserve(current_num_per_year);
+                                for (size_t ic = 0; (ic < current_num_per_year) && ((ic + iyear * current_num_per_year) < mp_ancserv1_revenue.nrows()); ic++)
+                                    current_year_capacity.push_back(mp_ancserv1_revenue(ic + iyear * current_num_per_year, 0));
+                            }
+                            extrapolated_current_year_capacity = extrapolate_timeseries(current_year_capacity, steps_per_hour);
+                        }
                         if (en_mp_ancserv1_percent_gen)
                         {
                             // copy capacity as % of system generation as specified from user input
-                            for (size_t ic = 0; (ic < extrapolated_current_year_capacity.size()) && ((ic + iyear * current_num_per_year) < cleared_capacity_sum.size()); ic++)
+                            for (size_t ic = 0; (ic + iyear * nsteps_per_year) < cleared_capacity_sum.size(); ic++)
                             {
                                 ancillary_services1_capacity[ic + iyear * nsteps_per_year] = mp_ancserv1_gen_factor * system_generation[ic + iyear * nsteps_per_year];
                                 cleared_capacity_sum[ic + iyear * nsteps_per_year] += mp_ancserv1_gen_factor * system_generation[ic + iyear * nsteps_per_year];
@@ -304,7 +334,7 @@ bool mp_ancillary_services(ssc_data_t data)
                         }
                         else
                         {
-                            for (size_t ic = 0; (ic < extrapolated_current_year_capacity.size()) && ((ic + iyear * current_num_per_year) < cleared_capacity_sum.size()); ic++)
+                            for (size_t ic = 0; (ic < extrapolated_current_year_capacity.size()) && ((ic + iyear * nsteps_per_year) < cleared_capacity_sum.size()); ic++)
                             {
                                 ancillary_services1_capacity[ic + iyear * nsteps_per_year] = extrapolated_current_year_capacity[ic];
                                 cleared_capacity_sum[ic + iyear * nsteps_per_year] += extrapolated_current_year_capacity[ic];
@@ -316,27 +346,47 @@ bool mp_ancillary_services(ssc_data_t data)
 						if (calculate_revenue)
 						{
 							current_year_revenue.clear();
-							current_year_revenue.reserve(current_num_per_year);
-							for (size_t ic = 0; (ic < current_num_per_year) && ((ic + iyear * current_num_per_year) < mp_ancserv1_revenue.nrows()); ic++)
-								current_year_revenue.push_back(mp_ancserv1_revenue(ic + iyear * current_num_per_year, price_col));
+                            if (mp_ancserv1_revenue.nrows() < 2) {// single value - addresses SAM issue 1004
+                                if (mp_ancserv1_revenue.nrows() == 1)
+                                    current_year_revenue.push_back(mp_ancserv1_revenue(0, price_col));
+                                else
+                                    current_year_revenue.push_back(0.0);
+                            }
+                            else {
+                                current_year_revenue.reserve(current_num_per_year);
+                                for (size_t ic = 0; (ic < current_num_per_year) && ((ic + iyear * current_num_per_year) < mp_ancserv1_revenue.nrows()); ic++)
+                                    current_year_revenue.push_back(mp_ancserv1_revenue(ic + iyear * current_num_per_year, price_col));
+                            }
 							extrapolated_current_year_revenue = extrapolate_timeseries(current_year_revenue, steps_per_hour);
-							for (size_t ic = 0; (ic < extrapolated_current_year_revenue.size()) && ((ic + iyear * current_num_per_year) < ancillary_services1_revenue.size()); ic++)
+							for (size_t ic = 0; (ic < extrapolated_current_year_revenue.size()) && ((ic + iyear * nsteps_per_year) < ancillary_services1_revenue.size()); ic++)
 								ancillary_services1_revenue[ic + iyear * nsteps_per_year] = extrapolated_current_year_revenue[ic]; // $/MWh
 						}
 
 					}
 					if (en_mp_ancserv2)
 					{
-						current_year_capacity.clear();
-						current_num_per_year = mp_ancserv2_revenue.nrows() / (size_t)analysis_period;
-						current_year_capacity.reserve(current_num_per_year);
-						for (size_t ic = 0; (ic < current_num_per_year) && ((ic + iyear * current_num_per_year) < mp_ancserv2_revenue.nrows()); ic++)
-							current_year_capacity.push_back(mp_ancserv2_revenue(ic + iyear * current_num_per_year, 0));
-						extrapolated_current_year_capacity = extrapolate_timeseries(current_year_capacity, steps_per_hour);
+                        current_num_per_year = mp_ancserv2_revenue.nrows() / (size_t)analysis_period;
+                        if (mp_ancserv2_revenue.nrows() < 2) current_num_per_year = 1;
+
+                        if (mp_ancserv2_revenue.ncols() > 1) {
+                            current_year_capacity.clear();
+                            if (mp_ancserv2_revenue.nrows() < 2) {// single value - addresses SAM issue 1004
+                                if (mp_ancserv2_revenue.nrows() == 1)
+                                    current_year_capacity.push_back(mp_ancserv2_revenue(0, 0));
+                                else
+                                    current_year_capacity.push_back(0.0);
+                            }
+                            else {
+                                current_year_capacity.reserve(current_num_per_year);
+                                for (size_t ic = 0; (ic < current_num_per_year) && ((ic + iyear * current_num_per_year) < mp_ancserv2_revenue.nrows()); ic++)
+                                    current_year_capacity.push_back(mp_ancserv2_revenue(ic + iyear * current_num_per_year, 0));
+                            }
+                            extrapolated_current_year_capacity = extrapolate_timeseries(current_year_capacity, steps_per_hour);
+                        }
                         if (en_mp_ancserv2_percent_gen)
                         {
                             // copy capacity as % of system generation as specified from user input
-                            for (size_t ic = 0; (ic < extrapolated_current_year_capacity.size()) && ((ic + iyear * current_num_per_year) < cleared_capacity_sum.size()); ic++)
+                            for (size_t ic = 0;(ic + iyear * nsteps_per_year) < cleared_capacity_sum.size(); ic++)
                             {
                                 ancillary_services2_capacity[ic + iyear * nsteps_per_year] = mp_ancserv2_gen_factor * system_generation[ic + iyear * nsteps_per_year];
                                 cleared_capacity_sum[ic + iyear * nsteps_per_year] += mp_ancserv2_gen_factor * system_generation[ic + iyear * nsteps_per_year];
@@ -344,7 +394,7 @@ bool mp_ancillary_services(ssc_data_t data)
                         }
                         else
                         {
-                            for (size_t ic = 0; (ic < extrapolated_current_year_capacity.size()) && ((ic + iyear * current_num_per_year) < cleared_capacity_sum.size()); ic++)
+                            for (size_t ic = 0; (ic < extrapolated_current_year_capacity.size()) && ((ic + iyear * nsteps_per_year) < cleared_capacity_sum.size()); ic++)
                             {
                                 ancillary_services2_capacity[ic + iyear * nsteps_per_year] = extrapolated_current_year_capacity[ic];
                                 cleared_capacity_sum[ic + iyear * nsteps_per_year] += extrapolated_current_year_capacity[ic];
@@ -356,27 +406,47 @@ bool mp_ancillary_services(ssc_data_t data)
 						if (calculate_revenue)
 						{
 							current_year_revenue.clear();
-							current_year_revenue.reserve(current_num_per_year);
-							for (size_t ic = 0; (ic < current_num_per_year) && ((ic + iyear * current_num_per_year) < mp_ancserv2_revenue.nrows()); ic++)
-								current_year_revenue.push_back(mp_ancserv2_revenue(ic + iyear * current_num_per_year, price_col));
-							extrapolated_current_year_revenue = extrapolate_timeseries(current_year_revenue, steps_per_hour);
-							for (size_t ic = 0; (ic < extrapolated_current_year_revenue.size()) && ((ic + iyear * current_num_per_year) < ancillary_services2_revenue.size()); ic++)
+                            if (mp_ancserv2_revenue.nrows() < 2) {// single value - addresses SAM issue 1004
+                                if (mp_ancserv2_revenue.nrows() == 1)
+                                    current_year_revenue.push_back(mp_ancserv2_revenue(0, price_col));
+                                else
+                                    current_year_revenue.push_back(0.0);
+                            }
+                            else {
+                                current_year_revenue.reserve(current_num_per_year);
+                                for (size_t ic = 0; (ic < current_num_per_year) && ((ic + iyear * current_num_per_year) < mp_ancserv2_revenue.nrows()); ic++)
+                                    current_year_revenue.push_back(mp_ancserv2_revenue(ic + iyear * current_num_per_year, price_col));
+                            }
+                            extrapolated_current_year_revenue = extrapolate_timeseries(current_year_revenue, steps_per_hour);
+							for (size_t ic = 0; (ic < extrapolated_current_year_revenue.size()) && ((ic + iyear * nsteps_per_year) < ancillary_services2_revenue.size()); ic++)
 								ancillary_services2_revenue[ic + iyear * nsteps_per_year] = extrapolated_current_year_revenue[ic]; // $/MWh
 						}
 
 					}
 					if (en_mp_ancserv3)
 					{
-						current_year_capacity.clear();
-						current_num_per_year = mp_ancserv3_revenue.nrows() / (size_t)analysis_period;
-						current_year_capacity.reserve(current_num_per_year);
-						for (size_t ic = 0; (ic < current_num_per_year) && ((ic + iyear * current_num_per_year) < mp_ancserv3_revenue.nrows()); ic++)
-							current_year_capacity.push_back(mp_ancserv3_revenue(ic + iyear * current_num_per_year, 0));
-						extrapolated_current_year_capacity = extrapolate_timeseries(current_year_capacity, steps_per_hour);
+                        current_num_per_year = mp_ancserv3_revenue.nrows() / (size_t)analysis_period;
+                        if (mp_ancserv3_revenue.nrows() < 2) current_num_per_year = 1;
+
+                        if (mp_ancserv3_revenue.ncols() > 1) {
+                            current_year_capacity.clear();
+                            if (mp_ancserv3_revenue.nrows() < 2) {// single value - addresses SAM issue 1004
+                                if (mp_ancserv3_revenue.nrows() == 1)
+                                    current_year_capacity.push_back(mp_ancserv3_revenue(0, 0));
+                                else
+                                    current_year_capacity.push_back(0.0);
+                            }
+                            else {
+                                current_year_capacity.reserve(current_num_per_year);
+                                for (size_t ic = 0; (ic < current_num_per_year) && ((ic + iyear * current_num_per_year) < mp_ancserv3_revenue.nrows()); ic++)
+                                    current_year_capacity.push_back(mp_ancserv3_revenue(ic + iyear * current_num_per_year, 0));
+                            }
+                            extrapolated_current_year_capacity = extrapolate_timeseries(current_year_capacity, steps_per_hour);
+                        }
                         if (en_mp_ancserv3_percent_gen)
                         {
                             // copy capacity as % of system generation as specified from user input
-                            for (size_t ic = 0; (ic < extrapolated_current_year_capacity.size()) && ((ic + iyear * current_num_per_year) < cleared_capacity_sum.size()); ic++)
+                            for (size_t ic = 0;(ic + iyear * nsteps_per_year) < cleared_capacity_sum.size(); ic++)
                             {
                                 ancillary_services3_capacity[ic + iyear * nsteps_per_year] = mp_ancserv3_gen_factor * system_generation[ic + iyear * nsteps_per_year];
                                 cleared_capacity_sum[ic + iyear * nsteps_per_year] += mp_ancserv3_gen_factor * system_generation[ic + iyear * nsteps_per_year];
@@ -384,7 +454,7 @@ bool mp_ancillary_services(ssc_data_t data)
                         }
                         else
                         {
-                            for (size_t ic = 0; (ic < extrapolated_current_year_capacity.size()) && ((ic + iyear * current_num_per_year) < cleared_capacity_sum.size()); ic++)
+                            for (size_t ic = 0; (ic < extrapolated_current_year_capacity.size()) && ((ic + iyear * nsteps_per_year) < cleared_capacity_sum.size()); ic++)
                             {
                                 ancillary_services3_capacity[ic + iyear * nsteps_per_year] = extrapolated_current_year_capacity[ic];
                                 cleared_capacity_sum[ic + iyear * nsteps_per_year] += extrapolated_current_year_capacity[ic];
@@ -396,27 +466,47 @@ bool mp_ancillary_services(ssc_data_t data)
 						if (calculate_revenue)
 						{
 							current_year_revenue.clear();
-							current_year_revenue.reserve(current_num_per_year);
-							for (size_t ic = 0; (ic < current_num_per_year) && ((ic + iyear * current_num_per_year) < mp_ancserv3_revenue.nrows()); ic++)
-								current_year_revenue.push_back(mp_ancserv3_revenue(ic + iyear * current_num_per_year, price_col));
-							extrapolated_current_year_revenue = extrapolate_timeseries(current_year_revenue, steps_per_hour);
-							for (size_t ic = 0; (ic < extrapolated_current_year_revenue.size()) && ((ic + iyear * current_num_per_year) < ancillary_services3_revenue.size()); ic++)
+                            if (mp_ancserv3_revenue.nrows() < 2) {// single value - addresses SAM issue 1004
+                                if (mp_ancserv3_revenue.nrows() == 1)
+                                    current_year_revenue.push_back(mp_ancserv3_revenue(0, price_col));
+                                else
+                                    current_year_revenue.push_back(0.0);
+                            }
+                            else {
+                                current_year_revenue.reserve(current_num_per_year);
+                                for (size_t ic = 0; (ic < current_num_per_year) && ((ic + iyear * current_num_per_year) < mp_ancserv3_revenue.nrows()); ic++)
+                                    current_year_revenue.push_back(mp_ancserv3_revenue(ic + iyear * current_num_per_year, price_col));
+                            }
+                            extrapolated_current_year_revenue = extrapolate_timeseries(current_year_revenue, steps_per_hour);
+							for (size_t ic = 0; (ic < extrapolated_current_year_revenue.size()) && ((ic + iyear * nsteps_per_year) < ancillary_services3_revenue.size()); ic++)
 								ancillary_services3_revenue[ic + iyear * nsteps_per_year] = extrapolated_current_year_revenue[ic]; // $/MWh
 						}
 
 					}
 					if (en_mp_ancserv4)
 					{
-						current_year_capacity.clear();
-						current_num_per_year = mp_ancserv4_revenue.nrows() / (size_t)analysis_period;
-						current_year_capacity.reserve(current_num_per_year);
-						for (size_t ic = 0; (ic < current_num_per_year) && ((ic + iyear * current_num_per_year) < mp_ancserv4_revenue.nrows()); ic++)
-							current_year_capacity.push_back(mp_ancserv4_revenue(ic + iyear * current_num_per_year, 0));
-						extrapolated_current_year_capacity = extrapolate_timeseries(current_year_capacity, steps_per_hour);
+                        current_num_per_year = mp_ancserv4_revenue.nrows() / (size_t)analysis_period;
+                        if (mp_ancserv4_revenue.nrows() < 2) current_num_per_year = 1;
+
+                        if (mp_ancserv4_revenue.ncols() > 1) {
+                            current_year_capacity.clear();
+                            if (mp_ancserv4_revenue.nrows() < 2) {// single value - addresses SAM issue 1004
+                                if (mp_ancserv4_revenue.nrows() == 1)
+                                    current_year_capacity.push_back(mp_ancserv4_revenue(0, 0));
+                                else
+                                    current_year_capacity.push_back(0.0);
+                            }
+                            else {
+                                current_year_capacity.reserve(current_num_per_year);
+                                for (size_t ic = 0; (ic < current_num_per_year) && ((ic + iyear * current_num_per_year) < mp_ancserv4_revenue.nrows()); ic++)
+                                    current_year_capacity.push_back(mp_ancserv4_revenue(ic + iyear * current_num_per_year, 0));
+                            }
+                            extrapolated_current_year_capacity = extrapolate_timeseries(current_year_capacity, steps_per_hour);
+                        }
                         if (en_mp_ancserv4_percent_gen)
                         {
                             // copy capacity as % of system generation as specified from user input
-                            for (size_t ic = 0; (ic < extrapolated_current_year_capacity.size()) && ((ic + iyear * current_num_per_year) < cleared_capacity_sum.size()); ic++)
+                            for (size_t ic = 0; (ic + iyear * nsteps_per_year) < cleared_capacity_sum.size(); ic++)
                             {
                                 ancillary_services4_capacity[ic + iyear * nsteps_per_year] = mp_ancserv4_gen_factor * system_generation[ic + iyear * nsteps_per_year];
                                 cleared_capacity_sum[ic + iyear * nsteps_per_year] += mp_ancserv4_gen_factor * system_generation[ic + iyear * nsteps_per_year];
@@ -424,7 +514,7 @@ bool mp_ancillary_services(ssc_data_t data)
                         }
                         else
                         {
-                            for (size_t ic = 0; (ic < extrapolated_current_year_capacity.size()) && ((ic + iyear * current_num_per_year) < cleared_capacity_sum.size()); ic++)
+                            for (size_t ic = 0; (ic < extrapolated_current_year_capacity.size()) && ((ic + iyear * nsteps_per_year) < cleared_capacity_sum.size()); ic++)
                             {
                                 ancillary_services4_capacity[ic + iyear * nsteps_per_year] = extrapolated_current_year_capacity[ic];
                                 cleared_capacity_sum[ic + iyear * nsteps_per_year] += extrapolated_current_year_capacity[ic];
@@ -436,11 +526,19 @@ bool mp_ancillary_services(ssc_data_t data)
 						if (calculate_revenue)
 						{
 							current_year_revenue.clear();
-							current_year_revenue.reserve(current_num_per_year);
-							for (size_t ic = 0; (ic < current_num_per_year) && ((ic + iyear * current_num_per_year) < mp_ancserv4_revenue.nrows()); ic++)
-								current_year_revenue.push_back(mp_ancserv4_revenue(ic + iyear * current_num_per_year, price_col));
-							extrapolated_current_year_revenue = extrapolate_timeseries(current_year_revenue, steps_per_hour);
-							for (size_t ic = 0; (ic < extrapolated_current_year_revenue.size()) && ((ic + iyear * current_num_per_year) < ancillary_services4_revenue.size()); ic++)
+                            if (mp_ancserv4_revenue.nrows() < 2) {// single value - addresses SAM issue 1004
+                                if (mp_ancserv4_revenue.nrows() == 1)
+                                    current_year_revenue.push_back(mp_ancserv4_revenue(0, price_col));
+                                else
+                                    current_year_revenue.push_back(0.0);
+                            }
+                            else {
+                                current_year_revenue.reserve(current_num_per_year);
+                                for (size_t ic = 0; (ic < current_num_per_year) && ((ic + iyear * current_num_per_year) < mp_ancserv4_revenue.nrows()); ic++)
+                                    current_year_revenue.push_back(mp_ancserv4_revenue(ic + iyear * current_num_per_year, price_col));
+                            }
+                            extrapolated_current_year_revenue = extrapolate_timeseries(current_year_revenue, steps_per_hour);
+							for (size_t ic = 0; (ic < extrapolated_current_year_revenue.size()) && ((ic + iyear * nsteps_per_year) < ancillary_services4_revenue.size()); ic++)
 								ancillary_services4_revenue[ic + iyear * nsteps_per_year] = extrapolated_current_year_revenue[ic]; // $/MWh
 						}
 
