@@ -203,6 +203,8 @@ bool solarpilot_invoke::run(std::shared_ptr<weather_data_provider> wdata)
     land.is_bounds_array.val = false;
 	land.max_scaled_rad.val = m_cmod->as_double("land_max");
 	land.min_scaled_rad.val = m_cmod->as_double("land_min");
+    land.land_mult.val = m_cmod->as_double("csp.pt.sf.land_overhead_factor");
+    land.land_const.val = m_cmod->as_double("csp.pt.sf.fixed_land_area");
 	sf.tht.val = m_cmod->as_double("h_tower");
 		
 	fin.tower_fixed_cost.val = m_cmod->as_double("tower_fixed_cost");
