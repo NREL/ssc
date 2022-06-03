@@ -337,7 +337,7 @@ double C_ud_power_cycle::get_m_dot_water_ND(double T_htf_hot /*C*/, double T_amb
 double C_ud_power_cycle::get_interpolated_ND_output(int i_ME /*M.E. table index*/, 
 							double T_htf_hot /*C*/, double T_amb /*C*/, double m_dot_htf_ND /*-*/)
 {
-	
+
 	double ME_T_htf = mc_T_htf_ind.interpolate_x_col_0(i_ME*3+2, T_htf_hot) - m_Y_at_ref[i_ME];
 	double ME_T_amb = mc_T_amb_ind.interpolate_x_col_0(i_ME*3+2, T_amb) - m_Y_at_ref[i_ME];
 	double ME_m_dot_htf = mc_m_dot_htf_ind.interpolate_x_col_0(i_ME*3+2, m_dot_htf_ND) - m_Y_at_ref[i_ME];

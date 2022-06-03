@@ -1,0 +1,7 @@
+ME_T_htf = -0.00523458
+ME_T_amb = 0.0163373
+ME_m_dot_htf = 0.352103
+
+INT_T_htf_on_T_amb = -0.00244645
+INT_T_amb_on_m_dot_htf = 0.00368688
+INT_m_dot_htf_on_T_htf = -0.00785089

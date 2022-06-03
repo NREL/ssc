@@ -24,12 +24,22 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ud_power_cycle.h"
 
+#include <iostream>
+#include <fstream>
+
 static var_info _cm_vtab_test_ud_power_cycle[] = {
 
 	/*   VARTYPE   DATATYPE         NAME               LABEL                                          UNITS     META  GROUP REQUIRED_IF CONSTRAINTS         UI_HINTS*/
 	{SSC_INPUT, SSC_NUMBER, "q_pb_design", "Design point power block thermal power", "MWt", "", "", "", "", ""},
 
+
 	{SSC_OUTPUT, SSC_MATRIX, "udpc_table_out", "udpc table defined in cmod", "", "", "", "", "", ""},
+
+    {SSC_INPUT, SSC_NUMBER, "n_T_htf", "Number of levels for HTF", "-", "", "", "*", "", ""},
+    
+	{SSC_OUTPUT, SSC_NUMBER, "W_dot_fossil", "Electric output with no solar contribution", "MWe", "", "", "", "", ""},
+    {SSC_OUTPUT, SSC_NUMBER, "W_dot_ND_calc", "Non-dimensional Work Output", "-", "", "", "", "", ""},
+
 
 	var_info_invalid};
 
@@ -46,25 +56,25 @@ public:
 	{
         // Setup independent variable combinations
             // HTF inlet temperature
-        double T_htf_des_table = 565.0;   //[C]
+        double T_htf_des_table = 560.0;   //[C]
         double T_htf_low = 545.0;   //[C]
         double T_htf_high = 575.0;  //[C]
-        size_t n_T_htf = 7;
+        size_t n_T_htf = as_integer("n_T_htf");// = 7;
         double dT_T_htf = (T_htf_high - T_htf_low) / (double)(n_T_htf - 1);
         std::vector<double> T_htf_levels = std::vector<double>{ T_htf_low, T_htf_des_table, T_htf_high };
 
             // HTF mass flow rate
         double m_dot_htf_ND_des = 1.0;     //[-] By definition, ND design mass flow is 1.0
         double m_dot_htf_ND_low = 0.5;     //[-]
-        double m_dot_htf_ND_high = 1.1;    //[-]
-        size_t n_m_dot_htf_ND = 13;
+        double m_dot_htf_ND_high = 1.5;    //[-]
+        size_t n_m_dot_htf_ND = 10;
         double dT_m_dot_htf_ND = (m_dot_htf_ND_high - m_dot_htf_ND_low) / (double)(n_m_dot_htf_ND - 1);
         std::vector<double> m_dot_htf_ND_levels = std::vector<double>{ m_dot_htf_ND_low, m_dot_htf_ND_des, m_dot_htf_ND_high };
 
             // Ambient temperature
-        double T_amb_des_table = 35.0;    //[C]
+        double T_amb_des_table = 25.0;    //[C]
         double T_amb_low = 0.0;     //[C]
-        double T_amb_high = 45.0;   //[C]
+        double T_amb_high = 50.0;   //[C]
         size_t n_T_amb = 10;
         double dT_T_amb = (T_amb_high - T_amb_low) / (double)(n_T_amb - 1);
         std::vector<double> T_amb_levels = std::vector<double>{ T_amb_low, T_amb_des_table, T_amb_high };
@@ -79,9 +89,11 @@ public:
                 udpc_data_full(k,C_ud_power_cycle::E_COL_T_HTF) = T_htf_low + j*dT_T_htf;
                 udpc_data_full(k,C_ud_power_cycle::E_COL_M_DOT) = m_dot_htf_ND_levels[i];
                 udpc_data_full(k,C_ud_power_cycle::E_COL_T_AMB) = T_amb_des_table;
+
                 k++;
             }
         }
+
 
         for (size_t i = 0; i < n_levels; i++) {
             for (size_t j = 0; j < n_m_dot_htf_ND; j++) {
@@ -117,8 +129,8 @@ public:
         }
 
         // Use example endo-reversible cycle model to calculate cycle performance
-        double T_htf_des_cycle = T_htf_des_table + 10.0;
-        double T_amb_des_cycle = T_amb_des_table + 10.0;
+        double T_htf_des_cycle = T_htf_des_table + 0.0;
+        double T_amb_des_cycle = T_amb_des_table + 0.0;
         C_endo_rev_cycle c_cycle(T_htf_des_cycle, T_amb_des_cycle);
 
         for (size_t i = 0; i < udpc_data_full.nrows(); i++) {
@@ -134,6 +146,7 @@ public:
         // Set udpc table output to udpc table defined using endo-reversible cycle model
         util::matrix_t<ssc_number_t>& udpc_out = allocate_matrix("udpc_table_out", udpc_data_full.nrows(), 7);
         udpc_out = udpc_data_full;
+
 
         // Initialize UDPC model with cycle performance data table
         C_ud_power_cycle c_udpc;
@@ -151,14 +164,72 @@ public:
 
 
         // Sample UPDC model
-            // at *table* design point
+        // at design point
         double W_dot_ND_calc = c_udpc.get_W_dot_gross_ND(T_htf_des_table, T_amb_des_table, 1.0);
-        double m_dot_ND_calc = c_udpc.get_m_dot_water_ND(T_htf_des_table, T_amb_des_table, 1.0);
+        
+        // Sample UDPC model over lots of points to compare results to new interpolation method
+        bool isDataWrite = false;
+        if (isDataWrite){
+
+            int Nsamp = 100;
+            double mdotS = 0;
+            double Wact, Q_cyl, W_cool, H2O, errS;
+            // Create a results file
+            std::ofstream resfile;
+            resfile.open("test_results_orig.txt");
+            resfile << "Mdot     ,      W (actual)       ,       W (regression)       ,       Error (%)\n";
+
+            for (size_t i = 0; i < Nsamp; i++) {
+                mdotS = 0.55 + i * (1.6 - 0.55) / double(Nsamp - 1);
+                W_dot_ND_calc = c_udpc.get_W_dot_gross_ND(T_htf_des_table - 10, T_amb_des_table - 5, mdotS);
+
+                // Results from original model
+                c_cycle.performance(T_htf_des_table - 10, mdotS, T_amb_des_table - 5, Wact, Q_cyl, W_cool, H2O);
+                errS = 100 * (Wact - W_dot_ND_calc) / Wact;
+                resfile << mdotS << "," << Wact << "," << W_dot_ND_calc << "," << errS << "\n";
+            }
+            resfile.close();
+        }
+
+
+        assign("W_dot_ND_calc", W_dot_ND_calc);     //[kWe]
+
+        double abce = 1.23;
+
+		/*C_ud_power_cycle c_pc;
+
+		c_pc.init(a_table, a_ref, a_low, a_high,
+				b_table, b_ref, b_low, b_high,
+				c_table, c_ref, c_low, c_high);
+
+		int n_test = N_runs*N_runs*N_runs;
+		
+		std::vector<double> Y_actual(n_test);
+		std::vector<double> Y_reg(n_test);
+		std::vector<double> E_reg_less_act(n_test);
+
+		double max_err = -1.0;
+
+		for(int i = 0; i < N_runs; i++)
+		{
+			for(int j = 0; j < N_runs; j++)
+			{
+				for(int k = 0; k < N_runs; k++)
+				{
+					int index = i*N_runs*N_runs + j*N_runs + k;
+
+					Y_actual[index] = three_var_eqn(a_table(i,0),b_table(j,0),c_table(k,0));
+
+					Y_reg[index] = c_pc.get_W_dot_gross_ND(a_table(i,0),b_table(j,0),c_table(k,0))*Y_ref;
+
+					E_reg_less_act[index] = (Y_reg[index] - Y_actual[index])/fmax(Y_actual[index],0.0001);
 
             // at *cycle* design point
         W_dot_ND_calc = c_udpc.get_W_dot_gross_ND(T_htf_des_cycle, T_amb_des_cycle, 1.0);
         m_dot_ND_calc = c_udpc.get_m_dot_water_ND(T_htf_des_cycle, T_amb_des_cycle, 1.0);
+        */
 	}
+    
 
     class C_endo_rev_cycle
     {

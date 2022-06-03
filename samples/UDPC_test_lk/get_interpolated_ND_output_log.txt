@@ -1,0 +1,24 @@
+Calculate main effects:
+ME_T_htf:  -0.00523458
+ME_T_amb:  0.0163373
+ME_m_dot_htf:  0.415843
+
+Calculate interaction of Thtf on Tamb:
+zone: 1
+The interaction effect = -0.00244645
+
+Calculate interaction of Tamb on mdot:
+zone: 1
+The interaction effect = 0.00450005
+
+Calculate interaction of mdot on Thtf:
+zone: 5
+mdot_col_lo: 3
+mdot_bound_lo: 1.25
+lower_int: -0.0134074
+mdot_col_hi: 4
+mdot_bound_hi: 1.5
+upper_int: -0.00981361
+Interaction: -0.00981361
+The interaction effect = -0.00981361
+

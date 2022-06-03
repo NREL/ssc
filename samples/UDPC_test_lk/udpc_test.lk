@@ -1,1 +1,5 @@
+var( 'n_T_htf', 10 );
 run('test_ud_power_cycle');
+outln("(ORIG) Non-dimensional work output ", var('W_dot_ND_calc'));
+run('test_ud_power_cycle_jdm');
+outln("(NEW) Non-dimensional work output ", var('W_dot_ND_calc'));
