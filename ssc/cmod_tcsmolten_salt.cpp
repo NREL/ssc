@@ -1149,7 +1149,8 @@ public:
 
             A_sf = as_double("helio_height") * as_double("helio_width") * as_double("dens_mirror") * (double)N_hel;
 
-            land_area_base = spi.land.land_area.Val();       //[acres] Land area occupied by heliostats
+            land_area_base = spi.land.land_area.Val();       //[acres] Total land area
+            land_area_base = spi.land.bound_area.Val() / 4046.86 /*acres/m^2*/;  // [acres] Land area occupied by heliostats 
 
             // *********************************************************************
             // TEMP until spi.land.land_area.Val() works for field_model_type == 2

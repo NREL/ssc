@@ -407,8 +407,7 @@ bool solarpilot_invoke::run(std::shared_ptr<weather_data_provider> wdata)
 		}
 
 		m_sapi->Setup(*this);
-
-        m_sapi->GetHeliostatPositions(layout);
+        m_sapi->PostProcessLayout(layout);
     }
     
     //check if flux map calculations are desired
