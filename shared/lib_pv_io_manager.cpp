@@ -869,6 +869,7 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
     p_inverterThermalLoss = cm->allocate("inv_tdcloss", numberOfWeatherFileRecords);
     p_inverterTotalLoss = cm->allocate("inv_total_loss", numberOfWeatherFileRecords);
 
+    p_inverterACOutputPreLoss = cm->allocate("ac_gross", numberOfWeatherFileRecords);
     p_acWiringLoss = cm->allocate("ac_wiring_loss", numberOfWeatherFileRecords);
     p_transmissionLoss = cm->allocate("ac_transmission_loss", numberOfWeatherFileRecords);
     p_acPerfAdjLoss = cm->allocate("ac_perf_adj_loss", numberOfWeatherFileRecords);
@@ -882,10 +883,6 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
         p_dcDegradationFactor = cm->allocate("dc_degrade_factor", numberOfYears);
     }
 
-}
-void PVSystem_IO::AssignOutputs(compute_module* cm)
-{
-    cm->assign("ac_loss", var_data((ssc_number_t)(acLossPercent + transmissionLossPercent)));
 }
 
 Module_IO::Module_IO(compute_module* cm, std::string cmName, double dcLoss)
