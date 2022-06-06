@@ -629,26 +629,25 @@ void AutoPilot::PostProcessLayout(sp_layout &layout)
 
     Hvector* hpos = _SF->getHeliostats();
     layout.heliostat_positions.clear();
-    layout.heliostat_positions.resize(hpos->size());
+    layout.heliostat_positions.reserve(hpos->size());
     for (int i = 0; i < (int)hpos->size(); i++) {
-        //sp_layout::h_position hp;
-        layout.heliostat_positions.at(i).location.x = hpos->at(i)->getLocation()->x;
-        layout.heliostat_positions.at(i).location.y = hpos->at(i)->getLocation()->y;
-        layout.heliostat_positions.at(i).location.z = hpos->at(i)->getLocation()->z;
+        sp_layout::h_position hp;
+        hp.location.x = hpos->at(i)->getLocation()->x;
+        hp.location.y = hpos->at(i)->getLocation()->y;
+        hp.location.z = hpos->at(i)->getLocation()->z;
 
-        layout.heliostat_positions.at(i).cant_vector.i = hpos->at(i)->getCantVector()->i;
-        layout.heliostat_positions.at(i).cant_vector.j = hpos->at(i)->getCantVector()->j;
-        layout.heliostat_positions.at(i).cant_vector.k = hpos->at(i)->getCantVector()->k;
+        hp.cant_vector.i = hpos->at(i)->getCantVector()->i;
+        hp.cant_vector.j = hpos->at(i)->getCantVector()->j;
+        hp.cant_vector.k = hpos->at(i)->getCantVector()->k;
 
-        layout.heliostat_positions.at(i).aimpoint.x = hpos->at(i)->getAimPoint()->x;
-        layout.heliostat_positions.at(i).aimpoint.y = hpos->at(i)->getAimPoint()->y;
-        layout.heliostat_positions.at(i).aimpoint.z = hpos->at(i)->getAimPoint()->z;
+        hp.aimpoint.x = hpos->at(i)->getAimPoint()->x;
+        hp.aimpoint.y = hpos->at(i)->getAimPoint()->y;
+        hp.aimpoint.z = hpos->at(i)->getAimPoint()->z;
 
-        layout.heliostat_positions.at(i).focal_length = hpos->at(i)->getFocalX();
-        layout.heliostat_positions.at(i).template_number = -1;
+        hp.focal_length = hpos->at(i)->getFocalX();
+        hp.template_number = -1;
         //hp.user_optics = false;
-        //layout.heliostat_positions.at(i) = hp;
-        //layout.heliostat_positions.push_back(hp);
+        layout.heliostat_positions.push_back(hp);
     }
 
     var_map *V = _SF->getVarMap();
