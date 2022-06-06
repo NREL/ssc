@@ -71,10 +71,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 
     { SSC_INPUT,     SSC_NUMBER, "receiver_type",                      "0: external (default), 1; cavity",                                                                                                        "",             "",                                  "Heliostat Field",                          "?=0",                                                              "",              ""},
 
-    // Cavity height and width can be reset by solarpilot optimization
-    { SSC_INPUT,     SSC_NUMBER, "cav_rec_height",                     "Cavity receiver height - in",                                                                                                             "m",            "",                                  "Tower and Receiver",                       "receiver_type=1",                                                  "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "cav_rec_width",                      "Cavity receiver width - in",                                                                                                              "m",            "",                                  "Tower and Receiver",                       "receiver_type=1",                                                  "",              ""},
-
+    
     // Cavity inputs that should *not* be reset during call to this cmod
     { SSC_INPUT,     SSC_NUMBER, "n_cav_rec_panels",                   "Cavity receiver number of panels",                                                                                                        "",             "",                                  "Tower and Receiver",                       "receiver_type=1",                                                  "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "cav_rec_span",                       "Cavity receiver span angle",                                                                                                              "deg",          "",                                  "Tower and Receiver",                       "receiver_type=1",                                                  "",              ""},
@@ -364,17 +361,22 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,     SSC_ARRAY,  "ppa_price_input",			           "PPA prices - yearly",			                                                                                                          "$/kWh",	      "",	                               "Revenue",			                       "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1",       "",      	    ""},
     { SSC_INPUT,     SSC_MATRIX, "mp_energy_market_revenue",           "Energy market revenue input",                                                                                                             "",             "Lifetime x 2[Cleared Capacity(MW),Price($/MWh)]", "Revenue",                    "csp_financial_model=6&is_dispatch=1",                              "",              ""},
 
-    // Inputs required for user defined SF performance
-    { SSC_INPUT,     SSC_NUMBER, "A_sf_in",                            "Solar field area",                                                                                                                        "m^2",          "",                                  "Heliostat Field",                          "",                                                                 "",              ""},
+    // Inputs required for user defined SF performance when field_model_type = 4
+    // Values can be defined by mapping to equivalent _calc output for simulation results with field_model_type < 3
+    { SSC_INPUT,     SSC_NUMBER, "A_sf_in",                            "Solar field area",                                                                                                                        "m^2",          "",                                  "Heliostat Field",                          "field_model_type>3",                                               "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "total_land_area_before_rad_cooling_in", "Total land area not including radiative cooling - in",                                                                                 "acre",         "",                                  "Heliostat Field",                          "field_model_type>3",                                               "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "N_hel",                              "Number of heliostats - in",                                                                                                               "",             "",                                  "Heliostat Field",                          "field_model_type>3",                                               "",              "" },
 
-    // optimized outputs updated depending on run type 
+    // Field layout and tower/receiver dimensions
+    // If field_model_type = 1, tower/receiver dimensions are used as guess values
+    //        and optimized values are reported as _calc outputs
+    { SSC_INPUT,     SSC_MATRIX, "helio_positions",                    "Heliostat position table - in",                                                                                                           "",             "",                                  "Heliostat Field",                          "field_model_type=2|field_model_type=3",                           "", "COL_LABEL=XY_POSITION" },
     { SSC_INPUT,     SSC_NUMBER, "rec_height",                         "Receiver height - in",                                                                                                                    "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "D_rec",                              "The overall outer diameter of the receiver - in",                                                                                         "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "h_tower",                            "Tower height - in",                                                                                                                       "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "N_hel",                              "Number of heliostats - in",                                                                                                               "",             "",                                  "Heliostat Field",                          "",                                                                 "",              ""},
-    { SSC_INPUT,     SSC_MATRIX, "helio_positions",                    "Heliostat position table - in",                                                                                                           "",             "",                                  "Heliostat Field",                          "*",                                                                "",              "COL_LABEL=XY_POSITION"},
-    { SSC_INPUT,     SSC_NUMBER, "land_area_base",                     "Base land area occupied by heliostats - in",                                                                                              "acre",         "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
-    
+    { SSC_INPUT,     SSC_NUMBER, "cav_rec_height",                     "Cavity receiver height - in",                                                                                                             "m",            "",                                  "Tower and Receiver",                       "receiver_type=1",                                                  "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "cav_rec_width",                      "Cavity receiver width - in",                                                                                                              "m",            "",                                  "Tower and Receiver",                       "receiver_type=1",                                                  "",              "" },
+
         // Construction financing inputs/outputs (SSC variable table from cmod_cb_construction_financing)
     { SSC_INPUT,     SSC_NUMBER, "const_per_interest_rate1",           "Interest rate, loan 1",                                                                                                                   "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "const_per_interest_rate2",           "Interest rate, loan 2",                                                                                                                   "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              ""},
@@ -421,7 +423,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_OUTPUT,    SSC_NUMBER, "h_tower_calc",                       "Tower height - out",                                                                                                                       "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "N_hel_calc",                         "Number of heliostats - out",                                                                                                               "",             "",                                  "Heliostat Field",                          "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_MATRIX, "helio_positions_calc",               "Heliostat position table - out",                                                                                                           "",             "",                                  "Heliostat Field",                          "*",                                                                "",              "COL_LABEL=XY_POSITION" },
-    { SSC_OUTPUT,    SSC_NUMBER, "land_area_base_calc",                "Base land area occupied by heliostats - out",                                                                                              "acre",         "",                                  "Heliostat Field",                          "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "total_land_area_before_rad_cooling_calc", "Total land area not including radiative cooling - out",                                                                               "acre",         "",                                  "Heliostat Field",                          "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "cav_rec_height_calc",                "Cavity receiver height - out",                                                                                                             "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "cav_rec_width_calc",                 "Cavity receiver width - out",                                                                                                              "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
 
@@ -810,14 +812,14 @@ public:
         double rec_aspect = std::numeric_limits<double>::quiet_NaN();
         double D_rec = std::numeric_limits<double>::quiet_NaN();
         double cav_rec_width = std::numeric_limits<double>::quiet_NaN();
-        double land_area_base = std::numeric_limits<double>::quiet_NaN();
+        double total_land_area_before_rad_cooling = std::numeric_limits<double>::quiet_NaN();
         util::matrix_t<double> helio_pos;
 
         assign("is_optimize", 0);
         bool is_optimize = false;
         int n_flux_y = 1;
 
-        if (field_model_type == 0 || field_model_type == 1 || field_model_type == 2) {
+        if (field_model_type < 4) {
 
             // Field types 0-2 require solar pilot
             solarpilot_invoke spi(this);
@@ -979,7 +981,7 @@ public:
                 else
                     throw exec_error("solarpilot", "failed to calculate a correct flux map table");
             }
-            else if (field_model_type == 2)
+            else if (field_model_type == 2 || field_model_type == 3)
             {
                 // only calculates a flux map, so need to "assign" 'helio_positions_in' for SolarPILOT cmod
                 util::matrix_t<double> helio_pos_temp = as_matrix("helio_positions");
@@ -1019,16 +1021,16 @@ public:
                 }
 
                 // 'calc_fluxmaps' defaults to false in solarpilot cmod, so overwrite here if we want flux maps
-                if (sim_type == 1) {
+                if (sim_type == 1 && field_model_type == 2) {
                     assign("calc_fluxmaps", 1);
                 }
-                else {
+                else if(sim_type == 2 || field_model_type == 3) {
                     assign("calc_fluxmaps", 0);
                 }
 
                 spi.run(weather_reader.m_weather_data_provider);
 
-                if (sim_type == 1) {
+                if (sim_type == 1 && field_model_type == 2) {
                     //collect the optical efficiency data and sun positions
                     if (spi.fluxtab.zeniths.size() > 0 && spi.fluxtab.azimuths.size() > 0
                         && spi.fluxtab.efficiency.size() > 0)
@@ -1120,11 +1122,21 @@ public:
                         throw exec_error("solarpilot", "failed to calculate a correct flux map table");
 
                 }
-                else if (sim_type == 2) {
+                else if (field_model_type == 3) {
+
+                    mt_eta_map = as_matrix("eta_map");
+                    mt_flux_maps = as_matrix("flux_maps");
+                }
+                else if (field_model_type == 2 && sim_type == 2) {
 
                     mt_eta_map.resize_fill(1, 3, std::numeric_limits<double>::quiet_NaN());
                     mt_flux_maps.resize_fill(1, 12, std::numeric_limits<double>::quiet_NaN());
 
+                }
+                else{
+                    string msg = util::format("Invalid combination of field_model_type and sim_type");
+
+                    throw exec_error("MSPT CSP Solver", msg);
                 }
             }
 
@@ -1168,41 +1180,23 @@ public:
 
             A_sf = as_double("helio_height") * as_double("helio_width") * as_double("dens_mirror") * (double)N_hel;
 
-            land_area_base = spi.land.land_area.Val();       //[acres] Total land area
-            land_area_base = spi.land.bound_area.Val() / 4046.86 /*acres/m^2*/;  // [acres] Land area occupied by heliostats 
-
-            // *********************************************************************
-            // TEMP until spi.land.land_area.Val() works for field_model_type == 2
-            if (field_model_type == 2) {
-                land_area_base = as_double("land_area_base");
-            }
-            // *********************************************************************
+            total_land_area_before_rad_cooling = spi.land.land_area.Val();       //[acres] Total land area
+            double land_area_base = spi.land.bound_area.Val() / 4046.86 /*acres/m^2*/;  // [acres] Land area occupied by heliostats 
         }
-        else if (field_model_type == 3 || field_model_type == 4)
+        else if (field_model_type == 4)
         {
             // Use input flux and efficiency maps
+            mt_eta_map = as_matrix("eta_map");
+            mt_flux_maps = as_matrix("flux_maps");
+
             // Need to specify:
             // 1) reflective area (scale flux map)
             // 2) number heliostats for heliostats (tracking parasitics)
-            //     in one of two ways
-
-            if (field_model_type == 3) {
-                // Use helio_positions (for number of heliostats), helio_height, helio_width, dens_mirror
-
-                helio_pos = as_matrix("helio_positions");
-                N_hel = helio_pos.nrows();
-                A_sf = as_double("helio_height") * as_double("helio_width") * as_double("dens_mirror") * (double)N_hel;
-            }
-            else if (field_model_type == 4) {
-                // Use A_sf and N_hel inputs
-
-                helio_pos.resize_fill(1, 2, std::numeric_limits<double>::quiet_NaN());
-                N_hel = as_number("N_hel");
-                A_sf = as_number("A_sf_in");        //[m2]
-            }
-
-            mt_eta_map = as_matrix("eta_map");
-            mt_flux_maps = as_matrix("flux_maps");
+            // 3) total land area before radiative cooling
+            // 4) tower and receiver dimensions
+            N_hel = as_number("N_hel");
+            A_sf = as_number("A_sf_in");        //[m2]
+            total_land_area_before_rad_cooling = as_double("total_land_area_before_rad_cooling_in");
 
             // Get tower/receiver dimensions through cmod
             THT = as_double("h_tower");             //[m]
@@ -1217,9 +1211,7 @@ public:
                 cav_rec_width = as_double("cav_rec_width");
             }
 
-            land_area_base = as_double("land_area_base");
-
-            assign("calc_fluxmaps", 0);
+            helio_pos.resize_fill(1, 2, std::numeric_limits<double>::quiet_NaN());
         }
         else
         {
@@ -2117,8 +2109,8 @@ public:
             // Solar field
         assign("N_hel_calc", N_hel);                //[-]
         assign("A_sf", (ssc_number_t)A_sf);         //[m2]
-        assign("land_area_base_calc", (ssc_number_t)land_area_base);        //[acre]
-
+        assign("total_land_area_before_rad_cooling_calc", (ssc_number_t)total_land_area_before_rad_cooling);        //[acre]
+        
         size_t n_helio_pos_rows = helio_pos.nrows();
         ssc_number_t* p_helio_positions_calc = allocate("helio_positions_calc", n_helio_pos_rows, 2);
         // Try to determine whether heliostat positions represent surround or cavity field
@@ -2207,7 +2199,7 @@ public:
         double contingency_rate = as_double("contingency_rate");
 
         //land area
-        double total_land_area = land_area_base * as_double("csp.pt.sf.land_overhead_factor") + as_double("csp.pt.sf.fixed_land_area") + radfield_area / 4046.86 /*acres/m^2*/;
+        double total_land_area = total_land_area_before_rad_cooling + radfield_area / 4046.86 /*acres/m^2*/;
         assign("csp.pt.cost.total_land_area", (ssc_number_t)total_land_area);
         assign("total_land_area", (ssc_number_t)total_land_area);
 
