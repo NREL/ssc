@@ -514,7 +514,7 @@ bool solarpilot_invoke::postsim_calcs(compute_module *cm)
         ssc_hl[i*2+1] = (ssc_number_t)layout.heliostat_positions.at(i).location.y;
     }
 
-    double A_sf = cm->as_double("helio_height") * cm->as_double("helio_width") * cm->as_double("dens_mirror") * (double)nr;
+    double A_sf = CalcSolarFieldArea(nr);
 
     //update piping length for parasitic calculation
     double piping_length = THT * cm->as_double("csp.pt.par.piping_length_mult") + cm->as_double("csp.pt.par.piping_length_const");
@@ -630,6 +630,27 @@ void solarpilot_invoke::setOptimizationSimulationHistory(vector<vector<double> >
 	_optimization_fluxes = flux_values;
 }
 
+double solarpilot_invoke::CalcSolarFieldArea(int N_hel)
+{
+    /*
+    Calculate solar field area using ratio of reflective area to heliostat profile
+
+    N_hel: Number of heliostats in the solar field
+    */
+    return m_cmod->as_double("helio_height") * m_cmod->as_double("helio_width") * m_cmod->as_double("dens_mirror") * (double)N_hel;
+}
+
+double solarpilot_invoke::GetTotalLandArea()
+{
+    // Total land area [acres]
+    return land.land_area.Val();
+}
+
+double solarpilot_invoke::GetBaseLandArea()
+{
+    // Base land area occupied by heliostats [acres]
+    return land.bound_area.Val() / 4046.86 /*acres/m^2*/;  // [acres] Land area occupied by heliostats
+}
 
 bool ssc_cmod_solarpilot_callback( simulation_info *siminfo, void *data )
 {
@@ -1732,3 +1753,4 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_phx_air_cooler & c_sco2_c
 
 	return 0;
 }
+

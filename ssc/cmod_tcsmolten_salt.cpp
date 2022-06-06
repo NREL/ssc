@@ -817,10 +817,10 @@ public:
         bool is_optimize = false;
         int n_flux_y = 1;
 
-        if (field_model_type == 0 || field_model_type == 1 || field_model_type == 2) {
+        // Field types 0-2 require solar pilot
+        solarpilot_invoke spi(this);
 
-            // Field types 0-2 require solar pilot
-            solarpilot_invoke spi(this);
+        if (field_model_type == 0 || field_model_type == 1 || field_model_type == 2) {
 
             assign("q_design", q_dot_rec_des);  //[MWt]
 
@@ -1147,10 +1147,10 @@ public:
 
             }
 
-            A_sf = as_double("helio_height") * as_double("helio_width") * as_double("dens_mirror") * (double)N_hel;
+            A_sf = spi.CalcSolarFieldArea(N_hel);
 
-            land_area_base = spi.land.land_area.Val();       //[acres] Total land area
-            land_area_base = spi.land.bound_area.Val() / 4046.86 /*acres/m^2*/;  // [acres] Land area occupied by heliostats 
+            double land_area_total = spi.GetTotalLandArea();    // [acres] Total land area
+            land_area_base = spi.GetBaseLandArea();             // [acres] Land area occupied by heliostats
 
             // *********************************************************************
             // TEMP until spi.land.land_area.Val() works for field_model_type == 2
@@ -1172,7 +1172,7 @@ public:
 
                 helio_pos = as_matrix("helio_positions");
                 N_hel = helio_pos.nrows();
-                A_sf = as_double("helio_height") * as_double("helio_width") * as_double("dens_mirror") * (double)N_hel;
+                A_sf = spi.CalcSolarFieldArea(N_hel);
             }
             else if (field_model_type == 4) {
                 // Use A_sf and N_hel inputs
