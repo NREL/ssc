@@ -618,40 +618,38 @@ void AutoPilot::PreSimCallbackUpdate()
 	}
 }
 
-void AutoPilot::GetHeliostatPositions(sp_layout& layout)
+
+void AutoPilot::PostProcessLayout(sp_layout &layout)
 {
     /*
     Layout post-process.. collect the layout results and fill the data into the
     layout structure for later use
+    Calculate all post layout parameters
     */
 
     Hvector* hpos = _SF->getHeliostats();
     layout.heliostat_positions.clear();
-    layout.heliostat_positions.resize((int)hpos->size());
+    layout.heliostat_positions.resize(hpos->size());
     for (int i = 0; i < (int)hpos->size(); i++) {
         //sp_layout::h_position hp;
-        layout.heliostat_positions[i].location.x = hpos->at(i)->getLocation()->x;
-        layout.heliostat_positions[i].location.y = hpos->at(i)->getLocation()->y;
-        layout.heliostat_positions[i].location.z = hpos->at(i)->getLocation()->z;
+        layout.heliostat_positions.at(i).location.x = hpos->at(i)->getLocation()->x;
+        layout.heliostat_positions.at(i).location.y = hpos->at(i)->getLocation()->y;
+        layout.heliostat_positions.at(i).location.z = hpos->at(i)->getLocation()->z;
 
-        layout.heliostat_positions[i].cant_vector.i = hpos->at(i)->getCantVector()->i;
-        layout.heliostat_positions[i].cant_vector.j = hpos->at(i)->getCantVector()->j;
-        layout.heliostat_positions[i].cant_vector.k = hpos->at(i)->getCantVector()->k;
+        layout.heliostat_positions.at(i).cant_vector.i = hpos->at(i)->getCantVector()->i;
+        layout.heliostat_positions.at(i).cant_vector.j = hpos->at(i)->getCantVector()->j;
+        layout.heliostat_positions.at(i).cant_vector.k = hpos->at(i)->getCantVector()->k;
 
-        layout.heliostat_positions[i].aimpoint.x = hpos->at(i)->getAimPoint()->x;
-        layout.heliostat_positions[i].aimpoint.y = hpos->at(i)->getAimPoint()->y;
-        layout.heliostat_positions[i].aimpoint.z = hpos->at(i)->getAimPoint()->z;
+        layout.heliostat_positions.at(i).aimpoint.x = hpos->at(i)->getAimPoint()->x;
+        layout.heliostat_positions.at(i).aimpoint.y = hpos->at(i)->getAimPoint()->y;
+        layout.heliostat_positions.at(i).aimpoint.z = hpos->at(i)->getAimPoint()->z;
 
-        layout.heliostat_positions[i].focal_length = hpos->at(i)->getFocalX();
-        layout.heliostat_positions[i].template_number = -1;
+        layout.heliostat_positions.at(i).focal_length = hpos->at(i)->getFocalX();
+        layout.heliostat_positions.at(i).template_number = -1;
         //hp.user_optics = false;
+        //layout.heliostat_positions.at(i) = hp;
         //layout.heliostat_positions.push_back(hp);
     }
-}
-
-void AutoPilot::PostProcessLayout(sp_layout &layout)
-{
-    GetHeliostatPositions(layout);
 
     var_map *V = _SF->getVarMap();
     _SF->updateAllCalculatedParameters( *V );
