@@ -627,24 +627,25 @@ void AutoPilot::GetHeliostatPositions(sp_layout& layout)
 
     Hvector* hpos = _SF->getHeliostats();
     layout.heliostat_positions.clear();
+    layout.heliostat_positions.resize((int)hpos->size());
     for (int i = 0; i < (int)hpos->size(); i++) {
-        sp_layout::h_position hp;
-        hp.location.x = hpos->at(i)->getLocation()->x;
-        hp.location.y = hpos->at(i)->getLocation()->y;
-        hp.location.z = hpos->at(i)->getLocation()->z;
+        //sp_layout::h_position hp;
+        layout.heliostat_positions[i].location.x = hpos->at(i)->getLocation()->x;
+        layout.heliostat_positions[i].location.y = hpos->at(i)->getLocation()->y;
+        layout.heliostat_positions[i].location.z = hpos->at(i)->getLocation()->z;
 
-        hp.cant_vector.i = hpos->at(i)->getCantVector()->i;
-        hp.cant_vector.j = hpos->at(i)->getCantVector()->j;
-        hp.cant_vector.k = hpos->at(i)->getCantVector()->k;
+        layout.heliostat_positions[i].cant_vector.i = hpos->at(i)->getCantVector()->i;
+        layout.heliostat_positions[i].cant_vector.j = hpos->at(i)->getCantVector()->j;
+        layout.heliostat_positions[i].cant_vector.k = hpos->at(i)->getCantVector()->k;
 
-        hp.aimpoint.x = hpos->at(i)->getAimPoint()->x;
-        hp.aimpoint.y = hpos->at(i)->getAimPoint()->y;
-        hp.aimpoint.z = hpos->at(i)->getAimPoint()->z;
+        layout.heliostat_positions[i].aimpoint.x = hpos->at(i)->getAimPoint()->x;
+        layout.heliostat_positions[i].aimpoint.y = hpos->at(i)->getAimPoint()->y;
+        layout.heliostat_positions[i].aimpoint.z = hpos->at(i)->getAimPoint()->z;
 
-        hp.focal_length = hpos->at(i)->getFocalX();
-        hp.template_number = -1;
+        layout.heliostat_positions[i].focal_length = hpos->at(i)->getFocalX();
+        layout.heliostat_positions[i].template_number = -1;
         //hp.user_optics = false;
-        layout.heliostat_positions.push_back(hp);
+        //layout.heliostat_positions.push_back(hp);
     }
 }
 
