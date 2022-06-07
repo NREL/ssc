@@ -846,7 +846,7 @@ public:
 
         if (field_model_type < 4) {
 
-            // Field types 0-2 require solar pilot
+            // Field types 0-3 require solar pilot
             solarpilot_invoke spi(this);
 
             assign("q_design", q_dot_rec_des);  //[MWt]
@@ -1203,10 +1203,11 @@ public:
 
             }
 
-            A_sf = as_double("helio_height") * as_double("helio_width") * as_double("dens_mirror") * (double)N_hel;
+            A_sf = spi.CalcSolarFieldArea(N_hel);
 
-            total_land_area_before_rad_cooling = spi.land.land_area.Val();       //[acres] Total land area
-            double land_area_base = spi.land.bound_area.Val() / 4046.86 /*acres/m^2*/;  // [acres] Land area occupied by heliostats 
+            total_land_area_before_rad_cooling = spi.GetTotalLandArea();    // [acres] Total land area
+            double land_area_base = spi.GetBaseLandArea();             // [acres] Land area occupied by heliostats
+
         }
         else if (field_model_type == 4)
         {
