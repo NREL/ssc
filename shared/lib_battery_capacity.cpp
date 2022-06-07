@@ -382,6 +382,8 @@ void capacity_kibam_t::updateCapacity(double &I, double dt_hour) {
     state->leadacid.q2_0 = q2;
     state->q0 = q1 + q2;
 
+    check_SOC();
+
     update_SOC();
     check_charge_change();
 
