@@ -139,7 +139,6 @@ private:
     double m_d_in_rec_tube;             //[m]
     double m_A_cs_tube;                 //[m2]
     size_t m_Ntubes;                    //[-]
-    double m_Q_dot_piping_loss;         //[Wt] = Constant thermal losses from piping to env. = (THT*length_mult + length_add) * piping_loss_coef
     double m_rel_roughness;             //[-]
     double m_A_aper;                    //[m2]
     double m_eta_therm_des;             //[-]

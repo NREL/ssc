@@ -428,11 +428,15 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_OUTPUT,    SSC_NUMBER, "h_tower_calc",                       "Tower height - out",                                                                                                                       "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "cav_rec_height_calc",                "Cavity receiver height - out",                                                                                                             "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "cav_rec_width_calc",                 "Cavity receiver width - out",                                                                                                              "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "L_tower_piping_calc",                "Tower piping length",                                                                                                                      "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
 
         // Receiver Performance
-    { SSC_OUTPUT,    SSC_NUMBER, "eta_rec_thermal_des",                "Estimated receiver thermal efficiency at design",                                                                                          "",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
-    { SSC_OUTPUT,    SSC_NUMBER, "W_dot_rec_pump_des",                 "Estimated receiver pump power at design",                                                                                                  "MWe",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
-    { SSC_OUTPUT,    SSC_NUMBER, "vel_rec_htf_des",                    "Estimated receiver tube HTF velocity at design",                                                                                           "m/s",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "eta_rec_thermal_des",                "Estimated receiver thermal efficiency at design",                                                                                         "",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "W_dot_rec_pump_des",                 "Estimated receiver pump power at design",                                                                                                 "MWe",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "vel_rec_htf_des",                    "Estimated receiver tube HTF velocity at design",                                                                                          "m/s",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "m_dot_htf_rec_des",                  "Estimated receiver HTF mass flow rate at design",                                                                                         "kg/s",        "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "q_dot_piping_loss_des",              "Estimated receiver piping loss at design",                                                                                                "MWt",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
+
 
         // Costs
     { SSC_OUTPUT,    SSC_NUMBER, "csp.pt.cost.total_land_area",        "Total land area",                                                                                                                         "acre",         "",                                  "System Costs",                             "*",                                                                "",              "" },
@@ -2138,14 +2142,23 @@ public:
         assign("cav_rec_height_calc", (ssc_number_t)cav_rec_height);
         assign("cav_rec_width_calc", (ssc_number_t)cav_rec_width);
 
+        double L_tower_piping = std::numeric_limits<double>::quiet_NaN();
+        receiver->get_design_geometry(L_tower_piping);
+        assign("L_tower_piping_calc", L_tower_piping);      //[m]
+
         double eta_rec_thermal_des;     //[-]
         double W_dot_rec_pump_des;      //[MWe]
-        double rec_pump_coef;           //[MWe/MWt]
-        double rec_vel_htf;             //[m/s]
-        receiver->get_design_performance(eta_rec_thermal_des, W_dot_rec_pump_des, rec_pump_coef, rec_vel_htf);
+        double rec_pump_coef_des;       //[MWe/MWt]
+        double rec_vel_htf_des;         //[m/s]
+        double m_dot_htf_rec_des;       //[kg/s]
+        double q_dot_piping_loss_des;   //[MWt]
+        receiver->get_design_performance(eta_rec_thermal_des, W_dot_rec_pump_des, rec_pump_coef_des,
+            rec_vel_htf_des, m_dot_htf_rec_des, q_dot_piping_loss_des);
         assign("eta_rec_thermal_des", eta_rec_thermal_des);     //[-]
         assign("W_dot_rec_pump_des", W_dot_rec_pump_des);       //[MWe]
-        assign("vel_rec_htf_des", rec_vel_htf);                 //[m/s]
+        assign("vel_rec_htf_des", rec_vel_htf_des);             //[m/s]
+        assign("m_dot_htf_rec_des", m_dot_htf_rec_des);         //[kg/s]
+        assign("q_dot_piping_loss_des", q_dot_piping_loss_des); //[MWt]
 
             // ******* Costs ************
         double A_sf_refl = A_sf;

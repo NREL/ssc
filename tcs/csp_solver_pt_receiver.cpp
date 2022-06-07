@@ -63,24 +63,29 @@ C_pt_receiver::C_pt_receiver(double h_tower /*m*/, double epsilon /*-*/,
 
     m_night_recirc = night_recirc;  //[-]
 
-    // Design ambient conditions
+    // Define design ambient conditions
     m_T_amb_des = 15.0 + 273.15;          //[K]
     m_T_sky_des = m_T_amb_des - 20.0;       //[K]
     m_v_wind_10_des = 5.0;     //[m/s]
     m_P_amb_des = 101000.0;    //[Pa]
 
+    // Calculated design geometry/dimensions
+    m_L_piping = std::numeric_limits<double>::quiet_NaN();
+    m_Q_dot_piping_loss = std::numeric_limits<double>::quiet_NaN();
+
     // Calculated design point performance
+    m_q_dot_inc_min = std::numeric_limits<double>::quiet_NaN();
     m_eta_thermal_des_calc = std::numeric_limits<double>::quiet_NaN();
     m_W_dot_rec_pump_des_calc = std::numeric_limits<double>::quiet_NaN();
     m_rec_pump_coef = std::numeric_limits<double>::quiet_NaN();
     m_vel_htf_des = std::numeric_limits<double>::quiet_NaN();
+    m_m_dot_htf_des = std::numeric_limits<double>::quiet_NaN();
 
     // State variables
     m_mode = C_csp_collector_receiver::E_csp_cr_modes::OFF;
     m_mode_prev = C_csp_collector_receiver::E_csp_cr_modes::OFF;
 
 	error_msg = "";
-	m_m_dot_htf_des = std::numeric_limits<double>::quiet_NaN();
 }
 
 C_csp_collector_receiver::E_csp_cr_modes C_pt_receiver::get_operating_state()
@@ -209,11 +214,20 @@ double C_pt_receiver::get_q_dot_rec_des()     //[MWt]
     return m_q_rec_des * 1.E-6;     //[MWt]
 }
 
-void C_pt_receiver::get_design_performance(double& eta_thermal,
-    double& W_dot_rec_pump, double& rec_pump_coef, double& rec_vel_htf)
+void C_pt_receiver::get_design_geometry(double& L_tower_piping /*m*/)
+{
+    L_tower_piping = m_L_piping;    //[m]
+}
+
+void C_pt_receiver::get_design_performance(double& eta_thermal /*-*/,
+    double& W_dot_rec_pump /*MWe*/, double& rec_pump_coef /*MWe/MWt*/,
+    double& rec_vel_htf_des /*m/s*/, double& m_dot_htf_rec /*kg/s*/,
+    double& q_dot_piping_loss_des /*MWt*/)
 {
     eta_thermal = m_eta_thermal_des_calc;   //[-]
     W_dot_rec_pump = m_W_dot_rec_pump_des_calc; //[MWe]
-    rec_pump_coef = m_rec_pump_coef;        //[MWe/MWt]
-    rec_vel_htf = m_vel_htf_des;            //[m/s]
+    rec_pump_coef = m_rec_pump_coef;            //[MWe/MWt]
+    rec_vel_htf_des = m_vel_htf_des;            //[m/s]
+    m_dot_htf_rec = m_m_dot_htf_des;            //[kg/s]
+    q_dot_piping_loss_des = m_Q_dot_piping_loss*1.E-6;  //[MWt]
 }

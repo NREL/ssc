@@ -125,7 +125,6 @@ protected:
 	double m_A_rec_proj;        //[m2]
 	double m_A_node;            //[m2]
     double m_m_dot_htf_max;	    //[kg/s]
-    double m_Q_dot_piping_loss;		//[Wt] = Constant thermal losses from piping to env. = (THT*length_mult + length_add) * piping_loss_coef
     double m_Rtot_riser;		//[K*m/W]
     double m_Rtot_downc;		//[K*m/W]
 

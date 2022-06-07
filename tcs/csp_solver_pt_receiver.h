@@ -153,8 +153,12 @@ public:
 
     double get_q_dot_rec_des();     //[MWt]
 
-    void get_design_performance(double& eta_thermal,
-        double& W_dot_rec_pump, double& rec_pump_coef, double& rec_vel_htf_des);
+    void get_design_geometry(double& L_tower_piping /*m*/);
+
+    void get_design_performance(double& eta_thermal /*-*/,
+        double& W_dot_rec_pump /*MWe*/, double& rec_pump_coef /*MWe/MWt*/,
+        double& rec_vel_htf_des /*m/s*/, double& m_dot_htf_rec /*kg/s*/,
+        double& q_dot_piping_loss_des /*MWt*/);
 
 protected:
 
@@ -202,11 +206,17 @@ protected:
     double m_v_wind_10_des;   //[m/s]
     double m_P_amb_des;       //[Pa]
 
+    // Calculated design geometry/dimensions
+    double m_L_piping;          //[m]
+    double m_Q_dot_piping_loss;	//[Wt] = Constant thermal losses from piping to env. = (THT*length_mult + length_add) * piping_loss_coef
+
     // Calculated design point performance
-    double m_eta_thermal_des_calc;    /*-*/
-    double m_W_dot_rec_pump_des_calc; /*MWe*/
-    double m_rec_pump_coef;           /*MWe/MWt*/
-    double m_vel_htf_des;				  //[m/s] HTF flow velocity through receiver tubes
+    double m_q_dot_inc_min;             //[Wt] minimum receiver thermal power
+    double m_eta_thermal_des_calc;      //[-]
+    double m_W_dot_rec_pump_des_calc;   //[MWe]
+    double m_rec_pump_coef;             //[MWe/MWt]
+    double m_vel_htf_des;		        //[m/s] HTF flow velocity through receiver tubes
+    double m_m_dot_htf_des;             //[kg/s] receiver HTF mass flow at design
 
     // *******************************************
     // *******************************************
@@ -214,9 +224,6 @@ protected:
     HTFProperties field_htfProps;       // heat transfer fluid properties
     HTFProperties tube_material;		// receiver tube material
     HTFProperties ambient_air;			// ambient air properties
-
-    double m_m_dot_htf_des;             //[kg/s] receiver HTF mass flow at design
-    double m_q_dot_inc_min;             //[Wt] minimum receiver thermal power
 
     C_csp_collector_receiver::E_csp_cr_modes m_mode;                         //[-] current operating mode of receiver
     C_csp_collector_receiver::E_csp_cr_modes m_mode_prev;                    //[-] operating mode of receiver at end of last converged timestep

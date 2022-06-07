@@ -123,14 +123,13 @@ void C_mspt_receiver_222::init_mspt_common()
     
     m_m_dot_htf_max = m_m_dot_htf_max_frac * m_m_dot_htf_des;	//[kg/s]
 
-    double L_piping = std::numeric_limits<double>::quiet_NaN();     //[m]
     double d_inner_piping = std::numeric_limits<double>::quiet_NaN();   //[m]
     CSP::mspt_piping_design(field_htfProps,
         m_h_tower, m_pipe_length_mult,
         m_pipe_length_add, m_piping_loss_coefficient,
         m_T_htf_hot_des, m_T_htf_cold_des,
         m_m_dot_htf_des,
-        L_piping, d_inner_piping, m_Q_dot_piping_loss);
+        m_L_piping, d_inner_piping, m_Q_dot_piping_loss);
 
     m_E_su_prev = m_q_rec_des * m_rec_qf_delay;	//[W-hr] Startup energy
     m_t_su_prev = m_rec_su_delay;				//[hr] Startup time requirement
