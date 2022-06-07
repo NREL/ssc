@@ -113,7 +113,7 @@ protected:
 
     // Hardcoded parameters
     double m_tol_od;            //[-]
-    double m_eta_therm_des;     //[-]
+    double m_eta_therm_des_est; //[-]
         // Derived class should overwrite
     bool m_use_constant_piping_loss;
 
@@ -163,11 +163,31 @@ private:
 	// track number of calls per timestep, reset = -1 in converged() call
 	int m_ncall;
 
+    class C_MEQ__q_dot_des : public C_monotonic_equation
+    {
+    private:
+        C_mspt_receiver_222* mpc_rec;
+        util::matrix_t<double> m_flux_map_input;
+
+        double m_min_to_max_flux_ratio;
+        double m_step;      //[s]
+        double m_plant_defocus;  //[-]
+        C_csp_collector_receiver::E_csp_cr_modes m_input_operation_mode;
+
+    public:
+
+        C_MEQ__q_dot_des(C_mspt_receiver_222* pc_rec);
+
+        virtual int operator()(double flux_max /*kW/m2*/, double *q_dot_des /*MWt*/) override;
+    };
+
 protected:
 
     void init_mspt_common();
 
-    
+    void design_point_steady_state(double& eta_thermal_des_calc /*-*/,
+        double& W_dot_rec_pump_des_calc /*MWe*/, double& rec_pump_coef /*MWe/MWt*/,
+        double& vel_htf_des /*m/s*/);
 
     bool use_previous_solution(const s_steady_state_soln& soln, const s_steady_state_soln& soln_prev);
     util::matrix_t<double> calculate_flux_profiles(double flux_sum /*W/m2*/, double dni_scale /*-*/, double plant_defocus /*-*/,

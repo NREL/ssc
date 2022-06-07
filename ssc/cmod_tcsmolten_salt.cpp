@@ -422,13 +422,17 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_OUTPUT,    SSC_NUMBER, "total_land_area_before_rad_cooling_calc", "Total land area not including radiative cooling - out",                                                                               "acre",         "",                                  "Heliostat Field",                          "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "W_dot_col_tracking_des",             "Collector tracking power at design",                                                                                                      "MWe",          "",                                  "",                                          "*",                                                                "",              "" },
 
-        // Receiver
+        // Receiver Geometry
     { SSC_OUTPUT,    SSC_NUMBER, "rec_height_calc",                    "Receiver height - out",                                                                                                                    "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "D_rec_calc",                         "The overall outer diameter of the receiver - out",                                                                                         "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "h_tower_calc",                       "Tower height - out",                                                                                                                       "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "cav_rec_height_calc",                "Cavity receiver height - out",                                                                                                             "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "cav_rec_width_calc",                 "Cavity receiver width - out",                                                                                                              "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
 
+        // Receiver Performance
+    { SSC_OUTPUT,    SSC_NUMBER, "eta_rec_thermal_des",                "Estimated receiver thermal efficiency at design",                                                                                          "",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "W_dot_rec_pump_des",                 "Estimated receiver pump power at design",                                                                                                  "MWe",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "vel_rec_htf_des",                    "Estimated receiver tube HTF velocity at design",                                                                                           "m/s",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
 
         // Costs
     { SSC_OUTPUT,    SSC_NUMBER, "csp.pt.cost.total_land_area",        "Total land area",                                                                                                                         "acre",         "",                                  "System Costs",                             "*",                                                                "",              "" },
@@ -2134,6 +2138,14 @@ public:
         assign("cav_rec_height_calc", (ssc_number_t)cav_rec_height);
         assign("cav_rec_width_calc", (ssc_number_t)cav_rec_width);
 
+        double eta_rec_thermal_des;     //[-]
+        double W_dot_rec_pump_des;      //[MWe]
+        double rec_pump_coef;           //[MWe/MWt]
+        double rec_vel_htf;             //[m/s]
+        receiver->get_design_performance(eta_rec_thermal_des, W_dot_rec_pump_des, rec_pump_coef, rec_vel_htf);
+        assign("eta_rec_thermal_des", eta_rec_thermal_des);     //[-]
+        assign("W_dot_rec_pump_des", W_dot_rec_pump_des);       //[MWe]
+        assign("vel_rec_htf_des", rec_vel_htf);                 //[m/s]
 
             // ******* Costs ************
         double A_sf_refl = A_sf;

@@ -63,7 +63,7 @@ C_mspt_receiver_222::C_mspt_receiver_222(double h_tower /*m*/, double epsilon /*
 
     // Hardcoded (for now?) parameters
     m_tol_od = 0.001;		//[-] Tolerance for over-design iteration
-    m_eta_therm_des = 0.9;  //[-] used to calculate min incident flux
+    m_eta_therm_des_est = 0.9;  //[-] Estimated and used to calculate min incident flux
     m_m_mixed = 3.2;        //[-] Exponential for calculating mixed convection
 
     // Calculated parameters
@@ -119,8 +119,8 @@ void C_mspt_receiver_222::init_mspt_common()
 
     double c_htf_des = field_htfProps.Cp((m_T_htf_hot_des + m_T_htf_cold_des) / 2.0) * 1000.0;		//[J/kg-K] Specific heat at design conditions
     m_m_dot_htf_des = m_q_rec_des / (c_htf_des * (m_T_htf_hot_des - m_T_htf_cold_des));					//[kg/s]
-    m_q_dot_inc_min = m_q_rec_des * m_f_rec_min / m_eta_therm_des;	//[W] Minimum receiver thermal power
-
+    m_q_dot_inc_min = m_q_rec_des * m_f_rec_min / m_eta_therm_des_est;	//[W] Minimum receiver thermal power
+    
     m_m_dot_htf_max = m_m_dot_htf_max_frac * m_m_dot_htf_des;	//[kg/s]
 
     double L_piping = std::numeric_limits<double>::quiet_NaN();     //[m]
@@ -187,6 +187,8 @@ void C_mspt_receiver_222::init()
     C_pt_receiver::init();
 
     init_mspt_common();
+
+    design_point_steady_state(m_eta_thermal_des_calc, m_W_dot_rec_pump_des_calc, m_rec_pump_coef, m_vel_htf_des);
 	
 	m_ncall = -1;
 
@@ -499,6 +501,77 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs& weather,
         plant_defocus,
         flux_map_input, input_operation_mode,
         T_salt_cold_in);
+}
+
+C_mspt_receiver_222::C_MEQ__q_dot_des::C_MEQ__q_dot_des(C_mspt_receiver_222* pc_rec)
+{
+    mpc_rec = pc_rec;
+
+    m_flux_map_input.resize_fill(1, mpc_rec->m_n_panels, std::numeric_limits<double>::quiet_NaN());
+
+    // Member constants
+    m_min_to_max_flux_ratio = 0.45; //[-]
+    m_step = 3600.0;        //[s]
+    m_plant_defocus = 1.0;   //[-]
+    m_input_operation_mode = C_csp_collector_receiver::STEADY_STATE;
+}
+
+int C_mspt_receiver_222::C_MEQ__q_dot_des::operator()(double flux_max /*kW/m2*/, double *q_dot_des /*MWt*/)
+{
+    double min_panel_flux = m_min_to_max_flux_ratio * flux_max;
+    double max_less_min = flux_max - min_panel_flux;
+
+    for (int i = 0; i < mpc_rec->m_n_panels; i++) {
+        m_flux_map_input(0, i) = max_less_min * sind(i / (double)(mpc_rec->m_n_panels - 1) * 180) + min_panel_flux;
+    }
+
+    mpc_rec->call(m_step,
+        mpc_rec->m_P_amb_des, mpc_rec->m_T_amb_des, mpc_rec->m_T_sky_des,
+        1.0,
+
+        mpc_rec->m_v_wind_10_des,
+        m_plant_defocus,
+        &m_flux_map_input, m_input_operation_mode,
+        mpc_rec->m_T_htf_cold_des);
+
+    *q_dot_des = mpc_rec->ms_outputs.m_Q_thermal;   //[MWt]
+
+    return 0;
+}
+
+void C_mspt_receiver_222::design_point_steady_state(double& eta_thermal_des_calc /*-*/,
+    double& W_dot_rec_pump_des_calc /*MWe*/, double& rec_pump_coef /*MWe/MWt*/,
+    double& vel_htf_des /*m/s*/)
+{
+    C_MEQ__q_dot_des c_qot_des_eq(this);
+    C_monotonic_eq_solver c_q_dot_des_solver(c_qot_des_eq);
+
+    c_q_dot_des_solver.settings(1.E-3, 5, 0.1, 10000, true);
+    double tol_solved = std::numeric_limits<double>::quiet_NaN();
+    double max_flux_solved = std::numeric_limits<double>::quiet_NaN();
+    int iter_solved = -1;
+    int q_dot_des_code = 0;
+    try{
+        q_dot_des_code = c_q_dot_des_solver.solve(775.0, 700.0, m_q_rec_des*1.E-6, max_flux_solved, tol_solved, iter_solved);
+    }
+    catch (C_csp_exception) {
+
+        eta_thermal_des_calc = std::numeric_limits<double>::quiet_NaN();
+        W_dot_rec_pump_des_calc = std::numeric_limits<double>::quiet_NaN();
+        rec_pump_coef = std::numeric_limits<double>::quiet_NaN();
+
+        return;
+    }
+
+    eta_thermal_des_calc = ms_outputs.m_eta_therm;       //[-]
+    W_dot_rec_pump_des_calc = ms_outputs.m_W_dot_pump;   //[MWe]
+
+    // Should q term include piping losses?
+    rec_pump_coef = W_dot_rec_pump_des_calc / ms_outputs.m_Q_thermal;    //[MWe/MWt]
+
+    vel_htf_des = ms_outputs.m_vel_htf;       //[m/s]
+
+    return;
 }
 
 void C_mspt_receiver_222::call(double step /*s*/,
@@ -1391,7 +1464,7 @@ void C_mspt_receiver_222::calc_pump_performance(double rho_f, double mdot, doubl
 double C_mspt_receiver_222::get_pumping_parasitic_coef()
 {
     double Tavg = (m_T_htf_cold_des + m_T_htf_hot_des) / 2.;
-
+    
     double mu_coolant = field_htfProps.visc(Tavg);				//[kg/m-s] Absolute viscosity of the coolant
     double k_coolant = field_htfProps.cond(Tavg);				//[W/m-K] Conductivity of the coolant
     double rho_coolant = field_htfProps.dens(Tavg, 1.0);        //[kg/m^3] Density of the coolant

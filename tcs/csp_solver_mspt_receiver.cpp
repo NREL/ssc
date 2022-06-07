@@ -127,6 +127,8 @@ void C_mspt_receiver::init()
 	m_ncall = -1;
 
 	initialize_transient_parameters();
+
+    design_point_steady_state(m_eta_thermal_des_calc, m_W_dot_rec_pump_des_calc, m_rec_pump_coef, m_vel_htf_des);
 	
 	return;
 }

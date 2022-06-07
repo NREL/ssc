@@ -153,6 +153,9 @@ public:
 
     double get_q_dot_rec_des();     //[MWt]
 
+    void get_design_performance(double& eta_thermal,
+        double& W_dot_rec_pump, double& rec_pump_coef, double& rec_vel_htf_des);
+
 protected:
 
     C_pt_receiver(double h_tower /*m*/, double m_epsilon /*-*/,
@@ -192,6 +195,18 @@ protected:
     int m_tube_mat_code;                //[-]
 
     int m_night_recirc;					//[-] 1=receiver is circulating HTF at night, otherwise not
+
+    // Design ambient conditions
+    double m_T_amb_des;       //[K]
+    double m_T_sky_des;       //[K]
+    double m_v_wind_10_des;   //[m/s]
+    double m_P_amb_des;       //[Pa]
+
+    // Calculated design point performance
+    double m_eta_thermal_des_calc;    /*-*/
+    double m_W_dot_rec_pump_des_calc; /*MWe*/
+    double m_rec_pump_coef;           /*MWe/MWt*/
+    double m_vel_htf_des;				  //[m/s] HTF flow velocity through receiver tubes
 
     // *******************************************
     // *******************************************

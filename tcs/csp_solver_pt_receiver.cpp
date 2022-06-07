@@ -63,6 +63,18 @@ C_pt_receiver::C_pt_receiver(double h_tower /*m*/, double epsilon /*-*/,
 
     m_night_recirc = night_recirc;  //[-]
 
+    // Design ambient conditions
+    m_T_amb_des = 15.0 + 273.15;          //[K]
+    m_T_sky_des = m_T_amb_des - 20.0;       //[K]
+    m_v_wind_10_des = 5.0;     //[m/s]
+    m_P_amb_des = 101000.0;    //[Pa]
+
+    // Calculated design point performance
+    m_eta_thermal_des_calc = std::numeric_limits<double>::quiet_NaN();
+    m_W_dot_rec_pump_des_calc = std::numeric_limits<double>::quiet_NaN();
+    m_rec_pump_coef = std::numeric_limits<double>::quiet_NaN();
+    m_vel_htf_des = std::numeric_limits<double>::quiet_NaN();
+
     // State variables
     m_mode = C_csp_collector_receiver::E_csp_cr_modes::OFF;
     m_mode_prev = C_csp_collector_receiver::E_csp_cr_modes::OFF;
@@ -195,4 +207,13 @@ double C_pt_receiver::get_T_htf_cold_des()    //[K]
 double C_pt_receiver::get_q_dot_rec_des()     //[MWt]
 {
     return m_q_rec_des * 1.E-6;     //[MWt]
+}
+
+void C_pt_receiver::get_design_performance(double& eta_thermal,
+    double& W_dot_rec_pump, double& rec_pump_coef, double& rec_vel_htf)
+{
+    eta_thermal = m_eta_thermal_des_calc;   //[-]
+    W_dot_rec_pump = m_W_dot_rec_pump_des_calc; //[MWe]
+    rec_pump_coef = m_rec_pump_coef;        //[MWe/MWt]
+    rec_vel_htf = m_vel_htf_des;            //[m/s]
 }
