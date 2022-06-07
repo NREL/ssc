@@ -53,6 +53,7 @@ private:
 	double m_m_dot_min;					//[kg/hr]
 	double m_q_dot_design;				//[MWt]
 	double m_cp_htf_design;				//[kJ/kg-K]
+    double m_W_dot_htf_pump_des;          //[MWe]
 
 	C_csp_power_cycle::E_csp_power_cycle_modes m_operating_mode_prev;
 	double m_startup_time_remain_prev;		//[hr]
@@ -253,7 +254,8 @@ public:
 
 	virtual void assign(int index, double *p_reporting_ts_array, size_t n_reporting_ts_array);
 
-    void get_design_parameters(double& m_dot_htf_des /*kg/hr*/, double& cp_htf_des_at_T_ave /*kJ/kg-K*/);
+    void get_design_parameters(double& m_dot_htf_des /*kg/hr*/,
+        double& cp_htf_des_at_T_ave /*kJ/kg-K*/, double& W_dot_htf_pump /*MWe*/);
 };
 
 

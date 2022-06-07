@@ -74,7 +74,7 @@ C_pc_Rankine_indirect_224::C_pc_Rankine_indirect_224()
     m_operating_mode_calc = m_operating_mode_prev;
 
 	m_F_wcMax = m_F_wcMin = m_delta_h_steam = m_startup_energy_required = m_eta_adj =
-		m_m_dot_design = m_q_dot_design = m_cp_htf_design =
+		m_m_dot_design = m_q_dot_design = m_cp_htf_design = m_W_dot_htf_pump_des =
 		m_startup_time_remain_prev = m_startup_time_remain_calc =
 		m_startup_energy_remain_prev = m_startup_energy_remain_calc = std::numeric_limits<double>::quiet_NaN();
 
@@ -127,7 +127,8 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
     m_q_dot_design = ms_params.m_P_ref / 1000.0 / ms_params.m_eta_ref;	//[MWt]
     m_m_dot_design = m_q_dot_design * 1000.0 / (m_cp_htf_design * ((ms_params.m_T_htf_hot_ref - ms_params.m_T_htf_cold_ref))) * 3600.0;		//[kg/hr]
     m_m_dot_min = ms_params.m_cycle_cutoff_frac * m_m_dot_design;		//[kg/hr]
-    m_m_dot_max = ms_params.m_cycle_max_frac * m_m_dot_design;		//[kg/hr]
+    m_m_dot_max = ms_params.m_cycle_max_frac * m_m_dot_design;		    //[kg/hr]
+    m_W_dot_htf_pump_des = m_m_dot_design*(ms_params.m_htf_pump_coef/3.6E6);    //[MWe] HTF pumping power, convert from [kW/kg/s]*[kg/hr]
 
     // Startup energy
     m_startup_energy_required = ms_params.m_startup_frac * ms_params.m_P_ref / ms_params.m_eta_ref; // [kWt-hr]
@@ -692,10 +693,12 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 	}
 } //init
 
-void C_pc_Rankine_indirect_224::get_design_parameters(double& m_dot_htf_des /*kg/hr*/, double& cp_htf_des_at_T_ave /*kJ/kg-K*/)
+void C_pc_Rankine_indirect_224::get_design_parameters(double& m_dot_htf_des /*kg/hr*/,
+    double& cp_htf_des_at_T_ave /*kJ/kg-K*/, double& W_dot_htf_pump /*MWe*/)
 {
     m_dot_htf_des = m_m_dot_design;         //[kg/hr]
     cp_htf_des_at_T_ave = m_cp_htf_design;  //[kJ/kg-K]
+    W_dot_htf_pump = m_W_dot_htf_pump_des;  //[MWe]
 }
 
 double C_pc_Rankine_indirect_224::get_cold_startup_time()

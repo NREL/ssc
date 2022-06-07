@@ -431,12 +431,27 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_OUTPUT,    SSC_NUMBER, "L_tower_piping_calc",                "Tower piping length",                                                                                                                      "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
 
         // Receiver Performance
-    { SSC_OUTPUT,    SSC_NUMBER, "eta_rec_thermal_des",                "Estimated receiver thermal efficiency at design",                                                                                         "",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
-    { SSC_OUTPUT,    SSC_NUMBER, "W_dot_rec_pump_des",                 "Estimated receiver pump power at design",                                                                                                 "MWe",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
-    { SSC_OUTPUT,    SSC_NUMBER, "vel_rec_htf_des",                    "Estimated receiver tube HTF velocity at design",                                                                                          "m/s",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
-    { SSC_OUTPUT,    SSC_NUMBER, "m_dot_htf_rec_des",                  "Estimated receiver HTF mass flow rate at design",                                                                                         "kg/s",        "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
-    { SSC_OUTPUT,    SSC_NUMBER, "q_dot_piping_loss_des",              "Estimated receiver piping loss at design",                                                                                                "MWt",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "eta_rec_thermal_des",                "Receiver estimated thermal efficiency at design",                                                                                         "",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "W_dot_rec_pump_des",                 "Receiver estimated pump power at design",                                                                                                 "MWe",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "vel_rec_htf_des",                    "Receiver estimated tube HTF velocity at design",                                                                                          "m/s",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "m_dot_htf_rec_des",                  "Receiver HTF mass flow rate at design",                                                                                                   "kg/s",        "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "q_dot_piping_loss_des",              "Receiver estimated piping loss at design",                                                                                                "MWt",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
 
+        // Power Cycle
+    { SSC_OUTPUT,    SSC_NUMBER, "m_dot_htf_cycle_des",                "PC HTF mass flow rate at design",                                                                                                         "kg/s",        "",                                  "Power Cycle",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "q_dot_cycle_des",                    "PC thermal input at design",                                                                                                              "MWt",         "",                                  "Power Cycle",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "W_dot_cycle_pump_des",               "PC HTF pump power at design",                                                                                                             "MWe",         "",                                  "Power Cycle",                              "*",                                                                "",              "" },
+
+        // TES
+    { SSC_OUTPUT,    SSC_NUMBER, "Q_tes_des",                          "TES design capacity",                                                                                                                     "MWt-hr",       "",                                 "TES Design Calc",                          "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "V_tes_htf_avail",                    "TES volume of HTF available for heat transfer",                                                                                           "m3",           "",                                 "TES Design Calc",                          "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "V_tes_htf_total",                    "TES total HTF volume",                                                                                                                    "m3",           "",                                 "TES Design Calc",                          "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "d_tank_tes",                         "TES tank diameter",                                                                                                                       "m",            "",                                 "TES Design Calc",                          "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "q_dot_loss_tes_des",                 "TES thermal loss at design",                                                                                                              "MWt",          "",                                 "TES Design Calc",                          "*",                                                                "",              "" },
+
+        // Balance of Plant
+    { SSC_OUTPUT,    SSC_NUMBER, "W_dot_bop_design",                   "BOP parasitics at design",                                                                                                                "MWe",          "",                                  "Balance of Plant",                        "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "W_dot_fixed",                        "Fixed parasitic at design",                                                                                                               "MWe",          "",                                  "Balance of Plant",                        "*",                                                                "",              "" },
 
         // Costs
     { SSC_OUTPUT,    SSC_NUMBER, "csp.pt.cost.total_land_area",        "Total land area",                                                                                                                         "acre",         "",                                  "System Costs",                             "*",                                                                "",              "" },
@@ -2116,6 +2131,7 @@ public:
         // *****************************************************
         // System design is complete, get design parameters from component models as necessary
 
+            // *************************
             // Solar field
         assign("N_hel_calc", N_hel);                //[-]
         assign("A_sf", (ssc_number_t)A_sf);         //[m2]
@@ -2133,6 +2149,7 @@ public:
         double W_dot_col_tracking_des = collector_receiver.get_tracking_power();    //[MWe]
         assign("W_dot_col_tracking_des", W_dot_col_tracking_des);       //[MWe]
 
+            // *************************
             // Tower and receiver
         assign("h_tower_calc", (ssc_number_t)THT);   //[m]
                 // External receiver
@@ -2159,6 +2176,49 @@ public:
         assign("vel_rec_htf_des", rec_vel_htf_des);             //[m/s]
         assign("m_dot_htf_rec_des", m_dot_htf_rec_des);         //[kg/s]
         assign("q_dot_piping_loss_des", q_dot_piping_loss_des); //[MWt]
+
+            // *************************
+            // Thermal Energy Storage
+        double V_tes_htf_avail_calc /*m3*/, V_tes_htf_total_calc /*m3*/,
+            d_tank_calc /*m*/, q_dot_loss_tes_des_calc /*MWt*/, dens_store_htf_at_T_ave_calc /*kg/m3*/,
+            Q_tes_des_calc /*MWt-hr*/;
+
+        storage.get_design_parameters(V_tes_htf_avail_calc, V_tes_htf_total_calc,
+            d_tank_calc, q_dot_loss_tes_des_calc, dens_store_htf_at_T_ave_calc, Q_tes_des_calc);
+
+        assign("Q_tes_des", Q_tes_des_calc);                //[MWt-hr]
+        assign("V_tes_htf_avail", V_tes_htf_avail_calc);    //[m3]
+        assign("V_tes_htf_total", V_tes_htf_total_calc);    //[m3]
+        assign("d_tank_tes", d_tank_calc);                  //[m]
+        assign("q_dot_loss_tes_des", q_dot_loss_tes_des_calc);  //[MWt]
+
+            // *************************
+            // Power Cycle
+        double m_dot_htf_pc_des;    //[kg/s]
+        double cp_htf_pc_des;       //[kJ/kg-K]
+        double W_dot_pc_pump_des;  //[MWe]
+        rankine_pc.get_design_parameters(m_dot_htf_pc_des, cp_htf_pc_des, W_dot_pc_pump_des);
+        m_dot_htf_pc_des /= 3600.0;     // convert from kg/hr to kg/s
+        assign("m_dot_htf_cycle_des", m_dot_htf_pc_des);
+        assign("q_dot_cycle_des", q_dot_pc_des);
+        assign("W_dot_cycle_pump_des", W_dot_pc_pump_des);
+
+            // *************************
+            // System
+        double W_dot_bop_design, W_dot_fixed_parasitic_design;    //[MWe]
+        csp_solver.get_design_parameters(W_dot_bop_design, W_dot_fixed_parasitic_design);
+
+                // Calculate net system *generation* capacity including HTF pumps and system parasitics
+        double plant_net_capacity_calc = W_dot_cycle_des - W_dot_col_tracking_des - W_dot_rec_pump_des -
+                                        W_dot_pc_pump_des - W_dot_bop_design - W_dot_fixed_parasitic_design;    //[MWe]
+
+        double plant_net_conv_calc = plant_net_capacity_calc / W_dot_cycle_des; //[-]
+
+        double system_capacity_calc = plant_net_capacity_calc * 1.E3;         //[kWe], convert from MWe
+
+        assign("W_dot_bop_design", W_dot_bop_design);           //[MWe]
+        assign("W_dot_fixed", W_dot_fixed_parasitic_design);    //[MWe]
+
 
             // ******* Costs ************
         double A_sf_refl = A_sf;

@@ -840,7 +840,8 @@ public:
             // Cycle
         double m_dot_htf_pc_des;    //[kg/s]
         double cp_htf_pc_des;       //[kJ/kg-K]
-        rankine_pc.get_design_parameters(m_dot_htf_pc_des, cp_htf_pc_des);
+        double W_dot_pc_pump_des;   //[MWe]
+        rankine_pc.get_design_parameters(m_dot_htf_pc_des, cp_htf_pc_des, W_dot_pc_pump_des);
         m_dot_htf_pc_des /= 3600.0;     // convert from kg/hr to kg/s
 
             // Heater
