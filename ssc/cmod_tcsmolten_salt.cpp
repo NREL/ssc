@@ -409,6 +409,9 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 
         // land area with variable name required by downstream financial model
     { SSC_OUTPUT,    SSC_NUMBER, "total_land_area",                    "Total land area",                                                                                                                         "acre",         "",                                  "System Costs",                             "*",                                                                "",              "" },
+        // System capacity required by downstream financial model
+    { SSC_OUTPUT,    SSC_NUMBER, "system_capacity",                    "System capacity",                                                                                                                         "kWe",          "",                                  "System Costs",                             "*",                                                                "",              "" },
+
 
         // Solar Field
     { SSC_OUTPUT,    SSC_NUMBER, "N_hel_calc",                         "Number of heliostats - out",                                                                                                               "",             "",                                  "Heliostat Field",                          "*",                                                                "",              "" },
@@ -427,6 +430,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_OUTPUT,    SSC_NUMBER, "L_tower_piping_calc",                "Tower piping length",                                                                                                                      "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
 
         // Receiver Performance
+    { SSC_OUTPUT,    SSC_NUMBER, "q_dot_rec_des",                      "Receiver thermal output at design",                                                                                                       "MWt",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "eta_rec_thermal_des",                "Receiver estimated thermal efficiency at design",                                                                                         "",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "W_dot_rec_pump_des",                 "Receiver estimated pump power at design",                                                                                                 "MWe",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "vel_rec_htf_des",                    "Receiver estimated tube HTF velocity at design",                                                                                          "m/s",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
@@ -440,14 +444,15 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 
         // TES
     { SSC_OUTPUT,    SSC_NUMBER, "Q_tes_des",                          "TES design capacity",                                                                                                                     "MWt-hr",       "",                                 "TES Design Calc",                          "*",                                                                "",              "" },
-    { SSC_OUTPUT,    SSC_NUMBER, "V_tes_htf_avail",                    "TES volume of HTF available for heat transfer",                                                                                           "m3",           "",                                 "TES Design Calc",                          "*",                                                                "",              "" },
-    { SSC_OUTPUT,    SSC_NUMBER, "V_tes_htf_total",                    "TES total HTF volume",                                                                                                                    "m3",           "",                                 "TES Design Calc",                          "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "V_tes_htf_avail_des",                "TES volume of HTF available for heat transfer",                                                                                           "m3",           "",                                 "TES Design Calc",                          "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "V_tes_htf_total_des",                "TES total HTF volume",                                                                                                                    "m3",           "",                                 "TES Design Calc",                          "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "d_tank_tes",                         "TES tank diameter",                                                                                                                       "m",            "",                                 "TES Design Calc",                          "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "q_dot_loss_tes_des",                 "TES thermal loss at design",                                                                                                              "MWt",          "",                                 "TES Design Calc",                          "*",                                                                "",              "" },
 
         // Balance of Plant
-    { SSC_OUTPUT,    SSC_NUMBER, "W_dot_bop_design",                   "BOP parasitics at design",                                                                                                                "MWe",          "",                                  "Balance of Plant",                        "*",                                                                "",              "" },
-    { SSC_OUTPUT,    SSC_NUMBER, "W_dot_fixed",                        "Fixed parasitic at design",                                                                                                               "MWe",          "",                                  "Balance of Plant",                        "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "nameplate",                          "Nameplate capacity",                                                                                                                      "MWe",          "",                                 "System Design Calc",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "W_dot_bop_design",                   "BOP parasitics at design",                                                                                                                "MWe",          "",                                 "Balance of Plant",                         "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "W_dot_fixed",                        "Fixed parasitic at design",                                                                                                               "MWe",          "",                                 "Balance of Plant",                         "*",                                                                "",              "" },
 
         // Costs
     { SSC_OUTPUT,    SSC_NUMBER, "csp.pt.cost.total_land_area",        "Total land area",                                                                                                                         "acre",         "",                                  "System Costs",                             "*",                                                                "",              "" },
@@ -472,7 +477,6 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_OUTPUT,    SSC_NUMBER, "total_indirect_cost",                "Total indirect cost",                                                                                                                     "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "total_installed_cost",               "Total installed cost",                                                                                                                    "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "csp.pt.cost.installed_per_capacity", "Estimated installed cost per cap",                                                                                                        "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
-    { SSC_OUTPUT,    SSC_NUMBER, "system_capacity",                    "System capacity",                                                                                                                         "kWe",          "",                                  "System Costs",                             "*",                                                                "",              "" },
 
         // Financing
     { SSC_OUTPUT,    SSC_NUMBER, "const_per_principal1",               "Principal, loan 1",                                                                                                                       "$",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
@@ -783,6 +787,7 @@ public:
         double q_dot_pc_des = W_dot_cycle_des / eta_cycle;      //[MWt]
         double Q_tes = q_dot_pc_des * tshours;                  //[MWt-hr]
         double q_dot_rec_des = q_dot_pc_des * as_number("solarm");  //[MWt]
+        double system_capacity = W_dot_cycle_des * as_double("gross_net_conversion_factor") * 1.E3;       //[kWe]
 
         // Weather reader
 		C_csp_weatherreader weather_reader;
@@ -807,10 +812,6 @@ public:
         double site_elevation = weather_reader.ms_solved_params.m_elev;     //[m]
 
         int tes_type = 1;
-
-        // Calculate system capacity instead of pass in
-        double system_capacity = as_double("P_ref") * as_double("gross_net_conversion_factor") *1.E3;       //[kWe]
-        assign("system_capacity", system_capacity);     //[kWe]
         
         // 'sf_model_type'
         // 0 = design field and tower/receiver geometry
@@ -2181,6 +2182,7 @@ public:
         double q_dot_piping_loss_des;   //[MWt]
         receiver->get_design_performance(eta_rec_thermal_des, W_dot_rec_pump_des, rec_pump_coef_des,
             rec_vel_htf_des, m_dot_htf_rec_des, q_dot_piping_loss_des);
+        assign("q_dot_rec_des", q_dot_rec_des);                 //[MWt]
         assign("eta_rec_thermal_des", eta_rec_thermal_des);     //[-]
         assign("W_dot_rec_pump_des", W_dot_rec_pump_des);       //[MWe]
         assign("vel_rec_htf_des", rec_vel_htf_des);             //[m/s]
@@ -2197,8 +2199,8 @@ public:
             d_tank_calc, q_dot_loss_tes_des_calc, dens_store_htf_at_T_ave_calc, Q_tes_des_calc);
 
         assign("Q_tes_des", Q_tes_des_calc);                //[MWt-hr]
-        assign("V_tes_htf_avail", V_tes_htf_avail_calc);    //[m3]
-        assign("V_tes_htf_total", V_tes_htf_total_calc);    //[m3]
+        assign("V_tes_htf_avail_des", V_tes_htf_avail_calc);    //[m3]
+        assign("V_tes_htf_total_des", V_tes_htf_total_calc);    //[m3]
         assign("d_tank_tes", d_tank_calc);                  //[m]
         assign("q_dot_loss_tes_des", q_dot_loss_tes_des_calc);  //[MWt]
 
@@ -2228,7 +2230,9 @@ public:
 
         assign("W_dot_bop_design", W_dot_bop_design);           //[MWe]
         assign("W_dot_fixed", W_dot_fixed_parasitic_design);    //[MWe]
-
+        // Calculate system capacity instead of pass in
+        assign("system_capacity", system_capacity);     //[kWe]
+        assign("nameplate", system_capacity * 1.E-3);    //[MWe]
 
             // ******* Costs ************
         double A_sf_refl = A_sf;
