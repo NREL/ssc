@@ -21,8 +21,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 
-#ifndef _CMOD_MERCHANTPLANT_BUILDER_H_
-#define _CMOD_MERCHANTPLANT_BUILDER_H_
+#ifndef _CMOD_ANALYSISPERIODCHANGE_BUILDER_H_
+#define _CMOD_ANALYSISPERIODCHANGE_BUILDER_H_
 
 #include "vartab.h"
 #include "sscapi.h"
@@ -31,15 +31,11 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 extern "C" {
 #endif
 
-static const char* mp_ancillary_services_doc =
-    "Checks the capacities specified in the Ancillary Services markets against the system capacity\\n\\n"
+static const char* analysisperiodchange_doc =
+    "Updates analysis dependent variables when changed\\n\\n"
     "Input: var_table with key-value pairs\\n"
     "     'analysis_period': double [-], Years in project lifetime to simulate\\n"
-    "     'mp_enable_energy_market_revenue': boolean [-], Enable energy market revenue, 0 is false\\n"
-	"     'mp_enable_ancserv1': boolean [-]\\n"
-	"     'mp_enable_ancserv2': boolean [-]\\n"
-	"     'mp_enable_ancserv3': boolean [-]\\n"
-	"     'mp_enable_ancserv4': boolean [-]\\n"
+    "     'analysis_period_old': double [-], previous value for Years in project lifetime to simulate\\n"
     "     'mp_energy_market_revenue': matrix [MW, $/MW]\\n"
     "     'mp_ancserv1_revenue': matrix [MW, $/MW]\\n"
     "     'mp_ancserv2_revenue': matrix [MW, $/MW]\\n"
@@ -50,15 +46,22 @@ static const char* mp_ancillary_services_doc =
     "     'mp_ancserv2_revenue_single': matrix [MW, $/MW]\\n"
     "     'mp_ancserv3_revenue_single': matrix [MW, $/MW]\\n"
     "     'mp_ancserv4_revenue_single': matrix [MW, $/MW]\\n"
-    "     'system_capacity': conditional double [kW], required if gen is not provided\\n"
-    "     'gen': conditional array [kW], required if system_capacity is not provided\\n"
-    "     'mp_calculate_revenue': boolean [-], 0 is false\\n\\n"
     "Output: key-value pairs added to var_table\\n"
-	"     'mp_capacity_check': boolean\\n"
-    "     'mp_capacity_check_error': string\\n"
-    "     'mp_capacity_check_warning': string\\n";
+    "     'mp_energy_market_revenue': matrix [MW, $/MW]\\n"
+    "     'mp_ancserv1_revenue': matrix [MW, $/MW]\\n"
+    "     'mp_ancserv2_revenue': matrix [MW, $/MW]\\n"
+    "     'mp_ancserv3_revenue': matrix [MW, $/MW]\\n"
+    "     'mp_ancserv4_revenue': matrix [MW, $/MW]\\n"
+    "     'mp_energy_market_revenue_single': matrix [MW, $/MW]\\n"
+    "     'mp_ancserv1_revenue_single': matrix [MW, $/MW]\\n"
+    "     'mp_ancserv2_revenue_single': matrix [MW, $/MW]\\n"
+    "     'mp_ancserv3_revenue_single': matrix [MW, $/MW]\\n"
+    "     'mp_ancserv4_revenue_single': matrix [MW, $/MW]\\n"
+    "     'analysisperiodchange_check': boolean\\n"
+    "     'analysisperiodchange_error': string\\n"
+    "     'analysisperiodchange_warning': string\\n";
 
-SSCEXPORT bool mp_ancillary_services(ssc_data_t data);
+SSCEXPORT bool analysisperiodchange(ssc_data_t data);
 
 
 #ifdef __cplusplus
