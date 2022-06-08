@@ -38,7 +38,7 @@ NAMESPACE_TEST(csp_tower, PowerTowerCmod, Default_NoFinancial)
     EXPECT_FALSE(errors);
     if (!errors) {
         EXPECT_NEAR_FRAC(power_tower.GetOutput("annual_energy"), 574526336, kErrorToleranceHi);
-        EXPECT_NEAR_FRAC(power_tower.GetOutput("land_area_base_calc"), 1847, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_tower.GetOutput("total_land_area"), 1847, kErrorToleranceHi);
         EXPECT_NEAR_FRAC(power_tower.GetOutput("capacity_factor"), 63.4, kErrorToleranceHi);
         EXPECT_NEAR_FRAC(power_tower.GetOutput("annual_W_cycle_gross"), 641513000, kErrorToleranceHi);
         EXPECT_NEAR_FRAC(power_tower.GetOutput("kwh_per_kw"), 5550.98, kErrorToleranceHi);
@@ -71,7 +71,7 @@ NAMESPACE_TEST(csp_tower, PowerTowerCmod, SlidingPressure_NoFinancial)
     if (!errors)
     {
         EXPECT_NEAR_FRAC(power_tower.GetOutput("annual_energy"), 580437568, kErrorToleranceHi);
-        EXPECT_NEAR_FRAC(power_tower.GetOutput("land_area_base_calc"), 1847, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_tower.GetOutput("total_land_area"), 1847, kErrorToleranceHi);
         EXPECT_NEAR_FRAC(power_tower.GetOutput("capacity_factor"), 64.0, kErrorToleranceHi);
         EXPECT_NEAR_FRAC(power_tower.GetOutput("annual_W_cycle_gross"), 648058000, kErrorToleranceHi);
         EXPECT_NEAR_FRAC(power_tower.GetOutput("kwh_per_kw"), 5608.09, kErrorToleranceHi);
@@ -96,7 +96,7 @@ NAMESPACE_TEST(csp_tower, PowerTowerCmod, FlowPattern_NoFinancial)
     if (!errors)
     {
         EXPECT_NEAR_FRAC(power_tower.GetOutput("annual_energy"), 521952672, kErrorToleranceHi);
-        EXPECT_NEAR_FRAC(power_tower.GetOutput("land_area_base_calc"), 1847, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_tower.GetOutput("total_land_area"), 1847, kErrorToleranceHi);
         EXPECT_NEAR_FRAC(power_tower.GetOutput("capacity_factor"), 57.6, kErrorToleranceHi);
         EXPECT_NEAR_FRAC(power_tower.GetOutput("annual_W_cycle_gross"), 645601000, kErrorToleranceHi);
         EXPECT_NEAR_FRAC(power_tower.GetOutput("kwh_per_kw"), 5043.02, kErrorToleranceHi);
