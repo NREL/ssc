@@ -458,7 +458,8 @@ public:
 		Rsh = (double)(_Rsh);
 		Adj = (double)(_Adj);
 
-		int err = sanity();
+        int err = 0;
+		err = sanity();
 
 		if ( err == 0 && !ok ) return -99;
 		else return err;
@@ -471,7 +472,8 @@ public:
 	{
 		guess();
 
-		int err = solve<Real>( max_iter, tol, nif );
+        int err = 0;
+        err = solve<Real>( max_iter, tol, nif );
 
 
 		if ( err < 0 && (Type == Amorphous || Type == CdTe) )

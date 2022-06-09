@@ -94,14 +94,15 @@ public:
             Tref = as_double("Tref");
 
         module6par m(tech_id, Vmp, Imp, Voc, Isc, bVoc, aIsc, gPmp, nser, Tref + 273.15);
-        int err = m.solve_with_sanity_and_heuristics<double>(300, 1e-7);
+        int err = 0;
+        err = m.solve_with_sanity_and_heuristics<double>(300, 1e-7);
 
-        int err_keys[10] = { -1, -2, -3, -4, -5, -6, -7, -33, -44, -55 };
-        int x;
-        for (int i = 0; i < 10; i++)
+        int err_keys[11] = { -1, -2, -3, -4, -5, -6, -7, -33, -44, -55, -99 };
+        int x = 0;
+        for (int i = 0; i < 11; i++)
             if (err_keys[i] == err)
                 x = i;
-        std::string err_values[10] = { "a < 0.05 || a > 15.0",
+        std::string err_values[11] = { "a < 0.05 || a > 15.0",
             "Il < 0.5 || Il > 20.0" ,
             "Io < 1e-16 || Io > 1e-7",
             "Rs < 0.001 || Rs > 75.0",
@@ -110,7 +111,8 @@ public:
             "Imp >= Isc",
             "abs((P - Pmp) / Pmp) > 0.015",
             "abs(I) > 0.015 * Imp",
-            "max_slope(0.015 * Voc 0.98 * Voc) > 0" };
+            "max_slope(0.015 * Voc 0.98 * Voc) > 0",
+            "solver failed with unknown error"};
 		if (err < 0)
 			throw general_error("Could not solve, sanity check failed (" + std::to_string(err) + "): " + err_values[x] );
 
@@ -119,7 +121,7 @@ public:
 		assign("Io", var_data( (ssc_number_t) m.Io));
 		assign("Rs", var_data( (ssc_number_t) m.Rs));
 		assign("Rsh", var_data( (ssc_number_t) m.Rsh));
-		assign("Adj", var_data( (ssc_number_t) m.Adj));
+		assign("Adj", var_data( (ssc_number_t) m.Adj)); 
 	}
 };
 
