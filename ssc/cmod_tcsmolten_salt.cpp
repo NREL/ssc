@@ -437,6 +437,9 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_OUTPUT,    SSC_NUMBER, "m_dot_htf_rec_des",                  "Receiver HTF mass flow rate at design",                                                                                                   "kg/s",        "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "q_dot_piping_loss_des",              "Receiver estimated piping loss at design",                                                                                                "MWt",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
 
+        // Heater
+    { SSC_OUTPUT,    SSC_NUMBER, "q_dot_heater_des",                   "Heater design thermal power",                                                                                                             "MWt",         "",                                  "Power Cycle",                              "*",                                                                "",              "" },
+
         // Power Cycle
     { SSC_OUTPUT,    SSC_NUMBER, "m_dot_htf_cycle_des",                "PC HTF mass flow rate at design",                                                                                                         "kg/s",        "",                                  "Power Cycle",                              "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "q_dot_cycle_des",                    "PC thermal input at design",                                                                                                              "MWt",         "",                                  "Power Cycle",                              "*",                                                                "",              "" },
@@ -448,6 +451,8 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_OUTPUT,    SSC_NUMBER, "V_tes_htf_total_des",                "TES total HTF volume",                                                                                                                    "m3",           "",                                 "TES Design Calc",                          "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "d_tank_tes",                         "TES tank diameter",                                                                                                                       "m",            "",                                 "TES Design Calc",                          "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "q_dot_loss_tes_des",                 "TES thermal loss at design",                                                                                                              "MWt",          "",                                 "TES Design Calc",                          "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "tshours_rec",                        "TES duration at receiver design output",                                                                                                  "hr",           "",                                 "TES Design Calc",                          "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "tshours_heater",                     "TES duration at heater design output",                                                                                                    "hr",           "",                                 "TES Design Calc",                          "*",                                                                "",              "" },
 
         // Balance of Plant
     { SSC_OUTPUT,    SSC_NUMBER, "nameplate",                          "Nameplate capacity",                                                                                                                      "MWe",          "",                                 "System Design Calc",                       "*",                                                                "",              "" },
@@ -1716,7 +1721,7 @@ public:
         double heater_spec_cost = 0.0;
         if (is_parallel_heater) {
 
-            if (!is_dispatch) {
+            if (!is_dispatch && sim_type == 1) {
                 if (!as_boolean("allow_heater_no_dispatch_opt")) {
                     throw exec_error("tcsmolten_salt", "When the molten salt power tower case has an electric HTF charger, dispatch optimization must be selected");
                 }
@@ -2191,6 +2196,10 @@ public:
 
             // *************************
             // Thermal Energy Storage
+        assign("q_dot_heater_des", q_dot_heater_des);       //[MWt]
+
+            // *************************
+            // Thermal Energy Storage
         double V_tes_htf_avail_calc /*m3*/, V_tes_htf_total_calc /*m3*/,
             d_tank_calc /*m*/, q_dot_loss_tes_des_calc /*MWt*/, dens_store_htf_at_T_ave_calc /*kg/m3*/,
             Q_tes_des_calc /*MWt-hr*/;
@@ -2201,8 +2210,16 @@ public:
         assign("Q_tes_des", Q_tes_des_calc);                //[MWt-hr]
         assign("V_tes_htf_avail_des", V_tes_htf_avail_calc);    //[m3]
         assign("V_tes_htf_total_des", V_tes_htf_total_calc);    //[m3]
-        assign("d_tank_tes", d_tank_calc);                  //[m]
+        assign("d_tank_tes", d_tank_calc);                      //[m]
         assign("q_dot_loss_tes_des", q_dot_loss_tes_des_calc);  //[MWt]
+        assign("tshours_rec", Q_tes_des_calc / q_dot_rec_des);  //[hr]
+
+        double tshours_heater = 0.0;
+        if (q_dot_heater_des > 0.0) {
+            tshours_heater = Q_tes_des_calc / q_dot_heater_des;     //[hr]
+        }
+
+        assign("tshours_heater", tshours_heater);
 
             // *************************
             // Power Cycle
