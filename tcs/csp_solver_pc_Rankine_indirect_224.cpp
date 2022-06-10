@@ -853,7 +853,7 @@ double C_pc_Rankine_indirect_224::get_efficiency_at_TPH(double T_degC, double P_
 
 		double Twet = calc_twet(T_degC, relhum_pct, P_atm*1.01325e6);
 
-		RankineCycle(
+		RankineCycle_V2(
 				//inputs
 				T_degC+273.15, Twet+273.15, P_atm*101325., ms_params.m_T_htf_hot_ref, m_m_dot_design,
 				2, 0., ms_params.m_P_boil, 1., m_F_wcMin, m_F_wcMax,T_cold,dT_cw_design,
@@ -917,7 +917,7 @@ double C_pc_Rankine_indirect_224::get_efficiency_at_load(double load_frac, doubl
 		double P_cycle, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_makeup, W_cool_par, f_hrsys, P_cond, T_cond_out,T_cold;
 		T_cond_out=T_cold=std::numeric_limits<double>::quiet_NaN();
 
-        RankineCycle(
+        RankineCycle_V2(
 			    //inputs
 			    ms_params.m_T_amb_des+273.15, Twet+273.15, 101325., ms_params.m_T_htf_hot_ref, mdot, 2,
                 0., ms_params.m_P_boil, 1., m_F_wcMin, m_F_wcMax, T_cold,dT_cw_design,
@@ -1146,7 +1146,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 		if( !ms_params.m_is_user_defined_pc )
 		{
 
-			RankineCycle(T_db, T_wb, P_amb, T_htf_hot, m_dot_htf, mode, demand_var, ms_params.m_P_boil,
+			RankineCycle_V2(T_db, T_wb, P_amb, T_htf_hot, m_dot_htf, mode, demand_var, ms_params.m_P_boil,
 				F_wc, m_F_wcMin, m_F_wcMax, T_cold_prev,dT_cw_design,
 				P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_water_cooling, W_cool_par, f_hrsys, P_cond, T_cond_out);
 
@@ -1968,6 +1968,7 @@ void C_pc_Rankine_indirect_224::RankineCycle_V2(double T_db, double T_wb,
                 CSP::ACC(ms_params.m_tech_type, P_cond_min, T_amb_des, m_Psat_ref, ms_params.m_n_pl_inc, T_ITD_des, P_cond_ratio, (P_ref * 1000.),
                     // 22-06-09 use design efficiency instead of map efficiency
                     ms_params.m_eta_ref, T_db, P_amb, q_reject, m_dot_air, W_cool_par, P_cond_calc, T_cond_calc, f_hrsys);
+                m_dot_makeup = 0.0;
                 break;
             case 3:
                 CSP::HybridHR(/*fcall, */ms_params.m_tech_type, P_cond_min, ms_params.m_n_pl_inc, F_wc, F_wcmax, F_wcmin, T_ITD_des, T_approach, dT_cw_ref, P_cond_ratio, (P_ref * 1000.),
