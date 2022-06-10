@@ -788,7 +788,7 @@ public:
 			CSP::evap_tower( m_tech_type, m_P_cond_min, m_n_pl_inc, m_dT_cw_ref, m_T_approach, m_P_ref*1000.0, m_eta_adj, T_db, T_wb, P_amb, q_reject_est, m_dot_makeup, W_cool_par, P_cond, T_cond, f_hrsys );
 			break;
 		case 2:
-			CSP::ACC( m_tech_type, m_P_cond_min, m_n_pl_inc, m_T_ITD_des, m_P_cond_ratio, m_P_ref*1000.0, m_eta_adj, T_db, P_amb, q_reject_est, m_dot_air, W_cool_par, P_cond, T_cond, f_hrsys );
+			CSP::ACC( m_tech_type, m_P_cond_min, m_T_amb_des, m_Psat_ref, m_n_pl_inc, m_T_ITD_des, m_P_cond_ratio, m_P_ref*1000.0, m_eta_adj, T_db, P_amb, q_reject_est, m_dot_air, W_cool_par, P_cond, T_cond, f_hrsys );
 			m_dot_makeup = 0.0;
 			break;
 		case 3:
@@ -934,7 +934,7 @@ public:
 					CSP::evap_tower( m_tech_type, m_P_cond_min, m_n_pl_inc, m_dT_cw_ref, m_T_approach, m_P_ref*1000.0, m_eta_adj, T_db, T_wb, P_amb, q_reject, m_dot_makeup, W_cool_par, P_cond_guess, T_cond, f_hrsys );
 					break;
 				case 2:
-					CSP::ACC( m_tech_type, m_P_cond_min, m_n_pl_inc, m_T_ITD_des, m_P_cond_ratio, m_P_ref*1000.0, m_eta_adj, T_db, P_amb, q_reject, m_dot_air, W_cool_par, P_cond_guess, T_cond, f_hrsys );
+					CSP::ACC( m_tech_type, m_P_cond_min, m_T_amb_des, m_Psat_ref, m_n_pl_inc, m_T_ITD_des, m_P_cond_ratio, m_P_ref*1000.0, m_eta_adj, T_db, P_amb, q_reject, m_dot_air, W_cool_par, P_cond_guess, T_cond, f_hrsys );
 					break;
 				case 3:
 					CSP::HybridHR( m_tech_type, m_P_cond_min, m_n_pl_inc, F_wc_tou, m_F_wcmax, m_F_wcmin, m_T_ITD_des, m_T_approach, m_dT_cw_ref, m_P_cond_ratio, m_P_ref*1000.0, m_eta_adj, T_db, T_wb,
