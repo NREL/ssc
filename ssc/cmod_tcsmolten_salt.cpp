@@ -445,6 +445,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_OUTPUT,    SSC_NUMBER, "m_dot_htf_cycle_des",                "PC HTF mass flow rate at design",                                                                                                         "kg/s",        "",                                  "Power Cycle",                              "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "q_dot_cycle_des",                    "PC thermal input at design",                                                                                                              "MWt",         "",                                  "Power Cycle",                              "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "W_dot_cycle_pump_des",               "PC HTF pump power at design",                                                                                                             "MWe",         "",                                  "Power Cycle",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "W_dot_cycle_cooling_des",            "PC cooling power at design",                                                                                                              "MWe",         "",                                  "Power Cycle",                              "*",                                                                "",              "" },
 
         // TES
     { SSC_OUTPUT,    SSC_NUMBER, "Q_tes_des",                          "TES design capacity",                                                                                                                     "MWt-hr",       "",                                 "TES Design Calc",                          "*",                                                                "",              "" },
@@ -2246,12 +2247,14 @@ public:
             // Power Cycle
         double m_dot_htf_pc_des;    //[kg/s]
         double cp_htf_pc_des;       //[kJ/kg-K]
-        double W_dot_pc_pump_des;  //[MWe]
-        rankine_pc.get_design_parameters(m_dot_htf_pc_des, cp_htf_pc_des, W_dot_pc_pump_des);
+        double W_dot_pc_pump_des;   //[MWe]
+        double W_dot_pc_cooling_des;   //[MWe]
+        rankine_pc.get_design_parameters(m_dot_htf_pc_des, cp_htf_pc_des, W_dot_pc_pump_des, W_dot_pc_cooling_des);
         m_dot_htf_pc_des /= 3600.0;     // convert from kg/hr to kg/s
         assign("m_dot_htf_cycle_des", m_dot_htf_pc_des);
         assign("q_dot_cycle_des", q_dot_pc_des);
         assign("W_dot_cycle_pump_des", W_dot_pc_pump_des);
+        assign("W_dot_cycle_cooling_des", W_dot_pc_cooling_des);
 
             // *************************
             // System
@@ -2260,7 +2263,7 @@ public:
 
                 // Calculate net system *generation* capacity including HTF pumps and system parasitics
         double plant_net_capacity_calc = W_dot_cycle_des - W_dot_col_tracking_des - W_dot_rec_pump_des -
-                                        W_dot_pc_pump_des - W_dot_bop_design - W_dot_fixed_parasitic_design;    //[MWe]
+                                        W_dot_pc_pump_des - W_dot_pc_cooling_des - W_dot_bop_design - W_dot_fixed_parasitic_design;    //[MWe]
 
         double plant_net_conv_calc = plant_net_capacity_calc / W_dot_cycle_des; //[-]
 

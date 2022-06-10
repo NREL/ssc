@@ -74,7 +74,7 @@ C_pc_Rankine_indirect_224::C_pc_Rankine_indirect_224()
     m_operating_mode_calc = m_operating_mode_prev;
 
 	m_F_wcMax = m_F_wcMin = m_delta_h_steam = m_startup_energy_required = m_eta_adj =
-		m_m_dot_design = m_q_dot_design = m_cp_htf_design = m_W_dot_htf_pump_des =
+		m_m_dot_design = m_q_dot_design = m_cp_htf_design = m_W_dot_htf_pump_des = m_W_dot_cooling_des =
 		m_startup_time_remain_prev = m_startup_time_remain_calc =
 		m_startup_energy_remain_prev = m_startup_energy_remain_calc = std::numeric_limits<double>::quiet_NaN();
 
@@ -600,30 +600,12 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 	}
     // ***********************************************************************
 
-	
-    // ***********************************************************************
-    // ***********************************************************************
-    // Finalize outputs
-
-        // Set call tracker - used when this is called through TCS shell (still used for MSLF)
-	m_ncall = -1;
-
-        // Set solved_params values
-	solved_params.m_W_dot_des = ms_params.m_P_ref / 1000.0;		//[MW], convert from kW
-	solved_params.m_eta_des = ms_params.m_eta_ref;				//[-]
-	solved_params.m_q_dot_des = m_q_dot_design;					//[MWt]
-	solved_params.m_q_startup = m_startup_energy_required/1.E3;	//[MWt-hr]
-	solved_params.m_max_frac = ms_params.m_cycle_max_frac;		//[-]
-	solved_params.m_cutoff_frac = ms_params.m_cycle_cutoff_frac;	//[-]
-	solved_params.m_sb_frac = ms_params.m_q_sby_frac;				//[-]
-	solved_params.m_T_htf_hot_ref = ms_params.m_T_htf_hot_ref;			//[C]
-	solved_params.m_m_dot_design = m_m_dot_design;		//[kg/hr]
-	solved_params.m_m_dot_min = m_m_dot_min;			//[kg/hr]
-	solved_params.m_m_dot_max = m_m_dot_max;			//[kg/hr]
-
     // ***********************************************************************
     // ***********************************************************************
     // Initialize cold storage if selected
+
+    double T_cold_rad_cooling_des = std::numeric_limits<double>::quiet_NaN();
+    double dT_cw_rad_cooling_des = std::numeric_limits<double>::quiet_NaN();
 
 	// Cold storage and radiator setup ARD
 	if (ms_params.m_CT==4)											//only if radiative cooling chosen.
@@ -654,6 +636,10 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 			//Initialize cold storage
             C_csp_cold_tes::S_csp_cold_tes_init_inputs init_inputs;
 			mc_two_tank_ctes.init(init_inputs);
+
+            T_cold_rad_cooling_des = mc_two_tank_ctes.ms_params.m_T_field_in_des;       //[C]
+            dT_cw_rad_cooling_des = mc_two_tank_ctes.ms_params.dT_cw_rad;               //[C]
+
 		}
 		//If three-node stratified cold storage
 		if (mc_two_tank_ctes.ms_params.m_ctes_type >2)
@@ -679,6 +665,8 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
             C_csp_tes::S_csp_tes_init_inputs tes_init_inputs;
 			mc_stratified_ctes.init(tes_init_inputs);
 
+            T_cold_rad_cooling_des = mc_stratified_ctes.ms_params.m_T_field_in_des;     //[C]
+            dT_cw_rad_cooling_des = mc_stratified_ctes.ms_params.dT_cw_rad;             //[C]
 		}
 		//Radiator
 		rad->L_c = rad->n*rad->W;									//Characteristic length for forced convection, typically equal to n*W unless wind direction is known to determine flow path : Lc[m]
@@ -688,17 +676,58 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 		//Initialize radiator
 		mc_radiator.init();
 
-
-
 	}
+
+
+    // Get cycle performance at design point
+    double T_wb_des = ms_params.m_T_amb_des - 10.0;     //[C]
+    double P_amb_des = 101000.0;                        //[Pa]
+    int mode_des = 2;                                   //[-]
+    double demand_var_des = 0.0;                        //[MWe]
+    double P_boil_des = ms_params.m_P_boil;             //[bar]
+    double F_wc_des = m_F_wcMax;
+
+    double P_cycle_des_calc, eta_des_calc, T_htf_cold_des_calc, m_dot_demand_des_calc, m_dot_htf_ref_des_calc,
+        m_dot_makeup_des_calc, f_hrsys_des_calc, P_cond_des_calc, T_cond_out_des_calc;
+
+    RankineCycle(ms_params.m_T_amb_des + 273.15, T_wb_des + 273.15,
+        P_amb_des, ms_params.m_T_htf_hot_ref, m_m_dot_design, mode_des,
+        demand_var_des, P_boil_des, F_wc_des, m_F_wcMin, m_F_wcMax, T_cold_rad_cooling_des, dT_cw_rad_cooling_des,
+        P_cycle_des_calc, eta_des_calc, T_htf_cold_des_calc, m_dot_demand_des_calc, m_dot_htf_ref_des_calc,
+        m_dot_makeup_des_calc, m_W_dot_cooling_des, f_hrsys_des_calc, P_cond_des_calc, T_cond_out_des_calc);
+
+
+    // ***********************************************************************
+    // ***********************************************************************
+    // Finalize outputs
+
+        // Set call tracker - used when this is called through TCS shell (still used for MSLF)
+    m_ncall = -1;
+
+    // Set solved_params values
+    solved_params.m_W_dot_des = ms_params.m_P_ref / 1000.0;		//[MW], convert from kW
+    solved_params.m_eta_des = ms_params.m_eta_ref;				//[-]
+    solved_params.m_q_dot_des = m_q_dot_design;					//[MWt]
+    solved_params.m_q_startup = m_startup_energy_required / 1.E3;	//[MWt-hr]
+    solved_params.m_max_frac = ms_params.m_cycle_max_frac;		//[-]
+    solved_params.m_cutoff_frac = ms_params.m_cycle_cutoff_frac;	//[-]
+    solved_params.m_sb_frac = ms_params.m_q_sby_frac;				//[-]
+    solved_params.m_T_htf_hot_ref = ms_params.m_T_htf_hot_ref;			//[C]
+    solved_params.m_m_dot_design = m_m_dot_design;		//[kg/hr]
+    solved_params.m_m_dot_min = m_m_dot_min;			//[kg/hr]
+    solved_params.m_m_dot_max = m_m_dot_max;			//[kg/hr]
+
+
 } //init
 
 void C_pc_Rankine_indirect_224::get_design_parameters(double& m_dot_htf_des /*kg/hr*/,
-    double& cp_htf_des_at_T_ave /*kJ/kg-K*/, double& W_dot_htf_pump /*MWe*/)
+    double& cp_htf_des_at_T_ave /*kJ/kg-K*/,
+    double& W_dot_htf_pump /*MWe*/, double& W_dot_cooling /*MWe*/)
 {
     m_dot_htf_des = m_m_dot_design;         //[kg/hr]
     cp_htf_des_at_T_ave = m_cp_htf_design;  //[kJ/kg-K]
     W_dot_htf_pump = m_W_dot_htf_pump_des;  //[MWe]
+    W_dot_cooling = m_W_dot_cooling_des;    //[MWe]
 }
 
 double C_pc_Rankine_indirect_224::get_cold_startup_time()
@@ -1656,7 +1685,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 
 	mc_reported_outputs.value(E_M_DOT_HTF_REF, m_dot_htf_ref);	//[kg/hr]
 	out_solver.m_W_cool_par = W_cool_par+W_radpump;				//[MWe] Cooling system parasitic load
-    mc_reported_outputs.value(E_W_DOT_COOLER);              //[MWe] Cooling parasitic
+    mc_reported_outputs.value(E_W_DOT_COOLER, out_solver.m_W_cool_par);        //[MWe] Cooling parasitic
 
 	double q_dot_startup = 0.0;
 	if( q_startup > 0.0 )

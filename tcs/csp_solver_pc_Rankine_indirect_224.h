@@ -54,6 +54,7 @@ private:
 	double m_q_dot_design;				//[MWt]
 	double m_cp_htf_design;				//[kJ/kg-K]
     double m_W_dot_htf_pump_des;          //[MWe]
+    double m_W_dot_cooling_des;         //[MWe]
 
 	C_csp_power_cycle::E_csp_power_cycle_modes m_operating_mode_prev;
 	double m_startup_time_remain_prev;		//[hr]
@@ -85,9 +86,9 @@ private:
 	//	/*double& fcall, */ double& P_cycle, double& eta, double& T_htf_cold, double& m_dot_demand, double& m_dot_htf_ref,
 	//	double& m_dot_makeup, double& W_cool_par, double& f_hrsys, double& P_cond);
 
-    void RankineCycle(double T_db, double T_wb,
-		double P_amb, double T_htf_hot, double m_dot_htf, int mode,
-		double demand_var, double P_boil, double F_wc, double F_wcmin, double F_wcmax, double T_cold, double dT_cw,
+    void RankineCycle(double T_db /*K*/, double T_wb /*K*/,
+		double P_amb /*Pa*/, double T_htf_hot /*C*/, double m_dot_htf /*kg/hr*/, int mode /*-*/,
+		double demand_var /*MWe*/, double P_boil /*bar*/, double F_wc /*-*/, double F_wcmin /*-*/, double F_wcmax /*-*/, double T_cold /*C*/, double dT_cw /*C*/,
         //outputs
         double& P_cycle, double& eta, double& T_htf_cold, double& m_dot_demand, double& m_dot_htf_ref,
 		double& m_dot_makeup, double& W_cool_par, double& f_hrsys, double& P_cond, double &T_cond_out);
@@ -255,7 +256,8 @@ public:
 	virtual void assign(int index, double *p_reporting_ts_array, size_t n_reporting_ts_array);
 
     void get_design_parameters(double& m_dot_htf_des /*kg/hr*/,
-        double& cp_htf_des_at_T_ave /*kJ/kg-K*/, double& W_dot_htf_pump /*MWe*/);
+        double& cp_htf_des_at_T_ave /*kJ/kg-K*/,
+        double& W_dot_htf_pump /*MWe*/, double& W_dot_cooling /*MWe*/);
 };
 
 
