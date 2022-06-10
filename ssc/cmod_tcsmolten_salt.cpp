@@ -190,7 +190,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,     SSC_NUMBER, "D_rec",                              "The overall outer diameter of the receiver - in",                                                                                         "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_INPUT,     SSC_NUMBER, "h_tower",                            "Tower height - in",                                                                                                                       "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_INPUT,     SSC_NUMBER, "cav_rec_height",                     "Cavity receiver height - in",                                                                                                             "m",            "",                                  "Tower and Receiver",                       "receiver_type=1",                                                  "",              "" },
-    { SSC_INPUT,     SSC_NUMBER, "cav_rec_width",                      "Cavity receiver width - in",                                                                                                              "m",            "",                                  "Tower and Receiver",                       "receiver_type=1",                                                  "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "cav_rec_width",                      "Cavity receiver aperture width - in",                                                                                                     "m",            "",                                  "Tower and Receiver",                       "receiver_type=1",                                                  "",              "" },
 
     // Parallel heater parameters
     { SSC_INPUT,     SSC_NUMBER, "heater_mult",                        "Heater multiple relative to design cycle thermal power",                                                                                  "-",            "",                                  "Parallel Heater",                          "is_parallel_htr=1",                                                "",              "" },
@@ -424,8 +424,14 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_OUTPUT,    SSC_NUMBER, "rec_height_calc",                    "Receiver height - out",                                                                                                                    "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "D_rec_calc",                         "The overall outer diameter of the receiver - out",                                                                                         "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "h_tower_calc",                       "Tower height - out",                                                                                                                       "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "ext_rec_area",                       "External receiver area - out",                                                                                                             "m2",           "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "ext_rec_aspect",                     "External receiver aspect ratio - out",                                                                                                     "",             "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "cav_rec_height_calc",                "Cavity receiver height - out",                                                                                                             "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
-    { SSC_OUTPUT,    SSC_NUMBER, "cav_rec_width_calc",                 "Cavity receiver width - out",                                                                                                              "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "cav_rec_width_calc",                 "Cavity receiver aperture width - out",                                                                                                     "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "cav_rec_area",                       "Cavity receiver area",                                                                                                                     "m2",           "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "cav_panel_width",                    "Cavity panel width",                                                                                                                       "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },        
+    { SSC_OUTPUT,    SSC_NUMBER, "cav_radius",                         "Cavity radius",                                                                                                                            "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },        
+    { SSC_OUTPUT,    SSC_NUMBER, "A_rec",                              "Receiver area - planar",                                                                                                                   "m2",           "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "L_tower_piping_calc",                "Tower piping length",                                                                                                                      "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
 
         // Receiver Performance
@@ -460,7 +466,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_OUTPUT,    SSC_NUMBER, "W_dot_fixed",                        "Fixed parasitic at design",                                                                                                               "MWe",          "",                                 "Balance of Plant",                         "*",                                                                "",              "" },
 
         // Costs
-    { SSC_OUTPUT,    SSC_NUMBER, "csp.pt.cost.total_land_area",        "Total land area",                                                                                                                         "acre",         "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "h_rec_input_to_cost_model",          "Receiver height for cost model selected from receiver type",                                                                              "m",            "",                                  "System Costs",                             "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "csp.pt.cost.site_improvements",      "Site improvement cost",                                                                                                                   "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "csp.pt.cost.heliostats",             "Heliostat cost",                                                                                                                          "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "csp.pt.cost.tower",                  "Tower cost",                                                                                                                              "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
@@ -1034,18 +1040,20 @@ public:
                 }
 
                 // Check determined field type against user-specified receiver type
-                if (is_cavity_field && rec_type == 0) {
-                    throw exec_error("mspt compute module", "\nExternal receiver specified, but cavity field detected. Try one of the following options:\n"
-                        "1) Run field layout macro on Heliostat Field page\n"
-                        "2) Select option for simulation to layout field and tower/receiver design\n"
-                        "3) Enter new heliostat positions\n");
-                }
+                if (sim_type == 1) {
+                    if (is_cavity_field && rec_type == 0) {
+                        throw exec_error("mspt compute module", "\nExternal receiver specified, but cavity field detected. Try one of the following options:\n"
+                            "1) Run field layout macro on Heliostat Field page\n"
+                            "2) Select option for simulation to layout field and tower/receiver design\n"
+                            "3) Enter new heliostat positions\n");
+                    }
 
-                if (!is_cavity_field && rec_type == 1) {
-                    throw exec_error("mspt compute module", "\nCavity receiver specified, but surround field detected. Try one of the following options:\n"
-                        "1) Run field layout macro on Heliostat Field page\n"
-                        "2) Select option for simulation to layout field and tower/receiver design\n"
-                        "3) Enter new heliostat positions\n");
+                    if (!is_cavity_field && rec_type == 1) {
+                        throw exec_error("mspt compute module", "\nCavity receiver specified, but surround field detected. Try one of the following options:\n"
+                            "1) Run field layout macro on Heliostat Field page\n"
+                            "2) Select option for simulation to layout field and tower/receiver design\n"
+                            "3) Enter new heliostat positions\n");
+                    }
                 }
 
                 // 'calc_fluxmaps' defaults to false in solarpilot cmod, so overwrite here if we want flux maps
@@ -1456,11 +1464,18 @@ public:
         //// *********************************************************
 
         double A_rec = std::numeric_limits<double>::quiet_NaN();
+        double ext_rec_area = std::numeric_limits<double>::quiet_NaN();
+        double ext_rec_aspect = std::numeric_limits<double>::quiet_NaN();
+        double cav_rec_area = std::numeric_limits<double>::quiet_NaN();
+        double cav_panel_width = std::numeric_limits<double>::quiet_NaN();
+        double cav_radius = std::numeric_limits<double>::quiet_NaN();
 
         // Calculate external receiver area, height, diameter here
         // Calculate cavity receiver area and height below. Don't set diameter or aspect ratio for cavity receiver
         if(rec_type == 0){
-            A_rec = rec_height * D_rec * 3.1415926;             //[m2]
+            A_rec = rec_height * D_rec * 3.1415926;         //[m2]
+            ext_rec_area = A_rec;                           //[m2]
+            ext_rec_aspect = rec_height / D_rec;            //[-]
         }
 
         std::unique_ptr<C_pt_receiver> receiver;
@@ -1525,7 +1540,9 @@ public:
                                             rec_span, nPanels,
                                             theta0, panelspan, panelwidth, A_rec, radius, offset );
 
-            //H_rec = receiverHeight;     //[m]
+            cav_rec_area = A_rec;           //[m2]
+            cav_panel_width = panelwidth;   //[m]
+            cav_radius = radius;            //[m]
         }
         else if (rec_type == 0){
 
@@ -2169,11 +2186,18 @@ public:
             // Tower and receiver
         assign("h_tower_calc", (ssc_number_t)THT);   //[m]
                 // External receiver
-        assign("rec_height_calc", (ssc_number_t)rec_height);     //[m]
-        assign("D_rec_calc", (ssc_number_t)D_rec);   //[m]
+        assign("rec_height_calc", (ssc_number_t)rec_height);    //[m]
+        assign("D_rec_calc", (ssc_number_t)D_rec);              //[m]
+        assign("ext_rec_area", (ssc_number_t)ext_rec_area);     //[m2]
+        assign("ext_rec_aspect", (ssc_number_t)ext_rec_aspect); //[-]
                 // Cavity receiver
         assign("cav_rec_height_calc", (ssc_number_t)cav_rec_height);
         assign("cav_rec_width_calc", (ssc_number_t)cav_rec_width);
+        assign("cav_rec_area", (ssc_number_t)cav_rec_area);
+        assign("cav_panel_width", (ssc_number_t)cav_panel_width);
+        assign("cav_radius", (ssc_number_t)cav_radius);
+                // Both
+        assign("A_rec", A_rec);     //[m2]
 
         double L_tower_piping = std::numeric_limits<double>::quiet_NaN();
         receiver->get_design_geometry(L_tower_piping);
@@ -2323,7 +2347,6 @@ public:
 
         //land area
         double total_land_area = total_land_area_before_rad_cooling + radfield_area / 4046.86 /*acres/m^2*/;
-        assign("csp.pt.cost.total_land_area", (ssc_number_t)total_land_area);
         assign("total_land_area", (ssc_number_t)total_land_area);
 
         double plant_net_capacity = system_capacity / 1000.0;         //[MWe], convert from kWe
@@ -2432,6 +2455,7 @@ public:
         // 1.5.2016 twn: financial model needs an updated total_installed_cost, remaining are for reporting only
         assign("total_installed_cost", (ssc_number_t)total_installed_cost);
 
+        assign("h_rec_input_to_cost_model", (ssc_number_t)h_rec_cost_in);       //[m]
         assign("csp.pt.cost.site_improvements", (ssc_number_t)site_improvement_cost);
         assign("csp.pt.cost.heliostats", (ssc_number_t)heliostat_cost);
         assign("csp.pt.cost.tower", (ssc_number_t)tower_cost);
