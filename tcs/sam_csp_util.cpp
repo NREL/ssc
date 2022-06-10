@@ -769,7 +769,7 @@ void CSP::ACC(int tech_type, double P_cond_min, int n_pl_inc, double T_ITD_des, 
 
         return P;
     };
-  
+
     double c_air = 1005.0;				          // [J/kg-K] Specific heat of air, relatively constant over dry bulb range
     const double T_db_des_C = 42.8;               // [C]
     //const double T_hot_diff = 3.0;                // [C] Temperature difference between saturation steam and condenser outlet air temp -> OLD VALUE

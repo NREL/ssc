@@ -47,6 +47,9 @@ private:
 	double m_delta_h_steam;
 	double m_startup_energy_required;
 	double m_eta_adj;
+    double m_Psat_ref;      //[Pa]
+    double m_P_ND_ref;      //[-]
+    double m_Q_ND_ref;      //[-]
 
 	double m_m_dot_design;				//[kg/hr]
 	double m_m_dot_max;					//[kg/hr]
@@ -92,6 +95,14 @@ private:
         //outputs
         double& P_cycle, double& eta, double& T_htf_cold, double& m_dot_demand, double& m_dot_htf_ref,
 		double& m_dot_makeup, double& W_cool_par, double& f_hrsys, double& P_cond, double &T_cond_out);
+
+    void RankineCycle_V2(double T_db /*K*/, double T_wb /*K*/,
+        double P_amb /*Pa*/, double T_htf_hot /*C*/, double m_dot_htf /*kg/hr*/, int mode /*-*/,
+        double demand_var /*MWe*/, double P_boil /*bar*/, double F_wc /*-*/, double F_wcmin /*-*/, double F_wcmax /*-*/, double T_cold /*C*/, double dT_cw /*C*/,
+        //outputs
+        double& P_cycle, double& eta, double& T_htf_cold, double& m_dot_demand, double& m_dot_htf_ref,
+        double& m_dot_makeup, double& W_cool_par, double& f_hrsys, double& P_cond, double& T_cond_out);
+
 
 	double Interpolate(int YT, int XT, double X, double Z = std::numeric_limits<double>::quiet_NaN());
 
