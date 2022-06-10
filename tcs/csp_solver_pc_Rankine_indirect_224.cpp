@@ -1965,7 +1965,7 @@ void C_pc_Rankine_indirect_224::RankineCycle_V2(double T_db, double T_wb,
                     m_eta_adj, T_db, T_wb, P_amb, q_reject, m_dot_makeup, W_cool_par, P_cond_calc, T_cond_calc, f_hrsys);
                 break;
             case 2:
-                CSP::ACC(ms_params.m_tech_type, P_cond_min, ms_params.m_n_pl_inc, T_ITD_des, P_cond_ratio, (P_ref * 1000.),
+                CSP::ACC(ms_params.m_tech_type, P_cond_min, T_amb_des, m_Psat_ref, ms_params.m_n_pl_inc, T_ITD_des, P_cond_ratio, (P_ref * 1000.),
                     // 22-06-09 use design efficiency instead of map efficiency
                     ms_params.m_eta_ref, T_db, P_amb, q_reject, m_dot_air, W_cool_par, P_cond_calc, T_cond_calc, f_hrsys);
                 break;
@@ -2109,7 +2109,7 @@ void C_pc_Rankine_indirect_224::RankineCycle(double T_db, double T_wb,
 		break;
 	case 2:
 		// For a dry-cooled system
-		CSP::ACC(ms_params.m_tech_type, P_cond_min, ms_params.m_n_pl_inc, T_ITD_des, P_cond_ratio, (P_ref*1000.), m_eta_adj, T_db, P_amb, q_reject_est, m_dot_air, W_cool_par, P_cond, T_cond, f_hrsys);
+		CSP::ACC(ms_params.m_tech_type, P_cond_min, T_amb_des, m_Psat_ref, ms_params.m_n_pl_inc, T_ITD_des, P_cond_ratio, (P_ref*1000.), m_eta_adj, T_db, P_amb, q_reject_est, m_dot_air, W_cool_par, P_cond, T_cond, f_hrsys);
 		m_dot_makeup = 0.0;
 		break;
 	case 3:
@@ -2243,7 +2243,7 @@ void C_pc_Rankine_indirect_224::RankineCycle(double T_db, double T_wb,
 				CSP::evap_tower(ms_params.m_tech_type, P_cond_min, ms_params.m_n_pl_inc, dT_cw_ref, T_approach, (P_ref*1000.), m_eta_adj, T_db, T_wb, P_amb, q_reject, m_dot_makeup, W_cool_par, P_cond_guess, T_cond, f_hrsys);
 				break;
 			case 2:
-				CSP::ACC(ms_params.m_tech_type, P_cond_min, ms_params.m_n_pl_inc, T_ITD_des, P_cond_ratio, (P_ref*1000.), m_eta_adj, T_db, P_amb, q_reject, m_dot_air, W_cool_par, P_cond_guess, T_cond, f_hrsys);
+				CSP::ACC(ms_params.m_tech_type, P_cond_min, T_amb_des, m_Psat_ref, ms_params.m_n_pl_inc, T_ITD_des, P_cond_ratio, (P_ref*1000.), m_eta_adj, T_db, P_amb, q_reject, m_dot_air, W_cool_par, P_cond_guess, T_cond, f_hrsys);
 				break;
 			case 3:
 				CSP::HybridHR(/*fcall, */ms_params.m_tech_type, P_cond_min, ms_params.m_n_pl_inc, F_wc, F_wcmax, F_wcmin, T_ITD_des, T_approach, dT_cw_ref, P_cond_ratio, (P_ref*1000.), m_eta_adj, T_db, T_wb,

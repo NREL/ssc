@@ -734,7 +734,7 @@ void CSP::evap_tower(int tech_type, double P_cond_min, int n_pl_inc, double Delt
 
 
 // Air cooling calculations
-void CSP::ACC(int tech_type, double P_cond_min, int n_pl_inc, double T_ITD_des, double P_cond_ratio, double P_cycle, double eta_ref,
+void CSP::ACC(int tech_type, double P_cond_min, double T_cond_des, double P_cond_des, int n_pl_inc, double T_ITD_des, double P_cond_ratio, double P_cycle, double eta_ref,
     double T_db, double /*P_amb*/, double q_reject, double& m_dot_air, double& W_dot_fan, double& P_cond, double& T_cond,
     double& f_hrsys)
 {
@@ -743,6 +743,8 @@ void CSP::ACC(int tech_type, double P_cond_min, int n_pl_inc, double T_ITD_des, 
     !--Inputs
     !   * tech_type     [-]
     C   * P_cond_min    [Pa]    Minimum allowable condenser pressure
+        * T_cond_des    [K]     Design condenser Temperature
+        * P_cond_des    [Pa]    Design condenser pressure
     C   * n_pl_inc      [-]     Number of part load heat rejection levels
     C   * T_ITD_des     [K]     ACC initial temperature difference, difference between dry bulb and steam inlet temp
     !   * P_cond_ratio  [-]     Condenser air inlet/outlet pressure ratio
@@ -771,8 +773,8 @@ void CSP::ACC(int tech_type, double P_cond_min, int n_pl_inc, double T_ITD_des, 
     };
 
     double c_air = 1005.0;				          // [J/kg-K] Specific heat of air, relatively constant over dry bulb range
-    const double T_db_des_C = 42.8;               // [C]
-    //const double T_hot_diff = 3.0;                // [C] Temperature difference between saturation steam and condenser outlet air temp -> OLD VALUE
+    const double T_map_des = 42.8 + 273.15;       // [K] Design point temperature of condenser map
+    //const double T_hot_diff = 3.0;              // [C] Temperature difference between saturation steam and condenser outlet air temp -> OLD VALUE
     const double T_hot_diff = 1.;                 // [C] Temperature difference between saturation steam and condenser outlet air temp
     const double P_cond_lower_bound_bar = 0.036;  // [bar] Default minimum condenser steam pressure
     double P_cond_min_bar = std::max(P_cond_lower_bound_bar, P_cond_min * 1.e-5);   // [Pa] -> [bar]
@@ -780,17 +782,26 @@ void CSP::ACC(int tech_type, double P_cond_min, int n_pl_inc, double T_ITD_des, 
     double T_db_K = T_db;                         // [K]
     double T_db_C = T_db_K - 273.15;              // [C]
 
-
     // **** Calculations for design conditions
     double Q_rej_des = P_cycle * (1.0 / eta_ref - 1.0);							// Heat rejection from the cycle
     double m_dot_air_des = Q_rej_des / (c_air*(T_ITD_des - T_hot_diff));
-    double T = T_db_K / (T_db_des_C + 273.15);
+    double T = T_db_K / T_map_des;
+    // Calculate design point for condenser map adjustment
+    double T_map_des_norm = (T_cond_des + 273.15) / T_map_des;
+    double P_map_des;
+    if (T_map_des_norm >= 0.9) {
+        P_map_des = PvsQT(1, T_map_des_norm);
+    }
+    else {
+        P_map_des = 1.0; // minimum pressure
+    }
+    double map_ratio = (P_cond_des / P_cond_min) / P_map_des;
+
     double P_cond_bar;
-    
     if (T >= 0.9) {                             // If T is less than 0.9 fit is not valid
         double Q = q_reject / Q_rej_des;
         double P = PvsQT(Q, T);
-        P_cond_bar = P * P_cond_min_bar;
+        P_cond_bar = map_ratio * P * P_cond_min_bar;
     }
     else {
         P_cond_bar = P_cond_min_bar;
@@ -823,7 +834,6 @@ void CSP::ACC(int tech_type, double P_cond_min, int n_pl_inc, double T_ITD_des, 
     T_cond_K = wp.temp;                         // [K]
     P_cond = P_cond_bar * 1.e5;                 // [bar] -> [Pa]
     T_cond = T_cond_K;
-
     
     // ===================== Fan Power =================================
     double eta_fan_s = 0.85;                    // [-] Fan isentropic efficiency

@@ -162,7 +162,7 @@ private:
 	bool m_bFirstCall;
 
 	double eta_adj, T_hot_diff, eta_acfan_s, eta_acfan, C_air, drift_loss_frac, blowdown_frac, dP_evap, eta_pump, eta_pcw_s, eta_wcfan,
-		  eta_wcfan_s, P_ratio_wcfan, mass_ratio_wcfan, Q_reject_des, q_ac_des, m_dot_acair_des, q_wc_des, c_cw, m_dot_cw_des;
+		  eta_wcfan_s, P_ratio_wcfan, mass_ratio_wcfan, Q_reject_des, q_ac_des, m_dot_acair_des, q_wc_des, c_cw, m_dot_cw_des, m_Psat_ref;
 
 	static inline double dmax1(double a, double b) {return (a > b) ? a : b; }
 	static inline double dmin1(double a, double b) {return (a < b) ? a : b; }

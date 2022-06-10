@@ -649,7 +649,8 @@ void C_Indirect_PB::RankineCycle(/*double time,*/double P_ref, double eta_ref, d
 	// that is part of the power block regression coefficients. I.e. if the user provides a ref. ambient temperature
 	// of 25degC, but the power block coefficients indicate that the normalized efficiency equals 1.0 at an ambient
 	// temp of 20degC, we have to adjust the user's efficiency value back to the coefficient set.
-	water_state wp; 
+	water_state wp;
+    m_Psat_ref = 0;
 	if (m_bFirstCall)
 	{
 		double Psat_ref = 0;
@@ -682,7 +683,8 @@ void C_Indirect_PB::RankineCycle(/*double time,*/double P_ref, double eta_ref, d
 				break;
 		}
 		eta_adj = eta_ref/(Interpolate(12,2,Psat_ref)/Interpolate(22,2,Psat_ref));
-		m_bFirstCall = false;
+        m_Psat_ref = Psat_ref;
+        m_bFirstCall = false;
 	}
 
 	// Calculate the specific heat before converting to Kelvin
@@ -736,7 +738,7 @@ void C_Indirect_PB::RankineCycle(/*double time,*/double P_ref, double eta_ref, d
 			break;
 		case 2:
 			// For a dry-cooled system
-			CSP::ACC(m_pbp.tech_type, P_cond_min, m_pbp.n_pl_inc, T_ITD_des, P_cond_ratio, (P_ref*1000.), eta_adj, T_db, P_amb, q_reject_est, m_dot_air, W_cool_par, P_cond, T_cond, f_hrsys);
+			CSP::ACC(m_pbp.tech_type, P_cond_min, T_amb_des, m_Psat_ref, m_pbp.n_pl_inc, T_ITD_des, P_cond_ratio, (P_ref*1000.), eta_adj, T_db, P_amb, q_reject_est, m_dot_air, W_cool_par, P_cond, T_cond, f_hrsys);
 			m_dot_makeup = 0.0;
 			break;
 		case 3:
@@ -847,7 +849,7 @@ void C_Indirect_PB::RankineCycle(/*double time,*/double P_ref, double eta_ref, d
 					CSP::evap_tower(m_pbp.tech_type, P_cond_min, m_pbp.n_pl_inc, dT_cw_ref, T_approach, (P_ref*1000.), eta_adj, T_db, T_wb, P_amb, q_reject, m_dot_makeup, W_cool_par, P_cond_guess, T_cond, f_hrsys);
 					break;
 				case 2:
-					CSP::ACC(m_pbp.tech_type, P_cond_min, m_pbp.n_pl_inc, T_ITD_des, P_cond_ratio, (P_ref*1000.), eta_adj, T_db, P_amb, q_reject, m_dot_air, W_cool_par, P_cond_guess, T_cond, f_hrsys);
+					CSP::ACC(m_pbp.tech_type, P_cond_min, T_amb_des, m_Psat_ref, m_pbp.n_pl_inc, T_ITD_des, P_cond_ratio, (P_ref*1000.), eta_adj, T_db, P_amb, q_reject, m_dot_air, W_cool_par, P_cond_guess, T_cond, f_hrsys);
 					break;
 				case 3:
 					CSP::HybridHR(/*fcall, */m_pbp.tech_type, P_cond_min, m_pbp.n_pl_inc, F_wc, F_wcmax, F_wcmin, T_ITD_des, T_approach, dT_cw_ref, P_cond_ratio, (P_ref*1000.), eta_adj, T_db, T_wb,
