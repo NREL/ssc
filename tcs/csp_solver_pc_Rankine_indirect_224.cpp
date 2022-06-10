@@ -1942,7 +1942,7 @@ void C_pc_Rankine_indirect_224::RankineCycle_V2(double T_db, double T_wb,
         //}
 
         // Calculate the output values:
-        P_cycle = P_ND_tot/m_P_ND_ref * P_ref;                                             //[MWt]
+        P_cycle = P_ND_tot/m_P_ND_ref * P_ref;                                  //[kWe]
         double q_dot_cycle = Q_ND_tot/m_Q_ND_ref * m_q_dot_design * 1.E3;       //[kWt]
 
         eta = P_cycle / q_dot_cycle;
