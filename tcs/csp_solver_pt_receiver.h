@@ -157,7 +157,8 @@ public:
 
     void get_design_performance(double& eta_thermal /*-*/,
         double& W_dot_rec_pump /*MWe*/, double& rec_pump_coef /*MWe/MWt*/,
-        double& rec_vel_htf_des /*m/s*/, double& m_dot_htf_rec /*kg/s*/,
+        double& rec_vel_htf_des /*m/s*/,
+        double& m_dot_htf_rec /*kg/s*/, double& m_dot_htf_max /*kg/s*/,
         double& q_dot_piping_loss_des /*MWt*/);
 
 protected:
@@ -217,6 +218,7 @@ protected:
     double m_rec_pump_coef;             //[MWe/MWt]
     double m_vel_htf_des;		        //[m/s] HTF flow velocity through receiver tubes
     double m_m_dot_htf_des;             //[kg/s] receiver HTF mass flow at design
+    double m_m_dot_htf_max;             //[kg/s] receiver HTF max mass flow rate
 
     // *******************************************
     // *******************************************

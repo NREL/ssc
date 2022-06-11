@@ -440,6 +440,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_OUTPUT,    SSC_NUMBER, "W_dot_rec_pump_des",                 "Receiver estimated pump power at design",                                                                                                 "MWe",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "vel_rec_htf_des",                    "Receiver estimated tube HTF velocity at design",                                                                                          "m/s",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "m_dot_htf_rec_des",                  "Receiver HTF mass flow rate at design",                                                                                                   "kg/s",        "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "m_dot_htf_rec_max",                  "Receiver max HTF mass flow rate",                                                                                                         "kg/s",        "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "q_dot_piping_loss_des",              "Receiver estimated piping loss at design",                                                                                                "MWt",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
 
         // Heater
@@ -2209,14 +2210,16 @@ public:
         double rec_vel_htf_des;         //[m/s]
         double m_dot_htf_rec_des;       //[kg/s]
         double q_dot_piping_loss_des;   //[MWt]
+        double m_dot_htf_rec_max;       //[kg/s]
         receiver->get_design_performance(eta_rec_thermal_des, W_dot_rec_pump_des, rec_pump_coef_des,
-            rec_vel_htf_des, m_dot_htf_rec_des, q_dot_piping_loss_des);
+            rec_vel_htf_des, m_dot_htf_rec_des, m_dot_htf_rec_max, q_dot_piping_loss_des);
         assign("q_dot_rec_des", q_dot_rec_des);                 //[MWt]
         assign("eta_rec_thermal_des", eta_rec_thermal_des);     //[-]
         assign("W_dot_rec_pump_des", W_dot_rec_pump_des);       //[MWe]
         assign("vel_rec_htf_des", rec_vel_htf_des);             //[m/s]
         assign("m_dot_htf_rec_des", m_dot_htf_rec_des);         //[kg/s]
         assign("q_dot_piping_loss_des", q_dot_piping_loss_des); //[MWt]
+        assign("m_dot_htf_rec_max", m_dot_htf_rec_max);         //[kg/s]
 
             // *************************
             // Thermal Energy Storage

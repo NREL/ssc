@@ -221,7 +221,8 @@ void C_pt_receiver::get_design_geometry(double& L_tower_piping /*m*/)
 
 void C_pt_receiver::get_design_performance(double& eta_thermal /*-*/,
     double& W_dot_rec_pump /*MWe*/, double& rec_pump_coef /*MWe/MWt*/,
-    double& rec_vel_htf_des /*m/s*/, double& m_dot_htf_rec /*kg/s*/,
+    double& rec_vel_htf_des /*m/s*/,
+    double& m_dot_htf_rec /*kg/s*/, double& m_dot_htf_max /*kg/s*/,
     double& q_dot_piping_loss_des /*MWt*/)
 {
     eta_thermal = m_eta_thermal_des_calc;   //[-]
@@ -230,4 +231,5 @@ void C_pt_receiver::get_design_performance(double& eta_thermal /*-*/,
     rec_vel_htf_des = m_vel_htf_des;            //[m/s]
     m_dot_htf_rec = m_m_dot_htf_des;            //[kg/s]
     q_dot_piping_loss_des = m_Q_dot_piping_loss*1.E-6;  //[MWt]
+    m_dot_htf_max = m_m_dot_htf_max;            //[kg/s]
 }

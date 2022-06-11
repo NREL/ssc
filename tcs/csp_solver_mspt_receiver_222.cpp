@@ -75,8 +75,6 @@ C_mspt_receiver_222::C_mspt_receiver_222(double h_tower /*m*/, double epsilon /*
     m_Rtot_riser = std::numeric_limits<double>::quiet_NaN();
     m_Rtot_downc = std::numeric_limits<double>::quiet_NaN();
 
-    m_m_dot_htf_max = std::numeric_limits<double>::quiet_NaN();
-
     m_Q_dot_piping_loss = std::numeric_limits<double>::quiet_NaN();
 
     m_flow_pattern = 0;

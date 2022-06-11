@@ -124,7 +124,6 @@ protected:
 	int m_n_t;                  //[-]
 	double m_A_rec_proj;        //[m2]
 	double m_A_node;            //[m2]
-    double m_m_dot_htf_max;	    //[kg/s]
     double m_Rtot_riser;		//[K*m/W]
     double m_Rtot_downc;		//[K*m/W]
 
