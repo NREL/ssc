@@ -3716,13 +3716,25 @@ int C_sco2_phx_air_cooler::solve_P_LP_in__target_T_htf_cold(double od_tol /*-*/)
         }
 
         // If we found negative slope, set xy structures
-        if (T_htf_cold_err_code == 0 && T_htf_cold_i < T_htf_cold_low)
-        {
-            xy_1.x = P_i;
-            xy_1.y = T_htf_cold_i;
+        if (ms_des_solved.ms_rc_cycle_solved.m_is_rc) {
+            if (T_htf_cold_err_code == 0 && T_htf_cold_i < T_htf_cold_low)
+            {
+                xy_1.x = P_i;
+                xy_1.y = T_htf_cold_i;
 
-            xy_2.x = P_at_T_htf_cold_low;
-            xy_2.y = T_htf_cold_low;
+                xy_2.x = P_at_T_htf_cold_low;
+                xy_2.y = T_htf_cold_low;
+            }
+        }
+        else {
+            if (T_htf_cold_err_code == 0 && T_htf_cold_i > T_htf_cold_low)
+            {
+                xy_1.x = P_i;
+                xy_1.y = T_htf_cold_i;
+
+                xy_2.x = P_at_T_htf_cold_low;
+                xy_2.y = T_htf_cold_low;
+            }
         }
     }
 
@@ -3734,9 +3746,20 @@ int C_sco2_phx_air_cooler::solve_P_LP_in__target_T_htf_cold(double od_tol /*-*/)
         int T_htf_cold_iter = 0;
         T_htf_cold_err_code = c_P_LP_in_solver.solve(xy_1, xy_2, T_htf_cold_target, P_LP_in_T_htf_cold_target, tol_T_htf_cold_target, T_htf_cold_iter);
 
-        if (T_htf_cold_err_code != C_monotonic_eq_solver::CONVERGED && fabs(tol_T_htf_cold_target) > od_tol*tol_margin)    // && tol_T_htf_cold_target > 1.E-3)
-        {
-            return -31;
+        if (ms_des_solved.ms_rc_cycle_solved.m_is_rc) {
+            if (T_htf_cold_err_code != C_monotonic_eq_solver::CONVERGED && fabs(tol_T_htf_cold_target) > od_tol * tol_margin)    // && tol_T_htf_cold_target > 1.E-3)
+            {
+                return -31;
+            }
+        }
+        else {
+            // For simple cycle, there may not be a solution that is <= target HTF cold temperature
+            if (ms_od_solved.m_od_error_code != 0 && ms_od_solved.m_od_error_code != -14) {
+                if (T_htf_cold_err_code != C_monotonic_eq_solver::CONVERGED && fabs(tol_T_htf_cold_target) > od_tol * tol_margin)    // && tol_T_htf_cold_target > 1.E-3)
+                {
+                    return -31;
+                }
+            }
         }
     }
 
@@ -3755,7 +3778,7 @@ int C_sco2_phx_air_cooler::solve_P_LP_in__target_T_htf_cold(double od_tol /*-*/)
         int P_mc_out_iter = 0;
         int P_mc_out_err_code = c_P_LP__P_mc_out_solver.solve(mc_P_LP_in_iter_tracker.mv_P_LP_in, mc_P_LP_in_iter_tracker.mv_P_mc_out, P_mc_out_target, P_LP_in_P_mc_out_target, tol_P_mc_out, P_mc_out_iter);
 
-        if (P_mc_out_err_code != C_monotonic_eq_solver::CONVERGED && fabs(tol_P_mc_out) > od_tol*tol_margin) // && tol_P_mc_out > 1.E-3)
+        if (P_mc_out_err_code != C_monotonic_eq_solver::CONVERGED && fabs(tol_P_mc_out) > od_tol * tol_margin) // && tol_P_mc_out > 1.E-3)
         {
             return -31;
         }
