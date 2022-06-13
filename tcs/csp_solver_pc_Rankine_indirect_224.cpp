@@ -53,6 +53,7 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 	{ C_pc_Rankine_indirect_224::E_RADCOOL_CNTRL,C_csp_reported_outputs::TS_WEIGHTED_AVE },
     {C_pc_Rankine_indirect_224::E_W_DOT_HTF_PUMP, C_csp_reported_outputs::TS_WEIGHTED_AVE},
     {C_pc_Rankine_indirect_224::E_W_DOT_COOLER, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+    {C_pc_Rankine_indirect_224::E_P_COND_ITER_ERR, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 
 	{C_pc_Rankine_indirect_224::E_M_DOT_HTF_REF, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 
@@ -516,8 +517,9 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 			}
 		}	// end cooling technology switch()
 
-        m_P_ND_ref = Interpolate(12, 2, m_Psat_ref);
-        m_Q_ND_ref = Interpolate(22, 2, m_Psat_ref);
+        cycle_Rankine_ND(1.0, m_Psat_ref, 1.0, m_P_ND_ref, m_Q_ND_ref);
+        //m_P_ND_ref = Interpolate(12, 2, m_Psat_ref);
+        //m_Q_ND_ref = Interpolate(22, 2, m_Psat_ref);
 		m_eta_adj = ms_params.m_eta_ref / (m_P_ND_ref / m_Q_ND_ref);
 	}
 	else
@@ -690,13 +692,14 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
     double F_wc_des = m_F_wcMax;
 
     double P_cycle_des_calc, eta_des_calc, T_htf_cold_des_calc, m_dot_demand_des_calc, m_dot_htf_ref_des_calc,
-        m_dot_makeup_des_calc, f_hrsys_des_calc, P_cond_des_calc, T_cond_out_des_calc;
+        m_dot_makeup_des_calc, f_hrsys_des_calc, P_cond_des_calc, T_cond_out_des_calc, P_cond_iter_rel_err_design;
 
     RankineCycle_V2(ms_params.m_T_amb_des + 273.15, T_wb_des + 273.15,
         P_amb_des, ms_params.m_T_htf_hot_ref, m_m_dot_design, mode_des,
         demand_var_des, P_boil_des, F_wc_des, m_F_wcMin, m_F_wcMax, T_cold_rad_cooling_des, dT_cw_rad_cooling_des,
         P_cycle_des_calc, eta_des_calc, T_htf_cold_des_calc, m_dot_demand_des_calc, m_dot_htf_ref_des_calc,
-        m_dot_makeup_des_calc, m_W_dot_cooling_des, f_hrsys_des_calc, P_cond_des_calc, T_cond_out_des_calc);
+        m_dot_makeup_des_calc, m_W_dot_cooling_des, f_hrsys_des_calc, P_cond_des_calc, T_cond_out_des_calc,
+        P_cond_iter_rel_err_design);
 
 
     // ***********************************************************************
@@ -847,7 +850,7 @@ double C_pc_Rankine_indirect_224::get_efficiency_at_TPH(double T_degC, double P_
 
 	if( !ms_params.m_is_user_defined_pc )
 	{
-		double P_cycle, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_makeup, W_cool_par, f_hrsys, P_cond, T_cond_out, T_cold;
+		double P_cycle, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_makeup, W_cool_par, f_hrsys, P_cond, T_cond_out, T_cold, P_cond_iter_rel_err;
 		T_cond_out=T_cold=std::numeric_limits<double>::quiet_NaN();		//check use of Tcold here
 //		water_state wprop;
 
@@ -858,7 +861,7 @@ double C_pc_Rankine_indirect_224::get_efficiency_at_TPH(double T_degC, double P_
 				T_degC+273.15, Twet+273.15, P_atm*101325., ms_params.m_T_htf_hot_ref, m_m_dot_design,
 				2, 0., ms_params.m_P_boil, 1., m_F_wcMin, m_F_wcMax,T_cold,dT_cw_design,
 				//outputs
-				P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_makeup, W_cool_par, f_hrsys, P_cond, T_cond_out);
+				P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_makeup, W_cool_par, f_hrsys, P_cond, T_cond_out, P_cond_iter_rel_err);
 
         if( w_dot_condenser != 0 )
             *w_dot_condenser = W_cool_par;
@@ -914,7 +917,7 @@ double C_pc_Rankine_indirect_224::get_efficiency_at_load(double load_frac, doubl
 		double Twet = calc_twet(ms_params.m_T_amb_des, 45, 1.01325e6);
 
 		//Call
-		double P_cycle, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_makeup, W_cool_par, f_hrsys, P_cond, T_cond_out,T_cold;
+		double P_cycle, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_makeup, W_cool_par, f_hrsys, P_cond, T_cond_out,T_cold, P_cond_iter_rel_err;
 		T_cond_out=T_cold=std::numeric_limits<double>::quiet_NaN();
 
         RankineCycle_V2(
@@ -922,7 +925,7 @@ double C_pc_Rankine_indirect_224::get_efficiency_at_load(double load_frac, doubl
 			    ms_params.m_T_amb_des+273.15, Twet+273.15, 101325., ms_params.m_T_htf_hot_ref, mdot, 2,
                 0., ms_params.m_P_boil, 1., m_F_wcMin, m_F_wcMax, T_cold,dT_cw_design,
 			    //outputs
-			    P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_makeup, W_cool_par, f_hrsys, P_cond, T_cond_out);
+			    P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_makeup, W_cool_par, f_hrsys, P_cond, T_cond_out, P_cond_iter_rel_err);
 
         if( w_dot_condenser != 0 )
             *w_dot_condenser = W_cool_par;
@@ -1045,9 +1048,9 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 		}
 	}//radiative cooling and cold storage setup
 
-	double P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_water_cooling, W_cool_par, f_hrsys, P_cond, T_cond_out, T_rad_out;
+	double P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_water_cooling, W_cool_par, f_hrsys, P_cond, T_cond_out, T_rad_out, P_cond_iter_rel_err;
 	int radcool_cntrl=0;
-	P_cycle = eta = T_htf_cold = m_dot_demand = m_dot_htf_ref = m_dot_water_cooling = W_cool_par = f_hrsys = P_cond = T_cond_out=T_rad_out= std::numeric_limits<double>::quiet_NaN();
+	P_cycle = eta = T_htf_cold = m_dot_demand = m_dot_htf_ref = m_dot_water_cooling = W_cool_par = f_hrsys = P_cond = T_cond_out=T_rad_out= P_cond_iter_rel_err = std::numeric_limits<double>::quiet_NaN();
 
 
 	// 4.15.15 twn: hardcode these so they don't have to be passed into call(). Mode is always = 2 for CSP simulations
@@ -1116,6 +1119,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 		f_hrsys = 0.0;
 		P_cond = 0.0;
 		m_dot_st_bd = 0.0;
+        P_cond_iter_rel_err = 0.0;
 
 		if (ms_params.m_CT == 4) // only if radiative cooling is chosen
 		{
@@ -1148,7 +1152,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 
 			RankineCycle_V2(T_db, T_wb, P_amb, T_htf_hot, m_dot_htf, mode, demand_var, ms_params.m_P_boil,
 				F_wc, m_F_wcMin, m_F_wcMax, T_cold_prev,dT_cw_design,
-				P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_water_cooling, W_cool_par, f_hrsys, P_cond, T_cond_out);
+				P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_water_cooling, W_cool_par, f_hrsys, P_cond, T_cond_out, P_cond_iter_rel_err);
 
 			if (ms_params.m_CT == 4) // only if radiative cooling is chosen ARD
 			{
@@ -1323,6 +1327,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 			f_hrsys = 0.0;		//[-] Not captured in User-defined power cycle model
 			P_cond = 0.0;		//[Pa] Not captured in User-defined power cycle model
 			m_dot_demand = 0.0;	//[kg/hr] Not captured in User-defined power cycle model
+            P_cond_iter_rel_err = 0.0;
 		}
 
 		break;
@@ -1351,6 +1356,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 			W_cool_par = 0.0;
 			f_hrsys = 0.0;
 			P_cond = 0.0;
+            P_cond_iter_rel_err = 0.0;
 
 			q_dot_htf = m_dot_htf/3600.0*c_htf*(T_htf_hot - T_htf_cold)/1000.0;		//[MWt]
 
@@ -1391,6 +1397,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 		W_cool_par = 0.0;
 		f_hrsys = 0.0;
 		P_cond = 0.0;
+        P_cond_iter_rel_err = 0.0;
 
 		q_dot_htf = 0.0;
 
@@ -1545,6 +1552,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 		W_cool_par = 0.0;
 		f_hrsys = 0.0;
 		P_cond = 0.0;
+        P_cond_iter_rel_err = 0.0;
 
 		q_dot_htf = m_dot_htf_required*c_htf*(T_htf_hot - ms_params.m_T_htf_cold_ref)/1000.0;	//[MWt]
 
@@ -1680,7 +1688,8 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 	}
 	mc_reported_outputs.value(E_T_RADOUT, T_rad_out-273.15);//[C] Radiator outlet temperature
 	mc_reported_outputs.value(E_P_COND, P_cond);			//[Pa] Condensing pressure					//out_report.m_m_dot_demand = m_dot_demand;			//[kg/hr] HTF required flow rate to meet power load
-	mc_reported_outputs.value(E_RADCOOL_CNTRL, radcool_cntrl);	//Record control choice of radiative cooling with cold storage
+    mc_reported_outputs.value(E_P_COND_ITER_ERR, P_cond_iter_rel_err);  //[-]
+    mc_reported_outputs.value(E_RADCOOL_CNTRL, radcool_cntrl);	//Record control choice of radiative cooling with cold storage
 
 	out_solver.m_m_dot_htf = m_dot_htf;					//[kg/hr] Actual HTF flow rate passing through the power cycle
 	mc_reported_outputs.value(E_M_DOT_HTF,m_dot_htf);	//[kg/hr] Actual HTF flow rate passing through the power cycle
@@ -1749,12 +1758,171 @@ C_csp_power_cycle::E_csp_power_cycle_modes C_pc_Rankine_indirect_224::get_operat
 	return m_operating_mode_prev;
 }
 
-void C_pc_Rankine_indirect_224::RankineCycle_V2(double T_db, double T_wb,
-    double P_amb, double T_htf_hot, double m_dot_htf_in /*kg/hr*/, int mode,
-    double demand_var, double P_boil, double F_wc, double F_wcmin, double F_wcmax, double T_cold /*[C]*/, double dT_cw /*[C]*/,
+C_pc_Rankine_indirect_224::C_MEQ__P_cond_OD::C_MEQ__P_cond_OD(C_pc_Rankine_indirect_224* pc_pc,
+                                                double T_htf_hot_ND /*-*/, double m_dot_htf_ND /*-*/,
+                                                double T_db /*K*/, double T_wb /*K*/, double P_amb /*Pa*/,
+                                                double F_wc /*-*/, double F_wcmin /*-*/, double F_wcmax /*-*/,
+                                                double T_cold_rad /*C*/, double dT_cw_rad_cooling /*C*/)
+{
+    mpc_pc = pc_pc;
+    m_T_htf_hot_ND = T_htf_hot_ND;      //[-]
+    m_m_dot_htf_ND = m_dot_htf_ND;      //[-]
+    m_T_db = T_db;                      //[K]
+    m_T_wb = T_wb;                      //[K]
+    m_P_amb = P_amb;                    //[Pa]
+    m_F_wc = F_wc;                      //[-]
+    m_F_wcmin = F_wcmin;                //[-]
+    m_F_wcmax = F_wcmax;                //[-]
+    m_T_cold_rad = T_cold_rad;          //[C]
+    m_dT_cw_rad_cooling = dT_cw_rad_cooling;    //[C]
+
+    // Calculated
+    m_P_cycle = std::numeric_limits<double>::quiet_NaN();           //[kWe]
+    m_eta = std::numeric_limits<double>::quiet_NaN();               //[-]
+    m_W_dot_cooling = std::numeric_limits<double>::quiet_NaN();     //[MWe]
+    m_m_dot_makeup = std::numeric_limits<double>::quiet_NaN();      //[kg/s]
+    m_f_hrsys = std::numeric_limits<double>::quiet_NaN();           //[-]
+    m_T_cond_out_rad = std::numeric_limits<double>::quiet_NaN();    //[C]
+}
+
+void C_pc_Rankine_indirect_224::C_MEQ__P_cond_OD::get_solved_values(double& P_cycle /*kWe*/, double& eta /*-*/, double& W_dot_cooling /*MWe*/,
+    double& m_dot_makeup /*kg/s*/, double& f_hrsys /*-*/, double& T_cond_out_rad /*C*/)
+{
+    P_cycle = m_P_cycle;
+    eta = m_eta;
+    W_dot_cooling = m_W_dot_cooling;
+    m_dot_makeup = m_m_dot_makeup;
+    f_hrsys = m_f_hrsys;
+    T_cond_out_rad = m_T_cond_out_rad;
+}
+
+int C_pc_Rankine_indirect_224::C_MEQ__P_cond_OD::operator()(double P_cond_iter_guess /*Pa*/, double* diff_P_cond /*-*/)
+{
+    double P_ND_tot = std::numeric_limits<double>::quiet_NaN();
+    double Q_ND_tot = std::numeric_limits<double>::quiet_NaN();
+    mpc_pc->cycle_Rankine_ND(m_T_htf_hot_ND, P_cond_iter_guess, m_m_dot_htf_ND,
+        P_ND_tot, Q_ND_tot);
+
+    // Calculate the output values:
+    m_P_cycle = P_ND_tot / mpc_pc->m_P_ND_ref * mpc_pc->ms_params.m_P_ref;                                        //[kWe]
+    double q_dot_cycle = Q_ND_tot / mpc_pc->m_Q_ND_ref * mpc_pc->m_q_dot_design * 1.E3;     //[kWt]
+
+    m_eta = m_P_cycle / q_dot_cycle;
+
+    //T_htf_cold = T_htf_hot - q_dot_cycle / (m_dot_htf * c_htf);
+    //m_dot_demand = fmax(m_dot_htf_ND * m_dot_htf_ref, 0.00001);   // [kg/s]
+
+    // Call the cooling tower model to update the condenser pressure
+    double q_reject = (1.0 - m_eta) * q_dot_cycle * 1000.0;       //[MWt]
+    double P_cond_calc = std::numeric_limits<double>::quiet_NaN();  //[Pa]
+    double T_cond_calc = std::numeric_limits<double>::quiet_NaN();
+    double m_dot_air = std::numeric_limits<double>::quiet_NaN();
+    double W_cool_parhac, W_cool_parhwc;
+
+    switch (mpc_pc->ms_params.m_CT)  // Cooling technology type {1=evaporative cooling, 2=air cooled condenser, 3=hybrid cooling, 4= surface condenser}
+    {
+    case 1:
+        CSP::evap_tower(mpc_pc->ms_params.m_tech_type, mpc_pc->ms_params.m_P_cond_min, mpc_pc->ms_params.m_n_pl_inc, mpc_pc->ms_params.m_dT_cw_ref, mpc_pc->ms_params.m_T_approach, (mpc_pc->ms_params.m_P_ref*1000.),
+            // 22-06-13 use design efficiency instead of map efficiency
+            mpc_pc->ms_params.m_eta_ref, m_T_db, m_T_wb, m_P_amb, q_reject, m_m_dot_makeup, m_W_dot_cooling, P_cond_calc, T_cond_calc, m_f_hrsys);
+        break;
+    case 2:
+        CSP::ACC(mpc_pc->ms_params.m_tech_type, mpc_pc->ms_params.m_P_cond_min, mpc_pc->ms_params.m_T_amb_des, mpc_pc->m_Psat_ref, mpc_pc->ms_params.m_n_pl_inc, mpc_pc->ms_params.m_T_ITD_des, mpc_pc->ms_params.m_P_cond_ratio, (mpc_pc->ms_params.m_P_ref*1000.),
+            // 22-06-09 use design efficiency instead of map efficiency
+            mpc_pc->ms_params.m_eta_ref, m_T_db, m_P_amb, q_reject, m_dot_air, m_W_dot_cooling, P_cond_calc, T_cond_calc, m_f_hrsys);
+        m_m_dot_makeup = 0.0;
+        break;
+    case 3:
+        CSP::HybridHR(mpc_pc->ms_params.m_tech_type, mpc_pc->ms_params.m_P_cond_min, mpc_pc->ms_params.m_n_pl_inc, m_F_wc, m_F_wcmax, m_F_wcmin, mpc_pc->ms_params.m_T_ITD_des, mpc_pc->ms_params.m_T_approach, mpc_pc->ms_params.m_dT_cw_ref, mpc_pc->ms_params.m_P_cond_ratio, (mpc_pc->ms_params.m_P_ref*1000.),
+            mpc_pc->m_eta_adj, m_T_db, m_T_wb,
+            m_P_amb, q_reject, m_m_dot_makeup, W_cool_parhac, W_cool_parhwc, m_W_dot_cooling, P_cond_calc, T_cond_calc, m_f_hrsys);
+        break;
+    case 4:
+        CSP::surface_cond(mpc_pc->ms_params.m_tech_type, mpc_pc->ms_params.m_P_cond_min, mpc_pc->ms_params.m_n_pl_inc, m_dT_cw_rad_cooling, mpc_pc->ms_params.m_T_approach, (mpc_pc->ms_params.m_P_ref*1000.),
+            mpc_pc->m_eta_adj, m_T_db, m_T_wb, m_P_amb, m_T_cold_rad, q_reject, m_m_dot_makeup, m_W_dot_cooling, P_cond_calc, T_cond_calc, m_f_hrsys, m_T_cond_out_rad);
+        break;
+    }
+
+    *diff_P_cond = (P_cond_iter_guess - P_cond_calc) / P_cond_calc;
+
+    return 0;
+}
+
+void C_pc_Rankine_indirect_224::cycle_Rankine_ND(double T_htf_hot_ND /*-*/, double P_cond_iter_guess /*Pa*/, double m_dot_htf_ND /*-*/,
+    double& P_ND_tot /*-*/, double& Q_ND_tot /*-*/)
+{
+    // ++++++++++++++Correlations++++++++++++++++++
+        // Calculate the correlations
+        // ++++++++++++++++++++++++++++++++++++++++++++
+        // POWER
+        // Main effects
+    double P_ND_0 = Interpolate(11, 1, T_htf_hot_ND) - 1.0;   // PA vs. A
+    double P_ND_1 = Interpolate(12, 2, P_cond_iter_guess) - 1.0;         // PB vs. B
+    double P_ND_2 = Interpolate(13, 3, m_dot_htf_ND) - 1.0;   // PC vs. C
+
+    // Interactions
+    double P_CA = Interpolate(113, 13, T_htf_hot_ND, m_dot_htf_ND);  // vs AC (A)
+    double P_AB = Interpolate(112, 12, P_cond_iter_guess, T_htf_hot_ND);        // vs AB (B)
+    double P_BC = Interpolate(123, 23, m_dot_htf_ND, P_cond_iter_guess);  // vs BC (C)
+
+    //ARD: cycles 5 & 6 based on different interaction pairs.
+    if ((ms_params.m_tech_type == 5) || (ms_params.m_tech_type == 6))
+    {
+        P_ND_0 = P_ND_0 * P_BC;
+        P_ND_1 = P_ND_1 * P_CA;
+        P_ND_2 = P_ND_2 * P_AB;
+    }
+    else
+    {
+        P_ND_0 = P_ND_0 * P_AB;   // PA*PAB
+        P_ND_1 = P_ND_1 * P_BC;   // PB*PBC
+        P_ND_2 = P_ND_2 * P_CA;   // PC*PCA
+    }
+
+    // HEAT
+    // Main effects
+    double Q_ND_0 = Interpolate(21, 1, T_htf_hot_ND) - 1.0;
+    double Q_ND_1 = Interpolate(22, 2, P_cond_iter_guess) - 1.0;
+    double Q_ND_2 = Interpolate(23, 3, m_dot_htf_ND) - 1.0;
+
+    // Interactions
+    double Q_CA = Interpolate(213, 13, T_htf_hot_ND, m_dot_htf_ND);  // vs AC (A)
+    double Q_AB = Interpolate(212, 12, P_cond_iter_guess, T_htf_hot_ND);        // vs AB (B)
+    double Q_BC = Interpolate(223, 23, m_dot_htf_ND, P_cond_iter_guess);  // vs BC (C)
+
+    if ((ms_params.m_tech_type == 5) || (ms_params.m_tech_type == 6)) //cycles 5 & 6 based on different interaction pairs.
+    {
+        Q_ND_0 = Q_ND_0 * Q_BC;
+        Q_ND_1 = Q_ND_1 * Q_CA;
+        Q_ND_2 = Q_ND_2 * Q_AB;
+    }
+    else
+    {
+        Q_ND_0 = Q_ND_0 * Q_AB;
+        Q_ND_1 = Q_ND_1 * Q_BC;
+        Q_ND_2 = Q_ND_2 * Q_CA;
+    }
+
+    // Calculate the cumulative values
+    P_ND_tot = 1.0;
+    Q_ND_tot = 1.0;
+
+    // Increment main effects. MJW 8.11.2010 :: For this system, the effects are multiplicative.
+    //for (int i = 0; i < 3; i++)
+    //{
+    P_ND_tot *= (1.0 + P_ND_0) * (1.0 + P_ND_1) * (1.0 + P_ND_2); //P_ND_tot = P_ND_tot * (1.0 + P_ND[i]);
+    Q_ND_tot *= (1.0 + Q_ND_0) * (1.0 + Q_ND_1) * (1.0 + Q_ND_2); //Q_ND_tot = Q_ND_tot * (1.0 + Q_ND[i]);
+//}
+
+}
+
+void C_pc_Rankine_indirect_224::RankineCycle_V2(double T_db /*K*/, double T_wb /*K*/,
+    double P_amb /*Pa*/, double T_htf_hot /*C*/, double m_dot_htf_in /*kg/hr*/, int mode,
+    double demand_var, double P_boil, double F_wc, double F_wcmin, double F_wcmax, double T_cold_rad_cool /*[C]*/, double dT_cw_rad_cool /*[C]*/,
     //outputs
-    double& P_cycle, double& eta, double& T_htf_cold, double& m_dot_demand, double& m_dot_htf_ref,
-    double& m_dot_makeup, double& W_cool_par, double& f_hrsys, double& P_cond_solved, double& T_cond_out /*[C]*/)
+    double& P_cycle /*kWe*/, double& eta /*-*/, double& T_htf_cold /*C*/, double& m_dot_demand, double& m_dot_htf_ref,
+    double& m_dot_makeup, double& W_cool_par /*MWe*/, double& f_hrsys, double& P_cond_solved /*Pa*/, double& T_cond_out_rad_cool /*[C]*/,
+    double& P_cond_iter_rel_err /*-*/)
 {
 
     //local names for parameters
@@ -1781,10 +1949,6 @@ void C_pc_Rankine_indirect_224::RankineCycle_V2(double T_db, double T_wb,
     T_htf_cold_ref = physics::CelciusToKelvin(T_htf_cold_ref);	//[K]
     // Mass flow rates from kg/hr to kg/s
     double m_dot_htf = m_dot_htf_in / 3600.0; // [kg/s]
-
-    // ****Calculate the reference values
-    double q_dot_ref_OLD = P_ref / m_eta_adj;   // The reference heat flow
-    double m_dot_htf_ref_OLD = q_dot_ref_OLD / (c_htf_ref * (T_htf_hot_ref - T_htf_cold_ref));  // The HTF mass flow rate [kg/s]
 
     double q_dot_reject_design = m_q_dot_design*1000.0*(1.0 - ms_params.m_eta_ref);     //[MWt]
     m_dot_htf_ref = m_m_dot_design / 3600.0;        //[kg/s]
@@ -1825,219 +1989,83 @@ void C_pc_Rankine_indirect_224::RankineCycle_V2(double T_db, double T_wb,
         err = 0.0;
     }
 
-    // Do an initial cooling tower call to estimate the turbine back pressure.
-    //double q_reject_est_OLD = q_dot_ref * 1000.0 * (1.0 - m_eta_adj) * m_dot_htf_ND * T_htf_hot_ND;
-    //
-    //double T_cond = 0, m_dot_air = 0, W_cool_parhac = 0, W_cool_parhwc = 0;
-    //switch (ms_params.m_CT)  // Cooling technology type {1=evaporative cooling, 2=air cooling, 3=hybrid cooling, 4=surface condenser}
-    //{
-    //case 1:
-    //    // For a wet-cooled system
-    //    CSP::evap_tower(ms_params.m_tech_type, P_cond_min, ms_params.m_n_pl_inc, dT_cw_ref, T_approach, (P_ref * 1000.), m_eta_adj, T_db, T_wb, P_amb, q_reject_est, m_dot_makeup, W_cool_par, P_cond, T_cond, f_hrsys);
-    //    break;
-    //case 2:
-    //    // For a dry-cooled system
-    //    CSP::ACC(ms_params.m_tech_type, P_cond_min, ms_params.m_n_pl_inc, T_ITD_des, P_cond_ratio, (P_ref * 1000.), m_eta_adj, T_db, P_amb, q_reject_est, m_dot_air, W_cool_par, P_cond, T_cond, f_hrsys);
-    //    m_dot_makeup = 0.0;
-    //    break;
-    //case 3:
-    //    // for a hybrid cooled system
-    //    CSP::HybridHR(/*fcall,*/ms_params.m_tech_type, P_cond_min, ms_params.m_n_pl_inc, F_wc, F_wcmax, F_wcmin, T_ITD_des, T_approach, dT_cw_ref, P_cond_ratio, (P_ref * 1000.), m_eta_adj, T_db, T_wb,
-    //        P_amb, q_reject_est, m_dot_makeup, W_cool_parhac, W_cool_parhwc, W_cool_par, P_cond, T_cond, f_hrsys);
-    //    break;
-    //case 4:
-    //    // For a once-through surface condenser
-    //    CSP::surface_cond(ms_params.m_tech_type, P_cond_min, ms_params.m_n_pl_inc, dT_cw, T_approach, (P_ref * 1000.), m_eta_adj, T_db, T_wb, P_amb, T_cold /*[C]*/, q_reject_est, m_dot_makeup, W_cool_par, P_cond, T_cond, f_hrsys, T_cond_out /*[C]*/);
-    //    break;
-    //}
-
-
-    //double P_dem_ND, P_AB, P_CA, P_BC, Q_AB, Q_CA, Q_BC, P_ND_tot, Q_ND_tot, q_reject;
-    //double P_ND[3], Q_ND[3];
-    //double P_cond_guess = 0.0;
-    double P_cond_low = -1.0;
-    double P_cond_high = -1.0;
-    // Begin iterations
     double P_cond_iter_guess = m_Psat_ref;      //[Pa]
-    //do while ((err.gt.1.e-6).and.(qq.lt.100))
-    for (int qq = 1; qq < 100; qq++)
-    {
-        if (err <= 1.0E-6) break;
-        /*qq=qq+1*/
 
-        // Now use the constrained variable to calculate the demand mass flow rate
-        // 22-06-09 P_dem_ND doesn't seem to be used anywhere?
-        if (mode == 1)
-        {
-            double P_dem_ND = demand_var / P_ref;
-            if (qq == 1) m_dot_htf_ND = P_dem_ND;   // An initial guess (function of power)
-            // if(qq.gt.1) m_dot_htf_ND = m_dot_htf_ND*ADJ
+    C_MEQ__P_cond_OD c_P_cond_eq(this, T_htf_hot_ND, m_dot_htf_ND, T_db, T_wb, P_amb,
+                    F_wc, F_wcmin, F_wcmax, T_cold_rad_cool, dT_cw_rad_cool);
+
+    C_monotonic_eq_solver c_P_cond_solver(c_P_cond_eq);
+
+    // Try guess value
+    double diff_P_cond_solved = std::numeric_limits<double>::quiet_NaN();   //[-]
+    int pc_cond_err_code = c_P_cond_solver.test_member_function(P_cond_iter_guess, &diff_P_cond_solved);
+
+    double tol_PC_cond = 1.E-4;     //[-]
+    double P_cond_iter_solved = P_cond_iter_guess;  //[Pa]
+
+    if (abs(diff_P_cond_solved) > tol_PC_cond && pc_cond_err_code == 0) {
+
+        c_P_cond_solver.settings(tol_PC_cond, 50, P_cond_min, 10.E6, false);
+
+        C_monotonic_eq_solver::S_xy_pair xy1;
+        xy1.x = P_cond_iter_guess;      //[Pa]
+        xy1.y = diff_P_cond_solved;     //[-]
+
+        int iter_solved = -1;
+
+        // Calculate new guess value equal to previous calculated value
+        //*diff_P_cond = (P_cond_iter_guess - P_cond_calc) / P_cond_calc = P_cond_iter_guess/P_cond_calc - 1
+        double P_cond_iter_next_guess = P_cond_iter_guess / (diff_P_cond_solved + 1.0);
+
+        try {
+            pc_cond_err_code = c_P_cond_solver.solve(xy1, P_cond_iter_next_guess, 0.0, P_cond_iter_solved, diff_P_cond_solved, iter_solved);
         }
-        /*
-        elseif(mode == 2.) then
-        continue     //  do nothing
-        endif*/
-
-        // ++++++++++++++Correlations++++++++++++++++++
-        // Calculate the correlations
-        // ++++++++++++++++++++++++++++++++++++++++++++
-        // POWER
-        // Main effects
-        double P_ND_0 = Interpolate(11, 1, T_htf_hot_ND) - 1.0;   // PA vs. A
-        double P_ND_1 = Interpolate(12, 2, P_cond_iter_guess) - 1.0;         // PB vs. B
-        double P_ND_2 = Interpolate(13, 3, m_dot_htf_ND) - 1.0;   // PC vs. C
-
-        // Interactions
-        double P_CA = Interpolate(113, 13, T_htf_hot_ND, m_dot_htf_ND);  // vs AC (A)
-        double P_AB = Interpolate(112, 12, P_cond_iter_guess, T_htf_hot_ND);        // vs AB (B)
-        double P_BC = Interpolate(123, 23, m_dot_htf_ND, P_cond_iter_guess);  // vs BC (C)
-
-        //ARD: cycles 5 & 6 based on different interaction pairs.
-        if ((ms_params.m_tech_type == 5) || (ms_params.m_tech_type == 6))
-        {
-            P_ND_0 = P_ND_0 * P_BC;
-            P_ND_1 = P_ND_1 * P_CA;
-            P_ND_2 = P_ND_2 * P_AB;
-        }
-        else
-        {
-            P_ND_0 = P_ND_0 * P_AB;   // PA*PAB
-            P_ND_1 = P_ND_1 * P_BC;   // PB*PBC
-            P_ND_2 = P_ND_2 * P_CA;   // PC*PCA
+        catch (C_csp_exception) {
+            pc_cond_err_code = -1;
         }
 
-        // HEAT
-        // Main effects
-        double Q_ND_0 = Interpolate(21, 1, T_htf_hot_ND) - 1.0;
-        double Q_ND_1 = Interpolate(22, 2, P_cond_iter_guess) - 1.0;
-        double Q_ND_2 = Interpolate(23, 3, m_dot_htf_ND) - 1.0;
-
-        // Interactions
-        double Q_CA = Interpolate(213, 13, T_htf_hot_ND, m_dot_htf_ND);  // vs AC (A)
-        double Q_AB = Interpolate(212, 12, P_cond_iter_guess, T_htf_hot_ND);        // vs AB (B)
-        double Q_BC = Interpolate(223, 23, m_dot_htf_ND, P_cond_iter_guess);  // vs BC (C)
-
-        if ((ms_params.m_tech_type == 5) || (ms_params.m_tech_type == 6)) //cycles 5 & 6 based on different interaction pairs.
-        {
-            Q_ND_0 = Q_ND_0 * Q_BC;
-            Q_ND_1 = Q_ND_1 * Q_CA;
-            Q_ND_2 = Q_ND_2 * Q_AB;
-        }
-        else
-        {
-            Q_ND_0 = Q_ND_0 * Q_AB;
-            Q_ND_1 = Q_ND_1 * Q_BC;
-            Q_ND_2 = Q_ND_2 * Q_CA;
-        }
-
-        // Calculate the cumulative values
-        double P_ND_tot = 1.0;
-        double Q_ND_tot = 1.0;
-
-        // Increment main effects. MJW 8.11.2010 :: For this system, the effects are multiplicative.
-        //for (int i = 0; i < 3; i++)
-        //{
-            P_ND_tot *= (1.0 + P_ND_0) * (1.0 + P_ND_1) * (1.0 + P_ND_2); //P_ND_tot = P_ND_tot * (1.0 + P_ND[i]);
-            Q_ND_tot *= (1.0 + Q_ND_0) * (1.0 + Q_ND_1) * (1.0 + Q_ND_2); //Q_ND_tot = Q_ND_tot * (1.0 + Q_ND[i]);
-        //}
-
-        // Calculate the output values:
-        P_cycle = P_ND_tot/m_P_ND_ref * P_ref;                                  //[kWe]
-        double q_dot_cycle = Q_ND_tot/m_Q_ND_ref * m_q_dot_design * 1.E3;       //[kWt]
-
-        eta = P_cycle / q_dot_cycle;
-
-        T_htf_cold = T_htf_hot - q_dot_cycle / (m_dot_htf * c_htf);
-        m_dot_demand = fmax(m_dot_htf_ND * m_dot_htf_ref, 0.00001);   // [kg/s]
-
-        // Call the cooling tower model to update the condenser pressure
-        double q_reject = (1.0 - eta) * q_dot_cycle * 1000.0;       //[MWt]
-        double P_cond_calc = std::numeric_limits<double>::quiet_NaN();  //[Pa]
-        double T_cond_calc = std::numeric_limits<double>::quiet_NaN();
-        double m_dot_air = std::numeric_limits<double>::quiet_NaN();
-        double W_cool_parhac, W_cool_parhwc;
-        if (qq < 10) // MJW 10.31.2010
-        {
-            switch (ms_params.m_CT)  // Cooling technology type {1=evaporative cooling, 2=air cooled condenser, 3=hybrid cooling, 4= surface condenser}
-            {
-            case 1:
-                CSP::evap_tower(ms_params.m_tech_type, P_cond_min, ms_params.m_n_pl_inc, dT_cw_ref, T_approach, (P_ref * 1000.),
-                    m_eta_adj, T_db, T_wb, P_amb, q_reject, m_dot_makeup, W_cool_par, P_cond_calc, T_cond_calc, f_hrsys);
-                break;
-            case 2:
-                CSP::ACC(ms_params.m_tech_type, P_cond_min, T_amb_des, m_Psat_ref, ms_params.m_n_pl_inc, T_ITD_des, P_cond_ratio, (P_ref * 1000.),
-                    // 22-06-09 use design efficiency instead of map efficiency
-                    ms_params.m_eta_ref, T_db, P_amb, q_reject, m_dot_air, W_cool_par, P_cond_calc, T_cond_calc, f_hrsys);
-                m_dot_makeup = 0.0;
-                break;
-            case 3:
-                CSP::HybridHR(/*fcall, */ms_params.m_tech_type, P_cond_min, ms_params.m_n_pl_inc, F_wc, F_wcmax, F_wcmin, T_ITD_des, T_approach, dT_cw_ref, P_cond_ratio, (P_ref * 1000.),
-                    m_eta_adj, T_db, T_wb,
-                    P_amb, q_reject, m_dot_makeup, W_cool_parhac, W_cool_parhwc, W_cool_par, P_cond_calc, T_cond_calc, f_hrsys);
-                break;
-            case 4:
-                CSP::surface_cond(ms_params.m_tech_type, P_cond_min, ms_params.m_n_pl_inc, dT_cw, T_approach, (P_ref * 1000.),
-                    m_eta_adj, T_db, T_wb, P_amb, T_cold, q_reject, m_dot_makeup, W_cool_par, P_cond_calc, T_cond_calc, f_hrsys, T_cond_out);
-                break;
+        if (pc_cond_err_code != C_monotonic_eq_solver::CONVERGED) {
+            if (!(pc_cond_err_code > C_monotonic_eq_solver::CONVERGED)) { // && fabs(tol_solved) <= 0.1)) {
+                pc_cond_err_code = -1;
+            }
+            else {
+                pc_cond_err_code = 0;
             }
         }
-
-        // Check to see if the calculated and demand values match
-        // If they don't match, calculate the "ADJ" factor
-        if (mode == 1)
-        {
-            // err = (P_cycle - demand_var)/demand_var
-            // ADJ = 1.+(demand_var-P_cycle)/(3.*demand_var)
-            ADJ = (demand_var - P_cycle) / demand_var;		// MJW 10.31.2010: Adjustment factor
-            err = fabs(ADJ);								// MJW 10.31.2010: Take the absolute value of the error..
-            m_dot_htf_ND = m_dot_htf_ND + ADJ * 0.75;		// MJW 10.31.2010: Iterate the mass flow rate. Take a step smaller than the calculated adjustment
-
-        }
-        else if (mode == 2)
-            err = 0.0;
-
-        err = (P_cond_iter_guess - P_cond_calc) / P_cond_calc;
-
-        if (err < 0)
-            P_cond_low = P_cond_iter_guess;
-        else
-            P_cond_high = P_cond_iter_guess;
-
-        if (P_cond_low > 0.0 && P_cond_high > 0.0)
-        {
-            P_cond_iter_guess = 0.5 * P_cond_low + 0.5 * P_cond_high;
-            if ((P_cond_high - P_cond_low) / P_cond_high < 1.E-6)
-                err = 0.0;
-        }
         else {
-            P_cond_iter_guess = P_cond_calc;
+            pc_cond_err_code = 0;
         }
 
-        err = fabs(err);
-
-        if (qq == 99)
-        {
-            mc_csp_messages.add_message(C_csp_messages::WARNING, "Power cycle model did not converge after 100 iterations");
-            P_cycle = 0.0;
-            eta = -999.9;			// 4.15.15 twn: set this such that it hits feasibility checks up stream
-            T_htf_cold = T_htf_hot_ref;
-            m_dot_demand = m_dot_htf_ref;
-            // TFF - should this be here too? m_bFirstCall = false;
-            /*if(errorfound())*/ return;
-        }
-        // If this is not true, the cycle has not yet converged, and we should return
-        //  to continue in the iterations
     }
 
-    // Finally, convert the values back to their original units
-    P_cond_solved = P_cond_iter_guess;
+    if (pc_cond_err_code != 0) {
+        P_cycle = 0.0;
+        eta = -999.9;			// 4.15.15 twn: set this such that it hits feasibility checks up stream
+        P_cond_iter_solved = 0.0;
+        T_htf_cold = T_htf_hot_ref;
+        m_dot_demand = m_dot_htf_ref;
+        return;
+    }
+
+    c_P_cond_eq.get_solved_values(P_cycle, eta, W_cool_par, m_dot_makeup, f_hrsys, T_cond_out_rad_cool);
+
+    // Final performance calcs
+    double q_dot_cycle = P_cycle / eta;
+
+    T_htf_cold = T_htf_hot - q_dot_cycle / (m_dot_htf * c_htf);     //[K]
+    m_dot_demand = fmax(m_dot_htf_ND * m_dot_htf_ref, 0.00001);     //[kg/s]
+
+    // Finally, convert to output units/names
+    P_cond_solved = P_cond_iter_solved;
+    P_cond_iter_rel_err = diff_P_cond_solved;
     T_htf_cold = T_htf_cold - 273.15;			// [K]-->[C]
     T_htf_cold_ref = T_htf_cold_ref - 273.15;	// [K]->[C]
     T_htf_hot_ref = T_htf_hot_ref - 273.15;		// [K]->[C]
-    m_dot_demand = m_dot_demand * 3600.0;			// [kg/s]->[kg/hr]
+    m_dot_demand = m_dot_demand * 3600.0;		// [kg/s]->[kg/hr]
     m_dot_htf = m_dot_htf * 3600.0;				// [kg/s]->[kg/hr]
     m_dot_htf_ref = m_dot_htf_ref * 3600.0;		// [kg/s]->[kg/hr]
 
+    return;
 }
 
 void C_pc_Rankine_indirect_224::RankineCycle(double T_db, double T_wb,

@@ -708,8 +708,6 @@ void CSP::evap_tower(int tech_type, double P_cond_min, int n_pl_inc, double Delt
 	W_dot_tot = w_dot_cw_pump + w_dot_fan;   // [MW]
 		
 	// Enthalpy of evaporation
-	// 1/28/13, twn: replace call to curve fit with call to steam properties routine
-	//deltah_evap = f_dh_evap(P_amb);
 	water_PQ( P_amb/1000.0, 0.0, &wp );
 	double dh_low = wp.enth;
 	water_PQ( P_amb/1000.0, 1.0, &wp );
@@ -816,13 +814,14 @@ void CSP::ACC(int tech_type, double P_cond_min, double T_cond_des, double P_cond
             f_hrsys = 1.0 - (i - 1.0) / n_pl_inc;
             double Q = q_reject / (Q_rej_des * f_hrsys);
             double P = PvsQT(Q, T);
-            P_cond_bar = P * P_cond_min_bar;
+            P_cond_bar = map_ratio * P * P_cond_min_bar;
             
             if (P_cond_bar > P_cond_min_bar) break;
         }
         if (P_cond_bar <= P_cond_min_bar)
         {
             P_cond_bar = P_cond_min_bar;                // Still below min. fix to min condenser pressure
+            f_hrsys = 1.;
         }
     }
     else {

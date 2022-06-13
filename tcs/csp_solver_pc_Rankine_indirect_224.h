@@ -100,9 +100,49 @@ private:
         double P_amb /*Pa*/, double T_htf_hot /*C*/, double m_dot_htf /*kg/hr*/, int mode /*-*/,
         double demand_var /*MWe*/, double P_boil /*bar*/, double F_wc /*-*/, double F_wcmin /*-*/, double F_wcmax /*-*/, double T_cold /*C*/, double dT_cw /*C*/,
         //outputs
-        double& P_cycle, double& eta, double& T_htf_cold, double& m_dot_demand, double& m_dot_htf_ref,
-        double& m_dot_makeup, double& W_cool_par, double& f_hrsys, double& P_cond, double& T_cond_out);
+        double& P_cycle /*kWe*/, double& eta, double& T_htf_cold, double& m_dot_demand, double& m_dot_htf_ref,
+        double& m_dot_makeup, double& W_cool_par /*MWe*/, double& f_hrsys, double& P_cond /*Pa*/, double& T_cond_out /*C*/,
+        double& P_cond_iter_rel_err /*-*/);
 
+    void cycle_Rankine_ND(double T_htf_hot_ND /*-*/, double P_cond_iter_guess /*Pa*/, double m_dot_htf_ND /*-*/,
+        double& P_ND_tot /*-*/, double& Q_ND_tot /*-*/);
+
+    class C_MEQ__P_cond_OD : public C_monotonic_equation
+    {
+    private:
+        C_pc_Rankine_indirect_224* mpc_pc;
+        double m_T_htf_hot_ND;      //[-]
+        double m_m_dot_htf_ND;      //[-]
+        double m_T_db;              //[K]
+        double m_T_wb;              //[K]
+        double m_P_amb;             //[Pa]
+        double m_F_wc;              //[-]
+        double m_F_wcmin;           //[-]
+        double m_F_wcmax;           //[-]
+        double m_T_cold_rad;        //[C]
+        double m_dT_cw_rad_cooling;   //[C]
+
+        // Calculated
+        double m_P_cycle;       //[kWe]
+        double m_eta;           //[-]
+        double m_W_dot_cooling; //[MWe]
+        double m_m_dot_makeup;  //[kg/s]
+        double m_f_hrsys;       //[-]
+        double m_T_cond_out_rad;//[C]
+
+    public:
+
+        C_MEQ__P_cond_OD(C_pc_Rankine_indirect_224* pc_pc,
+            double T_htf_hot_ND /*-*/, double m_dot_htf_ND /*-*/,
+            double T_db /*K*/, double T_wb /*K*/, double P_amb /*Pa*/,
+            double F_wc /*-*/, double F_wcmin /*-*/, double F_wcmax /*-*/,
+            double T_cold_rad /*C*/, double dT_cw_rad_cooling /*C*/);
+
+        virtual int operator()(double P_cond /*Pa*/, double* diff_P_cond /*-*/) override;
+
+        void get_solved_values(double& P_cycle /*kWe*/, double& eta /*-*/, double& W_dot_cooling /*MWe*/,
+            double& m_dot_makeup /*kg/s*/, double& f_hrsys /*-*/, double& T_cond_out_rad /*C*/);
+    };
 
 	double Interpolate(int YT, int XT, double X, double Z = std::numeric_limits<double>::quiet_NaN());
 
@@ -133,6 +173,7 @@ public:
 		E_RADCOOL_CNTRL,	//Code showing the status of radiative cooling with cold storage
         E_W_DOT_HTF_PUMP,   //[MWe] HTF pump power
         E_W_DOT_COOLER,     //[MWe] Cooling parasitic
+        E_P_COND_ITER_ERR,  //[-] Relative iteration error on condenser pressure
 
 		// Variables added for backwards compatability with TCS
 		E_M_DOT_HTF_REF,		//[kg/hr] HTF mass flow rate at design
