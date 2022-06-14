@@ -74,10 +74,18 @@ C_pc_Rankine_indirect_224::C_pc_Rankine_indirect_224()
     m_operating_mode_prev = C_csp_power_cycle::E_csp_power_cycle_modes::OFF;
     m_operating_mode_calc = m_operating_mode_prev;
 
-	m_F_wcMax = m_F_wcMin = m_delta_h_steam = m_startup_energy_required = m_eta_adj = m_Psat_ref =
-		m_m_dot_design = m_q_dot_design = m_cp_htf_design = m_W_dot_htf_pump_des = m_W_dot_cooling_des =
-		m_startup_time_remain_prev = m_startup_time_remain_calc =
+	m_F_wcMax = m_F_wcMin = m_delta_h_steam = m_startup_energy_required = m_eta_adj_OLD = m_Psat_ref = m_P_ND_ref = m_Q_ND_ref =
+        m_m_dot_design = m_q_dot_design = m_cp_htf_design = m_W_dot_htf_pump_des = m_W_dot_cooling_des =
+        m_T_wb_des =
+        m_startup_time_remain_prev = m_startup_time_remain_calc =
 		m_startup_energy_remain_prev = m_startup_energy_remain_calc = std::numeric_limits<double>::quiet_NaN();
+
+    // Design-point conditions
+    m_rh_des = 45.0;
+    m_P_amb_des = 101325.;      //[Pa]
+
+    // Cooler design - hardcoded
+    m_evap_dt_out = 3.0;             //[C/K] Temperature difference at hot side of the condenser
 
 	m_ncall = -1;
 
@@ -86,6 +94,10 @@ C_pc_Rankine_indirect_224::C_pc_Rankine_indirect_224()
 
 void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_params)
 {
+               // 1.01325e6
+    double P_amb_des_mb = m_P_amb_des / 100.0;      //[mbar]
+    m_T_wb_des = calc_twet(ms_params.m_T_amb_des, m_rh_des, P_amb_des_mb);     //[C]
+
 	// Declare instance of fluid class for FIELD fluid
 	if( ms_params.m_pc_fl != HTFProperties::User_defined && ms_params.m_pc_fl < HTFProperties::End_Library_Fluids )
 	{
@@ -482,12 +494,12 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 		case 1:		// Wet cooled case
 			if( ms_params.m_tech_type != 4 )
 			{
-				water_TQ(ms_params.m_dT_cw_ref + 3.0 + ms_params.m_T_approach + ms_params.m_T_amb_des + 273.15, 1.0, &wp);
+				water_TQ(ms_params.m_dT_cw_ref + m_evap_dt_out + ms_params.m_T_approach + m_T_wb_des + 273.15, 1.0, &wp);
 				m_Psat_ref = wp.pres*1000.0;
 			}
 			else
 			{
-                m_Psat_ref = CSP::P_sat4(ms_params.m_dT_cw_ref + 3.0 + ms_params.m_T_approach + ms_params.m_T_amb_des);	// Isopentane
+                m_Psat_ref = CSP::P_sat4(ms_params.m_dT_cw_ref + m_evap_dt_out + ms_params.m_T_approach + m_T_wb_des);	// Isopentane
 			}
 
 			break;
@@ -508,19 +520,19 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 			if (ms_params.m_tech_type != 4)
 			{
 
-				water_TQ(ms_params.m_dT_cw_ref + 3.0 /*dT at hot side*/ + ms_params.m_T_approach + ms_params.m_T_amb_des + 273.15, 1.0, &wp);
+				water_TQ(ms_params.m_dT_cw_ref + m_evap_dt_out + ms_params.m_T_approach + ms_params.m_T_amb_des + 273.15, 1.0, &wp);
                 m_Psat_ref = wp.pres*1000.0;
 			}
 			else
 			{
-                m_Psat_ref = CSP::P_sat4(ms_params.m_dT_cw_ref + 3.0 + ms_params.m_T_approach + ms_params.m_T_amb_des);	// Isopentane
+                m_Psat_ref = CSP::P_sat4(ms_params.m_dT_cw_ref + m_evap_dt_out + ms_params.m_T_approach + ms_params.m_T_amb_des);	// Isopentane
 			}
 		}	// end cooling technology switch()
 
         cycle_Rankine_ND(1.0, m_Psat_ref, 1.0, m_P_ND_ref, m_Q_ND_ref);
         //m_P_ND_ref = Interpolate(12, 2, m_Psat_ref);
         //m_Q_ND_ref = Interpolate(22, 2, m_Psat_ref);
-		m_eta_adj = ms_params.m_eta_ref / (m_P_ND_ref / m_Q_ND_ref);
+		m_eta_adj_OLD = ms_params.m_eta_ref / (m_P_ND_ref / m_Q_ND_ref);
 	}
 	else
 	{	// Initialization calculations for User Defined power cycle model
@@ -682,25 +694,20 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 
 	}
 
-
     // Get cycle performance at design point
-    double T_wb_des = ms_params.m_T_amb_des - 10.0;     //[C]
-    double P_amb_des = 101000.0;                        //[Pa]
     int mode_des = 2;                                   //[-]
     double demand_var_des = 0.0;                        //[MWe]
-    double P_boil_des = ms_params.m_P_boil;             //[bar]
     double F_wc_des = m_F_wcMax;
 
     double P_cycle_des_calc, eta_des_calc, T_htf_cold_des_calc, m_dot_demand_des_calc, m_dot_htf_ref_des_calc,
         m_dot_makeup_des_calc, f_hrsys_des_calc, P_cond_des_calc, T_cond_out_des_calc, P_cond_iter_rel_err_design;
 
-    RankineCycle_V2(ms_params.m_T_amb_des + 273.15, T_wb_des + 273.15,
-        P_amb_des, ms_params.m_T_htf_hot_ref, m_m_dot_design, mode_des,
-        demand_var_des, P_boil_des, F_wc_des, m_F_wcMin, m_F_wcMax, T_cold_rad_cooling_des, dT_cw_rad_cooling_des,
+    RankineCycle_V2(ms_params.m_T_amb_des + 273.15, m_T_wb_des + 273.15,
+        m_P_amb_des, ms_params.m_T_htf_hot_ref, m_m_dot_design, mode_des,
+        demand_var_des, ms_params.m_P_boil, F_wc_des, m_F_wcMin, m_F_wcMax, T_cold_rad_cooling_des, dT_cw_rad_cooling_des,
         P_cycle_des_calc, eta_des_calc, T_htf_cold_des_calc, m_dot_demand_des_calc, m_dot_htf_ref_des_calc,
         m_dot_makeup_des_calc, m_W_dot_cooling_des, f_hrsys_des_calc, P_cond_des_calc, T_cond_out_des_calc,
         P_cond_iter_rel_err_design);
-
 
     // ***********************************************************************
     // ***********************************************************************
@@ -909,12 +916,8 @@ double C_pc_Rankine_indirect_224::get_efficiency_at_load(double load_frac, doubl
 		double cp = mc_pc_htfProps.Cp( (ms_params.m_T_htf_cold_ref + ms_params.m_T_htf_hot_ref)/2. +273.15);  //kJ/kg-K
 
 		//calculate mass flow    [kg/hr]
-		double mdot = ms_params.m_P_ref /* kW */ / ( /*ms_params.m_eta_ref*/m_eta_adj * cp * (ms_params.m_T_htf_hot_ref - ms_params.m_T_htf_cold_ref) ) *3600.;
+		double mdot = ms_params.m_P_ref /* kW */ / ( ms_params.m_eta_ref * cp * (ms_params.m_T_htf_hot_ref - ms_params.m_T_htf_cold_ref) ) *3600.;
 		mdot *= load_frac;
-
-		//ambient calculations
-//		water_state wprop;
-		double Twet = calc_twet(ms_params.m_T_amb_des, 45, 1.01325e6);
 
 		//Call
 		double P_cycle, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_makeup, W_cool_par, f_hrsys, P_cond, T_cond_out,T_cold, P_cond_iter_rel_err;
@@ -922,7 +925,7 @@ double C_pc_Rankine_indirect_224::get_efficiency_at_load(double load_frac, doubl
 
         RankineCycle_V2(
 			    //inputs
-			    ms_params.m_T_amb_des+273.15, Twet+273.15, 101325., ms_params.m_T_htf_hot_ref, mdot, 2,
+			    ms_params.m_T_amb_des+273.15, m_T_wb_des+273.15, m_P_amb_des, ms_params.m_T_htf_hot_ref, mdot, 2,
                 0., ms_params.m_P_boil, 1., m_F_wcMin, m_F_wcMax, T_cold,dT_cw_design,
 			    //outputs
 			    P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_makeup, W_cool_par, f_hrsys, P_cond, T_cond_out, P_cond_iter_rel_err);
@@ -1822,7 +1825,7 @@ int C_pc_Rankine_indirect_224::C_MEQ__P_cond_OD::operator()(double P_cond_iter_g
     switch (mpc_pc->ms_params.m_CT)  // Cooling technology type {1=evaporative cooling, 2=air cooled condenser, 3=hybrid cooling, 4= surface condenser}
     {
     case 1:
-        CSP::evap_tower(mpc_pc->ms_params.m_tech_type, mpc_pc->ms_params.m_P_cond_min, mpc_pc->ms_params.m_n_pl_inc, mpc_pc->ms_params.m_dT_cw_ref, mpc_pc->ms_params.m_T_approach, (mpc_pc->ms_params.m_P_ref*1000.),
+        CSP::evap_tower(mpc_pc->ms_params.m_tech_type, mpc_pc->m_evap_dt_out, mpc_pc->ms_params.m_P_cond_min, mpc_pc->ms_params.m_n_pl_inc, mpc_pc->ms_params.m_dT_cw_ref, mpc_pc->ms_params.m_T_approach, (mpc_pc->ms_params.m_P_ref*1000.),
             // 22-06-13 use design efficiency instead of map efficiency
             mpc_pc->ms_params.m_eta_ref, m_T_db, m_T_wb, m_P_amb, q_reject, m_m_dot_makeup, m_W_dot_cooling, P_cond_calc, T_cond_calc, m_f_hrsys);
         break;
@@ -1834,12 +1837,13 @@ int C_pc_Rankine_indirect_224::C_MEQ__P_cond_OD::operator()(double P_cond_iter_g
         break;
     case 3:
         CSP::HybridHR(mpc_pc->ms_params.m_tech_type, mpc_pc->ms_params.m_P_cond_min, mpc_pc->ms_params.m_n_pl_inc, m_F_wc, m_F_wcmax, m_F_wcmin, mpc_pc->ms_params.m_T_ITD_des, mpc_pc->ms_params.m_T_approach, mpc_pc->ms_params.m_dT_cw_ref, mpc_pc->ms_params.m_P_cond_ratio, (mpc_pc->ms_params.m_P_ref*1000.),
-            mpc_pc->m_eta_adj, m_T_db, m_T_wb,
+            // 22-06-14 use design efficiency instead of map efficiency
+            mpc_pc->ms_params.m_eta_ref, m_T_db, m_T_wb,
             m_P_amb, q_reject, m_m_dot_makeup, W_cool_parhac, W_cool_parhwc, m_W_dot_cooling, P_cond_calc, T_cond_calc, m_f_hrsys);
         break;
     case 4:
         CSP::surface_cond(mpc_pc->ms_params.m_tech_type, mpc_pc->ms_params.m_P_cond_min, mpc_pc->ms_params.m_n_pl_inc, m_dT_cw_rad_cooling, mpc_pc->ms_params.m_T_approach, (mpc_pc->ms_params.m_P_ref*1000.),
-            mpc_pc->m_eta_adj, m_T_db, m_T_wb, m_P_amb, m_T_cold_rad, q_reject, m_m_dot_makeup, m_W_dot_cooling, P_cond_calc, T_cond_calc, m_f_hrsys, m_T_cond_out_rad);
+            mpc_pc->ms_params.m_eta_ref, m_T_db, m_T_wb, m_P_amb, m_T_cold_rad, q_reject, m_m_dot_makeup, m_W_dot_cooling, P_cond_calc, T_cond_calc, m_f_hrsys, m_T_cond_out_rad);
         break;
     }
 
@@ -2102,7 +2106,7 @@ void C_pc_Rankine_indirect_224::RankineCycle(double T_db, double T_wb,
 	m_dot_htf = m_dot_htf / 3600.0; // [kg/s]
 
 	// ****Calculate the reference values
-	double q_dot_ref = P_ref / m_eta_adj;   // The reference heat flow
+	double q_dot_ref = P_ref / m_eta_adj_OLD;   // The reference heat flow
 	m_dot_htf_ref = q_dot_ref / (c_htf_ref*(T_htf_hot_ref - T_htf_cold_ref));  // The HTF mass flow rate [kg/s]
 
 	double T_ref = 0; // The saturation temp at the boiler
@@ -2127,28 +2131,28 @@ void C_pc_Rankine_indirect_224::RankineCycle(double T_db, double T_wb,
 	double m_dot_htf_ND = m_dot_htf / m_dot_htf_ref;
 
 	// Do an initial cooling tower call to estimate the turbine back pressure.
-	double q_reject_est = q_dot_ref*1000.0*(1.0 - m_eta_adj)*m_dot_htf_ND*T_htf_hot_ND;
+	double q_reject_est = q_dot_ref*1000.0*(1.0 - m_eta_adj_OLD)*m_dot_htf_ND*T_htf_hot_ND;
 
 	double T_cond = 0, m_dot_air = 0, W_cool_parhac = 0, W_cool_parhwc = 0;
 	switch( ms_params.m_CT )  // Cooling technology type {1=evaporative cooling, 2=air cooling, 3=hybrid cooling, 4=surface condenser}
 	{
 	case 1:
 		// For a wet-cooled system
-		CSP::evap_tower(ms_params.m_tech_type, P_cond_min, ms_params.m_n_pl_inc, dT_cw_ref, T_approach, (P_ref*1000.), m_eta_adj, T_db, T_wb, P_amb, q_reject_est, m_dot_makeup, W_cool_par, P_cond, T_cond, f_hrsys);
+		CSP::evap_tower(ms_params.m_tech_type, m_evap_dt_out, P_cond_min, ms_params.m_n_pl_inc, dT_cw_ref, T_approach, (P_ref*1000.), m_eta_adj_OLD, T_db, T_wb, P_amb, q_reject_est, m_dot_makeup, W_cool_par, P_cond, T_cond, f_hrsys);
 		break;
 	case 2:
 		// For a dry-cooled system
-		CSP::ACC(ms_params.m_tech_type, P_cond_min, T_amb_des, m_Psat_ref, ms_params.m_n_pl_inc, T_ITD_des, P_cond_ratio, (P_ref*1000.), m_eta_adj, T_db, P_amb, q_reject_est, m_dot_air, W_cool_par, P_cond, T_cond, f_hrsys);
+		CSP::ACC(ms_params.m_tech_type, P_cond_min, T_amb_des, m_Psat_ref, ms_params.m_n_pl_inc, T_ITD_des, P_cond_ratio, (P_ref*1000.), m_eta_adj_OLD, T_db, P_amb, q_reject_est, m_dot_air, W_cool_par, P_cond, T_cond, f_hrsys);
 		m_dot_makeup = 0.0;
 		break;
 	case 3:
 		// for a hybrid cooled system
-		CSP::HybridHR(/*fcall,*/ms_params.m_tech_type, P_cond_min, ms_params.m_n_pl_inc, F_wc, F_wcmax, F_wcmin, T_ITD_des, T_approach, dT_cw_ref, P_cond_ratio, (P_ref*1000.), m_eta_adj, T_db, T_wb,
+		CSP::HybridHR(/*fcall,*/ms_params.m_tech_type, P_cond_min, ms_params.m_n_pl_inc, F_wc, F_wcmax, F_wcmin, T_ITD_des, T_approach, dT_cw_ref, P_cond_ratio, (P_ref*1000.), m_eta_adj_OLD, T_db, T_wb,
 			P_amb, q_reject_est, m_dot_makeup, W_cool_parhac, W_cool_parhwc, W_cool_par, P_cond, T_cond, f_hrsys);
 		break;
 	case 4:
 		// For a once-through surface condenser
-		CSP::surface_cond(ms_params.m_tech_type, P_cond_min, ms_params.m_n_pl_inc, dT_cw, T_approach, (P_ref*1000.), m_eta_adj, T_db, T_wb, P_amb, T_cold /*[C]*/, q_reject_est, m_dot_makeup, W_cool_par, P_cond, T_cond, f_hrsys, T_cond_out /*[C]*/);
+		CSP::surface_cond(ms_params.m_tech_type, P_cond_min, ms_params.m_n_pl_inc, dT_cw, T_approach, (P_ref*1000.), m_eta_adj_OLD, T_db, T_wb, P_amb, T_cold /*[C]*/, q_reject_est, m_dot_makeup, W_cool_par, P_cond, T_cond, f_hrsys, T_cond_out /*[C]*/);
 		break;
 	}
 
@@ -2269,17 +2273,17 @@ void C_pc_Rankine_indirect_224::RankineCycle(double T_db, double T_wb,
 			switch( ms_params.m_CT )  // Cooling technology type {1=evaporative cooling, 2=air cooled condenser, 3=hybrid cooling, 4= surface condenser}
 			{
 			case 1:
-				CSP::evap_tower(ms_params.m_tech_type, P_cond_min, ms_params.m_n_pl_inc, dT_cw_ref, T_approach, (P_ref*1000.), m_eta_adj, T_db, T_wb, P_amb, q_reject, m_dot_makeup, W_cool_par, P_cond_guess, T_cond, f_hrsys);
+				CSP::evap_tower(ms_params.m_tech_type, m_evap_dt_out, P_cond_min, ms_params.m_n_pl_inc, dT_cw_ref, T_approach, (P_ref*1000.), m_eta_adj_OLD, T_db, T_wb, P_amb, q_reject, m_dot_makeup, W_cool_par, P_cond_guess, T_cond, f_hrsys);
 				break;
 			case 2:
-				CSP::ACC(ms_params.m_tech_type, P_cond_min, T_amb_des, m_Psat_ref, ms_params.m_n_pl_inc, T_ITD_des, P_cond_ratio, (P_ref*1000.), m_eta_adj, T_db, P_amb, q_reject, m_dot_air, W_cool_par, P_cond_guess, T_cond, f_hrsys);
+				CSP::ACC(ms_params.m_tech_type, P_cond_min, T_amb_des, m_Psat_ref, ms_params.m_n_pl_inc, T_ITD_des, P_cond_ratio, (P_ref*1000.), m_eta_adj_OLD, T_db, P_amb, q_reject, m_dot_air, W_cool_par, P_cond_guess, T_cond, f_hrsys);
 				break;
 			case 3:
-				CSP::HybridHR(/*fcall, */ms_params.m_tech_type, P_cond_min, ms_params.m_n_pl_inc, F_wc, F_wcmax, F_wcmin, T_ITD_des, T_approach, dT_cw_ref, P_cond_ratio, (P_ref*1000.), m_eta_adj, T_db, T_wb,
+				CSP::HybridHR(/*fcall, */ms_params.m_tech_type, P_cond_min, ms_params.m_n_pl_inc, F_wc, F_wcmax, F_wcmin, T_ITD_des, T_approach, dT_cw_ref, P_cond_ratio, (P_ref*1000.), m_eta_adj_OLD, T_db, T_wb,
 					P_amb, q_reject, m_dot_makeup, W_cool_parhac, W_cool_parhwc, W_cool_par, P_cond_guess, T_cond, f_hrsys);
 				break;
 			case 4:
-				CSP::surface_cond(ms_params.m_tech_type, P_cond_min, ms_params.m_n_pl_inc, dT_cw, T_approach, (P_ref*1000.), m_eta_adj, T_db, T_wb, P_amb,T_cold, q_reject, m_dot_makeup, W_cool_par, P_cond_guess, T_cond, f_hrsys, T_cond_out);
+				CSP::surface_cond(ms_params.m_tech_type, P_cond_min, ms_params.m_n_pl_inc, dT_cw, T_approach, (P_ref*1000.), m_eta_adj_OLD, T_db, T_wb, P_amb,T_cold, q_reject, m_dot_makeup, W_cool_par, P_cond_guess, T_cond, f_hrsys, T_cond_out);
 				break;
 			}
 		}

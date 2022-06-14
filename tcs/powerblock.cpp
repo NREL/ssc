@@ -76,6 +76,10 @@ C_Indirect_PB::C_Indirect_PB()
 	m_sv.dStartupEnergyRemaining=0;
 	m_sv.dStartupTimeRemaining=0;
 	m_sv.iLastStandbyControl=1;
+
+    // Cooler design - hardcoded
+    m_evap_dt_out = 3.0;
+
 }
 
 C_Indirect_PB::~C_Indirect_PB()
@@ -661,12 +665,12 @@ void C_Indirect_PB::RankineCycle(/*double time,*/double P_ref, double eta_ref, d
 				{	
 					// 1/28/13, twn: replace call to curve fit with call to steam properties routine
 					// Psat_ref = f_psat_T(dT_cw_ref + 3.0 + T_approach + T_amb_des); // Steam
-					water_TQ( dT_cw_ref + 3.0 + T_approach + T_amb_des + 273.15, 1.0, &wp );
+					water_TQ( dT_cw_ref + m_evap_dt_out + T_approach + T_amb_des + 273.15, 1.0, &wp );
 					Psat_ref = wp.pres * 1000.0;
 				}
 
 				else
-					Psat_ref = CSP::P_sat4(dT_cw_ref + 3.0 + T_approach + T_amb_des); // Isopentane
+					Psat_ref = CSP::P_sat4(dT_cw_ref + m_evap_dt_out + T_approach + T_amb_des); // Isopentane
 				break;
 			
 			case 2:
@@ -734,7 +738,7 @@ void C_Indirect_PB::RankineCycle(/*double time,*/double P_ref, double eta_ref, d
 	{
 		case 1:
 			// For a wet-cooled system
-			CSP::evap_tower(m_pbp.tech_type, P_cond_min, m_pbp.n_pl_inc, dT_cw_ref, T_approach, (P_ref*1000.), eta_adj, T_db, T_wb, P_amb, q_reject_est, m_dot_makeup, W_cool_par, P_cond, T_cond, f_hrsys);
+			CSP::evap_tower(m_pbp.tech_type, m_evap_dt_out, P_cond_min, m_pbp.n_pl_inc, dT_cw_ref, T_approach, (P_ref*1000.), eta_adj, T_db, T_wb, P_amb, q_reject_est, m_dot_makeup, W_cool_par, P_cond, T_cond, f_hrsys);
 			break;
 		case 2:
 			// For a dry-cooled system
@@ -846,7 +850,7 @@ void C_Indirect_PB::RankineCycle(/*double time,*/double P_ref, double eta_ref, d
 			switch(m_pbp.CT)  // Cooling technology type {1=evaporative cooling, 2=air cooling, 3=hybrid cooling}
 			{
 				case 1:
-					CSP::evap_tower(m_pbp.tech_type, P_cond_min, m_pbp.n_pl_inc, dT_cw_ref, T_approach, (P_ref*1000.), eta_adj, T_db, T_wb, P_amb, q_reject, m_dot_makeup, W_cool_par, P_cond_guess, T_cond, f_hrsys);
+					CSP::evap_tower(m_pbp.tech_type, m_evap_dt_out, P_cond_min, m_pbp.n_pl_inc, dT_cw_ref, T_approach, (P_ref*1000.), eta_adj, T_db, T_wb, P_amb, q_reject, m_dot_makeup, W_cool_par, P_cond_guess, T_cond, f_hrsys);
 					break;
 				case 2:
 					CSP::ACC(m_pbp.tech_type, P_cond_min, T_amb_des, m_Psat_ref, m_pbp.n_pl_inc, T_ITD_des, P_cond_ratio, (P_ref*1000.), eta_adj, T_db, P_amb, q_reject, m_dot_air, W_cool_par, P_cond_guess, T_cond, f_hrsys);

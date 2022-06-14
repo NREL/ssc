@@ -573,7 +573,7 @@ double CSP::f_h_air_T(double T_C)
 } 
 
 // Evaporative cooling calculations
-void CSP::evap_tower(int tech_type, double P_cond_min, int n_pl_inc, double DeltaT_cw_des, double T_approach, double P_cycle, 
+void CSP::evap_tower(int tech_type, double dt_out, double P_cond_min, int n_pl_inc, double DeltaT_cw_des, double T_approach, double P_cycle, 
 							 double eta_ref, double T_db_K, double T_wb_K, double P_amb, double q_reject, double &m_dot_water, 
 							 double &W_dot_tot, double &P_cond, double &T_cond, double &f_hrsys)
 {
@@ -586,9 +586,10 @@ void CSP::evap_tower(int tech_type, double P_cond_min, int n_pl_inc, double Delt
 	/*
 	!------------------------------------------------------------------------------------------------------------
 	!--Inputs
+    !   * dt_out        [C/K]   Temperature difference at hot side of the condenser
 	!   * P_cond_min    [Pa]    Minimum allowable condenser pressure
 	!   * n_pl_inc      [-]     Number of part load heat rejection levels
-	!   * DeltaT_cw_des [K]     Cooling water temperature rise across condenser
+	!   * DeltaT_cw_des [K]     Cooling water temperature rise across condenser (dT_cw_ref)
 	!   * T_approach    [K]     Cooling tower approach temperature, difference between cw out and wet bulb temp
 	!   * P_cycle       [W]     Rated power block capacity
 	!   * eta_ref       [-]     Rated gross conversion efficiency
@@ -609,7 +610,7 @@ void CSP::evap_tower(int tech_type, double P_cond_min, int n_pl_inc, double Delt
 	double T_wb = T_wb_K - 273.15;    //[C] Converted wet bulb temp
 
 	// Values that can be estimated
-	double dt_out = 3.0;				// Temperature difference at hot side of the condenser
+	//double dt_out = 3.0;				// Temperature difference at hot side of the condenser
 	double drift_loss_frac = 0.001;    // Drift loss fraction
 	double blowdown_frac = 0.003;      // Blowdown fraction
 	double dp_evap = 0.37*1.0e5;       // [Pa] Pressure drop across the condenser and cooling tower

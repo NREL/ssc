@@ -91,7 +91,7 @@ namespace CSP
 	double eta_pl(double mf);
 
 	// Evaporative cooling calculations
-	void evap_tower(int tech_type, double P_cond_min, int n_pl_inc, double DeltaT_cw_des, double T_approach, double P_cycle, 
+	void evap_tower(int tech_type, double dt_out /*C/K*/, double P_cond_min, int n_pl_inc, double DeltaT_cw_des, double T_approach, double P_cycle,
 					double eta_ref, double T_db_K, double T_wb_K, double P_amb_Pa, double q_reject, double &m_dot_water,
 					double &W_dot_tot, double &P_cond, double &T_cond, double &f_hrsys);
 

@@ -145,6 +145,8 @@ private:
 	double m_dLastPCycle; //=STORED(3)
 	double m_dStartupERemain; //=STORED(4)
 
+    double m_evap_dt_out;   //[C/K]
+
 	double m_dStartupEnergy;
 	double m_dDeltaEnthalpySteam;
 	double m_F_wcMin;

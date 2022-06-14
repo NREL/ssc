@@ -46,10 +46,19 @@ private:
 	double m_F_wcMin;
 	double m_delta_h_steam;
 	double m_startup_energy_required;
-	double m_eta_adj;
+	double m_eta_adj_OLD;
     double m_Psat_ref;      //[Pa]
     double m_P_ND_ref;      //[-]
     double m_Q_ND_ref;      //[-]
+
+    // Design-point conditions
+    double m_rh_des;        //[%]
+    double m_P_amb_des;     //[Pa]
+    double m_T_wb_des;      //[C]
+
+    // Cooler design - hardcoded
+    double m_evap_dt_out;	//[C/K] Temperature difference at hot side of the condenser
+
 
 	double m_m_dot_design;				//[kg/hr]
 	double m_m_dot_max;					//[kg/hr]

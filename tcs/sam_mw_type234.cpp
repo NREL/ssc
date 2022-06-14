@@ -205,6 +205,9 @@ private:
 	double m_time_su;
 	double m_E_su_prev;
 	double m_E_su;
+
+    // Cooler design - hardcoded
+    double m_evap_dt_out;
 	
 public:
 
@@ -256,6 +259,8 @@ public:
 		m_time_su = std::numeric_limits<double>::quiet_NaN();
 		m_E_su_prev = std::numeric_limits<double>::quiet_NaN();
 		m_E_su = std::numeric_limits<double>::quiet_NaN();
+
+        m_evap_dt_out = 3.0;
 	}
 
 	virtual ~sam_mw_type234(){
@@ -467,11 +472,11 @@ public:
 		case 1:
 			if( m_tech_type != 4 )
 			{
-				water_TQ(m_dT_cw_ref + 3.0 + m_T_approach + m_T_amb_des + 273.15, 1.0, &wp);
+				water_TQ(m_dT_cw_ref + m_evap_dt_out + m_T_approach + m_T_amb_des + 273.15, 1.0, &wp);
 				m_Psat_ref = wp.pres*1000.0;		// [Pa]
 			}
 			else
-				m_Psat_ref = CSP::P_sat4( m_dT_cw_ref + 3.0 + m_T_approach + m_T_amb_des );
+				m_Psat_ref = CSP::P_sat4( m_dT_cw_ref + m_evap_dt_out + m_T_approach + m_T_amb_des );
 				
 			break;
 
@@ -785,7 +790,7 @@ public:
 		switch( m_CT )
 		{
 		case 1:
-			CSP::evap_tower( m_tech_type, m_P_cond_min, m_n_pl_inc, m_dT_cw_ref, m_T_approach, m_P_ref*1000.0, m_eta_adj, T_db, T_wb, P_amb, q_reject_est, m_dot_makeup, W_cool_par, P_cond, T_cond, f_hrsys );
+			CSP::evap_tower( m_tech_type, m_evap_dt_out, m_P_cond_min, m_n_pl_inc, m_dT_cw_ref, m_T_approach, m_P_ref*1000.0, m_eta_adj, T_db, T_wb, P_amb, q_reject_est, m_dot_makeup, W_cool_par, P_cond, T_cond, f_hrsys );
 			break;
 		case 2:
 			CSP::ACC( m_tech_type, m_P_cond_min, m_T_amb_des, m_Psat_ref, m_n_pl_inc, m_T_ITD_des, m_P_cond_ratio, m_P_ref*1000.0, m_eta_adj, T_db, P_amb, q_reject_est, m_dot_air, W_cool_par, P_cond, T_cond, f_hrsys );
@@ -931,7 +936,7 @@ public:
 				switch( m_CT )
 				{
 				case 1:
-					CSP::evap_tower( m_tech_type, m_P_cond_min, m_n_pl_inc, m_dT_cw_ref, m_T_approach, m_P_ref*1000.0, m_eta_adj, T_db, T_wb, P_amb, q_reject, m_dot_makeup, W_cool_par, P_cond_guess, T_cond, f_hrsys );
+					CSP::evap_tower( m_tech_type, m_evap_dt_out, m_P_cond_min, m_n_pl_inc, m_dT_cw_ref, m_T_approach, m_P_ref*1000.0, m_eta_adj, T_db, T_wb, P_amb, q_reject, m_dot_makeup, W_cool_par, P_cond_guess, T_cond, f_hrsys );
 					break;
 				case 2:
 					CSP::ACC( m_tech_type, m_P_cond_min, m_T_amb_des, m_Psat_ref, m_n_pl_inc, m_T_ITD_des, m_P_cond_ratio, m_P_ref*1000.0, m_eta_adj, T_db, P_amb, q_reject, m_dot_air, W_cool_par, P_cond_guess, T_cond, f_hrsys );
