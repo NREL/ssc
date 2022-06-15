@@ -695,19 +695,40 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 	}
 
     // Get cycle performance at design point
-    int mode_des = 2;                                   //[-]
-    double demand_var_des = 0.0;                        //[MWe]
-    double F_wc_des = m_F_wcMax;
+    double P_cycle_des_calc, eta_des_calc, T_htf_cold_des_calc, m_dot_makeup_des_calc;
+    P_cycle_des_calc = eta_des_calc = T_htf_cold_des_calc = m_dot_makeup_des_calc = std::numeric_limits<double>::quiet_NaN();
 
-    double P_cycle_des_calc, eta_des_calc, T_htf_cold_des_calc, m_dot_demand_des_calc, m_dot_htf_ref_des_calc,
-        m_dot_makeup_des_calc, f_hrsys_des_calc, P_cond_des_calc, T_cond_out_des_calc, P_cond_iter_rel_err_design;
+    if (!ms_params.m_is_user_defined_pc)
+    {
+        int mode_des = 2;                                   //[-]
+        double demand_var_des = 0.0;                        //[MWe]
+        double F_wc_des = m_F_wcMax;
 
-    RankineCycle_V2(ms_params.m_T_amb_des + 273.15, m_T_wb_des + 273.15,
-        m_P_amb_des, ms_params.m_T_htf_hot_ref, m_m_dot_design, mode_des,
-        demand_var_des, ms_params.m_P_boil, F_wc_des, m_F_wcMin, m_F_wcMax, T_cold_rad_cooling_des, dT_cw_rad_cooling_des,
-        P_cycle_des_calc, eta_des_calc, T_htf_cold_des_calc, m_dot_demand_des_calc, m_dot_htf_ref_des_calc,
-        m_dot_makeup_des_calc, m_W_dot_cooling_des, f_hrsys_des_calc, P_cond_des_calc, T_cond_out_des_calc,
-        P_cond_iter_rel_err_design);
+        double m_dot_demand_des_calc, m_dot_htf_ref_des_calc, f_hrsys_des_calc, P_cond_des_calc, T_cond_out_des_calc, P_cond_iter_rel_err_design;
+
+        RankineCycle_V2(ms_params.m_T_amb_des + 273.15, m_T_wb_des + 273.15,
+            m_P_amb_des, ms_params.m_T_htf_hot_ref, m_m_dot_design, mode_des,
+            demand_var_des, ms_params.m_P_boil, F_wc_des, m_F_wcMin, m_F_wcMax, T_cold_rad_cooling_des, dT_cw_rad_cooling_des,
+            P_cycle_des_calc, eta_des_calc, T_htf_cold_des_calc, m_dot_demand_des_calc, m_dot_htf_ref_des_calc,
+            m_dot_makeup_des_calc, m_W_dot_cooling_des, f_hrsys_des_calc, P_cond_des_calc, T_cond_out_des_calc,
+            P_cond_iter_rel_err_design);
+    }
+    else {
+
+        // Get ND performance at off-design / part-load conditions
+        P_cycle_des_calc = ms_params.m_P_ref * mc_user_defined_pc.get_W_dot_gross_ND(ms_params.m_T_htf_hot_ref, ms_params.m_T_amb_des, 1.0);	//[kW]
+
+        double q_dot_htf_des_calc = m_q_dot_design * mc_user_defined_pc.get_Q_dot_HTF_ND(ms_params.m_T_htf_hot_ref, ms_params.m_T_amb_des, 1.0);		//[MWt]
+
+        m_W_dot_cooling_des = ms_params.m_W_dot_cooling_des * mc_user_defined_pc.get_W_dot_cooling_ND(ms_params.m_T_htf_hot_ref, ms_params.m_T_amb_des, 1.0);	//[MWe]
+
+        m_dot_makeup_des_calc = ms_params.m_m_dot_water_des * mc_user_defined_pc.get_m_dot_water_ND(ms_params.m_T_htf_hot_ref, ms_params.m_T_amb_des, 1.0);	//[kg/hr]
+
+        eta_des_calc = P_cycle_des_calc / 1.E3 / q_dot_htf_des_calc;		//[-]
+
+        T_htf_cold_des_calc = ms_params.m_T_htf_hot_ref - q_dot_htf_des_calc / (m_m_dot_design / 3600.0 * m_cp_htf_design / 1.E3);		//[MJ/s * hr/kg * s/hr * kg-K/kJ * MJ/kJ] = C/K
+
+    }
 
     // ***********************************************************************
     // ***********************************************************************
