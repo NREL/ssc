@@ -74,7 +74,6 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,     SSC_NUMBER, "design_eff",                         "Power cycle efficiency at design",                                                                                                        "none",         "",                                  "System Design",                            "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "tshours",                            "Equivalent full-load thermal storage hours",                                                                                              "hr",           "",                                  "System Design",                            "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "solarm",                             "Solar multiple",                                                                                                                          "-",            "",                                  "System Design",                            "*",                                                                "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "gross_net_conversion_factor",        "Estimated gross to net conversion factor",                                                                                                "",             "",                                  "System Design",                            "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "dni_des",                            "Design-point DNI",                                                                                                                        "W/m2",         "",                                  "System Design",                            "*",                                                                "",              ""},
 
     // Solar field
@@ -438,6 +437,8 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_OUTPUT,    SSC_NUMBER, "q_dot_rec_des",                      "Receiver thermal output at design",                                                                                                       "MWt",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "eta_rec_thermal_des",                "Receiver estimated thermal efficiency at design",                                                                                         "",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "W_dot_rec_pump_des",                 "Receiver estimated pump power at design",                                                                                                 "MWe",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "W_dot_rec_pump_tower_share_des",     "Receiver estimated pump power due to tower height at design",                                                                             "MWe",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "W_dot_rec_pump_rec_share_des",       "Receiver estimated pump power due to rec tubes at design",                                                                                "MWe",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "vel_rec_htf_des",                    "Receiver estimated tube HTF velocity at design",                                                                                          "m/s",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "m_dot_htf_rec_des",                  "Receiver HTF mass flow rate at design",                                                                                                   "kg/s",        "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "m_dot_htf_rec_max",                  "Receiver max HTF mass flow rate",                                                                                                         "kg/s",        "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
@@ -800,7 +801,7 @@ public:
         double q_dot_pc_des = W_dot_cycle_des / eta_cycle;      //[MWt]
         double Q_tes = q_dot_pc_des * tshours;                  //[MWt-hr]
         double q_dot_rec_des = q_dot_pc_des * as_number("solarm");  //[MWt]
-        double system_capacity = W_dot_cycle_des * as_double("gross_net_conversion_factor") * 1.E3;       //[kWe]
+        //double system_capacity = W_dot_cycle_des * as_double("gross_net_conversion_factor") * 1.E3;       //[kWe]
 
         // Weather reader
 		C_csp_weatherreader weather_reader;
@@ -2208,16 +2209,21 @@ public:
 
         double eta_rec_thermal_des;     //[-]
         double W_dot_rec_pump_des;      //[MWe]
+        double W_dot_rec_pump_tower_share_des;  //[MWe]
+        double W_dot_rec_pump_rec_share_des;    //[MWe]
         double rec_pump_coef_des;       //[MWe/MWt]
         double rec_vel_htf_des;         //[m/s]
         double m_dot_htf_rec_des;       //[kg/s]
         double q_dot_piping_loss_des;   //[MWt]
         double m_dot_htf_rec_max;       //[kg/s]
-        receiver->get_design_performance(eta_rec_thermal_des, W_dot_rec_pump_des, rec_pump_coef_des,
-            rec_vel_htf_des, m_dot_htf_rec_des, m_dot_htf_rec_max, q_dot_piping_loss_des);
+        receiver->get_design_performance(eta_rec_thermal_des,
+            W_dot_rec_pump_des, W_dot_rec_pump_tower_share_des, W_dot_rec_pump_rec_share_des,
+            rec_pump_coef_des, rec_vel_htf_des, m_dot_htf_rec_des, m_dot_htf_rec_max, q_dot_piping_loss_des);
         assign("q_dot_rec_des", q_dot_rec_des);                 //[MWt]
         assign("eta_rec_thermal_des", eta_rec_thermal_des);     //[-]
         assign("W_dot_rec_pump_des", W_dot_rec_pump_des);       //[MWe]
+        assign("W_dot_rec_pump_tower_share_des", W_dot_rec_pump_tower_share_des);     //[MWe]
+        assign("W_dot_rec_pump_rec_share_des", W_dot_rec_pump_rec_share_des);       //[MWe]
         assign("vel_rec_htf_des", rec_vel_htf_des);             //[m/s]
         assign("m_dot_htf_rec_des", m_dot_htf_rec_des);         //[kg/s]
         assign("q_dot_piping_loss_des", q_dot_piping_loss_des); //[MWt]
@@ -2274,13 +2280,13 @@ public:
 
         double plant_net_conv_calc = plant_net_capacity_calc / W_dot_cycle_des; //[-]
 
-        double system_capacity_calc = plant_net_capacity_calc * 1.E3;         //[kWe], convert from MWe
+        double system_capacity = plant_net_capacity_calc * 1.E3;         //[kWe], convert from MWe
 
         assign("W_dot_bop_design", W_dot_bop_design);           //[MWe]
         assign("W_dot_fixed", W_dot_fixed_parasitic_design);    //[MWe]
         // Calculate system capacity instead of pass in
         assign("system_capacity", system_capacity);     //[kWe]
-        assign("nameplate", system_capacity * 1.E-3);    //[MWe]
+        assign("nameplate", system_capacity * 1.E-3);   //[MWe]
 
             // ******* Costs ************
         double A_sf_refl = A_sf;

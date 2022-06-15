@@ -77,6 +77,8 @@ C_pt_receiver::C_pt_receiver(double h_tower /*m*/, double epsilon /*-*/,
     m_q_dot_inc_min = std::numeric_limits<double>::quiet_NaN();
     m_eta_thermal_des_calc = std::numeric_limits<double>::quiet_NaN();
     m_W_dot_rec_pump_des_calc = std::numeric_limits<double>::quiet_NaN();
+    m_W_dot_pumping_tower_share = std::numeric_limits<double>::quiet_NaN();
+    m_W_dot_pumping_rec_share = std::numeric_limits<double>::quiet_NaN();
     m_rec_pump_coef = std::numeric_limits<double>::quiet_NaN();
     m_vel_htf_des = std::numeric_limits<double>::quiet_NaN();
     m_m_dot_htf_des = std::numeric_limits<double>::quiet_NaN();
@@ -220,13 +222,15 @@ void C_pt_receiver::get_design_geometry(double& L_tower_piping /*m*/)
 }
 
 void C_pt_receiver::get_design_performance(double& eta_thermal /*-*/,
-    double& W_dot_rec_pump /*MWe*/, double& rec_pump_coef /*MWe/MWt*/,
-    double& rec_vel_htf_des /*m/s*/,
+    double& W_dot_rec_pump /*MWe*/, double& W_dot_pumping_tower_share /*MWe*/, double& W_dot_pumping_rec_share /*MWe*/,
+    double& rec_pump_coef /*MWe/MWt*/, double& rec_vel_htf_des /*m/s*/,
     double& m_dot_htf_rec /*kg/s*/, double& m_dot_htf_max /*kg/s*/,
     double& q_dot_piping_loss_des /*MWt*/)
 {
     eta_thermal = m_eta_thermal_des_calc;   //[-]
     W_dot_rec_pump = m_W_dot_rec_pump_des_calc; //[MWe]
+    W_dot_pumping_tower_share = m_W_dot_pumping_tower_share;    //[MWe]
+    W_dot_pumping_rec_share = m_W_dot_pumping_rec_share;        //[MWe]
     rec_pump_coef = m_rec_pump_coef;            //[MWe/MWt]
     rec_vel_htf_des = m_vel_htf_des;            //[m/s]
     m_dot_htf_rec = m_m_dot_htf_des;            //[kg/s]

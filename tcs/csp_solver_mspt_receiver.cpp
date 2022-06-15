@@ -128,8 +128,11 @@ void C_mspt_receiver::init()
 
 	initialize_transient_parameters();
 
-    design_point_steady_state(m_eta_thermal_des_calc, m_W_dot_rec_pump_des_calc, m_rec_pump_coef, m_vel_htf_des);
-	
+    design_point_steady_state(m_eta_thermal_des_calc,
+        m_W_dot_rec_pump_des_calc,
+        m_W_dot_pumping_tower_share, m_W_dot_pumping_rec_share,
+        m_rec_pump_coef, m_vel_htf_des);
+
 	return;
 }
 
@@ -352,8 +355,8 @@ void C_mspt_receiver::call(double step /*s*/,
         od_control /*-*/,
         soln);
 
-	double DELTAP, Pres_D, W_dot_pump, q_thermal, q_startup;
-	DELTAP = Pres_D = W_dot_pump = q_thermal = q_startup = std::numeric_limits<double>::quiet_NaN();
+	double DELTAP, Pres_D, ratio_dP_tower_to_rec, W_dot_pump, q_thermal, q_startup;
+	DELTAP = Pres_D = ratio_dP_tower_to_rec = W_dot_pump = q_thermal = q_startup = std::numeric_limits<double>::quiet_NaN();
 
 
     double panel_req_preheat = m_tube_flux_preheat * m_od_tube * m_h_rec * m_n_t * 1000;					// Panel absorbed solar energy required to meet preheat flux requirement (W)
@@ -427,7 +430,7 @@ void C_mspt_receiver::call(double step /*s*/,
 				m_t_su = fmax(0.0, m_t_su_prev - step / 3600.0);
 
 				rec_is_off = true;
-				calc_pump_performance(rho_coolant, m_dot_salt_tot, f, Pres_D, W_dot_pump);
+				calc_pump_performance(rho_coolant, m_dot_salt_tot, f, Pres_D, W_dot_pump, ratio_dP_tower_to_rec);
 				if (m_is_transient && m_mode == C_csp_collector_receiver::ON)		// Define temperature profile after startup if transient receiver model will be solved
 				{
 					param_inputs.tm = m_tm;	// Select combined fluid/solid thermal mass values
@@ -725,7 +728,7 @@ void C_mspt_receiver::call(double step /*s*/,
 						double Re_inner = rho_coolant*u_coolant*m_id_tube / mu_coolant;				//[-] Reynolds number of internal flow
 						double Pr_inner = c_p_coolant*mu_coolant / k_coolant;						//[-] Prandtl number of internal flow
 						CSP::PipeFlow(Re_inner, Pr_inner, m_LoverD, m_RelRough, Nusselt_t, fstartup);
-						calc_pump_performance(rho_coolant, m_dot_salt_tot, fstartup, Pres_D, W_dot_pump);
+						calc_pump_performance(rho_coolant, m_dot_salt_tot, fstartup, Pres_D, W_dot_pump, ratio_dP_tower_to_rec);
 						W_dot_pump = W_dot_pump*(time_flow) / (time_required_su*3600.0);	 // Average pump work over the startup time
 					}
 
@@ -758,11 +761,11 @@ void C_mspt_receiver::call(double step /*s*/,
 					// Include here outputs that are ONLY set to zero if receiver completely off, and not attempting to start-up
 					W_dot_pump = 0.0;
 					// Pressure drops
-					DELTAP = 0.0; Pres_D = 0.0; u_coolant = 0.0;
+                    DELTAP = 0.0; Pres_D = 0.0; u_coolant = 0.0; ratio_dP_tower_to_rec = 0.0;
 				}
 				
 				q_thermal = m_dot_salt_tot*c_p_coolant*(T_salt_hot - T_salt_cold_in);
-				calc_pump_performance(rho_coolant, m_dot_salt_tot, f, Pres_D, W_dot_pump);
+				calc_pump_performance(rho_coolant, m_dot_salt_tot, f, Pres_D, W_dot_pump, ratio_dP_tower_to_rec);
 
 				if (m_mode == C_csp_collector_receiver::ON && m_is_startup_from_solved_profile)  // Calculate temperature profile
 				{
@@ -780,13 +783,13 @@ void C_mspt_receiver::call(double step /*s*/,
 				q_startup = 0.0;
 				m_mode = C_csp_collector_receiver::ON;
 				q_thermal = m_dot_salt_tot*c_p_coolant*(T_salt_hot - T_salt_cold_in);			// Steady state thermal power (W)
-				calc_pump_performance(rho_coolant, m_dot_salt_tot, f, Pres_D, W_dot_pump);
+				calc_pump_performance(rho_coolant, m_dot_salt_tot, f, Pres_D, W_dot_pump, ratio_dP_tower_to_rec);
 
 				if (q_dot_inc_sum < m_q_dot_inc_min)				// Receiver is not allowed to operate
 				{
 					m_mode = C_csp_collector_receiver::OFF;
 					W_dot_pump = 0.0;
-					DELTAP = 0.0; Pres_D = 0.0; u_coolant = 0.0;
+                    DELTAP = 0.0; Pres_D = 0.0; u_coolant = 0.0; ratio_dP_tower_to_rec = 0.0;
 				}
 				else
 				{
@@ -808,7 +811,7 @@ void C_mspt_receiver::call(double step /*s*/,
 		case C_csp_collector_receiver::STEADY_STATE:
 
 			m_mode = C_csp_collector_receiver::STEADY_STATE;
-			calc_pump_performance(rho_coolant, m_dot_salt_tot, f, Pres_D, W_dot_pump);
+			calc_pump_performance(rho_coolant, m_dot_salt_tot, f, Pres_D, W_dot_pump, ratio_dP_tower_to_rec);
 			q_thermal = m_dot_salt_tot*c_p_coolant*(T_salt_hot - T_salt_cold_in);
 
 			if (m_is_startup_transient && startup_low_flux)    // Incident flux is high enough for startup but not for steady state operation. Report nonzero q_thermal to allow startup
@@ -831,7 +834,7 @@ void C_mspt_receiver::call(double step /*s*/,
 		// Include here outputs that are ONLY set to zero if receiver completely off, and not attempting to start-up
 		W_dot_pump = 0.0;
 		// Pressure drops
-		DELTAP = 0.0; Pres_D = 0.0; u_coolant = 0.0;
+        DELTAP = 0.0; Pres_D = 0.0; u_coolant = 0.0; ratio_dP_tower_to_rec = 0.0;
 
 		m_startup_mode_initial = -1;
 		m_startup_mode = -1;
@@ -880,7 +883,8 @@ void C_mspt_receiver::call(double step /*s*/,
 	outputs.m_q_startup = q_startup/1.E6;					//[MW-hr] convert from W-hr
 	outputs.m_dP_receiver = DELTAP*m_n_panels / m_n_lines / 1.E5;	//[bar] receiver pressure drop, convert from Pa
 	outputs.m_dP_total = Pres_D*10.0;						//[bar] total pressure drop, convert from MPa
-	outputs.m_vel_htf = u_coolant;							//[m/s]
+    outputs.m_ratio_dP_tower_to_rec = ratio_dP_tower_to_rec;    //[-] ratio of total pressure drop that is caused by tower height
+    outputs.m_vel_htf = u_coolant;							//[m/s]
 	outputs.m_T_salt_cold = T_salt_cold_in - 273.15;			//[C] convert from K
 	outputs.m_time_required_su = time_required_su*3600.0;	//[s], convert from hr in code
 	if(q_thermal > 0.0)

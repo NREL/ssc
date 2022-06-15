@@ -184,8 +184,9 @@ protected:
     void init_mspt_common();
 
     void design_point_steady_state(double& eta_thermal_des_calc /*-*/,
-        double& W_dot_rec_pump_des_calc /*MWe*/, double& rec_pump_coef /*MWe/MWt*/,
-        double& vel_htf_des /*m/s*/);
+        double& W_dot_rec_pump_des_calc /*MWe*/,
+        double& W_dot_rec_pump__tower_only /*MWe*/, double& W_dot_rec_pump__rec_only /*MWe*/,
+        double& rec_pump_coef /*MWe/MWt*/, double& vel_htf_des /*m/s*/);
 
     bool use_previous_solution(const s_steady_state_soln& soln, const s_steady_state_soln& soln_prev);
     util::matrix_t<double> calculate_flux_profiles(double flux_sum /*W/m2*/, double dni_scale /*-*/, double plant_defocus /*-*/,
@@ -262,7 +263,9 @@ public:
 
 	virtual void converged() override;
 
-    void calc_pump_performance(double rho_f, double mdot, double ffact, double &PresDrop_calc, double &WdotPump_calc);
+    void calc_pump_performance(double rho_f, double mdot /*kg/s*/, double ffact, double& PresDrop_calc /*MPa*/, double& WdotPump_calc /*W*/);
+
+    void calc_pump_performance(double rho_f, double mdot /*kg/s*/, double ffact, double& PresDrop_calc /*MPa*/, double& WdotPump_calc /*W*/, double& ratio_dP_tower_to_rec /*-*/);
 
     double get_pumping_parasitic_coef() override;
 
