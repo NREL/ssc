@@ -216,7 +216,7 @@ TEST(save_as_JSON_test_run, pt_mechant_plant_rapidjson) {
     EXPECT_TRUE(success);
     ssc_number_t npv;
     ssc_data_get_number(data, "project_return_aftertax_npv", &npv);
-    EXPECT_NEAR(npv, -570719411, fabs(-570719411) / 1e7);
+    EXPECT_NEAR(npv, -570640203, fabs(-570640203) / 1e7);
     
     ssc_module_free(mod_pv);
     ssc_module_free(mod_grid);
