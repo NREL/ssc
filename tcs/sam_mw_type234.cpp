@@ -25,6 +25,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#include "waterprop.h"
 #include "water_properties.h"
 #include "sam_csp_util.h"
+#include "lib_weatherfile.h"
 
 using namespace std;
 
@@ -190,8 +191,9 @@ private:
 
 	double m_P_max;
 	double m_startup_energy;
-	double m_Psat_ref;
-	double m_eta_adj;
+	double m_Psat_ref_Pa;       //[Pa]
+    double m_Psat_ref_bar;      //[bar]
+	//double m_eta_adj;
 	double m_q_dot_ref;
 	double m_m_dot_ref;
 	double m_q_dot_rh_ref;
@@ -205,6 +207,12 @@ private:
 	double m_time_su;
 	double m_E_su_prev;
 	double m_E_su;
+
+    // Design-point conditions
+    double m_rh_des;      //[%]
+    double m_P_amb_des;   //[Pa]
+    double m_T_wb_des;    //[C]
+    double m_P_ND_ref, m_Q_ND_ref, m_R_ND_ref;
 
     // Cooler design - hardcoded
     double m_evap_dt_out;
@@ -246,8 +254,9 @@ public:
 		
 		m_P_max = std::numeric_limits<double>::quiet_NaN();
 		m_startup_energy = std::numeric_limits<double>::quiet_NaN();
-		m_Psat_ref = std::numeric_limits<double>::quiet_NaN();
-		m_eta_adj = std::numeric_limits<double>::quiet_NaN();
+        m_Psat_ref_Pa = std::numeric_limits<double>::quiet_NaN();
+        m_Psat_ref_bar = std::numeric_limits<double>::quiet_NaN();
+		//m_eta_adj = std::numeric_limits<double>::quiet_NaN();
 		m_q_dot_ref = std::numeric_limits<double>::quiet_NaN();
 		m_m_dot_ref = std::numeric_limits<double>::quiet_NaN();
 		m_q_dot_rh_ref = std::numeric_limits<double>::quiet_NaN();
@@ -260,6 +269,12 @@ public:
 		m_E_su_prev = std::numeric_limits<double>::quiet_NaN();
 		m_E_su = std::numeric_limits<double>::quiet_NaN();
 
+        // Design-point conditions
+        m_rh_des = 45.0;        //[%]
+        m_P_amb_des = 101325.0; //[Pa]
+        m_P_ND_ref = m_Q_ND_ref = m_R_ND_ref = std::numeric_limits<double>::quiet_NaN();
+
+        // Cooler design - hardcoded
         m_evap_dt_out = 3.0;
 	}
 
@@ -268,8 +283,6 @@ public:
 
 	virtual int init()
 	{
-
-		//double tstep = time_step();
 
 		m_P_ref			= value( P_P_REF )*1.E3;				//[kW] Reference output electric power at design condition
 		m_eta_ref		= value( P_ETA_REF );					//[-] Reference conversion efficiency at design condition		
@@ -310,6 +323,9 @@ public:
 			m_F_wcmax = max( m_F_wcmax, m_F_wc[i] );
 		}
 
+        double P_amb_des_mb = m_P_amb_des / 100.0;      //[mbar]
+        m_T_wb_des = calc_twet(m_T_amb_des, m_rh_des, P_amb_des_mb);     //[C]
+
 		//m_fcall = true;
 		m_P_max = 190.0;		//[bar]
 
@@ -343,6 +359,23 @@ public:
 
 		// Initialize Power Cycle models
 		Set_PB_ref_values();
+
+        // Call performance model at design
+        int mode_des = 2;
+        double demand_var_des = 0.0;
+        double F_wc_tou_des = m_F_wcmax;
+        double dp_rh = std::numeric_limits<double>::quiet_NaN();
+
+        double P_cycle_des, eta_des, T_cold_des, m_dot_demand_des, m_dot_makeup_des,
+            W_cool_par_des, f_hrsys_des, P_cond_des, P_turb_in_des,
+            m_dot_rh_des, P_rh_in_des, T_rh_in_des, T_rh_out_des;
+
+        DSGRankineCycle(m_T_amb_des + 273.15, m_T_wb_des + 273.15, m_P_amb_des, m_T_hot_ref, m_m_dot_ref*3600.0,
+            mode_des, demand_var_des, F_wc_tou_des, dp_rh,
+            // Outputs
+            P_cycle_des, eta_des, T_cold_des, m_dot_demand_des, m_dot_makeup_des,
+            W_cool_par_des, f_hrsys_des, P_cond_des, P_turb_in_des,
+            m_dot_rh_des, P_rh_in_des, T_rh_in_des, T_rh_out_des);
 
 		return 0;
 	}
@@ -459,6 +492,80 @@ public:
 		}
 	};
 
+    void cycle_ND(double T_hot_ND /*-*/, double P_cond /*Pa*/, double m_dot_ND /*-*/,
+        double& P_ND_tot /*-*/, double& Q_ND_tot /*-*/, double& R_ND_tot /*-*/)
+    {
+        double P_ND[3];
+        double Q_ND[3];
+        double R_ND[3] = { 0,0,0 };
+
+        // ************ Correlations ***************************
+            // Calculate the correlations 
+            // *****************************************************
+            // Power
+            // Main effects
+        P_ND[0] = CycleMap_DSG(11, 1, T_hot_ND) - 1.0;
+        P_ND[1] = CycleMap_DSG(12, 2, P_cond) - 1.0;
+        P_ND[2] = CycleMap_DSG(13, 3, m_dot_ND) - 1.0;
+
+        // Interactions
+        double P_CA = CycleMap_DSG(113, 13, T_hot_ND);
+        double P_AB = CycleMap_DSG(112, 12, P_cond);
+        double P_BC = CycleMap_DSG(123, 23, m_dot_ND);
+
+        P_ND[0] = P_ND[0] * P_AB;
+        P_ND[1] = P_ND[1] * P_BC;
+        P_ND[2] = P_ND[2] * P_CA;
+
+        // Heat
+        // Main effects
+        Q_ND[0] = CycleMap_DSG(21, 1, T_hot_ND) - 1.0;
+        Q_ND[1] = CycleMap_DSG(22, 2, P_cond) - 1.0;
+        Q_ND[2] = CycleMap_DSG(23, 3, m_dot_ND) - 1.0;
+
+        // Interactions
+        double Q_CA = CycleMap_DSG(213, 13, T_hot_ND);
+        double Q_AB = CycleMap_DSG(212, 12, P_cond);
+        double Q_BC = CycleMap_DSG(223, 23, m_dot_ND);
+
+        Q_ND[0] = Q_ND[0] * Q_AB;
+        Q_ND[1] = Q_ND[1] * Q_BC;
+        Q_ND[2] = Q_ND[2] * Q_CA;
+
+        if (m_is_rh)
+        {
+            // Reheat
+            // Main effects
+            R_ND[0] = CycleMap_DSG(31, 1, T_hot_ND) - 1.0;
+            R_ND[1] = CycleMap_DSG(32, 2, P_cond) - 1.0;
+            R_ND[2] = CycleMap_DSG(33, 3, m_dot_ND) - 1.0;
+
+            // Interactions
+            double R_CA = CycleMap_DSG(313, 13, T_hot_ND);
+            double R_AB = CycleMap_DSG(312, 12, P_cond);
+            double R_BC = CycleMap_DSG(323, 23, m_dot_ND);
+
+            R_ND[0] = R_ND[0] * R_AB;
+            R_ND[1] = R_ND[1] * R_BC;
+            R_ND[2] = R_ND[2] * R_CA;
+        }
+        // Default should be = 0 if no reheat
+
+        // Calculate the cumulative values
+        P_ND_tot = 1.0;
+        Q_ND_tot = 1.0;
+        R_ND_tot = 1.0;
+
+        // Increment main effects. MJW 8.11.2010 :: For this system, the effects are multiplicative
+        for (int i = 0; i < 3; i++)
+        {
+            P_ND_tot = P_ND_tot * (1.0 + P_ND[i]);
+            Q_ND_tot = Q_ND_tot * (1.0 + Q_ND[i]);
+            R_ND_tot = R_ND_tot * (1.0 + R_ND[i]);
+        }
+
+    }
+
 	bool Set_PB_ref_values( )
 	{
 		/*The user provides a reference efficiency, ambient temperature, and cooling system parameters. Using
@@ -472,11 +579,11 @@ public:
 		case 1:
 			if( m_tech_type != 4 )
 			{
-				water_TQ(m_dT_cw_ref + m_evap_dt_out + m_T_approach + m_T_amb_des + 273.15, 1.0, &wp);
-				m_Psat_ref = wp.pres*1000.0;		// [Pa]
+				water_TQ(m_dT_cw_ref + m_evap_dt_out + m_T_approach + m_T_wb_des + 273.15, 1.0, &wp);
+				m_Psat_ref_Pa = wp.pres*1000.0;		// [Pa]
 			}
 			else
-				m_Psat_ref = CSP::P_sat4( m_dT_cw_ref + m_evap_dt_out + m_T_approach + m_T_amb_des );
+				m_Psat_ref_Pa = CSP::P_sat4( m_dT_cw_ref + m_evap_dt_out + m_T_approach + m_T_amb_des );
 				
 			break;
 
@@ -485,16 +592,21 @@ public:
 			if( m_tech_type != 4 )
 			{
 				water_TQ(m_T_ITD_des + m_T_amb_des + 273.15, 1.0, &wp);
-				m_Psat_ref = wp.pres*1000.0;		// [Pa]
+				m_Psat_ref_Pa = wp.pres*1000.0;		// [Pa]
 			}
 			else
-				m_Psat_ref = CSP::P_sat4( m_T_ITD_des + m_T_amb_des );
+				m_Psat_ref_Pa = CSP::P_sat4( m_T_ITD_des + m_T_amb_des );
 
 			break;
 		}
-		
-		m_eta_adj = m_eta_ref/(CycleMap_DSG( 12, 2, m_Psat_ref )/CycleMap_DSG( 22, 2, m_Psat_ref ));
-		m_q_dot_ref = m_P_ref/m_eta_adj;		//[kW] The reference heat flow
+
+        
+        cycle_ND(1.0, m_Psat_ref_Pa, 1.0, m_P_ND_ref, m_Q_ND_ref, m_R_ND_ref);
+
+        
+
+		//m_eta_adj = m_eta_ref/(CycleMap_DSG( 12, 2, m_Psat_ref )/CycleMap_DSG( 22, 2, m_Psat_ref ));
+		m_q_dot_ref = m_P_ref/m_eta_ref;		//[kW] The reference heat flow
 			
 		if( m_tech_type == 5 )
 		{
@@ -521,14 +633,14 @@ public:
 				water_TP(m_T_rh_hot_ref + 273.15, m_P_rh_ref*100.0, &wp);
 				h_rh_out = wp.enth;	//[kJ/kg] LP turbine inlet conditions
 				double s_rh_out = wp.entr;	//[kJ/kg-K]
-				water_PS( m_Psat_ref/1000.0, s_rh_out, &wp );
+				water_PS( m_Psat_ref_Pa/1000.0, s_rh_out, &wp );
 				double h_LP_out_isen = wp.enth;	//[kJ/kg] LP outlet enthalpy
 				h_LP_out = h_rh_out - (h_rh_out - h_LP_out_isen)*0.88;		//[kJ/kg] Turbine outlet enthalpy										
 			}
 			else
 			{
 				m_rh_frac_ref = 0.0;
-				water_PS( m_Psat_ref*1000.0, s_t, &wp );
+				water_PS( m_Psat_ref_Pa/1000.0, s_t, &wp );
 				double h_t_outs = wp.enth;		//[kJ/kg]
 				h_t_out = h_hot_ref - (h_hot_ref - h_t_outs)*0.88;	//[kJ/kg] Turbine outlet enthlapy
 				h_rh_out = 0.0;
@@ -575,7 +687,7 @@ public:
 				h_t_out = 0.0;
 			}
 			// Design-point mass flow rate
-			m_m_dot_ref = m_q_dot_ref/( (h_rh_out - h_t_out)*m_rh_frac_ref + (h_hot_ref - h_cold_ref) );
+			m_m_dot_ref = m_q_dot_ref/( (h_rh_out - h_t_out)*m_rh_frac_ref + (h_hot_ref - h_cold_ref) );    //[kg/s]
 
 			// Design-point reheater thermal input
 			if( m_is_rh )
@@ -586,7 +698,7 @@ public:
 			m_q_dot_st_ref = m_m_dot_ref*(h_hot_ref - h_cold_ref);
 		}
 
-		m_Psat_ref = m_Psat_ref*1.E-5;		// Convert Pa to bar
+		m_Psat_ref_bar = m_Psat_ref_Pa*1.E-5;		// Convert Pa to bar
 
 		return true;
 	}
@@ -724,7 +836,10 @@ public:
 
 	}
 
-	bool DSGRankineCycle( double T_db, double T_wb, double P_amb, double T_hot, double m_dot_st, int mode, double demand_var, double F_wc_tou, double dp_rh, double & P_cycle, double & eta, double & T_cold,
+	bool DSGRankineCycle( double T_db /*K*/, double T_wb /*K*/, double P_amb /*Pa*/, double T_hot /*C*/,
+                            double m_dot_st /*kg/hr*/, int mode, double demand_var, double F_wc_tou, double dp_rh,
+                            // Outputs
+                            double& P_cycle, double& eta, double& T_cold,
 							double & m_dot_demand, double & m_dot_makeup, double & W_cool_par, double & f_hrsys, double & P_cond, double & P_turb_in,
 							double & m_dot_rh, double & P_rh_in, double & T_rh_in, double & T_rh_out )
 	{
@@ -735,11 +850,11 @@ public:
 
 		// Calculate the reheater and boiler pressures based on the mass flow fraction
 		if( m_is_rh )
-			P_rh_in = pow( ( pow(m_Psat_ref,2) + pow(max(0.5,m_dot_ND),2)*(pow(m_P_rh_ref,2)-pow(m_Psat_ref,2)) ), 0.5 );	//Patnode thesis, p. 69
+			P_rh_in = pow( ( pow(m_Psat_ref_bar,2) + pow(max(0.5,m_dot_ND),2)*(pow(m_P_rh_ref,2)-pow(m_Psat_ref_bar,2)) ), 0.5 );	//Patnode thesis, p. 69
 		else
 		{
-			P_rh_in = m_Psat_ref;
-			m_P_rh_ref = m_Psat_ref;
+			P_rh_in = m_Psat_ref_bar;
+			m_P_rh_ref = m_Psat_ref_bar;
 		}
         /* MW 2015.4.27
         For fixed pressure applications, I think we can comment out the sliding pressure calculation and just set to the design
@@ -784,20 +899,20 @@ public:
 		}
 
 		// Do an initial cooling tower call to estimate the turbine back pressure. 
-		double q_reject_est = m_q_dot_ref*1000.0*(1.0-m_eta_adj)*m_dot_ND*T_hot_ND;
+		double q_reject_est = m_q_dot_ref*1000.0*(1.0-m_eta_ref)*m_dot_ND*T_hot_ND;
 
 		double T_cond, m_dot_air, W_cool_parhac, W_cool_parhwc;
 		switch( m_CT )
 		{
 		case 1:
-			CSP::evap_tower( m_tech_type, m_evap_dt_out, m_P_cond_min, m_n_pl_inc, m_dT_cw_ref, m_T_approach, m_P_ref*1000.0, m_eta_adj, T_db, T_wb, P_amb, q_reject_est, m_dot_makeup, W_cool_par, P_cond, T_cond, f_hrsys );
+			CSP::evap_tower( m_tech_type, m_evap_dt_out, m_P_cond_min, m_n_pl_inc, m_dT_cw_ref, m_T_approach, m_P_ref*1000.0, m_eta_ref, T_db, T_wb, P_amb, q_reject_est, m_dot_makeup, W_cool_par, P_cond, T_cond, f_hrsys );
 			break;
 		case 2:
-			CSP::ACC( m_tech_type, m_P_cond_min, m_T_amb_des, m_Psat_ref, m_n_pl_inc, m_T_ITD_des, m_P_cond_ratio, m_P_ref*1000.0, m_eta_adj, T_db, P_amb, q_reject_est, m_dot_air, W_cool_par, P_cond, T_cond, f_hrsys );
+			CSP::ACC( m_tech_type, m_P_cond_min, m_T_amb_des, m_Psat_ref_Pa, m_n_pl_inc, m_T_ITD_des, m_P_cond_ratio, m_P_ref*1000.0, m_eta_ref, T_db, P_amb, q_reject_est, m_dot_air, W_cool_par, P_cond, T_cond, f_hrsys );
 			m_dot_makeup = 0.0;
 			break;
 		case 3:
-			CSP::HybridHR( m_tech_type, m_P_cond_min, m_n_pl_inc, F_wc_tou, m_F_wcmax, m_F_wcmin, m_T_ITD_des, m_T_approach, m_dT_cw_ref, m_P_cond_ratio, m_P_ref*1000.0, m_eta_adj, T_db, T_wb, P_amb, q_reject_est, m_dot_makeup,
+			CSP::HybridHR( m_tech_type, m_P_cond_min, m_n_pl_inc, F_wc_tou, m_F_wcmax, m_F_wcmin, m_T_ITD_des, m_T_approach, m_dT_cw_ref, m_P_cond_ratio, m_P_ref*1000.0, m_eta_ref, T_db, T_wb, P_amb, q_reject_est, m_dot_makeup,
 							W_cool_parhac, W_cool_parhwc, W_cool_par, P_cond, T_cond, f_hrsys );
 			break;
 		}
@@ -822,9 +937,6 @@ public:
 		}
 
 		double P_dem_ND;
-		double P_ND[3];
-		double Q_ND[3];
-		double R_ND[3] = {0,0,0};
 		double R_ND_tot;
 
 		double P_cond_guess = 0.0;
@@ -843,70 +955,13 @@ public:
 					m_dot_ND = P_dem_ND;		// An initial guess (function of power)
 			}
 
-			// ************ Correlations ***************************
-			// Calculate the correlations 
-			// *****************************************************
-			// Power
-			// Main effects
-			P_ND[0] = CycleMap_DSG( 11, 1, T_hot_ND ) - 1.0;
-			P_ND[1] = CycleMap_DSG( 12, 2, P_cond ) - 1.0;
-			P_ND[2] = CycleMap_DSG( 13, 3, m_dot_ND ) - 1.0;
+            double P_ND_tot, Q_ND_tot;
+            cycle_ND(T_hot_ND, P_cond, m_dot_ND,
+                P_ND_tot, Q_ND_tot, R_ND_tot);
 
-			// Interactions
-			double P_CA = CycleMap_DSG( 113, 13, T_hot_ND );
-			double P_AB = CycleMap_DSG( 112, 12, P_cond );
-			double P_BC = CycleMap_DSG( 123, 23, m_dot_ND );
-
-			P_ND[0] = P_ND[0]*P_AB;
-			P_ND[1] = P_ND[1]*P_BC;
-			P_ND[2] = P_ND[2]*P_CA;
-
-			// Heat
-			// Main effects
-			Q_ND[0] = CycleMap_DSG( 21, 1, T_hot_ND ) - 1.0;
-			Q_ND[1] = CycleMap_DSG( 22, 2, P_cond ) - 1.0;
-			Q_ND[2] = CycleMap_DSG( 23, 3, m_dot_ND ) - 1.0;
-
-			// Interactions
-			double Q_CA = CycleMap_DSG( 213, 13, T_hot_ND );
-			double Q_AB = CycleMap_DSG( 212, 12, P_cond );
-			double Q_BC = CycleMap_DSG( 223, 23, m_dot_ND );
-
-			Q_ND[0] = Q_ND[0]*Q_AB;
-			Q_ND[1] = Q_ND[1]*Q_BC;
-			Q_ND[2] = Q_ND[2]*Q_CA;
-
-			if( m_is_rh )
-			{
-				// Reheat
-				// Main effects
-				R_ND[0] = CycleMap_DSG( 31, 1, T_hot_ND ) - 1.0;
-				R_ND[1] = CycleMap_DSG( 32, 2, P_cond ) - 1.0;
-				R_ND[2] = CycleMap_DSG( 33, 3, m_dot_ND ) - 1.0;
-
-				// Interactions
-				double R_CA = CycleMap_DSG( 313, 13, T_hot_ND );
-				double R_AB = CycleMap_DSG( 312, 12, P_cond );
-				double R_BC = CycleMap_DSG( 323, 23, m_dot_ND );
-
-				R_ND[0] = R_ND[0]*R_AB;
-				R_ND[1] = R_ND[1]*R_BC;
-				R_ND[2] = R_ND[2]*R_CA;
-			}
-			// Default should be = 0 if no reheat
-
-			// Calculate the cumulative values
-			double P_ND_tot = 1.0;
-			double Q_ND_tot = 1.0;
-			R_ND_tot = 1.0;
-
-			// Increment main effects. MJW 8.11.2010 :: For this system, the effects are multiplicative
-			for( int i = 0; i < 3; i++ )
-			{
-				P_ND_tot = P_ND_tot * (1.0 + P_ND[i]);
-				Q_ND_tot = Q_ND_tot * (1.0 + Q_ND[i]);
-				R_ND_tot = R_ND_tot * (1.0 + R_ND[i]);
-			}
+            P_ND_tot = P_ND_tot / m_P_ND_ref;
+            Q_ND_tot = Q_ND_tot / m_Q_ND_ref;
+            R_ND_tot = R_ND_tot / m_R_ND_ref;
 
 			// Calculate the output values:
 			P_cycle = P_ND_tot * m_P_ref;
@@ -936,13 +991,13 @@ public:
 				switch( m_CT )
 				{
 				case 1:
-					CSP::evap_tower( m_tech_type, m_evap_dt_out, m_P_cond_min, m_n_pl_inc, m_dT_cw_ref, m_T_approach, m_P_ref*1000.0, m_eta_adj, T_db, T_wb, P_amb, q_reject, m_dot_makeup, W_cool_par, P_cond_guess, T_cond, f_hrsys );
+					CSP::evap_tower( m_tech_type, m_evap_dt_out, m_P_cond_min, m_n_pl_inc, m_dT_cw_ref, m_T_approach, m_P_ref*1000.0, m_eta_ref, T_db, T_wb, P_amb, q_reject, m_dot_makeup, W_cool_par, P_cond_guess, T_cond, f_hrsys );
 					break;
 				case 2:
-					CSP::ACC( m_tech_type, m_P_cond_min, m_T_amb_des, m_Psat_ref, m_n_pl_inc, m_T_ITD_des, m_P_cond_ratio, m_P_ref*1000.0, m_eta_adj, T_db, P_amb, q_reject, m_dot_air, W_cool_par, P_cond_guess, T_cond, f_hrsys );
+					CSP::ACC( m_tech_type, m_P_cond_min, m_T_amb_des, m_Psat_ref_Pa, m_n_pl_inc, m_T_ITD_des, m_P_cond_ratio, m_P_ref*1000.0, m_eta_ref, T_db, P_amb, q_reject, m_dot_air, W_cool_par, P_cond_guess, T_cond, f_hrsys );
 					break;
 				case 3:
-					CSP::HybridHR( m_tech_type, m_P_cond_min, m_n_pl_inc, F_wc_tou, m_F_wcmax, m_F_wcmin, m_T_ITD_des, m_T_approach, m_dT_cw_ref, m_P_cond_ratio, m_P_ref*1000.0, m_eta_adj, T_db, T_wb,
+					CSP::HybridHR( m_tech_type, m_P_cond_min, m_n_pl_inc, F_wc_tou, m_F_wcmax, m_F_wcmin, m_T_ITD_des, m_T_approach, m_dT_cw_ref, m_P_cond_ratio, m_P_ref*1000.0, m_eta_ref, T_db, T_wb,
 										P_amb, q_reject, m_dot_makeup, W_cool_parhac, W_cool_parhwc, W_cool_par, P_cond_guess, T_cond, f_hrsys );
 					break;
 				}
@@ -1009,27 +1064,17 @@ public:
 
 	virtual int call(double /*time*/, double step, int ncall){
 		
-		int mode = (int)value( I_MODE );					//[-] Cycle part load control... from plant controller
+		int mode = (int)value( I_MODE );	        //[-] Cycle part load control... from plant controller
 		double T_hot = value( I_T_HOT );			//[C] Hot inlet temperature
 		double m_dot_st = value( I_M_DOT_ST );		//[kg/s] Mass flow rate to HP turbine
 		double T_wb = value( I_T_WB )+273.15;		//[K] Wet bulb temperature, convert from C
 		double demand_var = value( I_DEMAND_VAR );	//[?] Control signal indicating operational mode - only used when mode == 1
 		m_standby_control = (int)value( I_STANDBY_CONTROL);	//[-] Control signal indicating standby mode
 		double T_db = value( I_T_DB )+273.15;		//[K] Ambient dry bulb temperature, convert from C
-		//double P_amb = value( I_P_AMB )*101325.0;	//[Pa] Ambient pressure, convert from bar
 		double P_amb = value( I_P_AMB )*100.0;		//[Pa] Ambient pressure, convert from mbar
-		//int tou = value( I_TOU );					//[-] Current Time-Of-Use period
 		int tou = (int)value(I_TOU) - 1;			// control value between 1 & 9, have to change to 0-8 for array index
-		//double rh = value( I_RH )/100.0;			//[-] Relative humidity of the ambient air, convert from %
 
 		double F_wc_tou = m_F_wc[tou];				//[-] Hybrid fraction at current Time-Of-Use period
-
-		//*********************************************
-		// Values for TRNSYS timestep comparison
-		//*********************************************
-		/*m_standby_control_prev = 1;
-		m_time_su_prev = 0.0;
-		m_E_su_prev = 0.0;*/
 
 		double f_rec_su = 1.0;
 		if(m_tech_type == 5)
