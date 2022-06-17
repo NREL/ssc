@@ -679,7 +679,7 @@ double CGeothermalAnalyzer::GetPumpWorkWattHrPerLb(void)
         dInjectionPumpPower = geothermal::pumpWorkInWattHr(1, GetInjectionPumpWorkft(), mo_geo_in.md_GFPumpEfficiency, ms_ErrorString); // ft-lbs/hr
 	}
 
-    double dProductionPumpPower = geothermal::pumpWorkInWattHr(1, pumpHeadFt(), mo_geo_in.md_GFPumpEfficiency, ms_ErrorString);
+    double dProductionPumpPower = geothermal::pumpWorkInWattHr(1, GetProductionPumpWorkft(dInjectionPumpPower), mo_geo_in.md_GFPumpEfficiency, ms_ErrorString);
     //double dProductionPumpPower = geothermal::pumpWorkInWattHr(1,GetProductionPumpWorkft(GetInjectionPumpWorkft()), mo_geo_in.md_GFPumpEfficiency, ms_ErrorString);
 
     double check = GetProductionPumpWorkft(dInjectionPumpPower);
@@ -703,7 +703,7 @@ double CGeothermalAnalyzer::GetInjectionPumpWorkft(void)
     double flow = mo_geo_in.md_ProductionFlowRateKgPerS / mo_geo_in.md_RatioInjectionToProduction; //kg/s
     double flow_lbh = flow * 2.20462 * 3600;
     //Upper interval
-    double D_well = mo_geo_in.md_DiameterPumpCasingInches - 0.4375 * 2;
+    double D_well = mo_geo_in.md_DiameterInjectionWellInches;
     double D_well_ft = D_well / 12;
     double A = 3.1415 * pow(D_well_ft, 2) / 4;
     double L_int = 0.8 * mo_geo_in.md_ResourceDepthM; //Length interval (m), how is this calculated?
@@ -729,17 +729,21 @@ double CGeothermalAnalyzer::GetInjectionPumpWorkft(void)
     double friction_head_loss = (f / D_well_ft) * pow(vel_well, 2) / (2 * 32.174);
     double friction_head_loss_ft = friction_head_loss * L_int * physics::FT_PER_METER;
     double friction_head_psid = friction_head_loss_ft * rho_sat * rho_correction / 144;
-    double P_upper_bottom_interval = mp_geo_out->md_PressureLPFlashPSI + rho_sat * rho_correction * physics::FT_PER_METER * L_int / 144 - friction_head_psid;
+    double P_start = 0;
+    if (mo_geo_in.me_ct == FLASH) P_start = mp_geo_out->md_PressureLPFlashPSI;
+    else P_start = geothermal::oPC.evaluate((GetResourceTemperatureC() - dT_dL * GetResourceDepthM()) * 1.8 + 32) + physics::mBarToPSI(mo_geo_in.md_ExcessPressureBar*1000) - mo_geo_in.md_PressureChangeAcrossSurfaceEquipmentPSI;
+    double P_upper_bottom_interval = P_start + rho_sat * rho_correction * physics::FT_PER_METER * L_int / 144 - friction_head_psid;
 
     //Injection interval
     flow = mo_geo_in.md_ProductionFlowRateKgPerS / mo_geo_in.md_RatioInjectionToProduction; //kg/s
     flow_lbh = flow * 2.20462 * 3600;
     //Upper interval
-    D_well = mo_geo_in.md_DiameterInjectionWellInches;
+    D_well = mo_geo_in.md_DiameterPumpCasingInches - 0.4 * 2;
     D_well_ft = D_well / 12;
     A = 3.1415 * pow(D_well_ft, 2) / 4;
     L_int = 0.2 * mo_geo_in.md_ResourceDepthM; //Length interval (m), how is this calculated?
     surf_rough_casing = 0.02; //different for open hole vs. slotted liner
+    if (mo_geo_in.md_InjectionWellType == 1) surf_rough_casing = 0.001;
     //dT_dL = (mo_geo_in.md_dtProdWell * 1.8) / (physics::FT_PER_METER * mo_geo_in.md_ResourceDepthM);
     T_star = InjectionTemperatureC() + dT_dL * mo_geo_in.md_RatioInjectionToProduction * (0.5 * L_int + (mo_geo_in.md_ResourceDepthM - L_int));
     P_sat = geothermal::oPC.evaluate(T_star * 1.8 + 32);
@@ -759,6 +763,7 @@ double CGeothermalAnalyzer::GetInjectionPumpWorkft(void)
     c = -2 * log10((surf_rough_casing / D_well_ft) / 3.7 + 2.51 * v / Re_well);
     f = pow((a - pow((v - a), 2) / (c - 2 * v + a)), -2);
     friction_head_loss = (f / D_well_ft) * pow(vel_well, 2) / (2 * 32.174);
+    if (mo_geo_in.me_ct == BINARY) friction_head_loss = friction_head_loss * 1.0 / 3.0;
     friction_head_loss_ft = friction_head_loss * L_int * physics::FT_PER_METER;
     friction_head_psid = friction_head_loss_ft * rho_sat * rho_correction / 144;
     double P_bottomhole = P_upper_bottom_interval + rho_sat * rho_correction * physics::FT_PER_METER * L_int / 144 - friction_head_psid;
@@ -783,18 +788,20 @@ double CGeothermalAnalyzer::GetProductionPumpWorkft(double injection_pressure)
     double flow = mo_geo_in.md_ProductionFlowRateKgPerS; //kg/s
     double flow_lbh = flow * 2.20462 * 3600;
     //Upper interval
-    double D_well = mo_geo_in.md_DiameterInjectionWellInches;
+    double D_well = mo_geo_in.md_DiameterPumpCasingInches - 2 * 0.4;
     double D_well_ft = D_well / 12;
     double A = 3.1415 * pow(D_well_ft, 2) / 4;
     double L_int = 0.2 * mo_geo_in.md_ResourceDepthM; //Length interval (m), how is this calculated?
-    double surf_rough_casing = 0.001; //different for open hole vs. slotted liner
+    double surf_rough_casing = 0.02; //different for open hole vs. slotted liner
+    if (mo_geo_in.md_ProductionWellType == 1) surf_rough_casing = 0.001;
     double dT_dL = (mo_geo_in.md_dtProdWell) / (mo_geo_in.md_ResourceDepthM);
     double T_star = GetResourceTemperatureC() - dT_dL * (L_int) * 0.5;
     double P_sat = geothermal::oPC.evaluate(T_star * 1.8 + 32);
     double rho_sat = 1 / geothermal::oSVC.evaluate(T_star * 1.8 + 32);
     double viscosity = 407.22 * pow((T_star * 1.8 + 32), -1.194) / 3600;
     double rho_head = L_int * 3.28084 * rho_sat / 144;
-    double P_ratio = 0.5 * (rho_head + mp_geo_out->md_PressureLPFlashPSI) / P_sat;
+    //double P_ratio = 0.5 * (rho_head + mp_geo_out->md_PressureLPFlashPSI) / P_sat;
+    double P_ratio = (Prod_well_minus_bottomhole - 0.5 * rho_sat * L_int * physics::FT_PER_METER / 144) / P_sat;
     double rho_correction = 1 + (7.15037e-19 * pow(physics::CelciusToFarenheit(T_star), 5.91303)) * (P_ratio - 1);
     double mu_correction = 1 + (4.02401e-18 * pow(physics::CelciusToFarenheit(T_star), 5.736882)) * (P_ratio - 1);
     double flow_cubic = flow_lbh / (3600 * rho_sat * rho_correction);
@@ -806,7 +813,7 @@ double CGeothermalAnalyzer::GetProductionPumpWorkft(double injection_pressure)
     double v = -2 * log10((surf_rough_casing / D_well_ft) / 3.7 + 2.51 * a / Re_well);
     double c = -2 * log10((surf_rough_casing / D_well_ft) / 3.7 + 2.51 * v / Re_well);
     double f = pow((a - pow((v - a), 2) / (c - 2 * v + a)), -2);
-    double friction_head_loss = (f / D_well_ft) * pow(vel_well, 2) / (2 * 32.174);
+    double friction_head_loss = (f / D_well_ft) * pow(vel_well, 2) / (2 * 32.174) * 1/3;
     double friction_head_loss_ft = friction_head_loss * L_int * physics::FT_PER_METER;
     double friction_head_psid = friction_head_loss_ft * rho_sat * rho_correction / 144;
     double P_upper_bottom_interval = Prod_well_minus_bottomhole - rho_sat * rho_correction * physics::FT_PER_METER * L_int / 144 - friction_head_psid;
@@ -815,18 +822,19 @@ double CGeothermalAnalyzer::GetProductionPumpWorkft(double injection_pressure)
     flow = mo_geo_in.md_ProductionFlowRateKgPerS; //kg/s
     flow_lbh = flow * 2.20462 * 3600;
     //Upper interval
-    D_well = mo_geo_in.md_DiameterPumpCasingInches - 0.4375 * 2;
+    D_well = mo_geo_in.md_DiameterProductionWellInches;
     D_well_ft = D_well / 12;
     A = 3.1415 * pow(D_well_ft, 2) / 4;
     L_int = 0.8 * mo_geo_in.md_ResourceDepthM; //Length interval (m), how is this calculated?
     surf_rough_casing = 0.00015; //different for open hole vs. slotted liner
     //dT_dL = (mo_geo_in.md_dtProdWell * 1.8) / (physics::FT_PER_METER * mo_geo_in.md_ResourceDepthM);
-    T_star = GetResourceTemperatureC() + dT_dL  * (0.5 * L_int + (mo_geo_in.md_ResourceDepthM - L_int));
+    T_star = T_star - dT_dL * (0.5 * L_int);
     P_sat = geothermal::oPC.evaluate(T_star * 1.8 + 32);
     rho_sat = 1 / geothermal::oSVC.evaluate(T_star * 1.8 + 32);
     viscosity = 407.22 * pow((T_star * 1.8 + 32), -1.194) / 3600;
     rho_head = L_int * 3.28084 * rho_sat / 144;
-    P_ratio = (0.5 * rho_head + P_upper_bottom_interval) / P_sat;
+    //P_ratio = (0.5 * rho_head + P_upper_bottom_interval) / P_sat;
+    P_ratio = 0.5 * (P_upper_bottom_interval + P_sat) / P_sat;
     rho_correction = 1 + (7.15037e-19 * pow(physics::CelciusToFarenheit(T_star), 5.91303)) * (P_ratio - 1);
     mu_correction = 1 + (4.02401e-18 * pow(physics::CelciusToFarenheit(T_star), 5.736882)) * (P_ratio - 1);
     flow_cubic = flow_lbh / (3600 * rho_sat * rho_correction);
@@ -841,26 +849,26 @@ double CGeothermalAnalyzer::GetProductionPumpWorkft(double injection_pressure)
     friction_head_loss = (f / D_well_ft) * pow(vel_well, 2) / (2 * 32.174);
     friction_head_loss_ft = friction_head_loss * L_int * physics::FT_PER_METER;
     friction_head_psid = friction_head_loss_ft * rho_sat * rho_correction / 144;
-    double P_pump_suction = geothermal::oPC.evaluate(physics::CelciusToFarenheit(GetResourceTemperatureC() - dT_dL * GetResourceDepthM())) +  physics::mBarToPSI(mo_geo_in.md_ExcessPressureBar);
+    double P_pump_suction = geothermal::oPC.evaluate(physics::CelciusToFarenheit(GetResourceTemperatureC() - dT_dL * GetResourceDepthM())) +  physics::mBarToPSI(mo_geo_in.md_ExcessPressureBar*1000);
     double P_available = P_upper_bottom_interval - P_pump_suction;
     double P_available_psf = P_available * 144;
-    double P_available_head = P_available_psf / rho_sat / (1 + friction_head_loss);
+    double P_available_head = P_available_psf / (rho_sat*rho_correction) / (1 + friction_head_loss);
 
     //Flashing in well bore
     double Pres_avail_before_flashing = P_upper_bottom_interval - P_sat;
-    double head_avail = ((Pres_avail_before_flashing * 144) / rho_sat) / (1 + friction_head_loss);
-    double depth_to_liner = (GetResourceDepthM() - L_int) * physics::FT_PER_METER;
+    double head_avail = ((Pres_avail_before_flashing * 144) / (rho_sat*rho_correction)) / (1 + friction_head_loss);
+    double depth_to_liner = (L_int) * physics::FT_PER_METER;
     double pump_setting = depth_to_liner - P_available_head;
     flow = mo_geo_in.md_ProductionFlowRateKgPerS; //kg/s
     flow_lbh = flow * 2.20462 * 3600;
     //Upper interval
-    D_well = mo_geo_in.md_DiameterInjectionWellInches;
+    D_well = mo_geo_in.md_DiameterPumpCasingInches - 0.944;
     D_well_ft = D_well / 12;
     A = 3.1415 * pow(D_well_ft, 2) / 4;
     L_int = 0.2 * mo_geo_in.md_ResourceDepthM; //Length interval (m), how is this calculated?
-    surf_rough_casing = 0.02; //different for open hole vs. slotted liner
+    surf_rough_casing = 0.00015; //different for open hole vs. slotted liner
     //dT_dL = (mo_geo_in.md_dtProdWell * 1.8) / (physics::FT_PER_METER * mo_geo_in.md_ResourceDepthM);
-    T_star = InjectionTemperatureC() + dT_dL * mo_geo_in.md_RatioInjectionToProduction * (0.5 * L_int + (mo_geo_in.md_ResourceDepthM - L_int));
+    T_star = T_star;
     P_sat = geothermal::oPC.evaluate(T_star * 1.8 + 32);
     rho_sat = 1 / geothermal::oSVC.evaluate(T_star * 1.8 + 32);
     viscosity = 407.22 * pow((T_star * 1.8 + 32), -1.194) / 3600;
@@ -878,7 +886,7 @@ double CGeothermalAnalyzer::GetProductionPumpWorkft(double injection_pressure)
     c = -2 * log10((surf_rough_casing / D_well_ft) / 3.7 + 2.51 * v / Re_well);
     f = pow((a - pow((v - a), 2) / (c - 2 * v + a)), -2);
     friction_head_loss = (f / D_well_ft) * pow(vel_well, 2) / (2 * 32.174);
-    friction_head_loss_ft = friction_head_loss * L_int * physics::FT_PER_METER;
+    friction_head_loss_ft = friction_head_loss * pump_setting;
     friction_head_psid = friction_head_loss_ft * rho_sat * rho_correction / 144;
     double pump_lift = pump_setting + friction_head_loss_ft;
     double ideal_pumping_power = flow * pump_lift * 1 / physics::FT_PER_METER; //ft-lb/h
@@ -887,7 +895,7 @@ double CGeothermalAnalyzer::GetProductionPumpWorkft(double injection_pressure)
     double pumping_power_hp = ideal_pumping_power_hp / mo_geo_in.md_GFPumpEfficiency;
     double pumping_power_ft = pumping_power_hp * (60 * 33000); //ft
     
-    return pumping_power_ft;
+    return pump_lift;
 }
 
 
@@ -1021,7 +1029,7 @@ double CGeothermalAnalyzer::InjectionTemperatureC() // calculate injection tempe
 
 double CGeothermalAnalyzer::InjectionTemperatureF(void)
 {
-	double dInjectionTempForResource = (mo_geo_in.me_rt == EGS) ? geothermal::TEMPERATURE_EGS_INJECTIONC : InjectionTemperatureC();	// D15 - degrees C
+	double dInjectionTempForResource = InjectionTemperatureC();	// D15 - degrees C
 
 	return physics::CelciusToFarenheit(dInjectionTempForResource);	// G15 - degrees F
 }
