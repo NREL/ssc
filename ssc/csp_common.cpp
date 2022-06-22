@@ -113,18 +113,16 @@ bool solarpilot_invoke::run(std::shared_ptr<weather_data_provider> wdata)
 	hf->n_cant_x.val = m_cmod->as_integer("n_facet_x");
 	hf->n_cant_y.val = m_cmod->as_integer("n_facet_y");
 
-    string cant_choices[] = {"No canting","On-axis at slant","On-axis, user-defined","Off-axis, day and hour","User-defined vector"};
-
+    // Cant map between SAM UI choices and SolarPILOT cant methods 
 	int cmap[5];
-    cmap[0] = var_heliostat::CANT_METHOD::NO_CANTING;
-    cmap[1] = var_heliostat::CANT_METHOD::ONAXIS_AT_SLANT;
-    cmap[2] = cmap[3] = cmap[4] = var_heliostat::CANT_METHOD::OFFAXIS_DAY_AND_HOUR;
+    cmap[AutoPilot::API_CANT_TYPE::NONE] = var_heliostat::CANT_METHOD::NO_CANTING;
+    cmap[AutoPilot::API_CANT_TYPE::ON_AXIS] = var_heliostat::CANT_METHOD::ONAXIS_AT_SLANT;
+    cmap[AutoPilot::API_CANT_TYPE::EQUINOX] = var_heliostat::CANT_METHOD::OFFAXIS_DAY_AND_HOUR;
+    cmap[AutoPilot::API_CANT_TYPE::SOLSTICE_SUMMER] = var_heliostat::CANT_METHOD::OFFAXIS_DAY_AND_HOUR;
+    cmap[AutoPilot::API_CANT_TYPE::SOLSTICE_WINTER] = var_heliostat::CANT_METHOD::OFFAXIS_DAY_AND_HOUR;
 
 	int cant_type = m_cmod->as_integer("cant_type");
-
-	//hf->cant_method.val = cmap[ cant_type ];       //Convert to the Heliostat::CANT_METHOD list
-    //hf->cant_method.combo_select( cant_choices[cmap[cant_type]] );
-    hf->cant_method.combo_select( cant_choices[cant_type] );
+    hf->cant_method.combo_select_by_mapval(cmap[cant_type]);
     switch (cant_type)
 {
     case AutoPilot::API_CANT_TYPE::NONE:

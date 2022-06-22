@@ -14,6 +14,7 @@
 #include "../tcs/csp_solver_two_tank_tes.h"
 #include "../tcs/csp_solver_tou_block_schedules.h"
 #include "../tcs/csp_dispatch.h"
+
 /**
  * This class tests the C_csp_weatherreader's functions and ensures that the interface is the
  * same using weatherfile & weatherdata as weather inputs. The test also tests for variable
@@ -247,7 +248,7 @@ protected:
         sim_setup.m_sim_time_start = 0;
         sim_setup.m_sim_time_start = 31536000;
         sim_setup.m_report_step = 3600.0;
-        solver = new C_csp_solver(wr, *cr, *pc, tes, tou, dispatch, system, NULL, ssc_cmod_update, (void*)0);
+        solver = new C_csp_solver(wr, *cr, *pc, tes, tou, dispatch, system, NULL, nullptr, ssc_cmod_update, (void*)0);
     }
 };
 

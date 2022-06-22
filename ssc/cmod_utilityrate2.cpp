@@ -1795,6 +1795,6 @@ public:
 
 };
 
-DEFINE_MODULE_ENTRY( utilityrate2, "Complex utility rate structure net revenue calculator OpenEI Version 2", 1 );
+DEFINE_MODULE_ENTRY( utilityrate2, "Electricity bill calculator based on OpenEI Version 2 (deprecated)", 1 );
 
 

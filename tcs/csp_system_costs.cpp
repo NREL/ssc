@@ -49,6 +49,10 @@ void N_mspt::calculate_mspt_etes_costs(
     double Q_storage,				//[MWt-hr] Storage capacity
     double tes_spec_cost,			//[$/kWt-hr] TES specific cost
 
+    // Cold Temp TES
+    double Q_CT_tes,                //[MWt-hr] Cold Temp Storage capacity
+    double CT_tes_spec_cost,        //[$/kWt-hr] CT TES specific cost
+
     // Power Cycle
     double W_dot_design,			//[MWe] Power cycle design output (w/o subtracting plant parasitics)
     double power_cycle_spec_cost,	//[$/kWe] Power cycle specific cost
@@ -96,6 +100,7 @@ void N_mspt::calculate_mspt_etes_costs(
     double& tower_cost,
     double& receiver_cost,
     double& tes_cost,
+    double& CT_tes_cost,
     double& power_cycle_cost,
     double& heater_cost,
     double& rad_field_totcost,
@@ -128,6 +133,9 @@ void N_mspt::calculate_mspt_etes_costs(
     tes_cost =
         N_mspt::tes_cost(Q_storage, tes_spec_cost);
 
+    CT_tes_cost =
+        N_mspt::tes_cost(Q_CT_tes, CT_tes_spec_cost);
+
     power_cycle_cost =
         N_mspt::power_cycle_cost(W_dot_design, power_cycle_spec_cost);
 
@@ -156,6 +164,7 @@ void N_mspt::calculate_mspt_etes_costs(
             tower_cost,
             receiver_cost,
             tes_cost,
+            CT_tes_cost,
             power_cycle_cost,
             heater_cost,
             rad_field_totcost,
@@ -191,6 +200,180 @@ void N_mspt::calculate_mspt_etes_costs(
         N_mspt::estimated_installed_cost_per_cap(total_installed_cost, plant_net_capacity);
 
     return;
+}
+void N_mspt::calculate_mspt_etes__no_rad_cool__costs(
+    // Heliostat Field
+    double A_sf_refl,				//[m^2] Total solar field reflective area
+    double site_improv_spec_cost,	//[$/m^2_reflect] Site improvement specific cost
+    double heliostat_spec_cost,		//[$/m^2_reflect] Heliostat specific cost
+    double heliostat_fixed_cost,	//[$] Heliostat fixed cost
+
+    // Tower
+    double h_tower,					//[m] Tower height
+    double h_rec,					//[m] Receiver height
+    double h_helio,					//[m] Heliostat height
+    double tower_fixed_cost,		//[$] Tower fixed cost
+    double tower_cost_scaling_exp,	//[-] Tower cost scaling exponent
+
+    // Receiver
+    double A_rec,					//[m^2] Receiver area
+    double rec_ref_cost,			//[$] Receiver reference cost
+    double A_rec_ref,				//[m^2] Receiver reference area
+    double rec_cost_scaling_exp,	//[-] Receiver cost scaling exponent
+
+    // TES
+    double Q_storage,				//[MWt-hr] Storage capacity
+    double tes_spec_cost,			//[$/kWt-hr] TES specific cost
+
+    // Cold Temp TES
+    double Q_CT_tes,                //[MWt-hr] Cold Temp Storage capacity
+    double CT_tes_spec_cost,        //[$/kWt-hr] CT TES specific cost
+
+    // Power Cycle
+    double W_dot_design,			//[MWe] Power cycle design output (w/o subtracting plant parasitics)
+    double power_cycle_spec_cost,	//[$/kWe] Power cycle specific cost
+
+    // Heater
+    double q_dot_heater_design,     //[MWt] Heater design thermal power
+    double heater_spec_cost,        //[$/kWe] Heater specific cost
+
+    // Balance Of Plant
+    double bop_spec_cost,			//[$/kWe] BOP specific cost
+
+    // Fossil Backup Cost
+    double fossil_backup_spec_cost,	//[$/kWe] Fossil backup specific cost
+
+    // Contingency Cost
+    double contingency_rate,		//[%] Of precontingency direct capital costs
+
+    // Indirect Capital Costs
+    double total_land_area,			    //[acres]
+    double plant_net_capacity,		    //[MWe] Nameplate plant capacity (Net cycle output less estimated parasitics)
+    double EPC_land_spec_cost,		    //[$/acre]
+    double EPC_land_perc_direct_cost,	//[%] Of calculated direct cost
+    double EPC_land_per_power_cost,		//[$/We] Of plant net capacity
+    double EPC_land_fixed_cost,		    //[$]
+    double total_land_spec_cost,	    //[$/acre]
+    double total_land_perc_direct_cost,	//[%] Of calculated direct cost
+    double total_land_per_power_cost,	//[$/We] Of plant net capacity
+    double total_land_fixed_cost,	    //[$]
+    double sales_tax_basis,			    //[%] Of total direct cost
+    double sales_tax_rate,			    //[%]
+
+    // Calculated Outputs
+    double& site_improvement_cost,                  //[$]
+    double& heliostat_cost,                         //[$]
+    double& tower_cost,                             //[$]
+    double& receiver_cost,                          //[$]
+    double& tes_cost,                               //[$]
+    double& CT_tes_cost,                            //[$]
+    double& power_cycle_cost,                       //[$]
+    double& heater_cost,                            //[$]
+    double& bop_cost,                               //[$]
+    double& fossil_backup_cost,                     //[$]
+    double& direct_capital_precontingency_cost,     //[$]
+    double& contingency_cost,                       //[$]
+    double& total_direct_cost,                      //[$]
+    double& total_land_cost,                        //[$]
+    double& epc_and_owner_cost,                     //[$]
+    double& sales_tax_cost,                         //[$]
+    double& total_indirect_cost,                    //[$]
+    double& total_installed_cost,                   //[$]
+    double& estimated_installed_cost_per_cap        //[$/kWe]
+)
+{
+    double rad_fluidcost = 0.0;
+    double rad_installcost = 0.0;
+    double rad_unitcost = 0.0;
+    double rad_volmulti = 0.0;
+    double coldstorage_unitcost = 0.0;
+    double radfield_area = 0.0;
+    double coldstorage_vol = 0.0;
+    double radfield_vol = 0.0;
+
+    // Unused outputs
+    double rad_field_totcost, rad_fluid_totcost, rad_storage_totcost;
+
+    N_mspt::calculate_mspt_etes_costs(
+        A_sf_refl,
+        site_improv_spec_cost,
+        heliostat_spec_cost,
+        heliostat_fixed_cost,
+
+        h_tower,
+        h_rec,
+        h_helio,
+        tower_fixed_cost,
+        tower_cost_scaling_exp,
+
+        A_rec,
+        rec_ref_cost,
+        A_rec_ref,
+        rec_cost_scaling_exp,
+
+        Q_storage,
+        tes_spec_cost,
+
+        Q_CT_tes,
+        CT_tes_spec_cost,
+
+        W_dot_design,
+        power_cycle_spec_cost,
+
+        q_dot_heater_design,
+        heater_spec_cost,
+
+        radfield_area,
+        coldstorage_vol,
+        radfield_vol,
+        rad_unitcost,
+        rad_installcost,
+        rad_volmulti,
+        rad_fluidcost,
+        coldstorage_unitcost,
+
+        bop_spec_cost,
+
+        fossil_backup_spec_cost,
+
+        contingency_rate,
+
+        total_land_area,
+        plant_net_capacity,
+        EPC_land_spec_cost,
+        EPC_land_perc_direct_cost,
+        EPC_land_per_power_cost,
+        EPC_land_fixed_cost,
+        total_land_spec_cost,
+        total_land_perc_direct_cost,
+        total_land_per_power_cost,
+        total_land_fixed_cost,
+        sales_tax_basis,
+        sales_tax_rate,
+
+        site_improvement_cost,
+        heliostat_cost,
+        tower_cost,
+        receiver_cost,
+        tes_cost,
+        CT_tes_cost,
+        power_cycle_cost,
+        heater_cost,
+        rad_field_totcost,
+        rad_fluid_totcost,
+        rad_storage_totcost,
+        bop_cost,
+        fossil_backup_cost,
+        direct_capital_precontingency_cost,
+        contingency_cost,
+        total_direct_cost,
+        total_land_cost,
+        epc_and_owner_cost,
+        sales_tax_cost,
+        total_indirect_cost,
+        total_installed_cost,
+        estimated_installed_cost_per_cap
+    );
 }
 
 void N_mspt::calculate_mspt__no_rad_cool__costs(
@@ -267,6 +450,10 @@ void N_mspt::calculate_mspt__no_rad_cool__costs(
     double q_dot_heater_design = 0.0;
     double heater_spec_cost = 0.0;
 
+    // no cold temp TES
+    double Q_CT_tes = 0.0;
+    double CT_tes_spec_cost = 0.0;
+
     double rad_fluidcost = 0.0;
     double rad_installcost = 0.0;
     double rad_unitcost = 0.0;
@@ -278,6 +465,7 @@ void N_mspt::calculate_mspt__no_rad_cool__costs(
 
     // Unused outputs
     double heater_cost, rad_field_totcost, rad_fluid_totcost, rad_storage_totcost;
+    double CT_tes_cost;
 
     N_mspt::calculate_mspt_etes_costs(
         A_sf_refl,
@@ -298,6 +486,9 @@ void N_mspt::calculate_mspt__no_rad_cool__costs(
 
         Q_storage,
         tes_spec_cost,
+
+        Q_CT_tes,
+        CT_tes_spec_cost,
 
         W_dot_design,
         power_cycle_spec_cost,
@@ -338,6 +529,7 @@ void N_mspt::calculate_mspt__no_rad_cool__costs(
         tower_cost,
         receiver_cost,
         tes_cost,
+        CT_tes_cost,
         power_cycle_cost,
         heater_cost,
         rad_field_totcost,
@@ -363,6 +555,10 @@ void N_mspt::calculate_etes_costs(
     // TES
     double Q_storage,				//[MWt-hr] Storage capacity
     double tes_spec_cost,			//[$/kWt-hr] TES specific cost
+
+    // Cold Temp TES
+    double Q_CT_tes,                //[MWt-hr] Cold Temp Storage capacity
+    double CT_tes_spec_cost,        //[$/kWt-hr] CT TES specific cost
 
     // Power Cycle
     double W_dot_design,			//[MWe] Power cycle design output (w/o subtracting plant parasitics)
@@ -391,6 +587,7 @@ void N_mspt::calculate_etes_costs(
 
     // Calculated Outputs
     double& tes_cost,                               //[$]
+    double& CT_tes_cost,                            //[$]
     double& power_cycle_cost,                       //[$]
     double& heater_cost,                            //[$]
     double& bop_cost,                               //[$]
@@ -449,6 +646,9 @@ void N_mspt::calculate_etes_costs(
         Q_storage,
         tes_spec_cost,
 
+        Q_CT_tes,
+        CT_tes_spec_cost,
+
         W_dot_design,
         power_cycle_spec_cost,
 
@@ -488,6 +688,7 @@ void N_mspt::calculate_etes_costs(
         tower_cost,
         receiver_cost,
         tes_cost,
+        CT_tes_cost,
         power_cycle_cost,
         heater_cost,
         rad_field_totcost,
@@ -573,6 +774,7 @@ double N_mspt::direct_capital_precontingency_cost(double site_improvement_cost /
 	double tower_cost /*$*/,
 	double receiver_cost /*$*/,
 	double tes_cost /*$*/,
+    double CT_tes_cost /*$*/,
 	double power_cycle_cost /*$*/,
     double heater_cost /*$*/,
 	double rad_field_totcost /*$*/,
@@ -586,6 +788,7 @@ double N_mspt::direct_capital_precontingency_cost(double site_improvement_cost /
 		tower_cost +
 		receiver_cost +
 		tes_cost +
+        CT_tes_cost +
 		power_cycle_cost +
         heater_cost +
 		rad_field_totcost +

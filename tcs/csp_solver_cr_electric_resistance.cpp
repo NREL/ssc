@@ -207,9 +207,9 @@ void C_csp_cr_electric_resistance::off(const C_csp_weatherreader::S_outputs& wea
     cr_out_solver.m_component_defocus = 1.0;        //[-]
     cr_out_solver.m_is_recirculating = false;       //[-]
 
-    cr_out_solver.m_W_dot_col_tracking = 0.0;       //[MWe]
-    cr_out_solver.m_W_dot_htf_pump = 0.0;           //[MWe]
     cr_out_solver.m_q_dot_heater = 0.0;             //[MWt]
+
+    cr_out_solver.m_W_dot_elec_in_tot = 0.0;        //[MWe]
 
     m_operating_mode = C_csp_collector_receiver::OFF;
     m_E_su_calculated = m_E_su_des;     //[MWt-hr]
@@ -236,6 +236,7 @@ void C_csp_cr_electric_resistance::startup(const C_csp_weatherreader::S_outputs&
 
     double step_hrs = sim_info.ms_ts.m_step / 3600.0;    //[hr]
 
+    // Assume startup is always at max startup rate
     double time_remaining_su = m_E_su_initial / m_q_dot_su_max; //[hr]
 
     double time_required_su = std::numeric_limits<double>::quiet_NaN();
@@ -263,9 +264,9 @@ void C_csp_cr_electric_resistance::startup(const C_csp_weatherreader::S_outputs&
     cr_out_solver.m_component_defocus = 1.0;                //[-]
     cr_out_solver.m_is_recirculating = false;               //[-]
 
-    cr_out_solver.m_W_dot_col_tracking = 0.0;               //[MWe]
-    cr_out_solver.m_W_dot_htf_pump = 0.0;                   //[MWe]
     cr_out_solver.m_q_dot_heater = m_q_dot_su_max;          //[MWt]
+
+    cr_out_solver.m_W_dot_elec_in_tot = 0.0;        //[MWe]
 
     // Set reported outputs
     mc_reported_outputs.value(E_W_DOT_HEATER, W_dot_heater);    //[MWe]
@@ -298,9 +299,11 @@ void C_csp_cr_electric_resistance::on(const C_csp_weatherreader::S_outputs& weat
     if (q_dot_elec < m_q_dot_min) {
         m_operating_mode = C_csp_collector_receiver::OFF;
         q_dot_elec = 0.0;       //[MWt]
+        m_E_su_calculated = m_E_su_des;     //[MWt-hr]
     }
     else {
         m_operating_mode = C_csp_collector_receiver::ON;
+        m_E_su_calculated = 0.0;        //[MWt-hr]
     }
 
     double W_dot_heater = q_dot_elec;       //[MWe]
@@ -317,8 +320,6 @@ void C_csp_cr_electric_resistance::on(const C_csp_weatherreader::S_outputs& weat
         W_dot_startup = q_dot_startup;      //[MWt]
     }
 
-    m_E_su_calculated = 0.0;        //[MWt-hr]
-
     // Set solver outputs and return
     cr_out_solver.m_q_startup = q_startup;        //[MWt-hr]
     cr_out_solver.m_time_required_su = 0.0; //[s]
@@ -327,9 +328,9 @@ void C_csp_cr_electric_resistance::on(const C_csp_weatherreader::S_outputs& weat
     cr_out_solver.m_T_salt_hot = m_T_htf_hot_des;   //[C]
     cr_out_solver.m_component_defocus = heater_turn_down;   //[-]
 
-    cr_out_solver.m_W_dot_col_tracking = 0.0;  //[MWe]
-    cr_out_solver.m_W_dot_htf_pump = 0.0;      //[MWe]
     cr_out_solver.m_q_dot_heater = q_dot_elec + q_dot_startup; //[MWt]
+
+    cr_out_solver.m_W_dot_elec_in_tot = 0.0;        //[MWe]
 
     // Set reported outputs
     mc_reported_outputs.value(E_W_DOT_HEATER, W_dot_heater + W_dot_startup);    //[MWe]
@@ -379,17 +380,16 @@ void C_csp_cr_electric_resistance::converged()
 {
     m_operating_mode_converged = m_operating_mode;
 
+    // Operating mode methods should handle this, but can check here too
+    if (m_operating_mode_converged == OFF) {
+
+        m_E_su_calculated = m_E_su_des;
+    }
+
     if ((m_startup_mode == INSTANTANEOUS_NO_MAX_ELEC_IN || m_E_su_des == 0.0)
         && m_operating_mode_converged == OFF) {
         m_operating_mode_converged = OFF_NO_SU_REQ;
     }
-
-    //if (m_E_su_calculated == 0.0 || m_startup_mode == INSTANTANEOUS_NO_MAX_ELEC_IN) {
-    //    m_operating_mode_converged = C_csp_collector_receiver::ON;
-    //}
-    //else {
-    //    m_operating_mode_converged = m_operating_mode;		
-    //}
 
     m_E_su_initial = m_E_su_calculated;
 
@@ -417,6 +417,6 @@ double C_csp_cr_electric_resistance::calculate_thermal_efficiency_approx(const C
 
 double C_csp_cr_electric_resistance::get_collector_area()
 {
-    // Used by dispatch model
-    return 0.0;
+    // Collector area is not a relevant metric for an electric resistance heater
+    return std::numeric_limits<double>::quiet_NaN();
 }

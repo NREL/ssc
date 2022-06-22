@@ -123,7 +123,7 @@ public:
      * *_forecast vectors need to be 12 * analysis_period in length. Predictions are used to estimate which tiers will be used for energy charges.
      * and set up baseline demand costs - equal to the demand charge at the average load during the month.
      */
-	UtilityRateForecast(rate_data* util_rate, size_t stepsPerHour, const std::vector<double>& monthly_load_forecast, const std::vector<double>& monthly_gen_forecast, const std::vector<double>& monthly_peak_forecast, size_t analysis_period);
+	UtilityRateForecast(rate_data* util_rate, size_t stepsPerHour, const std::vector<double>& monthly_load_forecast, const std::vector<double>& monthly_gen_forecast, const std::vector<double>& monthly_avg_load_forecast, size_t analysis_period, const util::matrix_t<double>& monthly_peak_forecast);
 
 	UtilityRateForecast(UtilityRateForecast& tmp);
 
@@ -184,6 +184,8 @@ protected:
 	std::vector<double> m_monthly_gen_forecast; // Length is 12 * analysis period
     // Avg load: the average gross load (no gen) over the month. Used to establish a floor for peak shaving costs
 	std::vector<double> m_monthly_avg_load_forecast; // Length is 12 * analysis period
+    // Peaks: Peak grid usage by time of use period
+    util::matrix_t<double> m_peaks_forecast; // 12 * analysis period rows, total TOU period cols - indexed by get_dc_tou_row for each month
 
 
 };

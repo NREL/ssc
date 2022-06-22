@@ -36,7 +36,6 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static C_csp_reported_outputs::S_output_info S_output_info[] =
 {
-	{C_pc_Rankine_indirect_224::E_ETA_THERMAL, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 	{C_pc_Rankine_indirect_224::E_Q_DOT_HTF, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 	{C_pc_Rankine_indirect_224::E_M_DOT_HTF, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 	{C_pc_Rankine_indirect_224::E_Q_DOT_STARTUP, C_csp_reported_outputs::TS_WEIGHTED_AVE},
@@ -52,9 +51,19 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 	{C_pc_Rankine_indirect_224::E_M_DOT_WATER, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 	{C_pc_Rankine_indirect_224::E_P_COND,C_csp_reported_outputs::TS_LAST },
 	{ C_pc_Rankine_indirect_224::E_RADCOOL_CNTRL,C_csp_reported_outputs::TS_WEIGHTED_AVE },
+    {C_pc_Rankine_indirect_224::E_W_DOT_HTF_PUMP, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+    {C_pc_Rankine_indirect_224::E_W_DOT_COOLER, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+
 	{C_pc_Rankine_indirect_224::E_M_DOT_HTF_REF, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 
 	csp_info_invalid
+};
+
+static C_csp_reported_outputs::S_dependent_output_info S_dependent_output_info[] =
+{
+    {C_pc_Rankine_indirect_224::E_ETA_THERMAL, C_pc_Rankine_indirect_224::E_W_DOT, C_pc_Rankine_indirect_224::E_Q_DOT_HTF, C_csp_reported_outputs::AoverB},
+
+    csp_dep_info_invalid
 };
 
 C_pc_Rankine_indirect_224::C_pc_Rankine_indirect_224()
@@ -71,7 +80,7 @@ C_pc_Rankine_indirect_224::C_pc_Rankine_indirect_224()
 
 	m_ncall = -1;
 
-	mc_reported_outputs.construct(S_output_info);
+	mc_reported_outputs.construct(S_output_info, S_dependent_output_info);
 }
 
 void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_params)
@@ -1028,7 +1037,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 		{
 			double c_htf = mc_pc_htfProps.Cp(physics::CelciusToKelvin((T_htf_hot + ms_params.m_T_htf_cold_ref) / 2.0));		//[kJ/kg-K]
 
-			double time_required_su_energy = m_startup_energy_remain_prev / (m_dot_htf*c_htf*(T_htf_hot - ms_params.m_T_htf_cold_ref)/3600);	//[hr]
+			double time_required_su_energy = m_startup_energy_remain_prev / (m_dot_htf*c_htf*(T_htf_hot - ms_params.m_T_htf_cold_ref)/3600.0);	//[hr]
 			double time_required_su_ramping = m_startup_time_remain_prev;	//[hr]
 
 			time_required_max = fmax(time_required_su_energy, time_required_su_ramping);	//[hr]
@@ -1611,14 +1620,13 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 	out_solver.m_P_cycle = P_cycle/1000.0;				//[MWe] Cycle power output, convert from kWe
 	mc_reported_outputs.value(E_W_DOT, P_cycle/1000.0);	//[MWe] Cycle power output, convert from kWe
 
-	//out_report.m_eta = eta;							//[-] Cycle thermal efficiency
-	mc_reported_outputs.value(E_ETA_THERMAL, eta);	//[-] Cycle thermal efficiency
+    //22.03.04 twn: post-process thermal efficiency at end of timestep reporting
+	//mc_reported_outputs.value(E_ETA_THERMAL, eta);	//[-] Cycle thermal efficiency
 
 	out_solver.m_T_htf_cold = T_htf_cold;				//[C] HTF outlet temperature
 	mc_reported_outputs.value(E_T_HTF_OUT, T_htf_cold);	//[C] HTF outlet temperature
 	mc_reported_outputs.value(E_T_HTF_IN, T_htf_hot);	//[C] HTF inlet temperature
 
-	//out_report.m_m_dot_makeup = (m_dot_water_cooling + m_dot_st_bd)*3600.0;		//[kg/hr] Cooling water makeup flow rate, convert from kg/s
 	mc_reported_outputs.value(E_M_DOT_WATER, (m_dot_water_cooling + m_dot_st_bd)*3600.0);		//[kg/hr] Cooling water makeup flow rate, convert from kg/s
 	mc_reported_outputs.value(E_T_COND_OUT, T_cond_out);										//[C] Cooling water outlet temperature from condenser
 
@@ -1643,20 +1651,15 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 	out_solver.m_m_dot_htf = m_dot_htf;					//[kg/hr] Actual HTF flow rate passing through the power cycle
 	mc_reported_outputs.value(E_M_DOT_HTF,m_dot_htf);	//[kg/hr] Actual HTF flow rate passing through the power cycle
 
-	//out_report.m_m_dot_htf_ref = m_dot_htf_ref;		//[kg/hr] Calculated reference HTF flow rate at design
 	mc_reported_outputs.value(E_M_DOT_HTF_REF, m_dot_htf_ref);	//[kg/hr]
 	out_solver.m_W_cool_par = W_cool_par+W_radpump;				//[MWe] Cooling system parasitic load
-	//out_report.m_P_ref = ms_params.m_P_ref / 1000.0;		//[MWe] Reference power level output at design, convert from kWe
-	//out_report.m_f_hrsys = f_hrsys;					//[-] Fraction of operating heat rejection system
-	//out_report.m_P_cond = P_cond;						//[Pa] Condenser pressure
+    mc_reported_outputs.value(E_W_DOT_COOLER);              //[MWe] Cooling parasitic
 
-	//outputs.m_q_startup = q_startup / 1.E3;					//[MWt-hr] Startup energy
 	double q_dot_startup = 0.0;
 	if( q_startup > 0.0 )
 		q_dot_startup = q_startup / 1.E3 / time_required_su;	//[MWt] Startup thermal power
 	else
 		q_dot_startup = 0.0;
-	//out_report.m_q_startup = q_dot_startup;						//[MWt] Startup thermal power
 	mc_reported_outputs.value(E_Q_DOT_STARTUP, q_dot_startup);	//[MWt] Startup thermal power
 
 	out_solver.m_time_required_su = time_required_su*3600.0;	//[s]
@@ -1665,7 +1668,10 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 	out_solver.m_q_dot_htf = q_dot_htf;					//[MWt] Thermal power from HTF (= thermal power into cycle)
 	mc_reported_outputs.value(E_Q_DOT_HTF, q_dot_htf);	//[MWt] Thermal power from HTF (= thermal power into cycle)
 
-	out_solver.m_W_dot_htf_pump = ms_params.m_htf_pump_coef*(m_dot_htf / 3.6E6);	//[MW] HTF pumping power, convert from [kW/kg/s]*[kg/hr]
+	double W_dot_htf_pump = ms_params.m_htf_pump_coef*(m_dot_htf / 3.6E6);	//[MW] HTF pumping power, convert from [kW/kg/s]*[kg/hr]
+    mc_reported_outputs.value(E_W_DOT_HTF_PUMP, W_dot_htf_pump);            //[MWe]
+
+    out_solver.m_W_dot_elec_parasitics_tot = out_solver.m_W_cool_par + W_dot_htf_pump; //[MWe]
 
 	out_solver.m_was_method_successful = was_method_successful;	//[-]
 }
