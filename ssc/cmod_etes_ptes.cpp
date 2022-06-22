@@ -972,8 +972,9 @@ public:
         double CT_to_HT_m_dot_ratio_pc = m_dot_CT_htf_gen_calc / m_dot_HT_htf_gen_calc;
 
             // Heat Pump
-        double W_dot_in_thermo_charge_calc;        //[MWe] power into cycle working fluid. does not consider electric parasitics (e.g. cooling fan, motor inefficiencies, etc.)
-        double q_dot_cold_in_charge_calc;   //[MWt]
+        double W_dot_in_thermo_charge_calc;         //[MWe] power into cycle working fluid. does not consider electric parasitics (e.g. cooling fan, motor inefficiencies, etc.)
+        double q_dot_cold_in_charge_calc;           //[MWt]
+        double q_dot_hot_out_charge_calc;           //[MWt]
         double W_dot_elec_parasitic_charge_calc;    //[MWe]
         double W_dot_in_net_charge_calc;    //[MWe]
         double COP_net_calc;                //[-]
@@ -990,7 +991,8 @@ public:
 
         double E_su_charge_calc;            //[MWt-hr]
 
-        c_heat_pump.get_design_parameters(W_dot_in_thermo_charge_calc, q_dot_cold_in_charge_calc,
+        c_heat_pump.get_design_parameters(W_dot_in_thermo_charge_calc,
+                        q_dot_cold_in_charge_calc, q_dot_hot_out_charge_calc,
                         W_dot_elec_parasitic_charge_calc, W_dot_in_net_charge_calc,
                         COP_net_calc,
                         m_dot_HT_htf_charge_calc, cp_HT_htf_charge_calc, W_dot_HT_htf_pump_charge_calc,
@@ -1133,7 +1135,7 @@ public:
 
             // Heater
         assign("W_dot_hp_in_thermo_des", W_dot_in_thermo_charge_calc);  //[MWe]
-        assign("q_dot_hp_hot_out_des", q_dot_hot_in_gen_calc);          //[MWt]
+        assign("q_dot_hp_hot_out_des", q_dot_hot_out_charge_calc);      //[MWt]
         assign("q_dot_hp_cold_in_des", q_dot_cold_in_charge_calc);      //[MWt]
         assign("W_dot_hp_elec_parasitic_des", W_dot_elec_parasitic_charge_calc);    //[MWe]
         assign("W_dot_hp_in_net_des", W_dot_in_net_charge_calc);        //[MWe]

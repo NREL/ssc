@@ -287,7 +287,8 @@ public:
     // ***************************************************************
     // ***************************************************************
 
-    void get_design_parameters(double& W_dot_in /*MWe*/, double& q_dot_cold_in /*MWt*/,
+    void get_design_parameters(double& W_dot_in /*MWe*/,
+            double& q_dot_cold_in /*MWt*/, double& q_dot_hot_out /*MWt*/,
             double& W_dot_elec_parasitic /*MWe*/, double& W_dot_in_net /*MWe*/,
             double& COP_net /*-*/,
             double& m_dot_HT_htf /*kg/s*/, double& cp_HT_htf /*kJ/kg-K*/, double& W_dot_HT_htf_pump /*MWe*/,
