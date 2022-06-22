@@ -1824,14 +1824,12 @@ void csp_dispatch_opt::set_outputs_from_lp_solution(lprec* lp, unordered_map<std
     outputs.clear();
     outputs.resize(nt);
 
-    int ncols = get_Ncolumns(lp);
+    int ncols = get_Norig_columns(lp);
+    int nrows = get_Norig_rows(lp);
 
-    REAL* vars = new REAL[ncols];
-    get_variables(lp, vars);
-
-    for (int c = 1; c < ncols; c++)
+    for (int c = 1; c <= ncols; c++)
     {
-        char* colname = get_col_name(lp, c);
+        char* colname = get_origcol_name(lp, c);
         if (!colname) continue;
 
         char root[15];
@@ -1839,60 +1837,59 @@ void csp_dispatch_opt::set_outputs_from_lp_solution(lprec* lp, unordered_map<std
         if (parse_column_name(colname, root, ind)) continue;  //a 2D variable
 
         int t = atoi(ind);
+        double val = get_var_primalresult(lp, nrows + c);
 
         if (strcmp(root, "ycsu") == 0)     //Cycle start up
         {
-            bool su = (fabs(1 - vars[c - 1]) < 0.001);
+            bool su = (fabs(1 - val) < 0.001);
             outputs.pb_operation.at(t) = outputs.pb_operation.at(t) || su;
             outputs.q_pb_startup.at(t) = su ? model_params["Qc"] : 0.;
         }
         else if (strcmp(root, "y") == 0)  // is cycle operating
         {
-            outputs.pb_operation.at(t) = outputs.pb_operation.at(t) || (fabs(1. - vars[c - 1]) < 0.001);
+            outputs.pb_operation.at(t) = outputs.pb_operation.at(t) || (fabs(1. - val) < 0.001);
         }
         else if (strcmp(root, "x") == 0)  // cycle thermal energy consumption
         {
-            outputs.q_pb_target.at(t) = vars[c - 1];
+            outputs.q_pb_target.at(t) = val;
         }
         else if (strcmp(root, "yrsu") == 0)  // is receiver starting
         {
-            outputs.rec_operation.at(t) = outputs.rec_operation.at(t) || (fabs(1 - vars[c - 1]) < 0.001);
+            outputs.rec_operation.at(t) = outputs.rec_operation.at(t) || (fabs(1 - val) < 0.001);
         }
         else if (strcmp(root, "xrsu") == 0)  // receiver startup energy
         {
-            outputs.q_rec_startup.at(t) = vars[c - 1];
+            outputs.q_rec_startup.at(t) = val;
         }
         else if (strcmp(root, "yr") == 0)  // is receiver operating
         {
-            outputs.rec_operation.at(t) = outputs.rec_operation.at(t) || (fabs(1 - vars[c - 1]) < 0.001);
+            outputs.rec_operation.at(t) = outputs.rec_operation.at(t) || (fabs(1 - val) < 0.001);
         }
         else if (strcmp(root, "s") == 0)  // thermal storage charge state
         {
-            outputs.tes_charge_expected.at(t) = vars[c - 1];
+            outputs.tes_charge_expected.at(t) = val;
         }
         else if (strcmp(root, "xr") == 0)  // receiver production
         {
-            outputs.q_sf_expected.at(t) = vars[c - 1];
+            outputs.q_sf_expected.at(t) = val;
         }
         else if (strcmp(root, "wdot") == 0)  // electricity production
         {
-            outputs.w_pb_target.at(t) = vars[c - 1];
+            outputs.w_pb_target.at(t) = val;
         }
         else if (strcmp(root, "ycsb") == 0)  // cycle standby
         {
-            outputs.pb_standby.at(t) = vars[c - 1] == 1.;
+            outputs.pb_standby.at(t) = val == 1.;
         }
         else if (strcmp(root, "yeh") == 0)  // is parallel heater on
         {
-            outputs.htr_operation.at(t) = outputs.htr_operation.at(t) || (fabs(1 - vars[c - 1]) < 0.001);
+            outputs.htr_operation.at(t) = outputs.htr_operation.at(t) || (fabs(1 - val) < 0.001);
         }
         else if (strcmp(root, "qeh") == 0)  // heater target power
         {
-            outputs.q_eh_target.at(t) = vars[c - 1];
+            outputs.q_eh_target.at(t) = val;
         }
     }
-
-    delete[] vars;
 }
 
 bool csp_dispatch_opt::set_dispatch_outputs()
