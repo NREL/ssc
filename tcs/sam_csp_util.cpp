@@ -731,9 +731,143 @@ void CSP::evap_tower(int tech_type, double dt_out, double P_cond_min, int n_pl_i
 	T_cond = T_cond + 273.15;	// [K] Convert to K for output
 }
 
+double C_air_cooled_condenser::PvsQT(double Q /*[-]*/, double T /*[-]*/)
+{
+    double a_0 = 147.96619 - 329.021562 * T + 183.4601872 * pow(T, 2.);
+    double a_1 = 71.23482281 - 159.2675368 * T + 89.50235831 * pow(T, 2.);
+    double a_2 = 27.55395547 - 62.24857193 * T + 35.57127305 * pow(T, 2.);
+    double P = a_0 + a_1 * Q + a_2 * pow(Q, 2.);  // [-]
+
+    return P;
+};
+
+double C_air_cooled_condenser::get_P_cond_des()
+{
+    return m_P_cond_des;
+}
+
+C_air_cooled_condenser::C_air_cooled_condenser(int tech_type /*-*/, double P_cond_min /*Pa*/, double T_amb_des /*K*/,
+    int n_pl_inc, double T_ITD_des /*C/K*/, double P_cond_ratio_des /*-*/, double q_dot_reject_des /*W*/)
+{
+    m_tech_type = tech_type;
+    m_P_cond_min = P_cond_min;  //[Pa]
+    m_T_amb_des = T_amb_des;    //[K]
+    m_n_pl_inc = n_pl_inc;      //[-]
+    m_T_ITD_des = T_ITD_des;    //[C/K]
+    m_P_cond_ratio_des = P_cond_ratio_des;  //[-]
+    m_q_dot_reject_des = q_dot_reject_des;  //[W]
+
+    m_P_cond_min_bar = std::max(P_cond_lower_bound_bar, P_cond_min * 1.e-5);   // [Pa] -> [bar]
+
+    m_T_cond_des = m_T_ITD_des + m_T_amb_des;    //[K]
+
+    // Water properties structure
+    water_state wp;
+
+    if (m_tech_type != 4)
+    {
+        water_TQ(m_T_cond_des, 1.0, &wp);
+        m_P_cond_des = wp.pres * 1000.0;      //[Pa]
+    }
+    else
+    {
+        m_P_cond_des = CSP::P_sat4(m_T_cond_des - 273.15);	//[Pa] Isopentane
+    }
+
+    m_dot_air_des = m_q_dot_reject_des / (m_c_air * (T_ITD_des - T_hot_diff));  //[kg/s]
+
+    // Calculate design point for condenser map adjustment
+    m_T_map_des_norm = m_T_amb_des / T_map_des;     //[-]
+    if (m_T_map_des_norm >= 0.9) {
+        m_P_map_des_norm = PvsQT(1, m_T_map_des_norm);
+    }
+    else {
+        m_P_map_des_norm = 1.0; // minimum pressure
+    }
+    m_map_ratio_des = (m_P_cond_des / P_cond_min) / m_P_map_des_norm;
+
+    double m_dot_air_des_check, P_cond_des_check, T_cond_des_check, f_hrsys_des;
+    off_design(T_amb_des, q_dot_reject_des,
+        m_dot_air_des_check, m_W_dot_fan_des, P_cond_des_check,
+        T_cond_des_check, f_hrsys_des);
+
+    return;
+}
+
+void C_air_cooled_condenser::off_design(double T_amb /*K*/, double q_dot_reject /*W*/,
+    double& m_dot_air /*kg/s*/, double& W_dot_fan /*MWe*/, double& P_cond /*Pa*/,
+    double& T_cond /*K*/, double& f_hrsys /*-*/)
+{
+    double T = T_amb / T_map_des;
+
+    double P_cond_bar;
+    if (T >= 0.9) {                             // If T is less than 0.9 fit is not valid
+        double Q = q_dot_reject / m_q_dot_reject_des;
+        double P = PvsQT(Q, T);
+        P_cond_bar = m_map_ratio_des * P * m_P_cond_min_bar;    //[bar]
+    }
+    else {
+        P_cond_bar = m_P_cond_min_bar;      //[bar]
+    }
+
+    water_state wp;
+    double T_cond_K, dT_air;
+    if ((P_cond_bar < m_P_cond_min_bar) && (m_tech_type != 4)) // No lower limit on Isopentane
+    {
+        for (size_t i = 2; i <= m_n_pl_inc; i++)
+        {
+            f_hrsys = 1.0 - (i - 1.0) / m_n_pl_inc;
+            double Q = q_dot_reject / (m_q_dot_reject_des * f_hrsys);
+            double P = PvsQT(Q, T);
+            P_cond_bar = m_map_ratio_des * P * m_P_cond_min_bar;
+
+            if (P_cond_bar > m_P_cond_min_bar) break;
+        }
+        if (P_cond_bar <= m_P_cond_min_bar)
+        {
+            P_cond_bar = m_P_cond_min_bar;                // Still below min. fix to min condenser pressure
+            f_hrsys = 1.;
+        }
+    }
+    else {
+        f_hrsys = 1.;
+    }
+
+    m_dot_air = m_dot_air_des * f_hrsys;        // [kg/s]
+    water_PQ(P_cond_bar * 100., 1.0, &wp);      // [bar] -> [kPa]
+    T_cond_K = wp.temp;                         // [K]
+    P_cond = P_cond_bar * 1.e5;                 // [bar] -> [Pa]
+    T_cond = T_cond_K;
+
+    m_dot_air = m_dot_air_des * f_hrsys;        // [kg/s]
+    water_PQ(P_cond_bar * 100., 1.0, &wp);      // [bar] -> [kPa]
+    T_cond_K = wp.temp;                         // [K]
+    P_cond = P_cond_bar * 1.e5;                 // [bar] -> [Pa]
+    T_cond = T_cond_K;
+
+    // ===================== Fan Power =================================
+    double h_fan_in = CSP::f_h_air_T(T_amb - 273.15);	// [J/kg] Fan inlet enthalpy
+    const double MM = 28.97;		  			// [kg/kmol] molar mass of air
+    double R = 8314.0 / MM;		    			// [J/kg-K] Gas constant for air
+
+    // These temperature calculations are for the isentropic expansion across the fan, not accounting for heat gain in the ACC
+    double T_fan_in_K = T_amb;                                         // [K] Fan inlet temperature
+    double T_fan_out_K = T_fan_in_K * pow(m_P_cond_ratio_des, (R / m_c_air));
+    double T_fan_out_C = T_fan_out_K - 273.15;                          // [C] Fan outlet temperature
+
+    double dT_fan = T_fan_out_K - T_fan_in_K;                           // [K] Temperature increase in fan
+
+    double h_fan_out_s = CSP::f_h_air_T(T_fan_out_C);                   // [J/kg] Isentropic fan outlet enthalpy
+    double h_fan_out = h_fan_in + (h_fan_out_s - h_fan_in) / m_eta_fan_s;	// [J/kg] Actual fan outlet enthalpy
+
+    W_dot_fan = (h_fan_out - h_fan_in) * m_dot_air / m_eta_fan * 1.0e-6;    // [MW] Fan power
+
+    return;
+}
 
 // Air cooling calculations
-void CSP::ACC(int tech_type, double P_cond_min, double T_cond_des, double P_cond_des, int n_pl_inc, double T_ITD_des, double P_cond_ratio, double P_cycle, double eta_ref,
+void CSP::ACC(int tech_type, double P_cond_min, double T_db_des, double P_cond_des,
+    int n_pl_inc, double T_ITD_des, double P_cond_ratio, double P_cycle, double eta_ref,
     double T_db, double /*P_amb*/, double q_reject, double& m_dot_air, double& W_dot_fan, double& P_cond, double& T_cond,
     double& f_hrsys)
 {
@@ -786,7 +920,7 @@ void CSP::ACC(int tech_type, double P_cond_min, double T_cond_des, double P_cond
     double m_dot_air_des = Q_rej_des / (c_air*(T_ITD_des - T_hot_diff));
     double T = T_db_K / T_map_des;
     // Calculate design point for condenser map adjustment
-    double T_map_des_norm = (T_cond_des + 273.15) / T_map_des;
+    double T_map_des_norm = (T_db_des + 273.15) / T_map_des;
     double P_map_des;
     if (T_map_des_norm >= 0.9) {
         P_map_des = PvsQT(1, T_map_des_norm);

@@ -75,7 +75,7 @@ C_pc_Rankine_indirect_224::C_pc_Rankine_indirect_224()
     m_operating_mode_calc = m_operating_mode_prev;
 
 	m_F_wcMax = m_F_wcMin = m_delta_h_steam = m_startup_energy_required = m_eta_adj_OLD = m_Psat_ref = m_P_ND_ref = m_Q_ND_ref =
-        m_m_dot_design = m_q_dot_design = m_cp_htf_design = m_W_dot_htf_pump_des = m_W_dot_cooling_des =
+        m_m_dot_design = m_q_dot_design = m_q_dot_reject_des = m_cp_htf_design = m_W_dot_htf_pump_des = m_W_dot_cooling_des =
         m_T_wb_des =
         m_startup_time_remain_prev = m_startup_time_remain_calc =
 		m_startup_energy_remain_prev = m_startup_energy_remain_calc = std::numeric_limits<double>::quiet_NaN();
@@ -138,6 +138,7 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 
     ms_params.m_P_ref *= 1000.0;		//[kW] convert from MW
     m_q_dot_design = ms_params.m_P_ref / 1000.0 / ms_params.m_eta_ref;	//[MWt]
+    m_q_dot_reject_des = m_q_dot_design - ms_params.m_P_ref*1.E-3;      //[MWt]
     m_m_dot_design = m_q_dot_design * 1000.0 / (m_cp_htf_design * ((ms_params.m_T_htf_hot_ref - ms_params.m_T_htf_cold_ref))) * 3600.0;		//[kg/hr]
     m_m_dot_min = ms_params.m_cycle_cutoff_frac * m_m_dot_design;		//[kg/hr]
     m_m_dot_max = ms_params.m_cycle_max_frac * m_m_dot_design;		    //[kg/hr]
@@ -504,17 +505,28 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 
 			break;
 		case 2:
-		case 3:		// Dry cooled and hyrbid cases
-			if( ms_params.m_tech_type != 4 )
-			{
-				water_TQ(ms_params.m_T_ITD_des + ms_params.m_T_amb_des + 273.15, 1.0, &wp);
-                m_Psat_ref = wp.pres * 1000.0;
-			}
-			else
-			{
-                m_Psat_ref = CSP::P_sat4(ms_params.m_T_ITD_des + ms_params.m_T_amb_des);	// Isopentane
-			}
+        {
+            std::unique_ptr<C_air_cooled_condenser> local_ACC(new C_air_cooled_condenser(ms_params.m_tech_type,
+                ms_params.m_P_cond_min, ms_params.m_T_amb_des + 273.15, ms_params.m_n_pl_inc, ms_params.m_T_ITD_des,
+                ms_params.m_P_cond_ratio, m_q_dot_reject_des * 1.E6));
+            m_ACC = std::move(local_ACC);
 
+            m_Psat_ref = m_ACC->get_P_cond_des();
+        }
+
+            break;
+		case 3:		// Dry cooled and hyrbid cases
+        {
+            if (ms_params.m_tech_type != 4)
+            {
+                water_TQ(ms_params.m_T_ITD_des + ms_params.m_T_amb_des + 273.15, 1.0, &wp);
+                m_Psat_ref = wp.pres * 1000.0;
+            }
+            else
+            {
+                m_Psat_ref = CSP::P_sat4(ms_params.m_T_ITD_des + ms_params.m_T_amb_des);	// Isopentane
+            }
+        }
 			break;
 		case 4:		// Once-through surface condenser case ARD
 			if (ms_params.m_tech_type != 4)
@@ -1851,10 +1863,15 @@ int C_pc_Rankine_indirect_224::C_MEQ__P_cond_OD::operator()(double P_cond_iter_g
             mpc_pc->ms_params.m_eta_ref, m_T_db, m_T_wb, m_P_amb, q_reject, m_m_dot_makeup, m_W_dot_cooling, P_cond_calc, T_cond_calc, m_f_hrsys);
         break;
     case 2:
-        CSP::ACC(mpc_pc->ms_params.m_tech_type, mpc_pc->ms_params.m_P_cond_min, mpc_pc->ms_params.m_T_amb_des, mpc_pc->m_Psat_ref, mpc_pc->ms_params.m_n_pl_inc, mpc_pc->ms_params.m_T_ITD_des, mpc_pc->ms_params.m_P_cond_ratio, (mpc_pc->ms_params.m_P_ref*1000.),
-            // 22-06-09 use design efficiency instead of map efficiency
-            mpc_pc->ms_params.m_eta_ref, m_T_db, m_P_amb, q_reject, m_dot_air, m_W_dot_cooling, P_cond_calc, T_cond_calc, m_f_hrsys);
+
+        mpc_pc->m_ACC->off_design(m_T_db, q_reject, m_dot_air, m_W_dot_cooling, P_cond_calc, T_cond_calc, m_f_hrsys);
+
+        //CSP::ACC(mpc_pc->ms_params.m_tech_type, mpc_pc->ms_params.m_P_cond_min, mpc_pc->ms_params.m_T_amb_des, mpc_pc->m_Psat_ref, mpc_pc->ms_params.m_n_pl_inc, mpc_pc->ms_params.m_T_ITD_des, mpc_pc->ms_params.m_P_cond_ratio, (mpc_pc->ms_params.m_P_ref*1000.),
+        //    // 22-06-09 use design efficiency instead of map efficiency
+        //    mpc_pc->ms_params.m_eta_ref, m_T_db, m_P_amb, q_reject, m_dot_air, m_W_dot_cooling, P_cond_calc, T_cond_calc, m_f_hrsys);
+
         m_m_dot_makeup = 0.0;
+
         break;
     case 3:
         CSP::HybridHR(mpc_pc->ms_params.m_tech_type, mpc_pc->ms_params.m_P_cond_min, mpc_pc->ms_params.m_n_pl_inc, m_F_wc, m_F_wcmax, m_F_wcmin, mpc_pc->ms_params.m_T_ITD_des, mpc_pc->ms_params.m_T_approach, mpc_pc->ms_params.m_dT_cw_ref, mpc_pc->ms_params.m_P_cond_ratio, (mpc_pc->ms_params.m_P_ref*1000.),

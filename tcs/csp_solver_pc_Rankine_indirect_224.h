@@ -64,6 +64,7 @@ private:
 	double m_m_dot_max;					//[kg/hr]
 	double m_m_dot_min;					//[kg/hr]
 	double m_q_dot_design;				//[MWt]
+    double m_q_dot_reject_des;          //[MWt]
 	double m_cp_htf_design;				//[kJ/kg-K]
     double m_W_dot_htf_pump_des;          //[MWe]
     double m_W_dot_cooling_des;         //[MWe]
@@ -79,6 +80,8 @@ private:
 	util::matrix_t<double> m_db;
 
 	HTFProperties mc_pc_htfProps;
+
+    std::shared_ptr<C_air_cooled_condenser> m_ACC;
 
 	// member string for exception messages
 	std::string m_error_msg;

@@ -95,6 +95,8 @@ namespace CSP
 					double eta_ref, double T_db_K, double T_wb_K, double P_amb_Pa, double q_reject, double &m_dot_water,
 					double &W_dot_tot, double &P_cond, double &T_cond, double &f_hrsys);
 
+    
+
 	// Air cooling calculations
 	void ACC( int tech_type, double P_cond_min, double T_cond_des, double P_cond_des, int n_pl_inc, double T_ITD_des, double P_cond_ratio, double P_cycle, double eta_ref,
 		 double T_db_K, double P_amb_Pa, double q_reject, double& m_dot_air, double& W_dot_fan, double& P_cond, double& T_cond, 
@@ -591,6 +593,50 @@ public:
 	double fT_2(double q_12conv, double T_1, double T_2g, double v_1, int hn, int hv);
 
 	double FK_23(double T_2, double T_3, int hn, int hv);
+};
+
+class C_air_cooled_condenser
+{
+private:
+
+    // Design parameters
+    int m_tech_type;
+    double m_P_cond_min;    //[Pa]
+    double m_T_amb_des;     //[K]
+    int m_n_pl_inc;         //[-]
+    double m_T_ITD_des;     //[K]
+    double m_P_cond_ratio_des;  //[-]
+    double m_q_dot_reject_des;  //[W]
+
+    // Model constants
+    const double m_c_air = 1005.0;			    //[J/kg-K] Specific heat of air, relatively constant over dry bulb range
+    const double T_map_des = 42.8 + 273.15;     //[K] Design point temperature of condenser map
+    const double T_hot_diff = 1.;               //[C/K] Temperature difference between saturation steam and condenser outlet air temp
+    const double P_cond_lower_bound_bar = 0.036;  // [bar] Default minimum condenser steam pressure
+    const double m_eta_fan_s = 0.85;            //[-] Fan isentropic efficiency
+    const double m_eta_fan = 0.97;          	//[-] Fan mechanical efficiency
+
+    // Calculated values
+    double m_P_cond_min_bar;    //[bar]
+    double m_T_cond_des;        //[K]
+    double m_P_cond_des;        //[Pa]
+    double m_dot_air_des;       //[kg/s]
+    double m_T_map_des_norm;    //[-]
+    double m_P_map_des_norm;    //[-]
+    double m_map_ratio_des;     //[-]
+    double m_W_dot_fan_des;     //[MWe]
+
+    double PvsQT(double Q /*[-]*/, double T /*[-]*/);
+
+public:
+
+    C_air_cooled_condenser(int tech_type /*-*/, double P_cond_min /*Pa*/, double T_amb_des /*K*/,
+        int n_pl_inc, double T_ITD_des /*C/K*/, double P_cond_ratio_des /*-*/, double q_dot_reject_des /*W*/);
+
+    void off_design(double T_amb /*K*/, double q_dot_reject /*W*/, double& m_dot_air, double& W_dot_fan, double& P_cond, double& T_cond,
+        double& f_hrsys);
+
+    double get_P_cond_des();
 };
 
 // Functor for advanced vector of vector sorting
