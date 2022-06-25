@@ -82,6 +82,7 @@ private:
 	HTFProperties mc_pc_htfProps;
 
     std::shared_ptr<C_air_cooled_condenser> m_ACC;
+    std::shared_ptr<C_evap_tower> m_evap_tower;
 
 	// member string for exception messages
 	std::string m_error_msg;

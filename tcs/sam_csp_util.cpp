@@ -572,6 +572,153 @@ double CSP::f_h_air_T(double T_C)
 	return 273474.659 + (1002.9404*T_C) + (0.0326819988*T_C*T_C); 
 } 
 
+double C_evap_tower::get_P_cond_des()
+{
+    return m_P_cond_des;    //[Pa]
+}
+
+C_evap_tower::C_evap_tower(int tech_type /*-*/, double P_cond_min /*Pa*/, int n_pl_inc /*-*/,
+    double DeltaT_cw_des /*C/K*/, double T_approach_des /*C/K*/, double q_dot_reject_des /*W*/,
+    double T_wb_des /*K*/, double T_db_des /*K*/, double P_amb_des /*Pa*/)
+{
+    m_tech_type = tech_type;
+    m_P_cond_min = P_cond_min;      //[Pa]
+    m_n_pl_inc = n_pl_inc;          //[-]
+    m_DeltaT_cw_des = DeltaT_cw_des;    //[C/K]
+    m_T_approach_des = T_approach_des;  //[C/K]
+    m_q_dot_reject_des = q_dot_reject_des;  //[W]
+    m_T_wb_des = T_wb_des;          //[K]
+    m_T_db_des = T_db_des;          //[K]
+    m_P_amb_des = P_amb_des;        //[Pa]
+
+    // Cooling water specific heat
+    water_state wp;
+    water_TP(max(m_T_wb_des, 283.15), m_P_amb_des / 1000.0, &wp);
+    double c_cw = wp.cp * 1000.0;		// Convert to J/kg-K
+
+    m_m_dot_cw_des = q_dot_reject_des / (c_cw * DeltaT_cw_des);	//[kg/s] Mass flow rate of cooling water required to absorb the rejected heat
+
+    double f_hrsys = std::numeric_limits<double>::quiet_NaN();
+    off_design(m_T_db_des, m_T_wb_des, m_P_amb_des, m_q_dot_reject_des,
+        m_m_dot_water_des, m_W_dot_cooling_des, m_P_cond_des,
+        m_T_cond_des, f_hrsys);
+
+    return;
+}
+
+void C_evap_tower::off_design(double T_db_K /*K*/, double T_wb_K /*K*/,
+                            double P_amb /*Pa*/, double q_dot_reject /*W*/,
+                            double& m_dot_water, double& W_dot_tot, double& P_cond,
+                            double& T_cond, double& f_hrsys)
+{
+    // Unit conversions
+    double T_db = T_db_K - 273.15;    //[C] Converted dry bulb temp
+    double T_wb = T_wb_K - 273.15;    //[C] Converted wet bulb temp
+
+    // Cooling water specific heat
+    water_state wp;
+    water_TP(max(T_wb, 10.0) + 273.15, P_amb / 1000.0, &wp);
+    double c_cw = wp.cp * 1000.0;		// Convert to J/kg-K
+
+    // **** Calculations for performance
+    // Calculate the cooling water temp. rise associated with normal cooling system operation
+    double m_dot_cw = m_m_dot_cw_des;           //[kg/s]
+    double deltat_cw = q_dot_reject / (m_dot_cw * c_cw);        //[C/K]
+
+    // Condenser saturation temperature
+    T_cond = T_wb + deltat_cw + m_dt_out + m_T_approach_des;    //[C]
+
+    // Condenser back pressure
+    if (m_tech_type != 4)
+    {
+        water_TQ(T_cond + 273.15, 1.0, &wp);
+        P_cond = wp.pres * 1000.0;
+    }
+    else
+        P_cond = CSP::P_sat4(T_cond); // isopentane
+
+    // MJW 7.19.2010 :: Cooling system part-load strategy uses the number of part-load increments to determine how the coolign system is
+    // partially shut down during under design operation. The condenser pressure is reduced with the cooling system running
+    // at full load until it reaches the minimum condenser pressure. The cooling system then incrementally shuts off bays until
+    // the condenser temperature/pressure rise above their minimum level. Default cond. pressure is 1.25 inHg (4233 Pa).
+    if ((P_cond < m_P_cond_min) && (m_tech_type != 4)) // Aug 3, 2011: No lower limit on Isopentane
+    {
+        for (int i = 2; i <= m_n_pl_inc; i++)
+        {
+            f_hrsys = (1.0 - (float)((i - 1.0) / m_n_pl_inc));
+            m_dot_cw = m_m_dot_cw_des * f_hrsys;
+            deltat_cw = q_dot_reject / (m_dot_cw * c_cw);
+            T_cond = T_wb + deltat_cw + m_dt_out + m_T_approach_des;
+
+            water_TQ(T_cond + 273.15, 1.0, &wp);
+            P_cond = wp.pres * 1000.0;
+
+            if (P_cond > m_P_cond_min) break;
+        }
+        if (P_cond <= m_P_cond_min)
+        {
+            // Still below min. fix to min condenser pressure and recalc. temp.
+
+            P_cond = m_P_cond_min;
+
+            water_PQ(P_cond / 1000.0, 1.0, &wp);
+            T_cond = wp.temp - 273.15;
+
+            deltat_cw = T_cond - (T_wb + m_dt_out + m_T_approach_des);
+            m_dot_cw = q_dot_reject / (deltat_cw * c_cw);
+        }
+    }
+    water_TP(T_cond - 3.0 + 273.15, P_amb / 1000.0, &wp);
+    double h_pcw_in = wp.enth * 1000.0;
+    //double s_pcw_in = wp.entr*1000.0;
+    double rho_cw = wp.dens;
+
+    double h_pcw_out_s = (m_dp_evap / rho_cw) + h_pcw_in;								// [J/kg] isentropic outlet enthalpy.. incompressible fluid
+    double h_pcw_out = h_pcw_in + ((h_pcw_out_s - h_pcw_in) / m_eta_pcw_s);			// [J/kg] Outlet enthalpy accounting for irreversibility
+    double w_dot_cw_pump = (h_pcw_out - h_pcw_in) * m_dot_cw / m_eta_pump * 1.0E-6;	// [MW] Cooling water circulating pump power
+
+    // Fan power
+    double m_dot_air = m_dot_cw * m_mass_ratio_fan;
+    double t_fan_in = (T_db + T_wb + m_T_approach_des) / 2.0;
+    double h_fan_in = CSP::f_h_air_T(t_fan_in);
+
+    double c_air = 1003.0;		// [J/kg-K] specific heat of air (This is relatively constant)
+    double R = 8314. / 28.97;	// [J/kmol-K]/[kg/kmol] Gas constant over the molar mass of air
+
+    double t_fan_in_k = t_fan_in + 273.15;										// Fan inlet temp, in K
+    double t_fan_out_k = t_fan_in_k * pow(m_p_ratio_fan, (R / c_air));				// [K] isentropic temperature rise
+    double t_fan_out = t_fan_out_k - 273.15;									// [C] Convert isentropic temperature rise to deg C
+    double h_fan_out_s = CSP::f_h_air_T(t_fan_out);									// [J/kg] Calculate isentropic enthalpy at fan outlet
+    double h_fan_out = h_fan_in + (h_fan_out_s - h_fan_in) / m_eta_fan_s;			// [J/kg] Actual enthalpy, accounting for irreversibility
+
+    double w_dot_fan = (h_fan_out - h_fan_in) * m_dot_air / m_eta_fan * 1.0E-6;  // [MW] Fan parasitic power
+
+    // Total cooling tower parasitic power
+    W_dot_tot = w_dot_cw_pump + w_dot_fan;   // [MW]
+
+    // Enthalpy of evaporation
+    water_PQ(P_amb / 1000.0, 0.0, &wp);
+    double dh_low = wp.enth;
+    water_PQ(P_amb / 1000.0, 1.0, &wp);
+    double dh_high = wp.enth;
+    double deltah_evap = (dh_high - dh_low) * 1000.0;	// [J/kg]
+
+    // Evaporative water loss
+    double m_dot_evap = q_dot_reject / deltah_evap;
+
+    // Other water losses
+    double m_dot_drift = m_drift_loss_frac * m_dot_cw;			// Drift loss fraction, based on cooling water mass flow rate
+    double m_dot_blowdown = m_blowdown_frac * m_dot_cw;			// Blow down fraction
+
+    // Total power block water usage
+    m_dot_water = m_dot_evap + m_dot_drift + m_dot_blowdown;
+
+    // Unit conversions
+    T_db = T_db + 273.15;		// [C] Converted dry bulb temp (TFF - I think this is irrelevant, since it's not passed back out)
+    T_wb = T_wb + 273.15;		// [C] Converted wet bulb temp (TFF - I think this is irrelevant, since it's not passed back out)
+    T_cond = T_cond + 273.15;	// [K] Convert to K for output
+}
+
 // Evaporative cooling calculations
 void CSP::evap_tower(int tech_type, double dt_out, double P_cond_min, int n_pl_inc, double DeltaT_cw_des, double T_approach, double P_cycle, 
 							 double eta_ref, double T_db_K, double T_wb_K, double P_amb, double q_reject, double &m_dot_water, 
@@ -730,6 +877,8 @@ void CSP::evap_tower(int tech_type, double dt_out, double P_cond_min, int n_pl_i
 	T_wb = T_wb + 273.15;		// [C] Converted wet bulb temp (TFF - I think this is irrelevant, since it's not passed back out)
 	T_cond = T_cond + 273.15;	// [K] Convert to K for output
 }
+
+
 
 double C_air_cooled_condenser::PvsQT(double Q /*[-]*/, double T /*[-]*/)
 {

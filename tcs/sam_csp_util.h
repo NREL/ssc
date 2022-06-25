@@ -595,6 +595,53 @@ public:
 	double FK_23(double T_2, double T_3, int hn, int hv);
 };
 
+class C_evap_tower
+{
+private:
+
+    // Design parameters
+    int m_tech_type;
+    double m_P_cond_min;    //[Pa] Minimum allowable condenser pressure
+    int m_n_pl_inc;         //[-] Number of part load heat rejection levels
+    double m_DeltaT_cw_des; //[C/K] Cooling water temperature rise across condenser (dT_cw_ref)
+    double m_T_approach_des;    //[C/K] Cooling tower approach temperature, difference between cw out and wet bulb temp
+    double m_q_dot_reject_des;  //[W]
+    double m_T_wb_des;      //[K]
+    double m_T_db_des;      //[K]
+    double m_P_amb_des;     //[Pa]
+
+    // Model constants
+    const double m_dt_out = 3.0;                //[C]
+    const double m_drift_loss_frac = 0.001;    // Drift loss fraction
+    const double m_blowdown_frac = 0.003;      // Blowdown fraction
+    const double m_dp_evap = 0.37 * 1.0e5;       // [Pa] Pressure drop across the condenser and cooling tower
+    const double m_eta_pump = 0.75;            // Total pump efficiency
+    const double m_eta_pcw_s = 0.8;            // Isentropic cooling water pump efficiency
+    const double m_eta_fan = 0.75;             // Fan mechanical efficiency
+    const double m_eta_fan_s = 0.8;            // Fan isentropic efficiency
+    const double m_p_ratio_fan = 1.0025;       // Fan pressure ratio
+    const double m_mass_ratio_fan = 1.01;      // Ratio of air flow to water flow in the cooling tower
+
+    // Calculated values
+    double m_m_dot_cw_des;      //[kg/s]
+    double m_m_dot_water_des;   //[kg/s]
+    double m_W_dot_cooling_des; //[MWe]
+    double m_P_cond_des;        //[Pa]
+    double m_T_cond_des;        //[K]
+
+public:
+
+    C_evap_tower(int tech_type /*-*/, double P_cond_min /*Pa*/, int n_pl_inc /*-*/,
+        double DeltaT_cw_des /*C/K*/, double T_approach_des /*C/K*/, double q_dot_reject_des /*W*/,
+        double T_wb_des /*K*/, double T_db_des /*K*/, double P_amb_des /*Pa*/);
+
+    void off_design(double T_db /*K*/, double T_wb /*K*/, double P_amb /*Pa*/, double q_dot_reject /*W*/,
+        double& m_dot_water, double& W_dot_tot, double& P_cond,
+        double& T_cond, double& f_hrsys);
+
+    double get_P_cond_des();
+};
+
 class C_air_cooled_condenser
 {
 private:

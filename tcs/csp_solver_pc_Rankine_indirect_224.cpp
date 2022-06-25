@@ -493,16 +493,15 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 		switch( ms_params.m_CT )
 		{
 		case 1:		// Wet cooled case
-			if( ms_params.m_tech_type != 4 )
-			{
-				water_TQ(ms_params.m_dT_cw_ref + m_evap_dt_out + ms_params.m_T_approach + m_T_wb_des + 273.15, 1.0, &wp);
-				m_Psat_ref = wp.pres*1000.0;
-			}
-			else
-			{
-                m_Psat_ref = CSP::P_sat4(ms_params.m_dT_cw_ref + m_evap_dt_out + ms_params.m_T_approach + m_T_wb_des);	// Isopentane
-			}
+        {
+            std::unique_ptr<C_evap_tower> local_evap_tower(new C_evap_tower(ms_params.m_tech_type,
+                ms_params.m_P_cond_min, ms_params.m_n_pl_inc, ms_params.m_dT_cw_ref, ms_params.m_T_approach,
+                m_q_dot_reject_des * 1.E6, m_T_wb_des + 273.15, ms_params.m_T_amb_des + 273.15, m_P_amb_des));
+            m_evap_tower = std::move(local_evap_tower);
 
+            m_Psat_ref = m_evap_tower->get_P_cond_des();
+
+        }
 			break;
 		case 2:
         {
@@ -1858,9 +1857,14 @@ int C_pc_Rankine_indirect_224::C_MEQ__P_cond_OD::operator()(double P_cond_iter_g
     switch (mpc_pc->ms_params.m_CT)  // Cooling technology type {1=evaporative cooling, 2=air cooled condenser, 3=hybrid cooling, 4= surface condenser}
     {
     case 1:
-        CSP::evap_tower(mpc_pc->ms_params.m_tech_type, mpc_pc->m_evap_dt_out, mpc_pc->ms_params.m_P_cond_min, mpc_pc->ms_params.m_n_pl_inc, mpc_pc->ms_params.m_dT_cw_ref, mpc_pc->ms_params.m_T_approach, (mpc_pc->ms_params.m_P_ref*1000.),
-            // 22-06-13 use design efficiency instead of map efficiency
-            mpc_pc->ms_params.m_eta_ref, m_T_db, m_T_wb, m_P_amb, q_reject, m_m_dot_makeup, m_W_dot_cooling, P_cond_calc, T_cond_calc, m_f_hrsys);
+
+        mpc_pc->m_evap_tower->off_design(m_T_db, m_T_wb, m_P_amb, q_reject,
+            m_m_dot_makeup, m_W_dot_cooling, P_cond_calc, T_cond_calc, m_f_hrsys);
+
+        //CSP::evap_tower(mpc_pc->ms_params.m_tech_type, mpc_pc->m_evap_dt_out, mpc_pc->ms_params.m_P_cond_min, mpc_pc->ms_params.m_n_pl_inc, mpc_pc->ms_params.m_dT_cw_ref, mpc_pc->ms_params.m_T_approach, (mpc_pc->ms_params.m_P_ref*1000.),
+        //    // 22-06-13 use design efficiency instead of map efficiency
+        //    mpc_pc->ms_params.m_eta_ref, m_T_db, m_T_wb, m_P_amb, q_reject, m_m_dot_makeup, m_W_dot_cooling, P_cond_calc, T_cond_calc, m_f_hrsys);
+
         break;
     case 2:
 
