@@ -46,7 +46,6 @@ private:
 	double m_F_wcMin;
 	double m_delta_h_steam;
 	double m_startup_energy_required;
-	double m_eta_adj_OLD;
     double m_Psat_ref;      //[Pa]
     double m_P_ND_ref;      //[-]
     double m_Q_ND_ref;      //[-]

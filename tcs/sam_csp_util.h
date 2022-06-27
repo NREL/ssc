@@ -91,23 +91,6 @@ namespace CSP
 	// Turbine isentropic efficiency penalty as a function of mass flow fraction (Patnode thesis)
 	double eta_pl(double mf);
 
-	// Evaporative cooling calculations
-	//void evap_tower(int tech_type, double dt_out /*C/K*/, double P_cond_min, int n_pl_inc, double DeltaT_cw_des, double T_approach, double P_cycle,
-	//				double eta_ref, double T_db_K, double T_wb_K, double P_amb_Pa, double q_reject, double &m_dot_water,
-	//				double &W_dot_tot, double &P_cond, double &T_cond, double &f_hrsys);
-
-    
-
-	// Air cooling calculations
-	//void ACC( int tech_type, double P_cond_min, double T_cond_des, double P_cond_des, int n_pl_inc, double T_ITD_des, double P_cond_ratio, double P_cycle, double eta_ref,
-	//	 double T_db_K, double P_amb_Pa, double q_reject, double& m_dot_air, double& W_dot_fan, double& P_cond, double& T_cond, 
-	//	 double &f_hrsys);
-
-	// Hybrid cooling calculations
-	//void HybridHR( int tech_type, double P_cond_min, int n_pl_inc, double F_wc, double F_wcmax, double F_wcmin,
-	//			  double T_ITD_des, double T_approach, double dT_cw_ref, double P_cond_ratio, double P_cycle, double eta_ref, 
-	//			  double T_db_K, double T_wb_K, double P_amb_Pa, double q_reject, double& m_dot_water, double& W_dot_acfan, 
-	//			  double& W_dot_wctot, double& W_dot_tot, double& P_cond, double& T_cond, double& f_hrsys);
 	// Surface condenser ARD
 	void surface_cond(int tech_type, double P_cond_min, int n_pl_inc, double DeltaT_cw_des, double T_approach, double P_cycle,
 		double eta_ref, double T_db_K, double T_wb_K, double P_amb_Pa, double T_cold, double q_reject, double &m_dot_water,

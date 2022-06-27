@@ -215,9 +215,6 @@ private:
     double m_T_wb_des;    //[C]
     double m_P_ND_ref, m_Q_ND_ref, m_R_ND_ref;
 
-    // Cooler design - hardcoded
-    double m_evap_dt_out;
-
     std::shared_ptr<C_evap_tower> m_evap_tower;
     std::shared_ptr<C_air_cooled_condenser> m_ACC;
     std::shared_ptr<C_hybrid_cooling> m_hybrid_cooling;
@@ -279,8 +276,6 @@ public:
         m_P_amb_des = 101325.0; //[Pa]
         m_P_ND_ref = m_Q_ND_ref = m_R_ND_ref = std::numeric_limits<double>::quiet_NaN();
 
-        // Cooler design - hardcoded
-        m_evap_dt_out = 3.0;
 	}
 
 	virtual ~sam_mw_type234(){

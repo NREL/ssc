@@ -74,7 +74,7 @@ C_pc_Rankine_indirect_224::C_pc_Rankine_indirect_224()
     m_operating_mode_prev = C_csp_power_cycle::E_csp_power_cycle_modes::OFF;
     m_operating_mode_calc = m_operating_mode_prev;
 
-	m_F_wcMax = m_F_wcMin = m_delta_h_steam = m_startup_energy_required = m_eta_adj_OLD = m_Psat_ref = m_P_ND_ref = m_Q_ND_ref =
+	m_F_wcMax = m_F_wcMin = m_delta_h_steam = m_startup_energy_required = m_Psat_ref = m_P_ND_ref = m_Q_ND_ref =
         m_m_dot_design = m_q_dot_design = m_q_dot_reject_des = m_cp_htf_design = m_W_dot_htf_pump_des = m_W_dot_cooling_des =
         m_T_wb_des =
         m_startup_time_remain_prev = m_startup_time_remain_calc =
@@ -538,10 +538,8 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 			}
 		}	// end cooling technology switch()
 
+        // Get normalized map outputs at design condenser pressure
         cycle_Rankine_ND(1.0, m_Psat_ref, 1.0, m_P_ND_ref, m_Q_ND_ref);
-        //m_P_ND_ref = Interpolate(12, 2, m_Psat_ref);
-        //m_Q_ND_ref = Interpolate(22, 2, m_Psat_ref);
-		m_eta_adj_OLD = ms_params.m_eta_ref / (m_P_ND_ref / m_Q_ND_ref);
 	}
 	else
 	{	// Initialization calculations for User Defined power cycle model
