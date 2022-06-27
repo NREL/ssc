@@ -1140,6 +1140,97 @@ void CSP::ACC(int tech_type, double P_cond_min, double T_db_des, double P_cond_d
     W_dot_fan = (h_fan_out - h_fan_in)*m_dot_air / eta_fan * 1.0e-6;    // [MW] Fan power
 }
 
+double C_hybrid_cooling::get_P_cond_des()
+{
+    return m_P_cond_des;    //[Pa]
+}
+
+void C_hybrid_cooling::off_design(double F_wc /*-*/, double q_dot_reject_cycle /*W*/,
+    double T_db /*K*/, double T_wb /*K*/, double P_amb /*Pa*/,
+    double& m_dot_water, double& W_dot_acfan /*MWe*/,
+    double& W_dot_wctot /*MWe*/, double& W_dot_tot /*MWe*/,
+    double& P_cond /*Pa*/, double& T_cond /*K*/, double& f_hrsys)
+{
+    double q_dot_reject_evap = q_dot_reject_cycle*F_wc;
+    double q_dot_reject_acc = q_dot_reject_cycle*(1.0 - F_wc);
+
+    double m_dot_air;
+    double P_cond_acc, T_cond_acc, f_hrsys_acc;
+    if (q_dot_reject_acc > 0.0) {
+        m_ACC->off_design(T_db, q_dot_reject_acc, m_dot_air, W_dot_acfan, P_cond_acc, T_cond_acc, f_hrsys_acc);
+    }
+    else {
+        m_dot_air = 0.0;
+        W_dot_acfan = 0.0;
+        P_cond_acc = -1.0;
+        T_cond_acc = -1.0;
+        f_hrsys_acc = 0.0;
+    }
+
+    double P_cond_evap, T_cond_evap, f_hrsys_evap;
+    if (q_dot_reject_evap > 0.0) {
+        m_evap_tower->off_design(T_db, T_wb, P_amb, q_dot_reject_evap,
+            m_dot_water, W_dot_wctot, P_cond_evap, T_cond_evap, f_hrsys_evap);
+    }
+    else {
+        m_dot_water = 0.0;
+        W_dot_wctot = 0.0;
+        P_cond_evap = -1.0;
+        T_cond_evap = -1.0;
+        f_hrsys_evap = 0.0;
+    }
+
+    P_cond = max(P_cond_acc, P_cond_evap);      //[Pa]
+    T_cond = max(T_cond_acc, T_cond_evap);      //[K]
+    W_dot_tot = W_dot_acfan + W_dot_wctot;      //[MWe]
+    // Not sure that a single f_hrsys makes sense with this methodology...
+    f_hrsys = max(f_hrsys_acc, f_hrsys_evap);
+}
+
+C_hybrid_cooling::C_hybrid_cooling(int tech_type /*-*/, double q_dot_reject_des /*W*/, double T_db_des /*K*/,
+    double P_cond_min /*Pa*/, int n_pl_inc /*-*/,
+    // Hybrid
+    double F_wcmax, double F_wcmin,
+    // Evap cooler
+    double DeltaT_cw_des /*C/K*/, double T_approach_des /*C/K*/,
+    double T_wb_des /*K*/, double P_amb_des /*Pa*/,
+    // ACC
+    double T_ITD_des /*C/K*/, double P_cond_ratio_des /*-*/)
+{
+    // If design heat rejection is 0, replace with small positive value,
+    // so design code doesn't fail
+    // Off-design shouldn't happen, since F_wcmin/max are based on min/max in TOU periods
+    double q_dot_min = 1.E-6 * q_dot_reject_des;
+    m_q_dot_reject_evap_des_size = max(q_dot_min, q_dot_reject_des*F_wcmax);         //[W]
+    m_q_dot_reject_ACC_des_size = max(q_dot_min, q_dot_reject_des*(1.0 - F_wcmin));  //[W]
+
+    // Design evap cooler
+    std::unique_ptr<C_evap_tower> local_evap_tower(new C_evap_tower(tech_type, P_cond_min, n_pl_inc,
+        DeltaT_cw_des, T_approach_des, m_q_dot_reject_evap_des_size, T_wb_des, T_db_des, P_amb_des));
+
+    m_evap_tower = std::move(local_evap_tower);
+
+    // Design ACC
+    std::unique_ptr<C_air_cooled_condenser> local_ACC(new C_air_cooled_condenser(tech_type, P_cond_min, T_db_des,
+        n_pl_inc, T_ITD_des, P_cond_ratio_des, m_q_dot_reject_ACC_des_size));
+
+    m_ACC = std::move(local_ACC);
+
+    // The cycle model gets the design condenser pressure from this class, so..
+    // how do we define "design point"?
+    // Sum of ACC and evap design heat reject is > cycle design heat reject
+    // Maybe design should be at F_wcmin so baseline is air cooler
+    m_q_dot_rejecet_evap_des_P_cond = q_dot_reject_des * F_wcmin;       //[W]
+    m_q_dot_reject_ACC_des_P_cond = q_dot_reject_des*(1.0 - F_wcmin);   //[W]
+
+    double f_hrsys_des;
+    off_design(F_wcmin, q_dot_reject_des, T_db_des, T_wb_des, P_amb_des,
+        m_m_dot_water_des, m_W_dot_acc_des, m_W_dot_evap_des, m_W_dot_tot_des,
+        m_P_cond_des, m_T_cond_des, f_hrsys_des);
+
+    return;
+}
+
 void CSP::HybridHR( int tech_type, double P_cond_min, int n_pl_inc, double F_wc, double F_wcmax, double F_wcmin, double T_ITD_des, double T_approach, 
 				  double dT_cw_ref, double P_cond_ratio, double P_cycle, double eta_ref, 
 				  double T_db, double T_wb, double P_amb, double q_reject, double& m_dot_water, double& W_dot_acfan, 

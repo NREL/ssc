@@ -503,7 +503,7 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 
         }
 			break;
-		case 2:
+		case 2:     // Air cooling
         {
             std::unique_ptr<C_air_cooled_condenser> local_ACC(new C_air_cooled_condenser(ms_params.m_tech_type,
                 ms_params.m_P_cond_min, ms_params.m_T_amb_des + 273.15, ms_params.m_n_pl_inc, ms_params.m_T_ITD_des,
@@ -514,17 +514,15 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
         }
 
             break;
-		case 3:		// Dry cooled and hyrbid cases
+		case 3:		// Hybrid cooling
         {
-            if (ms_params.m_tech_type != 4)
-            {
-                water_TQ(ms_params.m_T_ITD_des + ms_params.m_T_amb_des + 273.15, 1.0, &wp);
-                m_Psat_ref = wp.pres * 1000.0;
-            }
-            else
-            {
-                m_Psat_ref = CSP::P_sat4(ms_params.m_T_ITD_des + ms_params.m_T_amb_des);	// Isopentane
-            }
+            std::unique_ptr<C_hybrid_cooling> local_hybrid(new C_hybrid_cooling(ms_params.m_tech_type, m_q_dot_reject_des * 1.E6,
+                ms_params.m_T_amb_des + 273.15, ms_params.m_P_cond_min, ms_params.m_n_pl_inc,
+                m_F_wcMax, m_F_wcMin, ms_params.m_dT_cw_ref, ms_params.m_T_approach, m_T_wb_des + 273.15, m_P_amb_des,
+                ms_params.m_T_ITD_des, ms_params.m_P_cond_ratio));
+            m_hybrid_cooling = std::move(local_hybrid);
+
+            m_Psat_ref = m_hybrid_cooling->get_P_cond_des();
         }
 			break;
 		case 4:		// Once-through surface condenser case ARD
@@ -713,7 +711,7 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
     {
         int mode_des = 2;                                   //[-]
         double demand_var_des = 0.0;                        //[MWe]
-        double F_wc_des = m_F_wcMax;
+        double F_wc_des = m_F_wcMin;
 
         double m_dot_demand_des_calc, m_dot_htf_ref_des_calc, f_hrsys_des_calc, P_cond_des_calc, T_cond_out_des_calc, P_cond_iter_rel_err_design;
 
@@ -1878,10 +1876,15 @@ int C_pc_Rankine_indirect_224::C_MEQ__P_cond_OD::operator()(double P_cond_iter_g
 
         break;
     case 3:
-        CSP::HybridHR(mpc_pc->ms_params.m_tech_type, mpc_pc->ms_params.m_P_cond_min, mpc_pc->ms_params.m_n_pl_inc, m_F_wc, m_F_wcmax, m_F_wcmin, mpc_pc->ms_params.m_T_ITD_des, mpc_pc->ms_params.m_T_approach, mpc_pc->ms_params.m_dT_cw_ref, mpc_pc->ms_params.m_P_cond_ratio, (mpc_pc->ms_params.m_P_ref*1000.),
-            // 22-06-14 use design efficiency instead of map efficiency
-            mpc_pc->ms_params.m_eta_ref, m_T_db, m_T_wb,
-            m_P_amb, q_reject, m_m_dot_makeup, W_cool_parhac, W_cool_parhwc, m_W_dot_cooling, P_cond_calc, T_cond_calc, m_f_hrsys);
+
+        mpc_pc->m_hybrid_cooling->off_design(m_F_wc, q_reject, m_T_db, m_T_wb, m_P_amb,
+            m_m_dot_makeup, W_cool_parhac, W_cool_parhwc, m_W_dot_cooling, P_cond_calc, T_cond_calc, m_f_hrsys);
+
+        //CSP::HybridHR(mpc_pc->ms_params.m_tech_type, mpc_pc->ms_params.m_P_cond_min, mpc_pc->ms_params.m_n_pl_inc, m_F_wc, m_F_wcmax, m_F_wcmin, mpc_pc->ms_params.m_T_ITD_des, mpc_pc->ms_params.m_T_approach, mpc_pc->ms_params.m_dT_cw_ref, mpc_pc->ms_params.m_P_cond_ratio, (mpc_pc->ms_params.m_P_ref*1000.),
+        //    // 22-06-14 use design efficiency instead of map efficiency
+        //    mpc_pc->ms_params.m_eta_ref, m_T_db, m_T_wb,
+        //    m_P_amb, q_reject, m_m_dot_makeup, W_cool_parhac, W_cool_parhwc, m_W_dot_cooling, P_cond_calc, T_cond_calc, m_f_hrsys);
+
         break;
     case 4:
         CSP::surface_cond(mpc_pc->ms_params.m_tech_type, mpc_pc->ms_params.m_P_cond_min, mpc_pc->ms_params.m_n_pl_inc, m_dT_cw_rad_cooling, mpc_pc->ms_params.m_T_approach, (mpc_pc->ms_params.m_P_ref*1000.),

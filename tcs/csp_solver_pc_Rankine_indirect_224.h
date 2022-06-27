@@ -83,6 +83,7 @@ private:
 
     std::shared_ptr<C_air_cooled_condenser> m_ACC;
     std::shared_ptr<C_evap_tower> m_evap_tower;
+    std::shared_ptr<C_hybrid_cooling> m_hybrid_cooling;
 
 	// member string for exception messages
 	std::string m_error_msg;

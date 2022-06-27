@@ -29,6 +29,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../shared/lib_util.h"
 #include "htf_props.h"
 
+#include <memory>
 
 using namespace std;
 
@@ -595,6 +596,8 @@ public:
 	double FK_23(double T_2, double T_3, int hn, int hv);
 };
 
+
+
 class C_evap_tower
 {
 private:
@@ -680,8 +683,49 @@ public:
     C_air_cooled_condenser(int tech_type /*-*/, double P_cond_min /*Pa*/, double T_amb_des /*K*/,
         int n_pl_inc, double T_ITD_des /*C/K*/, double P_cond_ratio_des /*-*/, double q_dot_reject_des /*W*/);
 
-    void off_design(double T_amb /*K*/, double q_dot_reject /*W*/, double& m_dot_air, double& W_dot_fan, double& P_cond, double& T_cond,
+    void off_design(double T_amb /*K*/, double q_dot_reject /*W*/,
+        double& m_dot_air, double& W_dot_fan, double& P_cond, double& T_cond,
         double& f_hrsys);
+
+    double get_P_cond_des();
+};
+
+class C_hybrid_cooling
+{
+private:
+
+    std::shared_ptr<C_evap_tower> m_evap_tower;
+    std::shared_ptr<C_air_cooled_condenser> m_ACC;
+
+    double m_q_dot_reject_evap_des_size;     //[W]
+    double m_q_dot_reject_ACC_des_size;      //[W]
+
+    double m_q_dot_rejecet_evap_des_P_cond; //[W]
+    double m_q_dot_reject_ACC_des_P_cond;   //[W]
+
+    double m_m_dot_water_des;         //[kg/s]
+    double m_W_dot_acc_des;           //[MWe]
+    double m_W_dot_evap_des;          //[MWe]
+    double m_W_dot_tot_des;           //[MWe]
+    double m_P_cond_des;              //[Pa]
+    double m_T_cond_des;              //[K]
+
+public:
+
+    C_hybrid_cooling(int tech_type /*-*/, double q_dot_reject_des /*W*/, double T_db_des /*K*/,
+        double P_cond_min /*Pa*/, int n_pl_inc /*-*/,
+        // Hybrid
+        double F_wcmax, double F_wcmin,
+        // Evap cooler
+        double DeltaT_cw_des /*C/K*/, double T_approach_des /*C/K*/,
+        double T_wb_des /*K*/, double P_amb_des /*Pa*/,
+        // ACC
+        double T_ITD_des /*C/K*/, double P_cond_ratio_des /*-*/);
+
+    void off_design(double F_wc /*-*/, double q_dot_reject_cycle /*W*/,
+        double T_db /*K*/, double T_wb /*K*/, double P_amb /*Pa*/,
+        double& m_dot_water, double& W_dot_acfan,
+        double& W_dot_wctot, double& W_dot_tot, double& P_cond, double& T_cond, double& f_hrsys);
 
     double get_P_cond_des();
 };
