@@ -198,6 +198,7 @@ private:
 	double m_m_dot_ref;
 	double m_q_dot_rh_ref;
 	double m_q_dot_st_ref;
+    double m_q_dot_reject_des;  //[MWt]
 
 	util::matrix_t<double> m_db;
 
@@ -216,7 +217,11 @@ private:
 
     // Cooler design - hardcoded
     double m_evap_dt_out;
-	
+
+    std::shared_ptr<C_evap_tower> m_evap_tower;
+    std::shared_ptr<C_air_cooled_condenser> m_ACC;
+    std::shared_ptr<C_hybrid_cooling> m_hybrid_cooling;
+
 public:
 
 	sam_mw_type234(tcscontext *cxt, tcstypeinfo *ti)
@@ -304,7 +309,7 @@ public:
 		m_T_ITD_des		= value( P_T_ITD_DES );					//[C] ITD at design for dry system
 		m_P_cond_ratio	= value( P_P_COND_RATIO );				//[-] Condenser pressure ratio
 		m_pb_bd_frac	= value( P_PB_BD_FRAC );				//[-] Power block blowdown steam fraction
-		m_P_cond_min	= value( P_P_COND_MIN )*3386.388667;	//[inHg] Minimum condenser pressure
+		m_P_cond_min	= value( P_P_COND_MIN )*3386.388667;	//[Pa] Minimum condenser pressure, convert from inHg
 		m_n_pl_inc		= (int) value( P_N_PL_INC );			//[-] Number of part-load increments for the heat rejection system	
 
 		double* F_wc_in;							//Fraction indicating wet cooling use for hybrid system
@@ -339,6 +344,8 @@ public:
 
 		// Calculate the startup energy needed
 		m_startup_energy = m_startup_frac*m_P_ref/m_eta_ref;		//[kWt]
+
+        m_q_dot_reject_des = m_P_ref*(1.0/m_eta_ref - 1.0)*1.E-3;   //[MWt]
 
 		// Initialize stored variables
 		m_standby_control_prev = 3;
@@ -577,35 +584,43 @@ public:
 		switch( m_CT )
 		{
 		case 1:
-			if( m_tech_type != 4 )
-			{
-				water_TQ(m_dT_cw_ref + m_evap_dt_out + m_T_approach + m_T_wb_des + 273.15, 1.0, &wp);
-				m_Psat_ref_Pa = wp.pres*1000.0;		// [Pa]
-			}
-			else
-				m_Psat_ref_Pa = CSP::P_sat4( m_dT_cw_ref + m_evap_dt_out + m_T_approach + m_T_amb_des );
-				
+        {
+            std::unique_ptr<C_evap_tower> local_evap_tower(new C_evap_tower(m_tech_type,
+                m_P_cond_min, m_n_pl_inc, m_dT_cw_ref, m_T_approach,
+                m_q_dot_reject_des * 1.E6, m_T_wb_des + 273.15, m_T_amb_des + 273.15, m_P_amb_des));
+            m_evap_tower = std::move(local_evap_tower);
+
+            m_Psat_ref_Pa = m_evap_tower->get_P_cond_des();
+        }
 			break;
 
 		case 2:
-		case 3:
-			if( m_tech_type != 4 )
-			{
-				water_TQ(m_T_ITD_des + m_T_amb_des + 273.15, 1.0, &wp);
-				m_Psat_ref_Pa = wp.pres*1000.0;		// [Pa]
-			}
-			else
-				m_Psat_ref_Pa = CSP::P_sat4( m_T_ITD_des + m_T_amb_des );
+        {
+            std::unique_ptr<C_air_cooled_condenser> local_ACC(new C_air_cooled_condenser(m_tech_type,
+                m_P_cond_min, m_T_amb_des + 273.15, m_n_pl_inc, m_T_ITD_des,
+                m_P_cond_ratio, m_q_dot_reject_des * 1.E6));
+            m_ACC = std::move(local_ACC);
 
+            m_Psat_ref_Pa = m_ACC->get_P_cond_des();
+        }
+            break;
+
+		case 3:
+        {
+            std::unique_ptr<C_hybrid_cooling> local_hybrid(new C_hybrid_cooling(m_tech_type, m_q_dot_reject_des * 1.E6,
+                m_T_amb_des + 273.15, m_P_cond_min, m_n_pl_inc,
+                m_F_wcmax, m_F_wcmin, m_dT_cw_ref, m_T_approach, m_T_wb_des + 273.15, m_P_amb_des,
+                m_T_ITD_des, m_P_cond_ratio));
+            m_hybrid_cooling = std::move(local_hybrid);
+
+            m_Psat_ref_Pa = m_hybrid_cooling->get_P_cond_des();
+        }
 			break;
 		}
 
         
         cycle_ND(1.0, m_Psat_ref_Pa, 1.0, m_P_ND_ref, m_Q_ND_ref, m_R_ND_ref);
 
-        
-
-		//m_eta_adj = m_eta_ref/(CycleMap_DSG( 12, 2, m_Psat_ref )/CycleMap_DSG( 22, 2, m_Psat_ref ));
 		m_q_dot_ref = m_P_ref/m_eta_ref;		//[kW] The reference heat flow
 			
 		if( m_tech_type == 5 )
@@ -905,15 +920,24 @@ public:
 		switch( m_CT )
 		{
 		case 1:
-			CSP::evap_tower( m_tech_type, m_evap_dt_out, m_P_cond_min, m_n_pl_inc, m_dT_cw_ref, m_T_approach, m_P_ref*1000.0, m_eta_ref, T_db, T_wb, P_amb, q_reject_est, m_dot_makeup, W_cool_par, P_cond, T_cond, f_hrsys );
-			break;
+
+            m_evap_tower->off_design(T_db, T_wb, P_amb, q_reject_est,
+                m_dot_makeup, W_cool_par, P_cond, T_cond, f_hrsys);
+
+            break;
+
 		case 2:
-			CSP::ACC( m_tech_type, m_P_cond_min, m_T_amb_des, m_Psat_ref_Pa, m_n_pl_inc, m_T_ITD_des, m_P_cond_ratio, m_P_ref*1000.0, m_eta_ref, T_db, P_amb, q_reject_est, m_dot_air, W_cool_par, P_cond, T_cond, f_hrsys );
+
+            m_ACC->off_design(T_db, q_reject_est, m_dot_air, W_cool_par, P_cond, T_cond, f_hrsys);
 			m_dot_makeup = 0.0;
-			break;
+
+            break;
+
 		case 3:
-			CSP::HybridHR( m_tech_type, m_P_cond_min, m_n_pl_inc, F_wc_tou, m_F_wcmax, m_F_wcmin, m_T_ITD_des, m_T_approach, m_dT_cw_ref, m_P_cond_ratio, m_P_ref*1000.0, m_eta_ref, T_db, T_wb, P_amb, q_reject_est, m_dot_makeup,
-							W_cool_parhac, W_cool_parhwc, W_cool_par, P_cond, T_cond, f_hrsys );
+
+            m_hybrid_cooling->off_design(F_wc_tou, q_reject_est, T_db, T_wb, P_amb,
+                m_dot_makeup, W_cool_parhac, W_cool_parhwc, W_cool_par, P_cond, T_cond, f_hrsys);
+
 			break;
 		}
 
@@ -991,15 +1015,25 @@ public:
 				switch( m_CT )
 				{
 				case 1:
-					CSP::evap_tower( m_tech_type, m_evap_dt_out, m_P_cond_min, m_n_pl_inc, m_dT_cw_ref, m_T_approach, m_P_ref*1000.0, m_eta_ref, T_db, T_wb, P_amb, q_reject, m_dot_makeup, W_cool_par, P_cond_guess, T_cond, f_hrsys );
-					break;
+
+                    m_evap_tower->off_design(T_db, T_wb, P_amb, q_reject_est,
+                        m_dot_makeup, W_cool_par, P_cond, T_cond, f_hrsys);
+
+                    break;
+
 				case 2:
-					CSP::ACC( m_tech_type, m_P_cond_min, m_T_amb_des, m_Psat_ref_Pa, m_n_pl_inc, m_T_ITD_des, m_P_cond_ratio, m_P_ref*1000.0, m_eta_ref, T_db, P_amb, q_reject, m_dot_air, W_cool_par, P_cond_guess, T_cond, f_hrsys );
+
+                    m_ACC->off_design(T_db, q_reject_est, m_dot_air, W_cool_par, P_cond, T_cond, f_hrsys);
+                    m_dot_makeup = 0.0;
+
 					break;
+
 				case 3:
-					CSP::HybridHR( m_tech_type, m_P_cond_min, m_n_pl_inc, F_wc_tou, m_F_wcmax, m_F_wcmin, m_T_ITD_des, m_T_approach, m_dT_cw_ref, m_P_cond_ratio, m_P_ref*1000.0, m_eta_ref, T_db, T_wb,
-										P_amb, q_reject, m_dot_makeup, W_cool_parhac, W_cool_parhwc, W_cool_par, P_cond_guess, T_cond, f_hrsys );
-					break;
+
+                    m_hybrid_cooling->off_design(F_wc_tou, q_reject_est, T_db, T_wb, P_amb,
+                        m_dot_makeup, W_cool_parhac, W_cool_parhwc, W_cool_par, P_cond, T_cond, f_hrsys);
+
+                    break;
 				}
 			}
 			// Check to see if the calculated and demand values match

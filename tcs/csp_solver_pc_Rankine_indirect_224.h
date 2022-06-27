@@ -96,20 +96,6 @@ private:
 
 	double GetFieldToTurbineTemperatureDropC() { return 25.0; }
 
-	//void RankineCycle(/*double time,*/double P_ref, double eta_ref, double T_htf_hot_ref, double T_htf_cold_ref, double T_db, double T_wb,
-	//	double P_amb, double dT_cw_ref, /*double HTF,*/ double c_p_w, double T_htf_hot, double m_dot_htf, int /*double*/ mode,
-	//	double demand_var, double P_boil, /*double tech_type,*/ double T_amb_des, double T_approach, double F_wc, double F_wcmin,
-	//	double F_wcmax, double T_ITD_des, double P_cond_ratio, /*double CT,*/ double P_cond_min, /*double n_pl_inc,*/
-	//	/*double& fcall, */ double& P_cycle, double& eta, double& T_htf_cold, double& m_dot_demand, double& m_dot_htf_ref,
-	//	double& m_dot_makeup, double& W_cool_par, double& f_hrsys, double& P_cond);
-
-    void RankineCycle(double T_db /*K*/, double T_wb /*K*/,
-		double P_amb /*Pa*/, double T_htf_hot /*C*/, double m_dot_htf /*kg/hr*/, int mode /*-*/,
-		double demand_var /*MWe*/, double P_boil /*bar*/, double F_wc /*-*/, double F_wcmin /*-*/, double F_wcmax /*-*/, double T_cold /*C*/, double dT_cw /*C*/,
-        //outputs
-        double& P_cycle, double& eta, double& T_htf_cold, double& m_dot_demand, double& m_dot_htf_ref,
-		double& m_dot_makeup, double& W_cool_par, double& f_hrsys, double& P_cond, double &T_cond_out);
-
     void RankineCycle_V2(double T_db /*K*/, double T_wb /*K*/,
         double P_amb /*Pa*/, double T_htf_hot /*C*/, double m_dot_htf /*kg/hr*/, int mode /*-*/,
         double demand_var /*MWe*/, double P_boil /*bar*/, double F_wc /*-*/, double F_wcmin /*-*/, double F_wcmax /*-*/, double T_cold /*C*/, double dT_cw /*C*/,
