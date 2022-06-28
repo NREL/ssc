@@ -4,7 +4,7 @@
 #
 #####################################################################################################################
 
-cmake_minimum_required(VERSION 3.19)
+cmake_minimum_required(VERSION 3.18)
 
 if(POLICY CMP0077)
     cmake_policy(SET CMP0077 NEW)
@@ -26,8 +26,8 @@ if(APPLE)
 endif()
 
 if (UNIX AND NOT CMAKE_C_COMPILER)
-	set(CMAKE_C_COMPILER gcc)
-	set(CMAKE_CXX_COMPILER g++)
+	set(CMAKE_C_COMPILER clang)
+	set(CMAKE_CXX_COMPILER clang)
 endif()
 set(CMAKE_CXX_STANDARD 11)
 
