@@ -650,13 +650,14 @@ double CGeothermalAnalyzer::GetPumpWorkWattHrPerLb(void)
 	if (!ms_ErrorString.empty()) return 0;
 
 	double dInjectionPumpPower = 0;
+    double dFractionOfInletGFInjected = 1.0;
 	if (geothermal::ADDITIONAL_PRESSURE_REQUIRED)
 	{
-		double dWaterLoss = (1 / (1 - geothermal::WATER_LOSS_PERCENT)); // G130 - lb/hr
+		double dWaterLoss = (1 / (1 - mo_geo_in.md_WaterLossPercent)); // G130 - lb/hr
 
-		double dFractionOfInletGFInjected = 1.0;
+		
 		if (mo_geo_in.me_rt == EGS)
-			dFractionOfInletGFInjected = (1 + geothermal::WATER_LOSS_PERCENT);
+			dFractionOfInletGFInjected =  1.0 / (1 - mo_geo_in.md_WaterLossPercent);
 		else if (mo_geo_in.me_ct == FLASH)
 		{
 			calculateFlashPressures();
@@ -676,13 +677,15 @@ double CGeothermalAnalyzer::GetPumpWorkWattHrPerLb(void)
 
 		//dInjectionPumpPower = geothermal::pumpWorkInWattHr(dWaterLoss, dInjectionPumpHeadFt, geothermal::EFFICIENCY_PUMP_GF, ms_ErrorString) * dFractionOfInletGFInjected; // ft-lbs/hr
 		//dInjectionPumpPower = geothermal::pumpWorkInWattHr(dWaterLoss, dInjectionPumpHeadFt, mo_geo_in.md_GFPumpEfficiency, ms_ErrorString) * dFractionOfInletGFInjected; // ft-lbs/hr
-        dInjectionPumpPower = geothermal::pumpWorkInWattHr(1, GetInjectionPumpWorkft(), mo_geo_in.md_GFPumpEfficiency, ms_ErrorString); // ft-lbs/hr
+        dInjectionPumpPower = geothermal::pumpWorkInWattHr(1, GetInjectionPumpWorkft(), mo_geo_in.md_GFPumpEfficiency, ms_ErrorString) * dFractionOfInletGFInjected; // ft-lbs/hr
 	}
 
-    double dProductionPumpPower = geothermal::pumpWorkInWattHr(1, GetProductionPumpWorkft(dInjectionPumpPower), mo_geo_in.md_GFPumpEfficiency, ms_ErrorString);
+    double dProductionPumpPower = geothermal::pumpWorkInWattHr(1, GetProductionPumpWorkft(), mo_geo_in.md_GFPumpEfficiency, ms_ErrorString);
     //double dProductionPumpPower = geothermal::pumpWorkInWattHr(1,GetProductionPumpWorkft(GetInjectionPumpWorkft()), mo_geo_in.md_GFPumpEfficiency, ms_ErrorString);
-
-    double check = GetProductionPumpWorkft(dInjectionPumpPower);
+    mp_geo_out->md_pumpwork_prod = dProductionPumpPower;
+    mp_geo_out->md_pumpwork_inj = dInjectionPumpPower;
+    mp_geo_out->md_FractionGFInjected = dFractionOfInletGFInjected;
+    double check = GetProductionPumpWorkft();
     double retVal = 0;
     if (mo_geo_in.me_ct == FLASH)
         retVal = dInjectionPumpPower; // watt-hr per lb of flow
@@ -777,11 +780,12 @@ double CGeothermalAnalyzer::GetInjectionPumpWorkft(void)
     double injection_pump_head_ft = injection_pump_head_psi * 144 / InjectionDensity();
     double P_inject_bottomhole_used = injection_pump_head_psi + bottom_hole_pressure;
     //double pump_inj_hp = (injection_pump_head_ft * (flowRateTotal() / mo_geo_in.md_RatioInjectionToProduction / 2500) / (60 * 33000)) / mo_geo_in.md_GFPumpEfficiency;
+    //mp_geo_out->md_InjPump_hp = pump_inj_hp;
     //double pump_inj_kW = pump_inj_hp * 0.7457;
     return injection_pump_head_ft;
 }
 
-double CGeothermalAnalyzer::GetProductionPumpWorkft(double injection_pressure)
+double CGeothermalAnalyzer::GetProductionPumpWorkft(void)
 {
     double P_res = pressureHydrostaticPSI();
     double Prod_well_minus_bottomhole = P_res - mo_geo_in.md_ProductionFlowRateKgPerS * 7936.64 / (1000 / 0.4);
@@ -1168,7 +1172,7 @@ double CGeothermalAnalyzer::pressureInjectionWellBottomHolePSI() // [7B.Reservoi
 	double depthFt = geothermal::MetersToFeet(GetResourceDepthM()); //G22
 	double G23 = pMax + InjectionDensity() * depthFt / 144; // psi
 
-	double flowRate = mo_geo_in.md_ProductionFlowRateKgPerS / mo_geo_in.md_RatioInjectionToProduction / (1 - geothermal::WATER_LOSS_PERCENT); // kg per second
+	double flowRate = mo_geo_in.md_ProductionFlowRateKgPerS / mo_geo_in.md_RatioInjectionToProduction / (1 - mo_geo_in.md_WaterLossPercent); // kg per second
     //double flowRate = mo_geo_in.md_ProductionFlowRateKgPerS / mo_geo_in.md_RatioInjectionToProduction; // kg per second
 	flowRate = geothermal::KgToLb(flowRate) / InjectionDensity();  // cf per second
 	double dDiameterInjectionWellFt = mo_geo_in.md_DiameterInjectionWellInches / 12;
@@ -1251,8 +1255,11 @@ double CGeothermalAnalyzer::GetNumberOfWells(void)
 			ms_ErrorString = "The well capacity was calculated to be zero.  Could not continue analysis.";
 			mp_geo_out->md_NumberOfWells = 0;
 		}
+        mp_geo_out->md_BrineEff = GetPlantBrineEffectiveness();
+        mp_geo_out->md_PumpWorkWattHrPerLb = GetPumpWorkWattHrPerLb();
 		mp_geo_out->md_NumberOfWells = mo_geo_in.md_DesiredSalesCapacityKW / netCapacityPerWell;
-        mp_geo_out->md_NumberOfWellsInj = (mo_geo_in.md_DesiredSalesCapacityKW / (netBrineEffectiveness / 1000)) * (1 + (1 / (1 - mo_geo_in.md_WaterLossPercent) - 1)) / flowPerWellInj;
+        mp_geo_out->md_NumberOfWellsInj = (mo_geo_in.md_DesiredSalesCapacityKW / (netBrineEffectiveness / 1000)) * (mp_geo_out->md_FractionGFInjected) / flowPerWellInj;
+        mp_geo_out->md_InjPump_hp = ( (mp_geo_out->md_NumberOfWellsInj * flowPerWellInj * GetInjectionPumpWorkft()) / (60 * 33000) ) / mo_geo_in.md_GFPumpEfficiency;
 	}
 
 	return mp_geo_out->md_NumberOfWells;
@@ -2027,7 +2034,7 @@ bool CGeothermalAnalyzer::InterfaceOutputsFilled(void)
 	mp_geo_out->md_GrossPlantOutputMW = PlantGrossPowerkW() / 1000;
 
 	mp_geo_out->md_PumpWorkKW = GetPumpWorkKW();
-	mp_geo_out->md_PumpDepthFt = GetCalculatedPumpDepthInFeet();
+    mp_geo_out->md_PumpDepthFt = GetProductionPumpWorkft();
 	// mp_geo_out->md_BottomHolePressure  is calculated in GetCalculatedPumpDepthInFeet()
 	//mp_geo_out->md_PumpHorsePower = (flowRatePerWell() * pumpHeadFt())/(60 * 33000 * geothermal::EFFICIENCY_PUMP_GF);
 	mp_geo_out->md_PumpHorsePower = (flowRatePerWell() * pumpHeadFt()) / (60 * 33000 * mo_geo_in.md_GFPumpEfficiency);

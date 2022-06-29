@@ -172,6 +172,11 @@ struct SGeothermal_Outputs
 // single values used in calculations, some also used in UI
 	bool mb_BrineEffectivenessCalculated;
 	double md_FlashBrineEffectiveness;
+    double md_BrineEff;
+    double md_PumpWorkWattHrPerLb;
+    double md_pumpwork_prod;
+    double md_pumpwork_inj;
+    double md_InjPump_hp;
 
 	bool mb_FlashPressuresCalculated;
 	double md_PressureHPFlashPSI; // D29, D64
@@ -185,6 +190,7 @@ struct SGeothermal_Outputs
 	double md_PressureChangeAcrossReservoir; //double GetPressureChangeAcrossReservoir(void) { return moPPC.GetPressureChangeAcrossReservoir(); }
 	double md_AverageReservoirTemperatureF; //double GetAverageReservoirTemperatureUsedF(void) { return moPPC.GetReservoirTemperatureF(); }
 	double md_BottomHolePressure; //double GetBottomHolePressure(void) { return moPPC.GetBottomHolePressure(); }
+    double md_FractionGFInjected;
 
 	// output arrays
 	double * maf_ReplacementsByYear;			// array of ones and zero's over time, ones representing years where reservoirs are replaced
@@ -254,7 +260,7 @@ private:
 
 	double GetPumpWorkKW(void);
     double GetInjectionPumpWorkft(void);
-    double GetProductionPumpWorkft(double injection_pressure);
+    double GetProductionPumpWorkft(void);
 	double NumberOfReservoirs(void);
 	double CalculatePumpWorkInKW(double flowLbPerHr, double pumpHeadFt);
 	double GetPumpWorkWattHrPerLb(void);
