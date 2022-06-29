@@ -1012,13 +1012,13 @@ public:
 				case 1:
 
                     m_evap_tower->off_design(T_db, T_wb, P_amb, q_reject_est,
-                        m_dot_makeup, W_cool_par, P_cond, T_cond, f_hrsys);
+                        m_dot_makeup, W_cool_par, P_cond_guess, T_cond, f_hrsys);
 
                     break;
 
 				case 2:
 
-                    m_ACC->off_design(T_db, q_reject_est, m_dot_air, W_cool_par, P_cond, T_cond, f_hrsys);
+                    m_ACC->off_design(T_db, q_reject_est, m_dot_air, W_cool_par, P_cond_guess, T_cond, f_hrsys);
                     m_dot_makeup = 0.0;
 
 					break;
@@ -1026,7 +1026,7 @@ public:
 				case 3:
 
                     m_hybrid_cooling->off_design(F_wc_tou, q_reject_est, T_db, T_wb, P_amb,
-                        m_dot_makeup, W_cool_parhac, W_cool_parhwc, W_cool_par, P_cond, T_cond, f_hrsys);
+                        m_dot_makeup, W_cool_parhac, W_cool_parhwc, W_cool_par, P_cond_guess, T_cond, f_hrsys);
 
                     break;
 				}
