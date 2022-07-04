@@ -71,3 +71,33 @@ TEST_F(CmodCashLoanTest, DiscountedPayback) {
     ssc_data_free(dat);
     dat = nullptr;
 }
+
+TEST_F(CmodCashLoanTest, PVWattsResidential) {
+
+    char file_path[256];
+    int nfc1 = sprintf(file_path, "%s/test/input_json/2022.07.03_PVWatts_Residential_cmod_cashloan.json", SSCDIR);
+    std::ifstream file(file_path);
+    std::ostringstream tmp;
+    tmp << file.rdbuf();
+    file.close();
+    ssc_data_t dat = json_to_ssc_data(tmp.str().c_str());
+    tmp.str("");
+
+    // Run with fixed output
+    int errors =  run_module(dat, "cashloan");
+
+    EXPECT_FALSE(errors);
+    if (!errors)
+    {
+        ssc_number_t lcoe_nom, npv;
+        ssc_data_get_number(dat, "lcoe_nom", &lcoe_nom);
+        ssc_data_get_number(dat, "npv", &npv);
+
+        // values from cashloan_discounted_payback.xlsx
+        EXPECT_NEAR(lcoe_nom, 7.51, 7.51*0.01);
+        EXPECT_NEAR(npv, 5103.0, 5103.0*0.01);
+    }
+    ssc_data_free(dat);
+    dat = nullptr;
+}
+
