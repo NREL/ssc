@@ -163,6 +163,12 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_INPUT,     SSC_ARRAY,  "rec_clearsky_dni",					"User-defined clear-sky DNI",																											  "W/m2",         "",                                  "Tower and Receiver",                       "rec_clearsky_model=0",											   "",              "SIMULATION_PARAMETER"},
 	{ SSC_INPUT,     SSC_NUMBER, "rec_clearsky_fraction",               "Weighting fraction on clear-sky DNI for receiver flow control",                                                                          "",             "",                                  "Tower and Receiver",                       "?=0.0",                                                            "",              "SIMULATION_PARAMETER"},
 
+
+    // Receiver design parameters for analysis
+    { SSC_INPUT,     SSC_NUMBER, "is_calc_od_tube",                     "False (default): use input d_tube_output, True: calc OD tube to achieve W_dot_rec_target",                                               "",             "",                                  "Tower and Receiver",                       "?=0",                                                              "",              "SIMULATION_PARAMETER"},
+    { SSC_INPUT,     SSC_NUMBER, "W_dot_rec_target",                    "Target pumping power loss through receiver (not including riser/downcomer)",                                                             "MWe",          "",                                  "Tower and Receiver",                       "is_calc_od_tube=1",                                                "",              "SIMULATION_PARAMETER" },
+
+
     // Transient receiver parameters
 	{ SSC_INPUT,     SSC_NUMBER, "is_rec_model_trans",                 "Formulate receiver model as transient?",                                                                                                  "",             "",                                  "Tower and Receiver",                       "?=0",                                                              "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "is_rec_startup_trans",               "Formulate receiver startup model as transient?",                                                                                          "",             "",                                  "Tower and Receiver",                       "?=0",                                                              "",              ""},
@@ -432,6 +438,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_OUTPUT,    SSC_NUMBER, "cav_radius",                         "Cavity radius",                                                                                                                            "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },        
     { SSC_OUTPUT,    SSC_NUMBER, "A_rec",                              "Receiver area - planar",                                                                                                                   "m2",           "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "L_tower_piping_calc",                "Tower piping length",                                                                                                                      "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "od_tube_calc",                       "Receiver tube outer diameter - out",                                                                                                       "mm",           "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
 
         // Receiver Performance
     { SSC_OUTPUT,    SSC_NUMBER, "q_dot_rec_des",                      "Receiver thermal output at design",                                                                                                       "MWt",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
@@ -1553,6 +1560,12 @@ public:
             int rec_night_recirc = 0;
             int rec_clearsky_model = as_integer("rec_clearsky_model");
 
+            bool is_calc_od_tube = as_boolean("is_calc_od_tube");       //[-]
+            double W_dot_rec_target = std::numeric_limits<double>::quiet_NaN();
+            if (is_calc_od_tube) {
+                W_dot_rec_target = as_double("W_dot_rec_target");    //[MWe]
+            }
+
             if (rec_clearsky_model > 4)
                 throw exec_error("tcsmolten_salt", "Invalid specification for 'rec_clearsky_model'");
             if (rec_clearsky_model == -1 && as_double("rec_clearsky_fraction") >= 0.0001)
@@ -1574,7 +1587,8 @@ public:
                     rec_night_recirc,
                     as_integer("N_panels"), D_rec, rec_height,
                     as_integer("Flow_type"), as_integer("crossover_shift"), as_double("hl_ffact"),
-                    as_double("T_htf_hot_des"), as_double("rec_clearsky_fraction")
+                    as_double("T_htf_hot_des"), as_double("rec_clearsky_fraction"),
+                    is_calc_od_tube, W_dot_rec_target
                     ));   // steady-state receiver
 
                 receiver = std::move(ss_receiver);
@@ -1609,6 +1623,7 @@ public:
                     as_integer("N_panels"), D_rec, rec_height,
                     as_integer("Flow_type"), as_integer("crossover_shift"), as_double("hl_ffact"),
                     as_double("T_htf_hot_des"), as_double("rec_clearsky_fraction"),
+                    is_calc_od_tube, W_dot_rec_target,
                     as_boolean("is_rec_model_trans"), as_boolean("is_rec_startup_trans"),
                     as_double("rec_tm_mult"), as_double("u_riser"),
                     as_double("th_riser"), as_double("riser_tm_mult"),
@@ -2204,8 +2219,10 @@ public:
         assign("A_rec", A_rec);     //[m2]
 
         double L_tower_piping = std::numeric_limits<double>::quiet_NaN();
-        receiver->get_design_geometry(L_tower_piping);
+        double od_tube_calc = std::numeric_limits<double>::quiet_NaN();
+        receiver->get_design_geometry(L_tower_piping, od_tube_calc);
         assign("L_tower_piping_calc", L_tower_piping);      //[m]
+        assign("od_tube_calc", od_tube_calc*1.E3);          //[mm] convert from m
 
         double eta_rec_thermal_des;     //[-]
         double W_dot_rec_pump_des;      //[MWe]
