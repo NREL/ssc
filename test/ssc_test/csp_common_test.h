@@ -67,6 +67,28 @@ public:
         ssc_data_get_number(this->data_, name.c_str(), &output);
         return output;
     }
+    ssc_number_t GetOutputSum(std::string name) const {
+        var_table* vt = static_cast<var_table*>(this->data_);
+        if (!vt) return std::numeric_limits<ssc_number_t>::quiet_NaN();
+        var_data* dat = vt->lookup(name);
+
+        size_t length;
+        switch (dat->type) {
+            case SSC_ARRAY:
+                length = dat->num.length();
+                break;
+            case SSC_MATRIX:
+                length = dat->num.ncells();
+                break;
+            default:
+                return std::numeric_limits<ssc_number_t>::quiet_NaN();
+        }
+
+        ssc_number_t* data = dat->num.data();
+        ssc_number_t initial_sum = 0;
+        ssc_number_t sum = accumulate(data, data + length, initial_sum);
+        return sum;
+    }
 private:
     const std::string module_name_;
     ssc_data_t data_;
