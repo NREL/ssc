@@ -50,12 +50,12 @@ NAMESPACE_TEST(csp_trough, PowerTroughCmod, Default_NoFinancial)
         EXPECT_NEAR_FRAC(power_trough.GetOutputSum("month"), 57168, kErrorToleranceHi);
         EXPECT_NEAR_FRAC(power_trough.GetOutputSum("beam"), 2687889, kErrorToleranceHi);
         EXPECT_NEAR_FRAC(power_trough.GetOutputSum("defocus"), 8753, kErrorToleranceHi);
-        EXPECT_NEAR_FRAC(power_trough.GetOutputSum("q_dc_tes"), 329476, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_trough.GetOutputSum("q_dc_tes"), 333996, kErrorToleranceHi);
         EXPECT_NEAR_FRAC(power_trough.GetOutputSum("P_fixed"), 5347, kErrorToleranceHi);
         EXPECT_NEAR_FRAC(power_trough.GetOutputSum("op_mode_1"), 52902, kErrorToleranceHi);
         EXPECT_NEAR_FRAC(power_trough.GetOutputSum("n_op_modes"), 9799, kErrorToleranceHi);
         EXPECT_NEAR_FRAC(power_trough.GetOutputSum("is_rec_su_allowed"), 8760, kErrorToleranceHi);
-        EXPECT_NEAR_FRAC(power_trough.GetOutputSum("operating_modes_a"), 34053302, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_trough.GetOutputSum("operating_modes_a"), 35458021, kErrorToleranceHi);
     }
 
     //ssc_data_t defaults = singleowner_defaults();
