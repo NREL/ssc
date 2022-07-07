@@ -302,7 +302,7 @@ public:
 		
 
 		//reservoir properties
-		geo_inputs.md_TemperatureEGSAmbientC = 15.0;
+		geo_inputs.md_TemperatureEGSAmbientC = 10.0;
 		geo_inputs.md_EGSThermalConductivity = as_double("rock_thermal_conductivity");
 		geo_inputs.md_EGSSpecificHeatConstant = as_double("rock_specific_heat");
 		geo_inputs.md_EGSRockDensity = as_double("rock_density");

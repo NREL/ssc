@@ -550,8 +550,8 @@ double CGeothermalAnalyzer::MaxSecondLawEfficiency()
 double CGeothermalAnalyzer::FractionOfMaxEfficiency()
 {
 	double dTemperatureRatio = 0.0;
-	dTemperatureRatio = physics::CelciusToKelvin(mo_geo_in.md_TemperatureEGSAmbientC) / physics::CelciusToKelvin(md_WorkingTemperatureC);
-    double carnot_eff_initial = 1 - physics::CelciusToKelvin(mo_geo_in.md_TemperatureEGSAmbientC) / physics::CelciusToKelvin(GetTemperaturePlantDesignC());
+	dTemperatureRatio = physics::CelciusToKelvin(mo_geo_in.md_TemperatureWetBulbC) / physics::CelciusToKelvin(md_WorkingTemperatureC);
+    double carnot_eff_initial = 1 - physics::CelciusToKelvin(mo_geo_in.md_TemperatureWetBulbC) / physics::CelciusToKelvin(GetTemperaturePlantDesignC());
     double carnot_eff = 1 - dTemperatureRatio;
     double carnot_ratio = carnot_eff / carnot_eff_initial;
 	if (me_makeup == MA_FLASH || me_makeup == MA_EGS_FLASH)
