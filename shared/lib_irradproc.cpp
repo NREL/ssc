@@ -2463,7 +2463,7 @@ int irrad::calc_rear_side(double transmissionFactor, double groundClearanceHeigh
 
         double clearanceGround = std::numeric_limits<double>::quiet_NaN();          // distance between bottom edge of module to ground
         if (this->trackingMode == 1) {                                              // if horizontal single-axis tracking
-            clearanceGround = groundClearanceHeight - (0.5 * slopeLength) * sin(fabs(tiltRadian));
+            clearanceGround = groundClearanceHeight - (0.5 * slopeLength) * sin(tiltRadian);
         }
         else {
             clearanceGround = groundClearanceHeight;
