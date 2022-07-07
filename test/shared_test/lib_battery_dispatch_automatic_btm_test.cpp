@@ -1477,7 +1477,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMGridOutagePeakShavingDC)
                                         -57.6, -57.6, -57.6, -57.6, -1.1, 0, 0, 62.6, 62.6, 62.6,
                                          62.6, 62.6, 62.6, 62.6, 62.6, 62.6 };
 
-    std::vector<double> expectedCritLoadUnmet = { 0, 0, 0, 0, 19.4, 49.7, // Fixing https://github.com/NREL/ssc/issues/569 could probably get the crit load unmet in step 4 to zero
+    std::vector<double> expectedCritLoadUnmet = { 0, 0, 0, 0, 19.6, 49.7, // Fixing https://github.com/NREL/ssc/issues/569 could probably get the crit load unmet in step 4 to zero
                                                 50, 0, 0, 0, 0, 0,
                                                 0, 0, 0, 0, 0, 0,
                                                 0, 0, 0, 0, 0, 0 };

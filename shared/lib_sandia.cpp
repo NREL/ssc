@@ -427,7 +427,7 @@ bool sandia_inverter_t::acpower(
 		if (B > 2.0 * Pso) B = 2.0 * Pso;
 
 		Pac_each[m] = Pdc[m] / Pdc_total * (((Paco / (A - B)) - C * (A - B)) * (Pdc_total - B) + C * (Pdc_total - B) * (Pdc_total - B)); //calculate Pac for this MPPT input and save it
-		PacNoPso_each[m] = Pdc[m] * ((Paco / A) - C * A) + C * Pdc_total; //calculate Pac without operating losses (Pso = 0) for each MPPT input to store as Pso losses later
+		PacNoPso_each[m] = Pdc[m] * (((Paco / A) - C * A) + C * Pdc_total); //calculate Pac without operating losses (Pso = 0) for each MPPT input to store as Pso losses later
 
 	}
 

@@ -38,7 +38,7 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, DefaultNoFinancialModel) {
     {
         ssc_number_t annual_energy;
         ssc_data_get_number(data, "annual_energy", &annual_energy);
-        EXPECT_NEAR(annual_energy, 8836.5, m_error_tolerance_hi) << "Annual energy.";
+        EXPECT_NEAR(annual_energy, 8833.8, m_error_tolerance_hi) << "Annual energy.";
 
         ssc_number_t capacity_factor;
         ssc_data_get_number(data, "capacity_factor", &capacity_factor);
@@ -76,7 +76,7 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, DefaultLifetimeNoFinancialModel) 
     {
         ssc_number_t annual_energy;
         ssc_data_get_number(data, "annual_energy", &annual_energy);
-        EXPECT_NEAR(annual_energy, 8836.5, m_error_tolerance_hi) << "Annual energy.";
+        EXPECT_NEAR(annual_energy, 8833.8, m_error_tolerance_hi) << "Annual energy.";
 
         ssc_number_t capacity_factor;
         ssc_data_get_number(data, "capacity_factor", &capacity_factor);
@@ -104,7 +104,7 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, DefaultResidentialModel)
     {
         ssc_number_t annual_energy;
         ssc_data_get_number(data, "annual_energy", &annual_energy);
-        EXPECT_NEAR(annual_energy, 8836.5, m_error_tolerance_hi) << "Annual energy.";
+        EXPECT_NEAR(annual_energy, 8833.8, m_error_tolerance_hi) << "Annual energy.";
 
         ssc_number_t capacity_factor;
         ssc_data_get_number(data, "capacity_factor", &capacity_factor);
@@ -178,7 +178,7 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelCustomWeatherFile
     {
         ssc_number_t annual_energy;
         ssc_data_get_number(data, "annual_energy", &annual_energy);
-        EXPECT_NEAR(annual_energy, 8192.2, m_error_tolerance_hi) << "Annual energy.";
+        EXPECT_NEAR(annual_energy, 8190.8, m_error_tolerance_hi) << "Annual energy.";
 
         ssc_number_t capacity_factor;
         ssc_data_get_number(data, "capacity_factor", &capacity_factor);
@@ -203,7 +203,7 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelCustomWeatherFile
 /// Test PVSAMv1 with default no-financial model and combinations of Sky Diffuse Model and Weather File Irradiance
 TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelSkyDiffuseAndIrradModels)
 {
-    std::vector<double> annual_energy_expected = { 8633, 8644, 8648, 8757, 8768, 8772, 8836, 8846, 8851, 7623, 7400 };
+    std::vector<double> annual_energy_expected = { 8631, 8641, 8645, 8754, 8765, 8770, 8834, 8844, 8848, 7622, 7398 };
     std::map<std::string, double> pairs;
     size_t count = 0;
 
@@ -251,7 +251,7 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelSkyDiffuseAndIrra
 /// Test PVSAMv1 with default no-financial model and combinations of module and inverter models
 TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelModuleAndInverterModels)
 {
-    std::vector<double> annual_energy_expected = { 2517, 2547, 2474, 2517, 8836, 8816, 8784, 8836, 58, 62, 64, 58, 5403, 5398, 5345, 5403, 1726, 1764, 1695, 1726 };
+    std::vector<double> annual_energy_expected = { 2515, 2547, 2474, 2515, 8834, 8816, 8784, 8834, 58, 62, 64, 58, 5396, 5398, 5345, 5396, 1726, 1764, 1695, 1726 };
     std::map<std::string, double> pairs;
     size_t count = 0;
 
@@ -281,7 +281,7 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelModuleAndInverter
 //This test can be expanded when we allow different combinations of thermal, spectral, and reflection models with different module models
 TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelModuleThermalSpectralReflection)
 {
-    std::vector<double> annual_energy_expected = { 8874, 8836 };
+    std::vector<double> annual_energy_expected = { 8871, 8834 };
     std::map<std::string, double> pairs;
     size_t count = 0;
     int pvsam_errors = 1;
@@ -336,7 +336,7 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelSystemDesign)
     pairs["inverter_count"] = 22;
     pairs["subarray1_track_mode"] = 0;
 
-    std::vector<double> annual_energy_expected = { 185838, 243539, 259288, 218123, 195297 };
+    std::vector<double> annual_energy_expected = { 185647, 243264, 259017, 217887, 195100 };
 
     for (int tracking_option = 0; tracking_option != 5; tracking_option++)
     {
@@ -362,7 +362,7 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelSystemDesign)
     {
         ssc_number_t annual_energy;
         ssc_data_get_number(data, "annual_energy", &annual_energy);
-        EXPECT_NEAR(annual_energy, 238349, m_error_tolerance_hi) << "Annual energy.";
+        EXPECT_NEAR(annual_energy, 238077, m_error_tolerance_hi) << "Annual energy.";
     }
 
     // Test multiple sub-arrays with different tracking, tilt, azimuth, gcr, tracker rotation limit
@@ -396,12 +396,12 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelSystemDesign)
     std::vector<double> subarray2_track_mode = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
     std::vector<double> subarray3_track_mode = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 0, 0, 0, 0, 0 };
     std::vector<double> subarray4_track_mode = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4 };
-    annual_energy_expected = { 170275, 178996, 185838, 169154, 178502, 185838, 174755, 180967, 185838, 174755, 180967,
-                                185838, 185838, 185830, 185838, 185838, 185838, 185838, 185838, 185838, 185838, 185838,
-                                185838, 185838, 185838, 185838, 180092, 185502, 165210, 179679, 185476, 163726, 181744,
-                                185605, 171143, 181744, 185605, 171143, 185838, 185838, 185838, 185838, 185838, 200942,
-                                207264, 195087, 188610, 185838, 203611, 208790, 195747, 188807, 185838, 197691, 201152,
-                                192446, 187821, 185838, 197691, 201152, 192446, 187821
+    annual_energy_expected = { 170108, 178814, 185647, 168989, 178321, 185647, 174579, 180782, 185647, 174579, 180782,
+                                185647, 185647, 185638, 185647, 185647, 185647, 185647, 185647, 185647, 185647, 185647,
+                                185647, 185647, 185647, 185647, 179908, 185310, 165057, 179495, 185283, 163575, 181557,
+                                185413, 170978, 181557, 185413, 170978, 185647, 185647, 185647, 185647, 185647, 200729,
+                                207043, 194883, 188414, 185647, 203396, 208568, 195747, 188610, 185647, 197691, 201152,
+                                192446, 187821, 185647, 197691, 201152, 192446, 187821
     };
 
     for (size_t i = 0; i != annual_energy_expected.size(); i++)
