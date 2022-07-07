@@ -76,6 +76,11 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,     SSC_NUMBER, "solarm",                             "Solar multiple",                                                                                                                          "-",            "",                                  "System Design",                            "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "dni_des",                            "Design-point DNI",                                                                                                                        "W/m2",         "",                                  "System Design",                            "*",                                                                "",              ""},
 
+    // Optional system design parameters potentially useful for analysis
+    { SSC_INPUT,     SSC_NUMBER, "is_calc_sm",                         "False (default): use input solarm, True: calc solar multiple to achieve q_dot_rec_des_target",                                            "",             "",                                  "Tower and Receiver",                       "?=0",                                                              "",              "SIMULATION_PARAMETER"},
+    { SSC_INPUT,     SSC_NUMBER, "q_dot_rec_des_target",               "Target design receiver thermal power",                                                                                                    "MWe",          "",                                  "Tower and Receiver",                       "is_calc_sm=1",                                                     "",              "SIMULATION_PARAMETER" },
+
+
     // Solar field
     { SSC_INPUT,     SSC_NUMBER, "field_model_type",                   "0=design field and tower/receiver geometry, 1=design field, 2=user specified field, 3=user flux and eta map, pass heliostat_positions to SolarPILOT for layout, 4=user flux and eta maps, no SolarPILOT, input A_sf_in, total_land_area_before_rad_cooling_in, and N_hel", "", "", "Heliostat Field", "*",     "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "helio_width",                        "Heliostat width",                                                                                                                         "m",            "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
@@ -446,6 +451,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 
         // Receiver Performance
     { SSC_OUTPUT,    SSC_NUMBER, "q_dot_rec_des",                      "Receiver thermal output at design",                                                                                                       "MWt",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "solar_mult_calc",                    "Receiver solar multiple - out",                                                                                                           "",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "eta_rec_thermal_des",                "Receiver estimated thermal efficiency at design",                                                                                         "",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "W_dot_rec_pump_des",                 "Receiver estimated pump power at design",                                                                                                 "MWe",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "W_dot_rec_pump_tower_share_des",     "Receiver estimated pump power due to tower height at design",                                                                             "MWe",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
@@ -811,8 +817,14 @@ public:
         // System Design Calcs
         double q_dot_pc_des = W_dot_cycle_des / eta_cycle;      //[MWt]
         double Q_tes = q_dot_pc_des * tshours;                  //[MWt-hr]
-        double q_dot_rec_des = q_dot_pc_des * as_number("solarm");  //[MWt]
-        //double system_capacity = W_dot_cycle_des * as_double("gross_net_conversion_factor") * 1.E3;       //[kWe]
+        double solar_mult = as_number("solarm");                //[-]
+        double q_dot_rec_des = q_dot_pc_des * solar_mult;       //[MWt]
+
+        bool is_calc_sm = as_boolean("is_calc_sm");
+        if (is_calc_sm) {
+            q_dot_rec_des = as_double("q_dot_rec_des_target");  //[MWt]
+            solar_mult = q_dot_rec_des / q_dot_pc_des;          //[-]
+        }
 
         // Weather reader
 		C_csp_weatherreader weather_reader;
@@ -1812,7 +1824,7 @@ public:
         tes->m_tes_fl_props = as_matrix("field_fl_props");
         tes->m_W_dot_pc_design = as_double("P_ref");        //[MWe]
         tes->m_eta_pc = as_double("design_eff");                //[-]
-        tes->m_solarm = as_double("solarm");
+        tes->m_solarm = solar_mult;
         tes->m_ts_hours = as_double("tshours");
         tes->m_h_tank = as_double("h_tank");
         tes->m_u_tank = as_double("u_tank");
@@ -2253,6 +2265,7 @@ public:
             W_dot_rec_pump_des, W_dot_rec_pump_tower_share_des, W_dot_rec_pump_rec_share_des,
             rec_pump_coef_des, rec_vel_htf_des, m_dot_htf_rec_des, m_dot_htf_rec_max, q_dot_piping_loss_des);
         assign("q_dot_rec_des", q_dot_rec_des);                 //[MWt]
+        assign("solar_mult_calc", solar_mult);                  //[-]
         assign("eta_rec_thermal_des", eta_rec_thermal_des);     //[-]
         assign("W_dot_rec_pump_des", W_dot_rec_pump_des);       //[MWe]
         assign("W_dot_rec_pump_tower_share_des", W_dot_rec_pump_tower_share_des);     //[MWe]
