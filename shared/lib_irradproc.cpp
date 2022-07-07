@@ -2459,21 +2459,21 @@ int irrad::calc_rear_side(double transmissionFactor, double groundClearanceHeigh
     // do irradiance calculations if sun is up
     if (timeStepSunPosition[2] > 0) {
 
-        double tiltRadian = surfaceAnglesRadians[1];        // The tracked angle in radians
+        double tiltRadian = surfaceAnglesRadians[1];
 
-        // Update ground clearance height for HSAT
-        if (this->trackingMode == 1) {
-            groundClearanceHeight = groundClearanceHeight - (0.5 * slopeLength) * sin(fabs(tiltRadian));
+        double clearanceGround = std::numeric_limits<double>::quiet_NaN();          // distance between bottom edge of module to ground
+        if (this->trackingMode == 1) {                                              // if horizontal single-axis tracking
+            clearanceGround = groundClearanceHeight - (0.5 * slopeLength) * sin(fabs(tiltRadian));
+        }
+        else {
+            clearanceGround = groundClearanceHeight;
         }
 
         // System geometry
-        double rowToRow = slopeLength /
-                          this->groundCoverageRatio;        // Row to row spacing between the front of one row to the front of the next row
-        double clearanceGround = groundClearanceHeight;                    // The normalized clearance from the bottom edge of module to ground
-        double distanceBetweenRows = rowToRow -
-                                     cos(tiltRadian);        // The normalized distance from the read of module to front of module in next row
         double verticalHeight = slopeLength * sin(tiltRadian);
         double horizontalLength = slopeLength * cos(tiltRadian);
+        double rowToRow = slopeLength / this->groundCoverageRatio;                  // distance between front of row to front of next row
+        double distanceBetweenRows = rowToRow - horizontalLength;                   // distance between back of row to front of next row
 
         if (horizontalLength == 0)
             throw std::runtime_error("Bifacial calc_rear_side error: module's horizontal length cannot be 0. Please check module's dimensions.");
