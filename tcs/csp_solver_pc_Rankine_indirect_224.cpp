@@ -142,6 +142,12 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
     m_m_dot_design = m_q_dot_design * 1000.0 / (m_cp_htf_design * ((ms_params.m_T_htf_hot_ref - ms_params.m_T_htf_cold_ref))) * 3600.0;		//[kg/hr]
     m_m_dot_min = ms_params.m_cycle_cutoff_frac * m_m_dot_design;		//[kg/hr]
     m_m_dot_max = ms_params.m_cycle_max_frac * m_m_dot_design;		    //[kg/hr]
+
+    // Option to calculate pump coef for a target design HTF pumping power
+    if (ms_params.m_is_calc_htf_pump_coef) {
+        ms_params.m_htf_pump_coef = ms_params.m_W_dot_htf_pump_target*1.E3 / (m_m_dot_design/3600.0);
+    }
+
     m_W_dot_htf_pump_des = m_m_dot_design*(ms_params.m_htf_pump_coef/3.6E6);    //[MWe] HTF pumping power, convert from [kW/kg/s]*[kg/hr]
 
     // Startup energy

@@ -223,6 +223,8 @@ public:
 		util::matrix_t<double> m_pc_fl_props;
         double DP_SGS;              //[bar] pressure drop within the steam generator system
 
+        bool m_is_calc_htf_pump_coef;   //[-] Default false, use m_htf_pump_coef
+        double m_W_dot_htf_pump_target; //[MWe]
 
 		// Steam Rankine or User-Defined
 		bool m_is_user_defined_pc;				//[-] True: user-defined power cycle, False: Built-in Rankine Cycle model
@@ -255,7 +257,10 @@ public:
 				m_q_sby_frac = m_P_boil = m_startup_time = m_startup_frac = m_T_approach = m_T_ITD_des =
 				m_P_cond_ratio = m_pb_bd_frac = m_P_cond_min = m_htf_pump_coef = std::numeric_limits<double>::quiet_NaN();
 
+            m_W_dot_htf_pump_target = std::numeric_limits<double>::quiet_NaN();
+
 			m_pc_fl = m_CT = m_tech_type = m_n_pl_inc = -1;
+            m_is_calc_htf_pump_coef = false;
 
 			// Initialize parameters for user-defined power cycle
 			m_is_user_defined_pc = false;

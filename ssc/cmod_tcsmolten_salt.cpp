@@ -164,7 +164,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_INPUT,     SSC_NUMBER, "rec_clearsky_fraction",               "Weighting fraction on clear-sky DNI for receiver flow control",                                                                          "",             "",                                  "Tower and Receiver",                       "?=0.0",                                                            "",              "SIMULATION_PARAMETER"},
 
 
-    // Receiver design parameters for analysis
+    // Optional receiver design parameters potentially useful for analysis
     { SSC_INPUT,     SSC_NUMBER, "is_calc_od_tube",                     "False (default): use input d_tube_output, True: calc OD tube to achieve W_dot_rec_target",                                               "",             "",                                  "Tower and Receiver",                       "?=0",                                                              "",              "SIMULATION_PARAMETER"},
     { SSC_INPUT,     SSC_NUMBER, "W_dot_rec_target",                    "Target pumping power loss through receiver (not including riser/downcomer)",                                                             "MWe",          "",                                  "Tower and Receiver",                       "is_calc_od_tube=1",                                                "",              "SIMULATION_PARAMETER" },
 
@@ -263,6 +263,10 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,     SSC_NUMBER, "cycle_max_frac",                     "Maximum turbine over design operation fraction",                                                                                          "",             "",                                  "Power Cycle",                              "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "cycle_cutoff_frac",                  "Minimum turbine operation fraction before shutdown",                                                                                      "",             "",                                  "Power Cycle",                              "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "q_sby_frac",                         "Fraction of thermal power required for standby",                                                                                          "",             "",                                  "Power Cycle",                              "*",                                                                "",              ""},
+
+        // Optional cycle design parameters potentially useful for analysis
+    { SSC_INPUT,     SSC_NUMBER, "is_calc_pb_pump_coef",               "False (default): use input pb_pump_coef, True: calc pb_pump_coef to achieve W_dot_pb_pump_target",                                        "",             "",                                  "Tower and Receiver",                       "?=0",                                                              "",              "SIMULATION_PARAMETER" },
+    { SSC_INPUT,     SSC_NUMBER, "W_dot_pb_pump_target",               "Target HTF pumping power loss through cycle primary heat exchanger",                                                                      "MWe",          "",                                  "Tower and Receiver",                       "is_calc_pb_pump_coef=1",                                           "",              "SIMULATION_PARAMETER" },
 
     // Steam Rankine cycle
     { SSC_INPUT,     SSC_NUMBER, "dT_cw_ref",                          "Reference condenser cooling water inlet/outlet temperature difference",                                                                   "C",            "",                                  "Rankine Cycle",                            "pc_config=0",                                                      "",              ""},
@@ -1310,6 +1314,15 @@ public:
         // Steam Rankine and User Defined power cycle classes
         C_pc_Rankine_indirect_224 rankine_pc;
 
+
+        // Set pb_pump_coef logic for cycle
+        bool is_calc_pb_pump_coef = as_boolean("is_calc_pb_pump_coef");
+        double W_dot_htf_pump_target = std::numeric_limits<double>::quiet_NaN();
+        if (is_calc_pb_pump_coef) {
+            W_dot_htf_pump_target = as_double("W_dot_pb_pump_target");    //[MWe]
+        }
+
+
         // Check power block type
         int pb_tech_type = as_integer("pc_config");
         if (pb_tech_type == 0 || pb_tech_type == 1)     // Rankine or User Defined
@@ -1327,6 +1340,9 @@ public:
             pc->m_htf_pump_coef = as_double("pb_pump_coef");
             pc->m_pc_fl = as_integer("rec_htf");                            // power cycle HTF is same as receiver HTF
             pc->m_pc_fl_props = as_matrix("field_fl_props");
+
+            pc->m_is_calc_htf_pump_coef = is_calc_pb_pump_coef;
+            pc->m_W_dot_htf_pump_target = W_dot_htf_pump_target;    //[MWe]
 
             if (pb_tech_type == 0)
             {
