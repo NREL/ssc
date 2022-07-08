@@ -764,6 +764,31 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, bifacial) {
         ssc_data_get_number(data, "annual_energy", &annualEnergy);
         EXPECT_NEAR(annualEnergy, 9262, 1.0) << "Bifacial annual energy from SAM version 2018.11.11 using Phoenix TMY2";
     }
+
+
+    // test monofacial
+    pairs["cec_is_bifacial"] = 0;
+    double expected_monofacial_annual_energy = 8880.;
+    pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+    EXPECT_FALSE(pvsam_errors);
+    if (!pvsam_errors)
+    {
+        ssc_number_t annualEnergy;
+        ssc_data_get_number(data, "annual_energy", &annualEnergy);
+        EXPECT_NEAR(annualEnergy, expected_monofacial_annual_energy, 1.0) << "Bifacial annual energy from SAM version 2018.11.11 using Phoenix TMY2";
+    }
+
+    // test bifacial but effectively monofacial
+    pairs["cec_is_bifacial"] = 1;
+    pairs["cec_bifaciality"] = 0.;
+    pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+    EXPECT_FALSE(pvsam_errors);
+    if (!pvsam_errors)
+    {
+        ssc_number_t annualEnergy;
+        ssc_data_get_number(data, "annual_energy", &annualEnergy);
+        EXPECT_NEAR(annualEnergy, expected_monofacial_annual_energy, 1.0) << "Bifacial annual energy from SAM version 2018.11.11 using Phoenix TMY2";
+    }
 }
 
 TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, reopt_sizing) {
