@@ -32,7 +32,7 @@ static var_info vtab_lcoefcr[] =
 	{ SSC_INPUT,        SSC_NUMBER,      "fixed_charge_rate",        "Fixed charge rate",              "",       "",       "Simple LCOE", "*",           "",         "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "annual_energy",            "Annual energy production",       "kWh",    "",       "Simple LCOE",          "*",           "",         "" },
 	
-	{ SSC_OUTPUT,       SSC_NUMBER,      "lcoe_fcr",                 "Levelized cost of energy",       "$/kWh",  "",	   "Simple LCOE",          "*",           "",         "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "lcoe_fcr",                 "LCOE Levelized cost of energy",       "$/kWh",  "",	   "Simple LCOE",          "*",           "",         "" },
 var_info_invalid };
 
 class cm_lcoefcr : public compute_module

@@ -278,7 +278,6 @@ public:
 	// Parameters
 	double m_q_max_aux;			//[kWt] 
 	double m_LHV_eff;			//[-]
-	double m_T_set_aux;			//[K]
 	double m_T_field_in_des;	//[K]
 	double m_T_field_out_des;	//[K]
 	double m_x_b_des;			//[-]
@@ -451,11 +450,11 @@ public:
 
 	void loop_optical_eta_off();
 
-	void call(const C_csp_weatherreader::S_outputs &weather,
+	/*void call(const C_csp_weatherreader::S_outputs &weather,
 		const C_csp_solver_htf_1state &htf_state_in,
 		const C_csp_collector_receiver::S_csp_cr_inputs &inputs,
 		C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
-		const C_csp_solver_sim_info &sim_info);
+		const C_csp_solver_sim_info &sim_info);*/
 
 	void transient_energy_bal_numeric_int_ave(double h_in /*kJ/kg*/, double P_in /*kPa*/,
 		double q_dot_abs /*kWt*/, double m_dot /*kg/s*/, 

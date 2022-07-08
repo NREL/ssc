@@ -198,8 +198,9 @@ std::vector<T> extrapolate_timeseries(std::vector<T> input_values, size_t steps_
 		for (size_t s = 0; s < steps_per_hour; s++)
 		{
 			minute_step = (size_t)((T)s * (T)input_steps_per_hour / (T)steps_per_hour);
-			if (input_size == 12) extrapolated_value = input_values[month];
-			else if (input_size == 52) extrapolated_value = input_values[week];
+            if (input_size == 1) extrapolated_value = input_values[0];
+            else if (input_size == 12) extrapolated_value = input_values[month];
+            else if (input_size == 52) extrapolated_value = input_values[week];
 			else if (input_size == 365) extrapolated_value = input_values[day];
 			else if (input_size == 8760) extrapolated_value = input_values[hour];
 			else if (input_size > 8760 && (hour * input_steps_per_hour + minute_step) < input_size)

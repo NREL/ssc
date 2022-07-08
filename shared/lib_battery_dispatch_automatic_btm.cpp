@@ -159,18 +159,22 @@ void dispatch_automatic_behind_the_meter_t::setup_rate_forecast()
 {
     if (_mode == dispatch_t::FORECAST)
     {
-        // Process load and pv forecasts to get _monthly_ expected gen, load, and peak
-        // Do we need new member variables, or can these just be passed off to UtilityRateForecast?
+        // Process load and pv forecasts to get _monthly_ expected gen, load, net loads, and peak
         std::vector<double> monthly_gross_load;
         std::vector<double> monthly_gen;
         std::vector<double> monthly_net_load;
+        util::matrix_t<double> monthly_peaks; // By TOU period
 
         // Load here is every step for the full analysis period. Load escalation has already been applied (TODO in compute modules)
         size_t num_recs = util::hours_per_year * _steps_per_hour * _nyears;
-        size_t step = 0; size_t hour_of_year = 0;
+        size_t step = 0; size_t hour_of_year = 0; size_t year = 0;
         int curr_month = 1;
         double load_during_month = 0.0; double gen_during_month = 0.0; double gross_load_during_month = 0.0;
         size_t array_size = std::min(_P_pv_ac.size(), _P_load_ac.size()); // Cover smaller arrays to make testing easier
+        monthly_peaks.resize_fill(_nyears * 12, rate->m_dc_tou_periods_tiers.size(), 0.0);
+        if (rate->dc_enabled) {
+            rate->init_dc_peak_vectors(0);
+        }
         for (size_t idx = 0; idx < num_recs && idx < array_size; idx++)
         {
             double grid_power = _P_pv_ac[idx] - _P_load_ac[idx];
@@ -187,6 +191,15 @@ void dispatch_automatic_behind_the_meter_t::setup_rate_forecast()
                 gen_during_month += grid_power * _dt_hour;
             }
 
+            if (rate->dc_enabled) {
+                int dc_tou_period = rate->get_dc_tou_row(step % (8760 * _steps_per_hour), curr_month - 1);
+                size_t month_idx = year * 12 + (curr_month - 1);
+                double peak = monthly_peaks.at(month_idx, dc_tou_period) - m_batteryPower->powerBatteryDischargeMaxAC; // Peak for dispatch calcs: peak minus battery capacity
+                if (-1.0 * grid_power > peak) {
+                    monthly_peaks.set_value(-1.0 * grid_power, month_idx, dc_tou_period);
+                }
+            }
+
             step++;
             if (step == _steps_per_hour)
             {
@@ -196,6 +209,7 @@ void dispatch_automatic_behind_the_meter_t::setup_rate_forecast()
                     hour_of_year = 0;
                 }
             }
+
             if (util::month_of((double) hour_of_year) != curr_month || (idx == array_size - (size_t) 1))
             {
                 // Push back vectors
@@ -205,11 +219,17 @@ void dispatch_automatic_behind_the_meter_t::setup_rate_forecast()
                 monthly_gen.push_back(gen_during_month);
 
                 gross_load_during_month = 0.0; load_during_month = 0.0; gen_during_month = 0.0;
+                if (curr_month == 12) {
+                    year++;
+                }
                 curr_month < 12 ? curr_month++ : curr_month = 1;
+                if (rate->dc_enabled) {
+                    rate->init_dc_peak_vectors(curr_month - 1);
+                }
             }
         }
 
-        rate_forecast = std::shared_ptr<UtilityRateForecast>(new UtilityRateForecast(rate.get(), _steps_per_hour, monthly_net_load, monthly_gen, monthly_gross_load, _nyears));
+        rate_forecast = std::shared_ptr<UtilityRateForecast>(new UtilityRateForecast(rate.get(), _steps_per_hour, monthly_net_load, monthly_gen, monthly_gross_load, _nyears, monthly_peaks));
         rate_forecast->initializeMonth(0, 0);
         rate_forecast->copyTOUForecast();
     }
@@ -238,11 +258,10 @@ void dispatch_automatic_behind_the_meter_t::update_dispatch(size_t year, size_t 
             double no_dispatch_cost = compute_costs(idx, year, hour_of_year, p, debug);
 
             compute_energy(E_max, p, debug);
-            cost_based_target_power(idx, year, hour_of_year, no_dispatch_cost, E_max, p, debug);
-
-            // Set battery power profile
-            set_battery_power(idx, p, debug);            
+            cost_based_target_power(idx, year, hour_of_year, no_dispatch_cost, E_max, p, debug);         
         }
+        // Set battery power profile
+        set_battery_power(idx, _day_index, p, debug);
         m_batteryPower->powerBatteryTarget = _P_battery_use[step];
     }
 	else if (_mode != dispatch_t::CUSTOM_DISPATCH)
@@ -261,10 +280,10 @@ void dispatch_automatic_behind_the_meter_t::update_dispatch(size_t year, size_t 
 			// Peak shaving scheme
 			compute_energy(E_max, p, debug);
 			target_power(E_max, idx, p, debug);
-
-			// Set battery power profile
-			set_battery_power(idx, p, debug);
 		}
+        // Set battery power profile
+        apply_target_power(_day_index); // Account for actual grid usage at this step
+        set_battery_power(idx, _day_index, p, debug); // Account for efficiencies and losses
 		// save for extraction
 		_P_target_current = _P_target_use[_day_index];
 		m_batteryPower->powerBatteryTarget = _P_battery_use[_day_index];
@@ -566,8 +585,19 @@ void dispatch_automatic_behind_the_meter_t::target_power(double E_useful, size_t
 		for (size_t i = 0; i != num_steps; i++)
 			_P_target_use[i] = P_target;
 	}
-    for (size_t i = 0; i != _P_battery_use.size(); i++)
-        _P_battery_use[i] = grid[i].Grid() - _P_target_use[i];
+
+}
+
+void dispatch_automatic_behind_the_meter_t::apply_target_power(size_t day_index)
+{
+    double pv_ac_power = m_batteryPower->powerSystem; // True for AC connected
+    double fuel_cell_power = m_batteryPower->powerFuelCell;
+    if (m_batteryPower->connectionMode == m_batteryPower->DC_CONNECTED) {
+        m_batteryPower->sharedInverter->calculateACPower(m_batteryPower->powerSystem, m_batteryPower->voltageSystem, m_batteryPower->sharedInverter->Tdry_C);
+        pv_ac_power = m_batteryPower->sharedInverter->powerAC_kW;
+    }
+    double grid_power = m_batteryPower->powerLoad - pv_ac_power - fuel_cell_power;
+    _P_battery_use[day_index] = grid_power - _P_target_use[day_index];
 }
 
 void dispatch_automatic_behind_the_meter_t::cost_based_target_power(size_t idx, size_t year, size_t hour_of_year, double no_dispatch_cost, double E_max, FILE* p, const bool debug)
@@ -847,21 +877,18 @@ void dispatch_automatic_behind_the_meter_t::check_power_restrictions(double& pow
     power = desiredCurrent * _Battery->V() * util::watt_to_kilowatt;
 }
 
-void dispatch_automatic_behind_the_meter_t::set_battery_power(size_t idx, FILE *p, const bool debug)
+void dispatch_automatic_behind_the_meter_t::set_battery_power(size_t idx, size_t day_index, FILE *p, const bool debug)
 {
-	for (size_t i = 0; i != _P_target_use.size(); i++) {
+    double loss_kw = _Battery->calculate_loss(_P_battery_use[day_index], idx); // Units are kWac for AC connected batteries, and kWdc for DC connected
 
-        double loss_kw = _Battery->calculate_loss(_P_battery_use[i], idx + i); // Units are kWac for AC connected batteries, and kWdc for DC connected
-
-		// At this point the target power is expressed in AC, must convert to DC for battery
-		if (m_batteryPower->connectionMode == m_batteryPower->AC_CONNECTED) {
-            _P_battery_use[i] = m_batteryPower->adjustForACEfficiencies(_P_battery_use[i], loss_kw);
-		}
-        else {
-            _P_battery_use[i] = m_batteryPower->adjustForDCEfficiencies(_P_battery_use[i], loss_kw);
-        }
+	// At this point the target power is expressed in AC, must convert to DC for battery
+	if (m_batteryPower->connectionMode == m_batteryPower->AC_CONNECTED) {
+        _P_battery_use[day_index] = m_batteryPower->adjustForACEfficiencies(_P_battery_use[day_index], loss_kw);
 	}
-
+    else {
+        _P_battery_use[day_index] = m_batteryPower->adjustForDCEfficiencies(_P_battery_use[day_index], loss_kw);
+    }
+	
 	if (debug)
 	{
 		for (size_t i = 0; i != _P_target_use.size(); i++)

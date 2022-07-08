@@ -81,6 +81,8 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 
 	revenueToClipCharge = revenueToDischarge = revenueToGridCharge = revenueToPVCharge = 0;
 
+    discharge_hours = (size_t) std::ceil(_Battery->energy_max(m_batteryPower->stateOfChargeMax, m_batteryPower->stateOfChargeMin) / m_batteryPower->powerBatteryDischargeMaxDC);
+
     costToCycle();
 	setup_cost_forecast_vector();
 }
@@ -90,7 +92,9 @@ void dispatch_automatic_front_of_meter_t::init_with_pointer(const dispatch_autom
 	_forecast_hours = tmp->_forecast_hours;
 	_inverter_paco = tmp->_inverter_paco;
 	_forecast_price_rt_series = tmp->_forecast_price_rt_series;
+    ppa_prices = tmp->ppa_prices;
 
+    discharge_hours = tmp->discharge_hours;
 	m_etaPVCharge = tmp->m_etaPVCharge;
 	m_etaGridCharge = tmp->m_etaGridCharge;
 	m_etaDischarge = tmp->m_etaDischarge;
@@ -115,6 +119,12 @@ void dispatch_automatic_front_of_meter_t::setup_cost_forecast_vector()
 		ppa_price_series.push_back(_forecast_price_rt_series[i]);
 	}
 	_forecast_price_rt_series = ppa_price_series;
+
+    ppa_prices.reserve(_forecast_hours * _steps_per_hour);
+    if (discharge_hours >= _forecast_hours * _steps_per_hour) {
+        // -1 for 0 indexed arrays, additional -1 to ensure there is always a charging price lower than the discharing price if the forecast hours is = to battery capacity in hourrs
+        discharge_hours = _forecast_hours * _steps_per_hour - 2; 
+    }
 }
 
 // deep copy from dispatch to this
@@ -162,12 +172,17 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t year, size_t ho
         /*! Cost to cycle the battery at all, using maximum DOD or user input */
         costToCycle();
 
-        // Compute forecast variables which don't change from year to year
-        size_t idx_year1 = hour_of_year * _steps_per_hour;
+        // Compute forecast variables
         size_t idx_lookahead = _forecast_hours * _steps_per_hour;
-        auto max_ppa_cost = std::max_element(_forecast_price_rt_series.begin() + idx_year1, _forecast_price_rt_series.begin() + idx_year1 + idx_lookahead);
-        auto min_ppa_cost = std::min_element(_forecast_price_rt_series.begin() + idx_year1, _forecast_price_rt_series.begin() + idx_year1 + idx_lookahead);
-        double ppa_cost = _forecast_price_rt_series[idx_year1];
+
+        ppa_prices.clear();
+        std::copy(_forecast_price_rt_series.begin() + lifetimeIndex, _forecast_price_rt_series.begin() + lifetimeIndex + idx_lookahead, std::back_inserter(ppa_prices));
+        std::sort(ppa_prices.begin(), ppa_prices.end());
+        auto max_ppa_cost = std::max_element(_forecast_price_rt_series.begin() + lifetimeIndex, _forecast_price_rt_series.begin() + lifetimeIndex + idx_lookahead);
+        auto min_ppa_cost = std::min_element(_forecast_price_rt_series.begin() + lifetimeIndex, _forecast_price_rt_series.begin() + lifetimeIndex + idx_lookahead);
+        auto charge_ppa_cost = ppa_prices[discharge_hours];
+        auto discharge_ppa_cost = ppa_prices[ppa_prices.size() - discharge_hours]; 
+        double ppa_cost = _forecast_price_rt_series[lifetimeIndex];
 
         /*! Cost to purchase electricity from the utility */
         double usage_cost = ppa_cost;
@@ -196,7 +211,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t year, size_t ho
         if (m_batteryPower->canGridCharge) {
             std::vector<double> revenueToGridChargeForecast;
             size_t j = 0;
-            for (size_t i = idx_year1; i < idx_year1 + idx_lookahead; i++) {
+            for (size_t i = lifetimeIndex; i < lifetimeIndex + idx_lookahead; i++) {
                 if (m_utilityRateCalculator) {
                     revenueToGridChargeForecast.push_back(*max_ppa_cost * m_etaDischarge - usage_cost_forecast[j] / m_etaGridCharge - m_cycleCost);
                 }
@@ -209,7 +224,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t year, size_t ho
         }
 
         /*! Economic benefit of charging from regular PV in current time step to discharge sometime in next X hours ($/kWh)*/
-        revenueToPVCharge = _P_pv_ac[idx_year1] > 0 ? *max_ppa_cost * m_etaDischarge - ppa_cost / m_etaPVCharge - m_cycleCost : 0;
+        revenueToPVCharge = _P_pv_ac[lifetimeIndex] > 0 ? *max_ppa_cost * m_etaDischarge - ppa_cost / m_etaPVCharge - m_cycleCost : 0;
 
         /*! Computed revenue to charge from PV in each of next X hours ($/kWh)*/
         size_t t_duration = static_cast<size_t>(ceilf( (float)
@@ -218,7 +233,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t year, size_t ho
         double revenueToPVChargeMax = 0;
         if (m_batteryPower->canSystemCharge) {
             std::vector<double> revenueToPVChargeForecast;
-            for (size_t i = idx_year1; i < idx_year1 + idx_lookahead && i < _P_pv_ac.size(); i++) {
+            for (size_t i = lifetimeIndex; i < lifetimeIndex + idx_lookahead && i < _P_pv_ac.size(); i++) {
                 // when considering grid charging, require PV output to exceed battery input capacity before accepting as a better option
                 bool system_on = _P_pv_ac[i] >= m_batteryPower->powerBatteryChargeMaxDC ? 1 : 0;
                 if (system_on) {
@@ -230,7 +245,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t year, size_t ho
         }
 
         /*! Economic benefit of charging from clipped PV in current time step to discharge sometime in the next X hours (clipped PV is free) ($/kWh) */
-        revenueToClipCharge = *max_ppa_cost * m_etaDischarge - m_cycleCost;
+        revenueToClipCharge = _P_cliploss_dc[lifetimeIndex] > 0 ? *max_ppa_cost * m_etaDischarge - m_cycleCost : 0;
 
         /*! Economic benefit of discharging in current time step ($/kWh) */
         revenueToDischarge = ppa_cost * m_etaDischarge - m_cycleCost;
@@ -239,8 +254,8 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t year, size_t ho
         double energyNeededToFillBattery = _Battery->energy_to_fill(m_batteryPower->stateOfChargeMax);
 
         /* Booleans to assist decisions */
-        bool highDischargeValuePeriod = ppa_cost == *max_ppa_cost;
-        bool highChargeValuePeriod = ppa_cost == *min_ppa_cost;
+        bool highDischargeValuePeriod = ppa_cost >= discharge_ppa_cost && ppa_cost > charge_ppa_cost;
+        bool highChargeValuePeriod = ppa_cost <= charge_ppa_cost && ppa_cost < discharge_ppa_cost;
         bool excessAcCapacity = _inverter_paco > m_batteryPower->powerSystemThroughSharedInverter;
         bool batteryHasDischargeCapacity = _Battery->SOC() >= m_batteryPower->stateOfChargeMin + 1.0;
 

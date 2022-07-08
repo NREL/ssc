@@ -64,8 +64,8 @@ TEST_F(PVSmoothing_lib_battery_dispatch, PV_Phoenix_all_on) {
         ssc_data_get_number(dat, "batt_pvs_energy_to_grid_percent_sam", &grid_percent_sam);
 
         // values from Phoenix_Validation_testing.py EPRI code
-        EXPECT_NEAR(violation_count, 13, 0.001);
-        EXPECT_NEAR(violation_percent, 0.0247, 0.001);
+        EXPECT_NEAR(violation_count, 15, 0.001);
+        EXPECT_NEAR(violation_percent, 0.0285, 0.001);
         EXPECT_NEAR(grid_percent, 99.89, 0.01);
         EXPECT_NEAR(grid_percent_sam, 98.89, 0.01);
     }
@@ -85,8 +85,10 @@ TEST_F(PVSmoothing_lib_battery_dispatch, Generic_w_PV_input_all_on) {
     tmp.str("");
 
     // Run with fixed output
+//    auto mod1 = ssc_module_create("generic_system");
+
     int errors = run_module(dat, "generic_system");
-    errors = run_module(dat, "battery");
+    errors += run_module(dat, "battery");
     // minimize memory usage for Travis
 //    errors = run_module(dat, "grid");
 //    errors = run_module(dat, "utilityrate5");
@@ -102,8 +104,8 @@ TEST_F(PVSmoothing_lib_battery_dispatch, Generic_w_PV_input_all_on) {
         ssc_data_get_number(dat, "batt_pvs_energy_to_grid_percent_sam", &grid_percent_sam);
 
         // values from Phoenix_Validation_testing.py EPRI code
-        EXPECT_NEAR(violation_count, 12, 0.001);
-        EXPECT_NEAR(violation_percent, 0.022, 0.001);
+        EXPECT_NEAR(violation_count, 13, 0.001);
+        EXPECT_NEAR(violation_percent, 0.025, 0.001);
         EXPECT_NEAR(grid_percent, 99.90, 0.01);
         EXPECT_NEAR(grid_percent_sam, 99.90, 0.01);
     }
@@ -146,10 +148,10 @@ TEST_F(PVSmoothing_lib_battery_dispatch, FuelCell_PV_Phoenix_all_on) {
         ssc_data_get_number(dat, "batt_pvs_energy_to_grid_percent_sam", &grid_percent_sam);
 
         // values from Phoenix_FuelCell_Validation_testing.sam
-        EXPECT_NEAR(violation_count, 6, 0.001);
-        EXPECT_NEAR(violation_percent, 0.0114, 0.001);
-        EXPECT_NEAR(grid_percent, 99.92, 0.01);
-        EXPECT_NEAR(grid_percent_sam, 99.92, 0.01);
+        EXPECT_NEAR(violation_count, 5, 0.001);
+        EXPECT_NEAR(violation_percent, 0.0095, 0.001);
+        EXPECT_NEAR(grid_percent, 99.63, 0.01);
+        EXPECT_NEAR(grid_percent_sam, 99.96, 0.01);
     }
     ssc_data_free(dat);
     dat = nullptr;

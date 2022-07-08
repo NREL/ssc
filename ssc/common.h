@@ -83,7 +83,7 @@ class forecast_price_signal
 	std::string m_error;
 public:
 	forecast_price_signal(var_table *vt);
-	bool setup(size_t nsteps = 8760);
+	bool setup(size_t step_per_hour);
 	std::vector<ssc_number_t> forecast_price() { return m_forecast_price; }
 	ssc_number_t operator()(size_t time);
 	std::string error() { return m_error; }
@@ -170,9 +170,9 @@ public:
     ~weatherdata() override;
 
 	void set_counter_to(size_t cur_index);
-	bool read(weather_record *r); // reads one more record
+	bool read(weather_record *r) override; // reads one more record
 	bool read_average(weather_record *r, std::vector<int> &cols, size_t &num_timesteps); // reads one more record
-	bool has_data_column(size_t id);
+	bool has_data_column(size_t id) override;
 	bool check_continuous_single_year(bool leapyear);
 };
 

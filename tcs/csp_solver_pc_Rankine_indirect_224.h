@@ -103,7 +103,6 @@ public:
 	
     enum
 	{
-		E_ETA_THERMAL,		//[-] Cycle thermal efficiency (gross)
 		E_Q_DOT_HTF,		//[MWt] Cycle thermal power input
 		E_M_DOT_HTF,		//[kg/hr] Cycle HTF mass flow rate
 		E_Q_DOT_STARTUP,	//[MWt] Cycle startup thermal power
@@ -119,9 +118,14 @@ public:
 		E_M_DOT_WATER,		//[kg/hr] Cycle water consumption: makeup + cooling	
 		E_P_COND,			//[Pa] Cycle condensing pressure
 		E_RADCOOL_CNTRL,	//Code showing the status of radiative cooling with cold storage
+        E_W_DOT_HTF_PUMP,   //[MWe] HTF pump power
+        E_W_DOT_COOLER,     //[MWe] Cooling parasitic
 
 		// Variables added for backwards compatability with TCS
-		E_M_DOT_HTF_REF		//[kg/hr] HTF mass flow rate at design
+		E_M_DOT_HTF_REF,		//[kg/hr] HTF mass flow rate at design
+
+        // Dependent output variables
+        E_ETA_THERMAL,		//[-] Cycle thermal efficiency (gross)
 	};
 
 	C_csp_reported_outputs mc_reported_outputs;

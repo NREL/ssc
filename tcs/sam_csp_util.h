@@ -55,6 +55,12 @@ namespace CSP
 	//sky temp function
 	double skytemp(double T_amb_K, double T_dp_K, double hour);
 
+    double get_clearsky(int clearsky_model /*-*/, const std::vector<double>& clearsky_data,
+        double hour,
+        double solzen /*deg*/, double azimuth /*deg*/,
+        int day /*-*/, int month_1_base /*-*/, double elev /*m*/,
+        double P_amb /*mbar*/, double T_dp /*C*/);
+
 	double sign(double val);
 
 	double nint(double val);

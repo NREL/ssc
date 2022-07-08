@@ -55,20 +55,20 @@ TEST_F(lib_battery_lifetime_lmolto_test, InitTest) {
 TEST_F(lib_battery_lifetime_lmolto_test, CopyTest) {
     // check lifetime_lmolto_state get & set
     auto state = model->get_state();
-    state.cycle->cycle_DOD_range = {0, 1};
+    state.cycle->cycle_counts = {{0, 1}, {1, 1}};
     state.cycle->cycle_DOD_max = {2, 3};
     model->set_state(state);
 
     state = model->get_state();
-    EXPECT_EQ(state.cycle->cycle_DOD_range[0], 0);
-    EXPECT_EQ(state.cycle->cycle_DOD_range[1], 1);
+    EXPECT_EQ(state.cycle->cycle_counts[0][0], 0);
+    EXPECT_EQ(state.cycle->cycle_counts[1][0], 1);
     EXPECT_EQ(state.cycle->cycle_DOD_max[0], 2);
     EXPECT_EQ(state.cycle->cycle_DOD_max[1], 3);
 
     auto new_model = lifetime_lmolto_t(*model);
     state = new_model.get_state();
-    EXPECT_EQ(state.cycle->cycle_DOD_range[0], 0);
-    EXPECT_EQ(state.cycle->cycle_DOD_range[1], 1);
+    EXPECT_EQ(state.cycle->cycle_counts[0][0], 0);
+    EXPECT_EQ(state.cycle->cycle_counts[1][0], 1);
     EXPECT_EQ(state.cycle->cycle_DOD_max[0], 2);
     EXPECT_EQ(state.cycle->cycle_DOD_max[1], 3);
 }

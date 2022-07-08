@@ -32,6 +32,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "csp_system_costs.h"
 
+#include <ctime>
+
 static var_info _cm_vtab_etes_electric_resistance[] = {
 
     // Resource Data
@@ -333,10 +335,12 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
     { SSC_OUTPUT, SSC_NUMBER, "disp_solve_time_ann",           "Annual sum of dispatch solver time",                             "sec",         "",                                  "",                                         "sim_type=1",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "disp_solve_state_ann",          "Annual sum of dispatch solve state",                                "",         "",                                  "",                                         "sim_type=1",                                                                "",              "" },
 
+    { SSC_OUTPUT, SSC_NUMBER, "sim_cpu_run_time",              "Simulation duration clock time",                                   "s",         "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+
         // ETES settings for financial model
     { SSC_OUTPUT, SSC_NUMBER, "ppa_soln_mode",                 "PPA solution mode",                                             "0/1",          "0 = solve ppa,1 = specify ppa",     "Revenue",                                  "sim_type=1",                                                                "INTEGER,MIN = 0,MAX = 1", "" },
     { SSC_OUTPUT, SSC_NUMBER, "flip_target_percent",		   "After-tax IRR target",		                                    "%",	        "",					                 "Revenue",                                  "sim_type=1",					                                              "MIN=0,MAX=100",     	     "" },
-
+    { SSC_OUTPUT, SSC_NUMBER, "total_land_area",               "Total land area",                                               "acre",         "",                                  "System Costs",                             "*",                                                                         "",              "" },
 
     var_info_invalid };
 
@@ -354,6 +358,8 @@ public:
     {
         //FILE* fp = fopen("etes_cmod_to_lk.lk", "w");
         //write_cmod_to_lk_script(fp, m_vartab);
+
+        std::clock_t clock_start = std::clock();
 
         // First, check sim type
         int sim_type = as_integer("sim_type");
@@ -379,7 +385,6 @@ public:
 
         // System Design Calcs
         double q_dot_pc_des = W_dot_cycle_des / eta_cycle;      //[MWt]
-        double Q_tes = q_dot_pc_des * tshours;                  //[MWt-hr]
         double q_dot_heater_des = q_dot_pc_des * heater_mult;   //[MWt]
         double system_capacity = W_dot_cycle_des * gross_net_conversion_factor * 1.E3; //[kWe]
         double Q_tes_des = q_dot_pc_des * tshours;              //[MWt-hr] TES thermal capacity at design
@@ -511,6 +516,8 @@ public:
         rankine_pc.assign(C_pc_Rankine_indirect_224::E_T_HTF_IN, allocate("T_htf_cycle_in", n_steps_fixed), n_steps_fixed);
         rankine_pc.assign(C_pc_Rankine_indirect_224::E_T_HTF_OUT, allocate("T_htf_cycle_out", n_steps_fixed), n_steps_fixed);
         rankine_pc.assign(C_pc_Rankine_indirect_224::E_M_DOT_WATER, allocate("m_dot_water_cycle", n_steps_fixed), n_steps_fixed);
+        rankine_pc.assign(C_pc_Rankine_indirect_224::E_W_DOT_HTF_PUMP, allocate("W_dot_cycle_htf_pump", n_steps_fixed), n_steps_fixed);
+        rankine_pc.assign(C_pc_Rankine_indirect_224::E_W_DOT_COOLER, allocate("W_dot_cycle_cooling", n_steps_fixed), n_steps_fixed);
 
         // *****************************************************
         // *****************************************************
@@ -741,6 +748,7 @@ public:
             dispatch,
             system,
             NULL,
+            nullptr,
             ssc_cmod_update,
             (void*)(this));
 
@@ -752,7 +760,6 @@ public:
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TWET, allocate("twet", n_steps_fixed), n_steps_fixed);
 
             // Cycle
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::PC_W_DOT_COOLING, allocate("W_dot_cycle_cooling", n_steps_fixed), n_steps_fixed);
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::W_DOT_NET, allocate("W_dot_out_net", n_steps_fixed), n_steps_fixed);
 
             // TES
@@ -763,7 +770,6 @@ public:
             // Parasitics
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::SYS_W_DOT_FIXED, allocate("W_dot_fixed_parasitics", n_steps_fixed), n_steps_fixed);
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::SYS_W_DOT_BOP, allocate("W_dot_bop_parasitics", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::SYS_W_DOT_PUMP, allocate("W_dot_cycle_htf_pump", n_steps_fixed), n_steps_fixed);
 
             // Controller
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::ERR_M_DOT, allocate("m_dot_balance", n_steps_fixed), n_steps_fixed);
@@ -842,12 +848,14 @@ public:
         c_electric_resistance.get_design_parameters(E_heater_su_des);
 
             // TES
-        double V_tes_htf_avail /*m3*/, V_tes_htf_total /*m3*/, d_tank /*m*/, q_dot_loss_tes_des /*MWt*/, dens_store_htf_at_T_ave /*kg/m3*/;
-        storage.get_design_parameters(V_tes_htf_avail, V_tes_htf_total, d_tank, q_dot_loss_tes_des, dens_store_htf_at_T_ave);        
+        double V_tes_htf_avail /*m3*/, V_tes_htf_total /*m3*/, d_tank /*m*/, q_dot_loss_tes_des /*MWt*/, dens_store_htf_at_T_ave /*kg/m3*/, Q_tes_des_tes_class;
+        storage.get_design_parameters(V_tes_htf_avail, V_tes_htf_total, d_tank,
+            q_dot_loss_tes_des, dens_store_htf_at_T_ave, Q_tes_des_tes_class);        
 
             // System
         double W_dot_bop_design;    //[MWe]
-        csp_solver.get_design_parameters(W_dot_bop_design);
+        double W_dot_fixed_parasitic_design;    //[MWe]
+        csp_solver.get_design_parameters(W_dot_bop_design, W_dot_fixed_parasitic_design);
 
         // *****************************************************
         // System design is complete, so calculate final design outputs like cost, capacity, etc.
@@ -856,6 +864,10 @@ public:
         double heater_spec_cost = as_double("heater_spec_cost");
         double bop_spec_cost = as_double("bop_spec_cost");
         double contingency_rate = as_double("contingency_rate");
+
+        // no Cold Temp TES, so set those cost model inputs to 0
+        double Q_CT_tes = 0.0;
+        double CT_tes_spec_cost = 0.0;
 
         double plant_net_capacity = system_capacity / 1000.0;         //[MWe], convert from kWe
         double EPC_perc_direct_cost = as_double("epc_cost_perc_of_direct");
@@ -868,19 +880,20 @@ public:
         double sales_tax_rate = as_double("sales_tax_rate");
 
         // Cost model outputs
-        double tes_cost, power_cycle_cost, heater_cost, bop_cost, fossil_backup_cost,
+        double tes_cost, CT_tes_cost, power_cycle_cost, heater_cost, bop_cost, fossil_backup_cost,
             direct_capital_precontingency_cost, contingency_cost, total_direct_cost, total_land_cost,
             epc_and_owner_cost, sales_tax_cost, total_indirect_cost, total_installed_cost, estimated_installed_cost_per_cap;
-        tes_cost = power_cycle_cost = heater_cost = bop_cost = fossil_backup_cost =
+        tes_cost = CT_tes_cost = power_cycle_cost = heater_cost = bop_cost = fossil_backup_cost =
             direct_capital_precontingency_cost = contingency_cost = total_direct_cost = total_land_cost =
             epc_and_owner_cost = sales_tax_cost = total_indirect_cost = total_installed_cost = estimated_installed_cost_per_cap = std::numeric_limits<double>::quiet_NaN();
 
-        N_mspt::calculate_etes_costs(Q_tes, tes_spec_cost, W_dot_cycle_des, power_cycle_spec_cost,
+        N_mspt::calculate_etes_costs(Q_tes_des, tes_spec_cost, Q_CT_tes, CT_tes_spec_cost,
+            W_dot_cycle_des, power_cycle_spec_cost,
             q_dot_heater_des, heater_spec_cost, bop_spec_cost, contingency_rate,
             plant_net_capacity, EPC_perc_direct_cost, EPC_per_power_cost, EPC_fixed_cost,
             total_land_perc_direct_cost, total_land_per_power_cost, total_land_fixed_cost,
             sales_tax_basis, sales_tax_rate,
-            tes_cost, power_cycle_cost, heater_cost, bop_cost, direct_capital_precontingency_cost,
+            tes_cost, CT_tes_cost, power_cycle_cost, heater_cost, bop_cost, direct_capital_precontingency_cost,
             contingency_cost, total_direct_cost, total_land_cost, epc_and_owner_cost,
             sales_tax_cost, total_indirect_cost, total_installed_cost, estimated_installed_cost_per_cap);
 
@@ -972,7 +985,9 @@ public:
             // Financial
         assign("ppa_soln_mode", 1);     // Only allow dispatch model to use fixed ppa mode so dispatch model knows absolute prices
         assign("flip_target_percent", 0.0); //[%] fixed ppa mode shouldn't use this input, so set it to a value that, if used, will give weird results
-            
+            // ETES model assumes no land area. Can calculate land costs based on % or absolute values
+        assign("total_land_area", 0);   //[acre]
+
         // *****************************************************
         // *****************************************************
 
@@ -1099,6 +1114,9 @@ public:
 
         double q_balance_rel = (Q_heater_to_htf + Q_tes_heater - Q_tes_losses - Q_cycle_thermal_in) / Q_cycle_thermal_in;
 
+        std::clock_t clock_end = std::clock();
+        double sim_cpu_run_time = (clock_end - clock_start) / (double)CLOCKS_PER_SEC;		//[s]
+        assign("sim_cpu_run_time", sim_cpu_run_time);   //[s]
     }
 };
 

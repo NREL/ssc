@@ -33,6 +33,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "cmod_csp_trough_eqns.h"
 #include "cmod_financial_eqns.h"
 #include "cmod_utilityrate5_eqns.h"
+#include "cmod_analysisperiodchange_eqns.h"
 
 /**
  *  Returns true if completed successfully. For failures, query the "error" string that has been assigned to the `data`.
@@ -83,22 +84,25 @@ static ssc_equation_entry ssc_equation_table [] = {
             "Pvsamv1", Reopt_size_battery_params_doc,
             false, true},
         {"Reopt_size_battery_post", Reopt_size_battery_params,
-            "Pvwattsv7", Reopt_size_battery_params_doc,
+             "Pvwattsv7", Reopt_size_battery_params_doc,
+             false, true},
+        {"Reopt_size_battery_post", Reopt_size_battery_params,
+            "Pvwattsv8", Reopt_size_battery_params_doc,
             false, true},
 
         // Battery
         {"Calculate_thermal_params", Calculate_thermal_params,
             "Battery", calculate_thermal_params_doc,
-            false, true},
+            false, false},
 
         // Battery stateful
         {"Calculate_thermal_params", Calculate_thermal_params,
             "battery_stateful", calculate_thermal_params_doc,
-            false, true},
+            false, false},
 
         {"Size_batterystateful", Size_batterystateful,
             "battery_stateful", size_batterystateful_doc,
-            false, true},
+            false, false},
 
         // Wind
         {"Turbine_calculate_powercurve", Turbine_calculate_powercurve,
@@ -170,6 +174,12 @@ static ssc_equation_entry ssc_equation_table [] = {
         {"ElectricityRates_format_as_URDBv7", ElectricityRates_format_as_URDBv7,
             "UtilityRate5", ElectricityRates_format_as_URDBv7_doc,
             false, true},
+
+        // analysis period change
+        { "analysisperiodchange", analysisperiodchange,
+                "Merchant plant", analysisperiodchange_doc,
+                false, true },
+
         {nullptr, nullptr, nullptr, nullptr, false, false}
 };
 

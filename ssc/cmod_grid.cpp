@@ -37,17 +37,19 @@ var_info vtab_grid_input[] = {
 
 	// external compute module inputs
 	{ SSC_INOUT,        SSC_ARRAY,       "gen",								  "System power generated",                "kW",        "Lifetime system generation",          "System Output",                  "",                        "",                              "" },
-	{ SSC_INPUT,		SSC_ARRAY,	     "load",			                  "Electricity load (year 1)",             "kW",	    "",                                    "Load",	                       "",	                      "",	                           "" },
+	{ SSC_INOUT,		SSC_ARRAY,	     "load",			                  "Electricity load (year 1)",             "kW",	    "",                                    "Load",	                       "",	                      "",	                           "" },
     { SSC_INPUT,		SSC_ARRAY,	     "crit_load",			              "Critical electricity load (year 1)",    "kW",	        "",				        "Load",                             "",	                      "",	                            "" },
-    { SSC_INPUT,        SSC_ARRAY,       "grid_outage",                       "Timesteps with grid outage",            "0/1",        "0=GridAvailable,1=GridUnavailable,Length=load", "Load",    "",                       "",                               "" },
+    { SSC_INOUT,        SSC_ARRAY,       "grid_outage",                       "Grid outage in this time step",            "0/1",        "0=GridAvailable,1=GridUnavailable,Length=load", "Load",    "",                       "",                               "" },
     { SSC_INPUT,        SSC_ARRAY,       "load_escalation",                   "Annual load escalation",                "%/year",    "",                                    "Load",                        "?=0",                      "",                            "" },
 
 var_info_invalid };
 
 var_info vtab_grid_output[] = {
 
+    { SSC_OUTPUT,        SSC_ARRAY,       "full_load",                       "Electricity load prior to grid outage (year 1)",  "kW",       "Load" "",                 "",                        "",                              "" },
+
 	{ SSC_OUTPUT,        SSC_ARRAY,       "system_pre_interconnect_kwac",     "System power before grid interconnect",  "kW",       "Lifetime system generation" "",                 "",                        "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "capacity_factor_interconnect_ac",  "Capacity factor of the interconnection (year 1)",  "%",          "",                "",                           "",                     "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "capacity_factor_interconnect_ac",  "Capacity factor based on AC interconnection limit",  "%",          "",                "",                           "",                     "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_energy_pre_interconnect_ac", "Annual Energy AC pre-interconnection (year 1)",   "kWh",        "",                "",                           "",                     "",                              "" },
 	{ SSC_INOUT,        SSC_NUMBER,      "annual_energy",                    "Annual Energy AC (year 1)",                        "kWh",        "",                "System Output",                           "",                     "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_ac_interconnect_loss_percent","Annual Energy loss from interconnection limit (year 1)", "%", "",                "",                           "",                     "",                              "" },
@@ -56,7 +58,7 @@ var_info vtab_grid_output[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,       "system_pre_curtailment_kwac",     "System power before grid curtailment",  "kW",       "Lifetime system generation" "",                 "",                        "",                              "" },
 	
 // outputs to be assigned
-{ SSC_OUTPUT,        SSC_NUMBER,      "capacity_factor_curtailment_ac",  "Capacity factor of the curtailment (year 1)",  "%",          "",                "",                           "",                     "",                              "" },
+{ SSC_OUTPUT,        SSC_NUMBER,      "capacity_factor_curtailment_ac",  "Capacity factor based on AC electricity after curtailment and AC interconnection limit",  "%",          "",                "",                           "",                     "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_energy_pre_curtailment_ac", "Annual Energy AC pre-curtailment (year 1)",   "kWh",        "",                "",                           "",                     "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_ac_curtailment_loss_percent","Annual Energy loss from curtailment (year 1)", "%", "",                "",                           "",                     "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_ac_curtailment_loss_kwh",   "Annual Energy loss from curtailment (year 1)", "kWh", "",                "",                           "",                     "",
@@ -129,6 +131,22 @@ void cm_grid::exec()
 
     if (is_assigned("load")) {
         load_year_one = as_vector_double("load");
+    }
+
+    if (is_assigned("grid_outage")) {
+        std::vector<bool> grid_outage_steps = as_vector_bool("grid_outage");
+        bool analyze_outage = std::any_of(grid_outage_steps.begin(), grid_outage_steps.end(), [](bool x) {return x; });
+        if (analyze_outage) {
+            ssc_number_t* full_load = allocate("full_load", load_year_one.size());
+            ssc_number_t* load_kw_out = allocate("load", load_year_one.size());
+            for (size_t i = 0; i < load_year_one.size(); i++) {
+                full_load[i] = load_year_one[i];
+                load_year_one[i] = grid_outage_steps[i] ? 0.0 : load_year_one[i];
+                load_kw_out[i] = static_cast<ssc_number_t>(load_year_one[i]);
+            }
+        }
+        // No conversion from std::vector<bool> to var_data - worth adding?
+        assign("grid_outage", as_vector_integer("grid_outage"));
     }
 
     scalefactors scale_calculator(m_vartab);

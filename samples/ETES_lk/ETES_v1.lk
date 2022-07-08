@@ -29,8 +29,8 @@ var( 'disp_hsu_cost', 0.015 );		//[$/MWe-heater/start]
 
 var( 'disp_pen_delta_w', 1.3); // $/delta MW (ramp)
 
-var( 'disp_max_iter', 150000);
-var( 'disp_timeout', 5.0);
+var( 'disp_max_iter', 300000);
+var( 'disp_timeout', 30.0);
 
 var( 'T_htf_cold_des', 290 );
 var( 'T_htf_hot_des', 574 );

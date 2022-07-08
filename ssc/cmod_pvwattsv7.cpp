@@ -1096,7 +1096,7 @@ public:
                         double tpoa = poa - ( 1.0 - modifier )*wf.dn*cosd(aoi); */ // previous PVWatts method, skips diffuse calc
 
                         tpoa = calculateIrradianceThroughCoverDeSoto(
-                            aoi, solzen, stilt, ibeam, iskydiff, ignddiff, en_sdm == 0 && module.ar_glass);
+                            aoi, stilt, ibeam, iskydiff, ignddiff, en_sdm == 0 && module.ar_glass);
                         if (tpoa < 0.0) tpoa = 0.0;
                         if (tpoa > poa) tpoa = poa_front;
 
@@ -1237,10 +1237,10 @@ public:
                 p_tpoa[idx] = (ssc_number_t)tpoa;  // W/m2
                 p_tmod[idx] = (ssc_number_t)tmod;
                 p_dc[idx] = (ssc_number_t)dc; // power, Watts
-                p_ac[idx] = (ssc_number_t)ac; // power, Watts
+                p_ac[idx] = (ssc_number_t)(ac * haf(hour_of_year)); // power, Watts
 
                 // accumulate hourly energy (kWh) (was initialized to zero when allocated)
-                p_gen[idx_life] = (ssc_number_t)(ac * haf(hour_of_year) * util::watt_to_kilowatt);
+                p_gen[idx_life] = (ssc_number_t)(p_ac[idx]* util::watt_to_kilowatt);
 
                 if (y == 0 && wdprov->annualSimulation()) { //report first year annual energy
                     annual_kwh += p_gen[idx] / step_per_hour;
@@ -1254,10 +1254,11 @@ public:
 
             wdprov->rewind();
         }
-        ssc_number_t *p_annual_energy_dist_time = gen_heatmap(this, step_per_hour);
         // monthly and annual outputs
         if (wdprov->annualSimulation())
         {
+            ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, step_per_hour);
+
             accumulate_monthly_for_year("gen", "monthly_energy", ts_hour, step_per_hour);
             accumulate_annual_for_year("gen", "annual_energy", ts_hour, step_per_hour);
 

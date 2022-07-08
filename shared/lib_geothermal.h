@@ -29,6 +29,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lib_physics.h"
 #include "lib_powerblock.h"
 
+
 #ifndef __geothermalEnums__
 #define __geothermalEnums__
 
@@ -118,6 +119,7 @@ struct SGeothermal_Inputs
 
 	const char * mc_WeatherFileName;
 	int * mia_tou;											// time of use array
+    double* haf;                                            // adjustment factor array
 };
 
 struct SGeothermal_Outputs

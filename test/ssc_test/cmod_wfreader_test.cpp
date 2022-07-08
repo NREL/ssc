@@ -35,4 +35,7 @@ TEST(Wfreader_cmod_wfreader, Test) {
     ssc_data_set_string(data, "file_name", filepath);
     ssc_data_set_number(data, "header_only", 1);
     EXPECT_TRUE(ssc_module_exec(mod, data));
+    
+    ssc_module_free(mod);
+    ssc_data_free(data);
 }

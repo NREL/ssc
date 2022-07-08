@@ -395,6 +395,8 @@ TEST_F(lib_battery_test, runDuplicates) {
 
     EXPECT_FALSE(*cap_state3 == *cap_state2);
     EXPECT_NE(volt_state3->cell_voltage, volt_state2->cell_voltage);
+    
+    delete Battery;
 }
 
 TEST_F(lib_battery_test, createFromParams) {
@@ -540,6 +542,9 @@ TEST_F(lib_battery_test, RoundtripEffTable){
                                         0.73, 0.69, 0.66, 0.62, 0.59, 0.55, 0.51, 0.47};
     for (size_t i = 0; i < eff_expected.size(); i++)
         EXPECT_NEAR(eff_vs_current[i], eff_expected[i], .01);
+    
+    delete capacityModel;
+    delete voltageModel;
 }
 
 TEST_F(lib_battery_test, RoundtripEffVanadiumFlow){
@@ -590,6 +595,8 @@ TEST_F(lib_battery_test, RoundtripEffVanadiumFlow){
 
         current += fabs(max_current) / 100.;
     }
+    delete vol;
+    delete cap;
 }
 
 TEST_F(lib_battery_test, HourlyVsSubHourly)
@@ -619,6 +626,10 @@ TEST_F(lib_battery_test, HourlyVsSubHourly)
         EXPECT_NEAR(cap_subhourly->I() * volt_subhourly->battery_voltage(), discharge_watts, 0.1);
 
     }
+    delete cap_hourly;
+    delete volt_hourly;
+    delete cap_subhourly;
+    delete volt_subhourly;
 }
 
 TEST_F(lib_battery_test, AdaptiveTimestep) {
@@ -710,6 +721,9 @@ TEST_F(lib_battery_test, AdaptiveTimestep) {
     EXPECT_NEAR(batteryModel->SOC(), 94.98, 1e-2);
     EXPECT_NEAR(batt_subhourly->SOC(), 94.95, 1e-2);
     EXPECT_NEAR(batt_adaptive->SOC(), 94.95, 1e-2);
+    
+    delete batt_adaptive;
+    delete batt_subhourly;
 }
 
 
@@ -796,11 +810,13 @@ TEST_F(lib_battery_test, NMCLifeModel) {
     EXPECT_NEAR(state->nmc_li_neg->dq_relative_li3, 0, 1e-3);
     EXPECT_NEAR(state->cycle->DOD_min, 0.5, 1e-3);
     EXPECT_NEAR(state->cycle->DOD_max, 0.54, 1e-3);
-    EXPECT_NEAR(state->nmc_li_neg->b1_dt, 1.779e-5, 1e-9);
-    EXPECT_NEAR(state->nmc_li_neg->b2_dt, 8.619e-7, 1e-10);
+    EXPECT_NEAR(state->nmc_li_neg->b1_dt, 1.143e-4, 1e-6);
+    EXPECT_NEAR(state->nmc_li_neg->b2_dt, 0.05593, 1e-3);
     EXPECT_NEAR(state->nmc_li_neg->b3_dt, 8.829e-4, 1e-7);
     EXPECT_NEAR(state->nmc_li_neg->c0_dt, 3.105, 1e-3);
     EXPECT_NEAR(state->nmc_li_neg->c2_dt, 3.035e-6, 1e-8);
+    
+
 }
 
 TEST_F(lib_battery_test, AdaptiveTimestepNMC) {
@@ -892,13 +908,16 @@ TEST_F(lib_battery_test, AdaptiveTimestepNMC) {
 
     }
 
-    EXPECT_NEAR(batteryModel->charge_maximum(), 901.11, 1e-2);
-    EXPECT_NEAR(batt_subhourly->charge_maximum(), 902.21, 1e-2);
-    EXPECT_NEAR(batt_adaptive->charge_maximum(), 900.71, 1e-2);
+    EXPECT_NEAR(batteryModel->charge_maximum(), 900.63, 1e-2);
+    EXPECT_NEAR(batt_subhourly->charge_maximum(), 904.56, 1e-2);
+    EXPECT_NEAR(batt_adaptive->charge_maximum(), 903.19, 1e-2);
 
-    EXPECT_NEAR(batteryModel->SOC(), 85.42, 1e-2);
-    EXPECT_NEAR(batt_subhourly->SOC(), 86.15, 1e-2);
-    EXPECT_NEAR(batt_adaptive->SOC(), 86.28, 1e-2);
+    EXPECT_NEAR(batteryModel->SOC(), 85.46, 1e-2);
+    EXPECT_NEAR(batt_subhourly->SOC(), 85.94, 1e-2);
+    EXPECT_NEAR(batt_adaptive->SOC(), 86.06, 1e-2);
+
+    delete batt_adaptive;
+    delete batt_subhourly;
 }
 
 TEST_F(lib_battery_test, AdaptiveTimestepNonIntegerStep) {
@@ -916,6 +935,8 @@ TEST_F(lib_battery_test, AdaptiveTimestepNonIntegerStep) {
     batt_adaptive->runPower(100);
 
     EXPECT_ANY_THROW(batt_adaptive->ChangeTimestep(1));
+    
+
 }
 
 TEST_F(lib_battery_test, LMOLTOLifeModel) {
@@ -944,6 +965,8 @@ TEST_F(lib_battery_test, LMOLTOLifeModel) {
     EXPECT_NEAR(state->lmo_lto->temp_avg, 12.214, 1e-3);
     EXPECT_NEAR(state->lmo_lto->EFC, 0.0202, 1e-3);
     EXPECT_NEAR(state->lmo_lto->EFC_dt, 0.0202, 1e-3);
+    
+
 }
 
 TEST_F(lib_battery_test, AdaptiveTimestepLMOLTO) {
@@ -1040,4 +1063,7 @@ TEST_F(lib_battery_test, AdaptiveTimestepLMOLTO) {
     EXPECT_NEAR(batteryModel->SOC(), 95, 1e-2);
     EXPECT_NEAR(batt_subhourly->SOC(), 95, 1e-2);
     EXPECT_NEAR(batt_adaptive->SOC(), 95, 1e-2);
+    
+    delete batt_adaptive;
+    delete batt_subhourly;
 }

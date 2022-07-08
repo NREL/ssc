@@ -114,6 +114,7 @@ public:
 	std::vector<ssc_number_t> monthly_dc_fixed;
 	std::vector<ssc_number_t> monthly_dc_tou;
 
+    bool dc_enabled;
     bool uses_billing_demand; // Has a energy rate with kWh/kw AND/OR has a demand charge. If false, en_billing_demand_lookback must be false
     bool en_billing_demand_lookback; // Enable billing demand lookback percentages
     std::vector<ssc_number_t> prev_peak_demand; // Set before calling init_energy_rates
@@ -154,20 +155,28 @@ public:
 
     /* Populate ur_month objects from those filled out in setup_energy_rates. Called annually in cmod_utility_rate5, other classes may reset ur_month directly
        Can be called right away to create the vectors, but for kWh/kW rates needs to be called once after ur_month.update_net_and_peak to be accurate */
-    void init_energy_rates(bool gen_only);
+    void init_energy_rates_all_months(bool gen_only);
+    void init_energy_rates(bool gen_only, int m);
 
 	// Runs each step
 	void sort_energy_to_periods(int month, double energy, size_t step); // Net metering only
 	void find_dc_tou_peak(int month, double power, size_t step);
 	int get_tou_row(size_t year_one_index, int month);
 
+    // Used by setup
+    int get_dc_tou_row(size_t year_one_index, int month);
+
 	// Runs each month
 	void init_dc_peak_vectors(int month); // Reinitialize vectors for re-use of memory year to year
 	ssc_number_t get_demand_charge(int month, size_t year);  // Sum time of use and flat demand charges to return total cost. If the mismatch between int month and size_t year looks wierd to you, you're going to have to change lib_util to fix it. Good luck.
+    void set_demand_peak_hours(int month);
     // Returns error codes so compute module can print errors. 0: no error, 10x: error in previous month, 20x: error in current month. x is the period where the error occured
     int transfer_surplus(ur_month& curr_month, ur_month& prev_month); // For net metering rollovers, used between months to copy data
     void compute_surplus(ur_month& curr_month); // For net metering rollovers, used within a single month prior to cost calculations
 
+    // Checks all months for kWh/kW rate
+    bool has_kwh_per_kw_rate();
+    // Only call if you want to know for a specific month. If you want to know for the rate generally, use the above function
     bool has_kwh_per_kw_rate(int month);
 
     // Functions for calculating hourly net metering costs

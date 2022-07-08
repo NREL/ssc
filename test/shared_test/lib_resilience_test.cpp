@@ -112,6 +112,8 @@ TEST_F(ResilienceTest_lib_resilience, DischargeBatteryModelHourly)
         delete battery;
         battery = new battery_t(initial_batt);
     }
+    if (battery)
+        delete battery;
 }
 
 TEST_F(ResilienceTest_lib_resilience, DischargeBatteryModelSubHourly)
@@ -148,6 +150,10 @@ TEST_F(ResilienceTest_lib_resilience, DischargeBatteryModelSubHourly)
         delete battery;
         battery = new battery_t(initial_batt);
     }
+    
+    if (battery)
+        delete battery;
+
 }
 
 TEST_F(ResilienceTest_lib_resilience, DischargeBatteryModelSubHourlyWSOCLimits)
@@ -184,6 +190,10 @@ TEST_F(ResilienceTest_lib_resilience, DischargeBatteryModelSubHourlyWSOCLimits)
         delete battery;
         battery = new battery_t(initial_batt);
     }
+    
+    if (battery)
+        delete battery;
+
 }
 
 TEST_F(ResilienceTest_lib_resilience, ChargeBatteryModelHourly)
@@ -217,6 +227,10 @@ TEST_F(ResilienceTest_lib_resilience, ChargeBatteryModelHourly)
         delete battery;
         battery = new battery_t(initial_batt);
     }
+    
+    if (battery)
+        delete battery;
+
 }
 
 TEST_F(ResilienceTest_lib_resilience, ChargeBatteryModelSubhourly)
@@ -249,6 +263,10 @@ TEST_F(ResilienceTest_lib_resilience, ChargeBatteryModelSubhourly)
         delete battery;
         battery = new battery_t(initial_batt);
     }
+    
+    if (battery)
+        delete battery;
+
 }
 
 TEST_F(ResilienceTest_lib_resilience, PVWattsSetUp)
