@@ -2475,9 +2475,6 @@ int irrad::calc_rear_side(double transmissionFactor, double groundClearanceHeigh
         double rowToRow = slopeLength / this->groundCoverageRatio;                  // distance between front of row to front of next row
         double distanceBetweenRows = rowToRow - horizontalLength;                   // distance between back of row to front of next row
 
-        if (horizontalLength == 0)
-            throw std::runtime_error("Bifacial calc_rear_side error: module's horizontal length cannot be 0. Please check module's dimensions.");
-
         // Determine the factors for points on the ground from the leading edge of one row of PV panels to the edge of the next row of panels behind
         std::vector<double> rearSkyConfigFactors, frontSkyConfigFactors;
         this->getSkyConfigurationFactors(rowToRow, verticalHeight, clearanceGround, distanceBetweenRows,
