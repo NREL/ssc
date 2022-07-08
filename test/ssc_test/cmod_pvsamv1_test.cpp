@@ -400,8 +400,8 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelSystemDesign)
                                 185647, 185647, 185638, 185647, 185647, 185647, 185647, 185647, 185647, 185647, 185647,
                                 185647, 185647, 185647, 185647, 179908, 185310, 165057, 179495, 185283, 163575, 181557,
                                 185413, 170978, 181557, 185413, 170978, 185647, 185647, 185647, 185647, 185647, 200729,
-                                207043, 194883, 188414, 185647, 203396, 208568, 195747, 188610, 185647, 197691, 201152,
-                                192446, 187821, 185647, 197691, 201152, 192446, 187821
+                                207043, 194883, 188414, 185647, 203396, 208568, 195543, 188610, 185647, 197484, 200940,
+                                192246, 187626, 185647, 197484, 200940, 192246, 187626
     };
 
     for (size_t i = 0; i != annual_energy_expected.size(); i++)
@@ -446,7 +446,7 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelShading)
 // PR 280	std::vector<double> annual_energy_expected = { 12911, 10607, 10579, 10377 };
     // 2 - 3D shading with self-shading reduced from 10579 to 10529
     // 3 - shading with snow reduced from 10377 to 10328
-    std::vector<double> annual_energy_expected = { 13141, 10771, 10692, 10486 };
+    std::vector<double> annual_energy_expected = { 13130, 10763, 10684, 10479 };
     std::map<std::string, double> pairs;
 
     // 2 subarrays, one pointing east, one west
@@ -531,7 +531,7 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelShading)
 TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelLosses)
 {
     // 0: Default Losses, 1: Modify Point Losses, 2: Modify Availability
-    std::vector<double> annual_energy_expected = { 8836, 7990, 7719 };
+    std::vector<double> annual_energy_expected = { 8834, 7987, 7717 };
     std::map<std::string, double> pairs;
 
     // 0: Default losses
@@ -581,7 +581,7 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelLosses)
 TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelSequentialLosses)
 {
     // 0: Default Losses, 1: Modify Point Losses
-    std::vector<double> annual_energy_expected = { 8836, 2226};
+    std::vector<double> annual_energy_expected = { 8834, 2226};
     std::map<std::string, double> pairs;
 
     // 0: Default losses
@@ -655,7 +655,7 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, InvTempDerate) {
 /// Test PVSAMv1 multiple MPPT inverter, otherwise using default no financial model inputs
 TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelMultipleMPPT)
 {
-    std::vector<double> annual_energy_expected = { 7762 };
+    std::vector<double> annual_energy_expected = { 7807 };
     std::map<std::string, double> pairs;
 
     pairs["inv_num_mppt"] = 2;
@@ -693,7 +693,7 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, SnowModel)
 
     ssc_number_t annual_energy;
     ssc_data_get_number(data, "annual_energy", &annual_energy);
-    EXPECT_NEAR(annual_energy, 11397, m_error_tolerance_hi) << "Annual energy.";
+    EXPECT_NEAR(annual_energy, 11393, m_error_tolerance_hi) << "Annual energy.";
 
 }
 
@@ -762,7 +762,7 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, bifacial) {
     {
         ssc_number_t annualEnergy;
         ssc_data_get_number(data, "annual_energy", &annualEnergy);
-        EXPECT_NEAR(annualEnergy, 9262, 1.0) << "Bifacial annual energy from SAM version 2018.11.11 using Phoenix TMY2";
+        EXPECT_NEAR(annualEnergy, 9259, 1.0) << "Bifacial annual energy from SAM version 2018.11.11 using Phoenix TMY2";
     }
 }
 
