@@ -1268,7 +1268,7 @@ int C_csp_solver::C_MEQ__T_field_cold::operator()(double T_field_cold /*C*/, dou
     m_t_ts_calc = c_eq.m_t_ts_calc;
 
     double T_field_cold_calc = c_eq.m_T_field_cold_calc;        //[C]
-    *diff_T_field_cold = (T_field_cold_calc - T_field_cold) / T_field_cold; //[-]
+    *diff_T_field_cold = (T_field_cold_calc - T_field_cold) / std::max(100.0, mpc_csp_solver->m_T_htf_cold_des - 237.15); //[-]
 
     return 0;
 }
