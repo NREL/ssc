@@ -28,6 +28,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdlib.h>
 #include <string.h>
 #include <vector>
+#include <numeric>
 
 #include "lib_irradproc.h"
 #include "lib_pv_incidence_modifier.h"
@@ -2904,11 +2905,6 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
     double tiltRadians = surfaceAnglesRadians[1];
     double surfaceAzimuthRadians = surfaceAnglesRadians[2];
 
-    // Average GHI on ground under PV array for cases when x projection exceed 2*rtr
-    double averageGroundGHI = 0.0;
-    for (size_t i = 0; i != rearGroundGHI.size(); i++)
-        averageGroundGHI += rearGroundGHI[i] / rearGroundGHI.size();
-
     // Calculate diffuse isotropic irradiance for a horizontal surface
     perez(0, calculatedDirectNormal, calculatedDiffuseHorizontal, albedo, solarZenithRadians, 0, solarZenithRadians,
           planeOfArrayIrradianceRear, diffuseIrradianceRear);
@@ -3017,7 +3013,7 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 
             if (fabs(projectedX1 - projectedX2) > 0.99 * rowToRow) {
                 // Use average value if projection approximates the rtr
-                actualGroundGHI = averageGroundGHI;
+                actualGroundGHI = std::accumulate(rearGroundGHI.begin(), rearGroundGHI.end(), 0.) / rearGroundGHI.size();
             }
             else {
                 projectedX1 = intervals * projectedX1 / rowToRow;
