@@ -20,6 +20,7 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <algorithm>
 #include "cmod_pvsamv1.h"
 #include "lib_pv_io_manager.h"
 #include "lib_resilience.h"
@@ -52,7 +53,9 @@ static var_info _cm_vtab_pvsamv1[] = {
         {SSC_INPUT, SSC_NUMBER,   "en_snow_model",                        "Toggle snow loss estimation",                         "0/1",    "",                                                                                                                                                                                      "Losses",                                                "?=0",                                "BOOLEAN",             "" },
         {SSC_INPUT, SSC_NUMBER,   "system_capacity",                      "DC Nameplate capacity",                               "kWdc",   "",                                                                                                                                                                                      "System Design",                                         "*",                                  "",                    "" },
         {SSC_INPUT, SSC_NUMBER,   "use_wf_albedo",                        "Use albedo in weather file if provided",              "0/1",    "0=user-specified,1=weatherfile",                                                                                                                                                        "Solar Resource",                                        "?=1",                                "BOOLEAN",             "" },
-        {SSC_INPUT, SSC_ARRAY,    "albedo",                               "User specified ground albedo",                        "0..1",   "",                                                                                                                                                                                      "Solar Resource",                                        "*",                                  "LENGTH=12",           "" },
+        {SSC_INPUT, SSC_NUMBER,   "use_spatial_albedos",                  "Use spatial albedo values",                           "0/1",    "0=no,1=yes",                                                                                                                                                                            "Solar Resource",                                        "?=0",                                "BOOLEAN",             "" },
+        {SSC_INPUT, SSC_ARRAY,    "albedo",                               "User specified ground albedo (non-spatial)",          "0..1",   "",                                                                                                                                                                                      "Solar Resource",                                        "use_spatial_albedos=0",              "LENGTH=12",           "" },
+        {SSC_INPUT, SSC_MATRIX,   "albedo_spatial",                       "User specified ground albedo (spatial)",              "0..1",   "",                                                                                                                                                                                      "Solar Resource",                                        "use_spatial_albedos=1",              "",                    "" },
         {SSC_INPUT, SSC_NUMBER,   "irrad_mode",                           "Irradiance input translation mode",                   "",       "0=beam&diffuse,1=total&beam,2=total&diffuse,3=poa_reference,4=poa_pyranometer",                                                                                                         "Solar Resource",                                        "?=0",                                "INTEGER,MIN=0,MAX=4", "" },
         {SSC_INPUT, SSC_NUMBER,   "sky_model",                            "Diffuse sky model",                                   "",       "0=isotropic,1=hkdr,2=perez",                                                                                                                                                            "Solar Resource",                                        "?=2",                                "INTEGER,MIN=0,MAX=2", "" },
         {SSC_INPUT, SSC_NUMBER,   "inverter_count",                       "Number of inverters",                                 "",       "",                                                                                                                                                                                      "System Design",                                         "*",                                  "INTEGER,POSITIVE",    "" },
@@ -526,7 +529,8 @@ static var_info _cm_vtab_pvsamv1[] = {
         // non-irradiance data from weather file, note that albedo may be from weather file or monthly array
         { SSC_OUTPUT,        SSC_ARRAY,      "wspd",                                       "Weather file wind speed",                                                        "m/s",    "",                      "Time Series",       "*",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "tdry",                                       "Weather file ambient temperature",                                               "C",      "",                      "Time Series",       "*",                    "",                              "" },
-        { SSC_OUTPUT,        SSC_ARRAY,      "alb",                                        "Albedo",							                                 "",       "",                     "Time Series",       "*",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "alb",                                        "Albedo",							                                 "",       "",                     "Time Series",       "",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_MATRIX,     "alb_spatial",                                "Albedo spatial",  				                                     "",       "",                     "Time Series",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "snowdepth",                                  "Weather file snow depth",							                            "cm",       "",                    "Time Series",       "",                    "",                              "" },
 
         // calculated sun position data
@@ -1318,8 +1322,8 @@ void cm_pvsamv1::exec()
 
             // calculate incident irradiance on each subarray
             std::vector<double> ipoa_rear, ipoa_rear_after_losses, ipoa_front, ipoa;
-            double alb;
-            alb = 0;
+            double alb = 0.;
+            std::vector<double> alb_spatial;
 
             for (size_t nn = 0; nn < num_subarrays; nn++)
             {
@@ -1337,7 +1341,8 @@ void cm_pvsamv1::exec()
                     Irradiance->useWeatherFileAlbedo, Irradiance->instantaneous, Subarrays[nn]->backtrackingEnabled, false,
                     Irradiance->dtHour, Subarrays[nn]->tiltDegrees, Subarrays[nn]->azimuthDegrees, Subarrays[nn]->trackerRotationLimitDegrees, 0.0, Subarrays[nn]->groundCoverageRatio, Subarrays[nn]->slopeTilt, Subarrays[nn]->slopeAzm,
                     Subarrays[nn]->monthlyTiltDegrees, Irradiance->userSpecifiedMonthlyAlbedo,
-                    Subarrays[nn]->poa.poaAll.get());
+                    Subarrays[nn]->poa.poaAll.get(),
+                    Irradiance->useSpatialAlbedos, &Irradiance->userSpecifiedMonthlySpatialAlbedos);
 
                 int code = irr.calc();
 
@@ -1401,6 +1406,7 @@ void cm_pvsamv1::exec()
                 irr.get_angles(&aoi, &stilt, &sazi, &rot, &btd);
                 irr.get_poa(&ibeam, &iskydiff, &ignddiff, 0, 0, 0);
                 alb = irr.getAlbedo();
+                alb_spatial = irr.getAlbedoSpatial();
 
                 if (iyear == 0 || save_full_lifetime_variables == 1)
                     Irradiance->p_sunPositionTime[idx] = (ssc_number_t)irr.get_sunpos_calc_hour();
@@ -2117,16 +2123,20 @@ void cm_pvsamv1::exec()
             {
                 Irradiance->p_weatherFileWindSpeed[idx] = (ssc_number_t)wf.wspd;
                 Irradiance->p_weatherFileAmbientTemp[idx] = (ssc_number_t)wf.tdry;
-                Irradiance->p_weatherFileAlbedo[idx] = (ssc_number_t)alb;
                 Irradiance->p_weatherFileSnowDepth[idx] = (ssc_number_t)wf.snow;
-
                 Irradiance->p_sunZenithAngle[idx] = (ssc_number_t)solzen;
                 Irradiance->p_sunAltitudeAngle[idx] = (ssc_number_t)solalt;
                 Irradiance->p_sunAzimuthAngle[idx] = (ssc_number_t)solazi;
-
-                // absolute relative airmass calculation as f(zenith angle, site elevation)
                 Irradiance->p_absoluteAirmass[idx] = sunup > 0 ? (ssc_number_t)(exp(-0.0001184 * hdr.elev) / (cos(solzen * 3.1415926 / 180) + 0.5057 * pow(96.080 - solzen, -1.634))) : 0.0f;
                 Irradiance->p_sunUpOverHorizon[idx] = (ssc_number_t)sunup;
+                if (Irradiance->useSpatialAlbedos) {
+                    if (idx < Simulation->numberOfWeatherFileRecords) {         // limit to single year
+                        std::copy(alb_spatial.begin(), alb_spatial.end(), Irradiance->p_weatherFileAlbedoSpatial + idx * alb_spatial.size());
+                    }
+                }
+                else {
+                    Irradiance->p_weatherFileAlbedo[idx] = (ssc_number_t)alb;
+                }
             }
 
             if (iyear == 0 || save_full_lifetime_variables == 1)

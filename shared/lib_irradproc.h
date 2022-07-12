@@ -26,6 +26,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <memory>
 
 #include "lib_weatherfile.h"
+#include "lib_util.h"
 
 struct poaDecompReq;
 
@@ -939,11 +940,12 @@ protected:
     poaDecompReq* poaAll;			///< Data required to decompose input plane-of-array irradiance
 
     // Input Front-Side Irradiation components 
-    double globalHorizontal;		///< Input global horizontal irradiance (W/m2)
-    double directNormal;			///< Input direct normal irradiance (W/m2)
-    double diffuseHorizontal;		///< Input diffuse horizontal irradiance (W/m2)
-    double weatherFilePOA;			///< Input plane-of-array irradiance (W/m2)
-    double albedo;					///< Ground albedo (0-1)
+    double globalHorizontal;		    ///< Input global horizontal irradiance (W/m2)
+    double directNormal;			    ///< Input direct normal irradiance (W/m2)
+    double diffuseHorizontal;		    ///< Input diffuse horizontal irradiance (W/m2)
+    double weatherFilePOA;			    ///< Input plane-of-array irradiance (W/m2)
+    double albedo;					    ///< Ground albedo (0-1)
+    std::vector<double> albedoSpatial;  ///< Spatial ground albedo (0-1)
 
     // Calculated Front-Side Irradiation components
     double calculatedDirectNormal;		///< Calculated direct normal irradiance (W/m2)
@@ -975,7 +977,8 @@ public:
         bool useWeatherFileAlbedo, bool instantaneousWeather, bool backtrackingEnabled, bool forceToStowIn,
         double dtHour, double tiltDegrees, double azimuthDegrees, double trackerRotationLimitDegrees, double stowAngleDegreesIn,
         double groundCoverageRatio, double slopeTilt, double slopeAzm, std::vector<double> monthlyTiltDegrees, std::vector<double> userSpecifiedAlbedo,
-        poaDecompReq* poaAllIn);
+        poaDecompReq* poaAllIn,
+        bool useSpatialAlbedos = false, const util::matrix_t<double>* userSpecifiedSpatialAlbedos = nullptr);
 
     /// Construct the irrad class with an Irradiance_IO() object and Subarray_IO() object
     irrad();
@@ -1062,6 +1065,9 @@ public:
 
     /// Return the albedo used by the irradiance processor
     double getAlbedo();
+
+    /// Return the spatial albedo used by the irradiance processor
+    std::vector<double> getAlbedoSpatial();
 
     /// Return the sky configuration factors, used by \link calc_rear_side()
     void getSkyConfigurationFactors(double rowToRow, double verticalHeight, double clearanceGround, double distanceBetweenRows, double horizontalLength, std::vector<double>& rearSkyConfigFactors, std::vector<double>& frontSkyConfigFactors);

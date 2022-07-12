@@ -220,7 +220,9 @@ struct Irradiance_IO
 	int radiationMode;											  /// Specify which components of radiance should be used: 0=B&D, 1=G&B, 2=G&D, 3=POA-Ref, 4=POA-Pyra
 	int skyModel;												  /// Specify which sky diffuse model should be used: 0=isotropic, 1=hdkr, 2=perez
 	flag useWeatherFileAlbedo;									  /// Specify whether to use the weather file albedo
-	std::vector<double> userSpecifiedMonthlyAlbedo;				  /// User can provide monthly ground albedo values (0-1)
+    flag useSpatialAlbedos;									      /// Specify whether to use spatial albedos
+	std::vector<double> userSpecifiedMonthlyAlbedo;				  /// User can provide monthly uniform ground albedo values (0-1)
+    util::matrix_t<double> userSpecifiedMonthlySpatialAlbedos;	  /// User can provide monthly spatial ground albedo values (0-1), [month, location]
 
 	// Irradiance data Outputs (p_ is just a convention to organize all pointer outputs)
 	ssc_number_t * p_weatherFileGHI;			/// The Global Horizonal Irradiance from the weather file [W/m2]
@@ -231,6 +233,7 @@ struct Irradiance_IO
 	ssc_number_t * p_weatherFileWindSpeed;		/// The Wind Speed from the weather file [m/s]
 	ssc_number_t * p_weatherFileAmbientTemp;	/// The ambient temperature from the weather file [C]
 	ssc_number_t * p_weatherFileAlbedo;			/// The ground albedo from the weather file
+    ssc_number_t* p_weatherFileAlbedoSpatial;	/// The ground albedo from the weather file and spatial matrix input
 	ssc_number_t * p_weatherFileSnowDepth;		/// The snow depth from the weather file
 	ssc_number_t * p_IrradianceCalculated[3];	/// The calculated components of the irradiance [W/m2]
 	ssc_number_t * p_sunZenithAngle;			/// The calculate sun zenith angle [degrees]

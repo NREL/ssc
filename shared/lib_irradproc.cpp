@@ -2061,7 +2061,8 @@ irrad::irrad(weather_record wf, weather_header hdr,
              double stowAngleDegreesIn,
              double groundCoverageRatioIn, double slopeTiltIn, double slopeAzmIn, std::vector<double> monthlyTiltDegrees,
              std::vector<double> userSpecifiedAlbedo,
-             poaDecompReq *poaAllIn) :
+             poaDecompReq *poaAllIn,
+             bool useSpatialAlbedos, const util::matrix_t<double>* userSpecifiedSpatialAlbedos) :
         skyModel(skyModelIn), radiationMode(radiationModeIn), trackingMode(trackModeIn),
         enableBacktrack(backtrackingEnabled), forceToStow(forceToStowIn),
         delt(dtHour), tiltDegrees(tiltDegreesIn), surfaceAzimuthDegrees(azimuthDegreesIn),
@@ -2071,8 +2072,15 @@ irrad::irrad(weather_record wf, weather_header hdr,
     int month_idx = wf.month - 1;
     if (useWeatherFileAlbedo && std::isfinite(wf.alb) && wf.alb > 0 && wf.alb < 1) {
         albedo = wf.alb;
+        if (useSpatialAlbedos) {
+            albedoSpatial.assign(userSpecifiedSpatialAlbedos->ncols(), albedo);
+        }
     }
-    else if (month_idx >= 0 && month_idx < 12) {
+    else if (useSpatialAlbedos) {
+        albedoSpatial = userSpecifiedSpatialAlbedos->row(month_idx).to_vector();
+        albedo = std::accumulate(albedoSpatial.begin(), albedoSpatial.end(), 0.) / albedoSpatial.size();
+    }
+    else {
         albedo = userSpecifiedAlbedo[month_idx];
     }
 
@@ -2120,6 +2128,10 @@ int irrad::check() {
 
 double irrad::getAlbedo() {
     return albedo;
+}
+
+std::vector<double> irrad::getAlbedoSpatial() {
+    return albedoSpatial;
 }
 
 double irrad::get_sunpos_calc_hour() {

@@ -175,7 +175,25 @@ Irradiance_IO::Irradiance_IO(compute_module* cm, std::string cmName)
         throw exec_error(cmName, util::format("%d timesteps per hour found. Weather data should be single year.", stepsPerHour));
 
     useWeatherFileAlbedo = cm->as_boolean("use_wf_albedo");
-    userSpecifiedMonthlyAlbedo = cm->as_vector_double("albedo");
+    useSpatialAlbedos = cm->as_boolean("use_spatial_albedos");
+    userSpecifiedMonthlySpatialAlbedos.at(0) = std::numeric_limits<double>::quiet_NaN();
+    userSpecifiedMonthlyAlbedo.push_back(std::numeric_limits<double>::quiet_NaN());
+    if (useSpatialAlbedos) {
+        userSpecifiedMonthlySpatialAlbedos = cm->as_matrix("albedo_spatial");
+        double* data = userSpecifiedMonthlySpatialAlbedos.data();
+        std::size_t n_cells = userSpecifiedMonthlySpatialAlbedos.ncells();
+        if (*min_element(data, data + n_cells) <= 0 ||
+            *max_element(data, data + n_cells) >= 1) {
+            throw exec_error(cmName, "Albedos must be greater than zero and less than one in the monthly spatial albedo matrix.");
+        }
+    }
+    else {
+        userSpecifiedMonthlyAlbedo = cm->as_vector_double("albedo");
+        if (*min_element(userSpecifiedMonthlyAlbedo.begin(), userSpecifiedMonthlyAlbedo.end()) <= 0 ||
+            *max_element(userSpecifiedMonthlyAlbedo.begin(), userSpecifiedMonthlyAlbedo.end()) >= 1) {
+            throw exec_error(cmName, "Albedos must be greater than zero and less than one in the monthly uniform albedo matrix.");
+        }
+    }
 
     checkWeatherFile(cm, cmName);
 }
@@ -245,19 +263,10 @@ void Irradiance_IO::checkWeatherFile(compute_module* cm, std::string cmName)
             weatherRecord.poa = 0;
         }
         //albedo is allowed to be missing in the weather file- will be filled in from user-entered monthly array.
-        //only throw an error if there's a value that isn't reasonable somewhere
-        int month_idx = weatherRecord.month - 1;
         if (useWeatherFileAlbedo && (!std::isfinite(weatherRecord.alb) || weatherRecord.alb <= 0 || weatherRecord.alb >= 1) ) {
             throw exec_error(cmName,
                 util::format("Error retrieving albedo value from weather file: Invalid albedo value %lg at time [y:%d m:%d d:%d h:%d minute:%lg]. Albedo must be greater than zero and less than one.",
                 weatherRecord.alb, weatherRecord.year, weatherRecord.month, weatherRecord.day, weatherRecord.hour, weatherRecord.minute));
-        }
-        else if (month_idx >= 0 && month_idx < 12) {
-            if (userSpecifiedMonthlyAlbedo[month_idx] <= 0 || userSpecifiedMonthlyAlbedo[month_idx] >= 1) {
-                throw exec_error(cmName,
-                    util::format("Error retrieving albedo value from monthly albedo array: Invalid albedo value %lg for month %ld. Albedo must be greater than zero and less than one.",
-                    userSpecifiedMonthlyAlbedo[month_idx], month_idx));
-            }
         }
     }
     weatherDataProvider->rewind();
@@ -275,7 +284,12 @@ void Irradiance_IO::AllocateOutputs(compute_module* cm)
     p_sunPositionTime = cm->allocate("sunpos_hour", numberOfWeatherFileRecords);
     p_weatherFileWindSpeed = cm->allocate("wspd", numberOfWeatherFileRecords);
     p_weatherFileAmbientTemp = cm->allocate("tdry", numberOfWeatherFileRecords);
-    p_weatherFileAlbedo = cm->allocate("alb", numberOfWeatherFileRecords);
+    if (useSpatialAlbedos) {
+        p_weatherFileAlbedoSpatial = cm->allocate("alb_spatial", weatherDataProvider->nrecords(), userSpecifiedMonthlySpatialAlbedos.ncols());
+    }
+    else {
+        p_weatherFileAlbedo = cm->allocate("alb", numberOfWeatherFileRecords);
+    }
     p_weatherFileSnowDepth = cm->allocate("snowdepth", numberOfWeatherFileRecords);
 
     // If using input POA, must have POA for every subarray or assume POA applies to each subarray
