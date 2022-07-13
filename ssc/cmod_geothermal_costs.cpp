@@ -35,7 +35,9 @@ static var_info _cm_vtab_geothermal_costs[] = {
 
         // Binary Plant Type Inputs:		
 		{ SSC_INPUT,		SSC_NUMBER,     "gross_output",						"Gross output from GETEM",									"kW",		"",						"GeoHourly",				"*",						"",								"" },
-		{ SSC_INPUT,		SSC_NUMBER,		"design_temp",						"Power block design temperature",							"C",        "",						"GeoHourly",				"*",						"",								"" },
+        { SSC_INPUT,		SSC_NUMBER,     "gross_cost_output",						"Gross output from GETEM for cost calculations",									"MW",		"",						"GeoHourly",				"*",						"",								"" },
+
+        { SSC_INPUT,		SSC_NUMBER,		"design_temp",						"Power block design temperature",							"C",        "",						"GeoHourly",				"*",						"",								"" },
         { SSC_INPUT,        SSC_NUMBER,      "dt_prod_well",                   "Temperature loss in production well",                  "C",              "",             "GeoHourly",        "*",                        "",                "" },
         { SSC_INPUT,        SSC_NUMBER,     "eff_secondlaw",					"Second Law Efficiency",									"%",		"",						"GeoHourly",				"*",						"",								"" },
 		// Flash Plant Type Inputs:
@@ -377,8 +379,9 @@ public:
 		else if (conversion_type == 1) {
 			//geo_inputs.me_ct = FLASH;
 			double unit_plant = as_double("gross_output");
-
-			double qRejectTotal = as_double("qRejectTotal") / 1000000;		// Converting from btu/h to MMBTU/h
+            double gross_cost = as_double("gross_cost_output");
+            double GF_flowrate = as_double("GF_flowrate");
+			double qRejectTotal = (as_double("qRejectTotal")*GF_flowrate / 1000) / 1000000;		// Converting from btu/h to MMBTU/h
 			double q_Condenser = as_double("qCondenser") / 1000000;			// Converting from btu/h to MMBTU/h
 
 
@@ -388,7 +391,6 @@ public:
 			double v_stage_1 = as_double("v_stage_1");
 			double v_stage_2 = as_double("v_stage_2");
 			double v_stage_3 = as_double("v_stage_3");
-			double GF_flowrate = as_double("GF_flowrate");
 			double qRejectByStage_1 = as_double("qRejectByStage_1");
 			double qRejectByStage_2 = as_double("qRejectByStage_2");
 			double qRejectByStage_3 = as_double("qRejectByStage_3");
@@ -413,12 +415,12 @@ public:
 			double design_temp = as_double("design_temp");
 
 			//T-G Cost:
-			tg_cost = (tg_sets_num * (2830 * (pow((unit_plant / tg_sets_num), 0.745)))) + (3685 * (pow((unit_plant / tg_sets_num), 0.617)));	//Reference Equipment Cost
+			tg_cost = (tg_sets_num * (2830 * (pow((gross_cost / tg_sets_num), 0.745)))) + (3685 * (pow((gross_cost / tg_sets_num), 0.617)));	//Reference Equipment Cost
 			current_tg_cost = tg_cost * turbine_ppi[ppi_base_year];
 
 
 			//Cooling Tower Cost:
-			condenser_heat_rejected = GF_flowrate * qRejectTotal / 1000;
+			condenser_heat_rejected = qRejectTotal;
 			cooling_tower_cost = 7800 * (pow(condenser_heat_rejected, 0.8));		//Reference Equipment Cost
 			current_tower_cost = cooling_tower_cost * process_equip_ppi[ppi_base_year];
 

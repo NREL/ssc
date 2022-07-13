@@ -72,6 +72,7 @@ static var_info _cm_vtab_geothermal[] = {
     { SSC_INPUT,        SSC_NUMBER,      "excess_pressure_pump",               "Excess pressure @ pump suction",               "psi",            "",             "GeoHourly",        "*",                        "",                "" },
     { SSC_INPUT,        SSC_NUMBER,      "well_diameter",                      "Production well diameter",                     "in",             "",             "GeoHourly",        "*",                        "",                "" },
     { SSC_INPUT,        SSC_NUMBER,      "casing_size",                        "Production pump casing size",                  "in",             "",             "GeoHourly",        "*",                        "",                "" },
+    { SSC_INPUT,        SSC_NUMBER,      "inj_casing_size",                        "Injection pump casing size",                  "in",             "",             "GeoHourly",        "*",                        "",                "" },
     { SSC_INPUT,        SSC_NUMBER,      "inj_well_diam",                      "Injection well diameter",                      "in",             "",             "GeoHourly",        "*",                        "",                "" },
     { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.inj_cost_curve_welltype",                      "Injection well type",                      "0/1",             "",             "GeoHourly",        "*",                        "",                "" },
     { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.prod_cost_curve_welltype",                      "Production well type",                      "0/1",             "",             "GeoHourly",        "*",                        "",                "" },
@@ -148,6 +149,8 @@ static var_info _cm_vtab_geothermal[] = {
 
 
     { SSC_OUTPUT,       SSC_NUMBER,      "gross_output",                       "Gross output from GETEM",                             "",        "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "gross_cost_output",                       "Gross output from GETEM for cost",                             "",        "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
+
     { SSC_OUTPUT,       SSC_NUMBER,      "pump_depth_ft",                      "Pump depth calculated by GETEM",                      "ft",      "",             "GeoHourly",        "ui_calculations_only=1",   "",                "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "pump_hp",                            "Pump hp calculated by GETEM",                         "hp",      "",             "GeoHourly",        "ui_calculations_only=1",   "",                "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "reservoir_pressure",                 "Reservoir pres calculated by GETEM",                  "",        "",             "GeoHourly",        "ui_calculations_only=1",   "",                "" },
@@ -284,6 +287,7 @@ public:
 		geo_inputs.md_DiameterProductionWellInches = as_double("well_diameter");
         geo_inputs.md_ProductionWellType = as_double("geotherm.cost.prod_cost_curve_welltype");
 		geo_inputs.md_DiameterPumpCasingInches = as_double("casing_size");
+        geo_inputs.md_DiameterInjPumpCasingInches = as_double("inj_casing_size");
 		geo_inputs.md_DiameterInjectionWellInches = as_double("inj_well_diam");
         geo_inputs.md_InjectionWellType = as_double("geotherm.cost.inj_cost_curve_welltype");
 		geo_inputs.mb_CalculatePumpWork = ( 1 != as_integer("specify_pump_work") );
@@ -491,13 +495,7 @@ public:
 			double eff_secondlaw = geo_outputs.eff_secondlaw;
 			assign("eff_secondlaw", (ssc_number_t)eff_secondlaw);
 
-			//Assigning Rejected Total Heat from Flash Plant:
-			double qRejectTotal = geo_outputs.qRejectedTotal;	//total heat rejected 
-			assign("qRejectTotal", (ssc_number_t)qRejectTotal);
-
-			//Assign qCondenser (Flash Plant Type):
-			double qCondenser = geo_outputs.condenser_q;
-			assign("qCondenser", (ssc_number_t)qCondenser);
+			
 
 			//Assign HP & LP Flash Pressures: 
 			double hp_flash_pressure = geo_outputs.md_PressureHPFlashPSI;
@@ -516,6 +514,14 @@ public:
 			//Assign total GF Flow Rate: 
 			double GF_flowrate = geo_outputs.GF_flowrate;
 			assign("GF_flowrate", (ssc_number_t)GF_flowrate);
+
+            //Assigning Rejected Total Heat from Flash Plant:
+			double qRejectTotal = geo_outputs.qRejectedTotal;	//total heat rejected 
+			assign("qRejectTotal", (ssc_number_t)qRejectTotal);
+
+			//Assign qCondenser (Flash Plant Type):
+			double qCondenser = geo_outputs.condenser_q;
+			assign("qCondenser", (ssc_number_t)qCondenser);
 
 			//Assign NCG Condenser Heat Rejecting Stages:
 			double qRejectByStage_1 = geo_outputs.qRejectByStage_1;
@@ -601,6 +607,7 @@ public:
 			if (geo_inputs.mi_ProjectLifeYears > 0) kWhperkW = kWhperkW / geo_inputs.mi_ProjectLifeYears;
 
 			assign("gross_output", var_data((ssc_number_t)geo_outputs.md_GrossPlantOutputMW));
+            assign("gross_cost_output", var_data((ssc_number_t)geo_outputs.md_GrossPowerMW));
 			assign("capacity_factor", var_data((ssc_number_t)(capacity_fac / 87.6)));		//Divided by 8760 and then multiplied by 100 (or divide by 87.6) to return CF as a %
 			assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
 			// 5/28/15 average provided for FCR market

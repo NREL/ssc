@@ -513,6 +513,8 @@ bool CGeothermalAnalyzer::IsHourly() { return (mo_geo_in.mi_MakeupCalculationsPe
 double CGeothermalAnalyzer::PlantGrossPowerkW(void)
 {
 	double dPlantBrineEfficiency = 0;  // plant Brine Efficiency as a function of temperature
+    double dGrossOutput = 0;
+    double dGrossPower = 0;
 	switch (me_makeup)
 	{
     case MA_EGS_BINARY:
@@ -523,11 +525,25 @@ double CGeothermalAnalyzer::PlantGrossPowerkW(void)
     case MA_EGS_FLASH:
 	case MA_FLASH:
 		dPlantBrineEfficiency = MaxSecondLawEfficiency() * FractionOfMaxEfficiency() * GetAEFlashAtTemp(md_WorkingTemperatureC-mo_geo_in.md_dtProdWell);
+        /*calculateFlashPressures();
+        dGrossOutput = turbine1OutputKWh();
+        if (FlashCount() == 2) dGrossOutput += turbine2OutputKWh();
+        dGrossPower = dGrossOutput * geothermal::EFFICIENCY_GENERATOR;
+        dPlantBrineEfficiency = dGrossPower;*/
         break;
 	default: ms_ErrorString = ("Invalid make up technology in CGeothermalAnalyzer::PlantGrossPowerkW"); return 0;
 	}
 
 	return dPlantBrineEfficiency * flowRateTotal() / 1000.0;
+}
+
+double CGeothermalAnalyzer::GrossPowerMW()
+{
+    calculateFlashPressures();
+    double dGrossOutput = turbine1OutputKWh();
+    if (FlashCount() == 2) dGrossOutput += turbine2OutputKWh();
+    double dGrossPower = dGrossOutput * geothermal::EFFICIENCY_GENERATOR;
+    return dGrossPower * flowRateTotal() / 1000;
 }
 
 double CGeothermalAnalyzer::MaxSecondLawEfficiency()
@@ -706,7 +722,7 @@ double CGeothermalAnalyzer::GetInjectionPumpWorkft(void)
     double flow = mo_geo_in.md_ProductionFlowRateKgPerS / mo_geo_in.md_RatioInjectionToProduction; //kg/s
     double flow_lbh = flow * 2.20462 * 3600;
     //Upper interval
-    double D_well = mo_geo_in.md_DiameterInjectionWellInches;
+    double D_well = mo_geo_in.md_DiameterInjPumpCasingInches;
     double D_well_ft = D_well / 12;
     double A = 3.1415 * pow(D_well_ft, 2) / 4;
     double L_int = 0.8 * mo_geo_in.md_ResourceDepthM; //Length interval (m), how is this calculated?
@@ -741,7 +757,7 @@ double CGeothermalAnalyzer::GetInjectionPumpWorkft(void)
     flow = mo_geo_in.md_ProductionFlowRateKgPerS / mo_geo_in.md_RatioInjectionToProduction; //kg/s
     flow_lbh = flow * 2.20462 * 3600;
     //Upper interval
-    D_well = mo_geo_in.md_DiameterPumpCasingInches - 0.4 * 2;
+    D_well = mo_geo_in.md_DiameterInjectionWellInches;
     D_well_ft = D_well / 12;
     A = 3.1415 * pow(D_well_ft, 2) / 4;
     L_int = 0.2 * mo_geo_in.md_ResourceDepthM; //Length interval (m), how is this calculated?
@@ -1572,7 +1588,7 @@ double CGeothermalAnalyzer::qRejectTotal(void) {
 	return qRejectByStage(1) + qRejectByStage(2) + qRejectByStage(3);
 } // D303
 double CGeothermalAnalyzer::qRejectedTower(void) {
-	mp_geo_out->qRejectedTotal = qCondenser() + qRejectTotal();
+    mp_geo_out->qRejectedTotal = qCondenser() + qRejectTotal();
 	return qCondenser() + qRejectTotal();
 } // D102
 double CGeothermalAnalyzer::fanPowerCoeffA(void) { return -2.0814 * log(geothermal::DELTA_TEMPERATURE_CWF) + 10.6013; } // O95
@@ -2032,7 +2048,7 @@ bool CGeothermalAnalyzer::InterfaceOutputsFilled(void)
 	mp_geo_out->md_PlantBrineEffectiveness = GetPlantBrineEffectiveness();
 	ReplaceReservoir(0.0); // set the working temp so the further calculations are correct
 	mp_geo_out->md_GrossPlantOutputMW = PlantGrossPowerkW() / 1000;
-
+    mp_geo_out->md_GrossPowerMW = GrossPowerMW();
 	mp_geo_out->md_PumpWorkKW = GetPumpWorkKW();
     mp_geo_out->md_PumpDepthFt = GetProductionPumpWorkft();
 	// mp_geo_out->md_BottomHolePressure  is calculated in GetCalculatedPumpDepthInFeet()

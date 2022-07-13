@@ -55,7 +55,7 @@ struct SGeothermal_Inputs
 		mi_ProjectLifeYears = mi_MakeupCalculationsPerYear = mi_TotalMakeupCalculations = 0;
 		md_DesiredSalesCapacityKW = md_NumberOfWells = md_NumberofWellsInj = md_PlantEfficiency = md_TemperatureDeclineRate = md_MaxTempDeclineC = md_TemperatureWetBulbC = 0.0;
 		md_PressureAmbientPSI = md_ProductionFlowRateKgPerS = md_GFPumpEfficiency = md_PressureChangeAcrossSurfaceEquipmentPSI = md_ExcessPressureBar = 0.0;
-		md_DiameterProductionWellInches = md_DiameterPumpCasingInches = md_DiameterInjectionWellInches = md_UserSpecifiedPumpWorkKW = 0.0;
+		md_DiameterProductionWellInches = md_DiameterPumpCasingInches = md_DiameterInjPumpCasingInches = md_DiameterInjectionWellInches = md_UserSpecifiedPumpWorkKW = 0.0;
 		md_PotentialResourceMW = md_ResourceDepthM = md_TemperatureResourceC = md_TemperaturePlantDesignC = md_EGSThermalConductivity = md_EGSSpecificHeatConstant = 0.0;
 		md_EGSRockDensity = md_ReservoirDeltaPressure = md_ReservoirWidthM = md_ReservoirHeightM = md_ReservoirPermeability = md_DistanceBetweenProductionInjectionWellsM = 0.0;
 		md_WaterLossPercent = md_EGSFractureAperature = md_EGSNumberOfFractures = md_EGSFractureWidthM = md_EGSFractureAngle = 0.0;
@@ -94,6 +94,7 @@ struct SGeothermal_Inputs
 	double md_DiameterProductionWellInches;					// default 10 inches
     double md_ProductionWellType;                           // 0 open hole, 1 liner
 	double md_DiameterPumpCasingInches;						// default 9.925 inches
+    double md_DiameterInjPumpCasingInches;
 	double md_DiameterInjectionWellInches;					// default 10 inches
     double md_InjectionWellType;                            // 0 open hole, 1 liner
 	double md_UserSpecifiedPumpWorkKW;
@@ -130,7 +131,7 @@ struct SGeothermal_Outputs
 	SGeothermal_Outputs()
 	{
 		md_PumpWorkKW = md_NumberOfWells = md_NumberOfWellsInj = md_FlashBrineEffectiveness = md_PressureHPFlashPSI = md_PressureLPFlashPSI = 0.0;
-		md_GrossPlantOutputMW = md_PlantBrineEffectiveness = md_PressureChangeAcrossReservoir = md_AverageReservoirTemperatureF = 0;
+		md_GrossPlantOutputMW = md_GrossPowerMW = md_PlantBrineEffectiveness = md_PressureChangeAcrossReservoir = md_AverageReservoirTemperatureF = 0;
 		md_PumpDepthFt = md_PumpHorsePower = md_BottomHolePressure = 0;
 		maf_ReplacementsByYear = maf_monthly_resource_temp = maf_monthly_power = maf_monthly_energy = maf_timestep_resource_temp = NULL;
 		maf_timestep_power = maf_timestep_test_values = maf_timestep_pressure = maf_timestep_dry_bulb = maf_timestep_wet_bulb = NULL;
@@ -185,6 +186,7 @@ struct SGeothermal_Outputs
 	// only for use in the interface to show 'calculated' values
 	double md_PlantBrineEffectiveness;
 	double md_GrossPlantOutputMW;	//double GetGrossPlantOutputMW(void) { return this->PlantOutputKW()/1000; }
+    double md_GrossPowerMW;
 	double md_PumpDepthFt;
 	double md_PumpHorsePower;
 	double md_PressureChangeAcrossReservoir; //double GetPressureChangeAcrossReservoir(void) { return moPPC.GetPressureChangeAcrossReservoir(); }
@@ -252,6 +254,7 @@ private:
 	void init(void); // code common to both constructors
 	bool IsHourly(void);
 	double PlantGrossPowerkW(void);
+    double GrossPowerMW(void);
 	double MaxSecondLawEfficiency(void);
 	double FractionOfMaxEfficiency(void);
 	bool CanReplaceReservoir(double dTimePassedInYears);
