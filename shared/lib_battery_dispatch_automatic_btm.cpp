@@ -425,11 +425,15 @@ double dispatch_automatic_behind_the_meter_t::compute_costs(size_t idx, size_t y
     std::unique_ptr<UtilityRateForecast> noDispatchForecast = std::unique_ptr<UtilityRateForecast>(new UtilityRateForecast(*rate_forecast));
     std::unique_ptr<UtilityRateForecast> marginalForecast = std::unique_ptr<UtilityRateForecast>(new UtilityRateForecast(*rate_forecast));
     double no_dispatch_cost = 0;
+    size_t start_year = year;
 
     // compute grid net from pv and load (no battery)
     size_t count = 0;
     for (size_t hour = 0; hour != 24; hour++)
     {
+        if (hour_of_year + hour > 8760 && year == start_year) {
+            year++;
+        }
         for (size_t step = 0; step != _steps_per_hour && idx < _P_load_ac.size(); step++)
         {
             double power = _P_load_ac[idx] - _P_pv_ac[idx];

@@ -26,9 +26,17 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "core.h"
 
 class cm_utilityrateforecast : public compute_module {
-public:
-    double dt_hr;
+private:
+    int analysis_period; // Maximum length of analysis - in most cases it will be shorter in this compute module
+    double dt_hr; // Timestep in hours
 
+    /* Utility rate data structure */
+    std::shared_ptr<rate_data> rate;
+
+    /* Forecasting class. */
+    std::shared_ptr <UtilityRateForecast> rate_forecast;
+
+public:
     cm_utilityrateforecast();
 
     // return true for success, otherwise errors in log
