@@ -247,19 +247,17 @@ void Irradiance_IO::checkWeatherFile(compute_module* cm, std::string cmName)
         //albedo is allowed to be missing in the weather file- will be filled in from user-entered monthly array.
         //only throw an error if there's a value that isn't reasonable somewhere
         int month_idx = weatherRecord.month - 1;
-        bool albedoError = true;
-        if (useWeatherFileAlbedo && std::isfinite(weatherRecord.alb) && weatherRecord.alb > 0 && weatherRecord.alb < 1) {
-            albedoError = false;
+        if (useWeatherFileAlbedo && (!std::isfinite(weatherRecord.alb) || weatherRecord.alb <= 0 || weatherRecord.alb >= 1) ) {
+            throw exec_error(cmName,
+                util::format("Error retrieving albedo value from weather file: Invalid albedo value %lg at time [y:%d m:%d d:%d h:%d minute:%lg]. Albedo must be greater than zero and less than one.",
+                weatherRecord.alb, weatherRecord.year, weatherRecord.month, weatherRecord.day, weatherRecord.hour, weatherRecord.minute));
         }
         else if (month_idx >= 0 && month_idx < 12) {
-            if (userSpecifiedMonthlyAlbedo[month_idx] > 0 && userSpecifiedMonthlyAlbedo[month_idx] < 1) {
-                albedoError = false;
-                weatherRecord.alb = userSpecifiedMonthlyAlbedo[month_idx];
+            if (userSpecifiedMonthlyAlbedo[month_idx] <= 0 || userSpecifiedMonthlyAlbedo[month_idx] >= 1) {
+                throw exec_error(cmName,
+                    util::format("Error retrieving albedo value from monthly albedo array: Invalid albedo value %lg for month %ld. Albedo must be greater than zero and less than one.",
+                    userSpecifiedMonthlyAlbedo[month_idx], month_idx));
             }
-        }
-        if (albedoError) {
-            throw exec_error(cmName,
-                util::format("Error retrieving albedo value: Invalid month in weather file or invalid albedo value in weather file"));
         }
     }
     weatherDataProvider->rewind();
@@ -267,6 +265,10 @@ void Irradiance_IO::checkWeatherFile(compute_module* cm, std::string cmName)
 
 void Irradiance_IO::AllocateOutputs(compute_module* cm)
 {
+    if (cm->as_integer("save_full_lifetime_variables") == 1 && cm->is_assigned("analysis_period")) {
+        numberOfWeatherFileRecords *= cm->as_integer("analysis_period");
+    }
+
     p_weatherFileGHI = cm->allocate("gh", numberOfWeatherFileRecords);
     p_weatherFileDNI = cm->allocate("dn", numberOfWeatherFileRecords);
     p_weatherFileDHI = cm->allocate("df", numberOfWeatherFileRecords);
@@ -679,14 +681,14 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO* 
             for (size_t i = 1; i < Simulation->numberOfYears && i < dc_degrad.size(); i++)
             {
                 dcDegradationFactor.push_back(1.0 - dc_degrad[i] / 100.0);
-                if (dcDegradationFactor[i] > 0.0)
+                if (dcDegradationFactor[i] < 0.0)
                 {
                     dcDegradationFactor[i] = 0.0;
                     warningFlag = true;
                 }
             }
         }
-        if (warningFlag) cm->log("Degradation calculated to be greater than 100%, capped at 100%.", SSC_WARNING);
+        if (warningFlag) cm->log("Degradation calculated to be greater than 100% for one or more years and set to 100% for those years.", SSC_WARNING);
 
         //read in optional DC and AC lifetime daily losses, error check length of arrays
         if (enableDCLifetimeLosses)
@@ -867,10 +869,12 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
     p_inverterThermalLoss = cm->allocate("inv_tdcloss", numberOfWeatherFileRecords);
     p_inverterTotalLoss = cm->allocate("inv_total_loss", numberOfWeatherFileRecords);
 
+    p_inverterACOutputPreLoss = cm->allocate("ac_gross", numberOfWeatherFileRecords);
     p_acWiringLoss = cm->allocate("ac_wiring_loss", numberOfWeatherFileRecords);
     p_transmissionLoss = cm->allocate("ac_transmission_loss", numberOfWeatherFileRecords);
     p_acPerfAdjLoss = cm->allocate("ac_perf_adj_loss", numberOfWeatherFileRecords);
     p_acLifetimeLoss = cm->allocate("ac_lifetime_loss", numberOfWeatherFileRecords);
+    p_dcLifetimeLoss = cm->allocate("dc_lifetime_loss", numberOfWeatherFileRecords);
     p_systemDCPower = cm->allocate("dc_net", numberOfLifetimeRecords);
     p_systemACPower = cm->allocate("gen", numberOfLifetimeRecords);
 
@@ -879,10 +883,6 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
         p_dcDegradationFactor = cm->allocate("dc_degrade_factor", numberOfYears);
     }
 
-}
-void PVSystem_IO::AssignOutputs(compute_module* cm)
-{
-    cm->assign("ac_loss", var_data((ssc_number_t)(acLossPercent + transmissionLossPercent)));
 }
 
 Module_IO::Module_IO(compute_module* cm, std::string cmName, double dcLoss)

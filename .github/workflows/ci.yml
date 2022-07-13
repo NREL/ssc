@@ -26,6 +26,7 @@ jobs:
       with:
         repository: google/googletest
         path: googletest
+        ref: b85864c64758dec007208e56af933fc3f52044ee
     
     - name: build Gtest
       run: | 
@@ -59,7 +60,14 @@ jobs:
       run: |
         set -e
         ${SSCDIR}/build/test/Test
-
+    
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+          name: SSC Linux Shared Libraries
+          path: |
+            ${{env.SSCDIR}}/build/ssc/libssc.so
+            ${{env.SSCDIR}}/build/ssc/ssc.so
       
   build-on-mac:
     runs-on: macos-11
@@ -78,6 +86,7 @@ jobs:
       with:
         repository: google/googletest
         path: googletest
+        ref: b85864c64758dec007208e56af933fc3f52044ee
     
     - name: build Gtest
       run: | 
@@ -97,7 +106,7 @@ jobs:
       run: |
         mkdir ${SSCDIR}/build
         cd ${SSCDIR}/build
-        cmake .. -DCMAKE_BUILD_TYPE=Release -DSAM_SKIP_TOOLS=1
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DSAM_SKIP_TOOLS=1 -DSAMAPI_EXPORT=0 
 
     - name: Build
       # Build your program with the given configuration
@@ -110,5 +119,13 @@ jobs:
       run: |
         set -e
         ${SSCDIR}/build/test/Test
-      shell: bash
+      shell: bash      
+    
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+          name: SSC Mac Shared Libraries
+          path: |
+            ${{env.SSCDIR}}/build/ssc/libssc.dylib
+            ${{env.SSCDIR}}/build/ssc/ssc.dylib 
 

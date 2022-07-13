@@ -11,6 +11,8 @@ include_directories(. ../splinter ../shared ../nlopt ../lpsolve ../solarpilot ..
 set(SSC_SRC
 		cmod_6parsolve.cpp
 		cmod_annualoutput.cpp
+		cmod_analysisperiodchange_eqns.cpp
+		cmod_analysisperiodchange_eqns.h
 		cmod_battery.cpp
 		cmod_battery.h
 		cmod_battery_eqns.cpp
@@ -27,12 +29,14 @@ set(SSC_SRC
 		cmod_cb_mspt_system_costs.cpp
 		cmod_csp_common_eqns.cpp
 		cmod_csp_common_eqns.h
+		cmod_csp_dsg_lf_ui.cpp
 		cmod_csp_tower_eqns.cpp
 		cmod_csp_tower_eqns.h
         cmod_csp_trough_eqns.cpp
 		cmod_csp_trough_eqns.h
 		cmod_dsg_flux_preprocess.cpp
 		cmod_etes_electric_resistance.cpp
+		cmod_etes_ptes.cpp
 		cmod_equpartflip.cpp
 		cmod_financial_eqns.cpp
 		cmod_financial_eqns.h

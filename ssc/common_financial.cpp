@@ -3232,12 +3232,7 @@ bool hourly_energy_calculation::calculate(compute_module *cm)
     m_energy_purchases.clear();
     m_energy_without_battery.clear();
 
-	// assign hourly values for "gen"
-    ssc_number_t* ppa_gen;
-    // Choose which variable goes through the hourly PPA process. If electricity purchases are through a utility rate, use only the positive revenue (revenue_gen), otherwise use gen
-    ppa_gen = revenue_gen;
-
-    sum_ts_to_hourly(ppa_gen, m_hourly_energy);
+    sum_ts_to_hourly(pgen, m_hourly_energy);
     sum_ts_to_hourly(revenue_gen, m_energy_sales);
     sum_ts_to_hourly(gen_purchases, m_energy_purchases);
 
@@ -3331,7 +3326,6 @@ var_info vtab_lcos_inputs[] = {
     { SSC_OUTPUT, SSC_ARRAY, "cf_charging_cost_grid_month", "Annual cost to charge from grid (monthly)", "$", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
 
     { SSC_OUTPUT, SSC_ARRAY, "cf_charging_cost_pv", "Annual cost to charge from system", "$", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_om_batt_production_expense", "Annual cost to for battery production based maintenance", "$", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT, SSC_ARRAY, "cf_om_batt_capacity_expense", "Annual cost for battery capacity based maintenance", "$", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT, SSC_ARRAY, "cf_om_batt_fixed_expense", "Annual fixed cost for battery maintenance", "$", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT, SSC_ARRAY, "cf_salvage_cost_lcos", "Annual battery salvage value costs", "$", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
@@ -3339,8 +3333,8 @@ var_info vtab_lcos_inputs[] = {
 
     { SSC_OUTPUT, SSC_NUMBER, "npv_annual_costs_lcos", "Present value of annual storage costs", "$", "", "LCOE calculations", "", "", "" },
     { SSC_OUTPUT, SSC_NUMBER, "npv_energy_lcos_real", "Present value of annual stored energy (real)", "kWh", "", "LCOE calculations", "", "", "" },
-    { SSC_OUTPUT,       SSC_NUMBER,     "lcos_nom",                        "Levelized cost of storage (nominal)",              "cents/kWh",                   "", "Metrics", "", "", "" },
-    { SSC_OUTPUT,       SSC_NUMBER,     "lcos_real",                        "Levelized cost of storage (real)",              "cents/kWh",                   "", "Metrics", "", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "lcos_nom",                        "LCOS Levelized cost of storage nominal",              "cents/kWh",                   "", "Metrics", "", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "lcos_real",                        "LCOS Levelized cost of storage real",              "cents/kWh",                   "", "Metrics", "", "", "" },
     { SSC_OUTPUT, SSC_NUMBER, "npv_energy_lcos_nom", "Present value of annual stored energy (nominal)", "kWh", "", "LCOE calculations", "", "", "" },
     var_info_invalid };
 
@@ -3680,12 +3674,7 @@ void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double
         save_cf(CF_energy_discharged_lcos, nyears, "cf_annual_discharge_lcos", cf, cm); //Store battery energy discharge in each year in cash flow
         save_cf(CF_charging_cost_grid_lcos, nyears, "cf_charging_cost_grid", cf, cm); //Store grid charging cost in each year in cash flow ($)
         save_cf(CF_charging_cost_pv_lcos, nyears, "cf_charging_cost_pv", cf, cm); //Store system charging cost in each year in cash flow ($)
-        //save_cf(CF_om_capacity1_expense, nyears, "cf_om_batt_capacity_expense", cf, cm);
-        //save_cf(CF_om_production1_expense, nyears, "cf_om_batt_production_expense", cf, cm);
-        //save_cf(CF_om_fixed1_expense, nyears, "cf_om_batt_fixed_expense", cf, cm);
-        //save_cf(CF_battery_replacement_cost, nyears, "cf_batt_replacement_cost", cf, cm);
         save_cf(CF_salvage_cost_lcos_lcos, nyears, "cf_salvage_cost_lcos", cf, cm); //Store salvage value cost in each year in cash flow ($)
-        save_cf(CF_om_production1_expense_lcos, nyears, "cf_om_batt_production_expense", cf, cm);
         double lcos_nom = lcos_numerator / lcos_denominator * 100.0; // cent/kWh Nominal LCOS
         double lcos_real = lcos_numerator / lcos_denominator_real * 100.0; // cents/kWh Real LCOS
         cm->assign("lcos_nom", var_data((ssc_number_t)lcos_nom)); //Store nominal LCOS in outputs

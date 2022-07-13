@@ -38,8 +38,14 @@ public:
 		TS_WEIGHTED_AVE,
 		TS_1ST,
 		TS_LAST,
-        TS_MAX
+        TS_MAX,
+        DEPENDENT
 	};
+
+    enum E_AB_relationship
+    {
+        AoverB
+    };
 
 	class C_output
 	{
@@ -52,7 +58,11 @@ public:
 		
 		int m_subts_weight_type;	// 0: timestep-weighted average, 1: Take first piont in mv_temp_outputs, 2: Take final point in mv_temp_outupts
 		//bool m_is_ts_weighted;		// True = timestep-weighted average of mv_temp_outputs, False = take first point in mv_temp_outputs
-		
+
+        int m_name_indA;
+        int m_name_indB;
+        E_AB_relationship m_AB_relationship;
+
 		int m_counter_reporting_ts_array;	//[-] Tracking current location of reporting array
 
 	public:
@@ -61,6 +71,15 @@ public:
 		int get_vector_size();
 
 		void set_m_is_ts_weighted(int subts_weight_type);
+        void set_name_indA(int name_indA);
+        void set_name_indB(int name_indB);
+        void set_AB_relationship(E_AB_relationship AB_relationship);
+
+        int get_name_indA() { return m_name_indA; }
+        int get_name_indB() { return m_name_indB; }
+        E_AB_relationship get_AB_relationship() { return m_AB_relationship; }
+
+        bool get_is_allocated() { return m_is_allocated; }
 
 		void assign(double *p_reporting_ts_array, size_t n_reporting_ts_array);
 
@@ -72,8 +91,12 @@ public:
 
 		std::vector<double> get_output_vector();
 
+        double get_last_reported_value();
+
 		void send_to_reporting_ts_array(double report_time_start, int n_report,
 			const std::vector<double> & v_temp_ts_time_end, double report_time_end, bool is_save_last_step, int n_pop_back);
+
+        void send_to_reporting_ts_array(double val);
 	};
 
 	struct S_output_info
@@ -85,6 +108,15 @@ public:
 		//bool m_is_ts_weighted;		// True = timestep-weighted average of mv_temp_outputs, False = take first point in mv_temp_outputs	
 	};
 
+    struct S_dependent_output_info
+    {
+        int m_name;
+        int m_name_indA;
+        int m_name_indB;
+        E_AB_relationship m_AB_relationship;
+
+    };
+
 private:
 
 	std::vector<C_output> mvc_outputs;	//[-] vector of Output Classes
@@ -94,11 +126,16 @@ private:
 
 	std::vector<double> mv_latest_calculated_outputs;	//[-] Output after most recent 
 
+    std::vector<C_output> mvc_dependent_outputs;    //[-] vector of *dependent* outputs
+    int m_n_dependent_outputs;
+
 public:
 
-	C_csp_reported_outputs(){};
+	C_csp_reported_outputs();
 
 	void construct(const S_output_info *output_info);
+
+    void construct(const S_output_info* output_info, const S_dependent_output_info* dep_output_info);
 
 	bool assign(int index, double *p_reporting_ts_array, size_t n_reporting_ts_array);
 
@@ -122,6 +159,7 @@ public:
 };
 
 extern const C_csp_reported_outputs::S_output_info csp_info_invalid;
+extern const C_csp_reported_outputs::S_dependent_output_info csp_dep_info_invalid;
 
 class C_csp_messages
 {

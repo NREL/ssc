@@ -526,38 +526,32 @@ static var_info _cm_vtab_singleowner[] = {
 /* Production - input as energy_net above */
 
 /* Partial Income Statement: Project */
-	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_net",                          "Net energy to grid",                 "kWh",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
-    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_sales",                        "Energy to grid",                    "kWh",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
-    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_purchases",                    "Energy from grid",                  "kWh",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
-    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_without_battery",              "Energy produced without the battery or curtailment", "kWh",      "",       "Cash Flow Revenues",             "",                       "LENGTH_EQUAL=cf_length",                             "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_net",                          "Electricity to grid net",               "kWh", "", "Cash Flow Electricity", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_sales",                        "Electricity to grid",                   "kWh", "", "Cash Flow Electricity", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_purchases",                    "Electricity from grid",                 "kWh", "", "Cash Flow Electricity", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_without_battery",              "Electricity generated without storage", "kWh", "", "Cash Flow Electricity", "",  "LENGTH_EQUAL=cf_length", "" },
+
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_ppa_price",                           "PPA price",                     "cents/kWh",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
-    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_value",                        "PPA revenue net",                     "$",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
-    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_sales_value",                  "PPA revenue gross",                   "$",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_value",                        "PPA revenue",                     "$",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_thermal_value",                       "Thermal revenue",                     "$",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
+
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_om_fixed_expense",                    "O&M fixed expense",                  "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_om_production_expense",               "O&M production-based expense",       "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_om_capacity_expense",                 "O&M capacity-based expense",         "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-    //{ SSC_OUTPUT,       SSC_ARRAY,      "cf_om_land_expense",                 "O&M land lease expense",         "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-    { SSC_OUTPUT,       SSC_ARRAY,      "cf_om_fuel_expense",                     "O&M fuel expense",                   "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-
-
-    { SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fixed1_expense",      "Battery fixed expense",                  "$",            "",                      "Cash Flow Expenses",      "",                     "LENGTH_EQUAL=cf_length",                "" },
-    { SSC_OUTPUT,        SSC_ARRAY,      "cf_om_production1_expense", "Battery production-based expense",       "$",            "",                      "Cash Flow Expenses",      "",                     "LENGTH_EQUAL=cf_length",                "" },
-    { SSC_OUTPUT,        SSC_ARRAY,      "cf_om_capacity1_expense",   "Battery capacity-based expense",         "$",            "",                      "Cash Flow Expenses",      "",                     "LENGTH_EQUAL=cf_length",                "" },
-
-    { SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fixed2_expense",      "Fuel cell fixed expense",                  "$",            "",                      "Cash Flow Expenses",      "",                     "LENGTH_EQUAL=cf_length",                "" },
-    { SSC_OUTPUT,        SSC_ARRAY,      "cf_om_production2_expense", "Fuel cell production-based expense",       "$",            "",                      "Cash Flow Expenses",      "",                     "LENGTH_EQUAL=cf_length",                "" },
-    { SSC_OUTPUT,        SSC_ARRAY,      "cf_om_capacity2_expense",   "Fuel cell capacity-based expense",         "$",            "",                      "Cash Flow Expenses",      "",                     "LENGTH_EQUAL=cf_length",                "" },
-
-
-
-	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_om_opt_fuel_1_expense",               "O&M biomass feedstock expense",                   "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_om_opt_fuel_2_expense",               "O&M coal feedstock expense",                   "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "cf_om_fixed1_expense",                   "O&M battery fixed expense",                  "$",            "",              "Cash Flow Expenses",      "",                     "LENGTH_EQUAL=cf_length",                "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "cf_om_production1_expense",              "O&M battery production-based expense",       "$",            "",              "Cash Flow Expenses",      "",                     "LENGTH_EQUAL=cf_length",                "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "cf_om_capacity1_expense",                "O&M battery capacity-based expense",         "$",            "",              "Cash Flow Expenses",      "",                     "LENGTH_EQUAL=cf_length",                "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "cf_om_fixed2_expense",                   "O&M fuel cell fixed expense",                  "$",            "",            "Cash Flow Expenses",      "",                     "LENGTH_EQUAL=cf_length",                "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "cf_om_production2_expense",              "O&M fuel cell production-based expense",       "$",            "",            "Cash Flow Expenses",      "",                     "LENGTH_EQUAL=cf_length",                "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "cf_om_capacity2_expense",                "O&M fuel cell capacity-based expense",         "$",            "",            "Cash Flow Expenses",      "",                     "LENGTH_EQUAL=cf_length",                "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "cf_om_fuel_expense",                     "Fuel expense",                   "$",            "",                          "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_om_opt_fuel_1_expense",               "Feedstock biomass expense",                   "$",            "",             "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_om_opt_fuel_2_expense",               "Feedstock coal expense",                   "$",            "",                "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_property_tax_assessed_value",         "Property tax net assessed value", "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_property_tax_expense",                "Property tax expense",               "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_insurance_expense",                   "Insurance expense",                  "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_operating_expenses",                  "Total operating expenses",            "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_property_tax_expense",                "Property tax expense",               "$",            "",                   "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_insurance_expense",                   "Insurance expense",                  "$",            "",                   "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_operating_expenses",                  "Total operating expenses",            "$",            "",                  "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_net_salvage_value",                   "Salvage value",            "$",            "",                      "Cash Flow Revenues",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_total_revenue",                       "Total revenue",            "$",            "",                      "Cash Flow Revenues",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
@@ -631,8 +625,8 @@ static var_info _cm_vtab_singleowner[] = {
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_project_return_aftertax_npv",         "After-tax cumulative NPV",  "$", "",                      "Cash Flow Total and Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 	// metrics table
-    { SSC_OUTPUT,       SSC_NUMBER,     "project_return_aftertax_irr",            "Internal rate of return (after-tax)",       "%",                   "", "Metrics", "*", "", "" },
-    { SSC_OUTPUT,       SSC_NUMBER,     "project_return_aftertax_npv",            "Net present value (after-tax)",             "$",                   "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "project_return_aftertax_irr",            "IRR Internal rate of return",       "%",                   "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "project_return_aftertax_npv",            "NPV Net present value",             "$",                   "", "Metrics", "*", "", "" },
 
     { SSC_OUTPUT, SSC_ARRAY, "cf_annual_costs", "Annual costs", "$", "", "LCOE calculations", "*", "LENGTH_EQUAL=cf_length", "" },
 
@@ -644,9 +638,9 @@ static var_info _cm_vtab_singleowner[] = {
 
 	{ SSC_INPUT,        SSC_ARRAY,       "system_pre_curtailment_kwac",     "System power before grid curtailment",  "kW",       "System generation" "",                 "System Output",                        "",                              "" },
 
-	{ SSC_OUTPUT, SSC_ARRAY, "cf_energy_curtailed", "Curtailed energy", "kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "cf_curtailment_value", "Curtailment payment revenue", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "cf_capacity_payment", "Capacity payment revenue", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_energy_curtailed", "Electricity curtailed", "kWh", "", "Cash Flow Electricity", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_curtailment_value", "Curtailment payment revenue", "$", "", "Cash Flow Revenues", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_capacity_payment", "Capacity payment revenue", "$", "", "Cash Flow Revenues", "*", "LENGTH_EQUAL=cf_length", "" },
 
 	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_curtailment_revenue",                        "Present value of curtailment payment revenue",              "$",                   "", "Metrics", "*", "", "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_capacity_revenue",                        "Present value of capacity payment revenue",              "$",                   "", "Metrics", "*", "", "" },
@@ -864,9 +858,7 @@ enum {
 	CF_utility_bill,
 
     CF_energy_sales,
-    CF_energy_sales_value,
     CF_energy_purchases,
-    CF_energy_purchases_value,
 
     CF_energy_without_battery,
 
@@ -1349,7 +1341,7 @@ public:
 		{
 			degrade_cf.push_back(cf.at(CF_degradation, i));
 		}
-		m_disp_calcs.init(this, degrade_cf, hourly_energy_calcs.hourly_energy());
+		m_disp_calcs.init(this, degrade_cf, hourly_energy_calcs.hourly_sales());
 		// end of energy and dispatch initialization
 
 
@@ -1408,7 +1400,6 @@ public:
                     cf.at(CF_ppa_price, i) = ppa * pow(1 + ppa_escalation, i - 1); // ppa_mode==0 or single value
                 double ppa_value = cf.at(CF_ppa_price, i);
                 for (size_t h = 0; h < 8760; h++) {
-                    cf.at(CF_energy_sales_value, i) += hourly_energy_calcs.hourly_sales()[(i - 1) * 8760 + h] * cf.at(CF_degradation, i) * ppa_value / 100.0 * ppa_multipliers[h];
                     if (ppa_purchases) {
                         cf.at(CF_utility_bill, i) += -hourly_energy_calcs.hourly_purchases()[(i - 1) * 8760 + h] * cf.at(CF_degradation, i) * ppa_value / 100.0 * ppa_multipliers[h];
                     }
@@ -1429,7 +1420,6 @@ public:
                     cf.at(CF_ppa_price, i) = ppa * pow(1 + ppa_escalation, i - 1); // ppa_mode==0 or single value
                 double ppa_value = cf.at(CF_ppa_price, i);
                 for (size_t h = 0; h < 8760; h++) {
-                    cf.at(CF_energy_sales_value, i) += hourly_energy_calcs.hourly_sales()[h] * cf.at(CF_degradation, i) * ppa_value / 100.0 * ppa_multipliers[h];
                     if (ppa_purchases) {
                         cf.at(CF_utility_bill, i) += -hourly_energy_calcs.hourly_purchases()[h] * cf.at(CF_degradation, i) * ppa_value / 100.0 * ppa_multipliers[h];
                     }
@@ -2296,8 +2286,6 @@ public:
 			cf.at(CF_energy_value, i) = cf.at(CF_ppa_price, i) / 100.0 *(
 				m_disp_calcs.tod_energy_value(i));
 
-            cf.at(CF_energy_sales_value, i) = cf.at(CF_ppa_price, i) / 100 * (m_disp_calcs.tod_energy_value(i));
-
 //			log(util::format("year %d : energy value =%lg", i, m_disp_calcs.tod_energy_value(i)), SSC_WARNING);
 			// total revenue
 			cf.at(CF_total_revenue,i) = cf.at(CF_energy_value,i) +
@@ -2941,9 +2929,6 @@ public:
 
 //	log(util::format("after loop  - size of debt =%lg .", size_of_debt), SSC_WARNING);
 
-    for (size_t i = 1; i <= nyears; i++)
-        cf.at(CF_energy_net, i) = cf.at(CF_energy_sales, i) + cf.at(CF_energy_purchases, i); // Adding a positive and negative number
-
 	assign("flip_target_year", var_data((ssc_number_t) flip_target_year ));
 	assign("flip_target_irr", var_data((ssc_number_t)  flip_target_percent ));
 
@@ -3333,7 +3318,6 @@ public:
 
 
 		save_cf(CF_energy_value, nyears, "cf_energy_value");
-        save_cf(CF_energy_sales_value, nyears, "cf_energy_sales_value");
 		save_cf(CF_thermal_value, nyears, "cf_thermal_value");
 		save_cf(CF_curtailment_value, nyears, "cf_curtailment_value");
 		save_cf(CF_capacity_payment, nyears, "cf_capacity_payment");
@@ -3354,14 +3338,6 @@ public:
             save_cf(CF_om_capacity2_expense, nyears, "cf_om_capacity2_expense");
         }
 
-
-		save_cf( CF_om_fuel_expense, nyears, "cf_om_fuel_expense" );
-		save_cf( CF_om_opt_fuel_1_expense, nyears, "cf_om_opt_fuel_1_expense" );
-		save_cf( CF_om_opt_fuel_2_expense, nyears, "cf_om_opt_fuel_2_expense" );
-        save_cf(CF_land_lease_expense, nyears, "cf_land_lease_expense");
-		save_cf( CF_property_tax_assessed_value, nyears, "cf_property_tax_assessed_value" );
-		save_cf( CF_property_tax_expense, nyears, "cf_property_tax_expense" );
-		save_cf( CF_insurance_expense, nyears, "cf_insurance_expense" );
         if (as_integer("en_batt") == 1 || as_integer("en_standalone_batt") == 1) {
             save_cf(CF_battery_replacement_cost, nyears, "cf_battery_replacement_cost");
             save_cf(CF_battery_replacement_cost_schedule, nyears, "cf_battery_replacement_cost_schedule");
@@ -3370,14 +3346,23 @@ public:
             save_cf(CF_fuelcell_replacement_cost, nyears, "cf_fuelcell_replacement_cost");
             save_cf(CF_fuelcell_replacement_cost_schedule, nyears, "cf_fuelcell_replacement_cost_schedule");
         }
+
+		save_cf( CF_om_fuel_expense, nyears, "cf_om_fuel_expense" );
+		save_cf( CF_om_opt_fuel_1_expense, nyears, "cf_om_opt_fuel_1_expense" );
+		save_cf( CF_om_opt_fuel_2_expense, nyears, "cf_om_opt_fuel_2_expense" );
+        save_cf(CF_land_lease_expense, nyears, "cf_land_lease_expense");
+		save_cf( CF_property_tax_assessed_value, nyears, "cf_property_tax_assessed_value" );
+		save_cf( CF_property_tax_expense, nyears, "cf_property_tax_expense" );
+		save_cf( CF_insurance_expense, nyears, "cf_insurance_expense" );
+
 		save_cf( CF_operating_expenses, nyears, "cf_operating_expenses" );
 		save_cf( CF_ebitda, nyears, "cf_ebitda" );
 		save_cf( CF_net_salvage_value, nyears, "cf_net_salvage_value" );
 		save_cf( CF_total_revenue, nyears, "cf_total_revenue" );
+
 		save_cf( CF_energy_net, nyears, "cf_energy_net" );
 		save_cf( CF_energy_sales, nyears, "cf_energy_sales" );
 		save_cf( CF_energy_purchases, nyears, "cf_energy_purchases" );
-
         if (is_assigned("gen_without_battery")) {
             save_cf(CF_energy_without_battery, nyears, "cf_energy_without_battery");
         }
@@ -4090,12 +4075,12 @@ public:
 		if (len == 1)
 		{
 			for (int i=1;i<=nyears;i++)
-				cf.at(cf_line, i) = (i <= term) ? parr[0] * cf.at(CF_energy_net,i) * pow(1 + escal, i-1) : 0.0;
+				cf.at(cf_line, i) = (i <= term) ? parr[0] * cf.at(CF_energy_sales,i) * pow(1 + escal, i-1) : 0.0;
 		}
 		else
 		{
 			for (int i=1;i<=nyears && i <= (int)len;i++)
-				cf.at(cf_line, i) = parr[i-1]*cf.at(CF_energy_net,i);
+				cf.at(cf_line, i) = parr[i-1]*cf.at(CF_energy_sales,i);
 		}
 	}
 
@@ -4110,12 +4095,12 @@ public:
 		if (len == 1)
 		{
 			for (int i=1;i<=nyears;i++)
-				cf.at(cf_line, i) = (i <= term) ? cf.at(CF_energy_net,i) / 1000.0 * round_irs(1000.0 * parr[0] * pow(1 + escal, i-1)) : 0.0;
+				cf.at(cf_line, i) = (i <= term) ? cf.at(CF_energy_sales,i) / 1000.0 * round_irs(1000.0 * parr[0] * pow(1 + escal, i-1)) : 0.0;
 		}
 		else
 		{
 			for (int i=1;i<=nyears && i <= (int)len;i++)
-				cf.at(cf_line, i) = parr[i-1]*cf.at(CF_energy_net,i);
+				cf.at(cf_line, i) = parr[i-1]*cf.at(CF_energy_sales,i);
 		}
 	}
 

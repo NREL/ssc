@@ -61,6 +61,21 @@ bool MSPT_System_Design_Equations(ssc_data_t data)
     ssc_data_t_get_number(data, "solarm", &solarm);
     tshours_sf = Tshours_sf(tshours, solarm);
     ssc_data_t_set_number(data, "tshours_sf", tshours_sf);
+
+    // heater
+    double heater_mult, is_parallel_htr_dbl;
+    ssc_data_t_get_number(data, "is_parallel_htr", &is_parallel_htr_dbl);
+    bool is_parallel_htr = (bool)is_parallel_htr_dbl;
+    ssc_data_t_get_number(data, "heater_mult", &heater_mult);
+    double tshours_heater = 0.0;
+    double q_dot_heater_des_calc = 0.0;
+    if (is_parallel_htr) {
+        tshours_heater = tshours / heater_mult;      //[hr]
+        q_dot_heater_des_calc = heater_mult * q_pb_design;   //[MWt]
+    }
+    ssc_data_t_set_number(data, "tshours_heater", tshours_heater);
+    ssc_data_t_set_number(data, "q_dot_heater_des_calc", q_dot_heater_des_calc);    //[MWt]
+
     return true;
 }
 
@@ -205,12 +220,13 @@ bool MSPT_Receiver_Equations(ssc_data_t data)
     ssc_data_t_get_number(data, "csp.pt.rec.htf_t_avg", &csp_pt_rec_htf_t_avg);
     ssc_data_t_get_number(data, "rec_htf", &rec_htf);
     ssc_data_t_get_matrix(vt, "field_fl_props", field_fl_props);
-    csp_pt_rec_htf_c_avg = Csp_pt_rec_htf_c_avg(csp_pt_rec_htf_t_avg, (int)rec_htf, field_fl_props);
+    try {
+        csp_pt_rec_htf_c_avg = Csp_pt_rec_htf_c_avg(csp_pt_rec_htf_t_avg, (int)rec_htf, field_fl_props);
+    }
+    catch (...) {
+        csp_pt_rec_htf_c_avg = std::numeric_limits<double>::quiet_NaN();
+    }
     ssc_data_t_set_number(data, "csp.pt.rec.htf_c_avg", csp_pt_rec_htf_c_avg);
-
-    // Get HTFProperties class
-    HTFProperties field_htfProps;
-    field_htfProps = GetHtfProperties(rec_htf, field_fl_props);
 
     // csp_pt_rec_max_flow_to_rec
     ssc_data_t_get_number(data, "csp.pt.rec.max_oper_frac", &csp_pt_rec_max_oper_frac);
@@ -268,12 +284,20 @@ bool MSPT_Receiver_Equations(ssc_data_t data)
     // piping_loss_tot
     ssc_data_t_get_number(data, "piping_length", &piping_length);
     ssc_data_t_get_number(data, "piping_loss_coefficient", &piping_loss_coefficient);   //[W/m2-K]
-    CSP::mspt_piping_design(field_htfProps,
-        h_tower, piping_length_mult,
-        piping_length_const, piping_loss_coefficient,
-        t_htf_hot_des+273.15, t_htf_cold_des+273.15,
-        m_dot_htf_des,
-        piping_length, d_inner_piping, piping_loss_tot);
+    try {
+        HTFProperties field_htfProps;
+        field_htfProps = GetHtfProperties(rec_htf, field_fl_props);
+        CSP::mspt_piping_design(field_htfProps,
+            h_tower, piping_length_mult,
+            piping_length_const, piping_loss_coefficient,
+            t_htf_hot_des + 273.15, t_htf_cold_des + 273.15,
+            m_dot_htf_des,
+            piping_length, d_inner_piping, piping_loss_tot);
+    }
+    catch (...) {
+        piping_length = std::numeric_limits<double>::quiet_NaN();
+        piping_loss_tot = std::numeric_limits<double>::quiet_NaN();
+    }
     ssc_data_t_set_number(data, "piping_length", piping_length);
     ssc_data_t_set_number(data, "piping_loss_tot", piping_loss_tot*1.E-3);        //[kWt] convert from Wt
     return true;
@@ -388,6 +412,7 @@ bool Tower_SolarPilot_Capital_Costs_MSPT_Equations(ssc_data_t data)
     ssc_data_t_set_number(data, "csp.pt.cost.power_block_mwe", csp_pt_cost_power_block_mwe);
 
     Tower_SolarPilot_Capital_Costs_Equations(data);
+
     return true;
 }
 

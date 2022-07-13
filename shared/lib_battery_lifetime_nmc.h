@@ -50,6 +50,7 @@ struct lifetime_nmc_state {
     double dq_relative_li2;                 // cumulative dq from cycle-dependent Li loss, [0-1]
     double dq_relative_li3;                 // cumulative dq from BOL Li loss, [0-1]
     double dq_relative_neg;                 // cumulative dq from negative electrode, [0-1]
+    double temp_dt;                          // cumulative temp [K]
 
     // lifetime capacity updated after 24 hours elapsed using below values, which are all reset each day
     double b1_dt;
@@ -138,7 +139,7 @@ protected:
     void integrateDegParams(double dt_day, double DOD, double T_battery);
 
     /// Integrate degradation from QLi and Qneg over one day, resets `x_dt` values
-    void integrateDegLoss(double T_battery);
+    void integrateDegLoss();
 
     void initialize();
 };

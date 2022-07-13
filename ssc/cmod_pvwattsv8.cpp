@@ -171,6 +171,7 @@ static var_info _cm_vtab_pvwattsv8[] = {
 
         { SSC_OUTPUT,       SSC_ARRAY,       "dc",                             "DC inverter input power",                              "W",         "",                                             "Time Series",      "*",                       "",                          "" },
         { SSC_OUTPUT,       SSC_ARRAY,       "ac",                             "AC inverter output power",                           "W",         "",                                             "Time Series",      "*",                       "",                          "" },
+        { SSC_OUTPUT,       SSC_ARRAY,       "ac_pre_adjust",                             "AC inverter output power before system availability",                           "W",         "",                                             "Time Series",      "*",                       "",                          "" },
 
         { SSC_OUTPUT,       SSC_ARRAY,       "poa_monthly",                    "Plane of array irradiance",                   "kWh/m2",    "",                                             "Monthly",          "",                       "LENGTH=12",                          "" },
         { SSC_OUTPUT,       SSC_ARRAY,       "solrad_monthly",                 "Daily average solar irradiance",              "kWh/m2/day","",                                             "Monthly",          "",                       "LENGTH=12",                          "" },
@@ -181,9 +182,11 @@ static var_info _cm_vtab_pvwattsv8[] = {
 
         { SSC_OUTPUT,       SSC_NUMBER,      "solrad_annual",                  "Daily average solar irradiance",              "kWh/m2/day","",                                              "Annual",      "",                       "",                          "" },
         { SSC_OUTPUT,       SSC_NUMBER,      "ac_annual",                      "Annual AC output",                     "kWh",       "",                                                     "Annual",      "",                       "",                          "" },
+        { SSC_OUTPUT,       SSC_NUMBER,      "ac_annual_pre_adjust",                      "Annual AC output before system availability",                     "kWh",       "",                                                     "Annual",      "",                       "",                          "" },
+
         { SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",                  "Annual energy",                               "kWh",       "",                                              "Annual",      "",                       "",                          "" },
-        { SSC_OUTPUT,       SSC_NUMBER,      "capacity_factor",                "Capacity factor based on DC system capacity",    "%",         "",                                           "Annual",        "",                       "",                          "" },
-        { SSC_OUTPUT,       SSC_NUMBER,      "capacity_factor_ac",             "Capacity factor based on AC system capacity",    "%",         "",                                           "Annual",        "",                       "",                          "" },
+        { SSC_OUTPUT,       SSC_NUMBER,      "capacity_factor",                "Capacity factor based on nameplate DC capacity",    "%",         "",                                           "Annual",        "",                       "",                          "" },
+        { SSC_OUTPUT,       SSC_NUMBER,      "capacity_factor_ac",             "Capacity factor based on total AC capacity",    "%",         "",                                           "Annual",        "",                       "",                          "" },
         { SSC_OUTPUT,       SSC_NUMBER,      "kwh_per_kw",                     "Energy yield",                           "kWh/kW",          "",                                             "Annual",        "",                       "",                          "" },
 
         { SSC_OUTPUT,       SSC_STRING,      "location",                       "Location ID",                                 "",          "",                                             "Location",      "*",                       "",                          "" },
@@ -764,6 +767,7 @@ public:
         ssc_number_t* p_tpoa = allocate("tpoa", nrec);
         ssc_number_t* p_dc = allocate("dc", nrec);
         ssc_number_t* p_ac = allocate("ac", nrec);
+        ssc_number_t* p_ac_pre_adjust = allocate("ac_pre_adjust", nrec);
         ssc_number_t* p_gen = allocate("gen", nlifetime);
 
         double annual_kwh = 0;
@@ -1279,6 +1283,7 @@ public:
                 p_tpoa[idx] = (ssc_number_t)tpoa;  // W/m2
                 p_tmod[idx] = (ssc_number_t)tmod;
                 p_dc[idx] = (ssc_number_t)dc; // power, Watts
+                p_ac_pre_adjust[idx] = (ssc_number_t)ac; //power, Watts
                 p_ac[idx] = (ssc_number_t)(ac * haf(hour_of_year)); // power, Watts
 
                 // accumulate hourly energy (kWh) (was initialized to zero when allocated)
@@ -1297,10 +1302,11 @@ public:
 
             wdprov->rewind();
         }
-        ssc_number_t *p_annual_energy_dist_time = gen_heatmap(this, (double)step_per_hour);
-        // monthly and annual outputs
+
         if (wdprov->annualSimulation())
         {
+            ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, (double)step_per_hour);
+
             accumulate_monthly_for_year("gen", "monthly_energy", ts_hour, step_per_hour);
             accumulate_annual_for_year("gen", "annual_energy", ts_hour, step_per_hour);
 
@@ -1318,6 +1324,7 @@ public:
             assign("solrad_annual", var_data(solrad_ann / 12));
 
             accumulate_annual("ac", "ac_annual", 0.001 * ts_hour);
+            accumulate_annual("ac_pre_adjust", "ac_annual_pre_adjust", 0.001 * ts_hour);
 
             // metric outputs
             double kWhperkW = util::kilowatt_to_watt * annual_kwh / pv.dc_nameplate;

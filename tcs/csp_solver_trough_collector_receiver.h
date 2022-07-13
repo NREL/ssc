@@ -479,7 +479,7 @@ public:
 
 	C_csp_trough_collector_receiver();
 
-	~C_csp_trough_collector_receiver(){};
+    ~C_csp_trough_collector_receiver();
 
 	virtual void init(const C_csp_collector_receiver::S_csp_cr_init_inputs init_inputs, 
 				C_csp_collector_receiver::S_csp_cr_solved_params & solved_params);

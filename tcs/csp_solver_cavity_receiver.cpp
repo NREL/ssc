@@ -50,28 +50,30 @@ bool sort_pair_ascending(pair<double,double> i, pair<double, double> j)
     }
 }
 
-C_cavity_receiver::C_cavity_receiver(double dni_des /*W/m2*/, double hel_stow_deploy /*-*/,
+C_cavity_receiver::C_cavity_receiver(double dni_des /*W/m2*/,
     int field_fl /*-*/, util::matrix_t<double> field_fl_props,
-    double od_rec_tube /*m*/, double th_rec_tube /*m*/, int tube_mat_code /*-*/,
+    double od_rec_tube /*mm*/, double th_rec_tube /*mm*/, int tube_mat_code /*-*/,
     size_t nPanels /*-*/, double rec_height /*m*/, double rec_width /*m*/,
     double rec_span /*rad*/, double toplip_height /*m*/, double botlip_height /*m*/,
     double eps_active_sol /*-*/, double eps_passive_sol /*-*/, double eps_active_therm /*-*/, double eps_passive_therm /*-*/,
     E_mesh_types active_surface_mesh_type, E_mesh_types floor_and_cover_mesh_type, E_mesh_types lips_mesh_type,
     double piping_loss_coefficient /*Wt/m2-K*/, double pipe_length_add /*m*/, double pipe_length_mult /*-*/,
-    //double A_sf /*m2*/,
     double h_tower /*m*/, double T_htf_hot_des /*C*/,
     double T_htf_cold_des /*C*/, double f_rec_min /*-*/, double q_dot_rec_des /*MWt*/,
     double rec_su_delay /*hr*/, double rec_qf_delay /*-*/, double m_dot_htf_max_frac /*-*/,
-    double eta_pump /*-*/)
+    double eta_pump /*-*/) : C_pt_receiver(h_tower, eps_active_therm,
+        T_htf_hot_des, T_htf_cold_des,
+        f_rec_min, q_dot_rec_des,
+        rec_su_delay, rec_qf_delay,
+        m_dot_htf_max_frac, eta_pump,
+        od_rec_tube, th_rec_tube,
+        piping_loss_coefficient, pipe_length_add,
+        pipe_length_mult,
+        field_fl, field_fl_props,
+        tube_mat_code,
+        -1)
 {
     m_dni_des = dni_des;                    //[W/m2]
-    m_hel_stow_deploy = hel_stow_deploy;    //[deg]
-    m_field_fl = field_fl;                  //[-]
-    m_field_fl_props = field_fl_props;      //[-]
-
-    m_od_rec_tube = od_rec_tube;            //[m]
-    m_th_rec_tube = th_rec_tube;            //[m]
-    m_tube_mat_code = tube_mat_code;        //[-]
 
     m_nPanels = nPanels;                    //[-]
     m_receiverHeight = rec_height;          //[m]
@@ -88,13 +90,6 @@ C_cavity_receiver::C_cavity_receiver(double dni_des /*W/m2*/, double hel_stow_de
     m_floor_and_cover_mesh_type = floor_and_cover_mesh_type;
     m_lips_mesh_type = lips_mesh_type;
 
-    //m_pipe_loss_per_m = pipe_loss_per_m;    //[Wt/m]
-    m_piping_loss_coefficient = piping_loss_coefficient;    //[Wt/m2-K]
-    m_pipe_length_add = pipe_length_add;    //[m]
-    m_pipe_length_mult = pipe_length_mult;  //[-]
-
-    //m_A_sf = A_sf;      //[m2]
-
     m_area_active_total = std::numeric_limits<double>::quiet_NaN();
     m_d_in_rec_tube = std::numeric_limits<double>::quiet_NaN();
     m_A_cs_tube = std::numeric_limits<double>::quiet_NaN();
@@ -103,21 +98,6 @@ C_cavity_receiver::C_cavity_receiver(double dni_des /*W/m2*/, double hel_stow_de
     m_rel_roughness = std::numeric_limits<double>::quiet_NaN();
     m_A_aper = std::numeric_limits<double>::quiet_NaN();
     m_eta_therm_des = std::numeric_limits<double>::quiet_NaN();
-
-    // Set parent class member data
-    m_h_tower = h_tower;        //[m]
-    m_T_htf_hot_des = T_htf_hot_des;    //[C] convert to K in init()
-    m_T_htf_cold_des = T_htf_cold_des;  //[C] convert to K in init()
-    m_f_rec_min = f_rec_min;            //[-]
-    m_q_rec_des = q_dot_rec_des;        //[MWt] convert to W in init()
-    m_rec_su_delay = rec_su_delay;      //[hr]
-    m_rec_qf_delay = rec_qf_delay;      //[-]
-    m_m_dot_htf_max_frac = m_dot_htf_max_frac;  //[-]
-    m_eta_pump = eta_pump;              //[-]
-
-    // Hardcode parent class member data not used in cavity model
-    m_epsilon = std::numeric_limits<double>::quiet_NaN();
-    m_clearsky_model = -1;
 }
 
 void C_cavity_receiver::genOctCavity()
@@ -2727,7 +2707,7 @@ void C_cavity_receiver::tube_UA_and_deltaP(std::vector<double> m_dot_paths /*kg/
             CSP::PipeFlow(Re, Pr, lTotal / m_d_in_rec_tube, m_rel_roughness, Nu, f);
 
             double h = Nu * k / m_d_in_rec_tube;    //[W/m2-K]
-            double Rcond = log(m_od_rec_tube/m_d_in_rec_tube)/(CSP::pi*l*ktube*m_Ntubes);
+            double Rcond = log(m_od_tube/m_d_in_rec_tube)/(CSP::pi*l*ktube*m_Ntubes);
             double Rconv = 2.0/(h*m_Ntubes*l*m_d_in_rec_tube*CSP::pi);
             UA(stepID,0) = 1.0/(Rcond + Rconv);     //[W/K]
 
@@ -2759,13 +2739,6 @@ void C_cavity_receiver::tube_UA_and_deltaP(std::vector<double> m_dot_paths /*kg/
 void C_cavity_receiver::init()
 {
     // ******************************************
-    // Unit conversions
-    // ******************************************
-    m_T_htf_hot_des += 273.15;	//[K] Convert from input in [C]
-    m_T_htf_cold_des += 273.15;	//[K] Convert from input in [C]
-    m_q_rec_des *= 1.E6;		//[W] Convert from input in [MW]
-
-    // ******************************************
     // Set up cavity geometry and view factors
     // ******************************************  
     m_pipeWindings = 2;   //[-] Probably needs to be >= 2 to avoid inconsistencies in mesh calcs
@@ -2788,14 +2761,14 @@ void C_cavity_receiver::init()
     meshGeometry();
 
     // Tube geometry calcs
-    m_d_in_rec_tube = m_od_rec_tube - 2.0 * m_th_rec_tube;      //[m]
+    m_d_in_rec_tube = m_od_tube - 2.0 * m_th_tube;      //[m]
     m_A_cs_tube = 0.25*CSP::pi*pow(m_d_in_rec_tube,2);          //[m2]
     m_rel_roughness = surface_roughness / m_d_in_rec_tube;      //[-]
     m_A_aper = m_receiverHeight * m_receiverWidth;              //[m2]
 
     // choose number of HTF tubes per route based on available space
     //    assumes each receiver panel is same area and uses same dimension tube
-    m_Ntubes = std::floor(mv_rec_surfs[0].surf_elem_size*m_modelRes/m_od_rec_tube);
+    m_Ntubes = std::floor(mv_rec_surfs[0].surf_elem_size*m_modelRes/m_od_tube);
 
     // Make global elements and calculate element centroids and areas
     makeGlobalElems();
@@ -2826,58 +2799,8 @@ void C_cavity_receiver::init()
     // ********************************************
     // Complete receiver initialization
 
-    ambient_air.SetFluid(ambient_air.Air);
-
     // Declare instance of fluid class for FIELD fluid
-    if (m_field_fl != HTFProperties::User_defined && m_field_fl < HTFProperties::End_Library_Fluids)
-    {
-        if (!field_htfProps.SetFluid(m_field_fl))
-        {
-            throw(C_csp_exception("Receiver HTF code is not recognized", "MSPT receiver"));
-        }
-    }
-    else if (m_field_fl == HTFProperties::User_defined)
-    {
-        // Check that 'm_field_fl_props' is allocated and correct dimensions
-        int n_rows = (int)m_field_fl_props.nrows();
-        int n_cols = (int)m_field_fl_props.ncols();
-        if (n_rows > 2 && n_cols == 7)
-        {
-            if (!field_htfProps.SetUserDefinedFluid(m_field_fl_props))
-            {
-                error_msg = util::format(field_htfProps.UserFluidErrMessage(), n_rows, n_cols);
-                throw(C_csp_exception(error_msg, "MSPT receiver"));
-            }
-        }
-        else
-        {
-            error_msg = util::format("The user defined field HTF table must contain at least 3 rows and exactly 7 columns. The current table contains %d row(s) and %d column(s)", n_rows, n_cols);
-            throw(C_csp_exception(error_msg, "MSPT receiver"));
-        }
-    }
-    else
-    {
-        throw(C_csp_exception("Receiver HTF code is not recognized", "MSPT receiver"));
-    }
-
-    // Declare instance of htf class for receiver tube material
-    if (m_tube_mat_code == HTFProperties::Stainless_AISI316 || m_tube_mat_code == HTFProperties::T91_Steel ||
-        m_tube_mat_code == HTFProperties::N06230 || m_tube_mat_code == HTFProperties::N07740)
-    {
-        if (!tube_material.SetFluid(m_tube_mat_code))
-        {
-            throw(C_csp_exception("Tube material code not recognized", "MSPT receiver"));
-        }
-    }
-    else if (m_tube_mat_code == HTFProperties::User_defined)
-    {
-        throw(C_csp_exception("Receiver material currently does not accept user defined properties", "MSPT receiver"));
-    }
-    else
-    {
-        error_msg = util::format("Receiver material code, %d, is not recognized", m_tube_mat_code);
-        throw(C_csp_exception(error_msg, "MSPT receiver"));
-    }
+    C_pt_receiver::init();
 
     double c_htf_des = field_htfProps.Cp((m_T_htf_hot_des + m_T_htf_cold_des) / 2.0) * 1000.0;		//[J/kg-K] Specific heat at design conditions
     m_m_dot_htf_des = m_q_rec_des / (c_htf_des*(m_T_htf_hot_des - m_T_htf_cold_des));   //[kg/s]
@@ -2947,7 +2870,7 @@ void C_cavity_receiver::call(const C_csp_weatherreader::S_outputs& weather,
         rec_is_off = true;
     }
 
-    if (zenith > (90.0 - m_hel_stow_deploy) || I_bn <= m_f_rec_min*m_dni_des || (zenith == 0.0 && azimuth == 180.0))
+    if (plant_defocus == 0.0 || I_bn <= m_f_rec_min*m_dni_des || (zenith == 0.0 && azimuth == 180.0))
     {
         m_mode = C_csp_collector_receiver::OFF;
         rec_is_off = true;
@@ -3153,7 +3076,6 @@ void C_cavity_receiver::call(const C_csp_weatherreader::S_outputs& weather,
     }
 
     ms_outputs.m_q_heattrace = 0.0;
-    ms_outputs.m_clearsky = std::numeric_limits<double>::quiet_NaN();
 
 	return;
 }
@@ -3184,7 +3106,6 @@ void C_cavity_receiver::off(const C_csp_weatherreader::S_outputs& weather,
     ms_outputs.m_q_dot_piping_loss = 0.0;	//[MWt]
     ms_outputs.m_q_heattrace = 0.0;
     
-    ms_outputs.m_clearsky = get_clearsky(weather, sim_info.ms_ts.m_time / 3600.);  // clear-sky DNI (set to actual DNI if actual DNI is higher than computed clear-sky value)
     ms_outputs.m_Q_thermal_csky_ss = 0.0; //[MWt]
     ms_outputs.m_Q_thermal_ss = 0.0; //[MWt]
 
@@ -3663,7 +3584,6 @@ double cavity_receiver_helpers::calc_total_receiver_absorber_area(double rec_hei
 void cavity_receiver_helpers::test_cavity_case() {
 
     double dni_des = 950;           //[W/m2]
-    double hel_stow_deploy = 8;     //[deg]
     int rec_htf = 17;               //[-]
     util::matrix_t<double> ud_rec_htf;
 
@@ -3703,7 +3623,7 @@ void cavity_receiver_helpers::test_cavity_case() {
     double rec_qf_delay = 0.0;
     double m_dot_htf_max_frac = 0.0;
 
-    C_cavity_receiver c_cav(dni_des /*W/m2*/, hel_stow_deploy /*deg*/,
+    C_cavity_receiver c_cav(dni_des /*W/m2*/,
         rec_htf /*-*/, ud_rec_htf,
         od_rec_tube /*m*/, th_rec_tube /*m*/, mat_tube /*-*/,
         nPanels /*-*/, receiverHeight /*m*/, receiverWidth /*m*/,

@@ -124,7 +124,7 @@ TEST_F(CMBattwatts_cmod_battwatts, ResidentialDefaultsLeadAcid) {
     EXPECT_FALSE(errors);
 
     double charge_percent = data.as_number("batt_system_charge_percent");
-    EXPECT_NEAR(charge_percent, 95.98, 0.1);
+    EXPECT_NEAR(charge_percent, 96.13, 0.1);
 
     auto batt_power_data = data.as_vector_ssc_number_t("batt_power");
     ssc_number_t peakKwDischarge = *std::max_element(batt_power_data.begin(), batt_power_data.end());
@@ -169,5 +169,5 @@ TEST_F(CMBattwatts_cmod_battwatts, NoPV) {
 
     auto cycles = data.as_vector_ssc_number_t("batt_cycles");
     ssc_number_t maxCycles = *std::max_element(cycles.begin(), cycles.end());
-    EXPECT_NEAR(maxCycles, 522, 0.1);
+    EXPECT_NEAR(maxCycles, 520, 0.1);
 }

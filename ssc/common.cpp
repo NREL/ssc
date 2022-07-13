@@ -135,7 +135,7 @@ var_info vtab_oandm[] = {
 { SSC_INPUT,SSC_ARRAY   , "om_fuelcell_fixed_cost"                            , "Fuel cell fixed System Costs annual amount"                     , "$/year"                                 , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
 { SSC_INPUT,SSC_ARRAY   , "om_fuelcell_variable_cost"                       , "Fuel cell production-based System Costs amount"                 , "$/MWh"                                  , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
 { SSC_INPUT,SSC_ARRAY   , "om_fuelcell_capacity_cost"                         , "Fuel cell capacity-based System Costs amount"                   , "$/kWcap"                                , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
-{ SSC_INPUT, SSC_ARRAY,   "fuelcell_annual_energy_discharged",  "Annual energy from fuelcell",    "kWh",        "",                 "System Costs",                  "?=0",                        "",                              "" },
+{ SSC_INPUT, SSC_ARRAY,   "fuelcell_annual_energy_discharged",  "Fuel cell annual energy discharged",    "kWh",        "",                 "System Costs",                  "?=0",                        "",                              "" },
 
 // optional land lease
 { SSC_INPUT,        SSC_NUMBER,     "land_area",                      "Total land area",	                                                "acres",                "",                        "Land Lease",            "?=0",					   "",                              "" },
@@ -432,12 +432,12 @@ var_info vtab_ppa_inout[] = {
 { SSC_INPUT,        SSC_NUMBER,		"ppa_soln_max",                           "PPA solution maximum ppa",                       "cents/kWh",        "", "Revenue",         "?=100",                     "",            "" },
 { SSC_INPUT,        SSC_NUMBER,		"ppa_soln_max_iterations",                "PPA solution maximum number of iterations",      "",                 "", "Revenue",         "?=100",                     "INTEGER,MIN=1",            "" },
 
-{ SSC_INPUT,        SSC_ARRAY,      "ppa_price_input",			              "PPA price in first year",			            "$/kWh",	        "",	"Revenue",			 "*",         "",      			"" },
+{ SSC_INPUT,        SSC_ARRAY,      "ppa_price_input",			              "PPA price in first year input",			            "$/kWh",	        "",	"Revenue",			 "*",         "",      			"" },
 { SSC_INPUT,        SSC_NUMBER,     "ppa_escalation",                         "PPA escalation rate",                            "%/year",           "", "Revenue", "?=0", "", "" },
 
-{ SSC_OUTPUT,       SSC_NUMBER,     "lppa_real",                              "Levelized PPA price (real)",                         "cents/kWh",               "", "Metrics", "*", "", "" },
-{ SSC_OUTPUT,       SSC_NUMBER,     "lppa_nom",                               "Levelized PPA price (nominal)",                      "cents/kWh",               "", "Metrics", "*", "", "" },
-{ SSC_OUTPUT,       SSC_NUMBER,     "ppa",                                    "PPA price (Year 1)",                        "cents/kWh",               "", "Metrics", "*", "", "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "lppa_real",                              "LPPA Levelized PPA price real",                         "cents/kWh",               "", "Metrics", "*", "", "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "lppa_nom",                               "LPPA Levelized PPA price nominal",                      "cents/kWh",               "", "Metrics", "*", "", "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "ppa",                                    "PPA price in Year 1",                        "cents/kWh",               "", "Metrics", "*", "", "" },
 { SSC_OUTPUT,       SSC_NUMBER,     "ppa_escalation",                         "PPA price escalation",                      "%/year",              "", "Metrics", "*", "", "" },
 { SSC_OUTPUT,       SSC_NUMBER,     "npv_ppa_revenue",                        "Present value of PPA revenue",              "$",                   "", "Metrics", "*", "", "" },
 
@@ -450,22 +450,22 @@ var_info vtab_financial_metrics[] = {
 { SSC_OUTPUT,       SSC_NUMBER,     "flip_target_irr",                        "IRR target",                                "%",                   "", "Metrics", "*", "", "" },
 { SSC_OUTPUT,       SSC_NUMBER,     "flip_actual_year",                       "Year target IRR was achieved",              "year",                    "", "Metrics", "*", "", "" },
 { SSC_OUTPUT,       SSC_NUMBER,     "flip_actual_irr",                        "IRR in target year",                        "%",                   "", "Metrics", "*", "", "" },
-{ SSC_OUTPUT,       SSC_NUMBER,     "lcoe_real",                              "Levelized cost (real)",                               "cents/kWh",               "", "Metrics", "*", "", "" },
-{ SSC_OUTPUT,       SSC_NUMBER,     "lcoe_nom",                               "Levelized cost (nominal)",                            "cents/kWh",               "", "Metrics", "*", "", "" },
-{ SSC_OUTPUT,       SSC_NUMBER,     "lcos_real",                              "Levelized cost of storage (real)",                               "cents/kWh",               "", "Metrics", "?", "", "" },
-//{ SSC_OUTPUT,       SSC_NUMBER,     "lcos_nom",                               "Levelized cost of storage (nominal)",                            "cents/kWh",               "", "Metrics", "?", "", "" },
-{ SSC_OUTPUT,       SSC_NUMBER,     "npv_energy_nom",                         "Present value of annual energy (nominal)",     "kWh",                 "", "Metrics", "*", "", "" },
-{ SSC_OUTPUT,       SSC_NUMBER,     "npv_energy_real",                        "Present value of annual energy (real)",     "kWh",                 "", "Metrics", "*", "", "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "lcoe_real",                              "LCOE Levelized cost of energy real",                               "cents/kWh",               "", "Metrics", "*", "", "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "lcoe_nom",                               "LCOE Levelized cost of energy nominal",                            "cents/kWh",               "", "Metrics", "*", "", "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "lcos_real",                              "LCOS Levelized cost of storage real",                               "cents/kWh",               "", "Metrics", "?", "", "" },
+//{ SSC_OUTPUT,       SSC_NUMBER,     "lcos_nom",                               "LCOS Levelized cost of storage nominal",                            "cents/kWh",               "", "Metrics", "?", "", "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "npv_energy_nom",                         "Present value of annual energy nominal",     "kWh",                 "", "Metrics", "*", "", "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "npv_energy_real",                        "Present value of annual energy real",     "kWh",                 "", "Metrics", "*", "", "" },
 { SSC_OUTPUT,       SSC_NUMBER,     "present_value_oandm",                    "Present value of O&M",				       "$",                   "", "Metrics", "*", "", "" },
 { SSC_OUTPUT,       SSC_NUMBER,     "present_value_oandm_nonfuel",            "Present value of non-fuel O&M",         "$",                   "", "Metrics", "*", "", "" },
 { SSC_OUTPUT,       SSC_NUMBER,     "present_value_fuel",                     "Present value of fuel O&M",             "$",                   "", "Metrics", "*", "", "" },
 { SSC_OUTPUT,       SSC_NUMBER,     "present_value_insandproptax",            "Present value of insurance and prop tax",   "$",                   "", "Metrics", "*", "", "" },
 
-{ SSC_OUTPUT,       SSC_NUMBER,     "lcoptc_fed_real",                        "Levelized federal PTC (real)",              "cents/kWh",                   "", "Metrics", "*", "", "" },
-{ SSC_OUTPUT,       SSC_NUMBER,     "lcoptc_fed_nom",                         "Levelized federal PTC (nominal)",           "cents/kWh",                   "", "Metrics", "*", "", "" },
-{ SSC_OUTPUT,       SSC_NUMBER,     "lcoptc_sta_real",                        "Levelized state PTC (real)",                "cents/kWh",                   "", "Metrics", "*", "", "" },
-{ SSC_OUTPUT,       SSC_NUMBER,     "lcoptc_sta_nom",                         "Levelized state PTC (nominal)",             "cents/kWh",                   "", "Metrics", "*", "", "" },
-{ SSC_OUTPUT,       SSC_NUMBER,     "wacc",                                   "Weighted average cost of capital (WACC)",   "$",                   "", "Metrics", "*", "", "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "lcoptc_fed_real",                        "Levelized federal PTC real",              "cents/kWh",                   "", "Metrics", "*", "", "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "lcoptc_fed_nom",                         "Levelized federal PTC nominal",           "cents/kWh",                   "", "Metrics", "*", "", "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "lcoptc_sta_real",                        "Levelized state PTC real",                "cents/kWh",                   "", "Metrics", "*", "", "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "lcoptc_sta_nom",                         "Levelized state PTC nominal",             "cents/kWh",                   "", "Metrics", "*", "", "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "wacc",                                   "WACC Weighted average cost of capital",   "$",                   "", "Metrics", "*", "", "" },
 { SSC_OUTPUT,       SSC_NUMBER,     "effective_tax_rate",                     "Effective tax rate",                        "%",                   "", "Metrics", "*", "", "" },
 { SSC_OUTPUT,       SSC_NUMBER,     "analysis_period_irr",                    "IRR at end of analysis period",             "%",                   "", "Metrics", "*", "", "" },
 var_info_invalid
@@ -605,9 +605,10 @@ var_info vtab_forecast_price_signal[] = {
 	{ SSC_INPUT,        SSC_NUMBER,     "forecast_price_signal_model",					"Forecast price signal model selected",   "0/1",   "0=PPA based,1=Merchant Plant",    "Price Signal",  "?=0",	"INTEGER,MIN=0,MAX=1",      "" },
 
 	// PPA financial inputs
-	{ SSC_INPUT,        SSC_ARRAY,      "ppa_price_input",		                        "PPA Price Input",	                                        "",      "",                  "Price Signal", "forecast_price_signal_model=0&en_batt=1&batt_meter_position=1"   "",          "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "ppa_price_input",		                        "PPA Price Input",	                                        "$/kWh",      "",               "Price Signal", "forecast_price_signal_model=0&en_batt=1&batt_meter_position=1"   "",          "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ppa_multiplier_model",                         "PPA multiplier model",                                    "0/1",    "0=diurnal,1=timestep","Price Signal", "forecast_price_signal_model=0&en_batt=1&batt_meter_position=1",                                                  "INTEGER,MIN=0", "" },
-	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_factors_ts",                          "Dispatch payment factor time step",                        "",      "",                  "Price Signal", "forecast_price_signal_model=0&en_batt=1&batt_meter_position=1&ppa_multiplier_model=1", "", "" },
+    { SSC_INPUT,        SSC_NUMBER,      "ppa_escalation",		                        "PPA escalation rate",	                                    "%/year",      "",            "Price Signal", "forecast_price_signal_model=0&en_batt=1&batt_meter_position=1"   "",          "" },
+    { SSC_INPUT,        SSC_ARRAY,      "dispatch_factors_ts",                          "Dispatch payment factor time step",                        "",      "",                  "Price Signal", "forecast_price_signal_model=0&en_batt=1&batt_meter_position=1&ppa_multiplier_model=1", "", "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_tod_factors",		                    "TOD factors for periods 1-9",	                            "",      "",                  "Price Signal", "en_batt=1&batt_meter_position=1&forecast_price_signal_model=0&ppa_multiplier_model=0"   "",          "" },
 	{ SSC_INPUT,        SSC_MATRIX,     "dispatch_sched_weekday",                       "Diurnal weekday TOD periods",                              "1..9",  "12 x 24 matrix",    "Price Signal", "en_batt=1&batt_meter_position=1&forecast_price_signal_model=0&ppa_multiplier_model=0",  "",          "" },
 	{ SSC_INPUT,        SSC_MATRIX,     "dispatch_sched_weekend",                       "Diurnal weekend TOD periods",                              "1..9",  "12 x 24 matrix",    "Price Signal", "en_batt=1&batt_meter_position=1&forecast_price_signal_model=0&ppa_multiplier_model=0",  "",          "" },
@@ -623,6 +624,20 @@ var_info vtab_forecast_price_signal[] = {
 	{ SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv4",							"Enable ancillary services 4 revenue",   "0/1",   "",    "Price Signal",  "forecast_price_signal_model=1",	"INTEGER,MIN=0,MAX=1",      "" },
 	{ SSC_INPUT,		SSC_MATRIX,		"mp_ancserv4_revenue",							"Ancillary services 4 revenue input", " [MW, $/MW]", "","Price Signal", "en_batt=1&batt_meter_position=1&forecast_price_signal_model=1", ""},
 
+    // percent generation matrices (1-column)
+    { SSC_INPUT, SSC_MATRIX, "mp_energy_market_revenue_single", "Energy market revenue input", "", "Lifetime x 1 [Price($/MWh)]","Revenue", "forecast_price_signal_model=1&mp_enable_market_percent_gen=1", "", "" },
+    { SSC_INPUT, SSC_MATRIX, "mp_ancserv1_revenue_single", "Ancillary services 1 revenue input", "", "Lifetime x 1[Price($/MWh)]","Revenue", "forecast_price_signal_model=1&mp_enable_ancserv1_percent_gen=1", "", "" },
+    { SSC_INPUT, SSC_MATRIX, "mp_ancserv2_revenue_single", "Ancillary services 2 revenue input", "", "Lifetime x 1[Price($/MWh)]","Revenue", "forecast_price_signal_model=1&mp_enable_ancserv2_percent_gen=1", "", "" },
+    { SSC_INPUT, SSC_MATRIX, "mp_ancserv3_revenue_single", "Ancillary services 3 revenue input", "", "Lifetime x 1[Price($/MWh)]","Revenue", "forecast_price_signal_model=1&mp_enable_ancserv3_percent_gen=1", "", "" },
+    { SSC_INPUT, SSC_MATRIX, "mp_ancserv4_revenue_single", "Ancillary services 4 revenue input", "", "Lifetime x 1[Price($/MWh)]","Revenue", "forecast_price_signal_model=1&mp_enable_ancserv4_percent_gen=1", "", "" },
+
+    // percent generation variables
+    { SSC_INPUT,        SSC_NUMBER,     "mp_enable_market_percent_gen",		      "Enable percent demand cleared capacity option for market revenue",   "0/1",   "",    "Revenue",  "forecast_price_signal_model=1",	"INTEGER,MIN=0,MAX=1",      "" },
+    { SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv1_percent_gen",		      "Enable percent demand cleared capacity option for ancillary service 1",   "0/1",   "",    "Revenue",  "forecast_price_signal_model=1",	"INTEGER,MIN=0,MAX=1",      "" },
+    { SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv2_percent_gen",		      "Enable percent demand cleared capacity option for ancillary service 2",   "0/1",   "",    "Revenue",  "forecast_price_signal_model=1",	"INTEGER,MIN=0,MAX=1",      "" },
+    { SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv3_percent_gen",		      "Enable percent demand cleared capacity option for ancillary service 3",   "0/1",   "",    "Revenue",  "forecast_price_signal_model=1",	"INTEGER,MIN=0,MAX=1",      "" },
+    { SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv4_percent_gen",		      "Enable percent demand cleared capacity option for ancillary service 4",   "0/1",   "",    "Revenue",  "forecast_price_signal_model=1",	"INTEGER,MIN=0,MAX=1",      "" },
+
 var_info_invalid };
 
 forecast_price_signal::forecast_price_signal(var_table *vt)
@@ -630,20 +645,12 @@ forecast_price_signal::forecast_price_signal(var_table *vt)
 {
 }
 
-bool forecast_price_signal::setup(size_t nsteps)
+bool forecast_price_signal::setup(size_t step_per_hour)
 {
-	size_t step_per_hour = 1;
-	if (nsteps > 8760) step_per_hour = nsteps / 8760;
-	if (step_per_hour < 1 || step_per_hour > 60 || step_per_hour * 8760 != nsteps)
-	{
-		m_error = util::format("The requested number of timesteps must be a multiple of 8760. Instead requested timesteps is %d.", (int)nsteps);
-		return false;
-	}
-	m_forecast_price.reserve(nsteps);
-	for (size_t i = 0; i < nsteps; i++)
-		m_forecast_price.push_back(0.0);
+    size_t nsteps = 8760 * step_per_hour;;
 
 	int forecast_price_signal_model = vartab->as_integer("forecast_price_signal_model");
+    size_t nyears = vartab->as_unsigned_long("analysis_period");
 
 	if (forecast_price_signal_model == 1)
 	{
@@ -654,18 +661,30 @@ bool forecast_price_signal::setup(size_t nsteps)
 		bool en_mp_ancserv2 = (vartab->as_integer("mp_enable_ancserv2") == 1);
 		bool en_mp_ancserv3 = (vartab->as_integer("mp_enable_ancserv3") == 1);
 		bool en_mp_ancserv4 = (vartab->as_integer("mp_enable_ancserv4") == 1);
+
+        int mp_enable_market_percent_gen = vartab->as_integer("mp_enable_market_percent_gen");
+        int mp_enable_ancserv1_percent_gen = vartab->as_integer("mp_enable_ancserv1_percent_gen");
+        int mp_enable_ancserv2_percent_gen = vartab->as_integer("mp_enable_ancserv2_percent_gen");
+        int mp_enable_ancserv3_percent_gen = vartab->as_integer("mp_enable_ancserv3_percent_gen");
+        int mp_enable_ancserv4_percent_gen = vartab->as_integer("mp_enable_ancserv4_percent_gen");
+
 		// cleared capacity and price columns
 		// assume cleared capacities valid and use as generation for forecasting - will verify after generation in the financial models.
 		size_t nrows, ncols;
 		util::matrix_t<double> mp_energy_market_revenue_mat(1, 2, 0.0);
 		if (en_mp_energy_market)
 		{
-			ssc_number_t *mp_energy_market_revenue_in = vartab->as_matrix("mp_energy_market_revenue", &nrows, &ncols);
-			if (ncols != 2)
+            bool percent_gen = mp_enable_market_percent_gen > 0.5;
+			ssc_number_t *mp_energy_market_revenue_in = vartab->as_matrix("mp_energy_market_revenue" + std::string((percent_gen) ? "_single" : ""), &nrows, &ncols);
+			if (ncols != 2 && !percent_gen)
 			{
 				m_error = util::format("The energy market revenue table must have 2 columns. Instead it has %d columns.", (int)ncols);
 				return false;
 			}
+            else if (percent_gen && ncols != 1) {
+                m_error = util::format("The energy market revenue table must have 1 column. Instead it has %d columns.", (int)ncols);
+                return false;
+            }
 			mp_energy_market_revenue_mat.resize(nrows, ncols);
 			mp_energy_market_revenue_mat.assign(mp_energy_market_revenue_in, nrows, ncols);
 		}
@@ -673,12 +692,17 @@ bool forecast_price_signal::setup(size_t nsteps)
 		util::matrix_t<double> mp_ancserv_1_revenue_mat(1, 2, 0.0);
 		if (en_mp_ancserv1)
 		{
-			ssc_number_t *mp_ancserv1_revenue_in = vartab->as_matrix("mp_ancserv1_revenue", &nrows, &ncols);
-			if (ncols != 2)
+            bool percent_gen = mp_enable_ancserv1_percent_gen > 0.5;
+			ssc_number_t *mp_ancserv1_revenue_in = vartab->as_matrix("mp_ancserv1_revenue" + std::string((percent_gen) ? "_single" : ""), &nrows, &ncols);
+			if (ncols != 2 && !percent_gen)
 			{
 				m_error = util::format("The ancillary services revenue 1 table must have 2 columns. Instead it has %d columns.", (int)ncols);
 				return false;
 			}
+            else if (percent_gen && ncols != 1) {
+                m_error = util::format("The  ancillary services revenue 1 table must have 1 column. Instead it has %d columns.", (int)ncols);
+                return false;
+            }
 			mp_ancserv_1_revenue_mat.resize(nrows, ncols);
 			mp_ancserv_1_revenue_mat.assign(mp_ancserv1_revenue_in, nrows, ncols);
 		}
@@ -686,12 +710,18 @@ bool forecast_price_signal::setup(size_t nsteps)
 		util::matrix_t<double> mp_ancserv_2_revenue_mat(1, 2, 0.0);
 		if (en_mp_ancserv2)
 		{
-			ssc_number_t *mp_ancserv2_revenue_in = vartab->as_matrix("mp_ancserv2_revenue", &nrows, &ncols);
-			if (ncols != 2)
+            bool percent_gen = mp_enable_ancserv2_percent_gen > 0.5;
+
+			ssc_number_t *mp_ancserv2_revenue_in = vartab->as_matrix("mp_ancserv2_revenue" + std::string((percent_gen) ? "_single" : ""), &nrows, &ncols);
+			if (ncols != 2 && !percent_gen)
 			{
 				m_error = util::format("The ancillary services revenue 2 table must have 2 columns. Instead it has %d columns.", (int)ncols);
 				return false;
 			}
+            else if (percent_gen && ncols != 1) {
+                m_error = util::format("The  ancillary services revenue 2 table must have 1 column. Instead it has %d columns.", (int)ncols);
+                return false;
+            }
 			mp_ancserv_2_revenue_mat.resize(nrows, ncols);
 			mp_ancserv_2_revenue_mat.assign(mp_ancserv2_revenue_in, nrows, ncols);
 		}
@@ -699,12 +729,18 @@ bool forecast_price_signal::setup(size_t nsteps)
 		util::matrix_t<double> mp_ancserv_3_revenue_mat(1, 2, 0.0);
 		if (en_mp_ancserv3)
 		{
-			ssc_number_t *mp_ancserv3_revenue_in = vartab->as_matrix("mp_ancserv3_revenue", &nrows, &ncols);
-			if (ncols != 2)
+            bool percent_gen = mp_enable_ancserv3_percent_gen > 0.5;
+
+			ssc_number_t *mp_ancserv3_revenue_in = vartab->as_matrix("mp_ancserv3_revenue" + std::string((percent_gen) ? "_single" : ""), &nrows, &ncols);
+			if (ncols != 2 && !percent_gen)
 			{
 				m_error = util::format("The ancillary services revenue 3 table must have 2 columns. Instead it has %d columns.", (int)ncols);
 				return false;
 			}
+            else if (percent_gen && ncols != 1) {
+                m_error = util::format("The  ancillary services revenue 3 table must have 1 column. Instead it has %d columns.", (int)ncols);
+                return false;
+            }
 			mp_ancserv_3_revenue_mat.resize(nrows, ncols);
 			mp_ancserv_3_revenue_mat.assign(mp_ancserv3_revenue_in, nrows, ncols);
 		}
@@ -712,62 +748,81 @@ bool forecast_price_signal::setup(size_t nsteps)
 		util::matrix_t<double> mp_ancserv_4_revenue_mat(1, 2, 0.0);
 		if (en_mp_ancserv4)
 		{
-			ssc_number_t *mp_ancserv4_revenue_in = vartab->as_matrix("mp_ancserv4_revenue", &nrows, &ncols);
-			if (ncols != 2)
+            bool percent_gen = mp_enable_ancserv4_percent_gen > 0.5;
+
+			ssc_number_t *mp_ancserv4_revenue_in = vartab->as_matrix("mp_ancserv4_revenue" + std::string((percent_gen) ? "_single" : ""), &nrows, &ncols);
+			if (ncols != 2 && !percent_gen)
 			{
 				m_error = util::format("The ancillary services revenue 4 table must have 2 columns. Instead it has %d columns.", (int)ncols);
 				return false;
 			}
+            else if (percent_gen && ncols != 1) {
+                m_error = util::format("The  ancillary services revenue 4 table must have 1 column. Instead it has %d columns.", (int)ncols);
+                return false;
+            }
 			mp_ancserv_4_revenue_mat.resize(nrows, ncols);
 			mp_ancserv_4_revenue_mat.assign(mp_ancserv4_revenue_in, nrows, ncols);
 		}
 
-		int nyears = vartab->as_integer("analysis_period");
-		// calculate revenue for first year only and consolidate to m_forecast_price
+        if ( nsteps > 8760 * nyears) step_per_hour = nsteps / (8760 * nyears);
+        if (step_per_hour < 1 || step_per_hour > 60 || step_per_hour * 8760 != nsteps)
+        {
+            m_error = util::format("The requested number of timesteps must be a multiple of 8760. Instead requested timesteps is %d.", (int)nsteps);
+            return false;
+        }
+        m_forecast_price.reserve(nsteps * nyears);
+        for (size_t i = 0; i < nsteps * nyears; i++)
+            m_forecast_price.push_back(0.0);
+
+		// calculate revenue and consolidate to m_forecast_price
 		std::vector<double> as_revenue;
 		std::vector<double> as_revenue_extrapolated(nsteps,0.0);
 
-		size_t n_marketrevenue_per_year = mp_energy_market_revenue_mat.nrows() / (size_t)nyears;
-		as_revenue.clear();
-		as_revenue.reserve(n_marketrevenue_per_year);
-		for (size_t j = 0; j < n_marketrevenue_per_year; j++)
-			as_revenue.push_back(mp_energy_market_revenue_mat.at(j, 1) / step_per_hour / 1000.0);
-		as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
-		std::transform(m_forecast_price.begin(), m_forecast_price.end(), as_revenue_extrapolated.begin(), m_forecast_price.begin(), std::plus<double>());
+        for (size_t y = 0; y < nyears; y++) {
+            size_t forecast_start = y * nsteps;
+            size_t forecast_end = (y + 1) * nsteps;
+            size_t n_marketrevenue_per_year = mp_energy_market_revenue_mat.nrows() / (size_t)nyears;
+            as_revenue.clear();
+            as_revenue.reserve(n_marketrevenue_per_year);
+            for (size_t j = y * n_marketrevenue_per_year; j < (y + 1) * n_marketrevenue_per_year; j++)
+                as_revenue.push_back(mp_energy_market_revenue_mat.at(j, 1 - mp_enable_market_percent_gen) / 1000.0);
+            as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
+            std::transform(m_forecast_price.begin() + forecast_start, m_forecast_price.begin() + forecast_end, as_revenue_extrapolated.begin(), m_forecast_price.begin() + forecast_start, std::plus<double>());
 
-		size_t n_ancserv_1_revenue_per_year = mp_ancserv_1_revenue_mat.nrows() / (size_t)nyears;
-		as_revenue.clear();
-		as_revenue.reserve(n_ancserv_1_revenue_per_year);
-		for (size_t j = 0; j < n_ancserv_1_revenue_per_year; j++)
-			as_revenue.push_back(mp_ancserv_1_revenue_mat.at(j, 1) / step_per_hour / 1000.0);
-		as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
-		std::transform(m_forecast_price.begin(), m_forecast_price.end(), as_revenue_extrapolated.begin(), m_forecast_price.begin(), std::plus<double>());
+            size_t n_ancserv_1_revenue_per_year = mp_ancserv_1_revenue_mat.nrows() / (size_t)nyears;
+            as_revenue.clear();
+            as_revenue.reserve(n_ancserv_1_revenue_per_year);
+            for (size_t j = y * n_ancserv_1_revenue_per_year; j < (y + 1) * n_ancserv_1_revenue_per_year; j++)
+                as_revenue.push_back(mp_ancserv_1_revenue_mat.at(j, 1 - mp_enable_ancserv1_percent_gen) / 1000.0);
+            as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
+            std::transform(m_forecast_price.begin() + forecast_start, m_forecast_price.begin() + forecast_end, as_revenue_extrapolated.begin(), m_forecast_price.begin() + forecast_start, std::plus<double>());
 
-		size_t n_ancserv_2_revenue_per_year = mp_ancserv_2_revenue_mat.nrows() / (size_t)nyears;
-		as_revenue.clear();
-		as_revenue.reserve(n_ancserv_2_revenue_per_year);
-		for (size_t j = 0; j < n_ancserv_2_revenue_per_year; j++)
-			as_revenue.push_back(mp_ancserv_2_revenue_mat.at(j, 1) / step_per_hour / 1000.0);
-		as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
-		std::transform(m_forecast_price.begin(), m_forecast_price.end(), as_revenue_extrapolated.begin(), m_forecast_price.begin(), std::plus<double>());
+            size_t n_ancserv_2_revenue_per_year = mp_ancserv_2_revenue_mat.nrows() / (size_t)nyears;
+            as_revenue.clear();
+            as_revenue.reserve(n_ancserv_2_revenue_per_year);
+            for (size_t j = y * n_ancserv_2_revenue_per_year; j < (y + 1) * n_ancserv_2_revenue_per_year; j++)
+                as_revenue.push_back(mp_ancserv_2_revenue_mat.at(j, 1 - mp_enable_ancserv2_percent_gen) / 1000.0);
+            as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
+            std::transform(m_forecast_price.begin() + forecast_start, m_forecast_price.begin() + forecast_end, as_revenue_extrapolated.begin(), m_forecast_price.begin() + forecast_start, std::plus<double>());
 
-		size_t n_ancserv_3_revenue_per_year = mp_ancserv_3_revenue_mat.nrows() / (size_t)nyears;
-		as_revenue.clear();
-		as_revenue.reserve(n_ancserv_3_revenue_per_year);
-		for (size_t j = 0; j < n_ancserv_3_revenue_per_year; j++)
-			as_revenue.push_back(mp_ancserv_3_revenue_mat.at(j, 1) / step_per_hour / 1000.0);
-		as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
-		std::transform(m_forecast_price.begin(), m_forecast_price.end(), as_revenue_extrapolated.begin(), m_forecast_price.begin(), std::plus<double>());
+            size_t n_ancserv_3_revenue_per_year = mp_ancserv_3_revenue_mat.nrows() / (size_t)nyears;
+            as_revenue.clear();
+            as_revenue.reserve(n_ancserv_3_revenue_per_year);
+            for (size_t j = y * n_ancserv_3_revenue_per_year; j < (y + 1) * n_ancserv_3_revenue_per_year; j++)
+                as_revenue.push_back(mp_ancserv_3_revenue_mat.at(j, 1 - mp_enable_ancserv3_percent_gen) / 1000.0);
+            as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
+            std::transform(m_forecast_price.begin() + forecast_start, m_forecast_price.begin() + forecast_end, as_revenue_extrapolated.begin(), m_forecast_price.begin() + forecast_start, std::plus<double>());
 
-		size_t n_ancserv_4_revenue_per_year = mp_ancserv_4_revenue_mat.nrows() / (size_t)nyears;
-		as_revenue.clear();
-		as_revenue.reserve(n_ancserv_4_revenue_per_year);
-		for (size_t j = 0; j < n_ancserv_4_revenue_per_year; j++)
-			as_revenue.push_back(mp_ancserv_4_revenue_mat.at(j, 1) / step_per_hour / 1000.0);
-		as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
-		std::transform(m_forecast_price.begin(), m_forecast_price.end(), as_revenue_extrapolated.begin(), m_forecast_price.begin(), std::plus<double>());
+            size_t n_ancserv_4_revenue_per_year = mp_ancserv_4_revenue_mat.nrows() / (size_t)nyears;
+            as_revenue.clear();
+            as_revenue.reserve(n_ancserv_4_revenue_per_year);
+            for (size_t j = y * n_ancserv_4_revenue_per_year; j < (y + 1) * n_ancserv_4_revenue_per_year; j++)
+                as_revenue.push_back(mp_ancserv_4_revenue_mat.at(j, 1 - mp_enable_ancserv4_percent_gen) / 1000.0);
+            as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
+            std::transform(m_forecast_price.begin() + forecast_start, m_forecast_price.begin() + forecast_end, as_revenue_extrapolated.begin(), m_forecast_price.begin() + forecast_start, std::plus<double>());
+        }
 	}
-	else // TODO verify that return value is $/timestep (units of dollar) and NOT $/kWh
+	else
 	{
 		int ppa_multiplier_mode = vartab->as_integer("ppa_multiplier_model");
 		size_t count_ppa_price_input;
@@ -778,19 +833,50 @@ bool forecast_price_signal::setup(size_t nsteps)
 			return false;
 		}
 
-		if (ppa_multiplier_mode == 0)
-		{
-			m_forecast_price = flatten_diurnal(
+        double ppa_escalation = vartab->as_double("ppa_escalation") * 0.01;
+        double ppa = ppa_price[0];
+
+        m_forecast_price.reserve(nsteps* nyears);
+        for (size_t i = 0; i < nsteps * nyears; i++)
+            m_forecast_price.push_back(0.0);
+        std::vector<double> as_revenue;
+
+        for (size_t y = 0; y < nyears; y++) {
+            size_t forecast_start = y * nsteps;
+            size_t forecast_end = (y + 1) * nsteps;
+
+            as_revenue.clear();
+            as_revenue.reserve(nsteps);
+
+            if (count_ppa_price_input > 1) {
+                if (y < (int)count_ppa_price_input) {
+                    ppa_price[y];
+                }
+                else {
+                    ppa = 0; // Match convention in single owner 
+                }
+            }
+            else {
+                ppa = ppa_price[0] * pow(1 + ppa_escalation, y);
+            }
+
+            if (ppa_multiplier_mode == 0)
+            {
+                as_revenue = flatten_diurnal(
                     vartab->as_matrix_unsigned_long("dispatch_sched_weekday"),
                     vartab->as_matrix_unsigned_long("dispatch_sched_weekend"),
-				step_per_hour,
-                    vartab->as_vector_double("dispatch_tod_factors"), ppa_price[0] / step_per_hour);
-		}
-		else
-		{ // assumption on size - check that is requested size.
-			std::vector<double> factors = vartab->as_vector_double("dispatch_factors_ts");
-			m_forecast_price = extrapolate_timeseries(factors, step_per_hour, ppa_price[0] / step_per_hour);
-		}
+                    step_per_hour,
+                    vartab->as_vector_double("dispatch_tod_factors"), ppa);
+            }
+            else
+            { // assumption on size - check that is requested size.
+                std::vector<double> factors = vartab->as_vector_double("dispatch_factors_ts");
+                as_revenue = extrapolate_timeseries(factors, step_per_hour, ppa);
+            }
+
+            std::transform(m_forecast_price.begin() + forecast_start, m_forecast_price.begin() + forecast_end, as_revenue.begin(), m_forecast_price.begin() + forecast_start, std::plus<double>());
+
+        }
 	}
 
 	return true;
@@ -803,15 +889,15 @@ ssc_number_t forecast_price_signal::operator()(size_t time)
 }
 
 var_info vtab_resilience_outputs[] = {
-{ SSC_OUTPUT, SSC_ARRAY  , "resilience_hrs"                       , "Hours of autonomy during outage at each timestep for resilience"       , "hr"                                     , ""                                                         , "Resilience"          , ""               , ""                      , ""},
-{ SSC_OUTPUT, SSC_NUMBER , "resilience_hrs_min"                   , "Min hours of autonomy for resilience "                                 , "hr"                                     , ""                                                         , "Resilience"          , ""               , "MIN=0"                 , ""},
-{ SSC_OUTPUT, SSC_NUMBER , "resilience_hrs_max"                   , "Max hours of autonomy for resilience"                                  , "hr"                                     , ""                                                         , "Resilience"          , ""               , "MIN=0"                 , ""},
-{ SSC_OUTPUT, SSC_NUMBER , "resilience_hrs_avg"                   , "Avg hours of autonomy for resilience"                                  , "hr"                                     , ""                                                         , "Resilience"          , ""               , "MIN=0"                 , ""},
-{ SSC_OUTPUT, SSC_ARRAY  , "outage_durations"                     , "List of autonomous hours for resilience from min to max"               , "hr"                                     , "Hours from resilience_hrs_min to resilience_hrs_max"      , "Resilience"          , ""               , ""                      , ""},
-{ SSC_OUTPUT, SSC_ARRAY  , "pdf_of_surviving"                     , "Probabilities of autonomous hours for resilience "                     , ""                                       , "Hours from resilience_hrs_min to resilience_hrs_max"      , "Resilience"          , ""               , "MIN=0,MAX=1"           , ""},
-{ SSC_OUTPUT, SSC_ARRAY  , "cdf_of_surviving"                     , "Cumulative probabilities of autonomous hours for resilience"           , ""                                       , "Prob surviving at least x hrs; hrs from min to max"       , "Resilience"          , ""               , "MIN=0,MAX=1"           , ""},
-{ SSC_OUTPUT, SSC_ARRAY  , "survival_function"                    , "Survival function of autonomous hours for resilience"                  , ""                                       , "Prob surviving greater than x hours; hrs from min to max" , "Resilience"          , ""               , "MIN=0,MAX=1"           , ""},
-{ SSC_OUTPUT, SSC_NUMBER , "avg_critical_load"                    , "Average critical load met for resilience"                              , "kWh"                                    , ""                                                         , "Resilience"          , ""               , "MIN=0"                 , ""},
+{ SSC_OUTPUT, SSC_ARRAY  , "resilience_hrs"     , "Hours of autonomy during grid outage at each timestep"            , "hr"  , ""                                                         , "Resilience" , ""  , ""             , ""},
+{ SSC_OUTPUT, SSC_NUMBER , "resilience_hrs_min" , "Hours of autonomy during grid outage minimum"                     , "hr"  , ""                                                         , "Resilience" , ""  , "MIN=0"        , ""},
+{ SSC_OUTPUT, SSC_NUMBER , "resilience_hrs_max" , "Hours of autonomy during grid outage maximum"                     , "hr"  , ""                                                         , "Resilience" , ""  , "MIN=0"        , ""},
+{ SSC_OUTPUT, SSC_NUMBER , "resilience_hrs_avg" , "Hours of autonomy during grid outage average"                     , "hr"  , ""                                                         , "Resilience" , ""  , "MIN=0"        , ""},
+{ SSC_OUTPUT, SSC_ARRAY  , "outage_durations"   , "Hours of autonomy during grid outage hour list from min to max"   , "hr"  , "Hours from resilience_hrs_min to resilience_hrs_max"      , "Resilience" , ""  , ""             , ""},
+{ SSC_OUTPUT, SSC_ARRAY  , "pdf_of_surviving"   , "Hours of autonomy during grid outage probabilities"               , ""    , "Hours from resilience_hrs_min to resilience_hrs_max"      , "Resilience" , ""  , "MIN=0,MAX=1"  , ""},
+{ SSC_OUTPUT, SSC_ARRAY  , "cdf_of_surviving"   , "Hours of autonomy during grid outage cumulative probabilities"    , ""    , "Prob surviving at least x hrs; hrs from min to max"       , "Resilience" , ""  , "MIN=0,MAX=1"  , ""},
+{ SSC_OUTPUT, SSC_ARRAY  , "survival_function"  , "Hours of autonomy during grid outage survival function"           , ""    , "Prob surviving greater than x hours; hrs from min to max" , "Resilience" , ""  , "MIN=0,MAX=1"  , ""},
+{ SSC_OUTPUT, SSC_NUMBER , "avg_critical_load"  , "Hours of autonomy during grid outage critical load met"           , "kWh" , ""                                                         , "Resilience" , ""  , "MIN=0"        , ""},
         var_info_invalid
 };
 

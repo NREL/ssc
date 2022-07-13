@@ -674,6 +674,15 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
     mpc_csp_solver->mc_cr_htf_state_in.m_pres = m_P_field_in;	//[kPa]
     mpc_csp_solver->mc_cr_htf_state_in.m_qual = m_x_field_in;	//[-]
 
+    // For now, use initial state of CT TES hot tank
+    // If tank temp is ~around ambient (and two-tank system)
+    //   then this is a fairly good assumption
+    double T_CT_htf_hot_in = std::numeric_limits<double>::quiet_NaN();
+    if (mpc_csp_solver->m_is_CT_tes) {
+        T_CT_htf_hot_in = mpc_csp_solver->mc_CT_tes->get_hot_temp() - 273.15;    //[C] convert from K
+    }
+
+    double T_htf_cr_out = std::numeric_limits<double>::quiet_NaN();     //[C]
     double m_dot_cr_out = std::numeric_limits<double>::quiet_NaN();     //[kg/hr]
     double m_dot_cr_out_to_cold_tank = 0.0;                              //[kg/hr]
     double t_ts_cr_su = m_t_ts_in;
@@ -681,6 +690,7 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
     {
         mpc_csp_solver->mc_collector_receiver.on(mpc_csp_solver->mc_weather.ms_outputs,
             mpc_csp_solver->mc_cr_htf_state_in,
+            T_CT_htf_hot_in,
             m_q_dot_elec_to_CR_heat,
             m_defocus,            
             mpc_csp_solver->mc_cr_out_solver,
@@ -692,6 +702,7 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
             return -1;
         }
 
+        T_htf_cr_out = mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot;      //[C]
         if (m_is_rec_outlet_to_hottank) {
             m_dot_cr_out = mpc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot;     //[kg/hr]
             m_dot_cr_out_to_cold_tank = 0.0;
@@ -714,9 +725,11 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
             return -1;
         }
 
+        T_htf_cr_out = mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot;      //[C]
         if (mpc_csp_solver->m_is_cr_config_recirc)
         {
-            m_dot_cr_out = 0.0;  //[kg/hr]
+            m_dot_cr_out = 0.0;                     //[kg/hr]
+            T_htf_cr_out = m_T_field_cold_guess;    //[C]
         }
 
         t_ts_cr_su = mpc_csp_solver->mc_cr_out_solver.m_time_required_su;       //[s]
@@ -731,6 +744,7 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
         if (mpc_csp_solver->m_is_cr_config_recirc)
         {
             m_dot_cr_out = 0.0;  //[kg/hr]
+            T_htf_cr_out = m_T_field_cold_guess;    //[C]
         }
     }
 
@@ -789,16 +803,16 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
 
         if (m_dot_htf_par_htr > 0.0) {
             m_dot_field_out = m_dot_cr_out + m_dot_htf_par_htr;     //[kg/hr]
-            T_htf_hot_cr_mixed = (m_dot_cr_out*mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot + m_dot_htf_par_htr*T_htf_hot_par_htr)/m_dot_field_out;    //[C]
+            T_htf_hot_cr_mixed = (m_dot_cr_out*T_htf_cr_out + m_dot_htf_par_htr*T_htf_hot_par_htr)/m_dot_field_out;    //[C]
         }
         else {
             m_dot_field_out = m_dot_cr_out;
-            T_htf_hot_cr_mixed = mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot;     //[C]
+            T_htf_hot_cr_mixed = T_htf_cr_out;     //[C]
         }
     }
     else {   // No parallel heater, so set mixed field outputs to cr outputs
 
-        T_htf_hot_cr_mixed = mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot;      //[C]
+        T_htf_hot_cr_mixed = T_htf_cr_out;      //[C]
 
         m_dot_field_out = m_dot_cr_out;     //[kg/hr]
         m_dot_field_out_to_cold_tank = m_dot_cr_out_to_cold_tank;                              //[kg/hr]
@@ -988,6 +1002,7 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
     //    to get the cycle inlet temperature
     double T_cycle_hot = std::numeric_limits<double>::quiet_NaN();          //[K]
     double T_field_cold_calc = std::numeric_limits<double>::quiet_NaN();    //[K]
+    double T_CT_cold_htf_out = std::numeric_limits<double>::quiet_NaN();    //[K]
     if (mpc_csp_solver->m_is_tes)
     {
         int tes_code = mpc_csp_solver->mc_tes.solve_tes_off_design(mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step,
@@ -1001,6 +1016,32 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
         {
             *diff_target = std::numeric_limits<double>::quiet_NaN();
             return -3;
+        }
+
+        if (mpc_csp_solver->m_is_CT_tes) {
+
+            double T_CT_hot_htf_out;
+            T_CT_hot_htf_out = std::numeric_limits<double>::quiet_NaN();
+
+            // CT_to_HT_m_dot_ratio is a system level parameter
+            // It is also used/enforced in the ptes heat pump and cycle models
+            // so should check components return same value for a given system design
+            //double CT_to_HT_m_dot_ratio = 0.0;
+
+            double m_dot_CT_to_hot = m_m_dot_pc_in * mpc_csp_solver->m_CT_to_HT_m_dot_ratio;
+            double m_dot_CT_to_cold = m_dot_hot_to_tes * mpc_csp_solver->m_CT_to_HT_m_dot_ratio;
+            double T_pc_CT_to_hot_guess = 55 + 273.15;  //[K]
+
+            int CT_tes_code = mpc_csp_solver->mc_CT_tes->solve_tes_off_design(mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step,
+                mpc_csp_solver->mc_weather.ms_outputs.m_tdry + 273.15,
+                m_dot_CT_to_hot / 3600.0, m_dot_CT_to_cold / 3600.0, 0.0,
+                T_pc_CT_to_hot_guess, mpc_csp_solver->mc_cr_out_solver.m_T_CT_htf_cold_out + 273.15,
+                T_CT_hot_htf_out, T_CT_cold_htf_out,
+                mpc_csp_solver->mc_CT_tes_outputs);
+
+            if (CT_tes_code != 0) {
+                throw(C_csp_exception(util::format("At time = %lg, C_MEQ__timestep CT TES failed", mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time), ""));
+            }
         }
     }
     else
@@ -1020,6 +1061,7 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
     // Performance Call
     mpc_csp_solver->mc_power_cycle.call(mpc_csp_solver->mc_weather.ms_outputs,
         mpc_csp_solver->mc_pc_htf_state_in,
+        T_CT_cold_htf_out - 273.15,
         mpc_csp_solver->mc_pc_inputs,
         mpc_csp_solver->mc_pc_out_solver,
         mpc_csp_solver->mc_kernel.mc_sim_info);
@@ -1051,6 +1093,31 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
         {
             *diff_target = std::numeric_limits<double>::quiet_NaN();
             return -3;
+        }
+
+        if (mpc_csp_solver->m_is_CT_tes) {
+
+            double T_CT_hot_htf_out;
+            T_CT_hot_htf_out = std::numeric_limits<double>::quiet_NaN();
+
+            // CT_to_HT_m_dot_ratio is a system level parameter
+            // It is also used/enforced in the ptes heat pump and cycle models
+            // so should check components return same value for a given system design
+            //double CT_to_HT_m_dot_ratio = 0.0;
+
+            double m_dot_CT_to_hot = m_m_dot_pc_in * mpc_csp_solver->m_CT_to_HT_m_dot_ratio;
+            double m_dot_CT_to_cold = m_dot_hot_to_tes * mpc_csp_solver->m_CT_to_HT_m_dot_ratio;
+
+            int CT_tes_code = mpc_csp_solver->mc_CT_tes->solve_tes_off_design(mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step,
+                mpc_csp_solver->mc_weather.ms_outputs.m_tdry + 273.15,
+                m_dot_CT_to_hot / 3600.0, m_dot_CT_to_cold / 3600.0, 0.0,
+                mpc_csp_solver->mc_pc_out_solver.m_T_CT_htf_hot_out + 273.15, mpc_csp_solver->mc_cr_out_solver.m_T_CT_htf_cold_out + 273.15,
+                T_CT_hot_htf_out, T_CT_cold_htf_out,
+                mpc_csp_solver->mc_CT_tes_outputs);
+
+            if (CT_tes_code != 0) {
+                throw(C_csp_exception(util::format("At time = %lg, C_MEQ__timestep CT TES failed", mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time), ""));
+            }
         }
     }
     else
@@ -1201,7 +1268,7 @@ int C_csp_solver::C_MEQ__T_field_cold::operator()(double T_field_cold /*C*/, dou
     m_t_ts_calc = c_eq.m_t_ts_calc;
 
     double T_field_cold_calc = c_eq.m_T_field_cold_calc;        //[C]
-    *diff_T_field_cold = (T_field_cold_calc - T_field_cold) / T_field_cold; //[-]
+    *diff_T_field_cold = (T_field_cold_calc - T_field_cold) / std::max(100.0, mpc_csp_solver->m_T_htf_cold_des - 237.15); //[-]
 
     return 0;
 }

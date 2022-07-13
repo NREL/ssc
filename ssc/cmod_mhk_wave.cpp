@@ -73,7 +73,7 @@ static var_info _cm_vtab_mhk_wave[] = {
     { SSC_OUTPUT,           SSC_ARRAY,          "energy_period_data",            "Energy period time series data",                      "s",                         "", "MHKWave",          "wave_resource_model_choice=1",                        "",          "" },
 
     { SSC_OUTPUT,           SSC_ARRAY,          "wave_power_index_mat",            "Wave power for time series",                      "kW",                         "", "MHKWave",          "wave_resource_model_choice=1",                        "",          "" },
-    { SSC_OUTPUT,			SSC_NUMBER,			"capacity_factor",						"Capacity Factor",													"%",			"",				"MHKWave",			"*",						"",							"" },
+    { SSC_OUTPUT,			SSC_NUMBER,			"capacity_factor",						"Capacity factor",													"%",			"",				"MHKWave",			"*",						"",							"" },
     { SSC_OUTPUT,			SSC_NUMBER,			"numberRecords",						"Number of Records",													"",			"",				"MHKWave",			"",						"",							"" },
     { SSC_OUTPUT,			SSC_NUMBER,			"numberHours",						"Number of Hours",													"",			"",				"MHKWave",			"",						"",							"" },
 
@@ -168,12 +168,10 @@ protected:
 
 class wavedata : public wave_data_provider
 {
-    util::matrix_t<double> wave_resource_matrix_data;
-    std::string stdErrorMsg;
 public:
     explicit wavedata(int wave_resource_model_choice, var_data* data_table);
 
-
+    
     size_t nrecords(int wave_resource_model_choice);
 
     ssc_number_t get_number(var_data* v, const char* name);
@@ -182,24 +180,16 @@ public:
     util::matrix_t<double> get_matrix(var_data* v, const char* var_name, size_t* nrows, size_t* ncols);
     std::string get_string(var_data* v, const char* name);
 
-    std::string get_stdErrorMsg() { return stdErrorMsg; };
 };
 
 wavedata::wavedata(int wave_resource_model_choice, var_data* data_table) //wavedata class for specifying wave resource inputs in a table for pysam
 {
 
-    stdErrorMsg = "wave data must be an SSC table variable with fields: "
-        "(string): name, city, state, country, sea_bed, data_source, notes, "
-        "(number): lat, lon, nearby_buoy_number, average_power_flux, bathymetry, tz, "
-        "(array): significant_wave_height, energy_period";
-
-    if (data_table->type != SSC_TABLE) //Datatype must be table 
+    if (!data_table  || data_table->type != SSC_TABLE) //Datatype must be table
     {
-        m_errorMsg = stdErrorMsg;
+        m_errorMsg = "wave data must be an SSC table variable with fields: (string): name, city, state, country, sea_bed, data_source, notes, (number): lat, lon, nearby_buoy_number, average_power_flux, bathymetry, tz, (array): significant_wave_height, energy_period";
         return;
     }
-
-
 
     lat = get_number(data_table, "lat"); //Latitude of wave resource data
     lon = get_number(data_table, "lon"); //Longitude of wave resource data
@@ -300,9 +290,9 @@ size_t wavedata::nrecords(int wave_resource_model_choice) //Returns array size o
             return (size_t)std::numeric_limits<ssc_number_t>::quiet_NaN(); //Return nan is array sizes do not match
     }
     else {
-        m_nRecords = wave_resource_matrix_data.nrows();
+        m_nRecords = m_wave_resource_matrix_data.nrows();
         if (m_nRecords == 21)
-            return wave_resource_matrix_data.nrows();
+            return m_wave_resource_matrix_data.nrows();
         else
             return (size_t)std::numeric_limits<ssc_number_t>::quiet_NaN(); //return NaN if rows != 21
     }
@@ -398,12 +388,11 @@ public:
         
         //Read and store wave resource and power matrix as a 2D matrix of vectors:
         util::matrix_t<double>  wave_resource_matrix;
-        smart_ptr<wave_data_provider>::ptr wave_dp; //Wave data provider class for table definition of resource data for SDK
+        std::unique_ptr<wave_data_provider> wave_dp; //Wave data provider class for table definition of resource data for SDK
         if (is_assigned("wave_resource_data")) { //Check for table variable assignment
             wave_dp = std::unique_ptr<wave_data_provider>(new wavedata(wave_resource_model_choice, lookup("wave_resource_data"))); //Assign varible to data provider class
-            if (!wave_dp->error().empty()) { //Check for empty table
+            if (!(wave_dp->error()=="")) { //Check for empty table
                 throw exec_error("mhk_wave", wave_dp->error()); //Throw error if empty
-                return; //End module here if empty table is provided
             }
         }
         if (is_assigned("wave_resource_matrix")) //If wave resource matrix is assigned (may not be 
