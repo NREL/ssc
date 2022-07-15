@@ -189,4 +189,20 @@ private:
 
 };
 
+class forecast_setup {
+public:
+    forecast_setup(size_t steps_per_hour, size_t analysis_period);
+    void setup(rate_data* rate, std::vector<double>& P_pv_ac, std::vector<double>& P_load_ac, double peak_offset);
+
+    size_t _steps_per_hour;
+    size_t _nyears;
+    double _dt_hour;
+
+    // Processed in setup load and pv forecasts to get _monthly_ expected gen, load, net loads, and peak
+    std::vector<double> monthly_gross_load;
+    std::vector<double> monthly_gen;
+    std::vector<double> monthly_net_load;
+    util::matrix_t<double> monthly_peaks; // By TOU period
+};
+
 #endif // _LIB_UTILITY_RATE_EQUATIONS_H_

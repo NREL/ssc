@@ -24,11 +24,13 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SAM_SIMULATION_CORE_CMOD_UTILITYRATEFORECAST_H
 
 #include "core.h"
+#include "lib_utility_rate_equations.h"
+#include "lib_utility_rate.h"
 
 class cm_utilityrateforecast : public compute_module {
 private:
     int analysis_period; // Maximum length of analysis - in most cases it will be shorter in this compute module
-    double dt_hr; // Timestep in hours
+    int steps_per_hour; // Timestep in hours
 
     /* Utility rate data structure */
     std::shared_ptr<rate_data> rate;

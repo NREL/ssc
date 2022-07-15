@@ -30,15 +30,15 @@ static var_info vtab_utilityrateforecast[] =
 {	
 /*   VARTYPE            DATATYPE         NAME                        LABEL                                  UNITS     META       GROUP           REQUIRED_IF     CONSTRAINTS UI_HINTS*/
     { SSC_INPUT,        SSC_NUMBER,     "analysis_period",           "Number of years in escalation and forecast", "years",  "",  "Lifetime",     "*",           "INTEGER,POSITIVE",              "" },
-    { SSC_INPUT,        SSC_NUMBER,      "dt_hr",                    "Time step in hours",                  "hr",      "",        "Controls",     "*",            "",         "" },
-    { SSC_INPUT,        SSC_NUMBER,      "last_idx",                 "Last index (lifetime)",               "",        "",        "StatePack",    "",             "",         ""  },
+    { SSC_INPUT,        SSC_NUMBER,      "steps_per_hour",           "Steps per hour",                  "hr",      "",        "Controls",     "*",            "",         "" },
+    { SSC_INPUT,        SSC_NUMBER,      "idx",                      "Starting index (lifetime)",               "",        "",        "StatePack",    "",             "",         ""  },
 
-    { SSC_INPUT,        SSC_ARRAY,       "ur_monthly_load",          "Monthly load forecast",               "",        "",        "Electricity Rates",   "",      "",         "" },
-    { SSC_INPUT,        SSC_ARRAY,       "ur_monthly_gen",           "Monthly generation forecast",         "",        "",        "Electricity Rates",   "",      "",         "" },
-    { SSC_INPUT,        SSC_ARRAY,       "ur_monthly_peaks",         "Monthly peaks forecast",              "",        "",        "Electricity Rates",   "",      "",         "" },
+    { SSC_INPUT,        SSC_ARRAY,       "load",                     "Lifetime load forecast",               "",        "",        "Electricity Rates",   "",      "",         "" },
+    { SSC_INPUT,        SSC_ARRAY,       "gen",                      "Lifetime generation forecast",         "",        "",        "Electricity Rates",   "",      "",         "" },
     { SSC_INPUT,        SSC_ARRAY,       "grid_power",               "Electricity to/from grid",            "",        "",        "Electricity Rates",   "",      "",         "" },
 
-    { SSC_INOUT,        SSC_MATRIX,      "ur_net_metering_credits",  "Net metering credits available",      "",        "",      "Electricity Rates",     "",      "",         "" },
+    { SSC_INOUT,        SSC_MATRIX,      "ur_energy_use",            "Energy use or surplus by month and period",      "",        "",      "Electricity Rates",     "",      "",         "" },
+    { SSC_INOUT,        SSC_MATRIX,      "ur_dc_peaks",              "Peak demand by month and period",      "",        "",      "Electricity Rates",     "",      "",         "" },
 
     { SSC_INPUT,        SSC_NUMBER,      "inflation_rate",           "Inflation rate",                      "%",      "",        "Lifetime",     "*",            "MIN=-99",  "" },
 
@@ -61,17 +61,16 @@ bool cm_utilityrateforecast::setup(var_table* vt) {
     if (!compute_module::verify("precheck input", SSC_INPUT)) {
         return false;
     }
-    dt_hr = as_number("dt_hr");
+    steps_per_hour = as_number("steps_per_hour");
     analysis_period = as_integer("analysis_period");
 
-    int step_per_year = 8760 / dt_hr;
-    int step_per_hour = 1 / dt_hr;
+    int step_per_year = 8760 * steps_per_hour;
 
     rate = std::shared_ptr<rate_data>(new rate_data());
-    rate_setup::setup(vt, step_per_year, analysis_period, *rate, "cmod_battery");
+    rate_setup::setup(vt, step_per_year, analysis_period, *rate, "cmod_utilityrateforecast");
 
     /* - Need to determine final locations of pre-processing before writing this
-    rate_forecast = std::shared_ptr<UtilityRateForecast>(new UtilityRateForecast(rate.get(), step_per_hour, monthly_net_load, monthly_gen, monthly_gross_load, analysis_period, monthly_peaks));
+    rate_forecast = std::shared_ptr<UtilityRateForecast>(new UtilityRateForecast(rate.get(), steps_per_hour, monthly_net_load, monthly_gen, monthly_gross_load, analysis_period, monthly_peaks));
     rate_forecast->initializeMonth(0, 0);
     rate_forecast->copyTOUForecast();
     */
@@ -81,31 +80,46 @@ bool cm_utilityrateforecast::setup(var_table* vt) {
 
 void cm_utilityrateforecast::exec( )
 {
-    /*
-    for (size_t hour = 0; hour != 24; hour++)
+    // TODO: import nm structure
+
+    std::vector<double> grid_power = m_vartab->as_vector_double("grid_power");
+    size_t idx = m_vartab->as_unsigned_long("idx");
+    size_t year = idx / (8760 * steps_per_hour);
+    size_t index_of_year = idx % 8760;
+    size_t hour_of_year = index_of_year / steps_per_hour;
+    size_t step = index_of_year % steps_per_hour;
+
+    size_t steps_to_run = grid_power.size();
+    size_t index_at_end = idx + steps_to_run;
+    size_t count = 0;
+
+    ssc_number_t* cost_at_step = allocate("ur_price_series", steps_to_run);
+    ssc_number_t total_bill = 0;
+    // TODO: error check vector lengths - ensure we aren't going to overshoot analysis_period
+
+    while (idx < index_at_end)
     {
-        for (size_t step = 0; step != _steps_per_hour && idx < _P_load_ac.size(); step++)
-        {
-            double power = _P_load_ac[idx] - _P_pv_ac[idx];
-            // One at a time so we can sort grid points by no-dispatch cost
-            std::vector<double> forecast_power = { -power }; // Correct sign convention for cost forecast
-            double step_cost = noDispatchForecast->forecastCost(forecast_power, year, (hour_of_year + hour) % 8760, step);
-            no_dispatch_cost += step_cost;
+        // One at a time so we can return cost at each step
+        std::vector<double> forecast_power = { grid_power[count] }; // Correct sign convention for cost forecast
+        double step_cost = rate_forecast->forecastCost(forecast_power, year, hour_of_year, step);
+        total_bill += step_cost;
 
-            std::vector<double> marginal_power = { -1.0 };
-            double marginal_cost = marginalForecast->forecastCost(marginal_power, year, (hour_of_year + hour) % 8760, step);
+        cost_at_step[count] = step_cost;
 
-            grid[count] = grid_point(power, hour, step, step_cost, marginal_cost);
-            sorted_grid[count] = grid[count];
-
-            if (debug)
-                fprintf(p, "%zu\t %.1f\t %.1f\t %.1f\n", count, _P_load_ac[idx], _P_pv_ac[idx], _P_load_ac[idx] - _P_pv_ac[idx]);
-
-            idx++;
-            count++;
-        }
+        idx++;
+        count++;
+        step++;
+        if (step >= steps_per_hour) {
+            step = 0;
+            hour_of_year++;
+            if (hour_of_year >= 8760) {
+                hour_of_year = 0;
+                year++;
+            }
+        } 
     }
-    */
+    
+
 }
 
 
