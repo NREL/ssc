@@ -645,7 +645,7 @@ private:
     const double m_c_air = 1005.0;			    //[J/kg-K] Specific heat of air, relatively constant over dry bulb range
     const double T_map_des = 42.8 + 273.15;     //[K] Design point temperature of condenser map
     const double T_hot_diff = 1.;               //[C/K] Temperature difference between saturation steam and condenser outlet air temp
-    const double P_cond_lower_bound_bar = 0.036;  // [bar] Default minimum condenser steam pressure
+    const double T_map_min_norm = 0.9;       //[-] Minimum acceptable normalize temperature for condenser map
     const double m_eta_fan_s = 0.85;            //[-] Fan isentropic efficiency
     const double m_eta_fan = 0.97;          	//[-] Fan mechanical efficiency
 

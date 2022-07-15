@@ -744,9 +744,7 @@ C_air_cooled_condenser::C_air_cooled_condenser(int tech_type /*-*/, double P_con
     m_T_ITD_des = T_ITD_des;    //[C/K]
     m_P_cond_ratio_des = P_cond_ratio_des;  //[-]
     m_q_dot_reject_des = q_dot_reject_des;  //[W]
-
-    m_P_cond_min_bar = std::max(P_cond_lower_bound_bar, P_cond_min * 1.e-5);   // [Pa] -> [bar]
-
+    m_P_cond_min_bar = P_cond_min * 1.e-5;   // [Pa] -> [bar]
     m_T_cond_des = m_T_ITD_des + m_T_amb_des;    //[K]
 
     // Water properties structure
@@ -766,7 +764,7 @@ C_air_cooled_condenser::C_air_cooled_condenser(int tech_type /*-*/, double P_con
 
     // Calculate design point for condenser map adjustment
     m_T_map_des_norm = m_T_amb_des / T_map_des;     //[-]
-    if (m_T_map_des_norm >= 0.9) {
+    if (m_T_map_des_norm >= T_map_min_norm) {
         m_P_map_des_norm = PvsQT(1, m_T_map_des_norm);
     }
     else {
@@ -789,7 +787,7 @@ void C_air_cooled_condenser::off_design(double T_amb /*K*/, double q_dot_reject 
     double T = T_amb / T_map_des;
 
     double P_cond_bar;
-    if (T >= 0.9) {                             // If T is less than 0.9 fit is not valid
+    if (T >= T_map_min_norm) {                             // If T is less than 0.9, then fit is not valid
         double Q = q_dot_reject / m_q_dot_reject_des;
         double P = PvsQT(Q, T);
         P_cond_bar = m_map_ratio_des * P * m_P_cond_min_bar;    //[bar]
@@ -799,7 +797,6 @@ void C_air_cooled_condenser::off_design(double T_amb /*K*/, double q_dot_reject 
     }
 
     water_state wp;
-    double T_cond_K, dT_air;
     if ((P_cond_bar < m_P_cond_min_bar) && (m_tech_type != 4)) // No lower limit on Isopentane
     {
         for (size_t i = 2; i <= m_n_pl_inc; i++)
@@ -823,15 +820,8 @@ void C_air_cooled_condenser::off_design(double T_amb /*K*/, double q_dot_reject 
 
     m_dot_air = m_dot_air_des * f_hrsys;        // [kg/s]
     water_PQ(P_cond_bar * 100., 1.0, &wp);      // [bar] -> [kPa]
-    T_cond_K = wp.temp;                         // [K]
     P_cond = P_cond_bar * 1.e5;                 // [bar] -> [Pa]
-    T_cond = T_cond_K;
-
-    m_dot_air = m_dot_air_des * f_hrsys;        // [kg/s]
-    water_PQ(P_cond_bar * 100., 1.0, &wp);      // [bar] -> [kPa]
-    T_cond_K = wp.temp;                         // [K]
-    P_cond = P_cond_bar * 1.e5;                 // [bar] -> [Pa]
-    T_cond = T_cond_K;
+    T_cond = wp.temp;                           // [K]
 
     // ===================== Fan Power =================================
     double h_fan_in = CSP::f_h_air_T(T_amb - 273.15);	// [J/kg] Fan inlet enthalpy
@@ -840,10 +830,8 @@ void C_air_cooled_condenser::off_design(double T_amb /*K*/, double q_dot_reject 
 
     // These temperature calculations are for the isentropic expansion across the fan, not accounting for heat gain in the ACC
     double T_fan_in_K = T_amb;                                         // [K] Fan inlet temperature
-    double T_fan_out_K = T_fan_in_K * pow(m_P_cond_ratio_des, (R / m_c_air));
-    double T_fan_out_C = T_fan_out_K - 273.15;                          // [C] Fan outlet temperature
-
-    double dT_fan = T_fan_out_K - T_fan_in_K;                           // [K] Temperature increase in fan
+    double T_fan_out_C = T_fan_in_K * pow(m_P_cond_ratio_des, (R / m_c_air)) - 273.15;  // [C] Fan outlet temperature
+    double dT_fan = T_fan_out_C - (T_fan_in_K - 273.5);                           // [C] Temperature increase in fan
 
     double h_fan_out_s = CSP::f_h_air_T(T_fan_out_C);                   // [J/kg] Isentropic fan outlet enthalpy
     double h_fan_out = h_fan_in + (h_fan_out_s - h_fan_in) / m_eta_fan_s;	// [J/kg] Actual fan outlet enthalpy
