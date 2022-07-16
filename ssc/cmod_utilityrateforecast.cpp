@@ -64,23 +64,29 @@ bool cm_utilityrateforecast::setup(var_table* vt) {
     steps_per_hour = as_number("steps_per_hour");
     analysis_period = as_integer("analysis_period");
 
+    std::vector<double> load = as_vector_double("load");
+    std::vector<double> gen = as_vector_double("gen");
+
     int step_per_year = 8760 * steps_per_hour;
 
     rate = std::shared_ptr<rate_data>(new rate_data());
     rate_setup::setup(vt, step_per_year, analysis_period, *rate, "cmod_utilityrateforecast");
 
-    /* - Need to determine final locations of pre-processing before writing this
-    rate_forecast = std::shared_ptr<UtilityRateForecast>(new UtilityRateForecast(rate.get(), steps_per_hour, monthly_net_load, monthly_gen, monthly_gross_load, analysis_period, monthly_peaks));
+    forecast_setup rate_forecast_setup(steps_per_hour, analysis_period);
+    rate_forecast_setup.setup(rate.get(), gen, load);
+
+    rate_forecast = std::shared_ptr<UtilityRateForecast>(new UtilityRateForecast(rate.get(), steps_per_hour, rate_forecast_setup.monthly_net_load, rate_forecast_setup.monthly_gen, rate_forecast_setup.monthly_gross_load, analysis_period, rate_forecast_setup.monthly_peaks));
     rate_forecast->initializeMonth(0, 0);
     rate_forecast->copyTOUForecast();
-    */
 
     return true;
 }
 
 void cm_utilityrateforecast::exec( )
 {
-    // TODO: import nm structure
+    util::matrix_t<double> energy_use = m_vartab->as_matrix("ur_energy_use");
+    util::matrix_t<double> prior_peaks = m_vartab->as_matrix("ur_dc_peaks");
+    rate_forecast->set_energy_use_and_peaks(energy_use, prior_peaks);
 
     std::vector<double> grid_power = m_vartab->as_vector_double("grid_power");
     size_t idx = m_vartab->as_unsigned_long("idx");
@@ -95,7 +101,13 @@ void cm_utilityrateforecast::exec( )
 
     ssc_number_t* cost_at_step = allocate("ur_price_series", steps_to_run);
     ssc_number_t total_bill = 0;
-    // TODO: error check vector lengths - ensure we aren't going to overshoot analysis_period
+
+    int steps_remaining = (analysis_period - year) * 8760 - hour_of_year - step;
+    if (steps_remaining < steps_to_run) {
+        std::ostringstream ss;
+        ss << "grid_power had " << steps_to_run << " steps, but only " << steps_remaining << " are left in the analysis period.";
+        throw exec_error("cm_utilityrateforecast", ss.str());
+    }
 
     while (idx < index_at_end)
     {
@@ -118,7 +130,10 @@ void cm_utilityrateforecast::exec( )
             }
         } 
     }
-    
+
+    assign("ur_total_bill", total_bill);
+    assign("ur_energy_use", energy_use);
+    assign("ur_dc_peaks", prior_peaks);
 
 }
 

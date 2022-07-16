@@ -184,6 +184,10 @@ public:
     std::vector<double> get_composite_tou_sell_rate(int month, size_t year, double expected_gen);
     double getEnergyChargeNetMetering(int month, std::vector<double>& buy_rates, std::vector<double>& sell_rates);
 
+    void set_energy_use_and_peaks(util::matrix_t<double> energy_use, util::matrix_t<double> peak_use);
+    util::matrix_t<double> get_energy_use();
+    util::matrix_t<double> get_peak_use();
+
 private:
     bool check_for_kwh_per_kw_rate(int units);
 
@@ -192,7 +196,7 @@ private:
 class forecast_setup {
 public:
     forecast_setup(size_t steps_per_hour, size_t analysis_period);
-    void setup(rate_data* rate, std::vector<double>& P_pv_ac, std::vector<double>& P_load_ac, double peak_offset);
+    void setup(rate_data* rate, std::vector<double>& P_pv_ac, std::vector<double>& P_load_ac, double peak_offset = 0.0);
 
     size_t _steps_per_hour;
     size_t _nyears;

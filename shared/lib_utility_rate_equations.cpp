@@ -1254,6 +1254,68 @@ bool rate_data::has_kwh_per_kw_rate() {
     return has_rate;
 }
 
+void rate_data::set_energy_use_and_peaks(util::matrix_t<double> energy_use, util::matrix_t<double> peak_use) {
+    size_t ec_periods = m_ec_periods.size();
+    size_t dc_periods = m_dc_tou_periods.size();
+    size_t n_months = m_month.size();
+
+    if (energy_use.ncols() != ec_periods)
+    {
+        std::ostringstream ss;
+        ss << "Energy use provided only has " << energy_use.ncols() << " TOU periods. " << ec_periods << " are required.";
+        throw exec_error("lib_utility_rate_equations", ss.str());
+    }
+
+    if (peak_use.ncols() != dc_periods)
+    {
+        std::ostringstream ss;
+        ss << "Peak demand provided only has " << peak_use.ncols() << " TOU periods. " << dc_periods << " are required.";
+        throw exec_error("lib_utility_rate_equations", ss.str());
+    }
+
+    for (size_t i = 0; i < n_months; i++) {
+        ur_month month = m_month[i];
+        for (size_t j = 0; j < month.ec_energy_use.nrows(); j++) {
+            month.ec_energy_use.set_value(energy_use.at(i, j), j, 0);
+        }
+        for (size_t j = 0; j < month.dc_tou_peak.size(); j++) {
+            month.dc_tou_peak[j] = peak_use.at(i, j);
+        }
+    }
+}
+
+util::matrix_t<double> rate_data::get_energy_use() {
+    size_t max_periods = m_ec_periods.size();
+    size_t n_months = m_month.size();
+
+    util::matrix_t<double> usage(n_months, max_periods);
+
+    for (size_t i = 0; i < n_months; i++) {
+        ur_month month = m_month[i];
+        for (size_t j = 0; j < month.ec_energy_use.nrows(); j++) {
+            usage.set_value(month.ec_energy_use.at(j, 0), i, j);
+        }
+    }
+
+    return usage;
+}
+
+util::matrix_t<double> rate_data::get_peak_use() {
+    size_t max_periods = m_dc_tou_periods.size();
+    size_t n_months = m_month.size();
+
+    util::matrix_t<double> peaks(n_months, max_periods);
+
+    for (size_t i = 0; i < n_months; i++) {
+        ur_month month = m_month[i];
+        for (size_t j = 0; j < month.dc_tou_peak.size(); j++) {
+            peaks.set_value(month.dc_tou_peak[j], i, j);
+        }
+    }
+
+    return peaks;
+}
+
 forecast_setup::forecast_setup(size_t steps_per_hour, size_t analysis_period) :
 _steps_per_hour(steps_per_hour),
 _nyears(analysis_period),
@@ -1266,7 +1328,7 @@ monthly_peaks()
     // Nothing to do
 }
 
-void forecast_setup::setup(rate_data* rate, std::vector<double>& P_pv_ac, std::vector<double>& P_load_ac, double peak_offset = 0.0) {
+void forecast_setup::setup(rate_data* rate, std::vector<double>& P_pv_ac, std::vector<double>& P_load_ac, double peak_offset) {
     // Load here is every step for the full analysis period. Load escalation has already been applied (TODO in compute modules)
     size_t num_recs = util::hours_per_year * _steps_per_hour * _nyears;
     size_t step = 0; size_t hour_of_year = 0; size_t year = 0;
