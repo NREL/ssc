@@ -2488,12 +2488,12 @@ int irrad::calc_rear_side(double transmissionFactor, double groundClearanceHeigh
         double rowToRow = slopeLength / this->groundCoverageRatio;                  // distance between front of row to front of next row
         double distanceBetweenRows = rowToRow - horizontalLength;                   // distance between back of row to front of next row
 
-        // Determine the factors for points on the ground from the leading edge of one row of PV panels to the edge of the next row of panels behind
+        // Determine the view factors for points on the ground to the sky in the rowToRow interval
         std::vector<double> rearSkyConfigFactors, frontSkyConfigFactors;
         this->getSkyConfigurationFactors(rowToRow, verticalHeight, clearanceGround, distanceBetweenRows,
                                          horizontalLength, rearSkyConfigFactors, frontSkyConfigFactors);
 
-        // Determine if ground is shading from direct beam radio for points on the ground from leading edge of PV panels to leading edge of next row behind
+        // Determine whether points on the ground in the rowToRow interval are shaded or not from DNI
         double pvBackShadeFraction, pvFrontShadeFraction, maxShadow;
         pvBackShadeFraction = pvFrontShadeFraction = maxShadow = 0;
         std::vector<int> rearGroundShade, frontGroundShade;
@@ -2501,7 +2501,7 @@ int irrad::calc_rear_side(double transmissionFactor, double groundClearanceHeigh
                                     sunAnglesRadians[0], sunAnglesRadians[2], rearGroundShade, frontGroundShade,
                                     maxShadow, pvBackShadeFraction, pvFrontShadeFraction);
 
-        // Get the rear ground GHI
+        // Calculate GHI for the points on the ground in the rowToRow interval, considering shading and view factors to the sky
         std::vector<double> rearGroundGHI, frontGroundGHI;
         this->getGroundGHI(transmissionFactor, rearSkyConfigFactors, frontSkyConfigFactors, rearGroundShade,
                            frontGroundShade, rearGroundGHI, frontGroundGHI);
@@ -2600,31 +2600,30 @@ irrad::getGroundShadeFactors(double rowToRow, double verticalHeight, double clea
     double shadingStart1, shadingStart2, shadingEnd1, shadingEnd2;
     shadingStart1 = shadingStart2 = shadingEnd1 = shadingEnd2 = pvBackSurfaceShadeFraction = 0;
 
-    // Horizontal length of shadow perpindicular to row from top of module to bottom of module
+    // Horizontal length (from back of row) of shadow perpendicular to row if no ground clearance (Px in Fig. 6 of Appelbaum, 1979)
     double Lh = (verticalHeight / tan(solarElevationRadians)) * cos(surfaceAzimuthAngleRadians - solarAzimuthRadians);
 
-    //  Horizontal length of shadow perpindicular to row from top of module to ground level
-    double Lhc = ((clearanceGround + verticalHeight) / tan(solarElevationRadians)) *
-                 cos(surfaceAzimuthAngleRadians - solarAzimuthRadians);
+    // Horizontal length from back of row to end of shadow, perpendicular to row
+    double Lhc = ((clearanceGround + verticalHeight) / tan(solarElevationRadians)) * cos(surfaceAzimuthAngleRadians - solarAzimuthRadians);
 
-    // Horizontal length of shadow perpindicular to row from bottom of module to ground level
+    // Horizontal length from back of row to start of shadow, perpendicular to row
     double Lc = (clearanceGround / tan(solarElevationRadians)) * cos(surfaceAzimuthAngleRadians - solarAzimuthRadians);
 
-    // Front side of PV module partially shaded, back completely shaded, ground completely shaded
+    // Front partially shaded, back completely shaded, ground completely shaded
     if (Lh > distanceBetweenRows) {
         pvFrontSurfaceShadeFraction = (Lh - distanceBetweenRows) / (Lh + horizontalLength);
         pvBackSurfaceShadeFraction = 1.0;
         shadingStart1 = 0.0;
         shadingEnd1 = rowToRow;
     }
-        // Back side of PV module partially shaded, front completely shaded, ground completely shaded
+    // Front completely shaded, back partially shaded, ground completely shaded
     else if (Lh < -(rowToRow + horizontalLength)) {
         pvFrontSurfaceShadeFraction = 1.0;
         pvBackSurfaceShadeFraction = (Lh + rowToRow + horizontalLength) / (Lh + horizontalLength);
         shadingStart1 = 0.0;
         shadingEnd1 = rowToRow;
     }
-        // Assume ground is partially shaded
+    // Assume ground is partially shaded
     else {
         if (Lhc >= 0) {
             pvFrontSurfaceShadeFraction = 0.0;
@@ -2648,7 +2647,7 @@ irrad::getGroundShadeFactors(double rowToRow, double verticalHeight, double clea
                 }
             }
         }
-            // Shadow to front of row, either front or back might be shaded, depending on tilt and other factors
+        // Shadow to front of row, either front or back might be shaded, depending on tilt and other factors
         else {
             double shadowStart = 0.0;
             double shadowEnd = 0.0;
@@ -2704,7 +2703,7 @@ void irrad::getGroundGHI(double transmissionFactor, std::vector<double> rearSkyC
                          std::vector<double> frontSkyConfigFactors, std::vector<int> rearGroundShade,
                          std::vector<int> frontGroundShade, std::vector<double> &rearGroundGHI,
                          std::vector<double> &frontGroundGHI) {
-    // Calculate the diffuse components of irradiance
+    // Calculate the irradiance components on horizontal unobstructed ground
     perez(0, calculatedDirectNormal, calculatedDiffuseHorizontal, albedo, sunAnglesRadians[1], 0.0, sunAnglesRadians[1],
           planeOfArrayIrradianceRear, diffuseIrradianceRear);
     double incidentBeam = planeOfArrayIrradianceRear[0];
@@ -2713,7 +2712,7 @@ void irrad::getGroundGHI(double transmissionFactor, std::vector<double> rearSkyC
 
     // Sum the irradiance components for each of the ground segments to the front and rear of the front of the PV row
     for (size_t i = 0; i != 100; i++) {
-        // Add diffuse sky component viewed by ground
+        // Isotropic diffuse irradiance incident on ground
         rearGroundGHI.push_back(rearSkyConfigFactors[i] * isotropicDiffuse);
         frontGroundGHI.push_back(frontSkyConfigFactors[i] * isotropicDiffuse);
 
@@ -2722,9 +2721,11 @@ void irrad::getGroundGHI(double transmissionFactor, std::vector<double> rearSkyC
             rearGroundGHI[i] += incidentBeam + circumsolarDiffuse;
         }
         else {
-            // Add beam and circumsolar component transmitted thru module spacing if shaded
+            // Add beam and circumsolar component transmitted thru module if shaded
             rearGroundGHI[i] += (incidentBeam + circumsolarDiffuse) * transmissionFactor;
         }
+
+        // Repeat for ground in front of row
         if (frontGroundShade[i] == 0) {
             frontGroundGHI[i] += incidentBeam + circumsolarDiffuse;
         }
@@ -2747,11 +2748,6 @@ void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowTo
     double tiltRadians = surfaceAnglesRadians[1];
     double surfaceAzimuthRadians = surfaceAnglesRadians[2];
 
-    // Average GHI on ground under PV array for cases when x projection exceed 2*rtr
-    double averageGroundGHI = 0.0;
-    for (size_t i = 0; i != frontGroundGHI.size(); i++)
-        averageGroundGHI += frontGroundGHI[i] / frontGroundGHI.size();
-
     // Calculate diffuse isotropic irradiance for a horizontal surface
     double *poa = planeOfArrayIrradianceRear;
     double *diffc = diffuseIrradianceRear;
@@ -2759,8 +2755,8 @@ void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowTo
           poa, diffc);
     double isotropicSkyDiffuse = diffc[0];
 
-    // Calculate components for a 90 degree tilt
-    double angleTmp[5] = {0, 0, 0, 0, 0};
+    // Calculate irradiance components for a 90 degree tilt
+    double angleTmp[5] = {0, 0, 0, 0, 0};            // ([0] = incidence angle, [1] = tilt)
     incidence(0, 90.0, 180.0, 45.0, solarZenithRadians, solarAzimuthRadians, this->enableBacktrack,
               this->groundCoverageRatio, this->slopeTilt, this->slopeAzm, this->forceToStow, this->stowAngleDegrees, angleTmp);
     perez(0, calculatedDirectNormal, calculatedDiffuseHorizontal, albedo, angleTmp[0], angleTmp[1], solarZenithRadians,
@@ -2826,7 +2822,7 @@ void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowTo
 
             if (fabs(projectedX1 - projectedX2) > 0.99 * rowToRow) {
                 // Use average value if projection approximates the rtr
-                actualGroundGHI = averageGroundGHI;
+                actualGroundGHI = std::accumulate(frontGroundGHI.begin(), frontGroundGHI.end(), 0.) / frontGroundGHI.size();
             }
             else {
                 projectedX1 = intervals * projectedX1 / rowToRow;
