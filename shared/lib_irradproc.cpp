@@ -2072,9 +2072,7 @@ irrad::irrad(weather_record wf, weather_header hdr,
     int month_idx = wf.month - 1;
     if (useWeatherFileAlbedo && std::isfinite(wf.alb) && wf.alb > 0 && wf.alb < 1) {
         albedo = wf.alb;
-        if (useSpatialAlbedos) {
-            albedoSpatial.assign(userSpecifiedSpatialAlbedos->ncols(), albedo);
-        }
+        albedoSpatial.assign(userSpecifiedSpatialAlbedos->ncols(), albedo);
     }
     else if (useSpatialAlbedos) {
         albedoSpatial = userSpecifiedSpatialAlbedos->row(month_idx).to_vector();
@@ -2082,6 +2080,7 @@ irrad::irrad(weather_record wf, weather_header hdr,
     }
     else {
         albedo = userSpecifiedAlbedo[month_idx];
+        albedoSpatial.assign(userSpecifiedSpatialAlbedos->ncols(), albedo);
     }
 
     set_time(wf.year, wf.month, wf.day, wf.hour, wf.minute,
