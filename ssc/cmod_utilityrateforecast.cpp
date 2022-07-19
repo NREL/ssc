@@ -84,9 +84,21 @@ bool cm_utilityrateforecast::setup(var_table* vt) {
 
 void cm_utilityrateforecast::exec( )
 {
-    util::matrix_t<double> energy_use = m_vartab->as_matrix("ur_energy_use");
-    util::matrix_t<double> prior_peaks = m_vartab->as_matrix("ur_dc_peaks");
-    rate_forecast->set_energy_use_and_peaks(energy_use, prior_peaks);
+    if (!rate_forecast) {
+        throw exec_error("cm_utilityrateforecast", "Rate forecast not setup. Please call setup() before exec()");
+    }
+
+    util::matrix_t<double> energy_use;
+    util::matrix_t<double> prior_peaks;
+    if (is_assigned("ur_energy_use") && is_assigned("ur_dc_peaks")) {
+        energy_use = m_vartab->as_matrix("ur_energy_use");
+        prior_peaks = m_vartab->as_matrix("ur_dc_peaks");
+        rate_forecast->set_energy_use_and_peaks(energy_use, prior_peaks);
+    }
+    else if (is_assigned("ur_energy_use") || is_assigned("ur_dc_peaks")) {
+        throw exec_error("cm_utilityrateforecast", "If one of ur_energy_use or ur_dc_peaks is assigned, both must be assigned");
+    }
+    // Else - use defaults of zeroes from setup()
 
     std::vector<double> grid_power = m_vartab->as_vector_double("grid_power");
     size_t idx = m_vartab->as_unsigned_long("idx");
