@@ -869,6 +869,19 @@ void ModifiedDISC(const double kt[3], const double kt1[3], const double g[3], co
 double shadeFraction1x(double solar_azimuth, double solar_zenith, double axis_tilt, double axis_azimuth, double gcr, double rotation, double slope_tilt, double slope_azimuth);
 
 /**
+* divideAndAlignAlbedos subdivides the spatial albedo vector and if 1-axis tracking
+* changes reference from the row midline to the front
+*
+* \param[in] albedo spatial albedo for that point in time
+* \param[in] n_divisions increased number of divisions to divide the spatial albedo into
+* \param[in] isOneAxisTracking is 1-axis tracking used?
+* \param[in] horizontalLength projected horizontal length of the row, product of slope length and tilt
+* \param[in] rowToRow distance between front of row and front of row behind
+*/
+std::vector<double> divideAndAlignAlbedos(const std::vector<double>& albedo /*-*/, size_t n_divisions /*-*/, bool isOneAxisTracking /*-*/,
+                                          double horizontalLength /*m*/, double rowToRow /*m*/);
+
+/**
 * truetrack calculates the tracker rotation that minimizes the angle of incidence betweem direct irradiance and the module front surface normal
 *
 * \param[in] solar_azimuth sun azimuth in degrees, measured east from north
@@ -999,7 +1012,7 @@ public:
     void set_optional(double elev = 0, double pres = 1013.25, double t_amb = 15);
 
     /// Set the sky model for the irradiance processor, using \link Irradiance_IO::SKYMODEL 
-    void set_sky_model(int skymodel, double albedo);
+    void set_sky_model(int skymodel, double albedo, const std::vector<double> &albedoSpatial = std::vector<double>());
 
     /// Set the surface orientation for the irradiance processor
     void set_surface(int tracking, double tilt_deg, double azimuth_deg, double rotlim_deg, bool en_backtrack, double gcr, double slope_tilt, double slope_azm, bool forceToStowFlag, double stowAngle);
