@@ -124,7 +124,7 @@ void cm_utilityrateforecast::exec( )
     while (idx < index_at_end)
     {
         // One at a time so we can return cost at each step
-        std::vector<double> forecast_power = { grid_power[count] }; // Correct sign convention for cost forecast
+        std::vector<double> forecast_power = { grid_power[count] };
         double step_cost = rate_forecast->forecastCost(forecast_power, year, hour_of_year, step);
         total_bill += step_cost;
 
@@ -142,6 +142,9 @@ void cm_utilityrateforecast::exec( )
             }
         } 
     }
+
+    energy_use = rate_forecast->get_energy_use();
+    prior_peaks = rate_forecast->get_peak_use();
 
     assign("ur_total_bill", total_bill);
     assign("ur_energy_use", energy_use);
