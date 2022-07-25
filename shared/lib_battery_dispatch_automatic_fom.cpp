@@ -53,14 +53,15 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
     std::vector<double> battReplacementCostPerkWh,
 	int battCycleCostChoice,
     std::vector<double> battCycleCost,
-	std::vector<double> forecast_price_series_dollar_per_kwh,
+    std::vector<double> battOMCost,
+    std::vector<double> forecast_price_series_dollar_per_kwh,
 	UtilityRate * utilityRate,
 	double etaPVCharge,
 	double etaGridCharge,
 	double etaDischarge,
     double interconnection_limit) : dispatch_automatic_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max_kwdc, Pd_max_kwdc, Pc_max_kwac, Pd_max_kwac,
 		t_min, dispatch_mode, weather_forecast_mode, pv_dispatch, nyears, look_ahead_hours, dispatch_update_frequency_hours, can_charge, can_clip_charge, can_grid_charge, can_fuelcell_charge,
-        battReplacementCostPerkWh, battCycleCostChoice, battCycleCost, interconnection_limit)
+        battReplacementCostPerkWh, battCycleCostChoice, battCycleCost, battOMCost, interconnection_limit)
 {
 	// if look behind, only allow 24 hours
 	if (_weather_forecast_mode == dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_BEHIND)
@@ -84,6 +85,7 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
     discharge_hours = (size_t) std::ceil(_Battery->energy_max(m_batteryPower->stateOfChargeMax, m_batteryPower->stateOfChargeMin) / m_batteryPower->powerBatteryDischargeMaxDC);
 
     costToCycle();
+    omCost();
 	setup_cost_forecast_vector();
 }
 dispatch_automatic_front_of_meter_t::~dispatch_automatic_front_of_meter_t(){ /* NOTHING TO DO */}
@@ -171,6 +173,8 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t year, size_t ho
 
         /*! Cost to cycle the battery at all, using maximum DOD or user input */
         costToCycle();
+
+        omCost();
 
         // Compute forecast variables
         size_t idx_lookahead = _forecast_hours * _steps_per_hour;
@@ -366,4 +370,10 @@ void dispatch_automatic_front_of_meter_t::costToCycle()
     {
         m_cycleCost = cycle_costs_by_year[curr_year];
     }
+}
+
+
+void dispatch_automatic_front_of_meter_t::omCost()
+{
+    m_omCost = om_costs_by_year[curr_year];
 }

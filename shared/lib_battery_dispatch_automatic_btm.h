@@ -78,6 +78,7 @@ public:
         std::vector<double> battReplacementCostPerkWh,
         int battCycleCostChoice,
         std::vector<double> battCycleCost,
+        std::vector<double> battOMCost, // required for base class
         double interconnection_limit,
         bool chargeOnlySystemExceedLoad,
         bool dischargeOnlyLoadExceedSystem,
