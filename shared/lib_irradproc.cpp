@@ -2819,8 +2819,15 @@ void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowTo
 
 
         // Add ground reflected component
-        // subdivide spatial albedos to match ground GHI length and align reference point at front of row
-        std::vector<double> albedoAligned = divideAndAlignAlbedos(albedoSpatial, intervals, trackingMode == 1, horizontalLength, rowToRow);
+        std::vector<double> albedoAligned;
+        if (trackingMode == 0 || trackingMode == 1 || trackingMode == 4) {          // 0=fixed, 1=one-axis, 4=seasonal tilt
+            // subdivide spatial albedos to match ground GHI length and align reference point at front of row
+            albedoAligned = divideAndAlignAlbedos(albedoSpatial, intervals, trackingMode == 1, horizontalLength, rowToRow);
+        }
+        else {
+            double average_albedo = std::accumulate(albedoSpatial.begin(), albedoSpatial.end(), 0.) / albedoSpatial.size();
+            albedoAligned.assign(intervals, average_albedo);
+        }
 
         for (size_t j = iStartGrd; j < 180; j++) {
             double startElevationDown = (j - iStartGrd) * DTOR + elevationAngleDown;
@@ -3029,8 +3036,15 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 
 
         // Add ground reflected component
-        // subdivide spatial albedos to match ground GHI length and align reference point at front of row
-        std::vector<double> albedoAligned = divideAndAlignAlbedos(albedoSpatial, intervals, trackingMode == 1, horizontalLength, rowToRow);
+        std::vector<double> albedoAligned;
+        if (trackingMode == 0 || trackingMode == 1 || trackingMode == 4) {          // 0=fixed, 1=one-axis, 4=seasonal tilt
+            // subdivide spatial albedos to match ground GHI length and align reference point at front of row
+            albedoAligned = divideAndAlignAlbedos(albedoSpatial, intervals, trackingMode == 1, horizontalLength, rowToRow);
+        }
+        else {
+            double average_albedo = std::accumulate(albedoSpatial.begin(), albedoSpatial.end(), 0.) / albedoSpatial.size();
+            albedoAligned.assign(intervals, average_albedo);
+        }
 
         for (size_t j = iStartGrd; j < 180; j++) {
             double startElevationDown = (double) (j - iStartGrd) * DTOR + elevationAngleDown;
