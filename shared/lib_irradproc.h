@@ -882,6 +882,19 @@ std::vector<double> divideAndAlignAlbedos(const std::vector<double>& albedo /*-*
                                           double horizontalLength /*m*/, double rowToRow /*m*/);
 
 /**
+* condenseAndAlignGroundIrrad condenses the spatial ground irradiance vector and if 1-axis tracking
+* changes reference from the row front to the midline
+*
+* \param[in] ground_irr spatial ground irradiance for that point in time
+* \param[in] n_divisions reduced number of divisions to condense the spatial ground irradiance into
+* \param[in] isOneAxisTracking is 1-axis tracking used?
+* \param[in] horizontalLength projected horizontal length of the row, product of slope length and tilt
+* \param[in] rowToRow distance between front of row and front of row behind
+*/
+std::vector<double> condenseAndAlignGroundIrrad(const std::vector<double>& ground_irr /*W/m2*/, size_t n_divisions /*-*/, bool isOneAxisTracking /*-*/,
+                                                double horizontalLength /*m*/, double rowToRow /*m*/);
+
+/**
 * truetrack calculates the tracker rotation that minimizes the angle of incidence betweem direct irradiance and the module front surface normal
 *
 * \param[in] solar_azimuth sun azimuth in degrees, measured east from north
@@ -973,6 +986,8 @@ protected:
     double diffuseIrradianceRear[3];		///< Rear-side diffuse irradiance for isotropic, circumsolar, and horizon (W/m2)
     int timeStepSunPosition[3];				///< [0] effective hour of day used for sun position, [1] effective minute of hour used for sun position, [2] is sun up?  (0=no, 1=midday, 2=sunup, 3=sundown)
     double planeOfArrayIrradianceRearAverage; ///< Average rear side plane-of-array irradiance (W/m2)
+    std::vector<double> planeOfArrayIrradianceRearSpatial;  ///< Spatial rear side plane-of-array irradiance (W/m2), where index 0 is at row bottom
+    std::vector<double> groundIrradianceSpatial;            ///< Spatial irradiance incident on the ground in between rows, where index 0 is towards front of array
 
 public:
 
@@ -1069,6 +1084,12 @@ public:
 
     /// Return the rear-side average total plane-of-array irradiance
     double get_poa_rear();
+
+    /// Return the rear-side spatial total plane-of-array irradiance
+    std::vector<double> get_poa_rear_spatial();
+
+    /// Return the ground spatial total plane-of-array irradiance
+    std::vector<double> get_ground_spatial();
 
     /// Return the front-side irradiance components
     void get_irrad(double* ghi, double* dni, double* dhi);

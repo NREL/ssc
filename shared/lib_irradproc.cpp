@@ -2186,6 +2186,14 @@ double irrad::get_poa_rear() {
     return planeOfArrayIrradianceRearAverage;
 }
 
+std::vector<double> irrad::get_poa_rear_spatial() {
+    return planeOfArrayIrradianceRearSpatial;
+}
+
+std::vector<double> irrad::get_ground_spatial() {
+    return groundIrradianceSpatial;
+}
+
 void irrad::get_irrad(double *ghi, double *dni, double *dhi) {
     *ghi = globalHorizontal;
     *dni = directNormal;
@@ -2511,6 +2519,7 @@ int irrad::calc_rear_side(double transmissionFactor, double groundClearanceHeigh
         std::vector<double> rearGroundGHI, frontGroundGHI;
         this->getGroundGHI(transmissionFactor, rearSkyConfigFactors, frontSkyConfigFactors, rearGroundShade,
                            frontGroundShade, rearGroundGHI, frontGroundGHI);
+        groundIrradianceSpatial = condenseAndAlignGroundIrrad(rearGroundGHI, 10, trackingMode == 1, horizontalLength, rowToRow);
 
         // Calculate the irradiance on the front of the PV module (to get front reflected)
         std::vector<double> frontIrradiancePerCellrow, frontReflected;
@@ -2526,6 +2535,7 @@ int irrad::calc_rear_side(double transmissionFactor, double groundClearanceHeigh
                                   horizontalLength, rearGroundGHI, frontGroundGHI, frontReflected,
                                   rearIrradiancePerCellrow, rearAverageIrradiance);
         planeOfArrayIrradianceRearAverage = rearAverageIrradiance;
+        planeOfArrayIrradianceRearSpatial = rearIrradiancePerCellrow;
     }
     return true;
 }
@@ -3176,7 +3186,7 @@ double shadeFraction1x(double solar_azimuth, double solar_zenith,
 std::vector<double> divideAndAlignAlbedos(const std::vector<double>& albedo /*-*/, size_t n_divisions /*-*/, bool isOneAxisTracking /*-*/,
                                           double horizontalLength /*m*/, double rowToRow /*m*/) {
     /*
-    Subdivide spatial albedo and if 1-axis tracking change reference from the row midline to the front
+    Subdivide spatial albedos and if 1-axis tracking change reference from the row midline to the front
     */
     assert(n_divisions % albedo.size() == 0);                           // functionality only works for even divisions
 
@@ -3189,24 +3199,64 @@ std::vector<double> divideAndAlignAlbedos(const std::vector<double>& albedo /*-*
     }
 
     if (isOneAxisTracking) {
-        // Rotate the albedo vector so the first index is at the front of the row instead of at center
+        // Rotate the albedo vector so the first index is at (or overlapping) the front of the row instead of at center
         double L_division = rowToRow / n_divisions;                     // length of a single albedo division
-        double n = 0.5 * horizontalLength / L_division;                 // number of albedo segments between front of row and center of row
+        double n = 0.5 * horizontalLength / L_division;                 // fractional number of albedo segments between front of row and center of row
         size_t leading_segments = n_divisions - std::ceil(n);           // whole albedo segments between center of row and front of row behind
         rotate(albedo_aligned.begin(), albedo_aligned.begin() + leading_segments, albedo_aligned.end());   // move the leading segments to the back of the vector
 
+        // 'Shift' the actual ground albedo locations to front of row by weighting-averaging adjacent divisions
         double frac_div_extending = std::ceil(n) - n;                   // fraction of now first albedo division extending beyond front of row
-        if (frac_div_extending != 0.) {
-            // 'Shift' the actual ground albedo locations to front of row by weighting averaging adjacent divisions
-            double albedo_front_orig = albedo_aligned.front();
-            for (size_t i = 0; i < n_divisions - 1; i++) {              // do last segment separately
-                albedo_aligned.at(i) = albedo_aligned.at(i) * (1 - frac_div_extending) + albedo_aligned.at(i + 1) * frac_div_extending;
-            }
-            albedo_aligned.back() = albedo_aligned.back() * (1 - frac_div_extending) + albedo_front_orig * frac_div_extending;
+        double albedo_front_orig = albedo_aligned.front();
+        for (size_t i = 0; i < n_divisions - 1; i++) {                  // do last segment separately
+            albedo_aligned.at(i) = albedo_aligned.at(i) * (1 - frac_div_extending) + albedo_aligned.at(i + 1) * frac_div_extending;
         }
+        albedo_aligned.back() = albedo_aligned.back() * (1 - frac_div_extending) + albedo_front_orig * frac_div_extending;
     }
 
     return albedo_aligned;
+}
+
+std::vector<double> condenseAndAlignGroundIrrad(const std::vector<double>& ground_irr /*W/m2*/, size_t n_divisions /*-*/, bool isOneAxisTracking /*-*/,
+                                            double horizontalLength /*m*/, double rowToRow /*m*/) {
+    /*
+    Condense spatial ground irradiances and if 1-axis tracking change reference from the row front to the midline
+    */
+    assert(ground_irr.size() % n_divisions == 0);                           // functionality only works for even divisions
+
+    std::vector<double> ground_aligned = ground_irr;
+
+    if (isOneAxisTracking) {
+        // Rotate the ground irradiance vector so the first index is at (or overlapping) the center of the row instead of at the midline
+        double L_division = rowToRow / ground_aligned.size();           // length of a single ground division
+        double n = 0.5 * horizontalLength / L_division;                 // fractional number of ground segments between front of row and center of row
+        size_t leading_segments = std::floor(n);                        // whole ground segments between front of row and center of row
+        rotate(ground_aligned.begin(), ground_aligned.begin() + leading_segments, ground_aligned.end());   // move the leading segments to the back of the vector
+
+        // 'Shift' the actual ground irradiance locations to center of row by weighting-averaging adjacent divisions
+        double frac_div_extending = n - std::floor(n);                  // fraction of now first ground division extending beyond center of row
+        double ground_front_orig = ground_aligned.front();
+        for (size_t i = 0; i < ground_aligned.size() - 1; i++) {        // do last segment separately
+            ground_aligned.at(i) = ground_aligned.at(i) * (1 - frac_div_extending) + ground_aligned.at(i + 1) * frac_div_extending;
+        }
+        ground_aligned.back() = ground_aligned.back() * (1 - frac_div_extending) + ground_front_orig * frac_div_extending;
+    }
+
+    // Downsample vector to n_divisions
+    std::vector<double> ground_condensed;
+    size_t num_to_avg = ground_aligned.size() / n_divisions;
+    size_t i = 0;
+    double sum = 0.;
+    while (i < ground_aligned.size()) {
+        sum += ground_aligned.at(i);
+        if ((i + 1) % num_to_avg == 0) {
+            ground_condensed.push_back(sum / num_to_avg);     // add average to output
+            sum = 0.;
+        }
+        i++;
+    }
+
+    return ground_condensed;
 }
 
 double truetrack(double solar_azimuth, double solar_zenith, double axis_tilt, double axis_azimuth) {
