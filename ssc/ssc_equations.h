@@ -33,6 +33,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "cmod_csp_trough_eqns.h"
 #include "cmod_financial_eqns.h"
 #include "cmod_utilityrate5_eqns.h"
+#include "cmod_analysisperiodchange_eqns.h"
 
 /**
  *  Returns true if completed successfully. For failures, query the "error" string that has been assigned to the `data`.
@@ -173,6 +174,12 @@ static ssc_equation_entry ssc_equation_table [] = {
         {"ElectricityRates_format_as_URDBv7", ElectricityRates_format_as_URDBv7,
             "UtilityRate5", ElectricityRates_format_as_URDBv7_doc,
             false, true},
+
+        // analysis period change
+        { "analysisperiodchange", analysisperiodchange,
+                "Merchant plant", analysisperiodchange_doc,
+                false, true },
+
         {nullptr, nullptr, nullptr, nullptr, false, false}
 };
 

@@ -75,7 +75,7 @@ static var_info _cm_vtab_mhk_wave[] = {
     { SSC_OUTPUT,           SSC_ARRAY,          "energy_period_data",            "Energy period time series data",                      "s",                         "", "MHKWave",          "wave_resource_model_choice=1",                        "",          "" },
 
     { SSC_OUTPUT,           SSC_ARRAY,          "wave_power_index_mat",            "Wave power for time series",                      "kW",                         "", "MHKWave",          "wave_resource_model_choice=1",                        "",          "" },
-    { SSC_OUTPUT,			SSC_NUMBER,			"capacity_factor",						"Capacity Factor",													"%",			"",				"MHKWave",			"*",						"",							"" },
+    { SSC_OUTPUT,			SSC_NUMBER,			"capacity_factor",						"Capacity factor",													"%",			"",				"MHKWave",			"*",						"",							"" },
     { SSC_OUTPUT,			SSC_NUMBER,			"numberRecords",						"Number of Records",													"",			"",				"MHKWave",			"",						"",							"" },
     { SSC_OUTPUT,			SSC_NUMBER,			"numberHours",						"Number of Hours",													"",			"",				"MHKWave",			"",						"",							"" },
 

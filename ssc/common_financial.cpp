@@ -3329,7 +3329,7 @@ var_info vtab_lcos_inputs[] = {
     { SSC_OUTPUT, SSC_ARRAY, "cf_om_batt_capacity_expense", "Annual cost for battery capacity based maintenance", "$", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT, SSC_ARRAY, "cf_om_batt_fixed_expense", "Annual fixed cost for battery maintenance", "$", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT, SSC_ARRAY, "cf_salvage_cost_lcos", "Annual battery salvage value costs", "$", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_util_escal_rate", "Annual battery salvage value costs", "$", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_util_escal_rate", "Utility escalation rate", "", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
 
     { SSC_OUTPUT, SSC_NUMBER, "npv_annual_costs_lcos", "Present value of annual storage costs", "$", "", "LCOE calculations", "", "", "" },
     { SSC_OUTPUT, SSC_NUMBER, "npv_energy_lcos_real", "Present value of annual stored energy (real)", "kWh", "", "LCOE calculations", "", "", "" },

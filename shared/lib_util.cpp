@@ -813,8 +813,13 @@ int util::day_of(double time)
 int util::week_of(double time)
 {
 	/* returns week number 0..51 given
-	   time: hour index in year 0..8759 */
+	   time: hour index in year 0..8759
+       Note that for any number 8736 <= x <8760
+      (int)  (x / 24*7) = 52 (integer value
+       */
 	int weeknum = ((int)(time / (24.0*7.0)));   // week goes 0-51
+    if (weeknum > 51) weeknum = 51;
+    if (weeknum < 0) weeknum = 0;
 	return weeknum;
 }
 

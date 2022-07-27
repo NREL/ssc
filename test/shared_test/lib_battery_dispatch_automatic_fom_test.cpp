@@ -224,12 +224,12 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_DCCustomChargeSubhourly) {
 
         if (h < 6){
             EXPECT_NEAR(batteryPower->powerBatteryDC, -25000, 1) << "error in dispatched power at hour " << h;
-            EXPECT_NEAR(batteryPower->powerGridToBattery, 25868, 1) << "hour " << h;
+            EXPECT_NEAR(batteryPower->powerGridToBattery, 25877, 1) << "hour " << h;
             EXPECT_NEAR(batteryPower->sharedInverter->efficiencyAC, 97.6, 0.1);
         }
         else if (h == 6){
             EXPECT_NEAR(batteryPower->powerBatteryDC, -24392, 1) << "error in dispatched power at hour " << h;
-            EXPECT_NEAR(batteryPower->powerGridToBattery, 25233, 1) << "hour " << h;
+            EXPECT_NEAR(batteryPower->powerGridToBattery, 25241, 1) << "hour " << h;
             EXPECT_NEAR(batteryPower->sharedInverter->efficiencyAC, 97.64, 0.1);
         }
         else{
