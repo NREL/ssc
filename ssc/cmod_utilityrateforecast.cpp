@@ -31,7 +31,7 @@ static var_info vtab_utilityrateforecast[] =
 /*   VARTYPE            DATATYPE         NAME                        LABEL                                  UNITS     META       GROUP           REQUIRED_IF     CONSTRAINTS UI_HINTS*/
     { SSC_INPUT,        SSC_NUMBER,     "analysis_period",           "Number of years in escalation and forecast", "years",  "",  "Lifetime",     "*",           "INTEGER,POSITIVE",              "" },
     { SSC_INPUT,        SSC_NUMBER,      "steps_per_hour",           "Steps per hour",                  "hr",      "",        "Controls",     "*",            "",         "" },
-    { SSC_INPUT,        SSC_NUMBER,      "idx",                      "Starting index (lifetime)",               "",        "",        "StatePack",    "",             "",         ""  },
+    { SSC_INOUT,        SSC_NUMBER,      "idx",                      "Starting index (lifetime)",               "",        "",        "StatePack",    "",             "",         ""  },
 
     { SSC_INPUT,        SSC_ARRAY,       "load",                     "Lifetime load forecast",               "",        "",        "Electricity Rates",   "",      "",         "" },
     { SSC_INPUT,        SSC_ARRAY,       "gen",                      "Lifetime generation forecast",         "",        "",        "Electricity Rates",   "",      "",         "" },
@@ -149,6 +149,7 @@ void cm_utilityrateforecast::exec( )
     assign("ur_total_bill", total_bill);
     assign("ur_energy_use", energy_use);
     assign("ur_dc_peaks", prior_peaks);
+    assign("idx", (int) idx);
 
 }
 

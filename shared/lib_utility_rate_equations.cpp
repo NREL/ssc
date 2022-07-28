@@ -904,7 +904,7 @@ void rate_data::init_dc_peak_vectors(int month)
 	curr_month.dc_tou_peak.clear();
 	curr_month.dc_tou_peak_hour.clear();
 	
-	curr_month.dc_tou_peak = std::vector<ssc_number_t>(curr_month.dc_periods.size());
+	curr_month.dc_tou_peak = std::vector<ssc_number_t>(curr_month.dc_periods.size(), 0.0);
 	curr_month.dc_tou_peak_hour = std::vector<size_t>(curr_month.dc_periods.size());
 }
 
@@ -1266,7 +1266,7 @@ void rate_data::set_energy_use_and_peaks(util::matrix_t<double> energy_use, util
         throw exec_error("lib_utility_rate_equations", ss.str());
     }
 
-    if (peak_use.ncols() != dc_periods)
+    if (peak_use.ncols() != dc_periods && dc_enabled)
     {
         std::ostringstream ss;
         ss << "Peak demand provided only has " << peak_use.ncols() << " TOU periods. " << dc_periods << " are required.";
