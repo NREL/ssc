@@ -762,7 +762,7 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, bifacial) {
     {
         ssc_number_t annualEnergy;
         ssc_data_get_number(data, "annual_energy", &annualEnergy);
-        EXPECT_NEAR(annualEnergy, 9262, 1.0) << "Bifacial annual energy from SAM version 2018.11.11 using Phoenix TMY2";
+        EXPECT_NEAR(annualEnergy, 9245, 1.0) << "Bifacial annual energy from SAM version 2018.11.11 using Phoenix TMY2";
     }
 
 

@@ -2537,6 +2537,11 @@ int irrad::calc_rear_side(double transmissionFactor, double groundClearanceHeigh
         planeOfArrayIrradianceRearAverage = rearAverageIrradiance;
         planeOfArrayIrradianceRearSpatial = rearIrradiancePerCellrow;
     }
+    else {
+        groundIrradianceSpatial.clear();
+        planeOfArrayIrradianceRearAverage = 0.;
+        planeOfArrayIrradianceRearSpatial.clear();
+    }
     return true;
 }
 

@@ -21,6 +21,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <algorithm>
+#include <cmath>
 #include "cmod_pvsamv1.h"
 #include "lib_pv_io_manager.h"
 #include "lib_resilience.h"
@@ -1322,6 +1323,7 @@ void cm_pvsamv1::exec()
 
             // calculate incident irradiance on each subarray
             std::vector<double> ipoa_rear, ipoa_rear_after_losses, ipoa_front, ipoa;
+            std::vector<std::vector<double>> ipoa_rear_spatial, ignd_rear;
             double alb = 0.;
             std::vector<double> alb_spatial;
 
@@ -1331,6 +1333,8 @@ void cm_pvsamv1::exec()
                 ipoa_rear_after_losses.push_back(0);
                 ipoa_front.push_back(0);
                 ipoa.push_back(0);
+                ipoa_rear_spatial.push_back(std::vector<double>());
+                ignd_rear.push_back(std::vector<double>());
 
                 if (!Subarrays[nn]->enable
                     || Subarrays[nn]->nStrings < 1)
@@ -1696,6 +1700,7 @@ void cm_pvsamv1::exec()
                 ts_accum_poa_front_shaded_soiled += ipoa_front[nn] * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
 
                 // Calculate rear-side irradiance for bifacial modules
+                double intra_elec_mismatch = 0.;
                 if (Subarrays[0]->Module->isBifacial)
                 {
                     bifaciality = Subarrays[0]->Module->bifaciality;
@@ -1705,11 +1710,14 @@ void cm_pvsamv1::exec()
                     }
                     irr.calc_rear_side(Subarrays[0]->Module->bifacialTransmissionFactor, Subarrays[0]->Module->groundClearanceHeight, slopeLength);
                     ipoa_rear[nn] = irr.get_poa_rear();
-                    ipoa_rear_after_losses[nn] = ipoa_rear[nn] * (1 - Subarrays[nn]->rearIrradianceLossPercent);
+                    ipoa_rear_spatial[nn] = irr.get_poa_rear_spatial();
+                    ignd_rear[nn] = irr.get_ground_spatial();
+                    intra_elec_mismatch = intraElecMismatch(ipoa_front[nn], ipoa_rear_spatial[nn], bifaciality, Subarrays[nn]->Module->selfShadingFillFactor);
+                    ipoa_rear_after_losses[nn] = ipoa_rear[nn] * (1 - Subarrays[nn]->rearIrradianceLossPercent) * (1 - intra_elec_mismatch);
                 }
 
                 ts_accum_poa_rear += ipoa_rear[nn] * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
-                ts_accum_poa_rear_after_losses = ts_accum_poa_rear * (1 - Subarrays[nn]->rearIrradianceLossPercent);
+                ts_accum_poa_rear_after_losses = ts_accum_poa_rear * (1 - Subarrays[nn]->rearIrradianceLossPercent) * (1 - intra_elec_mismatch);
 
                 if (iyear == 0 || save_full_lifetime_variables == 1)
                 {
@@ -2972,6 +2980,51 @@ void cm_pvsamv1::exec()
             PVSystem->p_mpptVoltage[0], PVSystem->p_inverterClipLoss, Irradiance->p_weatherFileAmbientTemp);
         calculate_resilience_outputs(this, resilience);
     }
+}
+
+double cm_pvsamv1::intraElecMismatch(double irrad_front_avg /*W/m2*/, std::vector<double> irrad_back /*W/m2*/, double bifaciality /*-*/, double fill_factor_stc /*-*/)
+{
+    /*
+    * The intra-module electrical mismatch loss factor [-] from:
+    * Deline, "Estimating and Parameterizing Mismatch Power Loss in Bifacial Photovoltaic Systems"
+    */
+    const double kFillFactorReference = 0.79;
+
+    if (irrad_front_avg == 0 || irrad_back.size() == 0 || bifaciality == 0) {
+        return 0.;                  // avoid nan's
+    }
+
+    std::vector<double> irrad_total;
+    for (size_t i = 0; i < irrad_back.size(); i++) {
+        irrad_total.push_back(irrad_front_avg + bifaciality * irrad_back.at(i));
+    }
+
+    double sum_of_deviations = 0.;
+    for (size_t i = 0; i < irrad_total.size(); i++) {
+        for (size_t j = 0; j < irrad_total.size(); j++) {
+            sum_of_deviations += abs(irrad_total[i] - irrad_total[j]);
+        }
+    }
+
+    double irrad_total_avg = std::accumulate(irrad_total.begin(), irrad_total.end(), 0.) / irrad_total.size();
+    if (irrad_total_avg == 0) {
+        return 0.;                  // mean absolute difference would be nan
+    }
+
+    double mean_abs_diff = sum_of_deviations / ( pow(irrad_total.size(), 2) * irrad_total_avg ) * 100.;         // [%] Eqn. 4
+    double mismatch_loss_fit3 = 0.054 * mean_abs_diff + 0.068 * pow(mean_abs_diff, 2);                          // [%] Eqn. 12
+    double mismatch_factor = mismatch_loss_fit3 * (fill_factor_stc / kFillFactorReference);                     // [%] Eqn. 7
+
+    double irrad_back_avg = std::accumulate(irrad_back.begin(), irrad_back.end(), 0.) / irrad_back.size();
+    double bifacial_irrad_gain = irrad_back_avg * bifaciality / irrad_front_avg * 100.;                         // [%] Eqn. 5
+    double loss_factor;
+    if (bifacial_irrad_gain != 0) {
+        loss_factor = mismatch_factor * (1 + 100. / bifacial_irrad_gain);                                       // [%] Eqn. 15
+    }
+    else {
+        loss_factor = 0.;
+    }
+    return loss_factor / 100.;     // [-]
 }
 
 double cm_pvsamv1::module_eff(int mod_type)
