@@ -31,7 +31,7 @@ static var_info vtab_utilityrateforecast[] =
 /*   VARTYPE            DATATYPE         NAME                        LABEL                                  UNITS     META       GROUP           REQUIRED_IF     CONSTRAINTS UI_HINTS*/
     { SSC_INPUT,        SSC_NUMBER,     "analysis_period",           "Number of years in escalation and forecast", "years",  "",  "Lifetime",     "*",           "INTEGER,POSITIVE",              "" },
     { SSC_INPUT,        SSC_NUMBER,      "steps_per_hour",           "Steps per hour",                  "hr",      "",        "Controls",     "*",            "",         "" },
-    { SSC_INOUT,        SSC_NUMBER,      "idx",                      "Starting index (lifetime)",               "",        "",        "StatePack",    "",             "",         ""  },
+    { SSC_INOUT,        SSC_NUMBER,      "idx",                      "Starting index (lifetime)",               "",        "",        "Controls",    "",             "",         ""  },
 
     { SSC_INPUT,        SSC_ARRAY,       "load",                     "Lifetime load forecast",               "",        "",        "Electricity Rates",   "",      "",         "" },
     { SSC_INPUT,        SSC_ARRAY,       "gen",                      "Lifetime generation forecast",         "",        "",        "Electricity Rates",   "",      "",         "" },
@@ -42,8 +42,8 @@ static var_info vtab_utilityrateforecast[] =
 
     { SSC_INPUT,        SSC_NUMBER,      "inflation_rate",           "Inflation rate",                      "%",      "",        "Lifetime",     "*",            "MIN=-99",  "" },
 
-    { SSC_OUTPUT,       SSC_ARRAY,       "ur_price_series",          "Estimated cost of each timestep",     "$",      "",        "Lifetime",     "*",            "",  "" },
-    { SSC_OUTPUT,       SSC_NUMBER,      "ur_total_bill",            "Total cost for the calculated period","$",      "",        "Lifetime",     "*",            "",  "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "ur_price_series",          "Estimated cost of each timestep",     "$",      "",        "Time Series",     "*",            "",  "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "ur_total_bill",            "Total cost for the calculated period","$",      "",        "Financial Metrics",     "*",            "",  "" },
 
 
 var_info_invalid };
