@@ -208,7 +208,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t year, size_t ho
         }
 
         /*! Economic benefit of charging from the grid in current time step to discharge sometime in next X hours ($/kWh)*/
-        revenueToGridCharge = *max_ppa_cost * m_etaDischarge - usage_cost / m_etaGridCharge - m_cycleCost;
+        revenueToGridCharge = *max_ppa_cost * m_etaDischarge - usage_cost / m_etaGridCharge - m_cycleCost - m_omCost;
 
         /*! Computed revenue to charge from Grid in each of next X hours ($/kWh)*/
         double revenueToGridChargeMax = 0;
@@ -217,10 +217,10 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t year, size_t ho
             size_t j = 0;
             for (size_t i = lifetimeIndex; i < lifetimeIndex + idx_lookahead; i++) {
                 if (m_utilityRateCalculator) {
-                    revenueToGridChargeForecast.push_back(*max_ppa_cost * m_etaDischarge - usage_cost_forecast[j] / m_etaGridCharge - m_cycleCost);
+                    revenueToGridChargeForecast.push_back(*max_ppa_cost * m_etaDischarge - usage_cost_forecast[j] / m_etaGridCharge - m_cycleCost - m_omCost);
                 }
                 else {
-                    revenueToGridChargeForecast.push_back(*max_ppa_cost * m_etaDischarge - _forecast_price_rt_series[i] / m_etaGridCharge - m_cycleCost);
+                    revenueToGridChargeForecast.push_back(*max_ppa_cost * m_etaDischarge - _forecast_price_rt_series[i] / m_etaGridCharge - m_cycleCost - m_omCost);
                 }
                 j++;
             }
@@ -228,7 +228,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t year, size_t ho
         }
 
         /*! Economic benefit of charging from regular PV in current time step to discharge sometime in next X hours ($/kWh)*/
-        revenueToPVCharge = _P_pv_ac[lifetimeIndex] > 0 ? *max_ppa_cost * m_etaDischarge - ppa_cost / m_etaPVCharge - m_cycleCost : 0;
+        revenueToPVCharge = _P_pv_ac[lifetimeIndex] > 0 ? *max_ppa_cost * m_etaDischarge - ppa_cost / m_etaPVCharge - m_cycleCost -m_omCost : 0;
 
         /*! Computed revenue to charge from PV in each of next X hours ($/kWh)*/
         size_t t_duration = static_cast<size_t>(ceilf( (float)
@@ -241,7 +241,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t year, size_t ho
                 // when considering grid charging, require PV output to exceed battery input capacity before accepting as a better option
                 bool system_on = _P_pv_ac[i] >= m_batteryPower->powerBatteryChargeMaxDC ? 1 : 0;
                 if (system_on) {
-                    revenueToPVChargeForecast.push_back(system_on * (*max_ppa_cost * m_etaDischarge - _forecast_price_rt_series[i] / m_etaPVCharge - m_cycleCost));
+                    revenueToPVChargeForecast.push_back(system_on * (*max_ppa_cost * m_etaDischarge - _forecast_price_rt_series[i] / m_etaPVCharge - m_cycleCost - m_omCost));
                 }
             }
             pv_hours_on = revenueToPVChargeForecast.size() / _steps_per_hour;
@@ -249,10 +249,10 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t year, size_t ho
         }
 
         /*! Economic benefit of charging from clipped PV in current time step to discharge sometime in the next X hours (clipped PV is free) ($/kWh) */
-        revenueToClipCharge = _P_cliploss_dc[lifetimeIndex] > 0 ? *max_ppa_cost * m_etaDischarge - m_cycleCost : 0;
+        revenueToClipCharge = _P_cliploss_dc[lifetimeIndex] > 0 ? *max_ppa_cost * m_etaDischarge - m_cycleCost - m_omCost : 0;
 
         /*! Economic benefit of discharging in current time step ($/kWh) */
-        revenueToDischarge = ppa_cost * m_etaDischarge - m_cycleCost;
+        revenueToDischarge = ppa_cost * m_etaDischarge - m_cycleCost - m_omCost;
 
         /*! Energy need to charge the battery (kWh) */
         double energyNeededToFillBattery = _Battery->energy_to_fill(m_batteryPower->stateOfChargeMax);
