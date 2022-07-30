@@ -515,7 +515,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             // battery o and m cost
             if (vt.is_assigned("om_batt_variable_cost"))
             {
-                std::vector<ssc_number_t> replacement_cost(nyears);
+                std::vector<ssc_number_t> om_cost(nyears);
                 ssc_number_t* parr = vt.as_array("om_batt_variable_cost", &cnt);
                 if (cnt == 1)
                 {
@@ -525,7 +525,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
                     }
 
                     for (i = 0; i < nyears; i++)
-                        replacement_cost[i] = parr[0] * (ssc_number_t)pow((double)(inflation_rate + escal + 1), (double)i);
+                        om_cost[i] = parr[0] * (ssc_number_t)pow((double)(inflation_rate + escal + 1), (double)i);
                 }
                 else if (cnt < nyears)
                 {
@@ -533,12 +533,12 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
                 }
                 else {
                     for (i = 0; i < nyears; i++)
-                        replacement_cost[i] = parr[i];
+                        om_cost[i] = parr[i];
                 }
-                batt_vars->batt_cost_per_kwh = replacement_cost;
+                batt_vars->om_batt_variable_cost_per_kwh = om_cost;
             }
             else
-                batt_vars->batt_cost_per_kwh = std::vector<double>(nyears, 0.0);
+                batt_vars->om_batt_variable_cost_per_kwh = std::vector<double>(nyears, 0.0);
 
 
 

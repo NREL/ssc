@@ -622,7 +622,7 @@ void dispatch_automatic_behind_the_meter_t::cost_based_target_power(size_t idx, 
         plans[i].num_cycles = 0;
         plan_dispatch_for_cost(plans[i], idx, E_max, startingEnergy);
         UtilityRateForecast midDispatchForecast(*rate_forecast);
-        plans[i].cost = midDispatchForecast.forecastCost(plans[i].plannedGridUse, year, hour_of_year, 0) + cost_to_cycle() * plans[i].num_cycles - plans[i].kWhRemaining * plans[i].lowestMarginalCost;
+        plans[i].cost = midDispatchForecast.forecastCost(plans[i].plannedGridUse, year, hour_of_year, 0) + cost_to_cycle() * plans[i].num_cycles + plans[i].kWhRemaining * m_omCost  - plans[i].kWhRemaining * plans[i].lowestMarginalCost;
 
         if (plans[i].cost <= lowest_cost)
         {
