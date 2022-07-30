@@ -554,9 +554,11 @@ static var_info _cm_vtab_pvsamv1[] = {
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_nom",                    "Subarray 1 POA front total irradiance nominal",                        "W/m2",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_shaded",                 "Subarray 1 POA front total irradiance after shading only",             "W/m2",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_shaded_soiled",          "Subarray 1 POA front total irradiance after shading and soiling",      "W/m2",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
-        { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_front",                  "Subarray 1 POA front total irradiance after reflection (IAM)",              "W/m2",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
-        { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_rear",                   "Subarray 1 POA rear total irradiance after reflection (IAM)",              "W/m2",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
-        { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_eff",                    "Subarray 1 POA total irradiance after reflection (IAM)",                   "W/m2",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_front",                  "Subarray 1 POA front total irradiance after reflection (IAM)",         "W/m2",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_rear",                   "Subarray 1 POA rear total irradiance after reflection (IAM)",          "W/m2",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_MATRIX,     "subarray1_poa_rear_spatial",           "Subarray 1 POA spatial rear total irradiance after reflection (IAM)",  "W/m2",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_MATRIX,     "subarray1_ground_rear_spatial",        "Subarray 1 spatial irradiance incident on the ground between rows",    "W/m2",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_eff",                    "Subarray 1 POA total irradiance after reflection (IAM)",               "W/m2",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_soiling_derate",             "Subarray 1 Soiling beam irradiance factor",                            "frac",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_beam_shading_factor",        "Subarray 1 External shading and soiling beam irradiance factor",       "frac",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_linear_derate",              "Subarray 1 Self-shading linear beam irradiance factor",                "frac",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
@@ -585,9 +587,11 @@ static var_info _cm_vtab_pvsamv1[] = {
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray2_poa_nom",                    "Subarray 2 POA front total irradiance nominal",                        "W/m2",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray2_poa_shaded",                 "Subarray 2 POA front total irradiance after shading only",             "W/m2",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray2_poa_shaded_soiled",          "Subarray 2 POA front total irradiance after shading and soiling",      "W/m2",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
-        { SSC_OUTPUT,        SSC_ARRAY,      "subarray2_poa_front",                  "Subarray 2 POA front total irradiance after reflection (IAM)",                     "W/m2",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
-        { SSC_OUTPUT,        SSC_ARRAY,      "subarray2_poa_rear",                   "Subarray 2 POA rear irradiance after reflection (IAM)",                            "W/m2",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
-        { SSC_OUTPUT,        SSC_ARRAY,      "subarray2_poa_eff",                    "Subarray 2 POA total irradiance after module reflection (IAM)",                   "W/m2",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "subarray2_poa_front",                  "Subarray 2 POA front total irradiance after reflection (IAM)",         "W/m2",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "subarray2_poa_rear",                   "Subarray 2 POA rear irradiance after reflection (IAM)",                "W/m2",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_MATRIX,     "subarray2_poa_rear_spatial",           "Subarray 2 POA spatial rear total irradiance after reflection (IAM)",  "W/m2",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_MATRIX,     "subarray2_ground_rear_spatial",        "Subarray 2 spatial irradiance incident on the ground between rows",    "W/m2",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "subarray2_poa_eff",                    "Subarray 2 POA total irradiance after module reflection (IAM)",        "W/m2",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray2_soiling_derate",             "Subarray 2 Soiling beam irradiance factor",                            "frac",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray2_beam_shading_factor",        "Subarray 2 External shading and soiling beam irradiance factor",       "frac",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray2_linear_derate",              "Subarray 2 Self-shading linear beam irradiance factor",                "frac",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
@@ -616,9 +620,11 @@ static var_info _cm_vtab_pvsamv1[] = {
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray3_poa_nom",                    "Subarray 3 POA font total irradiance nominal",                        "W/m2",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray3_poa_shaded",                 "Subarray 3 POA front total irradiance after shading only",             "W/m2",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray3_poa_shaded_soiled",          "Subarray 3 POA front total irradiance after shading and soiling",      "W/m2",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
-        { SSC_OUTPUT,        SSC_ARRAY,      "subarray3_poa_front",                  "Subarray 3 POA front total irradiance after reflection (IAM)",					 "W/m2",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
-        { SSC_OUTPUT,        SSC_ARRAY,      "subarray3_poa_rear",                   "Subarray 3 POA rear irradiance after reflection (IAM)",                            "W/m2",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
-        { SSC_OUTPUT,        SSC_ARRAY,      "subarray3_poa_eff",                    "Subarray 3 POA total irradiance after reflection (IAM)",                          "W/m2",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "subarray3_poa_front",                  "Subarray 3 POA front total irradiance after reflection (IAM)",		 "W/m2",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "subarray3_poa_rear",                   "Subarray 3 POA rear irradiance after reflection (IAM)",                "W/m2",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_MATRIX,     "subarray3_poa_rear_spatial",           "Subarray 3 POA spatial rear total irradiance after reflection (IAM)",  "W/m2",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_MATRIX,     "subarray3_ground_rear_spatial",        "Subarray 3 spatial irradiance incident on the ground between rows",    "W/m2",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "subarray3_poa_eff",                    "Subarray 3 POA total irradiance after reflection (IAM)",               "W/m2",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray3_soiling_derate",             "Subarray 3 Soiling beam irradiance factor",                            "frac",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray3_beam_shading_factor",        "Subarray 3 External shading and soiling beam irradiance factor",       "frac",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray3_linear_derate",              "Subarray 3 Self-shading linear beam irradiance factor",                "frac",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
@@ -647,9 +653,11 @@ static var_info _cm_vtab_pvsamv1[] = {
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray4_poa_nom",                    "Subarray 4 POA front total irradiance nominal",                        "W/m2",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray4_poa_shaded",                 "Subarray 4 POA front total irradiance after shading only",             "W/m2",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray4_poa_shaded_soiled",          "Subarray 4 POA front total irradiance after shading and soiling",      "W/m2",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
-        { SSC_OUTPUT,        SSC_ARRAY,      "subarray4_poa_front",                  "Subarray 4 POA front total irradiance after reflection (IAM)",                     "W/m2",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
-        { SSC_OUTPUT,        SSC_ARRAY,      "subarray4_poa_rear",                   "Subarray 4 POA rear irradiance after reflection (IAM)",                            "W/m2",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
-        { SSC_OUTPUT,        SSC_ARRAY,      "subarray4_poa_eff",                    "Subarray 4 POA total irradiance after reflection (IAM)",                          "W/m2",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "subarray4_poa_front",                  "Subarray 4 POA front total irradiance after reflection (IAM)",         "W/m2",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "subarray4_poa_rear",                   "Subarray 4 POA rear irradiance after reflection (IAM)",                "W/m2",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_MATRIX,     "subarray4_poa_rear_spatial",           "Subarray 4 POA spatial rear total irradiance after reflection (IAM)",  "W/m2",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_MATRIX,     "subarray4_ground_rear_spatial",        "Subarray 4 spatial irradiance incident on the ground between rows",    "W/m2",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "subarray4_poa_eff",                    "Subarray 4 POA total irradiance after reflection (IAM)",               "W/m2",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray4_soiling_derate",             "Subarray 4 Soiling beam irradiance factor",                            "frac",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray4_beam_shading_factor",        "Subarray 4 External shading and soiling beam irradiance factor",       "frac",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray4_linear_derate",              "Subarray 4 Self-shading linear beam irradiance factor",                "frac",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
@@ -1323,7 +1331,7 @@ void cm_pvsamv1::exec()
 
             // calculate incident irradiance on each subarray
             std::vector<double> ipoa_rear, ipoa_rear_after_losses, ipoa_front, ipoa;
-            std::vector<std::vector<double>> ipoa_rear_spatial, ignd_rear;
+            std::vector<std::vector<double>> ipoa_rear_spatial, ipoa_rear_spatial_after_losses, ignd_rear;
             double alb = 0.;
             std::vector<double> alb_spatial;
 
@@ -1334,6 +1342,7 @@ void cm_pvsamv1::exec()
                 ipoa_front.push_back(0);
                 ipoa.push_back(0);
                 ipoa_rear_spatial.push_back(std::vector<double>());
+                ipoa_rear_spatial_after_losses.push_back(std::vector<double>());
                 ignd_rear.push_back(std::vector<double>());
 
                 if (!Subarrays[nn]->enable
@@ -1699,25 +1708,22 @@ void cm_pvsamv1::exec()
                 ipoa_front[nn] = ibeam + iskydiff + ignddiff;
                 ts_accum_poa_front_shaded_soiled += ipoa_front[nn] * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
 
-                // Calculate rear-side irradiance for bifacial modules
-                double intra_elec_mismatch = 0.;
-                if (Subarrays[0]->Module->isBifacial)
-                {
-                    bifaciality = Subarrays[0]->Module->bifaciality;
-                    double slopeLength = Subarrays[nn]->selfShadingInputs.length * Subarrays[nn]->selfShadingInputs.nmody;
-                    if (Subarrays[nn]->selfShadingInputs.mod_orient == 1) {
-                        slopeLength = Subarrays[nn]->selfShadingInputs.width * Subarrays[nn]->selfShadingInputs.nmody;
-                    }
-                    irr.calc_rear_side(Subarrays[0]->Module->bifacialTransmissionFactor, Subarrays[0]->Module->groundClearanceHeight, slopeLength);
-                    ipoa_rear[nn] = irr.get_poa_rear();
-                    ipoa_rear_spatial[nn] = irr.get_poa_rear_spatial();
-                    ignd_rear[nn] = irr.get_ground_spatial();
-                    intra_elec_mismatch = intraElecMismatch(ipoa_front[nn], ipoa_rear_spatial[nn], bifaciality, Subarrays[nn]->Module->selfShadingFillFactor);
-                    ipoa_rear_after_losses[nn] = ipoa_rear[nn] * (1 - Subarrays[nn]->rearIrradianceLossPercent) * (1 - intra_elec_mismatch);
+                // Calculate rear-side irradiance
+                double module_length = Subarrays[nn]->selfShadingInputs.mod_orient == 1 ? Subarrays[nn]->selfShadingInputs.width : Subarrays[nn]->selfShadingInputs.length;
+                double slopeLength = module_length * Subarrays[nn]->selfShadingInputs.nmody;
+                irr.calc_rear_side(Subarrays[nn]->Module->bifacialTransmissionFactor, Subarrays[nn]->Module->groundClearanceHeight, slopeLength);
+                ipoa_rear[nn] = irr.get_poa_rear();
+                ipoa_rear_after_losses[nn] = ipoa_rear[nn] * (1 - Subarrays[nn]->rearIrradianceLossPercent);
+                ipoa_rear_spatial[nn] = irr.get_poa_rear_spatial();
+                ipoa_rear_spatial_after_losses[nn].clear();
+                for (size_t i = 0; i < ipoa_rear_spatial[nn].size(); i++) {
+                    ipoa_rear_spatial_after_losses[nn].push_back(ipoa_rear_spatial[nn].at(i) * (1 - Subarrays[nn]->rearIrradianceLossPercent));
                 }
+                ignd_rear[nn] = irr.get_ground_spatial();
 
+                ts_accum_poa_front_beam_eff += ibeam * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
                 ts_accum_poa_rear += ipoa_rear[nn] * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
-                ts_accum_poa_rear_after_losses = ts_accum_poa_rear * (1 - Subarrays[nn]->rearIrradianceLossPercent) * (1 - intra_elec_mismatch);
+                ts_accum_poa_rear_after_losses = ts_accum_poa_rear * (1 - Subarrays[nn]->rearIrradianceLossPercent);
 
                 if (iyear == 0 || save_full_lifetime_variables == 1)
                 {
@@ -1734,16 +1740,28 @@ void cm_pvsamv1::exec()
                     PVSystem->p_surfaceTilt[nn][idx] = (ssc_number_t)stilt;
                     PVSystem->p_surfaceAzimuth[nn][idx] = (ssc_number_t)sazi;
                     PVSystem->p_derateSoiling[nn][idx] = (ssc_number_t)soiling_factor;
+
+                    // only save first-year spatial outputs
+                    if (iyear == 0) {
+                        std::copy(ipoa_rear_spatial_after_losses[nn].begin(), ipoa_rear_spatial_after_losses[nn].end(),
+                            PVSystem->p_poaRearSpatial[nn] + idx * ipoa_rear_spatial_after_losses[nn].size());
+                        std::copy(ignd_rear[nn].begin(), ignd_rear[nn].end(), PVSystem->p_groundRear[nn] + idx * ignd_rear[nn].size());
+                    }
                 }
 
-                // accumulate incident total radiation (W) in this timestep (all subarrays)
-                ts_accum_poa_front_beam_eff += ibeam * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
+                if (Subarrays[nn]->Module->isBifacial) {
+                    bifaciality = Subarrays[nn]->Module->bifaciality;
+                    ipoa_rear_after_losses[nn] *= (1 - intraElecMismatch(ipoa_front[nn], ipoa_rear_spatial_after_losses[nn], bifaciality, Subarrays[nn]->Module->selfShadingFillFactor));
+                }
+                else {
+                    bifaciality = 0.;       // TODO: remove and uncomment lines 1352 in lib_pv_io_manager.cpp instead
+                }
 
                 // save the required irradiance inputs on array plane for the module output calculations.
                 Subarrays[nn]->poa.poaBeamFront = ibeam;
                 Subarrays[nn]->poa.poaDiffuseFront = iskydiff;
                 Subarrays[nn]->poa.poaGroundFront = ignddiff;
-                Subarrays[nn]->poa.poaRear = ipoa_rear_after_losses[nn];
+                Subarrays[nn]->poa.poaRear = Subarrays[nn]->Module->isBifacial ? ipoa_rear_after_losses[nn] : 0.;       // TODO: why is setting to 0 necessary for some tests to pass?
                 Subarrays[nn]->poa.poaTotal = (radmode == irrad::POA_R) ? ipoa[nn] : (ipoa_front[nn] + ipoa_rear_after_losses[nn] * bifaciality);
                 Subarrays[nn]->poa.angleOfIncidenceDegrees = aoi;
                 Subarrays[nn]->poa.sunUp = sunup;

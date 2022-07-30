@@ -999,6 +999,10 @@ public:
 
     static const int dut1 = 0; //Time correction for irregular Earth rotation (leap second); value between -1 and 1, no source for value so left at zero
 
+    static const int poaFrontIrradRes = 6;
+    static const int poaRearIrradRes = 6;
+    static const int groundIrradOutputRes = 10;
+
     /// Default class constructor, calls setup()
     irrad(weather_record wr, weather_header wh,
         int skyModel, int radiationModeIn, int trackModeIn,

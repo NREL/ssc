@@ -2519,7 +2519,7 @@ int irrad::calc_rear_side(double transmissionFactor, double groundClearanceHeigh
         std::vector<double> rearGroundGHI, frontGroundGHI;
         this->getGroundGHI(transmissionFactor, rearSkyConfigFactors, frontSkyConfigFactors, rearGroundShade,
                            frontGroundShade, rearGroundGHI, frontGroundGHI);
-        groundIrradianceSpatial = condenseAndAlignGroundIrrad(rearGroundGHI, 10, trackingMode == 1, horizontalLength, rowToRow);
+        groundIrradianceSpatial = condenseAndAlignGroundIrrad(rearGroundGHI, groundIrradOutputRes, trackingMode == 1, horizontalLength, rowToRow);
 
         // Calculate the irradiance on the front of the PV module (to get front reflected)
         std::vector<double> frontIrradiancePerCellrow, frontReflected;
@@ -2538,9 +2538,9 @@ int irrad::calc_rear_side(double transmissionFactor, double groundClearanceHeigh
         planeOfArrayIrradianceRearSpatial = rearIrradiancePerCellrow;
     }
     else {
-        groundIrradianceSpatial.clear();
+        groundIrradianceSpatial.assign(groundIrradOutputRes, 0.);
         planeOfArrayIrradianceRearAverage = 0.;
-        planeOfArrayIrradianceRearSpatial.clear();
+        planeOfArrayIrradianceRearSpatial.assign(poaRearIrradRes, 0.);
     }
     return true;
 }
@@ -2794,7 +2794,7 @@ void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowTo
                    clearanceGround; // y value for point on top edge of PV module/panel of row in front of (in PV panel slope lengths)
 
     // Calculate diffuse and direct component irradiances for each cell row (assuming 6 rows)
-    size_t cellRows = 6;
+    size_t cellRows = poaFrontIrradRes;
     for (size_t i = 0; i != cellRows; i++) {
         // Calculate diffuse irradiances and reflected amounts for each cell row over its field of view of 180 degrees,
         // beginning with the angle providing the upper most view of the sky (j=0)
@@ -2976,7 +2976,7 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
                    clearanceGround; // y value for point on top edge of PV module/panel of row in back of (in PV panel slope lengths)
 
     // Calculate diffuse and direct component irradiances for each cell row (assuming 6 rows)
-    size_t cellRows = 6;
+    size_t cellRows = poaRearIrradRes;
     for (size_t i = 0; i != cellRows; i++) {
         // Calculate diffuse irradiances and reflected amounts for each cell row over its field of view of 180 degrees,
         // beginning with the angle providing the upper most view of the sky (j=0)
@@ -3087,8 +3087,8 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
                     projectedX1 += intervals;
                     projectedX2 += intervals;
                 }
-                int index1 = static_cast<int>(projectedX1 + intervals) - (int) intervals;
-                int index2 = static_cast<int>(projectedX2 + intervals) - (int) intervals;
+                int index1 = std::min(static_cast<int>(intervals - 1), static_cast<int>(projectedX1 + intervals) - (int) intervals);
+                int index2 = std::min(static_cast<int>(intervals - 1), static_cast<int>(projectedX2 + intervals) - (int) intervals);
 
                 if (index1 == index2) {
                     if (index1 < 0) {

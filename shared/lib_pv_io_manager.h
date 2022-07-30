@@ -332,6 +332,8 @@ struct PVSystem_IO
 	std::vector<ssc_number_t *> p_derateSelfShadingDiffuse;
 	std::vector<ssc_number_t *> p_derateSelfShadingReflected;
 	std::vector<ssc_number_t *> p_shadeDBShadeFraction;
+    std::vector<ssc_number_t *> p_poaRearSpatial;
+    std::vector<ssc_number_t *> p_groundRear;
 
 	// MPPT level outputs
 	std::vector<ssc_number_t *> p_mpptVoltage; /// An output vector containing input DC voltage in V to each mppt input

@@ -818,6 +818,8 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
             p_poaDiffuseFront.push_back(cm->allocate(prefix + "poa_eff_diff", numberOfWeatherFileRecords));
             p_poaTotal.push_back(cm->allocate(prefix + "poa_eff", numberOfWeatherFileRecords));
             p_poaRear.push_back(cm->allocate(prefix + "poa_rear", numberOfWeatherFileRecords));
+            p_poaRearSpatial.push_back(cm->allocate(prefix + "poa_rear_spatial", Irradiance->weatherDataProvider->nrecords(), irrad::poaRearIrradRes));
+            p_groundRear.push_back(cm->allocate(prefix + "ground_rear_spatial", Irradiance->weatherDataProvider->nrecords(), irrad::groundIrradOutputRes));
             p_poaFront.push_back(cm->allocate(prefix + "poa_front", numberOfWeatherFileRecords));
             p_derateSoiling.push_back(cm->allocate(prefix + "soiling_derate", numberOfWeatherFileRecords));
             p_beamShadingFactor.push_back(cm->allocate(prefix + "beam_shading_factor", numberOfWeatherFileRecords));
@@ -1343,7 +1345,16 @@ Module_IO::Module_IO(compute_module* cm, std::string cmName, double dcLoss)
 
     }
     else
+    {
         throw exec_error(cmName, "invalid pv module model type");
+    }
+
+    // TODO: reimplement, but fix issues that this causes with some tests
+    //if (!isBifacial)
+    //{
+    //    bifaciality = 0.;
+    //    bifacialTransmissionFactor = 0.;
+    //}
 }
 void Module_IO::setupNOCTModel(compute_module* cm, const std::string& prefix)
 {
