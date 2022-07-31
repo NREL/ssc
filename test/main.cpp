@@ -43,7 +43,7 @@ GTEST_API_ int main(int argc, char **argv) {
     
     //    filter to include
     //    ::testing::GTEST_FLAG(filter) = "CMPvsamv1PowerIntegration_cmod_pvsamv1*";
-        ::testing::GTEST_FLAG(filter) = "CMPvsamv1BatteryIntegration_cmod_pvsamv1.LCOS_test*";
+        ::testing::GTEST_FLAG(filter) = "CMPvsamv1BatteryIntegration_cmod_pvsamv1.PPA_AC*";
 //        ::testing::GTEST_FLAG(filter) = "ResilienceTest_lib_resilience.ChargeVoltageTable";
     
     //    filter to exclude
