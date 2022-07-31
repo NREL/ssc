@@ -43,7 +43,12 @@ GTEST_API_ int main(int argc, char **argv) {
     
     //    filter to include
     //    ::testing::GTEST_FLAG(filter) = "CMPvsamv1PowerIntegration_cmod_pvsamv1*";
-    
+    //    ::testing::GTEST_FLAG(filter) = "ResilienceTest_lib_resilience.ChargeVoltageTable";
+    /*
+     failing on macOS 12.5 M1 and different tests failing on Github actions
+     mAutoBTMTest_lib_battery_dispatch.TestCommercialPeakForecasting
+     [0;31m[  FAILED  ] [mResilienceTest_lib_resilience.ChargeVoltageTable
+     */
     //    filter to exclude
     //    ::testing::GTEST_FLAG(filter) = "-PVSmoothing_lib_battery_dispatch*";
 
