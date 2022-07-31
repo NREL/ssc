@@ -517,23 +517,20 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             {
                 std::vector<ssc_number_t> om_cost(nyears);
                 ssc_number_t* parr = vt.as_array("om_batt_variable_cost", &cnt);
-                if (cnt == 1)
-                {
+                if (cnt == 1) {
                     double escal = 0.0;
                     if (vt.is_assigned("om_production_escal")) {
                         escal = vt.as_double("om_production_escal");
                     }
-
                     for (i = 0; i < nyears; i++)
-                        om_cost[i] = parr[0] * (ssc_number_t)pow((double)(inflation_rate + escal + 1), (double)i);
+                        om_cost[i] = 0.001 * parr[0] * (ssc_number_t)pow((double)(inflation_rate + escal + 1), (double)i); // $/MWh to $/kWh
                 }
-                else if (cnt < nyears)
-                {
+                else if (cnt < nyears)  {
                     throw exec_error("battery", "Invalid number for om_batt_variable_cost, must be 1 or equal to analysis_period.");
                 }
                 else {
                     for (i = 0; i < nyears; i++)
-                        om_cost[i] = parr[i];
+                        om_cost[i] = 0.001* parr[i]; // $/MWh to $/kWh
                 }
                 batt_vars->om_batt_variable_cost_per_kwh = om_cost;
             }
