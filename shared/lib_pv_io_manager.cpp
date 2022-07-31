@@ -818,8 +818,8 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
             p_poaDiffuseFront.push_back(cm->allocate(prefix + "poa_eff_diff", numberOfWeatherFileRecords));
             p_poaTotal.push_back(cm->allocate(prefix + "poa_eff", numberOfWeatherFileRecords));
             p_poaRear.push_back(cm->allocate(prefix + "poa_rear", numberOfWeatherFileRecords));
-            p_poaRearSpatial.push_back(cm->allocate(prefix + "poa_rear_spatial", Irradiance->weatherDataProvider->nrecords(), irrad::poaRearIrradRes));
-            p_groundRear.push_back(cm->allocate(prefix + "ground_rear_spatial", Irradiance->weatherDataProvider->nrecords(), irrad::groundIrradOutputRes));
+            p_poaRearSpatial.push_back(cm->allocate(prefix + "poa_rear_spatial", Irradiance->weatherDataProvider->nrecords() + 1, irrad::poaRearIrradRes + 1));     // +1 for row/col labels
+            p_groundRear.push_back(cm->allocate(prefix + "ground_rear_spatial", Irradiance->weatherDataProvider->nrecords() + 1, irrad::groundIrradOutputRes + 1)); // +1 for row/col labels
             p_poaFront.push_back(cm->allocate(prefix + "poa_front", numberOfWeatherFileRecords));
             p_derateSoiling.push_back(cm->allocate(prefix + "soiling_derate", numberOfWeatherFileRecords));
             p_beamShadingFactor.push_back(cm->allocate(prefix + "beam_shading_factor", numberOfWeatherFileRecords));

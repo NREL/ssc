@@ -1743,9 +1743,44 @@ void cm_pvsamv1::exec()
 
                     // only save first-year spatial outputs
                     if (iyear == 0) {
-                        std::copy(ipoa_rear_spatial_after_losses[nn].begin(), ipoa_rear_spatial_after_losses[nn].end(),
-                            PVSystem->p_poaRearSpatial[nn] + idx * ipoa_rear_spatial_after_losses[nn].size());
-                        std::copy(ignd_rear[nn].begin(), ignd_rear[nn].end(), PVSystem->p_groundRear[nn] + idx * ignd_rear[nn].size());
+                        if (idx == 0) {
+                            // add column labels to output (first row)
+                            // spatial module rear irradiance:
+                            int n = ipoa_rear_spatial_after_losses[nn].size();
+                            for (size_t i = 0; i <= n; i++) {
+                                double slope_distance;      // distance along slope length from bottom of row
+                                if (i == 0) {
+                                    slope_distance = 0.;    // unused in output
+                                }
+                                else {
+                                    slope_distance = slopeLength / n * ((i - 1) + 0.5);
+                                }
+                                PVSystem->p_poaRearSpatial[nn][i] = static_cast<double>(slope_distance);
+                            }
+                            // spatial ground rear irradiance:
+                            n = ignd_rear[nn].size();
+                            for (size_t i = 0; i <= n; i++) {
+                                double row_to_row = slopeLength / Subarrays[nn]->groundCoverageRatio;
+                                double row_distance;        // distance along ground from front or center of first row
+                                if (i == 0) {
+                                    row_distance = 0.;      // unused in output
+                                }
+                                else {
+                                    row_distance = row_to_row / n * ((i - 1) + 0.5);
+                                }
+                                PVSystem->p_groundRear[nn][i] = static_cast<double>(row_distance);
+                            }
+                        }
+                        std::vector<double> ipoa_rear_output(ipoa_rear_spatial_after_losses[nn]);
+                        std::vector<double> ignd_rear_output(ignd_rear[nn]);
+
+                        // add row labels (first column)
+                        ipoa_rear_output.insert(ipoa_rear_output.begin(), static_cast<double>(idx));
+                        ignd_rear_output.insert(ignd_rear_output.begin(), static_cast<double>(idx));
+
+                        // copy data to output variables
+                        std::copy(ipoa_rear_output.begin(), ipoa_rear_output.end(), PVSystem->p_poaRearSpatial[nn] + (idx + 1) * ipoa_rear_output.size());  // +1 for column label row
+                        std::copy(ignd_rear_output.begin(), ignd_rear_output.end(), PVSystem->p_groundRear[nn] + (idx + 1) * ignd_rear_output.size());      // +1 for column label row
                     }
                 }
 
