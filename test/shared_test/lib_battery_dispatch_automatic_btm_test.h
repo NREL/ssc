@@ -129,6 +129,7 @@ public:
         BatteryProperties::TearDown();
         delete batteryModel;
         delete dispatchAutoBTM;
+////        delete capacityModel;
     }
 };
 
