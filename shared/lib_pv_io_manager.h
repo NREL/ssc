@@ -444,13 +444,17 @@ public:
 
 	// Subarray-specific losses
 	std::vector<double> monthlySoiling; // The soiling loss by month [%]
-	double rearIrradianceLossPercent;
+    bool calculateRackShading;
+    bool calculateBifacialElectricalMismatch;
+	double rearSoilingLossPercent;
+    double rackShadingLossPercent;
 	double dcOptimizerLossPercent;
 	double mismatchLossPercent;
 	double diodesLossPercent;
 	double dcWiringLossPercent;
 	double trackingLossPercent;
 	double nameplateLossPercent;
+    double electricalMismatchLossPercent;
 	double dcLossTotalPercent;			/// The DC loss due to mismatch, diodes, wiring, tracking, optimizers [%]
 
     // Shading and snow

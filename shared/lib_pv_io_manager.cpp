@@ -377,13 +377,17 @@ Subarray_IO::Subarray_IO(compute_module* cm, const std::string& cmName, size_t s
         usePOAFromWeatherFile = false;
 
         // losses
-        rearIrradianceLossPercent = cm->as_double(prefix + "rear_irradiance_loss") / 100;
+        calculateRackShading = cm->as_boolean("calculate_rack_shading");
+        calculateBifacialElectricalMismatch = cm->as_boolean("calculate_bifacial_electrical_mismatch");
+        rearSoilingLossPercent = cm->as_double(prefix + "rear_soiling_loss") / 100;
+        rackShadingLossPercent = cm->as_double(prefix + "rack_shading") / 100;
         dcOptimizerLossPercent = cm->as_double("dcoptimizer_loss") / 100;
         mismatchLossPercent = cm->as_double(prefix + "mismatch_loss") / 100;
         diodesLossPercent = cm->as_double(prefix + "diodeconn_loss") / 100;
         dcWiringLossPercent = cm->as_double(prefix + "dcwiring_loss") / 100;
         trackingLossPercent = cm->as_double(prefix + "tracking_loss") / 100;
         nameplateLossPercent = cm->as_double(prefix + "nameplate_loss") / 100;
+        electricalMismatchLossPercent = cm->as_double(prefix + "electrical_mismatch") / 100;
 
         dcLossTotalPercent = 1 - (
             (1 - dcOptimizerLossPercent) *
