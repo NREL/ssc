@@ -37,6 +37,7 @@ struct dispatch_plan
     int num_cycles;
     double kWhRemaining; // Stored to anticipate the value of energy outside the forecast period
     double lowestMarginalCost;
+    double kWhDischarged; // stored to provide energy to apply to variable O and M Cost (ssc issue 845)
 };
 
 /*! Automated dispatch class for behind-the-meter connections */
