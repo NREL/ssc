@@ -60,7 +60,8 @@ public:
         std::vector<double> battReplacementCostPerkWh, // required for base class
 		int battCycleCostChoice,
         std::vector<double> battCycleCost, // required for base class
-		double etaPVCharge,
+        std::vector<double> battOMCost, // required for base class
+        double etaPVCharge,
 		double etaGridCharge,
 		double etaDischarge,
         // PVSmoothing inputs
@@ -119,6 +120,9 @@ public:
 
     /*! Calculate the cost to cycle per kWh */
     void costToCycle();
+
+    /*! Calculate the O and M cost per kWh for current timestep */
+    void omCost();
 
  	/*! Inverter AC power limit */
 	double _inverter_paco;
