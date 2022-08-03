@@ -53,6 +53,7 @@ dispatch_automatic_behind_the_meter_t::dispatch_automatic_behind_the_meter_t(
     std::vector<double> battReplacementCostPerkWh,
     int battCycleCostChoice,
     std::vector<double> battCycleCost,
+    std::vector<double> battOMCost,
     double interconnection_limit,
     bool chargeOnlySystemExceedLoad,
     bool dischargeOnlyLoadExceedSystem,
@@ -60,7 +61,7 @@ dispatch_automatic_behind_the_meter_t::dispatch_automatic_behind_the_meter_t(
     double SOC_min_outage
 	) : dispatch_automatic_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max_kwdc, Pd_max_kwdc, Pc_max_kwac, Pd_max_kwac,
 		t_min, dispatch_mode, weather_forecast_mode, pv_dispatch, nyears, look_ahead_hours, dispatch_update_frequency_hours, can_charge, can_clip_charge, can_grid_charge, can_fuelcell_charge,
-        battReplacementCostPerkWh, battCycleCostChoice, battCycleCost, interconnection_limit, chargeOnlySystemExceedLoad, dischargeOnlyLoadExceedSystem,
+        battReplacementCostPerkWh, battCycleCostChoice, battCycleCost, battOMCost, interconnection_limit, chargeOnlySystemExceedLoad, dischargeOnlyLoadExceedSystem,
         behindTheMeterDischargeToGrid, SOC_min_outage)
 {
 	_P_target_month = -1e16;
@@ -559,7 +560,7 @@ void dispatch_automatic_behind_the_meter_t::cost_based_target_power(size_t idx, 
         plans[i].num_cycles = 0;
         plan_dispatch_for_cost(plans[i], idx, E_max, startingEnergy);
         UtilityRateForecast midDispatchForecast(*rate_forecast);
-        plans[i].cost = midDispatchForecast.forecastCost(plans[i].plannedGridUse, year, hour_of_year, 0) + cost_to_cycle() * plans[i].num_cycles - plans[i].kWhRemaining * plans[i].lowestMarginalCost;
+        plans[i].cost = midDispatchForecast.forecastCost(plans[i].plannedGridUse, year, hour_of_year, 0) + cost_to_cycle() * plans[i].num_cycles + plans[i].kWhDischarged * omCost() - plans[i].kWhRemaining * plans[i].lowestMarginalCost;
 
         if (plans[i].cost <= lowest_cost)
         {
@@ -805,6 +806,13 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(dispatch_plan
     }
 
     plan.kWhRemaining = energy * m_batteryPower->singlePointEfficiencyDCToAC;
+
+    // variable o and m cost energy
+    plan.kWhDischarged = 0.0;
+    for (i = 0; i < plan.plannedDispatch.size(); i++)
+        if (plan.plannedDispatch[i] > 0)
+            plan.kWhDischarged += plan.plannedDispatch[i] * _dt_hour; // plannedDispatch in kW and kWh discharged in kWh
+
 }
 
 void dispatch_automatic_behind_the_meter_t::check_power_restrictions(double& power)
@@ -857,4 +865,10 @@ void dispatch_automatic_behind_the_meter_t::costToCycle()
 double dispatch_automatic_behind_the_meter_t::cost_to_cycle_per_kwh()
 {
     return m_cycleCost / _Battery->get_params().nominal_energy;
+}
+
+double dispatch_automatic_behind_the_meter_t::omCost()
+{
+    m_omCost = om_costs_by_year[curr_year];
+    return m_omCost;
 }
