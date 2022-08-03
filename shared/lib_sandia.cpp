@@ -405,6 +405,11 @@ bool sandia_inverter_t::acpower(
 	std::vector<double> Pac_each;
 	std::vector<double> PacNoPso_each;
 
+    //find total DC input power
+	for (size_t m = 0; m < Pdc.size(); m++) 
+	{
+	    Pdc_total += Pdc[m];
+	}
 	//loop through each MPPT input
 	for (size_t m = 0; m < Pdc.size(); m++) 
 	{
@@ -421,9 +426,9 @@ bool sandia_inverter_t::acpower(
 		if (B < 0.5 * Pso) B = 0.5 * Pso;
 		if (B > 2.0 * Pso) B = 2.0 * Pso;
 
-		Pac_each[m] = ((Paco / (A - B)) - C * (A - B)) * (Pdc[m] - B) + C0 * (Pdc[m] - B) * (Pdc[m] - B); //calculate Pac for this MPPT input and save it
-		PacNoPso_each[m] = ((Paco / A) - C * A) * Pdc[m] + C0 * Pdc[m] * Pdc[m]; //calculate Pac without operating losses (Pso = 0) for each MPPT input to store as Pso losses later
-		Pdc_total += Pdc[m];
+		Pac_each[m] = Pdc[m] / Pdc_total * (((Paco / (A - B)) - C * (A - B)) * (Pdc_total - B) + C * (Pdc_total - B) * (Pdc_total - B)); //calculate Pac for this MPPT input and save it
+		PacNoPso_each[m] = Pdc[m] * (((Paco / A) - C * A) + C * Pdc_total); //calculate Pac without operating losses (Pso = 0) for each MPPT input to store as Pso losses later
+
 	}
 
 	// night time: power is equal to nighttime power loss (note that if PacNoPso > Pso and Pac < Pso then the night time loss could be considered an operating power loss)

@@ -218,6 +218,9 @@ struct batt_variables
 	int batt_cycle_cost_choice;
     std::vector<double> batt_cycle_cost;
 
+    /* Battery om costs */
+    std::vector<double> om_batt_variable_cost_per_kwh;
+
     /* PV Smoothing */
     ssc_number_t batt_dispatch_pvs_nameplate_ac;
     bool batt_dispatch_pvs_ac_lb_enable;
