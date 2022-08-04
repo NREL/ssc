@@ -63,6 +63,7 @@ public:
         std::vector<double> battReplacementCostPerkWh,
 		int battCycleCostChoice,
         std::vector<double> battCycleCost,
+        std::vector<double> battOMCost, // required for base class
 		std::vector<double> ppa_price_series_dollar_per_kwh,
 		UtilityRate * utilityRate,
 		double etaPVCharge,
@@ -105,7 +106,10 @@ protected:
     /*! Calculate the cost to cycle per kWh */
     void costToCycle();
 
-	/*! Inverter AC power limit */
+    /*! Calculate the O and M cost per kWh for current timestep */
+    void omCost();
+
+    /*! Inverter AC power limit */
 	double _inverter_paco;
 
 	/*! Market real time and forecast prices */

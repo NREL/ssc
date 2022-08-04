@@ -143,6 +143,7 @@
 	"batt_pv_ac_forecast" : [ 0 ],
 	"batt_cycle_cost_choice" : 1,
 	"batt_cycle_cost" : [ 0 ],
+    "om_batt_variable_cost" : [ 0 ],
 	"inflation_rate" : 2.5,
 	"om_batt_replacement_cost" : [ 293.83999999999997 ],
 	"om_replacement_cost_escal" : 0,
