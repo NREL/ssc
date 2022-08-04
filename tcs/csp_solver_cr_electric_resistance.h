@@ -53,6 +53,12 @@ private:
 
     E_elec_resist_startup_mode m_startup_mode;
 
+    // Hardcoded in constructor
+
+        // Heater electric-to-heat efficiency just set up to pass to getter
+        // Not threaded through to design or performance call
+    double m_heater_efficiency;     //[-]
+
     // ********************************
     // ********************************
 
@@ -143,6 +149,8 @@ public:
     virtual double calculate_thermal_efficiency_approx(const C_csp_weatherreader::S_outputs& weather, double q_incident /*MW*/);
 
     virtual double get_collector_area();
+
+    virtual double get_design_electric_to_heat_cop() override;
 
     void get_design_parameters(double& E_su_design /*MWt-hr*/);
 

@@ -555,6 +555,11 @@ double C_csp_cr_heat_pump::get_collector_area()
     return std::numeric_limits<double>::quiet_NaN();
 }
 
+double C_csp_cr_heat_pump::get_design_electric_to_heat_cop()
+{
+    return m_COP_heat_des;  //[-]
+}
+
 void C_csp_cr_heat_pump::get_design_parameters(double& W_dot_in /*MWe*/,
     double& q_dot_cold_in /*MWt*/, double& q_dot_hot_out /*MWt*/,
     double& W_dot_elec_parasitic /*MWe*/, double& W_dot_in_net /*MWe*/,

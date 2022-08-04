@@ -54,6 +54,9 @@ C_csp_cr_electric_resistance::C_csp_cr_electric_resistance(double T_htf_cold_des
     m_htf_code = htf_code;              //[-] htf fluid code
     m_ud_htf_props = ud_htf_props;      //[-] user defined fluid properties
 
+    // Set hardcoded value(s)
+    m_heater_efficiency = 1.0;
+
     // Initialize calculated member data
     m_m_dot_htf_des = std::numeric_limits<double>::quiet_NaN();
     m_dP_htf = std::numeric_limits<double>::quiet_NaN();
@@ -401,6 +404,11 @@ void C_csp_cr_electric_resistance::write_output_intervals(double report_time_sta
 {
     mc_reported_outputs.send_to_reporting_ts_array(report_time_start,
         v_temp_ts_time_end, report_time_end);
+}
+
+double C_csp_cr_electric_resistance::get_design_electric_to_heat_cop()
+{
+    return m_heater_efficiency;
 }
 
 double C_csp_cr_electric_resistance::calculate_optical_efficiency(const C_csp_weatherreader::S_outputs& weather, const C_csp_solver_sim_info& sim)

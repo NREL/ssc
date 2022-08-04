@@ -284,6 +284,8 @@ public:
 
     virtual double get_collector_area();
 
+    virtual double get_design_electric_to_heat_cop() override;
+
     // ***************************************************************
     // ***************************************************************
 
