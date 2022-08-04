@@ -33,6 +33,16 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../ssc/common.h"
 #include "../input_cases/code_generator_utilities.h"
 
+
+#include <iostream>
+#include <string>
+#include <fstream>
+#include <sstream>
+#include <cmath>
+#include "../rapidjson/document.h"
+#include "../rapidjson/istreamwrapper.h"
+
+
 /**
  * Cashloan tests
  */
@@ -45,6 +55,60 @@ public:
 	double m_error_tolerance_hi = 1.0;
 	double m_error_tolerance_lo = 0.1;
 	size_t interval = 100;
+
+public:
+    void Test() {
+        std::string file_path = SSCDIR;
+        file_path += "/test/input_json/2022.07.04_PVWatts_Residential_cmod_cashloan.json";
+        std::ifstream file(file_path);
+        std::ostringstream tmp;
+        tmp << file.rdbuf();
+        file.close();
+        ssc_data_t dat_inputs = json_to_ssc_data(tmp.str().c_str());
+        tmp.str("");
+        int errors = run_module(dat_inputs, "cashloan");
+
+        EXPECT_FALSE(errors);
+        if (!errors)
+        {
+            file_path = SSCDIR;
+            file_path += "/test/input_json/2022.07.04_PVWatts_Residential_cmod_cashloan_outputs.json";
+            file.open(file_path);
+            tmp << file.rdbuf();
+            file.close();
+            ssc_data_t dat_outputs = json_to_ssc_data(tmp.str().c_str());
+            tmp.str("");
+
+            std::vector<std::string> compare_number_variables = { "lcoe_nom", "npv", "payback" };
+            std::vector<ssc_number_t> values_to_compare(compare_number_variables.size());
+            std::vector<ssc_number_t> values_to_match(compare_number_variables.size());
+
+            std::vector<std::string> compare_array_variables = { "cf_after_tax_cash_flow", "cf_value_added" };
+            std::vector< std::vector<ssc_number_t> > arrays_to_compare(compare_array_variables.size());
+            std::vector< std::vector<ssc_number_t> > arrays_to_match(compare_array_variables.size());
+
+            for (size_t i = 0; i < compare_number_variables.size(); i++) {
+                ssc_data_get_number(dat_inputs, compare_number_variables[i].c_str(), &values_to_compare[i]);
+                ssc_data_get_number(dat_outputs, compare_number_variables[i].c_str(), &values_to_match[i]);
+                EXPECT_NEAR(values_to_compare[i], values_to_match[i], 0.001);
+            }
+
+            int len_currentrun, len_comparerun;
+            for (size_t i = 0; i < compare_array_variables.size(); i++) {
+                auto pCurrentOutputs = ssc_data_get_array(dat_inputs, compare_array_variables[i].c_str(), &len_currentrun);
+                auto pCompareOutputs = ssc_data_get_array(dat_outputs, compare_array_variables[i].c_str(), &len_comparerun);
+                EXPECT_EQ(len_currentrun, len_comparerun);
+                for (int j = 0; j < len_currentrun && j < len_comparerun; j++)
+                    EXPECT_NEAR(pCurrentOutputs[j], pCompareOutputs[j], 0.001);
+            }
+
+            ssc_data_free(dat_outputs);
+            dat_outputs = nullptr;
+        }
+        ssc_data_free(dat_inputs);
+        dat_inputs = nullptr;
+
+    }
 
 };
 

@@ -24,14 +24,6 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "cmod_cashloan_test.h"
 
-#include <iostream>
-#include <string>
-#include <fstream>
-#include <sstream>
-#include <cmath>
-#include "../rapidjson/document.h"
-#include "../rapidjson/istreamwrapper.h"
-
 
 // Discounted Payback update to address ssc issue 616
 TEST_F(CmodCashLoanTest, DiscountedPayback) {
@@ -125,3 +117,7 @@ TEST_F(CmodCashLoanTest, PVWattsResidential) {
     dat_inputs = nullptr;
 }
 
+
+TEST_F(CmodCashLoanTest, PVWattsResidential2) {
+    Test();
+}
