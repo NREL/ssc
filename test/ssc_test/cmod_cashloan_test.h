@@ -57,10 +57,10 @@ public:
 	size_t interval = 100;
 
 public:
-    void Test() {
-        std::string file_path = SSCDIR;
-        file_path += "/test/input_json/2022.07.04_PVWatts_Residential_cmod_cashloan.json";
-        std::ifstream file(file_path);
+    void Test(const std::string &file_inputs, const std::string &file_outputs, const std::vector<std::string> &compare_number_variables, const std::vector<std::string> &compare_array_variables) {
+//        std::string file_path = SSCDIR;
+//        file_path += "/test/input_json/2022.07.04_PVWatts_Residential_cmod_cashloan.json";
+        std::ifstream file(file_inputs);
         std::ostringstream tmp;
         tmp << file.rdbuf();
         file.close();
@@ -71,19 +71,19 @@ public:
         EXPECT_FALSE(errors);
         if (!errors)
         {
-            file_path = SSCDIR;
-            file_path += "/test/input_json/2022.07.04_PVWatts_Residential_cmod_cashloan_outputs.json";
-            file.open(file_path);
+//            file_path = SSCDIR;
+//            file_path += "/test/input_json/2022.07.04_PVWatts_Residential_cmod_cashloan_outputs.json";
+            file.open(file_outputs);
             tmp << file.rdbuf();
             file.close();
             ssc_data_t dat_outputs = json_to_ssc_data(tmp.str().c_str());
             tmp.str("");
 
-            std::vector<std::string> compare_number_variables = { "lcoe_nom", "npv", "payback" };
+            //std::vector<std::string> compare_number_variables = { "lcoe_nom", "npv", "payback" };
             std::vector<ssc_number_t> values_to_compare(compare_number_variables.size());
             std::vector<ssc_number_t> values_to_match(compare_number_variables.size());
 
-            std::vector<std::string> compare_array_variables = { "cf_after_tax_cash_flow", "cf_value_added" };
+            //std::vector<std::string> compare_array_variables = { "cf_after_tax_cash_flow", "cf_value_added" };
             std::vector< std::vector<ssc_number_t> > arrays_to_compare(compare_array_variables.size());
             std::vector< std::vector<ssc_number_t> > arrays_to_match(compare_array_variables.size());
 
