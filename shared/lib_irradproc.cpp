@@ -2190,8 +2190,50 @@ std::vector<double> irrad::get_poa_rear_spatial() {
     return planeOfArrayIrradianceRearSpatial;
 }
 
+double irrad::get_ground_incident() {
+    // Returns average irradiance incident on the ground
+    double ground_incident = 0.;
+    for (size_t i = 0; i < groundIrradianceSpatial.size(); i++) {
+        ground_incident += groundIrradianceSpatial.at(i) / groundIrradianceSpatial.size();
+    }
+    return ground_incident;
+}
+
 std::vector<double> irrad::get_ground_spatial() {
     return groundIrradianceSpatial;
+}
+
+double irrad::get_ground_absorbed() {
+    // Returns average irradiance absorbed by the ground
+    if (albedoSpatial.size() <= 1) {
+        albedoSpatial.assign(groundIrradianceSpatial.size(), albedo);
+    }
+
+    double ground_absorbed = 0.;
+    for (size_t i = 0; i < groundIrradianceSpatial.size(); i++) {
+        ground_absorbed += groundIrradianceSpatial.at(i) * (1. - albedoSpatial.at(i)) / groundIrradianceSpatial.size();
+    }
+    return ground_absorbed;
+}
+
+double irrad::get_ground_reflected() {
+    // Returns average ground reflected irradiance onto the rear, considering view factor
+    return poaRearGroundReflected;
+}
+
+double irrad::get_rear_direct_diffuse() {
+    // Returns average direct and diffuse irradiance onto the rear
+    return poaRearDirectDiffuse;
+}
+
+double irrad::get_rear_row_reflections() {
+    // Returns the average reflected irradiance from the rear row onto the rear
+    return poaRearRowReflections;
+}
+
+double irrad::get_rear_self_shaded() {
+    // Returns the average direct and circumsolar shaded from being incident on the rear
+    return poaRearSelfShaded;
 }
 
 void irrad::get_irrad(double *ghi, double *dni, double *dhi) {
@@ -2507,7 +2549,7 @@ int irrad::calc_rear_side(double transmissionFactor, double groundClearanceHeigh
         this->getSkyConfigurationFactors(rowToRow, verticalHeight, clearanceGround, distanceBetweenRows,
                                          horizontalLength, rearSkyConfigFactors, frontSkyConfigFactors);
 
-        // Determine whether points on the ground in the rowToRow interval are shaded or not from DNI
+        // Determine whether points on the ground in the rowToRow interval are shaded or not from DNI (also shaded fraction of PV back and front)
         double pvBackShadeFraction, pvFrontShadeFraction, maxShadow;
         pvBackShadeFraction = pvFrontShadeFraction = maxShadow = 0;
         std::vector<int> rearGroundShade, frontGroundShade;
@@ -2976,6 +3018,14 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
                    clearanceGround; // y value for point on top edge of PV module/panel of row in back of (in PV panel slope lengths)
 
     // Calculate diffuse and direct component irradiances for each cell row (assuming 6 rows)
+    std::vector<double> rearDirectDiffuse;              // the direct and sky diffuse irradiance incident on the rear for each cell row, before losses (shading, soiling, etc.)
+    poaRearDirectDiffuse = 0.;                          // the average direct and sky diffuse irradiance incident on the rear, before losses (shading, soiling, etc.)
+    std::vector<double> rearRowReflections;             // the reflected irradiance from the rear row on the rear of each cell row
+    poaRearRowReflections = 0.;                         // the average reflected irradiance from the rear row on the rear
+    std::vector<double> rearGroundReflected;            // the ground reflected irradiance onto the rear of each cell row, considering view factor
+    poaRearGroundReflected = 0.;                        // the average ground reflected irradiance onto the rear, considering view factor
+    std::vector<double> rearSelfShaded;                 // the direct and circumsolar shaded from being incident on the rear, for each cell
+    poaRearSelfShaded = 0.;                             // the average direct and circumsolar shaded from being incident on the rear
     size_t cellRows = poaRearIrradRes;
     for (size_t i = 0; i != cellRows; i++) {
         // Calculate diffuse irradiances and reflected amounts for each cell row over its field of view of 180 degrees,
@@ -2996,16 +3046,19 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
                                           DTOR);                          // First whole degree in arc range that sees ground, last is 180
 
         rearIrradiance.push_back(0);
+        rearDirectDiffuse.push_back(0);
         for (size_t j = 0; j != iStopIso; j++) {
-            rearIrradiance[i] += 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j] *
-                                 isotropicSkyDiffuse;
+            double rear_isotropic_horizon_diffuse = 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j] * isotropicSkyDiffuse;
             if ((iStopIso - j) <= iHorBright) {
-                rearIrradiance[i] += 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j] *
-                                     horizonDiffuse / 0.052264; // 0.052246 = 0.5 * [cos(84) - cos(90)]
+                rear_isotropic_horizon_diffuse += 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j] *
+                    horizonDiffuse / (0.5 * (cos(84 * DTOR) - cos(90 * DTOR)));
             }
+            rearIrradiance[i] += rear_isotropic_horizon_diffuse;
+            rearDirectDiffuse[i] += rear_isotropic_horizon_diffuse;
         }
 
         // Add reflections from PV module front surfaces
+        rearRowReflections.push_back(0);
         for (size_t j = iStopIso; j < iStartGrd; j++) {
             double diagonalDistance = (PbotX - PcellX) / cos(elevationAngleDown);
             double startAlpha = -(double) (j - iStopIso) * DTOR + elevationAngleUp + elevationAngleDown;
@@ -3045,8 +3098,10 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
                 PVreflectedIrradiance += cellLengthSeen * frontReflected[k];
             }
             PVreflectedIrradiance /= projectedX2 - projectedX1;
-            rearIrradiance[i] += 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j] *
-                                 PVreflectedIrradiance;
+            double rear_row_reflections = 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j] *
+                                 PVreflectedIrradiance;                                                                             // ** Rear row reflected, through glass
+            rearIrradiance[i] += rear_row_reflections;
+            rearRowReflections[i] += rear_row_reflections;
         }
 
 
@@ -3061,6 +3116,7 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
             albedoAligned.assign(intervals, average_albedo);
         }
 
+        rearGroundReflected.push_back(0);
         for (size_t j = iStartGrd; j < 180; j++) {
             double startElevationDown = (double) (j - iStartGrd) * DTOR + elevationAngleDown;
             double stopElevationDown = (double) (j + 1 - iStartGrd) * DTOR + elevationAngleDown;
@@ -3139,8 +3195,9 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
                     reflectedGroundGHI /= projectedX2 - projectedX1;
                 }
             }
-            rearIrradiance[i] +=
-                    0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j] * reflectedGroundGHI;
+            double rear_ground_reflected = 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j] * reflectedGroundGHI;          // ** Ground reflected, through glass ("View factor to rear row")
+            rearIrradiance[i] += rear_ground_reflected;
+            rearGroundReflected[i] += rear_ground_reflected;                    
         }
         // Calculate and add direct and circumsolar irradiance components
         incidence(0, 180.0 - tiltRadians * RTOD, (surfaceAzimuthRadians * RTOD - 180.0), 45.0, solarZenithRadians,
@@ -3148,6 +3205,9 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
                   this->groundCoverageRatio, this->slopeTilt, this->slopeAzm, this->forceToStow, this->stowAngleDegrees, surfaceAnglesRadians);
         perez(0, calculatedDirectNormal, calculatedDiffuseHorizontal, albedo, surfaceAnglesRadians[0],
               surfaceAnglesRadians[1], solarZenithRadians, planeOfArrayIrradianceRear, diffuseIrradianceRear);
+
+        double rear_direct_circumsolar = planeOfArrayIrradianceRear[0] + diffuseIrradianceRear[1];
+        rearDirectDiffuse[i] += rear_direct_circumsolar;
 
         double cellShade = pvBackShadeFraction * cellRows - i;
 
@@ -3160,12 +3220,19 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
         }
 
         // Cell not shaded entirely and incidence angle < 90 degrees
+        rearSelfShaded.push_back(0);
         if (cellShade < 1.0 && surfaceAnglesRadians[0] < M_PI / 2.0) {
             double iamMod = iamSjerpsKoomen(n2, surfaceAnglesRadians[0]);
-            rearIrradiance[i] +=
-                    (1.0 - cellShade) * (planeOfArrayIrradianceRear[0] + diffuseIrradianceRear[1]) * iamMod;
+            rearIrradiance[i] += (1.0 - cellShade) * rear_direct_circumsolar * iamMod;                        // ** (1 - Rear self shading loss) * (Rear direct and diffuse (circumsolar only)), through glass loss
+            rearSelfShaded[i] = cellShade * rear_direct_circumsolar * iamMod;
         }
+
         rearAverageIrradiance += rearIrradiance[i] / cellRows;
+        poaRearDirectDiffuse += rearDirectDiffuse[i] / cellRows;
+        poaRearRowReflections += rearRowReflections[i] / cellRows;
+        poaRearSelfShaded += rearSelfShaded[i] / cellRows;
+        poaRearGroundReflected += rearGroundReflected[i] / cellRows;
+        double xy = 1.;
     }
 }
 

@@ -367,6 +367,15 @@ struct PVSystem_IO
 	ssc_number_t *p_poaFrontShadedTotal;
 	ssc_number_t *p_poaFrontShadedSoiledTotal;
 	ssc_number_t *p_poaRearTotal;
+    ssc_number_t* p_groundIncidentTotal;
+    ssc_number_t* p_groundAbsorbedTotal;
+    ssc_number_t* p_poaRearGroundReflectedTotal;
+    ssc_number_t* p_poaRearRowReflectionsTotal;
+    ssc_number_t* p_poaRearDirectDiffuseTotal;
+    ssc_number_t* p_poaRearSelfShadedTotal;
+    ssc_number_t* p_poaRackShadedTotal;
+    ssc_number_t* p_poaRearSoiledTotal;
+    ssc_number_t* p_bifacialElectricalMismatchTotal;
 	ssc_number_t *p_poaFrontTotal;
 	ssc_number_t *p_poaTotalAllSubarrays;
 

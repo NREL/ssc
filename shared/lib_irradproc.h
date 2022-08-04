@@ -977,6 +977,12 @@ protected:
     double calculatedDirectNormal;		///< Calculated direct normal irradiance (W/m2)
     double calculatedDiffuseHorizontal; ///< Calculated diffuse horizontal irradiance (W/m2)
 
+    // Calculated Rear-Side Irradiance components
+    double poaRearDirectDiffuse;            ///< Direct and sky diffuse irradiance on rear (W/m2)
+    double poaRearRowReflections;           ///< Rear row reflected irradiance on rear (W/m2)
+    double poaRearGroundReflected;          ///< Ground reflected irradiance onto the rear (W/m2)
+    double poaRearSelfShaded;               ///< Irradiance shaded from being incident on the rear (W/m2)
+
     // Outputs
     double sunAnglesRadians[9];				///< Sun angles in radians calculated from solarpos()	
     double surfaceAnglesRadians[5];			///< Surface angles in radians calculated from incidence()
@@ -1092,8 +1098,26 @@ public:
     /// Return the rear-side spatial total plane-of-array irradiance
     std::vector<double> get_poa_rear_spatial();
 
+    /// Return the irradiance incident on the ground
+    double get_ground_incident();
+
     /// Return the ground spatial total plane-of-array irradiance
     std::vector<double> get_ground_spatial();
+
+    /// Return the ground absorbed irradiance
+    double get_ground_absorbed();
+
+    /// Return average ground reflected irradiance onto the rear, considering view factor
+    double get_ground_reflected();
+
+    /// Return average direct and diffuse irradiance onto the rear
+    double get_rear_direct_diffuse();
+
+    /// Return average reflected irradiance from the rear row onto the rear
+    double get_rear_row_reflections();
+
+    /// Return the average direct and circumsolar shaded from being incident on the rear
+    double get_rear_self_shaded();
 
     /// Return the front-side irradiance components
     void get_irrad(double* ghi, double* dni, double* dhi);

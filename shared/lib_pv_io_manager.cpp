@@ -876,6 +876,15 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
     p_poaFrontShadedSoiledTotal = cm->allocate("poa_shaded_soiled", numberOfWeatherFileRecords);
     p_poaFrontTotal = cm->allocate("poa_front", numberOfWeatherFileRecords);
     p_poaRearTotal = cm->allocate("poa_rear", numberOfWeatherFileRecords);
+    p_groundIncidentTotal = cm->allocate("ground_incident", numberOfWeatherFileRecords);
+    p_groundAbsorbedTotal = cm->allocate("ground_absorbed", numberOfWeatherFileRecords);
+    p_poaRearGroundReflectedTotal = cm->allocate("poa_rear_ground_reflected", numberOfWeatherFileRecords);
+    p_poaRearRowReflectionsTotal = cm->allocate("poa_rear_row_reflections", numberOfWeatherFileRecords);
+    p_poaRearDirectDiffuseTotal = cm->allocate("poa_rear_direct_diffuse", numberOfWeatherFileRecords);
+    p_poaRearSelfShadedTotal = cm->allocate("poa_rear_self_shaded", numberOfWeatherFileRecords);
+    p_poaRackShadedTotal = cm->allocate("poa_rear_rack_shaded", numberOfWeatherFileRecords);
+    p_poaRearSoiledTotal = cm->allocate("poa_rear_soiled", numberOfWeatherFileRecords);
+    p_bifacialElectricalMismatchTotal = cm->allocate("bifacial_electrical_mismatch", numberOfWeatherFileRecords);
     p_poaTotalAllSubarrays = cm->allocate("poa_eff", numberOfWeatherFileRecords);
 
     p_snowLossTotal = cm->allocate("dc_snow_loss", numberOfWeatherFileRecords);

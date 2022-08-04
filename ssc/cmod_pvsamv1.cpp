@@ -691,9 +691,18 @@ static var_info _cm_vtab_pvsamv1[] = {
         { SSC_OUTPUT,        SSC_ARRAY,      "poa_beam_eff",                         "Array POA beam radiation after shading and soiling",              "kW",   "",  "Time Series (Array)",       "*",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "poa_shaded",                           "Array POA front-side total radiation after shading only",         "kW",   "",  "Time Series (Array)",       "*",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "poa_shaded_soiled",                    "Array POA front-side total radiation after shading and soiling",  "kW",   "",  "Time Series (Array)",       "*",                    "",                              "" },
-        { SSC_OUTPUT,        SSC_ARRAY,      "poa_front",                            "Array POA front-side total radiation after reflection (IAM)",                "kW",   "",  "Time Series (Array)",       "*",                    "",                              "" },
-        { SSC_OUTPUT,        SSC_ARRAY,      "poa_rear",                             "Array POA rear-side total radiation after reflection (IAM)",                 "kW",   "",  "Time Series (Array)",       "*",                    "",                              "" },
-        { SSC_OUTPUT,        SSC_ARRAY,      "poa_eff",                              "Array POA radiation total after reflection (IAM)",                           "kW",   "",  "Time Series (Array)",       "*",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "poa_front",                            "Array POA front-side total radiation after reflection (IAM)",     "kW",   "",  "Time Series (Array)",       "*",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "poa_rear",                             "Array POA rear-side total radiation after reflection (IAM)",      "kW",   "",  "Time Series (Array)",       "*",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "poa_rear_ground_reflected",            "Array POA rear-side radiation reflected from the ground after (IAM)",   "kW", "", "Time Series (Array)",    "*",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "poa_rear_row_reflections",             "Array POA rear-side radiation reflected from the rear row after (IAM)", "kW", "", "Time Series (Array)",    "*",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "poa_rear_direct_diffuse",              "Array POA rear-side direct and diffuse radiation after (IAM)",    "kW",   "",  "Time Series (Array)",       "*",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "poa_rear_self_shaded",                 "Array POA blocked by self shading",                               "kW",   "",  "Time Series (Array)",       "*",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "poa_rear_rack_shaded",                 "Array POA blocked by racks",                                      "kW",   "",  "Time Series (Array)",       "*",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "poa_rear_soiled",                      "Array POA blocked by rear soiling",                               "kW",   "",  "Time Series (Array)",       "*",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "bifacial_electrical_mismatch",         "Array bifacial electrical mismatch loss",                         "kW",   "",  "Time Series (Array)",       "*",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "poa_eff",                              "Array POA radiation total after reflection (IAM)",                "kW",   "",  "Time Series (Array)",       "*",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "ground_incident",                      "Irradiance incident on the ground within the array",              "kW",   "",  "Time Series (Array)",       "*",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "ground_absorbed",                      "Irradiance absorbed by the ground within the array",              "kW",   "",  "Time Series (Array)",       "*",                    "",                              "" },
 
         //SEV: total dc snow loss time series (not a required output)
         { SSC_OUTPUT,        SSC_ARRAY,      "dc_snow_loss",                         "DC power loss due to snow",						 "kW",   "",   "Time Series (Array)",       "",                    "",                              "" },
@@ -764,10 +773,19 @@ static var_info _cm_vtab_pvsamv1[] = {
         { SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_beam_nom",                         "POA front-side irradiance beam nominal",                        "kWh/yr",    "",                      "Annual (Year 1)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_shaded",                           "POA front-side irradiance total after shading",                 "kWh/yr",    "",                      "Annual (Year 1)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_shaded_soiled",                    "POA front-side irradiance total after shading and soiling",     "kWh/yr",    "",                      "Annual (Year 1)",       "",                    "",                              "" },
-        { SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_front",                            "POA front-side irradiance total after reflection (IAM)",                   "kWh/yr",    "",                      "Annual (Year 1)",       "",                    "",                              "" },
-        { SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_rear",                             "POA rear-side irradiance total after reflection (IAM)",                    "kWh/yr",    "",                      "Annual (Year 1)",       "",                    "",                              "" },
-        { SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_eff",                              "POA irradiance total after reflection (IAM)",                              "kWh/yr",    "",                      "Annual (Year 1)",       "",                    "",                              "" },
-        { SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_beam_eff",                         "POA front-side irradiance beam after shading and soiling",      "kWh/yr",    "",                      "Annual (Year 1)",       "",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_front",                            "POA front-side irradiance total after reflection (IAM)",            "kWh/yr",    "",                  "Annual (Year 1)",       "",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_rear",                             "POA rear-side irradiance total after reflection (IAM)",             "kWh/yr",    "",                  "Annual (Year 1)",       "",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_rear_ground_reflected",            "POA rear-side radiation reflected from the ground after (IAM)",     "kWh/yr",    "",                  "Annual (Year 1)",       "",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_rear_row_reflections",             "POA rear-side radiation reflected from the rear row after (IAM)",   "kWh/yr",    "",                  "Annual (Year 1)",       "",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_rear_direct_diffuse",              "POA rear-side direct and diffuse radiation after reflection (IAM)", "kWh/yr",    "",                  "Annual (Year 1)",       "",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_rear_self_shaded",                 "POA blocked by self shading",                                       "kWh/yr",    "",                  "Annual (Year 1)",       "",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_rear_rack_shaded",                 "POA blocked by racks",                                              "kWh/yr",    "",                  "Annual (Year 1)",       "",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_rear_soiled",                      "POA blocked by rear soiling",                                       "kWh/yr",    "",                  "Annual (Year 1)",       "",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_NUMBER,     "annual_bifacial_electrical_mismatch",         "Bifacial electrical mismatch loss",                                 "kWh/yr",    "",                  "Annual (Year 1)",       "",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_NUMBER,     "annual_ground_incident",                      "Irradiance incident on the ground within the array",                "kWh/yr",    "",                  "Annual (Year 1)",       "",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_NUMBER,     "annual_ground_absorbed",                      "Irradiance absorbed by the ground within the array",                "kWh/yr",    "",                  "Annual (Year 1)",       "",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_eff",                              "POA irradiance total after reflection (IAM)",                       "kWh/yr",    "",                  "Annual (Year 1)",       "",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_beam_eff",                         "POA front-side irradiance beam after shading and soiling",          "kWh/yr",    "",                  "Annual (Year 1)",       "",                    "",                              "" },
 
         { SSC_OUTPUT,        SSC_NUMBER,     "annual_dc_nominal",                           "Annual DC energy nominal",                           "kWh/yr",    "",                      "Annual (Year 1)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_NUMBER,     "annual_dc_gross",                             "Annual DC energy gross",                             "kWh/yr",    "",                      "Annual (Year 1)",       "",                    "",                              "" },
@@ -825,7 +843,15 @@ static var_info _cm_vtab_pvsamv1[] = {
         { SSC_OUTPUT, SSC_NUMBER, "annual_poa_shading_loss_percent", "POA front-side shading loss", "%", "", "Loss", "", "", "" },
         { SSC_OUTPUT, SSC_NUMBER, "annual_poa_soiling_loss_percent", "POA front-side soiling loss", "%", "", "Loss", "", "", "" },
         { SSC_OUTPUT, SSC_NUMBER, "annual_poa_cover_loss_percent",   "POA front-side reflection (IAM) loss",   "%", "", "Loss", "", "", "" },
-        { SSC_OUTPUT, SSC_NUMBER, "annual_poa_rear_gain_percent",    "POA rear-side bifacial gain", "%", "", "Loss", "", "", "" },
+        { SSC_OUTPUT, SSC_NUMBER, "annual_ground_incident_percent"   "Ground incident gain", "%", "", "Loss", "", "", "" },
+        { SSC_OUTPUT, SSC_NUMBER, "annual_ground_absorbed_percent",   "Ground absorbed loss", "%", "", "Loss", "", "", "" },
+        { SSC_OUTPUT, SSC_NUMBER, "annual_rear_ground_reflected_percent",   "POA rear-side view factor reflected from ground gain", "%", "", "Loss", "", "", "" },
+        { SSC_OUTPUT, SSC_NUMBER, "annual_rear_row_reflections_percent",  "POA rear-side rear row reflections gain", "%", "", "Loss", "", "", "" },
+        { SSC_OUTPUT, SSC_NUMBER, "annual_rear_direct_diffuse_percent",   "POA rear-side direct and diffuse gain", "%", "", "Loss", "", "", "" },
+        { SSC_OUTPUT, SSC_NUMBER, "annual_rear_self_shaded_percent",      "POA rear-side self shaded loss", "%", "", "Loss", "", "", "" },
+        { SSC_OUTPUT, SSC_NUMBER, "annual_rack_shaded_percent",           "POA rear-side rack shaded loss", "%", "", "Loss", "", "", "" },
+        { SSC_OUTPUT, SSC_NUMBER, "annual_rear_soiled_percent",           "POA rear-side soiled loss", "%", "", "Loss", "", "", "" },
+        { SSC_OUTPUT, SSC_NUMBER, "annual_bifacial_electrical_mismatch_percent",   "Bifacial electrical mismatch loss", "%", "", "Loss", "", "", "" },
 
         // annual_dc_nominal
         { SSC_OUTPUT, SSC_NUMBER, "annual_dc_module_loss_percent", "DC module deviation from STC", "%", "", "Loss", "", "", "" },
@@ -1334,10 +1360,19 @@ void cm_pvsamv1::exec()
             double ts_accum_poa_front_shaded = 0.0;
             double ts_accum_poa_front_shaded_soiled = 0.0;
             double ts_accum_poa_front_total = 0.0;
+            double ts_accum_poa_front_beam_eff = 0.0;
+            double ts_accum_poa_total_eff = 0.0;
             double ts_accum_poa_rear = 0.0;
             double ts_accum_poa_rear_after_losses = 0.0;
-            double ts_accum_poa_total_eff = 0.0;
-            double ts_accum_poa_front_beam_eff = 0.0;
+            double ts_accum_ground_incident = 0.0;
+            double ts_accum_ground_absorbed = 0.0;
+            double ts_accum_poa_rear_ground_reflected = 0.0;
+            double ts_accum_poa_rear_row_reflections = 0.0;
+            double ts_accum_poa_rear_direct_diffuse = 0.0;
+            double ts_accum_poa_rear_self_shaded = 0.0;
+            double ts_accum_poa_rack_shaded = 0.0;
+            double ts_accum_poa_rear_soiled = 0.0;
+            double ts_accum_electrical_mismatch = 0.0;
 
             // calculate incident irradiance on each subarray
             std::vector<double> ipoa_rear, ipoa_rear_after_losses, ipoa_front, ipoa;
@@ -1723,14 +1758,15 @@ void cm_pvsamv1::exec()
                 double slopeLength = module_length * Subarrays[nn]->selfShadingInputs.nmody;
                 irr.calc_rear_side(Subarrays[nn]->Module->bifacialTransmissionFactor, Subarrays[nn]->Module->groundClearanceHeight, slopeLength);
                 ipoa_rear[nn] = irr.get_poa_rear();
-                double rear_irradiance_loss_factor = 1.;                                        // 1 = no loss
-                rear_irradiance_loss_factor *= (1 - Subarrays[nn]->rearSoilingLossPercent);     // apply rear soiling loss
-                if (Subarrays[nn]->calculateRackShading) {                                      // apply rack shading loss
-                    //rear_irradiance_loss_factor *= (1 - calculated_rack_shading_loss);        // TODO: implement
+                double rack_shading_loss_factor = 0.;
+                if (Subarrays[nn]->calculateRackShading) {
+                    //rack_shading_loss_factor = calculated_rack_shading_loss;        // TODO: implement
                 }
                 else {
-                    rear_irradiance_loss_factor *= (1 - Subarrays[nn]->rackShadingLossPercent);
+                    rack_shading_loss_factor = Subarrays[nn]->rackShadingLossPercent;
                 }
+                double rear_irradiance_loss_factor = (1 - rack_shading_loss_factor);
+                rear_irradiance_loss_factor *= (1 - Subarrays[nn]->rearSoilingLossPercent);
                 ipoa_rear_after_losses[nn] = ipoa_rear[nn] * rear_irradiance_loss_factor;
                 ipoa_rear_spatial[nn] = irr.get_poa_rear_spatial();
                 ipoa_rear_spatial_after_losses[nn].clear();
@@ -1739,9 +1775,18 @@ void cm_pvsamv1::exec()
                 }
                 ignd_rear[nn] = irr.get_ground_spatial();
 
-                ts_accum_poa_front_beam_eff += ibeam * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
-                ts_accum_poa_rear += ipoa_rear[nn] * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
-                ts_accum_poa_rear_after_losses = ts_accum_poa_rear * rear_irradiance_loss_factor;
+                double area_subarray = ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
+                ts_accum_poa_front_beam_eff += ibeam * area_subarray;
+                ts_accum_poa_rear += ipoa_rear[nn] * area_subarray;
+                ts_accum_poa_rear_after_losses = ts_accum_poa_rear * rear_irradiance_loss_factor;                               // rear with all losses, minus electrical mismatch
+                ts_accum_ground_incident += irr.get_ground_incident() * area_subarray / Subarrays[nn]->groundCoverageRatio;     // irradiance incident on ground
+                ts_accum_ground_absorbed += irr.get_ground_absorbed() * area_subarray / Subarrays[nn]->groundCoverageRatio;     // irradiance absorbed by ground
+                ts_accum_poa_rear_ground_reflected += irr.get_ground_reflected() * area_subarray;                               // irradiance reflected from ground to rear
+                ts_accum_poa_rear_row_reflections += irr.get_rear_row_reflections() * area_subarray;                            // irradiance reflected from rear row to rear
+                ts_accum_poa_rear_direct_diffuse += irr.get_rear_direct_diffuse() * area_subarray;                              // irradiance from sky beam and diffuse to rear
+                ts_accum_poa_rear_self_shaded += irr.get_rear_self_shaded() * area_subarray;                                    // irradiance blocked by self shading
+                ts_accum_poa_rack_shaded += ipoa_rear[nn] * area_subarray * rack_shading_loss_factor;                           // irradiance blocked by racks
+                ts_accum_poa_rear_soiled = ts_accum_poa_rack_shaded * Subarrays[nn]->rearSoilingLossPercent;                    // irradiance blocked by soiling
 
                 if (iyear == 0 || save_full_lifetime_variables == 1)
                 {
@@ -1802,18 +1847,21 @@ void cm_pvsamv1::exec()
                     }
                 }
 
+                double electrical_mismatch_loss_fraction = 0.;
                 if (Subarrays[nn]->Module->isBifacial) {
                     bifaciality = Subarrays[nn]->Module->bifaciality;
                     if (Subarrays[nn]->calculateBifacialElectricalMismatch) {
-                        ipoa_rear_after_losses[nn] *= (1 - intraElecMismatch(ipoa_front[nn], ipoa_rear_spatial_after_losses[nn], bifaciality, Subarrays[nn]->Module->selfShadingFillFactor));
+                        electrical_mismatch_loss_fraction = intraElecMismatch(ipoa_front[nn], ipoa_rear_spatial_after_losses[nn], bifaciality, Subarrays[nn]->Module->selfShadingFillFactor);
                     }
                     else {
-                        ipoa_rear_after_losses[nn] *= (1 - Subarrays[nn]->electricalMismatchLossPercent);
+                        electrical_mismatch_loss_fraction = Subarrays[nn]->electricalMismatchLossPercent;
                     }
                 }
                 else {
                     bifaciality = 0.;       // TODO: remove and uncomment lines 1352 in lib_pv_io_manager.cpp instead
                 }
+                ipoa_rear_after_losses[nn] *= (1 - electrical_mismatch_loss_fraction);
+                ts_accum_electrical_mismatch += ipoa_rear[nn] * area_subarray * rear_irradiance_loss_factor * electrical_mismatch_loss_fraction;    // energy lost due to intra-module electrical mismatch
 
                 // save the required irradiance inputs on array plane for the module output calculations.
                 Subarrays[nn]->poa.poaBeamFront = ibeam;
@@ -2232,6 +2280,15 @@ void cm_pvsamv1::exec()
                 PVSystem->p_poaFrontShadedSoiledTotal[idx] = (ssc_number_t)(ts_accum_poa_front_shaded_soiled * util::watt_to_kilowatt);
                 PVSystem->p_poaFrontTotal[idx] = (ssc_number_t)(ts_accum_poa_front_total * util::watt_to_kilowatt);
                 PVSystem->p_poaRearTotal[idx] = (ssc_number_t)(ts_accum_poa_rear_after_losses * util::watt_to_kilowatt);
+                PVSystem->p_groundIncidentTotal[idx] = (ssc_number_t)(ts_accum_ground_incident * util::watt_to_kilowatt);
+                PVSystem->p_groundAbsorbedTotal[idx] = (ssc_number_t)(ts_accum_ground_absorbed * util::watt_to_kilowatt);
+                PVSystem->p_poaRearGroundReflectedTotal[idx] = (ssc_number_t)(ts_accum_poa_rear_ground_reflected * util::watt_to_kilowatt);
+                PVSystem->p_poaRearRowReflectionsTotal[idx] = (ssc_number_t)(ts_accum_poa_rear_row_reflections * util::watt_to_kilowatt);
+                PVSystem->p_poaRearDirectDiffuseTotal[idx] = (ssc_number_t)(ts_accum_poa_rear_direct_diffuse * util::watt_to_kilowatt);
+                PVSystem->p_poaRearSelfShadedTotal[idx] = (ssc_number_t)(ts_accum_poa_rear_self_shaded * util::watt_to_kilowatt);
+                PVSystem->p_poaRackShadedTotal[idx] = (ssc_number_t)(ts_accum_poa_rack_shaded * util::watt_to_kilowatt);
+                PVSystem->p_poaRearSoiledTotal[idx] = (ssc_number_t)(ts_accum_poa_rear_soiled * util::watt_to_kilowatt);
+                PVSystem->p_bifacialElectricalMismatchTotal[idx] = (ssc_number_t)(ts_accum_electrical_mismatch * util::watt_to_kilowatt);
                 PVSystem->p_poaTotalAllSubarrays[idx] = (ssc_number_t)(ts_accum_poa_total_eff * util::watt_to_kilowatt);
                 PVSystem->p_poaFrontBeamTotal[idx] = (ssc_number_t)(ts_accum_poa_front_beam_eff * util::watt_to_kilowatt);
                 PVSystem->p_inverterMPPTLoss[idx] = 0;
@@ -2706,7 +2763,15 @@ void cm_pvsamv1::exec()
         double annual_poa_shaded = accumulate_annual_for_year("poa_shaded", "annual_poa_shaded", ts_hour, step_per_hour);
         double annual_poa_shaded_soiled = accumulate_annual_for_year("poa_shaded_soiled", "annual_poa_shaded_soiled", ts_hour, step_per_hour);
         double annual_poa_front = accumulate_annual_for_year("poa_front", "annual_poa_front", ts_hour, step_per_hour);
-        double annual_poa_rear = accumulate_annual_for_year("poa_rear", "annual_poa_rear", ts_hour, step_per_hour);
+        double annual_poa_rear_ground_reflected = accumulate_annual_for_year("poa_rear_ground_reflected", "annual_poa_rear_ground_reflected", ts_hour, step_per_hour);
+        double annual_poa_rear_row_reflections = accumulate_annual_for_year("poa_rear_row_reflections", "annual_poa_rear_row_reflections", ts_hour, step_per_hour);
+        double annual_poa_rear_direct_diffuse = accumulate_annual_for_year("poa_rear_direct_diffuse", "annual_poa_rear_direct_diffuse", ts_hour, step_per_hour);
+        double annual_poa_rear_self_shaded = accumulate_annual_for_year("poa_rear_self_shaded", "annual_poa_rear_self_shaded", ts_hour, step_per_hour);
+        double annual_poa_rear_rack_shaded = accumulate_annual_for_year("poa_rear_rack_shaded", "annual_poa_rear_rack_shaded", ts_hour, step_per_hour);
+        double annual_poa_rear_soiled = accumulate_annual_for_year("poa_rear_soiled", "annual_poa_rear_soiled", ts_hour, step_per_hour);
+        double annual_ground_incident = accumulate_annual_for_year("ground_incident", "annual_ground_incident", ts_hour, step_per_hour);
+        double annual_ground_absorbed = accumulate_annual_for_year("ground_absorbed", "annual_ground_absorbed", ts_hour, step_per_hour);
+        double annual_bifacial_electrical_mismatch = accumulate_annual_for_year("bifacial_electrical_mismatch", "annual_bifacial_electrical_mismatch", ts_hour, step_per_hour);
         double annual_poa_eff = accumulate_annual_for_year("poa_eff", "annual_poa_eff", ts_hour, step_per_hour);
         double annual_poa_beam_eff = accumulate_annual_for_year("poa_beam_eff", "annual_poa_beam_eff", ts_hour, step_per_hour);
 
@@ -2855,8 +2920,41 @@ void cm_pvsamv1::exec()
         if (annual_poa_shaded > 0) percent = 100 * (annual_poa_shaded_soiled - annual_poa_front) / annual_poa_shaded_soiled;
         assign("annual_poa_cover_loss_percent", var_data((ssc_number_t)percent));
         percent = 0.;
-        if (annual_poa_rear > 0) percent = 100 * (annual_poa_rear) / annual_poa_front;
-        assign("annual_poa_rear_gain_percent", var_data((ssc_number_t)percent));
+        if (annual_poa_front > 0) percent = 100 * (annual_ground_incident) / annual_poa_front;
+        assign("annual_ground_incident_percent", var_data((ssc_number_t)percent));  // too wide for loss diagram
+        percent = 0.;
+        if (annual_ground_incident > 0) percent = 100 * (annual_ground_absorbed) / annual_ground_incident;
+        assign("annual_ground_absorbed_percent", var_data((ssc_number_t)percent));  // too wide for loss diagram
+        percent = 0.;
+        // Basing off poa_front because ground incident and absorbed are excluded as they're too wide for loss diagram:
+        double rear_total_current = annual_poa_front;
+        if (rear_total_current > 0) percent = 100 * (annual_poa_rear_ground_reflected) / rear_total_current;
+        assign("annual_rear_ground_reflected_percent", var_data((ssc_number_t)percent));
+        rear_total_current += annual_poa_rear_ground_reflected;
+        percent = 0.;
+        if (rear_total_current > 0) percent = 100 * (annual_poa_rear_row_reflections) / rear_total_current;
+        assign("annual_rear_row_reflections_percent", var_data((ssc_number_t)percent));
+        rear_total_current += annual_poa_rear_row_reflections;      // insignificant
+        percent = 0.;
+        if (rear_total_current > 0) percent = 100 * (annual_poa_rear_direct_diffuse) / rear_total_current;
+        assign("annual_rear_direct_diffuse_percent", var_data((ssc_number_t)percent));
+        rear_total_current += annual_poa_rear_direct_diffuse;       // insignificant
+        percent = 0.;
+        if (rear_total_current > 0) percent = 100 * (annual_poa_rear_self_shaded) / rear_total_current;
+        assign("annual_rear_self_shaded_percent", var_data((ssc_number_t)percent));
+        rear_total_current -= annual_poa_rear_self_shaded;          // insignificant
+        percent = 0.;
+        if (rear_total_current > 0) percent = 100 * (annual_poa_rear_rack_shaded) / rear_total_current;
+        assign("annual_rack_shaded_percent", var_data((ssc_number_t)percent));
+        rear_total_current -= annual_poa_rear_rack_shaded;
+        percent = 0.;
+        if (rear_total_current > 0) percent = 100 * (annual_poa_rear_soiled) / rear_total_current;
+        assign("annual_rear_soiled_percent", var_data((ssc_number_t)percent));
+        rear_total_current -= annual_poa_rear_soiled;
+        percent = 0.;
+        if (rear_total_current > 0) percent = 100 * (annual_bifacial_electrical_mismatch) / rear_total_current;
+        assign("annual_bifacial_electrical_mismatch_percent", var_data((ssc_number_t)percent));
+        rear_total_current -= annual_bifacial_electrical_mismatch;
 
         // annual_dc_nominal
         percent = 0.;
@@ -2992,7 +3090,11 @@ void cm_pvsamv1::exec()
 
         // total loss diagram losses for single-year simulation (life time losses not included)
         std::vector<std::string> loss_components = { "annual_poa_shading_loss_percent", "annual_poa_soiling_loss_percent",
-                                                 "annual_poa_cover_loss_percent", "annual_poa_rear_gain_percent",
+                                                 "annual_poa_cover_loss_percent", "annual_ground_incident_percent",
+                                                 "annual_ground_absorbed_percent", "annual_rear_ground_reflected_percent",
+                                                 "annual_rear_row_reflections_percent", "annual_rear_direct_diffuse_percent",
+                                                 "annual_rear_self_shaded_percent", "annual_rack_shaded_percent",
+                                                 "annual_rear_soiled_percent", "annual_bifacial_electrical_mismatch_percent",
                                                  "annual_dc_snow_loss_percent", "annual_dc_module_loss_percent",
                                                  "annual_dc_mppt_clip_loss_percent", "annual_dc_mismatch_loss_percent",
                                                  "annual_dc_diodes_loss_percent", "annual_dc_wiring_loss_percent",
