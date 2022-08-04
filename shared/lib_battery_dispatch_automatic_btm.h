@@ -37,6 +37,7 @@ struct dispatch_plan
     int num_cycles;
     double kWhRemaining; // Stored to anticipate the value of energy outside the forecast period
     double lowestMarginalCost;
+    double kWhDischarged; // stored to provide energy to apply to variable O and M Cost (ssc issue 845)
 };
 
 /*! Automated dispatch class for behind-the-meter connections */
@@ -78,6 +79,7 @@ public:
         std::vector<double> battReplacementCostPerkWh,
         int battCycleCostChoice,
         std::vector<double> battCycleCost,
+        std::vector<double> battOMCost, // required for base class
         double interconnection_limit,
         bool chargeOnlySystemExceedLoad,
         bool dischargeOnlyLoadExceedSystem,
@@ -115,6 +117,10 @@ public:
 
     /*! Return the calculated cost to cycle for battery outputs */
     double cost_to_cycle_per_kwh() override;
+    
+    /*! Calculate the O and M cost per kWh for current timestep */
+    double omCost();
+
 
 	enum BTM_TARGET_MODES {TARGET_SINGLE_MONTHLY, TARGET_TIME_SERIES};
 

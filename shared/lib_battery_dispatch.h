@@ -306,6 +306,7 @@ public:
         std::vector<double> battReplacementCostPerkWh,
         int battCycleCostChoice,
         std::vector<double> battCycleCost,
+        std::vector<double> battOMCost, // required for base class
         double interconnection_limit,
         bool chargeOnlySystemExceedLoad = true,  // Optional so FOM doesn't have to specify them
         bool dischargeOnlyLoadExceedSystem = true,
@@ -413,6 +414,11 @@ protected:
     int m_battCycleCostChoice;
     std::vector<double> cycle_costs_by_year;
     double m_cycleCost; // $/cycle for behind the meter, $/cycle-kWh for front of the meter
+
+    /*! O and M cost inputs */
+    std::vector<double> om_costs_by_year; //(convert input to $/kWh per year)
+    double m_omCost; // $/kWh (input is $/MWh) for update_dispatch use
+
 };
 
 /*! Battery metrics class */

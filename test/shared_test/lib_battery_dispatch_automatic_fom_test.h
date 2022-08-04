@@ -58,6 +58,7 @@ protected:
 
     std::vector<double> replacementCost = { 0.0 };
     std::vector<double> cyclingCost = { 0.005 };
+    std::vector<double> omCost = { 0.0 };
 
     double interconnection_limit = 1e+38;
 public:

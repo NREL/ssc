@@ -636,6 +636,7 @@ dispatch_automatic_t::dispatch_automatic_t(
     std::vector<double> battReplacementCostPerkWh,
     int battCycleCostChoice,
     std::vector<double> battCycleCost,
+    std::vector<double> battOMCost,
     double interconnection_limit,
     bool chargeOnlySystemExceedLoad,
     bool dischargeOnlyLoadExceedSystem,
@@ -673,6 +674,7 @@ dispatch_automatic_t::dispatch_automatic_t(
     m_battReplacementCostPerKWH = battReplacementCostPerkWh;
     m_battCycleCostChoice = battCycleCostChoice;
     cycle_costs_by_year = battCycleCost;
+    om_costs_by_year = battOMCost;
 }
 
 void dispatch_automatic_t::init_with_pointer(const dispatch_automatic_t* tmp)
@@ -694,6 +696,7 @@ void dispatch_automatic_t::init_with_pointer(const dispatch_automatic_t* tmp)
     m_battCycleCostChoice = tmp->m_battCycleCostChoice;
     m_cycleCost = tmp->m_cycleCost;
     cycle_costs_by_year = tmp->cycle_costs_by_year;
+    om_costs_by_year = tmp->om_costs_by_year;
 }
 
 // deep copy from dispatch to this
