@@ -74,8 +74,11 @@ TEST_F(CmodCashLoanTest, DiscountedPayback) {
 
 TEST_F(CmodCashLoanTest, PVWattsResidential) {
 
-    char file_path[256];
-    int nfc1 = sprintf(file_path, "%s/test/input_json/2022.07.04_PVWatts_Residential_cmod_cashloan.json", SSCDIR);
+    //char file_path[256];
+    //int nfc1 = sprintf(file_path, "%s/test/input_json/2022.07.04_PVWatts_Residential_cmod_cashloan.json", SSCDIR);
+
+    std::string file_path = SSCDIR;
+    file_path += "/test/input_json/2022.07.04_PVWatts_Residential_cmod_cashloan.json";
     std::ifstream file(file_path);
     std::ostringstream tmp;
     tmp << file.rdbuf();
@@ -98,11 +101,11 @@ TEST_F(CmodCashLoanTest, PVWattsResidential) {
         ssc_data_t dat_outputs = json_to_ssc_data(tmp2.str().c_str());
         tmp2.str("");
 
-        std::vector<std::string> compare_number_variables = {"lcoe_nom", "npv"};
+        std::vector<std::string> compare_number_variables = {"lcoe_nom", "npv", "payback" };
         std::vector<ssc_number_t> values_to_compare(compare_number_variables.size());
         std::vector<ssc_number_t> values_to_match(compare_number_variables.size());
 
-        std::vector<std::string> compare_array_variables = { "cf_after_tax_cash_flow" };
+        std::vector<std::string> compare_array_variables = { "cf_after_tax_cash_flow", "cf_value_added"};
         std::vector< std::vector<ssc_number_t> > arrays_to_compare(compare_array_variables.size());
         std::vector< std::vector<ssc_number_t> > arrays_to_match(compare_array_variables.size());
         /*
