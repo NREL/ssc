@@ -419,7 +419,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, LCOS_test_singleowner)
 
     ssc_number_t lcos_real;
     ssc_data_get_number(data, "lcos_real", &lcos_real);
-    EXPECT_NEAR(lcos_real, 21.67, 0.1);
+    EXPECT_NEAR(lcos_real, 23.41, 0.1);
 
 }
 
@@ -435,7 +435,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, LCOS_test_levpartflip)
 
     ssc_number_t lcos_real;
     ssc_data_get_number(data, "lcos_real", &lcos_real);
-    EXPECT_NEAR(lcos_real, 21.70, 0.1);
+    EXPECT_NEAR(lcos_real, 23.43, 0.1);
 }
 
 TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, LCOS_test_cashloan)
@@ -462,14 +462,14 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_ACBatteryModelIntegration)
     grid_and_rate_defaults(data);
     singleowner_defaults(data);
 
-    ssc_number_t expectedEnergy[3] = { 37819210, 37818318, 37308139 };
+    ssc_number_t expectedEnergy[3] = { 37817636, 37816744, 37308139 };
     ssc_number_t expectedBatteryChargeEnergy[3] = { 14779, 24265, 14779 }; // No rate model means battery use is low
     ssc_number_t expectedBatteryDischargeEnergy[3] = { 14808, 23415, 14808 };
 
     ssc_number_t peakKwCharge[3] = { -1040.2, -1051.5, -1051.5 };
     ssc_number_t peakKwDischarge[3] = { 967.5, 969.5, 969.5 };
     ssc_number_t peakCycles[3] = { 1, 1, 1 };
-    ssc_number_t avgCycles[3] = { 0.0044, 0.005, 0.003 };
+    ssc_number_t avgCycles[3] = { 0.0039, 0.0042, 0.003 };
 
     ssc_data_set_number(data, "batt_dispatch_choice", 0);
     // Test economoic dispatch look ahead, economoic dispatch look behind. Others require additional input data
@@ -516,7 +516,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_ManualDispatchBatteryModelI
     grid_and_rate_defaults(data);
     singleowner_defaults(data);
 
-    ssc_number_t expectedEnergy = 37695624;
+    ssc_number_t expectedEnergy = 37694050;
     ssc_number_t expectedBatteryChargeEnergy = 1299674;
     ssc_number_t expectedBatteryDischargeEnergy = 1176096;
 
@@ -569,7 +569,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_CustomDispatchBatteryModelD
     grid_and_rate_defaults(data);
     singleowner_defaults(data);
 
-    ssc_number_t expectedEnergy = 37819927;
+    ssc_number_t expectedEnergy = 37818352;
     ssc_number_t expectedBatteryChargeEnergy = 2040;
     ssc_number_t expectedBatteryDischargeEnergy = 3254.;
 
@@ -618,7 +618,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_CustomDispatchBatteryModelD
     singleowner_defaults(data);
 
     //ssc_number_t expectedEnergy = 37264228;
-    ssc_number_t expectedEnergy = 37762919;
+    ssc_number_t expectedEnergy = 37761336;
     ssc_number_t expectedBatteryChargeEnergy = 416050;
     ssc_number_t expectedBatteryDischargeEnergy = 348966;
     ssc_number_t roundtripEfficiency = 80.6;
