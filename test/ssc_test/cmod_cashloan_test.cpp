@@ -128,3 +128,16 @@ TEST_F(CmodCashLoanTest, PVWattsResidential2) {
 
     Test(file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
+
+
+
+TEST_F(CmodCashLoanTest, PVWattsCommercial) {
+    std::string file_inputs = SSCDIR;
+    file_inputs += "/test/input_json/2022.08.07_develop_branch_PVWatts_Commercial_cmod_cashloan.json";
+    std::string file_outputs = SSCDIR;
+    file_outputs += "/test/input_json/2022.08.07_develop_branch_PVWatts_Commercial_cmod_cashloan_outputs.json";
+    std::vector<std::string> compare_number_variables = { "lcoe_nom", "npv", "payback" };
+    std::vector<std::string> compare_array_variables = { "cf_after_tax_cash_flow", "cf_value_added" };
+
+    Test(file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+}
