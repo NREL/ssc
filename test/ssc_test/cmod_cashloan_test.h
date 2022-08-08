@@ -99,8 +99,10 @@ public:
                 auto pCurrentOutputs = ssc_data_get_array(dat_inputs, compare_array_variables[i].c_str(), &len_currentrun);
                 auto pCompareOutputs = ssc_data_get_array(dat_outputs, compare_array_variables[i].c_str(), &len_comparerun);
                 EXPECT_EQ(len_currentrun, len_comparerun);
-                for (int j = 0; j < len_currentrun && j < len_comparerun; j++)
+                for (int j = 0; j < len_currentrun && j < len_comparerun; j++) {
                     EXPECT_NEAR(pCurrentOutputs[j], pCompareOutputs[j], 0.001) << " array issue at index i=" << i << " and array index j=" << j;
+                    cout << j << " " << pCurrentOutputs[j] << ", " << pCompareOutputs[j] << "\n";
+                }
             }
 
             ssc_data_free(dat_outputs);
