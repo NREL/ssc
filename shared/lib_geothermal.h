@@ -113,6 +113,7 @@ struct SGeothermal_Inputs
 	double md_DistanceBetweenProductionInjectionWellsM;		// default 1500 m [2B.Resource&Well Input].F185
 	double md_WaterLossPercent;								// default 2%
 	double md_EGSFractureAperature;							// default 0.0004 m
+    double md_EGSFractureLength;
 	double md_EGSNumberOfFractures;							// default 6
 	double md_EGSFractureWidthM;							// default 175 m
 	double md_EGSFractureAngle;								// default 15 degrees

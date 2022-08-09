@@ -788,7 +788,7 @@ double CGeothermalAnalyzer::GetInjectionPumpWorkft(void)
     double P_bottomhole = P_upper_bottom_interval + rho_sat * rho_correction * physics::FT_PER_METER * L_int / 144 - friction_head_psid;
     double bottom_hole_pressure = pressureInjectionWellBottomHolePSI();
 
-    double reservoir_buildup = mo_geo_in.md_ProductionFlowRateKgPerS * 7936.64 / mo_geo_in.md_RatioInjectionToProduction / 2500; //Injectivity index
+    double reservoir_buildup = GetPressureChangeAcrossReservoir() / mo_geo_in.md_RatioInjectionToProduction; //Injectivity index
     //double excess_pressure = bottom_hole_pressure - pressureHydrostaticPSI();
     double excess_pressure = P_bottomhole - pressureHydrostaticPSI();
     //double reservoir_buildup = GetPressureChangeAcrossReservoir();
@@ -804,7 +804,7 @@ double CGeothermalAnalyzer::GetInjectionPumpWorkft(void)
 double CGeothermalAnalyzer::GetProductionPumpWorkft(void)
 {
     double P_res = pressureHydrostaticPSI();
-    double Prod_well_minus_bottomhole = P_res - mo_geo_in.md_ProductionFlowRateKgPerS * 7936.64 / (1000 / 0.4);
+    double Prod_well_minus_bottomhole = P_res - GetPressureChangeAcrossReservoir();
     double flow = mo_geo_in.md_ProductionFlowRateKgPerS; //kg/s
     double flow_lbh = flow * 2.20462 * 3600;
     //Upper interval
@@ -1066,7 +1066,7 @@ double CGeothermalAnalyzer::GetAEFlash(void) { return GetAEFlashAtTemp(GetTemper
 
 double CGeothermalAnalyzer::EGSTimeStar(double tempC)
 {
-	double dEGSFractureSurfaceArea = mo_geo_in.md_EGSFractureWidthM * EGSFractureLength();
+	double dEGSFractureSurfaceArea = mo_geo_in.md_EGSFractureWidthM * mo_geo_in.md_EGSFractureLength;
 	double d2 = 27 * geothermal::EGSWaterDensity(tempC) * geothermal::EGSSpecificHeat(tempC) * EGSFlowPerFracture(tempC);
 	return (pow(EGSThermalConductivity() * dEGSFractureSurfaceArea / (d2), 2) / EGSAlpha()) + EGSLengthOverVelocity(tempC);
 }
@@ -1082,13 +1082,6 @@ double CGeothermalAnalyzer::EGSThermalConductivity()
 	return geothermal::EGS_THERMAL_CONDUCTIVITY;
 }
 
-double CGeothermalAnalyzer::EGSFractureLength()
-{	// fEffectiveLength, meters used in pump power calcs
-	// Pre Jan-2012 version: 
-	return 1000 / cos(mo_geo_in.md_EGSFractureAngle * physics::PI / 180); // Distance was hardwired to 1000m in GETEM
-	//return mo_geo_in.md_DistanceBetweenProductionInjectionWellsM / cos(mo_geo_in.md_EGSFractureAngle * physics::PI / 180);
-}
-
 double CGeothermalAnalyzer::EGSFlowPerFracture(double tempC)
 {	// m^3 per day
 	//double dFlowInTimePeriod = (IsHourly()) ? 60*60  : 60*60*24 ; // hourly analysis uses hourly flow, monthly analysis uses daily flow
@@ -1098,14 +1091,14 @@ double CGeothermalAnalyzer::EGSFlowPerFracture(double tempC)
 
 double CGeothermalAnalyzer::EGSAlpha(void)
 {	// fAlpha (m^2 per day) or (m^2 per hr)
-	return EGSThermalConductivity() / (mo_geo_in.md_EGSSpecificHeatConstant * mo_geo_in.md_EGSRockDensity);
+	return mo_geo_in.md_EGSThermalConductivity / (mo_geo_in.md_EGSSpecificHeatConstant * mo_geo_in.md_EGSRockDensity);
 }
 
 double CGeothermalAnalyzer::EGSLengthOverVelocity(double tempC)
 {
 	double dEGSFractureCrossSectionArea = mo_geo_in.md_EGSFractureWidthM * mo_geo_in.md_EGSFractureAperature; // Cross Sectional Area, m^2
 	double dEGSVelocity = EGSFlowPerFracture(tempC) / dEGSFractureCrossSectionArea;		// m^3 per day / m^2 = m/day (or hour)
-	return EGSFractureLength() / dEGSVelocity; 	// (m / m per day) = days (or hours)
+	return mo_geo_in.md_EGSFractureLength / dEGSVelocity; 	// (m / m per day) = days (or hours)
 }
 
 double CGeothermalAnalyzer::EGSAvailableEnergy()
@@ -1121,7 +1114,7 @@ double CGeothermalAnalyzer::EGSReservoirConstant(double avgWaterTempC, double dD
 	double cp = geothermal::EGSSpecificHeat(avgWaterTempC);	// J/kg-C
 	double rho = geothermal::EGSWaterDensity(avgWaterTempC);	// kg/m^3
 	double flow = EGSFlowPerFracture(avgWaterTempC);	// m^3 per day (or per hour)
-	double dEGSFractureSurfaceArea = mo_geo_in.md_EGSFractureWidthM * EGSFractureLength();//fFractureSurfaceArea, m^2
+	double dEGSFractureSurfaceArea = mo_geo_in.md_EGSFractureWidthM * mo_geo_in.md_EGSFractureLength;//fFractureSurfaceArea, m^2
 
 	double x = (EGSThermalConductivity() * dEGSFractureSurfaceArea) / (cp * rho * flow * sqrt(EGSAlpha()*(dDays - lv)));
 	return geothermal::gauss_error_function(x);
@@ -1155,12 +1148,12 @@ double CGeothermalAnalyzer::GetPressureChangeAcrossReservoir()
 	if ((mo_geo_in.me_rt == EGS) && (mo_geo_in.me_pc == SIMPLE_FRACTURE))
 	{	// only a valid option for EGS resources
 		// calculate the pressure change across the reservoir using simple fracture flow
-		double dEGSFractureLengthUserAdjusted = EGSFractureLength() * geothermal::FRACTURE_LENGTH_ADJUSTMENT;
+		double dEGSFractureLengthUserAdjusted = mo_geo_in.md_EGSFractureLength ;
 		double effectiveLengthFt = geothermal::MetersToFeet(dEGSFractureLengthUserAdjusted);
         double fracperm = pow(mo_geo_in.md_EGSFractureAperature, 2) / 12; //m^2
         double flowPerFracture = (volumetricFlow * 1 / 35.3147) / mo_geo_in.md_EGSNumberOfFractures; //m^3/s
 		double fractureFlowArea = mo_geo_in.md_EGSFractureAperature * mo_geo_in.md_EGSFractureWidthM;  // ft^2
-        double md_PressureChangeAcrossReservoir = flowPerFracture / (fractureFlowArea * fracperm * (viscosity * 1 / 1.48816)) * EGSFractureLength(); 
+        double md_PressureChangeAcrossReservoir = flowPerFracture / (fractureFlowArea * fracperm * (viscosity * 1 / 1.48816)) * mo_geo_in.md_EGSFractureLength; 
 		//double hydraulicDiameter = (2 * fractureFlowArea) / (geothermal::MetersToFeet(mo_geo_in.md_EGSFractureAperature) + geothermal::MetersToFeet(mo_geo_in.md_EGSFractureWidthM));  // ft
 		//double flowPerFracture = volumetricFlow / mo_geo_in.md_EGSNumberOfFractures; // ft^3 per second
 		//double velocity = flowPerFracture / fractureFlowArea; // ft per second
