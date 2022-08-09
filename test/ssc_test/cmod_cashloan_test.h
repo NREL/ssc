@@ -101,7 +101,7 @@ public:
                 EXPECT_EQ(len_currentrun, len_comparerun);
                 for (int j = 0; j < len_currentrun && j < len_comparerun; j++) {
                     EXPECT_NEAR(pCurrentOutputs[j], pCompareOutputs[j], 0.001) << " array issue at index i=" << i << " and array index j=" << j;
-                    cout << j << " " << pCurrentOutputs[j] << ", " << pCompareOutputs[j] << "\n";
+           //         cout << j << " " << pCurrentOutputs[j] << ", " << pCompareOutputs[j] << "\n";
                 }
             }
 

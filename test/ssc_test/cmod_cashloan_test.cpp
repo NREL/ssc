@@ -94,7 +94,7 @@ TEST_F(CmodCashLoanTest, PVWattsBatteryResidential) {
     std::string file_outputs = SSCDIR;
     file_outputs += "/test/input_json/2022.08.08_develop_branch_PVWatts_Battery_Residential_cmod_cashloan_outputs.json";
     std::vector<std::string> compare_number_variables = { "lcoe_nom", "npv", "payback" };
-    std::vector<std::string> compare_array_variables = { "cf_after_tax_cash_flow", "cf_value_added" };
+    std::vector<std::string> compare_array_variables = { "cf_after_tax_cash_flow", "cf_value_added", "cf_after_tax_net_equity_cost_flow", "cf_parasitic_cost", "cf_util_escal_rate" };
 
     Test(file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
