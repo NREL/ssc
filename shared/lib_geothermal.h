@@ -58,7 +58,7 @@ struct SGeothermal_Inputs
 		md_DiameterProductionWellInches = md_DiameterPumpCasingInches = md_DiameterInjPumpCasingInches = md_DiameterInjectionWellInches = md_UserSpecifiedPumpWorkKW = 0.0;
 		md_PotentialResourceMW = md_ResourceDepthM = md_TemperatureResourceC = md_TemperaturePlantDesignC = md_EGSThermalConductivity = md_EGSSpecificHeatConstant = 0.0;
 		md_EGSRockDensity = md_ReservoirDeltaPressure = md_ReservoirWidthM = md_ReservoirHeightM = md_ReservoirPermeability = md_DistanceBetweenProductionInjectionWellsM = 0.0;
-		md_WaterLossPercent = md_EGSFractureAperature = md_EGSNumberOfFractures = md_EGSFractureWidthM = md_EGSFractureAngle = 0.0;
+		md_WaterLossPercent = md_EGSFractureAperature = md_EGSNumberOfFractures = md_EGSFractureWidthM = md_EGSFractureAngle = md_EGSFractureSpacing = 0.0;
 		md_TemperatureEGSAmbientC = md_RatioInjectionToProduction = 0.0;
 		md_AdditionalPressure = 1.0;
         md_dtProdWell = 0.0;
@@ -114,6 +114,7 @@ struct SGeothermal_Inputs
 	double md_WaterLossPercent;								// default 2%
 	double md_EGSFractureAperature;							// default 0.0004 m
     double md_EGSFractureLength;
+    double md_EGSFractureSpacing;
 	double md_EGSNumberOfFractures;							// default 6
 	double md_EGSFractureWidthM;							// default 175 m
 	double md_EGSFractureAngle;								// default 15 degrees
@@ -169,6 +170,7 @@ struct SGeothermal_Outputs
 	double getX_hp, getX_lp;
 	double flash_count;
 	double max_secondlaw;				//Max 2nd Law efficiency
+    double ElapsedHours;
 
 
 // single values used in calculations, some also used in UI
@@ -280,6 +282,8 @@ private:
 	double InjectionTemperatureC(void); // calculate injection temperature in degrees C
 	double InjectionTemperatureF(void);
 	double InjectionDensity(void);
+
+    double Gringarten(void);
 
 	double GetAEAtTemp(double tempC);
 	double GetAEBinaryAtTemp(double tempC);
