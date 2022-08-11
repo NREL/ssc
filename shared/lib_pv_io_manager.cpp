@@ -244,21 +244,25 @@ void Irradiance_IO::checkWeatherFile(compute_module* cm, std::string cmName)
                 weatherRecord.poa, weatherRecord.year, weatherRecord.month, weatherRecord.day, weatherRecord.hour, weatherRecord.minute), SSC_WARNING, (float)idx);
             weatherRecord.poa = 0;
         }
-        //albedo is allowed to be missing in the weather file- will be filled in from user-entered monthly array.
-        //only throw an error if there's a value that isn't reasonable somewhere
+
+        // weather file albedo error: if use weather file albedo enabled and weather file albedo and monthly albedo are both invalid
+        // monthly albedo error: if use weather file albedo not enabled and monthly albedo is invalid
         int month_idx = weatherRecord.month - 1;
-        if (useWeatherFileAlbedo && (!std::isfinite(weatherRecord.alb) || weatherRecord.alb <= 0 || weatherRecord.alb >= 1) ) {
-            throw exec_error(cmName,
-                util::format("Error retrieving albedo value from weather file: Invalid albedo value %lg at time [y:%d m:%d d:%d h:%d minute:%lg]. Albedo must be greater than zero and less than one.",
-                weatherRecord.alb, weatherRecord.year, weatherRecord.month, weatherRecord.day, weatherRecord.hour, weatherRecord.minute));
-        }
-        else if (month_idx >= 0 && month_idx < 12) {
-            if (userSpecifiedMonthlyAlbedo[month_idx] <= 0 || userSpecifiedMonthlyAlbedo[month_idx] >= 1) {
+        bool wf_albedo_invalid = (!std::isfinite(weatherRecord.alb) && (weatherRecord.alb <= 0 || weatherRecord.alb >= 1));
+        bool monthly_albedo_invalid = (userSpecifiedMonthlyAlbedo[month_idx] <= 0 || userSpecifiedMonthlyAlbedo[month_idx] >= 1);
+        if ( useWeatherFileAlbedo && wf_albedo_invalid && monthly_albedo_invalid)
                 throw exec_error(cmName,
-                    util::format("Error retrieving albedo value from monthly albedo array: Invalid albedo value %lg for month %ld. Albedo must be greater than zero and less than one.",
-                    userSpecifiedMonthlyAlbedo[month_idx], month_idx));
-            }
-        }
+                    util::format("Invalid albedo %lg in weather file at time [y:%d m:%d d:%d h:%d minute:%lg] and invalid albedo %lg in monthly albedo array for month index %ld.. Albedo must be greater than zero and less than one.",
+                    weatherRecord.alb, weatherRecord.year, weatherRecord.month, weatherRecord.day, weatherRecord.hour, weatherRecord.minute, userSpecifiedMonthlyAlbedo[month_idx], month_idx));
+        if ( useWeatherFileAlbedo && wf_albedo_invalid && !monthly_albedo_invalid)
+                throw exec_error(cmName,
+                    util::format("Invalid albedo %lg in weather file at time [y:%d m:%d d:%d h:%d minute:%lg]. Albedo must be greater than zero and less than one.",
+                    weatherRecord.alb, weatherRecord.year, weatherRecord.month, weatherRecord.day, weatherRecord.hour, weatherRecord.minute));
+        if ( !useWeatherFileAlbedo && (month_idx >= 0 && month_idx < 12) && monthly_albedo_invalid )
+            throw exec_error(cmName,
+                util::format("Invalid albedo %lg in monthly albedo array for month index %ld. Albedo must be greater than zero and less than one.",
+                userSpecifiedMonthlyAlbedo[month_idx], month_idx));
+
     }
     weatherDataProvider->rewind();
 }
