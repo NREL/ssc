@@ -24,6 +24,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "csp_solver_core.h"
 
 #include "htf_props.h"
+#include "lib_physics.h"
 
 static C_csp_reported_outputs::S_output_info S_cr_electric_resistance_output_info[] =
 {
@@ -114,7 +115,7 @@ void C_csp_cr_electric_resistance::init(const C_csp_collector_receiver::S_csp_cr
     m_dP_htf = 0.0;
 
     // Calculate the design point HTF mass flow rate
-    m_cp_htf_des = mc_pc_htfProps.Cp_ave(m_T_htf_cold_des + 273.15, m_T_htf_hot_des + 273.15, 5);	//[kJ/kg-K]
+    m_cp_htf_des = mc_pc_htfProps.Cp_ave(physics::CelciusToKelvin(m_T_htf_cold_des), physics::CelciusToKelvin(m_T_htf_hot_des));	//[kJ/kg-K]
     m_m_dot_htf_des = m_q_dot_heater_des*1.E3 / (m_cp_htf_des*(m_T_htf_hot_des - m_T_htf_cold_des));	//[kg/s]
 
     // Check startup parameters
@@ -126,10 +127,10 @@ void C_csp_cr_electric_resistance::init(const C_csp_collector_receiver::S_csp_cr
     m_E_su_des = m_q_dot_su_max*m_hrs_startup_at_max_rate;   //[MWt-hr] 
     m_t_su_des = m_E_su_des / m_q_dot_su_max;   //[hr]
 
-    solved_params.m_T_htf_cold_des = m_T_htf_cold_des + 273.15; //[K]
+    solved_params.m_T_htf_cold_des = physics::CelciusToKelvin(m_T_htf_cold_des); //[K]
     solved_params.m_P_cold_des = std::numeric_limits<double>::quiet_NaN();  //[kPa]
     solved_params.m_x_cold_des = std::numeric_limits<double>::quiet_NaN();  //[-]
-    solved_params.m_T_htf_hot_des = m_T_htf_hot_des + 273.15;   //[K]
+    solved_params.m_T_htf_hot_des = physics::CelciusToKelvin(m_T_htf_hot_des);   //[K]
     solved_params.m_q_dot_rec_des = m_q_dot_heater_des;         //[MWt]
     solved_params.m_A_aper_total = 0.0;                         //[m2]
     solved_params.m_dP_sf = m_dP_htf;                           //[bar]
@@ -308,7 +309,8 @@ void C_csp_cr_electric_resistance::on(const C_csp_weatherreader::S_outputs& weat
 
     double W_dot_heater = q_dot_elec;       //[MWe]
 
-    double m_dot_htf = q_dot_elec * 1.E3 / (m_cp_htf_des*(m_T_htf_hot_des - htf_state_in.m_temp));  //[kg/s]
+    double cp_ave = mc_pc_htfProps.Cp_ave(physics::CelciusToKelvin(htf_state_in.m_temp), physics::CelciusToKelvin(m_T_htf_hot_des));
+    double m_dot_htf = q_dot_elec * 1.E3 / (cp_ave*(m_T_htf_hot_des - htf_state_in.m_temp));  //[kg/s]
 
     double q_startup = 0.0;         //[MWt-hr]
     double q_dot_startup = 0.0;     //[MWt-hr]
@@ -353,8 +355,8 @@ void C_csp_cr_electric_resistance::estimates(const C_csp_weatherreader::S_output
     // 2) heater is always capable of design output
     // 3) no mass flow rate bounds (for now)
     // 4) heater is controlled to always return HTF at design hot temperature
-
-    double m_dot_htf = m_q_dot_heater_des * 1.E3 / (m_cp_htf_des * (m_T_htf_hot_des - htf_state_in.m_temp));    //[kg/s]
+    double cp_ave = mc_pc_htfProps.Cp_ave(physics::CelciusToKelvin(htf_state_in.m_temp), physics::CelciusToKelvin(m_T_htf_hot_des));
+    double m_dot_htf = m_q_dot_heater_des * 1.E3 / (cp_ave * (m_T_htf_hot_des - htf_state_in.m_temp));    //[kg/s]
 
     E_csp_cr_modes mode = get_operating_state();
 

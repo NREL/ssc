@@ -403,7 +403,6 @@ bool C_Indirect_PB::Execute(const long lSecondsFromStart, const S_Indirect_PB_In
 
 		case 2: {  // The cycle is in standby operation		
 			double c_htf = m_pbp.htfProps.Cp( physics::CelciusToKelvin((m_pbi.T_htf_hot + m_pbp.T_htf_cold_ref)/2.0) );
-			// double c_htf = specheat(m_pbp.HTF, physics::CelciusToKelvin((m_pbi.T_htf_hot + m_pbp.T_htf_cold_ref)/2.0), 1.0);
 		    double q_tot = m_pbp.P_ref / m_pbp.eta_ref;
 
 			// Calculate the actual q_sby_needed from the reference flows
@@ -688,8 +687,6 @@ void C_Indirect_PB::RankineCycle(/*double time,*/double P_ref, double eta_ref, d
 	// Calculate the specific heat before converting to Kelvin
 	double c_htf_ref = m_pbp.htfProps.Cp( physics::CelciusToKelvin((T_htf_hot_ref+T_htf_cold_ref)/2.0) );
 	double c_htf = m_pbp.htfProps.Cp( physics::CelciusToKelvin((T_htf_hot+T_htf_cold_ref)/2.0) );
-	//double c_htf_ref = specheat(m_pbp.HTF, physics::CelciusToKelvin((T_htf_hot_ref+T_htf_cold_ref)/2.0), 1.0);
-	//double c_htf = specheat(m_pbp.HTF, physics::CelciusToKelvin((T_htf_hot+T_htf_cold_ref)/2.0), 1.0);
 
 	// Convert units
 	// **Temperatures from Celcius to Kelvin
