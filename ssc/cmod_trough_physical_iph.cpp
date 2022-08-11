@@ -719,9 +719,8 @@ public:
 		tes->m_field_fl_props = c_trough.m_field_fl_props;	//[-]
 		tes->m_tes_fl = tes->m_field_fl;	//[-]
 		tes->m_tes_fl_props = c_trough.m_field_fl_props;	//[-]
-		tes->m_W_dot_pc_design = c_heat_sink.ms_params.m_q_dot_des;	//[MWt]
-		tes->m_eta_pc = 1.0;
-		tes->m_solarm = as_double("solar_mult");	//[-]  (set during verify() using cmod_csp_trough_eqns.cpp)
+        tes->m_q_dot_design = c_heat_sink.ms_params.m_q_dot_des / 1.0;  //[MWe]
+        tes->m_frac_max_q_dot = as_double("solar_mult");                //[-]
 
 		tes->m_ts_hours = as_double("tshours");		//[hr]
 	

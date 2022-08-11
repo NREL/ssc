@@ -189,9 +189,8 @@ public:
 		int m_tes_fl;
 		util::matrix_t<double> m_tes_fl_props;
 
-		double m_W_dot_pc_design;   //[MWe] Design point gross power cycle output
-		double m_eta_pc;            //[-] Design point power cycle thermal efficiency
-		double m_solarm;			//[-] solar multiple
+        double m_q_dot_design;      //[MWe] Design heat rate in and out of tes
+        double m_frac_max_q_dot;    //[-] the max design heat rate as a fraction of the nominal
 		double m_ts_hours;			//[hr] hours of storage at design power cycle operation		
 		double m_h_tank;			//[m] tank height
 		double m_u_tank;			//[W/m^2-K]
@@ -238,7 +237,7 @@ public:
 
 			m_ts_hours = 0.0;		//[hr] Default to 0 so that if storage isn't defined, simulation won't crash
 
-			m_W_dot_pc_design = m_eta_pc = m_solarm = m_h_tank = m_u_tank = m_hot_tank_Thtr = m_hot_tank_max_heat = m_cold_tank_Thtr =
+            m_q_dot_design = m_frac_max_q_dot = m_h_tank = m_u_tank = m_hot_tank_Thtr = m_hot_tank_max_heat = m_cold_tank_Thtr =
 				m_cold_tank_max_heat = m_dt_hot = m_T_field_in_des = m_T_field_out_des = m_dP_field_des = m_T_tank_hot_ini =
 				m_T_tank_cold_ini = m_h_tank_min = m_f_V_hot_ini = m_htf_pump_coef = m_tes_pump_coef = eta_pump = T_tank_hot_inlet_min = 
                 V_tes_des = pipe_rough = DP_SGS = std::numeric_limits<double>::quiet_NaN();

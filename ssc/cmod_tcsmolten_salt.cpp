@@ -1661,9 +1661,8 @@ public:
         tes->m_field_fl_props = as_matrix("field_fl_props");
         tes->m_tes_fl = as_integer("rec_htf");
         tes->m_tes_fl_props = as_matrix("field_fl_props");
-        tes->m_W_dot_pc_design = as_double("P_ref");        //[MWe]
-        tes->m_eta_pc = as_double("design_eff");                //[-]
-        tes->m_solarm = as_double("solarm");
+        tes->m_q_dot_design = as_double("P_ref") / as_double("design_eff"); //[MWe]
+        tes->m_frac_max_q_dot = as_double("solarm");                        //[-]
         tes->m_ts_hours = as_double("tshours");
         tes->m_h_tank = as_double("h_tank");
         tes->m_u_tank = as_double("u_tank");

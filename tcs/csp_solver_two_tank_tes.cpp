@@ -825,7 +825,7 @@ void C_csp_two_tank_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inputs
     }
 
 	// Calculate thermal power to PC at design
-	m_q_pb_design = ms_params.m_W_dot_pc_design/ms_params.m_eta_pc*1.E6;	//[Wt]
+	m_q_pb_design = ms_params.m_q_dot_design * 1.E6;	//[Wt]
 
 	// Convert parameter units
 	ms_params.m_hot_tank_Thtr += 273.15;		//[K] convert from C
@@ -854,7 +854,7 @@ void C_csp_two_tank_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inputs
 		m_V_tank_active, m_vol_tank, m_d_tank, m_q_dot_loss_des);
 
 	// 5.13.15, twn: also be sure that hx is sized such that it can supply full load to power cycle, in cases of low solar multiples
-	double duty = m_q_pb_design * fmax(1.0, ms_params.m_solarm);		//[W] Allow all energy from the field to go into storage at any time
+	double duty = m_q_pb_design * fmax(1.0, ms_params.m_frac_max_q_dot);		//[W] Allow all energy from the field to go into storage at any time
 
 	if( ms_params.m_ts_hours > 0.0 )
 	{
@@ -917,10 +917,10 @@ void C_csp_two_tank_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inputs
     m_cp_field_avg = mc_field_htfProps.Cp((ms_params.m_T_field_in_des + ms_params.m_T_field_out_des) / 2);
 	double cp_tes_avg = mc_store_htfProps.Cp((T_tes_hot_des + T_tes_cold_des) / 2);
 	m_m_dot_tes_des_over_m_dot_field_des = m_cp_field_avg / cp_tes_avg;		//[-] assume hx cr = 1
-    double m_dot_pb_design = ms_params.m_W_dot_pc_design * 1.e3 /   // convert MWe to kWe for cp [kJ/kg-K]
-        (ms_params.m_eta_pc * m_cp_field_avg * (ms_params.m_T_field_out_des - ms_params.m_T_field_in_des));
+    double m_dot_pb_design = ms_params.m_q_dot_design * 1.e3 /   // convert MWe to kWe for cp [kJ/kg-K]
+        (m_cp_field_avg * (ms_params.m_T_field_out_des - ms_params.m_T_field_in_des));
     if (size_tes_piping(ms_params.V_tes_des, ms_params.tes_lengths, rho_avg,
-        m_dot_pb_design, ms_params.m_solarm, ms_params.tanks_in_parallel,     // Inputs
+        m_dot_pb_design, ms_params.m_frac_max_q_dot, ms_params.tanks_in_parallel,     // Inputs
         this->pipe_vol_tot, this->pipe_v_dot_rel, this->pipe_diams,
         this->pipe_wall_thk, this->pipe_m_dot_des, this->pipe_vel_des,        // Outputs
         ms_params.custom_tes_pipe_sizes)) {

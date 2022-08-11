@@ -606,9 +606,8 @@ public:
             tes->m_field_fl_props = ud_HT_htf_props;
             tes->m_tes_fl = HT_htf_code;
             tes->m_tes_fl_props = ud_HT_htf_props;
-            tes->m_W_dot_pc_design = W_dot_gen_thermo;  //[MWe]
-            tes->m_eta_pc = eta_therm_mech;             //[-]
-            tes->m_solarm = heater_mult;                //[-]
+            tes->m_q_dot_design = W_dot_gen_thermo / eta_therm_mech; //[MWe]
+            tes->m_frac_max_q_dot = heater_mult;                     //[-]
             tes->m_ts_hours = tshours;                  //[hr]
             tes->m_h_tank = as_double("h_tank");
             tes->m_u_tank = as_double("u_tank");
@@ -652,10 +651,9 @@ public:
             ctes->m_tes_fl = CT_htf_code;
             ctes->m_tes_fl_props = ud_CT_htf_props;
             // Power/effiency relationship doesn't hold for cold tank, so just fake it with power = heat and eta = 1
-            ctes->m_W_dot_pc_design = q_dot_cold_in_charge;     //[MWt]
-            ctes->m_eta_pc = 1.0;                               //[-]
+            ctes->m_q_dot_design = W_dot_gen_thermo / 1.0;        //[MWe]
+            ctes->m_frac_max_q_dot = heater_mult;                 //[-]
                 // *************************************************
-            ctes->m_solarm = heater_mult;                //[-]
             ctes->m_ts_hours = tshours;                  //[hr]
             ctes->m_h_tank = as_double("CT_h_tank");
             ctes->m_u_tank = as_double("CT_u_tank");
