@@ -83,6 +83,8 @@ static var_info _cm_vtab_windpower[] = {
         // OUTPUTS ----------------------------------------------------------------------------annual_energy
 	{ SSC_OUTPUT , SSC_ARRAY  , "turbine_output_by_windspeed_bin"    , "Turbine output by wind speed bin"         , "kW"      ,""                                    , "Power Curve"                      ,"" , "LENGTH_EQUAL=wind_turbine_powercurve_windspeeds" , "" } ,
 	{ SSC_OUTPUT , SSC_ARRAY  , "wind_direction"                     , "Wind direction"                           , "deg"     ,""                                    , "Time Series"                          , "wind_resource_model_choice=0"                    , ""                                                , "" } ,
+    { SSC_OUTPUT , SSC_ARRAY  , "wind_direction_bins"                     , "Wind direction rose values"                           , ""     ,""                                    , "Time Series"                          , "wind_resource_model_choice=0"                    , ""                                                , "" } ,
+
     { SSC_OUTPUT , SSC_ARRAY  , "wind_speed"                         , "Wind speed"                               , "m/s"     ,""                                    , "Time Series"                          , "wind_resource_model_choice=0"                    , ""                                                , "" } ,
 	{ SSC_OUTPUT , SSC_ARRAY  , "temp"                               , "Air temperature"                          , "'C"      ,""                                    , "Time Series"                          , "wind_resource_model_choice=0"                    , ""                                                , "" } ,
 	{ SSC_OUTPUT , SSC_ARRAY  , "pressure"                           , "Pressure"                                 , "atm"     ,""                                    , "Time Series"                          , "wind_resource_model_choice=0"                    , ""                                                , "" } ,
@@ -490,6 +492,9 @@ void cm_windpower::exec()
 	ssc_number_t *air_temp = allocate("temp", nstep);
 	ssc_number_t *air_pres = allocate("pressure", nstep);
 
+    ssc_number_t* wdir_bins = allocate("wind_direction_bins", 360);
+    int wdir_idx = 0;
+
 
 	std::vector<double> Power(wpc.nTurbines, 0.), Thrust(wpc.nTurbines, 0.),
 		Eff(wpc.nTurbines, 0.), Wind(wpc.nTurbines, 0.), Turb(wpc.nTurbines, 0.),
@@ -595,6 +600,8 @@ void cm_windpower::exec()
 			farmpwr[i] = (ssc_number_t)farmp*haf(hr); //adjustment factors are constrained to be hourly, not sub-hourly, so it's correct for this to be indexed on the hour
 			wspd[i] = (ssc_number_t)wind;
 			wdir[i] = (ssc_number_t)dir;
+            wdir_idx = wdir[i];
+            wdir_bins[wdir_idx] += 1.0; 
 			air_temp[i] = (ssc_number_t)temp;
 			air_pres[i] = (ssc_number_t)pres;
 
@@ -621,6 +628,7 @@ void cm_windpower::exec()
         wsp_avg += wspd[n];
     wsp_avg /= nstep;
     assign("wind_speed_average", wsp_avg);
+
 
 	// internal wake loss is calculated during simulation rather than provided
 	if (wakeModelChoice != 3){
