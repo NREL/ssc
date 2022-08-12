@@ -252,7 +252,9 @@ public:
 	
 	S_params ms_params;
 
-	C_csp_two_tank_tes();
+    C_csp_two_tank_tes();
+
+	C_csp_two_tank_tes(S_params params);
 
 	~C_csp_two_tank_tes(){};
 

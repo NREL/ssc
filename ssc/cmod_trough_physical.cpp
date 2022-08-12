@@ -973,52 +973,52 @@ public:
         // TES
         // ********************************
         // ********************************
-        C_csp_two_tank_tes storage;
-        C_csp_two_tank_tes::S_params *tes = &storage.ms_params;
-        tes->m_field_fl           = c_trough.m_Fluid;                       //[-]
-        tes->m_field_fl_props     = c_trough.m_field_fl_props;              //[-]
-        tes->m_tes_fl             = as_integer("store_fluid");              //[-]
-        tes->m_tes_fl_props       = as_matrix("store_fl_props");            //[-]
-        tes->m_q_dot_design       = as_double("P_ref") / as_double("eta_ref"); //[MWe]
-        tes->m_frac_max_q_dot     = as_double("solar_mult");                //[-]
-        tes->m_ts_hours           = as_double("tshours");                   //[hr]
-        tes->m_h_tank             = as_double("h_tank");                    //[m]
-        tes->m_u_tank             = as_double("u_tank");                    //[W/m^2-K]
-        tes->m_tank_pairs         = as_integer("tank_pairs");               //[-]
-        tes->m_hot_tank_Thtr      = as_double("hot_tank_Thtr");             //[C]
-        tes->m_hot_tank_max_heat  = as_double("hot_tank_max_heat");         //[MWe]
-        tes->m_cold_tank_Thtr     = as_double("cold_tank_Thtr");            //[C]
-        tes->m_cold_tank_max_heat = as_double("cold_tank_max_heat");        //[MWe]
-        tes->m_dt_hot             = as_double("dt_hot");                    //[C]
-        //tes->m_dt_cold            = as_double("dt_cold");                   //[C]
-        tes->m_T_cold_des         = T_loop_in_des;                          //[C]
-        tes->m_T_hot_des          = T_loop_out_des;                         //[C]
-        tes->m_T_tank_hot_ini     = T_loop_out_des;                         //[C]
-        tes->m_T_tank_cold_ini    = T_loop_in_des;                          //[C]
-        tes->m_h_tank_min         = as_double("h_tank_min");                //[m]
-        tes->m_f_V_hot_ini        = as_double("init_hot_htf_percent");      //[-]
-        tes->m_htf_pump_coef      = as_double("pb_pump_coef");              //[kWe/kg/s]
-        tes->m_tes_pump_coef      = as_double("tes_pump_coef");             //[kWe/kg/s]
-        tes->eta_pump             = as_double("eta_pump");                  //[-]
-        tes->tanks_in_parallel    = as_boolean("tanks_in_parallel");        //[-]
-        tes->has_hot_tank_bypass  = as_boolean("has_hot_tank_bypass");      //[-]
-        tes->T_tank_hot_inlet_min = as_double("T_tank_hot_inlet_min");      //[C]
-        tes->V_tes_des            = as_double("V_tes_des");                 //[m/s]
-        tes->custom_tes_p_loss    = as_boolean("custom_tes_p_loss");        //[-]
-        tes->k_tes_loss_coeffs    = as_matrix("k_tes_loss_coeffs");         //[-]
-        tes->custom_tes_pipe_sizes = as_boolean("custom_tes_pipe_sizes");   //[-]
-        tes->tes_diams            = as_matrix("tes_diams");                 //[m]
-        tes->tes_wallthicks       = as_matrix("tes_wallthicks");            //[m]
-        tes->calc_design_pipe_vals = as_boolean("calc_design_pipe_vals");   //[-]
-        tes->pipe_rough           = as_double("HDR_rough");                 //[m]
-        tes->dP_discharge         = as_double("DP_SGS");                    //[bar]
+        C_csp_two_tank_tes::S_params tes_params;
+        tes_params.m_field_fl           = c_trough.m_Fluid;                       //[-]
+        tes_params.m_field_fl_props     = c_trough.m_field_fl_props;              //[-]
+        tes_params.m_tes_fl             = as_integer("store_fluid");              //[-]
+        tes_params.m_tes_fl_props       = as_matrix("store_fl_props");            //[-]
+        tes_params.m_q_dot_design       = as_double("P_ref") / as_double("eta_ref"); //[MWe]
+        tes_params.m_frac_max_q_dot     = as_double("solar_mult");                //[-]
+        tes_params.m_ts_hours           = as_double("tshours");                   //[hr]
+        tes_params.m_h_tank             = as_double("h_tank");                    //[m]
+        tes_params.m_u_tank             = as_double("u_tank");                    //[W/m^2-K]
+        tes_params.m_tank_pairs         = as_integer("tank_pairs");               //[-]
+        tes_params.m_hot_tank_Thtr      = as_double("hot_tank_Thtr");             //[C]
+        tes_params.m_hot_tank_max_heat  = as_double("hot_tank_max_heat");         //[MWe]
+        tes_params.m_cold_tank_Thtr     = as_double("cold_tank_Thtr");            //[C]
+        tes_params.m_cold_tank_max_heat = as_double("cold_tank_max_heat");        //[MWe]
+        tes_params.m_dt_hot             = as_double("dt_hot");                    //[C]
+        //tes_params.m_dt_cold            = as_double("dt_cold");                   //[C]
+        tes_params.m_T_cold_des         = T_loop_in_des;                          //[C]
+        tes_params.m_T_hot_des          = T_loop_out_des;                         //[C]
+        tes_params.m_T_tank_hot_ini     = T_loop_out_des;                         //[C]
+        tes_params.m_T_tank_cold_ini    = T_loop_in_des;                          //[C]
+        tes_params.m_h_tank_min         = as_double("h_tank_min");                //[m]
+        tes_params.m_f_V_hot_ini        = as_double("init_hot_htf_percent");      //[-]
+        tes_params.m_htf_pump_coef      = as_double("pb_pump_coef");              //[kWe/kg/s]
+        tes_params.m_tes_pump_coef      = as_double("tes_pump_coef");             //[kWe/kg/s]
+        tes_params.eta_pump             = as_double("eta_pump");                  //[-]
+        tes_params.tanks_in_parallel    = as_boolean("tanks_in_parallel");        //[-]
+        tes_params.has_hot_tank_bypass  = as_boolean("has_hot_tank_bypass");      //[-]
+        tes_params.T_tank_hot_inlet_min = as_double("T_tank_hot_inlet_min");      //[C]
+        tes_params.V_tes_des            = as_double("V_tes_des");                 //[m/s]
+        tes_params.custom_tes_p_loss    = as_boolean("custom_tes_p_loss");        //[-]
+        tes_params.k_tes_loss_coeffs    = as_matrix("k_tes_loss_coeffs");         //[-]
+        tes_params.custom_tes_pipe_sizes = as_boolean("custom_tes_pipe_sizes");   //[-]
+        tes_params.tes_diams            = as_matrix("tes_diams");                 //[m]
+        tes_params.tes_wallthicks       = as_matrix("tes_wallthicks");            //[m]
+        tes_params.calc_design_pipe_vals = as_boolean("calc_design_pipe_vals");   //[-]
+        tes_params.pipe_rough           = as_double("HDR_rough");                 //[m]
+        tes_params.dP_discharge         = as_double("DP_SGS");                    //[bar]
         if (is_assigned("tes_lengths")) {
-            tes->tes_lengths = as_matrix("tes_lengths");               //[m]
+            tes_params.tes_lengths = as_matrix("tes_lengths");               //[m]
         }
-        if (!is_assigned("tes_lengths") || tes->tes_lengths.ncells() < 11) {
+        if (!is_assigned("tes_lengths") || tes_params.tes_lengths.ncells() < 11) {
             double vals1[11] = { 0., 90., 100., 120., 0., 30., 90., 80., 80., 120., 80. };
-            tes->tes_lengths.assign(vals1, 11);
+            tes_params.tes_lengths.assign(vals1, 11);
         }
+        C_csp_two_tank_tes storage(tes_params);
 
         // Set storage outputs
         storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_Q_DOT_LOSS, allocate("tank_losses", n_steps_fixed), n_steps_fixed);

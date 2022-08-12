@@ -762,34 +762,34 @@ public:
 		// Now add the storage class
 		// ********************************
 		// ********************************
-		C_csp_two_tank_tes storage;
-		C_csp_two_tank_tes::S_params *tes = &storage.ms_params;
-		tes->m_field_fl = as_integer("Fluid");
-		tes->m_field_fl_props = as_matrix("field_fl_props");
-		tes->m_tes_fl = as_integer("Fluid");
-		tes->m_tes_fl_props = as_matrix("field_fl_props");
-        tes->m_q_dot_design = as_double("W_pb_design") / as_double("eta_ref");  //[MWe]
-        tes->m_frac_max_q_dot = as_double("solar_mult");        //[-]
-		tes->m_ts_hours = as_double("tshours");					//[hr]
+		C_csp_two_tank_tes::S_params tes_params;
+		tes_params.m_field_fl = as_integer("Fluid");
+		tes_params.m_field_fl_props = as_matrix("field_fl_props");
+		tes_params.m_tes_fl = as_integer("Fluid");
+		tes_params.m_tes_fl_props = as_matrix("field_fl_props");
+        tes_params.m_q_dot_design = as_double("W_pb_design") / as_double("eta_ref");  //[MWe]
+        tes_params.m_frac_max_q_dot = as_double("solar_mult");        //[-]
+		tes_params.m_ts_hours = as_double("tshours");					//[hr]
 
 		// Hardcode NO TES for now
-		tes->m_ts_hours = 0.0;		//[hr]
+		tes_params.m_ts_hours = 0.0;		//[hr]
 
-		tes->m_h_tank = as_double("h_tank");					//[m]
-		tes->m_u_tank = as_double("u_tank");					//[W/m^2-K]
-		tes->m_tank_pairs = as_integer("tank_pairs");			//[-]
-		tes->m_hot_tank_Thtr = as_double("hot_tank_Thtr");		//[C]
-		tes->m_hot_tank_max_heat = as_double("tank_max_heat");	//[MW]
-		tes->m_cold_tank_Thtr = as_double("cold_tank_Thtr");	//[C]
-		tes->m_cold_tank_max_heat = as_double("tank_max_heat");	//[MW]
-		tes->m_dt_hot = 0.0;									//[-] Assuming direct storage here
-		tes->m_T_cold_des = as_double("T_loop_in_des");		    //[C]
-		tes->m_T_hot_des = as_double("T_loop_out");		        //[C]
-		tes->m_T_tank_hot_ini = as_double("T_loop_in_des");		//[C]
-		tes->m_T_tank_cold_ini = as_double("T_loop_out");		//[C]
-		tes->m_h_tank_min = as_double("h_tank_min");			//[m]
-		tes->m_f_V_hot_ini = as_double("V_tank_hot_ini");		//[-]
-		tes->m_htf_pump_coef = as_double("pb_pump_coef");		//[kW/kg/s]
+		tes_params.m_h_tank = as_double("h_tank");					//[m]
+		tes_params.m_u_tank = as_double("u_tank");					//[W/m^2-K]
+		tes_params.m_tank_pairs = as_integer("tank_pairs");			//[-]
+		tes_params.m_hot_tank_Thtr = as_double("hot_tank_Thtr");		//[C]
+		tes_params.m_hot_tank_max_heat = as_double("tank_max_heat");	//[MW]
+		tes_params.m_cold_tank_Thtr = as_double("cold_tank_Thtr");	//[C]
+		tes_params.m_cold_tank_max_heat = as_double("tank_max_heat");	//[MW]
+		tes_params.m_dt_hot = 0.0;									//[-] Assuming direct storage here
+		tes_params.m_T_cold_des = as_double("T_loop_in_des");		    //[C]
+		tes_params.m_T_hot_des = as_double("T_loop_out");		        //[C]
+		tes_params.m_T_tank_hot_ini = as_double("T_loop_in_des");		//[C]
+		tes_params.m_T_tank_cold_ini = as_double("T_loop_out");		//[C]
+		tes_params.m_h_tank_min = as_double("h_tank_min");			//[m]
+		tes_params.m_f_V_hot_ini = as_double("V_tank_hot_ini");		//[-]
+		tes_params.m_htf_pump_coef = as_double("pb_pump_coef");		//[kW/kg/s]
+        C_csp_two_tank_tes storage(tes_params);
 
 		// ********************************
 		// ********************************

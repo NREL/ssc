@@ -704,11 +704,22 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 
 C_csp_two_tank_tes::C_csp_two_tank_tes()
 {
+    m_vol_tank = m_V_tank_active = m_q_pb_design = m_Q_tes_des =
+        m_V_tank_hot_ini = m_mass_total_active = m_d_tank = m_q_dot_loss_des =
+        m_cp_field_avg = m_rho_store_avg = m_m_dot_tes_des_over_m_dot_field_des = std::numeric_limits<double>::quiet_NaN();
+
+    mc_reported_outputs.construct(S_output_info);
+}
+
+C_csp_two_tank_tes::C_csp_two_tank_tes(S_params params)
+{
 	m_vol_tank = m_V_tank_active = m_q_pb_design = m_Q_tes_des =
 		m_V_tank_hot_ini = m_mass_total_active = m_d_tank = m_q_dot_loss_des =
         m_cp_field_avg = m_rho_store_avg = m_m_dot_tes_des_over_m_dot_field_des = std::numeric_limits<double>::quiet_NaN();
 
 	mc_reported_outputs.construct(S_output_info);
+
+    ms_params = params;
 }
 
 void C_csp_two_tank_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inputs)

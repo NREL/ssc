@@ -599,35 +599,33 @@ public:
 
         // **********************************************************
         // High temp TES
-         C_csp_two_tank_tes c_HT_TES;
-        {
-            C_csp_two_tank_tes::S_params* tes = &c_HT_TES.ms_params;
-            tes->m_field_fl = HT_htf_code;
-            tes->m_field_fl_props = ud_HT_htf_props;
-            tes->m_tes_fl = HT_htf_code;
-            tes->m_tes_fl_props = ud_HT_htf_props;
-            tes->m_q_dot_design = W_dot_gen_thermo / eta_therm_mech; //[MWe]
-            tes->m_frac_max_q_dot = heater_mult;                     //[-]
-            tes->m_ts_hours = tshours;                  //[hr]
-            tes->m_h_tank = as_double("h_tank");
-            tes->m_u_tank = as_double("u_tank");
-            tes->m_tank_pairs = as_integer("tank_pairs");
-            tes->m_hot_tank_Thtr = as_double("hot_tank_Thtr");
-            tes->m_hot_tank_max_heat = as_double("hot_tank_max_heat");
-            tes->m_cold_tank_Thtr = as_double("cold_tank_Thtr");
-            tes->m_cold_tank_max_heat = as_double("cold_tank_max_heat");
-            tes->m_dt_hot = 0.0;                        // MSPT assumes direct storage, so no user input here: hardcode = 0.0
-            tes->m_T_cold_des = T_HT_cold_TES;          //[C]
-            tes->m_T_hot_des = T_HT_hot_TES;            //[C]
-            tes->m_T_tank_hot_ini = T_HT_hot_TES;       //[C]
-            tes->m_T_tank_cold_ini = T_HT_cold_TES;     //[C]
-            tes->m_h_tank_min = as_double("h_tank_min");
-            tes->m_f_V_hot_ini = as_double("tes_init_hot_htf_percent");
-            tes->m_htf_pump_coef = 0.0;         //[kW/kg/s] No htf pump losses in direct TES
-            tes->tanks_in_parallel = false;     //[-] False: Field HTF always goes to TES. PC HTF always comes from TES. ETES should not simultaneously operate heater and cycle
-            tes->V_tes_des = 1.85;              //[m/s]
-            tes->calc_design_pipe_vals = false; // for now, to get 'tanks_in_parallel' to work
-        }
+        C_csp_two_tank_tes::S_params tes_params;
+        tes_params.m_field_fl = HT_htf_code;
+        tes_params.m_field_fl_props = ud_HT_htf_props;
+        tes_params.m_tes_fl = HT_htf_code;
+        tes_params.m_tes_fl_props = ud_HT_htf_props;
+        tes_params.m_q_dot_design = W_dot_gen_thermo / eta_therm_mech; //[MWe]
+        tes_params.m_frac_max_q_dot = heater_mult;                     //[-]
+        tes_params.m_ts_hours = tshours;                  //[hr]
+        tes_params.m_h_tank = as_double("h_tank");
+        tes_params.m_u_tank = as_double("u_tank");
+        tes_params.m_tank_pairs = as_integer("tank_pairs");
+        tes_params.m_hot_tank_Thtr = as_double("hot_tank_Thtr");
+        tes_params.m_hot_tank_max_heat = as_double("hot_tank_max_heat");
+        tes_params.m_cold_tank_Thtr = as_double("cold_tank_Thtr");
+        tes_params.m_cold_tank_max_heat = as_double("cold_tank_max_heat");
+        tes_params.m_dt_hot = 0.0;                        // MSPT assumes direct storage, so no user input here: hardcode = 0.0
+        tes_params.m_T_cold_des = T_HT_cold_TES;          //[C]
+        tes_params.m_T_hot_des = T_HT_hot_TES;            //[C]
+        tes_params.m_T_tank_hot_ini = T_HT_hot_TES;       //[C]
+        tes_params.m_T_tank_cold_ini = T_HT_cold_TES;     //[C]
+        tes_params.m_h_tank_min = as_double("h_tank_min");
+        tes_params.m_f_V_hot_ini = as_double("tes_init_hot_htf_percent");
+        tes_params.m_htf_pump_coef = 0.0;         //[kW/kg/s] No htf pump losses in direct TES
+        tes_params.tanks_in_parallel = false;     //[-] False: Field HTF always goes to TES. PC HTF always comes from TES. ETES should not simultaneously operate heater and cycle
+        tes_params.V_tes_des = 1.85;              //[m/s]
+        tes_params.calc_design_pipe_vals = false; // for now, to get 'tanks_in_parallel' to work
+        C_csp_two_tank_tes c_HT_TES(tes_params);
 
             // Set TES cmod outputs
         c_HT_TES.mc_reported_outputs.assign(C_csp_two_tank_tes::E_Q_DOT_LOSS, allocate("q_dot_tes_losses", n_steps_fixed), n_steps_fixed);
@@ -643,45 +641,43 @@ public:
 
         // **********************************************************
         // Cold temp TES
-        std::shared_ptr<C_csp_two_tank_tes> c_CT_TES(new C_csp_two_tank_tes());
-        {
-            C_csp_two_tank_tes::S_params* ctes = &c_CT_TES->ms_params;
-            ctes->m_field_fl = CT_htf_code;
-            ctes->m_field_fl_props = ud_CT_htf_props;
-            ctes->m_tes_fl = CT_htf_code;
-            ctes->m_tes_fl_props = ud_CT_htf_props;
-            // Power/effiency relationship doesn't hold for cold tank, so just fake it with power = heat and eta = 1
-            ctes->m_q_dot_design = W_dot_gen_thermo / 1.0;        //[MWe]
-            ctes->m_frac_max_q_dot = heater_mult;                 //[-]
-                // *************************************************
-            ctes->m_ts_hours = tshours;                  //[hr]
-            ctes->m_h_tank = as_double("CT_h_tank");
-            ctes->m_u_tank = as_double("CT_u_tank");
-            ctes->m_tank_pairs = as_integer("CT_tank_pairs");
-            // If CTES is colder than ambient, then heaters aren't going to do much?
-            ctes->m_hot_tank_Thtr = -200.0;         //[C]
-            ctes->m_hot_tank_max_heat = 0.0;        //[MWt]
-            ctes->m_cold_tank_Thtr = -200.0;        //[C]
-            ctes->m_cold_tank_max_heat = 0.0;       //[MWt]
-                // so do we want these inputs from cmod?
-                // do we need a tank cooler? Close enough to ambient (we expect?) to have minor heat loss?
-                // ctes->m_hot_tank_Thtr = as_double("CT_hot_tank_Thtr");
-                // ctes->m_hot_tank_max_heat = as_double("CT_hot_tank_max_heat");
-                // ctes->m_cold_tank_Thtr = as_double("CT_cold_tank_Thtr");
-                // ctes->m_cold_tank_max_heat = as_double("CT_cold_tank_max_heat");
-            // ********************************************************************
-            ctes->m_dt_hot = 0.0;                        // MSPT assumes direct storage, so no user input here: hardcode = 0.0
-            ctes->m_T_cold_des = T_CT_cold_TES;          //[C]
-            ctes->m_T_hot_des = T_CT_hot_TES;            //[C]
-            ctes->m_T_tank_hot_ini = T_CT_hot_TES;       //[C]
-            ctes->m_T_tank_cold_ini = T_CT_cold_TES;     //[C]
-            ctes->m_h_tank_min = as_double("CT_h_tank_min");
-            ctes->m_f_V_hot_ini = 100.0 - as_double("tes_init_hot_htf_percent");   //[-] Cold storage is charged when cold tank is full
-            ctes->m_htf_pump_coef = 0.0;            //[kW/kg/s] No htf pump losses in direct TES
-            ctes->tanks_in_parallel = false;        //[-] False: Field HTF always goes to TES. PC HTF always comes from TES. ETES should not simultaneously operate heater and cycle
-            ctes->V_tes_des = 1.85;                 //[m/s]
-            ctes->calc_design_pipe_vals = false;    // for now, to get 'tanks_in_parallel' to work
-        }
+        C_csp_two_tank_tes::S_params ctes_params;
+        ctes_params.m_field_fl = CT_htf_code;
+        ctes_params.m_field_fl_props = ud_CT_htf_props;
+        ctes_params.m_tes_fl = CT_htf_code;
+        ctes_params.m_tes_fl_props = ud_CT_htf_props;
+        // Power/effiency relationship doesn't hold for cold tank, so just fake it with power = heat and eta = 1
+        ctes_params.m_q_dot_design = W_dot_gen_thermo / 1.0;        //[MWe]
+        ctes_params.m_frac_max_q_dot = heater_mult;                 //[-]
+            // *************************************************
+        ctes_params.m_ts_hours = tshours;                  //[hr]
+        ctes_params.m_h_tank = as_double("CT_h_tank");
+        ctes_params.m_u_tank = as_double("CT_u_tank");
+        ctes_params.m_tank_pairs = as_integer("CT_tank_pairs");
+        // If CTES is colder than ambient, then heaters aren't going to do much?
+        ctes_params.m_hot_tank_Thtr = -200.0;         //[C]
+        ctes_params.m_hot_tank_max_heat = 0.0;        //[MWt]
+        ctes_params.m_cold_tank_Thtr = -200.0;        //[C]
+        ctes_params.m_cold_tank_max_heat = 0.0;       //[MWt]
+            // so do we want these inputs from cmod?
+            // do we need a tank cooler? Close enough to ambient (we expect?) to have minor heat loss?
+            // ctes_params.m_hot_tank_Thtr = as_double("CT_hot_tank_Thtr");
+            // ctes_params.m_hot_tank_max_heat = as_double("CT_hot_tank_max_heat");
+            // ctes_params.m_cold_tank_Thtr = as_double("CT_cold_tank_Thtr");
+            // ctes_params.m_cold_tank_max_heat = as_double("CT_cold_tank_max_heat");
+        // ********************************************************************
+        ctes_params.m_dt_hot = 0.0;                        // MSPT assumes direct storage, so no user input here: hardcode = 0.0
+        ctes_params.m_T_cold_des = T_CT_cold_TES;          //[C]
+        ctes_params.m_T_hot_des = T_CT_hot_TES;            //[C]
+        ctes_params.m_T_tank_hot_ini = T_CT_hot_TES;       //[C]
+        ctes_params.m_T_tank_cold_ini = T_CT_cold_TES;     //[C]
+        ctes_params.m_h_tank_min = as_double("CT_h_tank_min");
+        ctes_params.m_f_V_hot_ini = 100.0 - as_double("tes_init_hot_htf_percent");   //[-] Cold storage is charged when cold tank is full
+        ctes_params.m_htf_pump_coef = 0.0;            //[kW/kg/s] No htf pump losses in direct TES
+        ctes_params.tanks_in_parallel = false;        //[-] False: Field HTF always goes to TES. PC HTF always comes from TES. ETES should not simultaneously operate heater and cycle
+        ctes_params.V_tes_des = 1.85;                 //[m/s]
+        ctes_params.calc_design_pipe_vals = false;    // for now, to get 'tanks_in_parallel' to work
+        std::shared_ptr<C_csp_two_tank_tes> c_CT_TES(new C_csp_two_tank_tes(ctes_params));
 
             // Set Cold TES cmod outputs
         c_CT_TES->mc_reported_outputs.assign(C_csp_two_tank_tes::E_Q_DOT_LOSS, allocate("q_dot_CT_tes_losses", n_steps_fixed), n_steps_fixed);
