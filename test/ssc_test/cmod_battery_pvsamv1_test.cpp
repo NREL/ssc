@@ -419,7 +419,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, LCOS_test_singleowner)
 
     ssc_number_t lcos_real;
     ssc_data_get_number(data, "lcos_real", &lcos_real);
-    EXPECT_NEAR(lcos_real, 21.67, 0.1);
+    EXPECT_NEAR(lcos_real, 23.41, 0.1);
 
 }
 
@@ -435,7 +435,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, LCOS_test_levpartflip)
 
     ssc_number_t lcos_real;
     ssc_data_get_number(data, "lcos_real", &lcos_real);
-    EXPECT_NEAR(lcos_real, 21.70, 0.1);
+    EXPECT_NEAR(lcos_real, 23.43, 0.1);
 }
 
 TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, LCOS_test_cashloan)
@@ -469,7 +469,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_ACBatteryModelIntegration)
     ssc_number_t peakKwCharge[3] = { -1040.2, -1051.5, -1051.5 };
     ssc_number_t peakKwDischarge[3] = { 967.5, 969.5, 969.5 };
     ssc_number_t peakCycles[3] = { 1, 1, 1 };
-    ssc_number_t avgCycles[3] = { 0.0044, 0.005, 0.003 };
+    ssc_number_t avgCycles[3] = { 0.0039, 0.0042, 0.003 };
 
     ssc_data_set_number(data, "batt_dispatch_choice", 0);
     // Test economoic dispatch look ahead, economoic dispatch look behind. Others require additional input data
