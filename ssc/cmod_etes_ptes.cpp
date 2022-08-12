@@ -617,8 +617,8 @@ public:
             tes->m_cold_tank_Thtr = as_double("cold_tank_Thtr");
             tes->m_cold_tank_max_heat = as_double("cold_tank_max_heat");
             tes->m_dt_hot = 0.0;                        // MSPT assumes direct storage, so no user input here: hardcode = 0.0
-            tes->m_T_field_in_des = T_HT_cold_TES;      //[C]
-            tes->m_T_field_out_des = T_HT_hot_TES;      //[C]
+            tes->m_T_cold_des = T_HT_cold_TES;          //[C]
+            tes->m_T_hot_des = T_HT_hot_TES;            //[C]
             tes->m_T_tank_hot_ini = T_HT_hot_TES;       //[C]
             tes->m_T_tank_cold_ini = T_HT_cold_TES;     //[C]
             tes->m_h_tank_min = as_double("h_tank_min");
@@ -671,8 +671,8 @@ public:
                 // ctes->m_cold_tank_max_heat = as_double("CT_cold_tank_max_heat");
             // ********************************************************************
             ctes->m_dt_hot = 0.0;                        // MSPT assumes direct storage, so no user input here: hardcode = 0.0
-            ctes->m_T_field_in_des = T_CT_cold_TES;      //[C]
-            ctes->m_T_field_out_des = T_CT_hot_TES;      //[C]
+            ctes->m_T_cold_des = T_CT_cold_TES;          //[C]
+            ctes->m_T_hot_des = T_CT_hot_TES;            //[C]
             ctes->m_T_tank_hot_ini = T_CT_hot_TES;       //[C]
             ctes->m_T_tank_cold_ini = T_CT_cold_TES;     //[C]
             ctes->m_h_tank_min = as_double("CT_h_tank_min");

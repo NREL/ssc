@@ -732,8 +732,8 @@ public:
 		tes->m_cold_tank_Thtr = as_double("cold_tank_Thtr");	//[C]
 		tes->m_cold_tank_max_heat = as_double("cold_tank_max_heat");		//[MWt]
 		tes->m_dt_hot = 0.0;								// MSPT assumes direct storage, so no user input here: hardcode = 0.0
-		tes->m_T_field_in_des = T_loop_in_des;		//[C]
-		tes->m_T_field_out_des = T_loop_out_des;	//[C]
+		tes->m_T_cold_des = T_loop_in_des;		    //[C]
+		tes->m_T_hot_des = T_loop_out_des;	        //[C]
 		tes->m_T_tank_hot_ini = T_loop_out_des;		//[C]
 		tes->m_T_tank_cold_ini = T_loop_in_des;		//[C]
 		tes->m_h_tank_min = as_double("h_tank_min");		//[m]

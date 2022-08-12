@@ -783,8 +783,8 @@ public:
 		tes->m_cold_tank_Thtr = as_double("cold_tank_Thtr");	//[C]
 		tes->m_cold_tank_max_heat = as_double("tank_max_heat");	//[MW]
 		tes->m_dt_hot = 0.0;									//[-] Assuming direct storage here
-		tes->m_T_field_in_des = as_double("T_loop_in_des");		//[C]
-		tes->m_T_field_out_des = as_double("T_loop_out");		//[C]
+		tes->m_T_cold_des = as_double("T_loop_in_des");		    //[C]
+		tes->m_T_hot_des = as_double("T_loop_out");		        //[C]
 		tes->m_T_tank_hot_ini = as_double("T_loop_in_des");		//[C]
 		tes->m_T_tank_cold_ini = as_double("T_loop_out");		//[C]
 		tes->m_h_tank_min = as_double("h_tank_min");			//[m]

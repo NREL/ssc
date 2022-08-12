@@ -991,8 +991,8 @@ public:
         tes->m_cold_tank_max_heat = as_double("cold_tank_max_heat");        //[MWe]
         tes->m_dt_hot             = as_double("dt_hot");                    //[C]
         //tes->m_dt_cold            = as_double("dt_cold");                   //[C]
-        tes->m_T_field_in_des     = T_loop_in_des;                          //[C]
-        tes->m_T_field_out_des    = T_loop_out_des;                         //[C]
+        tes->m_T_cold_des         = T_loop_in_des;                          //[C]
+        tes->m_T_hot_des          = T_loop_out_des;                         //[C]
         tes->m_T_tank_hot_ini     = T_loop_out_des;                         //[C]
         tes->m_T_tank_cold_ini    = T_loop_in_des;                          //[C]
         tes->m_h_tank_min         = as_double("h_tank_min");                //[m]
@@ -1011,7 +1011,7 @@ public:
         tes->tes_wallthicks       = as_matrix("tes_wallthicks");            //[m]
         tes->calc_design_pipe_vals = as_boolean("calc_design_pipe_vals");   //[-]
         tes->pipe_rough           = as_double("HDR_rough");                 //[m]
-        tes->DP_SGS               = as_double("DP_SGS");                    //[bar]
+        tes->dP_discharge         = as_double("DP_SGS");                    //[bar]
         if (is_assigned("tes_lengths")) {
             tes->tes_lengths = as_matrix("tes_lengths");               //[m]
         }

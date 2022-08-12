@@ -200,8 +200,8 @@ public:
 		double m_cold_tank_Thtr;	//[C] convert to K in init()
 		double m_cold_tank_max_heat;//[MW]
 		double m_dt_hot;			//[C] Temperature difference across heat exchanger - assume hot and cold deltaTs are equal
-		double m_T_field_in_des;	//[C] convert to K in init()
-		double m_T_field_out_des;	//[C] convert to K in init()
+		double m_T_cold_des;	    //[C] convert to K in init()
+		double m_T_hot_des;	        //[C] convert to K in init()
         double m_dP_field_des;      //[bar] Total field pressure drop at design
 		double m_T_tank_hot_ini;	//[C] Initial temperature in hot storage tank
 		double m_T_tank_cold_ini;	//[C] Initial temperature in cold storage cold
@@ -222,7 +222,7 @@ public:
         util::matrix_t<double> tes_lengths;       //[m] Imported lengths for the TES piping as read from the modified output files
         bool calc_design_pipe_vals;               //[-] Should the HTF state be calculated at design conditions
         double pipe_rough;                        //[m] Pipe absolute roughness
-        double DP_SGS;                            //[bar] Pressure drop within the steam generator
+        double dP_discharge;                      //[bar] Pressure drop on the TES discharge side (e.g., within the steam generator)
 
 
 
@@ -238,9 +238,9 @@ public:
 			m_ts_hours = 0.0;		//[hr] Default to 0 so that if storage isn't defined, simulation won't crash
 
             m_q_dot_design = m_frac_max_q_dot = m_h_tank = m_u_tank = m_hot_tank_Thtr = m_hot_tank_max_heat = m_cold_tank_Thtr =
-				m_cold_tank_max_heat = m_dt_hot = m_T_field_in_des = m_T_field_out_des = m_dP_field_des = m_T_tank_hot_ini =
+				m_cold_tank_max_heat = m_dt_hot = m_T_cold_des = m_T_hot_des = m_dP_field_des = m_T_tank_hot_ini =
 				m_T_tank_cold_ini = m_h_tank_min = m_f_V_hot_ini = m_htf_pump_coef = m_tes_pump_coef = eta_pump = T_tank_hot_inlet_min = 
-                V_tes_des = pipe_rough = DP_SGS = std::numeric_limits<double>::quiet_NaN();
+                V_tes_des = pipe_rough = dP_discharge = std::numeric_limits<double>::quiet_NaN();
 
             k_tes_loss_coeffs.resize_fill(11, 0.);
             tes_diams.resize_fill(1, -1.);
@@ -471,8 +471,8 @@ public:
 		double m_cold_tank_Thtr;	//[C] convert to K in init()
 		double m_cold_tank_max_heat;//[MW]
 		double m_dt_hot;			//[C] Temperature difference across heat exchanger - assume hot and cold deltaTs are equal
-		double m_T_field_in_des;	//[C] convert to K in init()
-		double m_T_field_out_des;	//[C] convert to K in init()
+		double m_T_cold_des;	    //[C] convert to K in init()
+		double m_T_hot_des;	        //[C] convert to K in init()
 		double m_T_tank_hot_ini;	//[C] Initial temperature in hot storage tank
 		double m_T_tank_cold_ini;	//[C] Initial temperature in cold storage cold
 		double m_h_tank_min;		//[m] Minimum allowable HTF height in storage tank
@@ -495,7 +495,7 @@ public:
 			m_ctes_type = 0;		// Default to <2 so that storage is not assumed in cost calculations.
 
 			m_W_dot_pc_design = m_eta_pc_factor = m_solarm = m_h_tank = m_u_tank = m_hot_tank_Thtr = m_hot_tank_max_heat = m_cold_tank_Thtr =
-				m_cold_tank_max_heat = m_dt_hot = m_T_field_in_des = m_T_field_out_des = m_T_tank_hot_ini =
+				m_cold_tank_max_heat = m_dt_hot = m_T_cold_des = m_T_hot_des = m_T_tank_hot_ini =
 				m_T_tank_cold_ini = m_h_tank_min = m_f_V_hot_ini = m_htf_pump_coef= dT_cw_rad=m_dot_cw_rad=m_dot_cw_cold=m_lat= std::numeric_limits<double>::quiet_NaN();
 		}
 	};
@@ -583,7 +583,7 @@ int size_tes_piping(double vel_dsn, util::matrix_t<double> L, double rho_avg, do
     bool tanks_in_parallel, double &vol_tot, util::matrix_t<double> &v_dot_rel, util::matrix_t<double> &diams,
     util::matrix_t<double> &wall_thk, util::matrix_t<double> &m_dot, util::matrix_t<double> &vel, bool custom_sizes = false);
 
-int size_tes_piping_TandP(HTFProperties &field_htf_props, double T_field_in /*K*/, double T_field_out /*K*/, double P_field_in /*Pa*/, double DP_SGS,
+int size_tes_piping_TandP(HTFProperties &field_htf_props, double T_field_in /*K*/, double T_field_out /*K*/, double P_field_in /*Pa*/, double dP_discharge,
     const util::matrix_t<double> &L, const util::matrix_t<double> &k_tes_loss_coeffs, double pipe_rough,
     bool tanks_in_parallel, const util::matrix_t<double> &diams, const util::matrix_t<double> &vel,
     util::matrix_t<double> &TES_T_des, util::matrix_t<double> &TES_P_des, double &TES_P_in);
