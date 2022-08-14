@@ -168,3 +168,131 @@ TankExternalConditions DefaultTankFactory::MakeExternalConditions() const
     return external_conditions;
 }
 //========/DefaultTankFactory (subclass)==========================================================
+
+//======== csp_solver TES ========================================================================
+double C_to_K(double T) {
+    return T + 273.15;
+}
+
+NAMESPACE_TEST(csp_common, TesCspSolver, Default)
+{
+    C_csp_two_tank_tes::S_params tes_params;
+    tes_params.m_field_fl = 21;                                         //[-]
+    tes_params.m_field_fl_props = util::matrix_t<double>(1, 1, 0.);     //[-]
+    tes_params.m_tes_fl = 18;                                           //[-]
+    tes_params.m_tes_fl_props = util::matrix_t<double>(1, 1, 1.);       //[-]
+    tes_params.m_q_dot_design = 311.8;                                  //[MWe]
+    tes_params.m_frac_max_q_dot = 2;                                    //[-]
+    tes_params.m_ts_hours = 6;                                          //[hr]
+    tes_params.m_h_tank = 12;                                           //[m]
+    tes_params.m_u_tank = 0.4;                                          //[W/m^2-K]
+    tes_params.m_tank_pairs = 1;                                        //[-]
+    tes_params.m_hot_tank_Thtr = 365;                                   //[C]
+    tes_params.m_hot_tank_max_heat = 25;                                //[MWe]
+    tes_params.m_cold_tank_Thtr = 250;                                  //[C]
+    tes_params.m_cold_tank_max_heat = 25;                               //[MWe]
+    tes_params.m_dt_hot = 5;                                            //[C]
+    tes_params.m_T_cold_des = 293;                                      //[C]
+    tes_params.m_T_hot_des = 391;                                       //[C]
+    tes_params.m_T_tank_hot_ini = 391;                                  //[C]
+    tes_params.m_T_tank_cold_ini = 293;                                 //[C]
+    tes_params.m_h_tank_min = 1.;                                       //[m]
+    tes_params.m_f_V_hot_ini = 30.;                                     //[-]
+    tes_params.m_htf_pump_coef = 0.55;                                  //[kWe/kg/s]
+    tes_params.m_tes_pump_coef = 0.15;                                  //[kWe/kg/s]
+    tes_params.eta_pump = 0.85;                                         //[-]
+    tes_params.tanks_in_parallel = true;                                //[-]
+    tes_params.has_hot_tank_bypass = false;                             //[-]
+    tes_params.T_tank_hot_inlet_min = 400;                              //[C]
+    tes_params.V_tes_des = 1.85;                                        //[m/s]
+    tes_params.custom_tes_p_loss = false;                               //[-]
+    tes_params.k_tes_loss_coeffs = util::matrix_t<double>(1, 11, 0.);   //[-]
+    tes_params.custom_tes_pipe_sizes = false;                           //[-]
+    tes_params.tes_diams = util::matrix_t<double>(1, 1, -1);            //[m]
+    tes_params.tes_wallthicks = util::matrix_t<double>(1, 1, -1);       //[m]
+    std::vector<double> tes_lengths{ 0, 90, 100, 120, 0, 0, 0, 0, 80, 120, 80 };
+    tes_params.tes_lengths = util::matrix_t<double>(1, 11, &tes_lengths);
+    tes_params.calc_design_pipe_vals = true;                            //[-]
+    tes_params.pipe_rough = 4.57e-5;                                    //[m]
+    tes_params.dP_discharge = 0.;                                       //[bar]
+
+    C_csp_two_tank_tes tes(tes_params);
+
+    C_csp_tes::S_csp_tes_init_inputs init_inputs;
+    init_inputs.T_to_cr_at_des = 566.1;
+    init_inputs.T_from_cr_at_des = 663.7;
+    init_inputs.P_to_cr_at_des = 19.64;
+
+    // Initialization
+    tes.init(init_inputs);      // right now, this only does something if calc_design_pipe_vals == true
+    EXPECT_TRUE(tes.does_tes_exist());
+    EXPECT_FALSE(tes.is_cr_to_cold_allowed());
+    EXPECT_NEAR(tes.get_hot_temp(), C_to_K(391.), 0.1);
+    EXPECT_NEAR(tes.get_cold_temp(), C_to_K(293.), 0.1);
+    EXPECT_NEAR(tes.get_hot_tank_vol_frac(), 0.305, 0.001);
+    EXPECT_NEAR(tes.get_initial_charge_energy(), 561.2, 0.1);
+
+    // Discharge estimate
+    double T_cold_K = C_to_K(tes_params.m_T_cold_des);
+    double t_step = 3600.;
+    double q_dot_dc_est, m_dot_field_est_dchg, T_hot_field_est;
+    tes.discharge_avail_est(T_cold_K /*K*/, t_step /*s*/, q_dot_dc_est /*MWt*/, m_dot_field_est_dchg /*kg/s*/, T_hot_field_est /*K*/);
+    EXPECT_NEAR(q_dot_dc_est, 594.7, 0.1);          // FIX: why is this different and higher than the initial charge energy of 561.2?
+    EXPECT_NEAR(m_dot_field_est_dchg, 2598., 1.);
+    EXPECT_NEAR(T_hot_field_est, C_to_K(386.3), 0.1);
+
+    // Charge estimate
+    double T_htf_hot_in = C_to_K(tes_params.m_T_hot_des);
+    double q_dot_ch_est, m_dot_field_est_chg, T_cold_field_est;
+    tes.charge_avail_est(T_htf_hot_in /*K*/, t_step /*s*/, q_dot_ch_est /*MWt*/, m_dot_field_est_chg /*kg/s*/, T_cold_field_est /*K*/);
+    EXPECT_NEAR(q_dot_ch_est, 1375., 1.);
+    EXPECT_NEAR(m_dot_field_est_chg, 6062., 1.);
+    EXPECT_NEAR(T_cold_field_est, 571.7, 0.1);
+
+    // Discharge
+    double T_amb = C_to_K(23.);
+    double T_htf_cold_in = C_to_K(tes_params.m_T_cold_des);
+    double T_htf_hot_out, q_dot_heater, m_dot, W_dot_rhtf_pump, q_dot_loss, q_dot_dc_to_htf,
+        q_dot_ch_from_htf, T_hot_ave, T_cold_ave, T_hot_final, T_cold_final;
+    tes.discharge(t_step /*s*/, T_amb /*K*/, m_dot_field_est_dchg /*kg/s*/, T_htf_cold_in /*K*/,
+        T_htf_hot_out /*K*/, q_dot_heater /*MWe*/, m_dot /*kg/s*/, W_dot_rhtf_pump /*MWe*/,
+        q_dot_loss /*MWt*/, q_dot_dc_to_htf /*MWt*/, q_dot_ch_from_htf /*MWt*/,
+        T_hot_ave /*K*/, T_cold_ave /*K*/, T_hot_final /*K*/, T_cold_final /*K*/);
+    EXPECT_NEAR(T_htf_hot_out, 659.3, 0.1);
+    EXPECT_NEAR(q_dot_heater, 0., 0.1);
+    EXPECT_NEAR(m_dot, 4247., 1.);
+    EXPECT_NEAR(W_dot_rhtf_pump, 0.6370, 0.001);
+    EXPECT_NEAR(q_dot_loss, 1.172, 0.001);
+    EXPECT_NEAR(q_dot_dc_to_htf, 592.5, 0.1);
+    EXPECT_NEAR(q_dot_ch_from_htf, 0., 0.1);
+    EXPECT_NEAR(T_hot_ave, 664.1, 0.1);
+    EXPECT_NEAR(T_cold_ave, 566.9, 0.1);
+    EXPECT_NEAR(T_hot_final, 664.0, 0.1);
+    EXPECT_NEAR(T_cold_final, 567.4, 0.1);
+
+    // Reset to initial state
+    tes.reset_storage_to_initial_state();
+    EXPECT_NEAR(tes.get_hot_temp(), C_to_K(391.), 0.1);
+    EXPECT_NEAR(tes.get_cold_temp(), C_to_K(293.), 0.1);
+    EXPECT_NEAR(tes.get_hot_tank_vol_frac(), 0.273, 0.001);         // FIX: why is this different than the initial hot tank vol frac?
+    EXPECT_NEAR(tes.get_initial_charge_energy(), 561.2, 0.1);
+
+    // Charge
+    double T_htf_cold_out;
+    // FIX: Anything greater than 0.89 * m_dot_field_est_chg will give invalid results
+    tes.charge(t_step /*s*/, T_amb /*K*/, 0.89 * m_dot_field_est_chg /*kg/s*/, T_htf_hot_in /*K*/,
+        T_htf_cold_out /*K*/, q_dot_heater /*MWe*/, m_dot /*kg/s*/, W_dot_rhtf_pump /*MWe*/,
+        q_dot_loss /*MWt*/, q_dot_dc_to_htf /*MWt*/, q_dot_ch_from_htf /*MWt*/,
+        T_hot_ave /*K*/, T_cold_ave /*K*/, T_hot_final /*K*/, T_cold_final /*K*/);
+    EXPECT_NEAR(T_htf_cold_out, 571.6, 0.1);
+    EXPECT_NEAR(q_dot_heater, 0., 0.1);
+    EXPECT_NEAR(m_dot, 8819., 1.);
+    EXPECT_NEAR(W_dot_rhtf_pump, 1.323, 0.001);
+    EXPECT_NEAR(q_dot_loss, 1.170, 0.01);
+    EXPECT_NEAR(q_dot_dc_to_htf, 0., 0.1);
+    EXPECT_NEAR(q_dot_ch_from_htf, 1230, 0.1);                     // TODO: lower than q_dot_ch_est, but expected due to 0.89 factor
+    EXPECT_NEAR(T_hot_ave, 661.8, 0.1);
+    EXPECT_NEAR(T_cold_ave, 566.1, 0.1);
+    EXPECT_NEAR(T_hot_final, 660.6, 0.1);
+    EXPECT_NEAR(T_cold_final, 566.1, 0.1);
+}
