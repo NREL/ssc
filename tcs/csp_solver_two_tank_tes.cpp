@@ -720,10 +720,6 @@ C_csp_two_tank_tes::C_csp_two_tank_tes(S_params params)
 	mc_reported_outputs.construct(S_output_info);
 
     ms_params = params;
-}
-
-void C_csp_two_tank_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inputs)
-{
 	if( !(ms_params.m_ts_hours > 0.0) )
 	{
 		m_is_tes = false;
@@ -940,6 +936,10 @@ void C_csp_two_tank_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inputs
         throw(C_csp_exception(error_msg, "Two Tank TES Initialization"));
     }
     this->pipe_lengths = ms_params.tes_lengths;
+}
+
+void C_csp_two_tank_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inputs)
+{
 
     if (ms_params.calc_design_pipe_vals) {
         if (size_tes_piping_TandP(mc_field_htfProps, init_inputs.T_to_cr_at_des, init_inputs.T_from_cr_at_des,
