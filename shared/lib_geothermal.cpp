@@ -520,7 +520,7 @@ double CGeothermalAnalyzer::PlantGrossPowerkW(void)
     case MA_EGS_BINARY:
 	case MA_BINARY:
 		//dPlantBrineEfficiency = MaxSecondLawEfficiency() * FractionOfMaxEfficiency() * ((geothermal::IMITATE_GETEM) ? GetAEBinary() : GetAE());				//MaxSecondLawEfficiency() * FractionOfMaxEfficiency() * GetAEBinaryAtTemp(md_WorkingTemperatureC);
-        dPlantBrineEfficiency = MaxSecondLawEfficiency() * mo_geo_in.md_PlantEfficiency * FractionOfMaxEfficiency() * GetAEBinaryAtTemp(md_WorkingTemperatureC - mo_geo_in.md_dtProdWell);	
+        dPlantBrineEfficiency = MaxSecondLawEfficiency() * mo_geo_in.md_PlantEfficiency * FractionOfMaxEfficiency() * GetAEBinaryAtTemp(md_WorkingTemperatureC - DT_prod_well(mo_geo_in.md_dtProdWellChoice));	
 		break;
     case MA_EGS_FLASH:
 	case MA_FLASH:
@@ -727,7 +727,7 @@ double CGeothermalAnalyzer::GetInjectionPumpWorkft(void)
     double A = 3.1415 * pow(D_well_ft, 2) / 4;
     double L_int = 0.8 * mo_geo_in.md_ResourceDepthM; //Length interval (m), how is this calculated?
     double surf_rough_casing = 0.00015; //different for open hole vs. slotted liner
-    double dT_dL = (mo_geo_in.md_dtProdWell) / (mo_geo_in.md_ResourceDepthM);
+    double dT_dL = (DT_prod_well(mo_geo_in.md_dtProdWellChoice)) / (mo_geo_in.md_ResourceDepthM);
     double T_star = InjectionTemperatureC() + dT_dL * mo_geo_in.md_RatioInjectionToProduction * (L_int) * 0.5;
     double P_sat = geothermal::oPC.evaluate(T_star*1.8 + 32);
     double rho_sat = 1 / geothermal::oSVC.evaluate(T_star * 1.8 + 32);
@@ -814,7 +814,7 @@ double CGeothermalAnalyzer::GetProductionPumpWorkft(void)
     double L_int = 0.2 * mo_geo_in.md_ResourceDepthM; //Length interval (m), how is this calculated?
     double surf_rough_casing = 0.02; //different for open hole vs. slotted liner
     if (mo_geo_in.md_ProductionWellType == 1) surf_rough_casing = 0.001;
-    double dT_dL = (mo_geo_in.md_dtProdWell) / (mo_geo_in.md_ResourceDepthM);
+    double dT_dL = (DT_prod_well(mo_geo_in.md_dtProdWellChoice)) / (mo_geo_in.md_ResourceDepthM);
     double T_star = GetResourceTemperatureC() - dT_dL * (L_int) * 0.5;
     double P_sat = geothermal::oPC.evaluate(T_star * 1.8 + 32);
     double rho_sat = 1 / geothermal::oSVC.evaluate(T_star * 1.8 + 32);
@@ -1081,11 +1081,18 @@ double CGeothermalAnalyzer::RameyWellbore()
     double time = mp_geo_out->ElapsedHours * 3600; //elapsed time (s)
     double utilfactor = 1.0; //capacity factor?
     double avg_gradient = 2 / GetResourceDepthM(); //local average geothermal gradient
-    double framey = -1.0 * log(1.1 * (0.3048 * (mo_geo_in.md_DiameterProductionWellInches / (2 * 12)) / sqrt(4.0 * alpharock * time * utilfactor)) - 0.29;
+    double framey = -1.0 * log(1.1 * (0.3048 * (mo_geo_in.md_DiameterProductionWellInches / (2 * 12)) / sqrt(4.0 * alpharock * time * utilfactor))) - 0.29;
     double rameyA = productionFlowRate() * geothermal::EGSSpecificHeat(EGSAverageWaterTemperatureC2()) * framey / (2 * physics::PI * mo_geo_in.md_EGSThermalConductivity);
     double ProdTempDrop = -1.0 * ((GetResourceTemperatureC() - md_WorkingTemperatureC) - avg_gradient * (GetResourceDepthM() - rameyA) + (md_WorkingTemperatureC - avg_gradient * rameyA - GetResourceTemperatureC())) * exp(-GetResourceDepthM() / rameyA);
-    double ProducedTemp = md_WorkingTemperatureC - ProdTempDrop;
-    return ProducedTemp;
+    return ProdTempDrop;
+}
+
+double CGeothermalAnalyzer::DT_prod_well(double prod_well_choice)
+{
+    if (prod_well_choice == 1)
+        return RameyWellbore();
+    else
+        return mo_geo_in.md_dtProdWell;
 }
 
 
@@ -1192,8 +1199,8 @@ double CGeothermalAnalyzer::InjectionDensity(void) { return (1 / geothermal::oSV
 double CGeothermalAnalyzer::GetAEAtTemp(double tempC) { return (mo_geo_in.me_ct == BINARY) ? GetAEBinaryAtTemp(tempC) : GetAEFlashAtTemp(tempC); }
 double CGeothermalAnalyzer::GetAEBinaryAtTemp(double tempC) { return geothermal::oGFC.GetAEForBinaryWattHrUsingC(tempC, GetAmbientTemperatureC()); }	// watt-hr/lb - Calculate available energy using binary constants and plant design temp (short cut)
 double CGeothermalAnalyzer::GetAEFlashAtTemp(double tempC) { return geothermal::oGFC.GetAEForFlashWattHrUsingC(tempC, GetAmbientTemperatureC()); }	// watt-hr/lb - Calculate available energy using flash constants and plant design temp (short cut)
-double CGeothermalAnalyzer::GetAE(void) { return GetAEAtTemp(GetTemperaturePlantDesignC()-mo_geo_in.md_dtProdWell); }
-double CGeothermalAnalyzer::GetAEBinary(void) { return GetAEBinaryAtTemp(GetTemperaturePlantDesignC()-mo_geo_in.md_dtProdWell); }// watt-hr/lb - Calculate available energy using binary constants and plant design temp (short cut)
+double CGeothermalAnalyzer::GetAE(void) { return GetAEAtTemp(GetTemperaturePlantDesignC()-DT_prod_well(mo_geo_in.md_dtProdWellChoice)); }
+double CGeothermalAnalyzer::GetAEBinary(void) { return GetAEBinaryAtTemp(GetTemperaturePlantDesignC()-DT_prod_well(mo_geo_in.md_dtProdWellChoice)); }// watt-hr/lb - Calculate available energy using binary constants and plant design temp (short cut)
 double CGeothermalAnalyzer::GetAEFlash(void) { return GetAEFlashAtTemp(GetTemperaturePlantDesignC()); }
 
 double CGeothermalAnalyzer::EGSTimeStar(double tempC)
@@ -1269,7 +1276,8 @@ double CGeothermalAnalyzer::GetPressureChangeAcrossReservoir()
 	double waterTempC = (geothermal::IMITATE_GETEM) ? dEGSAverageWaterTemperatureC1 : EGSAverageWaterTemperatureC2(); // degrees C
 	double days = geothermal::EGS_TIME_INPUT * geothermal::DAYS_PER_YEAR;
 	double tempEGSProductionC = GetResourceTemperatureC() + (geothermal::TEMPERATURE_EGS_INJECTIONC - GetResourceTemperatureC()) * EGSReservoirConstant(waterTempC, days);
-	double dEGSAverageReservoirTemperatureF = physics::CelciusToFarenheit((geothermal::TEMPERATURE_EGS_INJECTIONC + tempEGSProductionC) / 2);  //[7C.EGS Subsrfce HX].D52, [7B.Reservoir Hydraulics].D24
+    double tempEGSProductionCtest = Gringarten();
+    double dEGSAverageReservoirTemperatureF = physics::CelciusToFarenheit((geothermal::TEMPERATURE_EGS_INJECTIONC + tempEGSProductionC) / 2);  //[7C.EGS Subsrfce HX].D52, [7B.Reservoir Hydraulics].D24
 
 	mp_geo_out->md_AverageReservoirTemperatureF = (mo_geo_in.me_rt == EGS) ? dEGSAverageReservoirTemperatureF : physics::CelciusToFarenheit(GetResourceTemperatureC());	// G54 on [7B.Reservoir Hydraulics]
 
@@ -1477,7 +1485,7 @@ double CGeothermalAnalyzer::turbine1HEx() { return turbine1EnthalpyG() - turbine
 double CGeothermalAnalyzer::turbine1X()
 {	// D83 - %
 	mp_geo_out->spec_vol = GetSpecVol(mp_geo_out->flash_temperature);
-	double enthalpyPlantDesignTemp = geothermal::GetFlashEnthalpyF(physics::CelciusToFarenheit(GetTemperaturePlantDesignC()-mo_geo_in.md_dtProdWell));// D69
+	double enthalpyPlantDesignTemp = geothermal::GetFlashEnthalpyF(physics::CelciusToFarenheit(GetTemperaturePlantDesignC()-DT_prod_well(mo_geo_in.md_dtProdWellChoice)));// D69
 	mp_geo_out->getX_hp = calculateX(enthalpyPlantDesignTemp, turbine1TemperatureF());
 	return calculateX(enthalpyPlantDesignTemp, geothermal::GetFlashTemperature(mp_geo_out->md_PressureHPFlashPSI));
 }
@@ -1794,7 +1802,7 @@ double CGeothermalAnalyzer::pressureDualHighWithConstraint()
 {
 	double a = (temperatureCondF() > 125) ? 1.59 + (0.0015547 * exp(0.0354727*temperatureCondF())) : 1.59 + (0.098693 * exp(0.0025283*temperatureCondF()));
 	double b = (temperatureCondF() > 125) ? 0.01916 - (0.000005307 * exp(0.031279921*temperatureCondF())) : 0.01916 - (0.000167123 * exp(0.00400728*temperatureCondF()));
-	return a * exp(b * (GetTemperaturePlantDesignC()-mo_geo_in.md_dtProdWell));
+	return a * exp(b * (GetTemperaturePlantDesignC()-DT_prod_well(mo_geo_in.md_dtProdWellChoice)));
 }
 double CGeothermalAnalyzer::pressureDualHigh(void)
 {	// P64

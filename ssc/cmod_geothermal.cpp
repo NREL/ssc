@@ -63,6 +63,7 @@ static var_info _cm_vtab_geothermal[] = {
     { SSC_INPUT,        SSC_NUMBER,      "temp_decline_rate",                  "Temperature decline rate",                     "%/yr",           "",             "GeoHourly",        "*",                        "",                "" },
     { SSC_INPUT,        SSC_NUMBER,      "temp_decline_max",                   "Maximum temperature decline",                  "C",              "",             "GeoHourly",        "*",                        "",                "" },
     { SSC_INPUT,        SSC_NUMBER,      "dt_prod_well",                   "Temperature loss in production well",                  "C",              "",             "GeoHourly",        "*",                        "",                "" },
+    { SSC_INPUT,        SSC_NUMBER,      "prod_well_choice",                   "Temperature loss in production well choice",                  "0/1",              "",             "GeoHourly",        "*",                        "",                "" },
 
     { SSC_INPUT,        SSC_NUMBER,      "wet_bulb_temp",                      "Wet Bulb Temperature",                         "C",              "",             "GeoHourly",        "*",                        "",                "" },
     { SSC_INPUT,        SSC_NUMBER,      "ambient_pressure",                   "Ambient pressure",                             "psi",            "",             "GeoHourly",        "*",                        "",                "" },
@@ -275,6 +276,7 @@ public:
 		geo_inputs.md_TemperatureDeclineRate = as_double("temp_decline_rate")/100;
 		geo_inputs.md_MaxTempDeclineC = as_double("temp_decline_max");
         geo_inputs.md_dtProdWell = as_double("dt_prod_well");
+        geo_inputs.md_dtProdWellChoice = as_double("prod_well_choice");
 
 		// flash inputs
 		geo_inputs.md_TemperatureWetBulbC = as_double("wet_bulb_temp");
