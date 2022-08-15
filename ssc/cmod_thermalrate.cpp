@@ -59,7 +59,7 @@ static var_info vtab_thermal_rate[] = {
 
 	//  output as kWh - same as load (kW) for hourly simulations
 //	{ SSC_OUTPUT, SSC_ARRAY, "thermal_bill_load", "Thermal bill load (year 1)", "kWh-t", "", "Time Series", "*", "", "" },
-//	{ SSC_OUTPUT, SSC_ARRAY, "annual_thermal_value", "Thermal value", "$", "", "Annual", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "annual_thermal_value", "Thermal value", "$", "", "Annual", "*", "", "" },
 //	{ SSC_OUTPUT, SSC_ARRAY, "annual_thermal_revenue_with_system", "Thermal value with system", "$", "", "Annual", "*", "", "" },
 //	{ SSC_OUTPUT, SSC_ARRAY, "annual_thermal_revenue_without_system", "Thermal value without system", "$", "", "Annual", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "thermal_revenue_with_system", "Thermal revenue with system", "$", "", "Time Series", "*", "", "" },
