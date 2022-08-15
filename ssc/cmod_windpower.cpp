@@ -493,6 +493,8 @@ void cm_windpower::exec()
 	ssc_number_t *air_pres = allocate("pressure", nstep);
 
     ssc_number_t* wdir_bins = allocate("wind_direction_bins", 360);
+    std::vector<double> wdir_bins_cnt(360,0.0);
+
     int wdir_idx = 0;
 
 
@@ -601,8 +603,12 @@ void cm_windpower::exec()
 			wspd[i] = (ssc_number_t)wind;
 			wdir[i] = (ssc_number_t)dir;
             wdir_idx = wdir[i];
-            wdir_bins[wdir_idx] += 1.0; 
-			air_temp[i] = (ssc_number_t)temp;
+            if ((wdir_idx < 0) || (wdir_idx > 359)) // throw??
+                wdir_idx = 0; // or mod 360
+            //wdir_bins[wdir_idx] += 1.0;
+            wdir_bins[wdir_idx] += wspd[i];
+            wdir_bins_cnt[wdir_idx] += 1.0;
+            air_temp[i] = (ssc_number_t)temp;
 			air_pres[i] = (ssc_number_t)pres;
 
 			// accumulate monthly and annual energy
@@ -612,6 +618,12 @@ void cm_windpower::exec()
 			i++;
 		} // end steps_per_hour loop
 	} // end 1->8760 loop
+
+    // update average speed for wind rose plot
+    for (size_t i = 0; i < wdir_bins_cnt.size(); i++)
+        if (wdir_bins_cnt[i] > 0)
+            wdir_bins[i] /= wdir_bins_cnt[i];
+
     ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, steps_per_hour);
 	// assign outputs
 	assign("annual_energy", var_data((ssc_number_t)annual));
