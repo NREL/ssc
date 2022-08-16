@@ -348,12 +348,10 @@ public:
 	C_csp_messages mc_messages;
 
 private:
-	
-	C_sco2_cycle_core * mpc_sco2_cycle;
 
-	C_RecompCycle mc_rc_cycle;
+    std::unique_ptr<C_sco2_cycle_core> mpc_sco2_cycle;
+
 	C_HX_co2_to_htf mc_phx;
-	C_PartialCooling_Cycle mc_partialcooling_cycle;
 
 	S_des_par ms_des_par;
 	C_sco2_cycle_core::S_auto_opt_design_hit_eta_parameters ms_cycle_des_par;
