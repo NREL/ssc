@@ -80,6 +80,7 @@ public:
         double m_q_startup;				//[MWt-hr] thermal energy used to start receiver
         double m_dP_receiver;			//[bar] receiver pressure drop
         double m_dP_total;				//[bar] total pressure drop
+        double m_ratio_dP_tower_to_rec; //[-] ratio of total pressure drop that is caused by tower height
         double m_vel_htf;				//[m/s] HTF flow velocity through receiver tubes
         double m_T_salt_cold;			//[C] HTF inlet temperature
         double m_time_required_su;		//[s] time it took receiver to startup
@@ -107,7 +108,7 @@ public:
             m_m_dot_salt_tot = m_eta_therm = m_W_dot_pump = m_q_conv_sum = m_q_rad_sum = m_Q_thermal =
                 m_T_salt_hot = m_component_defocus =
                 m_q_dot_rec_inc_pre_defocus = m_q_dot_rec_inc = m_q_startup =
-                m_dP_receiver = m_dP_total = m_vel_htf = m_T_salt_cold =
+                m_dP_receiver = m_dP_total = m_ratio_dP_tower_to_rec = m_vel_htf = m_T_salt_cold =
                 m_time_required_su = m_q_dot_piping_loss = m_q_heattrace = std::numeric_limits<double>::quiet_NaN();
 
 			m_inst_T_salt_hot = m_max_T_salt_hot = m_min_T_salt_hot = m_max_rec_tout = m_Twall_inlet = m_Twall_outlet = 
@@ -153,6 +154,14 @@ public:
 
     double get_q_dot_rec_des();     //[MWt]
 
+    void get_design_geometry(double& L_tower_piping /*m*/);
+
+    void get_design_performance(double& eta_thermal /*-*/,
+        double& W_dot_rec_pump /*MWe*/, double& W_dot_pumping_tower_share /*MWe*/, double& W_dot_pumping_rec_share /*MWe*/,
+        double& rec_pump_coef /*MWe/MWt*/, double& rec_vel_htf_des /*m/s*/,
+        double& m_dot_htf_rec /*kg/s*/, double& m_dot_htf_max /*kg/s*/,
+        double& q_dot_piping_loss_des /*MWt*/);
+
 protected:
 
     C_pt_receiver(double h_tower /*m*/, double m_epsilon /*-*/,
@@ -193,15 +202,33 @@ protected:
 
     int m_night_recirc;					//[-] 1=receiver is circulating HTF at night, otherwise not
 
+    // Design ambient conditions
+    double m_T_amb_des;       //[K]
+    double m_T_sky_des;       //[K]
+    double m_v_wind_10_des;   //[m/s]
+    double m_P_amb_des;       //[Pa]
+
+    // Calculated design geometry/dimensions
+    double m_L_piping;          //[m]
+    double m_Q_dot_piping_loss;	//[Wt] = Constant thermal losses from piping to env. = (THT*length_mult + length_add) * piping_loss_coef
+
+    // Calculated design point performance
+    double m_q_dot_inc_min;             //[Wt] minimum receiver thermal power
+    double m_eta_thermal_des_calc;      //[-]
+    double m_W_dot_rec_pump_des_calc;   //[MWe]
+    double m_W_dot_pumping_tower_share; //[MWe]
+    double m_W_dot_pumping_rec_share;   //[MWe]
+    double m_rec_pump_coef;             //[MWe/MWt]
+    double m_vel_htf_des;		        //[m/s] HTF flow velocity through receiver tubes
+    double m_m_dot_htf_des;             //[kg/s] receiver HTF mass flow at design
+    double m_m_dot_htf_max;             //[kg/s] receiver HTF max mass flow rate
+
     // *******************************************
     // *******************************************
 
     HTFProperties field_htfProps;       // heat transfer fluid properties
     HTFProperties tube_material;		// receiver tube material
     HTFProperties ambient_air;			// ambient air properties
-
-    double m_m_dot_htf_des;             //[kg/s] receiver HTF mass flow at design
-    double m_q_dot_inc_min;             //[Wt] minimum receiver thermal power
 
     C_csp_collector_receiver::E_csp_cr_modes m_mode;                         //[-] current operating mode of receiver
     C_csp_collector_receiver::E_csp_cr_modes m_mode_prev;                    //[-] operating mode of receiver at end of last converged timestep
