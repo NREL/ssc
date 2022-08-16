@@ -202,10 +202,12 @@ static var_info _cm_vtab_etes_ptes[] = {
             // System
     { SSC_OUTPUT, SSC_NUMBER, "system_capacity",                 "System capacity (discharge)",                         "kWe",          "",                                  "System Design Calc",             "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "nameplate",                       "Nameplate capacity (discharge)",                      "MWe",          "",                                  "System Design Calc",             "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "cp_system_capacity",              "System capacity for capacity payments",               "MWe",          "",                                  "System Design Calc",             "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "cp_battery_capacity",             "Battery nameplate",                                   "MWe",          "",                                  "System Design Calc",             "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "rte_thermo",                      "Round-trip efficiency of working fluid cycles",       "MWe",          "",                                  "System Design Calc",             "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "rte_net",                         "Net round-trip efficiency considering all parasitics","MWe",          "",                                  "System Design Calc",             "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "charge_capacity",                 "Total electricity consumption at design-point charge","MWe",          "",                                  "System Design Calc",             "*",                                                                "",              "" },
-    { SSC_OUTPUT, SSC_NUMBER, "tshours_heater",                  "Hours of TES relative to heater output",              "hr",           "",                                  "System Design Calc",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "tshours_heater",                  "Hours of TES relative to heater output",              "hr",           "",                                  "System Design Calc",             "*",                                                                "",              "" },
 
             // Heat pump                                            
     { SSC_OUTPUT, SSC_NUMBER, "W_dot_hp_in_thermo_des",          "Heat pump power into working fluid",                  "MWe",          "",                                  "Heat Pump",                      "*",                                                                "",              "" },
@@ -1083,6 +1085,8 @@ public:
             // System
         assign("system_capacity", (ssc_number_t)system_capacity);           //[kWe] Discharge capacity
         assign("nameplate", (ssc_number_t)plant_net_capacity);              //[MWe] Discharge capacity
+        assign("cp_system_capacity", system_capacity * 1.E-3);             //[MWe]
+        assign("cp_battery_capacity", system_capacity * 1.E-3);             //[MWe]
         assign("rte_thermo", (ssc_number_t)RTE_therm);                      //[-] Round-trip efficiency of working fluid cycles
         assign("rte_net", (ssc_number_t)RTE_net);                           //[-] Round-trip efficiency considering all parasitics
         assign("charge_capacity", (ssc_number_t)plant_charging_power_in);   //[MWe] Total electricity consumption at design-point charge
