@@ -1085,7 +1085,7 @@ public:
             // System
         assign("system_capacity", (ssc_number_t)system_capacity);           //[kWe] Discharge capacity
         assign("nameplate", (ssc_number_t)plant_net_capacity);              //[MWe] Discharge capacity
-        assign("cp_system_nameplate", system_capacity * 1.E-3);             //[MWe]
+        assign("cp_system_capacity", system_capacity * 1.E-3);             //[MWe]
         assign("cp_battery_capacity", system_capacity * 1.E-3);             //[MWe]
         assign("rte_thermo", (ssc_number_t)RTE_therm);                      //[-] Round-trip efficiency of working fluid cycles
         assign("rte_net", (ssc_number_t)RTE_net);                           //[-] Round-trip efficiency considering all parasitics

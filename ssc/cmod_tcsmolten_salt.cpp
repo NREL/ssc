@@ -2288,7 +2288,7 @@ public:
         // Calculate system capacity instead of pass in
         assign("system_capacity", system_capacity);     //[kWe]
         assign("nameplate", system_capacity * 1.E-3);   //[MWe]
-        assign("cp_system_nameplate", system_capacity * 1.E-3); //[MWe]
+        assign("cp_system_capacity", system_capacity * 1.E-3); //[MWe]
         assign("cp_battery_capacity", 0.0);             //[MWe]
 
             // ******* Costs ************

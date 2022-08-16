@@ -948,7 +948,7 @@ public:
             // System
         assign("system_capacity", (ssc_number_t)system_capacity);           //[kWe]
         assign("nameplate", (ssc_number_t)(system_capacity * 1.E-3));       //[MWe]
-        assign("cp_system_nameplate", system_capacity * 1.E-3);             //[MWe]
+        assign("cp_system_capacity", system_capacity * 1.E-3);             //[MWe]
         assign("cp_battery_capacity", system_capacity * 1.E-3);             //[MWe]
         assign("q_pb_design", (ssc_number_t)q_dot_pc_des);                  //[MWt]
         assign("q_dot_heater_design", (ssc_number_t)q_dot_heater_des);      //[MWt]
