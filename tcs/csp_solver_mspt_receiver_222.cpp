@@ -220,8 +220,6 @@ void C_mspt_receiver_222::init()
             m_rec_pump_coef, m_vel_htf_des);
 
     }
-
-    // Check design pressure drop against some target (default = 4.746)
 	
 	m_ncall = -1;
 
