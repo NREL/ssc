@@ -218,13 +218,12 @@ NAMESPACE_TEST(csp_common, TesCspSolver, Default)
 
     C_csp_two_tank_tes tes(tes_params);
 
-    // NOTE: initialization is not necessary to fully instantiate the TES
-    // Initialization
-    //C_csp_tes::S_csp_tes_init_inputs init_inputs;
-    //init_inputs.T_to_cr_at_des = C_to_K(tes_params.m_T_cold_des);
-    //init_inputs.T_from_cr_at_des = C_to_K(tes_params.m_T_hot_des);
-    //init_inputs.P_to_cr_at_des = 19.64;
-    //tes.init(init_inputs);      // right now, this only does something if calc_design_pipe_vals == true
+    // Initialization   -> this is necessary to fully instantiate the TES
+    C_csp_tes::S_csp_tes_init_inputs init_inputs;
+    init_inputs.T_to_cr_at_des = C_to_K(tes_params.m_T_cold_des);
+    init_inputs.T_from_cr_at_des = C_to_K(tes_params.m_T_hot_des);
+    init_inputs.P_to_cr_at_des = 19.64;
+    tes.init(init_inputs);
 
     EXPECT_TRUE(tes.does_tes_exist());
     EXPECT_FALSE(tes.is_cr_to_cold_allowed());
