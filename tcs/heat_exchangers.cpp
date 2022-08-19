@@ -1887,19 +1887,6 @@ void C_HX_counterflow_CRM::design_calc_UA(C_HX_counterflow_CRM::S_des_calc_UA_pa
 	return;
 }
 
-void C_HX_co2_to_htf::design_and_calc_m_dot_htf(C_HX_counterflow_CRM::S_des_calc_UA_par &des_par, 
-			double q_dot_design /*kWt*/, double dt_cold_approach /*C/K*/, C_HX_counterflow_CRM::S_des_solved &des_solved)
-{
-	double T_htf_cold = des_par.m_T_c_in + dt_cold_approach;	//[C]
-
-	double h_h_in = mc_hot_fl.enth_lookup(des_par.m_T_h_in);	//[kJ/kg]
-	double h_c_in = mc_hot_fl.enth_lookup(T_htf_cold);			//[kJ/kg]
-
-	des_par.m_m_dot_hot_des = q_dot_design/(h_h_in - h_c_in);
-
-	design_calc_UA(des_par, q_dot_design, des_solved);
-}
-
 void C_HX_counterflow_CRM::design_for_target__calc_outlet(int hx_target_code /*-*/,
     double UA_target /*kW/K*/, double min_dT_target /*K*/, double eff_target /*-*/,
     double eff_max /*-*/, double T_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/, double P_c_out /*kPa*/,
@@ -2643,6 +2630,19 @@ void C_HX_co2_to_htf::initialize(int hot_fl, int N_sub_hx, NS_HX_counterflow_eqs
 	util::matrix_t<double> null_fluid_props;
 
 	initialize(hot_fl, null_fluid_props, N_sub_hx, od_UA_target_type);
+}
+
+void C_HX_co2_to_htf::design_and_calc_m_dot_htf(C_HX_counterflow_CRM::S_des_calc_UA_par& des_par,
+    double q_dot_design /*kWt*/, double dt_cold_approach /*C/K*/, C_HX_counterflow_CRM::S_des_solved& des_solved)
+{
+    double T_htf_cold = des_par.m_T_c_in + dt_cold_approach;	//[C]
+
+    double h_h_in = mc_hot_fl.enth_lookup(des_par.m_T_h_in);	//[kJ/kg]
+    double h_c_in = mc_hot_fl.enth_lookup(T_htf_cold);			//[kJ/kg]
+
+    des_par.m_m_dot_hot_des = q_dot_design / (h_h_in - h_c_in);
+
+    design_calc_UA(des_par, q_dot_design, des_solved);
 }
 
 bool N_compact_hx::get_compact_hx_geom(int enum_compact_hx_config, double & d_out, double & fin_pitch, double & D_h,
