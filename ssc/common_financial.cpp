@@ -3313,8 +3313,12 @@ var_info vtab_lcos_inputs[] = {
     { SSC_INPUT, SSC_MATRIX,           "true_up_credits_ym",     "Net annual true-up payments", "$", "", "LCOS", "", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
     { SSC_INPUT, SSC_MATRIX, "nm_dollars_applied_ym", "Net metering credit", "$", "", "Charges by Month", "", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
     { SSC_INPUT, SSC_MATRIX, "net_billing_credits_ym", "Net billing credit", "$", "", "Charges by Month", "", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
-    { SSC_INPUT,       SSC_ARRAY,       "gen_purchases",                              "Electricity from grid",                                    "kW",      "",                       "System Output",       "",                           "",                              "" },
 
+    // fix for running financial compute modules tests
+    { SSC_INOUT,       SSC_ARRAY,       "gen_purchases",                              "Electricity from grid",                                    "kW",      "",                       "System Output",       "",                           "",                              "" },
+    { SSC_INPUT,        SSC_ARRAY,      "rate_escalation",          "Annual electricity rate escalation",   "%/year",   "",                      "Electricity Rates",       "",              "",                             "" },
+
+    
     { SSC_INPUT,        SSC_ARRAY,      "batt_capacity_percent",                      "Battery relative capacity to nameplate",                 "%",        "",                     "LCOS",       "",                           "",                              "" },
     { SSC_INPUT,        SSC_ARRAY,      "monthly_grid_to_batt",                       "Energy to battery from grid",                           "kWh",      "",                      "LCOS",       "",                          "LENGTH=12",                     "" },
     { SSC_INPUT,        SSC_ARRAY,      "monthly_batt_to_grid",                       "Energy to grid from battery",                           "kWh",      "",                      "LCOS",       "",                          "LENGTH=12",                     "" },
@@ -3355,14 +3359,16 @@ void escal_or_annual(int cf_line, int nyears, const std::string& variable,
 {
     size_t count;
     ssc_number_t* arrp = cm->as_array(variable, &count);
-
+    double check;
     if (as_rate)
     {
         if (count == 1)
         {
             escal = inflation_rate + scale * arrp[0];
-            for (int i = 0; i < nyears; i++)
+            for (int i = 0; i < nyears; i++) {
                 cf.at(cf_line, i + 1) = pow(1 + escal, i);
+                check = cf.at(cf_line, i + 1);
+            }
         }
         else
         {
@@ -3500,8 +3506,24 @@ void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double
         cf.at(CF_charging_cost_grid_lcos, 0) = 0; //Initialize year 0 charging cost to $0
 
 
-        if (cm->is_assigned("rate_escalation")) //Create rate escalation nyears array with inflation and specified rate escalation %
-            escal_or_annual(CF_util_escal_rate_lcos, nyears, "rate_escalation", inflation_rate, 0.01, cf, cm, true, 0);
+        if (cm->is_assigned("rate_escalation")) { //Create rate escalation nyears array with inflation and specified rate escalation %
+            size_t count;
+            ssc_number_t* arrp = cm->as_array("rate_escalation", &count);
+            double scale = 0.01; //%
+            if (count == 1)
+            {
+                double escal = inflation_rate + scale * arrp[0];
+                for (int i = 0; i < nyears; i++) {
+                    cf.at(CF_util_escal_rate_lcos, i + 1) = pow(1 + escal, i);
+                }
+            }
+            else
+            {
+                for (int i = 0; i < nyears && i < (int)count; i++)
+                    cf.at(CF_util_escal_rate_lcos, i + 1) = 1 + arrp[i] * scale;
+            }
+            
+        }
         save_cf(CF_util_escal_rate_lcos, nyears, "cf_util_escal_rate", cf, cm);
 
         double capex_lcoe_ratio = 1 / 0.8; //ratio of capex ratio between PV+batt / PV to LCOE ratio PV+batt/ PV (assumed based on table)
@@ -3532,7 +3554,7 @@ void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double
                                 for (size_t n = 0; n < n_steps_per_hour; n++) {
                                     if (a == 0) monthly_e_fromgrid[m-1] += year1_hourly_e_from_grid[n_steps_per_hour * util::hour_of_year(m, d, h) + n];
                                     if (a != 0 && year1_hourly_e_from_grid[n_steps_per_hour * util::hour_of_year(m, d, h) + n] != 0.0) {
-                                        cf.at(CF_charging_cost_grid_lcos, a) += -grid_to_batt[(size_t(a) - 1) * 8760 * n_steps_per_hour + n_steps_per_hour * util::hour_of_year(m, d, h) + n] * cf.at(CF_degradation_lcos, a) /
+                                        cf.at(CF_charging_cost_grid_lcos, a) += grid_to_batt[(size_t(a) - 1) * 8760 * n_steps_per_hour + n_steps_per_hour * util::hour_of_year(m, d, h) + n] * cf.at(CF_degradation_lcos, a) /
                                             year1_hourly_e_from_grid[n_steps_per_hour * util::hour_of_year(m, d, h) + n] *
                                             (year1_hourly_ec[n_steps_per_hour * util::hour_of_year(m, d, h) + n] + year1_hourly_dc[n_steps_per_hour * util::hour_of_year(m, d, h) + n]) * cf.at(CF_util_escal_rate_lcos, a); //use the electricity rate data by year (also trueup) //* charged_grid[a] / charged_grid[1] * cf.at(CF_util_escal_rate, a);
                                     }

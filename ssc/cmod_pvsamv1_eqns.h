@@ -32,7 +32,7 @@ extern "C" {
 
 static const char *Reopt_size_battery_params_doc =
         "Given a PV system, get the optimal battery size. Wind and additional PV are disabled.\\n"
-        "Maps SAM compute module inputs to those of the ReOpt Lite API:\\n"
+        "Maps SAM compute module inputs to those of the ReOpt API:\\n"
         "Pvsamv1 or Pvwattsv5 technology paired with Residential, Commercial, Third Party or Host Developer financing.\\n\\n"
         "Optional: if missing, variable will be set to default value if documented, to REopt defaults otherwise.\\n"
         "Conditional: only required if the variable it's meant to replace is missing.\\n"
@@ -107,7 +107,7 @@ static const char *Reopt_size_battery_params_doc =
         "         'total_installed_cost': optional double [$]\\n"
         "         'value_of_lost_load': optional double [$/kWh], Value placed on unmet site load during grid outages\\n\\n"
         "Output: key-value pairs added to var_table\\n"
-        "         'reopt_scenario': table, Scenario inputs to Reopt Lite API\\n"
+        "         'reopt_scenario': table, Scenario inputs to Reopt API\\n"
         "         'log': string";
 
 SSCEXPORT bool Reopt_size_battery_params(ssc_data_t data);
