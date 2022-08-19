@@ -140,6 +140,7 @@ struct SGeothermal_Outputs
 		maf_timestep_power = maf_timestep_test_values = maf_timestep_pressure = maf_timestep_dry_bulb = maf_timestep_wet_bulb = NULL;
 		mb_BrineEffectivenessCalculated = mb_FlashPressuresCalculated = false;
 		maf_hourly_power = NULL;
+        ElapsedHours = 0;
 
 	}
 

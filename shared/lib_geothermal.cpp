@@ -524,7 +524,7 @@ double CGeothermalAnalyzer::PlantGrossPowerkW(void)
 		break;
     case MA_EGS_FLASH:
 	case MA_FLASH:
-		dPlantBrineEfficiency = MaxSecondLawEfficiency() * FractionOfMaxEfficiency() * GetAEFlashAtTemp(md_WorkingTemperatureC-mo_geo_in.md_dtProdWell);
+		dPlantBrineEfficiency = MaxSecondLawEfficiency() * FractionOfMaxEfficiency() * GetAEFlashAtTemp(md_WorkingTemperatureC- DT_prod_well(mo_geo_in.md_dtProdWellChoice));
         /*calculateFlashPressures();
         dGrossOutput = turbine1OutputKWh();
         if (FlashCount() == 2) dGrossOutput += turbine2OutputKWh();
@@ -1078,12 +1078,13 @@ double CGeothermalAnalyzer::Gringarten()
 double CGeothermalAnalyzer::RameyWellbore()
 {
     double alpharock = mo_geo_in.md_EGSThermalConductivity / (mo_geo_in.md_EGSRockDensity * mo_geo_in.md_EGSSpecificHeatConstant);
+    if (mp_geo_out->ElapsedHours < 0.1) return 0;
     double time = mp_geo_out->ElapsedHours * 3600; //elapsed time (s)
     double utilfactor = 1.0; //capacity factor?
     double avg_gradient = 2 / GetResourceDepthM(); //local average geothermal gradient
     double framey = -1.0 * log(1.1 * (0.3048 * (mo_geo_in.md_DiameterProductionWellInches / (2 * 12)) / sqrt(4.0 * alpharock * time * utilfactor))) - 0.29;
-    double rameyA = productionFlowRate() * geothermal::EGSSpecificHeat(EGSAverageWaterTemperatureC2()) * framey / (2 * physics::PI * mo_geo_in.md_EGSThermalConductivity);
-    double ProdTempDrop = -1.0 * ((GetResourceTemperatureC() - md_WorkingTemperatureC) - avg_gradient * (GetResourceDepthM() - rameyA) + (md_WorkingTemperatureC - avg_gradient * rameyA - GetResourceTemperatureC())) * exp(-GetResourceDepthM() / rameyA);
+    double rameyA = productionFlowRate() * md_WorkingTemperatureC * framey / (2 * physics::PI * mo_geo_in.md_EGSThermalConductivity);
+    double ProdTempDrop = -1.0 * ((GetResourceTemperatureC() - md_WorkingTemperatureC) - avg_gradient * (GetResourceDepthM() - rameyA) + (md_WorkingTemperatureC - avg_gradient * rameyA - GetResourceTemperatureC()) * exp(-GetResourceDepthM() / rameyA));
     return ProdTempDrop;
 }
 
