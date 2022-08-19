@@ -941,6 +941,8 @@ double C_pc_Rankine_indirect_224::get_efficiency_at_load(double load_frac, doubl
 
 	if( !ms_params.m_is_user_defined_pc )
 	{
+        double cp = mc_pc_htfProps.Cp_ave(physics::CelciusToKelvin(ms_params.m_T_htf_cold_ref), physics::CelciusToKelvin(ms_params.m_T_htf_hot_ref));  //kJ/kg-K
+
 		//calculate mass flow    [kg/hr]
 		double mdot = ms_params.m_P_ref /* kW */ / ( ms_params.m_eta_ref * cp * (ms_params.m_T_htf_hot_ref - ms_params.m_T_htf_cold_ref) ) *3600.;
 		mdot *= load_frac;
