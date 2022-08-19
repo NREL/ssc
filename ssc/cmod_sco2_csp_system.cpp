@@ -718,7 +718,7 @@ public:
         }
 		
 		int n_od_runs = (int)od_cases.nrows();
-		allocate_ssc_outputs(n_od_runs, n_mc_stages, n_rc_stages, n_pc_stages, is_od_generate_udpc_assigned);
+		allocate_ssc_outputs(n_od_runs, n_mc_stages, n_rc_stages, n_pc_stages, true);
 		C_sco2_phx_air_cooler::S_od_par s_sco2_od_par;
 
 		// For try/catch below
@@ -1297,8 +1297,11 @@ public:
 
                 // Columns(11) : 0) HTF Temp[C], 1) HTF ND mass flow[-], 2) Ambient Temp[C], 3) ND Power, 4) ND Heat, 5) ND Fan Power, 6) ND Water
                 //               ...... 7) ND PHX deltaT, 8) ND P_co2_PHX_in, 9) ND m_dot_co2_PHX, 10) ND P_co2_turb_in
-                if (is_od_generate_udpc_assigned)
-                {
+                // 5/12/2022 generate udpc table for all off-design simulations
+                //               the order won't necessarily match what the UDPC model wants,
+                //               but at least normalized values are available to post-process
+                //if (is_od_generate_udpc_assigned)
+                //{
                     pm_udpc_table[n_run * 11 + 0] = (ssc_number_t)p_T_htf_hot_od[n_run];      //[C]
                     pm_udpc_table[n_run * 11 + 1] = (ssc_number_t)p_m_dot_htf_fracs[n_run];   //[-]
                     pm_udpc_table[n_run * 11 + 2] = (ssc_number_t)p_T_amb_od[n_run];          //[C]
@@ -1317,7 +1320,7 @@ public:
                     pm_udpc_table[n_run * 11 + 8] = (ssc_number_t)((p_P_co2_PHX_in_od[n_run]) / (c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::HTR_HP_OUT] * 1.E-3));
                     pm_udpc_table[n_run * 11 + 9] = (ssc_number_t)((p_t_m_dot_od[n_run]) / c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_m_dot_t);
                     pm_udpc_table[n_run * 11 + 10] = (ssc_number_t)((p_t_P_in_od[n_run]) / (c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::TURB_IN] * 1.E-3));
-                }
+                //}
                 // Energy Balance Checks
                 double diff_m_dot, diff_E_cycle, diff_Q_LTR, diff_Q_HTR;
                 diff_m_dot = diff_E_cycle = diff_Q_LTR = diff_Q_HTR = std::numeric_limits<double>::quiet_NaN();

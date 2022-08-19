@@ -142,7 +142,8 @@ public:
 		// Techno-Economic Comparison of Solar-Driven SCO2 Brayton Cycles Using
 		// Component Cost Models Baselined with Vendor Data and Estimates
 		// ASME ES 2017
-		E_CARLSON_17
+		E_CARLSON_17,
+        E_WEILAND_19__AXIAL
 	};
 
 	struct S_design_parameters
@@ -183,14 +184,16 @@ public:
 
 		double m_W_dot;				//[kWe] Turbine power
 
-		double m_cost;				//[M$]
+		double m_equipment_cost;	//[M$]
+        double m_bare_erected_cost; //[M$]
 
 		S_design_solved()
 		{
 			m_nu_design = m_D_rotor = m_A_nozzle = m_w_tip_ratio =
 				m_eta = m_N_design =
 				m_delta_h_isen = m_rho_in =
-				m_W_dot = m_cost = std::numeric_limits<double>::quiet_NaN();
+				m_W_dot =
+                m_equipment_cost = m_bare_erected_cost = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -227,6 +230,7 @@ public:
 		m_r_W_dot_scale = 1.0;
 
 		m_cost_model = E_CARLSON_17;
+        m_cost_model = E_WEILAND_19__AXIAL;
 	};
 
 	static const double m_nu_design;
@@ -241,8 +245,10 @@ public:
 		return &ms_od_solved;
 	}
 
-	double calculate_cost(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
+	double calculate_equipment_cost(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
 		double T_out /*K*/, double P_out /*kPa*/, double W_dot /*kWe*/);
+
+    double /*M$*/ calculate_bare_erected_cost(double cost_equipment /*M$*/);
 
 	void turbine_sizing(const S_design_parameters & des_par_in, int & error_code);
 
@@ -459,7 +465,8 @@ public:
 		// Techno-Economic Comparison of Solar-Driven SCO2 Brayton Cycles Using
 		// Component Cost Models Baselined with Vendor Data and Estimates
 		// ASME ES 2017
-		E_CARLSON_17
+		E_CARLSON_17,
+        E_WEILAND_19__IG
 	};
 
 	struct S_des_solved
@@ -482,7 +489,8 @@ public:
 		double m_W_dot;			//[kWe] power required by compressor
 
 		// Cost
-		double m_cost;			//[M$]
+		double m_cost_equipment;		//[M$]
+        double m_cost_bare_erected;     //[M$]
 
 		// Stage Metrics
 		int m_n_stages;			//[-] Number of stages
@@ -507,7 +515,8 @@ public:
 				m_T_out = m_P_out = m_h_out = m_D_out =
 				m_isen_spec_work =
 				m_m_dot = m_W_dot =
-				m_cost =
+				m_cost_equipment =
+                m_cost_bare_erected =
 				m_tip_ratio_max =
 				m_N_design = m_phi_des =
                 m_psi_des = m_phi_surge = std::numeric_limits<double>::quiet_NaN();
@@ -564,6 +573,7 @@ public:
 	{
 		m_r_W_dot_scale = 1.0;
 		m_cost_model = E_CARLSON_17;
+        m_cost_model = E_WEILAND_19__IG;
 
         m_compressor_model = -1;
 	};
@@ -648,8 +658,10 @@ public:
 		virtual int operator()(double phi_od /*-*/, double *P_comp_out /*kPa*/);
 	};
 
-	double calculate_cost(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
+	double calculate_equipment_cost(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
 		double T_out /*K*/, double P_out /*kPa*/, double W_dot /*kWe*/);
+
+    double calculate_bare_erected_cost(double cost_equipment /*M$*/);
 
 	int design_given_outlet_state(int comp_model_code, double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
 		double T_out /*K*/, double P_out /*K*/, double tol /*-*/);
