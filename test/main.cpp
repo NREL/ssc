@@ -43,7 +43,7 @@ GTEST_API_ int main(int argc, char **argv) {
     
     //    filter to include
     //    ::testing::GTEST_FLAG(filter) = "CMPvsamv1PowerIntegration_cmod_pvsamv1*";
-       ::testing::GTEST_FLAG(filter) = "CmodHostDeveloperTest*";
+       ::testing::GTEST_FLAG(filter) = "CmodHostDeveloperTest.PV";
 
     //    filter to exclude
     //    ::testing::GTEST_FLAG(filter) = "-PVSmoothing_lib_battery_dispatch*";
