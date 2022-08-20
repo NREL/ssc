@@ -176,52 +176,53 @@ double C_to_K(double T) {
 
 NAMESPACE_TEST(csp_common, TesCspSolver, Default)
 {
-    C_csp_two_tank_tes::S_params tes_params;
-    tes_params.m_field_fl = 21;                                         //[-]
-    tes_params.m_field_fl_props = util::matrix_t<double>(1, 1, 0.);     //[-]
-    tes_params.m_tes_fl = 18;                                           //[-]
-    tes_params.m_tes_fl_props = util::matrix_t<double>(1, 1, 1.);       //[-]
-    tes_params.m_q_dot_design = 311.8;                                  //[MWe]
-    tes_params.m_frac_max_q_dot = 2;                                    //[-]
-    tes_params.m_ts_hours = 6;                                          //[hr]
-    tes_params.m_h_tank = 12;                                           //[m]
-    tes_params.m_u_tank = 0.4;                                          //[W/m^2-K]
-    tes_params.m_tank_pairs = 1;                                        //[-]
-    tes_params.m_hot_tank_Thtr = 365;                                   //[C]
-    tes_params.m_hot_tank_max_heat = 25;                                //[MWe]
-    tes_params.m_cold_tank_Thtr = 250;                                  //[C]
-    tes_params.m_cold_tank_max_heat = 25;                               //[MWe]
-    tes_params.m_dt_hot = 5;                                            //[C]
-    tes_params.m_T_cold_des = 293;                                      //[C]
-    tes_params.m_T_hot_des = 391;                                       //[C]
-    tes_params.m_T_tank_hot_ini = 391;                                  //[C]
-    tes_params.m_T_tank_cold_ini = 293;                                 //[C]
-    tes_params.m_h_tank_min = 1.;                                       //[m]
-    tes_params.m_f_V_hot_ini = 30.;                                     //[-]
-    tes_params.m_htf_pump_coef = 0.55;                                  //[kWe/kg/s]
-    tes_params.m_tes_pump_coef = 0.15;                                  //[kWe/kg/s]
-    tes_params.eta_pump = 0.85;                                         //[-]
-    tes_params.tanks_in_parallel = true;                                //[-]
-    tes_params.has_hot_tank_bypass = false;                             //[-]
-    tes_params.T_tank_hot_inlet_min = 400;                              //[C]
-    tes_params.V_tes_des = 1.85;                                        //[m/s]
-    tes_params.custom_tes_p_loss = false;                               //[-]
-    tes_params.k_tes_loss_coeffs = util::matrix_t<double>(1, 11, 0.);   //[-]
-    tes_params.custom_tes_pipe_sizes = false;                           //[-]
-    tes_params.tes_diams = util::matrix_t<double>(1, 1, -1);            //[m]
-    tes_params.tes_wallthicks = util::matrix_t<double>(1, 1, -1);       //[m]
     std::vector<double> tes_lengths{ 0, 90, 100, 120, 0, 0, 0, 0, 80, 120, 80 };
-    tes_params.tes_lengths = util::matrix_t<double>(1, 11, &tes_lengths);
-    tes_params.calc_design_pipe_vals = true;                            //[-]
-    tes_params.pipe_rough = 4.57e-5;                                    //[m]
-    tes_params.dP_discharge = 0.;                                       //[bar]
 
-    C_csp_two_tank_tes tes(tes_params);
+    C_csp_two_tank_tes tes(
+        21,                                           //[-]
+        util::matrix_t<double>(1, 1, 0.),             //[-]
+        18,                                           //[-]
+        util::matrix_t<double>(1, 1, 1.),             //[-]
+        311.8,                                        //[MWe]
+        2,                                            //[-]
+        6,                                            //[hr]
+        12,                                           //[m]
+        0.4,                                          //[W/m^2-K]
+        1,                                            //[-]
+        365,                                          //[C]
+        25,                                           //[MWe]
+        250,                                          //[C]
+        25,                                           //[MWe]
+        5,                                            //[C]
+        293,                                          //[C]
+        391,                                          //[C]
+        391,                                          //[C]
+        293,                                          //[C]
+        1.,                                           //[m]
+        30.,                                          //[-]
+        0.55,                                         //[kWe/kg/s]
+        true,                                         //[-]
+        1.85,                                         //[m/s]
+        true,                                         //[-]
+        0.15,                                         //[kWe/kg/s]
+        0.85,                                         //[-]
+        false,                                        //[-]
+        400,                                          //[C]
+        false,                                        //[-]
+        false,                                        //[-]
+        util::matrix_t<double>(1, 11, 0.),            //[-]
+        util::matrix_t<double>(1, 1, -1),             //[m]
+        util::matrix_t<double>(1, 1, -1),             //[m]
+        util::matrix_t<double>(1, 11, &tes_lengths),
+        4.57e-5,                                      //[m]
+        0.                                            //[bar]
+    );
+
 
     // Initialization   -> this is necessary to fully instantiate the TES
     C_csp_tes::S_csp_tes_init_inputs init_inputs;
-    init_inputs.T_to_cr_at_des = C_to_K(tes_params.m_T_cold_des);
-    init_inputs.T_from_cr_at_des = C_to_K(tes_params.m_T_hot_des);
+    init_inputs.T_to_cr_at_des = C_to_K(293.);
+    init_inputs.T_from_cr_at_des = C_to_K(391.);
     init_inputs.P_to_cr_at_des = 19.64;
     tes.init(init_inputs);
 
@@ -233,7 +234,7 @@ NAMESPACE_TEST(csp_common, TesCspSolver, Default)
     EXPECT_NEAR(tes.get_initial_charge_energy(), 561.2, 0.1);
 
     // Discharge estimate
-    double T_cold_K = C_to_K(tes_params.m_T_cold_des);
+    double T_cold_K = C_to_K(293.);
     double t_step = 3600.;
     double q_dot_dc_est, m_dot_field_est_dchg, T_hot_field_est;
     tes.discharge_avail_est(T_cold_K /*K*/, t_step /*s*/, q_dot_dc_est /*MWt*/, m_dot_field_est_dchg /*kg/s*/, T_hot_field_est /*K*/);
@@ -242,7 +243,7 @@ NAMESPACE_TEST(csp_common, TesCspSolver, Default)
     EXPECT_NEAR(T_hot_field_est, C_to_K(386.3), 0.1);
 
     // Charge estimate
-    double T_htf_hot_in = C_to_K(tes_params.m_T_hot_des);
+    double T_htf_hot_in = C_to_K(391.);
     double q_dot_ch_est, m_dot_field_est_chg, T_cold_field_est;
     tes.charge_avail_est(T_htf_hot_in /*K*/, t_step /*s*/, q_dot_ch_est /*MWt*/, m_dot_field_est_chg /*kg/s*/, T_cold_field_est /*K*/);
     EXPECT_NEAR(q_dot_ch_est, 1375., 1.);
@@ -251,7 +252,7 @@ NAMESPACE_TEST(csp_common, TesCspSolver, Default)
 
     // Discharge
     double T_amb = C_to_K(23.);
-    double T_htf_cold_in = C_to_K(tes_params.m_T_cold_des);
+    double T_htf_cold_in = C_to_K(293.);
     double T_htf_hot_out, q_dot_heater, m_dot, W_dot_rhtf_pump, q_dot_loss, q_dot_dc_to_htf,
         q_dot_ch_from_htf, T_hot_ave, T_cold_ave, T_hot_final, T_cold_final;
     tes.discharge(t_step /*s*/, T_amb /*K*/, m_dot_field_est_dchg /*kg/s*/, T_htf_cold_in /*K*/,

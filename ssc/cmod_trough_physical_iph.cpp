@@ -712,41 +712,33 @@ public:
 		// Now add the storage class
 		// ********************************
 		// ********************************
-		C_csp_two_tank_tes::S_params tes_params;
-			// Hardcode NO TES for now
-		tes_params.m_field_fl = c_trough.m_Fluid;	//[-]
-		tes_params.m_field_fl_props = c_trough.m_field_fl_props;	//[-]
-		tes_params.m_tes_fl = tes_params.m_field_fl;	//[-]
-		tes_params.m_tes_fl_props = c_trough.m_field_fl_props;	//[-]
-        tes_params.m_q_dot_design = c_heat_sink.ms_params.m_q_dot_des / 1.0;  //[MWe]
-        tes_params.m_frac_max_q_dot = as_double("solar_mult");                //[-]
-
-		tes_params.m_ts_hours = as_double("tshours");		//[hr]
-	
-		tes_params.m_h_tank = as_double("h_tank");		//[m]
-		tes_params.m_u_tank = as_double("u_tank");		//[W/m^2-K]
-		tes_params.m_tank_pairs = as_integer("tank_pairs");		//[-]
-		tes_params.m_hot_tank_Thtr = as_double("hot_tank_Thtr");	//[C]
-		tes_params.m_hot_tank_max_heat = as_double("hot_tank_max_heat");		//[MWt]
-		tes_params.m_cold_tank_Thtr = as_double("cold_tank_Thtr");	//[C]
-		tes_params.m_cold_tank_max_heat = as_double("cold_tank_max_heat");		//[MWt]
-		tes_params.m_dt_hot = 0.0;								// MSPT assumes direct storage, so no user input here: hardcode = 0.0
-		tes_params.m_T_cold_des = T_loop_in_des;		    //[C]
-		tes_params.m_T_hot_des = T_loop_out_des;	        //[C]
-		tes_params.m_T_tank_hot_ini = T_loop_out_des;		//[C]
-		tes_params.m_T_tank_cold_ini = T_loop_in_des;		//[C]
-		tes_params.m_h_tank_min = as_double("h_tank_min");		//[m]
-		tes_params.m_f_V_hot_ini = as_double("init_hot_htf_percent");		//[-]
-		tes_params.m_htf_pump_coef = as_double("pb_pump_coef");		//[kWe/kg/s]
-
-
-		tes_params.tanks_in_parallel = as_boolean("tanks_in_parallel");        //[-]
-        //tes_params.tanks_in_parallel = false; // true;      //[-] False: Field HTF always goes to TES. PC HTF always comes from TES
-        
-		
-		tes_params.V_tes_des = 1.85;  //[m/s]
-        tes_params.calc_design_pipe_vals = false; // for now, to get 'tanks_in_parallel' to work
-        C_csp_two_tank_tes storage(tes_params);
+        C_csp_two_tank_tes storage(
+		    c_trough.m_Fluid,	                      //[-]
+		    c_trough.m_field_fl_props,	              //[-]
+            c_trough.m_Fluid,	                      //[-]
+		    c_trough.m_field_fl_props,	              //[-]
+            c_heat_sink.ms_params.m_q_dot_des / 1.0,  //[MWe]
+            as_double("solar_mult"),                  //[-]
+            as_double("tshours"),		              //[hr]
+		    as_double("h_tank"),		              //[m]
+		    as_double("u_tank"),		              //[W/m^2-K]
+		    as_integer("tank_pairs"),		          //[-]
+		    as_double("hot_tank_Thtr"),	              //[C]
+		    as_double("hot_tank_max_heat"),		      //[MWt]
+		    as_double("cold_tank_Thtr"),	          //[C]
+		    as_double("cold_tank_max_heat"),		  //[MWt]
+		    0.0,								      // MSPT assumes direct storage, so no user input here: hardcode = 0.0
+		    T_loop_in_des,		                      //[C]
+		    T_loop_out_des,	                          //[C]
+		    T_loop_out_des,		                      //[C]
+		    T_loop_in_des,		                      //[C]
+		    as_double("h_tank_min"),		          //[m]
+		    as_double("init_hot_htf_percent"),		  //[-]
+		    as_double("pb_pump_coef"),		          //[kWe/kg/s]
+            as_boolean("tanks_in_parallel"),          //[-]
+		    1.85,                                     //[m/s]
+            false                                     // for now, to get 'tanks_in_parallel' to work
+        );
 
 
 		// Set storage outputs
