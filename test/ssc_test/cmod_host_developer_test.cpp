@@ -33,7 +33,7 @@ TEST_F(CmodHostDeveloperTest, PVWatts) {
     std::vector<std::string> compare_number_variables = { "project_return_aftertax_npv", "npv", "lnte_nom" };
     std::vector<std::string> compare_array_variables = { "cf_project_return_aftertax", "cf_project_return_aftertax_npv" };
 
-    Test(file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+    Test("host_developer", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
 TEST_F(CmodHostDeveloperTest, PVWattsBattery) {
@@ -44,7 +44,7 @@ TEST_F(CmodHostDeveloperTest, PVWattsBattery) {
     std::vector<std::string> compare_number_variables = { "project_return_aftertax_npv", "npv", "lnte_nom" };
     std::vector<std::string> compare_array_variables = { "cf_project_return_aftertax", "cf_project_return_aftertax_npv" };
 
-    Test(file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+    Test("host_developer", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
 TEST_F(CmodHostDeveloperTest, PV) {
@@ -55,7 +55,7 @@ TEST_F(CmodHostDeveloperTest, PV) {
     std::vector<std::string> compare_number_variables = { "project_return_aftertax_npv", "npv", "lnte_nom" };
     std::vector<std::string> compare_array_variables = { "cf_project_return_aftertax", "cf_project_return_aftertax_npv" };
 
-    Test(file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+    Test("host_developer", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
 
@@ -67,7 +67,7 @@ TEST_F(CmodHostDeveloperTest, PVBattery) {
     std::vector<std::string> compare_number_variables = { "project_return_aftertax_npv", "npv", "lnte_nom" };
     std::vector<std::string> compare_array_variables = { "cf_project_return_aftertax", "cf_project_return_aftertax_npv" };
 
-    Test(file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+    Test("host_developer", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
 
@@ -79,7 +79,7 @@ TEST_F(CmodHostDeveloperTest, Generic) {
     std::vector<std::string> compare_number_variables = { "project_return_aftertax_npv", "npv", "lnte_nom" };
     std::vector<std::string> compare_array_variables = { "cf_project_return_aftertax", "cf_project_return_aftertax_npv" };
 
-    Test(file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+    Test("host_developer", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
 
@@ -91,7 +91,7 @@ TEST_F(CmodHostDeveloperTest, GenericBattery) {
     std::vector<std::string> compare_number_variables = { "project_return_aftertax_npv", "npv", "lnte_nom" };
     std::vector<std::string> compare_array_variables = { "cf_project_return_aftertax", "cf_project_return_aftertax_npv" };
 
-    Test(file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+    Test("host_developer", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
 
@@ -104,6 +104,6 @@ TEST_F(CmodHostDeveloperTest, StandaloneBattery) {
     std::vector<std::string> compare_number_variables = { "project_return_aftertax_npv", "npv", "lnte_nom" };
     std::vector<std::string> compare_array_variables = { "cf_project_return_aftertax", "cf_project_return_aftertax_npv" };
 
-    Test(file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+    Test("host_developer", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
