@@ -1779,9 +1779,9 @@ public:
             as_matrix("field_fl_props"),
             as_integer("rec_htf"),
             as_matrix("field_fl_props"),
-            as_double("P_ref") / as_double("design_eff"),   //[MWe]
+            as_double("P_ref") / as_double("design_eff"),   //[MWt]
             as_double("solarm"),                            //[-]
-            as_double("tshours"),
+            as_double("P_ref") / as_double("design_eff") * as_double("tshours"),
             as_double("h_tank"),
             as_double("u_tank"),
             as_integer("tank_pairs"),

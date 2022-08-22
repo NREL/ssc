@@ -606,9 +606,9 @@ public:
             ud_HT_htf_props,
             HT_htf_code,
             ud_HT_htf_props,
-            W_dot_gen_thermo / eta_therm_mech, //[MWe]
+            W_dot_gen_thermo / eta_therm_mech, //[MWt]
             heater_mult,                       //[-]
-            tshours,                           //[hr]
+            W_dot_gen_thermo / eta_therm_mech * tshours,  //[MWht]
             as_double("h_tank"),
             as_double("u_tank"),
             as_integer("tank_pairs"),

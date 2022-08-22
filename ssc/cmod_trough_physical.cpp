@@ -988,7 +988,7 @@ public:
             as_matrix("store_fl_props"),
             as_double("P_ref") / as_double("eta_ref"),
             as_double("solar_mult"),
-            as_double("tshours"),
+            as_double("P_ref") / as_double("eta_ref") * as_double("tshours"),
             as_double("h_tank"),
             as_double("u_tank"),
             as_integer("tank_pairs"),

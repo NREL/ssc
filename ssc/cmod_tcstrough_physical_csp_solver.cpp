@@ -767,9 +767,9 @@ public:
             as_matrix("field_fl_props"),
             as_integer("Fluid"),
             as_matrix("field_fl_props"),
-            as_double("W_pb_design") / as_double("eta_ref"),  //[MWe]
+            as_double("W_pb_design") / as_double("eta_ref"),  //[MWt]
             as_double("solar_mult"),                          //[-]
-            0.0,		                                      //[hr]
+            0.0,		                                      //[MWht]
             as_double("h_tank"),					          //[m]
             as_double("u_tank"),					          //[W/m^2-K]
             as_integer("tank_pairs"),			              //[-]

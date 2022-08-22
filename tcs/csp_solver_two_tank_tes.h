@@ -151,7 +151,7 @@ private:
     double m_mass_total_active; //[kg] Total HTF mass at design point inlet/outlet T
     double m_d_tank;            //[m] diameter of a single tank
     double m_q_dot_loss_des;    //[MWt] design tank heat loss
-    double m_Q_tes_des;         //[MWt-hr] design storage capacity
+    double m_ts_hours;          //[hr] hours of storage at design power cycle operation		
 
 	double m_cp_field_avg;		//[kJ/kg-K]
     double m_rho_store_avg;     //[kg/m3]
@@ -184,9 +184,9 @@ public:
         util::matrix_t<double> field_fl_props,
         int tes_fl,
         util::matrix_t<double> tes_fl_props,
-        double q_dot_design,                         // [MWe] Design heat rate in and out of tes
+        double q_dot_design,                         // [MWt] Design heat rate in and out of tes
         double frac_max_q_dot,                       // [-] the max design heat rate as a fraction of the nominal
-        double ts_hours,			                 // [hr] hours of storage at design power cycle operation		
+        double Q_tes_des,                            // [MWt-hr] design storage capacity
         double h_tank,			                     // [m] tank height
         double u_tank,			                     // [W/m^2-K]
         int tank_pairs,			                     // [-]
@@ -225,7 +225,7 @@ public:
     util::matrix_t<double> m_tes_fl_props;
     double m_q_dot_design;      //[MWe] Design heat rate in and out of tes
     double m_frac_max_q_dot;    //[-] the max design heat rate as a fraction of the nominal
-    double m_ts_hours;			//[hr] hours of storage at design power cycle operation		
+    double m_Q_tes_des;         //[MWt-hr] design storage capacity
     double m_h_tank;			//[m] tank height
     double m_u_tank;			//[W/m^2-K]
     int m_tank_pairs;			//[-]

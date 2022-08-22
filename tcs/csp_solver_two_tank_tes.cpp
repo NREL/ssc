@@ -716,9 +716,9 @@ C_csp_two_tank_tes::C_csp_two_tank_tes(
     util::matrix_t<double> field_fl_props,
     int tes_fl,
     util::matrix_t<double> tes_fl_props,
-    double q_dot_design,                         // [MWe] Design heat rate in and out of tes
+    double q_dot_design,                         // [MWt] Design heat rate in and out of tes
     double frac_max_q_dot,                       // [-] the max design heat rate as a fraction of the nominal
-    double ts_hours,			                 // [hr] hours of storage at design power cycle operation		
+    double Q_tes_des,			                 // [MWt-hr] design storage capacity
     double h_tank,			                     // [m] tank height
     double u_tank,			                     // [W/m^2-K]
     int tank_pairs,			                     // [-]
@@ -752,7 +752,7 @@ C_csp_two_tank_tes::C_csp_two_tank_tes(
     )
     :
         m_field_fl(field_fl), m_field_fl_props(field_fl_props), m_tes_fl(tes_fl), m_tes_fl_props(tes_fl_props),
-        m_q_dot_design(q_dot_design), m_frac_max_q_dot(frac_max_q_dot), m_ts_hours(ts_hours), m_h_tank(h_tank),
+        m_q_dot_design(q_dot_design), m_frac_max_q_dot(frac_max_q_dot), m_Q_tes_des(Q_tes_des), m_h_tank(h_tank),
         m_u_tank(u_tank), m_tank_pairs(tank_pairs), m_hot_tank_Thtr(hot_tank_Thtr), m_hot_tank_max_heat(hot_tank_max_heat),
         m_cold_tank_Thtr(cold_tank_Thtr), m_cold_tank_max_heat(cold_tank_max_heat), m_dt_hot(dt_hot), m_T_cold_des(T_cold_des),
         m_T_hot_des(T_hot_des), m_T_tank_hot_ini(T_tank_hot_ini), m_T_tank_cold_ini(T_tank_cold_ini),
@@ -769,7 +769,7 @@ C_csp_two_tank_tes::C_csp_two_tank_tes(
         this->tes_lengths.assign(lengths, 11);
     }
 
-    m_vol_tank = m_V_tank_active = m_q_pb_design = m_Q_tes_des =
+    m_vol_tank = m_V_tank_active = m_q_pb_design = m_ts_hours =
         m_V_tank_hot_ini = m_mass_total_active = m_d_tank = m_q_dot_loss_des =
         m_cp_field_avg = m_rho_store_avg = m_m_dot_tes_des_over_m_dot_field_des = std::numeric_limits<double>::quiet_NaN();
 
@@ -778,7 +778,7 @@ C_csp_two_tank_tes::C_csp_two_tank_tes(
 
 void C_csp_two_tank_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inputs)
 {
-	if( !(m_ts_hours > 0.0) )
+	if( !(m_Q_tes_des > 0.0) )
 	{
 		m_is_tes = false;
 		return;		// No storage!
@@ -901,7 +901,7 @@ void C_csp_two_tank_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inputs
 	m_T_tank_cold_ini += 273.15;		//[K] convert from C
 
 
-	m_Q_tes_des = m_q_pb_design / 1.E6 * m_ts_hours;		//[MWt-hr] TES thermal capacity at design
+    m_ts_hours = m_Q_tes_des / m_q_dot_design;
 
 	double d_tank_temp = std::numeric_limits<double>::quiet_NaN();
 	double q_dot_loss_temp = std::numeric_limits<double>::quiet_NaN();

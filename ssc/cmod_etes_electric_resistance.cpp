@@ -554,9 +554,9 @@ public:
             ud_hot_htf_props,
             hot_htf_code,
             ud_hot_htf_props,
-            W_dot_cycle_des / eta_cycle,  //[MWe]
+            W_dot_cycle_des / eta_cycle,  //[MWt]
             heater_mult,                  //[-]
-            tshours,                      //[hr]
+            W_dot_cycle_des / eta_cycle * tshours,  //[MWht]
             as_double("h_tank"),
             as_double("u_tank"),
             as_integer("tank_pairs"),
