@@ -231,7 +231,7 @@ NAMESPACE_TEST(csp_common, TesCspSolver, Default)
     EXPECT_NEAR(tes.get_hot_temp(), C_to_K(391.), 0.1);
     EXPECT_NEAR(tes.get_cold_temp(), C_to_K(293.), 0.1);
     EXPECT_NEAR(tes.get_hot_tank_vol_frac(), 0.305, 0.001);
-    EXPECT_NEAR(tes.get_initial_charge_energy(), 561.2, 0.1);
+    EXPECT_NEAR(tes.get_initial_charge_energy(), 561.2, 0.1);   // only valid just after instantiation
 
     // Discharge estimate
     double T_cold_K = C_to_K(293.);
@@ -270,13 +270,16 @@ NAMESPACE_TEST(csp_common, TesCspSolver, Default)
     EXPECT_NEAR(T_cold_ave, 566.9, 0.1);
     EXPECT_NEAR(T_hot_final, 664.0, 0.1);
     EXPECT_NEAR(T_cold_final, 567.4, 0.1);
+    tes.converged();
+    EXPECT_NEAR(tes.get_hot_tank_vol_frac(), 0., 0.01);
+    EXPECT_NEAR(tes.get_hot_temp(), 664.0, 0.1);
+    EXPECT_NEAR(tes.get_cold_temp(), 567.4, 0.1);
 
     // Reset to initial state
     tes.reset_storage_to_initial_state();
+    EXPECT_NEAR(tes.get_hot_tank_vol_frac(), 0.273, 0.001);         // FIX: why is this different than the initial hot tank vol frac?
     EXPECT_NEAR(tes.get_hot_temp(), C_to_K(391.), 0.1);
     EXPECT_NEAR(tes.get_cold_temp(), C_to_K(293.), 0.1);
-    EXPECT_NEAR(tes.get_hot_tank_vol_frac(), 0.273, 0.001);         // FIX: why is this different than the initial hot tank vol frac?
-    EXPECT_NEAR(tes.get_initial_charge_energy(), 561.2, 0.1);
 
     // Charge
     double T_htf_cold_out;
@@ -296,4 +299,8 @@ NAMESPACE_TEST(csp_common, TesCspSolver, Default)
     EXPECT_NEAR(T_cold_ave, 566.1, 0.1);
     EXPECT_NEAR(T_hot_final, 660.6, 0.1);
     EXPECT_NEAR(T_cold_final, 566.1, 0.1);
+    tes.converged();
+    EXPECT_NEAR(tes.get_hot_tank_vol_frac(), 0.907, 0.01);
+    EXPECT_NEAR(tes.get_hot_temp(), 660.6, 0.1);
+    EXPECT_NEAR(tes.get_cold_temp(), 566.1, 0.1);
 }
