@@ -660,7 +660,7 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
             C_csp_cold_tes::S_csp_cold_tes_init_inputs init_inputs;
 			mc_two_tank_ctes.init(init_inputs);
 
-            T_cold_rad_cooling_des = mc_two_tank_ctes.ms_params.m_T_field_in_des;       //[C]
+            T_cold_rad_cooling_des = mc_two_tank_ctes.ms_params.m_T_cold_des;           //[C]
             dT_cw_rad_cooling_des = mc_two_tank_ctes.ms_params.dT_cw_rad;               //[C]
 
 		}
@@ -688,7 +688,7 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
             C_csp_tes::S_csp_tes_init_inputs tes_init_inputs;
 			mc_stratified_ctes.init(tes_init_inputs);
 
-            T_cold_rad_cooling_des = mc_stratified_ctes.ms_params.m_T_field_in_des;     //[C]
+            T_cold_rad_cooling_des = mc_stratified_ctes.ms_params.m_T_cold_des;         //[C]
             dT_cw_rad_cooling_des = mc_stratified_ctes.ms_params.dT_cw_rad;             //[C]
 		}
 		//Radiator
