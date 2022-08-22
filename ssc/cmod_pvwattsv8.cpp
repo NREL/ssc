@@ -109,8 +109,8 @@ static var_info _cm_vtab_pvwattsv8[] = {
     /*   VARTYPE           DATATYPE          NAME                              LABEL                                          UNITS        META                                            GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
         { SSC_INPUT,        SSC_STRING,      "solar_resource_file",            "Weather file path",                          "",           "",                                             "Solar Resource",      "",                       "",                              "" },
         { SSC_INPUT,        SSC_TABLE,       "solar_resource_data",            "Weather data",                               "",           "dn,df,tdry,wspd,lat,lon,tz,elev",              "Solar Resource",      "",                       "",                              "" },
-        { SSC_INPUT,        SSC_ARRAY,       "albedo",                         "Albedo",                                     "frac",       "if provided, will overwrite weather file albedo","Solar Resource",    "",                        "",                              "" },
-        { SSC_INPUT,        SSC_NUMBER,      "use_wf_albedo",                  "Use albedo from weather file",               "0/1",        "will use weather file albedo instead of albedo input","Solar Resource","?=0",                    "BOOLEAN",          "" },
+        { SSC_INPUT,        SSC_ARRAY,       "albedo",                         "Albedo",                                     "frac",       "array of 1 constant value or 12 monthly values for use when weather file albedo data not available","Solar Resource",    "",                        "",                              "" },
+        { SSC_INPUT,        SSC_NUMBER,      "use_wf_albedo",                  "Use albedo from weather file",               "0/1",        "0=use Albedo input, 1=use weather file albedo if available","Solar Resource","?=0",                    "BOOLEAN",          "" },
 
         { SSC_INOUT,        SSC_NUMBER,      "system_use_lifetime_output",     "Run lifetime simulation",                    "0/1",        "",                                             "Lifetime",            "?=0",                        "",                              "" },
         { SSC_INPUT,        SSC_NUMBER,      "analysis_period",                "Analysis period",                            "years",      "",                                             "Lifetime",            "system_use_lifetime_output=1", "",                          "" },
@@ -157,6 +157,9 @@ static var_info _cm_vtab_pvwattsv8[] = {
         { SSC_OUTPUT,       SSC_ARRAY,       "tamb",                           "Weather file ambient temperature",                         "C",         "",										       "Time Series",      "*",                       "",                          "" },
         { SSC_OUTPUT,       SSC_ARRAY,       "wspd",                           "Weather file wind speed",                                  "m/s",       "",											   "Time Series",      "*",                       "",                          "" },
         { SSC_OUTPUT,       SSC_ARRAY,       "snow",                           "Weather file snow depth",                                  "cm",        "",										       "Time Series",      "",                        "",                          "" },
+
+        { SSC_OUTPUT,       SSC_ARRAY,       "alb",                            "Albedo",                                  "",        "",										       "Time Series",      "",                        "",                          "" },
+        { SSC_OUTPUT,       SSC_ARRAY,       "soiling_f",                 "Soiling factor",                                  "",        "",										       "Time Series",      "",                        "",                          "" },
 
         { SSC_OUTPUT,       SSC_ARRAY,       "sunup",                          "Sun up over horizon",                         "0/1",       "",                                             "Time Series",      "*",                       "",                          "" },
         { SSC_OUTPUT,       SSC_ARRAY,       "shad_beam_factor",               "External shading factor for beam radiation",           "",          "",                                             "Time Series",      "*",                       "",                                     "" },
@@ -761,6 +764,8 @@ public:
         ssc_number_t* p_stow = allocate("tracker_stowing", nrec); // just for reporting output
 
         ssc_number_t* p_tmod = allocate("tcell", nrec);
+        ssc_number_t* p_alb = allocate("alb", nrec);
+        ssc_number_t* p_soiling_f = allocate("soiling_f", nrec);
         ssc_number_t* p_dcshadederate = allocate("dcshadederate", nrec);
         ssc_number_t* p_dcsnowderate = allocate("dcsnowderate", nrec);
         ssc_number_t* p_poa = allocate("poa", nrec);
@@ -805,19 +810,9 @@ public:
                 p_snow[idx] = (ssc_number_t)wf.snow; // if there is no snow data in the weather file, this will be NaN- consistent with pvsamv1
                 p_tmod[idx] = (ssc_number_t)wf.tdry;
 
-
-                // start by defaulting albedo value to 0.2
-                double alb = 0.2;
-
-                // if the snow loss model is enabled, and there's valid snow > 0.5 cm depth, then increase the albedo.
-                // however, if the snow loss model is disabled, do not artificially increase
-                // apparent production if snow covering the modules is not being accounted for
-                if (std::isfinite(wf.snow) && wf.snow > 0.5 && wf.snow < 999
-                    && en_snowloss)
-                    alb = 0.6;
-
-                // if the user has defined single value, monthly, or timeseries albedo input, then use the value they've specified
-                if (albedo_len == 1)
+                // if albedo user input is a single, monthly, or time series value, then assign the value to alb
+                double alb = 0.2; // set to default value just in case
+                if (albedo_len == 1 )
                     alb = albedo[0];
                 else if (albedo_len == 12)
                     alb = albedo[wf.month - 1];
@@ -826,12 +821,28 @@ public:
                 else if (is_assigned("albedo"))
                     log(util::format("Albedo array was assigned but is not the correct length (1, 12, or %d entries). Using default value.", nrec), SSC_WARNING);
 
-                // if the user hasn't specified an albedo, or has specified to use wf albedo, and the weather file contains hourly albedo, use that instead
-                // but make sure that the weather file albedo is realistic
-                // albedo_len will be zero if the albedo input isn't assigned
-                if (std::isfinite(wf.alb) && wf.alb > 0 && wf.alb < 1 && (albedo_len == 0 || use_wf_albedo))
+                // check albedo is valid value between 0 and 1. if not, set to default value 0.2
+                // if the snow loss model is enabled and there's valid snow depth > 0.5 cm, then set to 0.6
+                if (alb <= 0 || alb >= 1)
+                {
+                    if (std::isfinite(wf.snow) && wf.snow > 0.5 && wf.snow < 999 && en_snowloss)
+                        alb = 0.6;
+                    else
+                        alb = 0.2;
+                }
+
+                // conditions to use albedo from wf instead of albedo user input:
+                //   * wf.alb exists and is valid and use_wf_albedo = 1
+                //   * wf.alb exists and is valid and use_wf_albedo = 0 and albedo_len = 0 
+                // conditions to use albedo user input:
+                //   * albedo_len > 0 and use_wf_albedo = 0
+                //   * albedo_len > 0 and use_wf_albedo = 1 and wf.alb does not exist
+                //   * albedo_len > 0 and use_wf_albedo = 1 and wf.alb has invalid values
+                 if ( ( std::isfinite(wf.alb) && ( wf.alb > 0 && wf.alb < 1 ) ) && ( albedo_len == 0 || use_wf_albedo ))
                     alb = wf.alb;
 
+                // report albedo value as output
+                p_alb[idx] = (ssc_number_t)alb;
 
                 irrad irr;
                 irr.set_time(wf.year, wf.month, wf.day, wf.hour, wf.minute,
@@ -1113,6 +1124,9 @@ public:
                             soiling_f = soiling[idx] * 0.01; //convert from percentage to decimal
                         else
                             throw exec_error("pvwattsv8", "Soiling input array must have 1, 12, or nrecords values.");
+
+                        // report soiling factor output
+                        p_soiling_f[idx] = (ssc_number_t)soiling_f;
 
                         if (y == 0 && wdprov->annualSimulation()) ld("poa_loss_soiling") += (ibeam + iskydiff + ignddiff) * soiling_f * wm2_to_wh;
 
