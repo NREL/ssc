@@ -2805,14 +2805,16 @@ void C_cavity_receiver::init()
     double c_htf_des = field_htfProps.Cp((m_T_htf_hot_des + m_T_htf_cold_des) / 2.0) * 1000.0;		//[J/kg-K] Specific heat at design conditions
     m_m_dot_htf_des = m_q_rec_des / (c_htf_des*(m_T_htf_hot_des - m_T_htf_cold_des));   //[kg/s]
 
-    double L_piping = std::numeric_limits<double>::quiet_NaN();     //[m]
+    // 22-06-10 Currently not capping HTF mass flow rate in cavity model
+    m_m_dot_htf_max = 100.0 * m_m_dot_htf_des;  //[kg/s]
+
     double d_inner_piping = std::numeric_limits<double>::quiet_NaN();   //[m]
     CSP::mspt_piping_design(field_htfProps,
         m_h_tower, m_pipe_length_mult,
         m_pipe_length_add, m_piping_loss_coefficient,
         m_T_htf_hot_des, m_T_htf_cold_des,
         m_m_dot_htf_des,
-        L_piping, d_inner_piping, m_Q_dot_piping_loss);
+        m_L_piping, d_inner_piping, m_Q_dot_piping_loss);
 
     m_mode_prev = C_csp_collector_receiver::OFF;
     m_od_control = 1.0;			                //[-] Additional defocusing for over-design conditions
