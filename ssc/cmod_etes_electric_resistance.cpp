@@ -200,6 +200,8 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
         // System
     { SSC_OUTPUT, SSC_NUMBER, "system_capacity",             "System capacity",                         "kWe",          "",                                  "System Design Calc",                             "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "nameplate",                   "Nameplate capacity",                      "MWe",          "",                                  "System Design Calc",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "cp_system_capacity",          "System capacity for capacity payments",   "MWe",          "",                                  "System Design Calc",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "cp_battery_capacity",         "Battery nameplate",                       "MWe",          "",                                  "System Design Calc",                             "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "q_pb_design",                 "Cycle thermal input at design"            "MWt",          "",                                  "System Design Calc",                             "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "q_dot_heater_design",         "Heater thermal output at design",         "MWt",          "",                                  "System Design Calc",                             "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "tshours_heater",              "Hours of TES relative to heater output",  "hr",           "",                                  "System Design Calc",                             "*",                                                                "",              "" },
@@ -840,7 +842,9 @@ public:
             // Cycle
         double m_dot_htf_pc_des;    //[kg/s]
         double cp_htf_pc_des;       //[kJ/kg-K]
-        rankine_pc.get_design_parameters(m_dot_htf_pc_des, cp_htf_pc_des);
+        double W_dot_pc_pump_des;   //[MWe]
+        double W_dot_cooling_des;   //[MWe]
+        rankine_pc.get_design_parameters(m_dot_htf_pc_des, cp_htf_pc_des, W_dot_pc_pump_des, W_dot_cooling_des);
         m_dot_htf_pc_des /= 3600.0;     // convert from kg/hr to kg/s
 
             // Heater
@@ -944,6 +948,8 @@ public:
             // System
         assign("system_capacity", (ssc_number_t)system_capacity);           //[kWe]
         assign("nameplate", (ssc_number_t)(system_capacity * 1.E-3));       //[MWe]
+        assign("cp_system_capacity", system_capacity * 1.E-3);             //[MWe]
+        assign("cp_battery_capacity", system_capacity * 1.E-3);             //[MWe]
         assign("q_pb_design", (ssc_number_t)q_dot_pc_des);                  //[MWt]
         assign("q_dot_heater_design", (ssc_number_t)q_dot_heater_des);      //[MWt]
         assign("tshours_heater", (ssc_number_t)(tshours / heater_mult));    //[hr]
