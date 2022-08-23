@@ -82,7 +82,7 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 
 	revenueToClipCharge = revenueToDischarge = revenueToGridCharge = revenueToPVCharge = 0;
 
-    discharge_hours = (size_t) std::ceil(_Battery->energy_max(m_batteryPower->stateOfChargeMax, m_batteryPower->stateOfChargeMin) / m_batteryPower->powerBatteryDischargeMaxDC);
+    discharge_hours = (size_t) std::ceil(_Battery->energy_max(m_batteryPower->stateOfChargeMax, m_batteryPower->stateOfChargeMin) / m_batteryPower->powerBatteryDischargeMaxDC) - 1;
 
     costToCycle();
     omCost();
@@ -185,7 +185,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t year, size_t ho
         auto max_ppa_cost = std::max_element(_forecast_price_rt_series.begin() + lifetimeIndex, _forecast_price_rt_series.begin() + lifetimeIndex + idx_lookahead);
         auto min_ppa_cost = std::min_element(_forecast_price_rt_series.begin() + lifetimeIndex, _forecast_price_rt_series.begin() + lifetimeIndex + idx_lookahead);
         auto charge_ppa_cost = ppa_prices[discharge_hours];
-        auto discharge_ppa_cost = ppa_prices[ppa_prices.size() - discharge_hours]; 
+        auto discharge_ppa_cost = ppa_prices[ppa_prices.size() - discharge_hours - 1]; 
         double ppa_cost = _forecast_price_rt_series[lifetimeIndex];
 
         /*! Cost to purchase electricity from the utility */
