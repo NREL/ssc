@@ -26,7 +26,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "cmod_json_comparison_test.h"
 
 /**
- * Cashloan tests
+ * LCOE FCR tests
  */
 class CmodLCOEFCRTest : public JSONComparisonTest {};
 
