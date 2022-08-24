@@ -326,7 +326,7 @@ public:
 		geo_inputs.md_DistanceBetweenProductionInjectionWellsM = as_double("inj_prod_well_distance");
 		geo_inputs.md_WaterLossPercent = as_double("subsurface_water_loss")/100;
 		geo_inputs.md_EGSFractureAperature = as_double("fracture_aperature");
-        geo_inputs.md_EGSFractureAngle = as_double("fracture_length");
+        geo_inputs.md_EGSFractureLength = as_double("fracture_length");
 		geo_inputs.md_EGSNumberOfFractures = as_double("num_fractures");
 		geo_inputs.md_EGSFractureWidthM = as_double("fracture_width");
 		geo_inputs.md_EGSFractureAngle = as_double("fracture_angle");
