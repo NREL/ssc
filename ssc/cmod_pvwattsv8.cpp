@@ -109,27 +109,29 @@ static var_info _cm_vtab_pvwattsv8[] = {
     /*   VARTYPE           DATATYPE          NAME                              LABEL                                          UNITS        META                                            GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
         { SSC_INPUT,        SSC_STRING,      "solar_resource_file",            "Weather file path",                          "",           "",                                             "Solar Resource",      "",                       "",                              "" },
         { SSC_INPUT,        SSC_TABLE,       "solar_resource_data",            "Weather data",                               "",           "dn,df,tdry,wspd,lat,lon,tz,elev",              "Solar Resource",      "",                       "",                              "" },
-        { SSC_INPUT,        SSC_ARRAY,       "albedo",                         "Albedo",                                     "frac",       "array of 1 constant value or 12 monthly values for use when weather file albedo data not available","Solar Resource",    "",                        "",                              "" },
-        { SSC_INPUT,        SSC_NUMBER,      "use_wf_albedo",                  "Use albedo from weather file",               "0/1",        "0=use Albedo input, 1=use weather file albedo if available","Solar Resource","?=0",                    "BOOLEAN",          "" },
+        { SSC_INPUT,        SSC_ARRAY,       "albedo",                         "Albedo",                                     "0..1",       "array of 1 constant value or 12 monthly values for use when weather file albedo data not available","Solar Resource",    "",                        "",                              "" },
+        { SSC_INPUT,        SSC_NUMBER,      "albedo_default",                 "Albedo default",                             "0..1",       "default when albedo input data is invalid","Solar Resource",    "?=0.2",                        "",                              "" },
+        { SSC_INPUT,        SSC_NUMBER,      "albedo_default_snow",            "Albedo default for snow",                    "0..1",       "default when albedo input data is invalid with snow","Solar Resource",    "?=0.6",                        "",                              "" },
+        { SSC_INPUT,        SSC_NUMBER,      "use_wf_albedo",                  "Use albedo from weather file",               "0/1",        "use albedo input, use weather file albedo if available","Solar Resource","?=0",                    "BOOLEAN",          "" },
 
         { SSC_INOUT,        SSC_NUMBER,      "system_use_lifetime_output",     "Run lifetime simulation",                    "0/1",        "",                                             "Lifetime",            "?=0",                        "",                              "" },
         { SSC_INPUT,        SSC_NUMBER,      "analysis_period",                "Analysis period",                            "years",      "",                                             "Lifetime",            "system_use_lifetime_output=1", "",                          "" },
         { SSC_INPUT,        SSC_ARRAY,       "dc_degradation",                 "Annual DC degradation for lifetime simulations","%/year",  "",                                             "Lifetime",            "system_use_lifetime_output=1", "",                          "" },
 
         { SSC_INPUT,        SSC_NUMBER,      "system_capacity",                "System size (DC nameplate)",                  "kW",        "",											   "System Design",      "*",                       "",                      "" },
-        { SSC_INPUT,        SSC_NUMBER,      "module_type",                    "Module type",                                 "0/1/2",     "Standard,Premium,Thin film",                   "System Design",      "?=0",                     "MIN=0,MAX=2,INTEGER",           "" },
+        { SSC_INPUT,        SSC_NUMBER,      "module_type",                    "Module type",                                 "0/1/2",     "standard,premium,thin film",                   "System Design",      "?=0",                     "MIN=0,MAX=2,INTEGER",           "" },
         { SSC_INPUT,        SSC_NUMBER,      "dc_ac_ratio",                    "DC to AC ratio",                              "ratio",     "",                                             "System Design",      "?=1.1",                   "POSITIVE",                      "" },
 
         { SSC_INPUT,        SSC_NUMBER,      "bifaciality",                    "Module bifaciality factor",                   "0 or ~0.65","",                                             "System Design",      "?=0",                       "",                              "" },
 
-        { SSC_INPUT,        SSC_NUMBER,      "array_type",                     "Array type",                                  "0/1/2/3/4", "Fixed Rack,Fixed Roof,1Axis,Backtracked,2Axis","System Design",      "*",                       "MIN=0,MAX=4,INTEGER",           "" },
+        { SSC_INPUT,        SSC_NUMBER,      "array_type",                     "Array type",                                  "0/1/2/3/4", "fixed open rack,fixed roof mount,1-axis tracking,1-axis backtracking,2-axis tracking","System Design",      "*",                       "MIN=0,MAX=4,INTEGER",           "" },
         { SSC_INPUT,        SSC_NUMBER,      "tilt",                           "Tilt angle",                                  "deg",       "H=0,V=90",                                     "System Design",      "array_type<4",            "MIN=0,MAX=90",                  "" },
         { SSC_INPUT,        SSC_NUMBER,      "azimuth",                        "Azimuth angle",                               "deg",       "E=90,S=180,W=270",                             "System Design",      "array_type<4",            "MIN=0,MAX=360",                 "" },
         { SSC_INPUT,        SSC_NUMBER,      "gcr",                            "Ground coverage ratio",                       "0..1",      "",                                             "System Design",      "?=0.4",                   "MIN=0.01,MAX=0.99",             "" },
         { SSC_INPUT,        SSC_NUMBER,      "rotlim",                         "Tracker rotation angle limit",                "deg",       "",                                             "System Design",      "?=45.0",                  "",                              "" },
 
         { SSC_INPUT,        SSC_ARRAY,       "soiling",                        "Soiling loss",                                "%",         "",                                             "System Design",      "?",                       "",                              "" },
-        { SSC_INPUT,        SSC_NUMBER,      "losses",						   "Other DC losses",                             "%",         "Total system losses",                          "System Design",      "*",                       "MIN=-5,MAX=99",                 "" },
+        { SSC_INPUT,        SSC_NUMBER,      "losses",						   "Other DC losses",                             "%",         "total system losses",                          "System Design",      "*",                       "MIN=-5,MAX=99",                 "" },
 
         { SSC_INPUT,        SSC_NUMBER,      "enable_wind_stow",               "Enable tracker stow at high wind speeds",     "0/1",       "",                                             "System Design",      "?=0",                     "BOOLEAN",                              "" },
         { SSC_INPUT,        SSC_NUMBER,      "stow_wspd",                      "Tracker stow wind speed threshold",           "m/s",       "",                                             "System Design",      "?=10",                    "",                              "" },
@@ -811,7 +813,7 @@ public:
                 p_tmod[idx] = (ssc_number_t)wf.tdry;
 
                 // if albedo user input is a single, monthly, or time series value, then assign the value to alb
-                double alb = 0.2; // set to default value just in case
+                double alb = as_double("albedo_default"); // set to default value just in case
                 if (albedo_len == 1 )
                     alb = albedo[0];
                 else if (albedo_len == 12)
@@ -826,9 +828,9 @@ public:
                 if (alb <= 0 || alb >= 1)
                 {
                     if (std::isfinite(wf.snow) && wf.snow > 0.5 && wf.snow < 999 && en_snowloss)
-                        alb = 0.6;
+                        alb = as_double("albedo_default_snow");
                     else
-                        alb = 0.2;
+                        alb = as_double("albedo_default");
                 }
 
                 // conditions to use albedo from wf instead of albedo user input:
