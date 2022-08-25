@@ -44,7 +44,7 @@ GTEST_API_ int main(int argc, char **argv) {
     //    filter to include
     //    ::testing::GTEST_FLAG(filter) = "CMPvsamv1PowerIntegration_cmod_pvsamv1*";
        ::testing::GTEST_FLAG(filter) = "CmodHostDeveloperTest.*:CmodCashLoanTest.*:CmodThirdPartyOwnershipTest.*:CmodCommunitySolarTest.*:CmodLCOEFCRTest.*:CmodSingleOwnerTest.*:CmodAllEquityPartnershipFlipTest.*:CmodLeveragedPartnershipFlipTest.*:CmodSaleLeasebackTest.*:CmodMerchantPlantTest.*";
-     //  ::testing::GTEST_FLAG(filter) = "CmodMerchantPlantTest.*";
+     //  ::testing::GTEST_FLAG(filter) = "CmodLCOEFCRTest.*";
 
     //    filter to exclude
     //    ::testing::GTEST_FLAG(filter) = "-PVSmoothing_lib_battery_dispatch*";

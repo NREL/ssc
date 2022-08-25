@@ -194,3 +194,26 @@ TEST_F(CmodLCOEFCRTest, Wind) {
     Test("lcoefcr", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
+
+TEST_F(CmodLCOEFCRTest, DSGL_IPH_LCOH) {
+    std::string file_inputs = SSCDIR;
+    file_inputs += "/test/input_json/FinancialModels/lcoefcr/2022.08.08_develop_branch_DSGL_IPH_LCOH_Calculator_cmod_lcoefcr.json";
+    std::string file_outputs = SSCDIR;
+    file_outputs += "/test/input_json/FinancialModels/lcoefcr/2022.08.08_develop_branch_DSGL_IPH_LCOH_Calculator_cmod_lcoefcr_outputs.json";
+    std::vector<std::string> compare_number_variables = { "lcoe_fcr" };
+    std::vector<std::string> compare_array_variables;
+
+    Test("lcoefcr", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+}
+
+
+TEST_F(CmodLCOEFCRTest, PhysicalTrough_IPH_LCOH) {
+    std::string file_inputs = SSCDIR;
+    file_inputs += "/test/input_json/FinancialModels/lcoefcr/2022.08.08_develop_branch_Physical_Trough_IPH_LCOH_Calculator_cmod_lcoefcr.json";
+    std::string file_outputs = SSCDIR;
+    file_outputs += "/test/input_json/FinancialModels/lcoefcr/2022.08.08_develop_branch_Physical_Trough_IPH_LCOH_Calculator_cmod_lcoefcr_outputs.json";
+    std::vector<std::string> compare_number_variables = { "lcoe_fcr" };
+    std::vector<std::string> compare_array_variables;
+
+    Test("lcoefcr", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+}
