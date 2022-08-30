@@ -709,6 +709,9 @@ static var_info _cm_vtab_pvsamv1[] = {
 
        // monthly and annual outputs
 
+        { SSC_OUTPUT , SSC_ARRAY  , "wind_direction_bins"                     , "Wind direction rose values"                           , ""     ,""                                    , "Time Series"                          , ""                    , ""                                                , "" },
+
+
         { SSC_OUTPUT,		 SSC_NUMBER,     "annual_energy",						 "Annual AC energy",                                       "kWh",       "",                      "Annual (Year 1)", "", "", "" },
 
         { SSC_OUTPUT,        SSC_NUMBER,     "annual_dc_invmppt_loss",               "Inverter clipping loss DC MPPT voltage limits",          "kWh/yr",    "",                      "Annual (Year 1)",       "",                    "",                              "" },
@@ -974,6 +977,11 @@ void cm_pvsamv1::exec()
     int radmode = Irradiance->radiationMode;
     double bifaciality = 0.0;
 
+    ssc_number_t* wdir_bins = allocate("wind_direction_bins", 360);
+    std::vector<double> wdir_bins_cnt(360, 0.0);
+
+    int wdir_idx = 0;
+
     // Get System or Subarray Inputs
     double aspect_ratio = Subarrays[0]->moduleAspectRatio;
     size_t num_subarrays = PVSystem->numberOfSubarrays;
@@ -981,6 +989,8 @@ void cm_pvsamv1::exec()
     double ref_area_m2 = Subarrays[0]->Module->referenceArea;
     double module_watts_stc = Subarrays[0]->Module->moduleWattsSTC;
     SharedInverter* sharedInverter = PVSystem->m_sharedInverter.get();
+
+
 
     //overwrite tilt with latitude if flag is set- can't do this in PVIOManager because need latitude from weather file
     //also check here for tilt > 0 for tracking systems, since this is a very uncommon configuration but an easy mistake to make
@@ -2106,7 +2116,14 @@ void cm_pvsamv1::exec()
 
                 //assign net DC power output
                 PVSystem->p_systemDCPower[idx] += (ssc_number_t)(dcPowerNetPerSubarray[nn] * util::watt_to_kilowatt);
-
+                if (PVSystem->p_systemDCPower[idx] > 0.0 && iyear == 0) {
+                    wdir_idx = wf.wdir;
+                    if ((wdir_idx < 0) || (wdir_idx > 359)) // throw??
+                        wdir_idx = 0; // or mod 360
+                    //wdir_bins[wdir_idx] += 1.0;
+                    wdir_bins[wdir_idx] += 1.0;
+                    wdir_bins_cnt[wdir_idx] += 1.0;
+                }
                 //add this subarray's net DC power to the appropriate MPPT input and to the total system DC power
                 PVSystem->p_dcPowerNetPerMppt[Subarrays[nn]->mpptInput - 1][idx] += (ssc_number_t)(dcPowerNetPerSubarray[nn]); //need to subtract 1 from mppt input number because those are 1-indexed
                 dcPowerNetTotalSystem += dcPowerNetPerSubarray[nn];
@@ -2203,6 +2220,10 @@ void cm_pvsamv1::exec()
         // Recompute the forecast after AC losses
         p_pv_ac_use.clear();
     }
+    /*
+    for (size_t i = 0; i < wdir_bins_cnt.size(); i++)
+        if (wdir_bins_cnt[i] > 0)
+            wdir_bins[i] /= wdir_bins_cnt[i];*/
 
     /* *********************************************************************************************
     PV AC calculation
