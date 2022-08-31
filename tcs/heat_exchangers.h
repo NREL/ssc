@@ -478,6 +478,7 @@ public:
         // Component Cost Models Baselined with Vendor Data and Estimates
         // ASME ES 2017		
         E_CARLSON_17_RECUP,		// CO2 - CO2 PCHE
+        E_WEILAND_19_RECUP,     // CO2 - CO2
         E_CARLSON_17_PHX		// Salt - CO2 PCHE high temperature
     };
 
@@ -535,7 +536,8 @@ public:
         double m_DP_cold_des;		//[kPa] cold fluid design pressure drop
         double m_DP_hot_des;		//[kPa] hot fluid design pressure drop
 
-        double m_cost;				//[M$]
+        double m_cost_equipment;		    //[M$]
+        double m_cost_bare_erected;         //[M$]
 
         S_des_solved()
         {
@@ -545,7 +547,8 @@ public:
                 m_min_DT_design = m_eff_design = m_NTU_design =
                 m_T_h_out = m_T_c_out =
                 m_DP_cold_des = m_DP_hot_des =
-                m_cost = std::numeric_limits<double>::quiet_NaN();
+                m_cost_equipment =
+                m_cost_bare_erected = std::numeric_limits<double>::quiet_NaN();
         }
     };
 
@@ -648,9 +651,11 @@ public:
 
     double od_UA(double m_dot_c /*kg/s*/, double m_dot_h /*kg/s*/);
 
-    double calculate_cost(double UA /*kWt/K*/,
+    double calculate_equipment_cost(double UA /*kWt/K*/,
         double T_hot_in /*K*/, double P_hot_in /*kPa*/, double m_dot_hot /*kg/s*/,
         double T_cold_in /*K*/, double P_cold_in /*kPa*/, double m_dot_cold /*kg/s*/);
+
+    double calculate_bare_erected_cost(double cost_equipment /*M$*/);
 
     virtual void initialize(const S_init_par & init_par);
 
@@ -749,7 +754,10 @@ public:
 
     C_HX_co2_to_co2_CRM()
     {
-        m_cost_model = C_HX_counterflow_CRM::E_CARLSON_17_RECUP;
+        //m_cost_model = C_HX_counterflow_CRM::E_CARLSON_17_RECUP;
+        m_cost_model = C_HX_counterflow_CRM::E_WEILAND_19_RECUP;
+
+
         m_od_solution_type = C_HX_counterflow_CRM::C_od_thermal_solution_type::E_CRM_UA_PER_NODE;
 
         m_od_solution_type = C_HX_counterflow_CRM::C_od_thermal_solution_type::E_DEFAULT;
@@ -787,7 +795,8 @@ public:
 		// Techno-Economic Comparison of Solar-Driven SCO2 Brayton Cycles Using 
 		// Component Cost Models Baselined with Vendor Data and Estimates
 		// ASME ES 2017		
-		E_CARLSON_17		//[-]
+		E_CARLSON_17,		//[-]
+        E_WEILAND_19
 	};
 
 	// Class to save messages for up stream classes
@@ -869,7 +878,8 @@ public:
 		double m_L_node;	//[m] Tube length of one node
 		double m_V_node;	//[m3] Volume of one node
 
-		double m_cost;		//[M$] Cost
+		double m_cost_equipment;		//[M$] Equipment Cost
+        double m_cost_bare_erected;     //[M$] Equipment + install cost
 
 		S_des_solved()
 		{
@@ -880,7 +890,7 @@ public:
 				m_N_tubes = m_L_tube = m_UA_total = 
 				m_V_material_total = m_V_total =
 				m_L_node = m_V_node =
-				m_cost = std::numeric_limits<double>::quiet_NaN();
+				m_cost_equipment = m_cost_bare_erected = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -1306,8 +1316,10 @@ public:
 		double & mu_air /*kg/m-s*/, double & v_air /*m3/kg*/, double & cp_air /*J/kg-K*/,
 		double & k_air /*W/m-K*/, double & Pr_air);
 
-	double calculate_cost(double UA /*kWt/K*/, double V_material /*m^3*/,
+	double /*M$*/ calculate_equipment_cost(double UA /*kWt/K*/, double V_material /*m^3*/,
 		double T_hot_in /*K*/, double P_hot_in /*kPa*/, double m_dot_hot /*kg/s*/);
+
+    double /*M$*/ calculate_bare_erected_cost(double cost_equipment /*M$*/);
 };
 
 int co2_outlet_given_geom_and_air_m_dot(double T_co2_out /*K*/, double m_dot_co2_tube /*kg/s*/,

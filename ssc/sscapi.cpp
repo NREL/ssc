@@ -901,7 +901,8 @@ SSCEXPORT ssc_data_t json_to_ssc_data(const char* json_str) {
     auto vt = new var_table;
 //    std::unique_ptr<var_table> vt = std::unique_ptr<var_table>(new var_table);
     rapidjson::Document document;
-    document.Parse(json_str);
+    //document.Parse(json_str); Parse<kParseDefaultFlags>(str)
+    document.Parse<rapidjson::kParseNanAndInfFlag>(json_str); // Allow parsing NaN, Inf, Infinity, -Inf and -Infinity as double values (relaxed JSON syntax).
     if (document.HasParseError()) {
         std::string s = rapidjson::GetParseError_En(document.GetParseError());
         vt->assign("error", s);
