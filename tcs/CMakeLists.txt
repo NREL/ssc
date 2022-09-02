@@ -69,7 +69,6 @@ set(TCS_SRC
 		htf_props.cpp
 		interpolation_routines.cpp
 		ngcc_powerblock.cpp
-		powerblock.cpp
 		pump.cpp
 		sam_csp_util.cpp
 		sam_dsg_controller_type265.cpp
@@ -141,7 +140,6 @@ set(TCS_SRC
 		ngcc_powerblock.h
 		nlopt_callbacks.h
 		numeric_solvers.h
-		powerblock.h
 		sam_csp_util.h
 		sco2_cycle_components.h
 		sco2_cycle_templates.h
