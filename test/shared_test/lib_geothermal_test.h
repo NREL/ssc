@@ -86,6 +86,10 @@ protected:
 	int resource_potential;
 	int tou[8760];
     double haf_inputs[8760];
+    double inj_casing_size;
+    int inj_well_type;
+    int prod_well_type;
+    double inj_prod_ratio;
 			  
 	//Initializing all 4 structs to defualt values in SAM 2018.11.11:
 		SPowerBlockParameters SPBP;
@@ -119,6 +123,10 @@ public:
 		well_diameter = 12.25;
 		casing_size = 9.625;
 		inj_well_diam = 12.25;
+        inj_casing_size = 11.5;
+        inj_well_type = 0;
+        prod_well_type = 0;
+        inj_prod_ratio = 0.75;
 		specify_pump_work = 0;
 		specified_pump_work_amount = 0;
 		resource_type = 0;
@@ -233,6 +241,11 @@ public:
 				geoPlant_inputs.md_DiameterProductionWellInches = well_diameter;
 				geoPlant_inputs.md_DiameterPumpCasingInches = casing_size;
 				geoPlant_inputs.md_DiameterInjectionWellInches = inj_well_diam;
+                geoPlant_inputs.md_InjectionWellType = inj_well_type;
+                geoPlant_inputs.md_ProductionWellType = prod_well_type;
+                geoPlant_inputs.md_dtProdWellChoice = 0;
+                geoPlant_inputs.md_RatioInjectionToProduction = inj_prod_ratio;
+                geoPlant_inputs.md_DiameterInjPumpCasingInches = inj_casing_size;
 				geoPlant_inputs.mb_CalculatePumpWork = (1 != specify_pump_work);
 				geoPlant_inputs.md_UserSpecifiedPumpWorkKW = specified_pump_work_amount * 1000; // entered in MW
 

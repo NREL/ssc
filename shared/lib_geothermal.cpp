@@ -1863,8 +1863,8 @@ bool CGeothermalAnalyzer::OpenWeatherFile(const char * fn)
 {
 	mb_WeatherFileOpen = false;
 	ml_ReadCount = 0;
-	if (!m_wFile.open(fn))
-		ms_ErrorString = "Could not open the weather file: " + std::string(fn);
+    if (!m_wFile.open(fn))
+        ms_ErrorString = "Could not open the weather file: ";// +std::string(fn);
 	else
 		mb_WeatherFileOpen = true;
 
@@ -1882,7 +1882,7 @@ bool CGeothermalAnalyzer::ReadWeatherForTimeStep(bool bHourly, unsigned int time
 	size_t hours = util::hours_in_month(month);
 	if (hours == 0)
 	{
-		ms_ErrorString = "util::hours_in_month returned zero for month =  " + util::to_string(month) + ".";
+        ms_ErrorString = "util::hours_in_month returned zero for month =  ";// +util::to_string(month) + ".";
 		return false;
 	}
 
