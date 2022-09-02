@@ -712,10 +712,10 @@ C_csp_two_tank_tes::C_csp_two_tank_tes()
 }
 
 C_csp_two_tank_tes::C_csp_two_tank_tes(
-    int field_fl,
-    util::matrix_t<double> field_fl_props,
-    int tes_fl,
-    util::matrix_t<double> tes_fl_props,
+    int field_fl,                                // [-] field fluid identifier
+    util::matrix_t<double> field_fl_props,       // [-] field fluid properties
+    int tes_fl,                                  // [-] tes fluid identifier
+    util::matrix_t<double> tes_fl_props,         // [-] tes fluid properties
     double q_dot_design,                         // [MWt] Design heat rate in and out of tes
     double frac_max_q_dot,                       // [-] the max design heat rate as a fraction of the nominal
     double Q_tes_des,			                 // [MWt-hr] design storage capacity

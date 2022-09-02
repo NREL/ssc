@@ -24,8 +24,11 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "lib_csp_tes_test.h"
 #include "vs_google_test_explorer_namespace.h"
+#include "csp_common_test.h"
 
 using namespace csp_common;
+const double kErrorTolLo = 0.001;    // 0.1%
+const double kErrorToHi = 0.01;      // 1.0%
 
 //========Tests===================================================================================
 //=== Using factory patterns to create the different physical and non-physical components=========
@@ -51,13 +54,13 @@ NAMESPACE_TEST(csp_common, StorageTank, DrainingTank)
         external_conditions.T_in, external_conditions.T_amb,
         T_ave, vol_ave, q_loss, T_fin, vol_fin, m_fin, q_heater);
 
-    EXPECT_NEAR(T_ave, 563.7, 563.7 * kErrorToleranceLo);
-    EXPECT_NEAR(vol_ave, 892.30, 892.30 * kErrorToleranceLo);
-    EXPECT_NEAR(q_loss, 0.331, 0.331 * kErrorToleranceLo);
-    EXPECT_NEAR(T_fin, 558.9, 558.9 * kErrorToleranceLo);
-    EXPECT_NEAR(vol_fin, 0., 0. * kErrorToleranceLo);
-    EXPECT_NEAR(m_fin, 0., 0. * kErrorToleranceLo);
-    EXPECT_NEAR(q_heater, 0., 0. * kErrorToleranceLo);
+    EXPECT_NEAR(T_ave, 563.7, 563.7 * kErrorTolLo);
+    EXPECT_NEAR(vol_ave, 892.30, 892.30 * kErrorTolLo);
+    EXPECT_NEAR(q_loss, 0.331, 0.331 * kErrorTolLo);
+    EXPECT_NEAR(T_fin, 558.9, 558.9 * kErrorTolLo);
+    EXPECT_NEAR(vol_fin, 0., 0. * kErrorTolLo);
+    EXPECT_NEAR(m_fin, 0., 0. * kErrorTolLo);
+    EXPECT_NEAR(q_heater, 0., 0. * kErrorTolLo);
 }
 
 // Test an initially drained storage tank
@@ -83,13 +86,13 @@ NAMESPACE_TEST(csp_common, StorageTank, InitiallyDrainedTank)
         external_conditions.T_in, external_conditions.T_amb,
         T_ave, vol_ave, q_loss, T_fin, vol_fin, m_fin, q_heater);
 
-    EXPECT_NEAR(T_ave, 563.97, 563.97 * kErrorToleranceLo);
-    EXPECT_NEAR(vol_ave, 0., 0. * kErrorToleranceLo);
-    EXPECT_NEAR(q_loss, 0., 0. * kErrorToleranceLo);
-    EXPECT_NEAR(T_fin, 563.97, 563.97 * kErrorToleranceLo);
-    EXPECT_NEAR(vol_fin, 0., 0. * kErrorToleranceLo);
-    EXPECT_NEAR(m_fin, 0., 0. * kErrorToleranceLo);
-    EXPECT_NEAR(q_heater, 0., 0. * kErrorToleranceLo);
+    EXPECT_NEAR(T_ave, 563.97, 563.97 * kErrorTolLo);
+    EXPECT_NEAR(vol_ave, 0., 0. * kErrorTolLo);
+    EXPECT_NEAR(q_loss, 0., 0. * kErrorTolLo);
+    EXPECT_NEAR(T_fin, 563.97, 563.97 * kErrorTolLo);
+    EXPECT_NEAR(vol_fin, 0., 0. * kErrorTolLo);
+    EXPECT_NEAR(m_fin, 0., 0. * kErrorTolLo);
+    EXPECT_NEAR(q_heater, 0., 0. * kErrorTolLo);
 }
 
 //========/Tests==================================================================================
@@ -303,4 +306,94 @@ NAMESPACE_TEST(csp_common, TesCspSolver, Default)
     EXPECT_NEAR(tes.get_hot_tank_vol_frac(), 0.907, 0.01);
     EXPECT_NEAR(tes.get_hot_temp(), 660.6, 0.1);
     EXPECT_NEAR(tes.get_cold_temp(), 566.1, 0.1);
+}
+
+NAMESPACE_TEST(csp_common, TesSubcomponentCmod, Default)
+{
+    const size_t n_steps = 24;
+    ssc_data_t inputs = ssc_data_create();
+
+    // Inputs:
+    ssc_data_set_number(inputs, "t_step", 3600.);
+    ssc_number_t T_ambs[n_steps] = { 23., 23., 23., 23., 23., 23., 23., 23., 23., 23., 23., 23.,
+                                     23., 23., 23., 23., 23., 23., 23., 23., 23., 23., 23., 23. };
+    ssc_data_set_array(inputs, "T_amb", T_ambs, n_steps);
+    ssc_number_t mdot_srcs[n_steps] = {0., 0., 0., 0., 0., 0., 0., 0., 800., 800., 800., 800.,
+                                       800., 800., 800., 800., 800., 0., 0., 0., 0., 0., 0., 0. };
+    ssc_data_set_array(inputs, "mdot_src", mdot_srcs, n_steps);
+    ssc_number_t mdot_sinks[n_steps] = { 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+                                         0., 0., 0., 0., 0., 1200., 1200., 1200., 1200., 1200., 1200., 1200. };
+    ssc_data_set_array(inputs, "mdot_sink", mdot_sinks, n_steps);
+    ssc_number_t hot_tank_bypasseds[n_steps] = { 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+                                                 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0. };
+    ssc_data_set_array(inputs, "hot_tank_bypassed", hot_tank_bypasseds, n_steps);
+    ssc_number_t T_src_outs[n_steps] = { 250., 250., 250., 250., 250., 250., 250., 250., 250., 250., 250., 250.,
+                                         390., 390., 390., 390., 390., 390., 390., 390., 390., 390., 390., 390. };
+    ssc_data_set_array(inputs, "T_src_out", T_src_outs, n_steps);
+    ssc_number_t T_sink_outs[n_steps] = { 293., 293., 293., 293., 293., 293., 293., 293., 293., 293., 293., 293.,
+                                          293., 293., 293., 293., 293., 293., 293., 293., 293., 293., 293., 293. };
+    ssc_data_set_array(inputs, "T_sink_out", T_sink_outs, n_steps);
+    
+    // TES parameters:
+    ssc_data_set_number(inputs, "Fluid", 21);
+    ssc_number_t field_fl_props[1] = { 0 };
+    ssc_data_set_matrix(inputs, "field_fl_props", field_fl_props, 1, 1);
+    ssc_data_set_number(inputs, "store_fluid", 18);
+    ssc_number_t store_fl_props[1] = { 1 };
+    ssc_data_set_matrix(inputs, "store_fl_props", store_fl_props, 1, 1);
+    ssc_data_set_number(inputs, "P_ref", 111);
+    ssc_data_set_number(inputs, "eta_ref", 0.356);
+    ssc_data_set_number(inputs, "solar_mult", 2.);
+    ssc_data_set_number(inputs, "tshours", 6.);
+    ssc_data_set_number(inputs, "h_tank", 12.);
+    ssc_data_set_number(inputs, "u_tank", 0.4);
+    ssc_data_set_number(inputs, "tank_pairs", 1.);
+    ssc_data_set_number(inputs, "hot_tank_Thtr", 365.);
+    ssc_data_set_number(inputs, "hot_tank_max_heat", 25.);
+    ssc_data_set_number(inputs, "cold_tank_Thtr", 250.);
+    ssc_data_set_number(inputs, "cold_tank_max_heat", 25.);
+    ssc_data_set_number(inputs, "dt_hot", 5.);
+    ssc_data_set_number(inputs, "T_loop_in_des", 293.);
+    ssc_data_set_number(inputs, "T_loop_out", 391.);
+    ssc_data_set_number(inputs, "h_tank_min", 1.);
+    ssc_data_set_number(inputs, "init_hot_htf_percent", 30.);
+    ssc_data_set_number(inputs, "pb_pump_coef", 0.55);
+    ssc_data_set_number(inputs, "tanks_in_parallel", 1.);
+    ssc_data_set_number(inputs, "V_tes_des", 1.85);
+    ssc_data_set_number(inputs, "calc_design_pipe_vals", 1.);
+    ssc_data_set_number(inputs, "tes_pump_coef", 0.15);
+    ssc_data_set_number(inputs, "eta_pump", 0.85);
+    ssc_data_set_number(inputs, "has_hot_tank_bypass", 0.);
+    ssc_data_set_number(inputs, "T_tank_hot_inlet_min", 400.);
+    ssc_data_set_number(inputs, "custom_tes_p_loss", 0.);
+    ssc_data_set_number(inputs, "custom_tes_pipe_sizes", 0.);
+    ssc_number_t k_tes_loss_coeffs[11] = { 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., };
+    ssc_data_set_matrix(inputs, "k_tes_loss_coeffs", k_tes_loss_coeffs, 1, 11);
+    ssc_number_t tes_diams[1] = { -1 };
+    ssc_data_set_matrix(inputs, "tes_diams", tes_diams, 1, 1);
+    ssc_number_t tes_wallthicks[1] = { -1 };
+    ssc_data_set_matrix(inputs, "tes_wallthicks", tes_wallthicks, 1, 1);
+    ssc_number_t tes_lengths[11] = { 0, 90, 100, 120, 0, 0, 0, 0, 80, 120, 80 };
+    ssc_data_set_matrix(inputs, "tes_lengths", tes_lengths, 1, 1);
+    ssc_data_set_number(inputs, "HDR_rough", 4.57e-05);
+    ssc_data_set_number(inputs, "DP_SGS", 0.);
+
+    CmodUnderTest csp_subcomponent = CmodUnderTest("csp_subcomponent", inputs);
+    int errors = csp_subcomponent.RunModule();
+    EXPECT_FALSE(errors);
+    if (!errors) {
+        std::vector<ssc_number_t> T_src_in_expected{ 250.00, 250.00, 250.00, 250.00, 250.00, 250.00, 250.00, 250.00, 292.29, 292.26, 292.22, 292.18,
+                                                     296.34, 296.27, 296.18, 296.18, 296.18, 293.00, 293.00, 293.00, 293.00, 293.00, 293.00, 293.00 };
+        std::vector<ssc_number_t> T_sink_in_expected{ 250.00, 250.00, 250.00, 250.00, 250.00, 250.00, 250.00, 250.00, 250.00, 250.00, 250.00, 250.00,
+                                                      390.00, 390.00, 390.00, 390.00, 390.00, 346.43, 347.66, 349.11, 350.89, 353.18, 356.45, 356.45 };
+        std::vector<ssc_number_t> T_tank_cold_expected{ 292.97, 292.94, 292.91, 292.88, 292.85, 292.82, 292.79, 292.76, 292.73, 292.69, 292.65, 292.60,
+                                                        292.54, 292.45, 292.33, 292.33, 292.33, 294.02, 294.62, 294.94, 295.14, 295.29, 295.41, 295.41 };
+        std::vector<ssc_number_t> T_tank_hot_expected{ 390.91, 390.83, 390.75, 390.67, 390.59, 390.51, 390.43, 390.35, 365.00, 349.09, 337.60, 328.91,
+                                                       336.47, 342.55, 347.55, 347.55, 347.55, 348.73, 350.12, 351.79, 353.88, 356.68, 360.95, 360.95 };
+
+        EXPECT_FLOATS_NEARLY_EQ(csp_subcomponent.GetOutputVector("T_src_in"), T_src_in_expected, 0.1);
+        EXPECT_FLOATS_NEARLY_EQ(csp_subcomponent.GetOutputVector("T_sink_in"), T_sink_in_expected, 0.1);
+        EXPECT_FLOATS_NEARLY_EQ(csp_subcomponent.GetOutputVector("T_tank_cold"), T_tank_cold_expected, 0.1);
+        EXPECT_FLOATS_NEARLY_EQ(csp_subcomponent.GetOutputVector("T_tank_hot"), T_tank_hot_expected, 0.1);
+    }
 }
