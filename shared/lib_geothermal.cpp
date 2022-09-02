@@ -1293,8 +1293,8 @@ double CGeothermalAnalyzer::GetPressureChangeAcrossReservoir()
 		double effectiveLengthFt = geothermal::MetersToFeet(dEGSFractureLengthUserAdjusted);
         double fracperm = pow(mo_geo_in.md_EGSFractureAperature, 2) / 12; //m^2
         double flowPerFracture = (volumetricFlow * 1 / 35.3147) / mo_geo_in.md_EGSNumberOfFractures; //m^3/s
-		double fractureFlowArea = mo_geo_in.md_EGSFractureAperature * mo_geo_in.md_EGSFractureWidthM;  // ft^2
-        md_PressureChangeAcrossReservoir = flowPerFracture / (fractureFlowArea * fracperm * (viscosity * 1.0 / 1.48816)) * dEGSFractureLengthUserAdjusted;
+		double fractureFlowArea = mo_geo_in.md_EGSFractureAperature * mo_geo_in.md_EGSFractureWidthM;  // m^2
+        md_PressureChangeAcrossReservoir = flowPerFracture / (fractureFlowArea * fracperm) * (viscosity * 1.48816) * dEGSFractureLengthUserAdjusted * 0.000145038; //psi
         double test = md_PressureChangeAcrossReservoir;
 		//double hydraulicDiameter = (2 * fractureFlowArea) / (geothermal::MetersToFeet(mo_geo_in.md_EGSFractureAperature) + geothermal::MetersToFeet(mo_geo_in.md_EGSFractureWidthM));  // ft
 		//double flowPerFracture = volumetricFlow / mo_geo_in.md_EGSNumberOfFractures; // ft^3 per second

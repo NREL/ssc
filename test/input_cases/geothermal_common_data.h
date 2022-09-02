@@ -46,6 +46,7 @@ static void geothermal_singleowner_default(ssc_data_t &data)
 	ssc_data_set_number(data, "resource_type", 0);
 	ssc_data_set_number(data, "resource_temp", 200);
 	ssc_data_set_number(data, "resource_depth", 2000);
+    ssc_data_set_number(data, "geotherm.cost.inj_prod_well_ratio", 50);
 	ssc_data_set_number(data, "geothermal_analysis_period", 25);
 	ssc_data_set_number(data, "model_choice", 0);
 	ssc_data_set_number(data, "specified_pump_work_amount", 0);
@@ -60,6 +61,7 @@ static void geothermal_singleowner_default(ssc_data_t &data)
 	ssc_data_set_number(data, "temp_decline_rate", 0.5);
 	ssc_data_set_number(data, "temp_decline_max", 30);
     ssc_data_set_number(data, "dt_prod_well", 0.0);
+    ssc_data_set_number(data, "prod_well_choice", 0);
 	ssc_data_set_number(data, "wet_bulb_temp", 15);
 	ssc_data_set_number(data, "ambient_pressure", 14.699999809265137);
 	ssc_data_set_number(data, "well_flow_rate", 110);
@@ -69,6 +71,9 @@ static void geothermal_singleowner_default(ssc_data_t &data)
 	ssc_data_set_number(data, "well_diameter", 12.25);
 	ssc_data_set_number(data, "casing_size", 9.625);
 	ssc_data_set_number(data, "inj_well_diam", 12.25);
+    ssc_data_set_number(data, "inj_casing_size", 11.5);
+    ssc_data_set_number(data, "geotherm.cost.inj_cost_curve_welltype", 0);
+    ssc_data_set_number(data, "geotherm.cost.prod_cost_curve_welltype", 0);
 	ssc_data_set_number(data, "design_temp", 200);
 	ssc_data_set_number(data, "specify_pump_work", 0);
 	ssc_data_set_number(data, "rock_thermal_conductivity", 259200);
@@ -85,6 +90,8 @@ static void geothermal_singleowner_default(ssc_data_t &data)
 	ssc_data_set_number(data, "fracture_width", 175);
 	ssc_data_set_number(data, "num_fractures", 6);
 	ssc_data_set_number(data, "fracture_angle", 15);
+    ssc_data_set_number(data, "fracture_length", 1000.0);
+    ssc_data_set_number(data, "fracture_spacing", 50.0);
 	ssc_data_set_number(data, "T_htf_cold_ref", 90);
 	ssc_data_set_number(data, "T_htf_hot_ref", 200);
 	ssc_data_set_number(data, "HTF", 3);
