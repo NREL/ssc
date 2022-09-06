@@ -144,9 +144,9 @@ public:
 
         // Initialization   -> this is necessary to fully instantiate the TES
         C_csp_tes::S_csp_tes_init_inputs init_inputs;
-        init_inputs.T_to_cr_at_des = C_to_K(293.);
-        init_inputs.T_from_cr_at_des = C_to_K(391.);
-        init_inputs.P_to_cr_at_des = 19.64;
+        init_inputs.T_to_cr_at_des = C_to_K(as_double("T_loop_in_des"));        // [K]
+        init_inputs.T_from_cr_at_des = C_to_K(as_double("T_loop_out"));         // [K]
+        init_inputs.P_to_cr_at_des = 19.64;                                     // [bar]
         tes.init(init_inputs);
 
         // Get inputs
