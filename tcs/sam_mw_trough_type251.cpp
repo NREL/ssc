@@ -427,7 +427,7 @@ private:
     double * sgs_wallthicks;
     int l_sgs_lengths;
     double * sgs_lengths_in;
-    double DP_SGS;
+    double dP_discharge;
     double pb_fixed_par;
 	int l_bop_array;		
 	double * bop_array;
@@ -566,7 +566,7 @@ public:
         custom_tes_p_loss       = false;
         l_k_tes_loss_coeffs     = -1;
         k_tes_loss_coeffs_in    = 0;
-        DP_SGS          = std::numeric_limits<double>::quiet_NaN();
+        dP_discharge    = std::numeric_limits<double>::quiet_NaN();
 		pb_fixed_par	= std::numeric_limits<double>::quiet_NaN();
 		l_bop_array		= -1;
 		bop_array	= 0;
@@ -788,7 +788,7 @@ public:
         sgs_wallthicks = value(P_sgs_wallthicks, &l_sgs_wallthicks);    //[m]
         sgs_lengths_in = value(P_sgs_lengths, &l_sgs_lengths);             //[m]
         SGS_lengths.assign(sgs_lengths_in, l_sgs_lengths);
-        DP_SGS = value(P_dp_sgs) * 1.e5;                    // bar to Pa;
+        dP_discharge = value(P_dp_sgs) * 1.e5;              // bar to Pa;
 
 		pb_fixed_par	= value(P_pb_fixed_par);			//[-]
 	
@@ -1091,7 +1091,7 @@ public:
             T_field_out_at_des = value(I_T_field_out_at_des) + 273.15;
             P_field_in_at_des = value(I_P_field_in_at_des) * 1.e5;        // bar to Pa
 
-            size_sgs_piping_TandP(T_field_in_at_des, T_field_out_at_des, P_field_in_at_des, DP_SGS,
+            size_sgs_piping_TandP(T_field_in_at_des, T_field_out_at_des, P_field_in_at_des, dP_discharge,
                 SGS_lengths, k_tes_loss_coeffs, HDR_rough, tanks_in_parallel, SGS_diams, SGS_vel_des,
                 SGS_T_des, SGS_P_des);                          // Outputs
             
@@ -2153,7 +2153,7 @@ public:
             double rho_sf, rho_pb;
             double DP_col, DP_gen;
             sgs_pressure_drops(m_dot_field, m_dot_pb, SGS_v_dot_rel, T_field_in, T_field_out, T_pb_in, T_pb_out,
-                SGS_lengths, SGS_diams, HDR_rough, DP_SGS, k_tes_loss_coeffs, tanks_in_parallel, recirculating, DP_col, DP_gen);
+                SGS_lengths, SGS_diams, HDR_rough, dP_discharge, k_tes_loss_coeffs, tanks_in_parallel, recirculating, DP_col, DP_gen);
             rho_sf = field_htfProps.dens((T_field_in + T_field_out) / 2., 8e5);
             rho_pb = field_htfProps.dens((T_pb_in + T_pb_out) / 2., 1e5);
             if (is_hx) {
@@ -2410,7 +2410,7 @@ public:
         return 0;
     }
 
-    int size_sgs_piping_TandP(double T_field_in, double T_field_out, double P_field_in, double DP_SGS,
+    int size_sgs_piping_TandP(double T_field_in, double T_field_out, double P_field_in, double dP_discharge,
         const util::matrix_t<double> &L, const util::matrix_t<double> &k_tes_loss_coeffs, double pipe_rough,
         bool tanks_in_parallel, const util::matrix_t<double> &diams, const util::matrix_t<double> &vel,
         util::matrix_t<double> &SGS_T_des, util::matrix_t<double> &SGS_P_des)
@@ -2460,7 +2460,7 @@ public:
         
         // P_8
         ff = CSP::FrictionFactor(pipe_rough / diams.at(8), field_htfProps.Re(SGS_T_des.at(8), P_hi, vel.at(8), diams.at(8)));
-        SGS_P_des.at(8) = SGS_P_des.at(9) + DP_SGS + 
+        SGS_P_des.at(8) = SGS_P_des.at(9) + dP_discharge + 
             CSP::MajorPressureDrop(vel.at(8), rho_avg, ff, L.at(8), diams.at(8)) +
             CSP::MinorPressureDrop(vel.at(8), rho_avg, k_tes_loss_coeffs.at(8));
 
@@ -2535,10 +2535,10 @@ public:
         double k;                                     // effective minor loss coefficient
         double Re, ff;
         double v_dot_ref;
-        double DP_SGS;
+        double dP_discharge;
         std::vector<double> P_drops(num_sections, 0.0);
 
-        m_dot_pb > 0 ? DP_SGS = DP_SGS_nom : DP_SGS = 0.;
+        m_dot_pb > 0 ? dP_discharge = DP_SGS_nom : dP_discharge = 0.;
         v_dot_sf = m_dot_sf / field_htfProps.dens((T_sf_in + T_sf_out) / 2, (P_hi + P_lo) / 2);
         v_dot_pb = m_dot_pb / field_htfProps.dens((T_pb_in + T_pb_out) / 2, P_lo);
 
@@ -2565,7 +2565,7 @@ public:
         }
 
         P_drop_col = std::accumulate(P_drops.begin(), P_drops.begin() + gen_first_section, 0.0);
-        P_drop_gen = DP_SGS + std::accumulate(P_drops.begin() + gen_first_section, P_drops.end(), 0.0);
+        P_drop_gen = dP_discharge + std::accumulate(P_drops.begin() + gen_first_section, P_drops.end(), 0.0);
 
         return 0;
     }
