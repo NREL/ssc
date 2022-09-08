@@ -904,7 +904,7 @@ void rate_data::init_dc_peak_vectors(int month)
 	curr_month.dc_tou_peak.clear();
 	curr_month.dc_tou_peak_hour.clear();
 	
-	curr_month.dc_tou_peak = std::vector<ssc_number_t>(curr_month.dc_periods.size());
+	curr_month.dc_tou_peak = std::vector<ssc_number_t>(curr_month.dc_periods.size(), 0.0);
 	curr_month.dc_tou_peak_hour = std::vector<size_t>(curr_month.dc_periods.size());
 }
 
@@ -1252,4 +1252,144 @@ bool rate_data::has_kwh_per_kw_rate() {
         }
     }
     return has_rate;
+}
+
+void rate_data::set_energy_use_and_peaks(util::matrix_t<double> energy_use, util::matrix_t<double> peak_use) {
+    size_t ec_periods = m_ec_periods.size();
+    size_t dc_periods = m_dc_tou_periods.size();
+    size_t n_months = m_month.size();
+
+    if (energy_use.ncols() != ec_periods)
+    {
+        std::ostringstream ss;
+        ss << "Energy use provided only has " << energy_use.ncols() << " TOU periods. " << ec_periods << " are required.";
+        throw exec_error("lib_utility_rate_equations", ss.str());
+    }
+
+    if (peak_use.ncols() != dc_periods && dc_enabled)
+    {
+        std::ostringstream ss;
+        ss << "Peak demand provided only has " << peak_use.ncols() << " TOU periods. " << dc_periods << " are required.";
+        throw exec_error("lib_utility_rate_equations", ss.str());
+    }
+
+    for (size_t i = 0; i < n_months; i++) {
+        ur_month month = m_month[i];
+        for (size_t j = 0; j < month.ec_energy_use.nrows(); j++) {
+            month.ec_energy_use.set_value(energy_use.at(i, j), j, 0);
+        }
+        for (size_t j = 0; j < month.dc_tou_peak.size(); j++) {
+            month.dc_tou_peak[j] = peak_use.at(i, j);
+        }
+    }
+}
+
+util::matrix_t<double> rate_data::get_energy_use() {
+    size_t max_periods = m_ec_periods.size();
+    size_t n_months = m_month.size();
+
+    util::matrix_t<double> usage(n_months, max_periods);
+
+    for (size_t i = 0; i < n_months; i++) {
+        ur_month month = m_month[i];
+        for (size_t j = 0; j < month.ec_energy_use.nrows(); j++) {
+            usage.set_value(month.ec_energy_use.at(j, 0), i, j);
+        }
+    }
+
+    return usage;
+}
+
+util::matrix_t<double> rate_data::get_peak_use() {
+    size_t max_periods = m_dc_tou_periods.size();
+    size_t n_months = m_month.size();
+
+    util::matrix_t<double> peaks(n_months, max_periods);
+
+    for (size_t i = 0; i < n_months; i++) {
+        ur_month month = m_month[i];
+        for (size_t j = 0; j < month.dc_tou_peak.size(); j++) {
+            peaks.set_value(month.dc_tou_peak[j], i, j);
+        }
+    }
+
+    return peaks;
+}
+
+forecast_setup::forecast_setup(size_t steps_per_hour, size_t analysis_period) :
+_steps_per_hour(steps_per_hour),
+_nyears(analysis_period),
+_dt_hour(1.0 / steps_per_hour),
+monthly_gross_load(),
+monthly_gen(),
+monthly_net_load(),
+monthly_peaks()
+{
+    // Nothing to do
+}
+
+void forecast_setup::setup(rate_data* rate, std::vector<double>& P_pv_ac, std::vector<double>& P_load_ac, double peak_offset) {
+    // Load here is every step for the full analysis period. Load escalation has already been applied (TODO in compute modules)
+    size_t num_recs = util::hours_per_year * _steps_per_hour * _nyears;
+    size_t step = 0; size_t hour_of_year = 0; size_t year = 0;
+    int curr_month = 1;
+    double load_during_month = 0.0; double gen_during_month = 0.0; double gross_load_during_month = 0.0;
+    size_t array_size = std::min(P_pv_ac.size(), P_load_ac.size()); // Cover smaller arrays to make testing easier
+    monthly_peaks.resize_fill(_nyears * 12, rate->m_dc_tou_periods_tiers.size(), 0.0);
+    if (rate->dc_enabled) {
+        rate->init_dc_peak_vectors(0);
+    }
+    for (size_t idx = 0; idx < num_recs && idx < array_size; idx++)
+    {
+        double grid_power = P_pv_ac[idx] - P_load_ac[idx];
+
+        gross_load_during_month += P_load_ac[idx] * _dt_hour;
+
+
+        if (grid_power < 0)
+        {
+            load_during_month += grid_power * _dt_hour;
+        }
+        else
+        {
+            gen_during_month += grid_power * _dt_hour;
+        }
+
+        if (rate->dc_enabled) {
+            int dc_tou_period = rate->get_dc_tou_row(step % (8760 * _steps_per_hour), curr_month - 1);
+            size_t month_idx = year * 12 + (curr_month - 1);
+            double peak = monthly_peaks.at(month_idx, dc_tou_period) - peak_offset; // Peak for dispatch calcs in battery: peak minus battery capacity
+            if (-1.0 * grid_power > peak) {
+                monthly_peaks.set_value(-1.0 * grid_power, month_idx, dc_tou_period);
+            }
+        }
+
+        step++;
+        if (step == _steps_per_hour)
+        {
+            step = 0;
+            hour_of_year++;
+            if (hour_of_year >= 8760) {
+                hour_of_year = 0;
+            }
+        }
+
+        if (util::month_of((double)hour_of_year) != curr_month || (idx == array_size - (size_t)1))
+        {
+            // Push back vectors
+            // Note: this is a net-billing approach. To be accurate for net metering, we'd have to invoke tou periods here, this overestimates costs for NM
+            monthly_gross_load.push_back(gross_load_during_month / util::hours_in_month(curr_month));
+            monthly_net_load.push_back(-1.0 * load_during_month);
+            monthly_gen.push_back(gen_during_month);
+
+            gross_load_during_month = 0.0; load_during_month = 0.0; gen_during_month = 0.0;
+            if (curr_month == 12) {
+                year++;
+            }
+            curr_month < 12 ? curr_month++ : curr_month = 1;
+            if (rate->dc_enabled) {
+                rate->init_dc_peak_vectors(curr_month - 1);
+            }
+        }
+    }
 }
