@@ -197,6 +197,8 @@ var_info vtab_battery_inputs[] = {
     { SSC_INPUT,        SSC_ARRAY,      "om_batt_replacement_cost"                 , "Replacement cost 1"                                             , "$/kWh"                                  , ""                                      , "System Costs"         , "?=0.0"          , ""                      , "" },
     { SSC_INPUT,        SSC_NUMBER,     "om_replacement_cost_escal"            , "Replacement cost escalation"                                    , "%/year"                                 , ""                                      , "System Costs"         , "?=0.0"          , ""                      , "" },
 
+    { SSC_INPUT,SSC_ARRAY   , "om_batt_variable_cost"                       , "Battery production-based System Costs amount"                   , "$/MWh"                                  , ""                                      , "System Costs"         , "?=0.0"          , ""                      , "" },
+    { SSC_INPUT,        SSC_NUMBER,      "om_production_escal",          "Production-based O&M escalation",   "%/year",  "",                  "System Costs",            "?=0.0",                 "",                                         "" },
 
     // Powerflow calculation inputs
     { SSC_INPUT,       SSC_ARRAY,       "fuelcell_power",                               "Electricity from fuel cell",                            "kW",       "",                     "FuelCell",     "",                           "",                         "" },
@@ -508,6 +510,35 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             }
             else
                 batt_vars->batt_cost_per_kwh = std::vector<double>(nyears, 0.0);
+
+
+            // battery o and m cost
+            if (vt.is_assigned("om_batt_variable_cost"))
+            {
+                std::vector<ssc_number_t> om_cost(nyears);
+                ssc_number_t* parr = vt.as_array("om_batt_variable_cost", &cnt);
+                if (cnt == 1) {
+                    double escal = 0.0;
+                    if (vt.is_assigned("om_production_escal")) {
+                        escal = vt.as_double("om_production_escal");
+                    }
+                    for (i = 0; i < nyears; i++)
+                        om_cost[i] = 0.001 * parr[0] * (ssc_number_t)pow((double)(inflation_rate + escal + 1), (double)i); // $/MWh to $/kWh
+                }
+                else if (cnt < nyears)  {
+                    throw exec_error("battery", "Invalid number for om_batt_variable_cost, must be 1 or equal to analysis_period.");
+                }
+                else {
+                    for (i = 0; i < nyears; i++)
+                        om_cost[i] = 0.001* parr[i]; // $/MWh to $/kWh
+                }
+                batt_vars->om_batt_variable_cost_per_kwh = om_cost;
+            }
+            else
+                batt_vars->om_batt_variable_cost_per_kwh = std::vector<double>(nyears, 0.0);
+
+
+
 
             // Interconnection and curtailment
             std::vector<double> scaleFactors(batt_vars->analysis_period, 1.0); // No scaling factors for curtailment
@@ -1213,7 +1244,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
                 nyears, batt_vars->batt_look_ahead_hours, batt_vars->batt_dispatch_update_frequency_hours,
                 batt_vars->batt_dispatch_auto_can_charge, batt_vars->batt_dispatch_auto_can_clipcharge, batt_vars->batt_dispatch_auto_can_gridcharge, batt_vars->batt_dispatch_auto_can_fuelcellcharge,
                 batt_vars->inverter_paco, batt_vars->batt_cost_per_kwh,
-                batt_vars->batt_cycle_cost_choice, batt_vars->batt_cycle_cost,
+                batt_vars->batt_cycle_cost_choice, batt_vars->batt_cycle_cost, batt_vars->om_batt_variable_cost_per_kwh,
                 eta_pvcharge, eta_gridcharge, eta_discharge, batt_vars->batt_dispatch_pvs_nameplate_ac,
                 batt_vars->batt_dispatch_pvs_ac_lb, batt_vars->batt_dispatch_pvs_ac_lb_enable, batt_vars->batt_dispatch_pvs_ac_ub,
                 batt_vars->batt_dispatch_pvs_ac_ub_enable, batt_vars->batt_dispatch_pvs_curtail_as_control, batt_vars->batt_dispatch_pvs_curtail_if_violation,
@@ -1232,7 +1263,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
                 nyears, batt_vars->batt_look_ahead_hours, batt_vars->batt_dispatch_update_frequency_hours,
                 batt_vars->batt_dispatch_auto_can_charge, batt_vars->batt_dispatch_auto_can_clipcharge, batt_vars->batt_dispatch_auto_can_gridcharge, batt_vars->batt_dispatch_auto_can_fuelcellcharge,
                 batt_vars->inverter_paco, batt_vars->batt_cost_per_kwh,
-                batt_vars->batt_cycle_cost_choice, batt_vars->batt_cycle_cost,
+                batt_vars->batt_cycle_cost_choice, batt_vars->batt_cycle_cost, batt_vars->om_batt_variable_cost_per_kwh,
                 batt_vars->forecast_price_series_dollar_per_kwh, utilityRate,
                 eta_pvcharge, eta_gridcharge, eta_discharge,  batt_vars->grid_interconnection_limit_kW);
 
@@ -1263,7 +1294,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             batt_vars->batt_dispatch, batt_vars->batt_dispatch_wf_forecast, batt_vars->batt_meter_position, nyears,
             batt_vars->batt_look_ahead_hours, batt_vars->batt_dispatch_update_frequency_hours,
             batt_vars->batt_dispatch_auto_can_charge, batt_vars->batt_dispatch_auto_can_clipcharge, batt_vars->batt_dispatch_auto_can_gridcharge, batt_vars->batt_dispatch_auto_can_fuelcellcharge,
-            util_rate_data, batt_vars->batt_cost_per_kwh, batt_vars->batt_cycle_cost_choice, batt_vars->batt_cycle_cost, batt_vars->grid_interconnection_limit_kW,
+            util_rate_data, batt_vars->batt_cost_per_kwh, batt_vars->batt_cycle_cost_choice, batt_vars->batt_cycle_cost, batt_vars->om_batt_variable_cost_per_kwh, batt_vars->grid_interconnection_limit_kW,
             batt_vars->batt_dispatch_charge_only_system_exceeds_load, batt_vars->batt_dispatch_discharge_only_load_exceeds_system,
             batt_vars->batt_dispatch_auto_btm_can_discharge_to_grid, batt_vars->batt_minimum_outage_SOC
         );

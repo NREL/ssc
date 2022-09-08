@@ -23,29 +23,11 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef _CMOD_CASHLOAN_TEST_H_
 #define _CMOD_CASHLOAN_TEST_H_
 
-#include <gtest/gtest.h>
-#include <memory>
-
-#include "core.h"
-#include "sscapi.h"
-
-#include "vartab.h"
-#include "../ssc/common.h"
-#include "../input_cases/code_generator_utilities.h"
+#include "cmod_json_comparison_test.h"
 
 /**
  * Cashloan tests
  */
-class CmodCashLoanTest : public ::testing::Test {
-
-public:
-
-	ssc_number_t calculated_value;
-	ssc_number_t * calculated_array;
-	double m_error_tolerance_hi = 1.0;
-	double m_error_tolerance_lo = 0.1;
-	size_t interval = 100;
-
-};
+class CmodCashLoanTest : public JSONComparisonTest {};
 
 #endif 
