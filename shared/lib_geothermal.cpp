@@ -1066,11 +1066,15 @@ double CGeothermalAnalyzer::Gringarten()
             y1 = 5.0;
             y2 = 5.0;
         }
-        T_D = ((y2 - y) / (y2 - y1)) * ((x2 - x) / (x2 - x1) * td_x1y1 + (x - x1) / (x2 - x1) * td_x2y1) + ((y - y1) / (y2 - y1)) * ((x2 - x) / (x2 - x1) * td_x1y2 + (x - x1) / (x2 - x1) * td_x2y2);
+        if (y2 != y1 && x2 != x1) {
+            T_D = ((y2 - y) / (y2 - y1)) * ((x2 - x) / (x2 - x1) * td_x1y1 + (x - x1) / (x2 - x1) * td_x2y1) + ((y - y1) / (y2 - y1)) * ((x2 - x) / (x2 - x1) * td_x1y2 + (x - x1) / (x2 - x1) * td_x2y2);
+        }
+        else
+            T_D = 1.0;
     }
 
-    md_WorkingTemperatureC = md_WorkingTemperatureC - T_D * (md_WorkingTemperatureC - InjectionTemperatureC());
-    return md_WorkingTemperatureC;
+    double working_temp = GetResourceTemperatureC() - T_D * (GetResourceTemperatureC() - geothermal::TEMPERATURE_EGS_INJECTIONC);
+    return working_temp;
     
 
 }
@@ -1276,8 +1280,9 @@ double CGeothermalAnalyzer::GetPressureChangeAcrossReservoir()
 	// all this is from [7C.EGS Subsrfce HX]
 	double waterTempC = (geothermal::IMITATE_GETEM) ? dEGSAverageWaterTemperatureC1 : EGSAverageWaterTemperatureC2(); // degrees C
 	double days = geothermal::EGS_TIME_INPUT * geothermal::DAYS_PER_YEAR;
-	double tempEGSProductionC = GetResourceTemperatureC() + (geothermal::TEMPERATURE_EGS_INJECTIONC - GetResourceTemperatureC()) * EGSReservoirConstant(waterTempC, days);
+	//double tempEGSProductionC = GetResourceTemperatureC() + (geothermal::TEMPERATURE_EGS_INJECTIONC - GetResourceTemperatureC()) * EGSReservoirConstant(waterTempC, days);
     double tempEGSProductionCtest = Gringarten();
+    double tempEGSProductionC = Gringarten();
     double dEGSAverageReservoirTemperatureF = physics::CelciusToFarenheit((geothermal::TEMPERATURE_EGS_INJECTIONC + tempEGSProductionC) / 2);  //[7C.EGS Subsrfce HX].D52, [7B.Reservoir Hydraulics].D24
 
 	mp_geo_out->md_AverageReservoirTemperatureF = (mo_geo_in.me_rt == EGS) ? dEGSAverageReservoirTemperatureF : physics::CelciusToFarenheit(GetResourceTemperatureC());	// G54 on [7B.Reservoir Hydraulics]
@@ -2101,7 +2106,7 @@ bool CGeothermalAnalyzer::RunAnalysis(bool(*update_function)(float, void*), void
 
 					// record outputs based on current inputs
 					if (mo_geo_in.mi_ModelChoice == 0) // model choice 0 = GETEM
-						mp_geo_out->maf_timestep_power[iElapsedTimeSteps] = (float)MAX(PlantGrossPowerkW() * mo_geo_in.haf[iElapsedTimeSteps] - mp_geo_out->md_PumpWorkKW, 0);
+						mp_geo_out->maf_timestep_power[iElapsedTimeSteps] = (float)MAX(PlantGrossPowerkW() * mo_geo_in.haf[iElapsedTimeSteps] - GetPumpWorkKW(), 0);
 					else
 					{	// run power block model
 						if (!mo_PowerBlock.Execute((ml_HourCount - 1) * 3600, mo_pb_in))

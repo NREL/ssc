@@ -94,6 +94,8 @@ static var_info _cm_vtab_geothermal[] = {
     { SSC_INPUT,        SSC_NUMBER,      "subsurface_water_loss",              "Subsurface water loss",                        "%",              "",             "GeoHourly",        "*",                        "",                "" },
     { SSC_INPUT,        SSC_NUMBER,      "fracture_aperature",                 "Fracture aperature",                           "m",              "",             "GeoHourly",        "*",                        "",                "" },
     { SSC_INPUT,        SSC_NUMBER,      "fracture_length",                 "Fracture length",                           "m",              "",             "GeoHourly",        "*",                        "",                "" },
+    { SSC_INPUT,        SSC_NUMBER,      "fracture_spacing",                 "Fracture spacing",                           "m",              "",             "GeoHourly",        "*",                        "",                "" },
+
     { SSC_INPUT,        SSC_NUMBER,      "fracture_width",                     "Fracture width",                               "m",              "",             "GeoHourly",        "*",                        "",                "" },
     { SSC_INPUT,        SSC_NUMBER,      "num_fractures",                      "Number of fractures",                          "",               "",             "GeoHourly",        "*",                        "INTEGER",         "" },
     { SSC_INPUT,        SSC_NUMBER,      "fracture_angle",                     "Fracture angle",                               "deg",            "",             "GeoHourly",        "*",                        "",                "" },
@@ -327,6 +329,7 @@ public:
 		geo_inputs.md_WaterLossPercent = as_double("subsurface_water_loss")/100;
 		geo_inputs.md_EGSFractureAperature = as_double("fracture_aperature");
         geo_inputs.md_EGSFractureLength = as_double("fracture_length");
+        geo_inputs.md_EGSFractureSpacing = as_double("fracture_spacing");
 		geo_inputs.md_EGSNumberOfFractures = as_double("num_fractures");
 		geo_inputs.md_EGSFractureWidthM = as_double("fracture_width");
 		geo_inputs.md_EGSFractureAngle = as_double("fracture_angle");
