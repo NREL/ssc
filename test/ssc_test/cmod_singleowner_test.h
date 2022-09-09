@@ -32,6 +32,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../input_cases/singleowner_common.h"
 #include "../input_cases/code_generator_utilities.h"
 
+#include "cmod_json_comparison_test.h"
+
 class CMSingleOwner : public ::testing::Test {
 
 public:
@@ -53,6 +55,9 @@ public:
     }
 
 };
+
+
+class CmodSingleOwnerTest : public JSONComparisonTest {};
 
 
 #endif //SYSTEM_ADVISOR_MODEL_CMOD_SINGLEOWNER_TEST_H
