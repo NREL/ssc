@@ -358,7 +358,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             batt_vars->batt_can_fuelcellcharge = vt.as_vector_bool("dispatch_manual_fuelcellcharge");
         }
 
-        batt_vars->en_batt = vt.as_boolean("en_batt") || vt.as_boolean("en_standalone_batt");
+        batt_vars->en_batt = vt.as_boolean("en_batt") || vt.as_boolean("en_standalone_batt") || vt.as_boolean("en_wave_batt");
         if (batt_vars->en_batt)
         {
             // Financial Parameters

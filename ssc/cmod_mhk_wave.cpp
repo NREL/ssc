@@ -365,6 +365,7 @@ private:
 public:
 	cm_mhk_wave() {
 		add_var_info(_cm_vtab_mhk_wave);
+        add_var_info(vtab_adjustment_factors);
 	}
 
 	void exec() {
@@ -460,6 +461,14 @@ public:
             std::vector<int> day;
             std::vector<int> hour;
             std::vector<int> minute;
+
+            adjustment_factors haf(this, "adjust");
+            if (!haf.setup(2920))
+                throw exec_error("geothermal", "failed to setup adjustment factors: " + haf.error());
+            double haf_input[2920];
+            
+            
+
             if (is_assigned("significant_wave_height") && is_assigned("energy_period")) { //Check if wave height and period variables are assigned
                 //number_records = as_integer("number_records");
                 //number_hours = as_integer("number_hours");
@@ -610,9 +619,9 @@ public:
                 //First check that indexed power does not exceed maximum system power
                 if (wave_power_matrix.at(size_t(sig_wave_height_index), size_t(energy_period_index)) > device_rated_capacity)
                     throw exec_error("mhk_wave", "The device power calculated from the wave height and wave period exceeds the maximum power matrix value at index" + to_string(i) + ". Please check the wave conditions.");
-                energy_hourly_kWh[i] = (ssc_number_t)(wave_power_matrix.at(size_t(sig_wave_height_index), size_t(energy_period_index))) * hour_step * (1 - total_loss / 100) * number_devices;
+                energy_hourly_kWh[i] = (ssc_number_t)(wave_power_matrix.at(size_t(sig_wave_height_index), size_t(energy_period_index))) * hour_step * (1 - total_loss / 100) * haf(i) * number_devices;
                 p_annual_energy_dist[size_t(sig_wave_height_index) * 22 + size_t(energy_period_index)] += energy_hourly_kWh[i]; //Add energy for given time step to height x period distribution matrix at specified grid point
-                energy_hourly_gen[i] = (ssc_number_t)(wave_power_matrix.at(size_t(sig_wave_height_index), size_t(energy_period_index))) * (1 - total_loss / 100) * number_devices; //Store in gen to use in heatmap output (probably don't need two variables)
+                energy_hourly_gen[i] = (ssc_number_t)(wave_power_matrix.at(size_t(sig_wave_height_index), size_t(energy_period_index))) * (1 - total_loss / 100) * haf(i) * number_devices; //Store in gen to use in heatmap output (probably don't need two variables)
                 //energy_hourly_gen[i*3+1] = energy_hourly[i]; //Store in gen to use in heatmap output (probably don't need two variables)
                 //energy_hourly_gen[i*3+2] = energy_hourly[i]; //Store in gen to use in heatmap output (probably don't need two variables)
                 energy_hourly_kW[i * 3] = energy_hourly_gen[i];
