@@ -974,53 +974,53 @@ public:
         // TES
         // ********************************
         // ********************************
-        C_csp_two_tank_tes storage;
-        C_csp_two_tank_tes::S_params *tes = &storage.ms_params;
-        tes->m_field_fl           = c_trough.m_Fluid;                       //[-]
-        tes->m_field_fl_props     = c_trough.m_field_fl_props;              //[-]
-        tes->m_tes_fl             = as_integer("store_fluid");              //[-]
-        tes->m_tes_fl_props       = as_matrix("store_fl_props");            //[-]
-        tes->m_W_dot_pc_design    = as_double("P_ref");                     //[MWe]
-        tes->m_eta_pc             = as_double("eta_ref");                   //[-]
-        tes->m_solarm             = as_double("solar_mult");                //[-]  (set during verify() using cmod_csp_trough_eqns.cpp)
-        tes->m_ts_hours           = as_double("tshours");                   //[hr]
-        tes->m_h_tank             = as_double("h_tank");                    //[m]
-        tes->m_u_tank             = as_double("u_tank");                    //[W/m^2-K]
-        tes->m_tank_pairs         = as_integer("tank_pairs");               //[-]
-        tes->m_hot_tank_Thtr      = as_double("hot_tank_Thtr");             //[C]
-        tes->m_hot_tank_max_heat  = as_double("hot_tank_max_heat");         //[MWe]
-        tes->m_cold_tank_Thtr     = as_double("cold_tank_Thtr");            //[C]
-        tes->m_cold_tank_max_heat = as_double("cold_tank_max_heat");        //[MWe]
-        tes->m_dt_hot             = as_double("dt_hot");                    //[C]
-        //tes->m_dt_cold            = as_double("dt_cold");                   //[C]
-        tes->m_T_field_in_des     = T_loop_in_des;                          //[C]
-        tes->m_T_field_out_des    = T_loop_out_des;                         //[C]
-        tes->m_T_tank_hot_ini     = T_loop_out_des;                         //[C]
-        tes->m_T_tank_cold_ini    = T_loop_in_des;                          //[C]
-        tes->m_h_tank_min         = as_double("h_tank_min");                //[m]
-        tes->m_f_V_hot_ini        = as_double("init_hot_htf_percent");      //[-]
-        tes->m_htf_pump_coef      = as_double("pb_pump_coef");              //[kWe/kg/s]
-        tes->m_tes_pump_coef      = as_double("tes_pump_coef");             //[kWe/kg/s]
-        tes->eta_pump             = as_double("eta_pump");                  //[-]
-        tes->tanks_in_parallel    = as_boolean("tanks_in_parallel");        //[-]
-        tes->has_hot_tank_bypass  = as_boolean("has_hot_tank_bypass");      //[-]
-        tes->T_tank_hot_inlet_min = as_double("T_tank_hot_inlet_min");      //[C]
-        tes->V_tes_des            = as_double("V_tes_des");                 //[m/s]
-        tes->custom_tes_p_loss    = as_boolean("custom_tes_p_loss");        //[-]
-        tes->k_tes_loss_coeffs    = as_matrix("k_tes_loss_coeffs");         //[-]
-        tes->custom_tes_pipe_sizes = as_boolean("custom_tes_pipe_sizes");   //[-]
-        tes->tes_diams            = as_matrix("tes_diams");                 //[m]
-        tes->tes_wallthicks       = as_matrix("tes_wallthicks");            //[m]
-        tes->calc_design_pipe_vals = as_boolean("calc_design_pipe_vals");   //[-]
-        tes->pipe_rough           = as_double("HDR_rough");                 //[m]
-        tes->DP_SGS               = as_double("DP_SGS");                    //[bar]
+        util::matrix_t<double> tes_lengths;
         if (is_assigned("tes_lengths")) {
-            tes->tes_lengths = as_matrix("tes_lengths");               //[m]
+            tes_lengths = as_matrix("tes_lengths");               //[m]
         }
-        if (!is_assigned("tes_lengths") || tes->tes_lengths.ncells() < 11) {
+        if (!is_assigned("tes_lengths") || tes_lengths.ncells() < 11) {
             double vals1[11] = { 0., 90., 100., 120., 0., 30., 90., 80., 80., 120., 80. };
-            tes->tes_lengths.assign(vals1, 11);
+            tes_lengths.assign(vals1, 11);
         }
+        C_csp_two_tank_tes storage(
+            c_trough.m_Fluid,
+            c_trough.m_field_fl_props,
+            as_integer("store_fluid"),
+            as_matrix("store_fl_props"),
+            as_double("P_ref") / as_double("eta_ref"),
+            as_double("solar_mult"),
+            as_double("P_ref") / as_double("eta_ref") * as_double("tshours"),
+            as_double("h_tank"),
+            as_double("u_tank"),
+            as_integer("tank_pairs"),
+            as_double("hot_tank_Thtr"),
+            as_double("hot_tank_max_heat"),
+            as_double("cold_tank_Thtr"),
+            as_double("cold_tank_max_heat"),
+            as_double("dt_hot"),
+            T_loop_in_des,
+            T_loop_out_des,
+            T_loop_out_des,
+            T_loop_in_des,
+            as_double("h_tank_min"),
+            as_double("init_hot_htf_percent"),
+            as_double("pb_pump_coef"),
+            as_boolean("tanks_in_parallel"),
+            as_double("V_tes_des"),
+            as_boolean("calc_design_pipe_vals"),
+            as_double("tes_pump_coef"),
+            as_double("eta_pump"),
+            as_boolean("has_hot_tank_bypass"),
+            as_double("T_tank_hot_inlet_min"),
+            as_boolean("custom_tes_p_loss"),
+            as_boolean("custom_tes_pipe_sizes"),
+            as_matrix("k_tes_loss_coeffs"),
+            as_matrix("tes_diams"),
+            as_matrix("tes_wallthicks"),
+            tes_lengths,
+            as_double("HDR_rough"),
+            as_double("DP_SGS")
+        );
 
         // Set storage outputs
         storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_Q_DOT_LOSS, allocate("tank_losses", n_steps_fixed), n_steps_fixed);

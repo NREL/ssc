@@ -74,7 +74,7 @@ TEST_F(CmodCashLoanTest, PVWattsResidential) {
     std::vector<std::string> compare_number_variables = { "lcoe_nom", "npv", "payback" };
     std::vector<std::string> compare_array_variables = { "cf_after_tax_cash_flow", "cf_value_added" };
 
-    Test(file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+    Test("cashloan", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
 TEST_F(CmodCashLoanTest, PVWattsCommercial) {
@@ -85,7 +85,7 @@ TEST_F(CmodCashLoanTest, PVWattsCommercial) {
     std::vector<std::string> compare_number_variables = { "lcoe_nom", "npv", "payback" };
     std::vector<std::string> compare_array_variables = { "cf_after_tax_cash_flow", "cf_value_added" };
 
-    Test(file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+    Test("cashloan", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
 TEST_F(CmodCashLoanTest, PVWattsBatteryResidential) {
@@ -96,7 +96,7 @@ TEST_F(CmodCashLoanTest, PVWattsBatteryResidential) {
     std::vector<std::string> compare_number_variables = { "lcoe_nom", "npv", "payback" };
     std::vector<std::string> compare_array_variables = { "cf_after_tax_cash_flow", "cf_value_added", "cf_after_tax_net_equity_cost_flow", "cf_parasitic_cost", "cf_util_escal_rate" };
 
-    Test(file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+    Test("cashloan", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
 TEST_F(CmodCashLoanTest, PVWattsBatteryCommercial) {
@@ -107,7 +107,7 @@ TEST_F(CmodCashLoanTest, PVWattsBatteryCommercial) {
     std::vector<std::string> compare_number_variables = { "lcoe_nom", "npv", "payback" };
     std::vector<std::string> compare_array_variables = { "cf_after_tax_cash_flow", "cf_value_added" };
 
-    Test(file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+    Test("cashloan", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
 TEST_F(CmodCashLoanTest, PVResidential) {
@@ -118,7 +118,7 @@ TEST_F(CmodCashLoanTest, PVResidential) {
     std::vector<std::string> compare_number_variables = { "lcoe_nom", "npv", "payback" };
     std::vector<std::string> compare_array_variables = { "cf_after_tax_cash_flow", "cf_value_added" };
 
-    Test(file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+    Test("cashloan", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
 TEST_F(CmodCashLoanTest, PVCommercial) {
@@ -129,7 +129,7 @@ TEST_F(CmodCashLoanTest, PVCommercial) {
     std::vector<std::string> compare_number_variables = { "lcoe_nom", "npv", "payback" };
     std::vector<std::string> compare_array_variables = { "cf_after_tax_cash_flow", "cf_value_added" , "cf_energy_sales",  "cf_energy_net" };
 
-    Test(file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+    Test("cashloan", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
 
@@ -141,7 +141,7 @@ TEST_F(CmodCashLoanTest, PVBatteryResidential) {
     std::vector<std::string> compare_number_variables = { "lcoe_nom", "npv", "payback" };
     std::vector<std::string> compare_array_variables = { "cf_after_tax_cash_flow", "cf_value_added" };
 
-    Test(file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+    Test("cashloan", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
 TEST_F(CmodCashLoanTest, PVBatteryCommercial) {
@@ -152,7 +152,7 @@ TEST_F(CmodCashLoanTest, PVBatteryCommercial) {
     std::vector<std::string> compare_number_variables = { "lcoe_nom", "npv", "payback" };
     std::vector<std::string> compare_array_variables = { "cf_after_tax_cash_flow", "cf_value_added" };
 
-    Test(file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+    Test("cashloan", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
 TEST_F(CmodCashLoanTest, GenericResidential) {
@@ -163,7 +163,7 @@ TEST_F(CmodCashLoanTest, GenericResidential) {
     std::vector<std::string> compare_number_variables = { "lcoe_nom", "npv", "payback" };
     std::vector<std::string> compare_array_variables = { "cf_after_tax_cash_flow", "cf_value_added" };
 
-    Test(file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+    Test("cashloan", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
 TEST_F(CmodCashLoanTest, GenericCommercial) {
@@ -174,7 +174,7 @@ TEST_F(CmodCashLoanTest, GenericCommercial) {
     std::vector<std::string> compare_number_variables = { "lcoe_nom", "npv", "payback" };
     std::vector<std::string> compare_array_variables = { "cf_after_tax_cash_flow", "cf_value_added" };
 
-    Test(file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+    Test("cashloan", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
 TEST_F(CmodCashLoanTest, GenericBatteryResidential) {
@@ -185,7 +185,7 @@ TEST_F(CmodCashLoanTest, GenericBatteryResidential) {
     std::vector<std::string> compare_number_variables = { "lcoe_nom", "npv", "payback" };
     std::vector<std::string> compare_array_variables = { "cf_after_tax_cash_flow", "cf_value_added" };
 
-    Test(file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+    Test("cashloan", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
 TEST_F(CmodCashLoanTest, GenericBatteryCommercial) {
@@ -196,7 +196,7 @@ TEST_F(CmodCashLoanTest, GenericBatteryCommercial) {
     std::vector<std::string> compare_number_variables = { "lcoe_nom", "npv", "payback" };
     std::vector<std::string> compare_array_variables = { "cf_after_tax_cash_flow", "cf_value_added" };
 
-    Test(file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+    Test("cashloan", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
 TEST_F(CmodCashLoanTest, DSLFCommercial) {
@@ -207,7 +207,7 @@ TEST_F(CmodCashLoanTest, DSLFCommercial) {
     std::vector<std::string> compare_number_variables = { "lcoe_nom", "npv", "payback" };
     std::vector<std::string> compare_array_variables = { "cf_after_tax_cash_flow", "cf_value_added", "cf_after_tax_net_equity_cost_flow", "cf_parasitic_cost", "cf_util_escal_rate" };
 
-    Test(file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+    Test("cashloan", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
 TEST_F(CmodCashLoanTest, EmpiricalTroughCommercial) {
@@ -218,7 +218,7 @@ TEST_F(CmodCashLoanTest, EmpiricalTroughCommercial) {
     std::vector<std::string> compare_number_variables = { "lcoe_nom", "npv", "payback" };
     std::vector<std::string> compare_array_variables = { "cf_after_tax_cash_flow", "cf_value_added", "cf_after_tax_net_equity_cost_flow", "cf_parasitic_cost", "cf_util_escal_rate" };
 
-    Test(file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+    Test("cashloan", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
 TEST_F(CmodCashLoanTest, FuelCellCommercial) {
@@ -229,7 +229,7 @@ TEST_F(CmodCashLoanTest, FuelCellCommercial) {
     std::vector<std::string> compare_number_variables = { "lcoe_nom", "npv", "payback" };
     std::vector<std::string> compare_array_variables = { "cf_after_tax_cash_flow", "cf_value_added", "cf_after_tax_net_equity_cost_flow", "cf_parasitic_cost", "cf_util_escal_rate", "cf_energy_value", "cf_thermal_value" };
 
-    Test(file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+    Test("cashloan", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
 TEST_F(CmodCashLoanTest, GenericCSPCommercial) {
@@ -240,7 +240,7 @@ TEST_F(CmodCashLoanTest, GenericCSPCommercial) {
     std::vector<std::string> compare_number_variables = { "lcoe_nom", "npv", "payback" };
     std::vector<std::string> compare_array_variables = { "cf_after_tax_cash_flow", "cf_value_added", "cf_after_tax_net_equity_cost_flow", "cf_parasitic_cost", "cf_util_escal_rate" };
 
-    Test(file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+    Test("cashloan", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
 TEST_F(CmodCashLoanTest, MSLFCommercial) {
@@ -251,7 +251,7 @@ TEST_F(CmodCashLoanTest, MSLFCommercial) {
     std::vector<std::string> compare_number_variables = { "lcoe_nom", "npv", "payback" };
     std::vector<std::string> compare_array_variables = { "cf_after_tax_cash_flow", "cf_value_added", "cf_after_tax_net_equity_cost_flow", "cf_parasitic_cost", "cf_util_escal_rate" };
 
-    Test(file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+    Test("cashloan", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
 TEST_F(CmodCashLoanTest, SWHResidential) {
@@ -262,7 +262,7 @@ TEST_F(CmodCashLoanTest, SWHResidential) {
     std::vector<std::string> compare_number_variables = { "lcoe_nom", "npv", "payback" };
     std::vector<std::string> compare_array_variables = { "cf_after_tax_cash_flow", "cf_value_added", "cf_after_tax_net_equity_cost_flow", "cf_parasitic_cost", "cf_util_escal_rate" };
 
-    Test(file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+    Test("cashloan", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
 TEST_F(CmodCashLoanTest, SWHCommercial) {
@@ -273,7 +273,7 @@ TEST_F(CmodCashLoanTest, SWHCommercial) {
     std::vector<std::string> compare_number_variables = { "lcoe_nom", "npv", "payback" };
     std::vector<std::string> compare_array_variables = { "cf_after_tax_cash_flow", "cf_value_added", "cf_after_tax_net_equity_cost_flow", "cf_parasitic_cost", "cf_util_escal_rate" };
 
-    Test(file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+    Test("cashloan", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
 TEST_F(CmodCashLoanTest, StandaloneBatteryResidential) {
@@ -284,7 +284,7 @@ TEST_F(CmodCashLoanTest, StandaloneBatteryResidential) {
     std::vector<std::string> compare_number_variables = { "lcoe_nom", "npv", "payback" };
     std::vector<std::string> compare_array_variables = { "cf_after_tax_cash_flow", "cf_value_added", "cf_after_tax_net_equity_cost_flow", "cf_parasitic_cost", "cf_util_escal_rate" };
 
-    Test(file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+    Test("cashloan", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
 TEST_F(CmodCashLoanTest, StandaloneBatteryCommercial) {
@@ -295,7 +295,7 @@ TEST_F(CmodCashLoanTest, StandaloneBatteryCommercial) {
     std::vector<std::string> compare_number_variables = { "lcoe_nom", "npv", "payback" };
     std::vector<std::string> compare_array_variables = { "cf_after_tax_cash_flow", "cf_value_added", "cf_after_tax_net_equity_cost_flow", "cf_parasitic_cost", "cf_util_escal_rate" };
 
-    Test(file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+    Test("cashloan", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
 TEST_F(CmodCashLoanTest, WindResidential) {
@@ -306,7 +306,7 @@ TEST_F(CmodCashLoanTest, WindResidential) {
     std::vector<std::string> compare_number_variables = { "lcoe_nom", "npv", "payback" };
     std::vector<std::string> compare_array_variables = { "cf_after_tax_cash_flow", "cf_value_added", "cf_after_tax_net_equity_cost_flow", "cf_parasitic_cost", "cf_util_escal_rate" };
 
-    Test(file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+    Test("cashloan", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
 TEST_F(CmodCashLoanTest, WindCommercial) {
@@ -317,6 +317,6 @@ TEST_F(CmodCashLoanTest, WindCommercial) {
     std::vector<std::string> compare_number_variables = { "lcoe_nom", "npv", "payback" };
     std::vector<std::string> compare_array_variables = { "cf_after_tax_cash_flow", "cf_value_added", "cf_after_tax_net_equity_cost_flow", "cf_parasitic_cost", "cf_util_escal_rate" };
 
-    Test(file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+    Test("cashloan", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
