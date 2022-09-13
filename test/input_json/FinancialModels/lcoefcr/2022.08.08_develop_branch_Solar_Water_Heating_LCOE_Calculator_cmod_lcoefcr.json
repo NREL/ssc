@@ -1,0 +1,9 @@
+{
+    "capital_cost" : 13672.239999999996,
+    "fixed_operating_cost" : 170.90299999999996,
+    "variable_operating_cost" : 0,
+    "fixed_charge_rate" : 0.098000000000000004,
+    "annual_energy" : 2281.6062659297836,
+	"number_compute_modules" : 0,
+	"number_metrics" : 0
+}

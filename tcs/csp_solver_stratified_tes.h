@@ -157,8 +157,8 @@ public:
 		double m_cold_tank_Thtr;	//[C] convert to K in init()
 		double m_cold_tank_max_heat;//[MW]
 		double m_dt_hot;			//[C] Temperature difference across heat exchanger - assume hot and cold deltaTs are equal
-		double m_T_field_in_des;	//[C] convert to K in init()
-		double m_T_field_out_des;	//[C] convert to K in init()
+		double m_T_cold_des;	    //[C] convert to K in init()
+		double m_T_hot_des;	        //[C] convert to K in init()
 		double m_T_tank_hot_ini;	//[C] Initial temperature in hot storage tank
 		double m_T_tank_cold_ini;	//[C] Initial temperature in cold storage cold
 		double m_h_tank_min;		//[m] Minimum allowable HTF height in storage tank
@@ -179,7 +179,7 @@ public:
 			m_ts_hours = 0.0;		//[hr] Default to 0 so that if storage isn't defined, simulation won't crash
 
 			m_W_dot_pc_design = m_eta_pc_factor = m_solarm = m_h_tank = m_u_tank = m_hot_tank_Thtr = m_hot_tank_max_heat = m_cold_tank_Thtr =
-				m_cold_tank_max_heat = m_dt_hot = m_T_field_in_des = m_T_field_out_des = m_T_tank_hot_ini =
+				m_cold_tank_max_heat = m_dt_hot = m_T_cold_des = m_T_hot_des = m_T_tank_hot_ini =
 				m_T_tank_cold_ini = m_h_tank_min = m_f_V_hot_ini = m_htf_pump_coef = dT_cw_rad = m_dot_cw_rad = m_dot_cw_cold=m_lat= std::numeric_limits<double>::quiet_NaN();
 		}
 	};
