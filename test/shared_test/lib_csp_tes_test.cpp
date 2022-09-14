@@ -319,16 +319,16 @@ NAMESPACE_TEST(csp_common, TesSubcomponentCmod, Default)
                                      23., 23., 23., 23., 23., 23., 23., 23., 23., 23., 23., 23. };
     ssc_data_set_array(inputs, "T_amb", T_ambs, n_steps);
     ssc_number_t mdot_srcs[n_steps] = {0., 0., 0., 0., 0., 0., 0., 0., 800., 800., 800., 800.,
-                                       800., 800., 800., 800., 800., 0., 0., 0., 0., 0., 0., 0. };
+                                       800., 800., 800., 800., 0., 0., 0., 0., 0., 0., 0., 0. };
     ssc_data_set_array(inputs, "mdot_src", mdot_srcs, n_steps);
     ssc_number_t mdot_sinks[n_steps] = { 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
-                                         0., 0., 0., 0., 0., 1200., 1200., 1200., 1200., 1200., 1200., 1200. };
+                                         0., 0., 0., 0., 0., 0., 1200., 1200., 1200., 1200., 1200., 1200. };
     ssc_data_set_array(inputs, "mdot_sink", mdot_sinks, n_steps);
     ssc_number_t hot_tank_bypasseds[n_steps] = { 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
                                                  0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0. };
     ssc_data_set_array(inputs, "hot_tank_bypassed", hot_tank_bypasseds, n_steps);
-    ssc_number_t T_src_outs[n_steps] = { 250., 250., 250., 250., 250., 250., 250., 250., 250., 250., 250., 250.,
-                                         390., 390., 390., 390., 390., 390., 390., 390., 390., 390., 390., 390. };
+    ssc_number_t T_src_outs[n_steps] = { 250., 250., 250., 250., 250., 250., 250., 250., 390., 390., 390., 390.,
+                                         390., 390., 390., 390., 380., 360., 330., 310., 290., 270., 270., 260. };
     ssc_data_set_array(inputs, "T_src_out", T_src_outs, n_steps);
     ssc_number_t T_sink_outs[n_steps] = { 293., 293., 293., 293., 293., 293., 293., 293., 293., 293., 293., 293.,
                                           293., 293., 293., 293., 293., 293., 293., 293., 293., 293., 293., 293. };
@@ -382,14 +382,19 @@ NAMESPACE_TEST(csp_common, TesSubcomponentCmod, Default)
     int errors = csp_subcomponent.RunModule();
     EXPECT_FALSE(errors);
     if (!errors) {
-        std::vector<ssc_number_t> T_src_in_expected{ 250.00, 250.00, 250.00, 250.00, 250.00, 250.00, 250.00, 250.00, 292.29, 292.26, 292.22, 292.18,
-                                                     296.34, 296.27, 296.18, 296.18, 296.18, 293.00, 293.00, 293.00, 293.00, 293.00, 293.00, 293.00 };
-        std::vector<ssc_number_t> T_sink_in_expected{ 250.00, 250.00, 250.00, 250.00, 250.00, 250.00, 250.00, 250.00, 250.00, 250.00, 250.00, 250.00,
-                                                      390.00, 390.00, 390.00, 390.00, 390.00, 346.43, 347.66, 349.11, 350.89, 353.18, 356.45, 356.45 };
+        std::vector<ssc_number_t> T_src_in_expected{ 250.00, 250.00, 250.00, 250.00, 250.00, 250.00, 250.00, 250.00, 296.51, 296.48, 296.44, 296.40,
+                                                     296.34, 296.27, 296.18, 296.18, 380.00, 360.00, 293.00, 293.00, 293.00, 293.00, 293.00, 293.00 };
+        std::vector<ssc_number_t> T_sink_in_expected{ 250.00, 250.00, 250.00, 250.00, 250.00, 250.00, 250.00, 250.00, 390.00, 390.00, 390.00, 390.00,
+                                                      390.00, 390.00, 390.00, 390.00, 380.00, 360.00, 383.58, 383.54, 383.50, 383.46, 383.40, 383.31 };
         std::vector<ssc_number_t> T_tank_cold_expected{ 292.97, 292.94, 292.91, 292.88, 292.85, 292.82, 292.79, 292.76, 292.73, 292.69, 292.65, 292.60,
-                                                        292.54, 292.45, 292.33, 292.33, 292.33, 294.02, 294.62, 294.94, 295.14, 295.29, 295.41, 295.41 };
-        std::vector<ssc_number_t> T_tank_hot_expected{ 390.91, 390.83, 390.75, 390.67, 390.59, 390.51, 390.43, 390.35, 365.00, 349.09, 337.60, 328.91,
-                                                       336.47, 342.55, 347.55, 347.55, 347.55, 348.73, 350.12, 351.79, 353.88, 356.68, 360.95, 360.95 };
+                                                        292.54, 292.45, 292.33, 292.33, 292.17, 292.01, 294.38, 295.19, 295.61, 295.86, 296.02, 296.14 };
+        std::vector<ssc_number_t> T_tank_hot_expected{ 390.91, 390.83, 390.75, 390.67, 390.59, 390.51, 390.43, 390.35, 389.48, 388.89, 388.46, 388.14,
+                                                       387.89, 387.68, 387.52, 387.52, 387.48, 387.45, 387.42, 387.38, 387.34, 387.28, 387.21, 387.09 };
+
+        std::vector<ssc_number_t> T_src_in = csp_subcomponent.GetOutputVector("T_src_in");
+        std::vector<ssc_number_t> T_sink_in = csp_subcomponent.GetOutputVector("T_sink_in");
+        std::vector<ssc_number_t> T_tank_cold = csp_subcomponent.GetOutputVector("T_tank_cold");
+        std::vector<ssc_number_t> T_tank_hot = csp_subcomponent.GetOutputVector("T_tank_hot");
 
         EXPECT_FLOATS_NEARLY_EQ(csp_subcomponent.GetOutputVector("T_src_in"), T_src_in_expected, 0.1);
         EXPECT_FLOATS_NEARLY_EQ(csp_subcomponent.GetOutputVector("T_sink_in"), T_sink_in_expected, 0.1);
