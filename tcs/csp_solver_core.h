@@ -687,8 +687,8 @@ public:
 		double m_m_dot_pc_to_tes_cold;	//[kg/s]
 		double m_m_dot_tes_cold_out;	//[kg/s]
         double m_m_dot_tes_cold_in;     //[kg/s]
-		double m_m_dot_field_to_cycle;	//[kg/s]
-		double m_m_dot_cycle_to_field;	//[kg/s]
+		double m_m_dot_src_to_sink;	    //[kg/s]
+		double m_m_dot_sink_to_src;	    //[kg/s]
 
         double m_T_tes_cold_in;         //[K]
 
@@ -701,7 +701,7 @@ public:
             m_q_dot_dc_to_htf = m_q_dot_ch_from_htf = 
 			m_m_dot_cr_to_tes_hot = m_m_dot_cr_to_tes_cold = m_m_dot_tes_hot_out =
             m_m_dot_pc_to_tes_cold = m_m_dot_pc_to_tes_cold = m_m_dot_tes_cold_out =
-            m_m_dot_tes_cold_in = m_m_dot_field_to_cycle = m_m_dot_cycle_to_field =
+            m_m_dot_tes_cold_in = m_m_dot_src_to_sink = m_m_dot_sink_to_src =
             m_T_tes_cold_in = 
             m_m_dot_cold_tank_to_hot_tank = std::numeric_limits<double>::quiet_NaN();
 		}
