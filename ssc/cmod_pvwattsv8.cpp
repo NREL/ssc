@@ -1235,7 +1235,7 @@ public:
                     inverter.Pdco = inverter.Paco / (pv.inv_eff_percent * 0.01); // get inverter DC rating by dividing AC rating by efficiency
                     // set both Vdco and Vdc to zero. the assumption we make for voltages are irrelevant as long as C1, C2, and C3 are zero
                     inverter.Vdco = 0.0;
-                    inverter.Pso = 0.1 * pv.ac_nameplate; // simplifying assumption that the inverter can always operate - needed for knee
+                    inverter.Pso = 0.0; // simplifying assumption that the inverter can always operate - needed for knee
                     inverter.Pntare = 0.0; // simplifying assumption that inverter has no nighttime losses
                     inverter.C0 = 0.0; // needed for curvature 
                     // default values for C1, C2, C3 are zero per Sandia documentation: https://pvpmc.sandia.gov/modeling-steps/dc-to-ac-conversion/sandia-inverter-model/
