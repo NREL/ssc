@@ -77,6 +77,7 @@ extern module_entry_info
 	cm_entry_utilityrate3,
 	cm_entry_utilityrate4,
 	cm_entry_utilityrate5,
+    cm_entry_utilityrateforecast,
 	cm_entry_annualoutput,
 	cm_entry_cashloan,
 	cm_entry_thirdpartyownership,
@@ -147,7 +148,8 @@ extern module_entry_info
 	cm_entry_mhk_costs,
 	cm_entry_wave_file_reader,
 	cm_entry_grid,
-	cm_entry_battery_stateful
+	cm_entry_battery_stateful,
+    cm_entry_csp_subcomponent
 	;
 
 /* official module table */
@@ -175,6 +177,7 @@ static module_entry_info *module_table[] = {
 	&cm_entry_utilityrate3,
 	&cm_entry_utilityrate4,
 	&cm_entry_utilityrate5,
+    &cm_entry_utilityrateforecast,
 	&cm_entry_annualoutput,
 	&cm_entry_cashloan,
 	&cm_entry_thirdpartyownership,
@@ -246,6 +249,7 @@ static module_entry_info *module_table[] = {
 	&cm_entry_wave_file_reader,
 	&cm_entry_grid,
 	&cm_entry_battery_stateful,
+    &cm_entry_csp_subcomponent,
 	0 };
 
 SSCEXPORT ssc_module_t ssc_module_create( const char *name )
@@ -899,7 +903,8 @@ SSCEXPORT ssc_data_t json_to_ssc_data(const char* json_str) {
     auto vt = new var_table;
 //    std::unique_ptr<var_table> vt = std::unique_ptr<var_table>(new var_table);
     rapidjson::Document document;
-    document.Parse(json_str);
+    //document.Parse(json_str); Parse<kParseDefaultFlags>(str)
+    document.Parse<rapidjson::kParseNanAndInfFlag>(json_str); // Allow parsing NaN, Inf, Infinity, -Inf and -Infinity as double values (relaxed JSON syntax).
     if (document.HasParseError()) {
         std::string s = rapidjson::GetParseError_En(document.GetParseError());
         vt->assign("error", s);

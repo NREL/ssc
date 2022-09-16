@@ -31,6 +31,17 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define EXPECT_NEAR_FRAC(val1, val2, frac_error) EXPECT_NEAR(val1, val2, val2 * frac_error)
 #define ASSERT_NEAR_FRAC(val1, val2, frac_error) ASSERT_NEAR(val1, val2, val2 * frac_error)
+// NOTE: instead of defining EXPECT_FLOATS_NEARLY_EQ, the following could be used if not
+//       for the gmock paths not all resolving:
+        // #include <../googlemock/include/gmock/gmock-matchers.h>
+        // using namespace testing;
+        // EXPECT_THAT(float_vec1, Pointwise(FloatNear(abs_err), float_vec2));
+#define EXPECT_FLOATS_NEARLY_EQ(expected, actual, thresh) \
+        EXPECT_EQ(expected.size(), actual.size()) << "Array sizes differ.";\
+        for (size_t idx = 0; idx < std::min(expected.size(), actual.size()); ++idx) \
+        { \
+            EXPECT_NEAR(expected[idx], actual[idx], thresh) << "at index: " << idx;\
+        }
 
 const double kErrorToleranceLo = 0.001;    // 0.1%
 const double kErrorToleranceHi = 0.01;     // 1.0%
@@ -66,6 +77,12 @@ public:
         ssc_number_t output;
         ssc_data_get_number(this->data_, name.c_str(), &output);
         return output;
+    }
+    std::vector<ssc_number_t> GetOutputVector(std::string array_name) const {
+        int length = -1;
+        ssc_number_t* array_data = ssc_data_get_array(this->data_, array_name.c_str(), &length);
+        std::vector<ssc_number_t> vector_data(array_data, array_data + length);
+        return vector_data;
     }
     ssc_number_t GetOutputSum(std::string name) const {
         var_table* vt = static_cast<var_table*>(this->data_);

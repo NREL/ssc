@@ -261,7 +261,7 @@ bool Is_optimize(bool override_opt /*-*/) {      // [-]
 }
 
 int Field_model_type(bool is_optimize /*-*/, bool override_layout /*-*/, int assigned_field_model_type /*-*/) {      // [-]
-    if (is_optimize) {
+    if (is_optimize) {  // "override_opt"
         return 0;
     }
     else if (override_layout) {

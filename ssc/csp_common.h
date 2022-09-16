@@ -58,6 +58,9 @@ public:
     AutoPilot_S *GetSAPI();
     bool run(std::shared_ptr<weather_data_provider> wdata = nullptr);
     bool postsim_calcs( compute_module *cm );
+    double CalcSolarFieldArea(int N_hel);
+    double GetTotalLandArea();
+    double GetBaseLandArea();
 };
 
 bool are_values_sig_different(double v1, double v2, double tol);
