@@ -1002,12 +1002,13 @@ bool adjustment_factors::setup(int nsteps) //nsteps is set to 8760 in this decla
 	{
 		size_t nr, nc;
 		ssc_number_t *mat = m_cm->as_matrix(m_prefix + ":periods", &nr, &nc);
+        double ts_mult = nsteps / 8760.0;
 		if ( mat != 0 && nc == 3 )
 		{
 			for( size_t r=0;r<nr;r++ )
 			{
-				int start = (int) mat[ nc*r ];
-				int end = (int) mat[ nc*r + 1 ];
+				int start = (int) floor(mat[ nc*r ] * ts_mult);
+				int end = (int) floor(mat[ nc*r + 1 ] * ts_mult);
 				ssc_number_t factor =  mat[ nc*r + 2 ];
 
 				if ( start < 0 || start >= nsteps || end < start )
