@@ -1235,14 +1235,30 @@ public:
                     inverter.Pdco = inverter.Paco / (pv.inv_eff_percent * 0.01); // get inverter DC rating by dividing AC rating by efficiency
                     // set both Vdco and Vdc to zero. the assumption we make for voltages are irrelevant as long as C1, C2, and C3 are zero
                     inverter.Vdco = 0.0;
-                    inverter.Pso = 0.0; // simplifying assumption that the inverter can always operate - needed for knee
                     inverter.Pntare = 0.0; // simplifying assumption that inverter has no nighttime losses
-                    inverter.C0 = 0.0; // needed for curvature 
                     // default values for C1, C2, C3 are zero per Sandia documentation: https://pvpmc.sandia.gov/modeling-steps/dc-to-ac-conversion/sandia-inverter-model/
                     // setting these to 0 results in similar inverter output to pvwattsv5
                     inverter.C1 = 0.0; 
                     inverter.C2 = 0.0;
                     inverter.C3 = 0.0;
+
+                    // Set based on market per ssc issue 870  
+                    inverter.Pso = 0.0; // simplifying assumption that the inverter can always operate - needed for knee
+                    inverter.C0 = 0.0; // needed for curvature 
+
+                    if (pv.dc_nameplate < 10) { // Residential
+                        inverter.Pso = 12.0;
+                        inverter.C0 = -3.33e-6;
+                    }
+                    else if (pv.dc_nameplate < 10) { // Commercial
+                        inverter.Pso = 149;
+                        inverter.C0 = -1.42e-7;
+                    }
+                    else { // Utility
+                        inverter.Pso = 3714;
+                        inverter.C0 = -1.4e-8;
+                    }
+
                     // call inverter function
                     // set operating voltage (second parameter) to zero. the assumption we make for voltages are irrelevant as long as C1, C2, and C3 are zero (set above)
                     // use null pointers for results that we don't care about
