@@ -1250,19 +1250,13 @@ public:
                     inverter.C0 = 0.0; // needed for curvature - voltage needed for this parameter to be used
 
                     if (pv.dc_nameplate < 10) { // Residential
-//                        inverter.Pso = 12.0;
                         inverter.Pso = 0.002246 * inverter.Paco;
-//                        inverter.C0 = -3.33e-6;
                     }
                     else if (pv.dc_nameplate < 1000) { // Commercial >= 10kW
-                        inverter.Pso = 149;
                         inverter.Pso = 0.002478 * inverter.Paco;
-//                        inverter.C0 = -1.42e-7;
                     }
                     else { // Utility >= 1MW
-//                        inverter.Pso = 3714;
                         inverter.Pso = 0.004931 * inverter.Paco;
-//                        inverter.C0 = -1.4e-8;
                     }
 
                     // call inverter function
