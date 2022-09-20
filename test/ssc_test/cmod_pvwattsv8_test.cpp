@@ -418,3 +418,69 @@ TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, IntermediateOutputTesting)
 }
 
 
+TEST_F(CmodPVWattsv8Test, DCACRatio_0_02) {
+    std::string file_inputs = SSCDIR;
+    file_inputs += "/test/input_json/TechnologyModels/pvwattsv8/dc_ac_ratio_0.02_PVWatts_Single_Owner_cmod_pvwattsv8.json";
+    std::string file_outputs = SSCDIR;
+    file_outputs += "/test/input_json/TechnologyModels/pvwattsv8/dc_ac_ratio_0.02_PVWatts_Single_Owner_cmod_pvwattsv8_outputs.json";
+    std::vector<std::string> compare_number_variables = { "annual_energy" };
+    std::vector<std::string> compare_array_variables = { "gen", "inv_eff_output" };
+
+    Test("pvwattsv8", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+}
+
+TEST_F(CmodPVWattsv8Test, DCACRatio_0_5) {
+    std::string file_inputs = SSCDIR;
+    file_inputs += "/test/input_json/TechnologyModels/pvwattsv8/dc_ac_ratio_0.5_PVWatts_Single_Owner_cmod_pvwattsv8.json";
+    std::string file_outputs = SSCDIR;
+    file_outputs += "/test/input_json/TechnologyModels/pvwattsv8/dc_ac_ratio_0.5_PVWatts_Single_Owner_cmod_pvwattsv8_outputs.json";
+    std::vector<std::string> compare_number_variables = { "annual_energy" };
+    std::vector<std::string> compare_array_variables = { "gen", "inv_eff_output" };
+
+    Test("pvwattsv8", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+}
+
+
+TEST_F(CmodPVWattsv8Test, DCACRatio_1_0) {
+    std::string file_inputs = SSCDIR;
+    file_inputs += "/test/input_json/TechnologyModels/pvwattsv8/dc_ac_ratio_1_PVWatts_Single_Owner_cmod_pvwattsv8.json";
+    std::string file_outputs = SSCDIR;
+    file_outputs += "/test/input_json/TechnologyModels/pvwattsv8/dc_ac_ratio_1_PVWatts_Single_Owner_cmod_pvwattsv8_outputs.json";
+    std::vector<std::string> compare_number_variables = { "annual_energy" };
+    std::vector<std::string> compare_array_variables = { "gen", "inv_eff_output" };
+
+    Test("pvwattsv8", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+}
+
+TEST_F(CmodPVWattsv8Test, DCACRatio_1_5) {
+    std::string file_inputs = SSCDIR;
+    file_inputs += "/test/input_json/TechnologyModels/pvwattsv8/dc_ac_ratio_1.5_PVWatts_Single_Owner_cmod_pvwattsv8.json";
+    std::string file_outputs = SSCDIR;
+    file_outputs += "/test/input_json/TechnologyModels/pvwattsv8/dc_ac_ratio_1.5_PVWatts_Single_Owner_cmod_pvwattsv8_outputs.json";
+    std::vector<std::string> compare_number_variables = { "annual_energy" };
+    std::vector<std::string> compare_array_variables = { "gen", "inv_eff_output" };
+
+    Test("pvwattsv8", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+}
+
+TEST_F(CmodPVWattsv8Test, DCACRatio_2_0) {
+    std::string file_inputs = SSCDIR;
+    file_inputs += "/test/input_json/TechnologyModels/pvwattsv8/dc_ac_ratio_2_PVWatts_Single_Owner_cmod_pvwattsv8.json";
+    std::string file_outputs = SSCDIR;
+    file_outputs += "/test/input_json/TechnologyModels/pvwattsv8/dc_ac_ratio_2_PVWatts_Single_Owner_cmod_pvwattsv8_outputs.json";
+    std::vector<std::string> compare_number_variables = { "annual_energy" };
+    std::vector<std::string> compare_array_variables = { "gen", "inv_eff_output" };
+
+    Test("pvwattsv8", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+}
+
+TEST_F(CmodPVWattsv8Test, DCACRatio_10_0) {
+    std::string file_inputs = SSCDIR;
+    file_inputs += "/test/input_json/TechnologyModels/pvwattsv8/dc_ac_ratio_10_PVWatts_Single_Owner_cmod_pvwattsv8.json";
+    std::string file_outputs = SSCDIR;
+    file_outputs += "/test/input_json/TechnologyModels/pvwattsv8/dc_ac_ratio_10_PVWatts_Single_Owner_cmod_pvwattsv8_outputs.json";
+    std::vector<std::string> compare_number_variables = { "annual_energy" };
+    std::vector<std::string> compare_array_variables = { "gen", "inv_eff_output" };
+
+    Test("pvwattsv8", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+}
