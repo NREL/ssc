@@ -58,11 +58,15 @@ public:
 
 public:
     void Test(const std::string& compute_module, const std::string& file_inputs, const std::string &file_outputs, const std::vector<std::string> &compare_number_variables, const std::vector<std::string> &compare_array_variables) {
+        char solar_resource_path[256];
+        int npvy1 = sprintf(solar_resource_path, "%s/test/input_cases/general_data/phoenix_az_33.450495_-111.983688_psmv3_60_tmy.csv", std::getenv("SSCDIR")); // TODO - update for robustness
         std::ifstream file(file_inputs);
         std::ostringstream tmp;
         tmp << file.rdbuf();
         file.close();
         ssc_data_t dat_inputs = json_to_ssc_data(tmp.str().c_str());
+        ssc_data_set_string(dat_inputs, "solar_resource_file", solar_resource_path);
+
         tmp.str("");
         int errors = run_module(dat_inputs, compute_module);
 
