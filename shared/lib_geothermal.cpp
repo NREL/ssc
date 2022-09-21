@@ -1229,8 +1229,9 @@ double CGeothermalAnalyzer::EGSThermalConductivity()
 double CGeothermalAnalyzer::EGSFlowPerFracture(double tempC)
 {	// m^3 per day
 	//double dFlowInTimePeriod = (IsHourly()) ? 60*60  : 60*60*24 ; // hourly analysis uses hourly flow, monthly analysis uses daily flow
-	double dFlowInTimePeriod = 60 * 60 * 24; // hourly analysis and monthly analyses use daily flow
-	return ((mo_geo_in.md_ProductionFlowRateKgPerS / geothermal::EGSWaterDensity(tempC)) / mo_geo_in.md_EGSNumberOfFractures) * dFlowInTimePeriod;
+	//double dFlowInTimePeriod = 60 * 60 * 24; // hourly analysis and monthly analyses use daily flow
+    //m^3 / s
+	return ((mo_geo_in.md_ProductionFlowRateKgPerS / geothermal::EGSWaterDensity(tempC)) / mo_geo_in.md_EGSNumberOfFractures);
 }
 
 double CGeothermalAnalyzer::EGSAlpha(void)
