@@ -57,7 +57,7 @@ public:
 	size_t interval = 100;
 
 public:
-    void Test(const std::string& compute_module, const std::string& file_inputs, const std::string &file_outputs, const std::vector<std::string> &compare_number_variables, const std::vector<std::string> &compare_array_variables) {
+    void Test(const std::string& compute_module, const std::string& file_inputs, const std::string &file_outputs, const std::vector<std::string> &compare_number_variables, const std::vector<std::string> &compare_array_variables, double tolerance = 0.001) {
         char solar_resource_path[256];
         int npvy1 = sprintf(solar_resource_path, "%s/test/input_cases/general_data/phoenix_az_33.450495_-111.983688_psmv3_60_tmy.csv", std::getenv("SSCDIR")); // TODO - update for robustness
         std::ifstream file(file_inputs);
@@ -89,7 +89,7 @@ public:
                 ssc_data_get_number(dat_inputs, compare_number_variables[i].c_str(), &values_to_compare[i]);
                 ssc_data_get_number(dat_outputs, compare_number_variables[i].c_str(), &values_to_match[i]);
                 if (!isnan(values_to_compare[i]) || !isnan(values_to_match[i]))
-                    EXPECT_NEAR(values_to_compare[i], values_to_match[i], 0.001) << " number issue at index i=" << i << " for " << compare_number_variables[i];
+                    EXPECT_NEAR(values_to_compare[i], values_to_match[i], tolerance) << " number issue at index i=" << i << " for " << compare_number_variables[i];
             }
 
             int len_currentrun, len_comparerun;
@@ -98,7 +98,7 @@ public:
                 auto pCompareOutputs = ssc_data_get_array(dat_outputs, compare_array_variables[i].c_str(), &len_comparerun);
                 EXPECT_EQ(len_currentrun, len_comparerun) << " for " << compare_array_variables[i];
                 for (int j = 0; j < len_currentrun && j < len_comparerun; j++) {
-                    EXPECT_NEAR(pCurrentOutputs[j], pCompareOutputs[j], 0.001) << " array issue at index i=" << i << " and array index j=" << j << " for " << compare_array_variables[i];
+                    EXPECT_NEAR(pCurrentOutputs[j], pCompareOutputs[j], tolerance) << " array issue at index i=" << i << " and array index j=" << j << " for " << compare_array_variables[i];
                 }
             }
 

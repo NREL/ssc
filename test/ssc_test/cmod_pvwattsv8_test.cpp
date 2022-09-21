@@ -426,7 +426,7 @@ TEST_F(CmodPVWattsv8Test, DCACRatio_0_02) {
     std::vector<std::string> compare_number_variables = { "annual_energy" };
     std::vector<std::string> compare_array_variables = { "gen", "inv_eff_output" };
 
-    Test("pvwattsv8", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+    Test("pvwattsv8", file_inputs, file_outputs, compare_number_variables, compare_array_variables, 0.002);
 }
 
 TEST_F(CmodPVWattsv8Test, DCACRatio_0_5) {
@@ -437,7 +437,7 @@ TEST_F(CmodPVWattsv8Test, DCACRatio_0_5) {
     std::vector<std::string> compare_number_variables = { "annual_energy" };
     std::vector<std::string> compare_array_variables = { "gen", "inv_eff_output" };
 
-    Test("pvwattsv8", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+    Test("pvwattsv8", file_inputs, file_outputs, compare_number_variables, compare_array_variables, 0.002);
 }
 
 
@@ -449,7 +449,7 @@ TEST_F(CmodPVWattsv8Test, DCACRatio_1_0) {
     std::vector<std::string> compare_number_variables = { "annual_energy" };
     std::vector<std::string> compare_array_variables = { "gen", "inv_eff_output" };
 
-    Test("pvwattsv8", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+    Test("pvwattsv8", file_inputs, file_outputs, compare_number_variables, compare_array_variables, 0.002);
 }
 
 TEST_F(CmodPVWattsv8Test, DCACRatio_1_5) {
@@ -460,7 +460,7 @@ TEST_F(CmodPVWattsv8Test, DCACRatio_1_5) {
     std::vector<std::string> compare_number_variables = { "annual_energy" };
     std::vector<std::string> compare_array_variables = { "gen", "inv_eff_output" };
 
-    Test("pvwattsv8", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+    Test("pvwattsv8", file_inputs, file_outputs, compare_number_variables, compare_array_variables, 0.002);
 }
 
 TEST_F(CmodPVWattsv8Test, DCACRatio_2_0) {
@@ -471,7 +471,7 @@ TEST_F(CmodPVWattsv8Test, DCACRatio_2_0) {
     std::vector<std::string> compare_number_variables = { "annual_energy" };
     std::vector<std::string> compare_array_variables = { "gen", "inv_eff_output" };
 
-    Test("pvwattsv8", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+    Test("pvwattsv8", file_inputs, file_outputs, compare_number_variables, compare_array_variables, 0.002);
 }
 
 TEST_F(CmodPVWattsv8Test, DCACRatio_10_0) {
@@ -482,5 +482,5 @@ TEST_F(CmodPVWattsv8Test, DCACRatio_10_0) {
     std::vector<std::string> compare_number_variables = { "annual_energy" };
     std::vector<std::string> compare_array_variables = { "gen", "inv_eff_output" };
 
-    Test("pvwattsv8", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+    Test("pvwattsv8", file_inputs, file_outputs, compare_number_variables, compare_array_variables, 0.002);
 }
