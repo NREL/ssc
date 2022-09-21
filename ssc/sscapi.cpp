@@ -1317,8 +1317,19 @@ SSCEXPORT int ssc_stateful_module_setup(ssc_module_t p_mod, ssc_data_t p_data) {
     int i = 0;
     while ( module_table[i] != nullptr && module_table[i]->f_create != nullptr ) {
         if ( lname == util::lower_case( module_table[i]->name ) ) {
-            if (module_table[i]->f_setup_stateful)
-                return (*(module_table[i]->f_setup_stateful))(cm, vt);
+            if (module_table[i]->f_setup_stateful) {
+                try {
+                    return (*(module_table[i]->f_setup_stateful))(cm, vt);
+                }
+                catch (general_error& e) {
+                    cm->log(e.err_text, SSC_ERROR, e.time);
+                    return 0;
+                }
+                catch (std::exception& e) {
+                    cm->log("compute fail(" + cm->get_name() + "): " + e.what(), SSC_ERROR, -1);
+                    return 0;
+                }
+            }
             else {
                 cm->log("This module is not stateful. `setup` does not need to be called.");
                 return 0;
