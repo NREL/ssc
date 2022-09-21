@@ -1051,7 +1051,7 @@ void cm_pvsamv1::exec()
 
     // hourly adjustment factors
     adjustment_factors haf(this, "adjust");
-    if (!haf.setup())
+    if (!haf.setup((int)nrec))
         throw exec_error("pvsamv1", "failed to setup AC adjustment factors: " + haf.error());
 
     // clipping losses for battery dispatch
@@ -2276,7 +2276,7 @@ void cm_pvsamv1::exec()
                 ssc_number_t dc_loss_post_inverter = 1 - delivered_percent;
                 delivered_percent = 1; // Re-use variable for post batt losses
 
-                ssc_number_t adj_factor = haf(hour_of_year);
+                ssc_number_t adj_factor = haf(inrec);
                 delivered_percent *= adj_factor;
                 if (system_use_lifetime_output && PVSystem->enableACLifetimeLosses) {
                     int ac_loss_index = (int)iyear * 365 + (int)floor(hour_of_year / 24); //in units of days
@@ -2473,7 +2473,7 @@ void cm_pvsamv1::exec()
                 annual_energy_pre_battery += PVSystem->p_systemACPower[idx] * ts_hour;
 
             // Compute AC loss percent for AC connected batteries
-            ssc_number_t adj_factor = haf(hour_of_year);
+            ssc_number_t adj_factor = haf(inrec);
 
             if (en_batt && batt_topology == ChargeController::AC_CONNECTED)
             {

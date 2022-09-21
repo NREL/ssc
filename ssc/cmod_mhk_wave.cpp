@@ -467,13 +467,6 @@ public:
             std::vector<int> hour;
             std::vector<int> minute;
 
-            adjustment_factors haf(this, "adjust");
-            if (!haf.setup(2920))
-                throw exec_error("geothermal", "failed to setup adjustment factors: " + haf.error());
-            double haf_input[2920];
-            
-            
-
             if (is_assigned("significant_wave_height") && is_assigned("energy_period")) { //Check if wave height and period variables are assigned
                 //number_records = as_integer("number_records");
                 //number_hours = as_integer("number_hours");
@@ -540,6 +533,12 @@ public:
             size_t nyears = 1;
             std::vector<ssc_number_t> sys_degradation;
             size_t number_records_gen = number_records;
+
+            adjustment_factors haf(this, "adjust");
+            if (!haf.setup(number_records))
+                throw exec_error("geothermal", "failed to setup adjustment factors: " + haf.error());
+            double haf_input[2920];
+
             if (system_use_lifetime_output)
             {
                 nyears = as_integer("analysis_period");

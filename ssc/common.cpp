@@ -996,6 +996,9 @@ bool adjustment_factors::setup(int nsteps) //nsteps is set to 8760 in this decla
 			for( int i=0;i<nsteps;i++ )
 				m_factors[i] *= (1.0 - p[i]/100.0); //convert from percentages to factors
 		}
+        else {
+            m_error = util::format("Hourly loss factor array length %d does not equal length of weather file %d", (int)n, nsteps);
+        }
 	}
 
 	if ( m_cm->is_assigned(m_prefix + ":periods") )
@@ -1007,8 +1010,8 @@ bool adjustment_factors::setup(int nsteps) //nsteps is set to 8760 in this decla
 		{
 			for( size_t r=0;r<nr;r++ )
 			{
-				int start = (int) floor(mat[ nc*r ] * ts_mult);
-				int end = (int) floor(mat[ nc*r + 1 ] * ts_mult);
+				int start = (int) round(mat[ nc*r ] * ts_mult);
+				int end = (int) round(mat[ nc*r + 1 ] * ts_mult);
 				ssc_number_t factor =  mat[ nc*r + 2 ];
 
 				if ( start < 0 || start >= nsteps || end < start )
