@@ -61,13 +61,13 @@ bool cm_utilityrateforecast::setup(var_table* vt) {
     if (!compute_module::verify("precheck input", SSC_INPUT)) {
         return false;
     }
-    steps_per_hour = as_number("steps_per_hour");
+    steps_per_hour = as_unsigned_long("steps_per_hour");
     analysis_period = as_integer("analysis_period");
 
     std::vector<double> load = as_vector_double("load");
     std::vector<double> gen = as_vector_double("gen");
 
-    int step_per_year = 8760 * steps_per_hour;
+    size_t step_per_year = 8760 * steps_per_hour;
 
     rate = std::shared_ptr<rate_data>(new rate_data());
     rate_setup::setup(vt, step_per_year, analysis_period, *rate, "cmod_utilityrateforecast");
@@ -114,7 +114,7 @@ void cm_utilityrateforecast::exec( )
     ssc_number_t* cost_at_step = allocate("ur_price_series", steps_to_run);
     ssc_number_t total_bill = 0;
 
-    int steps_remaining = (analysis_period - year) * 8760 - hour_of_year - step;
+    size_t steps_remaining = (analysis_period - year) * 8760 - hour_of_year - step;
     if (steps_remaining < steps_to_run) {
         std::ostringstream ss;
         ss << "grid_power had " << steps_to_run << " steps, but only " << steps_remaining << " are left in the analysis period.";
