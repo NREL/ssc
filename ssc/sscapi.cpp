@@ -1326,7 +1326,7 @@ SSCEXPORT int ssc_stateful_module_setup(ssc_module_t p_mod, ssc_data_t p_data) {
                     return 0;
                 }
                 catch (std::exception& e) {
-                    cm->log("compute fail(" + cm->get_name() + "): " + e.what(), SSC_ERROR, -1);
+                    cm->log("setup fail(" + cm->get_name() + "): " + e.what(), SSC_ERROR, -1);
                     return 0;
                 }
             }
