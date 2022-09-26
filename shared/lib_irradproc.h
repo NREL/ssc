@@ -872,11 +872,11 @@ double shadeFraction1x(double solar_azimuth, double solar_zenith, double axis_ti
 * divideAndAlignAlbedos subdivides the spatial albedo vector and if 1-axis tracking
 * changes reference from the row midline to the front
 *
-* \param[in] albedo spatial albedo for that point in time
-* \param[in] n_divisions increased number of divisions to divide the spatial albedo into
-* \param[in] isOneAxisTracking is 1-axis tracking used?
-* \param[in] horizontalLength projected horizontal length of the row, product of slope length and tilt
-* \param[in] rowToRow distance between front of row and front of row behind
+* \param[in] albedo spatial albedo for that point in time (-)
+* \param[in] n_divisions increased number of divisions to divide the spatial albedo into (-)
+* \param[in] isOneAxisTracking is 1-axis tracking used? (-)
+* \param[in] horizontalLength projected horizontal length of the row, product of slope length and tilt (m)
+* \param[in] rowToRow distance between front of row and front of row behind (m)
 */
 std::vector<double> divideAndAlignAlbedos(const std::vector<double>& albedo /*-*/, size_t n_divisions /*-*/, bool isOneAxisTracking /*-*/,
                                           double horizontalLength /*m*/, double rowToRow /*m*/);
