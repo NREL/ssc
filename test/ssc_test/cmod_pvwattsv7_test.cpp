@@ -249,13 +249,14 @@ TEST_F(CMPvwattsV7Integration_cmod_pvwattsv7, SnowModelTests_cmod_pvwattsv7) {
 
     // Starting at 6 AM Jan. 12th
     // Snow derate should be non-zero during a snow event, and on a fixed system will always be 0, 0.5, or 1.0 due to the assumption of a 2-up installation
-    EXPECT_NEAR((double)hourly_snowderate[270], 0.0, error_tolerance);
-    EXPECT_NEAR((double)hourly_snowderate[271], 0.5, error_tolerance);
-    EXPECT_NEAR((double)hourly_snowderate[272], 0.5, error_tolerance);
+    // dcsnowderate changed from fraction to percentage per SAM issue 1137
+    EXPECT_NEAR((double)hourly_snowderate[270], 0, error_tolerance);
+    EXPECT_NEAR((double)hourly_snowderate[271], 50, error_tolerance);
+    EXPECT_NEAR((double)hourly_snowderate[272], 50, error_tolerance);
     // ...
-    EXPECT_NEAR((double)hourly_snowderate[275], 0.5, error_tolerance);
-    EXPECT_NEAR((double)hourly_snowderate[276], 0.5, error_tolerance);
-    EXPECT_NEAR((double)hourly_snowderate[277], 1.0, error_tolerance);
+    EXPECT_NEAR((double)hourly_snowderate[275], 50, error_tolerance);
+    EXPECT_NEAR((double)hourly_snowderate[276], 50, error_tolerance);
+    EXPECT_NEAR((double)hourly_snowderate[277], 0, error_tolerance);
 
 
     // Snow loss for single-axis system********************************
@@ -272,7 +273,7 @@ TEST_F(CMPvwattsV7Integration_cmod_pvwattsv7, SnowModelTests_cmod_pvwattsv7) {
     hourly_snowderate = ssc_data_get_array(data, "dcsnowderate", nullptr);
     for (int hour = 0; hour < 300; hour++) //check throughout a known snow event but don't need to check the whole year
     {
-        EXPECT_TRUE(hourly_snowderate[hour] == 0 || hourly_snowderate[hour] == 1);
+        EXPECT_TRUE(hourly_snowderate[hour] == 100 || hourly_snowderate[hour] == 0);
     }
 
 
@@ -290,7 +291,7 @@ TEST_F(CMPvwattsV7Integration_cmod_pvwattsv7, SnowModelTests_cmod_pvwattsv7) {
     hourly_snowderate = ssc_data_get_array(data, "dcsnowderate", nullptr);
     for (int hour = 0; hour < 300; hour++) //check throughout a known snow event but don't need to check the whole year
     {
-        EXPECT_TRUE(hourly_snowderate[hour] == 0 || hourly_snowderate[hour] == 1);
+        EXPECT_TRUE(hourly_snowderate[hour] == 100 || hourly_snowderate[hour] == 0);
     }
 }
 
