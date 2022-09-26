@@ -171,7 +171,9 @@ static var_info _cm_vtab_pvwattsv8[] = {
 
         { SSC_OUTPUT,       SSC_ARRAY,       "dc",                             "DC inverter input power",                              "W",         "",                                             "Time Series",      "*",                       "",                          "" },
         { SSC_OUTPUT,       SSC_ARRAY,       "ac",                             "AC inverter output power",                           "W",         "",                                             "Time Series",      "*",                       "",                          "" },
-        { SSC_OUTPUT,       SSC_ARRAY,       "ac_pre_adjust",                             "AC inverter output power before system availability",                           "W",         "",                                             "Time Series",      "*",                       "",                          "" },
+        { SSC_OUTPUT,       SSC_ARRAY,       "ac_pre_adjust",                  "AC inverter output power before system availability",                           "W",         "",                                             "Time Series",      "*",                       "",                          "" },
+
+        { SSC_OUTPUT,       SSC_ARRAY,       "inv_eff_output",                        "Inverter efficiency",                           "%",         "",                                             "Time Series",      "*",                       "",                          "" },
 
         { SSC_OUTPUT,       SSC_ARRAY,       "poa_monthly",                    "Plane of array irradiance",                   "kWh/m2",    "",                                             "Monthly",          "",                       "LENGTH=12",                          "" },
         { SSC_OUTPUT,       SSC_ARRAY,       "solrad_monthly",                 "Daily average solar irradiance",              "kWh/m2/day","",                                             "Monthly",          "",                       "LENGTH=12",                          "" },
@@ -768,6 +770,7 @@ public:
         ssc_number_t* p_dc = allocate("dc", nrec);
         ssc_number_t* p_ac = allocate("ac", nrec);
         ssc_number_t* p_ac_pre_adjust = allocate("ac_pre_adjust", nrec);
+        ssc_number_t* p_inv_eff = allocate("inv_eff_output", nrec);
         ssc_number_t* p_gen = allocate("gen", nlifetime);
 
         double annual_kwh = 0;
@@ -1235,19 +1238,35 @@ public:
                     inverter.Pdco = inverter.Paco / (pv.inv_eff_percent * 0.01); // get inverter DC rating by dividing AC rating by efficiency
                     // set both Vdco and Vdc to zero. the assumption we make for voltages are irrelevant as long as C1, C2, and C3 are zero
                     inverter.Vdco = 0.0;
-                    inverter.Pso = 0.0; // simplifying assumption that the inverter can always operate
                     inverter.Pntare = 0.0; // simplifying assumption that inverter has no nighttime losses
-                    inverter.C0 = 0.0; 
                     // default values for C1, C2, C3 are zero per Sandia documentation: https://pvpmc.sandia.gov/modeling-steps/dc-to-ac-conversion/sandia-inverter-model/
                     // setting these to 0 results in similar inverter output to pvwattsv5
                     inverter.C1 = 0.0; 
                     inverter.C2 = 0.0;
                     inverter.C3 = 0.0;
+
+                    // Set based on market per ssc issue 870  
+                    inverter.Pso = 0.0; // simplifying assumption that the inverter can always operate - needed for knee
+                    inverter.C0 = 0.0; // needed for curvature - voltage needed for this parameter to be used
+
+                    if (pv.dc_nameplate < 10) { // Residential
+                        inverter.Pso = 0.002246 * inverter.Paco;
+                    }
+                    else if (pv.dc_nameplate < 1000) { // Commercial >= 10kW
+                        inverter.Pso = 0.002478 * inverter.Paco;
+                    }
+                    else { // Utility >= 1MW
+                        inverter.Pso = 0.004931 * inverter.Paco;
+                    }
+
                     // call inverter function
-                    // set operating voltage (second parameter) to zero. the assumption we make for voltages are irrelevant as long as C1, C2, and C3 are zero (set above)
+                    // set operating voltage (second parameter) to zero. the assumption we make for voltages are irrelevant as long as C0, C1, C2, and C3 are zero (set above)
                     // use null pointers for results that we don't care about
                     if (!inverter.acpower(dc, 0.0, &ac, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr)) throw exec_error("pvwattsv8", util::format("Inverter power calculation failed at index %d.", (int)idx_life));
 
+                    // track inverter efficiency
+                    p_inv_eff[idx] = (dc > 0) ? ac/dc * 100 : 0.0;
+                    
                     // record AC results
                     if (y == 0 && wdprov->annualSimulation()) ld("ac_nominal") += dc * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
                     if (y == 0 && wdprov->annualSimulation()) ld("ac_loss_efficiency") += (dc - ac) * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data

@@ -30,7 +30,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class cm_utilityrateforecast : public compute_module {
 private:
     int analysis_period; // Maximum length of analysis - in most cases it will be shorter in this compute module
-    int steps_per_hour; // Timestep in hours
+    size_t steps_per_hour; // Timestep in hours
 
     /* Utility rate data structure */
     std::shared_ptr<rate_data> rate;
