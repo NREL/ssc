@@ -157,6 +157,17 @@ public:
      */
 	void compute_next_composite_tou(int month, size_t year);
 
+    /*Data transfer to/from utilityrateforecast. Allows for picking up forecast at arbitrary times*/
+    void set_energy_use_and_peaks(util::matrix_t<double> energy_use, util::matrix_t<double> peak_use) {
+        rate->set_energy_use_and_peaks(energy_use, peak_use);
+    }
+    util::matrix_t<double> get_energy_use() {
+        return rate->get_energy_use();
+    }
+    util::matrix_t<double> get_peak_use() {
+        return rate->get_peak_use();
+    }
+
     // Composite buy/sell rates given the usage in the forecasts provided to the constructor.
 	std::vector<double> current_composite_sell_rates; // Sell rates at the start of the forecast
 	std::vector<double> current_composite_buy_rates;

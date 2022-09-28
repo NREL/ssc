@@ -34,3 +34,211 @@ TEST_F(CMSingleOwner, ResidentialDefault_cmod_swh) {
     EXPECT_NEAR(npv, -647727845.8, 0.1);
 
 }
+
+
+
+TEST_F(CmodSingleOwnerTest, Biopower) {
+    std::string file_inputs = SSCDIR;
+    file_inputs += "/test/input_json/FinancialModels/singleowner/2022.08.08_develop_branch_Biopower_Single_Owner_cmod_singleowner.json";
+    std::string file_outputs = SSCDIR;
+    file_outputs += "/test/input_json/FinancialModels/singleowner/2022.08.08_develop_branch_Biopower_Single_Owner_cmod_singleowner_outputs.json";
+    std::vector<std::string> compare_number_variables = { "ppa", "project_return_aftertax_npv", "lcoe_real", "lppa_nom"};
+    std::vector<std::string> compare_array_variables = {"cf_project_return_aftertax", "cf_annual_costs"};
+
+    Test("singleowner", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+}
+
+TEST_F(CmodSingleOwnerTest, DSLF) {
+    std::string file_inputs = SSCDIR;
+    file_inputs += "/test/input_json/FinancialModels/singleowner/2022.08.08_develop_branch_DSLF_Single_Owner_cmod_singleowner.json";
+    std::string file_outputs = SSCDIR;
+    file_outputs += "/test/input_json/FinancialModels/singleowner/2022.08.08_develop_branch_DSLF_Single_Owner_cmod_singleowner_outputs.json";
+    std::vector<std::string> compare_number_variables = { "ppa", "project_return_aftertax_npv", "lcoe_real", "lppa_nom" };
+    std::vector<std::string> compare_array_variables = { "cf_project_return_aftertax", "cf_annual_costs" };
+
+    Test("singleowner", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+}
+
+TEST_F(CmodSingleOwnerTest, EmpiricalTrough) {
+    std::string file_inputs = SSCDIR;
+    file_inputs += "/test/input_json/FinancialModels/singleowner/2022.08.08_develop_branch_Empirical_Trough_Single_Owner_cmod_singleowner.json";
+    std::string file_outputs = SSCDIR;
+    file_outputs += "/test/input_json/FinancialModels/singleowner/2022.08.08_develop_branch_Empirical_Trough_Single_Owner_cmod_singleowner_outputs.json";
+    std::vector<std::string> compare_number_variables = { "ppa", "project_return_aftertax_npv", "lcoe_real", "lppa_nom" };
+    std::vector<std::string> compare_array_variables = { "cf_project_return_aftertax", "cf_annual_costs" };
+
+    Test("singleowner", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+}
+
+TEST_F(CmodSingleOwnerTest, ETES) {
+    std::string file_inputs = SSCDIR;
+    file_inputs += "/test/input_json/FinancialModels/singleowner/2022.08.08_develop_branch_ETES_Single_Owner_cmod_singleowner.json";
+    std::string file_outputs = SSCDIR;
+    file_outputs += "/test/input_json/FinancialModels/singleowner/2022.08.08_develop_branch_ETES_Single_Owner_cmod_singleowner_outputs.json";
+    std::vector<std::string> compare_number_variables = { "ppa", "project_return_aftertax_npv", "lcoe_real", "lppa_nom" };
+    std::vector<std::string> compare_array_variables = { "cf_project_return_aftertax", "cf_annual_costs" };
+
+    Test("singleowner", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+}
+
+TEST_F(CmodSingleOwnerTest, PV) {
+    std::string file_inputs = SSCDIR;
+    file_inputs += "/test/input_json/FinancialModels/singleowner/2022.08.08_develop_branch_Flat_Plate_PV_Single_Owner_cmod_singleowner.json";
+    std::string file_outputs = SSCDIR;
+    file_outputs += "/test/input_json/FinancialModels/singleowner/2022.08.08_develop_branch_Flat_Plate_PV_Single_Owner_cmod_singleowner_outputs.json";
+    std::vector<std::string> compare_number_variables = { "ppa", "project_return_aftertax_npv", "lcoe_real", "lppa_nom" };
+    std::vector<std::string> compare_array_variables = { "cf_project_return_aftertax", "cf_annual_costs" };
+
+    Test("singleowner", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+}
+
+TEST_F(CmodSingleOwnerTest, FuelCell) {
+    std::string file_inputs = SSCDIR;
+    file_inputs += "/test/input_json/FinancialModels/singleowner/2022.08.08_develop_branch_Fuel_Cell_Single_Owner_cmod_singleowner.json";
+    std::string file_outputs = SSCDIR;
+    file_outputs += "/test/input_json/FinancialModels/singleowner/2022.08.08_develop_branch_Fuel_Cell_Single_Owner_cmod_singleowner_outputs.json";
+    std::vector<std::string> compare_number_variables = { "ppa", "project_return_aftertax_npv", "lcoe_real", "lppa_nom" };
+    std::vector<std::string> compare_array_variables = { "cf_project_return_aftertax", "cf_annual_costs" };
+
+    Test("singleowner", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+}
+
+TEST_F(CmodSingleOwnerTest, GenericBattery) {
+    std::string file_inputs = SSCDIR;
+    file_inputs += "/test/input_json/FinancialModels/singleowner/2022.08.08_develop_branch_Generic_Battery_Single_Owner_cmod_singleowner.json";
+    std::string file_outputs = SSCDIR;
+    file_outputs += "/test/input_json/FinancialModels/singleowner/2022.08.08_develop_branch_Generic_Battery_Single_Owner_cmod_singleowner_outputs.json";
+    std::vector<std::string> compare_number_variables = { "ppa", "project_return_aftertax_npv", "lcoe_real", "lppa_nom" };
+    std::vector<std::string> compare_array_variables = { "cf_project_return_aftertax", "cf_annual_costs" };
+
+    Test("singleowner", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+}
+
+TEST_F(CmodSingleOwnerTest, GenericCSP) {
+    std::string file_inputs = SSCDIR;
+    file_inputs += "/test/input_json/FinancialModels/singleowner/2022.08.08_develop_branch_Generic_CSP_System_Single_Owner_cmod_singleowner.json";
+    std::string file_outputs = SSCDIR;
+    file_outputs += "/test/input_json/FinancialModels/singleowner/2022.08.08_develop_branch_Generic_CSP_System_Single_Owner_cmod_singleowner_outputs.json";
+    std::vector<std::string> compare_number_variables = { "ppa", "project_return_aftertax_npv", "lcoe_real", "lppa_nom" };
+    std::vector<std::string> compare_array_variables = { "cf_project_return_aftertax", "cf_annual_costs" };
+
+    Test("singleowner", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+}
+
+TEST_F(CmodSingleOwnerTest, Generic) {
+    std::string file_inputs = SSCDIR;
+    file_inputs += "/test/input_json/FinancialModels/singleowner/2022.08.08_develop_branch_Generic_System_Single_Owner_cmod_singleowner.json";
+    std::string file_outputs = SSCDIR;
+    file_outputs += "/test/input_json/FinancialModels/singleowner/2022.08.08_develop_branch_Generic_System_Single_Owner_cmod_singleowner_outputs.json";
+    std::vector<std::string> compare_number_variables = { "ppa", "project_return_aftertax_npv", "lcoe_real", "lppa_nom" };
+    std::vector<std::string> compare_array_variables = { "cf_project_return_aftertax", "cf_annual_costs" };
+
+    Test("singleowner", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+}
+
+
+TEST_F(CmodSingleOwnerTest, Geotherrmal) {
+    std::string file_inputs = SSCDIR;
+    file_inputs += "/test/input_json/FinancialModels/singleowner/2022.08.08_develop_branch_Geothermal_Power_Single_Owner_cmod_singleowner.json";
+    std::string file_outputs = SSCDIR;
+    file_outputs += "/test/input_json/FinancialModels/singleowner/2022.08.08_develop_branch_Geothermal_Power_Single_Owner_cmod_singleowner_outputs.json";
+    std::vector<std::string> compare_number_variables = { "ppa", "project_return_aftertax_npv", "lcoe_real", "lppa_nom" };
+    std::vector<std::string> compare_array_variables = { "cf_project_return_aftertax", "cf_annual_costs" };
+
+    Test("singleowner", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+}
+
+TEST_F(CmodSingleOwnerTest, CPV) {
+    std::string file_inputs = SSCDIR;
+    file_inputs += "/test/input_json/FinancialModels/singleowner/2022.08.08_develop_branch_High-X_Concentrating_PV_Single_Owner_cmod_singleowner.json";
+    std::string file_outputs = SSCDIR;
+    file_outputs += "/test/input_json/FinancialModels/singleowner/2022.08.08_develop_branch_High-X_Concentrating_PV_Single_Owner_cmod_singleowner_outputs.json";
+    std::vector<std::string> compare_number_variables = { "ppa", "project_return_aftertax_npv", "lcoe_real", "lppa_nom" };
+    std::vector<std::string> compare_array_variables = { "cf_project_return_aftertax", "cf_annual_costs" };
+
+
+    Test("singleowner", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+}
+
+
+TEST_F(CmodSingleOwnerTest, MSLF) {
+    std::string file_inputs = SSCDIR;
+    file_inputs += "/test/input_json/FinancialModels/singleowner/2022.08.08_develop_branch_MSLF_Single_Owner_cmod_singleowner.json";
+    std::string file_outputs = SSCDIR;
+    file_outputs += "/test/input_json/FinancialModels/singleowner/2022.08.08_develop_branch_MSLF_Single_Owner_cmod_singleowner_outputs.json";
+    std::vector<std::string> compare_number_variables = { "ppa", "project_return_aftertax_npv", "lcoe_real", "lppa_nom" };
+    std::vector<std::string> compare_array_variables = { "cf_project_return_aftertax", "cf_annual_costs" };
+
+    Test("singleowner", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+}
+
+TEST_F(CmodSingleOwnerTest, MSPT) {
+    std::string file_inputs = SSCDIR;
+    file_inputs += "/test/input_json/FinancialModels/singleowner/2022.08.08_develop_branch_MSPT_Single_Owner_cmod_singleowner.json";
+    std::string file_outputs = SSCDIR;
+    file_outputs += "/test/input_json/FinancialModels/singleowner/2022.08.08_develop_branch_MSPT_Single_Owner_cmod_singleowner_outputs.json";
+    std::vector<std::string> compare_number_variables = { "ppa", "project_return_aftertax_npv", "lcoe_real", "lppa_nom" };
+    std::vector<std::string> compare_array_variables = { "cf_project_return_aftertax", "cf_annual_costs" };
+
+    Test("singleowner", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+}
+
+TEST_F(CmodSingleOwnerTest, PhysicalTrough) {
+    std::string file_inputs = SSCDIR;
+    file_inputs += "/test/input_json/FinancialModels/singleowner/2022.08.08_develop_branch_Physical_Trough_Single_Owner_cmod_singleowner.json";
+    std::string file_outputs = SSCDIR;
+    file_outputs += "/test/input_json/FinancialModels/singleowner/2022.08.08_develop_branch_Physical_Trough_Single_Owner_cmod_singleowner_outputs.json";
+    std::vector<std::string> compare_number_variables = { "ppa", "project_return_aftertax_npv", "lcoe_real", "lppa_nom" };
+    std::vector<std::string> compare_array_variables = { "cf_project_return_aftertax", "cf_annual_costs" };
+
+    Test("singleowner", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+}
+
+
+TEST_F(CmodSingleOwnerTest, PVBattery) {
+    std::string file_inputs = SSCDIR;
+    file_inputs += "/test/input_json/FinancialModels/singleowner/2022.08.08_develop_branch_PV_Battery_Single_Owner_cmod_singleowner.json";
+    std::string file_outputs = SSCDIR;
+    file_outputs += "/test/input_json/FinancialModels/singleowner/2022.08.08_develop_branch_PV_Battery_Single_Owner_cmod_singleowner_outputs.json";
+    std::vector<std::string> compare_number_variables = { "ppa", "project_return_aftertax_npv", "lcoe_real", "lppa_nom" };
+    std::vector<std::string> compare_array_variables = { "cf_project_return_aftertax", "cf_annual_costs" };
+
+    Test("singleowner", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+}
+
+
+TEST_F(CmodSingleOwnerTest, PVWatts) {
+    std::string file_inputs = SSCDIR;
+    file_inputs += "/test/input_json/FinancialModels/singleowner/2022.08.08_develop_branch_PVWatts_Single_Owner_cmod_singleowner.json";
+    std::string file_outputs = SSCDIR;
+    file_outputs += "/test/input_json/FinancialModels/singleowner/2022.08.08_develop_branch_PVWatts_Single_Owner_cmod_singleowner_outputs.json";
+    std::vector<std::string> compare_number_variables = { "ppa", "project_return_aftertax_npv", "lcoe_real", "lppa_nom" };
+    std::vector<std::string> compare_array_variables = { "cf_project_return_aftertax", "cf_annual_costs" };
+
+    Test("singleowner", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+}
+
+TEST_F(CmodSingleOwnerTest, StandaloneBattery) {
+    std::string file_inputs = SSCDIR;
+    file_inputs += "/test/input_json/FinancialModels/singleowner/2022.08.08_develop_branch_Standalone_Battery_Single_Owner_cmod_singleowner.json";
+    std::string file_outputs = SSCDIR;
+    file_outputs += "/test/input_json/FinancialModels/singleowner/2022.08.08_develop_branch_Standalone_Battery_Single_Owner_cmod_singleowner_outputs.json";
+    std::vector<std::string> compare_number_variables = { "ppa", "project_return_aftertax_npv", "lcoe_real", "lppa_nom" };
+    std::vector<std::string> compare_array_variables = { "cf_project_return_aftertax", "cf_annual_costs" };
+
+    Test("singleowner", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+}
+
+
+TEST_F(CmodSingleOwnerTest, Wind) {
+    std::string file_inputs = SSCDIR;
+    file_inputs += "/test/input_json/FinancialModels/singleowner/2022.08.08_develop_branch_Wind_Power_Single_Owner_cmod_singleowner.json";
+    std::string file_outputs = SSCDIR;
+    file_outputs += "/test/input_json/FinancialModels/singleowner/2022.08.08_develop_branch_Wind_Power_Single_Owner_cmod_singleowner_outputs.json";
+    std::vector<std::string> compare_number_variables = { "ppa", "project_return_aftertax_npv", "lcoe_real", "lppa_nom" };
+    std::vector<std::string> compare_array_variables = { "cf_project_return_aftertax", "cf_annual_costs" };
+
+    Test("singleowner", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+}
+
+
