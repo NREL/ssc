@@ -313,7 +313,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t year, size_t ho
                 }
             }
             else
-                powerBattery = -energyNeededToFillBattery / _dt_hour;
+                powerBattery = _Battery->calculate_max_charge_kw();
         }
 
         // Discharge if we are in a high-price period and have battery and inverter capacity
