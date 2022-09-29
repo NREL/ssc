@@ -879,7 +879,8 @@ public:
                 irr.get_angles(&aoi, &stilt, &sazi, &rot, &btd);
                 irr.get_poa(&ibeam, &iskydiff, &ignddiff, nullptr, nullptr, nullptr); //nullptr used when you don't need to retrieve the output
 
-                if (module.bifaciality > 0)
+                //if (module.bifaciality > 0)
+                if (module.bifaciality != 0)
                 {
                     irr.calc_rear_side(bifacialTransmissionFactor, 1, module.length * pv.nmody);
                     irear = irr.get_poa_rear() * module.bifaciality; //total rear irradiance is returned, so must multiply module bifaciality
@@ -956,7 +957,8 @@ public:
                             irr.calc(); // recalculate POA and aoi, and rear side irradiance if bifacial, in the new stow position
 
                             double irear_stow = 0.0;
-                            if (module.bifaciality > 0)
+ //                           if (module.bifaciality > 0)
+                            if (module.bifaciality != 0)
                             {
                                 irr.calc_rear_side(bifacialTransmissionFactor, 1, module.length * pv.nmody);
                                 irear_stow = irr.get_poa_rear() * module.bifaciality; //total rear irradiance is returned, so must multiply module bifaciality
