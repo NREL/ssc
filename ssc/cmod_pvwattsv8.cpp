@@ -784,6 +784,7 @@ public:
 
         size_t idx_life = 0;
         float percent = 0;
+        int n_alb_errs = 0;
         for (size_t y = 0; y < nyears; y++)
         {
             for (size_t idx = 0; idx < nrec; idx++)
@@ -815,20 +816,26 @@ public:
                 p_snow[idx] = (ssc_number_t)wf.snow; // if there is no snow data in the weather file, this will be NaN- consistent with pvsamv1
                 p_tmod[idx] = (ssc_number_t)wf.tdry;
 
-                // conditions to use albedo from wf:
-                //   * use_wf_albedo = 1 and wf.alb is valid
-                // conditions to use albedo user input:
-                //   * use_wf_albedo = 0 and albedo user input is valid
-                // conditions to use default input (use snow default if snow depth data is valid and snow model enabled)
-                //   * use_wf_albedo = 0 and albedo user input invalid
-                //   * use_wf_albedo = 1 and wf.alb invalid
-
+                // use wf albedo if use_wf_albedo is true and wf albedo is valid
+                // use user albedo if use_wf_albedo is false and user albedo is valid
+                // otherwise use default albedo (snow or no snow)
                 double alb = 0;
-                bool user_albedo_error = false;
-
-                if ( ( std::isfinite(wf.alb) && use_wf_albedo && ( wf.alb > 0 && wf.alb < 1 ) ) ) 
-                    alb = wf.alb;
-                else if (!use_wf_albedo)
+                if (use_wf_albedo)
+                {
+                    if ((std::isfinite(wf.alb) && (wf.alb > 0 && wf.alb < 1)))
+                        alb = wf.alb;
+                    else if (n_alb_errs < 5) // display warning up to 5 times
+                    {
+                        log(util::format("Weather file albedo is not valid. "
+                            "Using default albedo value of %f (snow) or %f (no snow). "
+                            "This warning only appears for the first five instances of this error. "
+                            "[year:%d month:%d day:%d hour:%d minute:%lg]. ",
+                            as_double("albedo_default_snow"), as_double("albedo_default"),
+                            wf.year, wf.month, wf.day, wf.hour, wf.minute), SSC_NOTICE);
+                        n_alb_errs++;
+                    }
+                }
+                else
                 {
                     if (albedo_len == 1)
                         alb = albedo[0];
@@ -836,16 +843,24 @@ public:
                         alb = albedo[wf.month - 1];
                     else if (albedo_len == nrec)
                         alb = albedo[idx];
-                    else if (is_assigned("albedo"))
-                        log(util::format("Albedo input array is not the correct length (1, 12, or %d entries) or has invalid value(s). Using default albedo value of %f (snow) or %f (no snow).", nrec, as_double("albedo_default_snow"), as_double("albedo_default")), SSC_WARNING);
+                    else if (is_assigned("albedo") && (idx == 0)) // display warning once
+                        log(util::format("Albedo input array is not the correct length (1, 12, or %d entries). "
+                            "Using default albedo value of %f (snow) or %f (no snow). "
+                            "[year:%d month:%d day:%d hour:%d minute:%lg]. ",
+                            nrec, as_double("albedo_default_snow"), as_double("albedo_default"),
+                            wf.year, wf.month, wf.day, wf.hour, wf.minute), SSC_NOTICE);
                 }
-
                 if (alb <= 0 || alb >= 1)
                 {
                     if (std::isfinite(wf.snow) && wf.snow > 0.5 && wf.snow < 999 && en_snowloss)
                         alb = as_double("albedo_default_snow");
                     else
                         alb = as_double("albedo_default");
+                    if (!use_wf_albedo && n_alb_errs < 5) // display warning up to 5 times
+                    {
+                        log(util::format("Albedo input value is not valid for time step %d. Using default albedo value of %f (snow) or %f (no snow). This warning only appears for the first five instances of this error.", idx, as_double("albedo_default_snow"), as_double("albedo_default")), SSC_NOTICE);
+                        n_alb_errs++;
+                    }
                 }
 
                 // report albedo value as output
@@ -902,12 +917,12 @@ public:
 
                 if (-1 == code)
                 {
-                    log(util::format("Beam irradiance exceeded extraterrestrial value at record [y:%d m:%d d:%d h:%d minute:%lg].",
+                    log(util::format("Beam irradiance exceeded extraterrestrial value at record [year:%d month:%d day:%d hour:%d minute:%lg].",
                         wf.year, wf.month, wf.day, wf.hour, wf.minute));
                 }
                 else if (0 != code)
                     throw exec_error("pvwattsv8",
-                        util::format("Failed to process irradiation on surface (code: %d) [y:%d m:%d d:%d h:%d minute:%lg].",
+                        util::format("Failed to process irradiation on surface (code: %d) [year:%d month:%d day:%d hour:%d minute:%lg].",
                             code, wf.year, wf.month, wf.day, wf.hour, wf.minute));
 
                 p_sunup[idx] = (ssc_number_t)sunup;
