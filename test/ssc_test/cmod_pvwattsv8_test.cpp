@@ -50,30 +50,30 @@ TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, DefaultNoFinancialModel_cmod_pvwat
     //v5 is 6909.79, decrease of 2.4%: decreases due to shading, module cover losses, and spectral losses
     //v7 prior to module coeff changes is 6750.4236, increase of 3.7% due to improved tempco for standard module
     //v7 final version is 6999.0158, decrease of 0.4% due to model updates
-    EXPECT_NEAR(tmp, 7070.4729, error_tolerance) << "Annual energy.";
+    EXPECT_NEAR(tmp, 7030.3868, error_tolerance) << "Annual energy.";
 
-    EXPECT_NEAR((double)monthly_energy[0], 443.923, error_tolerance) << "Monthly energy of January";
-    EXPECT_NEAR((double)monthly_energy[1], 490.128, error_tolerance) << "Monthly energy of February";
-    EXPECT_NEAR((double)monthly_energy[2], 603.546, error_tolerance) << "Monthly energy of March";
-    EXPECT_NEAR((double)monthly_energy[3], 686.946, error_tolerance) << "Monthly energy of April";
-    EXPECT_NEAR((double)monthly_energy[4], 732.064, error_tolerance) << "Monthly energy of May";
-    EXPECT_NEAR((double)monthly_energy[5], 683.545, error_tolerance) << "Monthly energy of June";
-    EXPECT_NEAR((double)monthly_energy[6], 681.598, error_tolerance) << "Monthly energy of July";
-    EXPECT_NEAR((double)monthly_energy[7], 664.526, error_tolerance) << "Monthly energy of August";
-    EXPECT_NEAR((double)monthly_energy[8], 612.192, error_tolerance) << "Monthly energy of September";
-    EXPECT_NEAR((double)monthly_energy[9], 585.354, error_tolerance) << "Monthly energy of October";
-    EXPECT_NEAR((double)monthly_energy[10], 464.264, error_tolerance) << "Monthly energy of November";
-    EXPECT_NEAR((double)monthly_energy[11], 422.388, error_tolerance) << "Month energy of December";
+    EXPECT_NEAR((double)monthly_energy[0], 440.734, error_tolerance) << "Monthly energy of January";
+    EXPECT_NEAR((double)monthly_energy[1], 487.393, error_tolerance) << "Monthly energy of February";
+    EXPECT_NEAR((double)monthly_energy[2], 600.191, error_tolerance) << "Monthly energy of March";
+    EXPECT_NEAR((double)monthly_energy[3], 683.969, error_tolerance) << "Monthly energy of April";
+    EXPECT_NEAR((double)monthly_energy[4], 728.325, error_tolerance) << "Monthly energy of May";
+    EXPECT_NEAR((double)monthly_energy[5], 679.666, error_tolerance) << "Monthly energy of June";
+    EXPECT_NEAR((double)monthly_energy[6], 677.523, error_tolerance) << "Monthly energy of July";
+    EXPECT_NEAR((double)monthly_energy[7], 661.055, error_tolerance) << "Monthly energy of August";
+    EXPECT_NEAR((double)monthly_energy[8], 608.943, error_tolerance) << "Monthly energy of September";
+    EXPECT_NEAR((double)monthly_energy[9], 582.269, error_tolerance) << "Monthly energy of October";
+    EXPECT_NEAR((double)monthly_energy[10], 461.206, error_tolerance) << "Monthly energy of November";
+    EXPECT_NEAR((double)monthly_energy[11], 419.113, error_tolerance) << "Month energy of December";
 
     ssc_number_t capacity_factor, capacity_factor_ac;
     ssc_data_get_number(data, "capacity_factor", &capacity_factor);
-    EXPECT_NEAR(capacity_factor, 20.178, error_tolerance) << "DC Capacity factor";
+    EXPECT_NEAR(capacity_factor, 20.064, error_tolerance) << "DC Capacity factor";
     ssc_data_get_number(data, "capacity_factor_ac", &capacity_factor_ac);
-    EXPECT_NEAR(capacity_factor_ac, 24.214, error_tolerance) << "AC Capacity factor";
+    EXPECT_NEAR(capacity_factor_ac, 24.077, error_tolerance) << "AC Capacity factor";
 
     ssc_number_t kwh_per_kw;
     ssc_data_get_number(data, "kwh_per_kw", &kwh_per_kw);
-    EXPECT_NEAR(kwh_per_kw, 1767.618, error_tolerance) << "Energy yield";
+    EXPECT_NEAR(kwh_per_kw, 1757.597, error_tolerance) << "Energy yield";
 
 }
 
@@ -89,7 +89,7 @@ TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, DifferentTechnologyInputs_cmod_pvw
     //V7 after fix for AR glass:
     //annual_energy_expected = { 7001.83, 7032.99, 7079.73, 7001.83, 6969.07, 8754.11, 8696.94, 9861.27 };
    //V8 results
-    std::vector<double> annual_energy_expected = { 7070.47, 7068.35, 7126.57, 7070.47, 7049.49, 8856.67, 8800.49, 9933.89 };
+    std::vector<double> annual_energy_expected = { 7030.39, 7028.27, 7086.74, 7030.39, 7009.26, 8825.16, 8768.33, 9907.02 };
     //wrt V7 after AR fix: standard fixed +1.0%, premium fixed +0.5%, thinfilm fixed +0.7%, standard fixed +1.0%, standard roof +1.2%, standard 1-axis +1.2%, standard backtrack +1.2%, standard 2-axis +0.7%
     //v8 wrt v7 in 2020.11.29 release: standard fixed +1.0%, premium fixed +0.5%, thinfilm fixed +0.7%, standard fixed +1.0%, standard roof +1.1%, standard 1-axis +0.8%, standard backtrack +0.9%, standard 2-axis +0.7%
 
@@ -139,7 +139,7 @@ TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, LargeSystem_cmod_pvwattsv8)
 	//PVWattsV5 results: std::vector<double> annual_energy_expected = { 1727447.4, 1701094.0, 2150252.8, 2181925.8, 2422683.7 };
 	//PVWattsV7 prior to module coeff updates: std::vector<double> annual_energy_expected = { 1686353.2, 1673371.8, 2123603.8, 2105794.1, 2407940.7 };
 	//PVWattsV7 final results: std::vector<double> annual_energy_expected = { 1747992.2, 1742760.1, 2190219.7, 2175654.8,  2465319.2};
-    std::vector<double> annual_energy_expected = { 1765685.4, 1762371.4, 2208742.5, 2195064.6,  2483471.3 };
+    std::vector<double> annual_energy_expected = { 1755672.6, 1752314.7, 2200837.6, 2187001.8,  2476754.0 };
 
     std::map<std::string, double> pairs;
     size_t count = 0;
@@ -182,13 +182,13 @@ TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, SubhourlyWeather_cmod_pvwattsv8) {
         ssc_number_t annual_energy;
         ssc_data_get_number(data, "annual_energy", &annual_energy);
         //EXPECT_NEAR(annual_energy, 6523.727, error_tolerance) << "Annual energy.";
-        EXPECT_NEAR(annual_energy, 6590.761, error_tolerance) << "Annual energy.";
+        EXPECT_NEAR(annual_energy, 6553.247, error_tolerance) << "Annual energy.";
 
         ssc_number_t capacity_factor, capacity_factor_ac;
         ssc_data_get_number(data, "capacity_factor", &capacity_factor);
-        EXPECT_NEAR(capacity_factor, 18.87, 0.1) << "DC Capacity factor";
+        EXPECT_NEAR(capacity_factor, 18.70, 0.1) << "DC Capacity factor";
         ssc_data_get_number(data, "capacity_factor_ac", &capacity_factor_ac);
-        EXPECT_NEAR(capacity_factor_ac, 22.57, 0.1) << "AC Capacity factor";
+        EXPECT_NEAR(capacity_factor_ac, 22.44, 0.1) << "AC Capacity factor";
 
     }
 }
@@ -213,7 +213,7 @@ TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, LifetimeModeTest_cmod_pvwattsv8) {
     {
         ssc_number_t annual_energy;
         ssc_data_get_number(data, "annual_energy", &annual_energy);
-        EXPECT_NEAR(annual_energy, 7070.4729, error_tolerance) << "Annual energy degradation array length 1.";
+        EXPECT_NEAR(annual_energy, 7030.3868, error_tolerance) << "Annual energy degradation array length 1.";
     }
 
     // next, test degradation array with length the same as analysis period, which should also work
@@ -228,7 +228,7 @@ TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, LifetimeModeTest_cmod_pvwattsv8) {
     {
         ssc_number_t annual_energy;
         ssc_data_get_number(data, "annual_energy", &annual_energy);
-        EXPECT_NEAR(annual_energy, 7035.163, error_tolerance) << "Annual energy degradation array length 25.";
+        EXPECT_NEAR(annual_energy, 6994.9153, error_tolerance) << "Annual energy degradation array length 25.";
     }
 
     // lastly, test degradation array with the wrong length, which should fail
@@ -278,7 +278,7 @@ TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, SnowModelTests_cmod_pvwattsv8) {
     // Snow events in January, February, April, October, and December
     ssc_number_t january_energy;
     january_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[0]; //retrieve only january's value
-    EXPECT_NEAR((double)january_energy, 419.110, 0.01) << "Fixed tilt energy in January after snow loss";
+    EXPECT_NEAR((double)january_energy, 416.133, 0.01) << "Fixed tilt energy in January after snow loss";
 
     int count;
     ssc_number_t* hourly_snowderate = ssc_data_get_array(data, "dcsnowderate", &count);
@@ -303,7 +303,7 @@ TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, SnowModelTests_cmod_pvwattsv8) {
 
     // Snow events in January, February, April, October, and December
     january_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[0]; //retrieve only january's value
-    EXPECT_NEAR((double)january_energy, 512.287, 0.01) << "Single-axis tracker energy in January after snow loss";
+    EXPECT_NEAR((double)january_energy, 509.783, 0.01) << "Single-axis tracker energy in January after snow loss";
 
     // A tracker row is assumed to be nx1 panels, so all derates should be either 0 or 1
     hourly_snowderate = ssc_data_get_array(data, "dcsnowderate", nullptr);
@@ -321,7 +321,7 @@ TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, SnowModelTests_cmod_pvwattsv8) {
 
     // Snow events in January, February, April, October, and December
     january_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[0]; //retrieve only january's value
-    EXPECT_NEAR((double)january_energy, 508.062, 0.01) << "Backtracking energy in January after snow loss";
+    EXPECT_NEAR((double)january_energy, 505.546, 0.01) << "Backtracking energy in January after snow loss";
 
     // A tracker row is assumed to be nx1 panels, so all derates should be either 0 or 1
     hourly_snowderate = ssc_data_get_array(data, "dcsnowderate", nullptr);
@@ -412,9 +412,75 @@ TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, IntermediateOutputTesting)
     EXPECT_NEAR(dc, 2529.615, 0.01) << "DC Energy at noon";
 
     ac = ssc_data_get_array(data, "ac", nullptr)[12];
-    EXPECT_NEAR(ac, 2428.431, 0.01) << "AC Energy at noon";
+    EXPECT_NEAR(ac, 2424.127, 0.01) << "AC Energy at noon";
 
     free_weatherdata_array(weather_data);
 }
 
 
+TEST_F(CmodPVWattsv8Test, DCACRatio_0_02) {
+    std::string file_inputs = SSCDIR;
+    file_inputs += "/test/input_json/TechnologyModels/pvwattsv8/dc_ac_ratio_0.02_PVWatts_Single_Owner_cmod_pvwattsv8.json";
+    std::string file_outputs = SSCDIR;
+    file_outputs += "/test/input_json/TechnologyModels/pvwattsv8/dc_ac_ratio_0.02_PVWatts_Single_Owner_cmod_pvwattsv8_outputs.json";
+    std::vector<std::string> compare_number_variables = { "annual_energy" };
+    std::vector<std::string> compare_array_variables = { "gen", "inv_eff_output" };
+
+    Test("pvwattsv8", file_inputs, file_outputs, compare_number_variables, compare_array_variables, 0.01);
+}
+
+TEST_F(CmodPVWattsv8Test, DCACRatio_0_5) {
+    std::string file_inputs = SSCDIR;
+    file_inputs += "/test/input_json/TechnologyModels/pvwattsv8/dc_ac_ratio_0.5_PVWatts_Single_Owner_cmod_pvwattsv8.json";
+    std::string file_outputs = SSCDIR;
+    file_outputs += "/test/input_json/TechnologyModels/pvwattsv8/dc_ac_ratio_0.5_PVWatts_Single_Owner_cmod_pvwattsv8_outputs.json";
+    std::vector<std::string> compare_number_variables = { "annual_energy" };
+    std::vector<std::string> compare_array_variables = { "gen", "inv_eff_output" };
+
+    Test("pvwattsv8", file_inputs, file_outputs, compare_number_variables, compare_array_variables, 0.01);
+}
+
+
+TEST_F(CmodPVWattsv8Test, DCACRatio_1_0) {
+    std::string file_inputs = SSCDIR;
+    file_inputs += "/test/input_json/TechnologyModels/pvwattsv8/dc_ac_ratio_1_PVWatts_Single_Owner_cmod_pvwattsv8.json";
+    std::string file_outputs = SSCDIR;
+    file_outputs += "/test/input_json/TechnologyModels/pvwattsv8/dc_ac_ratio_1_PVWatts_Single_Owner_cmod_pvwattsv8_outputs.json";
+    std::vector<std::string> compare_number_variables = { "annual_energy" };
+    std::vector<std::string> compare_array_variables = { "gen", "inv_eff_output" };
+
+    Test("pvwattsv8", file_inputs, file_outputs, compare_number_variables, compare_array_variables, 0.01);
+}
+
+TEST_F(CmodPVWattsv8Test, DCACRatio_1_5) {
+    std::string file_inputs = SSCDIR;
+    file_inputs += "/test/input_json/TechnologyModels/pvwattsv8/dc_ac_ratio_1.5_PVWatts_Single_Owner_cmod_pvwattsv8.json";
+    std::string file_outputs = SSCDIR;
+    file_outputs += "/test/input_json/TechnologyModels/pvwattsv8/dc_ac_ratio_1.5_PVWatts_Single_Owner_cmod_pvwattsv8_outputs.json";
+    std::vector<std::string> compare_number_variables = { "annual_energy" };
+    std::vector<std::string> compare_array_variables = { "gen", "inv_eff_output" };
+
+    Test("pvwattsv8", file_inputs, file_outputs, compare_number_variables, compare_array_variables, 0.01);
+}
+
+TEST_F(CmodPVWattsv8Test, DCACRatio_2_0) {
+    std::string file_inputs = SSCDIR;
+    file_inputs += "/test/input_json/TechnologyModels/pvwattsv8/dc_ac_ratio_2_PVWatts_Single_Owner_cmod_pvwattsv8.json";
+    std::string file_outputs = SSCDIR;
+    file_outputs += "/test/input_json/TechnologyModels/pvwattsv8/dc_ac_ratio_2_PVWatts_Single_Owner_cmod_pvwattsv8_outputs.json";
+    std::vector<std::string> compare_number_variables = { "annual_energy" };
+    std::vector<std::string> compare_array_variables = { "gen", "inv_eff_output" };
+
+    Test("pvwattsv8", file_inputs, file_outputs, compare_number_variables, compare_array_variables, 0.01);
+}
+
+TEST_F(CmodPVWattsv8Test, DCACRatio_10_0) {
+    std::string file_inputs = SSCDIR;
+    file_inputs += "/test/input_json/TechnologyModels/pvwattsv8/dc_ac_ratio_10_PVWatts_Single_Owner_cmod_pvwattsv8.json";
+    std::string file_outputs = SSCDIR;
+    file_outputs += "/test/input_json/TechnologyModels/pvwattsv8/dc_ac_ratio_10_PVWatts_Single_Owner_cmod_pvwattsv8_outputs.json";
+    std::vector<std::string> compare_number_variables = { "annual_energy" };
+    std::vector<std::string> compare_array_variables = { "gen", "inv_eff_output" };
+
+    Test("pvwattsv8", file_inputs, file_outputs, compare_number_variables, compare_array_variables, 0.01);
+}
