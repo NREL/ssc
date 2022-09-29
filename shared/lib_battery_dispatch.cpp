@@ -536,6 +536,7 @@ void dispatch_t::dispatch_dc_outage_step(size_t lifetimeIndex) {
 void dispatch_t::dispatch_ac_outage_step(size_t lifetimeIndex) {
     double crit_load_kwac = m_batteryPower->powerCritLoad;
     double pv_kwac = m_batteryPower->powerSystem;
+    double fuel_cell_kwac = m_batteryPower->powerFuelCell;
     double ac_loss_percent = m_batteryPower->acLossPostBattery;
 
     double max_discharge_kwdc = _Battery->calculate_max_discharge_kw();
@@ -545,16 +546,16 @@ void dispatch_t::dispatch_ac_outage_step(size_t lifetimeIndex) {
     double max_charge_kwdc = _Battery->calculate_max_charge_kw();
     max_charge_kwdc = std::fmax(max_charge_kwdc, -1.0 * m_batteryPower->powerBatteryChargeMaxDC); // Max, since charging numbers are negative
 
-    if (pv_kwac * (1 - ac_loss_percent) > crit_load_kwac) {
-        double remaining_kwdc = -(pv_kwac * (1 - ac_loss_percent) - crit_load_kwac) * m_batteryPower->singlePointEfficiencyACToDC;
+    if ((pv_kwac + fuel_cell_kwac) * (1 - ac_loss_percent) > crit_load_kwac) {
+        double remaining_kwdc = -((pv_kwac + fuel_cell_kwac) * (1 - ac_loss_percent) - crit_load_kwac) * m_batteryPower->singlePointEfficiencyACToDC;
         remaining_kwdc = fmax(remaining_kwdc, max_charge_kwdc);
         m_batteryPower->powerBatteryTarget = remaining_kwdc;
         m_batteryPower->powerBatteryDC = remaining_kwdc;
         runDispatch(lifetimeIndex);
     }
     else {
-        double max_to_load_kwac = (max_discharge_kwac + pv_kwac) * (1 - ac_loss_percent);
-        double required_kwdc = (crit_load_kwac - pv_kwac * (1 - ac_loss_percent)) / m_batteryPower->singlePointEfficiencyDCToAC;
+        double max_to_load_kwac = (max_discharge_kwac + pv_kwac + fuel_cell_kwac) * (1 - ac_loss_percent);
+        double required_kwdc = (crit_load_kwac - (pv_kwac + fuel_cell_kwac) * (1 - ac_loss_percent)) / m_batteryPower->singlePointEfficiencyDCToAC;
         required_kwdc = fmin(required_kwdc, max_discharge_kwdc);
 
         if (max_to_load_kwac > crit_load_kwac) {
