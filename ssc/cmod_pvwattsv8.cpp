@@ -812,24 +812,31 @@ public:
                 p_snow[idx] = (ssc_number_t)wf.snow; // if there is no snow data in the weather file, this will be NaN- consistent with pvsamv1
                 p_tmod[idx] = (ssc_number_t)wf.tdry;
 
-                // set to default value from var table REQUIRED_IF field
-                double alb;
-                if (std::isfinite(wf.snow) && wf.snow > 0.5 && wf.snow < 999 && en_snowloss)
-                    alb = as_double("albedo_default_snow");
-                else
-                    alb = as_double("albedo_default");
+                // conditions to use albedo from wf:
+                //   * use_wf_albedo = 1 and wf.alb is valid
+                // conditions to use albedo user input:
+                //   * use_wf_albedo = 0 and albedo user input is valid
+                // conditions to use default input (use snow default if snow depth data is valid and snow model enabled)
+                //   * use_wf_albedo = 0 and albedo user input invalid
+                //   * use_wf_albedo = 1 and wf.alb invalid
 
-                // if albedo user input is a single, monthly, or time series value, then assign the value to alb
-                if (albedo_len == 1 )
-                    alb = albedo[0];
-                else if (albedo_len == 12)
-                    alb = albedo[wf.month - 1];
-                else if (albedo_len == nrec)
-                    alb = albedo[idx];
-                else if (is_assigned("albedo") && (idx == 0) ) // display warning once
-                    log(util::format("Albedo input array is not the correct length (1, 12, or %d entries). Using default albedo value of %f (snow) or %f (no snow).", nrec, as_double("albedo_default_snow"), as_double("albedo_default")), SSC_WARNING);
+                double alb = 0;
+                bool user_albedo_error = false;
 
-                // check albedo is valid value between 0 and 1
+                if ( ( std::isfinite(wf.alb) && use_wf_albedo && ( wf.alb > 0 && wf.alb < 1 ) ) ) 
+                    alb = wf.alb;
+                else if (!use_wf_albedo)
+                {
+                    if (albedo_len == 1)
+                        alb = albedo[0];
+                    else if (albedo_len == 12)
+                        alb = albedo[wf.month - 1];
+                    else if (albedo_len == nrec)
+                        alb = albedo[idx];
+                    else if (is_assigned("albedo"))
+                        log(util::format("Albedo input array is not the correct length (1, 12, or %d entries) or has invalid value(s). Using default albedo value of %f (snow) or %f (no snow).", nrec, as_double("albedo_default_snow"), as_double("albedo_default")), SSC_WARNING);
+                }
+
                 if (alb <= 0 || alb >= 1)
                 {
                     if (std::isfinite(wf.snow) && wf.snow > 0.5 && wf.snow < 999 && en_snowloss)
@@ -837,15 +844,6 @@ public:
                     else
                         alb = as_double("albedo_default");
                 }
-
-                // conditions to use albedo from wf instead of albedo user input:
-                //   * wf.alb exists and is valid and use_wf_albedo = 1
-                // conditions to use albedo user input:
-                //   * albedo_len > 0 and use_wf_albedo = 0
-                //   * albedo_len > 0 and use_wf_albedo = 1 and wf.alb does not exist
-                //   * albedo_len > 0 and use_wf_albedo = 1 and wf.alb has invalid values
-                 if ( ( std::isfinite(wf.alb) && ( wf.alb > 0 && wf.alb < 1 ) ) && ( albedo_len == 0 && use_wf_albedo ))
-                    alb = wf.alb;
 
                 // report albedo value as output
                 p_alb[idx] = (ssc_number_t)alb;
