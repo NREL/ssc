@@ -883,7 +883,7 @@ public:
                 if (module.bifaciality != 0)
                 {
                     irr.calc_rear_side(bifacialTransmissionFactor, 1, module.length * pv.nmody);
-                    irear = irr.get_poa_rear() * module.bifaciality; //total rear irradiance is returned, so must multiply module bifaciality
+                    irear = irr.get_poa_rear();// * module.bifaciality; //total rear irradiance is returned, so must multiply module bifaciality
                 }
 
                 if (-1 == code)
