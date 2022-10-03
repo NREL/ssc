@@ -1206,7 +1206,9 @@ public:
                         : (ibeam + iskydiff + ignddiff); // otherwise, use the 'linearly' derated beam irradiance
 
                     // set up inputs to module model for both temperature and subsequent CEC module model calculations
-                    pvinput_t in((f_nonlinear < 1.0 && poa > 0.0) ? ibeam_unselfshaded : ibeam, iskydiff, ignddiff, irear * module.bifaciality, poa_for_power,
+                    // bifaciality is applied to irear on line 885 above for fixed arrays and line 962 for trackers - so, module.bifaciality should not be applied again here - SAM issue 1151
+                    //pvinput_t in((f_nonlinear < 1.0 && poa > 0.0) ? ibeam_unselfshaded : ibeam, iskydiff, ignddiff, irear* module.bifaciality, poa_for_power,
+                    pvinput_t in((f_nonlinear < 1.0 && poa > 0.0) ? ibeam_unselfshaded : ibeam, iskydiff, ignddiff, irear, poa_for_power,
                         wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres,
                         solzen, aoi, hdr.elev,
                         stilt, sazi,
