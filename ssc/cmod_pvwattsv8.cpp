@@ -879,11 +879,10 @@ public:
                 irr.get_angles(&aoi, &stilt, &sazi, &rot, &btd);
                 irr.get_poa(&ibeam, &iskydiff, &ignddiff, nullptr, nullptr, nullptr); //nullptr used when you don't need to retrieve the output
 
-                //if (module.bifaciality > 0)
-                if (module.bifaciality != 0)
+                if (module.bifaciality > 0)
                 {
                     irr.calc_rear_side(bifacialTransmissionFactor, 1, module.length * pv.nmody);
-                    irear = irr.get_poa_rear();// * module.bifaciality; //total rear irradiance is returned, so must multiply module bifaciality
+                    irear = irr.get_poa_rear() * module.bifaciality; //total rear irradiance is returned, so must multiply module bifaciality
                 }
 
                 if (-1 == code)
@@ -957,8 +956,7 @@ public:
                             irr.calc(); // recalculate POA and aoi, and rear side irradiance if bifacial, in the new stow position
 
                             double irear_stow = 0.0;
- //                           if (module.bifaciality > 0)
-                            if (module.bifaciality != 0)
+                            if (module.bifaciality > 0)
                             {
                                 irr.calc_rear_side(bifacialTransmissionFactor, 1, module.length * pv.nmody);
                                 irear_stow = irr.get_poa_rear() * module.bifaciality; //total rear irradiance is returned, so must multiply module bifaciality
@@ -1175,7 +1173,9 @@ public:
                         : (ibeam + iskydiff + ignddiff); // otherwise, use the 'linearly' derated beam irradiance
 
                     // set up inputs to module model for both temperature and subsequent CEC module model calculations
-                    pvinput_t in((f_nonlinear < 1.0 && poa > 0.0) ? ibeam_unselfshaded : ibeam, iskydiff, ignddiff, irear * module.bifaciality, poa_for_power,
+                    // bifaciality is applied to irear on line 885 above for fixed arrays and line 962 for trackers - so, module.bifaciality should not be applied again here - SAM issue 1151
+                    //pvinput_t in((f_nonlinear < 1.0 && poa > 0.0) ? ibeam_unselfshaded : ibeam, iskydiff, ignddiff, irear* module.bifaciality, poa_for_power,
+                    pvinput_t in((f_nonlinear < 1.0 && poa > 0.0) ? ibeam_unselfshaded : ibeam, iskydiff, ignddiff, irear, poa_for_power,
                         wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres,
                         solzen, aoi, hdr.elev,
                         stilt, sazi,
