@@ -2330,7 +2330,7 @@ void cm_pvsamv1::exec()
                 annual_dc_loss_ond += sharedInverter->dcWiringLoss_ond_kW * ts_hour; // (TR)
                 annual_ac_loss_ond += sharedInverter->dcWiringLoss_ond_kW * ts_hour; // (TR)
 
-                annual_ac_wiring_loss += ac_wiringloss;
+                annual_ac_wiring_loss += ac_wiringloss * ts_hour;
             }
 
             if (iyear == 0 || save_full_lifetime_variables == 1)
