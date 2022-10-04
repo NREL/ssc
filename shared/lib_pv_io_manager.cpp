@@ -336,7 +336,8 @@ Subarray_IO::Subarray_IO(compute_module* cm, const std::string& cmName, size_t s
         if (trackMode == irrad::FIXED_TILT || trackMode == irrad::SINGLE_AXIS || trackMode == irrad::AZIMUTH_AXIS)
             if (!tiltEqualLatitude && !cm->is_assigned(prefix + "tilt"))
                 throw exec_error(cmName, "Subarray " + util::to_string((int)subarrayNumber) + " tilt required but not assigned.");
-        if (cm->is_assigned(prefix + "tilt")) tiltDegrees = fabs(cm->as_double(prefix + "tilt"));
+        if (cm->is_assigned(prefix + "tilt")) tiltDegrees = cm->as_double(prefix + "tilt");
+        if (tiltDegrees < 0.0) throw exec_error(cmName, "Subarray " + util::to_string((int)subarrayNumber) + "tilt angle must not be negative");
         //monthly tilt required if seasonal tracking mode selected- can't check for this in variable table so check here
         if (trackMode == irrad::SEASONAL_TILT && !cm->is_assigned(prefix + "monthly_tilt"))
             throw exec_error(cmName, "Subarray " + util::to_string((int)subarrayNumber) + " monthly tilt required but not assigned.");
