@@ -367,7 +367,7 @@ public:
 
         //Load the solar field adjustment factors
         sf_adjustment_factors sf_haf(this);
-        if (!sf_haf.setup())
+        if (!sf_haf.setup(hours))
 			throw exec_error("tcsgeneric_solar", "failed to setup sf adjustment factors: " + sf_haf.error());
         //allocate array to pass to tcs
         ssc_number_t *sf_adjust = allocate("sf_adjust", hours);
@@ -390,7 +390,7 @@ public:
 			throw exec_error("tcsgeneric_solar", "Failed to retrieve hourly net energy");
 
 		adjustment_factors haf(this, "adjust");
-		if (!haf.setup())
+		if (!haf.setup(count))
 			throw exec_error("tcsgeneric_solar", "failed to setup adjustment factors: " + haf.error());
 
 

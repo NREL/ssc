@@ -455,7 +455,7 @@ public:
 
 			// TODO - implement performance factors 
 			adjustment_factors haf(this, "adjust");
-			if (!haf.setup())
+			if (!haf.setup(8760, geo_inputs.mi_ProjectLifeYears))
 				throw exec_error("geothermal", "failed to setup adjustment factors: " + haf.error());
             double haf_input[8760];
             for (int i = 0; i < 8760; i++)

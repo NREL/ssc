@@ -383,9 +383,7 @@ public:
 
         setup_system_inputs(); // setup all basic system specifications
 
-        adjustment_factors haf(this, "adjust");
-        if (!haf.setup())
-            throw exec_error("pvwattsv5", "failed to setup adjustment factors: " + haf.error());
+        
 
         // read all the shading input data and calculate the hourly factors for use subsequently
         shading_factor_calculator shad;
@@ -448,6 +446,11 @@ public:
         }
         size_t nrec = wdprov->nrecords();
         size_t nlifetime = nrec * nyears;
+
+        adjustment_factors haf(this, "adjust");
+        if (!haf.setup(nrec, nyears))
+            throw exec_error("pvwattsv5", "failed to setup adjustment factors: " + haf.error());
+
         size_t step_per_hour = nrec / 8760;
         if (step_per_hour < 1 || step_per_hour > 60 || step_per_hour * 8760 != nrec)
             throw exec_error("pvwattsv5", util::format("invalid number of data records (%d): must be an integer multiple of 8760", (int)nrec));

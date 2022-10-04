@@ -642,9 +642,7 @@ public:
             }
         }
 
-        adjustment_factors haf(this, "adjust");
-        if (!haf.setup())
-            throw exec_error("pvwattsv8", "Failed to set up adjustment factors: " + haf.error());
+        
 
         // read all the shading input data and calculate the hourly factors for use subsequently
         // timeseries beam shading factors cannot be used with non-annual data
@@ -717,6 +715,11 @@ public:
 
         size_t nrec = wdprov->nrecords();
         size_t nlifetime = nrec * nyears;
+
+        adjustment_factors haf(this, "adjust");
+        if (!haf.setup(nrec, nyears))
+            throw exec_error("pvwattsv8", "Failed to set up adjustment factors: " + haf.error());
+
         size_t step_per_hour = 1; //default to 1 step per hour for non-annual simulations
         if (wdprov->annualSimulation())
             step_per_hour = nrec / 8760; //overwrite with real value for annual simulations
