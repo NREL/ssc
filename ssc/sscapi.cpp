@@ -38,7 +38,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 SSCEXPORT int ssc_version()
 {
-	return 274;
+	return 275;
 }
 
 SSCEXPORT const char *ssc_build_info()
@@ -77,6 +77,7 @@ extern module_entry_info
 	cm_entry_utilityrate3,
 	cm_entry_utilityrate4,
 	cm_entry_utilityrate5,
+    cm_entry_utilityrateforecast,
 	cm_entry_annualoutput,
 	cm_entry_cashloan,
 	cm_entry_thirdpartyownership,
@@ -147,7 +148,8 @@ extern module_entry_info
 	cm_entry_mhk_costs,
 	cm_entry_wave_file_reader,
 	cm_entry_grid,
-	cm_entry_battery_stateful
+	cm_entry_battery_stateful,
+    cm_entry_csp_subcomponent
 	;
 
 /* official module table */
@@ -175,6 +177,7 @@ static module_entry_info *module_table[] = {
 	&cm_entry_utilityrate3,
 	&cm_entry_utilityrate4,
 	&cm_entry_utilityrate5,
+    &cm_entry_utilityrateforecast,
 	&cm_entry_annualoutput,
 	&cm_entry_cashloan,
 	&cm_entry_thirdpartyownership,
@@ -246,6 +249,7 @@ static module_entry_info *module_table[] = {
 	&cm_entry_wave_file_reader,
 	&cm_entry_grid,
 	&cm_entry_battery_stateful,
+    &cm_entry_csp_subcomponent,
 	0 };
 
 SSCEXPORT ssc_module_t ssc_module_create( const char *name )
@@ -899,7 +903,8 @@ SSCEXPORT ssc_data_t json_to_ssc_data(const char* json_str) {
     auto vt = new var_table;
 //    std::unique_ptr<var_table> vt = std::unique_ptr<var_table>(new var_table);
     rapidjson::Document document;
-    document.Parse(json_str);
+    //document.Parse(json_str); Parse<kParseDefaultFlags>(str)
+    document.Parse<rapidjson::kParseNanAndInfFlag>(json_str); // Allow parsing NaN, Inf, Infinity, -Inf and -Infinity as double values (relaxed JSON syntax).
     if (document.HasParseError()) {
         std::string s = rapidjson::GetParseError_En(document.GetParseError());
         vt->assign("error", s);
@@ -1312,8 +1317,19 @@ SSCEXPORT int ssc_stateful_module_setup(ssc_module_t p_mod, ssc_data_t p_data) {
     int i = 0;
     while ( module_table[i] != nullptr && module_table[i]->f_create != nullptr ) {
         if ( lname == util::lower_case( module_table[i]->name ) ) {
-            if (module_table[i]->f_setup_stateful)
-                return (*(module_table[i]->f_setup_stateful))(cm, vt);
+            if (module_table[i]->f_setup_stateful) {
+                try {
+                    return (*(module_table[i]->f_setup_stateful))(cm, vt);
+                }
+                catch (general_error& e) {
+                    cm->log(e.err_text, SSC_ERROR, e.time);
+                    return 0;
+                }
+                catch (std::exception& e) {
+                    cm->log("setup fail(" + cm->get_name() + "): " + e.what(), SSC_ERROR, -1);
+                    return 0;
+                }
+            }
             else {
                 cm->log("This module is not stateful. `setup` does not need to be called.");
                 return 0;
