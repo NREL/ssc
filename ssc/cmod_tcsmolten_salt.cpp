@@ -1974,6 +1974,17 @@ public:
                     tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed, -1.0);
                 }
             }
+            else if (csp_financial_model == 8) {        // No Financial Model
+                if (is_dispatch) {
+                    throw exec_error("tcsmolten_salt", "Can't select dispatch optimization if No Financial model");
+                }
+                else { // if no dispatch optimization, don't need an input pricing schedule
+                    // If electricity pricing data is not available, then dispatch to a uniform schedule
+                    tou_params->mc_pricing.mc_weekdays.resize_fill(12, 24, 1.);
+                    tou_params->mc_pricing.mc_weekends.resize_fill(12, 24, 1.);
+                    tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(9, -1.0);
+                }
+            }
             else {
                 throw exec_error("tcsmolten_salt", "csp_financial_model must be 1, 2, 3, 4, or 6");
             }
