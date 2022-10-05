@@ -53,6 +53,7 @@ dispatch_pvsmoothing_front_of_meter_t::dispatch_pvsmoothing_front_of_meter_t(
     std::vector<double> battReplacementCostPerkWh,
 	int battCycleCostChoice,
     std::vector<double> battCycleCost,
+    std::vector<double> battOMCost, // required for base class
 	double etaPVCharge,
 	double etaGridCharge,
 	double etaDischarge,
@@ -75,7 +76,7 @@ dispatch_pvsmoothing_front_of_meter_t::dispatch_pvsmoothing_front_of_meter_t(
 
 ) : dispatch_automatic_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max_kwdc, Pd_max_kwdc, Pc_max_kwac, Pd_max_kwac,
 		t_min, dispatch_mode, weather_forecast_mode, pv_dispatch, nyears, look_ahead_hours, dispatch_update_frequency_hours, can_charge, can_clip_charge, can_grid_charge, can_fuelcell_charge,
-        battReplacementCostPerkWh, battCycleCostChoice, battCycleCost, interconnection_limit),
+        battReplacementCostPerkWh, battCycleCostChoice, battCycleCost, battOMCost, interconnection_limit),
     m_batt_dispatch_pvs_nameplate_ac(batt_dispatch_pvs_nameplate_ac),
     m_batt_dispatch_pvs_ac_lb(batt_dispatch_pvs_ac_lb),
     m_batt_dispatch_pvs_ac_lb_enable(batt_dispatch_pvs_ac_lb_enable),
@@ -102,6 +103,7 @@ dispatch_pvsmoothing_front_of_meter_t::dispatch_pvsmoothing_front_of_meter_t(
     m_batt_dispatch_pvs_outpower = m_batt_dispatch_pvs_battpower = m_batt_dispatch_pvs_curtail = m_batt_dispatch_pvs_violation_list = 0.0;
     m_batt_dispatch_pvs_battsoc = batt_dispatch_pvs_soc_rest;
 
+    omCost();
     costToCycle();
 }
 dispatch_pvsmoothing_front_of_meter_t::~dispatch_pvsmoothing_front_of_meter_t(){ /* NOTHING TO DO */}
@@ -178,6 +180,8 @@ void dispatch_pvsmoothing_front_of_meter_t::update_dispatch(size_t year, size_t 
 
             /*! Cost to cycle the battery at all, using maximum DOD or user input */
             costToCycle();
+
+            omCost();
 
             // Compute forecast variables which potentially do change from year to year
             double energyToStoreClipped = 0;
@@ -366,9 +370,14 @@ void dispatch_pvsmoothing_front_of_meter_t::costToCycle()
         double capacityPercentDamagePerCycle = _Battery->estimateCycleDamage();
         m_cycleCost = 0.01 * capacityPercentDamagePerCycle * m_battReplacementCostPerKWH[curr_year];
     }
-    else if(m_battCycleCostChoice == dispatch_t::INPUT_CYCLE_COST)
+    else if (m_battCycleCostChoice == dispatch_t::INPUT_CYCLE_COST)
     {
         m_cycleCost = cycle_costs_by_year[curr_year];
     }
+}
+
+void dispatch_pvsmoothing_front_of_meter_t::omCost()
+{
+        m_omCost = om_costs_by_year[curr_year];
 }
 
