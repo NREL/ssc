@@ -1415,8 +1415,8 @@ public:
                         two_tank->ms_params.m_h_tank = as_double("h_ctes_tank");
                         two_tank->ms_params.m_u_tank = as_double("u_ctes_tank");
                         two_tank->ms_params.m_tank_pairs = as_integer("ctes_tankpairs");
-                        two_tank->ms_params.m_T_field_in_des = as_double("T_ctes_cold_design");
-                        two_tank->ms_params.m_T_field_out_des = as_double("T_ctes_warm_design");
+                        two_tank->ms_params.m_T_cold_des = as_double("T_ctes_cold_design");
+                        two_tank->ms_params.m_T_hot_des = as_double("T_ctes_warm_design");
                         two_tank->ms_params.m_T_tank_hot_ini = as_double("T_ctes_warm_ini");
                         two_tank->ms_params.m_T_tank_cold_ini = as_double("T_ctes_cold_ini");
                         two_tank->ms_params.m_f_V_hot_ini = as_double("f_ctes_warm_ini");
@@ -1429,8 +1429,8 @@ public:
                         stratified->ms_params.m_h_tank = as_double("h_ctes_tank");
                         stratified->ms_params.m_u_tank = as_double("u_ctes_tank");
                         stratified->ms_params.m_tank_pairs = as_integer("ctes_tankpairs");
-                        stratified->ms_params.m_T_field_in_des = as_double("T_ctes_cold_design");
-                        stratified->ms_params.m_T_field_out_des = as_double("T_ctes_warm_design");
+                        stratified->ms_params.m_T_cold_des = as_double("T_ctes_cold_design");
+                        stratified->ms_params.m_T_hot_des = as_double("T_ctes_warm_design");
                         stratified->ms_params.m_T_tank_hot_ini = as_double("T_ctes_warm_ini");
                         stratified->ms_params.m_T_tank_cold_ini = as_double("T_ctes_cold_ini");
                         stratified->ms_params.m_f_V_hot_ini = as_double("f_ctes_warm_ini");
@@ -1834,40 +1834,34 @@ public:
         }
         p_heater = p_electric_resistance;        
 
-        // Thermal energy storage 
-        C_csp_two_tank_tes storage;
-        C_csp_two_tank_tes::S_params *tes = &storage.ms_params;
-        tes->m_field_fl = as_integer("rec_htf");
-        tes->m_field_fl_props = as_matrix("field_fl_props");
-        tes->m_tes_fl = as_integer("rec_htf");
-        tes->m_tes_fl_props = as_matrix("field_fl_props");
-        tes->m_W_dot_pc_design = as_double("P_ref");        //[MWe]
-        tes->m_eta_pc = as_double("design_eff");                //[-]
-        tes->m_solarm = solar_mult;
-        tes->m_ts_hours = as_double("tshours");
-        tes->m_h_tank = as_double("h_tank");
-        tes->m_u_tank = as_double("u_tank");
-        tes->m_tank_pairs = as_integer("tank_pairs");
-        tes->m_hot_tank_Thtr = as_double("hot_tank_Thtr");
-        tes->m_hot_tank_max_heat = as_double("hot_tank_max_heat");
-        tes->m_cold_tank_Thtr = as_double("cold_tank_Thtr");
-        tes->m_cold_tank_max_heat = as_double("cold_tank_max_heat");
-        tes->m_dt_hot = 0.0;                                // MSPT assumes direct storage, so no user input here: hardcode = 0.0
-        tes->m_T_field_in_des = as_double("T_htf_cold_des");
-        tes->m_T_field_out_des = as_double("T_htf_hot_des");
-        tes->m_T_tank_hot_ini = as_double("T_htf_hot_des");
-        tes->m_T_tank_cold_ini = as_double("T_htf_cold_des");
-        tes->m_h_tank_min = as_double("h_tank_min");
-        tes->m_f_V_hot_ini = as_double("csp.pt.tes.init_hot_htf_percent");
-        tes->m_htf_pump_coef = as_double("pb_pump_coef");
-
-
-        tes->tanks_in_parallel = as_boolean("tanks_in_parallel");        //[-]
-        //tes->tanks_in_parallel = false; // true;      //[-] False: Field HTF always goes to TES. PC HTF always comes from TES
-        
-        tes->V_tes_des = 1.85;  //[m/s]
-        tes->calc_design_pipe_vals = false; // for now, to get 'tanks_in_parallel' to work
-        
+        // Thermal energy storage
+        C_csp_two_tank_tes storage(
+            as_integer("rec_htf"),
+            as_matrix("field_fl_props"),
+            as_integer("rec_htf"),
+            as_matrix("field_fl_props"),
+            as_double("P_ref") / as_double("design_eff"),   //[MWt]
+            as_double("solarm"),                            //[-]
+            as_double("P_ref") / as_double("design_eff") * as_double("tshours"),
+            as_double("h_tank"),
+            as_double("u_tank"),
+            as_integer("tank_pairs"),
+            as_double("hot_tank_Thtr"),
+            as_double("hot_tank_max_heat"),
+            as_double("cold_tank_Thtr"),
+            as_double("cold_tank_max_heat"),
+            0.0,                                    // MSPT assumes direct storage, so no user input here: hardcode = 0.0
+            as_double("T_htf_cold_des"),
+            as_double("T_htf_hot_des"),
+            as_double("T_htf_hot_des"),
+            as_double("T_htf_cold_des"),
+            as_double("h_tank_min"),
+            as_double("csp.pt.tes.init_hot_htf_percent"),
+            as_double("pb_pump_coef"),
+            as_boolean("tanks_in_parallel"),        //[-]       
+            1.85,                                   //[m/s]
+            false                                   // for now, to get 'tanks_in_parallel' to work
+        );
         
         // Set storage outputs
         storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_Q_DOT_LOSS, allocate("tank_losses", n_steps_fixed), n_steps_fixed);

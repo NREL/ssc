@@ -160,77 +160,11 @@ void dispatch_automatic_behind_the_meter_t::setup_rate_forecast()
 {
     if (_mode == dispatch_t::FORECAST)
     {
-        // Process load and pv forecasts to get _monthly_ expected gen, load, net loads, and peak
-        std::vector<double> monthly_gross_load;
-        std::vector<double> monthly_gen;
-        std::vector<double> monthly_net_load;
-        util::matrix_t<double> monthly_peaks; // By TOU period
 
-        // Load here is every step for the full analysis period. Load escalation has already been applied (TODO in compute modules)
-        size_t num_recs = util::hours_per_year * _steps_per_hour * _nyears;
-        size_t step = 0; size_t hour_of_year = 0; size_t year = 0;
-        int curr_month = 1;
-        double load_during_month = 0.0; double gen_during_month = 0.0; double gross_load_during_month = 0.0;
-        size_t array_size = std::min(_P_pv_ac.size(), _P_load_ac.size()); // Cover smaller arrays to make testing easier
-        monthly_peaks.resize_fill(_nyears * 12, rate->m_dc_tou_periods_tiers.size(), 0.0);
-        if (rate->dc_enabled) {
-            rate->init_dc_peak_vectors(0);
-        }
-        for (size_t idx = 0; idx < num_recs && idx < array_size; idx++)
-        {
-            double grid_power = _P_pv_ac[idx] - _P_load_ac[idx];
+        forecast_setup rate_setup(_steps_per_hour, _nyears);
+        rate_setup.setup(rate.get(), _P_pv_ac, _P_load_ac, m_batteryPower->powerBatteryDischargeMaxAC);
 
-            gross_load_during_month += _P_load_ac[idx] * _dt_hour;
-            
-
-            if (grid_power < 0)
-            {
-                load_during_month += grid_power * _dt_hour;
-            }
-            else
-            {
-                gen_during_month += grid_power * _dt_hour;
-            }
-
-            if (rate->dc_enabled) {
-                int dc_tou_period = rate->get_dc_tou_row(step % (8760 * _steps_per_hour), curr_month - 1);
-                size_t month_idx = year * 12 + (curr_month - 1);
-                double peak = monthly_peaks.at(month_idx, dc_tou_period) - m_batteryPower->powerBatteryDischargeMaxAC; // Peak for dispatch calcs: peak minus battery capacity
-                if (-1.0 * grid_power > peak) {
-                    monthly_peaks.set_value(-1.0 * grid_power, month_idx, dc_tou_period);
-                }
-            }
-
-            step++;
-            if (step == _steps_per_hour)
-            {
-                step = 0;
-                hour_of_year++;
-                if (hour_of_year >= 8760) {
-                    hour_of_year = 0;
-                }
-            }
-
-            if (util::month_of((double) hour_of_year) != curr_month || (idx == array_size - (size_t) 1))
-            {
-                // Push back vectors
-                // Note: this is a net-billing approach. To be accurate for net metering, we'd have to invoke tou periods here, this overestimates costs for NM
-                monthly_gross_load.push_back(gross_load_during_month / util::hours_in_month(curr_month));
-                monthly_net_load.push_back(-1.0 * load_during_month);
-                monthly_gen.push_back(gen_during_month);
-
-                gross_load_during_month = 0.0; load_during_month = 0.0; gen_during_month = 0.0;
-                if (curr_month == 12) {
-                    year++;
-                }
-                curr_month < 12 ? curr_month++ : curr_month = 1;
-                if (rate->dc_enabled) {
-                    rate->init_dc_peak_vectors(curr_month - 1);
-                }
-            }
-        }
-
-        rate_forecast = std::shared_ptr<UtilityRateForecast>(new UtilityRateForecast(rate.get(), _steps_per_hour, monthly_net_load, monthly_gen, monthly_gross_load, _nyears, monthly_peaks));
+        rate_forecast = std::shared_ptr<UtilityRateForecast>(new UtilityRateForecast(rate.get(), _steps_per_hour, rate_setup.monthly_net_load, rate_setup.monthly_gen, rate_setup.monthly_gross_load, _nyears, rate_setup.monthly_peaks));
         rate_forecast->initializeMonth(0, 0);
         rate_forecast->copyTOUForecast();
     }
@@ -426,11 +360,15 @@ double dispatch_automatic_behind_the_meter_t::compute_costs(size_t idx, size_t y
     std::unique_ptr<UtilityRateForecast> noDispatchForecast = std::unique_ptr<UtilityRateForecast>(new UtilityRateForecast(*rate_forecast));
     std::unique_ptr<UtilityRateForecast> marginalForecast = std::unique_ptr<UtilityRateForecast>(new UtilityRateForecast(*rate_forecast));
     double no_dispatch_cost = 0;
+    size_t start_year = year;
 
     // compute grid net from pv and load (no battery)
     size_t count = 0;
     for (size_t hour = 0; hour != 24; hour++)
     {
+        if (hour_of_year + hour > 8760 && year == start_year) {
+            year++;
+        }
         for (size_t step = 0; step != _steps_per_hour && idx < _P_load_ac.size(); step++)
         {
             double power = _P_load_ac[idx] - _P_pv_ac[idx];

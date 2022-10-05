@@ -29,6 +29,12 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../ssc/vartab.h"
 #include "../ssc/common.h"
 #include "../input_cases/pvwatts_cases.h"
+#include "cmod_json_comparison_test.h"
+
+/**
+ * JSON file tests
+ */
+class CmodPVWattsv8Test : public JSONComparisonTest {};
 
 /**
 * CMPVWattsv8 tests cmod_pvwattsv8 using a solar resource file. SetUp() creates default case,

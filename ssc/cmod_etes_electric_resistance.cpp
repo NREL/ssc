@@ -549,34 +549,33 @@ public:
 
         // *****************************************************
         // TES
-        C_csp_two_tank_tes storage;
-        C_csp_two_tank_tes::S_params* tes = &storage.ms_params;
-        tes->m_field_fl = hot_htf_code;
-        tes->m_field_fl_props = ud_hot_htf_props;
-        tes->m_tes_fl = hot_htf_code;
-        tes->m_tes_fl_props = ud_hot_htf_props;
-        tes->m_W_dot_pc_design = W_dot_cycle_des;   //[MWe]
-        tes->m_eta_pc = eta_cycle;                  //[-]
-        tes->m_solarm = heater_mult;                //[-]
-        tes->m_ts_hours = tshours;                  //[hr]
-        tes->m_h_tank = as_double("h_tank");
-        tes->m_u_tank = as_double("u_tank");
-        tes->m_tank_pairs = as_integer("tank_pairs");
-        tes->m_hot_tank_Thtr = as_double("hot_tank_Thtr");
-        tes->m_hot_tank_max_heat = as_double("hot_tank_max_heat");
-        tes->m_cold_tank_Thtr = as_double("cold_tank_Thtr");
-        tes->m_cold_tank_max_heat = as_double("cold_tank_max_heat");
-        tes->m_dt_hot = 0.0;                        // MSPT assumes direct storage, so no user input here: hardcode = 0.0
-        tes->m_T_field_in_des = T_htf_cold_des;     //[C]
-        tes->m_T_field_out_des = T_htf_hot_des;     //[C]
-        tes->m_T_tank_hot_ini = T_htf_hot_des;      //[C]
-        tes->m_T_tank_cold_ini = T_htf_cold_des;    //[C]
-        tes->m_h_tank_min = as_double("h_tank_min");
-        tes->m_f_V_hot_ini = as_double("tes_init_hot_htf_percent");
-        tes->m_htf_pump_coef = as_double("pb_pump_coef");
-        tes->tanks_in_parallel = false;     //[-] False: Field HTF always goes to TES. PC HTF always comes from TES. ETES should not simultaneously operate heater and cycle
-        tes->V_tes_des = 1.85;              //[m/s]
-        tes->calc_design_pipe_vals = false; // for now, to get 'tanks_in_parallel' to work
+        C_csp_two_tank_tes storage(
+            hot_htf_code,
+            ud_hot_htf_props,
+            hot_htf_code,
+            ud_hot_htf_props,
+            W_dot_cycle_des / eta_cycle,  //[MWt]
+            heater_mult,                  //[-]
+            W_dot_cycle_des / eta_cycle * tshours,  //[MWht]
+            as_double("h_tank"),
+            as_double("u_tank"),
+            as_integer("tank_pairs"),
+            as_double("hot_tank_Thtr"),
+            as_double("hot_tank_max_heat"),
+            as_double("cold_tank_Thtr"),
+            as_double("cold_tank_max_heat"),
+            0.0,                          // MSPT assumes direct storage, so no user input here: hardcode = 0.0
+            T_htf_cold_des,               //[C]
+            T_htf_hot_des,                //[C]
+            T_htf_hot_des,                //[C]
+            T_htf_cold_des,               //[C]
+            as_double("h_tank_min"),
+            as_double("tes_init_hot_htf_percent"),
+            as_double("pb_pump_coef"),
+            false,                        //[-] False: Field HTF always goes to TES. PC HTF always comes from TES. ETES should not simultaneously operate heater and cycle
+            1.85,                         //[m/s]
+            false                         // for now, to get 'tanks_in_parallel' to work
+        );
 
         // Set TES cmod outputs
         storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_Q_DOT_LOSS, allocate("q_dot_tes_losses", n_steps_fixed), n_steps_fixed);
