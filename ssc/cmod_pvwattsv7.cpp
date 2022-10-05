@@ -1212,7 +1212,8 @@ public:
                     if (ac < 0) ac = 0;
 
                     p_dcshadederate[idx] = (ssc_number_t)f_nonlinear;
-                    p_dcsnowderate[idx] = (ssc_number_t)f_snow;
+                    //p_dcsnowderate[idx] = (ssc_number_t)f_snow; // output is percentage - calculated value is derate
+                    p_dcsnowderate[idx] =  (1.0 - f_snow) * 100.0;
                 }
                 else
                 {
