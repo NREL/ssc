@@ -632,9 +632,9 @@ public:
             ud_HT_htf_props,
             HT_htf_code,
             ud_HT_htf_props,
-            W_dot_gen_thermo / eta_therm_mech, //[MWt]
-            heater_mult,                       //[-]
-            W_dot_gen_thermo / eta_therm_mech * tshours,  //[MWht]
+            q_dot_hot_in_gen,                   //[MWt]
+            heater_mult,                        //[-]
+            q_dot_hot_in_gen* tshours,          //[MWht]
             as_double("h_tank"),
             as_double("u_tank"),
             as_integer("tank_pairs"),
@@ -676,14 +676,15 @@ public:
             // ctes_params.m_hot_tank_max_heat = as_double("CT_hot_tank_max_heat");
             // ctes_params.m_cold_tank_Thtr = as_double("CT_cold_tank_Thtr");
             // ctes_params.m_cold_tank_max_heat = as_double("CT_cold_tank_max_heat");
+        double q_dot_CT_des__discharge_basis = q_dot_cold_in_charge / heater_mult;
         std::shared_ptr<C_csp_two_tank_tes> c_CT_TES(new C_csp_two_tank_tes(
             CT_htf_code,
             ud_CT_htf_props,
             CT_htf_code,
             ud_CT_htf_props,
-            W_dot_gen_thermo / 1.0,                          //[MWe]
+            q_dot_CT_des__discharge_basis,                   //[MWt]
             heater_mult,                                     //[-]
-            tshours,                                         //[hr]
+            q_dot_CT_des__discharge_basis * tshours,         //[MWt-hr]
             as_double("CT_h_tank"),
             as_double("CT_u_tank"),
             as_integer("CT_tank_pairs"),
