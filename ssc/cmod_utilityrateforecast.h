@@ -19,42 +19,32 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-#if defined( _WINDOWS) && defined(_DEBUG)
-#define _CRTDBG_MAP_ALLOC
-#include <stdlib.h>
-#include <crtdbg.h>
-#endif
 
-#include <stdlib.h>
-#include <iostream>
-#include <gtest/gtest.h>
+#ifndef SAM_SIMULATION_CORE_CMOD_UTILITYRATEFORECAST_H
+#define SAM_SIMULATION_CORE_CMOD_UTILITYRATEFORECAST_H
 
-// in order to get MS V2017 update 2 to build without a bunch of C4996 "std::tr1:warning..."
-#define _SILENCE_TR1_NAMESPACE_DEPRECIATION_WARNING
+#include "core.h"
+#include "lib_utility_rate_equations.h"
+#include "lib_utility_rate.h"
 
-GTEST_API_ int main(int argc, char **argv) {
+class cm_utilityrateforecast : public compute_module {
+private:
+    int analysis_period; // Maximum length of analysis - in most cases it will be shorter in this compute module
+    size_t steps_per_hour; // Timestep in hours
 
-#if defined( _WINDOWS) && defined(_DEBUG)
-    _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
-#endif
+    /* Utility rate data structure */
+    std::shared_ptr<rate_data> rate;
 
-	printf("Running main() from gtest_main.cc\n");
-	testing::InitGoogleTest(&argc, argv);
-    
-    //    filter to include
-    //    ::testing::GTEST_FLAG(filter) = "CmodPVWatts*:CMPvwatts*";
-  
-    //    filter to exclude
-    //    ::testing::GTEST_FLAG(filter) = "-PVSmoothing_lib_battery_dispatch*";
+    /* Forecasting class. */
+    std::shared_ptr <UtilityRateForecast> rate_forecast;
 
-    // run multiple test
-    //    ::testing::GTEST_FLAG(filter) = "CMPvwattsv8Integration_cmod_pvwattsv8.DefaultNoFinancialModel_cmod_pvwattsv8:CMPvwattsv8Integration_cmod_pvwattsv8.NonAnnual";
+public:
+    cm_utilityrateforecast();
 
-    int status = RUN_ALL_TESTS();
+    // return true for success, otherwise errors in log
+    bool setup(var_table* vt);
 
-//    sleep(10); //used for single test instruments leak detector on macOS
-	
-    if (!status)
-		printf("Tests Pass!\n");
-	return status;
-}
+    void exec() override;
+};
+
+#endif //SAM_SIMULATION_CORE_CMOD_UTILITYRATEFORECAST_H

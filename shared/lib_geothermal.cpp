@@ -1388,7 +1388,7 @@ double CGeothermalAnalyzer::productionViscosity(void) { return 0.115631 * pow(pr
 double CGeothermalAnalyzer::flowRatePerWell(void) { return (60 * 60 * geothermal::KgToLb(mo_geo_in.md_ProductionFlowRateKgPerS)); } // lbs per hour, one well
 double CGeothermalAnalyzer::flowRateTotal(void) {
 	mp_geo_out->GF_flowrate = (flowRatePerWell() * GetNumberOfWells());
-    if (me_makeup == MA_BINARY) {
+    if (me_makeup == MA_BINARY && mo_geo_in.me_cb != NUMBER_OF_WELLS) {
         mp_geo_out->GF_flowrate = mo_geo_in.md_DesiredSalesCapacityKW * 1000 / (GetPlantBrineEffectiveness() - GetPumpWorkWattHrPerLb());
         return (mo_geo_in.md_DesiredSalesCapacityKW * 1000 / (GetPlantBrineEffectiveness() - GetPumpWorkWattHrPerLb()));
     }
