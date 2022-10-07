@@ -193,6 +193,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 
     // Parallel heater parameters
     { SSC_INPUT,     SSC_NUMBER, "heater_mult",                        "Heater multiple relative to design cycle thermal power",                                                                                  "-",            "",                                  "Parallel Heater",                          "is_parallel_htr=1",                                                "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "heater_efficiency",                  "Heater electric to thermal efficiency",                                                                                                   "%",            "",                                  "Parallel Heater",                          "is_parallel_htr=1",                                                "",              "" },
     { SSC_INPUT,     SSC_NUMBER, "f_q_dot_des_allowable_su",           "Fraction of design power allowed during startup",                                                                                         "-",            "",                                  "Parallel Heater",                          "is_parallel_htr=1",                                                "",              "" },
     { SSC_INPUT,     SSC_NUMBER, "hrs_startup_at_max_rate",            "Duration of startup at max startup power",                                                                                                "hr",           "",                                  "Parallel Heater",                          "is_parallel_htr=1",                                                "",              "" },
     { SSC_INPUT,     SSC_NUMBER, "f_q_dot_heater_min",                 "Minimum allowable heater output as fraction of design",                                                                                   "",             "",                                  "Parallel Heater",                          "is_parallel_htr=1",                                                "",              "" },
@@ -446,7 +447,9 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_OUTPUT,    SSC_NUMBER, "q_dot_piping_loss_des",              "Receiver estimated piping loss at design",                                                                                                "MWt",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
 
         // Heater
-    { SSC_OUTPUT,    SSC_NUMBER, "q_dot_heater_des",                   "Heater design thermal power",                                                                                                             "MWt",         "",                                  "Power Cycle",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "q_dot_heater_des",                   "Heater design thermal power",                                                                                                             "MWt",         "",                                  "Heater",                                   "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "W_dot_heater_des",                   "Heater electricity consumption at design",                                                                                                "MWe",         "",                                  "Heater",                                   "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "E_heater_su_des",                    "Heater startup energy",                                                                                                                   "MWt-hr",      "",                                  "Heater",                                   "*",                                                                "",              "" },
 
         // Power Cycle
     { SSC_OUTPUT,    SSC_NUMBER, "m_dot_htf_cycle_des",                "PC HTF mass flow rate at design",                                                                                                         "kg/s",        "",                                  "Power Cycle",                              "*",                                                                "",              "" },
@@ -1762,12 +1765,13 @@ public:
             q_dot_heater_des = q_dot_pc_des*heater_mult;     //[MWt]
             //double q_dot_heater_des = receiver->m_q_rec_des * 2.0;  // / 4.0;      //[MWt]
 
+            double heater_efficiency = as_double("heater_efficiency") / 100.0;          //[-] convert from % input
             double f_q_dot_des_allowable_su = as_double("f_q_dot_des_allowable_su");    //[-] fraction of design power allowed during startup
             double hrs_startup_at_max_rate = as_double("hrs_startup_at_max_rate");      //[hr] duration of startup at max startup power
             double f_heater_min = as_double("f_q_dot_heater_min");                      //[-] minimum allowable heater output as fraction of design
 
             p_electric_resistance = new C_csp_cr_electric_resistance(as_double("T_htf_cold_des"), as_double("T_htf_hot_des"),
-                q_dot_heater_des, f_heater_min,
+                q_dot_heater_des, heater_efficiency, f_heater_min,
                 f_q_dot_des_allowable_su, hrs_startup_at_max_rate,
                 as_integer("rec_htf"), as_matrix("field_fl_props"), C_csp_cr_electric_resistance::E_elec_resist_startup_mode::INSTANTANEOUS_NO_MAX_ELEC_IN);
 
@@ -2232,8 +2236,15 @@ public:
         assign("m_dot_htf_rec_max", m_dot_htf_rec_max);         //[kg/s]
 
             // *************************
-            // Thermal Energy Storage
+            // Heater
         assign("q_dot_heater_des", q_dot_heater_des);       //[MWt]
+        double W_dot_heater_des_calc = 0.0;                 //[MWe]
+        double E_heater_su_des = 0.0;                       //[MWt-hr]
+        if (is_parallel_heater) {
+            p_electric_resistance->get_design_parameters(E_heater_su_des, W_dot_heater_des_calc);
+        }
+        assign("W_dot_heater_des", (ssc_number_t)W_dot_heater_des_calc);    //[MWe]
+        assign("E_heater_su_des", (ssc_number_t)E_heater_su_des);           //[MWt-hr]
 
             // *************************
             // Thermal Energy Storage

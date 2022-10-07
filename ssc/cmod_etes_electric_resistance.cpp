@@ -102,6 +102,7 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
 
 
     // Heater
+    { SSC_INPUT,  SSC_NUMBER, "heater_efficiency",             "Heater electric to thermal efficiency",                         "%",            "",                                  "Heater",                                   "*",                                                                "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "f_q_dot_des_allowable_su",      "Fraction of design power allowed during startup",               "-",            "",                                  "Heater",                                   "*",                                                                "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "hrs_startup_at_max_rate",       "Duration of startup at max startup power",                      "hr",           "",                                  "Heater",                                   "*",                                                                "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "f_q_dot_heater_min",            "Minimum allowable heater output as fraction of design",         "",             "",                                  "Heater",                                   "*",                                                                "",              ""},
@@ -212,6 +213,7 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
     { SSC_OUTPUT, SSC_NUMBER, "cp_htf_cycle_des",            "Cycle htf cp at T ave at design",         "kJ/kg-K",      "",                                  "Cycle Design Calc",                             "*",                                                                "",              "" },
 
         // Heater
+    { SSC_OUTPUT, SSC_NUMBER, "W_dot_heater_des",            "Heater electricity consumption at design","MWe",          "",                                  "Cycle Design Calc",                             "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "E_heater_su_des",             "Heater startup energy",                   "MWt-hr",       "",                                  "Cycle Design Calc",                             "*",                                                                "",              "" },
 
         // TES
@@ -529,11 +531,12 @@ public:
         // *****************************************************
         // Electric resistance heater
         // Construct electric resistance heater class
+        double heater_efficiency = as_double("heater_efficiency") / 100.0;          //[-] convert from % input
         double f_q_dot_des_allowable_su = as_double("f_q_dot_des_allowable_su");    //[-] fraction of design power allowed during startup
         double hrs_startup_at_max_rate = as_double("hrs_startup_at_max_rate");      //[hr] duration of startup at max startup power
         double f_heater_min = as_double("f_q_dot_heater_min");                      //[-] minimum allowable heater output as fraction of design
         C_csp_cr_electric_resistance c_electric_resistance(T_htf_cold_des, T_htf_hot_des,
-            q_dot_heater_des, f_heater_min,
+            q_dot_heater_des, heater_efficiency, f_heater_min,
             f_q_dot_des_allowable_su, hrs_startup_at_max_rate,
             hot_htf_code, ud_hot_htf_props, C_csp_cr_electric_resistance::E_elec_resist_startup_mode::SEQUENCED);
 
@@ -847,8 +850,9 @@ public:
         m_dot_htf_pc_des /= 3600.0;     // convert from kg/hr to kg/s
 
             // Heater
-        double E_heater_su_des;     //[MWt-hr]
-        c_electric_resistance.get_design_parameters(E_heater_su_des);
+        double E_heater_su_des;         //[MWt-hr]
+        double W_dot_heater_des_calc;   //[MWe]
+        c_electric_resistance.get_design_parameters(E_heater_su_des, W_dot_heater_des_calc);
 
             // TES
         double V_tes_htf_avail /*m3*/, V_tes_htf_total /*m3*/, d_tank /*m*/, q_dot_loss_tes_des /*MWt*/, dens_store_htf_at_T_ave /*kg/m3*/, Q_tes_des_tes_class;
@@ -959,7 +963,8 @@ public:
         assign("cp_htf_cycle_des", (ssc_number_t)cp_htf_pc_des);                  //[kJ/kg-K]
 
             // Heater
-        assign("E_heater_su_des", (ssc_number_t)E_heater_su_des);       //[MWt-hr]
+        assign("W_dot_heater_des", (ssc_number_t)W_dot_heater_des_calc);    //[MWe]
+        assign("E_heater_su_des", (ssc_number_t)E_heater_su_des);           //[MWt-hr]
 
             // TES
         assign("V_tes_htf_avail", V_tes_htf_avail);         //[m3]
