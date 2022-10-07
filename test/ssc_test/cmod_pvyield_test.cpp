@@ -61,14 +61,14 @@ TEST_F(CMPvYieldTimo, DefaultTimoModel_cmod_pvsamv1)
 
 TEST_F(CMPvYieldTimo, Bifacial_cmod_pvsamv1)
 {
-    double desired_annual_energy = 346338151.57556278;
+    double desired_annual_energy = 345965378.92463976;
     pvyield_bifacial_case(data);
     int pvsam_errors = run_module(data, "pvsamv1");
     EXPECT_FALSE(pvsam_errors);
 
     ssc_number_t annual_energy_6;
     ssc_data_get_number(data, "annual_energy", &annual_energy_6);
-    EXPECT_NEAR(annual_energy_6, desired_annual_energy, m_error_tolerance_lo);
+    EXPECT_NEAR(annual_energy_6, desired_annual_energy, desired_annual_energy * m_error_tolerance_lo / 100. );
 
     ssc_number_t annual_dc_nominal;
     ssc_data_get_number(data, "annual_dc_nominal", &annual_dc_nominal);
