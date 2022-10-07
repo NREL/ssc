@@ -357,6 +357,7 @@ public:
     {
         add_var_info(_cm_vtab_etes_electric_resistance);
         add_var_info(vtab_adjustment_factors);
+        add_var_info(vtab_technology_outputs);
     }
 
     void exec() override

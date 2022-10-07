@@ -395,6 +395,7 @@ public:
     {
         add_var_info(_cm_vtab_etes_ptes);
         add_var_info(vtab_adjustment_factors);
+        add_var_info(vtab_technology_outputs);
     }
 
     void exec() override
@@ -1255,9 +1256,11 @@ public:
         // *****************************************************
         // *****************************************************
 
+        // Report simulation metrics
+        ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, steps_per_hour);
+
         // Annual metrics
         accumulate_annual_for_year("gen", "annual_energy", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour);
-
 
         accumulate_annual_for_year("disp_objective", "disp_objective_ann", sim_setup.m_report_step / 3600.0 / as_double("disp_frequency"), steps_per_hour, 1, n_steps_fixed / steps_per_hour);
         accumulate_annual_for_year("disp_solve_iter", "disp_iter_ann", sim_setup.m_report_step / 3600.0 / as_double("disp_frequency"), steps_per_hour, 1, n_steps_fixed / steps_per_hour);
