@@ -525,6 +525,7 @@ public:
         rankine_pc.assign(C_pc_Rankine_indirect_224::E_W_DOT_HTF_PUMP, allocate("W_dot_cycle_htf_pump", n_steps_fixed), n_steps_fixed);
         rankine_pc.assign(C_pc_Rankine_indirect_224::E_W_DOT_COOLER, allocate("W_dot_cycle_cooling", n_steps_fixed), n_steps_fixed);
 
+        rankine_pc.assign(C_pc_Rankine_indirect_224::E_ETA_THERMAL, allocate("eta_cycle_gross", n_steps_fixed), n_steps_fixed);
         // *****************************************************
         // *****************************************************
 
@@ -1066,7 +1067,6 @@ public:
         ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, steps_per_hour);
 
         // Post-process hourly values
-        ssc_number_t* p_eta_cycle_gross = allocate("eta_cycle_gross", n_steps_fixed);
         ssc_number_t* p_eta_cycle_net = allocate("eta_cycle_net", n_steps_fixed);
         ssc_number_t* p_W_dot_cycle_net = allocate("W_dot_cycle_net", n_steps_fixed);
         size_t count_q_dot_cycle, count_W_dot_cycle, count_W_dot_cycle_cooling, count_m_dot_htf_cycle, count_m_dot_water_cycle;
@@ -1083,11 +1083,9 @@ public:
         for (size_t i = 0; i < n_steps_fixed; i++) {
             p_W_dot_cycle_net[i] = p_W_dot_cycle_gross[i] - p_W_dot_cycle_cooling[i];     //[MWe]
             if (p_q_dot_cycle[i] > 0.0) {
-                p_eta_cycle_gross[i] = p_W_dot_cycle_gross[i] / p_q_dot_cycle[i];       //[-]
                 p_eta_cycle_net[i] = p_W_dot_cycle_net[i] / p_q_dot_cycle[i];
             }
             else {
-                p_eta_cycle_gross[i] = 0.0;
                 p_eta_cycle_net[i] = 0.0;
             }
 
