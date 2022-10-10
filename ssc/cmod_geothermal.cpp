@@ -49,7 +49,8 @@ static var_info _cm_vtab_geothermal[] = {
     // Other inputs						 								       											   				     
     { SSC_INPUT,        SSC_NUMBER,      "geothermal_analysis_period",         "Analysis Lifetime",                            "years",          "",             "GeoHourly",        "*",                        "INTEGER",         "" },
     { SSC_INPUT,        SSC_NUMBER,      "model_choice",                       "Which model to run (0,1,2)",                   "",               "",             "GeoHourly",        "*",                        "INTEGER",         "" },
-																		       											   				     														             
+    { SSC_INPUT,        SSC_MATRIX,      "reservoir_model_inputs",                       "Reservoir temperatures over time",                   "",               "",             "GeoHourly",        "reservoir_pressure_change_type=3",                        "",         "" },
+
     // geothermal plant and equipment									       											   				     														             
     { SSC_INPUT,        SSC_NUMBER,      "specified_pump_work_amount",         "Pump work specified by user",                  "MW",             "",             "GeoHourly",        "*",                        "",                "" },
     { SSC_INPUT,        SSC_NUMBER,      "nameplate",                          "Desired plant output",                         "kW",             "",             "GeoHourly",        "*",                        "",                "" },
@@ -336,7 +337,8 @@ public:
 
 		// calculate output array sizes
 		geo_inputs.mi_ModelChoice = as_integer("model_choice");		 // 0=GETEM, 1=Power Block monthly, 2=Power Block hourly
-		
+        if (is_assigned("reservoir_model_inputs")) 
+            geo_inputs.md_ReservoirInputs = as_matrix("reservoir_model_inputs");
 		// set geothermal inputs RE how analysis is done and for how long
 		geo_inputs.mi_ProjectLifeYears = 1;
 		if (as_boolean("system_use_lifetime_output")) {

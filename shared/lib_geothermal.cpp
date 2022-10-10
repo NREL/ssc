@@ -1309,7 +1309,7 @@ double CGeothermalAnalyzer::GetPressureChangeAcrossReservoir()
 	double volumetricFlow = (flowRatePerWell() / density) / 3600; // ft^3 per second
 	double viscosity = 0.115631 * pow(mp_geo_out->md_AverageReservoirTemperatureF, -1.199532); // lb per ft-second
 
-	if ((mo_geo_in.me_rt == EGS) && (mo_geo_in.me_pc == SIMPLE_FRACTURE))
+	if ((mo_geo_in.me_rt == EGS) && (mo_geo_in.me_pc == SIMPLE_FRACTURE || mo_geo_in.me_pc == USER_TEMP))
 	{	// only a valid option for EGS resources
 		// calculate the pressure change across the reservoir using simple fracture flow
 		double dEGSFractureLengthUserAdjusted = mo_geo_in.md_EGSFractureLength ;
