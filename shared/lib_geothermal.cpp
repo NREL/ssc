@@ -1272,6 +1272,8 @@ double CGeothermalAnalyzer::GetPressureChangeAcrossReservoir()
 	if (mo_geo_in.me_pc == ENTER_PC) return mo_geo_in.md_ReservoirDeltaPressure * flowRatePerWell() / 1000.0;
 	double md_PressureChangeAcrossReservoir = 0.0;
 
+    
+
 	// if user didn't input the pressure change, we have to calculate it.  start with these
 
 	// Why does GETEM calculate the average water temperature for EGS two different ways?  Is one better?  Method 2 is certainly simpler.
@@ -1284,6 +1286,21 @@ double CGeothermalAnalyzer::GetPressureChangeAcrossReservoir()
 	//double tempEGSProductionC = GetResourceTemperatureC() + (geothermal::TEMPERATURE_EGS_INJECTIONC - GetResourceTemperatureC()) * EGSReservoirConstant(waterTempC, days);
     double tempEGSProductionCtest = Gringarten();
     double tempEGSProductionC = Gringarten();
+    double t = mp_geo_out->ElapsedHours * 3600; //elapsed time (s)
+    if (mo_geo_in.me_pc == USER_TEMP) {
+        int i = 0;
+        while (mo_geo_in.md_ReservoirInputs.at(i, 0) < t)
+            i++;
+        if (i == 0) {
+            tempEGSProductionC = mo_geo_in.md_ReservoirInputs.at(i, 1);
+        }
+        else if (i > mo_geo_in.md_ReservoirInputs.nrows()) {
+            tempEGSProductionC = mo_geo_in.md_ReservoirInputs.at(mo_geo_in.md_ReservoirInputs.nrows() - 1, 1);
+        }
+        else {
+            tempEGSProductionC = (mo_geo_in.md_ReservoirInputs.at(i, 0) - t) / (mo_geo_in.md_ReservoirInputs.at(i, 0) - mo_geo_in.md_ReservoirInputs.at(i - 1, 0)) * (mo_geo_in.md_ReservoirInputs.at(i, 1) - mo_geo_in.md_ReservoirInputs.at(i - 1, 1)) + mo_geo_in.md_ReservoirInputs.at(i - 1, 1);
+        }
+    }
     double dEGSAverageReservoirTemperatureF = physics::CelciusToFarenheit((geothermal::TEMPERATURE_EGS_INJECTIONC + tempEGSProductionC) / 2);  //[7C.EGS Subsrfce HX].D52, [7B.Reservoir Hydraulics].D24
 
 	mp_geo_out->md_AverageReservoirTemperatureF = (mo_geo_in.me_rt == EGS) ? dEGSAverageReservoirTemperatureF : physics::CelciusToFarenheit(GetResourceTemperatureC());	// G54 on [7B.Reservoir Hydraulics]

@@ -43,7 +43,7 @@ enum condenserTypes { NO_CONDENSER_TYPE, SURFACE, DIRECT_CONTACT };
 enum ncgRemovalTypes { NO_NCG_TYPE, JET, VAC_PUMP, HYBRID };
 enum wellCostCurveChoices { NO_COST_CURVE, LOW, MED, HIGH };
 enum depthCalculationForEGS { NOT_CHOSEN, DEPTH, TEMPERATURE };
-enum reservoirPressureChangeCalculation { NO_PC_CHOICE, ENTER_PC, SIMPLE_FRACTURE, K_AREA };
+enum reservoirPressureChangeCalculation { NO_PC_CHOICE, ENTER_PC, SIMPLE_FRACTURE, K_AREA, USER_TEMP };
 #endif
 struct SGeothermal_Inputs
 {
@@ -74,6 +74,7 @@ struct SGeothermal_Inputs
 
 	int mi_ModelChoice;										// -1 on initialization; 0=GETEM, 1=Power Block monthly, 2=Power Block hourly
 	bool mb_CalculatePumpWork;								// true (default) = getem calculates pump work
+    util::matrix_t<double> md_ReservoirInputs;
 
 	size_t mi_ProjectLifeYears;
 	size_t mi_MakeupCalculationsPerYear;					// 12 (monthly) or 8760 (hourly)
