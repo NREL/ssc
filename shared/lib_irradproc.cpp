@@ -28,6 +28,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdlib.h>
 #include <string.h>
 #include <vector>
+#include <numeric>
+#include <assert.h>
 
 #include "lib_irradproc.h"
 #include "lib_pv_incidence_modifier.h"
@@ -2060,7 +2062,8 @@ irrad::irrad(weather_record wf, weather_header hdr,
              double stowAngleDegreesIn,
              double groundCoverageRatioIn, double slopeTiltIn, double slopeAzmIn, std::vector<double> monthlyTiltDegrees,
              std::vector<double> userSpecifiedAlbedo,
-             poaDecompReq *poaAllIn) :
+             poaDecompReq *poaAllIn,
+             bool useSpatialAlbedos, const util::matrix_t<double>* userSpecifiedSpatialAlbedos) :
         skyModel(skyModelIn), radiationMode(radiationModeIn), trackingMode(trackModeIn),
         enableBacktrack(backtrackingEnabled), forceToStow(forceToStowIn),
         delt(dtHour), tiltDegrees(tiltDegreesIn), surfaceAzimuthDegrees(azimuthDegreesIn),
@@ -2070,16 +2073,22 @@ irrad::irrad(weather_record wf, weather_header hdr,
     int month_idx = wf.month - 1;
     if (useWeatherFileAlbedo && std::isfinite(wf.alb) && wf.alb > 0 && wf.alb < 1) {
         albedo = wf.alb;
+        albedoSpatial.assign(userSpecifiedSpatialAlbedos->ncols(), albedo);
     }
-    else if (month_idx >= 0 && month_idx < 12) {
+    else if (useSpatialAlbedos) {
+        albedoSpatial = userSpecifiedSpatialAlbedos->row(month_idx).to_vector();
+        albedo = std::accumulate(albedoSpatial.begin(), albedoSpatial.end(), 0.) / albedoSpatial.size();
+    }
+    else {
         albedo = userSpecifiedAlbedo[month_idx];
+        albedoSpatial.assign(userSpecifiedSpatialAlbedos->ncols(), albedo);
     }
 
     set_time(wf.year, wf.month, wf.day, wf.hour, wf.minute,
              instantaneousWeather ? IRRADPROC_NO_INTERPOLATE_SUNRISE_SUNSET : dtHour);
     set_location(hdr.lat, hdr.lon, hdr.tz);
     set_optional(hdr.elev, wf.pres, wf.tdry);
-    set_sky_model(skyModel, albedo);
+    set_sky_model(skyModel, albedo, albedoSpatial);
 
     if (radiationMode == irrad::DN_DF) set_beam_diffuse(wf.dn, wf.df);
     else if (radiationMode == irrad::DN_GH) set_global_beam(wf.gh, wf.dn);
@@ -2119,6 +2128,10 @@ int irrad::check() {
 
 double irrad::getAlbedo() {
     return albedo;
+}
+
+std::vector<double> irrad::getAlbedoSpatial() {
+    return albedoSpatial;
 }
 
 double irrad::get_sunpos_calc_hour() {
@@ -2173,6 +2186,56 @@ double irrad::get_poa_rear() {
     return planeOfArrayIrradianceRearAverage;
 }
 
+std::vector<double> irrad::get_poa_rear_spatial() {
+    return planeOfArrayIrradianceRearSpatial;
+}
+
+double irrad::get_ground_incident() {
+    // Returns average irradiance incident on the ground
+    double ground_incident = 0.;
+    for (size_t i = 0; i < groundIrradianceSpatial.size(); i++) {
+        ground_incident += groundIrradianceSpatial.at(i) / groundIrradianceSpatial.size();
+    }
+    return ground_incident;
+}
+
+std::vector<double> irrad::get_ground_spatial() {
+    return groundIrradianceSpatial;
+}
+
+double irrad::get_ground_absorbed() {
+    // Returns average irradiance absorbed by the ground
+    if (albedoSpatial.size() <= 1) {
+        albedoSpatial.assign(groundIrradianceSpatial.size(), albedo);
+    }
+
+    double ground_absorbed = 0.;
+    for (size_t i = 0; i < groundIrradianceSpatial.size(); i++) {
+        ground_absorbed += groundIrradianceSpatial.at(i) * (1. - albedoSpatial.at(i)) / groundIrradianceSpatial.size();
+    }
+    return ground_absorbed;
+}
+
+double irrad::get_ground_reflected() {
+    // Returns average ground reflected irradiance onto the rear, considering view factor
+    return poaRearGroundReflected;
+}
+
+double irrad::get_rear_direct_diffuse() {
+    // Returns average direct and diffuse irradiance onto the rear
+    return poaRearDirectDiffuse;
+}
+
+double irrad::get_rear_row_reflections() {
+    // Returns the average reflected irradiance from the rear row onto the rear
+    return poaRearRowReflections;
+}
+
+double irrad::get_rear_self_shaded() {
+    // Returns the average direct and circumsolar shaded from being incident on the rear
+    return poaRearSelfShaded;
+}
+
 void irrad::get_irrad(double *ghi, double *dni, double *dhi) {
     *ghi = globalHorizontal;
     *dni = directNormal;
@@ -2204,9 +2267,15 @@ void irrad::set_optional(double elev, double pres, double t_amb) //defaults of 0
         this->tamb = t_amb;
 }
 
-void irrad::set_sky_model(int sm, double alb) {
+void irrad::set_sky_model(int sm, double alb, const std::vector<double> &albSpatial) {
     this->skyModel = sm;
     this->albedo = alb;
+    if (albSpatial.size() > 0) {
+        this->albedoSpatial = albSpatial;
+    }
+    else {
+        this->albedoSpatial.assign(10, alb);
+    }
 }
 
 void
@@ -2459,31 +2528,28 @@ int irrad::calc_rear_side(double transmissionFactor, double groundClearanceHeigh
     // do irradiance calculations if sun is up
     if (timeStepSunPosition[2] > 0) {
 
-        double tiltRadian = surfaceAnglesRadians[1];        // The tracked angle in radians
+        double tiltRadian = surfaceAnglesRadians[1];
 
-        // Update ground clearance height for HSAT
-        if (this->trackingMode == 1) {
-            groundClearanceHeight = groundClearanceHeight - (0.5 * slopeLength) * sin(fabs(tiltRadian));
+        double clearanceGround = std::numeric_limits<double>::quiet_NaN();          // distance between bottom edge of module to ground
+        if (this->trackingMode == 1) {                                              // if horizontal single-axis tracking
+            clearanceGround = groundClearanceHeight - (0.5 * slopeLength) * sin(tiltRadian);
+        }
+        else {
+            clearanceGround = groundClearanceHeight;
         }
 
         // System geometry
-        double rowToRow = slopeLength /
-                          this->groundCoverageRatio;        // Row to row spacing between the front of one row to the front of the next row
-        double clearanceGround = groundClearanceHeight;                    // The normalized clearance from the bottom edge of module to ground
-        double distanceBetweenRows = rowToRow -
-                                     cos(tiltRadian);        // The normalized distance from the read of module to front of module in next row
         double verticalHeight = slopeLength * sin(tiltRadian);
         double horizontalLength = slopeLength * cos(tiltRadian);
+        double rowToRow = slopeLength / this->groundCoverageRatio;                  // distance between front of row to front of next row
+        double distanceBetweenRows = rowToRow - horizontalLength;                   // distance between back of row to front of next row
 
-        if (horizontalLength == 0)
-            throw std::runtime_error("Bifacial calc_rear_side error: module's horizontal length cannot be 0. Please check module's dimensions.");
-
-        // Determine the factors for points on the ground from the leading edge of one row of PV panels to the edge of the next row of panels behind
+        // Determine the view factors for points on the ground to the sky in the rowToRow interval
         std::vector<double> rearSkyConfigFactors, frontSkyConfigFactors;
         this->getSkyConfigurationFactors(rowToRow, verticalHeight, clearanceGround, distanceBetweenRows,
                                          horizontalLength, rearSkyConfigFactors, frontSkyConfigFactors);
 
-        // Determine if ground is shading from direct beam radio for points on the ground from leading edge of PV panels to leading edge of next row behind
+        // Determine whether points on the ground in the rowToRow interval are shaded or not from DNI (also shaded fraction of PV back and front)
         double pvBackShadeFraction, pvFrontShadeFraction, maxShadow;
         pvBackShadeFraction = pvFrontShadeFraction = maxShadow = 0;
         std::vector<int> rearGroundShade, frontGroundShade;
@@ -2491,10 +2557,11 @@ int irrad::calc_rear_side(double transmissionFactor, double groundClearanceHeigh
                                     sunAnglesRadians[0], sunAnglesRadians[2], rearGroundShade, frontGroundShade,
                                     maxShadow, pvBackShadeFraction, pvFrontShadeFraction);
 
-        // Get the rear ground GHI
+        // Calculate GHI for the points on the ground in the rowToRow interval, considering shading and view factors to the sky
         std::vector<double> rearGroundGHI, frontGroundGHI;
         this->getGroundGHI(transmissionFactor, rearSkyConfigFactors, frontSkyConfigFactors, rearGroundShade,
                            frontGroundShade, rearGroundGHI, frontGroundGHI);
+        groundIrradianceSpatial = condenseAndAlignGroundIrrad(rearGroundGHI, groundIrradOutputRes, trackingMode == 1, horizontalLength, rowToRow);
 
         // Calculate the irradiance on the front of the PV module (to get front reflected)
         std::vector<double> frontIrradiancePerCellrow, frontReflected;
@@ -2510,6 +2577,12 @@ int irrad::calc_rear_side(double transmissionFactor, double groundClearanceHeigh
                                   horizontalLength, rearGroundGHI, frontGroundGHI, frontReflected,
                                   rearIrradiancePerCellrow, rearAverageIrradiance);
         planeOfArrayIrradianceRearAverage = rearAverageIrradiance;
+        planeOfArrayIrradianceRearSpatial = rearIrradiancePerCellrow;
+    }
+    else {
+        groundIrradianceSpatial.assign(groundIrradOutputRes, 0.);
+        planeOfArrayIrradianceRearAverage = 0.;
+        planeOfArrayIrradianceRearSpatial.assign(poaRearIrradRes, 0.);
     }
     return true;
 }
@@ -2590,31 +2663,30 @@ irrad::getGroundShadeFactors(double rowToRow, double verticalHeight, double clea
     double shadingStart1, shadingStart2, shadingEnd1, shadingEnd2;
     shadingStart1 = shadingStart2 = shadingEnd1 = shadingEnd2 = pvBackSurfaceShadeFraction = 0;
 
-    // Horizontal length of shadow perpindicular to row from top of module to bottom of module
+    // Horizontal length (from back of row) of shadow perpendicular to row if no ground clearance (Px in Fig. 6 of Appelbaum, 1979)
     double Lh = (verticalHeight / tan(solarElevationRadians)) * cos(surfaceAzimuthAngleRadians - solarAzimuthRadians);
 
-    //  Horizontal length of shadow perpindicular to row from top of module to ground level
-    double Lhc = ((clearanceGround + verticalHeight) / tan(solarElevationRadians)) *
-                 cos(surfaceAzimuthAngleRadians - solarAzimuthRadians);
+    // Horizontal length from back of row to end of shadow, perpendicular to row
+    double Lhc = ((clearanceGround + verticalHeight) / tan(solarElevationRadians)) * cos(surfaceAzimuthAngleRadians - solarAzimuthRadians);
 
-    // Horizontal length of shadow perpindicular to row from bottom of module to ground level
+    // Horizontal length from back of row to start of shadow, perpendicular to row
     double Lc = (clearanceGround / tan(solarElevationRadians)) * cos(surfaceAzimuthAngleRadians - solarAzimuthRadians);
 
-    // Front side of PV module partially shaded, back completely shaded, ground completely shaded
+    // Front partially shaded, back completely shaded, ground completely shaded
     if (Lh > distanceBetweenRows) {
         pvFrontSurfaceShadeFraction = (Lh - distanceBetweenRows) / (Lh + horizontalLength);
         pvBackSurfaceShadeFraction = 1.0;
         shadingStart1 = 0.0;
         shadingEnd1 = rowToRow;
     }
-        // Back side of PV module partially shaded, front completely shaded, ground completely shaded
+    // Front completely shaded, back partially shaded, ground completely shaded
     else if (Lh < -(rowToRow + horizontalLength)) {
         pvFrontSurfaceShadeFraction = 1.0;
         pvBackSurfaceShadeFraction = (Lh + rowToRow + horizontalLength) / (Lh + horizontalLength);
         shadingStart1 = 0.0;
         shadingEnd1 = rowToRow;
     }
-        // Assume ground is partially shaded
+    // Assume ground is partially shaded
     else {
         if (Lhc >= 0) {
             pvFrontSurfaceShadeFraction = 0.0;
@@ -2638,7 +2710,7 @@ irrad::getGroundShadeFactors(double rowToRow, double verticalHeight, double clea
                 }
             }
         }
-            // Shadow to front of row, either front or back might be shaded, depending on tilt and other factors
+        // Shadow to front of row, either front or back might be shaded, depending on tilt and other factors
         else {
             double shadowStart = 0.0;
             double shadowEnd = 0.0;
@@ -2694,7 +2766,7 @@ void irrad::getGroundGHI(double transmissionFactor, std::vector<double> rearSkyC
                          std::vector<double> frontSkyConfigFactors, std::vector<int> rearGroundShade,
                          std::vector<int> frontGroundShade, std::vector<double> &rearGroundGHI,
                          std::vector<double> &frontGroundGHI) {
-    // Calculate the diffuse components of irradiance
+    // Calculate the irradiance components on horizontal unobstructed ground
     perez(0, calculatedDirectNormal, calculatedDiffuseHorizontal, albedo, sunAnglesRadians[1], 0.0, sunAnglesRadians[1],
           planeOfArrayIrradianceRear, diffuseIrradianceRear);
     double incidentBeam = planeOfArrayIrradianceRear[0];
@@ -2703,7 +2775,7 @@ void irrad::getGroundGHI(double transmissionFactor, std::vector<double> rearSkyC
 
     // Sum the irradiance components for each of the ground segments to the front and rear of the front of the PV row
     for (size_t i = 0; i != 100; i++) {
-        // Add diffuse sky component viewed by ground
+        // Isotropic diffuse irradiance incident on ground
         rearGroundGHI.push_back(rearSkyConfigFactors[i] * isotropicDiffuse);
         frontGroundGHI.push_back(frontSkyConfigFactors[i] * isotropicDiffuse);
 
@@ -2712,9 +2784,11 @@ void irrad::getGroundGHI(double transmissionFactor, std::vector<double> rearSkyC
             rearGroundGHI[i] += incidentBeam + circumsolarDiffuse;
         }
         else {
-            // Add beam and circumsolar component transmitted thru module spacing if shaded
+            // Add beam and circumsolar component transmitted thru module if shaded
             rearGroundGHI[i] += (incidentBeam + circumsolarDiffuse) * transmissionFactor;
         }
+
+        // Repeat for ground in front of row
         if (frontGroundShade[i] == 0) {
             frontGroundGHI[i] += incidentBeam + circumsolarDiffuse;
         }
@@ -2737,11 +2811,6 @@ void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowTo
     double tiltRadians = surfaceAnglesRadians[1];
     double surfaceAzimuthRadians = surfaceAnglesRadians[2];
 
-    // Average GHI on ground under PV array for cases when x projection exceed 2*rtr
-    double averageGroundGHI = 0.0;
-    for (size_t i = 0; i != frontGroundGHI.size(); i++)
-        averageGroundGHI += frontGroundGHI[i] / frontGroundGHI.size();
-
     // Calculate diffuse isotropic irradiance for a horizontal surface
     double *poa = planeOfArrayIrradianceRear;
     double *diffc = diffuseIrradianceRear;
@@ -2749,8 +2818,8 @@ void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowTo
           poa, diffc);
     double isotropicSkyDiffuse = diffc[0];
 
-    // Calculate components for a 90 degree tilt
-    double angleTmp[5] = {0, 0, 0, 0, 0};
+    // Calculate irradiance components for a 90 degree tilt to get horizon brightening
+    double angleTmp[5] = {0, 0, 0, 0, 0};            // ([0] = incidence angle, [1] = tilt)
     incidence(0, 90.0, 180.0, 45.0, solarZenithRadians, solarAzimuthRadians, this->enableBacktrack,
               this->groundCoverageRatio, this->slopeTilt, this->slopeAzm, this->forceToStow, this->stowAngleDegrees, angleTmp);
     perez(0, calculatedDirectNormal, calculatedDiffuseHorizontal, albedo, angleTmp[0], angleTmp[1], solarZenithRadians,
@@ -2767,7 +2836,7 @@ void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowTo
                    clearanceGround; // y value for point on top edge of PV module/panel of row in front of (in PV panel slope lengths)
 
     // Calculate diffuse and direct component irradiances for each cell row (assuming 6 rows)
-    size_t cellRows = 6;
+    size_t cellRows = poaFrontIrradRes;
     for (size_t i = 0; i != cellRows; i++) {
         // Calculate diffuse irradiances and reflected amounts for each cell row over its field of view of 180 degrees,
         // beginning with the angle providing the upper most view of the sky (j=0)
@@ -2807,16 +2876,28 @@ void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowTo
 
 
         // Add ground reflected component
+        std::vector<double> albedoAligned;
+        if (trackingMode == 0 || trackingMode == 1 || trackingMode == 4) {          // 0=fixed, 1=one-axis, 4=seasonal tilt
+            // subdivide spatial albedos to match ground GHI length and align reference point at front of row
+            albedoAligned = divideAndAlignAlbedos(albedoSpatial, intervals, trackingMode == 1, horizontalLength, rowToRow);
+        }
+        else {
+            double average_albedo = std::accumulate(albedoSpatial.begin(), albedoSpatial.end(), 0.) / albedoSpatial.size();
+            albedoAligned.assign(intervals, average_albedo);
+        }
+
         for (size_t j = iStartGrd; j < 180; j++) {
             double startElevationDown = (j - iStartGrd) * DTOR + elevationAngleDown;
             double stopElevationDown = (j + 1 - iStartGrd) * DTOR + elevationAngleDown;
             double projectedX1 = PcellX - PcellY / tan(startElevationDown);
             double projectedX2 = PcellX - PcellY / tan(stopElevationDown);
             double actualGroundGHI = 0.0;
+            double reflectedGroundGHI = 0.0;
 
             if (fabs(projectedX1 - projectedX2) > 0.99 * rowToRow) {
                 // Use average value if projection approximates the rtr
-                actualGroundGHI = averageGroundGHI;
+                actualGroundGHI = std::accumulate(frontGroundGHI.begin(), frontGroundGHI.end(), 0.) / frontGroundGHI.size();
+                reflectedGroundGHI = actualGroundGHI * std::accumulate(albedoAligned.begin(), albedoAligned.end(), 0.) / albedoAligned.size();
             }
             else {
                 projectedX1 = intervals * projectedX1 / rowToRow;
@@ -2833,38 +2914,44 @@ void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowTo
 
                 if (index1 == index2) {
                     actualGroundGHI = frontGroundGHI[index1];
+                    reflectedGroundGHI = frontGroundGHI[index1] * albedoAligned[index1];
                 }
                 else {
                     // Sum irradiances on the ground if projects are in different groundGHI elements
                     for (size_t k = index1; k <= index2; k++) {
                         if (k == index1) {
                             actualGroundGHI += frontGroundGHI[k] * (k + 1.0 - projectedX1);
+                            reflectedGroundGHI += frontGroundGHI[k] * (k + 1.0 - projectedX1) * albedoAligned[k];
                         }
                         else if (k == index2) {
                             if (k < intervals) {
                                 actualGroundGHI += frontGroundGHI[k] * (projectedX2 - k);
+                                reflectedGroundGHI += frontGroundGHI[k] * (projectedX2 - k) * albedoAligned[k];
                             }
                             else {
                                 actualGroundGHI += frontGroundGHI[k - 100] * (projectedX2 - k);
+                                reflectedGroundGHI += frontGroundGHI[k - 100] * (projectedX2 - k) * albedoAligned[k - 100];
                             }
                         }
                         else {
                             if (k < intervals) {
                                 actualGroundGHI += frontGroundGHI[k];
+                                reflectedGroundGHI += frontGroundGHI[k] * albedoAligned[k];
                             }
                             else {
                                 actualGroundGHI += frontGroundGHI[k - 100];
+                                reflectedGroundGHI += frontGroundGHI[k - 100] * albedoAligned[k - 100];
                             }
                         }
                     }
                     // Irradiance on the ground in the 1-degree field of view
                     actualGroundGHI /= projectedX2 - projectedX1;
+                    reflectedGroundGHI /= projectedX2 - projectedX1;
                 }
             }
             frontIrradiance[i] +=
-                    0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j] * actualGroundGHI *
-                    this->albedo;
-            frontReflected[i] += 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * actualGroundGHI * this->albedo *
+                    0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j] * reflectedGroundGHI;
+            frontReflected[i] += 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * reflectedGroundGHI *
                                  (1.0 - MarionAOICorrectionFactorsGlass[j] * (1.0 - reflectanceNormalIncidence));
         }
         // Calculate and add direct and circumsolar irradiance components
@@ -2907,17 +2994,12 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
     double tiltRadians = surfaceAnglesRadians[1];
     double surfaceAzimuthRadians = surfaceAnglesRadians[2];
 
-    // Average GHI on ground under PV array for cases when x projection exceed 2*rtr
-    double averageGroundGHI = 0.0;
-    for (size_t i = 0; i != rearGroundGHI.size(); i++)
-        averageGroundGHI += rearGroundGHI[i] / rearGroundGHI.size();
-
     // Calculate diffuse isotropic irradiance for a horizontal surface
     perez(0, calculatedDirectNormal, calculatedDiffuseHorizontal, albedo, solarZenithRadians, 0, solarZenithRadians,
           planeOfArrayIrradianceRear, diffuseIrradianceRear);
     double isotropicSkyDiffuse = diffuseIrradianceRear[0];
 
-    // Calculate components for a 90 degree tilt
+    // Calculate components for a 90 degree tilt to get horizon brightening
     double surfaceAnglesRadians90[5] = {0, 0, 0, 0, 0};
     incidence(0, 90.0, 180.0, 45.0, solarZenithRadians, solarAzimuthRadians, this->enableBacktrack,
               this->groundCoverageRatio, this->slopeTilt, this->slopeAzm, this->forceToStow, this->stowAngleDegrees, surfaceAnglesRadians90);
@@ -2936,7 +3018,15 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
                    clearanceGround; // y value for point on top edge of PV module/panel of row in back of (in PV panel slope lengths)
 
     // Calculate diffuse and direct component irradiances for each cell row (assuming 6 rows)
-    size_t cellRows = 6;
+    std::vector<double> rearDirectDiffuse;              // the direct and sky diffuse irradiance incident on the rear for each cell row, before losses (shading, soiling, etc.)
+    poaRearDirectDiffuse = 0.;                          // the average direct and sky diffuse irradiance incident on the rear, before losses (shading, soiling, etc.)
+    std::vector<double> rearRowReflections;             // the reflected irradiance from the rear row on the rear of each cell row
+    poaRearRowReflections = 0.;                         // the average reflected irradiance from the rear row on the rear
+    std::vector<double> rearGroundReflected;            // the ground reflected irradiance onto the rear of each cell row, considering view factor
+    poaRearGroundReflected = 0.;                        // the average ground reflected irradiance onto the rear, considering view factor
+    std::vector<double> rearSelfShaded;                 // the direct and circumsolar shaded from being incident on the rear, for each cell
+    poaRearSelfShaded = 0.;                             // the average direct and circumsolar shaded from being incident on the rear
+    size_t cellRows = poaRearIrradRes;
     for (size_t i = 0; i != cellRows; i++) {
         // Calculate diffuse irradiances and reflected amounts for each cell row over its field of view of 180 degrees,
         // beginning with the angle providing the upper most view of the sky (j=0)
@@ -2956,16 +3046,19 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
                                           DTOR);                          // First whole degree in arc range that sees ground, last is 180
 
         rearIrradiance.push_back(0);
+        rearDirectDiffuse.push_back(0);
         for (size_t j = 0; j != iStopIso; j++) {
-            rearIrradiance[i] += 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j] *
-                                 isotropicSkyDiffuse;
+            double rear_isotropic_horizon_diffuse = 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j] * isotropicSkyDiffuse;
             if ((iStopIso - j) <= iHorBright) {
-                rearIrradiance[i] += 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j] *
-                                     horizonDiffuse / 0.052264; // 0.052246 = 0.5 * [cos(84) - cos(90)]
+                rear_isotropic_horizon_diffuse += 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j] *
+                    horizonDiffuse / (0.5 * (cos(84 * DTOR) - cos(90 * DTOR)));
             }
+            rearIrradiance[i] += rear_isotropic_horizon_diffuse;
+            rearDirectDiffuse[i] += rear_isotropic_horizon_diffuse;
         }
 
-        // Add relections from PV module front surfaces
+        // Add reflections from PV module front surfaces
+        rearRowReflections.push_back(0);
         for (size_t j = iStopIso; j < iStartGrd; j++) {
             double diagonalDistance = (PbotX - PcellX) / cos(elevationAngleDown);
             double startAlpha = -(double) (j - iStopIso) * DTOR + elevationAngleUp + elevationAngleDown;
@@ -3005,22 +3098,37 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
                 PVreflectedIrradiance += cellLengthSeen * frontReflected[k];
             }
             PVreflectedIrradiance /= projectedX2 - projectedX1;
-            rearIrradiance[i] += 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j] *
-                                 PVreflectedIrradiance;
+            double rear_row_reflections = 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j] *
+                                 PVreflectedIrradiance;                                                                             // ** Rear row reflected, through glass
+            rearIrradiance[i] += rear_row_reflections;
+            rearRowReflections[i] += rear_row_reflections;
         }
 
 
         // Add ground reflected component
+        std::vector<double> albedoAligned;
+        if (trackingMode == 0 || trackingMode == 1 || trackingMode == 4) {          // 0=fixed, 1=one-axis, 4=seasonal tilt
+            // subdivide spatial albedos to match ground GHI length and align reference point at front of row
+            albedoAligned = divideAndAlignAlbedos(albedoSpatial, intervals, trackingMode == 1, horizontalLength, rowToRow);
+        }
+        else {
+            double average_albedo = std::accumulate(albedoSpatial.begin(), albedoSpatial.end(), 0.) / albedoSpatial.size();
+            albedoAligned.assign(intervals, average_albedo);
+        }
+
+        rearGroundReflected.push_back(0);
         for (size_t j = iStartGrd; j < 180; j++) {
             double startElevationDown = (double) (j - iStartGrd) * DTOR + elevationAngleDown;
             double stopElevationDown = (double) (j + 1 - iStartGrd) * DTOR + elevationAngleDown;
             double projectedX2 = PcellX + PcellY / tan(startElevationDown);
             double projectedX1 = PcellX + PcellY / tan(stopElevationDown);
             double actualGroundGHI = 0.0;
+            double reflectedGroundGHI = 0.0;
 
             if (fabs(projectedX1 - projectedX2) > 0.99 * rowToRow) {
                 // Use average value if projection approximates the rtr
-                actualGroundGHI = averageGroundGHI;
+                actualGroundGHI = std::accumulate(rearGroundGHI.begin(), rearGroundGHI.end(), 0.) / rearGroundGHI.size();
+                reflectedGroundGHI = actualGroundGHI * std::accumulate(albedoAligned.begin(), albedoAligned.end(), 0.) / albedoAligned.size();
             }
             else {
                 projectedX1 = intervals * projectedX1 / rowToRow;
@@ -3035,15 +3143,17 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
                     projectedX1 += intervals;
                     projectedX2 += intervals;
                 }
-                int index1 = static_cast<int>(projectedX1 + intervals) - (int) intervals;
-                int index2 = static_cast<int>(projectedX2 + intervals) - (int) intervals;
+                int index1 = std::min(static_cast<int>(intervals - 1), static_cast<int>(projectedX1 + intervals) - (int) intervals);
+                int index2 = std::min(static_cast<int>(intervals - 1), static_cast<int>(projectedX2 + intervals) - (int) intervals);
 
                 if (index1 == index2) {
                     if (index1 < 0) {
                         actualGroundGHI = frontGroundGHI[index1 + 100];
+                        reflectedGroundGHI = frontGroundGHI[index1 + 100] * albedoAligned[index1 + 100];
                     }
                     else {
                         actualGroundGHI = rearGroundGHI[index1];
+                        reflectedGroundGHI = rearGroundGHI[index1] * albedoAligned[index1];
                     }
                 }
                 else {
@@ -3052,35 +3162,42 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
                         if (k == index1) {
                             if (k < 0) {
                                 actualGroundGHI += frontGroundGHI[k + intervals] * (k + 1.0 - projectedX1);
+                                reflectedGroundGHI += frontGroundGHI[k + intervals] * (k + 1.0 - projectedX1) * albedoAligned[k + intervals];
                             }
                             else {
                                 actualGroundGHI += rearGroundGHI[k] * (k + 1.0 - projectedX1);
+                                reflectedGroundGHI += rearGroundGHI[k] * (k + 1.0 - projectedX1) * albedoAligned[k];
                             }
                         }
                         else if (k == index2) {
                             if (k < 0) {
                                 actualGroundGHI += frontGroundGHI[k + intervals] * (projectedX2 - k);
+                                reflectedGroundGHI += frontGroundGHI[k + intervals] * (projectedX2 - k) * albedoAligned[k + intervals];
                             }
                             else {
                                 actualGroundGHI += rearGroundGHI[k] * (projectedX2 - k);
+                                reflectedGroundGHI += rearGroundGHI[k] * (projectedX2 - k) * albedoAligned[k];
                             }
                         }
                         else {
                             if (k < 0) {
                                 actualGroundGHI += frontGroundGHI[k + 100];
+                                reflectedGroundGHI += frontGroundGHI[k + 100] * albedoAligned[k + 100];
                             }
                             else {
                                 actualGroundGHI += rearGroundGHI[k];
+                                reflectedGroundGHI += rearGroundGHI[k] * albedoAligned[k];
                             }
                         }
                     }
                     // Irradiance on the ground in the 1-degree field of view
                     actualGroundGHI /= projectedX2 - projectedX1;
+                    reflectedGroundGHI /= projectedX2 - projectedX1;
                 }
             }
-            rearIrradiance[i] +=
-                    0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j] * actualGroundGHI *
-                    this->albedo;
+            double rear_ground_reflected = 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j] * reflectedGroundGHI;          // ** Ground reflected, through glass ("View factor to rear row")
+            rearIrradiance[i] += rear_ground_reflected;
+            rearGroundReflected[i] += rear_ground_reflected;                    
         }
         // Calculate and add direct and circumsolar irradiance components
         incidence(0, 180.0 - tiltRadians * RTOD, (surfaceAzimuthRadians * RTOD - 180.0), 45.0, solarZenithRadians,
@@ -3088,6 +3205,9 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
                   this->groundCoverageRatio, this->slopeTilt, this->slopeAzm, this->forceToStow, this->stowAngleDegrees, surfaceAnglesRadians);
         perez(0, calculatedDirectNormal, calculatedDiffuseHorizontal, albedo, surfaceAnglesRadians[0],
               surfaceAnglesRadians[1], solarZenithRadians, planeOfArrayIrradianceRear, diffuseIrradianceRear);
+
+        double rear_direct_circumsolar = planeOfArrayIrradianceRear[0] + diffuseIrradianceRear[1];
+        rearDirectDiffuse[i] += rear_direct_circumsolar;
 
         double cellShade = pvBackShadeFraction * cellRows - i;
 
@@ -3100,12 +3220,19 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
         }
 
         // Cell not shaded entirely and incidence angle < 90 degrees
+        rearSelfShaded.push_back(0);
         if (cellShade < 1.0 && surfaceAnglesRadians[0] < M_PI / 2.0) {
             double iamMod = iamSjerpsKoomen(n2, surfaceAnglesRadians[0]);
-            rearIrradiance[i] +=
-                    (1.0 - cellShade) * (planeOfArrayIrradianceRear[0] + diffuseIrradianceRear[1]) * iamMod;
+            rearIrradiance[i] += (1.0 - cellShade) * rear_direct_circumsolar * iamMod;                        // ** (1 - Rear self shading loss) * (Rear direct and diffuse (circumsolar only)), through glass loss
+            rearSelfShaded[i] = cellShade * rear_direct_circumsolar * iamMod;
         }
+
         rearAverageIrradiance += rearIrradiance[i] / cellRows;
+        poaRearDirectDiffuse += rearDirectDiffuse[i] / cellRows;
+        poaRearRowReflections += rearRowReflections[i] / cellRows;
+        poaRearSelfShaded += rearSelfShaded[i] / cellRows;
+        poaRearGroundReflected += rearGroundReflected[i] / cellRows;
+        double xy = 1.;
     }
 }
 
@@ -3126,6 +3253,82 @@ double shadeFraction1x(double solar_azimuth, double solar_zenith,
     fs = fs < 0 ? 0 : fs;
     fs = fs > 1 ? 1 : fs;
     return fs;
+}
+
+std::vector<double> divideAndAlignAlbedos(const std::vector<double>& albedo /*-*/, size_t n_divisions /*-*/, bool isOneAxisTracking /*-*/,
+                                          double horizontalLength /*m*/, double rowToRow /*m*/) {
+    /*
+    Subdivide spatial albedos and if 1-axis tracking change reference from the row midline to the front
+    */
+    assert(n_divisions % albedo.size() == 0);                           // functionality only works for even divisions
+
+    // Upsample vector to n_divisions
+    std::vector<double> albedo_aligned;
+    for (size_t i = 0; i < albedo.size(); i++) {
+        for (size_t j = 0; j < n_divisions / albedo.size(); j++) {
+            albedo_aligned.push_back(albedo.at(i));
+        }
+    }
+
+    if (isOneAxisTracking) {
+        // Rotate the albedo vector so the first index is at (or overlapping) the front of the row instead of at center
+        double L_division = rowToRow / n_divisions;                     // length of a single albedo division
+        double n = 0.5 * horizontalLength / L_division;                 // fractional number of albedo segments between front of row and center of row
+        size_t leading_segments = n_divisions - std::ceil(n);           // whole albedo segments between center of row and front of row behind
+        rotate(albedo_aligned.begin(), albedo_aligned.begin() + leading_segments, albedo_aligned.end());   // move the leading segments to the back of the vector
+
+        // 'Shift' the actual ground albedo locations to front of row by weighting-averaging adjacent divisions
+        double frac_div_extending = std::ceil(n) - n;                   // fraction of now first albedo division extending beyond front of row
+        double albedo_front_orig = albedo_aligned.front();
+        for (size_t i = 0; i < n_divisions - 1; i++) {                  // do last segment separately
+            albedo_aligned.at(i) = albedo_aligned.at(i) * (1 - frac_div_extending) + albedo_aligned.at(i + 1) * frac_div_extending;
+        }
+        albedo_aligned.back() = albedo_aligned.back() * (1 - frac_div_extending) + albedo_front_orig * frac_div_extending;
+    }
+
+    return albedo_aligned;
+}
+
+std::vector<double> condenseAndAlignGroundIrrad(const std::vector<double>& ground_irr /*W/m2*/, size_t n_divisions /*-*/, bool isOneAxisTracking /*-*/,
+                                            double horizontalLength /*m*/, double rowToRow /*m*/) {
+    /*
+    Condense spatial ground irradiances and if 1-axis tracking change reference from the row front to the midline
+    */
+    assert(ground_irr.size() % n_divisions == 0);                           // functionality only works for even divisions
+
+    std::vector<double> ground_aligned = ground_irr;
+
+    if (isOneAxisTracking) {
+        // Rotate the ground irradiance vector so the first index is at (or overlapping) the center of the row instead of at the midline
+        double L_division = rowToRow / ground_aligned.size();           // length of a single ground division
+        double n = 0.5 * horizontalLength / L_division;                 // fractional number of ground segments between front of row and center of row
+        size_t leading_segments = std::floor(n);                        // whole ground segments between front of row and center of row
+        rotate(ground_aligned.begin(), ground_aligned.begin() + leading_segments, ground_aligned.end());   // move the leading segments to the back of the vector
+
+        // 'Shift' the actual ground irradiance locations to center of row by weighting-averaging adjacent divisions
+        double frac_div_extending = n - std::floor(n);                  // fraction of now first ground division extending beyond center of row
+        double ground_front_orig = ground_aligned.front();
+        for (size_t i = 0; i < ground_aligned.size() - 1; i++) {        // do last segment separately
+            ground_aligned.at(i) = ground_aligned.at(i) * (1 - frac_div_extending) + ground_aligned.at(i + 1) * frac_div_extending;
+        }
+        ground_aligned.back() = ground_aligned.back() * (1 - frac_div_extending) + ground_front_orig * frac_div_extending;
+    }
+
+    // Downsample vector to n_divisions
+    std::vector<double> ground_condensed;
+    size_t num_to_avg = ground_aligned.size() / n_divisions;
+    size_t i = 0;
+    double sum = 0.;
+    while (i < ground_aligned.size()) {
+        sum += ground_aligned.at(i);
+        if ((i + 1) % num_to_avg == 0) {
+            ground_condensed.push_back(sum / num_to_avg);     // add average to output
+            sum = 0.;
+        }
+        i++;
+    }
+
+    return ground_condensed;
 }
 
 double truetrack(double solar_azimuth, double solar_zenith, double axis_tilt, double axis_azimuth) {
