@@ -24,8 +24,6 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "tcstype.h"
 #include "htf_props.h"
 //#include "sam_csp_util.h"
-//#include "recore/lib_powerblock.h"
-#include "powerblock.h"
 
 #include "csp_solver_pc_Rankine_indirect_224.h"
 #include "csp_solver_util.h"

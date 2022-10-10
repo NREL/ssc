@@ -109,27 +109,29 @@ static var_info _cm_vtab_pvwattsv8[] = {
     /*   VARTYPE           DATATYPE          NAME                              LABEL                                          UNITS        META                                            GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
         { SSC_INPUT,        SSC_STRING,      "solar_resource_file",            "Weather file path",                          "",           "",                                             "Solar Resource",      "",                       "",                              "" },
         { SSC_INPUT,        SSC_TABLE,       "solar_resource_data",            "Weather data",                               "",           "dn,df,tdry,wspd,lat,lon,tz,elev",              "Solar Resource",      "",                       "",                              "" },
-        { SSC_INPUT,        SSC_ARRAY,       "albedo",                         "Albedo",                                     "frac",       "array of 1 constant value or 12 monthly values for use when weather file albedo data not available","Solar Resource",    "",                        "",                              "" },
-        { SSC_INPUT,        SSC_NUMBER,      "use_wf_albedo",                  "Use albedo from weather file",               "0/1",        "0=use Albedo input, 1=use weather file albedo if available","Solar Resource","?=0",                    "BOOLEAN",          "" },
+        { SSC_INPUT,        SSC_ARRAY,       "albedo",                         "Albedo",                                     "0..1",       "array of 1 constant value or 12 monthly values for use when weather file albedo data not available","Solar Resource",    "",                        "",                              "" },
+        { SSC_INPUT,        SSC_NUMBER,      "albedo_default",                 "Albedo default",                             "0..1",       "default when albedo input data is invalid","Solar Resource",    "?=0.2",                        "",                              "" },
+        { SSC_INPUT,        SSC_NUMBER,      "albedo_default_snow",            "Albedo default for snow",                    "0..1",       "default when albedo input data is invalid with snow","Solar Resource",    "?=0.6",                        "",                              "" },
+        { SSC_INPUT,        SSC_NUMBER,      "use_wf_albedo",                  "Use albedo from weather file",               "0/1",        "use albedo input, use weather file albedo if available","Solar Resource","?=0",                    "BOOLEAN",          "" },
 
         { SSC_INOUT,        SSC_NUMBER,      "system_use_lifetime_output",     "Run lifetime simulation",                    "0/1",        "",                                             "Lifetime",            "?=0",                        "",                              "" },
         { SSC_INPUT,        SSC_NUMBER,      "analysis_period",                "Analysis period",                            "years",      "",                                             "Lifetime",            "system_use_lifetime_output=1", "",                          "" },
         { SSC_INPUT,        SSC_ARRAY,       "dc_degradation",                 "Annual DC degradation for lifetime simulations","%/year",  "",                                             "Lifetime",            "system_use_lifetime_output=1", "",                          "" },
 
         { SSC_INPUT,        SSC_NUMBER,      "system_capacity",                "System size (DC nameplate)",                  "kW",        "",											   "System Design",      "*",                       "",                      "" },
-        { SSC_INPUT,        SSC_NUMBER,      "module_type",                    "Module type",                                 "0/1/2",     "Standard,Premium,Thin film",                   "System Design",      "?=0",                     "MIN=0,MAX=2,INTEGER",           "" },
+        { SSC_INPUT,        SSC_NUMBER,      "module_type",                    "Module type",                                 "0/1/2",     "standard,premium,thin film",                   "System Design",      "?=0",                     "MIN=0,MAX=2,INTEGER",           "" },
         { SSC_INPUT,        SSC_NUMBER,      "dc_ac_ratio",                    "DC to AC ratio",                              "ratio",     "",                                             "System Design",      "?=1.1",                   "POSITIVE",                      "" },
 
         { SSC_INPUT,        SSC_NUMBER,      "bifaciality",                    "Module bifaciality factor",                   "0 or ~0.65","",                                             "System Design",      "?=0",                       "",                              "" },
 
-        { SSC_INPUT,        SSC_NUMBER,      "array_type",                     "Array type",                                  "0/1/2/3/4", "Fixed Rack,Fixed Roof,1Axis,Backtracked,2Axis","System Design",      "*",                       "MIN=0,MAX=4,INTEGER",           "" },
+        { SSC_INPUT,        SSC_NUMBER,      "array_type",                     "Array type",                                  "0/1/2/3/4", "fixed open rack,fixed roof mount,1-axis tracking,1-axis backtracking,2-axis tracking","System Design",      "*",                       "MIN=0,MAX=4,INTEGER",           "" },
         { SSC_INPUT,        SSC_NUMBER,      "tilt",                           "Tilt angle",                                  "deg",       "H=0,V=90",                                     "System Design",      "array_type<4",            "MIN=0,MAX=90",                  "" },
         { SSC_INPUT,        SSC_NUMBER,      "azimuth",                        "Azimuth angle",                               "deg",       "E=90,S=180,W=270",                             "System Design",      "array_type<4",            "MIN=0,MAX=360",                 "" },
         { SSC_INPUT,        SSC_NUMBER,      "gcr",                            "Ground coverage ratio",                       "0..1",      "",                                             "System Design",      "?=0.4",                   "MIN=0.01,MAX=0.99",             "" },
         { SSC_INPUT,        SSC_NUMBER,      "rotlim",                         "Tracker rotation angle limit",                "deg",       "",                                             "System Design",      "?=45.0",                  "",                              "" },
 
         { SSC_INPUT,        SSC_ARRAY,       "soiling",                        "Soiling loss",                                "%",         "",                                             "System Design",      "?",                       "",                              "" },
-        { SSC_INPUT,        SSC_NUMBER,      "losses",						   "Other DC losses",                             "%",         "Total system losses",                          "System Design",      "*",                       "MIN=-5,MAX=99",                 "" },
+        { SSC_INPUT,        SSC_NUMBER,      "losses",						   "Other DC losses",                             "%",         "total system losses",                          "System Design",      "*",                       "MIN=-5,MAX=99",                 "" },
 
         { SSC_INPUT,        SSC_NUMBER,      "enable_wind_stow",               "Enable tracker stow at high wind speeds",     "0/1",       "",                                             "System Design",      "?=0",                     "BOOLEAN",                              "" },
         { SSC_INPUT,        SSC_NUMBER,      "stow_wspd",                      "Tracker stow wind speed threshold",           "m/s",       "",                                             "System Design",      "?=10",                    "",                              "" },
@@ -174,7 +176,9 @@ static var_info _cm_vtab_pvwattsv8[] = {
 
         { SSC_OUTPUT,       SSC_ARRAY,       "dc",                             "DC inverter input power",                              "W",         "",                                             "Time Series",      "*",                       "",                          "" },
         { SSC_OUTPUT,       SSC_ARRAY,       "ac",                             "AC inverter output power",                           "W",         "",                                             "Time Series",      "*",                       "",                          "" },
-        { SSC_OUTPUT,       SSC_ARRAY,       "ac_pre_adjust",                             "AC inverter output power before system availability",                           "W",         "",                                             "Time Series",      "*",                       "",                          "" },
+        { SSC_OUTPUT,       SSC_ARRAY,       "ac_pre_adjust",                  "AC inverter output power before system availability",                           "W",         "",                                             "Time Series",      "*",                       "",                          "" },
+
+        { SSC_OUTPUT,       SSC_ARRAY,       "inv_eff_output",                        "Inverter efficiency",                           "%",         "",                                             "Time Series",      "*",                       "",                          "" },
 
         { SSC_OUTPUT,       SSC_ARRAY,       "poa_monthly",                    "Plane of array irradiance",                   "kWh/m2",    "",                                             "Monthly",          "",                       "LENGTH=12",                          "" },
         { SSC_OUTPUT,       SSC_ARRAY,       "solrad_monthly",                 "Daily average solar irradiance",              "kWh/m2/day","",                                             "Monthly",          "",                       "LENGTH=12",                          "" },
@@ -239,7 +243,7 @@ protected:
         double dc_nameplate;    //nameplate rated capacity of the DC side of the system units of this variable are W, while input is in kW
         double dc_ac_ratio;     //ratio of DC nameplate capacity to AC nameplate capacity (unitless)
         double ac_nameplate;    //nameplate rated capacity of the AC side of the system (W)
-        double xfmr_rating;     //rating of the transformer, hardcoded to be equal to ac_nameplate (W)   
+        double xfmr_rating;     //rating of the transformer, hardcoded to be equal to ac_nameplate (W)
         double inv_eff_percent; //inverter efficiency at rated power (percent)
         double dc_loss_percent; //DC system losses (percent)
         double tilt, azimuth;   //tilt and azimuth of the system (degrees)
@@ -773,12 +777,14 @@ public:
         ssc_number_t* p_dc = allocate("dc", nrec);
         ssc_number_t* p_ac = allocate("ac", nrec);
         ssc_number_t* p_ac_pre_adjust = allocate("ac_pre_adjust", nrec);
+        ssc_number_t* p_inv_eff = allocate("inv_eff_output", nrec);
         ssc_number_t* p_gen = allocate("gen", nlifetime);
 
         double annual_kwh = 0;
 
         size_t idx_life = 0;
         float percent = 0;
+        int n_alb_errs = 0;
         for (size_t y = 0; y < nyears; y++)
         {
             for (size_t idx = 0; idx < nrec; idx++)
@@ -810,36 +816,52 @@ public:
                 p_snow[idx] = (ssc_number_t)wf.snow; // if there is no snow data in the weather file, this will be NaN- consistent with pvsamv1
                 p_tmod[idx] = (ssc_number_t)wf.tdry;
 
-                // if albedo user input is a single, monthly, or time series value, then assign the value to alb
-                double alb = 0.2; // set to default value just in case
-                if (albedo_len == 1 )
-                    alb = albedo[0];
-                else if (albedo_len == 12)
-                    alb = albedo[wf.month - 1];
-                else if (albedo_len == nrec)
-                    alb = albedo[idx];
-                else if (is_assigned("albedo"))
-                    log(util::format("Albedo array was assigned but is not the correct length (1, 12, or %d entries). Using default value.", nrec), SSC_WARNING);
-
-                // check albedo is valid value between 0 and 1. if not, set to default value 0.2
-                // if the snow loss model is enabled and there's valid snow depth > 0.5 cm, then set to 0.6
+                // use wf albedo if use_wf_albedo is true and wf albedo is valid
+                // use user albedo if use_wf_albedo is false and user albedo is valid
+                // otherwise use default albedo (snow or no snow)
+                double alb = 0;
+                if (use_wf_albedo)
+                {
+                    if ((std::isfinite(wf.alb) && (wf.alb > 0 && wf.alb < 1)))
+                        alb = wf.alb;
+                    else if (n_alb_errs < 5) // display warning up to 5 times
+                    {
+                        log(util::format("Weather file albedo is not valid. "
+                            "Using default albedo value of %f (snow) or %f (no snow). "
+                            "This warning only appears for the first five instances of this error. "
+                            "[year:%d month:%d day:%d hour:%d minute:%lg]. ",
+                            as_double("albedo_default_snow"), as_double("albedo_default"),
+                            wf.year, wf.month, wf.day, wf.hour, wf.minute), SSC_NOTICE);
+                        n_alb_errs++;
+                    }
+                }
+                else
+                {
+                    if (albedo_len == 1)
+                        alb = albedo[0];
+                    else if (albedo_len == 12)
+                        alb = albedo[wf.month - 1];
+                    else if (albedo_len == nrec)
+                        alb = albedo[idx];
+                    else if (is_assigned("albedo") && (idx == 0)) // display warning once
+                        log(util::format("Albedo input array is not the correct length (1, 12, or %d entries). "
+                            "Using default albedo value of %f (snow) or %f (no snow). "
+                            "[year:%d month:%d day:%d hour:%d minute:%lg]. ",
+                            nrec, as_double("albedo_default_snow"), as_double("albedo_default"),
+                            wf.year, wf.month, wf.day, wf.hour, wf.minute), SSC_NOTICE);
+                }
                 if (alb <= 0 || alb >= 1)
                 {
                     if (std::isfinite(wf.snow) && wf.snow > 0.5 && wf.snow < 999 && en_snowloss)
-                        alb = 0.6;
+                        alb = as_double("albedo_default_snow");
                     else
-                        alb = 0.2;
+                        alb = as_double("albedo_default");
+                    if (!use_wf_albedo && n_alb_errs < 5) // display warning up to 5 times
+                    {
+                        log(util::format("Albedo input value is not valid for time step %d. Using default albedo value of %f (snow) or %f (no snow). This warning only appears for the first five instances of this error.", idx, as_double("albedo_default_snow"), as_double("albedo_default")), SSC_NOTICE);
+                        n_alb_errs++;
+                    }
                 }
-
-                // conditions to use albedo from wf instead of albedo user input:
-                //   * wf.alb exists and is valid and use_wf_albedo = 1
-                //   * wf.alb exists and is valid and use_wf_albedo = 0 and albedo_len = 0 
-                // conditions to use albedo user input:
-                //   * albedo_len > 0 and use_wf_albedo = 0
-                //   * albedo_len > 0 and use_wf_albedo = 1 and wf.alb does not exist
-                //   * albedo_len > 0 and use_wf_albedo = 1 and wf.alb has invalid values
-                 if ( ( std::isfinite(wf.alb) && ( wf.alb > 0 && wf.alb < 1 ) ) && ( albedo_len == 0 || use_wf_albedo ))
-                    alb = wf.alb;
 
                 // report albedo value as output
                 p_alb[idx] = (ssc_number_t)alb;
@@ -895,12 +917,12 @@ public:
 
                 if (-1 == code)
                 {
-                    log(util::format("Beam irradiance exceeded extraterrestrial value at record [y:%d m:%d d:%d h:%d minute:%lg].",
+                    log(util::format("Beam irradiance exceeded extraterrestrial value at record [year:%d month:%d day:%d hour:%d minute:%lg].",
                         wf.year, wf.month, wf.day, wf.hour, wf.minute));
                 }
                 else if (0 != code)
                     throw exec_error("pvwattsv8",
-                        util::format("Failed to process irradiation on surface (code: %d) [y:%d m:%d d:%d h:%d minute:%lg].",
+                        util::format("Failed to process irradiation on surface (code: %d) [year:%d month:%d day:%d hour:%d minute:%lg].",
                             code, wf.year, wf.month, wf.day, wf.hour, wf.minute));
 
                 p_sunup[idx] = (ssc_number_t)sunup;
@@ -1184,7 +1206,9 @@ public:
                         : (ibeam + iskydiff + ignddiff); // otherwise, use the 'linearly' derated beam irradiance
 
                     // set up inputs to module model for both temperature and subsequent CEC module model calculations
-                    pvinput_t in((f_nonlinear < 1.0 && poa > 0.0) ? ibeam_unselfshaded : ibeam, iskydiff, ignddiff, irear * module.bifaciality, poa_for_power,
+                    // bifaciality is applied to irear on line 885 above for fixed arrays and line 962 for trackers - so, module.bifaciality should not be applied again here - SAM issue 1151
+                    //pvinput_t in((f_nonlinear < 1.0 && poa > 0.0) ? ibeam_unselfshaded : ibeam, iskydiff, ignddiff, irear* module.bifaciality, poa_for_power,
+                    pvinput_t in((f_nonlinear < 1.0 && poa > 0.0) ? ibeam_unselfshaded : ibeam, iskydiff, ignddiff, irear, poa_for_power,
                         wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres,
                         solzen, aoi, hdr.elev,
                         stilt, sazi,
@@ -1217,8 +1241,8 @@ public:
                         poa_for_power *= f_cover * f_AM; //derate irradiance for module cover and spectral effects
                         poa_for_power += irear * f_AM; // backside irradiance model already includes back cover effects
                         if (y == 0 && wdprov->annualSimulation()) ld("dc_loss_cover") += (1 - f_cover) * dc_nom * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
-                        if (y == 0 && wdprov->annualSimulation()) ld("dc_loss_spectral") += (1 - f_AM) * dc_nom * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data*/                   
-                        
+                        if (y == 0 && wdprov->annualSimulation()) ld("dc_loss_spectral") += (1 - f_AM) * dc_nom * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data*/
+
                         // single diode model per PVsyst using representative module parameters for each module type
                         double P_single_module_sdm = sdmml_power(sdm, poa_for_power, tmod);
                         dc = P_single_module_sdm * pv.dc_nameplate / (sdm.Vmp * sdm.Imp);
@@ -1238,7 +1262,8 @@ public:
                     // apply common DC losses here (independent of module model)
                     dc *= f_nonlinear * f_snow * f_losses;
                     p_dcshadederate[idx] = (ssc_number_t)f_nonlinear;
-                    p_dcsnowderate[idx] = (ssc_number_t)f_snow;
+                    //p_dcsnowderate[idx] = (ssc_number_t)f_snow; // output is percentage - calculated value is derate
+                    p_dcsnowderate[idx] =  (1.0 - f_snow) * 100.0;
 
                     // apply DC degradation
                     dc *= degradationFactor[y];
@@ -1249,18 +1274,34 @@ public:
                     inverter.Pdco = inverter.Paco / (pv.inv_eff_percent * 0.01); // get inverter DC rating by dividing AC rating by efficiency
                     // set both Vdco and Vdc to zero. the assumption we make for voltages are irrelevant as long as C1, C2, and C3 are zero
                     inverter.Vdco = 0.0;
-                    inverter.Pso = 0.0; // simplifying assumption that the inverter can always operate
                     inverter.Pntare = 0.0; // simplifying assumption that inverter has no nighttime losses
-                    inverter.C0 = 0.0; 
                     // default values for C1, C2, C3 are zero per Sandia documentation: https://pvpmc.sandia.gov/modeling-steps/dc-to-ac-conversion/sandia-inverter-model/
                     // setting these to 0 results in similar inverter output to pvwattsv5
-                    inverter.C1 = 0.0; 
+                    inverter.C1 = 0.0;
                     inverter.C2 = 0.0;
                     inverter.C3 = 0.0;
+
+                    // Set based on market per ssc issue 870
+                    inverter.Pso = 0.0; // simplifying assumption that the inverter can always operate - needed for knee
+                    inverter.C0 = 0.0; // needed for curvature - voltage needed for this parameter to be used
+
+                    if (pv.dc_nameplate < 10) { // Residential
+                        inverter.Pso = 0.002246 * inverter.Paco;
+                    }
+                    else if (pv.dc_nameplate < 1000) { // Commercial >= 10kW
+                        inverter.Pso = 0.002478 * inverter.Paco;
+                    }
+                    else { // Utility >= 1MW
+                        inverter.Pso = 0.004931 * inverter.Paco;
+                    }
+
                     // call inverter function
-                    // set operating voltage (second parameter) to zero. the assumption we make for voltages are irrelevant as long as C1, C2, and C3 are zero (set above)
+                    // set operating voltage (second parameter) to zero. the assumption we make for voltages are irrelevant as long as C0, C1, C2, and C3 are zero (set above)
                     // use null pointers for results that we don't care about
                     if (!inverter.acpower(dc, 0.0, &ac, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr)) throw exec_error("pvwattsv8", util::format("Inverter power calculation failed at index %d.", (int)idx_life));
+
+                    // track inverter efficiency
+                    p_inv_eff[idx] = (dc > 0) ? ac/dc * 100 : 0.0;
 
                     // record AC results
                     if (y == 0 && wdprov->annualSimulation()) ld("ac_nominal") += dc * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
@@ -1378,4 +1419,3 @@ public:
 };
 
 DEFINE_MODULE_ENTRY(pvwattsv8, "PVWatts V8 - integrated hourly weather reader and PV system simulator.", 3)
-

@@ -915,6 +915,8 @@ void calculate_resilience_outputs(compute_module *cm, std::unique_ptr<resilience
 var_info vtab_utility_rate_common[] = {
 /*   VARTYPE           DATATYPE         NAME                        LABEL                                    UNITS      META                     GROUP                      REQUIRED_IF         CONSTRAINTS               UI_HINTS	*/
 
+    { SSC_INPUT,        SSC_NUMBER,     "en_electricity_rates",     "Optionally enable/disable electricity_rate",                   "years",  "",                      "Electricity Rates",             "",                         "INTEGER,MIN=0,MAX=1",              "" }, // Required for battery to use retail rates
+
     { SSC_INPUT,        SSC_ARRAY,      "rate_escalation",          "Annual electricity rate escalation",   "%/year",   "",                      "Electricity Rates",       "?=0",              "",                             "" },
 
     { SSC_INPUT,        SSC_NUMBER,     "ur_metering_option",       "Metering options",                     "0=net energy metering,1=net energy metering with $ credits,2=net billing,3=net billing with carryover to next month,4=buy all - sell all", "Net metering monthly excess", "Electricity Rates", "?=0", "INTEGER,MIN=0,MAX=4", "" },
@@ -1293,18 +1295,19 @@ size_t shading_factor_calculator::get_row_index_for_input(size_t hour_of_year, s
 
 bool shading_factor_calculator::fbeam(size_t hour_of_year, double minute, double solalt, double solazi)
 {
-	bool ok = false;
+    // apply beam Shade Loss Tables
+    bool ok = false;
 	double factor = 1.0;
 	size_t irow = get_row_index_for_input(hour_of_year, (size_t)minute);
 	if (irow < m_beamFactors.nrows() && irow >= 0)
 	{
-		factor = m_beamFactors.at(irow, 0);
-		// apply mxh factor
-		if (m_enMxH && (irow < m_mxhFactors.nrows()))
-			factor *= m_mxhFactors(irow, 0);
-		// apply azi alt shading factor
-		if (m_enAzAlt)
-			factor *= util::bilinear(solalt, solazi, m_azaltvals);
+		factor = m_beamFactors.at(irow, 0);                                 // beam shading losses by time step
+        if (m_enMxH && (irow < m_mxhFactors.nrows())) {
+            factor *= m_mxhFactors(irow, 0);                                // month-by-hour beam shading losses
+        }
+        if (m_enAzAlt) {
+            factor *= util::bilinear(solalt, solazi, m_azaltvals);          // azimuth-by-altitude beam shading losses
+        }
 
 		m_beam_shade_factor = factor;
 
@@ -1316,22 +1319,24 @@ bool shading_factor_calculator::fbeam(size_t hour_of_year, double minute, double
 
 bool shading_factor_calculator::fbeam_shade_db(ShadeDB8_mpp * p_shadedb, size_t hour, double minute, double solalt, double solazi, double gpoa, double dpoa, double pv_cell_temp, int mods_per_str, double str_vmp_stc, double mppt_lo, double mppt_hi)
 {
-	bool ok = false;
+    // apply 3D Shade Calculator results
+    bool ok = false;
 	double dc_factor = 1.0;
 	double beam_factor = 1.0;
 	size_t irow = get_row_index_for_input(hour, (size_t)minute);
 	if (irow < m_beamFactors.nrows())
 	{
 		std::vector<double> shad_fracs;
-		for (size_t icol = 0; icol < m_beamFactors.ncols(); icol++)
-			shad_fracs.push_back(m_beamFactors.at(irow, icol));
+        for (size_t icol = 0; icol < m_beamFactors.ncols(); icol++) {
+            shad_fracs.push_back(m_beamFactors.at(irow, icol));
+        }
 		dc_factor = 1.0 - p_shadedb->get_shade_loss(gpoa, dpoa, shad_fracs, true, pv_cell_temp, mods_per_str, str_vmp_stc, mppt_lo, mppt_hi);
-		// apply mxh factor
-		if (m_enMxH && (irow < m_mxhFactors.nrows()))
-			beam_factor *= m_mxhFactors(irow, 0);
-		// apply azi alt shading factor
-		if (m_enAzAlt)
-			beam_factor *= util::bilinear(solalt, solazi, m_azaltvals);
+        if (m_enMxH && (irow < m_mxhFactors.nrows())) {
+            beam_factor *= m_mxhFactors(irow, 0);                           // month-by-hour beam shading losses
+        }
+        if (m_enAzAlt) {
+            beam_factor *= util::bilinear(solalt, solazi, m_azaltvals);     // azimuth-by-altitude beam shading losses
+        }
 
 		m_dc_shade_factor = dc_factor;
 		m_beam_shade_factor = beam_factor;

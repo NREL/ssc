@@ -175,7 +175,25 @@ Irradiance_IO::Irradiance_IO(compute_module* cm, std::string cmName)
         throw exec_error(cmName, util::format("%d timesteps per hour found. Weather data should be single year.", stepsPerHour));
 
     useWeatherFileAlbedo = cm->as_boolean("use_wf_albedo");
-    userSpecifiedMonthlyAlbedo = cm->as_vector_double("albedo");
+    useSpatialAlbedos = cm->as_boolean("use_spatial_albedos");
+    userSpecifiedMonthlySpatialAlbedos.at(0) = std::numeric_limits<double>::quiet_NaN();
+    userSpecifiedMonthlyAlbedo.push_back(std::numeric_limits<double>::quiet_NaN());
+    if (useSpatialAlbedos) {
+        userSpecifiedMonthlySpatialAlbedos = cm->as_matrix("albedo_spatial");
+        double* data = userSpecifiedMonthlySpatialAlbedos.data();
+        std::size_t n_cells = userSpecifiedMonthlySpatialAlbedos.ncells();
+        if (*min_element(data, data + n_cells) <= 0 ||
+            *max_element(data, data + n_cells) >= 1) {
+            throw exec_error(cmName, "Albedos must be greater than zero and less than one in the monthly spatial albedo matrix.");
+        }
+    }
+    else {
+        userSpecifiedMonthlyAlbedo = cm->as_vector_double("albedo");
+        if (*min_element(userSpecifiedMonthlyAlbedo.begin(), userSpecifiedMonthlyAlbedo.end()) <= 0 ||
+            *max_element(userSpecifiedMonthlyAlbedo.begin(), userSpecifiedMonthlyAlbedo.end()) >= 1) {
+            throw exec_error(cmName, "Albedos must be greater than zero and less than one in the monthly uniform albedo matrix.");
+        }
+    }
 
     checkWeatherFile(cm, cmName);
 }
@@ -279,7 +297,12 @@ void Irradiance_IO::AllocateOutputs(compute_module* cm)
     p_sunPositionTime = cm->allocate("sunpos_hour", numberOfWeatherFileRecords);
     p_weatherFileWindSpeed = cm->allocate("wspd", numberOfWeatherFileRecords);
     p_weatherFileAmbientTemp = cm->allocate("tdry", numberOfWeatherFileRecords);
-    p_weatherFileAlbedo = cm->allocate("alb", numberOfWeatherFileRecords);
+    if (useSpatialAlbedos) {
+        p_weatherFileAlbedoSpatial = cm->allocate("alb_spatial", weatherDataProvider->nrecords(), userSpecifiedMonthlySpatialAlbedos.ncols());
+    }
+    else {
+        p_weatherFileAlbedo = cm->allocate("alb", numberOfWeatherFileRecords);
+    }
     p_weatherFileSnowDepth = cm->allocate("snowdepth", numberOfWeatherFileRecords);
 
     // If using input POA, must have POA for every subarray or assume POA applies to each subarray
@@ -367,13 +390,17 @@ Subarray_IO::Subarray_IO(compute_module* cm, const std::string& cmName, size_t s
         usePOAFromWeatherFile = false;
 
         // losses
-        rearIrradianceLossPercent = cm->as_double(prefix + "rear_irradiance_loss") / 100;
+        calculateRackShading = cm->as_boolean("calculate_rack_shading");
+        calculateBifacialElectricalMismatch = cm->as_boolean("calculate_bifacial_electrical_mismatch");
+        rearSoilingLossPercent = cm->as_double(prefix + "rear_soiling_loss") / 100;
+        rackShadingLossPercent = cm->as_double(prefix + "rack_shading") / 100;
         dcOptimizerLossPercent = cm->as_double("dcoptimizer_loss") / 100;
         mismatchLossPercent = cm->as_double(prefix + "mismatch_loss") / 100;
         diodesLossPercent = cm->as_double(prefix + "diodeconn_loss") / 100;
         dcWiringLossPercent = cm->as_double(prefix + "dcwiring_loss") / 100;
         trackingLossPercent = cm->as_double(prefix + "tracking_loss") / 100;
         nameplateLossPercent = cm->as_double(prefix + "nameplate_loss") / 100;
+        electricalMismatchLossPercent = cm->as_double(prefix + "electrical_mismatch") / 100;
 
         dcLossTotalPercent = 1 - (
             (1 - dcOptimizerLossPercent) *
@@ -808,6 +835,8 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
             p_poaDiffuseFront.push_back(cm->allocate(prefix + "poa_eff_diff", numberOfWeatherFileRecords));
             p_poaTotal.push_back(cm->allocate(prefix + "poa_eff", numberOfWeatherFileRecords));
             p_poaRear.push_back(cm->allocate(prefix + "poa_rear", numberOfWeatherFileRecords));
+            p_poaRearSpatial.push_back(cm->allocate(prefix + "poa_rear_spatial", Irradiance->weatherDataProvider->nrecords() + 1, irrad::poaRearIrradRes + 1));     // +1 for row/col labels
+            p_groundRear.push_back(cm->allocate(prefix + "ground_rear_spatial", Irradiance->weatherDataProvider->nrecords() + 1, irrad::groundIrradOutputRes + 1)); // +1 for row/col labels
             p_poaFront.push_back(cm->allocate(prefix + "poa_front", numberOfWeatherFileRecords));
             p_derateSoiling.push_back(cm->allocate(prefix + "soiling_derate", numberOfWeatherFileRecords));
             p_beamShadingFactor.push_back(cm->allocate(prefix + "beam_shading_factor", numberOfWeatherFileRecords));
@@ -860,6 +889,15 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
     p_poaFrontShadedSoiledTotal = cm->allocate("poa_shaded_soiled", numberOfWeatherFileRecords);
     p_poaFrontTotal = cm->allocate("poa_front", numberOfWeatherFileRecords);
     p_poaRearTotal = cm->allocate("poa_rear", numberOfWeatherFileRecords);
+    p_groundIncidentTotal = cm->allocate("ground_incident", numberOfWeatherFileRecords);
+    p_groundAbsorbedTotal = cm->allocate("ground_absorbed", numberOfWeatherFileRecords);
+    p_poaRearGroundReflectedTotal = cm->allocate("poa_rear_ground_reflected", numberOfWeatherFileRecords);
+    p_poaRearRowReflectionsTotal = cm->allocate("poa_rear_row_reflections", numberOfWeatherFileRecords);
+    p_poaRearDirectDiffuseTotal = cm->allocate("poa_rear_direct_diffuse", numberOfWeatherFileRecords);
+    p_poaRearSelfShadedTotal = cm->allocate("poa_rear_self_shaded", numberOfWeatherFileRecords);
+    p_poaRackShadedTotal = cm->allocate("poa_rear_rack_shaded", numberOfWeatherFileRecords);
+    p_poaRearSoiledTotal = cm->allocate("poa_rear_soiled", numberOfWeatherFileRecords);
+    p_bifacialElectricalMismatchTotal = cm->allocate("bifacial_electrical_mismatch", numberOfWeatherFileRecords);
     p_poaTotalAllSubarrays = cm->allocate("poa_eff", numberOfWeatherFileRecords);
 
     p_snowLossTotal = cm->allocate("dc_snow_loss", numberOfWeatherFileRecords);
@@ -1333,7 +1371,16 @@ Module_IO::Module_IO(compute_module* cm, std::string cmName, double dcLoss)
 
     }
     else
+    {
         throw exec_error(cmName, "invalid pv module model type");
+    }
+
+    // TODO: reimplement, but fix issues that this causes with some tests
+    //if (!isBifacial)
+    //{
+    //    bifaciality = 0.;
+    //    bifacialTransmissionFactor = 0.;
+    //}
 }
 void Module_IO::setupNOCTModel(compute_module* cm, const std::string& prefix)
 {

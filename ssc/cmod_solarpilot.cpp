@@ -75,7 +75,10 @@ static var_info _cm_vtab_solarpilot[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "dni_des",                   "Design-point DNI",                           "W/m2",   "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "land_max",                  "Max heliostat-dist-to-tower-height ratio",   "",       "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "land_min",                  "Min heliostat-dist-to-tower-height ratio",   "",       "",         "SolarPILOT",   "*",                "",                "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "h_tower",                   "Tower height",                               "m",      "",         "SolarPILOT",   "*",                "",                "" },
+    { SSC_INPUT,        SSC_NUMBER,      "csp.pt.sf.fixed_land_area",          "Fixed land area",                   "acre",   "",         "SolarPILOT",   "*",                "",                "" },
+    { SSC_INPUT,        SSC_NUMBER,      "csp.pt.sf.land_overhead_factor",     "Land overhead factor",              "",       "",         "SolarPILOT",   "*",                "",                "" },
+
+    { SSC_INPUT,        SSC_NUMBER,      "h_tower",                   "Tower height",                               "m",      "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "c_atm_0",					  "Attenuation coefficient 0",                  "",       "",         "SolarPILOT",   "?=0.006789",       "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "c_atm_1",					  "Attenuation coefficient 1",                  "",       "",         "SolarPILOT",   "?=0.1046",         "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "c_atm_2",					  "Attenuation coefficient 2",                  "",       "",         "SolarPILOT",   "?=-0.0107",        "",                "" },
