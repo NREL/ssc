@@ -267,6 +267,127 @@ TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, BifacialTest_cmod_pvwattsv8) {
     EXPECT_GT(annual_energy_bi / annual_energy_mono, 1.027);
 }
 
+/// Test albedo user single or monthly inputs, weather file (wf) input for valid and invalid albedo values with and without snow model
+TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, AlbedoTest_cmod_pvwattsv8) {
+
+    // albedo user input values for testing
+    ssc_number_t albedo_single[1] = { 0.45 };
+    ssc_number_t albedo_single_invalid[1] = { 1 };
+    ssc_number_t albedo_monthly[12] = { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.90, 0.91, 0.92 };
+    ssc_number_t albedo_monthly_invalid[12] = { 1, 2, 0.3, 4, 5, 6, 7, 8, 9, 0, 91, 92 };
+
+    // default albedo values
+    ssc_number_t default_albedo = 0.2;
+    ssc_number_t default_albedo_snow = 0.6;
+
+    // weather files for albedo tests
+    // pv_albedo_test.csv time steps 1, 2, and 3229 have invalid albedo values for testing
+    // time steps 0, 1, and 2 have snow depth = 14.2, time steps 3228 and 3229 have snow depth = 0
+    char wf_albedo[256];
+    int a1 = sprintf(wf_albedo, "%s/test/input_cases/pvsamv1_data/pv_albedo_test.csv", SSCDIR);
+    char wf_no_albedo[256];
+    int a2 = sprintf(wf_no_albedo, "%s/test/input_cases/pvsamv1_data/pv_albedo_test_no_albedo.csv", SSCDIR);
+
+    // albedo values from wf_snow_albedo
+    ssc_number_t albedo_ts_0 = 0.87; // jan 1 1:00 am
+    ssc_number_t albedo_ts_3228 = 0.1; // may 15 12:00 pm
+
+    ssc_data_set_string(data, "solar_resource_file", wf_albedo);
+
+    // Test set 1: use_wf_albedo true
+    ssc_data_set_number(data, "use_wf_albedo", 1);
+
+    ssc_data_set_number(data, "en_snowloss", 0);
+    EXPECT_FALSE(run_module(data, "pvwattsv8"));
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[0], albedo_ts_0, error_tolerance) << "Time step 0: Albedo should be wf albedo.";
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[1], default_albedo, error_tolerance) << "Time step 1: Albedo should be default albedo.";
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[2], default_albedo, error_tolerance) << "Time step 2: Albedo should be default albedo.";
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[3228], albedo_ts_3228, error_tolerance) << "Time step 3228: Albedo should wf albedo.";
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[3229], default_albedo, error_tolerance) << "Time step 3229: Albedo should be default albedo.";
+
+    ssc_data_set_number(data, "en_snowloss", 1);
+    EXPECT_FALSE(run_module(data, "pvwattsv8"));
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[0], albedo_ts_0, error_tolerance) << "Time step 0: Albedo should be wf albedo.";
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[1], default_albedo_snow, error_tolerance) << "Time step 1: Albedo should be default snow albedo.";
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[2], default_albedo_snow, error_tolerance) << "Time step 2: Albedo should be default snow albedo.";
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[3228], albedo_ts_3228, error_tolerance) << "Time step 3228: Albedo should be wf albedo.";
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[3229], default_albedo, error_tolerance) << "Time step 3229: Albedo should be default albedo.";
+
+    ssc_data_set_string(data, "solar_resource_file", wf_no_albedo);
+
+    ssc_data_set_number(data, "en_snowloss", 0);
+    EXPECT_FALSE(run_module(data, "pvwattsv8"));
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[0], default_albedo, error_tolerance) << "Time step 0: Albedo should be wf albedo.";
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[1], default_albedo, error_tolerance) << "Time step 1: Albedo should be default albedo.";
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[2], default_albedo, error_tolerance) << "Time step 2: Albedo should be default albedo.";
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[3228], default_albedo, error_tolerance) << "Time step 3228: Albedo should wf albedo.";
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[3229], default_albedo, error_tolerance) << "Time step 3229: Albedo should be default albedo.";
+
+    ssc_data_set_number(data, "en_snowloss", 1);
+    EXPECT_FALSE(run_module(data, "pvwattsv8"));
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[0], default_albedo_snow, error_tolerance) << "Time step 0: Albedo should be wf albedo.";
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[1], default_albedo_snow, error_tolerance) << "Time step 1: Albedo should be default snow albedo.";
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[2], default_albedo_snow, error_tolerance) << "Time step 2: Albedo should be default snow albedo.";
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[3228], default_albedo, error_tolerance) << "Time step 3228: Albedo should be wf albedo.";
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[3229], default_albedo, error_tolerance) << "Time step 3229: Albedo should be default albedo.";
+
+
+    // Test set 2: use_wf_albedo false
+    ssc_data_set_number(data, "use_wf_albedo", 0);
+
+    ssc_data_set_array(data, "albedo", albedo_single, 1);
+
+    ssc_data_set_number(data, "en_snowloss", 0);
+    EXPECT_FALSE(run_module(data, "pvwattsv8"));
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[0], albedo_single[0], error_tolerance) << "Time step 0: Albedo should be input albedo.";
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[3228], albedo_single[0], error_tolerance) << "Time step 3228: Albedo should input albedo.";
+
+    ssc_data_set_number(data, "en_snowloss", 1);
+    EXPECT_FALSE(run_module(data, "pvwattsv8"));
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[0], albedo_single[0], error_tolerance) << "Time step 0: Albedo should be input albedo.";
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[3228], albedo_single[0], error_tolerance) << "Time step 3228: Albedo should input albedo.";
+
+    ssc_data_set_array(data, "albedo", albedo_single_invalid, 1);
+
+    ssc_data_set_number(data, "en_snowloss", 0);
+    EXPECT_FALSE(run_module(data, "pvwattsv8"));
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[0], default_albedo, error_tolerance) << "Time step 0: Albedo should be default albedo.";
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[3228], default_albedo, error_tolerance) << "Time step 3228: Albedo should default albedo.";
+
+    ssc_data_set_number(data, "en_snowloss", 1);
+    EXPECT_FALSE(run_module(data, "pvwattsv8"));
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[0], default_albedo_snow, error_tolerance) << "Time step 0: Albedo should be default snow albedo.";
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[3228], default_albedo, error_tolerance) << "Time step 3228: Albedo should be default albedo.";
+
+    ssc_data_set_array(data, "albedo", albedo_monthly, 12);
+
+    ssc_data_set_number(data, "en_snowloss", 0);
+    EXPECT_FALSE(run_module(data, "pvwattsv8"));
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[0], albedo_monthly[0], error_tolerance) << "Time step 0: Albedo should be user albedo January.";
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[3228], albedo_monthly[4], error_tolerance) << "Time step 3228: Albedo should be user albedo May.";
+
+    ssc_data_set_number(data, "en_snowloss", 1);
+    EXPECT_FALSE(run_module(data, "pvwattsv8"));
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[0], albedo_monthly[0], error_tolerance) << "Time step 0: Albedo should be user albedo January.";
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[3228], albedo_monthly[4], error_tolerance) << "Time step 3228: Albedo should be user albedo May.";
+
+    ssc_data_set_array(data, "albedo", albedo_monthly_invalid, 12);
+
+    ssc_data_set_number(data, "en_snowloss", 0);
+    EXPECT_FALSE(run_module(data, "pvwattsv8"));
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[0], default_albedo, error_tolerance) << "Time step 0: Albedo should be default.";
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[3228], default_albedo, error_tolerance) << "Time step 3228: Albedo should be default.";
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[1776], albedo_monthly[2], error_tolerance) << "Time step 3228: Albedo should be user albedo March.";
+
+    ssc_data_set_number(data, "en_snowloss", 1);
+    EXPECT_FALSE(run_module(data, "pvwattsv8"));
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[0], default_albedo_snow, error_tolerance) << "Time step 0: Albedo should be default snow albedo.";
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[3228], default_albedo, error_tolerance) << "Time step 3228: Albedo should be default.";
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[1776], albedo_monthly[2], error_tolerance) << "Time step 1776: Albedo should be user albedo March.";
+
+
+}
+
 TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, SnowModelTests_cmod_pvwattsv8) {
 
     // Snow loss for fixed tilt system*********************************
@@ -284,15 +405,16 @@ TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, SnowModelTests_cmod_pvwattsv8) {
     ssc_number_t* hourly_snowderate = ssc_data_get_array(data, "dcsnowderate", &count);
     ASSERT_EQ(8760, count);
 
+    // changed from defrate to percentage per SAM issue 1137
     // Starting at 6 AM Jan. 12th
     // Snow derate should be non-zero during a snow event, and on a fixed system will always be 0, 0.5, or 1.0 due to the assumption of a 2-up installation
-    EXPECT_NEAR((double)hourly_snowderate[270], 0.0, error_tolerance);
-    EXPECT_NEAR((double)hourly_snowderate[271], 0.5, error_tolerance);
-    EXPECT_NEAR((double)hourly_snowderate[272], 0.5, error_tolerance);
+    EXPECT_NEAR((double)hourly_snowderate[270], 0, error_tolerance);
+    EXPECT_NEAR((double)hourly_snowderate[271], 50, error_tolerance);
+    EXPECT_NEAR((double)hourly_snowderate[272], 50, error_tolerance);
     // ...
-    EXPECT_NEAR((double)hourly_snowderate[275], 0.5, error_tolerance);
-    EXPECT_NEAR((double)hourly_snowderate[276], 0.5, error_tolerance);
-    EXPECT_NEAR((double)hourly_snowderate[277], 1.0, error_tolerance);
+    EXPECT_NEAR((double)hourly_snowderate[275], 50, error_tolerance);
+    EXPECT_NEAR((double)hourly_snowderate[276], 50, error_tolerance);
+    EXPECT_NEAR((double)hourly_snowderate[277], 0, error_tolerance);
 
 
     // Snow loss for single-axis system********************************
@@ -309,7 +431,7 @@ TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, SnowModelTests_cmod_pvwattsv8) {
     hourly_snowderate = ssc_data_get_array(data, "dcsnowderate", nullptr);
     for (int hour = 0; hour < 300; hour++) //check throughout a known snow event but don't need to check the whole year
     {
-        EXPECT_TRUE(hourly_snowderate[hour] == 0 || hourly_snowderate[hour] == 1);
+        EXPECT_TRUE(hourly_snowderate[hour] == 100 || hourly_snowderate[hour] == 0);
     }
 
 
@@ -327,7 +449,7 @@ TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, SnowModelTests_cmod_pvwattsv8) {
     hourly_snowderate = ssc_data_get_array(data, "dcsnowderate", nullptr);
     for (int hour = 0; hour < 300; hour++) //check throughout a known snow event but don't need to check the whole year
     {
-        EXPECT_TRUE(hourly_snowderate[hour] == 0 || hourly_snowderate[hour] == 1);
+        EXPECT_TRUE(hourly_snowderate[hour] == 100 || hourly_snowderate[hour] == 0);
     }
 }
 
@@ -362,7 +484,7 @@ TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, NonAnnual)
 
     ssc_number_t dc, gen;
     dc = ssc_data_get_array(data, "dc", nullptr)[12];
-    EXPECT_NEAR(dc, 2529.615, 0.01) << "DC Energy at noon";
+    EXPECT_NEAR(dc, 2530.148, 0.01) << "DC Energy at noon";
 
     gen = ssc_data_get_array(data, "gen", nullptr)[12];
     EXPECT_NEAR(gen, 2.428, 0.01) << "Gen at noon";
@@ -400,19 +522,19 @@ TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, IntermediateOutputTesting)
     EXPECT_NEAR(aoi, 32.195, 0.01) << "Angle of incidence at noon";
 
     poa = ssc_data_get_array(data, "poa", nullptr)[12];
-    EXPECT_NEAR(poa, 828.570, 0.01) << "POA at noon"; //this shouldn't have changed, and code comparison shows no differences, so why are we now getting 828.570????
+    EXPECT_NEAR(poa, 828.861, 0.01) << "POA at noon"; //this shouldn't have changed, and code comparison shows no differences, so why are we now getting 828.570????
 
     tpoa = ssc_data_get_array(data, "tpoa", nullptr)[12];
-    EXPECT_NEAR(tpoa, 819.591, 0.01) << "Transmitted POA at noon";
+    EXPECT_NEAR(tpoa, 819.785, 0.01) << "Transmitted POA at noon";
 
     tcell = ssc_data_get_array(data, "tcell", nullptr)[12];
     EXPECT_NEAR(tcell, 48.903, 0.01) << "Cell temp at noon";
 
     dc = ssc_data_get_array(data, "dc", nullptr)[12];
-    EXPECT_NEAR(dc, 2529.615, 0.01) << "DC Energy at noon";
+    EXPECT_NEAR(dc, 2530.148, 0.01) << "DC Energy at noon";
 
     ac = ssc_data_get_array(data, "ac", nullptr)[12];
-    EXPECT_NEAR(ac, 2424.127, 0.01) << "AC Energy at noon";
+    EXPECT_NEAR(ac, 2424.640, 0.01) << "AC Energy at noon";
 
     free_weatherdata_array(weather_data);
 }

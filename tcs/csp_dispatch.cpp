@@ -84,6 +84,7 @@ void csp_dispatch_opt::init(double cycle_q_dot_des, double cycle_eta_des)
     if (pointers.par_htr != NULL) {
         params.q_eh_min = pointers.par_htr->get_min_power_delivery() * ( 1 + 1e-8 ); // ensures controller doesn't shut down heater at minimum load
         params.q_eh_max = pointers.par_htr->get_max_power_delivery(std::numeric_limits<double>::quiet_NaN());
+        params.eta_eh = pointers.par_htr->get_design_electric_to_heat_cop();
         params.is_parallel_heater = true;
     }
     else {
@@ -336,7 +337,7 @@ static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::s
         if (optinst->params.is_parallel_heater) {
             pars["Qehu"] = optinst->params.q_eh_max;
             pars["Qehl"] = optinst->params.q_eh_min;
-            pars["eta_eh"] = 1.0;
+            pars["eta_eh"] = optinst->params.eta_eh;
             pars["hsu_cost"] = optinst->params.hsu_cost;
         }
 
