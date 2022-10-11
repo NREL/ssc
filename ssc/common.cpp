@@ -1018,20 +1018,20 @@ bool adjustment_factors::setup(int nsteps, int analysis_period) //nsteps is set 
             if (n == 1) {
                 for (int a = 0; a < analysis_period; a++) {
                     for (int i = 0; i < nsteps; i++)
-                        m_factors[nsteps * a + i] *= (1.0 - p[0]); //input as factors not percentage
+                        m_factors[nsteps * a + i] *= (1.0 - p[0]/100.0); //input as factors not percentage
                 }
             }
             else if (n == nsteps * analysis_period) { //Hourly or subhourly
                 for (int a = 0; a < analysis_period; a++) {
                     for (int i = 0; i < nsteps; i++)
-                        m_factors[nsteps * a + i] *= (1.0 - p[a*nsteps + i]); //convert from percentages to factors
+                        m_factors[nsteps * a + i] *= (1.0 - p[a*nsteps + i]/100.0); //convert from percentages to factors
                 }
             }
             else if (n % 12 == 0) { //Monthly 
                 for (int a = 0; a < analysis_period; a++) {
                     for (int i = 0; i < nsteps; i++) {
                         month = util::month_of(int(i / steps_per_hour))-1;
-                        m_factors[nsteps*a + i] *= (1.0 - p[a * 12 + month]); //input as factors not percentage
+                        m_factors[nsteps*a + i] *= (1.0 - p[a * 12 + month]/100.0); //input as factors not percentage
                     }
 
                 }
@@ -1040,7 +1040,7 @@ bool adjustment_factors::setup(int nsteps, int analysis_period) //nsteps is set 
                 for (int a = 0; a < analysis_period; a++) {
                     for (int i = 0; i < nsteps; i++) {
                         day = util::day_of(int(i / steps_per_hour));
-                        m_factors[nsteps*a + i] *= (1.0 - p[a * 365 + day]); //input as factors not percentage
+                        m_factors[nsteps*a + i] *= (1.0 - p[a * 365 + day]/100.0); //input as factors not percentage
                     }
 
                 }
@@ -1049,7 +1049,7 @@ bool adjustment_factors::setup(int nsteps, int analysis_period) //nsteps is set 
                 for (int a = 0; a < analysis_period; a++) {
                     for (int i = 0; i < nsteps; i++) {
                         week = util::week_of(int(i / steps_per_hour));
-                        m_factors[nsteps*a + i] *= (1.0 - p[a * 52 + week]); //input as factors not percentage
+                        m_factors[nsteps*a + i] *= (1.0 - p[a * 52 + week]/100.0); //input as factors not percentage
                     }
 
                 }
@@ -1057,7 +1057,7 @@ bool adjustment_factors::setup(int nsteps, int analysis_period) //nsteps is set 
             else if (n == analysis_period) { //Annual
                 for (int a = 0; a < analysis_period; a++) {
                     for (int i = 0; i < nsteps; i++)
-                        m_factors[nsteps * a + i] *= (1.0 - p[a]); //input as factors not percentage
+                        m_factors[nsteps * a + i] *= (1.0 - p[a]/100.0); //input as factors not percentage
                 }
             }
             else {
@@ -1087,8 +1087,10 @@ bool adjustment_factors::setup(int nsteps, int analysis_period) //nsteps is set 
 
 				if ( end >= nsteps ) end = nsteps-1;
 
-				for( int i=start;i<=end;i++ )
-					m_factors[i] *= (1.0 - factor/100.0); //convert from percentages to factors
+                for (int a = 0; a < analysis_period; a++) {
+				    for( int i=start;i<=end;i++ )
+					    m_factors[a * nsteps + i] *= (1.0 - factor/100.0); //convert from percentages to factors
+                }
 			}
 		}
 	}
