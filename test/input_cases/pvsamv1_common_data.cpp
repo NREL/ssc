@@ -561,7 +561,7 @@ void pvsamv1_with_residential_default(ssc_data_t& data)
     ssc_data_set_number(data, "subarray1_rotlim", 45);
     ssc_data_set_number(data, "subarray1_shade_mode", 0);
     ssc_data_set_number(data, "subarray1_slope_tilt", 0);
-    ssc_data_set_number(data, "subarray1_slope_azimuth", 0);
+    ssc_data_set_number(data, "subarray1_slope_azm", 0);
     ssc_data_set_number(data, "subarray1_gcr", 0.30000001192092896);
     ssc_number_t p_subarray1_monthly_tilt[12] = { 40, 40, 40, 20, 20, 20, 20, 20, 20, 40, 40, 40 };
     ssc_data_set_array(data, "subarray1_monthly_tilt", p_subarray1_monthly_tilt, 12);
