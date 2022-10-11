@@ -715,7 +715,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
 
             // Common to automated methods
             batt_vars->batt_dispatch_auto_can_charge = true;
-            batt_vars->batt_dispatch_auto_can_clipcharge = true;
+            batt_vars->batt_dispatch_auto_can_clipcharge = false;
             batt_vars->batt_dispatch_auto_can_gridcharge = false;
             batt_vars->batt_dispatch_auto_can_fuelcellcharge = true;
             batt_vars->batt_dispatch_auto_btm_can_discharge_to_grid = false;
