@@ -271,6 +271,7 @@ public:
 				case 0: geoPlant_inputs.me_pc = ENTER_PC; break;				// pressure change entered by user
 				case 1: geoPlant_inputs.me_pc = SIMPLE_FRACTURE; break;		// use fracture flow (EGS only)
 				case 2: geoPlant_inputs.me_pc = K_AREA; break;				// permeability * area
+                case 3: geoPlant_inputs.me_pc = USER_TEMP; break;
 				}
 				geoPlant_inputs.md_ReservoirDeltaPressure = reservoir_pressure_change;
 				geoPlant_inputs.md_ReservoirWidthM = reservoir_width;

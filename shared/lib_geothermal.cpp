@@ -1286,12 +1286,14 @@ double CGeothermalAnalyzer::GetPressureChangeAcrossReservoir()
 	//double tempEGSProductionC = GetResourceTemperatureC() + (geothermal::TEMPERATURE_EGS_INJECTIONC - GetResourceTemperatureC()) * EGSReservoirConstant(waterTempC, days);
     double tempEGSProductionCtest = Gringarten();
     double tempEGSProductionC = Gringarten();
+    double dEGSAverageReservoirTemperatureF = physics::CelciusToFarenheit((geothermal::TEMPERATURE_EGS_INJECTIONC + tempEGSProductionC) / 2);
     double pres_out = 0;
     double t = mp_geo_out->ElapsedHours * 3600; //elapsed time (s)
     if (mo_geo_in.me_pc == USER_TEMP) {
         int i = 0;
-        while (mo_geo_in.md_ReservoirInputs.at(i, 0) < t)
+        while (mo_geo_in.md_ReservoirInputs.at(i, 0) < t) {
             i++;
+        }
         if (i == 0) {
             tempEGSProductionC = mo_geo_in.md_ReservoirInputs.at(i, 1);
             pres_out = mo_geo_in.md_ReservoirInputs.at(i, 2) * 14.5038; //psi
@@ -1304,9 +1306,11 @@ double CGeothermalAnalyzer::GetPressureChangeAcrossReservoir()
             tempEGSProductionC = (mo_geo_in.md_ReservoirInputs.at(i, 0) - t) / (mo_geo_in.md_ReservoirInputs.at(i, 0) - mo_geo_in.md_ReservoirInputs.at(i - 1, 0)) * (mo_geo_in.md_ReservoirInputs.at(i, 1) - mo_geo_in.md_ReservoirInputs.at(i - 1, 1)) + mo_geo_in.md_ReservoirInputs.at(i - 1, 1);
             pres_out = ((mo_geo_in.md_ReservoirInputs.at(i, 0) - t) / (mo_geo_in.md_ReservoirInputs.at(i, 0) - mo_geo_in.md_ReservoirInputs.at(i - 1, 0)) * (mo_geo_in.md_ReservoirInputs.at(i, 2) - mo_geo_in.md_ReservoirInputs.at(i - 1, 2)) + mo_geo_in.md_ReservoirInputs.at(i - 1, 2)) * 14.5038; //psi
         }
+        dEGSAverageReservoirTemperatureF = physics::CelciusToFarenheit((geothermal::TEMPERATURE_EGS_INJECTIONC + tempEGSProductionC) / 2);
+        mp_geo_out->md_AverageReservoirTemperatureF = dEGSAverageReservoirTemperatureF;
         return pres_out;
     }
-    double dEGSAverageReservoirTemperatureF = physics::CelciusToFarenheit((geothermal::TEMPERATURE_EGS_INJECTIONC + tempEGSProductionC) / 2);  //[7C.EGS Subsrfce HX].D52, [7B.Reservoir Hydraulics].D24
+    
 
 	mp_geo_out->md_AverageReservoirTemperatureF = (mo_geo_in.me_rt == EGS) ? dEGSAverageReservoirTemperatureF : physics::CelciusToFarenheit(GetResourceTemperatureC());	// G54 on [7B.Reservoir Hydraulics]
 

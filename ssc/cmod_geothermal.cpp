@@ -321,6 +321,7 @@ public:
 			case 0: geo_inputs.me_pc = ENTER_PC; break;				// pressure change entered by user
 			case 1: geo_inputs.me_pc = SIMPLE_FRACTURE; break;		// use fracture flow (EGS only)
 			case 2: geo_inputs.me_pc = K_AREA; break;				// permeability * area
+            case 3: geo_inputs.me_pc = USER_TEMP; break;
 		}
 		geo_inputs.md_ReservoirDeltaPressure = as_double("reservoir_pressure_change");
 		geo_inputs.md_ReservoirWidthM = as_double("reservoir_width");
