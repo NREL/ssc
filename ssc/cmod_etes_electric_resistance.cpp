@@ -194,6 +194,11 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
     { SSC_INPUT,  SSC_NUMBER, "const_per_upfront_rate4",       "Upfront fee on principal, loan 4",                              "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
     { SSC_INPUT,  SSC_NUMBER, "const_per_upfront_rate5",       "Upfront fee on principal, loan 5",                              "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
 
+    // ****************************************************************************************************************************************
+    //     DEPRECATED INPUTS -- exec() checks if a) variable is assigned and b) if replacement variable is assigned. throws exception if a=true and b=false
+    // ****************************************************************************************************************************************
+    { SSC_INPUT,  SSC_NUMBER, "P_boil",                        "Boiler operating pressure",                                     "bar",          "",                                  "Rankine Cycle",                             "",                                                                "",              "SIMULATION_PARAMETER" },
+
 
     // ****************************************************************************************************************************************
     // Design Outputs here:
@@ -374,6 +379,19 @@ public:
 
             throw exec_error("etes_electric_resistsance", sim_type_msg);
         }
+
+        // *****************************************************
+        // Check deprecated variables
+
+        if (is_assigned("P_boil")) {
+            log("We removed boiler pressure (P_boil) as a user input to the Rankine Cycle model. Because the cycle efficiency"
+                " is provided by the user, the boiler pressure input does not modify the efficiency as one might expect. Instead the model"
+                " uses boiler pressure in second order calculations to 1) define a boiling temperature to normalize off-design HTF temperature and"
+                " 2) estimate steam mass flow for cycle make-up water calculations. Because boiler pressure only has influences"
+                " results in these minor non-intuitive ways, we decided to hardcode the valu to 100 bar.");
+        }
+        // *****************************************************
+        // *****************************************************
 
         // *****************************************************
         // System Design Parameters
