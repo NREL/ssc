@@ -467,7 +467,8 @@ public:
             {
                 pc->m_dT_cw_ref = as_double("dT_cw_ref");
                 pc->m_T_amb_des = as_double("T_amb_des");
-                pc->m_P_boil = as_double("P_boil");
+                //pc->m_P_boil = as_double("P_boil");
+                pc->m_P_boil_des = 100.0;       //[bar]
                 pc->m_CT = as_integer("CT");                    // cooling tech type: 1=evaporative, 2=air, 3=hybrid
                 if (pc->m_CT > 2) {
                     std::string err_msg = util::format("The specified power cycle cooling tech type, %d, does not exist"

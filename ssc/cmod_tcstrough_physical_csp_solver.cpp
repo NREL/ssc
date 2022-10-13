@@ -713,7 +713,8 @@ public:
 		{
 			pc->m_dT_cw_ref = as_double("dT_cw_ref");			//[C]
 			pc->m_T_amb_des = as_double("T_amb_des");			//[C]
-			pc->m_P_boil = as_double("P_boil");					//[bar]
+			//pc->m_P_boil = as_double("P_boil");					//[bar]
+            pc->m_P_boil_des = 100.0;           //[bar]
 			pc->m_CT = as_integer("CT");						//[-]
 			pc->m_tech_type = as_integer("tech_type");			//[-]					
 			pc->m_T_approach = as_double("T_approach");			//[C/K]

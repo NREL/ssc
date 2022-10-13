@@ -238,8 +238,9 @@ public:
 		{
 			p_params->m_dT_cw_ref = value(P_DT_CW_REF);				//Reference condenser cooling water inlet/outlet T diff [C]
 			p_params->m_T_amb_des = value(P_T_AMB_DES);				//Reference ambient temperature at design point [C]
-			p_params->m_P_boil = value(P_P_BOIL);					//Boiler operating pressure [bar]
-			p_params->m_CT = (int) value(P_CT);						//Flag for using dry cooling or wet cooling system                [none]
+			//p_params->m_P_boil = value(P_P_BOIL);					//Boiler operating pressure [bar]
+            p_params->m_P_boil_des = 100.0;         //[bar]
+            p_params->m_CT = (int) value(P_CT);						//Flag for using dry cooling or wet cooling system                [none]
 			p_params->m_tech_type = (int) value(P_TECH_TYPE);		//Flag indicating which coef. set to use. (1=tower,2=trough,3=user) [none]
 			p_params->m_T_approach = value(P_T_APPROACH);			//Cooling tower approach temperature [C]
 			p_params->m_T_ITD_des = value(P_T_ITD_DES);				//ITD at design for dry system [C]
