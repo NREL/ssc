@@ -74,6 +74,8 @@ void pvsamv_nofinancial_default(ssc_data_t& data)
     ssc_data_set_number(data, "subarray1_track_mode", 0);
     ssc_data_set_number(data, "subarray1_rotlim", 45);
     ssc_data_set_number(data, "subarray1_shade_mode", 0);
+    ssc_data_set_number(data, "subarray1_slope_tilt", 0);
+    ssc_data_set_number(data, "subarray1_slope_azm", 0);
     ssc_data_set_number(data, "subarray1_gcr", 0.30000001192092896);
     ssc_number_t p_subarray1_monthly_tilt[12] = { 40, 40, 40, 20, 20, 20, 20, 20, 20, 40, 40, 40 };
     ssc_data_set_array(data, "subarray1_monthly_tilt", p_subarray1_monthly_tilt, 12);
@@ -126,6 +128,8 @@ void pvsamv_nofinancial_default(ssc_data_t& data)
     ssc_data_set_number(data, "subarray2_track_mode", 0);
     ssc_data_set_number(data, "subarray2_rotlim", 45);
     ssc_data_set_number(data, "subarray2_shade_mode", 0);
+    ssc_data_set_number(data, "subarray2_slope_tilt", 0);
+    ssc_data_set_number(data, "subarray2_slope_azm", 0);
     ssc_data_set_number(data, "subarray2_gcr", 0.30000001192092896);
     ssc_number_t p_subarray2_monthly_tilt[12] = { 40, 40, 40, 20, 20, 20, 20, 20, 20, 40, 40, 40 };
     ssc_data_set_array(data, "subarray2_monthly_tilt", p_subarray2_monthly_tilt, 12);
@@ -143,6 +147,8 @@ void pvsamv_nofinancial_default(ssc_data_t& data)
     ssc_data_set_number(data, "subarray3_track_mode", 0);
     ssc_data_set_number(data, "subarray3_rotlim", 45);
     ssc_data_set_number(data, "subarray3_shade_mode", 0);
+    ssc_data_set_number(data, "subarray3_slope_tilt", 0);
+    ssc_data_set_number(data, "subarray3_slope_azm", 0);
     ssc_data_set_number(data, "subarray3_gcr", 0.30000001192092896);
     ssc_number_t p_subarray3_monthly_tilt[12] = { 40, 40, 40, 20, 20, 20, 20, 20, 20, 40, 40, 40 };
     ssc_data_set_array(data, "subarray3_monthly_tilt", p_subarray3_monthly_tilt, 12);
@@ -160,6 +166,8 @@ void pvsamv_nofinancial_default(ssc_data_t& data)
     ssc_data_set_number(data, "subarray4_track_mode", 0);
     ssc_data_set_number(data, "subarray4_rotlim", 45);
     ssc_data_set_number(data, "subarray4_shade_mode", 0);
+    ssc_data_set_number(data, "subarray4_slope_tilt", 0);
+    ssc_data_set_number(data, "subarray4_slope_azm", 0);
     ssc_data_set_number(data, "subarray4_gcr", 0.30000001192092896);
     ssc_number_t p_subarray4_monthly_tilt[12] = { 40, 40, 40, 20, 20, 20, 20, 20, 20, 40, 40, 40 };
     ssc_data_set_array(data, "subarray4_monthly_tilt", p_subarray4_monthly_tilt, 12);
@@ -552,6 +560,8 @@ void pvsamv1_with_residential_default(ssc_data_t& data)
     ssc_data_set_number(data, "subarray1_track_mode", 0);
     ssc_data_set_number(data, "subarray1_rotlim", 45);
     ssc_data_set_number(data, "subarray1_shade_mode", 0);
+    ssc_data_set_number(data, "subarray1_slope_tilt", 0);
+    ssc_data_set_number(data, "subarray1_slope_azm", 0);
     ssc_data_set_number(data, "subarray1_gcr", 0.30000001192092896);
     ssc_number_t p_subarray1_monthly_tilt[12] = { 40, 40, 40, 20, 20, 20, 20, 20, 20, 40, 40, 40 };
     ssc_data_set_array(data, "subarray1_monthly_tilt", p_subarray1_monthly_tilt, 12);
