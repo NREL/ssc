@@ -642,7 +642,7 @@ public:
 			set_unit_value_ssc_double(powerblock, "dT_cw_ref");
 			set_unit_value_ssc_double(powerblock, "T_amb_des");
 		
-			set_unit_value_ssc_double(powerblock, "P_boil");
+			//set_unit_value_ssc_double(powerblock, "P_boil");
 			set_unit_value_ssc_double(powerblock, "CT");
 
 			set_unit_value_ssc_double(powerblock, "tech_type");
