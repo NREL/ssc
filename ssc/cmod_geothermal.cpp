@@ -178,12 +178,12 @@ static var_info _cm_vtab_geothermal[] = {
     { SSC_OUTPUT,       SSC_ARRAY,      "monthly_power",                      "Monthly power",                                       "kW",      "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "monthly_energy",                     "Monthly energy before performance adjustments",       "kWh",     "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
 																																													   			                 
-    { SSC_OUTPUT,       SSC_ARRAY,      "timestep_resource_temperature",      "Resource temperature in each time step",              "C",       "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "timestep_resource_temperature",      "Resource temperature",              "C",       "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "timestep_test_values",               "Test output values in each time step",                "",        "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
 																																													   			                 
-    { SSC_OUTPUT,       SSC_ARRAY,      "timestep_pressure",                  "Atmospheric pressure in each time step",              "atm",     "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
-    { SSC_OUTPUT,       SSC_ARRAY,      "timestep_dry_bulb",                  "Dry bulb temperature in each time step",              "C",       "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
-    { SSC_OUTPUT,       SSC_ARRAY,      "timestep_wet_bulb",                  "Wet bulb temperature in each time step",              "C",       "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "timestep_pressure",                  "Atmospheric pressure",              "atm",     "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "timestep_dry_bulb",                  "Dry bulb temperature",              "C",       "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "timestep_wet_bulb",                  "Wet bulb temperature",              "C",       "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
 																																																	             
     { SSC_OUTPUT,       SSC_NUMBER,     "lifetime_output",                    "Lifetime Output",                                     "kWh",     "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
 	{ SSC_OUTPUT,		SSC_NUMBER,		"first_year_output",				  "First Year Output",									 "kWh",		"",				 "GeoHourly",		 "ui_calculations_only=0",	 "",				"" },
@@ -472,7 +472,6 @@ public:
 
 			geo_outputs.maf_timestep_resource_temp = allocate("timestep_resource_temperature", geo_inputs.mi_TotalMakeupCalculations);
 			geo_outputs.maf_timestep_power = allocate("timestep_power", geo_inputs.mi_TotalMakeupCalculations);
-			geo_outputs.maf_timestep_test_values = allocate("timestep_test_values", geo_inputs.mi_TotalMakeupCalculations);
 
 			geo_outputs.maf_timestep_pressure = allocate("timestep_pressure", geo_inputs.mi_TotalMakeupCalculations);
 			geo_outputs.maf_timestep_dry_bulb = allocate("timestep_dry_bulb", geo_inputs.mi_TotalMakeupCalculations);
