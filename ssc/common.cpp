@@ -996,9 +996,9 @@ bool adjustment_factors::setup(int nsteps, int analysis_period) //nsteps is set 
 	{
 		size_t n;
 		ssc_number_t *p = m_cm->as_array( m_prefix + ":hourly", &n );
-		if ( p != 0 && n == (size_t)nsteps )
+		if ( p != 0 && n == 8760 )
 		{
-			for( int i=0;i<nsteps;i++ )
+			for( int i=0;i<8760;i++ )
 				m_factors[i] *= (1.0 - p[i]/100.0); //convert from percentages to factors
 		}
         else {
