@@ -69,7 +69,7 @@ static var_info _cm_vtab_pvsamv1[] = {
         {SSC_INPUT, SSC_NUMBER,   "calculate_bifacial_electrical_mismatch", "Calculate bifacial electrical mismatch",            "",       "",                                                                                                                                                                                      "Losses",                                                "?=1",                                "BOOLEAN",             "" },
 
         {SSC_INPUT, SSC_NUMBER,   "use_measured_temp",                    "Use measured temperatures",         "0/1",       "",                                                                                                                                                                                      "System Design",                                         "?=0",                                "INTEGER,MIN=0,MAX=1",             "" },
-        {SSC_INPUT, SSC_ARRAY,    "measured_temp_array",                   "Lifetime daily AC losses",                            "%",      "",                                                                                                                                                                                      "Lifetime",                                              "en_ac_lifetime_losses=1",            "",                    "" },
+        {SSC_INPUT, SSC_ARRAY,    "measured_temp_array",                   "Lifetime daily AC losses",                            "%",      "",                                                                                                                                                                                      "System Design",                                              "use_measured_temp=1",            "",                    "" },
 
         // subarray 1
         {SSC_INPUT, SSC_NUMBER,   "subarray1_nstrings",                   "Sub-array 1 Number of parallel strings",              "",       "",                                                                                                                                                                                      "System Design",                                         "",                                   "INTEGER",             "" },
@@ -283,7 +283,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 { SSC_INPUT, SSC_NUMBER,   "cec_backside_temp",                    "Module backside temperature",                         "C",      "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1&cec_temp_corr_mode=1","POSITIVE",            "" },
 { SSC_INPUT, SSC_NUMBER,   "cec_lacunarity_length",                    "Module lacurnarity length for spatial heterogeneity",                         "C",      "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "cec_lacunarity_enable=1",  "",            "" },
 { SSC_INPUT, SSC_NUMBER,   "cec_lacunarity_enable",                    "Enable lacunarity heat transfer model",                         "0/1",      "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "?=0","",            "" },
-{ SSC_INPUT, SSC_NUMBER,   "cec_ground_clearance_height",                    "Module ground clearance height for heat transfer coefficient",                         "m",      "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1&cec_temp_corr_mode=1","",            "" },
+{ SSC_INPUT, SSC_NUMBER,   "cec_ground_clearance_height",                    "Module ground clearance height for heat transfer coefficient",                         "m",      "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "cec_lacunarity_enable=1","",            "" },
 
 { SSC_INPUT, SSC_NUMBER,   "cec_transient_thermal_model_unit_mass","Module unit mass",                                    "kg/m^2",      "",                                                                                                                                                                        "CEC Performance Model with Module Database",                     "module_model=1","POSITIVE",                                 "" },
 
@@ -1043,14 +1043,14 @@ void cm_pvsamv1::exec()
     double module_watts_stc = Subarrays[0]->Module->moduleWattsSTC;
     SharedInverter* sharedInverter = PVSystem->m_sharedInverter.get();
 
-    std::vector<ssc_number_t> measured_temp; measured_temp.reserve(nlifetime);
+    std::vector<ssc_number_t> measured_temp; measured_temp.reserve(nrec);
     size_t measured_temp_size;
     int use_measured_temp = (as_integer("use_measured_temp") == 1 && is_assigned("measured_temp_array"));
     if (as_integer("use_measured_temp") == 1 && is_assigned("measured_temp_array")) {
         measured_temp = as_vector_ssc_number_t("measured_temp_array");
         measured_temp_size = measured_temp.size();
-        if (measured_temp_size != nlifetime)
-            throw exec_error("pvsamv1", "The measured temperature array must be the size of nyears * nrecords per year");
+        if (measured_temp_size != nrec)
+            throw exec_error("pvsamv1", "The measured temperature array must be the size of nrecords per year");
     }
 
     //overwrite tilt with latitude if flag is set- can't do this in PVIOManager because need latitude from weather file
@@ -1578,7 +1578,7 @@ void cm_pvsamv1::exec()
                             radmode, Subarrays[nn]->poa.usePOAFromWF);
                         // voltage set to -1 for max power
                         if (use_measured_temp == 1)
-                            tcell = measured_temp[idx];
+                            tcell = measured_temp[inrec];
                         else
                             (*Subarrays[nn]->Module->cellTempModel)(in, *Subarrays[nn]->Module->moduleModel, -1.0, tcell);
                     }
@@ -1953,7 +1953,7 @@ void cm_pvsamv1::exec()
                                 double tcell = wf.tdry;
                                 // calculate cell temperature using selected temperature model
                                 if (use_measured_temp == 1)
-                                    tcell = measured_temp[idx];
+                                    tcell = measured_temp[inrec];
                                 else
                                     (*Subarrays[nn]->Module->cellTempModel)(in, *Subarrays[nn]->Module->moduleModel, V, tcell);
                                 // calculate module power output using conversion model previously specified
@@ -2003,7 +2003,7 @@ void cm_pvsamv1::exec()
                         // calculate cell temperature using selected temperature model
                         // calculate module power output using conversion model previously specified
                         if (use_measured_temp == 1)
-                            tcell = measured_temp[idx];
+                            tcell = measured_temp[inrec];
                         else
                             (*Subarrays[nn]->Module->cellTempModel)(in[nn], *Subarrays[nn]->Module->moduleModel, module_voltage, tcell);
 
@@ -2122,7 +2122,7 @@ void cm_pvsamv1::exec()
                                 //recalculate power at the correct voltage
                                 double module_voltage = avgVoltage / (double)Subarrays[nn]->nModulesPerString;
                                 if (use_measured_temp == 1)
-                                    tcell = measured_temp[idx];
+                                    tcell = measured_temp[inrec];
                                 else
                                     (*Subarrays[nn]->Module->cellTempModel)(in[nn], *Subarrays[nn]->Module->moduleModel, module_voltage, tcell);
                                 (*Subarrays[nn]->Module->moduleModel)(in[nn], tcell, module_voltage, out[nn]);
