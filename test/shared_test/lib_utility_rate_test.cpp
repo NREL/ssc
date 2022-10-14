@@ -864,3 +864,33 @@ TEST(lib_utility_rate_test, test_ts_sell_only)
 
     ASSERT_NEAR(-402.50, cost, 0.02);
 }
+
+TEST(lib_utility_rate_test, test_demand_monthly_tou_demand_charges)
+{
+    rate_data data;
+    set_up_tou_demand_charge(data); // No energy charges, $1/kW flat demand charge
+
+    int steps_per_hour = 1;
+    std::vector<double> monthly_load_forecast = { 31 * 24, 28 * 24 }; // Average load is 1 kW
+    std::vector<double> monthly_gen_forecast = { 0, 0 };
+    std::vector<double> monthly_avg_gross_load = { 1, 1 };
+    util::matrix_t<double> monthly_peaks;
+    monthly_peaks.resize_fill(1, 1, 0.0);
+
+    UtilityRateForecast rate_forecast(&data, steps_per_hour, monthly_load_forecast, monthly_gen_forecast, monthly_avg_gross_load, 2, monthly_peaks);
+
+    // - is load
+    std::vector<double> forecast = { -1, -1, 0, -2 }; // Demand charge increases by 1 kW from average
+    rate_forecast.initializeMonth(0, 0);
+    rate_forecast.copyTOUForecast();
+
+    int hour_of_year = 0; // 12 am on Jan 1st
+    double cost = rate_forecast.forecastCost(forecast, 0, hour_of_year, 0);
+
+    ASSERT_NEAR(11.00, cost, 0.01); // $10 TOU, $1 flat
+
+    // Running the same forecast again does not increase the cost (no energy charges, demand does not increase)
+    hour_of_year = 4; // 12 am on Jan 1st
+    cost = rate_forecast.forecastCost(forecast, 0, hour_of_year, 0);
+    ASSERT_NEAR(0.0, cost, 0.01);
+}

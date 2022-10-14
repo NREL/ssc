@@ -695,6 +695,73 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelMultipleMPPT)
 
 }
 
+/// Test albedo user inputs, weather file (wf) input for valid and invalid albedo values
+TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, AlbedoTest_cmod_pvsamv1) {
+
+    // albedo user input values for testing
+    ssc_number_t albedo_monthly[12] = { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.90, 0.91, 0.92 };
+    ssc_number_t albedo_monthly_invalid[12] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 91, 92 };
+
+    // weather files for albedo tests
+    // pv_albedo_test.csv time steps 1, 2, and 3229 have invalid albedo values for testing
+    // time steps 0, 1, and 2 have snow depth = 14.2, time steps 3228 and 3229 have snow depth = 0 (snow is for pvwattsv8)
+    char wf_albedo[256];
+    int a1 = sprintf(wf_albedo, "%s/test/input_cases/pvsamv1_data/pv_albedo_test.csv", SSCDIR);
+    char wf_no_albedo[256];
+    int a2 = sprintf(wf_no_albedo, "%s/test/input_cases/pvsamv1_data/pv_albedo_test_no_albedo.csv", SSCDIR);
+
+    // albedo values from wf
+    ssc_number_t albedo_ts_0 = 0.87; // jan 1 1:00 am
+
+    // Test set 1: weather file with no albedo.
+    ssc_data_set_string(data, "solar_resource_file", wf_no_albedo);
+
+    ssc_data_set_number(data, "use_wf_albedo", 1);
+
+    ssc_data_set_array(data, "albedo", albedo_monthly, 12);
+    EXPECT_FALSE(run_module(data, "pvsamv1"));
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[0], albedo_monthly[0], m_error_tolerance_lo) << "Time step 0: Albedo should be albedo input for jan.";
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[1], albedo_monthly[0], m_error_tolerance_lo) << "Time step 1: Albedo should be albedo input for jan.";
+
+    ssc_data_set_array(data, "albedo", albedo_monthly_invalid, 1);
+    EXPECT_TRUE(run_module(data, "pvsamv1"));
+
+    ssc_data_set_number(data, "use_wf_albedo", 0);
+
+    ssc_data_set_array(data, "albedo", albedo_monthly, 12);
+    EXPECT_FALSE(run_module(data, "pvsamv1"));
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[0], albedo_monthly[0], m_error_tolerance_lo) << "Time step 0: Albedo should be albedo input for jan.";
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[1], albedo_monthly[0], m_error_tolerance_lo) << "Time step 1: Albedo should be albedo input for jan.";
+
+    ssc_data_set_array(data, "albedo", albedo_monthly_invalid, 12);
+    EXPECT_TRUE(run_module(data, "pvsamv1"));
+
+    // Test set 2: weather file with albedo data
+    ssc_data_set_string(data, "solar_resource_file", wf_albedo);
+
+    ssc_data_set_number(data, "use_wf_albedo", 1);
+
+    ssc_data_set_array(data, "albedo", albedo_monthly, 12);
+    EXPECT_FALSE(run_module(data, "pvsamv1"));
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[0], albedo_ts_0, m_error_tolerance_lo) << "Time step 0: Albedo should be wf albedo.";
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[1], albedo_monthly[0], m_error_tolerance_lo) << "Time step 1: Albedo should be albedo input for jan.";
+
+    ssc_data_set_array(data, "albedo", albedo_monthly_invalid, 12);
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[0], albedo_ts_0, m_error_tolerance_lo) << "Time step 0: Albedo should be wf albedo.";
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[1], NULL, m_error_tolerance_lo) << "Time step 1: Albedo should be albedo input for jan.";
+
+    ssc_data_set_number(data, "use_wf_albedo", 0);
+
+    ssc_data_set_array(data, "albedo", albedo_monthly, 12);
+    EXPECT_FALSE(run_module(data, "pvsamv1"));
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[0], albedo_monthly[0], m_error_tolerance_lo) << "Time step 0: Albedo should be albedo input for jan.";
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[1], albedo_monthly[0], m_error_tolerance_lo) << "Time step 1: Albedo should be albedo input for jan.";
+
+    ssc_data_set_array(data, "albedo", albedo_monthly_invalid, 12);
+    EXPECT_TRUE(run_module(data, "pvsamv1"));
+
+}
+
 /// Test PVSAMv1 with Snow Model enabled and set to 1-axis Tracking
 TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, SnowModel)
 {
@@ -776,7 +843,32 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, bifacial) {
     {
         ssc_number_t annualEnergy;
         ssc_data_get_number(data, "annual_energy", &annualEnergy);
-        EXPECT_NEAR(annualEnergy, 9259, 1.0) << "Bifacial annual energy from SAM version 2018.11.11 using Phoenix TMY2";
+        EXPECT_NEAR(annualEnergy, 9258, 1.0) << "Bifacial annual energy from SAM version 2018.11.11 using Phoenix TMY2";
+    }
+
+
+    // test monofacial
+    pairs["cec_is_bifacial"] = 0;
+    double expected_monofacial_annual_energy = 8877.;
+    pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+    EXPECT_FALSE(pvsam_errors);
+    if (!pvsam_errors)
+    {
+        ssc_number_t annualEnergy;
+        ssc_data_get_number(data, "annual_energy", &annualEnergy);
+        EXPECT_NEAR(annualEnergy, expected_monofacial_annual_energy, 1.0) << "Bifacial annual energy from SAM version 2018.11.11 using Phoenix TMY2";
+    }
+
+    // test bifacial but effectively monofacial
+    pairs["cec_is_bifacial"] = 1;
+    pairs["cec_bifaciality"] = 0.;
+    pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+    EXPECT_FALSE(pvsam_errors);
+    if (!pvsam_errors)
+    {
+        ssc_number_t annualEnergy;
+        ssc_data_get_number(data, "annual_energy", &annualEnergy);
+        EXPECT_NEAR(annualEnergy, expected_monofacial_annual_energy, 1.0) << "Bifacial annual energy from SAM version 2018.11.11 using Phoenix TMY2";
     }
 }
 

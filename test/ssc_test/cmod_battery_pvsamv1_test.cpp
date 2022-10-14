@@ -909,6 +909,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialDCBatteryModelPriceS
     ssc_number_t avgCycles = 0.3205;
 
     pairs["batt_dispatch_choice"] = 4;
+    pairs["batt_dispatch_auto_can_clipcharge"] = 1;
 
     int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
     EXPECT_FALSE(pvsam_errors);
