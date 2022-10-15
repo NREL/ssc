@@ -78,11 +78,11 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 
     // Solar field
     { SSC_INPUT,     SSC_NUMBER, "field_model_type",                   "0=design field and tower/receiver geometry, 1=design field, 2=user specified field, 3=user flux and eta map, pass heliostat_positions to SolarPILOT for layout, 4=user flux and eta maps, no SolarPILOT, input A_sf_in, total_land_area_before_rad_cooling_in, and N_hel", "", "", "Heliostat Field", "*",     "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "helio_width",                        "Heliostat width",                                                                                                                         "m",            "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "helio_height",                       "Heliostat height",                                                                                                                        "m",            "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "helio_width",                        "Heliostat width",                                                                                                                         "m",            "",                                  "Heliostat Field",                          "field_model_type<4",                                               "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "helio_height",                       "Heliostat height",                                                                                                                        "m",            "",                                  "Heliostat Field",                          "field_model_type<4",                                               "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "helio_optical_error_mrad",           "Heliostat optical error",                                                                                                                 "mrad",         "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "helio_active_fraction",              "Heliostat active fraction",                                                                                                               "",             "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "dens_mirror",                        "Ratio of heliostat reflective area to profile",                                                                                           "",             "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "dens_mirror",                        "Ratio of heliostat reflective area to profile",                                                                                           "",             "",                                  "Heliostat Field",                          "field_model_type<4",                                               "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "helio_reflectance",                  "Heliostat reflectance",                                                                                                                   "",             "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "rec_absorptance",                    "Receiver absorptance",                                                                                                                    "",             "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "rec_hl_perm2",                       "Receiver design heatloss",                                                                                                                "kW/m2",        "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
@@ -414,11 +414,16 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 
         // Solar Field
     { SSC_OUTPUT,    SSC_NUMBER, "N_hel_calc",                         "Number of heliostats - out",                                                                                                               "",             "",                                  "Heliostat Field",                          "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "refl_image_error",                   "Reflected image error",                                                                                                                    "mrad",         "",                                  "Heliostat Field",                          "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "heliostat_area",                     "Active area of heliostat",                                                                                                                 "m^2",          "",                                  "Heliostat Field",                          "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "average_attenuation",                "Average solar field attenuation",                                                                                                          "%",            "",                                  "Heliostat Field",                          "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_MATRIX, "helio_positions_calc",               "Heliostat position table - out",                                                                                                           "",             "",                                  "Heliostat Field",                          "*",                                                                "",              "COL_LABEL=XY_POSITION" },
-    { SSC_OUTPUT,    SSC_NUMBER, "A_sf",                               "Solar field area",                                                                                                                         "m^2",          "",                                  "",                                          "*",                                                                "",              "" },
-    { SSC_OUTPUT,    SSC_NUMBER, "land_area_base_calc",                "Land area occupied by heliostats",                                                                                                         "acre",         "",                                  "",                                          "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "A_sf",                               "Solar field area",                                                                                                                         "m^2",          "",                                  "Heliostat Field",                          "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "land_min_abs",                       "Min distance from tower to heliostat",                                                                                                     "m",            "",                                  "Heliostat Field",                          "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "land_max_abs",                       "Max distance from tower to heliostat",                                                                                                     "m",            "",                                  "Heliostat Field",                          "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "land_area_base_calc",                "Land area occupied by heliostats",                                                                                                         "acre",         "",                                  "Heliostat Field",                          "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "total_land_area_before_rad_cooling_calc", "Total land area not including radiative cooling - out",                                                                               "acre",         "",                                  "Heliostat Field",                          "*",                                                                "",              "" },
-    { SSC_OUTPUT,    SSC_NUMBER, "W_dot_col_tracking_des",             "Collector tracking power at design",                                                                                                       "MWe",          "",                                  "",                                          "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "W_dot_col_tracking_des",             "Collector tracking power at design",                                                                                                       "MWe",          "",                                  "Heliostat Field",                          "*",                                                                "",              "" },
 
         // Receiver Geometry
     { SSC_OUTPUT,    SSC_NUMBER, "rec_height_calc",                    "Receiver height - out",                                                                                                                    "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
@@ -868,6 +873,13 @@ public:
         double cav_rec_width = std::numeric_limits<double>::quiet_NaN();
         double land_area_base = std::numeric_limits<double>::quiet_NaN();
         double total_land_area_before_rad_cooling = std::numeric_limits<double>::quiet_NaN();
+        double heliostat_area = std::numeric_limits<double>::quiet_NaN();
+        double h_helio = std::numeric_limits<double>::quiet_NaN();     //[m]
+        double average_attenuation = std::numeric_limits<double>::quiet_NaN();
+        double refl_image_error = std::numeric_limits<double>::quiet_NaN();
+        double land_max_abs = std::numeric_limits<double>::quiet_NaN();
+        double land_min_abs = std::numeric_limits<double>::quiet_NaN();
+        
         util::matrix_t<double> helio_pos;
 
         assign("is_optimize", 0);
@@ -876,13 +888,17 @@ public:
 
         if (field_model_type < 4) {
 
+            h_helio = as_double("helio_height");     //[m]
+            
             // Field types 0-3 require solar pilot
             solarpilot_invoke spi(this);
 
             assign("q_design", q_dot_rec_des);  //[MWt]
 
             // Set up "cmod_solarpilot.cpp" conversions as necessary
-            assign("helio_optical_error", (ssc_number_t)(as_number("helio_optical_error_mrad") * 1.E-3));
+            double helio_optical_error_mrad = as_number("helio_optical_error_mrad");        //[mrad]
+            refl_image_error = std::sqrt(2. * helio_optical_error_mrad * 2. * helio_optical_error_mrad * 2.);   //[mrad]
+            assign("helio_optical_error", (ssc_number_t)(helio_optical_error_mrad * 1.E-3));
 
             // Set 'n_flux_x' and 'n_flux_y' here, for now
             assign("n_flux_y", n_flux_y);
@@ -1236,6 +1252,11 @@ public:
             }
 
             A_sf = spi.CalcSolarFieldArea(N_hel);
+            heliostat_area = spi.CalcHeliostatArea();
+            average_attenuation = spi.CalcAveAttenuation();
+
+            land_min_abs = as_double("land_min") * THT;     //[m]
+            land_max_abs = as_double("land_max") * THT;     //[m]
 
             total_land_area_before_rad_cooling = spi.GetTotalLandArea();    // [acres] Total land area
             land_area_base = spi.GetBaseLandArea();             // [acres] Land area occupied by heliostats
@@ -1258,6 +1279,7 @@ public:
 
             // Get tower/receiver dimensions through cmod
             THT = as_double("h_tower");             //[m]
+            h_helio = 0.0;                          //[m] Need a finite value for cost model
 
             if (rec_type == 0) {
                 rec_height = as_double("rec_height");   //[m]
@@ -2183,8 +2205,13 @@ public:
 
             // *************************
             // Solar field
-        assign("N_hel_calc", N_hel);                //[-]
+        assign("N_hel_calc", N_hel);                    //[-]
+        assign("refl_image_error", refl_image_error);   //[mrad]
+        assign("heliostat_area", heliostat_area);   //[m2]
+        assign("average_attenuation", average_attenuation); //[%]
         assign("A_sf", (ssc_number_t)A_sf);         //[m2]
+        assign("land_min_abs", (ssc_number_t)land_min_abs);     //[m]
+        assign("land_max_abs", (ssc_number_t)land_max_abs);     //[m]
         assign("land_area_base_calc", (ssc_number_t)land_area_base);     //[acre]
         assign("total_land_area_before_rad_cooling_calc", (ssc_number_t)total_land_area_before_rad_cooling);        //[acre]
         
@@ -2324,7 +2351,6 @@ public:
         else if (rec_type == 1) {
             h_rec_cost_in = cav_rec_height; //[m]
         }
-        double h_helio = as_double("helio_height");
         double tower_fixed_cost = as_double("tower_fixed_cost");
         double tower_cost_scaling_exp = as_double("tower_exp");
 
