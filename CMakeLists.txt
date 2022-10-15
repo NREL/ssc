@@ -151,7 +151,6 @@ add_subdirectory(ssc)
 
 if (NOT SAM_SKIP_TOOLS)
 	add_subdirectory(sdktool)
-	add_subdirectory(tcsconsole)
 endif()
 
 if (NOT SAM_SKIP_TESTS)
