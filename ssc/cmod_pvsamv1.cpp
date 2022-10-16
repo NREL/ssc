@@ -1844,6 +1844,18 @@ void cm_pvsamv1::exec()
                         // copy data to output variables
                         std::copy(ipoa_rear_output.begin(), ipoa_rear_output.end(), PVSystem->p_poaRearSpatial[nn] + (idx + 1) * ipoa_rear_output.size());  // +1 for column label row
                         std::copy(ignd_rear_output.begin(), ignd_rear_output.end(), PVSystem->p_groundRear[nn] + (idx + 1) * ignd_rear_output.size());      // +1 for column label row
+
+                        // If using spatial albedos, repeat the above
+                        if (Irradiance->useSpatialAlbedos) {
+                            if (idx == 0) {
+                                // add column labels to output (first row), (same as ground rear irradiance)
+                                std::copy(PVSystem->p_groundRear[nn], PVSystem->p_groundRear[nn] + ignd_rear[nn].size() + 1,
+                                    Irradiance->p_weatherFileAlbedoSpatial);
+                            }
+                            std::vector<double> ialb_rear_output(alb_spatial);
+                            ialb_rear_output.insert(ialb_rear_output.begin(), static_cast<double>(idx));    // add row labels (first column)
+                            std::copy(ialb_rear_output.begin(), ialb_rear_output.end(), Irradiance->p_weatherFileAlbedoSpatial + (idx + 1) * ialb_rear_output.size());      // +1 for column label row
+                        }
                     }
                 }
 
@@ -2261,12 +2273,7 @@ void cm_pvsamv1::exec()
                 Irradiance->p_sunAzimuthAngle[idx] = (ssc_number_t)solazi;
                 Irradiance->p_absoluteAirmass[idx] = sunup > 0 ? (ssc_number_t)(exp(-0.0001184 * hdr.elev) / (cos(solzen * 3.1415926 / 180) + 0.5057 * pow(96.080 - solzen, -1.634))) : 0.0f;
                 Irradiance->p_sunUpOverHorizon[idx] = (ssc_number_t)sunup;
-                if (Irradiance->useSpatialAlbedos) {
-                    if (idx < Simulation->numberOfWeatherFileRecords) {         // limit to single year
-                        std::copy(alb_spatial.begin(), alb_spatial.end(), Irradiance->p_weatherFileAlbedoSpatial + idx * alb_spatial.size());
-                    }
-                }
-                else {
+                if (!Irradiance->useSpatialAlbedos) {
                     Irradiance->p_weatherFileAlbedo[idx] = (ssc_number_t)alb;
                 }
             }
