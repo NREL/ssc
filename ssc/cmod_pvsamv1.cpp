@@ -3198,13 +3198,13 @@ double cm_pvsamv1::intraElecMismatch(double irrad_front_avg /*W/m2*/, std::vecto
 
     double mean_abs_diff = sum_of_deviations / ( pow(irrad_total.size(), 2) * irrad_total_avg ) * 100.;         // [%] Eqn. 4
     double mismatch_loss_fit3 = 0.054 * mean_abs_diff + 0.068 * pow(mean_abs_diff, 2);                          // [%] Eqn. 12
-    double mismatch_factor = mismatch_loss_fit3 * (fill_factor_stc / kFillFactorReference);                     // [%] Eqn. 7
+    double mismatch_factor = std::min(10., mismatch_loss_fit3 * (fill_factor_stc / kFillFactorReference));      // [%] Eqn. 7, limited to 10% max
 
     double irrad_back_avg = std::accumulate(irrad_back.begin(), irrad_back.end(), 0.) / irrad_back.size();
     double bifacial_irrad_gain = irrad_back_avg * bifaciality / irrad_front_avg * 100.;                         // [%] Eqn. 5
     double loss_factor;
     if (bifacial_irrad_gain != 0) {
-        loss_factor = mismatch_factor * (1 + 100. / bifacial_irrad_gain);                                       // [%] Eqn. 15
+        loss_factor = std::max(0., mismatch_factor * (1 + 100. / bifacial_irrad_gain));                         // [%] Eqn. 15
     }
     else {
         loss_factor = 0.;
