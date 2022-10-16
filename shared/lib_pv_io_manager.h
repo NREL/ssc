@@ -220,7 +220,9 @@ struct Irradiance_IO
 	int radiationMode;											  /// Specify which components of radiance should be used: 0=B&D, 1=G&B, 2=G&D, 3=POA-Ref, 4=POA-Pyra
 	int skyModel;												  /// Specify which sky diffuse model should be used: 0=isotropic, 1=hdkr, 2=perez
 	flag useWeatherFileAlbedo;									  /// Specify whether to use the weather file albedo
-	std::vector<double> userSpecifiedMonthlyAlbedo;				  /// User can provide monthly ground albedo values (0-1)
+    flag useSpatialAlbedos;									      /// Specify whether to use spatial albedos
+	std::vector<double> userSpecifiedMonthlyAlbedo;				  /// User can provide monthly uniform ground albedo values (0-1)
+    util::matrix_t<double> userSpecifiedMonthlySpatialAlbedos;	  /// User can provide monthly spatial ground albedo values (0-1), [month, location]
 
 	// Irradiance data Outputs (p_ is just a convention to organize all pointer outputs)
 	ssc_number_t * p_weatherFileGHI;			/// The Global Horizonal Irradiance from the weather file [W/m2]
@@ -231,6 +233,7 @@ struct Irradiance_IO
 	ssc_number_t * p_weatherFileWindSpeed;		/// The Wind Speed from the weather file [m/s]
 	ssc_number_t * p_weatherFileAmbientTemp;	/// The ambient temperature from the weather file [C]
 	ssc_number_t * p_weatherFileAlbedo;			/// The ground albedo from the weather file
+    ssc_number_t* p_weatherFileAlbedoSpatial;	/// The ground albedo from the weather file and spatial matrix input
 	ssc_number_t * p_weatherFileSnowDepth;		/// The snow depth from the weather file
 	ssc_number_t * p_IrradianceCalculated[3];	/// The calculated components of the irradiance [W/m2]
 	ssc_number_t * p_sunZenithAngle;			/// The calculate sun zenith angle [degrees]
@@ -329,6 +332,8 @@ struct PVSystem_IO
 	std::vector<ssc_number_t *> p_derateSelfShadingDiffuse;
 	std::vector<ssc_number_t *> p_derateSelfShadingReflected;
 	std::vector<ssc_number_t *> p_shadeDBShadeFraction;
+    std::vector<ssc_number_t *> p_poaRearSpatial;
+    std::vector<ssc_number_t *> p_groundRear;
 
 	// MPPT level outputs
 	std::vector<ssc_number_t *> p_mpptVoltage; /// An output vector containing input DC voltage in V to each mppt input
@@ -362,6 +367,15 @@ struct PVSystem_IO
 	ssc_number_t *p_poaFrontShadedTotal;
 	ssc_number_t *p_poaFrontShadedSoiledTotal;
 	ssc_number_t *p_poaRearTotal;
+    ssc_number_t* p_groundIncidentTotal;
+    ssc_number_t* p_groundAbsorbedTotal;
+    ssc_number_t* p_poaRearGroundReflectedTotal;
+    ssc_number_t* p_poaRearRowReflectionsTotal;
+    ssc_number_t* p_poaRearDirectDiffuseTotal;
+    ssc_number_t* p_poaRearSelfShadedTotal;
+    ssc_number_t* p_poaRackShadedTotal;
+    ssc_number_t* p_poaRearSoiledTotal;
+    ssc_number_t* p_bifacialElectricalMismatchTotal;
 	ssc_number_t *p_poaFrontTotal;
 	ssc_number_t *p_poaTotalAllSubarrays;
 
@@ -439,13 +453,17 @@ public:
 
 	// Subarray-specific losses
 	std::vector<double> monthlySoiling; // The soiling loss by month [%]
-	double rearIrradianceLossPercent;
+    bool calculateRackShading;
+    bool calculateBifacialElectricalMismatch;
+	double rearSoilingLossPercent;
+    double rackShadingLossPercent;
 	double dcOptimizerLossPercent;
 	double mismatchLossPercent;
 	double diodesLossPercent;
 	double dcWiringLossPercent;
 	double trackingLossPercent;
 	double nameplateLossPercent;
+    double electricalMismatchLossPercent;
 	double dcLossTotalPercent;			/// The DC loss due to mismatch, diodes, wiring, tracking, optimizers [%]
 
     // Shading and snow

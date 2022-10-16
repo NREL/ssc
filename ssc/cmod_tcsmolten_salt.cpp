@@ -193,6 +193,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 
     // Parallel heater parameters
     { SSC_INPUT,     SSC_NUMBER, "heater_mult",                        "Heater multiple relative to design cycle thermal power",                                                                                  "-",            "",                                  "Parallel Heater",                          "is_parallel_htr=1",                                                "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "heater_efficiency",                  "Heater electric to thermal efficiency",                                                                                                   "%",            "",                                  "Parallel Heater",                          "is_parallel_htr=1",                                                "",              "" },
     { SSC_INPUT,     SSC_NUMBER, "f_q_dot_des_allowable_su",           "Fraction of design power allowed during startup",                                                                                         "-",            "",                                  "Parallel Heater",                          "is_parallel_htr=1",                                                "",              "" },
     { SSC_INPUT,     SSC_NUMBER, "hrs_startup_at_max_rate",            "Duration of startup at max startup power",                                                                                                "hr",           "",                                  "Parallel Heater",                          "is_parallel_htr=1",                                                "",              "" },
     { SSC_INPUT,     SSC_NUMBER, "f_q_dot_heater_min",                 "Minimum allowable heater output as fraction of design",                                                                                   "",             "",                                  "Parallel Heater",                          "is_parallel_htr=1",                                                "",              "" },
@@ -261,7 +262,6 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     // Steam Rankine cycle
     { SSC_INPUT,     SSC_NUMBER, "dT_cw_ref",                          "Reference condenser cooling water inlet/outlet temperature difference",                                                                   "C",            "",                                  "Rankine Cycle",                            "pc_config=0",                                                      "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "T_amb_des",                          "Reference ambient temperature at design point",                                                                                           "C",            "",                                  "Rankine Cycle",                            "pc_config=0",                                                      "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "P_boil",                             "Boiler operating pressure",                                                                                                               "bar",          "",                                  "Rankine Cycle",                            "pc_config=0",                                                      "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "CT",                                 "Condensor type: 1=evaporative, 2=air, 3=hybrid",                                                                                          "",             "",                                  "Rankine Cycle",                            "pc_config=0",                                                      "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "T_approach",                         "Cooling tower approach temperature",                                                                                                      "C",            "",                                  "Rankine Cycle",                            "pc_config=0",                                                      "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "T_ITD_des",                          "ITD at design for dry system",                                                                                                            "C",            "",                                  "Rankine Cycle",                            "pc_config=0",                                                      "",              ""},
@@ -399,7 +399,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,     SSC_NUMBER, "disp_csu_cost",                      "Cycle startup cost",                                                                                                                      "$",            "",                                  "System Control",                           "",                                                                 "",              "SIMULATION_PARAMETER" },
     { SSC_INPUT,     SSC_NUMBER, "disp_rsu_cost",                      "Receiver startup cost",                                                                                                                   "$",            "",                                  "System Control",                           "",                                                                 "",              "SIMULATION_PARAMETER" },
     { SSC_INPUT,     SSC_NUMBER, "disp_pen_delta_w",                   "Dispatch cycle production change penalty",                                                                                                "$/kWe-change", "",                                  "System Control",                           "",                                                                 "",              "SIMULATION_PARAMETER" },
-
+    { SSC_INPUT,     SSC_NUMBER, "P_boil",                             "Boiler operating pressure",                                                                                                               "bar",          "",                                  "Rankine Cycle",                            "",                                                                 "",              "SIMULATION_PARAMETER" },
 
     // ****************************************************************************************************************************************
     // Design Outputs here:
@@ -446,7 +446,9 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_OUTPUT,    SSC_NUMBER, "q_dot_piping_loss_des",              "Receiver estimated piping loss at design",                                                                                                "MWt",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
 
         // Heater
-    { SSC_OUTPUT,    SSC_NUMBER, "q_dot_heater_des",                   "Heater design thermal power",                                                                                                             "MWt",         "",                                  "Power Cycle",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "q_dot_heater_des",                   "Heater design thermal power",                                                                                                             "MWt",         "",                                  "Heater",                                   "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "W_dot_heater_des",                   "Heater electricity consumption at design",                                                                                                "MWe",         "",                                  "Heater",                                   "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "E_heater_su_des",                    "Heater startup energy",                                                                                                                   "MWt-hr",      "",                                  "Heater",                                   "*",                                                                "",              "" },
 
         // Power Cycle
     { SSC_OUTPUT,    SSC_NUMBER, "m_dot_htf_cycle_des",                "PC HTF mass flow rate at design",                                                                                                         "kg/s",        "",                                  "Power Cycle",                              "*",                                                                "",              "" },
@@ -688,19 +690,26 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 
     { SSC_OUTPUT,    SSC_NUMBER, "conversion_factor",                  "Gross to net conversion factor",                                                                                                          "%",            "",                                  "",                                         "sim_type=1",                                                       "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "capacity_factor",                    "Capacity factor",                                                                                                                         "%",            "",                                  "",                                         "sim_type=1",                                                       "",              ""},
+    { SSC_OUTPUT,    SSC_NUMBER, "sales_energy_capacity_factor",       "Capacity factor considering only positive net generation periods",                                                                        "%",            "",                                  "",                                         "sim_type=1",                                                       "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "kwh_per_kw",                         "First year kWh/kW",                                                                                                                       "kWh/kW",       "",                                  "",                                         "sim_type=1",                                                       "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "annual_total_water_use",             "Total annual water usage, cycle + mirror washing",                                                                                        "m3",           "",                                  "",                                         "sim_type=1",                                                       "",              ""},
-
+    { SSC_OUTPUT,    SSC_NUMBER, "capacity_factor_highest_1000_ppas",  "Capacity factor at 1000 highest ppa timesteps",                                                                                           "-",            "",                                  "",                                         "sim_type=1",                                                       "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "capacity_factor_highest_2000_ppas",  "Capacity factor at 2000 highest ppa timesteps",                                                                                           "-",            "",                                  "",                                         "sim_type=1",                                                       "",              "" },
+                                                                                                                                                                                                                                                                                                                    
     { SSC_OUTPUT,    SSC_NUMBER, "disp_objective_ann",                 "Annual sum of dispatch objective function value",                                                                                         "",             "",                                  "",                                         "sim_type=1",                                                       "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "disp_iter_ann",                      "Annual sum of dispatch solver iterations",                                                                                                "",             "",                                  "",                                         "sim_type=1",                                                       "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "disp_presolve_nconstr_ann",          "Annual sum of dispatch problem constraint count",                                                                                         "",             "",                                  "",                                         "sim_type=1",                                                       "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "disp_presolve_nvar_ann",             "Annual sum of dispatch problem variable count",                                                                                           "",             "",                                  "",                                         "sim_type=1",                                                       "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "disp_solve_time_ann",                "Annual sum of dispatch solver time",                                                                                                      "",             "",                                  "",                                         "sim_type=1",                                                       "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "disp_solve_state_ann",               "Annual sum of dispatch solve state",                                                                                                      "",             "",                                  "",                                         "sim_type=1",                                                       "",              ""},
+    { SSC_OUTPUT,    SSC_NUMBER, "avg_suboptimal_rel_mip_gap",         "Average suboptimal relative MIP gap",                                                                                                     "%",            "",                                  "",                                         "sim_type=1",                                                       "",              ""},
 
     { SSC_OUTPUT,    SSC_NUMBER, "sim_cpu_run_time",                   "Simulation duration clock time",                                                                                                         "s",             "",                                  "",                                         "sim_type=1",                                                       "",              ""},
 
     var_info_invalid };
+
+bool SortByPPAPrice(const pair<int, double>& lhs,
+    const pair<int, double>& rhs);
 
 class cm_tcsmolten_salt : public compute_module
 {
@@ -741,6 +750,14 @@ public:
             throw exec_error("tcsmolten_salt", "We replaced the functionality of input variable piping_loss [Wt/m] with new input variable piping_loss_coefficient [Wt/m2-K]."
                 " The new input scales piping thermal losses as a function of receiver thermal power and design-point temperatures."
                 " Please define piping_loss_coefficient in your script.");
+        }
+
+        if (is_assigned("P_boil")) {
+            log("We removed boiler pressure (P_boil) as a user input to the Rankine Cycle model. Because the cycle efficiency"
+                " is provided by the user, the boiler pressure input does not modify the efficiency as one might expect. Instead the model"
+                " uses boiler pressure in second order calculations to 1) define a boiling temperature to normalize off-design HTF temperature and"
+                " 2) estimate steam mass flow for cycle make-up water calculations. Because boiler pressure only has influences"
+                " results in these minor non-intuitive ways, we decided to hardcode the valu to 100 bar.");
         }
 
         if (is_dispatch) {
@@ -1324,9 +1341,10 @@ public:
 
             if (pb_tech_type == 0)
             {
+                pc->m_P_boil_des = 100;     //[bar]
                 pc->m_dT_cw_ref = as_double("dT_cw_ref");
                 pc->m_T_amb_des = as_double("T_amb_des");
-                pc->m_P_boil = as_double("P_boil");
+                //pc->m_P_boil = as_double("P_boil");
                 pc->m_CT = as_integer("CT");                    // cooling tech type: 1=evaporative, 2=air, 3=hybrid    , 5= custom for rad cool, 6= custom for rad cool
                 pc->m_tech_type = as_integer("tech_type");      // 1: Fixed, 3: Sliding
                 if (pc->m_tech_type == 2) { pc->m_tech_type = 1; }; // changing fixed pressure for the trough to fixed pressure for the tower
@@ -1361,8 +1379,8 @@ public:
                         two_tank->ms_params.m_h_tank = as_double("h_ctes_tank");
                         two_tank->ms_params.m_u_tank = as_double("u_ctes_tank");
                         two_tank->ms_params.m_tank_pairs = as_integer("ctes_tankpairs");
-                        two_tank->ms_params.m_T_field_in_des = as_double("T_ctes_cold_design");
-                        two_tank->ms_params.m_T_field_out_des = as_double("T_ctes_warm_design");
+                        two_tank->ms_params.m_T_cold_des = as_double("T_ctes_cold_design");
+                        two_tank->ms_params.m_T_hot_des = as_double("T_ctes_warm_design");
                         two_tank->ms_params.m_T_tank_hot_ini = as_double("T_ctes_warm_ini");
                         two_tank->ms_params.m_T_tank_cold_ini = as_double("T_ctes_cold_ini");
                         two_tank->ms_params.m_f_V_hot_ini = as_double("f_ctes_warm_ini");
@@ -1375,8 +1393,8 @@ public:
                         stratified->ms_params.m_h_tank = as_double("h_ctes_tank");
                         stratified->ms_params.m_u_tank = as_double("u_ctes_tank");
                         stratified->ms_params.m_tank_pairs = as_integer("ctes_tankpairs");
-                        stratified->ms_params.m_T_field_in_des = as_double("T_ctes_cold_design");
-                        stratified->ms_params.m_T_field_out_des = as_double("T_ctes_warm_design");
+                        stratified->ms_params.m_T_cold_des = as_double("T_ctes_cold_design");
+                        stratified->ms_params.m_T_hot_des = as_double("T_ctes_warm_design");
                         stratified->ms_params.m_T_tank_hot_ini = as_double("T_ctes_warm_ini");
                         stratified->ms_params.m_T_tank_cold_ini = as_double("T_ctes_cold_ini");
                         stratified->ms_params.m_f_V_hot_ini = as_double("f_ctes_warm_ini");
@@ -1755,12 +1773,13 @@ public:
             q_dot_heater_des = q_dot_pc_des*heater_mult;     //[MWt]
             //double q_dot_heater_des = receiver->m_q_rec_des * 2.0;  // / 4.0;      //[MWt]
 
+            double heater_efficiency = as_double("heater_efficiency") / 100.0;          //[-] convert from % input
             double f_q_dot_des_allowable_su = as_double("f_q_dot_des_allowable_su");    //[-] fraction of design power allowed during startup
             double hrs_startup_at_max_rate = as_double("hrs_startup_at_max_rate");      //[hr] duration of startup at max startup power
             double f_heater_min = as_double("f_q_dot_heater_min");                      //[-] minimum allowable heater output as fraction of design
 
             p_electric_resistance = new C_csp_cr_electric_resistance(as_double("T_htf_cold_des"), as_double("T_htf_hot_des"),
-                q_dot_heater_des, f_heater_min,
+                q_dot_heater_des, heater_efficiency, f_heater_min,
                 f_q_dot_des_allowable_su, hrs_startup_at_max_rate,
                 as_integer("rec_htf"), as_matrix("field_fl_props"), C_csp_cr_electric_resistance::E_elec_resist_startup_mode::INSTANTANEOUS_NO_MAX_ELEC_IN);
 
@@ -1773,40 +1792,34 @@ public:
         }
         p_heater = p_electric_resistance;        
 
-        // Thermal energy storage 
-        C_csp_two_tank_tes storage;
-        C_csp_two_tank_tes::S_params *tes = &storage.ms_params;
-        tes->m_field_fl = as_integer("rec_htf");
-        tes->m_field_fl_props = as_matrix("field_fl_props");
-        tes->m_tes_fl = as_integer("rec_htf");
-        tes->m_tes_fl_props = as_matrix("field_fl_props");
-        tes->m_W_dot_pc_design = as_double("P_ref");        //[MWe]
-        tes->m_eta_pc = as_double("design_eff");                //[-]
-        tes->m_solarm = as_double("solarm");
-        tes->m_ts_hours = as_double("tshours");
-        tes->m_h_tank = as_double("h_tank");
-        tes->m_u_tank = as_double("u_tank");
-        tes->m_tank_pairs = as_integer("tank_pairs");
-        tes->m_hot_tank_Thtr = as_double("hot_tank_Thtr");
-        tes->m_hot_tank_max_heat = as_double("hot_tank_max_heat");
-        tes->m_cold_tank_Thtr = as_double("cold_tank_Thtr");
-        tes->m_cold_tank_max_heat = as_double("cold_tank_max_heat");
-        tes->m_dt_hot = 0.0;                                // MSPT assumes direct storage, so no user input here: hardcode = 0.0
-        tes->m_T_field_in_des = as_double("T_htf_cold_des");
-        tes->m_T_field_out_des = as_double("T_htf_hot_des");
-        tes->m_T_tank_hot_ini = as_double("T_htf_hot_des");
-        tes->m_T_tank_cold_ini = as_double("T_htf_cold_des");
-        tes->m_h_tank_min = as_double("h_tank_min");
-        tes->m_f_V_hot_ini = as_double("csp.pt.tes.init_hot_htf_percent");
-        tes->m_htf_pump_coef = as_double("pb_pump_coef");
-
-
-        tes->tanks_in_parallel = as_boolean("tanks_in_parallel");        //[-]
-        //tes->tanks_in_parallel = false; // true;      //[-] False: Field HTF always goes to TES. PC HTF always comes from TES
-        
-        tes->V_tes_des = 1.85;  //[m/s]
-        tes->calc_design_pipe_vals = false; // for now, to get 'tanks_in_parallel' to work
-        
+        // Thermal energy storage
+        C_csp_two_tank_tes storage(
+            as_integer("rec_htf"),
+            as_matrix("field_fl_props"),
+            as_integer("rec_htf"),
+            as_matrix("field_fl_props"),
+            as_double("P_ref") / as_double("design_eff"),   //[MWt]
+            as_double("solarm"),                            //[-]
+            as_double("P_ref") / as_double("design_eff") * as_double("tshours"),
+            as_double("h_tank"),
+            as_double("u_tank"),
+            as_integer("tank_pairs"),
+            as_double("hot_tank_Thtr"),
+            as_double("hot_tank_max_heat"),
+            as_double("cold_tank_Thtr"),
+            as_double("cold_tank_max_heat"),
+            0.0,                                    // MSPT assumes direct storage, so no user input here: hardcode = 0.0
+            as_double("T_htf_cold_des"),
+            as_double("T_htf_hot_des"),
+            as_double("T_htf_hot_des"),
+            as_double("T_htf_cold_des"),
+            as_double("h_tank_min"),
+            as_double("csp.pt.tes.init_hot_htf_percent"),
+            as_double("pb_pump_coef"),
+            as_boolean("tanks_in_parallel"),        //[-]       
+            1.85,                                   //[m/s]
+            false                                   // for now, to get 'tanks_in_parallel' to work
+        );
         
         // Set storage outputs
         storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_Q_DOT_LOSS, allocate("tank_losses", n_steps_fixed), n_steps_fixed);
@@ -2231,8 +2244,15 @@ public:
         assign("m_dot_htf_rec_max", m_dot_htf_rec_max);         //[kg/s]
 
             // *************************
-            // Thermal Energy Storage
+            // Heater
         assign("q_dot_heater_des", q_dot_heater_des);       //[MWt]
+        double W_dot_heater_des_calc = 0.0;                 //[MWe]
+        double E_heater_su_des = 0.0;                       //[MWt-hr]
+        if (is_parallel_heater) {
+            p_electric_resistance->get_design_parameters(E_heater_su_des, W_dot_heater_des_calc);
+        }
+        assign("W_dot_heater_des", (ssc_number_t)W_dot_heater_des_calc);    //[MWe]
+        assign("E_heater_su_des", (ssc_number_t)E_heater_su_des);           //[MWt-hr]
 
             // *************************
             // Thermal Energy Storage
@@ -2669,13 +2689,16 @@ public:
             throw exec_error("tcsmolten_salt", "failed to setup adjustment factors: " + haf.error());
 
         ssc_number_t *p_gen = allocate("gen", count);
+        ssc_number_t* p_gensales_after_avail = allocate("gensales_after_avail", count);
         for( size_t i = 0; i < count; i++ )
         {
             size_t hour = (size_t)ceil(p_time_final_hr[i]);
             p_gen[i] = (ssc_number_t)(p_W_dot_net[i] * 1.E3 * haf(hour));           //[kWe]
+            p_gensales_after_avail[i] = max(0.0, p_gen[i]);                         //[kWe]
         }
         ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, steps_per_hour);
         accumulate_annual_for_year("gen", "annual_energy", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed/steps_per_hour);
+        accumulate_annual_for_year("gensales_after_avail", "annual_sales_energy", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour);
         
         accumulate_annual_for_year("P_cycle", "annual_W_cycle_gross", 1000.0*sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed/steps_per_hour);        //[kWe-hr]
         accumulate_annual_for_year("P_cooling_tower_tot", "annual_W_cooling_tower", 1000.0*sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour);        //[kWe-hr]
@@ -2693,6 +2716,29 @@ public:
         accumulate_annual_for_year("disp_solve_time", "disp_solve_time_ann", sim_setup.m_report_step / 3600.0 / as_double("disp_frequency"), steps_per_hour, 1, n_steps_fixed/steps_per_hour );
         accumulate_annual_for_year("disp_solve_state", "disp_solve_state_ann", sim_setup.m_report_step / 3600.0 / as_double("disp_frequency"), steps_per_hour, 1, n_steps_fixed / steps_per_hour);
 
+        // Reporting dispatch solution counts
+        size_t n_flag, n_gap = 0;
+        ssc_number_t* subopt_flag = as_array("disp_subopt_flag", &n_flag);
+        ssc_number_t* rel_mip_gap = as_array("disp_rel_mip_gap", &n_gap);
+
+        std::vector<int> flag;
+        std::vector<double> gap;
+        flag.resize(n_flag);
+        gap.resize(n_flag);
+        for (size_t i = 0; i < n_flag; i++) {
+            flag[i] = (int)subopt_flag[i];
+            gap[i] = (double)rel_mip_gap[i];
+        }
+
+        double avg_gap = 0;
+        if (as_boolean("is_dispatch")) {
+            std::string disp_sum_msg;
+            dispatch.count_solutions_by_type(flag, (int)as_double("disp_frequency"), disp_sum_msg);
+            log(disp_sum_msg, SSC_NOTICE);
+            avg_gap = dispatch.calc_avg_subopt_gap(gap, flag, (int)as_double("disp_frequency"));
+        }
+        assign("avg_suboptimal_rel_mip_gap", (ssc_number_t)avg_gap);
+
         // Calculated Outputs
             // First, sum power cycle water consumption timeseries outputs
         accumulate_annual_for_year("m_dot_water_pc", "annual_total_water_use", sim_setup.m_report_step / 1000.0, steps_per_hour, 1, n_steps_fixed/steps_per_hour); //[m^3], convert from kg
@@ -2701,17 +2747,22 @@ public:
         double V_water_mirrors = as_double("water_usage_per_wash") / 1000.0*A_sf*as_double("washing_frequency");
         assign("annual_total_water_use", (ssc_number_t)(V_water_cycle + V_water_mirrors));
 
-        ssc_number_t ae = as_number("annual_energy");
-        ssc_number_t pg = as_number("annual_W_cycle_gross");
+        ssc_number_t ae = as_number("annual_energy");           //[kWe-hr]
+        ssc_number_t pg = as_number("annual_W_cycle_gross");    //[kWe-hr]
+        ssc_number_t annual_sales_energy = as_number("annual_sales_energy");        //[kWe-hr]
         ssc_number_t convfactor = (pg != 0) ? 100 * ae / pg : (ssc_number_t)0.0;
         assign("conversion_factor", convfactor);
 
         double kWh_per_kW = 0.0;
+        double kWh_sales_energy_per_kW_nameplate = 0.0;
         double nameplate = system_capacity;     //[kWe]
-        if(nameplate > 0.0)
+        if (nameplate > 0.0) {
             kWh_per_kW = ae / nameplate;
+            kWh_sales_energy_per_kW_nameplate = annual_sales_energy / nameplate;
+        }
 
         assign("capacity_factor", (ssc_number_t)(kWh_per_kW / ((double)n_steps_fixed / (double)steps_per_hour)*100.));
+        assign("sales_energy_capacity_factor", (ssc_number_t)(kWh_sales_energy_per_kW_nameplate / ((double)n_steps_fixed / (double)steps_per_hour) * 100.));
         assign("kwh_per_kw", (ssc_number_t)kWh_per_kW);
          
         if (pb_tech_type == 0) {
@@ -2720,7 +2771,50 @@ public:
                 assign("A_radfield", (ssc_number_t)A_radfield);
             }
         }
-        //Single value outputs from radiative cooling system
+
+        ssc_number_t* p_pricing_mult = as_array("pricing_mult", &count);
+
+        std::vector<pair<int, double>> ppa_pairs;
+        ppa_pairs.resize(count);
+        for (size_t i = 0; i < count; i++) {
+            ppa_pairs[i].first = i;
+            ppa_pairs[i].second = p_pricing_mult[i];
+        }
+
+        std::sort(ppa_pairs.begin(), ppa_pairs.end(), SortByPPAPrice);
+        int n_ppa_steps = 1000;
+
+        double total_energy_in_sub_period = 0.0;
+        for (size_t i = 0; i < n_ppa_steps; i++) {
+            size_t j = ppa_pairs[i].first;
+            total_energy_in_sub_period += p_gen[j] * sim_setup.m_report_step / 3600.0;     //[kWe-hr]
+        }
+
+        double total_energy_nameplate = nameplate * n_ppa_steps * sim_setup.m_report_step / 3600.0;     //[kWe-hr]
+
+        double cap_fac_highest_1000_ppas = 0.0;
+        if (nameplate > 0.0) {
+            cap_fac_highest_1000_ppas = total_energy_in_sub_period / total_energy_nameplate * 100.0;    //[%]        
+        }
+
+        assign("capacity_factor_highest_1000_ppas", cap_fac_highest_1000_ppas);
+
+        n_ppa_steps = 2000;
+
+        total_energy_in_sub_period = 0.0;
+        for (size_t i = 0; i < n_ppa_steps; i++) {
+            size_t j = ppa_pairs[i].first;
+            total_energy_in_sub_period += p_gen[j] * sim_setup.m_report_step / 3600.0;     //[kWe-hr]
+        }
+
+        total_energy_nameplate = nameplate * n_ppa_steps * sim_setup.m_report_step / 3600.0;     //[kWe-hr]
+
+        double cap_fac_highest_2000_ppas = 0.0;
+        if (nameplate > 0.0) {
+            cap_fac_highest_2000_ppas = total_energy_in_sub_period / total_energy_nameplate * 100.0;    //[%]
+        }
+
+        assign("capacity_factor_highest_2000_ppas", cap_fac_highest_2000_ppas);
 
         if (p_electric_resistance != NULL) {
             delete p_electric_resistance;
@@ -2732,5 +2826,11 @@ public:
 
     }
 };
+
+bool SortByPPAPrice(const pair<int, double>& lhs,
+    const pair<int, double>& rhs)
+{
+    return lhs.second > rhs.second;
+}
 
 DEFINE_MODULE_ENTRY(tcsmolten_salt, "CSP molten salt power tower with hierarchical controller and dispatch optimization", 1)

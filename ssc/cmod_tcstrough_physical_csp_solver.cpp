@@ -206,7 +206,7 @@ static var_info _cm_vtab_trough_physical_csp_solver[] = {
 	// Steam Rankine cycle
     { SSC_INPUT,        SSC_NUMBER,      "dT_cw_ref",         "Reference condenser cooling water inlet/outlet T diff",                     "C",            "",                             "powerblock",     "pc_config=0",             "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_amb_des",         "Reference ambient temperature at design point",                             "C",            "",                             "powerblock",     "pc_config=0",             "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "P_boil",            "Boiler operating pressure",                                                 "bar",          "",                             "powerblock",     "pc_config=0",             "",                      "" },
+    //{ SSC_INPUT,        SSC_NUMBER,      "P_boil",            "Boiler operating pressure",                                                 "bar",          "",                             "powerblock",     "pc_config=0",             "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "CT",                "Flag for using dry cooling or wet cooling system",                          "none",         "",                             "powerblock",     "pc_config=0",             "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_approach",        "Cooling tower approach temperature",                                        "C",            "",                             "powerblock",     "pc_config=0",             "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_ITD_des",         "ITD at design for dry system",                                              "C",            "",                             "powerblock",     "pc_config=0",             "",                      "" },
@@ -713,7 +713,7 @@ public:
 		{
 			pc->m_dT_cw_ref = as_double("dT_cw_ref");			//[C]
 			pc->m_T_amb_des = as_double("T_amb_des");			//[C]
-			pc->m_P_boil = as_double("P_boil");					//[bar]
+            pc->m_P_boil_des = 100.0;           //[bar]
 			pc->m_CT = as_integer("CT");						//[-]
 			pc->m_tech_type = as_integer("tech_type");			//[-]					
 			pc->m_T_approach = as_double("T_approach");			//[C/K]
@@ -762,35 +762,31 @@ public:
 		// Now add the storage class
 		// ********************************
 		// ********************************
-		C_csp_two_tank_tes storage;
-		C_csp_two_tank_tes::S_params *tes = &storage.ms_params;
-		tes->m_field_fl = as_integer("Fluid");
-		tes->m_field_fl_props = as_matrix("field_fl_props");
-		tes->m_tes_fl = as_integer("Fluid");
-		tes->m_tes_fl_props = as_matrix("field_fl_props");
-		tes->m_W_dot_pc_design = as_double("W_pb_design");		//[MWe]
-		tes->m_eta_pc = as_double("eta_ref");					//[-]
-		tes->m_solarm = as_double("solar_mult");				//[-]
-		tes->m_ts_hours = as_double("tshours");					//[hr]
-
-		// Hardcode NO TES for now
-		tes->m_ts_hours = 0.0;		//[hr]
-
-		tes->m_h_tank = as_double("h_tank");					//[m]
-		tes->m_u_tank = as_double("u_tank");					//[W/m^2-K]
-		tes->m_tank_pairs = as_integer("tank_pairs");			//[-]
-		tes->m_hot_tank_Thtr = as_double("hot_tank_Thtr");		//[C]
-		tes->m_hot_tank_max_heat = as_double("tank_max_heat");	//[MW]
-		tes->m_cold_tank_Thtr = as_double("cold_tank_Thtr");	//[C]
-		tes->m_cold_tank_max_heat = as_double("tank_max_heat");	//[MW]
-		tes->m_dt_hot = 0.0;									//[-] Assuming direct storage here
-		tes->m_T_field_in_des = as_double("T_loop_in_des");		//[C]
-		tes->m_T_field_out_des = as_double("T_loop_out");		//[C]
-		tes->m_T_tank_hot_ini = as_double("T_loop_in_des");		//[C]
-		tes->m_T_tank_cold_ini = as_double("T_loop_out");		//[C]
-		tes->m_h_tank_min = as_double("h_tank_min");			//[m]
-		tes->m_f_V_hot_ini = as_double("V_tank_hot_ini");		//[-]
-		tes->m_htf_pump_coef = as_double("pb_pump_coef");		//[kW/kg/s]
+        C_csp_two_tank_tes storage(
+            as_integer("Fluid"),
+            as_matrix("field_fl_props"),
+            as_integer("Fluid"),
+            as_matrix("field_fl_props"),
+            as_double("W_pb_design") / as_double("eta_ref"),  //[MWt]
+            as_double("solar_mult"),                          //[-]
+            0.0,		                                      //[MWht]
+            as_double("h_tank"),					          //[m]
+            as_double("u_tank"),					          //[W/m^2-K]
+            as_integer("tank_pairs"),			              //[-]
+            as_double("hot_tank_Thtr"),		                  //[C]
+            as_double("tank_max_heat"),	                      //[MW]
+            as_double("cold_tank_Thtr"),	                  //[C]
+            as_double("tank_max_heat"),	                      //[MW]
+            0.0,									          //[-] Assuming direct storage here
+            as_double("T_loop_in_des"),		                  //[C]
+            as_double("T_loop_out"),		                  //[C]
+            as_double("T_loop_in_des"),		                  //[C]
+            as_double("T_loop_out"),		                  //[C]
+            as_double("h_tank_min"),			              //[m]
+            as_double("V_tank_hot_ini"),		              //[-]
+            as_double("pb_pump_coef"),		                  //[kW/kg/s]
+            true
+        );
 
 		// ********************************
 		// ********************************
