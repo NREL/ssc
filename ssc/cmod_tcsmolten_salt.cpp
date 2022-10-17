@@ -318,8 +318,10 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,     SSC_NUMBER, "disp_inventory_incentive",           "Dispatch storage terminal inventory incentive multiplier",                                                                                "",             "",                                  "System Control",                           "?=0.0",                                                            "",              "SIMULATION_PARAMETER"},
     { SSC_INPUT,     SSC_NUMBER, "q_rec_standby",                      "Receiver standby energy consumption",                                                                                                     "kWt",          "",                                  "System Control",                           "?=9e99",                                                           "",              "SIMULATION_PARAMETER"},
     { SSC_INPUT,     SSC_NUMBER, "q_rec_heattrace",                    "Receiver heat trace energy consumption during startup",                                                                                   "kWe-hr",       "",                                  "System Control",                           "?=0.0",                                                            "",              "SIMULATION_PARAMETER"},
-    { SSC_INPUT,     SSC_NUMBER, "is_wlim_series",                     "Use time-series net electricity generation limits",                                                                                       "",             "",                                  "System Control",                           "?=0",                                                              "",              ""},
-    { SSC_INPUT,     SSC_ARRAY,  "wlim_series",                        "Time series net electicity generation limits",                                                                                            "kWe",          "",                                  "System Control",                           "is_wlim_series=1",                                                 "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "is_wlim_design",                     "Use fixed design-point net electricity generation limits (dispatch opt only)",                                                            "",             "",                                  "System Control",                           "?=0",                                                              "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "disp_wlim_maxspec",                  "Fixed design-point max net power to the grid (dispatch opt only)",                                                                        "",             "",                                  "System Control",                           "is_wlim_design=1",                                                 "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "is_wlim_series",                     "Use time-series net electricity generation limits (dispatch opt only)",                                                                   "",             "",                                  "System Control",                           "?=0",                                                              "",              "SIMULATION_PARAMETER"},
+    { SSC_INPUT,     SSC_ARRAY,  "wlim_series",                        "Time series net electicity generation limits (dispatch opt only)",                                                                        "kWe",          "",                                  "System Control",                           "is_wlim_series=1",                                                 "",              "SIMULATION_PARAMETER"},
 
     // Pricing schedules and multipliers
         // Ideally this would work with sim_type = 2, but UI inputs availability depends on financial mode
@@ -1890,9 +1892,10 @@ public:
         tou_params->mc_csp_ops.mc_weekdays = as_matrix("weekday_schedule");
         tou_params->mc_csp_ops.mc_weekends = as_matrix("weekend_schedule");
 
-        if (true)
+        if (is_dispatch)
         {
-
+            tou.mc_dispatch_params.m_w_lim_full.resize(n_steps_full);
+            std::fill(tou.mc_dispatch_params.m_w_lim_full.begin(), tou.mc_dispatch_params.m_w_lim_full.end(), 9.e99);
             if (as_boolean("is_wlim_series"))
             {
                 size_t n_wlim_series = 0;
@@ -1901,6 +1904,11 @@ public:
                     throw exec_error("tcsmolten_salt", "Invalid net electricity generation limit series dimension. Matrix must have " + util::to_string((int)n_steps_full) + " rows.");
                 for (size_t i = 0; i < n_steps_full; i++)
                     tou.mc_dispatch_params.m_w_lim_full.at(i) = (double)wlim_series[i];
+            }
+            else if (as_boolean("is_wlim_design")) {
+                double wlim_design = as_double("disp_wlim_maxspec");
+                for (size_t i = 0; i < n_steps_full; i++)
+                    tou.mc_dispatch_params.m_w_lim_full.at(i) = wlim_design;
             }
         }
 
