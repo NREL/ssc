@@ -347,6 +347,54 @@ void base_dispatch_opt::set_lp_solve_outputs(lprec* lp)
     }
 }
 
+void base_dispatch_opt::count_solutions_by_type(std::vector<int>& flag, int dispatch_freq, std::string& log_msg)
+{
+    int opt = 0, iter = 0, timeout = 0, user_gap = 0, lpsolve_gap = 0;
+    for (size_t i = 0; i < flag.size(); i += dispatch_freq)
+    {
+        // Mapping flags to solve state condition
+        if (flag[i] == OPTIMAL) {
+            opt += 1;
+        }
+        else if (flag[i] == INTERATION) {
+            iter += 1;
+        }
+        else if (flag[i] == TIMELIMIT) {
+            timeout += 1;
+        }
+        else if (flag[i] == MIPGAP) {
+            user_gap += 1;
+        }
+        else if (flag[i] == MIPGAPLPSOLVE) {
+            lpsolve_gap += 1;
+        }
+    }
+
+    log_msg = util::format("====== Dispatch Optimization Summary ======\n"
+        "Optimal solves: %d\n"
+        "Suboptimal iteration limit: %d\n"
+        "Suboptimal time limit: %d\n"
+        "Suboptimal user gap: %d\n"
+        "Suboptimal lpsolve gap: %d", opt, iter, timeout, user_gap, lpsolve_gap);
+}
+
+double base_dispatch_opt::calc_avg_subopt_gap(std::vector<double>& gap, std::vector<int>& flag, int dispatch_freq)
+{
+    double avg_gap = 0.;
+    int count = 0;
+    for (size_t i = 0; i < gap.size(); i += dispatch_freq)
+    {
+        // Calculating average gap for suboptimal solutions
+        if (flag[i] != OPTIMAL) {
+            avg_gap += gap[i];
+            count += 1;
+        }
+    }
+    avg_gap /= (double)count;
+    avg_gap *= 100.;
+    return avg_gap;
+}
+
 void base_dispatch_opt::save_problem_solution_debug(lprec* lp)
 {
     // Saving problem and solution for debugging
