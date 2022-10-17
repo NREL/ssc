@@ -37,7 +37,7 @@ void C_hx_two_tank_tes::init(const HTFProperties &fluid_external, const HTFPrope
     mc_store_htfProps = fluid_store;
 
 		// Design should provide source/sink side design temperatures
-    double c_h = mc_field_htfProps.Cp_ave(T_h_out_des, T_h_in_des) * 1000.0;	//[J/kg-K] Spec heat of hot side fluid at hot side average temperature, convert from [kJ/kg-K]
+    double c_h = mc_external_htfProps.Cp_ave(T_h_out_des, T_h_in_des) * 1000.0;	//[J/kg-K] Spec heat of hot side fluid at hot side average temperature, convert from [kJ/kg-K]
     double c_c = mc_store_htfProps.Cp_ave(T_h_out_des, T_h_in_des) * 1000.0;	//[J/kg-K] Spec heat of cold side fluid at hot side average temperature (estimate, but should be close)
 		// HX inlet and outlet temperatures
 	double T_c_out = T_h_in_des - dt_des;
@@ -92,7 +92,7 @@ void C_hx_two_tank_tes::solve(double T_f_htf_hx_in /*K*/, double m_dot_f_htf /*k
 	double m_dot_od = 0.5 * (m_dot_f_htf + m_dot_s_htf);		//[kg/s]
 	double UA = m_UA_des * pow(m_dot_od / m_m_dot_des_ave, 0.8);
 
-    double cp_f = mc_field_htfProps.Cp_ave(T_s_htf_hx_in, T_f_htf_hx_in) * 1000.0;		//[J/kg-K]
+    double cp_f = mc_external_htfProps.Cp_ave(T_s_htf_hx_in, T_f_htf_hx_in) * 1000.0;		//[J/kg-K]
 	double c_dot_f = cp_f * m_dot_f_htf;
     double cp_s = mc_store_htfProps.Cp_ave(T_s_htf_hx_in, T_f_htf_hx_in) * 1000.0;		//[J/kg-K]
 	double c_dot_s = cp_s * m_dot_s_htf;
@@ -1353,8 +1353,12 @@ int C_csp_two_tank_tes::solve_tes_off_design(double timestep /*s*/, double  T_am
         T_cold_final = mc_cold_tank.get_m_T_calc();		//[K]
 
         // Net TES discharge
-        double q_dot_tes_net_discharge = m_cp_external_avg*(m_dot_tes_hot_out*T_hot_ave + m_dot_tes_cold_out*T_cold_ave -
+		double q_dot_tes_net_discharge = m_cp_external_avg*(m_dot_tes_hot_out*T_hot_ave + m_dot_tes_cold_out*T_cold_ave -
             m_dot_cr_to_tes_hot*T_cr_out_hot - m_dot_total_to_cv_cold*T_htf_cold_cv_in) / 1000.0;		//[MWt]
+        // double cp_field = mc_external_htfProps.Cp_ave(T_cold_ave, T_cr_out_hot);
+        // double cp_cycle = mc_external_htfProps.Cp_ave(T_htf_cold_cv_in, T_hot_ave);
+        // double q_dot_tes_net_discharge = (cp_field * (m_dot_tes_cold_out * T_cold_ave - m_dot_cr_to_tes_hot * T_cr_out_hot)
+        //     + cp_cycle * (m_dot_tes_hot_out * T_hot_ave - m_dot_total_to_cv_cold * T_htf_cold_cv_in) ) / 1000.0;		//[MWt]
 
         if (m_dot_cv_hot_to_sink >= m_dot_cr_to_cv_hot)
         {
@@ -1501,7 +1505,7 @@ bool C_csp_two_tank_tes::discharge(double timestep /*s*/, double T_amb /*K*/, do
 	T_cold_final = mc_cold_tank.get_m_T_calc();		//[K]
 
 	// Calculate thermal power to HTF
-	double cp_htf_ave = mc_field_htfProps.Cp_ave(T_htf_cold_in, T_htf_hot_out);		//[kJ/kg-K]
+	double cp_htf_ave = mc_external_htfProps.Cp_ave(T_htf_cold_in, T_htf_hot_out);		//[kJ/kg-K]
 	q_dot_dc_to_htf = m_dot_htf_in*cp_htf_ave*(T_htf_hot_out - T_htf_cold_in)/1000.0;		//[MWt]
 
 	return true;
@@ -1601,7 +1605,7 @@ bool C_csp_two_tank_tes::charge(double timestep /*s*/, double T_amb /*K*/, doubl
 	T_cold_final = mc_cold_tank.get_m_T_calc();		//[K]
 
 	// Calculate thermal power to HTF
-	double cp_htf_ave = mc_field_htfProps.Cp_ave(T_htf_cold_out, T_htf_hot_in);		//[kJ/kg-K]
+	double cp_htf_ave = mc_external_htfProps.Cp_ave(T_htf_cold_out, T_htf_hot_in);		//[kJ/kg-K]
 	q_dot_ch_from_htf = m_dot_htf_in*cp_htf_ave*(T_htf_hot_in - T_htf_cold_out)/1000.0;		//[MWt]
 
 	return true;
