@@ -203,7 +203,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 
 
     // TES parameters - general
-    { SSC_INPUT,     SSC_NUMBER, "csp.pt.tes.init_hot_htf_percent",    "Initial fraction of available volume that is hot",                                                                                        "%",            "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "tes_init_hot_htf_percent",           "Initial fraction of available volume that is hot",                                                                                        "%",            "",                                  "Thermal Storage",                          "", /*not required because replacing deprecated var and checked in cmod*/ "",        ""},
     { SSC_INPUT,     SSC_NUMBER, "h_tank",                             "Total height of tank (height of HTF when tank is full)",                                                                                  "m",            "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "cold_tank_max_heat",                 "Rated heater capacity for cold tank heating",                                                                                             "MW",           "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "u_tank",                             "Loss coefficient from the tank",                                                                                                          "W/m2-K",       "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
@@ -395,11 +395,12 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     // ****************************************************************************************************************************************
     //     DEPRECATED INPUTS -- exec() checks if a) variable is assigned and b) if replacement variable is assigned. throws exception if a=true and b=false
     // ****************************************************************************************************************************************
-    { SSC_INPUT,     SSC_NUMBER, "piping_loss",                        "Thermal loss per meter of piping",                                                                                                        "Wt/m",         "",                                  "Tower and Receiver",                       "",                                                                 "",              "SIMULATION_PARAMETER" },
-    { SSC_INPUT,     SSC_NUMBER, "disp_csu_cost",                      "Cycle startup cost",                                                                                                                      "$",            "",                                  "System Control",                           "",                                                                 "",              "SIMULATION_PARAMETER" },
-    { SSC_INPUT,     SSC_NUMBER, "disp_rsu_cost",                      "Receiver startup cost",                                                                                                                   "$",            "",                                  "System Control",                           "",                                                                 "",              "SIMULATION_PARAMETER" },
-    { SSC_INPUT,     SSC_NUMBER, "disp_pen_delta_w",                   "Dispatch cycle production change penalty",                                                                                                "$/kWe-change", "",                                  "System Control",                           "",                                                                 "",              "SIMULATION_PARAMETER" },
-    { SSC_INPUT,     SSC_NUMBER, "P_boil",                             "Boiler operating pressure",                                                                                                               "bar",          "",                                  "Rankine Cycle",                            "",                                                                 "",              "SIMULATION_PARAMETER" },
+    { SSC_INPUT,     SSC_NUMBER, "piping_loss",                        "Thermal loss per meter of piping",                                                                                                        "Wt/m",         "",                                  "Deprecated",                           "",                                                                 "",              "SIMULATION_PARAMETER" },
+    { SSC_INPUT,     SSC_NUMBER, "disp_csu_cost",                      "Cycle startup cost",                                                                                                                      "$",            "",                                  "Deprecated",                           "",                                                                 "",              "SIMULATION_PARAMETER" },
+    { SSC_INPUT,     SSC_NUMBER, "disp_rsu_cost",                      "Receiver startup cost",                                                                                                                   "$",            "",                                  "Deprecated",                           "",                                                                 "",              "SIMULATION_PARAMETER" },
+    { SSC_INPUT,     SSC_NUMBER, "disp_pen_delta_w",                   "Dispatch cycle production change penalty",                                                                                                "$/kWe-change", "",                                  "Deprecated",                           "",                                                                 "",              "SIMULATION_PARAMETER" },
+    { SSC_INPUT,     SSC_NUMBER, "P_boil",                             "Boiler operating pressure",                                                                                                               "bar",          "",                                  "Deprecated",                           "",                                                                 "",              "SIMULATION_PARAMETER" },
+    { SSC_INPUT,     SSC_NUMBER, "csp.pt.tes.init_hot_htf_percent",    "Initial fraction of available volume that is hot",                                                                                        "%",            "",                                  "Deprecated",                           "",                                                                 "",              "SIMULATION_PARAMETER" },
 
     // ****************************************************************************************************************************************
     // Design Outputs here:
@@ -486,6 +487,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_OUTPUT,    SSC_NUMBER, "q_dot_loss_tes_des",                 "TES thermal loss at design",                                                                                                              "MWt",          "",                                 "TES Design Calc",                          "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "tshours_rec",                        "TES duration at receiver design output",                                                                                                  "hr",           "",                                 "TES Design Calc",                          "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "tshours_heater",                     "TES duration at heater design output",                                                                                                    "hr",           "",                                 "TES Design Calc",                          "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "dens_store_htf_at_T_ave",            "TES density of HTF at avg temps",                                                                                                         "kg/m3",        "",                                 "TES Design Calc",                          "*",                                                                "",              "" },
 
         // Balance of Plant
     { SSC_OUTPUT,    SSC_NUMBER, "nameplate",                          "Nameplate capacity",                                                                                                                      "MWe",          "",                                 "System Design Calc",                       "*",                                                                "",              "" },
@@ -772,6 +774,17 @@ public:
             throw exec_error("tcsmolten_salt", "We replaced the functionality of input variable piping_loss [Wt/m] with new input variable piping_loss_coefficient [Wt/m2-K]."
                 " The new input scales piping thermal losses as a function of receiver thermal power and design-point temperatures."
                 " Please define piping_loss_coefficient in your script.");
+        }
+
+        bool is_csp_pt_tes_init_hot_htf_percent_assigned = is_assigned("csp.pt.tes.init_hot_htf_percent");
+        bool is_tes_hot_htf_percent_assigned = is_assigned("tes_hot_htf_percent_assigned");
+        if (is_csp_pt_tes_init_hot_htf_percent_assigned && is_tes_hot_htf_percent_assigned) {
+            log("We renamed input variable csp.pt.tes.init_hot_htf_percent to tes_init_hot_htf_percent,"
+                " you provided both inputs, so the model does not use your csp.pt.tes.init_hot_htf_percent input.");
+        }
+        else if (is_csp_pt_tes_init_hot_htf_percent_assigned) {
+            throw exec_error("tcsmolten_salt", "We renamed input variable csp.pt.tes.init_hot_htf_percent to tes_init_hot_htf_percent,"
+                " please define tes_init_hot_htf_percent in your script.");
         }
 
         if (is_assigned("P_boil")) {
@@ -1853,7 +1866,7 @@ public:
             as_double("T_htf_hot_des"),
             as_double("T_htf_cold_des"),
             as_double("h_tank_min"),
-            as_double("csp.pt.tes.init_hot_htf_percent"),
+            as_double("tes_init_hot_htf_percent"),
             as_double("pb_pump_coef"),
             as_boolean("tanks_in_parallel"),        //[-]       
             1.85,                                   //[m/s]
@@ -2313,6 +2326,7 @@ public:
         assign("d_tank_tes", d_tank_calc);                      //[m]
         assign("q_dot_loss_tes_des", q_dot_loss_tes_des_calc);  //[MWt]
         assign("tshours_rec", Q_tes_des_calc / q_dot_rec_des);  //[hr]
+        assign("dens_store_htf_at_T_ave", dens_store_htf_at_T_ave_calc); //[kg/m3]
 
         double tshours_heater = 0.0;
         if (q_dot_heater_des > 0.0) {
