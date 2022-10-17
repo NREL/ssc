@@ -35,7 +35,6 @@ set(SSC_SRC
 		cmod_csp_tower_eqns.h
         cmod_csp_trough_eqns.cpp
 		cmod_csp_trough_eqns.h
-		cmod_dsg_flux_preprocess.cpp
 		cmod_etes_electric_resistance.cpp
 		cmod_etes_ptes.cpp
 		cmod_equpartflip.cpp
