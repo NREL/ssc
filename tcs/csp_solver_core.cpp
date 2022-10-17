@@ -502,8 +502,8 @@ void C_csp_solver::init()
 		mc_tes_outputs.m_m_dot_tes_hot_out = 0.0;		//[kg/s]
 		mc_tes_outputs.m_m_dot_pc_to_tes_cold = 0.0;	//[kg/s]
 		mc_tes_outputs.m_m_dot_tes_cold_out = 0.0;		//[kg/s]
-		mc_tes_outputs.m_m_dot_field_to_cycle = 0.0;	//[kg/s]
-		mc_tes_outputs.m_m_dot_cycle_to_field = 0.0;	//[kg/s]
+		mc_tes_outputs.m_m_dot_src_to_sink = 0.0;	    //[kg/s]
+		mc_tes_outputs.m_m_dot_sink_to_src = 0.0;	    //[kg/s]
 
 		mc_tes_outputs.m_m_dot_cold_tank_to_hot_tank = 0.0;
 	}
@@ -1133,9 +1133,9 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		mc_reported_outputs.value(C_solver_outputs::M_DOT_TES_HOT_OUT, mc_tes_outputs.m_m_dot_tes_hot_out);			//[kg/s]
 		mc_reported_outputs.value(C_solver_outputs::M_DOT_PC_TO_TES_COLD, mc_tes_outputs.m_m_dot_pc_to_tes_cold);	//[kg/s]
 		mc_reported_outputs.value(C_solver_outputs::M_DOT_TES_COLD_OUT, mc_tes_outputs.m_m_dot_tes_cold_out);		//[kg/s]
-        mc_reported_outputs.value(C_solver_outputs::M_DOT_TES_COLD_IN, mc_tes_outputs.m_m_dot_tes_cold_in);		//[kg/s]
-		mc_reported_outputs.value(C_solver_outputs::M_DOT_FIELD_TO_CYCLE, mc_tes_outputs.m_m_dot_field_to_cycle);	//[kg/s]
-		mc_reported_outputs.value(C_solver_outputs::M_DOT_CYCLE_TO_FIELD, mc_tes_outputs.m_m_dot_cycle_to_field);	//[kg/s]
+        mc_reported_outputs.value(C_solver_outputs::M_DOT_TES_COLD_IN, mc_tes_outputs.m_m_dot_tes_cold_in);		    //[kg/s]
+		mc_reported_outputs.value(C_solver_outputs::M_DOT_FIELD_TO_CYCLE, mc_tes_outputs.m_m_dot_src_to_sink);	    //[kg/s]
+		mc_reported_outputs.value(C_solver_outputs::M_DOT_CYCLE_TO_FIELD, mc_tes_outputs.m_m_dot_sink_to_src);	    //[kg/s]
 
 
 			// Parasitics outputs

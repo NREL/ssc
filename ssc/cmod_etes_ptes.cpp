@@ -350,9 +350,35 @@ static var_info _cm_vtab_etes_ptes[] = {
     { SSC_OUTPUT, SSC_ARRAY,  "q_balance",                     "Relative energy balance error",                                 "",             "",                                  "",                                         "sim_type=1",                                                                "",              "" },
     { SSC_OUTPUT, SSC_ARRAY,  "q_pc_target",                   "Controller target pc heat input",                               "MWt",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
 
+        // Dispatch outputs
+    { SSC_OUTPUT,    SSC_ARRAY,  "disp_rel_mip_gap",           "Dispatch relative MIP gap",                                     "",             "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "disp_solve_state",           "Dispatch solver state",                                         "",             "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "disp_subopt_flag",           "Dispatch suboptimal solution flag",                             "",             "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "disp_solve_iter",            "Dispatch iterations count",                                     "",             "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "disp_objective",             "Dispatch objective function value",                             "",             "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "disp_obj_relax",             "Dispatch objective function - relaxed max",                     "",             "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "disp_qsfprod_expected",      "Dispatch expected heat pump heat generation",                   "MWt",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "disp_qsfsu_expected",        "Dispatch expected heat pump startup enegy",                     "MWt",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "disp_tes_expected",          "Dispatch expected TES charge level",                            "MWht",         "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "disp_pceff_expected",        "Dispatch expected power cycle efficiency adj.",                 "",             "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "disp_qpbsu_expected",        "Dispatch expected power cycle startup energy",                  "MWht",         "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "disp_wpb_expected",          "Dispatch expected power generation",                            "MWe",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "disp_rev_expected",          "Dispatch expected revenue factor",                              "",             "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "disp_presolve_nconstr",      "Dispatch number of constraints in problem",                     "",             "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "disp_presolve_nvar",         "Dispatch number of variables in problem",                       "",             "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "disp_solve_time",            "Dispatch solver time",                                          "sec",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+
             // Annual single-value outputs
     { SSC_OUTPUT, SSC_NUMBER, "annual_energy",                 "Annual total electric power to grid",                           "kWhe",         "",                                  "",                                         "sim_type=1",                                                                "",              "" },
 
+            // Dispatch
+    { SSC_OUTPUT, SSC_NUMBER, "disp_objective_ann",            "Annual sum of dispatch objective function value",                  "$",         "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "disp_iter_ann",                 "Annual sum of dispatch solver iterations",                          "",         "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "disp_presolve_nconstr_ann",     "Annual sum of dispatch problem constraint count",                   "",         "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "disp_presolve_nvar_ann",        "Annual sum of dispatch problem variable count",                     "",         "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "disp_solve_time_ann",           "Annual sum of dispatch solver time",                             "sec",         "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "disp_solve_state_ann",          "Annual sum of dispatch solve state",                                "",         "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "avg_suboptimal_rel_mip_gap",    "Average suboptimal relative MIP gap",                              "%",         "",                                  "",                                         "sim_type=1",                                                                "",              "" },
 
             // ETES settings for financial model
     { SSC_OUTPUT, SSC_NUMBER, "ppa_soln_mode",                 "PPA solution mode",                                             "0/1",          "0 = solve ppa,1 = specify ppa",     "Revenue",                                  "sim_type=1",                                                                "INTEGER,MIN = 0,MAX = 1", "" },
@@ -369,6 +395,7 @@ public:
     {
         add_var_info(_cm_vtab_etes_ptes);
         add_var_info(vtab_adjustment_factors);
+        add_var_info(vtab_technology_outputs);
     }
 
     void exec() override
@@ -601,36 +628,33 @@ public:
 
         // **********************************************************
         // High temp TES
-         C_csp_two_tank_tes c_HT_TES;
-        {
-            C_csp_two_tank_tes::S_params* tes = &c_HT_TES.ms_params;
-            tes->m_field_fl = HT_htf_code;
-            tes->m_field_fl_props = ud_HT_htf_props;
-            tes->m_tes_fl = HT_htf_code;
-            tes->m_tes_fl_props = ud_HT_htf_props;
-            tes->m_W_dot_pc_design = W_dot_gen_thermo;  //[MWe]
-            tes->m_eta_pc = eta_therm_mech;             //[-]
-            tes->m_solarm = heater_mult;                //[-]
-            tes->m_ts_hours = tshours;                  //[hr]
-            tes->m_h_tank = as_double("h_tank");
-            tes->m_u_tank = as_double("u_tank");
-            tes->m_tank_pairs = as_integer("tank_pairs");
-            tes->m_hot_tank_Thtr = as_double("hot_tank_Thtr");
-            tes->m_hot_tank_max_heat = as_double("hot_tank_max_heat");
-            tes->m_cold_tank_Thtr = as_double("cold_tank_Thtr");
-            tes->m_cold_tank_max_heat = as_double("cold_tank_max_heat");
-            tes->m_dt_hot = 0.0;                        // MSPT assumes direct storage, so no user input here: hardcode = 0.0
-            tes->m_T_field_in_des = T_HT_cold_TES;      //[C]
-            tes->m_T_field_out_des = T_HT_hot_TES;      //[C]
-            tes->m_T_tank_hot_ini = T_HT_hot_TES;       //[C]
-            tes->m_T_tank_cold_ini = T_HT_cold_TES;     //[C]
-            tes->m_h_tank_min = as_double("h_tank_min");
-            tes->m_f_V_hot_ini = as_double("tes_init_hot_htf_percent");
-            tes->m_htf_pump_coef = 0.0;         //[kW/kg/s] No htf pump losses in direct TES
-            tes->tanks_in_parallel = false;     //[-] False: Field HTF always goes to TES. PC HTF always comes from TES. ETES should not simultaneously operate heater and cycle
-            tes->V_tes_des = 1.85;              //[m/s]
-            tes->calc_design_pipe_vals = false; // for now, to get 'tanks_in_parallel' to work
-        }
+        C_csp_two_tank_tes c_HT_TES(
+            HT_htf_code,
+            ud_HT_htf_props,
+            HT_htf_code,
+            ud_HT_htf_props,
+            q_dot_hot_in_gen,                   //[MWt]
+            heater_mult,                        //[-]
+            q_dot_hot_in_gen* tshours,          //[MWht]
+            as_double("h_tank"),
+            as_double("u_tank"),
+            as_integer("tank_pairs"),
+            as_double("hot_tank_Thtr"),
+            as_double("hot_tank_max_heat"),
+            as_double("cold_tank_Thtr"),
+            as_double("cold_tank_max_heat"),
+            0.0,                               // MSPT assumes direct storage, so no user input here: hardcode = 0.0
+            T_HT_cold_TES,                     //[C]
+            T_HT_hot_TES,                      //[C]
+            T_HT_hot_TES,                      //[C]
+            T_HT_cold_TES,                     //[C]
+            as_double("h_tank_min"),
+            as_double("tes_init_hot_htf_percent"),
+            0.0,                               //[kW/kg/s] No htf pump losses in direct TES
+            false,                             //[-] False: Field HTF always goes to TES. PC HTF always comes from TES. ETES should not simultaneously operate heater and cycle
+            1.85,                              //[m/s]
+            false                              // for now, to get 'tanks_in_parallel' to work
+        );
 
             // Set TES cmod outputs
         c_HT_TES.mc_reported_outputs.assign(C_csp_two_tank_tes::E_Q_DOT_LOSS, allocate("q_dot_tes_losses", n_steps_fixed), n_steps_fixed);
@@ -646,46 +670,41 @@ public:
 
         // **********************************************************
         // Cold temp TES
-        std::shared_ptr<C_csp_two_tank_tes> c_CT_TES(new C_csp_two_tank_tes());
-        {
-            C_csp_two_tank_tes::S_params* ctes = &c_CT_TES->ms_params;
-            ctes->m_field_fl = CT_htf_code;
-            ctes->m_field_fl_props = ud_CT_htf_props;
-            ctes->m_tes_fl = CT_htf_code;
-            ctes->m_tes_fl_props = ud_CT_htf_props;
-            // Power/effiency relationship doesn't hold for cold tank, so just fake it with power = heat and eta = 1
-            ctes->m_W_dot_pc_design = q_dot_cold_in_charge;     //[MWt]
-            ctes->m_eta_pc = 1.0;                               //[-]
-                // *************************************************
-            ctes->m_solarm = heater_mult;                //[-]
-            ctes->m_ts_hours = tshours;                  //[hr]
-            ctes->m_h_tank = as_double("CT_h_tank");
-            ctes->m_u_tank = as_double("CT_u_tank");
-            ctes->m_tank_pairs = as_integer("CT_tank_pairs");
-            // If CTES is colder than ambient, then heaters aren't going to do much?
-            ctes->m_hot_tank_Thtr = -200.0;         //[C]
-            ctes->m_hot_tank_max_heat = 0.0;        //[MWt]
-            ctes->m_cold_tank_Thtr = -200.0;        //[C]
-            ctes->m_cold_tank_max_heat = 0.0;       //[MWt]
-                // so do we want these inputs from cmod?
-                // do we need a tank cooler? Close enough to ambient (we expect?) to have minor heat loss?
-                // ctes->m_hot_tank_Thtr = as_double("CT_hot_tank_Thtr");
-                // ctes->m_hot_tank_max_heat = as_double("CT_hot_tank_max_heat");
-                // ctes->m_cold_tank_Thtr = as_double("CT_cold_tank_Thtr");
-                // ctes->m_cold_tank_max_heat = as_double("CT_cold_tank_max_heat");
-            // ********************************************************************
-            ctes->m_dt_hot = 0.0;                        // MSPT assumes direct storage, so no user input here: hardcode = 0.0
-            ctes->m_T_field_in_des = T_CT_cold_TES;      //[C]
-            ctes->m_T_field_out_des = T_CT_hot_TES;      //[C]
-            ctes->m_T_tank_hot_ini = T_CT_hot_TES;       //[C]
-            ctes->m_T_tank_cold_ini = T_CT_cold_TES;     //[C]
-            ctes->m_h_tank_min = as_double("CT_h_tank_min");
-            ctes->m_f_V_hot_ini = 100.0 - as_double("tes_init_hot_htf_percent");   //[-] Cold storage is charged when cold tank is full
-            ctes->m_htf_pump_coef = 0.0;            //[kW/kg/s] No htf pump losses in direct TES
-            ctes->tanks_in_parallel = false;        //[-] False: Field HTF always goes to TES. PC HTF always comes from TES. ETES should not simultaneously operate heater and cycle
-            ctes->V_tes_des = 1.85;                 //[m/s]
-            ctes->calc_design_pipe_vals = false;    // for now, to get 'tanks_in_parallel' to work
-        }
+        // Power/effiency relationship doesn't hold for cold tank, so just fake it with power = heat and eta = 1
+            // so do we want these inputs from cmod?
+            // do we need a tank cooler? Close enough to ambient (we expect?) to have minor heat loss?
+            // ctes_params.m_hot_tank_Thtr = as_double("CT_hot_tank_Thtr");
+            // ctes_params.m_hot_tank_max_heat = as_double("CT_hot_tank_max_heat");
+            // ctes_params.m_cold_tank_Thtr = as_double("CT_cold_tank_Thtr");
+            // ctes_params.m_cold_tank_max_heat = as_double("CT_cold_tank_max_heat");
+        double q_dot_CT_des__discharge_basis = q_dot_cold_in_charge / heater_mult;
+        std::shared_ptr<C_csp_two_tank_tes> c_CT_TES(new C_csp_two_tank_tes(
+            CT_htf_code,
+            ud_CT_htf_props,
+            CT_htf_code,
+            ud_CT_htf_props,
+            q_dot_CT_des__discharge_basis,                   //[MWt]
+            heater_mult,                                     //[-]
+            q_dot_CT_des__discharge_basis * tshours,         //[MWt-hr]
+            as_double("CT_h_tank"),
+            as_double("CT_u_tank"),
+            as_integer("CT_tank_pairs"),
+            -200.0,                                          //[C]
+            0.0,                                             //[MWt]
+            -200.0,                                          //[C]
+            0.0,                                             //[MWt]
+            0.0,                                             // MSPT assumes direct storage, so no user input here: hardcode = 0.0
+            T_CT_cold_TES,                                   //[C]
+            T_CT_hot_TES,                                    //[C]
+            T_CT_hot_TES,                                    //[C]
+            T_CT_cold_TES,                                   //[C]
+            as_double("CT_h_tank_min"),
+            100.0 - as_double("tes_init_hot_htf_percent"),   //[-] Cold storage is charged when cold tank is full
+            0.0,                                             //[kW/kg/s] No htf pump losses in direct TES
+            false,                                           //[-] False: Field HTF always goes to TES. PC HTF always comes from TES. ETES should not simultaneously operate heater and cycle
+            1.85,                                            //[m/s]
+            false                                            // for now, to get 'tanks_in_parallel' to work
+        ));
 
             // Set Cold TES cmod outputs
         c_CT_TES->mc_reported_outputs.assign(C_csp_two_tank_tes::E_Q_DOT_LOSS, allocate("q_dot_CT_tes_losses", n_steps_fixed), n_steps_fixed);
@@ -867,6 +886,23 @@ public:
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::OP_MODE_3, allocate("op_mode_3", n_steps_fixed), n_steps_fixed);
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::PC_Q_DOT_TARGET, allocate("q_pc_target", n_steps_fixed), n_steps_fixed);
 
+        // DISPATCH
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_REL_MIP_GAP, allocate("disp_rel_mip_gap", n_steps_fixed), n_steps_fixed);
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_STATE, allocate("disp_solve_state", n_steps_fixed), n_steps_fixed);
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_SUBOPT_FLAG, allocate("disp_subopt_flag", n_steps_fixed), n_steps_fixed);
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_ITER, allocate("disp_solve_iter", n_steps_fixed), n_steps_fixed);
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_OBJ, allocate("disp_objective", n_steps_fixed), n_steps_fixed);
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_OBJ_RELAX, allocate("disp_obj_relax", n_steps_fixed), n_steps_fixed);
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_QSFPROD_EXPECT, allocate("disp_qsfprod_expected", n_steps_fixed), n_steps_fixed);
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_QSFSU_EXPECT, allocate("disp_qsfsu_expected", n_steps_fixed), n_steps_fixed);
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_TES_EXPECT, allocate("disp_tes_expected", n_steps_fixed), n_steps_fixed);
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_PCEFF_EXPECT, allocate("disp_pceff_expected", n_steps_fixed), n_steps_fixed);
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_QPBSU_EXPECT, allocate("disp_qpbsu_expected", n_steps_fixed), n_steps_fixed);
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_WPB_EXPECT, allocate("disp_wpb_expected", n_steps_fixed), n_steps_fixed);
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_REV_EXPECT, allocate("disp_rev_expected", n_steps_fixed), n_steps_fixed);
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_PRES_NCONSTR, allocate("disp_presolve_nconstr", n_steps_fixed), n_steps_fixed);
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_PRES_NVAR, allocate("disp_presolve_nvar", n_steps_fixed), n_steps_fixed);
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_TIME, allocate("disp_solve_time", n_steps_fixed), n_steps_fixed);
 
         // *****************************************************
         // *****************************************************
@@ -931,8 +967,9 @@ public:
         double CT_to_HT_m_dot_ratio_pc = m_dot_CT_htf_gen_calc / m_dot_HT_htf_gen_calc;
 
             // Heat Pump
-        double W_dot_in_thermo_charge_calc;        //[MWe] power into cycle working fluid. does not consider electric parasitics (e.g. cooling fan, motor inefficiencies, etc.)
-        double q_dot_cold_in_charge_calc;   //[MWt]
+        double W_dot_in_thermo_charge_calc;         //[MWe] power into cycle working fluid. does not consider electric parasitics (e.g. cooling fan, motor inefficiencies, etc.)
+        double q_dot_cold_in_charge_calc;           //[MWt]
+        double q_dot_hot_out_charge_calc;           //[MWt]
         double W_dot_elec_parasitic_charge_calc;    //[MWe]
         double W_dot_in_net_charge_calc;    //[MWe]
         double COP_net_calc;                //[-]
@@ -949,7 +986,8 @@ public:
 
         double E_su_charge_calc;            //[MWt-hr]
 
-        c_heat_pump.get_design_parameters(W_dot_in_thermo_charge_calc, q_dot_cold_in_charge_calc,
+        c_heat_pump.get_design_parameters(W_dot_in_thermo_charge_calc,
+                        q_dot_cold_in_charge_calc, q_dot_hot_out_charge_calc,
                         W_dot_elec_parasitic_charge_calc, W_dot_in_net_charge_calc,
                         COP_net_calc,
                         m_dot_HT_htf_charge_calc, cp_HT_htf_charge_calc, W_dot_HT_htf_pump_charge_calc,
@@ -1094,7 +1132,7 @@ public:
 
             // Heater
         assign("W_dot_hp_in_thermo_des", W_dot_in_thermo_charge_calc);  //[MWe]
-        assign("q_dot_hp_hot_out_des", q_dot_hot_in_gen_calc);          //[MWt]
+        assign("q_dot_hp_hot_out_des", q_dot_hot_out_charge_calc);      //[MWt]
         assign("q_dot_hp_cold_in_des", q_dot_cold_in_charge_calc);      //[MWt]
         assign("W_dot_hp_elec_parasitic_des", W_dot_elec_parasitic_charge_calc);    //[MWe]
         assign("W_dot_hp_in_net_des", W_dot_in_net_charge_calc);        //[MWe]
@@ -1218,9 +1256,41 @@ public:
         // *****************************************************
         // *****************************************************
 
+        // Report simulation metrics
+        ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, steps_per_hour);
+
         // Annual metrics
         accumulate_annual_for_year("gen", "annual_energy", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour);
 
+        accumulate_annual_for_year("disp_objective", "disp_objective_ann", sim_setup.m_report_step / 3600.0 / as_double("disp_frequency"), steps_per_hour, 1, n_steps_fixed / steps_per_hour);
+        accumulate_annual_for_year("disp_solve_iter", "disp_iter_ann", sim_setup.m_report_step / 3600.0 / as_double("disp_frequency"), steps_per_hour, 1, n_steps_fixed / steps_per_hour);
+        accumulate_annual_for_year("disp_presolve_nconstr", "disp_presolve_nconstr_ann", sim_setup.m_report_step / 3600.0 / as_double("disp_frequency"), steps_per_hour, 1, n_steps_fixed / steps_per_hour);
+        accumulate_annual_for_year("disp_presolve_nvar", "disp_presolve_nvar_ann", sim_setup.m_report_step / 3600.0 / as_double("disp_frequency"), steps_per_hour, 1, n_steps_fixed / steps_per_hour);
+        accumulate_annual_for_year("disp_solve_time", "disp_solve_time_ann", sim_setup.m_report_step / 3600. / as_double("disp_frequency"), steps_per_hour, 1, n_steps_fixed / steps_per_hour);
+        accumulate_annual_for_year("disp_solve_state", "disp_solve_state_ann", sim_setup.m_report_step / 3600. / as_double("disp_frequency"), steps_per_hour, 1, n_steps_fixed / steps_per_hour);
+
+        // Reporting dispatch solution counts
+        size_t n_flag, n_gap = 0;
+        ssc_number_t* subopt_flag = as_array("disp_subopt_flag", &n_flag);
+        ssc_number_t* rel_mip_gap = as_array("disp_rel_mip_gap", &n_gap);
+
+        std::vector<int> flag;
+        std::vector<double> gap;
+        flag.resize(n_flag);
+        gap.resize(n_flag);
+        for (size_t i = 0; i < n_flag; i++) {
+            flag[i] = (int)subopt_flag[i];
+            gap[i] = (double)rel_mip_gap[i];
+        }
+
+        double avg_gap = 0;
+        if (as_boolean("is_dispatch")) {
+            std::string disp_sum_msg;
+            dispatch.count_solutions_by_type(flag, (int)as_double("disp_frequency"), disp_sum_msg);
+            log(disp_sum_msg, SSC_NOTICE);
+            avg_gap = dispatch.calc_avg_subopt_gap(gap, flag, (int)as_double("disp_frequency"));
+        }
+        assign("avg_suboptimal_rel_mip_gap", (ssc_number_t)avg_gap);
 
         return;
     }

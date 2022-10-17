@@ -30,6 +30,7 @@ set(SSC_SRC
 		cmod_csp_common_eqns.cpp
 		cmod_csp_common_eqns.h
 		cmod_csp_dsg_lf_ui.cpp
+		cmod_csp_subcomponent.cpp
 		cmod_csp_tower_eqns.cpp
 		cmod_csp_tower_eqns.h
         cmod_csp_trough_eqns.cpp
@@ -121,6 +122,8 @@ set(SSC_SRC
 		cmod_wavefile.cpp
 		cmod_utilityrate5_eqns.cpp
 		cmod_utilityrate5_eqns.h
+        cmod_utilityrateforecast.cpp
+        cmod_utilityrateforecast.h
 		cmod_wfcheck.cpp
 		cmod_wfcsv.cpp
 		cmod_wfreader.cpp

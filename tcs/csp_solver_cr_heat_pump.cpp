@@ -555,7 +555,13 @@ double C_csp_cr_heat_pump::get_collector_area()
     return std::numeric_limits<double>::quiet_NaN();
 }
 
-void C_csp_cr_heat_pump::get_design_parameters(double& W_dot_in /*MWe*/, double& q_dot_cold_in /*MWt*/,
+double C_csp_cr_heat_pump::get_design_electric_to_heat_cop()
+{
+    return m_COP_heat_des;  //[-]
+}
+
+void C_csp_cr_heat_pump::get_design_parameters(double& W_dot_in /*MWe*/,
+    double& q_dot_cold_in /*MWt*/, double& q_dot_hot_out /*MWt*/,
     double& W_dot_elec_parasitic /*MWe*/, double& W_dot_in_net /*MWe*/,
     double& COP_net /*-*/,
     double& m_dot_HT_htf /*kg/s*/, double& cp_HT_htf /*kJ/kg-K*/, double& W_dot_HT_htf_pump /*MWe*/,
@@ -564,6 +570,7 @@ void C_csp_cr_heat_pump::get_design_parameters(double& W_dot_in /*MWe*/, double&
 {
     W_dot_in = m_W_dot_in_thermo_des;       //[MWe]
     q_dot_cold_in = m_q_dot_cold_in_des;    //[MWt]
+    q_dot_hot_out = m_q_dot_hot_out_des;    //[MWt]
     W_dot_elec_parasitic = m_W_dot_consume_elec_des;    //[MWe]
     W_dot_in_net = m_W_dot_in_net_des;      //[MWe]
     COP_net = m_COP_net_des;                //[-]

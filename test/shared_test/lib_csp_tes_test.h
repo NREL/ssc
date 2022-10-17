@@ -27,6 +27,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <memory>
 #include <gtest/gtest.h>
 #include "../tcs/storage_hx.h"
+#include "csp_solver_two_tank_tes.h"
 
 using Tank = Storage_HX;
 
