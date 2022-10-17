@@ -98,7 +98,8 @@ public:
 	battery_t * battery_model(){ return _Battery; }
 
 	// ac outputs
-	double power_tofrom_battery();
+	double power_tofrom_battery_ac();
+    double power_tofrom_battery_dc();
 	double power_tofrom_grid();
 	double power_gen();
 	double power_pv_to_load();
@@ -111,6 +112,7 @@ public:
 	double power_pv_to_grid();
 	double power_battery_to_grid();
     double power_battery_to_system_load();
+    double power_battery_to_inverter_dc();
 	double power_fuelcell_to_grid();
 	double power_conversion_loss();
 	double power_system_loss();

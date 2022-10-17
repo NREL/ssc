@@ -586,7 +586,8 @@ void dispatch_t::dispatch_ac_outage_step(size_t lifetimeIndex) {
     }
 }
 
-double dispatch_t::power_tofrom_battery() { return m_batteryPower->powerBatteryAC; }
+double dispatch_t::power_tofrom_battery_ac() { return m_batteryPower->powerBatteryAC; }
+double dispatch_t::power_tofrom_battery_dc() { return m_batteryPower->powerBatteryDC; }
 double dispatch_t::power_tofrom_grid() { return m_batteryPower->powerGrid; }
 double dispatch_t::power_gen() { return m_batteryPower->powerGeneratedBySystem; }
 double dispatch_t::power_pv_to_load() { return m_batteryPower->powerSystemToLoad; }
@@ -599,6 +600,7 @@ double dispatch_t::power_fuelcell_to_batt() { return m_batteryPower->powerFuelCe
 double dispatch_t::power_pv_to_grid() { return m_batteryPower->powerSystemToGrid; }
 double dispatch_t::power_battery_to_grid() { return m_batteryPower->powerBatteryToGrid; }
 double dispatch_t::power_battery_to_system_load() { return m_batteryPower->powerBatteryToSystemLoad; }
+double dispatch_t::power_battery_to_inverter_dc() { return m_batteryPower->powerBatteryToInverterDC; }
 double dispatch_t::power_fuelcell_to_grid() { return m_batteryPower->powerFuelCellToGrid; }
 double dispatch_t::power_conversion_loss() { return m_batteryPower->powerConversionLoss; }
 double dispatch_t::power_system_loss() { return m_batteryPower->powerSystemLoss; }

@@ -1819,7 +1819,7 @@ void battstor::outputs_fixed()
 void battstor::outputs_topology_dependent()
 {
     // Power output (all Powers in kWac)
-    outBatteryPower[index] = (ssc_number_t)(dispatch_model->power_tofrom_battery());
+    outBatteryPower[index] = (ssc_number_t)(dispatch_model->power_tofrom_battery_ac());
     outGridPower[index] = (ssc_number_t)(dispatch_model->power_tofrom_grid());
     outGenPower[index] = (ssc_number_t)(dispatch_model->power_gen());
     outSystemToBatt[index] = (ssc_number_t)(dispatch_model->power_pv_to_batt());

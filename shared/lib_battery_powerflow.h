@@ -140,10 +140,10 @@ public:
 
 	double dtHour;	   /// The timestep in hours, used for accumulated power losses
 
-	double powerSystem;				   ///< The power production of the renewable system (PV array) (kW)
-	double powerSystemThroughSharedInverter; ///< The power going through the shared inverter (kW)
-	double powerLoad;			   ///< The power required by the electric load (kW)
-    double powerCritLoad;          ///< The power for critical loads during an outage. Battery will only discharge to this during outage (kW)
+	double powerSystem;				   ///< The power production of the renewable system (PV array) (kW) AC when AC connected, DC when DC connected
+	double powerSystemThroughSharedInverter; ///< The power going through the shared inverter (kWac)
+	double powerLoad;			   ///< The power required by the electric load (kWac)
+    double powerCritLoad;          ///< The power for critical loads during an outage. Battery will only discharge to this during outage (kWac)
 	double powerBatteryDC; 	       ///< The power flow to and from the battery (> 0, discharging, < 0 charging) (kWdc)
 	double powerBatteryAC; 	       ///< The power flow to and from the battery (> 0, discharging, < 0 charging) (kWac)
 	double powerBatteryTarget;	   ///< A user specified or algorithm calculated target dispatch power (kW)
@@ -159,6 +159,7 @@ public:
 	double powerBatteryToLoad;     ///< The power from the battery to the electric load (kW)
 	double powerBatteryToGrid;     ///< The power from the battery to the grid (kW)
     double powerBatteryToSystemLoad; ///< The power from the battery to system loads (such as inverter night time losses) (kW)
+    double powerBatteryToInverterDC; ///< The power from the battery to the DC side of the inverter (kWdc)
     double powerCritLoadUnmet;     ///< Output of unmet critical load during outage (kW)
     double powerLossesUnmet;       ///< Output of unmet losses (system or battery) during outage (kW)
     double powerFuelCell;          ///< The power from the fuelcell (kW)
