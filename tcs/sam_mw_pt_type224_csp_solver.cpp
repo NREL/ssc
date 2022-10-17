@@ -40,7 +40,7 @@ enum{
 	P_HTF,
 	P_FIELD_FL_PROPS,
 	P_Q_SBY_FRAC,
-	P_P_BOIL,
+	//P_P_BOIL,
 	P_CT,
 	P_STARTUP_TIME,
 	P_STARTUP_FRAC,
@@ -110,7 +110,7 @@ tcsvarinfo sam_mw_pt_type224_variables[] = {
 	{ TCS_PARAM,          TCS_NUMBER,               P_HTF,                    "HTF",                                             "Integer flag identifying HTF in power block",         "none",             "",             "",           "21" },
 	{ TCS_PARAM,          TCS_NUMBER,    P_FIELD_FL_PROPS,         "field_fl_props",                                                  "User defined field fluid property data",            "-",             "7 columns (T,Cp,dens,visc,kvisc,cond,h), at least 3 rows",        "",        ""},
 	{ TCS_PARAM,          TCS_NUMBER,        P_Q_SBY_FRAC,             "q_sby_frac",                                     "Fraction of thermal power required for standby mode",         "none",             "",             "",          "0.2" },
-	{ TCS_PARAM,          TCS_NUMBER,            P_P_BOIL,                 "P_boil",                                                               "Boiler operating pressure",          "bar",             "",             "",          "100" },
+	//{ TCS_PARAM,          TCS_NUMBER,            P_P_BOIL,                 "P_boil",                                                               "Boiler operating pressure",          "bar",             "",             "",          "100" },
 	{ TCS_PARAM,          TCS_NUMBER,                P_CT,                     "CT",                                        "Flag for using dry cooling or wet cooling system",         "none",             "",             "",            "1" },
 	{ TCS_PARAM,          TCS_NUMBER,      P_STARTUP_TIME,           "startup_time",                                                     "Time needed for power block startup",           "hr",             "",             "",          "0.5" },
 	{ TCS_PARAM,          TCS_NUMBER,      P_STARTUP_FRAC,           "startup_frac",                                     "Fraction of design thermal power needed for startup",         "none",             "",             "",          "0.2" },
@@ -238,8 +238,9 @@ public:
 		{
 			p_params->m_dT_cw_ref = value(P_DT_CW_REF);				//Reference condenser cooling water inlet/outlet T diff [C]
 			p_params->m_T_amb_des = value(P_T_AMB_DES);				//Reference ambient temperature at design point [C]
-			p_params->m_P_boil = value(P_P_BOIL);					//Boiler operating pressure [bar]
-			p_params->m_CT = (int) value(P_CT);						//Flag for using dry cooling or wet cooling system                [none]
+			//p_params->m_P_boil = value(P_P_BOIL);					//Boiler operating pressure [bar]
+            p_params->m_P_boil_des = 100.0;         //[bar]
+            p_params->m_CT = (int) value(P_CT);						//Flag for using dry cooling or wet cooling system                [none]
 			p_params->m_tech_type = (int) value(P_TECH_TYPE);		//Flag indicating which coef. set to use. (1=tower,2=trough,3=user) [none]
 			p_params->m_T_approach = value(P_T_APPROACH);			//Cooling tower approach temperature [C]
 			p_params->m_T_ITD_des = value(P_T_ITD_DES);				//ITD at design for dry system [C]
