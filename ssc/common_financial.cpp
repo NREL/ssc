@@ -3296,6 +3296,34 @@ void hourly_energy_calculation::sum_ts_to_hourly(ssc_number_t* timestep_power, s
     }
 }
 
+void check_financial_metrics::check_irr(compute_module* cm, ssc_number_t& irr)
+{
+    if (isnan(irr))
+        cm->log("End of analysis IRR is not a number, please review all financial results", SSC_WARNING);
+}
+
+void check_financial_metrics::check_irr_flip(compute_module* cm, ssc_number_t& irr)
+{
+    if (isnan(irr))
+        cm->log("IRR is not a number, please review all financial results", SSC_WARNING);
+}
+
+void check_financial_metrics::check_npv(compute_module* cm, ssc_number_t& npv_metric)
+{
+    if (npv_metric < 0.0)
+        cm->log(util::format("NPV, %lg, is less than zero, please review all financial results", npv_metric), SSC_WARNING);
+}
+
+void check_financial_metrics::check_debt_percentage(compute_module* cm, ssc_number_t& debt_percentage)
+{
+    if (debt_percentage > 100.0)
+        cm->log(util::format("Debt percent, %lg, is greater than 100%%, please review all financial results", debt_percentage), SSC_WARNING);
+}
+
+
+
+
+
 var_info vtab_lcos_inputs[] = {
     /*   VARTYPE           DATATYPE         NAME                             LABEL                                UNITS      META                 GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 
