@@ -56,8 +56,6 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
     { SSC_INPUT,  SSC_NUMBER, "design_eff",                    "Power cycle efficiency at design",                               "none",         "",                                  "System Design",                            "*",                                                                "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "tshours",                       "Equivalent full-load thermal storage hours",                     "hr",           "",                                  "System Design",                            "*",                                                                "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "heater_mult",                   "Heater multiple relative to design cycle thermal power",         "-",            "",                                  "System Design",                            "*",                                                                "",              ""},
-    { SSC_INPUT,  SSC_NUMBER, "gross_net_conversion_factor",   "Estimated gross to net conversion factor",                       "",             "",                                  "System Design",                            "*",                                                                "",              ""},
-
 
     // Power Cycle
         // General
@@ -417,7 +415,6 @@ public:
         double eta_cycle = as_double("design_eff");             //[-]
         double tshours = as_double("tshours");                  //[-]
         double heater_mult = as_double("heater_mult");          //[-]
-        double gross_net_conversion_factor = as_double("gross_net_conversion_factor");
 
         // TES parameters
         int hot_htf_code = as_integer("hot_htf_code");
@@ -426,7 +423,6 @@ public:
         // System Design Calcs
         double q_dot_pc_des = W_dot_cycle_des / eta_cycle;      //[MWt]
         double q_dot_heater_des = q_dot_pc_des * heater_mult;   //[MWt]
-        double system_capacity = W_dot_cycle_des * gross_net_conversion_factor * 1.E3; //[kWe]
         double Q_tes_des = q_dot_pc_des * tshours;              //[MWt-hr] TES thermal capacity at design
         // *****************************************************
         // *****************************************************
@@ -915,8 +911,11 @@ public:
         double W_dot_fixed_parasitic_design;    //[MWe]
         csp_solver.get_design_parameters(W_dot_bop_design, W_dot_fixed_parasitic_design);
 
-        //double plant_net_capacity_des_calc = W_dot_cycle_des - W_dot_pc_pump_des - W_dot_pc_cooling_des -
-        //                        W_dot_bop_design - W_dot_fixed_parasitic_design;    //[MWe]
+        double plant_net_capacity_des_calc = W_dot_cycle_des - W_dot_pc_pump_des - W_dot_cooling_des -
+                                W_dot_bop_design - W_dot_fixed_parasitic_design;    //[MWe]
+
+        double plant_net_conv_calc = plant_net_capacity_des_calc / W_dot_cycle_des; //[-]
+        double system_capacity = plant_net_capacity_des_calc * 1.E3;        //[kWe]
 
         // *****************************************************
         // System design is complete, so calculate final design outputs like cost, capacity, etc.
@@ -930,7 +929,6 @@ public:
         double Q_CT_tes = 0.0;
         double CT_tes_spec_cost = 0.0;
 
-        double plant_net_capacity = system_capacity / 1000.0;         //[MWe], convert from kWe
         double EPC_perc_direct_cost = as_double("epc_cost_perc_of_direct");
         double EPC_per_power_cost = as_double("epc_cost_per_watt");
         double EPC_fixed_cost = as_double("epc_cost_fixed");
@@ -951,7 +949,7 @@ public:
         N_mspt::calculate_etes_costs(Q_tes_des, tes_spec_cost, Q_CT_tes, CT_tes_spec_cost,
             W_dot_cycle_des, power_cycle_spec_cost,
             q_dot_heater_des, heater_spec_cost, bop_spec_cost, contingency_rate,
-            plant_net_capacity, EPC_perc_direct_cost, EPC_per_power_cost, EPC_fixed_cost,
+            plant_net_capacity_des_calc, EPC_perc_direct_cost, EPC_per_power_cost, EPC_fixed_cost,
             total_land_perc_direct_cost, total_land_per_power_cost, total_land_fixed_cost,
             sales_tax_basis, sales_tax_rate,
             tes_cost, CT_tes_cost, power_cycle_cost, heater_cost, bop_cost, direct_capital_precontingency_cost,
