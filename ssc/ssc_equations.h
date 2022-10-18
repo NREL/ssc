@@ -29,7 +29,6 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "cmod_mhk_eqns.h"
 #include "cmod_merchantplant_eqns.h"
 #include "cmod_pvsamv1_eqns.h"
-#include "cmod_csp_tower_eqns.h"
 #include "cmod_csp_trough_eqns.h"
 #include "cmod_financial_eqns.h"
 #include "cmod_utilityrate5_eqns.h"
@@ -110,28 +109,6 @@ static ssc_equation_entry ssc_equation_table [] = {
             false, true},
 
         // CSP
-        // MSPT:
-        {"MSPT_System_Design_Equations", MSPT_System_Design_Equations,
-            "Tcsmolten_salt", MSPT_System_Design_Equations_doc,
-            false, false},
-        {"Tower_SolarPilot_Solar_Field_Equations", Tower_SolarPilot_Solar_Field_Equations,
-            "Tcsmolten_salt", Tower_SolarPilot_Solar_Field_Equations_doc,
-            false, false},
-        {"MSPT_Receiver_Equations", MSPT_Receiver_Equations,
-            "Tcsmolten_salt", MSPT_Receiver_Equations_doc,
-            false, false},
-        {"MSPT_System_Control_Equations", MSPT_System_Control_Equations,
-            "Tcsmolten_salt", MSPT_System_Control_Equations_doc,
-            false, false},
-        {"Tower_SolarPilot_Capital_Costs_MSPT_Equations", Tower_SolarPilot_Capital_Costs_MSPT_Equations,
-            "Tcsmolten_salt", Tower_SolarPilot_Capital_Costs_MSPT_Equations_doc,
-            false, false},
-        {"Tower_SolarPilot_Capital_Costs_DSPT_Equations", Tower_SolarPilot_Capital_Costs_DSPT_Equations,
-            "Tcsdirect_steam", Tower_SolarPilot_Capital_Costs_DSPT_Equations_doc,
-            false, false},
-        {"Tower_SolarPilot_Capital_Costs_ISCC_Equations", Tower_SolarPilot_Capital_Costs_ISCC_Equations,
-            "Tcsiscc", Tower_SolarPilot_Capital_Costs_ISCC_Equations_doc,
-            false, false},
 
         // Physical Trough:
         {"Physical_Trough_System_Design_Equations", Physical_Trough_System_Design_Equations,
@@ -163,9 +140,6 @@ static ssc_equation_entry ssc_equation_table [] = {
 
 
         // Single owner
-        {"Financial_Construction_Financing_Equations", Financial_Construction_Financing_Equations,
-            "Tcsmolten_salt", Financial_Construction_Financing_Equations_doc,
-            false, false},
         {"Financial_Capacity_Payments_Equations", Financial_Capacity_Payments_Equations,
             "Singleowner", Financial_Capacity_Payments_Equations_doc,
             true, false},
