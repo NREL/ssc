@@ -81,6 +81,7 @@ bool HTFProperties::SetUserDefinedFluid( const util::matrix_t<double> &table )
 	// Set class member data
 	m_userTable = table;	
 	m_fluid = User_defined;
+    m_integration_points = 100;
 
 	// Specific which columns are used as the independent variable; these must be monotonically increasing
 	int ind_var_index[2] = {0, 6};	
@@ -109,8 +110,9 @@ bool HTFProperties::SetUserDefinedFluid( const util::matrix_t<double> &table )
 
 void HTFProperties::set_temp_enth_lookup()
 {
+    // TODO: These should probably not be hard-coded temperature limits
 	double T_low = 270.0 + 273.15;
-	double T_high = 600.0 + 273.15;
+	double T_high = 720.0 + 273.15;
 
 	double delta_T_target = 1.0;
 
@@ -241,7 +243,6 @@ double HTFProperties::Cp_ave(double T_cold_K, double T_hot_K)
         cp_sum += Cp(T_i);
         T_i += delta_T;
 	}
-
 	return cp_sum/double(m_integration_points);
 }
 
@@ -843,9 +844,9 @@ double HTFProperties::Re(double T_K, double P, double vel, double d)
 
 void HTFProperties::set_integration_points(double n_points)
 {
-    // Check that 2 < n_points < 500
-    if (n_points < 2)
-        n_points = 2;
+    // Check that 1 < n_points < 500
+    if (n_points < 1)
+        n_points = 1;
 
     if (n_points > 500)
         n_points = 500;
