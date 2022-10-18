@@ -110,6 +110,9 @@ static ssc_equation_entry ssc_equation_table [] = {
 
         // CSP
 
+        // Do not add SSC equations for MSPT, ETES, or PTES
+        // These technologies handle calculated variables through their compute modules
+
         // Physical Trough:
         {"Physical_Trough_System_Design_Equations", Physical_Trough_System_Design_Equations,
             "Trough_physical", Physical_Trough_System_Design_Equations_doc,
