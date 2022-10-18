@@ -78,11 +78,11 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 
     // Solar field
     { SSC_INPUT,     SSC_NUMBER, "field_model_type",                   "0=design field and tower/receiver geometry, 1=design field, 2=user specified field, 3=user flux and eta map, pass heliostat_positions to SolarPILOT for layout, 4=user flux and eta maps, no SolarPILOT, input A_sf_in, total_land_area_before_rad_cooling_in, and N_hel", "", "", "Heliostat Field", "*",     "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "helio_width",                        "Heliostat width",                                                                                                                         "m",            "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "helio_height",                       "Heliostat height",                                                                                                                        "m",            "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "helio_width",                        "Heliostat width",                                                                                                                         "m",            "",                                  "Heliostat Field",                          "field_model_type<4",                                               "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "helio_height",                       "Heliostat height",                                                                                                                        "m",            "",                                  "Heliostat Field",                          "field_model_type<4",                                               "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "helio_optical_error_mrad",           "Heliostat optical error",                                                                                                                 "mrad",         "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "helio_active_fraction",              "Heliostat active fraction",                                                                                                               "",             "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "dens_mirror",                        "Ratio of heliostat reflective area to profile",                                                                                           "",             "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "dens_mirror",                        "Ratio of heliostat reflective area to profile",                                                                                           "",             "",                                  "Heliostat Field",                          "field_model_type<4",                                               "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "helio_reflectance",                  "Heliostat reflectance",                                                                                                                   "",             "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "rec_absorptance",                    "Receiver absorptance",                                                                                                                    "",             "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "rec_hl_perm2",                       "Receiver design heatloss",                                                                                                                "kW/m2",        "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
@@ -203,7 +203,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 
 
     // TES parameters - general
-    { SSC_INPUT,     SSC_NUMBER, "csp.pt.tes.init_hot_htf_percent",    "Initial fraction of available volume that is hot",                                                                                        "%",            "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "tes_init_hot_htf_percent",           "Initial fraction of available volume that is hot",                                                                                        "%",            "",                                  "Thermal Storage",                          "", /*not required because replacing deprecated var and checked in cmod*/ "",        ""},
     { SSC_INPUT,     SSC_NUMBER, "h_tank",                             "Total height of tank (height of HTF when tank is full)",                                                                                  "m",            "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "cold_tank_max_heat",                 "Rated heater capacity for cold tank heating",                                                                                             "MW",           "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "u_tank",                             "Loss coefficient from the tank",                                                                                                          "W/m2-K",       "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
@@ -262,7 +262,6 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     // Steam Rankine cycle
     { SSC_INPUT,     SSC_NUMBER, "dT_cw_ref",                          "Reference condenser cooling water inlet/outlet temperature difference",                                                                   "C",            "",                                  "Rankine Cycle",                            "pc_config=0",                                                      "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "T_amb_des",                          "Reference ambient temperature at design point",                                                                                           "C",            "",                                  "Rankine Cycle",                            "pc_config=0",                                                      "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "P_boil",                             "Boiler operating pressure",                                                                                                               "bar",          "",                                  "Rankine Cycle",                            "pc_config=0",                                                      "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "CT",                                 "Condensor type: 1=evaporative, 2=air, 3=hybrid",                                                                                          "",             "",                                  "Rankine Cycle",                            "pc_config=0",                                                      "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "T_approach",                         "Cooling tower approach temperature",                                                                                                      "C",            "",                                  "Rankine Cycle",                            "pc_config=0",                                                      "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "T_ITD_des",                          "ITD at design for dry system",                                                                                                            "C",            "",                                  "Rankine Cycle",                            "pc_config=0",                                                      "",              ""},
@@ -319,8 +318,10 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,     SSC_NUMBER, "disp_inventory_incentive",           "Dispatch storage terminal inventory incentive multiplier",                                                                                "",             "",                                  "System Control",                           "?=0.0",                                                            "",              "SIMULATION_PARAMETER"},
     { SSC_INPUT,     SSC_NUMBER, "q_rec_standby",                      "Receiver standby energy consumption",                                                                                                     "kWt",          "",                                  "System Control",                           "?=9e99",                                                           "",              "SIMULATION_PARAMETER"},
     { SSC_INPUT,     SSC_NUMBER, "q_rec_heattrace",                    "Receiver heat trace energy consumption during startup",                                                                                   "kWe-hr",       "",                                  "System Control",                           "?=0.0",                                                            "",              "SIMULATION_PARAMETER"},
-    { SSC_INPUT,     SSC_NUMBER, "is_wlim_series",                     "Use time-series net electricity generation limits",                                                                                       "",             "",                                  "System Control",                           "?=0",                                                              "",              ""},
-    { SSC_INPUT,     SSC_ARRAY,  "wlim_series",                        "Time series net electicity generation limits",                                                                                            "kWe",          "",                                  "System Control",                           "is_wlim_series=1",                                                 "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "is_wlim_design",                     "Use fixed design-point net electricity generation limits (dispatch opt only)",                                                            "",             "",                                  "System Control",                           "?=0",                                                              "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "disp_wlim_maxspec",                  "Fixed design-point max net power to the grid (dispatch opt only)",                                                                        "",             "",                                  "System Control",                           "is_wlim_design=1",                                                 "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "is_wlim_series",                     "Use time-series net electricity generation limits (dispatch opt only)",                                                                   "",             "",                                  "System Control",                           "?=0",                                                              "",              "SIMULATION_PARAMETER"},
+    { SSC_INPUT,     SSC_ARRAY,  "wlim_series",                        "Time series net electicity generation limits (dispatch opt only)",                                                                        "kWe",          "",                                  "System Control",                           "is_wlim_series=1",                                                 "",              "SIMULATION_PARAMETER"},
 
     // Pricing schedules and multipliers
         // Ideally this would work with sim_type = 2, but UI inputs availability depends on financial mode
@@ -396,11 +397,12 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     // ****************************************************************************************************************************************
     //     DEPRECATED INPUTS -- exec() checks if a) variable is assigned and b) if replacement variable is assigned. throws exception if a=true and b=false
     // ****************************************************************************************************************************************
-    { SSC_INPUT,     SSC_NUMBER, "piping_loss",                        "Thermal loss per meter of piping",                                                                                                        "Wt/m",         "",                                  "Tower and Receiver",                       "",                                                                 "",              "SIMULATION_PARAMETER" },
-    { SSC_INPUT,     SSC_NUMBER, "disp_csu_cost",                      "Cycle startup cost",                                                                                                                      "$",            "",                                  "System Control",                           "",                                                                 "",              "SIMULATION_PARAMETER" },
-    { SSC_INPUT,     SSC_NUMBER, "disp_rsu_cost",                      "Receiver startup cost",                                                                                                                   "$",            "",                                  "System Control",                           "",                                                                 "",              "SIMULATION_PARAMETER" },
-    { SSC_INPUT,     SSC_NUMBER, "disp_pen_delta_w",                   "Dispatch cycle production change penalty",                                                                                                "$/kWe-change", "",                                  "System Control",                           "",                                                                 "",              "SIMULATION_PARAMETER" },
-
+    { SSC_INPUT,     SSC_NUMBER, "piping_loss",                        "Thermal loss per meter of piping",                                                                                                        "Wt/m",         "",                                  "Deprecated",                           "",                                                                 "",              "SIMULATION_PARAMETER" },
+    { SSC_INPUT,     SSC_NUMBER, "disp_csu_cost",                      "Cycle startup cost",                                                                                                                      "$",            "",                                  "Deprecated",                           "",                                                                 "",              "SIMULATION_PARAMETER" },
+    { SSC_INPUT,     SSC_NUMBER, "disp_rsu_cost",                      "Receiver startup cost",                                                                                                                   "$",            "",                                  "Deprecated",                           "",                                                                 "",              "SIMULATION_PARAMETER" },
+    { SSC_INPUT,     SSC_NUMBER, "disp_pen_delta_w",                   "Dispatch cycle production change penalty",                                                                                                "$/kWe-change", "",                                  "Deprecated",                           "",                                                                 "",              "SIMULATION_PARAMETER" },
+    { SSC_INPUT,     SSC_NUMBER, "P_boil",                             "Boiler operating pressure",                                                                                                               "bar",          "",                                  "Deprecated",                           "",                                                                 "",              "SIMULATION_PARAMETER" },
+    { SSC_INPUT,     SSC_NUMBER, "csp.pt.tes.init_hot_htf_percent",    "Initial fraction of available volume that is hot",                                                                                        "%",            "",                                  "Deprecated",                           "",                                                                 "",              "SIMULATION_PARAMETER" },
 
     // ****************************************************************************************************************************************
     // Design Outputs here:
@@ -415,11 +417,16 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 
         // Solar Field
     { SSC_OUTPUT,    SSC_NUMBER, "N_hel_calc",                         "Number of heliostats - out",                                                                                                               "",             "",                                  "Heliostat Field",                          "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "refl_image_error",                   "Reflected image error",                                                                                                                    "mrad",         "",                                  "Heliostat Field",                          "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "heliostat_area",                     "Active area of heliostat",                                                                                                                 "m^2",          "",                                  "Heliostat Field",                          "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "average_attenuation",                "Average solar field attenuation",                                                                                                          "%",            "",                                  "Heliostat Field",                          "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_MATRIX, "helio_positions_calc",               "Heliostat position table - out",                                                                                                           "",             "",                                  "Heliostat Field",                          "*",                                                                "",              "COL_LABEL=XY_POSITION" },
-    { SSC_OUTPUT,    SSC_NUMBER, "A_sf",                               "Solar field area",                                                                                                                         "m^2",          "",                                  "",                                          "*",                                                                "",              "" },
-    { SSC_OUTPUT,    SSC_NUMBER, "land_area_base_calc",                "Land area occupied by heliostats",                                                                                                         "acre",         "",                                  "",                                          "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "A_sf",                               "Solar field area",                                                                                                                         "m^2",          "",                                  "Heliostat Field",                          "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "land_min_abs",                       "Min distance from tower to heliostat",                                                                                                     "m",            "",                                  "Heliostat Field",                          "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "land_max_abs",                       "Max distance from tower to heliostat",                                                                                                     "m",            "",                                  "Heliostat Field",                          "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "land_area_base_calc",                "Land area occupied by heliostats",                                                                                                         "acre",         "",                                  "Heliostat Field",                          "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "total_land_area_before_rad_cooling_calc", "Total land area not including radiative cooling - out",                                                                               "acre",         "",                                  "Heliostat Field",                          "*",                                                                "",              "" },
-    { SSC_OUTPUT,    SSC_NUMBER, "W_dot_col_tracking_des",             "Collector tracking power at design",                                                                                                       "MWe",          "",                                  "",                                          "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "W_dot_col_tracking_des",             "Collector tracking power at design",                                                                                                       "MWe",          "",                                  "Heliostat Field",                          "*",                                                                "",              "" },
 
         // Receiver Geometry
     { SSC_OUTPUT,    SSC_NUMBER, "rec_height_calc",                    "Receiver height - out",                                                                                                                    "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
@@ -456,6 +463,23 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_OUTPUT,    SSC_NUMBER, "q_dot_cycle_des",                    "PC thermal input at design",                                                                                                              "MWt",         "",                                  "Power Cycle",                              "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "W_dot_cycle_pump_des",               "PC HTF pump power at design",                                                                                                             "MWe",         "",                                  "Power Cycle",                              "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "W_dot_cycle_cooling_des",            "PC cooling power at design",                                                                                                              "MWe",         "",                                  "Power Cycle",                              "*",                                                                "",              "" },
+        // UDPC
+    { SSC_OUTPUT,    SSC_NUMBER, "n_T_htf_pars_calc",                  "UDPC number of HTF parametric values",                                                                                                     "",            "",                                  "UDPC Design Calc",                        "*",                                                                "",              "" },      
+    { SSC_OUTPUT,    SSC_NUMBER, "n_T_amb_pars_calc",                  "UDPC number of ambient temp parametric values",                                                                                            "",            "",                                  "UDPC Design Calc",                        "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "n_m_dot_pars_calc",                  "UDPC number of mass flow parametric values",                                                                                               "",            "",                                  "UDPC Design Calc",                        "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "T_htf_ref_calc",                     "UDPC reference HTF temperature",                                                                                                           "C",           "",                                  "UDPC Design Calc",                        "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "T_htf_low_calc",                     "UDPC low level HTF temperature",                                                                                                           "C",           "",                                  "UDPC Design Calc",                        "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "T_htf_high_calc",                    "UDPC high level HTF temperature",                                                                                                          "C",           "",                                  "UDPC Design Calc",                        "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "T_amb_ref_calc",                     "UDPC reference ambient temperature",                                                                                                       "C",           "",                                  "UDPC Design Calc",                        "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "T_amb_low_calc",                     "UDPC low level ambient temperature",                                                                                                       "C",           "",                                  "UDPC Design Calc",                        "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "T_amb_high_calc",                    "UDPC high level ambient temperature",                                                                                                      "C",           "",                                  "UDPC Design Calc",                        "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "m_dot_htf_ND_ref_calc",              "UDPC reference normalized mass flow rate",                                                                                                 "",            "",                                  "UDPC Design Calc",                        "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "m_dot_htf_ND_low_calc",              "UDPC low level normalized mass flow rate",                                                                                                 "",            "",                                  "UDPC Design Calc",                        "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "m_dot_htf_ND_high_calc",             "UDPC high level normalized mass flow rate",                                                                                                "",            "",                                  "UDPC Design Calc",                        "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "W_dot_gross_ND_des_calc",            "UDPC calculated normalized gross power at design",                                                                                         "",            "",                                  "UDPC Design Calc",                        "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "Q_dot_HTF_ND_des_calc",              "UDPC calculated normalized heat input at design",                                                                                          "",            "",                                  "UDPC Design Calc",                        "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "W_dot_cooling_ND_des_calc",          "UPPC calculated normalized cooling power at design",                                                                                       "",            "",                                  "UDPC Design Calc",                        "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "m_dot_water_ND_des_calc",            "UDPC calculated water use at design",                                                                                                      "",            "",                                  "UDPC Design Calc",                        "*",                                                                "",              "" },
 
         // TES
     { SSC_OUTPUT,    SSC_NUMBER, "Q_tes_des",                          "TES design capacity",                                                                                                                     "MWt-hr",       "",                                 "TES Design Calc",                          "*",                                                                "",              "" },
@@ -465,6 +489,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_OUTPUT,    SSC_NUMBER, "q_dot_loss_tes_des",                 "TES thermal loss at design",                                                                                                              "MWt",          "",                                 "TES Design Calc",                          "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "tshours_rec",                        "TES duration at receiver design output",                                                                                                  "hr",           "",                                 "TES Design Calc",                          "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "tshours_heater",                     "TES duration at heater design output",                                                                                                    "hr",           "",                                 "TES Design Calc",                          "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "dens_store_htf_at_T_ave",            "TES density of HTF at avg temps",                                                                                                         "kg/m3",        "",                                 "TES Design Calc",                          "*",                                                                "",              "" },
 
         // Balance of Plant
     { SSC_OUTPUT,    SSC_NUMBER, "nameplate",                          "Nameplate capacity",                                                                                                                      "MWe",          "",                                 "System Design Calc",                       "*",                                                                "",              "" },
@@ -753,6 +778,25 @@ public:
                 " Please define piping_loss_coefficient in your script.");
         }
 
+        bool is_csp_pt_tes_init_hot_htf_percent_assigned = is_assigned("csp.pt.tes.init_hot_htf_percent");
+        bool is_tes_hot_htf_percent_assigned = is_assigned("tes_hot_htf_percent_assigned");
+        if (is_csp_pt_tes_init_hot_htf_percent_assigned && is_tes_hot_htf_percent_assigned) {
+            log("We renamed input variable csp.pt.tes.init_hot_htf_percent to tes_init_hot_htf_percent,"
+                " you provided both inputs, so the model does not use your csp.pt.tes.init_hot_htf_percent input.");
+        }
+        else if (is_csp_pt_tes_init_hot_htf_percent_assigned) {
+            throw exec_error("tcsmolten_salt", "We renamed input variable csp.pt.tes.init_hot_htf_percent to tes_init_hot_htf_percent,"
+                " please define tes_init_hot_htf_percent in your script.");
+        }
+
+        if (is_assigned("P_boil")) {
+            log("We removed boiler pressure (P_boil) as a user input to the Rankine Cycle model. Because the cycle efficiency"
+                " is provided by the user, the boiler pressure input does not modify the efficiency as one might expect. Instead the model"
+                " uses boiler pressure in second order calculations to 1) define a boiling temperature to normalize off-design HTF temperature and"
+                " 2) estimate steam mass flow for cycle make-up water calculations. Because boiler pressure only has influences"
+                " results in these minor non-intuitive ways, we decided to hardcode the valu to 100 bar.");
+        }
+
         if (is_dispatch) {
             // Cycle startup cost disp_csu_cost
             bool is_disp_csu_cost_assigned = is_assigned("disp_csu_cost");
@@ -861,6 +905,13 @@ public:
         double cav_rec_width = std::numeric_limits<double>::quiet_NaN();
         double land_area_base = std::numeric_limits<double>::quiet_NaN();
         double total_land_area_before_rad_cooling = std::numeric_limits<double>::quiet_NaN();
+        double heliostat_area = std::numeric_limits<double>::quiet_NaN();
+        double h_helio = std::numeric_limits<double>::quiet_NaN();     //[m]
+        double average_attenuation = std::numeric_limits<double>::quiet_NaN();
+        double refl_image_error = std::numeric_limits<double>::quiet_NaN();
+        double land_max_abs = std::numeric_limits<double>::quiet_NaN();
+        double land_min_abs = std::numeric_limits<double>::quiet_NaN();
+        
         util::matrix_t<double> helio_pos;
 
         assign("is_optimize", 0);
@@ -869,13 +920,17 @@ public:
 
         if (field_model_type < 4) {
 
+            h_helio = as_double("helio_height");     //[m]
+            
             // Field types 0-3 require solar pilot
             solarpilot_invoke spi(this);
 
             assign("q_design", q_dot_rec_des);  //[MWt]
 
             // Set up "cmod_solarpilot.cpp" conversions as necessary
-            assign("helio_optical_error", (ssc_number_t)(as_number("helio_optical_error_mrad") * 1.E-3));
+            double helio_optical_error_mrad = as_number("helio_optical_error_mrad");        //[mrad]
+            refl_image_error = std::sqrt(2. * helio_optical_error_mrad * 2. * helio_optical_error_mrad * 2.);   //[mrad]
+            assign("helio_optical_error", (ssc_number_t)(helio_optical_error_mrad * 1.E-3));
 
             // Set 'n_flux_x' and 'n_flux_y' here, for now
             assign("n_flux_y", n_flux_y);
@@ -1229,6 +1284,11 @@ public:
             }
 
             A_sf = spi.CalcSolarFieldArea(N_hel);
+            heliostat_area = spi.CalcHeliostatArea();
+            average_attenuation = spi.CalcAveAttenuation();
+
+            land_min_abs = as_double("land_min") * THT;     //[m]
+            land_max_abs = as_double("land_max") * THT;     //[m]
 
             total_land_area_before_rad_cooling = spi.GetTotalLandArea();    // [acres] Total land area
             land_area_base = spi.GetBaseLandArea();             // [acres] Land area occupied by heliostats
@@ -1251,6 +1311,7 @@ public:
 
             // Get tower/receiver dimensions through cmod
             THT = as_double("h_tower");             //[m]
+            h_helio = 0.0;                          //[m] Need a finite value for cost model
 
             if (rec_type == 0) {
                 rec_height = as_double("rec_height");   //[m]
@@ -1334,9 +1395,10 @@ public:
 
             if (pb_tech_type == 0)
             {
+                pc->m_P_boil_des = 100;     //[bar]
                 pc->m_dT_cw_ref = as_double("dT_cw_ref");
                 pc->m_T_amb_des = as_double("T_amb_des");
-                pc->m_P_boil = as_double("P_boil");
+                //pc->m_P_boil = as_double("P_boil");
                 pc->m_CT = as_integer("CT");                    // cooling tech type: 1=evaporative, 2=air, 3=hybrid    , 5= custom for rad cool, 6= custom for rad cool
                 pc->m_tech_type = as_integer("tech_type");      // 1: Fixed, 3: Sliding
                 if (pc->m_tech_type == 2) { pc->m_tech_type = 1; }; // changing fixed pressure for the trough to fixed pressure for the tower
@@ -1806,7 +1868,7 @@ public:
             as_double("T_htf_hot_des"),
             as_double("T_htf_cold_des"),
             as_double("h_tank_min"),
-            as_double("csp.pt.tes.init_hot_htf_percent"),
+            as_double("tes_init_hot_htf_percent"),
             as_double("pb_pump_coef"),
             as_boolean("tanks_in_parallel"),        //[-]       
             1.85,                                   //[m/s]
@@ -1830,9 +1892,10 @@ public:
         tou_params->mc_csp_ops.mc_weekdays = as_matrix("weekday_schedule");
         tou_params->mc_csp_ops.mc_weekends = as_matrix("weekend_schedule");
 
-        if (true)
+        if (is_dispatch)
         {
-
+            tou.mc_dispatch_params.m_w_lim_full.resize(n_steps_full);
+            std::fill(tou.mc_dispatch_params.m_w_lim_full.begin(), tou.mc_dispatch_params.m_w_lim_full.end(), 9.e99);
             if (as_boolean("is_wlim_series"))
             {
                 size_t n_wlim_series = 0;
@@ -1841,6 +1904,11 @@ public:
                     throw exec_error("tcsmolten_salt", "Invalid net electricity generation limit series dimension. Matrix must have " + util::to_string((int)n_steps_full) + " rows.");
                 for (size_t i = 0; i < n_steps_full; i++)
                     tou.mc_dispatch_params.m_w_lim_full.at(i) = (double)wlim_series[i];
+            }
+            else if (as_boolean("is_wlim_design")) {
+                double wlim_design = as_double("disp_wlim_maxspec");
+                for (size_t i = 0; i < n_steps_full; i++)
+                    tou.mc_dispatch_params.m_w_lim_full.at(i) = wlim_design;
             }
         }
 
@@ -2175,8 +2243,13 @@ public:
 
             // *************************
             // Solar field
-        assign("N_hel_calc", N_hel);                //[-]
+        assign("N_hel_calc", N_hel);                    //[-]
+        assign("refl_image_error", refl_image_error);   //[mrad]
+        assign("heliostat_area", heliostat_area);   //[m2]
+        assign("average_attenuation", average_attenuation); //[%]
         assign("A_sf", (ssc_number_t)A_sf);         //[m2]
+        assign("land_min_abs", (ssc_number_t)land_min_abs);     //[m]
+        assign("land_max_abs", (ssc_number_t)land_max_abs);     //[m]
         assign("land_area_base_calc", (ssc_number_t)land_area_base);     //[acre]
         assign("total_land_area_before_rad_cooling_calc", (ssc_number_t)total_land_area_before_rad_cooling);        //[acre]
         
@@ -2261,6 +2334,7 @@ public:
         assign("d_tank_tes", d_tank_calc);                      //[m]
         assign("q_dot_loss_tes_des", q_dot_loss_tes_des_calc);  //[MWt]
         assign("tshours_rec", Q_tes_des_calc / q_dot_rec_des);  //[hr]
+        assign("dens_store_htf_at_T_ave", dens_store_htf_at_T_ave_calc); //[kg/m3]
 
         double tshours_heater = 0.0;
         if (q_dot_heater_des > 0.0) {
@@ -2275,12 +2349,43 @@ public:
         double cp_htf_pc_des;       //[kJ/kg-K]
         double W_dot_pc_pump_des;   //[MWe]
         double W_dot_pc_cooling_des;   //[MWe]
-        rankine_pc.get_design_parameters(m_dot_htf_pc_des, cp_htf_pc_des, W_dot_pc_pump_des, W_dot_pc_cooling_des);
+        int n_T_htf_pars, n_T_amb_pars, n_m_dot_pars;
+        n_T_htf_pars = n_T_amb_pars = n_m_dot_pars = -1;
+        double T_htf_ref_calc, T_htf_low_calc, T_htf_high_calc, T_amb_ref_calc, T_amb_low_calc, T_amb_high_calc,
+            m_dot_htf_ND_ref_calc, m_dot_htf_ND_low_calc, m_dot_htf_ND_high_calc, W_dot_gross_ND_des, Q_dot_HTF_ND_des,
+            W_dot_cooling_ND_des, m_dot_water_ND_des;
+        T_htf_ref_calc = T_htf_low_calc = T_htf_high_calc =
+            T_amb_ref_calc = T_amb_low_calc = T_amb_high_calc =
+            m_dot_htf_ND_ref_calc = m_dot_htf_ND_low_calc = m_dot_htf_ND_high_calc =
+            W_dot_gross_ND_des = Q_dot_HTF_ND_des = W_dot_cooling_ND_des = m_dot_water_ND_des = std::numeric_limits<double>::quiet_NaN();
+
+        rankine_pc.get_design_parameters(m_dot_htf_pc_des, cp_htf_pc_des, W_dot_pc_pump_des, W_dot_pc_cooling_des,
+                        n_T_htf_pars, n_T_amb_pars, n_m_dot_pars,
+                        T_htf_ref_calc /*C*/, T_htf_low_calc /*C*/, T_htf_high_calc /*C*/,
+                        T_amb_ref_calc /*C*/, T_amb_low_calc /*C*/, T_amb_high_calc /*C*/,
+                        m_dot_htf_ND_ref_calc, m_dot_htf_ND_low_calc /*-*/, m_dot_htf_ND_high_calc /*-*/,
+                        W_dot_gross_ND_des, Q_dot_HTF_ND_des, W_dot_cooling_ND_des, m_dot_water_ND_des);
         m_dot_htf_pc_des /= 3600.0;     // convert from kg/hr to kg/s
         assign("m_dot_htf_cycle_des", m_dot_htf_pc_des);
         assign("q_dot_cycle_des", q_dot_pc_des);
         assign("W_dot_cycle_pump_des", W_dot_pc_pump_des);
         assign("W_dot_cycle_cooling_des", W_dot_pc_cooling_des);
+        assign("n_T_htf_pars_calc", n_T_htf_pars);
+        assign("n_T_amb_pars_calc", n_T_amb_pars);
+        assign("n_m_dot_pars_calc", n_m_dot_pars);
+        assign("T_htf_ref_calc", T_htf_ref_calc);
+        assign("T_htf_low_calc", T_htf_low_calc);
+        assign("T_htf_high_calc", T_htf_high_calc);
+        assign("T_amb_ref_calc", T_amb_ref_calc);
+        assign("T_amb_low_calc", T_amb_low_calc);
+        assign("T_amb_high_calc", T_amb_high_calc);
+        assign("m_dot_htf_ND_ref_calc", m_dot_htf_ND_ref_calc);
+        assign("m_dot_htf_ND_low_calc", m_dot_htf_ND_low_calc);
+        assign("m_dot_htf_ND_high_calc", m_dot_htf_ND_high_calc);
+        assign("W_dot_gross_ND_des_calc", W_dot_gross_ND_des);
+        assign("Q_dot_HTF_ND_des_calc", Q_dot_HTF_ND_des);
+        assign("W_dot_cooling_ND_des_calc", W_dot_cooling_ND_des);
+        assign("m_dot_water_ND_des_calc", m_dot_water_ND_des);
 
             // *************************
             // System
@@ -2316,7 +2421,6 @@ public:
         else if (rec_type == 1) {
             h_rec_cost_in = cav_rec_height; //[m]
         }
-        double h_helio = as_double("helio_height");
         double tower_fixed_cost = as_double("tower_fixed_cost");
         double tower_cost_scaling_exp = as_double("tower_exp");
 
