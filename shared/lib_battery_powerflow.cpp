@@ -110,6 +110,7 @@ BatteryPower::BatteryPower(const BatteryPower& orig) {
     powerBatteryToLoad = orig.powerBatteryToLoad;
     powerBatteryToGrid = orig.powerBatteryToGrid;
     powerBatteryToSystemLoad = orig.powerBatteryToSystemLoad;
+    powerBatteryToInverterDC = orig.powerBatteryToInverterDC;
     powerCritLoadUnmet = orig.powerCritLoadUnmet;
     powerLossesUnmet = orig.powerLossesUnmet;
     powerFuelCell = orig.powerFuelCell;
@@ -569,7 +570,7 @@ void BatteryPowerFlow::calculateACConnected()
 	m_BatteryPower->powerGrid = P_grid_ac;
 	m_BatteryPower->powerGeneratedBySystem = P_gen_ac;
 	m_BatteryPower->powerSystemToLoad = P_pv_to_load_ac;
-	m_BatteryPower->powerSystemToBattery = P_pv_to_batt_ac;
+	m_BatteryPower->powerSystemToBattery = P_pv_to_batt_ac * m_BatteryPower->singlePointEfficiencyACToDC; // Convert to DC for output consistency
 	m_BatteryPower->powerSystemToGrid = P_pv_to_grid_ac;
 	m_BatteryPower->powerGridToBattery = P_grid_to_batt_ac;
 	m_BatteryPower->powerGridToLoad = P_grid_to_load_ac;
@@ -590,12 +591,12 @@ void BatteryPowerFlow::calculateDCConnected()
     // Quantities are AC in KW unless otherwise specified
     double P_load_ac = m_BatteryPower->powerLoad;
     double P_crit_load_ac = m_BatteryPower->powerCritLoad;
-    double P_battery_ac, P_pv_ac, P_gen_ac, P_pv_to_batt_ac, P_grid_to_batt_ac, 
+    double P_battery_ac, P_pv_ac, P_gen_ac, P_grid_to_batt_ac, 
         P_batt_to_load_ac, P_grid_to_load_ac, P_pv_to_load_ac,
         P_pv_to_grid_ac, P_batt_to_grid_ac, P_grid_ac, P_conversion_loss_ac,
         P_interconnection_loss_ac, P_crit_load_unmet_ac, P_unmet_losses,
         P_batt_to_inverter_dc;
-    P_battery_ac = P_pv_ac = P_gen_ac = P_pv_to_batt_ac = P_grid_to_batt_ac =
+    P_battery_ac = P_pv_ac = P_gen_ac = P_grid_to_batt_ac =
         P_batt_to_load_ac = P_grid_to_load_ac = P_pv_to_load_ac =
         P_pv_to_grid_ac = P_batt_to_grid_ac =  P_grid_ac = P_conversion_loss_ac =
         P_interconnection_loss_ac = P_crit_load_unmet_ac = P_unmet_losses =
@@ -761,8 +762,6 @@ void BatteryPowerFlow::calculateDCConnected()
             P_battery_ac = 0.0;
         }
 
-        // Assign AC value using current inverter efficency
-        P_pv_to_batt_ac = P_pv_to_batt_dc; // TODO: add eff when addressing https://github.com/NREL/ssc/issues/784
         P_battery_ac_post_loss = P_battery_ac;
     }
     else
@@ -932,7 +931,7 @@ void BatteryPowerFlow::calculateDCConnected()
 	m_BatteryPower->powerGrid = P_grid_ac;
 	m_BatteryPower->powerGeneratedBySystem = P_gen_ac;
 	m_BatteryPower->powerSystemToLoad = P_pv_to_load_ac;
-	m_BatteryPower->powerSystemToBattery = P_pv_to_batt_ac;
+	m_BatteryPower->powerSystemToBattery = P_pv_to_batt_dc;
 	m_BatteryPower->powerSystemToGrid = P_pv_to_grid_ac;
 	m_BatteryPower->powerGridToBattery = P_grid_to_batt_ac;
 	m_BatteryPower->powerGridToLoad = P_grid_to_load_ac;
