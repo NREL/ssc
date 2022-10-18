@@ -915,6 +915,9 @@ public:
         double W_dot_fixed_parasitic_design;    //[MWe]
         csp_solver.get_design_parameters(W_dot_bop_design, W_dot_fixed_parasitic_design);
 
+        //double plant_net_capacity_des_calc = W_dot_cycle_des - W_dot_pc_pump_des - W_dot_pc_cooling_des -
+        //                        W_dot_bop_design - W_dot_fixed_parasitic_design;    //[MWe]
+
         // *****************************************************
         // System design is complete, so calculate final design outputs like cost, capacity, etc.
         double tes_spec_cost = as_double("tes_spec_cost");
