@@ -1064,10 +1064,18 @@ Module_IO::Module_IO(compute_module* cm, std::string cmName, double dcLoss)
             mountingSpecificCellTemp.Nrows = cm->as_integer("cec_array_rows");
             mountingSpecificCellTemp.Ncols = cm->as_integer("cec_array_cols");
             mountingSpecificCellTemp.TbackInteg = cm->as_double("cec_backside_temp");
-            mountingSpecificCellTemp.lacunarity_enable = cm->as_double("cec_lacunarity_enable");
-            mountingSpecificCellTemp.Lsc = cm->as_double("cec_lacunarity_length");
+            if (cm->is_assigned("cec_lacunarity_enable")) {
+                mountingSpecificCellTemp.lacunarity_enable = cm->as_double("cec_lacunarity_enable");
+                mountingSpecificCellTemp.Lsc = cm->as_double("cec_lacunarity_length");
+                mountingSpecificCellTemp.ground_clearance_height = cm->as_double("cec_ground_clearance_height");
+            }
+            else {
+                mountingSpecificCellTemp.lacunarity_enable = 0;
+                mountingSpecificCellTemp.Lsc = 0; //not used
+                mountingSpecificCellTemp.ground_clearance_height = 0; //not used
+            }
             mountingSpecificCellTemp.track_mode = cm->as_integer("subarray1_track_mode");
-            mountingSpecificCellTemp.ground_clearance_height = cm->as_double("cec_ground_clearance_height");
+            
             mountingSpecificCellTemp.GCR = cm->as_double("subarray1_gcr");
             cellTempModel = &mountingSpecificCellTemp;
             mountingSpecificCellTemperatureForceNoPOA = true;

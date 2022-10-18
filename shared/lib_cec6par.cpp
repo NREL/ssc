@@ -970,15 +970,17 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
                                                                             //double Re_forced  = MAX(0.1,rho_air*V_cover*L_char/mu_air) ; //  !Reynolds number of wind moving across module
                 //double Re_forced = MAX(0.1, rho_air * V_cover * Lsc / mu_air); //  !Reynolds number of wind moving across module
                 
-                double Re_forced_Lsc = MAX(0.1, rho_air * V_cover * Lsc / mu_air);
+                
                 double Re_forced = MAX(0.1, rho_air * V_cover * L_char / mu_air);
                 double Nu_forced  = 0.037 * pow(Re_forced,4./5.) * pow(Pr_air, 1./3.) ; //  !Nusselt Number (Incropera et al., 2006)
                 double h_forced = 0;
                 if (lacunarity_enable == 0)
                     h_forced   = Nu_forced * k_air / L_char;
-                else
-                    h_forced   = (k_air / (ground_clearance_height + 2.0 * Length * sind(input.Tilt))) * pow(10, (0.090125 * pow(Re_forced_Lsc, 1. / 5.) * pow(Pr_air, 1. / 12.) + 1.8617));
-				double h_sky      = (TC*TC+T_sky*T_sky)*(TC+T_sky);
+                else {
+                    double Re_forced_Lsc = MAX(0.1, rho_air * V_cover * Lsc / mu_air);
+                    h_forced = (k_air / (ground_clearance_height + 2.0 * Length * sind(input.Tilt))) * pow(10, (0.090125 * pow(Re_forced_Lsc, 1. / 5.) * pow(Pr_air, 1. / 12.) + 1.8617));
+                }
+                double h_sky      = (TC*TC+T_sky*T_sky)*(TC+T_sky);
 				double h_ground   = (TC*TC+T_ground*T_ground)*(TC+T_ground);
 				double h_free_c   = free_convection_194(TC,TA,input.Tilt,rho_air,Area,Length,Width) ; //   !Call function to calculate free convection on tilted surface (top)           
 				double h_free_b   = free_convection_194(TC,TA,180.0-input.Tilt,rho_air,Area,Length,Width); // !Call function to calculate free convection on tilted surface (bottom)              
