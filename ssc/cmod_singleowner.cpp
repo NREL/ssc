@@ -690,7 +690,6 @@ enum {
 	CF_om_production2_expense,
 	CF_om_capacity2_expense,
 	CF_om_fuel_expense,
-    CF_om_land_expense,
 
 	CF_om_opt_fuel_2_expense,
 	CF_om_opt_fuel_1_expense,
@@ -1033,7 +1032,7 @@ public:
         escal_or_annual(CF_land_lease_expense, nyears, "om_land_lease", inflation_rate, total_land_area, false, as_double("om_land_lease_escal") * 0.01);
 
 		double om_opt_fuel_1_usage = as_double("om_opt_fuel_1_usage");
-		double om_opt_fuel_2_usage = as_double("om_opt_fuel_2_usage");;
+		double om_opt_fuel_2_usage = as_double("om_opt_fuel_2_usage");
 
 		// additional o and m sub types (e.g. batteries and fuel cells)
 		int add_om_num_types = as_integer("add_om_num_types");
@@ -1359,7 +1358,6 @@ public:
 			cf.at(CF_om_capacity1_expense, i) *= nameplate1;
 			cf.at(CF_om_capacity2_expense, i) *= nameplate2;
 			cf.at(CF_om_fuel_expense,i) *= fuel_use[i];
-            cf.at(CF_om_land_expense, i) *= total_land_area;
 
             //Battery Production OM Costs
             cf.at(CF_om_production1_expense, i) *= battery_discharged[i - 1]; //$/MWh * 0.001 MWh/kWh * kWh = $
@@ -3769,16 +3767,15 @@ public:
 		// present value of o and m value - note - present value is distributive - sum of pv = pv of sum
 		double pvAnnualOandM = npv(CF_om_fixed_expense, nyears, nom_discount_rate);
 		double pvFixedOandM = npv(CF_om_capacity_expense, nyears, nom_discount_rate);
-        double pvLandOandM = npv(CF_om_land_expense, nyears, nom_discount_rate);
 		double pvVariableOandM = npv(CF_om_production_expense, nyears, nom_discount_rate);
 		double pvFuelOandM = npv(CF_om_fuel_expense, nyears, nom_discount_rate);
 		double pvOptFuel1OandM = npv(CF_om_opt_fuel_1_expense, nyears, nom_discount_rate);
 		double pvOptFuel2OandM = npv(CF_om_opt_fuel_2_expense, nyears, nom_discount_rate);
 	//	double pvWaterOandM = NetPresentValue(sv[svNominalDiscountRate], cf[cfAnnualWaterCost], analysis_period);
 
-		assign( "present_value_oandm",  var_data((ssc_number_t)(pvAnnualOandM + pvFixedOandM + pvLandOandM + pvVariableOandM + pvFuelOandM))); // + pvWaterOandM);
+		assign( "present_value_oandm",  var_data((ssc_number_t)(pvAnnualOandM + pvFixedOandM + pvVariableOandM + pvFuelOandM))); // + pvWaterOandM);
 
-		assign( "present_value_oandm_nonfuel", var_data((ssc_number_t)(pvAnnualOandM + pvFixedOandM + pvLandOandM + pvVariableOandM)));
+		assign( "present_value_oandm_nonfuel", var_data((ssc_number_t)(pvAnnualOandM + pvFixedOandM + pvVariableOandM)));
 		assign( "present_value_fuel", var_data((ssc_number_t)(pvFuelOandM + pvOptFuel1OandM + pvOptFuel2OandM)));
 
 		// present value of insurance and property tax

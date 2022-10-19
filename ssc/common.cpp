@@ -106,12 +106,6 @@ var_info vtab_oandm[] = {
 { SSC_INPUT,SSC_ARRAY   , "om_fuelcell_replacement_cost"                 , "Replacement cost 2"                                             , "$/kW"                                   , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
 { SSC_INPUT,SSC_NUMBER  , "om_replacement_cost_escal"            , "Replacement cost escalation"                                    , "%/year"                                 , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
 
-
-//land
-{ SSC_INPUT,SSC_ARRAY   , "om_land_lease",                        "Land lease cost",                                                  "$"                                      ,""                                       , "System Costs"         , "?=0.0"          , ""                      , ""},
-{ SSC_INPUT,SSC_NUMBER   , "total_land_area",                      "Total land area",                                                  "acres"                                      ,""                                       , "System Costs"         , "?=0.0"          , "MIN=0"                      , ""},
-{ SSC_INPUT,SSC_NUMBER   , "om_land_lease_escal",                      "Land lease cost escalation",                                   "%/year"                                      ,""                                       , "System Costs"         , "?=0.0"          , ""                      , ""},
-
 // optional fuel o and m for Biopower - usage can be in any unit and cost is in $ per usage unit
 { SSC_INPUT,SSC_NUMBER  , "om_opt_fuel_1_usage"                  , "Biomass feedstock usage"                                        , "unit"                                   , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
 { SSC_INPUT,SSC_ARRAY   , "om_opt_fuel_1_cost"                   , "Biomass feedstock cost"                                         , "$/unit"                                 , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
