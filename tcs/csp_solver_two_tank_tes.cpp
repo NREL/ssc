@@ -1353,12 +1353,10 @@ int C_csp_two_tank_tes::solve_tes_off_design(double timestep /*s*/, double  T_am
         T_cold_final = mc_cold_tank.get_m_T_calc();		//[K]
 
         // Net TES discharge
-		double q_dot_tes_net_discharge = m_cp_external_avg*(m_dot_tes_hot_out*T_hot_ave + m_dot_tes_cold_out*T_cold_ave -
-            m_dot_cr_to_tes_hot*T_cr_out_hot - m_dot_total_to_cv_cold*T_htf_cold_cv_in) / 1000.0;		//[MWt]
-        // double cp_field = mc_external_htfProps.Cp_ave(T_cold_ave, T_cr_out_hot);
-        // double cp_cycle = mc_external_htfProps.Cp_ave(T_htf_cold_cv_in, T_hot_ave);
-        // double q_dot_tes_net_discharge = (cp_field * (m_dot_tes_cold_out * T_cold_ave - m_dot_cr_to_tes_hot * T_cr_out_hot)
-        //     + cp_cycle * (m_dot_tes_hot_out * T_hot_ave - m_dot_total_to_cv_cold * T_htf_cold_cv_in) ) / 1000.0;		//[MWt]
+         double cp_field = mc_external_htfProps.Cp_ave(T_cold_ave, T_cr_out_hot);
+         double cp_cycle = mc_store_htfProps.Cp_ave(T_htf_cold_cv_in, T_hot_ave);
+         double q_dot_tes_net_discharge = (cp_field * (m_dot_tes_cold_out * T_cold_ave - m_dot_cr_to_tes_hot * T_cr_out_hot)
+             + cp_cycle * (m_dot_tes_hot_out * T_hot_ave - m_dot_total_to_cv_cold * T_htf_cold_cv_in) ) / 1000.0;		//[MWt]
 
         if (m_dot_cv_hot_to_sink >= m_dot_cr_to_cv_hot)
         {

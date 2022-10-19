@@ -1356,8 +1356,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 				// Calculate other important metrics
 				eta = P_cycle / 1.E3 / q_dot_htf;		//[-]
 
-				// Want to iterate to fine more accurate cp_htf?
-				T_htf_cold = T_htf_hot - q_dot_htf / (m_dot_htf / 3600.0*m_cp_htf_design / 1.E3);		//[MJ/s * hr/kg * s/hr * kg-K/kJ * MJ/kJ] = C/K
+                T_htf_cold = Calculate_T_htf_cold_Converge_Cp(q_dot_htf * 1.E3, physics::CelciusToKelvin(T_htf_hot), m_dot_htf / 3600.0) - 273.15; //[K] -> [C]
 
 				was_method_successful = true;
 			}
@@ -1990,11 +1989,6 @@ void C_pc_Rankine_indirect_224::RankineCycle_V2(double T_db /*K*/, double T_wb /
     double P_cond_min = ms_params.m_P_cond_min;
 
     water_state wp;
-
-	// Calculate the specific heat before converting to Kelvin
-    double c_htf_ref = mc_pc_htfProps.Cp_ave(physics::CelciusToKelvin(T_htf_cold_ref), physics::CelciusToKelvin(T_htf_hot_ref));
-    double c_htf = mc_pc_htfProps.Cp_ave(physics::CelciusToKelvin(T_htf_cold_ref), physics::CelciusToKelvin(T_htf_hot)); //[kJ/kg-K]
-
     // Convert units
     // **Temperatures from Celcius to Kelvin
     T_htf_hot = physics::CelciusToKelvin(T_htf_hot);			//[K]
@@ -2095,8 +2089,7 @@ void C_pc_Rankine_indirect_224::RankineCycle_V2(double T_db /*K*/, double T_wb /
 
     // Final performance calcs
     double q_dot_cycle = P_cycle / eta;
-
-    T_htf_cold = T_htf_hot - q_dot_cycle / (m_dot_htf * c_htf);     //[K]
+    T_htf_cold = Calculate_T_htf_cold_Converge_Cp(q_dot_cycle, T_htf_hot, m_dot_htf); //[K]
     m_dot_demand = fmax(m_dot_htf_ND * m_dot_htf_ref, 0.00001);     //[kg/s]
 
     // Finally, convert to output units/names
@@ -2242,3 +2235,28 @@ double C_pc_Rankine_indirect_224::Interpolate(int YT, int XT, double X, double Z
 
 } // Interpolate
 
+double C_pc_Rankine_indirect_224::Calculate_T_htf_cold_Converge_Cp(double q_dot_htf /*kWt*/, double T_htf_hot /*K*/, double m_dot_htf /*kg/s*/)
+{
+    double alpha = 0.3;
+    int iter = 0;
+    double T_htf_cold = physics::CelciusToKelvin(ms_params.m_T_htf_cold_ref);
+    double c_htf, T_error = 1.0, T_htf_cold_prev;
+    double T_htf_cold_init = 0.0;
+    while (fabs(T_error) > 1e-4 && iter < 30) {
+        // set up C_monotonic_equation? and C_monotonic_eq_solver?
+        T_htf_cold_prev = T_htf_cold;
+        c_htf = mc_pc_htfProps.Cp_ave(T_htf_cold, T_htf_hot);       //[kJ/kg-K]
+        T_htf_cold = T_htf_hot - q_dot_htf / (m_dot_htf * c_htf);   //[kJ/s * s/kg * kg-K/kJ] = C/K
+        if (iter == 0) {
+            T_htf_cold_init = T_htf_cold;
+        }
+        T_htf_cold = T_htf_cold * alpha + T_htf_cold_prev * (1 - alpha);
+        T_error = (T_htf_cold - T_htf_cold_prev) / T_htf_cold_prev;
+        iter++;
+    }
+    if (fabs(T_error) > 1e-4) {
+        // Divergent - Use the initial iteration and deal with error
+        T_htf_cold = T_htf_cold_init;
+    }
+    return T_htf_cold; //[K]
+}
