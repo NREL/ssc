@@ -59,6 +59,8 @@ public:
     bool run(std::shared_ptr<weather_data_provider> wdata = nullptr);
     bool postsim_calcs( compute_module *cm );
     double CalcSolarFieldArea(int N_hel);
+    double CalcHeliostatArea();
+    double CalcAveAttenuation();
     double GetTotalLandArea();
     double GetBaseLandArea();
 };

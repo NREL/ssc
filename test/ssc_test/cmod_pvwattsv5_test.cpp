@@ -80,7 +80,7 @@ TEST_F(CMPvwattsV5Integration_cmod_pvwattsv5, DifferentTechnologyInputs)
 {
 //	std::vector<double> annual_energy_expected = { 6909.79, 7123.32, 7336.478, 6909.79, 6804.376, 8711.946, 8727.704, 9690.735 };
 	// single axis tracking reduction due to pull request 280
-	std::vector<double> annual_energy_expected = { 6908.02, 7121.52, 7334.71, 6908.02, 6802.62, 8584.29, 8721.18, 9687.18 };
+	std::vector<double> annual_energy_expected = { 6908.02, 7121.52, 7334.71, 6908.02, 6802.62, 8633.37, 8721.18, 9687.18 };
 	std::map<std::string, double> pairs;
 	size_t count = 0;
 
@@ -121,7 +121,7 @@ TEST_F(CMPvwattsV5Integration_cmod_pvwattsv5, DifferentTechnologyInputs)
 /// PVWattsV5 using a larger system size
 TEST_F(CMPvwattsV5Integration_cmod_pvwattsv5, LargeSystem_cmod_pvwattsv5)
 {
-	std::vector<double> annual_energy_expected = { 1727006, 1700656, 2146072, 2180297, 2421795 };
+	std::vector<double> annual_energy_expected = { 1727006, 1700656, 2158344, 2180297, 2421795 };
 	std::map<std::string, double> pairs;
 	size_t count = 0;
 	error_tolerance = 0.1; //use a larger error tolerance for large numbers
@@ -180,15 +180,15 @@ TEST_F(CMPvwattsV5Integration_cmod_pvwattsv5, singleTS) {
     
     double val;
     ssc_data_get_number(data_1ts, "poa", &val);
-    EXPECT_NEAR(val, 140.21, .1);
-    ssc_data_set_number(data_1ts, "poa", 140.21);
+    EXPECT_NEAR(val, 142.07, .1);
+    ssc_data_set_number(data_1ts, "poa", 142.07);
     ssc_data_get_number(data_1ts, "tcell", &val);
     EXPECT_NEAR(val, 12.77, .1);
     ssc_data_set_number(data_1ts, "tcell", 12.77);
     ssc_data_get_number(data_1ts, "dc", &val);
-    EXPECT_NEAR(val, 106739, 1);
+    EXPECT_NEAR(val, 108124, 1);
     ssc_data_get_number(data_1ts, "ac", &val);
-    EXPECT_NEAR(val, 100852, 1);
+    EXPECT_NEAR(val, 102204, 1);
    
  //   ssc_module_free(mod);
  //   mod = ssc_module_create("pvwattsv5_1ts");
@@ -197,13 +197,13 @@ TEST_F(CMPvwattsV5Integration_cmod_pvwattsv5, singleTS) {
     EXPECT_TRUE(ssc_module_exec(mod, data_1ts));
     
     ssc_data_get_number(data_1ts, "poa", &val);
-    EXPECT_NEAR(val, 140.21, .1);
+    EXPECT_NEAR(val, 142.06, .1);
     ssc_data_get_number(data_1ts, "tcell", &val);
     EXPECT_NEAR(val, 13.36, .1);
     ssc_data_get_number(data_1ts, "dc", &val);
-    EXPECT_NEAR(val, 106460, 1);
+    EXPECT_NEAR(val, 107838, 1);
     ssc_data_get_number(data_1ts, "ac", &val);
-    EXPECT_NEAR(val, 100579, 1);
+    EXPECT_NEAR(val, 101925, 1);
 
     // add some shading
     ssc_data_set_number(data_1ts, "shaded_percent", 50);
@@ -215,13 +215,13 @@ TEST_F(CMPvwattsV5Integration_cmod_pvwattsv5, singleTS) {
     EXPECT_TRUE(ssc_module_exec(mod, data_1ts));
 
     ssc_data_get_number(data_1ts, "poa", &val);
-    EXPECT_NEAR(val, 140.05, .1);
+    EXPECT_NEAR(val, 141.90, .1);
     ssc_data_get_number(data_1ts, "tcell", &val);
     EXPECT_NEAR(val, 13.36, .1);
     ssc_data_get_number(data_1ts, "dc", &val);
-    EXPECT_NEAR(val, 106342, 1);
+    EXPECT_NEAR(val, 107720, 1);
     ssc_data_get_number(data_1ts, "ac", &val);
-    EXPECT_NEAR(val, 100464, 1);
+    EXPECT_NEAR(val, 101810, 1);
 
     ssc_module_free(mod);
     ssc_data_free(data_1ts);
