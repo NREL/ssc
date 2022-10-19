@@ -460,7 +460,7 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelShading)
 // PR 280	std::vector<double> annual_energy_expected = { 12911, 10607, 10579, 10377 };
     // 2 - 3D shading with self-shading reduced from 10579 to 10529
     // 3 - shading with snow reduced from 10377 to 10328
-    std::vector<double> annual_energy_expected = { 13130, 10763, 10684, 10479 };
+    std::vector<double> annual_energy_expected = { 13130, 10763, 10702, 10497 };
     std::map<std::string, double> pairs;
 
     // 2 subarrays, one pointing east, one west
