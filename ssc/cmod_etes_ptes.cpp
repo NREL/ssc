@@ -395,6 +395,7 @@ public:
     {
         add_var_info(_cm_vtab_etes_ptes);
         add_var_info(vtab_adjustment_factors);
+        add_var_info(vtab_technology_outputs);
     }
 
     void exec() override
@@ -632,9 +633,9 @@ public:
             ud_HT_htf_props,
             HT_htf_code,
             ud_HT_htf_props,
-            W_dot_gen_thermo / eta_therm_mech, //[MWt]
-            heater_mult,                       //[-]
-            W_dot_gen_thermo / eta_therm_mech * tshours,  //[MWht]
+            q_dot_hot_in_gen,                   //[MWt]
+            heater_mult,                        //[-]
+            q_dot_hot_in_gen* tshours,          //[MWht]
             as_double("h_tank"),
             as_double("u_tank"),
             as_integer("tank_pairs"),
@@ -676,14 +677,15 @@ public:
             // ctes_params.m_hot_tank_max_heat = as_double("CT_hot_tank_max_heat");
             // ctes_params.m_cold_tank_Thtr = as_double("CT_cold_tank_Thtr");
             // ctes_params.m_cold_tank_max_heat = as_double("CT_cold_tank_max_heat");
+        double q_dot_CT_des__discharge_basis = q_dot_cold_in_charge / heater_mult;
         std::shared_ptr<C_csp_two_tank_tes> c_CT_TES(new C_csp_two_tank_tes(
             CT_htf_code,
             ud_CT_htf_props,
             CT_htf_code,
             ud_CT_htf_props,
-            W_dot_gen_thermo / 1.0,                          //[MWe]
+            q_dot_CT_des__discharge_basis,                   //[MWt]
             heater_mult,                                     //[-]
-            tshours,                                         //[hr]
+            q_dot_CT_des__discharge_basis * tshours,         //[MWt-hr]
             as_double("CT_h_tank"),
             as_double("CT_u_tank"),
             as_integer("CT_tank_pairs"),
@@ -1254,9 +1256,11 @@ public:
         // *****************************************************
         // *****************************************************
 
+        // Report simulation metrics
+        ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, steps_per_hour);
+
         // Annual metrics
         accumulate_annual_for_year("gen", "annual_energy", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour);
-
 
         accumulate_annual_for_year("disp_objective", "disp_objective_ann", sim_setup.m_report_step / 3600.0 / as_double("disp_frequency"), steps_per_hour, 1, n_steps_fixed / steps_per_hour);
         accumulate_annual_for_year("disp_solve_iter", "disp_iter_ann", sim_setup.m_report_step / 3600.0 / as_double("disp_frequency"), steps_per_hour, 1, n_steps_fixed / steps_per_hour);
