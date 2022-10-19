@@ -81,6 +81,16 @@ private:
 
 	util::matrix_t<double> m_db;
 
+    // UDPC calculated design metrics
+    int m_n_T_htf_pars, m_n_T_amb_pars, m_n_m_dot_pars;
+    double m_T_htf_ref_udpc_calc, m_T_htf_low_udpc_calc, m_T_htf_high_udpc_calc;
+    double m_T_amb_ref_udpc_calc, m_T_amb_low_udpc_calc, m_T_amb_high_udpc_calc;
+    double m_m_dot_htf_ref_udpc_calc, m_m_dot_htf_low_udpc_calc, m_m_dot_htf_high_udpc_calc;
+    double m_W_dot_gross_ND_des;
+    double m_Q_dot_HTF_ND_des;
+    double m_W_dot_cooling_ND_des;
+    double m_m_dot_water_ND_des;
+
 	HTFProperties mc_pc_htfProps;
 
     std::shared_ptr<C_air_cooled_condenser> m_ACC;
@@ -311,7 +321,13 @@ public:
 
     void get_design_parameters(double& m_dot_htf_des /*kg/hr*/,
         double& cp_htf_des_at_T_ave /*kJ/kg-K*/,
-        double& W_dot_htf_pump /*MWe*/, double& W_dot_cooling /*MWe*/);
+        double& W_dot_htf_pump /*MWe*/, double& W_dot_cooling /*MWe*/,
+        // UDPC
+        int& n_T_htf_pars, int& n_T_amb_pars, int& n_m_dot_pars,
+        double& T_htf_ref_calc /*C*/, double& T_htf_low_calc /*C*/, double& T_htf_high_calc /*C*/,
+        double& T_amb_ref_calc /*C*/, double& T_amb_low_calc /*C*/, double& T_amb_high_calc /*C*/,
+        double& m_dot_htf_ND_ref_calc, double& m_dot_htf_ND_low_calc /*-*/, double& m_dot_htf_ND_high_calc /*-*/,
+        double& W_dot_gross_ND_des, double& Q_dot_HTF_ND_des, double& W_dot_cooling_ND_des, double& m_dot_water_ND_des);
 };
 
 
