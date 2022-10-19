@@ -628,6 +628,34 @@ void solarpilot_invoke::setOptimizationSimulationHistory(vector<vector<double> >
 	_optimization_fluxes = flux_values;
 }
 
+double solarpilot_invoke::CalcAveAttenuation()
+{
+    double tht2 = std::pow(sf.tht.val, 2);        //[m]
+    std::size_t n_hel = layout.heliostat_positions.size();
+
+    double tot_att = 0.0;
+    std::size_t ncoefs = amb.atm_coefs.val.ncols();
+    std::size_t atm_sel = amb.atm_model.combo_get_current_index();
+
+    for (std::size_t i = 0; i < n_hel; i++) {
+
+        double x = layout.heliostat_positions[i].location.x;
+        double y = layout.heliostat_positions[i].location.y;
+        double r = std::sqrt(x * x + y * y);
+        double r2 = r * r;
+
+        double s = std::sqrt(tht2 + r2) * 0.001;    // [km]
+        //double s2 = s * s;
+        //double s3 = s2 * s;
+
+        for (int i = 0; i < ncoefs; i++) {
+            tot_att += amb.atm_coefs.val.at(atm_sel, i) * pow(s, i);
+        }
+    }
+
+    return 100.0 * tot_att / n_hel;     //[%]  
+}
+
 double solarpilot_invoke::CalcSolarFieldArea(int N_hel)
 {
     /*
@@ -636,6 +664,14 @@ double solarpilot_invoke::CalcSolarFieldArea(int N_hel)
     N_hel: Number of heliostats in the solar field
     */
     return m_cmod->as_double("helio_height") * m_cmod->as_double("helio_width") * m_cmod->as_double("dens_mirror") * (double)N_hel;
+}
+
+double solarpilot_invoke::CalcHeliostatArea()
+{
+    /*
+    Calculate reflective area of single heliostat
+    */
+    return m_cmod->as_double("helio_height") * m_cmod->as_double("helio_width") * m_cmod->as_double("dens_mirror");
 }
 
 double solarpilot_invoke::GetTotalLandArea()

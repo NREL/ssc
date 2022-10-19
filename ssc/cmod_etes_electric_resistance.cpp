@@ -56,8 +56,6 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
     { SSC_INPUT,  SSC_NUMBER, "design_eff",                    "Power cycle efficiency at design",                               "none",         "",                                  "System Design",                            "*",                                                                "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "tshours",                       "Equivalent full-load thermal storage hours",                     "hr",           "",                                  "System Design",                            "*",                                                                "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "heater_mult",                   "Heater multiple relative to design cycle thermal power",         "-",            "",                                  "System Design",                            "*",                                                                "",              ""},
-    { SSC_INPUT,  SSC_NUMBER, "gross_net_conversion_factor",   "Estimated gross to net conversion factor",                       "",             "",                                  "System Design",                            "*",                                                                "",              ""},
-
 
     // Power Cycle
         // General
@@ -215,6 +213,23 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
         // Cycle
     { SSC_OUTPUT, SSC_NUMBER, "m_dot_htf_cycle_des",         "Cycle htf mass flow rate at design",      "kg/s",         "",                                  "Cycle Design Calc",                             "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "cp_htf_cycle_des",            "Cycle htf cp at T ave at design",         "kJ/kg-K",      "",                                  "Cycle Design Calc",                             "*",                                                                "",              "" },
+        // UDPC
+    { SSC_OUTPUT, SSC_NUMBER, "n_T_htf_pars_calc",           "UDPC number of HTF parametric values",               "",  "",                                  "UDPC Design Calc",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "n_T_amb_pars_calc",           "UDPC number of ambient temp parametric values",      "",  "",                                  "UDPC Design Calc",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "n_m_dot_pars_calc",           "UDPC number of mass flow parametric values",         "",  "",                                  "UDPC Design Calc",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "T_htf_ref_calc",              "UDPC reference HTF temperature",                     "C", "",                                  "UDPC Design Calc",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "T_htf_low_calc",              "UDPC low level HTF temperature",                     "C", "",                                  "UDPC Design Calc",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "T_htf_high_calc",             "UDPC high level HTF temperature",                    "C", "",                                  "UDPC Design Calc",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "T_amb_ref_calc",              "UDPC reference ambient temperature",                 "C", "",                                  "UDPC Design Calc",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "T_amb_low_calc",              "UDPC low level ambient temperature",                 "C", "",                                  "UDPC Design Calc",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "T_amb_high_calc",             "UDPC high level ambient temperature",                "C", "",                                  "UDPC Design Calc",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "m_dot_htf_ND_ref_calc",       "UDPC reference normalized mass flow rate",           "",  "",                                  "UDPC Design Calc",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "m_dot_htf_ND_low_calc",       "UDPC low level normalized mass flow rate",           "",  "",                                  "UDPC Design Calc",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "m_dot_htf_ND_high_calc",      "UDPC high level normalized mass flow rate",          "",  "",                                  "UDPC Design Calc",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "W_dot_gross_ND_des_calc",     "UDPC calculated normalized gross power at design",   "",  "",                                  "UDPC Design Calc",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "Q_dot_HTF_ND_des_calc",       "UDPC calculated normalized heat input at design",    "",  "",                                  "UDPC Design Calc",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "W_dot_cooling_ND_des_calc",   "UPPC calculated normalized cooling power at design", "",  "",                                  "UDPC Design Calc",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "m_dot_water_ND_des_calc",     "UDPC calculated water use at design",                "",  "",                                  "UDPC Design Calc",                              "*",                                                                "",              "" },
 
         // Heater
     { SSC_OUTPUT, SSC_NUMBER, "W_dot_heater_des",            "Heater electricity consumption at design","MWe",          "",                                  "Cycle Design Calc",                             "*",                                                                "",              "" },
@@ -400,7 +415,6 @@ public:
         double eta_cycle = as_double("design_eff");             //[-]
         double tshours = as_double("tshours");                  //[-]
         double heater_mult = as_double("heater_mult");          //[-]
-        double gross_net_conversion_factor = as_double("gross_net_conversion_factor");
 
         // TES parameters
         int hot_htf_code = as_integer("hot_htf_code");
@@ -409,7 +423,6 @@ public:
         // System Design Calcs
         double q_dot_pc_des = W_dot_cycle_des / eta_cycle;      //[MWt]
         double q_dot_heater_des = q_dot_pc_des * heater_mult;   //[MWt]
-        double system_capacity = W_dot_cycle_des * gross_net_conversion_factor * 1.E3; //[kWe]
         double Q_tes_des = q_dot_pc_des * tshours;              //[MWt-hr] TES thermal capacity at design
         // *****************************************************
         // *****************************************************
@@ -865,7 +878,22 @@ public:
         double cp_htf_pc_des;       //[kJ/kg-K]
         double W_dot_pc_pump_des;   //[MWe]
         double W_dot_cooling_des;   //[MWe]
-        rankine_pc.get_design_parameters(m_dot_htf_pc_des, cp_htf_pc_des, W_dot_pc_pump_des, W_dot_cooling_des);
+        int n_T_htf_pars, n_T_amb_pars, n_m_dot_pars;
+        n_T_htf_pars = n_T_amb_pars = n_m_dot_pars = -1;
+        double T_htf_ref_calc, T_htf_low_calc, T_htf_high_calc, T_amb_ref_calc, T_amb_low_calc, T_amb_high_calc,
+            m_dot_htf_ND_ref_calc, m_dot_htf_ND_low_calc, m_dot_htf_ND_high_calc, W_dot_gross_ND_des, Q_dot_HTF_ND_des,
+            W_dot_cooling_ND_des, m_dot_water_ND_des;
+        T_htf_ref_calc = T_htf_low_calc = T_htf_high_calc =
+            T_amb_ref_calc = T_amb_low_calc = T_amb_high_calc =
+            m_dot_htf_ND_ref_calc = m_dot_htf_ND_low_calc = m_dot_htf_ND_high_calc =
+            W_dot_gross_ND_des = Q_dot_HTF_ND_des = W_dot_cooling_ND_des = m_dot_water_ND_des = std::numeric_limits<double>::quiet_NaN();
+
+        rankine_pc.get_design_parameters(m_dot_htf_pc_des, cp_htf_pc_des, W_dot_pc_pump_des, W_dot_cooling_des,
+            n_T_htf_pars, n_T_amb_pars, n_m_dot_pars,
+            T_htf_ref_calc /*C*/, T_htf_low_calc /*C*/, T_htf_high_calc /*C*/,
+            T_amb_ref_calc /*C*/, T_amb_low_calc /*C*/, T_amb_high_calc /*C*/,
+            m_dot_htf_ND_ref_calc, m_dot_htf_ND_low_calc /*-*/, m_dot_htf_ND_high_calc /*-*/,
+            W_dot_gross_ND_des, Q_dot_HTF_ND_des, W_dot_cooling_ND_des, m_dot_water_ND_des);
         m_dot_htf_pc_des /= 3600.0;     // convert from kg/hr to kg/s
 
             // Heater
@@ -883,6 +911,12 @@ public:
         double W_dot_fixed_parasitic_design;    //[MWe]
         csp_solver.get_design_parameters(W_dot_bop_design, W_dot_fixed_parasitic_design);
 
+        double plant_net_capacity_des_calc = W_dot_cycle_des - W_dot_pc_pump_des - W_dot_cooling_des -
+                                W_dot_bop_design - W_dot_fixed_parasitic_design;    //[MWe]
+
+        double plant_net_conv_calc = plant_net_capacity_des_calc / W_dot_cycle_des; //[-]
+        double system_capacity = plant_net_capacity_des_calc * 1.E3;        //[kWe]
+
         // *****************************************************
         // System design is complete, so calculate final design outputs like cost, capacity, etc.
         double tes_spec_cost = as_double("tes_spec_cost");
@@ -895,7 +929,6 @@ public:
         double Q_CT_tes = 0.0;
         double CT_tes_spec_cost = 0.0;
 
-        double plant_net_capacity = system_capacity / 1000.0;         //[MWe], convert from kWe
         double EPC_perc_direct_cost = as_double("epc_cost_perc_of_direct");
         double EPC_per_power_cost = as_double("epc_cost_per_watt");
         double EPC_fixed_cost = as_double("epc_cost_fixed");
@@ -916,7 +949,7 @@ public:
         N_mspt::calculate_etes_costs(Q_tes_des, tes_spec_cost, Q_CT_tes, CT_tes_spec_cost,
             W_dot_cycle_des, power_cycle_spec_cost,
             q_dot_heater_des, heater_spec_cost, bop_spec_cost, contingency_rate,
-            plant_net_capacity, EPC_perc_direct_cost, EPC_per_power_cost, EPC_fixed_cost,
+            plant_net_capacity_des_calc, EPC_perc_direct_cost, EPC_per_power_cost, EPC_fixed_cost,
             total_land_perc_direct_cost, total_land_per_power_cost, total_land_fixed_cost,
             sales_tax_basis, sales_tax_rate,
             tes_cost, CT_tes_cost, power_cycle_cost, heater_cost, bop_cost, direct_capital_precontingency_cost,
@@ -980,6 +1013,23 @@ public:
             // Cycle
         assign("m_dot_htf_cycle_des", (ssc_number_t)m_dot_htf_pc_des);            //[kg/s]
         assign("cp_htf_cycle_des", (ssc_number_t)cp_htf_pc_des);                  //[kJ/kg-K]
+            // UDPC
+        assign("n_T_htf_pars_calc", n_T_htf_pars);
+        assign("n_T_amb_pars_calc", n_T_amb_pars);
+        assign("n_m_dot_pars_calc", n_m_dot_pars);
+        assign("T_htf_ref_calc", T_htf_ref_calc);
+        assign("T_htf_low_calc", T_htf_low_calc);
+        assign("T_htf_high_calc", T_htf_high_calc);
+        assign("T_amb_ref_calc", T_amb_ref_calc);
+        assign("T_amb_low_calc", T_amb_low_calc);
+        assign("T_amb_high_calc", T_amb_high_calc);
+        assign("m_dot_htf_ND_ref_calc", m_dot_htf_ND_ref_calc);
+        assign("m_dot_htf_ND_low_calc", m_dot_htf_ND_low_calc);
+        assign("m_dot_htf_ND_high_calc", m_dot_htf_ND_high_calc);
+        assign("W_dot_gross_ND_des_calc", W_dot_gross_ND_des);
+        assign("Q_dot_HTF_ND_des_calc", Q_dot_HTF_ND_des);
+        assign("W_dot_cooling_ND_des_calc", W_dot_cooling_ND_des);
+        assign("m_dot_water_ND_des_calc", m_dot_water_ND_des);
 
             // Heater
         assign("W_dot_heater_des", (ssc_number_t)W_dot_heater_des_calc);    //[MWe]
