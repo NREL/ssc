@@ -31,8 +31,6 @@ set(SSC_SRC
 		cmod_csp_common_eqns.h
 		cmod_csp_dsg_lf_ui.cpp
 		cmod_csp_subcomponent.cpp
-		cmod_csp_tower_eqns.cpp
-		cmod_csp_tower_eqns.h
         cmod_csp_trough_eqns.cpp
 		cmod_csp_trough_eqns.h
 		cmod_etes_electric_resistance.cpp

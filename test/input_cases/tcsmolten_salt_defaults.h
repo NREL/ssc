@@ -154,7 +154,7 @@ ssc_data_t tcsmolten_salt_defaults()
     ssc_data_set_number(data, "startup_target_Tdiff", -5);
     ssc_data_set_number(data, "is_rec_startup_from_T_soln", 0);
     ssc_data_set_number(data, "is_rec_enforce_min_startup", 0);
-    ssc_data_set_number(data, "csp.pt.tes.init_hot_htf_percent", 30);
+    ssc_data_set_number(data, "tes_init_hot_htf_percent", 30);
     ssc_data_set_number(data, "h_tank", 12);
     ssc_data_set_number(data, "cold_tank_max_heat", 15);
     ssc_data_set_number(data, "u_tank", 0.40000000000000002);

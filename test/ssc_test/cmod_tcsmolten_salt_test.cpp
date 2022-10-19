@@ -22,7 +22,6 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <gtest/gtest.h>
 #include "tcsmolten_salt_defaults.h"
-#include "cmod_csp_tower_eqns.h"
 #include "csp_common_test.h"
 #include "vs_google_test_explorer_namespace.h"
 
