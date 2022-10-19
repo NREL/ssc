@@ -81,6 +81,13 @@ C_pc_Rankine_indirect_224::C_pc_Rankine_indirect_224()
         m_startup_time_remain_prev = m_startup_time_remain_calc =
 		m_startup_energy_remain_prev = m_startup_energy_remain_calc = std::numeric_limits<double>::quiet_NaN();
 
+    // UDPC calculated design metrics
+    m_n_T_htf_pars = m_n_T_amb_pars = m_n_m_dot_pars = -1;
+    m_T_htf_ref_udpc_calc = m_T_htf_low_udpc_calc = m_T_htf_high_udpc_calc =
+        m_T_amb_ref_udpc_calc = m_T_amb_low_udpc_calc = m_T_amb_high_udpc_calc =
+        m_m_dot_htf_ref_udpc_calc = m_m_dot_htf_low_udpc_calc = m_m_dot_htf_high_udpc_calc =
+        m_W_dot_gross_ND_des = m_Q_dot_HTF_ND_des = m_W_dot_cooling_ND_des = m_m_dot_water_ND_des = std::numeric_limits<double>::quiet_NaN();
+
     // Design-point conditions
     m_rh_des = 45.0;
     m_P_amb_des = 101325.;      //[Pa]
@@ -586,31 +593,27 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
             mc_csp_messages.add_message(C_csp_messages::WARNING, m_error_msg);
         }
         
-        int n_T_htf_pars, n_T_amb_pars, n_m_dot_pars;
-        double T_htf_ref_udpc_calc, T_htf_low_udpc_calc, T_htf_high_udpc_calc;
-        double T_amb_ref_udpc_calc, T_amb_low_udpc_calc, T_amb_high_udpc_calc;
-        double m_dot_htf_ref_udpc_calc, m_dot_htf_low_udpc_calc, m_dot_htf_high_udpc_calc;
         std::vector<double> Y_at_T_htf_ref, Y_at_T_amb_ref, Y_at_m_dot_htf_ND_ref, Y_avg_at_refs;
         mc_user_defined_pc.init(ms_params.mc_combined_ind,
-            n_T_htf_pars, n_T_amb_pars, n_m_dot_pars,
-            T_htf_ref_udpc_calc, T_htf_low_udpc_calc, T_htf_high_udpc_calc,
-            T_amb_ref_udpc_calc, T_amb_low_udpc_calc, T_amb_high_udpc_calc,
-            m_dot_htf_ref_udpc_calc, m_dot_htf_low_udpc_calc, m_dot_htf_high_udpc_calc,
+            m_n_T_htf_pars, m_n_T_amb_pars, m_n_m_dot_pars,
+            m_T_htf_ref_udpc_calc, m_T_htf_low_udpc_calc, m_T_htf_high_udpc_calc,
+            m_T_amb_ref_udpc_calc, m_T_amb_low_udpc_calc, m_T_amb_high_udpc_calc,
+            m_m_dot_htf_ref_udpc_calc, m_m_dot_htf_low_udpc_calc, m_m_dot_htf_high_udpc_calc,
             Y_at_T_htf_ref, Y_at_T_amb_ref, Y_at_m_dot_htf_ND_ref, Y_avg_at_refs);
 
         // Set design point ambient temperature to value calculated from UDPC table
-        ms_params.m_T_amb_des = T_amb_ref_udpc_calc;        //[C]
+        ms_params.m_T_amb_des = m_T_amb_ref_udpc_calc;        //[C]
 
         // Get UDPC Y values at *MSPT* design values
-        double W_dot_gross_ND_des = mc_user_defined_pc.get_W_dot_gross_ND(ms_params.m_T_htf_hot_ref, ms_params.m_T_amb_des, 1.0);
-        double Q_dot_HTF_ND_des = mc_user_defined_pc.get_Q_dot_HTF_ND(ms_params.m_T_htf_hot_ref, ms_params.m_T_amb_des, 1.0);
-        double W_dot_cooling_ND_des = mc_user_defined_pc.get_W_dot_cooling_ND(ms_params.m_T_htf_hot_ref, ms_params.m_T_amb_des, 1.0);
-        double m_dot_water_ND_des = mc_user_defined_pc.get_m_dot_water_ND(ms_params.m_T_htf_hot_ref, ms_params.m_T_amb_des, 1.0);
+        m_W_dot_gross_ND_des = mc_user_defined_pc.get_W_dot_gross_ND(ms_params.m_T_htf_hot_ref, ms_params.m_T_amb_des, 1.0);
+        m_Q_dot_HTF_ND_des = mc_user_defined_pc.get_Q_dot_HTF_ND(ms_params.m_T_htf_hot_ref, ms_params.m_T_amb_des, 1.0);
+        m_W_dot_cooling_ND_des = mc_user_defined_pc.get_W_dot_cooling_ND(ms_params.m_T_htf_hot_ref, ms_params.m_T_amb_des, 1.0);
+        m_m_dot_water_ND_des = mc_user_defined_pc.get_m_dot_water_ND(ms_params.m_T_htf_hot_ref, ms_params.m_T_amb_des, 1.0);
 
-        double W_dot_gross_des_UDPC = ms_params.m_P_ref * W_dot_gross_ND_des * 1.E-3;   //[MWe]
-        double q_dot_des_UDPC = m_q_dot_design * Q_dot_HTF_ND_des;              //[MWt]
-        double W_dot_cooling_des_UDPC = ms_params.m_W_dot_cooling_des * W_dot_cooling_ND_des;   //[MWe]
-        double m_dot_water_des_UDPC = ms_params.m_m_dot_water_des * m_dot_water_ND_des;         //[kg/s]
+        double W_dot_gross_des_UDPC = ms_params.m_P_ref * m_W_dot_gross_ND_des * 1.E-3;   //[MWe]
+        double q_dot_des_UDPC = m_q_dot_design * m_Q_dot_HTF_ND_des;              //[MWt]
+        double W_dot_cooling_des_UDPC = ms_params.m_W_dot_cooling_des * m_W_dot_cooling_ND_des;   //[MWe]
+        double m_dot_water_des_UDPC = ms_params.m_m_dot_water_des * m_m_dot_water_ND_des;         //[kg/s]
 
         // Calculate other important design values
         double eta_des_UDPDC = W_dot_gross_des_UDPC / q_dot_des_UDPC;		//[-]
@@ -783,12 +786,39 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 
 void C_pc_Rankine_indirect_224::get_design_parameters(double& m_dot_htf_des /*kg/hr*/,
     double& cp_htf_des_at_T_ave /*kJ/kg-K*/,
-    double& W_dot_htf_pump /*MWe*/, double& W_dot_cooling /*MWe*/)
+    double& W_dot_htf_pump /*MWe*/, double& W_dot_cooling /*MWe*/,
+    // UDPC
+    int& n_T_htf_pars, int& n_T_amb_pars, int& n_m_dot_pars,
+    double& T_htf_ref_calc /*C*/, double& T_htf_low_calc /*C*/, double& T_htf_high_calc /*C*/,
+    double& T_amb_ref_calc /*C*/, double& T_amb_low_calc /*C*/, double& T_amb_high_calc /*C*/,
+    double& m_dot_htf_ND_ref_calc, double& m_dot_htf_ND_low_calc /*-*/, double& m_dot_htf_ND_high_calc /*-*/,
+    double& W_dot_gross_ND_des, double& Q_dot_HTF_ND_des, double& W_dot_cooling_ND_des, double& m_dot_water_ND_des)
 {
     m_dot_htf_des = m_m_dot_design;         //[kg/hr]
     cp_htf_des_at_T_ave = m_cp_htf_design;  //[kJ/kg-K]
     W_dot_htf_pump = m_W_dot_htf_pump_des;  //[MWe]
     W_dot_cooling = m_W_dot_cooling_des;    //[MWe]
+
+    n_T_htf_pars = m_n_T_htf_pars;
+    n_T_amb_pars = m_n_T_amb_pars;
+    n_m_dot_pars = m_n_m_dot_pars;
+
+    T_htf_ref_calc = m_T_htf_ref_udpc_calc; //[C]
+    T_htf_low_calc = m_T_htf_low_udpc_calc; //[C]
+    T_htf_high_calc = m_T_htf_high_udpc_calc;   //[C]
+
+    T_amb_ref_calc = m_T_amb_ref_udpc_calc; //[C]
+    T_amb_low_calc = m_T_amb_low_udpc_calc; //[C]
+    T_amb_high_calc = m_T_amb_high_udpc_calc;   //[C]
+
+    m_dot_htf_ND_ref_calc = m_m_dot_htf_ref_udpc_calc;  //[-]
+    m_dot_htf_ND_low_calc = m_m_dot_htf_low_udpc_calc;  //[-]
+    m_dot_htf_ND_high_calc = m_m_dot_htf_high_udpc_calc;    //[-]
+
+    W_dot_gross_ND_des = m_W_dot_gross_ND_des;      //[-]
+    Q_dot_HTF_ND_des = m_Q_dot_HTF_ND_des;          //[-]
+    W_dot_cooling_ND_des = m_W_dot_cooling_ND_des;  //[-]
+    m_dot_water_ND_des = m_m_dot_water_ND_des;      //[-]
 }
 
 double C_pc_Rankine_indirect_224::get_cold_startup_time()
