@@ -543,7 +543,7 @@ TEST_F(ManualTest_lib_battery_dispatch_losses, TestLossesWithDispatch)
     // Test max charge power constraint
     batteryPower->powerSystem = 40; batteryPower->voltageSystem = 600;
     dispatchManual->dispatch(year, hour_of_year, step_of_hour);
-    EXPECT_NEAR(batteryPower->powerSystemToBattery, batteryPower->powerSystem - batteryPower->powerSystemLoss, 0.1);
+    EXPECT_NEAR(batteryPower->powerSystemToBatteryAC, batteryPower->powerSystem - batteryPower->powerSystemLoss, 0.1);
 
     // Test max discharge power constraint
     batteryPower->powerSystem = 0; batteryPower->voltageSystem = 600; batteryPower->powerLoad = 40;
@@ -601,7 +601,7 @@ TEST_F(ManualTest_lib_battery_dispatch, TestClipCharging)
     dispatchManual->dispatch(year, hour_of_year, step_of_hour);
     EXPECT_NEAR(batteryPower->powerBatteryDC, -clipped_power, 0.1);
     EXPECT_NEAR(batteryPower->powerSystemToLoad, batteryPower->powerLoad, 0.1);
-    EXPECT_NEAR(batteryPower->powerSystemToBattery, clipped_power / batteryPower->singlePointEfficiencyDCToDC, 0.1);
+    EXPECT_NEAR(batteryPower->powerSystemToBatteryAC, clipped_power / batteryPower->singlePointEfficiencyDCToDC, 0.1);
 }
 
 TEST_F(ManualTest_lib_battery_dispatch, OutageWithManualDispatch) {

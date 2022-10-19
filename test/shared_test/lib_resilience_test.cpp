@@ -449,9 +449,9 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsACHourly_Discharge)
         batt->advance(vartab, ac[i], voltage, load[i], load[i]); // Critical load is 100% of the load
         charge_total.emplace_back(batt->battery_model->charge_total());
         if (i < 5)
-            EXPECT_NEAR(batt->outBatteryPower[i], 1., 1e-3) << "timestep " << i;
+            EXPECT_NEAR(batt->outBatteryPowerAC[i], 1., 1e-3) << "timestep " << i;
         else
-            EXPECT_LT(batt->outBatteryPower[i], 1.) << "timestep " << i;
+            EXPECT_LT(batt->outBatteryPowerAC[i], 1.) << "timestep " << i;
 
     }
     std::vector<double> correct_charge_total = {13.86, 11.96, 10.05, 8.10, 6.10, 4.0, 3.15, 3.15, 3.15, 3.15 };
@@ -506,7 +506,7 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsACHalfHourly_Discharge)
             resilience.add_battery_at_outage_timestep(*dispatch, i * 2 + j);
             resilience.run_surviving_batteries(load[i], 0, 0, 0, 0, 0);
             batt->advance(vartab, ac[i], voltage, load[i], load[i]); // Critical load is 100% of the load
-            EXPECT_NEAR(batt->outBatteryPower[i], 1., 1e-3) << "timestep " << i * 2 + j;
+            EXPECT_NEAR(batt->outBatteryPowerAC[i], 1., 1e-3) << "timestep " << i * 2 + j;
         }
         charge_total.emplace_back(batt->battery_model->charge_total());
     }
@@ -567,11 +567,11 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsDCHourly_Discharge)
         batt->advance(vartab, ac[i], voltage, load[i], load[i]); // Critical load is 100% of the load
         charge_total.emplace_back(batt->battery_model->charge_total());
         if (i < 6)
-            EXPECT_NEAR(batt->outBatteryPower[i], 1., 1e-3) << "timestep " << i << " battery discharging";
+            EXPECT_NEAR(batt->outBatteryPowerAC[i], 1., 1e-3) << "timestep " << i << " battery discharging";
         else if (i == 6)
-            EXPECT_NEAR(batt->outBatteryPower[i], 0.301, 1e-3) << "timestep 5 battery SOC limits";
+            EXPECT_NEAR(batt->outBatteryPowerAC[i], 0.301, 1e-3) << "timestep 5 battery SOC limits";
         else
-            EXPECT_NEAR(batt->outBatteryPower[i], 0, 1e-3) << "timestep " << i << " battery at min SOC";
+            EXPECT_NEAR(batt->outBatteryPowerAC[i], 0, 1e-3) << "timestep " << i << " battery at min SOC";
 
     }
     std::vector<double> correct_charge_total = { 13.86, 11.96, 10.05, 8.10, 6.0, 3.82, 3.15, 3.15, 3.15, 3.15 };
@@ -626,7 +626,7 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsDCHalfHourly_Discharge)
             resilience.add_battery_at_outage_timestep(*dispatch, i * 2 + j);
             resilience.run_surviving_batteries(load[i], 0, 0, 0, 0, 0);
             batt->advance(vartab, ac[i], voltage, load[i], load[i]); // Critical load is 100% of the load
-            EXPECT_NEAR(batt->outBatteryPower[i], 1., 1e-3) << "timestep " << i * 2 + j;
+            EXPECT_NEAR(batt->outBatteryPowerAC[i], 1., 1e-3) << "timestep " << i * 2 + j;
         }
         charge_total.emplace_back(batt->battery_model->charge_total());
     }
@@ -682,7 +682,7 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsACHourly_Charge)
         resilience.run_surviving_batteries(load[i], ac[i], 0, 0, 0, 0);
         batt->advance(vartab, ac[i], voltage, load[i], load[i]); // Critical load is 100% of the load
         charge_total.emplace_back(batt->battery_model->charge_total());
-        EXPECT_NEAR(batt->outBatteryPower[i], -0.5, 0.005) << "timestep " << i;
+        EXPECT_NEAR(batt->outBatteryPowerAC[i], -0.5, 0.005) << "timestep " << i;
     }
     std::vector<double> correct_charge_total = {16.61, 17.46, 18.32, 19.17, 20.02};
 

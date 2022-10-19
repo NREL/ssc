@@ -106,7 +106,8 @@ public:
 	double power_battery_to_load();
 	double power_grid_to_load();
 	double power_fuelcell_to_load();
-	double power_pv_to_batt();
+	double power_pv_to_batt_ac();
+	double power_pv_to_batt_dc();
 	double power_grid_to_batt();
 	double power_fuelcell_to_batt();
 	double power_pv_to_grid();

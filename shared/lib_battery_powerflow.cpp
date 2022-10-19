@@ -37,7 +37,7 @@ BatteryPower::BatteryPower(double dtHour) :
 		powerGrid(0),
 		powerGeneratedBySystem(0),
 		powerSystemToLoad(0),
-		powerSystemToBattery(0),
+		powerSystemToBatteryAC(0),
 		powerSystemToGrid(0),
 		powerSystemClipped(0),
 		powerClippedToBattery(0),
@@ -101,7 +101,7 @@ BatteryPower::BatteryPower(const BatteryPower& orig) {
     powerGrid = orig.powerGrid;
     powerGeneratedBySystem = orig.powerGeneratedBySystem;
     powerSystemToLoad = orig.powerSystemToLoad;
-    powerSystemToBattery = orig.powerSystemToBattery;
+    powerSystemToBatteryAC = orig.powerSystemToBatteryAC;
     powerSystemToGrid = orig.powerSystemToGrid;
     powerSystemClipped = orig.powerSystemClipped;
     powerClippedToBattery = orig.powerClippedToBattery;
@@ -184,7 +184,7 @@ void BatteryPower::reset()
 	powerSystemThroughSharedInverter = 0;
 	powerSystemClipped = 0;
 	powerPVInverterDraw = 0;
-	powerSystemToBattery = 0;
+	powerSystemToBatteryAC = 0;
 	powerSystemToGrid = 0;
 	powerSystemToLoad = 0;
     powerInterconnectionLoss = 0;
@@ -570,7 +570,8 @@ void BatteryPowerFlow::calculateACConnected()
 	m_BatteryPower->powerGrid = P_grid_ac;
 	m_BatteryPower->powerGeneratedBySystem = P_gen_ac;
 	m_BatteryPower->powerSystemToLoad = P_pv_to_load_ac;
-	m_BatteryPower->powerSystemToBattery = P_pv_to_batt_ac * m_BatteryPower->singlePointEfficiencyACToDC; // Convert to DC for output consistency
+	m_BatteryPower->powerSystemToBatteryAC = P_pv_to_batt_ac;
+    m_BatteryPower->powerSystemToBatteryDC = P_pv_to_batt_ac * m_BatteryPower->singlePointEfficiencyACToDC; // Convert to DC for output consistency
 	m_BatteryPower->powerSystemToGrid = P_pv_to_grid_ac;
 	m_BatteryPower->powerGridToBattery = P_grid_to_batt_ac;
 	m_BatteryPower->powerGridToLoad = P_grid_to_load_ac;
@@ -593,12 +594,12 @@ void BatteryPowerFlow::calculateDCConnected()
     double P_crit_load_ac = m_BatteryPower->powerCritLoad;
     double P_battery_ac, P_pv_ac, P_gen_ac, P_grid_to_batt_ac, 
         P_batt_to_load_ac, P_grid_to_load_ac, P_pv_to_load_ac,
-        P_pv_to_grid_ac, P_batt_to_grid_ac, P_grid_ac, P_conversion_loss_ac,
+        P_pv_to_grid_ac, P_pv_to_batt_ac, P_batt_to_grid_ac, P_grid_ac, P_conversion_loss_ac,
         P_interconnection_loss_ac, P_crit_load_unmet_ac, P_unmet_losses,
         P_batt_to_inverter_dc;
     P_battery_ac = P_pv_ac = P_gen_ac = P_grid_to_batt_ac =
         P_batt_to_load_ac = P_grid_to_load_ac = P_pv_to_load_ac =
-        P_pv_to_grid_ac = P_batt_to_grid_ac =  P_grid_ac = P_conversion_loss_ac =
+        P_pv_to_grid_ac = P_pv_to_batt_ac = P_batt_to_grid_ac =  P_grid_ac = P_conversion_loss_ac =
         P_interconnection_loss_ac = P_crit_load_unmet_ac = P_unmet_losses =
         P_batt_to_inverter_dc = 0;
 
@@ -755,13 +756,14 @@ void BatteryPowerFlow::calculateDCConnected()
 
         // In this case, we have a combo of Battery DC power from the PV array, and potentially AC power from the grid
         if (P_pv_to_batt_dc + P_grid_to_batt_ac > 0) {
-            P_battery_ac = -(P_pv_to_batt_dc + P_grid_to_batt_ac); // TODO: add eff when addressing https://github.com/NREL/ssc/issues/784
+            P_battery_ac = -(P_pv_to_batt_dc / efficiencyDCAC + P_grid_to_batt_ac);
         }
 
         if (fabs(P_battery_ac) < tolerance) {
             P_battery_ac = 0.0;
         }
 
+        P_pv_to_batt_ac = P_pv_to_batt_dc * efficiencyDCAC;
         P_battery_ac_post_loss = P_battery_ac;
     }
     else
@@ -927,11 +929,13 @@ void BatteryPowerFlow::calculateDCConnected()
         P_crit_load_unmet_ac = 0;
 
 	// assign outputs
+    m_BatteryPower->singlePointEfficiencyDCToAC = efficiencyDCAC;
 	m_BatteryPower->powerBatteryAC = P_battery_ac;
 	m_BatteryPower->powerGrid = P_grid_ac;
 	m_BatteryPower->powerGeneratedBySystem = P_gen_ac;
 	m_BatteryPower->powerSystemToLoad = P_pv_to_load_ac;
-	m_BatteryPower->powerSystemToBattery = P_pv_to_batt_dc;
+	m_BatteryPower->powerSystemToBatteryAC = P_pv_to_batt_ac;
+    m_BatteryPower->powerSystemToBatteryDC = P_pv_to_batt_dc;
 	m_BatteryPower->powerSystemToGrid = P_pv_to_grid_ac;
 	m_BatteryPower->powerGridToBattery = P_grid_to_batt_ac;
 	m_BatteryPower->powerGridToLoad = P_grid_to_load_ac;

@@ -173,11 +173,11 @@ bool dispatch_manual_t::check_constraints(double &I, size_t count)
 		}
 		// Don't let PV serve battery before load (decrease charging) when specified by chargeOnlySystemExceedLoad
 		else if (m_batteryPower->meterPosition == dispatch_t::BEHIND && I < 0 && m_batteryPower->powerGridToLoad > tolerance &&
-			m_batteryPower->powerSystemToBattery > 0 && m_batteryPower->chargeOnlySystemExceedLoad) {
+			m_batteryPower->powerSystemToBatteryAC > 0 && m_batteryPower->chargeOnlySystemExceedLoad) {
 
 			double dP = m_batteryPower->powerGridToLoad;
-			if (dP > m_batteryPower->powerSystemToBattery) {
-				dP = m_batteryPower->powerSystemToBattery;
+			if (dP > m_batteryPower->powerSystemToBatteryAC) {
+				dP = m_batteryPower->powerSystemToBatteryAC;
 			}
 
 			double dI = 0;
