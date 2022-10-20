@@ -497,18 +497,21 @@ var_info_invalid
 var_info vtab_adjustment_factors[] = {
 { SSC_INPUT,SSC_NUMBER  , "adjust:constant"                      , "Constant loss adjustment"                                       , "%"                                      , ""                                      , "Adjustment Factors"   , "*"              , "MAX=100"               , ""},
 { SSC_INPUT,SSC_ARRAY   , "adjust:hourly"                        , "Hourly Adjustment Factors"                                      , "%"                                      , ""                                      , "Adjustment Factors"   , "?"              , "LENGTH=8760"           , ""},
+{ SSC_INPUT,SSC_ARRAY   , "adjust:timeindex"                        , "Lifetime Adjustment Factors"                                      , "%"                                      , ""                                      , "Adjustment Factors"   , "?"              , "LENGTH=8760"           , ""},
 { SSC_INPUT,SSC_MATRIX  , "adjust:periods"                       , "Period-based Adjustment Factors"                                , "%"                                      , "n x 3 matrix [ start, end, loss ]"     , "Adjustment Factors"   , "?"              , "COLS=3"                , ""},
 var_info_invalid };
 
 var_info vtab_dc_adjustment_factors[] = {
 { SSC_INPUT,SSC_NUMBER  , "dc_adjust:constant"                   , "DC Constant loss adjustment"                                    , "%"                                      , ""                                      , "Adjustment Factors"   , "*"               , "MAX=100"               , ""},
 { SSC_INPUT,SSC_ARRAY   , "dc_adjust:hourly"                     , "DC Hourly Adjustment Factors"                                   , "%"                                      , ""                                      , "Adjustment Factors"   , "?"               , "LENGTH=8760"           , ""},
+{ SSC_INPUT,SSC_ARRAY   , "dc_adjust:timeindex"                        , "DC Lifetime Adjustment Factors"                                      , "%"                                      , ""                                      , "Adjustment Factors"   , "?"              , "LENGTH=8760"           , ""},
 { SSC_INPUT,SSC_MATRIX  , "dc_adjust:periods"                    , "DC Period-based Adjustment Factors"                             , "%"                                      , "n x 3 matrix [ start, end, loss ]"     , "Adjustment Factors"   , "?"               , "COLS=3"                , ""},
 var_info_invalid };
 
 var_info vtab_sf_adjustment_factors[] = {
 { SSC_INPUT,SSC_NUMBER  , "sf_adjust:constant"                   , "SF Constant loss adjustment"                                    , "%"                                      , ""                                      , "Adjustment Factors"   , "*"              , "MAX=100"               , ""},
 { SSC_INPUT,SSC_ARRAY   , "sf_adjust:hourly"                     , "SF Hourly Adjustment Factors"                                   , "%"                                      , ""                                      , "Adjustment Factors"   , "?"              , "LENGTH=8760"           , ""},
+{ SSC_INPUT,SSC_ARRAY   , "sf_adjust:timeindex"                        , "SF Lifetime Adjustment Factors"                                      , "%"                                      , ""                                      , "Adjustment Factors"   , "?"              , "LENGTH=8760"           , ""},
 { SSC_INPUT,SSC_MATRIX  , "sf_adjust:periods"                    , "SF Period-based Adjustment Factors"                             , "%"                                      , "n x 3 matrix [ start, end, loss ]"     , "Adjustment Factors"   , "?"              , "COLS=3"                , ""},
 var_info_invalid };
 
@@ -983,33 +986,97 @@ adjustment_factors::adjustment_factors( compute_module *cm, const std::string &p
 }
 
 //adjustment factors changed from derates to percentages jmf 1/9/15
-bool adjustment_factors::setup(int nsteps) //nsteps is set to 8760 in this declaration function in common.h
+bool adjustment_factors::setup(int nsteps, int analysis_period) //nsteps is set to 8760 in this declaration function in common.h
 {
 	ssc_number_t f = m_cm->as_number( m_prefix + ":constant" );
 	f = 1.0 - f / 100.0; //convert from percentage to factor
-	m_factors.resize( nsteps, f );
+	m_factors.resize( nsteps * analysis_period, f);
 
 	if ( m_cm->is_assigned(m_prefix + ":hourly") )
 	{
 		size_t n;
 		ssc_number_t *p = m_cm->as_array( m_prefix + ":hourly", &n );
-		if ( p != 0 && n == (size_t)nsteps )
+		if ( p != 0 && n == 8760 )
 		{
-			for( int i=0;i<nsteps;i++ )
+			for( int i=0;i<8760;i++ )
 				m_factors[i] *= (1.0 - p[i]/100.0); //convert from percentages to factors
 		}
+        else {
+            m_error = util::format("Hourly loss factor array length %d does not equal length of weather file %d", (int)n, nsteps);
+        }
 	}
+
+    if (m_cm->is_assigned(m_prefix + ":timeindex"))
+    {
+        size_t n;
+        int steps_per_hour = nsteps / 8760;
+        int month = 0;
+        int day = 0;
+        int week = 0;
+        ssc_number_t* p = m_cm->as_array(m_prefix + ":timeindex", &n);
+        if (p != 0) {
+            if (n == 1) {
+                for (int a = 0; a < analysis_period; a++) {
+                    for (int i = 0; i < nsteps; i++)
+                        m_factors[nsteps * a + i] *= (1.0 - p[0]/100.0); //input as factors not percentage
+                }
+            }
+            else if (n == nsteps * analysis_period) { //Hourly or subhourly
+                for (int a = 0; a < analysis_period; a++) {
+                    for (int i = 0; i < nsteps; i++)
+                        m_factors[nsteps * a + i] *= (1.0 - p[a*nsteps + i]/100.0); //convert from percentages to factors
+                }
+            }
+            else if (n % 12 == 0) { //Monthly 
+                for (int a = 0; a < analysis_period; a++) {
+                    for (int i = 0; i < nsteps; i++) {
+                        month = util::month_of(int(i / steps_per_hour))-1;
+                        m_factors[nsteps*a + i] *= (1.0 - p[a * 12 + month]/100.0); //input as factors not percentage
+                    }
+
+                }
+            }
+            else if (n % 365 == 0) { //Daily
+                for (int a = 0; a < analysis_period; a++) {
+                    for (int i = 0; i < nsteps; i++) {
+                        day = util::day_of(int(i / steps_per_hour));
+                        m_factors[nsteps*a + i] *= (1.0 - p[a * 365 + day]/100.0); //input as factors not percentage
+                    }
+
+                }
+            }
+            else if (n % 52 == 0) { //Weekly
+                for (int a = 0; a < analysis_period; a++) {
+                    for (int i = 0; i < nsteps; i++) {
+                        week = util::week_of(int(i / steps_per_hour));
+                        m_factors[nsteps*a + i] *= (1.0 - p[a * 52 + week]/100.0); //input as factors not percentage
+                    }
+
+                }
+            }
+            else if (n == analysis_period) { //Annual
+                for (int a = 0; a < analysis_period; a++) {
+                    for (int i = 0; i < nsteps; i++)
+                        m_factors[nsteps * a + i] *= (1.0 - p[a]/100.0); //input as factors not percentage
+                }
+            }
+            else {
+                m_error = util::format("Error with lifetime loss data inputs");
+            }
+        }
+    }
 
 	if ( m_cm->is_assigned(m_prefix + ":periods") )
 	{
 		size_t nr, nc;
 		ssc_number_t *mat = m_cm->as_matrix(m_prefix + ":periods", &nr, &nc);
+        double ts_mult = nsteps / 8760.0;
 		if ( mat != 0 && nc == 3 )
 		{
 			for( size_t r=0;r<nr;r++ )
 			{
-				int start = (int) mat[ nc*r ];
-				int end = (int) mat[ nc*r + 1 ];
+				int start = (int) round(mat[ nc*r ] * ts_mult);
+				int end = (int) round(mat[ nc*r + 1 ] * ts_mult);
 				ssc_number_t factor =  mat[ nc*r + 2 ];
 
 				if ( start < 0 || start >= nsteps || end < start )
@@ -1020,8 +1087,10 @@ bool adjustment_factors::setup(int nsteps) //nsteps is set to 8760 in this decla
 
 				if ( end >= nsteps ) end = nsteps-1;
 
-				for( int i=start;i<=end;i++ )
-					m_factors[i] *= (1.0 - factor/100.0); //convert from percentages to factors
+                for (int a = 0; a < analysis_period; a++) {
+				    for( int i=start;i<=end;i++ )
+					    m_factors[a * nsteps + i] *= (1.0 - factor/100.0); //convert from percentages to factors
+                }
 			}
 		}
 	}
