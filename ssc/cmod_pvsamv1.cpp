@@ -31,13 +31,13 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#define SHADE_DB_OUTPUTS
 
 static var_info _cm_vtab_pvsamv1[] = {
-        /*   VARTYPE            DATATYPE         NAME                                            LABEL                                                   UNITS      META                             GROUP                  REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
+      /*VARTYPE     DATATYPE      NAME                                    LABEL                                                  UNITS     META                             GROUP                  REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
         {SSC_INPUT, SSC_STRING,   "solar_resource_file",                  "Weather file in TMY2, TMY3, EPW, or SAM CSV",         "",       "",                                                                                                                                                                                      "Solar Resource",                                        "?",                                  "",                    "" },
         {SSC_INPUT, SSC_TABLE,    "solar_resource_data",                  "Weather data",                                        "",       "lat,lon,tz,elev,year,month,hour,minute,gh,dn,df,poa,tdry,twet,tdew,rhum,pres,snow,alb,aod,wspd,wdir",                                                                                   "Solar Resource",                                        "?",                                  "",                    "" },
 
         // transformer model percent of rated ac output
-        {SSC_INPUT, SSC_NUMBER,   "transformer_no_load_loss",             "Power transformer no load loss",                      "%",      "",                                                                                                                                                                                      "Losses",                                                "?=0",                                "",                    "" },
-        {SSC_INPUT, SSC_NUMBER,   "transformer_load_loss",                "Power transformer load loss",                         "%",      "",                                                                                                                                                                                      "Losses",                                                "?=0",                                "",                    "" },
+        {SSC_INPUT, SSC_NUMBER,   "transformer_no_load_loss",             "Power transformer no load loss",                      "%",      "percent of inverter AC capacity",                                                                                                                                                                                      "Losses",                                                "?=0",                                "",                    "" },
+        {SSC_INPUT, SSC_NUMBER,   "transformer_load_loss",                "Power transformer load loss",                         "%",      "percent of AC output",                                                                                                                                                                                      "Losses",                                                "?=0",                                "",                    "" },
 
             // optional for lifetime analysis
         {SSC_INPUT, SSC_NUMBER,   "system_use_lifetime_output",           "PV lifetime simulation",                              "0/1",    "",                                                                                                                                                                                      "Lifetime",                                              "?=0",                                "INTEGER,MIN=0,MAX=1", "" },
@@ -124,8 +124,8 @@ static var_info _cm_vtab_pvsamv1[] = {
 
         //losses that are applied uniformly to all subarrays
         {SSC_INPUT, SSC_NUMBER,   "dcoptimizer_loss",                     "DC power optimizer loss",                             "%",      "",                                                                                                                                                                                      "Losses",                                                "*",                                  "MIN=0,MAX=100",       "" },
-        {SSC_INPUT, SSC_NUMBER,   "acwiring_loss",                        "AC wiring loss",                                      "%",      "",                                                                                                                                                                                      "Losses",                                                "*",                                  "MIN=0,MAX=100",       "" },
-        {SSC_INPUT, SSC_NUMBER,   "transmission_loss",                    "Transmission loss",                                   "%",      "",                                                                                                                                                                                      "Losses",                                                "*",                                  "MIN=0,MAX=100",       "" },
+        {SSC_INPUT, SSC_NUMBER,   "acwiring_loss",                        "AC wiring loss",                                      "%",      "percent of inverter AC output",                                                                                                                                                                                      "Losses",                                                "*",                                  "MIN=0,MAX=100",       "" },
+        {SSC_INPUT, SSC_NUMBER,   "transmission_loss",                    "Transmission loss",                                   "%",      "percent of AC output after transformer losses",                                                                                                                                                                                      "Losses",                                                "*",                                  "MIN=0,MAX=100",       "" },
 
         //system design inputs
         {SSC_INPUT, SSC_NUMBER,   "subarray1_mod_orient",                 "Sub-array 1 Module orientation",                      "0/1",    "0=portrait,1=landscape",                                                                                                                                                                "Layout",                                                "*",                                  "INTEGER,MIN=0,MAX=1", "" },
@@ -1094,13 +1094,15 @@ void cm_pvsamv1::exec()
     std::vector<ssc_number_t> p_load_forecast_full; // Reserve within an en_batt call, below
 
     //dc hourly adjustment factors
+    int nyears_haf = nyears;
+    if (!system_use_lifetime_output) nyears_haf = 1;
     adjustment_factors dc_haf(this, "dc_adjust");
-    if (!dc_haf.setup())
+    if (!dc_haf.setup((int)nrec, nyears_haf))
         throw exec_error("pvsamv1", "failed to setup DC adjustment factors: " + dc_haf.error());
 
     // hourly adjustment factors
     adjustment_factors haf(this, "adjust");
-    if (!haf.setup())
+    if (!haf.setup((int)nrec, nyears_haf))
         throw exec_error("pvsamv1", "failed to setup AC adjustment factors: " + haf.error());
 
     // clipping losses for battery dispatch
@@ -1844,6 +1846,18 @@ void cm_pvsamv1::exec()
                         // copy data to output variables
                         std::copy(ipoa_rear_output.begin(), ipoa_rear_output.end(), PVSystem->p_poaRearSpatial[nn] + (idx + 1) * ipoa_rear_output.size());  // +1 for column label row
                         std::copy(ignd_rear_output.begin(), ignd_rear_output.end(), PVSystem->p_groundRear[nn] + (idx + 1) * ignd_rear_output.size());      // +1 for column label row
+
+                        // If using spatial albedos, repeat the above
+                        if (Irradiance->useSpatialAlbedos) {
+                            if (idx == 0) {
+                                // add column labels to output (first row), (same as ground rear irradiance)
+                                std::copy(PVSystem->p_groundRear[nn], PVSystem->p_groundRear[nn] + ignd_rear[nn].size() + 1,
+                                    Irradiance->p_weatherFileAlbedoSpatial);
+                            }
+                            std::vector<double> ialb_rear_output(alb_spatial);
+                            ialb_rear_output.insert(ialb_rear_output.begin(), static_cast<double>(idx));    // add row labels (first column)
+                            std::copy(ialb_rear_output.begin(), ialb_rear_output.end(), Irradiance->p_weatherFileAlbedoSpatial + (idx + 1) * ialb_rear_output.size());      // +1 for column label row
+                        }
                     }
                 }
 
@@ -2226,8 +2240,8 @@ void cm_pvsamv1::exec()
                     dcPowerNetPerSubarray[nn] *= PVSystem->dcDegradationFactor[iyear];
 
                 //dc adjustment factors apply to all subarrays
-                if (iyear == 0) annual_dc_adjust_loss += dcPowerNetPerSubarray[nn] * (1 - dc_haf(hour_of_year)) * util::watt_to_kilowatt * ts_hour; //only keep track of this loss for year 0, convert from power W to energy kWh
-                dcPowerNetPerSubarray[nn] *= dc_haf(hour_of_year);
+                if (iyear == 0) annual_dc_adjust_loss += dcPowerNetPerSubarray[nn] * (1 - dc_haf(iyear * nrec + inrec)) * util::watt_to_kilowatt * ts_hour; //only keep track of this loss for year 0, convert from power W to energy kWh
+                dcPowerNetPerSubarray[nn] *= dc_haf(iyear * nrec + inrec);
 
                 //lifetime daily DC losses apply to all subarrays and should be applied last. Only applied if they are enabled.
                 if (PVSystem->enableDCLifetimeLosses)
@@ -2261,12 +2275,7 @@ void cm_pvsamv1::exec()
                 Irradiance->p_sunAzimuthAngle[idx] = (ssc_number_t)solazi;
                 Irradiance->p_absoluteAirmass[idx] = sunup > 0 ? (ssc_number_t)(exp(-0.0001184 * hdr.elev) / (cos(solzen * 3.1415926 / 180) + 0.5057 * pow(96.080 - solzen, -1.634))) : 0.0f;
                 Irradiance->p_sunUpOverHorizon[idx] = (ssc_number_t)sunup;
-                if (Irradiance->useSpatialAlbedos) {
-                    if (idx < Simulation->numberOfWeatherFileRecords) {         // limit to single year
-                        std::copy(alb_spatial.begin(), alb_spatial.end(), Irradiance->p_weatherFileAlbedoSpatial + idx * alb_spatial.size());
-                    }
-                }
-                else {
+                if (!Irradiance->useSpatialAlbedos) {
                     Irradiance->p_weatherFileAlbedo[idx] = (ssc_number_t)alb;
                 }
             }
@@ -2427,7 +2436,7 @@ void cm_pvsamv1::exec()
                 ssc_number_t dc_loss_post_inverter = 1 - delivered_percent;
                 delivered_percent = 1; // Re-use variable for post batt losses
 
-                ssc_number_t adj_factor = haf(hour_of_year);
+                ssc_number_t adj_factor = haf(iyear * nrec + inrec);
                 delivered_percent *= adj_factor;
                 if (system_use_lifetime_output && PVSystem->enableACLifetimeLosses) {
                     int ac_loss_index = (int)iyear * 365 + (int)floor(hour_of_year / 24); //in units of days
@@ -2624,7 +2633,7 @@ void cm_pvsamv1::exec()
                 annual_energy_pre_battery += PVSystem->p_systemACPower[idx] * ts_hour;
 
             // Compute AC loss percent for AC connected batteries
-            ssc_number_t adj_factor = haf(hour_of_year);
+            ssc_number_t adj_factor = haf(iyear* nrec + inrec);
 
             if (en_batt && batt_topology == ChargeController::AC_CONNECTED)
             {
@@ -3191,13 +3200,13 @@ double cm_pvsamv1::intraElecMismatch(double irrad_front_avg /*W/m2*/, std::vecto
 
     double mean_abs_diff = sum_of_deviations / ( pow(irrad_total.size(), 2) * irrad_total_avg ) * 100.;         // [%] Eqn. 4
     double mismatch_loss_fit3 = 0.054 * mean_abs_diff + 0.068 * pow(mean_abs_diff, 2);                          // [%] Eqn. 12
-    double mismatch_factor = mismatch_loss_fit3 * (fill_factor_stc / kFillFactorReference);                     // [%] Eqn. 7
+    double mismatch_factor = std::min(10., mismatch_loss_fit3 * (fill_factor_stc / kFillFactorReference));      // [%] Eqn. 7, limited to 10% max
 
     double irrad_back_avg = std::accumulate(irrad_back.begin(), irrad_back.end(), 0.) / irrad_back.size();
     double bifacial_irrad_gain = irrad_back_avg * bifaciality / irrad_front_avg * 100.;                         // [%] Eqn. 5
     double loss_factor;
     if (bifacial_irrad_gain != 0) {
-        loss_factor = mismatch_factor * (1 + 100. / bifacial_irrad_gain);                                       // [%] Eqn. 15
+        loss_factor = std::max(0., mismatch_factor * (1 + 100. / bifacial_irrad_gain));                         // [%] Eqn. 15
     }
     else {
         loss_factor = 0.;

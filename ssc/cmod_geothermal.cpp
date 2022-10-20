@@ -488,11 +488,14 @@ public:
 
 			// TODO - implement performance factors 
 			adjustment_factors haf(this, "adjust");
-			if (!haf.setup())
+			if (!haf.setup(8760, geo_inputs.mi_ProjectLifeYears))
 				throw exec_error("geothermal", "failed to setup adjustment factors: " + haf.error());
-            double haf_input[8760];
-            for (int i = 0; i < 8760; i++)
-                haf_input[i] = haf(i);
+            std::vector<double> haf_input;
+            haf_input.resize(8760 * geo_inputs.mi_ProjectLifeYears);
+            for (int a = 0; a < geo_inputs.mi_ProjectLifeYears; a++) {
+                for (int i = 0; i < 8760; i++)
+                    haf_input[int(a * 8760 + i)] = haf(a * 8760 + i);
+            }
             geo_inputs.haf = haf_input;
 
 			// running

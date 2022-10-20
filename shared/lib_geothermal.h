@@ -127,7 +127,7 @@ struct SGeothermal_Inputs
 
 	const char * mc_WeatherFileName;
 	int * mia_tou;											// time of use array
-    double* haf;                                            // adjustment factor array
+    std::vector<double> haf;                                            // adjustment factor array
 };
 
 struct SGeothermal_Outputs

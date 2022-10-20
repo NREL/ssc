@@ -85,7 +85,7 @@ protected:
 	int geothermal_analysis_period;
 	int resource_potential;
 	int tou[8760];
-    double haf_inputs[8760];
+    std::vector<double> haf_inputs;
     double inj_casing_size;
     int inj_well_type;
     int prod_well_type;
@@ -147,8 +147,11 @@ public:
 		fracture_angle = 15;
 		geothermal_analysis_period = 30;
 		resource_potential = 210;
-        for (int i = 0; i < 8760; i++) {
-            haf_inputs[i] = 0.0;
+        haf_inputs.resize(geothermal_analysis_period * 8760);
+        for (int a = 0; a < geothermal_analysis_period; a++) {
+            for (int i = 0; i < 8760; i++) {
+                haf_inputs[a * 8760 + i] = 0.0;
+            }
         }
 		
 		//Following block intializes all 4 Structs (to default values in SAM 2018.11.11) that are used
