@@ -54,6 +54,20 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, DefaultNoFinancialModel) {
     }
 }
 
+TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, DefaultNoFinancialModel_Lac) {
+
+
+    std::map<std::string, double> pairs;
+    pairs["cec_temp_corr_mode"] = 1;
+    pairs["cec_lacunarity_length"] = 1;
+    pairs["cec_lacunarity_h"] = 1;
+    pairs["cec_ground_clearance_height"] = 0.5;
+    int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+
+    EXPECT_FALSE(pvsam_errors);
+    
+}
+
 /// Run PVSAMv1 with all defaults and lifetime mode for no-financial model
 TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, DefaultLifetimeNoFinancialModel) {
 
