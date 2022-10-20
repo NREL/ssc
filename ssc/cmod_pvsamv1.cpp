@@ -2156,8 +2156,14 @@ void cm_pvsamv1::exec()
                     Subarrays[nn]->Module->dcPowerW = out[nn].Power;
                     Subarrays[nn]->Module->dcEfficiency = out[nn].Efficiency * 100;
                     Subarrays[nn]->Module->dcVoltage = out[nn].Voltage;
-                    Subarrays[nn]->Module->temperatureCellCelcius = out[nn].CellTemp;
-                    Subarrays[nn]->Module->temperatureCellCelciusSS = tcellSS;
+                    if (use_measured_temp) {
+                        Subarrays[nn]->Module->temperatureCellCelcius = measured_temp[inrec];
+                        Subarrays[nn]->Module->temperatureCellCelciusSS = measured_temp[inrec];
+                    }
+                    else {
+                        Subarrays[nn]->Module->temperatureCellCelcius = out[nn].CellTemp;
+                        Subarrays[nn]->Module->temperatureCellCelciusSS = tcellSS;
+                    }
                     Subarrays[nn]->Module->currentShortCircuit = out[nn].Isc_oper;
                     Subarrays[nn]->Module->voltageOpenCircuit = out[nn].Voc_oper;
                     Subarrays[nn]->Module->angleOfIncidenceModifier = out[nn].AOIModifier;
