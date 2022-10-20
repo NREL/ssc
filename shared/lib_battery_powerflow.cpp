@@ -768,7 +768,7 @@ void BatteryPowerFlow::calculateDCConnected()
             P_battery_ac = 0.0;
         }
 
-        P_pv_to_batt_ac = P_pv_to_batt_dc * efficiencyDCAC;
+        P_pv_to_batt_ac = P_pv_to_batt_dc / m_BatteryPower->singlePointEfficiencyDCToDC / efficiencyDCAC;
         P_battery_ac_post_loss = P_battery_ac;
     }
     else
