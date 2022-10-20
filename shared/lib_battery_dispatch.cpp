@@ -189,7 +189,7 @@ bool dispatch_t::check_constraints(double& I, size_t count)
     // Error checking for battery charging
     double power_to_batt = m_batteryPower->powerBatteryDC;
 	if (m_batteryPower->connectionMode == dispatch_t::DC_CONNECTED){
-	    power_to_batt = -(m_batteryPower->powerSystemToBatteryAC + m_batteryPower->powerFuelCellToBattery * m_batteryPower->singlePointEfficiencyACToDC); // System to batt in DC, convert fuel cell
+	    power_to_batt = -(m_batteryPower->powerSystemToBatteryDC + m_batteryPower->powerFuelCellToBattery * m_batteryPower->singlePointEfficiencyACToDC); // System to batt in DC, convert fuel cell
 	    if (m_batteryPower->sharedInverter->powerDC_kW < 0)
 	        power_to_batt += m_batteryPower->sharedInverter->powerDC_kW;    // charging from grid
 	    power_to_batt *= m_batteryPower->singlePointEfficiencyDCToDC;
@@ -198,7 +198,7 @@ bool dispatch_t::check_constraints(double& I, size_t count)
 	else {
 	    power_to_batt = -(m_batteryPower->powerGridToBattery + m_batteryPower->powerFuelCellToBattery); // AC components
 	    power_to_batt *= m_batteryPower->singlePointEfficiencyACToDC;
-        power_to_batt -= m_batteryPower->powerSystemToBatteryAC; // system to batt is in DC
+        power_to_batt -= m_batteryPower->powerSystemToBatteryDC;
     }
 
     if (m_batteryPower->powerBatteryTarget < 0 && abs(power_to_batt - m_batteryPower->powerBatteryTarget) > 0.005 * fabs(power_to_batt)) {
@@ -845,20 +845,20 @@ bool dispatch_automatic_t::check_constraints(double& I, size_t count)
                     _Battery->SOC() < m_batteryPower->stateOfChargeMax - tolerance && fabs(I) < fabs(m_batteryPower->currentChargeMax))
 			{
 				if (fabs(m_batteryPower->powerBatteryAC) < tolerance)
-					I -= (m_batteryPower->powerSystemToGrid  * util::kilowatt_to_watt / _Battery->V()); //AC/DC issue
+					I -= (m_batteryPower->powerSystemToGrid / m_batteryPower->singlePointEfficiencyDCToAC * util::kilowatt_to_watt / _Battery->V());
 				else
-					I -= (m_batteryPower->powerSystemToGrid  / fabs(m_batteryPower->powerBatteryAC)) *fabs(I); //AC/DC issue
+					I -= (m_batteryPower->powerSystemToGrid  / fabs(m_batteryPower->powerBatteryAC)) *fabs(I);
 			}
 			// Don't let battery export to the grid if behind the meter
 			else if (m_batteryPower->powerBatteryToGrid > tolerance && !m_batteryPower->canDischargeToGrid)
 			{
                 if (fabs(m_batteryPower->powerBatteryAC) < tolerance) {
-                    I -= (m_batteryPower->powerBatteryToGrid * util::kilowatt_to_watt / _Battery->V()); //AC/DC issue
+                    I -= (m_batteryPower->powerBatteryToGrid / m_batteryPower->singlePointEfficiencyDCToAC * util::kilowatt_to_watt / _Battery->V());
                 }
                 else {
-                    I -= (m_batteryPower->powerBatteryToGrid / fabs(m_batteryPower->powerBatteryAC)) * fabs(I); //AC/DC issue
+                    I -= (m_batteryPower->powerBatteryToGrid / fabs(m_batteryPower->powerBatteryAC)) * fabs(I); 
                 }
-                m_batteryPower->powerBatteryTarget -= m_batteryPower->powerBatteryToGrid; //AC/DC issue
+                m_batteryPower->powerBatteryTarget -= m_batteryPower->powerBatteryToGrid / m_batteryPower->singlePointEfficiencyDCToAC;
                 m_batteryPower->powerBatteryAC -= m_batteryPower->powerBatteryToGrid; // Target was too large given PV, reduce
 			}
 			else
