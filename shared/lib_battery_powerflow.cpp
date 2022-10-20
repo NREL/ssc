@@ -709,22 +709,27 @@ void BatteryPowerFlow::calculateDCConnected()
 
         // convert the DC power to AC
         m_BatteryPower->sharedInverter->calculateACPower(P_gen_dc_inverter, voltage, m_BatteryPower->sharedInverter->Tdry_C);
-        efficiencyDCAC = m_BatteryPower->sharedInverter->efficiencyAC * 0.01;
 
+        // Only update inverter efficiency if the inverter is running. Otherwise use max efficency from above
+        if (m_BatteryPower->sharedInverter->powerAC_kW > 0.0) {
+            
+            efficiencyDCAC = m_BatteryPower->sharedInverter->efficiencyAC * 0.01;
 
-        // Restrict low efficiency so don't get infinites - can sometimes have PV charging scenarios where inverter isn't running
-        if (efficiencyDCAC <= 0.05) {
-            efficiencyDCAC = 0.05;
+            // Restrict low efficiency so don't get infinites - can sometimes have PV charging scenarios where inverter isn't running
+            if (efficiencyDCAC <= 0.05 && (P_grid_to_batt_dc > 0 || P_pv_to_inverter_dc > 0)) {
+                efficiencyDCAC = 0.05;
+            }
+
+            // This is a traditional DC/AC efficiency loss
+            if (P_gen_dc_inverter > 0) {
+                m_BatteryPower->sharedInverter->powerAC_kW = P_gen_dc_inverter * efficiencyDCAC;
+            }
+            // if we are charging from grid, then we actually care about the amount of grid power it took to achieve the DC value
+            else {
+                m_BatteryPower->sharedInverter->powerAC_kW = P_gen_dc_inverter / efficiencyDCAC;
+            }
+            m_BatteryPower->sharedInverter->efficiencyAC = efficiencyDCAC * 100;
         }
-        // This is a traditional DC/AC efficiency loss
-        if (P_gen_dc_inverter > 0) {
-            m_BatteryPower->sharedInverter->powerAC_kW = P_gen_dc_inverter * efficiencyDCAC;
-        }
-        // if we are charging from grid, then we actually care about the amount of grid power it took to achieve the DC value
-        else {
-            m_BatteryPower->sharedInverter->powerAC_kW = P_gen_dc_inverter / efficiencyDCAC;
-        }
-        m_BatteryPower->sharedInverter->efficiencyAC = efficiencyDCAC * 100;
 
         // Compute the AC quantities
         P_gen_ac = m_BatteryPower->sharedInverter->powerAC_kW; // Gen will have ac losses applied elsewhere
