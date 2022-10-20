@@ -1147,7 +1147,7 @@ double CGeothermalAnalyzer::InjectionTemperatureC() // calculate injection tempe
 	// These are the calculations done at the bottom of [10B.GeoFluid] with the result in D89
 
 	// this is used in pump Power calculations, and in EGS energy produciton calculations
-	if ((GetTemperaturePlantDesignC() != GetResourceTemperatureC()) && ((me_makeup == MA_BINARY) || (me_makeup == MA_FLASH)))
+	if ((GetTemperaturePlantDesignC() != GetResourceTemperatureC()) && (mo_geo_in.me_rt != EGS))
 	{
 		ms_ErrorString = ("Resource temperature was not equal to plant design temp in non-EGS analysis in CGeoHourlyBaseInputs::InjectionTemperatureC");
 		return 0;
