@@ -285,7 +285,7 @@ void Irradiance_IO::AllocateOutputs(compute_module* cm)
     p_weatherFileWindSpeed = cm->allocate("wspd", numberOfWeatherFileRecords);
     p_weatherFileAmbientTemp = cm->allocate("tdry", numberOfWeatherFileRecords);
     if (useSpatialAlbedos) {
-        p_weatherFileAlbedoSpatial = cm->allocate("alb_spatial", weatherDataProvider->nrecords(), userSpecifiedMonthlySpatialAlbedos.ncols());
+        p_weatherFileAlbedoSpatial = cm->allocate("alb_spatial", weatherDataProvider->nrecords() + 1, userSpecifiedMonthlySpatialAlbedos.ncols() + 1);     // +1 for row/col labels
     }
     else {
         p_weatherFileAlbedo = cm->allocate("alb", numberOfWeatherFileRecords);
