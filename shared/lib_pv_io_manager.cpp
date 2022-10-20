@@ -262,25 +262,12 @@ void Irradiance_IO::checkWeatherFile(compute_module* cm, std::string cmName)
                 weatherRecord.poa, weatherRecord.year, weatherRecord.month, weatherRecord.day, weatherRecord.hour, weatherRecord.minute), SSC_WARNING, (float)idx);
             weatherRecord.poa = 0;
         }
-
-        // weather file albedo error: if use weather file albedo enabled and weather file albedo and monthly albedo are both invalid
-        // monthly albedo error: if use weather file albedo not enabled and monthly albedo is invalid
-        int month_idx = weatherRecord.month - 1;
-        bool wf_albedo_invalid = (!std::isfinite(weatherRecord.alb) && (weatherRecord.alb <= 0 || weatherRecord.alb >= 1));
-        bool monthly_albedo_invalid = (userSpecifiedMonthlyAlbedo[month_idx] <= 0 || userSpecifiedMonthlyAlbedo[month_idx] >= 1);
-        if ( useWeatherFileAlbedo && wf_albedo_invalid && monthly_albedo_invalid)
-                throw exec_error(cmName,
-                    util::format("Invalid albedo %lg in weather file at time [y:%d m:%d d:%d h:%d minute:%lg] and invalid albedo %lg in monthly albedo array for month index %ld.. Albedo must be greater than zero and less than one.",
-                    weatherRecord.alb, weatherRecord.year, weatherRecord.month, weatherRecord.day, weatherRecord.hour, weatherRecord.minute, userSpecifiedMonthlyAlbedo[month_idx], month_idx));
-        if ( useWeatherFileAlbedo && wf_albedo_invalid && !monthly_albedo_invalid)
-                throw exec_error(cmName,
-                    util::format("Invalid albedo %lg in weather file at time [y:%d m:%d d:%d h:%d minute:%lg]. Albedo must be greater than zero and less than one.",
-                    weatherRecord.alb, weatherRecord.year, weatherRecord.month, weatherRecord.day, weatherRecord.hour, weatherRecord.minute));
-        if ( !useWeatherFileAlbedo && (month_idx >= 0 && month_idx < 12) && monthly_albedo_invalid )
-            throw exec_error(cmName,
-                util::format("Invalid albedo %lg in monthly albedo array for month index %ld. Albedo must be greater than zero and less than one.",
-                userSpecifiedMonthlyAlbedo[month_idx], month_idx));
-
+        if (useWeatherFileAlbedo && (weatherRecord.alb <= 0 || weatherRecord.alb >= 1))
+        {
+            cm->log(util::format("Out of range albedo %lg at time [y:%d m:%d d:%d h:%d minute:%lg], using monthly value",
+                weatherRecord.alb, weatherRecord.year, weatherRecord.month, weatherRecord.day, weatherRecord.hour, weatherRecord.minute), SSC_WARNING, (float)idx);
+            weatherRecord.alb = 0;
+        }
     }
     weatherDataProvider->rewind();
 }
@@ -298,7 +285,7 @@ void Irradiance_IO::AllocateOutputs(compute_module* cm)
     p_weatherFileWindSpeed = cm->allocate("wspd", numberOfWeatherFileRecords);
     p_weatherFileAmbientTemp = cm->allocate("tdry", numberOfWeatherFileRecords);
     if (useSpatialAlbedos) {
-        p_weatherFileAlbedoSpatial = cm->allocate("alb_spatial", weatherDataProvider->nrecords(), userSpecifiedMonthlySpatialAlbedos.ncols());
+        p_weatherFileAlbedoSpatial = cm->allocate("alb_spatial", weatherDataProvider->nrecords() + 1, userSpecifiedMonthlySpatialAlbedos.ncols() + 1);     // +1 for row/col labels
     }
     else {
         p_weatherFileAlbedo = cm->allocate("alb", numberOfWeatherFileRecords);

@@ -227,9 +227,7 @@ public:
 
 		assign( "ts_shift_hours", var_data( (ssc_number_t)ts_shift_hours ) );
 
-		adjustment_factors haf( this, "adjust" );
-		if ( !haf.setup() )
-			throw exec_error("swh", "failed to setup adjustment factors: " + haf.error() );
+		
 
 
 		shading_factor_calculator shad;
@@ -325,6 +323,10 @@ public:
 
 		double ts_hour = 1.0/step_per_hour;
 		double ts_sec = 3600.0/step_per_hour;
+
+        adjustment_factors haf( this, "adjust" );
+		if ( !haf.setup(nrec) )
+			throw exec_error("swh", "failed to setup adjustment factors: " + haf.error() );
 
 		ssc_number_t *Beam = allocate("beam", nrec);
 		ssc_number_t *Diffuse = allocate("diffuse", nrec);

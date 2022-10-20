@@ -117,6 +117,17 @@ public:
 };
 
 
+class check_financial_metrics
+{
+private:
+    compute_module* m_cm;
+
+public:
+    void check_irr(compute_module* cm, ssc_number_t& irr);
+    void check_irr_flip(compute_module* cm, ssc_number_t& irr);
+    void check_npv(compute_module* cm, ssc_number_t& npv_metric);
+    void check_debt_percentage(compute_module* cm, ssc_number_t& debt_percentage);
+};
 
 
 /*

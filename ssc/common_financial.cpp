@@ -3297,6 +3297,38 @@ void hourly_energy_calculation::sum_ts_to_hourly(ssc_number_t* timestep_power, s
     }
 }
 
+void check_financial_metrics::check_irr(compute_module* cm, ssc_number_t& irr)
+{
+    if (isnan(irr))
+        cm->log("IRR at end of analysis period is not a number (NaN). This can indicate that revenues are too low to cover costs, or that they are excessively high compared to costs.", SSC_WARNING);
+    if (irr > 50.0)
+        cm->log(util::format("IRR at end of analysis period is %lg%%. A high IRR may indicate a project with unrealistically high returns.", irr), SSC_WARNING);
+}
+
+void check_financial_metrics::check_irr_flip(compute_module* cm, ssc_number_t& irr)
+{
+    if (isnan(irr))
+        cm->log("IRR in target year is not a number (NaN). This can indicate that revenues are too low to cover costs, or that they are excessively high compared to costs.", SSC_WARNING);
+    if (irr > 50.0)
+        cm->log(util::format("IRR in target year is %lg%%. A high IRR may indicate a project with unrealistically high returns.", irr), SSC_WARNING);
+}
+
+void check_financial_metrics::check_npv(compute_module* cm, ssc_number_t& npv_metric)
+{
+    if (npv_metric < 0.0)
+        cm->log(util::format("NPV is $%lg. A negative NPV indicates project costs are higher than revenues.", npv_metric), SSC_WARNING);
+}
+
+void check_financial_metrics::check_debt_percentage(compute_module* cm, ssc_number_t& debt_percentage)
+{
+    if (debt_percentage > 100.0)
+        cm->log(util::format("Debt percent is %lg. A debt percent greater than 100%% may indicate that revenues are higher than necessary to cover project costs.", debt_percentage), SSC_WARNING);
+}
+
+
+
+
+
 var_info vtab_lcos_inputs[] = {
     /*   VARTYPE           DATATYPE         NAME                             LABEL                                UNITS      META                 GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 
