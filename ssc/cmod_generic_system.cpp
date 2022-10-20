@@ -108,7 +108,7 @@ public:
 		double derate = (1 - (double)as_number("derate") / 100);
 
 		adjustment_factors haf(this, "adjust");
-		if (!haf.setup())
+		if (!haf.setup(nrec_load, nyears))
 			throw exec_error("generic system", "failed to setup adjustment factors: " + haf.error());
 
 		if (system_use_lifetime_output)

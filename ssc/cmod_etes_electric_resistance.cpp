@@ -1116,7 +1116,7 @@ public:
 
         // 'adjustment_factors' class stores factors in hourly array, so need to index as such
         adjustment_factors haf(this, "adjust");
-        if (!haf.setup())
+        if (!haf.setup(n_steps_fixed))
             throw exec_error("etes_electric_resistance", "failed to setup adjustment factors: " + haf.error());
 
         ssc_number_t* p_gen = allocate("gen", count);

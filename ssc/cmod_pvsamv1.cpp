@@ -1094,13 +1094,15 @@ void cm_pvsamv1::exec()
     std::vector<ssc_number_t> p_load_forecast_full; // Reserve within an en_batt call, below
 
     //dc hourly adjustment factors
+    int nyears_haf = nyears;
+    if (!system_use_lifetime_output) nyears_haf = 1;
     adjustment_factors dc_haf(this, "dc_adjust");
-    if (!dc_haf.setup())
+    if (!dc_haf.setup((int)nrec, nyears_haf))
         throw exec_error("pvsamv1", "failed to setup DC adjustment factors: " + dc_haf.error());
 
     // hourly adjustment factors
     adjustment_factors haf(this, "adjust");
-    if (!haf.setup())
+    if (!haf.setup((int)nrec, nyears_haf))
         throw exec_error("pvsamv1", "failed to setup AC adjustment factors: " + haf.error());
 
     // clipping losses for battery dispatch
@@ -2238,8 +2240,8 @@ void cm_pvsamv1::exec()
                     dcPowerNetPerSubarray[nn] *= PVSystem->dcDegradationFactor[iyear];
 
                 //dc adjustment factors apply to all subarrays
-                if (iyear == 0) annual_dc_adjust_loss += dcPowerNetPerSubarray[nn] * (1 - dc_haf(hour_of_year)) * util::watt_to_kilowatt * ts_hour; //only keep track of this loss for year 0, convert from power W to energy kWh
-                dcPowerNetPerSubarray[nn] *= dc_haf(hour_of_year);
+                if (iyear == 0) annual_dc_adjust_loss += dcPowerNetPerSubarray[nn] * (1 - dc_haf(iyear * nrec + inrec)) * util::watt_to_kilowatt * ts_hour; //only keep track of this loss for year 0, convert from power W to energy kWh
+                dcPowerNetPerSubarray[nn] *= dc_haf(iyear * nrec + inrec);
 
                 //lifetime daily DC losses apply to all subarrays and should be applied last. Only applied if they are enabled.
                 if (PVSystem->enableDCLifetimeLosses)
@@ -2434,7 +2436,7 @@ void cm_pvsamv1::exec()
                 ssc_number_t dc_loss_post_inverter = 1 - delivered_percent;
                 delivered_percent = 1; // Re-use variable for post batt losses
 
-                ssc_number_t adj_factor = haf(hour_of_year);
+                ssc_number_t adj_factor = haf(iyear * nrec + inrec);
                 delivered_percent *= adj_factor;
                 if (system_use_lifetime_output && PVSystem->enableACLifetimeLosses) {
                     int ac_loss_index = (int)iyear * 365 + (int)floor(hour_of_year / 24); //in units of days
@@ -2631,7 +2633,7 @@ void cm_pvsamv1::exec()
                 annual_energy_pre_battery += PVSystem->p_systemACPower[idx] * ts_hour;
 
             // Compute AC loss percent for AC connected batteries
-            ssc_number_t adj_factor = haf(hour_of_year);
+            ssc_number_t adj_factor = haf(iyear* nrec + inrec);
 
             if (en_batt && batt_topology == ChargeController::AC_CONNECTED)
             {

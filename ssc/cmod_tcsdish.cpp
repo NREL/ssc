@@ -508,7 +508,7 @@ public:
 
 
 		adjustment_factors haf(this, "adjust");
-		if (!haf.setup())
+		if (!haf.setup(count))
 			throw exec_error("dish", "failed to setup adjustment factors: " + haf.error());
 
 
