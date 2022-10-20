@@ -157,7 +157,6 @@ static var_info _cm_vtab_trough_physical[] = {
     //{ SSC_INPUT,        SSC_NUMBER,      "rec_htf",                   "17: Salt (60% NaNO3, 40% KNO3) 10: Salt (46.5% LiF 11.5% NaF 42% KF) 50: Lookup tables", "",       "",               "powerblock",     "*",                      "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "dT_cw_ref",                 "Reference condenser cooling water inlet/outlet T diff",                            "C",            "",               "powerblock",     "pc_config=0",             "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_amb_des",                 "Reference ambient temperature at design point",                                    "C",            "",               "powerblock",     "pc_config=0",             "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "P_boil",                    "Boiler operating pressure",                                                        "bar",          "",               "powerblock",     "pc_config=0",             "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "CT",                        "Flag for using dry cooling or wet cooling system",                                 "none",         "",               "powerblock",     "pc_config=0",             "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "tech_type",                 "Turbine inlet pressure control flag (sliding=user, fixed=trough)",                 "1/2/3",        "tower/trough/user", "powerblock",  "pc_config=0",             "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_approach",                "Cooling tower approach temperature",                                               "C",            "",               "powerblock",     "pc_config=0",             "",                      "" },
@@ -308,7 +307,7 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "disp_csu_cost",                       "Cycle startup cost",                                                     "$",            "",               "System Control",     "",           "",              "" },
     { SSC_INPUT,        SSC_NUMBER,      "disp_rsu_cost",                       "Receiver startup cost",                                                  "$",            "",               "System Control",     "",           "",              "" },
     { SSC_INPUT,        SSC_NUMBER,      "disp_pen_delta_w",                    "Dispatch cycle production change penalty",                               "$/kWe-change", "",               "tou",                "",           "",              "" },
-
+    { SSC_INPUT,        SSC_NUMBER,      "P_boil",                              "Boiler operating pressure",                                              "bar",          "",               "powerblock",         "",           "",              "" },
 
 
     // *************************************************************************************************
@@ -568,6 +567,15 @@ public:
                     " The new input represents the receiver startup costs in an optimization model that uses absolute grid prices."
                     " Please define disp_pen_ramping in your script. SAM's default value in the molten salt power tower model is 1.0");
             }
+
+            if (is_assigned("P_boil")) {
+                log("We removed boiler pressure (P_boil) as a user input to the Rankine Cycle model. Because the cycle efficiency"
+                    " is provided by the user, the boiler pressure input does not modify the efficiency as one might expect. Instead the model"
+                    " uses boiler pressure in second order calculations to 1) define a boiling temperature to normalize off-design HTF temperature and"
+                    " 2) estimate steam mass flow for cycle make-up water calculations. Because boiler pressure only has influences"
+                    " results in these minor non-intuitive ways, we decided to hardcode the valu to 100 bar.");
+            }
+
         }
         // *****************************************************
         // *****************************************************
@@ -911,7 +919,8 @@ public:
             {
                 pc->m_dT_cw_ref = as_double("dT_cw_ref");
                 pc->m_T_amb_des = as_double("T_amb_des");
-                pc->m_P_boil = as_double("P_boil");
+                //pc->m_P_boil = as_double("P_boil");
+                pc->m_P_boil_des = 100.0;       //[bar]
                 pc->m_CT = as_integer("CT");                    // cooling tech type: 1=evaporative, 2=air, 3=hybrid    
                 pc->m_tech_type = as_integer("tech_type");      // turbine inlet pressure: 1: Fixed, 3: Sliding
                 if (pc->m_tech_type == 1) { pc->m_tech_type = 2; }; // changing fixed pressure for the tower to fixed pressure for the trough

@@ -262,25 +262,12 @@ void Irradiance_IO::checkWeatherFile(compute_module* cm, std::string cmName)
                 weatherRecord.poa, weatherRecord.year, weatherRecord.month, weatherRecord.day, weatherRecord.hour, weatherRecord.minute), SSC_WARNING, (float)idx);
             weatherRecord.poa = 0;
         }
-
-        // weather file albedo error: if use weather file albedo enabled and weather file albedo and monthly albedo are both invalid
-        // monthly albedo error: if use weather file albedo not enabled and monthly albedo is invalid
-        int month_idx = weatherRecord.month - 1;
-        bool wf_albedo_invalid = (!std::isfinite(weatherRecord.alb) && (weatherRecord.alb <= 0 || weatherRecord.alb >= 1));
-        bool monthly_albedo_invalid = (userSpecifiedMonthlyAlbedo[month_idx] <= 0 || userSpecifiedMonthlyAlbedo[month_idx] >= 1);
-        if ( useWeatherFileAlbedo && wf_albedo_invalid && monthly_albedo_invalid)
-                throw exec_error(cmName,
-                    util::format("Invalid albedo %lg in weather file at time [y:%d m:%d d:%d h:%d minute:%lg] and invalid albedo %lg in monthly albedo array for month index %ld.. Albedo must be greater than zero and less than one.",
-                    weatherRecord.alb, weatherRecord.year, weatherRecord.month, weatherRecord.day, weatherRecord.hour, weatherRecord.minute, userSpecifiedMonthlyAlbedo[month_idx], month_idx));
-        if ( useWeatherFileAlbedo && wf_albedo_invalid && !monthly_albedo_invalid)
-                throw exec_error(cmName,
-                    util::format("Invalid albedo %lg in weather file at time [y:%d m:%d d:%d h:%d minute:%lg]. Albedo must be greater than zero and less than one.",
-                    weatherRecord.alb, weatherRecord.year, weatherRecord.month, weatherRecord.day, weatherRecord.hour, weatherRecord.minute));
-        if ( !useWeatherFileAlbedo && (month_idx >= 0 && month_idx < 12) && monthly_albedo_invalid )
-            throw exec_error(cmName,
-                util::format("Invalid albedo %lg in monthly albedo array for month index %ld. Albedo must be greater than zero and less than one.",
-                userSpecifiedMonthlyAlbedo[month_idx], month_idx));
-
+        if (useWeatherFileAlbedo && (weatherRecord.alb <= 0 || weatherRecord.alb >= 1))
+        {
+            cm->log(util::format("Out of range albedo %lg at time [y:%d m:%d d:%d h:%d minute:%lg], using monthly value",
+                weatherRecord.alb, weatherRecord.year, weatherRecord.month, weatherRecord.day, weatherRecord.hour, weatherRecord.minute), SSC_WARNING, (float)idx);
+            weatherRecord.alb = 0;
+        }
     }
     weatherDataProvider->rewind();
 }
@@ -363,11 +350,16 @@ Subarray_IO::Subarray_IO(compute_module* cm, const std::string& cmName, size_t s
         if (trackMode == irrad::FIXED_TILT || trackMode == irrad::SINGLE_AXIS || trackMode == irrad::AZIMUTH_AXIS)
             if (!tiltEqualLatitude && !cm->is_assigned(prefix + "tilt"))
                 throw exec_error(cmName, "Subarray " + util::to_string((int)subarrayNumber) + " tilt required but not assigned.");
-        if (cm->is_assigned(prefix + "tilt")) tiltDegrees = fabs(cm->as_double(prefix + "tilt"));
+        if (cm->is_assigned(prefix + "tilt")) tiltDegrees = cm->as_double(prefix + "tilt");
         //monthly tilt required if seasonal tracking mode selected- can't check for this in variable table so check here
         if (trackMode == irrad::SEASONAL_TILT && !cm->is_assigned(prefix + "monthly_tilt"))
             throw exec_error(cmName, "Subarray " + util::to_string((int)subarrayNumber) + " monthly tilt required but not assigned.");
-        if (cm->is_assigned(prefix + "monthly_tilt")) monthlyTiltDegrees = cm->as_vector_double(prefix + "monthly_tilt");
+        if (cm->is_assigned(prefix + "monthly_tilt") && trackMode == irrad::SEASONAL_TILT) {
+            monthlyTiltDegrees = cm->as_vector_double(prefix + "monthly_tilt");
+            for (int i = 0; i < monthlyTiltDegrees.size(); i++) {
+                if (monthlyTiltDegrees[i] < 0.0) throw exec_error(cmName, "Subarray " + util::to_string((int)subarrayNumber) + " monthly tilt angles cannot be negative.");
+            }
+        }
         //azimuth required for fixed tilt, single axis, and seasonal tilt- can't check for this in variable table so check here
         azimuthDegrees = std::numeric_limits<double>::quiet_NaN();
         if (trackMode == irrad::FIXED_TILT || trackMode == irrad::SINGLE_AXIS || trackMode == irrad::SEASONAL_TILT)

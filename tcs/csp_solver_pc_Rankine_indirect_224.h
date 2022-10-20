@@ -68,6 +68,9 @@ private:
     double m_W_dot_htf_pump_des;          //[MWe]
     double m_W_dot_cooling_des;         //[MWe]
 
+    double m_T_boil_des;                //[K]
+    double m_delatT_hot_to_boil_des;    //[C/K]
+
 	C_csp_power_cycle::E_csp_power_cycle_modes m_operating_mode_prev;
 	double m_startup_time_remain_prev;		//[hr]
 	double m_startup_energy_remain_prev;	//[kW-hr]
@@ -77,6 +80,16 @@ private:
 	double m_startup_energy_remain_calc;
 
 	util::matrix_t<double> m_db;
+
+    // UDPC calculated design metrics
+    int m_n_T_htf_pars, m_n_T_amb_pars, m_n_m_dot_pars;
+    double m_T_htf_ref_udpc_calc, m_T_htf_low_udpc_calc, m_T_htf_high_udpc_calc;
+    double m_T_amb_ref_udpc_calc, m_T_amb_low_udpc_calc, m_T_amb_high_udpc_calc;
+    double m_m_dot_htf_ref_udpc_calc, m_m_dot_htf_low_udpc_calc, m_m_dot_htf_high_udpc_calc;
+    double m_W_dot_gross_ND_des;
+    double m_Q_dot_HTF_ND_des;
+    double m_W_dot_cooling_ND_des;
+    double m_m_dot_water_ND_des;
 
 	HTFProperties mc_pc_htfProps;
 
@@ -96,8 +109,8 @@ private:
 	double GetFieldToTurbineTemperatureDropC() { return 25.0; }
 
     void RankineCycle_V2(double T_db /*K*/, double T_wb /*K*/,
-        double P_amb /*Pa*/, double T_htf_hot /*C*/, double m_dot_htf /*kg/hr*/, int mode /*-*/,
-        double demand_var /*MWe*/, double P_boil /*bar*/, double F_wc /*-*/, double F_wcmin /*-*/, double F_wcmax /*-*/, double T_cold /*C*/, double dT_cw /*C*/,
+        double P_amb /*Pa*/, double T_htf_hot /*C*/, double m_dot_htf /*kg/hr*/,
+        double F_wc /*-*/, double F_wcmin /*-*/, double F_wcmax /*-*/, double T_cold /*C*/, double dT_cw /*C*/,
         //outputs
         double& P_cycle /*kWe*/, double& eta, double& T_htf_cold, double& m_dot_demand, double& m_dot_htf_ref,
         double& m_dot_makeup, double& W_cool_par /*MWe*/, double& f_hrsys, double& P_cond /*Pa*/, double& T_cond_out /*C*/,
@@ -230,7 +243,7 @@ public:
 			// Parameters that have different SSCINPUT names for Rankine Cycle and User Defined Cycle
 		double m_dT_cw_ref;			//[C] design temp difference between cooling water inlet/outlet
 		double m_T_amb_des;			//[C] design ambient temperature
-		double m_P_boil;			//[bar] boiler operating pressure
+		double m_P_boil_des;     	//[bar] boiler operating pressure
 		int m_CT;					//[-] integer flag for cooling technology type {1=evaporative cooling, 2=air cooling, 3=hybrid cooling}
 		int m_tech_type;			//[-] Flag indicating which coef. set to use. (1=tower,2=trough,3=user) 
 		double m_T_approach;		//[C] cooling tower approach temp
@@ -252,7 +265,7 @@ public:
 		S_params()
 		{
 			m_P_ref = m_eta_ref = m_T_htf_hot_ref = m_T_htf_cold_ref = m_dT_cw_ref = m_T_amb_des =
-				m_q_sby_frac = m_P_boil = m_startup_time = m_startup_frac = m_T_approach = m_T_ITD_des =
+				m_q_sby_frac = m_P_boil_des = m_startup_time = m_startup_frac = m_T_approach = m_T_ITD_des =
 				m_P_cond_ratio = m_pb_bd_frac = m_P_cond_min = m_htf_pump_coef = std::numeric_limits<double>::quiet_NaN();
 
 			m_pc_fl = m_CT = m_tech_type = m_n_pl_inc = -1;
@@ -308,7 +321,13 @@ public:
 
     void get_design_parameters(double& m_dot_htf_des /*kg/hr*/,
         double& cp_htf_des_at_T_ave /*kJ/kg-K*/,
-        double& W_dot_htf_pump /*MWe*/, double& W_dot_cooling /*MWe*/);
+        double& W_dot_htf_pump /*MWe*/, double& W_dot_cooling /*MWe*/,
+        // UDPC
+        int& n_T_htf_pars, int& n_T_amb_pars, int& n_m_dot_pars,
+        double& T_htf_ref_calc /*C*/, double& T_htf_low_calc /*C*/, double& T_htf_high_calc /*C*/,
+        double& T_amb_ref_calc /*C*/, double& T_amb_low_calc /*C*/, double& T_amb_high_calc /*C*/,
+        double& m_dot_htf_ND_ref_calc, double& m_dot_htf_ND_low_calc /*-*/, double& m_dot_htf_ND_high_calc /*-*/,
+        double& W_dot_gross_ND_des, double& Q_dot_HTF_ND_des, double& W_dot_cooling_ND_des, double& m_dot_water_ND_des);
 };
 
 

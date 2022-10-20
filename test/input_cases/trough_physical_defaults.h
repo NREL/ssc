@@ -197,7 +197,6 @@ ssc_data_t trough_physical_defaults()
     ssc_data_set_number(data, "pb_pump_coef", 0.55000000000000004);
     ssc_data_set_number(data, "dT_cw_ref", 10);
     ssc_data_set_number(data, "T_amb_des", 42);
-    ssc_data_set_number(data, "P_boil", 100);
     ssc_data_set_number(data, "CT", 2);
     ssc_data_set_number(data, "tech_type", 1);
     ssc_data_set_number(data, "T_approach", 5);

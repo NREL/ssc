@@ -246,7 +246,6 @@ ssc_data_t tcsfresnel_molten_salt_defaults()
     ssc_data_set_number(data, "q_sby_frac", 0.20000000000000001);
     ssc_data_set_number(data, "dT_cw_ref", 10);
     ssc_data_set_number(data, "T_amb_des", 42);
-    ssc_data_set_number(data, "P_boil", 100);
     ssc_data_set_number(data, "CT", 2);
     ssc_data_set_number(data, "T_approach", 5);
     ssc_data_set_number(data, "T_ITD_des", 16);
