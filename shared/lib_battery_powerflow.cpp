@@ -712,8 +712,8 @@ void BatteryPowerFlow::calculateDCConnected()
         efficiencyDCAC = m_BatteryPower->sharedInverter->efficiencyAC * 0.01;
 
 
-        // Restrict low efficiency so don't get infinites
-        if (efficiencyDCAC <= 0.05 && (P_grid_to_batt_dc > 0 || P_pv_to_inverter_dc > 0)) {
+        // Restrict low efficiency so don't get infinites - can sometimes have PV charging scenarios where inverter isn't running
+        if (efficiencyDCAC <= 0.05) {
             efficiencyDCAC = 0.05;
         }
         // This is a traditional DC/AC efficiency loss
@@ -728,7 +728,7 @@ void BatteryPowerFlow::calculateDCConnected()
 
         // Compute the AC quantities
         P_gen_ac = m_BatteryPower->sharedInverter->powerAC_kW; // Gen will have ac losses applied elsewhere
-        P_grid_to_batt_ac = P_grid_to_batt_dc / efficiencyDCAC * (1 - ac_loss_percent);
+        P_grid_to_batt_ac = P_grid_to_batt_dc / efficiencyDCAC; // If only charging from grid this should match powerAC_kW (don't apply wiring losses here)
         if (std::isnan(P_gen_ac) && m_BatteryPower->sharedInverter->powerDC_kW == 0) {
             P_gen_ac = 0;
             P_grid_to_batt_ac = 0;
@@ -756,7 +756,7 @@ void BatteryPowerFlow::calculateDCConnected()
 
         // In this case, we have a combo of Battery DC power from the PV array, and potentially AC power from the grid
         if (P_pv_to_batt_dc + P_grid_to_batt_ac > 0) {
-            P_battery_ac = -(P_pv_to_batt_dc / efficiencyDCAC + P_grid_to_batt_ac);
+            P_battery_ac = -(P_pv_to_batt_dc / m_BatteryPower->singlePointEfficiencyDCToDC / efficiencyDCAC + P_grid_to_batt_ac);
         }
 
         if (fabs(P_battery_ac) < tolerance) {
@@ -930,7 +930,7 @@ void BatteryPowerFlow::calculateDCConnected()
 
 	// assign outputs
     m_BatteryPower->singlePointEfficiencyDCToAC = efficiencyDCAC;
-	m_BatteryPower->powerBatteryAC = P_battery_ac;
+	m_BatteryPower->powerBatteryAC = P_battery_ac; // battery DC is an input, and not adjusted here
 	m_BatteryPower->powerGrid = P_grid_ac;
 	m_BatteryPower->powerGeneratedBySystem = P_gen_ac;
 	m_BatteryPower->powerSystemToLoad = P_pv_to_load_ac;

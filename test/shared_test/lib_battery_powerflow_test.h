@@ -55,7 +55,14 @@ public:
     double calc_dc_gen() {
         //		return m_batteryPower->powerPVToLoad + m_batteryPower->powerPVToGrid + m_batteryPower->powerBatteryToLoad
         //			   + m_batteryPower->powerBatteryToGrid - m_batteryPower->powerGridToBattery * m_batteryPower->singlePointEfficiencyDCToDC;
-        double dc_power = m_batteryPower->powerBatteryDC + m_batteryPower->powerSystem - m_batteryPower->powerSystemLoss;
+        double battery_dc = m_batteryPower->powerBatteryDC;
+        if (battery_dc > 0) {
+            battery_dc *= m_batteryPower->singlePointEfficiencyDCToDC;
+        }
+        else {
+            battery_dc /= m_batteryPower->singlePointEfficiencyDCToDC;
+        }
+        double dc_power = battery_dc + m_batteryPower->powerSystem - m_batteryPower->powerSystemLoss;
         if (dc_power > 0.0) {
             dc_power *= m_batteryPower->singlePointEfficiencyDCToAC;
         }

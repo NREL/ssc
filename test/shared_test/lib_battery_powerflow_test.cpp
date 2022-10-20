@@ -1898,7 +1898,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, DC_GridPVCharging_ExcessLoad)
     m_batteryPower->powerBatteryDC = -20;
     m_batteryPowerFlow->calculate();
 
-    EXPECT_NEAR(m_batteryPower->powerBatteryAC, -21.0, error);
+    EXPECT_NEAR(m_batteryPower->powerBatteryAC, -25.49, error); // Includes PV to battery, grid to battery, and AC portion of the conversion loss. DC portion of loss not included
     EXPECT_NEAR(m_batteryPower->powerBatteryDC, -20.0, error);
     EXPECT_NEAR(m_batteryPower->powerSystemToLoad, 0, error);
     EXPECT_NEAR(m_batteryPower->powerSystemToBatteryAC, 8.0, error);
