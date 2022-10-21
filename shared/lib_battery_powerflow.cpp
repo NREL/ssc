@@ -699,6 +699,15 @@ void BatteryPowerFlow::calculateDCConnected()
             return calculateDCConnected();
         }
 
+        // Apply AC side charging losses here so inverter can pull in more power as needed
+        double grid_losses = P_grid_to_batt_dc * ac_loss_percent;
+        if (grid_losses > 0) {
+            P_grid_to_batt_dc -= grid_losses;
+            P_battery_dc += grid_losses; // Bring negative numbers closer to zero
+            P_gen_dc += grid_losses;
+            P_battery_dc_pre_bms += grid_losses * m_BatteryPower->singlePointEfficiencyDCToDC;
+        }
+
         // Assume inverter only "sees" the net flow in one direction, though practically
         // there should never be case where P_pv_dc - P_pv_to_batt_dc > 0 and P_grid_to_batt_dc > 0 simultaneously
         double P_gen_dc_inverter = P_pv_to_inverter_dc - P_grid_to_batt_dc;
@@ -713,7 +722,7 @@ void BatteryPowerFlow::calculateDCConnected()
         m_BatteryPower->sharedInverter->calculateACPower(P_gen_dc_inverter, voltage, m_BatteryPower->sharedInverter->Tdry_C);
 
         // Only update inverter efficiency if the inverter is running. Otherwise use max efficency from above
-        if (fabs(m_BatteryPower->sharedInverter->powerAC_kW) > 0.0) {
+        if (m_BatteryPower->sharedInverter->powerAC_kW > 0.0 && P_gen_dc_inverter > 0 || fabs(m_BatteryPower->sharedInverter->powerAC_kW) > m_BatteryPower->sharedInverter->powerNightLoss_kW) {
             
             efficiencyDCAC = m_BatteryPower->sharedInverter->efficiencyAC * 0.01;
 
@@ -731,11 +740,11 @@ void BatteryPowerFlow::calculateDCConnected()
                 m_BatteryPower->sharedInverter->powerAC_kW = P_gen_dc_inverter / efficiencyDCAC;
             }
             m_BatteryPower->sharedInverter->efficiencyAC = efficiencyDCAC * 100;
+            P_grid_to_batt_ac = P_grid_to_batt_dc / efficiencyDCAC; // If only charging from grid this should match powerAC_kW (don't apply wiring losses here)
         }
 
         // Compute the AC quantities
         P_gen_ac = m_BatteryPower->sharedInverter->powerAC_kW; // Gen will have ac losses applied elsewhere
-        P_grid_to_batt_ac = P_grid_to_batt_dc / efficiencyDCAC; // If only charging from grid this should match powerAC_kW (don't apply wiring losses here)
         if (std::isnan(P_gen_ac) && m_BatteryPower->sharedInverter->powerDC_kW == 0) {
             P_gen_ac = 0;
             P_grid_to_batt_ac = 0;
