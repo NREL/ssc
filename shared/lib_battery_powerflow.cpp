@@ -46,6 +46,7 @@ BatteryPower::BatteryPower(double dtHour) :
 		powerBatteryToLoad(0),
 		powerBatteryToGrid(0),
         powerBatteryToSystemLoad(0),
+        powerBatteryToInverterDC(0),
         powerCritLoadUnmet(0),
         powerLossesUnmet(0),
 		powerFuelCell(0),

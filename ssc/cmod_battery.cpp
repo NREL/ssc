@@ -1990,9 +1990,9 @@ void battstor::update_grid_power(compute_module&, double P_gen_ac, double P_load
     outGridPower[index_replace] = (ssc_number_t)(P_grid);
 }
 
-bool battstor::is_outage_step(size_t index) {
-    if (index < batt_vars->grid_outage_steps.size()) {
-        return batt_vars->grid_outage_steps[index];
+bool battstor::is_outage_step(size_t idx) {
+    if (idx < batt_vars->grid_outage_steps.size()) {
+        return batt_vars->grid_outage_steps[idx];
     }
     return false;
 }

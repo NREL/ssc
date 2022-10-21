@@ -53,8 +53,6 @@ protected:
 	double _dc_ac_efficiency;
 	double _ac_dc_efficiency;
 
-	double _loss_dc_ac;
-	double _loss_ac_dc;
 };
 
 class Battery_DC_DC_ChargeController
@@ -75,7 +73,6 @@ public:
 protected:
 	double _batt_dc_dc_bms_efficiency;
 	double _pv_dc_dc_mppt_efficiency;
-	double _loss_dc_dc;
 };
 
 class BatteryRectifier
