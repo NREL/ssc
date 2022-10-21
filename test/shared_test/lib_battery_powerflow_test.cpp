@@ -2339,7 +2339,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, DC_PVCharging_ExcessLoad_outa
     EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 50.0, error);
     EXPECT_NEAR(m_batteryPower->powerInterconnectionLoss, 0.0, error);
 
-    check_net_flows(std::string());
+    check_net_flows("8th case");
 }
 
 // DC connected outage

@@ -66,7 +66,7 @@ public:
         if (dc_power > 0.0) {
             dc_power *= m_batteryPower->singlePointEfficiencyDCToAC;
         }
-        else {
+        else if (m_batteryPower->singlePointEfficiencyDCToAC > 0) {
             dc_power /= m_batteryPower->singlePointEfficiencyDCToAC;
         }
         return dc_power;

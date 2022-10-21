@@ -637,11 +637,12 @@ void BatteryPowerFlow::calculateDCConnected()
     // in the event that PV system isn't operating, assume battery BMS converts battery voltage to nominal inverter input at the weighted efficiency
     double voltage = m_BatteryPower->voltageSystem;
     double efficiencyDCAC = m_BatteryPower->sharedInverter->efficiencyAC * 0.01;
+    double maxEfficiencyDCAC = m_BatteryPower->sharedInverter->getMaxPowerEfficiency() * 0.01;
     if (voltage <= 0) {
         voltage = m_BatteryPower->sharedInverter->getInverterDCNominalVoltage();
     }
     if (std::isnan(efficiencyDCAC) || m_BatteryPower->sharedInverter->efficiencyAC <= 0) {
-        efficiencyDCAC = m_BatteryPower->sharedInverter->getMaxPowerEfficiency() * 0.01;
+        efficiencyDCAC = maxEfficiencyDCAC;
     }
 
     double P_battery_ac_post_loss = 0;
@@ -712,7 +713,7 @@ void BatteryPowerFlow::calculateDCConnected()
         m_BatteryPower->sharedInverter->calculateACPower(P_gen_dc_inverter, voltage, m_BatteryPower->sharedInverter->Tdry_C);
 
         // Only update inverter efficiency if the inverter is running. Otherwise use max efficency from above
-        if (m_BatteryPower->sharedInverter->powerAC_kW > 0.0) {
+        if (fabs(m_BatteryPower->sharedInverter->powerAC_kW) > 0.0) {
             
             efficiencyDCAC = m_BatteryPower->sharedInverter->efficiencyAC * 0.01;
 
@@ -762,14 +763,16 @@ void BatteryPowerFlow::calculateDCConnected()
 
         // In this case, we have a combo of Battery DC power from the PV array, and potentially AC power from the grid
         if (P_pv_to_batt_dc + P_grid_to_batt_ac > 0) {
-            P_battery_ac = -(P_pv_to_batt_dc / m_BatteryPower->singlePointEfficiencyDCToDC / efficiencyDCAC + P_grid_to_batt_ac);
+            P_battery_ac = -(P_pv_to_batt_dc * maxEfficiencyDCAC + P_grid_to_batt_ac);
         }
 
         if (fabs(P_battery_ac) < tolerance) {
             P_battery_ac = 0.0;
         }
 
-        P_pv_to_batt_ac = P_pv_to_batt_dc / m_BatteryPower->singlePointEfficiencyDCToDC / efficiencyDCAC;
+        // Using the actual inverter efficiency here (as opposed to max) causes the charging power to seem low in some timesteps
+        // Directing additional power to the inverter would increase the efficiency, which makes this a more reasonable assumption
+        P_pv_to_batt_ac = P_pv_to_batt_dc * maxEfficiencyDCAC;
         P_battery_ac_post_loss = P_battery_ac;
     }
     else
