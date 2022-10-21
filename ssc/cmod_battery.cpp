@@ -358,7 +358,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             batt_vars->batt_can_fuelcellcharge = vt.as_vector_bool("dispatch_manual_fuelcellcharge");
         }
 
-        batt_vars->en_batt = vt.as_boolean("en_batt") || vt.as_boolean("en_standalone_batt");
+        batt_vars->en_batt = vt.as_boolean("en_batt") || vt.as_boolean("en_standalone_batt") || vt.as_boolean("en_wave_batt");
         if (batt_vars->en_batt)
         {
             // Financial Parameters
@@ -2128,6 +2128,9 @@ static var_info _cm_vtab_battery[] = {
     { SSC_INPUT,        SSC_NUMBER,      "analysis_period",                            "Lifetime analysis period",                                "years",      "The number of years in the simulation", "Lifetime",        "system_use_lifetime_output=1","",                               "" },
     { SSC_INPUT,        SSC_NUMBER,      "en_batt",                                    "Enable battery storage model",                            "0/1",        "",                     "BatterySystem",                      "?=0",                    "",                               "" },
     { SSC_INPUT,        SSC_NUMBER,      "en_standalone_batt",                         "Enable standalone battery storage model",                 "0/1",        "",                     "BatterySystem",                      "?=0",                    "",                               "" },
+    { SSC_INPUT,        SSC_NUMBER,      "en_wave_batt",                         "Enable wave battery storage model",                 "0/1",        "",                     "BatterySystem",                      "?=0",                    "",                               "" },
+    { SSC_INOUT,        SSC_ARRAY,       "energy_hourly_kW",								  "Power output of array",                "kW",        "Lifetime system generation",          "System Output",                  "en_wave_batt=1",                        "",                              "" },
+
     { SSC_INOUT,        SSC_ARRAY,       "gen",										   "System power generated",                                  "kW",         "",                     "System Output",                    "",                       "",                               "" },
     { SSC_INPUT,		SSC_ARRAY,	     "load",			                           "Electricity load (year 1)",                               "kW",	        "",				        "Load",                             "",	                      "",	                            "" },
     { SSC_INPUT,		SSC_ARRAY,	     "crit_load",			                       "Critical electricity load (year 1)",                      "kW",	        "",				        "Load",                             "",	                      "",	                            "" },
@@ -2162,7 +2165,7 @@ public:
 
     void exec() override
     {
-        if (as_boolean("en_batt") || as_boolean("en_standalone_batt"))
+        if (as_boolean("en_batt") || as_boolean("en_standalone_batt") || as_boolean("en_wave_batt"))
         {
             std::vector<ssc_number_t> power_input_lifetime;
             std::vector<ssc_number_t> load_lifetime, load_year_one;
@@ -2191,6 +2194,9 @@ public:
                 ssc_number_t* p_gen = allocate("gen", power_input_lifetime.size());
                 for (size_t i = 0; i < power_input_lifetime.size(); i++)
                     p_gen[i] = power_input_lifetime[i];
+            }
+            else if (as_boolean("en_wave_batt")) {
+                power_input_lifetime = as_vector_ssc_number_t("energy_hourly_kW");
             }
             else
                 power_input_lifetime = as_vector_ssc_number_t("gen");
@@ -2345,10 +2351,13 @@ public:
                 dt_hour_gen);
 
             // Prepare outputs
-            ssc_number_t* p_gen = allocate("gen", n_rec_lifetime);
-            double capacity_factor_in, annual_energy_in;
-            capacity_factor_in = annual_energy_in =  0;
-            double nameplate_in = batt->batt_vars->batt_power_discharge_max_kwac;
+            ssc_number_t* p_gen;
+            if (as_boolean("en_wave_batt"))
+                p_gen = allocate("energy_hourly_kW", n_rec_lifetime);
+            else
+                p_gen = allocate("gen", n_rec_lifetime);
+            double capacity_factor_in, annual_energy_in, nameplate_in;
+            capacity_factor_in = annual_energy_in = nameplate_in = 0;
 
             if (is_assigned("capacity_factor") && is_assigned("annual_energy")) {
                 capacity_factor_in = as_double("capacity_factor");

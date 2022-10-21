@@ -34,6 +34,7 @@ var_info vtab_grid_input[] = {
 	// simulation inputs
 	{ SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",        "Lifetime simulation",                   "0/1",     "0=SingleYearRepeated,1=RunEveryYear",   "Lifetime",        "?=0",                   "BOOLEAN",                          "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                   "Lifetime analysis period",              "years",   "The number of years in the simulation", "Lifetime",        "system_use_lifetime_output=1","",                           "" },
+    { SSC_INOUT,        SSC_ARRAY,       "energy_hourly_kW",								  "Power output of array",                "kW",        "Lifetime system generation",          "System Output",                  "",                        "",                              "" },
 
 	// external compute module inputs
 	{ SSC_INOUT,        SSC_ARRAY,       "gen",								  "System power generated",                "kW",        "Lifetime system generation",          "System Output",                  "",                        "",                              "" },
@@ -87,7 +88,10 @@ void cm_grid::exec()
 {
     construct();
     // System generation output, which is lifetime (if system_lifetime_output == true);
-    gridVars->systemGenerationLifetime_kW = as_vector_double("gen");
+    if (is_assigned("energy_hourly_kW"))
+        gridVars->systemGenerationLifetime_kW = as_vector_double("energy_hourly_kW");
+    else
+        gridVars->systemGenerationLifetime_kW = as_vector_double("gen");
 
     size_t n_rec_lifetime = gridVars->systemGenerationLifetime_kW.size();
     size_t n_rec_single_year;
