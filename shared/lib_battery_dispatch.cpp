@@ -216,7 +216,8 @@ bool dispatch_t::check_constraints(double& I, size_t count)
 		// if battery discharging, see if can back off to get higher efficiency
 		if (m_batteryPower->powerBatteryDC > 0) {
 			if (powerBatterykWdc + m_batteryPower->powerSystem > m_batteryPower->sharedInverter->getACNameplateCapacitykW()) {
-				powerBatterykWdc = m_batteryPower->sharedInverter->getACNameplateCapacitykW() - m_batteryPower->powerSystem; // AC/DC issue - shouldn't we get a DC level here?
+                double max_dc = m_batteryPower->powerSystem + powerBatterykWdc; // Only used by "inverter::NONE"
+				powerBatterykWdc = m_batteryPower->sharedInverter->getInverterDCMaxPower(max_dc) - m_batteryPower->powerSystem;
 				powerBatterykWdc = fmax(powerBatterykWdc, 0);
                 m_batteryPower->powerBatteryTarget = powerBatterykWdc;
                 I = _Battery->calculate_current_for_power_kw(m_batteryPower->powerBatteryTarget);

@@ -906,7 +906,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialDCBatteryModelPriceS
     ssc_number_t peakKwCharge = -3.601;
     ssc_number_t peakKwDischarge = 1.99;
     ssc_number_t peakCycles = 1;
-    ssc_number_t avgCycles = 0.3178;
+    ssc_number_t avgCycles = 0.3397;
 
     pairs["batt_dispatch_choice"] = 4;
     pairs["batt_dispatch_auto_can_clipcharge"] = 1;
