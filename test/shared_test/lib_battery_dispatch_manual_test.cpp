@@ -543,7 +543,7 @@ TEST_F(ManualTest_lib_battery_dispatch_losses, TestLossesWithDispatch)
     // Test max charge power constraint
     batteryPower->powerSystem = 40; batteryPower->voltageSystem = 600;
     dispatchManual->dispatch(year, hour_of_year, step_of_hour);
-    EXPECT_NEAR(batteryPower->powerSystemToBatteryAC, batteryPower->powerSystem - batteryPower->powerSystemLoss, 0.1);
+    EXPECT_NEAR(batteryPower->powerSystemToBatteryAC, batteryPower->powerSystem * batteryPower->sharedInverter->getMaxPowerEfficiency() * 0.01 - batteryPower->powerSystemLoss, 1);
 
     // Test max discharge power constraint
     batteryPower->powerSystem = 0; batteryPower->voltageSystem = 600; batteryPower->powerLoad = 40;
