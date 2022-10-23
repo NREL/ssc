@@ -437,10 +437,10 @@ private:
 	double cbi_oth_amount;
 	double cbi_total;
 	double itc_sta_total;
-	double itc_sta_amount;
+	double_vec itc_sta_amount;
 	double itc_sta_per;
 	double itc_fed_total;
-	double itc_fed_amount;
+	double_vec itc_fed_amount;
 	double itc_fed_per;
 	double ppa;
 	double ppa_escalation;
@@ -731,12 +731,16 @@ public:
 
 
 		// itc fixed
-		itc_fed_amount = as_double("itc_fed_amount");
+       itc_fed_amount = as_vector_double("itc_fed_amount");
 
 		// itc percent - max value used for comparison to qualifying costs
-		double itc_fed_frac = as_double("itc_fed_percent")*0.01;
-		itc_fed_per = itc_fed_frac * federal_itc_basis;
-		if (itc_fed_per > as_double("itc_fed_percent_maxvalue")) itc_fed_per = as_double("itc_fed_percent_maxvalue");
+        double_vec itc_fed_frac = as_vector_double("itc_fed_percent");
+        for (size_t k = 0; k < itc_fed_frac.size(); k++)
+            itc_fed_frac[k] *= 0.01;
+        itc_fed_per = itc_fed_frac[0] * federal_itc_basis;
+        double_vec itc_fed_percent_maxvalue = as_vector_double("itc_fed_percent_maxvalue");
+        if (itc_fed_per > itc_fed_percent_maxvalue[0]) itc_fed_per = itc_fed_percent_maxvalue[0];
+
 
 
 		double state_itc_basis = total_cost
@@ -754,25 +758,28 @@ public:
 			- (as_boolean("cbi_oth_deprbas_sta") ? cbi_oth_amount : 0);
 
 
-		// itc fixed
-		itc_sta_amount = as_double("itc_sta_amount");
+        // itc fixed
+        itc_sta_amount = as_vector_double("itc_sta_amount");
 
-		// itc percent - max value used for comparison to qualifying costs
-		double itc_sta_frac = as_double("itc_sta_percent")*0.01;
-		itc_sta_per = itc_sta_frac * state_itc_basis;
-		if (itc_sta_per > as_double("itc_sta_percent_maxvalue")) itc_sta_per = as_double("itc_sta_percent_maxvalue");
+        // itc percent - max value used for comparison to qualifying costs
+        double_vec itc_sta_frac = as_vector_double("itc_sta_percent");
+        for (size_t k = 0; k < itc_sta_frac.size(); k++)
+            itc_sta_frac[k] *= 0.01;
+        double itc_sta_per = itc_sta_frac[0] * state_itc_basis;
+        double_vec itc_sta_percent_maxvalue = as_vector_double("itc_sta_percent_maxvalue");
+        if (itc_sta_per > itc_sta_percent_maxvalue[0]) itc_sta_per = itc_sta_percent_maxvalue[0];
 
 		double federal_depr_basis = federal_itc_basis
-			- (as_boolean("itc_fed_amount_deprbas_fed") ? 0.5*itc_fed_amount : 0)
+			- (as_boolean("itc_fed_amount_deprbas_fed") ? 0.5*itc_fed_amount[0] : 0)
 			- (as_boolean("itc_fed_percent_deprbas_fed") ? 0.5*itc_fed_per : 0)
-			- (as_boolean("itc_sta_amount_deprbas_fed") ? 0.5*itc_sta_amount : 0)
+			- (as_boolean("itc_sta_amount_deprbas_fed") ? 0.5*itc_sta_amount[0] : 0)
 			- (as_boolean("itc_sta_percent_deprbas_fed") ? 0.5*itc_sta_per : 0);
 
 
 		double state_depr_basis = state_itc_basis
-			- (as_boolean("itc_fed_amount_deprbas_sta") ? 0.5*itc_fed_amount : 0)
+			- (as_boolean("itc_fed_amount_deprbas_sta") ? 0.5*itc_fed_amount[0] : 0)
 			- (as_boolean("itc_fed_percent_deprbas_sta") ? 0.5*itc_fed_per : 0)
-			- (as_boolean("itc_sta_amount_deprbas_sta") ? 0.5*itc_sta_amount : 0)
+			- (as_boolean("itc_sta_amount_deprbas_sta") ? 0.5*itc_sta_amount[0] : 0)
 			- (as_boolean("itc_sta_percent_deprbas_sta") ? 0.5*itc_sta_per : 0);
 
 
@@ -830,8 +837,8 @@ public:
 
 		ibi_total = ibi_fed_amount + ibi_fed_per + ibi_sta_amount + ibi_sta_per + ibi_uti_amount + ibi_uti_per + ibi_oth_amount + ibi_oth_per;
 		cbi_total = cbi_fed_amount + cbi_sta_amount + cbi_uti_amount + cbi_oth_amount;
-		itc_fed_total = itc_fed_amount + itc_fed_per;
-		itc_sta_total = itc_sta_amount + itc_sta_per;
+		itc_fed_total = itc_fed_amount[0] + itc_fed_per;
+		itc_sta_total = itc_sta_amount[0] + itc_sta_per;
 
 		double recapitalization_cost = as_double("system_recapitalization_cost");
 		double recapitalization_escalation = as_double("system_recapitalization_escalation");
@@ -1819,7 +1826,7 @@ public:
 			cf.at(CF_sta_income_taxes, i) = cf.at(CF_state_tax_frac, i)*cf.at(CF_sta_taxable_income_less_deductions, i);
 
 			cf.at(CF_sta_tax_savings, i) = cf.at(CF_ptc_sta, i) - cf.at(CF_sta_income_taxes, i);
-			if (i == 1) cf.at(CF_sta_tax_savings, i) += itc_sta_amount + itc_sta_per;
+			if (i == 1) cf.at(CF_sta_tax_savings, i) += itc_sta_amount[0] + itc_sta_per;
 
 			// ************************************************
 			//	tax effect on equity (federal)
@@ -1842,7 +1849,7 @@ public:
 			cf.at(CF_fed_income_taxes, i) = cf.at(CF_federal_tax_frac, i)*cf.at(CF_fed_taxable_income_less_deductions, i);
 
 			cf.at(CF_fed_tax_savings, i) = cf.at(CF_ptc_fed, i) - cf.at(CF_fed_income_taxes, i);
-			if (i == 1) cf.at(CF_fed_tax_savings, i) += itc_fed_amount + itc_fed_per;
+			if (i == 1) cf.at(CF_fed_tax_savings, i) += itc_fed_amount[0] + itc_fed_per;
 
 			// ************************************************
 			// combined tax savings and cost/cash flows
