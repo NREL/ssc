@@ -73,7 +73,7 @@ TEST_F(ManualTest_lib_battery_dispatch, PowerLimitsDispatchManualDC) {
     batteryPower->powerSystem = 1000;
     batteryPower->voltageSystem = 600;
     dispatchManual->dispatch(year, hour_of_year, step_of_hour);
-    EXPECT_NEAR(batteryPower->powerBatteryAC, -powerChargeMax, 2.0);
+    EXPECT_NEAR(batteryPower->powerBatteryAC, -powerChargeMax * batteryPower->sharedInverter->getMaxPowerEfficiency() * 0.01, 2.0);
 
     // Test max discharge power constraint
     batteryPower->powerSystem = 0;
@@ -469,7 +469,7 @@ TEST_F(ManualTest_lib_battery_dispatch, EfficiencyLimitsDispatchManualDC)
     // Test max charge power constraint
     batteryPower->powerSystem = 1000; batteryPower->voltageSystem = 600;
     dispatchManual->dispatch(year, hour_of_year, step_of_hour);
-    EXPECT_NEAR(batteryPower->powerBatteryAC, -powerChargeMax, 2.0);
+    EXPECT_NEAR(batteryPower->powerBatteryAC, -powerChargeMax * batteryPower->sharedInverter->getMaxPowerEfficiency() * 0.01, 2.0);
 
     // Test max discharge power constraint
     batteryPower->powerSystem = 0; batteryPower->voltageSystem = 600; batteryPower->powerLoad = 1000;
@@ -601,7 +601,7 @@ TEST_F(ManualTest_lib_battery_dispatch, TestClipCharging)
     dispatchManual->dispatch(year, hour_of_year, step_of_hour);
     EXPECT_NEAR(batteryPower->powerBatteryDC, -clipped_power, 0.1);
     EXPECT_NEAR(batteryPower->powerSystemToLoad, batteryPower->powerLoad, 0.1);
-    EXPECT_NEAR(batteryPower->powerSystemToBatteryAC, clipped_power / batteryPower->singlePointEfficiencyDCToDC, 0.1);
+    EXPECT_NEAR(batteryPower->powerSystemToBatteryAC, clipped_power * batteryPower->sharedInverter->getMaxPowerEfficiency() * 0.01, 0.1);
 }
 
 TEST_F(ManualTest_lib_battery_dispatch, OutageWithManualDispatch) {

@@ -343,7 +343,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialDCBatteryModelIntegr
     ssc_number_t expectedBatteryChargeEnergy[3] = { 1412.75, 1414.89, 253.2 };
     ssc_number_t expectedBatteryDischargeEnergy[3] = { 1283.8, 1285.88, 226.3 };
 
-    ssc_number_t peakKwCharge[3] = { -3.06, -2.50, -2.69 };
+    ssc_number_t peakKwCharge[3] = { -3.06, -2.91, -2.51 };
     ssc_number_t peakKwDischarge[3] = { 1.40, 1.74, 0.967 };
     ssc_number_t peakCycles[3] = { 1, 1, 1 };
     ssc_number_t avgCycles[3] = { 1.0, 1.0, 0.4794 };
@@ -626,7 +626,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_CustomDispatchBatteryModelD
     ssc_number_t peakKwCharge = -841.39;
     ssc_number_t peakKwDischarge = 652.0;
     ssc_number_t peakCycles = 3;
-    ssc_number_t avgCycles = 1.183;
+    ssc_number_t avgCycles = 1.1836;
 
     ssc_data_set_number(data, "batt_dispatch_choice", 2);
     ssc_data_set_number(data, "batt_ac_or_dc", 0);
@@ -933,7 +933,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialDCBatteryModelPriceS
         EXPECT_NEAR(batt_stats.peakKwCharge, peakKwCharge, m_error_tolerance_lo);
         EXPECT_NEAR(batt_stats.peakKwDischarge, peakKwDischarge, m_error_tolerance_lo);
         EXPECT_NEAR(batt_stats.peakCycles, peakCycles, m_error_tolerance_lo);
-        EXPECT_NEAR(batt_stats.avgCycles, avgCycles, 0.0001);
+        EXPECT_NEAR(batt_stats.avgCycles, avgCycles, 0.005); // Increased tolerance due to https://github.com/NREL/ssc/issues/614
 
         auto batt_q_rel = data_vtab->as_vector_ssc_number_t("batt_capacity_percent");
         auto batt_cyc_avg = data_vtab->as_vector_ssc_number_t("batt_DOD_cycle_average");
