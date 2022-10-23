@@ -57,7 +57,8 @@ public:
         double interconnection_limit,
         bool chargeOnlySystemExceedLoad = true,
         bool dischargeOnlyLoadExceedSystem = true,
-        double SOC_min_outage = 0.0);
+        double SOC_min_outage = 0.0,
+        bool priorityChargeBattery = false);
 
 	// deep copy constructor (new memory), from dispatch to this
 	dispatch_manual_t(const dispatch_t& dispatch);
@@ -87,7 +88,8 @@ protected:
         std::vector<bool>,
 		std::map<size_t, double> dm_percent_discharge,
 		std::map<size_t, double> dm_percent_gridcharge,
-        bool can_clip_charge);
+        bool can_clip_charge,
+        bool priorityChargeBattery);
 
 	void SOC_controller() override;
 	bool check_constraints(double &I, size_t count) override;
@@ -101,6 +103,7 @@ protected:
 	std::vector<bool> _fuelcellcharge_array;
     std::vector<bool> _discharge_grid_array;
     bool _can_clip_charge;
+    bool _priority_charge_battery;
 
 	double _percent_discharge;
 	double _percent_charge;

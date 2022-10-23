@@ -70,19 +70,19 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, TestInitialize)
 	m_batteryPower->canSystemCharge = true;
 	m_batteryPower->powerSystem = 100;
 	m_batteryPower->powerLoad = 50;
-	m_batteryPowerFlow->initialize(50);
+	m_batteryPowerFlow->initialize(50, false);
 	EXPECT_EQ(m_batteryPower->powerBatteryDC, -50);
 
     // Grid charging Scenario
     m_batteryPower->canGridCharge = true;
-    m_batteryPowerFlow->initialize(50);
+    m_batteryPowerFlow->initialize(50, false);
     EXPECT_EQ(m_batteryPower->powerBatteryDC, -m_batteryPower->powerBatteryChargeMaxDC);
 
 	// Discharging Scenario
 	m_batteryPower->canDischarge = true;
 	m_batteryPower->powerSystem = 50;
 	m_batteryPower->powerLoad = 100;
-	m_batteryPowerFlow->initialize(50);
+	m_batteryPowerFlow->initialize(50, false);
 	EXPECT_EQ(m_batteryPower->powerBatteryDC, m_batteryPower->powerBatteryDischargeMaxDC);
 }
 
@@ -2000,7 +2000,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, TestDCConnected)
 	m_batteryPower->canSystemCharge = true;
 	m_batteryPower->powerSystem = 300;
 	m_batteryPower->powerLoad = 200;
-	m_batteryPowerFlow->initialize(50);
+	m_batteryPowerFlow->initialize(50, false);
 	m_batteryPowerFlow->calculate();
 
     EXPECT_NEAR(m_batteryPower->powerBatteryAC, -98.73, error);
@@ -2015,7 +2015,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, TestDCConnected)
 	m_batteryPower->canSystemCharge = false;
 	m_batteryPower->powerSystem = 300;
 	m_batteryPower->powerLoad = 200;
-	m_batteryPowerFlow->initialize(50);
+	m_batteryPowerFlow->initialize(50, false);
 	m_batteryPowerFlow->calculate();
 
     EXPECT_NEAR(m_batteryPower->powerBatteryAC, -105.33, error);
@@ -2030,7 +2030,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, TestDCConnected)
 	m_batteryPower->canDischarge = true;
 	m_batteryPower->powerSystem = 200;
 	m_batteryPower->powerLoad = 300;
-	m_batteryPowerFlow->initialize(50);
+	m_batteryPowerFlow->initialize(50, false);
 	m_batteryPowerFlow->calculate();
 
     EXPECT_NEAR(m_batteryPower->powerBatteryAC, 47.49, error);
@@ -2048,7 +2048,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, TestDCConnected)
     m_batteryPower->powerSystem = 300;
     m_batteryPower->powerLoad = 200;
     m_batteryPower->powerSystemLoss = 1.0;
-    m_batteryPowerFlow->initialize(50);
+    m_batteryPowerFlow->initialize(50, false);
     m_batteryPowerFlow->calculate();
 
     EXPECT_NEAR(m_batteryPower->powerBatteryAC, -98.73, error);
@@ -2063,7 +2063,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, TestDCConnected)
     m_batteryPower->canSystemCharge = false;
     m_batteryPower->powerSystem = 300;
     m_batteryPower->powerLoad = 200;
-    m_batteryPowerFlow->initialize(50);
+    m_batteryPowerFlow->initialize(50, false);
     m_batteryPowerFlow->calculate();
 
     EXPECT_NEAR(m_batteryPower->powerBatteryAC, -105.33, error);
@@ -2078,7 +2078,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, TestDCConnected)
     m_batteryPower->canDischarge = true;
     m_batteryPower->powerSystem = 200;
     m_batteryPower->powerLoad = 300;
-    m_batteryPowerFlow->initialize(50);
+    m_batteryPowerFlow->initialize(50, false);
     m_batteryPowerFlow->calculate();
 
     EXPECT_NEAR(m_batteryPower->powerBatteryAC, 46.52, error);
