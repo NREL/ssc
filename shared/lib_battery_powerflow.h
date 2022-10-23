@@ -61,7 +61,7 @@ public:
 	BatteryPowerFlow(const BatteryPowerFlow& powerFlow);
 
 	/// Initialize the power flow for the battery system.  Only needs to be called for manual dispatch control
-	void initialize(double stateOfCharge, bool pvPriorityCharge);
+	void initialize(double stateOfCharge, bool systemPriorityCharge);
 
 	/// Reset the power flow for a new time step
 	void reset();

@@ -245,7 +245,7 @@ void BatteryPowerFlow::calculate()
         calculateDCConnected();
     }
 }
-void BatteryPowerFlow::initialize(double stateOfCharge, bool pvPriorityCharge)
+void BatteryPowerFlow::initialize(double stateOfCharge, bool systemPriorityCharge)
 {
 	// If the battery is allowed to discharge, do so
 	if (m_BatteryPower->canDischarge && stateOfCharge > m_BatteryPower->stateOfChargeMin + 1.0 &&
@@ -263,7 +263,7 @@ void BatteryPowerFlow::initialize(double stateOfCharge, bool pvPriorityCharge)
 
 		if (m_BatteryPower->canSystemCharge)
 		{
-            if (pvPriorityCharge) {
+            if (systemPriorityCharge) {
                 m_BatteryPower->powerBatteryDC = -1.0 * m_BatteryPower->powerSystem;
             }
             else {
