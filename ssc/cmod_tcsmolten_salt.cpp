@@ -297,6 +297,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     // User Defined cycle
     { SSC_INPUT,     SSC_NUMBER, "ud_f_W_dot_cool_des",                "Percent of user-defined power cycle design gross output consumed by cooling",                                                             "%",            "",                                  "User Defined Power Cycle",                 "pc_config=1",                                                      "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "ud_m_dot_water_cool_des",            "Mass flow rate of water required at user-defined power cycle design point",                                                               "kg/s",         "",                                  "User Defined Power Cycle",                 "pc_config=1",                                                      "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "ud_is_m_dot_max_T_htf_calc",         "False (default) max m_dot_ND set to W_dot_ND at global max ND; True max_m_dot_ND at highest value achieving T_htf_cold target",           "kg/s",         "",                                  "User Defined Power Cycle",                 "?=0",                                                              "",              "SIMULATION_PARAMETER"},
     { SSC_INPUT,     SSC_MATRIX, "ud_ind_od",                          "Off design user-defined power cycle performance as function of T_htf, m_dot_htf [ND], and T_amb",                                         "",             "",                                  "User Defined Power Cycle",                 "pc_config=1",                                                      "",              ""},
 
     // Aux and Balance of Plant
@@ -1472,6 +1473,7 @@ public:
                 // User-Defined Cycle Parameters
                 pc->m_W_dot_cooling_des = as_double("ud_f_W_dot_cool_des") / 100.0*as_double("P_ref");  //[MWe]
                 pc->m_m_dot_water_des = as_double("ud_m_dot_water_cool_des");       //[kg/s]
+                pc->m_is_udpc_m_dot_max__T_htf_calc = 0;        // as_integer("ud_is_m_dot_max_T_htf_calc");
 
                 // User-Defined Cycle Off-Design Tables 
                 pc->mc_combined_ind = as_matrix("ud_ind_od");
