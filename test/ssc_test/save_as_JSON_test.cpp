@@ -36,7 +36,7 @@ int np5 = sprintf(inputs_as_JSON5, "%s/test/input_json/Wind_MP.json", SSCDIR);
 TEST(save_as_JSON_test, pvwatts_mechant_plant_read_file_to_string) {
     std::ifstream test(inputs_as_JSON);
     std::string str((std::istreambuf_iterator<char>(test)), std::istreambuf_iterator<char>());
-    EXPECT_EQ(str.length(), 5278265);
+    EXPECT_EQ(str.length(), 5278325);
 }
 
 TEST(save_as_JSON_test_parse, pvwatts_mechant_plant_rapidjson_parse_file) {
