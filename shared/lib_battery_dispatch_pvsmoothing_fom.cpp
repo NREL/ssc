@@ -322,6 +322,9 @@ void dispatch_pvsmoothing_front_of_meter_t::update_dispatch(size_t year, size_t 
                 }
             }
 
+            // Update SOC to match convention from mainline battery code
+            battery_soc -= battery_power_terminal * power_to_energy_conversion_factor;
+
             // unscaled in public functions
             m_batt_dispatch_pvs_outpower = out_power;
             m_batt_dispatch_pvs_battpower = battery_power_terminal;
