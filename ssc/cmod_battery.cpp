@@ -201,7 +201,7 @@ var_info vtab_battery_inputs[] = {
     { SSC_INPUT,        SSC_NUMBER,      "om_production_escal",          "Production-based O&M escalation",   "%/year",  "",                  "System Costs",            "?=0.0",                 "",                                         "" },
 
     // Powerflow calculation inputs
-    { SSC_INPUT,       SSC_ARRAY,       "fuelcell_power",                               "Electricity from fuel cell",                            "kW",       "",                     "FuelCell",     "",                           "",                         "" },
+    { SSC_INPUT,       SSC_ARRAY,       "fuelcell_power",                               "Electricity from fuel cell AC",                            "kW",       "",                     "FuelCell",     "",                           "",                         "" },
 
 
     var_info_invalid
@@ -232,20 +232,23 @@ var_info vtab_battery_outputs[] = {
     { SSC_OUTPUT,        SSC_ARRAY,      "batt_bank_replacement",                      "Battery bank replacements per year",                     "number/year", "",                  "Battery",       "",                           "",                              "" },
 
     // Power outputs at native timestep
-    { SSC_OUTPUT,        SSC_ARRAY,      "batt_power",                                 "Electricity to/from battery",                           "kW",      "",                       "Battery",       "",                           "",                              "" },
-    { SSC_OUTPUT,        SSC_ARRAY,      "grid_power",                                 "Electricity to/from grid",                              "kW",      "",                       "Battery",       "",                           "",                              "" },
-    { SSC_OUTPUT,        SSC_ARRAY,      "system_to_load",                             "Electricity to load from system",                       "kW",      "",                       "Battery",       "",                           "",                              "" },
-    { SSC_OUTPUT,        SSC_ARRAY,      "batt_to_load",                               "Electricity to load from battery",                      "kW",      "",                       "Battery",       "",                           "",                              "" },
-    { SSC_OUTPUT,        SSC_ARRAY,      "grid_to_load",                               "Electricity to load from grid",                         "kW",      "",                       "Battery",       "",                           "",                              "" },
-    { SSC_OUTPUT,        SSC_ARRAY,      "system_to_batt",                             "Electricity to battery from system",                    "kW",      "",                       "Battery",       "",                           "",                              "" },
-    { SSC_OUTPUT,        SSC_ARRAY,      "fuelcell_to_batt",                           "Electricity to battery from fuel cell",                 "kW",      "",                       "Battery",       "",                           "",                              "" },
-    { SSC_OUTPUT,        SSC_ARRAY,      "grid_to_batt",                               "Electricity to battery from grid",                      "kW",      "",                       "Battery",       "",                           "",                              "" },
-    { SSC_OUTPUT,        SSC_ARRAY,      "system_to_grid",                             "Electricity to grid from system",                       "kW",      "",                       "Battery",       "",                           "",                              "" },
-    { SSC_OUTPUT,        SSC_ARRAY,      "batt_to_grid",                               "Electricity to grid from battery",                      "kW",      "",                       "Battery",       "",                           "",                              "" },
-    { SSC_OUTPUT,        SSC_ARRAY,      "batt_to_system_load",                        "Electricity to system loads from battery",              "kW",      "",                       "Battery",       "",                           "",                              "" },
-    { SSC_OUTPUT,        SSC_ARRAY,      "interconnection_loss",                       "Electricity loss due to curtailment, interconnection, or outage", "kW",      "",             "Battery",       "",                           "",                              "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "batt_power",                                 "Electricity to/from battery AC",                           "kW",      "",                       "Battery",       "",                           "",                              "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "batt_power_dc",                              "Electricity to/from battery DC",                           "kW",      "",                       "Battery",       "",                           "",                              "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "grid_power",                                 "Electricity to/from grid AC",                              "kW",      "",                       "Battery",       "",                           "",                              "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "system_to_load",                             "Electricity to load from system AC",                       "kW",      "",                       "Battery",       "",                           "",                              "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "batt_to_load",                               "Electricity to load from battery AC",                      "kW",      "",                       "Battery",       "",                           "",                              "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "grid_to_load",                               "Electricity to load from grid AC",                         "kW",      "",                       "Battery",       "",                           "",                              "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "system_to_batt",                             "Electricity to battery from system AC",                    "kW",      "",                       "Battery",       "",                           "",                              "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "system_to_batt_dc",                          "Electricity to battery from system DC",                    "kW",      "",                       "Battery",       "",                           "",                              "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "fuelcell_to_batt",                           "Electricity to battery from fuel cell AC",                 "kW",      "",                       "Battery",       "",                           "",                              "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "grid_to_batt",                               "Electricity to battery from grid AC",                      "kW",      "",                       "Battery",       "",                           "",                              "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "system_to_grid",                             "Electricity to grid from system AC",                       "kW",      "",                       "Battery",       "",                           "",                              "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "batt_to_grid",                               "Electricity to grid from battery AC",                      "kW",      "",                       "Battery",       "",                           "",                              "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "batt_to_system_load",                        "Electricity to system loads from battery AC",              "kW",      "",                       "Battery",       "",                           "",                              "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "interconnection_loss",                       "Electricity loss due to curtailment interconnection outage", "kW",      "",             "Battery",       "",                           "",                              "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "batt_conversion_loss",                       "Battery loss from power electronics",         "kW",      "",                       "Battery",       "",                           "",                              "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "batt_system_loss",                           "Battery loss from ancillary equipment",     "kW",      "",                       "Battery",       "",                           "",                              "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "batt_to_inverter_dc",                        "Electricity to inverter from battery DC",     "kW",      "",                       "Battery",       "",                           "",                              "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "grid_power_target",                          "Electricity grid power target for automated dispatch","kW","",                               "Battery",       "",                           "",                              "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "batt_power_target",                          "Electricity battery power target for automated dispatch","kW","",                            "Battery",       "",                           "",                              "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "batt_cost_to_cycle",                         "Battery computed cycle degradation penalty",            "$/cycle-kWh", "",                       "Battery",       "",                           "",                              "" },
@@ -868,19 +871,22 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
     outBatteryBankReplacement = 0;
     outBatteryTemperature = 0;
     outCapacityThermalPercent = 0;
-    outBatteryPower = 0;
+    outBatteryPowerAC = 0;
+    outBatteryPowerDC = 0;
     outGridPower = 0;
     outSystemToLoad = 0;
     outBatteryToLoad = 0;
     outGridToLoad = 0;
     outFuelCellToLoad = 0;
     outGridPowerTarget = 0;
-    outSystemToBatt = 0;
+    outSystemToBattAC = 0;
+    outSystemToBattDC = 0;
     outGridToBatt = 0;
     outFuelCellToBatt = 0;
     outSystemToGrid = 0;
     outBatteryToGrid = 0;
     outBatteryToSystemLoad = 0;
+    outBatteryToInverterDC = 0;
     outFuelCellToGrid = 0;
     outBatteryConversionPowerLoss = 0;
     outBatterySystemLoss = 0;
@@ -949,13 +955,15 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
         outCapacityPercentCycle = vt.allocate("batt_capacity_percent_cycle", nrec * nyears);
         outCapacityPercentCalendar = vt.allocate("batt_capacity_percent_calendar", nrec * nyears);
     }
-    outBatteryPower = vt.allocate("batt_power", nrec * nyears);
+    outBatteryPowerAC = vt.allocate("batt_power", nrec * nyears);
+    outBatteryPowerDC = vt.allocate("batt_power_dc", nrec * nyears);
     outGridPower = vt.allocate("grid_power", nrec * nyears); // Net grid energy required.  Positive indicates putting energy on grid.  Negative indicates pulling off grid
     outGenPower = vt.allocate("pv_batt_gen", nrec * nyears);
     outGenWithoutBattery = vt.allocate("gen_without_battery", nrec * nyears);
     outSystemToGrid = vt.allocate("system_to_grid", nrec * nyears);
     outBatteryToSystemLoad = vt.allocate("batt_to_system_load", nrec * nyears);
     outBatteryToGrid = vt.allocate("batt_to_grid", nrec * nyears);
+    outBatteryToInverterDC = vt.allocate("batt_to_inverter_dc", nrec * nyears);
 
     if (batt_vars->batt_meter_position == dispatch_t::BEHIND)
     {
@@ -989,7 +997,8 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             outBenefitDischarge = vt.allocate("batt_revenue_discharge", nrec * nyears);
         }
     }
-    outSystemToBatt = vt.allocate("system_to_batt", nrec * nyears);
+    outSystemToBattAC = vt.allocate("system_to_batt", nrec * nyears);
+    outSystemToBattDC = vt.allocate("system_to_batt_dc", nrec * nyears);
     outGridToBatt = vt.allocate("grid_to_batt", nrec * nyears);
 
     if (batt_vars->en_fuelcell) {
@@ -1621,7 +1630,8 @@ battstor::battstor(const battstor& orig) {
     outBatteryTemperature = orig.outBatteryTemperature;
     outCapacityThermalPercent = orig.outCapacityThermalPercent;
     outDispatchMode = orig.outDispatchMode;
-    outBatteryPower = orig.outBatteryPower;
+    outBatteryPowerAC = orig.outBatteryPowerAC;
+    outBatteryPowerDC = orig.outBatteryPowerDC;
     outGenPower = orig.outGenPower;
     outGenWithoutBattery = orig.outGenWithoutBattery;
     outGridPower = orig.outGridPower;
@@ -1631,7 +1641,8 @@ battstor::battstor(const battstor& orig) {
     outFuelCellToLoad = orig.outFuelCellToLoad;
     outGridPowerTarget = orig.outGridPowerTarget;
     outBattPowerTarget = orig.outBattPowerTarget;
-    outSystemToBatt = orig.outSystemToBatt;
+    outSystemToBattAC = orig.outSystemToBattAC;
+    outSystemToBattDC = orig.outSystemToBattDC;
     outGridToBatt = orig.outGridToBatt;
     outFuelCellToBatt = orig.outFuelCellToBatt;
     outSystemToGrid = orig.outSystemToGrid;
@@ -1639,7 +1650,8 @@ battstor::battstor(const battstor& orig) {
     outBatteryToSystemLoad = orig.outBatteryToSystemLoad;
     outFuelCellToGrid = orig.outFuelCellToGrid;
     outBatteryConversionPowerLoss = orig.outBatteryConversionPowerLoss;
-    outBatterySystemLoss = orig.outBatterySystemLoss;
+    outBatterySystemLoss =  orig.outBatterySystemLoss;
+    outBatteryToInverterDC = orig.outBatteryToInverterDC;
     outInterconnectionLoss = orig.outInterconnectionLoss;
     outCritLoadUnmet = orig.outCritLoadUnmet;
     outCritLoad = orig.outCritLoad;
@@ -1819,10 +1831,12 @@ void battstor::outputs_fixed()
 void battstor::outputs_topology_dependent()
 {
     // Power output (all Powers in kWac)
-    outBatteryPower[index] = (ssc_number_t)(dispatch_model->power_tofrom_battery());
+    outBatteryPowerAC[index] = (ssc_number_t)(dispatch_model->power_tofrom_battery_ac());
+    outBatteryPowerDC[index] = (ssc_number_t)(dispatch_model->power_tofrom_battery_dc());
     outGridPower[index] = (ssc_number_t)(dispatch_model->power_tofrom_grid());
     outGenPower[index] = (ssc_number_t)(dispatch_model->power_gen());
-    outSystemToBatt[index] = (ssc_number_t)(dispatch_model->power_pv_to_batt());
+    outSystemToBattAC[index] = (ssc_number_t)(dispatch_model->power_pv_to_batt_ac());
+    outSystemToBattDC[index] = (ssc_number_t)(dispatch_model->power_pv_to_batt_dc());
     outGridToBatt[index] = (ssc_number_t)(dispatch_model->power_grid_to_batt());
     outBatteryToGrid[index] = (ssc_number_t)(dispatch_model->power_battery_to_grid());
 
@@ -1836,6 +1850,7 @@ void battstor::outputs_topology_dependent()
     outBatterySystemLoss[index] = (ssc_number_t)(dispatch_model->power_system_loss());
     outSystemToGrid[index] = (ssc_number_t)(dispatch_model->power_pv_to_grid());
     outBatteryToSystemLoad[index] = (ssc_number_t)(dispatch_model->power_battery_to_system_load());
+    outBatteryToInverterDC[index] = (ssc_number_t)(dispatch_model->power_battery_to_inverter_dc());
     outInterconnectionLoss[index] = (ssc_number_t)(dispatch_model->power_interconnection_loss());
 
     if (batt_vars->batt_meter_position == dispatch_t::BEHIND)
@@ -1975,9 +1990,9 @@ void battstor::update_grid_power(compute_module&, double P_gen_ac, double P_load
     outGridPower[index_replace] = (ssc_number_t)(P_grid);
 }
 
-bool battstor::is_outage_step(size_t index) {
-    if (index < batt_vars->grid_outage_steps.size()) {
-        return batt_vars->grid_outage_steps[index];
+bool battstor::is_outage_step(size_t idx) {
+    if (idx < batt_vars->grid_outage_steps.size()) {
+        return batt_vars->grid_outage_steps[idx];
     }
     return false;
 }

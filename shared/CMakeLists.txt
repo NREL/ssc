@@ -67,7 +67,6 @@ set(SHARED_SRC
         lib_physics.h
         lib_power_electronics.cpp
         lib_power_electronics.h
-        lib_power_electronics_old.h
         lib_powerblock.cpp
         lib_powerblock.h
         lib_pv_incidence_modifier.cpp
