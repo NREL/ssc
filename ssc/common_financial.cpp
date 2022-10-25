@@ -25,6 +25,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "common.h"
 #include <sstream>
 #include <sstream>
+#include "../shared/lib_time.h"
 
 #ifndef WIN32
 #include <float.h>
@@ -3515,7 +3516,11 @@ void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double
         }
 
         size_t n_mp_market_price;
+        size_t steps_per_hour;
+        size_t steps_per_year;
         ssc_number_t* mp_market_price; //Market revenue for Merchant Plant model
+        std::vector<ssc_number_t> grid_to_batt_mp;
+        std::vector<ssc_number_t> extrapolated_grid_to_batt_mp;
         if (grid_charging_cost_version == 2) //Only if financial model is Merchant Plant
             mp_market_price = cm->as_array("mp_energy_market_price", &n_mp_market_price); //Energy market price (hourly) for lifetime array to calculate grid charging cost for Merchant Plant ($)
 
@@ -3665,9 +3670,16 @@ void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double
                 if (cm->as_integer("system_use_lifetime_output") == 1) //Lifetime
                 {
                     if (ppa_purchases && a != 0) {
+                        steps_per_hour = n_mp_market_price / (8760.0 * nyears);
+                        grid_to_batt_mp.clear();
+                        grid_to_batt_mp.reserve(n_steps_per_year);
                         for (size_t h = 0; h < n_steps_per_year; h++) {
+                            grid_to_batt_mp.push_back(grid_to_batt[(a - 1) * n_steps_per_year + h]);
+                        }
+                        extrapolated_grid_to_batt_mp = extrapolate_timeseries(grid_to_batt_mp, steps_per_hour);
+                        for (size_t h = 0; h < extrapolated_grid_to_batt_mp.size(); h++) {
                             if (a != 0) { //Not in investment year
-                                cf.at(CF_charging_cost_grid_lcos, a) += grid_to_batt[(a - 1) * n_steps_per_year + h] * 8760 / n_steps_per_year * mp_market_price[(a - 1) * n_steps_per_year + h] / (1000); //Grid charging cost from energy market price ($)
+                                cf.at(CF_charging_cost_grid_lcos, a) += extrapolated_grid_to_batt_mp[h] * 8760 / n_steps_per_year * mp_market_price[(a-1)*extrapolated_grid_to_batt_mp.size() + h] / (1000); //Grid charging cost from energy market price ($)
                             }
                         }
                     }
@@ -3683,9 +3695,16 @@ void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double
                 else //Not Lifetime
                 {
                     if (ppa_purchases && a != 0) {
+                        steps_per_hour = n_mp_market_price / (8760.0);
+                        grid_to_batt_mp.clear();
+                        grid_to_batt_mp.reserve(n_steps_per_year);
                         for (size_t h = 0; h < n_steps_per_year; h++) {
+                            grid_to_batt_mp.push_back(grid_to_batt[h]);
+                        }
+                        extrapolated_grid_to_batt_mp = extrapolate_timeseries(grid_to_batt_mp, steps_per_hour);
+                        for (size_t h = 0; h < extrapolated_grid_to_batt_mp.size(); h++) {
                             if (a != 0) { //Not in investment year
-                                cf.at(CF_charging_cost_grid_lcos, a) += grid_to_batt[h] * cf.at(CF_degradation_lcos, a) * 8760 / n_steps_per_year * mp_market_price[h] / (1000); //Grid charging cost from energy market price ($)
+                                cf.at(CF_charging_cost_grid_lcos, a) += grid_to_batt[h] * cf.at(CF_degradation_lcos, a) * 8760.0 / n_steps_per_year * mp_market_price[(a-1)* extrapolated_grid_to_batt_mp.size() + h] / (1000); //Grid charging cost from energy market price ($)
                             }
                         }
                     }

@@ -82,6 +82,17 @@ TEST_F(CmodMerchantPlantTest, GenericBattery) {
     Test("merchantplant", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
+TEST_F(CmodMerchantPlantTest, GenericBattery_LCOS) {
+    std::string file_inputs = SSCDIR;
+    file_inputs += "/test/input_json/FinancialModels/merchantplant/2022.10.21_develop_branch_Generic_Battery_Merchant_Plant_cmod_merchantplant.json";
+    std::string file_outputs = SSCDIR;
+    file_outputs += "/test/input_json/FinancialModels/merchantplant/2022.10.21_develop_branch_Generic_Battery_Merchant_Plant_cmod_merchantplant_outputs.json";
+    std::vector<std::string> compare_number_variables = { "lcos_real" };
+    std::vector<std::string> compare_array_variables = { "mp_energy_market_generated_revenue", "cf_charging_cost_grid" };
+
+    Test("merchantplant", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+}
+
 TEST_F(CmodMerchantPlantTest, GenericCSP) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/merchantplant/2022.08.08_develop_branch_Generic_CSP_System_Merchant_Plant_cmod_merchantplant.json";

@@ -30,7 +30,9 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 void geothermal_costs_default(ssc_data_t &data) {
 
 	ssc_data_set_number(data, "gross_output", 5435.705);
+    ssc_data_set_number(data, "gross_cost_output", 5.4);
 	ssc_data_set_number(data, "design_temp", 200.0);
+    ssc_data_set_number(data, "dt_prod_well", 0.0);
 	ssc_data_set_number(data, "eff_secondlaw", 0.405130);
 	ssc_data_set_number(data, "conversion_type", 0);
 	ssc_data_set_number(data, "qRejectTotal", 178754.609375);
