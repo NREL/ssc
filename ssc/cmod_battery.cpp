@@ -146,6 +146,7 @@ var_info vtab_battery_inputs[] = {
     { SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_percent_gridcharge",          "Periods 1-6 gridcharge percent",                         "%",        "",                     "BatteryDispatch",       "en_batt=1&batt_dispatch_choice=3",                           "",                             "" },
     { SSC_INPUT,        SSC_MATRIX,     "dispatch_manual_sched",                       "Battery dispatch schedule for weekday",                  "",         "",                     "BatteryDispatch",       "en_batt=1&batt_dispatch_choice=3",                           "",                             "" },
     { SSC_INPUT,        SSC_MATRIX,     "dispatch_manual_sched_weekend",               "Battery dispatch schedule for weekend",                  "",         "",                     "BatteryDispatch",       "en_batt=1&batt_dispatch_choice=3",                           "",                             "" },
+    { SSC_INPUT,        SSC_NUMBER,     "dispatch_manual_system_charge_first",         "System charges battery before meeting load",                 "0/1",    "0=LoadFirst,1=ChargeFirst","BatteryDispatch",      "en_batt=1&en_standalone_batt=0&batt_meter_position=0&batt_dispatch_choice=3&batt_dispatch_charge_only_system_exceeds_load=0",                           "",                             "" },
     { SSC_INPUT,        SSC_ARRAY,      "batt_target_power",                           "Grid target power for every time step",                  "kW",       "",                     "BatteryDispatch",       "en_batt=1&batt_meter_position=0&batt_dispatch_choice=1",                        "",                             "" },
     { SSC_INPUT,        SSC_ARRAY,      "batt_target_power_monthly",                   "Grid target power on monthly basis",                     "kW",       "",                     "BatteryDispatch",       "en_batt=1&batt_meter_position=0&batt_dispatch_choice=1",                        "",                             "" },
     { SSC_INPUT,        SSC_NUMBER,     "batt_target_choice",                          "Target power input option",                              "0/1",      "0=InputMonthlyTarget,1=InputFullTimeSeries", "BatteryDispatch", "en_batt=1&en_standalone_batt=0&batt_meter_position=0&batt_dispatch_choice=1",                        "",                             "" },
@@ -742,12 +743,16 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             // Control powerflow for all BTM methods
             batt_vars->batt_dispatch_charge_only_system_exceeds_load = true;
             batt_vars->batt_dispatch_discharge_only_load_exceeds_system = true;
+            batt_vars->batt_dispatch_batt_system_charge_first = false;
 
             if (vt.is_assigned("batt_dispatch_charge_only_system_exceeds_load")) {
                 batt_vars->batt_dispatch_charge_only_system_exceeds_load = vt.as_boolean("batt_dispatch_charge_only_system_exceeds_load");
             }
             if (vt.is_assigned("batt_dispatch_discharge_only_load_exceeds_system")) {
                 batt_vars->batt_dispatch_discharge_only_load_exceeds_system = vt.as_boolean("batt_dispatch_discharge_only_load_exceeds_system");
+            }
+            if (vt.is_assigned("dispatch_manual_system_charge_first")) {
+                batt_vars->batt_dispatch_batt_system_charge_first = vt.as_boolean("dispatch_manual_system_charge_first");
             }
 
             batt_vars->batt_replacement_option = vt.as_integer("batt_replacement_option");
@@ -1193,6 +1198,10 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             if (batt_vars->batt_btm_can_discharge_to_grid.size() != 6) {
                 throw exec_error("Battery", "Invalid manual dispatch control vector lenghts, must be length 6.");
             }
+
+            if (batt_vars->batt_dispatch_batt_system_charge_first && batt_vars->batt_dispatch_charge_only_system_exceeds_load) {
+                throw exec_error("Battery", "Invalid charging priority choices. Only enable dispatch_manual_system_charge_first if batt_dispatch_charge_only_system_exceeds_load is false");
+            }
         }
 
 
@@ -1222,7 +1231,8 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
                 dm_percent_discharge, dm_percent_gridcharge, batt_vars->batt_dispatch_auto_can_clipcharge, batt_vars->grid_interconnection_limit_kW,
                 batt_vars->batt_dispatch_charge_only_system_exceeds_load,
                 batt_vars->batt_dispatch_discharge_only_load_exceeds_system,
-                batt_vars->batt_minimum_outage_SOC);
+                batt_vars->batt_minimum_outage_SOC,
+                batt_vars->batt_dispatch_batt_system_charge_first);
         }
     }
     /*! Front of meter automated DC-connected dispatch */

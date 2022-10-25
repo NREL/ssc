@@ -245,7 +245,7 @@ void BatteryPowerFlow::calculate()
         calculateDCConnected();
     }
 }
-void BatteryPowerFlow::initialize(double stateOfCharge)
+void BatteryPowerFlow::initialize(double stateOfCharge, bool systemPriorityCharge)
 {
 	// If the battery is allowed to discharge, do so
 	if (m_BatteryPower->canDischarge && stateOfCharge > m_BatteryPower->stateOfChargeMin + 1.0 &&
@@ -263,8 +263,13 @@ void BatteryPowerFlow::initialize(double stateOfCharge)
 
 		if (m_BatteryPower->canSystemCharge)
 		{
-			// use all power available, it will only use what it can handle
-			m_BatteryPower->powerBatteryDC = -(m_BatteryPower->powerSystem - m_BatteryPower->powerLoad);
+            if (systemPriorityCharge) {
+                m_BatteryPower->powerBatteryDC = -1.0 * m_BatteryPower->powerSystem;
+            }
+            else {
+                // use all power available, it will only use what it can handle
+                m_BatteryPower->powerBatteryDC = -(m_BatteryPower->powerSystem - m_BatteryPower->powerLoad);
+            }
 		}
 		// if we want to charge from grid in addition to, or without array, we can always charge at max power
 		if (m_BatteryPower->canGridCharge) {
