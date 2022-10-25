@@ -3622,6 +3622,20 @@ public:
 		double pvPropertyTax = npv(CF_property_tax_expense, nyears, nom_discount_rate);
 
 		assign( "present_value_insandproptax", var_data((ssc_number_t)(pvInsurance + pvPropertyTax)));
+
+        // check financial metric outputs per SAM issue 551
+        ssc_number_t irr_metric_end = irr(CF_project_return_aftertax, nyears) * 100.0;
+        ssc_number_t irr_metric_flip_year = actual_flip_irr;
+        ssc_number_t npv_metric = npv(CF_project_return_aftertax, nyears, nom_discount_rate) + cf.at(CF_project_return_aftertax, 0);
+
+        check_financial_metrics cfm;
+        cfm.check_irr(this, irr_metric_end);
+        cfm.check_irr_flip(this, irr_metric_flip_year);
+        cfm.check_npv(this, npv_metric);
+        cfm.check_debt_percentage(this, debt_fraction);
+
+
+
 	}
 
 

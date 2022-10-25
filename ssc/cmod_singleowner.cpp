@@ -3789,21 +3789,11 @@ public:
 
 		assign( "present_value_insandproptax", var_data((ssc_number_t)(pvInsurance + pvPropertyTax)));
 
-        // TODO - refactor into general function in common_financial
-        // github issue SAM 551, check NPV > 0, Debt Percentage <=100% and IRR != NaN
-        //                     log(util::format("POA decomposition model calculated negative global horizontal irradiance at time [y:%d m:%d d:%d h:%d minute:%lg], set to zero.",  wf.year, wf.month, wf.day, wf.hour, wf.minute), SSC_NOTICE, (float)idx);
 
+        // check financial metric outputs per SAM issue 551
         ssc_number_t irr_metric_end = irr(CF_project_return_aftertax, nyears) * 100.0;
-//        if (isnan(irr_metric_end))
-//            log("End of analysis IRR is not a number, please review all financial results", SSC_WARNING);
         ssc_number_t irr_metric_flip_year = cf.at(CF_project_return_aftertax_irr, flip_target_year);
-//        if (isnan(irr_metric_flip_year))
-//            log("IRR is not a number, please review all financial results", SSC_WARNING);
         ssc_number_t npv_metric = npv(CF_project_return_aftertax, nyears, nom_discount_rate) + cf.at(CF_project_return_aftertax, 0);
-//        if (npv_metric < 0.0)
-//            log(util::format("NPV, %lg, is less than zero, please review all financial results", npv_metric), SSC_WARNING);
-//        if (debt_fraction > 100.0)
-//            log(util::format("Debt percent, %lg, is greater than 100%%, please review all financial results", debt_fraction), SSC_WARNING);
 
         check_financial_metrics cfm;
         cfm.check_irr(this, irr_metric_end);

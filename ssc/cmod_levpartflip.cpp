@@ -3760,6 +3760,22 @@ public:
 
 		assign( "present_value_insandproptax", var_data((ssc_number_t)(pvInsurance + pvPropertyTax)));
 
+
+        // check financial metric outputs per SAM issue 551 and 1194
+        ssc_number_t irr_ti_end = cf.at(CF_tax_investor_aftertax_irr, nyears);
+        ssc_number_t irr_sp_end = cf.at(CF_sponsor_aftertax_irr, nyears);
+        ssc_number_t irr_metric_flip_year = actual_flip_irr;
+        ssc_number_t npv_ti = cf.at(CF_tax_investor_aftertax_npv, nyears);
+        ssc_number_t npv_sp = cf.at(CF_sponsor_aftertax_npv, nyears);
+
+        check_financial_metrics cfm;
+        cfm.check_irr(this, irr_ti_end);
+        cfm.check_irr(this, irr_sp_end);
+        cfm.check_irr_flip(this, irr_metric_flip_year);
+        cfm.check_npv(this, npv_ti);
+        cfm.check_npv(this, npv_sp);
+        cfm.check_debt_percentage(this, debt_fraction);
+
 	}
 
 
