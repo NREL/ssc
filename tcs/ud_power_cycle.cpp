@@ -795,7 +795,7 @@ int N_udpc_common::split_ind_tbl(const util::matrix_t<double>& cmbd_ind, util::m
     double& T_amb_low, double& T_amb_des, double& T_amb_high)
 {
     // check for minimum length
-    int n_par_min = 4;
+    int n_par_min = 3;
     int n_levels = 3;
     int n_ind_vars = 3;
     int n_min_runs = n_par_min * n_levels * n_ind_vars;
@@ -907,9 +907,11 @@ int N_udpc_common::split_ind_tbl(const util::matrix_t<double>& cmbd_ind, util::m
     n_T_amb_pars = v_T_amb_unique.size();
     n_T_htf_pars = v_T_htf_unique.size();
 
-    if (n_m_dot_pars < 4 || n_T_amb_pars < 4 || n_T_htf_pars < 4)
+    if (n_m_dot_pars < n_par_min || n_T_amb_pars < n_par_min || n_T_htf_pars < n_par_min)
     {
-        throw(C_csp_exception("Filtered UDPC parametric for each variable must contain at least 4 unique values"));
+        std::string error_msg = util::format("The filtered UDPC parametric for each variable must contain at least %d unique values",
+            n_par_min);
+        throw(C_csp_exception(error_msg, "User defined power cycle initialization"));
     }
 
     // Build tables for each independent variable
