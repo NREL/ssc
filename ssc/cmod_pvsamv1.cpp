@@ -539,6 +539,12 @@ static var_info _cm_vtab_pvsamv1[] = {
         { SSC_OUTPUT,        SSC_ARRAY,      "df",                                         "Irradiance DHI from weather file",                                     "W/m2",   "",                      "Time Series",       "*",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "wfpoa",                                      "Irradiance POA from weather file",                                     "W/m2",   "",                      "Time Series",       "",                     "",                              "" },
 
+        // header data from weather file
+        { SSC_OUTPUT,        SSC_NUMBER,      "lat",                                         "Latitude from weather file",                                          "DD",   "",                      "Location",       "",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_NUMBER,      "lon",                                         "Longitude from weather file",                                         "DD",   "",                      "Location",       "",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_NUMBER,      "tz",                                          "Time zone from weather file",                                         "UTC offset",   "",              "Location",       "",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_NUMBER,      "elev",                                        "Site elevation from weather file",                                    "m",   "",                       "Location",       "",                    "",                              "" },
+
         //not all of these three calculated values will be reported, based on irrad_mode selection
         { SSC_OUTPUT,        SSC_ARRAY,      "gh_calc",                                    "Irradiance GHI calculated",                                       "W/m2",   "",                      "Time Series",       "",                     "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "dn_calc",                                    "Irradiance DNI calculated",                                       "W/m2",   "",                      "Time Series",       "",                     "",                              "" },
@@ -2786,6 +2792,11 @@ void cm_pvsamv1::exec()
 
     //Outputs that are always assigned
     assign("nameplate_dc_rating", var_data((ssc_number_t)nameplate_kw));
+
+    assign("lat", hdr.lat);
+    assign("lon", hdr.lon);
+    assign("tz", hdr.tz);
+    assign("elev", hdr.elev);
 
     inverter_vdcmax_check();
     inverter_size_check();
