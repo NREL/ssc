@@ -53,6 +53,12 @@ private:
 
     E_elec_resist_startup_mode m_startup_mode;
 
+    // Hardcoded in constructor
+
+        // Heater electric-to-heat efficiency just set up to pass to getter
+        // Not threaded through to design or performance call
+    double m_heater_efficiency;     //[-]
+
     // ********************************
     // ********************************
 
@@ -66,6 +72,7 @@ private:
     double m_q_dot_su_max;          //[MWt]
     double m_E_su_des;              //[MWt-hr]
     double m_t_su_des;              //[hr]
+    double m_W_dot_heater_des;      //[MWe]
 
     // ********************************
     // ********************************
@@ -92,7 +99,7 @@ public:
     C_csp_reported_outputs mc_reported_outputs;
 
     C_csp_cr_electric_resistance(double T_htf_cold_des /*C*/, double T_htf_hot_des /*C*/,
-        double q_dot_heater_des /*MWt*/, double f_q_dot_min /*- rel design*/,
+        double q_dot_heater_des /*MWt*/, double heater_efficiency /*-*/, double f_q_dot_min /*- rel design*/,
         double f_q_dot_des_allowable_su /*-*/, double hrs_startup_at_max_rate /*hr*/,
         int htf_code /*-*/, util::matrix_t<double> ud_htf_props, E_elec_resist_startup_mode startup_mode);
 
@@ -144,7 +151,10 @@ public:
 
     virtual double get_collector_area();
 
-    void get_design_parameters(double& E_su_design /*MWt-hr*/);
+    virtual double get_design_electric_to_heat_cop() override;
+
+    void get_design_parameters(double& E_su_design /*MWt-hr*/,
+        double& W_dot_heater_design /*MWe*/);
 
     // ***************************************************************
     // ***************************************************************

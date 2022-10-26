@@ -123,8 +123,8 @@ struct weather_record {
 	double rhum;   // relative humidity (%)
 	double pres;   // pressure (mbar)
 	double snow;   // snow depth (cm) 0-150
-	double alb; // ground reflectance 0-1.  values outside this range mean it is not included
-	double aod;    // aerosol optical depth
+	double alb;    // ground reflectance 0-1
+    double aod;    // aerosol optical depth
 };
 
 class weather_data_provider

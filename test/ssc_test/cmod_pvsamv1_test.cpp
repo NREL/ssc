@@ -54,6 +54,20 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, DefaultNoFinancialModel) {
     }
 }
 
+TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, DefaultNoFinancialModel_Lac) {
+
+
+    std::map<std::string, double> pairs;
+    pairs["cec_temp_corr_mode"] = 1;
+    pairs["cec_lacunarity_length"] = 1;
+    pairs["cec_lacunarity_h"] = 1;
+    pairs["cec_ground_clearance_height"] = 0.5;
+    int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+
+    EXPECT_FALSE(pvsam_errors);
+    
+}
+
 /// Run PVSAMv1 with all defaults and lifetime mode for no-financial model
 TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, DefaultLifetimeNoFinancialModel) {
 
@@ -164,6 +178,216 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, DefaultResidentialModel)
         EXPECT_NEAR(loan_amount, 13758, m_error_tolerance_hi) << "Debt";
     }
 }
+
+TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, LossAdjustmentLifetime) {
+    std::map<std::string, double> pairs;
+    pairs["system_use_lifetime_output"] = 1;
+    pairs["save_full_lifetime_variables"] = 1;
+    pairs["analysis_period"] = 2;
+
+    double dc_degradation[25];
+    for (size_t i = 0; i < 25; i++) {
+        dc_degradation[i] = 0.5;
+    }
+
+    ssc_data_set_array(data, "dc_degradation", (ssc_number_t*)dc_degradation, 25);
+   
+    
+    int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+   
+    //Single Value
+    double timeindex[1];
+    for (int i = 0; i < 1; i++)
+        timeindex[i] = 100;
+    ssc_data_set_array(data, "adjust:timeindex", (ssc_number_t*)timeindex, 1);
+    pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+    ssc_number_t annual_energy;
+    ssc_data_get_number(data, "annual_energy", &annual_energy);
+    EXPECT_NEAR(annual_energy, 0, m_error_tolerance_hi);
+
+    //Annual
+    double timeindex_annual[2];
+    for (int i = 0; i < 2; i++)
+        timeindex_annual[i] = i*100;
+    ssc_data_set_array(data, "adjust:timeindex", (ssc_number_t*)timeindex_annual, 2);
+    pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+    ssc_data_get_number(data, "annual_energy", &annual_energy);
+    EXPECT_NEAR(annual_energy, 8833.8, m_error_tolerance_hi);
+    ssc_number_t kwh_per_kw;
+    ssc_data_get_number(data, "kwh_per_kw", &kwh_per_kw);
+    EXPECT_NEAR(kwh_per_kw, 1883, m_error_tolerance_hi) << "Energy yield"; // Same as 1 year because year 2 has 0 production
+
+    //Monthly
+    double timeindex_monthly[24];
+    for (int i = 0; i < 24; i++)
+        if (i >= 12)
+            timeindex_monthly[i] = 100.0;
+        else
+            timeindex_monthly[i] = 0.0;
+    ssc_data_set_array(data, "adjust:timeindex", (ssc_number_t*)timeindex_monthly, 24);
+    pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+    ssc_data_get_number(data, "annual_energy", &annual_energy);
+    EXPECT_NEAR(annual_energy, 8833.8, m_error_tolerance_hi);
+    ssc_data_get_number(data, "kwh_per_kw", &kwh_per_kw);
+    EXPECT_NEAR(kwh_per_kw, 1883, m_error_tolerance_hi) << "Energy yield"; // Same as 1 year because year 2 has 0 production
+
+    //Weekly
+    double timeindex_weekly[104];
+    for (int i = 0; i < 104; i++)
+        if (i >= 52)
+            timeindex_weekly[i] = 100;
+        else
+            timeindex_weekly[i] = 0.0;
+
+    ssc_data_set_array(data, "adjust:timeindex", (ssc_number_t*)timeindex_weekly, 104); //52 Weeks * 2
+    pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+    ssc_data_get_number(data, "annual_energy", &annual_energy);
+    EXPECT_NEAR(annual_energy, 8833.8, m_error_tolerance_hi);
+    ssc_data_get_number(data, "kwh_per_kw", &kwh_per_kw);
+    EXPECT_NEAR(kwh_per_kw, 1883, m_error_tolerance_hi) << "Energy yield"; // Same as 1 year because year 2 has 0 production
+
+    //Daily
+    double timeindex_daily[730];
+    for (int i = 0; i < 730; i++)
+        if (i >= 365)
+            timeindex_daily[i] = 100;
+        else
+            timeindex_daily[i] = 0.0;
+    ssc_data_set_array(data, "adjust:timeindex", (ssc_number_t*)timeindex_daily, 730); //365days * 2
+    pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+    ssc_data_get_number(data, "annual_energy", &annual_energy);
+    EXPECT_NEAR(annual_energy, 8833.8, m_error_tolerance_hi);
+    ssc_data_get_number(data, "kwh_per_kw", &kwh_per_kw);
+    EXPECT_NEAR(kwh_per_kw, 1883, m_error_tolerance_hi) << "Energy yield"; // Same as 1 year because year 2 has 0 production
+
+    //Hourly
+    double timeindex_hourly[17520];
+    for (int i = 0; i < 17520; i++)
+        if (i >= 8760)
+            timeindex_hourly[i] = 100;
+        else
+            timeindex_hourly[i] = 0.0;
+    ssc_data_set_array(data, "adjust:timeindex", (ssc_number_t*)timeindex_hourly, 17520); //365days * 2
+    pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+    ssc_data_get_number(data, "annual_energy", &annual_energy);
+    EXPECT_NEAR(annual_energy, 8833.8, m_error_tolerance_hi);
+    ssc_data_get_number(data, "kwh_per_kw", &kwh_per_kw);
+    EXPECT_NEAR(kwh_per_kw, 1883, m_error_tolerance_hi) << "Energy yield"; // Same as 1 year because year 2 has 0 production
+
+    //Subhourly
+    double timeindex_subhourly[35040];
+    for (int i = 0; i < 35040; i++)
+        if (i >= 17520)
+            timeindex_subhourly[i] = 100;
+        else
+            timeindex_subhourly[i] = 0.0;
+    ssc_data_set_array(data, "adjust:timeindex", (ssc_number_t*)timeindex_subhourly, 35040); //365days * 2 steps per hour * 2 yr
+    pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+    ssc_data_get_number(data, "annual_energy", &annual_energy);
+    EXPECT_NEAR(annual_energy, 8833.8, m_error_tolerance_hi);
+    ssc_data_get_number(data, "kwh_per_kw", &kwh_per_kw);
+    EXPECT_NEAR(kwh_per_kw, 1883, m_error_tolerance_hi) << "Energy yield"; // Same as 1 year because year 2 has 0 production
+}
+
+TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, LossAdjustmentNonLifetime) {
+    
+   
+
+    //Single Value
+    double timeindex[1];
+    for (int i = 0; i < 1; i++)
+        timeindex[i] = 100;
+    ssc_data_set_array(data, "adjust:timeindex", (ssc_number_t*)timeindex, 1);
+    int pvsam_errors = run_module(data, "pvsamv1");
+    ssc_number_t annual_energy;
+    ssc_data_get_number(data, "annual_energy", &annual_energy);
+    EXPECT_NEAR(annual_energy, 0, m_error_tolerance_hi);
+
+    //Annual
+    double timeindex_annual[1];
+    for (int i = 0; i < 1; i++)
+        timeindex_annual[i] = 100;
+    ssc_data_set_array(data, "adjust:timeindex", (ssc_number_t*)timeindex_annual, 1);
+    pvsam_errors = run_module(data, "pvsamv1");
+    ssc_data_get_number(data, "annual_energy", &annual_energy);
+    EXPECT_NEAR(annual_energy, 0, m_error_tolerance_hi);
+    ssc_number_t kwh_per_kw;
+    ssc_data_get_number(data, "kwh_per_kw", &kwh_per_kw);
+    EXPECT_NEAR(kwh_per_kw, 0, m_error_tolerance_hi) << "Energy yield"; // Same as 1 year because year 2 has 0 production
+
+    //Monthly
+    double timeindex_monthly[12];
+    for (int i = 0; i < 12; i++)
+        if (i >= 6)
+            timeindex_monthly[i] = 100.0;
+        else
+            timeindex_monthly[i] = 0.0;
+    ssc_data_set_array(data, "adjust:timeindex", (ssc_number_t*)timeindex_monthly, 12);
+    pvsam_errors = run_module(data, "pvsamv1");
+    ssc_data_get_number(data, "annual_energy", &annual_energy);
+    EXPECT_NEAR(annual_energy, 4532.1, m_error_tolerance_hi);
+    ssc_data_get_number(data, "kwh_per_kw", &kwh_per_kw);
+    EXPECT_NEAR(kwh_per_kw, 965.7, m_error_tolerance_hi) << "Energy yield"; // Same as 1 year because year 2 has 0 production
+
+    //Weekly
+    double timeindex_weekly[52];
+    for (int i = 0; i < 52; i++)
+        if (i >= 26)
+            timeindex_weekly[i] = 100;
+        else
+            timeindex_weekly[i] = 0.0;
+
+    ssc_data_set_array(data, "adjust:timeindex", (ssc_number_t*)timeindex_weekly, 52); //52 Weeks * 2
+    pvsam_errors = run_module(data, "pvsamv1");
+    ssc_data_get_number(data, "annual_energy", &annual_energy);
+    EXPECT_NEAR(annual_energy, 4560.7, m_error_tolerance_hi);
+    ssc_data_get_number(data, "kwh_per_kw", &kwh_per_kw);
+    EXPECT_NEAR(kwh_per_kw, 971.8, m_error_tolerance_hi) << "Energy yield"; // Same as 1 year because year 2 has 0 production
+
+    //Daily
+    double timeindex_daily[365];
+    for (int i = 0; i < 365; i++)
+        if (i >= 180)
+            timeindex_daily[i] = 100;
+        else
+            timeindex_daily[i] = 0.0;
+    ssc_data_set_array(data, "adjust:timeindex", (ssc_number_t*)timeindex_daily, 365); //365days * 2
+    pvsam_errors = run_module(data, "pvsamv1");
+    ssc_data_get_number(data, "annual_energy", &annual_energy);
+    EXPECT_NEAR(annual_energy, 8833.8, m_error_tolerance_hi);
+    ssc_data_get_number(data, "kwh_per_kw", &kwh_per_kw);
+    EXPECT_NEAR(kwh_per_kw, 1883, m_error_tolerance_hi) << "Energy yield"; // Same as 1 year because year 2 has 0 production
+
+    //Hourly
+    double timeindex_hourly[8760];
+    for (int i = 0; i < 8760; i++)
+        if (i >= 5000)
+            timeindex_hourly[i] = 100;
+        else
+            timeindex_hourly[i] = 0.0;
+    ssc_data_set_array(data, "adjust:timeindex", (ssc_number_t*)timeindex_hourly, 8760); //365days * 2
+    pvsam_errors = run_module(data, "pvsamv1");
+    ssc_data_get_number(data, "annual_energy", &annual_energy);
+    EXPECT_NEAR(annual_energy, 5293.7, m_error_tolerance_hi);
+    ssc_data_get_number(data, "kwh_per_kw", &kwh_per_kw);
+    EXPECT_NEAR(kwh_per_kw, 1128.0, m_error_tolerance_hi) << "Energy yield"; // Same as 1 year because year 2 has 0 production
+
+    //Subhourly
+    double timeindex_subhourly[17520];
+    for (int i = 0; i < 17520; i++)
+        if (i >= 10000)
+            timeindex_subhourly[i] = 100;
+        else
+            timeindex_subhourly[i] = 0.0;
+    ssc_data_set_array(data, "adjust:timeindex", (ssc_number_t*)timeindex_subhourly, 17520); //365days * 2 steps per hour * 2 yr
+    pvsam_errors = run_module(data, "pvsamv1");
+    ssc_data_get_number(data, "annual_energy", &annual_energy);
+    EXPECT_NEAR(annual_energy, 8833.8, m_error_tolerance_hi);
+    ssc_data_get_number(data, "kwh_per_kw", &kwh_per_kw);
+    EXPECT_NEAR(kwh_per_kw, 1883, m_error_tolerance_hi) << "Energy yield"; // Same as 1 year because year 2 has 0 production
+}
+
+
 
 /// Test PVSAMv1 with default no-financial model and a 15-minute weather file
 TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelCustomWeatherFile) {
@@ -446,7 +670,7 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelShading)
 // PR 280	std::vector<double> annual_energy_expected = { 12911, 10607, 10579, 10377 };
     // 2 - 3D shading with self-shading reduced from 10579 to 10529
     // 3 - shading with snow reduced from 10377 to 10328
-    std::vector<double> annual_energy_expected = { 13130, 10763, 10684, 10479 };
+    std::vector<double> annual_energy_expected = { 13130, 10763, 10702, 10497 };
     std::map<std::string, double> pairs;
 
     // 2 subarrays, one pointing east, one west
@@ -681,6 +905,73 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelMultipleMPPT)
 
 }
 
+/// Test albedo user inputs, weather file (wf) input for valid and invalid albedo values
+TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, AlbedoTest_cmod_pvsamv1) {
+
+    // albedo user input values for testing
+    ssc_number_t albedo_monthly[12] = { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.90, 0.91, 0.92 };
+    ssc_number_t albedo_monthly_invalid[12] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 91, 92 };
+
+    // weather files for albedo tests
+    // pv_albedo_test.csv time steps 1, 2, and 3229 have invalid albedo values for testing
+    // time steps 0, 1, and 2 have snow depth = 14.2, time steps 3228 and 3229 have snow depth = 0 (snow is for pvwattsv8)
+    char wf_albedo[256];
+    int a1 = sprintf(wf_albedo, "%s/test/input_cases/pvsamv1_data/pv_albedo_test.csv", SSCDIR);
+    char wf_no_albedo[256];
+    int a2 = sprintf(wf_no_albedo, "%s/test/input_cases/pvsamv1_data/pv_albedo_test_no_albedo.csv", SSCDIR);
+
+    // albedo values from wf
+    ssc_number_t albedo_ts_0 = 0.87; // jan 1 1:00 am
+
+    // Test set 1: weather file with no albedo.
+    ssc_data_set_string(data, "solar_resource_file", wf_no_albedo);
+
+    ssc_data_set_number(data, "use_wf_albedo", 1);
+
+    ssc_data_set_array(data, "albedo", albedo_monthly, 12);
+    EXPECT_FALSE(run_module(data, "pvsamv1"));
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[0], albedo_monthly[0], m_error_tolerance_lo) << "Time step 0: Albedo should be albedo input for jan.";
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[1], albedo_monthly[0], m_error_tolerance_lo) << "Time step 1: Albedo should be albedo input for jan.";
+
+    ssc_data_set_array(data, "albedo", albedo_monthly_invalid, 1);
+    EXPECT_TRUE(run_module(data, "pvsamv1"));
+
+    ssc_data_set_number(data, "use_wf_albedo", 0);
+
+    ssc_data_set_array(data, "albedo", albedo_monthly, 12);
+    EXPECT_FALSE(run_module(data, "pvsamv1"));
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[0], albedo_monthly[0], m_error_tolerance_lo) << "Time step 0: Albedo should be albedo input for jan.";
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[1], albedo_monthly[0], m_error_tolerance_lo) << "Time step 1: Albedo should be albedo input for jan.";
+
+    ssc_data_set_array(data, "albedo", albedo_monthly_invalid, 12);
+    EXPECT_TRUE(run_module(data, "pvsamv1"));
+
+    // Test set 2: weather file with albedo data
+    ssc_data_set_string(data, "solar_resource_file", wf_albedo);
+
+    ssc_data_set_number(data, "use_wf_albedo", 1);
+
+    ssc_data_set_array(data, "albedo", albedo_monthly, 12);
+    EXPECT_FALSE(run_module(data, "pvsamv1"));
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[0], albedo_ts_0, m_error_tolerance_lo) << "Time step 0: Albedo should be wf albedo.";
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[1], albedo_monthly[0], m_error_tolerance_lo) << "Time step 1: Albedo should be albedo input for jan.";
+
+    ssc_data_set_array(data, "albedo", albedo_monthly_invalid, 12);
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[0], albedo_ts_0, m_error_tolerance_lo) << "Time step 0: Albedo should be wf albedo.";
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[1], NULL, m_error_tolerance_lo) << "Time step 1: Albedo should be albedo input for jan.";
+
+    ssc_data_set_number(data, "use_wf_albedo", 0);
+
+    ssc_data_set_array(data, "albedo", albedo_monthly, 12);
+    EXPECT_FALSE(run_module(data, "pvsamv1"));
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[0], albedo_monthly[0], m_error_tolerance_lo) << "Time step 0: Albedo should be albedo input for jan.";
+    EXPECT_NEAR(ssc_data_get_array(data, "alb", nullptr)[1], albedo_monthly[0], m_error_tolerance_lo) << "Time step 1: Albedo should be albedo input for jan.";
+
+    ssc_data_set_array(data, "albedo", albedo_monthly_invalid, 12);
+    EXPECT_TRUE(run_module(data, "pvsamv1"));
+
+}
+
 /// Test PVSAMv1 with Snow Model enabled and set to 1-axis Tracking
 TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, SnowModel)
 {
@@ -762,7 +1053,32 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, bifacial) {
     {
         ssc_number_t annualEnergy;
         ssc_data_get_number(data, "annual_energy", &annualEnergy);
-        EXPECT_NEAR(annualEnergy, 9259, 1.0) << "Bifacial annual energy from SAM version 2018.11.11 using Phoenix TMY2";
+        EXPECT_NEAR(annualEnergy, 9258, 1.0) << "Bifacial annual energy from SAM version 2018.11.11 using Phoenix TMY2";
+    }
+
+
+    // test monofacial
+    pairs["cec_is_bifacial"] = 0;
+    double expected_monofacial_annual_energy = 8877.;
+    pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+    EXPECT_FALSE(pvsam_errors);
+    if (!pvsam_errors)
+    {
+        ssc_number_t annualEnergy;
+        ssc_data_get_number(data, "annual_energy", &annualEnergy);
+        EXPECT_NEAR(annualEnergy, expected_monofacial_annual_energy, 1.0) << "Bifacial annual energy from SAM version 2018.11.11 using Phoenix TMY2";
+    }
+
+    // test bifacial but effectively monofacial
+    pairs["cec_is_bifacial"] = 1;
+    pairs["cec_bifaciality"] = 0.;
+    pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+    EXPECT_FALSE(pvsam_errors);
+    if (!pvsam_errors)
+    {
+        ssc_number_t annualEnergy;
+        ssc_data_get_number(data, "annual_energy", &annualEnergy);
+        EXPECT_NEAR(annualEnergy, expected_monofacial_annual_energy, 1.0) << "Bifacial annual energy from SAM version 2018.11.11 using Phoenix TMY2";
     }
 }
 

@@ -157,7 +157,6 @@ static var_info _cm_vtab_trough_physical[] = {
     //{ SSC_INPUT,        SSC_NUMBER,      "rec_htf",                   "17: Salt (60% NaNO3, 40% KNO3) 10: Salt (46.5% LiF 11.5% NaF 42% KF) 50: Lookup tables", "",       "",               "powerblock",     "*",                      "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "dT_cw_ref",                 "Reference condenser cooling water inlet/outlet T diff",                            "C",            "",               "powerblock",     "pc_config=0",             "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_amb_des",                 "Reference ambient temperature at design point",                                    "C",            "",               "powerblock",     "pc_config=0",             "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "P_boil",                    "Boiler operating pressure",                                                        "bar",          "",               "powerblock",     "pc_config=0",             "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "CT",                        "Flag for using dry cooling or wet cooling system",                                 "none",         "",               "powerblock",     "pc_config=0",             "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "tech_type",                 "Turbine inlet pressure control flag (sliding=user, fixed=trough)",                 "1/2/3",        "tower/trough/user", "powerblock",  "pc_config=0",             "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_approach",                "Cooling tower approach temperature",                                               "C",            "",               "powerblock",     "pc_config=0",             "",                      "" },
@@ -308,7 +307,7 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "disp_csu_cost",                       "Cycle startup cost",                                                     "$",            "",               "System Control",     "",           "",              "" },
     { SSC_INPUT,        SSC_NUMBER,      "disp_rsu_cost",                       "Receiver startup cost",                                                  "$",            "",               "System Control",     "",           "",              "" },
     { SSC_INPUT,        SSC_NUMBER,      "disp_pen_delta_w",                    "Dispatch cycle production change penalty",                               "$/kWe-change", "",               "tou",                "",           "",              "" },
-
+    { SSC_INPUT,        SSC_NUMBER,      "P_boil",                              "Boiler operating pressure",                                              "bar",          "",               "powerblock",         "",           "",              "" },
 
 
     // *************************************************************************************************
@@ -480,7 +479,8 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "disp_presolve_nconstr",     "Dispatch number of constraints in problem",                                        "",             "",               "tou",            "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "disp_presolve_nvar",        "Dispatch number of variables in problem",                                          "",             "",               "tou",            "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "disp_solve_time",           "Dispatch solver time",                                                             "sec",          "",               "tou",            "*",                       "",                      "" },
-                                                                                                                                                                                                                                                                  
+    { SSC_OUTPUT,       SSC_NUMBER,      "avg_suboptimal_rel_mip_gap","Average suboptimal relative MIP gap",                                              "%",            "",               "tou",            "*",                       "",                      "" },
+
     { SSC_OUTPUT,       SSC_ARRAY,       "P_fixed",                   "Parasitic power fixed load",                                                       "MWe",          "",               "system",         "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "P_plant_balance_tot",       "Parasitic power generation-dependent load",                                        "MWe",          "",               "system",         "*",                       "",                      "" },
                                                                                                                                                                                                                                                                   
@@ -567,6 +567,15 @@ public:
                     " The new input represents the receiver startup costs in an optimization model that uses absolute grid prices."
                     " Please define disp_pen_ramping in your script. SAM's default value in the molten salt power tower model is 1.0");
             }
+
+            if (is_assigned("P_boil")) {
+                log("We removed boiler pressure (P_boil) as a user input to the Rankine Cycle model. Because the cycle efficiency"
+                    " is provided by the user, the boiler pressure input does not modify the efficiency as one might expect. Instead the model"
+                    " uses boiler pressure in second order calculations to 1) define a boiling temperature to normalize off-design HTF temperature and"
+                    " 2) estimate steam mass flow for cycle make-up water calculations. Because boiler pressure only has influences"
+                    " results in these minor non-intuitive ways, we decided to hardcode the valu to 100 bar.");
+            }
+
         }
         // *****************************************************
         // *****************************************************
@@ -910,7 +919,8 @@ public:
             {
                 pc->m_dT_cw_ref = as_double("dT_cw_ref");
                 pc->m_T_amb_des = as_double("T_amb_des");
-                pc->m_P_boil = as_double("P_boil");
+                //pc->m_P_boil = as_double("P_boil");
+                pc->m_P_boil_des = 100.0;       //[bar]
                 pc->m_CT = as_integer("CT");                    // cooling tech type: 1=evaporative, 2=air, 3=hybrid    
                 pc->m_tech_type = as_integer("tech_type");      // turbine inlet pressure: 1: Fixed, 3: Sliding
                 if (pc->m_tech_type == 1) { pc->m_tech_type = 2; }; // changing fixed pressure for the tower to fixed pressure for the trough
@@ -1451,7 +1461,7 @@ public:
 
         // 'adjustment_factors' class stores factors in hourly array, so need to index as such
         adjustment_factors haf(this, "adjust");
-        if( !haf.setup() )
+        if( !haf.setup(n_steps_fixed) )
             throw exec_error("trough_physical", "failed to setup adjustment factors: " + haf.error());
 
         ssc_number_t *p_gen = allocate("gen", n_steps_fixed);
@@ -1571,6 +1581,29 @@ public:
 
         ssc_number_t annual_thermal_consumption = annual_field_fp + annual_tes_fp;  //[kWt-hr]
         assign("annual_thermal_consumption", annual_thermal_consumption);
+
+        // Reporting dispatch solution counts
+        size_t n_flag, n_gap = 0;
+        ssc_number_t* subopt_flag = as_array("disp_subopt_flag", &n_flag);
+        ssc_number_t* rel_mip_gap = as_array("disp_rel_mip_gap", &n_gap);
+
+        std::vector<int> flag;
+        std::vector<double> gap;
+        flag.resize(n_flag);
+        gap.resize(n_flag);
+        for (size_t i = 0; i < n_flag; i++) {
+            flag[i] = (int)subopt_flag[i];
+            gap[i] = (double)rel_mip_gap[i];
+        }
+
+        double avg_gap = 0;
+        if (as_boolean("is_dispatch")) {
+            std::string disp_sum_msg;
+            dispatch.count_solutions_by_type(flag, (int)as_double("disp_frequency"), disp_sum_msg);
+            log(disp_sum_msg, SSC_NOTICE);
+            avg_gap = dispatch.calc_avg_subopt_gap(gap, flag, (int)as_double("disp_frequency"));
+        }
+        assign("avg_suboptimal_rel_mip_gap", (ssc_number_t)avg_gap);
 
         // Calculate water use
         // First, sum power cycle water consumption timeseries outputs

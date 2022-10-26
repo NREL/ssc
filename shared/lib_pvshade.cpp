@@ -198,17 +198,16 @@ void diffuse_reduce(
 	double F1 = alb * pow(sind(stilt / 2.0), 2);
 	double Y1 = R - B * sind(180.0 - solalt - stilt) / sind(solalt);
 	Y1 = fmax(0.00001, Y1); // constraint per Chris 4/23/12
-	double F2 = 0.5 * (1.0 + Y1 / B - sqrt(pow(Y1, 2) / pow(B, 2) - 2 * Y1 / B * cosd(180 - stilt) + 1.0));
-	double F3 = 0.5 * (1.0 + R / B - sqrt(pow(R, 2) / pow(B, 2) - 2 * R / B * cosd(180 - stilt) + 1.0));
+	double F2 = 0.5 * alb * (1.0 + Y1 / B - sqrt(pow(Y1, 2) / pow(B, 2) - 2 * Y1 / B * cosd(180 - stilt) + 1.0));
+	double F3 = 0.5 * alb * (1.0 + R / B - sqrt(pow(R, 2) / pow(B, 2) - 2 * R / B * cosd(180 - stilt) + 1.0));
 
 	double Gr1 = F1 * (Gbh + Gdh);
-	double reduced_gnddiff_iso = ((F1 + (nrows - 1) * F1 * F2) / nrows) * Gbh
-		                          + ((F1 + (nrows - 1) * F1 * F3) / nrows) * Gdh;
+	reduced_gnddiff = ((F1 + (nrows - 1) * F2) / nrows) * Gbh
+		                          + ((F1 + (nrows - 1) * F3) / nrows) * Gdh;
 
 	Fgnddiff = 1.0;
 	if (Gr1 > 0)
-		Fgnddiff = reduced_gnddiff_iso / Gr1;
-	reduced_gnddiff = Fgnddiff * reduced_gnddiff_iso;
+		Fgnddiff = reduced_gnddiff / Gr1;
 }
 
 double selfshade_dc_derate(double X, double S, double FF0, double dbh_ratio, double m_d, double Vmp)

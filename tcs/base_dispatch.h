@@ -190,6 +190,12 @@ public:
     //Set LPsolve outputs
     void set_lp_solve_outputs(lprec* lp);
 
+    //Used by cmod to get dispatch annual stats on solves
+    void count_solutions_by_type(std::vector<int>& flag, int dispatch_freq, std::string& log_msg);
+
+    //Calculates average relative mip gap of suboptimal solutions
+    double calc_avg_subopt_gap(std::vector<double>& gap, std::vector<int>& flag, int dispatch_freq);
+
     // Saving problem and solution for debugging
     void save_problem_solution_debug(lprec* lp);
 

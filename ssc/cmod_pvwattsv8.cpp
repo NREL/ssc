@@ -109,10 +109,10 @@ static var_info _cm_vtab_pvwattsv8[] = {
     /*   VARTYPE           DATATYPE          NAME                              LABEL                                          UNITS        META                                            GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
         { SSC_INPUT,        SSC_STRING,      "solar_resource_file",            "Weather file path",                          "",           "",                                             "Solar Resource",      "",                       "",                              "" },
         { SSC_INPUT,        SSC_TABLE,       "solar_resource_data",            "Weather data",                               "",           "dn,df,tdry,wspd,lat,lon,tz,elev",              "Solar Resource",      "",                       "",                              "" },
-        { SSC_INPUT,        SSC_ARRAY,       "albedo",                         "Albedo",                                     "0..1",       "array of 1 constant value or 12 monthly values for use when weather file albedo data not available","Solar Resource",    "",                        "",                              "" },
-        { SSC_INPUT,        SSC_NUMBER,      "albedo_default",                 "Albedo default",                             "0..1",       "default when albedo input data is invalid","Solar Resource",    "?=0.2",                        "",                              "" },
-        { SSC_INPUT,        SSC_NUMBER,      "albedo_default_snow",            "Albedo default for snow",                    "0..1",       "default when albedo input data is invalid with snow","Solar Resource",    "?=0.6",                        "",                              "" },
-        { SSC_INPUT,        SSC_NUMBER,      "use_wf_albedo",                  "Use albedo from weather file",               "0/1",        "use albedo input, use weather file albedo if available","Solar Resource","?=0",                    "BOOLEAN",          "" },
+        { SSC_INPUT,        SSC_ARRAY,       "albedo",                         "Albedo",                                     "0..1",       "albedo input array of 1 constant value or 12 monthly values","Solar Resource",    "",                        "",                              "" },
+        { SSC_INPUT,        SSC_NUMBER,      "albedo_default",                 "Albedo default",                             "0..1",       "default when albedo invalid","Solar Resource",    "?=0.2",                        "",                              "" },
+        { SSC_INPUT,        SSC_NUMBER,      "albedo_default_snow",            "Albedo default for snow",                    "0..1",       "default when albedo invalid and snow model enabled","Solar Resource",    "?=0.6",                        "",                              "" },
+        { SSC_INPUT,        SSC_NUMBER,      "use_wf_albedo",                  "Use albedo from weather file",               "0/1",        "0=albedo input, 1=albedo from weather file (use albedo default if invalid)","Solar Resource","?=0",                    "BOOLEAN",          "" },
 
         { SSC_INOUT,        SSC_NUMBER,      "system_use_lifetime_output",     "Run lifetime simulation",                    "0/1",        "",                                             "Lifetime",            "?=0",                        "",                              "" },
         { SSC_INPUT,        SSC_NUMBER,      "analysis_period",                "Analysis period",                            "years",      "",                                             "Lifetime",            "system_use_lifetime_output=1", "",                          "" },
@@ -243,7 +243,7 @@ protected:
         double dc_nameplate;    //nameplate rated capacity of the DC side of the system units of this variable are W, while input is in kW
         double dc_ac_ratio;     //ratio of DC nameplate capacity to AC nameplate capacity (unitless)
         double ac_nameplate;    //nameplate rated capacity of the AC side of the system (W)
-        double xfmr_rating;     //rating of the transformer, hardcoded to be equal to ac_nameplate (W)   
+        double xfmr_rating;     //rating of the transformer, hardcoded to be equal to ac_nameplate (W)
         double inv_eff_percent; //inverter efficiency at rated power (percent)
         double dc_loss_percent; //DC system losses (percent)
         double tilt, azimuth;   //tilt and azimuth of the system (degrees)
@@ -642,9 +642,7 @@ public:
             }
         }
 
-        adjustment_factors haf(this, "adjust");
-        if (!haf.setup())
-            throw exec_error("pvwattsv8", "Failed to set up adjustment factors: " + haf.error());
+        
 
         // read all the shading input data and calculate the hourly factors for use subsequently
         // timeseries beam shading factors cannot be used with non-annual data
@@ -717,6 +715,11 @@ public:
 
         size_t nrec = wdprov->nrecords();
         size_t nlifetime = nrec * nyears;
+
+        adjustment_factors haf(this, "adjust");
+        if (!haf.setup(nrec, nyears))
+            throw exec_error("pvwattsv8", "Failed to set up adjustment factors: " + haf.error());
+
         size_t step_per_hour = 1; //default to 1 step per hour for non-annual simulations
         if (wdprov->annualSimulation())
             step_per_hour = nrec / 8760; //overwrite with real value for annual simulations
@@ -1241,8 +1244,8 @@ public:
                         poa_for_power *= f_cover * f_AM; //derate irradiance for module cover and spectral effects
                         poa_for_power += irear * f_AM; // backside irradiance model already includes back cover effects
                         if (y == 0 && wdprov->annualSimulation()) ld("dc_loss_cover") += (1 - f_cover) * dc_nom * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
-                        if (y == 0 && wdprov->annualSimulation()) ld("dc_loss_spectral") += (1 - f_AM) * dc_nom * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data*/                   
-                        
+                        if (y == 0 && wdprov->annualSimulation()) ld("dc_loss_spectral") += (1 - f_AM) * dc_nom * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data*/
+
                         // single diode model per PVsyst using representative module parameters for each module type
                         double P_single_module_sdm = sdmml_power(sdm, poa_for_power, tmod);
                         dc = P_single_module_sdm * pv.dc_nameplate / (sdm.Vmp * sdm.Imp);
@@ -1277,11 +1280,11 @@ public:
                     inverter.Pntare = 0.0; // simplifying assumption that inverter has no nighttime losses
                     // default values for C1, C2, C3 are zero per Sandia documentation: https://pvpmc.sandia.gov/modeling-steps/dc-to-ac-conversion/sandia-inverter-model/
                     // setting these to 0 results in similar inverter output to pvwattsv5
-                    inverter.C1 = 0.0; 
+                    inverter.C1 = 0.0;
                     inverter.C2 = 0.0;
                     inverter.C3 = 0.0;
 
-                    // Set based on market per ssc issue 870  
+                    // Set based on market per ssc issue 870
                     inverter.Pso = 0.0; // simplifying assumption that the inverter can always operate - needed for knee
                     inverter.C0 = 0.0; // needed for curvature - voltage needed for this parameter to be used
 
@@ -1302,7 +1305,7 @@ public:
 
                     // track inverter efficiency
                     p_inv_eff[idx] = (dc > 0) ? ac/dc * 100 : 0.0;
-                    
+
                     // record AC results
                     if (y == 0 && wdprov->annualSimulation()) ld("ac_nominal") += dc * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
                     if (y == 0 && wdprov->annualSimulation()) ld("ac_loss_efficiency") += (dc - ac) * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
@@ -1419,4 +1422,3 @@ public:
 };
 
 DEFINE_MODULE_ENTRY(pvwattsv8, "PVWatts V8 - integrated hourly weather reader and PV system simulator.", 3)
-

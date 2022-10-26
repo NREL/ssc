@@ -52,6 +52,7 @@ var_info_invalid };
 var_info vtab_battery_replacement_cost[] = {
 { SSC_INPUT, SSC_NUMBER , "en_batt"                              , "Enable battery storage model"                                   , "0/1"                                    , ""                                      , "BatterySystem"              , "?=0"            , ""                      , ""},
 { SSC_INPUT, SSC_NUMBER , "en_standalone_batt"                   , "Enable standalone battery storage model"                                   , "0/1"                                    , ""                                      , "BatterySystem"              , "?=0"            , ""                      , ""},
+{ SSC_INPUT, SSC_NUMBER , "en_wave_batt"                   , "Enable standalone battery storage model"                                   , "0/1"                                    , ""                                      , "BatterySystem"              , "?=0"            , ""                      , ""},
 { SSC_INOUT, SSC_ARRAY  , "batt_bank_replacement"                , "Battery bank replacements per year"                             , "number/year"                            , ""                                      , "BatterySystem"              , ""               , ""                      , ""},
 { SSC_INPUT, SSC_ARRAY  , "batt_replacement_schedule_percent"    , "Percentage of battery capacity to replace in each year"         , "%"                                      , "length <= analysis_period"             , "BatterySystem"              , ""               , ""                      , ""},
 { SSC_INPUT, SSC_NUMBER , "batt_replacement_option"              , "Enable battery replacement?"                                    , "0=none,1=capacity based,2=user schedule", ""                                      , "BatterySystem"              , "?=0"            , "INTEGER,MIN=0,MAX=2"   , ""},
@@ -252,21 +253,21 @@ var_info_invalid
 };
 
 var_info vtab_tax_credits[] = {
-{ SSC_INPUT,SSC_NUMBER  , "itc_fed_amount"                       , "Federal amount-based ITC amount"                                , "$"                                      , ""                                      , "Tax Credit Incentives", "?=0"            , ""                      , ""},
+{ SSC_INPUT,SSC_ARRAY  , "itc_fed_amount"                       , "Federal amount-based ITC amount"                                , "$"                                      , ""                                      , "Tax Credit Incentives", "?=0"            , ""                      , ""},
 { SSC_INPUT,SSC_NUMBER  , "itc_fed_amount_deprbas_fed"           , "Federal amount-based ITC reduces federal depreciation basis"    , "0/1"                                    , ""                                      , "Tax Credit Incentives", "?=1"            , "BOOLEAN"               , ""},
 { SSC_INPUT,SSC_NUMBER  , "itc_fed_amount_deprbas_sta"           , "Federal amount-based ITC reduces state depreciation basis"      , "0/1"                                    , ""                                      , "Tax Credit Incentives", "?=1"            , "BOOLEAN"               , ""},
 
-{ SSC_INPUT,SSC_NUMBER  , "itc_sta_amount"                       , "State amount-based ITC amount"                                  , "$"                                      , ""                                      , "Tax Credit Incentives", "?=0"            , ""                      , ""},
+{ SSC_INPUT,SSC_ARRAY  , "itc_sta_amount"                       , "State amount-based ITC amount"                                  , "$"                                      , ""                                      , "Tax Credit Incentives", "?=0"            , ""                      , ""},
 { SSC_INPUT,SSC_NUMBER  , "itc_sta_amount_deprbas_fed"           , "State amount-based ITC reduces federal depreciation basis"      , "0/1"                                    , ""                                      , "Tax Credit Incentives", "?=0"            , "BOOLEAN"               , ""},
 { SSC_INPUT,SSC_NUMBER  , "itc_sta_amount_deprbas_sta"           , "State amount-based ITC reduces state depreciation basis"        , "0/1"                                    , ""                                      , "Tax Credit Incentives", "?=0"            , "BOOLEAN"               , ""},
 
-{ SSC_INPUT,SSC_NUMBER  , "itc_fed_percent"                      , "Federal percentage-based ITC percent"                           , "%"                                      , ""                                      , "Tax Credit Incentives", "?=0"            , ""                      , ""},
-{ SSC_INPUT,SSC_NUMBER  , "itc_fed_percent_maxvalue"             , "Federal percentage-based ITC maximum value"                     , "$"                                      , ""                                      , "Tax Credit Incentives", "?=1e99"         , ""                      , ""},
+{ SSC_INPUT,SSC_ARRAY  , "itc_fed_percent"                      , "Federal percentage-based ITC percent"                           , "%"                                      , ""                                      , "Tax Credit Incentives", "?=0"            , ""                      , ""},
+{ SSC_INPUT,SSC_ARRAY  , "itc_fed_percent_maxvalue"             , "Federal percentage-based ITC maximum value"                     , "$"                                      , ""                                      , "Tax Credit Incentives", "?=1e99"         , ""                      , ""},
 { SSC_INPUT,SSC_NUMBER  , "itc_fed_percent_deprbas_fed"          , "Federal percentage-based ITC reduces federal depreciation basis", "0/1"                                    , ""                                      , "Tax Credit Incentives", "?=1"            , "BOOLEAN"               , ""},
 { SSC_INPUT,SSC_NUMBER  , "itc_fed_percent_deprbas_sta"          , "Federal percentage-based ITC reduces state depreciation basis"  , "0/1"                                    , ""                                      , "Tax Credit Incentives", "?=1"            , "BOOLEAN"               , ""},
 
-{ SSC_INPUT,SSC_NUMBER  , "itc_sta_percent"                      , "State percentage-based ITC percent"                             , "%"                                      , ""                                      , "Tax Credit Incentives", "?=0"            , ""                      , ""},
-{ SSC_INPUT,SSC_NUMBER  , "itc_sta_percent_maxvalue"             , "State percentage-based ITC maximum Value"                       , "$"                                      , ""                                      , "Tax Credit Incentives", "?=1e99"         , ""                      , ""},
+{ SSC_INPUT,SSC_ARRAY  , "itc_sta_percent"                      , "State percentage-based ITC percent"                             , "%"                                      , ""                                      , "Tax Credit Incentives", "?=0"            , ""                      , ""},
+{ SSC_INPUT,SSC_ARRAY  , "itc_sta_percent_maxvalue"             , "State percentage-based ITC maximum Value"                       , "$"                                      , ""                                      , "Tax Credit Incentives", "?=1e99"         , ""                      , ""},
 { SSC_INPUT,SSC_NUMBER  , "itc_sta_percent_deprbas_fed"          , "State percentage-based ITC reduces federal depreciation basis"  , "0/1"                                    , ""                                      , "Tax Credit Incentives", "?=0"            , "BOOLEAN"               , ""},
 { SSC_INPUT,SSC_NUMBER  , "itc_sta_percent_deprbas_sta"          , "State percentage-based ITC reduces state depreciation basis"    , "0/1"                                    , ""                                      , "Tax Credit Incentives", "?=0"            , "BOOLEAN"               , ""},
 
@@ -497,18 +498,21 @@ var_info_invalid
 var_info vtab_adjustment_factors[] = {
 { SSC_INPUT,SSC_NUMBER  , "adjust:constant"                      , "Constant loss adjustment"                                       , "%"                                      , ""                                      , "Adjustment Factors"   , "*"              , "MAX=100"               , ""},
 { SSC_INPUT,SSC_ARRAY   , "adjust:hourly"                        , "Hourly Adjustment Factors"                                      , "%"                                      , ""                                      , "Adjustment Factors"   , "?"              , "LENGTH=8760"           , ""},
+{ SSC_INPUT,SSC_ARRAY   , "adjust:timeindex"                        , "Lifetime Adjustment Factors"                                      , "%"                                      , ""                                      , "Adjustment Factors"   , "?"              , "LENGTH=8760"           , ""},
 { SSC_INPUT,SSC_MATRIX  , "adjust:periods"                       , "Period-based Adjustment Factors"                                , "%"                                      , "n x 3 matrix [ start, end, loss ]"     , "Adjustment Factors"   , "?"              , "COLS=3"                , ""},
 var_info_invalid };
 
 var_info vtab_dc_adjustment_factors[] = {
 { SSC_INPUT,SSC_NUMBER  , "dc_adjust:constant"                   , "DC Constant loss adjustment"                                    , "%"                                      , ""                                      , "Adjustment Factors"   , "*"               , "MAX=100"               , ""},
 { SSC_INPUT,SSC_ARRAY   , "dc_adjust:hourly"                     , "DC Hourly Adjustment Factors"                                   , "%"                                      , ""                                      , "Adjustment Factors"   , "?"               , "LENGTH=8760"           , ""},
+{ SSC_INPUT,SSC_ARRAY   , "dc_adjust:timeindex"                        , "DC Lifetime Adjustment Factors"                                      , "%"                                      , ""                                      , "Adjustment Factors"   , "?"              , "LENGTH=8760"           , ""},
 { SSC_INPUT,SSC_MATRIX  , "dc_adjust:periods"                    , "DC Period-based Adjustment Factors"                             , "%"                                      , "n x 3 matrix [ start, end, loss ]"     , "Adjustment Factors"   , "?"               , "COLS=3"                , ""},
 var_info_invalid };
 
 var_info vtab_sf_adjustment_factors[] = {
 { SSC_INPUT,SSC_NUMBER  , "sf_adjust:constant"                   , "SF Constant loss adjustment"                                    , "%"                                      , ""                                      , "Adjustment Factors"   , "*"              , "MAX=100"               , ""},
 { SSC_INPUT,SSC_ARRAY   , "sf_adjust:hourly"                     , "SF Hourly Adjustment Factors"                                   , "%"                                      , ""                                      , "Adjustment Factors"   , "?"              , "LENGTH=8760"           , ""},
+{ SSC_INPUT,SSC_ARRAY   , "sf_adjust:timeindex"                        , "SF Lifetime Adjustment Factors"                                      , "%"                                      , ""                                      , "Adjustment Factors"   , "?"              , "LENGTH=8760"           , ""},
 { SSC_INPUT,SSC_MATRIX  , "sf_adjust:periods"                    , "SF Period-based Adjustment Factors"                             , "%"                                      , "n x 3 matrix [ start, end, loss ]"     , "Adjustment Factors"   , "?"              , "COLS=3"                , ""},
 var_info_invalid };
 
@@ -915,6 +919,8 @@ void calculate_resilience_outputs(compute_module *cm, std::unique_ptr<resilience
 var_info vtab_utility_rate_common[] = {
 /*   VARTYPE           DATATYPE         NAME                        LABEL                                    UNITS      META                     GROUP                      REQUIRED_IF         CONSTRAINTS               UI_HINTS	*/
 
+    { SSC_INPUT,        SSC_NUMBER,     "en_electricity_rates",     "Optionally enable/disable electricity_rate",                   "years",  "",                      "Electricity Rates",             "",                         "INTEGER,MIN=0,MAX=1",              "" }, // Required for battery to use retail rates
+
     { SSC_INPUT,        SSC_ARRAY,      "rate_escalation",          "Annual electricity rate escalation",   "%/year",   "",                      "Electricity Rates",       "?=0",              "",                             "" },
 
     { SSC_INPUT,        SSC_NUMBER,     "ur_metering_option",       "Metering options",                     "0=net energy metering,1=net energy metering with $ credits,2=net billing,3=net billing with carryover to next month,4=buy all - sell all", "Net metering monthly excess", "Electricity Rates", "?=0", "INTEGER,MIN=0,MAX=4", "" },
@@ -981,33 +987,97 @@ adjustment_factors::adjustment_factors( compute_module *cm, const std::string &p
 }
 
 //adjustment factors changed from derates to percentages jmf 1/9/15
-bool adjustment_factors::setup(int nsteps) //nsteps is set to 8760 in this declaration function in common.h
+bool adjustment_factors::setup(int nsteps, int analysis_period) //nsteps is set to 8760 in this declaration function in common.h
 {
 	ssc_number_t f = m_cm->as_number( m_prefix + ":constant" );
 	f = 1.0 - f / 100.0; //convert from percentage to factor
-	m_factors.resize( nsteps, f );
+	m_factors.resize( nsteps * analysis_period, f);
 
 	if ( m_cm->is_assigned(m_prefix + ":hourly") )
 	{
 		size_t n;
 		ssc_number_t *p = m_cm->as_array( m_prefix + ":hourly", &n );
-		if ( p != 0 && n == (size_t)nsteps )
+		if ( p != 0 && n == 8760 )
 		{
-			for( int i=0;i<nsteps;i++ )
+			for( int i=0;i<8760;i++ )
 				m_factors[i] *= (1.0 - p[i]/100.0); //convert from percentages to factors
 		}
+        else {
+            m_error = util::format("Hourly loss factor array length %d does not equal length of weather file %d", (int)n, nsteps);
+        }
 	}
+
+    if (m_cm->is_assigned(m_prefix + ":timeindex"))
+    {
+        size_t n;
+        int steps_per_hour = nsteps / 8760;
+        int month = 0;
+        int day = 0;
+        int week = 0;
+        ssc_number_t* p = m_cm->as_array(m_prefix + ":timeindex", &n);
+        if (p != 0) {
+            if (n == 1) {
+                for (int a = 0; a < analysis_period; a++) {
+                    for (int i = 0; i < nsteps; i++)
+                        m_factors[nsteps * a + i] *= (1.0 - p[0]/100.0); //input as factors not percentage
+                }
+            }
+            else if (n == nsteps * analysis_period) { //Hourly or subhourly
+                for (int a = 0; a < analysis_period; a++) {
+                    for (int i = 0; i < nsteps; i++)
+                        m_factors[nsteps * a + i] *= (1.0 - p[a*nsteps + i]/100.0); //convert from percentages to factors
+                }
+            }
+            else if (n % 12 == 0) { //Monthly 
+                for (int a = 0; a < analysis_period; a++) {
+                    for (int i = 0; i < nsteps; i++) {
+                        month = util::month_of(int(i / steps_per_hour))-1;
+                        m_factors[nsteps*a + i] *= (1.0 - p[a * 12 + month]/100.0); //input as factors not percentage
+                    }
+
+                }
+            }
+            else if (n % 365 == 0) { //Daily
+                for (int a = 0; a < analysis_period; a++) {
+                    for (int i = 0; i < nsteps; i++) {
+                        day = util::day_of(int(i / steps_per_hour));
+                        m_factors[nsteps*a + i] *= (1.0 - p[a * 365 + day]/100.0); //input as factors not percentage
+                    }
+
+                }
+            }
+            else if (n % 52 == 0) { //Weekly
+                for (int a = 0; a < analysis_period; a++) {
+                    for (int i = 0; i < nsteps; i++) {
+                        week = util::week_of(int(i / steps_per_hour));
+                        m_factors[nsteps*a + i] *= (1.0 - p[a * 52 + week]/100.0); //input as factors not percentage
+                    }
+
+                }
+            }
+            else if (n == analysis_period) { //Annual
+                for (int a = 0; a < analysis_period; a++) {
+                    for (int i = 0; i < nsteps; i++)
+                        m_factors[nsteps * a + i] *= (1.0 - p[a]/100.0); //input as factors not percentage
+                }
+            }
+            else {
+                m_error = util::format("Error with lifetime loss data inputs");
+            }
+        }
+    }
 
 	if ( m_cm->is_assigned(m_prefix + ":periods") )
 	{
 		size_t nr, nc;
 		ssc_number_t *mat = m_cm->as_matrix(m_prefix + ":periods", &nr, &nc);
+        double ts_mult = nsteps / 8760.0;
 		if ( mat != 0 && nc == 3 )
 		{
 			for( size_t r=0;r<nr;r++ )
 			{
-				int start = (int) mat[ nc*r ];
-				int end = (int) mat[ nc*r + 1 ];
+				int start = (int) round(mat[ nc*r ] * ts_mult);
+				int end = (int) round(mat[ nc*r + 1 ] * ts_mult);
 				ssc_number_t factor =  mat[ nc*r + 2 ];
 
 				if ( start < 0 || start >= nsteps || end < start )
@@ -1018,8 +1088,10 @@ bool adjustment_factors::setup(int nsteps) //nsteps is set to 8760 in this decla
 
 				if ( end >= nsteps ) end = nsteps-1;
 
-				for( int i=start;i<=end;i++ )
-					m_factors[i] *= (1.0 - factor/100.0); //convert from percentages to factors
+                for (int a = 0; a < analysis_period; a++) {
+				    for( int i=start;i<=end;i++ )
+					    m_factors[a * nsteps + i] *= (1.0 - factor/100.0); //convert from percentages to factors
+                }
 			}
 		}
 	}
@@ -1293,18 +1365,19 @@ size_t shading_factor_calculator::get_row_index_for_input(size_t hour_of_year, s
 
 bool shading_factor_calculator::fbeam(size_t hour_of_year, double minute, double solalt, double solazi)
 {
-	bool ok = false;
+    // apply beam Shade Loss Tables
+    bool ok = false;
 	double factor = 1.0;
 	size_t irow = get_row_index_for_input(hour_of_year, (size_t)minute);
 	if (irow < m_beamFactors.nrows() && irow >= 0)
 	{
-		factor = m_beamFactors.at(irow, 0);
-		// apply mxh factor
-		if (m_enMxH && (irow < m_mxhFactors.nrows()))
-			factor *= m_mxhFactors(irow, 0);
-		// apply azi alt shading factor
-		if (m_enAzAlt)
-			factor *= util::bilinear(solalt, solazi, m_azaltvals);
+		factor = m_beamFactors.at(irow, 0);                                 // beam shading losses by time step
+        if (m_enMxH && (irow < m_mxhFactors.nrows())) {
+            factor *= m_mxhFactors(irow, 0);                                // month-by-hour beam shading losses
+        }
+        if (m_enAzAlt) {
+            factor *= util::bilinear(solalt, solazi, m_azaltvals);          // azimuth-by-altitude beam shading losses
+        }
 
 		m_beam_shade_factor = factor;
 
@@ -1316,22 +1389,24 @@ bool shading_factor_calculator::fbeam(size_t hour_of_year, double minute, double
 
 bool shading_factor_calculator::fbeam_shade_db(ShadeDB8_mpp * p_shadedb, size_t hour, double minute, double solalt, double solazi, double gpoa, double dpoa, double pv_cell_temp, int mods_per_str, double str_vmp_stc, double mppt_lo, double mppt_hi)
 {
-	bool ok = false;
+    // apply 3D Shade Calculator results
+    bool ok = false;
 	double dc_factor = 1.0;
 	double beam_factor = 1.0;
 	size_t irow = get_row_index_for_input(hour, (size_t)minute);
 	if (irow < m_beamFactors.nrows())
 	{
 		std::vector<double> shad_fracs;
-		for (size_t icol = 0; icol < m_beamFactors.ncols(); icol++)
-			shad_fracs.push_back(m_beamFactors.at(irow, icol));
+        for (size_t icol = 0; icol < m_beamFactors.ncols(); icol++) {
+            shad_fracs.push_back(m_beamFactors.at(irow, icol));
+        }
 		dc_factor = 1.0 - p_shadedb->get_shade_loss(gpoa, dpoa, shad_fracs, true, pv_cell_temp, mods_per_str, str_vmp_stc, mppt_lo, mppt_hi);
-		// apply mxh factor
-		if (m_enMxH && (irow < m_mxhFactors.nrows()))
-			beam_factor *= m_mxhFactors(irow, 0);
-		// apply azi alt shading factor
-		if (m_enAzAlt)
-			beam_factor *= util::bilinear(solalt, solazi, m_azaltvals);
+        if (m_enMxH && (irow < m_mxhFactors.nrows())) {
+            beam_factor *= m_mxhFactors(irow, 0);                           // month-by-hour beam shading losses
+        }
+        if (m_enAzAlt) {
+            beam_factor *= util::bilinear(solalt, solazi, m_azaltvals);     // azimuth-by-altitude beam shading losses
+        }
 
 		m_dc_shade_factor = dc_factor;
 		m_beam_shade_factor = beam_factor;

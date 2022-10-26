@@ -42,7 +42,7 @@ TEST_F(CMPvYieldTimo, DefaultTimoModel_cmod_pvsamv1)
     {
         ssc_number_t annual_energy;
         ssc_data_get_number(data, "annual_energy", &annual_energy);
-        EXPECT_NEAR(annual_energy, 7380478, 7380478e-4) << "Annual energy.";
+        EXPECT_NEAR(annual_energy, 7382053, 7380478e-4) << "Annual energy.";
 
         ssc_number_t capacity_factor;
         ssc_data_get_number(data, "capacity_factor", &capacity_factor);
@@ -61,14 +61,14 @@ TEST_F(CMPvYieldTimo, DefaultTimoModel_cmod_pvsamv1)
 
 TEST_F(CMPvYieldTimo, Bifacial_cmod_pvsamv1)
 {
-    double desired_annual_energy = 346338151.57556278;
+    double desired_annual_energy = 345965378.92463976;
     pvyield_bifacial_case(data);
     int pvsam_errors = run_module(data, "pvsamv1");
     EXPECT_FALSE(pvsam_errors);
 
     ssc_number_t annual_energy_6;
     ssc_data_get_number(data, "annual_energy", &annual_energy_6);
-    EXPECT_NEAR(annual_energy_6, desired_annual_energy, m_error_tolerance_lo);
+    EXPECT_NEAR(annual_energy_6, desired_annual_energy, desired_annual_energy * m_error_tolerance_lo / 100. );
 
     ssc_number_t annual_dc_nominal;
     ssc_data_get_number(data, "annual_dc_nominal", &annual_dc_nominal);
@@ -98,7 +98,7 @@ TEST_F(CMPvYieldTimo, TimoModel80603_meteo_cmod_pvsamv1)
     {
         ssc_number_t annual_energy;
         ssc_data_get_number(data, "annual_energy", &annual_energy);
-        EXPECT_NEAR(annual_energy, 7441557, 7441557e-4) << "Annual energy.";
+        EXPECT_NEAR(annual_energy, 7449046, 7441557e-4) << "Annual energy.";
 
         ssc_number_t capacity_factor;
         ssc_data_get_number(data, "capacity_factor", &capacity_factor);
@@ -106,7 +106,7 @@ TEST_F(CMPvYieldTimo, TimoModel80603_meteo_cmod_pvsamv1)
 
         ssc_number_t kwh_per_kw;
         ssc_data_get_number(data, "kwh_per_kw", &kwh_per_kw);
-        EXPECT_NEAR(kwh_per_kw, 1779.27, m_error_tolerance_hi) << "Energy yield";
+        EXPECT_NEAR(kwh_per_kw, 1781.06, m_error_tolerance_hi) << "Energy yield";
 
         ssc_number_t performance_ratio;
         ssc_data_get_number(data, "performance_ratio", &performance_ratio);
@@ -128,7 +128,7 @@ TEST_F(CMPvYieldTimo, TimoModel80603_AZ_cmod_pvsamv1)
     {
         ssc_number_t annual_energy;
         ssc_data_get_number(data, "annual_energy", &annual_energy);
-        EXPECT_NEAR(annual_energy, 8198434, 8198434e-4) << "Annual energy.";
+        EXPECT_NEAR(annual_energy, 8205905, 8198434e-4) << "Annual energy.";
 
         ssc_number_t capacity_factor;
         ssc_data_get_number(data, "capacity_factor", &capacity_factor);
@@ -136,7 +136,7 @@ TEST_F(CMPvYieldTimo, TimoModel80603_AZ_cmod_pvsamv1)
 
         ssc_number_t kwh_per_kw;
         ssc_data_get_number(data, "kwh_per_kw", &kwh_per_kw);
-        EXPECT_NEAR(kwh_per_kw, 1960.46, m_error_tolerance_hi) << "Energy yield";
+        EXPECT_NEAR(kwh_per_kw, 1962.02, m_error_tolerance_hi) << "Energy yield";
 
         ssc_number_t performance_ratio;
         ssc_data_get_number(data, "performance_ratio", &performance_ratio);

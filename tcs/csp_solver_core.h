@@ -464,6 +464,10 @@ public:
         C_csp_collector_receiver::S_csp_cr_out_solver& cr_out_solver,
         const C_csp_solver_sim_info& sim_info);
 
+    virtual double get_design_electric_to_heat_cop() {
+        throw(C_csp_exception("The collector-receiver method get_design_electric_to_heat_cop is not defined", "CSP Solver"));
+    }
+
 	struct S_csp_cr_est_out
 	{
 		double m_q_startup_avail;	//[MWt] Estimate startup thermal power. Only > 0 if solar avail AND cr is OFF or Starting Up

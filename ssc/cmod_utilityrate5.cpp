@@ -31,7 +31,6 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 static var_info vtab_utility_rate5[] = {
 
 /*   VARTYPE           DATATYPE         NAME                         LABEL                                           UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-	{ SSC_INPUT,        SSC_NUMBER,     "en_electricity_rates",           "Optionally enable/disable electricity_rate",                   "years",  "",                      "Electricity Rates",             "",                         "INTEGER,MIN=0,MAX=1",              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "analysis_period",           "Number of years in analysis",                   "years",  "",                      "Lifetime",             "*",                         "INTEGER,POSITIVE",              "" },
 
 	{ SSC_INPUT, SSC_NUMBER, "system_use_lifetime_output", "Lifetime hourly system outputs", "0/1", "0=hourly first year,1=hourly lifetime", "Lifetime", "*", "INTEGER,MIN=0,MAX=1", "" },

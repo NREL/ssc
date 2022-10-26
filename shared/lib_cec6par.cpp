@@ -43,6 +43,51 @@ static const double I_noct = 800; // 800 NOCT Irradiance W/m2
 static const double TauAlpha = 0.9; // 0.9
 static const double eg0 = 1.12; // 1.12
 
+const double air_table[41][8] = //Temp (degC), Density (kg/m^3), spec. heat (J/kgK), thermal conductivity (W/mK), Thermal diffusivity (m^2/s), Dynamic Viscosity (kg/m*s), Prandtl Number
+{
+    {-150,2.866,983,0.01171,0.000004158,0.000008636,0.000003013,0.7246},
+    {-100,2.038,966,0.01582,0.000008036,0.000001189,0.000005837,0.7263},
+    {-50,1.582,999,0.01979,0.00001252,0.00001474,0.000009319,0.744},
+    {-40,1.514,1002,0.02057,0.00001356,0.00001527,0.00001008,0.7436},
+    {-30,1.451,1004,0.02134,0.00001465,0.00001579,0.00001087,0.7425},
+    {-20,1.394,1005,0.02211,0.00001578,0.0000163,0.00001169,0.7408},
+    {-10,1.341,1006,0.02288,0.00001696,0.0000168,0.00001252,0.7387},
+    {0,1.292,1006,0.02364,0.00001818,0.00001729,0.00001338,0.7362},
+    {5,1.269,1006,0.02401,0.0000188,0.00001754,0.00001382,0.735},
+    {10,1.246,1006,0.02439,0.00001944,0.00001778,0.00001426,0.7336},
+    {15,1.225,1007,0.02476,0.00002009,0.00001802,0.0000147,0.7323},
+    {20,1.204,1007,0.02514,0.00002074,0.00001825,0.00001516,0.7309},
+    {25,1.184,1007,0.02551,0.00002141,0.00001849,0.00001562,0.7296},
+    {30,1.164,1007,0.02588,0.00002208,0.00001872,0.00001608,0.7282},
+    {35,1.145,1007,0.02625,0.00002277,0.00001895,0.00001655,0.7268},
+    {40,1.127,1007,0.02662,0.00002346,0.00001918,0.00001702,0.7255},
+    {45,1.109,1007,0.02699,0.00002416,0.00001941,0.0000175,0.7241},
+    {50,1.092,1007,0.02735,0.00002487,0.00001963,0.00001798,0.7228},
+    {60,1.059,1007,0.02808,0.00002632,0.00002008,0.00001896,0.7202},
+    {70,1.028,1007,0.02881,0.0000278,0.00002052,0.00001995,0.7177},
+    {80,0.9994,1008,0.02953,0.00002931,0.00002096,0.00002097,0.7154},
+    {90,0.9718,1008,0.03024,0.00003086,0.00002139,0.00002201,0.7132},
+    {100,0.9458,1009,0.03095,0.00003243,0.00002181,0.00002306,0.7111},
+    {120,0.8977,1011,0.03235,0.00003565,0.00002264,0.00002522,0.7073},
+    {140,0.8542,1013,0.03374,0.00003898,0.00002345,0.00002745,0.7041},
+    {160,0.8148,1016,0.03511,0.00004241,0.0000242,0.00002975,0.7014},
+    {180,0.7788,1019,0.03646,0.00004593,0.00002504,0.00003212,0.6992},
+    {200,0.7459,1023,0.03779,0.00004954,0.00002577,0.00003455,0.6974},
+    {250,0.6746,1033,0.04104,0.0000589,0.0000276,0.00004091,0.6946},
+    {300,0.6158,1044,0.04418,0.00006871,0.00002934,0.00004765,0.6935},
+    {350,0.5664,1056,0.04721,0.00007892,0.00003101,0.00005475,0.6937},
+    {400,0.5243,1069,0.05015,0.00008951,0.00003261,0.00006219,0.6948},
+    {450,0.488,1081,0.05298,0.0001004,0.00003415,0.00006997,0.6965},
+    {500,0.4565,1093,0.05572,0.0001117,0.00003563,0.00007806,0.6986},
+    {600,0.4042,1115,0.06093,0.0001352,0.00003846,0.00009515,0.7037},
+    {700,0.3627,1135,0.06581,0.0001598,0.00004111,0.0001133,0.7092},
+    {800,0.3289,1153,0.07037,0.0001855,0.00004362,0.0001326,0.7149},
+    {900,0.3008,1169,0.07465,0.0002122,0.000046,0.0001529,0.7206},
+    {1000,0.2772,1184,0.07868,0.0002398,0.00004826,0.0001741,0.726},
+    {1500,0.199,1234,0.09599,0.0003908,0.00005817,0.0002922,0.7478},
+    {2000,0.1553,1264,0.11113,0.0005664,0.0000663,0.000427,0.7539}
+};
+
 cec6par_module_t::cec6par_module_t( )
 {
 	Area = Vmp = Imp = Voc = Isc = alpha_isc = beta_voc 
@@ -222,14 +267,425 @@ bool noct_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 }
 
 
+void SuperLac( util::matrix_t<int> data, int oA, int n_p, std::vector<double>& L, std::vector<double>& L_n, std::vector<double>& R, std::vector<double>& R_n, util::matrix_t<double>& Z, util::matrix_t<double>& Z_n)
+{
+    std::vector<int> s;
+    int s_max;
+    int dimensions = 3;
+    int x_dim = data.nrows();
+    int y_dim = data.ncols() / oA;
+    if (y_dim > x_dim) s_max = y_dim;
+    else s_max = x_dim;
+
+    if (n_p > s_max) {
+        return; //Number of points must be less than data size
+    }
+
+    int linspace = (s_max - 1) / (n_p - 1);
+    int R_start = 1;
+    int R_inc = 1;
+    for (int i = 0; i < n_p; i++) {
+        if (i == 0) {
+            R[i] = R_start;
+            L[i] = i;
+            //Z[i] = Nan;
+        }
+        else {
+            R_inc += linspace;
+            R[i] = R_inc;
+            L[i] = i;
+            //Z[i] = Nan
+        }
+    }
+
+    int r = 0;
+    //double*** A = data;
+    util::matrix_t<double> A;
+    util::matrix_t<double> ones;
+    util::matrix_t<double> FA;
+    util::matrix_t<double> FA_prime;
+    util::matrix_t<double> F;
+    Z.resize_fill(R.size(), 4, 0);
+    Z_n.resize_fill(R.size(), 4, 0);
+    //std::vector<double> L;
+    int count = 0;
+    for (int b = 0; b < R.size(); b++) {
+        
+        A.resize_fill(x_dim, y_dim * oA , 0);
+        FA.resize_fill(x_dim, y_dim * oA, 0);
+        r = R[b];
+        //A = data;
+        if (r < x_dim) { //replace s_max with dimension 1
+            F.resize_fill(x_dim, x_dim, 0);
+            for (int a = 0; a < r; a++) {
+                count = 0;
+                while (a + count < x_dim) {
+                    F.at(count, a+count) = 1; //Filling diagonals with 1's
+                    count++; 
+                }
+            }
+
+            for (int i = 0; i < F.nrows(); i++) {
+                for (int k = 0; k < F.ncols(); k++) {
+                    for (int j = 0; j < A.ncols(); j++) {
+                        //A.at(k, j) = data.at(k, j);
+                        FA.at(i, j) += F.at(i, k) * data.at(k, j);
+                        
+                    }
+                    
+                }
+            }
+
+            FA.resize(FA.nrows() - r + 2, FA.ncols());
+            FA_prime.resize(y_dim, (FA.nrows() * FA.ncols()) / y_dim);
+            for (int i = 0; i < FA_prime.nrows(); i++) {
+                for (int j = 0; j < FA_prime.ncols()/oA; j++) {
+                    for (int k = 0; k < oA; k++) {
+                        FA_prime.at(i, FA_prime.ncols()/oA * k + j) = FA.at(j, FA_prime.nrows() * k + i);
+                    }
+                }
+            }
+            FA.resize(FA_prime.nrows(), FA_prime.ncols());
+            //FA = FA_prime;
+            
+        }
+        else {
+            F.resize_fill(x_dim, x_dim, 1);
+            for (int i = 0; i < F.nrows(); i++) {
+                for (int k = 0; k < F.ncols(); k++) {
+                    for (int j = 0; j < A.ncols(); j++) {
+                        //A.at(k, j) = data.at(k, j);
+                        FA.at(i, j) += F.at(i, k) * data.at(k, j);
+
+                    }
+
+                }
+            }
+            //FA.resize(FA.nrows() - r + 2, FA.ncols());
+            FA_prime.resize(y_dim, (FA.nrows() * FA.ncols()) / y_dim);
+            for (int i = 0; i < FA_prime.nrows(); i++) {
+                for (int j = 0; j < FA_prime.ncols()/oA; j++) {
+                    for (int k = 0; k < oA; k++) {
+                        FA_prime.at(i, FA_prime.ncols() / oA * k + j) = FA.at(j, FA_prime.nrows() * k + i);
+                    }
+                }
+            }
+            FA.resize(FA_prime.nrows(), FA_prime.ncols());
+            //FA = FA_prime;
+        }
+        if (r < y_dim) { //Direction 2
+            F.resize_fill(y_dim, y_dim, 0);
+            A.resize(FA_prime.nrows(), FA_prime.ncols());
+            //FA.resize(F.nrows(), A.ncols());
+            for (int a = 0; a < r; a++) {
+                count = 0;
+                while (a + count < y_dim) {
+                    F.at(count, a + count) = 1; //Filling diagonals with 1's
+                    count++;
+                }
+            }
+
+            for (int i = 0; i < F.nrows(); i++) {
+                for (int k = 0; k < F.ncols(); k++) {
+                    for (int j = 0; j < A.ncols(); j++) {
+                        A.at(k, j) = FA_prime.at(k, j);
+                        FA.at(i, j) += F.at(i, k) * A.at(k, j);
+
+                    }
+
+                }
+            }
+
+            FA.resize(FA.nrows() - r + 2, FA.ncols());
+            FA_prime.resize(oA, (FA.nrows() * FA.ncols()) / oA);
+            for (int i = 0; i < FA_prime.nrows(); i++) {
+                for (int j = 0; j < FA_prime.ncols()/(FA.ncols()/oA); j++) {
+                    for (int k = 0; k < FA.ncols()/oA; k++) {
+                        FA_prime.at(i, FA_prime.ncols() / (FA.ncols()/oA) * k + j) = FA.at(j, FA_prime.nrows() * k + i);
+                    }
+                }
+            }
+            FA.resize(FA_prime.nrows(), FA_prime.ncols());
+            //FA = FA_prime;
+        }
+        else {
+            F.resize_fill(y_dim, y_dim, 1);
+            A.resize(FA_prime.nrows(), FA_prime.ncols());
+            for (int i = 0; i < F.nrows(); i++) {
+                for (int k = 0; k < F.ncols(); k++) {
+                    for (int j = 0; j < A.ncols(); j++) {
+                        A.at(k, j) = FA_prime.at(k, j);
+                        FA.at(i, j) += F.at(i, k) * A.at(k, j);
+
+                    }
+
+                }
+            }
+            //FA.resize(FA.nrows() - r + 2, FA.ncols());
+            FA_prime.resize(oA, (FA.nrows() * FA.ncols()) / oA);
+            for (int i = 0; i < FA_prime.nrows(); i++) {
+                for (int j = 0; j < FA_prime.ncols() / (FA.ncols() / oA); j++) {
+                    for (int k = 0; k < FA.ncols()/oA; k++) {
+                        FA_prime.at(i, FA_prime.ncols() / (FA.ncols() / oA) * k + j) = FA.at(j, FA_prime.nrows() * k + i);
+                    }
+                }
+            }
+            FA.resize(FA_prime.nrows(), FA_prime.ncols());
+            //FA = FA_prime;
+        }
+        if (r < oA) { //Dimension 3
+            F.resize_fill(oA, oA, 0);
+            A.resize(FA_prime.nrows(), FA_prime.ncols());
+            for (int a = 0; a < r; a++) {
+                count = 0;
+                while (a + count < oA) {
+                    F.at(count, a + count) = 1; //Filling diagonals with 1's
+                    count++;
+                }
+            }
+
+            for (int i = 0; i < F.nrows(); i++) {
+                for (int k = 0; k < F.ncols(); k++) {
+                    for (int j = 0; j < A.ncols(); j++) {
+                        A.at(k, j) = FA_prime.at(k, j);
+                        FA.at(i, j) += F.at(i, k) * A.at(k, j);
+
+                    }
+
+                }
+            }
+
+            FA.resize(FA.nrows() - r + 2, FA.ncols());
+            
+        }
+        else {
+            F.resize_fill(oA, oA, 1);
+            A.resize(FA_prime.nrows(), FA_prime.ncols());
+            for (int i = 0; i < F.nrows(); i++) {
+                for (int k = 0; k < F.ncols(); k++) {
+                    for (int j = 0; j < A.ncols(); j++) {
+                        A.at(k, j) = FA_prime.at(k, j);
+                        FA.at(i, j) += F.at(i, k) * A.at(k, j);
+
+                    }
+
+                }
+            }
+        }
+        double z1; //Mean
+        double z2; //Variance
+        double z3; //Skewness
+        double z4; //Kurtosis
+        
+        double mean = 0;
+        double variance = 0;
+        double variance_sum = 0;
+        double skewness_sum_denom = 0;
+        double skewness_sum_num = 0;
+        double skewness = 0;
+        double kurtosis_sum_num = 0;
+        double kurtosis_sum_denom = 0;
+        double kurtosis = 0; 
+        for (int i = 0; i < FA.nrows(); i++) {
+            for (int j = 0; j < FA.ncols(); j++) {
+                mean += FA.at(i, j) / (r*(FA.nrows() * FA.ncols()));
+            }
+        }
+        for (int i = 0; i < FA.nrows(); i++) {
+            for (int j = 0; j < FA.ncols(); j++) {
+                variance += pow(abs(FA.at(i,j)/r - mean), 2) / (FA.nrows() * FA.ncols() - 1);
+                skewness_sum_denom += pow(FA.at(i, j) / r - mean, 2) / (FA.nrows() * FA.ncols());
+                skewness_sum_num += pow(FA.at(i, j) / r - mean, 3) / (FA.nrows() * FA.ncols());
+                kurtosis_sum_denom += pow(FA.at(i, j) / r - mean, 2) / (FA.nrows() * FA.ncols());
+                kurtosis_sum_num += pow(FA.at(i, j) / r - mean, 4) / (FA.nrows() * FA.ncols());
+            }
+        }
+        skewness = skewness_sum_num / (pow(pow(skewness_sum_denom, 0.5), 3.0));
+        kurtosis = kurtosis_sum_num / (pow(kurtosis_sum_denom, 2));
+        Z.at(b, 0) = mean;
+        Z.at(b, 1) = variance;
+        Z.at(b, 2) = skewness;
+        Z.at(b, 3) = kurtosis;
+        L[b] = 1 + variance / pow(mean, 2);
+        Z_n.at(b, 0) = Z.at(b, 0) / Z.at(0, 0);
+        Z_n.at(b, 1) = Z.at(b, 1) / Z.at(0, 1);
+        Z_n.at(b, 2) = Z.at(b, 2) / Z.at(0, 2);
+        Z_n.at(b, 3) = Z.at(b, 3) / Z.at(0, 3);
+        L_n[b] = L[b] / L[0];
+        R_n[b] = (R[b] - R[0]) / (s_max - R[0]);
+    }
+
+
+    
+
+}
+/*
+util::matrix_t<int> imrotate(util::matrix_t<int> image, double degree)
+{
+    if (degree != 0) {
+        double rads = degree * DTOR;
+        //util::matrix_t<double> rotate;
+        double rotate[3][3] = { {cosd(degree), sind(degree), 0}, {sind(degree), cos(degree), 0}, {0, 0, 1} };
+        int twod_size_x = image.nrows();
+        int twod_size_y = image.ncols();
+        double hiA_x = (twod_size_x - 1) / 2;
+        double hiA_y = (twod_size_y - 1) / 2;
+        double loA_x = -hiA_x;
+        double loA_y = -hiA_y;
+        double formfwd[3][3] = { { loA_x, hiA_y, 0}, {hiA_x, hiA_y, 0}, {0,0,1} };
+        int hiB_x_1 = rotate[0][0] * loA_x - rotate[0][1] * hiA_y;
+        int hiB_y_1 = rotate[1][0] * loA_x + rotate[1][1] * hiA_y;
+        int hiB_x_2 = rotate[0][0] * hiA_x - rotate[0][1] * hiA_y;
+        int hiB_y_2 = rotate[1][0] * hiA_x + rotate[1][1] * hiA_y;
+        int hiB_x = (abs(hiB_x_1) < abs(hiB_x_2)) ? hiB_x_2 : hiB_x_1;
+        int hiB_y = (abs(hiB_y_1) < abs(hiB_y_2)) ? hiB_y_2 : hiB_y_1;
+        int loB_x = -hiB_x;
+        int loB_y = -hiB_y;
+        int outputSize_x = hiB_x - loB_x + 1;
+        int outputSize_y = hiB_y - loB_y + 1;
+        int offRow = 0;
+        int RowPad = outputSize_x - twod_size_x;
+        if (RowPad <= 0) {
+            offRow = 1 + abs(RowPad) / 2;
+            RowPad = 1;
+        }
+
+        int ColPad = outputSize_y - twod_size_y;
+        int offCol = 0;
+        if (ColPad <= 0) {
+            offCol = 1 + abs(ColPad) / 2;
+            ColPad = 1;
+        }
+
+        util::matrix_t<int> imagepad;
+        imagepad.resize_fill(twod_size_x + RowPad, twod_size_y + ColPad, 0);
+        for (int i = 0; i < ceil(RowPad / 2) + twod_size_x; i++) {
+            for (int j = 0; j < ceil(ColPad / 2) + twod_size_y; j++) {
+                imagepad.at(i, j) = image.at(i, j);
+            }
+        }
+
+        int midx = ceil(imagepad.nrows() / 2);
+        int midy = ceil(imagepad.ncols() / 2);
+
+        util::matrix_t<int> imagerot;
+        int posi, posj;
+        int x, y;
+        imagerot.resize_fill(outputSize_x, outputSize_y, 0);
+        for (int i = 0; i < outputSize_x; i++) {
+            for (int j = 0; j < outputSize_y; j++) {
+                posi = i - midx + offRow;
+                posj = j - midy + offCol;
+                x = (posi)*cosd(degree) + posj * sind(degree);
+                y = -(posi)*sind(degree) + posj * cosd(degree);
+                x = round(x) + midx;
+                y = round(y) + midy;
+                if (x >= 1 && y >= 1 && x <= imagepad.nrows() && y <= imagepad.ncols())
+                    imagerot.at(i, j) = imagepad.at(i, j);
+
+            }
+        }
+        return imagerot;
+    }
+    else
+        return image;
 
 
 
+}
+*/
+util::matrix_t<int> imrotate(util::matrix_t<int> image, double degree)
+{
+    int rows = image.nrows();
+    int cols = image.ncols();
+    double diagonal = sqrt(pow(rows, 2) + pow(cols, 2));
+    int row_pad = ceil(diagonal - rows) + 2;
+    int col_pad = ceil(diagonal - cols) + 2;
+    util::matrix_t<int> imagepad;
+    imagepad.resize_fill(rows + row_pad, cols + col_pad, 0);
+    for (int i = ceil(row_pad/2); i < ceil(row_pad / 2) + rows; i++) {
+        for (int j = ceil(col_pad/2); j < ceil(col_pad / 2) + cols; j++) {
+            imagepad.at(i, j) = image.at(i-ceil(row_pad/2), j-ceil(col_pad/2));
+        }
+    }
+    int midx = ceil((cols + col_pad + 1) / 2); //Distance along x number of columns
+    int midy = ceil((rows + row_pad + 1) / 2); //Distance along y number of rows
+    util::matrix_t<int> imagerot;
+    int x;
+    int y;
+    imagerot.resize_fill(imagepad.nrows(), imagepad.ncols(), 0);
+    for (int i = 0; i < imagerot.nrows(); i++) {
+        for (int j = 0; j < imagerot.ncols(); j++) {
+            x = round((i - midx) * cosd(degree) + (j - midy) * sind(degree)) + midx;
+            y = round((i - midx) * sind(degree) + (j - midy) * cosd(degree)) + midy;
+            if (x >= 0 && y >= 0 && x <= imagepad.ncols()-1 && y <= imagepad.nrows()-1)
+                imagerot.at(i, j) = imagepad.at(x, y);
+        }
+    }
+    return imagerot;
+}
 
 
+util::matrix_t<int> SolArrayLog(double res, double baseheight, double GCR, double Lmod, double thick, double angle, double Depth, double row_num, bool showArray, int &oA_out)
+{
+    double H_pan = baseheight + (Lmod * sind(angle));
+    double Lmod_x = Lmod * cosd(angle);
+    double S = Lmod / GCR;
+    double Smid = S - Lmod_x;
+    double Ltot_x = row_num * (Lmod_x + Smid);
 
+    int SmidInd = round(Smid / (2 * res));
+    int SInd = round(S / res);
+    int BInd = round(baseheight / res - thick * cosd(angle) / res);
+    int Pcount = 0;
+    int x = Ltot_x / res;
+    const int y = H_pan / res;
+    const int z = Depth / res;
+    int oA = z;
+    oA_out = oA;
+    const int const_OA = oA;
+    int ones_x = floor(Lmod / res);
+    int ones_y = floor(thick / res);
+    util::matrix_t<int> ones;
+    util::matrix_t<int> Pmat = imrotate(ones, angle);
+    util::matrix_t<int> ArrayLog;
+    //util::matrix_t<int> Pmat;
+    ArrayLog.resize_fill(x, y * z, 0);
+    //Pmat.resize_fill(ones_rotated.nrows(), ones_rotated.ncols(), 0);
+    if (BInd + Pmat.ncols() > ArrayLog.ncols()/z) {
+        ArrayLog.resize_fill(ArrayLog.nrows(), ArrayLog.ncols() + (BInd + Pmat.ncols())* z, 0);
+    }
+    /*
+    for (int i = 0; i < ones_rotated.nrows(); i++) {
+        for (int j = 0; j < ones_rotated.ncols(); j++) {
+           
+           Pmat.at(i, j) = ones_rotated.at(i, j);
+            
+        }
+    }
+    */
 
+    int xstart;
+    int ystart;
+    for (int jj = 0; jj < row_num; jj++) {
+        xstart = SmidInd + SInd * Pcount;
+        for (int i = xstart; i < xstart + Pmat.nrows(); i++) {
+            ystart = BInd;
+            for (int j = ystart; j < ystart + Pmat.ncols(); j++) {
+                for (int k = 0; k < z; k++) {
 
+                    ArrayLog.at(i, k * (ystart + Pmat.ncols()) + j) = Pmat.at(i - xstart, (j - ystart));
+                }
+                
+            }
+        }
+        
+        Pcount++;
+    }
+
+    return ArrayLog;
+
+}
 
 // !*****************************************************************
 static double free_convection_194( double TC, double TA, double SLOPE, double rho_air, 
@@ -470,7 +926,11 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 	double app_fac_P  = 1.;
 	
 	double TC = input.Tdry+273.15;
-
+    double rho_air_test = 0;
+    double mu_air_test = 0;
+    double k_air_test = 0;
+    double Pr_air_test = 0;
+    double temp_interp = 0;
 	while( p_iter <= 300 && fabs(err_P) > 0.1 )
 	{		  
 		double err_TC   = 100.; //  !Set initial temperature error. Must be > tolerance for temp error in do loop
@@ -479,23 +939,55 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 		double app_fac  = 0.5  ; //  !Set approach factor for updating cell temp guess value
 		double app_fac_v = 0.5 ; // !Set approach factor for updating channel velocity guess value
 
+        //Lacunarity
+        double res = 0.025; //resolution
+        int oA_out = 0;
+        int n_p = 2;
+        const int n_p_const = n_p;
+        std::vector<double> L(n_p);
+        std::vector<double> L_n(n_p);
+        util::matrix_t<double> Z;
+        util::matrix_t<double> Z_n;
+        Z.resize(n_p, 4);
+        Z_n.resize(n_p, 4);
+        std::vector<double> R(n_p);
+        std::vector<double> R_n(n_p);
+
+        //util::matrix_t<int> ArrayLog = SolArrayLog(res, 5 * ground_clearance_height, GCR, Length, 0.025, input.Tilt, Width, 9, false, oA_out);
+        //SuperLac(ArrayLog, oA_out, 2, L, L_n, R, R_n, Z, Z_n);
+        //Do something with finding asymptote of L or L_n to get final Lacunarity value here?
+
+
 		switch( MC )
 		{
 		case 1 : // !Rack Mounting Configuration 
 			while( fabs(err_TC) > 0.001 )
 			{
-
+                //L_char = Lsc; //Change characteristic length to Lacunarity length scale
 				double rho_air    = Patm*28.967/8314.34*(1./((TA+TC)/2.)) ; // !density of air as a function of pressure and ambient temp
-				double Re_forced  = MAX(0.1,rho_air*V_cover*L_char/mu_air) ; //  !Reynolds number of wind moving across module
-				double Nu_forced  = 0.037 * pow(Re_forced,4./5.) * pow(Pr_air, 1./3.) ; //  !Nusselt Number (Incropera et al., 2006)
-				double h_forced   = Nu_forced * k_air / L_char;
-				double h_sky      = (TC*TC+T_sky*T_sky)*(TC+T_sky);
+                int iter = 0;
+                
+                                                                            //double Re_forced  = MAX(0.1,rho_air*V_cover*L_char/mu_air) ; //  !Reynolds number of wind moving across module
+                //double Re_forced = MAX(0.1, rho_air * V_cover * Lsc / mu_air); //  !Reynolds number of wind moving across module
+                
+                
+                double Re_forced = MAX(0.1, rho_air * V_cover * L_char / mu_air);
+                double Nu_forced  = 0.037 * pow(Re_forced,4./5.) * pow(Pr_air, 1./3.) ; //  !Nusselt Number (Incropera et al., 2006)
+                double h_forced = 0;
+                if (lacunarity_enable == 0)
+                    h_forced   = Nu_forced * k_air / L_char;
+                else {
+                    double Re_forced_Lsc = MAX(0.1, rho_air * V_cover * Lsc / mu_air);
+                    h_forced = (k_air / (ground_clearance_height + 2.0 * Length * sind(input.Tilt))) * pow(10, (0.090125 * pow(Re_forced_Lsc, 1. / 5.) * pow(Pr_air, 1. / 12.) + 1.8617));
+                }
+                double h_sky      = (TC*TC+T_sky*T_sky)*(TC+T_sky);
 				double h_ground   = (TC*TC+T_ground*T_ground)*(TC+T_ground);
 				double h_free_c   = free_convection_194(TC,TA,input.Tilt,rho_air,Area,Length,Width) ; //   !Call function to calculate free convection on tilted surface (top)           
 				double h_free_b   = free_convection_194(TC,TA,180.0-input.Tilt,rho_air,Area,Length,Width); // !Call function to calculate free convection on tilted surface (bottom)              
 				double h_conv_c   = pow( pow(h_forced,3.) + pow(h_free_c,3.) , 1./3.) ; // !Combine free and forced heat transfer coefficients (top)
 				double h_conv_b   = pow( pow(h_forced,3.) + pow(h_free_b,3.) , 1./3.) ; // !Combine free and forced heat transfer coefficients (bottom)
-			
+                //h_conv_c = h_forced;
+                //h_conv_b = h_forced;
 				// !Energy balance to calculate TC
 				double TC1 = ( (h_conv_c+h_conv_b)*TA 
 						+ (Fcs*EmisC+Fbs*EmisB)*sigma*h_sky*T_sky 
@@ -505,6 +997,8 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 						+ h_conv_b 
 						+ (Fcs*EmisC +Fbs*EmisB)*sigma*h_sky 
 						+ (Fcg*EmisC + Fbg*EmisB)*sigma*h_ground );
+
+                
 
 				// !Since some variables in TC1 calc are function of TC, iterative solving is required        
 				err_TC     = TC1 - TC; // !Error between n-1 and n temp calculations

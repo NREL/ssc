@@ -71,6 +71,7 @@ public:
         bool is_parallel_heater;            //[-] Is there a heater parallel to the receiver?
         double q_eh_max;                    //[kWt] Maximum allowable power delivery by the electrical heaters when operating
         double q_eh_min;                    //[kWt] Minimum allowable power delivery by the electrical heaters when operating
+        double eta_eh;                      //[-] Electric resistance heating sub-system efficiency
         double hsu_cost;                    //[$/start] Heater startup cost
 
         // Initial Conditions
@@ -131,6 +132,7 @@ public:
             is_parallel_heater = false;
             q_eh_max = 0.0;
             q_eh_min = 0.0;
+            eta_eh = 1.0;
             hsu_cost = 10.;
             can_cycle_use_standby = false;
             ppa_price_y1 = std::numeric_limits<double>::quiet_NaN();

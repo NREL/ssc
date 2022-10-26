@@ -233,7 +233,7 @@ static var_info _cm_vtab_tcstrough_physical[] = {
 	// Steam Rankine cycle
     { SSC_INPUT,        SSC_NUMBER,      "dT_cw_ref",         "Reference condenser cooling water inlet/outlet T diff",                     "C",            "",                             "powerblock",     "pc_config=0",             "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_amb_des",         "Reference ambient temperature at design point",                             "C",            "",                             "powerblock",     "pc_config=0",             "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "P_boil",            "Boiler operating pressure",                                                 "bar",          "",                             "powerblock",     "pc_config=0",             "",                      "" },
+    //{ SSC_INPUT,        SSC_NUMBER,      "P_boil",            "Boiler operating pressure",                                                 "bar",          "",                             "powerblock",     "pc_config=0",             "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "CT",                "Flag for using dry cooling or wet cooling system",                          "none",         "",                             "powerblock",     "pc_config=0",             "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_approach",        "Cooling tower approach temperature",                                        "C",            "",                             "powerblock",     "pc_config=0",             "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_ITD_des",         "ITD at design for dry system",                                              "C",            "",                             "powerblock",     "pc_config=0",             "",                      "" },
@@ -797,7 +797,7 @@ public:
 			set_unit_value_ssc_double(type224_powerblock, "dT_cw_ref" ); // , 10);
 			set_unit_value_ssc_double(type224_powerblock, "T_amb_des" ); // , 20);
 		
-			set_unit_value_ssc_double(type224_powerblock, "P_boil" ); // , 100);
+			//set_unit_value_ssc_double(type224_powerblock, "P_boil" ); // , 100);
 			set_unit_value_ssc_double(type224_powerblock, "CT" ); // , 1);
 		
 			set_unit_value_ssc_double(type224_powerblock, "tech_type" ); // , 2);
@@ -972,7 +972,7 @@ public:
 		
 		// performance adjustment factors
 		adjustment_factors haf(this, "adjust");
-		if (!haf.setup())
+		if (!haf.setup(nrec))
 			throw exec_error("tcstrough_physical", "failed to setup adjustment factors: " + haf.error());
 
 		size_t idx=0;

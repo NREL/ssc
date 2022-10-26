@@ -582,6 +582,12 @@ namespace util
 		{
 			return t_array[0];
 		}
+
+        inline std::vector<T> to_vector() const
+        {
+            std::vector<T> v(t_array, t_array + ncells());
+            return v;
+        }
 	};
 
 	template< typename T >

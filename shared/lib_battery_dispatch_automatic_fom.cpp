@@ -82,7 +82,7 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 
 	revenueToClipCharge = revenueToDischarge = revenueToGridCharge = revenueToPVCharge = 0;
 
-    discharge_hours = (size_t) std::ceil(_Battery->energy_max(m_batteryPower->stateOfChargeMax, m_batteryPower->stateOfChargeMin) / m_batteryPower->powerBatteryDischargeMaxDC);
+    discharge_hours = (size_t) std::ceil(_Battery->energy_max(m_batteryPower->stateOfChargeMax, m_batteryPower->stateOfChargeMin) / m_batteryPower->powerBatteryDischargeMaxDC) - 1;
 
     costToCycle();
     omCost();
@@ -185,7 +185,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t year, size_t ho
         auto max_ppa_cost = std::max_element(_forecast_price_rt_series.begin() + lifetimeIndex, _forecast_price_rt_series.begin() + lifetimeIndex + idx_lookahead);
         auto min_ppa_cost = std::min_element(_forecast_price_rt_series.begin() + lifetimeIndex, _forecast_price_rt_series.begin() + lifetimeIndex + idx_lookahead);
         auto charge_ppa_cost = ppa_prices[discharge_hours];
-        auto discharge_ppa_cost = ppa_prices[ppa_prices.size() - discharge_hours]; 
+        auto discharge_ppa_cost = ppa_prices[ppa_prices.size() - discharge_hours - 1]; 
         double ppa_cost = _forecast_price_rt_series[lifetimeIndex];
 
         /*! Cost to purchase electricity from the utility */
@@ -258,20 +258,19 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t year, size_t ho
         double energyNeededToFillBattery = _Battery->energy_to_fill(m_batteryPower->stateOfChargeMax);
 
         /* Booleans to assist decisions */
-        bool highDischargeValuePeriod = ppa_cost >= discharge_ppa_cost && ppa_cost > charge_ppa_cost;
-        bool highChargeValuePeriod = ppa_cost <= charge_ppa_cost && ppa_cost < discharge_ppa_cost;
+        bool highDischargeValuePeriod = ppa_cost >= discharge_ppa_cost && ppa_cost >= charge_ppa_cost;
+        bool highChargeValuePeriod = ppa_cost <= charge_ppa_cost && ppa_cost <= discharge_ppa_cost;
         bool excessAcCapacity = _inverter_paco > m_batteryPower->powerSystemThroughSharedInverter;
         bool batteryHasDischargeCapacity = _Battery->SOC() >= m_batteryPower->stateOfChargeMin + 1.0;
 
         // Always Charge if PV is clipping
-        if (m_batteryPower->canClipCharge && m_batteryPower->powerSystemClipped > 0 && revenueToClipCharge > 0)
+        if (m_batteryPower->canClipCharge && m_batteryPower->powerSystemClipped > 0 && revenueToClipCharge >= 0)
         {
             powerBattery = -m_batteryPower->powerSystemClipped;
         }
 
         // Increase charge from system (PV) if it is more valuable later than selling now
         if (m_batteryPower->canSystemCharge &&
-            //revenueToPVCharge >= revenueToGridChargeMax &&
             revenueToPVCharge > 0 &&
             highChargeValuePeriod &&
             m_batteryPower->powerSystem > 0)
@@ -314,7 +313,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t year, size_t ho
                 }
             }
             else
-                powerBattery = -energyNeededToFillBattery / _dt_hour;
+                powerBattery = _Battery->calculate_max_charge_kw();
         }
 
         // Discharge if we are in a high-price period and have battery and inverter capacity

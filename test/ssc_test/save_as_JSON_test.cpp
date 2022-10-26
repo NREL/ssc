@@ -36,7 +36,7 @@ int np5 = sprintf(inputs_as_JSON5, "%s/test/input_json/Wind_MP.json", SSCDIR);
 TEST(save_as_JSON_test, pvwatts_mechant_plant_read_file_to_string) {
     std::ifstream test(inputs_as_JSON);
     std::string str((std::istreambuf_iterator<char>(test)), std::istreambuf_iterator<char>());
-    EXPECT_EQ(str.length(), 5278265);
+    EXPECT_EQ(str.length(), 5278325);
 }
 
 TEST(save_as_JSON_test_parse, pvwatts_mechant_plant_rapidjson_parse_file) {
@@ -137,7 +137,7 @@ TEST(save_as_JSON_test_run, pvwatts_mechant_plant_rapidjson_read_file_run_pvwatt
     EXPECT_TRUE(success);
     ssc_number_t annual_energy;
     ssc_data_get_number(data, "annual_energy", &annual_energy);
-    EXPECT_NEAR(annual_energy, 88017907, 88017907 / 1e6);
+    EXPECT_NEAR(annual_energy, 88483173, 88483173 / 1e6);
     
     ssc_module_free(mod);
     ssc_data_free(data);

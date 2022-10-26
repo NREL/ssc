@@ -76,9 +76,17 @@ C_pc_Rankine_indirect_224::C_pc_Rankine_indirect_224()
 
 	m_F_wcMax = m_F_wcMin = m_delta_h_steam = m_startup_energy_required = m_Psat_ref = m_P_ND_ref = m_Q_ND_ref =
         m_m_dot_design = m_q_dot_design = m_q_dot_reject_des = m_cp_htf_design = m_W_dot_htf_pump_des = m_W_dot_cooling_des =
+        m_T_boil_des = m_delatT_hot_to_boil_des =
         m_T_wb_des =
         m_startup_time_remain_prev = m_startup_time_remain_calc =
 		m_startup_energy_remain_prev = m_startup_energy_remain_calc = std::numeric_limits<double>::quiet_NaN();
+
+    // UDPC calculated design metrics
+    m_n_T_htf_pars = m_n_T_amb_pars = m_n_m_dot_pars = -1;
+    m_T_htf_ref_udpc_calc = m_T_htf_low_udpc_calc = m_T_htf_high_udpc_calc =
+        m_T_amb_ref_udpc_calc = m_T_amb_low_udpc_calc = m_T_amb_high_udpc_calc =
+        m_m_dot_htf_ref_udpc_calc = m_m_dot_htf_low_udpc_calc = m_m_dot_htf_high_udpc_calc =
+        m_W_dot_gross_ND_des = m_Q_dot_HTF_ND_des = m_W_dot_cooling_ND_des = m_m_dot_water_ND_des = std::numeric_limits<double>::quiet_NaN();
 
     // Design-point conditions
     m_rh_des = 45.0;
@@ -470,20 +478,40 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 		// =======================================================================
 		// Limit the boiler pressure to below the supercritical point.  If a supercritical pressure is used,
 		// notify the user that the pressure value is being switched.
-		if( ms_params.m_P_boil > 220.0 )
+		if( ms_params.m_P_boil_des > 220.0 )
 		{
-			m_error_msg = util::format("The boiler pressure provided by the user, %lg, requires a supercritical system. The pressure has been reset to 220 bar", ms_params.m_P_boil);
+			m_error_msg = util::format("The boiler pressure provided by the user, %lg, requires a supercritical system. The pressure has been reset to 220 bar", ms_params.m_P_boil_des);
 			mc_csp_messages.add_message(C_csp_messages::WARNING, m_error_msg);
-			ms_params.m_P_boil = 220.0; // Set to 220 bar, 22 MPa
+			ms_params.m_P_boil_des = 220.0; // Set to 220 bar, 22 MPa
 		}
+
+        water_state wp;
+        if (ms_params.m_tech_type == 4)
+            m_T_boil_des = T_sat4(ms_params.m_P_boil_des); // Sat temp for isopentane
+        else
+        {
+            water_PQ(ms_params.m_P_boil_des * 100, 1.0, &wp);
+            m_T_boil_des = wp.temp;	//[K]
+        }
+
+        // Calculate the htf hot temperature, in non-dimensional form
+        if (m_T_boil_des >= ms_params.m_T_htf_hot_ref + 273.15)
+        {	// boiler pressure is unrealistic -> it could not be achieved with this resource temp
+            std::string msg = util::format("The design HTF hot temperature %lg [C] is colder than then"
+                " the design point boiling temperature %lg [C] corresponding to the hardcoded design point boiler pressure %lg [bar]",
+                ms_params.m_T_htf_hot_ref, m_T_boil_des - 273.15, ms_params.m_P_boil_des);
+
+            mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
+        }
+
+        m_delatT_hot_to_boil_des = (ms_params.m_T_htf_hot_ref + 273.15) - m_T_boil_des;      //[C/K]
 
 		double h_st_hot, h_st_cold;
 
 		// 1.3.13 twn: Use FIT water props to calculate enthalpy rise over economizer/boiler/superheater
-		water_state wp;
-		water_TP(ms_params.m_T_htf_hot_ref - GetFieldToTurbineTemperatureDropC() + 273.15, ms_params.m_P_boil*100.0, &wp);	// Get hot side enthalpy [kJ/kg] using Steam Props
+		water_TP(ms_params.m_T_htf_hot_ref - GetFieldToTurbineTemperatureDropC() + 273.15, ms_params.m_P_boil_des*100.0, &wp);	// Get hot side enthalpy [kJ/kg] using Steam Props
 		h_st_hot = wp.enth;
-		water_PQ(ms_params.m_P_boil*100.0, 0.0, &wp);
+		water_PQ(ms_params.m_P_boil_des*100.0, 0.0, &wp);
 		h_st_cold = wp.enth;
 		m_delta_h_steam = h_st_hot - h_st_cold + 4.91*100.0;
 
@@ -571,31 +599,27 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
             mc_csp_messages.add_message(C_csp_messages::WARNING, m_error_msg);
         }
         
-        int n_T_htf_pars, n_T_amb_pars, n_m_dot_pars;
-        double T_htf_ref_udpc_calc, T_htf_low_udpc_calc, T_htf_high_udpc_calc;
-        double T_amb_ref_udpc_calc, T_amb_low_udpc_calc, T_amb_high_udpc_calc;
-        double m_dot_htf_ref_udpc_calc, m_dot_htf_low_udpc_calc, m_dot_htf_high_udpc_calc;
         std::vector<double> Y_at_T_htf_ref, Y_at_T_amb_ref, Y_at_m_dot_htf_ND_ref, Y_avg_at_refs;
         mc_user_defined_pc.init(ms_params.mc_combined_ind,
-            n_T_htf_pars, n_T_amb_pars, n_m_dot_pars,
-            T_htf_ref_udpc_calc, T_htf_low_udpc_calc, T_htf_high_udpc_calc,
-            T_amb_ref_udpc_calc, T_amb_low_udpc_calc, T_amb_high_udpc_calc,
-            m_dot_htf_ref_udpc_calc, m_dot_htf_low_udpc_calc, m_dot_htf_high_udpc_calc,
+            m_n_T_htf_pars, m_n_T_amb_pars, m_n_m_dot_pars,
+            m_T_htf_ref_udpc_calc, m_T_htf_low_udpc_calc, m_T_htf_high_udpc_calc,
+            m_T_amb_ref_udpc_calc, m_T_amb_low_udpc_calc, m_T_amb_high_udpc_calc,
+            m_m_dot_htf_ref_udpc_calc, m_m_dot_htf_low_udpc_calc, m_m_dot_htf_high_udpc_calc,
             Y_at_T_htf_ref, Y_at_T_amb_ref, Y_at_m_dot_htf_ND_ref, Y_avg_at_refs);
 
         // Set design point ambient temperature to value calculated from UDPC table
-        ms_params.m_T_amb_des = T_amb_ref_udpc_calc;        //[C]
+        ms_params.m_T_amb_des = m_T_amb_ref_udpc_calc;        //[C]
 
         // Get UDPC Y values at *MSPT* design values
-        double W_dot_gross_ND_des = mc_user_defined_pc.get_W_dot_gross_ND(ms_params.m_T_htf_hot_ref, ms_params.m_T_amb_des, 1.0);
-        double Q_dot_HTF_ND_des = mc_user_defined_pc.get_Q_dot_HTF_ND(ms_params.m_T_htf_hot_ref, ms_params.m_T_amb_des, 1.0);
-        double W_dot_cooling_ND_des = mc_user_defined_pc.get_W_dot_cooling_ND(ms_params.m_T_htf_hot_ref, ms_params.m_T_amb_des, 1.0);
-        double m_dot_water_ND_des = mc_user_defined_pc.get_m_dot_water_ND(ms_params.m_T_htf_hot_ref, ms_params.m_T_amb_des, 1.0);
+        m_W_dot_gross_ND_des = mc_user_defined_pc.get_W_dot_gross_ND(ms_params.m_T_htf_hot_ref, ms_params.m_T_amb_des, 1.0);
+        m_Q_dot_HTF_ND_des = mc_user_defined_pc.get_Q_dot_HTF_ND(ms_params.m_T_htf_hot_ref, ms_params.m_T_amb_des, 1.0);
+        m_W_dot_cooling_ND_des = mc_user_defined_pc.get_W_dot_cooling_ND(ms_params.m_T_htf_hot_ref, ms_params.m_T_amb_des, 1.0);
+        m_m_dot_water_ND_des = mc_user_defined_pc.get_m_dot_water_ND(ms_params.m_T_htf_hot_ref, ms_params.m_T_amb_des, 1.0);
 
-        double W_dot_gross_des_UDPC = ms_params.m_P_ref * W_dot_gross_ND_des * 1.E-3;   //[MWe]
-        double q_dot_des_UDPC = m_q_dot_design * Q_dot_HTF_ND_des;              //[MWt]
-        double W_dot_cooling_des_UDPC = ms_params.m_W_dot_cooling_des * W_dot_cooling_ND_des;   //[MWe]
-        double m_dot_water_des_UDPC = ms_params.m_m_dot_water_des * m_dot_water_ND_des;         //[kg/s]
+        double W_dot_gross_des_UDPC = ms_params.m_P_ref * m_W_dot_gross_ND_des * 1.E-3;   //[MWe]
+        double q_dot_des_UDPC = m_q_dot_design * m_Q_dot_HTF_ND_des;              //[MWt]
+        double W_dot_cooling_des_UDPC = ms_params.m_W_dot_cooling_des * m_W_dot_cooling_ND_des;   //[MWe]
+        double m_dot_water_des_UDPC = ms_params.m_m_dot_water_des * m_m_dot_water_ND_des;         //[kg/s]
 
         // Calculate other important design values
         double eta_des_UDPDC = W_dot_gross_des_UDPC / q_dot_des_UDPC;		//[-]
@@ -720,8 +744,8 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
         double m_dot_demand_des_calc, m_dot_htf_ref_des_calc, f_hrsys_des_calc, P_cond_des_calc, T_cond_out_des_calc, P_cond_iter_rel_err_design;
 
         RankineCycle_V2(ms_params.m_T_amb_des + 273.15, m_T_wb_des + 273.15,
-            m_P_amb_des, ms_params.m_T_htf_hot_ref, m_m_dot_design, mode_des,
-            demand_var_des, ms_params.m_P_boil, F_wc_des, m_F_wcMin, m_F_wcMax, T_cold_rad_cooling_des, dT_cw_rad_cooling_des,
+            m_P_amb_des, ms_params.m_T_htf_hot_ref, m_m_dot_design,
+            F_wc_des, m_F_wcMin, m_F_wcMax, T_cold_rad_cooling_des, dT_cw_rad_cooling_des,
             P_cycle_des_calc, eta_des_calc, T_htf_cold_des_calc, m_dot_demand_des_calc, m_dot_htf_ref_des_calc,
             m_dot_makeup_des_calc, m_W_dot_cooling_des, f_hrsys_des_calc, P_cond_des_calc, T_cond_out_des_calc,
             P_cond_iter_rel_err_design);
@@ -768,12 +792,39 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 
 void C_pc_Rankine_indirect_224::get_design_parameters(double& m_dot_htf_des /*kg/hr*/,
     double& cp_htf_des_at_T_ave /*kJ/kg-K*/,
-    double& W_dot_htf_pump /*MWe*/, double& W_dot_cooling /*MWe*/)
+    double& W_dot_htf_pump /*MWe*/, double& W_dot_cooling /*MWe*/,
+    // UDPC
+    int& n_T_htf_pars, int& n_T_amb_pars, int& n_m_dot_pars,
+    double& T_htf_ref_calc /*C*/, double& T_htf_low_calc /*C*/, double& T_htf_high_calc /*C*/,
+    double& T_amb_ref_calc /*C*/, double& T_amb_low_calc /*C*/, double& T_amb_high_calc /*C*/,
+    double& m_dot_htf_ND_ref_calc, double& m_dot_htf_ND_low_calc /*-*/, double& m_dot_htf_ND_high_calc /*-*/,
+    double& W_dot_gross_ND_des, double& Q_dot_HTF_ND_des, double& W_dot_cooling_ND_des, double& m_dot_water_ND_des)
 {
     m_dot_htf_des = m_m_dot_design;         //[kg/hr]
     cp_htf_des_at_T_ave = m_cp_htf_design;  //[kJ/kg-K]
     W_dot_htf_pump = m_W_dot_htf_pump_des;  //[MWe]
     W_dot_cooling = m_W_dot_cooling_des;    //[MWe]
+
+    n_T_htf_pars = m_n_T_htf_pars;
+    n_T_amb_pars = m_n_T_amb_pars;
+    n_m_dot_pars = m_n_m_dot_pars;
+
+    T_htf_ref_calc = m_T_htf_ref_udpc_calc; //[C]
+    T_htf_low_calc = m_T_htf_low_udpc_calc; //[C]
+    T_htf_high_calc = m_T_htf_high_udpc_calc;   //[C]
+
+    T_amb_ref_calc = m_T_amb_ref_udpc_calc; //[C]
+    T_amb_low_calc = m_T_amb_low_udpc_calc; //[C]
+    T_amb_high_calc = m_T_amb_high_udpc_calc;   //[C]
+
+    m_dot_htf_ND_ref_calc = m_m_dot_htf_ref_udpc_calc;  //[-]
+    m_dot_htf_ND_low_calc = m_m_dot_htf_low_udpc_calc;  //[-]
+    m_dot_htf_ND_high_calc = m_m_dot_htf_high_udpc_calc;    //[-]
+
+    W_dot_gross_ND_des = m_W_dot_gross_ND_des;      //[-]
+    Q_dot_HTF_ND_des = m_Q_dot_HTF_ND_des;          //[-]
+    W_dot_cooling_ND_des = m_W_dot_cooling_ND_des;  //[-]
+    m_dot_water_ND_des = m_m_dot_water_ND_des;      //[-]
 }
 
 double C_pc_Rankine_indirect_224::get_cold_startup_time()
@@ -941,7 +992,7 @@ double C_pc_Rankine_indirect_224::get_efficiency_at_TPH(double T_degC, double P_
 		RankineCycle_V2(
 				//inputs
 				T_degC+273.15, Twet+273.15, P_atm*101325., ms_params.m_T_htf_hot_ref, m_m_dot_design,
-				2, 0., ms_params.m_P_boil, 1., m_F_wcMin, m_F_wcMax,T_cold,dT_cw_design,
+				1., m_F_wcMin, m_F_wcMax,T_cold,dT_cw_design,
 				//outputs
 				P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_makeup, W_cool_par, f_hrsys, P_cond, T_cond_out, P_cond_iter_rel_err);
 
@@ -1000,8 +1051,8 @@ double C_pc_Rankine_indirect_224::get_efficiency_at_load(double load_frac, doubl
 
         RankineCycle_V2(
 			    //inputs
-			    ms_params.m_T_amb_des+273.15, m_T_wb_des+273.15, m_P_amb_des, ms_params.m_T_htf_hot_ref, mdot, 2,
-                0., ms_params.m_P_boil, 1., m_F_wcMin, m_F_wcMax, T_cold,dT_cw_design,
+			    ms_params.m_T_amb_des+273.15, m_T_wb_des+273.15, m_P_amb_des, ms_params.m_T_htf_hot_ref, mdot,
+                1., m_F_wcMin, m_F_wcMax, T_cold,dT_cw_design,
 			    //outputs
 			    P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_makeup, W_cool_par, f_hrsys, P_cond, T_cond_out, P_cond_iter_rel_err);
 
@@ -1228,7 +1279,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 		if( !ms_params.m_is_user_defined_pc )
 		{
 
-			RankineCycle_V2(T_db, T_wb, P_amb, T_htf_hot, m_dot_htf, mode, demand_var, ms_params.m_P_boil,
+			RankineCycle_V2(T_db, T_wb, P_amb, T_htf_hot, m_dot_htf,
 				F_wc, m_F_wcMin, m_F_wcMax, T_cold_prev,dT_cw_design,
 				P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_water_cooling, W_cool_par, f_hrsys, P_cond, T_cond_out, P_cond_iter_rel_err);
 
@@ -1998,8 +2049,8 @@ void C_pc_Rankine_indirect_224::cycle_Rankine_ND(double T_htf_hot_ND /*-*/, doub
 }
 
 void C_pc_Rankine_indirect_224::RankineCycle_V2(double T_db /*K*/, double T_wb /*K*/,
-    double P_amb /*Pa*/, double T_htf_hot /*C*/, double m_dot_htf_in /*kg/hr*/, int mode,
-    double demand_var, double P_boil, double F_wc, double F_wcmin, double F_wcmax, double T_cold_rad_cool /*[C]*/, double dT_cw_rad_cool /*[C]*/,
+    double P_amb /*Pa*/, double T_htf_hot /*C*/, double m_dot_htf_in /*kg/hr*/,
+    double F_wc, double F_wcmin, double F_wcmax, double T_cold_rad_cool /*[C]*/, double dT_cw_rad_cool /*[C]*/,
     //outputs
     double& P_cycle /*kWe*/, double& eta /*-*/, double& T_htf_cold /*C*/, double& m_dot_demand, double& m_dot_htf_ref,
     double& m_dot_makeup, double& W_cool_par /*MWe*/, double& f_hrsys, double& P_cond_solved /*Pa*/, double& T_cond_out_rad_cool /*[C]*/,
@@ -2034,23 +2085,14 @@ void C_pc_Rankine_indirect_224::RankineCycle_V2(double T_db /*K*/, double T_wb /
     double q_dot_reject_design = m_q_dot_design*1000.0*(1.0 - ms_params.m_eta_ref);     //[MWt]
     m_dot_htf_ref = m_m_dot_design / 3600.0;        //[kg/s]
 
-    double T_ref = 0; // The saturation temp at the boiler
-    if (ms_params.m_tech_type == 4)
-        T_ref = T_sat4(P_boil); // Sat temp for isopentane
-    else
-    {
-        water_PQ(P_boil * 100, 1.0, &wp);
-        T_ref = wp.temp;	//[K]
-    }
+    double T_htf_hot_ND = (T_htf_hot - m_T_boil_des) / m_delatT_hot_to_boil_des;       //[-]
 
     // Calculate the htf hot temperature, in non-dimensional form
-    if (T_ref >= T_htf_hot)
+    if (m_T_boil_des >= T_htf_hot)
     {	// boiler pressure is unrealistic -> it could not be achieved with this resource temp
-        mc_csp_messages.add_message(C_csp_messages::WARNING, "The input boiler pressure could not be achieved with the resource temperature entered.");
+        mc_csp_messages.add_message(C_csp_messages::WARNING, "The inlet HTF temperature is colder than the DESIGN boiler temperature.");
         //P_cycle = 0.0;
     }
-
-    double T_htf_hot_ND = (T_htf_hot - T_ref) / (T_htf_hot_ref - T_ref);
 
     // Calculate the htf mass flow rate in non-dimensional form
     double m_dot_htf_ND = m_dot_htf / m_dot_htf_ref;

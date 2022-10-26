@@ -204,7 +204,7 @@ static var_info _cm_vtab_tcsmslf[] = {
 		// Steam Rankine Cycle																												
     { SSC_INPUT,    SSC_NUMBER,      "dT_cw_ref",         "Reference condenser cooling water inlet/outlet T diff",                     "C",            "",                             "powerblock",     "pc_config=0",             "",                      "" },
     { SSC_INPUT,    SSC_NUMBER,      "T_amb_des",         "Reference ambient temperature at design point",                             "C",            "",                             "powerblock",     "pc_config=0",             "",                      "" },
-    { SSC_INPUT,    SSC_NUMBER,      "P_boil",            "Boiler operating pressure",                                                 "bar",          "",                             "powerblock",     "pc_config=0",             "",                      "" },
+    //{ SSC_INPUT,    SSC_NUMBER,      "P_boil",            "Boiler operating pressure",                                                 "bar",          "",                             "powerblock",     "pc_config=0",             "",                      "" },
     { SSC_INPUT,    SSC_NUMBER,      "CT",                "Flag for using dry cooling or wet cooling system",                          "none",         "",                             "powerblock",     "pc_config=0",             "",                      "" },
     { SSC_INPUT,    SSC_NUMBER,      "T_approach",        "Cooling tower approach temperature",                                        "C",            "",                             "powerblock",     "pc_config=0",             "",                      "" },
     { SSC_INPUT,    SSC_NUMBER,      "T_ITD_des",         "ITD at design for dry system",                                              "C",            "",                             "powerblock",     "pc_config=0",             "",                      "" },
@@ -642,7 +642,7 @@ public:
 			set_unit_value_ssc_double(powerblock, "dT_cw_ref");
 			set_unit_value_ssc_double(powerblock, "T_amb_des");
 		
-			set_unit_value_ssc_double(powerblock, "P_boil");
+			//set_unit_value_ssc_double(powerblock, "P_boil");
 			set_unit_value_ssc_double(powerblock, "CT");
 
 			set_unit_value_ssc_double(powerblock, "tech_type");

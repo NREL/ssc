@@ -63,6 +63,7 @@ void etes_dispatch_opt::init(double cycle_q_dot_des, double cycle_eta_des)
     params.e_rec_startup = pointers.col_rec->get_startup_energy();
     params.q_eh_min = pointers.col_rec->get_min_power_delivery() * (1 + 1e-8); // ensures controller doesn't shut down heater at minimum load
     params.q_eh_max = pointers.col_rec->get_max_power_delivery(std::numeric_limits<double>::quiet_NaN());
+    params.eta_eh = pointers.col_rec->get_design_electric_to_heat_cop();
 
     params.e_tes0 = pointers.tes->get_initial_charge_energy();
     params.e_tes_min = pointers.tes->get_min_charge_energy();
@@ -220,7 +221,6 @@ static void calculate_parameters(etes_dispatch_opt *optinst, unordered_map<std::
             optinst->params.time_elapsed.push_back(pars["delta"] * (t + 1));
         }
 
-        pars["eta_eh"] = optinst->params.eta_eh;
         pars["Ec"] = optinst->params.e_pb_startup_cold;
         pars["Eeh"] = optinst->params.e_rec_startup;
         pars["Eu"] = optinst->params.e_tes_max;
@@ -229,6 +229,7 @@ static void calculate_parameters(etes_dispatch_opt *optinst, unordered_map<std::
         pars["Ql"] = optinst->params.q_pb_min ;
         pars["Qcsu"] = optinst->params.e_pb_startup_cold / ceil(optinst->params.dt_pb_startup_cold / pars["delta"]) / pars["delta"];
 
+        pars["eta_eh"] = optinst->params.eta_eh;
         pars["Qehu"] = optinst->params.q_eh_max;
         pars["Qehl"] = optinst->params.q_eh_min;
         pars["Qhsu"] = optinst->params.e_rec_startup / ceil(optinst->params.dt_rec_startup / pars["delta"]) / pars["delta"];
@@ -285,9 +286,6 @@ static void calculate_parameters(etes_dispatch_opt *optinst, unordered_map<std::
         pars["Wdot0"] = 0.;
         if (pars["q0"] >= pars["Ql"])
             pars["Wdot0"] = (pars["etap"] * pars["q0"] + intercept) * optinst->params.eta_pb_expected.at(0) / optinst->params.eta_pb_des;
-
-        // ==================================================================
-        pars["eta_eh"] = 1.0;   //0.95; We could remove this completely
 };
 
 bool etes_dispatch_opt::optimize()

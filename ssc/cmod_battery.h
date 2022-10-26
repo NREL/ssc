@@ -92,6 +92,10 @@ struct batt_variables
         Applies to both automated and manual dispatch */
     bool batt_dispatch_discharge_only_load_exceeds_system;
 
+    /*! Determines if the battery charging takes priority over the PV meeting the load. True prioritizes battery charging
+        Only applies to manual dispatch */
+    bool batt_dispatch_batt_system_charge_first;
+
 	/*! Vector of periods and if battery can charge from PV*/
 	std::vector<bool> batt_can_charge;
 
@@ -383,7 +387,8 @@ struct battstor
         * outBatteryTemperature,
         * outCapacityThermalPercent,
         * outDispatchMode,
-        * outBatteryPower,
+        * outBatteryPowerAC,
+        * outBatteryPowerDC,
         * outGenPower,
         * outGenWithoutBattery,
         * outGridPower,
@@ -393,7 +398,8 @@ struct battstor
         * outFuelCellToLoad,
         * outGridPowerTarget,
         * outBattPowerTarget,
-        * outSystemToBatt,
+        * outSystemToBattAC,
+        * outSystemToBattDC,
         * outGridToBatt,
         * outFuelCellToBatt,
         * outSystemToGrid,
@@ -402,6 +408,7 @@ struct battstor
         * outFuelCellToGrid,
         * outBatteryConversionPowerLoss,
         * outBatterySystemLoss,
+        * outBatteryToInverterDC,
 		* outInterconnectionLoss,
 		* outCritLoadUnmet,
         * outCritLoad,

@@ -37,4 +37,6 @@ void set_up_time_series(rate_data& data);
 
 void set_up_simple_demand_charge(rate_data& data);
 
+void set_up_tou_demand_charge(rate_data& data);
+
 #endif // _SHARED_RATE_DATA_H_

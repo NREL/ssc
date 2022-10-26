@@ -34,5 +34,5 @@ TEST_F(CMGeothermalCosts, CostModuleTest_cmod_geothermal_costs)
 		
 	ssc_number_t baseline_cost;
 	ssc_data_get_number(data, "baseline_cost", &baseline_cost);
-	EXPECT_NEAR(baseline_cost, 2100, 100 );
+	EXPECT_NEAR(baseline_cost, 2271, 100 );
 }

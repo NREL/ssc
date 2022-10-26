@@ -71,7 +71,10 @@ public:
 	
 	//! Run the PV model
 	void exec();
-	
+
+    //! Return the intra-module electrical mismatch for bifacials
+    double intraElecMismatch(double irrad_front_avg, std::vector<double> irrad_back, double bifaciality, double fill_factor_stc);
+
 	//! Return the module efficiency
 	double module_eff(int mod_type);
 
