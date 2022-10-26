@@ -277,9 +277,17 @@ bool compute_module::verify(const std::string &phase, int check_var_type) {
                         ") required but not assigned");
                     return false;
                 } else if (dat->type != vi->data_type) {
-                    log(phase + ": variable '" + std::string(vi->name) + "' (" + var_data::type_name(dat->type) +
-                        ") of wrong type, " + var_data::type_name(vi->data_type) + " required.");
-                    return false;
+                    // ssc issue 906 - required only inputs!
+                    if ((vi->data_type == SSC_ARRAY) && (dat->type == SSC_NUMBER)) {
+                        log(phase + ": variable '" + std::string(vi->name) + "' input type changed from " + var_data::type_name(dat->type) +
+                            " to single element " + var_data::type_name(vi->data_type) + ".");
+                        dat->type = SSC_ARRAY;
+                    }
+                    else { 
+                        log(phase + ": variable '" + std::string(vi->name) + "' (" + var_data::type_name(dat->type) +
+                            ") of wrong type, " + var_data::type_name(vi->data_type) + " required.");
+                        return false;
+                    }
                 }
 
                 // now check constraints on it
