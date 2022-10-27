@@ -876,6 +876,68 @@ enum {
     CF_annual_cost_lcos,
     CF_util_escal_rate,
 
+
+    CF_itc_fed_amount,
+    CF_itc_fed_percent_amount,
+    CF_itc_fed_percent_maxvalue,
+    CF_itc_fed,
+    CF_itc_sta_amount,
+    CF_itc_sta_percent_amount,
+    CF_itc_sta_percent_maxvalue,
+    CF_itc_sta,
+    CF_itc_total,
+
+
+    CF_depr_stabas_macrs_5,
+    CF_depr_stabas_macrs_15,
+    CF_depr_stabas_sl_5,
+    CF_depr_stabas_sl_15,
+    CF_depr_stabas_sl_20,
+    CF_depr_stabas_sl_39,
+    CF_depr_stabas_custom,
+
+    CF_depr_fedbas_macrs_5,
+    CF_depr_fedbas_macrs_15,
+    CF_depr_fedbas_sl_5,
+    CF_depr_fedbas_sl_15,
+    CF_depr_fedbas_sl_20,
+    CF_depr_fedbas_sl_39,
+    CF_depr_fedbas_custom,
+
+        CF_itc_disallow_sta_percent_macrs_5,
+        CF_itc_disallow_sta_percent_macrs_15,
+        CF_itc_disallow_sta_percent_sl_5,
+        CF_itc_disallow_sta_percent_sl_15,
+        CF_itc_disallow_sta_percent_sl_20,
+        CF_itc_disallow_sta_percent_sl_39,
+        CF_itc_disallow_sta_percent_custom,
+
+        CF_itc_disallow_sta_fixed_macrs_5,
+        CF_itc_disallow_sta_fixed_macrs_15,
+        CF_itc_disallow_sta_fixed_sl_5,
+        CF_itc_disallow_sta_fixed_sl_15,
+        CF_itc_disallow_sta_fixed_sl_20,
+        CF_itc_disallow_sta_fixed_sl_39,
+        CF_itc_disallow_sta_fixed_custom,
+
+        CF_itc_disallow_fed_percent_macrs_5,
+        CF_itc_disallow_fed_percent_macrs_15,
+        CF_itc_disallow_fed_percent_sl_5,
+        CF_itc_disallow_fed_percent_sl_15,
+        CF_itc_disallow_fed_percent_sl_20,
+        CF_itc_disallow_fed_percent_sl_39,
+        CF_itc_disallow_fed_percent_custom,
+
+        CF_itc_disallow_fed_fixed_macrs_5,
+        CF_itc_disallow_fed_fixed_macrs_15,
+        CF_itc_disallow_fed_fixed_sl_5,
+        CF_itc_disallow_fed_fixed_sl_15,
+        CF_itc_disallow_fed_fixed_sl_20,
+        CF_itc_disallow_fed_fixed_sl_39,
+        CF_itc_disallow_fed_fixed_custom,
+
+
+
     CF_max,
  };
 
@@ -1629,18 +1691,29 @@ public:
 		if (ibi_oth_per > as_double("ibi_oth_percent_maxvalue")) ibi_oth_per = as_double("ibi_oth_percent_maxvalue");
 
 		// itc fixed
-		double_vec itc_fed_amount = as_vector_double("itc_fed_amount");
-		double_vec itc_sta_amount = as_vector_double("itc_sta_amount");
+//        double itc_fed_amount = 0.0;
+		double_vec vitc_fed_amount = as_vector_double("itc_fed_amount");
+        for (size_t k = 0; k < vitc_fed_amount.size() && k < nyears; k++) {
+            cf.at(CF_itc_fed_amount, k + 1) = vitc_fed_amount[k];
+//            itc_fed_amount += vitc_fed_amount[k];
+        }
+
+//       double itc_sta_amount = 0.0;
+		double_vec vitc_sta_amount = as_vector_double("itc_sta_amount");
+        for (size_t k = 0; k < vitc_sta_amount.size() && k < nyears; k++) {
+            cf.at(CF_itc_sta_amount, k + 1) = vitc_sta_amount[k];
+//            itc_sta_amount += vitc_sta_amount[k];
+        }
 
 		// itc percent - max value used for comparison to qualifying costs
-		double_vec itc_fed_frac = as_vector_double("itc_fed_percent");
-        for (size_t k = 0; k < itc_fed_frac.size(); k++)
-            itc_fed_frac[k] *= 0.01;
-		double itc_fed_per;
-		double_vec itc_sta_frac = as_vector_double("itc_sta_percent");
-        for (size_t k = 0; k < itc_sta_frac.size(); k++)
-            itc_sta_frac[k] *= 0.01;
-        double itc_sta_per;
+		double_vec vitc_fed_frac = as_vector_double("itc_fed_percent");
+        for (size_t k = 0; k < vitc_fed_frac.size(); k++)
+            cf.at(CF_itc_fed_percent_amount, k + 1) = vitc_fed_frac[k] * 0.01;
+		//double itc_fed_per;
+		double_vec vitc_sta_frac = as_vector_double("itc_sta_percent");
+        for (size_t k = 0; k < vitc_sta_frac.size(); k++)
+            cf.at(CF_itc_sta_percent_amount, k + 1) = vitc_sta_frac[k] * 0.01;
+        //double itc_sta_per;
 
 		// cbi
 		double cbi_fed_amount = 1000.0*nameplate*as_double("cbi_fed_amount");
@@ -1670,9 +1743,9 @@ public:
 
 		double cbi_total = cbi_fed_amount + cbi_sta_amount +cbi_uti_amount + cbi_oth_amount;
 		double ibi_total = ibi_fed_amount + ibi_sta_amount +ibi_uti_amount + ibi_oth_amount + ibi_fed_per + ibi_sta_per +ibi_uti_per + ibi_oth_per;
-		double itc_fed_total;
-		double itc_sta_total;
-		double itc_total;
+//		double itc_fed_total;
+//		double itc_sta_total;
+//		double itc_total;
 
 		double cbi_statax_total =
 			( as_boolean("cbi_fed_tax_sta") ? cbi_fed_amount : 0 ) +
@@ -1845,9 +1918,12 @@ public:
 		double itc_sta_qual_custom;
 
 		double_vec itc_sta_percent_maxvalue = as_vector_double("itc_sta_percent_maxvalue");
+        for (size_t k = 0; k<itc_sta_percent_maxvalue.size() && k < nyears; k++)
+            cf.at(CF_itc_sta_percent_maxvalue, k + 1) = itc_sta_percent_maxvalue[k];
 
 		double itc_sta_disallow_factor = 0.5;
 
+/*
 		double itc_disallow_sta_percent_macrs_5;
 		double itc_disallow_sta_percent_macrs_15;
 		double itc_disallow_sta_percent_sl_5;
@@ -1856,14 +1932,25 @@ public:
 		double itc_disallow_sta_percent_sl_39;
 		double itc_disallow_sta_percent_custom;
 
-        // TODO update to array
-		double itc_disallow_sta_fixed_macrs_5 = (itc_sta_disallow_factor*itc_sta_qual_macrs_5_frac * itc_sta_amount[0]);
-		double itc_disallow_sta_fixed_macrs_15 = (itc_sta_disallow_factor*itc_sta_qual_macrs_15_frac * itc_sta_amount[0]);
-		double itc_disallow_sta_fixed_sl_5 = (itc_sta_disallow_factor*itc_sta_qual_sl_5_frac * itc_sta_amount[0]);
-		double itc_disallow_sta_fixed_sl_15 = (itc_sta_disallow_factor*itc_sta_qual_sl_15_frac * itc_sta_amount[0]);
-		double itc_disallow_sta_fixed_sl_20 = (itc_sta_disallow_factor*itc_sta_qual_sl_20_frac * itc_sta_amount[0]);
-		double itc_disallow_sta_fixed_sl_39 = (itc_sta_disallow_factor*itc_sta_qual_sl_39_frac * itc_sta_amount[0]);
-		double itc_disallow_sta_fixed_custom = (itc_sta_disallow_factor*itc_sta_qual_custom_frac * itc_sta_amount[0]);
+
+		double itc_disallow_sta_fixed_macrs_5 = (itc_sta_disallow_factor*itc_sta_qual_macrs_5_frac * itc_sta_amount);
+		double itc_disallow_sta_fixed_macrs_15 = (itc_sta_disallow_factor*itc_sta_qual_macrs_15_frac * itc_sta_amount);
+		double itc_disallow_sta_fixed_sl_5 = (itc_sta_disallow_factor*itc_sta_qual_sl_5_frac * itc_sta_amount);
+		double itc_disallow_sta_fixed_sl_15 = (itc_sta_disallow_factor*itc_sta_qual_sl_15_frac * itc_sta_amount);
+		double itc_disallow_sta_fixed_sl_20 = (itc_sta_disallow_factor*itc_sta_qual_sl_20_frac * itc_sta_amount);
+		double itc_disallow_sta_fixed_sl_39 = (itc_sta_disallow_factor*itc_sta_qual_sl_39_frac * itc_sta_amount);
+		double itc_disallow_sta_fixed_custom = (itc_sta_disallow_factor*itc_sta_qual_custom_frac * itc_sta_amount);
+*/
+
+        for (size_t k = 0; k <= nyears; k++) {
+            cf.at(CF_itc_disallow_sta_fixed_macrs_5,k) = itc_sta_disallow_factor * itc_sta_qual_macrs_5_frac * cf.at(CF_itc_sta_amount,k);
+            cf.at(CF_itc_disallow_sta_fixed_macrs_15, k) = itc_sta_disallow_factor * itc_sta_qual_macrs_15_frac * cf.at(CF_itc_sta_amount, k);
+            cf.at(CF_itc_disallow_sta_fixed_sl_5, k) = itc_sta_disallow_factor * itc_sta_qual_sl_5_frac * cf.at(CF_itc_sta_amount, k);
+            cf.at(CF_itc_disallow_sta_fixed_sl_15, k) = itc_sta_disallow_factor * itc_sta_qual_sl_15_frac * cf.at(CF_itc_sta_amount, k);
+            cf.at(CF_itc_disallow_sta_fixed_sl_20, k) = itc_sta_disallow_factor * itc_sta_qual_sl_20_frac * cf.at(CF_itc_sta_amount, k);
+            cf.at(CF_itc_disallow_sta_fixed_sl_39, k) = itc_sta_disallow_factor * itc_sta_qual_sl_39_frac * cf.at(CF_itc_sta_amount, k);
+            cf.at(CF_itc_disallow_sta_fixed_custom, k) = itc_sta_disallow_factor * itc_sta_qual_custom_frac * cf.at(CF_itc_sta_amount, k);
+        }
 
 		double itc_fed_qual_macrs_5_frac = ( as_boolean("depr_itc_fed_macrs_5")  ?1: 0 ) ;
 		double itc_fed_qual_macrs_15_frac = ( as_boolean("depr_itc_fed_macrs_15")  ? 1: 0 ) ;
@@ -1884,10 +1971,13 @@ public:
 		double itc_fed_qual_custom;
 
 		double_vec itc_fed_percent_maxvalue = as_vector_double("itc_fed_percent_maxvalue");
+        for (size_t k = 0; k < itc_fed_percent_maxvalue.size() && k < nyears; k++)
+            cf.at(CF_itc_fed_percent_maxvalue, k + 1) = itc_fed_percent_maxvalue[k];
 
 		double itc_fed_disallow_factor = 0.5;
 
-		double itc_disallow_fed_percent_macrs_5;
+/*
+        double itc_disallow_fed_percent_macrs_5;
 		double itc_disallow_fed_percent_macrs_15;
 		double itc_disallow_fed_percent_sl_5;
 		double itc_disallow_fed_percent_sl_15;
@@ -1895,13 +1985,24 @@ public:
 		double itc_disallow_fed_percent_sl_39;
 		double itc_disallow_fed_percent_custom;
 
-		double itc_disallow_fed_fixed_macrs_5 = (itc_fed_disallow_factor*itc_fed_qual_macrs_5_frac * itc_fed_amount[0]);
-		double itc_disallow_fed_fixed_macrs_15 = (itc_fed_disallow_factor*itc_fed_qual_macrs_15_frac * itc_fed_amount[0]);
-		double itc_disallow_fed_fixed_sl_5 = (itc_fed_disallow_factor*itc_fed_qual_sl_5_frac * itc_fed_amount[0]);
-		double itc_disallow_fed_fixed_sl_15 = (itc_fed_disallow_factor*itc_fed_qual_sl_15_frac * itc_fed_amount[0]);
-		double itc_disallow_fed_fixed_sl_20 = (itc_fed_disallow_factor*itc_fed_qual_sl_20_frac * itc_fed_amount[0]);
-		double itc_disallow_fed_fixed_sl_39 = (itc_fed_disallow_factor*itc_fed_qual_sl_39_frac * itc_fed_amount[0]);
-		double itc_disallow_fed_fixed_custom = (itc_fed_disallow_factor*itc_fed_qual_custom_frac * itc_fed_amount[0]);
+		double itc_disallow_fed_fixed_macrs_5 = (itc_fed_disallow_factor*itc_fed_qual_macrs_5_frac * itc_fed_amount);
+		double itc_disallow_fed_fixed_macrs_15 = (itc_fed_disallow_factor*itc_fed_qual_macrs_15_frac * itc_fed_amount);
+		double itc_disallow_fed_fixed_sl_5 = (itc_fed_disallow_factor*itc_fed_qual_sl_5_frac * itc_fed_amount);
+		double itc_disallow_fed_fixed_sl_15 = (itc_fed_disallow_factor*itc_fed_qual_sl_15_frac * itc_fed_amount);
+		double itc_disallow_fed_fixed_sl_20 = (itc_fed_disallow_factor*itc_fed_qual_sl_20_frac * itc_fed_amount);
+		double itc_disallow_fed_fixed_sl_39 = (itc_fed_disallow_factor*itc_fed_qual_sl_39_frac * itc_fed_amount);
+		double itc_disallow_fed_fixed_custom = (itc_fed_disallow_factor*itc_fed_qual_custom_frac * itc_fed_amount);
+*/
+
+        for (size_t k = 0; k <= nyears; k++) {
+            cf.at(CF_itc_disallow_fed_fixed_macrs_5, k) = itc_fed_disallow_factor * itc_fed_qual_macrs_5_frac * cf.at(CF_itc_fed_amount, k);
+            cf.at(CF_itc_disallow_fed_fixed_macrs_15, k) = itc_fed_disallow_factor * itc_fed_qual_macrs_15_frac * cf.at(CF_itc_fed_amount, k);
+            cf.at(CF_itc_disallow_fed_fixed_sl_5, k) = itc_fed_disallow_factor * itc_fed_qual_sl_5_frac * cf.at(CF_itc_fed_amount, k);
+            cf.at(CF_itc_disallow_fed_fixed_sl_15, k) = itc_fed_disallow_factor * itc_fed_qual_sl_15_frac * cf.at(CF_itc_fed_amount, k);
+            cf.at(CF_itc_disallow_fed_fixed_sl_20, k) = itc_fed_disallow_factor * itc_fed_qual_sl_20_frac * cf.at(CF_itc_fed_amount, k);
+            cf.at(CF_itc_disallow_fed_fixed_sl_39, k) = itc_fed_disallow_factor * itc_fed_qual_sl_39_frac * cf.at(CF_itc_fed_amount, k);
+            cf.at(CF_itc_disallow_fed_fixed_custom, k) = itc_fed_disallow_factor * itc_fed_qual_custom_frac * cf.at(CF_itc_fed_amount, k);
+        }
 
 
 
@@ -1927,13 +2028,13 @@ public:
 
 		double depr_sta_reduction = depr_sta_reduction_ibi + depr_sta_reduction_cbi;
 
-		double depr_stabas_macrs_5;
-		double depr_stabas_macrs_15;
-		double depr_stabas_sl_5;
-		double depr_stabas_sl_15;
-		double depr_stabas_sl_20;
-		double depr_stabas_sl_39;
-		double depr_stabas_custom;
+//		double depr_stabas_macrs_5;
+//		double depr_stabas_macrs_15;
+//		double depr_stabas_sl_5;
+//		double depr_stabas_sl_15;
+//		double depr_stabas_sl_20;
+//		double depr_stabas_sl_39;
+//		double depr_stabas_custom;
 
 		// ITC reduction
 		double itc_fed_percent_deprbas_sta = as_boolean("itc_fed_percent_deprbas_sta") ? 1.0 : 0.0;
@@ -2456,7 +2557,7 @@ public:
 		itc_sta_qual_custom = itc_sta_qual_custom_frac * ( depr_alloc_custom - depr_stabas_custom_frac * depr_sta_reduction);
 
 		itc_sta_qual_total = itc_sta_qual_macrs_5 + itc_sta_qual_macrs_15 + itc_sta_qual_sl_5 +itc_sta_qual_sl_15 +itc_sta_qual_sl_20 + itc_sta_qual_sl_39 + itc_sta_qual_custom;
-
+/*
 		itc_sta_per = min(itc_sta_percent_maxvalue[0], itc_sta_frac[0] * itc_sta_qual_total);
 
 		if (itc_sta_qual_total > 0)
@@ -2495,8 +2596,50 @@ public:
 			itc_disallow_sta_fixed_sl_39 = 0;
 			itc_disallow_sta_fixed_custom = 0;
 		}
+*/
+        for (size_t k = 0; k <= nyears; k++) {
+            cf.at(CF_itc_sta_percent_amount, k) = min(cf.at(CF_itc_sta_percent_maxvalue,k), cf.at(CF_itc_sta_percent_amount,k) * itc_sta_qual_total);
 
-		itc_fed_qual_macrs_5 = itc_fed_qual_macrs_5_frac * ( depr_alloc_macrs_5 - depr_fedbas_macrs_5_frac * depr_fed_reduction);
+            if (itc_sta_qual_total > 0)
+            {
+                cf.at(CF_itc_disallow_sta_percent_macrs_5, k) = itc_sta_qual_macrs_5_frac * (itc_sta_disallow_factor * itc_sta_qual_macrs_5 / itc_sta_qual_total * cf.at(CF_itc_sta_percent_amount, k));
+                cf.at(CF_itc_disallow_sta_percent_macrs_15, k) = itc_sta_qual_macrs_15_frac * (itc_sta_disallow_factor * itc_sta_qual_macrs_15 / itc_sta_qual_total * cf.at(CF_itc_sta_percent_amount, k));
+                cf.at(CF_itc_disallow_sta_percent_sl_5, k) = itc_sta_qual_sl_5_frac * (itc_sta_disallow_factor * itc_sta_qual_sl_5 / itc_sta_qual_total * cf.at(CF_itc_sta_percent_amount, k));
+                cf.at(CF_itc_disallow_sta_percent_sl_15, k) = itc_sta_qual_sl_15_frac * (itc_sta_disallow_factor * itc_sta_qual_sl_15 / itc_sta_qual_total * cf.at(CF_itc_sta_percent_amount, k));
+                cf.at(CF_itc_disallow_sta_percent_sl_20, k) = itc_sta_qual_sl_20_frac * (itc_sta_disallow_factor * itc_sta_qual_sl_20 / itc_sta_qual_total * cf.at(CF_itc_sta_percent_amount, k));
+                cf.at(CF_itc_disallow_sta_percent_sl_39, k) = itc_sta_qual_sl_39_frac * (itc_sta_disallow_factor * itc_sta_qual_sl_39 / itc_sta_qual_total * cf.at(CF_itc_sta_percent_amount, k));
+                cf.at(CF_itc_disallow_sta_percent_custom, k) = itc_sta_qual_custom_frac * (itc_sta_disallow_factor * itc_sta_qual_custom / itc_sta_qual_total * cf.at(CF_itc_sta_percent_amount, k));
+
+                cf.at(CF_itc_disallow_sta_fixed_macrs_5, k) = itc_sta_qual_macrs_5_frac * (itc_sta_disallow_factor * itc_sta_qual_macrs_5 / itc_sta_qual_total * cf.at(CF_itc_sta_amount, k));
+                cf.at(CF_itc_disallow_sta_fixed_macrs_15, k) = itc_sta_qual_macrs_15_frac * (itc_sta_disallow_factor * itc_sta_qual_macrs_15 / itc_sta_qual_total * cf.at(CF_itc_sta_amount, k));
+                cf.at(CF_itc_disallow_sta_fixed_sl_5, k) = itc_sta_qual_sl_5_frac * (itc_sta_disallow_factor * itc_sta_qual_sl_5 / itc_sta_qual_total * cf.at(CF_itc_sta_amount, k));
+                cf.at(CF_itc_disallow_sta_fixed_sl_15, k) = itc_sta_qual_sl_15_frac * (itc_sta_disallow_factor * itc_sta_qual_sl_15 / itc_sta_qual_total * cf.at(CF_itc_sta_amount, k));
+                cf.at(CF_itc_disallow_sta_fixed_sl_20, k) = itc_sta_qual_sl_20_frac * (itc_sta_disallow_factor * itc_sta_qual_sl_20 / itc_sta_qual_total * cf.at(CF_itc_sta_amount, k));
+                cf.at(CF_itc_disallow_sta_fixed_sl_39, k) = itc_sta_qual_sl_39_frac * (itc_sta_disallow_factor * itc_sta_qual_sl_39 / itc_sta_qual_total * cf.at(CF_itc_sta_amount, k));
+                cf.at(CF_itc_disallow_sta_fixed_custom, k) = itc_sta_qual_custom_frac * (itc_sta_disallow_factor * itc_sta_qual_custom / itc_sta_qual_total * cf.at(CF_itc_sta_amount, k));
+            }
+            else
+            {
+                cf.at(CF_itc_disallow_sta_percent_macrs_5, k) = 0;
+                cf.at(CF_itc_disallow_sta_percent_macrs_15, k) = 0;
+                cf.at(CF_itc_disallow_sta_percent_sl_5, k) = 0;
+                cf.at(CF_itc_disallow_sta_percent_sl_15, k) = 0;
+                cf.at(CF_itc_disallow_sta_percent_sl_20, k) = 0;
+                cf.at(CF_itc_disallow_sta_percent_sl_39, k) = 0;
+                cf.at(CF_itc_disallow_sta_percent_custom, k) = 0;
+
+                cf.at(CF_itc_disallow_sta_fixed_macrs_5, k) = 0;
+                cf.at(CF_itc_disallow_sta_fixed_macrs_15, k) = 0;
+                cf.at(CF_itc_disallow_sta_fixed_sl_5, k) = 0;
+                cf.at(CF_itc_disallow_sta_fixed_sl_15, k) = 0;
+                cf.at(CF_itc_disallow_sta_fixed_sl_20, k) = 0;
+                cf.at(CF_itc_disallow_sta_fixed_sl_39, k) = 0;
+                cf.at(CF_itc_disallow_sta_fixed_custom, k) = 0;
+            }
+        }
+
+
+        itc_fed_qual_macrs_5 = itc_fed_qual_macrs_5_frac * ( depr_alloc_macrs_5 - depr_fedbas_macrs_5_frac * depr_fed_reduction);
 		itc_fed_qual_macrs_15 = itc_fed_qual_macrs_15_frac * ( depr_alloc_macrs_15 - depr_fedbas_macrs_15_frac * depr_fed_reduction);
 		itc_fed_qual_sl_5 = itc_fed_qual_sl_5_frac * ( depr_alloc_sl_5 - depr_fedbas_sl_5_frac * depr_fed_reduction);
 		itc_fed_qual_sl_15 = itc_fed_qual_sl_15_frac * ( depr_alloc_sl_15 - depr_fedbas_sl_15_frac * depr_fed_reduction);
@@ -2506,6 +2649,7 @@ public:
 
 		itc_fed_qual_total = itc_fed_qual_macrs_5 + itc_fed_qual_macrs_15 + itc_fed_qual_sl_5 +itc_fed_qual_sl_15 +itc_fed_qual_sl_20 + itc_fed_qual_sl_39 + itc_fed_qual_custom;
 
+/*
 		itc_fed_per = min(itc_fed_percent_maxvalue[0], itc_fed_frac[0] * itc_fed_qual_total);
 
 		if (itc_fed_qual_total > 0)
@@ -2544,6 +2688,49 @@ public:
 			itc_disallow_fed_fixed_sl_39 = 0;
 			itc_disallow_fed_fixed_custom = 0;
 		}
+*/
+
+        for (size_t k = 0; k <= nyears; k++) {
+            cf.at(CF_itc_fed_percent_amount, k) = min(cf.at(CF_itc_fed_percent_maxvalue, k), cf.at(CF_itc_fed_percent_amount, k) * itc_fed_qual_total);
+
+            if (itc_fed_qual_total > 0)
+            {
+                cf.at(CF_itc_disallow_fed_percent_macrs_5, k) = itc_fed_qual_macrs_5_frac * (itc_fed_disallow_factor * itc_fed_qual_macrs_5 / itc_fed_qual_total * cf.at(CF_itc_fed_percent_amount, k));
+                cf.at(CF_itc_disallow_fed_percent_macrs_15, k) = itc_fed_qual_macrs_15_frac * (itc_fed_disallow_factor * itc_fed_qual_macrs_15 / itc_fed_qual_total * cf.at(CF_itc_fed_percent_amount, k));
+                cf.at(CF_itc_disallow_fed_percent_sl_5, k) = itc_fed_qual_sl_5_frac * (itc_fed_disallow_factor * itc_fed_qual_sl_5 / itc_fed_qual_total * cf.at(CF_itc_fed_percent_amount, k));
+                cf.at(CF_itc_disallow_fed_percent_sl_15, k) = itc_fed_qual_sl_15_frac * (itc_fed_disallow_factor * itc_fed_qual_sl_15 / itc_fed_qual_total * cf.at(CF_itc_fed_percent_amount, k));
+                cf.at(CF_itc_disallow_fed_percent_sl_20, k) = itc_fed_qual_sl_20_frac * (itc_fed_disallow_factor * itc_fed_qual_sl_20 / itc_fed_qual_total * cf.at(CF_itc_fed_percent_amount, k));
+                cf.at(CF_itc_disallow_fed_percent_sl_39, k) = itc_fed_qual_sl_39_frac * (itc_fed_disallow_factor * itc_fed_qual_sl_39 / itc_fed_qual_total * cf.at(CF_itc_fed_percent_amount, k));
+                cf.at(CF_itc_disallow_fed_percent_custom, k) = itc_fed_qual_custom_frac * (itc_fed_disallow_factor * itc_fed_qual_custom / itc_fed_qual_total * cf.at(CF_itc_fed_percent_amount, k));
+
+                cf.at(CF_itc_disallow_fed_fixed_macrs_5, k) = itc_fed_qual_macrs_5_frac * (itc_fed_disallow_factor * itc_fed_qual_macrs_5 / itc_fed_qual_total * cf.at(CF_itc_fed_amount, k));
+                cf.at(CF_itc_disallow_fed_fixed_macrs_15, k) = itc_fed_qual_macrs_15_frac * (itc_fed_disallow_factor * itc_fed_qual_macrs_15 / itc_fed_qual_total * cf.at(CF_itc_fed_amount, k));
+                cf.at(CF_itc_disallow_fed_fixed_sl_5, k) = itc_fed_qual_sl_5_frac * (itc_fed_disallow_factor * itc_fed_qual_sl_5 / itc_fed_qual_total * cf.at(CF_itc_fed_amount, k));
+                cf.at(CF_itc_disallow_fed_fixed_sl_15, k) = itc_fed_qual_sl_15_frac * (itc_fed_disallow_factor * itc_fed_qual_sl_15 / itc_fed_qual_total * cf.at(CF_itc_fed_amount, k));
+                cf.at(CF_itc_disallow_fed_fixed_sl_20, k) = itc_fed_qual_sl_20_frac * (itc_fed_disallow_factor * itc_fed_qual_sl_20 / itc_fed_qual_total * cf.at(CF_itc_fed_amount, k));
+                cf.at(CF_itc_disallow_fed_fixed_sl_39, k) = itc_fed_qual_sl_39_frac * (itc_fed_disallow_factor * itc_fed_qual_sl_39 / itc_fed_qual_total * cf.at(CF_itc_fed_amount, k));
+                cf.at(CF_itc_disallow_fed_fixed_custom, k) = itc_fed_qual_custom_frac * (itc_fed_disallow_factor * itc_fed_qual_custom / itc_fed_qual_total * cf.at(CF_itc_fed_amount, k));
+            }
+            else
+            {
+                cf.at(CF_itc_disallow_fed_percent_macrs_5, k) = 0;
+                cf.at(CF_itc_disallow_fed_percent_macrs_15, k) = 0;
+                cf.at(CF_itc_disallow_fed_percent_sl_5, k) = 0;
+                cf.at(CF_itc_disallow_fed_percent_sl_15, k) = 0;
+                cf.at(CF_itc_disallow_fed_percent_sl_20, k) = 0;
+                cf.at(CF_itc_disallow_fed_percent_sl_39, k) = 0;
+                cf.at(CF_itc_disallow_fed_percent_custom, k) = 0;
+
+                cf.at(CF_itc_disallow_fed_fixed_macrs_5, k) = 0;
+                cf.at(CF_itc_disallow_fed_fixed_macrs_15, k) = 0;
+                cf.at(CF_itc_disallow_fed_fixed_sl_5, k) = 0;
+                cf.at(CF_itc_disallow_fed_fixed_sl_15, k) = 0;
+                cf.at(CF_itc_disallow_fed_fixed_sl_20, k) = 0;
+                cf.at(CF_itc_disallow_fed_fixed_sl_39, k) = 0;
+                cf.at(CF_itc_disallow_fed_fixed_custom, k) = 0;
+            }
+        }
+
 
 		itc_fed_total = itc_fed_amount[0] + itc_fed_per;
 		itc_sta_total = itc_sta_amount[0] + itc_sta_per;
@@ -3281,7 +3468,7 @@ public:
 
 		save_cf( CF_ptc_fed, nyears, "cf_ptc_fed" );
 		save_cf( CF_ptc_sta, nyears, "cf_ptc_sta" );
-
+ 
 		save_cf( CF_project_return_aftertax_cash, nyears, "cf_project_return_aftertax_cash" );
 		save_cf( CF_project_return_aftertax, nyears, "cf_project_return_aftertax" );
 		save_cf( CF_project_return_aftertax_irr, nyears, "cf_project_return_aftertax_irr" );
@@ -3800,6 +3987,15 @@ public:
         cfm.check_irr_flip(this, irr_metric_flip_year);
         cfm.check_npv(this, npv_metric);
         cfm.check_debt_percentage(this, debt_fraction);
+
+
+        save_cf(CF_itc_fed_amount, nyears, "cf_itc_fed_amount");
+        save_cf(CF_itc_fed_percent_amount, nyears, "cf_itc_fed_percent_amount");
+        save_cf(CF_itc_fed, nyears, "cf_itc_fed");
+        save_cf(CF_itc_sta_amount, nyears, "cf_itc_fed_amount");
+        save_cf(CF_itc_sta_percent_amount, nyears, "cf_itc_fed_percent_amount");
+        save_cf(CF_itc_sta, nyears, "cf_itc_sta");
+        save_cf(CF_itc_total, nyears, "cf_itc_total");
 
 	}
 

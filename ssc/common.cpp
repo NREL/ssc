@@ -417,7 +417,15 @@ var_info vtab_payment_incentives[] = {
 
 { SSC_OUTPUT,       SSC_ARRAY,      "cf_ptc_fed",                             "Federal PTC income",                 "$",            "",                      "Cash Flow Incentives",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 { SSC_OUTPUT,       SSC_ARRAY,      "cf_ptc_sta",                             "State PTC income",                   "$",            "",                      "Cash Flow Incentives",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-{ 	SSC_OUTPUT, 	SSC_ARRAY, 	    "cf_ptc_total", 	                         "Total PTC", 	            "$", 	            "", 	                "Cash Flow Incentives", 	        "", 	"LENGTH_EQUAL=cf_length", 	""},
+{ 	SSC_OUTPUT, 	SSC_ARRAY, 	    "cf_ptc_total", 	                     "Total PTC", 	            "$", 	            "", 	                "Cash Flow Incentives", 	        "", 	"LENGTH_EQUAL=cf_length", 	""},
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_itc_fed_amount",                     "Federal ITC income amount",                 "$",            "",                      "Cash Flow Incentives",      "",                     "LENGTH_EQUAL=cf_length",                "" },
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_itc_sta_amount",                             "State ITC income amount",                   "$",            "",                      "Cash Flow Incentives",      "",                     "LENGTH_EQUAL=cf_length",                "" },
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_itc_fed_percent_amount",                             "Federal ITC income percent amount",                 "$",            "",                      "Cash Flow Incentives",      "",                     "LENGTH_EQUAL=cf_length",                "" },
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_itc_sta_percent_amount",                             "State ITC income percent amount",                   "$",            "",                      "Cash Flow Incentives",      "",                     "LENGTH_EQUAL=cf_length",                "" },
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_itc_fed",                             "Federal ITC income",                 "$",            "",                      "Cash Flow Incentives",      "",                     "LENGTH_EQUAL=cf_length",                "" },
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_itc_sta",                             "State ITC income",                   "$",            "",                      "Cash Flow Incentives",      "",                     "LENGTH_EQUAL=cf_length",                "" },
+{ SSC_OUTPUT, 	SSC_ARRAY, 	    "cf_itc_total", 	                         "Total ITC income", 	            "$", 	            "", 	                "Cash Flow Incentives", 	        "", 	"LENGTH_EQUAL=cf_length", 	"" },
+
 var_info_invalid };
 
 var_info vtab_ppa_inout[] = {
