@@ -1320,6 +1320,9 @@ public:
                     pm_udpc_table[n_run * 11 + 8] = (ssc_number_t)((p_P_co2_PHX_in_od[n_run]) / (c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::HTR_HP_OUT] * 1.E-3));
                     pm_udpc_table[n_run * 11 + 9] = (ssc_number_t)((p_t_m_dot_od[n_run]) / c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_m_dot_t);
                     pm_udpc_table[n_run * 11 + 10] = (ssc_number_t)((p_t_P_in_od[n_run]) / (c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::TURB_IN] * 1.E-3));
+                    pm_udpc_table[n_run * 11 + 11] = (ssc_number_t)(p_W_dot_net_less_cooling_od[n_run] / (as_double("W_dot_net_less_cooling")));  //[-]
+                    pm_udpc_table[n_run * 11 + 12] = (ssc_number_t)(p_eta_thermal_net_less_cooling_od[n_run]/(as_double("eta_thermal_net_less_cooling_des")));
+                    pm_udpc_table[n_run * 11 + 13] = (ssc_number_t)(1.0 - p_T_htf_cold_od[n_run] / p_deltaT_HTF_PHX_od[n_run]);     //[-]
                 //}
                 // Energy Balance Checks
                 double diff_m_dot, diff_E_cycle, diff_Q_LTR, diff_Q_HTR;
@@ -1468,6 +1471,9 @@ public:
                     pm_udpc_table[n_run * 11 + 8] = std::numeric_limits<ssc_number_t>::quiet_NaN();
                     pm_udpc_table[n_run * 11 + 9] = std::numeric_limits<ssc_number_t>::quiet_NaN();
                     pm_udpc_table[n_run * 11 + 10] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    pm_udpc_table[n_run * 11 + 11] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    pm_udpc_table[n_run * 11 + 12] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    pm_udpc_table[n_run * 11 + 13] = std::numeric_limits<ssc_number_t>::quiet_NaN();
                 }
 			}
 
@@ -1599,7 +1605,7 @@ public:
         // UDPC Table
         if (is_udpc_table)
         {
-            pm_udpc_table = allocate("udpc_table", n_od_runs, 11);
+            pm_udpc_table = allocate("udpc_table", n_od_runs, 14);
         }
 		// Solver Metrics
 		p_od_code = allocate("od_code", n_od_runs);
