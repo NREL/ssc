@@ -1934,11 +1934,16 @@ public:
 		double itc_sta_qual_sl_20;
 		double itc_sta_qual_sl_39;
 		double itc_sta_qual_custom;
-
+        // SAM 1308
 		double_vec itc_sta_percent_maxvalue = as_vector_double("itc_sta_percent_maxvalue");
-        for (size_t k = 0; k<itc_sta_percent_maxvalue.size() && k < nyears; k++)
-            cf.at(CF_itc_sta_percent_maxvalue, k + 1) = itc_sta_percent_maxvalue[k];
-
+        if (itc_sta_percent_maxvalue.size() == 1) {
+            for (size_t k = 0; k < nyears; k++)
+                cf.at(CF_itc_sta_percent_maxvalue, k + 1) = itc_sta_percent_maxvalue[0];
+        }
+        else {
+            for (size_t k = 0; k < itc_sta_percent_maxvalue.size() && k < nyears; k++)
+                cf.at(CF_itc_sta_percent_maxvalue, k + 1) = itc_sta_percent_maxvalue[k];
+        }
 		double itc_sta_disallow_factor = 0.5;
 
 
@@ -1989,9 +1994,14 @@ public:
 		double itc_fed_qual_custom;
 
 		double_vec itc_fed_percent_maxvalue = as_vector_double("itc_fed_percent_maxvalue");
-        for (size_t k = 0; k < itc_fed_percent_maxvalue.size() && k < nyears; k++)
-            cf.at(CF_itc_fed_percent_maxvalue, k + 1) = itc_fed_percent_maxvalue[k];
-
+        if (itc_fed_percent_maxvalue.size() == 1) {
+            for (size_t k = 0; k < nyears; k++)
+                cf.at(CF_itc_fed_percent_maxvalue, k + 1) = itc_fed_percent_maxvalue[0];
+        }
+        else {
+            for (size_t k = 0; k < itc_fed_percent_maxvalue.size() && k < nyears; k++)
+                cf.at(CF_itc_fed_percent_maxvalue, k + 1) = itc_fed_percent_maxvalue[k];
+        }
 		double itc_fed_disallow_factor = 0.5;
 
 
@@ -4039,8 +4049,8 @@ public:
         save_cf(CF_itc_fed_amount, nyears, "cf_itc_fed_amount");
         save_cf(CF_itc_fed_percent_amount, nyears, "cf_itc_fed_percent_amount");
         save_cf(CF_itc_fed, nyears, "cf_itc_fed");
-        save_cf(CF_itc_sta_amount, nyears, "cf_itc_fed_amount");
-        save_cf(CF_itc_sta_percent_amount, nyears, "cf_itc_fed_percent_amount");
+        save_cf(CF_itc_sta_amount, nyears, "cf_itc_sta_amount");
+        save_cf(CF_itc_sta_percent_amount, nyears, "cf_itc_sta_percent_amount");
         save_cf(CF_itc_sta, nyears, "cf_itc_sta");
         save_cf(CF_itc_total, nyears, "cf_itc_total");
 
