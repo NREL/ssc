@@ -42,7 +42,8 @@ GTEST_API_ int main(int argc, char **argv) {
 	testing::InitGoogleTest(&argc, argv);
     
     //    filter to include
-    //    ::testing::GTEST_FLAG(filter) = "CmodPVWatts*:CMPvwatts*";
+    ::testing::GTEST_FLAG(filter) = "etes_etes_test.EtesEtesCmod*";     // "CmodPVWatts*:CMPvwatts*";
+        //"csp_common.TowerSharedWithUi*"
 
     //    filter to exclude
     //    ::testing::GTEST_FLAG(filter) = "-PVSmoothing_lib_battery_dispatch*";
