@@ -42,7 +42,7 @@ GTEST_API_ int main(int argc, char **argv) {
 	testing::InitGoogleTest(&argc, argv);
     
     //    filter to include
-    ::testing::GTEST_FLAG(filter) = "etes_etes_test.EtesPtesCmod*";     // :etes_ptes_test.EtesPtesCmod * ";     // "CmodPVWatts * : CMPvwatts * ";
+    ::testing::GTEST_FLAG(filter) = "etes_ptes_test.EtesPtesCmod*";     // :etes_ptes_test.EtesPtesCmod * ";     // "CmodPVWatts * : CMPvwatts * ";
     //::testing::GTEST_FLAG(filter) = "etes_ptes_test.EtesPtesCmod*";
     //"csp_common.TowerSharedWithUi*"
 
