@@ -2497,6 +2497,7 @@ public:
 
 		itc_sta_qual_total = itc_sta_qual_macrs_5 + itc_sta_qual_macrs_15 + itc_sta_qual_sl_5 +itc_sta_qual_sl_15 +itc_sta_qual_sl_20 + itc_sta_qual_sl_39 + itc_sta_qual_custom;
 
+        // SAM 1308
         itc_sta_per = 0.0;
         for (size_t k = 0; k <= nyears; k++) {
             cf.at(CF_itc_sta_percent_amount, k) = min(cf.at(CF_itc_sta_percent_maxvalue, k), cf.at(CF_itc_sta_percent_amount, k) * itc_sta_qual_total);
@@ -2550,6 +2551,7 @@ public:
 
 		itc_fed_qual_total = itc_fed_qual_macrs_5 + itc_fed_qual_macrs_15 + itc_fed_qual_sl_5 +itc_fed_qual_sl_15 +itc_fed_qual_sl_20 + itc_fed_qual_sl_39 + itc_fed_qual_custom;
 
+        // SAM 1308
         itc_fed_per = 0.0;
         for (size_t k = 0; k <= nyears; k++) {
             cf.at(CF_itc_fed_percent_amount, k) = min(cf.at(CF_itc_fed_percent_maxvalue, k), cf.at(CF_itc_fed_percent_amount, k) * itc_fed_qual_total);
