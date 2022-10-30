@@ -38,7 +38,7 @@ NAMESPACE_TEST(etes_ptes_test, EtesPtesCmod, Default_NoFinancial)
     double ann_energy = ptes_system.GetOutput("annual_energy");
     EXPECT_FALSE(errors);
     if (!errors) {
-        EXPECT_NEAR_FRAC(std::abs(ptes_system.GetOutput("annual_energy")), std::abs(-2.64339E8), kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(std::abs(ptes_system.GetOutput("annual_energy")), std::abs(-2.64339E8), 0.0);
     }
 
     ptes_system.SetInput("is_dispatch", 1);
