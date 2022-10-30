@@ -898,10 +898,12 @@ enum {
 
     // SAM 1308
     CF_itc_fed_amount,
+    CF_itc_fed_percent_fraction,
     CF_itc_fed_percent_amount,
     CF_itc_fed_percent_maxvalue,
     CF_itc_fed,
     CF_itc_sta_amount,
+    CF_itc_sta_percent_fraction,
     CF_itc_sta_percent_amount,
     CF_itc_sta_percent_maxvalue,
     CF_itc_sta,
@@ -1519,11 +1521,11 @@ public:
         // itc percent - max value used for comparison to qualifying costs
         double_vec vitc_fed_frac = as_vector_double("itc_fed_percent");
         for (size_t k = 0; k < vitc_fed_frac.size(); k++)
-            cf.at(CF_itc_fed_percent_amount, k + 1) = vitc_fed_frac[k] * 0.01;
+            cf.at(CF_itc_fed_percent_fraction, k + 1) = vitc_fed_frac[k] * 0.01;
         double itc_fed_per;
         double_vec vitc_sta_frac = as_vector_double("itc_sta_percent");
         for (size_t k = 0; k < vitc_sta_frac.size(); k++)
-            cf.at(CF_itc_sta_percent_amount, k + 1) = vitc_sta_frac[k] * 0.01;
+            cf.at(CF_itc_sta_percent_fraction, k + 1) = vitc_sta_frac[k] * 0.01;
         double itc_sta_per;
 
         double_vec itc_sta_percent_maxvalue = as_vector_double("itc_sta_percent_maxvalue");
@@ -2056,7 +2058,7 @@ public:
 
         itc_sta_per = 0.0;
         for (size_t k = 0; k <= nyears; k++) {
-            cf.at(CF_itc_sta_percent_amount, k) = min(cf.at(CF_itc_sta_percent_maxvalue, k), cf.at(CF_itc_sta_percent_amount, k) * itc_sta_qual_total);
+            cf.at(CF_itc_sta_percent_amount, k) = min(cf.at(CF_itc_sta_percent_maxvalue, k), cf.at(CF_itc_sta_percent_fraction, k) * itc_sta_qual_total);
             itc_sta_per += cf.at(CF_itc_sta_percent_amount, k);
         }
 
@@ -2109,7 +2111,7 @@ public:
 
         itc_fed_per = 0.0;
         for (size_t k = 0; k <= nyears; k++) {
-            cf.at(CF_itc_fed_percent_amount, k) = min(cf.at(CF_itc_fed_percent_maxvalue, k), cf.at(CF_itc_fed_percent_amount, k) * itc_fed_qual_total);
+            cf.at(CF_itc_fed_percent_amount, k) = min(cf.at(CF_itc_fed_percent_maxvalue, k), cf.at(CF_itc_fed_percent_fraction, k) * itc_fed_qual_total);
             itc_fed_per += cf.at(CF_itc_fed_percent_amount, k);
         }
 
