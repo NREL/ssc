@@ -744,7 +744,7 @@ int heat_pump_helpers::C_MEQ__T_CT_cold::operator()(double T_CT_cold /*C*/, doub
     // using input T_CT_hot
     double cop_temp = mpc_carnot_heat_pump->cop_carnot(m_T_HT_hot, m_T_HT_cold,
                                             m_T_CT_hot, T_CT_cold);
-    double cop_pl = pow(1. - abs(1. - m_Q_dot_hot_out_ND), 0.2);
+    double cop_pl = std::pow(1. - std::abs(1. - m_Q_dot_hot_out_ND), 0.2);
     double cop = cop_temp * cop_pl;
 
     // Calculate power by scaling by ratio of calculated and design carnot cop
