@@ -118,7 +118,7 @@ C_csp_cr_heat_pump::C_csp_cr_heat_pump(double COP_heat_des /*-*/, double q_dot_h
 
 C_csp_cr_heat_pump::~C_csp_cr_heat_pump(){}
 
-void C_csp_cr_heat_pump::test_heat_pump_perf_call(double m_dot_ND,
+int C_csp_cr_heat_pump::test_heat_pump_perf_call(double m_dot_ND,
     double& W_dot_gross_ND /*-*/, double& Q_dot_ND /*-*/,
     double& Q_dot_cold_in_ND /*-*/,
     double& T_HT_hot_out /*C*/, double& T_CT_cold /*C*/) {
@@ -126,7 +126,7 @@ void C_csp_cr_heat_pump::test_heat_pump_perf_call(double m_dot_ND,
     double T_HT_cold_des, T_CT_hot_des;
     mp_carnot_heat_pump->get_des_for_perf(T_HT_cold_des, T_CT_hot_des);
 
-    mp_carnot_heat_pump->performance(T_HT_cold_des, m_dot_ND,
+    return mp_carnot_heat_pump->performance(T_HT_cold_des, m_dot_ND,
         T_CT_hot_des, m_dot_ND,
         W_dot_gross_ND /*-*/, Q_dot_ND /*-*/,
         Q_dot_cold_in_ND /*-*/,

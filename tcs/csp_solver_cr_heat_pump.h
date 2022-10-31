@@ -200,7 +200,7 @@ private:
 
 public:
 
-    void test_heat_pump_perf_call(double m_dot_ND,
+    int test_heat_pump_perf_call(double m_dot_ND,
         double& W_dot_gross_ND /*-*/, double& Q_dot_ND /*-*/,
         double& Q_dot_cold_in_ND /*-*/,
         double& T_HT_hot_out /*C*/, double& T_CT_cold /*C*/);

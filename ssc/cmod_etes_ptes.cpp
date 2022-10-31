@@ -223,12 +223,12 @@ static var_info _cm_vtab_etes_ptes[] = {
     { SSC_OUTPUT, SSC_NUMBER, "E_hp_su_des",                     "Heat pump startup energy",                            "MWt-hr",       "",                                  "Heat Pump",                      "*",                                                                "",              "" },
 
 
+    { SSC_OUTPUT, SSC_NUMBER, "test_ret_code",                     "Heat pump startup energy",                            "MWt-hr",       "",                                  "Heat Pump",                      "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "W_dot_gross_ND1",                     "Heat pump startup energy",                            "MWt-hr",       "",                                  "Heat Pump",                      "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "Q_dot_ND1",                     "Heat pump startup energy",                            "MWt-hr",       "",                                  "Heat Pump",                      "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "Q_dot_cold_in_ND1",                     "Heat pump startup energy",                            "MWt-hr",       "",                                  "Heat Pump",                      "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "T_HT_hot_out1",                     "Heat pump startup energy",                            "MWt-hr",       "",                                  "Heat Pump",                      "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "T_CT_cold1",                     "Heat pump startup energy",                            "MWt-hr",       "",                                  "Heat Pump",                      "*",                                                                "",              "" },
-
 
             // Power cycle
     { SSC_OUTPUT, SSC_NUMBER, "q_dot_pc_hot_in_des",             "Cycle heat input",                                    "MWt",          "",                                  "Cycle",                          "*",                                                                "",              "" },
@@ -954,10 +954,10 @@ public:
 
         double W_dot_gross_ND1 /*-*/, Q_dot_ND1 /*-*/,
             Q_dot_cold_in_ND1 /*-*/, T_HT_hot_out1 /*C*/, T_CT_cold1 /*C*/;
-        c_heat_pump.test_heat_pump_perf_call(0.75,
+        int test_ret_code = c_heat_pump.test_heat_pump_perf_call(0.75,
             W_dot_gross_ND1, Q_dot_ND1, Q_dot_cold_in_ND1, T_HT_hot_out1, T_CT_cold1);
 
-
+        assign("test_ret_code", test_ret_code);
         assign("W_dot_gross_ND1", W_dot_gross_ND1);
         assign("Q_dot_ND1", Q_dot_cold_in_ND1);
         assign("Q_dot_cold_in_ND1", Q_dot_cold_in_ND1);
