@@ -190,7 +190,12 @@ void C_csp_cr_heat_pump::init(const C_csp_collector_receiver::S_csp_cr_init_inpu
 
     // State variables
     m_E_su_initial = m_E_su_des;        //[MWt-hr]
-    m_operating_mode_converged = C_csp_collector_receiver::OFF;					//
+    if (m_E_su_initial == 0.0) {
+        m_operating_mode_converged = C_csp_collector_receiver::OFF_NO_SU_REQ;
+    }
+    else {
+        m_operating_mode_converged = C_csp_collector_receiver::OFF;					//
+    }
 
     return;
 }
@@ -525,6 +530,10 @@ void C_csp_cr_heat_pump::converged()
     if (m_operating_mode_converged == OFF) {
 
         m_E_su_calculated = m_E_su_des;
+    }
+
+    if (m_E_su_des == 0.0 && m_operating_mode_converged == OFF) {
+        m_operating_mode_converged = OFF_NO_SU_REQ;
     }
 
     m_E_su_initial = m_E_su_calculated;
