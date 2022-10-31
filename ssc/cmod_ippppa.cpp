@@ -412,6 +412,20 @@ enum {
 	CF_fed_income_taxes,
 	CF_pretax_dscr,
 
+
+    // SAM 1308
+    CF_itc_fed_amount,
+    CF_itc_fed_percent_fraction,
+    CF_itc_fed_percent_amount,
+    CF_itc_fed_percent_maxvalue,
+    CF_itc_fed,
+    CF_itc_sta_amount,
+    CF_itc_sta_percent_fraction,
+    CF_itc_sta_percent_amount,
+    CF_itc_sta_percent_maxvalue,
+    CF_itc_sta,
+    CF_itc_total,
+
 	CF_max
 };
 
@@ -730,17 +744,51 @@ public:
 			- (as_boolean("cbi_oth_deprbas_fed") ? cbi_oth_amount : 0);
 
 
-		// itc fixed
-       itc_fed_amount = as_vector_double("itc_fed_amount");
+        // SAM 1308
+         // itc fixed
+        double itc_fed_amount = 0.0;
+        double_vec vitc_fed_amount = as_vector_double("itc_fed_amount");
+        for (size_t k = 0; k < vitc_fed_amount.size() && k < nyears; k++) {
+            cf.at(CF_itc_fed_amount, k + 1) = vitc_fed_amount[k];
+            itc_fed_amount += vitc_fed_amount[k];
+        }
 
-		// itc percent - max value used for comparison to qualifying costs
-        double_vec itc_fed_frac = as_vector_double("itc_fed_percent");
-        for (size_t k = 0; k < itc_fed_frac.size(); k++)
-            itc_fed_frac[k] *= 0.01;
-        itc_fed_per = itc_fed_frac[0] * federal_itc_basis;
+        double itc_sta_amount = 0.0;
+        double_vec vitc_sta_amount = as_vector_double("itc_sta_amount");
+        for (size_t k = 0; k < vitc_sta_amount.size() && k < nyears; k++) {
+            cf.at(CF_itc_sta_amount, k + 1) = vitc_sta_amount[k];
+            itc_sta_amount += vitc_sta_amount[k];
+        }
+
+        // itc percent - max value used for comparison to qualifying costs
+        double_vec vitc_fed_frac = as_vector_double("itc_fed_percent");
+        for (size_t k = 0; k < vitc_fed_frac.size(); k++)
+            cf.at(CF_itc_fed_percent_fraction, k + 1) = vitc_fed_frac[k] * 0.01;
+        double itc_fed_per;
+        double_vec vitc_sta_frac = as_vector_double("itc_sta_percent");
+        for (size_t k = 0; k < vitc_sta_frac.size(); k++)
+            cf.at(CF_itc_sta_percent_fraction, k + 1) = vitc_sta_frac[k] * 0.01;
+        double itc_sta_per;
+
+        double_vec itc_sta_percent_maxvalue = as_vector_double("itc_sta_percent_maxvalue");
+        if (itc_sta_percent_maxvalue.size() == 1) {
+            for (size_t k = 0; k < nyears; k++)
+                cf.at(CF_itc_sta_percent_maxvalue, k + 1) = itc_sta_percent_maxvalue[0];
+        }
+        else {
+            for (size_t k = 0; k < itc_sta_percent_maxvalue.size() && k < nyears; k++)
+                cf.at(CF_itc_sta_percent_maxvalue, k + 1) = itc_sta_percent_maxvalue[k];
+        }
+
         double_vec itc_fed_percent_maxvalue = as_vector_double("itc_fed_percent_maxvalue");
-        if (itc_fed_per > itc_fed_percent_maxvalue[0]) itc_fed_per = itc_fed_percent_maxvalue[0];
-
+        if (itc_fed_percent_maxvalue.size() == 1) {
+            for (size_t k = 0; k < nyears; k++)
+                cf.at(CF_itc_fed_percent_maxvalue, k + 1) = itc_fed_percent_maxvalue[0];
+        }
+        else {
+            for (size_t k = 0; k < itc_fed_percent_maxvalue.size() && k < nyears; k++)
+                cf.at(CF_itc_fed_percent_maxvalue, k + 1) = itc_fed_percent_maxvalue[k];
+        }
 
 
 		double state_itc_basis = total_cost
@@ -758,28 +806,34 @@ public:
 			- (as_boolean("cbi_oth_deprbas_sta") ? cbi_oth_amount : 0);
 
 
-        // itc fixed
-        itc_sta_amount = as_vector_double("itc_sta_amount");
 
-        // itc percent - max value used for comparison to qualifying costs
-        double_vec itc_sta_frac = as_vector_double("itc_sta_percent");
-        for (size_t k = 0; k < itc_sta_frac.size(); k++)
-            itc_sta_frac[k] *= 0.01;
-        double itc_sta_per = itc_sta_frac[0] * state_itc_basis;
-        double_vec itc_sta_percent_maxvalue = as_vector_double("itc_sta_percent_maxvalue");
-        if (itc_sta_per > itc_sta_percent_maxvalue[0]) itc_sta_per = itc_sta_percent_maxvalue[0];
+        // SAM 1308
+        itc_sta_per = 0.0;
+        for (size_t k = 0; k <= nyears; k++) {
+            cf.at(CF_itc_sta_percent_amount, k) = min(cf.at(CF_itc_sta_percent_maxvalue, k), cf.at(CF_itc_sta_percent_fraction, k) * state_itc_basis);
+            itc_sta_per += cf.at(CF_itc_sta_percent_amount, k);
+        }
+
+        // SAM 1308
+        itc_fed_per = 0.0;
+        for (size_t k = 0; k <= nyears; k++) {
+            cf.at(CF_itc_fed_percent_amount, k) = min(cf.at(CF_itc_fed_percent_maxvalue, k), cf.at(CF_itc_fed_percent_fraction, k) * federal_itc_basis);
+            itc_fed_per += cf.at(CF_itc_fed_percent_amount, k);
+        }
+
+
 
 		double federal_depr_basis = federal_itc_basis
-			- (as_boolean("itc_fed_amount_deprbas_fed") ? 0.5*itc_fed_amount[0] : 0)
+			- (as_boolean("itc_fed_amount_deprbas_fed") ? 0.5*itc_fed_amount : 0)
 			- (as_boolean("itc_fed_percent_deprbas_fed") ? 0.5*itc_fed_per : 0)
-			- (as_boolean("itc_sta_amount_deprbas_fed") ? 0.5*itc_sta_amount[0] : 0)
+			- (as_boolean("itc_sta_amount_deprbas_fed") ? 0.5*itc_sta_amount : 0)
 			- (as_boolean("itc_sta_percent_deprbas_fed") ? 0.5*itc_sta_per : 0);
 
 
 		double state_depr_basis = state_itc_basis
-			- (as_boolean("itc_fed_amount_deprbas_sta") ? 0.5*itc_fed_amount[0] : 0)
+			- (as_boolean("itc_fed_amount_deprbas_sta") ? 0.5*itc_fed_amount : 0)
 			- (as_boolean("itc_fed_percent_deprbas_sta") ? 0.5*itc_fed_per : 0)
-			- (as_boolean("itc_sta_amount_deprbas_sta") ? 0.5*itc_sta_amount[0] : 0)
+			- (as_boolean("itc_sta_amount_deprbas_sta") ? 0.5*itc_sta_amount : 0)
 			- (as_boolean("itc_sta_percent_deprbas_sta") ? 0.5*itc_sta_per : 0);
 
 
@@ -837,8 +891,18 @@ public:
 
 		ibi_total = ibi_fed_amount + ibi_fed_per + ibi_sta_amount + ibi_sta_per + ibi_uti_amount + ibi_uti_per + ibi_oth_amount + ibi_oth_per;
 		cbi_total = cbi_fed_amount + cbi_sta_amount + cbi_uti_amount + cbi_oth_amount;
-		itc_fed_total = itc_fed_amount[0] + itc_fed_per;
-		itc_sta_total = itc_sta_amount[0] + itc_sta_per;
+
+
+//        itc_fed_total = itc_fed_amount + itc_fed_per;
+//		itc_sta_total = itc_sta_amount + itc_sta_per;
+               // SAM 1308
+        for (size_t k = 0; k <= nyears; k++) {
+            cf.at(CF_itc_fed, k) = cf.at(CF_itc_fed_amount, k) + cf.at(CF_itc_fed_percent_amount, k);
+            cf.at(CF_itc_sta, k) = cf.at(CF_itc_sta_amount, k) + cf.at(CF_itc_sta_percent_amount, k);
+            cf.at(CF_itc_total, k) = cf.at(CF_itc_fed, k) + cf.at(CF_itc_sta, k);
+        }
+
+
 
 		double recapitalization_cost = as_double("system_recapitalization_cost");
 		double recapitalization_escalation = as_double("system_recapitalization_escalation");
@@ -1221,6 +1285,15 @@ public:
 
 		assign("present_value_insandproptax", var_data((ssc_number_t)(pvInsurance + pvPropertyTax)));
 
+
+        // SAM 1308
+        save_cf(this, cf, CF_itc_fed_amount, nyears, "cf_itc_fed_amount");
+        save_cf(this, cf, CF_itc_fed_percent_amount, nyears, "cf_itc_fed_percent_amount");
+        save_cf(this, cf, CF_itc_fed, nyears, "cf_itc_fed");
+        save_cf(this, cf, CF_itc_sta_amount, nyears, "cf_itc_sta_amount");
+        save_cf(this, cf, CF_itc_sta_percent_amount, nyears, "cf_itc_sta_percent_amount");
+        save_cf(this, cf, CF_itc_sta, nyears, "cf_itc_sta");
+        save_cf(this, cf, CF_itc_total, nyears, "cf_itc_total");
 
 	}
 
@@ -1826,7 +1899,8 @@ public:
 			cf.at(CF_sta_income_taxes, i) = cf.at(CF_state_tax_frac, i)*cf.at(CF_sta_taxable_income_less_deductions, i);
 
 			cf.at(CF_sta_tax_savings, i) = cf.at(CF_ptc_sta, i) - cf.at(CF_sta_income_taxes, i);
-			if (i == 1) cf.at(CF_sta_tax_savings, i) += itc_sta_amount[0] + itc_sta_per;
+// SAM 1308            if (i == 1) cf.at(CF_sta_tax_savings, i) += itc_sta_amount + itc_sta_per;
+            cf.at(CF_sta_tax_savings, i) += cf.at(CF_itc_sta_amount,i) + cf.at(CF_itc_sta_percent_amount,i);
 
 			// ************************************************
 			//	tax effect on equity (federal)
@@ -1849,7 +1923,8 @@ public:
 			cf.at(CF_fed_income_taxes, i) = cf.at(CF_federal_tax_frac, i)*cf.at(CF_fed_taxable_income_less_deductions, i);
 
 			cf.at(CF_fed_tax_savings, i) = cf.at(CF_ptc_fed, i) - cf.at(CF_fed_income_taxes, i);
-			if (i == 1) cf.at(CF_fed_tax_savings, i) += itc_fed_amount[0] + itc_fed_per;
+// sam 1308			if (i == 1) cf.at(CF_fed_tax_savings, i) += itc_fed_amount + itc_fed_per;
+            cf.at(CF_fed_tax_savings, i) += cf.at(CF_itc_fed_amount,i) + cf.at(CF_itc_fed_percent_amount,i);
 
 			// ************************************************
 			// combined tax savings and cost/cash flows
