@@ -38,13 +38,11 @@ GTEST_API_ int main(int argc, char **argv) {
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 #endif
 
-	printf("Running main() from gtest_main.cc\n");
-	testing::InitGoogleTest(&argc, argv);
-    
+    printf("Running main() from gtest_main.cc\n");
+    testing::InitGoogleTest(&argc, argv);
+
     //    filter to include
-    ::testing::GTEST_FLAG(filter) = "etes_ptes_test.EtesPtesCmod*";     // :etes_ptes_test.EtesPtesCmod * ";     // "CmodPVWatts * : CMPvwatts * ";
-    //::testing::GTEST_FLAG(filter) = "etes_ptes_test.EtesPtesCmod*";
-    //"csp_common.TowerSharedWithUi*"
+    //    ::testing::GTEST_FLAG(filter) = "CmodPVWatts*:CMPvwatts*";
 
     //    filter to exclude
     //    ::testing::GTEST_FLAG(filter) = "-PVSmoothing_lib_battery_dispatch*";
@@ -54,9 +52,9 @@ GTEST_API_ int main(int argc, char **argv) {
 
     int status = RUN_ALL_TESTS();
 
-//    sleep(10); //used for single test instruments leak detector on macOS
-	
+    //    sleep(10); //used for single test instruments leak detector on macOS
+
     if (!status)
-		printf("Tests Pass!\n");
-	return status;
+        printf("Tests Pass!\n");
+    return status;
 }
