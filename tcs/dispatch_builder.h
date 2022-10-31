@@ -26,7 +26,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <vector>
 #include <string>
 #include <unordered_map>
-#include "../lpsolve/lp_lib.h" 
+#include "../lpsolve/lp_lib.h"
+#include <limits>
 
 //#include "glpk\src\glpk.h"
 
