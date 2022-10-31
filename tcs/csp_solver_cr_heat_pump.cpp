@@ -118,6 +118,21 @@ C_csp_cr_heat_pump::C_csp_cr_heat_pump(double COP_heat_des /*-*/, double q_dot_h
 
 C_csp_cr_heat_pump::~C_csp_cr_heat_pump(){}
 
+void C_csp_cr_heat_pump::test_heat_pump_perf_call(double m_dot_ND,
+    double& W_dot_gross_ND /*-*/, double& Q_dot_ND /*-*/,
+    double& Q_dot_cold_in_ND /*-*/,
+    double& T_HT_hot_out /*C*/, double& T_CT_cold /*C*/) {
+
+    double T_HT_cold_des, T_CT_hot_des;
+    mp_carnot_heat_pump->get_des_for_perf(T_HT_cold_des, T_CT_hot_des);
+
+    mp_carnot_heat_pump->performance(T_HT_cold_des, m_dot_ND,
+        T_CT_hot_des, m_dot_ND,
+        W_dot_gross_ND /*-*/, Q_dot_ND /*-*/,
+        Q_dot_cold_in_ND /*-*/,
+        T_HT_hot_out /*C*/, T_CT_cold /*C*/);
+}
+
 // ***********************
 // Inherited methods
 // ***********************
@@ -630,6 +645,13 @@ double heat_pump_helpers::C_carnot_heat_pump::cop_carnot(double T_HT_hot /*C*/, 
     double T_CT_avg = 0.5 * (T_CT_hot + T_CT_cold) + 273.15;  //[K]
 
     return T_HT_avg / (T_HT_avg - T_CT_avg);
+}
+
+void heat_pump_helpers::C_carnot_heat_pump::get_des_for_perf(double& T_HT_cold_des /*C*/,
+    double& T_CT_hot_des /*C*/)
+{
+    T_HT_cold_des = m_T_HT_cold_des;
+    T_CT_hot_des = m_T_CT_hot_des;
 }
 
 int heat_pump_helpers::C_carnot_heat_pump::performance(double T_HT_cold_in /*C*/, double m_dot_HT_ND /*-*/,
