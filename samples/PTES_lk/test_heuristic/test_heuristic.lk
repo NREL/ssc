@@ -58,7 +58,7 @@ var( 'disp_time_weighting', 0.999 );
 var( 'disp_down_time_min', 2 );
 var( 'disp_up_time_min', 2 );
 var( 'ppa_multiplier_model', 1 );
-var( 'dispatch_factors_ts', real_array(read_text_file('C:/Users/tneises/Documents/Projects/GitHub/ssc/samples/PTES_lk/test_heuristic/dispatch_factors_ts.csv')));
+var( 'dispatch_factors_ts', real_array(read_text_file('dispatch_factors_ts.csv')));
 var( 'dispatch_sched_weekday', 
 [ [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ], 
 [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ], 
