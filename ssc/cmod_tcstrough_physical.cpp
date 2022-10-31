@@ -972,7 +972,7 @@ public:
 		
 		// performance adjustment factors
 		adjustment_factors haf(this, "adjust");
-		if (!haf.setup())
+		if (!haf.setup(nrec))
 			throw exec_error("tcstrough_physical", "failed to setup adjustment factors: " + haf.error());
 
 		size_t idx=0;

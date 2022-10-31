@@ -73,7 +73,7 @@ TEST_F(ManualTest_lib_battery_dispatch, PowerLimitsDispatchManualDC) {
     batteryPower->powerSystem = 1000;
     batteryPower->voltageSystem = 600;
     dispatchManual->dispatch(year, hour_of_year, step_of_hour);
-    EXPECT_NEAR(batteryPower->powerBatteryAC, -powerChargeMax, 2.0);
+    EXPECT_NEAR(batteryPower->powerBatteryAC, -powerChargeMax * batteryPower->sharedInverter->getMaxPowerEfficiency() * 0.01, 2.0);
 
     // Test max discharge power constraint
     batteryPower->powerSystem = 0;
@@ -469,7 +469,7 @@ TEST_F(ManualTest_lib_battery_dispatch, EfficiencyLimitsDispatchManualDC)
     // Test max charge power constraint
     batteryPower->powerSystem = 1000; batteryPower->voltageSystem = 600;
     dispatchManual->dispatch(year, hour_of_year, step_of_hour);
-    EXPECT_NEAR(batteryPower->powerBatteryAC, -powerChargeMax, 2.0);
+    EXPECT_NEAR(batteryPower->powerBatteryAC, -powerChargeMax * batteryPower->sharedInverter->getMaxPowerEfficiency() * 0.01, 2.0);
 
     // Test max discharge power constraint
     batteryPower->powerSystem = 0; batteryPower->voltageSystem = 600; batteryPower->powerLoad = 1000;
@@ -543,7 +543,7 @@ TEST_F(ManualTest_lib_battery_dispatch_losses, TestLossesWithDispatch)
     // Test max charge power constraint
     batteryPower->powerSystem = 40; batteryPower->voltageSystem = 600;
     dispatchManual->dispatch(year, hour_of_year, step_of_hour);
-    EXPECT_NEAR(batteryPower->powerSystemToBattery, batteryPower->powerSystem - batteryPower->powerSystemLoss, 0.1);
+    EXPECT_NEAR(batteryPower->powerSystemToBatteryAC, batteryPower->powerSystem * batteryPower->sharedInverter->getMaxPowerEfficiency() * 0.01 - batteryPower->powerSystemLoss, 1);
 
     // Test max discharge power constraint
     batteryPower->powerSystem = 0; batteryPower->voltageSystem = 600; batteryPower->powerLoad = 40;
@@ -601,7 +601,7 @@ TEST_F(ManualTest_lib_battery_dispatch, TestClipCharging)
     dispatchManual->dispatch(year, hour_of_year, step_of_hour);
     EXPECT_NEAR(batteryPower->powerBatteryDC, -clipped_power, 0.1);
     EXPECT_NEAR(batteryPower->powerSystemToLoad, batteryPower->powerLoad, 0.1);
-    EXPECT_NEAR(batteryPower->powerSystemToBattery, clipped_power / batteryPower->singlePointEfficiencyDCToDC, 0.1);
+    EXPECT_NEAR(batteryPower->powerSystemToBatteryAC, clipped_power * batteryPower->sharedInverter->getMaxPowerEfficiency() * 0.01, 0.1);
 }
 
 TEST_F(ManualTest_lib_battery_dispatch, OutageWithManualDispatch) {
@@ -671,4 +671,58 @@ TEST_F(ManualTest_lib_battery_dispatch, OutageWithManualDispatch) {
     dispatchManual->dispatch(year, hour_of_year, step_of_hour);
     hour_of_year += 1;
     EXPECT_NEAR(batteryPower->powerBatteryDC, 0.0, 0.1);
+}
+
+TEST_F(ManualTest_lib_battery_dispatch, PVPriorityLoadFirst)
+{
+    bool chargeOnlySystemExceedLoad = false;
+    bool dischargeOnlyLoadExceedSystem = true;
+    double SOC_min_outage = 1.0;
+    bool priorityChargeBattery = false;
+    dispatchManual = new dispatch_manual_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice, currentChargeMax,
+        currentDischargeMax, powerChargeMax, powerDischargeMax, powerChargeMax,
+        powerDischargeMax, minimumModeTime,
+        dispatchChoice, meterPosition, scheduleWeekday, scheduleWeekend, canCharge,
+        canDischarge, canGridcharge, canDischargeToGrid, canGridcharge, percentDischarge,
+        percentGridcharge, canClipCharge, interconnection_limit,
+        chargeOnlySystemExceedLoad, dischargeOnlyLoadExceedSystem, SOC_min_outage, priorityChargeBattery);
+
+    batteryPower = dispatchManual->getBatteryPower();
+    batteryPower->connectionMode = ChargeController::AC_CONNECTED;
+
+    batteryPower->powerSystem = 400; batteryPower->voltageSystem = 600; batteryPower->powerLoad = 400;
+    dispatchManual->dispatch(year, hour_of_year, step_of_hour);
+    EXPECT_NEAR(batteryPower->powerBatteryAC, 0.0, 1.0);
+    EXPECT_NEAR(batteryPower->powerGridToBattery, 0.0, 1.0);
+    EXPECT_NEAR(batteryPower->powerSystemToBatteryAC, 0.0, 1.0);
+    EXPECT_NEAR(batteryPower->powerSystemToLoad, 400.0, 1.0);
+    EXPECT_NEAR(batteryPower->powerGridToLoad, 0.0, 1.0);
+    
+}
+
+TEST_F(ManualTest_lib_battery_dispatch, PVPriorityBatteryFirst)
+{
+    bool chargeOnlySystemExceedLoad = false;
+    bool dischargeOnlyLoadExceedSystem = true;
+    double SOC_min_outage = 1.0;
+    bool priorityChargeBattery = true;
+    dispatchManual = new dispatch_manual_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice, currentChargeMax,
+        currentDischargeMax, powerChargeMax, powerDischargeMax, powerChargeMax,
+        powerDischargeMax, minimumModeTime,
+        dispatchChoice, meterPosition, scheduleWeekday, scheduleWeekend, canCharge,
+        canDischarge, canGridcharge, canDischargeToGrid, canGridcharge, percentDischarge,
+        percentGridcharge, canClipCharge, interconnection_limit,
+        chargeOnlySystemExceedLoad, dischargeOnlyLoadExceedSystem, SOC_min_outage, priorityChargeBattery);
+
+    batteryPower = dispatchManual->getBatteryPower();
+    batteryPower->connectionMode = ChargeController::AC_CONNECTED;
+
+    batteryPower->powerSystem = 400; batteryPower->voltageSystem = 600; batteryPower->powerLoad = 400;
+    dispatchManual->dispatch(year, hour_of_year, step_of_hour);
+    EXPECT_NEAR(batteryPower->powerBatteryAC, -50.0, 1.0);
+    EXPECT_NEAR(batteryPower->powerGridToBattery, 0.0, 1.0);
+    EXPECT_NEAR(batteryPower->powerSystemToBatteryAC, 50.0, 1.0);
+    EXPECT_NEAR(batteryPower->powerSystemToLoad, 350.0, 1.0);
+    EXPECT_NEAR(batteryPower->powerGridToLoad, 50.0, 1.0);
+
 }

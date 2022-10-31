@@ -71,7 +71,7 @@ class adjustment_factors
 	std::string m_prefix;
 public:
 	adjustment_factors(compute_module *cm, const std::string &prefix);
-	bool setup(int nsteps=8760);
+	bool setup(int nsteps=8760, int analysis_period=1);
 	ssc_number_t operator()(size_t time);
 	std::string error() { return m_error; }
 };
