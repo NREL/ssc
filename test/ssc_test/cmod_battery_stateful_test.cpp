@@ -379,7 +379,7 @@ TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, TestReplacementbySche
     var_table *vt = static_cast<var_table*>(data);
 
     EXPECT_EQ(vt->as_integer("n_replacements"), 1);
-    EXPECT_EQ(vt->as_vector_ssc_number_t("indices_replaced")[1], 8760);
+    EXPECT_EQ(vt->as_vector_ssc_number_t("indices_replaced")[1], 17520);
     EXPECT_EQ(vt->as_number("q_relative"), 100);
 }
 
@@ -423,6 +423,6 @@ TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, TestReplacementByCapa
     var_table* vt = static_cast<var_table*>(data);
 
     EXPECT_EQ(vt->as_integer("n_replacements"), 1);
-    EXPECT_EQ(vt->as_vector_ssc_number_t("indices_replaced")[1], 1);
+    EXPECT_EQ(vt->as_vector_ssc_number_t("indices_replaced")[1], 2);
     EXPECT_EQ(vt->as_number("q_relative"), 100);
 }
