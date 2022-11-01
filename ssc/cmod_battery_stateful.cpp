@@ -614,6 +614,17 @@ void cm_battery_stateful::exec() {
         battery->ChangeTimestep(dt_hr);
     }
 
+    // Replacements
+    size_t lifetime_index = as_integer("last_idx");
+    size_t steps_per_hour = (size_t)(1 / control_dt_hr);
+    size_t steps_per_year = (size_t)(8760 * steps_per_hour);
+    size_t year = (size_t)(lifetime_index / steps_per_year);
+    size_t year_one_index = lifetime_index - (year * steps_per_year);
+    size_t hour = (size_t)(year_one_index / steps_per_hour);
+    size_t step_of_hour = year_one_index - (hour * steps_per_hour);
+
+    battery->runReplacement(year, hour, step_of_hour);
+
     // Simulate
     if (static_cast<MODE>(as_integer("control_mode")) == MODE::CURRENT) {
         double I = as_number("input_current");

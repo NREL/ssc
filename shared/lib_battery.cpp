@@ -111,7 +111,7 @@ thermal_t &thermal_t::operator=(const thermal_t &rhs) {
 thermal_t *thermal_t::clone() { return new thermal_t(*this); }
 
 void thermal_t::replace_battery(size_t lifetimeIndex) {
-    if (params->option == thermal_params::VALUE)
+    if (params->option == thermal_params::SCHEDULE)
         state->T_batt = params->T_room_schedule[lifetimeIndex % params->T_room_schedule.size()];
     else
         state->T_batt = state->T_room;
