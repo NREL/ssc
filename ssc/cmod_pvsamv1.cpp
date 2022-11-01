@@ -2471,8 +2471,16 @@ void cm_pvsamv1::exec()
                 // Add up AC loss percents for DC connected batteries
                 double delivered_percent = 1 - PVSystem->acLossPercent * 0.01;
 
-                ssc_number_t xfmr_loss_percent = transformerLoss(PVSystem->p_systemACPower[idx], PVSystem->transformerLoadLossFraction, transformerRatingkW, xfmr_ll, xfmr_nll) / PVSystem->p_systemACPower[idx];
-                delivered_percent *= (1 - xfmr_loss_percent);
+                // If PV has AC power output, use that in transformer loss estimation
+                if (PVSystem->p_systemACPower[idx] > 0) {
+                    ssc_number_t xfmr_loss_percent = transformerLoss(PVSystem->p_systemACPower[idx], PVSystem->transformerLoadLossFraction, transformerRatingkW, xfmr_ll, xfmr_nll) / PVSystem->p_systemACPower[idx];
+                    delivered_percent *= (1 - xfmr_loss_percent);
+                }
+                else {
+                    // At night, use inverter output power to estimate transformer no-load loss for the battery
+                    ssc_number_t xfmr_loss_percent = transformerLoss(PVSystem->p_systemACPower[idx], PVSystem->transformerLoadLossFraction, transformerRatingkW, xfmr_ll, xfmr_nll) / PVSystem->Inverter->sharedInverter->getACNameplateCapacitykW();
+                    delivered_percent *= (1 - xfmr_loss_percent);
+                }
                 delivered_percent *= 1 - PVSystem->transmissionLossPercent * 0.01;
 
                 ssc_number_t dc_loss_post_inverter = 1 - delivered_percent;
