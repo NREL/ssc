@@ -736,7 +736,7 @@ void pc_ptes_helpers::C_endo_reversible_cycle::performance(double T_HT_hot /*C*/
 
     // Calculate new endo-reversible efficiency and adjust for part-load
     double eta_temp = eta_endo(T_HT_hot, T_HT_cold, T_CT_hot, T_CT_cold);
-    double eta_pl = pow(1 - abs(1 - Q_dot_ND), 0.2);
+    double eta_pl = std::pow(1 - std::abs(1 - Q_dot_ND), 0.2);
     double eta = eta_temp * eta_pl;
 
     // calculate power by scaling by ratio of calculated and design endo-reversible efficiencies

@@ -59,6 +59,9 @@ namespace heat_pump_helpers
             double& Q_dot_cold_in_ND /*-*/,
             double& T_HT_hot_out /*C*/, double& T_CT_cold /*C*/);
 
+        void get_des_for_perf(double& T_HT_cold_des /*C*/,
+            double& T_CT_hot_des /*C*/);
+
         double get_cop_des()
         {
             return m_cop_carnot_des;
@@ -196,6 +199,11 @@ private:
 
 
 public:
+
+    int test_heat_pump_perf_call(double m_dot_ND,
+        double& W_dot_gross_ND /*-*/, double& Q_dot_ND /*-*/,
+        double& Q_dot_cold_in_ND /*-*/,
+        double& T_HT_hot_out /*C*/, double& T_CT_cold /*C*/);
 
     enum {
         E_T_HT_HTF_IN,         //[C] HT HTF inlet temperature

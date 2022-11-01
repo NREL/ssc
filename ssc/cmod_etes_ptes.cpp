@@ -62,9 +62,9 @@ static var_info _cm_vtab_etes_ptes[] = {
 
     // HTFs
     { SSC_INPUT,  SSC_NUMBER, "hot_htf_code",                  "Hot HTF code - see htf_props.h for list",                        "",             "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
-    { SSC_INPUT,  SSC_MATRIX, "ud_hot_htf_props",              "User-defined Hot HTF fluid property data",                       "-",            "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
+    { SSC_INPUT,  SSC_MATRIX, "ud_hot_htf_props",              "User-defined Hot HTF fluid property data",                       "-",            "",                                  "Thermal Storage",                          "hot_htf_code=50",                                                  "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "cold_htf_code",                 "Cold HTF code - see htf_props.h for list",                       "",             "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
-    { SSC_INPUT,  SSC_MATRIX, "ud_cold_htf_props",             "User-defined Cold HTF fluid property data",                      "-",            "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
+    { SSC_INPUT,  SSC_MATRIX, "ud_cold_htf_props",             "User-defined Cold HTF fluid property data",                      "-",            "",                                  "Thermal Storage",                          "cold_htf_code=50",                                                 "",              ""},
 
 
     // Heat Pump
@@ -543,9 +543,15 @@ public:
 
         // Get HTF inputs here
         int HT_htf_code = as_integer("hot_htf_code");
-        util::matrix_t<double> ud_HT_htf_props = as_matrix("ud_hot_htf_props");
+        util::matrix_t<double> ud_HT_htf_props;
+        if (HT_htf_code == HTFProperties::User_defined) {
+            ud_HT_htf_props = as_matrix("ud_hot_htf_props");
+        }
         int CT_htf_code = as_integer("cold_htf_code");
-        util::matrix_t<double> ud_CT_htf_props = as_matrix("ud_cold_htf_props");
+        util::matrix_t<double> ud_CT_htf_props;
+        if (CT_htf_code == HTFProperties::User_defined) {
+            ud_CT_htf_props = as_matrix("ud_cold_htf_props");
+        }
 
         // *****************************************************
         // Power cycle
@@ -937,7 +943,6 @@ public:
         }
         // *****************************************************
         // *****************************************************
-
 
         // *****************************************************
         // System design is complete, get design parameters from component models as necessary
