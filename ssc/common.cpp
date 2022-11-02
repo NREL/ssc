@@ -936,7 +936,7 @@ var_info vtab_utility_rate_common[] = {
 
     { SSC_INPUT,        SSC_NUMBER,     "ur_nm_yearend_sell_rate",  "Net metering true-up credit sell rate", "$/kWh",    "",                     "Electricity Rates",        "?=0.0",            "",                             "" },
     { SSC_INPUT,        SSC_NUMBER,     "ur_nm_credit_month",       "Month of year end payout (true-up)",    "mn",       "",                     "Electricity Rates",        "?=11",             "INTEGER,MIN=0,MAX=11",         "" },
-    { SSC_INPUT,        SSC_NUMBER,     "ur_nm_credit_rollover",    "Apply net metering true-up credits to future bills", "0/1", "",           "Electricity Rates",        "?=0",              "INTEGER,MIN=0,MAX=1",          "" },
+    { SSC_INPUT,        SSC_NUMBER,     "ur_nm_credit_rollover",    "Apply net metering true-up credits to future bills", "0/1", "0=disable,1=enable",           "Electricity Rates",        "?=0",              "INTEGER,MIN=0,MAX=1",          "" },
     { SSC_INPUT,        SSC_NUMBER,     "ur_monthly_fixed_charge",  "Monthly fixed charge",                 "$",        "",                     "Electricity Rates",        "?=0.0",            "",                             "" },
 
 
@@ -949,42 +949,42 @@ var_info vtab_utility_rate_common[] = {
     { SSC_INPUT,        SSC_NUMBER,     "ur_annual_min_charge",     "Annual minimum charge",                "$",        "",                     "Electricity Rates",        "?=0.0",            "",                             "" },
 
     // time step rates
-    { SSC_INPUT,        SSC_NUMBER,     "ur_en_ts_sell_rate",       "Enable time step sell rates",          "0/1",      "",                     "Electricity Rates",        "?=0",              "BOOLEAN",                      "" },
-    { SSC_INPUT,        SSC_ARRAY,      "ur_ts_sell_rate",          "Time step sell rates",                 "0/1",      "",                     "Electricity Rates",        "",                 "",                             "" },
+    { SSC_INPUT,        SSC_NUMBER,     "ur_en_ts_sell_rate",       "Enable time step sell rates",          "0/1",      "0=disable,1=enable",                     "Electricity Rates",        "?=0",              "BOOLEAN",                      "" },
+    { SSC_INPUT,        SSC_ARRAY,      "ur_ts_sell_rate",          "Time step sell rates",                 "$/kWh",      "",                     "Electricity Rates",        "",                 "",                             "" },
     // add separately to UI
-    { SSC_INPUT,        SSC_NUMBER,     "ur_en_ts_buy_rate",        "Enable time step buy rates",           "0/1",      "",                     "Electricity Rates",        "?=0",              "BOOLEAN",                      "" },
-    { SSC_INPUT,        SSC_ARRAY,      "ur_ts_buy_rate",           "Time step buy rates",                  "0/1",      "",                     "Electricity Rates",        "",                 "",                             "" },
+    { SSC_INPUT,        SSC_NUMBER,     "ur_en_ts_buy_rate",        "Enable time step buy rates",           "0/1",      "0=disable,1=enable",                     "Electricity Rates",        "?=0",              "BOOLEAN",                      "" },
+    { SSC_INPUT,        SSC_ARRAY,      "ur_ts_buy_rate",           "Time step buy rates",                  "$/kWh",      "",                     "Electricity Rates",        "",                 "",                             "" },
 
     // Energy Charge Inputs
-    { SSC_INPUT,        SSC_MATRIX,     "ur_ec_sched_weekday",      "Energy charge weekday schedule",       "",         "12x24",                "Electricity Rates",        "",                 "",                             "" },
-    { SSC_INPUT,        SSC_MATRIX,     "ur_ec_sched_weekend",      "Energy charge weekend schedule",       "",         "12x24",                "Electricity Rates",        "",                 "",                             "" },
+    { SSC_INPUT,        SSC_MATRIX,     "ur_ec_sched_weekday",      "Energy charge weekday schedule",       "Periods defined in ur_ec_tou_mat",         "12x24",                "Electricity Rates",        "",                 "",                             "" },
+    { SSC_INPUT,        SSC_MATRIX,     "ur_ec_sched_weekend",      "Energy charge weekend schedule",       "Periods defined in ur_ec_tou_mat",         "12x24",                "Electricity Rates",        "",                 "",                             "" },
 
     // ur_ec_tou_mat has 6 columns period, tier, max usage, max usage units, buy rate, sell rate
     // replaces 12(P)*6(T)*(max usage+buy+sell) = 216 single inputs
-    { SSC_INPUT,        SSC_MATRIX,     "ur_ec_tou_mat",            "Energy rates table",                   "",         "",                     "Electricity Rates",        "",                 "",                             "" },
+    { SSC_INPUT,        SSC_MATRIX,     "ur_ec_tou_mat",            "Energy rates table",                   "col 0: period no, col 1: tier no, col 2: max usage, col 3: max usage units, col 4: buy ($/kWh), col 5: sell ($/kWh)",         "nx6",                     "Electricity Rates",        "",                 "",                             "" },
 
     // Demand Charge Inputs
-    { SSC_INPUT,        SSC_NUMBER,     "ur_dc_enable",             "Enable demand charge",                 "0/1",      "",                     "Electricity Rates",        "?=0",              "BOOLEAN",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,     "ur_dc_enable",             "Enable demand charge",                 "0/1",      "0=disable,1=enable",                     "Electricity Rates",        "?=0",              "BOOLEAN",                      "" },
     // TOU demand charge
-    { SSC_INPUT,        SSC_MATRIX,     "ur_dc_sched_weekday",      "Demand charge weekday schedule",       "",         "12x24",                "Electricity Rates",        "",                 "",                             "" },
-    { SSC_INPUT,        SSC_MATRIX,     "ur_dc_sched_weekend",      "Demand charge weekend schedule",       "",         "12x24",                "Electricity Rates",        "",                 "",                             "" },
+    { SSC_INPUT,        SSC_MATRIX,     "ur_dc_sched_weekday",      "Demand charge weekday schedule",       "Periods defined in ur_dc_tou_mat",         "12x24",                "Electricity Rates",        "",                 "",                             "" },
+    { SSC_INPUT,        SSC_MATRIX,     "ur_dc_sched_weekend",      "Demand charge weekend schedule",       "Periods defined in ur_dc_tou_mat",         "12x24",                "Electricity Rates",        "",                 "",                             "" },
 
     // ur_dc_tou_mat has 4 columns period, tier, peak demand (kW), demand charge
     // replaces 12(P)*6(T)*(peak+charge) = 144 single inputs
-    { SSC_INPUT,        SSC_MATRIX,     "ur_dc_tou_mat",            "Demand rates (TOU) table",             "",         "",                     "Electricity Rates",        "ur_dc_enable=1",   "",                             "" },
+    { SSC_INPUT,        SSC_MATRIX,     "ur_dc_tou_mat",            "Demand rates (TOU) table",             "col 0: period no, col 1: tier no, col 2: tier peak (kW), col 3: charge ($/kW)",         "nx4",                     "Electricity Rates",        "ur_dc_enable=1",   "",                             "" },
 
     // flat demand charge
     // ur_dc_tou_flat has 4 columns month, tier, peak demand (kW), demand charge
     // replaces 12(P)*6(T)*(peak+charge) = 144 single inputs
-    { SSC_INPUT,        SSC_MATRIX,     "ur_dc_flat_mat",           "Demand rates (flat) table",            "",         "",                     "Electricity Rates",        "ur_dc_enable=1",   "",                             "" },
+    { SSC_INPUT,        SSC_MATRIX,     "ur_dc_flat_mat",           "Demand rates (flat) table",            "col 0: month, col 1: tier no, col 2: tier peak (kW), col 3: charge ($/kW)",         "nx4",                     "Electricity Rates",        "ur_dc_enable=1",   "",                             "" },
 
     // Ratcheting demand charges
     { SSC_INPUT,        SSC_NUMBER,     "ur_enable_billing_demand",     "Enable billing demand ratchets",     "0/1",  "0=disable,1=enable",        "Electricity Rates",        "?=0",                 "INTEGER,MIN=0,MAX=1",       "" },
-    { SSC_INPUT,        SSC_NUMBER,     "ur_billing_demand_minimum",       "Minimum billing demand",               "",         "",                     "Electricity Rates",        "ur_enable_billing_demand=1",                 "",                             "" },
+    { SSC_INPUT,        SSC_NUMBER,     "ur_billing_demand_minimum",       "Minimum billing demand",               "kW",         "",                     "Electricity Rates",        "ur_enable_billing_demand=1",                 "",                             "" },
     { SSC_INPUT,        SSC_NUMBER,     "ur_billing_demand_lookback_period", "Billing demand lookback period",  "mn",         "",                "Electricity Rates",           "ur_enable_billing_demand=1",                 "INTEGER,MIN=0,MAX=12",                             "" },
-    { SSC_INPUT,        SSC_MATRIX,     "ur_billing_demand_lookback_percentages", "Billing demand lookback percentages by month and consider actual peak demand",       "",         "12x2",      "Electricity Rates",        "ur_enable_billing_demand=1",                 "",                             "" },
+    { SSC_INPUT,        SSC_MATRIX,     "ur_billing_demand_lookback_percentages", "Billing demand lookback percentages by month and consider actual peak demand",       "%",         "12x2",      "Electricity Rates",        "ur_enable_billing_demand=1",                 "",                             "" },
     { SSC_INPUT,        SSC_MATRIX,     "ur_dc_billing_demand_periods", "Billing demand applicability to a given demand charge time of use period",       "",         "",      "Electricity Rates",        "ur_enable_billing_demand=1",                 "",                             "" },
-    { SSC_INPUT,        SSC_ARRAY,      "ur_yearzero_usage_peaks",  "Peak usage by month for year zero",       "",         "12",                "Electricity Rates",        "ur_enable_billing_demand=1",                 "",                             "" },
+    { SSC_INPUT,        SSC_ARRAY,      "ur_yearzero_usage_peaks",  "Peak usage by month for year zero",       "kW",         "12",                "Electricity Rates",        "ur_enable_billing_demand=1",                 "",                             "" },
 
 
     var_info_invalid
