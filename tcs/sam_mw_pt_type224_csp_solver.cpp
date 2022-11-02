@@ -193,7 +193,7 @@ public:
 		: tcstypeinterface(cxt, ti)
 	{
 		p_eta_thermal = new double[8760];
-		mc_power_cycle.mc_reported_outputs.assign(C_pc_Rankine_indirect_224::E_ETA_THERMAL, p_eta_thermal, 8760);
+		mc_power_cycle.mc_reported_outputs.assign(C_pc_Rankine_indirect_224::E_ETA_THERMAL_STEP_AVERAGED, p_eta_thermal, 8760);
 		p_m_dot_water = new double[8760];
 		mc_power_cycle.mc_reported_outputs.assign(C_pc_Rankine_indirect_224::E_T_HTF_OUT, p_m_dot_water, 8760);
 		p_q_dot_startup = new double[8760];
@@ -354,7 +354,7 @@ public:
 
 
 		value(O_P_CYCLE, ms_out_solver.m_P_cycle);				//[MWe] Cycle power output
-		value(O_ETA, mc_power_cycle.mc_reported_outputs.value(C_pc_Rankine_indirect_224::E_ETA_THERMAL));						//[none] Cycle thermal efficiency
+		value(O_ETA, mc_power_cycle.mc_reported_outputs.value(C_pc_Rankine_indirect_224::E_ETA_THERMAL_STEP_AVERAGED));						//[none] Cycle thermal efficiency
 		value(O_T_HTF_COLD, ms_out_solver.m_T_htf_cold);		//[C] Heat transfer fluid outlet temperature 
 		value(O_M_DOT_MAKEUP, mc_power_cycle.mc_reported_outputs.value(C_pc_Rankine_indirect_224::E_M_DOT_WATER));	//[kg/hr] Cooling water makeup flow rate
 
