@@ -2272,7 +2272,6 @@ double C_pc_Rankine_indirect_224::Calculate_T_htf_cold_Converge_Cp(double q_dot_
     int iter = 0;
     double T_htf_cold = physics::CelciusToKelvin(ms_params.m_T_htf_cold_ref);
     double c_htf, T_error = 1.0, T_htf_cold_prev;
-    double T_htf_cold_init = 0.0;
     while (fabs(T_error) > 1e-4 && iter < 30) {
         // set up C_monotonic_equation? and C_monotonic_eq_solver?
         T_htf_cold_prev = T_htf_cold;
@@ -2285,16 +2284,14 @@ double C_pc_Rankine_indirect_224::Calculate_T_htf_cold_Converge_Cp(double q_dot_
             break;
         }
         T_htf_cold = T_htf_hot - q_dot_htf / (m_dot_htf * c_htf);   //[kJ/s * s/kg * kg-K/kJ] = C/K
-        if (iter == 0) {
-            T_htf_cold_init = T_htf_cold;
-        }
         T_htf_cold = T_htf_cold * alpha + T_htf_cold_prev * (1 - alpha);
         T_error = (T_htf_cold - T_htf_cold_prev) / T_htf_cold_prev;
         iter++;
     }
     if (fabs(T_error) > 1e-4) {
         // Divergent - Use the initial iteration and deal with error
-        T_htf_cold = T_htf_cold_init;
+        c_htf = mc_pc_htfProps.Cp_ave(physics::CelciusToKelvin(ms_params.m_T_htf_cold_ref), T_htf_hot);       //[kJ/kg-K]
+        T_htf_cold = T_htf_hot - q_dot_htf / (m_dot_htf * c_htf);   //[kJ/s * s/kg * kg-K/kJ] = C/K
     }
     return T_htf_cold; //[K]
 }
