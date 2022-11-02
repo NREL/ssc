@@ -2276,7 +2276,14 @@ double C_pc_Rankine_indirect_224::Calculate_T_htf_cold_Converge_Cp(double q_dot_
     while (fabs(T_error) > 1e-4 && iter < 30) {
         // set up C_monotonic_equation? and C_monotonic_eq_solver?
         T_htf_cold_prev = T_htf_cold;
-        c_htf = mc_pc_htfProps.Cp_ave(T_htf_cold, T_htf_hot);       //[kJ/kg-K]
+        try {
+            c_htf = mc_pc_htfProps.Cp_ave(T_htf_cold, T_htf_hot);       //[kJ/kg-K]
+        }
+        catch (C_csp_exception) {
+            // Recover T_htf_cold or T_htf_hot is < 0
+            T_error = 1;
+            break;
+        }
         T_htf_cold = T_htf_hot - q_dot_htf / (m_dot_htf * c_htf);   //[kJ/s * s/kg * kg-K/kJ] = C/K
         if (iter == 0) {
             T_htf_cold_init = T_htf_cold;
