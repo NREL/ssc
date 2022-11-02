@@ -190,6 +190,7 @@ public:
         E_P_COND_ITER_ERR,  //[-] Relative iteration error on condenser pressure
 
 		// Variables added for backwards compatability with TCS
+        E_ETA_THERMAL_STEP_AVERAGED,    //[-]
 		E_M_DOT_HTF_REF,		//[kg/hr] HTF mass flow rate at design
 
         // Dependent output variables
