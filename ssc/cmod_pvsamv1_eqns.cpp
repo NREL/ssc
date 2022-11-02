@@ -157,7 +157,7 @@ SSCEXPORT bool Reopt_size_battery_params(ssc_data_t data) {
     std::vector<double> kwac_per_kwdc(year_one_values);
     for (size_t i = 0; i < year_one_values; i++) {
         kwac_per_kwdc[i] = gen[i] / system_cap;
-        kwac_per_kwdc[i] = std::fmax(0.0, kwac_per_kwdc[i]);
+        kwac_per_kwdc[i] = std::max(0.0, kwac_per_kwdc[i]);
     }
     reopt_pv.assign("prod_factor_series_kw", kwac_per_kwdc);
     // The above already includes losses
