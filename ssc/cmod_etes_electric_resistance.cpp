@@ -86,7 +86,7 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
     // TES
         // Performance
     { SSC_INPUT,  SSC_NUMBER, "hot_htf_code",                  "Receiver HTF, 17=Salt (60% NaNO3, 40% KNO3) 10=Salt (46.5% LiF 11.5% NaF 42% KF) 50=Lookup tables", "", "",          "Thermal Storage",                          "*",                                                                "",              ""},
-    { SSC_INPUT,  SSC_MATRIX, "ud_hot_htf_props",              "User-defined TES fluid property data",                          "-",            "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
+    { SSC_INPUT,  SSC_MATRIX, "ud_hot_htf_props",              "User-defined TES fluid property data",                          "-",            "",                                  "Thermal Storage",                          "hot_htf_code=50",                                                  "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "tes_init_hot_htf_percent",      "Initial fraction of available volume that is hot",              "%",            "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "h_tank",                        "Total height of tank (height of HTF when tank is full)",        "m",            "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "cold_tank_max_heat",            "Rated heater capacity for cold tank heating",                   "MW",           "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
@@ -418,7 +418,10 @@ public:
 
         // TES parameters
         int hot_htf_code = as_integer("hot_htf_code");
-        util::matrix_t<double> ud_hot_htf_props = as_matrix("ud_hot_htf_props");
+        util::matrix_t<double> ud_hot_htf_props;
+        if (hot_htf_code == 50) {
+            ud_hot_htf_props = as_matrix("ud_hot_htf_props");
+        }
 
         // System Design Calcs
         double q_dot_pc_des = W_dot_cycle_des / eta_cycle;      //[MWt]

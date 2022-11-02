@@ -3299,7 +3299,7 @@ void hourly_energy_calculation::sum_ts_to_hourly(ssc_number_t* timestep_power, s
 
 void check_financial_metrics::check_irr(compute_module* cm, ssc_number_t& irr)
 {
-    if (isnan(irr))
+    if (std::isnan(irr))
         cm->log("IRR at end of analysis period is not a number (NaN). This can indicate that revenues are too low to cover costs, or that they are excessively high compared to costs.", SSC_WARNING);
     if (irr > 50.0)
         cm->log(util::format("IRR at end of analysis period is %lg%%. A high IRR may indicate a project with unrealistically high returns.", irr), SSC_WARNING);
@@ -3307,7 +3307,7 @@ void check_financial_metrics::check_irr(compute_module* cm, ssc_number_t& irr)
 
 void check_financial_metrics::check_irr_flip(compute_module* cm, ssc_number_t& irr)
 {
-    if (isnan(irr))
+    if (std::isnan(irr))
         cm->log("IRR in target year is not a number (NaN). This can indicate that revenues are too low to cover costs, or that they are excessively high compared to costs.", SSC_WARNING);
     if (irr > 50.0)
         cm->log(util::format("IRR in target year is %lg%%. A high IRR may indicate a project with unrealistically high returns.", irr), SSC_WARNING);

@@ -118,6 +118,21 @@ C_csp_cr_heat_pump::C_csp_cr_heat_pump(double COP_heat_des /*-*/, double q_dot_h
 
 C_csp_cr_heat_pump::~C_csp_cr_heat_pump(){}
 
+int C_csp_cr_heat_pump::test_heat_pump_perf_call(double m_dot_ND,
+    double& W_dot_gross_ND /*-*/, double& Q_dot_ND /*-*/,
+    double& Q_dot_cold_in_ND /*-*/,
+    double& T_HT_hot_out /*C*/, double& T_CT_cold /*C*/) {
+
+    double T_HT_cold_des, T_CT_hot_des;
+    mp_carnot_heat_pump->get_des_for_perf(T_HT_cold_des, T_CT_hot_des);
+
+    return mp_carnot_heat_pump->performance(T_HT_cold_des, m_dot_ND,
+        T_CT_hot_des, m_dot_ND,
+        W_dot_gross_ND /*-*/, Q_dot_ND /*-*/,
+        Q_dot_cold_in_ND /*-*/,
+        T_HT_hot_out /*C*/, T_CT_cold /*C*/);
+}
+
 // ***********************
 // Inherited methods
 // ***********************
@@ -190,7 +205,12 @@ void C_csp_cr_heat_pump::init(const C_csp_collector_receiver::S_csp_cr_init_inpu
 
     // State variables
     m_E_su_initial = m_E_su_des;        //[MWt-hr]
-    m_operating_mode_converged = C_csp_collector_receiver::OFF;					//
+    if (m_E_su_initial == 0.0) {
+        m_operating_mode_converged = C_csp_collector_receiver::OFF_NO_SU_REQ;
+    }
+    else {
+        m_operating_mode_converged = C_csp_collector_receiver::OFF;					//
+    }
 
     return;
 }
@@ -527,6 +547,10 @@ void C_csp_cr_heat_pump::converged()
         m_E_su_calculated = m_E_su_des;
     }
 
+    if (m_E_su_des == 0.0 && m_operating_mode_converged == OFF) {
+        m_operating_mode_converged = OFF_NO_SU_REQ;
+    }
+
     m_E_su_initial = m_E_su_calculated;
 
     mc_reported_outputs.set_timestep_outputs();
@@ -623,6 +647,13 @@ double heat_pump_helpers::C_carnot_heat_pump::cop_carnot(double T_HT_hot /*C*/, 
     return T_HT_avg / (T_HT_avg - T_CT_avg);
 }
 
+void heat_pump_helpers::C_carnot_heat_pump::get_des_for_perf(double& T_HT_cold_des /*C*/,
+    double& T_CT_hot_des /*C*/)
+{
+    T_HT_cold_des = m_T_HT_cold_des;
+    T_CT_hot_des = m_T_CT_hot_des;
+}
+
 int heat_pump_helpers::C_carnot_heat_pump::performance(double T_HT_cold_in /*C*/, double m_dot_HT_ND /*-*/,
     double T_CT_hot /*C*/, double m_dot_CT_ND /*-*/,
     double& W_dot_gross_ND /*-*/, double& Q_dot_hot_out_ND /*-*/,
@@ -713,7 +744,7 @@ int heat_pump_helpers::C_MEQ__T_CT_cold::operator()(double T_CT_cold /*C*/, doub
     // using input T_CT_hot
     double cop_temp = mpc_carnot_heat_pump->cop_carnot(m_T_HT_hot, m_T_HT_cold,
                                             m_T_CT_hot, T_CT_cold);
-    double cop_pl = pow(1. - abs(1. - m_Q_dot_hot_out_ND), 0.2);
+    double cop_pl = std::pow(1. - std::abs(1. - m_Q_dot_hot_out_ND), 0.2);
     double cop = cop_temp * cop_pl;
 
     // Calculate power by scaling by ratio of calculated and design carnot cop

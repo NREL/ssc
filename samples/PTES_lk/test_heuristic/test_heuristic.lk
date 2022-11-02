@@ -1,0 +1,142 @@
+clear();
+var( 'time_start', 0 );
+var( 'time_stop', 8760*3600.0 );
+var( 'solar_resource_file', '../../../test/input_cases/moltensalt_data/daggett_ca_34.865371_-116.783023_psmv3_60_tmy.csv');
+var( 'is_dispatch', 0 );
+var( 'etes_financial_model', 1 );
+var( 'heater_mult', 1 );
+var( 'tshours', 10 );
+var( 'W_dot_pc_thermo_des', 100 );
+var( 'eta_pc_thermo_des', 0.46999999999999997 );
+var( 'f_pc_parasitic_des', 0.040000000000000001 );
+var( 'cop_hp_thermo_des', 1.3300000000000001 );
+var( 'f_hp_parasitic_des', 0.02 );
+var( 'T_HT_hot_htf_des', 560 );
+var( 'T_HT_cold_htf_des', 305 );
+var( 'T_CT_cold_htf_des', -45 );
+var( 'T_CT_hot_htf_des', 55 );
+var( 'hot_htf_code', 17 );
+var( 'ud_hot_htf_props', 
+[ [ 1, 7, 0, 0, 0, 0, 0, 0, 0 ] ] );
+var( 'cold_htf_code', 3 );
+var( 'ud_cold_htf_props', 
+[ [ 1, 7, 0, 0, 0, 0, 0, 0, 0 ] ] );
+var( 'f_q_dot_des_allowable_su', 1 );
+var( 'hrs_startup_at_max_rate', 0.25 );
+var( 'f_q_dot_heater_min', 0.25 );
+var( 'heat_pump_HT_HTF_pump_coef', 0.55000000000000004 );
+var( 'heat_pump_CT_HTF_pump_coef', 0.55000000000000004 );
+var( 'pb_pump_coef', 0.55000000000000004 );
+var( 'CT_pb_pump_coef', 0.55000000000000004 );
+var( 'startup_time', 0.5 );
+var( 'startup_frac', 0.5 );
+var( 'cycle_max_frac', 1 );
+var( 'cycle_cutoff_frac', 0.20000000000000001 );
+var( 'q_sby_frac', 0.20000000000000001 );
+var( 'tes_init_hot_htf_percent', 0 );
+var( 'h_tank', 12 );
+var( 'cold_tank_max_heat', 15 );
+var( 'u_tank', 0.40000000000000002 );
+var( 'tank_pairs', 1 );
+var( 'cold_tank_Thtr', 280 );
+var( 'h_tank_min', 1 );
+var( 'hot_tank_Thtr', 500 );
+var( 'hot_tank_max_heat', 30 );
+var( 'CT_h_tank', 12 );
+var( 'CT_u_tank', 0.40000000000000002 );
+var( 'CT_tank_pairs', 1 );
+var( 'CT_h_tank_min', 1 );
+var( 'disp_horizon', 48 );
+var( 'disp_frequency', 24 );
+var( 'disp_max_iter', 100000 );
+var( 'disp_timeout', 5 );
+var( 'disp_mip_gap', 0.001 );
+var( 'disp_pen_delta_w', 1 );
+var( 'disp_csu_cost', 87 );
+var( 'disp_hsu_cost', 0.014999999999999999 );
+var( 'disp_time_weighting', 0.999 );
+var( 'disp_down_time_min', 2 );
+var( 'disp_up_time_min', 2 );
+var( 'ppa_multiplier_model', 1 );
+var( 'dispatch_factors_ts', real_array(read_text_file('dispatch_factors_ts.csv')));
+var( 'dispatch_sched_weekday', 
+[ [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ], 
+[ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ], 
+[ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ], 
+[ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ], 
+[ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ], 
+[ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ], 
+[ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ], 
+[ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ], 
+[ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ], 
+[ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ], 
+[ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ], 
+[ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ] ] );
+var( 'dispatch_sched_weekend', 
+[ [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ], 
+[ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ], 
+[ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ], 
+[ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ], 
+[ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ], 
+[ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ], 
+[ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ], 
+[ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ], 
+[ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ], 
+[ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ], 
+[ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ], 
+[ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ] ] );
+var( 'dispatch_factor1', 0.25 );
+var( 'dispatch_factor2', 1.75 );
+var( 'dispatch_factor3', 1 );
+var( 'dispatch_factor4', 1 );
+var( 'dispatch_factor5', 1 );
+var( 'dispatch_factor6', 1 );
+var( 'dispatch_factor7', 1 );
+var( 'dispatch_factor8', 1 );
+var( 'dispatch_factor9', 1 );
+var( 'ppa_price_input', [ 0.074999999999999997 ] );
+var( 'pb_fixed_par', 0.0054999999999999997 );
+var( 'bop_par', 0 );
+var( 'bop_par_f', 1 );
+var( 'bop_par_0', 0 );
+var( 'bop_par_1', 0.48299999999999998 );
+var( 'bop_par_2', 0 );
+var( 'cycle_spec_cost', 1040 );
+var( 'tes_spec_cost', 22 );
+var( 'CT_tes_spec_cost', 2 );
+var( 'heat_pump_spec_cost', 100 );
+var( 'bop_spec_cost', 0 );
+var( 'contingency_rate', 7 );
+var( 'sales_tax_frac', 80 );
+var( 'epc_cost_perc_of_direct', 13 );
+var( 'epc_cost_per_watt', 0 );
+var( 'epc_cost_fixed', 0 );
+var( 'land_cost_perc_of_direct', 0 );
+var( 'land_cost_per_watt', 0 );
+var( 'land_cost_fixed', 0 );
+var( 'sales_tax_rate', 5 );
+var( 'const_per_interest_rate1', 3.5 );
+var( 'const_per_interest_rate2', 0 );
+var( 'const_per_interest_rate3', 0 );
+var( 'const_per_interest_rate4', 0 );
+var( 'const_per_interest_rate5', 0 );
+var( 'const_per_months1', 24 );
+var( 'const_per_months2', 0 );
+var( 'const_per_months3', 0 );
+var( 'const_per_months4', 0 );
+var( 'const_per_months5', 0 );
+var( 'const_per_percent1', 100 );
+var( 'const_per_percent2', 0 );
+var( 'const_per_percent3', 0 );
+var( 'const_per_percent4', 0 );
+var( 'const_per_percent5', 0 );
+var( 'const_per_upfront_rate1', 1 );
+var( 'const_per_upfront_rate2', 0 );
+var( 'const_per_upfront_rate3', 0 );
+var( 'const_per_upfront_rate4', 0 );
+var( 'const_per_upfront_rate5', 0 );
+var( 'adjust:constant', 0 );
+var( 'ppa_soln_mode', 1 );
+run('etes_ptes');
+outln('Net electricity to grid (year 1) kWh ' + var('annual_energy'));
+

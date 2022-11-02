@@ -55,7 +55,8 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
     {C_pc_Rankine_indirect_224::E_W_DOT_COOLER, C_csp_reported_outputs::TS_WEIGHTED_AVE},
     {C_pc_Rankine_indirect_224::E_P_COND_ITER_ERR, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 
-	{C_pc_Rankine_indirect_224::E_M_DOT_HTF_REF, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+    {C_pc_Rankine_indirect_224::E_ETA_THERMAL_STEP_AVERAGED, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+    {C_pc_Rankine_indirect_224::E_M_DOT_HTF_REF, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 
 	csp_info_invalid
 };
@@ -1792,7 +1793,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 	mc_reported_outputs.value(E_W_DOT, P_cycle/1000.0);	//[MWe] Cycle power output, convert from kWe
 
     //22.03.04 twn: post-process thermal efficiency at end of timestep reporting
-	//mc_reported_outputs.value(E_ETA_THERMAL, eta);	//[-] Cycle thermal efficiency
+	mc_reported_outputs.value(E_ETA_THERMAL_STEP_AVERAGED, eta);	//[-] Cycle thermal efficiency
 
 	out_solver.m_T_htf_cold = T_htf_cold;				//[C] HTF outlet temperature
 	mc_reported_outputs.value(E_T_HTF_OUT, T_htf_cold);	//[C] HTF outlet temperature
