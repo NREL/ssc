@@ -110,9 +110,8 @@ bool HTFProperties::SetUserDefinedFluid( const util::matrix_t<double> &table )
 
 void HTFProperties::set_temp_enth_lookup()
 {
-    // TODO: These should probably not be hard-coded temperature limits
-	double T_low = 270.0 + 273.15;
-	double T_high = 720.0 + 273.15;
+    double T_low = this->min_temp();
+    double T_high = this->max_temp();
 
 	double delta_T_target = 1.0;
 
