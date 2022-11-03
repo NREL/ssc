@@ -118,8 +118,6 @@ SSCEXPORT bool Reopt_size_battery_params(ssc_data_t data) {
     assign_matching_pv_vars(reopt_pv, "azimuth", "subarray1_azimuth");
     assign_matching_pv_vars(reopt_pv, "tilt", "subarray1_tilt");
     assign_matching_pv_vars(reopt_pv, "gcr", "subarray1_gcr");
-    assign_matching_pv_vars(reopt_pv, "losses", "annual_total_loss_percent", true);
-
 
     // Get appropriate inverter efficiency input and transform to ratio from percent
     int inv_model = 0;
@@ -150,6 +148,27 @@ SSCEXPORT bool Reopt_size_battery_params(ssc_data_t data) {
         map_input(vt, "inv_eff", &reopt_batt, "inverter_efficiency_pct", false, true);
         map_input(vt, "dc_ac_ratio", &reopt_pv, "dc_ac_ratio");
     }
+
+    // If gen is assigned, use REopt's prod_factor_series_kw number, if not use lat/lon and losses with the PVWatts weather files (as called by REopt)
+    if (vt->is_assigned("gen")) {
+        std::vector<double> gen;
+        vt_get_array_vec(vt, "gen", gen);
+        int analysis_period;
+        vt_get_int(vt, "analysis_period", &analysis_period);
+        size_t year_one_values = gen.size() / analysis_period;
+        std::vector<double> kwac_per_kwdc(year_one_values);
+        for (size_t i = 0; i < year_one_values; i++) {
+            kwac_per_kwdc[i] = gen[i] / system_cap;
+            kwac_per_kwdc[i] = std::max(0.0, kwac_per_kwdc[i]);
+        }
+        reopt_pv.assign("prod_factor_series_kw", kwac_per_kwdc);
+        // The above already includes losses
+        reopt_pv.assign("losses", 0.0);
+    }
+    else if (vt->is_assigned("losses")) {
+        map_input(vt, "losses", &reopt_pv, "losses");
+    }
+    // Else use REopt default losses (14%)
 
     // financial inputs
     map_optional_input(vt, "itc_fed_percent", &reopt_pv, "federal_itc_pct", 0., true);
