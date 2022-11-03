@@ -961,7 +961,7 @@ var_info vtab_utility_rate_common[] = {
 
     // ur_ec_tou_mat has 6 columns period, tier, max usage, max usage units, buy rate, sell rate
     // replaces 12(P)*6(T)*(max usage+buy+sell) = 216 single inputs
-    { SSC_INPUT,        SSC_MATRIX,     "ur_ec_tou_mat",            "Energy rates table",                   "col 0: period no, col 1: tier no, col 2: max usage, col 3: max usage units (0=kWh, 1=kWh/kW, 2=kWh daily, 3=kWh/kW daily), col 4: buy rate ($/kWh), col 5: sell rate ($/kWh)",         "nx6",                     "Electricity Rates",        "",                 "",                             "" },
+    { SSC_INPUT,        SSC_MATRIX,     "ur_ec_tou_mat",            "Energy rates table",                   "col 0=period no, col 1=tier no, col 2=max usage, col 3=max usage units (0=kWh, 1=kWh/kW, 2=kWh daily, 3=kWh/kW daily), col 4=buy rate ($/kWh), col 5=sell rate ($/kWh)",         "nx6",                     "Electricity Rates",        "",                 "",                             "" },
 
     // Demand Charge Inputs
     { SSC_INPUT,        SSC_NUMBER,     "ur_dc_enable",             "Enable demand charge",                 "0/1",      "0=disable,1=enable",                     "Electricity Rates",        "?=0",              "BOOLEAN",                      "" },
@@ -971,12 +971,12 @@ var_info vtab_utility_rate_common[] = {
 
     // ur_dc_tou_mat has 4 columns period, tier, peak demand (kW), demand charge
     // replaces 12(P)*6(T)*(peak+charge) = 144 single inputs
-    { SSC_INPUT,        SSC_MATRIX,     "ur_dc_tou_mat",            "Demand rates (TOU) table",             "col 0: period no, col 1: tier no, col 2: tier peak (kW), col 3: charge ($/kW)",         "nx4",                     "Electricity Rates",        "ur_dc_enable=1",   "",                             "" },
+    { SSC_INPUT,        SSC_MATRIX,     "ur_dc_tou_mat",            "Demand rates (TOU) table",             "col 0=period no, col 1=tier no, col 2=tier peak (kW), col 3=charge ($/kW)",         "nx4",                     "Electricity Rates",        "ur_dc_enable=1",   "",                             "" },
 
     // flat demand charge
     // ur_dc_tou_flat has 4 columns month, tier, peak demand (kW), demand charge
     // replaces 12(P)*6(T)*(peak+charge) = 144 single inputs
-    { SSC_INPUT,        SSC_MATRIX,     "ur_dc_flat_mat",           "Demand rates (flat) table",            "col 0: month, col 1: tier no, col 2: tier peak (kW), col 3: charge ($/kW)",         "nx4",                     "Electricity Rates",        "ur_dc_enable=1",   "",                             "" },
+    { SSC_INPUT,        SSC_MATRIX,     "ur_dc_flat_mat",           "Demand rates (flat) table",            "col 0=month, col 1=tier no, col 2=tier peak (kW), col 3=charge ($/kW)",         "nx4",                     "Electricity Rates",        "ur_dc_enable=1",   "",                             "" },
 
     // Ratcheting demand charges
     { SSC_INPUT,        SSC_NUMBER,     "ur_enable_billing_demand",     "Enable billing demand ratchets",     "0/1",  "0=disable,1=enable",        "Electricity Rates",        "?=0",                 "INTEGER,MIN=0,MAX=1",       "" },
