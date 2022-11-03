@@ -168,6 +168,7 @@ SSCEXPORT bool Reopt_size_battery_params(ssc_data_t data) {
     else if (vt->is_assigned("losses")) {
         map_input(vt, "losses", &reopt_pv, "losses");
     }
+    // Else use REopt default losses (14%)
 
     // financial inputs
     map_optional_input(vt, "itc_fed_percent", &reopt_pv, "federal_itc_pct", 0., true);
