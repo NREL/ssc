@@ -149,19 +149,25 @@ SSCEXPORT bool Reopt_size_battery_params(ssc_data_t data) {
         map_input(vt, "dc_ac_ratio", &reopt_pv, "dc_ac_ratio");
     }
 
-    std::vector<double> gen;
-    vt_get_array_vec(vt, "gen", gen);
-    int analysis_period;
-    vt_get_int(vt, "analysis_period", &analysis_period);
-    size_t year_one_values = gen.size() / analysis_period;
-    std::vector<double> kwac_per_kwdc(year_one_values);
-    for (size_t i = 0; i < year_one_values; i++) {
-        kwac_per_kwdc[i] = gen[i] / system_cap;
-        kwac_per_kwdc[i] = std::max(0.0, kwac_per_kwdc[i]);
+    // If gen is assigned, use REopt's prod_factor_series_kw number, if not use lat/lon and losses with the PVWatts weather files (as called by REopt)
+    if (vt->is_assigned("gen")) {
+        std::vector<double> gen;
+        vt_get_array_vec(vt, "gen", gen);
+        int analysis_period;
+        vt_get_int(vt, "analysis_period", &analysis_period);
+        size_t year_one_values = gen.size() / analysis_period;
+        std::vector<double> kwac_per_kwdc(year_one_values);
+        for (size_t i = 0; i < year_one_values; i++) {
+            kwac_per_kwdc[i] = gen[i] / system_cap;
+            kwac_per_kwdc[i] = std::max(0.0, kwac_per_kwdc[i]);
+        }
+        reopt_pv.assign("prod_factor_series_kw", kwac_per_kwdc);
+        // The above already includes losses
+        reopt_pv.assign("losses", 0.0);
     }
-    reopt_pv.assign("prod_factor_series_kw", kwac_per_kwdc);
-    // The above already includes losses
-    reopt_pv.assign("losses", 0.0);
+    else if (vt->is_assigned("losses")) {
+        map_input(vt, "losses", &reopt_pv, "losses");
+    }
 
     // financial inputs
     map_optional_input(vt, "itc_fed_percent", &reopt_pv, "federal_itc_pct", 0., true);
