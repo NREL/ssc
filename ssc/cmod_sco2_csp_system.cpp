@@ -1297,6 +1297,7 @@ public:
 
                 // Columns(11) : 0) HTF Temp[C], 1) HTF ND mass flow[-], 2) Ambient Temp[C], 3) ND Power, 4) ND Heat, 5) ND Fan Power, 6) ND Water
                 //               ...... 7) ND PHX deltaT, 8) ND P_co2_PHX_in, 9) ND m_dot_co2_PHX, 10) ND P_co2_turb_in
+                //               ...... 11) ND W_dot_net 12) ND eta_net, 13) T_htf_cold_diff / deltaT_des
                 // 5/12/2022 generate udpc table for all off-design simulations
                 //               the order won't necessarily match what the UDPC model wants,
                 //               but at least normalized values are available to post-process
@@ -1322,7 +1323,7 @@ public:
                     pm_udpc_table[n_run * 11 + 10] = (ssc_number_t)((p_t_P_in_od[n_run]) / (c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::TURB_IN] * 1.E-3));
                     pm_udpc_table[n_run * 11 + 11] = (ssc_number_t)(p_W_dot_net_less_cooling_od[n_run] / (as_double("W_dot_net_less_cooling")));  //[-]
                     pm_udpc_table[n_run * 11 + 12] = (ssc_number_t)(p_eta_thermal_net_less_cooling_od[n_run]/(as_double("eta_thermal_net_less_cooling_des")));
-                    pm_udpc_table[n_run * 11 + 13] = (ssc_number_t)(1.0 - p_T_htf_cold_od[n_run] / p_deltaT_HTF_PHX_od[n_run]);     //[-]
+                    pm_udpc_table[n_run * 11 + 13] = (ssc_number_t)(1.0 - (T_htf_PHX_out_des - p_T_htf_cold_od[n_run]) / (T_htf_hot_des - T_htf_PHX_out_des));     //[-]
                 //}
                 // Energy Balance Checks
                 double diff_m_dot, diff_E_cycle, diff_Q_LTR, diff_Q_HTR;
