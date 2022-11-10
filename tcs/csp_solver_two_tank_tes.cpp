@@ -2041,7 +2041,7 @@ double /*MWe*/ C_csp_two_tank_tes::pumping_power(double m_dot_sf /*kg/s*/, doubl
         if (this->m_is_hx) 
 		{
             // Also going to be tanks_in_parallel = true if there's a hx between external system and TES HTF
-			htf_pump_power = (tes_pump_coef * m_dot_tank + tes_pump_coef * fabs(m_dot_pb - m_dot_sf)) / 1000.0;		//[MWe]
+			htf_pump_power = (tes_pump_coef * m_dot_tank + tes_pump_coef * std::abs(m_dot_pb - m_dot_sf)) / 1000.0;		//[MWe]
 			//htf_pump_power = (tes_pump_coef*m_dot_tank + pb_pump_coef * (fabs(m_dot_pb - m_dot_sf) + m_dot_pb)) / 1000.0;	//[MW]
         }
         else 

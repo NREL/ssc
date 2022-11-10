@@ -90,7 +90,7 @@ int C_csp_solver::solve_operating_mode(C_csp_collector_receiver::E_csp_cr_modes 
                     return -2;
                 }
                 x1 = xy2.x;
-            } while (fabs(m_dot_bal2 - m_dot_bal) < 0.02);
+            } while (std::abs(m_dot_bal2 - m_dot_bal) < 0.02);
 
             xy2.y = m_dot_bal2;
 
@@ -112,7 +112,7 @@ int C_csp_solver::solve_operating_mode(C_csp_collector_receiver::E_csp_cr_modes 
             }
             if (m_dot_bal_code != C_monotonic_eq_solver::CONVERGED)
             {
-                if (m_dot_bal_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) < 0.1)
+                if (m_dot_bal_code > C_monotonic_eq_solver::CONVERGED && std::abs(tol_solved) < 0.1)
                 {
                     std::string msg = util::format("At time = %lg %s "
                         "iteration to find a defocus resulting in the maximum power cycle mass flow rate only reached a convergence "
@@ -202,7 +202,7 @@ int C_csp_solver::solve_operating_mode(C_csp_collector_receiver::E_csp_cr_modes 
 
             if (solver_code != C_monotonic_eq_solver::CONVERGED)
             {
-                if (solver_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) < 0.1)
+                if (solver_code > C_monotonic_eq_solver::CONVERGED && std::abs(tol_solved) < 0.1)
                 {
                     std::string msg = util::format("At time = %lg %s "
                         "iteration to find a defocus resulting in the maximum power cycle heat input only reached a convergence "
@@ -370,7 +370,7 @@ int C_csp_solver::C_MEQ__defocus::operator()(double defocus /*-*/, double *targe
             }
             if (t_ts_code != C_monotonic_eq_solver::CONVERGED)
             {
-                if (t_ts_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) < 0.1)
+                if (t_ts_code > C_monotonic_eq_solver::CONVERGED && std::abs(tol_solved) < 0.1)
                 {
                     std::string msg = util::format("At time = %lg power cycle startup time iteration "
                         " only reached a convergence"
@@ -510,7 +510,7 @@ int C_csp_solver::C_MEQ__defocus::operator()(double defocus /*-*/, double *targe
                     }
                     if (t_ts_code != C_monotonic_eq_solver::CONVERGED)
                     {
-                        if (t_ts_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) < 0.1*m_t_ts_initial)
+                        if (t_ts_code > C_monotonic_eq_solver::CONVERGED && std::abs(tol_solved) < 0.1*m_t_ts_initial)
                         {
                             std::string msg = util::format("At time = %lg power cycle startup time iteration "
                                 " only reached a convergence"
@@ -582,7 +582,7 @@ int C_csp_solver::C_MEQ__timestep::operator()(double t_ts_guess /*s*/, double *t
     }
 
     // Check if iteration is required
-    if (fabs(diff_T_field_cold) > 1.E-3)
+    if (std::abs(diff_T_field_cold) > 1.E-3)
     {
         // Set up solver
         c_solver.settings(1.E-3, 50, mpc_csp_solver->m_T_field_cold_limit, mpc_csp_solver->m_T_field_in_hot_limit, false);
@@ -617,7 +617,7 @@ int C_csp_solver::C_MEQ__timestep::operator()(double t_ts_guess /*s*/, double *t
 
         if (T_field_cold_code != C_monotonic_eq_solver::CONVERGED)
         {
-            if (T_field_cold_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) < 0.1)
+            if (T_field_cold_code > C_monotonic_eq_solver::CONVERGED && std::abs(tol_solved) < 0.1)
             {
                 double abc = 1.23;
                 //std::string msg = util::format("At time = %lg C_csp_solver:::solver_pc_fixed__tes_dc failed "
@@ -820,7 +820,7 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
    
 
     // For now, check the CR return pressure against the assumed constant system interface pressure
-    if (fabs((mpc_csp_solver->mc_cr_out_solver.m_P_htf_hot - m_P_field_in) / m_P_field_in) > 0.001 && !mpc_csp_solver->mc_collector_receiver.m_is_sensible_htf)
+    if (std::abs((mpc_csp_solver->mc_cr_out_solver.m_P_htf_hot - m_P_field_in) / m_P_field_in) > 0.001 && !mpc_csp_solver->mc_collector_receiver.m_is_sensible_htf)
     {
         std::string msg = util::format("C_csp_solver::solver_cr_to_pc_to_cr(...) The pressure returned from the CR model, %lg [bar],"
             " is different than the assumed constant pressure, %lg [bar]",
@@ -1210,7 +1210,7 @@ int C_csp_solver::C_MEQ__T_field_cold::operator()(double T_field_cold /*C*/, dou
             return -4;
         }
 
-        if (fabs(diff_m_dot) > 1.E-3)
+        if (std::abs(diff_m_dot) > 1.E-3)
         {
             C_monotonic_eq_solver::S_xy_pair xy1;
             xy1.x = f_m_dot_guess_1;        //[-]
@@ -1237,7 +1237,7 @@ int C_csp_solver::C_MEQ__T_field_cold::operator()(double T_field_cold /*C*/, dou
 
             if (f_m_dot_code != C_monotonic_eq_solver::CONVERGED)
             {
-                if (f_m_dot_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) < 0.1)
+                if (f_m_dot_code > C_monotonic_eq_solver::CONVERGED && std::abs(tol_solved) < 0.1)
                 {
                     std::string msg = util::format("At time = %lg power cycle mass flow for startup "
                         "iteration to find a defocus resulting in the maximum power cycle mass flow rate only reached a convergence "

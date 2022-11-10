@@ -1205,7 +1205,7 @@ void C_cavity_receiver::viewFactor(const util::matrix_t<double>& poly_a, const u
         }
     }
 
-    radUA = abs(radUA)/(4.0*CSP::pi);
+    radUA = std::abs(radUA)/(4.0*CSP::pi);
 
     F_AB = radUA / areaA;
     F_BA = radUA / areaB;
@@ -1246,11 +1246,11 @@ double C_cavity_receiver::f_skew(double s, double l, double alpha, double cosAlp
     double wsqrt = sqrt(s2 + d2/sinAlpha2);
     double psqrt = sqrt(l2 + d2/sinAlpha2);
     double wdim = 1.E-9;
-    if (abs(s + wsqrt) > 0) {
+    if (std::abs(s + wsqrt) > 0) {
         wdim = s + wsqrt;
     }
     double pdim = 1.E-9;
-    if (abs(l + psqrt) > 0) {
+    if (std::abs(l + psqrt) > 0) {
         pdim = l + psqrt;
     }
 
@@ -1379,13 +1379,13 @@ void C_cavity_receiver::edgePairParameters(const util::matrix_t<double>& Po, con
     double l_toEnd = mag_vect(qfdiff);
 
     // unit vectors point from parameter origin to furthest of the two vertices
-    if (abs(s) < s_toEnd) {
+    if (std::abs(s) < s_toEnd) {
         norm3Dvect(pfdiff, sHat);
     }
     else {
         norm3Dvect(podiff, sHat);
     }
-    if (abs(l) < l_toEnd) {
+    if (std::abs(l) < l_toEnd) {
         norm3Dvect(qfdiff, lHat);
     }
     else {
@@ -1426,7 +1426,7 @@ void C_cavity_receiver::polygon_normal_and_area(const util::matrix_t<double>& po
             // the triple product of any combination of vertices must be zero
             // for the polygon to be planar
             diffrows(poly_a.row(i), poly_a.row(0), diff_local);
-            double volume = abs(dotprod3D(norm_vect, diff_local));
+            double volume = std::abs(dotprod3D(norm_vect, diff_local));
             if (volume > almostZero) {
                 throw(C_csp_exception("viewFactor: input 1 vertices not coplanar"));
             }
@@ -2146,7 +2146,7 @@ void C_cavity_receiver::inpolygon(const util::matrix_t<double>& p_x, const util:
             theCrossProd(i,j) = vx(i,j)*vy(i+1,j) - vx(i+1,j)*vy(i,j);
 
             scaledEps = ScaleFactor(i, 0) * scaledEps_base;
-            if (abs(theCrossProd(i, j)) < scaledEps) {
+            if (std::abs(theCrossProd(i, j)) < scaledEps) {
                 signCrossProd(i,j) = 0;
             }
             else if (theCrossProd(i, j) > 1.E-10) {
@@ -2163,10 +2163,10 @@ void C_cavity_receiver::inpolygon(const util::matrix_t<double>& p_x, const util:
 
             diffQuad(i,j) = quad(i+1,j) - quad(i,j);
 
-            if (abs(diffQuad(i, j)) == 3) {
+            if (std::abs(diffQuad(i, j)) == 3) {
                 diffQuad(i,j) /= -3;
             }
-            if (abs(diffQuad(i, j)) == 2) {
+            if (std::abs(diffQuad(i, j)) == 2) {
                 diffQuad(i,j) = 2 * signCrossProd(i,j);
             }
         }        
@@ -3267,7 +3267,7 @@ void C_cavity_receiver::steady_state_sln(double T_salt_cold_in /*K*/, double q_d
     error_T_HTF_node_iter = 10. * tol_T_HTF_node_iter;
     count_T_HTF_node_iter = 0;
 
-    while (fabs(error_T_HTF_node_iter) > tol_T_HTF_node_iter && count_T_HTF_node_iter < 100) {
+    while (std::abs(error_T_HTF_node_iter) > tol_T_HTF_node_iter && count_T_HTF_node_iter < 100) {
 
         count_T_HTF_node_iter++;
 
@@ -3335,7 +3335,7 @@ void C_cavity_receiver::steady_state_sln(double T_salt_cold_in /*K*/, double q_d
 
             error_relmax_T_rec_node_iter = 0.0;
             for (size_t i = 0; i < m_nElems; i++) {
-                error_relmax_T_rec_node_iter = max(error_relmax_T_rec_node_iter, abs(E_T(i, 0) - E_Tstar(i, 0)) / E_T(i, 0));
+                error_relmax_T_rec_node_iter = max(error_relmax_T_rec_node_iter, std::abs(E_T(i, 0) - E_Tstar(i, 0)) / E_T(i, 0));
             }
         }
 
@@ -3357,7 +3357,7 @@ void C_cavity_receiver::steady_state_sln(double T_salt_cold_in /*K*/, double q_d
             error_T_htf_out = tol_abs_T_htf_target * 10.0;
             count_T_htf_out_iter = 0;
 
-            while (fabs(error_T_htf_out) > tol_abs_T_htf_target && count_T_htf_out_iter < 100) {
+            while (std::abs(error_T_htf_out) > tol_abs_T_htf_target && count_T_htf_out_iter < 100) {
 
                 count_T_htf_out_iter++;
                 double mc = m_dot_paths[k] * cp_htf; //[kg/s * J/kg-K] = [W/K]
@@ -3425,7 +3425,7 @@ void C_cavity_receiver::steady_state_sln(double T_salt_cold_in /*K*/, double q_d
         // Calculate difference between nodal T_HTF and T_HTF_calc
         error_T_HTF_node_iter = 0.0;
         for (size_t i = 0; i < m_nElems; i++) {
-            error_T_HTF_node_iter = max(error_T_HTF_node_iter, abs(E_T_HTF(i, 0) - E_T_HTF_calc(i, 0)));
+            error_T_HTF_node_iter = max(error_T_HTF_node_iter, std::abs(E_T_HTF(i, 0) - E_T_HTF_calc(i, 0)));
         }
 
         E_T_HTF = E_T_HTF_calc;

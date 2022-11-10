@@ -1204,13 +1204,13 @@ void etes_dispatch_opt::set_outputs_from_lp_solution(lprec* lp, unordered_map<st
 
         if (strcmp(root, "ycsu") == 0)     //Cycle start up
         {
-            bool su = (fabs(1 - val) < 0.001);
+            bool su = (std::abs(1 - val) < 0.001);
             outputs.pb_operation.at(t) = outputs.pb_operation.at(t) || su;
             outputs.q_pb_startup.at(t) = su ? params["Qcsu"] : 0.;
         }
         else if (strcmp(root, "y") == 0)     //Cycle operation
         {
-            outputs.pb_operation.at(t) = outputs.pb_operation.at(t) || (fabs(1. - val) < 0.001);
+            outputs.pb_operation.at(t) = outputs.pb_operation.at(t) || (std::abs(1. - val) < 0.001);
         }
         else if (strcmp(root, "qdot") == 0)     //Cycle thermal energy consumption
         {
@@ -1218,13 +1218,13 @@ void etes_dispatch_opt::set_outputs_from_lp_solution(lprec* lp, unordered_map<st
         }
         else if (strcmp(root, "yhsu") == 0)     //Receiver start up
         {
-            bool su = (fabs(1 - val) < 0.001);
+            bool su = (std::abs(1 - val) < 0.001);
             outputs.rec_operation.at(t) = outputs.rec_operation.at(t) || su;
             outputs.q_rec_startup.at(t) = su ? params["Qhsu"] : 0.;
         }
         else if (strcmp(root, "yeh") == 0)
         {
-            outputs.rec_operation.at(t) = outputs.rec_operation.at(t) || (fabs(1 - val) < 0.001);
+            outputs.rec_operation.at(t) = outputs.rec_operation.at(t) || (std::abs(1 - val) < 0.001);
         }
         else if (strcmp(root, "s") == 0)         //Thermal storage charge state
         {

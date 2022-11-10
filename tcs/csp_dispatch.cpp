@@ -1842,13 +1842,13 @@ void csp_dispatch_opt::set_outputs_from_lp_solution(lprec* lp, unordered_map<std
 
         if (strcmp(root, "ycsu") == 0)     //Cycle start up
         {
-            bool su = (fabs(1 - val) < 0.001);
+            bool su = (std::abs(1 - val) < 0.001);
             outputs.pb_operation.at(t) = outputs.pb_operation.at(t) || su;
             outputs.q_pb_startup.at(t) = su ? model_params["Qc"] : 0.;
         }
         else if (strcmp(root, "y") == 0)  // is cycle operating
         {
-            outputs.pb_operation.at(t) = outputs.pb_operation.at(t) || (fabs(1. - val) < 0.001);
+            outputs.pb_operation.at(t) = outputs.pb_operation.at(t) || (std::abs(1. - val) < 0.001);
         }
         else if (strcmp(root, "x") == 0)  // cycle thermal energy consumption
         {
@@ -1856,7 +1856,7 @@ void csp_dispatch_opt::set_outputs_from_lp_solution(lprec* lp, unordered_map<std
         }
         else if (strcmp(root, "yrsu") == 0)  // is receiver starting
         {
-            outputs.rec_operation.at(t) = outputs.rec_operation.at(t) || (fabs(1 - val) < 0.001);
+            outputs.rec_operation.at(t) = outputs.rec_operation.at(t) || (std::abs(1 - val) < 0.001);
         }
         else if (strcmp(root, "xrsu") == 0)  // receiver startup energy
         {
@@ -1864,7 +1864,7 @@ void csp_dispatch_opt::set_outputs_from_lp_solution(lprec* lp, unordered_map<std
         }
         else if (strcmp(root, "yr") == 0)  // is receiver operating
         {
-            outputs.rec_operation.at(t) = outputs.rec_operation.at(t) || (fabs(1 - val) < 0.001);
+            outputs.rec_operation.at(t) = outputs.rec_operation.at(t) || (std::abs(1 - val) < 0.001);
         }
         else if (strcmp(root, "s") == 0)  // thermal storage charge state
         {
@@ -1884,7 +1884,7 @@ void csp_dispatch_opt::set_outputs_from_lp_solution(lprec* lp, unordered_map<std
         }
         else if (strcmp(root, "yeh") == 0)  // is parallel heater on
         {
-            outputs.htr_operation.at(t) = outputs.htr_operation.at(t) || (fabs(1 - val) < 0.001);
+            outputs.htr_operation.at(t) = outputs.htr_operation.at(t) || (std::abs(1 - val) < 0.001);
         }
         else if (strcmp(root, "qeh") == 0)  // heater target power
         {
@@ -1943,7 +1943,7 @@ bool csp_dispatch_opt::set_dispatch_outputs()
             {
                 double q_pc_est = params.w_lim.at(m_current_read_step) * 1.e-3 / eta_calc;			// Estimated power cycle thermal input at w_lim
                 double eta_new = pointers.mpc_pc->get_efficiency_at_load(q_pc_est / params.q_pb_des) * eta_corr;		// Calculated power cycle efficiency
-                eta_diff = fabs(eta_calc - eta_new);
+                eta_diff = std::abs(eta_calc - eta_new);
                 eta_calc = eta_new;
                 i++;
             }
