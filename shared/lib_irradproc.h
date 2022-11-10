@@ -877,9 +877,10 @@ double shadeFraction1x(double solar_azimuth, double solar_zenith, double axis_ti
 * \param[in] isOneAxisTracking is 1-axis tracking used? (-)
 * \param[in] horizontalLength projected horizontal length of the row, product of slope length and tilt (m)
 * \param[in] rowToRow distance between front of row and front of row behind (m)
+* \param[in] solar_azimuth solar azimuth where due south is 180 degrees
 */
 std::vector<double> divideAndAlignAlbedos(const std::vector<double>& albedo /*-*/, size_t n_divisions /*-*/, bool isOneAxisTracking /*-*/,
-                                          double horizontalLength /*m*/, double rowToRow /*m*/);
+                                          double horizontalLength /*m*/, double rowToRow /*m*/, double solar_azimuth /*rad*/);
 
 /**
 * condenseAndAlignGroundIrrad condenses the spatial ground irradiance vector and if 1-axis tracking
@@ -890,9 +891,10 @@ std::vector<double> divideAndAlignAlbedos(const std::vector<double>& albedo /*-*
 * \param[in] isOneAxisTracking is 1-axis tracking used?
 * \param[in] horizontalLength projected horizontal length of the row, product of slope length and tilt
 * \param[in] rowToRow distance between front of row and front of row behind
+* \param[in] solar_azimuth solar azimuth where due south is 180 degrees
 */
 std::vector<double> condenseAndAlignGroundIrrad(const std::vector<double>& ground_irr /*W/m2*/, size_t n_divisions /*-*/, bool isOneAxisTracking /*-*/,
-                                                double horizontalLength /*m*/, double rowToRow /*m*/);
+                                                double horizontalLength /*m*/, double rowToRow /*m*/, double solar_azimuth /*rad*/);
 
 /**
 * truetrack calculates the tracker rotation that minimizes the angle of incidence betweem direct irradiance and the module front surface normal
