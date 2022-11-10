@@ -538,10 +538,10 @@ void cm_windpower::exec()
 			if (!wdprov->read(wt.hubHeight, &wind, &dir, &temp, &pres, &wt.measurementHeight, &closest_dir_meas_ht, true))
 				throw exec_error("windpower", util::format("error reading wind resource file at %d: ", i) + wdprov->error());
 
-			if (fabs(wt.measurementHeight - wt.hubHeight) > 35.0)
+			if (std::abs(wt.measurementHeight - wt.hubHeight) > 35.0)
 				throw exec_error("windpower", util::format("the closest wind speed measurement height (%lg m) found is more than 35 m from the hub height specified (%lg m)", wt.measurementHeight, wt.hubHeight));
 
-			if (fabs(closest_dir_meas_ht - wt.measurementHeight) > 10.0)
+			if (std::abs(closest_dir_meas_ht - wt.measurementHeight) > 10.0)
 			{
 				if (i > 0) // if this isn't the first hour, then it's probably because of interpolation
 				{
@@ -558,7 +558,7 @@ void cm_windpower::exec()
 			}
 
 			// If the wind speed measurement height still differs from the turbine hub height (ie it wasn't corrected above, maybe because file only has one measurement height), use the shear to correct it.
-			if (fabs(wt.measurementHeight - wt.hubHeight) > 1) {
+			if (std::abs(wt.measurementHeight - wt.hubHeight) > 1) {
 				if (wt.shearExponent > 1.0) wt.shearExponent = 1.0 / 7.0;
 				wind = wind * pow(wt.hubHeight / wt.measurementHeight, wt.shearExponent);
 				wt.measurementHeight = wt.hubHeight;

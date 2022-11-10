@@ -1367,9 +1367,9 @@ public:
 		// scale to max value for better irr convergence
 		if (count < 1) return 1.0;
 		int i = 0;
-		double max = fabs(cf.at(cf_unscaled, 0));
+		double max = std::abs(cf.at(cf_unscaled, 0));
 		for (i = 0; i <= count; i++)
-			if (fabs(cf.at(cf_unscaled, i)) > max) max = fabs(cf.at(cf_unscaled, i));
+			if (std::abs(cf.at(cf_unscaled, i)) > max) max = std::abs(cf.at(cf_unscaled, i));
 		return (max > 0 ? max : 1);
 	}
 
@@ -1377,7 +1377,7 @@ public:
 	{
 		double npv_of_irr = npv(cf_line, count, calculated_irr) + cf.at(cf_line, 0);
 		double npv_of_irr_plus_delta = npv(cf_line, count, calculated_irr + 0.001) + cf.at(cf_line, 0);
-		bool is_valid = ((number_of_iterations < max_iterations) && (fabs(residual) < tolerance) && (npv_of_irr > npv_of_irr_plus_delta) && (fabs(npv_of_irr / scale_factor) < tolerance));
+		bool is_valid = ((number_of_iterations < max_iterations) && (std::abs(residual) < tolerance) && (npv_of_irr > npv_of_irr_plus_delta) && (std::abs(npv_of_irr / scale_factor) < tolerance));
 		//if (!is_valid)
 		//{
 		//std::stringstream outm;
@@ -1468,7 +1468,7 @@ public:
 
 		residual = irr_poly_sum(calculated_irr, cf_line, count) / scale_factor;
 
-		while (!(fabs(residual) <= tolerance) && (number_of_iterations < max_iterations))
+		while (!(std::abs(residual) <= tolerance) && (number_of_iterations < max_iterations))
 		{
 			deriv_sum = irr_derivative_sum(initial_guess, cf_line, count);
 			if (deriv_sum != 0.0)
@@ -1755,7 +1755,7 @@ public:
 		}
 
 
-		while ((itnum < maxIterations) && (fabs(newMin - oldMin) > ppa_soln_tolerance))
+		while ((itnum < maxIterations) && (std::abs(newMin - oldMin) > ppa_soln_tolerance))
 		{
 			// reset values and run
 			oldMin = newMin;
@@ -1980,7 +1980,7 @@ public:
 		{
 			itnpv_target_irr = npv(CF_after_tax_net_equity_cash_flow, nyears, min_irr_target) + cf.at(CF_after_tax_net_equity_cash_flow, 0);
 			itnpv_target_irr_plus_delta = npv(CF_after_tax_net_equity_cash_flow, nyears, min_irr_target + 0.001) + cf.at(CF_after_tax_net_equity_cash_flow, 0);
-			irr_weighting_factor = fabs(itnpv_target_irr);
+			irr_weighting_factor = std::abs(itnpv_target_irr);
 			is_min_irr_minimally_satisfied = (irr_weighting_factor < ppa_soln_tolerance);
 			is_min_irr_satisfied = ((itnpv_target_irr >= 0.0) || is_min_irr_minimally_satisfied);
 			if (is_min_dscr_minimally_satisfied)
@@ -1999,22 +1999,22 @@ public:
 			itnpv_target_irr = npv(CF_after_tax_net_equity_cash_flow, nyears, aftertax_irr) + cf.at(CF_after_tax_net_equity_cash_flow, 0);
 			itnpv_target_irr_plus_delta = npv(CF_after_tax_net_equity_cash_flow, nyears, aftertax_irr + 0.001) + cf.at(CF_after_tax_net_equity_cash_flow, 0);
 			irr_weighting_factor = DBL_MAX;
-			is_min_irr_minimally_satisfied = (fabs(itnpv_target_irr) <= ppa_soln_tolerance) && (itnpv_target_irr > itnpv_target_irr_plus_delta) && (aftertax_irr >= min_irr_target);
+			is_min_irr_minimally_satisfied = (std::abs(itnpv_target_irr) <= ppa_soln_tolerance) && (itnpv_target_irr > itnpv_target_irr_plus_delta) && (aftertax_irr >= min_irr_target);
 			is_min_irr_satisfied = (((itnpv_target_irr <= itnpv_target_irr_plus_delta) && (aftertax_irr >= 0)) || is_min_irr_minimally_satisfied);
 		}
 
 		if (min_dscr_required == 1)
 		{
-			dscr_weighting_factor = fabs(min_dscr - min_dscr_target);
+			dscr_weighting_factor = std::abs(min_dscr - min_dscr_target);
 			is_min_dscr_minimally_satisfied = (dscr_weighting_factor < ppa_soln_tolerance);
 			is_min_dscr_satisfied = ((min_dscr >= min_dscr_target) || is_min_dscr_minimally_satisfied);
-			if (fabs(min_dscr) > ppa_soln_tolerance) dscr_weighting_factor /= fabs(min_dscr);
+			if (std::abs(min_dscr) > ppa_soln_tolerance) dscr_weighting_factor /= std::abs(min_dscr);
 		}
 		if (positive_cashflow_required == 1)
 		{
 			is_positive_cashflow_satisfied = (min_after_tax_cash_flow >= 0.0);
 			//				is_positive_cashflow_minimally_satisfied= ((is_positive_cashflow_satisfied) && ( min_after_tax_cash_flow  < 100.0)); // somewhat arbitrary - consistent with finutility
-			is_positive_cashflow_minimally_satisfied = ((is_positive_cashflow_satisfied) && (fabs(min_after_tax_cash_flow) < ppa_soln_tolerance)); // somewhat arbitrary - consistent with finutility
+			is_positive_cashflow_minimally_satisfied = ((is_positive_cashflow_satisfied) && (std::abs(min_after_tax_cash_flow) < ppa_soln_tolerance)); // somewhat arbitrary - consistent with finutility
 //				positive_cashflow_weighting_factor = fabs(min_after_tax_cash_flow);
 			positive_cashflow_weighting_factor = 1.0; // switch to binary search
 		}
@@ -2066,7 +2066,7 @@ public:
 			{
 
 				check_constraints(use_target_irr, are_all_constraints_satisfied, is_one_constraint_minimally_satisfied);
-				solved = (((are_all_constraints_satisfied) && (is_one_constraint_minimally_satisfied)) || (fabs(x0 - x1) < ppa_soln_tolerance));
+				solved = (((are_all_constraints_satisfied) && (is_one_constraint_minimally_satisfied)) || (std::abs(x0 - x1) < ppa_soln_tolerance));
 
 				if (!solved)
 				{
@@ -2111,7 +2111,7 @@ public:
 
 								compute_cashflow();
 								check_constraints(use_target_irr, are_all_constraints_satisfied, is_one_constraint_minimally_satisfied);
-								solved = (((are_all_constraints_satisfied) && (is_one_constraint_minimally_satisfied)) || (fabs(x0 - x1) < ppa_soln_tolerance));
+								solved = (((are_all_constraints_satisfied) && (is_one_constraint_minimally_satisfied)) || (std::abs(x0 - x1) < ppa_soln_tolerance));
 
 								// set endpoint of weighted interval x0<x1
 								x1 = x0;
@@ -2139,7 +2139,7 @@ public:
 
 								compute_cashflow();
 								check_constraints(use_target_irr, are_all_constraints_satisfied, is_one_constraint_minimally_satisfied);
-								solved = (((are_all_constraints_satisfied) && (is_one_constraint_minimally_satisfied)) || (fabs(x0 - x1) < ppa_soln_tolerance));
+								solved = (((are_all_constraints_satisfied) && (is_one_constraint_minimally_satisfied)) || (std::abs(x0 - x1) < ppa_soln_tolerance));
 								// set endpoint of weighted interval x0<x1
 								x0 = x1;
 								w0 = w1;

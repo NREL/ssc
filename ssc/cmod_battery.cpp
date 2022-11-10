@@ -1969,16 +1969,16 @@ void battstor::update_grid_power(compute_module&, double P_gen_ac, double P_load
     if (analyze_outage) {
         P_crit_load_unmet = outCritLoadUnmet[index_replace];
         if (P_gen_ac < 0.0) {
-            if (fabs(P_gen_ac) < tolerance) {
+            if (std::abs(P_gen_ac) < tolerance) {
                 outUnmetLosses[index_replace] = 0.0;
             }
             else {
                 // Update post-AC losses
-                outUnmetLosses[index_replace] = abs(P_gen_ac);
+                outUnmetLosses[index_replace] = std::abs(P_gen_ac);
             }
         }
         P_unmet_losses = outUnmetLosses[index_replace];
-        if (fabs(P_unmet_losses) < tolerance) {
+        if (std::abs(P_unmet_losses) < tolerance) {
             P_unmet_losses = 0.0;
             outUnmetLosses[index_replace] = 0.0;
         }
@@ -1993,7 +1993,7 @@ void battstor::update_grid_power(compute_module&, double P_gen_ac, double P_load
     }
     outInterconnectionLoss[index_replace] = P_interconnection_loss;
     P_grid = P_gen_ac - P_load_ac - P_interconnection_loss + P_crit_load_unmet + P_unmet_losses;
-    if (fabs(P_grid) < tolerance) {
+    if (std::abs(P_grid) < tolerance) {
         P_grid = 0;
     }
 

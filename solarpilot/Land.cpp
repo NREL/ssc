@@ -151,7 +151,7 @@ void Land::getExtents(var_map &V, double rval[])
 			//For each polygon in the inclusions
 			for(unsigned int j=0; j<V.land.inclusions.val.at(i).size(); j++){
 				rad = sqrt( pow(V.land.inclusions.val.at(i).at(j).x - V.land.tower_offset_x.val, 2) + pow(V.land.inclusions.val.at(i).at(j).y - V.land.tower_offset_y.val, 2) );
-				if(fabs(rad) > trmax) trmax = rad;
+				if(std::abs(rad) > trmax) trmax = rad;
 			}
 		}
         if( V.land.inclusions.val.size() > 0 )
@@ -191,7 +191,7 @@ void Land::getExtents(var_map &V, double rval[])
 
 				//Find the closest point on the line defined by pt1 and pt0 to 'T'.
 				Toolbox::line_norm_intersect(V.land.inclusions.val.at(i).at(j), pt1, T, N, rad);
-				if(fabs(rad) < trmin) trmin = rad;
+				if(std::abs(rad) < trmin) trmin = rad;
 
 			}
 		}
@@ -216,7 +216,7 @@ void Land::getExtents(var_map &V, double rval[])
 				//Find the closest point on the line defined by ex0 and ex1 to 'T'. This point
 				//is 'N' with a distance 'rad' from T.
 				Toolbox::line_norm_intersect(V.land.exclusions.val.at(i).at(j), ex1, T, N, rad);
-				if(fabs(rad) < excheck) excheck = rad;
+				if(std::abs(rad) < excheck) excheck = rad;
 			}
 		}
 		if(excheck > trmin && excheck < 9.e9) trmin = excheck;		if(trmin > radmax) trmin = 0.001;	//Use a small number larger than zero if nothing is set
@@ -372,7 +372,7 @@ double Land::calcPolyLandArea(var_land &V){
 			j = k;
 		}
 	}
-	area = fabs(area);
+	area = std::abs(area);
 
 	//Now subtract the area of the exclusions
 	double excs = 0.;
@@ -387,7 +387,7 @@ double Land::calcPolyLandArea(var_land &V){
 			j = k;
 		}
 	}	
-	excs = fabs(excs);
+	excs = std::abs(excs);
 
 	return area-excs;
 

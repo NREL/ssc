@@ -220,7 +220,7 @@ public:
 				
 		//Throw exception if frequency distribution vector sums to < 99.5%
 		double probability_tolerance = 0.005;
-		if (fabs(1.0 - _probability_vect_checker) > probability_tolerance)
+		if (std::abs(1.0 - _probability_vect_checker) > probability_tolerance)
 			throw exec_error("mhk_tidal", "Probability distribution vector does not add up to 100%.");
 
 		//Factoring in losses in total annual energy production:

@@ -1104,7 +1104,7 @@ public:
                 }
 
                 bool is_cavity_field = false;
-                if ((y_h_max - y_h_min) / max(abs(y_h_max), abs(y_h_min)) < 1.25) {
+                if ((y_h_max - y_h_min) / max(std::abs(y_h_max), std::abs(y_h_min)) < 1.25) {
                     is_cavity_field = true;
                 }
 

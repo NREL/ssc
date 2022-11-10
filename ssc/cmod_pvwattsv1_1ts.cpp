@@ -110,7 +110,7 @@ public:
         double derate = as_double("derate");
         int track_mode = as_integer("track_mode"); // 0, 1, 2, 3
         double azimuth = as_double("azimuth");
-        double tilt = fabs(as_double("tilt"));
+        double tilt = std::abs(as_double("tilt"));
         double elev, pres;
         if (!is_assigned("elevation")) {
             elev = 0; //assume 0 meter elevation if none is provided

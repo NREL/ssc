@@ -281,13 +281,13 @@ public:
                 ts_significant_wave_height = wave_heights[r];
                 ts_energy_period = wave_periods[r];
                 for (size_t j = 0; j < 21; j++) {
-                    if (abs(ts_significant_wave_height - (0.25 + (j - 1) * 0.5)) <= 0.25 && j != 0) {
+                    if (std::abs(ts_significant_wave_height - (0.25 + (j - 1) * 0.5)) <= 0.25 && j != 0) {
                         sig_wave_height_index = j;
                         break;
                     }
                 }
                 for (size_t m = 0; m < 22; m++) {
-                    if (abs(ts_energy_period - (0.5 + (m - 1))) <= 0.5 && m != 0) {
+                    if (std::abs(ts_energy_period - (0.5 + (m - 1))) <= 0.5 && m != 0) {
                         energy_period_index = m;
                         break;
                     }

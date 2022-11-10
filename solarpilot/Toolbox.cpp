@@ -551,7 +551,7 @@ std::vector<std::vector<double>*> *WeatherData::getEntryPointers()
 
 //misc
 double Toolbox::round(double x){
-	return fabs(x - ceil(x)) > 0.5 ? floor(x) : ceil(x);
+	return std::abs(x - ceil(x)) > 0.5 ? floor(x) : ceil(x);
 }
 
 void Toolbox::writeMatD(string dir, string name, matrix_t<double> &mat, bool clear){
@@ -789,9 +789,9 @@ int Toolbox::polywind( const vector<sp_point> &vt, const sp_point &pt) {
 	Vect pn = crossprod( v1, v2 );
 
 	which_ign = 1;
-	if(fabs(pn.j) > fabs(pn.i)) {which_ign=1;}
-	if(fabs(pn.k) > fabs(pn.j)) {which_ign=2;}
-	if(fabs(pn.i) > fabs(pn.k)) {which_ign=0;}
+	if(std::abs(pn.j) > std::abs(pn.i)) {which_ign=1;}
+	if(std::abs(pn.k) > std::abs(pn.j)) {which_ign=2;}
+	if(std::abs(pn.i) > std::abs(pn.k)) {which_ign=0;}
 
 	/* Return the winding number of a polygon (specified by a vector of vertex points vt) 
 	around an arbitrary point pt.*/

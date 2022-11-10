@@ -898,7 +898,7 @@ public:
                             {
                                 // one axis tracker stows at a prescribed rotation angle,
                                 // but still need to consider the rotation axis tilt and azimuth
-                                double stow_angle = fabs(wind_stow_angle_deg);
+                                double stow_angle = std::abs(wind_stow_angle_deg);
                                 if (rot < 0) stow_angle = -stow_angle;  // go to stow in the same direction of current tracker position
 
                                 irr.set_surface(irrad::SINGLE_AXIS, pv.tilt, pv.azimuth,

@@ -1002,7 +1002,7 @@ bool SolarField::CheckReceiverAcceptance(Receiver* Rec, sp_point *hpos, double t
     if (Rv->accept_ang_type.mapval() == var_receiver::ACCEPT_ANG_TYPE::RECTANGULAR  //Rectangular
         || rectype == var_receiver::REC_TYPE::EXTERNAL_CYLINDRICAL) //or, if this is a cylindrical receiver (no elliptical view from cylinder)
     {
-        if (fabs(theta_x) < acc_x && fabs(theta_y) < acc_y)
+        if (std::abs(theta_x) < acc_x && std::abs(theta_y) < acc_y)
             return true;
     }
     else {	//Elliptical
@@ -3623,7 +3623,7 @@ double SolarField::calcShadowBlock(Heliostat *H, Heliostat *HI, int mode, Vect &
 			if(hits.at(0) && hits.at(1)) {
 				//Both corners are active in interfering (i.e. the shadow image is contained within the shadowed heliostat
 				dy_inter = ( Hh - (ints_trans.at(0).y + ints_trans.at(1).y) ) / (2. * Hh);	//Use the average z position of both points
-				dx_inter = fabs(ints_trans.at(0).x - ints_trans.at(1).x ) / Hw;
+				dx_inter = std::abs(ints_trans.at(0).x - ints_trans.at(1).x ) / Hw;
 
 				return dy_inter * dx_inter;
 			}
@@ -4502,7 +4502,7 @@ double SolarField::clouds::ShadowLoss(var_map &V, sp_point &hloc){
 			break;
 		}
         case var_fluxsim::CLOUD_SHAPE::RECTANGULAR:
-			if( fabs(hloc_rot.x) < V.flux.cloud_width.val/2. && fabs(hloc_rot.y) < V.flux.cloud_depth.val/2.)
+			if(std::abs(hloc_rot.x) < V.flux.cloud_width.val/2. && std::abs(hloc_rot.y) < V.flux.cloud_depth.val/2.)
 				shadowed = true;
 
 			break;

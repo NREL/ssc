@@ -176,10 +176,10 @@ public:
 
                     // iterate for Perez POA to match input POA
                     int counter = 0; // counter to prevent an infinite loop
-                    while (fabs(Pcalc - P) > 0.5 && counter < 5000)
+                    while (std::abs(Pcalc - P) > 0.5 && counter < 5000)
                     {
                         // incrementally increase or reduce D based on difference between P calculated and P measured
-                        double incr = fabs(Pcalc - P) * 0.01;
+                        double incr = std::abs(Pcalc - P) * 0.01;
                         if (Pcalc > P)
                             D = D - incr;
                         else
