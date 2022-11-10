@@ -511,7 +511,7 @@ double battery_t::calculate_max_charge_kw(double *max_current_A) {
     double power_W = 0;
     double current = 0;
     size_t its = 0;
-    while (fabs(power_W - voltage->calculate_max_charge_w(q, qmax, thermal->T_battery(), &current)) > tolerance
+    while (std::abs(power_W - voltage->calculate_max_charge_w(q, qmax, thermal->T_battery(), &current)) > tolerance
            && its++ < 10) {
         power_W = voltage->calculate_max_charge_w(q, qmax, thermal->T_battery(), &current);
         thermal->updateTemperature(current, state->last_idx + 1);
@@ -530,7 +530,7 @@ double battery_t::calculate_max_discharge_kw(double *max_current_A) {
     double power_W = 0;
     double current = 0;
     size_t its = 0;
-    while (fabs(power_W - voltage->calculate_max_discharge_w(q, qmax, thermal->T_battery(), &current)) > tolerance
+    while (std::abs(power_W - voltage->calculate_max_discharge_w(q, qmax, thermal->T_battery(), &current)) > tolerance
            && its++ < 5) {
         power_W = voltage->calculate_max_discharge_w(q, qmax, thermal->T_battery(), &current);
         thermal->updateTemperature(current, state->last_idx + 1);
@@ -550,7 +550,7 @@ void battery_t::ChangeTimestep(double dt_hr) {
 
     auto old_hr = (double)state->last_idx * params->dt_hr;
     state->last_idx = (size_t)(old_hr / dt_hr);
-    if (fabs(old_hr / dt_hr - state->last_idx) > 1e-7)
+    if (std::abs(old_hr / dt_hr - state->last_idx) > 1e-7)
         throw std::runtime_error("battery_t dt_hr step size can only be changed to a higher step size when the current time step"
                                  " is at a time step common to both the previous and new step size. For instance, if running"
                                  " 30-min steps, step size can only be increased to 60-min step at the hour.");
@@ -574,8 +574,8 @@ double battery_t::run(size_t lifetimeIndex, double &I) {
         runThermalModel(I, lifetimeIndex);
         runCapacityModel(I);
 
-        double numerator = fabs(I - I_initial);
-        if ((numerator > 0.0) && (numerator / fabs(I_initial) > tolerance)) {
+        double numerator = std::abs(I - I_initial);
+        if ((numerator > 0.0) && (numerator / std::abs(I_initial) > tolerance)) {
             *thermal->state = thermal_initial;
             *capacity->state = capacity_initial;
             I_initial = I;
@@ -612,7 +612,7 @@ double battery_t::estimateCycleDamage() {
 
 void battery_t::runCapacityModel(double &I) {
     // Don't update max capacity if the battery is idle
-    if (fabs(I) > tolerance) {
+    if (std::abs(I) > tolerance) {
         // Need to first update capacity model to ensure temperature accounted for
         capacity->updateCapacityForThermal(thermal->capacity_percent());
     }

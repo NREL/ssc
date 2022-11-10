@@ -37,7 +37,7 @@ void jacobian( Real x[n], Real f[m], Real J[n][m], F &func, Real epsrel )
 	for ( int j=0 ; j < n; j++ )
 	{
 		Real xj = x[j];
-		Real dx = epsrel * fabs( xj );
+		Real dx = epsrel * std::abs( xj );
 		
 		if (dx == 0)
 			dx = epsrel;

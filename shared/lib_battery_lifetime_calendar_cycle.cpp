@@ -148,18 +148,18 @@ void lifetime_cycle_t::rainflow(double DOD) {
 }
 
 void lifetime_cycle_t::rainflow_ranges() {
-    state->cycle->rainflow_Ylt = fabs(state->cycle->rainflow_peaks[state->cycle->rainflow_jlt - (size_t) 1] - state->cycle->rainflow_peaks[state->cycle->rainflow_jlt - (size_t) 2]);
-    state->cycle->rainflow_Xlt = fabs(state->cycle->rainflow_peaks[state->cycle->rainflow_jlt] - state->cycle->rainflow_peaks[state->cycle->rainflow_jlt - (size_t) 1]);
+    state->cycle->rainflow_Ylt = std::abs(state->cycle->rainflow_peaks[state->cycle->rainflow_jlt - (size_t) 1] - state->cycle->rainflow_peaks[state->cycle->rainflow_jlt - (size_t) 2]);
+    state->cycle->rainflow_Xlt = std::abs(state->cycle->rainflow_peaks[state->cycle->rainflow_jlt] - state->cycle->rainflow_peaks[state->cycle->rainflow_jlt - (size_t) 1]);
 }
 
 void lifetime_cycle_t::rainflow_ranges_circular(int index) {
     size_t end = state->cycle->rainflow_peaks.size() - 1;
     if (index == 0) {
-        state->cycle->rainflow_Xlt = fabs(state->cycle->rainflow_peaks[0] - state->cycle->rainflow_peaks[end]);
-        state->cycle->rainflow_Ylt = fabs(state->cycle->rainflow_peaks[end] - state->cycle->rainflow_peaks[end - 1]);
+        state->cycle->rainflow_Xlt = std::abs(state->cycle->rainflow_peaks[0] - state->cycle->rainflow_peaks[end]);
+        state->cycle->rainflow_Ylt = std::abs(state->cycle->rainflow_peaks[end] - state->cycle->rainflow_peaks[end - 1]);
     } else if (index == 1) {
-        state->cycle->rainflow_Xlt = fabs(state->cycle->rainflow_peaks[1] - state->cycle->rainflow_peaks[0]);
-        state->cycle->rainflow_Ylt = fabs(state->cycle->rainflow_peaks[0] - state->cycle->rainflow_peaks[end]);
+        state->cycle->rainflow_Xlt = std::abs(state->cycle->rainflow_peaks[1] - state->cycle->rainflow_peaks[0]);
+        state->cycle->rainflow_Ylt = std::abs(state->cycle->rainflow_peaks[0] - state->cycle->rainflow_peaks[end]);
     } else
         rainflow_ranges();
 }

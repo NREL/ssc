@@ -90,7 +90,7 @@ bool winddata_provider::find_closest( int& closest_index, int id, int ncols, dou
 	{
 		if ( (m_dataid[i] == id) && ((int)i != index_to_exclude) )
 		{
-			if ( fabs(m_heights[i] - requested_height) < height_diff )
+			if (std::abs(m_heights[i] - requested_height) < height_diff )
 			{
 				if ( index_to_exclude>=0 ) // we're looking for the next closest column for interpolation
 				{	// the next closest measurement height can't be on the same side of requested_height as index_to_exclude
@@ -98,7 +98,7 @@ bool winddata_provider::find_closest( int& closest_index, int id, int ncols, dou
 					if ( (m_heights[i] < requested_height) && (m_heights[index_to_exclude] < requested_height) ) continue;
 				}
 				closest_index = (int)i;
-				height_diff = fabs(m_heights[i] - requested_height);
+				height_diff = std::abs(m_heights[i] - requested_height);
 			}
 		}
 	}

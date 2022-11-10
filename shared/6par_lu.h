@@ -43,7 +43,7 @@ bool lu_decomp( const Real a[n][n],
 	{
 		big = 0.0;
 		for ( j=0; j < n ; j++ )
-			if ( (temp = fabs(lu[i][j])) > big )
+			if ( (temp = std::abs(lu[i][j])) > big )
 				big = temp;
 				
 		if ( big == 0.0 ) return false;
@@ -56,7 +56,7 @@ bool lu_decomp( const Real a[n][n],
 		imax = k;
 		for (i=k;i<n;i++)
 		{
-			temp=vv[i]*fabs(lu[i][k]);
+			temp=vv[i]* std::abs(lu[i][k]);
 			if (temp > big)
 			{
 				big=temp;

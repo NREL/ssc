@@ -185,7 +185,7 @@ double FuelCell::interpolateMap(double key, std::map<double, double> mapDouble) 
 			f1 = fc->second;
 			f2 = fc_next->second;
 
-			if (fabs(p2 - p1) > 0) {
+			if (std::abs(p2 - p1) > 0) {
 				m = (f2 - f1) / (p2 - p1);
 				f = f1 + m * (key-p1);
 			}
@@ -231,13 +231,13 @@ void FuelCell::checkPowerResponse() {
 
 	// Calculate maximum ramp rate up (kW/hr)
 	if (dP > 0) {
-		dP_max = fmin(fabs(dP), m_dynamicResponseUp_kWperHour);
+		dP_max = fmin(std::abs(dP), m_dynamicResponseUp_kWperHour);
 	}
 	// Calculate mmaximum ramp rate down (kW/hr)
 	else {
-		dP_max = fmin(fabs(dP), m_dynamicResponseDown_kWperHour);
+		dP_max = fmin(std::abs(dP), m_dynamicResponseDown_kWperHour);
 	}
-	double sign = fabs(dP) > 0 ? dP / fabs(dP) : 1.0;
+	double sign = std::abs(dP) > 0 ? dP / std::abs(dP) : 1.0;
 
 	// Limit output to the minimum of the power requested and ramp rate limit
 	if (sign > 0) {

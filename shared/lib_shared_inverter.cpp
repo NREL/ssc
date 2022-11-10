@@ -252,11 +252,11 @@ void SharedInverter::calculateACPower(const double powerDC_kW_in, const double D
 
 
     if (m_inverterType == SANDIA_INVERTER || m_inverterType == DATASHEET_INVERTER || m_inverterType == COEFFICIENT_GENERATOR)
-        m_sandiaInverter->acpower(std::fabs(powerDC_Watts) / m_numInverters, DCStringVoltage, &powerAC_Watts, &P_par, &P_lr, &efficiencyAC, &powerClipLoss_kW, &powerConsumptionLoss_kW, &powerNightLoss_kW);
+        m_sandiaInverter->acpower(std::abs(powerDC_Watts) / m_numInverters, DCStringVoltage, &powerAC_Watts, &P_par, &P_lr, &efficiencyAC, &powerClipLoss_kW, &powerConsumptionLoss_kW, &powerNightLoss_kW);
     else if (m_inverterType == PARTLOAD_INVERTER)
-        m_partloadInverter->acpower(std::fabs(powerDC_Watts) / m_numInverters, &powerAC_Watts, &P_lr, &P_par, &efficiencyAC, &powerClipLoss_kW, &powerNightLoss_kW);
+        m_partloadInverter->acpower(std::abs(powerDC_Watts) / m_numInverters, &powerAC_Watts, &P_lr, &P_par, &efficiencyAC, &powerClipLoss_kW, &powerNightLoss_kW);
     else if (m_inverterType == OND_INVERTER)
-        m_ondInverter->acpower(std::fabs(powerDC_Watts) / m_numInverters, DCStringVoltage, tempC, &powerAC_Watts, &P_par, &P_lr, &efficiencyAC, &powerClipLoss_kW, &powerConsumptionLoss_kW, &powerNightLoss_kW, &dcWiringLoss_ond_kW, &acWiringLoss_ond_kW);
+        m_ondInverter->acpower(std::abs(powerDC_Watts) / m_numInverters, DCStringVoltage, tempC, &powerAC_Watts, &P_par, &P_lr, &efficiencyAC, &powerClipLoss_kW, &powerConsumptionLoss_kW, &powerNightLoss_kW, &dcWiringLoss_ond_kW, &acWiringLoss_ond_kW);
     else if (m_inverterType == NONE) {
         powerClipLoss_kW = 0.;
         powerConsumptionLoss_kW = 0.;
@@ -272,7 +272,7 @@ void SharedInverter::calculateACPower(const double powerDC_kW_in, const double D
 
     // In event shared inverter is charging a battery only, need to re-convert to negative power
     if (negativePower) {
-        powerAC_kW = -1.0 * fabs(powerAC_kW);
+        powerAC_kW = -1.0 * std::abs(powerAC_kW);
     }
 }
 
@@ -376,7 +376,7 @@ void SharedInverter::convertOutputsToKWandScale(double tempLoss, double powerAC_
     powerNightLoss_kW *= m_numInverters * util::watt_to_kilowatt;
     powerTempLoss_kW = tempLoss * m_numInverters * util::watt_to_kilowatt;
     if (powerDC_kW < 0.0)
-        powerLossTotal_kW = fabs(powerDC_kW) - fabs(powerAC_kW); // DC connected grid charging
+        powerLossTotal_kW = std::abs(powerDC_kW) - std::abs(powerAC_kW); // DC connected grid charging
     else
         powerLossTotal_kW = powerDC_kW - powerAC_kW; // Normal operation and night time losses
     efficiencyAC *= 100;

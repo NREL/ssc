@@ -322,13 +322,13 @@ public:
 		I = module6par::current(V, Il, Io, Rs, a, Rsh, Imp );
 		P = V * I;
 		double Pmp = Vmp * Imp;
-		if ( fabs( (P-Pmp)/Pmp ) > 0.015 )
+		if (std::abs( (P-Pmp)/Pmp ) > 0.015 )
 			return -33;
 
 		// make sure I @ open circut is basically zero (less than 1% of Imp)
 		V = Voc;
 		I = module6par::current(V, Il, Io, Rs, a, Rsh, Imp );
-		if ( fabs(I) > 0.015 * Imp )
+		if (std::abs(I) > 0.015 * Imp )
 			return -44;
 
 		// derivative of I/V curve should always be negative (because of numerical issues, could be 0)
@@ -414,7 +414,7 @@ public:
 	  double Inew = I_mp_ref;
 	  int iter = 0;
 
-	  while (fabs(Inew - Iold) > 1.0e-5)
+	  while (std::abs(Inew - Iold) > 1.0e-5)
 	  {
 		Iold = Inew;
 

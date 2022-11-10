@@ -201,7 +201,7 @@ bool dispatch_t::check_constraints(double& I, size_t count)
         power_to_batt -= m_batteryPower->powerSystemToBatteryDC;
     }
 
-    if (m_batteryPower->powerBatteryTarget < 0 && abs(power_to_batt - m_batteryPower->powerBatteryTarget) > 0.005 * fabs(power_to_batt)) {
+    if (m_batteryPower->powerBatteryTarget < 0 && std::abs(power_to_batt - m_batteryPower->powerBatteryTarget) > 0.005 * std::abs(power_to_batt)) {
         m_batteryPower->powerBatteryTarget = power_to_batt;
         m_batteryPower->powerBatteryDC = m_batteryPower->powerBatteryTarget;
         I = _Battery_initial->calculate_current_for_power_kw(m_batteryPower->powerBatteryTarget);
@@ -226,12 +226,12 @@ bool dispatch_t::check_constraints(double& I, size_t count)
         }
         // if charging, this will also be due to low powerflow from grid-charging, just cut off that component
         else if (m_batteryPower->powerBatteryDC < 0 && m_batteryPower->powerGridToBattery > 0) {
-            I *= fmax(1.0 - fabs(m_batteryPower->powerGridToBattery * m_batteryPower->sharedInverter->efficiencyAC * 0.01 / m_batteryPower->powerBatteryDC), 0);
+            I *= fmax(1.0 - std::abs(m_batteryPower->powerGridToBattery * m_batteryPower->sharedInverter->efficiencyAC * 0.01 / m_batteryPower->powerBatteryDC), 0);
             m_batteryPower->powerBatteryTarget = _Battery->calculate_voltage_for_current(I) * I * util::watt_to_kilowatt;
         }
     }
 
-    iterate = abs(I_initial - I) > tolerance;
+    iterate = std::abs(I_initial - I) > tolerance;
 
     // update constraints for current, power, if they are now violated
     if (!current_iterate) {
@@ -250,7 +250,7 @@ bool dispatch_t::check_constraints(double& I, size_t count)
         iterate = false;
 
     // don't allow battery to flip from charging to discharging or vice versa
-    if (fabs(I) > tolerance && (I_initial / I) < 0) {
+    if (std::abs(I) > tolerance && (I_initial / I) < 0) {
         I = 0;
         iterate = false;
     }
@@ -319,7 +319,7 @@ bool dispatch_t::restrict_current(double& I)
     {
         if (I < 0)
         {
-            if (fabs(I) > m_batteryPower->currentChargeMax)
+            if (std::abs(I) > m_batteryPower->currentChargeMax)
             {
                 I = -m_batteryPower->currentChargeMax;
                 iterate = true;
@@ -353,50 +353,50 @@ bool dispatch_t::restrict_power(double& I)
         // charging
         if (powerBattery < 0)
         {
-            if (fabs(powerBattery) > m_batteryPower->powerBatteryChargeMaxDC * (1 + low_tolerance))
+            if (std::abs(powerBattery) > m_batteryPower->powerBatteryChargeMaxDC * (1 + low_tolerance))
             {
-                dP = fabs(m_batteryPower->powerBatteryChargeMaxDC - fabs(powerBattery));
+                dP = std::abs(m_batteryPower->powerBatteryChargeMaxDC - std::abs(powerBattery));
 
                 // increase (reduce) charging magnitude by percentage
-                I -= (dP / fabs(powerBattery)) * I;
+                I -= (dP / std::abs(powerBattery)) * I;
                 iterate = true;
             }
             else if (m_batteryPower->connectionMode == m_batteryPower->AC_CONNECTED &&
                 fabs(powerBatteryAC) > m_batteryPower->powerBatteryChargeMaxAC * (1 + low_tolerance))
             {
-                dP = fabs(m_batteryPower->powerBatteryChargeMaxAC - fabs(powerBatteryAC));
+                dP = std::abs(m_batteryPower->powerBatteryChargeMaxAC - std::abs(powerBatteryAC));
 
                 // increase (reduce) charging magnitude by percentage
-                I -= (dP / fabs(powerBattery)) * I;
+                I -= (dP / std::abs(powerBattery)) * I;
                 iterate = true;
             }
             // This could just be grid power since that's technically the only AC component.  But, limit all to this
             else if (m_batteryPower->connectionMode == m_batteryPower->DC_CONNECTED &&
-                fabs(powerBatteryAC) > m_batteryPower->powerBatteryChargeMaxAC * (1 + low_tolerance))
+                std::abs(powerBatteryAC) > m_batteryPower->powerBatteryChargeMaxAC * (1 + low_tolerance))
             {
-                dP = fabs(m_batteryPower->powerBatteryChargeMaxAC - fabs(powerBatteryAC));
+                dP = std::abs(m_batteryPower->powerBatteryChargeMaxAC - std::abs(powerBatteryAC));
 
                 // increase (reduce) charging magnitude by percentage
-                I -= (dP / fabs(powerBattery)) * I;
+                I -= (dP / std::abs(powerBattery)) * I;
                 iterate = true;
             }
         }
         else
         {
-            if (fabs(powerBattery) > m_batteryPower->powerBatteryDischargeMaxDC * (1 + low_tolerance))
+            if (std::abs(powerBattery) > m_batteryPower->powerBatteryDischargeMaxDC * (1 + low_tolerance))
             {
-                dP = fabs(m_batteryPower->powerBatteryDischargeMaxDC - powerBattery);
+                dP = std::abs(m_batteryPower->powerBatteryDischargeMaxDC - powerBattery);
 
                 // decrease discharging magnitude
-                I -= (dP / fabs(powerBattery)) * I;
+                I -= (dP / std::abs(powerBattery)) * I;
                 iterate = true;
             }
-            else if (fabs(powerBatteryAC) > m_batteryPower->powerBatteryDischargeMaxAC * (1 + low_tolerance))
+            else if (std::abs(powerBatteryAC) > m_batteryPower->powerBatteryDischargeMaxAC * (1 + low_tolerance))
             {
-                dP = fabs(m_batteryPower->powerBatteryDischargeMaxAC - powerBatteryAC);
+                dP = std::abs(m_batteryPower->powerBatteryDischargeMaxAC - powerBatteryAC);
 
                 // decrease discharging magnitude
-                I -= (dP / fabs(powerBattery)) * I;
+                I -= (dP / std::abs(powerBattery)) * I;
                 iterate = true;
             }
         }
@@ -788,14 +788,14 @@ bool dispatch_automatic_t::check_constraints(double& I, size_t count)
                 }
                 // Don't charge more if would violate current or power charge limits
                 if (I > m_batteryPower->currentChargeMax - tolerance ||
-                    fabs(P_battery) > m_batteryPower->powerBatteryChargeMaxDC - tolerance ||
-                    fabs(m_batteryPower->powerBatteryAC) > m_batteryPower->powerBatteryChargeMaxAC - tolerance) {
+                    std::abs(P_battery) > m_batteryPower->powerBatteryChargeMaxDC - tolerance ||
+                    std::abs(m_batteryPower->powerBatteryAC) > m_batteryPower->powerBatteryChargeMaxAC - tolerance) {
                     iterate = false;
                 }
                 // restrict based on power limits
                 else {
-                    double dP_max = fmin(fmin(dP, m_batteryPower->powerBatteryChargeMaxDC - fabs(P_battery)),
-                        m_batteryPower->powerBatteryChargeMaxAC - fabs(m_batteryPower->powerBatteryAC));
+                    double dP_max = fmin(fmin(dP, m_batteryPower->powerBatteryChargeMaxDC - std::abs(P_battery)),
+                        m_batteryPower->powerBatteryChargeMaxAC - std::abs(m_batteryPower->powerBatteryAC));
                     dP = fmax(dP_max, 0);
                 }
             }
@@ -844,30 +844,30 @@ bool dispatch_automatic_t::check_constraints(double& I, size_t count)
 		{
 			// Don't let PV export to grid if can still charge battery (increase charging) (unless following custom dispatch)
 			if (_mode != dispatch_t::CUSTOM_DISPATCH && m_batteryPower->powerSystemToGrid  > tolerance && m_batteryPower->canSystemCharge &&
-                    _Battery->SOC() < m_batteryPower->stateOfChargeMax - tolerance && fabs(I) < fabs(m_batteryPower->currentChargeMax))
+                    _Battery->SOC() < m_batteryPower->stateOfChargeMax - tolerance && std::abs(I) < std::abs(m_batteryPower->currentChargeMax))
 			{
-				if (fabs(m_batteryPower->powerBatteryAC) < tolerance)
+				if (std::abs(m_batteryPower->powerBatteryAC) < tolerance)
 					I -= (m_batteryPower->powerSystemToGrid / m_batteryPower->singlePointEfficiencyDCToAC * util::kilowatt_to_watt / _Battery->V());
 				else
-					I -= (m_batteryPower->powerSystemToGrid  / fabs(m_batteryPower->powerBatteryAC)) *fabs(I);
+					I -= (m_batteryPower->powerSystemToGrid  / std::abs(m_batteryPower->powerBatteryAC)) * std::abs(I);
 			}
 			// Don't let battery export to the grid if behind the meter
 			else if (m_batteryPower->powerBatteryToGrid > tolerance && !m_batteryPower->canDischargeToGrid)
 			{
-                if (fabs(m_batteryPower->powerBatteryAC) < tolerance) {
+                if (std::abs(m_batteryPower->powerBatteryAC) < tolerance) {
                     I -= (m_batteryPower->powerBatteryToGrid / m_batteryPower->singlePointEfficiencyDCToAC * util::kilowatt_to_watt / _Battery->V());
                 }
                 else {
-                    I -= (m_batteryPower->powerBatteryToGrid / fabs(m_batteryPower->powerBatteryAC)) * fabs(I); 
+                    I -= (m_batteryPower->powerBatteryToGrid / std::abs(m_batteryPower->powerBatteryAC)) * std::abs(I);
                 }
                 m_batteryPower->powerBatteryTarget -= m_batteryPower->powerBatteryToGrid / m_batteryPower->singlePointEfficiencyDCToAC;
                 m_batteryPower->powerBatteryAC -= m_batteryPower->powerBatteryToGrid; // Target was too large given PV, reduce
 			}
 			else
-				iterate = abs(I_initial - I) > tolerance;;
+				iterate = std::abs(I_initial - I) > tolerance;;
 		}
 		else
-			iterate = abs(I_initial - I) > tolerance;;
+			iterate = std::abs(I_initial - I) > tolerance;;
 
         // don't allow any changes to violate current limits
         bool current_iterate = restrict_current(I);
@@ -1109,13 +1109,13 @@ bool byCost::operator() (grid_point const& a, grid_point const& b)
 bool byLowestMarginalCost::operator() (grid_point const& a, grid_point const& b)
 {
 
-    if (fabs(a.MarginalCost() - b.MarginalCost()) < 1e-7)
+    if (std::abs(a.MarginalCost() - b.MarginalCost()) < 1e-7)
     {
-        if (fabs(a.Grid()) < 1e-7 || fabs(b.Grid()) < 1e-7)
+        if (std::abs(a.Grid()) < 1e-7 || std::abs(b.Grid()) < 1e-7)
         {
             return a.Grid() < b.Grid();
         }
-        else if (fabs((a.Cost() / a.Grid()) - (b.Cost() / b.Grid())) < 1e-7)
+        else if (std::abs((a.Cost() / a.Grid()) - (b.Cost() / b.Grid())) < 1e-7)
         {
             return a.Grid() < b.Grid();
         }
