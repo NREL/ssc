@@ -29,7 +29,7 @@ OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMA
 
 ***************************************************************************************************/
 
-#include <math.h>
+#include <cmath>
 #include "CO2_properties.h"
 
 using namespace N_co2_props;
