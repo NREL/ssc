@@ -3963,10 +3963,10 @@ public:
         save_cf(CF_community_solar_recurring_generation, nyears, "cf_community_solar_recurring_generation");
 
         // community solar metrics
-        assign("subscriber1_npv", var_data((ssc_number_t)(npv(CF_subscriber1_net_benefit_cumulative, nyears, nom_discount_rate) + cf.at(CF_subscriber1_net_benefit_cumulative, 0))));
-        assign("subscriber2_npv", var_data((ssc_number_t)(npv(CF_subscriber2_net_benefit_cumulative, nyears, nom_discount_rate) + cf.at(CF_subscriber2_net_benefit_cumulative, 0))));
-        assign("subscriber3_npv", var_data((ssc_number_t)(npv(CF_subscriber3_net_benefit_cumulative, nyears, nom_discount_rate) + cf.at(CF_subscriber3_net_benefit_cumulative, 0))));
-        assign("subscriber4_npv", var_data((ssc_number_t)(npv(CF_subscriber4_net_benefit_cumulative, nyears, nom_discount_rate) + cf.at(CF_subscriber4_net_benefit_cumulative, 0))));
+        assign("subscriber1_npv", var_data((ssc_number_t)(npv(CF_subscriber1_net_benefit, nyears, nom_discount_rate) + cf.at(CF_subscriber1_net_benefit, 0))));
+        assign("subscriber2_npv", var_data((ssc_number_t)(npv(CF_subscriber2_net_benefit, nyears, nom_discount_rate) + cf.at(CF_subscriber2_net_benefit, 0))));
+        assign("subscriber3_npv", var_data((ssc_number_t)(npv(CF_subscriber3_net_benefit, nyears, nom_discount_rate) + cf.at(CF_subscriber3_net_benefit, 0))));
+        assign("subscriber4_npv", var_data((ssc_number_t)(npv(CF_subscriber4_net_benefit, nyears, nom_discount_rate) + cf.at(CF_subscriber4_net_benefit, 0))));
 
 		for (i = 0; i <= nyears; i++)
 		{
