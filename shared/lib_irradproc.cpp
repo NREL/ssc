@@ -2561,7 +2561,7 @@ int irrad::calc_rear_side(double transmissionFactor, double groundClearanceHeigh
         std::vector<double> rearGroundGHI, frontGroundGHI;
         this->getGroundGHI(transmissionFactor, rearSkyConfigFactors, frontSkyConfigFactors, rearGroundShade,
                            frontGroundShade, rearGroundGHI, frontGroundGHI);
-        groundIrradianceSpatial = condenseAndAlignGroundIrrad(rearGroundGHI, groundIrradOutputRes, trackingMode == 1, horizontalLength, rowToRow, sunAnglesRadians[0]);
+        groundIrradianceSpatial = condenseAndAlignGroundIrrad(rearGroundGHI, groundIrradOutputRes, trackingMode == 1, horizontalLength, rowToRow, surfaceAnglesRadians[3]);
 
         // Calculate the irradiance on the front of the PV module (to get front reflected)
         std::vector<double> frontIrradiancePerCellrow, frontReflected;
@@ -2879,7 +2879,7 @@ void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowTo
         std::vector<double> albedoAligned;
         if (trackingMode == 0 || trackingMode == 1 || trackingMode == 4) {          // 0=fixed, 1=one-axis, 4=seasonal tilt
             // subdivide spatial albedos to match ground GHI length and align reference point at front of row
-            albedoAligned = divideAndAlignAlbedos(albedoSpatial, intervals, trackingMode == 1, horizontalLength, rowToRow, solarAzimuthRadians);
+            albedoAligned = divideAndAlignAlbedos(albedoSpatial, intervals, trackingMode == 1, horizontalLength, rowToRow, surfaceAnglesRadians[3]);
         }
         else {
             double average_albedo = std::accumulate(albedoSpatial.begin(), albedoSpatial.end(), 0.) / albedoSpatial.size();
@@ -3109,7 +3109,7 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
         std::vector<double> albedoAligned;
         if (trackingMode == 0 || trackingMode == 1 || trackingMode == 4) {          // 0=fixed, 1=one-axis, 4=seasonal tilt
             // subdivide spatial albedos to match ground GHI length and align reference point at front of row
-            albedoAligned = divideAndAlignAlbedos(albedoSpatial, intervals, trackingMode == 1, horizontalLength, rowToRow, solarAzimuthRadians);
+            albedoAligned = divideAndAlignAlbedos(albedoSpatial, intervals, trackingMode == 1, horizontalLength, rowToRow, surfaceAnglesRadians[3]);
         }
         else {
             double average_albedo = std::accumulate(albedoSpatial.begin(), albedoSpatial.end(), 0.) / albedoSpatial.size();
@@ -3235,8 +3235,8 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
         double xy = 1.;
     }
 
-    // Flip the row rear spatial irradiance if after solar noon (because the tilt range = [0, 90] degrees, therefore the tilt convention flips at solar noon)
-    if (sunAnglesRadians[0] > M_PI) {
+    // Flip the row rear spatial irradiance if tracking after solar noon (because the tilt range = [0, 90] degrees, therefore the tilt convention flips at solar noon)
+    if (trackingMode == 1 && surfaceAnglesRadians[3] > 0.) {
         std::reverse(rearIrradiance.begin(), rearIrradiance.end());
     }
 }
@@ -3261,7 +3261,7 @@ double shadeFraction1x(double solar_azimuth, double solar_zenith,
 }
 
 std::vector<double> divideAndAlignAlbedos(const std::vector<double>& albedo /*-*/, size_t n_divisions /*-*/, bool isOneAxisTracking /*-*/,
-                                          double horizontalLength /*m*/, double rowToRow /*m*/, double solar_azimuth /*rad*/) {
+                                          double horizontalLength /*m*/, double rowToRow /*m*/, double surface_rotation /*rad*/) {
     /*
     Subdivide spatial albedos and if 1-axis tracking change reference from the row midline to the front
     */
@@ -3276,8 +3276,8 @@ std::vector<double> divideAndAlignAlbedos(const std::vector<double>& albedo /*-*
     }
 
     if (isOneAxisTracking) {
-        // Flip the albedo array if after solar noon (because the tilt range = [0, 90] degrees, therefore the tilt convention flips at solar noon)
-        if (solar_azimuth > M_PI) {
+        // Flip the albedo array if tracking after solar noon (because the tilt range = [0, 90] degrees, therefore the tilt convention flips at solar noon)
+        if (surface_rotation > 0.) {
             std::reverse(albedo_aligned.begin(), albedo_aligned.end());
         }
 
@@ -3300,7 +3300,7 @@ std::vector<double> divideAndAlignAlbedos(const std::vector<double>& albedo /*-*
 }
 
 std::vector<double> condenseAndAlignGroundIrrad(const std::vector<double>& ground_irr /*W/m2*/, size_t n_divisions /*-*/, bool isOneAxisTracking /*-*/,
-                                            double horizontalLength /*m*/, double rowToRow /*m*/, double solar_azimuth /*rad*/) {
+                                            double horizontalLength /*m*/, double rowToRow /*m*/, double surface_rotation /*rad*/) {
     /*
     Condense spatial ground irradiances and if 1-axis tracking change reference from the row front to the midline
     */
@@ -3323,8 +3323,8 @@ std::vector<double> condenseAndAlignGroundIrrad(const std::vector<double>& groun
         }
         ground_aligned.back() = ground_aligned.back() * (1 - frac_div_extending) + ground_front_orig * frac_div_extending;
 
-        // Flip the ground irradiance if after solar noon (because the tilt range = [0, 90] degrees, therefore the tilt convention flips at solar noon)
-        if (solar_azimuth > M_PI) {
+        // Flip the ground irradiance if tracking after solar noon (because the tilt range = [0, 90] degrees, therefore the tilt convention flips at solar noon)
+        if (surface_rotation > 0.) {
             std::reverse(ground_aligned.begin(), ground_aligned.end());
         }
     }
