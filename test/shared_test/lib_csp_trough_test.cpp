@@ -101,8 +101,8 @@ NAMESPACE_TEST(csp_trough, TroughLoop, SteadyStateTest)
         // Calculate metric for deciding whether steady-state is reached
         ss_diff = 0.;
         for (int i = 0; i < trough->m_nSCA; i++) {
-            ss_diff += fabs(trough->m_T_htf_in_t_int[i] - T_htf_in_t_int_prev[i]) +
-                fabs(trough->m_T_htf_out_t_int[i] - T_htf_out_t_int_prev[i]);
+            ss_diff += std::abs(trough->m_T_htf_in_t_int[i] - T_htf_in_t_int_prev[i]) +
+                std::abs(trough->m_T_htf_out_t_int[i] - T_htf_out_t_int_prev[i]);
         }
 
         // Set converged values so reset_last_temps() propagates the temps in time

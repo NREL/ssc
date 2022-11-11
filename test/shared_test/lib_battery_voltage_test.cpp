@@ -1236,7 +1236,7 @@ TEST_F(voltage_vanadium_lib_battery_voltage_test, calculateMaxChargeSubMinute){
     double power = model->calculate_max_charge_w(cap->q0(), cap->qmax(), 0, &max_current);
     EXPECT_NEAR(power, -10908720, 1);
     double max_current_calc = model->calculate_current_for_target_w(power, cap->q0(), cap->qmax(), 293);
-    EXPECT_NEAR(max_current_calc, max_current, 1e-2 * fabs(max_current));
+    EXPECT_NEAR(max_current_calc, max_current, 1e-2 * std::abs(max_current));
     // max current reduced to enforce SOC
     cap->updateCapacity(max_current, dt_hour);
     EXPECT_NEAR(cap->SOC(), 95, 1e-3);
@@ -1246,7 +1246,7 @@ TEST_F(voltage_vanadium_lib_battery_voltage_test, calculateMaxChargeSubMinute){
     power = model->calculate_max_charge_w(cap->q0(), cap->qmax(), 0, &max_current);
     EXPECT_NEAR(power, -190152, 1);
     max_current_calc = model->calculate_current_for_target_w(power, cap->q0(), cap->qmax(), 293);
-    EXPECT_NEAR(max_current_calc, max_current, 0.1 * fabs(max_current));
+    EXPECT_NEAR(max_current_calc, max_current, 0.1 * std::abs(max_current));
     // max current reduced to enforce SOC
     cap->updateCapacity(max_current, dt_hour);
     EXPECT_NEAR(cap->SOC(), 95, 1e-3);
@@ -1259,7 +1259,7 @@ TEST_F(voltage_vanadium_lib_battery_voltage_test, calculateMaxChargeSubMinute){
     power = model->calculate_max_charge_w(cap->q0(), cap->qmax(), 0, &max_current);
     EXPECT_NEAR(power, -37840248, 1);
     max_current_calc = model->calculate_current_for_target_w(power, cap->q0(), cap->qmax(), 293);
-    EXPECT_NEAR(max_current_calc, max_current, 1e-2 * fabs(max_current));
+    EXPECT_NEAR(max_current_calc, max_current, 1e-2 * std::abs(max_current));
     // max current reduced to enforce SOC
     cap->updateCapacity(max_current, dt_hour);
     EXPECT_NEAR(cap->SOC(), 95, 1e-3);

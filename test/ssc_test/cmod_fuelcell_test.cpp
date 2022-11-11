@@ -98,7 +98,7 @@ TEST_F(CMFuelCell, FuelCellBattery_cmod_fuelcell) {
 			ssc_number_t * load = GetArray("load", n);
 
 			for (int i = 0; i < n; i += (int)interval) {
-				EXPECT_LT(fabs(load[i] - (fc_to_load[i] + pv_to_load[i] + batt_to_load[i] + grid_to_load[i])), 1.0);
+				EXPECT_LT(std::abs(load[i] - (fc_to_load[i] + pv_to_load[i] + batt_to_load[i] + grid_to_load[i])), 1.0);
 			}
 
 			
