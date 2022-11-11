@@ -484,7 +484,7 @@ TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, NonAnnual)
 
     ssc_number_t dc, gen;
     dc = ssc_data_get_array(data, "dc", nullptr)[12];
-    EXPECT_NEAR(dc, 2534.432, 0.01) << "DC Energy at noon";
+    EXPECT_NEAR(dc, 2533.257, 0.01) << "DC Energy at noon";
 
     gen = ssc_data_get_array(data, "gen", nullptr)[12];
     EXPECT_NEAR(gen, 2.428, 0.01) << "Gen at noon";
@@ -522,19 +522,19 @@ TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, IntermediateOutputTesting)
     EXPECT_NEAR(aoi, 32.195, 0.01) << "Angle of incidence at noon";
 
     poa = ssc_data_get_array(data, "poa", nullptr)[12];
-    EXPECT_NEAR(poa, 831.207, 0.01) << "POA at noon"; //this shouldn't have changed, and code comparison shows no differences, so why are we now getting 828.570????
+    EXPECT_NEAR(poa, 830.564, 0.01) << "POA at noon"; //this shouldn't have changed, and code comparison shows no differences, so why are we now getting 828.570????
 
     tpoa = ssc_data_get_array(data, "tpoa", nullptr)[12];
-    EXPECT_NEAR(tpoa, 821.340, 0.01) << "Transmitted POA at noon";
+    EXPECT_NEAR(tpoa, 820.913, 0.01) << "Transmitted POA at noon";
 
     tcell = ssc_data_get_array(data, "tcell", nullptr)[12];
-    EXPECT_NEAR(tcell, 48.954, 0.01) << "Cell temp at noon";
+    EXPECT_NEAR(tcell, 48.942, 0.01) << "Cell temp at noon";
 
     dc = ssc_data_get_array(data, "dc", nullptr)[12];
-    EXPECT_NEAR(dc, 2534.432, 0.01) << "DC Energy at noon";
+    EXPECT_NEAR(dc, 2533.257, 0.01) << "DC Energy at noon";
 
     ac = ssc_data_get_array(data, "ac", nullptr)[12];
-    EXPECT_NEAR(ac, 2428.773, 0.01) << "AC Energy at noon";
+    EXPECT_NEAR(ac, 2427.639, 0.01) << "AC Energy at noon";
 
     free_weatherdata_array(weather_data);
 }
