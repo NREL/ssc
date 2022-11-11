@@ -1881,13 +1881,13 @@ public:
 						pow( ((ms_charge + m_dot_pb - ms_disch) - m_dot_field_avail)/max(m_dot_field_avail, 1.e-6), 2) + 
 						pow( ((T_field_in - T_field_in_guess)/T_field_in), 2));
                 if (err_prev_iter != 0) {
-                    derr = fabs((err - err_prev_iter) / err_prev_iter);
+                    derr = std::abs((err - err_prev_iter) / err_prev_iter);
                 }
                 else if (err != 0) {
-                    derr = fabs((err - err_prev_iter) / err);
+                    derr = std::abs((err - err_prev_iter) / err);
                 }
                 else {
-                    derr = fabs(err - err_prev_iter);
+                    derr = std::abs(err - err_prev_iter);
                 }
 
 				err_prev_iter = err;
@@ -1907,7 +1907,7 @@ public:
 				{
 					// If the defocus control has changed during the calculations, bypass iteration and recalculate field output.
 					// Otherwise, the iteration will continue until the max # has been reached.
-                    if( abs(defocus - defocus_rel_prev_ncall) > 0.01 )
+                    if(std::abs(defocus - defocus_rel_prev_ncall) > 0.01 )
 					{
                         defocus_prev_iter = defocus;    // Does this do anything? iterate_mass_temp = false exits this loop, and defocus_prev_iter is set to 1 just before this loop
 						T_field_in = T_field_in_guess;	// MJW 12.8.2010
@@ -2160,7 +2160,7 @@ public:
                 // TODO - replace tes_pump_coef with a pump efficiency. Maybe utilize unused coefficients specified for the
                 //  series configuration, namely the SGS Pump suction header to Individual SGS pump inlet and the additional
                 //  two immediately downstream
-                htf_pump_power = tes_pump_coef * fabs(m_tank_disch - m_tank_charge) / 1000 +
+                htf_pump_power = tes_pump_coef * std::abs(m_tank_disch - m_tank_charge) / 1000 +
                     (DP_col * m_dot_field / (rho_sf * eta_pump) + DP_gen * m_dot_pb / (rho_pb * eta_pump)) / 1e6;   //[MW]
             }
             else {
@@ -2169,11 +2169,11 @@ public:
         }
         else {    // original methods
             if (is_hx) {
-                htf_pump_power = (tes_pump_coef*fabs(m_tank_disch - m_tank_charge) + pb_pump_coef * (fabs(ms_disch - ms_charge) + m_dot_pb)) / 1000.0;	//[MW]
+                htf_pump_power = (tes_pump_coef* std::abs(m_tank_disch - m_tank_charge) + pb_pump_coef * (std::abs(ms_disch - ms_charge) + m_dot_pb)) / 1000.0;	//[MW]
             }
             else {
                 if (tanks_in_parallel) {
-                    htf_pump_power = pb_pump_coef * (fabs(ms_disch - ms_charge) + m_dot_pb) / 1000.0;	//[MW]
+                    htf_pump_power = pb_pump_coef * (std::abs(ms_disch - ms_charge) + m_dot_pb) / 1000.0;	//[MW]
                 }
                 else {
                     htf_pump_power = pb_pump_coef * m_dot_pb / 1000.0;	//[MW]

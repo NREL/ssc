@@ -357,12 +357,12 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 	{
 		if( y_target == 0 )
 			return REL_TOL_WITH_0_TARGET;
-		E1 = E1 / fabs(y_target);
-		E2 = E2 / fabs(y_target);
+		E1 = E1 / std::abs(y_target);
+		E2 = E2 / std::abs(y_target);
 	}
 
 	// x guesses might be lucky, check against tolerance
-	if( fabs(E1) < m_tol )
+	if(std::abs(E1) < m_tol )
 	{
 		// Last call to equation was with x_guess_2, so call again here...
 		// ... if equation is setting member data, this is required to have outputs matching calculated solution
@@ -372,7 +372,7 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 		iter_solved = 0;
 		return CONVERGED;
 	}
-	if( fabs(E2) < m_tol )
+	if(std::abs(E2) < m_tol )
 	{
 		double last_x_tried = get_last_mono_eq_call().x;
 		if(last_x_tried != x_guess_2 || !std::isfinite(last_x_tried))
@@ -499,7 +499,7 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 	m_iter = 0;		// Counter is first line inside loop, so first iteration = 1
 
 	// Start iteration loop
-	while( fabs(m_y_err) > m_tol || !std::isfinite(m_y_err) )
+	while(std::abs(m_y_err) > m_tol || !std::isfinite(m_y_err) )
 	{
 		m_iter++;		// First iteration = 1
 
@@ -556,7 +556,7 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 		}
 
 		// If it is early in the iteration and it was not set with finite bounds, then diff_x_bounds might be nan
-		if (fabs(diff_x_bounds) < m_tol / 10.0 && m_iter > 1)
+		if (std::abs(diff_x_bounds) < m_tol / 10.0 && m_iter > 1)
 		{	// Assumes if x values are too close, then *something* is preventing convergence
 
 			// 1) Solver can't find a negative error
@@ -796,7 +796,7 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 					// Have both positive and negative errors, but x value in between is causing an error
 					// Not expected behavior for the function, but try to get around the problem
 					double x_min_abs_err = m_x_pos_err;
-					if (fabs(m_y_err_neg) < fabs(m_y_err_pos))
+					if (std::abs(m_y_err_neg) < std::abs(m_y_err_pos))
 						x_min_abs_err = m_x_neg_err;
 
 					m_x_guess = 0.5*(m_x_guess + x_min_abs_err);
@@ -840,7 +840,7 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 					else
 					{
 
-						m_x_guess = m_x_pos_err + 0.5*std::max(fabs(x_guess_1), fabs(x_guess_2));
+						m_x_guess = m_x_pos_err + 0.5*std::max(std::abs(x_guess_1), std::abs(x_guess_2));
 					}
 					m_x_guess = check_against_limits(m_x_guess);
 				}
@@ -886,7 +886,7 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 					}
 					else if( m_E_slope > 0.0 )
 					{
-						m_x_guess = m_x_neg_err + 0.5*std::max(fabs(x_guess_1), fabs(x_guess_2));
+						m_x_guess = m_x_neg_err + 0.5*std::max(std::abs(x_guess_1), std::abs(x_guess_2));
 					}
 					else
 					{
@@ -929,7 +929,7 @@ double C_monotonic_eq_solver::call_mono_eq_calc_y_err(double x, double y_target)
     double y_err = y_calc - y_target;
 
     if (m_is_err_rel)
-        y_err = y_err / fabs(y_target);
+        y_err = y_err / std::abs(y_target);
 
     return y_err;
 }
@@ -965,10 +965,10 @@ bool C_monotonic_eq_solver::is_last_x_best(double & x_at_lowest, double y_target
     {
         double y_err = s_eq_chars_min_abs_diff.y - y_target;
         if (m_is_err_rel)
-            y_err = y_err / fabs(y_target);
+            y_err = y_err / std::abs(y_target);
 
-        double min_abs_diff = fabs(y_err);
-        if (min_abs_diff < std::fabs(m_y_err) || !std::isfinite(m_y_err))
+        double min_abs_diff = std::abs(y_err);
+        if (min_abs_diff < std::abs(m_y_err) || !std::isfinite(m_y_err))
         {
             x_at_lowest = s_eq_chars_min_abs_diff.x;
 
@@ -997,10 +997,10 @@ bool C_monotonic_eq_solver::is_last_x_best(double & x_at_lowest, double y_target
         C_monotonic_eq_solver::S_eq_chars i_ms_eq = ms_eq_call_tracker[i];
         if (i_ms_eq.err_code == 0 && std::isfinite(i_ms_eq.y))
         {
-            y_err = fabs(i_ms_eq.y - y_target);
+            y_err = std::abs(i_ms_eq.y - y_target);
             if (m_is_err_rel)
             {
-                y_err = y_err / fabs(y_target);
+                y_err = y_err / std::abs(y_target);
             }
 
             if (is_found_min && y_err < min_abs_diff)

@@ -393,7 +393,7 @@ bool RecompCycle::design()
 
 	// Apply pressure drops to heat exchangers, fully defining the pressures at all stages
 	if( m_cycle_des_par.m_DP_LT[1 - cpp_offset] < 0.0 )
-		m_pres_last[3 - cpp_offset] = m_pres_last[2 - cpp_offset] - m_pres_last[2 - cpp_offset] * abs(m_cycle_des_par.m_DP_LT[1 - cpp_offset]);		// Relative pressure drop specified for LT recuperator (cold stream)
+		m_pres_last[3 - cpp_offset] = m_pres_last[2 - cpp_offset] - m_pres_last[2 - cpp_offset] * std::abs(m_cycle_des_par.m_DP_LT[1 - cpp_offset]);		// Relative pressure drop specified for LT recuperator (cold stream)
 	else
 		m_pres_last[3 - cpp_offset] = m_pres_last[2 - cpp_offset] - m_cycle_des_par.m_DP_LT[1 - cpp_offset];									// Absolute pressure drop specified for LT recuperator (cold stream)
 	
@@ -407,7 +407,7 @@ bool RecompCycle::design()
 	m_pres_last[10 - cpp_offset] = m_pres_last[3 - cpp_offset];			// No pressure drop in mixing value
 
 	if( m_cycle_des_par.m_DP_HT[1 - cpp_offset] < 0.0 )
-		m_pres_last[5 - cpp_offset] = m_pres_last[4 - cpp_offset] - m_pres_last[4 - cpp_offset] * abs(m_cycle_des_par.m_DP_HT[1 - cpp_offset]);	// relative pressure drop specified for HT recuperator (cold stream)
+		m_pres_last[5 - cpp_offset] = m_pres_last[4 - cpp_offset] - m_pres_last[4 - cpp_offset] * std::abs(m_cycle_des_par.m_DP_HT[1 - cpp_offset]);	// relative pressure drop specified for HT recuperator (cold stream)
 	else
 		m_pres_last[5 - cpp_offset] = m_pres_last[4 - cpp_offset] - m_cycle_des_par.m_DP_HT[1 - cpp_offset];								// absolute pressure drop specified for HT recuperator (cold stream)
 
@@ -415,17 +415,17 @@ bool RecompCycle::design()
 		m_pres_last[5 - cpp_offset] = m_pres_last[4 - cpp_offset];		// if there is no HT recuperator, there is no pressure drop
 
 	if( m_cycle_des_par.m_DP_PHX[1 - cpp_offset] < 0.0 )
-		m_pres_last[6 - cpp_offset] = m_pres_last[5 - cpp_offset] - m_pres_last[5 - cpp_offset] * abs(m_cycle_des_par.m_DP_PHX[1 - cpp_offset]);	// relative pressure drop specified for PHX
+		m_pres_last[6 - cpp_offset] = m_pres_last[5 - cpp_offset] - m_pres_last[5 - cpp_offset] * std::abs(m_cycle_des_par.m_DP_PHX[1 - cpp_offset]);	// relative pressure drop specified for PHX
 	else
 		m_pres_last[6 - cpp_offset] = m_pres_last[5 - cpp_offset] - m_cycle_des_par.m_DP_PHX[1 - cpp_offset];								// absolute pressure drop specified for PHX
 
 	if( m_cycle_des_par.m_DP_PC[2 - cpp_offset] < 0.0 )
-		m_pres_last[9 - cpp_offset] = m_pres_last[1 - cpp_offset] / (1.0 - abs(m_cycle_des_par.m_DP_PC[2 - cpp_offset]));			// relative pressure drop specified for precooler [P1 = P9 - P9*rel_DP => P1 = P9*(1-rel_DP)
+		m_pres_last[9 - cpp_offset] = m_pres_last[1 - cpp_offset] / (1.0 - std::abs(m_cycle_des_par.m_DP_PC[2 - cpp_offset]));			// relative pressure drop specified for precooler [P1 = P9 - P9*rel_DP => P1 = P9*(1-rel_DP)
 	else
 		m_pres_last[9 - cpp_offset] = m_pres_last[1 - cpp_offset] + m_cycle_des_par.m_DP_PC[2 - cpp_offset];										// absolute pressure drop specified for precooler
 
 	if( m_cycle_des_par.m_DP_LT[2 - cpp_offset] < 0.0 )
-		m_pres_last[8 - cpp_offset] = m_pres_last[9 - cpp_offset] / (1.0 - abs(m_cycle_des_par.m_DP_LT[2 - cpp_offset]));			// relative pressure drop specified for LT recuperator (hot stream)
+		m_pres_last[8 - cpp_offset] = m_pres_last[9 - cpp_offset] / (1.0 - std::abs(m_cycle_des_par.m_DP_LT[2 - cpp_offset]));			// relative pressure drop specified for LT recuperator (hot stream)
 	else
 		m_pres_last[8 - cpp_offset] = m_pres_last[9 - cpp_offset] + m_cycle_des_par.m_DP_LT[2 - cpp_offset];						// absolute pressure drop specified for LT recuperator (hot stream)
 
@@ -433,7 +433,7 @@ bool RecompCycle::design()
 		m_pres_last[8 - cpp_offset] = m_pres_last[9 - cpp_offset];		// if there is no LT recup, there is no pressure drop
 
 	if( m_cycle_des_par.m_DP_HT[2 - cpp_offset] < 0.0 )
-		m_pres_last[7 - cpp_offset] = m_pres_last[8 - cpp_offset] / (1.0 - abs(m_cycle_des_par.m_DP_HT[2 - cpp_offset]));			// relative pressure drop specified for HT recup
+		m_pres_last[7 - cpp_offset] = m_pres_last[8 - cpp_offset] / (1.0 - std::abs(m_cycle_des_par.m_DP_HT[2 - cpp_offset]));			// relative pressure drop specified for HT recup
 	else
 		m_pres_last[7 - cpp_offset] = m_pres_last[8 - cpp_offset] + m_cycle_des_par.m_DP_HT[2 - cpp_offset];						// absolute pressure drop specified for HT recup
 
@@ -619,14 +619,14 @@ bool RecompCycle::design()
 
 			// Check for convergence and adjust T9 appropriately.
 			double UA_LT_residual = UA_LT - UA_LT_calc;
-			if( abs(UA_LT_residual) < 1.E-12 )
+			if(std::abs(UA_LT_residual) < 1.E-12 )
 				break;		// 'exit T9_loop' catches no LT case
 
 			double secant_guess = m_temp_last[9 - cpp_offset] - UA_LT_residual*(last_T9_guess - m_temp_last[9 - cpp_offset]) / (last_LT_residual - UA_LT_residual);	// next guess predicted using secant method
 
 			if(UA_LT_residual < 0.0)			// UA_LT_calc is too big, temp(9) needs to be higher
 			{
-				if( abs(UA_LT_residual) / UA_LT < m_cycle_des_par.m_tol )
+				if(std::abs(UA_LT_residual) / UA_LT < m_cycle_des_par.m_tol )
 					break;	// 'exit T9_loop' UA_LT converged (residual is negative)
 				T9_lower_bound = m_temp_last[9 - cpp_offset];
 			}
@@ -721,14 +721,14 @@ bool RecompCycle::design()
 		// Check for convergence and adjust T8 appropriately.
 		double UA_HT_residual = UA_HT - UA_HT_calc;
 
-		if( abs(UA_HT_residual) < 1.E-12 )
+		if(std::abs(UA_HT_residual) < 1.E-12 )
 			break;			// exit T8_loop  !catches no HT case
 		
 		double secant_guess = m_temp_last[8 - cpp_offset] - UA_HT_residual*(last_T8_guess - m_temp_last[8 - cpp_offset])/(last_HT_residual - UA_HT_residual);		// next guess predicted using secant method
 
 		if(UA_HT_residual < 0.0)			// UA_HT_calc is too big, temp(8) needs to be higher
 		{
-			if( abs(UA_HT_residual) / UA_HT < m_cycle_des_par.m_tol )
+			if(std::abs(UA_HT_residual) / UA_HT < m_cycle_des_par.m_tol )
 				break;		// exit T8_loop    UA_HT converged (residual is negative)
 			T8_lower_bound = m_temp_last[8 - cpp_offset];
 		}
@@ -1416,7 +1416,7 @@ bool RecompCycle::off_design_target_power()
 		else
 			lower_limit = P_low;
 
-		if( abs(residual)/cycle_off_des_in.m_S.m_W_dot_net_target <= (1+iter/10)*cycle_off_des_in.m_S.m_tol )
+		if(std::abs(residual)/cycle_off_des_in.m_S.m_W_dot_net_target <= (1+iter/10)*cycle_off_des_in.m_S.m_tol )
 			break;
 		last_P_low = P_low;
 		last_residual = residual;
@@ -1736,7 +1736,7 @@ bool RecompCycle::off_design(const cycle_off_des_inputs & cycle_off_des_in_in)
 					}
 					double pres_10_residual = m_pres_od_last[10 - cpp_offset] - pres_10_calc;
 
-					if( abs(pres_10_residual) / m_pres_od_last[10 - cpp_offset] <= m_cycle_off_des_in.m_S.m_tol )
+					if(std::abs(pres_10_residual) / m_pres_od_last[10 - cpp_offset] <= m_cycle_off_des_in.m_S.m_tol )
 						break;
 
 					double secant_guess = N_rc_guess - pres_10_residual*(last_N_rc_guess - N_rc_guess) / (last_pres_10_residual - pres_10_residual);	// next guess predicted using secant method
@@ -1807,14 +1807,14 @@ bool RecompCycle::off_design(const cycle_off_des_inputs & cycle_off_des_in_in)
 			// Check for convergence and adjust T9 appropriately.
 			double UA_LT_residual = UA_LT - UA_LT_calc;
 			
-			if( abs(UA_LT_residual) < 1.E-12 )
+			if(std::abs(UA_LT_residual) < 1.E-12 )
 				break;		// exit T9_loop  !catches no LT case
 			
 			double secant_guess = m_temp_od_last[9 - cpp_offset] - UA_LT_residual * (last_T9_guess - m_temp_od_last[9 - cpp_offset]) / (last_LT_residual - UA_LT_residual);		// next guess predicted using secant method
 			
 			if( UA_LT_residual < 0.0 )		// UA_LT_calc is too big, temp(9) needs to be higher
 			{
-				if( abs(UA_LT_residual) / UA_LT < m_cycle_off_des_in.m_S.m_tol )
+				if(std::abs(UA_LT_residual) / UA_LT < m_cycle_off_des_in.m_S.m_tol )
 					break;					// exit T9_loop  !UA_LT converged(residual is negative)
 				T9_lower_bound = m_temp_od_last[9 - cpp_offset];
 			}
@@ -1917,14 +1917,14 @@ bool RecompCycle::off_design(const cycle_off_des_inputs & cycle_off_des_in_in)
 		// Check for convergence and adjust T8 appropriately.
 		double UA_HT_residual = UA_HT - UA_HT_calc;
 
-		if( abs(UA_HT_residual) < 1.E-12 )
+		if(std::abs(UA_HT_residual) < 1.E-12 )
 			break;				// exit T8_loop  !catches no HT case
 		
 		double secant_guess = m_temp_od_last[8 - cpp_offset] - UA_HT_residual * (last_T8_guess - m_temp_od_last[8 - cpp_offset]) / (last_HT_residual - UA_HT_residual);			// next guess predicted using secant method
 
 		if( UA_HT_residual < 0.0 )		// UA_HT calc is too big, temp(8) needs to be higher
 		{
-			if( abs(UA_HT_residual) / UA_HT < m_cycle_off_des_in.m_S.m_tol )
+			if(std::abs(UA_HT_residual) / UA_HT < m_cycle_off_des_in.m_S.m_tol )
 				break;					// exit T8_loop, UA_HT converged (residual is negative)
 			T8_lower_bound = m_temp_od_last[8 - cpp_offset];
 		}

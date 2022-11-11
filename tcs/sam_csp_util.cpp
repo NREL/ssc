@@ -275,8 +275,8 @@ void CSP::theta_trans(double alpha_sun /*rad*/, double phi_sun /*rad*/, double a
     double alpha_sunX = alpha_sun + pi;		//[rad]
         
     //Calculate angles
-    phi_t = fabs(atan(tan(phi_sun)*sin(alpha_sunX - alpha_fix))); //[rad] collector angle in transversal plane
-    theta = fabs(asin(sin(phi_sun)*cos(alpha_sunX - alpha_fix))); //[rad] collector angle in the longitudinal plane
+    phi_t = std::abs(atan(tan(phi_sun)*sin(alpha_sunX - alpha_fix))); //[rad] collector angle in transversal plane
+    theta = std::abs(asin(sin(phi_sun)*cos(alpha_sunX - alpha_fix))); //[rad] collector angle in the longitudinal plane
         
     //check for NaN
     if(theta!=theta || phi_t != phi_t) 
@@ -1168,7 +1168,7 @@ double CSP::FricFactor_Iter(double rel_rough, double Re) {
     while (NumTries < 21) {
         NumTries++;
         Test = X + 2 * log10(rel_rough / 3.7 + 2.51 * X / Re);
-        if (fabs(Test - TestOld) <= Acc) {
+        if (std::abs(Test - TestOld) <= Acc) {
             return 1. / (X * X);
         }
 
@@ -1677,7 +1677,7 @@ void Evacuated_Receiver::FQ_34CONV(double T_3, double T_4, double P_6, double v_
 			nu_36 = mu_36 / rho_36;  //[m**2/s] kinematic viscosity, AIR
 			alpha_36 = k_36 / (cp_36 * rho_36);  //[m**2/s], thermal diffusivity, AIR
 			beta_36 =  1.0 / T_36;  //[1/K]
-			Ra_D3 = grav * beta_36 * fabs(T_3 - T_6) * pow(m_D_3.at(hn,0),3) / (alpha_36 * nu_36);
+			Ra_D3 = grav * beta_36 * std::abs(T_3 - T_6) * pow(m_D_3.at(hn,0),3) / (alpha_36 * nu_36);
 
 			// Warning Statement if following Nusselt Number correlation is used out of recommended range //
 			//If ((Ra_D3 <= 1.e-5) || (Ra_D3 >= 1.e12)) continue
@@ -1763,8 +1763,8 @@ void Evacuated_Receiver::FQ_34CONV(double T_3, double T_4, double P_6, double v_
 		Alpha_34 = k_34 /(Cp_34 * rho_34);  //[m**2/s]//
 		nu_34 = mu_34 / rho_34;  //[m**2/s]//
 		Beta_34 = 1. / max(T_34,1.0);  //[1/K]//
-		Ra_D3 = grav * Beta_34 * fabs(T_3 - T_4) * pow(m_D_3.at(hn,0),3) / (Alpha_34 * nu_34);
-		Ra_D4 = grav * Beta_34 * fabs(T_3 - T_4) * pow(m_D_4.at(hn,0),3) / (Alpha_34 * nu_34);
+		Ra_D3 = grav * Beta_34 * std::abs(T_3 - T_4) * pow(m_D_3.at(hn,0),3) / (Alpha_34 * nu_34);
+		Ra_D4 = grav * Beta_34 * std::abs(T_3 - T_4) * pow(m_D_4.at(hn,0),3) / (Alpha_34 * nu_34);
 		Pr_34 = nu_34 / Alpha_34;
 		Natq_34conv = 2.425 * k_34 * (T_3 - T_4) / pow(1 + pow(m_D_3.at(hn,0)/ m_D_4.at(hn,0), 0.6), 1.25) * pow(Pr_34 * Ra_D3 / (0.861 + Pr_34),0.25);  //[W/m]//	
 		P = m_P_a(hn,hv);  //[mmHg] (note that 1 torr = 1 mmHg by definition)
@@ -1906,7 +1906,7 @@ double alpha_5, alpha_6, C, Cp_5, Cp_56, Cp_6, k_5, k_56, k_6, m, mu_5, mu_56, m
 			nu_56 = mu_56 / rho_56;  //[m^2/s]
 			alpha_56 = k_56 / (Cp_56 * rho_56 );  //[m^2/s]
 			beta_56 =  1.0 / T_56;  //[1/K]
-			Ra_D5 = CSP::grav *beta_56 * fabs(T_5 - T_6) * pow(m_D_5.at(hn,0),3) / (alpha_56 * nu_56);
+			Ra_D5 = CSP::grav *beta_56 * std::abs(T_5 - T_6) * pow(m_D_5.at(hn,0),3) / (alpha_56 * nu_56);
 
 			// Warning Statement if following Nusselt Number correlation is used out of range //
 			//If (Ra_D5 <= 10**(-5)) or (Ra_D5 >= 10**12) Then CALL WARNING('The result may not be accurate, 
@@ -2020,7 +2020,7 @@ double Evacuated_Receiver::FQ_COND_BRACKET(double T_3, double T_6, double P_6, d
 		nu_brac6 = mu_brac6 / rho_brac6;  //[m**2/s]
 		Alpha_brac6 = k_brac6 / (Cp_brac6 * rho_brac6);  //[m**2/s]
 		Beta_brac6 =  1.0 / T_brac6;  //[1/K]
-		Ra_Dbrac = CSP::grav * Beta_brac6 * fabs(T_brac - T_6) * D_brac*D_brac*D_brac / (Alpha_brac6 * nu_brac6);
+		Ra_Dbrac = CSP::grav * Beta_brac6 * std::abs(T_brac - T_6) * D_brac*D_brac*D_brac / (Alpha_brac6 * nu_brac6);
 
 		// Warning Statement if following Nusselt Number correlation is used out of recommended range 
 		//If ((Ra_Dbrac <= 1.e-5)) || (Ra_Dbrac >= 1.e12) Then CALL WARNING('The result may not be accurate, 
@@ -2388,7 +2388,7 @@ void Evacuated_Receiver::EvacReceiver(double T_1_in, double m_dot, double T_amb,
 	// Re-guess criteria
 	do
 	{
-		if( time <= 2 || ((int)mv_reguess_args[0] == 1) != m_Glazing_intact.at(hn,hv) || m_P_a.at(hn,hv) != mv_reguess_args[1] || fabs(mv_reguess_args[2]-T_1_in) > 50.0 )
+		if( time <= 2 || ((int)mv_reguess_args[0] == 1) != m_Glazing_intact.at(hn,hv) || m_P_a.at(hn,hv) != mv_reguess_args[1] || std::abs(mv_reguess_args[2]-T_1_in) > 50.0 )
 		{
 			reguess = true;
 			break;
@@ -2535,7 +2535,7 @@ void Evacuated_Receiver::EvacReceiver(double T_1_in, double m_dot, double T_amb,
 	double T_upper  = std::numeric_limits<double>::quiet_NaN();
 	double q5_tol_1 = std::numeric_limits<double>::quiet_NaN();
 
-	while( ( (fabs(Diff_T3)>T3_tol) && (qq<100) ) || (qq<2))
+	while( ( (std::abs(Diff_T3)>T3_tol) && (qq<100) ) || (qq<2))
 	{    //Outer loop: Find T_3 such than energy balance is satisfied
 		qq++; //loop counter
 		
@@ -2600,7 +2600,7 @@ void Evacuated_Receiver::EvacReceiver(double T_1_in, double m_dot, double T_amb,
 			else           // For additional iterations:
 			{                                            
 				T_lower  = T_lower - max(abs_diffT3,0.0);       //If diff_T3 is + then new T3 < old T3 so adjust lower limit
-				T_upper  = T_upper + fabs(min(abs_diffT3,0.0));  //If diff_T3 is (-) then new T3 > old T3 so adjust upper limit
+				T_upper  = T_upper + std::abs(min(abs_diffT3,0.0));  //If diff_T3 is (-) then new T3 > old T3 so adjust upper limit
 				q5_tol_1 = q5_tol;        //For remaining T3 iterations, use specified tolerance (note that 2 iterations for T3 are gauranteed)             
 			}
 
@@ -2614,7 +2614,7 @@ void Evacuated_Receiver::EvacReceiver(double T_1_in, double m_dot, double T_amb,
 			//************* Begin Bisection/False Position Iteration method *********************
 			//***********************************************************************************
 
-			while( (fabs(diff_q5)>q5_tol_1) && (q5_iter<100) )
+			while( (std::abs(diff_q5)>q5_tol_1) && (q5_iter<100) )
 			{       //Determine T_4 such that energy balance from T_3 to surroundings is satisfied
 
 				q5_iter++;					// Increase iteration counter
@@ -2658,7 +2658,7 @@ void Evacuated_Receiver::EvacReceiver(double T_1_in, double m_dot, double T_amb,
 				//***************************************************************************
 				//********** Compare q_5out with q_45 cond***********************************
 				//***************************************************************************
-				diff_q5 = (q_5out - q_45cond)/fabs(q_45cond);			// [W/m]
+				diff_q5 = (q_5out - q_45cond)/ std::abs(q_45cond);			// [W/m]
 
 				//Determine next guess for T_4.  Want to use false position method, but it requires that the *results* at both ends of the bracket are known.  We have
 				//defined a bracket but not the results.  Use the guess T_4 to get the results at one end of a new bracket.  Then calculate a new T_4 that is highly weighted 
@@ -2753,7 +2753,7 @@ void Evacuated_Receiver::EvacReceiver(double T_1_in, double m_dot, double T_amb,
 			double diff_T1 = T1_tol + 1.0;								//Set diff > tolerance
 			int T1_iter = 0;                                             //Set iteration counter    
 
-			while( (fabs(diff_T1)>T1_tol) && (T1_iter<100))
+			while( (std::abs(diff_T1)>T1_tol) && (T1_iter<100))
 			{       //Find correct cp& rho and solve for T_1_ave
 				T1_iter ++;                   //Increase iteration counter
 				T_1_ave = (T_1_out + T_1_in) / 2.0;			//Average fluid temperature
@@ -2778,7 +2778,7 @@ void Evacuated_Receiver::EvacReceiver(double T_1_in, double m_dot, double T_amb,
 		double diff_T2 = 1.0 + T2_tol;		// Set diff > tolerance
 
 		// Ensure convective calculations are correct (convergence on T_2)
-		while( (fabs(diff_T2)>T2_tol) && q_conv_iter < 100 )
+		while( (std::abs(diff_T2)>T2_tol) && q_conv_iter < 100 )
 		{
 			q_conv_iter++;			// Increase iteration counter
 
