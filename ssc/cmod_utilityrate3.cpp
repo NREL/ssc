@@ -2957,7 +2957,7 @@ public:
 				{
 					if (monthly_energy_net[m] != 0 && (ec_monthly_energy_net[m][period]<0))
 					{
-						ssc_number_t reduction = fabs(monthly_cumulative_excess_energy[m - 1] * ec_monthly_energy_net[m][period] / monthly_energy_net[m]);
+						ssc_number_t reduction = std::abs(monthly_cumulative_excess_energy[m - 1] * ec_monthly_energy_net[m][period] / monthly_energy_net[m]);
 						ec_monthly_energy_net[m][period] += reduction;
 					}
 				}

@@ -64,7 +64,7 @@ bool search( Real xold[n], const Real fold, Real g[n], Real p[n],
 	test=0.0;
 	for (i=0;i<n;i++)
 	{
-		temp=fabs(p[i])/mymax(fabs(xold[i]),1.0);
+		temp= std::abs(p[i])/mymax(std::abs(xold[i]),1.0);
 		if (temp > test) test=temp;
 	}
 	

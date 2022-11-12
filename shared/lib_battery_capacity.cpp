@@ -328,8 +328,8 @@ void capacity_kibam_t::parameter_compute() {
         c1 = c_compute(params->leadacid.F1, params->leadacid.tn, 20, k_guess);
         c2 = c_compute(params->leadacid.F2, params->leadacid.tn, params->leadacid.t2, k_guess);
 
-        if (fabs(c1 - c2) < minRes) {
-            minRes = fabs(c1 - c2);
+        if (std::abs(c1 - c2) < minRes) {
+            minRes = std::abs(c1 - c2);
             k = k_guess;
             c = 0.5 * (c1 + c2);
         }
@@ -338,7 +338,7 @@ void capacity_kibam_t::parameter_compute() {
 }
 
 void capacity_kibam_t::updateCapacity(double &I, double dt_hour) {
-    if (fabs(I) < low_tolerance)
+    if (std::abs(I) < low_tolerance)
         I = 0;
 
     state->SOC_prev = state->SOC;
@@ -359,7 +359,7 @@ void capacity_kibam_t::updateCapacity(double &I, double dt_hour) {
         state->cell_current = Id;
     } else if (state->cell_current < 0) {
         Icmax = Icmax_compute(state->leadacid.q1_0, state->q0, dt_hour);
-        Ic = -fmin(fabs(state->cell_current), fabs(Icmax));
+        Ic = -fmin(std::abs(state->cell_current), std::abs(Icmax));
         state->cell_current = Ic;
     }
 

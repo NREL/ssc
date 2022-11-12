@@ -165,7 +165,7 @@ bool spe_module_t::operator() ( pvinput_t &input, double TcellC, double , pvoutp
 #define TINY 1.0e-20
 #define SHFT(a,b,c,d) (a)=(b);(b)=(c);(c)=(d);
 #define FMAX(a,b) ((a)>(b)?(a):(b))
-#define SIGN(a,b) ((b) >= 0.0 ? fabs(a) : -fabs(a))
+#define SIGN(a,b) ((b) >= 0.0 ? std::abs(a) : -std::abs(a))
 
 static void mnbrak(double *ax, double *bx, double *cx, double *fa, double *fb, double *fc,
 	double (*func)(double, void *), void *data)
@@ -184,7 +184,7 @@ static void mnbrak(double *ax, double *bx, double *cx, double *fa, double *fb, d
 		r=(*bx-*ax)*(*fb-*fc);
 		q=(*bx-*cx)*(*fb-*fa);
 		u=(*bx)-((*bx-*cx)*q-(*bx-*ax)*r)/
-			(2.0*SIGN(FMAX(fabs(q-r),TINY),q-r));
+			(2.0*SIGN(FMAX(std::abs(q-r),TINY),q-r));
 		ulim=(*bx)+GLIMIT*(*cx-*bx);
 		if ((*bx-u)*(u-*cx) > 0.0) {
 			fu=(*func)(u,data);
@@ -244,7 +244,7 @@ static bool golden(double ax, double bx, double (*f)(double,void*), void *data, 
 
 	x0=ax;
 	x3=cx;
-	if (fabs(cx-bx) > fabs(bx-ax)) {
+	if (std::abs(cx-bx) > std::abs(bx-ax)) {
 		x1=bx;
 		x2=bx+C*(cx-bx);
 	} else {
@@ -253,7 +253,7 @@ static bool golden(double ax, double bx, double (*f)(double,void*), void *data, 
 	}
 	f1=(*f)(x1,data);
 	f2=(*f)(x2,data);
-	while (fabs(x3-x0) > tol*(fabs(x1)+fabs(x2))) {
+	while (std::abs(x3-x0) > tol*(std::abs(x1)+ std::abs(x2))) {
 		if (f2 < f1) {
 			SHFT3(x0,x1,x2,R*x1+C*x3)
 			SHFT2(f1,f2,(*f)(x2,data))
@@ -298,7 +298,7 @@ double current_5par( double V, double IMR, double A, double IL, double IO, doubl
 	double INEW = IMR;
 	const int maxit = 4000;
 	int it = 0;
-	while( fabs(INEW-IOLD) > 0.0001)
+	while(std::abs(INEW-IOLD) > 0.0001)
 	{
 		IOLD = INEW;
 		double F = IL-IOLD-IO*(exp((V_MODULE+IOLD*RS)/A)-1.0) - (V_MODULE+IOLD*RS)/RSH;
@@ -328,7 +328,7 @@ double current_5par_rec(double V, double IMR, double A, double IL, double IO, do
 	const int maxit = 4000;
 	int it = 0;
 
-	while (fabs(INEW - IOLD) > 0.0001)
+	while (std::abs(INEW - IOLD) > 0.0001)
 	{
 		IOLD = INEW;
 
@@ -358,7 +358,7 @@ double openvoltage_5par( double Voc0, double a, double IL, double IO, double Rsh
 	double Voc = Voc0; // initial guess
 	
 	int niter = 0;
-	while( fabs(VocHigh-VocLow) > 0.001 )
+	while(std::abs(VocHigh-VocLow) > 0.001 )
 	{
 		double I = IL - IO*(exp(Voc/a)-1) - Voc/Rsh;
 		if (I < 0) VocHigh = Voc;
@@ -384,7 +384,7 @@ double openvoltage_5par_rec(double Voc0, double a, double IL, double IO, double 
 	double Voc = Voc0; // initial guess
 
 	int niter = 0;
-	while (fabs(VocHigh - VocLow) > 0.001)
+	while (std::abs(VocHigh - VocLow) > 0.001)
 	{
 		double I = IL - IO * (exp(Voc / a) - 1) - Voc / Rsh - IL * D2MuTau / (Vbi - Voc);
 

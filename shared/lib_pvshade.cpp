@@ -97,11 +97,11 @@ void polint(double xa[], double ya[], int n, double x, double *y, double *dy)
 	size_t size = n+1;
 	std::vector<double> c(size);
 	std::vector<double> d(size);
-	dif=fabs(x-xa[1]);
+	dif= std::abs(x-xa[1]);
 
 	for (i=1;i<=n;i++)
 	{
-		if ( (dift=fabs(x-xa[i])) < dif)
+		if ( (dift= std::abs(x-xa[i])) < dif)
 		{
 			ns=i;
 			dif=dift;
@@ -144,7 +144,7 @@ double qromb(double (*func)(double,double,double,double), double a, double b, do
 		if (j >= K)
 		{
 			polint(&h[j-K],&s[j-K],K,0.0,&ss,&dss);
-			if (fabs(dss) <= EPS*fabs(ss)) return ss;
+			if (std::abs(dss) <= EPS* std::abs(ss)) return ss;
 		}
 		h[j+1]=0.25*h[j];
 	}
@@ -440,7 +440,7 @@ bool ss_exec(
 	double az_eff = solazi - azimuth;
 
 	// if no effective tilt, or sun is down, then no array self-shading
-	if ((solzen < 90.0) && (tilt != 0) && (fabs(az_eff) < 90.0) )
+	if ((solzen < 90.0) && (tilt != 0) && (std::abs(az_eff) < 90.0) )
 	{
 		// Appelbaum eqn (12)
 		py = m_A * (cosd(tilt) + ( cosd(az_eff) * sind(tilt) /tand(90.0-solzen) ) );

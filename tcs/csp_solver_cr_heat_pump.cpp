@@ -690,7 +690,7 @@ int heat_pump_helpers::C_carnot_heat_pump::performance(double T_HT_cold_in /*C*/
 
     double tol_T_CT_cold = 0.1;  //[C]
 
-    if (abs(diff_T_CT_cold) > tol_T_CT_cold) {
+    if (std::abs(diff_T_CT_cold) > tol_T_CT_cold) {
 
         double T_CT_cold_guess_2 = c_eq.m_T_CT_cold_calc;    //[C]
         double diff_T_CT_cold_guess_2 = std::numeric_limits<double>::quiet_NaN();
@@ -700,7 +700,7 @@ int heat_pump_helpers::C_carnot_heat_pump::performance(double T_HT_cold_in /*C*/
             return -1;
         }
 
-        if (abs(diff_T_CT_cold_guess_2) > tol_T_CT_cold) {
+        if (std::abs(diff_T_CT_cold_guess_2) > tol_T_CT_cold) {
 
             C_monotonic_eq_solver::S_xy_pair xy1;
             xy1.x = T_CT_cold_guess;

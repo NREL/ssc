@@ -455,7 +455,7 @@ public:
 					Q_reject = (T_glass_res - T_amb)/R2;
 					
 					// determine error in Q_losses......they should all be equal
-					residual = fabs(T_glass_res-T_glass);
+					residual = std::abs(T_glass_res-T_glass);
 				}
 				else
 					break;

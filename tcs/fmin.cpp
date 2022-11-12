@@ -48,6 +48,7 @@
 *
 ************************************************************************
 */
+#include <cmath>
 
 #include "assert.h"
 #include "math.h"
@@ -88,12 +89,12 @@ double fminbr(double a, double b, double(*f)(double x, void *data), void *data_i
 		/* is seeked for                */
 		double middle_range = (a + b) / 2;
 		double tol_act =          /* Actual tolerance             */
-			SQRT_EPSILON * fabs(x) + tol / 3;
+			SQRT_EPSILON * std::abs(x) + tol / 3;
 		double new_step;          /* Step at this iteration       */
 
 
 
-		if( fabs(x - middle_range) + range / 2 <= 2 * tol_act )
+		if(std::abs(x - middle_range) + range / 2 <= 2 * tol_act )
 			return x;              /* Acceptable approx. is found  */
 
 		/* Obtain the gold section step */
@@ -101,7 +102,7 @@ double fminbr(double a, double b, double(*f)(double x, void *data), void *data_i
 
 
 		/* Decide if the interpolation can be tried     */
-		if( fabs(x - w) >= tol_act ) {     /* If x and w are distinct      *//* interpolatiom may be tried   */
+		if(std::abs(x - w) >= tol_act ) {     /* If x and w are distinct      *//* interpolatiom may be tried   */
 			double p;     /* Interpolation step is calcula- */
 			double q;     /* ted as p/q; division operation */
 			/* is delayed until last moment */
@@ -117,7 +118,7 @@ double fminbr(double a, double b, double(*f)(double x, void *data), void *data_i
 			else                   /* and assign possible minus to     */
 				q = -q;             /* p                            */
 
-			if( fabs(p) < fabs(new_step * q) &&    /* If x+p/q falls in [a,b] */
+			if(std::abs(p) < std::abs(new_step * q) &&    /* If x+p/q falls in [a,b] */
 				p > q * (a - x + 2 * tol_act) &&   /* not too close to a and */
 				p < q * (b - x - 2 * tol_act) )     /* b, and isn't too large */
 				new_step = p / q;   /* it is accepted         */
@@ -127,7 +128,7 @@ double fminbr(double a, double b, double(*f)(double x, void *data), void *data_i
 			/* extent                       */
 		}
 
-		if( fabs(new_step) < tol_act ) {   /* Adjust the step to be not less */
+		if(std::abs(new_step) < tol_act ) {   /* Adjust the step to be not less */
 			if (new_step > 0) {        /* than tolerance                 */
 				new_step = tol_act;
 			}

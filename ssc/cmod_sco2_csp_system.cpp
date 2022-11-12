@@ -755,7 +755,7 @@ public:
                     if (od_cases(n_run, 3) < 0.0)
                     {
                         is_rc_N_od_at_design = false;
-                        rc_N_od_f_des = fabs(od_cases(n_run, 3));
+                        rc_N_od_f_des = std::abs(od_cases(n_run, 3));
                     }
                     else if (od_cases(n_run, 3) == 0.0)
                     {
@@ -768,7 +768,7 @@ public:
                     if (od_cases(n_run, 4) < 0.0)
                     {
                         is_mc_N_od_at_design = false;
-                        mc_N_od_f_des = fabs(od_cases(n_run, 4));
+                        mc_N_od_f_des = std::abs(od_cases(n_run, 4));
                     }
                     else if (od_cases(n_run, 4) == 0.0)
                     {
@@ -780,7 +780,7 @@ public:
                     double pc_N_od_f_des = 1.0;
                     if (od_cases(n_run, 5) < 0.0) {
                         is_pc_N_od_at_design = false;
-                        pc_N_od_f_des = fabs(od_cases(n_run, 5));
+                        pc_N_od_f_des = std::abs(od_cases(n_run, 5));
                     }
                     else if(od_cases(n_run, 5) == 0.0){
                         is_optimize_pc_N = true;
@@ -791,7 +791,7 @@ public:
                     if (od_cases(n_run, 6) < 0.0)
                     {
                         is_PHX_dP_input = true;
-                        PHX_f_dP_od = fabs(od_cases(n_run, 6));
+                        PHX_f_dP_od = std::abs(od_cases(n_run, 6));
                     }
 
                     double eta_max, f_N_mc_opt, f_N_rc_opt, W_dot_at_eta_max;
@@ -867,7 +867,7 @@ public:
                     if (od_cases(n_run, 5) < 0.0)
                     {
                         is_rc_N_od_at_design = false;
-                        rc_N_od_f_des = fabs(od_cases(n_run, 5));
+                        rc_N_od_f_des = std::abs(od_cases(n_run, 5));
                     }
                         // MC shaft speed control
                     bool is_mc_N_od_at_design = true;
@@ -875,7 +875,7 @@ public:
                     if (od_cases(n_run, 6) < 0.0)
                     {
                         is_mc_N_od_at_design = false;
-                        mc_N_od_f_des = fabs(od_cases(n_run, 6));
+                        mc_N_od_f_des = std::abs(od_cases(n_run, 6));
                     }
                         // PC shaft speed control
                     bool is_pc_N_od_at_design = true;
@@ -883,7 +883,7 @@ public:
                     double pc_N_od_f_des = 1.0;
                     if (od_cases(n_run, 7) < 0.0) {
                         is_pc_N_od_at_design = false;
-                        pc_N_od_f_des = fabs(od_cases(n_run, 7));
+                        pc_N_od_f_des = std::abs(od_cases(n_run, 7));
                     }
                         // PHX pressure drop options
                     bool is_PHX_dP_input = false;
@@ -891,7 +891,7 @@ public:
                     if (od_cases(n_run, 8) < 0.0)
                     {
                         is_PHX_dP_input = true;
-                        PHX_f_dP_od = fabs(od_cases(n_run, 8));
+                        PHX_f_dP_od = std::abs(od_cases(n_run, 8));
                     }
 
                     std::string od_sim_log = util::format("Beginning off design run %d of %d, the "
@@ -926,7 +926,7 @@ public:
 					if (od_cases(n_run, 3) < 0.0)
 					{
 						is_rc_N_od_at_design = false;
-						rc_N_od_f_des = fabs(od_cases(n_run, 3));
+						rc_N_od_f_des = std::fabs(od_cases(n_run, 3));
 					}
 					// MC shaft speed control
 					bool is_mc_N_od_at_design = true;
@@ -934,14 +934,14 @@ public:
 					if (od_cases(n_run, 4) < 0.0)
 					{
 						is_mc_N_od_at_design = false;
-						mc_N_od_f_des = fabs(od_cases(n_run, 4));
+						mc_N_od_f_des = std::fabs(od_cases(n_run, 4));
 					}
                     // PC shaft speed control
                     bool is_pc_N_od_at_design = true;
                     double pc_N_od_f_des = 1.0;
                     if (od_cases(n_run, 5) < 0.0) {
                         is_pc_N_od_at_design = false;
-                        pc_N_od_f_des = fabs(od_cases(n_run, 5));
+                        pc_N_od_f_des = std::fabs(od_cases(n_run, 5));
                     }
 					// PHX pressure drop options
 					bool is_PHX_dP_input = false;
@@ -949,7 +949,7 @@ public:
 					if (od_cases(n_run, 6) < 0.0)
 					{
 						is_PHX_dP_input = true;
-						PHX_f_dP_od = fabs(od_cases(n_run, 6));
+						PHX_f_dP_od = std::abs(od_cases(n_run, 6));
 					}
 
 					std::string od_sim_log = util::format("Beginning off design run %d of %d, the "
@@ -981,7 +981,7 @@ public:
                     if (od_cases(n_run, 3) < 0.0)
                     {
                         is_rc_N_od_at_design = false;
-                        rc_N_od_f_des = fabs(od_cases(n_run, 3));
+                        rc_N_od_f_des = std::abs(od_cases(n_run, 3));
                     }
                     // MC shaft speed control
                     bool is_mc_N_od_at_design = true;
@@ -989,7 +989,7 @@ public:
                     if (od_cases(n_run, 4) < 0.0)
                     {
                         is_mc_N_od_at_design = false;
-                        mc_N_od_f_des = fabs(od_cases(n_run, 4));
+                        mc_N_od_f_des = std::abs(od_cases(n_run, 4));
                     }
                     // PHX pressure drop options
                     bool is_PHX_dP_input = false;
@@ -997,7 +997,7 @@ public:
                     if (od_cases(n_run, 5) < 0.0)
                     {
                         is_PHX_dP_input = true;
-                        PHX_f_dP_od = fabs(od_cases(n_run, 5));
+                        PHX_f_dP_od = std::abs(od_cases(n_run, 5));
                     }
 
                     std::string od_sim_log = util::format("Beginning 'od_max_htf_m_dot' run %d of %d, the "
@@ -1023,7 +1023,7 @@ public:
 					double P_LP_comp_in = od_cases(n_run, 3);
 					if (od_cases(n_run, 3) < 0.0)
 					{
-						P_LP_comp_in = P_LP_comp_in_des / fabs(P_LP_comp_in);
+						P_LP_comp_in = P_LP_comp_in_des / std::abs(P_LP_comp_in);
 					}
                     double T_mc_in_local = od_cases(n_run, 4) + 273.15; //[K] convert from C
                     double T_pc_in_local = od_cases(n_run, 5) + 273.15; //[K] convert from C
@@ -1033,7 +1033,7 @@ public:
                     if (od_cases(n_run, 6) < 0.0)
                     {
                         is_rc_N_od_at_design = false;
-                        rc_N_od_f_des = fabs(od_cases(n_run, 6));
+                        rc_N_od_f_des = std::abs(od_cases(n_run, 6));
                     }
                         // MC shaft speed control
                     bool is_mc_N_od_at_design = true;
@@ -1041,7 +1041,7 @@ public:
                     if (od_cases(n_run, 7) < 0.0)
                     {
                         is_mc_N_od_at_design = false;
-                        mc_N_od_f_des = fabs(od_cases(n_run, 7));
+                        mc_N_od_f_des = std::abs(od_cases(n_run, 7));
                     }
                         // PC shaft speed control
                     bool is_pc_N_od_at_design = true;
@@ -1049,7 +1049,7 @@ public:
                     double pc_N_od_f_des = 1.0;
                     if (od_cases(n_run, 8) < 0.0) {
                         is_pc_N_od_at_design = false;
-                        pc_N_od_f_des = fabs(od_cases(n_run, 8));
+                        pc_N_od_f_des = std::abs(od_cases(n_run, 8));
                     }
                         // PHX pressure drop options
                     bool is_PHX_dP_input = false;
@@ -1057,7 +1057,7 @@ public:
                     if (od_cases(n_run, 9) < 0.0)
                     {
                         is_PHX_dP_input = true;
-                        PHX_f_dP_od = fabs(od_cases(n_run, 9));
+                        PHX_f_dP_od = std::abs(od_cases(n_run, 9));
                     }
 
 					off_design_code = c_sco2_cycle.off_design_fix_P_mc_in(s_sco2_od_par,

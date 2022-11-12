@@ -2177,7 +2177,7 @@ public:
 				cost_installed += debt_frac *cost_installed*cost_debt_fee_frac;
 				loan_amount = debt_frac * cost_installed;
 				i_repeat++;
-			} while ((fabs(new_ds_reserve - old_ds_reserve) > 1e-3) && (i_repeat < 10));
+			} while ((std::abs(new_ds_reserve - old_ds_reserve) > 1e-3) && (i_repeat < 10));
 
 			if (term_tenor == 0) loan_amount = 0;
 //			log(util::format("loan amount =%lg, debt fraction=%lg, adj installed cost=%lg", loan_amount, debt_frac, adjusted_installed_cost), SSC_WARNING);
@@ -2345,7 +2345,7 @@ public:
         /* Github issue 550 update dscr if necessary with limit on maximum debt fraction */
         if (constant_dscr_mode && dscr_limit_debt_fraction /* && (size_of_debt > 0)*/) {
             // TODO - determine if we are going to allow negative DSCR values for coverage when PPA fixed price is too low to cover expenses
-            if ((fabs(size_of_debt) > (cost_installed * dscr_maximum_debt_fraction)) || (size_of_debt < 0)) {
+            if ((std::abs(size_of_debt) > (cost_installed * dscr_maximum_debt_fraction)) || (size_of_debt < 0)) {
                 if (/*(size_of_debt > 0) &&*/ (cost_installed > 0) && (dscr_maximum_debt_fraction > 0)) {
                     //                    dscr = fabs(size_of_debt) / (cost_installed * dscr_maximum_debt_fraction) * dscr_input;
                     dscr = size_of_debt / (cost_installed * dscr_maximum_debt_fraction) * dscr_input;
@@ -4097,9 +4097,9 @@ public:
 		// scale to max value for better irr convergence
 		if (count<1) return 1.0;
 		int i=0;
-		double max=fabs(cf.at(cf_unscaled,0));
+		double max= std::abs(cf.at(cf_unscaled,0));
 		for (i=0;i<=count;i++) 
-			if (fabs(cf.at(cf_unscaled,i))> max) max =fabs(cf.at(cf_unscaled,i));
+			if (std::abs(cf.at(cf_unscaled,i))> max) max = std::abs(cf.at(cf_unscaled,i));
 		return (max>0 ? max:1);
 	}
 
@@ -4107,7 +4107,7 @@ public:
 	{
 		double npv_of_irr = npv(cf_line,count,calculated_irr)+cf.at(cf_line,0);
 		double npv_of_irr_plus_delta = npv(cf_line,count,calculated_irr+0.001)+cf.at(cf_line,0);
-		bool is_valid = ( (number_of_iterations<max_iterations) && (fabs(residual)<tolerance) && (npv_of_irr>npv_of_irr_plus_delta) && (fabs(npv_of_irr/scale_factor)<tolerance) );
+		bool is_valid = ( (number_of_iterations<max_iterations) && (std::abs(residual)<tolerance) && (npv_of_irr>npv_of_irr_plus_delta) && (std::abs(npv_of_irr/scale_factor)<tolerance) );
 				//if (!is_valid)
 				//{
 				//std::stringstream outm;
@@ -4204,7 +4204,7 @@ public:
 
 		residual = irr_poly_sum(calculated_irr,cf_line,count) / scale_factor;
 
-		while (!(fabs(residual) <= tolerance) && (number_of_iterations < max_iterations))
+		while (!(std::abs(residual) <= tolerance) && (number_of_iterations < max_iterations))
 		{
 			deriv_sum = irr_derivative_sum(initial_guess,cf_line,count);
 			if (deriv_sum != 0.0)

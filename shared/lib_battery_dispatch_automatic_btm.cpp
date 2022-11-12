@@ -760,7 +760,7 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(dispatch_plan
         }
         energy -= plan.plannedDispatch[i] * _dt_hour;
 
-        if (fabs(plan.plannedDispatch[i] - 0) < 1e-7) {
+        if (std::abs(plan.plannedDispatch[i] - 0) < 1e-7) {
             plan.plannedDispatch[i] = 0;
         }
 

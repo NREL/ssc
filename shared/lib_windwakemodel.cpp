@@ -69,7 +69,7 @@ void windTurbine::turbinePower(double windVelocity, double airDensity, double *t
 	*turbineOutput = 0.0;
 
 	//correct wind speeds in power curve for site air density if necessary, using method 2 described in https://www.scribd.com/document/38818683/PO310-EWEC2010-Presentation
-	if (fabs(airDensity - previousAirDensity) > 0.001 ) {
+	if (std::abs(airDensity - previousAirDensity) > 0.001 ) {
         double correction = pow((physics::AIR_DENSITY_SEA_LEVEL / airDensity), (1.0 / 3.0));
         for (size_t i = 0; i < densityCorrectedWS.size(); i++) {
             densityCorrectedWS[i] = powerCurveWS[i] * correction;
@@ -152,10 +152,10 @@ void simpleWakeModel::wakeCalculations(const double airDensity, const double dis
 		for (size_t j = 0; j < i; j++) // loop through all turbines upwind of turbine[i]
 		{
 			// distance downwind (axial distance) = distance from turbine j to turbine i along axis of wind direction (units of wind turbine blade radii)
-			double fDistanceDownwind = fabs(distanceDownwind[j] - distanceDownwind[i]);
+			double fDistanceDownwind = std::abs(distanceDownwind[j] - distanceDownwind[i]);
 
 			// separation crosswind (radial distance) between turbine j and turbine i (units of wind turbine blade radii)
-			double fDistanceCrosswind = fabs(distanceCrosswind[j] - distanceCrosswind[i]);
+			double fDistanceCrosswind = std::abs(distanceCrosswind[j] - distanceCrosswind[i]);
 
 			// Calculate the wind speed reduction and turbulence at turbine i, due to turbine j
 			// Both the velocity deficit (vdef) and the turbulence intensity (TI) are accumulated over the j loop
@@ -228,8 +228,8 @@ void parkWakeModel::wakeCalculations(const double airDensity, const double dista
 		double newSpeed = windSpeed[0];
 		for (size_t j = 0; j < i; j++) // upwind turbines
 		{
-			double distanceDownwindMeters = turbineRadius*fabs(distanceDownwind[i] - distanceDownwind[j]);
-			double distanceCrosswindMeters = turbineRadius*fabs(distanceCrosswind[i] - distanceCrosswind[j]);
+			double distanceDownwindMeters = turbineRadius* std::abs(distanceDownwind[i] - distanceDownwind[j]);
+			double distanceCrosswindMeters = turbineRadius* std::abs(distanceCrosswind[i] - distanceCrosswind[j]);
 
 			// Calculate the wind speed reduction at turbine i, due turbine [j]
 			// keep this new speed if it's less than any other calculated speed
@@ -502,12 +502,12 @@ void eddyViscosityWakeModel::wakeCalculations(/*INPUTS */ const double air_densi
 		for (size_t j = 0; j<i; j++) // upwind turbines - turbines upwind of turbine[i]
 		{
 			// distance downwind = distance from turbine i to turbine j along axis of wind direction
-			double dDistAxialInDiameters = fabs(aDistanceDownwind[i] - aDistanceDownwind[j]) / 2.0;
-			if (fabs(dDistAxialInDiameters) <= 0.0001)
+			double dDistAxialInDiameters = std::abs(aDistanceDownwind[i] - aDistanceDownwind[j]) / 2.0;
+			if (std::abs(dDistAxialInDiameters) <= 0.0001)
 				continue; // if this turbine isn't really upwind, move on to the next
 
 			// separation crosswind between turbine i and turbine j
-			double dDistRadialInDiameters = fabs(aDistanceCrosswind[i] - aDistanceCrosswind[j]) / 2.0;
+			double dDistRadialInDiameters = std::abs(aDistanceCrosswind[i] - aDistanceCrosswind[j]) / 2.0;
 
 			double dWakeRadiusMeters = getWakeWidth((int)j, dDistAxialInDiameters);  // the radius of the wake
 			if (dWakeRadiusMeters <= 0.0)
@@ -536,7 +536,7 @@ void eddyViscosityWakeModel::wakeCalculations(/*INPUTS */ const double air_densi
 		eff[i] = wTurbine->calculateEff(power[i], power[0]);
 
 		// now that turbine[i] wind speed, output, thrust, etc. have been calculated, calculate wake characteristics for it, because downwind turbines will need the info
-		if (!fillWakeArrays((int)i, adWindSpeed[0], adWindSpeed[i], power[i], Thrust[i], aTurbulence_intensity[i], fabs(aDistanceDownwind[nTurbines - 1] - aDistanceDownwind[i])*dTurbineRadius))
+		if (!fillWakeArrays((int)i, adWindSpeed[0], adWindSpeed[i], power[i], Thrust[i], aTurbulence_intensity[i], std::abs(aDistanceDownwind[nTurbines - 1] - aDistanceDownwind[i])*dTurbineRadius))
 		{
 			if (errDetails.length() == 0) errDetails = "Could not calculate the turbine wake arrays in the Eddy-Viscosity model.";
 		}

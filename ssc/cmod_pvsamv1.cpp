@@ -1058,7 +1058,7 @@ void cm_pvsamv1::exec()
     for (size_t nn = 0; nn < num_subarrays; nn++)
     {
         if (Subarrays[nn]->tiltEqualLatitude)
-            Subarrays[nn]->tiltDegrees = fabs(Irradiance->weatherHeader.lat);
+            Subarrays[nn]->tiltDegrees = std::abs(Irradiance->weatherHeader.lat);
         if (Subarrays[nn]->trackMode == irrad::SINGLE_AXIS && Subarrays[nn]->tiltDegrees > 0 && !Subarrays[nn]->Module->isBifacial)
             log(util::format("Subarray %d has one-axis tracking with a tilt angle of %f degrees. SAM can simulate one-axis tracking with non-zero tilt angles, but large one-axis tracking arrays typically have a tilt angle of zero. This message is a reminder in case you forgot to set the tilt angle to zero.", nn + 1, Subarrays[nn]->tiltDegrees), SSC_WARNING);
         if (Subarrays[nn]->Module->isBifacial && Subarrays[nn]->trackMode == irrad::SINGLE_AXIS && Subarrays[nn]->tiltDegrees > 0)
@@ -2518,7 +2518,7 @@ void cm_pvsamv1::exec()
                 }
             }
 
-            ac_wiringloss = fabs(acpwr_gross) * PVSystem->acLossPercent * 0.01;
+            ac_wiringloss = std::abs(acpwr_gross) * PVSystem->acLossPercent * 0.01;
 
             // accumulate first year annual energy
             if (iyear == 0)
@@ -2559,7 +2559,7 @@ void cm_pvsamv1::exec()
 			PVSystem->p_systemACPower[idx] = (ssc_number_t)(acpwr_gross - ac_wiringloss);
             // AC connected batteries will set this laster
             if (en_batt && (batt_topology == ChargeController::DC_CONNECTED)) {
-                batt->outGenWithoutBattery[idx] -= fabs(batt->outGenWithoutBattery[idx]) * PVSystem->acLossPercent * 0.01;;
+                batt->outGenWithoutBattery[idx] -= std::abs(batt->outGenWithoutBattery[idx]) * PVSystem->acLossPercent * 0.01;;
             }
 
 
@@ -2583,7 +2583,7 @@ void cm_pvsamv1::exec()
 
 			// transmission loss if AC power is produced
 			if (PVSystem->p_systemACPower[idx] > 0){
-                transmissionloss = fabs(PVSystem->p_systemACPower[idx]) * PVSystem->transmissionLossPercent * 0.01;
+                transmissionloss = std::abs(PVSystem->p_systemACPower[idx]) * PVSystem->transmissionLossPercent * 0.01;
 				PVSystem->p_systemACPower[idx] -= (ssc_number_t)(transmissionloss);
 
                 if (en_batt && (batt_topology == ChargeController::DC_CONNECTED)) {
@@ -2946,7 +2946,7 @@ void cm_pvsamv1::exec()
 
 #ifdef WITH_CHECKS
     // check that sys_output=dc_net
-        if (fabs(annual_dc_net - sys_output) / annual_dc_net > 0.00001)
+        if (std::abs(annual_dc_net - sys_output) / annual_dc_net > 0.00001)
             log(util::format("Internal discrepancy in calculated output dc_gross: %lg != %lg at DC1.  Please report to SAM support.", annual_dc_net, sys_output), SSC_WARNING);
 #endif
 
@@ -3093,7 +3093,7 @@ void cm_pvsamv1::exec()
 
 #ifdef WITH_CHECKS
         // check that ac_gross = sys_output at this point
-        if (fabs(annual_ac_gross - sys_output) / annual_ac_gross > 0.00001)
+        if (std::abs(annual_ac_gross - sys_output) / annual_ac_gross > 0.00001)
             log(util::format("Internal discrepancy in calculated output ac_gross: %lg != %lg at AC1.  Please report to SAM support.", annual_ac_gross, sys_output), SSC_WARNING);
 #endif
 
@@ -3131,7 +3131,7 @@ void cm_pvsamv1::exec()
 
 #ifdef WITH_CHECKS
         // check that ac_net = sys_output at this point
-        if (fabs(annual_ac_pre_avail - sys_output) / annual_ac_pre_avail > 0.00001)
+        if (std::abs(annual_ac_pre_avail - sys_output) / annual_ac_pre_avail > 0.00001)
             log(util::format("Internal discrepancy in calculated output ac_net: %lg != %lg at AC2.  Please report to SAM support.", annual_ac_pre_avail, sys_output), SSC_WARNING);
 #endif
 
@@ -3152,7 +3152,7 @@ void cm_pvsamv1::exec()
 
 #ifdef WITH_CHECKS
     // check that ac_net = sys_output at this point
-        if (fabs(annual_ac_net - sys_output) / annual_ac_net > 0.00001)
+        if (std::abs(annual_ac_net - sys_output) / annual_ac_net > 0.00001)
             log(util::format("Internal discrepancy in calculated output ac_net: %lg != %lg at AC3.  Please report to SAM support.", annual_ac_net, sys_output), SSC_WARNING);
 #endif
 
@@ -3214,7 +3214,7 @@ double cm_pvsamv1::intraElecMismatch(double irrad_front_avg /*W/m2*/, std::vecto
     double sum_of_deviations = 0.;
     for (size_t i = 0; i < irrad_total.size(); i++) {
         for (size_t j = 0; j < irrad_total.size(); j++) {
-            sum_of_deviations += abs(irrad_total[i] - irrad_total[j]);
+            sum_of_deviations += std::abs(irrad_total[i] - irrad_total[j]);
         }
     }
 

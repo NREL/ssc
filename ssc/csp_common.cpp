@@ -710,16 +710,16 @@ static bool optimize_callback( simulation_info *siminfo, void *data )
 
 bool are_values_sig_different(double v1, double v2, double tol)
 {
-    if (fabs(v1) < tol || fabs(v2) < tol)
+    if (std::abs(v1) < tol || std::abs(v2) < tol)
     {
-        if (fabs(v1 - v2) > tol)
+        if (std::abs(v1 - v2) > tol)
         {
             return true;
         }
     }
     else
     {
-        if (fabs(v1 - v2) / std::min(fabs(v1), fabs(v2)) > tol)
+        if (std::abs(v1 - v2) / std::min(std::abs(v1), std::abs(v2)) > tol)
         {
             return true;
         }
@@ -1083,7 +1083,7 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_phx_air_cooler & c_sco2_c
         {
             s_sco2_des_par.m_fixed_f_PR_HP_to_IP = true;
             double P_LP_in_local = s_sco2_des_par.m_P_high_limit / s_sco2_des_par.m_PR_HP_to_LP_guess;    //[kPa]
-            double P_IP_in_local = fabs(PR_HP_to_IP_in)*1.E3;      //[kPa]
+            double P_IP_in_local = std::abs(PR_HP_to_IP_in)*1.E3;      //[kPa]
             if (PR_HP_to_IP_in > 0.0)
             {
                 P_IP_in_local = s_sco2_des_par.m_P_high_limit / PR_HP_to_IP_in;  //[-]

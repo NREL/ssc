@@ -1189,7 +1189,7 @@ void C_mspt_receiver_222::calculate_steady_state_soln(s_steady_state_soln &soln,
 		// Check convergence
 		double err = (soln.T_salt_hot - T_salt_hot_guess) / T_salt_hot_guess;
 		T_salt_hot_guess = soln.T_salt_hot;
-		if (fabs(err) < tol && q>0)
+		if (std::abs(err) < tol && q>0)
 			break;
 
 	} // End iterations
@@ -1310,7 +1310,7 @@ void C_mspt_receiver_222::solve_for_mass_flow(s_steady_state_soln &soln)
 		if (soln.rec_is_off)  // SS solution was unsuccessful or resulted in an infeasible exit temperature -> remove outlet T for solution to start next iteration from the default intial guess
 			soln.T_salt_hot = std::numeric_limits<double>::quiet_NaN();
 
-		if (fabs(err) > tol)
+		if (std::abs(err) > tol)
 		{
 			m_dot_salt_guess = (soln.Q_abs_sum - soln.Q_dot_piping_loss) / (m_n_lines * c_p_coolant * (m_T_salt_hot_target - soln.T_salt_cold_in));			//[kg/s]
 
@@ -1402,7 +1402,7 @@ void C_mspt_receiver_222::solve_for_defocus_given_flow(s_steady_state_soln &soln
 
 		if (soln.od_control > 0.9999 && soln.T_salt_hot < m_T_salt_hot_target)  // Impossible for solution to achieve temperature target
 			break;
-		else if ((fabs(soln.T_salt_hot - m_T_salt_hot_target) / m_T_salt_hot_target) < tolT)
+		else if ((std::abs(soln.T_salt_hot - m_T_salt_hot_target) / m_T_salt_hot_target) < tolT)
 			break;
 		else
 		{

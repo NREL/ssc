@@ -206,7 +206,7 @@ bool cec6par_module_t::operator() ( pvinput_t &input, double TcellC, double opvo
 bool noct_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double , double &Tcell )
 {
 	double G_total, Geff_total;
-	double tau_al = fabs(TauAlpha);
+	double tau_al = std::abs(TauAlpha);
 
 	double theta_z = input.Zenith;
 	if (theta_z > 86.0) theta_z = 86.0; // !Zenith angle must be < 90 (?? why 86?)
@@ -252,7 +252,7 @@ bool noct_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 		// calculate cell temperature, kelvin
 		//double G_total = input.Ibeam + input.Idiff + input.Ignd;		
 		double eff_ref = Imp *Vmp / ( I_ref*Area );
-		tau_al = fabs(TauAlpha);  // Sev: What's the point of recalculating this??
+		tau_al = std::abs(TauAlpha);  // Sev: What's the point of recalculating this??
 
 		W_spd = input.Wspd * ffv_wind; //added 1/11/12 to account for FFV_wind correction factor internally
 		if (W_spd < 0.001) W_spd = 0.001;		
@@ -288,7 +288,7 @@ static double free_convection_194( double TC, double TA, double SLOPE, double rh
 	// !Horizontal Heated Upward Facing Plate (L_ch_f)
 	// !OR Cooled Downward Facing Plate
 	g_spec    = grav*MAX(0.,cosd(SLOPE));//  !Adjustment of gravity vector;
-	Gr        = g_spec*Beta*fabs(TC-TA)*pow(L_ch_f,3)/pow(nu,2); //    !Grashof Number
+	Gr        = g_spec*Beta* std::abs(TC-TA)*pow(L_ch_f,3)/pow(nu,2); //    !Grashof Number
 	Ra        = MAX(0.0001,Gr*Pr_air); //                 !Rayleigh Number
 
 	C_lam     = 0.671/pow(1. + pow(0.492/Pr_air, 9./16.) , 4./9.); //  !Eq. 6-49 (Nellis&Klein)
@@ -300,7 +300,7 @@ static double free_convection_194( double TC, double TA, double SLOPE, double rh
 
 	// !Vertical Plate (Length)
 	g_spec    = grav*sind(SLOPE);  //          !Adjustment of gravity vector
-	Gr        = g_spec*Beta*fabs(TC-TA)*pow(Length,3)/pow(nu,2);        
+	Gr        = g_spec*Beta* std::abs(TC-TA)*pow(Length,3)/pow(nu,2);
 	Ra        = MAX(0.0001,Gr*Pr_air);
 	
 	Nu_bar    = pow(0.825+(0.387*pow(Ra,(1./6.)))/pow(1+ pow(0.492/Pr_air, 9./16.), (8./27.)),2)  ;  // !(Incropera et al.,2006)
@@ -309,7 +309,7 @@ static double free_convection_194( double TC, double TA, double SLOPE, double rh
 	// !Horizontal Heated Downward Facing Plate
 	// !OR Cooled Upward Facing Plate
 	g_spec    = grav*MAX(0.,-cosd(SLOPE));
-	Gr        = g_spec*Beta*fabs(TC-TA)*pow(L_ch_f,3)/pow(nu,2);
+	Gr        = g_spec*Beta* std::abs(TC-TA)*pow(L_ch_f,3)/pow(nu,2);
 	Ra        = MAX(0.0001,Gr*Pr_air);
 
 	Nu_bar    = 2.5/log(1.+(2.5/(0.527*pow(Ra,0.2)))*pow(1.+pow(1.9/Pr_air,0.9),2./9.));//    !Eq. 6-59  (Nellis&Klein)
@@ -486,8 +486,8 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 
 	// !Adjust backside wind speed based on mounting structure orientation for "gap" mounting configuration
 	if (MC == 4) {
-		if (MSO==2) V_WIND  = MAX(0.001,fabs(cosd(input.Wdir-input.Azimuth))*V_WIND);
-		if (MSO==3) V_WIND  = MAX(0.001,fabs(cosd(input.Wdir+90.-input.Azimuth))*V_WIND);
+		if (MSO==2) V_WIND  = MAX(0.001, std::abs(cosd(input.Wdir-input.Azimuth))*V_WIND);
+		if (MSO==3) V_WIND  = MAX(0.001, std::abs(cosd(input.Wdir+90.-input.Azimuth))*V_WIND);
 		v_ch = V_WIND * 0.3;   // !Give realistic starting value to channel air velocity
 	}
 
@@ -511,7 +511,7 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
     double k_air_test = 0;
     double Pr_air_test = 0;
     double temp_interp = 0;
-	while( p_iter <= 300 && fabs(err_P) > 0.1 )
+	while( p_iter <= 300 && std::abs(err_P) > 0.1 )
 	{		  
 		double err_TC   = 100.; //  !Set initial temperature error. Must be > tolerance for temp error in do loop
 		double err_TC_p = 0.; //    !Set initial previous error. Should be zero so approach factor doesn't reset after 1 iteration
@@ -541,7 +541,7 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 		switch( MC )
 		{
 		case 1 : // !Rack Mounting Configuration 
-			while( fabs(err_TC) > 0.001 )
+			while(std::abs(err_TC) > 0.001 )
 			{
                 //L_char = Lsc; //Change characteristic length to Lacunarity length scale
 				double rho_air    = Patm*28.967/8314.34*(1./((TA+TC)/2.)) ; // !density of air as a function of pressure and ambient temp
@@ -590,7 +590,7 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 			break;
 				
 		case 2: // !Flush Mounting Configuration
-			while( fabs(err_TC) > 0.001)
+			while(std::abs(err_TC) > 0.001)
 			{
 				double rho_air    = Patm*28.967/8314.34*(1 / ((TA+TC)/2.)); // !density of air a function of pressure and ambient temp
 				double Re_forced  = MAX(0.1,rho_air*V_cover*L_char/mu_air); //  !Reynolds number of wind moving across panel: function of L_char: array depen?
@@ -613,7 +613,7 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 			break;
 			
 		case 3: // !Integrated Mounting Configuration
-			while( fabs(err_TC) > 0.001)
+			while(std::abs(err_TC) > 0.001)
 			{
 				double TbackK = TbackInteg + 273.15;
 				double rho_air    = Patm*28.967/8314.34*(1 / ((TA+TC)/2.)); // !density of air a function of pressure and film temp
@@ -679,7 +679,7 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 					return false; // invalid parameter specified
 					
 				// !Begin iteration to find cell temperature
-				while ( fabs(err_TC) > 0.001 )
+				while (std::abs(err_TC) > 0.001 )
 				{      
 					double rho_air    = Patm*28.967/8314.34*(1 / ((TA+TC)/2.)); // !density of air a function of pressure and film temp
 					double err_v      = 100; //                                     !set error for channel velocity iteration
@@ -688,7 +688,7 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 					int v_iter     = 0 ; //                       !set iteration counter for channel velocity iteration
 						
 					// !Calculate air velocity through channel by assuming roughness and estimating pressure drop
-					while ( v_iter < 80 && fabs(err_v) > 0.001)
+					while ( v_iter < 80 && std::abs(err_v) > 0.001)
 					{
 						double Re_dh_ch   = rho_air*v_ch*(D_h / mu_air) ; //   !Reynolds number for channel flow
 						double f_fd       = ffd_194(D_h,Re_dh_ch)  ; //         !Friction factor of channel flow
@@ -730,7 +730,7 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 					double h_radbk = 0;
 					double Q_conv_c = 0, Q_conv_r = 0;
 					// !Calculate roof temperature based on current cell temperature guess
-					while ( iter_T_rw < 121 && fabs(err_T_rw) > 0.001 )
+					while ( iter_T_rw < 121 && std::abs(err_T_rw) > 0.001 )
 					{
 						double T_cr = (TC+T_rw)/2.; // !Average of cell and roof temp assumed in correlations
 
@@ -819,7 +819,7 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 		P_guess    = P_guess + app_fac_P*err_P1; //  !Set performance to most recent calc
 		p_iter     = p_iter + 1; // !+1 to iteration counter
       
-		if ( p_iter > 300 && fabs(err_P) > 0.1 )
+		if ( p_iter > 300 && std::abs(err_P) > 0.1 )
 		{
 			m_err = "Power Calculations Did Not Converge";
 			return false;

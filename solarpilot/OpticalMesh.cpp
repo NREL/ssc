@@ -82,7 +82,7 @@ double derivatives::int_eval(double r, double lf){
 	double lfmls = lf-ls;
 
 	//Check whether the focal length is equal to the slant length. Handle separately.
-	if(fabs(lfmls) < .1){
+	if(std::abs(lfmls) < .1){
 		//Use the formulation for only Gaussian error contributions.
 		return -r*Data.w_rec/(sqt2*sqtpi*ls*ls*ls*Data.s_h)*exp(-Data.w_rec*Data.w_rec/(8.*ls*ls*Data.s_h*Data.s_h));
 	}
@@ -354,8 +354,8 @@ void optical_hash_tree::create_node(opt_element &node, bool rad_direction, int r
 	ddr = res.at(0);
 	ddB = res.at(1);
 
-	double dr = fabs(ddr*(xr1 - xr0));
-    double dB = fabs(ddB*(yr1 - yr0));
+	double dr = std::abs(ddr*(xr1 - xr0));
+    double dB = std::abs(ddB*(yr1 - yr0));
         
 	//Calculate the azimuthal zone size limits for this radius
 	int max_rec_level_a = (int)floor( log2inv*log(C0*max_rec_level_a_dr) );

@@ -226,7 +226,7 @@ public:
 
             // double precsion issue (15 digits IEEE 754) encountered by Anthony Lopez 4/29/13 for
             // minutes other than 15,30,45 and 60
-            if (fabs(delt - 1.0) < 1e-14) delt = 1.0;
+            if (std::abs(delt - 1.0) < 1e-14) delt = 1.0;
 
             double alb = alb_const;
             // if we have array of albedo values, use it

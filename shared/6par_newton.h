@@ -52,8 +52,8 @@ int newton( Real x[n], Real residual[n], bool &check, F &func,
 	f = fminsum<Real, F, n>(x, residual, func);
 	test=0.0;
 	for (i=0;i<n;i++)
-		if (fabs(residual[i]) > test) 
-			test=fabs(residual[i]);
+		if (std::abs(residual[i]) > test)
+			test= std::abs(residual[i]);
 		
 	if (test < 0.01*TOLF)
 	{
@@ -101,8 +101,8 @@ int newton( Real x[n], Real residual[n], bool &check, F &func,
 		
 		test=0.0;
 		for (i=0;i<n;i++)
-			if (fabs(residual[i]) > test)
-				test=fabs(residual[i]);
+			if (std::abs(residual[i]) > test)
+				test= std::abs(residual[i]);
 				
 		if (test < TOLF)
 		{
@@ -114,7 +114,7 @@ int newton( Real x[n], Real residual[n], bool &check, F &func,
 			test=0.0;
 			den=mymax(f,0.5*n);
 			for (i=0;i<n;i++) {
-				temp=fabs(g[i])*mymax(fabs(x[i]),1.0)/den;
+				temp= std::abs(g[i])*mymax(std::abs(x[i]),1.0)/den;
 				if (temp > test) test=temp;
 			}
 			check=(test < TOLMIN) ? true : false;
@@ -123,7 +123,7 @@ int newton( Real x[n], Real residual[n], bool &check, F &func,
 		
 		test=0.0;
 		for (i=0;i<n;i++) {
-			temp=(fabs(x[i]-xold[i]))/mymax(fabs(x[i]),1.0);
+			temp=(std::abs(x[i]-xold[i]))/mymax(std::abs(x[i]),1.0);
 			if (temp > test) test=temp;
 		}
 		

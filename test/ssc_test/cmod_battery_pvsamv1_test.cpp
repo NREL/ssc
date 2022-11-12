@@ -37,7 +37,7 @@ void daily_battery_stats::compute(std::vector<ssc_number_t> batt_power_data) {
         for (size_t hour = 0; hour < 24 * steps_per_hour; hour++) {
             ssc_number_t currentPower = batt_power_data[index];
 
-            if (fabs(currentPower - 0) < 1e-7) {
+            if (std::abs(currentPower - 0) < 1e-7) {
                 currentPower = 0;
             }
 
@@ -873,7 +873,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_CustomDispatchBatteryModelD
         auto batt_power = data_vtab->as_vector_ssc_number_t("batt_power");
         daily_battery_stats batt_stats = daily_battery_stats(batt_power, 4);
 
-        EXPECT_NEAR(batt_stats.peakKwCharge, peakKwCharge, abs(peakKwCharge * 0.01));
+        EXPECT_NEAR(batt_stats.peakKwCharge, peakKwCharge, std::abs(peakKwCharge * 0.01));
         EXPECT_NEAR(batt_stats.peakKwDischarge, peakKwDischarge, peakKwDischarge * 0.01);
         EXPECT_NEAR(batt_stats.peakCycles, peakCycles, m_error_tolerance_lo);
         EXPECT_NEAR(batt_stats.avgCycles, avgCycles, 0.05);

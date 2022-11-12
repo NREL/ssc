@@ -2205,7 +2205,7 @@ public:
 				cost_installed += debt_frac *cost_installed*cost_debt_fee_frac;
 				loan_amount = debt_frac * cost_installed;
 				i_repeat++;
-			} while ((fabs(new_ds_reserve - old_ds_reserve) > 1e-3) && (i_repeat < 10));
+			} while ((std::abs(new_ds_reserve - old_ds_reserve) > 1e-3) && (i_repeat < 10));
 
 			if (term_tenor == 0) loan_amount = 0;
 //			log(util::format("loan amount =%lg, debt fraction=%lg, adj installed cost=%lg", loan_amount, debt_frac, adjusted_installed_cost), SSC_WARNING);
@@ -2385,7 +2385,7 @@ public:
         /* Github issue 550 update dscr if necessary with limit on maximum debt fraction */
         if (constant_dscr_mode && dscr_limit_debt_fraction /* && (size_of_debt > 0)*/) {
             // TODO - determine if we are going to allow negative DSCR values for coverage when PPA fixed price is too low to cover expenses
-            if ((fabs(size_of_debt) > (cost_installed * dscr_maximum_debt_fraction)) || (size_of_debt <0)) {
+            if ((std::abs(size_of_debt) > (cost_installed * dscr_maximum_debt_fraction)) || (size_of_debt <0)) {
                 if (/*(size_of_debt > 0) &&*/ (cost_installed > 0) && (dscr_maximum_debt_fraction > 0)) {
 //                    dscr = fabs(size_of_debt) / (cost_installed * dscr_maximum_debt_fraction) * dscr_input;
                     dscr = size_of_debt / (cost_installed * dscr_maximum_debt_fraction) * dscr_input;
@@ -2868,7 +2868,7 @@ public:
 
 			if (flip_year <=0)
 			{
-				double residual = fabs(cf.at(CF_project_return_aftertax_irr, i) - flip_target_percent) / 100.0; // solver checks fractions and not percentages
+				double residual = std::abs(cf.at(CF_project_return_aftertax_irr, i) - flip_target_percent) / 100.0; // solver checks fractions and not percentages
 				if ( ( cf.at(CF_project_return_aftertax_max_irr,i-1) < flip_target_percent ) &&  (   residual  < ppa_soln_tolerance ) 	)
 				{
 					flip_year = i;
@@ -2892,7 +2892,7 @@ public:
 			double ppa_denom = max(x0, x1);
 			if (ppa_denom <= ppa_soln_tolerance) ppa_denom = 1;
 			double residual = cf.at(CF_project_return_aftertax_irr, flip_target_year) - flip_target_percent;
-			solved = (( fabs( residual )/resid_denom < ppa_soln_tolerance ) || ( fabs(x0-x1)/ppa_denom < ppa_soln_tolerance) );
+			solved = ((std::abs( residual )/resid_denom < ppa_soln_tolerance ) || (std::abs(x0-x1)/ppa_denom < ppa_soln_tolerance) );
 //			solved = (( fabs( residual ) < ppa_soln_tolerance ) );
 				double flip_frac = flip_target_percent/100.0;
 				double itnpv_target = npv(CF_project_return_aftertax,flip_target_year,flip_frac) +  cf.at(CF_project_return_aftertax,0) ;
@@ -2903,7 +2903,7 @@ public:
 			{
 //				double flip_frac = flip_target_percent/100.0;
 //				double itnpv_target = npv(CF_project_return_aftertax,flip_target_year,flip_frac) +  cf.at(CF_project_return_aftertax,0) ;
-				irr_weighting_factor = fabs(itnpv_target);
+				irr_weighting_factor = std::abs(itnpv_target);
 				irr_is_minimally_met = ((irr_weighting_factor < ppa_soln_tolerance));
 				irr_greater_than_target = (( itnpv_target >= 0.0) || irr_is_minimally_met );
 				if (ppa_interval_found)
@@ -2965,7 +2965,7 @@ public:
 						}
 					}
 					// for initial guess of zero
-					if (fabs(x0-x1)<ppa_soln_tolerance) x0 = x1-2*ppa_soln_tolerance;
+					if (std::abs(x0-x1)<ppa_soln_tolerance) x0 = x1-2*ppa_soln_tolerance;
 				}
 					//std::stringstream outm;
 					//outm << "iteration=" << its  << ", irr=" << cf.at(CF_project_return_aftertax_irr, flip_target_year)  << ", npvtarget=" << itnpv_target  << ", npvtarget_delta=" << itnpv_target_delta
@@ -4262,9 +4262,9 @@ public:
 		// scale to max value for better irr convergence
 		if (count<1) return 1.0;
 		int i=0;
-		double max=fabs(cf.at(cf_unscaled,0));
+		double max= std::abs(cf.at(cf_unscaled,0));
 		for (i=0;i<=count;i++)
-			if (fabs(cf.at(cf_unscaled,i))> max) max =fabs(cf.at(cf_unscaled,i));
+			if (std::abs(cf.at(cf_unscaled,i))> max) max = std::abs(cf.at(cf_unscaled,i));
 		return (max>0 ? max:1);
 	}
 
@@ -4272,7 +4272,7 @@ public:
 	{
 		double npv_of_irr = npv(cf_line,count,calculated_irr)+cf.at(cf_line,0);
 		double npv_of_irr_plus_delta = npv(cf_line,count,calculated_irr+0.001)+cf.at(cf_line,0);
-		bool is_valid = ( (number_of_iterations<max_iterations) && (fabs(residual)<tolerance) && (npv_of_irr>npv_of_irr_plus_delta) && (fabs(npv_of_irr/scale_factor)<tolerance) );
+		bool is_valid = ( (number_of_iterations<max_iterations) && (std::abs(residual)<tolerance) && (npv_of_irr>npv_of_irr_plus_delta) && (std::abs(npv_of_irr/scale_factor)<tolerance) );
 				//if (!is_valid)
 				//{
 				//std::stringstream outm;

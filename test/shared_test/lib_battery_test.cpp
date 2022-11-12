@@ -449,8 +449,8 @@ TEST_F(lib_battery_test, RoundtripEffModel){
     batteryModel->calculate_max_charge_kw(&max_current);
 
     std::vector<double> eff_vs_current;
-    double current = fabs(max_current) * 0.01;
-    while (current < fabs(max_current)){
+    double current = std::abs(max_current) * 0.01;
+    while (current < std::abs(max_current)){
         capacityModel->updateCapacity(full_current, 1);   //discharge to empty
 
         size_t n_t = 0;
@@ -474,8 +474,8 @@ TEST_F(lib_battery_test, RoundtripEffModel){
             n_t += 1;
 
         }
-        current += fabs(max_current) / 100.;
-        eff_vs_current.emplace_back(fabs(output_power/input_power));
+        current += std::abs(max_current) / 100.;
+        eff_vs_current.emplace_back(std::abs(output_power/input_power));
     }
     std::vector<double> eff_expected = { 0.99, 0.99, 0.99, 0.99, 0.99, 0.99, 0.99, 0.99, 0.99, 0.98, 0.98, 0.98, 0.98, // i = 12
                                         0.98, 0.98, 0.98, 0.98, 0.97, 0.97, 0.97, 0.97, 0.97, 0.97, 0.96, 0.96, 0.96, // i = 25
@@ -504,8 +504,8 @@ TEST_F(lib_battery_test, RoundtripEffTable){
     voltageModel->calculate_max_charge_w(capacityModel->q0(), capacityModel->qmax(), 0, &max_current);
 
     std::vector<double> eff_vs_current;
-    double current = fabs(max_current) * 0.01;
-    while (current < fabs(max_current)){
+    double current = std::abs(max_current) * 0.01;
+    while (current < std::abs(max_current)){
         capacityModel->updateCapacity(full_current, 1);   //discharge to empty
 
         size_t n_t = 0;
@@ -528,8 +528,8 @@ TEST_F(lib_battery_test, RoundtripEffTable){
             output_power += capacityModel->I() * voltageModel->battery_voltage();
             n_t += 1;
         }
-        current += fabs(max_current) / 100.;
-        eff_vs_current.emplace_back(fabs(output_power/input_power));
+        current += std::abs(max_current) / 100.;
+        eff_vs_current.emplace_back(std::abs(output_power/input_power));
     }
 
     std::vector<double> eff_expected = {0.99, 0.99, 0.98, 0.98, 0.97, 0.96, 0.96, 0.95, 0.95, 0.94, 0.93, 0.94, 0.93,
@@ -558,8 +558,8 @@ TEST_F(lib_battery_test, RoundtripEffVanadiumFlow){
     double max_current;
     vol->calculate_max_charge_w(cap->q0(), cap->qmax(), 300, &max_current);
 
-    double current = fabs(max_current) * 0.01;
-    while (current < fabs(max_current)){
+    double current = std::abs(max_current) * 0.01;
+    while (current < std::abs(max_current)){
         cap->updateCapacity(full_current, 1);   //discharge to empty
 
         std::vector<double> inputs, outputs;
@@ -593,7 +593,7 @@ TEST_F(lib_battery_test, RoundtripEffVanadiumFlow){
 //        }
 //        printf("current %f, eff %f, n %zd\n", current, -output_power/input_power, n_t);
 
-        current += fabs(max_current) / 100.;
+        current += std::abs(max_current) / 100.;
     }
     delete vol;
     delete cap;

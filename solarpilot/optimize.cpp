@@ -76,7 +76,7 @@ double testoptclass::matyas_test(unsigned n, const double *x, double * /*grad*/,
 	call_count++;
 	double y=0.;
 	for(unsigned i=0; i<n; i++){
-		y+= 0.26 * pow(fabs(x[i]),(double)n);
+		y+= 0.26 * pow(std::abs(x[i]),(double)n);
 	}
 	double xx=0.48;
 	for(unsigned i=0; i<n; i++){
