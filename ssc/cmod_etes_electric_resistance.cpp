@@ -643,7 +643,6 @@ public:
         // Still need to define mc_csp_ops blocks and fractions although we're not using them
         tou_params->mc_csp_ops.mc_weekdays.resize_fill(12, 24, 1.0);
         tou_params->mc_csp_ops.mc_weekends.resize_fill(12, 24, 1.0);
-        tou_params->mc_csp_ops.mvv_tou_arrays[C_block_schedule_csp_ops::TURB_FRAC].resize(2, std::numeric_limits<double>::quiet_NaN());
         
         tou.mc_dispatch_params.m_is_tod_pc_target_also_pc_max = true;
         tou.mc_dispatch_params.m_is_block_dispatch = false;
@@ -665,6 +664,14 @@ public:
                 size_t count_ppa_price_input;
                 ssc_number_t* ppa_price_input_array = as_array("ppa_price_input", &count_ppa_price_input);
                 ppa_price_year1 = (double)ppa_price_input_array[0];  // [$/kWh]
+
+                // if no dispatch optimization, then need to define a real turbine fraction
+                //if (is_dispatch) {
+                //    tou_params->mc_csp_ops.mvv_tou_arrays[C_block_schedule_csp_ops::TURB_FRAC].resize(2, std::numeric_limits<double>::quiet_NaN());
+                //}
+                //else {
+                    tou_params->mc_csp_ops.mvv_tou_arrays[C_block_schedule_csp_ops::TURB_FRAC].resize(2, 1.0);
+                //}
 
                 // Time-of-Delivery factors by time step:
                 int ppa_mult_model = as_integer("ppa_multiplier_model");
