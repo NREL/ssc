@@ -1059,10 +1059,10 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMGridOutageWithInverterLo
         if (h < 6) {
             batteryPower->isOutageStep = true;
             batteryPower->powerCritLoad = 50;
-            batteryPower->acLossPostInverter = 1;
+            batteryPower->acLossWiring = 1;
         }
         else {
-            batteryPower->acLossPostInverter = 0;
+            batteryPower->acLossWiring = 0;
             batteryPower->isOutageStep = false;
         }
 

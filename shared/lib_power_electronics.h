@@ -87,7 +87,7 @@ public:
 
 protected:
 	double _ac_dc_efficiency;
-	double _loss_dc_ac;
+
 };
 
 /**
@@ -179,5 +179,17 @@ private:
 
 };
 
+/**
+*
+* \class Transformer
+*
+*  A transformer calculates transformer load losses and no load losses
+*/
+class Transformer
+{
+public:
+
+    static double transformerLoss(double powerkW, double transformerLoadLossFraction, double transformerRatingkW, double& xfmr_ll, double xfmr_nll);
+};
 
 #endif

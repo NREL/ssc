@@ -1768,7 +1768,7 @@ void battstor::initialize_time(size_t year_in, size_t hour_of_year, size_t step_
     year_index = (hour * step_per_hour) + step;
     step_per_year = 8760 * step_per_hour;
 }
-void battstor::advance(var_table*, double P_gen, double V_gen, double P_load, double P_crit_load, double ac_loss_post_inverter, double ac_loss_post_battery, double P_gen_clipped)
+void battstor::advance(var_table*, double P_gen, double V_gen, double P_load, double P_crit_load, double ac_wiring_loss, double ac_loss_post_battery, double P_gen_clipped, double xfmr_ll, double xfmr_nll)
 {
     BatteryPower* powerflow = dispatch_model->getBatteryPower();
     powerflow->reset();
@@ -1787,8 +1787,10 @@ void battstor::advance(var_table*, double P_gen, double V_gen, double P_load, do
     powerflow->powerLoad = P_load;
     powerflow->powerCritLoad = P_crit_load;
     powerflow->voltageSystem = V_gen;
-    powerflow->acLossPostInverter = ac_loss_post_inverter;
+    powerflow->acLossWiring = ac_wiring_loss;
     powerflow->acLossPostBattery = ac_loss_post_battery;
+    powerflow->acXfmrLoadLoss = xfmr_ll;
+    powerflow->acXfmrNoLoadLoss = xfmr_nll;
     powerflow->powerSystemClipped = P_gen_clipped;
 
     charge_control->run(year, hour, step, year_index);
@@ -1802,6 +1804,12 @@ void battstor::setSharedInverter(SharedInverter* sharedInverter)
         tmp->setSharedInverter(sharedInverter);
     dispatch_model->getBatteryPower()->setSharedInverter(sharedInverter);
 }
+
+void battstor::setXfmrRating(double xfmrRating)
+{
+    dispatch_model->getBatteryPower()->acXfmrRating = xfmrRating;
+}
+
 void battstor::outputs_fixed()
 {
     auto state = battery_model->get_state();

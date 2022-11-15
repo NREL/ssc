@@ -178,7 +178,10 @@ public:
     double powerInterconnectionLoss; ///< The power loss due to interconnection limit, outage, or curtailment (kW)
     double powerCurtailmentLimit; ///< The curtailment limit for the current step (kW)
     double voltageSystem;		   ///< The system voltage
-    double acLossPostInverter; ///< Wiring and transformer losses. Currently applies only to the PV inverter output, so does not affect AC connected batteries (%)
+    double acLossWiring; ///< Wiring losses. Currently applies only to the PV inverter output, so does not affect AC connected batteries (%)
+    double acXfmrLoadLoss; ///< Transformer load loss percent (%)
+    double acXfmrNoLoadLoss; ///< Transformer no-load loss value (kWac)
+    double acXfmrRating; ///< Transformer rating for transformer loss calculations (kWac)
     double acLossPostBattery; ///< Expected system and daily losses. Applies to the final AC output including the battery (%)
 
     bool   isOutageStep;
