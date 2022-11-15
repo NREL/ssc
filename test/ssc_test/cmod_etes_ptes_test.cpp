@@ -34,6 +34,9 @@ NAMESPACE_TEST(etes_ptes_test, EtesPtesCmod, Default_NoFinancial)
     ssc_data_t defaults = etes_ptes_defaults();
     CmodUnderTest ptes_system = CmodUnderTest("etes_ptes", defaults);
     ptes_system.SetInput("is_dispatch", 0);
+    ptes_system.SetInput("disp_timeout", 60);
+    ptes_system.SetInput("disp_max_iter", 1000000);
+
     int errors = ptes_system.RunModule();
     double ann_energy = ptes_system.GetOutput("annual_energy");
     EXPECT_FALSE(errors);
