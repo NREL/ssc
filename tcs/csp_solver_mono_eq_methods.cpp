@@ -855,7 +855,7 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
                 q_dot_dc_est = m_dot_tes_dc = T_tes_dc_est = 0.0;
             }
             m_dot_tes_dc *= 3600.0;     //[kg/hr] convert from kg/s
-            m_m_dot_pc_in = fmin(m_dot_pc_max, m_dot_field_out + m_dot_tes_dc);
+            m_m_dot_pc_in = std::min(m_dot_pc_max, m_dot_field_out + m_dot_tes_dc);
         }
         else if (m_solver_mode == E__CR_OUT__0)
         {
@@ -875,8 +875,8 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
 
             // max: not allowing TES CH, so all field m_dot must go to pc
             // min: can't send more to pc than field + dc
-            double m_dot_to_pc_max = fmin(m_dot_pc_max, m_dot_tes_dc + m_dot_field_out);
-            m_m_dot_pc_in = m_dot_field_out + fmin(0.99999,f_m_dot_tes)*fmax(0.0, m_dot_to_pc_max - m_dot_field_out);
+            double m_dot_to_pc_max = std::min(m_dot_pc_max, m_dot_tes_dc + m_dot_field_out);
+            m_m_dot_pc_in = m_dot_field_out + std::min(0.99999,f_m_dot_tes)*std::max(0.0, m_dot_to_pc_max - m_dot_field_out);
         }
         else if (m_solver_mode == E__CR_OUT__ITER_M_DOT_SU_CH_ONLY || m_solver_mode == E__CR_OUT__ITER_Q_DOT_TARGET_CH_ONLY)
         {
@@ -893,9 +893,9 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
 
             // min: not allowing TES DC, so max m_dot to pc is field m_dot
             // max: need to send enough mass flow to pc so TES doesn't overcharge
-            double m_dot_to_tes_max = fmin(m_dot_field_out, m_dot_hot_to_tes_est);
-            double m_dot_to_tes_min = fmax(m_dot_field_out - m_dot_pc_max, 0.0);
-            double m_dot_to_tes = m_dot_to_tes_max - fmin(0.99999,f_m_dot_tes)* fmax(0.0, m_dot_to_tes_max - m_dot_to_tes_min);
+            double m_dot_to_tes_max = std::min(m_dot_field_out, m_dot_hot_to_tes_est);
+            double m_dot_to_tes_min = std::max(m_dot_field_out - m_dot_pc_max, 0.0);
+            double m_dot_to_tes = m_dot_to_tes_max - std::min(0.99999,f_m_dot_tes)* std::max(0.0, m_dot_to_tes_max - m_dot_to_tes_min);
 
             m_m_dot_pc_in = m_dot_field_out - m_dot_to_tes;
         }
@@ -953,7 +953,7 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
         }
         else if (m_solver_mode == E__TO_PC_PLUS_TES_FULL__ITER_M_DOT_SU)
         {
-            m_m_dot_pc_in = fmin(0.99999, f_m_dot_tes) * m_dot_pc_max;
+            m_m_dot_pc_in = std::min(0.99999, f_m_dot_tes) * m_dot_pc_max;
         }
 
         if (m_m_dot_pc_in > m_dot_pc_max)
@@ -971,7 +971,7 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
         }
         else if (m_solver_mode == E__TO_PC__ITER_M_DOT_SU)
         {
-            m_m_dot_pc_in = fmin(0.99999, f_m_dot_tes) * m_dot_pc_max;
+            m_m_dot_pc_in = std::min(0.99999, f_m_dot_tes) * m_dot_pc_max;
         }
 
         if (m_m_dot_pc_in > m_dot_pc_max)

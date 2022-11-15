@@ -50,8 +50,8 @@ void C_hx_two_tank_tes::init(const HTFProperties &fluid_external, const HTFPrope
 		// Capacitance rates
 	double c_dot_h = m_dot_h * c_h;				//[W/K]
 	double c_dot_c = m_dot_c * c_c;				//[W/K]
-	double c_dot_max = fmax(c_dot_h, c_dot_c);	//[W/K]
-	double c_dot_min = fmin(c_dot_h, c_dot_c);	//[W/K]
+	double c_dot_max = std::max(c_dot_h, c_dot_c);	//[W/K]
+	double c_dot_min = std::min(c_dot_h, c_dot_c);	//[W/K]
 	double cr = c_dot_min / c_dot_max;			//[-]
 		// Maximum possible energy flow rate
 	double q_max = c_dot_min * (T_h_in_des - T_c_in);	//[W]
@@ -171,8 +171,8 @@ void C_hx_cold_tes::init(const HTFProperties& fluid_field, const HTFProperties& 
 		// Capacitance rates
 	double c_dot_h = m_dot_h * c_h;				//[W/K]
 	double c_dot_c = m_dot_c * c_c;				//[W/K]
-	double c_dot_max = fmax(c_dot_h, c_dot_c);	//[W/K]
-	double c_dot_min = fmin(c_dot_h, c_dot_c);	//[W/K]
+	double c_dot_max = std::max(c_dot_h, c_dot_c);	//[W/K]
+	double c_dot_min = std::min(c_dot_h, c_dot_c);	//[W/K]
 	double cr = c_dot_min / c_dot_max;			//[-]
 		// Maximum possible energy flow rate
 	double q_max = c_dot_min * (T_h_in_des - T_c_in);	//[W]
@@ -521,16 +521,16 @@ void C_storage_tank::energy_balance(double timestep /*s*/, double m_dot_in /*kg/
 		double b_coef = m_dot_in + m_UA / cp;
         double c_coef = diff_m_dot;
 
-		m_T_calc = a_coef / b_coef + (m_T_prev - a_coef / b_coef)*pow( max( (timestep*c_coef / m_m_prev + 1), 0.0), -b_coef / c_coef);
-		T_ave = a_coef / b_coef + m_m_prev*(m_T_prev - a_coef / b_coef) / ((c_coef - b_coef)*timestep)*(pow( max( (timestep*c_coef / m_m_prev + 1.0), 0.0), 1.0 -b_coef/c_coef) - 1.0);
+		m_T_calc = a_coef / b_coef + (m_T_prev - a_coef / b_coef)*pow( std::max( (timestep*c_coef / m_m_prev + 1), 0.0), -b_coef / c_coef);
+		T_ave = a_coef / b_coef + m_m_prev*(m_T_prev - a_coef / b_coef) / ((c_coef - b_coef)*timestep)*(pow( std::max( (timestep*c_coef / m_m_prev + 1.0), 0.0), 1.0 -b_coef/c_coef) - 1.0);
 		if (timestep < 1.e-6)
-			T_ave = a_coef / b_coef + (m_T_prev - a_coef / b_coef)*pow( max( (timestep*c_coef / m_m_prev + 1.0), 0.0), -b_coef / c_coef);	// Limiting expression for small time step	
+			T_ave = a_coef / b_coef + (m_T_prev - a_coef / b_coef)*pow( std::max( (timestep*c_coef / m_m_prev + 1.0), 0.0), -b_coef / c_coef);	// Limiting expression for small time step	
 		q_dot_loss = m_UA*(T_ave - T_amb)/1.E6;		//[MW]
 
 		if( m_T_calc < m_T_htr )
 		{
-				q_heater = b_coef*((m_T_htr - m_T_prev*pow( max( (timestep*c_coef / m_m_prev + 1), 0.0), -b_coef / c_coef)) /
-					(-pow( max( (timestep*c_coef / m_m_prev + 1), 0.0), -b_coef / c_coef) + 1)) - a_coef;
+				q_heater = b_coef*((m_T_htr - m_T_prev*pow( std::max( (timestep*c_coef / m_m_prev + 1), 0.0), -b_coef / c_coef)) /
+					(-pow( std::max( (timestep*c_coef / m_m_prev + 1), 0.0), -b_coef / c_coef) + 1)) - a_coef;
 
 				q_heater = q_heater*cp;
 
@@ -549,10 +549,10 @@ void C_storage_tank::energy_balance(double timestep /*s*/, double m_dot_in /*kg/
 
 		a_coef += q_heater*1.E6 / cp;
 
-		m_T_calc = a_coef / b_coef + (m_T_prev - a_coef / b_coef)*pow( max( (timestep*c_coef / m_m_prev + 1), 0.0), -b_coef / c_coef);
-		T_ave = a_coef / b_coef + m_m_prev*(m_T_prev - a_coef / b_coef) / ((c_coef - b_coef)*timestep)*(pow( max( (timestep*c_coef / m_m_prev + 1.0), 0.0), 1.0 -b_coef/c_coef) - 1.0);
+		m_T_calc = a_coef / b_coef + (m_T_prev - a_coef / b_coef)*pow( std::max( (timestep*c_coef / m_m_prev + 1), 0.0), -b_coef / c_coef);
+		T_ave = a_coef / b_coef + m_m_prev*(m_T_prev - a_coef / b_coef) / ((c_coef - b_coef)*timestep)*(pow(std::max( (timestep*c_coef / m_m_prev + 1.0), 0.0), 1.0 -b_coef/c_coef) - 1.0);
 		if (timestep < 1.e-6)
-			T_ave = a_coef / b_coef + (m_T_prev - a_coef / b_coef)*pow( max( (timestep*c_coef / m_m_prev + 1.0), 0.0), -b_coef / c_coef);  // Limiting expression for small time step	
+			T_ave = a_coef / b_coef + (m_T_prev - a_coef / b_coef)*pow( std::max( (timestep*c_coef / m_m_prev + 1.0), 0.0), -b_coef / c_coef);  // Limiting expression for small time step	
 		q_dot_loss = m_UA*(T_ave - T_amb)/1.E6;		//[MW]
 
 	}
@@ -919,7 +919,7 @@ void C_csp_two_tank_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inputs
 		m_V_tank_active, m_vol_tank, m_d_tank, m_q_dot_loss_des);
 
 	// 5.13.15, twn: also be sure that hx is sized such that it can supply full load to sink
-	double duty = m_q_pb_design * fmax(1.0, m_frac_max_q_dot);		//[W] Allow all energy from the source to go into storage at any time
+	double duty = m_q_pb_design * std::max(1.0, m_frac_max_q_dot);		//[W] Allow all energy from the source to go into storage at any time
 
 	if( m_ts_hours > 0.0 )
 	{
@@ -2398,7 +2398,7 @@ void C_csp_cold_tes::init(const C_csp_cold_tes::S_csp_cold_tes_init_inputs init_
 		m_V_tank_active, m_vol_tank, d_tank_temp, q_dot_loss_temp);
 
 	// 5.13.15, twn: also be sure that hx is sized such that it can supply full load to power cycle, in cases of low solar multiples
-	double duty = m_q_pb_design * fmax(1.0, ms_params.m_solarm);		//[W] Allow all energy from the field to go into storage at any time
+	double duty = m_q_pb_design * std::max(1.0, ms_params.m_solarm);		//[W] Allow all energy from the field to go into storage at any time
 
 	if (ms_params.m_ts_hours > 0.0)
 	{
