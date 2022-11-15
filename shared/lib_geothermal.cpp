@@ -169,7 +169,7 @@ namespace geothermal
 		double y, yc; // y = err function, yc = complimentary error function
 		const int maxloop = 2000;
 		const double tiny = 10e-15;
-		u = fabs(x);   //10.11.06 fix bug for x<<0. Thanks to Michael Hautus
+		u = std::abs(x);   //10.11.06 fix bug for x<<0. Thanks to Michael Hautus
 		if (u <= 2)
 		{
 			t = 2 * u * u; p = 1; s = 1;
@@ -195,7 +195,7 @@ namespace geothermal
 				a2 = g * u * a1 + i * a0;
 				b2 = g * u * B1 + i * b0;
 				f2 = a2 / b2;
-				d = fabs(f2 - f1);
+				d = std::abs(f2 - f1);
 				if (d < tiny) break;
 				a0 = a1 / b2;
 				b0 = B1 / b2;

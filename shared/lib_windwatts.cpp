@@ -476,7 +476,7 @@ bool windPowerCalculator::windPowerUsingDistribution(std::vector<std::vector<dou
     }
 
 
-    if (fabs(freq_total - 1.0) > 0.01){
+    if (std::abs(freq_total - 1.0) > 0.01){
         errDetails = "Sum of wind resource distribution frequencies must be 1.";
         return false;
     }

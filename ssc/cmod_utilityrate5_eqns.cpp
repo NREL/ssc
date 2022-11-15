@@ -189,7 +189,7 @@ SSCEXPORT bool ElectricityRates_format_as_URDBv7(ssc_data_t data) {
             for (size_t j = 0; j < flat_demand_structure.size(); j++){
                 double j_max = flat_demand_structure[j][0].table.lookup("max")->num[0];
                 double j_charge = flat_demand_structure[j][0].table.lookup("rate")->num[0];
-                if (abs(max - j_max) < 1e-3 && abs(charge - j_charge) < 1e-3){
+                if (std::abs(max - j_max) < 1e-3 && std::abs(charge - j_charge) < 1e-3){
                     period = j;
                     break;
                 }

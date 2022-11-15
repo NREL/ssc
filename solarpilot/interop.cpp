@@ -1266,7 +1266,7 @@ bool interop::SolTraceFluxBinning(SimControl& SimC, SolarField& SF)
 			for (int j = 0; j < SimC._STSim->IntData.nint; j++)
 			{    //loop through each intersection
 
-				if (SimC._STSim->IntData.smap[j] != rstage1 || abs(SimC._STSim->IntData.emap[j]) != e_ind) continue;    //only consider rays that interact with this element
+				if (SimC._STSim->IntData.smap[j] != rstage1 || std::abs(SimC._STSim->IntData.emap[j]) != e_ind) continue;    //only consider rays that interact with this element
 
 				//Where did the ray hit relative to the location of the receiver?
 				rayhit.Set(SimC._STSim->IntData.hitx[j] - offset.x, SimC._STSim->IntData.hity[j] - offset.y, SimC._STSim->IntData.hitz[j] - offset.z);
@@ -1320,7 +1320,7 @@ bool interop::SolTraceFluxBinning(SimControl& SimC, SolarField& SF)
 			for (int j = 0; j < SimC._STSim->IntData.nint; j++)
 			{    //loop through each intersection
 
-				if (SimC._STSim->IntData.smap[j] != rstage1 || abs(SimC._STSim->IntData.emap[j]) != e_ind) continue;    //only consider rays that interact with this element
+				if (SimC._STSim->IntData.smap[j] != rstage1 || std::abs(SimC._STSim->IntData.emap[j]) != e_ind) continue;    //only consider rays that interact with this element
 
 				//Where did the ray hit relative to the location of the receiver?
 				rayhit.Set(SimC._STSim->IntData.hitx[j] - offset.x, SimC._STSim->IntData.hity[j] - offset.y, SimC._STSim->IntData.hitz[j] - offset.z);

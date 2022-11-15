@@ -651,7 +651,7 @@ void Heliostat::calcAndSetAimPointFluxPlane(sp_point &aimpos_abs, Receiver &Rec,
     Toolbox::rotation(PI - az, 2, aimpos);
 	Toolbox::rotation(PI/2. - el, 0, aimpos);
 	//The z component should be very small, so zero out
-	if( fabs(aimpos.z) < 1.e-6 ) aimpos.z = 0.;
+	if(std::abs(aimpos.z) < 1.e-6 ) aimpos.z = 0.;
 	//The X and Y coordinates now indicate the image plane position
 	H.setAimPointFluxPlane(aimpos.x, aimpos.y, aimpos.z);
 }

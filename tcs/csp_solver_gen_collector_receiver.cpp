@@ -481,7 +481,7 @@ void C_csp_gen_collector_receiver::call(const C_csp_weatherreader::S_outputs &we
 	double omega = (soltime - 12.0)*15.0*CSP::pi / 180.0;
 	// B. Stine equation for Solar Altitude angle in radians
 	double solalt = asin(sin(dec)*sin(ms_params.m_latitude) + cos(ms_params.m_latitude)*cos(dec)*cos(omega));
-	double solaz = (omega < 0. ? -1. : 1.)*fabs(acos(min(1.0, (cos(CSP::pi / 2. - solalt)*sin(ms_params.m_latitude) - sin(dec)) / (sin(CSP::pi / 2. - solalt)*cos(ms_params.m_latitude)))));
+	double solaz = (omega < 0. ? -1. : 1.)* std::abs(acos(min(1.0, (cos(CSP::pi / 2. - solalt)*sin(ms_params.m_latitude) - sin(dec)) / (sin(CSP::pi / 2. - solalt)*cos(ms_params.m_latitude)))));
 
 	//Get the current optical efficiency
 	double opt_val;

@@ -320,7 +320,7 @@ void base_dispatch_opt::set_lp_solve_outputs(lprec* lp)
 
     // When solve_state is 0, I believe this is the last known gap before tree was prune. Therefore, not reporting
     if (lp_outputs.solve_state == SUBOPTIMAL)
-        lp_outputs.rel_mip_gap = abs(lp_outputs.objective - lp_outputs.objective_relaxed) / (1 + abs(lp_outputs.objective_relaxed));
+        lp_outputs.rel_mip_gap = std::abs(lp_outputs.objective - lp_outputs.objective_relaxed) / (1.0 + std::abs(lp_outputs.objective_relaxed));
     else
         lp_outputs.rel_mip_gap = get_mip_gap(lp, FALSE);
 

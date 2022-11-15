@@ -197,7 +197,7 @@ public:
 
             // Calculate new endo-reversible efficiency and adjust for part-load
             double eta_temp = eta_endo(T_htf_hot, T_amb);
-            double eta_pl = pow(1 - abs(1-Q_dot_ND), 0.2);
+            double eta_pl = pow(1 - std::abs(1-Q_dot_ND), 0.2);
             double eta = eta_temp * eta_pl;
 
             // calculate power by scaling by ratio of calculated and design endo-reversible efficiencies

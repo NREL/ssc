@@ -86,7 +86,7 @@ double libfin::irr(double tolerance, int maxIterations, const std::vector<double
 			return initialGuess;
 
 		numberOfIterations++;
-		while (!(fabs(irr_poly_sum(calculatedIRR,CashFlows,Count)) <= tolerance) && (numberOfIterations < maxIterations))
+		while (!(std::abs(irr_poly_sum(calculatedIRR,CashFlows,Count)) <= tolerance) && (numberOfIterations < maxIterations))
 		{
 			deriv_sum = irr_derivative_sum(initialGuess,CashFlows,Count);
 			if (deriv_sum != 0.0)

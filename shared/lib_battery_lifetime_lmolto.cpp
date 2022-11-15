@@ -130,7 +130,7 @@ void lifetime_lmolto_t::integrateDegLoss() {
 }
 
 void lifetime_lmolto_t::integrateDegParams(double dt_day, double prev_DOD, double DOD, double T_battery) {
-    double energy_throughput = fabs(DOD - prev_DOD) * 0.01 * 0.5;
+    double energy_throughput = std::abs(DOD - prev_DOD) * 0.01 * 0.5;
     state->lmo_lto->EFC_dt += energy_throughput;
     state->lmo_lto->EFC += energy_throughput;
     state->lmo_lto->temp_avg += T_battery * dt_day;
@@ -161,7 +161,7 @@ void lifetime_lmolto_t::runLifetimeModels(size_t lifetimeIndex, bool charge_chan
     state->day_age_of_battery += dt_day;
     integrateDegParams(dt_day, prev_DOD, DOD, T_battery);
 
-    if (fabs(state->cycle->cum_dt - 1.) < 1e-7) {
+    if (std::abs(state->cycle->cum_dt - 1.) < 1e-7) {
         integrateDegLoss();
     }
 }

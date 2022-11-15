@@ -53,7 +53,7 @@ bool me_array_cable_length(ssc_data_t data)
 	var_data cablelength = var_data(length);
 	vt->assign("inter_array_cable_length", cablelength);
 
-	if (fabs(floating_array) > 0.1)
+	if (std::abs(floating_array) > 0.1)
 	{
 		length = 1.5 * water_depth * number_devices;
 		length *= (1.0 + cable_system_overbuild / 100.0);
@@ -64,7 +64,7 @@ bool me_array_cable_length(ssc_data_t data)
 	}
 	vt->assign("riser_cable_length", var_data(length));
 
-	if (fabs(export_cable_redundancy) > 0.1)
+	if (std::abs(export_cable_redundancy) > 0.1)
 	{
 		length = (water_depth + distance_to_shore) * 2;
 		length *= (1.0 + cable_system_overbuild / 100.0);

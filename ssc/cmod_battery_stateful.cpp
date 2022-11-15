@@ -609,7 +609,7 @@ void cm_battery_stateful::exec() {
     // Update controls
     control_mode = static_cast<MODE>(as_integer("control_mode"));
     double control_dt_hr = as_float("dt_hr");
-    if (fabs(control_dt_hr - dt_hr) > 1e-7) {
+    if (std::abs(control_dt_hr - dt_hr) > 1e-7) {
         dt_hr = control_dt_hr;
         battery->ChangeTimestep(dt_hr);
     }

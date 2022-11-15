@@ -1097,7 +1097,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 							mc_cr_out_solver.m_m_dot_salt_tot - m_dot_par_htr_out_to_tes_hot -
 							mc_tes_outputs.m_m_dot_tes_cold_in*3600.0) / m_m_dot_pc_des;	//[-]
 
-		double m_dot_bal_max = std::max(fabs(m_dot_bal_hot), fabs(m_dot_bal_cold));
+		double m_dot_bal_max = std::max(std::abs(m_dot_bal_hot), std::abs(m_dot_bal_cold));
 
         double q_dot_par_htr = 0.0;
         if (m_is_parallel_heater) {
@@ -1897,7 +1897,7 @@ void C_csp_solver::C_CR_ON__PC_TARGET__TES_CH__AUX_OFF::check_system_limits(C_cs
     double q_dot_pc_solved = pc_csp_solver->mc_pc_out_solver.m_q_dot_htf;		//[MWt]
     double m_dot_pc_solved = pc_csp_solver->mc_pc_out_solver.m_m_dot_htf;		//[kg/hr]
 
-    if (fabs(q_dot_pc_solved - q_dot_pc_on_dispatch_target) / q_dot_pc_on_dispatch_target < limit_comp_tol)
+    if (std::abs(q_dot_pc_solved - q_dot_pc_on_dispatch_target) / q_dot_pc_on_dispatch_target < limit_comp_tol)
     {	// If successfully solved for target thermal power, check that mass flow is above minimum
         if ((m_dot_pc_solved - m_dot_pc_min) / fmax(0.01, m_dot_pc_min) < -limit_comp_tol)
         {
@@ -2455,7 +2455,7 @@ void C_csp_solver::C_CR_ON__PC_SB__TES_CH__AUX_OFF::check_system_limits(C_csp_so
     double q_dot_pc_solved = pc_csp_solver->mc_pc_out_solver.m_q_dot_htf;		//[MWt]
     double m_dot_pc_solved = pc_csp_solver->mc_pc_out_solver.m_m_dot_htf;		//[kg/hr]
 
-    if (fabs(q_dot_pc_solved - q_dot_pc_sb) / q_dot_pc_sb < limit_comp_tol)
+    if (std::abs(q_dot_pc_solved - q_dot_pc_sb) / q_dot_pc_sb < limit_comp_tol)
     {	// If successfully solved for target thermal power, check that mass flow is above minimum
         if ((m_dot_pc_solved - m_dot_pc_min) / fmax(0.01, m_dot_pc_min) < -limit_comp_tol)
         {

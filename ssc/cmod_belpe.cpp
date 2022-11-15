@@ -902,7 +902,7 @@ public:
             Q_SolWin[inext] = Q_SolWin[inext] * 3.412;  //And now it's BTU/hr
 
             //Get the infiltration(cheating - using this hr's Tair; is assumed similar to prev hour's)
-            CFM[inext] = ELA * sqrt(Cs * fabs(T_ambF[inext] - Tair[i]) + Cw * pow(VwindMPH[inext], 2)) * 0.67;
+            CFM[inext] = ELA * sqrt(Cs * std::abs(T_ambF[inext] - Tair[i]) + Cw * pow(VwindMPH[inext], 2)) * 0.67;
             UAInf[inext] = CFM[inext] * 60 * 0.018;
             QInf[i] = UAInf[i] * (T_ambF[i] - Tair[i]); //This would be BTU / hr -- all convective
             QG[i] = QInt_Conv[i] + QInf[i]; //Same!
@@ -946,7 +946,7 @@ public:
                     TAnew[i] = Cset[i];
                     QN[inext] = Cair / dT / 1 * (TAnew[i] * TAnewBot - TAnewTop);  //BTU
                     if (ClEn[Mon] == 0 && ClEn[NextMon] == 1)
-                        QN[inext] = -1 * ((fabs(QN[inext]) < CoolMaxBTU) ? fabs(QN[inext]) : CoolMaxBTU);
+                        QN[inext] = -1 * ((std::abs(QN[inext]) < CoolMaxBTU) ? std::abs(QN[inext]) : CoolMaxBTU);
                     QHV2[inext] = QN[i] / SEER * en_cool;
                 }
             }
@@ -970,7 +970,7 @@ public:
             TSnew[i] = (Tsurf[i] + dT / Cenv * (SolEnvFrac * (Q_SolWin[i] / Aenv + QInt_Rad[i] / Aenv) + T_solairF[inext] / Renv + TAnew[i] / hsurf)) / bar;
 
             //HVAC Loads completed
-            hvac_load[i] = (ssc_number_t)fabs(QHV2[i]); //Wh
+            hvac_load[i] = (ssc_number_t)std::abs(QHV2[i]); //Wh
 
             //Total load for the hour
             load[i] = hvac_load[i] + non_hvac_load[i]; //Wh
@@ -1031,12 +1031,12 @@ public:
                 monthly_scale[i] = 0;
         }
         int min_diff_month = 0;
-        double min_diff = fabs(monthly_diff[0]);
+        double min_diff = std::abs(monthly_diff[0]);
         for (int i = 1; i < 12; i++)
         {
-            if (fabs(monthly_diff[i]) < min_diff)
+            if (std::abs(monthly_diff[i]) < min_diff)
             {
-                min_diff = fabs(monthly_diff[i]); //lowest energy difference of the months
+                min_diff = std::abs(monthly_diff[i]); //lowest energy difference of the months
                 min_diff_month = i; //and the month that it happens in
             }
         }

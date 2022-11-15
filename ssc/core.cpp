@@ -129,7 +129,7 @@ bool compute_module::evaluate() {
 
     auto NumberSquaredError = [&](double a, double b) -> void {
         constexpr double kEpsilon = std::numeric_limits<double>::epsilon();
-        if (fabs(a - b) > kEpsilon) {
+        if (std::abs(a - b) > kEpsilon) {
             squared_error += std::pow(a - b, 2);
             n_differences++;
         }

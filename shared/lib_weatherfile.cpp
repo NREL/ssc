@@ -287,7 +287,7 @@ float calc_dewpt(float db, float rh)  /* Function to find dewpoint temperature *
                 ptb = t + 10.0;
                 ptc = (pta + ptb) / 2.0;
             }
-            while (fabs(pres - pres_dew) > 0.00001 && fabs(pta - ptb) > 0.05)
+            while (std::abs(pres - pres_dew) > 0.00001 && std::abs(pta - ptb) > 0.05)
             {
                 dpt = (float)(ptc - 273.15);
                 t = ptc;
@@ -357,7 +357,7 @@ double calc_twet(double T, double RH, double P)
             hiflag = true;
         }
 
-        if (fabs(err) < tol) break;
+        if (std::abs(err) < tol) break;
 
         //If the error is still too high, guess new values
         if (hiflag && lowflag) {
@@ -478,7 +478,7 @@ bool is_missing(double v) {
 }
 
 float check_missing(double v, double missing = -999.) {
-    if (std::fabs(v - missing) <= 0.01) {
+    if (std::abs(v - missing) <= 0.01) {
         return std::numeric_limits<float>::quiet_NaN();
     }
     else return (float)v;
@@ -1502,7 +1502,7 @@ bool weatherfile::open(const std::string& file, bool header_only)
 
     // make sure data is single-year
     if (m_columns[MINUTE].index != -1) {
-        int minDiff = (int)abs(m_columns[MINUTE].data[1] - m_columns[MINUTE].data[0]);
+        int minDiff = (int)std::abs(m_columns[MINUTE].data[1] - m_columns[MINUTE].data[0]);
         if (minDiff == 0) minDiff = 60;
         if (minDiff * 60 != (int)m_stepSec) {
             m_message = util::format("Weather file timestep per hour (%f) does not correspond to 8760/nRecords", minDiff / 60.);

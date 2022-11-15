@@ -2625,7 +2625,7 @@ public:
 				cost_installed += debt_frac *cost_installed*cost_debt_fee_frac;
 				loan_amount = debt_frac * cost_installed;
 				i_repeat++;
-			} while ((fabs(new_ds_reserve - old_ds_reserve) > 1e-3) && (i_repeat < 10));
+			} while ((std::abs(new_ds_reserve - old_ds_reserve) > 1e-3) && (i_repeat < 10));
 
 			if (term_tenor == 0) loan_amount = 0;
 //			log(util::format("loan amount =%lg, debt fraction=%lg, adj installed cost=%lg", loan_amount, debt_frac, adjusted_installed_cost), SSC_WARNING);
@@ -3276,7 +3276,7 @@ public:
 
 			if (flip_year <=0) 
 			{
-				double residual = fabs(cf.at(CF_project_return_aftertax_irr, i) - flip_target_percent) / 100.0; // solver checks fractions and not percentages
+				double residual = std::abs(cf.at(CF_project_return_aftertax_irr, i) - flip_target_percent) / 100.0; // solver checks fractions and not percentages
 				if ( ( cf.at(CF_project_return_aftertax_max_irr,i-1) < flip_target_percent ) &&  (   residual  < ppa_soln_tolerance ) 	) 
 				{
 					flip_year = i;
@@ -3300,7 +3300,7 @@ public:
 			double ppa_denom = max(x0, x1);
 			if (ppa_denom <= ppa_soln_tolerance) ppa_denom = 1;
 			double residual = cf.at(CF_project_return_aftertax_irr, flip_target_year) - flip_target_percent;
-			solved = (( fabs( residual )/resid_denom < ppa_soln_tolerance ) || ( fabs(x0-x1)/ppa_denom < ppa_soln_tolerance) );
+			solved = ((std::abs( residual )/resid_denom < ppa_soln_tolerance ) || (std::abs(x0-x1)/ppa_denom < ppa_soln_tolerance) );
 //			solved = (( fabs( residual ) < ppa_soln_tolerance ) );
 				double flip_frac = flip_target_percent/100.0;
 				double itnpv_target = npv(CF_project_return_aftertax,flip_target_year,flip_frac) +  cf.at(CF_project_return_aftertax,0) ;
@@ -3311,7 +3311,7 @@ public:
 			{
 //				double flip_frac = flip_target_percent/100.0;
 //				double itnpv_target = npv(CF_project_return_aftertax,flip_target_year,flip_frac) +  cf.at(CF_project_return_aftertax,0) ;
-				irr_weighting_factor = fabs(itnpv_target);
+				irr_weighting_factor = std::abs(itnpv_target);
 				irr_is_minimally_met = ((irr_weighting_factor < ppa_soln_tolerance));
 				irr_greater_than_target = (( itnpv_target >= 0.0) || irr_is_minimally_met );
 				if (ppa_interval_found)
@@ -3373,7 +3373,7 @@ public:
 						}
 					}
 					// for initial guess of zero
-					if (fabs(x0-x1)<ppa_soln_tolerance) x0 = x1-2*ppa_soln_tolerance;
+					if (std::abs(x0-x1)<ppa_soln_tolerance) x0 = x1-2*ppa_soln_tolerance;
 				}
 					//std::stringstream outm;
 					//outm << "iteration=" << its  << ", irr=" << cf.at(CF_project_return_aftertax_irr, flip_target_year)  << ", npvtarget=" << itnpv_target  << ", npvtarget_delta=" << itnpv_target_delta  
@@ -3963,10 +3963,10 @@ public:
         save_cf(CF_community_solar_recurring_generation, nyears, "cf_community_solar_recurring_generation");
 
         // community solar metrics
-        assign("subscriber1_npv", var_data((ssc_number_t)(npv(CF_subscriber1_net_benefit_cumulative, nyears, nom_discount_rate) + cf.at(CF_subscriber1_net_benefit_cumulative, 0))));
-        assign("subscriber2_npv", var_data((ssc_number_t)(npv(CF_subscriber2_net_benefit_cumulative, nyears, nom_discount_rate) + cf.at(CF_subscriber2_net_benefit_cumulative, 0))));
-        assign("subscriber3_npv", var_data((ssc_number_t)(npv(CF_subscriber3_net_benefit_cumulative, nyears, nom_discount_rate) + cf.at(CF_subscriber3_net_benefit_cumulative, 0))));
-        assign("subscriber4_npv", var_data((ssc_number_t)(npv(CF_subscriber4_net_benefit_cumulative, nyears, nom_discount_rate) + cf.at(CF_subscriber4_net_benefit_cumulative, 0))));
+        assign("subscriber1_npv", var_data((ssc_number_t)(npv(CF_subscriber1_net_benefit, nyears, nom_discount_rate) + cf.at(CF_subscriber1_net_benefit, 0))));
+        assign("subscriber2_npv", var_data((ssc_number_t)(npv(CF_subscriber2_net_benefit, nyears, nom_discount_rate) + cf.at(CF_subscriber2_net_benefit, 0))));
+        assign("subscriber3_npv", var_data((ssc_number_t)(npv(CF_subscriber3_net_benefit, nyears, nom_discount_rate) + cf.at(CF_subscriber3_net_benefit, 0))));
+        assign("subscriber4_npv", var_data((ssc_number_t)(npv(CF_subscriber4_net_benefit, nyears, nom_discount_rate) + cf.at(CF_subscriber4_net_benefit, 0))));
 
 		for (i = 0; i <= nyears; i++)
 		{
@@ -4802,9 +4802,9 @@ public:
 		// scale to max value for better irr convergence
 		if (count<1) return 1.0;
 		int i=0;
-		double max=fabs(cf.at(cf_unscaled,0));
+		double max= std::abs(cf.at(cf_unscaled,0));
 		for (i=0;i<=count;i++) 
-			if (fabs(cf.at(cf_unscaled,i))> max) max =fabs(cf.at(cf_unscaled,i));
+			if (std::abs(cf.at(cf_unscaled,i))> max) max =fabs(cf.at(cf_unscaled,i));
 		return (max>0 ? max:1);
 	}
 
@@ -4812,7 +4812,7 @@ public:
 	{
 		double npv_of_irr = npv(cf_line,count,calculated_irr)+cf.at(cf_line,0);
 		double npv_of_irr_plus_delta = npv(cf_line,count,calculated_irr+0.001)+cf.at(cf_line,0);
-		bool is_valid = ( (number_of_iterations<max_iterations) && (fabs(residual)<tolerance) && (npv_of_irr>npv_of_irr_plus_delta) && (fabs(npv_of_irr/scale_factor)<tolerance) );
+		bool is_valid = ( (number_of_iterations<max_iterations) && (std::abs(residual)<tolerance) && (npv_of_irr>npv_of_irr_plus_delta) && (std::abs(npv_of_irr/scale_factor)<tolerance) );
 				//if (!is_valid)
 				//{
 				//std::stringstream outm;
@@ -4909,7 +4909,7 @@ public:
 
 		residual = irr_poly_sum(calculated_irr,cf_line,count) / scale_factor;
 
-		while (!(fabs(residual) <= tolerance) && (number_of_iterations < max_iterations))
+		while (!(std::abs(residual) <= tolerance) && (number_of_iterations < max_iterations))
 		{
 			deriv_sum = irr_derivative_sum(initial_guess,cf_line,count);
 			if (deriv_sum != 0.0)

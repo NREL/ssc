@@ -1194,7 +1194,7 @@ size_t util::nearest_col_index(const matrix_t<double>& mat, size_t col, double v
     double a = *(iter - 1);
     double b = *(iter);
 
-    return fabs(val - a) < fabs(val - b) ? (iter - values.begin() - 1) : (iter - values.begin());
+    return std::abs(val - a) < std::abs(val - b) ? (iter - values.begin() - 1) : (iter - values.begin());
 }
 
 size_t util::nearest_col_index(const std::vector<std::vector<double>>& mat, size_t col, double val) {
@@ -1216,7 +1216,7 @@ size_t util::nearest_col_index(const std::vector<std::vector<double>>& mat, size
     double a = *(iter - 1);
     double b = *(iter);
 
-    return fabs(val - a) < fabs(val - b) ? (iter - values.begin() - 1) : (iter - values.begin());
+    return std::abs(val - a) < std::abs(val - b) ? (iter - values.begin() - 1) : (iter - values.begin());
 }
 
 size_t util::lifetimeIndex(size_t year, size_t hour_of_year, size_t step_of_hour, size_t step_per_hour)

@@ -1089,7 +1089,8 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, reopt_sizing) {
     belpe_default(data);
     ssc_data_set_number(data, "lat", 30);
     ssc_data_set_number(data, "lon", -30);
-    ssc_data_set_number(data, "losses", 15);
+    ssc_number_t gen[8760] = { 0 };
+    ssc_data_set_array(data, "gen", gen, 8760);
 
     Reopt_size_battery_params(data);
 

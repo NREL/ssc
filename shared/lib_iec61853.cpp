@@ -117,7 +117,7 @@ bool linfit( std::vector<double> &yvec, std::vector<double> &xvec, double *mout,
 		
 		if ( i == 0 ) continue;
 
-        if (fabs( double(n) * sumXsquared - sumX * sumX) > DBL_EPSILON)
+        if (std::abs( double(n) * sumXsquared - sumX * sumX) > DBL_EPSILON)
         {
             b = ( double(n) * sumXY - sumY * sumX) /
                 ( double(n) * sumXsquared - sumX * sumX);
@@ -193,17 +193,17 @@ int gauss( double A[4][4], double B[4] )
 	for( K=0;K<3;K++)
 	{
 		KP1=K+1;
-		BIG = fabs( A[K][K] ); 
+		BIG = std::abs( A[K][K] );
 		if ( BIG < 1.0e-05)
 		{
 			IBIG=K;                                                                  
 
 			for( I=KP1; I < 4; I++ )
 			{
-				if( fabs( A[I][K] ) <= BIG )
+				if(std::abs( A[I][K] ) <= BIG )
 					continue;
 					
-				BIG = fabs( A[I][K] );
+				BIG = std::abs( A[I][K] );
 				IBIG = I;
 			}
 
@@ -235,7 +235,7 @@ int gauss( double A[4][4], double B[4] )
 		}
 	}
 
-	if( fabs( A[3][3] ) > 0.0 )       
+	if(std::abs( A[3][3] ) > 0.0 )
 	{
 		B[3] =  B[3]/A[3][3];
 		B[2] = (B[2]-A[2][3]*B[3])/A[2][2];
@@ -353,10 +353,10 @@ bool iec61853_module_t::solve( double Voc, double Isc, double Vmp, double Imp, d
 		Rs = Rs - B[2]/urelax;
 		Rsh = Rsh - B[3]/urelax;
 		
-		T[0] = fabs(B[0]/Il);
-		T[1] = fabs(B[1]/Io);
-		T[2] = fabs(B[2]/Rs);
-		T[3] = fabs(B[3]/Rsh);
+		T[0] = std::abs(B[0]/Il);
+		T[1] = std::abs(B[1]/Io);
+		T[2] = std::abs(B[2]/Rs);
+		T[3] = std::abs(B[3]/Rsh);
 
 		maxerr = 0;
 		int nck = 0;

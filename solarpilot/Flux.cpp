@@ -1612,7 +1612,7 @@ void Flux::hermiteIntegralSetup(double SigXY[2], Heliostat &H, matrix_t<double> 
 
         if( siglim < w2 )
         {
-            double xprime = (TA[0] < 0. ? -1. : 1.) * fmin(fabs(TA[0]), w2 - siglim);
+            double xprime = (TA[0] < 0. ? -1. : 1.) * fmin(std::abs(TA[0]), w2 - siglim);
             X[0] = - siglim;
             X[1] =   siglim; 
             TA[0] += -xprime;
@@ -1688,7 +1688,7 @@ void Flux::hermiteIntegralSetup(double SigXY[2], Heliostat &H, matrix_t<double> 
 				xmax = dd*bb2/(aa*term_1),
 				xmin = sqrt(xmax);
 			if(bb > 0) xmin = - xmin;
-			xmax = fabs(-bb*xmin/2./cc + sqrt(xmax*term_1 - 4.*cc*dd)/2./cc);
+			xmax = std::abs(-bb*xmin/2./cc + sqrt(xmax*term_1 - 4.*cc*dd)/2./cc);
 			xmin = -xmax;
 			G[0] = 0.;
 			F[0] = 0.;
@@ -1807,12 +1807,12 @@ void Flux::hermiteIntegralSetup(double SigXY[2], Heliostat &H, matrix_t<double> 
                 (valid first quadrant)
                 */
 
-                double dydx_w = fabs(lx23)>1e-6 ? ly23/lx23 : 1e6;
+                double dydx_w = std::abs(lx23)>1e-6 ? ly23/lx23 : 1e6;
                 if(U[3] > U[0]) dydx_w *= -1.;  //always work 3->0 positive
 
                 double dydx_w2 = dydx_w * dydx_w;
 
-                double dydx_h = fabs(lx03)>1e-6 ? ly03/lx03 : 1e6;
+                double dydx_h = std::abs(lx03)>1e-6 ? ly03/lx03 : 1e6;
                 if(U[3] > U[2]) dydx_h *= -1;   //always work 3->2 positive
 
                 double dydx_h2 = dydx_h * dydx_h;
@@ -1836,12 +1836,12 @@ void Flux::hermiteIntegralSetup(double SigXY[2], Heliostat &H, matrix_t<double> 
                     double delta_x_q = aimx_adj; 
                     double signx = aimx_adj < 0 ? -1. : 1.;
                     double dshiftx = max(rxn - rx_ip, 0.);      //maximum allowable shift in x, zero if rx_ip > rxn
-                    if( fabs(delta_x_q) > rxn - rx_ip ) delta_x_q = signx * dshiftx;
+                    if(std::abs(delta_x_q) > rxn - rx_ip ) delta_x_q = signx * dshiftx;
 
                     double delta_y_q = aimy_adj; 
                     double signy = aimy_adj < 0 ? -1. : 1.;
                     double dshifty = max(ryn - ry_ip, 0.);
-                    if( fabs(delta_y_q) > ryn - ry_ip ) delta_y_q = signy * dshifty;
+                    if(std::abs(delta_y_q) > ryn - ry_ip ) delta_y_q = signy * dshifty;
 
                     //the aim point is now closer to the (0,0) centroid of the quadrature grid. Adjust
                     aimx_adj += -delta_x_q;
@@ -2100,10 +2100,10 @@ void Flux::hermiteIntegral(double G[5], double F[5], double X[2], double A[2], d
 			h.at(2,k-1) = x[2]*h.at(2,k-2) - fk*h.at(2,k-3);
 		}
 		s2 = 1.; s3 = 1.;
-		sign2 = (x[1]+dsmall)/fabs(x[1]+dsmall);
-		sign3 = (x[2]+dsmall)/fabs(x[2]+dsmall);
-		x[1] = fabs(x[1]);
-		x[2] = fabs(x[2]);
+		sign2 = (x[1]+dsmall)/ std::abs(x[1]+dsmall);
+		sign3 = (x[2]+dsmall)/ std::abs(x[2]+dsmall);
+		x[1] = std::abs(x[1]);
+		x[2] = std::abs(x[2]);
         //
 		for(j=1; j<5; j++){
 			s2 += _ci[j-1]*pow(x[1], j);
@@ -3243,7 +3243,7 @@ void Flux::frozenAimPoint(Heliostat &H, double tht, double args[] )
 		double view_az = atan2(r_to_h.i, r_to_h.j);	
         Toolbox::rotation( Pi - view_az, 2, aim_adj );
         Toolbox::rotation( Pi/2. - Rv->rec_elevation.val*D2R, 0, aim_adj );
-		if( fabs(aim_adj.z) < 1.e-6 ) aim_adj.z = 0.;
+		if(std::abs(aim_adj.z) < 1.e-6 ) aim_adj.z = 0.;
 		//The X and Y coordinates now indicate the image plane position
 		H.setAimPointFluxPlane(aim_adj);
         

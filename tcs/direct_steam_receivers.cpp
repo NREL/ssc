@@ -349,7 +349,7 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 	double T_n_in, h_fw, rho_fw, T_in, T1_max;
 	T_n_in = h_fw = rho_fw = T_in = T1_max = std::numeric_limits<double>::quiet_NaN();
 	// Adjust steam drum pressure to equal calculated boiler outlet pressure
-	while ( fabs(diff_Pout) > 0.01 && iter_P_out < 20 )
+	while (std::abs(diff_Pout) > 0.01 && iter_P_out < 20 )
 	{
 		iter_P_out++;
 		// Guess a new boiler outlet pressure based on previous results
@@ -407,7 +407,7 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 		// Adjust mass flow rate to reach target quality
 		// 297 -> TRNSYS GOTO
 		bool break_to_massflow_calc = false;
-		while( fabs(diff_x_out) > 0.0035 && iter_x < 20 )
+		while(std::abs(diff_x_out) > 0.0035 && iter_x < 20 )
 		{
 			break_to_massflow_calc = false;
 			iter_x++;					//[-] Increase iteration counter
@@ -575,7 +575,7 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 
 					// An average pressure of the node is used as one independent variable to calculate additional properties
 					// After pressure drop through node is calculated, want to make sure calculated average pressure is within some % of average used for props
-					while( fabs(diff_P_ave) > 0.001 && iter_P_ave < 125 )
+					while(std::abs(diff_P_ave) > 0.001 && iter_P_ave < 125 )
 					{
 						// 348 -> GOTO NUMBER from TRNSYS
 						iter_P_ave++;		//[-] Increase iteration counter
@@ -653,7 +653,7 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 						q_wf = x_n_ave = mu_l = mu_v = rho_l = f_fd = std::numeric_limits<double>::quiet_NaN();
 
 						// This loop ensures that the outlet flow conditions for each panel are solved correctly by finding the correct T1 (outer surface temp)
-						while( fabs(diff_T_1/T_1) > 0.0025 && iter_T_1 < 50 )
+						while(std::abs(diff_T_1/T_1) > 0.0025 && iter_T_1 < 50 )
 						{
 							iter_T_1++;			//[-] Add to iteration counter
 
@@ -661,7 +661,7 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 							{
 								if( !HT_flag && !enth_flag )
 								{
-									if( fabs(diff_T_1)>50.0 )	// If error is very large, use bisection rather than false interpolation method
+									if(std::abs(diff_T_1)>50.0 )	// If error is very large, use bisection rather than false interpolation method
 									{
 										if( diff_T_1 > 0.0 )	// If old temp is higher than new temp, then old temp is too high, so:
 										{
@@ -895,7 +895,7 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 								{
 									int iter_T_2 = 0;
 									double diff_T_2 = 999.9;
-									while( iter_T_2 < 20 && fabs(diff_T_2) > 0.01 )
+									while( iter_T_2 < 20 && std::abs(diff_T_2) > 0.01 )
 									{
 										iter_T_2++;
 										if( iter_T_1 == 1 )		T_2_guess = T_in1 - 1.0;	//[K] If first iteration on energy balance, then T_2 is not set
@@ -1056,7 +1056,7 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 
 	}	// End total boiler outlet pressure iteration
 	
-	if( iter_x == 20 && fabs(diff_x_out) > 0.0035 )
+	if( iter_x == 20 && std::abs(diff_x_out) > 0.0035 )
 	{
 		// Message: Boiler model did not converge on the correct quality
 	}
@@ -1175,7 +1175,7 @@ bool C_DSG_Boiler::Solve_Superheater( double I_T_amb_K, double I_T_sky_K, double
 	{
 		water_PH( P_in, h_in, &wp );
 		T_in = wp.temp;	//[K]
-		if( fabs(T_in) < 1.E4 )
+		if(std::abs(T_in) < 1.E4 )
 			break;
 		h_in *= 0.99;
 
@@ -1287,7 +1287,7 @@ bool C_DSG_Boiler::Solve_Superheater( double I_T_amb_K, double I_T_sky_K, double
 			f_fd = rho_n_ave = std::numeric_limits<double>::quiet_NaN();
 			// An average pressure of the node is used as one indepedent variable to calculate additional properties
 			// After pressure drop through node is calculated, want to make sure calculated average pressure is within some % of average used for props
-			while( fabs(diff_P_ave) > 0.001 && iter_P_ave < 125 )
+			while(std::abs(diff_P_ave) > 0.001 && iter_P_ave < 125 )
 			{
 				iter_P_ave++;
 
@@ -1393,7 +1393,7 @@ bool C_DSG_Boiler::Solve_Superheater( double I_T_amb_K, double I_T_sky_K, double
 
 				double q_wf = std::numeric_limits<double>::quiet_NaN();
 				// This loop ensures that the outlet flow conditions for each panel are solved correctly by finding the correct T1 (outer surface temp)
-				while( fabs(diff_T_1/T_1)>0.0025 && iter_T_1 < 50 )
+				while(std::abs(diff_T_1/T_1)>0.0025 && iter_T_1 < 50 )
 				{
 					// GOTO 272 -> do something with this!?!?
 					iter_T_1++;
@@ -1401,7 +1401,7 @@ bool C_DSG_Boiler::Solve_Superheater( double I_T_amb_K, double I_T_sky_K, double
 					{
 						if( !HT_flag && !enth_flag )
 						{
-							if( fabs(diff_T_1)>50.0 )		// If error is very large, use bisection rather than false interpolation method
+							if(std::abs(diff_T_1)>50.0 )		// If error is very large, use bisection rather than false interpolation method
 							{
 								if(diff_T_1 > 0.0)			// If old temp is higher than new temp, then old temp is too high, so:
 								{

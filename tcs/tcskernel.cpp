@@ -879,7 +879,7 @@ bool tcskernel::check_tolerance( double val1, double val2, double ftol )
 	
 	if ( ftol <= 0 )
 	{ // ftol is negative or zero: test is absolute
-		if ( fabs( val1 - val2 ) > fabs( ftol ) )
+		if (std::abs( val1 - val2 ) > std::abs( ftol ) )
 			return false;
 	}
 	else
@@ -888,7 +888,7 @@ bool tcskernel::check_tolerance( double val1, double val2, double ftol )
 		if ( denom == 0.0 )	denom = val2;
 		if ( denom == 0.0 )	denom = 1.0;
 			
-		if (  fabs( (val1-val2)/denom ) > fabs( ftol/100.0 ) )
+		if (std::abs( (val1-val2)/denom ) > std::abs( ftol/100.0 ) )
 			return false;
 	}
 	

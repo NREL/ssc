@@ -503,7 +503,7 @@ FluidFlowsAndSystemHeats FlatPlateArray::RunWithHx(tm& timestamp, ExternalCondit
             Q_gain_fp = 0.;
             Q_loss_fp = 0.;
 
-            if (solver_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) <= 0.1) {
+            if (solver_code > C_monotonic_eq_solver::CONVERGED && std::abs(tol_solved) <= 0.1) {
                 //mpc_csp_solver->error_msg = util::format("At time = %lg the C_MEQ__mdot_fp -> C_MEQ__T_in_fp iteration "
                 //    "to find the flat plate cold inlet HTF temperature only reached a convergence = %lg. "
                 //    "Check that results at this timestep are not unreasonably biasing total simulation results",
@@ -762,7 +762,7 @@ int C_MEQ__mdot_fp::operator()(double mdot_fp /*kg/s*/, double* diff_T_out_f /*C
     }
 
     if (solver_code != C_monotonic_eq_solver::CONVERGED) {
-        if (solver_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) <= 0.1) {
+        if (solver_code > C_monotonic_eq_solver::CONVERGED && std::abs(tol_solved) <= 0.1) {
             //mpc_csp_solver->error_msg = util::format("At time = %lg the C_MEQ__mdot_fp -> C_MEQ__T_in_fp iteration "
             //    "to find the flat plate cold inlet HTF temperature only reached a convergence = %lg. "
             //    "Check that results at this timestep are not unreasonably biasing total simulation results",

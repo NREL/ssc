@@ -1163,7 +1163,7 @@ double Receiver::CalculateApparentDiameter(sp_point &Hloc)
 	{
 		//First determine the azimuthal span between the heliostat location vector and the receiver 
 		//main panel normal vector
-		double alpha = fabs(atan2(Hloc.x, Hloc.y) - _var_receiver->rec_azimuth.val*D2R);
+		double alpha = std::abs(atan2(Hloc.x, Hloc.y) - _var_receiver->rec_azimuth.val*D2R);
 		//Calculate the difference between the angle and the nearest panel normal
 		double theta_hat = fmod(alpha, 2.*PI/_var_receiver->n_panels.val);
 		//finally the width is:

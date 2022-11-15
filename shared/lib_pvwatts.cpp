@@ -68,7 +68,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	Changed soiling loss from 1% to 3%     9/16/99 */
 
 #include <stdio.h>
-#include <math.h>
+#include <cmath>
 #include <string.h>
 #include <stdlib.h>
 
@@ -196,7 +196,7 @@ double pvwatts_celltemp::operator() ( double poa2, double ws2, double ambt2, dou
 			hforce=0.8600/pow(reynld,0.5)*denair*windmd*1007.0/pow(0.71,0.67);
 			if(reynld > 1.2e5)
 				hforce=0.0282/pow(reynld,0.2)*denair*windmd*1007.0/pow(0.71,0.4);
-			grashf=9.8/tave*fabs(tmod-tamb)*pow(xlen,3.0)/pow(visair,2.0)*0.5;
+			grashf=9.8/tave* std::abs(tmod-tamb)*pow(xlen,3.0)/pow(visair,2.0)*0.5;
 			hfree=0.21*pow(grashf*0.71,0.32)*conair/xlen;
 			hconv=fhconv*convrt*pow(pow(hfree,3.0)+pow(hforce,3.0),1.0/3.0);
 					/* Solve the heat transfer equation */

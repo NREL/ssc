@@ -717,7 +717,7 @@ public:
 			else
 				break;
 
-			T_difference = fabs(T_res - T_cool_out);
+			T_difference = std::abs(T_res - T_cool_out);
 		}
 
 		// =================================================================

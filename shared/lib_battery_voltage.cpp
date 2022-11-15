@@ -237,7 +237,7 @@ double voltage_table_t::calculate_current_for_target_w(double P_watts, double q,
     else
         max_p = calculate_max_discharge_w(q, qmax, 0, &current);
 
-    if (fabs(max_p) <= fabs(P_watts))
+    if (std::abs(max_p) <= std::abs(P_watts))
         return current;
 
     P_watts /= params->num_cells_series;
@@ -270,7 +270,7 @@ double voltage_table_t::calculate_current_for_target_w(double P_watts, double q,
             continue;
         }
 
-        DOD_new = fabs((-b + sqrt(b * b - 4 * a * c)) / (2 * a));
+        DOD_new = std::abs((-b + sqrt(b * b - 4 * a * c)) / (2 * a));
 
         auto upper = (size_t) fmin(i, params->voltage_table.size() - 1);
         auto lower = (size_t) fmax(0, i - 1);
@@ -278,7 +278,7 @@ double voltage_table_t::calculate_current_for_target_w(double P_watts, double q,
         auto DOD_lower = params->voltage_table[lower][0];
         if (DOD_new <= DOD_upper && DOD_new >= DOD_lower) {
             double P = (q - (100. - DOD_new) * qmax/100) * (a * DOD_new + b);
-            if (fabs(P) > fabs(P_best)) {
+            if (std::abs(P) > std::abs(P_best)) {
                 P_best = P;
                 DOD_best = DOD_new;
             }
@@ -471,7 +471,7 @@ double voltage_dynamic_t::calculate_current_for_target_w(double P_watts, double 
 
     if (P_watts == 0) return 0.;
 
-    solver_power = fabs(P_watts) / (params->num_cells_series * params->num_strings);
+    solver_power = std::abs(P_watts) / (params->num_cells_series * params->num_strings);
     solver_q = q / params->num_strings;
     solver_Q = qmax  / params->num_strings;
     if (params->dynamic.Vcut != 0) {
@@ -652,18 +652,18 @@ double voltage_vanadium_redox_t::voltage_model(double q0, double qmax, double I_
 
     double A = std::log(std::pow(SOC_use, 2) / std::pow(1 - SOC_use, 2));
 
-    return params->Vnom_default + m_RCF * T * A + fabs(I_string) * params->resistance;
+    return params->Vnom_default + m_RCF * T * A + std::abs(I_string) * params->resistance;
 }
 
 void voltage_vanadium_redox_t::solve_current_for_power(const double *x, double *f) {
     double I = x[0];
     double SOC = (solver_q - I * params->dt_hr) / solver_Q;
     f[0] = I * (params->Vnom_default + m_RCF * solver_T_k * std::log(SOC * SOC / std::pow(1. - SOC, 2)) +
-                fabs(I) * params->resistance) - solver_power;
+        std::abs(I) * params->resistance) - solver_power;
 }
 
 void voltage_vanadium_redox_t::solve_max_discharge_power(const double *x, double *f) {
-    double I = fabs(x[0]);
+    double I = std::abs(x[0]);
     double SOC = (solver_q - I * params->dt_hr) / solver_Q;
     f[0] = params->Vnom_default + 2 * I * params->resistance + m_RCF * solver_T_k *
                                                                (std::log(SOC * SOC / pow(1. - SOC, 2)) -

@@ -1003,7 +1003,7 @@ public:
 
         double m_dot_ratio_ratio = CT_to_HT_m_dot_ratio_hp / CT_to_HT_m_dot_ratio_pc;
 
-        if (abs(m_dot_ratio_ratio - 1.0) > 1.E-6) {
+        if (std::abs(m_dot_ratio_ratio - 1.0) > 1.E-6) {
             throw exec_error("etes_electric_resistance", "CT to HT htf mass flow ratios from heat pump and power cycle don't match");
         }
 

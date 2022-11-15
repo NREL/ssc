@@ -138,9 +138,9 @@ public:
         double derate = as_double("derate");
         int track_mode = as_integer("track_mode"); // 0, 1, 2, 3
         double azimuth = as_double("azimuth");
-        double tilt = fabs(hdr.lat);
+        double tilt = std::abs(hdr.lat);
         if (!lookup("tilt_eq_lat") || !as_boolean("tilt_eq_lat"))
-            tilt = fabs(as_double("tilt"));
+            tilt = std::abs(as_double("tilt"));
 
         ssc_number_t* p_user_poa = 0;
         if (as_boolean("enable_user_poa"))

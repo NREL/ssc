@@ -408,14 +408,14 @@ public:
 		int nearx=0, neary=0;
 		double rx=9.e9, ry=9.e9;
 		for(int i=0; i<sizex; i++){
-			double r = fabs(x - xvals[i]);
+			double r = std::abs(x - xvals[i]);
 			if(r < rx){
 				rx = r;
 				nearx = i;
 			}
 		}
 		for(int i=0; i<sizey; i++){
-			double r = fabs(y - yvals[i]);
+			double r = std::abs(y - yvals[i]);
 			if(r < ry){
 				ry = r;
 				neary = i;

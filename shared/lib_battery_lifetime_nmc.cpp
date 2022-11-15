@@ -231,7 +231,7 @@ void lifetime_nmc_t::runLifetimeModels(size_t _, bool charge_changed, double pre
     state->day_age_of_battery += dt_day;
     integrateDegParams(dt_day, DOD, T_battery);
 
-    if (fabs(state->cycle->cum_dt - 1.) < 1e-7) {
+    if (std::abs(state->cycle->cum_dt - 1.) < 1e-7) {
         integrateDegLoss();
     }
 }

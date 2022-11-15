@@ -38,7 +38,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #ifndef SIGN
-#define SIGN(a,b) ( (b)>=0 ? fabs(a) : -fabs(a) )
+#define SIGN(a,b) ( (b)>=0 ? std::abs(a) : -std::abs(a) )
 #endif
 
 enum {
@@ -932,7 +932,7 @@ public:
 		double AzNum = (sin(Dec)*cos(Site_Lat)-cos(Dec)*cos(Hour_Angle)*sin(Site_Lat));
 		double AzDen = cos(SolarAlt);
 
-		if (fabs(AzNum-AzDen)<= 0.0001) 
+		if (std::abs(AzNum-AzDen)<= 0.0001)
 			AzDen = AzDen + 0.01;
 
 		// cos theta
@@ -973,7 +973,7 @@ public:
 
 		// Row_Distance is distance between rows of SCA; 15m @ SEGS
 		// SCA_Aper is SCA aperature; 5m LS-2
-		double RowShadow = fabs(sin(PH)) * Row_Distance / SCA_aper;
+		double RowShadow = std::abs(sin(PH)) * Row_Distance / SCA_aper;
    
 		if ((RowShadow < 0.5) || (SolarAlt < 0)) 
 			RowShadow = 0;
@@ -1263,7 +1263,7 @@ public:
 
 			//NB HERE IS WHERE THE LOOP ENDS TO ITERATE ON THE OUTLET TEMPERATURE BY RECALCULATING THE HEAT LOSSES, ETC.
 		
-			if((fabs(SfTo - SfTo_hold) < 0.1) && (CALCSFTi )) break; //HP Added 12-08-06
+			if((std::abs(SfTo - SfTo_hold) < 0.1) && (CALCSFTi )) break; //HP Added 12-08-06
 			}
 		//if((fabs(SfTo - SfTo_hold) < 0.1) && (CALCSFTi )) break; //HP Added 12-08-06
 		//while ((fabs(SfTo - SfTo_hold) >= 0.1) || (!CALCSFTi ));

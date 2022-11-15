@@ -55,7 +55,8 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
     {C_pc_Rankine_indirect_224::E_W_DOT_COOLER, C_csp_reported_outputs::TS_WEIGHTED_AVE},
     {C_pc_Rankine_indirect_224::E_P_COND_ITER_ERR, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 
-	{C_pc_Rankine_indirect_224::E_M_DOT_HTF_REF, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+    {C_pc_Rankine_indirect_224::E_ETA_THERMAL_STEP_AVERAGED, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+    {C_pc_Rankine_indirect_224::E_M_DOT_HTF_REF, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 
 	csp_info_invalid
 };
@@ -677,7 +678,7 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 			mc_two_tank_ctes.ms_params.m_htf_pump_coef = 0.55;							//pumping power for HTF thru power block [kW/kg/s]
 			mc_two_tank_ctes.ms_params.dT_cw_rad = mc_two_tank_ctes.ms_params.m_T_hot_des - mc_two_tank_ctes.ms_params.m_T_cold_des;	//Reference delta T based on design values given.
 			mc_two_tank_ctes.ms_params.m_dot_cw_rad = (mc_two_tank_ctes.ms_params.m_W_dot_pc_design*1000000. / mc_two_tank_ctes.ms_params.m_eta_pc_factor) / (4183 /*[J/kg-K]*/ * mc_two_tank_ctes.ms_params.dT_cw_rad);	//Calculate design cw mass flow [kg/sec]
-			rad->m_night_hrs = 2.0 / 15.0 * 180.0 / 3.1415* acos(tan(abs(mc_two_tank_ctes.ms_params.m_lat)*3.1415/180.0)*tan(0.40928)); //Calculate nighttime hours.
+			rad->m_night_hrs = 2.0 / 15.0 * 180.0 / 3.1415* acos(tan(std::abs(mc_two_tank_ctes.ms_params.m_lat)*3.1415/180.0)*tan(0.40928)); //Calculate nighttime hours.
 
 			mc_two_tank_ctes.ms_params.m_dot_cw_cold = (mc_two_tank_ctes.ms_params.m_dot_cw_rad*mc_two_tank_ctes.ms_params.m_ts_hours) / rad->m_night_hrs;//Set the flow rate on the storage system between tank and HX to radiative field to fill the tank in the shortest night of year (9 hours in Las Vegas Nevada).
 			//Initialize cold storage
@@ -704,7 +705,7 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 			mc_stratified_ctes.ms_params.m_htf_pump_coef = 0.55;							//pumping power for HTF thru power block [kW/kg/s]
 			mc_stratified_ctes.ms_params.dT_cw_rad = mc_stratified_ctes.ms_params.m_T_hot_des - mc_stratified_ctes.ms_params.m_T_cold_des;	//Reference delta T based on design values given.
 			mc_stratified_ctes.ms_params.m_dot_cw_rad = (mc_stratified_ctes.ms_params.m_W_dot_pc_design*1000000. / mc_stratified_ctes.ms_params.m_eta_pc_factor) / (4183 /*[J/kg-K]*/ * mc_stratified_ctes.ms_params.dT_cw_rad);	//Calculate design cw mass flow [kg/sec]
-			rad->m_night_hrs = 2.0 / 15.0 * 180.0/3.1415 * acos(tan(abs(mc_stratified_ctes.ms_params.m_lat)*3.1415 / 180.0)*tan(0.40928)); //Calculate nighttime hours.
+			rad->m_night_hrs = 2.0 / 15.0 * 180.0/3.1415 * acos(tan(std::abs(mc_stratified_ctes.ms_params.m_lat)*3.1415 / 180.0)*tan(0.40928)); //Calculate nighttime hours.
 
 			mc_stratified_ctes.ms_params.m_dot_cw_cold = (mc_stratified_ctes.ms_params.m_dot_cw_rad*mc_stratified_ctes.ms_params.m_ts_hours) / rad->m_night_hrs;	//Set the flow rate on the storage system between tank and HX to radiative field to fill the tank in the shortest night of year (9 hours in Las Vegas Nevada).
 
@@ -1745,7 +1746,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 	mc_reported_outputs.value(E_W_DOT, P_cycle/1000.0);	//[MWe] Cycle power output, convert from kWe
 
     //22.03.04 twn: post-process thermal efficiency at end of timestep reporting
-	//mc_reported_outputs.value(E_ETA_THERMAL, eta);	//[-] Cycle thermal efficiency
+	mc_reported_outputs.value(E_ETA_THERMAL_STEP_AVERAGED, eta);	//[-] Cycle thermal efficiency
 
 	out_solver.m_T_htf_cold = T_htf_cold;				//[C] HTF outlet temperature
 	mc_reported_outputs.value(E_T_HTF_OUT, T_htf_cold);	//[C] HTF outlet temperature
@@ -2053,7 +2054,7 @@ void C_pc_Rankine_indirect_224::RankineCycle_V2(double T_db /*K*/, double T_wb /
     // Do a quick check to see if there is actually a mass flow being supplied
     //   to the cycle. If not, go to the end.
     double ADJ = 1.0, err = 1.0; /*qq=0;*/
-    if (fabs(m_dot_htf_ND) < 1.0E-3)
+    if (std::abs(m_dot_htf_ND) < 1.0E-3)
     {
         P_cycle = 0.0;
         eta = 0.0;
@@ -2079,7 +2080,7 @@ void C_pc_Rankine_indirect_224::RankineCycle_V2(double T_db /*K*/, double T_wb /
     double tol_PC_cond = 1.E-4;     //[-]
     double P_cond_iter_solved = P_cond_iter_guess;  //[Pa]
 
-    if (abs(diff_P_cond_solved) > tol_PC_cond && pc_cond_err_code == 0) {
+    if (std::abs(diff_P_cond_solved) > tol_PC_cond && pc_cond_err_code == 0) {
 
         c_P_cond_solver.settings(tol_PC_cond, 50, P_cond_min, 10.E6, false);
 

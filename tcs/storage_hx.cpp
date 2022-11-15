@@ -399,7 +399,7 @@ bool Storage_HX::mixed_tank( bool is_hot_tank, double dt, double m_prev, double 
 	// Check for no flow
 	double B = m_dot_in + m_ua/cp;					//[kg/s] + [W/K]*[kg-K/J]
 	double D, G, H1, A1, E, C, CC, DD, AA, BB;
-	if( (fabs(m_dot_in-m_dot_out_adj) < B*1.e-5) ||
+	if( (std::abs(m_dot_in-m_dot_out_adj) < B*1.e-5) ||
 	   ( (m_dot_in < 0.001) && (m_dot_out_adj < 0.001) ))
 	{
 		// Equations for no flow or zero net flow
