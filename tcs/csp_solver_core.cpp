@@ -390,6 +390,9 @@ void C_csp_solver::init()
         m_PAR_HTR_q_dot_rec_des = par_htr_solved_params.m_q_dot_rec_des;        //[MWt]
         m_PAR_HTR_A_aperture = par_htr_solved_params.m_A_aper_total;            //[m2]
     }
+    else {
+        m_PAR_HTR_q_dot_rec_des = 0.0;
+    }
 
 		// Power cycle
 	C_csp_power_cycle::S_solved_params pc_solved_params;
@@ -734,6 +737,11 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 			q_dot_tes_dc = q_dot_tes_ch = 0.0;
 			m_dot_tes_dc_est = m_dot_tes_ch_est = 0.0;
 		}
+
+        // Check that q_dot_tes_ch is not "too close" to 0
+        if (q_dot_tes_ch < std::max(m_PAR_HTR_q_dot_rec_des, m_q_dot_rec_des) * 1.E-4) {
+            q_dot_tes_ch = 0.0;
+        }
 
         // Check that there is enough discharge energy to operate cycle for a 'reasonable' fraction of the timestep
         double t_q_dot_min = fmax(0.05*mc_kernel.mc_sim_info.ms_ts.m_step, m_step_tolerance);   //[s]
