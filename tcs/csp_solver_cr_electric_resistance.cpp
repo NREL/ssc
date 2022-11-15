@@ -259,7 +259,7 @@ void C_csp_cr_electric_resistance::startup(const C_csp_weatherreader::S_outputs&
 
     double W_dot_heater = m_q_dot_su_max / m_heater_efficiency;       //[MWe]
 
-    m_E_su_calculated = fmax(0.0, m_E_su_initial - q_startup);  //[MWt-hr]
+    m_E_su_calculated = std::max(0.0, m_E_su_initial - q_startup);  //[MWt-hr]
 
     cr_out_solver.m_q_startup = q_startup;                  //[MWt-hr]
     cr_out_solver.m_time_required_su = time_required_su*3600.0; //[s]
