@@ -38,16 +38,16 @@ NAMESPACE_TEST(etes_etes_test, EtesEtesCmod, Default_NoFinancial)
     double ann_energy = etes_system.GetOutput("annual_energy");
     EXPECT_FALSE(errors);
     if (!errors) {
-        EXPECT_NEAR_FRAC(std::abs(etes_system.GetOutput("annual_energy")), std::abs(-739728801.), 0.0);
+        EXPECT_NEAR_FRAC(std::abs(etes_system.GetOutput("annual_energy")), std::abs(-739728801.), kErrorToleranceHi);
     }
 
-    //etes_system.SetInput("is_dispatch", 1);
-    //errors = etes_system.RunModule();
-    //ann_energy = etes_system.GetOutput("annual_energy");
-    //EXPECT_FALSE(errors);
-    //if (!errors) {
-    //    EXPECT_NEAR_FRAC(std::abs(etes_system.GetOutput("annual_energy")), std::abs(-497554825), kErrorToleranceHi);
-    //}
+    etes_system.SetInput("is_dispatch", 1);
+    errors = etes_system.RunModule();
+    ann_energy = etes_system.GetOutput("annual_energy");
+    EXPECT_FALSE(errors);
+    if (!errors) {
+        EXPECT_NEAR_FRAC(std::abs(etes_system.GetOutput("annual_energy")), std::abs(-497554825), kErrorToleranceHi);
+    }
 
     //if (!errors) {
     //    EXPECT_NEAR_FRAC(power_tower.GetOutput("annual_energy"), 602247767, kErrorToleranceHi);

@@ -43,7 +43,7 @@ GTEST_API_ int main(int argc, char **argv) {
 
     //    filter to include
     //    ::testing::GTEST_FLAG(filter) = "CmodPVWatts*:CMPvwatts*";
-    ::testing::GTEST_FLAG(filter) = "etes_etes_test.EtesEtesCmod*";
+    //    ::testing::GTEST_FLAG(filter) = "etes_ptes_test.EtesPtesCmod*";
 
     //    filter to exclude
     //    ::testing::GTEST_FLAG(filter) = "-PVSmoothing_lib_battery_dispatch*";
