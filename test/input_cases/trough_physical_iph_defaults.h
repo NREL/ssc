@@ -26,9 +26,6 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdio.h>
 #include "../input_cases/code_generator_utilities.h"
 
-char wlim_series_path2[512];
-int ntpiph1 = sprintf(wlim_series_path2, "%s/test/input_cases/tcstrough_data/wlim_series.csv", std::getenv("SSCDIR"));
-
 /**
 *  Default data for trough_physical_process_heat run that can be further modified
 */
@@ -40,7 +37,6 @@ ssc_data_t trough_physical_iph_defaults()
     char solar_resource_path[512];
 	//char load_profile_path[512];
 	int n1 = sprintf(solar_resource_path, "%s/test/input_cases/tcstrough_data/tucson_az_32.116521_-110.933042_psmv3_60_tmy.csv", SSCDIR);
-	//int n2 = sprintf(load_profile_path, "%s/test/input_cases/pvsamv1_data/pvsamv1_residential_load.csv", SSCDIR);
 
     ssc_data_set_string(data, "file_name", solar_resource_path);
     ssc_data_set_number(data, "track_mode", 1);
@@ -209,7 +205,7 @@ ssc_data_t trough_physical_iph_defaults()
     ssc_data_set_number(data, "disp_csu_cost", 10000);
     ssc_data_set_number(data, "disp_pen_delta_w", 0.10000000000000001);
     ssc_data_set_number(data, "is_wlim_series", 0);
-    set_array(data, "wlim_series", wlim_series_path2, 8760);
+    //set_array(data, "wlim_series", wlim_series_path2, 8760);
     ssc_number_t p_f_turb_tou_periods[9] = { 1.05, 1, 1, 1, 1, 1, 1, 1, 1 };
     ssc_data_set_array(data, "f_turb_tou_periods", p_f_turb_tou_periods, 9);
     ssc_data_set_number(data, "is_dispatch_series", 0);

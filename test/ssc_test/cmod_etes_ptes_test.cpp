@@ -46,7 +46,7 @@ NAMESPACE_TEST(etes_ptes_test, EtesPtesCmod, Default_NoFinancial)
     ann_energy = ptes_system.GetOutput("annual_energy");
     EXPECT_FALSE(errors);
     if (!errors) {
-        EXPECT_NEAR_FRAC(std::abs(ptes_system.GetOutput("annual_energy")), std::abs(-2.03107e+08), kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(std::abs(ptes_system.GetOutput("annual_energy")), std::abs(-202961043.), kErrorToleranceHi);
     }
 
 }
