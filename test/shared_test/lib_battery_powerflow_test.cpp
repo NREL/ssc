@@ -2892,7 +2892,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, AC_system_w_ac_losses) {
     m_batteryPower->powerSystem = 0;
     m_batteryPower->powerLoad = 50;
     m_batteryPower->acLossPostBattery = 0;
-    m_batteryPower->acLossPostInverter = 1;
+    m_batteryPower->acLossWiring = 1;
 
     // Try to charge - 100% inverter loss means no available power
     m_batteryPower->powerBatteryDC = -50 * m_batteryPower->singlePointEfficiencyACToDC;
@@ -2916,7 +2916,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, AC_system_w_ac_losses) {
     m_batteryPower->powerSystem = 0;
     m_batteryPower->powerLoad = 50;
     m_batteryPower->acLossPostBattery = 0;
-    m_batteryPower->acLossPostInverter = 1;
+    m_batteryPower->acLossWiring = 1;
     m_batteryPower->canGridCharge = true;
 
     // Try to charge - grid charging provides power even with inverter off
@@ -2941,7 +2941,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, AC_system_w_ac_losses) {
     m_batteryPower->powerSystem = 0;
     m_batteryPower->powerLoad = 50;
     m_batteryPower->acLossPostBattery = 1;
-    m_batteryPower->acLossPostInverter = 0;
+    m_batteryPower->acLossWiring = 0;
     m_batteryPower->canGridCharge = true;
 
     // Try to charge - but 100% system loss
@@ -2964,7 +2964,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, AC_system_w_ac_losses) {
 
     // Try to discharge to load w/ inverter loss
     m_batteryPower->acLossPostBattery = 0;
-    m_batteryPower->acLossPostInverter = 1;
+    m_batteryPower->acLossWiring = 1;
     m_batteryPower->powerBatteryDC = 50;
     m_batteryPowerFlow->calculate();
 
@@ -2984,7 +2984,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, AC_system_w_ac_losses) {
 
     // Cannot discharge to load w/ post batt loss
     m_batteryPower->acLossPostBattery = 1;
-    m_batteryPower->acLossPostInverter = 0;
+    m_batteryPower->acLossWiring = 0;
     m_batteryPower->powerBatteryDC = 50;
     m_batteryPowerFlow->calculate();
 
@@ -3004,7 +3004,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, AC_system_w_ac_losses) {
 
     // Try to discharge to grid w/ inverter loss
     m_batteryPower->acLossPostBattery = 0;
-    m_batteryPower->acLossPostInverter = 1;
+    m_batteryPower->acLossWiring = 1;
     m_batteryPower->powerLoad = 0;
     m_batteryPower->powerBatteryDC = 50;
     m_batteryPowerFlow->calculate();
@@ -3026,7 +3026,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, AC_system_w_ac_losses) {
 
     // Cannot discharge w/ post batt loss
     m_batteryPower->acLossPostBattery = 1;
-    m_batteryPower->acLossPostInverter = 0;
+    m_batteryPower->acLossWiring = 0;
     m_batteryPower->powerBatteryDC = 50;
     m_batteryPowerFlow->calculate();
 
@@ -3076,7 +3076,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, DC_system_w_ac_losses) {
     m_batteryPower->powerSystem = 100;
     m_batteryPower->powerLoad = 50;
     m_batteryPower->acLossPostBattery = 0;
-    m_batteryPower->acLossPostInverter = 1;
+    m_batteryPower->acLossWiring = 1;
 
     m_batteryPower->powerBatteryDC = -50;
     m_batteryPowerFlow->calculate();
@@ -3097,7 +3097,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, DC_system_w_ac_losses) {
     m_batteryPower->powerSystem = 0;
     m_batteryPower->powerLoad = 50;
     m_batteryPower->acLossPostBattery = 0;
-    m_batteryPower->acLossPostInverter = 1;
+    m_batteryPower->acLossWiring = 1;
     m_batteryPower->canGridCharge = true;
 
     // Try to grid charge - not allowed with inverter loss
@@ -3119,7 +3119,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, DC_system_w_ac_losses) {
     m_batteryPower->powerSystem = 0;
     m_batteryPower->powerLoad = 50;
     m_batteryPower->acLossPostBattery = 1;
-    m_batteryPower->acLossPostInverter = 0;
+    m_batteryPower->acLossWiring = 0;
     m_batteryPower->canGridCharge = true;
 
     // Try to charge - but 100% system loss
@@ -3139,7 +3139,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, DC_system_w_ac_losses) {
 
     // Try to discharge to load w/ inverter loss - not allowed
     m_batteryPower->acLossPostBattery = 0;
-    m_batteryPower->acLossPostInverter = 1;
+    m_batteryPower->acLossWiring = 1;
     m_batteryPower->powerBatteryDC = 50;
     m_batteryPowerFlow->calculate();
 
@@ -3156,7 +3156,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, DC_system_w_ac_losses) {
 
     // Cannot discharge to load w/ post batt loss
     m_batteryPower->acLossPostBattery = 1;
-    m_batteryPower->acLossPostInverter = 0;
+    m_batteryPower->acLossWiring = 0;
     m_batteryPower->powerBatteryDC = 50;
     m_batteryPowerFlow->calculate();
 
@@ -3173,7 +3173,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, DC_system_w_ac_losses) {
 
     // Try to discharge to grid w/ inverter loss - not allowed
     m_batteryPower->acLossPostBattery = 0;
-    m_batteryPower->acLossPostInverter = 1;
+    m_batteryPower->acLossWiring = 1;
     m_batteryPower->powerLoad = 0;
     m_batteryPower->powerBatteryDC = 50;
     m_batteryPowerFlow->calculate();
@@ -3192,7 +3192,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, DC_system_w_ac_losses) {
 
     // Cannot discharge w/ post batt loss
     m_batteryPower->acLossPostBattery = 1;
-    m_batteryPower->acLossPostInverter = 0;
+    m_batteryPower->acLossWiring = 0;
     m_batteryPower->powerBatteryDC = 50;
     m_batteryPowerFlow->calculate();
 
@@ -3204,6 +3204,47 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, DC_system_w_ac_losses) {
     EXPECT_NEAR(m_batteryPower->powerSystemToGrid, 0, error);
     EXPECT_NEAR(m_batteryPower->powerBatteryToLoad, 0, error);
     EXPECT_NEAR(m_batteryPower->powerBatteryToGrid, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerConversionLoss, 3.738, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemLoss, 0.0, error);
+    EXPECT_NEAR(m_batteryPower->powerLoad, 0, error);
+
+    // Transformer losses applied to battery
+    m_batteryPower->acLossPostBattery = 0;
+    m_batteryPower->acXfmrLoadLoss = 0.5;
+    m_batteryPower->acXfmrRating = 50;
+    m_batteryPower->acLossWiring = 0;
+    m_batteryPower->powerBatteryDC = 50;
+    m_batteryPowerFlow->calculate();
+
+    EXPECT_NEAR(m_batteryPower->powerBatteryAC, 46.26, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToBatteryAC, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToBattery, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToGrid, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerBatteryToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerBatteryToGrid, 24.86, error);
+    EXPECT_NEAR(m_batteryPower->powerConversionLoss, 3.738, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemLoss, 0.0, error);
+    EXPECT_NEAR(m_batteryPower->powerLoad, 0, error);
+
+    // Transformer no load loss is in kw
+    m_batteryPower->acLossPostBattery = 0;
+    m_batteryPower->acXfmrLoadLoss = 0.01;
+    m_batteryPower->acXfmrNoLoadLoss = 10.0;
+    m_batteryPower->acXfmrRating = 50;
+    m_batteryPower->acLossWiring = 0;
+    m_batteryPower->powerBatteryDC = 50;
+    m_batteryPowerFlow->calculate();
+
+    EXPECT_NEAR(m_batteryPower->powerBatteryAC, 46.26, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToBatteryAC, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToBattery, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToGrid, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerBatteryToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerBatteryToGrid, 35.83, error);
     EXPECT_NEAR(m_batteryPower->powerConversionLoss, 3.738, error);
     EXPECT_NEAR(m_batteryPower->powerSystemLoss, 0.0, error);
     EXPECT_NEAR(m_batteryPower->powerLoad, 0, error);

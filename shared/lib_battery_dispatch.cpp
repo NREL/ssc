@@ -464,7 +464,7 @@ void dispatch_t::dispatch_dc_outage_step(size_t lifetimeIndex) {
     double V_pv = m_batteryPower->voltageSystem;
     double pv_clipped = m_batteryPower->powerSystemClipped;
     double crit_load_kwac = m_batteryPower->powerCritLoad;
-    double ac_loss_percent = 1 - (1 - m_batteryPower->acLossPostInverter) * (1 - m_batteryPower->acLossPostBattery);
+    double ac_loss_percent = 1 - (1 - m_batteryPower->acLossWiring) * (1 - m_batteryPower->acLossPostBattery);
 
     m_batteryPower->sharedInverter->calculateACPower(pv_kwdc, V_pv, m_batteryPower->sharedInverter->Tdry_C);
     double dc_ac_eff = m_batteryPower->sharedInverter->efficiencyAC * 0.01;

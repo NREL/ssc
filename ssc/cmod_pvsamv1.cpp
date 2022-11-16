@@ -2463,15 +2463,26 @@ void cm_pvsamv1::exec()
             ssc_number_t xfmr_ll = PVSystem->transformerLoadLossFraction / step_per_hour;
             ssc_number_t xfmr_nll = PVSystem->transformerNoLoadLossFraction * static_cast<ssc_number_t>(ts_hour * transformerRatingkW);
 
+            bool offline = false;
+            if (en_batt && (batt_topology == ChargeController::DC_CONNECTED)) {
+                if (batt->is_outage_step(idx % 8760)) {
+                    offline = batt->is_offline(idx);
+                }
+            }
+
             //run AC power calculation
             if (en_batt && (batt_topology == ChargeController::DC_CONNECTED)) // DC-connected battery
             {
+                batt->setXfmrRating(transformerRatingkW);
+                double xfmr_nll_kw = PVSystem->transformerNoLoadLossFraction * static_cast<ssc_number_t>(transformerRatingkW);
+
                 // Add up AC loss percents for DC connected batteries
                 double delivered_percent = 1 - PVSystem->acLossPercent * 0.01;
 
-                ssc_number_t xfmr_loss_percent = transformerLoss(PVSystem->p_systemACPower[idx], PVSystem->transformerLoadLossFraction, transformerRatingkW, xfmr_ll, xfmr_nll) / PVSystem->p_systemACPower[idx];
-                delivered_percent *= (1 - xfmr_loss_percent);
-                delivered_percent *= 1 - PVSystem->transmissionLossPercent * 0.01;
+                // No transmission losses during grid outage
+                if (!offline) {
+                    delivered_percent *= 1 - PVSystem->transmissionLossPercent * 0.01;
+                }
 
                 ssc_number_t dc_loss_post_inverter = 1 - delivered_percent;
                 delivered_percent = 1; // Re-use variable for post batt losses
@@ -2495,7 +2506,7 @@ void cm_pvsamv1::exec()
                 }
 
                 // Run PV plus battery through sharedInverter, returns AC power
-                batt->advance(m_vartab, dcPower_kW, dcVoltagePerMppt[0], cur_load, p_crit_load_full[idx], dc_loss_post_inverter, dc_loss_post_battery, sharedInverter->powerClipLoss_kW);
+                batt->advance(m_vartab, dcPower_kW, dcVoltagePerMppt[0], cur_load, p_crit_load_full[idx], dc_loss_post_inverter, dc_loss_post_battery, sharedInverter->powerClipLoss_kW, PVSystem->transformerLoadLossFraction, xfmr_nll_kw);
                 acpwr_gross = batt->outGenPower[idx];
             }
             else if (PVSystem->Inverter->inverterType == INVERTER_PVYIELD) //PVyield inverter model not currently enabled for multiple MPPT
@@ -2509,13 +2520,6 @@ void cm_pvsamv1::exec()
                 // for capturing tare losses
                 sharedInverter->calculateACPower(dcPowerNetPerMppt_kW, dcVoltagePerMppt, Irradiance->weatherRecord.tdry);
                 acpwr_gross = sharedInverter->powerAC_kW;
-            }
-
-            bool offline = false;
-            if (en_batt && (batt_topology == ChargeController::DC_CONNECTED)) {
-                if (batt->is_outage_step(idx % 8760)) {
-                    offline = batt->is_offline(idx);
-                }
             }
 
             ac_wiringloss = std::abs(acpwr_gross) * PVSystem->acLossPercent * 0.01;
@@ -2562,34 +2566,38 @@ void cm_pvsamv1::exec()
                 batt->outGenWithoutBattery[idx] -= std::abs(batt->outGenWithoutBattery[idx]) * PVSystem->acLossPercent * 0.01;;
             }
 
-
-            // Apply transformer loss - reset variables after DC connected calculations
-            transformerRatingkW = static_cast<ssc_number_t>(PVSystem->ratedACOutput * util::watt_to_kilowatt);
-            xfmr_ll = PVSystem->transformerLoadLossFraction / step_per_hour;
-            xfmr_nll = PVSystem->transformerNoLoadLossFraction * static_cast<ssc_number_t>(ts_hour * transformerRatingkW);
-			// total load loss
-            ssc_number_t xfmr_loss = transformerLoss(PVSystem->p_systemACPower[idx], PVSystem->transformerLoadLossFraction, transformerRatingkW, xfmr_ll, xfmr_nll);
-
-			PVSystem->p_systemACPower[idx] -= xfmr_loss/ts_hour; // kW
-            if (en_batt && (batt_topology == ChargeController::DC_CONNECTED)) {
-                // Recompute transformer loss as if the battery didn't run
-                ssc_number_t xfmr_ll_no_batt = PVSystem->transformerLoadLossFraction / step_per_hour;
-                ssc_number_t xfmr_nll_no_batt = PVSystem->transformerNoLoadLossFraction * static_cast<ssc_number_t>(ts_hour * transformerRatingkW);
-
+            ssc_number_t xfmr_loss = 0;
+            if (!offline) {
+                // Apply transformer loss - reset variables after DC connected calculations
+                transformerRatingkW = static_cast<ssc_number_t>(PVSystem->ratedACOutput * util::watt_to_kilowatt);
+                xfmr_ll = PVSystem->transformerLoadLossFraction / step_per_hour;
+                xfmr_nll = PVSystem->transformerNoLoadLossFraction * static_cast<ssc_number_t>(ts_hour * transformerRatingkW);
                 // total load loss
-                ssc_number_t xfmr_loss_no_batt = transformerLoss(PVSystem->p_systemACPower[idx], PVSystem->transformerLoadLossFraction, transformerRatingkW, xfmr_ll_no_batt, xfmr_nll_no_batt);
-                batt->outGenWithoutBattery[idx] -= xfmr_loss_no_batt / ts_hour;
-            }
+                xfmr_loss = Transformer::transformerLoss(PVSystem->p_systemACPower[idx], PVSystem->transformerLoadLossFraction, transformerRatingkW, xfmr_ll, xfmr_nll);
 
-			// transmission loss if AC power is produced
-			if (PVSystem->p_systemACPower[idx] > 0){
-                transmissionloss = std::abs(PVSystem->p_systemACPower[idx]) * PVSystem->transmissionLossPercent * 0.01;
-				PVSystem->p_systemACPower[idx] -= (ssc_number_t)(transmissionloss);
+                PVSystem->p_systemACPower[idx] -= xfmr_loss / ts_hour; // kW
+
 
                 if (en_batt && (batt_topology == ChargeController::DC_CONNECTED)) {
-                    batt->outGenWithoutBattery[idx] -= (ssc_number_t)(transmissionloss);
+                    // Recompute transformer loss as if the battery didn't run
+                    ssc_number_t xfmr_ll_no_batt = PVSystem->transformerLoadLossFraction / step_per_hour;
+                    ssc_number_t xfmr_nll_no_batt = PVSystem->transformerNoLoadLossFraction * static_cast<ssc_number_t>(ts_hour * transformerRatingkW);
+
+                    // total load loss
+                    ssc_number_t xfmr_loss_no_batt = Transformer::transformerLoss(PVSystem->p_systemACPower[idx], PVSystem->transformerLoadLossFraction, transformerRatingkW, xfmr_ll_no_batt, xfmr_nll_no_batt);
+                    batt->outGenWithoutBattery[idx] -= xfmr_loss_no_batt / ts_hour;
                 }
-			}
+
+                // transmission loss if AC power is produced
+                if (PVSystem->p_systemACPower[idx] > 0) {
+                    transmissionloss = std::abs(PVSystem->p_systemACPower[idx]) * PVSystem->transmissionLossPercent * 0.01;
+                    PVSystem->p_systemACPower[idx] -= (ssc_number_t)(transmissionloss);
+
+                    if (en_batt && (batt_topology == ChargeController::DC_CONNECTED)) {
+                        batt->outGenWithoutBattery[idx] -= (ssc_number_t)(transmissionloss);
+                    }
+                }
+            }
 
             // Re-compute PV AC forecast for AC connected batteries
             if (en_batt && batt_topology == ChargeController::AC_CONNECTED)
@@ -2683,7 +2691,7 @@ void cm_pvsamv1::exec()
                     int ac_loss_index = (int)iyear * 365 + (int)floor(hour_of_year / 24); //in units of days
                     delivered_percent *= (1 - PVSystem->acLifetimeLosses[ac_loss_index] / 100); // loss in kWac
                 }
-                double ac_loss_post_inverter = 0; // Already accounted for in pv AC power
+                double ac_loss_post_inverter = 0; // Already accounted for in pv AC power (including transformer losses)
                 double ac_loss_post_batt = 1 - delivered_percent;
 
                 // calculate timestep in hour for battery models
@@ -3433,22 +3441,6 @@ void cm_pvsamv1::inverter_size_check()
         log(util::format("Inverter oversized: The maximum inverter output was %.2lf%% of the rated value %lg kWac.",
             100 * maxACOutput / ratedACOutput, ratedACOutput),
             SSC_WARNING);
-}
-
-double cm_pvsamv1::transformerLoss(double powerkW, double transformerLoadLossFraction, double transformerRatingkW, double& xfmr_ll, double xfmr_nll)
-{
-    if (transformerRatingkW == 0.0 || transformerLoadLossFraction == 0.0)
-        return 0;
-
-    // calculate xfmr_ll, xfmr_nll
-
-    if (powerkW < transformerRatingkW)
-        xfmr_ll *= powerkW * powerkW / transformerRatingkW;
-    else
-        xfmr_ll *= powerkW;
-
-    // total load loss
-    return xfmr_ll + xfmr_nll; // kWh
 }
 
 DEFINE_MODULE_ENTRY(pvsamv1, "Photovoltaic performance model, SAM component models V.1", 1)

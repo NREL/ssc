@@ -906,7 +906,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialDCBatteryModelPriceS
     ssc_number_t peakKwCharge = -3.601;
     ssc_number_t peakKwDischarge = 1.99;
     ssc_number_t peakCycles = 1;
-    ssc_number_t avgCycles = 0.3178;
+    ssc_number_t avgCycles = 0.3233;
 
     pairs["batt_dispatch_choice"] = 4;
     pairs["batt_dispatch_auto_can_clipcharge"] = 1;
@@ -937,8 +937,8 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialDCBatteryModelPriceS
 
         auto batt_q_rel = data_vtab->as_vector_ssc_number_t("batt_capacity_percent");
         auto batt_cyc_avg = data_vtab->as_vector_ssc_number_t("batt_DOD_cycle_average");
-        EXPECT_NEAR(batt_q_rel.back(), 97.958, 2e-2);
-        EXPECT_NEAR(batt_cyc_avg.back(), 25.94, 1.0); // High tolerance due to ~ 1% dispatch difference between linux and windows. Tighten in the future by improving the algorithm.
+        EXPECT_NEAR(batt_q_rel.back(), 97.987, 2e-2);
+        EXPECT_NEAR(batt_cyc_avg.back(), 27.49, 1.0); // High tolerance due to ~ 1% dispatch difference between linux and windows. Tighten in the future by improving the algorithm.
     }
 }
 

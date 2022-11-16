@@ -52,13 +52,13 @@ ChargeController::ChargeController(dispatch_t * dispatch, battery_metrics_t * ba
 	m_batteryMetrics(battery_metrics),
 	m_dispatch(dispatch)
 {
+    m_batteryPower = dispatch->getBatteryPower();
 }
 
 ACBatteryController::ACBatteryController(dispatch_t * dispatch, battery_metrics_t * battery_metrics, double efficiencyACToDC, double efficiencyDCToAC) : ChargeController(dispatch, battery_metrics)
 {
 	std::unique_ptr<BatteryBidirectionalInverter> tmp(new BatteryBidirectionalInverter(efficiencyACToDC, efficiencyDCToAC));
 	m_bidirectionalInverter = std::move(tmp);
-	m_batteryPower = dispatch->getBatteryPower();
 	m_batteryPower->connectionMode = ChargeController::AC_CONNECTED;
 	m_batteryPower->singlePointEfficiencyACToDC = m_bidirectionalInverter->ac_dc_efficiency();
 	m_batteryPower->singlePointEfficiencyDCToAC = m_bidirectionalInverter->dc_ac_efficiency();
@@ -88,7 +88,6 @@ DCBatteryController::DCBatteryController(dispatch_t * dispatch, battery_metrics_
 {
 	std::unique_ptr<Battery_DC_DC_ChargeController> tmp(new Battery_DC_DC_ChargeController(efficiencyDCToDC, 100));
 	m_DCDCChargeController = std::move(tmp);
-	m_batteryPower = dispatch->getBatteryPower();
 	m_batteryPower->connectionMode = ChargeController::DC_CONNECTED;
 	m_batteryPower->singlePointEfficiencyDCToDC = m_DCDCChargeController->batt_dc_dc_bms_efficiency();
 	m_batteryPower->inverterEfficiencyCutoff = inverterEfficiencyCutoff;
@@ -113,4 +112,20 @@ void DCBatteryController::run(size_t year, size_t hour_of_year, size_t step_of_h
 
 	// Compute annual metrics
 	m_batteryMetrics->compute_metrics_ac(m_dispatch->getBatteryPower());
+}
+
+double Transformer::transformerLoss(double powerkW, double transformerLoadLossFraction, double transformerRatingkW, double& xfmr_ll, double xfmr_nll)
+{
+    if (transformerRatingkW == 0.0 || transformerLoadLossFraction == 0.0)
+        return 0;
+
+    // calculate xfmr_ll, xfmr_nll
+
+    if (powerkW < transformerRatingkW)
+        xfmr_ll *= powerkW * powerkW / transformerRatingkW;
+    else
+        xfmr_ll *= powerkW;
+
+    // total load loss
+    return xfmr_ll + xfmr_nll; // kWh
 }

@@ -38,6 +38,7 @@ BatteryPower::BatteryPower(double dtHour) :
 		powerGeneratedBySystem(0),
 		powerSystemToLoad(0),
 		powerSystemToBatteryAC(0),
+        powerSystemToBatteryDC(0),
 		powerSystemToGrid(0),
 		powerSystemClipped(0),
 		powerClippedToBattery(0),
@@ -64,8 +65,11 @@ BatteryPower::BatteryPower(double dtHour) :
         powerInterconnectionLoss(0),
         powerCurtailmentLimit(1e+38),
         voltageSystem(0),
-        acLossPostInverter(0.0),
+        acLossWiring(0.0),
         acLossPostBattery(0.0),
+        acXfmrLoadLoss(0.0),
+        acXfmrNoLoadLoss(0.0),
+        acXfmrRating(0.0),
         isOutageStep(false),
 		connectionMode(0),
         meterPosition(0),
@@ -103,6 +107,7 @@ BatteryPower::BatteryPower(const BatteryPower& orig) {
     powerGeneratedBySystem = orig.powerGeneratedBySystem;
     powerSystemToLoad = orig.powerSystemToLoad;
     powerSystemToBatteryAC = orig.powerSystemToBatteryAC;
+    powerSystemToBatteryDC = orig.powerSystemToBatteryDC;
     powerSystemToGrid = orig.powerSystemToGrid;
     powerSystemClipped = orig.powerSystemClipped;
     powerClippedToBattery = orig.powerClippedToBattery;
@@ -129,8 +134,11 @@ BatteryPower::BatteryPower(const BatteryPower& orig) {
     powerInterconnectionLoss = orig.powerInterconnectionLoss;
     powerCurtailmentLimit = orig.powerCurtailmentLimit;
     voltageSystem = orig.voltageSystem;
-    acLossPostInverter = orig.acLossPostInverter;
-    acLossPostBattery = orig.acLossPostBattery,
+    acLossWiring = orig.acLossWiring;
+    acLossPostBattery = orig.acLossPostBattery;
+    acXfmrLoadLoss = orig.acXfmrLoadLoss;
+    acXfmrNoLoadLoss = orig.acXfmrNoLoadLoss;
+    acXfmrRating = orig.acXfmrRating;
     isOutageStep = orig.isOutageStep;
     connectionMode = orig.connectionMode;
     meterPosition = orig.meterPosition;
@@ -186,13 +194,16 @@ void BatteryPower::reset()
 	powerSystemClipped = 0;
 	powerPVInverterDraw = 0;
 	powerSystemToBatteryAC = 0;
+    powerSystemToBatteryDC = 0;
 	powerSystemToGrid = 0;
 	powerSystemToLoad = 0;
     powerInterconnectionLoss = 0;
     powerCurtailmentLimit = 1e+38;
 	voltageSystem = 0;
-    acLossPostInverter = 0.0;
+    acLossWiring = 0.0;
     acLossPostBattery = 0.0;
+    acXfmrLoadLoss = 0.0;
+    acXfmrNoLoadLoss = 0.0;
     isOutageStep = false;
 }
 
@@ -609,7 +620,14 @@ void BatteryPowerFlow::calculateDCConnected()
         P_interconnection_loss_ac = P_crit_load_unmet_ac = P_unmet_losses =
         P_batt_to_inverter_dc = 0;
 
-    double ac_loss_percent = 1 - (1 - m_BatteryPower->acLossPostInverter) * (1 - m_BatteryPower->acLossPostBattery); // Combine the loss types into one number - they're both on the AC side of the inverter
+    double ac_loss_percent = 1 - (1 - m_BatteryPower->acLossWiring) * (1 - m_BatteryPower->acLossPostBattery); // Combine the loss types into one number - they're all on the AC side of the inverter
+
+    if (m_BatteryPower->isOutageStep) {
+        m_BatteryPower->acXfmrNoLoadLoss = 0;
+    }
+    else {
+        ac_loss_percent *= (1 - m_BatteryPower->acXfmrLoadLoss);
+    }
 
     double P_ac_losses = 0.0; // These are reported by the loss variables in the system model, just record here for powerflow calcs
 
@@ -754,6 +772,17 @@ void BatteryPowerFlow::calculateDCConnected()
             P_gen_ac = 0;
             P_grid_to_batt_ac = 0;
         }
+
+        double P_xfmr_ll = m_BatteryPower->acXfmrLoadLoss;
+        double P_transformer_loss = 0;
+        if (!m_BatteryPower->isOutageStep && P_gen_ac > 0) {
+            P_transformer_loss = Transformer::transformerLoss(P_gen_ac * (1 - m_BatteryPower->acLossWiring), m_BatteryPower->acXfmrLoadLoss, m_BatteryPower->acXfmrRating, P_xfmr_ll, m_BatteryPower->acXfmrNoLoadLoss);
+        }
+        P_ac_losses = P_gen_ac - (P_gen_ac * (1 - m_BatteryPower->acLossWiring) - P_transformer_loss) * (1 - m_BatteryPower->acLossPostBattery);
+        if (P_gen_ac > tolerance) {
+            ac_loss_percent = P_ac_losses / P_gen_ac;
+        }
+
         P_pv_ac = P_pv_to_inverter_dc * efficiencyDCAC * (1 - ac_loss_percent);
 
         if (m_BatteryPower->isOutageStep) {
@@ -824,7 +853,16 @@ void BatteryPowerFlow::calculateDCConnected()
             P_battery_ac = 0.0;
         }
 
-        P_ac_losses = (P_battery_ac + P_pv_ac) * ac_loss_percent;
+        double P_xfmr_ll = m_BatteryPower->acXfmrLoadLoss;
+        double P_transformer_loss = 0;
+        if (!m_BatteryPower->isOutageStep && P_gen_ac > 0) {
+            P_transformer_loss = Transformer::transformerLoss(P_gen_ac * (1 - m_BatteryPower->acLossWiring), m_BatteryPower->acXfmrLoadLoss, m_BatteryPower->acXfmrRating, P_xfmr_ll, m_BatteryPower->acXfmrNoLoadLoss);
+        }
+        P_ac_losses = P_gen_ac - (P_gen_ac * (1 - m_BatteryPower->acLossWiring) - P_transformer_loss) * (1 - m_BatteryPower->acLossPostBattery);
+        if (P_gen_ac > tolerance) {
+            ac_loss_percent = P_ac_losses / P_gen_ac;
+        }
+
         P_pv_ac *= (1 - ac_loss_percent);  // P_pv_ac isn't reported out directly, so we can use it
         P_battery_ac_post_loss = P_battery_ac * (1 - ac_loss_percent); // P_battery_ac is used to calculate annual charging and discharging. Apply to another variable so post batt AC losses aren't included in that value
 
@@ -872,7 +910,7 @@ void BatteryPowerFlow::calculateDCConnected()
                     P_batt_to_load_ac = std::fmin(P_battery_ac_post_loss, P_load_ac - P_pv_to_load_ac);
                 }
 
-                P_batt_to_grid_ac = P_battery_ac_post_loss - P_batt_to_load_ac;
+                P_batt_to_grid_ac = std::fmax(0, P_battery_ac_post_loss - P_batt_to_load_ac);
             }
             else {
                 P_batt_to_load_ac = std::fmin(P_battery_ac_post_loss, P_load_ac);
@@ -884,8 +922,6 @@ void BatteryPowerFlow::calculateDCConnected()
 
     // compute losses
     P_conversion_loss_ac = P_gen_dc - P_gen_ac + P_battery_dc_pre_bms - P_battery_dc;
-
-    P_ac_losses = P_gen_ac * ac_loss_percent;
     
     double P_loss_coverage = 0;
     if (m_BatteryPower->isOutageStep) {
@@ -917,7 +953,7 @@ void BatteryPowerFlow::calculateDCConnected()
         P_grid_to_load_ac = P_load_ac - P_pv_to_load_ac - P_batt_to_load_ac;
 
         // Grid charging loss accounted for in P_battery_ac
-        P_grid_ac = P_gen_ac - P_load_ac;
+        P_grid_ac = P_gen_ac - P_load_ac - P_ac_losses;
 
         // Error checking for power to load
         if (P_pv_to_load_ac + P_grid_to_load_ac + P_batt_to_load_ac != P_load_ac)
