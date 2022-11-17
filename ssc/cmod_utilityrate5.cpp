@@ -593,7 +593,9 @@ public:
             monthly_salespurchases(12),
             monthly_load(12), monthly_system_generation(12), monthly_elec_to_grid(12),
             monthly_elec_needed_from_grid(12),
-            monthly_cumulative_excess_energy(12), monthly_cumulative_excess_dollars(12), monthly_bill(12), monthly_test(12),
+            monthly_cumulative_excess_energy_w_sys(12), monthly_cumulative_excess_dollars_w_sys(12),
+            monthly_cumulative_excess_energy_wo_sys(12), monthly_cumulative_excess_dollars_wo_sys(12),
+            monthly_bill(12), monthly_test(12),
             monthly_two_meter_sales(12),
             monthly_peak_wo_sys(12), monthly_peak_w_sys(12), // can't re-use these due to their role in billing demand
             monthly_true_up_credits(12), // Realistically only one true-up month will be non-zero, but track them all for monthly outputs
@@ -876,18 +878,24 @@ public:
 
 
 
-		ur_month last_month;
-		ssc_number_t last_excess_energy = 0;
-		ssc_number_t last_excess_dollars = 0;
-
+		ur_month last_month_wo_sys;
+		ssc_number_t last_excess_energy_wo_sys = 0;
+		ssc_number_t last_excess_dollars_wo_sys = 0;
+        ur_month last_month_w_sys;
+        ssc_number_t last_excess_energy_w_sys = 0;
+        ssc_number_t last_excess_dollars_w_sys = 0;
 
 		idx = 0;
 		for (i=0;i<nyears;i++)
 		{
 			if (i > 0) {
-				last_month = rate.m_month[11];
-				last_excess_energy = monthly_cumulative_excess_energy[11];
-				last_excess_dollars = monthly_cumulative_excess_dollars[11];
+				last_month_w_sys = rate.m_month[11];
+				last_excess_energy_w_sys = monthly_cumulative_excess_energy_w_sys[11];
+				last_excess_dollars_w_sys = monthly_cumulative_excess_dollars_w_sys[11];
+
+                // last_month_wo_sys set below
+                last_excess_energy_wo_sys = monthly_cumulative_excess_energy_wo_sys[11];
+                last_excess_dollars_wo_sys = monthly_cumulative_excess_dollars_wo_sys[11];
 			}
 			for (j = 0; j<m_num_rec_yearly; j++)
 			{
@@ -958,13 +966,13 @@ public:
 					&monthly_excess_dollars_earned[0],
 					&monthly_excess_kwhs_earned[0],
                     &monthly_net_billing_credits[0],
-					&rate.dc_hourly_peak[0], &monthly_cumulative_excess_energy[0],
-					&monthly_cumulative_excess_dollars[0], &monthly_bill[0],
+					&rate.dc_hourly_peak[0], &monthly_cumulative_excess_energy_wo_sys[0],
+					&monthly_cumulative_excess_dollars_wo_sys[0], &monthly_bill[0],
                     &monthly_two_meter_sales[0],
                     &monthly_true_up_credits[0],
                     &monthly_billing_demand_peaks_wo_sys[0],
                     rate.rate_scale[i], i,
-					last_excess_dollars);
+					last_excess_dollars_wo_sys);
 			}
 			else
 			{
@@ -976,13 +984,15 @@ public:
 					&monthly_excess_dollars_earned[0],
 					&monthly_nm_dollars_applied[0],
 					&monthly_excess_kwhs_earned[0],
-					&rate.dc_hourly_peak[0], &monthly_cumulative_excess_energy[0],
-					&monthly_cumulative_excess_dollars[0], &monthly_bill[0],
+					&rate.dc_hourly_peak[0], &monthly_cumulative_excess_energy_wo_sys[0],
+					&monthly_cumulative_excess_dollars_wo_sys[0], &monthly_bill[0],
                     &monthly_true_up_credits[0],
                     &monthly_billing_demand_peaks_wo_sys[0],
                     rate.rate_scale[i], i,
-					&last_month, last_excess_energy, last_excess_dollars);
+					&last_month_wo_sys, last_excess_energy_wo_sys, last_excess_dollars_wo_sys);
 			}
+
+            last_month_wo_sys = ur_month(rate.m_month[11]); // Deep copy now so it's available next y
 
 			for (j = 0; j < 12; j++)
 			{
@@ -1137,11 +1147,11 @@ public:
 						&monthly_excess_dollars_earned[0],
 						&monthly_excess_kwhs_earned[0],
                         &monthly_net_billing_credits[0],
-						&rate.dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0],
+						&rate.dc_hourly_peak[0], &monthly_cumulative_excess_energy_w_sys[0], &monthly_cumulative_excess_dollars_w_sys[0], &monthly_bill[0],
                         &monthly_two_meter_sales[0], &monthly_true_up_credits[0],
                         &monthly_billing_demand_peaks_w_sys[0],
                         rate.rate_scale[i],
-						i, last_excess_dollars, false, false, true);
+						i, last_excess_dollars_w_sys, false, false, true);
 				}
 				else
 				{
@@ -1154,11 +1164,11 @@ public:
 						&monthly_excess_dollars_earned[0],
 						&monthly_excess_kwhs_earned[0],
                         &monthly_net_billing_credits[0],
-						&rate.dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0],
+						&rate.dc_hourly_peak[0], &monthly_cumulative_excess_energy_w_sys[0], &monthly_cumulative_excess_dollars_w_sys[0],
 						&monthly_bill[0], &monthly_two_meter_sales[0],
                         &monthly_true_up_credits[0],
                         &monthly_billing_demand_peaks_w_sys[0],
-                        rate.rate_scale[i], i, last_excess_dollars);
+                        rate.rate_scale[i], i, last_excess_dollars_w_sys);
 				}
 			}
 			else // monthly reconciliation per 2015.6.30 release
@@ -1174,11 +1184,11 @@ public:
 					&monthly_excess_dollars_earned[0],
 					&monthly_nm_dollars_applied[0],
 					&monthly_excess_kwhs_earned[0],
-					&rate.dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0],
+					&rate.dc_hourly_peak[0], &monthly_cumulative_excess_energy_w_sys[0], &monthly_cumulative_excess_dollars_w_sys[0],
 					&monthly_bill[0], &monthly_true_up_credits[0],
                     &monthly_billing_demand_peaks_w_sys[0],
                     rate.rate_scale[i], i,
-					&last_month, last_excess_energy, last_excess_dollars);
+					&last_month_w_sys, last_excess_energy_w_sys, last_excess_dollars_w_sys);
 			}
 			if (two_meter)
 			{
@@ -1392,7 +1402,7 @@ public:
 				assign("year1_monthly_electricity_to_grid", var_data(&monthly_elec_to_grid[0], 12));
 				assign("year1_monthly_electricity_needed_from_grid", var_data(&monthly_elec_needed_from_grid[0], 12));
 
-				assign("year1_monthly_cumulative_excess_generation", var_data(&monthly_cumulative_excess_energy[0], 12));
+				assign("year1_monthly_cumulative_excess_generation", var_data(&monthly_cumulative_excess_energy_w_sys[0], 12));
 				assign("year1_monthly_utility_bill_w_sys", var_data(&monthly_bill[0], 12));
 
 				// output and demand per Paul's email 9/10/10
