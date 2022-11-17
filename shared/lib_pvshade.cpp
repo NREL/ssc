@@ -23,7 +23,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lib_pvshade.h"
 #include "lib_util.h"
 
-#include <math.h>
+#include <cmath>
 #include <limits>
 #include <vector>
 
@@ -308,7 +308,7 @@ double sssky_diffuse_table::compute(double surface_tilt) {
         gamma[n] = (-M_PI / 2) + atan(arg[n]);
         tan_tilt_gamma[n] = tan(surface_tilt * DTOR + gamma[n]);
         Asky_shade[n] = M_PI + M_PI / pow((1 + tan_tilt_gamma[n] * tan_tilt_gamma[n]), 0.5);
-        if (isnan(Asky_shade[n]))
+        if (std::isnan(Asky_shade[n]))
         {
             Asky_shade[n] = Asky;
         }

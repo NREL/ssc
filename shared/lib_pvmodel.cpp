@@ -21,7 +21,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "lib_pvmodel.h"
-#include <math.h>
+#include <cmath>
 #include <limits>
 #include <iostream>
 
