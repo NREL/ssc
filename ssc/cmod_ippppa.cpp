@@ -413,7 +413,7 @@ enum {
 	CF_pretax_dscr,
 
 
-    // SAM 1308
+    // SAM 1038
     CF_itc_fed_amount,
     CF_itc_fed_percent_fraction,
     CF_itc_fed_percent_amount,
@@ -744,7 +744,7 @@ public:
 			- (as_boolean("cbi_oth_deprbas_fed") ? cbi_oth_amount : 0);
 
 
-        // SAM 1308
+        // SAM 1038
          // itc fixed
         double itc_fed_amount = 0.0;
         double_vec vitc_fed_amount = as_vector_double("itc_fed_amount");
@@ -807,14 +807,14 @@ public:
 
 
 
-        // SAM 1308
+        // SAM 1038
         itc_sta_per = 0.0;
         for (size_t k = 0; k <= nyears; k++) {
             cf.at(CF_itc_sta_percent_amount, k) = min(cf.at(CF_itc_sta_percent_maxvalue, k), cf.at(CF_itc_sta_percent_fraction, k) * state_itc_basis);
             itc_sta_per += cf.at(CF_itc_sta_percent_amount, k);
         }
 
-        // SAM 1308
+        // SAM 1038
         itc_fed_per = 0.0;
         for (size_t k = 0; k <= nyears; k++) {
             cf.at(CF_itc_fed_percent_amount, k) = min(cf.at(CF_itc_fed_percent_maxvalue, k), cf.at(CF_itc_fed_percent_fraction, k) * federal_itc_basis);
@@ -895,7 +895,7 @@ public:
 
 //        itc_fed_total = itc_fed_amount + itc_fed_per;
 //		itc_sta_total = itc_sta_amount + itc_sta_per;
-               // SAM 1308
+               // SAM 1038
         for (size_t k = 0; k <= nyears; k++) {
             cf.at(CF_itc_fed, k) = cf.at(CF_itc_fed_amount, k) + cf.at(CF_itc_fed_percent_amount, k);
             cf.at(CF_itc_sta, k) = cf.at(CF_itc_sta_amount, k) + cf.at(CF_itc_sta_percent_amount, k);
@@ -1286,7 +1286,7 @@ public:
 		assign("present_value_insandproptax", var_data((ssc_number_t)(pvInsurance + pvPropertyTax)));
 
 
-        // SAM 1308
+        // SAM 1038
         save_cf(this, cf, CF_itc_fed_amount, nyears, "cf_itc_fed_amount");
         save_cf(this, cf, CF_itc_fed_percent_amount, nyears, "cf_itc_fed_percent_amount");
         save_cf(this, cf, CF_itc_fed, nyears, "cf_itc_fed");
@@ -1899,7 +1899,7 @@ public:
 			cf.at(CF_sta_income_taxes, i) = cf.at(CF_state_tax_frac, i)*cf.at(CF_sta_taxable_income_less_deductions, i);
 
 			cf.at(CF_sta_tax_savings, i) = cf.at(CF_ptc_sta, i) - cf.at(CF_sta_income_taxes, i);
-// SAM 1308            if (i == 1) cf.at(CF_sta_tax_savings, i) += itc_sta_amount + itc_sta_per;
+// SAM 1038            if (i == 1) cf.at(CF_sta_tax_savings, i) += itc_sta_amount + itc_sta_per;
             cf.at(CF_sta_tax_savings, i) += cf.at(CF_itc_sta_amount,i) + cf.at(CF_itc_sta_percent_amount,i);
 
 			// ************************************************
@@ -1923,7 +1923,7 @@ public:
 			cf.at(CF_fed_income_taxes, i) = cf.at(CF_federal_tax_frac, i)*cf.at(CF_fed_taxable_income_less_deductions, i);
 
 			cf.at(CF_fed_tax_savings, i) = cf.at(CF_ptc_fed, i) - cf.at(CF_fed_income_taxes, i);
-// sam 1308			if (i == 1) cf.at(CF_fed_tax_savings, i) += itc_fed_amount + itc_fed_per;
+// SAM 1038			if (i == 1) cf.at(CF_fed_tax_savings, i) += itc_fed_amount + itc_fed_per;
             cf.at(CF_fed_tax_savings, i) += cf.at(CF_itc_fed_amount,i) + cf.at(CF_itc_fed_percent_amount,i);
 
 			// ************************************************
