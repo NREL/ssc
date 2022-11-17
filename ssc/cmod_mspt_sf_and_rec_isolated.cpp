@@ -158,6 +158,8 @@ public:
             is__clearsky_to_measured_dni_od__required = true;
         }
 
+        int n_panels = as_integer("N_panels");
+
         // Transient model
         if (is_rec_model_trans || is_rec_startup_trans) {
 
@@ -195,7 +197,7 @@ public:
                 as_integer("rec_htf"), as_matrix("field_fl_props"),
                 as_integer("mat_tube"),
                 rec_night_recirc,
-                as_integer("N_panels"), D_rec, H_rec,
+                n_panels, D_rec, H_rec,
                 as_integer("Flow_type"), as_integer("crossover_shift"), as_double("hl_ffact"),
                 as_double("T_htf_hot_des"), rec_clearsky_fraction,
                 is_rec_model_trans, is_rec_startup_trans,
@@ -226,7 +228,7 @@ public:
                 as_integer("rec_htf"), as_matrix("field_fl_props"),
                 as_integer("mat_tube"),
                 rec_night_recirc,
-                as_integer("N_panels"), D_rec, H_rec,
+                n_panels, D_rec, H_rec,
                 as_integer("Flow_type"), as_integer("crossover_shift"), as_double("hl_ffact"),
                 as_double("T_htf_hot_des"), rec_clearsky_fraction
                 ));   // steady-state receiver
@@ -237,12 +239,16 @@ public:
 
         mspt_base->init();
 
-        double m_dot_rec_des = std::numeric_limits<double>::quiet_NaN();
-        double T_htf_cold_des = std::numeric_limits<double>::quiet_NaN();
-        int n_panels = -1;
-        mspt_base->get_solved_design_common(m_dot_rec_des, T_htf_cold_des, n_panels);
+        double eta_thermal_des /*-*/, W_dot_rec_pump_des /*MWe*/, W_dot_pumping_tower_share_des /*MWe*/, W_dot_pumping_rec_share_des /*MWe*/,
+            rec_pump_coef_des /*MWe/MWt*/, rec_vel_htf_des_des /*m/s*/, m_dot_htf_rec_des /*kg/s*/, m_dot_htf_max_des /*kg/s*/,
+            q_dot_piping_loss_des_des /*MWt*/;
+        mspt_base->get_design_performance(eta_thermal_des /*-*/,
+            W_dot_rec_pump_des /*MWe*/, W_dot_pumping_tower_share_des /*MWe*/, W_dot_pumping_rec_share_des /*MWe*/,
+            rec_pump_coef_des /*MWe/MWt*/, rec_vel_htf_des_des /*m/s*/,
+            m_dot_htf_rec_des /*kg/s*/, m_dot_htf_max_des /*kg/s*/,
+            q_dot_piping_loss_des_des /*MWt*/);
 
-        assign("m_dot_rec_des", m_dot_rec_des);
+        assign("m_dot_rec_des", m_dot_htf_rec_des);
 
         // If only simulating receiver design then get out here
         int sim_type = as_integer("sim_type");
