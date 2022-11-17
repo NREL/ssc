@@ -26,7 +26,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lib_physics.h"
 
 #include <iostream>
-#include <math.h>
+#include <cmath>
 #include "lib_util.h"
 #include "lib_windwakemodel.h"
 

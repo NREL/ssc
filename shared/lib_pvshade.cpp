@@ -23,7 +23,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lib_pvshade.h"
 #include "lib_util.h"
 
-#include <math.h>
+#include <cmath>
 #include <limits>
 #include <vector>
 
