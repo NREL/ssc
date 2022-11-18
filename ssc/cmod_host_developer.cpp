@@ -879,7 +879,7 @@ enum {
     CF_utility_bill,
     CF_parasitic_cost,
 
-    // SAM 1308
+    // SAM 1038
     CF_itc_fed_amount,
     CF_itc_fed_percent_fraction,
     CF_itc_fed_percent_amount,
@@ -1434,7 +1434,7 @@ public:
 		double ibi_oth_per = as_double("ibi_oth_percent")*0.01*cost_prefinancing;
 		if (ibi_oth_per > as_double("ibi_oth_percent_maxvalue")) ibi_oth_per = as_double("ibi_oth_percent_maxvalue");
 
-        // SAM 1308
+        // SAM 1038
          // itc fixed
         double itc_fed_amount = 0.0;
         double_vec vitc_fed_amount = as_vector_double("itc_fed_amount");
@@ -2283,7 +2283,7 @@ public:
 
 		itc_sta_qual_total = itc_sta_qual_macrs_5 + itc_sta_qual_macrs_15 + itc_sta_qual_sl_5 +itc_sta_qual_sl_15 +itc_sta_qual_sl_20 + itc_sta_qual_sl_39 + itc_sta_qual_custom;
 
-        // SAM 1308
+        // SAM 1038
         itc_sta_per = 0.0;
         for (size_t k = 0; k <= nyears; k++) {
             cf.at(CF_itc_sta_percent_amount, k) = min(cf.at(CF_itc_sta_percent_maxvalue, k), cf.at(CF_itc_sta_percent_fraction, k) * itc_sta_qual_total);
@@ -2337,7 +2337,7 @@ public:
 
 		itc_fed_qual_total = itc_fed_qual_macrs_5 + itc_fed_qual_macrs_15 + itc_fed_qual_sl_5 +itc_fed_qual_sl_15 +itc_fed_qual_sl_20 + itc_fed_qual_sl_39 + itc_fed_qual_custom;
 
-        // SAM 1308
+        // SAM 1038
         itc_fed_per = 0.0;
         for (size_t k = 0; k <= nyears; k++) {
             cf.at(CF_itc_fed_percent_amount, k) = min(cf.at(CF_itc_fed_percent_maxvalue, k), cf.at(CF_itc_fed_percent_fraction, k) * itc_fed_qual_total);
@@ -2381,7 +2381,7 @@ public:
 			itc_disallow_fed_fixed_custom = 0;
 		}
 
-        // SAM 1308
+        // SAM 1038
         for (size_t k = 0; k <= nyears; k++) {
             cf.at(CF_itc_fed, k) = cf.at(CF_itc_fed_amount, k) + cf.at(CF_itc_fed_percent_amount, k);
             cf.at(CF_itc_sta, k) = cf.at(CF_itc_sta_amount, k) + cf.at(CF_itc_sta_percent_amount, k);
@@ -2633,7 +2633,7 @@ public:
 				cf.at(CF_statax,i) +
 				cf.at(CF_ptc_sta,i) +
                 cf.at(CF_itc_sta, i);
-            //	SAM 1308		if (i==1) cf.at(CF_fedtax_income_prior_incentives,i) += itc_sta_total;
+            //	SAM 1038		if (i==1) cf.at(CF_fedtax_income_prior_incentives,i) += itc_sta_total;
 
 
 			// pbi in ebitda - so remove if non-taxable
@@ -2645,7 +2645,7 @@ public:
 				cf.at(CF_project_return_aftertax_cash,i) +
 				cf.at(CF_ptc_fed,i) + cf.at(CF_ptc_sta,i) +
 				cf.at(CF_statax,i) + cf.at(CF_fedtax,i) + cf.at(CF_itc_total, i);
-            //	SAM 1308		if (i==1) cf.at(CF_project_return_aftertax,i) += itc_total;
+            //	SAM 1038		if (i==1) cf.at(CF_project_return_aftertax,i) += itc_total;
 
 
 			cf.at(CF_project_return_aftertax_irr,i) = irr(CF_project_return_aftertax,i)*100.0;
@@ -3002,7 +3002,7 @@ public:
 			- cf.at(CF_disbursement_debtservice, i) // note sign is negative for positive disbursement
 			- cf.at(CF_disbursement_om, i) // note sign is negative for positive disbursement
 			+ cf.at(CF_net_salvage_value, i)// benefit to cost reduction so that project revenue based on PPA revenue and not total revenue per 7/16/15 meeting
-            + cf.at(CF_itc_total, i); // SAM 1308
+            + cf.at(CF_itc_total, i); // SAM 1038
     }
     // year 1 add total ITC (net benefit) so that project return = project revenue - project cost
     //if (nyears >= 1) cf.at(CF_Annual_Costs, 1) += itc_total;
@@ -3202,7 +3202,7 @@ public:
 	assign("cbi_total_oth", var_data((ssc_number_t) cbi_oth_amount));
 	assign("cbi_total_uti", var_data((ssc_number_t) cbi_uti_amount));
 
-    // SAM 1308
+    // SAM 1038
     double itc_fed_total = 0.0;
     double itc_sta_total = 0.0;
     double itc_total = 0.0;
@@ -3800,7 +3800,7 @@ public:
         cfm.check_debt_percentage(this, debt_fraction);
 
 
-        // SAM 1308
+        // SAM 1038
         save_cf(CF_itc_fed_amount, nyears, "cf_itc_fed_amount");
         save_cf(CF_itc_fed_percent_amount, nyears, "cf_itc_fed_percent_amount");
         save_cf(CF_itc_fed, nyears, "cf_itc_fed");
