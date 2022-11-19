@@ -41,9 +41,6 @@ and 8-byte pointer on 64-bit architectures.
 
 Shared libraries have the .dll file extension on Windows,
 
-\copyright 2012 National Renewable Energy Laboratory
-\authors Aron Dobos, Steven Janzou
-
    C DLL Interface for Visual Basic (_stdcall)
 */
 

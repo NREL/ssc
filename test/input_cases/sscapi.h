@@ -45,9 +45,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
    Shared libraries have the .dll file extension on Windows,
    .dylib on MacOSX, and .so on Linux/Unix.
 
-  \copyright 2012 National Renewable Energy Laboratory
-  \authors Aron Dobos, Steven Janzou
-  */
+ */
 
 #ifndef __ssc_api_h
 #define __ssc_api_h
