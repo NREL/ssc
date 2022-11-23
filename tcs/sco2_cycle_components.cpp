@@ -1444,7 +1444,7 @@ int C_comp_multi_stage::C_MEQ_eta_isen__h_out::operator()(double eta_isen /*-*/,
 
 	if (N_rpm_code != C_monotonic_eq_solver::CONVERGED)
 	{
-		if (!(N_rpm_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) < 0.01))
+		if (!(N_rpm_code > C_monotonic_eq_solver::CONVERGED && std::abs(tol_solved) < 0.01))
 		{
 			throw(C_csp_exception("C_comp_multi_stage::C_MEQ_eta_isen__h_out failed to converge within a reasonable tolerance"));
 		}
@@ -1594,7 +1594,7 @@ int C_comp_multi_stage::design_given_outlet_state(int comp_model_code, double T_
 
 			if (eta_isen_code != C_monotonic_eq_solver::CONVERGED)
 			{
-				if (!(eta_isen_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) < 0.01))
+				if (!(eta_isen_code > C_monotonic_eq_solver::CONVERGED && std::abs(tol_solved) < 0.01))
 				{
 					throw(C_csp_exception("C_comp_multi_stage::design_given_outlet_state failed to converge within a reasonable tolerance"));
 				}

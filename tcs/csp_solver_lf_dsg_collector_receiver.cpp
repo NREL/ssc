@@ -1,24 +1,35 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 
 #include "csp_solver_lf_dsg_collector_receiver.h"
 
@@ -915,7 +926,7 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 		double dvar8 = wp.enth;
 		double dvar9 = (dvar8 - dvar7) / (dvar2 - dvar1)*m_nModBoil;
 
-		if (fabs(dvar6) > 25.0)
+		if (std::abs(dvar6) > 25.0)
 		{
 
 			std::string err_msg = util::format("The field you selected with %d boiler modules and %d superheater modules results in a projected superheater outlet temperature"
@@ -1172,7 +1183,7 @@ int C_csp_lf_dsg_collector_receiver::freeze_protection(const C_csp_weatherreader
 		throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::off - freeze protection failed"));
 	}
 
-    if (!(fp_code >= C_monotonic_eq_solver::CONVERGED && std::fabs(tol_solved) < 10.0))
+    if (!(fp_code >= C_monotonic_eq_solver::CONVERGED && std::abs(tol_solved) < 10.0))
     {
         throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::off - freeze protection failed to converge"));
     }
@@ -1828,7 +1839,7 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 
 			if( m_dot_code != C_monotonic_eq_solver::CONVERGED )
 			{
-                if (m_dot_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) <= 0.3)
+                if (m_dot_code > C_monotonic_eq_solver::CONVERGED && std::abs(tol_solved) <= 0.3)
                 {
                     std::string error_msg = util::format("At time = %lg the iteration to find the steam mass flow rate resulting in the target outlet enthalpy only reached a convergence "
                         "= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
@@ -2669,7 +2680,7 @@ void C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int_ave(doubl
     double deltaT = T_out_t_end_prev - T_x0_at_P_in;	//[K]
 
     double h_out_t_start_local = std::numeric_limits<double>::quiet_NaN();
-    if (fabs(deltaT) >= deltaT_tol)
+    if (std::abs(deltaT) >= deltaT_tol)
     {   // If inlet pressure and initial temperature are not 2-phase, then use properties at water_TP to calculate enthalpy
         water_prop_error = water_TP(T_out_t_end_prev, P_in, &wp);
         if (water_prop_error != 0)
@@ -2771,7 +2782,7 @@ void C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int(double h_
 
 	// Check that this guess is not too close to Guess1
 	double diff_guess = (h_out_t_end_guess2 - h_out_t_end_prev) / h_out_t_end_prev;
-	if( abs(diff_guess) < 0.01 )
+	if(std::abs(diff_guess) < 0.01 )
 	{
 		if(diff_guess > 0.0)
 		{
@@ -2827,7 +2838,7 @@ void C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int(double h_
 
 	if( h_out_t_end_code != C_monotonic_eq_solver::CONVERGED )
 	{
-		if ( !(h_out_t_end_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) <= 0.1))
+		if ( !(h_out_t_end_code > C_monotonic_eq_solver::CONVERGED && std::abs(tol_solved) <= 0.1))
 		{
 			throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int monotonic solver failed to reach convergence","",5));
 		}

@@ -1,24 +1,35 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 
 #include <algorithm>
 #include <cmath>
@@ -98,32 +109,32 @@ static var_info _cm_vtab_pvsamv1[] = {
         {SSC_INPUT, SSC_NUMBER,   "subarray1_nameplate_loss",             "Sub-array 1 DC nameplate loss",                       "%",      "",                                                                                                                                                                                      "Losses",                                                "*",                                  "MIN=-5,MAX=100",      "" },
         {SSC_INPUT, SSC_NUMBER,   "subarray1_electrical_mismatch",        "Sub-array 1 bifacial electrical mismatch loss",       "%",      "",                                                                                                                                                                                      "Losses",                                                "*",                                  "MIN=0,MAX=100",       "" },
 
-        {SSC_INPUT, SSC_NUMBER,   "subarray2_rear_soiling_loss",          "Sub-array 2 rear soiling loss",                       "%",      "",                                                                                                                                                                                      "Losses",                                                "subarray2_enable=1",                 "MIN=0,MAX=100",       "" },
-        {SSC_INPUT, SSC_NUMBER,   "subarray2_rack_shading",               "Sub-array 2 rack shading loss",                       "%",      "",                                                                                                                                                                                      "Losses",                                                "?",                                  "MIN=0,MAX=100",       "" },
-        {SSC_INPUT, SSC_NUMBER,   "subarray2_mismatch_loss",              "Sub-array 2 DC mismatch loss",                        "%",      "",                                                                                                                                                                                      "Losses",                                                "?",                                  "MIN=0,MAX=100",       "" },
-        {SSC_INPUT, SSC_NUMBER,   "subarray2_diodeconn_loss",             "Sub-array 2 DC diodes and connections loss",          "%",      "",                                                                                                                                                                                      "Losses",                                                "?",                                  "MIN=0,MAX=100",       "" },
-        {SSC_INPUT, SSC_NUMBER,   "subarray2_dcwiring_loss",              "Sub-array 2 DC wiring loss",                          "%",      "",                                                                                                                                                                                      "Losses",                                                "?",                                  "MIN=0,MAX=100",       "" },
-        {SSC_INPUT, SSC_NUMBER,   "subarray2_tracking_loss",              "Sub-array 2 DC tracking error loss",                  "%",      "",                                                                                                                                                                                      "Losses",                                                "?",                                  "MIN=0,MAX=100",       "" },
-        {SSC_INPUT, SSC_NUMBER,   "subarray2_nameplate_loss",             "Sub-array 2 DC nameplate loss",                       "%",      "",                                                                                                                                                                                      "Losses",                                                "?",                                  "MIN=-5,MAX=100",      "" },
-        {SSC_INPUT, SSC_NUMBER,   "subarray2_electrical_mismatch",        "Sub-array 2 bifacial electrical mismatch loss",       "%",      "",                                                                                                                                                                                      "Losses",                                                "?",                                  "MIN=0,MAX=100",       "" },
+        {SSC_INPUT, SSC_NUMBER,   "subarray2_rear_soiling_loss",          "Sub-array 2 rear soiling loss",                       "%",      "",                                                                                                                                                                                      "Losses",                                                "subarray2_enable=1",                                  "MIN=0,MAX=100",       "" },
+        {SSC_INPUT, SSC_NUMBER,   "subarray2_rack_shading",               "Sub-array 2 rack shading loss",                       "%",      "",                                                                                                                                                                                      "Losses",                                                "subarray2_enable=1",                                  "MIN=0,MAX=100",       "" },
+        {SSC_INPUT, SSC_NUMBER,   "subarray2_mismatch_loss",              "Sub-array 2 DC mismatch loss",                        "%",      "",                                                                                                                                                                                      "Losses",                                                "subarray2_enable=1",                                  "MIN=0,MAX=100",       "" },
+        {SSC_INPUT, SSC_NUMBER,   "subarray2_diodeconn_loss",             "Sub-array 2 DC diodes and connections loss",          "%",      "",                                                                                                                                                                                      "Losses",                                                "subarray2_enable=1",                                  "MIN=0,MAX=100",       "" },
+        {SSC_INPUT, SSC_NUMBER,   "subarray2_dcwiring_loss",              "Sub-array 2 DC wiring loss",                          "%",      "",                                                                                                                                                                                      "Losses",                                                "subarray2_enable=1",                                  "MIN=0,MAX=100",       "" },
+        {SSC_INPUT, SSC_NUMBER,   "subarray2_tracking_loss",              "Sub-array 2 DC tracking error loss",                  "%",      "",                                                                                                                                                                                      "Losses",                                                "subarray2_enable=1",                                  "MIN=0,MAX=100",       "" },
+        {SSC_INPUT, SSC_NUMBER,   "subarray2_nameplate_loss",             "Sub-array 2 DC nameplate loss",                       "%",      "",                                                                                                                                                                                      "Losses",                                                "subarray2_enable=1",                                  "MIN=-5,MAX=100",      "" },
+        {SSC_INPUT, SSC_NUMBER,   "subarray2_electrical_mismatch",        "Sub-array 2 bifacial electrical mismatch loss",       "%",      "",                                                                                                                                                                                      "Losses",                                                "subarray2_enable=1",                                  "MIN=0,MAX=100",       "" },
 
-        {SSC_INPUT, SSC_NUMBER,   "subarray3_rear_soiling_loss",          "Sub-array 3 rear soiling loss",                       "%",      "",                                                                                                                                                                                      "Losses",                                                "subarray3_enable=1",                 "MIN=0,MAX=100",       "" },
-        {SSC_INPUT, SSC_NUMBER,   "subarray3_rack_shading",               "Sub-array 3 rack shading loss",                       "%",      "",                                                                                                                                                                                      "Losses",                                                "?",                                  "MIN=0,MAX=100",       "" },
-        {SSC_INPUT, SSC_NUMBER,   "subarray3_mismatch_loss",              "Sub-array 3 DC mismatch loss",                        "%",      "",                                                                                                                                                                                      "Losses",                                                "?",                                  "MIN=0,MAX=100",       "" },
-        {SSC_INPUT, SSC_NUMBER,   "subarray3_diodeconn_loss",             "Sub-array 3 DC diodes and connections loss",          "%",      "",                                                                                                                                                                                      "Losses",                                                "?",                                  "MIN=0,MAX=100",       "" },
-        {SSC_INPUT, SSC_NUMBER,   "subarray3_dcwiring_loss",              "Sub-array 3 DC wiring loss",                          "%",      "",                                                                                                                                                                                      "Losses",                                                "?",                                  "MIN=0,MAX=100",       "" },
-        {SSC_INPUT, SSC_NUMBER,   "subarray3_tracking_loss",              "Sub-array 3 DC tracking error loss",                  "%",      "",                                                                                                                                                                                      "Losses",                                                "?",                                  "MIN=0,MAX=100",       "" },
-        {SSC_INPUT, SSC_NUMBER,   "subarray3_nameplate_loss",             "Sub-array 3 DC nameplate loss",                       "%",      "",                                                                                                                                                                                      "Losses",                                                "?",                                  "MIN=-5,MAX=100",      "" },
-        {SSC_INPUT, SSC_NUMBER,   "subarray3_electrical_mismatch",        "Sub-array 3 bifacial electrical mismatch loss",       "%",      "",                                                                                                                                                                                      "Losses",                                                "?",                                  "MIN=0,MAX=100",       "" },
+        {SSC_INPUT, SSC_NUMBER,   "subarray3_rear_soiling_loss",          "Sub-array 3 rear soiling loss",                       "%",      "",                                                                                                                                                                                      "Losses",                                                "subarray3_enable=1",                                  "MIN=0,MAX=100",       "" },
+        {SSC_INPUT, SSC_NUMBER,   "subarray3_rack_shading",               "Sub-array 3 rack shading loss",                       "%",      "",                                                                                                                                                                                      "Losses",                                                "subarray3_enable=1",                                  "MIN=0,MAX=100",       "" },
+        {SSC_INPUT, SSC_NUMBER,   "subarray3_mismatch_loss",              "Sub-array 3 DC mismatch loss",                        "%",      "",                                                                                                                                                                                      "Losses",                                                "subarray3_enable=1",                                  "MIN=0,MAX=100",       "" },
+        {SSC_INPUT, SSC_NUMBER,   "subarray3_diodeconn_loss",             "Sub-array 3 DC diodes and connections loss",          "%",      "",                                                                                                                                                                                      "Losses",                                                "subarray3_enable=1",                                  "MIN=0,MAX=100",       "" },
+        {SSC_INPUT, SSC_NUMBER,   "subarray3_dcwiring_loss",              "Sub-array 3 DC wiring loss",                          "%",      "",                                                                                                                                                                                      "Losses",                                                "subarray3_enable=1",                                  "MIN=0,MAX=100",       "" },
+        {SSC_INPUT, SSC_NUMBER,   "subarray3_tracking_loss",              "Sub-array 3 DC tracking error loss",                  "%",      "",                                                                                                                                                                                      "Losses",                                                "subarray3_enable=1",                                  "MIN=0,MAX=100",       "" },
+        {SSC_INPUT, SSC_NUMBER,   "subarray3_nameplate_loss",             "Sub-array 3 DC nameplate loss",                       "%",      "",                                                                                                                                                                                      "Losses",                                                "subarray3_enable=1",                                  "MIN=-5,MAX=100",      "" },
+        {SSC_INPUT, SSC_NUMBER,   "subarray3_electrical_mismatch",        "Sub-array 3 bifacial electrical mismatch loss",       "%",      "",                                                                                                                                                                                      "Losses",                                                "subarray3_enable=1",                                  "MIN=0,MAX=100",       "" },
 
-        {SSC_INPUT, SSC_NUMBER,   "subarray4_rear_soiling_loss",          "Sub-array 4 rear soiling loss",                       "%",      "",                                                                                                                                                                                      "Losses",                                                "subarray4_enable=1",                 "MIN=0,MAX=100",       "" },
-        {SSC_INPUT, SSC_NUMBER,   "subarray4_rack_shading",               "Sub-array 4 rack shading loss",                       "%",      "",                                                                                                                                                                                      "Losses",                                                "?",                                  "MIN=0,MAX=100",       "" },
-        {SSC_INPUT, SSC_NUMBER,   "subarray4_mismatch_loss",              "Sub-array 4 DC mismatch loss",                        "%",      "",                                                                                                                                                                                      "Losses",                                                "?",                                  "MIN=0,MAX=100",       "" },
-        {SSC_INPUT, SSC_NUMBER,   "subarray4_diodeconn_loss",             "Sub-array 4 DC diodes and connections loss",          "%",      "?",                                                                                                                                                                                     "Losses",                                                "?",                                  "MIN=0,MAX=100",       "" },
-        {SSC_INPUT, SSC_NUMBER,   "subarray4_dcwiring_loss",              "Sub-array 4 DC wiring loss",                          "%",      "",                                                                                                                                                                                      "Losses",                                                "?",                                  "MIN=0,MAX=100",       "" },
-        {SSC_INPUT, SSC_NUMBER,   "subarray4_tracking_loss",              "Sub-array 4 DC tracking error loss",                  "%",      "",                                                                                                                                                                                      "Losses",                                                "?",                                  "MIN=0,MAX=100",       "" },
-        {SSC_INPUT, SSC_NUMBER,   "subarray4_nameplate_loss",             "Sub-array 4 DC nameplate loss",                       "%",      "",                                                                                                                                                                                      "Losses",                                                "?",                                  "MIN=-5,MAX=100",      "" },
-        {SSC_INPUT, SSC_NUMBER,   "subarray4_electrical_mismatch",        "Sub-array 4 bifacial electrical mismatch loss",       "%",      "",                                                                                                                                                                                      "Losses",                                                "?",                                  "MIN=0,MAX=100",       "" },
+        {SSC_INPUT, SSC_NUMBER,   "subarray4_rear_soiling_loss",          "Sub-array 4 rear soiling loss",                       "%",      "",                                                                                                                                                                                      "Losses",                                                "subarray4_enable=1",                                  "MIN=0,MAX=100",       "" },
+        {SSC_INPUT, SSC_NUMBER,   "subarray4_rack_shading",               "Sub-array 4 rack shading loss",                       "%",      "",                                                                                                                                                                                      "Losses",                                                "subarray4_enable=1",                                  "MIN=0,MAX=100",       "" },
+        {SSC_INPUT, SSC_NUMBER,   "subarray4_mismatch_loss",              "Sub-array 4 DC mismatch loss",                        "%",      "",                                                                                                                                                                                      "Losses",                                                "subarray4_enable=1",                                  "MIN=0,MAX=100",       "" },
+        {SSC_INPUT, SSC_NUMBER,   "subarray4_diodeconn_loss",             "Sub-array 4 DC diodes and connections loss",          "%",      "?",                                                                                                                                                                                     "Losses",                                                "subarray4_enable=1",                                  "MIN=0,MAX=100",       "" },
+        {SSC_INPUT, SSC_NUMBER,   "subarray4_dcwiring_loss",              "Sub-array 4 DC wiring loss",                          "%",      "",                                                                                                                                                                                      "Losses",                                                "subarray4_enable=1",                                  "MIN=0,MAX=100",       "" },
+        {SSC_INPUT, SSC_NUMBER,   "subarray4_tracking_loss",              "Sub-array 4 DC tracking error loss",                  "%",      "",                                                                                                                                                                                      "Losses",                                                "subarray4_enable=1",                                  "MIN=0,MAX=100",       "" },
+        {SSC_INPUT, SSC_NUMBER,   "subarray4_nameplate_loss",             "Sub-array 4 DC nameplate loss",                       "%",      "",                                                                                                                                                                                      "Losses",                                                "subarray4_enable=1",                                  "MIN=-5,MAX=100",      "" },
+        {SSC_INPUT, SSC_NUMBER,   "subarray4_electrical_mismatch",        "Sub-array 4 bifacial electrical mismatch loss",       "%",      "",                                                                                                                                                                                      "Losses",                                                "subarray4_enable=1",                                  "MIN=0,MAX=100",       "" },
 
         //losses that are applied uniformly to all subarrays
         {SSC_INPUT, SSC_NUMBER,   "dcoptimizer_loss",                     "DC power optimizer loss",                             "%",      "",                                                                                                                                                                                      "Losses",                                                "*",                                  "MIN=0,MAX=100",       "" },
@@ -239,7 +250,7 @@ static var_info _cm_vtab_pvsamv1[] = {
         { SSC_INPUT, SSC_NUMBER,   "spe_fd",                               "Diffuse fraction",                                    "0..1",   "",                                                                                                                                                                                      "Simple Efficiency Module Model",                        "module_model=0",                     "MIN=0,MAX=1",         "" },
         { SSC_INPUT, SSC_NUMBER,   "spe_vmp",                              "Nominal max power voltage",                           "V",      "",                                                                                                                                                                                      "Simple Efficiency Module Model",                        "module_model=0",                     "POSITIVE",            "" },
         { SSC_INPUT, SSC_NUMBER,   "spe_voc",                              "Nominal open circuit voltage",                        "V",      "",                                                                                                                                                                                      "Simple Efficiency Module Model",                        "module_model=0",                     "POSITIVE",            "" },
-        { SSC_INPUT, SSC_NUMBER,   "spe_is_bifacial",                      "Modules are bifacial",                                "0/1",    "",                                                                                                                                                                                      "Simple Efficiency Module Model",                        "module_model=0",                     "",                    "" },
+        { SSC_INPUT, SSC_NUMBER,   "spe_is_bifacial",                      "Modules are bifacial",                                "0/1",    "0=monofacial,1=bifacial",                                                                                                                                                                                      "Simple Efficiency Module Model",                        "module_model=0",                     "",                    "" },
         { SSC_INPUT, SSC_NUMBER,   "spe_bifacial_transmission_factor",     "Bifacial transmission factor",                        "0-1",    "",                                                                                                                                                                                      "Simple Efficiency Module Model",                        "module_model=0",                     "",                    "" },
         { SSC_INPUT, SSC_NUMBER,   "spe_bifaciality",                      "Bifaciality factor",                                  "%",      "",                                                                                                                                                                                      "Simple Efficiency Module Model",                        "module_model=0",                     "",                    "" },
         { SSC_INPUT, SSC_NUMBER,   "spe_bifacial_ground_clearance_height", "Module ground clearance height",                      "m",      "",                                                                                                                                                                                      "Simple Efficiency Module Model",                        "module_model=0",                     "",                    "" },
@@ -262,8 +273,8 @@ static var_info _cm_vtab_pvsamv1[] = {
 { SSC_INPUT, SSC_NUMBER,   "cec_v_mp_ref",                         "Maximum power point voltage",                         "V",      "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1",                     "",                    "" },
 { SSC_INPUT, SSC_NUMBER,   "cec_v_oc_ref",                         "Open circuit voltage",                                "V",      "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1",                     "",                    "" },
 { SSC_INPUT, SSC_NUMBER,   "cec_temp_corr_mode",                   "Cell temperature model selection",                    "",       "0=noct,1=mc",                                                                                                                                                                           "CEC Performance Model with Module Database",            "module_model=1",                     "INTEGER,MIN=0,MAX=1", "" },
-{ SSC_INPUT, SSC_NUMBER,   "cec_is_bifacial",                      "Modules are bifacial",                                "0/1",    "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1",                     "",                    "" },
-{ SSC_INPUT, SSC_NUMBER,   "cec_bifacial_transmission_factor",     "Bifacial transmission factor",                        "0-1",    "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1",                     "",                    "" },
+{ SSC_INPUT, SSC_NUMBER,   "cec_is_bifacial",                      "Modules are bifacial",                                "0/1",    "0=monofacial,1=bifacial",                                                                                                                                                               "CEC Performance Model with Module Database",            "module_model=1",                     "INTEGER,MIN=0,MAX=1", "" },
+{ SSC_INPUT, SSC_NUMBER,   "cec_bifacial_transmission_factor",     "Bifacial transmission factor",                        "0-1",    "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1",                     "MIN=0,MAX=1",         "" },
 { SSC_INPUT, SSC_NUMBER,   "cec_bifaciality",                      "Bifaciality factor",                                  "%",      "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1",                     "",                    "" },
 { SSC_INPUT, SSC_NUMBER,   "cec_bifacial_ground_clearance_height", "Module ground clearance height",                      "m",      "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1",                     "",                    "" },
 { SSC_INPUT, SSC_NUMBER,   "cec_standoff",                         "Standoff mode",                                       "",       "0=bipv,1=>3.5in,2=2.5-3.5in,3=1.5-2.5in,4=0.5-1.5in,5=<0.5in,6=ground/rack",                                                                                                            "CEC Performance Model with Module Database",            "module_model=1",                     "INTEGER,MIN=0,MAX=6", "" },
@@ -280,7 +291,6 @@ static var_info _cm_vtab_pvsamv1[] = {
 { SSC_INPUT, SSC_NUMBER,   "cec_lacunarity_enable",                    "Enable lacunarity heat transfer model",                         "0/1",      "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "?=0","",            "" },
 { SSC_INPUT, SSC_NUMBER,   "cec_lacunarity_length",                    "Module lacurnarity length for spatial heterogeneity",                         "C",      "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "cec_lacunarity_enable=1&cec_temp_corr_mode=1",  "",            "" },
 { SSC_INPUT, SSC_NUMBER,   "cec_ground_clearance_height",                    "Module ground clearance height for heat transfer coefficient",                         "m",      "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "cec_lacunarity_enable=1&cec_temp_corr_mode=1","",            "" },
-
 { SSC_INPUT, SSC_NUMBER,   "cec_transient_thermal_model_unit_mass","Module unit mass",                                    "kg/m^2",      "",                                                                                                                                                                        "CEC Performance Model with Module Database",                     "module_model=1","POSITIVE",                                 "" },
 
         // 6 par model
@@ -297,7 +307,7 @@ static var_info _cm_vtab_pvsamv1[] = {
         { SSC_INPUT, SSC_NUMBER,   "6par_tnoct",                           "Nominal operating cell temperature",                  "C",      "",                                                                                                                                                                                      "CEC Performance Model with User Entered Specifications","module_model=2",                     "",                    "" },
         { SSC_INPUT, SSC_NUMBER,   "6par_standoff",                        "Standoff mode",                                       "",       "0=bipv,1=>3.5in,2=2.5-3.5in,3=1.5-2.5in,4=0.5-1.5in,5=<0.5in,6=ground/rack",                                                                                                            "CEC Performance Model with User Entered Specifications","module_model=2",                     "INTEGER,MIN=0,MAX=6", "" },
         { SSC_INPUT, SSC_NUMBER,   "6par_mounting",                        "Array mounting height",                               "",       "0=one story,1=two story",                                                                                                                                                               "CEC Performance Model with User Entered Specifications","module_model=2",                     "INTEGER,MIN=0,MAX=1", "" },
-        { SSC_INPUT, SSC_NUMBER,   "6par_is_bifacial",                     "Modules are bifacial",                                "0/1",    "",                                                                                                                                                                                      "CEC Performance Model with User Entered Specifications","module_model=2",                     "",                    "" },
+        { SSC_INPUT, SSC_NUMBER,   "6par_is_bifacial",                     "Modules are bifacial",                                "0/1",    "0=monofacial,1=bifacial",                                                                                                                                                                                      "CEC Performance Model with User Entered Specifications","module_model=2",                     "INTEGER,MIN=0,MAX=1", "" },
         { SSC_INPUT, SSC_NUMBER,   "6par_bifacial_transmission_factor",    "Bifacial transmission factor",                        "0-1",    "",                                                                                                                                                                                      "CEC Performance Model with User Entered Specifications","module_model=2",                     "",                    "" },
         { SSC_INPUT, SSC_NUMBER,   "6par_bifaciality",                     "Bifaciality factor",                                  "%",      "",                                                                                                                                                                                      "CEC Performance Model with User Entered Specifications","module_model=2",                     "",                    "" },
         { SSC_INPUT, SSC_NUMBER,   "6par_bifacial_ground_clearance_height","Module ground clearance height",                      "m",      "",                                                                                                                                                                                      "CEC Performance Model with User Entered Specifications","module_model=2",                     "",                    "" },
@@ -428,8 +438,8 @@ static var_info _cm_vtab_pvsamv1[] = {
         { SSC_INPUT, SSC_ARRAY,    "mlm_IAM_c_cs_incAngle",                "Spline IAM - Incidence angles",                       "degrees",    "",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
         { SSC_INPUT, SSC_ARRAY,    "mlm_IAM_c_cs_iamValue",                "Spline IAM - IAM values",                             "-",      "",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
         { SSC_INPUT, SSC_NUMBER,   "mlm_groundRelfectionFraction",         "Ground reflection fraction",                          "-",      "",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
-        { SSC_INPUT, SSC_NUMBER,   "mlm_is_bifacial",                      "Modules are bifacial",                                "0/1",    "",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
-        { SSC_INPUT, SSC_NUMBER,   "mlm_bifacial_transmission_factor",     "Bifacial transmission factor",                        "0-1",    "",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
+        { SSC_INPUT, SSC_NUMBER,   "mlm_is_bifacial",                      "Modules are bifacial",                                "0/1",    "0=monofacial,1=bifacial",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "INTEGER,MIN=0,MAX=1", "" },
+        { SSC_INPUT, SSC_NUMBER,   "mlm_bifacial_transmission_factor",     "Bifacial transmission factor",                        "0-1",    "",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "MIN=0,MAX=1",         "" },
         { SSC_INPUT, SSC_NUMBER,   "mlm_bifaciality",                      "Bifaciality factor",                                  "%",      "",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
         { SSC_INPUT, SSC_NUMBER,   "mlm_bifacial_ground_clearance_height", "Module ground clearance height",                      "m",      "",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
 
@@ -520,12 +530,12 @@ static var_info _cm_vtab_pvsamv1[] = {
         { SSC_INPUT, SSC_MATRIX,   "inv_tdc_plc",                          "Temperature derate curves for Part Load Curve",       "(Vdc, C, %/C)",    "",                                                                                                                                                                            "Inverter Part Load Curve",                              "inverter_model=2",                   "",                    "" },
 
         // battery storage and dispatch
-        { SSC_INPUT, SSC_NUMBER,   "en_batt",                              "Enable battery storage model",                        "0/1",    "",                                                                                                                                                                                      "BatterySystem",                                               "?=0",                                "",                    "" },
-        { SSC_INPUT, SSC_NUMBER,   "en_standalone_batt",                   "Enable standalone battery storage model",             "0/1",    "",                     "BatterySystem",                      "?=0",                    "",                               "" },
+        { SSC_INPUT, SSC_NUMBER,   "en_batt",                              "Enable battery storage model",                        "0/1",    "",                                                                                                                                                                                      "BatterySystem",                                      "?=0",                                "INTEGER,MIN=0,MAX=1", "" },
+        { SSC_INPUT, SSC_NUMBER,   "en_standalone_batt",                   "Enable standalone battery storage model",             "0/1",    "",                     "BatterySystem",                      "?=0",                    "INTEGER,MIN=0,MAX=1",                               "" },
         { SSC_INPUT, SSC_ARRAY,    "load",                                 "Electricity load (year 1)",                           "kW",     "",                                                                                                                                                                                      "Load",                                               "?",                                  "",                    "" },
         { SSC_INPUT, SSC_ARRAY,    "crit_load",                            "Critical Electricity load (year 1)",                  "kW",     "",                                                                                                                                                                                      "Load",                                               "",                                   "",                    "" },
         { SSC_INPUT, SSC_ARRAY,    "grid_outage",                          "Grid outage in this time step",                          "0/1",    "0=GridAvailable,1=GridUnavailable,Length=load", "Load",    "",                       "",                               "" },
-        { SSC_INPUT, SSC_NUMBER,   "run_resiliency_calcs",                 "Enable resilence calculations for every timestep",    "0/1",    "0=DisableCalcs,1=EnableCalcs",                  "Load",    "?=0",                    "",                               "" },
+        { SSC_INPUT, SSC_NUMBER,   "run_resiliency_calcs",                 "Enable resilence calculations for every timestep",    "0/1",    "0=DisableCalcs,1=EnableCalcs",                  "Load",    "?=0",                    "INTEGER,MIN=0,MAX=1",                               "" },
         { SSC_INPUT, SSC_ARRAY,    "load_escalation",                      "Annual load escalation",                              "%/year", "",                                                                                                                                                                                      "Load",                                               "?=0",                                "",                    "" },
         { SSC_INPUT, SSC_ARRAY,    "crit_load_escalation",                 "Annual critical load escalation",                     "%/year", "",                                                                                                                                                                                      "Load",                                               "?=0",                                "",                    "" },
         // NOTE:  other battery storage model inputs and outputs are defined in batt_common.h/batt_common.cpp
@@ -1059,7 +1069,7 @@ void cm_pvsamv1::exec()
     for (size_t nn = 0; nn < num_subarrays; nn++)
     {
         if (Subarrays[nn]->tiltEqualLatitude)
-            Subarrays[nn]->tiltDegrees = fabs(Irradiance->weatherHeader.lat);
+            Subarrays[nn]->tiltDegrees = std::abs(Irradiance->weatherHeader.lat);
         if (Subarrays[nn]->trackMode == irrad::SINGLE_AXIS && Subarrays[nn]->tiltDegrees > 0 && !Subarrays[nn]->Module->isBifacial)
             log(util::format("Subarray %d has one-axis tracking with a tilt angle of %f degrees. SAM can simulate one-axis tracking with non-zero tilt angles, but large one-axis tracking arrays typically have a tilt angle of zero. This message is a reminder in case you forgot to set the tilt angle to zero.", nn + 1, Subarrays[nn]->tiltDegrees), SSC_WARNING);
         if (Subarrays[nn]->Module->isBifacial && Subarrays[nn]->trackMode == irrad::SINGLE_AXIS && Subarrays[nn]->tiltDegrees > 0)
@@ -2464,15 +2474,26 @@ void cm_pvsamv1::exec()
             ssc_number_t xfmr_ll = PVSystem->transformerLoadLossFraction / step_per_hour;
             ssc_number_t xfmr_nll = PVSystem->transformerNoLoadLossFraction * static_cast<ssc_number_t>(ts_hour * transformerRatingkW);
 
+            bool offline = false;
+            if (en_batt && (batt_topology == ChargeController::DC_CONNECTED)) {
+                if (batt->is_outage_step(idx % 8760)) {
+                    offline = batt->is_offline(idx);
+                }
+            }
+
             //run AC power calculation
             if (en_batt && (batt_topology == ChargeController::DC_CONNECTED)) // DC-connected battery
             {
+                batt->setXfmrRating(transformerRatingkW);
+                double xfmr_nll_kw = PVSystem->transformerNoLoadLossFraction * static_cast<ssc_number_t>(transformerRatingkW);
+
                 // Add up AC loss percents for DC connected batteries
                 double delivered_percent = 1 - PVSystem->acLossPercent * 0.01;
 
-                ssc_number_t xfmr_loss_percent = transformerLoss(PVSystem->p_systemACPower[idx], PVSystem->transformerLoadLossFraction, transformerRatingkW, xfmr_ll, xfmr_nll) / PVSystem->p_systemACPower[idx];
-                delivered_percent *= (1 - xfmr_loss_percent);
-                delivered_percent *= 1 - PVSystem->transmissionLossPercent * 0.01;
+                // No transmission losses during grid outage
+                if (!offline) {
+                    delivered_percent *= 1 - PVSystem->transmissionLossPercent * 0.01;
+                }
 
                 ssc_number_t dc_loss_post_inverter = 1 - delivered_percent;
                 delivered_percent = 1; // Re-use variable for post batt losses
@@ -2496,7 +2517,7 @@ void cm_pvsamv1::exec()
                 }
 
                 // Run PV plus battery through sharedInverter, returns AC power
-                batt->advance(m_vartab, dcPower_kW, dcVoltagePerMppt[0], cur_load, p_crit_load_full[idx], dc_loss_post_inverter, dc_loss_post_battery, sharedInverter->powerClipLoss_kW);
+                batt->advance(m_vartab, dcPower_kW, dcVoltagePerMppt[0], cur_load, p_crit_load_full[idx], dc_loss_post_inverter, dc_loss_post_battery, sharedInverter->powerClipLoss_kW, PVSystem->transformerLoadLossFraction, xfmr_nll_kw);
                 acpwr_gross = batt->outGenPower[idx];
             }
             else if (PVSystem->Inverter->inverterType == INVERTER_PVYIELD) //PVyield inverter model not currently enabled for multiple MPPT
@@ -2512,14 +2533,7 @@ void cm_pvsamv1::exec()
                 acpwr_gross = sharedInverter->powerAC_kW;
             }
 
-            bool offline = false;
-            if (en_batt && (batt_topology == ChargeController::DC_CONNECTED)) {
-                if (batt->is_outage_step(idx % 8760)) {
-                    offline = batt->is_offline(idx);
-                }
-            }
-
-            ac_wiringloss = fabs(acpwr_gross) * PVSystem->acLossPercent * 0.01;
+            ac_wiringloss = std::abs(acpwr_gross) * PVSystem->acLossPercent * 0.01;
 
             // accumulate first year annual energy
             if (iyear == 0)
@@ -2560,37 +2574,41 @@ void cm_pvsamv1::exec()
 			PVSystem->p_systemACPower[idx] = (ssc_number_t)(acpwr_gross - ac_wiringloss);
             // AC connected batteries will set this laster
             if (en_batt && (batt_topology == ChargeController::DC_CONNECTED)) {
-                batt->outGenWithoutBattery[idx] -= fabs(batt->outGenWithoutBattery[idx]) * PVSystem->acLossPercent * 0.01;;
+                batt->outGenWithoutBattery[idx] -= std::abs(batt->outGenWithoutBattery[idx]) * PVSystem->acLossPercent * 0.01;;
             }
 
-
-            // Apply transformer loss - reset variables after DC connected calculations
-            transformerRatingkW = static_cast<ssc_number_t>(PVSystem->ratedACOutput * util::watt_to_kilowatt);
-            xfmr_ll = PVSystem->transformerLoadLossFraction / step_per_hour;
-            xfmr_nll = PVSystem->transformerNoLoadLossFraction * static_cast<ssc_number_t>(ts_hour * transformerRatingkW);
-			// total load loss
-            ssc_number_t xfmr_loss = transformerLoss(PVSystem->p_systemACPower[idx], PVSystem->transformerLoadLossFraction, transformerRatingkW, xfmr_ll, xfmr_nll);
-
-			PVSystem->p_systemACPower[idx] -= xfmr_loss/ts_hour; // kW
-            if (en_batt && (batt_topology == ChargeController::DC_CONNECTED)) {
-                // Recompute transformer loss as if the battery didn't run
-                ssc_number_t xfmr_ll_no_batt = PVSystem->transformerLoadLossFraction / step_per_hour;
-                ssc_number_t xfmr_nll_no_batt = PVSystem->transformerNoLoadLossFraction * static_cast<ssc_number_t>(ts_hour * transformerRatingkW);
-
+            ssc_number_t xfmr_loss = 0;
+            if (!offline) {
+                // Apply transformer loss - reset variables after DC connected calculations
+                transformerRatingkW = static_cast<ssc_number_t>(PVSystem->ratedACOutput * util::watt_to_kilowatt);
+                xfmr_ll = PVSystem->transformerLoadLossFraction / step_per_hour;
+                xfmr_nll = PVSystem->transformerNoLoadLossFraction * static_cast<ssc_number_t>(ts_hour * transformerRatingkW);
                 // total load loss
-                ssc_number_t xfmr_loss_no_batt = transformerLoss(PVSystem->p_systemACPower[idx], PVSystem->transformerLoadLossFraction, transformerRatingkW, xfmr_ll_no_batt, xfmr_nll_no_batt);
-                batt->outGenWithoutBattery[idx] -= xfmr_loss_no_batt / ts_hour;
-            }
+                xfmr_loss = Transformer::transformerLoss(PVSystem->p_systemACPower[idx], PVSystem->transformerLoadLossFraction, transformerRatingkW, xfmr_ll, xfmr_nll);
 
-			// transmission loss if AC power is produced
-			if (PVSystem->p_systemACPower[idx] > 0){
-                transmissionloss = fabs(PVSystem->p_systemACPower[idx]) * PVSystem->transmissionLossPercent * 0.01;
-				PVSystem->p_systemACPower[idx] -= (ssc_number_t)(transmissionloss);
+                PVSystem->p_systemACPower[idx] -= xfmr_loss / ts_hour; // kW
+
 
                 if (en_batt && (batt_topology == ChargeController::DC_CONNECTED)) {
-                    batt->outGenWithoutBattery[idx] -= (ssc_number_t)(transmissionloss);
+                    // Recompute transformer loss as if the battery didn't run
+                    ssc_number_t xfmr_ll_no_batt = PVSystem->transformerLoadLossFraction / step_per_hour;
+                    ssc_number_t xfmr_nll_no_batt = PVSystem->transformerNoLoadLossFraction * static_cast<ssc_number_t>(ts_hour * transformerRatingkW);
+
+                    // total load loss
+                    ssc_number_t xfmr_loss_no_batt = Transformer::transformerLoss(PVSystem->p_systemACPower[idx], PVSystem->transformerLoadLossFraction, transformerRatingkW, xfmr_ll_no_batt, xfmr_nll_no_batt);
+                    batt->outGenWithoutBattery[idx] -= xfmr_loss_no_batt / ts_hour;
                 }
-			}
+
+                // transmission loss if AC power is produced
+                if (PVSystem->p_systemACPower[idx] > 0) {
+                    transmissionloss = std::abs(PVSystem->p_systemACPower[idx]) * PVSystem->transmissionLossPercent * 0.01;
+                    PVSystem->p_systemACPower[idx] -= (ssc_number_t)(transmissionloss);
+
+                    if (en_batt && (batt_topology == ChargeController::DC_CONNECTED)) {
+                        batt->outGenWithoutBattery[idx] -= (ssc_number_t)(transmissionloss);
+                    }
+                }
+            }
 
             // Re-compute PV AC forecast for AC connected batteries
             if (en_batt && batt_topology == ChargeController::AC_CONNECTED)
@@ -2684,7 +2702,7 @@ void cm_pvsamv1::exec()
                     int ac_loss_index = (int)iyear * 365 + (int)floor(hour_of_year / 24); //in units of days
                     delivered_percent *= (1 - PVSystem->acLifetimeLosses[ac_loss_index] / 100); // loss in kWac
                 }
-                double ac_loss_post_inverter = 0; // Already accounted for in pv AC power
+                double ac_loss_post_inverter = 0; // Already accounted for in pv AC power (including transformer losses)
                 double ac_loss_post_batt = 1 - delivered_percent;
 
                 // calculate timestep in hour for battery models
@@ -2947,7 +2965,7 @@ void cm_pvsamv1::exec()
 
 #ifdef WITH_CHECKS
     // check that sys_output=dc_net
-        if (fabs(annual_dc_net - sys_output) / annual_dc_net > 0.00001)
+        if (std::abs(annual_dc_net - sys_output) / annual_dc_net > 0.00001)
             log(util::format("Internal discrepancy in calculated output dc_gross: %lg != %lg at DC1.  Please report to SAM support.", annual_dc_net, sys_output), SSC_WARNING);
 #endif
 
@@ -3094,7 +3112,7 @@ void cm_pvsamv1::exec()
 
 #ifdef WITH_CHECKS
         // check that ac_gross = sys_output at this point
-        if (fabs(annual_ac_gross - sys_output) / annual_ac_gross > 0.00001)
+        if (std::abs(annual_ac_gross - sys_output) / annual_ac_gross > 0.00001)
             log(util::format("Internal discrepancy in calculated output ac_gross: %lg != %lg at AC1.  Please report to SAM support.", annual_ac_gross, sys_output), SSC_WARNING);
 #endif
 
@@ -3132,7 +3150,7 @@ void cm_pvsamv1::exec()
 
 #ifdef WITH_CHECKS
         // check that ac_net = sys_output at this point
-        if (fabs(annual_ac_pre_avail - sys_output) / annual_ac_pre_avail > 0.00001)
+        if (std::abs(annual_ac_pre_avail - sys_output) / annual_ac_pre_avail > 0.00001)
             log(util::format("Internal discrepancy in calculated output ac_net: %lg != %lg at AC2.  Please report to SAM support.", annual_ac_pre_avail, sys_output), SSC_WARNING);
 #endif
 
@@ -3153,7 +3171,7 @@ void cm_pvsamv1::exec()
 
 #ifdef WITH_CHECKS
     // check that ac_net = sys_output at this point
-        if (fabs(annual_ac_net - sys_output) / annual_ac_net > 0.00001)
+        if (std::abs(annual_ac_net - sys_output) / annual_ac_net > 0.00001)
             log(util::format("Internal discrepancy in calculated output ac_net: %lg != %lg at AC3.  Please report to SAM support.", annual_ac_net, sys_output), SSC_WARNING);
 #endif
 
@@ -3215,7 +3233,7 @@ double cm_pvsamv1::intraElecMismatch(double irrad_front_avg /*W/m2*/, std::vecto
     double sum_of_deviations = 0.;
     for (size_t i = 0; i < irrad_total.size(); i++) {
         for (size_t j = 0; j < irrad_total.size(); j++) {
-            sum_of_deviations += abs(irrad_total[i] - irrad_total[j]);
+            sum_of_deviations += std::abs(irrad_total[i] - irrad_total[j]);
         }
     }
 
@@ -3434,22 +3452,6 @@ void cm_pvsamv1::inverter_size_check()
         log(util::format("Inverter oversized: The maximum inverter output was %.2lf%% of the rated value %lg kWac.",
             100 * maxACOutput / ratedACOutput, ratedACOutput),
             SSC_WARNING);
-}
-
-double cm_pvsamv1::transformerLoss(double powerkW, double transformerLoadLossFraction, double transformerRatingkW, double& xfmr_ll, double xfmr_nll)
-{
-    if (transformerRatingkW == 0.0 || transformerLoadLossFraction == 0.0)
-        return 0;
-
-    // calculate xfmr_ll, xfmr_nll
-
-    if (powerkW < transformerRatingkW)
-        xfmr_ll *= powerkW * powerkW / transformerRatingkW;
-    else
-        xfmr_ll *= powerkW;
-
-    // total load loss
-    return xfmr_ll + xfmr_nll; // kWh
 }
 
 DEFINE_MODULE_ENTRY(pvsamv1, "Photovoltaic performance model, SAM component models V.1", 1)

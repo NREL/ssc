@@ -1,23 +1,33 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #include <sstream>
 #include <vector>
@@ -303,7 +313,7 @@ enum {
     CF_utility_bill,
     CF_parasitic_cost,
 
-    // SAM 1308
+    // SAM 1038
     CF_itc_fed_amount,
     CF_itc_fed_percent_amount,
     CF_itc_fed_percent_maxvalue,
@@ -704,7 +714,7 @@ public:
 			- ( as_boolean("cbi_oth_deprbas_fed")  ? cbi_oth_amount : 0 );
 
 
-        // SAM 1308
+        // SAM 1038
          // itc fixed
         double itc_fed_amount = 0.0;
         double_vec vitc_fed_amount = as_vector_double("itc_fed_amount");
@@ -767,14 +777,14 @@ public:
 			- ( as_boolean("cbi_oth_deprbas_sta")  ? cbi_oth_amount : 0 );
 
 
-        // SAM 1308
+        // SAM 1038
         itc_sta_per = 0.0;
         for (size_t k = 0; k <= nyears; k++) {
             cf.at(CF_itc_sta_percent_amount, k) = min(cf.at(CF_itc_sta_percent_maxvalue, k), cf.at(CF_itc_sta_percent_amount, k) * state_itc_basis);
             itc_sta_per += cf.at(CF_itc_sta_percent_amount, k);
         }
 
-        // SAM 1308
+        // SAM 1038
         itc_fed_per = 0.0;
         for (size_t k = 0; k <= nyears; k++) {
             cf.at(CF_itc_fed_percent_amount, k) = min(cf.at(CF_itc_fed_percent_maxvalue, k), cf.at(CF_itc_fed_percent_amount, k) * federal_itc_basis);
@@ -863,7 +873,7 @@ public:
 //		double itc_total_fed = itc_fed_amount + itc_fed_per;
 //		double itc_total_sta = itc_sta_amount + itc_sta_per;
 
-        // SAM 1308
+        // SAM 1038
         for (size_t k = 0; k <= nyears; k++) {
             cf.at(CF_itc_fed, k) = cf.at(CF_itc_fed_amount, k) + cf.at(CF_itc_fed_percent_amount, k);
             cf.at(CF_itc_sta, k) = cf.at(CF_itc_sta_amount, k) + cf.at(CF_itc_sta_percent_amount, k);
@@ -1005,7 +1015,7 @@ public:
 				cf.at(CF_sta_taxable_income_less_deductions, i) -= cf.at(CF_debt_payment_interest,i);
 
 			cf.at(CF_sta_tax_savings, i) = cf.at(CF_ptc_sta,i) - cf.at(CF_state_tax_frac,i)*cf.at(CF_sta_taxable_income_less_deductions,i);
-// SAM 1308			if (i==1) cf.at(CF_sta_tax_savings, i) += itc_sta_amount + itc_sta_per;
+// SAM 1038			if (i==1) cf.at(CF_sta_tax_savings, i) += itc_sta_amount + itc_sta_per;
             cf.at(CF_sta_tax_savings, i) += cf.at(CF_itc_sta_amount,i) + cf.at(CF_itc_sta_percent_amount,i);
 
 			// ************************************************
@@ -1039,8 +1049,8 @@ public:
 				cf.at(CF_fed_taxable_income_less_deductions, i) -= cf.at(CF_debt_payment_interest,i);
 			
 			cf.at(CF_fed_tax_savings, i) = cf.at(CF_ptc_fed,i) - cf.at(CF_federal_tax_frac,i)*cf.at(CF_fed_taxable_income_less_deductions,i);
-//  SAM 1308          if (i == 1) cf.at(CF_fed_tax_savings, i) += itc_fed_amount + itc_fed_per;
-            if (i == 1) cf.at(CF_fed_tax_savings, i) += cf.at(CF_itc_fed_amount,i) + cf.at(CF_itc_fed_percent_amount,i);
+//  SAM 1038          if (i == 1) cf.at(CF_fed_tax_savings, i) += itc_fed_amount + itc_fed_per;
+            cf.at(CF_fed_tax_savings, i) += cf.at(CF_itc_fed_amount,i) + cf.at(CF_itc_fed_percent_amount,i);
 
 			// ************************************************
 			// combined tax savings and cost/cash flows
@@ -1418,7 +1428,7 @@ public:
 		save_cf( CF_ptc_total, nyears, "cf_ptc_total" );
 
 
-        // SAM 1308
+        // SAM 1038
         double itc_fed_total = 0.0;
         double itc_sta_total = 0.0;
         double itc_total = 0.0;
@@ -1486,7 +1496,7 @@ public:
 		assign( "present_value_insandproptax", var_data((ssc_number_t)(pvInsurance + pvPropertyTax)));
 
 
-        // SAM 1308
+        // SAM 1038
         save_cf(CF_itc_fed_amount, nyears, "cf_itc_fed_amount");
         save_cf(CF_itc_fed_percent_amount, nyears, "cf_itc_fed_percent_amount");
         save_cf(CF_itc_fed, nyears, "cf_itc_fed");

@@ -1,23 +1,33 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #define _TCSTYPEINTERFACE_
@@ -1881,13 +1891,13 @@ public:
 						pow( ((ms_charge + m_dot_pb - ms_disch) - m_dot_field_avail)/max(m_dot_field_avail, 1.e-6), 2) + 
 						pow( ((T_field_in - T_field_in_guess)/T_field_in), 2));
                 if (err_prev_iter != 0) {
-                    derr = fabs((err - err_prev_iter) / err_prev_iter);
+                    derr = std::abs((err - err_prev_iter) / err_prev_iter);
                 }
                 else if (err != 0) {
-                    derr = fabs((err - err_prev_iter) / err);
+                    derr = std::abs((err - err_prev_iter) / err);
                 }
                 else {
-                    derr = fabs(err - err_prev_iter);
+                    derr = std::abs(err - err_prev_iter);
                 }
 
 				err_prev_iter = err;
@@ -1907,7 +1917,7 @@ public:
 				{
 					// If the defocus control has changed during the calculations, bypass iteration and recalculate field output.
 					// Otherwise, the iteration will continue until the max # has been reached.
-                    if( abs(defocus - defocus_rel_prev_ncall) > 0.01 )
+                    if(std::abs(defocus - defocus_rel_prev_ncall) > 0.01 )
 					{
                         defocus_prev_iter = defocus;    // Does this do anything? iterate_mass_temp = false exits this loop, and defocus_prev_iter is set to 1 just before this loop
 						T_field_in = T_field_in_guess;	// MJW 12.8.2010
@@ -2160,7 +2170,7 @@ public:
                 // TODO - replace tes_pump_coef with a pump efficiency. Maybe utilize unused coefficients specified for the
                 //  series configuration, namely the SGS Pump suction header to Individual SGS pump inlet and the additional
                 //  two immediately downstream
-                htf_pump_power = tes_pump_coef * fabs(m_tank_disch - m_tank_charge) / 1000 +
+                htf_pump_power = tes_pump_coef * std::abs(m_tank_disch - m_tank_charge) / 1000 +
                     (DP_col * m_dot_field / (rho_sf * eta_pump) + DP_gen * m_dot_pb / (rho_pb * eta_pump)) / 1e6;   //[MW]
             }
             else {
@@ -2169,11 +2179,11 @@ public:
         }
         else {    // original methods
             if (is_hx) {
-                htf_pump_power = (tes_pump_coef*fabs(m_tank_disch - m_tank_charge) + pb_pump_coef * (fabs(ms_disch - ms_charge) + m_dot_pb)) / 1000.0;	//[MW]
+                htf_pump_power = (tes_pump_coef* std::abs(m_tank_disch - m_tank_charge) + pb_pump_coef * (std::abs(ms_disch - ms_charge) + m_dot_pb)) / 1000.0;	//[MW]
             }
             else {
                 if (tanks_in_parallel) {
-                    htf_pump_power = pb_pump_coef * (fabs(ms_disch - ms_charge) + m_dot_pb) / 1000.0;	//[MW]
+                    htf_pump_power = pb_pump_coef * (std::abs(ms_disch - ms_charge) + m_dot_pb) / 1000.0;	//[MW]
                 }
                 else {
                     htf_pump_power = pb_pump_coef * m_dot_pb / 1000.0;	//[MW]

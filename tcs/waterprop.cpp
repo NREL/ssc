@@ -883,7 +883,7 @@ int VaporNonGap(int pIndex, double pFraction, property_info *data, int edgeInd, 
 
 	/// solve cubic for sFraction at given T
 	double sFraction = cubic_solution(pAdjustedCoefs[0],pAdjustedCoefs[1], pAdjustedCoefs[2], pAdjustedCoefs[3],indVar);
-	if (fabs(sFraction) > 1.) return error_code = 9;
+	if (std::abs(sFraction) > 1.) return error_code = 9;
 
 	/// calculate S
 	int sIndex = water_vapor_entr_index_vector[pIndex] +rowInd;
@@ -1054,9 +1054,9 @@ double cubic_solution(double coef_1, double coef_2, double coef_3, double coef_4
 				}
 				else
 				{
-					double froot_1 = fabs(root_1);
-					double froot_2 = fabs(root_2);
-					double froot_3 = fabs(root_3);
+					double froot_1 = std::abs(root_1);
+					double froot_2 = std::abs(root_2);
+					double froot_3 = std::abs(root_3);
 
 					if ((froot_1 < froot_2) && (froot_1 < froot_3)) root = root_1;
 					else if ((froot_2 < froot_1) && (froot_2 < froot_3)) root = root_2;
@@ -1074,8 +1074,8 @@ double cubic_solution(double coef_1, double coef_2, double coef_3, double coef_4
 		double A,B;
 
 		if (r < 0) sign = -1;
-		A = -sign*pow((fabs(r) + t1),one_third);
-		fabs(A) < 1e-9 ? B = 0: B = q/A;
+		A = -sign*pow((std::abs(r) + t1),one_third);
+        std::abs(A) < 1e-9 ? B = 0: B = q/A;
 
 		root = (A+B) - a*one_third;
 		return root;

@@ -1,23 +1,33 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <math.h>
@@ -1735,7 +1745,7 @@ void C_csp_trough_collector_receiver::loop_optical_eta(const C_csp_weatherreader
 			//mjw 4.21.11 - rescope this to be for each specific collector j=1,m_nSCA
 			for (int j = 0; j < m_nSCA; j++)
 			{
-				if (fabs(SolarAz) <= 90.0)
+				if (std::abs(SolarAz) <= 90.0)
 				{  //mjw 5.1.11 The sun is in the southern sky (towards equator)
 					if (j == 0 || j == m_nSCA - 1)
 					{
@@ -1762,7 +1772,7 @@ void C_csp_trough_collector_receiver::loop_optical_eta(const C_csp_weatherreader
 
 			// Row to Row m_Shadowing Lossess
 			//PH = m_pi / 2.0 - TrackAngle[i]
-			m_RowShadow[i] = fabs(cos(TrackAngle)) * m_Row_Distance / m_W_aperture[i];
+			m_RowShadow[i] = std::abs(cos(TrackAngle)) * m_Row_Distance / m_W_aperture[i];
 			if (m_RowShadow[i] < 0.5 || SolarAlt < 0.)
 			{
 				m_RowShadow[i] = 0.;
@@ -2712,8 +2722,8 @@ void C_csp_trough_collector_receiver::steady_state(const C_csp_weatherreader::S_
         // Calculate metric for deciding whether steady-state is reached
         ss_diff = 0.;
         for (int i = 0; i < m_nSCA; i++) {
-            ss_diff += fabs(m_T_htf_in_t_int[i] - T_htf_in_t_int_last[i]) +
-                fabs(m_T_htf_out_t_int[i] - T_htf_out_t_int_last[i]);
+            ss_diff += std::abs(m_T_htf_in_t_int[i] - T_htf_in_t_int_last[i]) +
+                std::abs(m_T_htf_out_t_int[i] - T_htf_out_t_int_last[i]);
         }
 
         // Set converged values so reset_last_temps() propagates the temps in time
@@ -3103,7 +3113,7 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 	// ******************************************************************************************************************************
 	//                   Iterative section
 	// ******************************************************************************************************************************
-	while ((fabs(err) > t_tol) && (qq < 30))
+	while ((std::abs(err) > t_tol) && (qq < 30))
 	{
 
 		qq++; //Iteration counter
@@ -3146,12 +3156,12 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 		{
 			// Check if solution has reached steady state
 			double ss_diff = 0.0;
-			ss_diff += fabs(m_TCS_T_sys_c - m_TCS_T_sys_c_last) + fabs(m_TCS_T_sys_h_last - m_TCS_T_sys_h);
+			ss_diff += std::abs(m_TCS_T_sys_c - m_TCS_T_sys_c_last) + std::abs(m_TCS_T_sys_h_last - m_TCS_T_sys_h);
 			for (int i = 0; i < m_nSCA; i++)
 			{
 				//ss_diff += fabs(m_T_htf_in_last[i] - m_T_htf_in[i]) + fabs(m_T_htf_out_last[i] - m_T_htf_out[i]) + fabs(m_T_htf_ave_last[i] - (m_T_htf_in[i] + m_T_htf_out[i]) / 2.0);
 					// 7.7.2016 twn: only use m_T_htf_ave for now...
-				ss_diff += fabs(m_TCS_T_htf_ave_last[i] - (m_TCS_T_htf_in[i] + m_TCS_T_htf_out[i]) / 2.0);
+				ss_diff += std::abs(m_TCS_T_htf_ave_last[i] - (m_TCS_T_htf_in[i] + m_TCS_T_htf_out[i]) / 2.0);
 			}
 
 			if (ss_diff / 300.0 > 0.001)	// If not in steady state, updated previous temperatures and re-run energy balances
@@ -3218,7 +3228,7 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 
 			err = (E_field_loss_tot - E_fp_field) / E_field_loss_tot;
 
-			if (fabs(err) <= t_tol)
+			if (std::abs(err) <= t_tol)
 				goto freeze_prot_ok;
 
 			if ((fp_lowflag) && (fp_upflag))
@@ -3275,14 +3285,14 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 		{
 			t_tol = 1.5e-4;		//12.29.2014, twn: decreases oscillation in freeze protection energy because a smaller deltaT governs it
 
-			if( (m_no_fp) && ((m_TCS_T_htf_out[m_nSCA - 1] > m_T_fp) || fabs(m_T_fp - m_TCS_T_htf_out[m_nSCA - 1]) / m_T_fp <= t_tol) )
+			if( (m_no_fp) && ((m_TCS_T_htf_out[m_nSCA - 1] > m_T_fp) || std::abs(m_T_fp - m_TCS_T_htf_out[m_nSCA - 1]) / m_T_fp <= t_tol) )
 				goto freeze_prot_ok; //goto 9
 
 			m_no_fp = false;
 
 			err = (m_T_fp - m_TCS_T_htf_out[m_nSCA - 1]) / m_T_fp;
 
-			if (fabs(err) <= t_tol)
+			if (std::abs(err) <= t_tol)
 				goto freeze_prot_ok; //goto 9
 
 			if ((fp_lowflag) && (fp_upflag))
@@ -3456,7 +3466,7 @@ freeze_prot_ok:		//9 continue
 		// Could consider implementing a faster, more robust method than successive substitution to solve for the inlet temperature.
 		if (m_TCS_T_sys_h < T_cold_in)
 		{
-			if( m_no_fp && fabs(m_T_cold_in_1 - m_TCS_T_sys_h) / m_TCS_T_sys_h > 0.001 )
+			if( m_no_fp && std::abs(m_T_cold_in_1 - m_TCS_T_sys_h) / m_TCS_T_sys_h > 0.001 )
 			{
 				m_T_cold_in_1 = m_TCS_T_sys_h;
 				goto overtemp_iter_flag;
@@ -4295,7 +4305,7 @@ void C_csp_trough_collector_receiver::EvacReceiver(double T_1_in, double m_dot, 
 
 	if (m_P_a(hn, hv) != mv_reguess_args[1]) goto lab_reguess;                   //Reguess for different annulus pressure
 
-	if (fabs(mv_reguess_args[2] - T_1_in) > 50.) goto lab_reguess;
+	if (std::abs(mv_reguess_args[2] - T_1_in) > 50.) goto lab_reguess;
 
 	for (int i = 0; i<5; i++){ if (m_T_save[i] < m_T_sky - 1.) goto lab_reguess; }
 
@@ -4410,7 +4420,7 @@ lab_keep_guess:
 	double T3_adjust = 0.0;
 	double T3_prev_qq = 0.0;
 
-	while (((fabs(Diff_T3)>T3_tol) && (m_qq<100)) || (m_qq<2)){    //Outer loop: Find T_3 such than energy balance is satisfied
+	while (((std::abs(Diff_T3)>T3_tol) && (m_qq<100)) || (m_qq<2)){    //Outer loop: Find T_3 such than energy balance is satisfied
 		m_qq = m_qq + 1; //loop counter
 
 		T3_prev_qq = T_3;
@@ -4509,7 +4519,7 @@ lab_keep_guess:
 			//***********************************************************************************
 			//************* Begin Bisection/False Position Iteration method *********************
 			//***********************************************************************************
-			while ((fabs(diff_q5)>q5_tol_1) && (q5_iter<100)){       //Determine T_4 such that energy balance from T_3 to surroundings is satisfied
+			while ((std::abs(diff_q5)>q5_tol_1) && (q5_iter<100)){       //Determine T_4 such that energy balance from T_3 to surroundings is satisfied
 
 				q5_iter = q5_iter + 1;                       //Increase iteration counter
 
@@ -4545,7 +4555,7 @@ lab_keep_guess:
 				//***************************************************************************
 				//********** Compare q_5out with q_45 cond***********************************
 				//***************************************************************************
-				diff_q5 = (q_5out - q_45cond) / fabs(q_45cond);     //[W/m]
+				diff_q5 = (q_5out - q_45cond) / std::abs(q_45cond);     //[W/m]
 
 				//Determine next guess for T_4.  Want to use false position method, but it requires that the *results* at both ends of the bracket are known.  We have
 				//defined a bracket but not the results.  Use the guess T_4 to get the results at one end of a new bracket.  Then calculate a new T_4 that is highly weighted 
@@ -4634,7 +4644,7 @@ lab_keep_guess:
 			diff_T1 = T1_tol + 1.0;                                 //Set diff > tolerance
 			T1_iter = 0;                                             //Set iteration counter    
 
-			while ((fabs(diff_T1)>T1_tol) && (T1_iter<100)){       //Find correct cp& rho and solve for T_1_ave
+			while ((std::abs(diff_T1)>T1_tol) && (T1_iter<100)){       //Find correct cp& rho and solve for T_1_ave
 
 				T1_iter++;                   //Increase iteration counter
 				T_1_ave = (T_1_out + T_1_in) / 2.0;     //Average fluid temperature
@@ -4667,7 +4677,7 @@ lab_keep_guess:
 		double T2_up = max(T_1_ave, T_3);
 
 		//Ensure convective calculations are correct (converge on T_2)
-		while ((fabs(diff_T2)>T2_tol) && (q_conv_iter<100)){
+		while ((std::abs(diff_T2)>T2_tol) && (q_conv_iter<100)){
 
 			q_conv_iter++;       //Increase iteration counter
 
@@ -5077,7 +5087,7 @@ void C_csp_trough_collector_receiver::FQ_34CONV(double T_3, double T_4, double P
 			nu_36 = mu_36 / rho_36;  //[m**2/s] kinematic viscosity, AIR
 			alpha_36 = k_36 / (cp_36 * rho_36);  //[m**2/s], thermal diffusivity, AIR
 			beta_36 = 1.0 / T_36;  //[1/K]
-			Ra_D3 = grav * beta_36 * fabs(T_3 - T_6) * pow(m_D_3(hn, hv), 3) / (alpha_36 * nu_36);
+			Ra_D3 = grav * beta_36 * std::abs(T_3 - T_6) * pow(m_D_3(hn, hv), 3) / (alpha_36 * nu_36);
 
 			// Warning Statement if following Nusselt Number correlation is used out of recommended range //
 			//If ((Ra_D3 <= 1.e-5) || (Ra_D3 >= 1.e12)) continue
@@ -5163,8 +5173,8 @@ void C_csp_trough_collector_receiver::FQ_34CONV(double T_3, double T_4, double P
 		Alpha_34 = k_34 / (Cp_34 * rho_34);  //[m**2/s]//
 		nu_34 = mu_34 / rho_34;  //[m**2/s]//
 		Beta_34 = 1. / max(T_34, 1.0);  //[1/K]//
-		Ra_D3 = grav * Beta_34 * fabs(T_3 - T_4) * pow(m_D_3(hn, hv), 3) / (Alpha_34 * nu_34);
-		Ra_D4 = grav * Beta_34 * fabs(T_3 - T_4) * pow(m_D_4(hn, hv), 3) / (Alpha_34 * nu_34);
+		Ra_D3 = grav * Beta_34 * std::abs(T_3 - T_4) * pow(m_D_3(hn, hv), 3) / (Alpha_34 * nu_34);
+		Ra_D4 = grav * Beta_34 * std::abs(T_3 - T_4) * pow(m_D_4(hn, hv), 3) / (Alpha_34 * nu_34);
 		Pr_34 = nu_34 / Alpha_34;
 		Natq_34conv = 2.425 * k_34 * (T_3 - T_4) / pow(1 + pow(m_D_3(hn, hv) / m_D_4(hn, hv), 0.6), 1.25) * pow(Pr_34 * Ra_D3 / (0.861 + Pr_34), 0.25);  //[W/m]//	
 		P = m_P_a(hn, hv);  //[mmHg] (note that 1 torr = 1 mmHg by definition)
@@ -5303,7 +5313,7 @@ void C_csp_trough_collector_receiver::FQ_56CONV(double T_5, double T_6, double P
 			nu_56 = mu_56 / rho_56;  //[m^2/s]
 			alpha_56 = k_56 / (Cp_56 * rho_56);  //[m^2/s]
 			beta_56 = 1.0 / T_56;  //[1/K]
-			Ra_D5 = CSP::grav *beta_56 * fabs(T_5 - T_6) * pow(m_D_5(hn, hv), 3) / (alpha_56 * nu_56);
+			Ra_D5 = CSP::grav *beta_56 * std::abs(T_5 - T_6) * pow(m_D_5(hn, hv), 3) / (alpha_56 * nu_56);
 
 			// Warning Statement if following Nusselt Number correlation is used out of range //
 			//If (Ra_D5 <= 10**(-5)) or (Ra_D5 >= 10**12) Then CALL WARNING('The result may not be accurate, 
@@ -5419,7 +5429,7 @@ double C_csp_trough_collector_receiver::FQ_COND_BRACKET(double T_3, double T_6, 
 		nu_brac6 = mu_brac6 / rho_brac6;  //[m**2/s]
 		Alpha_brac6 = k_brac6 / (Cp_brac6 * rho_brac6);  //[m**2/s]
 		Beta_brac6 = 1.0 / T_brac6;  //[1/K]
-		Ra_Dbrac = CSP::grav * Beta_brac6 * fabs(T_brac - T_6) * D_brac*D_brac*D_brac / (Alpha_brac6 * nu_brac6);
+		Ra_Dbrac = CSP::grav * Beta_brac6 * std::abs(T_brac - T_6) * D_brac*D_brac*D_brac / (Alpha_brac6 * nu_brac6);
 
 		// Warning Statement if following Nusselt Number correlation is used out of recommended range 
 		//If ((Ra_Dbrac <= 1.e-5)) || (Ra_Dbrac >= 1.e12) Then CALL WARNING('The result may not be accurate, 
@@ -5773,7 +5783,7 @@ double C_csp_trough_collector_receiver::FricFactor(double rough, double Reynold)
 	while (NumTries < 21){
 		NumTries++;
 		Test = X + 2 * log10(rough / 3.7 + 2.51 * X / Reynold);
-		if (fabs(Test - TestOld) <= Acc) {
+		if (std::abs(Test - TestOld) <= Acc) {
 			return 1. / (X * X);
 		}
 

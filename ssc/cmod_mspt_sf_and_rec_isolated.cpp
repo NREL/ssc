@@ -1,24 +1,35 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 
 #include "core.h"
 
@@ -160,6 +171,7 @@ public:
 
         bool is_calc_od_tube = false;
         double W_dot_rec_target = std::numeric_limits<double>::quiet_NaN();
+        int n_panels = as_integer("N_panels");
 
         // Transient model
         if (is_rec_model_trans || is_rec_startup_trans) {
@@ -198,7 +210,7 @@ public:
                 as_integer("rec_htf"), as_matrix("field_fl_props"),
                 as_integer("mat_tube"),
                 rec_night_recirc,
-                as_integer("N_panels"), D_rec, H_rec,
+                n_panels, D_rec, H_rec,
                 as_integer("Flow_type"), as_integer("crossover_shift"), as_double("hl_ffact"),
                 as_double("T_htf_hot_des"), rec_clearsky_fraction,
                 is_calc_od_tube, W_dot_rec_target,
@@ -230,7 +242,7 @@ public:
                 as_integer("rec_htf"), as_matrix("field_fl_props"),
                 as_integer("mat_tube"),
                 rec_night_recirc,
-                as_integer("N_panels"), D_rec, H_rec,
+                n_panels, D_rec, H_rec,
                 as_integer("Flow_type"), as_integer("crossover_shift"), as_double("hl_ffact"),
                 as_double("T_htf_hot_des"), rec_clearsky_fraction,
                 is_calc_od_tube, W_dot_rec_target
@@ -242,12 +254,16 @@ public:
 
         mspt_base->init();
 
-        double m_dot_rec_des = std::numeric_limits<double>::quiet_NaN();
-        double T_htf_cold_des = std::numeric_limits<double>::quiet_NaN();
-        int n_panels = -1;
-        mspt_base->get_solved_design_common(m_dot_rec_des, T_htf_cold_des, n_panels);
+        double eta_thermal_des /*-*/, W_dot_rec_pump_des /*MWe*/, W_dot_pumping_tower_share_des /*MWe*/, W_dot_pumping_rec_share_des /*MWe*/,
+            rec_pump_coef_des /*MWe/MWt*/, rec_vel_htf_des_des /*m/s*/, m_dot_htf_rec_des /*kg/s*/, m_dot_htf_max_des /*kg/s*/,
+            q_dot_piping_loss_des_des /*MWt*/;
+        mspt_base->get_design_performance(eta_thermal_des /*-*/,
+            W_dot_rec_pump_des /*MWe*/, W_dot_pumping_tower_share_des /*MWe*/, W_dot_pumping_rec_share_des /*MWe*/,
+            rec_pump_coef_des /*MWe/MWt*/, rec_vel_htf_des_des /*m/s*/,
+            m_dot_htf_rec_des /*kg/s*/, m_dot_htf_max_des /*kg/s*/,
+            q_dot_piping_loss_des_des /*MWt*/);
 
-        assign("m_dot_rec_des", m_dot_rec_des);
+        assign("m_dot_rec_des", m_dot_htf_rec_des);
 
         // If only simulating receiver design then get out here
         int sim_type = as_integer("sim_type");

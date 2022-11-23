@@ -1,23 +1,33 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "sco2_partialcooling_cycle.h"
@@ -66,7 +76,7 @@ int C_PartialCooling_Cycle::design_core()
 
 	// Apply design pressure drops to heat exchangers to fully define pressures at all states
 	if (m_DP_LTR[0] < 0.0)
-		m_pres_last[LTR_HP_OUT] = m_pres_last[MC_OUT] * (1.0 - fabs(m_DP_LTR[0]));	//[kPa]
+		m_pres_last[LTR_HP_OUT] = m_pres_last[MC_OUT] * (1.0 - std::abs(m_DP_LTR[0]));	//[kPa]
 	else
 		m_pres_last[LTR_HP_OUT] = m_pres_last[MC_OUT] - m_DP_LTR[0];		//[kPa]
 
@@ -80,7 +90,7 @@ int C_PartialCooling_Cycle::design_core()
 	m_pres_last[RC_OUT] = m_pres_last[LTR_HP_OUT];		//[kPa] assume no pressure drop in mixer
 
 	if (m_DP_HTR[0] < 0.0)
-		m_pres_last[HTR_HP_OUT] = m_pres_last[MIXER_OUT] * (1.0 - fabs(m_DP_HTR[0]));	//[kPa]
+		m_pres_last[HTR_HP_OUT] = m_pres_last[MIXER_OUT] * (1.0 - std::abs(m_DP_HTR[0]));	//[kPa]
 	else
 		m_pres_last[HTR_HP_OUT] = m_pres_last[MIXER_OUT] - m_DP_HTR[0];	//[kPa]
 
@@ -91,22 +101,22 @@ int C_PartialCooling_Cycle::design_core()
 		m_pres_last[HTR_HP_OUT] = m_pres_last[MIXER_OUT];	//[kPa] If no HTR then no pressure drop
 
 	if (m_DP_PHX[0] < 0.0)
-		m_pres_last[TURB_IN] = m_pres_last[HTR_HP_OUT] * (1.0 - fabs(m_DP_PHX[0]));	//[kPa]
+		m_pres_last[TURB_IN] = m_pres_last[HTR_HP_OUT] * (1.0 - std::abs(m_DP_PHX[0]));	//[kPa]
 	else
 		m_pres_last[TURB_IN] = m_pres_last[HTR_HP_OUT] - m_DP_PHX[0];	//[kPa]
 
 	if (m_DP_PC_main[1] < 0.0)
-		m_pres_last[PC_OUT] = m_pres_last[MC_IN] / (1.0 - fabs(m_DP_PC_main[1]));	//[kPa]
+		m_pres_last[PC_OUT] = m_pres_last[MC_IN] / (1.0 - std::abs(m_DP_PC_main[1]));	//[kPa]
 	else
 		m_pres_last[PC_OUT] = m_pres_last[MC_IN] + m_DP_PC_main[1];	//[kPa]
 
 	if (ms_des_par.m_DP_PC_LP[1] < 0.0)
-		m_pres_last[LTR_LP_OUT] = m_pres_last[PC_IN] / (1.0 - fabs(ms_des_par.m_DP_PC_LP[1]));	//[kPa]
+		m_pres_last[LTR_LP_OUT] = m_pres_last[PC_IN] / (1.0 - std::abs(ms_des_par.m_DP_PC_LP[1]));	//[kPa]
 	else
 		m_pres_last[LTR_LP_OUT] = m_pres_last[PC_IN] + ms_des_par.m_DP_PC_LP[1];	//[kPa]
 
 	if (m_DP_LTR[1] < 0.0)
-		m_pres_last[HTR_LP_OUT] = m_pres_last[LTR_LP_OUT] / (1.0 - fabs(m_DP_LTR[1]));	//[kPa]
+		m_pres_last[HTR_LP_OUT] = m_pres_last[LTR_LP_OUT] / (1.0 - std::abs(m_DP_LTR[1]));	//[kPa]
 	else
 		m_pres_last[HTR_LP_OUT] = m_pres_last[LTR_LP_OUT] + m_DP_LTR[1];		//[kPa]
 
@@ -117,7 +127,7 @@ int C_PartialCooling_Cycle::design_core()
 		m_pres_last[HTR_LP_OUT] = m_pres_last[LTR_LP_OUT];	//[kPa] if no LTR then no pressure drop
 
 	if (m_DP_HTR[1] < 0.0)
-		m_pres_last[TURB_OUT] = m_pres_last[HTR_LP_OUT] / (1.0 - fabs(m_DP_HTR[1]));	//[kPa]
+		m_pres_last[TURB_OUT] = m_pres_last[HTR_LP_OUT] / (1.0 - std::abs(m_DP_HTR[1]));	//[kPa]
 	else
 		m_pres_last[TURB_OUT] = m_pres_last[HTR_LP_OUT] + m_DP_HTR[1];	//[kPa]
 
@@ -133,7 +143,7 @@ int C_PartialCooling_Cycle::design_core()
 	{
 		int poly_error_code = 0;
 
-		isen_eta_from_poly_eta(m_temp_last[MC_IN], m_pres_last[MC_IN], m_pres_last[MC_OUT], fabs(m_eta_mc),
+		isen_eta_from_poly_eta(m_temp_last[MC_IN], m_pres_last[MC_IN], m_pres_last[MC_OUT], std::abs(m_eta_mc),
 			true, poly_error_code, eta_mc_isen);
 
 		if (poly_error_code != 0)
@@ -145,7 +155,7 @@ int C_PartialCooling_Cycle::design_core()
 	{
 		int poly_error_code = 0;
 
-		isen_eta_from_poly_eta(m_temp_last[PC_OUT], m_pres_last[PC_OUT], m_pres_last[RC_OUT], fabs(m_eta_rc),
+		isen_eta_from_poly_eta(m_temp_last[PC_OUT], m_pres_last[PC_OUT], m_pres_last[RC_OUT], std::abs(m_eta_rc),
 			true, poly_error_code, eta_rc_isen);
 
 		if (poly_error_code != 0)
@@ -157,7 +167,7 @@ int C_PartialCooling_Cycle::design_core()
 	{
 		int poly_error_code = 0;
 
-		isen_eta_from_poly_eta(m_temp_last[PC_IN], m_pres_last[PC_IN], m_pres_last[PC_OUT], fabs(ms_des_par.m_eta_pc),
+		isen_eta_from_poly_eta(m_temp_last[PC_IN], m_pres_last[PC_IN], m_pres_last[PC_OUT], std::abs(ms_des_par.m_eta_pc),
 			true, poly_error_code, eta_pc_isen);
 
 		if (poly_error_code != 0)
@@ -169,7 +179,7 @@ int C_PartialCooling_Cycle::design_core()
 	{
 		int poly_error_code = 0;
 
-		isen_eta_from_poly_eta(m_temp_last[TURB_IN], m_pres_last[TURB_IN], m_pres_last[TURB_OUT], fabs(m_eta_t),
+		isen_eta_from_poly_eta(m_temp_last[TURB_IN], m_pres_last[TURB_IN], m_pres_last[TURB_OUT], std::abs(m_eta_t),
 			false, poly_error_code, eta_t_isen);
 
 		if (poly_error_code != 0)
@@ -474,7 +484,7 @@ double C_PartialCooling_Cycle::opt_eta_fixed_P_high(double P_high_opt /*kPa*/)
     // Is the recompression fraction fixed or optimized?
     if (ms_auto_opt_des_par.m_is_recomp_ok < 0.0)
     {
-        ms_opt_des_par.m_recomp_frac_guess = fabs(ms_auto_opt_des_par.m_is_recomp_ok);  //[-]
+        ms_opt_des_par.m_recomp_frac_guess = std::abs(ms_auto_opt_des_par.m_is_recomp_ok);  //[-]
         ms_opt_des_par.m_fixed_recomp_frac = true;
     }
     else
@@ -711,7 +721,7 @@ double C_PartialCooling_Cycle::design_cycle_return_objective_metric(const std::v
 		}
 		else
 		{
-			P_pc_in = fabs(ms_opt_des_par.m_PR_total_guess);	//[kPa]
+			P_pc_in = std::abs(ms_opt_des_par.m_PR_total_guess);	//[kPa]
 		}
 	}
 
@@ -1033,7 +1043,7 @@ int C_PartialCooling_Cycle::auto_opt_design_core()
     // Is recompression fraction fixed or optimized?
     if (ms_auto_opt_des_par.m_is_recomp_ok < 0.0)
     {
-        ms_opt_des_par.m_recomp_frac_guess = fabs(ms_auto_opt_des_par.m_is_recomp_ok);  //[-]
+        ms_opt_des_par.m_recomp_frac_guess = std::abs(ms_auto_opt_des_par.m_is_recomp_ok);  //[-]
         ms_opt_des_par.m_fixed_recomp_frac = true;  
     }
     else
@@ -2076,7 +2086,7 @@ void C_PartialCooling_Cycle::check_od_solution(double & diff_m_dot, double & dif
     double diff_m_dot_pc_t = (m_dot_pc - m_dot_t) / m_dot_t;    //[-]
     double diff_m_dot_mc_rc_t = ((m_dot_mc + m_dot_rc) - m_dot_t) / m_dot_t;    //[-]
 
-    if (fabs(diff_m_dot_mc_rc_t) > fabs(diff_m_dot_pc_t))
+    if (std::abs(diff_m_dot_mc_rc_t) > std::abs(diff_m_dot_pc_t))
     {
         diff_m_dot = diff_m_dot_mc_rc_t;    //[-]
     }

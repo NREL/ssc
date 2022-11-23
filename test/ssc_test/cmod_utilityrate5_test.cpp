@@ -1,24 +1,35 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 
 #include <vector>
 #include <string>
@@ -395,13 +406,21 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_net_metering_credits_in_may_with_r
 
     ensure_outputs_line_up(data);
 
-    ssc_number_t cost_without_system;
-    ssc_data_get_number(data, "elec_cost_without_system_year1", &cost_without_system);
-    EXPECT_NEAR(771.8, cost_without_system, 0.1);
+    int nrows;
+    int ncols;
+    ssc_number_t* annual_bills_ub = ssc_data_get_array(data, "elec_cost_with_system", &nrows);
+    std::vector<double> annual_bill_w_sys(nrows);
+    annual_bill_w_sys = util::array_to_vector(annual_bills_ub, nrows);
 
-    ssc_number_t cost_with_system;
-    ssc_data_get_number(data, "elec_cost_with_system_year1", &cost_with_system);
-    EXPECT_NEAR(36.6, cost_with_system, 0.1);
+    EXPECT_NEAR(36.6, annual_bill_w_sys[1], 0.1);
+    EXPECT_NEAR(13.8, annual_bill_w_sys[2], 0.1);
+
+    ssc_number_t* annual_bills_ub_no_sys = ssc_data_get_array(data, "elec_cost_without_system", &nrows);
+    std::vector<double> annual_bill_wo_sys(nrows);
+    annual_bill_wo_sys = util::array_to_vector(annual_bills_ub_no_sys, nrows);
+
+    EXPECT_NEAR(771.8, annual_bill_wo_sys[1], 0.1);
+    EXPECT_NEAR(791.1, annual_bill_wo_sys[2], 0.1);
 
     int length;
     ssc_number_t* true_up_dollars = ssc_data_get_array(data, "year1_true_up_credits", &length);
@@ -413,8 +432,6 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_net_metering_credits_in_may_with_r
     float june_dollars = excess_dollars[credit_month + 1];
     EXPECT_NEAR(11.37, june_dollars, 0.1);
 
-    int nrows;
-    int ncols;
     ssc_number_t* annual_bills = ssc_data_get_matrix(data, "utility_bill_w_sys_ym", &nrows, &ncols);
     util::matrix_t<double> bill_matrix(nrows, ncols);
     bill_matrix.assign(annual_bills, nrows, ncols);
@@ -487,27 +504,32 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_metering_credits) {
     setup_residential_rates(data); // No sell rate in the defaults, so no credits
     ssc_data_set_number(data, "ur_metering_option", 1);
 
-    int analysis_period = 1;
+    int analysis_period = 25;
     ssc_data_set_number(data, "system_use_lifetime_output", 1);
     ssc_data_set_number(data, "analysis_period", analysis_period);
     set_array(data, "load", load_profile_path, 8760);
-    set_array(data, "gen", subhourly_gen_path, 8760 * 4); // 15 min data
+    set_array(data, "gen", commercial_gen_path, 8760 * 25);
 
     int status = run_module(data, "utilityrate5");
     EXPECT_FALSE(status);
 
     ensure_outputs_line_up(data);
-
-    ssc_number_t cost_without_system;
-    ssc_data_get_number(data, "elec_cost_without_system_year1", &cost_without_system);
-    EXPECT_NEAR(771.8, cost_without_system, 0.1); // Same as hourly, good!
-
-    ssc_number_t cost_with_system;
-    ssc_data_get_number(data, "elec_cost_with_system_year1", &cost_with_system);
-    EXPECT_NEAR(81.4, cost_with_system, 0.1);
-
     int nrows;
     int ncols;
+    ssc_number_t* annual_bills_ub = ssc_data_get_array(data, "elec_cost_with_system", &nrows);
+    std::vector<double> annual_bill_w_sys(nrows);
+    annual_bill_w_sys = util::array_to_vector(annual_bills_ub, nrows);
+
+    EXPECT_NEAR(0, annual_bill_w_sys[1], 0.1);
+    EXPECT_NEAR(0, annual_bill_w_sys[2], 0.1);
+
+    ssc_number_t* annual_bills_ub_no_sys = ssc_data_get_array(data, "elec_cost_without_system", &nrows);
+    std::vector<double> annual_bill_wo_sys(nrows);
+    annual_bill_wo_sys = util::array_to_vector(annual_bills_ub_no_sys, nrows);
+
+    EXPECT_NEAR(771.8, annual_bill_wo_sys[1], 0.1);
+    EXPECT_NEAR(791.1, annual_bill_wo_sys[2], 0.1);
+
     ssc_number_t* net_billing_credits = ssc_data_get_matrix(data, "nm_dollars_applied_ym", &nrows, &ncols);
     util::matrix_t<double> credits_matrix(nrows, ncols);
     credits_matrix.assign(net_billing_credits, nrows, ncols);
@@ -515,6 +537,55 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_metering_credits) {
     double dec_year_1_credits = credits_matrix.at((size_t)1, (size_t)11);
     EXPECT_NEAR(0, dec_year_1_credits, 0.1);
     
+    ssc_data_free(data);
+}
+
+TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_metering_credits_w_sell_rates_and_rollover) {
+    ssc_data_t data = new var_table;
+
+    setup_residential_rates(data);
+    ssc_number_t p_ur_ec_tou_mat[24] = { 1, 1, 9.9999999999999998e+37, 0, 0.10000000000000001, 0.10000000000000001,
+                         2, 1, 9.9999999999999998e+37, 0, 0.050000000000000003, 0.050000000000000003,
+                         3, 1, 9.9999999999999998e+37, 0, 0.20000000000000001, 0.20000000000000001,
+                         4, 1, 9.9999999999999998e+37, 0, 0.25, 0.25 };
+    ssc_data_set_matrix(data, "ur_ec_tou_mat", p_ur_ec_tou_mat, 4, 6);
+    ssc_data_set_number(data, "ur_metering_option", 1);
+    ssc_data_set_number(data, "ur_nm_credit_rollover", 1);
+
+    int analysis_period = 25;
+    ssc_data_set_number(data, "system_use_lifetime_output", 1);
+    ssc_data_set_number(data, "analysis_period", analysis_period);
+    set_array(data, "load", load_profile_path, 8760);
+    set_array(data, "gen", commercial_gen_path, 8760 * 25);
+
+    int status = run_module(data, "utilityrate5");
+    EXPECT_FALSE(status);
+
+    ensure_outputs_line_up(data);
+
+    int nrows;
+    int ncols;
+    ssc_number_t* annual_bills_ub = ssc_data_get_array(data, "elec_cost_with_system", &nrows);
+    std::vector<double> annual_bill_w_sys(nrows);
+    annual_bill_w_sys = util::array_to_vector(annual_bills_ub, nrows);
+
+    EXPECT_NEAR(-19600.58, annual_bill_w_sys[1], 0.1);
+    EXPECT_NEAR(-37439.55, annual_bill_w_sys[2], 0.1);
+
+    ssc_number_t* annual_bills_ub_no_sys = ssc_data_get_array(data, "elec_cost_without_system", &nrows);
+    std::vector<double> annual_bill_wo_sys(nrows);
+    annual_bill_wo_sys = util::array_to_vector(annual_bills_ub_no_sys, nrows);
+
+    EXPECT_NEAR(771.8, annual_bill_wo_sys[1], 0.1);
+    EXPECT_NEAR(791.1, annual_bill_wo_sys[2], 0.1);
+
+    ssc_number_t* net_billing_credits = ssc_data_get_matrix(data, "nm_dollars_applied_ym", &nrows, &ncols);
+    util::matrix_t<double> credits_matrix(nrows, ncols);
+    credits_matrix.assign(net_billing_credits, nrows, ncols);
+
+    double dec_year_1_credits = credits_matrix.at((size_t)1, (size_t)11);
+    EXPECT_NEAR(0, dec_year_1_credits, 0.1);
+
     ssc_data_free(data);
 }
 

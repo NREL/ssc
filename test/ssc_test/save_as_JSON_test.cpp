@@ -160,7 +160,7 @@ TEST(save_as_JSON_test_run, pvwatts_mechant_plant_rapidjson) {
     EXPECT_TRUE(success);
     ssc_number_t npv;
     ssc_data_get_number(data, "project_return_aftertax_npv", &npv);
-    EXPECT_NEAR(npv, -59413096, fabs(59413096) / 1e6);
+    EXPECT_NEAR(npv, -59413096, std::abs(59413096) / 1e6);
     
     ssc_module_free(mod_pv);
     ssc_module_free(mod_mp);
@@ -188,7 +188,7 @@ TEST(save_as_JSON_test_run, pv_batt_mechant_plant_rapidjson) {
     EXPECT_TRUE(success);
     ssc_number_t npv;
     ssc_data_get_number(data, "project_return_aftertax_npv", &npv);
-    EXPECT_NEAR(npv, -60972106, fabs(-60972106) / 1e6);
+    EXPECT_NEAR(npv, -60972106, std::abs(-60972106) / 1e6);
 
     ssc_module_free(mod_pv);
     ssc_module_free(mod_grid);
@@ -216,7 +216,7 @@ TEST(save_as_JSON_test_run, pt_mechant_plant_rapidjson) {
     EXPECT_TRUE(success);
     ssc_number_t npv;
     ssc_data_get_number(data, "project_return_aftertax_npv", &npv);
-    EXPECT_NEAR(npv, -570639509, fabs(-570639509) / 1e7);
+    EXPECT_NEAR(npv, -570639509, std::abs(-570639509) / 1e7);
     
     ssc_module_free(mod_pv);
     ssc_module_free(mod_grid);

@@ -1,23 +1,33 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "csp_solver_core.h"
@@ -90,7 +100,7 @@ int C_csp_solver::solve_operating_mode(C_csp_collector_receiver::E_csp_cr_modes 
                     return -2;
                 }
                 x1 = xy2.x;
-            } while (fabs(m_dot_bal2 - m_dot_bal) < 0.02);
+            } while (std::abs(m_dot_bal2 - m_dot_bal) < 0.02);
 
             xy2.y = m_dot_bal2;
 
@@ -112,7 +122,7 @@ int C_csp_solver::solve_operating_mode(C_csp_collector_receiver::E_csp_cr_modes 
             }
             if (m_dot_bal_code != C_monotonic_eq_solver::CONVERGED)
             {
-                if (m_dot_bal_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) < 0.1)
+                if (m_dot_bal_code > C_monotonic_eq_solver::CONVERGED && std::abs(tol_solved) < 0.1)
                 {
                     std::string msg = util::format("At time = %lg %s "
                         "iteration to find a defocus resulting in the maximum power cycle mass flow rate only reached a convergence "
@@ -202,7 +212,7 @@ int C_csp_solver::solve_operating_mode(C_csp_collector_receiver::E_csp_cr_modes 
 
             if (solver_code != C_monotonic_eq_solver::CONVERGED)
             {
-                if (solver_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) < 0.1)
+                if (solver_code > C_monotonic_eq_solver::CONVERGED && std::abs(tol_solved) < 0.1)
                 {
                     std::string msg = util::format("At time = %lg %s "
                         "iteration to find a defocus resulting in the maximum power cycle heat input only reached a convergence "
@@ -370,7 +380,7 @@ int C_csp_solver::C_MEQ__defocus::operator()(double defocus /*-*/, double *targe
             }
             if (t_ts_code != C_monotonic_eq_solver::CONVERGED)
             {
-                if (t_ts_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) < 0.1)
+                if (t_ts_code > C_monotonic_eq_solver::CONVERGED && std::abs(tol_solved) < 0.1)
                 {
                     std::string msg = util::format("At time = %lg power cycle startup time iteration "
                         " only reached a convergence"
@@ -510,7 +520,7 @@ int C_csp_solver::C_MEQ__defocus::operator()(double defocus /*-*/, double *targe
                     }
                     if (t_ts_code != C_monotonic_eq_solver::CONVERGED)
                     {
-                        if (t_ts_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) < 0.1*m_t_ts_initial)
+                        if (t_ts_code > C_monotonic_eq_solver::CONVERGED && std::abs(tol_solved) < 0.1*m_t_ts_initial)
                         {
                             std::string msg = util::format("At time = %lg power cycle startup time iteration "
                                 " only reached a convergence"
@@ -582,7 +592,7 @@ int C_csp_solver::C_MEQ__timestep::operator()(double t_ts_guess /*s*/, double *t
     }
 
     // Check if iteration is required
-    if (fabs(diff_T_field_cold) > 1.E-3)
+    if (std::abs(diff_T_field_cold) > 1.E-3)
     {
         // Set up solver
         c_solver.settings(1.E-3, 50, mpc_csp_solver->m_T_field_cold_limit, mpc_csp_solver->m_T_field_in_hot_limit, false);
@@ -617,7 +627,7 @@ int C_csp_solver::C_MEQ__timestep::operator()(double t_ts_guess /*s*/, double *t
 
         if (T_field_cold_code != C_monotonic_eq_solver::CONVERGED)
         {
-            if (T_field_cold_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) < 0.1)
+            if (T_field_cold_code > C_monotonic_eq_solver::CONVERGED && std::abs(tol_solved) < 0.1)
             {
                 double abc = 1.23;
                 //std::string msg = util::format("At time = %lg C_csp_solver:::solver_pc_fixed__tes_dc failed "
@@ -820,7 +830,7 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
    
 
     // For now, check the CR return pressure against the assumed constant system interface pressure
-    if (fabs((mpc_csp_solver->mc_cr_out_solver.m_P_htf_hot - m_P_field_in) / m_P_field_in) > 0.001 && !mpc_csp_solver->mc_collector_receiver.m_is_sensible_htf)
+    if (std::abs((mpc_csp_solver->mc_cr_out_solver.m_P_htf_hot - m_P_field_in) / m_P_field_in) > 0.001 && !mpc_csp_solver->mc_collector_receiver.m_is_sensible_htf)
     {
         std::string msg = util::format("C_csp_solver::solver_cr_to_pc_to_cr(...) The pressure returned from the CR model, %lg [bar],"
             " is different than the assumed constant pressure, %lg [bar]",
@@ -855,7 +865,7 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
                 q_dot_dc_est = m_dot_tes_dc = T_tes_dc_est = 0.0;
             }
             m_dot_tes_dc *= 3600.0;     //[kg/hr] convert from kg/s
-            m_m_dot_pc_in = fmin(m_dot_pc_max, m_dot_field_out + m_dot_tes_dc);
+            m_m_dot_pc_in = std::min(m_dot_pc_max, m_dot_field_out + m_dot_tes_dc);
         }
         else if (m_solver_mode == E__CR_OUT__0)
         {
@@ -875,8 +885,8 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
 
             // max: not allowing TES CH, so all field m_dot must go to pc
             // min: can't send more to pc than field + dc
-            double m_dot_to_pc_max = fmin(m_dot_pc_max, m_dot_tes_dc + m_dot_field_out);
-            m_m_dot_pc_in = m_dot_field_out + fmin(0.99999,f_m_dot_tes)*fmax(0.0, m_dot_to_pc_max - m_dot_field_out);
+            double m_dot_to_pc_max = std::min(m_dot_pc_max, m_dot_tes_dc + m_dot_field_out);
+            m_m_dot_pc_in = m_dot_field_out + std::min(0.99999,f_m_dot_tes)*std::max(0.0, m_dot_to_pc_max - m_dot_field_out);
         }
         else if (m_solver_mode == E__CR_OUT__ITER_M_DOT_SU_CH_ONLY || m_solver_mode == E__CR_OUT__ITER_Q_DOT_TARGET_CH_ONLY)
         {
@@ -893,9 +903,9 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
 
             // min: not allowing TES DC, so max m_dot to pc is field m_dot
             // max: need to send enough mass flow to pc so TES doesn't overcharge
-            double m_dot_to_tes_max = fmin(m_dot_field_out, m_dot_hot_to_tes_est);
-            double m_dot_to_tes_min = fmax(m_dot_field_out - m_dot_pc_max, 0.0);
-            double m_dot_to_tes = m_dot_to_tes_max - fmin(0.99999,f_m_dot_tes)* fmax(0.0, m_dot_to_tes_max - m_dot_to_tes_min);
+            double m_dot_to_tes_max = std::min(m_dot_field_out, m_dot_hot_to_tes_est);
+            double m_dot_to_tes_min = std::max(m_dot_field_out - m_dot_pc_max, 0.0);
+            double m_dot_to_tes = m_dot_to_tes_max - std::min(0.99999,f_m_dot_tes)* std::max(0.0, m_dot_to_tes_max - m_dot_to_tes_min);
 
             m_m_dot_pc_in = m_dot_field_out - m_dot_to_tes;
         }
@@ -953,7 +963,7 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
         }
         else if (m_solver_mode == E__TO_PC_PLUS_TES_FULL__ITER_M_DOT_SU)
         {
-            m_m_dot_pc_in = fmin(0.99999, f_m_dot_tes) * m_dot_pc_max;
+            m_m_dot_pc_in = std::min(0.99999, f_m_dot_tes) * m_dot_pc_max;
         }
 
         if (m_m_dot_pc_in > m_dot_pc_max)
@@ -971,7 +981,7 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
         }
         else if (m_solver_mode == E__TO_PC__ITER_M_DOT_SU)
         {
-            m_m_dot_pc_in = fmin(0.99999, f_m_dot_tes) * m_dot_pc_max;
+            m_m_dot_pc_in = std::min(0.99999, f_m_dot_tes) * m_dot_pc_max;
         }
 
         if (m_m_dot_pc_in > m_dot_pc_max)
@@ -1210,7 +1220,7 @@ int C_csp_solver::C_MEQ__T_field_cold::operator()(double T_field_cold /*C*/, dou
             return -4;
         }
 
-        if (fabs(diff_m_dot) > 1.E-3)
+        if (std::abs(diff_m_dot) > 1.E-3)
         {
             C_monotonic_eq_solver::S_xy_pair xy1;
             xy1.x = f_m_dot_guess_1;        //[-]
@@ -1237,7 +1247,7 @@ int C_csp_solver::C_MEQ__T_field_cold::operator()(double T_field_cold /*C*/, dou
 
             if (f_m_dot_code != C_monotonic_eq_solver::CONVERGED)
             {
-                if (f_m_dot_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) < 0.1)
+                if (f_m_dot_code > C_monotonic_eq_solver::CONVERGED && std::abs(tol_solved) < 0.1)
                 {
                     std::string msg = util::format("At time = %lg power cycle mass flow for startup "
                         "iteration to find a defocus resulting in the maximum power cycle mass flow rate only reached a convergence "
