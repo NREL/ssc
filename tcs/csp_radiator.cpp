@@ -51,7 +51,7 @@ void C_csp_radiator::night_cool(double T_db /*K*/, double T_rad_in /*K*/, double
 			analytical_panel_calc(T_db /*K*/, T_rad_in /*K*/, Tp_est /*K*/, u /*m/s*/, T_s /*K*/, m_dot_rad /*K*/,
 				//outputs
 				T_rad_out /*K*/, Tp /*K*/, W_radpump /*MW*/);
-			error_Tp = abs(Tp_est - Tp);	//Update error
+			error_Tp = std::abs(Tp_est - Tp);	//Update error
 			Tp_est = Tp;					//Update guess value
 		}
 	}
@@ -62,7 +62,7 @@ void C_csp_radiator::night_cool(double T_db /*K*/, double T_rad_in /*K*/, double
 			analytical_panel_calc_HX(T_db /*K*/, T_rad_in /*K*/, Tp_est /*K*/, u /*m/s*/, T_s /*K*/, m_dot_rad /*K*/, Np, m_dot_coldstorage/*kg/sec*/,
 				//outputs
 				T_rad_out /*K*/, Tp /*K*/, W_radpump /*MW*/);
-			error_Tp = abs(Tp_est - Tp);	//Update error
+			error_Tp = std::abs(Tp_est - Tp);	//Update error
 			Tp_est = Tp;					//Update guess value
 		}
 	}
@@ -152,7 +152,7 @@ void C_csp_radiator::analytical_panel_calc(double T_db /*K*/, double Tin /*K*/, 
 		double Pr = mc_air.Pr(300., 101300.);//.7092;								//[-] Prandtl number.
 		double k_air = mc_air.cond(300.);	//0.02566;							//[W / m - K] Conductivity of air, assumed constant.
 		double L_c_free = (Lsec*W_plate) / (2 * Lsec + 2 * W_plate);	 //[m] Characteristic length for free convection.
-		double Ra = 9.81 *(1 / Tf)*abs((Tp_est - T_db))*pow(L_c_free,3) / (nu*alpha);  //[-] Rayleigh number estimate.
+		double Ra = 9.81 *(1 / Tf)* std::abs((Tp_est - T_db))*pow(L_c_free,3) / (nu*alpha);  //[-] Rayleigh number estimate.
 		double Gr = Ra / Pr;							//[-] Grashof number
 
 		double Re = rho * u*Lc / mu;					//[-] Reynolds number for forced convection based on given characteristic length.
@@ -321,7 +321,7 @@ void C_csp_radiator::analytical_panel_calc_HX(double T_db /*K*/, double Tin /*K*
 	double Pr = mc_air.Pr(300., 101300.);//.7092;								//[-] Prandtl number.
 	double k_air = mc_air.cond(300.);	//0.02566;							//[W / m - K] Conductivity of air, assumed constant.
 	double L_c_free = (Lsec*W_plate) / (2 * Lsec + 2 * W_plate);	 //[m] Characteristic length for free convection.
-	double Ra = 9.81 *(1 / Tf)*abs((Tp_est - T_db))*pow(L_c_free, 3) / (nu*alpha);  //[-] Rayleigh number estimate.
+	double Ra = 9.81 *(1 / Tf)* std::abs((Tp_est - T_db))*pow(L_c_free, 3) / (nu*alpha);  //[-] Rayleigh number estimate.
 	double Gr = Ra / Pr;							//[-] Grashof number
 
 	double Re = rho * u*Lc / mu;					//[-] Reynolds number for forced convection based on given characteristic length.

@@ -1,24 +1,35 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 
 #include "lib_battery_dispatch_manual.h"
 #include "lib_battery_powerflow.h"
@@ -34,11 +45,11 @@ dispatch_manual_t::dispatch_manual_t(battery_t * Battery, double dt, double SOC_
 	util::matrix_t<size_t> dm_dynamic_sched, util::matrix_t<size_t> dm_dynamic_sched_weekend,
 	std::vector<bool> dm_charge, std::vector<bool> dm_discharge, std::vector<bool> dm_gridcharge, std::vector<bool> dm_fuelcellcharge, std::vector<bool> dm_btm_to_grid,
 	std::map<size_t, double>  dm_percent_discharge, std::map<size_t, double>  dm_percent_gridcharge, bool can_clip_charge, double interconnection_limit,
-    bool chargeOnlySystemExceedLoad, bool dischargeOnlyLoadExceedSystem, double SOC_min_outage)
+    bool chargeOnlySystemExceedLoad, bool dischargeOnlyLoadExceedSystem, double SOC_min_outage, bool priorityChargeBattery)
 	: dispatch_t(Battery, dt, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max_kwdc, Pd_max_kwdc, Pc_max_kwac, Pd_max_kwac,
 	t_min, mode, battMeterPosition, interconnection_limit, chargeOnlySystemExceedLoad, dischargeOnlyLoadExceedSystem, SOC_min_outage)
 {
-	init_with_vects(dm_dynamic_sched, dm_dynamic_sched_weekend, dm_charge, dm_discharge, dm_gridcharge, dm_fuelcellcharge, dm_btm_to_grid, dm_percent_discharge, dm_percent_gridcharge, can_clip_charge);
+	init_with_vects(dm_dynamic_sched, dm_dynamic_sched_weekend, dm_charge, dm_discharge, dm_gridcharge, dm_fuelcellcharge, dm_btm_to_grid, dm_percent_discharge, dm_percent_gridcharge, can_clip_charge, priorityChargeBattery);
 }
 
 void dispatch_manual_t::init_with_vects(
@@ -51,7 +62,8 @@ void dispatch_manual_t::init_with_vects(
     std::vector<bool> dm_btm_to_grid,
 	std::map<size_t, double> dm_percent_discharge,
 	std::map<size_t, double> dm_percent_gridcharge,
-    bool can_clip_charge)
+    bool can_clip_charge,
+    bool priorityChargeBattery)
 {
 	_sched = dm_dynamic_sched;
 	_sched_weekend = dm_dynamic_sched_weekend;
@@ -63,6 +75,7 @@ void dispatch_manual_t::init_with_vects(
 	_percent_discharge_array = dm_percent_discharge;
 	_percent_charge_array = dm_percent_gridcharge;
     _can_clip_charge = can_clip_charge;
+    _priority_charge_battery = priorityChargeBattery;
 }
 
 // deep copy from dispatch to this
@@ -72,7 +85,7 @@ dispatch_t(dispatch)
 	const dispatch_manual_t * tmp = dynamic_cast<const dispatch_manual_t *>(&dispatch);
 	init_with_vects(tmp->_sched, tmp->_sched_weekend,
 		tmp->_charge_array, tmp->_discharge_array, tmp->_gridcharge_array, tmp->_fuelcellcharge_array, tmp->_discharge_grid_array,
-		tmp->_percent_discharge_array, tmp->_percent_charge_array, tmp->_can_clip_charge);
+		tmp->_percent_discharge_array, tmp->_percent_charge_array, tmp->_can_clip_charge, tmp->_priority_charge_battery);
 }
 
 // shallow copy from dispatch to this
@@ -82,7 +95,7 @@ void dispatch_manual_t::copy(const dispatch_t * dispatch)
 	const dispatch_manual_t * tmp = dynamic_cast<const dispatch_manual_t *>(dispatch);
 	init_with_vects(tmp->_sched, tmp->_sched_weekend,
 		tmp->_charge_array, tmp->_discharge_array, tmp->_gridcharge_array, tmp->_fuelcellcharge_array, tmp->_discharge_grid_array,
-		tmp->_percent_discharge_array, tmp->_percent_charge_array, tmp->_can_clip_charge);
+		tmp->_percent_discharge_array, tmp->_percent_charge_array, tmp->_can_clip_charge, tmp->_priority_charge_battery);
 }
 
 void dispatch_manual_t::prepareDispatch(size_t hour_of_year, size_t )
@@ -133,7 +146,7 @@ void dispatch_manual_t::dispatch(size_t year,
         prepareDispatch(hour_of_year, step);
 
         // Initialize power flow model by calculating the battery power to dispatch
-        m_batteryPowerFlow->initialize(_Battery->SOC());
+        m_batteryPowerFlow->initialize(_Battery->SOC(), _priority_charge_battery);
 
         // Run the dispatch
         runDispatch(lifetimeIndex);
@@ -155,15 +168,15 @@ bool dispatch_manual_t::check_constraints(double &I, size_t count)
 		if (m_batteryPower->powerSystemToGrid > low_tolerance &&
             m_batteryPower->canSystemCharge &&					// only do if battery is allowed to charge
                                                               _Battery->SOC() < m_batteryPower->stateOfChargeMax - 1.0 &&		// and battery SOC is less than max
-			fabs(I) < fabs(m_batteryPower->currentChargeMax) &&						// and battery current is less than max charge current
-			fabs(m_batteryPower->powerBatteryDC) < (m_batteryPower->powerBatteryChargeMaxDC - 1.0) &&// and battery power is less than max charge power
+            std::abs(I) < std::abs(m_batteryPower->currentChargeMax) &&						// and battery current is less than max charge current
+            std::abs(m_batteryPower->powerBatteryDC) < (m_batteryPower->powerBatteryChargeMaxDC - 1.0) &&// and battery power is less than max charge power
 			I <= 0)											// and battery was not discharging
 		{
 			double dI = 0;
-			if (fabs(m_batteryPower->powerBatteryDC) < tolerance)
+			if (std::abs(m_batteryPower->powerBatteryDC) < tolerance)
 				dI = (m_batteryPower->powerSystemToGrid  * util::kilowatt_to_watt / _Battery->V());
 			else
-				dI = (m_batteryPower->powerSystemToGrid  / fabs(m_batteryPower->powerBatteryAC)) *fabs(I);
+				dI = (m_batteryPower->powerSystemToGrid  / std::abs(m_batteryPower->powerBatteryAC)) * std::abs(I);
 
 			// Main problem will be that this tends to overcharge battery maximum SOC, so check
 			double dQ = 0.01 * (m_batteryPower->stateOfChargeMax - _Battery->SOC()) *
@@ -173,28 +186,28 @@ bool dispatch_manual_t::check_constraints(double &I, size_t count)
 		}
 		// Don't let PV serve battery before load (decrease charging) when specified by chargeOnlySystemExceedLoad
 		else if (m_batteryPower->meterPosition == dispatch_t::BEHIND && I < 0 && m_batteryPower->powerGridToLoad > tolerance &&
-			m_batteryPower->powerSystemToBattery > 0 && m_batteryPower->chargeOnlySystemExceedLoad) {
+			m_batteryPower->powerSystemToBatteryAC > 0 && m_batteryPower->chargeOnlySystemExceedLoad) {
 
 			double dP = m_batteryPower->powerGridToLoad;
-			if (dP > m_batteryPower->powerSystemToBattery) {
-				dP = m_batteryPower->powerSystemToBattery;
+			if (dP > m_batteryPower->powerSystemToBatteryAC) {
+				dP = m_batteryPower->powerSystemToBatteryAC;
 			}
 
 			double dI = 0;
 			if (dP < tolerance)
 				dI = dP / _Battery->V();
 			else
-				dI = (dP / fabs(m_batteryPower->powerBatteryAC)) *fabs(I);
+				dI = (dP / std::abs(m_batteryPower->powerBatteryAC)) * std::abs(I);
 
 			I += dI;
 		}
 		// Don't let battery export to the grid if behind the meter
 		else if (m_batteryPower->meterPosition == dispatch_t::BEHIND && !m_batteryPower->canDischargeToGrid && I > 0 && m_batteryPower->powerBatteryToGrid > tolerance)
 		{
-			if (fabs(m_batteryPower->powerBatteryAC) < tolerance)
+			if (std::abs(m_batteryPower->powerBatteryAC) < tolerance)
 				I -= (m_batteryPower->powerBatteryToGrid * util::kilowatt_to_watt / _Battery->V());
 			else
-				I -= (m_batteryPower->powerBatteryToGrid / fabs(m_batteryPower->powerBatteryAC)) * fabs(I);
+				I -= (m_batteryPower->powerBatteryToGrid / std::abs(m_batteryPower->powerBatteryAC)) * std::abs(I);
 		}
 		else
 			iterate = false;
@@ -261,7 +274,7 @@ void dispatch_manual_t::SOC_controller()
             //  charge percent for automated grid charging
             double e_percent = _e_max * _percent_charge * 0.01;
 
-            if (fabs(m_batteryPower->powerBatteryDC) > fabs(e_percent) / _dt_hour)
+            if (std::abs(m_batteryPower->powerBatteryDC) > std::abs(e_percent) / _dt_hour)
                 m_batteryPower->powerBatteryDC = -e_percent / _dt_hour;
         }
         else

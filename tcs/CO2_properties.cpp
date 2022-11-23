@@ -1,10 +1,10 @@
 /*********************************** FIT Carbon Dioxide (NREL v1) **********************************
-ó
+‚Äî
 Copyright (c) 2016, Northland Numerics LLC
 All rights reserved.
 
 Use of this software in source and binary forms, with or without modification, is permitted for
-Alliance for Sustainable Energy, LLC (the ìLicenseeî) and for third parties that receive this
+Alliance for Sustainable Energy, LLC (the ‚ÄúLicensee‚Äù) and for third parties that receive this
 software, with or without modification, directly from Licensee.  Licensee is permitted to
 redistribute this software in source and binary forms, with or without modification, provided
 that redistributions of source code must retain the above copyright notice and reservation of
@@ -25,11 +25,11 @@ OR LOSS OF USE, DATA, OR PROFITS), HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY
 CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE), ARISING IN ANY WAY
 OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-ó
+‚Äî
 
 ***************************************************************************************************/
 
-#include <math.h>
+#include <cmath>
 #include "CO2_properties.h"
 
 using namespace N_co2_props;
@@ -30264,7 +30264,7 @@ double CO2_sat_vap_dens(const double T) {
       f = f * x + c4;
       fp = fp * x + f;
       f = f * x + c5 - T;
-      if (fabs(f) <= 1e-10)
+      if (std::abs(f) <= 1e-10)
         break;
       x = x - f / fp;
       x = fmax(x, -0.01);
@@ -30404,7 +30404,7 @@ double CO2_sat_liq_dens(const double T) {
       f = f * x + c4;
       fp = fp * x + f;
       f = f * x + c5 - T;
-      if (fabs(f) <= 1e-10)
+      if (std::abs(f) <= 1e-10)
         break;
       x = x - f / fp;
       x = fmax(x, -0.01);
@@ -44317,7 +44317,7 @@ double CO2_sat_vap_dens_derivative(const double T) {
       f = f * x + c4;
       fp = fp * x + f;
       f = f * x + c5 - T;
-      if (fabs(f) <= 1e-10)
+      if (std::abs(f) <= 1e-10)
         break;
       x = x - f / fp;
       x = fmax(x, -0.01);
@@ -44445,7 +44445,7 @@ double CO2_sat_liq_dens_derivative(const double T) {
       f = f * x + c4;
       fp = fp * x + f;
       f = f * x + c5 - T;
-      if (fabs(f) <= 1e-10)
+      if (std::abs(f) <= 1e-10)
         break;
       x = x - f / fp;
       x = fmax(x, -0.01);
@@ -44682,7 +44682,7 @@ int CO2_TP(const double T, const double P, CO2_state *__restrict state) {
       dfdD = dfdD * e.inv_dx;
     }
     const double residual = D * D * dfdD - P;
-    if (fabs(residual) < P_tol)
+    if (std::abs(residual) < P_tol)
       break;
     D = D - residual / (2.0 * D * dfdD + D * D * dfdD2);
   }
@@ -44757,7 +44757,7 @@ int CO2_PH(const double P, const double H, CO2_state *__restrict state) {
   const int max_iter = 20;
   const double rel_tol = 1e-10;
   const double P_tol = fmax(rel_tol, P * rel_tol);
-  const double H_tol = fmax(rel_tol, fabs(H) * rel_tol);
+  const double H_tol = fmax(rel_tol, std::abs(H) * rel_tol);
   Element e;
 
   if (P < P_crit) {
@@ -44836,7 +44836,7 @@ int CO2_PH(const double P, const double H, CO2_state *__restrict state) {
     const double calc_H = f - T * dfdT + D * dfdD;
     const double P_res = calc_P - P;
     const double H_res = calc_H - H;
-    if (fabs(P_res) < P_tol && fabs(H_res) < H_tol)
+    if (std::abs(P_res) < P_tol && std::abs(H_res) < H_tol)
       break; // converged
 
     // Create the Jacobian.
@@ -44853,8 +44853,8 @@ int CO2_PH(const double P, const double H, CO2_state *__restrict state) {
     const double delta_x = (P_res - J_12 * delta_y) / J_11;
     D = D - delta_x;
     T = T - delta_y;
-    if (fabs(delta_x) < 1e-12 && fabs(delta_y) < 1e-12) {
-      if (fabs(P_res) < P_tol * 10.0 && fabs(H_res) < H_tol * 10.0)
+    if (std::abs(delta_x) < 1e-12 && std::abs(delta_y) < 1e-12) {
+      if (std::abs(P_res) < P_tol * 10.0 && std::abs(H_res) < H_tol * 10.0)
         break; // converged enough
     }
   }
@@ -44904,7 +44904,7 @@ int CO2_PS(const double P, const double S, CO2_state *__restrict state) {
   const int max_iter = 20;
   const double rel_tol = 1e-10;
   const double P_tol = fmax(rel_tol, P * rel_tol);
-  const double S_tol = fmax(rel_tol, fabs(S) * rel_tol);
+  const double S_tol = fmax(rel_tol, std::abs(S) * rel_tol);
   Element e;
 
   if (P < P_crit) {
@@ -44984,7 +44984,7 @@ int CO2_PS(const double P, const double S, CO2_state *__restrict state) {
     const double calc_S = -dfdT;
     const double P_res = calc_P - P;
     const double S_res = calc_S - S;
-    if (fabs(P_res) < P_tol && fabs(S_res) < S_tol)
+    if (std::abs(P_res) < P_tol && std::abs(S_res) < S_tol)
       break; // converged
 
     // Create the Jacobian.
@@ -45001,8 +45001,8 @@ int CO2_PS(const double P, const double S, CO2_state *__restrict state) {
     const double delta_x = (P_res - J_12 * delta_y) / J_11;
     D = D - delta_x;
     T = T - delta_y;
-    if (fabs(delta_x) < 1e-12 && fabs(delta_y) < 1e-12) {
-      if (fabs(P_res) < P_tol * 10.0 && fabs(S_res) < S_tol * 10.0)
+    if (std::abs(delta_x) < 1e-12 && std::abs(delta_y) < 1e-12) {
+      if (std::abs(P_res) < P_tol * 10.0 && std::abs(S_res) < S_tol * 10.0)
         break; // converged enough
     }
   }
@@ -45051,8 +45051,8 @@ int CO2_PS(const double P, const double S, CO2_state *__restrict state) {
 int CO2_HS(const double H, const double S, CO2_state *__restrict state) {
   const int max_iter = 30;
   const double rel_tol = 1e-10;
-  const double H_tol = fmax(rel_tol, fabs(H) * rel_tol);
-  const double S_tol = fmax(rel_tol, fabs(S) * rel_tol);
+  const double H_tol = fmax(rel_tol, std::abs(H) * rel_tol);
+  const double S_tol = fmax(rel_tol, std::abs(S) * rel_tol);
   int iter;
   double T, D;
   T = CO2_sh_temp(S, H);
@@ -45067,7 +45067,7 @@ int CO2_HS(const double H, const double S, CO2_state *__restrict state) {
                          &dDdT, &pres, &calc_H, &calc_S);
     const double H_res = calc_H - H;
     const double S_res = calc_S - S;
-    if (fabs(H_res) < H_tol && fabs(S_res) < S_tol)
+    if (std::abs(H_res) < H_tol && std::abs(S_res) < S_tol)
       break; // converged
     const double J_11 = dhdD;
     const double J_12 = dhdT;
@@ -45080,8 +45080,8 @@ int CO2_HS(const double H, const double S, CO2_state *__restrict state) {
     const double delta_x = (H_res - J_12 * delta_y) / J_11;
     D = D - delta_x;
     T = T - delta_y;
-    if (fabs(delta_x) < 1e-12 && fabs(delta_y) < 1e-12) {
-      if (fabs(H_res) < H_tol * 10.0 && fabs(S_res) < S_tol * 10.0)
+    if (std::abs(delta_x) < 1e-12 && std::abs(delta_y) < 1e-12) {
+      if (std::abs(H_res) < H_tol * 10.0 && std::abs(S_res) < S_tol * 10.0)
         break; // converged enough
     }
   }
@@ -45117,7 +45117,7 @@ int CO2_HS(const double H, const double S, CO2_state *__restrict state) {
                            &dDdP, &dDdT, &pres, &calc_H, &calc_S);
       const double H_res = calc_H - H;
       const double S_res = calc_S - S;
-      if (fabs(H_res) < H_tol && fabs(S_res) < S_tol)
+      if (std::abs(H_res) < H_tol && std::abs(S_res) < S_tol)
         break; // converged
       const double J_11 = dhdD;
       const double J_12 = dhdT;
@@ -45130,8 +45130,8 @@ int CO2_HS(const double H, const double S, CO2_state *__restrict state) {
       const double delta_x = (H_res - J_12 * delta_y) / J_11;
       D = D - delta_x;
       T = T - delta_y;
-      if (fabs(delta_x) < 1e-12 && fabs(delta_y) < 1e-12) {
-        if (fabs(H_res) < H_tol * 10.0 && fabs(S_res) < S_tol * 10.0)
+      if (std::abs(delta_x) < 1e-12 && std::abs(delta_y) < 1e-12) {
+        if (std::abs(H_res) < H_tol * 10.0 && std::abs(S_res) < S_tol * 10.0)
           break; // converged enough
       }
     }

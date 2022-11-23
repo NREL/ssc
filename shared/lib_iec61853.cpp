@@ -1,24 +1,35 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 
 #include <string>
 #include <numeric>
@@ -117,7 +128,7 @@ bool linfit( std::vector<double> &yvec, std::vector<double> &xvec, double *mout,
 		
 		if ( i == 0 ) continue;
 
-        if (fabs( double(n) * sumXsquared - sumX * sumX) > DBL_EPSILON)
+        if (std::abs( double(n) * sumXsquared - sumX * sumX) > DBL_EPSILON)
         {
             b = ( double(n) * sumXY - sumY * sumX) /
                 ( double(n) * sumXsquared - sumX * sumX);
@@ -193,17 +204,17 @@ int gauss( double A[4][4], double B[4] )
 	for( K=0;K<3;K++)
 	{
 		KP1=K+1;
-		BIG = fabs( A[K][K] ); 
+		BIG = std::abs( A[K][K] );
 		if ( BIG < 1.0e-05)
 		{
 			IBIG=K;                                                                  
 
 			for( I=KP1; I < 4; I++ )
 			{
-				if( fabs( A[I][K] ) <= BIG )
+				if(std::abs( A[I][K] ) <= BIG )
 					continue;
 					
-				BIG = fabs( A[I][K] );
+				BIG = std::abs( A[I][K] );
 				IBIG = I;
 			}
 
@@ -235,7 +246,7 @@ int gauss( double A[4][4], double B[4] )
 		}
 	}
 
-	if( fabs( A[3][3] ) > 0.0 )       
+	if(std::abs( A[3][3] ) > 0.0 )
 	{
 		B[3] =  B[3]/A[3][3];
 		B[2] = (B[2]-A[2][3]*B[3])/A[2][2];
@@ -353,10 +364,10 @@ bool iec61853_module_t::solve( double Voc, double Isc, double Vmp, double Imp, d
 		Rs = Rs - B[2]/urelax;
 		Rsh = Rsh - B[3]/urelax;
 		
-		T[0] = fabs(B[0]/Il);
-		T[1] = fabs(B[1]/Io);
-		T[2] = fabs(B[2]/Rs);
-		T[3] = fabs(B[3]/Rsh);
+		T[0] = std::abs(B[0]/Il);
+		T[1] = std::abs(B[1]/Io);
+		T[2] = std::abs(B[2]/Rs);
+		T[3] = std::abs(B[3]/Rsh);
 
 		maxerr = 0;
 		int nck = 0;

@@ -1,24 +1,35 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 
 #include <gtest/gtest.h>
 
@@ -37,7 +48,7 @@ void daily_battery_stats::compute(std::vector<ssc_number_t> batt_power_data) {
         for (size_t hour = 0; hour < 24 * steps_per_hour; hour++) {
             ssc_number_t currentPower = batt_power_data[index];
 
-            if (fabs(currentPower - 0) < 1e-7) {
+            if (std::abs(currentPower - 0) < 1e-7) {
                 currentPower = 0;
             }
 
@@ -343,7 +354,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialDCBatteryModelIntegr
     ssc_number_t expectedBatteryChargeEnergy[3] = { 1412.75, 1414.89, 253.2 };
     ssc_number_t expectedBatteryDischargeEnergy[3] = { 1283.8, 1285.88, 226.3 };
 
-    ssc_number_t peakKwCharge[3] = { -3.21, -2.96, -2.69 };
+    ssc_number_t peakKwCharge[3] = { -3.06, -2.91, -2.51 };
     ssc_number_t peakKwDischarge[3] = { 1.40, 1.74, 0.967 };
     ssc_number_t peakCycles[3] = { 1, 1, 1 };
     ssc_number_t avgCycles[3] = { 1.0, 1.0, 0.4794 };
@@ -573,8 +584,8 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_CustomDispatchBatteryModelD
     ssc_number_t expectedBatteryChargeEnergy = 2040;
     ssc_number_t expectedBatteryDischargeEnergy = 3254.;
 
-    ssc_number_t peakKwCharge = -1020.4;
-    ssc_number_t peakKwDischarge = 958.7;
+    ssc_number_t peakKwCharge = -992.86;
+    ssc_number_t peakKwDischarge = 946.83;
     ssc_number_t peakCycles = 1;
     ssc_number_t avgCycles = 0.0027;
 
@@ -618,15 +629,15 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_CustomDispatchBatteryModelD
     singleowner_defaults(data);
 
     //ssc_number_t expectedEnergy = 37264228;
-    ssc_number_t expectedEnergy = 37761336;
-    ssc_number_t expectedBatteryChargeEnergy = 416050;
+    ssc_number_t expectedEnergy = 37762415;
+    ssc_number_t expectedBatteryChargeEnergy = 414366;
     ssc_number_t expectedBatteryDischargeEnergy = 348966;
     ssc_number_t roundtripEfficiency = 80.6;
 
-    ssc_number_t peakKwCharge = -939.14;
+    ssc_number_t peakKwCharge = -841.39;
     ssc_number_t peakKwDischarge = 652.0;
     ssc_number_t peakCycles = 3;
-    ssc_number_t avgCycles = 1.194;
+    ssc_number_t avgCycles = 1.1836;
 
     ssc_data_set_number(data, "batt_dispatch_choice", 2);
     ssc_data_set_number(data, "batt_ac_or_dc", 0);
@@ -733,7 +744,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ClippingForecastTest1_DC_Dispat
     ssc_number_t expectedBatteryDischargeEnergy = 343.96;
     ssc_number_t expectedClipLoss = 590.8;
 
-    ssc_number_t peakKwCharge = -9.238;
+    ssc_number_t peakKwCharge = -9.04;
     ssc_number_t peakKwDischarge = 1.1;
     ssc_number_t peakCycles = 1;
     ssc_number_t avgCycles = 1;
@@ -787,7 +798,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ClippingForecastTest2_DC_Dispat
     ssc_number_t expectedBatteryDischargeEnergy = 343.96;
     ssc_number_t expectedClipLoss = 590.8;
 
-    ssc_number_t peakKwCharge = -9.238;
+    ssc_number_t peakKwCharge = -9.04;
     ssc_number_t peakKwDischarge = 1.1;
     ssc_number_t peakCycles = 1;
     ssc_number_t avgCycles = 1;
@@ -839,7 +850,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_CustomDispatchBatteryModelD
     ssc_number_t expectedBatteryDischargeEnergy = 349127;
     ssc_number_t roundtripEfficiency = 80.6;
 
-    ssc_number_t peakKwCharge = -948.6;
+    ssc_number_t peakKwCharge = -833.74;
     ssc_number_t peakKwDischarge = 651.7;
     ssc_number_t peakCycles = 3;
     ssc_number_t avgCycles = 1.1829;
@@ -873,15 +884,15 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_CustomDispatchBatteryModelD
         auto batt_power = data_vtab->as_vector_ssc_number_t("batt_power");
         daily_battery_stats batt_stats = daily_battery_stats(batt_power, 4);
 
-        EXPECT_NEAR(batt_stats.peakKwCharge, peakKwCharge, abs(peakKwCharge * 0.01));
+        EXPECT_NEAR(batt_stats.peakKwCharge, peakKwCharge, std::abs(peakKwCharge * 0.01));
         EXPECT_NEAR(batt_stats.peakKwDischarge, peakKwDischarge, peakKwDischarge * 0.01);
         EXPECT_NEAR(batt_stats.peakCycles, peakCycles, m_error_tolerance_lo);
         EXPECT_NEAR(batt_stats.avgCycles, avgCycles, 0.05);
 
         auto batt_q_rel = data_vtab->as_vector_ssc_number_t("batt_capacity_percent");
         auto batt_cyc_avg = data_vtab->as_vector_ssc_number_t("batt_DOD_cycle_average");
-        EXPECT_NEAR(batt_q_rel.back(), 85.759, 2e-2);
-        EXPECT_NEAR(batt_cyc_avg.back(), 21.92, m_error_tolerance_lo);
+        EXPECT_NEAR(batt_q_rel.back(), 85.875, 2e-2);
+        EXPECT_NEAR(batt_cyc_avg.back(), 21.81, m_error_tolerance_lo);
     }
 
 }
@@ -903,10 +914,10 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialDCBatteryModelPriceS
     ssc_number_t expectedBatteryChargeEnergy = 390.9;
     ssc_number_t expectedBatteryDischargeEnergy = 360.2;
 
-    ssc_number_t peakKwCharge = -3.709;
+    ssc_number_t peakKwCharge = -3.601;
     ssc_number_t peakKwDischarge = 1.99;
     ssc_number_t peakCycles = 1;
-    ssc_number_t avgCycles = 0.3205;
+    ssc_number_t avgCycles = 0.3233;
 
     pairs["batt_dispatch_choice"] = 4;
     pairs["batt_dispatch_auto_can_clipcharge"] = 1;
@@ -933,12 +944,12 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialDCBatteryModelPriceS
         EXPECT_NEAR(batt_stats.peakKwCharge, peakKwCharge, m_error_tolerance_lo);
         EXPECT_NEAR(batt_stats.peakKwDischarge, peakKwDischarge, m_error_tolerance_lo);
         EXPECT_NEAR(batt_stats.peakCycles, peakCycles, m_error_tolerance_lo);
-        EXPECT_NEAR(batt_stats.avgCycles, avgCycles, 0.0001);
+        EXPECT_NEAR(batt_stats.avgCycles, avgCycles, 0.005); // Increased tolerance due to https://github.com/NREL/ssc/issues/614
 
         auto batt_q_rel = data_vtab->as_vector_ssc_number_t("batt_capacity_percent");
         auto batt_cyc_avg = data_vtab->as_vector_ssc_number_t("batt_DOD_cycle_average");
-        EXPECT_NEAR(batt_q_rel.back(), 97.958, 2e-2);
-        EXPECT_NEAR(batt_cyc_avg.back(), 25.94, 1.0); // High tolerance due to ~ 1% dispatch difference between linux and windows. Tighten in the future by improving the algorithm.
+        EXPECT_NEAR(batt_q_rel.back(), 97.987, 2e-2);
+        EXPECT_NEAR(batt_cyc_avg.back(), 27.49, 1.0); // High tolerance due to ~ 1% dispatch difference between linux and windows. Tighten in the future by improving the algorithm.
     }
 }
 
