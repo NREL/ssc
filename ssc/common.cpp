@@ -1,24 +1,35 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 
 #include <string>
 #include "common.h"
@@ -52,6 +63,7 @@ var_info_invalid };
 var_info vtab_battery_replacement_cost[] = {
 { SSC_INPUT, SSC_NUMBER , "en_batt"                              , "Enable battery storage model"                                   , "0/1"                                    , ""                                      , "BatterySystem"              , "?=0"            , ""                      , ""},
 { SSC_INPUT, SSC_NUMBER , "en_standalone_batt"                   , "Enable standalone battery storage model"                                   , "0/1"                                    , ""                                      , "BatterySystem"              , "?=0"            , ""                      , ""},
+{ SSC_INPUT, SSC_NUMBER , "en_wave_batt"                   , "Enable standalone battery storage model"                                   , "0/1"                                    , ""                                      , "BatterySystem"              , "?=0"            , ""                      , ""},
 { SSC_INOUT, SSC_ARRAY  , "batt_bank_replacement"                , "Battery bank replacements per year"                             , "number/year"                            , ""                                      , "BatterySystem"              , ""               , ""                      , ""},
 { SSC_INPUT, SSC_ARRAY  , "batt_replacement_schedule_percent"    , "Percentage of battery capacity to replace in each year"         , "%"                                      , "length <= analysis_period"             , "BatterySystem"              , ""               , ""                      , ""},
 { SSC_INPUT, SSC_NUMBER , "batt_replacement_option"              , "Enable battery replacement?"                                    , "0=none,1=capacity based,2=user schedule", ""                                      , "BatterySystem"              , "?=0"            , "INTEGER,MIN=0,MAX=2"   , ""},
@@ -252,21 +264,21 @@ var_info_invalid
 };
 
 var_info vtab_tax_credits[] = {
-{ SSC_INPUT,SSC_NUMBER  , "itc_fed_amount"                       , "Federal amount-based ITC amount"                                , "$"                                      , ""                                      , "Tax Credit Incentives", "?=0"            , ""                      , ""},
+{ SSC_INPUT,SSC_ARRAY  , "itc_fed_amount"                       , "Federal amount-based ITC amount"                                , "$"                                      , ""                                      , "Tax Credit Incentives", "?=0"            , ""                      , ""},
 { SSC_INPUT,SSC_NUMBER  , "itc_fed_amount_deprbas_fed"           , "Federal amount-based ITC reduces federal depreciation basis"    , "0/1"                                    , ""                                      , "Tax Credit Incentives", "?=1"            , "BOOLEAN"               , ""},
 { SSC_INPUT,SSC_NUMBER  , "itc_fed_amount_deprbas_sta"           , "Federal amount-based ITC reduces state depreciation basis"      , "0/1"                                    , ""                                      , "Tax Credit Incentives", "?=1"            , "BOOLEAN"               , ""},
 
-{ SSC_INPUT,SSC_NUMBER  , "itc_sta_amount"                       , "State amount-based ITC amount"                                  , "$"                                      , ""                                      , "Tax Credit Incentives", "?=0"            , ""                      , ""},
+{ SSC_INPUT,SSC_ARRAY  , "itc_sta_amount"                       , "State amount-based ITC amount"                                  , "$"                                      , ""                                      , "Tax Credit Incentives", "?=0"            , ""                      , ""},
 { SSC_INPUT,SSC_NUMBER  , "itc_sta_amount_deprbas_fed"           , "State amount-based ITC reduces federal depreciation basis"      , "0/1"                                    , ""                                      , "Tax Credit Incentives", "?=0"            , "BOOLEAN"               , ""},
 { SSC_INPUT,SSC_NUMBER  , "itc_sta_amount_deprbas_sta"           , "State amount-based ITC reduces state depreciation basis"        , "0/1"                                    , ""                                      , "Tax Credit Incentives", "?=0"            , "BOOLEAN"               , ""},
 
-{ SSC_INPUT,SSC_NUMBER  , "itc_fed_percent"                      , "Federal percentage-based ITC percent"                           , "%"                                      , ""                                      , "Tax Credit Incentives", "?=0"            , ""                      , ""},
-{ SSC_INPUT,SSC_NUMBER  , "itc_fed_percent_maxvalue"             , "Federal percentage-based ITC maximum value"                     , "$"                                      , ""                                      , "Tax Credit Incentives", "?=1e99"         , ""                      , ""},
+{ SSC_INPUT,SSC_ARRAY  , "itc_fed_percent"                      , "Federal percentage-based ITC percent"                           , "%"                                      , ""                                      , "Tax Credit Incentives", "?=0"            , ""                      , ""},
+{ SSC_INPUT,SSC_ARRAY  , "itc_fed_percent_maxvalue"             , "Federal percentage-based ITC maximum value"                     , "$"                                      , ""                                      , "Tax Credit Incentives", "?=1e99"         , ""                      , ""},
 { SSC_INPUT,SSC_NUMBER  , "itc_fed_percent_deprbas_fed"          , "Federal percentage-based ITC reduces federal depreciation basis", "0/1"                                    , ""                                      , "Tax Credit Incentives", "?=1"            , "BOOLEAN"               , ""},
 { SSC_INPUT,SSC_NUMBER  , "itc_fed_percent_deprbas_sta"          , "Federal percentage-based ITC reduces state depreciation basis"  , "0/1"                                    , ""                                      , "Tax Credit Incentives", "?=1"            , "BOOLEAN"               , ""},
 
-{ SSC_INPUT,SSC_NUMBER  , "itc_sta_percent"                      , "State percentage-based ITC percent"                             , "%"                                      , ""                                      , "Tax Credit Incentives", "?=0"            , ""                      , ""},
-{ SSC_INPUT,SSC_NUMBER  , "itc_sta_percent_maxvalue"             , "State percentage-based ITC maximum Value"                       , "$"                                      , ""                                      , "Tax Credit Incentives", "?=1e99"         , ""                      , ""},
+{ SSC_INPUT,SSC_ARRAY  , "itc_sta_percent"                      , "State percentage-based ITC percent"                             , "%"                                      , ""                                      , "Tax Credit Incentives", "?=0"            , ""                      , ""},
+{ SSC_INPUT,SSC_ARRAY  , "itc_sta_percent_maxvalue"             , "State percentage-based ITC maximum Value"                       , "$"                                      , ""                                      , "Tax Credit Incentives", "?=1e99"         , ""                      , ""},
 { SSC_INPUT,SSC_NUMBER  , "itc_sta_percent_deprbas_fed"          , "State percentage-based ITC reduces federal depreciation basis"  , "0/1"                                    , ""                                      , "Tax Credit Incentives", "?=0"            , "BOOLEAN"               , ""},
 { SSC_INPUT,SSC_NUMBER  , "itc_sta_percent_deprbas_sta"          , "State percentage-based ITC reduces state depreciation basis"    , "0/1"                                    , ""                                      , "Tax Credit Incentives", "?=0"            , "BOOLEAN"               , ""},
 
@@ -412,11 +424,20 @@ var_info vtab_payment_incentives[] = {
 
 { SSC_OUTPUT,       SSC_NUMBER,     "itc_total_fed",                          "Federal ITC income",         "$",            "",                      "Cash Flow Incentives",      "*",                     "",                                      "" },
 { SSC_OUTPUT,       SSC_NUMBER,     "itc_total_sta",                          "State ITC income",           "$",            "",                      "Cash Flow Incentives",      "*",                     "",                                      "" },
-{ SSC_OUTPUT,        SSC_NUMBER,    "itc_total",							  "Total ITC income",                 "$",            "",                      "Cash Flow Incentives",      "*",                     "",                "" },
+{ SSC_OUTPUT,        SSC_NUMBER,    "itc_total",							  "Total ITC income",           "$",            "",                      "Cash Flow Incentives",      "*",                     "",                "" },
 
 { SSC_OUTPUT,       SSC_ARRAY,      "cf_ptc_fed",                             "Federal PTC income",                 "$",            "",                      "Cash Flow Incentives",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 { SSC_OUTPUT,       SSC_ARRAY,      "cf_ptc_sta",                             "State PTC income",                   "$",            "",                      "Cash Flow Incentives",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-{ 	SSC_OUTPUT, 	SSC_ARRAY, 	    "cf_ptc_total", 	                         "Total PTC", 	            "$", 	            "", 	                "Cash Flow Incentives", 	        "", 	"LENGTH_EQUAL=cf_length", 	""},
+{ 	SSC_OUTPUT, 	SSC_ARRAY, 	    "cf_ptc_total", 	                      "Total PTC income", 	            "$", 	            "", 	                "Cash Flow Incentives", 	        "", 	"LENGTH_EQUAL=cf_length", 	""},
+// SAM 1038 - make required after other compute module updated - see ssc 910
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_itc_fed_amount",                     "Federal ITC amount income",                 "$",            "",                      "Cash Flow Incentives",      "",                     "LENGTH_EQUAL=cf_length",                "" },
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_itc_sta_amount",                     "State ITC amount income",                   "$",            "",                      "Cash Flow Incentives",      "",                     "LENGTH_EQUAL=cf_length",                "" },
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_itc_fed_percent_amount",             "Federal ITC percent income",                 "$",            "",                      "Cash Flow Incentives",      "",                     "LENGTH_EQUAL=cf_length",                "" },
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_itc_sta_percent_amount",             "State ITC percent income",                   "$",            "",                      "Cash Flow Incentives",      "",                     "LENGTH_EQUAL=cf_length",                "" },
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_itc_fed",                            "Federal ITC total income",                 "$",            "",                      "Cash Flow Incentives",      "",                     "LENGTH_EQUAL=cf_length",                "" },
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_itc_sta",                            "State ITC total income",                   "$",            "",                      "Cash Flow Incentives",      "",                     "LENGTH_EQUAL=cf_length",                "" },
+{ SSC_OUTPUT, 	SSC_ARRAY, 	    "cf_itc_total", 	                         "Total ITC income", 	            "$", 	            "", 	                "Cash Flow Incentives", 	        "", 	"LENGTH_EQUAL=cf_length", 	"" },
+
 var_info_invalid };
 
 var_info vtab_ppa_inout[] = {
@@ -497,18 +518,21 @@ var_info_invalid
 var_info vtab_adjustment_factors[] = {
 { SSC_INPUT,SSC_NUMBER  , "adjust:constant"                      , "Constant loss adjustment"                                       , "%"                                      , ""                                      , "Adjustment Factors"   , "*"              , "MAX=100"               , ""},
 { SSC_INPUT,SSC_ARRAY   , "adjust:hourly"                        , "Hourly Adjustment Factors"                                      , "%"                                      , ""                                      , "Adjustment Factors"   , "?"              , "LENGTH=8760"           , ""},
+{ SSC_INPUT,SSC_ARRAY   , "adjust:timeindex"                        , "Lifetime Adjustment Factors"                                      , "%"                                      , ""                                      , "Adjustment Factors"   , "?"              , "LENGTH=8760"           , ""},
 { SSC_INPUT,SSC_MATRIX  , "adjust:periods"                       , "Period-based Adjustment Factors"                                , "%"                                      , "n x 3 matrix [ start, end, loss ]"     , "Adjustment Factors"   , "?"              , "COLS=3"                , ""},
 var_info_invalid };
 
 var_info vtab_dc_adjustment_factors[] = {
 { SSC_INPUT,SSC_NUMBER  , "dc_adjust:constant"                   , "DC Constant loss adjustment"                                    , "%"                                      , ""                                      , "Adjustment Factors"   , "*"               , "MAX=100"               , ""},
 { SSC_INPUT,SSC_ARRAY   , "dc_adjust:hourly"                     , "DC Hourly Adjustment Factors"                                   , "%"                                      , ""                                      , "Adjustment Factors"   , "?"               , "LENGTH=8760"           , ""},
+{ SSC_INPUT,SSC_ARRAY   , "dc_adjust:timeindex"                        , "DC Lifetime Adjustment Factors"                                      , "%"                                      , ""                                      , "Adjustment Factors"   , "?"              , "LENGTH=8760"           , ""},
 { SSC_INPUT,SSC_MATRIX  , "dc_adjust:periods"                    , "DC Period-based Adjustment Factors"                             , "%"                                      , "n x 3 matrix [ start, end, loss ]"     , "Adjustment Factors"   , "?"               , "COLS=3"                , ""},
 var_info_invalid };
 
 var_info vtab_sf_adjustment_factors[] = {
 { SSC_INPUT,SSC_NUMBER  , "sf_adjust:constant"                   , "SF Constant loss adjustment"                                    , "%"                                      , ""                                      , "Adjustment Factors"   , "*"              , "MAX=100"               , ""},
 { SSC_INPUT,SSC_ARRAY   , "sf_adjust:hourly"                     , "SF Hourly Adjustment Factors"                                   , "%"                                      , ""                                      , "Adjustment Factors"   , "?"              , "LENGTH=8760"           , ""},
+{ SSC_INPUT,SSC_ARRAY   , "sf_adjust:timeindex"                        , "SF Lifetime Adjustment Factors"                                      , "%"                                      , ""                                      , "Adjustment Factors"   , "?"              , "LENGTH=8760"           , ""},
 { SSC_INPUT,SSC_MATRIX  , "sf_adjust:periods"                    , "SF Period-based Adjustment Factors"                             , "%"                                      , "n x 3 matrix [ start, end, loss ]"     , "Adjustment Factors"   , "?"              , "COLS=3"                , ""},
 var_info_invalid };
 
@@ -923,7 +947,7 @@ var_info vtab_utility_rate_common[] = {
 
     { SSC_INPUT,        SSC_NUMBER,     "ur_nm_yearend_sell_rate",  "Net metering true-up credit sell rate", "$/kWh",    "",                     "Electricity Rates",        "?=0.0",            "",                             "" },
     { SSC_INPUT,        SSC_NUMBER,     "ur_nm_credit_month",       "Month of year end payout (true-up)",    "mn",       "",                     "Electricity Rates",        "?=11",             "INTEGER,MIN=0,MAX=11",         "" },
-    { SSC_INPUT,        SSC_NUMBER,     "ur_nm_credit_rollover",    "Apply net metering true-up credits to future bills", "0/1", "",           "Electricity Rates",        "?=0",              "INTEGER,MIN=0,MAX=1",          "" },
+    { SSC_INPUT,        SSC_NUMBER,     "ur_nm_credit_rollover",    "Apply net metering true-up credits to future bills", "0/1", "0=disable,1=enable",           "Electricity Rates",        "?=0",              "INTEGER,MIN=0,MAX=1",          "" },
     { SSC_INPUT,        SSC_NUMBER,     "ur_monthly_fixed_charge",  "Monthly fixed charge",                 "$",        "",                     "Electricity Rates",        "?=0.0",            "",                             "" },
 
 
@@ -936,42 +960,42 @@ var_info vtab_utility_rate_common[] = {
     { SSC_INPUT,        SSC_NUMBER,     "ur_annual_min_charge",     "Annual minimum charge",                "$",        "",                     "Electricity Rates",        "?=0.0",            "",                             "" },
 
     // time step rates
-    { SSC_INPUT,        SSC_NUMBER,     "ur_en_ts_sell_rate",       "Enable time step sell rates",          "0/1",      "",                     "Electricity Rates",        "?=0",              "BOOLEAN",                      "" },
-    { SSC_INPUT,        SSC_ARRAY,      "ur_ts_sell_rate",          "Time step sell rates",                 "0/1",      "",                     "Electricity Rates",        "",                 "",                             "" },
+    { SSC_INPUT,        SSC_NUMBER,     "ur_en_ts_sell_rate",       "Enable time step sell rates",          "0/1",      "0=disable,1=enable",                     "Electricity Rates",        "?=0",              "BOOLEAN",                      "" },
+    { SSC_INPUT,        SSC_ARRAY,      "ur_ts_sell_rate",          "Time step sell rates",                 "$/kWh",      "",                     "Electricity Rates",        "",                 "",                             "" },
     // add separately to UI
-    { SSC_INPUT,        SSC_NUMBER,     "ur_en_ts_buy_rate",        "Enable time step buy rates",           "0/1",      "",                     "Electricity Rates",        "?=0",              "BOOLEAN",                      "" },
-    { SSC_INPUT,        SSC_ARRAY,      "ur_ts_buy_rate",           "Time step buy rates",                  "0/1",      "",                     "Electricity Rates",        "",                 "",                             "" },
+    { SSC_INPUT,        SSC_NUMBER,     "ur_en_ts_buy_rate",        "Enable time step buy rates",           "0/1",      "0=disable,1=enable",                     "Electricity Rates",        "?=0",              "BOOLEAN",                      "" },
+    { SSC_INPUT,        SSC_ARRAY,      "ur_ts_buy_rate",           "Time step buy rates",                  "$/kWh",      "",                     "Electricity Rates",        "",                 "",                             "" },
 
     // Energy Charge Inputs
-    { SSC_INPUT,        SSC_MATRIX,     "ur_ec_sched_weekday",      "Energy charge weekday schedule",       "",         "12x24",                "Electricity Rates",        "",                 "",                             "" },
-    { SSC_INPUT,        SSC_MATRIX,     "ur_ec_sched_weekend",      "Energy charge weekend schedule",       "",         "12x24",                "Electricity Rates",        "",                 "",                             "" },
+    { SSC_INPUT,        SSC_MATRIX,     "ur_ec_sched_weekday",      "Energy charge weekday schedule",       "Periods defined in ur_ec_tou_mat",         "12x24",                "Electricity Rates",        "",                 "",                             "" },
+    { SSC_INPUT,        SSC_MATRIX,     "ur_ec_sched_weekend",      "Energy charge weekend schedule",       "Periods defined in ur_ec_tou_mat",         "12x24",                "Electricity Rates",        "",                 "",                             "" },
 
     // ur_ec_tou_mat has 6 columns period, tier, max usage, max usage units, buy rate, sell rate
     // replaces 12(P)*6(T)*(max usage+buy+sell) = 216 single inputs
-    { SSC_INPUT,        SSC_MATRIX,     "ur_ec_tou_mat",            "Energy rates table",                   "",         "",                     "Electricity Rates",        "",                 "",                             "" },
+    { SSC_INPUT,        SSC_MATRIX,     "ur_ec_tou_mat",            "Energy rates table",                   "col 0=period no, col 1=tier no, col 2=max usage, col 3=max usage units (0=kWh, 1=kWh/kW, 2=kWh daily, 3=kWh/kW daily), col 4=buy rate ($/kWh), col 5=sell rate ($/kWh)",         "nx6",                     "Electricity Rates",        "",                 "",                             "" },
 
     // Demand Charge Inputs
-    { SSC_INPUT,        SSC_NUMBER,     "ur_dc_enable",             "Enable demand charge",                 "0/1",      "",                     "Electricity Rates",        "?=0",              "BOOLEAN",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,     "ur_dc_enable",             "Enable demand charge",                 "0/1",      "0=disable,1=enable",                     "Electricity Rates",        "?=0",              "BOOLEAN",                      "" },
     // TOU demand charge
-    { SSC_INPUT,        SSC_MATRIX,     "ur_dc_sched_weekday",      "Demand charge weekday schedule",       "",         "12x24",                "Electricity Rates",        "",                 "",                             "" },
-    { SSC_INPUT,        SSC_MATRIX,     "ur_dc_sched_weekend",      "Demand charge weekend schedule",       "",         "12x24",                "Electricity Rates",        "",                 "",                             "" },
+    { SSC_INPUT,        SSC_MATRIX,     "ur_dc_sched_weekday",      "Demand charge weekday schedule",       "Periods defined in ur_dc_tou_mat",         "12x24",                "Electricity Rates",        "",                 "",                             "" },
+    { SSC_INPUT,        SSC_MATRIX,     "ur_dc_sched_weekend",      "Demand charge weekend schedule",       "Periods defined in ur_dc_tou_mat",         "12x24",                "Electricity Rates",        "",                 "",                             "" },
 
     // ur_dc_tou_mat has 4 columns period, tier, peak demand (kW), demand charge
     // replaces 12(P)*6(T)*(peak+charge) = 144 single inputs
-    { SSC_INPUT,        SSC_MATRIX,     "ur_dc_tou_mat",            "Demand rates (TOU) table",             "",         "",                     "Electricity Rates",        "ur_dc_enable=1",   "",                             "" },
+    { SSC_INPUT,        SSC_MATRIX,     "ur_dc_tou_mat",            "Demand rates (TOU) table",             "col 0=period no, col 1=tier no, col 2=tier peak (kW), col 3=charge ($/kW)",         "nx4",                     "Electricity Rates",        "ur_dc_enable=1",   "",                             "" },
 
     // flat demand charge
     // ur_dc_tou_flat has 4 columns month, tier, peak demand (kW), demand charge
     // replaces 12(P)*6(T)*(peak+charge) = 144 single inputs
-    { SSC_INPUT,        SSC_MATRIX,     "ur_dc_flat_mat",           "Demand rates (flat) table",            "",         "",                     "Electricity Rates",        "ur_dc_enable=1",   "",                             "" },
+    { SSC_INPUT,        SSC_MATRIX,     "ur_dc_flat_mat",           "Demand rates (flat) table",            "col 0=month, col 1=tier no, col 2=tier peak (kW), col 3=charge ($/kW)",         "nx4",                     "Electricity Rates",        "ur_dc_enable=1",   "",                             "" },
 
     // Ratcheting demand charges
     { SSC_INPUT,        SSC_NUMBER,     "ur_enable_billing_demand",     "Enable billing demand ratchets",     "0/1",  "0=disable,1=enable",        "Electricity Rates",        "?=0",                 "INTEGER,MIN=0,MAX=1",       "" },
-    { SSC_INPUT,        SSC_NUMBER,     "ur_billing_demand_minimum",       "Minimum billing demand",               "",         "",                     "Electricity Rates",        "ur_enable_billing_demand=1",                 "",                             "" },
+    { SSC_INPUT,        SSC_NUMBER,     "ur_billing_demand_minimum",       "Minimum billing demand",               "kW",         "",                     "Electricity Rates",        "ur_enable_billing_demand=1",                 "",                             "" },
     { SSC_INPUT,        SSC_NUMBER,     "ur_billing_demand_lookback_period", "Billing demand lookback period",  "mn",         "",                "Electricity Rates",           "ur_enable_billing_demand=1",                 "INTEGER,MIN=0,MAX=12",                             "" },
-    { SSC_INPUT,        SSC_MATRIX,     "ur_billing_demand_lookback_percentages", "Billing demand lookback percentages by month and consider actual peak demand",       "",         "12x2",      "Electricity Rates",        "ur_enable_billing_demand=1",                 "",                             "" },
+    { SSC_INPUT,        SSC_MATRIX,     "ur_billing_demand_lookback_percentages", "Billing demand lookback percentages by month and consider actual peak demand",       "%",         "12x2",      "Electricity Rates",        "ur_enable_billing_demand=1",                 "",                             "" },
     { SSC_INPUT,        SSC_MATRIX,     "ur_dc_billing_demand_periods", "Billing demand applicability to a given demand charge time of use period",       "",         "",      "Electricity Rates",        "ur_enable_billing_demand=1",                 "",                             "" },
-    { SSC_INPUT,        SSC_ARRAY,      "ur_yearzero_usage_peaks",  "Peak usage by month for year zero",       "",         "12",                "Electricity Rates",        "ur_enable_billing_demand=1",                 "",                             "" },
+    { SSC_INPUT,        SSC_ARRAY,      "ur_yearzero_usage_peaks",  "Peak usage by month for year zero",       "kW",         "12",                "Electricity Rates",        "ur_enable_billing_demand=1",                 "",                             "" },
 
 
     var_info_invalid
@@ -983,33 +1007,97 @@ adjustment_factors::adjustment_factors( compute_module *cm, const std::string &p
 }
 
 //adjustment factors changed from derates to percentages jmf 1/9/15
-bool adjustment_factors::setup(int nsteps) //nsteps is set to 8760 in this declaration function in common.h
+bool adjustment_factors::setup(int nsteps, int analysis_period) //nsteps is set to 8760 in this declaration function in common.h
 {
 	ssc_number_t f = m_cm->as_number( m_prefix + ":constant" );
 	f = 1.0 - f / 100.0; //convert from percentage to factor
-	m_factors.resize( nsteps, f );
+	m_factors.resize( nsteps * analysis_period, f);
 
 	if ( m_cm->is_assigned(m_prefix + ":hourly") )
 	{
 		size_t n;
 		ssc_number_t *p = m_cm->as_array( m_prefix + ":hourly", &n );
-		if ( p != 0 && n == (size_t)nsteps )
+		if ( p != 0 && n == 8760 )
 		{
-			for( int i=0;i<nsteps;i++ )
+			for( int i=0;i<8760;i++ )
 				m_factors[i] *= (1.0 - p[i]/100.0); //convert from percentages to factors
 		}
+        else {
+            m_error = util::format("Hourly loss factor array length %d does not equal length of weather file %d", (int)n, nsteps);
+        }
 	}
+
+    if (m_cm->is_assigned(m_prefix + ":timeindex"))
+    {
+        size_t n;
+        int steps_per_hour = nsteps / 8760;
+        int month = 0;
+        int day = 0;
+        int week = 0;
+        ssc_number_t* p = m_cm->as_array(m_prefix + ":timeindex", &n);
+        if (p != 0) {
+            if (n == 1) {
+                for (int a = 0; a < analysis_period; a++) {
+                    for (int i = 0; i < nsteps; i++)
+                        m_factors[nsteps * a + i] *= (1.0 - p[0]/100.0); //input as factors not percentage
+                }
+            }
+            else if (n == nsteps * analysis_period) { //Hourly or subhourly
+                for (int a = 0; a < analysis_period; a++) {
+                    for (int i = 0; i < nsteps; i++)
+                        m_factors[nsteps * a + i] *= (1.0 - p[a*nsteps + i]/100.0); //convert from percentages to factors
+                }
+            }
+            else if (n % 12 == 0) { //Monthly 
+                for (int a = 0; a < analysis_period; a++) {
+                    for (int i = 0; i < nsteps; i++) {
+                        month = util::month_of(int(i / steps_per_hour))-1;
+                        m_factors[nsteps*a + i] *= (1.0 - p[a * 12 + month]/100.0); //input as factors not percentage
+                    }
+
+                }
+            }
+            else if (n % 365 == 0) { //Daily
+                for (int a = 0; a < analysis_period; a++) {
+                    for (int i = 0; i < nsteps; i++) {
+                        day = util::day_of(int(i / steps_per_hour));
+                        m_factors[nsteps*a + i] *= (1.0 - p[a * 365 + day]/100.0); //input as factors not percentage
+                    }
+
+                }
+            }
+            else if (n % 52 == 0) { //Weekly
+                for (int a = 0; a < analysis_period; a++) {
+                    for (int i = 0; i < nsteps; i++) {
+                        week = util::week_of(int(i / steps_per_hour));
+                        m_factors[nsteps*a + i] *= (1.0 - p[a * 52 + week]/100.0); //input as factors not percentage
+                    }
+
+                }
+            }
+            else if (n == analysis_period) { //Annual
+                for (int a = 0; a < analysis_period; a++) {
+                    for (int i = 0; i < nsteps; i++)
+                        m_factors[nsteps * a + i] *= (1.0 - p[a]/100.0); //input as factors not percentage
+                }
+            }
+            else {
+                m_error = util::format("Error with lifetime loss data inputs");
+            }
+        }
+    }
 
 	if ( m_cm->is_assigned(m_prefix + ":periods") )
 	{
 		size_t nr, nc;
 		ssc_number_t *mat = m_cm->as_matrix(m_prefix + ":periods", &nr, &nc);
+        double ts_mult = nsteps / 8760.0;
 		if ( mat != 0 && nc == 3 )
 		{
 			for( size_t r=0;r<nr;r++ )
 			{
-				int start = (int) mat[ nc*r ];
-				int end = (int) mat[ nc*r + 1 ];
+				int start = (int) round(mat[ nc*r ] * ts_mult);
+				int end = (int) round(mat[ nc*r + 1 ] * ts_mult);
 				ssc_number_t factor =  mat[ nc*r + 2 ];
 
 				if ( start < 0 || start >= nsteps || end < start )
@@ -1020,8 +1108,10 @@ bool adjustment_factors::setup(int nsteps) //nsteps is set to 8760 in this decla
 
 				if ( end >= nsteps ) end = nsteps-1;
 
-				for( int i=start;i<=end;i++ )
-					m_factors[i] *= (1.0 - factor/100.0); //convert from percentages to factors
+                for (int a = 0; a < analysis_period; a++) {
+				    for( int i=start;i<=end;i++ )
+					    m_factors[a * nsteps + i] *= (1.0 - factor/100.0); //convert from percentages to factors
+                }
 			}
 		}
 	}

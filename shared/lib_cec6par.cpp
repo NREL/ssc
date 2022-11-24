@@ -1,23 +1,33 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <stdio.h>
@@ -42,6 +52,51 @@ static const double Tamb_noct = 20;  // 20 Ambient NOCT temp ('C)
 static const double I_noct = 800; // 800 NOCT Irradiance W/m2
 static const double TauAlpha = 0.9; // 0.9
 static const double eg0 = 1.12; // 1.12
+
+const double air_table[41][8] = //Temp (degC), Density (kg/m^3), spec. heat (J/kgK), thermal conductivity (W/mK), Thermal diffusivity (m^2/s), Dynamic Viscosity (kg/m*s), Prandtl Number
+{
+    {-150,2.866,983,0.01171,0.000004158,0.000008636,0.000003013,0.7246},
+    {-100,2.038,966,0.01582,0.000008036,0.000001189,0.000005837,0.7263},
+    {-50,1.582,999,0.01979,0.00001252,0.00001474,0.000009319,0.744},
+    {-40,1.514,1002,0.02057,0.00001356,0.00001527,0.00001008,0.7436},
+    {-30,1.451,1004,0.02134,0.00001465,0.00001579,0.00001087,0.7425},
+    {-20,1.394,1005,0.02211,0.00001578,0.0000163,0.00001169,0.7408},
+    {-10,1.341,1006,0.02288,0.00001696,0.0000168,0.00001252,0.7387},
+    {0,1.292,1006,0.02364,0.00001818,0.00001729,0.00001338,0.7362},
+    {5,1.269,1006,0.02401,0.0000188,0.00001754,0.00001382,0.735},
+    {10,1.246,1006,0.02439,0.00001944,0.00001778,0.00001426,0.7336},
+    {15,1.225,1007,0.02476,0.00002009,0.00001802,0.0000147,0.7323},
+    {20,1.204,1007,0.02514,0.00002074,0.00001825,0.00001516,0.7309},
+    {25,1.184,1007,0.02551,0.00002141,0.00001849,0.00001562,0.7296},
+    {30,1.164,1007,0.02588,0.00002208,0.00001872,0.00001608,0.7282},
+    {35,1.145,1007,0.02625,0.00002277,0.00001895,0.00001655,0.7268},
+    {40,1.127,1007,0.02662,0.00002346,0.00001918,0.00001702,0.7255},
+    {45,1.109,1007,0.02699,0.00002416,0.00001941,0.0000175,0.7241},
+    {50,1.092,1007,0.02735,0.00002487,0.00001963,0.00001798,0.7228},
+    {60,1.059,1007,0.02808,0.00002632,0.00002008,0.00001896,0.7202},
+    {70,1.028,1007,0.02881,0.0000278,0.00002052,0.00001995,0.7177},
+    {80,0.9994,1008,0.02953,0.00002931,0.00002096,0.00002097,0.7154},
+    {90,0.9718,1008,0.03024,0.00003086,0.00002139,0.00002201,0.7132},
+    {100,0.9458,1009,0.03095,0.00003243,0.00002181,0.00002306,0.7111},
+    {120,0.8977,1011,0.03235,0.00003565,0.00002264,0.00002522,0.7073},
+    {140,0.8542,1013,0.03374,0.00003898,0.00002345,0.00002745,0.7041},
+    {160,0.8148,1016,0.03511,0.00004241,0.0000242,0.00002975,0.7014},
+    {180,0.7788,1019,0.03646,0.00004593,0.00002504,0.00003212,0.6992},
+    {200,0.7459,1023,0.03779,0.00004954,0.00002577,0.00003455,0.6974},
+    {250,0.6746,1033,0.04104,0.0000589,0.0000276,0.00004091,0.6946},
+    {300,0.6158,1044,0.04418,0.00006871,0.00002934,0.00004765,0.6935},
+    {350,0.5664,1056,0.04721,0.00007892,0.00003101,0.00005475,0.6937},
+    {400,0.5243,1069,0.05015,0.00008951,0.00003261,0.00006219,0.6948},
+    {450,0.488,1081,0.05298,0.0001004,0.00003415,0.00006997,0.6965},
+    {500,0.4565,1093,0.05572,0.0001117,0.00003563,0.00007806,0.6986},
+    {600,0.4042,1115,0.06093,0.0001352,0.00003846,0.00009515,0.7037},
+    {700,0.3627,1135,0.06581,0.0001598,0.00004111,0.0001133,0.7092},
+    {800,0.3289,1153,0.07037,0.0001855,0.00004362,0.0001326,0.7149},
+    {900,0.3008,1169,0.07465,0.0002122,0.000046,0.0001529,0.7206},
+    {1000,0.2772,1184,0.07868,0.0002398,0.00004826,0.0001741,0.726},
+    {1500,0.199,1234,0.09599,0.0003908,0.00005817,0.0002922,0.7478},
+    {2000,0.1553,1264,0.11113,0.0005664,0.0000663,0.000427,0.7539}
+};
 
 cec6par_module_t::cec6par_module_t( )
 {
@@ -161,7 +216,7 @@ bool cec6par_module_t::operator() ( pvinput_t &input, double TcellC, double opvo
 bool noct_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double , double &Tcell )
 {
 	double G_total, Geff_total;
-	double tau_al = fabs(TauAlpha);
+	double tau_al = std::abs(TauAlpha);
 
 	double theta_z = input.Zenith;
 	if (theta_z > 86.0) theta_z = 86.0; // !Zenith angle must be < 90 (?? why 86?)
@@ -207,7 +262,7 @@ bool noct_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 		// calculate cell temperature, kelvin
 		//double G_total = input.Ibeam + input.Idiff + input.Ignd;		
 		double eff_ref = Imp *Vmp / ( I_ref*Area );
-		tau_al = fabs(TauAlpha);  // Sev: What's the point of recalculating this??
+		tau_al = std::abs(TauAlpha);  // Sev: What's the point of recalculating this??
 
 		W_spd = input.Wspd * ffv_wind; //added 1/11/12 to account for FFV_wind correction factor internally
 		if (W_spd < 0.001) W_spd = 0.001;		
@@ -220,15 +275,6 @@ bool noct_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 
 	return true;
 }
-
-
-
-
-
-
-
-
-
 
 
 // !*****************************************************************
@@ -252,7 +298,7 @@ static double free_convection_194( double TC, double TA, double SLOPE, double rh
 	// !Horizontal Heated Upward Facing Plate (L_ch_f)
 	// !OR Cooled Downward Facing Plate
 	g_spec    = grav*MAX(0.,cosd(SLOPE));//  !Adjustment of gravity vector;
-	Gr        = g_spec*Beta*fabs(TC-TA)*pow(L_ch_f,3)/pow(nu,2); //    !Grashof Number
+	Gr        = g_spec*Beta* std::abs(TC-TA)*pow(L_ch_f,3)/pow(nu,2); //    !Grashof Number
 	Ra        = MAX(0.0001,Gr*Pr_air); //                 !Rayleigh Number
 
 	C_lam     = 0.671/pow(1. + pow(0.492/Pr_air, 9./16.) , 4./9.); //  !Eq. 6-49 (Nellis&Klein)
@@ -264,7 +310,7 @@ static double free_convection_194( double TC, double TA, double SLOPE, double rh
 
 	// !Vertical Plate (Length)
 	g_spec    = grav*sind(SLOPE);  //          !Adjustment of gravity vector
-	Gr        = g_spec*Beta*fabs(TC-TA)*pow(Length,3)/pow(nu,2);        
+	Gr        = g_spec*Beta* std::abs(TC-TA)*pow(Length,3)/pow(nu,2);
 	Ra        = MAX(0.0001,Gr*Pr_air);
 	
 	Nu_bar    = pow(0.825+(0.387*pow(Ra,(1./6.)))/pow(1+ pow(0.492/Pr_air, 9./16.), (8./27.)),2)  ;  // !(Incropera et al.,2006)
@@ -273,7 +319,7 @@ static double free_convection_194( double TC, double TA, double SLOPE, double rh
 	// !Horizontal Heated Downward Facing Plate
 	// !OR Cooled Upward Facing Plate
 	g_spec    = grav*MAX(0.,-cosd(SLOPE));
-	Gr        = g_spec*Beta*fabs(TC-TA)*pow(L_ch_f,3)/pow(nu,2);
+	Gr        = g_spec*Beta* std::abs(TC-TA)*pow(L_ch_f,3)/pow(nu,2);
 	Ra        = MAX(0.0001,Gr*Pr_air);
 
 	Nu_bar    = 2.5/log(1.+(2.5/(0.527*pow(Ra,0.2)))*pow(1.+pow(1.9/Pr_air,0.9),2./9.));//    !Eq. 6-59  (Nellis&Klein)
@@ -450,8 +496,8 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 
 	// !Adjust backside wind speed based on mounting structure orientation for "gap" mounting configuration
 	if (MC == 4) {
-		if (MSO==2) V_WIND  = MAX(0.001,fabs(cosd(input.Wdir-input.Azimuth))*V_WIND);
-		if (MSO==3) V_WIND  = MAX(0.001,fabs(cosd(input.Wdir+90.-input.Azimuth))*V_WIND);
+		if (MSO==2) V_WIND  = MAX(0.001, std::abs(cosd(input.Wdir-input.Azimuth))*V_WIND);
+		if (MSO==3) V_WIND  = MAX(0.001, std::abs(cosd(input.Wdir+90.-input.Azimuth))*V_WIND);
 		v_ch = V_WIND * 0.3;   // !Give realistic starting value to channel air velocity
 	}
 
@@ -470,8 +516,12 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 	double app_fac_P  = 1.;
 	
 	double TC = input.Tdry+273.15;
-
-	while( p_iter <= 300 && fabs(err_P) > 0.1 )
+    double rho_air_test = 0;
+    double mu_air_test = 0;
+    double k_air_test = 0;
+    double Pr_air_test = 0;
+    double temp_interp = 0;
+	while( p_iter <= 300 && std::abs(err_P) > 0.1 )
 	{		  
 		double err_TC   = 100.; //  !Set initial temperature error. Must be > tolerance for temp error in do loop
 		double err_TC_p = 0.; //    !Set initial previous error. Should be zero so approach factor doesn't reset after 1 iteration
@@ -479,23 +529,55 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 		double app_fac  = 0.5  ; //  !Set approach factor for updating cell temp guess value
 		double app_fac_v = 0.5 ; // !Set approach factor for updating channel velocity guess value
 
+        //Lacunarity
+        double res = 0.025; //resolution
+        int oA_out = 0;
+        int n_p = 2;
+        const int n_p_const = n_p;
+        std::vector<double> L(n_p);
+        std::vector<double> L_n(n_p);
+        util::matrix_t<double> Z;
+        util::matrix_t<double> Z_n;
+        Z.resize(n_p, 4);
+        Z_n.resize(n_p, 4);
+        std::vector<double> R(n_p);
+        std::vector<double> R_n(n_p);
+
+        //util::matrix_t<int> ArrayLog = SolArrayLog(res, 5 * ground_clearance_height, GCR, Length, 0.025, input.Tilt, Width, 9, false, oA_out);
+        //SuperLac(ArrayLog, oA_out, 2, L, L_n, R, R_n, Z, Z_n);
+        //Do something with finding asymptote of L or L_n to get final Lacunarity value here?
+
+
 		switch( MC )
 		{
 		case 1 : // !Rack Mounting Configuration 
-			while( fabs(err_TC) > 0.001 )
+			while(std::abs(err_TC) > 0.001 )
 			{
-
+                //L_char = Lsc; //Change characteristic length to Lacunarity length scale
 				double rho_air    = Patm*28.967/8314.34*(1./((TA+TC)/2.)) ; // !density of air as a function of pressure and ambient temp
-				double Re_forced  = MAX(0.1,rho_air*V_cover*L_char/mu_air) ; //  !Reynolds number of wind moving across module
-				double Nu_forced  = 0.037 * pow(Re_forced,4./5.) * pow(Pr_air, 1./3.) ; //  !Nusselt Number (Incropera et al., 2006)
-				double h_forced   = Nu_forced * k_air / L_char;
-				double h_sky      = (TC*TC+T_sky*T_sky)*(TC+T_sky);
+                int iter = 0;
+                
+                                                                            //double Re_forced  = MAX(0.1,rho_air*V_cover*L_char/mu_air) ; //  !Reynolds number of wind moving across module
+                //double Re_forced = MAX(0.1, rho_air * V_cover * Lsc / mu_air); //  !Reynolds number of wind moving across module
+                
+                
+                double Re_forced = MAX(0.1, rho_air * V_cover * L_char / mu_air);
+                double Nu_forced  = 0.037 * pow(Re_forced,4./5.) * pow(Pr_air, 1./3.) ; //  !Nusselt Number (Incropera et al., 2006)
+                double h_forced = 0;
+                if (lacunarity_enable == 0)
+                    h_forced   = Nu_forced * k_air / L_char;
+                else {
+                    double Re_forced_Lsc = MAX(0.1, rho_air * V_cover * Lsc / mu_air);
+                    h_forced = (k_air / (ground_clearance_height + 2.0 * Length * sind(input.Tilt))) * pow(10, (0.090125 * pow(Re_forced_Lsc, 1. / 5.) * pow(Pr_air, 1. / 12.) + 1.8617));
+                }
+                double h_sky      = (TC*TC+T_sky*T_sky)*(TC+T_sky);
 				double h_ground   = (TC*TC+T_ground*T_ground)*(TC+T_ground);
 				double h_free_c   = free_convection_194(TC,TA,input.Tilt,rho_air,Area,Length,Width) ; //   !Call function to calculate free convection on tilted surface (top)           
 				double h_free_b   = free_convection_194(TC,TA,180.0-input.Tilt,rho_air,Area,Length,Width); // !Call function to calculate free convection on tilted surface (bottom)              
 				double h_conv_c   = pow( pow(h_forced,3.) + pow(h_free_c,3.) , 1./3.) ; // !Combine free and forced heat transfer coefficients (top)
 				double h_conv_b   = pow( pow(h_forced,3.) + pow(h_free_b,3.) , 1./3.) ; // !Combine free and forced heat transfer coefficients (bottom)
-			
+                //h_conv_c = h_forced;
+                //h_conv_b = h_forced;
 				// !Energy balance to calculate TC
 				double TC1 = ( (h_conv_c+h_conv_b)*TA 
 						+ (Fcs*EmisC+Fbs*EmisB)*sigma*h_sky*T_sky 
@@ -505,6 +587,8 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 						+ h_conv_b 
 						+ (Fcs*EmisC +Fbs*EmisB)*sigma*h_sky 
 						+ (Fcg*EmisC + Fbg*EmisB)*sigma*h_ground );
+
+                
 
 				// !Since some variables in TC1 calc are function of TC, iterative solving is required        
 				err_TC     = TC1 - TC; // !Error between n-1 and n temp calculations
@@ -516,7 +600,7 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 			break;
 				
 		case 2: // !Flush Mounting Configuration
-			while( fabs(err_TC) > 0.001)
+			while(std::abs(err_TC) > 0.001)
 			{
 				double rho_air    = Patm*28.967/8314.34*(1 / ((TA+TC)/2.)); // !density of air a function of pressure and ambient temp
 				double Re_forced  = MAX(0.1,rho_air*V_cover*L_char/mu_air); //  !Reynolds number of wind moving across panel: function of L_char: array depen?
@@ -539,7 +623,7 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 			break;
 			
 		case 3: // !Integrated Mounting Configuration
-			while( fabs(err_TC) > 0.001)
+			while(std::abs(err_TC) > 0.001)
 			{
 				double TbackK = TbackInteg + 273.15;
 				double rho_air    = Patm*28.967/8314.34*(1 / ((TA+TC)/2.)); // !density of air a function of pressure and film temp
@@ -605,7 +689,7 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 					return false; // invalid parameter specified
 					
 				// !Begin iteration to find cell temperature
-				while ( fabs(err_TC) > 0.001 )
+				while (std::abs(err_TC) > 0.001 )
 				{      
 					double rho_air    = Patm*28.967/8314.34*(1 / ((TA+TC)/2.)); // !density of air a function of pressure and film temp
 					double err_v      = 100; //                                     !set error for channel velocity iteration
@@ -614,7 +698,7 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 					int v_iter     = 0 ; //                       !set iteration counter for channel velocity iteration
 						
 					// !Calculate air velocity through channel by assuming roughness and estimating pressure drop
-					while ( v_iter < 80 && fabs(err_v) > 0.001)
+					while ( v_iter < 80 && std::abs(err_v) > 0.001)
 					{
 						double Re_dh_ch   = rho_air*v_ch*(D_h / mu_air) ; //   !Reynolds number for channel flow
 						double f_fd       = ffd_194(D_h,Re_dh_ch)  ; //         !Friction factor of channel flow
@@ -656,7 +740,7 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 					double h_radbk = 0;
 					double Q_conv_c = 0, Q_conv_r = 0;
 					// !Calculate roof temperature based on current cell temperature guess
-					while ( iter_T_rw < 121 && fabs(err_T_rw) > 0.001 )
+					while ( iter_T_rw < 121 && std::abs(err_T_rw) > 0.001 )
 					{
 						double T_cr = (TC+T_rw)/2.; // !Average of cell and roof temp assumed in correlations
 
@@ -745,7 +829,7 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 		P_guess    = P_guess + app_fac_P*err_P1; //  !Set performance to most recent calc
 		p_iter     = p_iter + 1; // !+1 to iteration counter
       
-		if ( p_iter > 300 && fabs(err_P) > 0.1 )
+		if ( p_iter > 300 && std::abs(err_P) > 0.1 )
 		{
 			m_err = "Power Calculations Did Not Converge";
 			return false;

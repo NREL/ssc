@@ -1,23 +1,33 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #include <string>
 #include <fstream>
@@ -27,7 +37,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static var_info _cm_wave_file_reader[] = {
 /*   VARTYPE           DATATYPE         NAME                           LABEL                                        UNITS     META                      GROUP                 REQUIRED_IF                CONSTRAINTS        UI_HINTS*/
-    { SSC_INPUT,         SSC_NUMBER,      "wave_resource_model_choice",           "Joint PDF or 3-hour wave resource data",                                 "0/1",             "",             "Weather Reader",          "?=0",                         "INTEGER",                  "" },
+    { SSC_INPUT,         SSC_NUMBER,      "wave_resource_model_choice",           "Joint PDF or 3-hour wave resource data",                                 "0/1",             "",             "Weather Reader",          "?=1",                         "INTEGER",                  "" },
     { SSC_INPUT,         SSC_STRING,      "wave_resource_filename",               "File path with Wave Height x Period Distribution as 2-D PDF",                     "",       "",                      "Weather Reader",      "wave_resource_model_choice=0",                       "LOCAL_FILE",      "" },
     { SSC_INPUT,         SSC_STRING,      "wave_resource_filename_ts",               "File path with 3-hour Wave Height and Period data as Time Series array",                     "",       "",                      "Weather Reader",      "wave_resource_model_choice=1",                       "LOCAL_FILE",      "" },
 
@@ -281,13 +291,13 @@ public:
                 ts_significant_wave_height = wave_heights[r];
                 ts_energy_period = wave_periods[r];
                 for (size_t j = 0; j < 21; j++) {
-                    if (abs(ts_significant_wave_height - (0.25 + (j - 1) * 0.5)) <= 0.25 && j != 0) {
+                    if (std::abs(ts_significant_wave_height - (0.25 + (j - 1) * 0.5)) <= 0.25 && j != 0) {
                         sig_wave_height_index = j;
                         break;
                     }
                 }
                 for (size_t m = 0; m < 22; m++) {
-                    if (abs(ts_energy_period - (0.5 + (m - 1))) <= 0.5 && m != 0) {
+                    if (std::abs(ts_energy_period - (0.5 + (m - 1))) <= 0.5 && m != 0) {
                         energy_period_index = m;
                         break;
                     }

@@ -1,23 +1,35 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+/*
+BSD 3-Clause License
+
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 
 
 #include <memory>
@@ -112,7 +124,7 @@ static var_info _cm_vtab_pvwattsv8[] = {
         { SSC_INPUT,        SSC_ARRAY,       "albedo",                         "Albedo",                                     "0..1",       "albedo input array of 1 constant value or 12 monthly values","Solar Resource",    "",                        "",                              "" },
         { SSC_INPUT,        SSC_NUMBER,      "albedo_default",                 "Albedo default",                             "0..1",       "default when albedo invalid","Solar Resource",    "?=0.2",                        "",                              "" },
         { SSC_INPUT,        SSC_NUMBER,      "albedo_default_snow",            "Albedo default for snow",                    "0..1",       "default when albedo invalid and snow model enabled","Solar Resource",    "?=0.6",                        "",                              "" },
-        { SSC_INPUT,        SSC_NUMBER,      "use_wf_albedo",                  "Use albedo from weather file",               "0/1",        "0=albedo input, 1=albedo from weather file (use albedo default if invalid)","Solar Resource","?=0",                    "BOOLEAN",          "" },
+        { SSC_INPUT,        SSC_NUMBER,      "use_wf_albedo",                  "Use albedo from weather file",               "0/1",        "0=albedo input, 1=albedo from weather file (use albedo default if invalid)","Solar Resource","?=1",                    "BOOLEAN",          "" },
 
         { SSC_INOUT,        SSC_NUMBER,      "system_use_lifetime_output",     "Run lifetime simulation",                    "0/1",        "",                                             "Lifetime",            "?=0",                        "",                              "" },
         { SSC_INPUT,        SSC_NUMBER,      "analysis_period",                "Analysis period",                            "years",      "",                                             "Lifetime",            "system_use_lifetime_output=1", "",                          "" },
@@ -125,10 +137,10 @@ static var_info _cm_vtab_pvwattsv8[] = {
         { SSC_INPUT,        SSC_NUMBER,      "bifaciality",                    "Module bifaciality factor",                   "0 or ~0.65","",                                             "System Design",      "?=0",                       "",                              "" },
 
         { SSC_INPUT,        SSC_NUMBER,      "array_type",                     "Array type",                                  "0/1/2/3/4", "fixed open rack,fixed roof mount,1-axis tracking,1-axis backtracking,2-axis tracking","System Design",      "*",                       "MIN=0,MAX=4,INTEGER",           "" },
-        { SSC_INPUT,        SSC_NUMBER,      "tilt",                           "Tilt angle",                                  "deg",       "H=0,V=90",                                     "System Design",      "array_type<4",            "MIN=0,MAX=90",                  "" },
-        { SSC_INPUT,        SSC_NUMBER,      "azimuth",                        "Azimuth angle",                               "deg",       "E=90,S=180,W=270",                             "System Design",      "array_type<4",            "MIN=0,MAX=360",                 "" },
-        { SSC_INPUT,        SSC_NUMBER,      "gcr",                            "Ground coverage ratio",                       "0..1",      "",                                             "System Design",      "?=0.4",                   "MIN=0.01,MAX=0.99",             "" },
-        { SSC_INPUT,        SSC_NUMBER,      "rotlim",                         "Tracker rotation angle limit",                "deg",       "",                                             "System Design",      "?=45.0",                  "",                              "" },
+        { SSC_INPUT,        SSC_NUMBER,      "tilt",                           "Tilt angle",                                  "degrees",       "H=0,V=90",                                     "System Design",      "array_type<4",            "MIN=0,MAX=90",                  "" },
+        { SSC_INPUT,        SSC_NUMBER,      "azimuth",                        "Azimuth angle",                               "degrees",       "E=90,S=180,W=270",                             "System Design",      "array_type<4",            "MIN=0,MAX=360",                 "" },
+        { SSC_INPUT,        SSC_NUMBER,      "gcr",                            "Ground coverage ratio",                       "0..1",      "",                                             "System Design",      "?=0.3",                   "MIN=0.01,MAX=0.99",             "" },
+        { SSC_INPUT,        SSC_NUMBER,      "rotlim",                         "Tracker rotation angle limit",                "degrees",       "",                                             "System Design",      "?=45.0",                  "",                              "" },
 
         { SSC_INPUT,        SSC_ARRAY,       "soiling",                        "Soiling loss",                                "%",         "",                                             "System Design",      "?",                       "",                              "" },
         { SSC_INPUT,        SSC_NUMBER,      "losses",						   "Other DC losses",                             "%",         "total system losses",                          "System Design",      "*",                       "MIN=-5,MAX=99",                 "" },
@@ -136,7 +148,7 @@ static var_info _cm_vtab_pvwattsv8[] = {
         { SSC_INPUT,        SSC_NUMBER,      "enable_wind_stow",               "Enable tracker stow at high wind speeds",     "0/1",       "",                                             "System Design",      "?=0",                     "BOOLEAN",                              "" },
         { SSC_INPUT,        SSC_NUMBER,      "stow_wspd",                      "Tracker stow wind speed threshold",           "m/s",       "",                                             "System Design",      "?=10",                    "",                              "" },
         { SSC_INPUT,        SSC_NUMBER,      "gust_factor",                    "Wind gust estimation factor",                 "",          "",                                             "System Design",      "?",                       "",                              "" },
-        { SSC_INPUT,        SSC_NUMBER,      "wind_stow_angle",                "Tracker angle for wind stow",                 "deg",       "",                                             "System Design",      "?=30.0",                  "",                              "" },
+        { SSC_INPUT,        SSC_NUMBER,      "wind_stow_angle",                "Tracker angle for wind stow",                 "degrees",       "",                                             "System Design",      "?=30.0",                  "",                              "" },
 
         { SSC_INPUT,        SSC_NUMBER,      "en_snowloss",                    "Enable snow loss model",                      "0/1",       "",                                             "System Design",      "?=0",                     "BOOLEAN",                       "" },
 
@@ -168,7 +180,7 @@ static var_info _cm_vtab_pvwattsv8[] = {
         { SSC_OUTPUT,       SSC_ARRAY,       "ss_beam_factor",                 "Calculated self-shading factor for beam radiation",           "",          "1=no shading",                                             "Time Series",      "*",                       "",                                     "" },
         { SSC_OUTPUT,       SSC_ARRAY,       "ss_sky_diffuse_factor",          "Calculated self-shading factor for sky diffuse radiation",           "",          "1=no shading",                                             "Time Series",      "*",                       "",                                     "" },
         { SSC_OUTPUT,       SSC_ARRAY,       "ss_gnd_diffuse_factor",          "Calculated self-shading factor for ground-reflected diffuse radiation",           "",          "1=no shading",                                             "Time Series",      "*",                       "",                                     "" },
-        { SSC_OUTPUT,       SSC_ARRAY,       "aoi",                            "Angle of incidence",                          "deg",       "",                                             "Time Series",      "*",                       "",                          "" },
+        { SSC_OUTPUT,       SSC_ARRAY,       "aoi",                            "Angle of incidence",                          "degrees",       "",                                             "Time Series",      "*",                       "",                          "" },
         { SSC_OUTPUT,       SSC_ARRAY,       "poa",                            "Plane of array irradiance",                   "W/m2",      "",                                             "Time Series",      "*",                       "",                          "" },
         { SSC_OUTPUT,       SSC_ARRAY,       "tpoa",                           "Transmitted plane of array irradiance",       "W/m2",      "",                                             "Time Series",      "*",                       "",                          "" },
         { SSC_OUTPUT,       SSC_ARRAY,       "tcell",                          "Module temperature",                          "C",         "",                                             "Time Series",      "*",                       "",                          "" },
@@ -199,9 +211,9 @@ static var_info _cm_vtab_pvwattsv8[] = {
         { SSC_OUTPUT,       SSC_STRING,      "location",                       "Location ID",                                 "",          "",                                             "Location",      "*",                       "",                          "" },
         { SSC_OUTPUT,       SSC_STRING,      "city",                           "City",                                        "",          "",                                             "Location",      "*",                       "",                          "" },
         { SSC_OUTPUT,       SSC_STRING,      "state",                          "State",                                       "",          "",                                             "Location",      "*",                       "",                          "" },
-        { SSC_OUTPUT,       SSC_NUMBER,      "lat",                            "Latitude",                                    "deg",       "",                                             "Location",      "*",                       "",                          "" },
-        { SSC_OUTPUT,       SSC_NUMBER,      "lon",                            "Longitude",                                   "deg",       "",                                             "Location",      "*",                       "",                          "" },
-        { SSC_OUTPUT,       SSC_NUMBER,      "tz",                             "Time zone",                                   "hr",        "",                                             "Location",      "*",                       "",                          "" },
+        { SSC_OUTPUT,       SSC_NUMBER,      "lat",                            "Latitude",                                    "degrees",       "",                                             "Location",      "*",                       "",                          "" },
+        { SSC_OUTPUT,       SSC_NUMBER,      "lon",                            "Longitude",                                   "degrees",       "",                                             "Location",      "*",                       "",                          "" },
+        { SSC_OUTPUT,       SSC_NUMBER,      "tz",                             "Time zone",                                   "UTC offset",        "",                                    "Location",      "*",                       "",                          "" },
         { SSC_OUTPUT,       SSC_NUMBER,      "elev",                           "Site elevation",                              "m",         "",                                             "Location",      "*",                       "",                          "" },
 
         { SSC_OUTPUT,       SSC_NUMBER,      "inverter_efficiency",            "Inverter efficiency at rated power",          "%",         "",                                             "PVWatts",      "",                        "",                              "" },
@@ -642,9 +654,7 @@ public:
             }
         }
 
-        adjustment_factors haf(this, "adjust");
-        if (!haf.setup())
-            throw exec_error("pvwattsv8", "Failed to set up adjustment factors: " + haf.error());
+        
 
         // read all the shading input data and calculate the hourly factors for use subsequently
         // timeseries beam shading factors cannot be used with non-annual data
@@ -717,6 +727,11 @@ public:
 
         size_t nrec = wdprov->nrecords();
         size_t nlifetime = nrec * nyears;
+
+        adjustment_factors haf(this, "adjust");
+        if (!haf.setup(nrec, nyears))
+            throw exec_error("pvwattsv8", "Failed to set up adjustment factors: " + haf.error());
+
         size_t step_per_hour = 1; //default to 1 step per hour for non-annual simulations
         if (wdprov->annualSimulation())
             step_per_hour = nrec / 8760; //overwrite with real value for annual simulations
@@ -972,7 +987,7 @@ public:
                             {
                                 // one axis tracker stows at a prescribed rotation angle,
                                 // but still need to consider the rotation axis tilt and azimuth
-                                double stow_angle = fabs(wind_stow_angle_deg);
+                                double stow_angle = std::abs(wind_stow_angle_deg);
                                 if (rot < 0) stow_angle = -stow_angle;  // go to stow in the same direction of current tracker position
 
                                 irr.set_surface(irrad::SINGLE_AXIS, pv.tilt, pv.azimuth,

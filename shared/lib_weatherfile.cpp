@@ -1,24 +1,35 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 
 #include <stdio.h>
 #include <cmath>
@@ -287,7 +298,7 @@ float calc_dewpt(float db, float rh)  /* Function to find dewpoint temperature *
                 ptb = t + 10.0;
                 ptc = (pta + ptb) / 2.0;
             }
-            while (fabs(pres - pres_dew) > 0.00001 && fabs(pta - ptb) > 0.05)
+            while (std::abs(pres - pres_dew) > 0.00001 && std::abs(pta - ptb) > 0.05)
             {
                 dpt = (float)(ptc - 273.15);
                 t = ptc;
@@ -357,7 +368,7 @@ double calc_twet(double T, double RH, double P)
             hiflag = true;
         }
 
-        if (fabs(err) < tol) break;
+        if (std::abs(err) < tol) break;
 
         //If the error is still too high, guess new values
         if (hiflag && lowflag) {
@@ -478,7 +489,7 @@ bool is_missing(double v) {
 }
 
 float check_missing(double v, double missing = -999.) {
-    if (std::fabs(v - missing) <= 0.01) {
+    if (std::abs(v - missing) <= 0.01) {
         return std::numeric_limits<float>::quiet_NaN();
     }
     else return (float)v;
@@ -1502,7 +1513,7 @@ bool weatherfile::open(const std::string& file, bool header_only)
 
     // make sure data is single-year
     if (m_columns[MINUTE].index != -1) {
-        int minDiff = (int)abs(m_columns[MINUTE].data[1] - m_columns[MINUTE].data[0]);
+        int minDiff = (int)std::abs(m_columns[MINUTE].data[1] - m_columns[MINUTE].data[0]);
         if (minDiff == 0) minDiff = 60;
         if (minDiff * 60 != (int)m_stepSec) {
             m_message = util::format("Weather file timestep per hour (%f) does not correspond to 8760/nRecords", minDiff / 60.);

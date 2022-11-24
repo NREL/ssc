@@ -1,24 +1,35 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 
 
 #ifndef _LIB_BATTERY_POWERFLOW_H_
@@ -61,7 +72,7 @@ public:
 	BatteryPowerFlow(const BatteryPowerFlow& powerFlow);
 
 	/// Initialize the power flow for the battery system.  Only needs to be called for manual dispatch control
-	void initialize(double stateOfCharge);
+	void initialize(double stateOfCharge, bool systemPriorityCharge);
 
 	/// Reset the power flow for a new time step
 	void reset();
@@ -140,25 +151,27 @@ public:
 
 	double dtHour;	   /// The timestep in hours, used for accumulated power losses
 
-	double powerSystem;				   ///< The power production of the renewable system (PV array) (kW)
-	double powerSystemThroughSharedInverter; ///< The power going through the shared inverter (kW)
-	double powerLoad;			   ///< The power required by the electric load (kW)
-    double powerCritLoad;          ///< The power for critical loads during an outage. Battery will only discharge to this during outage (kW)
+	double powerSystem;				   ///< The power production of the renewable system (PV array) (kW) AC when AC connected, DC when DC connected
+	double powerSystemThroughSharedInverter; ///< The power going through the shared inverter (kWac)
+	double powerLoad;			   ///< The power required by the electric load (kWac)
+    double powerCritLoad;          ///< The power for critical loads during an outage. Battery will only discharge to this during outage (kWac)
 	double powerBatteryDC; 	       ///< The power flow to and from the battery (> 0, discharging, < 0 charging) (kWdc)
 	double powerBatteryAC; 	       ///< The power flow to and from the battery (> 0, discharging, < 0 charging) (kWac)
 	double powerBatteryTarget;	   ///< A user specified or algorithm calculated target dispatch power (kW)
 	double powerGrid;              ///< The power flow to and from the grid (> 0, to grid, < 0 from grid) (kW)
 	double powerGeneratedBySystem; /// The power generated by the combined power generator and battery (kW)
-	double powerSystemToLoad;      ///< The power from the renewable system to the electric load (kW)
-	double powerSystemToBattery;   ///< The power from renewable system to the battery (kW)
-	double powerSystemToGrid;      ///< The power from renewable system to the grid (kW)
-	double powerSystemClipped;	   ///< The power from renewable system that will be clipped if not used in the battery (kW)
-	double powerClippedToBattery;  ///< The power from that would otherwise have been clipped to the battery (kW)
-	double powerGridToBattery;     ///< The power from the grid to the battery (kW)
+	double powerSystemToLoad;      ///< The power from the renewable system to the electric load (kWac)
+	double powerSystemToBatteryAC;   ///< The power from renewable system to the battery (kWac)
+	double powerSystemToBatteryDC;   ///< The power from renewable system to the battery (kWdc)
+	double powerSystemToGrid;      ///< The power from renewable system to the grid (kWac)
+	double powerSystemClipped;	   ///< The power from renewable system that will be clipped if not used in the battery (kWdc)
+	double powerClippedToBattery;  ///< The power from that would otherwise have been clipped to the battery (kWdc)
+	double powerGridToBattery;     ///< The power from the grid to the battery (kWac)
 	double powerGridToLoad;        ///< The power from the grid to the electric load (kW)
 	double powerBatteryToLoad;     ///< The power from the battery to the electric load (kW)
 	double powerBatteryToGrid;     ///< The power from the battery to the grid (kW)
     double powerBatteryToSystemLoad; ///< The power from the battery to system loads (such as inverter night time losses) (kW)
+    double powerBatteryToInverterDC; ///< The power from the battery to the DC side of the inverter (kWdc)
     double powerCritLoadUnmet;     ///< Output of unmet critical load during outage (kW)
     double powerLossesUnmet;       ///< Output of unmet losses (system or battery) during outage (kW)
     double powerFuelCell;          ///< The power from the fuelcell (kW)
@@ -176,7 +189,10 @@ public:
     double powerInterconnectionLoss; ///< The power loss due to interconnection limit, outage, or curtailment (kW)
     double powerCurtailmentLimit; ///< The curtailment limit for the current step (kW)
     double voltageSystem;		   ///< The system voltage
-    double acLossPostInverter; ///< Wiring and transformer losses. Currently applies only to the PV inverter output, so does not affect AC connected batteries (%)
+    double acLossWiring; ///< Wiring losses. Currently applies only to the PV inverter output, so does not affect AC connected batteries (%)
+    double acXfmrLoadLoss; ///< Transformer load loss percent (%)
+    double acXfmrNoLoadLoss; ///< Transformer no-load loss value (kWac)
+    double acXfmrRating; ///< Transformer rating for transformer loss calculations (kWac)
     double acLossPostBattery; ///< Expected system and daily losses. Applies to the final AC output including the battery (%)
 
     bool   isOutageStep;

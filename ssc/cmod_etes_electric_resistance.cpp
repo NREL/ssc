@@ -1,24 +1,35 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 
 #include "core.h"
 
@@ -86,7 +97,7 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
     // TES
         // Performance
     { SSC_INPUT,  SSC_NUMBER, "hot_htf_code",                  "Receiver HTF, 17=Salt (60% NaNO3, 40% KNO3) 10=Salt (46.5% LiF 11.5% NaF 42% KF) 50=Lookup tables", "", "",          "Thermal Storage",                          "*",                                                                "",              ""},
-    { SSC_INPUT,  SSC_MATRIX, "ud_hot_htf_props",              "User-defined TES fluid property data",                          "-",            "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
+    { SSC_INPUT,  SSC_MATRIX, "ud_hot_htf_props",              "User-defined TES fluid property data",                          "-",            "",                                  "Thermal Storage",                          "hot_htf_code=50",                                                  "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "tes_init_hot_htf_percent",      "Initial fraction of available volume that is hot",              "%",            "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "h_tank",                        "Total height of tank (height of HTF when tank is full)",        "m",            "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "cold_tank_max_heat",            "Rated heater capacity for cold tank heating",                   "MW",           "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
@@ -338,6 +349,13 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
     { SSC_OUTPUT,    SSC_ARRAY,  "disp_presolve_nvar",         "Dispatch number of variables in problem",                       "",             "",                                  "",                                         "sim_type=1",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_ARRAY,  "disp_solve_time",            "Dispatch solver time",                                          "sec",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
 
+        // These outputs correspond to the first csp-solver timestep in the reporting timestep.
+        //     Subsequent csp-solver timesteps within the same reporting timestep are not tracked
+    { SSC_OUTPUT,    SSC_ARRAY,  "operating_modes_a",          "First 3 operating modes tried",                                 "",             "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "operating_modes_b",          "Next 3 operating modes tried",                                  "",             "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "operating_modes_c",          "Final 3 operating modes tried",                                 "",             "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+
+
         // Annual single-value outputs
     { SSC_OUTPUT, SSC_NUMBER, "annual_energy",                 "Annual total electric power to grid",                           "kWhe",         "",                                  "",                                         "sim_type=1",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "annual_energy_full_availability","Annual total electric power to grid w/ full availability",     "MWhe",         "",                                  "",                                         "sim_type=1",                                                                "",              "" },
@@ -418,7 +436,10 @@ public:
 
         // TES parameters
         int hot_htf_code = as_integer("hot_htf_code");
-        util::matrix_t<double> ud_hot_htf_props = as_matrix("ud_hot_htf_props");
+        util::matrix_t<double> ud_hot_htf_props;
+        if (hot_htf_code == 50) {
+            ud_hot_htf_props = as_matrix("ud_hot_htf_props");
+        }
 
         // System Design Calcs
         double q_dot_pc_des = W_dot_cycle_des / eta_cycle;      //[MWt]
@@ -633,7 +654,6 @@ public:
         // Still need to define mc_csp_ops blocks and fractions although we're not using them
         tou_params->mc_csp_ops.mc_weekdays.resize_fill(12, 24, 1.0);
         tou_params->mc_csp_ops.mc_weekends.resize_fill(12, 24, 1.0);
-        tou_params->mc_csp_ops.mvv_tou_arrays[C_block_schedule_csp_ops::TURB_FRAC].resize(2, std::numeric_limits<double>::quiet_NaN());
         
         tou.mc_dispatch_params.m_is_tod_pc_target_also_pc_max = true;
         tou.mc_dispatch_params.m_is_block_dispatch = false;
@@ -655,6 +675,14 @@ public:
                 size_t count_ppa_price_input;
                 ssc_number_t* ppa_price_input_array = as_array("ppa_price_input", &count_ppa_price_input);
                 ppa_price_year1 = (double)ppa_price_input_array[0];  // [$/kWh]
+
+                // if no dispatch optimization, then need to define a real turbine fraction
+                //if (is_dispatch) {
+                //    tou_params->mc_csp_ops.mvv_tou_arrays[C_block_schedule_csp_ops::TURB_FRAC].resize(2, std::numeric_limits<double>::quiet_NaN());
+                //}
+                //else {
+                    tou_params->mc_csp_ops.mvv_tou_arrays[C_block_schedule_csp_ops::TURB_FRAC].resize(2, 1.0);
+                //}
 
                 // Time-of-Delivery factors by time step:
                 int ppa_mult_model = as_integer("ppa_multiplier_model");
@@ -834,6 +862,11 @@ public:
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_PRES_NCONSTR, allocate("disp_presolve_nconstr", n_steps_fixed), n_steps_fixed);
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_PRES_NVAR,    allocate("disp_presolve_nvar", n_steps_fixed), n_steps_fixed);
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_TIME,   allocate("disp_solve_time", n_steps_fixed), n_steps_fixed);
+
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::CTRL_OP_MODE_SEQ_A, allocate("operating_modes_a", n_steps_fixed), n_steps_fixed);
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::CTRL_OP_MODE_SEQ_B, allocate("operating_modes_b", n_steps_fixed), n_steps_fixed);
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::CTRL_OP_MODE_SEQ_C, allocate("operating_modes_c", n_steps_fixed), n_steps_fixed);
+
 
         // *****************************************************
         // *****************************************************
@@ -1116,7 +1149,7 @@ public:
 
         // 'adjustment_factors' class stores factors in hourly array, so need to index as such
         adjustment_factors haf(this, "adjust");
-        if (!haf.setup())
+        if (!haf.setup(n_steps_fixed))
             throw exec_error("etes_electric_resistance", "failed to setup adjustment factors: " + haf.error());
 
         ssc_number_t* p_gen = allocate("gen", count);

@@ -1,24 +1,35 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 
 #include "csp_solver_cr_heat_pump.h"
 #include "csp_solver_core.h"
@@ -118,6 +129,21 @@ C_csp_cr_heat_pump::C_csp_cr_heat_pump(double COP_heat_des /*-*/, double q_dot_h
 
 C_csp_cr_heat_pump::~C_csp_cr_heat_pump(){}
 
+int C_csp_cr_heat_pump::test_heat_pump_perf_call(double m_dot_ND,
+    double& W_dot_gross_ND /*-*/, double& Q_dot_ND /*-*/,
+    double& Q_dot_cold_in_ND /*-*/,
+    double& T_HT_hot_out /*C*/, double& T_CT_cold /*C*/) {
+
+    double T_HT_cold_des, T_CT_hot_des;
+    mp_carnot_heat_pump->get_des_for_perf(T_HT_cold_des, T_CT_hot_des);
+
+    return mp_carnot_heat_pump->performance(T_HT_cold_des, m_dot_ND,
+        T_CT_hot_des, m_dot_ND,
+        W_dot_gross_ND /*-*/, Q_dot_ND /*-*/,
+        Q_dot_cold_in_ND /*-*/,
+        T_HT_hot_out /*C*/, T_CT_cold /*C*/);
+}
+
 // ***********************
 // Inherited methods
 // ***********************
@@ -190,7 +216,12 @@ void C_csp_cr_heat_pump::init(const C_csp_collector_receiver::S_csp_cr_init_inpu
 
     // State variables
     m_E_su_initial = m_E_su_des;        //[MWt-hr]
-    m_operating_mode_converged = C_csp_collector_receiver::OFF;					//
+    if (m_E_su_initial == 0.0) {
+        m_operating_mode_converged = C_csp_collector_receiver::OFF_NO_SU_REQ;
+    }
+    else {
+        m_operating_mode_converged = C_csp_collector_receiver::OFF;					//
+    }
 
     return;
 }
@@ -527,6 +558,10 @@ void C_csp_cr_heat_pump::converged()
         m_E_su_calculated = m_E_su_des;
     }
 
+    if (m_E_su_des == 0.0 && m_operating_mode_converged == OFF) {
+        m_operating_mode_converged = OFF_NO_SU_REQ;
+    }
+
     m_E_su_initial = m_E_su_calculated;
 
     mc_reported_outputs.set_timestep_outputs();
@@ -623,6 +658,13 @@ double heat_pump_helpers::C_carnot_heat_pump::cop_carnot(double T_HT_hot /*C*/, 
     return T_HT_avg / (T_HT_avg - T_CT_avg);
 }
 
+void heat_pump_helpers::C_carnot_heat_pump::get_des_for_perf(double& T_HT_cold_des /*C*/,
+    double& T_CT_hot_des /*C*/)
+{
+    T_HT_cold_des = m_T_HT_cold_des;
+    T_CT_hot_des = m_T_CT_hot_des;
+}
+
 int heat_pump_helpers::C_carnot_heat_pump::performance(double T_HT_cold_in /*C*/, double m_dot_HT_ND /*-*/,
     double T_CT_hot /*C*/, double m_dot_CT_ND /*-*/,
     double& W_dot_gross_ND /*-*/, double& Q_dot_hot_out_ND /*-*/,
@@ -659,7 +701,7 @@ int heat_pump_helpers::C_carnot_heat_pump::performance(double T_HT_cold_in /*C*/
 
     double tol_T_CT_cold = 0.1;  //[C]
 
-    if (abs(diff_T_CT_cold) > tol_T_CT_cold) {
+    if (std::abs(diff_T_CT_cold) > tol_T_CT_cold) {
 
         double T_CT_cold_guess_2 = c_eq.m_T_CT_cold_calc;    //[C]
         double diff_T_CT_cold_guess_2 = std::numeric_limits<double>::quiet_NaN();
@@ -669,7 +711,7 @@ int heat_pump_helpers::C_carnot_heat_pump::performance(double T_HT_cold_in /*C*/
             return -1;
         }
 
-        if (abs(diff_T_CT_cold_guess_2) > tol_T_CT_cold) {
+        if (std::abs(diff_T_CT_cold_guess_2) > tol_T_CT_cold) {
 
             C_monotonic_eq_solver::S_xy_pair xy1;
             xy1.x = T_CT_cold_guess;
@@ -713,7 +755,7 @@ int heat_pump_helpers::C_MEQ__T_CT_cold::operator()(double T_CT_cold /*C*/, doub
     // using input T_CT_hot
     double cop_temp = mpc_carnot_heat_pump->cop_carnot(m_T_HT_hot, m_T_HT_cold,
                                             m_T_CT_hot, T_CT_cold);
-    double cop_pl = pow(1. - abs(1. - m_Q_dot_hot_out_ND), 0.2);
+    double cop_pl = std::pow(1. - std::abs(1. - m_Q_dot_hot_out_ND), 0.2);
     double cop = cop_temp * cop_pl;
 
     // Calculate power by scaling by ratio of calculated and design carnot cop
