@@ -52,6 +52,7 @@ static var_info _cm_vtab_geothermal[] = {
     // climate and resource inputs		 								       											   				     
     { SSC_INPUT,        SSC_STRING,      "file_name",                          "local weather file path",                      "",               "",             "GeoHourly",        "ui_calculations_only=0",   "LOCAL_FILE",      "" },
     { SSC_INPUT,        SSC_NUMBER,      "resource_potential",                 "Resource Potential",                           "MW",             "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
+    { SSC_INPUT,        SSC_NUMBER,      "allow_reservoir_replacements",       "Allow reservoir replacements",                 "0/1",            "",             "GeoHourly",        "?=1",   "",                "" },
     { SSC_INPUT,        SSC_NUMBER,      "resource_type",                      "Type of Resource",                             "",               "",             "GeoHourly",        "*",                        "INTEGER",         "" },
     { SSC_INPUT,        SSC_NUMBER,      "resource_temp",                      "Resource Temperature",                         "C",              "",             "GeoHourly",        "*",                        "",                "" },
     { SSC_INPUT,        SSC_NUMBER,      "resource_depth",                     "Resource Depth",                               "m",              "",             "GeoHourly",        "*",                        "",                "" },
@@ -399,6 +400,7 @@ public:
 		else {
 			// running the model, we need to specify other inputs
 			geo_inputs.md_PotentialResourceMW = as_double("resource_potential");
+            geo_inputs.md_AllowReservoirReplacements = as_integer("allow_reservoir_replacements");
 
 			// we need to create the SPowerBlockInputs & SPowerBlockParameters and set the inputs
 

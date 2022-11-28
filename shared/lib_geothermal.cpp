@@ -609,7 +609,7 @@ double CGeothermalAnalyzer::FractionOfMaxEfficiency()
 
 bool CGeothermalAnalyzer::CanReplaceReservoir(double dTimePassedInYears)
 {
-	return ((mi_ReservoirReplacements < NumberOfReservoirs()) && (dTimePassedInYears + geothermal::FINAL_YEARS_WITH_NO_REPLACEMENT <= mo_geo_in.mi_ProjectLifeYears)) ? true : false;
+	return ( (mo_geo_in.md_AllowReservoirReplacements == 1) && (mi_ReservoirReplacements < NumberOfReservoirs()) && (dTimePassedInYears + geothermal::FINAL_YEARS_WITH_NO_REPLACEMENT <= mo_geo_in.mi_ProjectLifeYears)) ? true : false;
 }
 
 void CGeothermalAnalyzer::CalculateNewTemperature(double dElapsedTimeInYears)
@@ -643,21 +643,24 @@ double CGeothermalAnalyzer::GetPumpWorkKW(void)
 
 double CGeothermalAnalyzer::NumberOfReservoirs(void)
 {
-	double d1 = GetAEBinary();
-	if ((d1 == 0) && (geothermal::IMITATE_GETEM))
-	{
-		ms_ErrorString = ("GetAEBinary returned zero in CGeothermalAnalyzer::NumberOfReservoirs. Could not calculate the number of reservoirs.");
-		return 0;
-	}
+    if (mo_geo_in.md_AllowReservoirReplacements == 1) {
+        double d1 = GetAEBinary();
+        if ((d1 == 0) && (geothermal::IMITATE_GETEM))
+        {
+            ms_ErrorString = ("GetAEBinary returned zero in CGeothermalAnalyzer::NumberOfReservoirs. Could not calculate the number of reservoirs.");
+            return 0;
+        }
 
-	double dFactor = (geothermal::IMITATE_GETEM) ? GetAE() / d1 : 1;
-	double dPlantOutputKW = dFactor * flowRateTotal() * GetPlantBrineEffectiveness() / 1000.0; // KW = (watt-hr/lb)*(lbs/hr) / 1000
-	if (dPlantOutputKW == 0)
-	{
-		ms_ErrorString = ("The Plant Output was zero in CGeothermalAnalyzer::NumberOfReservoirs. Could not calculate the number of reservoirs.");
-		return 0;
-	}
-	return floor(mo_geo_in.md_PotentialResourceMW * 1000 / dPlantOutputKW);
+        double dFactor = (geothermal::IMITATE_GETEM) ? GetAE() / d1 : 1;
+        double dPlantOutputKW = dFactor * flowRateTotal() * GetPlantBrineEffectiveness() / 1000.0; // KW = (watt-hr/lb)*(lbs/hr) / 1000
+        if (dPlantOutputKW == 0)
+        {
+            ms_ErrorString = ("The Plant Output was zero in CGeothermalAnalyzer::NumberOfReservoirs. Could not calculate the number of reservoirs.");
+            return 0;
+        }
+        return floor(mo_geo_in.md_PotentialResourceMW * 1000 / dPlantOutputKW);
+    }
+    else return 1.0;
 }
 
 
