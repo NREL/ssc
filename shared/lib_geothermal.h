@@ -110,7 +110,8 @@ struct SGeothermal_Inputs
     double md_InjectionWellType;                            // 0 open hole, 1 liner
 	double md_UserSpecifiedPumpWorkKW;
 	double md_PotentialResourceMW;							// MW, default = 200 MW, determines how many times reservoir can be replaced
-	double md_ResourceDepthM;								// meters, default 2000
+    double md_AllowReservoirReplacements;                   // 0/1, turn on/off reservoir replacements
+    double md_ResourceDepthM;								// meters, default 2000
 	double md_TemperatureResourceC;							// degrees C, default 200
 	double md_TemperatureEGSAmbientC;						// Note in GETEM spreadsheet says that this is only used in calculating resource temp or depth.  However, if EGS calculations are based on depth, then resource temp is based on this number, so all power calcs are based on it as well
 	double md_TemperaturePlantDesignC;						// degrees C, default 225, only used for EGS
