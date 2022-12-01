@@ -89,5 +89,152 @@ bool me_array_cable_length(ssc_data_t data)
     return true;
 }
 
+bool me_array_cable_voltage(ssc_data_t data)
+{
+    auto vt = static_cast<var_table*>(data);
+    if (!vt) {
+        return false;
+    }
+
+    double devices_per_row, device_spacing_in_row, number_rows, row_spacing, cable_system_overbuild, floating_array, export_cable_redundancy, water_depth, number_devices, distance_to_shore;
+    double device_rated_power, system_capacity;
+    vt_get_number(vt, "devices_per_row", &devices_per_row);
+    vt_get_number(vt, "device_rated_power", &device_rated_power);
+    vt_get_number(vt, "system_capacity", &system_capacity);
+    vt_get_number(vt, "device_spacing_in_row", &device_spacing_in_row);
+    vt_get_number(vt, "number_rows", &number_rows);
+    vt_get_number(vt, "row_spacing", &row_spacing);
+    vt_get_number(vt, "cable_system_overbuild", &cable_system_overbuild);
+    vt_get_number(vt, "floating_array", &floating_array);
+    vt_get_number(vt, "export_cable_redundancy", &export_cable_redundancy);
+    vt_get_number(vt, "water_depth", &water_depth);
+    vt_get_number(vt, "number_devices", &number_devices);
+    vt_get_number(vt, "distance_to_shore", &distance_to_shore);
+
+
+    double PF = 0.95; //Power Factor
+    double angle = acos(PF);
+    double reactive_power = sqrt(3.0); //Where is this used
+    double riser_cable_rated_power_per_device = device_rated_power / (sqrt(3.0) * PF * 1000.0);
+    double array_cable_rated_power_per_row = (device_rated_power * devices_per_row) / (sqrt(3.0) * PF * 1000.0);
+    double export_cable_rated_power_array_ac = (system_capacity) / (sqrt(3.0) * PF * 1000.0);
+    double export_cable_rated_power_array_hvdc = (system_capacity) / 1000.0;
+
+    //Cable Electrical Specifications
+    double export_cable_type = 0; //0 - AC, 1 - HVDC Appendix A Electrical Instracture Model spreadsheet
+    if (system_capacity >= 200000 && distance_to_shore >= 150000 ||
+        (system_capacity >= 300000 && distance_to_shore >= 100000) ||
+        (system_capacity >= 500000 && distance_to_shore >= 90000) ||
+        (system_capacity >=600000 && distance_to_shore >= 80000) ||
+        (system_capacity >= 1100000 && distance_to_shore >= 70000)) {
+        export_cable_type = 1;
+    }
+    vt->assign("export_cable_type", export_cable_type);
+    //Riser Cable
+    double riser_cable_voltage = 0;
+    double riser_cable_cost = 0; //$/m
+    if ( array_cable_rated_power_per_row < 4) {
+        riser_cable_voltage = 7.2;
+        riser_cable_cost = 57.955 *  array_cable_rated_power_per_row;
+    }
+    else if (riser_cable_rated_power_per_device >= 5 && riser_cable_rated_power_per_device < 9) {
+        riser_cable_voltage = 12;
+        riser_cable_cost = 47.214 * riser_cable_rated_power_per_device - 91.05;
+    }
+    else if (riser_cable_rated_power_per_device >= 9 && riser_cable_rated_power_per_device < 14) {
+        riser_cable_voltage = 24;
+        riser_cable_cost = 22.748 * riser_cable_rated_power_per_device - 68.376;
+    }
+    else if (riser_cable_rated_power_per_device >= 14) {
+        riser_cable_voltage = 36;
+        riser_cable_cost = 20.82 * riser_cable_rated_power_per_device - 163.14;
+    }
+    vt->assign("riser_cable_voltage", riser_cable_voltage);
+    vt->assign("riser_cable_cost", riser_cable_cost);
+
+    //Array Cable
+    double array_cable_voltage = 0;
+    double array_cable_cost = 0;
+    if ( array_cable_rated_power_per_row < 4) {
+        array_cable_voltage = 7.2;
+        array_cable_cost = 44.245 *  array_cable_rated_power_per_row;
+    }
+    else if ( array_cable_rated_power_per_row >= 4 &&  array_cable_rated_power_per_row < 9) {
+        array_cable_voltage = 12;
+        array_cable_cost = 31.029 *  array_cable_rated_power_per_row - 40.744;
+    }
+    else if ( array_cable_rated_power_per_row >= 9 &&  array_cable_rated_power_per_row < 14) {
+        array_cable_voltage = 24;
+        array_cable_cost = 17.348 *  array_cable_rated_power_per_row - 61.467;
+    }
+    else if ( array_cable_rated_power_per_row >= 14 && array_cable_rated_power_per_row < 30) {
+        array_cable_voltage = 36;
+        array_cable_cost = 13.791 *  array_cable_rated_power_per_row - 93.272;
+    }
+    else if (array_cable_rated_power_per_row >= 30) {
+        array_cable_voltage = 66;
+        array_cable_cost = 11.984 * array_cable_rated_power_per_row - 155.97;
+    }
+    vt->assign("array_cable_voltage", array_cable_voltage);
+    vt->assign("array_cable_cost", array_cable_cost);
+
+    //Export Cable
+    double export_cable_voltage = 0;
+    double export_cable_cost = 0;
+    if (export_cable_type == 0) {
+        if (export_cable_rated_power_array_ac < 4) {
+            export_cable_voltage = 7.2;
+            export_cable_cost = 44.245 * export_cable_rated_power_array_ac;
+        }
+        else if (export_cable_rated_power_array_ac >= 4 && export_cable_rated_power_array_ac < 9) {
+            export_cable_voltage = 12;
+            export_cable_cost = 31.029 * export_cable_rated_power_array_ac - 40.744;
+        }
+        else if (export_cable_rated_power_array_ac >= 9 && export_cable_rated_power_array_ac < 14) {
+            export_cable_voltage = 24;
+            export_cable_cost = 17.348 * export_cable_rated_power_array_ac - 61.467;
+        }
+        else if (export_cable_rated_power_array_ac >= 14 && export_cable_rated_power_array_ac < 30) {
+            export_cable_voltage = 36;
+            export_cable_cost = 13.791 * export_cable_rated_power_array_ac - 93.272;
+        }
+        else if (export_cable_rated_power_array_ac >= 30 && export_cable_rated_power_array_ac < 40) {
+            export_cable_voltage = 66;
+            array_cable_cost = 11.984 * export_cable_rated_power_array_ac - 155.97;
+        }
+        else if (export_cable_rated_power_array_ac >= 40 && export_cable_rated_power_array_ac < 121) {
+            export_cable_voltage = 72.5;
+            array_cable_cost = 9.8977 * export_cable_rated_power_array_ac - 195.75;
+        }
+        else if (export_cable_rated_power_array_ac >= 121 && export_cable_rated_power_array_ac < 250) {
+            export_cable_voltage = 145;
+            array_cable_cost = 10.046 * export_cable_rated_power_array_ac - 886.49;
+        }
+        else if (export_cable_rated_power_array_ac >= 250 && export_cable_rated_power_array_ac < 550) {
+            export_cable_voltage = 220;
+            array_cable_cost = 5.2937 * export_cable_rated_power_array_ac - 318.15;
+        }
+        else if (export_cable_rated_power_array_ac >= 550) {
+            export_cable_voltage = 400;
+            array_cable_cost = 7.7566 * export_cable_rated_power_array_ac - 2704.6;
+        }
+    }
+    else {
+        if (export_cable_rated_power_array_hvdc < 500) {
+            export_cable_voltage = 150;
+            export_cable_cost = 2.5026 * export_cable_rated_power_array_hvdc;
+        }
+        else {
+            export_cable_voltage = 300;
+            export_cable_cost = 2.0375 * export_cable_rated_power_array_hvdc - 516.02;
+        }
+    }
+    vt->assign("export_cable_voltage", export_cable_voltage);
+    vt->assign("export_cable_cost", export_cable_cost);
+    
+
+
+}
+
 
 
