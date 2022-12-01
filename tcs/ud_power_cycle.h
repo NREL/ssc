@@ -135,7 +135,11 @@ public:
 
 	double get_W_dot_cooling_ND(double T_htf_hot /*C*/, double T_amb /*C*/, double m_dot_htf_ND /*-*/);
 
-	double get_m_dot_water_ND(double T_htf_hot /*C*/, double T_amb /*C*/, double m_dot_htf_ND /*-*/);	
+	double get_m_dot_water_ND(double T_htf_hot /*C*/, double T_amb /*C*/, double m_dot_htf_ND /*-*/);
+
+    void get_max_m_dot_and_W_dot_ND(int max_calc_mode, double T_htf_hot /*C*/, double T_amb /*C*/,
+                    double max_frac /*-*/, double cutoff_frac /*-*/,
+                    double& m_dot_HTF_ND_max, double& W_dot_ND_max);
 };
 
 class C_od_pc_function

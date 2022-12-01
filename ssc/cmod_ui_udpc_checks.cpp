@@ -39,6 +39,7 @@ static var_info _cm_vtab_ui_udpc_checks[] = {
     /*   VARTYPE   DATATYPE         NAME               LABEL                                            UNITS     META  GROUP REQUIRED_IF CONSTRAINTS         UI_HINTS*/
     { SSC_INPUT,   SSC_MATRIX, "ud_ind_od",        "Off design user-defined power cycle performance as function of T_htf, m_dot_htf [ND], and T_amb",                                         "",             "",                                  "User Defined Power Cycle",                 "?=[[0]]",                                                      "",              ""},
     { SSC_INPUT,   SSC_NUMBER, "T_htf_des_in",     "Input HTF design temperature",      "C", "", "", "*", "", "" },
+    { SSC_INPUT,   SSC_NUMBER, "is_calc_m_dot_vs_T_amb", "0 (defalt) no; 1: return array of max m_dot vs T_amb", "", "", "", "?=0", "", "" },
 
     { SSC_OUTPUT,  SSC_NUMBER, "n_T_htf_pars",     "Number of HTF parametrics",   "-", "", "", "*", "", "" },
     { SSC_OUTPUT,  SSC_NUMBER, "T_htf_low",        "HTF low temperature",         "C", "", "", "*", "", "" },
@@ -59,6 +60,9 @@ static var_info _cm_vtab_ui_udpc_checks[] = {
     { SSC_OUTPUT,  SSC_NUMBER, "Q_dot_HTF_ND_des",     "ND cycle heat input at design values of independent parameters",     "-", "", "", "*", "", "" },
     { SSC_OUTPUT,  SSC_NUMBER, "W_dot_cooling_ND_des", "ND cycle cooling power at design values of independent parameters",  "C", "", "", "*", "", "" },
     { SSC_OUTPUT,  SSC_NUMBER, "m_dot_water_ND_des",   "ND cycle water use at design values of independent parameters",      "C", "", "", "*", "", "" },
+
+    { SSC_OUTPUT,  SSC_ARRAY,  "T_amb_sweep",          "Ambient temperature sweep for max mass flow calcs", "", "", "", "is_calc_m_dot_vs_T_amb=1", "", "" },
+    { SSC_OUTPUT,  SSC_ARRAY,  "m_dot_htf_ND_max_vs_T_amb", "Calculated ND max htf mass flow rate vs ambient temp", "", "", "", "is_calc_m_dot_vs_T_amb=1", "", "" },
 
     var_info_invalid };
 
@@ -86,6 +90,8 @@ public:
         double W_dot_gross_ND_des, Q_dot_HTF_ND_des, W_dot_cooling_ND_des, m_dot_water_ND_des;
         W_dot_gross_ND_des = Q_dot_HTF_ND_des = W_dot_cooling_ND_des = m_dot_water_ND_des = std::numeric_limits<double>::quiet_NaN();
 
+        double T_htf_des_in = as_double("T_htf_des_in");
+
         try
         {
             std::vector<double> Y_at_T_htf_ref, Y_at_T_amb_ref, Y_at_m_dot_htf_ND_ref, Y_avg_at_refs;
@@ -97,7 +103,6 @@ public:
                 m_dot_des, m_dot_low, m_dot_high,
                 Y_at_T_htf_ref, Y_at_T_amb_ref, Y_at_m_dot_htf_ND_ref, Y_avg_at_refs);
 
-            double T_htf_des_in = as_double("T_htf_des_in");
 
             W_dot_gross_ND_des = c_udpc.get_W_dot_gross_ND(T_htf_des_in, T_amb_des, 1.0);
             Q_dot_HTF_ND_des = c_udpc.get_Q_dot_HTF_ND(T_htf_des_in, T_amb_des, 1.0);
@@ -108,6 +113,22 @@ public:
         {
             n_T_htf_pars = n_T_amb_pars = n_m_dot_pars = -1;
             m_dot_low = m_dot_des = m_dot_high = T_htf_low = T_htf_des = T_htf_high = T_amb_low = T_amb_des = T_amb_high = std::numeric_limits<double>::quiet_NaN();
+        }
+
+        int is_calc_m_dot_vs_T_amb = as_integer("is_calc_m_dot_vs_T_amb");
+        if (is_calc_m_dot_vs_T_amb == 1) {
+            size_t n_amb_steps = 30;
+            double delta_t_amb = (T_amb_high - T_amb_low) / (double(n_amb_steps) - 1.0);
+
+            ssc_number_t* p_m_dot_htf_ND_max = allocate("m_dot_htf_ND_max_vs_T_amb", n_amb_steps);
+            ssc_number_t* p_T_amb_sweep = allocate("T_amb_sweep", n_amb_steps);
+
+            for (size_t i = 0; i < n_amb_steps; i++) {
+                double i_W_dot_gross_ND_max;
+                p_T_amb_sweep[i] = T_amb_low + delta_t_amb * i;
+                c_udpc.get_max_m_dot_and_W_dot_ND(0, T_htf_des_in, p_T_amb_sweep[i], m_dot_high, m_dot_low,
+                    p_m_dot_htf_ND_max[i], i_W_dot_gross_ND_max);
+            }
         }
 
         assign("n_T_htf_pars", (ssc_number_t)n_T_htf_pars);

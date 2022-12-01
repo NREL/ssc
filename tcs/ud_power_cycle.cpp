@@ -344,6 +344,85 @@ double C_ud_power_cycle::get_m_dot_water_ND(double T_htf_hot /*C*/, double T_amb
 	// Also, maybe want to check parameters against max/min, or if extrapolating, or something?
 }
 
+void C_ud_power_cycle::get_max_m_dot_and_W_dot_ND(int max_calc_mode, double T_htf_hot /*C*/, double T_amb /*C*/,
+    double max_frac /*-*/, double cutoff_frac /*-*/,
+    double& m_dot_HTF_ND_max, double& W_dot_ND_max)
+{
+    if (max_calc_mode == 1) {
+
+        // Calculate max HTF ND flow rate based on highest value that achieves close to the max heat over mass flow ratio
+        // Option added to support sCO2 system modeling
+        // as of 22-10-24 the sco2 response still has noise (in some cases; mostly simple cycle) that makes this challenging
+
+        // 1) Find max q_over_m_dot_NDs
+        double q_over_mdot_NDs_max = 0.0;
+        for (double i_m_dot_ND = max_frac; i_m_dot_ND >= cutoff_frac; i_m_dot_ND += -0.01) {
+
+            double i_q_dot_ND = get_Q_dot_HTF_ND(T_htf_hot, T_amb, i_m_dot_ND);
+
+            double i_q_over_mdot_NDs = i_q_dot_ND / i_m_dot_ND;
+            if (i_q_over_mdot_NDs > q_over_mdot_NDs_max) {
+                q_over_mdot_NDs_max = i_q_over_mdot_NDs;
+            }
+        }
+
+        // 2) Set to min(calc, 1.0)
+        q_over_mdot_NDs_max = min(q_over_mdot_NDs_max, 1.0);
+
+        // 3) Find highest m_dot_HTF_ND_max that gets within tolerance of max q_over_mdot_NDs_max
+        m_dot_HTF_ND_max = max_frac;
+        double i_q_tol = 0.03;
+        for (double i_m_dot_ND = max_frac; i_m_dot_ND >= cutoff_frac; i_m_dot_ND += -0.01) {
+
+            double i_q_dot_ND = get_Q_dot_HTF_ND(T_htf_hot, T_amb, i_m_dot_ND);
+
+            double i_q_over_mdot_NDs = i_q_dot_ND / i_m_dot_ND;
+
+            if (q_over_mdot_NDs_max - i_q_over_mdot_NDs < i_q_tol) {
+
+                m_dot_HTF_ND_max = i_m_dot_ND;
+                break;
+            }
+        }
+
+        // 4) Get performance at max mass flow rate
+        W_dot_ND_max = get_W_dot_gross_ND(T_htf_hot, T_amb, m_dot_HTF_ND_max);
+
+        return;
+
+    }
+    else {
+
+        // Heuristic sets max ND mass flow to ND power at global max ND mass flow rate
+        // Probably in retrospect (before T_htf option above added) not very good,
+        // ... but it's probably more reliable for udpc tables of unknown origins
+
+        // Calculate non-dimensional mass flow rate relative to design point
+        m_dot_HTF_ND_max = max_frac;		//[-] Use max mass flow rate
+
+        // Get ND performance at off-design ambient temperature
+        W_dot_ND_max = get_W_dot_gross_ND(T_htf_hot,
+            T_amb,
+            m_dot_HTF_ND_max);	//[-]
+
+        if (W_dot_ND_max >= m_dot_HTF_ND_max)
+        {
+            return;
+        }
+
+        // set m_dot_ND to P_cycle_ND
+        m_dot_HTF_ND_max = W_dot_ND_max;
+
+        // Get ND performance at off-design ambient temperature
+        W_dot_ND_max = get_W_dot_gross_ND(T_htf_hot,
+            T_amb,
+            m_dot_HTF_ND_max);	//[-]
+
+        return;
+
+    }
+}
+
 double C_ud_power_cycle::get_interpolated_ND_output(int i_ME /*M.E. table index*/, 
 							double T_htf_hot /*C*/, double T_amb /*C*/, double m_dot_htf_ND /*-*/)
 {
