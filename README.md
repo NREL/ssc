@@ -34,4 +34,4 @@ SSC is licensed with BSD-3-Clause terms, found [here](https://github.com/NREL/SA
 
 # Citing this package
 
-System Advisor Model Version 2021.12.02 (2021.12.02). SSC source code. National Renewable Energy Laboratory. Golden, CO. Accessed December 15, 2021. https://github.com/NREL/ssc
+System Advisor Model Version 2022.11.21 (2022). SSC source code. National Renewable Energy Laboratory. Golden, CO. Accessed November 28, 2022. https://github.com/NREL/ssc
