@@ -106,14 +106,6 @@ bool me_array_cable_voltage(ssc_data_t data)
     vt_get_number(vt, "inter_array_cable_length", &inter_array_cable_length);
     vt_get_number(vt, "riser_cable_length", &riser_cable_length);
     vt_get_number(vt, "export_cable_length", &export_cable_length);
-    vt_get_number(vt, "number_rows", &number_rows);
-    vt_get_number(vt, "row_spacing", &row_spacing);
-    vt_get_number(vt, "cable_system_overbuild", &cable_system_overbuild);
-    vt_get_number(vt, "floating_array", &floating_array);
-    vt_get_number(vt, "export_cable_redundancy", &export_cable_redundancy);
-    vt_get_number(vt, "water_depth", &water_depth);
-    vt_get_number(vt, "number_devices", &number_devices);
-    vt_get_number(vt, "distance_to_shore", &distance_to_shore);
     vt_get_number(vt, "use_onshore_substation", &use_onshore_substation);
     vt_get_number(vt, "load_grid_voltage", &load_grid_voltage);
 
@@ -253,6 +245,7 @@ bool me_array_cable_voltage(ssc_data_t data)
     }
     vt->assign("export_cable_voltage", export_cable_voltage);
     vt->assign("export_cable_cost", export_cable_cost);
+    vt->assign("export_cable_type", export_cable_type);
     double export_cable_cost_total = export_cable_cost * export_cable_length;
     vt->assign("export_cable_cost_total", export_cable_cost_total);
 
@@ -275,6 +268,7 @@ bool me_array_cable_voltage(ssc_data_t data)
     else if (array_cable_voltage == export_cable_voltage && export_cable_type == 1) {
         offshore_substation_cost_total = offshore_foundation_cost + hvdc_converter_station_cost;
     }
+    vt->assign("offshore_substation_cost_total", offshore_substation_cost_total);
 
     //Onshore substation
     double onshore_substation_voltage = load_grid_voltage;
@@ -295,6 +289,7 @@ bool me_array_cable_voltage(ssc_data_t data)
     else if (use_onshore_substation==1 && export_cable_type == 1) {
         onshore_substation_cost_total = onshore_foundation_cost + onshore_hvdc_converter_station_cost;
     }
+    vt->assign("onshore_substation_cost_total", onshore_substation_cost_total);
 }
 
 
