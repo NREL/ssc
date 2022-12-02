@@ -1,24 +1,35 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 
 #include <gtest/gtest.h>
 #include <lib_utility_rate_equations.h>
@@ -86,7 +97,7 @@ TEST(lib_utility_rate_equations_test, test_demand_charges)
     data.init(8760);
     data.setup_demand_charges(&p_ur_dc_sched_weekday[0], &p_ur_dc_sched_weekend[0], tou_rows, &p_ur_dc_tou_mat[0], dc_flat_rows, &p_ur_dc_flat_mat[0]);
     data.setup_energy_rates(&p_ur_ec_sched_weekday[0], &p_ur_ec_sched_weekend[0], tou_rows, &p_ur_ec_tou_mat[0], sell_eq_buy);
-    data.init_energy_rates(false);
+    data.init_energy_rates_all_months(false);
     data.init_dc_peak_vectors(0);
 
     // Peak period 1: 5 kW, peak period 2: 10 kW
@@ -150,7 +161,7 @@ TEST(lib_utility_rate_equations_test, test_seasonal_demand_charges)
     data.init(8760);
     data.setup_demand_charges(&p_ur_dc_sched_weekday[0], &p_ur_dc_sched_weekend[0], dc_tou_rows, &p_ur_dc_tou_mat[0], dc_flat_rows, &p_ur_dc_flat_mat[0]);
     data.setup_energy_rates(&p_ur_ec_sched_weekday[0], &p_ur_ec_sched_weekend[0], tou_rows, &p_ur_ec_tou_mat[0], sell_eq_buy);
-    data.init_energy_rates(false);
+    data.init_energy_rates_all_months(false);
     data.uses_billing_demand = true;
     data.en_billing_demand_lookback = false;
     data.init_dc_peak_vectors(0);
@@ -260,7 +271,7 @@ TEST(lib_utility_rate_equations_test, test_block_step_tiers)
     data.init(8760);
     data.setup_demand_charges(&p_ur_dc_sched_weekday[0], &p_ur_dc_sched_weekend[0], dc_tou_rows, &p_ur_dc_tou_mat[0], dc_flat_rows, &p_ur_dc_flat_mat[0]);
     data.setup_energy_rates(&p_ur_ec_sched_weekday[0], &p_ur_ec_sched_weekend[0], tou_rows, &p_ur_ec_tou_mat[0], sell_eq_buy);
-    data.init_energy_rates(false); // This gets called once to set up all the vectors
+    data.init_energy_rates_all_months(false); // This gets called once to set up all the vectors
     data.init_dc_peak_vectors(0);
     data.uses_billing_demand = true;
     data.en_billing_demand_lookback = false;
@@ -306,7 +317,7 @@ TEST(lib_utility_rate_equations_test, test_block_step_tiers)
     }
 
     // Recompute the tiers based on actual peaks
-    data.init_energy_rates(false);
+    data.init_energy_rates_all_months(false);
 
     // Each month is only going to have one TOU period in this schedule
     EXPECT_NEAR(3000, curr_month.ec_tou_ub.at(0, 0), 0.1);
@@ -384,7 +395,7 @@ TEST(lib_utility_rate_equations_test, test_kwh_per_kw_only)
     data.init(8760);
     data.setup_demand_charges(&p_ur_dc_sched_weekday[0], &p_ur_dc_sched_weekend[0], dc_tou_rows, &p_ur_dc_tou_mat[0], dc_flat_rows, &p_ur_dc_flat_mat[0]);
     data.setup_energy_rates(&p_ur_ec_sched_weekday[0], &p_ur_ec_sched_weekend[0], tou_rows, &p_ur_ec_tou_mat[0], sell_eq_buy);
-    data.init_energy_rates(false); // This gets called once to set up all the vectors
+    data.init_energy_rates_all_months(false); // This gets called once to set up all the vectors
     data.init_dc_peak_vectors(0);
     data.uses_billing_demand = true;
     data.en_billing_demand_lookback = false;
@@ -430,7 +441,7 @@ TEST(lib_utility_rate_equations_test, test_kwh_per_kw_only)
     }
 
     // Recompute the tiers based on actual peaks
-    data.init_energy_rates(false);
+    data.init_energy_rates_all_months(false);
 
     // Each month is only going to have one TOU period in this schedule
     EXPECT_NEAR(131600, curr_month.ec_tou_ub.at(0, 0), 0.1);
@@ -495,7 +506,7 @@ TEST(lib_utility_rate_equations_test, test_billing_demand_calcs)
     data.init(8760);
     data.setup_demand_charges(&p_ur_dc_sched_weekday[0], &p_ur_dc_sched_weekend[0], dc_tou_rows, &p_ur_dc_tou_mat[0], dc_flat_rows, &p_ur_dc_flat_mat[0]);
     data.setup_energy_rates(&p_ur_ec_sched_weekday[0], &p_ur_ec_sched_weekend[0], tou_rows, &p_ur_ec_tou_mat[0], sell_eq_buy);
-    data.init_energy_rates(false); // This gets called once to set up all the vectors
+    data.init_energy_rates_all_months(false); // This gets called once to set up all the vectors
     for (size_t i = 0; i < 12; i++) {
         data.init_dc_peak_vectors(i);
     }
@@ -627,7 +638,7 @@ TEST(lib_utility_rate_equations_test, test_billing_demand_calcs_w_tou)
     data.init(8760);
     data.setup_demand_charges(&p_ur_dc_sched_weekday[0], &p_ur_dc_sched_weekend[0], dc_tou_rows, &p_ur_dc_tou_mat[0], dc_flat_rows, &p_ur_dc_flat_mat[0]);
     data.setup_energy_rates(&p_ur_ec_sched_weekday[0], &p_ur_ec_sched_weekend[0], tou_rows, &p_ur_ec_tou_mat[0], sell_eq_buy);
-    data.init_energy_rates(false); // This gets called once to set up all the vectors
+    data.init_energy_rates_all_months(false); // This gets called once to set up all the vectors
     for (size_t i = 0; i < 12; i++) {
         data.init_dc_peak_vectors(i);
     }

@@ -1,23 +1,33 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "sco2_pc_csp_int.h"
@@ -83,15 +93,60 @@ void C_sco2_phx_air_cooler::design_core()
 	int auto_err_code = 0;
 	std::string s_cycle_config = "";
 
+    // *************************************
+    // 4.25.22 Generator inputs - need to thread to cmod
+    int tgm_code = 0;
+    C_sco2_cycle_core::E_turbo_gen_motor_config turbo_gen_motor_config = static_cast<C_sco2_cycle_core::E_turbo_gen_motor_config>(tgm_code);
+
+    double eta_generator = 1.0;
+    // *************************************
+
+    double T_mc_in = ms_des_par.m_T_amb_des + ms_des_par.m_dt_mc_approach;	//[K]
+    double T_t_in = ms_des_par.m_T_htf_hot_in - ms_des_par.m_phx_dt_hot_approach;	//[K]
+
 	if (ms_des_par.m_cycle_config == 2)
 	{
-		mpc_sco2_cycle = &mc_partialcooling_cycle;
+        std::unique_ptr<C_PartialCooling_Cycle> c_pc_cycle = std::unique_ptr<C_PartialCooling_Cycle>(new C_PartialCooling_Cycle(
+            turbo_gen_motor_config,
+            eta_generator,
+            T_mc_in,
+            ms_des_par.m_W_dot_net,
+            T_t_in, ms_des_par.m_P_high_limit,
+            ms_des_par.m_DP_LT, ms_des_par.m_DP_HT,
+            ms_des_par.m_DP_PC, ms_des_par.m_DP_PHX,
+            ms_des_par.m_LTR_N_sub_hxrs, ms_des_par.m_HTR_N_sub_hxrs,
+            ms_des_par.m_eta_mc, ms_des_par.m_mc_comp_type,
+            ms_des_par.m_eta_rc,
+            ms_des_par.m_eta_t, ms_des_par.m_N_turbine,
+            ms_des_par.m_frac_fan_power, ms_des_par.m_eta_fan, ms_des_par.m_deltaP_cooler_frac,
+            ms_des_par.m_N_nodes_pass,
+            ms_des_par.m_T_amb_des, ms_des_par.m_elevation));
+
 		s_cycle_config = "partial cooling";
+
+        mpc_sco2_cycle = std::move(c_pc_cycle);
 	}
 	else
 	{
-		mpc_sco2_cycle = &mc_rc_cycle;
+        std::unique_ptr<C_RecompCycle> c_rc_cycle = std::unique_ptr<C_RecompCycle>(new C_RecompCycle(
+            turbo_gen_motor_config,
+            eta_generator,
+            T_mc_in,
+            ms_des_par.m_W_dot_net,
+            T_t_in, ms_des_par.m_P_high_limit,
+            ms_des_par.m_DP_LT, ms_des_par.m_DP_HT,
+            ms_des_par.m_DP_PC, ms_des_par.m_DP_PHX,
+            ms_des_par.m_LTR_N_sub_hxrs, ms_des_par.m_HTR_N_sub_hxrs,
+            ms_des_par.m_eta_mc, ms_des_par.m_mc_comp_type,
+            ms_des_par.m_eta_rc,
+            ms_des_par.m_eta_t, ms_des_par.m_N_turbine,
+            ms_des_par.m_frac_fan_power, ms_des_par.m_eta_fan, ms_des_par.m_deltaP_cooler_frac,
+            ms_des_par.m_N_nodes_pass,
+            ms_des_par.m_T_amb_des, ms_des_par.m_elevation));
+
 		s_cycle_config = "recompression";
+
+        mpc_sco2_cycle = std::move(c_rc_cycle);
 	}
 
 	// Set min temp
@@ -101,30 +156,23 @@ void C_sco2_phx_air_cooler::design_core()
 	{
 		// Design the cycle to hit a specified efficiency
 		// Define sCO2 cycle design parameter structure
-		ms_cycle_des_par.m_W_dot_net = ms_des_par.m_W_dot_net;		//[kWe]
+
 		ms_cycle_des_par.m_eta_thermal = ms_des_par.m_eta_thermal;	//[-]
-		ms_cycle_des_par.m_T_mc_in = ms_des_par.m_T_amb_des + ms_des_par.m_dt_mc_approach;	//[K]
-		if (ms_cycle_des_par.m_T_mc_in < m_T_mc_in_min)
+		if (T_mc_in < m_T_mc_in_min)
 		{
 			std::string msg = util::format("The input design main compressor inlet temperature is %lg [C]."
 				" The sCO2 cycle design code reset it to the minimum allowable design main compressor inlet temperature: %lg [C].",
-				ms_cycle_des_par.m_T_mc_in - 273.15,
+				T_mc_in - 273.15,
 				m_T_mc_in_min - 273.15);
 		}
-		ms_cycle_des_par.m_T_pc_in = ms_cycle_des_par.m_T_mc_in;		//[K]
-		ms_cycle_des_par.m_T_t_in = ms_des_par.m_T_htf_hot_in - ms_des_par.m_phx_dt_hot_approach;	//[K]
-		ms_cycle_des_par.m_DP_LT = ms_des_par.m_DP_LT;
-		ms_cycle_des_par.m_DP_HT = ms_des_par.m_DP_HT;
+		ms_cycle_des_par.m_T_pc_in = T_mc_in;		//[K]
 		ms_cycle_des_par.m_DP_PC_pre = ms_des_par.m_DP_PC;
-		ms_cycle_des_par.m_DP_PC_main = ms_des_par.m_DP_PC;
-		ms_cycle_des_par.m_DP_PHX = ms_des_par.m_DP_PHX;
             // LTR thermal design
         ms_cycle_des_par.m_LTR_target_code = ms_des_par.m_LTR_target_code;  //[-]
         ms_cycle_des_par.m_LTR_UA = ms_des_par.m_LTR_UA;                    //[kW/K]
         ms_cycle_des_par.m_LTR_min_dT = ms_des_par.m_LTR_min_dT;            //[K]
         ms_cycle_des_par.m_LTR_eff_target = ms_des_par.m_LTR_eff_target;    //[-]
 		ms_cycle_des_par.m_LTR_eff_max = ms_des_par.m_LTR_eff_max;       //[-]
-        ms_cycle_des_par.m_LTR_N_sub_hxrs = ms_des_par.m_LTR_N_sub_hxrs;    //[-]
         ms_cycle_des_par.m_LTR_od_UA_target_type = ms_des_par.m_LTR_od_UA_target_type;
             // HTR thermal design
         ms_cycle_des_par.m_HTR_target_code = ms_des_par.m_HTR_target_code;  //[-]
@@ -132,27 +180,14 @@ void C_sco2_phx_air_cooler::design_core()
         ms_cycle_des_par.m_HTR_min_dT = ms_des_par.m_HTR_min_dT;            //[K]
         ms_cycle_des_par.m_HTR_eff_target = ms_des_par.m_HTR_eff_target;    //[-]
         ms_cycle_des_par.m_HTR_eff_max = ms_des_par.m_HTR_eff_max;       //[-]
-        ms_cycle_des_par.m_HTR_N_sub_hxrs = ms_des_par.m_HTR_N_sub_hxrs;    //[-]
         ms_cycle_des_par.m_HTR_od_UA_target_type = ms_des_par.m_HTR_od_UA_target_type;
             //
-		ms_cycle_des_par.m_eta_mc = ms_des_par.m_eta_mc;
-        ms_cycle_des_par.m_mc_comp_model_code = ms_des_par.m_mc_comp_type;
-		ms_cycle_des_par.m_eta_rc = ms_des_par.m_eta_rc;
 		ms_cycle_des_par.m_eta_pc = ms_des_par.m_eta_pc;
-		ms_cycle_des_par.m_eta_t = ms_des_par.m_eta_t;
-		ms_cycle_des_par.m_P_high_limit = ms_des_par.m_P_high_limit;
 		ms_cycle_des_par.m_des_tol = ms_des_par.m_des_tol;
 		ms_cycle_des_par.m_des_opt_tol = ms_des_par.m_des_opt_tol;
-		ms_cycle_des_par.m_N_turbine = ms_des_par.m_N_turbine;
 		ms_cycle_des_par.m_is_recomp_ok = ms_des_par.m_is_recomp_ok;
 
 		ms_cycle_des_par.m_is_des_air_cooler = ms_des_par.m_is_des_air_cooler;		//[-]
-		ms_cycle_des_par.m_frac_fan_power = ms_des_par.m_frac_fan_power;			//[-]
-		ms_cycle_des_par.m_deltaP_cooler_frac = ms_des_par.m_deltaP_cooler_frac;	//[-]
-		ms_cycle_des_par.m_T_amb_des = ms_des_par.m_T_amb_des;						//[K]
-		ms_cycle_des_par.m_elevation = ms_des_par.m_elevation;						//[m]
-        ms_cycle_des_par.m_eta_fan = ms_des_par.m_eta_fan;                          //[-]
-        ms_cycle_des_par.m_N_nodes_pass = ms_des_par.m_N_nodes_pass;                //[-]
 
 		ms_cycle_des_par.m_des_objective_type = ms_des_par.m_des_objective_type;		//[-]
 		ms_cycle_des_par.m_min_phx_deltaT = ms_des_par.m_min_phx_deltaT;				//[C]
@@ -182,22 +217,16 @@ void C_sco2_phx_air_cooler::design_core()
 		}
 		
 		C_sco2_cycle_core::S_auto_opt_design_parameters des_params;
-		des_params.m_W_dot_net = ms_des_par.m_W_dot_net;		//[kWe]
-		des_params.m_T_mc_in = ms_des_par.m_T_amb_des + ms_des_par.m_dt_mc_approach;	//[K]
-		if (ms_cycle_des_par.m_T_mc_in < m_T_mc_in_min)
+
+        if (T_mc_in < m_T_mc_in_min)
 		{
 			std::string msg = util::format("The input design main compressor inlet temperature is %lg [C]."
 				" The sCO2 cycle design code reset it to the minimum allowable design main compressor inlet temperature: %lg [C].",
-				ms_cycle_des_par.m_T_mc_in - 273.15,
+				T_mc_in - 273.15,
 				m_T_mc_in_min - 273.15);
 		}
-		des_params.m_T_pc_in = des_params.m_T_mc_in;		//[K]
-		des_params.m_T_t_in = ms_des_par.m_T_htf_hot_in - ms_des_par.m_phx_dt_hot_approach;	//[K]
-		des_params.m_DP_LTR = ms_des_par.m_DP_LT;
-		des_params.m_DP_HTR = ms_des_par.m_DP_HT;
+		des_params.m_T_pc_in = T_mc_in;		//[K]
 		des_params.m_DP_PC_pre = ms_des_par.m_DP_PC;
-		des_params.m_DP_PC_main = ms_des_par.m_DP_PC;
-		des_params.m_DP_PHX = ms_des_par.m_DP_PHX;
 		des_params.m_UA_rec_total = ms_des_par.m_UA_recup_tot_des;	//[kW/K]
             // LTR thermal design
         des_params.m_LTR_target_code = ms_des_par.m_LTR_target_code;  //[-]
@@ -205,7 +234,6 @@ void C_sco2_phx_air_cooler::design_core()
         des_params.m_LTR_min_dT = ms_des_par.m_LTR_min_dT;            //[K]
         des_params.m_LTR_eff_target = ms_des_par.m_LTR_eff_target;    //[-]
         des_params.m_LTR_eff_max = ms_des_par.m_LTR_eff_max;       //[-]
-        des_params.m_LTR_N_sub_hxrs = ms_des_par.m_LTR_N_sub_hxrs;  //[-]
         des_params.m_LTR_od_UA_target_type = ms_des_par.m_LTR_od_UA_target_type;
             // HTR thermal design
         des_params.m_HTR_target_code = ms_des_par.m_HTR_target_code;    //[-]
@@ -213,26 +241,13 @@ void C_sco2_phx_air_cooler::design_core()
         des_params.m_HTR_min_dT = ms_des_par.m_HTR_min_dT;          //[K]
         des_params.m_HTR_eff_target = ms_des_par.m_HTR_eff_target;  //[-]
 		des_params.m_HTR_eff_max = ms_des_par.m_HTR_eff_max;		//[-]
-        des_params.m_HTR_N_sub_hxrs = ms_des_par.m_HTR_N_sub_hxrs;  //[-]
         des_params.m_HTR_od_UA_target_type = ms_des_par.m_HTR_od_UA_target_type;
             //
-		des_params.m_eta_mc = ms_des_par.m_eta_mc;
-        des_params.m_mc_comp_model_code = ms_des_par.m_mc_comp_type;
-		des_params.m_eta_rc = ms_des_par.m_eta_rc;
 		des_params.m_eta_pc = ms_des_par.m_eta_pc;
-		des_params.m_eta_t = ms_des_par.m_eta_t;
-		des_params.m_P_high_limit = ms_des_par.m_P_high_limit;
 		des_params.m_des_tol = ms_des_par.m_des_tol;
 		des_params.m_des_opt_tol = ms_des_par.m_des_opt_tol;
-		des_params.m_N_turbine = ms_des_par.m_N_turbine;
 
 		des_params.m_is_des_air_cooler = ms_des_par.m_is_des_air_cooler;	//[-]
-		des_params.m_frac_fan_power = ms_des_par.m_frac_fan_power;			//[-]
-		des_params.m_deltaP_cooler_frac = ms_des_par.m_deltaP_cooler_frac;	//[-]
-		des_params.m_T_amb_des = ms_des_par.m_T_amb_des;					//[K]
-		des_params.m_elevation = ms_des_par.m_elevation;					//[m]
-        des_params.m_eta_fan = ms_des_par.m_eta_fan;                        //[-]
-        des_params.m_N_nodes_pass = ms_des_par.m_N_nodes_pass;              //[-]
 
 		des_params.m_des_objective_type = ms_des_par.m_des_objective_type;		//[-]
 		des_params.m_min_phx_deltaT = ms_des_par.m_min_phx_deltaT;				//[C]
@@ -744,7 +759,7 @@ int C_sco2_phx_air_cooler::optimize_N_mc_and_N_rc__max_eta(C_sco2_phx_air_cooler
             eta_low1 = eta_f_N_mc;      //[-]
             f_N_mc_low1 = f_N_mc;       //[-]
 
-            slope_sign = (f_N_mc_2 - f_N_mc) / fabs(f_N_mc_2 - f_N_mc); //[-]
+            slope_sign = (f_N_mc_2 - f_N_mc) / std::abs(f_N_mc_2 - f_N_mc); //[-]
         }
         else
         {
@@ -754,7 +769,7 @@ int C_sco2_phx_air_cooler::optimize_N_mc_and_N_rc__max_eta(C_sco2_phx_air_cooler
             eta_low1 = eta_f_N_mc_2;    //[-]
             f_N_mc_low1 = f_N_mc_2;     //[-]
 
-            slope_sign = (f_N_mc - f_N_mc_2) / fabs(f_N_mc - f_N_mc_2); //[-]
+            slope_sign = (f_N_mc - f_N_mc_2) / std::abs(f_N_mc - f_N_mc_2); //[-]
         }
 
         while (true)
@@ -824,11 +839,11 @@ int C_sco2_phx_air_cooler::optimize_N_mc_and_N_rc__max_eta(C_sco2_phx_air_cooler
 
         if (!std::isfinite(eta_low2) || eta_low2 > eta_low1)
         {   // Move in f_N_mc_low2 direction
-            slope_sign = (f_N_mc_low2 - f_N_mc_opt) / fabs(f_N_mc_low2 - f_N_mc_opt);
+            slope_sign = (f_N_mc_low2 - f_N_mc_opt) / std::abs(f_N_mc_low2 - f_N_mc_opt);
         }
         else
         {   // Move in f_N_mc_low1 direction
-            slope_sign = (f_N_mc_low1 - f_N_mc_opt) / fabs(f_N_mc_low1 - f_N_mc_opt);
+            slope_sign = (f_N_mc_low1 - f_N_mc_opt) / std::abs(f_N_mc_low1 - f_N_mc_opt);
         }
 
         f_N_mc = f_N_mc_opt + slope_sign * opt_step;        //[-]
@@ -886,7 +901,7 @@ int C_sco2_phx_air_cooler::optimize_N_mc_and_N_rc__max_eta(C_sco2_phx_air_cooler
         {
             f_N_mc = f_N_mc_opt + slope_sign * opt_step;    //[-]
 
-            if (fabs(f_N_mc - f_N_mc_low1) < opt_step || fabs(f_N_mc - f_N_mc_low2) < opt_step)
+            if (std::abs(f_N_mc - f_N_mc_low1) < opt_step || std::abs(f_N_mc - f_N_mc_low2) < opt_step)
             {
                 break;
             }
@@ -1108,7 +1123,7 @@ int C_sco2_phx_air_cooler::optimize_N_rc__max_eta(C_sco2_phx_air_cooler::S_od_pa
         eta_low1 = eta_f_N_rc;      //[-]
         f_N_rc_low1 = f_N_rc;       //[-]
 
-        slope_sign = (f_N_rc_2 - f_N_rc) / fabs(f_N_rc_2 - f_N_rc);  //[-]
+        slope_sign = (f_N_rc_2 - f_N_rc) / std::abs(f_N_rc_2 - f_N_rc);  //[-]
     }
     else if (eta_f_N_rc > eta_f_N_rc_2)
     {
@@ -1118,7 +1133,7 @@ int C_sco2_phx_air_cooler::optimize_N_rc__max_eta(C_sco2_phx_air_cooler::S_od_pa
         eta_low1 = eta_f_N_rc_2;    //[-]
         f_N_rc_low1 = f_N_rc_2;     //[-]
 
-        slope_sign = (f_N_rc - f_N_rc_2) / fabs(f_N_rc - f_N_rc_2);  //[-]
+        slope_sign = (f_N_rc - f_N_rc_2) / std::abs(f_N_rc - f_N_rc_2);  //[-]
     }
     else
     {
@@ -1193,11 +1208,11 @@ int C_sco2_phx_air_cooler::optimize_N_rc__max_eta(C_sco2_phx_air_cooler::S_od_pa
     // ------- if neither direction results in larger eta_max, then we're already there
     if (!std::isfinite(eta_low2) || eta_low2 > eta_low1)
     {
-        slope_sign = (f_N_rc_low2 - f_N_rc_opt) / fabs(f_N_rc_low2 - f_N_rc_opt);
+        slope_sign = (f_N_rc_low2 - f_N_rc_opt) / std::abs(f_N_rc_low2 - f_N_rc_opt);
     }
     else
     {
-        slope_sign = (f_N_rc_low1 - f_N_rc_opt) / fabs(f_N_rc_low1 - f_N_rc_opt);
+        slope_sign = (f_N_rc_low1 - f_N_rc_opt) / std::abs(f_N_rc_low1 - f_N_rc_opt);
     }
 
     f_N_rc = f_N_rc_opt + slope_sign * opt_step;      //[-]
@@ -1248,7 +1263,7 @@ int C_sco2_phx_air_cooler::optimize_N_rc__max_eta(C_sco2_phx_air_cooler::S_od_pa
     {
         f_N_rc = f_N_rc_opt + slope_sign * opt_step;      //[-]
 
-        if (fabs(f_N_rc - f_N_rc_low1) < opt_step || fabs(f_N_rc - f_N_rc_low2) < opt_step)
+        if (std::abs(f_N_rc - f_N_rc_low1) < opt_step || std::abs(f_N_rc - f_N_rc_low2) < opt_step)
         {
             break;
         }
@@ -2053,7 +2068,7 @@ int C_sco2_phx_air_cooler::off_design__calc_T_pc_in__target_T_htf_cold__max_powe
 
     // Check whether HTF cold temperature is within tolerance of target
     double tol_W_dot_pc_fan = od_tol * 2.0;     //[-]
-    bool is_T_htf_equal_target = std::fabs(i_rel_diff_T_htf_cold_at_cooler_target) < tol_W_dot_pc_fan;
+    bool is_T_htf_equal_target = std::abs(i_rel_diff_T_htf_cold_at_cooler_target) < tol_W_dot_pc_fan;
 
     // Start search at max fan power T_pc_in, which is cold limit
     std::vector<S_solve_P_LP_in__tracker>::iterator it_sorted_W_dot_net_less_cooling_min__T_cool = it_sorted_cooler_target;
@@ -2065,7 +2080,7 @@ int C_sco2_phx_air_cooler::off_design__calc_T_pc_in__target_T_htf_cold__max_powe
         // Is there another T_pc_in in the solution vector where T_htf_cold is equal to the target?
         std::vector<S_solve_P_LP_in__tracker>::iterator it_sorted_T_htf_cold_target = it_sorted_cooler_target;
         while (it_sorted_T_htf_cold_target < v_T_mc_in_tracker__T_pc_in_sorted.end()) {
-            if (std::fabs((*it_sorted_T_htf_cold_target).m_rel_diff_T_htf_cold) < tol_W_dot_pc_fan &&
+            if (std::abs((*it_sorted_T_htf_cold_target).m_rel_diff_T_htf_cold) < tol_W_dot_pc_fan &&
                 (*it_sorted_T_htf_cold_target).m_error_code == 0) {
                 break;
             }
@@ -2080,16 +2095,16 @@ int C_sco2_phx_air_cooler::off_design__calc_T_pc_in__target_T_htf_cold__max_powe
         }
 
         // If no solution in vector has T_htf_cold equal to target, check for min difference
-        double T_htf_cold_diff_abs_min = std::fabs(i_rel_diff_T_htf_cold_at_cooler_target);
+        double T_htf_cold_diff_abs_min = std::abs(i_rel_diff_T_htf_cold_at_cooler_target);
         it_sorted_T_htf_cold_target = it_sorted_cooler_target;
 
         std::vector<S_solve_P_LP_in__tracker>::iterator it_sorted_rel_diff_T_htf_min = it_sorted_cooler_target;
         while (it_sorted_T_htf_cold_target < v_T_mc_in_tracker__T_pc_in_sorted.end()) {
 
-            if (std::fabs((*it_sorted_T_htf_cold_target).m_rel_diff_T_htf_cold) < T_htf_cold_diff_abs_min
+            if (std::abs((*it_sorted_T_htf_cold_target).m_rel_diff_T_htf_cold) < T_htf_cold_diff_abs_min
                 && (*it_sorted_T_htf_cold_target).m_error_code == 0) {
 
-                T_htf_cold_diff_abs_min = std::fabs((*it_sorted_T_htf_cold_target).m_rel_diff_T_htf_cold);
+                T_htf_cold_diff_abs_min = std::abs((*it_sorted_T_htf_cold_target).m_rel_diff_T_htf_cold);
                 it_sorted_rel_diff_T_htf_min = it_sorted_T_htf_cold_target;
             }
             it_sorted_T_htf_cold_target++;
@@ -2113,7 +2128,7 @@ int C_sco2_phx_air_cooler::off_design__calc_T_pc_in__target_T_htf_cold__max_powe
                 v_T_mc_in_tracker__T_pc_in_sorted.push_back(*(v_P_LP_in__tracker_in.end() - 1));
 
                 if ((*(v_T_mc_in_tracker__T_pc_in_sorted.end() - 1)).m_error_code != 0 ||
-                    std::fabs((*(v_T_mc_in_tracker__T_pc_in_sorted.end() - 1)).m_rel_diff_T_htf_cold) > T_htf_cold_diff_abs_min + std::fmax(0.01, tol_W_dot_pc_fan)) {
+                    std::abs((*(v_T_mc_in_tracker__T_pc_in_sorted.end() - 1)).m_rel_diff_T_htf_cold) > T_htf_cold_diff_abs_min + std::fmax(0.01, tol_W_dot_pc_fan)) {
                     // If most recent T_pc_in guess resulted in error code or a greater absolute difference in T_htf_cold target, then revert and get out
                     T_pc_in -= 0.5;
                     v_P_LP_in__tracker_in.resize(0);
@@ -2130,13 +2145,13 @@ int C_sco2_phx_air_cooler::off_design__calc_T_pc_in__target_T_htf_cold__max_powe
 
                     return T_mc_in_err_code;
                 }
-                else if(std::fabs((*(v_T_mc_in_tracker__T_pc_in_sorted.end() - 1)).m_rel_diff_T_htf_cold) > T_htf_cold_diff_abs_min)
+                else if(std::abs((*(v_T_mc_in_tracker__T_pc_in_sorted.end() - 1)).m_rel_diff_T_htf_cold) > T_htf_cold_diff_abs_min)
                 {   // Otherwise, set new minimum HTF cold temperature difference
-                    T_htf_cold_diff_abs_min = std::fabs((*(v_T_mc_in_tracker__T_pc_in_sorted.end() - 1)).m_rel_diff_T_htf_cold);    //[-]
+                    T_htf_cold_diff_abs_min = std::abs((*(v_T_mc_in_tracker__T_pc_in_sorted.end() - 1)).m_rel_diff_T_htf_cold);    //[-]
                 }
 
                 // Check if HTF cold temp is within tolerance of target. If so, get out.
-                if (std::fabs((*(v_T_mc_in_tracker__T_pc_in_sorted.end() - 1)).m_rel_diff_T_htf_cold) < tol_W_dot_pc_fan) {
+                if (std::abs((*(v_T_mc_in_tracker__T_pc_in_sorted.end() - 1)).m_rel_diff_T_htf_cold) < tol_W_dot_pc_fan) {
                     it_sorted_W_dot_net_less_cooling_min__T_cool = v_T_mc_in_tracker__T_pc_in_sorted.end() - 1;
                     is_T_htf_equal_target = true;
                     break;
@@ -2182,7 +2197,7 @@ int C_sco2_phx_air_cooler::off_design__calc_T_pc_in__target_T_htf_cold__max_powe
 
         for (std::vector<S_solve_P_LP_in__tracker>::iterator it = it_sorted_W_dot_net_less_cooling_min__T_cool + 1; it < v_T_mc_in_tracker__T_pc_in_sorted.end(); it++) {
 
-            if ((*it).m_error_code != 0 || fabs((*it).m_rel_diff_T_htf_cold) > tol_W_dot_pc_fan) {
+            if ((*it).m_error_code != 0 || std::abs((*it).m_rel_diff_T_htf_cold) > tol_W_dot_pc_fan) {
                 found_constraint_violation = true;
                 odsol_constraint_violation = *it;
                 break;
@@ -2219,7 +2234,7 @@ int C_sco2_phx_air_cooler::off_design__calc_T_pc_in__target_T_htf_cold__max_powe
                 v_T_mc_in__tracker.push_back(*(v_P_LP_in__tracker_in.end() - 1));
 
                 std::vector<S_solve_P_LP_in__tracker>::iterator it = v_P_LP_in__tracker_in.end() - 1;
-                if ((*it).m_error_code != 0 || fabs((*it).m_rel_diff_T_htf_cold) > tol_W_dot_pc_fan) {
+                if ((*it).m_error_code != 0 || std::abs((*it).m_rel_diff_T_htf_cold) > tol_W_dot_pc_fan) {
                     // If solution violates constraints, get out
                     found_constraint_violation = true;
                     odsol_constraint_violation = *it;
@@ -2262,7 +2277,7 @@ int C_sco2_phx_air_cooler::off_design__calc_T_pc_in__target_T_htf_cold__max_powe
                 std::vector<S_solve_P_LP_in__tracker>::iterator it = v_P_LP_in__tracker_in.end() - 1;
 
                 // Track whether most recent solution violates constraints, results in a new max power, or is less than previous max power
-                if ((*it).m_error_code != 0 || fabs((*it).m_rel_diff_T_htf_cold) > tol_W_dot_pc_fan) {
+                if ((*it).m_error_code != 0 || std::abs((*it).m_rel_diff_T_htf_cold) > tol_W_dot_pc_fan) {
                     odsol_constraint_violation = *it;
                 }
                 else if ((*it).m_W_dot_net_less_cooling >= odsol_max.m_W_dot_net_less_cooling) {
@@ -2322,7 +2337,7 @@ int C_sco2_phx_air_cooler::off_design__calc_T_pc_in__target_T_htf_cold__max_powe
                 v_T_mc_in__tracker.push_back(*(v_P_LP_in__tracker_in.end() - 1));
 
                 std::vector<S_solve_P_LP_in__tracker>::iterator it = v_P_LP_in__tracker_in.end() - 1;
-                if ((*it).m_error_code != 0 || fabs((*it).m_rel_diff_T_htf_cold) > tol_W_dot_pc_fan) {
+                if ((*it).m_error_code != 0 || std::abs((*it).m_rel_diff_T_htf_cold) > tol_W_dot_pc_fan) {
                     found_constraint_violation = true;
                     odsol_constraint_violation = *it;
                     break;
@@ -2363,7 +2378,7 @@ int C_sco2_phx_air_cooler::off_design__calc_T_pc_in__target_T_htf_cold__max_powe
 
                 std::vector<S_solve_P_LP_in__tracker>::iterator it = v_P_LP_in__tracker_in.end() - 1;
 
-                if ((*it).m_error_code != 0 || fabs((*it).m_rel_diff_T_htf_cold) > tol_W_dot_pc_fan) {
+                if ((*it).m_error_code != 0 || std::abs((*it).m_rel_diff_T_htf_cold) > tol_W_dot_pc_fan) {
                     odsol_constraint_violation = *it;
                 }
                 else if ((*it).m_W_dot_net_less_cooling >= odsol_max.m_W_dot_net_less_cooling) {
@@ -2680,7 +2695,7 @@ int C_sco2_phx_air_cooler::off_design__calc_T_mc_in__target_T_htf_cold__max_powe
 
     // Check whether HTF cold temperature is within tolerance of target
     double tol_W_dot_fan = od_tol * 2.0;        // 0.002;
-    bool is_T_htf_equal_target = std::fabs(i_rel_diff_T_htf_cold_at_cooler_target) < tol_W_dot_fan;
+    bool is_T_htf_equal_target = std::abs(i_rel_diff_T_htf_cold_at_cooler_target) < tol_W_dot_fan;
 
     // Start searching at max fan power T_mc_in, which is cold limit
     std::vector<S_solve_P_LP_in__tracker>::iterator it_sorted_W_dot_net_less_cooling_min__T_cool = it_sorted_cooler_target;
@@ -2692,7 +2707,7 @@ int C_sco2_phx_air_cooler::off_design__calc_T_mc_in__target_T_htf_cold__max_powe
         // Is there another T_mc_in in the solution vector where T htf cold is equal to target?
         std::vector<S_solve_P_LP_in__tracker>::iterator it_sorted_T_htf_cold_target = it_sorted_cooler_target;
         while (it_sorted_T_htf_cold_target < P_LP_in_tracker_T_mc_in_sorted.end()) {
-            if (std::fabs((*it_sorted_T_htf_cold_target).m_rel_diff_T_htf_cold) < tol_W_dot_fan && (*it_sorted_T_htf_cold_target).m_error_code == 0) {
+            if (std::abs((*it_sorted_T_htf_cold_target).m_rel_diff_T_htf_cold) < tol_W_dot_fan && (*it_sorted_T_htf_cold_target).m_error_code == 0) {
                 break;
             }
             it_sorted_T_htf_cold_target++;
@@ -2706,16 +2721,16 @@ int C_sco2_phx_air_cooler::off_design__calc_T_mc_in__target_T_htf_cold__max_powe
         }
 
         // If no solution in vector has T htf cold equal to target, check for min difference
-        double T_htf_cold_diff_abs_min = std::fabs(i_rel_diff_T_htf_cold_at_cooler_target);
+        double T_htf_cold_diff_abs_min = std::abs(i_rel_diff_T_htf_cold_at_cooler_target);
         it_sorted_T_htf_cold_target = it_sorted_cooler_target;
 
         std::vector<S_solve_P_LP_in__tracker>::iterator it_sorted_rel_diff_T_htf_min = it_sorted_cooler_target;
         while (it_sorted_T_htf_cold_target < P_LP_in_tracker_T_mc_in_sorted.end()) {
 
-            if (std::fabs((*it_sorted_T_htf_cold_target).m_rel_diff_T_htf_cold) < T_htf_cold_diff_abs_min
+            if (std::abs((*it_sorted_T_htf_cold_target).m_rel_diff_T_htf_cold) < T_htf_cold_diff_abs_min
                     && (*it_sorted_T_htf_cold_target).m_error_code == 0) {
 
-                T_htf_cold_diff_abs_min = std::fabs((*it_sorted_T_htf_cold_target).m_rel_diff_T_htf_cold);
+                T_htf_cold_diff_abs_min = std::abs((*it_sorted_T_htf_cold_target).m_rel_diff_T_htf_cold);
                 it_sorted_rel_diff_T_htf_min = it_sorted_T_htf_cold_target;
             }
             it_sorted_T_htf_cold_target++;
@@ -2727,14 +2742,14 @@ int C_sco2_phx_air_cooler::off_design__calc_T_mc_in__target_T_htf_cold__max_powe
                 ms_cycle_od_par.m_T_mc_in = (*(P_LP_in_tracker_T_mc_in_sorted.end() - 1)).m_T_mc_in + 0.5;  //[K]
                 opt_P_LP_err = solve_P_LP_in__objective(od_opt_objective, P_LP_in_tracker_T_mc_in_sorted, od_tol);
                 if ((*(P_LP_in_tracker_T_mc_in_sorted.end() - 1)).m_error_code != 0 ||
-                    std::fabs((*(P_LP_in_tracker_T_mc_in_sorted.end() - 1)).m_rel_diff_T_htf_cold) > T_htf_cold_diff_abs_min + std::fmax(0.01, tol_W_dot_fan)) {
+                    std::abs((*(P_LP_in_tracker_T_mc_in_sorted.end() - 1)).m_rel_diff_T_htf_cold) > T_htf_cold_diff_abs_min + std::fmax(0.01, tol_W_dot_fan)) {
                     ms_cycle_od_par.m_T_mc_in -= 0.5;
                     return solve_P_LP_in__objective(od_opt_objective, P_LP_in_tracker_T_mc_in_sorted, od_tol);
                 }
-                else if (std::fabs((*(P_LP_in_tracker_T_mc_in_sorted.end() - 1)).m_rel_diff_T_htf_cold) < T_htf_cold_diff_abs_min) {
-                    T_htf_cold_diff_abs_min = std::fabs((*(P_LP_in_tracker_T_mc_in_sorted.end() - 1)).m_rel_diff_T_htf_cold);
+                else if (std::abs((*(P_LP_in_tracker_T_mc_in_sorted.end() - 1)).m_rel_diff_T_htf_cold) < T_htf_cold_diff_abs_min) {
+                    T_htf_cold_diff_abs_min = std::abs((*(P_LP_in_tracker_T_mc_in_sorted.end() - 1)).m_rel_diff_T_htf_cold);
                 }
-                if (std::fabs((*(P_LP_in_tracker_T_mc_in_sorted.end() - 1)).m_rel_diff_T_htf_cold) < tol_W_dot_fan) {
+                if (std::abs((*(P_LP_in_tracker_T_mc_in_sorted.end() - 1)).m_rel_diff_T_htf_cold) < tol_W_dot_fan) {
                     it_sorted_W_dot_net_less_cooling_min__T_cool = P_LP_in_tracker_T_mc_in_sorted.end() - 1;
                     is_T_htf_equal_target = true;
                     break;
@@ -2768,7 +2783,7 @@ int C_sco2_phx_air_cooler::off_design__calc_T_mc_in__target_T_htf_cold__max_powe
         // Start checking warmer T_mc_in
         // Expect fan power to stay within limit, but no guarantee that T_htf_cold will remain equal to target or error code will be 0
         for (std::vector<S_solve_P_LP_in__tracker>::iterator it = it_sorted_W_dot_net_less_cooling_min__T_cool + 1; it < P_LP_in_tracker_T_mc_in_sorted.end(); it++) {
-            if ((*it).m_error_code != 0 || fabs((*it).m_rel_diff_T_htf_cold) > tol_W_dot_fan)
+            if ((*it).m_error_code != 0 || std::abs((*it).m_rel_diff_T_htf_cold) > tol_W_dot_fan)
             {
                 found_constraint_violation = true;
                 odsol_constraint_violation = *it;
@@ -2796,7 +2811,7 @@ int C_sco2_phx_air_cooler::off_design__calc_T_mc_in__target_T_htf_cold__max_powe
                 ms_cycle_od_par.m_T_mc_in = odsol_max.m_T_mc_in + 1.0;  //[K]
                 opt_P_LP_err = solve_P_LP_in__objective(od_opt_objective, v_P_LP_in__tracker, od_tol);
                 std::vector<S_solve_P_LP_in__tracker>::iterator it = v_P_LP_in__tracker.end() - 1;
-                if ((*it).m_error_code != 0 || fabs((*it).m_rel_diff_T_htf_cold) > tol_W_dot_fan){
+                if ((*it).m_error_code != 0 || std::abs((*it).m_rel_diff_T_htf_cold) > tol_W_dot_fan){
                     found_constraint_violation = true;
                     odsol_constraint_violation = *it;
                     break;
@@ -2823,7 +2838,7 @@ int C_sco2_phx_air_cooler::off_design__calc_T_mc_in__target_T_htf_cold__max_powe
                 ms_cycle_od_par.m_T_mc_in = 0.5*(odsol_constraint_violation.m_T_mc_in + odsol_T_warm.m_T_mc_in);  //[K]
                 opt_P_LP_err = solve_P_LP_in__objective(od_opt_objective, v_P_LP_in__tracker, od_tol);
                 std::vector<S_solve_P_LP_in__tracker>::iterator it = v_P_LP_in__tracker.end() - 1;
-                if ((*it).m_error_code != 0 || fabs((*it).m_rel_diff_T_htf_cold) > tol_W_dot_fan){
+                if ((*it).m_error_code != 0 || std::abs((*it).m_rel_diff_T_htf_cold) > tol_W_dot_fan){
                     odsol_constraint_violation = *it;
                 }
                 else if((*it).m_W_dot_net_less_cooling >= odsol_max.m_W_dot_net_less_cooling) {
@@ -2856,7 +2871,7 @@ int C_sco2_phx_air_cooler::off_design__calc_T_mc_in__target_T_htf_cold__max_powe
                 ms_cycle_od_par.m_T_mc_in = odsol_max.m_T_mc_in + 1.0;  //[K]
                 opt_P_LP_err = solve_P_LP_in__objective(od_opt_objective, v_P_LP_in__tracker, od_tol);
                 std::vector<S_solve_P_LP_in__tracker>::iterator it = v_P_LP_in__tracker.end()-1;
-                if ((*it).m_error_code != 0 || fabs((*it).m_rel_diff_T_htf_cold) > tol_W_dot_fan){
+                if ((*it).m_error_code != 0 || std::abs((*it).m_rel_diff_T_htf_cold) > tol_W_dot_fan){
                     found_constraint_violation = true;
                     odsol_constraint_violation = *it;
                     break;
@@ -2884,7 +2899,7 @@ int C_sco2_phx_air_cooler::off_design__calc_T_mc_in__target_T_htf_cold__max_powe
                 ms_cycle_od_par.m_T_mc_in = 0.5 * (odsol_constraint_violation.m_T_mc_in + odsol_T_warm.m_T_mc_in);  //[K]
                 opt_P_LP_err = solve_P_LP_in__objective(od_opt_objective, v_P_LP_in__tracker, od_tol);
                 std::vector<S_solve_P_LP_in__tracker>::iterator it = v_P_LP_in__tracker.end() - 1;
-                if ((*it).m_error_code != 0 || fabs((*it).m_rel_diff_T_htf_cold) > tol_W_dot_fan) {
+                if ((*it).m_error_code != 0 || std::abs((*it).m_rel_diff_T_htf_cold) > tol_W_dot_fan) {
                     odsol_constraint_violation = *it;
                 }
                 else if ((*it).m_W_dot_net_less_cooling >= odsol_max.m_W_dot_net_less_cooling) {
@@ -2958,7 +2973,7 @@ int C_sco2_phx_air_cooler::off_design__constant_N__calc_max_htf_massflow__T_mc_i
         double m_dot_htf_target_bound = std::numeric_limits<double>::quiet_NaN();
         double m_dot_htf_miss_bound = std::numeric_limits<double>::quiet_NaN();
         double step_sign = std::numeric_limits<double>::quiet_NaN();
-        if (std::fabs(T_htf_cold_reldiff) < T_htf_cold_tol) {
+        if (std::abs(T_htf_cold_reldiff) < T_htf_cold_tol) {
             m_dot_htf_target_bound = m_dot_htf_guess;
             step_sign = 1.0;
         }
@@ -2988,7 +3003,7 @@ int C_sco2_phx_air_cooler::off_design__constant_N__calc_max_htf_massflow__T_mc_i
 
             T_htf_cold_reldiff = (mc_phx.ms_od_solved.m_T_h_out - ms_des_solved.ms_phx_des_solved.m_T_h_out) / ms_des_solved.ms_phx_des_solved.m_T_h_out;
 
-            if (std::fabs(T_htf_cold_reldiff) < T_htf_cold_tol) {
+            if (std::abs(T_htf_cold_reldiff) < T_htf_cold_tol) {
                 m_dot_htf_target_bound = m_dot_htf_guess;
                 if (step_sign == -1.0) {
                     break;
@@ -3021,7 +3036,7 @@ int C_sco2_phx_air_cooler::off_design__constant_N__calc_max_htf_massflow__T_mc_i
 
             T_htf_cold_reldiff = (mc_phx.ms_od_solved.m_T_h_out - ms_des_solved.ms_phx_des_solved.m_T_h_out) / ms_des_solved.ms_phx_des_solved.m_T_h_out;
 
-            if (std::fabs(T_htf_cold_reldiff) < T_htf_cold_tol) {
+            if (std::abs(T_htf_cold_reldiff) < T_htf_cold_tol) {
                 m_dot_htf_target_bound = m_dot_htf_guess;
             }
             else {
@@ -3547,7 +3562,7 @@ int C_sco2_phx_air_cooler::solve_P_LP_in__objective(E_off_design_strategies od_o
             local_tracker_values.m_objective = 0.0;
         }
         else{
-            double T_htf_cold_exp_penalty = std::max(0.0, std::fabs(local_tracker_values.m_rel_diff_T_htf_cold) - 0.002);
+            double T_htf_cold_exp_penalty = std::max(0.0, std::abs(local_tracker_values.m_rel_diff_T_htf_cold) - 0.002);
             local_tracker_values.m_objective = local_tracker_values.m_W_dot_net_less_cooling * std::exp(-T_htf_cold_exp_penalty * 100.0);
         }
     }
@@ -3711,13 +3726,25 @@ int C_sco2_phx_air_cooler::solve_P_LP_in__target_T_htf_cold(double od_tol /*-*/)
         }
 
         // If we found negative slope, set xy structures
-        if (T_htf_cold_err_code == 0 && T_htf_cold_i < T_htf_cold_low)
-        {
-            xy_1.x = P_i;
-            xy_1.y = T_htf_cold_i;
+        if (ms_des_solved.ms_rc_cycle_solved.m_is_rc) {
+            if (T_htf_cold_err_code == 0 && T_htf_cold_i < T_htf_cold_low)
+            {
+                xy_1.x = P_i;
+                xy_1.y = T_htf_cold_i;
 
-            xy_2.x = P_at_T_htf_cold_low;
-            xy_2.y = T_htf_cold_low;
+                xy_2.x = P_at_T_htf_cold_low;
+                xy_2.y = T_htf_cold_low;
+            }
+        }
+        else {
+            if (T_htf_cold_err_code == 0 && T_htf_cold_i > T_htf_cold_low)
+            {
+                xy_1.x = P_i;
+                xy_1.y = T_htf_cold_i;
+
+                xy_2.x = P_at_T_htf_cold_low;
+                xy_2.y = T_htf_cold_low;
+            }
         }
     }
 
@@ -3729,9 +3756,20 @@ int C_sco2_phx_air_cooler::solve_P_LP_in__target_T_htf_cold(double od_tol /*-*/)
         int T_htf_cold_iter = 0;
         T_htf_cold_err_code = c_P_LP_in_solver.solve(xy_1, xy_2, T_htf_cold_target, P_LP_in_T_htf_cold_target, tol_T_htf_cold_target, T_htf_cold_iter);
 
-        if (T_htf_cold_err_code != C_monotonic_eq_solver::CONVERGED && fabs(tol_T_htf_cold_target) > od_tol*tol_margin)    // && tol_T_htf_cold_target > 1.E-3)
-        {
-            return -31;
+        if (ms_des_solved.ms_rc_cycle_solved.m_is_rc) {
+            if (T_htf_cold_err_code != C_monotonic_eq_solver::CONVERGED && std::abs(tol_T_htf_cold_target) > od_tol * tol_margin)    // && tol_T_htf_cold_target > 1.E-3)
+            {
+                return -31;
+            }
+        }
+        else {
+            // For simple cycle, there may not be a solution that is <= target HTF cold temperature
+            if (ms_od_solved.m_od_error_code != 0 && ms_od_solved.m_od_error_code != -14) {
+                if (T_htf_cold_err_code != C_monotonic_eq_solver::CONVERGED && std::abs(tol_T_htf_cold_target) > od_tol * tol_margin)    // && tol_T_htf_cold_target > 1.E-3)
+                {
+                    return -31;
+                }
+            }
         }
     }
 
@@ -3750,7 +3788,7 @@ int C_sco2_phx_air_cooler::solve_P_LP_in__target_T_htf_cold(double od_tol /*-*/)
         int P_mc_out_iter = 0;
         int P_mc_out_err_code = c_P_LP__P_mc_out_solver.solve(mc_P_LP_in_iter_tracker.mv_P_LP_in, mc_P_LP_in_iter_tracker.mv_P_mc_out, P_mc_out_target, P_LP_in_P_mc_out_target, tol_P_mc_out, P_mc_out_iter);
 
-        if (P_mc_out_err_code != C_monotonic_eq_solver::CONVERGED && fabs(tol_P_mc_out) > od_tol*tol_margin) // && tol_P_mc_out > 1.E-3)
+        if (P_mc_out_err_code != C_monotonic_eq_solver::CONVERGED && std::abs(tol_P_mc_out) > od_tol * tol_margin) // && tol_P_mc_out > 1.E-3)
         {
             return -31;
         }
@@ -3875,7 +3913,7 @@ int C_sco2_phx_air_cooler::solve_P_LP_in__target_T_htf_cold(double od_tol /*-*/)
 
         // Expect not to be able to converge, instead want to see SLOPE_POS_NO_POS_ERR
         //    indicating solver is at inlet pressure where errors begin
-        if (no_err_err_code != C_monotonic_eq_solver::CONVERGED && no_err_err_code != C_monotonic_eq_solver::SLOPE_POS_NO_POS_ERR && fabs(tol_no_err) > 1.E-3*tol_margin)
+        if (no_err_err_code != C_monotonic_eq_solver::CONVERGED && no_err_err_code != C_monotonic_eq_solver::SLOPE_POS_NO_POS_ERR && std::abs(tol_no_err) > 1.E-3*tol_margin)
         {
             return -31;
         }
@@ -4427,13 +4465,13 @@ int C_sco2_phx_air_cooler::off_design_core(double & eta_solved, double od_tol /*
         iter_deltaP++;
 
     } while (is_hx_deltaP_converge && 
-        ( fabs(diff_P_LTR_HP_out_rel) > od_tol
-            || fabs(diff_P_HTR_HP_out_rel) > od_tol
-            || fabs(diff_P_PHX_out_rel) > od_tol
-            || fabs(diff_P_HTR_LP_out_rel) > od_tol
-            || fabs(diff_P_LTR_LP_out_rel) > od_tol
-            || fabs(diff_P_mc_cooler_out_rel) > od_tol
-            || fabs(diff_P_pc_cooler_out_rel) > od_tol) );
+        (std::abs(diff_P_LTR_HP_out_rel) > od_tol
+            || std::abs(diff_P_HTR_HP_out_rel) > od_tol
+            || std::abs(diff_P_PHX_out_rel) > od_tol
+            || std::abs(diff_P_HTR_LP_out_rel) > od_tol
+            || std::abs(diff_P_LTR_LP_out_rel) > od_tol
+            || std::abs(diff_P_mc_cooler_out_rel) > od_tol
+            || std::abs(diff_P_pc_cooler_out_rel) > od_tol) );
 
     ms_od_solved.m_is_converged = true;
 

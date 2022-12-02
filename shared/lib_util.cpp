@@ -1,24 +1,35 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 
 #include <cstdio>
 #include <cstdarg>
@@ -813,8 +824,13 @@ int util::day_of(double time)
 int util::week_of(double time)
 {
 	/* returns week number 0..51 given
-	   time: hour index in year 0..8759 */
+	   time: hour index in year 0..8759
+       Note that for any number 8736 <= x <8760
+      (int)  (x / 24*7) = 52 (integer value
+       */
 	int weeknum = ((int)(time / (24.0*7.0)));   // week goes 0-51
+    if (weeknum > 51) weeknum = 51;
+    if (weeknum < 0) weeknum = 0;
 	return weeknum;
 }
 
@@ -919,9 +935,9 @@ size_t util::hour_of_year(size_t month, size_t day, size_t hour)
 		h += hour;
 	else ok = false;
 	if (hour > 8759)
-	    throw std::runtime_error("hour_of_year range is (0-8759) but calculated hour is > 8759.");
+	    throw std::runtime_error("hour_of_year range is (0-8759) but calculated hour is > 8759: " + std::to_string(hour));
 	if (!ok)
-		throw std::runtime_error("hour_of_year input month, day, or hour out of correct range");
+		throw std::runtime_error("hour_of_year input month, day, or hour out of correct range for m-d-h: " + std::to_string(month) + "-" + std::to_string(day) + "-" + std::to_string(hour));
 	return h;
 }
 
@@ -1189,7 +1205,29 @@ size_t util::nearest_col_index(const matrix_t<double>& mat, size_t col, double v
     double a = *(iter - 1);
     double b = *(iter);
 
-    return fabs(val - a) < fabs(val - b) ? (iter - values.begin() - 1) : (iter - values.begin());
+    return std::abs(val - a) < std::abs(val - b) ? (iter - values.begin() - 1) : (iter - values.begin());
+}
+
+size_t util::nearest_col_index(const std::vector<std::vector<double>>& mat, size_t col, double val) {
+    std::vector<double> values;
+    values.reserve(mat.size());
+    for (const auto & i : mat) {
+        values.push_back(i[col]);
+    }
+
+    auto iter = std::lower_bound(values.begin(), values.end(), val);
+
+    if (iter == values.begin()) {
+        return 0;
+    }
+    if (iter == values.end()) {
+        return iter - values.begin() - 1;
+    }
+
+    double a = *(iter - 1);
+    double b = *(iter);
+
+    return std::abs(val - a) < std::abs(val - b) ? (iter - values.begin() - 1) : (iter - values.begin());
 }
 
 size_t util::lifetimeIndex(size_t year, size_t hour_of_year, size_t step_of_hour, size_t step_per_hour)

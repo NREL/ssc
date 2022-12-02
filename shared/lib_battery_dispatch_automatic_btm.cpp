@@ -1,24 +1,35 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 
 #include "lib_battery_dispatch_automatic_btm.h"
 #include "lib_battery_powerflow.h"
@@ -53,6 +64,7 @@ dispatch_automatic_behind_the_meter_t::dispatch_automatic_behind_the_meter_t(
     std::vector<double> battReplacementCostPerkWh,
     int battCycleCostChoice,
     std::vector<double> battCycleCost,
+    std::vector<double> battOMCost,
     double interconnection_limit,
     bool chargeOnlySystemExceedLoad,
     bool dischargeOnlyLoadExceedSystem,
@@ -60,7 +72,7 @@ dispatch_automatic_behind_the_meter_t::dispatch_automatic_behind_the_meter_t(
     double SOC_min_outage
 	) : dispatch_automatic_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max_kwdc, Pd_max_kwdc, Pc_max_kwac, Pd_max_kwac,
 		t_min, dispatch_mode, weather_forecast_mode, pv_dispatch, nyears, look_ahead_hours, dispatch_update_frequency_hours, can_charge, can_clip_charge, can_grid_charge, can_fuelcell_charge,
-        battReplacementCostPerkWh, battCycleCostChoice, battCycleCost, interconnection_limit, chargeOnlySystemExceedLoad, dischargeOnlyLoadExceedSystem,
+        battReplacementCostPerkWh, battCycleCostChoice, battCycleCost, battOMCost, interconnection_limit, chargeOnlySystemExceedLoad, dischargeOnlyLoadExceedSystem,
         behindTheMeterDischargeToGrid, SOC_min_outage)
 {
 	_P_target_month = -1e16;
@@ -159,57 +171,11 @@ void dispatch_automatic_behind_the_meter_t::setup_rate_forecast()
 {
     if (_mode == dispatch_t::FORECAST)
     {
-        // Process load and pv forecasts to get _monthly_ expected gen, load, and peak
-        // Do we need new member variables, or can these just be passed off to UtilityRateForecast?
-        std::vector<double> monthly_gross_load;
-        std::vector<double> monthly_gen;
-        std::vector<double> monthly_net_load;
 
-        // Load here is every step for the full analysis period. Load escalation has already been applied (TODO in compute modules)
-        size_t num_recs = util::hours_per_year * _steps_per_hour * _nyears;
-        size_t step = 0; size_t hour_of_year = 0;
-        int curr_month = 1;
-        double load_during_month = 0.0; double gen_during_month = 0.0; double gross_load_during_month = 0.0;
-        size_t array_size = std::min(_P_pv_ac.size(), _P_load_ac.size()); // Cover smaller arrays to make testing easier
-        for (size_t idx = 0; idx < num_recs && idx < array_size; idx++)
-        {
-            double grid_power = _P_pv_ac[idx] - _P_load_ac[idx];
+        forecast_setup rate_setup(_steps_per_hour, _nyears);
+        rate_setup.setup(rate.get(), _P_pv_ac, _P_load_ac, m_batteryPower->powerBatteryDischargeMaxAC);
 
-            gross_load_during_month += _P_load_ac[idx] * _dt_hour;
-            
-
-            if (grid_power < 0)
-            {
-                load_during_month += grid_power * _dt_hour;
-            }
-            else
-            {
-                gen_during_month += grid_power * _dt_hour;
-            }
-
-            step++;
-            if (step == _steps_per_hour)
-            {
-                step = 0;
-                hour_of_year++;
-                if (hour_of_year >= 8760) {
-                    hour_of_year = 0;
-                }
-            }
-            if (util::month_of((double) hour_of_year) != curr_month || (idx == array_size - (size_t) 1))
-            {
-                // Push back vectors
-                // Note: this is a net-billing approach. To be accurate for net metering, we'd have to invoke tou periods here, this overestimates costs for NM
-                monthly_gross_load.push_back(gross_load_during_month / util::hours_in_month(curr_month));
-                monthly_net_load.push_back(-1.0 * load_during_month);
-                monthly_gen.push_back(gen_during_month);
-
-                gross_load_during_month = 0.0; load_during_month = 0.0; gen_during_month = 0.0;
-                curr_month < 12 ? curr_month++ : curr_month = 1;
-            }
-        }
-
-        rate_forecast = std::shared_ptr<UtilityRateForecast>(new UtilityRateForecast(rate.get(), _steps_per_hour, monthly_net_load, monthly_gen, monthly_gross_load, _nyears));
+        rate_forecast = std::shared_ptr<UtilityRateForecast>(new UtilityRateForecast(rate.get(), _steps_per_hour, rate_setup.monthly_net_load, rate_setup.monthly_gen, rate_setup.monthly_gross_load, _nyears, rate_setup.monthly_peaks));
         rate_forecast->initializeMonth(0, 0);
         rate_forecast->copyTOUForecast();
     }
@@ -238,11 +204,10 @@ void dispatch_automatic_behind_the_meter_t::update_dispatch(size_t year, size_t 
             double no_dispatch_cost = compute_costs(idx, year, hour_of_year, p, debug);
 
             compute_energy(E_max, p, debug);
-            cost_based_target_power(idx, year, hour_of_year, no_dispatch_cost, E_max, p, debug);
-
-            // Set battery power profile
-            set_battery_power(idx, p, debug);            
+            cost_based_target_power(idx, year, hour_of_year, no_dispatch_cost, E_max, p, debug);         
         }
+        // Set battery power profile
+        set_battery_power(idx, _day_index, p, debug);
         m_batteryPower->powerBatteryTarget = _P_battery_use[step];
     }
 	else if (_mode != dispatch_t::CUSTOM_DISPATCH)
@@ -261,10 +226,10 @@ void dispatch_automatic_behind_the_meter_t::update_dispatch(size_t year, size_t 
 			// Peak shaving scheme
 			compute_energy(E_max, p, debug);
 			target_power(E_max, idx, p, debug);
-
-			// Set battery power profile
-			set_battery_power(idx, p, debug);
 		}
+        // Set battery power profile
+        apply_target_power(_day_index); // Account for actual grid usage at this step
+        set_battery_power(idx, _day_index, p, debug); // Account for efficiencies and losses
 		// save for extraction
 		_P_target_current = _P_target_use[_day_index];
 		m_batteryPower->powerBatteryTarget = _P_battery_use[_day_index];
@@ -406,11 +371,15 @@ double dispatch_automatic_behind_the_meter_t::compute_costs(size_t idx, size_t y
     std::unique_ptr<UtilityRateForecast> noDispatchForecast = std::unique_ptr<UtilityRateForecast>(new UtilityRateForecast(*rate_forecast));
     std::unique_ptr<UtilityRateForecast> marginalForecast = std::unique_ptr<UtilityRateForecast>(new UtilityRateForecast(*rate_forecast));
     double no_dispatch_cost = 0;
+    size_t start_year = year;
 
     // compute grid net from pv and load (no battery)
     size_t count = 0;
     for (size_t hour = 0; hour != 24; hour++)
     {
+        if (hour_of_year + hour > 8760 && year == start_year) {
+            year++;
+        }
         for (size_t step = 0; step != _steps_per_hour && idx < _P_load_ac.size(); step++)
         {
             double power = _P_load_ac[idx] - _P_pv_ac[idx];
@@ -566,8 +535,19 @@ void dispatch_automatic_behind_the_meter_t::target_power(double E_useful, size_t
 		for (size_t i = 0; i != num_steps; i++)
 			_P_target_use[i] = P_target;
 	}
-    for (size_t i = 0; i != _P_battery_use.size(); i++)
-        _P_battery_use[i] = grid[i].Grid() - _P_target_use[i];
+
+}
+
+void dispatch_automatic_behind_the_meter_t::apply_target_power(size_t day_index)
+{
+    double pv_ac_power = m_batteryPower->powerSystem; // True for AC connected
+    double fuel_cell_power = m_batteryPower->powerFuelCell;
+    if (m_batteryPower->connectionMode == m_batteryPower->DC_CONNECTED) {
+        m_batteryPower->sharedInverter->calculateACPower(m_batteryPower->powerSystem, m_batteryPower->voltageSystem, m_batteryPower->sharedInverter->Tdry_C);
+        pv_ac_power = m_batteryPower->sharedInverter->powerAC_kW;
+    }
+    double grid_power = m_batteryPower->powerLoad - pv_ac_power - fuel_cell_power;
+    _P_battery_use[day_index] = grid_power - _P_target_use[day_index];
 }
 
 void dispatch_automatic_behind_the_meter_t::cost_based_target_power(size_t idx, size_t year, size_t hour_of_year, double no_dispatch_cost, double E_max, FILE* p, const bool debug)
@@ -591,7 +571,7 @@ void dispatch_automatic_behind_the_meter_t::cost_based_target_power(size_t idx, 
         plans[i].num_cycles = 0;
         plan_dispatch_for_cost(plans[i], idx, E_max, startingEnergy);
         UtilityRateForecast midDispatchForecast(*rate_forecast);
-        plans[i].cost = midDispatchForecast.forecastCost(plans[i].plannedGridUse, year, hour_of_year, 0) + cost_to_cycle() * plans[i].num_cycles - plans[i].kWhRemaining * plans[i].lowestMarginalCost;
+        plans[i].cost = midDispatchForecast.forecastCost(plans[i].plannedGridUse, year, hour_of_year, 0) + cost_to_cycle() * plans[i].num_cycles + plans[i].kWhDischarged * omCost() - plans[i].kWhRemaining * plans[i].lowestMarginalCost;
 
         if (plans[i].cost <= lowest_cost)
         {
@@ -791,7 +771,7 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(dispatch_plan
         }
         energy -= plan.plannedDispatch[i] * _dt_hour;
 
-        if (fabs(plan.plannedDispatch[i] - 0) < 1e-7) {
+        if (std::abs(plan.plannedDispatch[i] - 0) < 1e-7) {
             plan.plannedDispatch[i] = 0;
         }
 
@@ -837,6 +817,13 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(dispatch_plan
     }
 
     plan.kWhRemaining = energy * m_batteryPower->singlePointEfficiencyDCToAC;
+
+    // variable o and m cost energy
+    plan.kWhDischarged = 0.0;
+    for (i = 0; i < plan.plannedDispatch.size(); i++)
+        if (plan.plannedDispatch[i] > 0)
+            plan.kWhDischarged += plan.plannedDispatch[i] * _dt_hour; // plannedDispatch in kW and kWh discharged in kWh
+
 }
 
 void dispatch_automatic_behind_the_meter_t::check_power_restrictions(double& power)
@@ -847,21 +834,18 @@ void dispatch_automatic_behind_the_meter_t::check_power_restrictions(double& pow
     power = desiredCurrent * _Battery->V() * util::watt_to_kilowatt;
 }
 
-void dispatch_automatic_behind_the_meter_t::set_battery_power(size_t idx, FILE *p, const bool debug)
+void dispatch_automatic_behind_the_meter_t::set_battery_power(size_t idx, size_t day_index, FILE *p, const bool debug)
 {
-	for (size_t i = 0; i != _P_target_use.size(); i++) {
+    double loss_kw = _Battery->calculate_loss(_P_battery_use[day_index], idx); // Units are kWac for AC connected batteries, and kWdc for DC connected
 
-        double loss_kw = _Battery->calculate_loss(_P_battery_use[i], idx + i); // Units are kWac for AC connected batteries, and kWdc for DC connected
-
-		// At this point the target power is expressed in AC, must convert to DC for battery
-		if (m_batteryPower->connectionMode == m_batteryPower->AC_CONNECTED) {
-            _P_battery_use[i] = m_batteryPower->adjustForACEfficiencies(_P_battery_use[i], loss_kw);
-		}
-        else {
-            _P_battery_use[i] = m_batteryPower->adjustForDCEfficiencies(_P_battery_use[i], loss_kw);
-        }
+	// At this point the target power is expressed in AC, must convert to DC for battery
+	if (m_batteryPower->connectionMode == m_batteryPower->AC_CONNECTED) {
+        _P_battery_use[day_index] = m_batteryPower->adjustForACEfficiencies(_P_battery_use[day_index], loss_kw);
 	}
-
+    else {
+        _P_battery_use[day_index] = m_batteryPower->adjustForDCEfficiencies(_P_battery_use[day_index], loss_kw);
+    }
+	
 	if (debug)
 	{
 		for (size_t i = 0; i != _P_target_use.size(); i++)
@@ -892,4 +876,10 @@ void dispatch_automatic_behind_the_meter_t::costToCycle()
 double dispatch_automatic_behind_the_meter_t::cost_to_cycle_per_kwh()
 {
     return m_cycleCost / _Battery->get_params().nominal_energy;
+}
+
+double dispatch_automatic_behind_the_meter_t::omCost()
+{
+    m_omCost = om_costs_by_year[curr_year];
+    return m_omCost;
 }

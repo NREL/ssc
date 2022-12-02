@@ -1,24 +1,35 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 
 #ifndef _PVYIELD_COMMON_DATA_H_
 #define _PVYIELD_COMMON_DATA_H_
@@ -65,31 +76,42 @@ void pvyield_no_financial_meteo(ssc_data_t& data)
     ssc_data_set_number(data, "subarray1_azimuth", 180);
     ssc_data_set_number(data, "subarray1_track_mode", 0);
     ssc_data_set_number(data, "subarray1_rotlim", 45);
+    ssc_data_set_number(data, "subarray1_slope_tilt", 0);
+    ssc_data_set_number(data, "subarray1_slope_azm", 0);
+    ssc_data_set_number(data, "subarray1_shade_mode", 0);
     ssc_data_set_number(data, "subarray1_shade_mode", 1);
     ssc_data_set_number(data, "subarray1_gcr", 0.5);
     ssc_number_t p_subarray1_monthly_tilt[12] = { 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30 };
     ssc_data_set_array(data, "subarray1_monthly_tilt", p_subarray1_monthly_tilt, 12);
     ssc_number_t p_subarray1_soiling[12] = { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 };
     ssc_data_set_array(data, "subarray1_soiling", p_subarray1_soiling, 12);
-    ssc_data_set_number(data, "subarray1_rear_irradiance_loss", 0);
+    ssc_data_set_number(data, "subarray1_rear_soiling_loss", 0);
+    ssc_data_set_number(data, "subarray1_rack_shading", 0);
+    ssc_data_set_number(data, "subarray1_electrical_mismatch", 0);
     ssc_data_set_number(data, "subarray1_mismatch_loss", 0);
     ssc_data_set_number(data, "subarray1_diodeconn_loss", 0);
     ssc_data_set_number(data, "subarray1_dcwiring_loss", 0);
     ssc_data_set_number(data, "subarray1_tracking_loss", 0);
     ssc_data_set_number(data, "subarray1_nameplate_loss", 0);
-    ssc_data_set_number(data, "subarray2_rear_irradiance_loss", 0);
+    ssc_data_set_number(data, "subarray2_rear_soiling_loss", 0);
+    ssc_data_set_number(data, "subarray2_rack_shading", 0);
+    ssc_data_set_number(data, "subarray2_electrical_mismatch", 0);
     ssc_data_set_number(data, "subarray2_mismatch_loss", 2);
     ssc_data_set_number(data, "subarray2_diodeconn_loss", 0.5);
     ssc_data_set_number(data, "subarray2_dcwiring_loss", 2);
     ssc_data_set_number(data, "subarray2_tracking_loss", 0);
     ssc_data_set_number(data, "subarray2_nameplate_loss", 0);
-    ssc_data_set_number(data, "subarray3_rear_irradiance_loss", 0);
+    ssc_data_set_number(data, "subarray3_rear_soiling_loss", 0);
+    ssc_data_set_number(data, "subarray3_rack_shading", 0);
+    ssc_data_set_number(data, "subarray3_electrical_mismatch", 0);
     ssc_data_set_number(data, "subarray3_mismatch_loss", 2);
     ssc_data_set_number(data, "subarray3_diodeconn_loss", 0.5);
     ssc_data_set_number(data, "subarray3_dcwiring_loss", 2);
     ssc_data_set_number(data, "subarray3_tracking_loss", 0);
     ssc_data_set_number(data, "subarray3_nameplate_loss", 0);
-    ssc_data_set_number(data, "subarray4_rear_irradiance_loss", 0);
+    ssc_data_set_number(data, "subarray4_rear_soiling_loss", 0);
+    ssc_data_set_number(data, "subarray4_rack_shading", 0);
+    ssc_data_set_number(data, "subarray4_electrical_mismatch", 0);
     ssc_data_set_number(data, "subarray4_mismatch_loss", 2);
     ssc_data_set_number(data, "subarray4_diodeconn_loss", 0.5);
     ssc_data_set_number(data, "subarray4_dcwiring_loss", 2);
@@ -109,6 +131,8 @@ void pvyield_no_financial_meteo(ssc_data_t& data)
     ssc_data_set_number(data, "subarray2_azimuth", 180);
     ssc_data_set_number(data, "subarray2_track_mode", 0);
     ssc_data_set_number(data, "subarray2_rotlim", 45);
+    ssc_data_set_number(data, "subarray2_slope_tilt", 0);
+    ssc_data_set_number(data, "subarray2_slope_azm", 0);
     ssc_data_set_number(data, "subarray2_shade_mode", 0);
     ssc_data_set_number(data, "subarray2_gcr", 0.30000001192092896);
     ssc_number_t p_subarray2_monthly_tilt[12] = { 40, 40, 40, 20, 20, 20, 20, 20, 20, 40, 40, 40 };
@@ -126,6 +150,8 @@ void pvyield_no_financial_meteo(ssc_data_t& data)
     ssc_data_set_number(data, "subarray3_azimuth", 180);
     ssc_data_set_number(data, "subarray3_track_mode", 0);
     ssc_data_set_number(data, "subarray3_rotlim", 45);
+    ssc_data_set_number(data, "subarray3_slope_azm", 0);
+    ssc_data_set_number(data, "subarray3_shade_mode", 0);
     ssc_data_set_number(data, "subarray3_shade_mode", 0);
     ssc_data_set_number(data, "subarray3_gcr", 0.30000001192092896);
     ssc_number_t p_subarray3_monthly_tilt[12] = { 40, 40, 40, 20, 20, 20, 20, 20, 20, 40, 40, 40 };
@@ -143,6 +169,8 @@ void pvyield_no_financial_meteo(ssc_data_t& data)
     ssc_data_set_number(data, "subarray4_azimuth", 180);
     ssc_data_set_number(data, "subarray4_track_mode", 0);
     ssc_data_set_number(data, "subarray4_rotlim", 45);
+    ssc_data_set_number(data, "subarray4_slope_azm", 0);
+    ssc_data_set_number(data, "subarray4_shade_mode", 0);
     ssc_data_set_number(data, "subarray4_shade_mode", 0);
     ssc_data_set_number(data, "subarray4_gcr", 0.30000001192092896);
     ssc_number_t p_subarray4_monthly_tilt[12] = { 40, 40, 40, 20, 20, 20, 20, 20, 20, 40, 40, 40 };
@@ -496,30 +524,40 @@ void pvyield_bifacial_case(ssc_data_t& data)
     ssc_data_set_number(data, "subarray1_track_mode", 1);
     ssc_data_set_number(data, "subarray1_rotlim", 45);
     ssc_data_set_number(data, "subarray1_shade_mode", 1);
+    ssc_data_set_number(data, "subarray1_slope_tilt", 0);
+    ssc_data_set_number(data, "subarray1_slope_azm", 0);
     ssc_data_set_number(data, "subarray1_gcr", 0.33);
     ssc_number_t p_subarray1_monthly_tilt[12] = { 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30 };
     ssc_data_set_array(data, "subarray1_monthly_tilt", p_subarray1_monthly_tilt, 12);
     ssc_number_t p_subarray1_soiling[12] = { 0.005, 0.005, 0.004, 0.006, 0.015, 0.042, 0.083, 0.003, 0.066, 0.049, 0.013, 0.007 };
     ssc_data_set_array(data, "subarray1_soiling", p_subarray1_soiling, 12);
-    ssc_data_set_number(data, "subarray1_rear_irradiance_loss", 0);
+    ssc_data_set_number(data, "subarray1_rear_soiling_loss", 0);
+    ssc_data_set_number(data, "subarray1_rack_shading", 0);
+    ssc_data_set_number(data, "subarray1_electrical_mismatch", 0);
     ssc_data_set_number(data, "subarray1_mismatch_loss", 0);
     ssc_data_set_number(data, "subarray1_diodeconn_loss", 0);
     ssc_data_set_number(data, "subarray1_dcwiring_loss", 0);
     ssc_data_set_number(data, "subarray1_tracking_loss", 0);
     ssc_data_set_number(data, "subarray1_nameplate_loss", 0);
-    ssc_data_set_number(data, "subarray2_rear_irradiance_loss", 0);
+    ssc_data_set_number(data, "subarray2_rear_soiling_loss", 0);
+    ssc_data_set_number(data, "subarray2_rack_shading", 0);
+    ssc_data_set_number(data, "subarray2_electrical_mismatch", 0);
     ssc_data_set_number(data, "subarray2_mismatch_loss", 2);
     ssc_data_set_number(data, "subarray2_diodeconn_loss", 0.5);
     ssc_data_set_number(data, "subarray2_dcwiring_loss", 2);
     ssc_data_set_number(data, "subarray2_tracking_loss", 0);
     ssc_data_set_number(data, "subarray2_nameplate_loss", 0);
-    ssc_data_set_number(data, "subarray3_rear_irradiance_loss", 0);
+    ssc_data_set_number(data, "subarray3_rear_soiling_loss", 0);
+    ssc_data_set_number(data, "subarray3_rack_shading", 0);
+    ssc_data_set_number(data, "subarray3_electrical_mismatch", 0);
     ssc_data_set_number(data, "subarray3_mismatch_loss", 2);
     ssc_data_set_number(data, "subarray3_diodeconn_loss", 0.5);
     ssc_data_set_number(data, "subarray3_dcwiring_loss", 2);
     ssc_data_set_number(data, "subarray3_tracking_loss", 0);
     ssc_data_set_number(data, "subarray3_nameplate_loss", 0);
-    ssc_data_set_number(data, "subarray4_rear_irradiance_loss", 0);
+    ssc_data_set_number(data, "subarray4_rear_soiling_loss", 0);
+    ssc_data_set_number(data, "subarray4_rack_shading", 0);
+    ssc_data_set_number(data, "subarray4_electrical_mismatch", 0);
     ssc_data_set_number(data, "subarray4_mismatch_loss", 2);
     ssc_data_set_number(data, "subarray4_diodeconn_loss", 0.5);
     ssc_data_set_number(data, "subarray4_dcwiring_loss", 2);
@@ -921,30 +959,40 @@ void pvyield_user_support_80603_meteo(ssc_data_t& data)
     ssc_data_set_number(data, "subarray1_track_mode", 0);
     ssc_data_set_number(data, "subarray1_rotlim", 45);
     ssc_data_set_number(data, "subarray1_shade_mode", 1);
+    ssc_data_set_number(data, "subarray1_slope_tilt", 0);
+    ssc_data_set_number(data, "subarray1_slope_azm", 0);
     ssc_data_set_number(data, "subarray1_gcr", 0.5);
     ssc_number_t p_subarray1_monthly_tilt[12] = { 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30 };
     ssc_data_set_array(data, "subarray1_monthly_tilt", p_subarray1_monthly_tilt, 12);
     ssc_number_t p_subarray1_soiling[12] = { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 };
     ssc_data_set_array(data, "subarray1_soiling", p_subarray1_soiling, 12);
-    ssc_data_set_number(data, "subarray1_rear_irradiance_loss", 0);
+    ssc_data_set_number(data, "subarray1_rear_soiling_loss", 0);
+    ssc_data_set_number(data, "subarray1_rack_shading", 0);
+    ssc_data_set_number(data, "subarray1_electrical_mismatch", 0);
     ssc_data_set_number(data, "subarray1_mismatch_loss", 0);
     ssc_data_set_number(data, "subarray1_diodeconn_loss", 0);
     ssc_data_set_number(data, "subarray1_dcwiring_loss", 0);
     ssc_data_set_number(data, "subarray1_tracking_loss", 0);
     ssc_data_set_number(data, "subarray1_nameplate_loss", 0);
-    ssc_data_set_number(data, "subarray2_rear_irradiance_loss", 0);
+    ssc_data_set_number(data, "subarray2_rear_soiling_loss", 0);
+    ssc_data_set_number(data, "subarray2_rack_shading", 0);
+    ssc_data_set_number(data, "subarray2_electrical_mismatch", 0);
     ssc_data_set_number(data, "subarray2_mismatch_loss", 2);
     ssc_data_set_number(data, "subarray2_diodeconn_loss", 0.5);
     ssc_data_set_number(data, "subarray2_dcwiring_loss", 2);
     ssc_data_set_number(data, "subarray2_tracking_loss", 0);
     ssc_data_set_number(data, "subarray2_nameplate_loss", 0);
-    ssc_data_set_number(data, "subarray3_rear_irradiance_loss", 0);
+    ssc_data_set_number(data, "subarray3_rear_soiling_loss", 0);
+    ssc_data_set_number(data, "subarray3_rack_shading", 0);
+    ssc_data_set_number(data, "subarray3_electrical_mismatch", 0);
     ssc_data_set_number(data, "subarray3_mismatch_loss", 2);
     ssc_data_set_number(data, "subarray3_diodeconn_loss", 0.5);
     ssc_data_set_number(data, "subarray3_dcwiring_loss", 2);
     ssc_data_set_number(data, "subarray3_tracking_loss", 0);
     ssc_data_set_number(data, "subarray3_nameplate_loss", 0);
-    ssc_data_set_number(data, "subarray4_rear_irradiance_loss", 0);
+    ssc_data_set_number(data, "subarray4_rear_soiling_loss", 0);
+    ssc_data_set_number(data, "subarray4_rack_shading", 0);
+    ssc_data_set_number(data, "subarray4_electrical_mismatch", 0);
     ssc_data_set_number(data, "subarray4_mismatch_loss", 2);
     ssc_data_set_number(data, "subarray4_diodeconn_loss", 0.5);
     ssc_data_set_number(data, "subarray4_dcwiring_loss", 2);
@@ -1348,30 +1396,40 @@ void pvyield_user_support_80603_AZ(ssc_data_t& data)
     ssc_data_set_number(data, "subarray1_track_mode", 0);
     ssc_data_set_number(data, "subarray1_rotlim", 45);
     ssc_data_set_number(data, "subarray1_shade_mode", 1);
+    ssc_data_set_number(data, "subarray1_slope_tilt", 0);
+    ssc_data_set_number(data, "subarray1_slope_azm", 0);
     ssc_data_set_number(data, "subarray1_gcr", 0.5);
     ssc_number_t p_subarray1_monthly_tilt[12] = { 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30 };
     ssc_data_set_array(data, "subarray1_monthly_tilt", p_subarray1_monthly_tilt, 12);
     ssc_number_t p_subarray1_soiling[12] = { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 };
     ssc_data_set_array(data, "subarray1_soiling", p_subarray1_soiling, 12);
-    ssc_data_set_number(data, "subarray1_rear_irradiance_loss", 0);
+    ssc_data_set_number(data, "subarray1_rear_soiling_loss", 0);
+    ssc_data_set_number(data, "subarray1_rack_shading", 0);
+    ssc_data_set_number(data, "subarray1_electrical_mismatch", 0);
     ssc_data_set_number(data, "subarray1_mismatch_loss", 0);
     ssc_data_set_number(data, "subarray1_diodeconn_loss", 0);
     ssc_data_set_number(data, "subarray1_dcwiring_loss", 0);
     ssc_data_set_number(data, "subarray1_tracking_loss", 0);
     ssc_data_set_number(data, "subarray1_nameplate_loss", 0);
-    ssc_data_set_number(data, "subarray2_rear_irradiance_loss", 0);
+    ssc_data_set_number(data, "subarray2_rear_soiling_loss", 0);
+    ssc_data_set_number(data, "subarray2_rack_shading", 0);
+    ssc_data_set_number(data, "subarray2_electrical_mismatch", 0);
     ssc_data_set_number(data, "subarray2_mismatch_loss", 2);
     ssc_data_set_number(data, "subarray2_diodeconn_loss", 0.5);
     ssc_data_set_number(data, "subarray2_dcwiring_loss", 2);
     ssc_data_set_number(data, "subarray2_tracking_loss", 0);
     ssc_data_set_number(data, "subarray2_nameplate_loss", 0);
-    ssc_data_set_number(data, "subarray3_rear_irradiance_loss", 0);
+    ssc_data_set_number(data, "subarray3_rear_soiling_loss", 0);
+    ssc_data_set_number(data, "subarray3_rack_shading", 0);
+    ssc_data_set_number(data, "subarray3_electrical_mismatch", 0);
     ssc_data_set_number(data, "subarray3_mismatch_loss", 2);
     ssc_data_set_number(data, "subarray3_diodeconn_loss", 0.5);
     ssc_data_set_number(data, "subarray3_dcwiring_loss", 2);
     ssc_data_set_number(data, "subarray3_tracking_loss", 0);
     ssc_data_set_number(data, "subarray3_nameplate_loss", 0);
-    ssc_data_set_number(data, "subarray4_rear_irradiance_loss", 0);
+    ssc_data_set_number(data, "subarray4_rear_soiling_loss", 0);
+    ssc_data_set_number(data, "subarray4_rack_shading", 0);
+    ssc_data_set_number(data, "subarray4_electrical_mismatch", 0);
     ssc_data_set_number(data, "subarray4_mismatch_loss", 2);
     ssc_data_set_number(data, "subarray4_diodeconn_loss", 0.5);
     ssc_data_set_number(data, "subarray4_dcwiring_loss", 2);
@@ -1783,25 +1841,33 @@ void pvsamMPPT_nofinancial_default(ssc_data_t& data)
     ssc_data_set_array(data, "subarray1_monthly_tilt", p_subarray1_monthly_tilt, 12);
     ssc_number_t p_subarray1_soiling[12] = { 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 };
     ssc_data_set_array(data, "subarray1_soiling", p_subarray1_soiling, 12);
-    ssc_data_set_number(data, "subarray1_rear_irradiance_loss", 0);
+    ssc_data_set_number(data, "subarray1_rear_soiling_loss", 0);
+    ssc_data_set_number(data, "subarray1_rack_shading", 0);
+    ssc_data_set_number(data, "subarray1_electrical_mismatch", 0);
     ssc_data_set_number(data, "subarray1_mismatch_loss", 2);
     ssc_data_set_number(data, "subarray1_diodeconn_loss", 0.5);
     ssc_data_set_number(data, "subarray1_dcwiring_loss", 2);
     ssc_data_set_number(data, "subarray1_tracking_loss", 0);
     ssc_data_set_number(data, "subarray1_nameplate_loss", 0);
-    ssc_data_set_number(data, "subarray2_rear_irradiance_loss", 0);
+    ssc_data_set_number(data, "subarray2_rear_soiling_loss", 0);
+    ssc_data_set_number(data, "subarray2_rack_shading", 0);
+    ssc_data_set_number(data, "subarray2_electrical_mismatch", 0);
     ssc_data_set_number(data, "subarray2_mismatch_loss", 2);
     ssc_data_set_number(data, "subarray2_diodeconn_loss", 0.5);
     ssc_data_set_number(data, "subarray2_dcwiring_loss", 2);
     ssc_data_set_number(data, "subarray2_tracking_loss", 0);
     ssc_data_set_number(data, "subarray2_nameplate_loss", 0);
-    ssc_data_set_number(data, "subarray3_rear_irradiance_loss", 0);
+    ssc_data_set_number(data, "subarray3_rear_soiling_loss", 0);
+    ssc_data_set_number(data, "subarray3_rack_shading", 0);
+    ssc_data_set_number(data, "subarray3_electrical_mismatch", 0);
     ssc_data_set_number(data, "subarray3_mismatch_loss", 2);
     ssc_data_set_number(data, "subarray3_diodeconn_loss", 0.5);
     ssc_data_set_number(data, "subarray3_dcwiring_loss", 2);
     ssc_data_set_number(data, "subarray3_tracking_loss", 0);
     ssc_data_set_number(data, "subarray3_nameplate_loss", 0);
-    ssc_data_set_number(data, "subarray4_rear_irradiance_loss", 0);
+    ssc_data_set_number(data, "subarray4_rear_soiling_loss", 0);
+    ssc_data_set_number(data, "subarray4_rack_shading", 0);
+    ssc_data_set_number(data, "subarray4_electrical_mismatch", 0);
     ssc_data_set_number(data, "subarray4_mismatch_loss", 2);
     ssc_data_set_number(data, "subarray4_diodeconn_loss", 0.5);
     ssc_data_set_number(data, "subarray4_dcwiring_loss", 2);

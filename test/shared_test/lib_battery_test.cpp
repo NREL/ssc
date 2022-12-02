@@ -1,24 +1,35 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 
 #include <cmath>
 #include <gtest/gtest.h>
@@ -395,6 +406,8 @@ TEST_F(lib_battery_test, runDuplicates) {
 
     EXPECT_FALSE(*cap_state3 == *cap_state2);
     EXPECT_NE(volt_state3->cell_voltage, volt_state2->cell_voltage);
+    
+    delete Battery;
 }
 
 TEST_F(lib_battery_test, createFromParams) {
@@ -447,8 +460,8 @@ TEST_F(lib_battery_test, RoundtripEffModel){
     batteryModel->calculate_max_charge_kw(&max_current);
 
     std::vector<double> eff_vs_current;
-    double current = fabs(max_current) * 0.01;
-    while (current < fabs(max_current)){
+    double current = std::abs(max_current) * 0.01;
+    while (current < std::abs(max_current)){
         capacityModel->updateCapacity(full_current, 1);   //discharge to empty
 
         size_t n_t = 0;
@@ -472,8 +485,8 @@ TEST_F(lib_battery_test, RoundtripEffModel){
             n_t += 1;
 
         }
-        current += fabs(max_current) / 100.;
-        eff_vs_current.emplace_back(fabs(output_power/input_power));
+        current += std::abs(max_current) / 100.;
+        eff_vs_current.emplace_back(std::abs(output_power/input_power));
     }
     std::vector<double> eff_expected = { 0.99, 0.99, 0.99, 0.99, 0.99, 0.99, 0.99, 0.99, 0.99, 0.98, 0.98, 0.98, 0.98, // i = 12
                                         0.98, 0.98, 0.98, 0.98, 0.97, 0.97, 0.97, 0.97, 0.97, 0.97, 0.96, 0.96, 0.96, // i = 25
@@ -502,8 +515,8 @@ TEST_F(lib_battery_test, RoundtripEffTable){
     voltageModel->calculate_max_charge_w(capacityModel->q0(), capacityModel->qmax(), 0, &max_current);
 
     std::vector<double> eff_vs_current;
-    double current = fabs(max_current) * 0.01;
-    while (current < fabs(max_current)){
+    double current = std::abs(max_current) * 0.01;
+    while (current < std::abs(max_current)){
         capacityModel->updateCapacity(full_current, 1);   //discharge to empty
 
         size_t n_t = 0;
@@ -526,8 +539,8 @@ TEST_F(lib_battery_test, RoundtripEffTable){
             output_power += capacityModel->I() * voltageModel->battery_voltage();
             n_t += 1;
         }
-        current += fabs(max_current) / 100.;
-        eff_vs_current.emplace_back(fabs(output_power/input_power));
+        current += std::abs(max_current) / 100.;
+        eff_vs_current.emplace_back(std::abs(output_power/input_power));
     }
 
     std::vector<double> eff_expected = {0.99, 0.99, 0.98, 0.98, 0.97, 0.96, 0.96, 0.95, 0.95, 0.94, 0.93, 0.94, 0.93,
@@ -540,6 +553,9 @@ TEST_F(lib_battery_test, RoundtripEffTable){
                                         0.73, 0.69, 0.66, 0.62, 0.59, 0.55, 0.51, 0.47};
     for (size_t i = 0; i < eff_expected.size(); i++)
         EXPECT_NEAR(eff_vs_current[i], eff_expected[i], .01);
+    
+    delete capacityModel;
+    delete voltageModel;
 }
 
 TEST_F(lib_battery_test, RoundtripEffVanadiumFlow){
@@ -553,8 +569,8 @@ TEST_F(lib_battery_test, RoundtripEffVanadiumFlow){
     double max_current;
     vol->calculate_max_charge_w(cap->q0(), cap->qmax(), 300, &max_current);
 
-    double current = fabs(max_current) * 0.01;
-    while (current < fabs(max_current)){
+    double current = std::abs(max_current) * 0.01;
+    while (current < std::abs(max_current)){
         cap->updateCapacity(full_current, 1);   //discharge to empty
 
         std::vector<double> inputs, outputs;
@@ -588,8 +604,10 @@ TEST_F(lib_battery_test, RoundtripEffVanadiumFlow){
 //        }
 //        printf("current %f, eff %f, n %zd\n", current, -output_power/input_power, n_t);
 
-        current += fabs(max_current) / 100.;
+        current += std::abs(max_current) / 100.;
     }
+    delete vol;
+    delete cap;
 }
 
 TEST_F(lib_battery_test, HourlyVsSubHourly)
@@ -619,6 +637,10 @@ TEST_F(lib_battery_test, HourlyVsSubHourly)
         EXPECT_NEAR(cap_subhourly->I() * volt_subhourly->battery_voltage(), discharge_watts, 0.1);
 
     }
+    delete cap_hourly;
+    delete volt_hourly;
+    delete cap_subhourly;
+    delete volt_subhourly;
 }
 
 TEST_F(lib_battery_test, AdaptiveTimestep) {
@@ -710,6 +732,9 @@ TEST_F(lib_battery_test, AdaptiveTimestep) {
     EXPECT_NEAR(batteryModel->SOC(), 94.98, 1e-2);
     EXPECT_NEAR(batt_subhourly->SOC(), 94.95, 1e-2);
     EXPECT_NEAR(batt_adaptive->SOC(), 94.95, 1e-2);
+    
+    delete batt_adaptive;
+    delete batt_subhourly;
 }
 
 
@@ -796,11 +821,13 @@ TEST_F(lib_battery_test, NMCLifeModel) {
     EXPECT_NEAR(state->nmc_li_neg->dq_relative_li3, 0, 1e-3);
     EXPECT_NEAR(state->cycle->DOD_min, 0.5, 1e-3);
     EXPECT_NEAR(state->cycle->DOD_max, 0.54, 1e-3);
-    EXPECT_NEAR(state->nmc_li_neg->b1_dt, 1.779e-5, 1e-9);
-    EXPECT_NEAR(state->nmc_li_neg->b2_dt, 8.619e-7, 1e-10);
+    EXPECT_NEAR(state->nmc_li_neg->b1_dt, 1.143e-4, 1e-6);
+    EXPECT_NEAR(state->nmc_li_neg->b2_dt, 0.05593, 1e-3);
     EXPECT_NEAR(state->nmc_li_neg->b3_dt, 8.829e-4, 1e-7);
     EXPECT_NEAR(state->nmc_li_neg->c0_dt, 3.105, 1e-3);
     EXPECT_NEAR(state->nmc_li_neg->c2_dt, 3.035e-6, 1e-8);
+    
+
 }
 
 TEST_F(lib_battery_test, AdaptiveTimestepNMC) {
@@ -892,13 +919,16 @@ TEST_F(lib_battery_test, AdaptiveTimestepNMC) {
 
     }
 
-    EXPECT_NEAR(batteryModel->charge_maximum(), 901.11, 1e-2);
-    EXPECT_NEAR(batt_subhourly->charge_maximum(), 902.21, 1e-2);
-    EXPECT_NEAR(batt_adaptive->charge_maximum(), 900.71, 1e-2);
+    EXPECT_NEAR(batteryModel->charge_maximum(), 900.63, 1e-2);
+    EXPECT_NEAR(batt_subhourly->charge_maximum(), 904.56, 1e-2);
+    EXPECT_NEAR(batt_adaptive->charge_maximum(), 903.19, 1e-2);
 
-    EXPECT_NEAR(batteryModel->SOC(), 85.42, 1e-2);
-    EXPECT_NEAR(batt_subhourly->SOC(), 86.15, 1e-2);
-    EXPECT_NEAR(batt_adaptive->SOC(), 86.28, 1e-2);
+    EXPECT_NEAR(batteryModel->SOC(), 85.46, 1e-2);
+    EXPECT_NEAR(batt_subhourly->SOC(), 85.94, 1e-2);
+    EXPECT_NEAR(batt_adaptive->SOC(), 86.06, 1e-2);
+
+    delete batt_adaptive;
+    delete batt_subhourly;
 }
 
 TEST_F(lib_battery_test, AdaptiveTimestepNonIntegerStep) {
@@ -916,6 +946,8 @@ TEST_F(lib_battery_test, AdaptiveTimestepNonIntegerStep) {
     batt_adaptive->runPower(100);
 
     EXPECT_ANY_THROW(batt_adaptive->ChangeTimestep(1));
+    
+
 }
 
 TEST_F(lib_battery_test, LMOLTOLifeModel) {
@@ -944,6 +976,8 @@ TEST_F(lib_battery_test, LMOLTOLifeModel) {
     EXPECT_NEAR(state->lmo_lto->temp_avg, 12.214, 1e-3);
     EXPECT_NEAR(state->lmo_lto->EFC, 0.0202, 1e-3);
     EXPECT_NEAR(state->lmo_lto->EFC_dt, 0.0202, 1e-3);
+    
+
 }
 
 TEST_F(lib_battery_test, AdaptiveTimestepLMOLTO) {
@@ -1040,4 +1074,7 @@ TEST_F(lib_battery_test, AdaptiveTimestepLMOLTO) {
     EXPECT_NEAR(batteryModel->SOC(), 95, 1e-2);
     EXPECT_NEAR(batt_subhourly->SOC(), 95, 1e-2);
     EXPECT_NEAR(batt_adaptive->SOC(), 95, 1e-2);
+    
+    delete batt_adaptive;
+    delete batt_subhourly;
 }

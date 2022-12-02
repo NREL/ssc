@@ -1,24 +1,35 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 
 #include <gtest/gtest.h>
 #include <cmath>
@@ -671,7 +682,7 @@ TEST_F(voltage_table_lib_battery_voltage_test, calculateMaxChargeHourly1){
     max_current_calc = model->calculate_current_for_target_w(power + 1, cap->q0(), cap->qmax(), 0);
     EXPECT_NEAR(max_current_calc, -4.99, 1e-2);
     cap->updateCapacity(max_current_calc, dt_hour);
-    EXPECT_NEAR(cap->SOC(), 99.99, 1e-2);
+    EXPECT_NEAR(cap->SOC(), 99.99, 2e-2);
     EXPECT_NEAR(cap->I() * model->battery_voltage(), -2564, 1);
 }
 
@@ -702,11 +713,11 @@ TEST_F(voltage_table_lib_battery_voltage_test, calculateMaxChargeHourly2){
     EXPECT_NEAR(power, -569, 1);
 
     max_current_calc = model->calculate_current_for_target_w(power + 1, cap->q0(), cap->qmax(), 0);
-    EXPECT_NEAR(max_current_calc, -0.998, 1e-3);
+    EXPECT_NEAR(max_current_calc, -0.998, 2e-3);
 
     // max current reduced to enforce SOC
     cap->updateCapacity(max_current_calc, dt_hour);
-    EXPECT_NEAR(cap->SOC(), 99.984, 1e-3);
+    EXPECT_NEAR(cap->SOC(), 99.984, 2e-2); // for Apple Silicon
     EXPECT_NEAR(cap->I() * model->battery_voltage(), -512, 1);
 
     // start at empty SOC
@@ -753,8 +764,8 @@ TEST_F(voltage_table_lib_battery_voltage_test, calculateMaxChargeHourly3){
 
     // max current reduced to enforce SOC
     cap->updateCapacity(max_current_calc, dt_hour);
-    EXPECT_NEAR(cap->SOC(), 99.99, 1e-2);
-    EXPECT_NEAR(cap->I() * model->battery_voltage(), -4615, 1);
+    EXPECT_NEAR(cap->SOC(), 99.99, 2e-2);
+    EXPECT_NEAR(cap->I() * model->battery_voltage(), -4615, 2);
 }
 
 TEST_F(voltage_table_lib_battery_voltage_test, calculateMaxChargeSubHourly1){
@@ -783,8 +794,8 @@ TEST_F(voltage_table_lib_battery_voltage_test, calculateMaxChargeSubHourly1){
     EXPECT_NEAR(max_current_calc, -9.999, 1e-3);
     // max current reduced to enforce SOC
     cap->updateCapacity(max_current_calc, dt_hour);
-    EXPECT_NEAR(cap->SOC(), 99.99, 1e-2);
-    EXPECT_NEAR(cap->I() * model->battery_voltage(), -5128, 1);
+    EXPECT_NEAR(cap->SOC(), 99.99, 2e-2);
+    EXPECT_NEAR(cap->I() * model->battery_voltage(), -5128, 2);
 }
 
 TEST_F(voltage_table_lib_battery_voltage_test, calculateMaxChargeSubHourly2){
@@ -817,7 +828,7 @@ TEST_F(voltage_table_lib_battery_voltage_test, calculateMaxChargeSubHourly2){
     EXPECT_NEAR(max_current_calc, -2, 1e-2);
 
     cap->updateCapacity(max_current_calc, dt_hour);
-    EXPECT_NEAR(cap->SOC(), 99.99, 1e-2);
+    EXPECT_NEAR(cap->SOC(), 99.99, 2e-2);
     EXPECT_NEAR(cap->I() * model->battery_voltage(), -1025, 1);
 
     // start at empty SOC
@@ -1236,7 +1247,7 @@ TEST_F(voltage_vanadium_lib_battery_voltage_test, calculateMaxChargeSubMinute){
     double power = model->calculate_max_charge_w(cap->q0(), cap->qmax(), 0, &max_current);
     EXPECT_NEAR(power, -10908720, 1);
     double max_current_calc = model->calculate_current_for_target_w(power, cap->q0(), cap->qmax(), 293);
-    EXPECT_NEAR(max_current_calc, max_current, 1e-2 * fabs(max_current));
+    EXPECT_NEAR(max_current_calc, max_current, 1e-2 * std::abs(max_current));
     // max current reduced to enforce SOC
     cap->updateCapacity(max_current, dt_hour);
     EXPECT_NEAR(cap->SOC(), 95, 1e-3);
@@ -1246,7 +1257,7 @@ TEST_F(voltage_vanadium_lib_battery_voltage_test, calculateMaxChargeSubMinute){
     power = model->calculate_max_charge_w(cap->q0(), cap->qmax(), 0, &max_current);
     EXPECT_NEAR(power, -190152, 1);
     max_current_calc = model->calculate_current_for_target_w(power, cap->q0(), cap->qmax(), 293);
-    EXPECT_NEAR(max_current_calc, max_current, 0.1 * fabs(max_current));
+    EXPECT_NEAR(max_current_calc, max_current, 0.1 * std::abs(max_current));
     // max current reduced to enforce SOC
     cap->updateCapacity(max_current, dt_hour);
     EXPECT_NEAR(cap->SOC(), 95, 1e-3);
@@ -1259,7 +1270,7 @@ TEST_F(voltage_vanadium_lib_battery_voltage_test, calculateMaxChargeSubMinute){
     power = model->calculate_max_charge_w(cap->q0(), cap->qmax(), 0, &max_current);
     EXPECT_NEAR(power, -37840248, 1);
     max_current_calc = model->calculate_current_for_target_w(power, cap->q0(), cap->qmax(), 293);
-    EXPECT_NEAR(max_current_calc, max_current, 1e-2 * fabs(max_current));
+    EXPECT_NEAR(max_current_calc, max_current, 1e-2 * std::abs(max_current));
     // max current reduced to enforce SOC
     cap->updateCapacity(max_current, dt_hour);
     EXPECT_NEAR(cap->SOC(), 95, 1e-3);

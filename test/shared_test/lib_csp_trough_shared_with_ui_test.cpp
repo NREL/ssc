@@ -1,24 +1,35 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 
 #include <gtest/gtest.h>
 #include "cmod_csp_trough_eqns.h"
@@ -45,6 +56,9 @@ NAMESPACE_TEST(csp_common, TroughSharedWithUi, SystemDesign) {
 
     ASSERT_NEAR_FRAC(GetNum(vd, "csp_dtr_pwrb_nameplate"), 99.9, kErrorToleranceHi);
     ASSERT_NEAR_FRAC(GetNum(vd, "q_pb_design"), 311.8, kErrorToleranceHi);
+    
+    delete vd;
+
 }
 
 NAMESPACE_TEST(csp_common, TroughSharedWithUi, SolarField) {
@@ -152,6 +166,8 @@ NAMESPACE_TEST(csp_common, TroughSharedWithUi, SolarField) {
     ASSERT_NEAR_FRAC(L_cpnt.ncells(), 121, kErrorToleranceHi);
     util::matrix_t<ssc_number_t> Type_cpnt = vd->lookup("Type_cpnt")->num;
     ASSERT_NEAR_FRAC(Type_cpnt.ncells(), 121, kErrorToleranceHi);
+    
+    delete vd;
 }
 
 NAMESPACE_TEST(csp_common, TroughSharedWithUi, CollectorType) {
@@ -188,6 +204,9 @@ NAMESPACE_TEST(csp_common, TroughSharedWithUi, CollectorType) {
     ASSERT_NEAR_FRAC(csp_dtr_sca_calc_end_losses.at(0,0), 0.9996, kErrorToleranceHi);
     util::matrix_t<ssc_number_t> csp_dtr_sca_calc_iams = vd->lookup("csp_dtr_sca_calc_iams")->num;
     ASSERT_NEAR_FRAC(csp_dtr_sca_calc_iams.at(0,0), 1.0019, kErrorToleranceHi);
+    
+    delete vd;
+
 }
 
 NAMESPACE_TEST(csp_common, TroughSharedWithUi, SystemControl) {
@@ -204,4 +223,7 @@ NAMESPACE_TEST(csp_common, TroughSharedWithUi, SystemControl) {
     util::matrix_t<ssc_number_t> wlim_series = vd->lookup("wlim_series")->num;
     ASSERT_NEAR_FRAC(wlim_series.ncells(), 8760, 0.);
     ASSERT_NEAR_FRAC(wlim_series.at(0, 0), 9.6e40, kErrorToleranceHi);
+    
+    delete vd;
+
 }

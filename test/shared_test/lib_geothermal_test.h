@@ -1,24 +1,35 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 
 #ifndef lib_geothermal_test_h_
 #define lib_geothermal_test_h_
@@ -85,6 +96,11 @@ protected:
 	int geothermal_analysis_period;
 	int resource_potential;
 	int tou[8760];
+    std::vector<double> haf_inputs;
+    double inj_casing_size;
+    int inj_well_type;
+    int prod_well_type;
+    double inj_prod_ratio;
 			  
 	//Initializing all 4 structs to defualt values in SAM 2018.11.11:
 		SPowerBlockParameters SPBP;
@@ -118,6 +134,10 @@ public:
 		well_diameter = 12.25;
 		casing_size = 9.625;
 		inj_well_diam = 12.25;
+        inj_casing_size = 11.5;
+        inj_well_type = 0;
+        prod_well_type = 0;
+        inj_prod_ratio = 0.75;
 		specify_pump_work = 0;
 		specified_pump_work_amount = 0;
 		resource_type = 0;
@@ -138,6 +158,12 @@ public:
 		fracture_angle = 15;
 		geothermal_analysis_period = 30;
 		resource_potential = 210;
+        haf_inputs.resize(geothermal_analysis_period * 8760);
+        for (int a = 0; a < geothermal_analysis_period; a++) {
+            for (int i = 0; i < 8760; i++) {
+                haf_inputs[a * 8760 + i] = 0.0;
+            }
+        }
 		
 		//Following block intializes all 4 Structs (to default values in SAM 2018.11.11) that are used
 		//as formal parameters in constructing the CGeothermalAnalyzer Class:
@@ -229,6 +255,11 @@ public:
 				geoPlant_inputs.md_DiameterProductionWellInches = well_diameter;
 				geoPlant_inputs.md_DiameterPumpCasingInches = casing_size;
 				geoPlant_inputs.md_DiameterInjectionWellInches = inj_well_diam;
+                geoPlant_inputs.md_InjectionWellType = inj_well_type;
+                geoPlant_inputs.md_ProductionWellType = prod_well_type;
+                geoPlant_inputs.md_dtProdWellChoice = 0;
+                geoPlant_inputs.md_RatioInjectionToProduction = inj_prod_ratio;
+                geoPlant_inputs.md_DiameterInjPumpCasingInches = inj_casing_size;
 				geoPlant_inputs.mb_CalculatePumpWork = (1 != specify_pump_work);
 				geoPlant_inputs.md_UserSpecifiedPumpWorkKW = specified_pump_work_amount * 1000; // entered in MW
 
@@ -254,6 +285,7 @@ public:
 				case 0: geoPlant_inputs.me_pc = ENTER_PC; break;				// pressure change entered by user
 				case 1: geoPlant_inputs.me_pc = SIMPLE_FRACTURE; break;		// use fracture flow (EGS only)
 				case 2: geoPlant_inputs.me_pc = K_AREA; break;				// permeability * area
+                case 3: geoPlant_inputs.me_pc = USER_TEMP; break;
 				}
 				geoPlant_inputs.md_ReservoirDeltaPressure = reservoir_pressure_change;
 				geoPlant_inputs.md_ReservoirWidthM = reservoir_width;
@@ -278,6 +310,9 @@ public:
 				geoPlant_inputs.mia_tou = tou;
 				geoPlant_inputs.mi_MakeupCalculationsPerYear = (geoPlant_inputs.mi_ModelChoice == 2) ? 8760 : 12;
 				geoPlant_inputs.mi_TotalMakeupCalculations = geoPlant_inputs.mi_ProjectLifeYears * geoPlant_inputs.mi_MakeupCalculationsPerYear;
+
+                //Adjustment factors
+                geoPlant_inputs.haf = haf_inputs;
 
 		//====================================================================================================================================================================
 				//Initializing SGeothermal_Outputs:
@@ -367,67 +402,19 @@ public:
 
 
 	void TearDown() {
-		
-		if (geoTester != nullptr) {
-			delete geoTester;
-			geoTester = nullptr;
-		}
-		
-		if (geoPlant_outputs.maf_hourly_power != nullptr) {
-			delete[] geoPlant_outputs.maf_hourly_power;
-			geoPlant_outputs.maf_hourly_power = nullptr;
-		}
-		
-		if (geoPlant_outputs.maf_timestep_wet_bulb != nullptr) {
-			delete[] geoPlant_outputs.maf_timestep_wet_bulb;
-			geoPlant_outputs.maf_timestep_wet_bulb = nullptr;
-		}
-		
-		if (geoPlant_outputs.maf_timestep_dry_bulb != nullptr) {
-			delete[] geoPlant_outputs.maf_timestep_dry_bulb;
-			geoPlant_outputs.maf_timestep_dry_bulb = nullptr;
-		}
-		
-		if (geoPlant_outputs.maf_timestep_pressure != nullptr) {
-			delete[] geoPlant_outputs.maf_timestep_pressure;
-			geoPlant_outputs.maf_timestep_pressure = nullptr;
-		}
-		
-		if (geoPlant_outputs.maf_timestep_test_values != nullptr) {
-			delete[] geoPlant_outputs.maf_timestep_test_values;
-			geoPlant_outputs.maf_timestep_test_values = nullptr;
-		}
-		
-		if (geoPlant_outputs.maf_timestep_power != nullptr) {
-			delete[] geoPlant_outputs.maf_timestep_power;
-			geoPlant_outputs.maf_timestep_power = nullptr;
-		}
-		
-		if (geoPlant_outputs.maf_timestep_resource_temp != nullptr) {
-			delete[] geoPlant_outputs.maf_timestep_resource_temp;
-			geoPlant_outputs.maf_timestep_resource_temp = nullptr;
-		}
-		
-		if (geoPlant_outputs.maf_monthly_energy != nullptr) {
-			delete[] geoPlant_outputs.maf_monthly_energy;
-			geoPlant_outputs.maf_monthly_energy = nullptr;
-		}
-		
-		if (geoPlant_outputs.maf_monthly_power != nullptr) {
-			delete[] geoPlant_outputs.maf_monthly_power;
-			geoPlant_outputs.maf_monthly_power = nullptr;
-		}
-		
-		if (geoPlant_outputs.maf_monthly_resource_temp != nullptr) {
-			delete[] geoPlant_outputs.maf_monthly_resource_temp;
-			geoPlant_outputs.maf_monthly_resource_temp = nullptr;
-		}
-		
-		if (geoPlant_outputs.maf_ReplacementsByYear != nullptr) {
-			delete[] geoPlant_outputs.maf_ReplacementsByYear;
-			geoPlant_outputs.maf_ReplacementsByYear = nullptr;
-		}
-			   		 
+			delete [] geoPlant_outputs.maf_hourly_power;
+			delete [] geoPlant_outputs.maf_timestep_wet_bulb;
+			delete [] geoPlant_outputs.maf_timestep_dry_bulb;
+			delete [] geoPlant_outputs.maf_timestep_pressure;
+			delete [] geoPlant_outputs.maf_timestep_test_values;
+			delete [] geoPlant_outputs.maf_timestep_power;
+			delete [] geoPlant_outputs.maf_timestep_resource_temp;
+			delete [] geoPlant_outputs.maf_monthly_energy;
+			delete [] geoPlant_outputs.maf_monthly_power;
+			delete [] geoPlant_outputs.maf_monthly_resource_temp;
+			delete [] geoPlant_outputs.maf_ReplacementsByYear;
+            delete geoTester;
+
 	}
 
 };

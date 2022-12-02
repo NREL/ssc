@@ -1,23 +1,33 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "common_financial.h"
@@ -39,7 +49,7 @@ static var_info _cm_vtab_communitysolar[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "en_electricity_rates",                       "Enable electricity rates for grid purchase",              "0/1",     "",                     "Electricity Rates",       "?=0",                                 "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_meter_position",                        "Position of battery relative to electric meter",          "",        "",                     "BatterySystem",       "",                           "",                              "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "revenue_gen",                                "Electricity to grid",                                     "kW",      "",                       "System Output",       "",                           "",                              "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "gen_purchases",                              "Electricity from grid",                                    "kW",      "",                       "System Output",       "",                           "",                              "" },
+//    { SSC_OUTPUT,       SSC_ARRAY,       "gen_purchases",                              "Electricity from grid",                                    "kW",      "",                       "System Output",       "",                           "",                              "" },
 
 
 	{ SSC_INPUT,        SSC_ARRAY,       "gen",                                         "Net power to or from the grid",                            "kW",       "",                    "System Output", "*", "", "" },
@@ -48,7 +58,7 @@ static var_info _cm_vtab_communitysolar[] = {
 	{ SSC_INPUT,        SSC_ARRAY, "degradation", "Annual energy degradation", "", "", "System Output", "*", "", "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "system_capacity",			              "System nameplate capacity",		                               "kW",                "",                        "System Output",             "*",					   "MIN=1e-3",                      "" },
     
-	/* PPA Buy Rate values */
+	/* PPA Buy Rate values (PVWatts has no nighttime losses, so electricity purchase is always zero. Note no PPA community solar. Will need to address if we make CS available with pvsamv1, storage, etc.*/
 	{ SSC_INPUT, SSC_ARRAY, "utility_bill_w_sys", "Electricity bill with system", "$", "", "Utility Bill", "", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_utility_bill", "Electricity purchase", "$", "", "", "", "LENGTH_EQUAL=cf_length", "" },
 
@@ -595,39 +605,34 @@ static var_info _cm_vtab_communitysolar[] = {
 
 /* model outputs */
 	{ SSC_OUTPUT,       SSC_NUMBER,     "cf_length",                              "Number of periods in cashflow",      "",             "",                      "Metrics",      "*",                       "INTEGER",                                  "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,     "ppa_price",			                  "PPA price in first year",			"cents/kWh",	"",				   "Metrics",			  "*",                         "",      					   "" },
+    // No PPA for community solar, placeholder for implementing it later
+    //  { SSC_OUTPUT,       SSC_NUMBER,     "ppa_price",			                  "PPA price in first year",			"cents/kWh",	"",				   "Metrics",			  "*",                         "",      					   "" },
 /* Production - input as energy_net above */
 
 /* Partial Income Statement: Project */	
-	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_net",                          "Net energy to grid",                 "kWh",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
-    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_sales",                        "Energy to grid",                    "kWh",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
-    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_purchases",                    "Energy from grid",                  "kWh",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
-    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_without_battery",              "Energy produced without the battery or curtailment", "kWh",      "",       "Cash Flow Revenues",             "",                       "LENGTH_EQUAL=cf_length",                             "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_net",                          "Electricity to grid net",                 "kWh",      "",                      "Cash Flow Electricity",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_sales",                        "Electricity to grid",                    "kWh",      "",                      "Cash Flow Electricity",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_purchases",                    "Electricity from grid",                  "kWh",      "",                      "Cash Flow Electricity",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_without_battery",              "Electricity produced without the battery or curtailment", "kWh",      "",       "Cash Flow Electricity",             "",                       "LENGTH_EQUAL=cf_length",                             "" },
     /* PPA revenue not applicable to community solar, may need to be restored later
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_ppa_price",                           "PPA price",                     "cents/kWh",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
-    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_value",                        "PPA revenue net",                     "$",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
-    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_sales_value",                  "PPA revenue gross",                   "$",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
-    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_purchases_value",              "PPA revenue lost to self-consumption","$",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
-    { SSC_OUTPUT,       SSC_ARRAY,      "cf_thermal_value",                       "Thermal revenue",                     "$",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_value",                        "PPA revenue",                     "$",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
     */
-    { SSC_OUTPUT,       SSC_ARRAY,      "cf_om_fixed_expense",                    "O&M fixed expense",                  "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_om_production_expense",               "O&M production-based expense",       "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_om_capacity_expense",                 "O&M capacity-based expense",         "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_om_fuel_expense",                     "O&M fuel expense",                   "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-
-
-    { SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fixed1_expense",      "Battery fixed expense",                  "$",            "",                      "Cash Flow Expenses",      "",                     "LENGTH_EQUAL=cf_length",                "" },
-    { SSC_OUTPUT,        SSC_ARRAY,      "cf_om_production1_expense", "Battery production-based expense",       "$",            "",                      "Cash Flow Expenses",      "",                     "LENGTH_EQUAL=cf_length",                "" },
-    { SSC_OUTPUT,        SSC_ARRAY,      "cf_om_capacity1_expense",   "Battery capacity-based expense",         "$",            "",                      "Cash Flow Expenses",      "",                     "LENGTH_EQUAL=cf_length",                "" },
-
-    { SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fixed2_expense",      "Fuel cell fixed expense",                  "$",            "",                      "Cash Flow Expenses",      "",                     "LENGTH_EQUAL=cf_length",                "" },
-    { SSC_OUTPUT,        SSC_ARRAY,      "cf_om_production2_expense", "Fuel cell production-based expense",       "$",            "",                      "Cash Flow Expenses",      "",                     "LENGTH_EQUAL=cf_length",                "" },
-    { SSC_OUTPUT,        SSC_ARRAY,      "cf_om_capacity2_expense",   "Fuel cell capacity-based expense",         "$",            "",                      "Cash Flow Expenses",      "",                     "LENGTH_EQUAL=cf_length",                "" },
-
-
-
-	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_om_opt_fuel_1_expense",               "O&M biomass feedstock expense",                   "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_om_opt_fuel_2_expense",               "O&M coal feedstock expense",                   "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+    // for fuel cell only, restore if community solar available for fuel cell configs
+    //{ SSC_OUTPUT,       SSC_ARRAY,      "cf_thermal_value",                       "Thermal revenue",                     "$",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
+    
+    { SSC_OUTPUT,       SSC_ARRAY,      "cf_om_fixed_expense",       "O&M fixed expense",                  "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_om_production_expense",  "O&M production-based expense",       "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_om_capacity_expense",    "O&M capacity-based expense",         "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+    { SSC_OUTPUT,        SSC_ARRAY,     "cf_om_fixed1_expense",      "O&M battery fixed expense",                  "$",            "",              "Cash Flow Expenses",      "",                     "LENGTH_EQUAL=cf_length",                "" },
+    { SSC_OUTPUT,        SSC_ARRAY,     "cf_om_production1_expense", "O&M battery production-based expense",       "$",            "",              "Cash Flow Expenses",      "",                     "LENGTH_EQUAL=cf_length",                "" },
+    { SSC_OUTPUT,        SSC_ARRAY,     "cf_om_capacity1_expense",   "O&M battery capacity-based expense",         "$",            "",              "Cash Flow Expenses",      "",                     "LENGTH_EQUAL=cf_length",                "" },
+    { SSC_OUTPUT,        SSC_ARRAY,     "cf_om_fixed2_expense",      "O&M fuel cell fixed expense",                  "$",            "",            "Cash Flow Expenses",      "",                     "LENGTH_EQUAL=cf_length",                "" },
+    { SSC_OUTPUT,        SSC_ARRAY,     "cf_om_production2_expense", "O&M fuel cell production-based expense",       "$",            "",            "Cash Flow Expenses",      "",                     "LENGTH_EQUAL=cf_length",                "" },
+    { SSC_OUTPUT,        SSC_ARRAY,     "cf_om_capacity2_expense",   "O&M fuel cell capacity-based expense",         "$",            "",            "Cash Flow Expenses",      "",                     "LENGTH_EQUAL=cf_length",                "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "cf_om_fuel_expense",        "Fuel expense",                   "$",            "",                          "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_om_opt_fuel_1_expense",  "Feedstock biomass expense",                   "$",            "",             "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_om_opt_fuel_2_expense",  "Feedstock coal expense",                   "$",            "",                "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_property_tax_assessed_value",         "Property tax net assessed value", "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_property_tax_expense",                "Property tax expense",               "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -706,8 +711,8 @@ static var_info _cm_vtab_communitysolar[] = {
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_project_return_aftertax_npv",         "After-tax cumulative NPV",  "$", "",                      "Cash Flow Total and Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 	// metrics table
-    { SSC_OUTPUT,       SSC_NUMBER,     "project_return_aftertax_irr",            "Internal rate of return (IRR, after-tax)",       "%",                   "", "Metrics", "*", "", "" },
-    { SSC_OUTPUT,       SSC_NUMBER,     "project_return_aftertax_npv",            "Net present value (NPV, after-tax)",             "$",                   "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "project_return_aftertax_irr",            "IRR Internal rate of return",       "%",                   "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "project_return_aftertax_npv",            "NPV Net present value",             "$",                   "", "Metrics", "*", "", "" },
 
     { SSC_OUTPUT, SSC_ARRAY, "cf_annual_costs", "Annual costs", "$", "", "LCOE calculations", "*", "LENGTH_EQUAL=cf_length", "" },
 
@@ -719,9 +724,9 @@ static var_info _cm_vtab_communitysolar[] = {
 
 	{ SSC_INPUT,        SSC_ARRAY,       "system_pre_curtailment_kwac",     "System power before grid curtailment",  "kW",       "System generation" "",                 "System Output",                        "",                              "" },
 
-	{ SSC_OUTPUT, SSC_ARRAY, "cf_energy_curtailed", "Curtailed energy", "kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "cf_curtailment_value", "Curtailment payment revenue", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "cf_capacity_payment", "Capacity payment revenue", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_energy_curtailed", "Electricity curtailed", "kWh", "", "Cash Flow Electricity", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_curtailment_value", "Curtailment payment revenue", "$", "", "Cash Flow Revenues", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_capacity_payment", "Capacity payment revenue", "$", "", "Cash Flow Revenues", "*", "LENGTH_EQUAL=cf_length", "" },
 
 	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_curtailment_revenue",                        "Present value of curtailment payment revenue",              "$",                   "", "Metrics", "*", "", "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_capacity_revenue",                        "Present value of capacity payment revenue",              "$",                   "", "Metrics", "*", "", "" },
@@ -812,10 +817,10 @@ static var_info _cm_vtab_communitysolar[] = {
     { SSC_OUTPUT,       SSC_NUMBER,     "community_solar_upfront_cost",   "Community solar total up-front cost",              "$",                   "", "Metrics", "*", "", "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "community_solar_upfront_revenue",   "Revenue from total up-front payments",              "$",                   "", "Metrics", "*", "", "" },
 
-    { SSC_OUTPUT,       SSC_NUMBER,     "subscriber1_npv",            "Subscriber 1 Net present value (NPV)",             "$",                   "", "Metrics", "*", "", "" },
-    { SSC_OUTPUT,       SSC_NUMBER,     "subscriber2_npv",            "Subscriber 2 Net present value (NPV)",             "$",                   "", "Metrics", "*", "", "" },
-    { SSC_OUTPUT,       SSC_NUMBER,     "subscriber3_npv",            "Subscriber 3 Net present value (NPV)",             "$",                   "", "Metrics", "*", "", "" },
-    { SSC_OUTPUT,       SSC_NUMBER,     "subscriber4_npv",            "Subscriber 4 Net present value (NPV)",             "$",                   "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "subscriber1_npv",            "Subscriber 1 NPV Net present value",             "$",                   "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "subscriber2_npv",            "Subscriber 2 NPV Net present value",             "$",                   "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "subscriber3_npv",            "Subscriber 3 NPV Net present value",             "$",                   "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "subscriber4_npv",            "Subscriber 4 NPV Net present value",             "$",                   "", "Metrics", "*", "", "" },
 
 
 var_info_invalid };
@@ -844,7 +849,7 @@ enum {
 	CF_thermal_value,
 	CF_curtailment_value,
 	CF_capacity_payment,
-	CF_ppa_price,
+	//CF_ppa_price,
 
 	CF_om_fixed_expense,
 	CF_om_production_expense,
@@ -1028,9 +1033,7 @@ enum {
 	CF_utility_bill,
 
     CF_energy_sales,
-    CF_energy_sales_value,
     CF_energy_purchases,
-    CF_energy_purchases_value,
 
     CF_energy_without_battery,
 
@@ -1125,6 +1128,20 @@ enum {
     CF_community_solar_recurring_capacity,
     CF_community_solar_recurring_generation,
 
+    // SAM 1038
+    CF_itc_fed_amount,
+    CF_itc_fed_percent_fraction,
+    CF_itc_fed_percent_amount,
+    CF_itc_fed_percent_maxvalue,
+    CF_itc_fed,
+    CF_itc_sta_amount,
+    CF_itc_sta_percent_fraction,
+    CF_itc_sta_percent_amount,
+    CF_itc_sta_percent_maxvalue,
+    CF_itc_sta,
+    CF_itc_total,
+
+
     CF_max,
  };
 
@@ -1170,7 +1187,7 @@ public:
         cf_lcos.resize_fill(CF_max, nyears + 1, 0.0);
 		// assign inputs
 		double inflation_rate = as_double("inflation_rate")*0.01;
-        double ppa_escalation = 0.0;// as_double("ppa_escalation") * 0.01;
+        //double ppa_escalation = 0.0;// as_double("ppa_escalation") * 0.01;
 		double disc_real = as_double("real_discount_rate")*0.01;
 //		double federal_tax_rate = as_double("federal_tax_rate")*0.01;
 //		double state_tax_rate = as_double("state_tax_rate")*0.01;
@@ -1588,7 +1605,6 @@ public:
 		{
 			degrade_cf.push_back(cf.at(CF_degradation, i));
 		}
-		//m_disp_calcs.init(this, degrade_cf, hourly_energy_calcs.hourly_energy());
 		// end of energy and dispatch initialization
 
        
@@ -2082,15 +2098,51 @@ public:
 		double ibi_oth_per = as_double("ibi_oth_percent")*0.01*cost_prefinancing;
 		if (ibi_oth_per > as_double("ibi_oth_percent_maxvalue")) ibi_oth_per = as_double("ibi_oth_percent_maxvalue"); 
 
-		// itc fixed
-		double itc_fed_amount = as_double("itc_fed_amount");
-		double itc_sta_amount = as_double("itc_sta_amount");
+        // SAM 1038
+         // itc fixed
+        double itc_fed_amount = 0.0;
+        double_vec vitc_fed_amount = as_vector_double("itc_fed_amount");
+        for (size_t k = 0; k < vitc_fed_amount.size() && k < nyears; k++) {
+            cf.at(CF_itc_fed_amount, k + 1) = vitc_fed_amount[k];
+            itc_fed_amount += vitc_fed_amount[k];
+        }
 
-		// itc percent - max value used for comparison to qualifying costs
-		double itc_fed_frac = as_double("itc_fed_percent")*0.01;
-		double itc_fed_per;
-		double itc_sta_frac = as_double("itc_sta_percent")*0.01;
-		double itc_sta_per;
+        double itc_sta_amount = 0.0;
+        double_vec vitc_sta_amount = as_vector_double("itc_sta_amount");
+        for (size_t k = 0; k < vitc_sta_amount.size() && k < nyears; k++) {
+            cf.at(CF_itc_sta_amount, k + 1) = vitc_sta_amount[k];
+            itc_sta_amount += vitc_sta_amount[k];
+        }
+
+        // itc percent - max value used for comparison to qualifying costs
+        double_vec vitc_fed_frac = as_vector_double("itc_fed_percent");
+        for (size_t k = 0; k < vitc_fed_frac.size(); k++)
+            cf.at(CF_itc_fed_percent_fraction, k + 1) = vitc_fed_frac[k] * 0.01;
+        double itc_fed_per;
+        double_vec vitc_sta_frac = as_vector_double("itc_sta_percent");
+        for (size_t k = 0; k < vitc_sta_frac.size(); k++)
+            cf.at(CF_itc_sta_percent_fraction, k + 1) = vitc_sta_frac[k] * 0.01;
+        double itc_sta_per;
+
+        double_vec itc_sta_percent_maxvalue = as_vector_double("itc_sta_percent_maxvalue");
+        if (itc_sta_percent_maxvalue.size() == 1) {
+            for (size_t k = 0; k < nyears; k++)
+                cf.at(CF_itc_sta_percent_maxvalue, k + 1) = itc_sta_percent_maxvalue[0];
+        }
+        else {
+            for (size_t k = 0; k < itc_sta_percent_maxvalue.size() && k < nyears; k++)
+                cf.at(CF_itc_sta_percent_maxvalue, k + 1) = itc_sta_percent_maxvalue[k];
+        }
+
+        double_vec itc_fed_percent_maxvalue = as_vector_double("itc_fed_percent_maxvalue");
+        if (itc_fed_percent_maxvalue.size() == 1) {
+            for (size_t k = 0; k < nyears; k++)
+                cf.at(CF_itc_fed_percent_maxvalue, k + 1) = itc_fed_percent_maxvalue[0];
+        }
+        else {
+            for (size_t k = 0; k < itc_fed_percent_maxvalue.size() && k < nyears; k++)
+                cf.at(CF_itc_fed_percent_maxvalue, k + 1) = itc_fed_percent_maxvalue[k];
+        }
 
 		// cbi
 		double cbi_fed_amount = 1000.0*nameplate*as_double("cbi_fed_amount");
@@ -2120,9 +2172,6 @@ public:
 
 		double cbi_total = cbi_fed_amount + cbi_sta_amount +cbi_uti_amount + cbi_oth_amount;
 		double ibi_total = ibi_fed_amount + ibi_sta_amount +ibi_uti_amount + ibi_oth_amount + ibi_fed_per + ibi_sta_per +ibi_uti_per + ibi_oth_per;
-		double itc_fed_total;
-		double itc_sta_total;
-		double itc_total;
 
 		double cbi_statax_total = 
 			( as_boolean("cbi_fed_tax_sta") ? cbi_fed_amount : 0 ) +
@@ -2294,8 +2343,6 @@ public:
 		double itc_sta_qual_sl_39;
 		double itc_sta_qual_custom;
 
-		double itc_sta_percent_maxvalue = as_double("itc_sta_percent_maxvalue");
-
 		double itc_sta_disallow_factor = 0.5;
 
 		double itc_disallow_sta_percent_macrs_5;
@@ -2331,8 +2378,6 @@ public:
 		double itc_fed_qual_sl_20;
 		double itc_fed_qual_sl_39;
 		double itc_fed_qual_custom;
-
-		double itc_fed_percent_maxvalue = as_double("itc_fed_percent_maxvalue");
 
 		double itc_fed_disallow_factor = 0.5;
 
@@ -2590,7 +2635,7 @@ public:
 				cost_installed += debt_frac *cost_installed*cost_debt_fee_frac;
 				loan_amount = debt_frac * cost_installed;
 				i_repeat++;
-			} while ((fabs(new_ds_reserve - old_ds_reserve) > 1e-3) && (i_repeat < 10));
+			} while ((std::abs(new_ds_reserve - old_ds_reserve) > 1e-3) && (i_repeat < 10));
 
 			if (term_tenor == 0) loan_amount = 0;
 //			log(util::format("loan amount =%lg, debt fraction=%lg, adj installed cost=%lg", loan_amount, debt_frac, adjusted_installed_cost), SSC_WARNING);
@@ -2698,6 +2743,7 @@ public:
 		{			
 		// Project partial income statement			
 			// energy_value = DHF Total PPA Revenue (cents/kWh)
+            /* No PPA for community solar, placeholder for implementing it later
 			if ((ppa_mode == 1) && (count_ppa_price_input > 1))
 			{
 				if (i <= (int)count_ppa_price_input)
@@ -2707,10 +2753,7 @@ public:
 			}
 			else
 				cf.at(CF_ppa_price, i) = ppa * pow(1 + ppa_escalation, i - 1); // ppa_mode==0 or single value 
-//			cf.at(CF_energy_value,i) = cf.at(CF_energy_net,i) * cf.at(CF_ppa_price,i) /100.0;
-			// dispatch
-//			cf.at(CF_energy_value, i) = cf.at(CF_ppa_price, i) / 100.0 *(
-//				m_disp_calcs.tod_energy_value(i));
+            */
 
 //			log(util::format("year %d : energy value =%lg", i, m_disp_calcs.tod_energy_value(i)), SSC_WARNING);
 			// total revenue
@@ -2720,7 +2763,7 @@ public:
                 cf.at(CF_community_solar_subscriber3_revenue, i) +
                 cf.at(CF_community_solar_subscriber4_revenue, i) +
                 cf.at(CF_community_solar_unsubscribed_revenue, i) +
-                cf.at(CF_thermal_value,i) +
+                // cf.at(CF_thermal_value,i) +
 				cf.at(CF_curtailment_value, i) +
 				cf.at(CF_capacity_payment, i) +
 				pbi_fed_for_ds_frac * cf.at(CF_pbi_fed,i) +
@@ -2735,13 +2778,14 @@ public:
 		} // end of debt precalculation.
 
 		// receivables precalculation need future energy value so outside previous loop
+        // restore cf_thermal_value if Community Storage for fuel cell implemented, and capacity/curtailment payments if additional revenue implemented
 		if (nyears>0)
 		{
-			cf.at(CF_reserve_receivables, 0) = months_receivables_reserve_frac * (cf.at(CF_energy_value, 1) + cf.at(CF_thermal_value, 1) + cf.at(CF_curtailment_value, 1) + cf.at(CF_capacity_payment, 1));
+			cf.at(CF_reserve_receivables, 0) = months_receivables_reserve_frac * (cf.at(CF_community_solar_subscriber1_revenue) + cf.at(CF_community_solar_subscriber2_revenue) + cf.at(CF_community_solar_subscriber3_revenue) + cf.at(CF_community_solar_subscriber4_revenue) /*+ cf.at(CF_thermal_value, 1) + cf.at(CF_curtailment_value, 1) + cf.at(CF_capacity_payment, 1)*/);
 			cf.at(CF_funding_receivables, 0) = cf.at(CF_reserve_receivables, 0);
 			for (i = 1; i<nyears; i++)
 			{
-				cf.at(CF_reserve_receivables, i) = months_receivables_reserve_frac * (cf.at(CF_energy_value, i + 1) + cf.at(CF_thermal_value, i+1) + cf.at(CF_curtailment_value, i+1) + cf.at(CF_capacity_payment, i + 1));
+				cf.at(CF_reserve_receivables, i) = months_receivables_reserve_frac * (cf.at(CF_community_solar_subscriber1_revenue, i + 1) + cf.at(CF_community_solar_subscriber2_revenue, i + 1) + cf.at(CF_community_solar_subscriber3_revenue, i + 1) + cf.at(CF_community_solar_subscriber4_revenue, i + 1) + cf.at(CF_thermal_value, i+1) /* + cf.at(CF_curtailment_value, i + 1) + cf.at(CF_capacity_payment, i + 1)*/);
 				cf.at(CF_funding_receivables, i) = cf.at(CF_reserve_receivables, i) - cf.at(CF_reserve_receivables, i - 1);
 			}
 			cf.at(CF_disbursement_receivables, nyears) = -cf.at(CF_reserve_receivables, nyears - 1);
@@ -2868,7 +2912,11 @@ public:
 
 		itc_sta_qual_total = itc_sta_qual_macrs_5 + itc_sta_qual_macrs_15 + itc_sta_qual_sl_5 +itc_sta_qual_sl_15 +itc_sta_qual_sl_20 + itc_sta_qual_sl_39 + itc_sta_qual_custom;
 
-		itc_sta_per = min(itc_sta_percent_maxvalue,itc_sta_frac*itc_sta_qual_total);
+        itc_sta_per = 0.0;
+        for (size_t k = 0; k <= nyears; k++) {
+            cf.at(CF_itc_sta_percent_amount, k) = min(cf.at(CF_itc_sta_percent_maxvalue, k), cf.at(CF_itc_sta_percent_fraction, k) * itc_sta_qual_total);
+            itc_sta_per += cf.at(CF_itc_sta_percent_amount, k);
+        }
 
 		if (itc_sta_qual_total > 0)
 		{
@@ -2917,7 +2965,11 @@ public:
 
 		itc_fed_qual_total = itc_fed_qual_macrs_5 + itc_fed_qual_macrs_15 + itc_fed_qual_sl_5 +itc_fed_qual_sl_15 +itc_fed_qual_sl_20 + itc_fed_qual_sl_39 + itc_fed_qual_custom;
 
-		itc_fed_per = min(itc_fed_percent_maxvalue,itc_fed_frac*itc_fed_qual_total);
+        itc_fed_per = 0.0;
+        for (size_t k = 0; k <= nyears; k++) {
+            cf.at(CF_itc_fed_percent_amount, k) = min(cf.at(CF_itc_fed_percent_maxvalue, k), cf.at(CF_itc_fed_percent_fraction, k) * itc_fed_qual_total);
+            itc_fed_per += cf.at(CF_itc_fed_percent_amount, k);
+        }
 
 		if (itc_fed_qual_total > 0)
 		{
@@ -2956,9 +3008,13 @@ public:
 			itc_disallow_fed_fixed_custom = 0;
 		}
 
-		itc_fed_total = itc_fed_amount + itc_fed_per;
-		itc_sta_total = itc_sta_amount + itc_sta_per;
-		itc_total = itc_fed_total + itc_sta_total;
+        // SAM 1038
+        for (size_t k = 0; k <= nyears; k++) {
+            cf.at(CF_itc_fed, k) = cf.at(CF_itc_fed_amount, k) + cf.at(CF_itc_fed_percent_amount, k);
+            cf.at(CF_itc_sta, k) = cf.at(CF_itc_sta_amount, k) + cf.at(CF_itc_sta_percent_amount, k);
+            cf.at(CF_itc_total, k) = cf.at(CF_itc_fed, k) + cf.at(CF_itc_sta, k);
+        }
+
 
 // Depreciation
 // State depreciation
@@ -3207,8 +3263,9 @@ public:
 				cf.at(CF_debt_payment_interest,i) -
 				cf.at(CF_feddepr_total,i) +
 				cf.at(CF_statax,i) +
-				cf.at(CF_ptc_sta,i);
-			if (i==1) cf.at(CF_fedtax_income_prior_incentives,i) += itc_sta_total;
+				cf.at(CF_ptc_sta,i) +
+                cf.at(CF_itc_sta, i);
+            //	SAM 1038		if (i==1) cf.at(CF_fedtax_income_prior_incentives,i) += itc_sta_total;
 
 
 			// pbi in ebitda - so remove if non-taxable
@@ -3219,8 +3276,9 @@ public:
 			cf.at(CF_project_return_aftertax,i) = 
 				cf.at(CF_project_return_aftertax_cash,i) +
 				cf.at(CF_ptc_fed,i) + cf.at(CF_ptc_sta,i) +
-				cf.at(CF_statax,i) + cf.at(CF_fedtax,i);
-			if (i==1) cf.at(CF_project_return_aftertax,i) += itc_total;
+				cf.at(CF_statax,i) + cf.at(CF_fedtax,i) + cf.at(CF_itc_total, i);
+            //	SAM 1038		if (i==1) cf.at(CF_project_return_aftertax,i) += itc_total;
+
 
 			cf.at(CF_project_return_aftertax_irr,i) = irr(CF_project_return_aftertax,i)*100.0;
 			cf.at(CF_project_return_aftertax_max_irr,i) = max(cf.at(CF_project_return_aftertax_max_irr,i-1),cf.at(CF_project_return_aftertax_irr,i));
@@ -3228,7 +3286,7 @@ public:
 
 			if (flip_year <=0) 
 			{
-				double residual = fabs(cf.at(CF_project_return_aftertax_irr, i) - flip_target_percent) / 100.0; // solver checks fractions and not percentages
+				double residual = std::abs(cf.at(CF_project_return_aftertax_irr, i) - flip_target_percent) / 100.0; // solver checks fractions and not percentages
 				if ( ( cf.at(CF_project_return_aftertax_max_irr,i-1) < flip_target_percent ) &&  (   residual  < ppa_soln_tolerance ) 	) 
 				{
 					flip_year = i;
@@ -3252,7 +3310,7 @@ public:
 			double ppa_denom = max(x0, x1);
 			if (ppa_denom <= ppa_soln_tolerance) ppa_denom = 1;
 			double residual = cf.at(CF_project_return_aftertax_irr, flip_target_year) - flip_target_percent;
-			solved = (( fabs( residual )/resid_denom < ppa_soln_tolerance ) || ( fabs(x0-x1)/ppa_denom < ppa_soln_tolerance) );
+			solved = ((std::abs( residual )/resid_denom < ppa_soln_tolerance ) || (std::abs(x0-x1)/ppa_denom < ppa_soln_tolerance) );
 //			solved = (( fabs( residual ) < ppa_soln_tolerance ) );
 				double flip_frac = flip_target_percent/100.0;
 				double itnpv_target = npv(CF_project_return_aftertax,flip_target_year,flip_frac) +  cf.at(CF_project_return_aftertax,0) ;
@@ -3263,7 +3321,7 @@ public:
 			{
 //				double flip_frac = flip_target_percent/100.0;
 //				double itnpv_target = npv(CF_project_return_aftertax,flip_target_year,flip_frac) +  cf.at(CF_project_return_aftertax,0) ;
-				irr_weighting_factor = fabs(itnpv_target);
+				irr_weighting_factor = std::abs(itnpv_target);
 				irr_is_minimally_met = ((irr_weighting_factor < ppa_soln_tolerance));
 				irr_greater_than_target = (( itnpv_target >= 0.0) || irr_is_minimally_met );
 				if (ppa_interval_found)
@@ -3325,7 +3383,7 @@ public:
 						}
 					}
 					// for initial guess of zero
-					if (fabs(x0-x1)<ppa_soln_tolerance) x0 = x1-2*ppa_soln_tolerance;
+					if (std::abs(x0-x1)<ppa_soln_tolerance) x0 = x1-2*ppa_soln_tolerance;
 				}
 					//std::stringstream outm;
 					//outm << "iteration=" << its  << ", irr=" << cf.at(CF_project_return_aftertax_irr, flip_target_year)  << ", npvtarget=" << itnpv_target  << ", npvtarget_delta=" << itnpv_target_delta  
@@ -3347,49 +3405,7 @@ public:
 
 //	log(util::format("after loop  - size of debt =%lg .", size_of_debt), SSC_WARNING);
 
-    
-    /*
-    // Use PPA values to calculate revenue from purchases and sales
-    size_t n_multipliers;
-    
-    ssc_number_t* ppa_multipliers = as_array("ppa_multipliers", &n_multipliers);
-    bool ppa_purchases = !(is_assigned("en_electricity_rates") && as_number("en_electricity_rates") == 1);
-    if (as_integer("system_use_lifetime_output") == 1)
-    {
-        // hourly_enet includes all curtailment, availability
-        for (size_t i = 1; i <= nyears; i++) {
-            double ppa_value = cf.at(CF_ppa_price, i);
-            for (size_t h = 0; h < 8760; h++) {
-                cf.at(CF_energy_sales_value, i) += hourly_energy_calcs.hourly_sales()[(i - 1) * 8760 + h] * cf.at(CF_degradation, i) * ppa_value / 100.0 * ppa_multipliers[h];
-                if (ppa_purchases) {
-                    cf.at(CF_energy_purchases_value, i) += hourly_energy_calcs.hourly_purchases()[(i - 1) * 8760 + h] * cf.at(CF_degradation, i) * ppa_value / 100.0 * ppa_multipliers[h];
-                }
-            }
-            if (!ppa_purchases) {
-                cf.at(CF_energy_purchases_value, i) = 0.0;
-                // Recompute this variable because the ppa_gen values (hourly_net) were all positve until now 
-                cf.at(CF_energy_net, i) = cf.at(CF_energy_sales, i) + cf.at(CF_energy_purchases, i); // Adding a positive and negative number
-            }
-        }   
-    }
-    else
-    {
-        for (size_t i = 1; i <= nyears; i++) {
-            double ppa_value = cf.at(CF_ppa_price, i);
-            for (size_t h = 0; h < 8760; h++) {
-                cf.at(CF_energy_sales_value, i) += hourly_energy_calcs.hourly_sales()[h] * cf.at(CF_degradation, i) * ppa_value / 100.0 * ppa_multipliers[h];
-                if (ppa_purchases) {
-                    cf.at(CF_energy_purchases_value, i) += hourly_energy_calcs.hourly_purchases()[h] * cf.at(CF_degradation, i) * ppa_value / 100.0 * ppa_multipliers[h];
-                }
-            }
-            if (!ppa_purchases) {
-                cf.at(CF_energy_purchases_value, i) = 0.0;
-                // Recompute this variable because the ppa_gen values (hourly_net) were all positve until now 
-                cf.at(CF_energy_net, i) = cf.at(CF_energy_sales, i) + cf.at(CF_energy_purchases, i); // Adding a positive and negative number
-            }
-        }
-    }
-    */
+   
 
 	// NPV of revenue components for stacked bar chart
 	/*
@@ -3413,21 +3429,30 @@ public:
 	assign("npv_salvage_value", var_data((ssc_number_t)npv(CF_net_salvage_value, nyears, nom_discount_rate)));
 	assign("npv_thermal_value", var_data((ssc_number_t)npv(CF_thermal_value, nyears, nom_discount_rate)));
 
-	// LPPA - change form total revenue to PPA revenue 7/19/15 consistent with DHF v4.4
+
+
+    double npv_energy_nom = npv(CF_energy_sales, nyears, nom_discount_rate);
+    double npv_energy_real = npv(CF_energy_sales, nyears, disc_real);
+
+    // LPPA - change form total revenue to PPA revenue 7/19/15 consistent with DHF v4.4
 	// fixed price PPA - LPPA independent of salvage value per 7/16/15 meeting
 	// Thermal value not included in LPPA calculation but in total revenue.
-	double npv_ppa_revenue = npv(CF_energy_value, nyears, nom_discount_rate);
-//	double npv_ppa_revenue = npv(CF_total_revenue, nyears, nom_discount_rate);
-	double npv_energy_nom = npv(CF_energy_sales, nyears, nom_discount_rate);
-	double lppa_nom = 0;
+    /*	double npv_ppa_revenue = npv(CF_energy_value, nyears, nom_discount_rate);
+    //	double npv_ppa_revenue = npv(CF_total_revenue, nyears, nom_discount_rate);
+    double npv_ppa_revenue = npv(CF_energy_value, nyears, nom_discount_rate);
+    //	double npv_ppa_revenue = npv(CF_total_revenue, nyears, nom_discount_rate);
+    double lppa_nom = 0;
 	if (npv_energy_nom != 0) lppa_nom = npv_ppa_revenue / npv_energy_nom * 100.0;
 	double lppa_real = 0;
-	double npv_energy_real = npv(CF_energy_sales,nyears,disc_real);
-	if (npv_energy_real != 0) lppa_real = npv_ppa_revenue / npv_energy_real * 100.0;
+    if (npv_energy_real != 0) lppa_real = npv_ppa_revenue / npv_energy_real * 100.0;
 
-	// update LCOE calculations 
+    // update LCOE calculations 
 	double lcoe_nom = lppa_nom;
 	double lcoe_real = lppa_real;
+     */
+
+    double lcoe_nom = 0.0;
+    double lcoe_real = 0.0;
 
 	// from single_owner.xlsm
 	cf.at(CF_Annual_Costs, 0) = -issuance_of_equity;
@@ -3454,10 +3479,13 @@ public:
 			+ cf.at(CF_reserve_interest, i)
 			- cf.at(CF_disbursement_debtservice, i) // note sign is negative for positive disbursement
 			- cf.at(CF_disbursement_om, i) // note sign is negative for positive disbursement
-			+ cf.at(CF_net_salvage_value, i); // benefit to cost reduction so that project revenue based on PPA revenue and not total revenue per 7/16/15 meeting
-	}
-	// year 1 add total ITC (net benefit) so that project return = project revenue - project cost
-	if (nyears >= 1) cf.at(CF_Annual_Costs, 1) += itc_total;
+			+ cf.at(CF_net_salvage_value, i)// benefit to cost reduction so that project revenue based on PPA revenue and not total revenue per 7/16/15 meeting
+            + cf.at(CF_itc_total, i); // SAM 1038
+    }
+    // year 1 add total ITC (net benefit) so that project return = project revenue - project cost
+    //if (nyears >= 1) cf.at(CF_Annual_Costs, 1) += itc_total;
+
+
 
 	double npv_annual_costs = -(npv(CF_Annual_Costs, nyears, nom_discount_rate)
 		+ cf.at(CF_Annual_Costs, 0));
@@ -3473,7 +3501,7 @@ public:
         for (int y = 0; y <= nyears; y++) {
             cf_lcos.at(0, y) = cf.at(CF_battery_replacement_cost, y);
             cf_lcos.at(1, y) = cf.at(CF_battery_replacement_cost_schedule, y);
-            cf_lcos.at(2, y) = cf.at(CF_ppa_price, y);
+            //cf_lcos.at(2, y) = cf.at(CF_ppa_price, y);
             cf_lcos.at(6, y) = cf.at(CF_om_fixed1_expense, y); //Fixed OM Battery cost
             cf_lcos.at(7, y) = cf.at(CF_om_production1_expense, y); //Produciton OM Battery cost
             cf_lcos.at(8, y) = cf.at(CF_om_capacity1_expense, y); //Capacity OM Battery Cost
@@ -3570,9 +3598,7 @@ public:
     }
     assign("flip_actual_irr", var_data((ssc_number_t)actual_flip_irr));
 
-
-
-	assign("npv_ppa_revenue", var_data( (ssc_number_t) npv_ppa_revenue));
+	//assign("npv_ppa_revenue", var_data( (ssc_number_t) npv_ppa_revenue));
 	assign("npv_energy_nom", var_data( (ssc_number_t) npv_energy_nom));
 	assign("npv_energy_real", var_data( (ssc_number_t) npv_energy_real));
 
@@ -3654,9 +3680,8 @@ public:
 		assign("pv_cafds", var_data((ssc_number_t) pv_cafds));
 		assign("size_of_debt", var_data((ssc_number_t) size_of_debt));
 		
-		assign("ppa_price", var_data((ssc_number_t) ppa));
+		//assign("ppa_price", var_data((ssc_number_t) ppa));
 		assign("target_return_flip_year", var_data((ssc_number_t) flip_year));
-
 
 		assign("ibi_total_fed", var_data((ssc_number_t) (ibi_fed_amount+ibi_fed_per)));
 		assign("ibi_total_sta", var_data((ssc_number_t) (ibi_sta_amount+ibi_sta_per)));
@@ -3672,7 +3697,19 @@ public:
 		assign("cbi_total_sta", var_data((ssc_number_t) cbi_sta_amount));
 		assign("cbi_total_oth", var_data((ssc_number_t) cbi_oth_amount));
 		assign("cbi_total_uti", var_data((ssc_number_t) cbi_uti_amount));
-		assign("itc_total_fed", var_data((ssc_number_t) itc_fed_total));
+
+        // SAM 1038
+        double itc_fed_total = 0.0;
+        double itc_sta_total = 0.0;
+        double itc_total = 0.0;
+
+        for (size_t k = 0; k <= nyears; k++) {
+            itc_fed_total += cf.at(CF_itc_fed, k);
+            itc_sta_total += cf.at(CF_itc_sta, k);
+            itc_total += cf.at(CF_itc_total, k);
+        }
+
+        assign("itc_total_fed", var_data((ssc_number_t) itc_fed_total));
 		assign("itc_total_sta", var_data((ssc_number_t) itc_sta_total));
 		assign("itc_total", var_data((ssc_number_t) itc_total));
 
@@ -3680,12 +3717,13 @@ public:
 
 		assign("lcoe_nom", var_data((ssc_number_t)lcoe_nom));
 		assign("lcoe_real", var_data((ssc_number_t)lcoe_real));
-		assign("lppa_nom", var_data((ssc_number_t)lppa_nom));
+		/* No PPA for community solar, keep here to restore later
+        assign("lppa_nom", var_data((ssc_number_t)lppa_nom));
 		assign("lppa_real", var_data((ssc_number_t)lppa_real));
 		assign("ppa_price", var_data((ssc_number_t)ppa));
 		assign("ppa_escalation", var_data((ssc_number_t) (ppa_escalation *100.0) ));
 		assign("ppa", var_data((ssc_number_t) ppa));
-
+        */
 
 		assign("issuance_of_equity", var_data((ssc_number_t) issuance_of_equity));
 		
@@ -3782,13 +3820,11 @@ public:
 
 
 		save_cf(CF_energy_value, nyears, "cf_energy_value");
-        save_cf(CF_energy_sales_value, nyears, "cf_energy_sales_value");
-        save_cf(CF_energy_purchases_value, nyears, "cf_energy_purchases_value");
 		save_cf(CF_thermal_value, nyears, "cf_thermal_value");
 		save_cf(CF_curtailment_value, nyears, "cf_curtailment_value");
 		save_cf(CF_capacity_payment, nyears, "cf_capacity_payment");
 		save_cf(CF_energy_curtailed, nyears, "cf_energy_curtailed");
-		save_cf( CF_ppa_price, nyears, "cf_ppa_price" );
+		//save_cf( CF_ppa_price, nyears, "cf_ppa_price" );
 		save_cf( CF_om_fixed_expense, nyears, "cf_om_fixed_expense" );
 		save_cf( CF_om_production_expense, nyears, "cf_om_production_expense" );
 		save_cf( CF_om_capacity_expense, nyears, "cf_om_capacity_expense" );
@@ -3823,10 +3859,10 @@ public:
 		save_cf( CF_ebitda, nyears, "cf_ebitda" );
 		save_cf( CF_net_salvage_value, nyears, "cf_net_salvage_value" );
 		save_cf( CF_total_revenue, nyears, "cf_total_revenue" );
+
 		save_cf( CF_energy_net, nyears, "cf_energy_net" );
 		save_cf( CF_energy_sales, nyears, "cf_energy_sales" );
 		save_cf( CF_energy_purchases, nyears, "cf_energy_purchases" );
-
         if (is_assigned("gen_without_battery")) {
             save_cf(CF_energy_without_battery, nyears, "cf_energy_without_battery");
         }
@@ -3937,10 +3973,10 @@ public:
         save_cf(CF_community_solar_recurring_generation, nyears, "cf_community_solar_recurring_generation");
 
         // community solar metrics
-        assign("subscriber1_npv", var_data((ssc_number_t)(npv(CF_subscriber1_net_benefit_cumulative, nyears, nom_discount_rate) + cf.at(CF_subscriber1_net_benefit_cumulative, 0))));
-        assign("subscriber2_npv", var_data((ssc_number_t)(npv(CF_subscriber2_net_benefit_cumulative, nyears, nom_discount_rate) + cf.at(CF_subscriber2_net_benefit_cumulative, 0))));
-        assign("subscriber3_npv", var_data((ssc_number_t)(npv(CF_subscriber3_net_benefit_cumulative, nyears, nom_discount_rate) + cf.at(CF_subscriber3_net_benefit_cumulative, 0))));
-        assign("subscriber4_npv", var_data((ssc_number_t)(npv(CF_subscriber4_net_benefit_cumulative, nyears, nom_discount_rate) + cf.at(CF_subscriber4_net_benefit_cumulative, 0))));
+        assign("subscriber1_npv", var_data((ssc_number_t)(npv(CF_subscriber1_net_benefit, nyears, nom_discount_rate) + cf.at(CF_subscriber1_net_benefit, 0))));
+        assign("subscriber2_npv", var_data((ssc_number_t)(npv(CF_subscriber2_net_benefit, nyears, nom_discount_rate) + cf.at(CF_subscriber2_net_benefit, 0))));
+        assign("subscriber3_npv", var_data((ssc_number_t)(npv(CF_subscriber3_net_benefit, nyears, nom_discount_rate) + cf.at(CF_subscriber3_net_benefit, 0))));
+        assign("subscriber4_npv", var_data((ssc_number_t)(npv(CF_subscriber4_net_benefit, nyears, nom_discount_rate) + cf.at(CF_subscriber4_net_benefit, 0))));
 
 		for (i = 0; i <= nyears; i++)
 		{
@@ -3976,17 +4012,15 @@ public:
 		if (npv_energy_nom != 0) lcog_nom = lcog_nom * 100.0 / npv_energy_nom;
 		assign("lcog", var_data((ssc_number_t)lcog_nom));
 
-
-
-
 		// dispatch
-		std::vector<double> ppa_cf;
+        /* Community solar not available with storage, need to address price signal dispatch with no PPA if we enable with storage
+        std::vector<double> ppa_cf;
 		for (i = 0; i <= nyears; i++)
 		{
 			ppa_cf.push_back(cf.at(CF_ppa_price, i));
 		}
 		//m_disp_calcs.compute_outputs(ppa_cf);
-
+        */
 
 		// State ITC/depreciation table
 		assign("depr_stabas_percent_macrs_5", var_data((ssc_number_t)  (depr_stabas_macrs_5_frac*100.0)));
@@ -4371,6 +4405,28 @@ public:
 		double pvPropertyTax = npv(CF_property_tax_expense, nyears, nom_discount_rate);
 
 		assign( "present_value_insandproptax", var_data((ssc_number_t)(pvInsurance + pvPropertyTax)));
+
+        // check financial metric outputs per SAM issue 551
+        ssc_number_t irr_metric_end = irr(CF_project_return_aftertax, nyears) * 100.0;
+        ssc_number_t irr_metric_flip_year = actual_flip_irr;
+        ssc_number_t npv_metric = npv(CF_project_return_aftertax, nyears, nom_discount_rate) + cf.at(CF_project_return_aftertax, 0);
+
+        check_financial_metrics cfm;
+        cfm.check_irr(this, irr_metric_end);
+        cfm.check_irr_flip(this, irr_metric_flip_year);
+        cfm.check_npv(this, npv_metric);
+        cfm.check_debt_percentage(this, debt_fraction);
+
+        // SAM 1038
+        save_cf(CF_itc_fed_amount, nyears, "cf_itc_fed_amount");
+        save_cf(CF_itc_fed_percent_amount, nyears, "cf_itc_fed_percent_amount");
+        save_cf(CF_itc_fed, nyears, "cf_itc_fed");
+        save_cf(CF_itc_sta_amount, nyears, "cf_itc_sta_amount");
+        save_cf(CF_itc_sta_percent_amount, nyears, "cf_itc_sta_percent_amount");
+        save_cf(CF_itc_sta, nyears, "cf_itc_sta");
+        save_cf(CF_itc_total, nyears, "cf_itc_total");
+
+
 	}
 
 
@@ -4659,12 +4715,12 @@ public:
 		if (len == 1)
 		{
 			for (int i=1;i<=nyears;i++)
-				cf.at(cf_line, i) = (i <= term) ? parr[0] * cf.at(CF_energy_net,i) * pow(1 + escal, i-1) : 0.0;
+				cf.at(cf_line, i) = (i <= term) ? parr[0] * cf.at(CF_energy_sales,i) * pow(1 + escal, i-1) : 0.0;
 		}
 		else
 		{
 			for (int i=1;i<=nyears && i <= (int)len;i++)
-				cf.at(cf_line, i) = parr[i-1]*cf.at(CF_energy_net,i);
+				cf.at(cf_line, i) = parr[i-1]*cf.at(CF_energy_sales,i);
 		}
 	}
 
@@ -4679,12 +4735,12 @@ public:
 		if (len == 1)
 		{
 			for (int i=1;i<=nyears;i++)
-				cf.at(cf_line, i) = (i <= term) ? cf.at(CF_energy_net,i) / 1000.0 * round_irs(1000.0 * parr[0] * pow(1 + escal, i-1)) : 0.0;
+				cf.at(cf_line, i) = (i <= term) ? cf.at(CF_energy_sales,i) / 1000.0 * round_irs(1000.0 * parr[0] * pow(1 + escal, i-1)) : 0.0;
 		}
 		else
 		{
 			for (int i=1;i<=nyears && i <= (int)len;i++)
-				cf.at(cf_line, i) = parr[i-1]*cf.at(CF_energy_net,i);
+				cf.at(cf_line, i) = parr[i-1]*cf.at(CF_energy_sales,i);
 		}
 	}
 
@@ -4756,9 +4812,9 @@ public:
 		// scale to max value for better irr convergence
 		if (count<1) return 1.0;
 		int i=0;
-		double max=fabs(cf.at(cf_unscaled,0));
+		double max= std::abs(cf.at(cf_unscaled,0));
 		for (i=0;i<=count;i++) 
-			if (fabs(cf.at(cf_unscaled,i))> max) max =fabs(cf.at(cf_unscaled,i));
+			if (std::abs(cf.at(cf_unscaled,i))> max) max =fabs(cf.at(cf_unscaled,i));
 		return (max>0 ? max:1);
 	}
 
@@ -4766,7 +4822,7 @@ public:
 	{
 		double npv_of_irr = npv(cf_line,count,calculated_irr)+cf.at(cf_line,0);
 		double npv_of_irr_plus_delta = npv(cf_line,count,calculated_irr+0.001)+cf.at(cf_line,0);
-		bool is_valid = ( (number_of_iterations<max_iterations) && (fabs(residual)<tolerance) && (npv_of_irr>npv_of_irr_plus_delta) && (fabs(npv_of_irr/scale_factor)<tolerance) );
+		bool is_valid = ( (number_of_iterations<max_iterations) && (std::abs(residual)<tolerance) && (npv_of_irr>npv_of_irr_plus_delta) && (std::abs(npv_of_irr/scale_factor)<tolerance) );
 				//if (!is_valid)
 				//{
 				//std::stringstream outm;
@@ -4863,7 +4919,7 @@ public:
 
 		residual = irr_poly_sum(calculated_irr,cf_line,count) / scale_factor;
 
-		while (!(fabs(residual) <= tolerance) && (number_of_iterations < max_iterations))
+		while (!(std::abs(residual) <= tolerance) && (number_of_iterations < max_iterations))
 		{
 			deriv_sum = irr_derivative_sum(initial_guess,cf_line,count);
 			if (deriv_sum != 0.0)

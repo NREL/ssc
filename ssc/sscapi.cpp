@@ -1,24 +1,35 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 
 #include <stdio.h>
 #include <cstring>
@@ -38,7 +49,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 SSCEXPORT int ssc_version()
 {
-	return 267;
+	return 278;
 }
 
 SSCEXPORT const char *ssc_build_info()
@@ -77,6 +88,7 @@ extern module_entry_info
 	cm_entry_utilityrate3,
 	cm_entry_utilityrate4,
 	cm_entry_utilityrate5,
+    cm_entry_utilityrateforecast,
 	cm_entry_annualoutput,
 	cm_entry_cashloan,
 	cm_entry_thirdpartyownership,
@@ -105,10 +117,12 @@ extern module_entry_info
 	cm_entry_iph_to_lcoefcr,
 	cm_entry_tcsgeneric_solar,
 	cm_entry_tcsmolten_salt,
+    cm_entry_mspt_sf_and_rec_isolated,
 	cm_entry_tcslinear_fresnel,
 	cm_entry_linear_fresnel_dsg_iph,
 	cm_entry_tcsmslf,
     cm_entry_etes_electric_resistance,
+    cm_entry_etes_ptes,
 	cm_entry_hcpv,
 	cm_entry_wfcheck,
 	cm_entry_wind_file_reader,
@@ -119,7 +133,6 @@ extern module_entry_info
 	cm_entry_biomass,
 	cm_entry_solarpilot,
 	cm_entry_belpe,
-	cm_entry_dsg_flux_preprocess,
 	cm_entry_layoutarea,
 	cm_entry_sco2_csp_system,
 	cm_entry_sco2_csp_ud_pc_tables,
@@ -132,7 +145,7 @@ extern module_entry_info
 	cm_entry_cb_mspt_system_costs,
 	cm_entry_cb_construction_financing,
 	cm_entry_cb_empirical_hce_heat_loss,
-	cm_entry_iscc_design_point,
+    cm_entry_csp_dsg_lf_ui,
 	cm_entry_battery,
 	cm_entry_battwatts,
 	cm_entry_fuelcell,
@@ -145,7 +158,8 @@ extern module_entry_info
 	cm_entry_mhk_costs,
 	cm_entry_wave_file_reader,
 	cm_entry_grid,
-	cm_entry_battery_stateful
+	cm_entry_battery_stateful,
+    cm_entry_csp_subcomponent
 	;
 
 /* official module table */
@@ -173,6 +187,7 @@ static module_entry_info *module_table[] = {
 	&cm_entry_utilityrate3,
 	&cm_entry_utilityrate4,
 	&cm_entry_utilityrate5,
+    &cm_entry_utilityrateforecast,
 	&cm_entry_annualoutput,
 	&cm_entry_cashloan,
 	&cm_entry_thirdpartyownership,
@@ -201,10 +216,12 @@ static module_entry_info *module_table[] = {
 	&cm_entry_iph_to_lcoefcr,
 	&cm_entry_tcsgeneric_solar,
 	&cm_entry_tcsmolten_salt,
+    &cm_entry_mspt_sf_and_rec_isolated,
 	&cm_entry_tcslinear_fresnel,
 	&cm_entry_linear_fresnel_dsg_iph,
 	&cm_entry_tcsmslf,
     &cm_entry_etes_electric_resistance,
+    &cm_entry_etes_ptes,
 	&cm_entry_hcpv,
 	&cm_entry_wind_file_reader,
 	&cm_entry_wfcheck,
@@ -215,7 +232,6 @@ static module_entry_info *module_table[] = {
 	&cm_entry_biomass,
 	&cm_entry_solarpilot,
 	&cm_entry_belpe,
-	&cm_entry_dsg_flux_preprocess,
 	&cm_entry_layoutarea,
 	&cm_entry_sco2_csp_system,
 	&cm_entry_sco2_csp_ud_pc_tables,
@@ -228,7 +244,7 @@ static module_entry_info *module_table[] = {
 	&cm_entry_cb_mspt_system_costs,
 	&cm_entry_cb_construction_financing,
 	&cm_entry_cb_empirical_hce_heat_loss,
-	&cm_entry_iscc_design_point,
+    &cm_entry_csp_dsg_lf_ui,
 	&cm_entry_battery,
 	&cm_entry_battwatts,
 	&cm_entry_fuelcell,
@@ -242,6 +258,7 @@ static module_entry_info *module_table[] = {
 	&cm_entry_wave_file_reader,
 	&cm_entry_grid,
 	&cm_entry_battery_stateful,
+    &cm_entry_csp_subcomponent,
 	0 };
 
 SSCEXPORT ssc_module_t ssc_module_create( const char *name )
@@ -891,13 +908,17 @@ void json_to_ssc_var(const rapidjson::Value& json_val, ssc_var_t ssc_val) {
 }
 
 SSCEXPORT ssc_data_t json_to_ssc_data(const char* json_str) {
+        // memory leak if calling program does not do garbage collection
     auto vt = new var_table;
+//    std::unique_ptr<var_table> vt = std::unique_ptr<var_table>(new var_table);
     rapidjson::Document document;
-    document.Parse(json_str);
+    //document.Parse(json_str); Parse<kParseDefaultFlags>(str)
+    document.Parse<rapidjson::kParseNanAndInfFlag>(json_str); // Allow parsing NaN, Inf, Infinity, -Inf and -Infinity as double values (relaxed JSON syntax).
     if (document.HasParseError()) {
         std::string s = rapidjson::GetParseError_En(document.GetParseError());
         vt->assign("error", s);
-        return dynamic_cast<ssc_data_t>(vt);
+//        return dynamic_cast<ssc_data_t>(vt);
+        return vt;
     }
 //    static const char* kTypeNames[] = { "Null", "False", "True", "Object", "Array", "String", "Number" };
     for (rapidjson::Value::ConstMemberIterator itr = document.MemberBegin(); itr != document.MemberEnd(); ++itr) {
@@ -1272,12 +1293,13 @@ SSCEXPORT void __ssc_segfault()
 	std::string mystr = *pstr;
 }
 
-static std::string* s_python_path;
+//static std::string* s_python_path
+static std::unique_ptr<std::string> s_python_path;
 
 SSCEXPORT int set_python_path(const char* abs_path) {
     if (util::dir_exists(abs_path)){
-        delete s_python_path;
-        s_python_path = new std::string(abs_path);
+//        delete s_python_path;
+        s_python_path = std::unique_ptr<std::string>( new std::string(abs_path));
         return 1;
     }
     else
@@ -1304,8 +1326,19 @@ SSCEXPORT int ssc_stateful_module_setup(ssc_module_t p_mod, ssc_data_t p_data) {
     int i = 0;
     while ( module_table[i] != nullptr && module_table[i]->f_create != nullptr ) {
         if ( lname == util::lower_case( module_table[i]->name ) ) {
-            if (module_table[i]->f_setup_stateful)
-                return (*(module_table[i]->f_setup_stateful))(cm, vt);
+            if (module_table[i]->f_setup_stateful) {
+                try {
+                    return (*(module_table[i]->f_setup_stateful))(cm, vt);
+                }
+                catch (general_error& e) {
+                    cm->log(e.err_text, SSC_ERROR, e.time);
+                    return 0;
+                }
+                catch (std::exception& e) {
+                    cm->log("setup fail(" + cm->get_name() + "): " + e.what(), SSC_ERROR, -1);
+                    return 0;
+                }
+            }
             else {
                 cm->log("This module is not stateful. `setup` does not need to be called.");
                 return 0;

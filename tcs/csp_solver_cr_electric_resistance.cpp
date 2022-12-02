@@ -1,24 +1,35 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 
 #include "csp_solver_cr_electric_resistance.h"
 #include "csp_solver_core.h"
@@ -38,7 +49,7 @@ static C_csp_reported_outputs::S_output_info S_cr_electric_resistance_output_inf
 };
 
 C_csp_cr_electric_resistance::C_csp_cr_electric_resistance(double T_htf_cold_des /*C*/, double T_htf_hot_des /*C*/,
-    double q_dot_heater_des /*MWt*/, double f_q_dot_min /*-*/,
+    double q_dot_heater_des /*MWt*/, double heater_efficiency /*-*/, double f_q_dot_min /*-*/,
     double f_q_dot_des_allowable_su /*-*/, double hrs_startup_at_max_rate /*hr*/,
     int htf_code /*-*/, util::matrix_t<double> ud_htf_props, E_elec_resist_startup_mode startup_mode)
 {
@@ -46,6 +57,7 @@ C_csp_cr_electric_resistance::C_csp_cr_electric_resistance(double T_htf_cold_des
     m_T_htf_cold_des = T_htf_cold_des;      //[C]
     m_T_htf_hot_des = T_htf_hot_des;        //[C]
     m_q_dot_heater_des = q_dot_heater_des;  //[MWt]
+    m_heater_efficiency = heater_efficiency;    //[-]
     m_q_dot_min = f_q_dot_min*m_q_dot_heater_des; //[MWt]
 
     m_f_q_dot_des_allowable_su = f_q_dot_des_allowable_su;  //[-]
@@ -60,6 +72,7 @@ C_csp_cr_electric_resistance::C_csp_cr_electric_resistance(double T_htf_cold_des
     m_cp_htf_des = std::numeric_limits<double>::quiet_NaN();
     m_q_dot_su_max = std::numeric_limits<double>::quiet_NaN();
     m_E_su_des = std::numeric_limits<double>::quiet_NaN();
+    m_W_dot_heater_des = std::numeric_limits<double>::quiet_NaN();
 
     // Initialize state variables
     m_E_su_initial = m_E_su_calculated = std::numeric_limits<double>::quiet_NaN();
@@ -116,6 +129,7 @@ void C_csp_cr_electric_resistance::init(const C_csp_collector_receiver::S_csp_cr
     // Calculate the design point HTF mass flow rate
     m_cp_htf_des = mc_pc_htfProps.Cp_ave(m_T_htf_cold_des + 273.15, m_T_htf_hot_des + 273.15, 5);	//[kJ/kg-K]
     m_m_dot_htf_des = m_q_dot_heater_des*1.E3 / (m_cp_htf_des*(m_T_htf_hot_des - m_T_htf_cold_des));	//[kg/s]
+    m_W_dot_heater_des = m_q_dot_heater_des / m_heater_efficiency;      //[MWe]
 
     // Check startup parameters
     m_f_q_dot_des_allowable_su = std::max(0.0, m_f_q_dot_des_allowable_su); //[-]
@@ -146,9 +160,11 @@ void C_csp_cr_electric_resistance::init(const C_csp_collector_receiver::S_csp_cr
 
 }
 
-void C_csp_cr_electric_resistance::get_design_parameters(double& E_su_design /*MWt-hr*/)
+void C_csp_cr_electric_resistance::get_design_parameters(double& E_su_design /*MWt-hr*/,
+                double& W_dot_heater_design /*MWe*/)
 {
-    E_su_design = m_E_su_des;      //[MWt-hr]
+    E_su_design = m_E_su_des;                   //[MWt-hr]
+    W_dot_heater_design = m_W_dot_heater_des;   //[MWe]
 }
 
 C_csp_collector_receiver::E_csp_cr_modes C_csp_cr_electric_resistance::get_operating_state()
@@ -207,9 +223,9 @@ void C_csp_cr_electric_resistance::off(const C_csp_weatherreader::S_outputs& wea
     cr_out_solver.m_component_defocus = 1.0;        //[-]
     cr_out_solver.m_is_recirculating = false;       //[-]
 
-    cr_out_solver.m_W_dot_col_tracking = 0.0;       //[MWe]
-    cr_out_solver.m_W_dot_htf_pump = 0.0;           //[MWe]
     cr_out_solver.m_q_dot_heater = 0.0;             //[MWt]
+
+    cr_out_solver.m_W_dot_elec_in_tot = 0.0;        //[MWe]
 
     m_operating_mode = C_csp_collector_receiver::OFF;
     m_E_su_calculated = m_E_su_des;     //[MWt-hr]
@@ -236,6 +252,7 @@ void C_csp_cr_electric_resistance::startup(const C_csp_weatherreader::S_outputs&
 
     double step_hrs = sim_info.ms_ts.m_step / 3600.0;    //[hr]
 
+    // Assume startup is always at max startup rate
     double time_remaining_su = m_E_su_initial / m_q_dot_su_max; //[hr]
 
     double time_required_su = std::numeric_limits<double>::quiet_NaN();
@@ -251,9 +268,9 @@ void C_csp_cr_electric_resistance::startup(const C_csp_weatherreader::S_outputs&
 
     double q_startup = m_q_dot_su_max * time_required_su;       //[MWt-hr]
 
-    double W_dot_heater = m_q_dot_su_max;       //[MWe]
+    double W_dot_heater = m_q_dot_su_max / m_heater_efficiency;       //[MWe]
 
-    m_E_su_calculated = fmax(0.0, m_E_su_initial - q_startup);  //[MWt-hr]
+    m_E_su_calculated = std::max(0.0, m_E_su_initial - q_startup);  //[MWt-hr]
 
     cr_out_solver.m_q_startup = q_startup;                  //[MWt-hr]
     cr_out_solver.m_time_required_su = time_required_su*3600.0; //[s]
@@ -263,9 +280,10 @@ void C_csp_cr_electric_resistance::startup(const C_csp_weatherreader::S_outputs&
     cr_out_solver.m_component_defocus = 1.0;                //[-]
     cr_out_solver.m_is_recirculating = false;               //[-]
 
-    cr_out_solver.m_W_dot_col_tracking = 0.0;               //[MWe]
-    cr_out_solver.m_W_dot_htf_pump = 0.0;                   //[MWe]
-    cr_out_solver.m_q_dot_heater = m_q_dot_su_max;          //[MWt]
+    // Treat this as external heat input -> set to 0
+    cr_out_solver.m_q_dot_heater = 0.0;          //[MWt]
+
+    cr_out_solver.m_W_dot_elec_in_tot = W_dot_heater;        //[MWe]
 
     // Set reported outputs
     mc_reported_outputs.value(E_W_DOT_HEATER, W_dot_heater);    //[MWe]
@@ -298,26 +316,24 @@ void C_csp_cr_electric_resistance::on(const C_csp_weatherreader::S_outputs& weat
     if (q_dot_elec < m_q_dot_min) {
         m_operating_mode = C_csp_collector_receiver::OFF;
         q_dot_elec = 0.0;       //[MWt]
+        m_E_su_calculated = m_E_su_des;     //[MWt-hr]
     }
     else {
         m_operating_mode = C_csp_collector_receiver::ON;
+        m_E_su_calculated = 0.0;        //[MWt-hr]
     }
-
-    double W_dot_heater = q_dot_elec;       //[MWe]
 
     double m_dot_htf = q_dot_elec * 1.E3 / (m_cp_htf_des*(m_T_htf_hot_des - htf_state_in.m_temp));  //[kg/s]
 
     double q_startup = 0.0;         //[MWt-hr]
     double q_dot_startup = 0.0;     //[MWt-hr]
-    double W_dot_startup = 0.0;     //[MWt-hr]
     // Apply startup if in INSTANTANEOUS startup mode
     if (m_E_su_initial > 0.0 && m_startup_mode == INSTANTANEOUS_NO_MAX_ELEC_IN) {
         q_startup = m_E_su_initial;
         q_dot_startup = q_startup / (sim_info.ms_ts.m_step / 3600.0);   //[MWt]
-        W_dot_startup = q_dot_startup;      //[MWt]
     }
 
-    m_E_su_calculated = 0.0;        //[MWt-hr]
+    double W_dot_heater_total = (q_dot_elec + q_dot_startup) / m_heater_efficiency;       //[MWe]
 
     // Set solver outputs and return
     cr_out_solver.m_q_startup = q_startup;        //[MWt-hr]
@@ -327,12 +343,14 @@ void C_csp_cr_electric_resistance::on(const C_csp_weatherreader::S_outputs& weat
     cr_out_solver.m_T_salt_hot = m_T_htf_hot_des;   //[C]
     cr_out_solver.m_component_defocus = heater_turn_down;   //[-]
 
-    cr_out_solver.m_W_dot_col_tracking = 0.0;  //[MWe]
-    cr_out_solver.m_W_dot_htf_pump = 0.0;      //[MWe]
-    cr_out_solver.m_q_dot_heater = q_dot_elec + q_dot_startup; //[MWt]
+    // Treat this as external heat input -> set to 0
+    // Used for freeze protection in CSP collector-receiver models
+    cr_out_solver.m_q_dot_heater = 0.0; // q_dot_elec + q_dot_startup; //[MWt]
+
+    cr_out_solver.m_W_dot_elec_in_tot = W_dot_heater_total;        //[MWe]
 
     // Set reported outputs
-    mc_reported_outputs.value(E_W_DOT_HEATER, W_dot_heater + W_dot_startup);    //[MWe]
+    mc_reported_outputs.value(E_W_DOT_HEATER, W_dot_heater_total);    //[MWe]
     mc_reported_outputs.value(E_Q_DOT_HTF, q_dot_elec);         //[MWt] only heat to HTF - doesn't include startup in INST mode
     mc_reported_outputs.value(E_Q_DOT_STARTUP, q_dot_startup);            //[MWt]
     mc_reported_outputs.value(E_M_DOT_HTF, cr_out_solver.m_m_dot_salt_tot / 3600.0);    //[kg/s]
@@ -379,17 +397,16 @@ void C_csp_cr_electric_resistance::converged()
 {
     m_operating_mode_converged = m_operating_mode;
 
+    // Operating mode methods should handle this, but can check here too
+    if (m_operating_mode_converged == OFF) {
+
+        m_E_su_calculated = m_E_su_des;
+    }
+
     if ((m_startup_mode == INSTANTANEOUS_NO_MAX_ELEC_IN || m_E_su_des == 0.0)
         && m_operating_mode_converged == OFF) {
         m_operating_mode_converged = OFF_NO_SU_REQ;
     }
-
-    //if (m_E_su_calculated == 0.0 || m_startup_mode == INSTANTANEOUS_NO_MAX_ELEC_IN) {
-    //    m_operating_mode_converged = C_csp_collector_receiver::ON;
-    //}
-    //else {
-    //    m_operating_mode_converged = m_operating_mode;		
-    //}
 
     m_E_su_initial = m_E_su_calculated;
 
@@ -401,6 +418,11 @@ void C_csp_cr_electric_resistance::write_output_intervals(double report_time_sta
 {
     mc_reported_outputs.send_to_reporting_ts_array(report_time_start,
         v_temp_ts_time_end, report_time_end);
+}
+
+double C_csp_cr_electric_resistance::get_design_electric_to_heat_cop()
+{
+    return m_heater_efficiency;
 }
 
 double C_csp_cr_electric_resistance::calculate_optical_efficiency(const C_csp_weatherreader::S_outputs& weather, const C_csp_solver_sim_info& sim)
@@ -417,6 +439,6 @@ double C_csp_cr_electric_resistance::calculate_thermal_efficiency_approx(const C
 
 double C_csp_cr_electric_resistance::get_collector_area()
 {
-    // Used by dispatch model
-    return 0.0;
+    // Collector area is not a relevant metric for an electric resistance heater
+    return std::numeric_limits<double>::quiet_NaN();
 }

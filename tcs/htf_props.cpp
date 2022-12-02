@@ -1,23 +1,33 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "htf_props.h"
@@ -30,6 +40,40 @@ HTFProperties::HTFProperties()
 	uf_err_msg = "The user-defined htf property table is invalid (rows=%d cols=%d)";
 
 	m_is_temp_enth_avail = false;
+}
+
+void HTFProperties::Initialize(int htf_code, util::matrix_t<double> ud_htf_props)
+{
+    if (htf_code != HTFProperties::User_defined && htf_code < HTFProperties::End_Library_Fluids)
+    {
+        if (!SetFluid(htf_code))
+        {
+            throw(C_csp_exception("C_csp_cr_electric_resistance::init HTF code is not recognized"));
+        }
+    }
+    else if (htf_code == HTFProperties::User_defined)
+    {
+        // Check that 'm_field_fl_props' is allocated and correct dimensions
+        int n_rows = (int)ud_htf_props.nrows();
+        int n_cols = (int)ud_htf_props.ncols();
+        if (n_rows > 2 && n_cols == 7)
+        {
+            if (!SetUserDefinedFluid(ud_htf_props))
+            {
+                std::string error_msg = util::format(UserFluidErrMessage(), n_rows, n_cols);
+                throw(C_csp_exception(error_msg, "Heat Sink Initialization"));
+            }
+        }
+        else
+        {
+            std::string error_msg = util::format("The user defined field HTF table must contain at least 3 rows and exactly 7 columns. The current table contains %d row(s) and %d column(s)", n_rows, n_cols);
+            throw(C_csp_exception(error_msg, "Heat Sink Initialization"));
+        }
+    }
+    else
+    {
+        throw(C_csp_exception("Power cycle HTF code is not recognized", "Heat Sink Initialization"));
+    }
 }
 
 bool HTFProperties::SetUserDefinedFluid(const util::matrix_t<double> &table, bool calc_temp_enth_table)
@@ -611,6 +655,112 @@ double HTFProperties::temp(double H)
 	default:
 		return std::numeric_limits<double>::quiet_NaN();
 	}
+}
+
+double HTFProperties::min_temp()
+{
+    // Outputs: temperature [K]
+
+    double T_C = std::numeric_limits<double>::quiet_NaN();
+
+    switch (m_fluid)
+    {
+    case Nitrate_Salt:
+        T_C = 238.;
+        break;
+    case Caloria_HT_43:
+        T_C = -12.;
+        break;
+    case Hitec_XL:
+        T_C = 120.;
+        break;
+    case Therminol_VP1:
+        T_C = 12.;
+        break;
+    case Hitec:
+        T_C = 142.;
+        break;
+    case Dowtherm_Q:
+        T_C = -35.;
+        break;
+    case Dowtherm_RP:
+        T_C = 0.;
+        break;
+    case Therminol_66:
+        T_C = 0.;
+        break;
+    case Therminol_59:
+        T_C = -45.;
+        break;
+    case Pressurized_Water:
+        T_C = 10.;
+        break;
+    case User_defined:
+        if (m_userTable.nrows() < 2) {
+            T_C = std::numeric_limits<double>::quiet_NaN();
+        }
+        else {
+            T_C = User_Defined_Props.get_min_x_value_x_col_0();
+        }
+        break;
+    default:
+        T_C = std::numeric_limits<double>::quiet_NaN();
+    }
+
+    return T_C + 273.15;
+}
+
+double HTFProperties::max_temp()
+{
+    // Outputs: temperature [K]
+
+    double T_C = std::numeric_limits<double>::quiet_NaN();
+
+    switch (m_fluid)
+    {
+    case Nitrate_Salt:
+        T_C = 593.;
+        break;
+    case Caloria_HT_43:
+        T_C = 315.;
+        break;
+    case Hitec_XL:
+        T_C = 500.;
+        break;
+    case Therminol_VP1:
+        T_C = 400.;
+        break;
+    case Hitec:
+        T_C = 538.;
+        break;
+    case Dowtherm_Q:
+        T_C = 330.;
+        break;
+    case Dowtherm_RP:
+        T_C = 330.;
+        break;
+    case Therminol_66:
+        T_C = 345.;
+        break;
+    case Therminol_59:
+        T_C = 315.;
+        break;
+    case Pressurized_Water:
+        T_C = 220.;
+        break;
+    case User_defined:
+        if (m_userTable.nrows() < 2) {
+            T_C = std::numeric_limits<double>::quiet_NaN();
+        }
+        else {
+            T_C = User_Defined_Props.get_max_x_value_x_col_0();
+        }
+        break;
+    default:
+        T_C =  std::numeric_limits<double>::quiet_NaN();
+    }
+
+    return T_C + 273.15;
 }
 
 double HTFProperties::enth(double T_K)

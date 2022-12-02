@@ -1,23 +1,33 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #ifndef __csp_solver_util_
@@ -25,6 +35,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <string>
 #include <vector>
+#include <limits>
 
 #include <exception>
 
@@ -38,8 +49,14 @@ public:
 		TS_WEIGHTED_AVE,
 		TS_1ST,
 		TS_LAST,
-        TS_MAX
+        TS_MAX,
+        DEPENDENT
 	};
+
+    enum E_AB_relationship
+    {
+        AoverB
+    };
 
 	class C_output
 	{
@@ -52,7 +69,11 @@ public:
 		
 		int m_subts_weight_type;	// 0: timestep-weighted average, 1: Take first piont in mv_temp_outputs, 2: Take final point in mv_temp_outupts
 		//bool m_is_ts_weighted;		// True = timestep-weighted average of mv_temp_outputs, False = take first point in mv_temp_outputs
-		
+
+        int m_name_indA;
+        int m_name_indB;
+        E_AB_relationship m_AB_relationship;
+
 		int m_counter_reporting_ts_array;	//[-] Tracking current location of reporting array
 
 	public:
@@ -61,6 +82,15 @@ public:
 		int get_vector_size();
 
 		void set_m_is_ts_weighted(int subts_weight_type);
+        void set_name_indA(int name_indA);
+        void set_name_indB(int name_indB);
+        void set_AB_relationship(E_AB_relationship AB_relationship);
+
+        int get_name_indA() { return m_name_indA; }
+        int get_name_indB() { return m_name_indB; }
+        E_AB_relationship get_AB_relationship() { return m_AB_relationship; }
+
+        bool get_is_allocated() { return m_is_allocated; }
 
 		void assign(double *p_reporting_ts_array, size_t n_reporting_ts_array);
 
@@ -72,8 +102,12 @@ public:
 
 		std::vector<double> get_output_vector();
 
+        double get_last_reported_value();
+
 		void send_to_reporting_ts_array(double report_time_start, int n_report,
 			const std::vector<double> & v_temp_ts_time_end, double report_time_end, bool is_save_last_step, int n_pop_back);
+
+        void send_to_reporting_ts_array(double val);
 	};
 
 	struct S_output_info
@@ -85,6 +119,15 @@ public:
 		//bool m_is_ts_weighted;		// True = timestep-weighted average of mv_temp_outputs, False = take first point in mv_temp_outputs	
 	};
 
+    struct S_dependent_output_info
+    {
+        int m_name;
+        int m_name_indA;
+        int m_name_indB;
+        E_AB_relationship m_AB_relationship;
+
+    };
+
 private:
 
 	std::vector<C_output> mvc_outputs;	//[-] vector of Output Classes
@@ -94,11 +137,16 @@ private:
 
 	std::vector<double> mv_latest_calculated_outputs;	//[-] Output after most recent 
 
+    std::vector<C_output> mvc_dependent_outputs;    //[-] vector of *dependent* outputs
+    int m_n_dependent_outputs;
+
 public:
 
-	C_csp_reported_outputs(){};
+	C_csp_reported_outputs();
 
 	void construct(const S_output_info *output_info);
+
+    void construct(const S_output_info* output_info, const S_dependent_output_info* dep_output_info);
 
 	bool assign(int index, double *p_reporting_ts_array, size_t n_reporting_ts_array);
 
@@ -122,6 +170,7 @@ public:
 };
 
 extern const C_csp_reported_outputs::S_output_info csp_info_invalid;
+extern const C_csp_reported_outputs::S_dependent_output_info csp_dep_info_invalid;
 
 class C_csp_messages
 {

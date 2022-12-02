@@ -1,23 +1,33 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <cmath>
@@ -34,20 +44,23 @@ var_info vtab_grid_input[] = {
 	// simulation inputs
 	{ SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",        "Lifetime simulation",                   "0/1",     "0=SingleYearRepeated,1=RunEveryYear",   "Lifetime",        "?=0",                   "BOOLEAN",                          "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                   "Lifetime analysis period",              "years",   "The number of years in the simulation", "Lifetime",        "system_use_lifetime_output=1","",                           "" },
+    { SSC_INOUT,        SSC_ARRAY,       "energy_hourly_kW",								  "Power output of array",                "kW",        "Lifetime system generation",          "System Output",                  "",                        "",                              "" },
 
 	// external compute module inputs
 	{ SSC_INOUT,        SSC_ARRAY,       "gen",								  "System power generated",                "kW",        "Lifetime system generation",          "System Output",                  "",                        "",                              "" },
-	{ SSC_INPUT,		SSC_ARRAY,	     "load",			                  "Electricity load (year 1)",             "kW",	    "",                                    "Load",	                       "",	                      "",	                           "" },
+	{ SSC_INOUT,		SSC_ARRAY,	     "load",			                  "Electricity load (year 1)",             "kW",	    "",                                    "Load",	                       "",	                      "",	                           "" },
     { SSC_INPUT,		SSC_ARRAY,	     "crit_load",			              "Critical electricity load (year 1)",    "kW",	        "",				        "Load",                             "",	                      "",	                            "" },
-    { SSC_INPUT,        SSC_ARRAY,       "grid_outage",                       "Timesteps with grid outage",            "0/1",        "0=GridAvailable,1=GridUnavailable,Length=load", "Load",    "",                       "",                               "" },
+    { SSC_INOUT,        SSC_ARRAY,       "grid_outage",                       "Grid outage in this time step",            "0/1",        "0=GridAvailable,1=GridUnavailable,Length=load", "Load",    "",                       "",                               "" },
     { SSC_INPUT,        SSC_ARRAY,       "load_escalation",                   "Annual load escalation",                "%/year",    "",                                    "Load",                        "?=0",                      "",                            "" },
 
 var_info_invalid };
 
 var_info vtab_grid_output[] = {
 
+    { SSC_OUTPUT,        SSC_ARRAY,       "full_load",                       "Electricity load prior to grid outage (year 1)",  "kW",       "Load" "",                 "",                        "",                              "" },
+
 	{ SSC_OUTPUT,        SSC_ARRAY,       "system_pre_interconnect_kwac",     "System power before grid interconnect",  "kW",       "Lifetime system generation" "",                 "",                        "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "capacity_factor_interconnect_ac",  "Capacity factor of the interconnection (year 1)",  "%",          "",                "",                           "",                     "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "capacity_factor_interconnect_ac",  "Capacity factor based on AC interconnection limit",  "%",          "",                "",                           "",                     "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_energy_pre_interconnect_ac", "Annual Energy AC pre-interconnection (year 1)",   "kWh",        "",                "",                           "",                     "",                              "" },
 	{ SSC_INOUT,        SSC_NUMBER,      "annual_energy",                    "Annual Energy AC (year 1)",                        "kWh",        "",                "System Output",                           "",                     "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_ac_interconnect_loss_percent","Annual Energy loss from interconnection limit (year 1)", "%", "",                "",                           "",                     "",                              "" },
@@ -56,7 +69,7 @@ var_info vtab_grid_output[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,       "system_pre_curtailment_kwac",     "System power before grid curtailment",  "kW",       "Lifetime system generation" "",                 "",                        "",                              "" },
 	
 // outputs to be assigned
-{ SSC_OUTPUT,        SSC_NUMBER,      "capacity_factor_curtailment_ac",  "Capacity factor of the curtailment (year 1)",  "%",          "",                "",                           "",                     "",                              "" },
+{ SSC_OUTPUT,        SSC_NUMBER,      "capacity_factor_curtailment_ac",  "Capacity factor based on AC electricity after curtailment and AC interconnection limit",  "%",          "",                "",                           "",                     "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_energy_pre_curtailment_ac", "Annual Energy AC pre-curtailment (year 1)",   "kWh",        "",                "",                           "",                     "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_ac_curtailment_loss_percent","Annual Energy loss from curtailment (year 1)", "%", "",                "",                           "",                     "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_ac_curtailment_loss_kwh",   "Annual Energy loss from curtailment (year 1)", "kWh", "",                "",                           "",                     "",
@@ -85,7 +98,10 @@ void cm_grid::exec()
 {
     construct();
     // System generation output, which is lifetime (if system_lifetime_output == true);
-    gridVars->systemGenerationLifetime_kW = as_vector_double("gen");
+    if (is_assigned("energy_hourly_kW"))
+        gridVars->systemGenerationLifetime_kW = as_vector_double("energy_hourly_kW");
+    else
+        gridVars->systemGenerationLifetime_kW = as_vector_double("gen");
 
     size_t n_rec_lifetime = gridVars->systemGenerationLifetime_kW.size();
     size_t n_rec_single_year;
@@ -129,6 +145,22 @@ void cm_grid::exec()
 
     if (is_assigned("load")) {
         load_year_one = as_vector_double("load");
+    }
+
+    if (is_assigned("grid_outage")) {
+        std::vector<bool> grid_outage_steps = as_vector_bool("grid_outage");
+        bool analyze_outage = std::any_of(grid_outage_steps.begin(), grid_outage_steps.end(), [](bool x) {return x; });
+        if (analyze_outage) {
+            ssc_number_t* full_load = allocate("full_load", load_year_one.size());
+            ssc_number_t* load_kw_out = allocate("load", load_year_one.size());
+            for (size_t i = 0; i < load_year_one.size(); i++) {
+                full_load[i] = load_year_one[i];
+                load_year_one[i] = grid_outage_steps[i] ? 0.0 : load_year_one[i];
+                load_kw_out[i] = static_cast<ssc_number_t>(load_year_one[i]);
+            }
+        }
+        // No conversion from std::vector<bool> to var_data - worth adding?
+        assign("grid_outage", as_vector_integer("grid_outage"));
     }
 
     scalefactors scale_calculator(m_vartab);

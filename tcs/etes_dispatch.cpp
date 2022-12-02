@@ -1,23 +1,33 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #include <fstream>
 #include <sstream>
@@ -28,6 +38,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lib_util.h"
 
 #define SOS_NONE
+//#define ALT_ETES_FORM
 
 #undef min
 #undef max
@@ -60,8 +71,9 @@ void etes_dispatch_opt::init(double cycle_q_dot_des, double cycle_eta_des)
 
     params.dt_rec_startup = pointers.col_rec->get_startup_time(); // / 3600.;
     params.e_rec_startup = pointers.col_rec->get_startup_energy();
-    params.q_eh_min = pointers.col_rec->get_min_power_delivery();
+    params.q_eh_min = pointers.col_rec->get_min_power_delivery() * (1 + 1e-8); // ensures controller doesn't shut down heater at minimum load
     params.q_eh_max = pointers.col_rec->get_max_power_delivery(std::numeric_limits<double>::quiet_NaN());
+    params.eta_eh = pointers.col_rec->get_design_electric_to_heat_cop();
 
     params.e_tes0 = pointers.tes->get_initial_charge_energy();
     params.e_tes_min = pointers.tes->get_min_charge_energy();
@@ -219,7 +231,6 @@ static void calculate_parameters(etes_dispatch_opt *optinst, unordered_map<std::
             optinst->params.time_elapsed.push_back(pars["delta"] * (t + 1));
         }
 
-        pars["eta_eh"] = optinst->params.eta_eh;
         pars["Ec"] = optinst->params.e_pb_startup_cold;
         pars["Eeh"] = optinst->params.e_rec_startup;
         pars["Eu"] = optinst->params.e_tes_max;
@@ -228,6 +239,7 @@ static void calculate_parameters(etes_dispatch_opt *optinst, unordered_map<std::
         pars["Ql"] = optinst->params.q_pb_min ;
         pars["Qcsu"] = optinst->params.e_pb_startup_cold / ceil(optinst->params.dt_pb_startup_cold / pars["delta"]) / pars["delta"];
 
+        pars["eta_eh"] = optinst->params.eta_eh;
         pars["Qehu"] = optinst->params.q_eh_max;
         pars["Qehl"] = optinst->params.q_eh_min;
         pars["Qhsu"] = optinst->params.e_rec_startup / ceil(optinst->params.dt_rec_startup / pars["delta"]) / pars["delta"];
@@ -284,9 +296,6 @@ static void calculate_parameters(etes_dispatch_opt *optinst, unordered_map<std::
         pars["Wdot0"] = 0.;
         if (pars["q0"] >= pars["Ql"])
             pars["Wdot0"] = (pars["etap"] * pars["q0"] + intercept) * optinst->params.eta_pb_expected.at(0) / optinst->params.eta_pb_des;
-
-        // ==================================================================
-        pars["eta_eh"] = 1.0;   //0.95; We could remove this completely
 };
 
 bool etes_dispatch_opt::optimize()
@@ -345,6 +354,11 @@ bool etes_dispatch_opt::optimize()
         O.add_var("uhsu", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0., P["Eeh"] * 1.0001);
         O.add_var("zhsu", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0., P["Qehu"]);
 
+#ifdef ALT_ETES_FORM
+        O.add_var("zcsu", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0., P["Qu"]);
+        O.add_var("zwcsu", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0., P["Wdotu"] * 1.1);
+#endif
+
         O.add_var("y", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_T, nt);
         O.add_var("ycgb", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_T, nt);
         O.add_var("ycge", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_T, nt);
@@ -379,6 +393,11 @@ bool etes_dispatch_opt::optimize()
                 i = 0;
                 row[t + nt * (i)] = P["delta"] * tadj * params.sell_price.at(t) * (1. - params.w_condf_expected.at(t));
                 col[t + nt * (i++)] = O.column("wdot", t);
+
+#ifdef ALT_ETES_FORM
+                row[t + nt * (i)] = -P["delta_csu"] * tadj * params.sell_price.at(t) * (1. - params.w_condf_expected.at(t));
+                col[t + nt * (i++)] = O.column("zwcsu", t);
+#endif
 
                 row[t + nt * (i)] = -(P["delta"] * (1 / tadj) * params.buy_price.at(t) * (1 / P["eta_eh"]));
                 col[t + nt * (i++)] = O.column("qeh", t);
@@ -480,19 +499,6 @@ bool etes_dispatch_opt::optimize()
                     add_constraintex(lp, i, row, col, LE, rhs);
                 }
 
-                // Heater power limit
-                // qeh[t] <= Qehu * yeh[t]
-                {
-                    i = 0;
-                    row[i] = 1.;
-                    col[i++] = O.column("qeh", t);
-
-                    row[i] = -P["Qehu"];
-                    col[i++] = O.column("yeh", t);
-
-                    add_constraintex(lp, i, row, col, LE, 0.);
-                }
-
                 // Heater minimum operation requirement
                 // qeh[t] >= Qehl * yeh[t]
                 {
@@ -504,6 +510,19 @@ bool etes_dispatch_opt::optimize()
                     col[i++] = O.column("yeh", t);
 
                     add_constraintex(lp, i, row, col, GE, 0.);
+                }
+
+                // Heater power limit
+                // qeh[t] <= Qehu * yeh[t]
+                {
+                    i = 0;
+                    row[i] = 1.;
+                    col[i++] = O.column("qeh", t);
+
+                    row[i] = -P["Qehu"];
+                    col[i++] = O.column("yeh", t);
+
+                    add_constraintex(lp, i, row, col, LE, 0.);
                 }
 
                 // Heater startup can't be enabled after a time step where the heaters was operating
@@ -551,7 +570,7 @@ bool etes_dispatch_opt::optimize()
                 int i = 0; // row and col index, reset for every constraint
 
                 // Startup Inventory balance
-                // ucsu[t] <= ucsu[t] + delta * Qcsu * ycsu[t]
+                // ucsu[t] <= ucsu[t-1] + delta * Qcsu * ycsu[t]
                 {
                     double rhs = 0.;
                     row[i] = 1.;
@@ -582,9 +601,9 @@ bool etes_dispatch_opt::optimize()
                     add_constraintex(lp, i, row, col, LE, 0.);
                 }
 
-                // Cycle operation allowed when startup is complete or already operating or in standby
-                // hourly:    y[t] <=  ucsu[t  ] / Ec + y[t-1] + ycsb[t-1]
-                // subhourly: y[t] <=  ucsu[t-1] / Ec + y[t-1] + ycsb[t-1]   (startup and production cannot coincide)
+                // Cycle operation allowed when startup is complete or already operating
+                // hourly:    y[t] <=  ucsu[t  ] / Ec + y[t-1]
+                // subhourly: y[t] <=  ucsu[t-1] / Ec + y[t-1]   (startup and production cannot coincide)
                 {
                     i = 0;
                     row[i] = P["Ec"];
@@ -620,6 +639,7 @@ bool etes_dispatch_opt::optimize()
                     However, in practice this constraint (in addition to providing adding startup power to heat target) provides the dispatch model a disincentive to
                     start-up on high value periods as fraction of production is lost due to startup time.  Therefore, it better to startup the hour before a high value period. */
                 // qdot[t] + Qcsu * ycsu[t] <= Qu * y[t]
+#ifndef ALT_ETES_FORM
                 {
                     i = 0;
                     row[i] = 1.;
@@ -633,6 +653,7 @@ bool etes_dispatch_opt::optimize()
 
                     add_constraintex(lp, i, row, col, LE, 0.);
                 }
+#endif
 
                 // Cycle maximum operation limit
                 // qdot[t] <= Qu * y[t]
@@ -774,6 +795,7 @@ bool etes_dispatch_opt::optimize()
             int col[4];
 
             // binary logic when switching power cycle state
+            // ycgb[t] - ycge[t] = y[t] - y[t-1]
             for (int t = 0; t < nt; t++)
             {
                 double rhs = 0.;
@@ -801,9 +823,10 @@ bool etes_dispatch_opt::optimize()
             }
 
             // minimum up-time constraint
+            // sum{tp in Tau : 0 <= deltaE[t] - deltaE[tp] <= Yu} ycgb[tp] <= y[t] forall t in Tau : deltaE[t] > (Yu-Yu0)*y0
             for (int t = 0; t < nt; t++)
             {
-                if (params.time_elapsed.at(t) > (P["Yu"] - P["Yu0"])* P["y0"])
+                if (params.time_elapsed.at(t) > (P["Yu"] - P["Yu0"]) * P["y0"])
                 {
                     REAL* row = new REAL[nt + 2];
                     int* col = new int[nt + 2];
@@ -829,6 +852,7 @@ bool etes_dispatch_opt::optimize()
             }
 
             // minimum down-time constraint
+            // sum{tp in Tau : 0 <= deltaE[t] - deltaE[tp] <= Yd} ycge[tp] <= 1 - y[t] forall t in Tau : deltaE[t] > (Yd-Yd0)*(1-y0)
             for (int t = 0; t < nt; t++)
             {
                 if (params.time_elapsed.at(t) > (P["Yd"] - P["Yd0"])* (1 - P["y0"]))
@@ -857,6 +881,7 @@ bool etes_dispatch_opt::optimize()
             }
 
             // cycle minimum up time initial enforcement
+            // y[t] = y0 forall t in Tau : deltaE[t] <= max{ (Yu - Yu0) * y0 , (Yd - Yd0) * (1 - y0) }
             for (int t = 0; t < nt; t++)
             {
                 if (params.time_elapsed.at(t) <= std::max((P["Yu"] - P["Yu0"]) * P["y0"], (P["Yd"] - P["Yd0"]) * (1 - P["y0"])))
@@ -876,8 +901,8 @@ bool etes_dispatch_opt::optimize()
 
         // ******************** TES Balance constraints *******************
         {
-            REAL row[7];
-            int col[7];
+            REAL row[8];
+            int col[8];
 
             for(int t=0; t<nt; t++)
             {
@@ -892,6 +917,11 @@ bool etes_dispatch_opt::optimize()
 
                     row[i] = -P["delta_hsu"];
                     col[i++] = O.column("zhsu", t);
+
+#ifdef ALT_ETES_FORM
+                    row[i] = P["delta_csu"];
+                    col[i++] = O.column("zcsu", t);
+#endif
 
                     row[i] = -P["delta"];
                     col[i++] = O.column("qdot", t);
@@ -985,6 +1015,104 @@ bool etes_dispatch_opt::optimize()
                         add_constraintex(lp, i, row, col, GE, -P["Qehu"]);
                     }
                 }
+
+#ifdef ALT_ETES_FORM
+                //******* linearization of zcsu[t] = qdot[t] * ycsu[t] ******
+                {
+                    // Upper bound with Qu
+                    // zcsu[t] <= Qu * ycsu[t]
+                    {
+                        i = 0;
+
+                        row[i] = 1.;
+                        col[i++] = O.column("zcsu", t);
+
+                        row[i] = -P["Qu"];
+                        col[i++] = O.column("ycsu", t);
+
+                        add_constraintex(lp, i, row, col, LE, 0);
+                    }
+
+                    // Upper bound with qdot[t]
+                    // zcsu[t] <= qdot[t]
+                    {
+                        i = 0;
+
+                        row[i] = 1.;
+                        col[i++] = O.column("zcsu", t);
+
+                        row[i] = -1;
+                        col[i++] = O.column("qdot", t);
+
+                        add_constraintex(lp, i, row, col, LE, 0);
+                    }
+
+                    // Lower bound
+                    // zcsu[t] >= qdot[t] - Qu * ( 1 - ycsu[t] )
+                    {
+                        i = 0;
+
+                        row[i] = 1.;
+                        col[i++] = O.column("zcsu", t);
+
+                        row[i] = -1;
+                        col[i++] = O.column("qdot", t);
+
+                        row[i] = -P["Qu"];
+                        col[i++] = O.column("ycsu", t);
+
+                        add_constraintex(lp, i, row, col, GE, -P["Qu"]);
+                    }
+                }
+
+                //******* linearization of zwcsu[t] = wdot[t] * ycsu[t] ******
+                {
+                    // Upper bound with Qu
+                    // zwcsu[t] <= (eta^amb / eta^des) Wdotu * ycsu[t]
+                    {
+                        i = 0;
+
+                        row[i] = 1.;
+                        col[i++] = O.column("zcsu", t);
+
+                        row[i] = -(params.eta_pb_expected.at(t) / params.eta_pb_des) * P["Wdotu"];
+                        col[i++] = O.column("ycsu", t);
+
+                        add_constraintex(lp, i, row, col, LE, 0);
+                    }
+
+                    // Upper bound with wdot[t]
+                    // zwcsu[t] <= wdot[t]
+                    {
+                        i = 0;
+
+                        row[i] = 1.;
+                        col[i++] = O.column("zwcsu", t);
+
+                        row[i] = -1;
+                        col[i++] = O.column("wdot", t);
+
+                        add_constraintex(lp, i, row, col, LE, 0);
+                    }
+
+                    // Lower bound
+                    // zwcsu[t] >= wdot[t] - (eta^amb / eta^des) Wdotu * ( 1 - ycsu[t] )
+                    {
+                        i = 0;
+
+                        row[i] = 1.;
+                        col[i++] = O.column("zwcsu", t);
+
+                        row[i] = -1;
+                        col[i++] = O.column("wdot", t);
+
+                        row[i] = -(params.eta_pb_expected.at(t) / params.eta_pb_des) * P["Wdotu"];
+                        col[i++] = O.column("ycsu", t);
+
+                        add_constraintex(lp, i, row, col, GE, -(params.eta_pb_expected.at(t) / params.eta_pb_des) * P["Wdotu"]);
+                    }
+                }
+#endif
             }
         }
         
@@ -1069,14 +1197,12 @@ void etes_dispatch_opt::set_outputs_from_lp_solution(lprec* lp, unordered_map<st
     outputs.clear();
     outputs.resize(nt);
 
-    int ncols = get_Ncolumns(lp);
-
-    REAL* vars = new REAL[ncols];
-    get_variables(lp, vars);
+    int ncols = get_Norig_columns(lp);
+    int nrows = get_Norig_rows(lp);
 
     for (int c = 1; c < ncols; c++)
     {
-        char* colname = get_col_name(lp, c);
+        char* colname = get_origcol_name(lp, c);
         if (!colname) continue;
 
         char root[15];
@@ -1084,58 +1210,46 @@ void etes_dispatch_opt::set_outputs_from_lp_solution(lprec* lp, unordered_map<st
         if (parse_column_name(colname, root, ind)) continue;  //a 2D variable
 
         int t = atoi(ind);
+        double val = get_var_primalresult(lp, nrows + c);
 
         if (strcmp(root, "ycsu") == 0)     //Cycle start up
         {
-            bool su = (fabs(1 - vars[c - 1]) < 0.001);
+            bool su = (std::abs(1 - val) < 0.001);
             outputs.pb_operation.at(t) = outputs.pb_operation.at(t) || su;
             outputs.q_pb_startup.at(t) = su ? params["Qcsu"] : 0.;
         }
         else if (strcmp(root, "y") == 0)     //Cycle operation
         {
-            outputs.pb_operation.at(t) = outputs.pb_operation.at(t) || (fabs(1. - vars[c - 1]) < 0.001);
+            outputs.pb_operation.at(t) = outputs.pb_operation.at(t) || (std::abs(1. - val) < 0.001);
         }
         else if (strcmp(root, "qdot") == 0)     //Cycle thermal energy consumption
         {
-            outputs.q_pb_target.at(t) = vars[c - 1];
+            outputs.q_pb_target.at(t) = val;
         }
         else if (strcmp(root, "yhsu") == 0)     //Receiver start up
         {
-            bool su = (fabs(1 - vars[c - 1]) < 0.001);
+            bool su = (std::abs(1 - val) < 0.001);
             outputs.rec_operation.at(t) = outputs.rec_operation.at(t) || su;
             outputs.q_rec_startup.at(t) = su ? params["Qhsu"] : 0.;
         }
         else if (strcmp(root, "yeh") == 0)
         {
-            outputs.rec_operation.at(t) = outputs.rec_operation.at(t) || (fabs(1 - vars[c - 1]) < 0.001);
+            outputs.rec_operation.at(t) = outputs.rec_operation.at(t) || (std::abs(1 - val) < 0.001);
         }
         else if (strcmp(root, "s") == 0)         //Thermal storage charge state
         {
-            outputs.tes_charge_expected.at(t) = vars[c - 1];
+            outputs.tes_charge_expected.at(t) = val;
         }
         else if (strcmp(root, "qeh") == 0)   //receiver production
         {
-            outputs.q_sf_expected.at(t) = vars[c - 1] * 1.0001;  // small increase to ensure heater starts when minimum power is applied
+            outputs.q_sf_expected.at(t) = val * 1.0001;  // small increase to ensure heater starts when minimum power is applied
         }
         else if (strcmp(root, "wdot") == 0) //electricity production
         {
-            outputs.w_pb_target.at(t) = vars[c - 1];
+            outputs.w_pb_target.at(t) = val;
         }
     }
-
-    delete[] vars;
 }
-
-
-void etes_dispatch_opt::print_log_to_file()
-{
-    std::stringstream outname;   
-    outname << "ETES_dispatch.log";
-    std::ofstream fout(outname.str().c_str());
-    fout << solver_params.log_message.c_str();
-    fout.close();
-}
-
 
 bool etes_dispatch_opt::set_dispatch_outputs()
 {
@@ -1149,7 +1263,10 @@ bool etes_dispatch_opt::set_dispatch_outputs()
         disp_outputs.is_pc_sb_allowed = outputs.pb_standby.at(m_current_read_step);
         disp_outputs.is_pc_su_allowed = outputs.pb_operation.at(m_current_read_step) || disp_outputs.is_pc_sb_allowed;
 
-        disp_outputs.q_pc_target = outputs.q_pb_target.at(m_current_read_step) + outputs.q_pb_startup.at(m_current_read_step);
+        disp_outputs.q_pc_target = outputs.q_pb_target.at(m_current_read_step);
+#ifndef ALT_ETES_FORM
+        disp_outputs.q_pc_target += outputs.q_pb_startup.at(m_current_read_step);
+#endif
         disp_outputs.q_dot_elec_to_CR_heat = outputs.q_sf_expected.at(m_current_read_step);
 
         if (disp_outputs.q_pc_target + 1.e-5 < params.q_pb_min)

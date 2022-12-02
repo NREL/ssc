@@ -1,23 +1,35 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+/*
+BSD 3-Clause License
+
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 
 #include <memory>
 
@@ -134,7 +146,7 @@ protected:
     double solazi, solzen, solalt, aoi, stilt, sazi, rot, btd;
     int sunup;
 
-    pvwatts_celltemp* tccalc;
+    std::unique_ptr<pvwatts_celltemp> tccalc;
 
     double poa, tpoa, pvt, dc, ac;
 
@@ -154,12 +166,7 @@ public:
         poa = tpoa = pvt = dc = ac = std::numeric_limits<double>::quiet_NaN();
     }
 
-    virtual ~cm_pvwattsv5_base()
-    {
-        if (tccalc) delete tccalc;
-    }
-
-    void setup_system_inputs()
+     void setup_system_inputs()
     {
         dc_nameplate = as_double("system_capacity") * 1000;
         dc_ac_ratio = as_double("dc_ac_ratio");
@@ -217,7 +224,8 @@ public:
 
     void initialize_cell_temp(double ts_hour, double last_tcell = -9999, double last_poa = -9999)
     {
-        tccalc = new pvwatts_celltemp(inoct + 273.15, PVWATTS_HEIGHT, ts_hour);
+//        tccalc = std::make_unique< pvwatts_celltemp>(inoct + 273.15, PVWATTS_HEIGHT, ts_hour); c++14
+        tccalc = std::unique_ptr< pvwatts_celltemp>(new pvwatts_celltemp(inoct + 273.15, PVWATTS_HEIGHT, ts_hour));
         if (last_tcell > -99 && last_poa >= 0)
             tccalc->set_last_values(last_tcell, last_poa);
     }
@@ -387,9 +395,7 @@ public:
 
         setup_system_inputs(); // setup all basic system specifications
 
-        adjustment_factors haf(this, "adjust");
-        if (!haf.setup())
-            throw exec_error("pvwattsv5", "failed to setup adjustment factors: " + haf.error());
+        
 
         // read all the shading input data and calculate the hourly factors for use subsequently
         shading_factor_calculator shad;
@@ -452,6 +458,11 @@ public:
         }
         size_t nrec = wdprov->nrecords();
         size_t nlifetime = nrec * nyears;
+
+        adjustment_factors haf(this, "adjust");
+        if (!haf.setup(nrec, nyears))
+            throw exec_error("pvwattsv5", "failed to setup adjustment factors: " + haf.error());
+
         size_t step_per_hour = nrec / 8760;
         if (step_per_hour < 1 || step_per_hour > 60 || step_per_hour * 8760 != nrec)
             throw exec_error("pvwattsv5", util::format("invalid number of data records (%d): must be an integer multiple of 8760", (int)nrec));
@@ -598,6 +609,7 @@ public:
         double kWhperkW = util::kilowatt_to_watt * annual_kwh / dc_nameplate;
         assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
         assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
+
     }
 };
 
@@ -710,7 +722,10 @@ public:
         assign("tcell", var_data((ssc_number_t)pvt));
         assign("dc", var_data((ssc_number_t)dc));
         assign("ac", var_data((ssc_number_t)ac));
+
+
     }
+
 };
 
 DEFINE_MODULE_ENTRY(pvwattsv5_1ts, "pvwattsv5_1ts- single timestep calculation of PV system performance.", 1)

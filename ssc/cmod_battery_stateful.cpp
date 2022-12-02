@@ -1,26 +1,38 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+
 #include <lib_battery_capacity.h>
+#include <lib_util.h>
 #include "common.h"
 #include "vartab.h"
 #include "core.h"
@@ -138,7 +150,7 @@ var_info vtab_battery_state[] = {
     { SSC_INOUT,        SSC_NUMBER,     "n_cycles",                  "Number of cycles",                                         "",          "",                     "StateCell",        "",                           "",                               ""  },
     { SSC_INOUT,        SSC_NUMBER,     "cycle_range",               "Range of last cycle",                                      "%",         "",                     "StateCell",        "",                           "",                               ""  },
     { SSC_INOUT,        SSC_NUMBER,     "cycle_DOD",                 "cycle_DOD of last cycle",                                  "%",         "",                     "StateCell",        "",                           "",                               ""  },
-    { SSC_INOUT,        SSC_MATRIX,     "cycle_counts",              "Counts of cycles by DOD categories in cycle matrix",                                  "",         "",                      "StateCell",        "",                           "",                               ""  },
+    { SSC_INOUT,        SSC_MATRIX,     "cycle_counts",              "Counts of cycles by DOD",                                  "[%, cycles]","If life_model=0, counts all cycles in simulation; else, cycles per day",                      "StateCell",        "",                           "",                               ""  },
     { SSC_INOUT,        SSC_NUMBER,     "average_range",             "Average cycle cycle_range",                                "%",         "",                     "StateCell",        "",                           "",                               ""  },
     { SSC_INOUT,        SSC_NUMBER,     "rainflow_Xlt",              "Rainflow cycle_range of second to last half cycle",        "%",         "",                     "StateCell",        "",                           "",                               ""  },
     { SSC_INOUT,        SSC_NUMBER,     "rainflow_Ylt",              "Rainflow cycle_range of last half cycle",                  "%",         "",                     "StateCell",        "",                           "",                               ""  },
@@ -150,9 +162,8 @@ var_info vtab_battery_state[] = {
 
     { SSC_INOUT,        SSC_NUMBER,     "DOD_max",                   "Max DOD of battery for current day",                      "%",         "Cycles for Life Model",   "StateCell",        "",                           "",                               ""  },
     { SSC_INOUT,        SSC_NUMBER,     "DOD_min",                   "Min DOD of battery for current day",                      "%",         "Cycles for Life Model",   "StateCell",        "",                           "",                               ""  },
-    { SSC_INOUT,        SSC_NUMBER,     "cum_dt",                    "Elapsed time for current day",                            "day",       "Cycles for Life Model",   "StateCell",        "",                           "",                               ""  },
     { SSC_INOUT,        SSC_ARRAY,      "cycle_DOD_max",             "Max DODs of cycles concluded in current day",             "%",         "Cycles for Life Model",   "StateCell",        "",                           "",                               ""  },
-    { SSC_INOUT,        SSC_ARRAY,      "cycle_DOD_range",           "DOD cycle_range of each cycle",                           "%",         "NMC Life Model",          "StateCell",        "",                           "",                               ""  },
+    { SSC_INOUT,        SSC_NUMBER,     "cum_dt",                    "Elapsed time for current day",                            "day",       "Cycles for Life Model",   "StateCell",        "",                           "",                               ""  },
 
     { SSC_INOUT,        SSC_NUMBER,     "q_relative_li",             "Relative capacity due to loss of lithium inventory",      "%",         "NMC Life Model",          "StateCell",        "",                           "",                               ""  },
     { SSC_INOUT,        SSC_NUMBER,     "q_relative_neg",            "Relative capacity due to loss of anode material",         "%",         "NMC Life Model",          "StateCell",        "",                           "",                               ""  },
@@ -165,6 +176,7 @@ var_info vtab_battery_state[] = {
     { SSC_INOUT,        SSC_NUMBER,     "b3_dt",                     "b3 coefficient cumulated for current day",                "1",         "NMC Life Model",          "StateCell",        "",                           "",                               ""  },
     { SSC_INOUT,        SSC_NUMBER,     "c0_dt",                     "c0 coefficient cumulated for current day",                "Ah",        "NMC Life Model",          "StateCell",        "",                           "",                               ""  },
     { SSC_INOUT,        SSC_NUMBER,     "c2_dt",                     "c2 coefficient cumulated for current day",                "1/cycle",   "NMC Life Model",          "StateCell",        "",                           "",                               ""  },
+    { SSC_INOUT,        SSC_NUMBER,     "temp_dt",                   "Temperature cumulated for current day",                   "K",         "NMC Life Model",          "StateCell",        "",                           "",                               ""  },
 
     { SSC_INOUT,        SSC_NUMBER,     "dq_relative_cal",           "Cumulative capacity change from calendar degradation",    "%",         "LMO/LTO Life Model",      "StateCell",        "",                           "",                               ""  },
     { SSC_INOUT,        SSC_NUMBER,     "dq_relative_cyc",           "Cumulative capacity change from cycling degradation",     "%",         "LMO/LTO Life Model",      "StateCell",        "",                           "",                               ""  },
@@ -242,10 +254,14 @@ void write_battery_state(const battery_state& state, var_table* vt) {
     vt->assign_match_case("rainflow_Xlt", lifetime->cycle->rainflow_Xlt);
     vt->assign_match_case("rainflow_Ylt", lifetime->cycle->rainflow_Ylt);
     vt->assign_match_case("rainflow_jlt", lifetime->cycle->rainflow_jlt);
+    if (!lifetime->cycle->cycle_counts.empty())
+        vt->assign_match_case("cycle_counts", util::vector_to_matrix(lifetime->cycle->cycle_counts));
+    else {
+        vt->unassign("cycle_counts");
+    }
     if (choice == lifetime_params::CALCYC) {
         vt->assign_match_case("q_relative_calendar", lifetime->calendar->q_relative_calendar);
         vt->assign_match_case("dq_relative_calendar_old", lifetime->calendar->dq_relative_calendar_old);
-        vt->assign_match_case("cycle_counts", lifetime->cycle->cycle_counts);
     }
     else {
         vt->assign_match_case("cum_dt", lifetime->cycle->cum_dt);
@@ -257,13 +273,8 @@ void write_battery_state(const battery_state& state, var_table* vt) {
         else {
             vt->unassign("cycle_DOD_max");
         }
-        if (!lifetime->cycle->cycle_DOD_range.empty()) {
-            vt->assign_match_case("cycle_DOD_range", lifetime->cycle->cycle_DOD_range);
-        }
-        else {
-            vt->unassign("cycle_DOD_range");
-        }
         if (choice == lifetime_params::NMC) {
+            vt->assign_match_case("temp_dt", lifetime->nmc_li_neg->temp_dt);
             vt->assign_match_case("q_relative_li", lifetime->nmc_li_neg->q_relative_li);
             vt->assign_match_case("q_relative_neg", lifetime->nmc_li_neg->q_relative_neg);
             vt->assign_match_case("dq_relative_li1", lifetime->nmc_li_neg->dq_relative_li1);
@@ -354,22 +365,19 @@ void read_battery_state(battery_state& state, var_table* vt) {
     else {
         lifetime->cycle->rainflow_peaks.clear();
     }
+    if (vt->is_assigned("cycle_counts")) {
+        util::matrix_t<double> cycle_counts;
+        vt_get_matrix(vt, "cycle_counts", cycle_counts);
+        lifetime->cycle->cycle_counts = util::matrix_to_vector(cycle_counts);
+    }
     if (choice == lifetime_params::CALCYC) {
         vt_get_number(vt, "q_relative_calendar", &lifetime->calendar->q_relative_calendar);
         vt_get_number(vt, "dq_relative_calendar_old", &lifetime->calendar->dq_relative_calendar_old);
-        vt_get_matrix(vt, "cycle_counts", lifetime->cycle->cycle_counts);
     }
     else {
         vt_get_number(vt, "cum_dt", &lifetime->cycle->cum_dt);
         vt_get_number(vt, "DOD_min", &lifetime->cycle->DOD_min);
         vt_get_number(vt, "DOD_max", &lifetime->cycle->DOD_max);
-        if (vt->is_assigned("cycle_DOD_range"))
-        {
-            vt_get_array_vec(vt, "cycle_DOD_range", lifetime->cycle->cycle_DOD_range);
-        }
-        else {
-            lifetime->cycle->cycle_DOD_range.clear();
-        }
         if (vt->is_assigned("cycle_DOD_max"))
         {
             vt_get_array_vec(vt, "cycle_DOD_max", lifetime->cycle->cycle_DOD_max);
@@ -377,6 +385,8 @@ void read_battery_state(battery_state& state, var_table* vt) {
         else {
             lifetime->cycle->cycle_DOD_max.clear();
         }
+        if (!vt->is_assigned("cycle_counts"))
+            lifetime->cycle->cycle_counts.clear();
         if (choice == lifetime_params::NMC) {
             vt_get_number(vt, "q_relative_li", &lifetime->nmc_li_neg->q_relative_li);
             vt_get_number(vt, "q_relative_neg", &lifetime->nmc_li_neg->q_relative_neg);
@@ -389,6 +399,7 @@ void read_battery_state(battery_state& state, var_table* vt) {
             vt_get_number(vt, "b3_dt", &lifetime->nmc_li_neg->b3_dt);
             vt_get_number(vt, "c0_dt", &lifetime->nmc_li_neg->c0_dt);
             vt_get_number(vt, "c2_dt", &lifetime->nmc_li_neg->c2_dt);
+            vt_get_number(vt, "temp_dt", &lifetime->nmc_li_neg->temp_dt);
         }
         else {
             vt_get_number(vt, "dq_relative_cal", &lifetime->lmo_lto->dq_relative_cal);
@@ -609,10 +620,21 @@ void cm_battery_stateful::exec() {
     // Update controls
     control_mode = static_cast<MODE>(as_integer("control_mode"));
     double control_dt_hr = as_float("dt_hr");
-    if (fabs(control_dt_hr - dt_hr) > 1e-7) {
+    if (std::abs(control_dt_hr - dt_hr) > 1e-7) {
         dt_hr = control_dt_hr;
         battery->ChangeTimestep(dt_hr);
     }
+
+    // Replacements
+    size_t lifetime_index = as_integer("last_idx");
+    size_t steps_per_hour = (size_t)(1 / control_dt_hr);
+    size_t steps_per_year = (size_t)(8760 * steps_per_hour);
+    size_t year = (size_t)(lifetime_index / steps_per_year);
+    size_t year_one_index = lifetime_index - (year * steps_per_year);
+    size_t hour = (size_t)(year_one_index / steps_per_hour);
+    size_t step_of_hour = year_one_index - (hour * steps_per_hour);
+
+    battery->runReplacement(year, hour, step_of_hour);
 
     // Simulate
     if (static_cast<MODE>(as_integer("control_mode")) == MODE::CURRENT) {

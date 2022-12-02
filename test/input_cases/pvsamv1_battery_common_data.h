@@ -1,24 +1,35 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 
 #ifndef _PVSAMV1_BATTERY_COMMON_DATA_H_
 #define _PVSAMV1_BATTERY_COMMON_DATA_H_
@@ -100,25 +111,33 @@ void pvsamv1_pv_defaults(ssc_data_t& data) {
 	ssc_data_set_array(data, "subarray1_monthly_tilt", p_subarray1_monthly_tilt, 12);
 	ssc_number_t p_subarray1_soiling[12] = { 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 };
 	ssc_data_set_array(data, "subarray1_soiling", p_subarray1_soiling, 12);
-	ssc_data_set_number(data, "subarray1_rear_irradiance_loss", 0);
+    ssc_data_set_number(data, "subarray1_rear_soiling_loss", 0);
+    ssc_data_set_number(data, "subarray1_rack_shading", 0);
+    ssc_data_set_number(data, "subarray1_electrical_mismatch", 0);
 	ssc_data_set_number(data, "subarray1_mismatch_loss", 2);
 	ssc_data_set_number(data, "subarray1_diodeconn_loss", 0.5);
 	ssc_data_set_number(data, "subarray1_dcwiring_loss", 2);
 	ssc_data_set_number(data, "subarray1_tracking_loss", 0);
 	ssc_data_set_number(data, "subarray1_nameplate_loss", 0);
-	ssc_data_set_number(data, "subarray2_rear_irradiance_loss", 0);
+    ssc_data_set_number(data, "subarray2_rear_soiling_loss", 0);
+    ssc_data_set_number(data, "subarray2_rack_shading", 0);
+    ssc_data_set_number(data, "subarray2_electrical_mismatch", 0);
 	ssc_data_set_number(data, "subarray2_mismatch_loss", 2);
 	ssc_data_set_number(data, "subarray2_diodeconn_loss", 0.5);
 	ssc_data_set_number(data, "subarray2_dcwiring_loss", 2);
 	ssc_data_set_number(data, "subarray2_tracking_loss", 0);
 	ssc_data_set_number(data, "subarray2_nameplate_loss", 0);
-	ssc_data_set_number(data, "subarray3_rear_irradiance_loss", 0);
+    ssc_data_set_number(data, "subarray3_rear_soiling_loss", 0);
+    ssc_data_set_number(data, "subarray3_rack_shading", 0);
+    ssc_data_set_number(data, "subarray3_electrical_mismatch", 0);
 	ssc_data_set_number(data, "subarray3_mismatch_loss", 2);
 	ssc_data_set_number(data, "subarray3_diodeconn_loss", 0.5);
 	ssc_data_set_number(data, "subarray3_dcwiring_loss", 2);
 	ssc_data_set_number(data, "subarray3_tracking_loss", 0);
 	ssc_data_set_number(data, "subarray3_nameplate_loss", 0);
-	ssc_data_set_number(data, "subarray4_rear_irradiance_loss", 0);
+    ssc_data_set_number(data, "subarray4_rear_soiling_loss", 0);
+    ssc_data_set_number(data, "subarray4_rack_shading", 0);
+    ssc_data_set_number(data, "subarray4_electrical_mismatch", 0);
 	ssc_data_set_number(data, "subarray4_mismatch_loss", 2);
 	ssc_data_set_number(data, "subarray4_diodeconn_loss", 0.5);
 	ssc_data_set_number(data, "subarray4_dcwiring_loss", 2);
@@ -495,6 +514,8 @@ void pvsamv1_battery_defaults(ssc_data_t& data) {
 	ssc_data_set_number(data, "batt_cycle_cost_choice", 0);
     ssc_number_t p_batt_cycle_cost[1] = { 0.1 };
     ssc_data_set_array(data, "batt_cycle_cost", p_batt_cycle_cost, 1);
+    ssc_number_t p_om_batt_variable_cost[1] = { 0.0 };
+    ssc_data_set_array(data, "om_batt_variable_cost", p_om_batt_variable_cost, 1);
 	ssc_data_set_number(data, "en_electricity_rates", 0);
 	ssc_data_set_number(data, "ur_en_ts_sell_rate", 0);
 	ssc_number_t p_ur_ts_buy_rate[1] = { 0 };
@@ -588,18 +609,21 @@ void singleowner_defaults(ssc_data_t& data) {
 	ssc_data_set_number(data, "equip3_reserve_freq", 3);
 	ssc_data_set_number(data, "equip_reserve_depr_sta", 0);
 	ssc_data_set_number(data, "equip_reserve_depr_fed", 0);
-	ssc_data_set_number(data, "itc_fed_amount", 0);
+    ssc_number_t itc_amount[1] = { 0 };
+    ssc_number_t itc_fed_percent[1] = { 26 };
+    ssc_number_t itc_amount_max[1] = { 1e+38 };
+    ssc_data_set_array(data, "itc_fed_amount", itc_amount, 1);
+    ssc_data_set_array(data, "itc_sta_amount", itc_amount, 1);
+    ssc_data_set_array(data, "itc_fed_percent", itc_fed_percent, 1);
+    ssc_data_set_array(data, "itc_sta_percent", itc_amount, 1);
+    ssc_data_set_array(data, "itc_fed_percent_maxvalue", itc_amount_max, 1);
+    ssc_data_set_array(data, "itc_sta_percent_maxvalue", itc_amount_max, 1);
 	ssc_data_set_number(data, "itc_fed_amount_deprbas_fed", 1);
 	ssc_data_set_number(data, "itc_fed_amount_deprbas_sta", 1);
-	ssc_data_set_number(data, "itc_sta_amount", 0);
 	ssc_data_set_number(data, "itc_sta_amount_deprbas_fed", 0);
 	ssc_data_set_number(data, "itc_sta_amount_deprbas_sta", 0);
-	ssc_data_set_number(data, "itc_fed_percent", 26);
-	ssc_data_set_number(data, "itc_fed_percent_maxvalue", 9.9999999999999998e+37);
 	ssc_data_set_number(data, "itc_fed_percent_deprbas_fed", 1);
 	ssc_data_set_number(data, "itc_fed_percent_deprbas_sta", 1);
-	ssc_data_set_number(data, "itc_sta_percent", 0);
-	ssc_data_set_number(data, "itc_sta_percent_maxvalue", 9.9999999999999998e+37);
 	ssc_data_set_number(data, "itc_sta_percent_deprbas_fed", 0);
 	ssc_data_set_number(data, "itc_sta_percent_deprbas_sta", 0);
 	ssc_number_t p_ptc_fed_amount[1] = { 0 };
@@ -838,25 +862,33 @@ void commercial_multiarray_default(ssc_data_t& data) {
 	ssc_data_set_array(data, "subarray1_monthly_tilt", p_subarray1_monthly_tilt, 12);
 	ssc_number_t p_subarray1_soiling[12] = { 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 };
 	ssc_data_set_array(data, "subarray1_soiling", p_subarray1_soiling, 12);
-	ssc_data_set_number(data, "subarray1_rear_irradiance_loss", 0);
+    ssc_data_set_number(data, "subarray1_rear_soiling_loss", 0);
+    ssc_data_set_number(data, "subarray1_rack_shading", 0);
+    ssc_data_set_number(data, "subarray1_electrical_mismatch", 0);
 	ssc_data_set_number(data, "subarray1_mismatch_loss", 2);
 	ssc_data_set_number(data, "subarray1_diodeconn_loss", 0.5);
 	ssc_data_set_number(data, "subarray1_dcwiring_loss", 2);
 	ssc_data_set_number(data, "subarray1_tracking_loss", 0);
 	ssc_data_set_number(data, "subarray1_nameplate_loss", 0);
-	ssc_data_set_number(data, "subarray2_rear_irradiance_loss", 0);
+    ssc_data_set_number(data, "subarray2_rear_soiling_loss", 0);
+    ssc_data_set_number(data, "subarray2_rack_shading", 0);
+    ssc_data_set_number(data, "subarray2_electrical_mismatch", 0);
 	ssc_data_set_number(data, "subarray2_mismatch_loss", 2);
 	ssc_data_set_number(data, "subarray2_diodeconn_loss", 0.5);
 	ssc_data_set_number(data, "subarray2_dcwiring_loss", 2);
 	ssc_data_set_number(data, "subarray2_tracking_loss", 0);
 	ssc_data_set_number(data, "subarray2_nameplate_loss", 0);
-	ssc_data_set_number(data, "subarray3_rear_irradiance_loss", 0);
+    ssc_data_set_number(data, "subarray3_rear_soiling_loss", 0);
+    ssc_data_set_number(data, "subarray3_rack_shading", 0);
+    ssc_data_set_number(data, "subarray3_electrical_mismatch", 0);
 	ssc_data_set_number(data, "subarray3_mismatch_loss", 2);
 	ssc_data_set_number(data, "subarray3_diodeconn_loss", 0.5);
 	ssc_data_set_number(data, "subarray3_dcwiring_loss", 2);
 	ssc_data_set_number(data, "subarray3_tracking_loss", 0);
 	ssc_data_set_number(data, "subarray3_nameplate_loss", 0);
-	ssc_data_set_number(data, "subarray4_rear_irradiance_loss", 0);
+    ssc_data_set_number(data, "subarray4_rear_soiling_loss", 0);
+    ssc_data_set_number(data, "subarray4_rack_shading", 0);
+    ssc_data_set_number(data, "subarray4_electrical_mismatch", 0);
 	ssc_data_set_number(data, "subarray4_mismatch_loss", 2);
 	ssc_data_set_number(data, "subarray4_diodeconn_loss", 0.5);
 	ssc_data_set_number(data, "subarray4_dcwiring_loss", 2);

@@ -16,6 +16,7 @@ set(TCS_SRC
 		csp_solver_cavity_receiver.cpp
 		csp_solver_core.cpp
 		csp_solver_cr_electric_resistance.cpp
+		csp_solver_cr_heat_pump.cpp
 		csp_solver_gen_collector_receiver.cpp
 		csp_solver_lf_dsg_collector_receiver.cpp
 		csp_solver_mono_eq_methods.cpp
@@ -24,10 +25,9 @@ set(TCS_SRC
 		csp_solver_mspt_receiver_222.cpp
 		csp_solver_pc_gen.cpp
 		csp_solver_pc_heat_sink.cpp
+		csp_solver_pc_ptes.cpp
 		csp_solver_pc_Rankine_indirect_224.cpp
-		csp_solver_pc_sco2.cpp
 		csp_solver_pc_steam_heat_sink.cpp
-		csp_solver_pt_heliostatfield.cpp
 		csp_solver_pt_receiver.cpp
 		csp_solver_pt_sf_perf_interp.cpp
 		csp_solver_stratified_tes.cpp
@@ -47,7 +47,6 @@ set(TCS_SRC
 		interconnect.cpp
 		nlopt_callbacks.cpp
 		numeric_solvers.cpp
-		sam_mw_pt_heliostatfield_csp_solver.cpp
 		sam_type250_input_generator.cpp
 		sco2_cycle_components.cpp
 		sco2_partialcooling_cycle.cpp
@@ -70,19 +69,15 @@ set(TCS_SRC
 		htf_props.cpp
 		interpolation_routines.cpp
 		ngcc_powerblock.cpp
-		powerblock.cpp
 		pump.cpp
 		sam_csp_util.cpp
 		sam_dsg_controller_type265.cpp
-		sam_iscc_parasitics.cpp
-		sam_iscc_powerblock.cpp
 		sam_lf_st_pt_type232.cpp
 		sam_mw_csp_SumCalcs.cpp
 		sam_mw_gen_Type260_csp_solver.cpp
 		sam_mw_lf_type261_steam.cpp
 		sam_mw_lf_type261_Wnet.cpp
 		sam_mw_lf_type262_salt.cpp
-		sam_mw_pt_type222_csp_solver.cpp
 		sam_mw_pt_type224_csp_solver.cpp
 		sam_mw_pt_type228.cpp
 		sam_mw_trough_type250.cpp
@@ -113,6 +108,7 @@ set(TCS_SRC
 		csp_solver_cavity_receiver.h
 		csp_solver_core.h
 		csp_solver_cr_electric_resistance.h
+		csp_solver_cr_heat_pump.h
 		csp_solver_gen_collector_receiver.h
 		csp_solver_lf_dsg_collector_receiver.h
 		csp_solver_mspt_collector_receiver.h
@@ -120,10 +116,9 @@ set(TCS_SRC
 		csp_solver_mspt_receiver_222.h
 		csp_solver_pc_gen.h
 		csp_solver_pc_heat_sink.h
+		csp_solver_pc_ptes.h
 		csp_solver_pc_Rankine_indirect_224.h
-		csp_solver_pc_sco2.h
 		csp_solver_pc_steam_heat_sink.h
-		csp_solver_pt_heliostatfield.h
 		csp_solver_pt_receiver.h
 		csp_solver_pt_sf_perf_interp.h
 		csp_solver_stratified_tes.h
@@ -145,7 +140,6 @@ set(TCS_SRC
 		ngcc_powerblock.h
 		nlopt_callbacks.h
 		numeric_solvers.h
-		powerblock.h
 		sam_csp_util.h
 		sco2_cycle_components.h
 		sco2_cycle_templates.h
@@ -191,6 +185,10 @@ endif ()
 # Link Libraries and Options
 #
 #####################################################################################################################
+
+set( DEPENDENCIES
+	splinter
+	)
 
 if (MSVC)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:WINDOWS")

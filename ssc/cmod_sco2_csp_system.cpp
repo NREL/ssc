@@ -1,23 +1,33 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "core.h"
@@ -718,7 +728,7 @@ public:
         }
 		
 		int n_od_runs = (int)od_cases.nrows();
-		allocate_ssc_outputs(n_od_runs, n_mc_stages, n_rc_stages, n_pc_stages, is_od_generate_udpc_assigned);
+		allocate_ssc_outputs(n_od_runs, n_mc_stages, n_rc_stages, n_pc_stages, true);
 		C_sco2_phx_air_cooler::S_od_par s_sco2_od_par;
 
 		// For try/catch below
@@ -755,7 +765,7 @@ public:
                     if (od_cases(n_run, 3) < 0.0)
                     {
                         is_rc_N_od_at_design = false;
-                        rc_N_od_f_des = fabs(od_cases(n_run, 3));
+                        rc_N_od_f_des = std::abs(od_cases(n_run, 3));
                     }
                     else if (od_cases(n_run, 3) == 0.0)
                     {
@@ -768,7 +778,7 @@ public:
                     if (od_cases(n_run, 4) < 0.0)
                     {
                         is_mc_N_od_at_design = false;
-                        mc_N_od_f_des = fabs(od_cases(n_run, 4));
+                        mc_N_od_f_des = std::abs(od_cases(n_run, 4));
                     }
                     else if (od_cases(n_run, 4) == 0.0)
                     {
@@ -780,7 +790,7 @@ public:
                     double pc_N_od_f_des = 1.0;
                     if (od_cases(n_run, 5) < 0.0) {
                         is_pc_N_od_at_design = false;
-                        pc_N_od_f_des = fabs(od_cases(n_run, 5));
+                        pc_N_od_f_des = std::abs(od_cases(n_run, 5));
                     }
                     else if(od_cases(n_run, 5) == 0.0){
                         is_optimize_pc_N = true;
@@ -791,7 +801,7 @@ public:
                     if (od_cases(n_run, 6) < 0.0)
                     {
                         is_PHX_dP_input = true;
-                        PHX_f_dP_od = fabs(od_cases(n_run, 6));
+                        PHX_f_dP_od = std::abs(od_cases(n_run, 6));
                     }
 
                     double eta_max, f_N_mc_opt, f_N_rc_opt, W_dot_at_eta_max;
@@ -867,7 +877,7 @@ public:
                     if (od_cases(n_run, 5) < 0.0)
                     {
                         is_rc_N_od_at_design = false;
-                        rc_N_od_f_des = fabs(od_cases(n_run, 5));
+                        rc_N_od_f_des = std::abs(od_cases(n_run, 5));
                     }
                         // MC shaft speed control
                     bool is_mc_N_od_at_design = true;
@@ -875,7 +885,7 @@ public:
                     if (od_cases(n_run, 6) < 0.0)
                     {
                         is_mc_N_od_at_design = false;
-                        mc_N_od_f_des = fabs(od_cases(n_run, 6));
+                        mc_N_od_f_des = std::abs(od_cases(n_run, 6));
                     }
                         // PC shaft speed control
                     bool is_pc_N_od_at_design = true;
@@ -883,7 +893,7 @@ public:
                     double pc_N_od_f_des = 1.0;
                     if (od_cases(n_run, 7) < 0.0) {
                         is_pc_N_od_at_design = false;
-                        pc_N_od_f_des = fabs(od_cases(n_run, 7));
+                        pc_N_od_f_des = std::abs(od_cases(n_run, 7));
                     }
                         // PHX pressure drop options
                     bool is_PHX_dP_input = false;
@@ -891,7 +901,7 @@ public:
                     if (od_cases(n_run, 8) < 0.0)
                     {
                         is_PHX_dP_input = true;
-                        PHX_f_dP_od = fabs(od_cases(n_run, 8));
+                        PHX_f_dP_od = std::abs(od_cases(n_run, 8));
                     }
 
                     std::string od_sim_log = util::format("Beginning off design run %d of %d, the "
@@ -926,7 +936,7 @@ public:
 					if (od_cases(n_run, 3) < 0.0)
 					{
 						is_rc_N_od_at_design = false;
-						rc_N_od_f_des = fabs(od_cases(n_run, 3));
+						rc_N_od_f_des = std::fabs(od_cases(n_run, 3));
 					}
 					// MC shaft speed control
 					bool is_mc_N_od_at_design = true;
@@ -934,14 +944,14 @@ public:
 					if (od_cases(n_run, 4) < 0.0)
 					{
 						is_mc_N_od_at_design = false;
-						mc_N_od_f_des = fabs(od_cases(n_run, 4));
+						mc_N_od_f_des = std::fabs(od_cases(n_run, 4));
 					}
                     // PC shaft speed control
                     bool is_pc_N_od_at_design = true;
                     double pc_N_od_f_des = 1.0;
                     if (od_cases(n_run, 5) < 0.0) {
                         is_pc_N_od_at_design = false;
-                        pc_N_od_f_des = fabs(od_cases(n_run, 5));
+                        pc_N_od_f_des = std::fabs(od_cases(n_run, 5));
                     }
 					// PHX pressure drop options
 					bool is_PHX_dP_input = false;
@@ -949,7 +959,7 @@ public:
 					if (od_cases(n_run, 6) < 0.0)
 					{
 						is_PHX_dP_input = true;
-						PHX_f_dP_od = fabs(od_cases(n_run, 6));
+						PHX_f_dP_od = std::abs(od_cases(n_run, 6));
 					}
 
 					std::string od_sim_log = util::format("Beginning off design run %d of %d, the "
@@ -981,7 +991,7 @@ public:
                     if (od_cases(n_run, 3) < 0.0)
                     {
                         is_rc_N_od_at_design = false;
-                        rc_N_od_f_des = fabs(od_cases(n_run, 3));
+                        rc_N_od_f_des = std::abs(od_cases(n_run, 3));
                     }
                     // MC shaft speed control
                     bool is_mc_N_od_at_design = true;
@@ -989,7 +999,7 @@ public:
                     if (od_cases(n_run, 4) < 0.0)
                     {
                         is_mc_N_od_at_design = false;
-                        mc_N_od_f_des = fabs(od_cases(n_run, 4));
+                        mc_N_od_f_des = std::abs(od_cases(n_run, 4));
                     }
                     // PHX pressure drop options
                     bool is_PHX_dP_input = false;
@@ -997,7 +1007,7 @@ public:
                     if (od_cases(n_run, 5) < 0.0)
                     {
                         is_PHX_dP_input = true;
-                        PHX_f_dP_od = fabs(od_cases(n_run, 5));
+                        PHX_f_dP_od = std::abs(od_cases(n_run, 5));
                     }
 
                     std::string od_sim_log = util::format("Beginning 'od_max_htf_m_dot' run %d of %d, the "
@@ -1023,7 +1033,7 @@ public:
 					double P_LP_comp_in = od_cases(n_run, 3);
 					if (od_cases(n_run, 3) < 0.0)
 					{
-						P_LP_comp_in = P_LP_comp_in_des / fabs(P_LP_comp_in);
+						P_LP_comp_in = P_LP_comp_in_des / std::abs(P_LP_comp_in);
 					}
                     double T_mc_in_local = od_cases(n_run, 4) + 273.15; //[K] convert from C
                     double T_pc_in_local = od_cases(n_run, 5) + 273.15; //[K] convert from C
@@ -1033,7 +1043,7 @@ public:
                     if (od_cases(n_run, 6) < 0.0)
                     {
                         is_rc_N_od_at_design = false;
-                        rc_N_od_f_des = fabs(od_cases(n_run, 6));
+                        rc_N_od_f_des = std::abs(od_cases(n_run, 6));
                     }
                         // MC shaft speed control
                     bool is_mc_N_od_at_design = true;
@@ -1041,7 +1051,7 @@ public:
                     if (od_cases(n_run, 7) < 0.0)
                     {
                         is_mc_N_od_at_design = false;
-                        mc_N_od_f_des = fabs(od_cases(n_run, 7));
+                        mc_N_od_f_des = std::abs(od_cases(n_run, 7));
                     }
                         // PC shaft speed control
                     bool is_pc_N_od_at_design = true;
@@ -1049,7 +1059,7 @@ public:
                     double pc_N_od_f_des = 1.0;
                     if (od_cases(n_run, 8) < 0.0) {
                         is_pc_N_od_at_design = false;
-                        pc_N_od_f_des = fabs(od_cases(n_run, 8));
+                        pc_N_od_f_des = std::abs(od_cases(n_run, 8));
                     }
                         // PHX pressure drop options
                     bool is_PHX_dP_input = false;
@@ -1057,7 +1067,7 @@ public:
                     if (od_cases(n_run, 9) < 0.0)
                     {
                         is_PHX_dP_input = true;
-                        PHX_f_dP_od = fabs(od_cases(n_run, 9));
+                        PHX_f_dP_od = std::abs(od_cases(n_run, 9));
                     }
 
 					off_design_code = c_sco2_cycle.off_design_fix_P_mc_in(s_sco2_od_par,
@@ -1297,8 +1307,11 @@ public:
 
                 // Columns(11) : 0) HTF Temp[C], 1) HTF ND mass flow[-], 2) Ambient Temp[C], 3) ND Power, 4) ND Heat, 5) ND Fan Power, 6) ND Water
                 //               ...... 7) ND PHX deltaT, 8) ND P_co2_PHX_in, 9) ND m_dot_co2_PHX, 10) ND P_co2_turb_in
-                if (is_od_generate_udpc_assigned)
-                {
+                // 5/12/2022 generate udpc table for all off-design simulations
+                //               the order won't necessarily match what the UDPC model wants,
+                //               but at least normalized values are available to post-process
+                //if (is_od_generate_udpc_assigned)
+                //{
                     pm_udpc_table[n_run * 11 + 0] = (ssc_number_t)p_T_htf_hot_od[n_run];      //[C]
                     pm_udpc_table[n_run * 11 + 1] = (ssc_number_t)p_m_dot_htf_fracs[n_run];   //[-]
                     pm_udpc_table[n_run * 11 + 2] = (ssc_number_t)p_T_amb_od[n_run];          //[C]
@@ -1317,7 +1330,7 @@ public:
                     pm_udpc_table[n_run * 11 + 8] = (ssc_number_t)((p_P_co2_PHX_in_od[n_run]) / (c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::HTR_HP_OUT] * 1.E-3));
                     pm_udpc_table[n_run * 11 + 9] = (ssc_number_t)((p_t_m_dot_od[n_run]) / c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_m_dot_t);
                     pm_udpc_table[n_run * 11 + 10] = (ssc_number_t)((p_t_P_in_od[n_run]) / (c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::TURB_IN] * 1.E-3));
-                }
+                //}
                 // Energy Balance Checks
                 double diff_m_dot, diff_E_cycle, diff_Q_LTR, diff_Q_HTR;
                 diff_m_dot = diff_E_cycle = diff_Q_LTR = diff_Q_HTR = std::numeric_limits<double>::quiet_NaN();

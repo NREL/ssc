@@ -4,7 +4,7 @@
 #
 #####################################################################################################################
 
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.24)
 
 if(POLICY CMP0077)
     cmake_policy(SET CMP0077 NEW)
@@ -22,7 +22,7 @@ option(SAMAPI_EXPORT "Export of ssc binaries to the SAM_api directory; for Unix,
 #
 
 if(APPLE)
-    set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version")
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15" CACHE STRING "Minimum OS X deployment version")
 endif()
 
 if (UNIX AND NOT CMAKE_C_COMPILER)
@@ -91,7 +91,7 @@ function(set_default_compile_options target)
     else(MSVC)
         SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
         if (APPLE)
-            set(MAIN_CFLAGS "${MAIN_CFLAGS} -arch x86_64 -fno-common -DWX_PRECOMP -D__MACOSX__")
+            set(MAIN_CFLAGS "${MAIN_CFLAGS} -fno-common -DWX_PRECOMP -D__MACOSX__")
         else()
             set(MAIN_CFLAGS "${MAIN_CFLAGS} -D__UNIX__")
         endif()
@@ -102,7 +102,7 @@ function(set_default_compile_options target)
         endif()
     endif()
     if (SAMAPI_EXPORT AND APPLE)
-        SET(MAIN_CFLAGS "${MAIN_CFLAGS} -mmacosx-version-min=10.9" )
+        SET(MAIN_CFLAGS "${MAIN_CFLAGS} -mmacosx-version-min=10.15" )
     endif()
     set_target_properties(${target} PROPERTIES COMPILE_FLAGS ${MAIN_CFLAGS})
 endfunction()
@@ -151,7 +151,6 @@ add_subdirectory(ssc)
 
 if (NOT SAM_SKIP_TOOLS)
 	add_subdirectory(sdktool)
-	add_subdirectory(tcsconsole)
 endif()
 
 if (NOT SAM_SKIP_TESTS)

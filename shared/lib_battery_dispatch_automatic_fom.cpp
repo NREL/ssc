@@ -1,24 +1,35 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 
 #include "lib_battery_dispatch_automatic_fom.h"
 #include "lib_battery_powerflow.h"
@@ -53,14 +64,15 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
     std::vector<double> battReplacementCostPerkWh,
 	int battCycleCostChoice,
     std::vector<double> battCycleCost,
-	std::vector<double> forecast_price_series_dollar_per_kwh,
+    std::vector<double> battOMCost,
+    std::vector<double> forecast_price_series_dollar_per_kwh,
 	UtilityRate * utilityRate,
 	double etaPVCharge,
 	double etaGridCharge,
 	double etaDischarge,
     double interconnection_limit) : dispatch_automatic_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max_kwdc, Pd_max_kwdc, Pc_max_kwac, Pd_max_kwac,
 		t_min, dispatch_mode, weather_forecast_mode, pv_dispatch, nyears, look_ahead_hours, dispatch_update_frequency_hours, can_charge, can_clip_charge, can_grid_charge, can_fuelcell_charge,
-        battReplacementCostPerkWh, battCycleCostChoice, battCycleCost, interconnection_limit)
+        battReplacementCostPerkWh, battCycleCostChoice, battCycleCost, battOMCost, interconnection_limit)
 {
 	// if look behind, only allow 24 hours
 	if (_weather_forecast_mode == dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_BEHIND)
@@ -81,7 +93,10 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 
 	revenueToClipCharge = revenueToDischarge = revenueToGridCharge = revenueToPVCharge = 0;
 
+    discharge_hours = (size_t) std::ceil(_Battery->energy_max(m_batteryPower->stateOfChargeMax, m_batteryPower->stateOfChargeMin) / m_batteryPower->powerBatteryDischargeMaxDC) - 1;
+
     costToCycle();
+    omCost();
 	setup_cost_forecast_vector();
 }
 dispatch_automatic_front_of_meter_t::~dispatch_automatic_front_of_meter_t(){ /* NOTHING TO DO */}
@@ -90,7 +105,9 @@ void dispatch_automatic_front_of_meter_t::init_with_pointer(const dispatch_autom
 	_forecast_hours = tmp->_forecast_hours;
 	_inverter_paco = tmp->_inverter_paco;
 	_forecast_price_rt_series = tmp->_forecast_price_rt_series;
+    ppa_prices = tmp->ppa_prices;
 
+    discharge_hours = tmp->discharge_hours;
 	m_etaPVCharge = tmp->m_etaPVCharge;
 	m_etaGridCharge = tmp->m_etaGridCharge;
 	m_etaDischarge = tmp->m_etaDischarge;
@@ -115,6 +132,12 @@ void dispatch_automatic_front_of_meter_t::setup_cost_forecast_vector()
 		ppa_price_series.push_back(_forecast_price_rt_series[i]);
 	}
 	_forecast_price_rt_series = ppa_price_series;
+
+    ppa_prices.reserve(_forecast_hours * _steps_per_hour);
+    if (discharge_hours >= _forecast_hours * _steps_per_hour) {
+        // -1 for 0 indexed arrays, additional -1 to ensure there is always a charging price lower than the discharing price if the forecast hours is = to battery capacity in hourrs
+        discharge_hours = _forecast_hours * _steps_per_hour - 2; 
+    }
 }
 
 // deep copy from dispatch to this
@@ -162,12 +185,19 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t year, size_t ho
         /*! Cost to cycle the battery at all, using maximum DOD or user input */
         costToCycle();
 
-        // Compute forecast variables which don't change from year to year
-        size_t idx_year1 = hour_of_year * _steps_per_hour;
+        omCost();
+
+        // Compute forecast variables
         size_t idx_lookahead = _forecast_hours * _steps_per_hour;
-        auto max_ppa_cost = std::max_element(_forecast_price_rt_series.begin() + idx_year1, _forecast_price_rt_series.begin() + idx_year1 + idx_lookahead);
-        auto min_ppa_cost = std::min_element(_forecast_price_rt_series.begin() + idx_year1, _forecast_price_rt_series.begin() + idx_year1 + idx_lookahead);
-        double ppa_cost = _forecast_price_rt_series[idx_year1];
+
+        ppa_prices.clear();
+        std::copy(_forecast_price_rt_series.begin() + lifetimeIndex, _forecast_price_rt_series.begin() + lifetimeIndex + idx_lookahead, std::back_inserter(ppa_prices));
+        std::sort(ppa_prices.begin(), ppa_prices.end());
+        auto max_ppa_cost = std::max_element(_forecast_price_rt_series.begin() + lifetimeIndex, _forecast_price_rt_series.begin() + lifetimeIndex + idx_lookahead);
+        auto min_ppa_cost = std::min_element(_forecast_price_rt_series.begin() + lifetimeIndex, _forecast_price_rt_series.begin() + lifetimeIndex + idx_lookahead);
+        auto charge_ppa_cost = ppa_prices[discharge_hours];
+        auto discharge_ppa_cost = ppa_prices[ppa_prices.size() - discharge_hours - 1]; 
+        double ppa_cost = _forecast_price_rt_series[lifetimeIndex];
 
         /*! Cost to purchase electricity from the utility */
         double usage_cost = ppa_cost;
@@ -189,19 +219,19 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t year, size_t ho
         }
 
         /*! Economic benefit of charging from the grid in current time step to discharge sometime in next X hours ($/kWh)*/
-        revenueToGridCharge = *max_ppa_cost * m_etaDischarge - usage_cost / m_etaGridCharge - m_cycleCost;
+        revenueToGridCharge = *max_ppa_cost * m_etaDischarge - usage_cost / m_etaGridCharge - m_cycleCost - m_omCost;
 
         /*! Computed revenue to charge from Grid in each of next X hours ($/kWh)*/
         double revenueToGridChargeMax = 0;
         if (m_batteryPower->canGridCharge) {
             std::vector<double> revenueToGridChargeForecast;
             size_t j = 0;
-            for (size_t i = idx_year1; i < idx_year1 + idx_lookahead; i++) {
+            for (size_t i = lifetimeIndex; i < lifetimeIndex + idx_lookahead; i++) {
                 if (m_utilityRateCalculator) {
-                    revenueToGridChargeForecast.push_back(*max_ppa_cost * m_etaDischarge - usage_cost_forecast[j] / m_etaGridCharge - m_cycleCost);
+                    revenueToGridChargeForecast.push_back(*max_ppa_cost * m_etaDischarge - usage_cost_forecast[j] / m_etaGridCharge - m_cycleCost - m_omCost);
                 }
                 else {
-                    revenueToGridChargeForecast.push_back(*max_ppa_cost * m_etaDischarge - _forecast_price_rt_series[i] / m_etaGridCharge - m_cycleCost);
+                    revenueToGridChargeForecast.push_back(*max_ppa_cost * m_etaDischarge - _forecast_price_rt_series[i] / m_etaGridCharge - m_cycleCost - m_omCost);
                 }
                 j++;
             }
@@ -209,7 +239,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t year, size_t ho
         }
 
         /*! Economic benefit of charging from regular PV in current time step to discharge sometime in next X hours ($/kWh)*/
-        revenueToPVCharge = _P_pv_ac[idx_year1] > 0 ? *max_ppa_cost * m_etaDischarge - ppa_cost / m_etaPVCharge - m_cycleCost : 0;
+        revenueToPVCharge = _P_pv_ac[lifetimeIndex] > 0 ? *max_ppa_cost * m_etaDischarge - ppa_cost / m_etaPVCharge - m_cycleCost -m_omCost : 0;
 
         /*! Computed revenue to charge from PV in each of next X hours ($/kWh)*/
         size_t t_duration = static_cast<size_t>(ceilf( (float)
@@ -218,11 +248,11 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t year, size_t ho
         double revenueToPVChargeMax = 0;
         if (m_batteryPower->canSystemCharge) {
             std::vector<double> revenueToPVChargeForecast;
-            for (size_t i = idx_year1; i < idx_year1 + idx_lookahead && i < _P_pv_ac.size(); i++) {
+            for (size_t i = lifetimeIndex; i < lifetimeIndex + idx_lookahead && i < _P_pv_ac.size(); i++) {
                 // when considering grid charging, require PV output to exceed battery input capacity before accepting as a better option
                 bool system_on = _P_pv_ac[i] >= m_batteryPower->powerBatteryChargeMaxDC ? 1 : 0;
                 if (system_on) {
-                    revenueToPVChargeForecast.push_back(system_on * (*max_ppa_cost * m_etaDischarge - _forecast_price_rt_series[i] / m_etaPVCharge - m_cycleCost));
+                    revenueToPVChargeForecast.push_back(system_on * (*max_ppa_cost * m_etaDischarge - _forecast_price_rt_series[i] / m_etaPVCharge - m_cycleCost - m_omCost));
                 }
             }
             pv_hours_on = revenueToPVChargeForecast.size() / _steps_per_hour;
@@ -230,29 +260,28 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t year, size_t ho
         }
 
         /*! Economic benefit of charging from clipped PV in current time step to discharge sometime in the next X hours (clipped PV is free) ($/kWh) */
-        revenueToClipCharge = *max_ppa_cost * m_etaDischarge - m_cycleCost;
+        revenueToClipCharge = _P_cliploss_dc[lifetimeIndex] > 0 ? *max_ppa_cost * m_etaDischarge - m_cycleCost - m_omCost : 0;
 
         /*! Economic benefit of discharging in current time step ($/kWh) */
-        revenueToDischarge = ppa_cost * m_etaDischarge - m_cycleCost;
+        revenueToDischarge = ppa_cost * m_etaDischarge - m_cycleCost - m_omCost;
 
         /*! Energy need to charge the battery (kWh) */
         double energyNeededToFillBattery = _Battery->energy_to_fill(m_batteryPower->stateOfChargeMax);
 
         /* Booleans to assist decisions */
-        bool highDischargeValuePeriod = ppa_cost == *max_ppa_cost;
-        bool highChargeValuePeriod = ppa_cost == *min_ppa_cost;
+        bool highDischargeValuePeriod = ppa_cost >= discharge_ppa_cost && ppa_cost >= charge_ppa_cost;
+        bool highChargeValuePeriod = ppa_cost <= charge_ppa_cost && ppa_cost <= discharge_ppa_cost;
         bool excessAcCapacity = _inverter_paco > m_batteryPower->powerSystemThroughSharedInverter;
         bool batteryHasDischargeCapacity = _Battery->SOC() >= m_batteryPower->stateOfChargeMin + 1.0;
 
         // Always Charge if PV is clipping
-        if (m_batteryPower->canClipCharge && m_batteryPower->powerSystemClipped > 0 && revenueToClipCharge > 0)
+        if (m_batteryPower->canClipCharge && m_batteryPower->powerSystemClipped > 0 && revenueToClipCharge >= 0)
         {
             powerBattery = -m_batteryPower->powerSystemClipped;
         }
 
         // Increase charge from system (PV) if it is more valuable later than selling now
         if (m_batteryPower->canSystemCharge &&
-            //revenueToPVCharge >= revenueToGridChargeMax &&
             revenueToPVCharge > 0 &&
             highChargeValuePeriod &&
             m_batteryPower->powerSystem > 0)
@@ -295,7 +324,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t year, size_t ho
                 }
             }
             else
-                powerBattery = -energyNeededToFillBattery / _dt_hour;
+                powerBattery = _Battery->calculate_max_charge_kw();
         }
 
         // Discharge if we are in a high-price period and have battery and inverter capacity
@@ -351,4 +380,10 @@ void dispatch_automatic_front_of_meter_t::costToCycle()
     {
         m_cycleCost = cycle_costs_by_year[curr_year];
     }
+}
+
+
+void dispatch_automatic_front_of_meter_t::omCost()
+{
+    m_omCost = om_costs_by_year[curr_year];
 }

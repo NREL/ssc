@@ -1,23 +1,33 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "csp_solver_pc_steam_heat_sink.h"
@@ -50,10 +60,10 @@ void C_pc_steam_heat_sink::check_double_params_are_set()
 	{
 		throw(C_csp_exception("The following parameter was not set prior to calling the C_pc_heat_sink init() method: ", "m_x_hot_des"));
 	}
-	if( !check_double(ms_params.m_T_hot_des) )
-	{
-		throw(C_csp_exception("The following parameter was not set prior to calling the C_pc_heat_sink init() method: ", "m_T_hot_des"));
-	}
+	//if( !check_double(ms_params.m_T_hot_des) )
+	//{
+	//	throw(C_csp_exception("The following parameter was not set prior to calling the C_pc_heat_sink init() method: ", "m_T_hot_des"));
+	//}
 	if( !check_double(ms_params.m_P_hot_des) )
 	{
 		throw(C_csp_exception("The following parameter was not set prior to calling the C_pc_heat_sink init() method: ", "m_P_hot_des"));
@@ -282,16 +292,18 @@ void C_pc_steam_heat_sink::call(const C_csp_weatherreader::S_outputs &weather,
 	out_solver.m_P_cycle = 0.0;							//[MWe] No electricity generation
 	out_solver.m_T_htf_cold = T_steam_cold - 273.15;	//[C] convert from K
 	out_solver.m_m_dot_htf = m_dot_steam*3600.0;		//[kg/hr] Return inlet mass flow rate
-	out_solver.m_W_cool_par = 0.0;			//[MWe] No cooling load
+	double W_dot_cooling_par = 0.0;			//[MWe] No cooling load
 	
 	out_solver.m_time_required_su = 0.0;		//[s] No startup requirements, for now
 	out_solver.m_q_dot_htf = q_dot_steam;	//[MWt] Thermal power form HTF
-	out_solver.m_W_dot_htf_pump = m_dot_steam*(h_steam_cold_comp - h_steam_cold)/1.E3;	//[MWe]
-	
+
+    double W_dot_htf_pump = m_dot_steam*(h_steam_cold_comp - h_steam_cold)/1.E3;	//[MWe]
+    out_solver.m_W_dot_elec_parasitics_tot = W_dot_cooling_par + W_dot_htf_pump;    //[MWe]
+
 	out_solver.m_was_method_successful = true;
 
-	mc_reported_outputs.value(E_Q_DOT_HEAT_SINK, q_dot_steam);					//[MWt]
-	mc_reported_outputs.value(E_W_DOT_PUMPING, out_solver.m_W_dot_htf_pump);	//[MWe]
+	mc_reported_outputs.value(E_Q_DOT_HEAT_SINK, q_dot_steam);		//[MWt]
+	mc_reported_outputs.value(E_W_DOT_PUMPING, W_dot_htf_pump);	    //[MWe]
 
 	return;
 }

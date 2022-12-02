@@ -1,30 +1,42 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 
 #include "common_financial.h"
 #include "core.h"
 #include "common.h"
 #include <sstream>
 #include <sstream>
+#include "../shared/lib_time.h"
 
 #ifndef WIN32
 #include <float.h>
@@ -3232,12 +3244,7 @@ bool hourly_energy_calculation::calculate(compute_module *cm)
     m_energy_purchases.clear();
     m_energy_without_battery.clear();
 
-	// assign hourly values for "gen"
-    ssc_number_t* ppa_gen;
-    // Choose which variable goes through the hourly PPA process. If electricity purchases are through a utility rate, use only the positive revenue (revenue_gen), otherwise use gen
-    ppa_gen = revenue_gen;
-
-    sum_ts_to_hourly(ppa_gen, m_hourly_energy);
+    sum_ts_to_hourly(pgen, m_hourly_energy);
     sum_ts_to_hourly(revenue_gen, m_energy_sales);
     sum_ts_to_hourly(gen_purchases, m_energy_purchases);
 
@@ -3301,6 +3308,38 @@ void hourly_energy_calculation::sum_ts_to_hourly(ssc_number_t* timestep_power, s
     }
 }
 
+void check_financial_metrics::check_irr(compute_module* cm, ssc_number_t& irr)
+{
+    if (std::isnan(irr))
+        cm->log("IRR at end of analysis period is not a number (NaN). This can indicate that revenues are too low to cover costs, or that they are excessively high compared to costs.", SSC_WARNING);
+    if (irr > 50.0)
+        cm->log(util::format("IRR at end of analysis period is %lg%%. A high IRR may indicate a project with unrealistically high returns.", irr), SSC_WARNING);
+}
+
+void check_financial_metrics::check_irr_flip(compute_module* cm, ssc_number_t& irr)
+{
+    if (std::isnan(irr))
+        cm->log("IRR in target year is not a number (NaN). This can indicate that revenues are too low to cover costs, or that they are excessively high compared to costs.", SSC_WARNING);
+    if (irr > 50.0)
+        cm->log(util::format("IRR in target year is %lg%%. A high IRR may indicate a project with unrealistically high returns.", irr), SSC_WARNING);
+}
+
+void check_financial_metrics::check_npv(compute_module* cm, ssc_number_t& npv_metric)
+{
+    if (npv_metric < 0.0)
+        cm->log(util::format("NPV is $%lg. A negative NPV indicates project costs are higher than revenues.", npv_metric), SSC_WARNING);
+}
+
+void check_financial_metrics::check_debt_percentage(compute_module* cm, ssc_number_t& debt_percentage)
+{
+    if (debt_percentage > 100.0)
+        cm->log(util::format("Debt percent is %lg. A debt percent greater than 100%% may indicate that revenues are higher than necessary to cover project costs.", debt_percentage), SSC_WARNING);
+}
+
+
+
+
+
 var_info vtab_lcos_inputs[] = {
     /*   VARTYPE           DATATYPE         NAME                             LABEL                                UNITS      META                 GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 
@@ -3318,8 +3357,12 @@ var_info vtab_lcos_inputs[] = {
     { SSC_INPUT, SSC_MATRIX,           "true_up_credits_ym",     "Net annual true-up payments", "$", "", "LCOS", "", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
     { SSC_INPUT, SSC_MATRIX, "nm_dollars_applied_ym", "Net metering credit", "$", "", "Charges by Month", "", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
     { SSC_INPUT, SSC_MATRIX, "net_billing_credits_ym", "Net billing credit", "$", "", "Charges by Month", "", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
-    { SSC_INPUT,       SSC_ARRAY,       "gen_purchases",                              "Electricity from grid",                                    "kW",      "",                       "System Output",       "",                           "",                              "" },
 
+    // fix for running financial compute modules tests
+    { SSC_INOUT,       SSC_ARRAY,       "gen_purchases",                              "Electricity from grid",                                    "kW",      "",                       "System Output",       "",                           "",                              "" },
+    { SSC_INPUT,        SSC_ARRAY,      "rate_escalation",          "Annual electricity rate escalation",   "%/year",   "",                      "Electricity Rates",       "",              "",                             "" },
+
+    
     { SSC_INPUT,        SSC_ARRAY,      "batt_capacity_percent",                      "Battery relative capacity to nameplate",                 "%",        "",                     "LCOS",       "",                           "",                              "" },
     { SSC_INPUT,        SSC_ARRAY,      "monthly_grid_to_batt",                       "Energy to battery from grid",                           "kWh",      "",                      "LCOS",       "",                          "LENGTH=12",                     "" },
     { SSC_INPUT,        SSC_ARRAY,      "monthly_batt_to_grid",                       "Energy to grid from battery",                           "kWh",      "",                      "LCOS",       "",                          "LENGTH=12",                     "" },
@@ -3331,16 +3374,15 @@ var_info vtab_lcos_inputs[] = {
     { SSC_OUTPUT, SSC_ARRAY, "cf_charging_cost_grid_month", "Annual cost to charge from grid (monthly)", "$", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
 
     { SSC_OUTPUT, SSC_ARRAY, "cf_charging_cost_pv", "Annual cost to charge from system", "$", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_om_batt_production_expense", "Annual cost to for battery production based maintenance", "$", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT, SSC_ARRAY, "cf_om_batt_capacity_expense", "Annual cost for battery capacity based maintenance", "$", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT, SSC_ARRAY, "cf_om_batt_fixed_expense", "Annual fixed cost for battery maintenance", "$", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT, SSC_ARRAY, "cf_salvage_cost_lcos", "Annual battery salvage value costs", "$", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_util_escal_rate", "Annual battery salvage value costs", "$", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_util_escal_rate", "Utility escalation rate", "", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
 
     { SSC_OUTPUT, SSC_NUMBER, "npv_annual_costs_lcos", "Present value of annual storage costs", "$", "", "LCOE calculations", "", "", "" },
     { SSC_OUTPUT, SSC_NUMBER, "npv_energy_lcos_real", "Present value of annual stored energy (real)", "kWh", "", "LCOE calculations", "", "", "" },
-    { SSC_OUTPUT,       SSC_NUMBER,     "lcos_nom",                        "Levelized cost of storage (nominal)",              "cents/kWh",                   "", "Metrics", "", "", "" },
-    { SSC_OUTPUT,       SSC_NUMBER,     "lcos_real",                        "Levelized cost of storage (real)",              "cents/kWh",                   "", "Metrics", "", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "lcos_nom",                        "LCOS Levelized cost of storage nominal",              "cents/kWh",                   "", "Metrics", "", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "lcos_real",                        "LCOS Levelized cost of storage real",              "cents/kWh",                   "", "Metrics", "", "", "" },
     { SSC_OUTPUT, SSC_NUMBER, "npv_energy_lcos_nom", "Present value of annual stored energy (nominal)", "kWh", "", "LCOE calculations", "", "", "" },
     var_info_invalid };
 
@@ -3361,14 +3403,16 @@ void escal_or_annual(int cf_line, int nyears, const std::string& variable,
 {
     size_t count;
     ssc_number_t* arrp = cm->as_array(variable, &count);
-
+    double check;
     if (as_rate)
     {
         if (count == 1)
         {
             escal = inflation_rate + scale * arrp[0];
-            for (int i = 0; i < nyears; i++)
+            for (int i = 0; i < nyears; i++) {
                 cf.at(cf_line, i + 1) = pow(1 + escal, i);
+                check = cf.at(cf_line, i + 1);
+            }
         }
         else
         {
@@ -3483,7 +3527,11 @@ void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double
         }
 
         size_t n_mp_market_price;
+        size_t steps_per_hour;
+        size_t steps_per_year;
         ssc_number_t* mp_market_price; //Market revenue for Merchant Plant model
+        std::vector<ssc_number_t> grid_to_batt_mp;
+        std::vector<ssc_number_t> extrapolated_grid_to_batt_mp;
         if (grid_charging_cost_version == 2) //Only if financial model is Merchant Plant
             mp_market_price = cm->as_array("mp_energy_market_price", &n_mp_market_price); //Energy market price (hourly) for lifetime array to calculate grid charging cost for Merchant Plant ($)
 
@@ -3506,8 +3554,24 @@ void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double
         cf.at(CF_charging_cost_grid_lcos, 0) = 0; //Initialize year 0 charging cost to $0
 
 
-        if (cm->is_assigned("rate_escalation")) //Create rate escalation nyears array with inflation and specified rate escalation %
-            escal_or_annual(CF_util_escal_rate_lcos, nyears, "rate_escalation", inflation_rate, 0.01, cf, cm, true, 0);
+        if (cm->is_assigned("rate_escalation")) { //Create rate escalation nyears array with inflation and specified rate escalation %
+            size_t count;
+            ssc_number_t* arrp = cm->as_array("rate_escalation", &count);
+            double scale = 0.01; //%
+            if (count == 1)
+            {
+                double escal = inflation_rate + scale * arrp[0];
+                for (int i = 0; i < nyears; i++) {
+                    cf.at(CF_util_escal_rate_lcos, i + 1) = pow(1 + escal, i);
+                }
+            }
+            else
+            {
+                for (int i = 0; i < nyears && i < (int)count; i++)
+                    cf.at(CF_util_escal_rate_lcos, i + 1) = 1 + arrp[i] * scale;
+            }
+            
+        }
         save_cf(CF_util_escal_rate_lcos, nyears, "cf_util_escal_rate", cf, cm);
 
         double capex_lcoe_ratio = 1 / 0.8; //ratio of capex ratio between PV+batt / PV to LCOE ratio PV+batt/ PV (assumed based on table)
@@ -3538,7 +3602,7 @@ void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double
                                 for (size_t n = 0; n < n_steps_per_hour; n++) {
                                     if (a == 0) monthly_e_fromgrid[m-1] += year1_hourly_e_from_grid[n_steps_per_hour * util::hour_of_year(m, d, h) + n];
                                     if (a != 0 && year1_hourly_e_from_grid[n_steps_per_hour * util::hour_of_year(m, d, h) + n] != 0.0) {
-                                        cf.at(CF_charging_cost_grid_lcos, a) += -grid_to_batt[(size_t(a) - 1) * 8760 * n_steps_per_hour + n_steps_per_hour * util::hour_of_year(m, d, h) + n] * cf.at(CF_degradation_lcos, a) /
+                                        cf.at(CF_charging_cost_grid_lcos, a) += grid_to_batt[(size_t(a) - 1) * 8760 * n_steps_per_hour + n_steps_per_hour * util::hour_of_year(m, d, h) + n] * cf.at(CF_degradation_lcos, a) /
                                             year1_hourly_e_from_grid[n_steps_per_hour * util::hour_of_year(m, d, h) + n] *
                                             (year1_hourly_ec[n_steps_per_hour * util::hour_of_year(m, d, h) + n] + year1_hourly_dc[n_steps_per_hour * util::hour_of_year(m, d, h) + n]) * cf.at(CF_util_escal_rate_lcos, a); //use the electricity rate data by year (also trueup) //* charged_grid[a] / charged_grid[1] * cf.at(CF_util_escal_rate, a);
                                     }
@@ -3617,9 +3681,16 @@ void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double
                 if (cm->as_integer("system_use_lifetime_output") == 1) //Lifetime
                 {
                     if (ppa_purchases && a != 0) {
+                        steps_per_hour = n_mp_market_price / (8760.0 * nyears);
+                        grid_to_batt_mp.clear();
+                        grid_to_batt_mp.reserve(n_steps_per_year);
                         for (size_t h = 0; h < n_steps_per_year; h++) {
+                            grid_to_batt_mp.push_back(grid_to_batt[(a - 1) * n_steps_per_year + h]);
+                        }
+                        extrapolated_grid_to_batt_mp = extrapolate_timeseries(grid_to_batt_mp, steps_per_hour);
+                        for (size_t h = 0; h < extrapolated_grid_to_batt_mp.size(); h++) {
                             if (a != 0) { //Not in investment year
-                                cf.at(CF_charging_cost_grid_lcos, a) += grid_to_batt[(a - 1) * n_steps_per_year + h] * 8760 / n_steps_per_year * mp_market_price[(a - 1) * n_steps_per_year + h] / (1000); //Grid charging cost from energy market price ($)
+                                cf.at(CF_charging_cost_grid_lcos, a) += extrapolated_grid_to_batt_mp[h] * 8760 / n_steps_per_year * mp_market_price[(a-1)*extrapolated_grid_to_batt_mp.size() + h] / (1000); //Grid charging cost from energy market price ($)
                             }
                         }
                     }
@@ -3635,9 +3706,16 @@ void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double
                 else //Not Lifetime
                 {
                     if (ppa_purchases && a != 0) {
+                        steps_per_hour = n_mp_market_price / (8760.0);
+                        grid_to_batt_mp.clear();
+                        grid_to_batt_mp.reserve(n_steps_per_year);
                         for (size_t h = 0; h < n_steps_per_year; h++) {
+                            grid_to_batt_mp.push_back(grid_to_batt[h]);
+                        }
+                        extrapolated_grid_to_batt_mp = extrapolate_timeseries(grid_to_batt_mp, steps_per_hour);
+                        for (size_t h = 0; h < extrapolated_grid_to_batt_mp.size(); h++) {
                             if (a != 0) { //Not in investment year
-                                cf.at(CF_charging_cost_grid_lcos, a) += grid_to_batt[h] * cf.at(CF_degradation_lcos, a) * 8760 / n_steps_per_year * mp_market_price[h] / (1000); //Grid charging cost from energy market price ($)
+                                cf.at(CF_charging_cost_grid_lcos, a) += grid_to_batt[h] * cf.at(CF_degradation_lcos, a) * 8760.0 / n_steps_per_year * mp_market_price[(a-1)* extrapolated_grid_to_batt_mp.size() + h] / (1000); //Grid charging cost from energy market price ($)
                             }
                         }
                     }
@@ -3680,12 +3758,7 @@ void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double
         save_cf(CF_energy_discharged_lcos, nyears, "cf_annual_discharge_lcos", cf, cm); //Store battery energy discharge in each year in cash flow
         save_cf(CF_charging_cost_grid_lcos, nyears, "cf_charging_cost_grid", cf, cm); //Store grid charging cost in each year in cash flow ($)
         save_cf(CF_charging_cost_pv_lcos, nyears, "cf_charging_cost_pv", cf, cm); //Store system charging cost in each year in cash flow ($)
-        //save_cf(CF_om_capacity1_expense, nyears, "cf_om_batt_capacity_expense", cf, cm);
-        //save_cf(CF_om_production1_expense, nyears, "cf_om_batt_production_expense", cf, cm);
-        //save_cf(CF_om_fixed1_expense, nyears, "cf_om_batt_fixed_expense", cf, cm);
-        //save_cf(CF_battery_replacement_cost, nyears, "cf_batt_replacement_cost", cf, cm);
         save_cf(CF_salvage_cost_lcos_lcos, nyears, "cf_salvage_cost_lcos", cf, cm); //Store salvage value cost in each year in cash flow ($)
-        save_cf(CF_om_production1_expense_lcos, nyears, "cf_om_batt_production_expense", cf, cm);
         double lcos_nom = lcos_numerator / lcos_denominator * 100.0; // cent/kWh Nominal LCOS
         double lcos_real = lcos_numerator / lcos_denominator_real * 100.0; // cents/kWh Real LCOS
         cm->assign("lcos_nom", var_data((ssc_number_t)lcos_nom)); //Store nominal LCOS in outputs

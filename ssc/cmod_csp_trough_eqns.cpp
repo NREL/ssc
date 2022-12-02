@@ -1,24 +1,35 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 
 #include "cmod_csp_trough_eqns.h"
 #include "cmod_csp_common_eqns.h"
@@ -100,6 +111,8 @@ bool Physical_Trough_Solar_Field_Equations(ssc_data_t data)
 
 
     // Outputs
+    double field_htf_min_operating_temp = std::numeric_limits<double>::quiet_NaN();
+    double field_htf_max_operating_temp = std::numeric_limits<double>::quiet_NaN();
     double field_htf_cp_avg = std::numeric_limits<double>::quiet_NaN();
     double single_loop_aperature = std::numeric_limits<double>::quiet_NaN();
     double min_inner_diameter = std::numeric_limits<double>::quiet_NaN();
@@ -131,12 +144,35 @@ bool Physical_Trough_Solar_Field_Equations(ssc_data_t data)
 
 
 
+    // field_htf_min_operating_temp
+    ssc_data_t_get_number(data, "Fluid", &Fluid);
+    ssc_data_t_get_matrix(vt, "field_fl_props", field_fl_props);
+    try {
+        field_htf_min_operating_temp = Min_htf_temp((int)Fluid, field_fl_props);
+    }
+    catch (...) {
+        field_htf_min_operating_temp = std::numeric_limits<double>::quiet_NaN();
+    }
+    ssc_data_t_set_number(data, "field_htf_min_operating_temp", field_htf_min_operating_temp);
+
+    // field_htf_max_operating_temp
+    try {
+        field_htf_max_operating_temp = Max_htf_temp((int)Fluid, field_fl_props);
+    }
+    catch (...) {
+        field_htf_max_operating_temp = std::numeric_limits<double>::quiet_NaN();
+    }
+    ssc_data_t_set_number(data, "field_htf_max_operating_temp", field_htf_max_operating_temp);
+
     // field_htf_cp_avg
     ssc_data_t_get_number(data, "T_loop_in_des", &T_loop_in_des);
     ssc_data_t_get_number(data, "T_loop_out", &T_loop_out);
-    ssc_data_t_get_number(data, "Fluid", &Fluid);
-    ssc_data_t_get_matrix(vt, "field_fl_props", field_fl_props);
-    field_htf_cp_avg = Field_htf_cp_avg(T_loop_in_des, T_loop_out, (int)Fluid, field_fl_props);      // [kJ/kg-K]
+    try {
+        field_htf_cp_avg = Field_htf_cp_avg(T_loop_in_des, T_loop_out, (int)Fluid, field_fl_props);      // [kJ/kg-K]
+    }
+    catch (...) {
+        field_htf_cp_avg = std::numeric_limits<double>::quiet_NaN();
+    }
     ssc_data_t_set_number(data, "field_htf_cp_avg", field_htf_cp_avg);
 
     // single_loop_aperature
@@ -197,17 +233,26 @@ bool Physical_Trough_Solar_Field_Equations(ssc_data_t data)
     SCADefocusArray = Sca_defocus_array(trough_loop_control);
     ssc_data_t_set_array(data, "scadefocusarray", SCADefocusArray.data(), (int)SCADefocusArray.ncells());
 
-
     // max_field_flow_velocity
     ssc_data_t_get_number(data, "m_dot_htfmax", &m_dot_htfmax);
-    max_field_flow_velocity = Max_field_flow_velocity(m_dot_htfmax, min_inner_diameter,
-        T_loop_out, (int)Fluid, field_fl_props);
+    try {
+        max_field_flow_velocity = Max_field_flow_velocity(m_dot_htfmax, min_inner_diameter,
+            T_loop_out, (int)Fluid, field_fl_props);
+    }
+    catch (...) {
+        max_field_flow_velocity = std::numeric_limits<double>::quiet_NaN();
+    }
     ssc_data_t_set_number(data, "max_field_flow_velocity", max_field_flow_velocity);
 
     // min_field_flow_velocity
     ssc_data_t_get_number(data, "m_dot_htfmin", &m_dot_htfmin);
-    min_field_flow_velocity = Min_field_flow_velocity(m_dot_htfmin, min_inner_diameter,
-        T_loop_in_des, (int)Fluid, field_fl_props);
+    try {
+        min_field_flow_velocity = Min_field_flow_velocity(m_dot_htfmin, min_inner_diameter,
+            T_loop_in_des, (int)Fluid, field_fl_props);
+    }
+    catch (...) {
+        min_field_flow_velocity = std::numeric_limits<double>::quiet_NaN();
+    }
     ssc_data_t_set_number(data, "min_field_flow_velocity", min_field_flow_velocity);
 
     // total_loop_conversion_efficiency
@@ -295,7 +340,7 @@ bool Physical_Trough_Collector_Type_Equations(ssc_data_t data)
     if (!vt) {
         return false;
     }
-
+    return true;
 }
 
 bool Physical_Trough_Collector_Type_UI_Only_Equations(ssc_data_t data)

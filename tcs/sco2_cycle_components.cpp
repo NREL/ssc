@@ -805,16 +805,27 @@ void C_HeatExchanger::hxr_conductance(const std::vector<double> & m_dots, double
 	hxr_UA = ms_des_par.m_UA_design*pow(m_dot_ratio, 0.8);
 }
 
-double C_turbine::calculate_cost(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
+double C_turbine::calculate_equipment_cost(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
 	double T_out /*K*/, double P_out /*kPa*/, double W_dot /*kWe*/)
 {
 	switch (m_cost_model)
 	{
 	case C_turbine::E_CARLSON_17:
 		return 7.79*1.E-3*std::pow(W_dot, 0.6842);		//[M$] needs power in kWe
+    case C_turbine::E_WEILAND_19__AXIAL:
+        return 182600*std::pow(W_dot*1.E-3, 0.5561)*1.E-6;  //[M$] needs power in MWe
 	default:
 		return std::numeric_limits<double>::quiet_NaN();
 	}
+}
+
+double C_turbine::calculate_bare_erected_cost(double cost_equipment /*M$*/)
+{
+    // Weiland 2019
+    double frac_installation = 0.08;
+    double frac_labor = 0.12;
+
+    return cost_equipment*(1.+frac_installation+frac_labor);
 }
 
 void C_turbine::turbine_sizing(const S_design_parameters & des_par_in, int & error_code)
@@ -885,8 +896,10 @@ void C_turbine::turbine_sizing(const S_design_parameters & des_par_in, int & err
 
 	ms_des_solved.m_W_dot = ms_des_par.m_m_dot*(ms_des_par.m_h_in - ms_des_par.m_h_out);
 
-	ms_des_solved.m_cost = calculate_cost(ms_des_par.m_T_in, ms_des_par.m_P_in, ms_des_par.m_m_dot,
+	ms_des_solved.m_equipment_cost = calculate_equipment_cost(ms_des_par.m_T_in, ms_des_par.m_P_in, ms_des_par.m_m_dot,
 							T_out, ms_des_par.m_P_out, ms_des_solved.m_W_dot);
+
+    ms_des_solved.m_bare_erected_cost = calculate_bare_erected_cost(ms_des_solved.m_equipment_cost);
 }
 
 void C_turbine::off_design_turbine(double T_in, double P_in, double P_out, double N, int & error_code, double & m_dot_cycle, double & T_out)
@@ -1431,7 +1444,7 @@ int C_comp_multi_stage::C_MEQ_eta_isen__h_out::operator()(double eta_isen /*-*/,
 
 	if (N_rpm_code != C_monotonic_eq_solver::CONVERGED)
 	{
-		if (!(N_rpm_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) < 0.01))
+		if (!(N_rpm_code > C_monotonic_eq_solver::CONVERGED && std::abs(tol_solved) < 0.01))
 		{
 			throw(C_csp_exception("C_comp_multi_stage::C_MEQ_eta_isen__h_out failed to converge within a reasonable tolerance"));
 		}
@@ -1480,16 +1493,27 @@ int C_comp_multi_stage::C_MEQ_N_rpm__P_out::operator()(double N_rpm /*rpm*/, dou
 	return 0;
 }
 
-double C_comp_multi_stage::calculate_cost(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
+double C_comp_multi_stage::calculate_equipment_cost(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
 	double T_out /*K*/, double P_out /*kPa*/, double W_dot /*kWe*/)
 {
 	switch (m_cost_model)
 	{
 	case C_comp_multi_stage::E_CARLSON_17:
 		return 6.898*1.E-3*std::pow(W_dot, 0.7865);		//[M$] needs power in kWe
+    case C_comp_multi_stage::E_WEILAND_19__IG:
+        return 1.23*std::pow(W_dot*1.E-3, 0.3992);      //[M$] needs power in MWe
 	default:
 		return std::numeric_limits<double>::quiet_NaN();
 	}
+}
+
+double C_comp_multi_stage::calculate_bare_erected_cost(double cost_equipment /*M$*/)
+{
+    // Weiland 2019
+    double frac_installation = 0.08;
+    double frac_labor = 0.12;
+
+    return cost_equipment * (1. + frac_installation + frac_labor);
 }
 
 int C_comp_multi_stage::design_given_outlet_state(int comp_model_code, double T_in /*K*/, double P_in /*kPa*/, double m_dot_cycle /*kg/s*/,
@@ -1570,7 +1594,7 @@ int C_comp_multi_stage::design_given_outlet_state(int comp_model_code, double T_
 
 			if (eta_isen_code != C_monotonic_eq_solver::CONVERGED)
 			{
-				if (!(eta_isen_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) < 0.01))
+				if (!(eta_isen_code > C_monotonic_eq_solver::CONVERGED && std::abs(tol_solved) < 0.01))
 				{
 					throw(C_csp_exception("C_comp_multi_stage::design_given_outlet_state failed to converge within a reasonable tolerance"));
 				}
@@ -1630,8 +1654,10 @@ int C_comp_multi_stage::design_given_outlet_state(int comp_model_code, double T_
 		ms_des_solved.mv_eta_stages[i] = mv_c_stages[i]->ms_des_solved.m_eta_design;	//[-]
 	}
 
-	ms_des_solved.m_cost = calculate_cost(ms_des_solved.m_T_in, ms_des_solved.m_P_in, ms_des_solved.m_m_dot,
+	ms_des_solved.m_cost_equipment = calculate_equipment_cost(ms_des_solved.m_T_in, ms_des_solved.m_P_in, ms_des_solved.m_m_dot,
 							ms_des_solved.m_T_out, ms_des_solved.m_P_out, ms_des_solved.m_W_dot);
+
+    ms_des_solved.m_cost_bare_erected = calculate_bare_erected_cost(ms_des_solved.m_cost_equipment);    //[M$]
 
 	// Also need to size OD vectors here
 	ms_od_solved.mv_eta.resize(n_stages);

@@ -1,23 +1,33 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <sstream>
@@ -618,35 +628,37 @@ void AutoPilot::PreSimCallbackUpdate()
 	}
 }
 
+
 void AutoPilot::PostProcessLayout(sp_layout &layout)
 {
-	/* 
-	Layout post-process.. collect the layout results and fill the data into the
-	layout structure for later use
-	*/
+    /*
+    Layout post-process.. collect the layout results and fill the data into the
+    layout structure for later use
+    Calculate all post layout parameters
+    */
 
-	Hvector *hpos = _SF->getHeliostats();
-	layout.heliostat_positions.clear();
-	for(int i=0; i<(int)hpos->size(); i++){
-		sp_layout::h_position hp;
-		hp.location.x = hpos->at(i)->getLocation()->x;
-		hp.location.y = hpos->at(i)->getLocation()->y;
-		hp.location.z = hpos->at(i)->getLocation()->z;
+    Hvector* hpos = _SF->getHeliostats();
+    layout.heliostat_positions.clear();
+    layout.heliostat_positions.reserve(hpos->size());
+    for (int i = 0; i < (int)hpos->size(); i++) {
+        sp_layout::h_position hp;
+        hp.location.x = hpos->at(i)->getLocation()->x;
+        hp.location.y = hpos->at(i)->getLocation()->y;
+        hp.location.z = hpos->at(i)->getLocation()->z;
 
-		hp.cant_vector.i = hpos->at(i)->getCantVector()->i;
+        hp.cant_vector.i = hpos->at(i)->getCantVector()->i;
         hp.cant_vector.j = hpos->at(i)->getCantVector()->j;
         hp.cant_vector.k = hpos->at(i)->getCantVector()->k;
-		
+
         hp.aimpoint.x = hpos->at(i)->getAimPoint()->x;
-		hp.aimpoint.y = hpos->at(i)->getAimPoint()->y;
-		hp.aimpoint.z = hpos->at(i)->getAimPoint()->z;
+        hp.aimpoint.y = hpos->at(i)->getAimPoint()->y;
+        hp.aimpoint.z = hpos->at(i)->getAimPoint()->z;
 
-		hp.focal_length = hpos->at(i)->getFocalX();
-		hp.template_number = -1;
-		//hp.user_optics = false;
-		layout.heliostat_positions.push_back( hp );
-	}
-
+        hp.focal_length = hpos->at(i)->getFocalX();
+        hp.template_number = -1;
+        //hp.user_optics = false;
+        layout.heliostat_positions.push_back(hp);
+    }
 
     var_map *V = _SF->getVarMap();
     _SF->updateAllCalculatedParameters( *V );

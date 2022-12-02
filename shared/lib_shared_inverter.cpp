@@ -1,24 +1,35 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 
 #include <algorithm>
 #include <functional>
@@ -252,11 +263,11 @@ void SharedInverter::calculateACPower(const double powerDC_kW_in, const double D
 
 
     if (m_inverterType == SANDIA_INVERTER || m_inverterType == DATASHEET_INVERTER || m_inverterType == COEFFICIENT_GENERATOR)
-        m_sandiaInverter->acpower(std::fabs(powerDC_Watts) / m_numInverters, DCStringVoltage, &powerAC_Watts, &P_par, &P_lr, &efficiencyAC, &powerClipLoss_kW, &powerConsumptionLoss_kW, &powerNightLoss_kW);
+        m_sandiaInverter->acpower(std::abs(powerDC_Watts) / m_numInverters, DCStringVoltage, &powerAC_Watts, &P_par, &P_lr, &efficiencyAC, &powerClipLoss_kW, &powerConsumptionLoss_kW, &powerNightLoss_kW);
     else if (m_inverterType == PARTLOAD_INVERTER)
-        m_partloadInverter->acpower(std::fabs(powerDC_Watts) / m_numInverters, &powerAC_Watts, &P_lr, &P_par, &efficiencyAC, &powerClipLoss_kW, &powerNightLoss_kW);
+        m_partloadInverter->acpower(std::abs(powerDC_Watts) / m_numInverters, &powerAC_Watts, &P_lr, &P_par, &efficiencyAC, &powerClipLoss_kW, &powerNightLoss_kW);
     else if (m_inverterType == OND_INVERTER)
-        m_ondInverter->acpower(std::fabs(powerDC_Watts) / m_numInverters, DCStringVoltage, tempC, &powerAC_Watts, &P_par, &P_lr, &efficiencyAC, &powerClipLoss_kW, &powerConsumptionLoss_kW, &powerNightLoss_kW, &dcWiringLoss_ond_kW, &acWiringLoss_ond_kW);
+        m_ondInverter->acpower(std::abs(powerDC_Watts) / m_numInverters, DCStringVoltage, tempC, &powerAC_Watts, &P_par, &P_lr, &efficiencyAC, &powerClipLoss_kW, &powerConsumptionLoss_kW, &powerNightLoss_kW, &dcWiringLoss_ond_kW, &acWiringLoss_ond_kW);
     else if (m_inverterType == NONE) {
         powerClipLoss_kW = 0.;
         powerConsumptionLoss_kW = 0.;
@@ -272,7 +283,7 @@ void SharedInverter::calculateACPower(const double powerDC_kW_in, const double D
 
     // In event shared inverter is charging a battery only, need to re-convert to negative power
     if (negativePower) {
-        powerAC_kW = -1.0 * fabs(powerAC_kW);
+        powerAC_kW = -1.0 * std::abs(powerAC_kW);
     }
 }
 
@@ -376,7 +387,7 @@ void SharedInverter::convertOutputsToKWandScale(double tempLoss, double powerAC_
     powerNightLoss_kW *= m_numInverters * util::watt_to_kilowatt;
     powerTempLoss_kW = tempLoss * m_numInverters * util::watt_to_kilowatt;
     if (powerDC_kW < 0.0)
-        powerLossTotal_kW = fabs(powerDC_kW) - fabs(powerAC_kW); // DC connected grid charging
+        powerLossTotal_kW = std::abs(powerDC_kW) - std::abs(powerAC_kW); // DC connected grid charging
     else
         powerLossTotal_kW = powerDC_kW - powerAC_kW; // Normal operation and night time losses
     efficiencyAC *= 100;
@@ -387,11 +398,11 @@ void SharedInverter::convertOutputsToKWandScale(double tempLoss, double powerAC_
 double SharedInverter::getMaxPowerEfficiency()
 {
     if (m_inverterType == SANDIA_INVERTER || m_inverterType == DATASHEET_INVERTER || m_inverterType == COEFFICIENT_GENERATOR)
-        calculateACPower(m_sandiaInverter->Paco * util::watt_to_kilowatt, m_sandiaInverter->Vdco, 0.0);
+        calculateACPower(m_sandiaInverter->Paco * util::watt_to_kilowatt * m_numInverters, m_sandiaInverter->Vdco, 0.0);
     else if (m_inverterType == PARTLOAD_INVERTER)
-        calculateACPower(m_partloadInverter->Paco * util::watt_to_kilowatt, m_partloadInverter->Vdco, 0.0);
+        calculateACPower(m_partloadInverter->Paco * util::watt_to_kilowatt * m_numInverters, m_partloadInverter->Vdco, 0.0);
     else if (m_inverterType == OND_INVERTER)
-        calculateACPower(m_ondInverter->PMaxOUT * util::watt_to_kilowatt, m_ondInverter->VAbsMax, 0.0);
+        calculateACPower(m_ondInverter->PMaxOUT * util::watt_to_kilowatt * m_numInverters, m_ondInverter->VAbsMax, 0.0);
 
     return efficiencyAC;
 }

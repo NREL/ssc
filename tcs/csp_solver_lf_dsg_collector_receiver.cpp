@@ -1,24 +1,35 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 
 #include "csp_solver_lf_dsg_collector_receiver.h"
 
@@ -195,7 +206,6 @@ C_csp_lf_dsg_collector_receiver::C_csp_lf_dsg_collector_receiver()
 	// Design Parameters - public member data (user specified)
 	m_q_max_aux = std::numeric_limits<double>::quiet_NaN();			//[kWt]
 	m_LHV_eff = std::numeric_limits<double>::quiet_NaN();			//[-]
-	m_T_set_aux = std::numeric_limits<double>::quiet_NaN();			//[K]
 	m_T_field_in_des = std::numeric_limits<double>::quiet_NaN();		//[K]
 	m_T_field_out_des = std::numeric_limits<double>::quiet_NaN();		//[K]
 	m_x_b_des = std::numeric_limits<double>::quiet_NaN();				//[-]
@@ -261,35 +271,30 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	m_wp_max_pres = wp_info.pres_upper_limit;	//[kPa]
 	m_wp_min_pres = wp_info.pres_lower_limit;	//[kPa]
 
-	// Compare the startup to final temperature
-	int wp_code = water_PQ(m_P_turb_des*100.0, m_x_b_des, &wp);
-	if( wp_code != 0 )
-	{
-		throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::init", "Design point water_PQ failed", wp_code));
-	}
-	double T_boil_des = wp.temp;	//[K]
-	double T_startup_max = T_boil_des - 5.0;	//[K]
+    // Compare the startup to final temperature
+    int wp_code = water_PQ(m_P_turb_des * 100.0, 0.0, &wp);
+    if (wp_code != 0)
+    {
+        throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::init", "Design point water_PQ failed", wp_code));
+    }
+    double T_boil_des = wp.temp;	//[K]
+
+    // Use negative design quality as subcooled temperature target
+    if (m_x_b_des < 0.0) {
+
+        if (!m_is_oncethru) {
+            throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::init, negative input quality cases must be once-through and single phase target"));
+        }
+
+    }
 
 	if( !m_is_sh_target )
 	{
 		m_T_field_out_des = T_boil_des;		//[K]
-		m_T_startup = T_startup_max;		//[K]
-
-		if( m_T_startup > T_startup_max )
-		{
-			std::string msg = util::format("The specified configuration returns 2-phase steam"
-								"The model requires the specified startup temperature, %lg, [C] to be at least"
-								"5 [C] less than the boiling temperature, %lg, [C] at the design pressure"
-								"The startup temperature was reset to %lg [C].", m_T_startup, T_boil_des, T_startup_max);
-			mc_csp_messages.add_message(C_csp_messages::NOTICE,msg);
-			m_T_startup = T_startup_max;
-		}
-	}
-	else
-	{
-		m_T_startup = m_T_field_out_des;	//[K]
 	}
 
+    double T_startup_threshold = 5.0;	//[K]
+    m_T_startup = m_T_field_out_des - T_startup_threshold;  //[K]
 
 	//[-] Outer glass envelope emissivities (Pyrex)
 	m_EPSILON_5 = m_EPSILON_4;
@@ -921,7 +926,7 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 		double dvar8 = wp.enth;
 		double dvar9 = (dvar8 - dvar7) / (dvar2 - dvar1)*m_nModBoil;
 
-		if (fabs(dvar6) > 25.0)
+		if (std::abs(dvar6) > 25.0)
 		{
 
 			std::string err_msg = util::format("The field you selected with %d boiler modules and %d superheater modules results in a projected superheater outlet temperature"
@@ -1178,7 +1183,7 @@ int C_csp_lf_dsg_collector_receiver::freeze_protection(const C_csp_weatherreader
 		throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::off - freeze protection failed"));
 	}
 
-    if (!(fp_code >= C_monotonic_eq_solver::CONVERGED && std::fabs(tol_solved) < 10.0))
+    if (!(fp_code >= C_monotonic_eq_solver::CONVERGED && std::abs(tol_solved) < 10.0))
     {
         throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::off - freeze protection failed to converge"));
     }
@@ -1354,8 +1359,9 @@ void C_csp_lf_dsg_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 	cr_out_solver.m_T_salt_hot = T_sys_hot_out_t_int_ts_ave - 273.15;	//[C] Average timestep field outlet temperature
 	cr_out_solver.m_component_defocus = 1.0;		//[-]
 
-	cr_out_solver.m_W_dot_col_tracking = m_W_dot_sca_tracking;	//[MWe]
-	cr_out_solver.m_W_dot_htf_pump = m_W_dot_pump;				//[MWe]
+	//cr_out_solver.m_W_dot_col_tracking = m_W_dot_sca_tracking;	//[MWe]
+	//cr_out_solver.m_W_dot_htf_pump = m_W_dot_pump;				//[MWe]
+    cr_out_solver.m_W_dot_elec_in_tot = m_W_dot_sca_tracking + m_W_dot_pump;    //[MWe]
     cr_out_solver.m_q_dot_heater = m_q_dot_freeze_protection;   //[MWt]
 
 	cr_out_solver.m_standby_control = -1;
@@ -1566,8 +1572,9 @@ void C_csp_lf_dsg_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 	cr_out_solver.m_component_defocus = 1.0;
 
 		// Shouldn't need freeze protection if in startup, but may want a check on this
-	cr_out_solver.m_W_dot_col_tracking = m_W_dot_sca_tracking;	//[MWe]
-	cr_out_solver.m_W_dot_htf_pump = m_W_dot_pump;				//[MWe]
+	//cr_out_solver.m_W_dot_col_tracking = m_W_dot_sca_tracking;	//[MWe]
+	//cr_out_solver.m_W_dot_htf_pump = m_W_dot_pump;				//[MWe]
+    cr_out_solver.m_W_dot_elec_in_tot = m_W_dot_sca_tracking + m_W_dot_pump;    //[MWe]
     cr_out_solver.m_q_dot_heater = m_q_dot_freeze_protection;	//[MWt]
 
 	cr_out_solver.m_standby_control = -1;
@@ -1832,7 +1839,7 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 
 			if( m_dot_code != C_monotonic_eq_solver::CONVERGED )
 			{
-                if (m_dot_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) <= 0.3)
+                if (m_dot_code > C_monotonic_eq_solver::CONVERGED && std::abs(tol_solved) <= 0.3)
                 {
                     std::string error_msg = util::format("At time = %lg the iteration to find the steam mass flow rate resulting in the target outlet enthalpy only reached a convergence "
                         "= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
@@ -1899,8 +1906,9 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 		cr_out_solver.m_component_defocus = m_component_defocus;
 
 		// For now, set parasitic outputs to 0
-		cr_out_solver.m_W_dot_col_tracking = m_W_dot_sca_tracking;	//[MWe]
-		cr_out_solver.m_W_dot_htf_pump = m_W_dot_pump;				//[MWe]
+		//cr_out_solver.m_W_dot_col_tracking = m_W_dot_sca_tracking;	//[MWe]
+		//cr_out_solver.m_W_dot_htf_pump = m_W_dot_pump;				//[MWe]
+        cr_out_solver.m_W_dot_elec_in_tot = m_W_dot_sca_tracking + m_W_dot_pump;    //[MWe]
         cr_out_solver.m_q_dot_heater = 0.0;			//[MWt]
 
 		cr_out_solver.m_standby_control = -1;		//[-]
@@ -1930,8 +1938,9 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 		cr_out_solver.m_T_salt_hot = 0.0;			//[C]
 		cr_out_solver.m_component_defocus = 1.0;	//[-]
 
-		cr_out_solver.m_W_dot_col_tracking = 0.0;	//[MWe]
-		cr_out_solver.m_W_dot_htf_pump = 0.0;		//[MWe]
+		//cr_out_solver.m_W_dot_col_tracking = 0.0;	//[MWe]
+		//cr_out_solver.m_W_dot_htf_pump = 0.0;		//[MWe]
+        cr_out_solver.m_W_dot_elec_in_tot = 0.0;    //[MWe]
         cr_out_solver.m_q_dot_heater = 0.0;			//[MW]
 
 		cr_out_solver.m_standby_control = -1;		//[-]
@@ -2671,7 +2680,7 @@ void C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int_ave(doubl
     double deltaT = T_out_t_end_prev - T_x0_at_P_in;	//[K]
 
     double h_out_t_start_local = std::numeric_limits<double>::quiet_NaN();
-    if (fabs(deltaT) >= deltaT_tol)
+    if (std::abs(deltaT) >= deltaT_tol)
     {   // If inlet pressure and initial temperature are not 2-phase, then use properties at water_TP to calculate enthalpy
         water_prop_error = water_TP(T_out_t_end_prev, P_in, &wp);
         if (water_prop_error != 0)
@@ -2773,7 +2782,7 @@ void C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int(double h_
 
 	// Check that this guess is not too close to Guess1
 	double diff_guess = (h_out_t_end_guess2 - h_out_t_end_prev) / h_out_t_end_prev;
-	if( abs(diff_guess) < 0.01 )
+	if(std::abs(diff_guess) < 0.01 )
 	{
 		if(diff_guess > 0.0)
 		{
@@ -2829,7 +2838,7 @@ void C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int(double h_
 
 	if( h_out_t_end_code != C_monotonic_eq_solver::CONVERGED )
 	{
-		if ( !(h_out_t_end_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) <= 0.1))
+		if ( !(h_out_t_end_code > C_monotonic_eq_solver::CONVERGED && std::abs(tol_solved) <= 0.1))
 		{
 			throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int monotonic solver failed to reach convergence","",5));
 		}
@@ -2930,1134 +2939,1134 @@ void C_csp_lf_dsg_collector_receiver::set_output_values()
 	mc_reported_outputs.value(E_W_DOT_PUMP, m_W_dot_pump);					//[MWe]
 }
 
-void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs &weather,
-	const C_csp_solver_htf_1state &htf_state_in,
-	const C_csp_collector_receiver::S_csp_cr_inputs &inputs,
-	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
-	const C_csp_solver_sim_info &sim_info)
-{
-
-	// start optical function
-	double I_bn = weather.m_beam;						//[W/m2] Current DNI
-	double T_db = weather.m_tdry + 273.15;				//[K] Dry bulb temp, convert from C
-	double T_dp = weather.m_tdew + 273.15;				//[K] Dewpoint temp, convert from C
-	double P_amb = weather.m_pres*100.0;				//[Pa] Ambient pressure, convert from mbar
-	double V_wind = weather.m_wspd;						//[m/s] Ambient windspeed
-	double shift = weather.m_shift*0.0174533;			//[deg] Shift in longitude from local standard meridian
-	double SolarAz = weather.m_solazi;					//[deg] Solar azimuth angle
-	double SolarZen = weather.m_solzen*0.0174533;;		//Solar zenith angle [deg]
-	double T_pb_out = htf_state_in.m_temp + 273.15;		//[K] Fluid temperature from the power block, convert from C
-	int tou_period = sim_info.m_tou - 1;				//[-] control value between 1 & 9, have to change to 0-8 for array index
-
-	SolarAz = (SolarAz - 180.0) * 0.0174533;			//[rad] Convert to TRNSYS convention, radians
-
-	// Increase call-per-timestep counter
-	// Converge() sets it to -1, so on first call this line will adjust it = 0
-	m_ncall++;
-
-	double time = sim_info.ms_ts.m_time;
-	double m_dt = sim_info.ms_ts.m_step;
-	double hour = (double)((int)(time / 3600.0) % 24);
-
-	double T_sky = CSP::skytemp(T_db, T_dp, hour);		//[K]
-
-	// Calculations for values once per timestep
-	if (m_ncall == 0)
-	{
-		if(I_bn > 0.0)
-			loop_optical_eta(weather, sim_info);
-		else
-		{
-			loop_optical_eta_off();
-		}
-
-		// Set initial defocus
-		m_defocus = 1.0;
-		m_defocus_prev = m_defocus;
-		m_is_def = false;
-		m_err_def = 0.0;
-		m_tol_def = 0.0001;
-		m_rc = 0.7;						//Relaxation coefficient
-		// Set the power block return temperature to a reasonable value since the power block has not yet been called
-		T_pb_out = m_T_field_in_des;	//[K]
-
-		// Reset the pressure check function
-		check_pressure.report_and_reset();
-
-		evac_tube_model.Update_Timestep_Properties(m_eta_optical);
-	}
-
-	// end optical
-	////////////////////////////////////////////////////////////////////
-	////////////////////////////////////////////////////////////////////
-
-
-
-
-	//************************************************************
-	// Determine the solar field thermal performance
-	//************************************************************
-	int iter_def = 0;
-	bool defocus_on = false;
-
-
-	double m_dot = std::numeric_limits<double>::quiet_NaN();
-	double P_turb_in = std::numeric_limits<double>::quiet_NaN();
-	double dP_basis = std::numeric_limits<double>::quiet_NaN();
-	double h_pb_out = std::numeric_limits<double>::quiet_NaN();
-	double h_b_in = std::numeric_limits<double>::quiet_NaN();
-	double eta_opt_ave = 0.0;
-	double m_dot_b_tot = 0.0;
-
-	do		// Begin defocus loop
-	{
-		defocus_on = false;
-		double defocus_lim = max(min(m_defocus, 1.0), 0.0);
-		eta_opt_ave = 0.0;
-		int gset = 0;
-		double q_rec_loop = 0.0;
-		double q_inc_loop = 0.0;
-		for (int i = 0; i < m_nModTot; i++)
-		{
-			if (i >= m_nModBoil && m_is_multgeom)
-				gset = 1;
-			// Calculate the incident energy on each module
-			m_q_inc[i] = I_bn*m_A_aperture.at(gset, 0) / 1000.0;		//[kWt] Incident beam radiation for each receiver in loop
-			// Calculate the energy on the receiver
-			m_q_rec[i] = m_q_inc[i] * m_eta_optical[gset]*defocus_lim;	//[kWt] Incident thermal power on receiver after *optical* losses and *defocus*
-			// Average optical efficiency
-			eta_opt_ave += m_eta_optical[gset]*m_A_aperture.at(gset, 0)*m_nLoops / m_Ap_tot;
-			q_rec_loop += m_q_rec[i];			//[kWt] LOOP total thermal power on receiver after *optical* losses and *defocus*
-			q_inc_loop += m_q_inc[i];					//[kW] LOOP total incident beam radiation
-		}
-
-		// For nighttime conditions, calculate the solar field inlet temperature
-		if (q_rec_loop == 0.0 && m_ffrac[tou_period] < m_cycle_cutoff_frac)
-			T_pb_out = max(313.15, m_T_sys_prev);		// Need to limit the inlet temp so that the minimum temp in the loops stays above freezing
-
-		// Total reference pressure drop across the field: 9/16/13: tn: already calculated in initial call
-
-		// Guess the mass flow rate in a loop for iteration. Ratio of incident heat/abs heat at design differs by nLoops..
-		double m_dot_guess = max(min(q_rec_loop / m_q_dot_abs_tot_des * m_m_dot_des, m_m_dot_max), m_m_dot_min);
-
-		// Guess the turbine pressure.. turbine inlet pressure is highly insensitive to condenser pressure, so
-		// simplify the expression to eliminate condenser pressure
-		double P_turb_in_guess = turb_pres_frac(m_dot_guess*(double)m_nLoops / m_m_dot_pb_des, m_fossil_mode, m_ffrac[tou_period], m_fP_turb_min)*m_P_turb_des;
-		double dP_basis_guess = m_dot_guess*(double)m_nLoops / m_m_dot_des*m_P_turb_des;
-
-		if (m_is_oncethru || m_ftrack <= 0.0)		// Run in once-through mode at night since distinct boiler/superheater models are not useful
-		{
-			// Guess the loop inlet/outlet enthalpies
-			water_TP(T_pb_out, check_pressure.P_check(P_turb_in_guess + dP_basis_guess*(m_fP_sf_tot - m_fP_hdr_c))*100.0, &wp);
-			double h_b_in_guess = wp.enth;		//[kJ/kg]
-			double h_pb_out_guess = h_b_in_guess;	//[kJ/kg]
-			water_TP(m_T_field_out_des, check_pressure.P_check(P_turb_in_guess + dP_basis_guess*m_fP_hdr_h)*100.0, &wp);
-			double h_sh_out_guess = wp.enth;		//[kJ/kg]
-
-			// Set the loop inlet enthalpy
-			m_h_in.at(0, 0) = h_b_in_guess;	//[kJ/kg]
-
-			// Set up iteration brackets for false-position method
-			double m_dot_lower = 0.7*m_m_dot_min;
-			double m_dot_upper = 1.3*m_m_dot_max;
-			// Set logic to switch from bisection to false position mode
-			bool upflag = false;
-			bool lowflag = false;
-			// Set upper and lower err results
-			double y_upper = std::numeric_limits<double>::quiet_NaN();
-			double y_lower = std::numeric_limits<double>::quiet_NaN();
-
-			// Set the iteration tolerance (MJW found that it doesn't help to adjust the tolerance based on iteration number)
-			double tol = 1.E-4;
-
-			// Do a rough guess of the receiver enthlapy for the whole loop
-			double dh_guess = (h_sh_out_guess - h_b_in_guess) / (double)m_nModTot;
-			std::vector<double> h_ave;
-			h_ave.resize(m_nModTot, std::numeric_limits<double>::quiet_NaN());
-			for (int i = 0; i < m_nModTot; i++)
-				h_ave[i] = h_b_in_guess + dh_guess*(double)(i + 1) - dh_guess / 2.0;
-
-			double err = 10.0*tol;
-			int iter = 0;
-
-			// Main iteration loop
-			while (fabs(err) > tol && iter < 50)
-			{
-				iter++;
-				m_dot = m_dot_guess;
-
-				// Update the turbine pressure and enthalpies
-				P_turb_in = check_pressure.P_check(turb_pres_frac(m_dot*(double)m_nLoops / m_m_dot_pb_des, m_fossil_mode, m_ffrac[tou_period], m_fP_turb_min)*m_P_turb_des);
-				dP_basis = m_dot*(double)m_nLoops / m_m_dot_des*m_P_turb_des;
-
-
-
-				// *****************************************
-				// Test 'once_thru_loop_energy_balance_T_t_in
-				// *****************************************
-				//once_thru_loop_energy_balance_T_t_int(weather, T_pb_out, P_turb_in, m_dot, h_sh_out_guess, sim_info);
-
-
-
-
-				// Guess the loop inlet/outlet enthalpies
-				water_TP(T_pb_out, check_pressure.P_check(P_turb_in + dP_basis*(m_fP_sf_tot - m_fP_hdr_c))*100.0, &wp);
-				h_b_in = wp.enth;
-				h_pb_out = h_b_in;
-				water_TP(m_T_field_out_des, check_pressure.P_check(P_turb_in + dP_basis*m_fP_hdr_h)*100.0, &wp);
-				double h_sh_out_target = wp.enth;
-
-				// Set the loop inlet enthalpy
-				m_h_in.at(0, 0) = h_b_in;
-
-				// Initialize
-				m_q_loss.assign(m_q_loss.size(), 0.0);	//[kWt] Thermal loss for each receiver in loop
-				m_q_abs.assign(m_q_abs.size(), 0.0);	//[kWt] Thermal power absorbed by steam in each receiver
-
-				for (int i = 0; i < m_nModTot; i++)
-				{
-					// Which geometry set?
-					gset = 0;
-					if (i >= m_nModBoil && m_is_multgeom)
-						gset = 1;
-
-					// Calculate thermal losses based on temperature guess values
-					// Calculate the local pressure in the superheter. Assume a linear pressure drop across each section
-					double P_loc = check_pressure.P_check(P_turb_in + dP_basis * (m_fP_hdr_h + (m_fP_sf_sh + m_fP_boil_to_sh + m_fP_sf_boil)*(1.0 - (double)i / (double)m_nModTot)));
-
-					// Get the temperature at each state point in the loop
-					water_PH(P_loc*100.0, h_ave[i], &wp);
-					m_T_ave.at(i, 0) = wp.temp;
-
-					// Calculate the heat loss at each temperature
-					if (m_HLCharType.at(gset, 0) == 1)
-					{
-						// Estimate based on the polynomial adjustments provided by the user
-						double dT_loc = m_T_ave.at(i, 0) - T_db;
-						double c_hl = m_HL_dT.at(gset, 0) + m_HL_dT.at(gset, 1)*dT_loc + m_HL_dT.at(gset, 2)*pow(dT_loc, 2) + m_HL_dT.at(gset, 3)*pow(dT_loc, 3) + m_HL_dT.at(gset, 4)*pow(dT_loc, 4);	//[W/m] Effect from dT
-						if (m_HL_W.at(gset, 0) != 0 || m_HL_W.at(gset, 1) != 0 || m_HL_W.at(gset, 2) != 0 || m_HL_W.at(gset, 3) != 0 || m_HL_W.at(gset, 0) != 0)
-							c_hl *= m_HL_W.at(gset, 0) + m_HL_W.at(gset, 1)*V_wind + m_HL_W.at(gset, 2)*pow(V_wind, 2) + m_HL_W.at(gset, 3)*pow(V_wind, 3) + m_HL_W.at(gset, 4)*pow(V_wind, 4);
-						m_q_loss[i] = c_hl*m_L_col.at(gset, 0) / 1000.0;	//[kWt] Thermal loss for each receiver in loop
-						m_q_abs[i] = m_q_rec[i] - m_q_loss[i];				//[kWt] Thermal power absorbed by steam in each receiver
-					}
-					else if (m_HLCharType.at(gset, 0) == 2)
-					{
-						// Calculate thermal loss from Forristall receiver model (algorithm is found in Type 250)
-
-						m_q_loss[i] = 0.0;		//[kWt] Thermal loss for each receiver in loop
-						m_q_abs[i] = 0.0;		//[kWt] Thermal power absorbed by steam in each receiver
-
-						for (int j = 0; j < 4; j++)
-						{
-							// Only calculate if the HCE fraction is non-zero
-							if (m_HCE_FieldFrac.at(gset, j) <= 0.0)
-								continue;
-
-							/*Call the receiver performance model - single point mode
-							!This call uses VP1 as the HTF since 2-phase heat transfer correlations have high uncertainty. The
-							!only use for the fluid type in the single point model is calculating the convective heat transfer
-							!coefficient between the HTF and inner absorber wall. This is sufficiently high for both HTF and
-							!steam that substituting the HTF here introduces negligible error.*/
-
-							// For LF, HT = CT && sca_num = 0
-							double q_rec_loss, q_rec_abs, dum1, dum2, dum3;
-							q_rec_loss = q_rec_abs = dum1 = dum2 = dum3 = std::numeric_limits<double>::quiet_NaN();
-							evac_tube_model.EvacReceiver(m_T_ave.at(i, 0), 10.0, T_db, T_sky, V_wind, P_amb, defocus_lim*m_q_inc[i] / m_L_col.at(gset, 0)*1000.0, gset, j, gset, 0, true, m_ncall,
-								time / 3600.0, q_rec_loss, q_rec_abs, dum1, dum2, dum3);
-
-							if (q_rec_loss != q_rec_loss || q_rec_abs != q_rec_abs)
-							{
-								q_rec_loss = 0.0;
-								q_rec_abs = 0.0;
-							}
-
-							m_q_loss[i] += q_rec_loss*m_L_col.at(gset, 0)*m_HCE_FieldFrac.at(gset, j) / 1000.0;		//[kWt] Thermal loss for each receiver in loop
-							m_q_abs[i] += q_rec_abs*m_L_col.at(gset, 0)*m_HCE_FieldFrac.at(gset, j) / 1000.0;		//[kWt] Thermal power absorbed by steam in each receiver
-
-						}
-
-					}
-
-					// Set the inlet enthalpy equal to the outlet of the previous node
-					if (i > 0)
-						m_h_in.at(i, 0) = m_h_out.at(i - 1, 0);
-
-					// Calculate the collector outlet enthalpy
-					double tol_t = 0.001;
-					double err_t = 10.0*tol_t;
-					int iter_t = 0;
-					while (err_t > tol_t && iter_t < 50)
-					{
-						iter_t++;
-						// Calculate the average enthalpy value in the collector module
-						m_h_out.at(i,0) = check_h.check(m_h_in.at(i,0) + m_q_abs[i]/m_dot_guess - (m_T_ave.at(i,0)-m_T_ave_prev[i])*m_C_thermal/(m_dt*m_dot_guess));	//[kJ/kg]
-
-						// Update guesses for h_ave and T_ave
-						double h_aveg = (m_h_out.at(i,0) + m_h_in.at(i, 0)) / 2.0;
-						// Update the average temperature for the heat loss calculation
-						water_PH(P_loc*100.0, h_aveg, &wp);
-						m_T_ave.at(i, 0) = wp.temp;
-						err_t = fabs((h_ave[i] - h_aveg) / h_ave[i]);
-						h_ave[i] = h_aveg;
-					}
-
-					// Test transient energy balance convergence
-					// double h_out_comp = std::numeric_limits<double>::quiet_NaN();
-					// transient_energy_bal_numeric_int(m_h_in.at(i, 0), P_loc*100.0, m_q_abs[i], m_dot_guess, m_T_ave_prev[i], m_C_thermal, m_dt, h_out_comp);
-
-					if (i < m_nModTot - 1)
-						h_ave[i + 1] = check_h.check(m_h_in.at(i, 0) + (m_h_out.at(i,0) - m_h_in.at(i, 0))*1.5);
-
-				}   // End step through receivers in flow path
-
-				err = (h_sh_out_target - m_h_out.at(m_nModTot - 1, 0)) / h_sh_out_target;
-
-				if (m_dot == m_m_dot_min && err > 0.0)			// m_dot may already equal m_dot_min while the temperature is still too low, this saves 1 more iteration
-					break;
-
-				//***************************************************
-				// *** Hybrid False Position Iteration Method *******
-				//***************************************************
-				if (lowflag && upflag)
-				{
-					if (err > 0.0)
-					{
-						m_dot_upper = m_dot;
-						y_upper = err;
-					}
-					else
-					{
-						m_dot_lower = m_dot;
-						y_lower = err;
-					}
-					m_dot_guess = y_upper / (y_upper - y_lower)*(m_dot_lower - m_dot_upper) + m_dot_upper;
-				}
-				else
-				{
-					if (err > 0.0)			// Prescribed is greater than calculated, so decrease mass flow and set upper limit
-					{
-						m_dot_upper = m_dot;
-						y_upper = err;
-						upflag = true;
-					}
-					else					// Prescribed is less than calculated, so increase mass flow and set lower limit
-					{
-						m_dot_lower = m_dot;
-						y_lower = err;
-						lowflag = true;
-					}
-
-					if (lowflag && upflag)		// If results of bracket are defined, use false position
-						m_dot_guess = y_upper / (y_upper - y_lower)*(m_dot_lower - m_dot_upper) + m_dot_upper;
-					else						// If not, recalculate value based on approximate energy balance
-					{
-						if (iter < 3)
-						{
-							double q_abs_sum = 0.0;
-							for (int ii = 0; ii < m_nModTot; ii++)
-								q_abs_sum += m_q_abs[ii];				//[kWt] LOOP total Thermal power absorbed by steam in each receiver
-							m_dot_guess = q_abs_sum / (h_sh_out_target - h_b_in);
-							m_dot_guess = max(m_m_dot_min*0.5, min(m_dot_guess, m_m_dot_max*1.5));
-						}
-						else
-							m_dot_guess = 0.5*m_dot_upper + 0.5*m_dot_lower;
-					}
-				}
-
-				//**************************************************************************
-				// **** End Hyrbid False Position Iteration Method *****************
-				//**************************************************************************
-				if (m_dot_lower >= m_m_dot_max)	// Once the minimum possible m_dot to solve energy balance is greater than maximum allowable, exit loop and go to defocus
-				{
-					m_is_def = true;
-					break;
-				}
-				if (m_dot_upper <= m_m_dot_min)   // Once the maximum possible m_dot to solve energy balance is less than minimum allowable, set to min value and get final T_out
-					m_dot_guess = m_m_dot_min;
-
-			}		// End main iteration loop
-
-			// Defocus calculations
-			m_err_def = (m_dot_guess - m_m_dot_max) / m_m_dot_max;
-			if (!m_is_def && m_err_def > 0.0)
-				m_is_def = true;
-			if (m_is_def)
-			{
-				// Calculate new defocus
-				m_defocus = min(1.0, m_defocus_prev*pow(1.0 / (m_err_def + 1.0), m_rc));
-				if (fabs(m_err_def) > m_tol_def)
-				{
-					m_defocus_prev = m_defocus;
-					iter_def++;
-					if (iter_def < 11)
-					{
-						defocus_on = true;
-						continue;
-					}
-				}
-			}
-
-			// The boiler mass flow rate is equal to the flow throughout the loop
-			m_dot_b_tot = m_dot*(double)m_nLoops;
-
-		}		// End once-through model
-		else	// Standard boiler + optional superheater design
-		{
-			// Boiler
-			// Guess the field inlet enthalpy
-			water_TP(T_pb_out, check_pressure.P_check(P_turb_in_guess + dP_basis_guess*(m_fP_sf_tot - m_fP_hdr_c))*100.0, &wp);
-			double h_pb_out_guess = wp.enth;		//[kJ/kg]
-
-			// Boiler outlet conditions
-			water_PQ(check_pressure.P_check(P_turb_in_guess + dP_basis_guess*(m_fP_hdr_h + m_fP_sf_sh + m_fP_boil_to_sh))*100.0, m_x_b_des, &wp);
-			double h_b_out_guess = wp.enth;		//[kJ/kg]
-			water_PQ(check_pressure.P_check(P_turb_in_guess + dP_basis_guess*(m_fP_hdr_h + m_fP_sf_sh + m_fP_boil_to_sh))*100.0, 0.0, &wp);
-			double h_b_recirc_guess = wp.enth;	//[kJ/kg]
-
-			// Determine the mixed inlet enthalpy
-			double h_b_in_guess = h_pb_out_guess*m_x_b_des + h_b_recirc_guess*(1.0 - m_x_b_des);
-
-			// Set the loop inlet enthalpy
-			m_h_in(0, 0) = h_b_in_guess;		//[kJ/kg]
-
-			double m_dot_b_guess = m_dot_guess / m_x_b_des;
-			// Set up iteration brackets for false-position method
-			double m_dot_lower = 0.7*m_m_dot_min / m_x_b_des;
-			double m_dot_upper = 1.3*m_m_dot_b_max;
-
-			bool upflag = false;		// Set logic to switch from bisection to false position mode
-			bool lowflag = false;		// Set logic to swtich from bisection to false position mode
-
-			double y_upper = std::numeric_limits<double>::quiet_NaN();
-			double y_lower = std::numeric_limits<double>::quiet_NaN();
-
-			// Set iteration tolerance
-			double tol = 1.E-4;
-
-			// Do a rough guess of the receiver enthalpy for the boiler
-			double dh_b_guess = (h_b_out_guess - h_b_in_guess) / (double)m_nModBoil;
-			std::vector<double> h_ave;
-			h_ave.resize(m_nModTot, std::numeric_limits<double>::quiet_NaN());
-			for (int i = 0; i < m_nModBoil; i++)
-				h_ave[i] = h_b_in_guess + dh_b_guess*(double)(i + 1) - dh_b_guess / 2.0;
-
-			double err = 10.0*tol;
-			int iter = 0;
-
-			double m_dot_b = std::numeric_limits<double>::quiet_NaN();
-
-			while (fabs(err) > tol && iter < 50)
-			{
-				iter++;
-				m_dot_b = m_dot_b_guess;
-				//Initialize
-				m_q_loss.assign(m_q_loss.size(), 0.0);		//[kWt] Thermal loss for each receiver in loop
-				m_q_abs.assign(m_q_abs.size(), 0.0);		//[kWt] Thermal power absorbed by steam in each receiver
-
-				// Update inlet enthalpy conditions and turbine pressure
-				P_turb_in = check_pressure.P_check(turb_pres_frac(m_dot_b*m_x_b_des*(double)m_nLoops / m_m_dot_pb_des, m_fossil_mode, m_ffrac[tou_period], m_fP_turb_min)*m_P_turb_des);
-				dP_basis = m_dot_b*(double)m_nLoops / m_m_dot_b_des*m_P_turb_des;
-
-				// Field inlet enthalpy
-				water_TP(T_pb_out, check_pressure.P_check(P_turb_in + dP_basis*(m_fP_sf_tot - m_fP_hdr_c))*100.0, &wp);
-				h_pb_out = wp.enth;
-
-				// Update the boiler outlet conditions
-				water_PQ(check_pressure.P_check(P_turb_in + dP_basis*(m_fP_hdr_h + m_fP_sf_sh + m_fP_boil_to_sh))*100.0, m_x_b_des, &wp);	// 2-phase outlet enthalpy
-				double h_b_out = wp.enth;
-				water_PQ(check_pressure.P_check(P_turb_in + dP_basis*(m_fP_hdr_h + m_fP_sf_sh + m_fP_boil_to_sh))*100.0, 0.0, &wp);		// Recirculation enthalpy
-				double h_b_recirc = wp.enth;
-
-				// Determin the mixed inlet enthalpy
-				h_b_in = h_pb_out*m_x_b_des + h_b_recirc*(1.0 - m_x_b_des);
-
-				// Set the loop inlet enthalpy
-				m_h_in(0, 0) = h_b_in;
-
-				for (int i = 0; i < m_nModBoil; i++)
-				{
-					// Calculate thermal losses based on temperature guess values
-					// Calculate the local pressure in the boiler. Assume a linear pressure drop across each section
-					double P_loc = check_pressure.P_check(P_turb_in + dP_basis*(m_fP_sf_tot - m_fP_sf_boil*(1.0 - (double)i / (double)m_nModBoil)));
-
-					// Get the temperature at each state in the boiler
-					water_PH(P_loc*100.0, h_ave[i], &wp);
-					m_T_ave.at(i, 0) = wp.temp;
-
-					gset = 0;
-					// Calculate the heat loss at each temperature
-					if (m_HLCharType.at(gset, 0) == 1)
-					{
-						// Estimate based on the polynomial adjustments provided by the user
-						double dT_loc = m_T_ave.at(i, 0) - T_db;
-						double c_hl = m_HL_dT.at(gset, 0) + m_HL_dT.at(gset, 1)*dT_loc + m_HL_dT.at(gset, 2)*pow(dT_loc, 2) + m_HL_dT.at(gset, 3)*pow(dT_loc, 3) + m_HL_dT.at(gset, 4)*pow(dT_loc, 4);	//[W/m] Effect from dT
-						if (m_HL_W.at(gset, 0) != 0 || m_HL_W.at(gset, 1) != 0 || m_HL_W.at(gset, 2) != 0 || m_HL_W.at(gset, 3) != 0 || m_HL_W.at(gset, 0) != 0)
-							c_hl *= m_HL_W.at(gset, 0) + m_HL_W.at(gset, 1)*V_wind + m_HL_W.at(gset, 2)*pow(V_wind, 2) + m_HL_W.at(gset, 3)*pow(V_wind, 3) + m_HL_W.at(gset, 4)*pow(V_wind, 4);
-						m_q_loss[i] = c_hl*m_L_col.at(gset, 0) / 1000.0;	//[kWt] Thermal loss for each receiver in loop
-						m_q_abs[i] = m_q_rec[i] - m_q_loss[i];				//[kWt] Thermal power absorbed by steam in each receiver
-					}
-					else if (m_HLCharType.at(gset, 0) == 2)
-					{
-						// Calculate thermal loss from Forristall receiver model (algorithm is found in Type 250)
-
-						m_q_loss[i] = 0.0;			//[kWt] Thermal loss for each receiver in loop
-						m_q_abs[i] = 0.0;			//[kWt] Thermal power absorbed by steam in each receiver
-
-						for (int j = 0; j < 4; j++)
-						{
-							// Only calculate if the HCE fraction is non-zero
-							if (m_HCE_FieldFrac.at(gset, j) <= 0.0)
-								continue;
-
-							/*Call the receiver performance model - single point mode
-							!This call uses VP1 as the HTF since 2-phase heat transfer correlations have high uncertainty. The
-							!only use for the fluid type in the single point model is calculating the convective heat transfer
-							!coefficient between the HTF and inner absorber wall. This is sufficiently high for both HTF and
-							!steam that substituting the HTF here introduces negligible error.*/
-
-							// For LF, HT = CT && sca_num = 0
-							double q_rec_loss, q_rec_abs, dum1, dum2, dum3;
-							q_rec_loss = q_rec_abs = dum1 = dum2 = dum3 = std::numeric_limits<double>::quiet_NaN();
-							evac_tube_model.EvacReceiver(m_T_ave.at(i, 0), 10.0, T_db, T_sky, V_wind, P_amb, defocus_lim*m_q_inc[i] / m_L_col.at(gset, 0)*1000.0, gset, j, gset, 0, true, m_ncall,
-								time / 3600.0, q_rec_loss, q_rec_abs, dum1, dum2, dum3);
-
-							if (q_rec_loss != q_rec_loss || q_rec_abs != q_rec_abs)
-							{
-								q_rec_loss = 0.0;
-								q_rec_abs = 0.0;
-							}
-
-							m_q_loss[i] += q_rec_loss*m_L_col.at(gset, 0)*m_HCE_FieldFrac.at(gset, j) / 1000.0;		//[kW]
-							m_q_abs[i] += q_rec_abs*m_L_col.at(gset, 0)*m_HCE_FieldFrac.at(gset, j) / 1000.0;		//[kWt] Thermal power absorbed by steam in each receiver
-
-						}
-
-					}
-
-					// Set the inlet enthalpy equal to the outlet of the previous node
-					if (i > 0)
-						m_h_in(i, 0) = m_h_out(i - 1, 0);
-
-					// Calculate the collector outlet enthalpy
-					double tol_t = 0.001;
-					double err_t = 10.0*tol_t;
-					int iter_t = 0;
-
-					while (err_t > tol_t && iter_t < 50)
-					{
-						iter_t++;
-						// Calculate the average enthalpy value in the collector module
-						m_h_out.at(i,0) = check_h.check(m_h_in.at(i, 0) + m_q_abs[i] / m_dot_b_guess - (m_T_ave.at(i, 0) - m_T_ave_prev[i])*m_C_thermal/(m_dt*m_dot_b_guess));
-						// Update guesses for h_ave and T_ave
-						double h_aveg = (m_h_out.at(i,0) + m_h_in.at(i, 0)) / 2.0;
-						// Update the average temperature for the heat loss calculation
-						water_PH(P_loc*100.0, h_aveg, &wp);
-						m_T_ave.at(i, 0) = wp.temp;
-						err_t = fabs((h_ave[i] - h_aveg) / h_ave[i]);
-						h_ave[i] = h_aveg;
-					}
-
-					// Predict the next outlet enthalpy
-					if (i < m_nModTot - 1)
-						h_ave[i+1] = check_h.check(m_h_in.at(i, 0) + (m_h_out.at(i, 0) - m_h_in.at(i, 0))*1.5);
-
-				}	// End step through boiler receiver modules
-
-				err = (h_b_out - m_h_out.at(m_nModBoil - 1, 0)) / h_b_out;
-
-				if (m_dot_b == m_m_dot_min / m_x_b_des && err > 0.0)		// M_dot may already equal m_dot_min while the temperature is still too low, this saves 1 more iteration
-					break;
-
-				// **************************************************
-				// **** Hybrid False Position Iteration Method ******
-				// **************************************************
-				if (lowflag && upflag)
-				{
-					if (err > 0.0)
-					{
-						m_dot_upper = m_dot_b;
-						y_upper = err;
-					}
-					else
-					{
-						m_dot_lower = m_dot_b;
-						y_lower = err;
-					}
-					m_dot_b_guess = y_upper / (y_upper - y_lower)*(m_dot_lower - m_dot_upper) + m_dot_upper;
-				}
-				else
-				{
-					if (err > 0.0)			// Prescribed is greater than calculated, so decrease mass flow and set upper limit
-					{
-						m_dot_upper = m_dot_b;
-						y_upper = err;
-						upflag = true;
-					}
-					else
-					{
-						m_dot_lower = m_dot_b;
-						y_lower = err;
-						lowflag = true;
-					}
-
-					if (lowflag && upflag)		// If results of bracket are defined, use false position
-						m_dot_b_guess = y_upper / (y_upper - y_lower)*(m_dot_lower - m_dot_upper) + m_dot_upper;
-					else		// If not, recalculate value based on approximate energy balance
-					{
-						if (iter < 3)
-						{
-							double q_abs_sum = 0.0;
-							for (int ii = 0; ii < m_nModBoil; ii++)
-								q_abs_sum += m_q_abs[ii];				//[kWt] LOOP total Thermal power absorbed by steam in each receiver
-							m_dot_b_guess = q_abs_sum / (h_b_out - h_b_in);
-							m_dot_b_guess = max(m_m_dot_min / m_x_b_des*0.5, min(m_dot_b_guess, m_m_dot_b_max*1.5));
-						}
-						else
-							m_dot_b_guess = 0.5*m_dot_upper + 0.5*m_dot_lower;
-					}
-				}
-
-				// ************************************************************************
-				// *** End Hybrid False Position Iteration Method ***********
-				// ************************************************************************
-				if (m_dot_lower >= m_m_dot_b_max)		// Once the minimum possible m_dot to solve energy balance is greater than maximum allowable, exit loop and go to defocus
-				{
-					m_is_def = true;
-					break;
-				}
-
-				if (m_dot_upper <= m_m_dot_min / m_x_b_des)		// Once the maximum possible m_dot to solve energy balance is less than minimum allowable, set to min value and get final T_out
-					m_dot_b_guess = m_m_dot_min / m_x_b_des;
-
-			}   // End main BOILER iteration loop
-
-			// Defocus calculations
-			m_err_def = (m_dot_b_guess - m_m_dot_b_max) / m_m_dot_b_max;
-			if (!m_is_def && m_err_def > 0.0)
-				m_is_def = true;
-			if (m_is_def)
-			{
-				// Calculate new defocus
-				m_defocus = min(1.0, m_defocus_prev*pow(1.0 / (m_err_def + 1.0), m_rc));
-				if (fabs(m_err_def) > m_tol_def)
-				{
-					m_defocus_prev = m_defocus;
-					iter_def++;
-					if (iter_def < 11)
-					{
-						defocus_on = true;
-						continue;
-					}
-				}
-			}
-
-			// Superheater
-			if (m_is_sh)
-			{
-				// Choose which geometry set to use
-				gset = 0;
-				if (m_is_multgeom)
-					gset = 1;
-
-				// Calculate superheater inlet enthalpy
-				water_PQ(check_pressure.P_check(P_turb_in + dP_basis*(m_fP_hdr_h + m_fP_sf_sh))*100.0, 1.0, &wp);
-				double h_sh_in = wp.enth;		//[kJ/kg]
-				// The superheater outlet enthalpy is constrained according to the steam mass flow produced in the boiler
-				water_TP(m_T_field_out_des, check_pressure.P_check(P_turb_in + dP_basis*m_fP_hdr_h)*100.0, &wp);
-				double h_sh_out = wp.enth;		//[kJ/kg]
-
-				// Set the loop inlet enthalpy
-				m_h_in.at(m_nModBoil, 0) = h_sh_in;
-
-				// Do a rough guess of the receiver enthalpy for the boiler
-				double dh_sh = (h_sh_out - h_sh_in) / (double)m_nModSH;
-				for (int ii = 0; ii < m_nModSH; ii++)
-				{
-					int i = ii + m_nModBoil;
-					h_ave[i] = h_sh_in + dh_sh*(double)(ii + 1) - dh_sh / 2.0;
-				}
-
-				m_dot = m_dot_b*m_x_b_des;
-				double T_sh_guess = m_T_field_out_des;		// Guess the superheater outlet temp
-
-				// Iterative loop to get convergence in heat loss
-				double tol_sh = 0.01;
-				double err_sh = 10.0*tol_sh;
-				int iter_sh = 0;
-
-				while (fabs(err_sh) > tol_sh && iter_sh < 5)
-				{
-					iter_sh++;
-
-					// Initialize
-					for (int i = m_nModBoil; i < m_nModTot; i++)
-					{
-						m_q_loss[i] = 0.0;			//[kWt] Thermal loss for each receiver in loop
-						m_q_abs[i] = 0.0;			//[kWt] Thermal power absorbed by steam in each receiver
-					}
-
-					for (int ii = 0; ii < m_nModSH; ii++)
-					{
-						int i = ii + m_nModBoil;
-
-						// Calculate thermal losses based on temperature guess values
-						// Calculate the local pressure in the superheater. Assume a linear pressure drop across each section
-						double P_loc = check_pressure.P_check(P_turb_in + dP_basis*(m_fP_hdr_h + m_fP_sf_sh*(1.0 - (double)ii / (double)m_nModSH)));
-
-						// Get the temperature at each state in the boiler
-						water_PH(P_loc*100.0, h_ave[i], &wp);
-						m_T_ave.at(i, 0) = wp.temp;
-
-						// Calculate the heat loss at each temperature
-						if (m_HLCharType.at(gset, 0) == 1)
-						{
-							// Estimate based on the polynomial adjustments provided by the user
-							double dT_loc = m_T_ave.at(i, 0) - T_db;
-							double c_hl = m_HL_dT.at(gset, 0) + m_HL_dT.at(gset, 1)*dT_loc + m_HL_dT.at(gset, 2)*pow(dT_loc, 2) + m_HL_dT.at(gset, 3)*pow(dT_loc, 3) + m_HL_dT.at(gset, 4)*pow(dT_loc, 4);	//[W/m] Effect from dT
-							if (m_HL_W.at(gset, 0) != 0 || m_HL_W.at(gset, 1) != 0 || m_HL_W.at(gset, 2) != 0 || m_HL_W.at(gset, 3) != 0 || m_HL_W.at(gset, 0) != 0)
-								c_hl *= m_HL_W.at(gset, 0) + m_HL_W.at(gset, 1)*V_wind + m_HL_W.at(gset, 2)*pow(V_wind, 2) + m_HL_W.at(gset, 3)*pow(V_wind, 3) + m_HL_W.at(gset, 4)*pow(V_wind, 4);
-							m_q_loss[i] = c_hl*m_L_col.at(gset, 0) / 1000.0;		//[kWt] Thermal loss for each receiver in loop
-							m_q_abs[i] = m_q_rec[i] - m_q_loss[i];		//[kWt] Thermal power absorbed by steam in each receiver
-						}
-						else if (m_HLCharType.at(gset, 0) == 2)
-						{
-							// Calculate thermal loss from Forristall receiver model (algorithm is found in Type 250)
-
-							m_q_loss[i] = 0.0;			//[kWt] Thermal loss for each receiver in loop
-							m_q_abs[i] = 0.0;			//[kWt] Thermal power absorbed by steam in each receiver
-
-							for (int j = 0; j < 4; j++)
-							{
-								// Only calculate if the HCE fraction is non-zero
-								if (m_HCE_FieldFrac.at(gset, j) <= 0.0)
-									continue;
-
-								/*Call the receiver performance model - single point mode
-								!This call uses VP1 as the HTF since 2-phase heat transfer correlations have high uncertainty. The
-								!only use for the fluid type in the single point model is calculating the convective heat transfer
-								!coefficient between the HTF and inner absorber wall. This is sufficiently high for both HTF and
-								!steam that substituting the HTF here introduces negligible error.*/
-
-								// For LF, HT = CT && sca_num = 0
-								double q_rec_loss, q_rec_abs, dum1, dum2, dum3;
-								q_rec_loss = q_rec_abs = dum1 = dum2 = dum3 = std::numeric_limits<double>::quiet_NaN();
-								evac_tube_model.EvacReceiver(m_T_ave.at(i, 0), 10.0, T_db, T_sky, V_wind, P_amb, defocus_lim*m_q_inc[i] / m_L_col.at(gset, 0)*1000.0, gset, j, gset, 0, true, m_ncall,
-									time / 3600.0, q_rec_loss, q_rec_abs, dum1, dum2, dum3);
-
-								if (q_rec_loss != q_rec_loss || q_rec_abs != q_rec_abs)
-								{
-									q_rec_loss = 0.0;
-									q_rec_abs = 0.0;
-								}
-
-								m_q_loss[i] += q_rec_loss*m_L_col.at(gset, 0)*m_HCE_FieldFrac.at(gset, j) / 1000.0;		//[kWt] Thermal loss for each receiver in loop
-								m_q_abs[i] += q_rec_abs*m_L_col.at(gset, 0)*m_HCE_FieldFrac.at(gset, j) / 1000.0;		//[kWt] Thermal power absorbed by steam in each receiver
-
-							}
-
-						}
-
-						// Set the inlet enthalpy equal to the outlet of the previous mode
-						if (ii > 0)
-							m_h_in.at(i, 0) = m_h_out.at(i - 1, 0);
-
-						// Calculate the collector outlet enthalpy
-						double tol_t = 0.001;
-						double err_t = 10.0*tol_t;
-						int iter_t = 0;
-
-						while (err_t > tol_t && iter_t < 50)
-						{
-							// Calculate the average enthalpy value in the collector module
-							m_h_out.at(i,0) = check_h.check(m_h_in.at(i, 0) + m_q_abs[i] / m_dot - (m_T_ave.at(i, 0) - m_T_ave_prev[i])*m_C_thermal/(m_dt*m_dot));
-							// Update guesses for h_ave and T_ave
-							double h_aveg = (m_h_out.at(i,0) + m_h_in.at(i, 0)) / 2.0;
-							// Update the average temperature for the heat loss calculation
-							water_PH(P_loc*100.0, h_aveg, &wp);
-							m_T_ave.at(i, 0) = wp.temp;
-							err_t = fabs((h_ave[i] - h_aveg) / h_ave[i]);
-							h_ave[i] = h_aveg;
-						}
-
-					}	// Step through superheater receivers
-
-					err_sh = (T_sh_guess - m_T_ave.at(m_nModTot - 1, 0)) / T_sh_guess;
-					T_sh_guess = m_T_ave.at(m_nModTot - 1, 0);
-
-				}	// Main superheater iteration
-
-			}		// End superheater
-			else
-			{
-				double m_dot_field = m_dot_b*m_x_b_des*(double)m_nLoops;	//[kg/s] The total field mass flow rate is just the saturated steam coming from the boiler section
-			}
-
-			m_dot_b_tot = m_dot_b * (double)m_nLoops;
-
-		}	// End "standard" boiler + sh configuration
-
-	} while (defocus_on);
-
-	// **** Calculate final solar field values ******
-	// Total effective solar field mass flow rate
-	double m_dot_field = m_dot*(double)m_nLoops;		//[kg/s]
-
-	// Look up temperatures
-	water_PH(check_pressure.P_check(P_turb_in + dP_basis*(m_fP_sf_tot - m_fP_hdr_c))*100.0, m_h_in.at(0, 0), &wp);
-	double T_field_in = wp.temp - 273.15;		// [C]
-	water_PH(check_pressure.P_check(P_turb_in + dP_basis*m_fP_hdr_h)*100.0, m_h_out.at(m_nModTot - 1, 0), &wp);
-	double T_loop_out = wp.temp - 273.15;		// [C]
-
-	// Piping thermal loss
-	double q_loss_piping = m_Ap_tot * m_Pipe_hl_coef / 1000.0 * ((T_field_in + T_loop_out) / 2.0 - (T_db - 273.15));	// hl coef is [W/m2-K], use average field temp as driving difference
-
-	// Given the piping heat/pressure loss, calculate the temperature at the inlet to the power block
-	double h_to_pb = 0.0;
-	if (m_dot > 0.0)
-		h_to_pb = m_h_out.at(m_nModTot - 1, 0) - q_loss_piping / m_dot_field;
-	else
-		h_to_pb = m_h_out.at(m_nModTot - 1, 0);
-
-	water_PH(P_turb_in*100.0, h_to_pb, &wp);
-	mc_sys_h_out.m_temp = wp.temp;		//[K]
-
-	// Energies
-	double q_inc_tot, q_rec_tot, q_abs_tot, q_loss_rec;
-	q_inc_tot = q_rec_tot = q_abs_tot = q_loss_rec = 0.0;
-	for (int i = 0; i < m_nModTot; i++)
-	{
-		q_inc_tot += m_q_inc[i];			//[kWt] LOOP total incident beam radiation
-		q_rec_tot += m_q_rec[i];			//[kWt] LOOP total incident thermal power on receiver after *optical* losses and *defocus*
-		q_abs_tot += m_q_abs[i];			//[kWt] LOOP total Thermal power absorbed by steam in each receiver
-		q_loss_rec += m_q_loss[i];			//[kWt] LOOP total thermal losses
-	}
-	q_inc_tot *= (double)m_nLoops / 1000.0;
-	q_rec_tot *= (double)m_nLoops / 1000.0;
-	q_abs_tot *= (double)m_nLoops / 1000.0;
-	q_loss_rec *= (double)m_nLoops / 1000.0;
-	q_loss_piping = q_loss_piping / 1000.0;			//[MW] Thermal losses from the receiver
-	double q_loss_sf = q_loss_rec + q_loss_piping;	//[MW] Total solar field losses, receiver + piping loss
-	double q_field_delivered = m_dot_field*max(h_to_pb - h_pb_out, 0.0);	//[kW] Energy balance indicating total energy delivered from the solar field
-	double h_field_out = h_to_pb;					// h_field_out is corrected later if fossil energy is supplied in topping mode
-
-	// 11.2.15 twn: corrected q_dump equation
-	double q_dump = (1.0 - m_defocus)*q_inc_tot;	//[MW] Total amount of energy dumped by collector defocusing
-	// this also works, assuming defocus is last multiplier before q_rec_tot:
-	//double q_dump = q_inc_tot*(1.0/m_defocus - 1.0);
-
-
-	double eta_thermal = 0.0;
-	if (q_rec_tot > 0.0)
-		eta_thermal = 1.0 - min(max(q_loss_sf / q_rec_tot, 0.0), 1.0);	//[-] thermal efficiency after reflection
-
-	// Calculate solar field pressure drops all [bar]
-	double dP_tot = dP_basis*m_fP_sf_tot;
-	double dP_hdr_c = dP_basis*m_fP_hdr_c;
-	double dP_sf_boil = dP_basis*m_fP_sf_boil;
-	double dP_boil_to_SH = dP_basis*m_fP_boil_to_sh;
-	double dP_sf_sh = dP_basis*m_fP_sf_sh;
-	double dP_hdr_h = dP_basis*m_fP_hdr_h;
-
-	// Calculate the total change in energy state
-	double E_bal_startup = 0.0;
-	double E_field = 0.0;
-	for (int i = 0; i < m_nModTot; i++)
-	{
-		E_bal_startup += (m_T_ave.at(i, 0) - m_T_ave_prev[i] )*m_C_thermal / m_dt*(double)m_nLoops / 1000.0;	//[MW]
-		E_field += (m_T_ave.at(i, 0) - m_T_field_ini)*m_C_thermal / m_dt*(double)m_nLoops / 1000.0;				//[MW]
-	}
-
-
-	//***********************************************************************
-	//*** Control logic *******************
-	//***********************************************************************
-	// Check how much power is available from the aux backup
-	double q_aux_avail = min(m_q_pb_des*m_ffrac[tou_period], m_q_max_aux);
-
-	/*Fossil mode 3 allows fossil as supplemental temperature boosting. This requires flow from the field.
-	it is also possible that the total of the energy from the field plus the topping energy does not
-	produce enough to meet the cycle cutoff fraction, so calculate here how much energy would be contributed
-	from the fossil contribution */
-	if (m_fossil_mode == 3)
-	{
-		if (q_field_delivered <= 0.0)
-			q_aux_avail = 0.0;
-		else
-		{
-			double h_target = 0.0;
-			if (m_is_sh)
-			{
-				water_TP(m_T_field_out_des, P_turb_in*100.0, &wp);
-				h_target = wp.enth;
-			}
-			else
-			{
-				water_PQ(P_turb_in*100.0, m_x_b_des, &wp);
-				h_target = wp.enth;
-			}
-			// Thermal requirement for the aux heater
-			q_aux_avail = max(0.0, (h_target - h_field_out)*m_dot_field);
-		}
-	}
-
-	// Calculate the total available energy for the power cycle as the sum of the energy from the solar field and the aux backup
-	double q_avail_tot = q_aux_avail + max(0.0, q_field_delivered);
-
-	double T_pb_in = 0.0;
-	double q_aux_fuel = 0.0;
-	double m_dot_to_pb = 0.0;	//[kg/s]
-	double q_to_pb = 0.0;
-	int standby_control = 0;
-	double q_aux = 0.0;
-	double m_dot_aux = 0.0;
-	// Do we have enough to run the power cycle?
-	if (q_avail_tot >= m_q_pb_des*m_cycle_cutoff_frac)
-	{
-		if (q_aux_avail > 0.0)
-		{
-			double h_target = 0.0;
-			double h_to_pb = 0.0;
-			// Calculate the contribution from the aux backup
-			switch (m_fossil_mode)
-			{
-			case 1:			// backup minimum level - parallel
-				if (m_is_sh)
-				{
-					water_TP(m_T_field_out_des, P_turb_in*100.0, &wp);
-					h_target = wp.enth;
-				}
-				else
-				{
-					water_PQ(P_turb_in*100.0, m_x_b_des, &wp);
-					h_target = wp.enth;
-				}
-				q_aux = max(0.0, q_aux_avail - q_field_delivered);
-				m_dot_aux = q_aux / (h_target - h_pb_out);
-
-				if (q_field_delivered > 0.0)
-				{
-					m_dot_to_pb = m_dot_aux + m_dot_field;
-					h_to_pb = (h_field_out*m_dot_field + h_target*m_dot_aux) / m_dot_to_pb;
-				}
-				else
-				{
-					m_dot_to_pb = m_dot_aux;
-					h_to_pb = h_target;
-				}
-				water_PH(P_turb_in*100.0, h_to_pb, &wp);
-				q_to_pb = m_dot_to_pb * (h_to_pb - h_pb_out);
-				break;
-			case 2:			// supplemental parallel
-				if (m_is_sh)
-				{
-					water_TP(m_T_field_out_des, P_turb_in*100.0, &wp);
-					h_target = wp.enth;
-				}
-				else
-				{
-					water_PQ(P_turb_in*100.0, m_x_b_des, &wp);
-					h_target = wp.enth;
-				}
-				q_aux = min(m_q_pb_des - q_field_delivered, q_aux_avail);
-				// For parallel operation, the result is a weighted mix of the field output and the boiler
-				m_dot_aux = q_aux / (h_target - h_pb_out);
-				m_dot_to_pb = 0.0;
-				if (q_field_delivered > 0.0)
-				{
-					m_dot_to_pb = m_dot_aux + m_dot_field;
-					h_to_pb = (h_field_out*m_dot_field + h_target*m_dot_aux) / m_dot_to_pb;
-				}
-				else
-				{
-					m_dot_to_pb = m_dot_aux;
-					h_to_pb = h_target;
-				}
-				water_PH(P_turb_in*100.0, h_to_pb, &wp);
-				q_to_pb = m_dot_to_pb * (h_to_pb - h_b_in);
-				break;
-			case 3:		// Supplemental parallel
-				// The auxiliary heater is used to bring the steam from the solar field up to the design-point temperature
-				// for the power block. The fossil use corresponds to the operation level of the solar field
-				if (m_is_sh)
-				{
-					water_TP(m_T_field_out_des, P_turb_in*100.0, &wp);
-					h_target = wp.enth;
-				}
-				else
-				{
-					water_PQ(P_turb_in*100.0, m_x_b_des, &wp);
-					h_target = wp.enth;
-				}
-				// The flow rate through the aux heater is the same as through the field
-				m_dot_aux = m_dot_field;
-				// Thermal requirement for the aux heater
-				q_aux = min(max(0.0, h_target - h_field_out)*m_dot_aux, q_aux_avail);
-				// Calcualte the enthalpy into the power block
-				h_to_pb = h_field_out + q_aux / m_dot_aux;
-				m_dot_to_pb = m_dot_field;
-				q_to_pb = m_dot_to_pb * (h_to_pb - h_pb_out);
-				water_PH(P_turb_in*100.0, h_to_pb, &wp);
-				T_pb_in = wp.temp - 273.15;
-				break;
-			}  // end switch
-			q_aux_fuel = q_aux / m_LHV_eff;
-		}   // end "if q_aux_avail > 0.0
-		else
-		{
-			// No aux backup, just the solar field
-			m_dot_to_pb = m_dot_field;
-			T_pb_in = mc_sys_h_out.m_temp - 273.15;		//[C]
-			q_to_pb = q_field_delivered;
-		}
-		standby_control = 1;	// We're operating the power block normally
-		m_is_pb_on = true;
-	}
-	else
-	{
-		// There isn't enough energy to run the power block
-
-		// Do we have enough to do standby?
-		if (q_avail_tot > m_q_pb_des*m_q_sby_frac && m_t_sby_prev > 0.0 && m_is_pb_on_prev)
-		{
-			standby_control = 2;	// Operate in standby mode
-			m_t_sby = max(0.0, m_t_sby_prev - m_dt / 3600.0);
-			q_aux = max(m_q_sby_frac*m_q_pb_des - q_field_delivered, 0.0);
-			m_dot_aux = 0.0;		// It's not meaningful to report the aux mass flow rate
-			q_aux_fuel = q_aux / m_LHV_eff;
-			q_to_pb = m_q_sby_frac*m_q_pb_des;
-			T_pb_in = m_T_field_in_des;
-			m_is_pb_on = true;
-		}
-		else
-		{
-			standby_control = 3;		// Turn off power block
-			m_t_sby = m_t_sby_des;		// Reset standby time
-			q_aux = 0.0;
-			m_dot_aux = 0.0;
-			q_field_delivered = 0.0;
-			q_aux_fuel = 0.0;
-			q_to_pb = 0.0;
-			T_pb_in = mc_sys_h_out.m_temp - 273.15;		//[C]
-			m_is_pb_on = false;
-		}
-		m_dot_to_pb = 0.0;
-	}
-
-	// *** Calculate final plant values ****
-	// Parasitic losses associated with the operation of the aux boiler
-	double W_dot_aux = 0.0;
-	if (q_aux > 0.0)
-		W_dot_aux = m_W_pb_des / 1000.0 * m_aux_array[0] * m_aux_array[1] * (m_aux_array[2] + m_aux_array[3] * (q_aux / m_q_pb_des) + m_aux_array[4] * pow(q_aux / m_q_pb_des, 2));	//[MWe]
-
-	// Balance of plant parasitics as a function of power block load
-	double W_dot_bop = 0.0;
-	if (q_to_pb > 0.0)
-		W_dot_bop = m_W_pb_des / 1000.0 * m_bop_array[0] * m_bop_array[1] * (m_bop_array[2] + m_bop_array[3] * (q_to_pb / m_q_pb_des) + m_bop_array[4] * pow(q_to_pb / m_q_pb_des, 2));	//[MWe]
-
-	// Parasitic electric power consumed by the collectors
-	double W_dot_col = 0.0;
-	if (CSP::pi / 2.0 - SolarZen > 0.0)
-		W_dot_col = m_ftrack*m_SCA_drives_elec*m_Ap_tot / 1.E6;	//[MWe]
-
-	double W_dot_fixed = m_PB_fixed_par*m_W_pb_des / 1000.0;	//[MWe] Fixed parasitic power losses... for every hour of operation
-
-	// If the power block isn't running, there's only a small pressure differential across the field
-	if (q_to_pb <= 0.0)
-	{
-		P_turb_in = m_P_turb_des * turb_pres_frac(m_cycle_cutoff_frac, m_fossil_mode, m_ffrac[tou_period], m_fP_turb_min);
-		// m_cycle_cutoff_frac  mjw 11.15.11 The cycle cutoff restriction occasionally allows low pressure and steaming in the feedwater line. Avoid this.
-		dP_hdr_c = dP_basis * m_fP_hdr_c;
-		dP_sf_boil = dP_basis * m_fP_sf_boil;
-		dP_boil_to_SH = dP_basis * m_fP_boil_to_sh;
-		dP_sf_sh = dP_basis * m_fP_sf_sh;
-		dP_hdr_h = dP_basis * m_fP_hdr_h;
-		dP_tot = dP_basis * (m_fP_hdr_c + m_fP_sf_boil + m_fP_boil_to_sh + m_fP_sf_sh + m_fP_hdr_h);
-	}
-
-	// Feedwater pump parasitic
-	water_PQ(check_pressure.P_check(P_turb_in + dP_basis*(m_fP_hdr_c + m_fP_sf_boil + m_fP_boil_to_sh + m_fP_sf_sh + m_fP_hdr_h))*100.0, 0.0, &wp);
-	double T_low_limit = wp.temp;
-	water_TP(min(T_pb_out, T_low_limit), check_pressure.P_check(P_turb_in + dP_basis*(m_fP_hdr_c + m_fP_sf_boil + m_fP_boil_to_sh + m_fP_sf_sh + m_fP_hdr_h))*100.0, &wp);
-	double rho_fw = wp.dens;
-
-	double W_dot_pump = 0.0;
-	if (m_is_oncethru)
-		W_dot_pump = m_dot_field*dP_tot / rho_fw / m_eta_pump*0.1;
-	else
-		W_dot_pump = (m_dot_field*(m_fP_hdr_c + m_fP_boil_to_sh + m_fP_sf_sh + m_fP_hdr_h) + m_dot_field / m_x_b_des*m_fP_sf_boil)*dP_basis / rho_fw / m_eta_pump*0.1;	//[MWe] P_turb in in bar
-
-	// Solar field efficiency
-	double eta_sf = eta_opt_ave * eta_thermal;
-
-	// Limit the reported values of solar azimuth/elevation
-	double solaralt = max(0.0, CSP::pi / 2 - SolarZen);
-	if (SolarZen >= CSP::pi / 2)
-		SolarAz = 0.0;
-
-	// Set Outputs
-	//reference
-	//bConnected &= connect(type261_solarfield, "T_field_out", type234_powerblock, "T_hot");		//[C] connect to LF solarfield
-	//bConnected &= connect(type261_solarfield, "m_dot_to_pb", type234_powerblock, "m_dot_st");		//[kg/hr] connect to LF solarfield
-	//bConnected &= connect(type261_solarfield, "standby_control", type234_powerblock, "standby_control");
-	//bConnected &= connect(type261_solarfield, "dP_sf_sh", type234_powerblock, "dp_sh");			//[Pa] Pressure drop in sh
-	//bConnected &= connect(type261_solarfield, "W_dot_par_tot", type261_summarizer, "W_par_sf_tot");
-	//reference
-
-	cr_out_solver.m_T_salt_hot = mc_sys_h_out.m_temp - 273.15;	//[C] not really "salt", but ok
-	cr_out_solver.m_m_dot_salt_tot = m_dot_to_pb*3600.0;		//[kg/hr] not really "salt", but ok
-	cr_out_solver.m_standby_control = standby_control;			//[-]
-	cr_out_solver.m_dP_sf_sh = dP_sf_sh;						//[bar]
-
-	cr_out_solver.m_W_dot_col_tracking = W_dot_col;				//[MWe]
-	cr_out_solver.m_W_dot_htf_pump = W_dot_aux + W_dot_bop + W_dot_fixed + W_dot_pump;	//[MWe]
-	//cr_out_solver.m_W_dot_par_tot = W_dot_aux + W_dot_bop + W_dot_col + W_dot_fixed + W_dot_pump;	//[MWe]
-	//value(O_CYCLE_PL_CONTROL, cycle_pl_control);        //[none] Part-load control flag - used by Type224
-	//value(O_DP_TOT, dP_tot);							  //[bar] Total HTF pressure drop
-	//value(O_DP_HDR_C, dP_hdr_c);						  //[bar] Average cold header pressure drop
-	//value(O_DP_SF_BOIL, dP_sf_boil);					  //[bar] Pressure drop across the solar field boiler
-	//value(O_DP_BOIL_TO_SH, dP_boil_to_SH);			  //[bar] Pressure drop between the boiler and superheater
-	//value(O_DP_SF_SH, dP_sf_sh);						  //[bar] Pressure drop across the solar field superheater
-	//value(O_DP_HDR_H, dP_hdr_h);						  //[bar] Average hot header pressure drop
-	//value(O_E_BAL_STARTUP, E_bal_startup);			  //[MW] Startup energy consumed
-	//value(O_E_FIELD, E_field);						  //[MW-hr] Accumulated internal energy in the entire solar field
-	//value(O_E_FP_TOT, 0.0);							  //[J] Freeze protection energy
-	//value(O_ETA_OPT_AVE, eta_opt_ave);				  //[none] Collector equivalent optical efficiency
-	//value(O_ETA_THERMAL, eta_thermal);				  //[none] Solar field thermal efficiency (power out/ANI)
-	//value(O_ETA_SF, eta_sf);    						  //[none] Total solar field collection efficiency
-	//value(O_DEFOCUS, m_defocus);     					  //[none] The fraction of focused aperture area in the solar field
-	//value(O_M_DOT_AUX, m_dot_aux * 3600);				  //[kg/s] --> [kg/hr] Auxiliary heater mass flow rate
-	//value(O_M_DOT_FIELD, m_dot_field * 3600);			  //[kg/s] --> [kg/hr] Flow rate from the field
-	//value(O_M_DOT_B_TOT, m_dot_b_tot * 3600);			  //[kg/s] --> [kg/hr] Flow rate within the boiler section
-	//value(O_M_DOT, m_dot);							  //[kg/s] Flow rate in a single loop
-	//value(O_M_DOT_TO_PB, m_dot_to_pb * 3600);			  //[kg/s] --> [kg/hr] Flow rate delivered to the power block
-	//value(O_P_TURB_IN, P_turb_in);			               //[bar] Pressure at the turbine inlet
-	//value(O_Q_LOSS_PIPING, q_loss_piping);				   //[MW] Pipe heat loss in the hot header and the hot runner
-	//value(O_Q_AUX_FLUID, q_aux*0.001);					   //[MW] Thermal energy provided to the fluid passing through the aux heater
-	//value(O_Q_AUX_FUEL, q_aux_fuel*3.412E-3);				   //[W] --> [MMBTU] Heat content of fuel required to provide aux firing
-	//value(O_Q_DUMP, q_dump);								   //[MW] Dumped thermal energy
-	//value(O_Q_FIELD_DELIVERED, q_field_delivered*0.001);	   //[kW] --> [MW] Total solar field thermal power delivered
-	//value(O_Q_INC_TOT, q_inc_tot);						   //[MW] Total power incident on the field
-	//value(O_Q_LOSS_REC, q_loss_rec);						   //[MW] Total Receiver thermal losses
-	//value(O_Q_LOSS_SF, q_loss_sf);						   //[MW] Total solar field thermal losses
-	//value(O_Q_TO_PB, q_to_pb*0.001);						   //[kW] --> [MW] Thermal energy to the power block
-	//value(O_SOLARALT, solaralt*57.2958);					   //[rad] --> [deg] Solar altitude used in optical calculations
-	//value(O_SOLARAZ, SolarAz*57.2958);					   //[rad] --> [deg] Solar azimuth used in optical calculations
-	//value(O_PHI_T, phi_t*57.2958);						   //[rad] --> [deg] Transversal solar incidence angle
-	//value(O_THETA_L, theta_L*57.2958);					   //[rad] --> [deg] Longitudinal solar incidence angle
-	//value(O_STANDBY_CONTROL, standby_control);			   //[none] Standby control flag - used by Type224
-	//value(O_T_FIELD_IN, m_T_field_in);						   //[C] HTF temperature into the collector field header
-	//value(O_T_FIELD_OUT, m_T_field_out);					   //[C] HTF Temperature from the field
-	//value(O_T_LOOP_OUT, T_loop_out);						   //[C] Loop outlet temperature
-	//value(O_T_PB_IN, T_pb_in);							   //[C] HTF Temperature to the power block
-	//value(O_W_DOT_AUX, W_dot_aux);						   //[MW] Parasitic power associated with operation of the aux boiler
-	//value(O_W_DOT_BOP, W_dot_bop);						   //[MW] parasitic power as a function of power block load
-	//value(O_W_DOT_COL, W_dot_col);						   //[MW] Parasitic electric power consumed by the collectors
-	//value(O_W_DOT_FIXED, W_dot_fixed);					   //[MW] Fixed parasitic power losses.. for every hour of operation
-	//value(O_W_DOT_PUMP, W_dot_pump);						   //[MW] Required solar field pumping power
-	//value(O_W_DOT_PAR_TOT, W_dot_aux + W_dot_bop + W_dot_col + W_dot_fixed + W_dot_pump);	//[MW] Total parasitic power losses
-	//value(O_P_SF_IN, P_turb_in + dP_tot);						//[bar] Solar field inlet pressure
-
-	return;
-
-
-}
+//void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs &weather,
+//	const C_csp_solver_htf_1state &htf_state_in,
+//	const C_csp_collector_receiver::S_csp_cr_inputs &inputs,
+//	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
+//	const C_csp_solver_sim_info &sim_info)
+//{
+//
+//	// start optical function
+//	double I_bn = weather.m_beam;						//[W/m2] Current DNI
+//	double T_db = weather.m_tdry + 273.15;				//[K] Dry bulb temp, convert from C
+//	double T_dp = weather.m_tdew + 273.15;				//[K] Dewpoint temp, convert from C
+//	double P_amb = weather.m_pres*100.0;				//[Pa] Ambient pressure, convert from mbar
+//	double V_wind = weather.m_wspd;						//[m/s] Ambient windspeed
+//	double shift = weather.m_shift*0.0174533;			//[deg] Shift in longitude from local standard meridian
+//	double SolarAz = weather.m_solazi;					//[deg] Solar azimuth angle
+//	double SolarZen = weather.m_solzen*0.0174533;;		//Solar zenith angle [deg]
+//	double T_pb_out = htf_state_in.m_temp + 273.15;		//[K] Fluid temperature from the power block, convert from C
+//	int tou_period = sim_info.m_tou - 1;				//[-] control value between 1 & 9, have to change to 0-8 for array index
+//
+//	SolarAz = (SolarAz - 180.0) * 0.0174533;			//[rad] Convert to TRNSYS convention, radians
+//
+//	// Increase call-per-timestep counter
+//	// Converge() sets it to -1, so on first call this line will adjust it = 0
+//	m_ncall++;
+//
+//	double time = sim_info.ms_ts.m_time;
+//	double m_dt = sim_info.ms_ts.m_step;
+//	double hour = (double)((int)(time / 3600.0) % 24);
+//
+//	double T_sky = CSP::skytemp(T_db, T_dp, hour);		//[K]
+//
+//	// Calculations for values once per timestep
+//	if (m_ncall == 0)
+//	{
+//		if(I_bn > 0.0)
+//			loop_optical_eta(weather, sim_info);
+//		else
+//		{
+//			loop_optical_eta_off();
+//		}
+//
+//		// Set initial defocus
+//		m_defocus = 1.0;
+//		m_defocus_prev = m_defocus;
+//		m_is_def = false;
+//		m_err_def = 0.0;
+//		m_tol_def = 0.0001;
+//		m_rc = 0.7;						//Relaxation coefficient
+//		// Set the power block return temperature to a reasonable value since the power block has not yet been called
+//		T_pb_out = m_T_field_in_des;	//[K]
+//
+//		// Reset the pressure check function
+//		check_pressure.report_and_reset();
+//
+//		evac_tube_model.Update_Timestep_Properties(m_eta_optical);
+//	}
+//
+//	// end optical
+//	////////////////////////////////////////////////////////////////////
+//	////////////////////////////////////////////////////////////////////
+//
+//
+//
+//
+//	//************************************************************
+//	// Determine the solar field thermal performance
+//	//************************************************************
+//	int iter_def = 0;
+//	bool defocus_on = false;
+//
+//
+//	double m_dot = std::numeric_limits<double>::quiet_NaN();
+//	double P_turb_in = std::numeric_limits<double>::quiet_NaN();
+//	double dP_basis = std::numeric_limits<double>::quiet_NaN();
+//	double h_pb_out = std::numeric_limits<double>::quiet_NaN();
+//	double h_b_in = std::numeric_limits<double>::quiet_NaN();
+//	double eta_opt_ave = 0.0;
+//	double m_dot_b_tot = 0.0;
+//
+//	do		// Begin defocus loop
+//	{
+//		defocus_on = false;
+//		double defocus_lim = max(min(m_defocus, 1.0), 0.0);
+//		eta_opt_ave = 0.0;
+//		int gset = 0;
+//		double q_rec_loop = 0.0;
+//		double q_inc_loop = 0.0;
+//		for (int i = 0; i < m_nModTot; i++)
+//		{
+//			if (i >= m_nModBoil && m_is_multgeom)
+//				gset = 1;
+//			// Calculate the incident energy on each module
+//			m_q_inc[i] = I_bn*m_A_aperture.at(gset, 0) / 1000.0;		//[kWt] Incident beam radiation for each receiver in loop
+//			// Calculate the energy on the receiver
+//			m_q_rec[i] = m_q_inc[i] * m_eta_optical[gset]*defocus_lim;	//[kWt] Incident thermal power on receiver after *optical* losses and *defocus*
+//			// Average optical efficiency
+//			eta_opt_ave += m_eta_optical[gset]*m_A_aperture.at(gset, 0)*m_nLoops / m_Ap_tot;
+//			q_rec_loop += m_q_rec[i];			//[kWt] LOOP total thermal power on receiver after *optical* losses and *defocus*
+//			q_inc_loop += m_q_inc[i];					//[kW] LOOP total incident beam radiation
+//		}
+//
+//		// For nighttime conditions, calculate the solar field inlet temperature
+//		if (q_rec_loop == 0.0 && m_ffrac[tou_period] < m_cycle_cutoff_frac)
+//			T_pb_out = max(313.15, m_T_sys_prev);		// Need to limit the inlet temp so that the minimum temp in the loops stays above freezing
+//
+//		// Total reference pressure drop across the field: 9/16/13: tn: already calculated in initial call
+//
+//		// Guess the mass flow rate in a loop for iteration. Ratio of incident heat/abs heat at design differs by nLoops..
+//		double m_dot_guess = max(min(q_rec_loop / m_q_dot_abs_tot_des * m_m_dot_des, m_m_dot_max), m_m_dot_min);
+//
+//		// Guess the turbine pressure.. turbine inlet pressure is highly insensitive to condenser pressure, so
+//		// simplify the expression to eliminate condenser pressure
+//		double P_turb_in_guess = turb_pres_frac(m_dot_guess*(double)m_nLoops / m_m_dot_pb_des, m_fossil_mode, m_ffrac[tou_period], m_fP_turb_min)*m_P_turb_des;
+//		double dP_basis_guess = m_dot_guess*(double)m_nLoops / m_m_dot_des*m_P_turb_des;
+//
+//		if (m_is_oncethru || m_ftrack <= 0.0)		// Run in once-through mode at night since distinct boiler/superheater models are not useful
+//		{
+//			// Guess the loop inlet/outlet enthalpies
+//			water_TP(T_pb_out, check_pressure.P_check(P_turb_in_guess + dP_basis_guess*(m_fP_sf_tot - m_fP_hdr_c))*100.0, &wp);
+//			double h_b_in_guess = wp.enth;		//[kJ/kg]
+//			double h_pb_out_guess = h_b_in_guess;	//[kJ/kg]
+//			water_TP(m_T_field_out_des, check_pressure.P_check(P_turb_in_guess + dP_basis_guess*m_fP_hdr_h)*100.0, &wp);
+//			double h_sh_out_guess = wp.enth;		//[kJ/kg]
+//
+//			// Set the loop inlet enthalpy
+//			m_h_in.at(0, 0) = h_b_in_guess;	//[kJ/kg]
+//
+//			// Set up iteration brackets for false-position method
+//			double m_dot_lower = 0.7*m_m_dot_min;
+//			double m_dot_upper = 1.3*m_m_dot_max;
+//			// Set logic to switch from bisection to false position mode
+//			bool upflag = false;
+//			bool lowflag = false;
+//			// Set upper and lower err results
+//			double y_upper = std::numeric_limits<double>::quiet_NaN();
+//			double y_lower = std::numeric_limits<double>::quiet_NaN();
+//
+//			// Set the iteration tolerance (MJW found that it doesn't help to adjust the tolerance based on iteration number)
+//			double tol = 1.E-4;
+//
+//			// Do a rough guess of the receiver enthlapy for the whole loop
+//			double dh_guess = (h_sh_out_guess - h_b_in_guess) / (double)m_nModTot;
+//			std::vector<double> h_ave;
+//			h_ave.resize(m_nModTot, std::numeric_limits<double>::quiet_NaN());
+//			for (int i = 0; i < m_nModTot; i++)
+//				h_ave[i] = h_b_in_guess + dh_guess*(double)(i + 1) - dh_guess / 2.0;
+//
+//			double err = 10.0*tol;
+//			int iter = 0;
+//
+//			// Main iteration loop
+//			while (fabs(err) > tol && iter < 50)
+//			{
+//				iter++;
+//				m_dot = m_dot_guess;
+//
+//				// Update the turbine pressure and enthalpies
+//				P_turb_in = check_pressure.P_check(turb_pres_frac(m_dot*(double)m_nLoops / m_m_dot_pb_des, m_fossil_mode, m_ffrac[tou_period], m_fP_turb_min)*m_P_turb_des);
+//				dP_basis = m_dot*(double)m_nLoops / m_m_dot_des*m_P_turb_des;
+//
+//
+//
+//				// *****************************************
+//				// Test 'once_thru_loop_energy_balance_T_t_in
+//				// *****************************************
+//				//once_thru_loop_energy_balance_T_t_int(weather, T_pb_out, P_turb_in, m_dot, h_sh_out_guess, sim_info);
+//
+//
+//
+//
+//				// Guess the loop inlet/outlet enthalpies
+//				water_TP(T_pb_out, check_pressure.P_check(P_turb_in + dP_basis*(m_fP_sf_tot - m_fP_hdr_c))*100.0, &wp);
+//				h_b_in = wp.enth;
+//				h_pb_out = h_b_in;
+//				water_TP(m_T_field_out_des, check_pressure.P_check(P_turb_in + dP_basis*m_fP_hdr_h)*100.0, &wp);
+//				double h_sh_out_target = wp.enth;
+//
+//				// Set the loop inlet enthalpy
+//				m_h_in.at(0, 0) = h_b_in;
+//
+//				// Initialize
+//				m_q_loss.assign(m_q_loss.size(), 0.0);	//[kWt] Thermal loss for each receiver in loop
+//				m_q_abs.assign(m_q_abs.size(), 0.0);	//[kWt] Thermal power absorbed by steam in each receiver
+//
+//				for (int i = 0; i < m_nModTot; i++)
+//				{
+//					// Which geometry set?
+//					gset = 0;
+//					if (i >= m_nModBoil && m_is_multgeom)
+//						gset = 1;
+//
+//					// Calculate thermal losses based on temperature guess values
+//					// Calculate the local pressure in the superheter. Assume a linear pressure drop across each section
+//					double P_loc = check_pressure.P_check(P_turb_in + dP_basis * (m_fP_hdr_h + (m_fP_sf_sh + m_fP_boil_to_sh + m_fP_sf_boil)*(1.0 - (double)i / (double)m_nModTot)));
+//
+//					// Get the temperature at each state point in the loop
+//					water_PH(P_loc*100.0, h_ave[i], &wp);
+//					m_T_ave.at(i, 0) = wp.temp;
+//
+//					// Calculate the heat loss at each temperature
+//					if (m_HLCharType.at(gset, 0) == 1)
+//					{
+//						// Estimate based on the polynomial adjustments provided by the user
+//						double dT_loc = m_T_ave.at(i, 0) - T_db;
+//						double c_hl = m_HL_dT.at(gset, 0) + m_HL_dT.at(gset, 1)*dT_loc + m_HL_dT.at(gset, 2)*pow(dT_loc, 2) + m_HL_dT.at(gset, 3)*pow(dT_loc, 3) + m_HL_dT.at(gset, 4)*pow(dT_loc, 4);	//[W/m] Effect from dT
+//						if (m_HL_W.at(gset, 0) != 0 || m_HL_W.at(gset, 1) != 0 || m_HL_W.at(gset, 2) != 0 || m_HL_W.at(gset, 3) != 0 || m_HL_W.at(gset, 0) != 0)
+//							c_hl *= m_HL_W.at(gset, 0) + m_HL_W.at(gset, 1)*V_wind + m_HL_W.at(gset, 2)*pow(V_wind, 2) + m_HL_W.at(gset, 3)*pow(V_wind, 3) + m_HL_W.at(gset, 4)*pow(V_wind, 4);
+//						m_q_loss[i] = c_hl*m_L_col.at(gset, 0) / 1000.0;	//[kWt] Thermal loss for each receiver in loop
+//						m_q_abs[i] = m_q_rec[i] - m_q_loss[i];				//[kWt] Thermal power absorbed by steam in each receiver
+//					}
+//					else if (m_HLCharType.at(gset, 0) == 2)
+//					{
+//						// Calculate thermal loss from Forristall receiver model (algorithm is found in Type 250)
+//
+//						m_q_loss[i] = 0.0;		//[kWt] Thermal loss for each receiver in loop
+//						m_q_abs[i] = 0.0;		//[kWt] Thermal power absorbed by steam in each receiver
+//
+//						for (int j = 0; j < 4; j++)
+//						{
+//							// Only calculate if the HCE fraction is non-zero
+//							if (m_HCE_FieldFrac.at(gset, j) <= 0.0)
+//								continue;
+//
+//							/*Call the receiver performance model - single point mode
+//							!This call uses VP1 as the HTF since 2-phase heat transfer correlations have high uncertainty. The
+//							!only use for the fluid type in the single point model is calculating the convective heat transfer
+//							!coefficient between the HTF and inner absorber wall. This is sufficiently high for both HTF and
+//							!steam that substituting the HTF here introduces negligible error.*/
+//
+//							// For LF, HT = CT && sca_num = 0
+//							double q_rec_loss, q_rec_abs, dum1, dum2, dum3;
+//							q_rec_loss = q_rec_abs = dum1 = dum2 = dum3 = std::numeric_limits<double>::quiet_NaN();
+//							evac_tube_model.EvacReceiver(m_T_ave.at(i, 0), 10.0, T_db, T_sky, V_wind, P_amb, defocus_lim*m_q_inc[i] / m_L_col.at(gset, 0)*1000.0, gset, j, gset, 0, true, m_ncall,
+//								time / 3600.0, q_rec_loss, q_rec_abs, dum1, dum2, dum3);
+//
+//							if (q_rec_loss != q_rec_loss || q_rec_abs != q_rec_abs)
+//							{
+//								q_rec_loss = 0.0;
+//								q_rec_abs = 0.0;
+//							}
+//
+//							m_q_loss[i] += q_rec_loss*m_L_col.at(gset, 0)*m_HCE_FieldFrac.at(gset, j) / 1000.0;		//[kWt] Thermal loss for each receiver in loop
+//							m_q_abs[i] += q_rec_abs*m_L_col.at(gset, 0)*m_HCE_FieldFrac.at(gset, j) / 1000.0;		//[kWt] Thermal power absorbed by steam in each receiver
+//
+//						}
+//
+//					}
+//
+//					// Set the inlet enthalpy equal to the outlet of the previous node
+//					if (i > 0)
+//						m_h_in.at(i, 0) = m_h_out.at(i - 1, 0);
+//
+//					// Calculate the collector outlet enthalpy
+//					double tol_t = 0.001;
+//					double err_t = 10.0*tol_t;
+//					int iter_t = 0;
+//					while (err_t > tol_t && iter_t < 50)
+//					{
+//						iter_t++;
+//						// Calculate the average enthalpy value in the collector module
+//						m_h_out.at(i,0) = check_h.check(m_h_in.at(i,0) + m_q_abs[i]/m_dot_guess - (m_T_ave.at(i,0)-m_T_ave_prev[i])*m_C_thermal/(m_dt*m_dot_guess));	//[kJ/kg]
+//
+//						// Update guesses for h_ave and T_ave
+//						double h_aveg = (m_h_out.at(i,0) + m_h_in.at(i, 0)) / 2.0;
+//						// Update the average temperature for the heat loss calculation
+//						water_PH(P_loc*100.0, h_aveg, &wp);
+//						m_T_ave.at(i, 0) = wp.temp;
+//						err_t = fabs((h_ave[i] - h_aveg) / h_ave[i]);
+//						h_ave[i] = h_aveg;
+//					}
+//
+//					// Test transient energy balance convergence
+//					// double h_out_comp = std::numeric_limits<double>::quiet_NaN();
+//					// transient_energy_bal_numeric_int(m_h_in.at(i, 0), P_loc*100.0, m_q_abs[i], m_dot_guess, m_T_ave_prev[i], m_C_thermal, m_dt, h_out_comp);
+//
+//					if (i < m_nModTot - 1)
+//						h_ave[i + 1] = check_h.check(m_h_in.at(i, 0) + (m_h_out.at(i,0) - m_h_in.at(i, 0))*1.5);
+//
+//				}   // End step through receivers in flow path
+//
+//				err = (h_sh_out_target - m_h_out.at(m_nModTot - 1, 0)) / h_sh_out_target;
+//
+//				if (m_dot == m_m_dot_min && err > 0.0)			// m_dot may already equal m_dot_min while the temperature is still too low, this saves 1 more iteration
+//					break;
+//
+//				//***************************************************
+//				// *** Hybrid False Position Iteration Method *******
+//				//***************************************************
+//				if (lowflag && upflag)
+//				{
+//					if (err > 0.0)
+//					{
+//						m_dot_upper = m_dot;
+//						y_upper = err;
+//					}
+//					else
+//					{
+//						m_dot_lower = m_dot;
+//						y_lower = err;
+//					}
+//					m_dot_guess = y_upper / (y_upper - y_lower)*(m_dot_lower - m_dot_upper) + m_dot_upper;
+//				}
+//				else
+//				{
+//					if (err > 0.0)			// Prescribed is greater than calculated, so decrease mass flow and set upper limit
+//					{
+//						m_dot_upper = m_dot;
+//						y_upper = err;
+//						upflag = true;
+//					}
+//					else					// Prescribed is less than calculated, so increase mass flow and set lower limit
+//					{
+//						m_dot_lower = m_dot;
+//						y_lower = err;
+//						lowflag = true;
+//					}
+//
+//					if (lowflag && upflag)		// If results of bracket are defined, use false position
+//						m_dot_guess = y_upper / (y_upper - y_lower)*(m_dot_lower - m_dot_upper) + m_dot_upper;
+//					else						// If not, recalculate value based on approximate energy balance
+//					{
+//						if (iter < 3)
+//						{
+//							double q_abs_sum = 0.0;
+//							for (int ii = 0; ii < m_nModTot; ii++)
+//								q_abs_sum += m_q_abs[ii];				//[kWt] LOOP total Thermal power absorbed by steam in each receiver
+//							m_dot_guess = q_abs_sum / (h_sh_out_target - h_b_in);
+//							m_dot_guess = max(m_m_dot_min*0.5, min(m_dot_guess, m_m_dot_max*1.5));
+//						}
+//						else
+//							m_dot_guess = 0.5*m_dot_upper + 0.5*m_dot_lower;
+//					}
+//				}
+//
+//				//**************************************************************************
+//				// **** End Hyrbid False Position Iteration Method *****************
+//				//**************************************************************************
+//				if (m_dot_lower >= m_m_dot_max)	// Once the minimum possible m_dot to solve energy balance is greater than maximum allowable, exit loop and go to defocus
+//				{
+//					m_is_def = true;
+//					break;
+//				}
+//				if (m_dot_upper <= m_m_dot_min)   // Once the maximum possible m_dot to solve energy balance is less than minimum allowable, set to min value and get final T_out
+//					m_dot_guess = m_m_dot_min;
+//
+//			}		// End main iteration loop
+//
+//			// Defocus calculations
+//			m_err_def = (m_dot_guess - m_m_dot_max) / m_m_dot_max;
+//			if (!m_is_def && m_err_def > 0.0)
+//				m_is_def = true;
+//			if (m_is_def)
+//			{
+//				// Calculate new defocus
+//				m_defocus = min(1.0, m_defocus_prev*pow(1.0 / (m_err_def + 1.0), m_rc));
+//				if (fabs(m_err_def) > m_tol_def)
+//				{
+//					m_defocus_prev = m_defocus;
+//					iter_def++;
+//					if (iter_def < 11)
+//					{
+//						defocus_on = true;
+//						continue;
+//					}
+//				}
+//			}
+//
+//			// The boiler mass flow rate is equal to the flow throughout the loop
+//			m_dot_b_tot = m_dot*(double)m_nLoops;
+//
+//		}		// End once-through model
+//		else	// Standard boiler + optional superheater design
+//		{
+//			// Boiler
+//			// Guess the field inlet enthalpy
+//			water_TP(T_pb_out, check_pressure.P_check(P_turb_in_guess + dP_basis_guess*(m_fP_sf_tot - m_fP_hdr_c))*100.0, &wp);
+//			double h_pb_out_guess = wp.enth;		//[kJ/kg]
+//
+//			// Boiler outlet conditions
+//			water_PQ(check_pressure.P_check(P_turb_in_guess + dP_basis_guess*(m_fP_hdr_h + m_fP_sf_sh + m_fP_boil_to_sh))*100.0, m_x_b_des, &wp);
+//			double h_b_out_guess = wp.enth;		//[kJ/kg]
+//			water_PQ(check_pressure.P_check(P_turb_in_guess + dP_basis_guess*(m_fP_hdr_h + m_fP_sf_sh + m_fP_boil_to_sh))*100.0, 0.0, &wp);
+//			double h_b_recirc_guess = wp.enth;	//[kJ/kg]
+//
+//			// Determine the mixed inlet enthalpy
+//			double h_b_in_guess = h_pb_out_guess*m_x_b_des + h_b_recirc_guess*(1.0 - m_x_b_des);
+//
+//			// Set the loop inlet enthalpy
+//			m_h_in(0, 0) = h_b_in_guess;		//[kJ/kg]
+//
+//			double m_dot_b_guess = m_dot_guess / m_x_b_des;
+//			// Set up iteration brackets for false-position method
+//			double m_dot_lower = 0.7*m_m_dot_min / m_x_b_des;
+//			double m_dot_upper = 1.3*m_m_dot_b_max;
+//
+//			bool upflag = false;		// Set logic to switch from bisection to false position mode
+//			bool lowflag = false;		// Set logic to swtich from bisection to false position mode
+//
+//			double y_upper = std::numeric_limits<double>::quiet_NaN();
+//			double y_lower = std::numeric_limits<double>::quiet_NaN();
+//
+//			// Set iteration tolerance
+//			double tol = 1.E-4;
+//
+//			// Do a rough guess of the receiver enthalpy for the boiler
+//			double dh_b_guess = (h_b_out_guess - h_b_in_guess) / (double)m_nModBoil;
+//			std::vector<double> h_ave;
+//			h_ave.resize(m_nModTot, std::numeric_limits<double>::quiet_NaN());
+//			for (int i = 0; i < m_nModBoil; i++)
+//				h_ave[i] = h_b_in_guess + dh_b_guess*(double)(i + 1) - dh_b_guess / 2.0;
+//
+//			double err = 10.0*tol;
+//			int iter = 0;
+//
+//			double m_dot_b = std::numeric_limits<double>::quiet_NaN();
+//
+//			while (fabs(err) > tol && iter < 50)
+//			{
+//				iter++;
+//				m_dot_b = m_dot_b_guess;
+//				//Initialize
+//				m_q_loss.assign(m_q_loss.size(), 0.0);		//[kWt] Thermal loss for each receiver in loop
+//				m_q_abs.assign(m_q_abs.size(), 0.0);		//[kWt] Thermal power absorbed by steam in each receiver
+//
+//				// Update inlet enthalpy conditions and turbine pressure
+//				P_turb_in = check_pressure.P_check(turb_pres_frac(m_dot_b*m_x_b_des*(double)m_nLoops / m_m_dot_pb_des, m_fossil_mode, m_ffrac[tou_period], m_fP_turb_min)*m_P_turb_des);
+//				dP_basis = m_dot_b*(double)m_nLoops / m_m_dot_b_des*m_P_turb_des;
+//
+//				// Field inlet enthalpy
+//				water_TP(T_pb_out, check_pressure.P_check(P_turb_in + dP_basis*(m_fP_sf_tot - m_fP_hdr_c))*100.0, &wp);
+//				h_pb_out = wp.enth;
+//
+//				// Update the boiler outlet conditions
+//				water_PQ(check_pressure.P_check(P_turb_in + dP_basis*(m_fP_hdr_h + m_fP_sf_sh + m_fP_boil_to_sh))*100.0, m_x_b_des, &wp);	// 2-phase outlet enthalpy
+//				double h_b_out = wp.enth;
+//				water_PQ(check_pressure.P_check(P_turb_in + dP_basis*(m_fP_hdr_h + m_fP_sf_sh + m_fP_boil_to_sh))*100.0, 0.0, &wp);		// Recirculation enthalpy
+//				double h_b_recirc = wp.enth;
+//
+//				// Determin the mixed inlet enthalpy
+//				h_b_in = h_pb_out*m_x_b_des + h_b_recirc*(1.0 - m_x_b_des);
+//
+//				// Set the loop inlet enthalpy
+//				m_h_in(0, 0) = h_b_in;
+//
+//				for (int i = 0; i < m_nModBoil; i++)
+//				{
+//					// Calculate thermal losses based on temperature guess values
+//					// Calculate the local pressure in the boiler. Assume a linear pressure drop across each section
+//					double P_loc = check_pressure.P_check(P_turb_in + dP_basis*(m_fP_sf_tot - m_fP_sf_boil*(1.0 - (double)i / (double)m_nModBoil)));
+//
+//					// Get the temperature at each state in the boiler
+//					water_PH(P_loc*100.0, h_ave[i], &wp);
+//					m_T_ave.at(i, 0) = wp.temp;
+//
+//					gset = 0;
+//					// Calculate the heat loss at each temperature
+//					if (m_HLCharType.at(gset, 0) == 1)
+//					{
+//						// Estimate based on the polynomial adjustments provided by the user
+//						double dT_loc = m_T_ave.at(i, 0) - T_db;
+//						double c_hl = m_HL_dT.at(gset, 0) + m_HL_dT.at(gset, 1)*dT_loc + m_HL_dT.at(gset, 2)*pow(dT_loc, 2) + m_HL_dT.at(gset, 3)*pow(dT_loc, 3) + m_HL_dT.at(gset, 4)*pow(dT_loc, 4);	//[W/m] Effect from dT
+//						if (m_HL_W.at(gset, 0) != 0 || m_HL_W.at(gset, 1) != 0 || m_HL_W.at(gset, 2) != 0 || m_HL_W.at(gset, 3) != 0 || m_HL_W.at(gset, 0) != 0)
+//							c_hl *= m_HL_W.at(gset, 0) + m_HL_W.at(gset, 1)*V_wind + m_HL_W.at(gset, 2)*pow(V_wind, 2) + m_HL_W.at(gset, 3)*pow(V_wind, 3) + m_HL_W.at(gset, 4)*pow(V_wind, 4);
+//						m_q_loss[i] = c_hl*m_L_col.at(gset, 0) / 1000.0;	//[kWt] Thermal loss for each receiver in loop
+//						m_q_abs[i] = m_q_rec[i] - m_q_loss[i];				//[kWt] Thermal power absorbed by steam in each receiver
+//					}
+//					else if (m_HLCharType.at(gset, 0) == 2)
+//					{
+//						// Calculate thermal loss from Forristall receiver model (algorithm is found in Type 250)
+//
+//						m_q_loss[i] = 0.0;			//[kWt] Thermal loss for each receiver in loop
+//						m_q_abs[i] = 0.0;			//[kWt] Thermal power absorbed by steam in each receiver
+//
+//						for (int j = 0; j < 4; j++)
+//						{
+//							// Only calculate if the HCE fraction is non-zero
+//							if (m_HCE_FieldFrac.at(gset, j) <= 0.0)
+//								continue;
+//
+//							/*Call the receiver performance model - single point mode
+//							!This call uses VP1 as the HTF since 2-phase heat transfer correlations have high uncertainty. The
+//							!only use for the fluid type in the single point model is calculating the convective heat transfer
+//							!coefficient between the HTF and inner absorber wall. This is sufficiently high for both HTF and
+//							!steam that substituting the HTF here introduces negligible error.*/
+//
+//							// For LF, HT = CT && sca_num = 0
+//							double q_rec_loss, q_rec_abs, dum1, dum2, dum3;
+//							q_rec_loss = q_rec_abs = dum1 = dum2 = dum3 = std::numeric_limits<double>::quiet_NaN();
+//							evac_tube_model.EvacReceiver(m_T_ave.at(i, 0), 10.0, T_db, T_sky, V_wind, P_amb, defocus_lim*m_q_inc[i] / m_L_col.at(gset, 0)*1000.0, gset, j, gset, 0, true, m_ncall,
+//								time / 3600.0, q_rec_loss, q_rec_abs, dum1, dum2, dum3);
+//
+//							if (q_rec_loss != q_rec_loss || q_rec_abs != q_rec_abs)
+//							{
+//								q_rec_loss = 0.0;
+//								q_rec_abs = 0.0;
+//							}
+//
+//							m_q_loss[i] += q_rec_loss*m_L_col.at(gset, 0)*m_HCE_FieldFrac.at(gset, j) / 1000.0;		//[kW]
+//							m_q_abs[i] += q_rec_abs*m_L_col.at(gset, 0)*m_HCE_FieldFrac.at(gset, j) / 1000.0;		//[kWt] Thermal power absorbed by steam in each receiver
+//
+//						}
+//
+//					}
+//
+//					// Set the inlet enthalpy equal to the outlet of the previous node
+//					if (i > 0)
+//						m_h_in(i, 0) = m_h_out(i - 1, 0);
+//
+//					// Calculate the collector outlet enthalpy
+//					double tol_t = 0.001;
+//					double err_t = 10.0*tol_t;
+//					int iter_t = 0;
+//
+//					while (err_t > tol_t && iter_t < 50)
+//					{
+//						iter_t++;
+//						// Calculate the average enthalpy value in the collector module
+//						m_h_out.at(i,0) = check_h.check(m_h_in.at(i, 0) + m_q_abs[i] / m_dot_b_guess - (m_T_ave.at(i, 0) - m_T_ave_prev[i])*m_C_thermal/(m_dt*m_dot_b_guess));
+//						// Update guesses for h_ave and T_ave
+//						double h_aveg = (m_h_out.at(i,0) + m_h_in.at(i, 0)) / 2.0;
+//						// Update the average temperature for the heat loss calculation
+//						water_PH(P_loc*100.0, h_aveg, &wp);
+//						m_T_ave.at(i, 0) = wp.temp;
+//						err_t = fabs((h_ave[i] - h_aveg) / h_ave[i]);
+//						h_ave[i] = h_aveg;
+//					}
+//
+//					// Predict the next outlet enthalpy
+//					if (i < m_nModTot - 1)
+//						h_ave[i+1] = check_h.check(m_h_in.at(i, 0) + (m_h_out.at(i, 0) - m_h_in.at(i, 0))*1.5);
+//
+//				}	// End step through boiler receiver modules
+//
+//				err = (h_b_out - m_h_out.at(m_nModBoil - 1, 0)) / h_b_out;
+//
+//				if (m_dot_b == m_m_dot_min / m_x_b_des && err > 0.0)		// M_dot may already equal m_dot_min while the temperature is still too low, this saves 1 more iteration
+//					break;
+//
+//				// **************************************************
+//				// **** Hybrid False Position Iteration Method ******
+//				// **************************************************
+//				if (lowflag && upflag)
+//				{
+//					if (err > 0.0)
+//					{
+//						m_dot_upper = m_dot_b;
+//						y_upper = err;
+//					}
+//					else
+//					{
+//						m_dot_lower = m_dot_b;
+//						y_lower = err;
+//					}
+//					m_dot_b_guess = y_upper / (y_upper - y_lower)*(m_dot_lower - m_dot_upper) + m_dot_upper;
+//				}
+//				else
+//				{
+//					if (err > 0.0)			// Prescribed is greater than calculated, so decrease mass flow and set upper limit
+//					{
+//						m_dot_upper = m_dot_b;
+//						y_upper = err;
+//						upflag = true;
+//					}
+//					else
+//					{
+//						m_dot_lower = m_dot_b;
+//						y_lower = err;
+//						lowflag = true;
+//					}
+//
+//					if (lowflag && upflag)		// If results of bracket are defined, use false position
+//						m_dot_b_guess = y_upper / (y_upper - y_lower)*(m_dot_lower - m_dot_upper) + m_dot_upper;
+//					else		// If not, recalculate value based on approximate energy balance
+//					{
+//						if (iter < 3)
+//						{
+//							double q_abs_sum = 0.0;
+//							for (int ii = 0; ii < m_nModBoil; ii++)
+//								q_abs_sum += m_q_abs[ii];				//[kWt] LOOP total Thermal power absorbed by steam in each receiver
+//							m_dot_b_guess = q_abs_sum / (h_b_out - h_b_in);
+//							m_dot_b_guess = max(m_m_dot_min / m_x_b_des*0.5, min(m_dot_b_guess, m_m_dot_b_max*1.5));
+//						}
+//						else
+//							m_dot_b_guess = 0.5*m_dot_upper + 0.5*m_dot_lower;
+//					}
+//				}
+//
+//				// ************************************************************************
+//				// *** End Hybrid False Position Iteration Method ***********
+//				// ************************************************************************
+//				if (m_dot_lower >= m_m_dot_b_max)		// Once the minimum possible m_dot to solve energy balance is greater than maximum allowable, exit loop and go to defocus
+//				{
+//					m_is_def = true;
+//					break;
+//				}
+//
+//				if (m_dot_upper <= m_m_dot_min / m_x_b_des)		// Once the maximum possible m_dot to solve energy balance is less than minimum allowable, set to min value and get final T_out
+//					m_dot_b_guess = m_m_dot_min / m_x_b_des;
+//
+//			}   // End main BOILER iteration loop
+//
+//			// Defocus calculations
+//			m_err_def = (m_dot_b_guess - m_m_dot_b_max) / m_m_dot_b_max;
+//			if (!m_is_def && m_err_def > 0.0)
+//				m_is_def = true;
+//			if (m_is_def)
+//			{
+//				// Calculate new defocus
+//				m_defocus = min(1.0, m_defocus_prev*pow(1.0 / (m_err_def + 1.0), m_rc));
+//				if (fabs(m_err_def) > m_tol_def)
+//				{
+//					m_defocus_prev = m_defocus;
+//					iter_def++;
+//					if (iter_def < 11)
+//					{
+//						defocus_on = true;
+//						continue;
+//					}
+//				}
+//			}
+//
+//			// Superheater
+//			if (m_is_sh)
+//			{
+//				// Choose which geometry set to use
+//				gset = 0;
+//				if (m_is_multgeom)
+//					gset = 1;
+//
+//				// Calculate superheater inlet enthalpy
+//				water_PQ(check_pressure.P_check(P_turb_in + dP_basis*(m_fP_hdr_h + m_fP_sf_sh))*100.0, 1.0, &wp);
+//				double h_sh_in = wp.enth;		//[kJ/kg]
+//				// The superheater outlet enthalpy is constrained according to the steam mass flow produced in the boiler
+//				water_TP(m_T_field_out_des, check_pressure.P_check(P_turb_in + dP_basis*m_fP_hdr_h)*100.0, &wp);
+//				double h_sh_out = wp.enth;		//[kJ/kg]
+//
+//				// Set the loop inlet enthalpy
+//				m_h_in.at(m_nModBoil, 0) = h_sh_in;
+//
+//				// Do a rough guess of the receiver enthalpy for the boiler
+//				double dh_sh = (h_sh_out - h_sh_in) / (double)m_nModSH;
+//				for (int ii = 0; ii < m_nModSH; ii++)
+//				{
+//					int i = ii + m_nModBoil;
+//					h_ave[i] = h_sh_in + dh_sh*(double)(ii + 1) - dh_sh / 2.0;
+//				}
+//
+//				m_dot = m_dot_b*m_x_b_des;
+//				double T_sh_guess = m_T_field_out_des;		// Guess the superheater outlet temp
+//
+//				// Iterative loop to get convergence in heat loss
+//				double tol_sh = 0.01;
+//				double err_sh = 10.0*tol_sh;
+//				int iter_sh = 0;
+//
+//				while (fabs(err_sh) > tol_sh && iter_sh < 5)
+//				{
+//					iter_sh++;
+//
+//					// Initialize
+//					for (int i = m_nModBoil; i < m_nModTot; i++)
+//					{
+//						m_q_loss[i] = 0.0;			//[kWt] Thermal loss for each receiver in loop
+//						m_q_abs[i] = 0.0;			//[kWt] Thermal power absorbed by steam in each receiver
+//					}
+//
+//					for (int ii = 0; ii < m_nModSH; ii++)
+//					{
+//						int i = ii + m_nModBoil;
+//
+//						// Calculate thermal losses based on temperature guess values
+//						// Calculate the local pressure in the superheater. Assume a linear pressure drop across each section
+//						double P_loc = check_pressure.P_check(P_turb_in + dP_basis*(m_fP_hdr_h + m_fP_sf_sh*(1.0 - (double)ii / (double)m_nModSH)));
+//
+//						// Get the temperature at each state in the boiler
+//						water_PH(P_loc*100.0, h_ave[i], &wp);
+//						m_T_ave.at(i, 0) = wp.temp;
+//
+//						// Calculate the heat loss at each temperature
+//						if (m_HLCharType.at(gset, 0) == 1)
+//						{
+//							// Estimate based on the polynomial adjustments provided by the user
+//							double dT_loc = m_T_ave.at(i, 0) - T_db;
+//							double c_hl = m_HL_dT.at(gset, 0) + m_HL_dT.at(gset, 1)*dT_loc + m_HL_dT.at(gset, 2)*pow(dT_loc, 2) + m_HL_dT.at(gset, 3)*pow(dT_loc, 3) + m_HL_dT.at(gset, 4)*pow(dT_loc, 4);	//[W/m] Effect from dT
+//							if (m_HL_W.at(gset, 0) != 0 || m_HL_W.at(gset, 1) != 0 || m_HL_W.at(gset, 2) != 0 || m_HL_W.at(gset, 3) != 0 || m_HL_W.at(gset, 0) != 0)
+//								c_hl *= m_HL_W.at(gset, 0) + m_HL_W.at(gset, 1)*V_wind + m_HL_W.at(gset, 2)*pow(V_wind, 2) + m_HL_W.at(gset, 3)*pow(V_wind, 3) + m_HL_W.at(gset, 4)*pow(V_wind, 4);
+//							m_q_loss[i] = c_hl*m_L_col.at(gset, 0) / 1000.0;		//[kWt] Thermal loss for each receiver in loop
+//							m_q_abs[i] = m_q_rec[i] - m_q_loss[i];		//[kWt] Thermal power absorbed by steam in each receiver
+//						}
+//						else if (m_HLCharType.at(gset, 0) == 2)
+//						{
+//							// Calculate thermal loss from Forristall receiver model (algorithm is found in Type 250)
+//
+//							m_q_loss[i] = 0.0;			//[kWt] Thermal loss for each receiver in loop
+//							m_q_abs[i] = 0.0;			//[kWt] Thermal power absorbed by steam in each receiver
+//
+//							for (int j = 0; j < 4; j++)
+//							{
+//								// Only calculate if the HCE fraction is non-zero
+//								if (m_HCE_FieldFrac.at(gset, j) <= 0.0)
+//									continue;
+//
+//								/*Call the receiver performance model - single point mode
+//								!This call uses VP1 as the HTF since 2-phase heat transfer correlations have high uncertainty. The
+//								!only use for the fluid type in the single point model is calculating the convective heat transfer
+//								!coefficient between the HTF and inner absorber wall. This is sufficiently high for both HTF and
+//								!steam that substituting the HTF here introduces negligible error.*/
+//
+//								// For LF, HT = CT && sca_num = 0
+//								double q_rec_loss, q_rec_abs, dum1, dum2, dum3;
+//								q_rec_loss = q_rec_abs = dum1 = dum2 = dum3 = std::numeric_limits<double>::quiet_NaN();
+//								evac_tube_model.EvacReceiver(m_T_ave.at(i, 0), 10.0, T_db, T_sky, V_wind, P_amb, defocus_lim*m_q_inc[i] / m_L_col.at(gset, 0)*1000.0, gset, j, gset, 0, true, m_ncall,
+//									time / 3600.0, q_rec_loss, q_rec_abs, dum1, dum2, dum3);
+//
+//								if (q_rec_loss != q_rec_loss || q_rec_abs != q_rec_abs)
+//								{
+//									q_rec_loss = 0.0;
+//									q_rec_abs = 0.0;
+//								}
+//
+//								m_q_loss[i] += q_rec_loss*m_L_col.at(gset, 0)*m_HCE_FieldFrac.at(gset, j) / 1000.0;		//[kWt] Thermal loss for each receiver in loop
+//								m_q_abs[i] += q_rec_abs*m_L_col.at(gset, 0)*m_HCE_FieldFrac.at(gset, j) / 1000.0;		//[kWt] Thermal power absorbed by steam in each receiver
+//
+//							}
+//
+//						}
+//
+//						// Set the inlet enthalpy equal to the outlet of the previous mode
+//						if (ii > 0)
+//							m_h_in.at(i, 0) = m_h_out.at(i - 1, 0);
+//
+//						// Calculate the collector outlet enthalpy
+//						double tol_t = 0.001;
+//						double err_t = 10.0*tol_t;
+//						int iter_t = 0;
+//
+//						while (err_t > tol_t && iter_t < 50)
+//						{
+//							// Calculate the average enthalpy value in the collector module
+//							m_h_out.at(i,0) = check_h.check(m_h_in.at(i, 0) + m_q_abs[i] / m_dot - (m_T_ave.at(i, 0) - m_T_ave_prev[i])*m_C_thermal/(m_dt*m_dot));
+//							// Update guesses for h_ave and T_ave
+//							double h_aveg = (m_h_out.at(i,0) + m_h_in.at(i, 0)) / 2.0;
+//							// Update the average temperature for the heat loss calculation
+//							water_PH(P_loc*100.0, h_aveg, &wp);
+//							m_T_ave.at(i, 0) = wp.temp;
+//							err_t = fabs((h_ave[i] - h_aveg) / h_ave[i]);
+//							h_ave[i] = h_aveg;
+//						}
+//
+//					}	// Step through superheater receivers
+//
+//					err_sh = (T_sh_guess - m_T_ave.at(m_nModTot - 1, 0)) / T_sh_guess;
+//					T_sh_guess = m_T_ave.at(m_nModTot - 1, 0);
+//
+//				}	// Main superheater iteration
+//
+//			}		// End superheater
+//			else
+//			{
+//				double m_dot_field = m_dot_b*m_x_b_des*(double)m_nLoops;	//[kg/s] The total field mass flow rate is just the saturated steam coming from the boiler section
+//			}
+//
+//			m_dot_b_tot = m_dot_b * (double)m_nLoops;
+//
+//		}	// End "standard" boiler + sh configuration
+//
+//	} while (defocus_on);
+//
+//	// **** Calculate final solar field values ******
+//	// Total effective solar field mass flow rate
+//	double m_dot_field = m_dot*(double)m_nLoops;		//[kg/s]
+//
+//	// Look up temperatures
+//	water_PH(check_pressure.P_check(P_turb_in + dP_basis*(m_fP_sf_tot - m_fP_hdr_c))*100.0, m_h_in.at(0, 0), &wp);
+//	double T_field_in = wp.temp - 273.15;		// [C]
+//	water_PH(check_pressure.P_check(P_turb_in + dP_basis*m_fP_hdr_h)*100.0, m_h_out.at(m_nModTot - 1, 0), &wp);
+//	double T_loop_out = wp.temp - 273.15;		// [C]
+//
+//	// Piping thermal loss
+//	double q_loss_piping = m_Ap_tot * m_Pipe_hl_coef / 1000.0 * ((T_field_in + T_loop_out) / 2.0 - (T_db - 273.15));	// hl coef is [W/m2-K], use average field temp as driving difference
+//
+//	// Given the piping heat/pressure loss, calculate the temperature at the inlet to the power block
+//	double h_to_pb = 0.0;
+//	if (m_dot > 0.0)
+//		h_to_pb = m_h_out.at(m_nModTot - 1, 0) - q_loss_piping / m_dot_field;
+//	else
+//		h_to_pb = m_h_out.at(m_nModTot - 1, 0);
+//
+//	water_PH(P_turb_in*100.0, h_to_pb, &wp);
+//	mc_sys_h_out.m_temp = wp.temp;		//[K]
+//
+//	// Energies
+//	double q_inc_tot, q_rec_tot, q_abs_tot, q_loss_rec;
+//	q_inc_tot = q_rec_tot = q_abs_tot = q_loss_rec = 0.0;
+//	for (int i = 0; i < m_nModTot; i++)
+//	{
+//		q_inc_tot += m_q_inc[i];			//[kWt] LOOP total incident beam radiation
+//		q_rec_tot += m_q_rec[i];			//[kWt] LOOP total incident thermal power on receiver after *optical* losses and *defocus*
+//		q_abs_tot += m_q_abs[i];			//[kWt] LOOP total Thermal power absorbed by steam in each receiver
+//		q_loss_rec += m_q_loss[i];			//[kWt] LOOP total thermal losses
+//	}
+//	q_inc_tot *= (double)m_nLoops / 1000.0;
+//	q_rec_tot *= (double)m_nLoops / 1000.0;
+//	q_abs_tot *= (double)m_nLoops / 1000.0;
+//	q_loss_rec *= (double)m_nLoops / 1000.0;
+//	q_loss_piping = q_loss_piping / 1000.0;			//[MW] Thermal losses from the receiver
+//	double q_loss_sf = q_loss_rec + q_loss_piping;	//[MW] Total solar field losses, receiver + piping loss
+//	double q_field_delivered = m_dot_field*max(h_to_pb - h_pb_out, 0.0);	//[kW] Energy balance indicating total energy delivered from the solar field
+//	double h_field_out = h_to_pb;					// h_field_out is corrected later if fossil energy is supplied in topping mode
+//
+//	// 11.2.15 twn: corrected q_dump equation
+//	double q_dump = (1.0 - m_defocus)*q_inc_tot;	//[MW] Total amount of energy dumped by collector defocusing
+//	// this also works, assuming defocus is last multiplier before q_rec_tot:
+//	//double q_dump = q_inc_tot*(1.0/m_defocus - 1.0);
+//
+//
+//	double eta_thermal = 0.0;
+//	if (q_rec_tot > 0.0)
+//		eta_thermal = 1.0 - min(max(q_loss_sf / q_rec_tot, 0.0), 1.0);	//[-] thermal efficiency after reflection
+//
+//	// Calculate solar field pressure drops all [bar]
+//	double dP_tot = dP_basis*m_fP_sf_tot;
+//	double dP_hdr_c = dP_basis*m_fP_hdr_c;
+//	double dP_sf_boil = dP_basis*m_fP_sf_boil;
+//	double dP_boil_to_SH = dP_basis*m_fP_boil_to_sh;
+//	double dP_sf_sh = dP_basis*m_fP_sf_sh;
+//	double dP_hdr_h = dP_basis*m_fP_hdr_h;
+//
+//	// Calculate the total change in energy state
+//	double E_bal_startup = 0.0;
+//	double E_field = 0.0;
+//	for (int i = 0; i < m_nModTot; i++)
+//	{
+//		E_bal_startup += (m_T_ave.at(i, 0) - m_T_ave_prev[i] )*m_C_thermal / m_dt*(double)m_nLoops / 1000.0;	//[MW]
+//		E_field += (m_T_ave.at(i, 0) - m_T_field_ini)*m_C_thermal / m_dt*(double)m_nLoops / 1000.0;				//[MW]
+//	}
+//
+//
+//	//***********************************************************************
+//	//*** Control logic *******************
+//	//***********************************************************************
+//	// Check how much power is available from the aux backup
+//	double q_aux_avail = min(m_q_pb_des*m_ffrac[tou_period], m_q_max_aux);
+//
+//	/*Fossil mode 3 allows fossil as supplemental temperature boosting. This requires flow from the field.
+//	it is also possible that the total of the energy from the field plus the topping energy does not
+//	produce enough to meet the cycle cutoff fraction, so calculate here how much energy would be contributed
+//	from the fossil contribution */
+//	if (m_fossil_mode == 3)
+//	{
+//		if (q_field_delivered <= 0.0)
+//			q_aux_avail = 0.0;
+//		else
+//		{
+//			double h_target = 0.0;
+//			if (m_is_sh)
+//			{
+//				water_TP(m_T_field_out_des, P_turb_in*100.0, &wp);
+//				h_target = wp.enth;
+//			}
+//			else
+//			{
+//				water_PQ(P_turb_in*100.0, m_x_b_des, &wp);
+//				h_target = wp.enth;
+//			}
+//			// Thermal requirement for the aux heater
+//			q_aux_avail = max(0.0, (h_target - h_field_out)*m_dot_field);
+//		}
+//	}
+//
+//	// Calculate the total available energy for the power cycle as the sum of the energy from the solar field and the aux backup
+//	double q_avail_tot = q_aux_avail + max(0.0, q_field_delivered);
+//
+//	double T_pb_in = 0.0;
+//	double q_aux_fuel = 0.0;
+//	double m_dot_to_pb = 0.0;	//[kg/s]
+//	double q_to_pb = 0.0;
+//	int standby_control = 0;
+//	double q_aux = 0.0;
+//	double m_dot_aux = 0.0;
+//	// Do we have enough to run the power cycle?
+//	if (q_avail_tot >= m_q_pb_des*m_cycle_cutoff_frac)
+//	{
+//		if (q_aux_avail > 0.0)
+//		{
+//			double h_target = 0.0;
+//			double h_to_pb = 0.0;
+//			// Calculate the contribution from the aux backup
+//			switch (m_fossil_mode)
+//			{
+//			case 1:			// backup minimum level - parallel
+//				if (m_is_sh)
+//				{
+//					water_TP(m_T_field_out_des, P_turb_in*100.0, &wp);
+//					h_target = wp.enth;
+//				}
+//				else
+//				{
+//					water_PQ(P_turb_in*100.0, m_x_b_des, &wp);
+//					h_target = wp.enth;
+//				}
+//				q_aux = max(0.0, q_aux_avail - q_field_delivered);
+//				m_dot_aux = q_aux / (h_target - h_pb_out);
+//
+//				if (q_field_delivered > 0.0)
+//				{
+//					m_dot_to_pb = m_dot_aux + m_dot_field;
+//					h_to_pb = (h_field_out*m_dot_field + h_target*m_dot_aux) / m_dot_to_pb;
+//				}
+//				else
+//				{
+//					m_dot_to_pb = m_dot_aux;
+//					h_to_pb = h_target;
+//				}
+//				water_PH(P_turb_in*100.0, h_to_pb, &wp);
+//				q_to_pb = m_dot_to_pb * (h_to_pb - h_pb_out);
+//				break;
+//			case 2:			// supplemental parallel
+//				if (m_is_sh)
+//				{
+//					water_TP(m_T_field_out_des, P_turb_in*100.0, &wp);
+//					h_target = wp.enth;
+//				}
+//				else
+//				{
+//					water_PQ(P_turb_in*100.0, m_x_b_des, &wp);
+//					h_target = wp.enth;
+//				}
+//				q_aux = min(m_q_pb_des - q_field_delivered, q_aux_avail);
+//				// For parallel operation, the result is a weighted mix of the field output and the boiler
+//				m_dot_aux = q_aux / (h_target - h_pb_out);
+//				m_dot_to_pb = 0.0;
+//				if (q_field_delivered > 0.0)
+//				{
+//					m_dot_to_pb = m_dot_aux + m_dot_field;
+//					h_to_pb = (h_field_out*m_dot_field + h_target*m_dot_aux) / m_dot_to_pb;
+//				}
+//				else
+//				{
+//					m_dot_to_pb = m_dot_aux;
+//					h_to_pb = h_target;
+//				}
+//				water_PH(P_turb_in*100.0, h_to_pb, &wp);
+//				q_to_pb = m_dot_to_pb * (h_to_pb - h_b_in);
+//				break;
+//			case 3:		// Supplemental parallel
+//				// The auxiliary heater is used to bring the steam from the solar field up to the design-point temperature
+//				// for the power block. The fossil use corresponds to the operation level of the solar field
+//				if (m_is_sh)
+//				{
+//					water_TP(m_T_field_out_des, P_turb_in*100.0, &wp);
+//					h_target = wp.enth;
+//				}
+//				else
+//				{
+//					water_PQ(P_turb_in*100.0, m_x_b_des, &wp);
+//					h_target = wp.enth;
+//				}
+//				// The flow rate through the aux heater is the same as through the field
+//				m_dot_aux = m_dot_field;
+//				// Thermal requirement for the aux heater
+//				q_aux = min(max(0.0, h_target - h_field_out)*m_dot_aux, q_aux_avail);
+//				// Calcualte the enthalpy into the power block
+//				h_to_pb = h_field_out + q_aux / m_dot_aux;
+//				m_dot_to_pb = m_dot_field;
+//				q_to_pb = m_dot_to_pb * (h_to_pb - h_pb_out);
+//				water_PH(P_turb_in*100.0, h_to_pb, &wp);
+//				T_pb_in = wp.temp - 273.15;
+//				break;
+//			}  // end switch
+//			q_aux_fuel = q_aux / m_LHV_eff;
+//		}   // end "if q_aux_avail > 0.0
+//		else
+//		{
+//			// No aux backup, just the solar field
+//			m_dot_to_pb = m_dot_field;
+//			T_pb_in = mc_sys_h_out.m_temp - 273.15;		//[C]
+//			q_to_pb = q_field_delivered;
+//		}
+//		standby_control = 1;	// We're operating the power block normally
+//		m_is_pb_on = true;
+//	}
+//	else
+//	{
+//		// There isn't enough energy to run the power block
+//
+//		// Do we have enough to do standby?
+//		if (q_avail_tot > m_q_pb_des*m_q_sby_frac && m_t_sby_prev > 0.0 && m_is_pb_on_prev)
+//		{
+//			standby_control = 2;	// Operate in standby mode
+//			m_t_sby = max(0.0, m_t_sby_prev - m_dt / 3600.0);
+//			q_aux = max(m_q_sby_frac*m_q_pb_des - q_field_delivered, 0.0);
+//			m_dot_aux = 0.0;		// It's not meaningful to report the aux mass flow rate
+//			q_aux_fuel = q_aux / m_LHV_eff;
+//			q_to_pb = m_q_sby_frac*m_q_pb_des;
+//			T_pb_in = m_T_field_in_des;
+//			m_is_pb_on = true;
+//		}
+//		else
+//		{
+//			standby_control = 3;		// Turn off power block
+//			m_t_sby = m_t_sby_des;		// Reset standby time
+//			q_aux = 0.0;
+//			m_dot_aux = 0.0;
+//			q_field_delivered = 0.0;
+//			q_aux_fuel = 0.0;
+//			q_to_pb = 0.0;
+//			T_pb_in = mc_sys_h_out.m_temp - 273.15;		//[C]
+//			m_is_pb_on = false;
+//		}
+//		m_dot_to_pb = 0.0;
+//	}
+//
+//	// *** Calculate final plant values ****
+//	// Parasitic losses associated with the operation of the aux boiler
+//	double W_dot_aux = 0.0;
+//	if (q_aux > 0.0)
+//		W_dot_aux = m_W_pb_des / 1000.0 * m_aux_array[0] * m_aux_array[1] * (m_aux_array[2] + m_aux_array[3] * (q_aux / m_q_pb_des) + m_aux_array[4] * pow(q_aux / m_q_pb_des, 2));	//[MWe]
+//
+//	// Balance of plant parasitics as a function of power block load
+//	double W_dot_bop = 0.0;
+//	if (q_to_pb > 0.0)
+//		W_dot_bop = m_W_pb_des / 1000.0 * m_bop_array[0] * m_bop_array[1] * (m_bop_array[2] + m_bop_array[3] * (q_to_pb / m_q_pb_des) + m_bop_array[4] * pow(q_to_pb / m_q_pb_des, 2));	//[MWe]
+//
+//	// Parasitic electric power consumed by the collectors
+//	double W_dot_col = 0.0;
+//	if (CSP::pi / 2.0 - SolarZen > 0.0)
+//		W_dot_col = m_ftrack*m_SCA_drives_elec*m_Ap_tot / 1.E6;	//[MWe]
+//
+//	double W_dot_fixed = m_PB_fixed_par*m_W_pb_des / 1000.0;	//[MWe] Fixed parasitic power losses... for every hour of operation
+//
+//	// If the power block isn't running, there's only a small pressure differential across the field
+//	if (q_to_pb <= 0.0)
+//	{
+//		P_turb_in = m_P_turb_des * turb_pres_frac(m_cycle_cutoff_frac, m_fossil_mode, m_ffrac[tou_period], m_fP_turb_min);
+//		// m_cycle_cutoff_frac  mjw 11.15.11 The cycle cutoff restriction occasionally allows low pressure and steaming in the feedwater line. Avoid this.
+//		dP_hdr_c = dP_basis * m_fP_hdr_c;
+//		dP_sf_boil = dP_basis * m_fP_sf_boil;
+//		dP_boil_to_SH = dP_basis * m_fP_boil_to_sh;
+//		dP_sf_sh = dP_basis * m_fP_sf_sh;
+//		dP_hdr_h = dP_basis * m_fP_hdr_h;
+//		dP_tot = dP_basis * (m_fP_hdr_c + m_fP_sf_boil + m_fP_boil_to_sh + m_fP_sf_sh + m_fP_hdr_h);
+//	}
+//
+//	// Feedwater pump parasitic
+//	water_PQ(check_pressure.P_check(P_turb_in + dP_basis*(m_fP_hdr_c + m_fP_sf_boil + m_fP_boil_to_sh + m_fP_sf_sh + m_fP_hdr_h))*100.0, 0.0, &wp);
+//	double T_low_limit = wp.temp;
+//	water_TP(min(T_pb_out, T_low_limit), check_pressure.P_check(P_turb_in + dP_basis*(m_fP_hdr_c + m_fP_sf_boil + m_fP_boil_to_sh + m_fP_sf_sh + m_fP_hdr_h))*100.0, &wp);
+//	double rho_fw = wp.dens;
+//
+//	double W_dot_pump = 0.0;
+//	if (m_is_oncethru)
+//		W_dot_pump = m_dot_field*dP_tot / rho_fw / m_eta_pump*0.1;
+//	else
+//		W_dot_pump = (m_dot_field*(m_fP_hdr_c + m_fP_boil_to_sh + m_fP_sf_sh + m_fP_hdr_h) + m_dot_field / m_x_b_des*m_fP_sf_boil)*dP_basis / rho_fw / m_eta_pump*0.1;	//[MWe] P_turb in in bar
+//
+//	// Solar field efficiency
+//	double eta_sf = eta_opt_ave * eta_thermal;
+//
+//	// Limit the reported values of solar azimuth/elevation
+//	double solaralt = max(0.0, CSP::pi / 2 - SolarZen);
+//	if (SolarZen >= CSP::pi / 2)
+//		SolarAz = 0.0;
+//
+//	// Set Outputs
+//	//reference
+//	//bConnected &= connect(type261_solarfield, "T_field_out", type234_powerblock, "T_hot");		//[C] connect to LF solarfield
+//	//bConnected &= connect(type261_solarfield, "m_dot_to_pb", type234_powerblock, "m_dot_st");		//[kg/hr] connect to LF solarfield
+//	//bConnected &= connect(type261_solarfield, "standby_control", type234_powerblock, "standby_control");
+//	//bConnected &= connect(type261_solarfield, "dP_sf_sh", type234_powerblock, "dp_sh");			//[Pa] Pressure drop in sh
+//	//bConnected &= connect(type261_solarfield, "W_dot_par_tot", type261_summarizer, "W_par_sf_tot");
+//	//reference
+//
+//	cr_out_solver.m_T_salt_hot = mc_sys_h_out.m_temp - 273.15;	//[C] not really "salt", but ok
+//	cr_out_solver.m_m_dot_salt_tot = m_dot_to_pb*3600.0;		//[kg/hr] not really "salt", but ok
+//	cr_out_solver.m_standby_control = standby_control;			//[-]
+//	cr_out_solver.m_dP_sf_sh = dP_sf_sh;						//[bar]
+//
+//	cr_out_solver.m_W_dot_col_tracking = W_dot_col;				//[MWe]
+//	cr_out_solver.m_W_dot_htf_pump = W_dot_aux + W_dot_bop + W_dot_fixed + W_dot_pump;	//[MWe]
+//	//cr_out_solver.m_W_dot_par_tot = W_dot_aux + W_dot_bop + W_dot_col + W_dot_fixed + W_dot_pump;	//[MWe]
+//	//value(O_CYCLE_PL_CONTROL, cycle_pl_control);        //[none] Part-load control flag - used by Type224
+//	//value(O_DP_TOT, dP_tot);							  //[bar] Total HTF pressure drop
+//	//value(O_DP_HDR_C, dP_hdr_c);						  //[bar] Average cold header pressure drop
+//	//value(O_DP_SF_BOIL, dP_sf_boil);					  //[bar] Pressure drop across the solar field boiler
+//	//value(O_DP_BOIL_TO_SH, dP_boil_to_SH);			  //[bar] Pressure drop between the boiler and superheater
+//	//value(O_DP_SF_SH, dP_sf_sh);						  //[bar] Pressure drop across the solar field superheater
+//	//value(O_DP_HDR_H, dP_hdr_h);						  //[bar] Average hot header pressure drop
+//	//value(O_E_BAL_STARTUP, E_bal_startup);			  //[MW] Startup energy consumed
+//	//value(O_E_FIELD, E_field);						  //[MW-hr] Accumulated internal energy in the entire solar field
+//	//value(O_E_FP_TOT, 0.0);							  //[J] Freeze protection energy
+//	//value(O_ETA_OPT_AVE, eta_opt_ave);				  //[none] Collector equivalent optical efficiency
+//	//value(O_ETA_THERMAL, eta_thermal);				  //[none] Solar field thermal efficiency (power out/ANI)
+//	//value(O_ETA_SF, eta_sf);    						  //[none] Total solar field collection efficiency
+//	//value(O_DEFOCUS, m_defocus);     					  //[none] The fraction of focused aperture area in the solar field
+//	//value(O_M_DOT_AUX, m_dot_aux * 3600);				  //[kg/s] --> [kg/hr] Auxiliary heater mass flow rate
+//	//value(O_M_DOT_FIELD, m_dot_field * 3600);			  //[kg/s] --> [kg/hr] Flow rate from the field
+//	//value(O_M_DOT_B_TOT, m_dot_b_tot * 3600);			  //[kg/s] --> [kg/hr] Flow rate within the boiler section
+//	//value(O_M_DOT, m_dot);							  //[kg/s] Flow rate in a single loop
+//	//value(O_M_DOT_TO_PB, m_dot_to_pb * 3600);			  //[kg/s] --> [kg/hr] Flow rate delivered to the power block
+//	//value(O_P_TURB_IN, P_turb_in);			               //[bar] Pressure at the turbine inlet
+//	//value(O_Q_LOSS_PIPING, q_loss_piping);				   //[MW] Pipe heat loss in the hot header and the hot runner
+//	//value(O_Q_AUX_FLUID, q_aux*0.001);					   //[MW] Thermal energy provided to the fluid passing through the aux heater
+//	//value(O_Q_AUX_FUEL, q_aux_fuel*3.412E-3);				   //[W] --> [MMBTU] Heat content of fuel required to provide aux firing
+//	//value(O_Q_DUMP, q_dump);								   //[MW] Dumped thermal energy
+//	//value(O_Q_FIELD_DELIVERED, q_field_delivered*0.001);	   //[kW] --> [MW] Total solar field thermal power delivered
+//	//value(O_Q_INC_TOT, q_inc_tot);						   //[MW] Total power incident on the field
+//	//value(O_Q_LOSS_REC, q_loss_rec);						   //[MW] Total Receiver thermal losses
+//	//value(O_Q_LOSS_SF, q_loss_sf);						   //[MW] Total solar field thermal losses
+//	//value(O_Q_TO_PB, q_to_pb*0.001);						   //[kW] --> [MW] Thermal energy to the power block
+//	//value(O_SOLARALT, solaralt*57.2958);					   //[rad] --> [deg] Solar altitude used in optical calculations
+//	//value(O_SOLARAZ, SolarAz*57.2958);					   //[rad] --> [deg] Solar azimuth used in optical calculations
+//	//value(O_PHI_T, phi_t*57.2958);						   //[rad] --> [deg] Transversal solar incidence angle
+//	//value(O_THETA_L, theta_L*57.2958);					   //[rad] --> [deg] Longitudinal solar incidence angle
+//	//value(O_STANDBY_CONTROL, standby_control);			   //[none] Standby control flag - used by Type224
+//	//value(O_T_FIELD_IN, m_T_field_in);						   //[C] HTF temperature into the collector field header
+//	//value(O_T_FIELD_OUT, m_T_field_out);					   //[C] HTF Temperature from the field
+//	//value(O_T_LOOP_OUT, T_loop_out);						   //[C] Loop outlet temperature
+//	//value(O_T_PB_IN, T_pb_in);							   //[C] HTF Temperature to the power block
+//	//value(O_W_DOT_AUX, W_dot_aux);						   //[MW] Parasitic power associated with operation of the aux boiler
+//	//value(O_W_DOT_BOP, W_dot_bop);						   //[MW] parasitic power as a function of power block load
+//	//value(O_W_DOT_COL, W_dot_col);						   //[MW] Parasitic electric power consumed by the collectors
+//	//value(O_W_DOT_FIXED, W_dot_fixed);					   //[MW] Fixed parasitic power losses.. for every hour of operation
+//	//value(O_W_DOT_PUMP, W_dot_pump);						   //[MW] Required solar field pumping power
+//	//value(O_W_DOT_PAR_TOT, W_dot_aux + W_dot_bop + W_dot_col + W_dot_fixed + W_dot_pump);	//[MW] Total parasitic power losses
+//	//value(O_P_SF_IN, P_turb_in + dP_tot);						//[bar] Solar field inlet pressure
+//
+//	return;
+//
+//
+//}

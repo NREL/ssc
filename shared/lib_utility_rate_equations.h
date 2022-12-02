@@ -1,24 +1,35 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 
 #ifndef _LIB_UTILITY_RATE_EQUATIONS_H_
 #define _LIB_UTILITY_RATE_EQUATIONS_H_
@@ -114,6 +125,7 @@ public:
 	std::vector<ssc_number_t> monthly_dc_fixed;
 	std::vector<ssc_number_t> monthly_dc_tou;
 
+    bool dc_enabled;
     bool uses_billing_demand; // Has a energy rate with kWh/kw AND/OR has a demand charge. If false, en_billing_demand_lookback must be false
     bool en_billing_demand_lookback; // Enable billing demand lookback percentages
     std::vector<ssc_number_t> prev_peak_demand; // Set before calling init_energy_rates
@@ -154,20 +166,28 @@ public:
 
     /* Populate ur_month objects from those filled out in setup_energy_rates. Called annually in cmod_utility_rate5, other classes may reset ur_month directly
        Can be called right away to create the vectors, but for kWh/kW rates needs to be called once after ur_month.update_net_and_peak to be accurate */
-    void init_energy_rates(bool gen_only);
+    void init_energy_rates_all_months(bool gen_only);
+    void init_energy_rates(bool gen_only, int m);
 
 	// Runs each step
 	void sort_energy_to_periods(int month, double energy, size_t step); // Net metering only
 	void find_dc_tou_peak(int month, double power, size_t step);
 	int get_tou_row(size_t year_one_index, int month);
 
+    // Used by setup
+    int get_dc_tou_row(size_t year_one_index, int month);
+
 	// Runs each month
 	void init_dc_peak_vectors(int month); // Reinitialize vectors for re-use of memory year to year
 	ssc_number_t get_demand_charge(int month, size_t year);  // Sum time of use and flat demand charges to return total cost. If the mismatch between int month and size_t year looks wierd to you, you're going to have to change lib_util to fix it. Good luck.
+    void set_demand_peak_hours(int month);
     // Returns error codes so compute module can print errors. 0: no error, 10x: error in previous month, 20x: error in current month. x is the period where the error occured
     int transfer_surplus(ur_month& curr_month, ur_month& prev_month); // For net metering rollovers, used between months to copy data
     void compute_surplus(ur_month& curr_month); // For net metering rollovers, used within a single month prior to cost calculations
 
+    // Checks all months for kWh/kW rate
+    bool has_kwh_per_kw_rate();
+    // Only call if you want to know for a specific month. If you want to know for the rate generally, use the above function
     bool has_kwh_per_kw_rate(int month);
 
     // Functions for calculating hourly net metering costs
@@ -175,9 +195,29 @@ public:
     std::vector<double> get_composite_tou_sell_rate(int month, size_t year, double expected_gen);
     double getEnergyChargeNetMetering(int month, std::vector<double>& buy_rates, std::vector<double>& sell_rates);
 
+    void set_energy_use_and_peaks(util::matrix_t<double> energy_use, util::matrix_t<double> peak_use);
+    util::matrix_t<double> get_energy_use();
+    util::matrix_t<double> get_peak_use();
+
 private:
     bool check_for_kwh_per_kw_rate(int units);
 
+};
+
+class forecast_setup {
+public:
+    forecast_setup(size_t steps_per_hour, size_t analysis_period);
+    void setup(rate_data* rate, std::vector<double>& P_pv_ac, std::vector<double>& P_load_ac, double peak_offset = 0.0);
+
+    size_t _steps_per_hour;
+    size_t _nyears;
+    double _dt_hour;
+
+    // Processed in setup load and pv forecasts to get _monthly_ expected gen, load, net loads, and peak
+    std::vector<double> monthly_gross_load;
+    std::vector<double> monthly_gen;
+    std::vector<double> monthly_net_load;
+    util::matrix_t<double> monthly_peaks; // By TOU period
 };
 
 #endif // _LIB_UTILITY_RATE_EQUATIONS_H_

@@ -1,24 +1,35 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 
 #include "csp_solver_cavity_receiver.h"
 #include "csp_solver_core.h"
@@ -50,27 +61,30 @@ bool sort_pair_ascending(pair<double,double> i, pair<double, double> j)
     }
 }
 
-C_cavity_receiver::C_cavity_receiver(double dni_des /*W/m2*/, double hel_stow_deploy /*-*/,
+C_cavity_receiver::C_cavity_receiver(double dni_des /*W/m2*/,
     int field_fl /*-*/, util::matrix_t<double> field_fl_props,
-    double od_rec_tube /*m*/, double th_rec_tube /*m*/, int tube_mat_code /*-*/,
+    double od_rec_tube /*mm*/, double th_rec_tube /*mm*/, int tube_mat_code /*-*/,
     size_t nPanels /*-*/, double rec_height /*m*/, double rec_width /*m*/,
     double rec_span /*rad*/, double toplip_height /*m*/, double botlip_height /*m*/,
     double eps_active_sol /*-*/, double eps_passive_sol /*-*/, double eps_active_therm /*-*/, double eps_passive_therm /*-*/,
     E_mesh_types active_surface_mesh_type, E_mesh_types floor_and_cover_mesh_type, E_mesh_types lips_mesh_type,
     double piping_loss_coefficient /*Wt/m2-K*/, double pipe_length_add /*m*/, double pipe_length_mult /*-*/,
-    double A_sf /*m2*/, double h_tower /*m*/, double T_htf_hot_des /*C*/,
+    double h_tower /*m*/, double T_htf_hot_des /*C*/,
     double T_htf_cold_des /*C*/, double f_rec_min /*-*/, double q_dot_rec_des /*MWt*/,
     double rec_su_delay /*hr*/, double rec_qf_delay /*-*/, double m_dot_htf_max_frac /*-*/,
-    double eta_pump /*-*/)
+    double eta_pump /*-*/) : C_pt_receiver(h_tower, eps_active_therm,
+        T_htf_hot_des, T_htf_cold_des,
+        f_rec_min, q_dot_rec_des,
+        rec_su_delay, rec_qf_delay,
+        m_dot_htf_max_frac, eta_pump,
+        od_rec_tube, th_rec_tube,
+        piping_loss_coefficient, pipe_length_add,
+        pipe_length_mult,
+        field_fl, field_fl_props,
+        tube_mat_code,
+        -1)
 {
     m_dni_des = dni_des;                    //[W/m2]
-    m_hel_stow_deploy = hel_stow_deploy;    //[deg]
-    m_field_fl = field_fl;                  //[-]
-    m_field_fl_props = field_fl_props;      //[-]
-
-    m_od_rec_tube = od_rec_tube;            //[m]
-    m_th_rec_tube = th_rec_tube;            //[m]
-    m_tube_mat_code = tube_mat_code;        //[-]
 
     m_nPanels = nPanels;                    //[-]
     m_receiverHeight = rec_height;          //[m]
@@ -87,13 +101,6 @@ C_cavity_receiver::C_cavity_receiver(double dni_des /*W/m2*/, double hel_stow_de
     m_floor_and_cover_mesh_type = floor_and_cover_mesh_type;
     m_lips_mesh_type = lips_mesh_type;
 
-    //m_pipe_loss_per_m = pipe_loss_per_m;    //[Wt/m]
-    m_piping_loss_coefficient = piping_loss_coefficient;    //[Wt/m2-K]
-    m_pipe_length_add = pipe_length_add;    //[m]
-    m_pipe_length_mult = pipe_length_mult;  //[-]
-
-    m_A_sf = A_sf;      //[m2]
-
     m_area_active_total = std::numeric_limits<double>::quiet_NaN();
     m_d_in_rec_tube = std::numeric_limits<double>::quiet_NaN();
     m_A_cs_tube = std::numeric_limits<double>::quiet_NaN();
@@ -102,21 +109,6 @@ C_cavity_receiver::C_cavity_receiver(double dni_des /*W/m2*/, double hel_stow_de
     m_rel_roughness = std::numeric_limits<double>::quiet_NaN();
     m_A_aper = std::numeric_limits<double>::quiet_NaN();
     m_eta_therm_des = std::numeric_limits<double>::quiet_NaN();
-
-    // Set parent class member data
-    m_h_tower = h_tower;        //[m]
-    m_T_htf_hot_des = T_htf_hot_des;    //[C] convert to K in init()
-    m_T_htf_cold_des = T_htf_cold_des;  //[C] convert to K in init()
-    m_f_rec_min = f_rec_min;            //[-]
-    m_q_rec_des = q_dot_rec_des;        //[MWt] convert to W in init()
-    m_rec_su_delay = rec_su_delay;      //[hr]
-    m_rec_qf_delay = rec_qf_delay;      //[-]
-    m_m_dot_htf_max_frac = m_dot_htf_max_frac;  //[-]
-    m_eta_pump = eta_pump;              //[-]
-
-    // Hardcode parent class member data not used in cavity model
-    m_epsilon = std::numeric_limits<double>::quiet_NaN();
-    m_clearsky_model = -1;
 }
 
 void C_cavity_receiver::genOctCavity()
@@ -1224,7 +1216,7 @@ void C_cavity_receiver::viewFactor(const util::matrix_t<double>& poly_a, const u
         }
     }
 
-    radUA = abs(radUA)/(4.0*CSP::pi);
+    radUA = std::abs(radUA)/(4.0*CSP::pi);
 
     F_AB = radUA / areaA;
     F_BA = radUA / areaB;
@@ -1265,11 +1257,11 @@ double C_cavity_receiver::f_skew(double s, double l, double alpha, double cosAlp
     double wsqrt = sqrt(s2 + d2/sinAlpha2);
     double psqrt = sqrt(l2 + d2/sinAlpha2);
     double wdim = 1.E-9;
-    if (abs(s + wsqrt) > 0) {
+    if (std::abs(s + wsqrt) > 0) {
         wdim = s + wsqrt;
     }
     double pdim = 1.E-9;
-    if (abs(l + psqrt) > 0) {
+    if (std::abs(l + psqrt) > 0) {
         pdim = l + psqrt;
     }
 
@@ -1398,13 +1390,13 @@ void C_cavity_receiver::edgePairParameters(const util::matrix_t<double>& Po, con
     double l_toEnd = mag_vect(qfdiff);
 
     // unit vectors point from parameter origin to furthest of the two vertices
-    if (abs(s) < s_toEnd) {
+    if (std::abs(s) < s_toEnd) {
         norm3Dvect(pfdiff, sHat);
     }
     else {
         norm3Dvect(podiff, sHat);
     }
-    if (abs(l) < l_toEnd) {
+    if (std::abs(l) < l_toEnd) {
         norm3Dvect(qfdiff, lHat);
     }
     else {
@@ -1445,7 +1437,7 @@ void C_cavity_receiver::polygon_normal_and_area(const util::matrix_t<double>& po
             // the triple product of any combination of vertices must be zero
             // for the polygon to be planar
             diffrows(poly_a.row(i), poly_a.row(0), diff_local);
-            double volume = abs(dotprod3D(norm_vect, diff_local));
+            double volume = std::abs(dotprod3D(norm_vect, diff_local));
             if (volume > almostZero) {
                 throw(C_csp_exception("viewFactor: input 1 vertices not coplanar"));
             }
@@ -2165,7 +2157,7 @@ void C_cavity_receiver::inpolygon(const util::matrix_t<double>& p_x, const util:
             theCrossProd(i,j) = vx(i,j)*vy(i+1,j) - vx(i+1,j)*vy(i,j);
 
             scaledEps = ScaleFactor(i, 0) * scaledEps_base;
-            if (abs(theCrossProd(i, j)) < scaledEps) {
+            if (std::abs(theCrossProd(i, j)) < scaledEps) {
                 signCrossProd(i,j) = 0;
             }
             else if (theCrossProd(i, j) > 1.E-10) {
@@ -2182,10 +2174,10 @@ void C_cavity_receiver::inpolygon(const util::matrix_t<double>& p_x, const util:
 
             diffQuad(i,j) = quad(i+1,j) - quad(i,j);
 
-            if (abs(diffQuad(i, j)) == 3) {
+            if (std::abs(diffQuad(i, j)) == 3) {
                 diffQuad(i,j) /= -3;
             }
-            if (abs(diffQuad(i, j)) == 2) {
+            if (std::abs(diffQuad(i, j)) == 2) {
                 diffQuad(i,j) = 2 * signCrossProd(i,j);
             }
         }        
@@ -2726,7 +2718,7 @@ void C_cavity_receiver::tube_UA_and_deltaP(std::vector<double> m_dot_paths /*kg/
             CSP::PipeFlow(Re, Pr, lTotal / m_d_in_rec_tube, m_rel_roughness, Nu, f);
 
             double h = Nu * k / m_d_in_rec_tube;    //[W/m2-K]
-            double Rcond = log(m_od_rec_tube/m_d_in_rec_tube)/(CSP::pi*l*ktube*m_Ntubes);
+            double Rcond = log(m_od_tube/m_d_in_rec_tube)/(CSP::pi*l*ktube*m_Ntubes);
             double Rconv = 2.0/(h*m_Ntubes*l*m_d_in_rec_tube*CSP::pi);
             UA(stepID,0) = 1.0/(Rcond + Rconv);     //[W/K]
 
@@ -2758,13 +2750,6 @@ void C_cavity_receiver::tube_UA_and_deltaP(std::vector<double> m_dot_paths /*kg/
 void C_cavity_receiver::init()
 {
     // ******************************************
-    // Unit conversions
-    // ******************************************
-    m_T_htf_hot_des += 273.15;	//[K] Convert from input in [C]
-    m_T_htf_cold_des += 273.15;	//[K] Convert from input in [C]
-    m_q_rec_des *= 1.E6;		//[W] Convert from input in [MW]
-
-    // ******************************************
     // Set up cavity geometry and view factors
     // ******************************************  
     m_pipeWindings = 2;   //[-] Probably needs to be >= 2 to avoid inconsistencies in mesh calcs
@@ -2787,14 +2772,14 @@ void C_cavity_receiver::init()
     meshGeometry();
 
     // Tube geometry calcs
-    m_d_in_rec_tube = m_od_rec_tube - 2.0 * m_th_rec_tube;      //[m]
+    m_d_in_rec_tube = m_od_tube - 2.0 * m_th_tube;      //[m]
     m_A_cs_tube = 0.25*CSP::pi*pow(m_d_in_rec_tube,2);          //[m2]
     m_rel_roughness = surface_roughness / m_d_in_rec_tube;      //[-]
     m_A_aper = m_receiverHeight * m_receiverWidth;              //[m2]
 
     // choose number of HTF tubes per route based on available space
     //    assumes each receiver panel is same area and uses same dimension tube
-    m_Ntubes = std::floor(mv_rec_surfs[0].surf_elem_size*m_modelRes/m_od_rec_tube);
+    m_Ntubes = std::floor(mv_rec_surfs[0].surf_elem_size*m_modelRes/m_od_tube);
 
     // Make global elements and calculate element centroids and areas
     makeGlobalElems();
@@ -2825,70 +2810,22 @@ void C_cavity_receiver::init()
     // ********************************************
     // Complete receiver initialization
 
-    ambient_air.SetFluid(ambient_air.Air);
-
     // Declare instance of fluid class for FIELD fluid
-    if (m_field_fl != HTFProperties::User_defined && m_field_fl < HTFProperties::End_Library_Fluids)
-    {
-        if (!field_htfProps.SetFluid(m_field_fl))
-        {
-            throw(C_csp_exception("Receiver HTF code is not recognized", "MSPT receiver"));
-        }
-    }
-    else if (m_field_fl == HTFProperties::User_defined)
-    {
-        // Check that 'm_field_fl_props' is allocated and correct dimensions
-        int n_rows = (int)m_field_fl_props.nrows();
-        int n_cols = (int)m_field_fl_props.ncols();
-        if (n_rows > 2 && n_cols == 7)
-        {
-            if (!field_htfProps.SetUserDefinedFluid(m_field_fl_props))
-            {
-                error_msg = util::format(field_htfProps.UserFluidErrMessage(), n_rows, n_cols);
-                throw(C_csp_exception(error_msg, "MSPT receiver"));
-            }
-        }
-        else
-        {
-            error_msg = util::format("The user defined field HTF table must contain at least 3 rows and exactly 7 columns. The current table contains %d row(s) and %d column(s)", n_rows, n_cols);
-            throw(C_csp_exception(error_msg, "MSPT receiver"));
-        }
-    }
-    else
-    {
-        throw(C_csp_exception("Receiver HTF code is not recognized", "MSPT receiver"));
-    }
-
-    // Declare instance of htf class for receiver tube material
-    if (m_tube_mat_code == HTFProperties::Stainless_AISI316 || m_tube_mat_code == HTFProperties::T91_Steel ||
-        m_tube_mat_code == HTFProperties::N06230 || m_tube_mat_code == HTFProperties::N07740)
-    {
-        if (!tube_material.SetFluid(m_tube_mat_code))
-        {
-            throw(C_csp_exception("Tube material code not recognized", "MSPT receiver"));
-        }
-    }
-    else if (m_tube_mat_code == HTFProperties::User_defined)
-    {
-        throw(C_csp_exception("Receiver material currently does not accept user defined properties", "MSPT receiver"));
-    }
-    else
-    {
-        error_msg = util::format("Receiver material code, %d, is not recognized", m_tube_mat_code);
-        throw(C_csp_exception(error_msg, "MSPT receiver"));
-    }
+    C_pt_receiver::init();
 
     double c_htf_des = field_htfProps.Cp((m_T_htf_hot_des + m_T_htf_cold_des) / 2.0) * 1000.0;		//[J/kg-K] Specific heat at design conditions
     m_m_dot_htf_des = m_q_rec_des / (c_htf_des*(m_T_htf_hot_des - m_T_htf_cold_des));   //[kg/s]
 
-    double L_piping = std::numeric_limits<double>::quiet_NaN();     //[m]
+    // 22-06-10 Currently not capping HTF mass flow rate in cavity model
+    m_m_dot_htf_max = 100.0 * m_m_dot_htf_des;  //[kg/s]
+
     double d_inner_piping = std::numeric_limits<double>::quiet_NaN();   //[m]
     CSP::mspt_piping_design(field_htfProps,
         m_h_tower, m_pipe_length_mult,
         m_pipe_length_add, m_piping_loss_coefficient,
         m_T_htf_hot_des, m_T_htf_cold_des,
         m_m_dot_htf_des,
-        L_piping, d_inner_piping, m_Q_dot_piping_loss);
+        m_L_piping, d_inner_piping, m_Q_dot_piping_loss);
 
     m_mode_prev = C_csp_collector_receiver::OFF;
     m_od_control = 1.0;			                //[-] Additional defocusing for over-design conditions
@@ -2904,7 +2841,7 @@ void C_cavity_receiver::call(const C_csp_weatherreader::S_outputs& weather,
 	const C_csp_solver_sim_info& sim_info)
 {
     // Get inputs
-    double field_eff = inputs.m_field_eff;					//[-]
+    double plant_defocus = inputs.m_plant_defocus;      //[-]
     const util::matrix_t<double>* flux_map_input = inputs.m_flux_map_input;
     C_csp_collector_receiver::E_csp_cr_modes input_operation_mode = inputs.m_input_operation_mode;
 
@@ -2937,7 +2874,6 @@ void C_cavity_receiver::call(const C_csp_weatherreader::S_outputs& weather,
 
     bool rec_is_off = false;
     bool rec_is_defocusing = false;
-    double field_eff_adj = 0.0;
 
     // Do an initial check to make sure the solar position called is valid
     // If it's not, return the output equal to zeros. Also check to make sure
@@ -2947,7 +2883,7 @@ void C_cavity_receiver::call(const C_csp_weatherreader::S_outputs& weather,
         rec_is_off = true;
     }
 
-    if (zenith > (90.0 - m_hel_stow_deploy) || I_bn <= m_f_rec_min*m_dni_des || (zenith == 0.0 && azimuth == 180.0))
+    if (plant_defocus == 0.0 || I_bn <= m_f_rec_min*m_dni_des || (zenith == 0.0 && azimuth == 180.0))
     {
         m_mode = C_csp_collector_receiver::OFF;
         rec_is_off = true;
@@ -2959,10 +2895,25 @@ void C_cavity_receiver::call(const C_csp_weatherreader::S_outputs& weather,
     double W_dot_pump, DELTAP, Pres_D, u_coolant;
     W_dot_pump = DELTAP = Pres_D = u_coolant = std::numeric_limits<double>::quiet_NaN();
 
-    if (field_eff < m_eta_field_iter_prev && m_od_control < 1.0)
-    {	// Suggests controller applied defocus, so reset *controller* defocus
-        m_od_control = fmin(m_od_control + (1.0 - field_eff / m_eta_field_iter_prev), 1.0);
-    }
+    //if (field_eff < m_eta_field_iter_prev && m_od_control < 1.0)
+    //{	// In a prior call-iteration this timestep, the component control was set < 1.0
+    //    //     indicating that receiver requested defocus due to mass flow rate constraint
+    //    // This call, the plant requests the field to defocus. Under the new plant defocus
+    //    //     the corresponding required *component* defocus decreases, because less flux on receiver
+    //    // So this line helps "correctly" allocate defocus from the component to the controller
+    //    // But, this likely makes the defocus iteration trickier because the iterator
+    //    //    won't see a reponse in output mass flow or heat until m_od_control is back to 1.0
+    //    // Component defocus also depends on inlet temperature, which can make current method tricky
+    //    //    because the mass_flow_and_defocus code will only adjust m_od_control down, not up
+    //    //    and then following calls-iterations use the previous m_od_control as a baseline
+    //    //    unless adjusted here.
+    //	m_od_control = fmin(m_od_control + (1.0 - field_eff / m_eta_field_iter_prev), 1.0);
+    //}
+    // So maybe just try resetting m_od_control each call?
+    //      This will also force correct allocation of defocus. Might be a bit slower because it's calling
+    //           the mspt component defocus method more frequently, but seems more straight-forward
+    //           and might make the upstream problem easier to solve or at least easier to understand
+    m_od_control = 1.0;
 
     double m_dot_htf_tot = std::numeric_limits<double>::quiet_NaN();        //[kg/s]
     double T_htf_tower_out_calc = std::numeric_limits<double>::quiet_NaN();       //[K]
@@ -2984,7 +2935,7 @@ void C_cavity_receiver::call(const C_csp_weatherreader::S_outputs& weather,
 
         // Adjust input field efficiency w/ component defocus, m_od_control
         // m_od_control will always = 1 until component (max mass flow rate) defocus loop built
-        field_eff_adj = field_eff * m_od_control;
+        double total_defocus = plant_defocus * m_od_control;    //[-]
 
         // *************************************************
         // *************************************************
@@ -2998,10 +2949,8 @@ void C_cavity_receiver::call(const C_csp_weatherreader::S_outputs& weather,
         }
         int n_flux_x = (int)flux_map_input->ncols();
         if (n_flux_x != m_nPanels) {
-            throw(C_csp_exception("cavity model currently requires that flux map contains 1 value per panel"));
+            throw(C_csp_exception("cavity model currently requires that flux map contains the same number of x nodes as number of panels"));
         }
-
-        double flux_scale_geometry = m_A_sf/(m_area_active_total/((double)n_flux_x * (double)n_flux_y));
 
         Eigen::MatrixXd EsolarFlux(mE_areas.rows(), 1);
         EsolarFlux.setConstant(0.0);
@@ -3009,8 +2958,8 @@ void C_cavity_receiver::call(const C_csp_weatherreader::S_outputs& weather,
         for (size_t i_surf = 0; i_surf < mv_rec_surfs.size(); i_surf++) {
             if (std::isfinite(mv_rec_surfs[i_surf].vertices(0, 0)) && mv_rec_surfs[i_surf].is_active_surf) {
                 for (size_t i = 0; i < m_v_elems[i_surf].nrows(); i++) {
-                    EsolarFlux(m_surfIDs[i_surf](i, 0), 0) = (*flux_map_input)(0,i_surf)*I_bn*field_eff_adj*flux_scale_geometry; //[W/m2]
-                    q_dot_inc += EsolarFlux(m_surfIDs[i_surf](i, 0), 0)*mE_areas(m_surfIDs[i_surf](i,0));   //[kW]
+                    EsolarFlux(m_surfIDs[i_surf](i, 0), 0) = (*flux_map_input)(0, i_surf) * total_defocus*1.E3;  // [W/m2]
+                    q_dot_inc += EsolarFlux(m_surfIDs[i_surf](i, 0), 0)*mE_areas(m_surfIDs[i_surf](i,0));   //[W]
                 }
             }
         }
@@ -3106,8 +3055,6 @@ void C_cavity_receiver::call(const C_csp_weatherreader::S_outputs& weather,
         ms_outputs.m_T_salt_hot = m_T_htf_cold_des - 273.15;    //[C] convert from K
         ms_outputs.m_q_dot_rec_inc = 0.0;   //[MWt]
         ms_outputs.m_q_dot_refl_loss = 0.0; //[MWt]
-        ms_outputs.m_m_dot_ss = 0.0;        //[kg/hr]
-        ms_outputs.m_q_dot_ss = 0.0;        //[MWt]
         ms_outputs.m_Q_thermal_csky_ss = 0.0;   //[MWt]
         ms_outputs.m_Q_thermal_ss = 0.0;
 
@@ -3123,20 +3070,16 @@ void C_cavity_receiver::call(const C_csp_weatherreader::S_outputs& weather,
         ms_outputs.m_q_dot_rec_inc = q_dot_inc/1.E6;        //[MWt]
         ms_outputs.m_q_dot_refl_loss = q_dot_refl_losses/1.E6;   //[MWt]
         ms_outputs.m_T_salt_cold = T_salt_cold_in - 273.15; //[C] convert from K
-        ms_outputs.m_m_dot_ss = std::numeric_limits<double>::quiet_NaN();
-        ms_outputs.m_q_dot_ss = std::numeric_limits<double>::quiet_NaN();
         ms_outputs.m_Q_thermal_csky_ss = std::numeric_limits<double>::quiet_NaN();
         ms_outputs.m_Q_thermal_ss = std::numeric_limits<double>::quiet_NaN();
     }
 
     ms_outputs.m_W_dot_pump = W_dot_pump;                   //[MWe]
-    ms_outputs.m_field_eff_adj = field_eff_adj;             //[-]
     ms_outputs.m_component_defocus = m_od_control;          //[-]
     ms_outputs.m_q_startup = q_startup / 1.E6;              //[MW-hr] convert from [W-hr]
     ms_outputs.m_dP_receiver = std::numeric_limits<double>::quiet_NaN();    //[bar]
     ms_outputs.m_dP_total = std::numeric_limits<double>::quiet_NaN();       //[bar]
     ms_outputs.m_vel_htf = std::numeric_limits<double>::quiet_NaN();        //[m/s]
-    ms_outputs.m_f_timestep = std::numeric_limits<double>::quiet_NaN();
     ms_outputs.m_time_required_su = time_required_su * 3600.0;        //[s], convert from hr
     if (q_dot_thermal_tower_out > 0.0) {
         ms_outputs.m_q_dot_piping_loss = q_dot_piping_losses/1.E6;       //[MWt]
@@ -3146,9 +3089,6 @@ void C_cavity_receiver::call(const C_csp_weatherreader::S_outputs& weather,
     }
 
     ms_outputs.m_q_heattrace = 0.0;
-    ms_outputs.m_clearsky = std::numeric_limits<double>::quiet_NaN();
-
-    m_eta_field_iter_prev = field_eff;	//[-]
 
 	return;
 }
@@ -3168,7 +3108,6 @@ void C_cavity_receiver::off(const C_csp_weatherreader::S_outputs& weather,
     ms_outputs.m_q_rad_sum = 0.0;			//[MW] convert from W
     ms_outputs.m_Q_thermal = 0.0;			//[MW] convert from W
     ms_outputs.m_T_salt_hot = 0.0;			//[C] convert from K
-    ms_outputs.m_field_eff_adj = 0.0;		//[-]
     ms_outputs.m_component_defocus = 1.0;	//[-]
     ms_outputs.m_q_dot_rec_inc = 0.0;		//[MW] convert from kW
     ms_outputs.m_q_startup = 0.0;			//[MW-hr] convert from W-hr
@@ -3176,14 +3115,10 @@ void C_cavity_receiver::off(const C_csp_weatherreader::S_outputs& weather,
     ms_outputs.m_dP_total = 0.0;			//[bar] total pressure drop, convert from MPa
     ms_outputs.m_vel_htf = 0.0;				//[m/s]
     ms_outputs.m_T_salt_cold = 0.0;			//[C] convert from K
-    ms_outputs.m_m_dot_ss = 0.0;			//[kg/hr] convert from kg/s
-    ms_outputs.m_q_dot_ss = 0.0;			//[MW] convert from W
-    ms_outputs.m_f_timestep = 0.0;			//[-]
     ms_outputs.m_time_required_su = sim_info.ms_ts.m_step;	//[s], convert from hr in code
     ms_outputs.m_q_dot_piping_loss = 0.0;	//[MWt]
     ms_outputs.m_q_heattrace = 0.0;
     
-    ms_outputs.m_clearsky = get_clearsky(weather, sim_info.ms_ts.m_time / 3600.);  // clear-sky DNI (set to actual DNI if actual DNI is higher than computed clear-sky value)
     ms_outputs.m_Q_thermal_csky_ss = 0.0; //[MWt]
     ms_outputs.m_Q_thermal_ss = 0.0; //[MWt]
 
@@ -3216,7 +3151,6 @@ void C_cavity_receiver::converged()
 
     // Reset call variables
     m_od_control = 1.0;             //[-]
-    m_eta_field_iter_prev = 1.0;    //[-]
 }
 
 double C_cavity_receiver::get_pumping_parasitic_coef()
@@ -3344,7 +3278,7 @@ void C_cavity_receiver::steady_state_sln(double T_salt_cold_in /*K*/, double q_d
     error_T_HTF_node_iter = 10. * tol_T_HTF_node_iter;
     count_T_HTF_node_iter = 0;
 
-    while (fabs(error_T_HTF_node_iter) > tol_T_HTF_node_iter && count_T_HTF_node_iter < 100) {
+    while (std::abs(error_T_HTF_node_iter) > tol_T_HTF_node_iter && count_T_HTF_node_iter < 100) {
 
         count_T_HTF_node_iter++;
 
@@ -3412,7 +3346,7 @@ void C_cavity_receiver::steady_state_sln(double T_salt_cold_in /*K*/, double q_d
 
             error_relmax_T_rec_node_iter = 0.0;
             for (size_t i = 0; i < m_nElems; i++) {
-                error_relmax_T_rec_node_iter = max(error_relmax_T_rec_node_iter, abs(E_T(i, 0) - E_Tstar(i, 0)) / E_T(i, 0));
+                error_relmax_T_rec_node_iter = max(error_relmax_T_rec_node_iter, std::abs(E_T(i, 0) - E_Tstar(i, 0)) / E_T(i, 0));
             }
         }
 
@@ -3434,7 +3368,7 @@ void C_cavity_receiver::steady_state_sln(double T_salt_cold_in /*K*/, double q_d
             error_T_htf_out = tol_abs_T_htf_target * 10.0;
             count_T_htf_out_iter = 0;
 
-            while (fabs(error_T_htf_out) > tol_abs_T_htf_target && count_T_htf_out_iter < 100) {
+            while (std::abs(error_T_htf_out) > tol_abs_T_htf_target && count_T_htf_out_iter < 100) {
 
                 count_T_htf_out_iter++;
                 double mc = m_dot_paths[k] * cp_htf; //[kg/s * J/kg-K] = [W/K]
@@ -3502,7 +3436,7 @@ void C_cavity_receiver::steady_state_sln(double T_salt_cold_in /*K*/, double q_d
         // Calculate difference between nodal T_HTF and T_HTF_calc
         error_T_HTF_node_iter = 0.0;
         for (size_t i = 0; i < m_nElems; i++) {
-            error_T_HTF_node_iter = max(error_T_HTF_node_iter, abs(E_T_HTF(i, 0) - E_T_HTF_calc(i, 0)));
+            error_T_HTF_node_iter = max(error_T_HTF_node_iter, std::abs(E_T_HTF(i, 0) - E_T_HTF_calc(i, 0)));
         }
 
         E_T_HTF = E_T_HTF_calc;
@@ -3663,7 +3597,6 @@ double cavity_receiver_helpers::calc_total_receiver_absorber_area(double rec_hei
 void cavity_receiver_helpers::test_cavity_case() {
 
     double dni_des = 950;           //[W/m2]
-    double hel_stow_deploy = 8;     //[deg]
     int rec_htf = 17;               //[-]
     util::matrix_t<double> ud_rec_htf;
 
@@ -3703,7 +3636,7 @@ void cavity_receiver_helpers::test_cavity_case() {
     double rec_qf_delay = 0.0;
     double m_dot_htf_max_frac = 0.0;
 
-    C_cavity_receiver c_cav(dni_des /*W/m2*/, hel_stow_deploy /*deg*/,
+    C_cavity_receiver c_cav(dni_des /*W/m2*/,
         rec_htf /*-*/, ud_rec_htf,
         od_rec_tube /*m*/, th_rec_tube /*m*/, mat_tube /*-*/,
         nPanels /*-*/, receiverHeight /*m*/, receiverWidth /*m*/,
@@ -3711,7 +3644,8 @@ void cavity_receiver_helpers::test_cavity_case() {
         e_act_sol /*-*/, e_pass_sol /*-*/, e_act_therm /*-*/, e_pass_therm /*-*/,
         active_surface_mesh_type, floor_and_cover_mesh_type, lips_mesh_type,
         piping_loss /*Wt/m*/, piping_length_const /*m*/, piping_length_mult /*-*/,
-        A_sf /*m2*/, h_tower /*m*/, T_htf_hot_des /*C*/,
+        //A_sf /*m2*/,
+        h_tower /*m*/, T_htf_hot_des /*C*/,
         T_htf_cold_des /*C*/, f_rec_min /*-*/, q_dot_rec_des /*MWt*/,
         rec_su_delay /*hr*/, rec_qf_delay /*-*/, m_dot_htf_max_frac /*-*/,
         eta_pump /*-*/);

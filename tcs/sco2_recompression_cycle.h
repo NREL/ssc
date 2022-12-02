@@ -1,23 +1,33 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #ifndef __SCO2_PC_CORE_
@@ -58,82 +68,52 @@ public:
 
 	struct S_design_parameters
 	{
-		double m_W_dot_net;					//[kW] Target net cycle power
-		double m_T_mc_in;					//[K] Compressor inlet temperature
-		double m_T_t_in;					//[K] Turbine inlet temperature
 		double m_P_mc_in;					//[kPa] Compressor inlet pressure
 		double m_P_mc_out;					//[kPa] Compressor outlet pressure
-		std::vector<double> m_DP_LT;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-		std::vector<double> m_DP_HT;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-		std::vector<double> m_DP_PC;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-		std::vector<double> m_DP_PHX;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-		    // LTR thermal design
+		
+            // LTR thermal design
         int m_LTR_target_code;              //[-] 1 = UA, 2 = min dT, 3 = effectiveness
         double m_LTR_UA;					//[kW/K] target LTR conductance
         double m_LTR_min_dT;                //[K] target LTR minimum temperature difference
         double m_LTR_eff_target;            //[-] target LTR effectiveness
 		double m_LTR_eff_max;				//[-] Maximum allowable effectiveness in LT recuperator
-        int m_LTR_N_sub_hxrs;               //[-] Number of sub-hxs to use in hx model
         NS_HX_counterflow_eqs::E_UA_target_type m_LTR_od_UA_target_type;
-        // HTR thermal design
+
+            // HTR thermal design
         int m_HTR_target_code;              //[-] 1 = UA, 2 = min dT, 3 = effectiveness
         double m_HTR_UA;					//[kW/K] target HTR conductance
         double m_HTR_min_dT;                //[K] target HTR min temperature difference
         double m_HTR_eff_target;            //[-] target HTR effectiveness
         double m_HTR_eff_max;				//[-] Maximum allowable effectiveness in HT recuperator
-        int m_HTR_N_sub_hxrs;               //[-] Number of sub-hxs to use in hx model
         NS_HX_counterflow_eqs::E_UA_target_type m_HTR_od_UA_target_type;
-        //
+
         double m_recomp_frac;				//[-] Fraction of flow that bypasses the precooler and the main compressor at the design point
-		double m_eta_mc;					//[-] design-point efficiency of the main compressor; isentropic if positive, polytropic if negative
-        int m_mc_comp_model_code;           //[-] Main compressor model - see sco2_cycle_components.h 
-        double m_eta_rc;					//[-] design-point efficiency of the recompressor; isentropic if positive, polytropic if negative
-        int m_rc_comp_model_code;           //[-] Recompressor model - see sco2_cycle_components.h 
-        double m_eta_t;						//[-] design-point efficiency of the turbine; isentropic if positive, polytropic if negative
-		//int m_N_sub_hxrs;					//[-] Number of sub-heat exchangers to use when calculating UA value for a heat exchanger
-		double m_P_high_limit;				//[kPa] maximum allowable pressure in cycle
 		double m_des_tol;						//[-] Convergence tolerance
-		double m_N_turbine;					//[rpm] Turbine shaft speed (negative values link turbine to compressor)
 
 		// Air cooler parameters
 		bool m_is_des_air_cooler;		//[-] False will skip physical air cooler design. UA will not be available for cost models.
-		double m_frac_fan_power;		//[-] Fraction of total cycle power 'S_des_par_cycle_dep.m_W_dot_fan_des' consumed by air fan
-		double m_deltaP_cooler_frac;	//[-] Fraction of high side (of cycle, i.e. comp outlet) pressure that is allowed as pressure drop to design the ACC
-		double m_T_amb_des;				//[K] Design point ambient temperature
-		double m_elevation;				//[m] Elevation (used to calculate ambient pressure)
-        double m_eta_fan;               //[-] Fan isentropic efficiency
-        int m_N_nodes_pass;             //[-] Number of nodes per pass
 
 		int m_des_objective_type;		//[2] = min phx deltat then max eta, [else] max eta
 		double m_min_phx_deltaT;		//[C]
 
 		S_design_parameters()
 		{
-			m_W_dot_net = m_T_mc_in = m_T_t_in = m_P_mc_in = m_P_mc_out = 
+                m_P_mc_in = m_P_mc_out = 
                 m_LTR_UA = m_LTR_min_dT = m_LTR_eff_target = m_LTR_eff_max =
                 m_HTR_UA = m_HTR_min_dT = m_HTR_eff_target = m_HTR_eff_max = 
                 m_recomp_frac = 
-				m_eta_mc = m_eta_rc = m_eta_t = m_P_high_limit = m_des_tol = m_N_turbine =
-				m_frac_fan_power = m_deltaP_cooler_frac =
-                m_eta_fan = m_T_amb_des = m_elevation = std::numeric_limits<double>::quiet_NaN();
-			m_LTR_N_sub_hxrs = m_HTR_N_sub_hxrs = -1;
+                m_des_tol = 
+                std::numeric_limits<double>::quiet_NaN();
 
             // Compressor model codes
-            m_mc_comp_model_code = C_comp__psi_eta_vs_phi::E_snl_radial_via_Dyreby;
-
-
+            //m_mc_comp_model_code = C_comp__psi_eta_vs_phi::E_snl_radial_via_Dyreby;
             //m_mc_comp_model_code = C_comp__psi_eta_vs_phi::E_compA__P85_T37;
             //m_mc_comp_model_code = C_comp__psi_eta_vs_phi::E_compA__P85_T32;
             //m_mc_comp_model_code = C_comp__psi_eta_vs_phi::E_compA__P80_T37;
             //m_mc_comp_model_code = C_comp__psi_eta_vs_phi::E_compA__P80_T32;
             //m_mc_comp_model_code = C_comp__psi_eta_vs_phi::E_compA__interpolate;
 
-
-
-            //m_mc_comp_model_code = C_comp__psi_eta_vs_phi::E_snl_radial_via_Dyreby;
-
-
-            m_rc_comp_model_code = C_comp__psi_eta_vs_phi::E_snl_radial_via_Dyreby;
+            //m_rc_comp_model_code = C_comp__psi_eta_vs_phi::E_snl_radial_via_Dyreby;
 
 
             // Recuperator design target codes
@@ -148,28 +128,12 @@ public:
 
 			// Air cooler default
 			m_is_des_air_cooler = true;
-            m_N_nodes_pass = -1;
 
-			m_DP_LT.resize(2);
-			std::fill(m_DP_LT.begin(), m_DP_LT.end(), std::numeric_limits<double>::quiet_NaN());
-			m_DP_HT.resize(2);
-			std::fill(m_DP_HT.begin(), m_DP_HT.end(), std::numeric_limits<double>::quiet_NaN());
-			m_DP_PC.resize(2);
-			std::fill(m_DP_PC.begin(), m_DP_PC.end(), std::numeric_limits<double>::quiet_NaN());
-			m_DP_PHX.resize(2);
-			std::fill(m_DP_PHX.begin(), m_DP_PHX.end(), std::numeric_limits<double>::quiet_NaN());
 		}
 	};
 
 	struct S_opt_design_parameters
 	{
-		double m_W_dot_net;					//[kW] Target net cycle power
-		double m_T_mc_in;					//[K] Compressor inlet temperature
-		double m_T_t_in;					//[K] Turbine inlet temperature
-		std::vector<double> m_DP_LT;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-		std::vector<double> m_DP_HT;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-		std::vector<double> m_DP_PC;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-		std::vector<double> m_DP_PHX;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		double m_UA_rec_total;				//[kW/K] Total design-point recuperator UA
 		    // LTR thermal design
         int m_LTR_target_code;              //[-] 1 = UA, 2 = min dT, 3 = effectiveness
@@ -177,7 +141,6 @@ public:
         double m_LTR_min_dT;                //[K] target LTR minimum temperature difference
         double m_LTR_eff_target;            //[-] target LTR effectiveness
         double m_LTR_eff_max;				//[-] Maximum allowable effectiveness in LT recuperator
-        int m_LTR_N_sub_hxrs;               //[-] Number of sub-hxs used to model hx
         NS_HX_counterflow_eqs::E_UA_target_type m_LTR_od_UA_target_type;
             // HTR thermal design
         int m_HTR_target_code;              //[-] 1 = UA, 2 = min dT, 3 = effectiveness
@@ -185,26 +148,13 @@ public:
         double m_HTR_min_dT;                //[K] target HTR min temperature difference
         double m_HTR_eff_target;            //[-] target HTR effectiveness
         double m_HTR_eff_max;				//[-] Maximum allowable effectiveness in HT recuperator
-        int m_HTR_N_sub_hxrs;               //[-] Number of sub-hxs used to model hx
         NS_HX_counterflow_eqs::E_UA_target_type m_HTR_od_UA_target_type;
             //
-        double m_eta_mc;					//[-] design-point efficiency of the main compressor; isentropic if positive, polytropic if negative
-        int m_mc_comp_model_code;           //[-] Recompressor model - see sco2_cycle_components.h 
-        double m_eta_rc;					//[-] design-point efficiency of the recompressor; isentropic if positive, polytropic if negative
-		double m_eta_t;						//[-] design-point efficiency of the turbine; isentropic if positive, polytropic if negative
-		double m_P_high_limit;				//[kPa] maximum allowable pressure in cycle
 		double m_des_tol;					//[-] Convergence tolerance
 		double m_des_opt_tol;					//[-] Optimization tolerance
-		double m_N_turbine;					//[rpm] Turbine shaft speed (negative values link turbine to compressor)
 		
 		// Air cooler parameters
 		bool m_is_des_air_cooler;		//[-] False will skip physical air cooler design. UA will not be available for cost models.
-		double m_frac_fan_power;		//[-] Fraction of total cycle power 'S_des_par_cycle_dep.m_W_dot_fan_des' consumed by air fan
-		double m_deltaP_cooler_frac;	//[-] Fraction of high side (of cycle, i.e. comp outlet) pressure that is allowed as pressure drop to design the ACC
-		double m_T_amb_des;				//[K] Design point ambient temperature
-		double m_elevation;				//[m] Elevation (used to calculate ambient pressure)
-        double m_eta_fan;               //[-] Fan isentropic efficiency
-        int m_N_nodes_pass;             //[-] Number of nodes per pass
 
 		int m_des_objective_type;			//[2] = min phx deltat then max eta, [else] max eta
 		double m_min_phx_deltaT;			//[C]
@@ -221,21 +171,14 @@ public:
 		double m_LT_frac_guess;				//[-] Initial guess for fraction of UA_rec_total that is in the low-temperature recuperator
 		bool m_fixed_LT_frac;				//[-] if true, LT_frac is fixed at LT_frac_guess
 
-		
-
 		S_opt_design_parameters()
 		{
-			m_W_dot_net = m_T_mc_in = m_T_t_in = m_UA_rec_total = 
+                m_UA_rec_total = 
                 m_LTR_UA = m_LTR_min_dT = m_LTR_eff_target = m_LTR_eff_max =
                 m_HTR_UA = m_HTR_min_dT = m_HTR_eff_target = m_HTR_eff_max = 
-				m_eta_mc = m_eta_rc = m_eta_t = m_P_high_limit = m_des_tol = m_des_opt_tol = m_N_turbine =
-				m_frac_fan_power = m_deltaP_cooler_frac = m_T_amb_des = m_elevation =
+                m_des_tol = m_des_opt_tol = 
 				m_P_mc_out_guess = m_PR_HP_to_LP_guess = m_recomp_frac_guess = m_LT_frac_guess =
-                m_eta_fan = std::numeric_limits<double>::quiet_NaN();
-
-			m_LTR_N_sub_hxrs = m_HTR_N_sub_hxrs = -1;
-
-            m_mc_comp_model_code = C_comp__psi_eta_vs_phi::E_snl_radial_via_Dyreby;
+                std::numeric_limits<double>::quiet_NaN();
 
             // Recuperator design target codes
             m_LTR_target_code = 1;      // default to target conductance
@@ -245,20 +188,11 @@ public:
 
 			// Air cooler default
 			m_is_des_air_cooler = true;
-            m_N_nodes_pass = -1;
 
 			// Default to standard optimization to maximize cycle efficiency
 			m_des_objective_type = 1;
 			m_min_phx_deltaT = 0.0;		//[C]
 
-			m_DP_LT.resize(2);
-			std::fill(m_DP_LT.begin(), m_DP_LT.end(), std::numeric_limits<double>::quiet_NaN());
-			m_DP_HT.resize(2);
-			std::fill(m_DP_HT.begin(), m_DP_HT.end(), std::numeric_limits<double>::quiet_NaN());
-			m_DP_PC.resize(2);
-			std::fill(m_DP_PC.begin(), m_DP_PC.end(), std::numeric_limits<double>::quiet_NaN());
-			m_DP_PHX.resize(2);
-			std::fill(m_DP_PHX.begin(), m_DP_PHX.end(), std::numeric_limits<double>::quiet_NaN());
 		}
 	};
 
@@ -549,7 +483,34 @@ private:
 
 public:
 
-	C_RecompCycle()
+	C_RecompCycle(C_sco2_cycle_core::E_turbo_gen_motor_config turbo_gen_motor_config,
+        double eta_generator /*-*/,
+        double T_mc_in /*K*/,
+        double W_dot_net /*kWe*/,
+        double T_t_in /*K*/, double P_high_limit /*kPa*/,
+        std::vector<double> DP_LTR, std::vector<double> DP_HTR,
+        std::vector<double> DP_PC_main, std::vector<double> DP_PHX,
+        int LTR_N_sub_hxrs /*-*/, int HTR_N_sub_hxrs /*-*/,
+        double eta_mc /*-*/, int mc_comp_model_code /*-*/,
+        double eta_rc /*-*/,
+        double eta_t /*-*/, double N_turbine /*rpm*/,
+        double frac_fan_power /*-*/, double eta_fan /*-*/, double deltaP_cooler_frac /*-*/,
+        int N_nodes_pass /*-*/,
+        double T_amb_des /*K*/, double elevation /*m*/) :
+        C_sco2_cycle_core(turbo_gen_motor_config,
+            eta_generator,
+            T_mc_in,
+            W_dot_net,
+            T_t_in, P_high_limit,
+            DP_LTR, DP_HTR,
+            DP_PC_main, DP_PHX,
+            LTR_N_sub_hxrs, HTR_N_sub_hxrs,
+            eta_mc, mc_comp_model_code,
+            eta_rc,
+            eta_t, N_turbine,
+            frac_fan_power, eta_fan, deltaP_cooler_frac,
+            N_nodes_pass,
+            T_amb_des, elevation)
 	{
 		m_temp_last.resize(END_SCO2_STATES);
 		std::fill(m_temp_last.begin(), m_temp_last.end(), std::numeric_limits<double>::quiet_NaN());

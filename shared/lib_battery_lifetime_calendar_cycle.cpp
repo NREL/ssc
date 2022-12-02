@@ -1,24 +1,35 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 
 #include <algorithm>
 #include <numeric>
@@ -42,8 +53,10 @@ void lifetime_cycle_t::initialize() {
     state->cycle->rainflow_Xlt = 0;
     state->cycle->rainflow_Ylt = 0;
     state->cycle->rainflow_peaks.clear();
-    init_cycle_counts();
-    resetDailyCycles();
+    if (params->model_choice == lifetime_params::CALCYC)
+        init_cycle_counts();
+    else
+        resetDailyCycles();
 }
 
 void lifetime_cycle_t::init_cycle_counts() {
@@ -55,9 +68,11 @@ void lifetime_cycle_t::init_cycle_counts() {
         }
     }
     std::sort(DOD_levels.begin(), DOD_levels.end());
-    state->cycle->cycle_counts.resize_fill(DOD_levels.size(), 2, 0.0);
-    for (size_t i = 0; i < DOD_levels.size(); i++) {
-        state->cycle->cycle_counts.set_value(DOD_levels[i], i, cycle_state::DOD);
+    for (double & DOD_level : DOD_levels) {
+        std::vector<double> row(2);
+        row[cycle_state::DOD] = DOD_level;
+        row[cycle_state::CYCLES] = 0;
+        state->cycle->cycle_counts.emplace_back(row);
     }
 }
 
@@ -144,18 +159,18 @@ void lifetime_cycle_t::rainflow(double DOD) {
 }
 
 void lifetime_cycle_t::rainflow_ranges() {
-    state->cycle->rainflow_Ylt = fabs(state->cycle->rainflow_peaks[state->cycle->rainflow_jlt - (size_t) 1] - state->cycle->rainflow_peaks[state->cycle->rainflow_jlt - (size_t) 2]);
-    state->cycle->rainflow_Xlt = fabs(state->cycle->rainflow_peaks[state->cycle->rainflow_jlt] - state->cycle->rainflow_peaks[state->cycle->rainflow_jlt - (size_t) 1]);
+    state->cycle->rainflow_Ylt = std::abs(state->cycle->rainflow_peaks[state->cycle->rainflow_jlt - (size_t) 1] - state->cycle->rainflow_peaks[state->cycle->rainflow_jlt - (size_t) 2]);
+    state->cycle->rainflow_Xlt = std::abs(state->cycle->rainflow_peaks[state->cycle->rainflow_jlt] - state->cycle->rainflow_peaks[state->cycle->rainflow_jlt - (size_t) 1]);
 }
 
 void lifetime_cycle_t::rainflow_ranges_circular(int index) {
     size_t end = state->cycle->rainflow_peaks.size() - 1;
     if (index == 0) {
-        state->cycle->rainflow_Xlt = fabs(state->cycle->rainflow_peaks[0] - state->cycle->rainflow_peaks[end]);
-        state->cycle->rainflow_Ylt = fabs(state->cycle->rainflow_peaks[end] - state->cycle->rainflow_peaks[end - 1]);
+        state->cycle->rainflow_Xlt = std::abs(state->cycle->rainflow_peaks[0] - state->cycle->rainflow_peaks[end]);
+        state->cycle->rainflow_Ylt = std::abs(state->cycle->rainflow_peaks[end] - state->cycle->rainflow_peaks[end - 1]);
     } else if (index == 1) {
-        state->cycle->rainflow_Xlt = fabs(state->cycle->rainflow_peaks[1] - state->cycle->rainflow_peaks[0]);
-        state->cycle->rainflow_Ylt = fabs(state->cycle->rainflow_peaks[0] - state->cycle->rainflow_peaks[end]);
+        state->cycle->rainflow_Xlt = std::abs(state->cycle->rainflow_peaks[1] - state->cycle->rainflow_peaks[0]);
+        state->cycle->rainflow_Ylt = std::abs(state->cycle->rainflow_peaks[0] - state->cycle->rainflow_peaks[end]);
     } else
         rainflow_ranges();
 }
@@ -179,12 +194,17 @@ int lifetime_cycle_t::rainflow_compareRanges() {
 
         int cycles_at_range = state->n_cycles;
 
-        // Update cycle matrix with latest DOD - size 1 is uninitalized (NMC or LMO/LTO models)
-        if (state->cycle->cycle_counts.ncells() > 1) {
+        // Update cycle matrix with latest DOD
+        if (params->model_choice == lifetime_params::CALCYC) {
             size_t cycle_index = util::nearest_col_index(state->cycle->cycle_counts, cycle_state::DOD, state->cycle_range);
-            cycles_at_range = state->cycle->cycle_counts.at(cycle_index, cycle_state::CYCLES);
-            cycles_at_range += 1;
-            state->cycle->cycle_counts.set_value(cycles_at_range, cycle_index, cycle_state::CYCLES);
+            state->cycle->cycle_counts[cycle_index][cycle_state::CYCLES] += 1;
+        }
+        else if (params->model_choice == lifetime_params::NMC) {
+            std::vector<double> row(2);
+            row[cycle_state::DOD] = state->cycle_range;
+            row[cycle_state::CYCLES] = 1;
+            state->cycle->cycle_counts.emplace_back(row);
+            state->cycle->cycle_DOD_max.push_back(state->cycle_DOD);
         }
 
         // the capacity percent cannot increase
@@ -220,9 +240,9 @@ void lifetime_cycle_t::replaceBattery(double replacement_percent) {
         state->cycle_range = 0;
         state->cycle_DOD = 0;
         state->average_range = 0;
-        if (state->cycle->cycle_counts.ncells() > 1) {
-            for (size_t i = 0; i < state->cycle->cycle_counts.nrows(); i++) {
-                state->cycle->cycle_counts.set_value(0.0, i, cycle_state::CYCLES);
+        if (state->cycle->cycle_counts.size() > 1) {
+            for (auto & cycle_count : state->cycle->cycle_counts) {
+                cycle_count[cycle_state::CYCLES] = 0;
             }
         }
     }
@@ -248,7 +268,7 @@ void lifetime_cycle_t::resetDailyCycles() {
     state->cycle->DOD_max = -1;
     state->cycle->cum_dt = 0;
     state->cycle->cycle_DOD_max.clear();
-    state->cycle->cycle_DOD_range.clear();
+    state->cycle->cycle_counts.clear();
 }
 
 void lifetime_cycle_t::updateDailyCycles(double &prev_DOD, double &DOD, bool charge_changed) {
@@ -266,21 +286,19 @@ void lifetime_cycle_t::updateDailyCycles(double &prev_DOD, double &DOD, bool cha
     if (charge_changed){
         size_t n_cyc_prev = state->n_cycles;
         rainflow(prev_DOD);
-        if (state->n_cycles > n_cyc_prev) {
-            state->cycle->cycle_DOD_range.push_back(state->cycle_range);
-            state->cycle->cycle_DOD_max.push_back(state->cycle_DOD);
-        }
     }
 }
 
-double lifetime_cycle_t::predictDODRng() {
-    // if no cycles have yet elapsed, try to predict range of coming cycle
+double lifetime_cycle_t::predictDODMax() {
+    // if no cycles have yet elapsed, try to predict max range of coming cycle
     double DOD_range = state->cycle->DOD_max - state->cycle->DOD_min;
-    // otherwise, use average DOD range of cycles so far this day
-    if (!state->cycle->cycle_DOD_range.empty()) {
-        DOD_range = fmax(DOD_range, std::accumulate(state->cycle->cycle_DOD_range.begin(),
-                                                    state->cycle->cycle_DOD_range.end(), 0.)
-                                    * 0.01 / (double)state->cycle->cycle_DOD_range.size());
+    // otherwise, use DOD of cycles so far this day
+    if (!state->cycle->cycle_counts.empty()) {
+        auto DOD_max = *std::max_element(state->cycle->cycle_counts.begin(),
+                                        state->cycle->cycle_counts.end(),
+                                        [] (std::vector<double> lhs, std::vector<double> rhs) {
+                                            return lhs[cycle_state::DOD] < rhs[cycle_state::DOD];});
+        DOD_range = fmax(DOD_range, DOD_max[cycle_state::DOD] * 1e-2);
     }
     return DOD_range;
 }
@@ -293,9 +311,12 @@ double lifetime_cycle_t::predictAvgSOC(double DOD) {
     }
     // otherwise, get average SOCs of each cycle
     else {
+        if (state->cycle->cycle_DOD_max.size() != state->cycle->cycle_counts.size())
+            throw std::runtime_error("lifetime_cycle_t error: `cycle_DOD_max` and `cycle_counts` lengths must be the same. ");
+
         for (size_t i = 0; i < state->cycle->cycle_DOD_max.size(); i++) {
             double cycle_DOD_max = state->cycle->cycle_DOD_max[i] * 0.01;
-            double cycle_DOD_rng = state->cycle->cycle_DOD_range[i] * 0.01;
+            double cycle_DOD_rng = state->cycle->cycle_counts[i][cycle_state::DOD] * 0.01;
             SOC_avg += 1 - (cycle_DOD_max + (cycle_DOD_max - cycle_DOD_rng)) / 2;
         }
         SOC_avg /= (double)state->cycle->cycle_DOD_max.size();
@@ -408,7 +429,7 @@ double lifetime_cycle_t::bilinear(double DOD, int cycle_number) {
         }
 
         util::matrix_t<double> C_n_low(n_rows_lo, n_cols, &C_n_low_vect);
-        util::matrix_t<double> C_n_high(n_rows_lo, n_cols, &C_n_high_vect);
+        util::matrix_t<double> C_n_high(n_rows_hi, n_cols, &C_n_high_vect);
 
         // Compute C(D_lo, n), C(D_hi, n)
         double C_Dlo = util::linterp_col(C_n_low, 0, cycle_number, 1);

@@ -1,23 +1,33 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 //#pragma once
 //#pragma warning(disable: 4290)  // ignore warning: 'C++ exception specification ignored except to indicate a function is not __declspec(nothrow)'
@@ -52,12 +62,13 @@ public:
 
     struct S_pointers
     {
-        C_csp_weatherreader m_weather;      //Pointer to weather file
+        C_csp_weatherreader m_weather;       //Pointer to weather file
         C_csp_solver_sim_info *siminfo;      //Pointer to existing simulation info object
         C_csp_collector_receiver *col_rec;   //Pointer to collector/receiver object
 		C_csp_power_cycle *mpc_pc;	         //Pointer to csp power cycle class object
         C_csp_tes *tes;                      //Pointer to tes class object
 		C_csp_messages *messages;            //Pointer to message structure
+        C_csp_collector_receiver* par_htr;   //Pointer to parallel heater if it exist, else NULL
 
         S_pointers()
         {
@@ -67,6 +78,7 @@ public:
             mpc_pc = nullptr;
             tes = nullptr;
             messages = nullptr;
+            par_htr = nullptr;
         }
 
         void set_pointers(C_csp_weatherreader &weather,
@@ -74,7 +86,8 @@ public:
             C_csp_power_cycle *power_cycle,
             C_csp_tes *thermal_es,
             C_csp_messages *csp_messages,
-            C_csp_solver_sim_info *sim_info)
+            C_csp_solver_sim_info *sim_info,
+            C_csp_collector_receiver *heater)
         {
             m_weather = weather;    // Todo: technically not a pointer
             col_rec = collector_receiver;
@@ -82,6 +95,7 @@ public:
             tes = thermal_es;
             messages = csp_messages;
             siminfo = sim_info;
+            par_htr = heater;
         }
 
     } pointers;
@@ -139,6 +153,9 @@ public:
         double wpb_expect = 0.;
         double rev_expect = 0.;
 
+        bool is_eh_su_allowed = false;
+        double q_eh_target = 0.;
+
     } disp_outputs;
 
     //----- public member functions ----
@@ -183,6 +200,12 @@ public:
     //Set LPsolve outputs
     void set_lp_solve_outputs(lprec* lp);
 
+    //Used by cmod to get dispatch annual stats on solves
+    void count_solutions_by_type(std::vector<int>& flag, int dispatch_freq, std::string& log_msg);
+
+    //Calculates average relative mip gap of suboptimal solutions
+    double calc_avg_subopt_gap(std::vector<double>& gap, std::vector<int>& flag, int dispatch_freq);
+
     // Saving problem and solution for debugging
     void save_problem_solution_debug(lprec* lp);
 
@@ -192,8 +215,11 @@ public:
     // Parse column name to get variable name (root) and index (ind)
     bool parse_column_name(char* colname, char* root, char* ind);
 
-    //simple string compare
+    // simple string compare
     bool strcompare(std::string a, std::string b);
+
+    // Print dispatch solver log to file for debugging solver
+    void print_log_to_file();
 };
 
 struct s_efftable

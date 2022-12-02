@@ -1,24 +1,35 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 
 #include <vector>
 #include <string>
@@ -294,6 +305,9 @@ TEST(URDBv7_cmod_utilityrate5_eqns, ElectricityRates_format_as_URDBv7){
     EXPECT_NEAR(period[0].table.lookup("rate")->num, 8.09, 1e-3);
     EXPECT_GT(period[1].table.lookup("max")->num[0], 9.99e+33);
     EXPECT_NEAR(period[1].table.lookup("rate")->num, 4.676, 1e-3);
+    
+    ssc_data_free(data);
+
 }
 
 TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates) {
@@ -324,6 +338,9 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates) {
     ssc_number_t* excess_dollars = ssc_data_get_array(data, "year1_true_up_credits", &length);
     float dec_dollars = excess_dollars[length - 1];
     EXPECT_NEAR(75.9, dec_dollars, 0.1);
+    
+    ssc_data_free(data);
+
 }
 
 TEST(cmod_utilityrate5_eqns, Test_Residential_net_metering_credits_in_may) {
@@ -365,6 +382,9 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_net_metering_credits_in_may) {
 
     double may_year_1 = bill_matrix.at((size_t)1, (size_t)credit_month);
     EXPECT_NEAR(-50.28, may_year_1, 0.1);
+    
+    ssc_data_free(data);
+
 }
 
 TEST(cmod_utilityrate5_eqns, Test_Residential_net_metering_credits_in_may_with_rollover) {
@@ -386,13 +406,21 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_net_metering_credits_in_may_with_r
 
     ensure_outputs_line_up(data);
 
-    ssc_number_t cost_without_system;
-    ssc_data_get_number(data, "elec_cost_without_system_year1", &cost_without_system);
-    EXPECT_NEAR(771.8, cost_without_system, 0.1);
+    int nrows;
+    int ncols;
+    ssc_number_t* annual_bills_ub = ssc_data_get_array(data, "elec_cost_with_system", &nrows);
+    std::vector<double> annual_bill_w_sys(nrows);
+    annual_bill_w_sys = util::array_to_vector(annual_bills_ub, nrows);
 
-    ssc_number_t cost_with_system;
-    ssc_data_get_number(data, "elec_cost_with_system_year1", &cost_with_system);
-    EXPECT_NEAR(36.6, cost_with_system, 0.1);
+    EXPECT_NEAR(36.6, annual_bill_w_sys[1], 0.1);
+    EXPECT_NEAR(13.8, annual_bill_w_sys[2], 0.1);
+
+    ssc_number_t* annual_bills_ub_no_sys = ssc_data_get_array(data, "elec_cost_without_system", &nrows);
+    std::vector<double> annual_bill_wo_sys(nrows);
+    annual_bill_wo_sys = util::array_to_vector(annual_bills_ub_no_sys, nrows);
+
+    EXPECT_NEAR(771.8, annual_bill_wo_sys[1], 0.1);
+    EXPECT_NEAR(791.1, annual_bill_wo_sys[2], 0.1);
 
     int length;
     ssc_number_t* true_up_dollars = ssc_data_get_array(data, "year1_true_up_credits", &length);
@@ -404,14 +432,15 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_net_metering_credits_in_may_with_r
     float june_dollars = excess_dollars[credit_month + 1];
     EXPECT_NEAR(11.37, june_dollars, 0.1);
 
-    int nrows;
-    int ncols;
     ssc_number_t* annual_bills = ssc_data_get_matrix(data, "utility_bill_w_sys_ym", &nrows, &ncols);
     util::matrix_t<double> bill_matrix(nrows, ncols);
     bill_matrix.assign(annual_bills, nrows, ncols);
 
     double may_year_1 = bill_matrix.at((size_t)1, (size_t)credit_month);
     EXPECT_NEAR(0.0, may_year_1, 0.1);
+    
+    ssc_data_free(data);
+
 }
 
 TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_subhourly_gen) {
@@ -437,6 +466,8 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_subhourly_gen) {
     ssc_number_t cost_with_system;
     ssc_data_get_number(data, "elec_cost_with_system_year1", &cost_with_system);
     EXPECT_NEAR(-27.94, cost_with_system, 0.1);
+    
+    ssc_data_free(data);
 }
 
 TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_subhourly_gen_and_load) {
@@ -462,6 +493,9 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_subhourly_gen_and_load) 
     ssc_number_t cost_with_system;
     ssc_data_get_number(data, "elec_cost_with_system_year1", &cost_with_system);
     EXPECT_NEAR(-27.94, cost_with_system, 0.1);
+    
+    ssc_data_free(data);
+
 }
 
 TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_metering_credits) {
@@ -470,33 +504,89 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_metering_credits) {
     setup_residential_rates(data); // No sell rate in the defaults, so no credits
     ssc_data_set_number(data, "ur_metering_option", 1);
 
-    int analysis_period = 1;
+    int analysis_period = 25;
     ssc_data_set_number(data, "system_use_lifetime_output", 1);
     ssc_data_set_number(data, "analysis_period", analysis_period);
     set_array(data, "load", load_profile_path, 8760);
-    set_array(data, "gen", subhourly_gen_path, 8760 * 4); // 15 min data
+    set_array(data, "gen", commercial_gen_path, 8760 * 25);
 
     int status = run_module(data, "utilityrate5");
     EXPECT_FALSE(status);
 
     ensure_outputs_line_up(data);
-
-    ssc_number_t cost_without_system;
-    ssc_data_get_number(data, "elec_cost_without_system_year1", &cost_without_system);
-    EXPECT_NEAR(771.8, cost_without_system, 0.1); // Same as hourly, good!
-
-    ssc_number_t cost_with_system;
-    ssc_data_get_number(data, "elec_cost_with_system_year1", &cost_with_system);
-    EXPECT_NEAR(81.4, cost_with_system, 0.1);
-
     int nrows;
     int ncols;
+    ssc_number_t* annual_bills_ub = ssc_data_get_array(data, "elec_cost_with_system", &nrows);
+    std::vector<double> annual_bill_w_sys(nrows);
+    annual_bill_w_sys = util::array_to_vector(annual_bills_ub, nrows);
+
+    EXPECT_NEAR(0, annual_bill_w_sys[1], 0.1);
+    EXPECT_NEAR(0, annual_bill_w_sys[2], 0.1);
+
+    ssc_number_t* annual_bills_ub_no_sys = ssc_data_get_array(data, "elec_cost_without_system", &nrows);
+    std::vector<double> annual_bill_wo_sys(nrows);
+    annual_bill_wo_sys = util::array_to_vector(annual_bills_ub_no_sys, nrows);
+
+    EXPECT_NEAR(771.8, annual_bill_wo_sys[1], 0.1);
+    EXPECT_NEAR(791.1, annual_bill_wo_sys[2], 0.1);
+
     ssc_number_t* net_billing_credits = ssc_data_get_matrix(data, "nm_dollars_applied_ym", &nrows, &ncols);
     util::matrix_t<double> credits_matrix(nrows, ncols);
     credits_matrix.assign(net_billing_credits, nrows, ncols);
 
     double dec_year_1_credits = credits_matrix.at((size_t)1, (size_t)11);
     EXPECT_NEAR(0, dec_year_1_credits, 0.1);
+    
+    ssc_data_free(data);
+}
+
+TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_metering_credits_w_sell_rates_and_rollover) {
+    ssc_data_t data = new var_table;
+
+    setup_residential_rates(data);
+    ssc_number_t p_ur_ec_tou_mat[24] = { 1, 1, 9.9999999999999998e+37, 0, 0.10000000000000001, 0.10000000000000001,
+                         2, 1, 9.9999999999999998e+37, 0, 0.050000000000000003, 0.050000000000000003,
+                         3, 1, 9.9999999999999998e+37, 0, 0.20000000000000001, 0.20000000000000001,
+                         4, 1, 9.9999999999999998e+37, 0, 0.25, 0.25 };
+    ssc_data_set_matrix(data, "ur_ec_tou_mat", p_ur_ec_tou_mat, 4, 6);
+    ssc_data_set_number(data, "ur_metering_option", 1);
+    ssc_data_set_number(data, "ur_nm_credit_rollover", 1);
+
+    int analysis_period = 25;
+    ssc_data_set_number(data, "system_use_lifetime_output", 1);
+    ssc_data_set_number(data, "analysis_period", analysis_period);
+    set_array(data, "load", load_profile_path, 8760);
+    set_array(data, "gen", commercial_gen_path, 8760 * 25);
+
+    int status = run_module(data, "utilityrate5");
+    EXPECT_FALSE(status);
+
+    ensure_outputs_line_up(data);
+
+    int nrows;
+    int ncols;
+    ssc_number_t* annual_bills_ub = ssc_data_get_array(data, "elec_cost_with_system", &nrows);
+    std::vector<double> annual_bill_w_sys(nrows);
+    annual_bill_w_sys = util::array_to_vector(annual_bills_ub, nrows);
+
+    EXPECT_NEAR(-19600.58, annual_bill_w_sys[1], 0.1);
+    EXPECT_NEAR(-37439.55, annual_bill_w_sys[2], 0.1);
+
+    ssc_number_t* annual_bills_ub_no_sys = ssc_data_get_array(data, "elec_cost_without_system", &nrows);
+    std::vector<double> annual_bill_wo_sys(nrows);
+    annual_bill_wo_sys = util::array_to_vector(annual_bills_ub_no_sys, nrows);
+
+    EXPECT_NEAR(771.8, annual_bill_wo_sys[1], 0.1);
+    EXPECT_NEAR(791.1, annual_bill_wo_sys[2], 0.1);
+
+    ssc_number_t* net_billing_credits = ssc_data_get_matrix(data, "nm_dollars_applied_ym", &nrows, &ncols);
+    util::matrix_t<double> credits_matrix(nrows, ncols);
+    credits_matrix.assign(net_billing_credits, nrows, ncols);
+
+    double dec_year_1_credits = credits_matrix.at((size_t)1, (size_t)11);
+    EXPECT_NEAR(0, dec_year_1_credits, 0.1);
+
+    ssc_data_free(data);
 }
 
 TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing) {
@@ -532,6 +622,9 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing) {
 
     double dec_year_1_credits = credits_matrix.at((size_t)1, (size_t)11);
     EXPECT_NEAR(0, dec_year_1_credits, 0.1);
+    
+    ssc_data_free(data);
+
 }
 
 TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_w_sell_rates) {
@@ -572,6 +665,9 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_w_sell_rates
 
     double dec_year_1_credits = credits_matrix.at((size_t)1, (size_t)11);
     EXPECT_NEAR(34.47, dec_year_1_credits, 0.1);
+    
+    ssc_data_free(data);
+
 }
 TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_subhourly_gen_and_load) {
     ssc_data_t data = new var_table;
@@ -597,6 +693,9 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_subhourly_ge
     ssc_number_t cost_with_system;
     ssc_data_get_number(data, "elec_cost_with_system_year1", &cost_with_system);
     EXPECT_NEAR(441.4, cost_with_system, 0.1);
+    
+    ssc_data_free(data);
+
 }
 
 TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_subhourly_gen_and_load_w_sell_rates) {
@@ -628,6 +727,9 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_subhourly_ge
     ssc_number_t cost_with_system;
     ssc_data_get_number(data, "elec_cost_with_system_year1", &cost_with_system);
     EXPECT_NEAR(-156.95, cost_with_system, 0.1); // Subhourly data allows for increased sales - consistent with net metering
+    
+    ssc_data_free(data);
+
 }
 
 // If these results change, validate with https://github.com/NREL/SAM-documentation/blob/master/Unit%20Testing/Utility%20Rates/SAM%202020.11.29%20Rollover%20Month%20Tests/2020.11.29_net_billing_carryover.xlsx
@@ -683,6 +785,9 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_carryover) {
 
     double jan_year_2_credits = credits_matrix.at((size_t)2, (size_t)0);
     EXPECT_NEAR(0, jan_year_2_credits, 0.1);
+    
+    ssc_data_free(data);
+
 }
 
 // If these results change, validate with https://github.com/NREL/SAM-documentation/blob/master/Unit%20Testing/Utility%20Rates/SAM%202020.11.29%20Rollover%20Month%20Tests/2020.11.29_net_billing_carryover.xlsx
@@ -745,6 +850,8 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_carryover_ap
 
     double apr_year_1_credits = true_up_credits_matrix.at((size_t)1, (size_t)3);
     EXPECT_NEAR(122.19, apr_year_1_credits, 0.1);
+    
+    ssc_data_free(data);
 }
 
 // If these results change, validate with https://github.com/NREL/SAM-documentation/blob/master/Unit%20Testing/Utility%20Rates/SAM%202020.11.29%20Rollover%20Month%20Tests/2020.11.29_net_billing_carryover.xlsx
@@ -805,6 +912,9 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_carryover_ja
 
     double jan_year_2_credits = true_up_credits_matrix.at((size_t)2, (size_t)0);
     EXPECT_NEAR(175.92, jan_year_2_credits, 0.1);
+    
+    ssc_data_free(data);
+
 }
 
 // If these results change, validate with https://github.com/NREL/SAM-documentation/blob/master/Unit%20Testing/Utility%20Rates/SAM%202020.11.29%20Rollover%20Month%20Tests/2020.11.29_net_billing_carryover.xlsx
@@ -860,6 +970,9 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_carryover_lo
 
     double dec_year_1_credits = true_up_credits_matrix.at((size_t)1, (size_t)11);
     EXPECT_NEAR(21.80, dec_year_1_credits, 0.1);
+    
+    ssc_data_free(data);
+
 }
 
 TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_carryover_monthly_min) {
@@ -925,6 +1038,9 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_carryover_mo
 
     double april_year_1_min = min_matrix.at((size_t)1, (size_t)3);
     EXPECT_NEAR(10.0, april_year_1_min, 0.001);
+    
+    ssc_data_free(data);
+
 }
 
 TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_carryover_annual_min) {
@@ -993,6 +1109,9 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_carryover_an
 
     double dec_year_1_min = min_matrix.at((size_t)1, (size_t)11);
     EXPECT_NEAR(68.25, dec_year_1_min, 0.001);
+    
+    ssc_data_free(data);
+
 }
 
 TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_carryover_incorrect_month) {
@@ -1015,6 +1134,9 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_carryover_in
 
     int status = run_module(data, "utilityrate5");
     EXPECT_TRUE(status);
+    
+    ssc_data_free(data);
+
 }
 
 TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_buyall_sellall) {
@@ -1056,6 +1178,9 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_buyall_sellall) {
 
     double dec_year_1_credits = credits_matrix.at((size_t)1, (size_t)11);
     EXPECT_NEAR(45.49, dec_year_1_credits, 0.1);
+    
+    ssc_data_free(data);
+
 }
 
 TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_no_credit) {
@@ -1082,6 +1207,9 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_no_credit) {
     ssc_number_t cost_with_system;
     ssc_data_get_number(data, "elec_cost_with_system_year1", &cost_with_system);
     EXPECT_NEAR(64.03, cost_with_system, 0.1);
+    
+    ssc_data_free(data);
+
 }
 
 TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_annual_minimum) {
@@ -1109,6 +1237,9 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_annual_minimum) {
     ssc_number_t cost_with_system;
     ssc_data_get_number(data, "elec_cost_with_system_year1", &cost_with_system);
     EXPECT_NEAR(100.0, cost_with_system, 0.1);
+    
+    ssc_data_free(data);
+
 }
 TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_w_tiers) {
     ssc_data_t data = new var_table;
@@ -1166,6 +1297,9 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_w_tiers) {
     ssc_number_t cost_with_system;
     ssc_data_get_number(data, "elec_cost_with_system_year1", &cost_with_system);
     EXPECT_NEAR(286.2, cost_with_system, 0.1);
+    
+    ssc_data_free(data);
+
 }
 
 TEST(cmod_utilityrate5_eqns, Test_Commercial_Demand_Charges) {
@@ -1223,7 +1357,12 @@ TEST(cmod_utilityrate5_eqns, Test_Commercial_Demand_Charges) {
     ssc_number_t cost_with_system;
     ssc_data_get_number(data, "elec_cost_with_system_year1", &cost_with_system);
     EXPECT_NEAR(92538.1, cost_with_system, 0.1);
+
+    ssc_data_free(data);
+
 }
+
+
 
 TEST(cmod_utilityrate5_eqns, Test_Commercial_kWh_per_kW_charges) {
     ssc_data_t data = new var_table;
@@ -1337,6 +1476,9 @@ TEST(cmod_utilityrate5_eqns, Test_Commercial_kWh_per_kW_charges) {
     EXPECT_NEAR(121603.13, tier_matrix.at((size_t)1, 3), 0.01);
     EXPECT_NEAR(131603.13, tier_matrix.at((size_t)1, 4), 0.01);
     EXPECT_NEAR(103255.44, tier_matrix.at((size_t)1, 5), 0.01);
+
+    ssc_data_free(data);
+
 }
 
 TEST(cmod_utilityrate5_eqns, Test_Commercial_Energy_Tiers_net_billing) {
@@ -1417,6 +1559,9 @@ TEST(cmod_utilityrate5_eqns, Test_Commercial_Energy_Tiers_net_billing) {
     }
     tier_usage = tier_matrix.at((size_t)1, (size_t)6);
     EXPECT_NEAR(3014.93, tier_usage, 0.001);
+    
+    ssc_data_free(data);
+
 }
 
 TEST(cmod_utilityrate5_eqns, Test_Commercial_kWh_per_kW_charges_with_billing_demand_percents) {
@@ -1564,4 +1709,204 @@ TEST(cmod_utilityrate5_eqns, Test_Commercial_kWh_per_kW_charges_with_billing_dem
     EXPECT_NEAR(131851.63, tier_matrix.at((size_t)1, 3), 0.01);
     EXPECT_NEAR(141851.63, tier_matrix.at((size_t)1, 4), 0.01);
     EXPECT_NEAR(100466.35, tier_matrix.at((size_t)1, 5), 0.01);
+    
+    ssc_data_free(data);
+
+}
+
+TEST(cmod_utilityrate5_eqns, Test_seasonal_per_kw_charge_w_no_demand_charge) {
+    ssc_data_t data = new var_table;
+
+    ssc_data_set_number(data, "en_electricity_rates", 1);
+    ssc_data_set_number(data, "ur_en_ts_sell_rate", 0);
+    ssc_number_t p_ur_ts_buy_rate[1] = { 0 };
+    ssc_data_set_array(data, "ur_ts_buy_rate", p_ur_ts_buy_rate, 1);
+    ssc_data_set_number(data, "inflation_rate", 2.5);
+    ssc_number_t p_degradation[1] = { 0 };
+    ssc_data_set_array(data, "degradation", p_degradation, 1);
+    ssc_number_t p_load_escalation[1] = { 0 };
+    ssc_data_set_array(data, "load_escalation", p_load_escalation, 1);
+    ssc_number_t p_rate_escalation[1] = { 0 };
+    ssc_data_set_array(data, "rate_escalation", p_rate_escalation, 1);
+    ssc_data_set_number(data, "ur_metering_option", 0);
+    ssc_data_set_number(data, "ur_nm_yearend_sell_rate", 0);
+    ssc_data_set_number(data, "ur_nm_credit_month", 11);
+    ssc_data_set_number(data, "ur_nm_credit_rollover", 0);
+    ssc_data_set_number(data, "ur_monthly_fixed_charge", 21);
+    ssc_data_set_number(data, "ur_monthly_min_charge", 0);
+    ssc_data_set_number(data, "ur_annual_min_charge", 0);
+    ssc_number_t  ur_ts_sell_rate[1] = { 0 };
+    ssc_data_set_array(data, "ur_ts_sell_rate", ur_ts_sell_rate, 1);
+    ssc_number_t p_ur_ec_sched_weekday[288] = { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 };
+    ssc_data_set_matrix(data, "ur_ec_sched_weekday", p_ur_ec_sched_weekday, 12, 24);
+    ssc_number_t p_ur_ec_sched_weekend[288] = { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 };
+    ssc_data_set_matrix(data, "ur_ec_sched_weekend", p_ur_ec_sched_weekend, 12, 24);
+    ssc_number_t p_ur_ec_tou_mat[96] = { 1, 1, 200, 1, 0.031718000000000003, 0,
+                                         1, 2, 3000, 0, 0.132655, 0,
+                                         1, 3, 10000, 0, 0.120303, 0,
+                                         1, 4, 200000, 0, 0.102607, 0,
+                                         1, 5, 9.9999999999999998e+37, 0, 0.079109, 0,
+                                         1, 6, 400, 1, 0.013627, 0,
+                                         1, 7, 600, 1, 0.010275, 0,
+                                         1, 8, 9.9999999999999998e+37, 1, 0.00771, 0,
+                                         2, 1, 200, 0, 0.028812999999999998, 0,
+                                         2, 2, 9.9999999999999998e+37, 0, 0.132655, 0 };
+    ssc_data_set_matrix(data, "ur_ec_tou_mat", p_ur_ec_tou_mat, 10, 6);
+    ssc_data_set_number(data, "ur_dc_enable", 0);
+
+
+    ssc_data_set_number(data, "ur_enable_billing_demand", 1);
+    ssc_data_set_number(data, "ur_billing_demand_minimum", 100);
+    ssc_data_set_number(data, "ur_billing_demand_lookback_period", 11);
+
+    ssc_number_t p_ur_billing_demand_lookback_percentages[24] = { 60, 0,
+                                      60, 0,
+                                      60, 0,
+                                      60, 0,
+                                      60, 0,
+                                      95, 1,
+                                      95, 1,
+                                      95, 1,
+                                      95, 1,
+                                      60, 0,
+                                      60, 0,
+                                      60, 0 };
+    ssc_data_set_matrix(data, "ur_billing_demand_lookback_percentages", p_ur_billing_demand_lookback_percentages, 12, 2);
+
+    ssc_number_t p_ur_billing_demand_tou_matrix[2] = { 1, 1 };
+    ssc_data_set_matrix(data, "ur_dc_billing_demand_periods", p_ur_billing_demand_tou_matrix, 1, 2);
+
+    ssc_number_t year_zero_power[12] = { -1200,
+                                        -1100,
+                                        -900,
+                                        -700,
+                                        -800,
+                                        -950,
+                                        -1050,
+                                        -1150,
+                                        -850,
+                                        -400,
+                                        -600,
+                                        -750 };
+
+    ssc_data_set_array(data, "ur_yearzero_usage_peaks", year_zero_power, 12);
+
+    int analysis_period = 25;
+    ssc_data_set_number(data, "system_use_lifetime_output", 1);
+    ssc_data_set_number(data, "analysis_period", analysis_period);
+    set_array(data, "load", large_load_commercial, 8760);
+    set_array(data, "gen", commercial_gen_path, 8760 * analysis_period);
+
+    int status = run_module(data, "utilityrate5");
+    EXPECT_FALSE(status);
+
+    int nrows;
+    int ncols;
+    ssc_number_t* annual_bills = ssc_data_get_matrix(data, "utility_bill_wo_sys_ym", &nrows, &ncols);
+    util::matrix_t<double> bill_matrix(nrows, ncols);
+    bill_matrix.assign(annual_bills, nrows, ncols);
+
+    double july_year_1 = bill_matrix.at((size_t)1, (size_t)6);
+    EXPECT_NEAR(17755.29, july_year_1, 0.01);
+
+    ssc_data_set_number(data, "ur_metering_option", 2); // Net billing
+    status = run_module(data, "utilityrate5");
+    EXPECT_FALSE(status);
+
+    annual_bills = ssc_data_get_matrix(data, "utility_bill_wo_sys_ym", &nrows, &ncols);
+    bill_matrix.assign(annual_bills, nrows, ncols);
+
+    july_year_1 = bill_matrix.at((size_t)1, (size_t)6);
+    EXPECT_NEAR(17755.29, july_year_1, 0.01);
+
+    ssc_number_t* billing_demand_wo_sys = ssc_data_get_matrix(data, "billing_demand_wo_sys_ym", &nrows, &ncols);
+    util::matrix_t<double> billing_demand_matrix(nrows, ncols);
+    billing_demand_matrix.assign(billing_demand_wo_sys, nrows, ncols);
+
+    double july_yr_1_billing_demand = billing_demand_matrix.at((size_t)1, (size_t)6);
+    EXPECT_NEAR(709.26, july_yr_1_billing_demand, 0.01);
+
+    ssc_number_t* july_tiers = ssc_data_get_matrix(data, "energy_wo_sys_ec_jul_tp", &nrows, &ncols);
+    util::matrix_t<double> tier_matrix(nrows, ncols);
+    tier_matrix.assign(july_tiers, nrows, ncols);
+
+    EXPECT_NEAR(3000.0, tier_matrix.at((size_t)1, 1), 0.01);
+    EXPECT_NEAR(7000.0, tier_matrix.at((size_t)1, 2), 0.01);
+    EXPECT_NEAR(131851.63, tier_matrix.at((size_t)1, 3), 0.01);
+    EXPECT_NEAR(141851.63, tier_matrix.at((size_t)1, 4), 0.01);
+    EXPECT_NEAR(100466.35, tier_matrix.at((size_t)1, 5), 0.01);
+    
+    ssc_data_free(data);
+
+}
+
+TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_w_36_periods) {
+    ssc_data_t data = new var_table;
+
+    setup_residential_rates(data);
+    ssc_data_set_number(data, "ur_metering_option", 2);
+    ssc_number_t p_ur_ec_tou_mat[216] = { 1, 1, 9.9999999999999998e+37, 0, 0.10000000000000001, 0.10000000000000001, // A lot of these are the same, the point is to test the large number
+                                 2, 1, 9.9999999999999998e+37, 0, 0.050000000000000003, 0.050000000000000003,
+                                 3, 1, 9.9999999999999998e+37, 0, 0.20000000000000001, 0.20000000000000001,
+                                 4, 1, 9.9999999999999998e+37, 0, 0.050000000000000003, 0.050000000000000003,
+                                 5, 1, 9.9999999999999998e+37, 0, 0.20000000000000001, 0.20000000000000001,
+                                 6, 1, 9.9999999999999998e+37, 0, 0.050000000000000003, 0.050000000000000003,
+                                 7, 1, 9.9999999999999998e+37, 0, 0.20000000000000001, 0.20000000000000001,
+                                 8, 1, 9.9999999999999998e+37, 0, 0.050000000000000003, 0.050000000000000003,
+                                 9, 1, 9.9999999999999998e+37, 0, 0.20000000000000001, 0.20000000000000001,
+                                 10, 1, 9.9999999999999998e+37, 0, 0.050000000000000003, 0.050000000000000003,
+                                 11, 1, 9.9999999999999998e+37, 0, 0.20000000000000001, 0.20000000000000001,
+                                 12, 1, 9.9999999999999998e+37, 0, 0.050000000000000003, 0.050000000000000003,
+                                 13, 1, 9.9999999999999998e+37, 0, 0.20000000000000001, 0.20000000000000001,
+                                 14, 1, 9.9999999999999998e+37, 0, 0.050000000000000003, 0.050000000000000003,
+                                 15, 1, 9.9999999999999998e+37, 0, 0.20000000000000001, 0.20000000000000001,
+                                 16, 1, 9.9999999999999998e+37, 0, 0.050000000000000003, 0.050000000000000003,
+                                 17, 1, 9.9999999999999998e+37, 0, 0.20000000000000001, 0.20000000000000001,
+                                 18, 1, 9.9999999999999998e+37, 0, 0.050000000000000003, 0.050000000000000003,
+                                 19, 1, 9.9999999999999998e+37, 0, 0.20000000000000001, 0.20000000000000001,
+                                 20, 1, 9.9999999999999998e+37, 0, 0.050000000000000003, 0.050000000000000003,
+                                 21, 1, 9.9999999999999998e+37, 0, 0.20000000000000001, 0.20000000000000001,
+                                 22, 1, 9.9999999999999998e+37, 0, 0.050000000000000003, 0.050000000000000003,
+                                 23, 1, 9.9999999999999998e+37, 0, 0.20000000000000001, 0.20000000000000001,
+                                 24, 1, 9.9999999999999998e+37, 0, 0.050000000000000003, 0.050000000000000003,
+                                 25, 1, 9.9999999999999998e+37, 0, 0.20000000000000001, 0.20000000000000001,
+                                 26, 1, 9.9999999999999998e+37, 0, 0.050000000000000003, 0.050000000000000003,
+                                 27, 1, 9.9999999999999998e+37, 0, 0.20000000000000001, 0.20000000000000001,
+                                 28, 1, 9.9999999999999998e+37, 0, 0.050000000000000003, 0.050000000000000003,
+                                 29, 1, 9.9999999999999998e+37, 0, 0.20000000000000001, 0.20000000000000001,
+                                 30, 1, 9.9999999999999998e+37, 0, 0.050000000000000003, 0.050000000000000003,
+                                 31, 1, 9.9999999999999998e+37, 0, 0.20000000000000001, 0.20000000000000001,
+                                 32, 1, 9.9999999999999998e+37, 0, 0.050000000000000003, 0.050000000000000003,
+                                 33, 1, 9.9999999999999998e+37, 0, 0.20000000000000001, 0.20000000000000001,
+                                 34, 1, 9.9999999999999998e+37, 0, 0.050000000000000003, 0.050000000000000003,
+                                 35, 1, 9.9999999999999998e+37, 0, 0.20000000000000001, 0.20000000000000001,
+                                 36, 1, 9.9999999999999998e+37, 0, 0.25, 0.25 };
+    ssc_data_set_matrix(data, "ur_ec_tou_mat", p_ur_ec_tou_mat, 36, 6);
+
+    ssc_number_t p_ur_ec_sched_weekday[288] = {36, 2, 2, 34, 2, 2, 2, 33, 32, 31, 29, 27, 28, 25, 26, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 };
+    ssc_data_set_matrix(data, "ur_ec_sched_weekday", p_ur_ec_sched_weekday, 12, 24);
+    ssc_number_t p_ur_ec_sched_weekend[288] = { 2, 2, 2, 2, 2, 2, 20, 2, 2, 2, 2, 2, 23, 2, 2, 2, 25, 2, 2, 2, 29, 2, 32, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 };
+    ssc_data_set_matrix(data, "ur_ec_sched_weekend", p_ur_ec_sched_weekend, 12, 24);
+
+    int analysis_period = 1;
+    ssc_data_set_number(data, "system_use_lifetime_output", 1);
+    ssc_data_set_number(data, "analysis_period", analysis_period);
+    set_array(data, "load", load_profile_path, 8760);
+    set_array(data, "gen", gen_path, 8760 * analysis_period);
+
+    int status = run_module(data, "utilityrate5");
+    EXPECT_FALSE(status);
+
+    ensure_outputs_line_up(data);
+
+    ssc_number_t cost_without_system;
+    ssc_data_get_number(data, "elec_cost_without_system_year1", &cost_without_system);
+    EXPECT_NEAR(475.56, cost_without_system, 0.1);
+
+    ssc_number_t cost_with_system;
+    ssc_data_get_number(data, "elec_cost_with_system_year1", &cost_with_system);
+    EXPECT_NEAR(-173.25, cost_with_system, 0.1);
+
+    ssc_data_free(data);
+
 }

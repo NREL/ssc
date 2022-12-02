@@ -1,23 +1,33 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 // Trough CSP - physical model
@@ -191,9 +201,9 @@ static var_info _cm_vtab_trough_physical_process_heat[] = {
     { SSC_INPUT,        SSC_NUMBER,      "disp_reporting",            "Dispatch optimization reporting level",                                            "-",            "",               "tou",            "?=-1",                    "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "disp_spec_scaling",         "Dispatch optimization scaling heuristic",                                          "-",            "",               "tou",            "?=-1",                    "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "disp_time_weighting",       "Dispatch optimization future time discounting factor",                             "-",            "",               "tou",            "?=0.99",                  "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "disp_rsu_cost",             "Receiver startup cost",                                                            "$",            "",               "tou",            "is_dispatch=1",           "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "disp_csu_cost",             "Heat sink startup cost",                                                           "$",            "",               "tou",            "is_dispatch=1",           "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "disp_pen_delta_w",          "Dispatch heat production change penalty",                                          "$/kWt-change", "",               "tou",            "is_dispatch=1",           "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "disp_rsu_cost_rel",         "Receiver startup cost",                                                            "$/MWt/start",  "",               "tou",            "is_dispatch=1",           "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "disp_csu_cost_rel",         "Heat sink startup cost",                                                           "$/MWe-cycle/start", "",          "tou",            "is_dispatch=1",           "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "disp_pen_ramping",          "Dispatch heat production change penalty",                                          "$/MWt-change", "",               "tou",            "is_dispatch=1",           "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "disp_inventory_incentive",  "Dispatch storage terminal inventory incentive multiplier",                         "",             "",               "System Control", "?=0.0",                   "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "q_rec_standby",             "Receiver standby energy consumption",                                              "kWt",          "",               "tou",            "?=9e99",                  "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "q_rec_heattrace",           "Receiver heat trace energy consumption during startup",                            "kWe-hr",       "",               "tou",            "?=0.0",                   "",                      "" },
@@ -712,42 +722,33 @@ public:
 		// Now add the storage class
 		// ********************************
 		// ********************************
-		C_csp_two_tank_tes storage;
-		C_csp_two_tank_tes::S_params *tes = &storage.ms_params;
-			// Hardcode NO TES for now
-		tes->m_field_fl = c_trough.m_Fluid;	//[-]
-		tes->m_field_fl_props = c_trough.m_field_fl_props;	//[-]
-		tes->m_tes_fl = tes->m_field_fl;	//[-]
-		tes->m_tes_fl_props = c_trough.m_field_fl_props;	//[-]
-		tes->m_W_dot_pc_design = c_heat_sink.ms_params.m_q_dot_des;	//[MWt]
-		tes->m_eta_pc = 1.0;
-		tes->m_solarm = as_double("solar_mult");	//[-]  (set during verify() using cmod_csp_trough_eqns.cpp)
-
-		tes->m_ts_hours = as_double("tshours");		//[hr]
-	
-		tes->m_h_tank = as_double("h_tank");		//[m]
-		tes->m_u_tank = as_double("u_tank");		//[W/m^2-K]
-		tes->m_tank_pairs = as_integer("tank_pairs");		//[-]
-		tes->m_hot_tank_Thtr = as_double("hot_tank_Thtr");	//[C]
-		tes->m_hot_tank_max_heat = as_double("hot_tank_max_heat");		//[MWt]
-		tes->m_cold_tank_Thtr = as_double("cold_tank_Thtr");	//[C]
-		tes->m_cold_tank_max_heat = as_double("cold_tank_max_heat");		//[MWt]
-		tes->m_dt_hot = 0.0;								// MSPT assumes direct storage, so no user input here: hardcode = 0.0
-		tes->m_T_field_in_des = T_loop_in_des;		//[C]
-		tes->m_T_field_out_des = T_loop_out_des;	//[C]
-		tes->m_T_tank_hot_ini = T_loop_out_des;		//[C]
-		tes->m_T_tank_cold_ini = T_loop_in_des;		//[C]
-		tes->m_h_tank_min = as_double("h_tank_min");		//[m]
-		tes->m_f_V_hot_ini = as_double("init_hot_htf_percent");		//[-]
-		tes->m_htf_pump_coef = as_double("pb_pump_coef");		//[kWe/kg/s]
-
-
-		tes->tanks_in_parallel = as_boolean("tanks_in_parallel");        //[-]
-        //tes->tanks_in_parallel = false; // true;      //[-] False: Field HTF always goes to TES. PC HTF always comes from TES
-        
-		
-		tes->V_tes_des = 1.85;  //[m/s]
-        tes->calc_design_pipe_vals = false; // for now, to get 'tanks_in_parallel' to work
+        C_csp_two_tank_tes storage(
+		    c_trough.m_Fluid,	                      //[-]
+		    c_trough.m_field_fl_props,	              //[-]
+            c_trough.m_Fluid,	                      //[-]
+		    c_trough.m_field_fl_props,	              //[-]
+            c_heat_sink.ms_params.m_q_dot_des / 1.0,  //[MWt]
+            as_double("solar_mult"),                  //[-]
+            c_heat_sink.ms_params.m_q_dot_des / 1.0 * as_double("tshours"), //[hr]
+		    as_double("h_tank"),		              //[m]
+		    as_double("u_tank"),		              //[W/m^2-K]
+		    as_integer("tank_pairs"),		          //[-]
+		    as_double("hot_tank_Thtr"),	              //[C]
+		    as_double("hot_tank_max_heat"),		      //[MWt]
+		    as_double("cold_tank_Thtr"),	          //[C]
+		    as_double("cold_tank_max_heat"),		  //[MWt]
+		    0.0,								      // MSPT assumes direct storage, so no user input here: hardcode = 0.0
+		    T_loop_in_des,		                      //[C]
+		    T_loop_out_des,	                          //[C]
+		    T_loop_out_des,		                      //[C]
+		    T_loop_in_des,		                      //[C]
+		    as_double("h_tank_min"),		          //[m]
+		    as_double("init_hot_htf_percent"),		  //[-]
+		    as_double("pb_pump_coef"),		          //[kWe/kg/s]
+            as_boolean("tanks_in_parallel"),          //[-]
+		    1.85,                                     //[m/s]
+            false                                     // for now, to get 'tanks_in_parallel' to work
+        );
 
 
 		// Set storage outputs
@@ -857,6 +858,7 @@ public:
                                 dispatch,
 								system,
                                 NULL,
+                                nullptr,
 								ssc_cmod_update,
 								(void*)(this));
 
@@ -955,7 +957,7 @@ public:
 
 		// 'adjustment_factors' class stores factors in hourly array, so need to index as such
 		adjustment_factors haf(this, "adjust");
-		if( !haf.setup() )
+		if( !haf.setup(n_steps_fixed) )
 			throw exec_error("trough_physical_iph", "failed to setup adjustment factors: " + haf.error());
 
 		ssc_number_t *p_gen = allocate("gen", n_steps_fixed);

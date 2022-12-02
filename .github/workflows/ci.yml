@@ -1,0 +1,143 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+env:
+  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
+  BUILD_TYPE: Release
+
+jobs:
+  build-on-ubuntu1804:
+    runs-on: ubuntu-18.04
+
+    steps:
+    - name: Setup cmake
+      uses: jwlawson/actions-setup-cmake@v1.12
+      with:
+        cmake-version: '3.24.x'
+    - name: Test cmake version
+      run: cmake --version
+    
+    - name: Set relative paths
+      run: | 
+        GTEST=$GITHUB_WORKSPACE/googletest
+        echo "GTEST=$GTEST" >> $GITHUB_ENV
+        SSCDIR=$GITHUB_WORKSPACE/ssc
+        echo "SSCDIR=$SSCDIR" >> $GITHUB_ENV
+    
+    - name: Clone Gtest
+      uses: actions/checkout@v2
+      with:
+        repository: google/googletest
+        path: googletest
+        ref: b85864c64758dec007208e56af933fc3f52044ee
+    
+    - name: build Gtest
+      run: | 
+          export 
+          mkdir ${GTEST}/build
+          cd ${GTEST}/build
+          cmake -DCMAKE_CXX_FLAGS=-std=c++11 ..
+          make          
+    
+    - name: Checkout SSC
+      uses: actions/checkout@v2
+      with:
+         path: ssc
+
+    - name: Configure CMake
+      # Configure cmake to build ssc tests but not tools
+      run: |
+        mkdir ${SSCDIR}/build
+        cd ${SSCDIR}/build
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DSAM_SKIP_TOOLS=1
+
+    - name: Build
+      # Build your program with the given configuration
+      run: |
+        cd ${SSCDIR}/build
+        make -j4
+
+    - name: Test
+      # Turn off fast fail for when the landbosse tests write to cerr
+      shell: bash
+      run: |
+        set -e
+        ${SSCDIR}/build/test/Test
+    
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+          name: SSC Linux Shared Libraries
+          path: |
+            ${{env.SSCDIR}}/build/ssc/libssc.so
+            ${{env.SSCDIR}}/build/ssc/ssc.so
+      
+  build-on-mac:
+    runs-on: macos-11
+
+    steps:
+    - name: Setup cmake
+      uses: jwlawson/actions-setup-cmake@v1.12
+      with:
+        cmake-version: '3.24.x'
+    - name: Test cmake version
+      run: cmake --version
+    
+    - name: Set relative paths
+      run: | 
+        GTEST=$GITHUB_WORKSPACE/googletest
+        echo "GTEST=$GTEST" >> $GITHUB_ENV
+        SSCDIR=$GITHUB_WORKSPACE/ssc
+        echo "SSCDIR=$SSCDIR" >> $GITHUB_ENV
+    
+    - name: Clone Gtest
+      uses: actions/checkout@v2
+      with:
+        repository: google/googletest
+        path: googletest
+        ref: b85864c64758dec007208e56af933fc3f52044ee
+    
+    - name: build Gtest
+      run: | 
+          export 
+          mkdir ${GTEST}/build
+          cd ${GTEST}/build
+          cmake -DCMAKE_CXX_FLAGS=-std=c++11 ..
+          make          
+    
+    - name: Checkout SSC
+      uses: actions/checkout@v2
+      with:
+         path: ssc
+
+    - name: Configure CMake
+      # Configure cmake to build ssc tests but not tools
+      run: |
+        mkdir ${SSCDIR}/build
+        cd ${SSCDIR}/build
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DSAM_SKIP_TOOLS=1 -DSAMAPI_EXPORT=0 
+
+    - name: Build
+      # Build your program with the given configuration
+      run: |
+        cd ${SSCDIR}/build
+        make -j4
+
+    - name: Test
+      # Turn off fast fail for when the landbosse tests write to cerr
+      run: |
+        set -e
+        ${SSCDIR}/build/test/Test
+      shell: bash      
+    
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+          name: SSC Mac Shared Libraries
+          path: |
+            ${{env.SSCDIR}}/build/ssc/libssc.dylib
+            ${{env.SSCDIR}}/build/ssc/ssc.dylib 
+

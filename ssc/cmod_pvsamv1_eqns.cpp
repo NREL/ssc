@@ -1,24 +1,35 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 
 #include "cmod_pvsamv1_eqns.h"
 #include "cmod_utilityrate5_eqns.h"
@@ -118,8 +129,6 @@ SSCEXPORT bool Reopt_size_battery_params(ssc_data_t data) {
     assign_matching_pv_vars(reopt_pv, "azimuth", "subarray1_azimuth");
     assign_matching_pv_vars(reopt_pv, "tilt", "subarray1_tilt");
     assign_matching_pv_vars(reopt_pv, "gcr", "subarray1_gcr");
-    assign_matching_pv_vars(reopt_pv, "losses", "annual_total_loss_percent", true);
-
 
     // Get appropriate inverter efficiency input and transform to ratio from percent
     int inv_model = 0;
@@ -150,6 +159,27 @@ SSCEXPORT bool Reopt_size_battery_params(ssc_data_t data) {
         map_input(vt, "inv_eff", &reopt_batt, "inverter_efficiency_pct", false, true);
         map_input(vt, "dc_ac_ratio", &reopt_pv, "dc_ac_ratio");
     }
+
+    // If gen is assigned, use REopt's prod_factor_series_kw number, if not use lat/lon and losses with the PVWatts weather files (as called by REopt)
+    if (vt->is_assigned("gen")) {
+        std::vector<double> gen;
+        vt_get_array_vec(vt, "gen", gen);
+        int analysis_period;
+        vt_get_int(vt, "analysis_period", &analysis_period);
+        size_t year_one_values = gen.size() / analysis_period;
+        std::vector<double> kwac_per_kwdc(year_one_values);
+        for (size_t i = 0; i < year_one_values; i++) {
+            kwac_per_kwdc[i] = gen[i] / system_cap;
+            kwac_per_kwdc[i] = std::max(0.0, kwac_per_kwdc[i]);
+        }
+        reopt_pv.assign("prod_factor_series_kw", kwac_per_kwdc);
+        // The above already includes losses
+        reopt_pv.assign("losses", 0.0);
+    }
+    else if (vt->is_assigned("losses")) {
+        map_input(vt, "losses", &reopt_pv, "losses");
+    }
+    // Else use REopt default losses (14%)
 
     // financial inputs
     map_optional_input(vt, "itc_fed_percent", &reopt_pv, "federal_itc_pct", 0., true);
@@ -290,12 +320,15 @@ SSCEXPORT bool Reopt_size_battery_params(ssc_data_t data) {
     reopt_load.assign("loads_kw", var_data(&vec[0], sim_len));
     reopt_load.assign("loads_kw_is_net", false);
 
-	vt_get_array_vec(vt, "crit_load", vec);
-	if (vec.size() != sim_len) {
-	    vt->assign("error", var_data("Critical load profile's length must be same as for load."));
-	    return false;
+    vd = vt->lookup("crit_load");
+    if (vd) {
+        vt_get_array_vec(vt, "crit_load", vec);
+        if (vec.size() != sim_len) {
+            vt->assign("error", var_data("Critical load profile's length must be same as for load."));
+            return false;
+        }
+        reopt_load.assign("critical_loads_kw", var_data(&vec[0], vec.size()));
     }
-    reopt_load.assign("critical_loads_kw", var_data(&vec[0], vec.size()));
 
     // assign the reopt parameter table and log messages
     reopt_electric.assign_match_case("urdb_response", reopt_utility);

@@ -1,24 +1,35 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 
 #ifndef __lib_util_h
 #define __lib_util_h
@@ -37,7 +48,7 @@ using std::unordered_map;
 #pragma warning(disable: 4290)  // ignore warning: 'C++ exception specification ignored except to indicate a function is not __declspec(nothrow)'
 #pragma warning(disable: 4996)  // fopen and fopen_s among others
 #endif
-/* 
+/*
 
 For proper compilation:
 
@@ -114,10 +125,10 @@ namespace util
 
 	std::string lower_case( const std::string &in );
 	std::string upper_case( const std::string &in );
-	
+
 	std::string read_file( const std::string &file );
 	bool read_line( FILE *fp, std::string &text, int prealloc = 256 );
-	
+
 	size_t hours_in_month(size_t month); /* returns the number of hours in a month, as used in month_of() */
 	size_t hour_of_day(size_t hour_of_year); /* return the hour of day (0 - 23) given the hour of year (0 - 8759) */
 	size_t hour_of_year(size_t month, size_t day, size_t hour); /* returns the hour of the year (0-8759) given the current month, date, and time */
@@ -139,14 +150,14 @@ namespace util
 	bool file_exists( const char *file );
 	bool dir_exists( const char *path );
 	bool remove_file( const char *path );
-	bool mkdir( const char *path, bool make_full = false); 
+	bool mkdir( const char *path, bool make_full = false);
 	std::string path_only( const std::string &path );
 	std::string name_only( const std::string &path );
 	std::string ext_only( const std::string &path );
 	char path_separator();
 	std::string get_cwd();
 	bool set_cwd( const std::string &path );
-	
+
 	template <class T>
 	std::vector<T> array_to_vector(T * array_in, size_t n)
 	{
@@ -177,11 +188,11 @@ namespace util
 		int spawn(const std::string &command, const std::string &workdir="");
 		virtual void on_stdout(const std::string &line_text) = 0;
 	};
-	
-	
+
+
 	std::string format(const char *fmt, ...);
 	size_t format_vn(char *buffer, int maxlen, const char *fmt, va_list arglist);
-		
+
 	class stdfile
 	{
 	public:
@@ -247,7 +258,7 @@ namespace util
 	#endif
 			return t_array[r][c];
 		}
-		
+
 		inline T &operator()(size_t r, size_t c)
 		{
 	#ifdef _LIB_UTIL_CHECK_
@@ -285,7 +296,7 @@ namespace util
 			t_array = NULL;
 			copy( cc );
 		}
-		
+
 		matrix_t(size_t len)
 		{
 			n_rows = n_cols = 0;
@@ -302,7 +313,7 @@ namespace util
 			if (nc < 1) nc = 1;
 			resize(nr,nc);
 		}
-		
+
 		matrix_t(size_t nr, size_t nc, const T &val)
 		{
 			n_rows = n_cols = 0;
@@ -327,16 +338,16 @@ namespace util
 
 		virtual ~matrix_t()
 		{
-			if (t_array) delete [] t_array;
-		}
-		
+            if (t_array) delete[] t_array;
+        }
+
 		void clear()
 		{
 			if (t_array) delete [] t_array;
 			n_rows = n_cols = 1;
 			t_array = new T[1];
 		}
-		
+
 		void copy( const matrix_t &rhs )
 		{
 			if (this != &rhs)
@@ -355,7 +366,7 @@ namespace util
 				for (size_t i=0;i<len;i++)
 					t_array[i] = pvalues[i];
 		}
-		
+
 		void assign( const T *pvalues, size_t nr, size_t nc )
 		{
 			resize( nr, nc );
@@ -374,42 +385,42 @@ namespace util
 
 			return *this;
 		}
-		
+
 		matrix_t &operator=(const T &val)
 		{
 			resize(1,1);
 			t_array[0] = val;
 			return *this;
 		}
-		
+
 		inline operator T()
 		{
 			return t_array[0];
 		}
-		
+
 		bool equals( const matrix_t & rhs )
 		{
 			if (n_rows != rhs.n_rows || n_cols != rhs.n_cols)
 				return false;
-			
+
 			size_t nn = n_rows*n_cols;
 			for (size_t i=0;i<nn;i++)
 				if (t_array[i] != rhs.t_array[i])
 					return false;
-			
+
 			return true;
 		}
-		
+
 		inline bool is_single()
 		{
 			return (n_rows == 1 && n_cols == 1);
 		}
-			
+
 		inline bool is_array()
 		{
 			return (n_rows == 1);
 		}
-		
+
 		void fill( const T &val )
 		{
 			size_t ncells = n_rows*n_cols;
@@ -420,7 +431,7 @@ namespace util
 		{
 			if (nr < 1 || nc < 1) return;
 			if (nr == n_rows && nc == n_cols) return;
-			
+
 			if (t_array) delete [] t_array;
 			t_array = new T[ nr * nc ];
 			n_rows = nr;
@@ -432,12 +443,12 @@ namespace util
 			resize( nr, nc );
 			fill( val );
 		}
-		
+
 		void resize(size_t len)
 		{
 			resize( 1, len );
 		}
-		
+
 		void resize_fill(size_t len, const T &val)
 		{
 			resize_fill( 1, len, val );
@@ -471,7 +482,7 @@ namespace util
 	#endif
 			return t_array[i];
 		}
-		
+
 		inline T &at(size_t r, size_t c)
 		{
 	#ifdef _LIB_UTIL_CHECK_
@@ -487,7 +498,7 @@ namespace util
 	#endif
 			return t_array[n_cols*r+c];
 		}
-		
+
 		inline T &operator()(size_t r, size_t c)
 		{
 	#ifdef _LIB_UTIL_CHECK_
@@ -503,7 +514,7 @@ namespace util
 	#endif
 			return t_array[n_cols*r+c];
 		}
-		
+
 		T operator[] (size_t i) const
 		{
 	#ifdef _LIB_UTIL_CHECK_
@@ -511,7 +522,7 @@ namespace util
 	#endif
 			return t_array[i];
 		}
-		
+
 		T &operator[] (size_t i)
 		{
 	#ifdef _LIB_UTIL_CHECK_
@@ -519,7 +530,7 @@ namespace util
 	#endif
 			return t_array[i];
 		}
-		
+
         matrix_t row(const size_t r) const
         {
     #ifdef _LIB_UTIL_CHECK_
@@ -546,33 +557,33 @@ namespace util
 		{
 			return n_rows;
 		}
-		
+
 		inline size_t ncols() const
 		{
 			return n_cols;
 		}
-		
+
 		inline size_t ncells() const
 		{
 			return n_rows*n_cols;
 		}
-		
+
 		inline size_t membytes() const
 		{
 			return n_rows*n_cols*sizeof(T);
 		}
-		
+
 		void size(size_t &nr, size_t &nc) const
 		{
 			nr = n_rows;
 			nc = n_cols;
 		}
-		
+
 		size_t length() const
 		{
 			return n_cols;
 		}
-		
+
 		inline T *data()
 		{
 			return t_array;
@@ -582,6 +593,12 @@ namespace util
 		{
 			return t_array[0];
 		}
+
+        inline std::vector<T> to_vector() const
+        {
+            std::vector<T> v(t_array, t_array + ncells());
+            return v;
+        }
 	};
 
 	template< typename T >
@@ -597,14 +614,14 @@ namespace util
 			t_array = new T[1];
 			n_rows = n_cols = n_layers = 1;
 		}
-		
+
 		block_t(size_t nr, size_t nc, size_t nl)
 		{
 			t_array = NULL;
 			if (nl < 1) nl = 1;
 			if (nr < 1) nr = 1;
 			if (nc < 1) nc = 1;
-			resize(nr,nc,nl);			
+			resize(nr,nc,nl);
 		}
 
 		block_t(size_t nr, size_t nc, size_t nl, const T &val)
@@ -623,7 +640,7 @@ namespace util
 		{
 			if (t_array) delete [] t_array;
 		}
-		
+
 		void clear()
 		{	//Note: when Clear() is called before resize() or resize_fill(), it can cause a memory error.
 			//Do not use clear before calling these functions.
@@ -631,7 +648,7 @@ namespace util
 			n_layers = n_rows = n_cols = 0;
             t_array = new T[1];
 		}
-		
+
 		void copy( const block_t &rhs )
 		{
 			if (this != &rhs)
@@ -659,42 +676,42 @@ namespace util
 			copy( rhs );
 			return *this;
 		}
-		
+
 		block_t &operator=(const T &val)
 		{
 			resize(1,1,1);
 			t_array[0] = val;
 			return *this;
 		}
-		
+
 		inline operator T()
 		{
 			return t_array[0];
 		}
-		
+
 		bool equals( const block_t & rhs )
 		{
 			if (n_rows != rhs.n_rows || n_cols != rhs.n_cols || n_layers != rhs.n_layers)
 				return false;
-			
+
 			size_t nn = n_rows*n_cols*n_layers;
 			for (size_t i=0;i<nn;i++)
 				if (t_array[i] != rhs.t_array[i])
 					return false;
-			
+
 			return true;
 		}
-		
+
 		inline bool is_single()
 		{
 			return (n_rows == 1 && n_cols == 1 && n_layers == 1);
 		}
-			
+
 		inline bool is_array()
 		{
 			return (n_rows == 1 && n_layers == 1);
 		}
-		
+
 		void fill( const T &val )
 		{
 			size_t ncells = n_rows*n_cols*n_layers;
@@ -706,7 +723,7 @@ namespace util
 		{
 			if (nr < 1 || nc < 1 || nl < 1) return;
 			if (nr == n_rows && nc == n_cols && n_layers) return;
-			
+
 			if (t_array) delete [] t_array;
 			t_array = new T[ nr * nc * nl];
 			n_rows = nr;
@@ -719,17 +736,17 @@ namespace util
 			resize( nr, nc, nl);
 			fill( val );
 		}
-		
+
 		void resize(size_t len)
 		{
 			resize( 1, len, 1);
 		}
-		
+
 		void resize_fill(size_t len, const T &val)
 		{
 			resize_fill( 1, len, 1, val );
 		}
-		
+
 		inline T &at(size_t r, size_t c, size_t l)
 		{
 	#ifdef _LIB_UTIL_CHECK_
@@ -745,7 +762,7 @@ namespace util
 	#endif
 			return t_array[n_cols*(n_rows*l + r)+c];
 		}
-		
+
 		T operator[] (size_t i) const
 		{
 	#ifdef _LIB_UTIL_CHECK_
@@ -753,7 +770,7 @@ namespace util
 	#endif
 			return t_array[i];
 		}
-		
+
 		T &operator[] (size_t i)
 		{
 	#ifdef _LIB_UTIL_CHECK_
@@ -761,44 +778,44 @@ namespace util
 	#endif
 			return t_array[i];
 		}
-		
+
 		inline size_t nrows() const
 		{
 			return n_rows;
 		}
-		
+
 		inline size_t ncols() const
 		{
 			return n_cols;
 		}
-		
+
 		inline size_t nlayers() const
 		{
 			return n_layers;
 		}
-		
+
 		inline size_t ncells() const
 		{
 			return n_rows*n_cols*n_layers;
 		}
-		
+
 		inline size_t membytes() const
 		{
 			return n_rows*n_cols*n_layers*sizeof(T);
 		}
-		
+
 		void size(size_t &nr, size_t &nc, size_t &nl) const
 		{
 			nr = n_rows;
 			nc = n_cols;
 			nl = n_layers;
 		}
-		
+
 		size_t length() const
 		{
 			return n_cols;
 		}
-		
+
 		inline T *data()
 		{
 			return t_array;
@@ -810,11 +827,38 @@ namespace util
 		}
 	};
 
+    template <class T>
+    std::vector<std::vector<T>> matrix_to_vector(matrix_t<T> mat_in)
+    {
+        std::vector<std::vector<T>> M;
+        for (size_t r = 0; r < mat_in.nrows(); r++) {
+            std::vector<T> row;
+            for (size_t c = 0; c < mat_in.ncols(); c++)
+                row.push_back(mat_in.at(r, c));
+            M.emplace_back(row);
+        }
+        return M;
+    }
+
+    template <class T>
+    matrix_t<T> vector_to_matrix(std::vector<std::vector<T>> mat_in)
+    {
+        if (mat_in.size() < 1)
+            return matrix_t<T>();
+        matrix_t<T> M;
+        M.resize(mat_in.size(), mat_in[0].size());
+        for (size_t r = 0; r < mat_in.size(); r++)
+            for (size_t c = 0; c < mat_in[0].size(); c++)
+                M.set_value(mat_in[r][c], r, c);
+        return M;
+    }
+
 	double bilinear( double rowval, double colval, const matrix_t<double> &mat );
 	double interpolate(double x1, double y1, double x2, double y2, double xValueToGetYValueFor);
 	double linterp_col( const matrix_t<double> &mat, size_t ixcol, double xval, size_t iycol );
     size_t nearest_col_index(const matrix_t<double>& mat, size_t col, double val);
-	bool translate_schedule(int tod[8760], const matrix_t<double> &wkday, const matrix_t<double> &wkend, int min_val, int max_val);
+    size_t nearest_col_index(const std::vector<std::vector<double>>& mat, size_t col, double val);
+    bool translate_schedule(int tod[8760], const matrix_t<double> &wkday, const matrix_t<double> &wkend, int min_val, int max_val);
 
 	std::vector<double> frequency_table(double* values, size_t n_vals, double bin_width);
 };

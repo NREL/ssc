@@ -1,23 +1,33 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "csp_solver_core.h"
@@ -131,6 +141,34 @@ void C_csp_solver::C_csp_solver_kernel::baseline_step_forward()
 	mc_ts_sim_baseline.step_forward();
 }
 
+void C_csp_collector_receiver::on(const C_csp_weatherreader::S_outputs& weather,
+    const C_csp_solver_htf_1state& htf_state_in,
+    double T_CT_htf_hot_in /*C*/,
+    double q_dot_elec_to_CR_heat /*MWt*/, double field_control,
+    C_csp_collector_receiver::S_csp_cr_out_solver& cr_out_solver,
+    const C_csp_solver_sim_info& sim_info)
+{
+    on(weather,
+        htf_state_in,
+        q_dot_elec_to_CR_heat, field_control,
+        cr_out_solver,
+        sim_info);
+}
+
+void C_csp_power_cycle::call(const C_csp_weatherreader::S_outputs& weather,
+    C_csp_solver_htf_1state& htf_state_in,
+    double T_CT_htf_cold_in /*C*/,
+    const C_csp_power_cycle::S_control_inputs& inputs,
+    C_csp_power_cycle::S_csp_pc_out_solver& out_solver,
+    const C_csp_solver_sim_info& sim_info)
+{
+    call(weather,
+        htf_state_in,
+        inputs,
+        out_solver,
+        sim_info);
+}
+
 static C_csp_reported_outputs::S_output_info S_solver_output_info[] =
 {
 	// Ouputs that are NOT reported as weighted averages
@@ -138,25 +176,27 @@ static C_csp_reported_outputs::S_output_info S_solver_output_info[] =
 	{C_csp_solver::C_solver_outputs::TIME_FINAL, C_csp_reported_outputs::TS_LAST},	//[hr]
 		// Weather Reader
 	{ C_csp_solver::C_solver_outputs::MONTH, C_csp_reported_outputs::TS_1ST},		//[-] Month of year
-	{ C_csp_solver::C_solver_outputs::HOUR_DAY, C_csp_reported_outputs::TS_1ST},		//[hr] hour of day
+	{ C_csp_solver::C_solver_outputs::HOUR_DAY, C_csp_reported_outputs::TS_1ST},    //[hr] hour of day
 		// Controller, TES, & Dispatch
-	{C_csp_solver::C_solver_outputs::ERR_M_DOT, C_csp_reported_outputs::TS_1ST},		//[-] Relative mass conservation error
-	{C_csp_solver::C_solver_outputs::ERR_Q_DOT, C_csp_reported_outputs::TS_1ST},		//[-] Relative energy conservation error
-	{C_csp_solver::C_solver_outputs::N_OP_MODES, C_csp_reported_outputs::TS_LAST},	//[-] Number of subtimesteps in reporting timestep
-	{C_csp_solver::C_solver_outputs::OP_MODE_1, C_csp_reported_outputs::TS_1ST},     //[-] Operating mode in first subtimestep
-	{C_csp_solver::C_solver_outputs::OP_MODE_2, C_csp_reported_outputs::TS_1ST},		//[-] Operating mode in second subtimestep
-	{C_csp_solver::C_solver_outputs::OP_MODE_3, C_csp_reported_outputs::TS_1ST},		//[-] Operating mode in third subtimestep
-	{C_csp_solver::C_solver_outputs::TOU_PERIOD, C_csp_reported_outputs::TS_1ST},                  //[-] CSP operating TOU period
+	{C_csp_solver::C_solver_outputs::ERR_M_DOT, C_csp_reported_outputs::TS_1ST},		          //[-] Relative mass conservation error
+	{C_csp_solver::C_solver_outputs::ERR_Q_DOT, C_csp_reported_outputs::TS_1ST},		          //[-] Relative energy conservation error
+	{C_csp_solver::C_solver_outputs::N_OP_MODES, C_csp_reported_outputs::TS_LAST},	              //[-] Number of subtimesteps in reporting timestep
+	{C_csp_solver::C_solver_outputs::OP_MODE_1, C_csp_reported_outputs::TS_1ST},                  //[-] Operating mode in first subtimestep
+	{C_csp_solver::C_solver_outputs::OP_MODE_2, C_csp_reported_outputs::TS_1ST},		          //[-] Operating mode in second subtimestep
+	{C_csp_solver::C_solver_outputs::OP_MODE_3, C_csp_reported_outputs::TS_1ST},		          //[-] Operating mode in third subtimestep
+	{C_csp_solver::C_solver_outputs::TOU_PERIOD, C_csp_reported_outputs::TS_1ST},                 //[-] CSP operating TOU period
 	{C_csp_solver::C_solver_outputs::PRICING_MULT, C_csp_reported_outputs::TS_1ST},				  //[-] PPA price multiplier
 	{C_csp_solver::C_solver_outputs::PC_Q_DOT_SB, C_csp_reported_outputs::TS_1ST},				  //[MWt] PC required standby thermal power
 	{C_csp_solver::C_solver_outputs::PC_Q_DOT_MIN, C_csp_reported_outputs::TS_1ST},				  //[MWt] PC required min thermal power
-	{C_csp_solver::C_solver_outputs::PC_Q_DOT_TARGET, C_csp_reported_outputs::TS_WEIGHTED_AVE},			  //[MWt] PC target thermal power
-	{C_csp_solver::C_solver_outputs::PC_Q_DOT_MAX, C_csp_reported_outputs::TS_WEIGHTED_AVE},				  //[MWt] PC allowable max thermal power
-    {C_csp_solver::C_solver_outputs::PC_Q_DOT_TARGET_SU, C_csp_reported_outputs::TS_MAX},		    //[MWt] PC target thermal power for startup
-    {C_csp_solver::C_solver_outputs::PC_Q_DOT_TARGET_ON, C_csp_reported_outputs::TS_MAX},		    //[MWt] PC target thermal power for startup
+	{C_csp_solver::C_solver_outputs::PC_Q_DOT_TARGET, C_csp_reported_outputs::TS_WEIGHTED_AVE},	  //[MWt] PC target thermal power
+	{C_csp_solver::C_solver_outputs::PC_Q_DOT_MAX, C_csp_reported_outputs::TS_WEIGHTED_AVE},	  //[MWt] PC allowable max thermal power
+    {C_csp_solver::C_solver_outputs::PC_Q_DOT_TARGET_SU, C_csp_reported_outputs::TS_MAX},		  //[MWt] PC target thermal power for startup
+    {C_csp_solver::C_solver_outputs::PC_Q_DOT_TARGET_ON, C_csp_reported_outputs::TS_MAX},		  //[MWt] PC target thermal power for startup
 	{C_csp_solver::C_solver_outputs::CTRL_IS_REC_SU, C_csp_reported_outputs::TS_1ST},			  //[-] Control decision: is receiver startup allowed?
-	{C_csp_solver::C_solver_outputs::CTRL_IS_PC_SU, C_csp_reported_outputs::TS_1ST},				  //[-] Control decision: is power cycle startup allowed?
-	{C_csp_solver::C_solver_outputs::CTRL_IS_PC_SB, C_csp_reported_outputs::TS_1ST},				  //[-] Control decision: is power cycle standby allowed?
+	{C_csp_solver::C_solver_outputs::CTRL_IS_PC_SU, C_csp_reported_outputs::TS_1ST},			  //[-] Control decision: is power cycle startup allowed?
+	{C_csp_solver::C_solver_outputs::CTRL_IS_PC_SB, C_csp_reported_outputs::TS_1ST},			  //[-] Control decision: is power cycle standby allowed?
+	{C_csp_solver::C_solver_outputs::CTRL_IS_PAR_HTR_SU, C_csp_reported_outputs::TS_1ST},		  //[-] Control decision: is parallel electric heater startup allowed?
+	{C_csp_solver::C_solver_outputs::PAR_HTR_Q_DOT_TARGET, C_csp_reported_outputs::TS_1ST},		  //[MWt] Parallel electric heater target thermal power
 	{C_csp_solver::C_solver_outputs::EST_Q_DOT_CR_SU, C_csp_reported_outputs::TS_1ST},			  //[MWt] Estimate receiver startup thermal power
 	{C_csp_solver::C_solver_outputs::EST_Q_DOT_CR_ON, C_csp_reported_outputs::TS_1ST},			  //[MWt] Estimate receiver thermal power to HTF
 	{C_csp_solver::C_solver_outputs::EST_Q_DOT_DC, C_csp_reported_outputs::TS_1ST},				  //[MWt] Estimate max TES dc thermal power
@@ -164,7 +204,7 @@ static C_csp_reported_outputs::S_output_info S_solver_output_info[] =
 	{C_csp_solver::C_solver_outputs::CTRL_OP_MODE_SEQ_A, C_csp_reported_outputs::TS_1ST},		  //[-] First 3 operating modes tried
 	{C_csp_solver::C_solver_outputs::CTRL_OP_MODE_SEQ_B, C_csp_reported_outputs::TS_1ST},		  //[-] Next 3 operating modes tried
 	{C_csp_solver::C_solver_outputs::CTRL_OP_MODE_SEQ_C, C_csp_reported_outputs::TS_1ST},		  //[-] Final 3 operating modes tried
-	{C_csp_solver::C_solver_outputs::DISPATCH_REL_MIP_GAP, C_csp_reported_outputs::TS_1ST},		      //[-] Relative MIP gap from optimization solver
+	{C_csp_solver::C_solver_outputs::DISPATCH_REL_MIP_GAP, C_csp_reported_outputs::TS_1ST},		  //[-] Relative MIP gap from optimization solver
 	{C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_STATE, C_csp_reported_outputs::TS_1ST},		  //[-] The status of the dispatch optimization solver
     {C_csp_solver::C_solver_outputs::DISPATCH_SUBOPT_FLAG, C_csp_reported_outputs::TS_1ST},		  //[-] Flag specifing information about LPSolve suboptimal result
 	{C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_ITER, C_csp_reported_outputs::TS_1ST},		  //[-] Number of iterations before completing dispatch optimization
@@ -172,14 +212,14 @@ static C_csp_reported_outputs::S_output_info S_solver_output_info[] =
 	{C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_OBJ_RELAX, C_csp_reported_outputs::TS_1ST},	  //[?] Objective function value for the relaxed continuous problem 
 	{C_csp_solver::C_solver_outputs::DISPATCH_QSF_EXPECT, C_csp_reported_outputs::TS_1ST},		  //[MWt] Expected total solar field energy generation in dispatch model
 	{C_csp_solver::C_solver_outputs::DISPATCH_QSFPROD_EXPECT, C_csp_reported_outputs::TS_1ST},	  //[MWt] Expected useful solar field energy generation in dispatch model
-	{C_csp_solver::C_solver_outputs::DISPATCH_QSFSU_EXPECT, C_csp_reported_outputs::TS_1ST},		  //[MWt] Solar field startup energy in dispatch model
+	{C_csp_solver::C_solver_outputs::DISPATCH_QSFSU_EXPECT, C_csp_reported_outputs::TS_1ST},      //[MWt] Solar field startup energy in dispatch model
 	{C_csp_solver::C_solver_outputs::DISPATCH_TES_EXPECT, C_csp_reported_outputs::TS_1ST},		  //[MWht] Thermal energy storage charge state in dispatch model
-	{C_csp_solver::C_solver_outputs::DISPATCH_PCEFF_EXPECT, C_csp_reported_outputs::TS_1ST},		  //[-] Expected power cycle efficiency adjustment in dispatch model
-	{C_csp_solver::C_solver_outputs::DISPATCH_SFEFF_EXPECT, C_csp_reported_outputs::TS_1ST},		  //[-] Expected solar field thermal efficiency adjustment in dispatch model
-	{C_csp_solver::C_solver_outputs::DISPATCH_QPBSU_EXPECT, C_csp_reported_outputs::TS_1ST},		  //[MWt] Power cycle startup energy consumption in dispatch model
+	{C_csp_solver::C_solver_outputs::DISPATCH_PCEFF_EXPECT, C_csp_reported_outputs::TS_1ST},	  //[-] Expected power cycle efficiency adjustment in dispatch model
+	{C_csp_solver::C_solver_outputs::DISPATCH_SFEFF_EXPECT, C_csp_reported_outputs::TS_1ST},	  //[-] Expected solar field thermal efficiency adjustment in dispatch model
+	{C_csp_solver::C_solver_outputs::DISPATCH_QPBSU_EXPECT, C_csp_reported_outputs::TS_1ST},	  //[MWt] Power cycle startup energy consumption in dispatch model
 	{C_csp_solver::C_solver_outputs::DISPATCH_WPB_EXPECT, C_csp_reported_outputs::TS_1ST},		  //[MWe] Power cycle electricity production in dispatch model
 	{C_csp_solver::C_solver_outputs::DISPATCH_REV_EXPECT, C_csp_reported_outputs::TS_1ST},		  //[MWe*fact] Power cycle electricity production times revenue factor in dispatch model
-	{C_csp_solver::C_solver_outputs::DISPATCH_PRES_NCONSTR, C_csp_reported_outputs::TS_1ST},		  //[-] Number of constraint relationships in dispatch model formulation
+	{C_csp_solver::C_solver_outputs::DISPATCH_PRES_NCONSTR, C_csp_reported_outputs::TS_1ST},	  //[-] Number of constraint relationships in dispatch model formulation
 	{C_csp_solver::C_solver_outputs::DISPATCH_PRES_NVAR, C_csp_reported_outputs::TS_1ST},		  //[-] Number of variables in dispatch model formulation
 	{C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_TIME, C_csp_reported_outputs::TS_1ST},		  //[sec]   Time required to solve the dispatch model at each instance
 
@@ -213,10 +253,6 @@ static C_csp_reported_outputs::S_output_info S_solver_output_info[] =
 	{C_csp_solver::C_solver_outputs::M_DOT_FIELD_TO_CYCLE, C_csp_reported_outputs::TS_WEIGHTED_AVE},	//[kg/s]
 	{C_csp_solver::C_solver_outputs::M_DOT_CYCLE_TO_FIELD, C_csp_reported_outputs::TS_WEIGHTED_AVE},	//[kg/s]
 	
-	{C_csp_solver::C_solver_outputs::COL_W_DOT_TRACK, C_csp_reported_outputs::TS_WEIGHTED_AVE},	  //[MWe] Parasitic collector tracking, startup, stow power consumption
-	{C_csp_solver::C_solver_outputs::CR_W_DOT_PUMP, C_csp_reported_outputs::TS_WEIGHTED_AVE},		  //[MWe] Parasitic tower HTF pump power
-	{C_csp_solver::C_solver_outputs::SYS_W_DOT_PUMP, C_csp_reported_outputs::TS_WEIGHTED_AVE},		  //[MWe] Parasitic PC and TES HTF pump power
-	{C_csp_solver::C_solver_outputs::PC_W_DOT_COOLING, C_csp_reported_outputs::TS_WEIGHTED_AVE},	  //[MWe] Parasitic condenser operation power
 	{C_csp_solver::C_solver_outputs::SYS_W_DOT_FIXED, C_csp_reported_outputs::TS_WEIGHTED_AVE},	  //[MWe] Parasitic fixed power consumption
 	{C_csp_solver::C_solver_outputs::SYS_W_DOT_BOP, C_csp_reported_outputs::TS_WEIGHTED_AVE},		  //[MWe] Parasitic BOP power consumption
 	{C_csp_solver::C_solver_outputs::W_DOT_NET, C_csp_reported_outputs::TS_WEIGHTED_AVE},			  //[MWe] System total electric power to grid
@@ -232,6 +268,7 @@ C_csp_solver::C_csp_solver(C_csp_weatherreader &weather,
     base_dispatch_opt &dispatch,
 	S_csp_system_params &system,
     C_csp_collector_receiver* heater,
+    std::shared_ptr<C_csp_tes> c_CT_tes,
 	bool(*pf_callback)(std::string &log_msg, std::string &progress_msg, void *data, double progress, int out_type),
 	void *p_cmod_active) :
 	mc_weather(weather), 
@@ -244,6 +281,7 @@ C_csp_solver::C_csp_solver(C_csp_weatherreader &weather,
 {
     // Assign remaining member data
     mp_heater = heater;
+    mc_CT_tes = c_CT_tes;
     mpf_callback = pf_callback;
     mp_cmod_active = p_cmod_active;
 
@@ -261,13 +299,14 @@ C_csp_solver::C_csp_solver(C_csp_weatherreader &weather,
 
 	// Inititalize non-reference member data
 	m_T_htf_cold_des = m_P_cold_des = m_x_cold_des =
-		m_q_dot_rec_des = m_A_aperture =
+		m_q_dot_rec_des = m_A_aperture = m_CT_to_HT_m_dot_ratio =
         m_PAR_HTR_T_htf_cold_des = m_PAR_HTR_P_cold_des = m_PAR_HTR_x_cold_des = m_PAR_HTR_q_dot_rec_des = m_PAR_HTR_A_aperture =
 		m_cycle_W_dot_des = m_cycle_eta_des = m_cycle_q_dot_des = m_cycle_max_frac = m_cycle_cutoff_frac =
 		m_cycle_sb_frac_des = m_cycle_T_htf_hot_des =
 		m_cycle_P_hot_des = m_cycle_x_hot_des = 
 		m_m_dot_pc_des = m_m_dot_pc_min =
-        m_m_dot_pc_max = m_m_dot_pc_max_startup = m_W_dot_bop_design = m_T_htf_pc_cold_est = std::numeric_limits<double>::quiet_NaN();
+        m_m_dot_pc_max = m_m_dot_pc_max_startup =
+        m_W_dot_bop_design = m_W_dot_fixed_design = m_T_htf_pc_cold_est = std::numeric_limits<double>::quiet_NaN();
 
     m_is_cr_config_recirc = true;
 
@@ -361,6 +400,9 @@ void C_csp_solver::init()
         m_PAR_HTR_q_dot_rec_des = par_htr_solved_params.m_q_dot_rec_des;        //[MWt]
         m_PAR_HTR_A_aperture = par_htr_solved_params.m_A_aper_total;            //[m2]
     }
+    else {
+        m_PAR_HTR_q_dot_rec_des = 0.0;
+    }
 
 		// Power cycle
 	C_csp_power_cycle::S_solved_params pc_solved_params;
@@ -387,6 +429,19 @@ void C_csp_solver::init()
     tes_init_inputs.P_to_cr_at_des = cr_solved_params.m_dP_sf;
 	mc_tes.init(tes_init_inputs);
     mc_csp_messages.transfer_messages(mc_tes.mc_csp_messages);
+        // Check Cold TES
+    if (mc_CT_tes.get() != nullptr) {
+        m_is_CT_tes = true;
+
+        C_csp_tes::S_csp_tes_init_inputs CT_tes_init_inputs;
+        mc_CT_tes->init(CT_tes_init_inputs);
+        mc_csp_messages.transfer_messages(mc_CT_tes->mc_csp_messages);
+
+        m_CT_to_HT_m_dot_ratio = cr_solved_params.m_CT_to_HT_m_dot_ratio;   //[-]
+    }
+    else {
+        m_is_CT_tes = false;
+    }
 		// TOU
     mc_tou.mc_dispatch_params.m_isleapyear = mc_weather.ms_solved_params.m_leapyear;
 	mc_tou.init();
@@ -417,7 +472,7 @@ void C_csp_solver::init()
 
     if (mc_dispatch.solver_params.dispatch_optimize)
     {
-        mc_dispatch.pointers.set_pointers(mc_weather, &mc_collector_receiver, &mc_power_cycle, &mc_tes, &mc_csp_messages, &mc_kernel.mc_sim_info);
+        mc_dispatch.pointers.set_pointers(mc_weather, &mc_collector_receiver, &mc_power_cycle, &mc_tes, &mc_csp_messages, &mc_kernel.mc_sim_info, mp_heater);
         mc_dispatch.init(m_cycle_q_dot_des, m_cycle_eta_des);
     }
 
@@ -429,6 +484,8 @@ void C_csp_solver::init()
     double W_dot_ratio_des = 1.0;       //[-]
     m_W_dot_bop_design = m_cycle_W_dot_des * ms_system_params.m_bop_par * ms_system_params.m_bop_par_f *
         (ms_system_params.m_bop_par_0 + ms_system_params.m_bop_par_1 * W_dot_ratio_des + ms_system_params.m_bop_par_2 * pow(W_dot_ratio_des, 2));   //[MWe]
+
+    m_W_dot_fixed_design = ms_system_params.m_pb_fixed_par* m_cycle_W_dot_des;			//[MWe]
 
 	if( mc_collector_receiver.m_is_sensible_htf != mc_power_cycle.m_is_sensible_htf )
 	{
@@ -458,16 +515,18 @@ void C_csp_solver::init()
 		mc_tes_outputs.m_m_dot_tes_hot_out = 0.0;		//[kg/s]
 		mc_tes_outputs.m_m_dot_pc_to_tes_cold = 0.0;	//[kg/s]
 		mc_tes_outputs.m_m_dot_tes_cold_out = 0.0;		//[kg/s]
-		mc_tes_outputs.m_m_dot_field_to_cycle = 0.0;	//[kg/s]
-		mc_tes_outputs.m_m_dot_cycle_to_field = 0.0;	//[kg/s]
+		mc_tes_outputs.m_m_dot_src_to_sink = 0.0;	    //[kg/s]
+		mc_tes_outputs.m_m_dot_sink_to_src = 0.0;	    //[kg/s]
 
 		mc_tes_outputs.m_m_dot_cold_tank_to_hot_tank = 0.0;
 	}
 }
 
-void C_csp_solver::get_design_parameters(double& W_dot_bop_design /*MWe*/)
+void C_csp_solver::get_design_parameters(double& W_dot_bop_design /*MWe*/,
+                                    double& W_dot_fixed_design /*MWe*/)
 {
     W_dot_bop_design = m_W_dot_bop_design;      //[MWe]
+    W_dot_fixed_design = m_W_dot_fixed_design;  //[MWe]
 }
 
 int C_csp_solver::steps_per_hour()
@@ -616,12 +675,18 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		mc_pc_inputs.m_standby_control = C_csp_power_cycle::ON;
 		//mc_pc_inputs.m_tou = tou_timestep;
 		// Performance Call
+
+        double T_CT_htf_cold_in = std::numeric_limits<double>::quiet_NaN();
+        if (m_is_CT_tes) {
+            T_CT_htf_cold_in = mc_CT_tes->get_cold_temp() - 273.15;    //[C] convert from K
+        }
+
 		mc_power_cycle.call(mc_weather.ms_outputs,
 			mc_pc_htf_state_in,
+            T_CT_htf_cold_in,
 			mc_pc_inputs,
 			mc_pc_out_solver,
 			mc_kernel.mc_sim_info);
-
 
         // Next, estimate receiver performance using estimated power cycle performance
         // If the return temperature is hotter than design, then the mass flow from the receiver will be bigger than expected
@@ -683,8 +748,13 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 			m_dot_tes_dc_est = m_dot_tes_ch_est = 0.0;
 		}
 
+        // Check that q_dot_tes_ch is not "too close" to 0
+        if (q_dot_tes_ch < std::max(m_PAR_HTR_q_dot_rec_des, m_q_dot_rec_des) * 1.E-4) {
+            q_dot_tes_ch = 0.0;
+        }
+
         // Check that there is enough discharge energy to operate cycle for a 'reasonable' fraction of the timestep
-        double t_q_dot_min = fmax(0.05*mc_kernel.mc_sim_info.ms_ts.m_step, m_step_tolerance);   //[s]
+        double t_q_dot_min = std::max(0.05*mc_kernel.mc_sim_info.ms_ts.m_step, m_step_tolerance);   //[s]
         if (q_dot_tes_dc * mc_kernel.mc_sim_info.ms_ts.m_step < m_cycle_q_dot_des * t_q_dot_min)
         {
             q_dot_tes_dc = 0.0;     //[s
@@ -777,7 +847,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				double t_CR_su = mc_cr_out_solver.m_time_required_su;		//[s] Receiver model returns MIN(time required to completely startup, full timestep duration)
 
 				// Use minimum of CR startup timestep and initial simulation timestep
-				t_CR_su = fmin(t_CR_su, mc_kernel.mc_sim_info.ms_ts.m_step);			//[s]
+				t_CR_su = std::min(t_CR_su, mc_kernel.mc_sim_info.ms_ts.m_step);			//[s]
 
 				// Predict estimated amount of discharage available with new timestep
 				if( m_is_tes )
@@ -813,12 +883,18 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
             if (q_dot_cr_on > qmax || m_dot_cr_on > mmax)  // Receiver will need to be defocused
             {
-                double df = fmin(qmax / q_dot_cr_on, mmax / m_dot_cr_on);
+                double df = std::min(qmax / q_dot_cr_on, mmax / m_dot_cr_on);
                 if (q_dot_elec_to_CR_heat > 0. && !m_is_parallel_heater) //Heater is on and not the CSP+ETES case
                 {
                     q_dot_elec_to_CR_heat = q_dot_cr_on;  // Setting to the max and allowing controller to defocus
                 }
-                mc_collector_receiver.on(mc_weather.ms_outputs, mc_cr_htf_state_in, q_dot_elec_to_CR_heat, df, mc_cr_out_solver, mc_kernel.mc_sim_info);
+
+                double T_CT_htf_hot_in = std::numeric_limits<double>::quiet_NaN();
+                if (m_is_CT_tes) {
+                    T_CT_htf_hot_in = mc_CT_tes->get_hot_temp() - 273.15;    //[C] convert from K
+                }
+
+                mc_collector_receiver.on(mc_weather.ms_outputs, mc_cr_htf_state_in, T_CT_htf_hot_in, q_dot_elec_to_CR_heat, df, mc_cr_out_solver, mc_kernel.mc_sim_info);
                 if (mc_cr_out_solver.m_q_thermal == 0.0)  // Receiver solution wasn't successful 
                     is_rec_su_allowed = false;
             }
@@ -880,50 +956,38 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
         */
 
 		// Calculate system-level parasitics: can happen after controller/solver converges
-		double W_dot_fixed = ms_system_params.m_pb_fixed_par*m_cycle_W_dot_des;			//[MWe]
+		//double W_dot_fixed = ms_system_params.m_pb_fixed_par*m_cycle_W_dot_des;			//[MWe]
 
-		double W_dot_ratio = mc_pc_out_solver.m_P_cycle / fmax(0.001, m_cycle_W_dot_des);		//[-]
+		double W_dot_ratio = mc_pc_out_solver.m_P_cycle / std::max(0.001, m_cycle_W_dot_des);		//[-]
 
 		double W_dot_bop = m_cycle_W_dot_des*ms_system_params.m_bop_par*ms_system_params.m_bop_par_f *
 			(ms_system_params.m_bop_par_0 + ms_system_params.m_bop_par_1*W_dot_ratio + ms_system_params.m_bop_par_2*pow(W_dot_ratio,2));
 			// [MWe]
 
-        double W_dot_tes_pump;
-        if (m_is_tes) {
-            W_dot_tes_pump = mc_tes.pumping_power(mc_cr_out_solver.m_m_dot_salt_tot / 3600., mc_pc_out_solver.m_m_dot_htf / 3600., fabs(mc_tes_outputs.m_m_dot_cold_tank_to_hot_tank),
-                mc_cr_htf_state_in.m_temp + 273.15, mc_cr_out_solver.m_T_salt_hot + 273.15,
-                mc_pc_htf_state_in.m_temp + 273.15, mc_pc_out_solver.m_T_htf_cold + 273.15,
-                mc_cr_out_solver.m_is_recirculating);
-        }
-        else {
-            W_dot_tes_pump = 0.;
-        }
-        if (W_dot_tes_pump < 0 || W_dot_tes_pump != W_dot_tes_pump){
-            error_msg = "TES pumping power failed";
-            throw(C_csp_exception(error_msg, "System-level parasitics"));
-        }
-
         double W_dot_cr_freeze_protection = 0.0;
         if (ms_system_params.m_is_field_freeze_protection_electric) {
-            W_dot_cr_freeze_protection = mc_cr_out_solver.m_q_dot_heater;
+            W_dot_cr_freeze_protection = mc_cr_out_solver.m_q_dot_heater;       //[MWe]
+        }
+
+        double W_dot_tes_pump = 0.0;        //[MWe]
+        if (m_is_tes) {
+            W_dot_tes_pump = mc_tes_outputs.m_W_dot_elec_in_tot;    //[MWe]
         }
 
         double W_dot_par_htr_elec_load = 0.0;
         if (m_is_parallel_heater) {
-            W_dot_par_htr_elec_load = mc_par_htr_out_solver.m_W_dot_col_tracking +
-                                    mc_par_htr_out_solver.m_W_dot_htf_pump +
+            W_dot_par_htr_elec_load = mc_par_htr_out_solver.m_W_dot_elec_in_tot +
                                     mc_par_htr_out_solver.m_q_dot_heater;       //[MWe]
         }
 
-		double W_dot_net = mc_pc_out_solver.m_P_cycle - 
-			mc_cr_out_solver.m_W_dot_col_tracking -
-			mc_cr_out_solver.m_W_dot_htf_pump - 
-			(mc_pc_out_solver.m_W_dot_htf_pump + W_dot_tes_pump) -
+        double W_dot_net = mc_pc_out_solver.m_P_cycle -
+            mc_cr_out_solver.m_W_dot_elec_in_tot -
+            mc_pc_out_solver.m_W_dot_elec_parasitics_tot -
+            W_dot_tes_pump -
 			W_dot_cr_freeze_protection -
             W_dot_par_htr_elec_load -
-			mc_pc_out_solver.m_W_cool_par -
 			mc_tes_outputs.m_q_heater - 
-			W_dot_fixed -
+			m_W_dot_fixed_design -
 			W_dot_bop;	//[MWe]
 
 
@@ -933,6 +997,9 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		mc_tes.converged();
         if (m_is_parallel_heater) {
             mp_heater->converged();
+        }
+        if (m_is_CT_tes) {
+            mc_CT_tes->converged();
         }
 		
         //Update the estimated thermal energy storage charge state
@@ -1008,21 +1075,23 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		}
 		
 
-		mc_reported_outputs.value(C_solver_outputs::TOU_PERIOD, (double)f_turb_tou_period);        //[-]       
-		mc_reported_outputs.value(C_solver_outputs::PRICING_MULT, pricing_mult);	//[-] 
-		mc_reported_outputs.value(C_solver_outputs::PC_Q_DOT_SB, q_pc_sb);          //[MW]     
-		mc_reported_outputs.value(C_solver_outputs::PC_Q_DOT_MIN, q_pc_min);        //[MW]    
-		mc_reported_outputs.value(C_solver_outputs::PC_Q_DOT_TARGET, q_pc_target);  //[MW]
-		mc_reported_outputs.value(C_solver_outputs::PC_Q_DOT_MAX, m_q_dot_pc_max);         //[MW]
+		mc_reported_outputs.value(C_solver_outputs::TOU_PERIOD, (double)f_turb_tou_period);             //[-]       
+		mc_reported_outputs.value(C_solver_outputs::PRICING_MULT, pricing_mult);	                    //[-] 
+		mc_reported_outputs.value(C_solver_outputs::PC_Q_DOT_SB, q_pc_sb);                              //[MW]     
+		mc_reported_outputs.value(C_solver_outputs::PC_Q_DOT_MIN, q_pc_min);                            //[MW]    
+		mc_reported_outputs.value(C_solver_outputs::PC_Q_DOT_TARGET, q_pc_target);                      //[MW]
+		mc_reported_outputs.value(C_solver_outputs::PC_Q_DOT_MAX, m_q_dot_pc_max);                      //[MW]
         mc_reported_outputs.value(C_solver_outputs::PC_Q_DOT_TARGET_SU, q_dot_pc_su_target_reporting);  //[MW]
         mc_reported_outputs.value(C_solver_outputs::PC_Q_DOT_TARGET_ON, q_dot_pc_on_target_reporting);  //[MW]
-		mc_reported_outputs.value(C_solver_outputs::CTRL_IS_REC_SU, is_rec_su_allowed);     //[-] 
-		mc_reported_outputs.value(C_solver_outputs::CTRL_IS_PC_SU, is_pc_su_allowed);       //[-] 
-		mc_reported_outputs.value(C_solver_outputs::CTRL_IS_PC_SB, is_pc_sb_allowed);       //[-]  
-		mc_reported_outputs.value(C_solver_outputs::EST_Q_DOT_CR_SU, q_dot_cr_startup);     //[-]
-		mc_reported_outputs.value(C_solver_outputs::EST_Q_DOT_CR_ON, q_dot_cr_on);          //[MWt]
-		mc_reported_outputs.value(C_solver_outputs::EST_Q_DOT_DC, q_dot_tes_dc);            //[MWt]    
-		mc_reported_outputs.value(C_solver_outputs::EST_Q_DOT_CH, q_dot_tes_ch);            //[MWt]    
+		mc_reported_outputs.value(C_solver_outputs::CTRL_IS_REC_SU, is_rec_su_allowed);                 //[-] 
+		mc_reported_outputs.value(C_solver_outputs::CTRL_IS_PC_SU, is_pc_su_allowed);                   //[-] 
+		mc_reported_outputs.value(C_solver_outputs::CTRL_IS_PC_SB, is_pc_sb_allowed);                   //[-]
+		mc_reported_outputs.value(C_solver_outputs::CTRL_IS_PAR_HTR_SU, is_PAR_HTR_allowed);            //[-]
+		mc_reported_outputs.value(C_solver_outputs::PAR_HTR_Q_DOT_TARGET, q_dot_elec_to_PAR_HTR);       //[MW]
+		mc_reported_outputs.value(C_solver_outputs::EST_Q_DOT_CR_SU, q_dot_cr_startup);                 //[-]
+		mc_reported_outputs.value(C_solver_outputs::EST_Q_DOT_CR_ON, q_dot_cr_on);                      //[MWt]
+		mc_reported_outputs.value(C_solver_outputs::EST_Q_DOT_DC, q_dot_tes_dc);                        //[MWt]    
+		mc_reported_outputs.value(C_solver_outputs::EST_Q_DOT_CH, q_dot_tes_ch);                        //[MWt]    
 
         double m_dot_cr_out_to_tes_hot = mc_cr_out_solver.m_m_dot_salt_tot;     //[kg/hr]
         double m_dot_cr_out_to_tes_cold = 0.0;
@@ -1046,7 +1115,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 							mc_cr_out_solver.m_m_dot_salt_tot - m_dot_par_htr_out_to_tes_hot -
 							mc_tes_outputs.m_m_dot_tes_cold_in*3600.0) / m_m_dot_pc_des;	//[-]
 
-		double m_dot_bal_max = std::max(fabs(m_dot_bal_hot), fabs(m_dot_bal_cold));
+		double m_dot_bal_max = std::max(std::abs(m_dot_bal_hot), std::abs(m_dot_bal_cold));
 
         double q_dot_par_htr = 0.0;
         if (m_is_parallel_heater) {
@@ -1082,17 +1151,14 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		mc_reported_outputs.value(C_solver_outputs::M_DOT_TES_HOT_OUT, mc_tes_outputs.m_m_dot_tes_hot_out);			//[kg/s]
 		mc_reported_outputs.value(C_solver_outputs::M_DOT_PC_TO_TES_COLD, mc_tes_outputs.m_m_dot_pc_to_tes_cold);	//[kg/s]
 		mc_reported_outputs.value(C_solver_outputs::M_DOT_TES_COLD_OUT, mc_tes_outputs.m_m_dot_tes_cold_out);		//[kg/s]
-        mc_reported_outputs.value(C_solver_outputs::M_DOT_TES_COLD_IN, mc_tes_outputs.m_m_dot_tes_cold_in);		//[kg/s]
-		mc_reported_outputs.value(C_solver_outputs::M_DOT_FIELD_TO_CYCLE, mc_tes_outputs.m_m_dot_field_to_cycle);	//[kg/s]
-		mc_reported_outputs.value(C_solver_outputs::M_DOT_CYCLE_TO_FIELD, mc_tes_outputs.m_m_dot_cycle_to_field);	//[kg/s]
+        mc_reported_outputs.value(C_solver_outputs::M_DOT_TES_COLD_IN, mc_tes_outputs.m_m_dot_tes_cold_in);		    //[kg/s]
+		mc_reported_outputs.value(C_solver_outputs::M_DOT_FIELD_TO_CYCLE, mc_tes_outputs.m_m_dot_src_to_sink);	    //[kg/s]
+		mc_reported_outputs.value(C_solver_outputs::M_DOT_CYCLE_TO_FIELD, mc_tes_outputs.m_m_dot_sink_to_src);	    //[kg/s]
 
 
 			// Parasitics outputs
-		mc_reported_outputs.value(C_solver_outputs::COL_W_DOT_TRACK, mc_cr_out_solver.m_W_dot_col_tracking);    //[MWe] Collector tracking, startup, stow power consumption 
-		mc_reported_outputs.value(C_solver_outputs::CR_W_DOT_PUMP, mc_cr_out_solver.m_W_dot_htf_pump);          //[MWe] Receiver/tower HTF pumping power   
-		mc_reported_outputs.value(C_solver_outputs::SYS_W_DOT_PUMP, (mc_pc_out_solver.m_W_dot_htf_pump + W_dot_tes_pump ));    //[MWe] TES & PC HTF pumping power (Receiver - PC side HTF)  
-		mc_reported_outputs.value(C_solver_outputs::PC_W_DOT_COOLING, mc_pc_out_solver.m_W_cool_par);           //[MWe] Power cycle cooling power consumption (fan, pumps, etc.)
-		mc_reported_outputs.value(C_solver_outputs::SYS_W_DOT_FIXED, W_dot_fixed);								//[MWe] Fixed electric parasitic power load 
+        mc_reported_outputs.value(C_solver_outputs::SYS_W_DOT_FIXED, m_W_dot_fixed_design);						//[MWe] Fixed electric parasitic power load 
+
 		mc_reported_outputs.value(C_solver_outputs::SYS_W_DOT_BOP, W_dot_bop);									//[MWe] Balance-of-plant electric parasitic power load   
 		mc_reported_outputs.value(C_solver_outputs::W_DOT_NET, W_dot_net);								//[MWe] Total electric power output to grid        
 		
@@ -1122,7 +1188,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
         //    will result in key: 1091011
 		int n_op_modes = (int)m_op_mode_tracking.size();
 		double op_mode_key = 1.0;
-		for( int i = 0; i < fmin(3,n_op_modes); i++ )
+		for( int i = 0; i < std::min(3,n_op_modes); i++ )
 		{
 			double op_mode_step = m_op_mode_tracking[i];
             op_mode_key = 100.0 * op_mode_key + op_mode_step;
@@ -1130,7 +1196,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		mc_reported_outputs.value(C_solver_outputs::CTRL_OP_MODE_SEQ_A, op_mode_key);
 
 		op_mode_key = 0.0;
-		for( int i = 3; i < fmin(6,n_op_modes); i++ )
+		for( int i = 3; i < std::min(6,n_op_modes); i++ )
 		{
             double op_mode_step = m_op_mode_tracking[i];
             op_mode_key = 100.0 * op_mode_key + op_mode_step;
@@ -1161,6 +1227,9 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				mc_tes.write_output_intervals(m_report_time_start, mv_time_local, m_report_time_end);
                 if (m_is_parallel_heater) {
                     mp_heater->write_output_intervals(m_report_time_start, mv_time_local, m_report_time_end);
+                }
+                if (m_is_CT_tes) {
+                    mc_CT_tes->write_output_intervals(m_report_time_start, mv_time_local, m_report_time_end);
                 }
 
 				// Overwrite TIME_FINAL
@@ -1371,10 +1440,6 @@ void C_csp_solver::calc_timestep_plant_control_and_targets(
         q_dot_elec_to_PAR_HTR = 0.0;
         is_PAR_HTR_allowed = false;
 
-        if (m_is_parallel_heater) {
-            throw(C_csp_exception("Dispatch optimization not available for parallel heater configs"));
-        }
-
         //time to reoptimize
         //reoptimize when the time is equal to multiples of the first time step
         if ((int)mc_kernel.mc_sim_info.ms_ts.m_time % (int)(3600. * mc_dispatch.solver_params.optimize_frequency) == baseline_step
@@ -1443,6 +1508,8 @@ void C_csp_solver::calc_timestep_plant_control_and_targets(
         q_dot_pc_target = mc_dispatch.disp_outputs.q_pc_target;
         q_dot_elec_to_CR_heat = mc_dispatch.disp_outputs.q_dot_elec_to_CR_heat;
         q_dot_pc_max = mc_dispatch.disp_outputs.q_dot_pc_max;
+        is_PAR_HTR_allowed = mc_dispatch.disp_outputs.is_eh_su_allowed;
+        q_dot_elec_to_PAR_HTR = mc_dispatch.disp_outputs.q_eh_target;
     }
 }
 
@@ -1664,18 +1731,19 @@ void C_csp_solver::C_CR_ON__PC_SU__TES_OFF__AUX_OFF::check_system_limits(C_csp_s
     bool& is_model_converged, bool& is_turn_off_plant)
 {
     // Compare q_dot_to_pc to q_dot_pc_su_max
-    if (pc_csp_solver->mc_cr_out_solver.m_q_thermal > q_dot_pc_su_max || pc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot > m_dot_pc_max_startup)
+    
+    if (pc_csp_solver->mc_pc_out_solver.m_q_dot_htf > q_dot_pc_su_max || pc_csp_solver->mc_pc_out_solver.m_m_dot_htf > m_dot_pc_max_startup)
     {
         std::string error_msg;
-        if (pc_csp_solver->mc_cr_out_solver.m_q_thermal > q_dot_pc_su_max)
+        if (pc_csp_solver->mc_pc_out_solver.m_q_dot_htf > q_dot_pc_su_max)
         {
             error_msg = time_and_op_mode_to_string(pc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time) + " method converged to a power cycle";
-            error_msg += util::format(" thermal input, %lg [MWt], greater than the target %lg [MWt].", pc_csp_solver->mc_cr_out_solver.m_q_thermal, q_dot_pc_su_max);
+            error_msg += util::format(" thermal input, %lg [MWt], greater than the target %lg [MWt].", pc_csp_solver->mc_pc_out_solver.m_q_dot_htf, q_dot_pc_su_max);
         }
-        if (pc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot > m_dot_pc_max_startup)
+        if (pc_csp_solver->mc_pc_out_solver.m_m_dot_htf > m_dot_pc_max_startup)
         {
             error_msg = time_and_op_mode_to_string(pc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time) + " method converged to a power cycle";
-            error_msg += util::format(" mass flow rate input, %lg [kg/s], greater than the maximum allowable %lg [kg/s].", pc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot / 3600.0, pc_csp_solver->m_m_dot_pc_max_startup / 3600.0);
+            error_msg += util::format(" mass flow rate input, %lg [kg/s], greater than the maximum allowable %lg [kg/s].", pc_csp_solver->mc_pc_out_solver.m_m_dot_htf / 3600.0, pc_csp_solver->m_m_dot_pc_max_startup / 3600.0);
         }
         pc_csp_solver->mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
     }
@@ -1821,7 +1889,7 @@ void C_csp_solver::C_CR_ON__PC_RM_LO__TES_OFF__AUX_OFF::check_system_limits(C_cs
     double limit_comp_tol /*-*/,
     bool& is_model_converged, bool& is_turn_off_plant)
 {
-    if (pc_csp_solver->mc_cr_out_solver.m_q_thermal < q_dot_pc_min)
+    if (pc_csp_solver->mc_pc_out_solver.m_q_dot_htf < q_dot_pc_min)
     {
         m_is_mode_available = false;
         is_model_converged = false;
@@ -1847,9 +1915,9 @@ void C_csp_solver::C_CR_ON__PC_TARGET__TES_CH__AUX_OFF::check_system_limits(C_cs
     double q_dot_pc_solved = pc_csp_solver->mc_pc_out_solver.m_q_dot_htf;		//[MWt]
     double m_dot_pc_solved = pc_csp_solver->mc_pc_out_solver.m_m_dot_htf;		//[kg/hr]
 
-    if (fabs(q_dot_pc_solved - q_dot_pc_on_dispatch_target) / q_dot_pc_on_dispatch_target < limit_comp_tol)
+    if (std::abs(q_dot_pc_solved - q_dot_pc_on_dispatch_target) / q_dot_pc_on_dispatch_target < limit_comp_tol)
     {	// If successfully solved for target thermal power, check that mass flow is above minimum
-        if ((m_dot_pc_solved - m_dot_pc_min) / fmax(0.01, m_dot_pc_min) < -limit_comp_tol)
+        if ((m_dot_pc_solved - m_dot_pc_min) / std::max(0.01, m_dot_pc_min) < -limit_comp_tol)
         {
             std::string error_msg = time_and_op_mode_to_string(pc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time) +
                 util::format(" solved with a PC HTF mass flow rate %lg [kg/s] smaller than the minimum %lg [kg/s]. Controller shut off plant",
@@ -2352,14 +2420,16 @@ void C_csp_solver::C_CR_ON__PC_RM_HI__TES_OFF__AUX_OFF::check_system_limits(C_cs
     double limit_comp_tol /*-*/,
     bool& is_model_converged, bool& is_turn_off_plant)
 {
-    if (pc_csp_solver->mc_cr_out_solver.m_q_thermal > q_dot_pc_max || pc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot > m_dot_pc_max)
+    if(pc_csp_solver->mc_pc_out_solver.m_q_dot_htf > q_dot_pc_max || pc_csp_solver->mc_pc_out_solver.m_m_dot_htf > m_dot_pc_max)
+    //if (pc_csp_solver->mc_cr_out_solver.m_q_thermal > q_dot_pc_max || pc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot > m_dot_pc_max)
     {
         m_is_HI_SIDE_mode_available = false;
         is_model_converged = false;
         is_turn_off_plant = false;
         return;
     }
-    else if (pc_csp_solver->mc_cr_out_solver.m_q_thermal < q_dot_pc_on_dispatch_target)
+    else if (pc_csp_solver->mc_pc_out_solver.m_q_dot_htf < q_dot_pc_on_dispatch_target)
+    //else if (pc_csp_solver->mc_cr_out_solver.m_q_thermal < q_dot_pc_on_dispatch_target)
     {
         m_is_LO_SIDE_mode_available = false;
         is_model_converged = false;
@@ -2403,9 +2473,9 @@ void C_csp_solver::C_CR_ON__PC_SB__TES_CH__AUX_OFF::check_system_limits(C_csp_so
     double q_dot_pc_solved = pc_csp_solver->mc_pc_out_solver.m_q_dot_htf;		//[MWt]
     double m_dot_pc_solved = pc_csp_solver->mc_pc_out_solver.m_m_dot_htf;		//[kg/hr]
 
-    if (fabs(q_dot_pc_solved - q_dot_pc_sb) / q_dot_pc_sb < limit_comp_tol)
+    if (std::abs(q_dot_pc_solved - q_dot_pc_sb) / q_dot_pc_sb < limit_comp_tol)
     {	// If successfully solved for target thermal power, check that mass flow is above minimum
-        if ((m_dot_pc_solved - m_dot_pc_min) / fmax(0.01, m_dot_pc_min) < -limit_comp_tol)
+        if ((m_dot_pc_solved - m_dot_pc_min) / std::max(0.01, m_dot_pc_min) < -limit_comp_tol)
         {
             std::string error_msg = time_and_op_mode_to_string(pc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time) +
                 util::format(" solved with a PC HTF mass flow rate %lg [kg/s] smaller than the minimum %lg [kg/s]. Controller shut off plant",
@@ -2577,13 +2647,13 @@ void C_csp_solver::C_CR_ON__PC_SB__TES_OFF__AUX_OFF::check_system_limits(C_csp_s
     bool& is_model_converged, bool& is_turn_off_plant)
 {
     // Check that cr and pc mass flow rates balance
-    if (fabs(pc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot - pc_csp_solver->mc_pc_out_solver.m_m_dot_htf) / pc_csp_solver->m_m_dot_pc_des > limit_comp_tol / 10.)
-    {
-        m_is_mode_available = false;
-        is_model_converged = false;
-        is_turn_off_plant = false;
-        return;
-    }
+    //if (fabs(pc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot - pc_csp_solver->mc_pc_out_solver.m_m_dot_htf) / pc_csp_solver->m_m_dot_pc_des > limit_comp_tol / 10.)
+    //{
+    //    m_is_mode_available = false;
+    //    is_model_converged = false;
+    //    is_turn_off_plant = false;
+    //    return;
+    //}
 
     // Check if solved thermal power is greater than target
     if ((pc_csp_solver->mc_pc_out_solver.m_q_dot_htf - q_dot_pc_max) > limit_comp_tol)

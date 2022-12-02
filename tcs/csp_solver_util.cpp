@@ -1,23 +1,33 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "csp_solver_util.h"
@@ -25,6 +35,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <algorithm>
 
 const C_csp_reported_outputs::S_output_info csp_info_invalid = {-1, -1};
+const C_csp_reported_outputs::S_dependent_output_info csp_dep_info_invalid = { -1, -1, -1, C_csp_reported_outputs::E_AB_relationship::AoverB };
 
 C_csp_reported_outputs::C_output::C_output()
 {
@@ -37,6 +48,8 @@ C_csp_reported_outputs::C_output::C_output()
 	m_counter_reporting_ts_array = 0;
 
 	m_n_reporting_ts_array = -1;
+
+    m_name_indA = m_name_indB = -1;
 }
 
 void C_csp_reported_outputs::C_output::assign(double *p_reporting_ts_array, size_t n_reporting_ts_array)
@@ -56,10 +69,26 @@ void C_csp_reported_outputs::C_output::set_m_is_ts_weighted(int subts_weight_typ
 	if( !(m_subts_weight_type == TS_WEIGHTED_AVE ||
 		  m_subts_weight_type == TS_1ST ||
 		  m_subts_weight_type == TS_LAST ||
-          m_subts_weight_type == TS_MAX) )
+          m_subts_weight_type == TS_MAX ||
+          m_subts_weight_type == DEPENDENT ))
 	{
 		throw(C_csp_exception("C_csp_reported_outputs::C_output::send_to_reporting_ts_array did not recognize subtimestep weighting type"));
 	}
+}
+
+void C_csp_reported_outputs::C_output::set_name_indA(int name_indA)
+{
+    m_name_indA = name_indA;
+}
+
+void C_csp_reported_outputs::C_output::set_name_indB(int name_indB)
+{
+    m_name_indB = name_indB;
+}
+
+void C_csp_reported_outputs::C_output::set_AB_relationship(E_AB_relationship AB_relationship)
+{
+    m_AB_relationship = AB_relationship;
 }
 
 int C_csp_reported_outputs::C_output::get_vector_size()
@@ -73,6 +102,16 @@ void C_csp_reported_outputs::C_output::set_timestep_output(double output_value)
 	{	
 		mv_temp_outputs.push_back(output_value);
 	}
+}
+
+void C_csp_reported_outputs::C_output::send_to_reporting_ts_array(double val_dep)
+{
+    if (m_is_allocated)
+    {
+        mp_reporting_ts_array[m_counter_reporting_ts_array] = (float)val_dep;
+
+        m_counter_reporting_ts_array++;
+    }
 }
 
 void C_csp_reported_outputs::C_output::send_to_reporting_ts_array(double report_time_start, int n_report, 
@@ -127,7 +166,7 @@ void C_csp_reported_outputs::C_output::send_to_reporting_ts_array(double report_
             //   if multiple csp-timesteps for one reporting timestep
             // ************************************************************
             mp_reporting_ts_array[m_counter_reporting_ts_array] =(float)(*std::max_element(mv_temp_outputs.begin(), mv_temp_outputs.end()));
-        }
+        }        
 		else
 		{
 			throw(C_csp_exception("C_csp_reported_outputs::C_output::send_to_reporting_ts_array did not recognize subtimestep weighting type"));
@@ -170,6 +209,33 @@ void C_csp_reported_outputs::send_to_reporting_ts_array(double report_time_start
 		mvc_outputs[i].send_to_reporting_ts_array(report_time_start, n_report, v_temp_ts_time_end,
 			report_time_end, is_save_last_step, n_pop_back);
 	}
+
+    for (int i = 0; i < m_n_dependent_outputs; i++) {
+
+        bool is_A_allocated = mvc_outputs[mvc_dependent_outputs[i].get_name_indA()].get_is_allocated();
+        bool is_B_allocated = mvc_outputs[mvc_dependent_outputs[i].get_name_indB()].get_is_allocated();
+
+        if (is_A_allocated && is_B_allocated) {
+            double val_A = mvc_outputs[mvc_dependent_outputs[i].get_name_indA()].get_last_reported_value();
+            double val_B = mvc_outputs[mvc_dependent_outputs[i].get_name_indB()].get_last_reported_value();
+
+            double val_dep = std::numeric_limits<double>::quiet_NaN();
+            if (mvc_dependent_outputs[i].get_AB_relationship() == AoverB) {
+
+                if (val_B == 0.0) {
+                    val_dep = 0.0;
+                }
+                else {
+                    val_dep = val_A / val_B;
+                }
+            }
+
+            mvc_dependent_outputs[i].send_to_reporting_ts_array(val_dep);
+        }
+        else {
+            mvc_dependent_outputs[i].send_to_reporting_ts_array(-999.9);
+        }
+    }
 }
 
 std::vector<double> C_csp_reported_outputs::C_output::get_output_vector()
@@ -180,6 +246,11 @@ std::vector<double> C_csp_reported_outputs::C_output::get_output_vector()
 std::vector<double> C_csp_reported_outputs::get_output_vector(int index)
 {
 	return mvc_outputs[index].get_output_vector();
+}
+
+C_csp_reported_outputs::C_csp_reported_outputs()
+{
+    m_n_dependent_outputs = 0;
 }
 
 void C_csp_reported_outputs::construct(const S_output_info *output_info)
@@ -206,9 +277,36 @@ void C_csp_reported_outputs::construct(const S_output_info *output_info)
 	m_n_reporting_ts_array = -1;
 }
 
+void C_csp_reported_outputs::construct(const S_output_info* output_info, const S_dependent_output_info* dep_output_info)
+{
+    // Test dependent input handling
+    //m_n_dependent_outputs = 1;
+    //mvc_dependent_outputs.resize(m_n_dependent_outputs);
+    //mvc_dependent_outputs[0].set_m_is_ts_weighted(DEPENDENT);
+
+    m_n_dependent_outputs = 0;
+    while (dep_output_info[m_n_dependent_outputs].m_name != csp_info_invalid.m_name) {
+        m_n_dependent_outputs++;
+    }
+
+    if (m_n_dependent_outputs > 0) {
+        mvc_dependent_outputs.resize(m_n_dependent_outputs);
+
+        // Loop through dependent output info and set member data
+        for (int i = 0; i < m_n_dependent_outputs; i++) {
+            mvc_dependent_outputs[i].set_m_is_ts_weighted(DEPENDENT);
+            mvc_dependent_outputs[i].set_name_indA(dep_output_info->m_name_indA);
+            mvc_dependent_outputs[i].set_name_indB(dep_output_info->m_name_indB);
+            mvc_dependent_outputs[i].set_AB_relationship(dep_output_info->m_AB_relationship);
+        }
+    }
+
+    construct(output_info);
+}
+
 bool C_csp_reported_outputs::assign(int index, double *p_reporting_ts_array, size_t n_reporting_ts_array)
 {
-	if(index < 0 || index >= m_n_outputs)
+	if(index < 0 || index >= m_n_outputs + m_n_dependent_outputs)
 		return false;
 
 	if(m_n_reporting_ts_array == -1)
@@ -221,7 +319,15 @@ bool C_csp_reported_outputs::assign(int index, double *p_reporting_ts_array, siz
 			return false;
 	}
 
-	mvc_outputs[index].assign(p_reporting_ts_array, n_reporting_ts_array);
+    if (index < m_n_outputs) {
+        mvc_outputs[index].assign(p_reporting_ts_array, n_reporting_ts_array);
+    }
+    else {
+        // Can't check allocation here, because assign might not be called in index order
+
+        mvc_dependent_outputs[index-m_n_outputs].assign(p_reporting_ts_array, n_reporting_ts_array);
+        
+    }
 
 	return true;
 }
@@ -230,6 +336,11 @@ void C_csp_reported_outputs::set_timestep_outputs()
 {
 	for(int i = 0; i < m_n_outputs; i++)
 		mvc_outputs[i].set_timestep_output(mv_latest_calculated_outputs[i]);
+}
+
+double C_csp_reported_outputs::C_output::get_last_reported_value()
+{
+    return mp_reporting_ts_array[m_counter_reporting_ts_array - 1];
 }
 
 void C_csp_reported_outputs::C_output::overwrite_vector_to_constant(double value)

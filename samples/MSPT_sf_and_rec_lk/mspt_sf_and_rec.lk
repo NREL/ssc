@@ -1,0 +1,61 @@
+var("T_htf_cold_des", 290);		//[C]
+var("T_htf_hot_des", 560);		//[C]
+var("q_dot_rec_des", 670);		//[MWt]
+
+var( 'N_panels', 20 );
+
+var( 'd_tube_out', 40 );
+var( 'th_tube', 1.25 );
+var( 'mat_tube', 2 );
+var( 'rec_height', 21.6 );
+var( 'D_rec', 17.6 );
+var( 'h_tower', 193.458 );
+
+var( 'rec_htf', 17 );
+var( 'field_fl_props', 
+[ [ 0, 0, 0, 0, 0, 0, 0 ] ] );
+var( 'Flow_type', 1 );
+var( 'epsilon', 0.88 );
+var( 'hl_ffact', 1 );
+var( 'f_rec_min', 0.25 );
+var( 'rec_su_delay', 0.20000000000000001 );
+var( 'rec_qf_delay', 0.25 );
+var( 'csp.pt.rec.max_oper_frac', 1.2 );
+var( 'eta_pump', 0.84999999999999998 );
+var( 'piping_length_mult', 2.6000000000000001 );
+var( 'piping_length_const', 0 );
+var( 'piping_loss_coefficient', 2 );
+
+var( 'is_rec_model_trans', 0);
+var( "rec_tm_mult", 1.0);         
+var( "riser_tm_mult", 1.0);        
+var( "downc_tm_mult", 1.0);      
+var( "u_riser", 4.0);      
+var( "th_riser", 15.0); 
+
+var( 'is_rec_clearsky_control', 0);
+var( 'rec_clearsky_fraction', 0.5);
+
+flux_uniform = [700, 340, 700];
+flux_map_od = [];
+for(i = 0; i < #flux_uniform; i++){
+	flux_map_od[i] = [];
+	for(j = 0; j < var('N_panels'); j++){
+		flux_map_od[i][j] = flux_uniform[i];
+	}
+}
+outln(flux_map_od);
+var('flux_map_od', flux_map_od);
+
+var( 'timestep_od', [1800, 5, 5] );	//[s]
+var( 'P_amb_od', [1000] );		//[mbar]
+var( 'T_amb_od', [25] );		//[C]
+var( 'deltaT_sky_od', [15] );	//[C]
+var( 'v_wind_10_od', [3] );		//[m/s]
+// only required if using clearsky control
+var( 'clearsky_to_measured_dni_od', [1.0, 2.0, 1.0] );
+
+var( 'plant_defocus_od', [1] );							//[-]
+var( 'T_htf_cold_in_od', [var('T_htf_cold_des')] );		//[C]
+
+run("mspt_sf_and_rec_isolated");

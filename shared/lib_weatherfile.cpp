@@ -1,24 +1,35 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 
 #include <stdio.h>
 #include <cmath>
@@ -287,7 +298,7 @@ float calc_dewpt(float db, float rh)  /* Function to find dewpoint temperature *
                 ptb = t + 10.0;
                 ptc = (pta + ptb) / 2.0;
             }
-            while (fabs(pres - pres_dew) > 0.00001 && fabs(pta - ptb) > 0.05)
+            while (std::abs(pres - pres_dew) > 0.00001 && std::abs(pta - ptb) > 0.05)
             {
                 dpt = (float)(ptc - 273.15);
                 t = ptc;
@@ -357,7 +368,7 @@ double calc_twet(double T, double RH, double P)
             hiflag = true;
         }
 
-        if (fabs(err) < tol) break;
+        if (std::abs(err) < tol) break;
 
         //If the error is still too high, guess new values
         if (hiflag && lowflag) {
@@ -478,7 +489,7 @@ bool is_missing(double v) {
 }
 
 float check_missing(double v, double missing = -999.) {
-    if (std::fabs(v - missing) <= 0.01) {
+    if (std::abs(v - missing) <= 0.01) {
         return std::numeric_limits<float>::quiet_NaN();
     }
     else return (float)v;
@@ -961,13 +972,13 @@ bool weatherfile::open(const std::string& file, bool header_only)
                 else if (lowname == "ghi" || lowname == "gh" || lowname == "global" || lowname == "global horizontal" || lowname == "global horizontal irradiance") m_columns[GHI].index = i;
                 else if (lowname == "dni" || lowname == "dn" || lowname == "beam" || lowname == "direct normal" || lowname == "direct normal irradiance" || lowname == "direct (beam) normal irradiance") m_columns[DNI].index = i;
                 else if (lowname == "dhi" || lowname == "df" || lowname == "diffuse" || lowname == "diffuse horizontal" || lowname == "diffuse horizontal irradiance") m_columns[DHI].index = i;
-                else if (lowname == "poa" || lowname == "pa" || lowname == "plane" || lowname == "plane of array" || lowname == "plane of array irradiance") m_columns[POA].index = i;
-                else if (lowname == "tdry" || lowname == "dry bulb" || lowname == "dry bulb temp" || lowname == "dry bulb temperature" || lowname == "temperature" || lowname == "ambient" || lowname == "ambient temp" || lowname == "tamb" || lowname == "air temperature" || lowname == "air temerature") m_columns[TDRY].index = i;
+                else if (lowname == "poa" || lowname == "pa" || lowname == "plane" || lowname == "plane of array" || lowname == "plane of array irradiance" || lowname == "poa_global") m_columns[POA].index = i;
+                else if (lowname == "tdry" || lowname == "dry bulb" || lowname == "dry bulb temp" || lowname == "dry bulb temperature" || lowname == "temperature" || lowname == "ambient" || lowname == "ambient temp" || lowname == "tamb" || lowname == "air temperature" || lowname == "air temerature" || lowname == "temp_air") m_columns[TDRY].index = i;
                 else if (lowname == "twet" || lowname == "wet bulb" || lowname == "wet bulb temperature") m_columns[TWET].index = i;
-                else if (lowname == "tdew" || lowname == "dew point" || lowname == "dew point temperature") m_columns[TDEW].index = i;
-                else if (lowname == "wspd" || lowname == "wind speed" || lowname == "windspeed" || lowname == "ws" || lowname == "windvel") m_columns[WSPD].index = i;
-                else if (lowname == "wdir" || lowname == "wind direction" || lowname == "wd") m_columns[WDIR].index = i;
-                else if (lowname == "rh" || lowname == "rhum" || lowname == "relative humidity" || lowname == "humidity") m_columns[RH].index = i;
+                else if (lowname == "tdew" || lowname == "dew point" || lowname == "dew point temperature" || lowname == "temp_dew") m_columns[TDEW].index = i;
+                else if (lowname == "wspd" || lowname == "wind speed" || lowname == "windspeed" || lowname == "ws" || lowname == "windvel" || lowname == "wind_speed") m_columns[WSPD].index = i;
+                else if (lowname == "wdir" || lowname == "wind direction" || lowname == "wd" || lowname == "wind_direction") m_columns[WDIR].index = i;
+                else if (lowname == "rh" || lowname == "rhum" || lowname == "relative humidity" || lowname == "humidity" || lowname == "relative_humidity") m_columns[RH].index = i;
                 else if (lowname == "pres" || lowname == "pressure" || lowname == "air pressure") m_columns[PRES].index = i;
                 else if (lowname == "snow" || lowname == "snow cover" || lowname == "snow depth") m_columns[SNOW].index = i;
                 else if (lowname == "alb" || lowname == "albedo" || lowname == "surface albedo") m_columns[ALB].index = i;
@@ -1502,7 +1513,7 @@ bool weatherfile::open(const std::string& file, bool header_only)
 
     // make sure data is single-year
     if (m_columns[MINUTE].index != -1) {
-        int minDiff = (int)abs(m_columns[MINUTE].data[1] - m_columns[MINUTE].data[0]);
+        int minDiff = (int)std::abs(m_columns[MINUTE].data[1] - m_columns[MINUTE].data[0]);
         if (minDiff == 0) minDiff = 60;
         if (minDiff * 60 != (int)m_stepSec) {
             m_message = util::format("Weather file timestep per hour (%f) does not correspond to 8760/nRecords", minDiff / 60.);

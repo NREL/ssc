@@ -1,29 +1,40 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 
 #include "lib_pvshade.h"
 #include "lib_util.h"
 
-#include <math.h>
+#include <cmath>
 #include <limits>
 #include <vector>
 
@@ -97,11 +108,11 @@ void polint(double xa[], double ya[], int n, double x, double *y, double *dy)
 	size_t size = n+1;
 	std::vector<double> c(size);
 	std::vector<double> d(size);
-	dif=fabs(x-xa[1]);
+	dif= std::abs(x-xa[1]);
 
 	for (i=1;i<=n;i++)
 	{
-		if ( (dift=fabs(x-xa[i])) < dif)
+		if ( (dift= std::abs(x-xa[i])) < dif)
 		{
 			ns=i;
 			dif=dift;
@@ -144,7 +155,7 @@ double qromb(double (*func)(double,double,double,double), double a, double b, do
 		if (j >= K)
 		{
 			polint(&h[j-K],&s[j-K],K,0.0,&ss,&dss);
-			if (fabs(dss) <= EPS*fabs(ss)) return ss;
+			if (std::abs(dss) <= EPS* std::abs(ss)) return ss;
 		}
 		h[j+1]=0.25*h[j];
 	}
@@ -198,17 +209,16 @@ void diffuse_reduce(
 	double F1 = alb * pow(sind(stilt / 2.0), 2);
 	double Y1 = R - B * sind(180.0 - solalt - stilt) / sind(solalt);
 	Y1 = fmax(0.00001, Y1); // constraint per Chris 4/23/12
-	double F2 = 0.5 * (1.0 + Y1 / B - sqrt(pow(Y1, 2) / pow(B, 2) - 2 * Y1 / B * cosd(180 - stilt) + 1.0));
-	double F3 = 0.5 * (1.0 + R / B - sqrt(pow(R, 2) / pow(B, 2) - 2 * R / B * cosd(180 - stilt) + 1.0));
+	double F2 = 0.5 * alb * (1.0 + Y1 / B - sqrt(pow(Y1, 2) / pow(B, 2) - 2 * Y1 / B * cosd(180 - stilt) + 1.0));
+	double F3 = 0.5 * alb * (1.0 + R / B - sqrt(pow(R, 2) / pow(B, 2) - 2 * R / B * cosd(180 - stilt) + 1.0));
 
 	double Gr1 = F1 * (Gbh + Gdh);
-	double reduced_gnddiff_iso = ((F1 + (nrows - 1) * F1 * F2) / nrows) * Gbh
-		                          + ((F1 + (nrows - 1) * F1 * F3) / nrows) * Gdh;
+	reduced_gnddiff = ((F1 + (nrows - 1) * F2) / nrows) * Gbh
+		                          + ((F1 + (nrows - 1) * F3) / nrows) * Gdh;
 
 	Fgnddiff = 1.0;
 	if (Gr1 > 0)
-		Fgnddiff = reduced_gnddiff_iso / Gr1;
-	reduced_gnddiff = Fgnddiff * reduced_gnddiff_iso;
+		Fgnddiff = reduced_gnddiff / Gr1;
 }
 
 double selfshade_dc_derate(double X, double S, double FF0, double dbh_ratio, double m_d, double Vmp)
@@ -309,7 +319,7 @@ double sssky_diffuse_table::compute(double surface_tilt) {
         gamma[n] = (-M_PI / 2) + atan(arg[n]);
         tan_tilt_gamma[n] = tan(surface_tilt * DTOR + gamma[n]);
         Asky_shade[n] = M_PI + M_PI / pow((1 + tan_tilt_gamma[n] * tan_tilt_gamma[n]), 0.5);
-        if (isnan(Asky_shade[n]))
+        if (std::isnan(Asky_shade[n]))
         {
             Asky_shade[n] = Asky;
         }
@@ -441,7 +451,7 @@ bool ss_exec(
 	double az_eff = solazi - azimuth;
 
 	// if no effective tilt, or sun is down, then no array self-shading
-	if ((solzen < 90.0) && (tilt != 0) && (fabs(az_eff) < 90.0) )
+	if ((solzen < 90.0) && (tilt != 0) && (std::abs(az_eff) < 90.0) )
 	{
 		// Appelbaum eqn (12)
 		py = m_A * (cosd(tilt) + ( cosd(az_eff) * sind(tilt) /tand(90.0-solzen) ) );

@@ -11,6 +11,8 @@ include_directories(. ../splinter ../shared ../nlopt ../lpsolve ../solarpilot ..
 set(SSC_SRC
 		cmod_6parsolve.cpp
 		cmod_annualoutput.cpp
+		cmod_analysisperiodchange_eqns.cpp
+		cmod_analysisperiodchange_eqns.h
 		cmod_battery.cpp
 		cmod_battery.h
 		cmod_battery_eqns.cpp
@@ -27,12 +29,12 @@ set(SSC_SRC
 		cmod_cb_mspt_system_costs.cpp
 		cmod_csp_common_eqns.cpp
 		cmod_csp_common_eqns.h
-		cmod_csp_tower_eqns.cpp
-		cmod_csp_tower_eqns.h
+		cmod_csp_dsg_lf_ui.cpp
+		cmod_csp_subcomponent.cpp
         cmod_csp_trough_eqns.cpp
 		cmod_csp_trough_eqns.h
-		cmod_dsg_flux_preprocess.cpp
 		cmod_etes_electric_resistance.cpp
+		cmod_etes_ptes.cpp
 		cmod_equpartflip.cpp
 		cmod_financial_eqns.cpp
 		cmod_financial_eqns.h
@@ -53,7 +55,6 @@ set(SSC_SRC
 		cmod_iph_to_lcoefcr.cpp
 		cmod_ippppa.cpp
 		cmod_irradproc.cpp
-		cmod_iscc_design_point.cpp
 		cmod_layoutarea.cpp
 		cmod_lcoefcr.cpp
 		cmod_levpartflip.cpp
@@ -66,6 +67,7 @@ set(SSC_SRC
 		cmod_mhk_eqns.h
 		cmod_mhk_tidal.cpp
 		cmod_mhk_wave.cpp
+		cmod_mspt_sf_and_rec_isolated.cpp
 		cmod_poacalib.cpp
 		cmod_pv6parmod.cpp
 		cmod_pv_get_shade_loss_mpp.cpp
@@ -91,10 +93,8 @@ set(SSC_SRC
 		cmod_snowmodel.cpp
 		cmod_solarpilot.cpp
 		cmod_swh.cpp
-		cmod_tcsdirect_steam.cpp
 		cmod_tcsdish.cpp
 		cmod_tcsgeneric_solar.cpp
-		cmod_tcsiscc.cpp
 		cmod_tcslinear_fresnel.cpp
 		cmod_tcsmolten_salt.cpp
 		cmod_tcsmslf.cpp
@@ -119,6 +119,8 @@ set(SSC_SRC
 		cmod_wavefile.cpp
 		cmod_utilityrate5_eqns.cpp
 		cmod_utilityrate5_eqns.h
+        cmod_utilityrateforecast.cpp
+        cmod_utilityrateforecast.h
 		cmod_wfcheck.cpp
 		cmod_wfcsv.cpp
 		cmod_wfreader.cpp
@@ -194,13 +196,19 @@ endif()
 # dltest executable for checking ssc library
 if(UNIX AND NOT SAMAPI_EXPORT)
 	add_executable(dltest ../build_resources/dltest.c)
-	if (NOT APPLE)
+	if (APPLE)
+		add_custom_command(
+			TARGET ssc
+			POST_BUILD
+			COMMAND codesign --force --deep --sign - $<TARGET_FILE:ssc>
+			COMMAND dltest $<TARGET_FILE:ssc>)
+	else()
 		target_link_libraries(dltest -ldl -Wl,--no-as-needed)
+		add_custom_command(
+			TARGET ssc
+			POST_BUILD
+			COMMAND dltest $<TARGET_FILE:ssc>)
 	endif()
-	add_custom_command(
-		TARGET ssc
-		POST_BUILD
-		COMMAND dltest $<TARGET_FILE:ssc>)
 endif()
 
 # libssc for PySAM
@@ -210,7 +218,7 @@ if(UNIX)
 		set_property(TARGET ssc PROPERTY PREFIX "lib")
 		set(CMAKE_SHARED_LIBRARY_SUFFIX ".so")
 		if (APPLE)
-            SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmacosx-version-min=10.9")
+            SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmacosx-version-min=10.15")
             add_custom_command(
 				TARGET ssc
 				POST_BUILD

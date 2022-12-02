@@ -1,23 +1,33 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #ifndef __csp_solver_pc_Rankine_indirect_224_
@@ -46,13 +56,30 @@ private:
 	double m_F_wcMin;
 	double m_delta_h_steam;
 	double m_startup_energy_required;
-	double m_eta_adj;
+    double m_Psat_ref;      //[Pa]
+    double m_P_ND_ref;      //[-]
+    double m_Q_ND_ref;      //[-]
+
+    // Design-point conditions
+    double m_rh_des;        //[%]
+    double m_P_amb_des;     //[Pa]
+    double m_T_wb_des;      //[C]
+
+    // Cooler design - hardcoded
+    double m_evap_dt_out;	//[C/K] Temperature difference at hot side of the condenser
+
 
 	double m_m_dot_design;				//[kg/hr]
 	double m_m_dot_max;					//[kg/hr]
 	double m_m_dot_min;					//[kg/hr]
 	double m_q_dot_design;				//[MWt]
+    double m_q_dot_reject_des;          //[MWt]
 	double m_cp_htf_design;				//[kJ/kg-K]
+    double m_W_dot_htf_pump_des;          //[MWe]
+    double m_W_dot_cooling_des;         //[MWe]
+
+    double m_T_boil_des;                //[K]
+    double m_delatT_hot_to_boil_des;    //[C/K]
 
 	C_csp_power_cycle::E_csp_power_cycle_modes m_operating_mode_prev;
 	double m_startup_time_remain_prev;		//[hr]
@@ -64,7 +91,21 @@ private:
 
 	util::matrix_t<double> m_db;
 
+    // UDPC calculated design metrics
+    int m_n_T_htf_pars, m_n_T_amb_pars, m_n_m_dot_pars;
+    double m_T_htf_ref_udpc_calc, m_T_htf_low_udpc_calc, m_T_htf_high_udpc_calc;
+    double m_T_amb_ref_udpc_calc, m_T_amb_low_udpc_calc, m_T_amb_high_udpc_calc;
+    double m_m_dot_htf_ref_udpc_calc, m_m_dot_htf_low_udpc_calc, m_m_dot_htf_high_udpc_calc;
+    double m_W_dot_gross_ND_des;
+    double m_Q_dot_HTF_ND_des;
+    double m_W_dot_cooling_ND_des;
+    double m_m_dot_water_ND_des;
+
 	HTFProperties mc_pc_htfProps;
+
+    std::shared_ptr<C_air_cooled_condenser> m_ACC;
+    std::shared_ptr<C_evap_tower> m_evap_tower;
+    std::shared_ptr<C_hybrid_cooling> m_hybrid_cooling;
 
 	// member string for exception messages
 	std::string m_error_msg;
@@ -77,19 +118,53 @@ private:
 
 	double GetFieldToTurbineTemperatureDropC() { return 25.0; }
 
-	//void RankineCycle(/*double time,*/double P_ref, double eta_ref, double T_htf_hot_ref, double T_htf_cold_ref, double T_db, double T_wb,
-	//	double P_amb, double dT_cw_ref, /*double HTF,*/ double c_p_w, double T_htf_hot, double m_dot_htf, int /*double*/ mode,
-	//	double demand_var, double P_boil, /*double tech_type,*/ double T_amb_des, double T_approach, double F_wc, double F_wcmin,
-	//	double F_wcmax, double T_ITD_des, double P_cond_ratio, /*double CT,*/ double P_cond_min, /*double n_pl_inc,*/
-	//	/*double& fcall, */ double& P_cycle, double& eta, double& T_htf_cold, double& m_dot_demand, double& m_dot_htf_ref,
-	//	double& m_dot_makeup, double& W_cool_par, double& f_hrsys, double& P_cond);
-
-    void RankineCycle(double T_db, double T_wb,
-		double P_amb, double T_htf_hot, double m_dot_htf, int mode,
-		double demand_var, double P_boil, double F_wc, double F_wcmin, double F_wcmax, double T_cold, double dT_cw,
+    void RankineCycle_V2(double T_db /*K*/, double T_wb /*K*/,
+        double P_amb /*Pa*/, double T_htf_hot /*C*/, double m_dot_htf /*kg/hr*/,
+        double F_wc /*-*/, double F_wcmin /*-*/, double F_wcmax /*-*/, double T_cold /*C*/, double dT_cw /*C*/,
         //outputs
-        double& P_cycle, double& eta, double& T_htf_cold, double& m_dot_demand, double& m_dot_htf_ref,
-		double& m_dot_makeup, double& W_cool_par, double& f_hrsys, double& P_cond, double &T_cond_out);
+        double& P_cycle /*kWe*/, double& eta, double& T_htf_cold, double& m_dot_demand, double& m_dot_htf_ref,
+        double& m_dot_makeup, double& W_cool_par /*MWe*/, double& f_hrsys, double& P_cond /*Pa*/, double& T_cond_out /*C*/,
+        double& P_cond_iter_rel_err /*-*/);
+
+    void cycle_Rankine_ND(double T_htf_hot_ND /*-*/, double P_cond_iter_guess /*Pa*/, double m_dot_htf_ND /*-*/,
+        double& P_ND_tot /*-*/, double& Q_ND_tot /*-*/);
+
+    class C_MEQ__P_cond_OD : public C_monotonic_equation
+    {
+    private:
+        C_pc_Rankine_indirect_224* mpc_pc;
+        double m_T_htf_hot_ND;      //[-]
+        double m_m_dot_htf_ND;      //[-]
+        double m_T_db;              //[K]
+        double m_T_wb;              //[K]
+        double m_P_amb;             //[Pa]
+        double m_F_wc;              //[-]
+        double m_F_wcmin;           //[-]
+        double m_F_wcmax;           //[-]
+        double m_T_cold_rad;        //[C]
+        double m_dT_cw_rad_cooling;   //[C]
+
+        // Calculated
+        double m_P_cycle;       //[kWe]
+        double m_eta;           //[-]
+        double m_W_dot_cooling; //[MWe]
+        double m_m_dot_makeup;  //[kg/s]
+        double m_f_hrsys;       //[-]
+        double m_T_cond_out_rad;//[C]
+
+    public:
+
+        C_MEQ__P_cond_OD(C_pc_Rankine_indirect_224* pc_pc,
+            double T_htf_hot_ND /*-*/, double m_dot_htf_ND /*-*/,
+            double T_db /*K*/, double T_wb /*K*/, double P_amb /*Pa*/,
+            double F_wc /*-*/, double F_wcmin /*-*/, double F_wcmax /*-*/,
+            double T_cold_rad /*C*/, double dT_cw_rad_cooling /*C*/);
+
+        virtual int operator()(double P_cond /*Pa*/, double* diff_P_cond /*-*/) override;
+
+        void get_solved_values(double& P_cycle /*kWe*/, double& eta /*-*/, double& W_dot_cooling /*MWe*/,
+            double& m_dot_makeup /*kg/s*/, double& f_hrsys /*-*/, double& T_cond_out_rad /*C*/);
+    };
 
 	double Interpolate(int YT, int XT, double X, double Z = std::numeric_limits<double>::quiet_NaN());
 
@@ -103,7 +178,6 @@ public:
 	
     enum
 	{
-		E_ETA_THERMAL,		//[-] Cycle thermal efficiency (gross)
 		E_Q_DOT_HTF,		//[MWt] Cycle thermal power input
 		E_M_DOT_HTF,		//[kg/hr] Cycle HTF mass flow rate
 		E_Q_DOT_STARTUP,	//[MWt] Cycle startup thermal power
@@ -119,9 +193,16 @@ public:
 		E_M_DOT_WATER,		//[kg/hr] Cycle water consumption: makeup + cooling	
 		E_P_COND,			//[Pa] Cycle condensing pressure
 		E_RADCOOL_CNTRL,	//Code showing the status of radiative cooling with cold storage
+        E_W_DOT_HTF_PUMP,   //[MWe] HTF pump power
+        E_W_DOT_COOLER,     //[MWe] Cooling parasitic
+        E_P_COND_ITER_ERR,  //[-] Relative iteration error on condenser pressure
 
 		// Variables added for backwards compatability with TCS
-		E_M_DOT_HTF_REF		//[kg/hr] HTF mass flow rate at design
+        E_ETA_THERMAL_STEP_AVERAGED,    //[-]
+		E_M_DOT_HTF_REF,		//[kg/hr] HTF mass flow rate at design
+
+        // Dependent output variables
+        E_ETA_THERMAL,		//[-] Cycle thermal efficiency (gross)
 	};
 
 	C_csp_reported_outputs mc_reported_outputs;
@@ -173,7 +254,7 @@ public:
 			// Parameters that have different SSCINPUT names for Rankine Cycle and User Defined Cycle
 		double m_dT_cw_ref;			//[C] design temp difference between cooling water inlet/outlet
 		double m_T_amb_des;			//[C] design ambient temperature
-		double m_P_boil;			//[bar] boiler operating pressure
+		double m_P_boil_des;     	//[bar] boiler operating pressure
 		int m_CT;					//[-] integer flag for cooling technology type {1=evaporative cooling, 2=air cooling, 3=hybrid cooling}
 		int m_tech_type;			//[-] Flag indicating which coef. set to use. (1=tower,2=trough,3=user) 
 		double m_T_approach;		//[C] cooling tower approach temp
@@ -195,7 +276,7 @@ public:
 		S_params()
 		{
 			m_P_ref = m_eta_ref = m_T_htf_hot_ref = m_T_htf_cold_ref = m_dT_cw_ref = m_T_amb_des =
-				m_q_sby_frac = m_P_boil = m_startup_time = m_startup_frac = m_T_approach = m_T_ITD_des =
+				m_q_sby_frac = m_P_boil_des = m_startup_time = m_startup_frac = m_T_approach = m_T_ITD_des =
 				m_P_cond_ratio = m_pb_bd_frac = m_P_cond_min = m_htf_pump_coef = std::numeric_limits<double>::quiet_NaN();
 
 			m_pc_fl = m_CT = m_tech_type = m_n_pl_inc = -1;
@@ -249,7 +330,15 @@ public:
 
 	virtual void assign(int index, double *p_reporting_ts_array, size_t n_reporting_ts_array);
 
-    void get_design_parameters(double& m_dot_htf_des /*kg/hr*/, double& cp_htf_des_at_T_ave /*kJ/kg-K*/);
+    void get_design_parameters(double& m_dot_htf_des /*kg/hr*/,
+        double& cp_htf_des_at_T_ave /*kJ/kg-K*/,
+        double& W_dot_htf_pump /*MWe*/, double& W_dot_cooling /*MWe*/,
+        // UDPC
+        int& n_T_htf_pars, int& n_T_amb_pars, int& n_m_dot_pars,
+        double& T_htf_ref_calc /*C*/, double& T_htf_low_calc /*C*/, double& T_htf_high_calc /*C*/,
+        double& T_amb_ref_calc /*C*/, double& T_amb_low_calc /*C*/, double& T_amb_high_calc /*C*/,
+        double& m_dot_htf_ND_ref_calc, double& m_dot_htf_ND_low_calc /*-*/, double& m_dot_htf_ND_high_calc /*-*/,
+        double& W_dot_gross_ND_des, double& Q_dot_HTF_ND_des, double& W_dot_cooling_ND_des, double& m_dot_water_ND_des);
 };
 
 

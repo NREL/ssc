@@ -1,24 +1,35 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 #include <fstream>
 #include <future>
 #include <sstream>
@@ -113,6 +124,7 @@ void cm_wind_landbosse::load_config(){
         throw exec_error("wind_landbosse", "Path to SAM python configuration directory not set. "
                                            "Use 'set_python_path' function in sscapi.h to point to the correct folder.");
 
+ 
     // load python configuration
     rapidjson::Document python_config_root;
     std::ifstream python_config_doc(python_config_path + "/python_config.json");
@@ -130,6 +142,7 @@ void cm_wind_landbosse::load_config(){
         python_config_doc.seekg(0);
     }
 #endif
+
     std::ostringstream tmp;
     tmp << python_config_doc.rdbuf();
     python_config_root.Parse(tmp.str().c_str());
@@ -142,6 +155,9 @@ void cm_wind_landbosse::load_config(){
 
 
     python_exec_path = python_config_root["exec_path"].GetString();
+    if (python_exec_path.empty())
+        throw exec_error("wind_landbosse", "Missing key 'exec_path' in 'python_config.json'.");
+
     auto str_python = std::string(get_python_path()) + "/" + python_exec_path;
     if (!util::file_exists( str_python.c_str()))
         throw exec_error("wind_landbosse", "Missing python executable 'exe_path' in 'python_config.json'.");
@@ -347,31 +363,43 @@ void cm_wind_landbosse::exec() {
     input_data.assign_match_case("hub_height_meters", *m_vartab->lookup("wind_turbine_hub_ht"));
     input_data.assign_match_case("rotor_diameter_m", *m_vartab->lookup("wind_turbine_rotor_diameter"));
 
-    std::string input_json = ssc_data_to_json(&input_data);
+    auto input_json = ssc_data_to_json(&input_data);
 	std::string input_dict_as_text = input_json;
+
+
 	std::replace(input_dict_as_text.begin(), input_dict_as_text.end(), '\"', '\'');
 
-    load_config();
+    try {
+        load_config();
 #ifdef __WINDOWS__
-	std::string output_json = call_python_module_windows(input_dict_as_text);
+        std::string output_json = call_python_module_windows(input_dict_as_text);
 #else
-    std::string output_json = call_python_module(input_dict_as_text);
+        std::string output_json = call_python_module(input_dict_as_text);
 #endif
+        //    delete input_json;
 
-	cleanOutputString(output_json);
-    auto output_data = static_cast<var_table*>(json_to_ssc_data(output_json.c_str()));
-    if (output_data->is_assigned("error")){
-        m_vartab->assign("errors", output_json);
-        return;
+        cleanOutputString(output_json);
+        auto output_data = static_cast<var_table*>(json_to_ssc_data(output_json.c_str()));
+        if (output_data->is_assigned("error")) {
+            m_vartab->assign("errors", output_json);
+            ssc_data_free(output_data);
+            return;
+        }
+
+        m_vartab->merge(*output_data, false);
+        ssc_data_free(output_data);
+
+        auto error_vd = m_vartab->lookup("errors");
+        if (error_vd && error_vd->type == SSC_ARRAY)
+            m_vartab->assign("errors", std::to_string(int(0)));
+        if (error_vd && error_vd->type == SSC_DATARR)
+            m_vartab->assign("errors", error_vd->vec[0].str);
+
     }
-
-    m_vartab->merge(*output_data, false);
-
-    auto error_vd = m_vartab->lookup("errors");
-    if (error_vd && error_vd->type == SSC_ARRAY)
-        m_vartab->assign("errors", std::to_string(int(0)));
-    if (error_vd && error_vd->type == SSC_DATARR)
-        m_vartab->assign("errors", error_vd->vec[0].str);
+    catch (exec_error& e) {
+        m_vartab->assign("errors", e.err_text);
+        delete input_json;
+    }
 }
 
 DEFINE_MODULE_ENTRY( wind_landbosse, "Land-based Balance-of-System Systems Engineering (LandBOSSE) cost model", 1 )

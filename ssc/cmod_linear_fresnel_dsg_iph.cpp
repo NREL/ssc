@@ -1,23 +1,33 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 // Steam Linear Fresnel - direct steam generation 
@@ -47,10 +57,11 @@ static var_info _cm_vtab_linear_fresnel_dsg_iph[] = {
     { SSC_INPUT,        SSC_NUMBER,      "I_bn_des",          "Design point irradiation value",                                                      "W/m2",          "",            "solarfield",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_cold_ref",        "Reference HTF outlet temperature at design",                                          "C",             "",            "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "P_turb_des",        "Design-point turbine inlet pressure",                                                 "bar",           "",            "solarfield",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_hot",             "Hot HTF inlet temperature, from storage tank",                                        "C",             "",            "powerblock",     "*",                       "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "x_b_des",           "Design point boiler outlet steam quality",                                            "none",          "",            "solarfield",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "q_pb_des",          "Design heat input to the power block",                                                "MW",            "",            "solarfield",     "*",                       "",                      "" },
-	
+    { SSC_INPUT,        SSC_NUMBER,      "use_quality_or_subcooled", "0 = 2 phase outlet, 1 = subcooled",                                            "",              "",            "solarfield",     "?=0",                     "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "deltaT_subcooled",         "Subcooled temperature difference from saturation temp",                        "C",             "",            "solarfield",     "?=1.23",                  "",                      "" },
+
 
 	// Type 261 (solar field collector) parameters
     { SSC_INPUT,        SSC_NUMBER,      "fP_hdr_c",          "Average design-point cold header pressure drop fraction",                             "none",          "",            "solarfield",     "*",                       "",                      "" },
@@ -237,15 +248,40 @@ public:
 		//***************************************************************************
 
 		C_csp_lf_dsg_collector_receiver c_lf_dsg;
-		
+
+        double T_field_out_des = std::numeric_limits<double>::quiet_NaN();  //[K]
+        double P_turb_des = as_double("P_turb_des");    //[bar]
+        double x_b_des = as_double("x_b_des");
+        bool is_target_single_phase = false;
+
+        bool is_subcooled = as_boolean("use_quality_or_subcooled");
+        double deltaT_subcooled = as_double("deltaT_subcooled");
+
+        if (is_subcooled) {
+
+            is_target_single_phase = true;
+            water_state wp;
+
+            int wp_code = water_PQ(P_turb_des * 100.0, 0.0, &wp);
+            if (wp_code != 0)
+            {
+                throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::init", "Design point water_PQ failed", wp_code));
+            }
+
+            // Apply subcooled deltaT
+            T_field_out_des = wp.temp - deltaT_subcooled;	//[K]
+
+            // need to set to 'real' quality to avoid tripping checks in LF class
+            x_b_des = 0.5;      //[-]
+        }
+
 		// Now set solar field collector unit parameters
 		c_lf_dsg.m_q_max_aux = 0.0;			//[kWt] No aux for IPH
 		c_lf_dsg.m_LHV_eff = 1.0;			//[-] No aux for IPH
-		c_lf_dsg.m_T_set_aux = as_double("T_hot") + 273.15;				//[K], convert from [C]
 		c_lf_dsg.m_T_field_in_des = as_double("T_cold_ref") +273.15;	//[K], convert from [C]
-		c_lf_dsg.m_T_field_out_des = as_double("T_hot") + 273.15;		//[K], convert from [C]
-		c_lf_dsg.m_x_b_des = as_double("x_b_des");				//[-]
-		c_lf_dsg.m_P_turb_des = as_double("P_turb_des");		//[bar]
+		c_lf_dsg.m_T_field_out_des = T_field_out_des;		//[K]
+		c_lf_dsg.m_x_b_des = x_b_des;				//[-]
+		c_lf_dsg.m_P_turb_des = P_turb_des;		    //[bar]
 		c_lf_dsg.m_fP_hdr_c = as_double("fP_hdr_c");			//[-]
 		c_lf_dsg.m_fP_sf_boil = as_double("fP_sf_boil");		//[-]
 		c_lf_dsg.m_fP_boil_to_sh = 0.0;							//[-] Modeling only for boiling, so far
@@ -274,7 +310,7 @@ public:
 		c_lf_dsg.m_fossil_mode = 4;								//[-] in mode 4 the fossil mode sets the off-design pressure to the design pressure
 		c_lf_dsg.m_I_bn_des = as_double("I_bn_des");			//[W/m2]
 		c_lf_dsg.m_is_oncethru = true;							//[-] Once through because assuming boiler only, for now
-		c_lf_dsg.m_is_sh_target = false;						//[-] Targeting 2-phase outlet
+		c_lf_dsg.m_is_sh_target = is_target_single_phase;       //[-] Targeting 2-phase outlet
 		c_lf_dsg.m_is_multgeom = false;							//[-] Only one geometry because assuming boiler only, for now
 		c_lf_dsg.m_nModBoil = as_integer("nModBoil");			//[-] Number of modules in a loop
 		c_lf_dsg.m_nModSH = 0;									//[-] No superheat, for now
@@ -400,9 +436,9 @@ public:
 		// ********************************
 		// Heat Sink
 		C_pc_steam_heat_sink steam_heat_sink;
-		steam_heat_sink.ms_params.m_x_hot_des = as_double("x_b_des");		//[-] Inlet quality = field outlet
-		steam_heat_sink.ms_params.m_T_hot_des = as_double("T_hot");			//[C] Inlet temperature = field outlet
-		steam_heat_sink.ms_params.m_P_hot_des = as_double("P_turb_des")*100.0;	//[kPa], convert from [bar], Inlet pressure = field outlet = design
+		steam_heat_sink.ms_params.m_x_hot_des = x_b_des;		        //[-] Inlet quality = field outlet
+        steam_heat_sink.ms_params.m_T_hot_des = T_field_out_des-273.15; //[C] Inlet temperature = field outlet
+		steam_heat_sink.ms_params.m_P_hot_des = P_turb_des*100.0;	//[kPa], convert from [bar], Inlet pressure = field outlet = design
 		steam_heat_sink.ms_params.m_T_cold_des = as_double("T_cold_ref");	//[C] Outlet temperature = FIELD design inlet temperature
 		steam_heat_sink.ms_params.m_dP_frac_des = as_double("heat_sink_dP_frac");	//[-] Fractional pressure drop through heat sink at design
 		steam_heat_sink.ms_params.m_q_dot_des = as_double("q_pb_des");		//[MWt] Design thermal power to heat sink
@@ -456,6 +492,7 @@ public:
                                 dispatch,
 								system,
                                 NULL,
+                                nullptr,
 								ssc_cmod_update,
 								(void*)(this));
 
@@ -538,7 +575,7 @@ public:
 
 		// 'adjustment_factors' class stores factors in hourly array, so need to index as such
 		adjustment_factors haf(this, "adjust");
-		if( !haf.setup() )
+		if( !haf.setup(n_steps_fixed) )
 			throw exec_error("linear_fresnel_dsg_iph", "failed to setup adjustment factors: " + haf.error());
 
 		ssc_number_t *p_gen = allocate("gen", n_steps_fixed);

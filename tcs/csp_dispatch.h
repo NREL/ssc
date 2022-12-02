@@ -1,23 +1,33 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #pragma once
 #pragma warning(disable: 4290)  // ignore warning: 'C++ exception specification ignored except to indicate a function is not __declspec(nothrow)'
@@ -61,12 +71,18 @@ public:
         double q_rec_min;                   //[kWt] Minimum allowable power delivery by the receiver when operating
         double w_rec_pump;                  //[kWe/kWt] Pumping parasitic power per thermal energy produced
         double sf_effadj;                   //[-] 0..1 Solar field efficiency adjustment
-        double eta_cycle_ref;               //[kWe/kWt]  Design-point power cycle efficiency
         double time_weighting;              //[-] Weighting factor that discounts future decisions over more imminent ones
         double rsu_cost;                    //[$/start] Receiver startup cost
         double csu_cost;                    //[$/start] Cycle startup cost
         double pen_delta_w;                 //[$/kWe-change] Cycle production change penalty
         double q_rec_standby;               //[kWt] Receiver standby thermal power consumption fraction
+
+        bool can_cycle_use_standby;         //[-] Can the cycle use standby operation?
+        bool is_parallel_heater;            //[-] Is there a heater parallel to the receiver?
+        double q_eh_max;                    //[kWt] Maximum allowable power delivery by the electrical heaters when operating
+        double q_eh_min;                    //[kWt] Minimum allowable power delivery by the electrical heaters when operating
+        double eta_eh;                      //[-] Electric resistance heating sub-system efficiency
+        double hsu_cost;                    //[$/start] Heater startup cost
 
         // Initial Conditions
         bool is_rec_operating0;             //receiver is operating at the initial time step
@@ -81,7 +97,9 @@ public:
 		double w_stow;				        //[kWe-hr] Heliostat stow electricity requirement
 		double w_cycle_standby;		        //[kWe] Cycle HTF pumping power during standby
 		double w_cycle_pump;		        //[kWe/kWt] Cycle HTF pumping power per thermal energy consumed
-        double inventory_incentive;    //[-]   Terminal storage inventory objective incentive multiplier
+
+        double inventory_incentive;         //[-]   Terminal storage inventory objective incentive multiplier
+        double ppa_price_y1;                //[$/MWh] Assumed ppa price for year 1 dispatch
 
         s_efftable eff_table_load, eff_table_Tdb, wcondcoef_table_Tdb;  //Efficiency of the power cycle, condenser power coefs
 
@@ -110,7 +128,7 @@ public:
             eta_pb_des = std::numeric_limits<double>::quiet_NaN();
             inventory_incentive = 0.;
             sf_effadj = 1.;
-            eta_cycle_ref = std::numeric_limits<double>::quiet_NaN();
+
             time_weighting = 0.99;
             rsu_cost = 952.;
             csu_cost = 10000;
@@ -121,6 +139,13 @@ public:
             w_stow = std::numeric_limits<double>::quiet_NaN();
             w_cycle_standby = std::numeric_limits<double>::quiet_NaN();
             w_cycle_pump = std::numeric_limits<double>::quiet_NaN();
+            is_parallel_heater = false;
+            q_eh_max = 0.0;
+            q_eh_min = 0.0;
+            eta_eh = 1.0;
+            hsu_cost = 10.;
+            can_cycle_use_standby = false;
+            ppa_price_y1 = std::numeric_limits<double>::quiet_NaN();
         }
 
         void clear()
@@ -136,17 +161,20 @@ public:
             eta_sf_expected.clear();
         }
 
-        void set_user_params(double disp_time_weighting,
-            double disp_rsu_cost, double disp_csu_cost, double disp_pen_delta_w, double disp_inventory_incentive,
-            double rec_standby_loss, double rec_heattrace)
+        void set_user_params(bool cycle_use_standby, double disp_time_weighting,
+            double disp_rsu_cost, double disp_hsu_cost, double disp_csu_cost, double disp_pen_delta_w, double disp_inventory_incentive,
+            double rec_standby_loss, double rec_heattrace, double ppa_price_year1/*$/kWh*/)
         {
+            can_cycle_use_standby = cycle_use_standby;
             time_weighting = disp_time_weighting;
             rsu_cost = disp_rsu_cost;
+            hsu_cost = disp_hsu_cost;
             csu_cost = disp_csu_cost;
             pen_delta_w = disp_pen_delta_w;
             inventory_incentive = disp_inventory_incentive;
             q_rec_standby = rec_standby_loss;   //TODO: why are these grouped here?
             w_rec_ht = rec_heattrace;           //TODO: why are these grouped here?
+            ppa_price_y1 = ppa_price_year1 * 1000.0;    // $/kWh -> $/MWh
         }
     } params;
 
@@ -164,6 +192,9 @@ public:
         std::vector<double> q_rec_startup;       //thermal power going to startup
         std::vector<double> w_pb_target;         //optimized electricity generation
 
+        std::vector<bool> htr_operation;       //is heater allowed to operate
+        std::vector<double> q_eh_target;         //heater target thermal power
+
         void clear() {
             rec_operation.clear();
             pb_operation.clear();
@@ -175,6 +206,9 @@ public:
             q_pb_startup.clear();
             q_rec_startup.clear();
             w_pb_target.clear();
+
+            htr_operation.clear();
+            q_eh_target.clear();
         }
 
         void resize(int nt) {
@@ -188,6 +222,9 @@ public:
             q_pb_startup.resize(nt, 0.);
             q_rec_startup.resize(nt, 0.);
             w_pb_target.resize(nt, 0.);
+
+            htr_operation.resize(nt, false);
+            q_eh_target.resize(nt, 0.);
         }
 
     } outputs;

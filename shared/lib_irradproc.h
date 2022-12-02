@@ -1,24 +1,35 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 
 #ifndef __irradproc_h
 #define __irradproc_h
@@ -26,6 +37,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <memory>
 
 #include "lib_weatherfile.h"
+#include "lib_util.h"
 
 struct poaDecompReq;
 
@@ -868,6 +880,34 @@ void ModifiedDISC(const double kt[3], const double kt1[3], const double g[3], co
 double shadeFraction1x(double solar_azimuth, double solar_zenith, double axis_tilt, double axis_azimuth, double gcr, double rotation, double slope_tilt, double slope_azimuth);
 
 /**
+* divideAndAlignAlbedos subdivides the spatial albedo vector and if 1-axis tracking
+* changes reference from the row midline to the front
+*
+* \param[in] albedo spatial albedo for that point in time (-)
+* \param[in] n_divisions increased number of divisions to divide the spatial albedo into (-)
+* \param[in] isOneAxisTracking is 1-axis tracking used? (-)
+* \param[in] horizontalLength projected horizontal length of the row, product of slope length and tilt (m)
+* \param[in] rowToRow distance between front of row and front of row behind (m)
+* \param[in] surface_rotation surface rotation of the array about the axis
+*/
+std::vector<double> divideAndAlignAlbedos(const std::vector<double>& albedo /*-*/, size_t n_divisions /*-*/, bool isOneAxisTracking /*-*/,
+                                          double horizontalLength /*m*/, double rowToRow /*m*/, double surface_rotation /*rad*/);
+
+/**
+* condenseAndAlignGroundIrrad condenses the spatial ground irradiance vector and if 1-axis tracking
+* changes reference from the row front to the midline
+*
+* \param[in] ground_irr spatial ground irradiance for that point in time
+* \param[in] n_divisions reduced number of divisions to condense the spatial ground irradiance into
+* \param[in] isOneAxisTracking is 1-axis tracking used?
+* \param[in] horizontalLength projected horizontal length of the row, product of slope length and tilt
+* \param[in] rowToRow distance between front of row and front of row behind
+* \param[in] surface_rotation surface rotation of the array about the axis
+*/
+std::vector<double> condenseAndAlignGroundIrrad(const std::vector<double>& ground_irr /*W/m2*/, size_t n_divisions /*-*/, bool isOneAxisTracking /*-*/,
+                                                double horizontalLength /*m*/, double rowToRow /*m*/, double surface_rotation /*rad*/);
+
+/**
 * truetrack calculates the tracker rotation that minimizes the angle of incidence betweem direct irradiance and the module front surface normal
 *
 * \param[in] solar_azimuth sun azimuth in degrees, measured east from north
@@ -939,15 +979,22 @@ protected:
     poaDecompReq* poaAll;			///< Data required to decompose input plane-of-array irradiance
 
     // Input Front-Side Irradiation components 
-    double globalHorizontal;		///< Input global horizontal irradiance (W/m2)
-    double directNormal;			///< Input direct normal irradiance (W/m2)
-    double diffuseHorizontal;		///< Input diffuse horizontal irradiance (W/m2)
-    double weatherFilePOA;			///< Input plane-of-array irradiance (W/m2)
-    double albedo;					///< Ground albedo (0-1)
+    double globalHorizontal;		    ///< Input global horizontal irradiance (W/m2)
+    double directNormal;			    ///< Input direct normal irradiance (W/m2)
+    double diffuseHorizontal;		    ///< Input diffuse horizontal irradiance (W/m2)
+    double weatherFilePOA;			    ///< Input plane-of-array irradiance (W/m2)
+    double albedo;					    ///< Ground albedo (0-1)
+    std::vector<double> albedoSpatial;  ///< Spatial ground albedo (0-1)
 
     // Calculated Front-Side Irradiation components
     double calculatedDirectNormal;		///< Calculated direct normal irradiance (W/m2)
     double calculatedDiffuseHorizontal; ///< Calculated diffuse horizontal irradiance (W/m2)
+
+    // Calculated Rear-Side Irradiance components
+    double poaRearDirectDiffuse;            ///< Direct and sky diffuse irradiance on rear (W/m2)
+    double poaRearRowReflections;           ///< Rear row reflected irradiance on rear (W/m2)
+    double poaRearGroundReflected;          ///< Ground reflected irradiance onto the rear (W/m2)
+    double poaRearSelfShaded;               ///< Irradiance shaded from being incident on the rear (W/m2)
 
     // Outputs
     double sunAnglesRadians[9];				///< Sun angles in radians calculated from solarpos()	
@@ -958,6 +1005,8 @@ protected:
     double diffuseIrradianceRear[3];		///< Rear-side diffuse irradiance for isotropic, circumsolar, and horizon (W/m2)
     int timeStepSunPosition[3];				///< [0] effective hour of day used for sun position, [1] effective minute of hour used for sun position, [2] is sun up?  (0=no, 1=midday, 2=sunup, 3=sundown)
     double planeOfArrayIrradianceRearAverage; ///< Average rear side plane-of-array irradiance (W/m2)
+    std::vector<double> planeOfArrayIrradianceRearSpatial;  ///< Spatial rear side plane-of-array irradiance (W/m2), where index 0 is at row bottom
+    std::vector<double> groundIrradianceSpatial;            ///< Spatial irradiance incident on the ground in between rows, where index 0 is towards front of array
 
 public:
 
@@ -969,13 +1018,18 @@ public:
 
     static const int dut1 = 0; //Time correction for irregular Earth rotation (leap second); value between -1 and 1, no source for value so left at zero
 
+    static const int poaFrontIrradRes = 6;
+    static const int poaRearIrradRes = 6;
+    static const int groundIrradOutputRes = 10;
+
     /// Default class constructor, calls setup()
     irrad(weather_record wr, weather_header wh,
         int skyModel, int radiationModeIn, int trackModeIn,
         bool useWeatherFileAlbedo, bool instantaneousWeather, bool backtrackingEnabled, bool forceToStowIn,
         double dtHour, double tiltDegrees, double azimuthDegrees, double trackerRotationLimitDegrees, double stowAngleDegreesIn,
         double groundCoverageRatio, double slopeTilt, double slopeAzm, std::vector<double> monthlyTiltDegrees, std::vector<double> userSpecifiedAlbedo,
-        poaDecompReq* poaAllIn);
+        poaDecompReq* poaAllIn,
+        bool useSpatialAlbedos = false, const util::matrix_t<double>* userSpecifiedSpatialAlbedos = nullptr);
 
     /// Construct the irrad class with an Irradiance_IO() object and Subarray_IO() object
     irrad();
@@ -996,7 +1050,7 @@ public:
     void set_optional(double elev = 0, double pres = 1013.25, double t_amb = 15);
 
     /// Set the sky model for the irradiance processor, using \link Irradiance_IO::SKYMODEL 
-    void set_sky_model(int skymodel, double albedo);
+    void set_sky_model(int skymodel, double albedo, const std::vector<double> &albedoSpatial = std::vector<double>());
 
     /// Set the surface orientation for the irradiance processor
     void set_surface(int tracking, double tilt_deg, double azimuth_deg, double rotlim_deg, bool en_backtrack, double gcr, double slope_tilt, double slope_azm, bool forceToStowFlag, double stowAngle);
@@ -1054,6 +1108,30 @@ public:
     /// Return the rear-side average total plane-of-array irradiance
     double get_poa_rear();
 
+    /// Return the rear-side spatial total plane-of-array irradiance
+    std::vector<double> get_poa_rear_spatial();
+
+    /// Return the irradiance incident on the ground
+    double get_ground_incident();
+
+    /// Return the ground spatial total plane-of-array irradiance
+    std::vector<double> get_ground_spatial();
+
+    /// Return the ground absorbed irradiance
+    double get_ground_absorbed();
+
+    /// Return average ground reflected irradiance onto the rear, considering view factor
+    double get_ground_reflected();
+
+    /// Return average direct and diffuse irradiance onto the rear
+    double get_rear_direct_diffuse();
+
+    /// Return average reflected irradiance from the rear row onto the rear
+    double get_rear_row_reflections();
+
+    /// Return the average direct and circumsolar shaded from being incident on the rear
+    double get_rear_self_shaded();
+
     /// Return the front-side irradiance components
     void get_irrad(double* ghi, double* dni, double* dhi);
 
@@ -1062,6 +1140,9 @@ public:
 
     /// Return the albedo used by the irradiance processor
     double getAlbedo();
+
+    /// Return the spatial albedo used by the irradiance processor
+    std::vector<double> getAlbedoSpatial();
 
     /// Return the sky configuration factors, used by \link calc_rear_side()
     void getSkyConfigurationFactors(double rowToRow, double verticalHeight, double clearanceGround, double distanceBetweenRows, double horizontalLength, std::vector<double>& rearSkyConfigFactors, std::vector<double>& frontSkyConfigFactors);

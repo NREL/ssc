@@ -1,24 +1,35 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 
 #include "lib_resilience_test.h"
 
@@ -112,6 +123,8 @@ TEST_F(ResilienceTest_lib_resilience, DischargeBatteryModelHourly)
         delete battery;
         battery = new battery_t(initial_batt);
     }
+    if (battery)
+        delete battery;
 }
 
 TEST_F(ResilienceTest_lib_resilience, DischargeBatteryModelSubHourly)
@@ -148,6 +161,10 @@ TEST_F(ResilienceTest_lib_resilience, DischargeBatteryModelSubHourly)
         delete battery;
         battery = new battery_t(initial_batt);
     }
+    
+    if (battery)
+        delete battery;
+
 }
 
 TEST_F(ResilienceTest_lib_resilience, DischargeBatteryModelSubHourlyWSOCLimits)
@@ -184,6 +201,10 @@ TEST_F(ResilienceTest_lib_resilience, DischargeBatteryModelSubHourlyWSOCLimits)
         delete battery;
         battery = new battery_t(initial_batt);
     }
+    
+    if (battery)
+        delete battery;
+
 }
 
 TEST_F(ResilienceTest_lib_resilience, ChargeBatteryModelHourly)
@@ -217,6 +238,10 @@ TEST_F(ResilienceTest_lib_resilience, ChargeBatteryModelHourly)
         delete battery;
         battery = new battery_t(initial_batt);
     }
+    
+    if (battery)
+        delete battery;
+
 }
 
 TEST_F(ResilienceTest_lib_resilience, ChargeBatteryModelSubhourly)
@@ -249,6 +274,10 @@ TEST_F(ResilienceTest_lib_resilience, ChargeBatteryModelSubhourly)
         delete battery;
         battery = new battery_t(initial_batt);
     }
+    
+    if (battery)
+        delete battery;
+
 }
 
 TEST_F(ResilienceTest_lib_resilience, PVWattsSetUp)
@@ -431,9 +460,9 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsACHourly_Discharge)
         batt->advance(vartab, ac[i], voltage, load[i], load[i]); // Critical load is 100% of the load
         charge_total.emplace_back(batt->battery_model->charge_total());
         if (i < 5)
-            EXPECT_NEAR(batt->outBatteryPower[i], 1., 1e-3) << "timestep " << i;
+            EXPECT_NEAR(batt->outBatteryPowerAC[i], 1., 1e-3) << "timestep " << i;
         else
-            EXPECT_LT(batt->outBatteryPower[i], 1.) << "timestep " << i;
+            EXPECT_LT(batt->outBatteryPowerAC[i], 1.) << "timestep " << i;
 
     }
     std::vector<double> correct_charge_total = {13.86, 11.96, 10.05, 8.10, 6.10, 4.0, 3.15, 3.15, 3.15, 3.15 };
@@ -488,7 +517,7 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsACHalfHourly_Discharge)
             resilience.add_battery_at_outage_timestep(*dispatch, i * 2 + j);
             resilience.run_surviving_batteries(load[i], 0, 0, 0, 0, 0);
             batt->advance(vartab, ac[i], voltage, load[i], load[i]); // Critical load is 100% of the load
-            EXPECT_NEAR(batt->outBatteryPower[i], 1., 1e-3) << "timestep " << i * 2 + j;
+            EXPECT_NEAR(batt->outBatteryPowerAC[i], 1., 1e-3) << "timestep " << i * 2 + j;
         }
         charge_total.emplace_back(batt->battery_model->charge_total());
     }
@@ -549,11 +578,11 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsDCHourly_Discharge)
         batt->advance(vartab, ac[i], voltage, load[i], load[i]); // Critical load is 100% of the load
         charge_total.emplace_back(batt->battery_model->charge_total());
         if (i < 6)
-            EXPECT_NEAR(batt->outBatteryPower[i], 1., 1e-3) << "timestep " << i << " battery discharging";
+            EXPECT_NEAR(batt->outBatteryPowerAC[i], 1., 1e-3) << "timestep " << i << " battery discharging";
         else if (i == 6)
-            EXPECT_NEAR(batt->outBatteryPower[i], 0.301, 1e-3) << "timestep 5 battery SOC limits";
+            EXPECT_NEAR(batt->outBatteryPowerAC[i], 0.301, 1e-3) << "timestep 5 battery SOC limits";
         else
-            EXPECT_NEAR(batt->outBatteryPower[i], 0, 1e-3) << "timestep " << i << " battery at min SOC";
+            EXPECT_NEAR(batt->outBatteryPowerAC[i], 0, 1e-3) << "timestep " << i << " battery at min SOC";
 
     }
     std::vector<double> correct_charge_total = { 13.86, 11.96, 10.05, 8.10, 6.0, 3.82, 3.15, 3.15, 3.15, 3.15 };
@@ -608,7 +637,7 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsDCHalfHourly_Discharge)
             resilience.add_battery_at_outage_timestep(*dispatch, i * 2 + j);
             resilience.run_surviving_batteries(load[i], 0, 0, 0, 0, 0);
             batt->advance(vartab, ac[i], voltage, load[i], load[i]); // Critical load is 100% of the load
-            EXPECT_NEAR(batt->outBatteryPower[i], 1., 1e-3) << "timestep " << i * 2 + j;
+            EXPECT_NEAR(batt->outBatteryPowerAC[i], 1., 1e-3) << "timestep " << i * 2 + j;
         }
         charge_total.emplace_back(batt->battery_model->charge_total());
     }
@@ -664,7 +693,7 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsACHourly_Charge)
         resilience.run_surviving_batteries(load[i], ac[i], 0, 0, 0, 0);
         batt->advance(vartab, ac[i], voltage, load[i], load[i]); // Critical load is 100% of the load
         charge_total.emplace_back(batt->battery_model->charge_total());
-        EXPECT_NEAR(batt->outBatteryPower[i], -0.5, 0.005) << "timestep " << i;
+        EXPECT_NEAR(batt->outBatteryPowerAC[i], -0.5, 0.005) << "timestep " << i;
     }
     std::vector<double> correct_charge_total = {16.61, 17.46, 18.32, 19.17, 20.02};
 

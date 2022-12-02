@@ -1,24 +1,35 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 
 #ifndef __csp_solver_cavity_receiver_
 #define __csp_solver_cavity_receiver_
@@ -77,7 +88,6 @@ private:
     util::matrix_t<double> m_field_fl_props;
 
     double m_dni_des;               //[W/m2]
-    double m_hel_stow_deploy;		//[deg]
 
     size_t m_nPanels;       //[-]
     size_t m_pipeWindings;  //[-]
@@ -86,11 +96,6 @@ private:
     bool m_is_bottomUpFlow;     //[-]
     bool m_is_centerOutFlow;    //[-]
     double m_rec_span;      //[rad]
-    //double m_offset;        //[m]
-
-    double m_od_rec_tube;   //[m] single tube outer diameter
-    double m_th_rec_tube;   //[m] single tube wall thickness
-    int m_tube_mat_code;    //[-]
 
     double m_receiverHeight; //[m] Receiver opening height in meters
     double m_receiverWidth; //[m] Reciever opening width in meters
@@ -101,13 +106,6 @@ private:
     double m_e_act_therm;   //[-] Emissivity in long wave range for active surfaces
     double m_e_pass_therm;  //[-] Emissivity in long wave range for passive surfaces
 
-    //double m_pipe_loss_per_m;		//[Wt/m]
-    double m_piping_loss_coefficient;   //[Wt/m2-K]
-    double m_pipe_length_add;		//[m]
-    double m_pipe_length_mult;		//[-]
-
-    double m_A_sf;                  //[m2]
-
     E_mesh_types m_active_surface_mesh_type;
     E_mesh_types m_floor_and_cover_mesh_type;
     E_mesh_types m_lips_mesh_type;
@@ -116,6 +114,7 @@ private:
 
     // ************************************
     // Calculated stored parameters
+
     std::vector<C_rec_surface> mv_rec_surfs;    // vector of surface classes for each surface in cavity model
     std::vector<util::matrix_t<int>> m_v_elems; // each vector index is a surface; each row lists the nodes that define a mesh element
     util::matrix_t<double> m_nodesGlobal;       // each row lists x,y,z coordinates of each node
@@ -151,14 +150,12 @@ private:
     double m_d_in_rec_tube;             //[m]
     double m_A_cs_tube;                 //[m2]
     size_t m_Ntubes;                    //[-]
-    double m_Q_dot_piping_loss;         //[Wt] = Constant thermal losses from piping to env. = (THT*length_mult + length_add) * piping_loss_coef
     double m_rel_roughness;             //[-]
     double m_A_aper;                    //[m2]
     double m_eta_therm_des;             //[-]
 
     // ************************************
     // Call variables
-    double m_eta_field_iter_prev;	//[-] Efficiency from heliostat on last iteration. Maybe change if CR gets defocus signal from controller
     double m_od_control;            //[-]
 
     // ************************************
@@ -173,7 +170,7 @@ private:
 public:
 
 	// Methods
-	C_cavity_receiver(double dni_des /*W/m2*/, double hel_stow_deploy /*deg*/,
+	C_cavity_receiver(double dni_des /*W/m2*/,
         int field_fl /*-*/, util::matrix_t<double> field_fl_props,
         double od_rec_tube /*m*/, double th_rec_tube /*m*/, int tube_mat_code /*-*/,
         size_t nPanels /*-*/, double rec_height /*m*/, double rec_width /*m*/,
@@ -181,7 +178,7 @@ public:
         double eps_active_sol /*-*/, double eps_passive_sol /*-*/, double eps_active_therm /*-*/, double eps_passive_therm /*-*/,
         E_mesh_types active_surface_mesh_type, E_mesh_types floor_and_cover_mesh_type,  E_mesh_types lips_mesh_type,
         double piping_loss_coefficient /*Wt/m2-K*/, double pipe_length_add /*m*/, double pipe_length_mult /*-*/,
-        double A_sf /*m2*/, double h_tower /*m*/, double T_htf_hot_des /*C*/,
+        double h_tower /*m*/, double T_htf_hot_des /*C*/,
         double T_htf_cold_des /*C*/, double f_rec_min /*-*/, double q_dot_rec_des /*MWt*/,
         double rec_su_delay /*hr*/, double rec_qf_delay /*-*/, double m_dot_htf_max_frac /*-*/,
         double eta_pump /*-*/);

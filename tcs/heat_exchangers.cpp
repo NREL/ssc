@@ -1,23 +1,33 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "heat_exchangers.h"
@@ -872,12 +882,12 @@ void NS_HX_counterflow_eqs::calc_req_UA_enth(int hot_fl_code /*-*/, HTFPropertie
     eff = q_dot / q_dot_max;
 
     bool is_h_2phase = false;
-    if (fabs(T_h_in - T_h_out) < 0.001)
+    if (std::abs(T_h_in - T_h_out) < 0.001)
     {
         is_h_2phase = true;
     }
     bool is_c_2phase = false;
-    if (fabs(T_c_out - T_c_in) < 0.001)
+    if (std::abs(T_c_out - T_c_in) < 0.001)
     {
         is_c_2phase = true;
     }
@@ -1194,7 +1204,7 @@ void NS_HX_counterflow_eqs::solve_q_dot__fixed_eff__enth(int hot_fl_code /*-*/, 
     double q_dot_lower = 1.E-10;	//[kWt]
 
     // If min dT is within tolerance of tareget, then get out
-    if (fabs(min_dT_q_dot_guess - min_dT_target) < tol)
+    if (std::abs(min_dT_q_dot_guess - min_dT_target) < tol)
     {
         T_c_out = hx_min_dt_eq.m_T_c_out;	//[K]
         h_c_out = hx_min_dt_eq.m_h_c_out;	//[kJ/kg]
@@ -1234,7 +1244,7 @@ void NS_HX_counterflow_eqs::solve_q_dot__fixed_eff__enth(int hot_fl_code /*-*/, 
 
     if (hx_min_dT_solver_code != C_monotonic_eq_solver::CONVERGED)
     {
-        if (!(hx_min_dT_solver_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) <= 1.0))
+        if (!(hx_min_dT_solver_code > C_monotonic_eq_solver::CONVERGED && std::abs(tol_solved) <= 1.0))
         {
             throw(C_csp_exception("NS_HX_counterflow_eqs::solve_q_dot__fixed_min_dT__enth(...) failed to converge"));
         }
@@ -1346,7 +1356,7 @@ void NS_HX_counterflow_eqs::solve_q_dot__fixed_min_dT__enth(int hot_fl_code /*-*
 
     // If min dT is within tolerance of target, then get out
     // Also, the max q dot will have the smallest dT, so if smallest dT larger than target then also get out
-    if (fabs(min_dT_eff_ideal - min_dT_target) < tol || min_dT_eff_ideal - min_dT_target > tol)
+    if (std::abs(min_dT_eff_ideal - min_dT_target) < tol || min_dT_eff_ideal - min_dT_target > tol)
     {
         T_c_out = hx_min_dt_eq.m_T_c_out;	//[K]
         h_c_out = hx_min_dt_eq.m_h_c_out;	//[kJ/kg]
@@ -1375,7 +1385,7 @@ void NS_HX_counterflow_eqs::solve_q_dot__fixed_min_dT__enth(int hot_fl_code /*-*
     // ********************************************************************************************
 
     // If min dT is within tolerance of tareget, then get out
-    if (fabs(min_dT_q_dot_guess - min_dT_target) < tol)
+    if (std::abs(min_dT_q_dot_guess - min_dT_target) < tol)
     {
         T_c_out = hx_min_dt_eq.m_T_c_out;	//[K]
         h_c_out = hx_min_dt_eq.m_h_c_out;	//[kJ/kg]
@@ -1412,7 +1422,7 @@ void NS_HX_counterflow_eqs::solve_q_dot__fixed_min_dT__enth(int hot_fl_code /*-*
 
     if (hx_min_dT_solver_code != C_monotonic_eq_solver::CONVERGED)
     {
-        if (!(hx_min_dT_solver_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) <= 1.0))
+        if (!(hx_min_dT_solver_code > C_monotonic_eq_solver::CONVERGED && std::abs(tol_solved) <= 1.0))
         {
             throw(C_csp_exception("NS_HX_counterflow_eqs::solve_q_dot__fixed_min_dT__enth(...) failed to converge"));
         }
@@ -1530,7 +1540,7 @@ void NS_HX_counterflow_eqs::solve_q_dot_for_fixed_UA_enth(int hot_fl_code /*-*/,
 		// UA vs. q_dot is very nonlinear, with very large increases of UA as q_dot approaches q_dot_max
 		// As such, may not reach convergence on UA while the uncertainty on q_dot is very small, which should be ok
 		if (od_hx_code < C_monotonic_eq_solver::CONVERGED || 
-			(fabs(tol_solved) > 0.1 && 
+			(std::abs(tol_solved) > 0.1 &&
 			!(od_hx_code == C_monotonic_eq_solver::SLOPE_POS_NO_POS_ERR || od_hx_code == C_monotonic_eq_solver::SLOPE_POS_BOTH_ERRS)) )
 		{
 			throw(C_csp_exception("Off-design heat exchanger method failed"));
@@ -1797,7 +1807,7 @@ double C_HX_counterflow_CRM::calc_max_q_dot_enth(double h_h_in /*kJ/kg*/, double
         T_h_in_q_max, T_c_in_q_max);
 }
 
-double C_HX_counterflow_CRM::calculate_cost(double UA /*kWt/K*/,
+double /*M$*/ C_HX_counterflow_CRM::calculate_equipment_cost(double UA /*kWt/K*/,
     double T_hot_in /*K*/, double P_hot_in /*kPa*/, double m_dot_hot /*kg/s*/,
     double T_cold_in /*K*/, double P_cold_in /*kPa*/, double m_dot_cold /*kg/s*/)
 {
@@ -1805,11 +1815,22 @@ double C_HX_counterflow_CRM::calculate_cost(double UA /*kWt/K*/,
     {
     case C_HX_counterflow_CRM::E_CARLSON_17_RECUP:
         return 1.25*1.E-3*UA;		//[M$] needs UA in kWt/K
+    case C_HX_counterflow_CRM::E_WEILAND_19_RECUP:
+        return 49.45*std::pow(UA*1.E3, 0.7544)*1.E-6;  //[M$] needs UA in Wt/K
     case C_HX_counterflow_CRM::E_CARLSON_17_PHX:
         return 3.5*1.E-3*UA;		//[M$] needs UA in kWt/K
     default:
         return std::numeric_limits<double>::quiet_NaN();
     }
+}
+
+double /*M$*/ C_HX_counterflow_CRM::calculate_bare_erected_cost(double cost_equipment /*M$*/)
+{
+    // Weiland 2019
+    double frac_installation = 0.02;
+    double frac_labor = 0.03;
+
+    return cost_equipment * (1. + frac_installation + frac_labor);
 }
 
 void C_HX_counterflow_CRM::design_calc_UA(C_HX_counterflow_CRM::S_des_calc_UA_par des_par,
@@ -1862,9 +1883,11 @@ void C_HX_counterflow_CRM::design_calc_UA(C_HX_counterflow_CRM::S_des_calc_UA_pa
 	ms_des_solved.m_T_h_out = T_h_out_calc;
 	ms_des_solved.m_T_c_out = T_c_out_calc;
 
-	ms_des_solved.m_cost = calculate_cost(ms_des_solved.m_UA_design,
+	ms_des_solved.m_cost_equipment = calculate_equipment_cost(ms_des_solved.m_UA_design,
 		ms_des_calc_UA_par.m_T_h_in, ms_des_calc_UA_par.m_P_h_in, ms_des_calc_UA_par.m_m_dot_hot_des,
 		ms_des_calc_UA_par.m_T_c_in, ms_des_calc_UA_par.m_P_c_in, ms_des_calc_UA_par.m_m_dot_cold_des);
+
+    ms_des_solved.m_cost_bare_erected = calculate_bare_erected_cost(ms_des_solved.m_cost_equipment);
 
 	// Specify that method solved successfully
 	m_is_HX_designed = true;
@@ -1950,9 +1973,11 @@ void C_HX_counterflow_CRM::design_for_target__calc_outlet(int hx_target_code /*-
     ms_des_solved.m_DP_cold_des = P_c_in - P_c_out;		//[kPa]
     ms_des_solved.m_DP_hot_des = P_h_in - P_h_out;		//[kPa]
 
-    ms_des_solved.m_cost = calculate_cost(ms_des_solved.m_UA_design,
+    ms_des_solved.m_cost_equipment = calculate_equipment_cost(ms_des_solved.m_UA_design,
         T_h_in, P_h_in, m_dot_h,
         T_c_in, P_c_in, m_dot_c);
+
+    ms_des_solved.m_cost_bare_erected = calculate_bare_erected_cost(ms_des_solved.m_cost_equipment);
 }
 
 void C_HX_counterflow_CRM::C_MEQ__hx_total_q_dot::init_calc_member_vars()
@@ -2107,7 +2132,7 @@ int C_HX_counterflow_CRM::C_MEQ__hx_total_q_dot::operator()(double q_dot_hx /*kW
 
                 if (od_hx_code != C_monotonic_eq_solver::CONVERGED)
                 {
-                    if (!(od_hx_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) <= 0.01))
+                    if (!(od_hx_code > C_monotonic_eq_solver::CONVERGED && std::abs(tol_solved) <= 0.01))
                     {
                         *diff_q_dot = std::numeric_limits<double>::quiet_NaN();
                         return -2;
@@ -2274,7 +2299,7 @@ void C_HX_counterflow_CRM::off_design_solution_fixed_dP(double T_c_in /*K*/, dou
 
                     if (q_dot_hx_code != C_monotonic_eq_solver::CONVERGED)
                     {
-                        if (!(q_dot_hx_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) <= 0.1))
+                        if (!(q_dot_hx_code > C_monotonic_eq_solver::CONVERGED && std::abs(tol_solved) <= 0.1))
                         {
                             throw(C_csp_exception("C_HX_counterflow_CRM::off_design_solution did not solve for the off-design"
                                 "heat transfer for off design hx conductance within the specified tolerance"));
@@ -2498,7 +2523,7 @@ void C_HX_counterflow_CRM::off_design_solution_fixed_dP(double T_c_in /*K*/, dou
 
             iter_deltaP++;
 
-        } while (is_hx_deltaP_converge && (fabs(diff_P_c_out) > od_tol || fabs(diff_P_h_out) > od_tol));
+        } while (is_hx_deltaP_converge && (std::abs(diff_P_c_out) > od_tol || std::abs(diff_P_h_out) > od_tol));
 
         ms_od_solved.m_eff = eff_calc;			//[-]
         ms_od_solved.m_min_DT = min_DT;		//[K]
@@ -2708,7 +2733,8 @@ C_CO2_to_air_cooler::C_CO2_to_air_cooler()
 
 	mc_air.SetFluid(mc_air.Air);
 
-	m_cost_model = C_CO2_to_air_cooler::E_CARLSON_17;		//[-]
+    //m_cost_model = C_CO2_to_air_cooler::E_CARLSON_17;		//[-]
+    m_cost_model = C_CO2_to_air_cooler::E_WEILAND_19;       //[-]
 }
 
 bool C_CO2_to_air_cooler::design_hx(S_des_par_ind des_par_ind, S_des_par_cycle_dep des_par_cycle_dep, double tol /*-*/)
@@ -2871,7 +2897,7 @@ bool C_CO2_to_air_cooler::design_hx(S_des_par_ind des_par_ind, S_des_par_cycle_d
 	solver_code = -1;
 	i_W_par = -1;
 
-	while (solver_code != 0 || fabs(T_hot_in_calc_2 - T_hot_in_calc) / T_hot_in_calc < 0.01)
+	while (solver_code != 0 || std::abs(T_hot_in_calc_2 - T_hot_in_calc) / T_hot_in_calc < 0.01)
 	{
 		i_W_par++;
 
@@ -2910,7 +2936,7 @@ bool C_CO2_to_air_cooler::design_hx(S_des_par_ind des_par_ind, S_des_par_cycle_d
 	}
 	if (solver_code != C_monotonic_eq_solver::CONVERGED)
 	{
-		if (solver_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) <= 0.1)
+		if (solver_code > C_monotonic_eq_solver::CONVERGED && std::abs(tol_solved) <= 0.1)
 		{
 			std::string error_msg = util::format("Air cooler iteration on the parallel width only reached a convergence "
 				"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
@@ -2953,8 +2979,10 @@ bool C_CO2_to_air_cooler::design_hx(S_des_par_ind des_par_ind, S_des_par_cycle_d
 
 	ms_hx_des_sol.m_W_dot_fan = ms_des_par_cycle_dep.m_W_dot_fan_des;	//[MWe]
 
-	ms_hx_des_sol.m_cost = calculate_cost(ms_hx_des_sol.m_UA_total*1.E-3, ms_hx_des_sol.m_V_total,
+	ms_hx_des_sol.m_cost_equipment = calculate_equipment_cost(ms_hx_des_sol.m_UA_total*1.E-3, ms_hx_des_sol.m_V_total,
 		ms_hx_des_sol.m_T_in_co2, ms_hx_des_sol.m_P_in_co2, ms_hx_des_sol.m_m_dot_co2);		//[M$]
+
+    ms_hx_des_sol.m_cost_bare_erected = calculate_bare_erected_cost(ms_hx_des_sol.m_cost_equipment);
 
 	return true;
 };
@@ -3395,7 +3423,7 @@ int C_CO2_to_air_cooler::C_MEQ_target_CO2_dP__L_tube_pass::operator()(double L_t
 	}
 	if (m_dot_air_solver_code != C_monotonic_eq_solver::CONVERGED)
 	{
-		if (m_dot_air_solver_code > C_monotonic_eq_solver::CONVERGED && fabs(m_dot_air_tol_solved) <= 0.1)
+		if (m_dot_air_solver_code > C_monotonic_eq_solver::CONVERGED && std::abs(m_dot_air_tol_solved) <= 0.1)
 		{
 			std::string error_msg = util::format("Air cooler iteration on air mass flow rate only reached a convergence "
 				"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
@@ -3512,7 +3540,7 @@ int C_CO2_to_air_cooler::C_MEQ_target_T_hot__width_parallel::operator()(double W
 	}
 	if (solver_code != C_monotonic_eq_solver::CONVERGED)
 	{
-		if (solver_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) <= 0.1)
+		if (solver_code > C_monotonic_eq_solver::CONVERGED && std::abs(tol_solved) <= 0.1)
 		{
 			std::string error_msg = util::format("Air cooler iteration on tube length only reached a convergence "
 				"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
@@ -3538,16 +3566,27 @@ int C_CO2_to_air_cooler::C_MEQ_target_T_hot__width_parallel::operator()(double W
 	return 0;
 }
 
-double C_CO2_to_air_cooler::calculate_cost(double UA /*kWt/K*/, double V_material /*m^3*/,
+double /*M$*/ C_CO2_to_air_cooler::calculate_equipment_cost(double UA /*kWt/K*/, double V_material /*m^3*/,
 	double T_hot_in /*K*/, double P_hot_in /*kPa*/, double m_dot_hot /*kg/s*/)
 {
 	switch (m_cost_model)
 	{
 	case C_CO2_to_air_cooler::E_CARLSON_17:
 		return 2.3*1.E-3*UA;		//[M$] needs UA in kWt/K
+    case C_CO2_to_air_cooler::E_WEILAND_19:
+        return 32.88*std::pow(UA*1.E3, 0.75)*1.E-6; //[M$] needs UA in Wt/K
 	default:
 		return std::numeric_limits<double>::quiet_NaN();
 	}
+}
+
+double /*M$*/ C_CO2_to_air_cooler::calculate_bare_erected_cost(double cost_equipment /*M$*/)
+{
+    // Weiland 2019
+    double frac_installation = 0.08;
+    double frac_labor = 0.12;
+
+    return cost_equipment * (1. + frac_installation + frac_labor);
 }
 
 void C_CO2_to_air_cooler::calc_air_props(double T_amb /*K*/, double P_amb /*Pa*/,
@@ -3699,7 +3738,7 @@ int co2_outlet_given_geom_and_air_m_dot(double T_co2_cold_out /*K*/, double m_do
 
                     if (h_co2_hot_solve_code != C_monotonic_eq_solver::CONVERGED)
                     {
-                        if (h_co2_hot_solve_code > C_monotonic_eq_solver::CONVERGED && fabs(h_co2_hot_tol_solved) <= 0.1)
+                        if (h_co2_hot_solve_code > C_monotonic_eq_solver::CONVERGED && std::abs(h_co2_hot_tol_solved) <= 0.1)
                         {
                             std::string error_msg = util::format("Air cooler iteration on nodal energy balance only reached a convergence "
                                 "= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
@@ -3759,7 +3798,7 @@ int co2_outlet_given_geom_and_air_m_dot(double T_co2_cold_out /*K*/, double m_do
                 iter_deltaP++;
 
             // Make sure this iterates at least once on pressure so that pressure moves through HX even if each node has small deltaP
-            } while (is_iter_deltaP && (fabs(diff_P_co2_out) > tol_pressure || iter_deltaP < 2));
+            } while (is_iter_deltaP && (std::abs(diff_P_co2_out) > tol_pressure || iter_deltaP < 2));
         }
     }
 
@@ -3866,7 +3905,7 @@ int C_CO2_to_air_cooler::off_design_given_fan_power(double T_amb /*K*/, double T
 
     if (T_co2_out_code != C_monotonic_eq_solver::CONVERGED)
     {
-        if (!(T_co2_out_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) < 0.1))
+        if (!(T_co2_out_code > C_monotonic_eq_solver::CONVERGED && std::abs(tol_solved) < 0.1))
         {
             return -2;
         }
@@ -3962,7 +4001,7 @@ int C_CO2_to_air_cooler::off_design_given_T_out(double T_amb /*K*/, double T_hot
 
 	if (m_dot_code != C_monotonic_eq_solver::CONVERGED)
 	{
-		if( !(m_dot_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) <= 0.1) )
+		if( !(m_dot_code > C_monotonic_eq_solver::CONVERGED && std::abs(tol_solved) <= 0.1) )
 		{
 			return -1;
 		}
@@ -4054,7 +4093,7 @@ int C_CO2_to_air_cooler::C_MEQ_od_air_mdot__T_co2_out::operator()(double m_dot_a
 
         iter_deltaP++;
 
-    } while (is_deltaP_iter && fabs(diff_P_hot_out) > m_tol_pressure);
+    } while (is_deltaP_iter && std::abs(diff_P_hot_out) > m_tol_pressure);
 
     m_P_co2_out = P_hot_out_guess;
 

@@ -1,24 +1,35 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 
 #ifndef _CMOD_BATTERY_COMMON_
 #define _CMOD_BATTERY_COMMON_ 1
@@ -91,6 +102,10 @@ struct batt_variables
     /*! Determines if the battery is allowed to discharge only when the load exceeds system output (false is more flexible)
         Applies to both automated and manual dispatch */
     bool batt_dispatch_discharge_only_load_exceeds_system;
+
+    /*! Determines if the battery charging takes priority over the PV meeting the load. True prioritizes battery charging
+        Only applies to manual dispatch */
+    bool batt_dispatch_batt_system_charge_first;
 
 	/*! Vector of periods and if battery can charge from PV*/
 	std::vector<bool> batt_can_charge;
@@ -218,6 +233,9 @@ struct batt_variables
 	int batt_cycle_cost_choice;
     std::vector<double> batt_cycle_cost;
 
+    /* Battery om costs */
+    std::vector<double> om_batt_variable_cost_per_kwh;
+
     /* PV Smoothing */
     ssc_number_t batt_dispatch_pvs_nameplate_ac;
     bool batt_dispatch_pvs_ac_lb_enable;
@@ -262,10 +280,13 @@ struct battstor
 	void initialize_time(size_t year, size_t hour_of_year, size_t step);
 
 	/// Run the battery for the current timestep, given the System power, load, and clipped power
-	void advance(var_table *vt, double P_gen, double V_gen=0, double P_load=0, double P_crit_load=0, double ac_loss_percent=0, double P_gen_clipped=0);
+    void advance(var_table* vt, double P_gen, double V_gen = 0, double P_load = 0, double P_crit_load = 0, double ac_wiring_loss = 0, double ac_loss_post_battery = 0, double P_gen_clipped = 0, double xfmr_ll = 0, double xfmr_nll = 0);
 
 	/// Given a DC connected battery, set the shared system (typically PV) and battery inverter
 	void setSharedInverter(SharedInverter * sharedInverter);
+
+    /// Given a DC connected battery, set the transformer rating for loss calculations
+    void setXfmrRating(double xfmrRating);
 
 	void outputs_fixed();
 	void outputs_topology_dependent();
@@ -300,6 +321,8 @@ struct battstor
 
 	/*! Use user-input battery dispatch */
 	bool input_custom_dispatch = false;
+
+    bool uses_forecast();
 
 	// for user schedule
 	void check_replacement_schedule();
@@ -378,7 +401,8 @@ struct battstor
         * outBatteryTemperature,
         * outCapacityThermalPercent,
         * outDispatchMode,
-        * outBatteryPower,
+        * outBatteryPowerAC,
+        * outBatteryPowerDC,
         * outGenPower,
         * outGenWithoutBattery,
         * outGridPower,
@@ -388,7 +412,8 @@ struct battstor
         * outFuelCellToLoad,
         * outGridPowerTarget,
         * outBattPowerTarget,
-        * outSystemToBatt,
+        * outSystemToBattAC,
+        * outSystemToBattDC,
         * outGridToBatt,
         * outFuelCellToBatt,
         * outSystemToGrid,
@@ -397,6 +422,7 @@ struct battstor
         * outFuelCellToGrid,
         * outBatteryConversionPowerLoss,
         * outBatterySystemLoss,
+        * outBatteryToInverterDC,
 		* outInterconnectionLoss,
 		* outCritLoadUnmet,
         * outCritLoad,

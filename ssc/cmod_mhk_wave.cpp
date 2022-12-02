@@ -1,24 +1,35 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 
 #include "core.h"
 #include "common.h"
@@ -40,12 +51,22 @@ static var_info _cm_vtab_mhk_wave[] = {
     { SSC_INPUT,           SSC_NUMBER,           "number_hours",                "Number of hours in wave time series",                                        "",     "",                       "MHKWave",      "?",                        "",                            "" },
     { SSC_INPUT,           SSC_NUMBER,           "number_records",                "Number of records in wave time series",                                        "",     "",                       "MHKWave",      "?",                        "",                            "" },
 
+    { SSC_INPUT,SSC_NUMBER  , "me_adjust:constant"                      , "Constant loss adjustment"                                       , "%"                                      , ""                                      , "Adjustment Factors"   , "?"              , "MAX=100"               , ""},
+    { SSC_INPUT,SSC_ARRAY   , "me_adjust:hourly"                        , "Hourly Adjustment Factors"                                      , "%"                                      , ""                                      , "Adjustment Factors"   , "?"              , "LENGTH=8760"           , ""},
+    { SSC_INPUT,SSC_ARRAY   , "me_adjust:timeindex"                        , "Lifetime Adjustment Factors"                                      , "%"                                      , ""                                      , "Adjustment Factors"   , "?"              , "LENGTH=8760"           , ""},
+    { SSC_INPUT,SSC_MATRIX  , "me_adjust:periods"                       , "Period-based Adjustment Factors"                                , "%"                                      , "n x 3 matrix [ start, end, loss ]"     , "Adjustment Factors"   , "?"              , "COLS=3"                , ""},
+
     { SSC_INPUT,			SSC_NUMBER,			"device_rated_power",				"Rated capacity of device",													"kW",			"",				"MHKWave",			"*",		"",						"" },
     { SSC_INPUT,			SSC_NUMBER,			"fixed_charge_rate",						"FCR from LCOE Cost page",									"",				"",             "MHKWave",         "?=1",                      "",				"" },
     { SSC_INPUT,			SSC_NUMBER,			"device_costs_total",						"Device costs",									"$",				"",             "MHKWave",         "?=1",                      "",				"" },
     { SSC_INPUT,			SSC_NUMBER,			"balance_of_system_cost_total",						"BOS costs",									"$",				"",             "MHKWave",         "?=1",                      "",				"" },
     { SSC_INPUT,			SSC_NUMBER,			"financial_cost_total",						"Financial costs",									"$",				"",             "MHKWave",         "?=1",                      "",				"" },
     { SSC_INPUT,			SSC_NUMBER,			"total_operating_cost",						"O&M costs",									"$",				"",             "MHKWave",         "?=1",                      "",				"" },
+
+    { SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",                  "Generic lifetime simulation",                               "0/1",      "",                              "Lifetime",             "?=0",                        "INTEGER,MIN=0,MAX=1",          "" },
+    { SSC_INPUT,        SSC_NUMBER,      "analysis_period",                             "Lifetime analysis period",                             "years",    "",                              "Lifetime",             "system_use_lifetime_output=1",   "",                             "" },
+    { SSC_INPUT,        SSC_ARRAY,       "generic_degradation",                              "Annual AC degradation",                            "%/year",   "",                              "Lifetime",             "system_use_lifetime_output=1",   "",                             "" },
+
 
     // losses
 	{ SSC_INPUT,			SSC_NUMBER,			"loss_array_spacing",				"Array spacing loss",													"%",			"",				"MHKWave",			"*",		"",						"" },
@@ -64,6 +85,8 @@ static var_info _cm_vtab_mhk_wave[] = {
 	{ SSC_OUTPUT,			SSC_NUMBER,			"device_average_power",					"Average power production of a single device",											"kW",			"",				"MHKWave",			"*",						"",							"" },
 	{ SSC_OUTPUT,			SSC_NUMBER,			"annual_energy",						"Annual energy production of array",											"kWh",			"",				"MHKWave",			"*",						"",							"" },
     { SSC_OUTPUT,           SSC_ARRAY,          "energy_hourly_kWh",                        "Energy production of array",                                            "kWh",          "", "Time Series",          "wave_resource_model_choice=1",                        "",          "" },
+    { SSC_OUTPUT,           SSC_ARRAY,          "energy_hourly_kW",                        "Power output of array",                                            "kW",          "", "Time Series",          "wave_resource_model_choice=1",                        "",          "" },
+
     { SSC_OUTPUT,           SSC_ARRAY,          "gen",                        "System power generated",                                            "kW",          "", "Time Series",          "",                        "",          "" },
 
     { SSC_OUTPUT,           SSC_ARRAY,          "sig_wave_height_index_mat",            "Wave height index locations for time series",                      "m",                         "", "MHKWave",          "wave_resource_model_choice=1",                        "",          "" },
@@ -73,7 +96,7 @@ static var_info _cm_vtab_mhk_wave[] = {
     { SSC_OUTPUT,           SSC_ARRAY,          "energy_period_data",            "Energy period time series data",                      "s",                         "", "MHKWave",          "wave_resource_model_choice=1",                        "",          "" },
 
     { SSC_OUTPUT,           SSC_ARRAY,          "wave_power_index_mat",            "Wave power for time series",                      "kW",                         "", "MHKWave",          "wave_resource_model_choice=1",                        "",          "" },
-    { SSC_OUTPUT,			SSC_NUMBER,			"capacity_factor",						"Capacity Factor",													"%",			"",				"MHKWave",			"*",						"",							"" },
+    { SSC_OUTPUT,			SSC_NUMBER,			"capacity_factor",						"Capacity factor",													"%",			"",				"MHKWave",			"*",						"",							"" },
     { SSC_OUTPUT,			SSC_NUMBER,			"numberRecords",						"Number of Records",													"",			"",				"MHKWave",			"",						"",							"" },
     { SSC_OUTPUT,			SSC_NUMBER,			"numberHours",						"Number of Hours",													"",			"",				"MHKWave",			"",						"",							"" },
 
@@ -168,12 +191,10 @@ protected:
 
 class wavedata : public wave_data_provider
 {
-    util::matrix_t<double> wave_resource_matrix_data;
-    std::string stdErrorMsg;
 public:
     explicit wavedata(int wave_resource_model_choice, var_data* data_table);
 
-
+    
     size_t nrecords(int wave_resource_model_choice);
 
     ssc_number_t get_number(var_data* v, const char* name);
@@ -182,24 +203,16 @@ public:
     util::matrix_t<double> get_matrix(var_data* v, const char* var_name, size_t* nrows, size_t* ncols);
     std::string get_string(var_data* v, const char* name);
 
-    std::string get_stdErrorMsg() { return stdErrorMsg; };
 };
 
 wavedata::wavedata(int wave_resource_model_choice, var_data* data_table) //wavedata class for specifying wave resource inputs in a table for pysam
 {
 
-    stdErrorMsg = "wave data must be an SSC table variable with fields: "
-        "(string): name, city, state, country, sea_bed, data_source, notes, "
-        "(number): lat, lon, nearby_buoy_number, average_power_flux, bathymetry, tz, "
-        "(array): significant_wave_height, energy_period";
-
-    if (data_table->type != SSC_TABLE) //Datatype must be table 
+    if (!data_table  || data_table->type != SSC_TABLE) //Datatype must be table
     {
-        m_errorMsg = stdErrorMsg;
+        m_errorMsg = "wave data must be an SSC table variable with fields: (string): name, city, state, country, sea_bed, data_source, notes, (number): lat, lon, nearby_buoy_number, average_power_flux, bathymetry, tz, (array): significant_wave_height, energy_period";
         return;
     }
-
-
 
     lat = get_number(data_table, "lat"); //Latitude of wave resource data
     lon = get_number(data_table, "lon"); //Longitude of wave resource data
@@ -300,9 +313,9 @@ size_t wavedata::nrecords(int wave_resource_model_choice) //Returns array size o
             return (size_t)std::numeric_limits<ssc_number_t>::quiet_NaN(); //Return nan is array sizes do not match
     }
     else {
-        m_nRecords = wave_resource_matrix_data.nrows();
+        m_nRecords = m_wave_resource_matrix_data.nrows();
         if (m_nRecords == 21)
-            return wave_resource_matrix_data.nrows();
+            return m_wave_resource_matrix_data.nrows();
         else
             return (size_t)std::numeric_limits<ssc_number_t>::quiet_NaN(); //return NaN if rows != 21
     }
@@ -398,12 +411,11 @@ public:
         
         //Read and store wave resource and power matrix as a 2D matrix of vectors:
         util::matrix_t<double>  wave_resource_matrix;
-        smart_ptr<wave_data_provider>::ptr wave_dp; //Wave data provider class for table definition of resource data for SDK
+        std::unique_ptr<wave_data_provider> wave_dp; //Wave data provider class for table definition of resource data for SDK
         if (is_assigned("wave_resource_data")) { //Check for table variable assignment
             wave_dp = std::unique_ptr<wave_data_provider>(new wavedata(wave_resource_model_choice, lookup("wave_resource_data"))); //Assign varible to data provider class
-            if (!wave_dp->error().empty()) { //Check for empty table
+            if (!(wave_dp->error()=="")) { //Check for empty table
                 throw exec_error("mhk_wave", wave_dp->error()); //Throw error if empty
-                return; //End module here if empty table is provided
             }
         }
         if (is_assigned("wave_resource_matrix")) //If wave resource matrix is assigned (may not be 
@@ -469,6 +481,7 @@ public:
             std::vector<int> day;
             std::vector<int> hour;
             std::vector<int> minute;
+
             if (is_assigned("significant_wave_height") && is_assigned("energy_period")) { //Check if wave height and period variables are assigned
                 //number_records = as_integer("number_records");
                 //number_hours = as_integer("number_hours");
@@ -531,8 +544,45 @@ public:
             else if (!is_assigned("significant_wave_height") || !is_assigned("energy_period")) //Both heights and periods must be assigned
                 throw exec_error("mhk_wave", "Wave height and Energy period arrays of equal length must be assigned");
 
-            ssc_number_t* energy_hourly_kWh = allocate("energy_hourly_kWh", number_records);
-            ssc_number_t* energy_hourly_gen = allocate("gen", number_records);
+            bool system_use_lifetime_output = (as_integer("system_use_lifetime_output") == 1);
+            size_t nyears = 1;
+            std::vector<ssc_number_t> sys_degradation;
+            size_t number_records_gen = number_records;
+
+            
+            /*
+            adjustment_factors haf(this, "me_adjust");
+            if (!haf.setup(number_records))
+                throw exec_error("mewave", "failed to setup adjustment factors: " + haf.error());
+            double haf_input[2920];*/
+            
+
+            if (system_use_lifetime_output)
+            {
+                nyears = as_integer("analysis_period");
+                number_records_gen *= nyears;
+                sys_degradation.reserve(nyears);
+                // setup system degradation
+                size_t i, count_degrad = 0;
+                ssc_number_t* degrad = 0;
+                degrad = as_array("generic_degradation", &count_degrad);
+
+                if (count_degrad == 1)
+                {
+                    for (i = 0; i < nyears; i++)
+                        sys_degradation.push_back((ssc_number_t)pow((1.0 - (double)degrad[0] / 100.0), i));
+                }
+                else if (count_degrad > 0)
+                {
+                    for (i = 0; i < nyears && i < (int)count_degrad; i++) sys_degradation.push_back((ssc_number_t)(1.0 - (double)degrad[i] / 100.0));
+                }
+            }
+            else {
+                sys_degradation.push_back(1); // single year mode - degradation handled in financial models.
+            }
+            ssc_number_t* energy_hourly_kWh = allocate("energy_hourly_kWh", number_records_gen);
+            ssc_number_t* energy_hourly_kW = allocate("energy_hourly_kW", number_records_gen * 3); //8760 of kW values
+            ssc_number_t* energy_hourly_gen = allocate("gen", number_records_gen);
             ssc_number_t* sig_wave_height_index_mat = allocate("sig_wave_height_index_mat", number_records);
             ssc_number_t* sig_wave_height_data = allocate("sig_wave_height_data", number_records);
             ssc_number_t* energy_period_index_mat = allocate("energy_period_index_mat", number_records);
@@ -569,86 +619,97 @@ public:
                 }
             }
 
-            for (size_t i = 0; i < size_t(number_records); i++) {
-                ts_significant_wave_height = wave_height_input[i];
-                ts_energy_period = wave_period_input[i];
-                sig_wave_height_index = 0;
-                energy_period_index = 0;
-                //Significant Wave Height
-                if (ts_significant_wave_height < 0) {
-                    sig_wave_height_index = 1;
-                    sig_wave_height_index_mat[i] = 1;
-                }
-                else if (ts_significant_wave_height > 9.75) {
-                    sig_wave_height_index = wave_power_matrix.nrows() - 1;
-                    sig_wave_height_index_mat[i] = wave_power_matrix.nrows() - 1;
-                }
-                else {
-                    for (ssc_number_t j = 1; j < (ssc_number_t)wave_power_matrix.nrows(); j++) {
-                        if (abs(ts_significant_wave_height - wave_power_matrix.at(size_t(j), 0)) <= 0.25) { //Find which height is closest to height at current timestep
-                            sig_wave_height_index = j;
-                            sig_wave_height_index_mat[i] = sig_wave_height_index; //Store height index location in time series array
+            for (size_t y = 0; y < nyears; y++) {
+                for (size_t i = 0; i < size_t(number_records); i++) {
+                    if (y == 0) {
+                        ts_significant_wave_height = wave_height_input[i];
+                        ts_energy_period = wave_period_input[i];
+                        sig_wave_height_index = 0;
+                        energy_period_index = 0;
+                        //Significant Wave Height
+                        if (ts_significant_wave_height < 0) {
+                            sig_wave_height_index = 1;
+                            sig_wave_height_index_mat[i] = 1;
                         }
-                    }
-                }
-                //Energy Period
-                if (ts_energy_period < 0) {
-                    energy_period_index = 1;
-                    energy_period_index_mat[i] = 1;
-                }
-                else if (ts_energy_period > 20.5) {
-                    energy_period_index = wave_power_matrix.ncols() - 1;
-                    energy_period_index_mat[i] = wave_power_matrix.ncols() - 1;
-                }
-                else {
-                    for (ssc_number_t m = 1; m < (ssc_number_t)wave_power_matrix.ncols(); m++) {
-                        if (abs(ts_energy_period - wave_power_matrix.at(0, size_t(m))) <= 0.50) {
-                            energy_period_index = m;
-                            energy_period_index_mat[i] = energy_period_index;
+                        else if (ts_significant_wave_height > 9.75) {
+                            sig_wave_height_index = wave_power_matrix.nrows() - 1;
+                            sig_wave_height_index_mat[i] = wave_power_matrix.nrows() - 1;
                         }
-                    }
-                }
+                        else {
+                            for (ssc_number_t j = 1; j < (ssc_number_t)wave_power_matrix.nrows(); j++) {
+                                if (std::abs(ts_significant_wave_height - wave_power_matrix.at(size_t(j), 0)) <= 0.25) { //Find which height is closest to height at current timestep
+                                    sig_wave_height_index = j;
+                                    sig_wave_height_index_mat[i] = sig_wave_height_index; //Store height index location in time series array
+                                }
+                            }
+                        }
+                        //Energy Period
+                        if (ts_energy_period < 0) {
+                            energy_period_index = 1;
+                            energy_period_index_mat[i] = 1;
+                        }
+                        else if (ts_energy_period > 20.5) {
+                            energy_period_index = wave_power_matrix.ncols() - 1;
+                            energy_period_index_mat[i] = wave_power_matrix.ncols() - 1;
+                        }
+                        else {
+                            for (ssc_number_t m = 1; m < (ssc_number_t)wave_power_matrix.ncols(); m++) {
+                                if (std::abs(ts_energy_period - wave_power_matrix.at(0, size_t(m))) <= 0.50) {
+                                    energy_period_index = m;
+                                    energy_period_index_mat[i] = energy_period_index;
+                                }
+                            }
+                        }
 
-                if (sig_wave_height_index == 0 || energy_period_index == 0) {
-                    throw exec_error("mhk_wave", "The wave conditions at timestep" + to_string(i) + "were not able to be located in the power matrix. Please check your resource file");
-                }
+                        if (sig_wave_height_index == 0 || energy_period_index == 0) {
+                            throw exec_error("mhk_wave", "The wave conditions at timestep" + to_string(i) + "were not able to be located in the power matrix. Please check your resource file");
+                        }
+
+
+                        //n-hour energy based on wave power matrix value at height and period best matching the time series inputs * number devices * size multiplier
+                        //First check that indexed power does not exceed maximum system power
+                        if (wave_power_matrix.at(size_t(sig_wave_height_index), size_t(energy_period_index)) > device_rated_capacity)
+                            throw exec_error("mhk_wave", "The device power calculated from the wave height and wave period exceeds the maximum power matrix value at index" + to_string(i) + ". Please check the wave conditions.");
+                    }
                 
-
-                //n-hour energy based on wave power matrix value at height and period best matching the time series inputs * number devices * size multiplier
-                //First check that indexed power does not exceed maximum system power
-                if (wave_power_matrix.at(size_t(sig_wave_height_index), size_t(energy_period_index)) > device_rated_capacity)
-                    throw exec_error("mhk_wave", "The device power calculated from the wave height and wave period exceeds the maximum power matrix value at index" + to_string(i) + ". Please check the wave conditions.");
-                energy_hourly_kWh[i] = (ssc_number_t)(wave_power_matrix.at(size_t(sig_wave_height_index), size_t(energy_period_index))) * hour_step * (1 - total_loss / 100) * number_devices;
-                p_annual_energy_dist[size_t(sig_wave_height_index) * 22 + size_t(energy_period_index)] += energy_hourly_kWh[i]; //Add energy for given time step to height x period distribution matrix at specified grid point
-                energy_hourly_gen[i] = (ssc_number_t)(wave_power_matrix.at(size_t(sig_wave_height_index), size_t(energy_period_index))) * (1 - total_loss / 100) * number_devices; //Store in gen to use in heatmap output (probably don't need two variables)
-                //energy_hourly_gen[i*3+1] = energy_hourly[i]; //Store in gen to use in heatmap output (probably don't need two variables)
-                //energy_hourly_gen[i*3+2] = energy_hourly[i]; //Store in gen to use in heatmap output (probably don't need two variables)
-
-                //iday = floor(double(i * 3) / 24); //Calculate day of year
-                if (month[i] == 1)
-                    iday = day[i];
-                else
-                    iday = days_in_month[size_t(month[i]) - 2] + day[i];
-                //ihour = fmod(i * 3, 24); //Calculate hour of day
-                ihour = hour[i];
-                for (size_t d = 0; d < days_in_year; d++) {
-                    for (size_t h = 0; h < 9; h++) {
-                        if (iday == d && ihour == size_t(3 * (h - 1))) {
-                            p_annual_energy_dist_time[h * days_in_year + d] += energy_hourly_kWh[i]; //Add energy for time step to time distribution matrix at day and hour of current timestep
-                            break; //Get out of loop once day and hour match is found
+                    energy_hourly_kWh[y * number_records + i] = (ssc_number_t)(wave_power_matrix.at(size_t(sig_wave_height_index), size_t(energy_period_index))) * hour_step * (1 - total_loss / 100) * sys_degradation[y] * number_devices;
+                    if (y == 0)
+                        p_annual_energy_dist[size_t(sig_wave_height_index_mat[i]) * 22 + size_t(energy_period_index_mat[i])] += energy_hourly_kWh[i]; //Add energy for given time step to height x period distribution matrix at specified grid point
+                    energy_hourly_gen[y * number_records + i] = (ssc_number_t)(wave_power_matrix.at(size_t(sig_wave_height_index_mat[i]), size_t(energy_period_index_mat[i]))) * (1 - total_loss / 100) * sys_degradation[y] * number_devices; //Store in gen to use in heatmap output (probably don't need two variables)
+                    //energy_hourly_gen[i*3+1] = energy_hourly[i]; //Store in gen to use in heatmap output (probably don't need two variables)
+                    //energy_hourly_gen[i*3+2] = energy_hourly[i]; //Store in gen to use in heatmap output (probably don't need two variables)
+                    energy_hourly_kW[y * (number_records * 3) + (i * 3)] = energy_hourly_gen[y * number_records + i];
+                    energy_hourly_kW[y * (number_records * 3) + (i * 3) + 1] = energy_hourly_gen[y * number_records + i];
+                    energy_hourly_kW[y * (number_records * 3) + (i * 3) + 2] = energy_hourly_gen[y * number_records + i];
+                    //iday = floor(double(i * 3) / 24); //Calculate day of year
+                    if (y == 0) {
+                        if (month[i] == 1)
+                            iday = day[i];
+                        else
+                            iday = days_in_month[size_t(month[i]) - 2] + day[i];
+                        //ihour = fmod(i * 3, 24); //Calculate hour of day
+                        ihour = hour[i];
+                        for (size_t d = 0; d < days_in_year; d++) {
+                            for (size_t h = 0; h < 9; h++) {
+                                if (iday == d && ihour == size_t(3 * (h - 1))) {
+                                    p_annual_energy_dist_time[h * days_in_year + d] += energy_hourly_kWh[i]; //Add energy for time step to time distribution matrix at day and hour of current timestep
+                                    break; //Get out of loop once day and hour match is found
+                                }
+                            }
                         }
+                        /*
+                        sig_wave_height_index_mat[i] = (ssc_number_t)(wave_power_matrix.at(size_t(sig_wave_height_index), 0)); //Store height values closest to those in time series array
+                        sig_wave_height_data[i] = ts_significant_wave_height;
+                        energy_period_index_mat[i] = (ssc_number_t)(wave_power_matrix.at(0, size_t(energy_period_index))); //Store wave period values closest to those in time series input array
+                        energy_period_data[i] = ts_energy_period;
+                        */
+                        wave_power_index_mat[i] = (ssc_number_t)(wave_power_matrix.at(size_t(sig_wave_height_index), size_t(energy_period_index))); //Store wave power used in each time step based on closest height and period from time series input arrays
+                        annual_energy += energy_hourly_kWh[i]; //Sum up to annual energy
+                        //device_average_power += energy_hourly[i] / 8760;
+                        device_average_power += energy_hourly_kWh[i] / (number_hours * (1 - total_loss / 100) * number_devices); //Average for device average power
+
                     }
                 }
-                sig_wave_height_index_mat[i] = (ssc_number_t)(wave_power_matrix.at(size_t(sig_wave_height_index), 0)); //Store height values closest to those in time series array
-                sig_wave_height_data[i] = ts_significant_wave_height;
-                energy_period_index_mat[i] = (ssc_number_t)(wave_power_matrix.at(0, size_t(energy_period_index))); //Store wave period values closest to those in time series input array
-                energy_period_data[i] = ts_energy_period;
-                wave_power_index_mat[i] = (ssc_number_t)(wave_power_matrix.at(size_t(sig_wave_height_index), size_t(energy_period_index))); //Store wave power used in each time step based on closest height and period from time series input arrays
-                annual_energy += energy_hourly_kWh[i]; //Sum up to annual energy
-                //device_average_power += energy_hourly[i] / 8760;
-                device_average_power += energy_hourly_kWh[i] / (number_hours * (1 - total_loss / 100) * number_devices); //Average for device average power
-
-
             }
             p_annual_energy_dist[0] = 0; //set top left corner of matrix to 0
             p_annual_energy_dist_time[0] = 0; //set top left corner of matrix to 0

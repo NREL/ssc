@@ -10,8 +10,8 @@ elseif (DEFINED ENV{GTEST})
     set(GTDIR $ENV{GTEST})
 endif()
 
-include_directories(${GTDIR}/include ${GTDIR}/googletest/include . input_cases shared_test ssc_test tcs_test
-						../ssc ../tcs ../solarpilot ../shared ../splinter ../jsoncpp/include )
+include_directories(${GTDIR}/include ${GTDIR}/googletest/include ${GTDIR}/googletest/include/gtest . input_cases shared_test ssc_test tcs_test
+						../ssc ../tcs ../solarpilot ../shared ../splinter )
 
 file(GLOB SSC_TESTS ssc_test/*.cpp)
 file(GLOB SSC_TESTS_HEADERS ssc_test/*.h)
@@ -76,12 +76,11 @@ endif()
 #####################################################################################################################
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug" OR MSVC)
-find_library( GTESTD_LIB
-        NAMES libgtestd.a gtestd.lib libgtestd.so
-        PATHS $ENV{GTESTD_DIR} ${GTDIR}/build/lib ${GTDIR}/build/lib/Debug)
-target_link_libraries(Test debug ${GTESTD_LIB})
+    find_library( GTESTD_LIB
+            NAMES libgtest.a gtest.lib libgtest.so
+            PATHS $ENV{GTEST_DIR} ${GTDIR}/build/lib ${GTDIR}/build/lib/Debug)
+    target_link_libraries(Test debug ${GTESTD_LIB})
 endif()
-
 if (CMAKE_BUILD_TYPE STREQUAL "Release" OR MSVC)
     find_library( GTEST_LIB
             NAMES libgtest.a gtest.lib libgtest.so

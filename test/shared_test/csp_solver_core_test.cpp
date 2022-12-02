@@ -14,6 +14,7 @@
 #include "../tcs/csp_solver_two_tank_tes.h"
 #include "../tcs/csp_solver_tou_block_schedules.h"
 #include "../tcs/csp_dispatch.h"
+
 /**
  * This class tests the C_csp_weatherreader's functions and ensures that the interface is the
  * same using weatherfile & weatherdata as weather inputs. The test also tests for variable
@@ -57,16 +58,19 @@ protected:
 
 class UsingDataCaseWeatherReader : public CspWeatherReaderTest {
     var_data* data;
+    var_table* table;
 protected:
     void SetUp() {
         CspWeatherReaderTest::SetUp();
         sim_info.ms_ts.m_step = 3600;
         sim_info.ms_ts.m_time_start = 0;
-        data = create_weatherdata_array(8760); // allocates memory for weatherdata
-        wr.m_weather_data_provider = make_shared<weatherdata>(data);
+        table = create_weatherdata_array(8760); // allocates memory for weatherdata
+        data = new var_data(*table);
+        wr.m_weather_data_provider = make_shared<weatherdata>((data));
     }
     void TearDown() {
-        free_weatherdata_array(data);
+        free_weatherdata_array(table);
+        delete data;
     }
 };
 
@@ -244,7 +248,7 @@ protected:
         sim_setup.m_sim_time_start = 0;
         sim_setup.m_sim_time_start = 31536000;
         sim_setup.m_report_step = 3600.0;
-        solver = new C_csp_solver(wr, *cr, *pc, tes, tou, dispatch, system, NULL, ssc_cmod_update, (void*)0);
+        solver = new C_csp_solver(wr, *cr, *pc, tes, tou, dispatch, system, NULL, nullptr, ssc_cmod_update, (void*)0);
     }
 };
 

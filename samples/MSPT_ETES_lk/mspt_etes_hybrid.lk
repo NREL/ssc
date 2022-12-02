@@ -1,19 +1,42 @@
 clear();
+var( 'time_start', 0 );
+var( 'time_stop', 31536000 );
+//var( 'time_stop', 5*24*3600);
+
+//clear-sky control for testing
+//var("rec_clearsky_model", 1);
+//var("rec_clearsky_fraction", 1);
 
 // Does MSPT include parallel heater?
 // ... 0 = no parallel heater (default), 1 = parallel heater
 var( 'is_parallel_htr', 1);
 // Heater design parameters - required if is_parallel_htr = 1
-var( 'heater_mult', 1); 
+var( 'heater_mult', 2.0); 
 var( 'f_q_dot_des_allowable_su', 1.0);
 var( 'hrs_startup_at_max_rate', 0.25);
 var( 'f_q_dot_heater_min', 0.25);
+var( 'heater_spec_cost', 104.);		//[$/kWt] new var added 1.20.22
+
+var( 'can_cycle_use_standby', 0);  // Toggles cycle standby option in dispatch
+var( 'is_dispatch', 1 );
+var( 'disp_max_iter', 450000 );
+var( 'disp_timeout', 30 );
+var( 'disp_time_weighting', 0.999 ); //0.989999999999
+var( 'disp_pen_ramping', 1.0 ); // Scaled to MW
+var( 'disp_rsu_cost_rel', 1.7 );
+var( 'disp_csu_cost_rel', 87 );
+var( 'disp_hsu_cost_rel', 0.015 );
+var( 'dispatch_factors_ts', real_array(read_text_file('LCGS_price_multipliers.csv')));
+
+var( 'tshours', 10 );
+var( 'solarm', 2.4);
+var( 'field_model_type', 1 );
 
 var( 'solar_resource_file', '../../test/input_cases/moltensalt_data/daggett_ca_34.865371_-116.783023_psmv3_60_tmy.csv' );
 var( 'csp_financial_model', 1 );
-var( 'ppa_multiplier_model', 0 );
-var( 'dispatch_factors_ts', real_array(read_text_file('dispatch_factors_ts.csv')));
-var( 'field_model_type', 2 );
+var( 'ppa_multiplier_model', 1 );	//Has to be 1 for dispatch_factors_ts
+var( 'ppa_soln_mode', 1 );
+
 var( 'gross_net_conversion_factor', 0.90000000000000002 );
 var( 'helio_width', 12.199999999999999 );
 var( 'helio_height', 12.199999999999999 );
@@ -79,8 +102,6 @@ var( 'T_htf_cold_des', 290 );
 var( 'T_htf_hot_des', 574 );
 var( 'P_ref', 115 );
 var( 'design_eff', 0.41199999999999998 );
-var( 'tshours', 10 );
-var( 'solarm', 2.3999999999999999 );
 var( 'N_panels', 20 );
 var( 'd_tube_out', 40 );
 var( 'th_tube', 1.25 );
@@ -96,7 +117,7 @@ var( 'rec_su_delay', 0.20000000000000001 );
 var( 'rec_qf_delay', 0.25 );
 var( 'csp.pt.rec.max_oper_frac', 1.2 );
 var( 'eta_pump', 0.84999999999999998 );
-var( 'piping_loss', 10200 );
+var( 'piping_loss_coefficient', 2 );
 var( 'piping_length_mult', 2.6000000000000001 );
 var( 'piping_length_const', 0 );
 var( 'is_rec_model_trans', 0 );
@@ -176,8 +197,6 @@ var( 'tech_type', 1 );
 var( 'ud_f_W_dot_cool_des', 0 );
 var( 'ud_m_dot_water_cool_des', 0 );
 var( 'ud_ind_od', csvread('ud_ind_od.csv'));
-var( 'time_start', 0 );
-var( 'time_stop', 31536000 );
 var( 'pb_fixed_par', 0.0054999999999999997 );
 var( 'aux_par', 0.023 );
 var( 'aux_par_f', 1 );
@@ -217,16 +236,9 @@ var( 'weekend_schedule',
 [ 3, 3, 3, 3, 3, 3, 3, 3, 5, 5, 5, 5, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3 ], 
 [ 3, 3, 3, 3, 3, 3, 3, 3, 5, 5, 5, 5, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3 ] ] );
 var( 'is_tod_pc_target_also_pc_max', 0 );
-var( 'is_dispatch', 0 );
 var( 'disp_horizon', 48 );
 var( 'disp_frequency', 24 );
-var( 'disp_max_iter', 35000 );
-var( 'disp_timeout', 5 );
 var( 'disp_mip_gap', 0.001 );
-var( 'disp_time_weighting', 0.98999999999999999 );
-var( 'disp_rsu_cost', 950 );
-var( 'disp_csu_cost', 10000 );
-var( 'disp_pen_delta_w', 0.10000000000000001 );
 var( 'disp_inventory_incentive', 0.14999999999999999 );
 var( 'is_wlim_series', 0 );
 var( 'wlim_series', real_array(read_text_file('wlim_series.csv')));
@@ -299,7 +311,6 @@ var( 'analysis_period', 25 );
 var( 'grid_curtailment', real_array(read_text_file('grid_curtailment.csv')));
 var( 'enable_interconnection_limit', 0 );
 var( 'grid_interconnection_limit_kwac', 20000 );
-var( 'ppa_soln_mode', 0 );
 var( 'ppa_price_input', [ 0.13 ] );
 var( 'ppa_escalation', 1 );
 var( 'federal_tax_rate', [ 21 ] );
@@ -510,6 +521,100 @@ var( 'batt_salvage_percentage', 0 );
 run('tcsmolten_salt');
 run('grid');
 run('singleowner');
+
+output_vars = ["dispatch_factors_ts", "pricing_mult", 
+				"P_out_net", "gen", "defocus", "Q_thermal", "q_startup",
+				"P_cycle", "q_pb", "eta", "q_dot_pc_startup", "q_pc_startup", 
+				"q_dot_heater_to_htf", "q_dot_heater_startup", 
+				"q_dc_tes", "q_ch_tes", "e_ch_tes",
+				//Dispatch outputs
+				"q_dot_pc_target", "is_rec_su_allowed", "is_pc_su_allowed", "is_pc_sb_allowed", "is_PAR_HTR_allowed", 
+				"q_dot_elec_to_PAR_HTR", "disp_qsf_expected", "disp_qsfprod_expected",
+				"disp_qsfsu_expected", "disp_wpb_expected", "disp_tes_expected", "disp_solve_state", "disp_subopt_flag",
+				"disp_solve_iter", "disp_objective", "disp_obj_relax", "disp_rel_mip_gap", 
+				"disp_solve_state", "disp_rev_expected", "disp_presolve_nconstr", "disp_presolve_nvar", "disp_solve_time"];
+
+for (i = 0; i< #output_vars; i++)
+{
+	outputs{output_vars[i]} = var(output_vars[i]);
+}
+
+csvwrite("outputs.csv", outputs);
+
+// calculating dispatch stop conditions
+subopt_count = {'optimal_solves' = 0,
+				'iteration_stop' = 0,
+				'timeout_stop' = 0,
+				'gap_abort' = 0,
+				'gap_lpsolve' = 0};
+
+subopt_flag = var("disp_subopt_flag");
+for (t = 0; t< #subopt_flag; t=t+24)
+{
+	if (subopt_flag[t] == 0){
+		subopt_count{'optimal_solves'} ++;
+	}
+	elseif (subopt_flag[t] == 1){
+		subopt_count{'iteration_stop'} ++;
+	}
+	elseif (subopt_flag[t] == 2){
+		subopt_count{'timeout_stop'} ++;	
+	}
+	elseif (subopt_flag[t] == 3){
+		subopt_count{'gap_abort'} ++;	
+	}
+	elseif (subopt_flag[t] == 4){
+		subopt_count{'gap_lpsolve'} ++;	
+	}
+}
+
+revenue = 0;
+price_mult = var("dispatch_factors_ts");
+ppa_year1 = var("ppa_price_input")[0];
+gen = var("gen");
+for (t = 0; t < #gen; t++) {
+	revenue += price_mult[t] * gen[t] / 1000.; // kWh -> MWh 
+	// * ppa_year1 * 1000. 
+}
+
+cycle_start_count = 0;
+startup_heat = var("q_pc_startup");
+for (t = 1; t < #startup_heat; t++) {
+	if (startup_heat[t] > 0 && startup_heat[t-1] == 0) {
+		cycle_start_count ++;
+	}
+}
+
+// Calculating number of equipment starts
+receiver_start_count = 0;
+startup_heat = var("q_startup");
+for (t = 1; t < #startup_heat; t++) {
+	if (startup_heat[t] > 0 && startup_heat[t-1] == 0) {
+		receiver_start_count ++;
+	}
+}
+
+// Calculating number of equipment starts
+heater_start_count = 0;
+startup_heat = var("q_dot_heater_startup");
+for (t = 1; t < #startup_heat; t++) {
+	if (startup_heat[t] > 0 && startup_heat[t-1] == 0) {
+		heater_start_count ++;
+	}
+}
+
+outln("Annual revenue ", revenue);
+outln('Annual cycle starts ' + cycle_start_count);
+outln('Annual receiver starts ' + receiver_start_count);
+outln('Annual heater starts ' + heater_start_count);
+
+outln('Annual heater load (dispatched) ' + sum(var('q_dot_elec_to_PAR_HTR')));
+outln('Annual heater load ' + sum(var('q_dot_heater_to_htf')));
+outln('Annual cycle gross (dispatched) ' + sum(var('disp_wpb_expected')));
+outln('Annual cycle gross ' + var('annual_W_cycle_gross'));
+outln('Annual receiver generation (dispatched)' + sum(var('disp_qsfprod_expected')));
+outln('Annual receiver generation ' + sum(var('Q_thermal')));
+
 outln('Annual energy (year 1) ' + var('annual_energy'));
 outln('Capacity factor (year 1) ' + var('capacity_factor'));
 outln('Annual Water Usage ' + var('annual_total_water_use'));
@@ -526,3 +631,12 @@ outln('IRR at end of project ' + var('project_return_aftertax_irr'));
 outln('Net capital cost ' + var('cost_installed'));
 outln('Equity ' + var('size_of_equity'));
 outln('Size of debt ' + var('size_of_debt'));
+
+outln("Total dispatch objective: ", var('disp_objective_ann'));
+outln("Total dispatch solve time: ", var('disp_solve_time_ann'));
+
+outln("Number of subopt days: ", var('disp_solve_state_ann'));
+outln("\tNumber of solves that stopped due to iterations: ", subopt_count{'iteration_stop'});
+outln("\tNumber of solves that timed out: ", subopt_count{'timeout_stop'});
+outln("\tNumber of solves that aborted due to external gap: ", subopt_count{'gap_abort'});
+outln("\tNumber of subopt that aborted due to lpsolve gap: ", subopt_count{'gap_lpsolve'});

@@ -1,23 +1,33 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "csp_solver_pt_sf_perf_interp.h"
@@ -38,9 +48,11 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define zen_scale 1.570781477 
 #define eff_scale 0.7
 
-C_pt_sf_perf_interp::C_pt_sf_perf_interp()
+C_pt_sf_perf_interp::C_pt_sf_perf_interp(double A_rec_active_total /*m2*/)
 {
-	m_p_start = m_p_track = m_hel_stow_deploy = m_v_wind_max = std::numeric_limits<double>::quiet_NaN();
+    m_A_rec_active_total = A_rec_active_total;  //[m2]
+
+	m_p_start = m_p_track = m_hel_stow_deploy = m_v_wind_max = m_A_rec_flux_node = std::numeric_limits<double>::quiet_NaN();
 
     // Initialize to field stowed - can overwrite after class is constructed if desired
     m_is_field_tracking = m_is_field_tracking_prev = false;
@@ -76,7 +88,12 @@ void C_pt_sf_perf_interp::init()
 
 	m_n_flux_x = ms_params.m_n_flux_x;
 	m_n_flux_y = ms_params.m_n_flux_y;
-		
+    m_A_rec_flux_node = m_A_rec_active_total / (double(m_n_flux_x * m_n_flux_y));
+
+    if (m_n_flux_y != 1) {
+        throw(C_csp_exception("n_flux_y must be equal to 1", "heliostat field initialization"));
+    }
+
 	int nfluxpos = eta_map.nrows();
 	int nfposdim = 2;
 
@@ -195,6 +212,15 @@ void C_pt_sf_perf_interp::init()
 	m_ncall = -1;
 }
 
+double C_pt_sf_perf_interp::get_clearsky(const C_csp_weatherreader::S_outputs& weather, double hour)
+{
+    return CSP::get_clearsky(ms_params.m_clearsky_model, ms_params.mv_clearsky_data,
+        hour,
+        weather.m_solzen, weather.m_solazi,
+        weather.m_day, weather.m_month, weather.m_elev,
+        weather.m_pres, weather.m_tdew);
+}
+
 void C_pt_sf_perf_interp::call(const C_csp_weatherreader::S_outputs &weather, double field_control_in, const C_csp_solver_sim_info &sim_info)
 {
 	// Increase call-per-timestep counter
@@ -231,6 +257,9 @@ void C_pt_sf_perf_interp::call(const C_csp_weatherreader::S_outputs &weather, do
     }
 
 	double solaz = weather.m_solazi*CSP::pi / 180.0;
+
+    double hour = time / 3600.0;    //[hr]
+    ms_outputs.m_clearsky_dni = get_clearsky(weather, hour);
 
 	// clear out the existing flux map
 	ms_outputs.m_flux_map_out.fill(0.0);
@@ -269,7 +298,10 @@ void C_pt_sf_perf_interp::call(const C_csp_weatherreader::S_outputs &weather, do
         }
 
 		eta_field = field_efficiency_table->interp(sunpos) * eff_scale;
-		eta_field = fmin(fmax(eta_field, 0.0), 1.0) * field_control * sf_adjust;		// Ensure physical behavior 
+
+        // Ensure physical behavior and apply sf_adjust
+        // Plant defocus is applied in receiver model
+        eta_field = fmin(fmax(eta_field, 0.0), 1.0) * sf_adjust;		
 
 		//Set the active flux map
 		VectDoub pos_now(sunpos);
@@ -313,15 +345,24 @@ void C_pt_sf_perf_interp::call(const C_csp_weatherreader::S_outputs &weather, do
 
 	}
 
+    for (int j = 0; j < m_n_flux_y; j++)
+    {
+        for (int i = 0; i < m_n_flux_x; i++)
+        {
+            ms_outputs.m_flux_map_out(j, i) *= ms_params.m_A_sf*eta_field/m_A_rec_flux_node*weather.m_beam*1.E-3;  //[kW/m2]
+        }
+    }
+
 	ms_outputs.m_q_dot_field_inc = weather.m_beam*ms_params.m_A_sf*1.E-6;		//[MWt]
 
 	ms_outputs.m_pparasi = pparasi / 1.E3;		//[MW], convert from kJ/hr: Parasitic power for tracking
-	ms_outputs.m_eta_field = eta_field;			//[-], field efficiency
+	ms_outputs.m_eta_field = eta_field;			//[-], field efficiency * sf_adjust. plant defocus not applied
     ms_outputs.m_sf_adjust_out = sf_adjust;
-
+    ms_outputs.m_plant_defocus_out = field_control; //[-] plant defocus including field control events (e.g. wind stow speed)
 }
 
-void C_pt_sf_perf_interp::off(const C_csp_solver_sim_info &sim_info)
+void C_pt_sf_perf_interp::off(const C_csp_weatherreader::S_outputs& weather,
+    const C_csp_solver_sim_info &sim_info)
 {
 	// Increase call-per-timestep counter
 	// Converge() sets it to -1, so on first call this line will adjust it = 0
@@ -338,6 +379,9 @@ void C_pt_sf_perf_interp::off(const C_csp_solver_sim_info &sim_info)
 	if( m_is_field_tracking_prev ) {
 		pparasi = ms_params.m_N_hel * m_p_start / (step / 3600.0);			// [kWe-hr]/[hr] = kWe 
 	}
+
+    double hour = sim_info.ms_ts.m_time / 3600.0;    //[hr]
+    ms_outputs.m_clearsky_dni = get_clearsky(weather, hour);
 
 	ms_outputs.m_pparasi = pparasi / 1.E3;		//[MW], convert from kJ/hr: Parasitic power for tracking
 	// Other outputs

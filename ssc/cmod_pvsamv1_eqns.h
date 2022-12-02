@@ -1,24 +1,35 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 
 
 #ifndef SYSTEM_ADVISOR_MODEL_CMOD_PVSAMV1_EQNS_H
@@ -32,7 +43,7 @@ extern "C" {
 
 static const char *Reopt_size_battery_params_doc =
         "Given a PV system, get the optimal battery size. Wind and additional PV are disabled.\\n"
-        "Maps SAM compute module inputs to those of the ReOpt Lite API:\\n"
+        "Maps SAM compute module inputs to those of the ReOpt API:\\n"
         "Pvsamv1 or Pvwattsv5 technology paired with Residential, Commercial, Third Party or Host Developer financing.\\n\\n"
         "Optional: if missing, variable will be set to default value if documented, to REopt defaults otherwise.\\n"
         "Conditional: only required if the variable it's meant to replace is missing.\\n"
@@ -94,7 +105,7 @@ static const char *Reopt_size_battery_params_doc =
         "         'ur_ec_sched_weekend': matrix [tiers], Energy charge weekend schedule, count starts at 1, 12mx24hr\\n"
         "         'ur_ec_tou_mat': matrix [[period, tier, kw, $], Demand rates (TOU), each row provides period, tier, peak power, and charge\\n"
         "         'load': array [kW], Electricity load (year 1)\\n"
-        "         'crit_load': array [kW], Critical electricity load (year 1)\\n"
+        "         'crit_load': optional array [kW], Critical electricity load (year 1)\\n"
         "     ++ Financial inputs ++\\n"
         "         'analysis_period': double [years]\\n"
         "         'rate_escalation': double [%/year], Annual electricity rate escalation, 0-100\\n"
@@ -107,7 +118,7 @@ static const char *Reopt_size_battery_params_doc =
         "         'total_installed_cost': optional double [$]\\n"
         "         'value_of_lost_load': optional double [$/kWh], Value placed on unmet site load during grid outages\\n\\n"
         "Output: key-value pairs added to var_table\\n"
-        "         'reopt_scenario': table, Scenario inputs to Reopt Lite API\\n"
+        "         'reopt_scenario': table, Scenario inputs to Reopt API\\n"
         "         'log': string";
 
 SSCEXPORT bool Reopt_size_battery_params(ssc_data_t data);

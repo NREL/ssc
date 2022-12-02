@@ -1,24 +1,35 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 
 #include <gtest/gtest.h>
 
@@ -31,7 +42,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cmath>
 #include "../rapidjson/document.h"
 #include "../rapidjson/istreamwrapper.h"
-
+ 
 // more can be added but these tests take a while...
 TEST_F(PVSmoothing_lib_battery_dispatch, PV_Phoenix_all_on) {
 
@@ -64,8 +75,8 @@ TEST_F(PVSmoothing_lib_battery_dispatch, PV_Phoenix_all_on) {
         ssc_data_get_number(dat, "batt_pvs_energy_to_grid_percent_sam", &grid_percent_sam);
 
         // values from Phoenix_Validation_testing.py EPRI code
-        EXPECT_NEAR(violation_count, 13, 0.001);
-        EXPECT_NEAR(violation_percent, 0.0247, 0.001);
+        EXPECT_NEAR(violation_count, 15, 0.001);
+        EXPECT_NEAR(violation_percent, 0.0285, 0.001);
         EXPECT_NEAR(grid_percent, 99.89, 0.01);
         EXPECT_NEAR(grid_percent_sam, 98.89, 0.01);
     }
@@ -85,8 +96,10 @@ TEST_F(PVSmoothing_lib_battery_dispatch, Generic_w_PV_input_all_on) {
     tmp.str("");
 
     // Run with fixed output
+//    auto mod1 = ssc_module_create("generic_system");
+
     int errors = run_module(dat, "generic_system");
-    errors = run_module(dat, "battery");
+    errors += run_module(dat, "battery");
     // minimize memory usage for Travis
 //    errors = run_module(dat, "grid");
 //    errors = run_module(dat, "utilityrate5");
@@ -102,8 +115,8 @@ TEST_F(PVSmoothing_lib_battery_dispatch, Generic_w_PV_input_all_on) {
         ssc_data_get_number(dat, "batt_pvs_energy_to_grid_percent_sam", &grid_percent_sam);
 
         // values from Phoenix_Validation_testing.py EPRI code
-        EXPECT_NEAR(violation_count, 12, 0.001);
-        EXPECT_NEAR(violation_percent, 0.022, 0.001);
+        EXPECT_NEAR(violation_count, 13, 0.001);
+        EXPECT_NEAR(violation_percent, 0.025, 0.001);
         EXPECT_NEAR(grid_percent, 99.90, 0.01);
         EXPECT_NEAR(grid_percent_sam, 99.90, 0.01);
     }
@@ -148,8 +161,8 @@ TEST_F(PVSmoothing_lib_battery_dispatch, FuelCell_PV_Phoenix_all_on) {
         // values from Phoenix_FuelCell_Validation_testing.sam
         EXPECT_NEAR(violation_count, 5, 0.001);
         EXPECT_NEAR(violation_percent, 0.0095, 0.001);
-        EXPECT_NEAR(grid_percent, 99.92, 0.01);
-        EXPECT_NEAR(grid_percent_sam, 99.92, 0.01);
+        EXPECT_NEAR(grid_percent, 99.63, 0.01);
+        EXPECT_NEAR(grid_percent_sam, 99.96, 0.01);
     }
     ssc_data_free(dat);
     dat = nullptr;

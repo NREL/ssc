@@ -1,23 +1,33 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #ifndef __CSP_UTIL_
@@ -29,6 +39,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../shared/lib_util.h"
 #include "htf_props.h"
 
+#include <memory>
 
 using namespace std;
 
@@ -54,6 +65,12 @@ namespace CSP
 
 	//sky temp function
 	double skytemp(double T_amb_K, double T_dp_K, double hour);
+
+    double get_clearsky(int clearsky_model /*-*/, const std::vector<double>& clearsky_data,
+        double hour,
+        double solzen /*deg*/, double azimuth /*deg*/,
+        int day /*-*/, int month_1_base /*-*/, double elev /*m*/,
+        double P_amb /*mbar*/, double T_dp /*C*/);
 
 	double sign(double val);
 
@@ -84,21 +101,6 @@ namespace CSP
 	// Turbine isentropic efficiency penalty as a function of mass flow fraction (Patnode thesis)
 	double eta_pl(double mf);
 
-	// Evaporative cooling calculations
-	void evap_tower(int tech_type, double P_cond_min, int n_pl_inc, double DeltaT_cw_des, double T_approach, double P_cycle, 
-					double eta_ref, double T_db_K, double T_wb_K, double P_amb_Pa, double q_reject, double &m_dot_water,
-					double &W_dot_tot, double &P_cond, double &T_cond, double &f_hrsys);
-
-	// Air cooling calculations
-	void ACC( int tech_type, double P_cond_min, int n_pl_inc, double T_ITD_des, double P_cond_ratio, double P_cycle, double eta_ref, 
-		 double T_db_K, double P_amb_Pa, double q_reject, double& m_dot_air, double& W_dot_fan, double& P_cond, double& T_cond, 
-		 double &f_hrsys);
-
-	// Hybrid cooling calculations
-	void HybridHR( int tech_type, double P_cond_min, int n_pl_inc, double F_wc, double F_wcmax, double F_wcmin,
-				  double T_ITD_des, double T_approach, double dT_cw_ref, double P_cond_ratio, double P_cycle, double eta_ref, 
-				  double T_db_K, double T_wb_K, double P_amb_Pa, double q_reject, double& m_dot_water, double& W_dot_acfan, 
-				  double& W_dot_wctot, double& W_dot_tot, double& P_cond, double& T_cond, double& f_hrsys);
 	// Surface condenser ARD
 	void surface_cond(int tech_type, double P_cond_min, int n_pl_inc, double DeltaT_cw_des, double T_approach, double P_cycle,
 		double eta_ref, double T_db_K, double T_wb_K, double P_amb_Pa, double T_cold, double q_reject, double &m_dot_water,
@@ -416,14 +418,14 @@ public:
 		int nearx=0, neary=0;
 		double rx=9.e9, ry=9.e9;
 		for(int i=0; i<sizex; i++){
-			double r = fabs(x - xvals[i]);
+			double r = std::abs(x - xvals[i]);
 			if(r < rx){
 				rx = r;
 				nearx = i;
 			}
 		}
 		for(int i=0; i<sizey; i++){
-			double r = fabs(y - yvals[i]);
+			double r = std::abs(y - yvals[i]);
 			if(r < ry){
 				ry = r;
 				neary = i;
@@ -585,6 +587,140 @@ public:
 	double fT_2(double q_12conv, double T_1, double T_2g, double v_1, int hn, int hv);
 
 	double FK_23(double T_2, double T_3, int hn, int hv);
+};
+
+
+
+class C_evap_tower
+{
+private:
+
+    // Design parameters
+    int m_tech_type;
+    double m_P_cond_min;    //[Pa] Minimum allowable condenser pressure
+    int m_n_pl_inc;         //[-] Number of part load heat rejection levels
+    double m_DeltaT_cw_des; //[C/K] Cooling water temperature rise across condenser (dT_cw_ref)
+    double m_T_approach_des;    //[C/K] Cooling tower approach temperature, difference between cw out and wet bulb temp
+    double m_q_dot_reject_des;  //[W]
+    double m_T_wb_des;      //[K]
+    double m_T_db_des;      //[K]
+    double m_P_amb_des;     //[Pa]
+
+    // Model constants
+    const double m_dt_out = 3.0;                //[C]
+    const double m_drift_loss_frac = 0.001;    // Drift loss fraction
+    const double m_blowdown_frac = 0.003;      // Blowdown fraction
+    const double m_dp_evap = 0.37 * 1.0e5;       // [Pa] Pressure drop across the condenser and cooling tower
+    const double m_eta_pump = 0.75;            // Total pump efficiency
+    const double m_eta_pcw_s = 0.8;            // Isentropic cooling water pump efficiency
+    const double m_eta_fan = 0.75;             // Fan mechanical efficiency
+    const double m_eta_fan_s = 0.8;            // Fan isentropic efficiency
+    const double m_p_ratio_fan = 1.0025;       // Fan pressure ratio
+    const double m_mass_ratio_fan = 1.01;      // Ratio of air flow to water flow in the cooling tower
+
+    // Calculated values
+    double m_m_dot_cw_des;      //[kg/s]
+    double m_m_dot_water_des;   //[kg/s]
+    double m_W_dot_cooling_des; //[MWe]
+    double m_P_cond_des;        //[Pa]
+    double m_T_cond_des;        //[K]
+
+public:
+
+    C_evap_tower(int tech_type /*-*/, double P_cond_min /*Pa*/, int n_pl_inc /*-*/,
+        double DeltaT_cw_des /*C/K*/, double T_approach_des /*C/K*/, double q_dot_reject_des /*W*/,
+        double T_wb_des /*K*/, double T_db_des /*K*/, double P_amb_des /*Pa*/);
+
+    void off_design(double T_db /*K*/, double T_wb /*K*/, double P_amb /*Pa*/, double q_dot_reject /*W*/,
+        double& m_dot_water, double& W_dot_tot, double& P_cond,
+        double& T_cond, double& f_hrsys);
+
+    double get_P_cond_des();
+};
+
+class C_air_cooled_condenser
+{
+private:
+
+    // Design parameters
+    int m_tech_type;
+    double m_P_cond_min;    //[Pa]
+    double m_T_amb_des;     //[K]
+    int m_n_pl_inc;         //[-]
+    double m_T_ITD_des;     //[K]
+    double m_P_cond_ratio_des;  //[-]
+    double m_q_dot_reject_des;  //[W]
+
+    // Model constants
+    const double m_c_air = 1005.0;			    //[J/kg-K] Specific heat of air, relatively constant over dry bulb range
+    const double T_map_des = 42.8 + 273.15;     //[K] Design point temperature of condenser map
+    const double T_hot_diff = 1.;               //[C/K] Temperature difference between saturation steam and condenser outlet air temp
+    const double T_map_min_norm = 0.9;       //[-] Minimum acceptable normalize temperature for condenser map
+    const double m_eta_fan_s = 0.85;            //[-] Fan isentropic efficiency
+    const double m_eta_fan = 0.97;          	//[-] Fan mechanical efficiency
+
+    // Calculated values
+    double m_P_cond_min_bar;    //[bar]
+    double m_T_cond_des;        //[K]
+    double m_P_cond_des;        //[Pa]
+    double m_dot_air_des;       //[kg/s]
+    double m_T_map_des_norm;    //[-]
+    double m_P_map_des_norm;    //[-]
+    double m_map_ratio_des;     //[-]
+    double m_W_dot_fan_des;     //[MWe]
+
+    double PvsQT(double Q /*[-]*/, double T /*[-]*/);
+
+public:
+
+    C_air_cooled_condenser(int tech_type /*-*/, double P_cond_min /*Pa*/, double T_amb_des /*K*/,
+        int n_pl_inc, double T_ITD_des /*C/K*/, double P_cond_ratio_des /*-*/, double q_dot_reject_des /*W*/);
+
+    void off_design(double T_amb /*K*/, double q_dot_reject /*W*/,
+        double& m_dot_air, double& W_dot_fan, double& P_cond, double& T_cond,
+        double& f_hrsys);
+
+    double get_P_cond_des();
+};
+
+class C_hybrid_cooling
+{
+private:
+
+    std::shared_ptr<C_evap_tower> m_evap_tower;
+    std::shared_ptr<C_air_cooled_condenser> m_ACC;
+
+    double m_q_dot_reject_evap_des_size;     //[W]
+    double m_q_dot_reject_ACC_des_size;      //[W]
+
+    double m_q_dot_rejecet_evap_des_P_cond; //[W]
+    double m_q_dot_reject_ACC_des_P_cond;   //[W]
+
+    double m_m_dot_water_des;         //[kg/s]
+    double m_W_dot_acc_des;           //[MWe]
+    double m_W_dot_evap_des;          //[MWe]
+    double m_W_dot_tot_des;           //[MWe]
+    double m_P_cond_des;              //[Pa]
+    double m_T_cond_des;              //[K]
+
+public:
+
+    C_hybrid_cooling(int tech_type /*-*/, double q_dot_reject_des /*W*/, double T_db_des /*K*/,
+        double P_cond_min /*Pa*/, int n_pl_inc /*-*/,
+        // Hybrid
+        double F_wcmax, double F_wcmin,
+        // Evap cooler
+        double DeltaT_cw_des /*C/K*/, double T_approach_des /*C/K*/,
+        double T_wb_des /*K*/, double P_amb_des /*Pa*/,
+        // ACC
+        double T_ITD_des /*C/K*/, double P_cond_ratio_des /*-*/);
+
+    void off_design(double F_wc /*-*/, double q_dot_reject_cycle /*W*/,
+        double T_db /*K*/, double T_wb /*K*/, double P_amb /*Pa*/,
+        double& m_dot_water, double& W_dot_acfan,
+        double& W_dot_wctot, double& W_dot_tot, double& P_cond, double& T_cond, double& f_hrsys);
+
+    double get_P_cond_des();
 };
 
 // Functor for advanced vector of vector sorting

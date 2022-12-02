@@ -1,23 +1,33 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #ifndef __csp_solver_core_
@@ -196,6 +206,7 @@ public:
 		{
 			m_year = m_month = m_day = m_hour = -1;
 
+            m_minute =
 			m_global = m_beam = m_hor_beam = m_diffuse = m_tdry = m_twet = m_tdew = m_wspd = 
 				m_wdir = m_rhum = m_pres = m_snow = m_albedo =
 				m_poa = m_solazi = m_solzen = m_lat = m_lon = m_tz = m_shift = m_elev =
@@ -358,6 +369,10 @@ public:
 		  std::numeric_limits<double>::quiet_NaN();
 	  	double m_dP_sf =                 	//[bar] Total field pressure drop
 		  std::numeric_limits<double>::quiet_NaN();
+
+        // only define for heat pump or systems that interface with both hot and cold stores
+        double m_CT_to_HT_m_dot_ratio =     //[-]
+            std::numeric_limits<double>::quiet_NaN();
 	};
 
 	struct S_csp_cr_inputs
@@ -384,13 +399,14 @@ public:
         bool m_is_recirculating;        //[-] Is field/receiver recirculating?
 			
 		// These are used for the parasitic class call(), so could be zero...
-		//double m_E_fp_total;			//[MW] Solar field freeze protection power
-		double m_W_dot_col_tracking;	//[MWe] Collector tracking power
-		double m_W_dot_htf_pump;		//[MWe] HTF pumping power
+        double m_W_dot_elec_in_tot;     //[MWe] Total component electricity consumption - used upstream in plant net electricity calculation
         double m_dP_sf;                 //[bar] Total field pressure drop
-		//double m_q_rec_heattrace;		//[MW] Receiver heat trace parasitic power
 
         double m_q_dot_heater;          //[MWt] 'external' heat delivered to receiver, e.g. heat trace
+
+        // Outputs for CR designs that integrate with cold TES
+        double m_T_CT_htf_cold_out; //[C]
+        double m_m_dot_CT_htf;      //[kg/hr]
 
 		// 07/08/2016, GZ: add new variables for DSG LF 
 		int m_standby_control;		//[-]
@@ -401,12 +417,13 @@ public:
 			
 		S_csp_cr_out_solver()
 		{
-			m_q_thermal = m_q_startup = m_m_dot_salt_tot = m_T_salt_hot = m_W_dot_htf_pump =
-				m_W_dot_col_tracking = m_time_required_su = // m_E_fp_total =
+			m_q_thermal = m_q_startup = m_m_dot_salt_tot = m_T_salt_hot =
+                m_W_dot_elec_in_tot = m_time_required_su = m_dP_sf =
 				m_dP_sf_sh = m_h_htf_hot = m_xb_htf_hot = m_P_htf_hot = std::numeric_limits<double>::quiet_NaN();
 
             m_q_dot_heater = 0.0;
-			//m_q_rec_heattrace = 0.0;
+
+            m_T_CT_htf_cold_out = m_m_dot_CT_htf = std::numeric_limits<double>::quiet_NaN();
 
 			m_component_defocus = 1.0;
 
@@ -447,6 +464,19 @@ public:
 		double q_dot_elec_to_CR_heat /*MWt*/, double field_control,
 		C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
 		const C_csp_solver_sim_info &sim_info) = 0;
+
+    // Not a pure virtual method
+    // Base class implementation cuts out T_CT_htf_hot_in and calls other 'on'
+    virtual void on(const C_csp_weatherreader::S_outputs& weather,
+        const C_csp_solver_htf_1state& htf_state_in,
+        double T_CT_htf_hot_in /*C*/,
+        double q_dot_elec_to_CR_heat /*MWt*/, double field_control,
+        C_csp_collector_receiver::S_csp_cr_out_solver& cr_out_solver,
+        const C_csp_solver_sim_info& sim_info);
+
+    virtual double get_design_electric_to_heat_cop() {
+        throw(C_csp_exception("The collector-receiver method get_design_electric_to_heat_cop is not defined", "CSP Solver"));
+    }
 
 	struct S_csp_cr_est_out
 	{
@@ -516,6 +546,7 @@ public:
 		S_control_inputs()
 		{
             m_standby_control = E_csp_power_cycle_modes::OFF;
+            m_m_dot = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -541,7 +572,8 @@ public:
 		{
 			m_W_dot_des = m_eta_des = m_q_dot_des = m_q_startup = m_max_frac = m_cutoff_frac = 
 				m_sb_frac = m_T_htf_hot_ref = 
-				m_m_dot_design = m_m_dot_max = m_m_dot_min = std::numeric_limits<double>::quiet_NaN();
+				m_m_dot_design = m_m_dot_max = m_m_dot_min =
+                m_P_hot_des = m_x_hot_des = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -557,15 +589,27 @@ public:
 		double m_m_dot_htf;			//[kg/hr] Actual HTF flow rate passing through the power cycle
 
 			// Parasitics, plant net power equation
-		double m_W_dot_htf_pump;	//[MWe] HTF pumping power
+        double m_W_dot_elec_parasitics_tot; //[MWe] Total TES electricity consumption that doesn't contribute to cycle working fluid
+
+            // Want to only report total aggregate parasitics in m_W_dot_elec_parasitics total
+            //    but need to keep m_W_cool_par because sam_mw_pt_type224_csp_solver needs it
+            //    until we straighten out HTF pump power in Type 251 or preferably move MSLF to CSP Solver
+        //double m_W_dot_htf_pump;	//[MWe] HTF pumping power
 		double m_W_cool_par;		//[MWe] Cooling system parasitic load
+
+        // Outputs for CR designs that integrate with cold TES
+        double m_T_CT_htf_hot_out;  //[C]
+        double m_m_dot_CT_htf;      //[kg/hr]
 
 		bool m_was_method_successful;	//[-] Return false if method did not solve as expected but can be handled by solver/controller
 
 		S_csp_pc_out_solver()
 		{
 			m_time_required_su = m_time_required_max = m_P_cycle = m_T_htf_cold = m_q_dot_htf = m_m_dot_htf =
-				m_W_dot_htf_pump = m_W_cool_par = std::numeric_limits<double>::quiet_NaN();
+                m_W_dot_elec_parasitics_tot =
+                /*m_W_dot_htf_pump =*/ m_W_cool_par = std::numeric_limits<double>::quiet_NaN();
+
+            m_T_CT_htf_hot_out = m_m_dot_CT_htf = std::numeric_limits<double>::quiet_NaN();
 
 			m_was_method_successful = false;
 		}
@@ -597,8 +641,14 @@ public:
 		C_csp_solver_htf_1state &htf_state_in,
 		const C_csp_power_cycle::S_control_inputs &inputs,
 		C_csp_power_cycle::S_csp_pc_out_solver &out_solver,
-		//C_csp_power_cycle::S_csp_pc_out_report &out_report,
 		const C_csp_solver_sim_info &sim_info) = 0;
+
+    virtual void call(const C_csp_weatherreader::S_outputs& weather,
+        C_csp_solver_htf_1state& htf_state_in,
+        double T_CT_htf_cold_in /*C*/,
+        const C_csp_power_cycle::S_control_inputs& inputs,
+        C_csp_power_cycle::S_csp_pc_out_solver& out_solver,
+        const C_csp_solver_sim_info& sim_info);
 
 	virtual void converged() = 0;
 
@@ -635,8 +685,10 @@ public:
 
 	struct S_csp_tes_outputs
 	{
-		double m_q_heater;			//[MWe]  Heating power required to keep tanks at a minimum temperature
-		double m_q_dot_dc_to_htf;	//[MWt]  Thermal power to the HTF from storage
+		double m_q_heater;			//[MWe] Heating power required to keep tanks at a minimum temperature
+        double m_W_dot_elec_in_tot; //[MWe] Total TES electricity consumption - used upstream in plant net electricity calculation
+
+        double m_q_dot_dc_to_htf;	//[MWt]  Thermal power to the HTF from storage
 		double m_q_dot_ch_from_htf;	//[MWt]  Thermal power from the HTF to storage
 		
 		double m_m_dot_cr_to_tes_hot;	//[kg/s]
@@ -645,8 +697,8 @@ public:
 		double m_m_dot_pc_to_tes_cold;	//[kg/s]
 		double m_m_dot_tes_cold_out;	//[kg/s]
         double m_m_dot_tes_cold_in;     //[kg/s]
-		double m_m_dot_field_to_cycle;	//[kg/s]
-		double m_m_dot_cycle_to_field;	//[kg/s]
+		double m_m_dot_src_to_sink;	    //[kg/s]
+		double m_m_dot_sink_to_src;	    //[kg/s]
 
         double m_T_tes_cold_in;         //[K]
 
@@ -655,9 +707,11 @@ public:
 
 		S_csp_tes_outputs()
 		{
-			m_q_heater =  m_q_dot_dc_to_htf = m_q_dot_ch_from_htf = 
-			m_m_dot_cr_to_tes_hot = m_m_dot_cr_to_tes_cold = m_m_dot_pc_to_tes_cold = m_m_dot_pc_to_tes_cold =
-			m_m_dot_tes_cold_out = m_m_dot_tes_cold_in = m_m_dot_field_to_cycle = m_m_dot_cycle_to_field =
+			m_q_heater = m_W_dot_elec_in_tot =
+            m_q_dot_dc_to_htf = m_q_dot_ch_from_htf = 
+			m_m_dot_cr_to_tes_hot = m_m_dot_cr_to_tes_cold = m_m_dot_tes_hot_out =
+            m_m_dot_pc_to_tes_cold = m_m_dot_pc_to_tes_cold = m_m_dot_tes_cold_out =
+            m_m_dot_tes_cold_in = m_m_dot_src_to_sink = m_m_dot_sink_to_src =
             m_T_tes_cold_in = 
             m_m_dot_cold_tank_to_hot_tank = std::numeric_limits<double>::quiet_NaN();
 		}
@@ -745,6 +799,8 @@ public:
 			CTRL_IS_REC_SU,             //[-] Control decision: is receiver startup allowed?
 			CTRL_IS_PC_SU,              //[-] Control decision: is power cycle startup allowed?
 			CTRL_IS_PC_SB,              //[-] Control decision: is power cycle standby allowed?
+            CTRL_IS_PAR_HTR_SU,         //[-] Control decision: is parallel electric heater startup allowed?
+            PAR_HTR_Q_DOT_TARGET,       //[MWt] Parallel electric heater target thermal power
 			EST_Q_DOT_CR_SU,            //[MWt] Estimate receiver startup thermal power
 			EST_Q_DOT_CR_ON,            //[MWt] Estimate receiver thermal power to HTF
 			EST_Q_DOT_DC,               //[MWt] Estimate max TES dc thermal power
@@ -798,12 +854,6 @@ public:
             M_DOT_TES_COLD_IN,    //[kg/s]
 			M_DOT_FIELD_TO_CYCLE, //[kg/s]
 			M_DOT_CYCLE_TO_FIELD, //[kg/s]
-			//TES_M_DOT_DC,         //[MWt] TES discharge mass flow rate
-			//TES_M_DOT_CH,         //[MWt] TES charge mass flow rate
-			COL_W_DOT_TRACK,      //[MWe] Parasitic collector tracking, startup, stow power consumption
-			CR_W_DOT_PUMP,        //[MWe] Parasitic tower HTF pump power
-			SYS_W_DOT_PUMP,       //[MWe] Parasitic PC and TES HTF pump power
-			PC_W_DOT_COOLING,     //[MWe] Parasitic condenser operation power
 			SYS_W_DOT_FIXED,      //[MWe] Parasitic fixed power consumption
 			SYS_W_DOT_BOP,        //[MWe] Parasitic BOP power consumption
 			W_DOT_NET             //[MWe] System total electric power to grid
@@ -912,6 +962,7 @@ private:
 	C_csp_tou &mc_tou;
     base_dispatch_opt &mc_dispatch;
     C_csp_collector_receiver* mp_heater;
+    std::shared_ptr<C_csp_tes> mc_CT_tes;
 
 	S_csp_system_params & ms_system_params;
 
@@ -925,6 +976,7 @@ private:
 	C_csp_power_cycle::S_csp_pc_out_solver mc_pc_out_solver;
 
 	C_csp_tes::S_csp_tes_outputs mc_tes_outputs;
+    C_csp_tes::S_csp_tes_outputs mc_CT_tes_outputs;
 
     C_csp_tou::S_csp_tou_outputs mc_tou_outputs;
 
@@ -939,6 +991,7 @@ private:
 	double m_x_cold_des;				//[-]
 	double m_q_dot_rec_des;				//[MW]
 	double m_A_aperture;				//[m2]
+    double m_CT_to_HT_m_dot_ratio;      //[-]
 
         // Parallel heater design parameters
     double m_PAR_HTR_T_htf_cold_des;			//[K]
@@ -968,6 +1021,7 @@ private:
 		// Storage logic
 	bool m_is_tes;			    //[-] True: plant has storage
     bool m_is_cr_config_recirc; //[-] True: Receiver "off" and "startup" are recirculated from outlet to inlet
+    bool m_is_CT_tes;           //[-] True: plant has cold temp storage
 
         // System control logic
         // Checks if mp_heater is defined. if True, then solves system for CSP+ETES
@@ -979,6 +1033,7 @@ private:
         
         // System design
     double m_W_dot_bop_design;      //[MWe]
+    double m_W_dot_fixed_design;    //[MWe]
 
         // Field-side HTF
     double m_T_field_cold_limit;    //[C]
@@ -1032,6 +1087,7 @@ public:
         base_dispatch_opt &dispatch,
 		S_csp_system_params &system,
         C_csp_collector_receiver* heater,
+        std::shared_ptr<C_csp_tes> c_CT_tes,
 		bool(*pf_callback)(std::string &log_msg, std::string &progress_msg, void *data, double progress, int out_type) = 0,
 		void *p_cmod_active = 0);
 
@@ -1047,7 +1103,8 @@ public:
 
 	double get_cr_aperture_area();
 
-    void get_design_parameters(double& W_dot_bop_design /*MWe*/);
+    void get_design_parameters(double& W_dot_bop_design /*MWe*/,
+                        double& W_dot_fixed_design /*MWe*/);
 
 	// Output vectors
 	// Need to be sure these are always up-to-date as multiple operating modes are tested during one timestep

@@ -1,24 +1,35 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 
 #include "core.h"
 
@@ -31,6 +42,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "etes_dispatch.h"
 
 #include "csp_system_costs.h"
+
+#include <ctime>
 
 static var_info _cm_vtab_etes_electric_resistance[] = {
 
@@ -54,8 +67,6 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
     { SSC_INPUT,  SSC_NUMBER, "design_eff",                    "Power cycle efficiency at design",                               "none",         "",                                  "System Design",                            "*",                                                                "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "tshours",                       "Equivalent full-load thermal storage hours",                     "hr",           "",                                  "System Design",                            "*",                                                                "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "heater_mult",                   "Heater multiple relative to design cycle thermal power",         "-",            "",                                  "System Design",                            "*",                                                                "",              ""},
-    { SSC_INPUT,  SSC_NUMBER, "gross_net_conversion_factor",   "Estimated gross to net conversion factor",                       "",             "",                                  "System Design",                            "*",                                                                "",              ""},
-
 
     // Power Cycle
         // General
@@ -69,7 +80,6 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
         // Steam Rankine
     { SSC_INPUT,  SSC_NUMBER, "dT_cw_ref",                     "Reference condenser cooling water inlet/outlet temperature difference",  "C",    "",                                  "Rankine Cycle",                            "pc_config=0",                                                      "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "T_amb_des",                     "Reference ambient temperature at design point",                          "C",    "",                                  "Rankine Cycle",                            "pc_config=0",                                                      "",              ""},
-    { SSC_INPUT,  SSC_NUMBER, "P_boil",                        "Boiler operating pressure",                                              "bar",  "",                                  "Rankine Cycle",                            "pc_config=0",                                                      "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "CT",                            "Condensor type: 1=evaporative, 2=air",                                   "",     "",                                  "Rankine Cycle",                            "pc_config=0",                                                      "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "T_approach",                    "Cooling tower approach temperature",                                     "C",    "",                                  "Rankine Cycle",                            "pc_config=0",                                                      "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "T_ITD_des",                     "ITD at design for dry system",                                           "C",    "",                                  "Rankine Cycle",                            "pc_config=0",                                                      "",              ""},
@@ -87,7 +97,7 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
     // TES
         // Performance
     { SSC_INPUT,  SSC_NUMBER, "hot_htf_code",                  "Receiver HTF, 17=Salt (60% NaNO3, 40% KNO3) 10=Salt (46.5% LiF 11.5% NaF 42% KF) 50=Lookup tables", "", "",          "Thermal Storage",                          "*",                                                                "",              ""},
-    { SSC_INPUT,  SSC_MATRIX, "ud_hot_htf_props",              "User-defined TES fluid property data",                          "-",            "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
+    { SSC_INPUT,  SSC_MATRIX, "ud_hot_htf_props",              "User-defined TES fluid property data",                          "-",            "",                                  "Thermal Storage",                          "hot_htf_code=50",                                                  "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "tes_init_hot_htf_percent",      "Initial fraction of available volume that is hot",              "%",            "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "h_tank",                        "Total height of tank (height of HTF when tank is full)",        "m",            "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "cold_tank_max_heat",            "Rated heater capacity for cold tank heating",                   "MW",           "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
@@ -100,6 +110,7 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
 
 
     // Heater
+    { SSC_INPUT,  SSC_NUMBER, "heater_efficiency",             "Heater electric to thermal efficiency",                         "%",            "",                                  "Heater",                                   "*",                                                                "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "f_q_dot_des_allowable_su",      "Fraction of design power allowed during startup",               "-",            "",                                  "Heater",                                   "*",                                                                "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "hrs_startup_at_max_rate",       "Duration of startup at max startup power",                      "hr",           "",                                  "Heater",                                   "*",                                                                "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "f_q_dot_heater_min",            "Minimum allowable heater output as fraction of design",         "",             "",                                  "Heater",                                   "*",                                                                "",              ""},
@@ -191,6 +202,11 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
     { SSC_INPUT,  SSC_NUMBER, "const_per_upfront_rate4",       "Upfront fee on principal, loan 4",                              "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
     { SSC_INPUT,  SSC_NUMBER, "const_per_upfront_rate5",       "Upfront fee on principal, loan 5",                              "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
 
+    // ****************************************************************************************************************************************
+    //     DEPRECATED INPUTS -- exec() checks if a) variable is assigned and b) if replacement variable is assigned. throws exception if a=true and b=false
+    // ****************************************************************************************************************************************
+    { SSC_INPUT,  SSC_NUMBER, "P_boil",                        "Boiler operating pressure",                                     "bar",          "",                                  "Rankine Cycle",                             "",                                                                "",              "SIMULATION_PARAMETER" },
+
 
     // ****************************************************************************************************************************************
     // Design Outputs here:
@@ -198,6 +214,8 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
         // System
     { SSC_OUTPUT, SSC_NUMBER, "system_capacity",             "System capacity",                         "kWe",          "",                                  "System Design Calc",                             "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "nameplate",                   "Nameplate capacity",                      "MWe",          "",                                  "System Design Calc",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "cp_system_capacity",          "System capacity for capacity payments",   "MWe",          "",                                  "System Design Calc",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "cp_battery_capacity",         "Battery nameplate",                       "MWe",          "",                                  "System Design Calc",                             "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "q_pb_design",                 "Cycle thermal input at design"            "MWt",          "",                                  "System Design Calc",                             "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "q_dot_heater_design",         "Heater thermal output at design",         "MWt",          "",                                  "System Design Calc",                             "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "tshours_heater",              "Hours of TES relative to heater output",  "hr",           "",                                  "System Design Calc",                             "*",                                                                "",              "" },
@@ -206,8 +224,26 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
         // Cycle
     { SSC_OUTPUT, SSC_NUMBER, "m_dot_htf_cycle_des",         "Cycle htf mass flow rate at design",      "kg/s",         "",                                  "Cycle Design Calc",                             "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "cp_htf_cycle_des",            "Cycle htf cp at T ave at design",         "kJ/kg-K",      "",                                  "Cycle Design Calc",                             "*",                                                                "",              "" },
+        // UDPC
+    { SSC_OUTPUT, SSC_NUMBER, "n_T_htf_pars_calc",           "UDPC number of HTF parametric values",               "",  "",                                  "UDPC Design Calc",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "n_T_amb_pars_calc",           "UDPC number of ambient temp parametric values",      "",  "",                                  "UDPC Design Calc",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "n_m_dot_pars_calc",           "UDPC number of mass flow parametric values",         "",  "",                                  "UDPC Design Calc",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "T_htf_ref_calc",              "UDPC reference HTF temperature",                     "C", "",                                  "UDPC Design Calc",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "T_htf_low_calc",              "UDPC low level HTF temperature",                     "C", "",                                  "UDPC Design Calc",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "T_htf_high_calc",             "UDPC high level HTF temperature",                    "C", "",                                  "UDPC Design Calc",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "T_amb_ref_calc",              "UDPC reference ambient temperature",                 "C", "",                                  "UDPC Design Calc",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "T_amb_low_calc",              "UDPC low level ambient temperature",                 "C", "",                                  "UDPC Design Calc",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "T_amb_high_calc",             "UDPC high level ambient temperature",                "C", "",                                  "UDPC Design Calc",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "m_dot_htf_ND_ref_calc",       "UDPC reference normalized mass flow rate",           "",  "",                                  "UDPC Design Calc",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "m_dot_htf_ND_low_calc",       "UDPC low level normalized mass flow rate",           "",  "",                                  "UDPC Design Calc",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "m_dot_htf_ND_high_calc",      "UDPC high level normalized mass flow rate",          "",  "",                                  "UDPC Design Calc",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "W_dot_gross_ND_des_calc",     "UDPC calculated normalized gross power at design",   "",  "",                                  "UDPC Design Calc",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "Q_dot_HTF_ND_des_calc",       "UDPC calculated normalized heat input at design",    "",  "",                                  "UDPC Design Calc",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "W_dot_cooling_ND_des_calc",   "UPPC calculated normalized cooling power at design", "",  "",                                  "UDPC Design Calc",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "m_dot_water_ND_des_calc",     "UDPC calculated water use at design",                "",  "",                                  "UDPC Design Calc",                              "*",                                                                "",              "" },
 
         // Heater
+    { SSC_OUTPUT, SSC_NUMBER, "W_dot_heater_des",            "Heater electricity consumption at design","MWe",          "",                                  "Cycle Design Calc",                             "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "E_heater_su_des",             "Heater startup energy",                   "MWt-hr",       "",                                  "Cycle Design Calc",                             "*",                                                                "",              "" },
 
         // TES
@@ -302,9 +338,8 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
     { SSC_OUTPUT,    SSC_ARRAY,  "disp_solve_iter",            "Dispatch iterations count",                                     "",             "",                                  "",                                         "sim_type=1",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_ARRAY,  "disp_objective",             "Dispatch objective function value",                             "",             "",                                  "",                                         "sim_type=1",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_ARRAY,  "disp_obj_relax",             "Dispatch objective function - relaxed max",                     "",             "",                                  "",                                         "sim_type=1",                                                                "",              "" },
-    { SSC_OUTPUT,    SSC_ARRAY,  "disp_qsf_expected",          "Dispatch expected solar field available energy",                "MWt",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
-    { SSC_OUTPUT,    SSC_ARRAY,  "disp_qsfprod_expected",      "Dispatch expected solar field generation",                      "MWt",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
-    { SSC_OUTPUT,    SSC_ARRAY,  "disp_qsfsu_expected",        "Dispatch expected solar field startup enegy",                   "MWt",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "disp_qsfprod_expected",      "Dispatch expected electric heater heat generation",             "MWt",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "disp_qsfsu_expected",        "Dispatch expected electric heater startup enegy",               "MWt",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_ARRAY,  "disp_tes_expected",          "Dispatch expected TES charge level",                            "MWht",         "",                                  "",                                         "sim_type=1",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_ARRAY,  "disp_pceff_expected",        "Dispatch expected power cycle efficiency adj.",                 "",             "",                                  "",                                         "sim_type=1",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_ARRAY,  "disp_qpbsu_expected",        "Dispatch expected power cycle startup energy",                  "MWht",         "",                                  "",                                         "sim_type=1",                                                                "",              "" },
@@ -313,6 +348,13 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
     { SSC_OUTPUT,    SSC_ARRAY,  "disp_presolve_nconstr",      "Dispatch number of constraints in problem",                     "",             "",                                  "",                                         "sim_type=1",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_ARRAY,  "disp_presolve_nvar",         "Dispatch number of variables in problem",                       "",             "",                                  "",                                         "sim_type=1",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_ARRAY,  "disp_solve_time",            "Dispatch solver time",                                          "sec",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+
+        // These outputs correspond to the first csp-solver timestep in the reporting timestep.
+        //     Subsequent csp-solver timesteps within the same reporting timestep are not tracked
+    { SSC_OUTPUT,    SSC_ARRAY,  "operating_modes_a",          "First 3 operating modes tried",                                 "",             "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "operating_modes_b",          "Next 3 operating modes tried",                                  "",             "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "operating_modes_c",          "Final 3 operating modes tried",                                 "",             "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+
 
         // Annual single-value outputs
     { SSC_OUTPUT, SSC_NUMBER, "annual_energy",                 "Annual total electric power to grid",                           "kWhe",         "",                                  "",                                         "sim_type=1",                                                                "",              "" },
@@ -332,11 +374,15 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
     { SSC_OUTPUT, SSC_NUMBER, "disp_presolve_nvar_ann",        "Annual sum of dispatch problem variable count",                     "",         "",                                  "",                                         "sim_type=1",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "disp_solve_time_ann",           "Annual sum of dispatch solver time",                             "sec",         "",                                  "",                                         "sim_type=1",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "disp_solve_state_ann",          "Annual sum of dispatch solve state",                                "",         "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "avg_suboptimal_rel_mip_gap",    "Average suboptimal relative MIP gap",                              "%",         "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+
+
+    { SSC_OUTPUT, SSC_NUMBER, "sim_cpu_run_time",              "Simulation duration clock time",                                   "s",         "",                                  "",                                         "sim_type=1",                                                                "",              "" },
 
         // ETES settings for financial model
     { SSC_OUTPUT, SSC_NUMBER, "ppa_soln_mode",                 "PPA solution mode",                                             "0/1",          "0 = solve ppa,1 = specify ppa",     "Revenue",                                  "sim_type=1",                                                                "INTEGER,MIN = 0,MAX = 1", "" },
     { SSC_OUTPUT, SSC_NUMBER, "flip_target_percent",		   "After-tax IRR target",		                                    "%",	        "",					                 "Revenue",                                  "sim_type=1",					                                              "MIN=0,MAX=100",     	     "" },
-
+    { SSC_OUTPUT, SSC_NUMBER, "total_land_area",               "Total land area",                                               "acre",         "",                                  "System Costs",                             "*",                                                                         "",              "" },
 
     var_info_invalid };
 
@@ -348,12 +394,15 @@ public:
     {
         add_var_info(_cm_vtab_etes_electric_resistance);
         add_var_info(vtab_adjustment_factors);
+        add_var_info(vtab_technology_outputs);
     }
 
     void exec() override
     {
         //FILE* fp = fopen("etes_cmod_to_lk.lk", "w");
         //write_cmod_to_lk_script(fp, m_vartab);
+
+        std::clock_t clock_start = std::clock();
 
         // First, check sim type
         int sim_type = as_integer("sim_type");
@@ -364,6 +413,19 @@ public:
         }
 
         // *****************************************************
+        // Check deprecated variables
+
+        if (is_assigned("P_boil")) {
+            log("We removed boiler pressure (P_boil) as a user input to the Rankine Cycle model. Because the cycle efficiency"
+                " is provided by the user, the boiler pressure input does not modify the efficiency as one might expect. Instead the model"
+                " uses boiler pressure in second order calculations to 1) define a boiling temperature to normalize off-design HTF temperature and"
+                " 2) estimate steam mass flow for cycle make-up water calculations. Because boiler pressure only has influences"
+                " results in these minor non-intuitive ways, we decided to hardcode the valu to 100 bar.");
+        }
+        // *****************************************************
+        // *****************************************************
+
+        // *****************************************************
         // System Design Parameters
         double T_htf_cold_des = as_double("T_htf_cold_des");    //[C]
         double T_htf_hot_des = as_double("T_htf_hot_des");      //[C]
@@ -371,17 +433,17 @@ public:
         double eta_cycle = as_double("design_eff");             //[-]
         double tshours = as_double("tshours");                  //[-]
         double heater_mult = as_double("heater_mult");          //[-]
-        double gross_net_conversion_factor = as_double("gross_net_conversion_factor");
 
         // TES parameters
         int hot_htf_code = as_integer("hot_htf_code");
-        util::matrix_t<double> ud_hot_htf_props = as_matrix("ud_hot_htf_props");
+        util::matrix_t<double> ud_hot_htf_props;
+        if (hot_htf_code == 50) {
+            ud_hot_htf_props = as_matrix("ud_hot_htf_props");
+        }
 
         // System Design Calcs
         double q_dot_pc_des = W_dot_cycle_des / eta_cycle;      //[MWt]
-        double Q_tes = q_dot_pc_des * tshours;                  //[MWt-hr]
         double q_dot_heater_des = q_dot_pc_des * heater_mult;   //[MWt]
-        double system_capacity = W_dot_cycle_des * gross_net_conversion_factor * 1.E3; //[kWe]
         double Q_tes_des = q_dot_pc_des * tshours;              //[MWt-hr] TES thermal capacity at design
         // *****************************************************
         // *****************************************************
@@ -456,7 +518,7 @@ public:
             {
                 pc->m_dT_cw_ref = as_double("dT_cw_ref");
                 pc->m_T_amb_des = as_double("T_amb_des");
-                pc->m_P_boil = as_double("P_boil");
+                pc->m_P_boil_des = 100.0;       //[bar]
                 pc->m_CT = as_integer("CT");                    // cooling tech type: 1=evaporative, 2=air, 3=hybrid
                 if (pc->m_CT > 2) {
                     std::string err_msg = util::format("The specified power cycle cooling tech type, %d, does not exist"
@@ -511,7 +573,10 @@ public:
         rankine_pc.assign(C_pc_Rankine_indirect_224::E_T_HTF_IN, allocate("T_htf_cycle_in", n_steps_fixed), n_steps_fixed);
         rankine_pc.assign(C_pc_Rankine_indirect_224::E_T_HTF_OUT, allocate("T_htf_cycle_out", n_steps_fixed), n_steps_fixed);
         rankine_pc.assign(C_pc_Rankine_indirect_224::E_M_DOT_WATER, allocate("m_dot_water_cycle", n_steps_fixed), n_steps_fixed);
+        rankine_pc.assign(C_pc_Rankine_indirect_224::E_W_DOT_HTF_PUMP, allocate("W_dot_cycle_htf_pump", n_steps_fixed), n_steps_fixed);
+        rankine_pc.assign(C_pc_Rankine_indirect_224::E_W_DOT_COOLER, allocate("W_dot_cycle_cooling", n_steps_fixed), n_steps_fixed);
 
+        rankine_pc.assign(C_pc_Rankine_indirect_224::E_ETA_THERMAL, allocate("eta_cycle_gross", n_steps_fixed), n_steps_fixed);
         // *****************************************************
         // *****************************************************
 
@@ -519,11 +584,12 @@ public:
         // *****************************************************
         // Electric resistance heater
         // Construct electric resistance heater class
+        double heater_efficiency = as_double("heater_efficiency") / 100.0;          //[-] convert from % input
         double f_q_dot_des_allowable_su = as_double("f_q_dot_des_allowable_su");    //[-] fraction of design power allowed during startup
         double hrs_startup_at_max_rate = as_double("hrs_startup_at_max_rate");      //[hr] duration of startup at max startup power
         double f_heater_min = as_double("f_q_dot_heater_min");                      //[-] minimum allowable heater output as fraction of design
         C_csp_cr_electric_resistance c_electric_resistance(T_htf_cold_des, T_htf_hot_des,
-            q_dot_heater_des, f_heater_min,
+            q_dot_heater_des, heater_efficiency, f_heater_min,
             f_q_dot_des_allowable_su, hrs_startup_at_max_rate,
             hot_htf_code, ud_hot_htf_props, C_csp_cr_electric_resistance::E_elec_resist_startup_mode::SEQUENCED);
 
@@ -540,34 +606,33 @@ public:
 
         // *****************************************************
         // TES
-        C_csp_two_tank_tes storage;
-        C_csp_two_tank_tes::S_params* tes = &storage.ms_params;
-        tes->m_field_fl = hot_htf_code;
-        tes->m_field_fl_props = ud_hot_htf_props;
-        tes->m_tes_fl = hot_htf_code;
-        tes->m_tes_fl_props = ud_hot_htf_props;
-        tes->m_W_dot_pc_design = W_dot_cycle_des;   //[MWe]
-        tes->m_eta_pc = eta_cycle;                  //[-]
-        tes->m_solarm = heater_mult;                //[-]
-        tes->m_ts_hours = tshours;                  //[hr]
-        tes->m_h_tank = as_double("h_tank");
-        tes->m_u_tank = as_double("u_tank");
-        tes->m_tank_pairs = as_integer("tank_pairs");
-        tes->m_hot_tank_Thtr = as_double("hot_tank_Thtr");
-        tes->m_hot_tank_max_heat = as_double("hot_tank_max_heat");
-        tes->m_cold_tank_Thtr = as_double("cold_tank_Thtr");
-        tes->m_cold_tank_max_heat = as_double("cold_tank_max_heat");
-        tes->m_dt_hot = 0.0;                        // MSPT assumes direct storage, so no user input here: hardcode = 0.0
-        tes->m_T_field_in_des = T_htf_cold_des;     //[C]
-        tes->m_T_field_out_des = T_htf_hot_des;     //[C]
-        tes->m_T_tank_hot_ini = T_htf_hot_des;      //[C]
-        tes->m_T_tank_cold_ini = T_htf_cold_des;    //[C]
-        tes->m_h_tank_min = as_double("h_tank_min");
-        tes->m_f_V_hot_ini = as_double("tes_init_hot_htf_percent");
-        tes->m_htf_pump_coef = as_double("pb_pump_coef");
-        tes->tanks_in_parallel = false;     //[-] False: Field HTF always goes to TES. PC HTF always comes from TES. ETES should not simultaneously operate heater and cycle
-        tes->V_tes_des = 1.85;              //[m/s]
-        tes->calc_design_pipe_vals = false; // for now, to get 'tanks_in_parallel' to work
+        C_csp_two_tank_tes storage(
+            hot_htf_code,
+            ud_hot_htf_props,
+            hot_htf_code,
+            ud_hot_htf_props,
+            W_dot_cycle_des / eta_cycle,  //[MWt]
+            heater_mult,                  //[-]
+            W_dot_cycle_des / eta_cycle * tshours,  //[MWht]
+            as_double("h_tank"),
+            as_double("u_tank"),
+            as_integer("tank_pairs"),
+            as_double("hot_tank_Thtr"),
+            as_double("hot_tank_max_heat"),
+            as_double("cold_tank_Thtr"),
+            as_double("cold_tank_max_heat"),
+            0.0,                          // MSPT assumes direct storage, so no user input here: hardcode = 0.0
+            T_htf_cold_des,               //[C]
+            T_htf_hot_des,                //[C]
+            T_htf_hot_des,                //[C]
+            T_htf_cold_des,               //[C]
+            as_double("h_tank_min"),
+            as_double("tes_init_hot_htf_percent"),
+            as_double("pb_pump_coef"),
+            false,                        //[-] False: Field HTF always goes to TES. PC HTF always comes from TES. ETES should not simultaneously operate heater and cycle
+            1.85,                         //[m/s]
+            false                         // for now, to get 'tanks_in_parallel' to work
+        );
 
         // Set TES cmod outputs
         storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_Q_DOT_LOSS, allocate("q_dot_tes_losses", n_steps_fixed), n_steps_fixed);
@@ -589,7 +654,6 @@ public:
         // Still need to define mc_csp_ops blocks and fractions although we're not using them
         tou_params->mc_csp_ops.mc_weekdays.resize_fill(12, 24, 1.0);
         tou_params->mc_csp_ops.mc_weekends.resize_fill(12, 24, 1.0);
-        tou_params->mc_csp_ops.mvv_tou_arrays[C_block_schedule_csp_ops::TURB_FRAC].resize(2, std::numeric_limits<double>::quiet_NaN());
         
         tou.mc_dispatch_params.m_is_tod_pc_target_also_pc_max = true;
         tou.mc_dispatch_params.m_is_block_dispatch = false;
@@ -611,6 +675,14 @@ public:
                 size_t count_ppa_price_input;
                 ssc_number_t* ppa_price_input_array = as_array("ppa_price_input", &count_ppa_price_input);
                 ppa_price_year1 = (double)ppa_price_input_array[0];  // [$/kWh]
+
+                // if no dispatch optimization, then need to define a real turbine fraction
+                //if (is_dispatch) {
+                //    tou_params->mc_csp_ops.mvv_tou_arrays[C_block_schedule_csp_ops::TURB_FRAC].resize(2, std::numeric_limits<double>::quiet_NaN());
+                //}
+                //else {
+                    tou_params->mc_csp_ops.mvv_tou_arrays[C_block_schedule_csp_ops::TURB_FRAC].resize(2, 1.0);
+                //}
 
                 // Time-of-Delivery factors by time step:
                 int ppa_mult_model = as_integer("ppa_multiplier_model");
@@ -741,6 +813,7 @@ public:
             dispatch,
             system,
             NULL,
+            nullptr,
             ssc_cmod_update,
             (void*)(this));
 
@@ -752,7 +825,6 @@ public:
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TWET, allocate("twet", n_steps_fixed), n_steps_fixed);
 
             // Cycle
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::PC_W_DOT_COOLING, allocate("W_dot_cycle_cooling", n_steps_fixed), n_steps_fixed);
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::W_DOT_NET, allocate("W_dot_out_net", n_steps_fixed), n_steps_fixed);
 
             // TES
@@ -763,7 +835,6 @@ public:
             // Parasitics
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::SYS_W_DOT_FIXED, allocate("W_dot_fixed_parasitics", n_steps_fixed), n_steps_fixed);
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::SYS_W_DOT_BOP, allocate("W_dot_bop_parasitics", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::SYS_W_DOT_PUMP, allocate("W_dot_cycle_htf_pump", n_steps_fixed), n_steps_fixed);
 
             // Controller
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::ERR_M_DOT, allocate("m_dot_balance", n_steps_fixed), n_steps_fixed);
@@ -781,7 +852,6 @@ public:
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_ITER,   allocate("disp_solve_iter", n_steps_fixed), n_steps_fixed);
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_OBJ,    allocate("disp_objective", n_steps_fixed), n_steps_fixed);
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_OBJ_RELAX, allocate("disp_obj_relax", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_QSF_EXPECT, allocate("disp_qsf_expected", n_steps_fixed), n_steps_fixed);
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_QSFPROD_EXPECT, allocate("disp_qsfprod_expected", n_steps_fixed), n_steps_fixed);
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_QSFSU_EXPECT, allocate("disp_qsfsu_expected", n_steps_fixed), n_steps_fixed);
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_TES_EXPECT, allocate("disp_tes_expected", n_steps_fixed), n_steps_fixed);
@@ -792,6 +862,11 @@ public:
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_PRES_NCONSTR, allocate("disp_presolve_nconstr", n_steps_fixed), n_steps_fixed);
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_PRES_NVAR,    allocate("disp_presolve_nvar", n_steps_fixed), n_steps_fixed);
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_TIME,   allocate("disp_solve_time", n_steps_fixed), n_steps_fixed);
+
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::CTRL_OP_MODE_SEQ_A, allocate("operating_modes_a", n_steps_fixed), n_steps_fixed);
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::CTRL_OP_MODE_SEQ_B, allocate("operating_modes_b", n_steps_fixed), n_steps_fixed);
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::CTRL_OP_MODE_SEQ_C, allocate("operating_modes_c", n_steps_fixed), n_steps_fixed);
+
 
         // *****************************************************
         // *****************************************************
@@ -834,20 +909,46 @@ public:
             // Cycle
         double m_dot_htf_pc_des;    //[kg/s]
         double cp_htf_pc_des;       //[kJ/kg-K]
-        rankine_pc.get_design_parameters(m_dot_htf_pc_des, cp_htf_pc_des);
+        double W_dot_pc_pump_des;   //[MWe]
+        double W_dot_cooling_des;   //[MWe]
+        int n_T_htf_pars, n_T_amb_pars, n_m_dot_pars;
+        n_T_htf_pars = n_T_amb_pars = n_m_dot_pars = -1;
+        double T_htf_ref_calc, T_htf_low_calc, T_htf_high_calc, T_amb_ref_calc, T_amb_low_calc, T_amb_high_calc,
+            m_dot_htf_ND_ref_calc, m_dot_htf_ND_low_calc, m_dot_htf_ND_high_calc, W_dot_gross_ND_des, Q_dot_HTF_ND_des,
+            W_dot_cooling_ND_des, m_dot_water_ND_des;
+        T_htf_ref_calc = T_htf_low_calc = T_htf_high_calc =
+            T_amb_ref_calc = T_amb_low_calc = T_amb_high_calc =
+            m_dot_htf_ND_ref_calc = m_dot_htf_ND_low_calc = m_dot_htf_ND_high_calc =
+            W_dot_gross_ND_des = Q_dot_HTF_ND_des = W_dot_cooling_ND_des = m_dot_water_ND_des = std::numeric_limits<double>::quiet_NaN();
+
+        rankine_pc.get_design_parameters(m_dot_htf_pc_des, cp_htf_pc_des, W_dot_pc_pump_des, W_dot_cooling_des,
+            n_T_htf_pars, n_T_amb_pars, n_m_dot_pars,
+            T_htf_ref_calc /*C*/, T_htf_low_calc /*C*/, T_htf_high_calc /*C*/,
+            T_amb_ref_calc /*C*/, T_amb_low_calc /*C*/, T_amb_high_calc /*C*/,
+            m_dot_htf_ND_ref_calc, m_dot_htf_ND_low_calc /*-*/, m_dot_htf_ND_high_calc /*-*/,
+            W_dot_gross_ND_des, Q_dot_HTF_ND_des, W_dot_cooling_ND_des, m_dot_water_ND_des);
         m_dot_htf_pc_des /= 3600.0;     // convert from kg/hr to kg/s
 
             // Heater
-        double E_heater_su_des;     //[MWt-hr]
-        c_electric_resistance.get_design_parameters(E_heater_su_des);
+        double E_heater_su_des;         //[MWt-hr]
+        double W_dot_heater_des_calc;   //[MWe]
+        c_electric_resistance.get_design_parameters(E_heater_su_des, W_dot_heater_des_calc);
 
             // TES
-        double V_tes_htf_avail /*m3*/, V_tes_htf_total /*m3*/, d_tank /*m*/, q_dot_loss_tes_des /*MWt*/, dens_store_htf_at_T_ave /*kg/m3*/;
-        storage.get_design_parameters(V_tes_htf_avail, V_tes_htf_total, d_tank, q_dot_loss_tes_des, dens_store_htf_at_T_ave);        
+        double V_tes_htf_avail /*m3*/, V_tes_htf_total /*m3*/, d_tank /*m*/, q_dot_loss_tes_des /*MWt*/, dens_store_htf_at_T_ave /*kg/m3*/, Q_tes_des_tes_class;
+        storage.get_design_parameters(V_tes_htf_avail, V_tes_htf_total, d_tank,
+            q_dot_loss_tes_des, dens_store_htf_at_T_ave, Q_tes_des_tes_class);        
 
             // System
         double W_dot_bop_design;    //[MWe]
-        csp_solver.get_design_parameters(W_dot_bop_design);
+        double W_dot_fixed_parasitic_design;    //[MWe]
+        csp_solver.get_design_parameters(W_dot_bop_design, W_dot_fixed_parasitic_design);
+
+        double plant_net_capacity_des_calc = W_dot_cycle_des - W_dot_pc_pump_des - W_dot_cooling_des -
+                                W_dot_bop_design - W_dot_fixed_parasitic_design;    //[MWe]
+
+        double plant_net_conv_calc = plant_net_capacity_des_calc / W_dot_cycle_des; //[-]
+        double system_capacity = plant_net_capacity_des_calc * 1.E3;        //[kWe]
 
         // *****************************************************
         // System design is complete, so calculate final design outputs like cost, capacity, etc.
@@ -857,7 +958,10 @@ public:
         double bop_spec_cost = as_double("bop_spec_cost");
         double contingency_rate = as_double("contingency_rate");
 
-        double plant_net_capacity = system_capacity / 1000.0;         //[MWe], convert from kWe
+        // no Cold Temp TES, so set those cost model inputs to 0
+        double Q_CT_tes = 0.0;
+        double CT_tes_spec_cost = 0.0;
+
         double EPC_perc_direct_cost = as_double("epc_cost_perc_of_direct");
         double EPC_per_power_cost = as_double("epc_cost_per_watt");
         double EPC_fixed_cost = as_double("epc_cost_fixed");
@@ -868,19 +972,20 @@ public:
         double sales_tax_rate = as_double("sales_tax_rate");
 
         // Cost model outputs
-        double tes_cost, power_cycle_cost, heater_cost, bop_cost, fossil_backup_cost,
+        double tes_cost, CT_tes_cost, power_cycle_cost, heater_cost, bop_cost, fossil_backup_cost,
             direct_capital_precontingency_cost, contingency_cost, total_direct_cost, total_land_cost,
             epc_and_owner_cost, sales_tax_cost, total_indirect_cost, total_installed_cost, estimated_installed_cost_per_cap;
-        tes_cost = power_cycle_cost = heater_cost = bop_cost = fossil_backup_cost =
+        tes_cost = CT_tes_cost = power_cycle_cost = heater_cost = bop_cost = fossil_backup_cost =
             direct_capital_precontingency_cost = contingency_cost = total_direct_cost = total_land_cost =
             epc_and_owner_cost = sales_tax_cost = total_indirect_cost = total_installed_cost = estimated_installed_cost_per_cap = std::numeric_limits<double>::quiet_NaN();
 
-        N_mspt::calculate_etes_costs(Q_tes, tes_spec_cost, W_dot_cycle_des, power_cycle_spec_cost,
+        N_mspt::calculate_etes_costs(Q_tes_des, tes_spec_cost, Q_CT_tes, CT_tes_spec_cost,
+            W_dot_cycle_des, power_cycle_spec_cost,
             q_dot_heater_des, heater_spec_cost, bop_spec_cost, contingency_rate,
-            plant_net_capacity, EPC_perc_direct_cost, EPC_per_power_cost, EPC_fixed_cost,
+            plant_net_capacity_des_calc, EPC_perc_direct_cost, EPC_per_power_cost, EPC_fixed_cost,
             total_land_perc_direct_cost, total_land_per_power_cost, total_land_fixed_cost,
             sales_tax_basis, sales_tax_rate,
-            tes_cost, power_cycle_cost, heater_cost, bop_cost, direct_capital_precontingency_cost,
+            tes_cost, CT_tes_cost, power_cycle_cost, heater_cost, bop_cost, direct_capital_precontingency_cost,
             contingency_cost, total_direct_cost, total_land_cost, epc_and_owner_cost,
             sales_tax_cost, total_indirect_cost, total_installed_cost, estimated_installed_cost_per_cap);
 
@@ -931,6 +1036,8 @@ public:
             // System
         assign("system_capacity", (ssc_number_t)system_capacity);           //[kWe]
         assign("nameplate", (ssc_number_t)(system_capacity * 1.E-3));       //[MWe]
+        assign("cp_system_capacity", system_capacity * 1.E-3);             //[MWe]
+        assign("cp_battery_capacity", system_capacity * 1.E-3);             //[MWe]
         assign("q_pb_design", (ssc_number_t)q_dot_pc_des);                  //[MWt]
         assign("q_dot_heater_design", (ssc_number_t)q_dot_heater_des);      //[MWt]
         assign("tshours_heater", (ssc_number_t)(tshours / heater_mult));    //[hr]
@@ -939,9 +1046,27 @@ public:
             // Cycle
         assign("m_dot_htf_cycle_des", (ssc_number_t)m_dot_htf_pc_des);            //[kg/s]
         assign("cp_htf_cycle_des", (ssc_number_t)cp_htf_pc_des);                  //[kJ/kg-K]
+            // UDPC
+        assign("n_T_htf_pars_calc", n_T_htf_pars);
+        assign("n_T_amb_pars_calc", n_T_amb_pars);
+        assign("n_m_dot_pars_calc", n_m_dot_pars);
+        assign("T_htf_ref_calc", T_htf_ref_calc);
+        assign("T_htf_low_calc", T_htf_low_calc);
+        assign("T_htf_high_calc", T_htf_high_calc);
+        assign("T_amb_ref_calc", T_amb_ref_calc);
+        assign("T_amb_low_calc", T_amb_low_calc);
+        assign("T_amb_high_calc", T_amb_high_calc);
+        assign("m_dot_htf_ND_ref_calc", m_dot_htf_ND_ref_calc);
+        assign("m_dot_htf_ND_low_calc", m_dot_htf_ND_low_calc);
+        assign("m_dot_htf_ND_high_calc", m_dot_htf_ND_high_calc);
+        assign("W_dot_gross_ND_des_calc", W_dot_gross_ND_des);
+        assign("Q_dot_HTF_ND_des_calc", Q_dot_HTF_ND_des);
+        assign("W_dot_cooling_ND_des_calc", W_dot_cooling_ND_des);
+        assign("m_dot_water_ND_des_calc", m_dot_water_ND_des);
 
             // Heater
-        assign("E_heater_su_des", (ssc_number_t)E_heater_su_des);       //[MWt-hr]
+        assign("W_dot_heater_des", (ssc_number_t)W_dot_heater_des_calc);    //[MWe]
+        assign("E_heater_su_des", (ssc_number_t)E_heater_su_des);           //[MWt-hr]
 
             // TES
         assign("V_tes_htf_avail", V_tes_htf_avail);         //[m3]
@@ -972,7 +1097,9 @@ public:
             // Financial
         assign("ppa_soln_mode", 1);     // Only allow dispatch model to use fixed ppa mode so dispatch model knows absolute prices
         assign("flip_target_percent", 0.0); //[%] fixed ppa mode shouldn't use this input, so set it to a value that, if used, will give weird results
-            
+            // ETES model assumes no land area. Can calculate land costs based on % or absolute values
+        assign("total_land_area", 0);   //[acre]
+
         // *****************************************************
         // *****************************************************
 
@@ -1022,7 +1149,7 @@ public:
 
         // 'adjustment_factors' class stores factors in hourly array, so need to index as such
         adjustment_factors haf(this, "adjust");
-        if (!haf.setup())
+        if (!haf.setup(n_steps_fixed))
             throw exec_error("etes_electric_resistance", "failed to setup adjustment factors: " + haf.error());
 
         ssc_number_t* p_gen = allocate("gen", count);
@@ -1040,7 +1167,6 @@ public:
         ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, steps_per_hour);
 
         // Post-process hourly values
-        ssc_number_t* p_eta_cycle_gross = allocate("eta_cycle_gross", n_steps_fixed);
         ssc_number_t* p_eta_cycle_net = allocate("eta_cycle_net", n_steps_fixed);
         ssc_number_t* p_W_dot_cycle_net = allocate("W_dot_cycle_net", n_steps_fixed);
         size_t count_q_dot_cycle, count_W_dot_cycle, count_W_dot_cycle_cooling, count_m_dot_htf_cycle, count_m_dot_water_cycle;
@@ -1057,11 +1183,9 @@ public:
         for (size_t i = 0; i < n_steps_fixed; i++) {
             p_W_dot_cycle_net[i] = p_W_dot_cycle_gross[i] - p_W_dot_cycle_cooling[i];     //[MWe]
             if (p_q_dot_cycle[i] > 0.0) {
-                p_eta_cycle_gross[i] = p_W_dot_cycle_gross[i] / p_q_dot_cycle[i];       //[-]
                 p_eta_cycle_net[i] = p_W_dot_cycle_net[i] / p_q_dot_cycle[i];
             }
             else {
-                p_eta_cycle_gross[i] = 0.0;
                 p_eta_cycle_net[i] = 0.0;
             }
 
@@ -1089,6 +1213,29 @@ public:
         accumulate_annual_for_year("disp_solve_time", "disp_solve_time_ann", sim_setup.m_report_step / 3600. / as_double("disp_frequency"), steps_per_hour, 1, n_steps_fixed / steps_per_hour);
         accumulate_annual_for_year("disp_solve_state", "disp_solve_state_ann", sim_setup.m_report_step / 3600. / as_double("disp_frequency"), steps_per_hour, 1, n_steps_fixed / steps_per_hour);
 
+        // Reporting dispatch solution counts
+        size_t n_flag, n_gap = 0;
+        ssc_number_t* subopt_flag = as_array("disp_subopt_flag", &n_flag);
+        ssc_number_t* rel_mip_gap = as_array("disp_rel_mip_gap", &n_gap);
+
+        std::vector<int> flag;
+        std::vector<double> gap;
+        flag.resize(n_flag);
+        gap.resize(n_flag);
+        for (size_t i = 0; i < n_flag; i++) {
+            flag[i] = (int)subopt_flag[i];
+            gap[i] = (double)rel_mip_gap[i];
+        }
+
+        double avg_gap = 0;
+        if (as_boolean("is_dispatch")) {
+            std::string disp_sum_msg;
+            dispatch.count_solutions_by_type(flag, (int)as_double("disp_frequency"), disp_sum_msg);
+            log(disp_sum_msg, SSC_NOTICE);
+            avg_gap = dispatch.calc_avg_subopt_gap(gap, flag, (int)as_double("disp_frequency"));
+        }
+        assign("avg_suboptimal_rel_mip_gap", (ssc_number_t)avg_gap);
+
         // *****************************************************
         // Check annual metrics
         double E_heater = as_double("annual_E_heater");
@@ -1099,6 +1246,9 @@ public:
 
         double q_balance_rel = (Q_heater_to_htf + Q_tes_heater - Q_tes_losses - Q_cycle_thermal_in) / Q_cycle_thermal_in;
 
+        std::clock_t clock_end = std::clock();
+        double sim_cpu_run_time = (clock_end - clock_start) / (double)CLOCKS_PER_SEC;		//[s]
+        assign("sim_cpu_run_time", sim_cpu_run_time);   //[s]
     }
 };
 

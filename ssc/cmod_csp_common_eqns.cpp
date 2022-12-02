@@ -1,24 +1,35 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 
 #include <cmath>
 #include <math.h>
@@ -261,7 +272,7 @@ bool Is_optimize(bool override_opt /*-*/) {      // [-]
 }
 
 int Field_model_type(bool is_optimize /*-*/, bool override_layout /*-*/, int assigned_field_model_type /*-*/) {      // [-]
-    if (is_optimize) {
+    if (is_optimize) {  // "override_opt"
         return 0;
     }
     else if (override_layout) {
@@ -447,8 +458,14 @@ void Tower_SolarPilot_Capital_Costs_Equations(ssc_data_t data)
     ssc_data_t_get_number(data, "rec_cost_exp", &rec_cost_scaling_exp);
     ssc_data_t_get_number(data, "csp.pt.cost.storage_mwht", &Q_storage);         // calculation specific to each tech
     ssc_data_t_get_number(data, "tes_spec_cost", &tes_spec_cost);
+
     ssc_data_t_get_number(data, "csp.pt.cost.power_block_mwe", &W_dot_design);   // calculation specific to each tech
     ssc_data_t_get_number(data, "plant_spec_cost", &power_cycle_spec_cost);
+
+    double q_dot_heater_des_calc, heater_spec_cost;
+    ssc_data_t_get_number(data, "q_dot_heater_des_calc", &q_dot_heater_des_calc);   //[MWt]
+    ssc_data_t_get_number(data, "heater_spec_cost", &heater_spec_cost);
+
     ssc_data_t_get_number(data, "bop_spec_cost", &bop_spec_cost);
     ssc_data_t_get_number(data, "fossil_spec_cost", &fossil_backup_spec_cost);
     ssc_data_t_get_number(data, "contingency_rate", &contingency_rate);
@@ -466,18 +483,21 @@ void Tower_SolarPilot_Capital_Costs_Equations(ssc_data_t data)
     ssc_data_t_get_number(data, "sales_tax_rate", &sales_tax_rate);
 
 
-    double site_improvement_cost, heliostat_cost, tower_cost, receiver_cost, tes_cost, power_cycle_cost,
+    double site_improvement_cost, heliostat_cost, tower_cost, receiver_cost, tes_cost, CT_tes_cost, power_cycle_cost, heater_cost,
         bop_cost, fossil_backup_cost,
         direct_capital_precontingency_cost, contingency_cost, total_direct_cost, epc_and_owner_cost, total_land_cost,
         sales_tax_cost, total_indirect_cost, total_installed_cost, estimated_installed_cost_per_cap;
 
-    site_improvement_cost = heliostat_cost = tower_cost = receiver_cost = tes_cost = power_cycle_cost =
+    site_improvement_cost = heliostat_cost = tower_cost = receiver_cost = tes_cost = CT_tes_cost = power_cycle_cost = heater_cost =
         bop_cost = fossil_backup_cost =
         direct_capital_precontingency_cost = contingency_cost = total_direct_cost = epc_and_owner_cost = total_land_cost =
         sales_tax_cost = total_indirect_cost = total_installed_cost = estimated_installed_cost_per_cap = std::numeric_limits<double>::quiet_NaN();
 
+    // Hybrid MSPT-ETES currently not configured for PTES
+    double Q_CT_tes = 0.0;
+    double CT_tes_spec_cost = 0.0;
 
-    N_mspt::calculate_mspt__no_rad_cool__costs(
+    N_mspt::calculate_mspt_etes__no_rad_cool__costs(
         A_sf_refl,
         site_improv_spec_cost,
         heliostat_spec_cost,
@@ -497,8 +517,14 @@ void Tower_SolarPilot_Capital_Costs_Equations(ssc_data_t data)
         Q_storage,
         tes_spec_cost,
 
+        Q_CT_tes,
+        CT_tes_spec_cost,
+
         W_dot_design,
         power_cycle_spec_cost,
+
+        q_dot_heater_des_calc,
+        heater_spec_cost,
 
         bop_spec_cost,
 
@@ -524,7 +550,9 @@ void Tower_SolarPilot_Capital_Costs_Equations(ssc_data_t data)
         tower_cost,
         receiver_cost,
         tes_cost,
+        CT_tes_cost,
         power_cycle_cost,
+        heater_cost,
         bop_cost,
         fossil_backup_cost,
         direct_capital_precontingency_cost,
@@ -544,6 +572,7 @@ void Tower_SolarPilot_Capital_Costs_Equations(ssc_data_t data)
     ssc_data_t_set_number(data, "csp.pt.cost.receiver", (ssc_number_t)receiver_cost);
     ssc_data_t_set_number(data, "csp.pt.cost.storage", (ssc_number_t)tes_cost);
     ssc_data_t_set_number(data, "csp.pt.cost.power_block", (ssc_number_t)power_cycle_cost);
+    ssc_data_t_set_number(data, "heater_cost_calc", (ssc_number_t)heater_cost);
     ssc_data_t_set_number(data, "csp.pt.cost.bop", (ssc_number_t)bop_cost);
     ssc_data_t_set_number(data, "csp.pt.cost.fossil", (ssc_number_t)fossil_backup_cost);
     ssc_data_t_set_number(data, "ui_direct_subtotal", (ssc_number_t)direct_capital_precontingency_cost);
@@ -602,6 +631,18 @@ double Min_field_flow_velocity(double m_dot_htfmin, double min_inner_diameter,
 
     return m_dot_htfmin * 4 / (density * M_PI *
         min_inner_diameter * min_inner_diameter);
+}
+
+double Min_htf_temp(int rec_htf /*-*/, const util::matrix_t<ssc_number_t>& field_fl_props /*-*/)       // [C]
+{
+    HTFProperties htf_properties = GetHtfProperties(rec_htf, field_fl_props);
+    return htf_properties.min_temp() - 273.15;
+}
+
+double Max_htf_temp(int rec_htf /*-*/, const util::matrix_t<ssc_number_t>& field_fl_props /*-*/)       // [C]
+{
+    HTFProperties htf_properties = GetHtfProperties(rec_htf, field_fl_props);
+    return htf_properties.max_temp() - 273.15;
 }
 
 double Field_htf_cp_avg(double T_in /*C*/, double T_out /*C*/, int rec_htf /*-*/,
