@@ -161,7 +161,6 @@ ssc_data_t tcsmolten_salt_defaults()
     ssc_data_set_number(data, "heat_trace_power", 500);
     ssc_data_set_number(data, "preheat_flux", 50);
     ssc_data_set_number(data, "startup_ramp_time", 0);
-    ssc_data_set_number(data, "preheat_target_Tdiff", 25);
     ssc_data_set_number(data, "startup_target_Tdiff", -5);
     ssc_data_set_number(data, "is_rec_startup_from_T_soln", 0);
     ssc_data_set_number(data, "is_rec_enforce_min_startup", 0);
