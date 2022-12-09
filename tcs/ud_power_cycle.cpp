@@ -48,10 +48,12 @@ void C_ud_power_cycle::init(const util::matrix_t<double>& udpc_table,
     std::vector<double>& Y_at_T_htf_ref, std::vector<double>& Y_at_T_amb_ref,
     std::vector<double>& Y_at_m_dot_htf_ND_ref, std::vector<double>& Y_avg_at_refs)
 {
-    util::matrix_t<double> T_htf_ind_table, m_dot_htf_ND_ind_table, T_amb_ind_table;
+    util::matrix_t<double> T_htf_ind_table, m_dot_htf_ND_ind_table, T_amb_ind_table;    
 
     N_udpc_common::split_ind_tbl(udpc_table,
         T_htf_ind_table, m_dot_htf_ND_ind_table, T_amb_ind_table,
+        mv_T_htf_unique, mv_m_dot_unique,
+        mv_T_amb_unique,
         n_T_htf_pars, n_T_amb_pars, n_m_dot_pars,
         m_dot_htf_ND_low_calc, m_dot_htf_ND_ref_calc, m_dot_htf_ND_high_calc,
         T_htf_low_calc, T_htf_ref_calc, T_htf_high_calc,
@@ -421,6 +423,14 @@ void C_ud_power_cycle::get_max_m_dot_and_W_dot_ND(int max_calc_mode, double T_ht
         return;
 
     }
+}
+
+void C_ud_power_cycle::get_ind_var_params(std::vector<double>& v_T_htf_unique, std::vector<double>& v_m_dot_unique,
+    std::vector<double>& v_T_amb_unique)
+{
+    v_T_htf_unique = mv_T_htf_unique;
+    v_T_amb_unique = mv_T_amb_unique;
+    v_m_dot_unique = mv_m_dot_unique;
 }
 
 double C_ud_power_cycle::get_interpolated_ND_output(int i_ME /*M.E. table index*/, 
@@ -869,7 +879,13 @@ int N_udpc_common::split_ind_tbl(const util::matrix_t<double>& cmbd_ind, util::m
     double m_dot_low, m_dot_des, m_dot_high, T_htf_low, T_htf_des, T_htf_high, T_amb_low, T_amb_des, T_amb_high;
     m_dot_low = m_dot_des = m_dot_high = T_htf_low = T_htf_des = T_htf_high = T_amb_low = T_amb_des = T_amb_high = std::numeric_limits<double>::quiet_NaN();
 
+    std::vector<double> v_T_htf_unique;
+    std::vector<double> v_m_dot_unique;
+    std::vector<double> v_T_amb_unique;
+
     return split_ind_tbl(cmbd_ind, T_htf_ind, m_dot_ind, T_amb_ind,
+        v_T_htf_unique, v_m_dot_unique,
+        v_T_amb_unique,
         n_T_htf_pars, n_T_amb_pars, n_m_dot_pars,
         m_dot_low, m_dot_des, m_dot_high,
         T_htf_low, T_htf_des, T_htf_high,
@@ -878,6 +894,8 @@ int N_udpc_common::split_ind_tbl(const util::matrix_t<double>& cmbd_ind, util::m
 
 int N_udpc_common::split_ind_tbl(const util::matrix_t<double>& cmbd_ind, util::matrix_t<double>& T_htf_ind,
     util::matrix_t<double>& m_dot_ind, util::matrix_t<double>& T_amb_ind,
+    std::vector<double>& v_T_htf_unique, std::vector<double>& v_m_dot_unique,
+    std::vector<double>& v_T_amb_unique,
     int& n_T_htf_pars, int& n_T_amb_pars, int& n_m_dot_pars,
     double& m_dot_low, double& m_dot_des, double& m_dot_high,
     double& T_htf_low, double& T_htf_des, double& T_htf_high,
@@ -907,9 +925,9 @@ int N_udpc_common::split_ind_tbl(const util::matrix_t<double>& cmbd_ind, util::m
     set<double, std::less<double>> T_htf_unique(T_htf_col.data(), T_htf_col.data() + T_htf_col.ncells());
     set<double, std::less<double>> m_dot_unique(m_dot_col.data(), m_dot_col.data() + m_dot_col.ncells());
     set<double, std::less<double>> T_amb_unique(T_amb_col.data(), T_amb_col.data() + T_amb_col.ncells());
-    std::vector<double> v_T_htf_unique(T_htf_unique.begin(), T_htf_unique.end());
-    std::vector<double> v_m_dot_unique(m_dot_unique.begin(), m_dot_unique.end());
-    std::vector<double> v_T_amb_unique(T_amb_unique.begin(), T_amb_unique.end());
+    v_T_htf_unique = std::vector<double>(T_htf_unique.begin(), T_htf_unique.end());
+    v_m_dot_unique = std::vector<double>(m_dot_unique.begin(), m_dot_unique.end());
+    v_T_amb_unique = std::vector<double>(T_amb_unique.begin(), T_amb_unique.end());
 
     // Get HTF temperature levels
     T_htf_des = T_htf_low = T_htf_high = std::numeric_limits<double>::quiet_NaN();

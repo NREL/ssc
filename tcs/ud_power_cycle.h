@@ -115,6 +115,11 @@ private:
 	std::vector<double> m_ME_m_dot_htf_low;		//[-]
 	std::vector<double> m_ME_m_dot_htf_high;	//[-]
 
+    // Save vectors of independent variable parametric value (also stored in Linear_Interp objects)
+    std::vector<double> mv_T_htf_unique;
+    std::vector<double> mv_m_dot_unique;
+    std::vector<double> mv_T_amb_unique;    
+
 public:
 
 	C_ud_power_cycle(){};
@@ -140,6 +145,10 @@ public:
     void get_max_m_dot_and_W_dot_ND(int max_calc_mode, double T_htf_hot /*C*/, double T_amb /*C*/,
                     double max_frac /*-*/, double cutoff_frac /*-*/,
                     double& m_dot_HTF_ND_max, double& W_dot_ND_max);
+
+    void get_ind_var_params(std::vector<double>& v_T_htf_unique, std::vector<double>& v_m_dot_unique,
+        std::vector<double>& v_T_amb_unique);
+
 };
 
 class C_od_pc_function
@@ -232,6 +241,8 @@ namespace N_udpc_common
 
     int split_ind_tbl(const util::matrix_t<double>& combined, util::matrix_t<double>& T_htf_ind,
         util::matrix_t<double>& m_dot_ind, util::matrix_t<double>& T_amb_ind,
+        std::vector<double>& v_T_htf_unique, std::vector<double>& v_m_dot_unique,
+        std::vector<double>& v_T_amb_unique,
         int& n_T_htf_pars, int& n_T_amb_pars, int& n_m_dot_pars,
         double& m_dot_low, double& m_dot_des, double& m_dot_high,
         double& T_htf_low, double& T_htf_des, double& T_htf_high,
