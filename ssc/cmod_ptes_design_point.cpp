@@ -36,42 +36,61 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ptes_solver_design_point.h"
 
 #include <algorithm>
+using std::string;
 
 static var_info _cm_vtab_ptes_design_point[] = {
 
     // ----------------------------------------- Input
 
     // Simulation options
-    //   VARTYPE    DATATYPE        NAME                                LABEL                                                       UNITS     META                      GROUP               REQUIRED_IF                 CONSTRAINTS     UI_HINTS*/
-    { SSC_INPUT,    SSC_NUMBER,     "sim_type",                         "1 (default): timeseries, 2: design only",                  "",             "",             "Simulation",           "?=1",                      "",              "SIMULATION_PARAMETER"},
-    { SSC_INPUT,    SSC_NUMBER,     "N_panels",                         "Number of individual panels on the receiver",              "",             "",             "Tower and Receiver",   "*",                        "INTEGER",       ""},
+    //   VARTYPE    DATATYPE        NAME                                LABEL                                                       UNITS           META            GROUP               REQUIRED_IF         CONSTRAINTS     UI_HINTS*/
+
+    { SSC_INPUT,    SSC_NUMBER,     "hx_eff",                           "hx effectiveness",                                         "",             "",             "",                     "*",              "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,     "eta",                              "polytropic efficiency of compressors and expanders",       "",             "",             "",                     "*",              "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,     "eta_pump",                         "polytropic efficiency of air pump",                        "",             "",             "",                     "*",              "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,     "ploss_working",                    "Fractional pressure loss in each heat exchanger",          "",             "",             "",                     "*",              "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,     "ploss_air",                        "Fractional pressure loss (air)",                           "",             "",             "",                     "*",              "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,     "ploss_liquid",                     "Fractional pressure loss (liquid)",                        "",             "",             "",                     "*",              "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,     "motor_eff",                        "Motor Efficiency",                                         "",             "",             "",                     "*",              "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,     "gen_eff",                          "Generator Efficiency",                                     "",             "",             "",                     "*",              "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,     "T0",                               "Ambient Temperature",                                      "K",            "",             "",                     "*",              "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,     "P0",                               "Ambient Pressure",                                         "Pa",           "",             "",                     "*",              "",              ""},
+                                                                                                                                                                                                              
+    { SSC_INPUT,    SSC_NUMBER,     "P1",                               "Lowest Pressure in cycle",                                 "Pa",           "",             "",                     "*",              "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,     "T_compressor_inlet",               "Charging compressor inlet temperature",                    "K",            "",             "",                     "*",              "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,     "T_compressor_outlet",              "Charging compressor outlet temperature",                   "K",            "",             "",                     "*",              "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,     "power_output",                     "Power Output",                                             "W",            "",             "",                     "*",              "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,     "charge_time_hr",                   "charging time",                                            "hr",           "",             "",                     "*",              "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,     "discharge_time_hr",                "discharge time",                                           "hr",           "",             "",                     "*",              "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,     "alpha",                            "Ratio of mdot cp     AIR/WF",                              "",             "",             "",                     "*",              "",              ""},
+                                                                                                                                                                                                              
+    { SSC_INPUT,    SSC_STRING,     "working_fluid_type",               "Working Fluid Fluid",                                      "",             "",             "",                     "*",              "",              ""},
+    { SSC_INPUT,    SSC_STRING,     "hot_fluid_type",                   "Hot Resevoir Fluid",                                       "",             "",             "",                     "*",              "",              ""},
+    { SSC_INPUT,    SSC_STRING,     "cold_fluid_type",                  "Cold Resevoir Fluid",                                      "",             "",             "",                     "*",              "",              ""},
 
     // ----------------------------------------- Output
 
     // Results
-    { SSC_OUTPUT, SSC_NUMBER,       "hp_perf",                          "Heat Pump Coefficient of Performance",                     "",             "",             "",                     "sim_type=1",               "",              ""},
-    { SSC_OUTPUT, SSC_NUMBER,       "cycle_eff",                        "Cycle Efficiency",                                         "",             "",             "",                     "sim_type=1",               "",              ""},
-    { SSC_OUTPUT, SSC_NUMBER,       "Th_hot",                           "Temperature of the Hot Tanks hotter tank",                 "C",            "",             "",                     "sim_type=1",               "",              ""},
-    { SSC_OUTPUT, SSC_NUMBER,       "Tc_hot",                           "Temperature of the Cold Tanks hotter tank",                "C",            "",             "",                     "sim_type=1",               "",              ""},
-    { SSC_OUTPUT, SSC_NUMBER,       "Tc_cold",                          "Temperature of the Cold Tanks colder tank",                "C",            "",             "",                     "sim_type=1",               "",              ""},
+    { SSC_OUTPUT, SSC_NUMBER,       "hp_COP",                           "Heat Pump Coefficient of Performance",                     "",             "",             "",                     "",               "",              ""},
+    { SSC_OUTPUT, SSC_NUMBER,       "cycle_eff",                        "Cycle Efficiency",                                         "",             "",             "",                     "",               "",              ""},
+    { SSC_OUTPUT, SSC_NUMBER,       "Th_hot",                           "Temperature of the Hot Tanks hotter tank",                 "C",            "",             "",                     "",               "",              ""},
+    { SSC_OUTPUT, SSC_NUMBER,       "Tc_hot",                           "Temperature of the Cold Tanks hotter tank",                "C",            "",             "",                     "",               "",              ""},
+    { SSC_OUTPUT, SSC_NUMBER,       "Tc_cold",                          "Temperature of the Cold Tanks colder tank",                "C",            "",             "",                     "",               "",              ""},
+    
+    { SSC_OUTPUT, SSC_NUMBER,       "hp_parasitic_fraction",            "Parasitics (non-pumping) fraction",                        "",             "",             "",                     "",               "",              ""},
+    { SSC_OUTPUT, SSC_NUMBER,       "hp_hot_pump_power",                "Pumping Power through Hot HX",                             "kW/kg/s",      "",             "",                     "",               "",              ""},
+    { SSC_OUTPUT, SSC_NUMBER,       "hp_cold_pump_power",               "Pumping Power through Cold HX",                            "kW/kg/s",      "",             "",                     "",               "",              ""},
+    { SSC_OUTPUT, SSC_NUMBER,       "pc_parasitic_fraction",            "Parasitics (non-pumping) fraction",                        "C",            "",             "",                     "",               "",              ""},
+    { SSC_OUTPUT, SSC_NUMBER,       "pc_hot_pump_power",                "Pumping Power through Hot HX",                             "kW/kg/s",      "",             "",                     "",               "",              ""},
+    { SSC_OUTPUT, SSC_NUMBER,       "pc_cold_pump_power",               "Pumping Power through Cold HX",                            "kW/kg/s",      "",             "",                     "",               "",              ""},
 
-    { SSC_OUTPUT, SSC_NUMBER,       "hp_parasitic_fraction",            "Parasitics (non-pumping) fraction",                        "",             "",             "",                     "sim_type=1",               "",              ""},
-    { SSC_OUTPUT, SSC_NUMBER,       "hp_hot_pump_power",                "Pumping Power through Hot HX",                             "kW/kg/s",      "",             "",                     "sim_type=1",               "",              ""},
-    { SSC_OUTPUT, SSC_NUMBER,       "hp_cold_pump_power",               "Pumping Power through Cold HX",                            "kW/kg/s",      "",             "",                     "sim_type=1",               "",              ""},
-    { SSC_OUTPUT, SSC_NUMBER,       "pc_parasitic_fraction",            "Parasitics (non-pumping) fraction",                        "C",            "",             "",                     "sim_type=1",               "",              ""},
-    { SSC_OUTPUT, SSC_NUMBER,       "pc_hot_pump_power",                "Pumping Power through Hot HX",                             "kW/kg/s",      "",             "",                     "sim_type=1",               "",              ""},
-    { SSC_OUTPUT, SSC_NUMBER,       "pc_cold_pump_power",               "Pumping Power through Cold HX",                            "kW/kg/s",      "",             "",                     "sim_type=1",               "",              ""},
-
-    // Plots
-    { SSC_OUTPUT, SSC_NUMBER,       "N_pts_charge",                     "Number data points on plot",                               "",             "",             "",                     "sim_type=1",               "",              ""},
-    { SSC_OUTPUT, SSC_ARRAY,        "temp_series_charge",               "Temperature Values",                                       "C",            "",             "",                     "sim_type=1",               "",              ""},
-    { SSC_OUTPUT, SSC_ARRAY,        "s_series_charge",                  "Entropy Values",                                           "kJ/kg K",      "",             "",                     "sim_type=1",               "",              ""},
-    { SSC_OUTPUT, SSC_NUMBER,       "N_pts_discharge",                  "Number data points on plot",                               "",             "",             "",                     "sim_type=1",               "",              ""},
-    { SSC_OUTPUT, SSC_ARRAY,        "temp_series_discharge",            "Temperature Values",                                       "C",            "",             "",                     "sim_type=1",               "",              ""},
-    { SSC_OUTPUT, SSC_ARRAY,        "s_series_discharge",               "Entropy Values",                                           "kJ/kg K",      "",             "",                     "sim_type=1",               "",              ""},
-
-
-
+     // Plots
+    { SSC_OUTPUT, SSC_NUMBER,       "N_pts_charge",                     "Number data points on plot",                               "",             "",             "",                     "",               "",              ""},
+    { SSC_OUTPUT, SSC_ARRAY,        "temp_series_charge",               "Temperature Values",                                       "C",            "",             "",                     "",               "",              ""},
+    { SSC_OUTPUT, SSC_ARRAY,        "s_series_charge",                  "Entropy Values",                                           "kJ/kg K",      "",             "",                     "",               "",              ""},
+    { SSC_OUTPUT, SSC_NUMBER,       "N_pts_discharge",                  "Number data points on plot",                               "",             "",             "",                     "",               "",              ""},
+    { SSC_OUTPUT, SSC_ARRAY,        "temp_series_discharge",            "Temperature Values",                                       "C",            "",             "",                     "",               "",              ""},
+    { SSC_OUTPUT, SSC_ARRAY,        "s_series_discharge",               "Entropy Values",                                           "kJ/kg K",      "",             "",                     "",               "",              ""},
 
     var_info_invalid };
 
@@ -86,11 +105,43 @@ public:
 
     void exec() override
     {
-        // Test Inputs
-        int n_panels = compute_module::as_integer("N_panels");
-
-        // Set Parameters
+        // Collect Inputs
         PTESSystemParam params;
+        string wf_string;
+        string hf_string;
+        string cf_string;
+        try
+        {
+            params.hx_eff = compute_module::as_double("hx_eff");
+            params.eta = compute_module::as_double("eta");
+            params.eta_pump = compute_module::as_double("eta_pump");
+            params.ploss_working = compute_module::as_double("ploss_working");
+            params.ploss_air = compute_module::as_double("ploss_air");
+            params.ploss_liquid = compute_module::as_double("ploss_liquid");
+
+            params.motor_eff = compute_module::as_double("motor_eff");
+            params.gen_eff = compute_module::as_double("gen_eff");
+
+            params.T0 = compute_module::as_double("T0");
+            params.P0 = compute_module::as_double("P0");
+            params.P1 = compute_module::as_double("P1");
+            params.T_compressor_inlet = compute_module::as_double("T_compressor_inlet");
+            params.T_compressor_outlet = compute_module::as_double("T_compressor_outlet");
+            params.power_output = compute_module::as_double("power_output");
+            params.charge_time_hr = compute_module::as_double("charge_time_hr");
+            params.discharge_time_hr = compute_module::as_double("discharge_time_hr");
+            params.alpha = compute_module::as_double("alpha");
+
+            wf_string = compute_module::as_string("working_fluid_type");
+            hf_string = compute_module::as_string("hot_fluid_type");
+            cf_string = compute_module::as_string("cold_fluid_type");
+        }
+        catch (std::exception& e)
+        {
+            int x = 0;
+        }
+
+        /* //Set Parameters
         {
             params.hx_eff = 0.98;
             params.eta = 0.90;
@@ -104,17 +155,27 @@ public:
 
             params.T0 = 288;
             params.P0 = 1e5;
-            params.mdot_WF = 1;
             params.P1 = 5e5;
-            params.T_Compressor_Inlet = 600;
-            params.T_Compressor_Outlet = 800;
+            params.T_compressor_inlet = 600;
+            params.T_compressor_outlet = 800;
             params.power_output = 100e6;
             params.charge_time_hr = 10;
             params.discharge_time_hr = 10;
+            params.alpha = 2;
+        }*/
+
+        // Convert Fluid Type Strings to Enum
+        bool wf_flag, hf_flag, cf_flag;
+        FluidType wf_type = PTESDesignPoint::GetFluidTypeFromString(wf_string, wf_flag);
+        FluidType hf_type = PTESDesignPoint::GetFluidTypeFromString(hf_string, hf_flag);
+        FluidType cf_type = PTESDesignPoint::GetFluidTypeFromString(cf_string, cf_flag);
+        if (wf_flag == false || hf_flag == false || cf_flag == false)
+        {
+            // throw exception, return
         }
 
         // Build and Run System
-        PTESDesignPoint ptes(params, FluidType::kAir, FluidType::kNitrateSalt, FluidType::kGlycol);
+        PTESDesignPoint ptes(params, wf_type, hf_type, cf_type);
         ptes.Charge();
         ptes.Discharge();
         ptes.Performance();
@@ -152,7 +213,7 @@ public:
         {
             assign("N_pts_charge", (ssc_number_t)out_size);
             assign("N_pts_discharge", (ssc_number_t)out_size_D);
-            assign("hp_perf", (ssc_number_t)ptes.hp_COP_);
+            assign("hp_COP", (ssc_number_t)ptes.hp_COP_);
             assign("cycle_eff", (ssc_number_t)ptes.cycle_eff_);
             assign("Th_hot", (ssc_number_t)ptes.Th_hot_);
             assign("Tc_hot", (ssc_number_t)ptes.Tc_hot_);
@@ -163,7 +224,6 @@ public:
             assign("pc_parasitic_fraction", (ssc_number_t)ptes.pc_parasitic_fraction_);
             assign("pc_hot_pump_power", (ssc_number_t)ptes.pc_hot_pump_power_);
             assign("pc_cold_pump_power", (ssc_number_t)ptes.pc_cold_pump_power_);
-
         }
 
     }

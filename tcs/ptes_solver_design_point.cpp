@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ptes_solver_design_point.h"
 #include <cmath>
 #include <algorithm>
+using std::string;
 
 /// <summary>
 /// Construct Fluid Model based on a designated Fluid Type
@@ -190,6 +191,17 @@ void FluidMaterialProp::SetFluid(FluidType fluid_type)
     }
 }
 
+FluidMaterialProp::map FluidMaterialProp::map_ = {
+    {"Nitrogen", FluidType::kNitrogen},
+    {"Argon", FluidType::kArgon},
+    {"Hydrogen", FluidType::kHydrogen},
+    {"Helium", FluidType::kHelium},
+    {"Air", FluidType::kAir},
+    {"NitrateSalt", FluidType::kNitrateSalt},
+    {"Glycol", FluidType::kGlycol},
+    {"Methanol", FluidType::kMethanol}
+};
+
 /// <summary>
 /// Constructor for State Information
 /// </summary>
@@ -295,9 +307,9 @@ void PTESDesignPoint::Charge()
     double T0 = this->kSystemParams.T0; // Ambient Temperature, K
     double P0 = this->kSystemParams.P0; // Ambient Pressure, Pa
     P1 = this->kSystemParams.P1; // Lowest Pressure in cycle, Pa
-    T1 = this->kSystemParams.T_Compressor_Inlet; // Charging compressor inlet temperature, K
-    T2 = this->kSystemParams.T_Compressor_Outlet; // Charging compressor outlet temperature, K
-    mdot_WF = this->kSystemParams.mdot_WF; // Working Fluid Mass Flow Rate
+    T1 = this->kSystemParams.T_compressor_inlet; // Charging compressor inlet temperature, K
+    T2 = this->kSystemParams.T_compressor_outlet; // Charging compressor outlet temperature, K
+    mdot_WF = 1; // Working Fluid Mass Flow Rate
         
     // Calculate Compressor Outlet Pressure
     double wf_gam = working_fluid_state_.fluid_material_.GetGam();
@@ -452,7 +464,7 @@ void PTESDesignPoint::Discharge()
     double T0 = this->kSystemParams.T0; // Ambient Temperature, K
     double P0 = this->kSystemParams.P0; // Ambient Pressure, Pa
     P1_D = this->kSystemParams.P1; // Lowest Pressure in cycle, Pa
-    mdot_WF_D = this->kSystemParams.mdot_WF; // Mass Flow Rate of Working Fluid during Discharge
+    mdot_WF_D = 1; // Mass Flow Rate of Working Fluid during Discharge
 
     // Hot Heat Exchanger (returns to original temperature)
     TH1_D = TH2_C;
@@ -816,6 +828,28 @@ void PTESDesignPoint::GenerateTSData(vector<double>& temp_vec, vector<double>& e
 
 
 // Static Functions
+
+FluidType PTESDesignPoint::GetFluidTypeFromString(std::string type_string, bool& flag)
+{
+    FluidType fluid_enum;
+
+    try
+    {
+        fluid_enum = FluidMaterialProp::map_.at(type_string);
+        flag = true;
+    }
+    catch (std::exception e)
+    {
+        flag = false;
+        return FluidType::kAir;
+    }
+
+
+
+
+    return fluid_enum;
+}
+
 
 /// <summary>
 /// Calculate Enthalpy in the system

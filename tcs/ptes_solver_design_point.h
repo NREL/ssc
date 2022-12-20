@@ -36,20 +36,23 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 #include <functional>
 #include <vector>
+#include <unordered_map>
+#include <map>
 using std::vector;
+using std::string;
 
 enum struct FluidType
 {
-    kNitrogen,
-    kArgon,
-    kHydrogen,
-    kHelium,
-    kAir,
-    kNitrateSalt,
-    kChlorideSalt,
-    kGlycol,
-    kMethanol,
-    kRejectionAir
+    kNitrogen = 0,
+    kArgon = 1,
+    kHydrogen = 2,
+    kHelium = 3,
+    kAir = 4,
+    kNitrateSalt = 5,
+    kChlorideSalt = 6,
+    kGlycol = 7,
+    kMethanol = 8,
+    kRejectionAir = 9
 };
 
 class FluidMaterialProp
@@ -68,6 +71,9 @@ public:
     double GetSmu() { return Smu_; }
     bool GetIsCompressible() { return is_compressible_; }
 
+    typedef std::map<std::string, FluidType> map;
+    static map map_;
+
 private:
     std::string name_;                  // Material Name
     double cp_;                         // Specific Heat, constant pressure
@@ -85,8 +91,14 @@ private:
 
     void SetFluid(FluidType fluid_type);
 
+    
+    
 };
 
+//const std::map<std::string, FluidType> string_to_fluidtype_map
+//{
+//    {"Nitrogen", FluidType::kNitrogen}
+//};
 
 class FluidState
 {
@@ -139,14 +151,13 @@ public:
     double P0 = 0;                      // Ambient Pressure, Pa
 
     // Cycle Properties
-    double mdot_WF = 0;                 // Mass Flow Rate of Working Fluid
     double P1 = 0;                      // Lowest Pressure in cycle, Pa
-    double T_Compressor_Inlet = 0;      // Charging compressor inlet temperature, K
-    double T_Compressor_Outlet = 0;     // Charging compressor outlet temperature, K
+    double T_compressor_inlet = 0;      // Charging compressor inlet temperature, K
+    double T_compressor_outlet = 0;     // Charging compressor outlet temperature, K
     double power_output = 0;            // Power Output, W
     double charge_time_hr = 0;          // charging time, hr
     double discharge_time_hr = 0;       // discharge time, hr
-    double alpha = 2;                   // Ratio of mdot cp     AIR/WF
+    double alpha = 0;                   // Ratio of mdot cp     AIR/WF
 
 };
 
@@ -156,6 +167,8 @@ public:
 
     // Functions
     PTESDesignPoint(PTESSystemParam params, FluidType working_fluid_type, FluidType hot_fluid_type, FluidType cold_fluid_type);
+
+    static FluidType GetFluidTypeFromString(std::string type_string, bool& flag);
 
     void Charge();                      // Simulate Charge Cycle
     void Discharge();                   // Simulate Discharge Cycle
