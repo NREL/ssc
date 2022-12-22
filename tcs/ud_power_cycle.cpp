@@ -393,7 +393,38 @@ void C_ud_power_cycle::get_max_m_dot_and_W_dot_ND(int max_calc_mode, double T_ht
         return;
 
     }
-    else {
+    else if (max_calc_mode == 2) {
+
+        // 22-12-13 try heuristic from mode == 0, but use q_dot_ND instead of W_dot_ND
+
+        // Heuristic sets max ND mass flow to q_dot_ND at global max ND mass flow rate
+        // Probably in retrospect (before T_htf option above added) not very good,
+        // ... but it's probably more reliable for udpc tables of unknown origins
+
+        // Calculate non-dimensional mass flow rate relative to design point
+        m_dot_HTF_ND_max = max_frac;		//[-] Use max mass flow rate
+
+        // Get ND performance at off-design ambient temperature
+        double q_dot_ND_max = get_Q_dot_HTF_ND(T_htf_hot,
+            T_amb,
+            m_dot_HTF_ND_max);	//[-]
+
+        if (q_dot_ND_max >= m_dot_HTF_ND_max)
+        {
+            return;
+        }
+
+        // set m_dot_ND to P_cycle_ND
+        m_dot_HTF_ND_max = q_dot_ND_max;
+
+        // Get ND performance at off-design ambient temperature
+        W_dot_ND_max = get_W_dot_gross_ND(T_htf_hot,
+            T_amb,
+            m_dot_HTF_ND_max);	//[-]
+
+        return;
+    }
+    else{
 
         // Heuristic sets max ND mass flow to ND power at global max ND mass flow rate
         // Probably in retrospect (before T_htf option above added) not very good,
@@ -421,8 +452,8 @@ void C_ud_power_cycle::get_max_m_dot_and_W_dot_ND(int max_calc_mode, double T_ht
             m_dot_HTF_ND_max);	//[-]
 
         return;
-
     }
+
 }
 
 void C_ud_power_cycle::get_ind_var_params(std::vector<double>& v_T_htf_unique, std::vector<double>& v_m_dot_unique,
@@ -792,7 +823,10 @@ void N_udpc_common::get_var_setup(const std::vector<double>& vec_unique, const s
     int var_count_max = v_var_count[n_var_unique - 1];      // highest count
     int var_count_2 = v_var_count[n_var_unique - 2];        // 2nd highest count
     int var_count_3 = v_var_count[n_var_unique - 3];        // 3rd highest count
-    int var_count_4 = v_var_count[n_var_unique - 4];        // 4th highest count
+    int var_count_4 = 0;
+    if (v_var_count.size() > 3) {
+        var_count_4 = v_var_count[n_var_unique - 4];        // 4th highest count
+    }
 
     // Map independent variable with count, then check against some udpc rules
     var_des = std::numeric_limits<double>::quiet_NaN();
