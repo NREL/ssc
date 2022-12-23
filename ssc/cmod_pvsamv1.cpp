@@ -867,6 +867,7 @@ static var_info _cm_vtab_pvsamv1[] = {
         { SSC_OUTPUT, SSC_NUMBER, "annual_poa_shading_loss_percent", "POA front-side shading loss", "%", "", "Loss", "", "", "" },
         { SSC_OUTPUT, SSC_NUMBER, "annual_poa_soiling_loss_percent", "POA front-side soiling loss", "%", "", "Loss", "", "", "" },
         { SSC_OUTPUT, SSC_NUMBER, "annual_poa_cover_loss_percent",   "POA front-side reflection (IAM) loss",   "%", "", "Loss", "", "", "" },
+        { SSC_OUTPUT, SSC_NUMBER, "annual_poa_rear_gain_percent",    "POA rear-side bifacial gain", "%", "", "Loss", "", "", "" },
         { SSC_OUTPUT, SSC_NUMBER, "annual_ground_incident_percent",   "Ground incident gain", "%", "", "Loss", "", "", "" },
         { SSC_OUTPUT, SSC_NUMBER, "annual_ground_absorbed_percent",   "Ground absorbed loss", "%", "", "Loss", "", "", "" },
         { SSC_OUTPUT, SSC_NUMBER, "annual_rear_ground_reflected_percent",   "POA rear-side view factor reflected from ground gain", "%", "", "Loss", "", "", "" },
@@ -2836,6 +2837,7 @@ void cm_pvsamv1::exec()
         double annual_poa_shaded = accumulate_annual_for_year("poa_shaded", "annual_poa_shaded", ts_hour, step_per_hour);
         double annual_poa_shaded_soiled = accumulate_annual_for_year("poa_shaded_soiled", "annual_poa_shaded_soiled", ts_hour, step_per_hour);
         double annual_poa_front = accumulate_annual_for_year("poa_front", "annual_poa_front", ts_hour, step_per_hour);
+        double annual_poa_rear = accumulate_annual_for_year("poa_rear", "annual_poa_rear", ts_hour, step_per_hour);
         double annual_poa_rear_ground_reflected = accumulate_annual_for_year("poa_rear_ground_reflected", "annual_poa_rear_ground_reflected", ts_hour, step_per_hour);
         double annual_poa_rear_row_reflections = accumulate_annual_for_year("poa_rear_row_reflections", "annual_poa_rear_row_reflections", ts_hour, step_per_hour);
         double annual_poa_rear_direct_diffuse = accumulate_annual_for_year("poa_rear_direct_diffuse", "annual_poa_rear_direct_diffuse", ts_hour, step_per_hour);
@@ -2992,6 +2994,9 @@ void cm_pvsamv1::exec()
         percent = 0.;
         if (annual_poa_shaded > 0) percent = 100 * (annual_poa_shaded_soiled - annual_poa_front) / annual_poa_shaded_soiled;
         assign("annual_poa_cover_loss_percent", var_data((ssc_number_t)percent));
+        percent = 0.;
+        if (annual_poa_rear > 0) percent = 100 * (annual_poa_rear) / annual_poa_front;
+        assign("annual_poa_rear_gain_percent", var_data((ssc_number_t)percent));
         percent = 0.;
         if (annual_poa_front > 0) percent = 100 * (annual_ground_incident) / annual_poa_front;
         assign("annual_ground_incident_percent", var_data((ssc_number_t)percent));  // too wide for loss diagram

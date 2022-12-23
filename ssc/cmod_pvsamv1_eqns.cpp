@@ -164,9 +164,14 @@ SSCEXPORT bool Reopt_size_battery_params(ssc_data_t data) {
     if (vt->is_assigned("gen")) {
         std::vector<double> gen;
         vt_get_array_vec(vt, "gen", gen);
-        int analysis_period;
-        vt_get_int(vt, "analysis_period", &analysis_period);
-        size_t year_one_values = gen.size() / analysis_period;
+        bool lifetime_mode;
+        vt_get_bool(vt, "system_use_lifetime_output", &lifetime_mode);
+        size_t year_one_values = gen.size();
+        if (lifetime_mode) {
+            int analysis_period;
+            vt_get_int(vt, "analysis_period", &analysis_period);
+            year_one_values /= analysis_period;
+        }
         std::vector<double> kwac_per_kwdc(year_one_values);
         for (size_t i = 0; i < year_one_values; i++) {
             kwac_per_kwdc[i] = gen[i] / system_cap;
