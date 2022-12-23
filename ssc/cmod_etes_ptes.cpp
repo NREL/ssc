@@ -695,6 +695,12 @@ public:
             // ctes_params.m_cold_tank_Thtr = as_double("CT_cold_tank_Thtr");
             // ctes_params.m_cold_tank_max_heat = as_double("CT_cold_tank_max_heat");
         double q_dot_CT_des__discharge_basis = q_dot_cold_in_charge / heater_mult;
+        // Hardcoded (for now) parameters
+        double hot_tank_Thtr = -200.0;
+        double hot_tank_max_heat = 0.0;
+        double cold_tank_Thtr = -200.0;
+        double cold_tank_max_heat = 0.0;
+        // ******************************
         std::shared_ptr<C_csp_two_tank_tes> c_CT_TES(new C_csp_two_tank_tes(
             CT_htf_code,
             ud_CT_htf_props,
@@ -706,10 +712,10 @@ public:
             as_double("CT_h_tank"),
             as_double("CT_u_tank"),
             as_integer("CT_tank_pairs"),
-            -200.0,                                          //[C]
-            0.0,                                             //[MWt]
-            -200.0,                                          //[C]
-            0.0,                                             //[MWt]
+            hot_tank_Thtr,                                   //[C]
+            hot_tank_max_heat,                               //[MWt]
+            cold_tank_Thtr,                                  //[C]
+            cold_tank_max_heat,                              //[MWt]
             0.0,                                             // MSPT assumes direct storage, so no user input here: hardcode = 0.0
             T_CT_cold_TES,                                   //[C]
             T_CT_hot_TES,                                    //[C]
