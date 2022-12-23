@@ -756,6 +756,7 @@ public:
         add_var_info(_cm_vtab_tcsmolten_salt);
         add_var_info(vtab_adjustment_factors);
         add_var_info(vtab_sf_adjustment_factors);
+        add_var_info(vtab_technology_outputs);
     } 
 
     bool relay_message(string &msg, double percent)
