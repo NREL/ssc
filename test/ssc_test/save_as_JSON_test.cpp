@@ -31,6 +31,9 @@ int np4 = sprintf(inputs_as_JSON4, "%s/test/input_json/Trough_MP.json", SSCDIR);
 char inputs_as_JSON5[256] = {};
 int np5 = sprintf(inputs_as_JSON5, "%s/test/input_json/Wind_MP.json", SSCDIR);
 
+// test table from SAM defaults for MSPT none
+char SAM_default_as_JSON[256] = {};
+int ns1 = sprintf(SAM_default_as_JSON, "%s/test/input_json/MSPT_None.json", SSCDIR);
 
 
 TEST(save_as_JSON_test, pvwatts_mechant_plant_read_file_to_string) {
@@ -224,5 +227,23 @@ TEST(save_as_JSON_test_run, pt_mechant_plant_rapidjson) {
     ssc_data_free(data);
 
 }
+
+
+
+TEST(SAM_as_JSON_test, sam_table_ssc_table) {
+    std::ifstream test(SAM_default_as_JSON);
+    std::string json_str((std::istreambuf_iterator<char>(test)), std::istreambuf_iterator<char>());
+    auto data = json_to_ssc_data(json_str.c_str());
+    auto tab = ssc_data_get_table(data, "adjust"); // owned by data - no need to free
+
+    ssc_number_t sf_const;
+    ssc_data_get_number(tab, "constant", &sf_const);
+    EXPECT_EQ(sf_const, 4.0);
+
+    ssc_data_free(data);
+
+}
+
+
 
 
