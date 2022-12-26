@@ -85,6 +85,7 @@ public:
 	bool setup(int nsteps=8760, int analysis_period=1);
 	ssc_number_t operator()(size_t time);
 	std::string error() { return m_error; }
+    size_t size() { return m_factors.size(); }
 };
 
 class forecast_price_signal

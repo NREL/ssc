@@ -240,8 +240,11 @@ TEST(SAM_as_JSON_test, sam_table_ssc_table) {
     ssc_data_get_number(tab, "constant", &sf_const);
     EXPECT_EQ(sf_const, 4.0);
 
-    ssc_data_free(data);
+    auto  vt = static_cast<var_table*>(data);
 
+    EXPECT_EQ(vt->lookup("adjust")->table.lookup("constant")->num[0], 4.0);
+
+    ssc_data_free(data);
 }
 
 

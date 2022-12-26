@@ -514,7 +514,7 @@ var_info vtab_debt[] = {
 { SSC_INPUT,        SSC_NUMBER,     "pbi_oth_for_ds",                         "Other PBI available for debt service",     "0/1",      "",                      "Payment Incentives",      "?=0",                       "BOOLEAN",                                         "" },
 var_info_invalid
 };
-
+/*
 var_info vtab_adjustment_factors[] = {
 { SSC_INPUT,SSC_NUMBER  , "adjust:constant"                      , "Constant loss adjustment"                                       , "%"                                      , ""                                      , "Adjustment Factors"   , "*"              , "MAX=100"               , ""},
 { SSC_INPUT,SSC_ARRAY   , "adjust:hourly"                        , "Hourly Adjustment Factors"                                      , "%"                                      , ""                                      , "Adjustment Factors"   , "?"              , "LENGTH=8760"           , ""},
@@ -535,7 +535,19 @@ var_info vtab_sf_adjustment_factors[] = {
 { SSC_INPUT,SSC_ARRAY   , "sf_adjust:timeindex"                        , "SF Lifetime Adjustment Factors"                                      , "%"                                      , ""                                      , "Adjustment Factors"   , "?"              , "LENGTH=8760"           , ""},
 { SSC_INPUT,SSC_MATRIX  , "sf_adjust:periods"                    , "SF Period-based Adjustment Factors"                             , "%"                                      , "n x 3 matrix [ start, end, loss ]"     , "Adjustment Factors"   , "?"              , "COLS=3"                , ""},
 var_info_invalid };
+*/
+var_info vtab_adjustment_factors[] = {
+{ SSC_INPUT,SSC_TABLE  , "adjust:constant"                      , "Loss adjustment"                                       , "%"                                      , ""                                      , "Adjustment Factors"   , "*"              , ""               , ""},
+var_info_invalid };
 
+
+var_info vtab_dc_adjustment_factors[] = {
+{ SSC_INPUT,SSC_TABLE  , "dc_adjust:constant"                   , "DC loss adjustment"                                    , "%"                                      , ""                                      , "Adjustment Factors"   , "*"               , ""               , ""},
+var_info_invalid };
+
+var_info vtab_sf_adjustment_factors[] = {
+{ SSC_INPUT,SSC_TABLE  , "sf_adjust"                   , "SF loss adjustment"                                    , ""                                      , ""                                      , "Adjustment Factors"   , "*"              , ""               , ""},
+var_info_invalid };
 
 var_info vtab_financial_capacity_payments[] = {
 
@@ -571,7 +583,7 @@ ssc_number_t* gen_heatmap(compute_module* cm, double step_per_hour) {
     if (!cm)
         return 0;
     size_t count = (size_t)(8760 * step_per_hour);
-    size_t imonth = 0;
+ //   size_t imonth = 0;
     size_t iday = 0;
     size_t hour;
     size_t count_gen;
@@ -1009,15 +1021,19 @@ adjustment_factors::adjustment_factors( compute_module *cm, const std::string &p
 //adjustment factors changed from derates to percentages jmf 1/9/15
 bool adjustment_factors::setup(int nsteps, int analysis_period) //nsteps is set to 8760 in this declaration function in common.h
 {
-	ssc_number_t f = m_cm->as_number( m_prefix + ":constant" );
-	f = 1.0 - f / 100.0; //convert from percentage to factor
+    auto& table = m_cm->get_var_table()->lookup(m_prefix)->table;
+//    ssc_number_t f = m_cm->as_number(m_prefix + ":constant");
+    ssc_number_t f = table.lookup("constant")->num[0];
+    f = 1.0 - f / 100.0; //convert from percentage to factor
 	m_factors.resize( nsteps * analysis_period, f);
 
-	if ( m_cm->is_assigned(m_prefix + ":hourly") )
-	{
+//    if (m_cm->is_assigned(m_prefix + ":hourly"))
+    if (table.as_boolean("en_hourly"))
+    {
 		size_t n;
-		ssc_number_t *p = m_cm->as_array( m_prefix + ":hourly", &n );
-		if ( p != 0 && n == 8760 )
+//        ssc_number_t* p = m_cm->as_array(m_prefix + ":hourly", &n);
+        ssc_number_t* p = table.as_array("hourly", &n);
+        if ( p != 0 && n == 8760 )
 		{
 			for( int i=0;i<8760;i++ )
 				m_factors[i] *= (1.0 - p[i]/100.0); //convert from percentages to factors
@@ -1027,14 +1043,16 @@ bool adjustment_factors::setup(int nsteps, int analysis_period) //nsteps is set 
         }
 	}
 
-    if (m_cm->is_assigned(m_prefix + ":timeindex"))
+//    if (m_cm->is_assigned(m_prefix + ":timeindex"))
+    if (table.as_boolean("en_timeindex"))
     {
         size_t n;
         int steps_per_hour = nsteps / 8760;
         int month = 0;
         int day = 0;
         int week = 0;
-        ssc_number_t* p = m_cm->as_array(m_prefix + ":timeindex", &n);
+//        ssc_number_t* p = m_cm->as_array(m_prefix + ":timeindex", &n);
+        ssc_number_t* p = table.as_array("timeindex", &n);
         if (p != 0) {
             if (n == 1) {
                 for (int a = 0; a < analysis_period; a++) {
@@ -1042,7 +1060,7 @@ bool adjustment_factors::setup(int nsteps, int analysis_period) //nsteps is set 
                         m_factors[nsteps * a + i] *= (1.0 - p[0]/100.0); //input as factors not percentage
                 }
             }
-            else if (n == nsteps * analysis_period) { //Hourly or subhourly
+            else if (n == (size_t)(nsteps * analysis_period)) { //Hourly or subhourly
                 for (int a = 0; a < analysis_period; a++) {
                     for (int i = 0; i < nsteps; i++)
                         m_factors[nsteps * a + i] *= (1.0 - p[a*nsteps + i]/100.0); //convert from percentages to factors
@@ -1075,7 +1093,7 @@ bool adjustment_factors::setup(int nsteps, int analysis_period) //nsteps is set 
 
                 }
             }
-            else if (n == analysis_period) { //Annual
+            else if (n == (size_t)analysis_period) { //Annual
                 for (int a = 0; a < analysis_period; a++) {
                     for (int i = 0; i < nsteps; i++)
                         m_factors[nsteps * a + i] *= (1.0 - p[a]/100.0); //input as factors not percentage
@@ -1087,10 +1105,12 @@ bool adjustment_factors::setup(int nsteps, int analysis_period) //nsteps is set 
         }
     }
 
-	if ( m_cm->is_assigned(m_prefix + ":periods") )
-	{
+//    if (m_cm->is_assigned(m_prefix + ":periods"))
+    if (table.as_boolean("en_periods"))
+    {
 		size_t nr, nc;
-		ssc_number_t *mat = m_cm->as_matrix(m_prefix + ":periods", &nr, &nc);
+//        ssc_number_t* mat = m_cm->as_matrix(m_prefix + ":periods", &nr, &nc);
+        ssc_number_t* mat = table.as_matrix("periods", &nr, &nc);
         double ts_mult = nsteps / 8760.0;
 		if ( mat != 0 && nc == 3 )
 		{
@@ -1132,6 +1152,7 @@ sf_adjustment_factors::sf_adjustment_factors(compute_module *cm)
 
 bool sf_adjustment_factors::setup(int nsteps)
 {
+
 	ssc_number_t f = m_cm->as_number("sf_adjust:constant");
 	f = 1.0 - f / 100.0; //convert from percentage to factor
 	m_factors.resize(nsteps, f);
@@ -1872,10 +1893,10 @@ void prepend_to_output(compute_module* cm, std::string var_name, size_t count, s
     arr = cm->resize_array(var_name, count);
     if (count > orig_count) {
         size_t diff = count - orig_count;
-        for (int i = orig_count - 1; i >= 0; i--) {
+        for (int i = (int)orig_count - 1; i >= 0; i--) {
             arr[i + diff] = arr[i];
         }
-        for (int i = 0; i < diff; i++) {
+        for (int i = 0; i < (int)diff; i++) {
             arr[i] = value;
         }
     }
