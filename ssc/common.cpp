@@ -537,12 +537,12 @@ var_info vtab_sf_adjustment_factors[] = {
 var_info_invalid };
 */
 var_info vtab_adjustment_factors[] = {
-{ SSC_INPUT,SSC_TABLE  , "adjust:constant"                      , "Loss adjustment"                                       , "%"                                      , ""                                      , "Adjustment Factors"   , "*"              , ""               , ""},
+{ SSC_INPUT,SSC_TABLE  , "adjust"                      , "Loss adjustment"                                       , "%"                                      , ""                                      , "Adjustment Factors"   , "*"              , ""               , ""},
 var_info_invalid };
 
 
 var_info vtab_dc_adjustment_factors[] = {
-{ SSC_INPUT,SSC_TABLE  , "dc_adjust:constant"                   , "DC loss adjustment"                                    , "%"                                      , ""                                      , "Adjustment Factors"   , "*"               , ""               , ""},
+{ SSC_INPUT,SSC_TABLE  , "dc_adjust"                   , "DC loss adjustment"                                    , "%"                                      , ""                                      , "Adjustment Factors"   , "*"               , ""               , ""},
 var_info_invalid };
 
 var_info vtab_sf_adjustment_factors[] = {
@@ -1044,7 +1044,7 @@ bool adjustment_factors::setup(int nsteps, int analysis_period) //nsteps is set 
 	}
 
 //    if (m_cm->is_assigned(m_prefix + ":timeindex"))
-    if (table.as_boolean("en_timeindex"))
+    if (table.is_assigned("timeindex"))
     {
         size_t n;
         int steps_per_hour = nsteps / 8760;
