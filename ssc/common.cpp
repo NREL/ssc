@@ -1145,6 +1145,7 @@ ssc_number_t adjustment_factors::operator()( size_t time )
 	else return 0.0;
 }
 
+/*
 sf_adjustment_factors::sf_adjustment_factors(compute_module *cm)
 : m_cm(cm)
 {
@@ -1209,6 +1210,8 @@ int sf_adjustment_factors::size()
 {
     return (int)m_factors.size();
 }
+*/
+
 
 shading_factor_calculator::shading_factor_calculator()
 {

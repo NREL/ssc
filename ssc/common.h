@@ -101,7 +101,7 @@ public:
 	std::string error() { return m_error; }
 };
 
-
+/*
 class sf_adjustment_factors
 {
 	compute_module *m_cm;
@@ -114,7 +114,7 @@ public:
 	ssc_number_t operator()(size_t time);
 	std::string error() { return m_error; }
 };
-
+*/
 
 class shading_factor_calculator
 {
