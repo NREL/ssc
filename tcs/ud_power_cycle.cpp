@@ -346,6 +346,54 @@ double C_ud_power_cycle::get_m_dot_water_ND(double T_htf_hot /*C*/, double T_amb
 	// Also, maybe want to check parameters against max/min, or if extrapolating, or something?
 }
 
+void C_ud_power_cycle::udpc_sco2_regr_off_design(double T_htf_hot /*C*/, double T_amb /*C*/, double m_dot_htf_ND /*-*/,
+    double m_dot_max_ND,
+    double& W_dot_gross_ND, double& q_dot_ND, double& W_dot_cooling_ND, double& m_dot_water_ND)
+{
+    // 1) Get q_dot_ND_max at m_dot_ND = 1
+    // 2) m_dot_ND_max = q_dot_ND_max
+    // 3) New performance model as f(m_dot_ND, T_amb, T_htf)
+    // --- a) eta_gross_ND = 'original' udpc model = w_dot_gross(udpc) / q_dot(udpc)
+    // --- b) if m_dot_ND > q_dot_ND_max
+    // --------- q_dot_ND = q_dot_ND_max
+    // --------- W_dot_parasitics = 1.0
+    // --------- this is at mass flow rate greater than "system" max, so should not be used in system model...
+    // -------else
+    // --------- q_dot_ND = m_dot_ND
+    // --------- W_dot_parasitics = interpolate
+    //     c) W_dot_ND = q_dot_ND * eta_ND
+    //     d) m_dot_water_ND = interpolate
+
+    // ----------------------------------------------------------------------------
+
+    // 1)
+    double q_dot_htf_ND_max_regr = get_Q_dot_HTF_ND(T_htf_hot, T_amb, m_dot_max_ND);
+    // 2)
+    double m_dot_htf_ND_max_regr = q_dot_htf_ND_max_regr;
+
+    // 3.a)
+    double q_dot_ND_udpc = get_Q_dot_HTF_ND(T_htf_hot, T_amb, m_dot_htf_ND);
+    double w_dot_gross_ND_udpc = get_W_dot_gross_ND(T_htf_hot, T_amb, m_dot_htf_ND);
+    double eta_gross_ND_udpc = w_dot_gross_ND_udpc / q_dot_ND_udpc;
+
+    // 3.b)
+    q_dot_ND = W_dot_cooling_ND = std::numeric_limits<double>::quiet_NaN();
+    if (m_dot_htf_ND > m_dot_htf_ND_max_regr) {
+        q_dot_ND = q_dot_htf_ND_max_regr;
+        W_dot_cooling_ND = 1.0;
+    }
+    else {
+        q_dot_ND = m_dot_htf_ND;      //[-]
+        W_dot_cooling_ND = get_W_dot_cooling_ND(T_htf_hot, T_amb, m_dot_htf_ND);
+    }
+
+    // 3.c)
+    W_dot_gross_ND = q_dot_ND * eta_gross_ND_udpc;
+
+    // 3.d)
+    m_dot_water_ND = get_m_dot_water_ND(T_htf_hot, T_amb, m_dot_htf_ND);
+}
+
 void C_ud_power_cycle::get_max_m_dot_and_W_dot_ND(int max_calc_mode, double T_htf_hot /*C*/, double T_amb /*C*/,
     double max_frac /*-*/, double cutoff_frac /*-*/,
     double& m_dot_HTF_ND_max, double& W_dot_ND_max)

@@ -146,6 +146,10 @@ public:
                     double max_frac /*-*/, double cutoff_frac /*-*/,
                     double& m_dot_HTF_ND_max, double& W_dot_ND_max);
 
+    void udpc_sco2_regr_off_design(double T_htf_hot /*C*/, double T_amb /*C*/, double m_dot_htf_ND /*-*/,
+        double m_dot_max_ND,
+        double& W_dot_gross_ND, double& q_dot_ND, double& W_dot_cooling_ND, double& m_dot_water_ND);
+
     void get_ind_var_params(std::vector<double>& v_T_htf_unique, std::vector<double>& v_m_dot_unique,
         std::vector<double>& v_T_amb_unique);
 

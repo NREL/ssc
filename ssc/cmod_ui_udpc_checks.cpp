@@ -71,8 +71,6 @@ static var_info _cm_vtab_ui_udpc_checks[] = {
     { SSC_OUTPUT,  SSC_ARRAY,  "T_amb_sweep",          "Ambient temperature sweep for max mass flow calcs", "", "", "", "is_calc_m_dot_vs_T_amb=1", "", "" },
     { SSC_OUTPUT,  SSC_ARRAY,  "m_dot_htf_ND_max_vs_T_amb_rule0", "Calculated ND max htf mass flow rate vs ambient temp", "", "", "", "is_calc_m_dot_vs_T_amb=1", "", "" },
 
-    //{ SSC_OUTPUT,  SSC_ARRAY,  "m_dot_htf_ND_max_vs_T_amb_rule1", "Calculated ND max htf mass flow rate vs ambient temp", "", "", "", "is_calc_m_dot_vs_T_amb=1", "", "" },
-
     { SSC_OUTPUT,  SSC_NUMBER, "T_amb_LT",             "Low temp ambient temp of calculated ND outputs",    "C", "", "", "is_calc_m_dot_vs_T_amb=1", "", "" },
     { SSC_OUTPUT,  SSC_ARRAY,  "q_dot_ND_vs_m_dot__T_amb_LT", "Calculated ND heat in vs mass flow at LT ambient temp", "", "", "", "is_calc_m_dot_vs_T_amb=1", "", "" },
     { SSC_OUTPUT,  SSC_ARRAY,  "W_dot_ND_vs_m_dot__T_amb_LT", "Calculated ND power in vs mass flow at LT ambient temp", "", "", "", "is_calc_m_dot_vs_T_amb=1", "", "" },
@@ -81,9 +79,6 @@ static var_info _cm_vtab_ui_udpc_checks[] = {
     { SSC_OUTPUT,  SSC_NUMBER, "q_dot_htf_ND_max_at_T_amb_LT_rule0","Calculated max ND HTF mass flow at LT ambient temp",    "", "", "", "is_calc_m_dot_vs_T_amb=1", "", "" },
     { SSC_OUTPUT,  SSC_NUMBER, "W_dot_htf_ND_max_at_T_amb_LT_rule0","Calculated max ND HTF mass flow at LT ambient temp",    "", "", "", "is_calc_m_dot_vs_T_amb=1", "", "" },
     { SSC_OUTPUT,  SSC_NUMBER, "eta_ND_max_at_T_amb_LT_rule0",      "Calculated max ND HTF mass flow at LT ambient temp",    "", "", "", "is_calc_m_dot_vs_T_amb=1", "", "" },
-
-    //{ SSC_OUTPUT,  SSC_NUMBER, "m_dot_htf_ND_max_at_T_amb_LT_rule1","Calculated max ND HTF mass flow at LT ambient temp",    "", "", "", "is_calc_m_dot_vs_T_amb=1", "", "" },
-    //{ SSC_OUTPUT,  SSC_NUMBER, "m_dot_htf_ND_max_at_T_amb_LT_rule1","Calculated max ND HTF mass flow at LT ambient temp",    "", "", "", "is_calc_m_dot_vs_T_amb=1", "", "" },
 
     { SSC_OUTPUT,  SSC_NUMBER, "T_amb_HT",             "High temp ambient temp of calculated ND outputs",   "C", "", "", "is_calc_m_dot_vs_T_amb=1", "", "" },
     { SSC_OUTPUT,  SSC_ARRAY,  "q_dot_ND_vs_m_dot__T_amb_HT", "Calculated ND heat in vs mass flow at HT ambient temp", "", "", "", "is_calc_m_dot_vs_T_amb=1", "", "" },
@@ -114,9 +109,6 @@ static var_info _cm_vtab_ui_udpc_checks[] = {
     { SSC_OUTPUT,  SSC_ARRAY,  "W_dot_ND_regr_vs_m_dot__T_amb_HT",       "Regression max ND HTF mass flow at low level ambient temp",    "", "", "", "is_calc_m_dot_vs_T_amb=1", "", "" },
     { SSC_OUTPUT,  SSC_ARRAY,  "eta_ND_regr_vs_m_dot__T_amb_HT",         "Regression max ND HTF mass flow at low level ambient temp",    "", "", "", "is_calc_m_dot_vs_T_amb=1", "", "" },
 
-
-    //{ SSC_OUTPUT,  SSC_NUMBER, "m_dot_htf_ND_max_at_T_amb_HT_rule1","Calculated max ND HTF mass flow at HT ambient temp",    "", "", "", "is_calc_m_dot_vs_T_amb=1", "", "" },
-
     { SSC_OUTPUT,  SSC_NUMBER, "m_dot_htf_ND_max_at_T_amb_low_level_rule0", "Calculated max ND HTF mass flow at low level ambient temp",    "", "", "", "is_calc_m_dot_vs_T_amb=1", "", "" },
     { SSC_OUTPUT,  SSC_NUMBER, "q_dot_htf_ND_max_at_T_amb_low_level_rule0", "Calculated max ND HTF mass flow at low level ambient temp",    "", "", "", "is_calc_m_dot_vs_T_amb=1", "", "" },
     { SSC_OUTPUT,  SSC_NUMBER, "W_dot_htf_ND_max_at_T_amb_low_level_rule0", "Calculated max ND HTF mass flow at low level ambient temp",    "", "", "", "is_calc_m_dot_vs_T_amb=1", "", "" },    
@@ -131,6 +123,31 @@ static var_info _cm_vtab_ui_udpc_checks[] = {
     { SSC_OUTPUT,  SSC_NUMBER, "q_dot_htf_ND_max_at_T_amb_high_level_rule0", "Calculated max ND HTF mass flow at low level ambient temp",    "", "", "", "is_calc_m_dot_vs_T_amb=1", "", "" },
     { SSC_OUTPUT,  SSC_NUMBER, "W_dot_htf_ND_max_at_T_amb_high_level_rule0", "Calculated max ND HTF mass flow at low level ambient temp",    "", "", "", "is_calc_m_dot_vs_T_amb=1", "", "" },
     { SSC_OUTPUT,  SSC_NUMBER, "eta_ND_max_at_T_amb_high_level_rule0",       "Calculated max ND HTF mass flow at low level ambient temp",    "", "", "", "is_calc_m_dot_vs_T_amb=1", "", "" },
+
+    { SSC_OUTPUT,  SSC_NUMBER, "m_dot_htf_ND_max_at_T_amb_low_level_regr", "Calculated max ND HTF mass flow at low level ambient temp",    "", "", "", "is_calc_m_dot_vs_T_amb=1", "", "" },
+    { SSC_OUTPUT,  SSC_NUMBER, "q_dot_htf_ND_max_at_T_amb_low_level_regr", "Calculated max ND HTF mass flow at low level ambient temp",    "", "", "", "is_calc_m_dot_vs_T_amb=1", "", "" },
+    { SSC_OUTPUT,  SSC_NUMBER, "W_dot_htf_ND_max_at_T_amb_low_level_regr", "Calculated max ND HTF mass flow at low level ambient temp",    "", "", "", "is_calc_m_dot_vs_T_amb=1", "", "" },
+    { SSC_OUTPUT,  SSC_NUMBER, "eta_ND_max_at_T_amb_low_level_regr",       "Calculated max ND HTF mass flow at low level ambient temp",    "", "", "", "is_calc_m_dot_vs_T_amb=1", "", "" },
+    
+    { SSC_OUTPUT,  SSC_NUMBER, "m_dot_htf_ND_max_at_T_amb_design_regr",    "Calculated max ND HTF mass flow at low level ambient temp",    "", "", "", "is_calc_m_dot_vs_T_amb=1", "", "" },
+    { SSC_OUTPUT,  SSC_NUMBER, "q_dot_htf_ND_max_at_T_amb_design_regr",    "Calculated max ND HTF mass flow at low level ambient temp",    "", "", "", "is_calc_m_dot_vs_T_amb=1", "", "" },
+    { SSC_OUTPUT,  SSC_NUMBER, "W_dot_htf_ND_max_at_T_amb_design_regr",    "Calculated max ND HTF mass flow at low level ambient temp",    "", "", "", "is_calc_m_dot_vs_T_amb=1", "", "" },
+    { SSC_OUTPUT,  SSC_NUMBER, "eta_ND_max_at_T_amb_design_regr",          "Calculated max ND HTF mass flow at low level ambient temp",    "", "", "", "is_calc_m_dot_vs_T_amb=1", "", "" },
+    
+    { SSC_OUTPUT,  SSC_NUMBER, "m_dot_htf_ND_max_at_T_amb_high_level_regr", "Calculated max ND HTF mass flow at low level ambient temp",    "", "", "", "is_calc_m_dot_vs_T_amb=1", "", "" },
+    { SSC_OUTPUT,  SSC_NUMBER, "q_dot_htf_ND_max_at_T_amb_high_level_regr", "Calculated max ND HTF mass flow at low level ambient temp",    "", "", "", "is_calc_m_dot_vs_T_amb=1", "", "" },
+    { SSC_OUTPUT,  SSC_NUMBER, "W_dot_htf_ND_max_at_T_amb_high_level_regr", "Calculated max ND HTF mass flow at low level ambient temp",    "", "", "", "is_calc_m_dot_vs_T_amb=1", "", "" },
+    { SSC_OUTPUT,  SSC_NUMBER, "eta_ND_max_at_T_amb_high_level_regr",       "Calculated max ND HTF mass flow at low level ambient temp",    "", "", "", "is_calc_m_dot_vs_T_amb=1", "", "" },
+    
+    { SSC_OUTPUT,  SSC_NUMBER, "m_dot_htf_ND_max_at_T_amb_LT_regr",         "Calculated max ND HTF mass flow at LT ambient temp",    "", "", "", "is_calc_m_dot_vs_T_amb=1", "", "" },
+    { SSC_OUTPUT,  SSC_NUMBER, "q_dot_htf_ND_max_at_T_amb_LT_regr",         "Calculated max ND HTF mass flow at LT ambient temp",    "", "", "", "is_calc_m_dot_vs_T_amb=1", "", "" },
+    { SSC_OUTPUT,  SSC_NUMBER, "W_dot_htf_ND_max_at_T_amb_LT_regr",         "Calculated max ND HTF mass flow at LT ambient temp",    "", "", "", "is_calc_m_dot_vs_T_amb=1", "", "" },
+    { SSC_OUTPUT,  SSC_NUMBER, "eta_ND_max_at_T_amb_LT_regr",               "Calculated max ND HTF mass flow at LT ambient temp",    "", "", "", "is_calc_m_dot_vs_T_amb=1", "", "" },
+    
+    { SSC_OUTPUT,  SSC_NUMBER, "m_dot_htf_ND_max_at_T_amb_HT_regr",         "Calculated max ND HTF mass flow at HT ambient temp",    "", "", "", "is_calc_m_dot_vs_T_amb=1", "", "" },
+    { SSC_OUTPUT,  SSC_NUMBER, "q_dot_htf_ND_max_at_T_amb_HT_regr",         "Calculated max ND HTF mass flow at HT ambient temp",    "", "", "", "is_calc_m_dot_vs_T_amb=1", "", "" },
+    { SSC_OUTPUT,  SSC_NUMBER, "W_dot_htf_ND_max_at_T_amb_HT_regr",         "Calculated max ND HTF mass flow at HT ambient temp",    "", "", "", "is_calc_m_dot_vs_T_amb=1", "", "" },
+    { SSC_OUTPUT,  SSC_NUMBER, "eta_ND_max_at_T_amb_HT_regr",               "Calculated max ND HTF mass flow at HT ambient temp",    "", "", "", "is_calc_m_dot_vs_T_amb=1", "", "" },//
 
     
     var_info_invalid };
@@ -323,65 +340,89 @@ public:
             ssc_number_t* p_W_dot_ND_regr_vs_m_dot__T_amb_HT = allocate("W_dot_ND_regr_vs_m_dot__T_amb_HT", n_m_dot_steps);
             ssc_number_t* p_eta_ND_regr_vs_m_dot__T_amb_HT = allocate("eta_ND_regr_vs_m_dot__T_amb_HT", n_m_dot_steps);
 
-            i_m = 0;
-            for (std::vector<double>::iterator i_it_m = v_m_dot_unique.begin(); i_it_m < v_m_dot_unique.end(); i_it_m++, i_m++) {
+            i_t = 0;
+            for (std::vector<double>::iterator i_it = v_T_amb_OD.begin(); i_it < v_T_amb_OD.end(); i_it++, i_t++) {
 
-                for (std::vector<double>::iterator i_it = v_T_amb_OD.begin(); i_it < v_T_amb_OD.end(); i_it++, i_t++) {
+                ssc_number_t* p_q_dot_ND_regr;
+                ssc_number_t* p_W_dot_ND_regr;
+                ssc_number_t* p_eta_ND_regr;
 
-                    // 1)
-                    double q_dot_htf_ND_max_regr = c_udpc.get_Q_dot_HTF_ND(T_htf_des_in, *i_it, 1.0);
-                    // 2)
-                    double m_dot_htf_ND_max_regr = q_dot_htf_ND_max_regr;
+                std::string i_cmod_var_name;
+                // Assign to output arrays
+                if (*i_it == LT) {
+                    p_q_dot_ND_regr = p_q_dot_ND_regr_vs_m_dot__T_amb_LT;
+                    p_W_dot_ND_regr = p_W_dot_ND_regr_vs_m_dot__T_amb_LT;
+                    p_eta_ND_regr = p_eta_ND_regr_vs_m_dot__T_amb_LT;
+                    i_cmod_var_name = "LT";
+                }
+                else if (*i_it == HT) {
+                    p_q_dot_ND_regr = p_q_dot_ND_regr_vs_m_dot__T_amb_HT;
+                    p_W_dot_ND_regr = p_W_dot_ND_regr_vs_m_dot__T_amb_HT;
+                    p_eta_ND_regr = p_eta_ND_regr_vs_m_dot__T_amb_HT;
+                    i_cmod_var_name = "HT";
+                }
+                else if (*i_it == T_amb_low) {
+                    p_q_dot_ND_regr = p_q_dot_ND_regr_vs_m_dot__T_amb_low_level;
+                    p_W_dot_ND_regr = p_W_dot_ND_regr_vs_m_dot__T_amb_low_level;
+                    p_eta_ND_regr = p_eta_ND_regr_vs_m_dot__T_amb_low_level;
+                    i_cmod_var_name = "low_level";
+                }
+                else if (*i_it == T_amb_des) {
+                    p_q_dot_ND_regr = p_q_dot_ND_regr_vs_m_dot__T_amb_design;
+                    p_W_dot_ND_regr = p_W_dot_ND_regr_vs_m_dot__T_amb_design;
+                    p_eta_ND_regr = p_eta_ND_regr_vs_m_dot__T_amb_design;
+                    i_cmod_var_name = "design";
+                }
+                else if (*i_it == T_amb_high) {
+                    p_q_dot_ND_regr = p_q_dot_ND_regr_vs_m_dot__T_amb_high_level;
+                    p_W_dot_ND_regr = p_W_dot_ND_regr_vs_m_dot__T_amb_high_level;
+                    p_eta_ND_regr = p_eta_ND_regr_vs_m_dot__T_amb_high_level;
+                    i_cmod_var_name = "high_level";
+                }
 
-                    // 3.a)
-                    double q_dot_ND_udpc = c_udpc.get_Q_dot_HTF_ND(T_htf_des_in, *i_it, *i_it_m);
-                    double w_dot_gross_ND_udpc = c_udpc.get_W_dot_gross_ND(T_htf_des_in, *i_it, *i_it_m);
-                    double eta_gross_ND_udpc = w_dot_gross_ND_udpc / q_dot_ND_udpc;
+                // Get performance at max m dot at i_T_amb
+                    // 1) calculate performance at m_dot_ND = 1
+                double W_dot_gross_ND_regr_max, q_dot_ND_regr_max, W_dot_ND_parasitics_regr_max, m_dot_water_ND_max;
+                W_dot_gross_ND_regr_max = q_dot_ND_regr_max = W_dot_ND_parasitics_regr_max = m_dot_water_ND_max = std::numeric_limits<double>::quiet_NaN();
+                c_udpc.udpc_sco2_regr_off_design(T_htf_des_in, *i_it, 1.0, 1.0,
+                    W_dot_gross_ND_regr_max, q_dot_ND_regr_max, W_dot_ND_parasitics_regr_max, m_dot_water_ND_max);
 
-                    // 3.b)
-                    double q_dot_ND_regr, W_dot_ND_parasitics_regr;
-                    q_dot_ND_regr = W_dot_ND_parasitics_regr = std::numeric_limits<double>::quiet_NaN();
-                    if (*i_it_m > m_dot_htf_ND_max_regr) {
-                        q_dot_ND_regr = q_dot_htf_ND_max_regr;
-                        W_dot_ND_parasitics_regr = 1.0;
-                    }
-                    else {
-                        q_dot_ND_regr = *i_it_m;      //[-]
-                        W_dot_ND_parasitics_regr = c_udpc.get_W_dot_cooling_ND(T_htf_des_in, *i_it, *i_it_m);
-                    }
+                    // 2) use calculated q_dot_ND as m_dot_ND to get max performance
+                double m_dot_ND_calc_max = std::min(1.0, q_dot_ND_regr_max);
+                c_udpc.udpc_sco2_regr_off_design(T_htf_des_in, *i_it, m_dot_ND_calc_max, 1.0,
+                    W_dot_gross_ND_regr_max, q_dot_ND_regr_max, W_dot_ND_parasitics_regr_max, m_dot_water_ND_max);
 
-                    // 3.c)
-                    double W_dot_gross_ND_regr = q_dot_ND_regr * eta_gross_ND_udpc;
+                    // 3) Calculate net metrics
+                double W_dot_net_ND_regr_max = (W_dot_gross_ND_regr_max * W_dot_gross_des - W_dot_ND_parasitics_regr_max * W_dot_parasitic_des) / W_dot_net_des;
+                double eta_net_ND_regr_max = W_dot_net_ND_regr_max / q_dot_ND_regr_max;
 
-                    // 4)
+                    // 4) set outputs
+                std::string m_dot_name = "m_dot_htf_ND_max_at_T_amb_" + i_cmod_var_name + "_regr";
+                std::string q_dot_name = "q_dot_htf_ND_max_at_T_amb_" + i_cmod_var_name + "_regr";
+                std::string W_dot_name = "W_dot_htf_ND_max_at_T_amb_" + i_cmod_var_name + "_regr";
+                std::string eta_name = "eta_ND_max_at_T_amb_" + i_cmod_var_name + "_regr";
+                assign(m_dot_name, m_dot_ND_calc_max);
+                assign(q_dot_name, q_dot_ND_regr_max);
+                assign(W_dot_name, W_dot_net_ND_regr_max);
+                assign(eta_name, eta_net_ND_regr_max);
+
+                i_m = 0;
+                for (std::vector<double>::iterator i_it_m = v_m_dot_unique.begin(); i_it_m < v_m_dot_unique.end(); i_it_m++, i_m++) {                                 
+
+                    // Get sco2 udpc regression model outputs
+                    double W_dot_gross_ND_regr, q_dot_ND_regr, W_dot_ND_parasitics_regr, m_dot_water_ND;
+                    W_dot_gross_ND_regr = q_dot_ND_regr = W_dot_ND_parasitics_regr = m_dot_water_ND = std::numeric_limits<double>::quiet_NaN();
+                    c_udpc.udpc_sco2_regr_off_design(T_htf_des_in, *i_it, *i_it_m, 1.0,
+                        W_dot_gross_ND_regr, q_dot_ND_regr, W_dot_ND_parasitics_regr, m_dot_water_ND);
+
+                    // Calculate net metrics
                     double W_dot_net_ND_regr = (W_dot_gross_ND_regr * W_dot_gross_des - W_dot_ND_parasitics_regr * W_dot_parasitic_des) / W_dot_net_des;
                     double eta_net_ND_regr = W_dot_net_ND_regr / q_dot_ND_regr;
 
-                    if (*i_it == LT) {
-                        p_q_dot_ND_regr_vs_m_dot__T_amb_LT[i_m] = q_dot_ND_regr;
-                        p_W_dot_ND_regr_vs_m_dot__T_amb_LT[i_m] = W_dot_net_ND_regr;
-                        p_eta_ND_regr_vs_m_dot__T_amb_LT[i_m] = eta_net_ND_regr;
-                    }
-                    else if (*i_it == HT) {
-                        p_q_dot_ND_regr_vs_m_dot__T_amb_HT[i_m] = q_dot_ND_regr;
-                        p_W_dot_ND_regr_vs_m_dot__T_amb_HT[i_m] = W_dot_net_ND_regr;
-                        p_eta_ND_regr_vs_m_dot__T_amb_HT[i_m] = eta_net_ND_regr;
-                    }
-                    else if (*i_it == T_amb_low) {
-                        p_q_dot_ND_regr_vs_m_dot__T_amb_low_level[i_m] = q_dot_ND_regr;
-                        p_W_dot_ND_regr_vs_m_dot__T_amb_low_level[i_m] = W_dot_net_ND_regr;
-                        p_eta_ND_regr_vs_m_dot__T_amb_low_level[i_m] = eta_net_ND_regr;
-                    }
-                    else if (*i_it == T_amb_des) {
-                        p_q_dot_ND_regr_vs_m_dot__T_amb_design[i_m] = q_dot_ND_regr;
-                        p_W_dot_ND_regr_vs_m_dot__T_amb_design[i_m] = W_dot_net_ND_regr;
-                        p_eta_ND_regr_vs_m_dot__T_amb_design[i_m] = eta_net_ND_regr;
-                    }
-                    else if (*i_it == T_amb_high) {
-                        p_q_dot_ND_regr_vs_m_dot__T_amb_high_level[i_m] = q_dot_ND_regr;
-                        p_W_dot_ND_regr_vs_m_dot__T_amb_high_level[i_m] = W_dot_net_ND_regr;
-                        p_eta_ND_regr_vs_m_dot__T_amb_high_level[i_m] = eta_net_ND_regr;
-                    }
+                    // Set outputs
+                    p_q_dot_ND_regr[i_m] = q_dot_ND_regr;
+                    p_W_dot_ND_regr[i_m] = W_dot_net_ND_regr;
+                    p_eta_ND_regr[i_m] = eta_net_ND_regr;
                 }
             }
         }
