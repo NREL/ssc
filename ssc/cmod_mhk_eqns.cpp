@@ -133,7 +133,7 @@ bool me_array_cable_voltage(ssc_data_t data)
     double riser_cable_cost = 0; //$/m
     if ( array_cable_rated_power_per_row < 4) {
         riser_cable_voltage = 7.2;
-        riser_cable_cost = 57.955 *  array_cable_rated_power_per_row;
+        riser_cable_cost = 57.955 * riser_cable_rated_power_per_device;
     }
     else if (riser_cable_rated_power_per_device >= 5 && riser_cable_rated_power_per_device < 9) {
         riser_cable_voltage = 12;
@@ -261,11 +261,11 @@ bool me_array_cable_voltage(ssc_data_t data)
     //HVDC Electrical equipment
     double hvdc_converter_station_cost = 142.61 * system_capacity;
     double offshore_substation_cost_total = 0;
-    if (array_cable_voltage == export_cable_voltage && export_cable_type == 0) {
+    if (array_cable_voltage != export_cable_voltage && export_cable_type == 0) {
         offshore_substation_cost_total = offshore_foundation_cost + circuit_breaker_cost + ac_switchgear_cost + transformer_cost +
             shunt_reactor_cost + series_capacitor_cost + static_var_compensator_cost;
     }
-    else if (array_cable_voltage == export_cable_voltage && export_cable_type == 1) {
+    else if (array_cable_voltage != export_cable_voltage && export_cable_type == 1) {
         offshore_substation_cost_total = offshore_foundation_cost + hvdc_converter_station_cost;
     }
     vt->assign("offshore_substation_cost_total", offshore_substation_cost_total);
@@ -281,12 +281,12 @@ bool me_array_cable_voltage(ssc_data_t data)
     double onshore_static_var_compensator_cost = 105060 * reactive_power;
     //HVDC Electrical equipment
     double onshore_hvdc_converter_station_cost = 142.61 * system_capacity;
-    double onshore_substation_cost_total;
-    if (use_onshore_substation==1 && export_cable_type == 0) {
+    double onshore_substation_cost_total = 0;
+    if (use_onshore_substation==0 && export_cable_type == 0) {
         onshore_substation_cost_total = onshore_foundation_cost + onshore_circuit_breaker_cost + onshore_ac_switchgear_cost + onshore_transformer_cost +
             onshore_shunt_reactor_cost + onshore_series_capacitor_cost + onshore_static_var_compensator_cost;
     }
-    else if (use_onshore_substation==1 && export_cable_type == 1) {
+    else if (use_onshore_substation==0 && export_cable_type == 1) {
         onshore_substation_cost_total = onshore_foundation_cost + onshore_hvdc_converter_station_cost;
     }
     vt->assign("onshore_substation_cost_total", onshore_substation_cost_total);
