@@ -46,6 +46,20 @@ FluidMaterialProp::FluidMaterialProp(FluidType fluid_type)
 }
 
 /// <summary>
+/// Constructor for Custom Hot or Cold Storage Fluid
+/// Only uses Cp and Rho
+/// </summary>
+/// <param name="cp"></param>
+/// <param name="rho"></param>
+/// <param name="T0"></param>
+/// <param name="P0"></param>
+FluidMaterialProp::FluidMaterialProp(double cp, double rho, double T0, double P0)
+    :
+    cp_(cp), rho_(rho), T0_(T0), P0_(P0), is_compressible_(false)
+{
+}
+
+/// <summary>
 /// Set Fluid Materials Properties based on Fluid Type
 /// </summary>
 /// <param name="fluid_type"></param>
@@ -191,6 +205,9 @@ void FluidMaterialProp::SetFluid(FluidType fluid_type)
     }
 }
 
+/// <summary>
+/// Relate FluidType to Strings 
+/// </summary>
 FluidMaterialProp::map FluidMaterialProp::map_ = {
     {"Nitrogen", FluidType::kNitrogen},
     {"Argon", FluidType::kArgon},
@@ -208,10 +225,17 @@ FluidMaterialProp::map FluidMaterialProp::map_ = {
 /// <param name="num_states_charge"></param>
 /// <param name="num_states_discharge"></param>
 /// <param name="fluid_type"></param>
-FluidState::FluidState(int num_states_charge, int num_states_discharge, FluidType fluid_type) :
+FluidState::FluidState(int num_states_charge, int num_states_discharge, FluidType fluid_type)
+    :
+    FluidState(num_states_charge, num_states_discharge, FluidMaterialProp(fluid_type))
+{
+}
+
+FluidState::FluidState(int num_states_charge, int num_states_discharge, FluidMaterialProp fluid)
+    :
     num_states_charge_(num_states_charge),
     num_states_discharge_(num_states_discharge),
-    fluid_material_(fluid_type),
+    fluid_material_(fluid),
     mdot_charge_(0),
     mdot_discharge_(0)
 {
@@ -239,11 +263,24 @@ FluidState::FluidState(int num_states_charge, int num_states_discharge, FluidTyp
 PTESDesignPoint::PTESDesignPoint(const PTESSystemParam params,
     const FluidType working_fluid_type,
     const FluidType hot_fluid_type,
-    const FluidType cold_fluid_type) :
+    const FluidType cold_fluid_type)
+    :
+    PTESDesignPoint(params, FluidMaterialProp(working_fluid_type), FluidMaterialProp(hot_fluid_type), FluidMaterialProp(cold_fluid_type))
+{
+    //// Add references to fluid states
+    //fluid_collection_.push_back(working_fluid_state_);
+    //fluid_collection_.push_back(hot_fluid_state_);
+    //fluid_collection_.push_back(cold_fluid_state_);
+    //fluid_collection_.push_back(rejection_air1_state_);
+    //fluid_collection_.push_back(rejection_air2_state_);
+}
+
+PTESDesignPoint::PTESDesignPoint(PTESSystemParam params, FluidMaterialProp working_fluid, FluidMaterialProp hot_fluid, FluidMaterialProp cold_fluid)
+    :
     kSystemParams(params),
-    working_fluid_state_(8, 9, working_fluid_type),
-    hot_fluid_state_(2, 2, hot_fluid_type),
-    cold_fluid_state_(2, 2, cold_fluid_type),
+    working_fluid_state_(8, 9, working_fluid),
+    hot_fluid_state_(2, 2, hot_fluid),
+    cold_fluid_state_(2, 2, cold_fluid),
     rejection_air1_state_(2, 2, FluidType::kRejectionAir),
     rejection_air2_state_(2, 2, FluidType::kRejectionAir)
 {
@@ -603,10 +640,11 @@ void PTESDesignPoint::Performance()
     double w_A2_D = ((a2.mdot_discharge_ * cp_a2 * a2.temp_discharge_[0]) / etaP) *
         (pow(a2.pressure_discharge_[0] / a2.pressure_discharge_[1], (gam_a2 - 1.0) / gam_a2) - 1.0);
 
+    // Net Work Out (unit)
     double w_out_net = (w_WF_D - w_HF_D - w_CF_D - w_A1_D - w_A2_D) * kSystemParams.gen_eff;
 
     // Heat Calculations
-    double q_in = cp_WF * (wf.temp_charge_[1] - wf.temp_charge_[2]); // amount of heat being trasnferred to hot tanks (charge)
+    double q_in = cp_WF * (wf.temp_charge_[1] - wf.temp_charge_[2]); // amount of heat being transferred to hot tanks (charge)
     double q_out = cp_WF * (wf.temp_discharge_[4] - wf.temp_discharge_[3]); // amount of heat extracted from hot tank (discharge)
 
     // Calculate Efficiencies
@@ -617,15 +655,19 @@ void PTESDesignPoint::Performance()
     // Work and Heat Ratios
     W_ratio_ = (wf.temp_charge_[1] - wf.temp_charge_[0]) / (wf.temp_charge_[4] - wf.temp_charge_[5]);
     Q_ratio_ = ((wf.temp_charge_[1] - wf.temp_charge_[4]) + (wf.temp_charge_[0] - wf.temp_charge_[5])) /
-                     ((wf.temp_charge_[1] - wf.temp_charge_[0]) - (wf.temp_charge_[4] - wf.temp_charge_[5]));
+                    ((wf.temp_charge_[1] - wf.temp_charge_[0]) - (wf.temp_charge_[4] - wf.temp_charge_[5]));
 
     // Calculate Energy
     E_out_ = kSystemParams.power_output * kSystemParams.discharge_time_hr * 3600.0; // convert hrs to seconds
     E_in_ = E_out_ / rt_eff_;
-    W_in_ = E_in_ / (kSystemParams.charge_time_hr * 3600.0);
+    W_in_ = E_in_ / (kSystemParams.charge_time_hr * 3600.0); // ? This doesn't take into account parasitics or generator eff
 
+    // Mass Flow Rate
     double MDot_D = kSystemParams.power_output / w_out_net;
     double MDot_C = W_in_ / w_in_net;
+
+    // Thermodynamic Power Output
+    W_WF_D_ = w_WF_D * MDot_D;
 
     // Hot and Cold Fluid Volumes
     vol_hf_ = hf.mdot_charge_ * MDot_C * kSystemParams.charge_time_hr * 3600.0 / rho_hf;
@@ -636,11 +678,13 @@ void PTESDesignPoint::Performance()
     E_density_ = E_out_ / vol_total_; // energy density
 
     // Output Parameters
-    //hp_COP_ = w_out_net / q_out; // Heat Pump Coefficient of Performance
-    Th_hot_ = this->hot_fluid_state_.temp_charge_[1] - 273;
-    Th_cold_ = this->hot_fluid_state_.temp_charge_[0] - 273;
-    Tc_hot_ = this->cold_fluid_state_.temp_charge_[0] - 273;
-    Tc_cold_ = this->cold_fluid_state_.temp_charge_[1] - 273;
+    // hp_COP_;                                                 // Heat Pump Coefficient of Performance
+    // W_WF_D                                                   // Cycle Thermodynamic Power
+    // cycle_eff_;                                              // Cycle Thermo Efficiency
+    Th_hot_ = this->hot_fluid_state_.temp_charge_[1] - 273;     // Hot resevoir's hot tank
+    Th_cold_ = this->hot_fluid_state_.temp_charge_[0] - 273;    // Hot resevoir's cold tank
+    Tc_hot_ = this->cold_fluid_state_.temp_charge_[0] - 273;    // Cold resevoir's hot tank
+    Tc_cold_ = this->cold_fluid_state_.temp_charge_[1] - 273;   // Cold resevoir's cold tank
 
 
     // Heat Pump Performance
@@ -655,7 +699,7 @@ void PTESDesignPoint::Performance()
         // Pumping Power through Hot HX
         double MDot_HF = MDot_C * wf.fluid_material_.GetCp() / hf.fluid_material_.GetCp();
         double W_HF_C = w_HF_C * MDot_HF * t_chg;
-        hp_hot_pump_power_ = W_HF_C / (t_chg * 1e3 * MDot_HF); // kW/kg/s
+        hp_hot_pump_power_ = W_HF_C / t_chg / 1e3 / MDot_HF; // kW/kg/s
 
         // Pumping Power through Cold HX
         double MDot_CF = MDot_C * cf.fluid_material_.GetCp() / cf.fluid_material_.GetCp();
@@ -826,9 +870,14 @@ void PTESDesignPoint::GenerateTSData(vector<double>& temp_vec, vector<double>& e
 }
 
 
-
 // Static Functions
 
+/// <summary>
+/// Retrieve FluidType Enum based on string
+/// </summary>
+/// <param name="type_string"></param>
+/// <param name="flag"></param>
+/// <returns></returns>
 FluidType PTESDesignPoint::GetFluidTypeFromString(std::string type_string, bool& flag)
 {
     FluidType fluid_enum;
@@ -849,7 +898,6 @@ FluidType PTESDesignPoint::GetFluidTypeFromString(std::string type_string, bool&
 
     return fluid_enum;
 }
-
 
 /// <summary>
 /// Calculate Enthalpy in the system

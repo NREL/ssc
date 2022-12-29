@@ -59,6 +59,7 @@ class FluidMaterialProp
 {
 public:
     FluidMaterialProp(FluidType fluid_type);
+    FluidMaterialProp(double cp, double rho, double T0, double P0);
 
     double GetCp() { return cp_; }
     double GetRho() { return rho_; }
@@ -76,36 +77,29 @@ public:
 
 private:
     std::string name_;                  // Material Name
-    double cp_;                         // Specific Heat, constant pressure
-    double cv_;                         // Specific Heat, constant volume
-    double rho_;                        // Density
+    double cp_;                         // Specific Heat, constant pressure (J/kg K)
+    double cv_;                         // Specific Heat, constant volume (J/kg K)
+    double rho_;                        // Density (kg/m3)
     double gam_;                        // Ratio of Specific Heats
     double R_;                          // Specific Heat Constant
-    double mu_;                         // Viscosity
-    double mu0_;                        // Viscosity at T0, P0
-    double T0_;                         // Reference Temp
-    double P0_;                         // Reference Pressure
+    double mu_;                         // Viscosity (Ns/m2)
+    double mu0_;                        // Viscosity at T0, P0 (Ns/m2)
+    double T0_;                         // Reference Temp (K)
+    double P0_;                         // Reference Pressure (Pa)
     double Smu_;                        // Sutherland's Constant
 
     bool is_compressible_;
 
     void SetFluid(FluidType fluid_type);
 
-    
-    
 };
-
-//const std::map<std::string, FluidType> string_to_fluidtype_map
-//{
-//    {"Nitrogen", FluidType::kNitrogen}
-//};
 
 class FluidState
 {
-
 public:
 
     FluidState(int num_states_charge, int num_states_discharge, FluidType fluid_type);
+    FluidState(int num_states_charge, int num_states_discharge, FluidMaterialProp fluid);
 
     const int num_states_charge_;       // Number of states in charge cycle
     const int num_states_discharge_;    // Number of states in discharge cycle
@@ -167,6 +161,7 @@ public:
 
     // Functions
     PTESDesignPoint(PTESSystemParam params, FluidType working_fluid_type, FluidType hot_fluid_type, FluidType cold_fluid_type);
+    PTESDesignPoint(PTESSystemParam params, FluidMaterialProp working_fluid, FluidMaterialProp hot_fluid, FluidMaterialProp cold_fluid);
 
     static FluidType GetFluidTypeFromString(std::string type_string, bool& flag);
 
@@ -194,6 +189,7 @@ public:
 
     // SAM Output Results
     double hp_COP_ = 0;                     // Heat Pump Coefficient of Performance, %
+    double W_WF_D_ = 0;
     double cycle_eff_ = 0;                  // Cycle Efficiency, %
     double Th_hot_ = 0;                     // Temperature of the Hot Tanks hotter tank, C
     double Th_cold_ = 0;                    // Temperature of the Hot Tanks colder tank, C

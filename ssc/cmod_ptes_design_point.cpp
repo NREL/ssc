@@ -30,7 +30,6 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
 #include "core.h"
 
 #include "ptes_solver_design_point.h"
@@ -64,25 +63,32 @@ static var_info _cm_vtab_ptes_design_point[] = {
     { SSC_INPUT,    SSC_NUMBER,     "discharge_time_hr",                "discharge time",                                           "hr",           "",             "",                     "*",              "",              ""},
     { SSC_INPUT,    SSC_NUMBER,     "alpha",                            "Ratio of mdot cp     AIR/WF",                              "",             "",             "",                     "*",              "",              ""},
                                                                                                                                                                                                               
-    { SSC_INPUT,    SSC_STRING,     "working_fluid_type",               "Working Fluid Fluid",                                      "",             "",             "",                     "*",              "",              ""},
-    { SSC_INPUT,    SSC_STRING,     "hot_fluid_type",                   "Hot Resevoir Fluid",                                       "",             "",             "",                     "*",              "",              ""},
-    { SSC_INPUT,    SSC_STRING,     "cold_fluid_type",                  "Cold Resevoir Fluid",                                      "",             "",             "",                     "*",              "",              ""},
+    { SSC_INPUT,    SSC_STRING,     "working_fluid_type",               "Working Fluid Fluid",                                      "",             "",             "",                     "",              "",              ""},
+    { SSC_INPUT,    SSC_STRING,     "hot_fluid_type",                   "Hot Resevoir Fluid",                                       "",             "",             "",                     "",              "",              ""},
+    { SSC_INPUT,    SSC_STRING,     "cold_fluid_type",                  "Cold Resevoir Fluid",                                      "",             "",             "",                     "",              "",              ""},
+
+    { SSC_INPUT,    SSC_STRING,     "hot_cp",                           "Hot Resevoir Specific Heat",                               "J/kg K",       "",             "",                     "",              "",              ""},
+    { SSC_INPUT,    SSC_STRING,     "hot_rho",                          "Hot Resevoir Density",                                     "kg/m3",        "",             "",                     "",              "",              ""},
+    { SSC_INPUT,    SSC_STRING,     "cold_cp",                          "Cold Resevoir Specific Heat",                              "J/kg K",       "",             "",                     "",              "",              ""},
+    { SSC_INPUT,    SSC_STRING,     "cold_rho",                         "Cold Resevoir Density",                                    "kg/m3",        "",             "",                     "",              "",              ""},
+
+
 
     // ----------------------------------------- Output
 
     // Results
-    { SSC_OUTPUT, SSC_NUMBER,       "hp_COP",                           "Heat Pump Coefficient of Performance",                     "",             "",             "",                     "",               "",              ""},
-    { SSC_OUTPUT, SSC_NUMBER,       "cycle_eff",                        "Cycle Efficiency",                                         "",             "",             "",                     "",               "",              ""},
-    { SSC_OUTPUT, SSC_NUMBER,       "Th_hot",                           "Temperature of the Hot Tanks hotter tank",                 "C",            "",             "",                     "",               "",              ""},
-    { SSC_OUTPUT, SSC_NUMBER,       "Tc_hot",                           "Temperature of the Cold Tanks hotter tank",                "C",            "",             "",                     "",               "",              ""},
-    { SSC_OUTPUT, SSC_NUMBER,       "Tc_cold",                          "Temperature of the Cold Tanks colder tank",                "C",            "",             "",                     "",               "",              ""},
+    { SSC_OUTPUT, SSC_NUMBER,       "hp_COP",                           "Heat Pump COP",                                            "",             "",             "SAM",                     "",               "",              ""},
+    { SSC_OUTPUT, SSC_NUMBER,       "cycle_eff",                        "Cycle Efficiency",                                         "",             "",             "SAM",                     "",               "",              ""},
+    { SSC_OUTPUT, SSC_NUMBER,       "Th_hot",                           "Hot Storage Hot Temp",                                     "C",            "",             "SAM",                     "",               "",              ""},
+    { SSC_OUTPUT, SSC_NUMBER,       "Tc_hot",                           "Cold Storage Hot Temp",                                    "C",            "",             "SAM",                     "",               "",              ""},
+    { SSC_OUTPUT, SSC_NUMBER,       "Tc_cold",                          "Cold Storage Cold Temp",                                   "C",            "",             "SAM",                     "",               "",              ""},
     
-    { SSC_OUTPUT, SSC_NUMBER,       "hp_parasitic_fraction",            "Parasitics (non-pumping) fraction",                        "",             "",             "",                     "",               "",              ""},
-    { SSC_OUTPUT, SSC_NUMBER,       "hp_hot_pump_power",                "Pumping Power through Hot HX",                             "kW/kg/s",      "",             "",                     "",               "",              ""},
-    { SSC_OUTPUT, SSC_NUMBER,       "hp_cold_pump_power",               "Pumping Power through Cold HX",                            "kW/kg/s",      "",             "",                     "",               "",              ""},
-    { SSC_OUTPUT, SSC_NUMBER,       "pc_parasitic_fraction",            "Parasitics (non-pumping) fraction",                        "C",            "",             "",                     "",               "",              ""},
-    { SSC_OUTPUT, SSC_NUMBER,       "pc_hot_pump_power",                "Pumping Power through Hot HX",                             "kW/kg/s",      "",             "",                     "",               "",              ""},
-    { SSC_OUTPUT, SSC_NUMBER,       "pc_cold_pump_power",               "Pumping Power through Cold HX",                            "kW/kg/s",      "",             "",                     "",               "",              ""},
+    { SSC_OUTPUT, SSC_NUMBER,       "hp_parasitic_fraction",            "Heat Pump Parasitics Fraction",                            "",             "",             "SAM",                     "",               "",              ""},
+    { SSC_OUTPUT, SSC_NUMBER,       "hp_hot_pump_power",                "Heat Pump Hot HX Pump Power",                              "kW/kg/s",      "",             "SAM",                     "",               "",              ""},
+    { SSC_OUTPUT, SSC_NUMBER,       "hp_cold_pump_power",               "Heat Pump Cold HX Pump Power",                             "kW/kg/s",      "",             "SAM",                     "",               "",              ""},
+    { SSC_OUTPUT, SSC_NUMBER,       "pc_parasitic_fraction",            "Power Cycle Parasitics Fraction",                          "",            "",             "SAM",                     "",               "",              ""},
+    { SSC_OUTPUT, SSC_NUMBER,       "pc_hot_pump_power",                "Power Cycle Hot HX Pump Power",                            "kW/kg/s",      "",             "SAM",                     "",               "",              ""},
+    { SSC_OUTPUT, SSC_NUMBER,       "pc_cold_pump_power",               "Power Cycle Cold HX Pump Power",                           "kW/kg/s",      "",             "SAM",                     "",               "",              ""},
 
      // Plots
     { SSC_OUTPUT, SSC_NUMBER,       "N_pts_charge",                     "Number data points on plot",                               "",             "",             "",                     "",               "",              ""},
@@ -107,9 +113,7 @@ public:
     {
         // Collect Inputs
         PTESSystemParam params;
-        string wf_string;
-        string hf_string;
-        string cf_string;
+        
         try
         {
             params.hx_eff = compute_module::as_double("hx_eff");
@@ -131,51 +135,71 @@ public:
             params.charge_time_hr = compute_module::as_double("charge_time_hr");
             params.discharge_time_hr = compute_module::as_double("discharge_time_hr");
             params.alpha = compute_module::as_double("alpha");
-
-            wf_string = compute_module::as_string("working_fluid_type");
-            hf_string = compute_module::as_string("hot_fluid_type");
-            cf_string = compute_module::as_string("cold_fluid_type");
         }
         catch (std::exception& e)
         {
-            int x = 0;
+            throw e;
         }
 
-        /* //Set Parameters
+        // Collect Fluid Inputs
+        FluidMaterialProp working_fluid(FluidType::kAir); // Placeholder Working Fluid
+        FluidMaterialProp hot_fluid(FluidType::kAir);
+        FluidMaterialProp cold_fluid(FluidType::kAir);
+        try
         {
-            params.hx_eff = 0.98;
-            params.eta = 0.90;
-            params.eta_pump = 0.70;
-            params.ploss_working = 0.01;
-            params.ploss_air = 0.005;
-            params.ploss_liquid = 0.02;
+            // Assign Working Fluid
+            string wf_string = compute_module::as_string("working_fluid_type");
+            bool wf_flag;
+            FluidType wf_type = PTESDesignPoint::GetFluidTypeFromString(wf_string, wf_flag);
+            working_fluid = FluidMaterialProp(wf_type);
 
-            params.motor_eff = 0.97216;
-            params.gen_eff = 0.97216;
+            // Check if HF and CF have Types or are custom
 
-            params.T0 = 288;
-            params.P0 = 1e5;
-            params.P1 = 5e5;
-            params.T_compressor_inlet = 600;
-            params.T_compressor_outlet = 800;
-            params.power_output = 100e6;
-            params.charge_time_hr = 10;
-            params.discharge_time_hr = 10;
-            params.alpha = 2;
-        }*/
+            // Hot Fluid
+            bool hf_flag = compute_module::is_assigned("hot_fluid_type");
+            if (hf_flag == false)
+            {
+                double hf_cp = compute_module::as_number("hot_cp");
+                double hf_rho = compute_module::as_number("hot_rho");
+                hot_fluid = FluidMaterialProp(hf_cp, hf_rho, params.T0, params.P0);
+            }
+            else
+            {
+                string hf_string = compute_module::as_string("hot_fluid_type");
+                FluidType hf_type = PTESDesignPoint::GetFluidTypeFromString(hf_string, hf_flag);
+                if (hf_flag == false)
+                {
+                    // Error
+                    throw new std::exception("Error Reading Hot Fluid Type");
+                }
+                hot_fluid = FluidMaterialProp(hf_type);
+            }
 
-        // Convert Fluid Type Strings to Enum
-        bool wf_flag, hf_flag, cf_flag;
-        FluidType wf_type = PTESDesignPoint::GetFluidTypeFromString(wf_string, wf_flag);
-        FluidType hf_type = PTESDesignPoint::GetFluidTypeFromString(hf_string, hf_flag);
-        FluidType cf_type = PTESDesignPoint::GetFluidTypeFromString(cf_string, cf_flag);
-        if (wf_flag == false || hf_flag == false || cf_flag == false)
+            // Cold Fluid
+            bool cf_flag = compute_module::is_assigned("cold_fluid_type");
+            if (cf_flag == false)
+            {
+                double cf_cp = compute_module::as_number("cold_cp");
+                double cf_rho = compute_module::as_number("cold_rho");
+                cold_fluid = FluidMaterialProp(cf_cp, cf_rho, params.T0, params.P0);
+            }
+            else
+            {
+                string cf_string = compute_module::as_string("cold_fluid_type");
+                FluidType cf_type = PTESDesignPoint::GetFluidTypeFromString(cf_string, cf_flag);
+                if (cf_flag == false)
+                    throw new std::exception("Error Reading Cold Fluid Type");
+                cold_fluid = FluidMaterialProp(cf_type);
+            }
+
+        }
+        catch (std::exception e)
         {
-            // throw exception, return
+            throw e;
         }
 
         // Build and Run System
-        PTESDesignPoint ptes(params, wf_type, hf_type, cf_type);
+        PTESDesignPoint ptes(params, working_fluid, hot_fluid, cold_fluid);
         ptes.Charge();
         ptes.Discharge();
         ptes.Performance();
@@ -189,28 +213,26 @@ public:
         ptes.GetTSDataDischarge(t_vec_D, s_vec_D);
         int out_size_D = t_vec_D.size();
 
-        // Output
-
-        // Output Ts data
-        ssc_number_t* ptr_temp_series_charge = allocate("temp_series_charge", out_size);
-        ssc_number_t* ptr_s_series_charge = allocate("s_series_charge", out_size);
-        for (int i = 0; i < out_size; i++)
-        {
-            ptr_temp_series_charge[i] = (ssc_number_t)t_vec[i];
-            ptr_s_series_charge[i] = (ssc_number_t)s_vec[i];
-        }
-
-        ssc_number_t* ptr_temp_series_discharge = allocate("temp_series_discharge", out_size_D);
-        ssc_number_t* ptr_s_series_discharge = allocate("s_series_discharge", out_size_D);
-        for (int i = 0; i < out_size_D; i++)
-        {
-            ptr_temp_series_discharge[i] = (ssc_number_t)t_vec_D[i];
-            ptr_s_series_discharge[i] = (ssc_number_t)s_vec_D[i];
-        }
-
-
         // Send Output
+        try
         {
+            // Output Ts data
+            ssc_number_t* ptr_temp_series_charge = allocate("temp_series_charge", out_size);
+            ssc_number_t* ptr_s_series_charge = allocate("s_series_charge", out_size);
+            for (int i = 0; i < out_size; i++)
+            {
+                ptr_temp_series_charge[i] = (ssc_number_t)t_vec[i];
+                ptr_s_series_charge[i] = (ssc_number_t)s_vec[i];
+            }
+
+            ssc_number_t* ptr_temp_series_discharge = allocate("temp_series_discharge", out_size_D);
+            ssc_number_t* ptr_s_series_discharge = allocate("s_series_discharge", out_size_D);
+            for (int i = 0; i < out_size_D; i++)
+            {
+                ptr_temp_series_discharge[i] = (ssc_number_t)t_vec_D[i];
+                ptr_s_series_discharge[i] = (ssc_number_t)s_vec_D[i];
+            }
+
             assign("N_pts_charge", (ssc_number_t)out_size);
             assign("N_pts_discharge", (ssc_number_t)out_size_D);
             assign("hp_COP", (ssc_number_t)ptes.hp_COP_);
@@ -224,6 +246,10 @@ public:
             assign("pc_parasitic_fraction", (ssc_number_t)ptes.pc_parasitic_fraction_);
             assign("pc_hot_pump_power", (ssc_number_t)ptes.pc_hot_pump_power_);
             assign("pc_cold_pump_power", (ssc_number_t)ptes.pc_cold_pump_power_);
+        }
+        catch (std::exception& e)
+        {
+            throw e;
         }
 
     }
