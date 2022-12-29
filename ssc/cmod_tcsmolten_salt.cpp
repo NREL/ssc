@@ -445,8 +445,8 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_OUTPUT,    SSC_NUMBER, "total_land_area",                    "Total land area",                                                                                                                         "acre",         "",                                  "System Costs",                             "*",                                                                "",              "" },
         // System capacity required by downstream financial model
     { SSC_OUTPUT,    SSC_NUMBER, "system_capacity",                    "System capacity",                                                                                                                         "kWe",          "",                                  "System Costs",                             "*",                                                                "",              "" },
-    { SSC_OUTPUT,    SSC_NUMBER, "cp_system_capacity",                 "System capacity for capacity payments",                                                                                                   "MWe",          "",                                  "System Costs",                             "*",                                                                "",              "" },
-    { SSC_OUTPUT,    SSC_NUMBER, "cp_battery_capacity",                "Battery nameplate",                                                                                                                       "MWe",          "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "cp_system_nameplate",                 "System capacity for capacity payments",                                                                                                   "MWe",          "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "cp_battery_nameplate",                "Battery nameplate",                                                                                                                       "MWe",          "",                                  "System Costs",                             "*",                                                                "",              "" },
 
         // Solar Field
     { SSC_OUTPUT,    SSC_NUMBER, "N_hel_calc",                         "Number of heliostats - out",                                                                                                               "",             "",                                  "Heliostat Field",                          "*",                                                                "",              "" },
@@ -2475,8 +2475,8 @@ public:
         // Calculate system capacity instead of pass in
         assign("system_capacity", system_capacity);     //[kWe]
         assign("nameplate", system_capacity * 1.E-3);   //[MWe]
-        assign("cp_system_capacity", system_capacity * 1.E-3); //[MWe]
-        assign("cp_battery_capacity", 0.0);             //[MWe]
+        assign("cp_system_nameplate", system_capacity * 1.E-3); //[MWe]
+        assign("cp_battery_nameplate", 0.0);             //[MWe]
 
             // ******* Costs ************
         double A_sf_refl = A_sf;

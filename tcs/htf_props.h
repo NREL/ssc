@@ -75,6 +75,7 @@ public:
 		Therminol_66,
 		Therminol_59,
 		Pressurized_Water,
+        Methanol,
         N06230,         // Nickel alloy
         N07740,         // Nickel alloy
 		End_Library_Fluids,
