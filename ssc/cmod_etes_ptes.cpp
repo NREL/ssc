@@ -213,8 +213,8 @@ static var_info _cm_vtab_etes_ptes[] = {
             // System
     { SSC_OUTPUT, SSC_NUMBER, "system_capacity",                 "System capacity (discharge)",                         "kWe",          "",                                  "System Design Calc",             "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "nameplate",                       "Nameplate capacity (discharge)",                      "MWe",          "",                                  "System Design Calc",             "*",                                                                "",              "" },
-    { SSC_OUTPUT, SSC_NUMBER, "cp_system_capacity",              "System capacity for capacity payments",               "MWe",          "",                                  "System Design Calc",             "*",                                                                "",              "" },
-    { SSC_OUTPUT, SSC_NUMBER, "cp_battery_capacity",             "Battery nameplate",                                   "MWe",          "",                                  "System Design Calc",             "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "cp_system_nameplate",              "System capacity for capacity payments",               "MWe",          "",                                  "System Design Calc",             "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "cp_battery_nameplate",             "Battery nameplate",                                   "MWe",          "",                                  "System Design Calc",             "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "rte_thermo",                      "Round-trip efficiency of working fluid cycles",       "MWe",          "",                                  "System Design Calc",             "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "rte_net",                         "Net round-trip efficiency considering all parasitics","MWe",          "",                                  "System Design Calc",             "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "charge_capacity",                 "Total electricity consumption at design-point charge","MWe",          "",                                  "System Design Calc",             "*",                                                                "",              "" },
@@ -695,6 +695,12 @@ public:
             // ctes_params.m_cold_tank_Thtr = as_double("CT_cold_tank_Thtr");
             // ctes_params.m_cold_tank_max_heat = as_double("CT_cold_tank_max_heat");
         double q_dot_CT_des__discharge_basis = q_dot_cold_in_charge / heater_mult;
+        // Hardcoded (for now) parameters
+        double hot_tank_Thtr = -200.0;
+        double hot_tank_max_heat = 0.0;
+        double cold_tank_Thtr = -200.0;
+        double cold_tank_max_heat = 0.0;
+        // ******************************
         std::shared_ptr<C_csp_two_tank_tes> c_CT_TES(new C_csp_two_tank_tes(
             CT_htf_code,
             ud_CT_htf_props,
@@ -706,10 +712,10 @@ public:
             as_double("CT_h_tank"),
             as_double("CT_u_tank"),
             as_integer("CT_tank_pairs"),
-            -200.0,                                          //[C]
-            0.0,                                             //[MWt]
-            -200.0,                                          //[C]
-            0.0,                                             //[MWt]
+            hot_tank_Thtr,                                   //[C]
+            hot_tank_max_heat,                               //[MWt]
+            cold_tank_Thtr,                                  //[C]
+            cold_tank_max_heat,                              //[MWt]
             0.0,                                             // MSPT assumes direct storage, so no user input here: hardcode = 0.0
             T_CT_cold_TES,                                   //[C]
             T_CT_hot_TES,                                    //[C]
@@ -1139,8 +1145,8 @@ public:
             // System
         assign("system_capacity", (ssc_number_t)system_capacity);           //[kWe] Discharge capacity
         assign("nameplate", (ssc_number_t)plant_net_capacity);              //[MWe] Discharge capacity
-        assign("cp_system_capacity", system_capacity * 1.E-3);             //[MWe]
-        assign("cp_battery_capacity", system_capacity * 1.E-3);             //[MWe]
+        assign("cp_system_nameplate", system_capacity * 1.E-3);             //[MWe]
+        assign("cp_battery_nameplate", system_capacity * 1.E-3);             //[MWe]
         assign("rte_thermo", (ssc_number_t)RTE_therm);                      //[-] Round-trip efficiency of working fluid cycles
         assign("rte_net", (ssc_number_t)RTE_net);                           //[-] Round-trip efficiency considering all parasitics
         assign("charge_capacity", (ssc_number_t)plant_charging_power_in);   //[MWe] Total electricity consumption at design-point charge
