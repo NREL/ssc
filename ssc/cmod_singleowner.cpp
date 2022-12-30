@@ -90,7 +90,7 @@ static var_info _cm_vtab_singleowner[] = {
 	{ SSC_INPUT, SSC_ARRAY, "dispatch_factors_ts", "Dispatch payment factor array", "", "", "Revenue", "ppa_multiplier_model=1", "", "" },
 
 	{ SSC_OUTPUT, SSC_ARRAY, "ppa_multipliers", "TOD factors", "", "", "Revenue", "*", "", "" },
-
+    /*
 	{ SSC_INPUT,        SSC_NUMBER,     "dispatch_factor1",		                  "TOD factor for period 1",	                                   "",   "",                          "Revenue",             "ppa_multiplier_model=0",						   "",                 "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "dispatch_factor2",		                  "TOD factor for period 2",	                                   "",   "",                          "Revenue",             "ppa_multiplier_model=0",						   "",                 "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "dispatch_factor3",		                  "TOD factor for period 3",	                                   "",   "",                          "Revenue",             "ppa_multiplier_model=0",						   "",                 "" },
@@ -100,6 +100,8 @@ static var_info _cm_vtab_singleowner[] = {
 	{ SSC_INPUT,        SSC_NUMBER,     "dispatch_factor7",		                  "TOD factor for period 7",	                                   "",   "",                          "Revenue",             "ppa_multiplier_model=0",						   "",                 "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "dispatch_factor8",		                  "TOD factor for period 8",	                                   "",   "",                          "Revenue",             "ppa_multiplier_model=0",						   "",                 "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "dispatch_factor9",		                  "TOD factor for period 9",	                                   "",   "",                          "Revenue",             "ppa_multiplier_model=0",						   "",                 "" },
+    */
+    { SSC_INPUT,        SSC_ARRAY,      "dispatch_tod_factors",                   " TOD facros for periods 1 through 9",                           "",   "",                          "Revenue",             "ppa_multiplier_model=0",						   "",                 "" },
 	{ SSC_INPUT,        SSC_MATRIX,     "dispatch_sched_weekday",                 "Diurnal weekday TOD periods",                                   "1..9", "12 x 24 matrix",    "Revenue", "ppa_multiplier_model=0", "", "" },
 	{ SSC_INPUT,        SSC_MATRIX,     "dispatch_sched_weekend",                 "Diurnal weekend TOD periods",                                   "1..9", "12 x 24 matrix",    "Revenue", "ppa_multiplier_model=0", "", "" },
 

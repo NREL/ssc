@@ -1145,83 +1145,19 @@ ssc_number_t adjustment_factors::operator()( size_t time )
 	else return 0.0;
 }
 
-/*
-sf_adjustment_factors::sf_adjustment_factors(compute_module *cm)
-: m_cm(cm)
-{
-}
-
-bool sf_adjustment_factors::setup(int nsteps)
-{
-
-	ssc_number_t f = m_cm->as_number("sf_adjust:constant");
-	f = 1.0 - f / 100.0; //convert from percentage to factor
-	m_factors.resize(nsteps, f);
-
-	if (m_cm->is_assigned("sf_adjust:hourly"))
-	{
-		size_t n;
-		ssc_number_t *p = m_cm->as_array("sf_adjust:hourly", &n);
-		if (p != 0 && n == (size_t)nsteps)
-		{
-			for (int i = 0; i < nsteps; i++)
-				m_factors[i] *= (1.0 - p[i] / 100.0); //convert from percentages to factors
-		}
-		if (n!=(size_t)nsteps)
-			m_error = util::format("array length (%d) must match number of yearly simulation time steps (%d).", n, nsteps);
-	}
-
-	if (m_cm->is_assigned("sf_adjust:periods"))
-	{
-		size_t nr, nc;
-		ssc_number_t *mat = m_cm->as_matrix("sf_adjust:periods", &nr, &nc);
-		if (mat != 0 && nc == 3)
-		{
-			for (size_t r = 0; r<nr; r++)
-			{
-				int start = (int)mat[nc*r];
-				int end = (int)mat[nc*r + 1];
-				float factor = (float)mat[nc*r + 2];
-
-				if (start < 0 || start >= nsteps || end < start)
-				{
-					m_error = util::format("period %d is invalid ( start: %d, end %d )", (int)r, start, end);
-					continue;
-				}
-
-				if (end >= nsteps) end = nsteps-1;
-
-				for (int i = start; i <= end; i++)
-					m_factors[i] *= (1 - factor / 100); //convert from percentages to factors
-			}
-		}
-	}
-
-	return m_error.length() == 0;
-}
-
-ssc_number_t sf_adjustment_factors::operator()(size_t time)
-{
-	if (time < m_factors.size()) return m_factors[time];
-	else return 0.0;
-}
-
-int sf_adjustment_factors::size()
-{
-    return (int)m_factors.size();
-}
-*/
 
 
 shading_factor_calculator::shading_factor_calculator()
 {
 	m_enAzAlt = false;
 	m_enMxH = false;
+    m_enTimestep = false;
 	m_diffFactor = 1.0;
 	m_beam_shade_factor = 1.0;
 	m_dc_shade_factor = 1.0;
+    m_string_option = -1;
+    m_steps_per_hour = 1;
 }
-
 
 
 bool shading_factor_calculator::setup( compute_module *cm, const std::string &prefix )

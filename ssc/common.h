@@ -101,20 +101,6 @@ public:
 	std::string error() { return m_error; }
 };
 
-/*
-class sf_adjustment_factors
-{
-	compute_module *m_cm;
-	std::vector<ssc_number_t> m_factors;
-	std::string m_error;
-public:
-	sf_adjustment_factors(compute_module *cm);
-	bool setup(int nsteps=8760);
-    int size();
-	ssc_number_t operator()(size_t time);
-	std::string error() { return m_error; }
-};
-*/
 
 class shading_factor_calculator
 {

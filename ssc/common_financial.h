@@ -65,6 +65,7 @@ private:
 	util::matrix_t<double> m_cf;
 	std::vector<double> m_degradation;
 	std::vector<double> m_hourly_energy;
+    std::vector<double> m_dispatch_tod_factors;
 	int m_nyears;
 	bool m_timestep;
 	ssc_number_t *m_gen; // Time series power
