@@ -266,24 +266,6 @@ enum {
 
 
 
-//var_info vtab_dispatch_periods[] = {
-	/*   VARTYPE           DATATYPE         NAME                               LABEL                                       UNITS     META                                     GROUP                 REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-
-	//{ SSC_INPUT, SSC_NUMBER, "dispatch_factor1", "Dispatch period 1 value", "", "", "Dispatch values", "*", "POSITIVE", "" },
-	//{ SSC_INPUT, SSC_NUMBER, "dispatch_factor2", "Dispatch period 2 value", "", "", "Dispatch values", "*", "POSITIVE", "" },
-	//{ SSC_INPUT, SSC_NUMBER, "dispatch_factor3", "Dispatch period 3 value", "", "", "Dispatch values", "*", "POSITIVE", "" },
-	//{ SSC_INPUT, SSC_NUMBER, "dispatch_factor4", "Dispatch period 4 value", "", "", "Dispatch values", "*", "POSITIVE", "" },
-	//{ SSC_INPUT, SSC_NUMBER, "dispatch_factor5", "Dispatch period 5 value", "", "", "Dispatch values", "*", "POSITIVE", "" },
-	//{ SSC_INPUT, SSC_NUMBER, "dispatch_factor6", "Dispatch period 6 value", "", "", "Dispatch values", "*", "POSITIVE", "" },
-	//{ SSC_INPUT, SSC_NUMBER, "dispatch_factor7", "Dispatch period 7 value", "", "", "Dispatch values", "*", "POSITIVE", "" },
-	//{ SSC_INPUT, SSC_NUMBER, "dispatch_factor8", "Dispatch period 8 value", "", "", "Dispatch values", "*", "POSITIVE", "" },
-	//{ SSC_INPUT, SSC_NUMBER, "dispatch_factor9", "Dispatch period 9 value", "", "", "Dispatch values", "*", "POSITIVE", "" },
-//	{ SSC_INPUT, SSC_MATRIX, "dispatch_sched_weekday", "Diurnal weekday dispatch periods", "1..9", "12 x 24 matrix", "Dispatch values", "*", "", "" },
-//	{ SSC_INPUT, SSC_MATRIX, "dispatch_sched_weekend", "Diurnal weekend dispatch periods", "1..9", "12 x 24 matrix", "Dispatch values", "*", "", "" },
-
-//	var_info_invalid };
-
-
 dispatch_calculations::dispatch_calculations(compute_module *cm, std::vector<double>& degradation, std::vector<double>& hourly_energy)
 {
 	init(cm, degradation, hourly_energy);
@@ -3353,6 +3335,17 @@ void check_financial_metrics::check_debt_percentage(compute_module* cm, ssc_numb
 }
 
 
+
+var_info vtab_tod_dispatch_periods[] = {
+    // TOD factors
+        { SSC_INPUT, SSC_NUMBER, "ppa_multiplier_model", "PPA multiplier model", "0/1", "0=diurnal,1=timestep", "Revenue", "?=0", "INTEGER,MIN=0", "" },
+        { SSC_INPUT, SSC_ARRAY, "dispatch_factors_ts", "Dispatch payment factor array", "", "", "Revenue", "ppa_multiplier_model=1", "", "" },
+
+        { SSC_OUTPUT, SSC_ARRAY, "ppa_multipliers", "TOD factors", "", "", "Revenue", "*", "", "" },
+        { SSC_INPUT,        SSC_ARRAY,      "dispatch_tod_factors",                   "TOD factors for periods 1 through 9",                           "",   "",                          "Revenue",             "ppa_multiplier_model=0",						   "",                 "" },
+        { SSC_INPUT,        SSC_MATRIX,     "dispatch_sched_weekday",                 "Diurnal weekday TOD periods",                                   "1..9", "12 x 24 matrix",    "Revenue", "ppa_multiplier_model=0", "", "" },
+        { SSC_INPUT,        SSC_MATRIX,     "dispatch_sched_weekend",                 "Diurnal weekend TOD periods",                                   "1..9", "12 x 24 matrix",    "Revenue", "ppa_multiplier_model=0", "", "" },
+        var_info_invalid };
 
 
 

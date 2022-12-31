@@ -85,25 +85,6 @@ static var_info _cm_vtab_singleowner[] = {
 /* Dispatch */
 	{ SSC_INPUT,        SSC_NUMBER,     "system_use_lifetime_output",		      "Lifetime hourly system outputs",	                               "0/1",                         "0=hourly first year,1=hourly lifetime",                      "Lifetime",             "*",						   "INTEGER,MIN=0",                 "" },
 
-	// dispatch update TODO - remove SO output label below after consildated with CSP
-	{ SSC_INPUT, SSC_NUMBER, "ppa_multiplier_model", "PPA multiplier model", "0/1", "0=diurnal,1=timestep", "Revenue", "?=0", "INTEGER,MIN=0", "" },
-	{ SSC_INPUT, SSC_ARRAY, "dispatch_factors_ts", "Dispatch payment factor array", "", "", "Revenue", "ppa_multiplier_model=1", "", "" },
-
-	{ SSC_OUTPUT, SSC_ARRAY, "ppa_multipliers", "TOD factors", "", "", "Revenue", "*", "", "" },
-    /*
-	{ SSC_INPUT,        SSC_NUMBER,     "dispatch_factor1",		                  "TOD factor for period 1",	                                   "",   "",                          "Revenue",             "ppa_multiplier_model=0",						   "",                 "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "dispatch_factor2",		                  "TOD factor for period 2",	                                   "",   "",                          "Revenue",             "ppa_multiplier_model=0",						   "",                 "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "dispatch_factor3",		                  "TOD factor for period 3",	                                   "",   "",                          "Revenue",             "ppa_multiplier_model=0",						   "",                 "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "dispatch_factor4",		                  "TOD factor for period 4",	                                   "",   "",                          "Revenue",             "ppa_multiplier_model=0",						   "",                 "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "dispatch_factor5",		                  "TOD factor for period 5",	                                   "",   "",                          "Revenue",             "ppa_multiplier_model=0",						   "",                 "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "dispatch_factor6",		                  "TOD factor for period 6",	                                   "",   "",                          "Revenue",             "ppa_multiplier_model=0",						   "",                 "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "dispatch_factor7",		                  "TOD factor for period 7",	                                   "",   "",                          "Revenue",             "ppa_multiplier_model=0",						   "",                 "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "dispatch_factor8",		                  "TOD factor for period 8",	                                   "",   "",                          "Revenue",             "ppa_multiplier_model=0",						   "",                 "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "dispatch_factor9",		                  "TOD factor for period 9",	                                   "",   "",                          "Revenue",             "ppa_multiplier_model=0",						   "",                 "" },
-    */
-    { SSC_INPUT,        SSC_ARRAY,      "dispatch_tod_factors",                   " TOD facros for periods 1 through 9",                           "",   "",                          "Revenue",             "ppa_multiplier_model=0",						   "",                 "" },
-	{ SSC_INPUT,        SSC_MATRIX,     "dispatch_sched_weekday",                 "Diurnal weekday TOD periods",                                   "1..9", "12 x 24 matrix",    "Revenue", "ppa_multiplier_model=0", "", "" },
-	{ SSC_INPUT,        SSC_MATRIX,     "dispatch_sched_weekend",                 "Diurnal weekend TOD periods",                                   "1..9", "12 x 24 matrix",    "Revenue", "ppa_multiplier_model=0", "", "" },
 
 
     { SSC_OUTPUT,       SSC_ARRAY,       "cf_energy_net_jan",                     "Energy produced by year in January",                      "kWh", "", "Cash Flow Revenue by Month and TOD Period", "*", "LENGTH_EQUAL=cf_length", "" },
@@ -682,7 +663,8 @@ extern var_info
 	vtab_financial_grid[],
 	vtab_fuelcell_replacement_cost[],
     vtab_lcos_inputs[],
-	vtab_battery_replacement_cost[];
+	vtab_battery_replacement_cost[],
+    vtab_tod_dispatch_periods[];
 
 enum {
 	CF_energy_net,
@@ -937,6 +919,7 @@ public:
 		add_var_info(vtab_financial_capacity_payments);
 		add_var_info(vtab_financial_grid);
         add_var_info(vtab_lcos_inputs);
+        add_var_info(vtab_tod_dispatch_periods);
 	}
 
 	void exec( )
