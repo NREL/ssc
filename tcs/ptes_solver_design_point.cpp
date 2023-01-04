@@ -674,10 +674,10 @@ void PTESDesignPoint::Performance()
     // hp_COP_;                                                 // Heat Pump Coefficient of Performance
     // W_WF_D                                                   // Cycle Thermodynamic Power
     // cycle_eff_;                                              // Cycle Thermo Efficiency
-    Th_hot_ = this->hot_fluid_state_.temp_charge_[1] - 273;     // Hot resevoir's hot tank
-    Th_cold_ = this->hot_fluid_state_.temp_charge_[0] - 273;    // Hot resevoir's cold tank
-    Tc_hot_ = this->cold_fluid_state_.temp_charge_[0] - 273;    // Cold resevoir's hot tank
-    Tc_cold_ = this->cold_fluid_state_.temp_charge_[1] - 273;   // Cold resevoir's cold tank
+    Th_hot_ = this->hot_fluid_state_.temp_charge_[1] - 273;     // Hot reservoir's hot tank
+    Th_cold_ = this->hot_fluid_state_.temp_charge_[0] - 273;    // Hot reservoir's cold tank
+    Tc_hot_ = this->cold_fluid_state_.temp_charge_[0] - 273;    // Cold reservoir's hot tank
+    Tc_cold_ = this->cold_fluid_state_.temp_charge_[1] - 273;   // Cold reservoir's cold tank
 
 
     // Heat Pump Performance

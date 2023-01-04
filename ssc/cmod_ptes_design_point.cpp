@@ -68,8 +68,8 @@ static var_info _cm_vtab_ptes_design_point[] = {
     // Fluids
     { SSC_INPUT,    SSC_STRING,     "working_fluid_type",               "Working Fluid Type",                                       "",             "",             "",                     "",             "",              ""},
 
-    { SSC_INPUT,    SSC_NUMBER,     "hot_fluid_id",                     "Hot Resevoir Fluid ID",                                    "",             "",             "",                     "",             "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,     "cold_fluid_id",                    "Cold Resevoir Fluid ID",                                   "",             "",             "",                     "",             "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,     "hot_fluid_id",                     "Hot Reservoir Fluid ID",                                    "",             "",             "",                     "",             "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,     "cold_fluid_id",                    "Cold Reservoir Fluid ID",                                   "",             "",             "",                     "",             "",              ""},
     { SSC_INPUT,    SSC_MATRIX,     "hot_ud_fluid_props",               "User Defined Hot Resevior Fluid Properties",               "",             "",             "",                     "",             "",              ""},
     { SSC_INPUT,    SSC_MATRIX,     "cold_ud_fluid_props",              "User Defined Cold Resevior Fluid Properties",              "",             "",             "",                     "",             "",              ""},
 
