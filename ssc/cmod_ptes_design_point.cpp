@@ -80,6 +80,7 @@ static var_info _cm_vtab_ptes_design_point[] = {
     { SSC_OUTPUT, SSC_NUMBER,       "hp_COP",                           "Heat Pump COP",                                            "",             "",             "SAM",                  "",             "",              ""},
     { SSC_OUTPUT, SSC_NUMBER,       "cycle_eff",                        "Cycle Efficiency",                                         "",             "",             "SAM",                  "",             "",              ""},
     { SSC_OUTPUT, SSC_NUMBER,       "Th_hot",                           "Hot Storage Hot Temp",                                     "C",            "",             "SAM",                  "",             "",              ""},
+    { SSC_OUTPUT, SSC_NUMBER,       "Th_cold",                          "Hot Storage Cold Temp",                                    "C",            "",             "SAM",                  "",             "",              ""},
     { SSC_OUTPUT, SSC_NUMBER,       "Tc_hot",                           "Cold Storage Hot Temp",                                    "C",            "",             "SAM",                  "",             "",              ""},
     { SSC_OUTPUT, SSC_NUMBER,       "Tc_cold",                          "Cold Storage Cold Temp",                                   "C",            "",             "SAM",                  "",             "",              ""},
 
@@ -226,6 +227,7 @@ public:
             assign("hp_COP", (ssc_number_t)ptes.hp_COP_);
             assign("cycle_eff", (ssc_number_t)ptes.cycle_eff_);
             assign("Th_hot", (ssc_number_t)ptes.Th_hot_);
+            assign("Th_cold", (ssc_number_t)ptes.Th_cold_);
             assign("Tc_hot", (ssc_number_t)ptes.Tc_hot_);
             assign("Tc_cold", (ssc_number_t)ptes.Tc_cold_);
             assign("hp_parasitic_fraction", (ssc_number_t)ptes.hp_parasitic_fraction_);
