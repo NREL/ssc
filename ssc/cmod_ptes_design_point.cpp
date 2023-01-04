@@ -33,6 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "core.h"
 
 #include "ptes_solver_design_point.h"
+#include "htf_props.h"
 
 #include <algorithm>
 using std::string;
@@ -44,59 +45,58 @@ static var_info _cm_vtab_ptes_design_point[] = {
     // Simulation options
     //   VARTYPE    DATATYPE        NAME                                LABEL                                                       UNITS           META            GROUP               REQUIRED_IF         CONSTRAINTS     UI_HINTS*/
 
-    { SSC_INPUT,    SSC_NUMBER,     "hx_eff",                           "hx effectiveness",                                         "",             "",             "",                     "*",              "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,     "eta",                              "polytropic efficiency of compressors and expanders",       "",             "",             "",                     "*",              "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,     "eta_pump",                         "polytropic efficiency of air pump",                        "",             "",             "",                     "*",              "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,     "ploss_working",                    "Fractional pressure loss in each heat exchanger",          "",             "",             "",                     "*",              "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,     "ploss_air",                        "Fractional pressure loss (air)",                           "",             "",             "",                     "*",              "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,     "ploss_liquid",                     "Fractional pressure loss (liquid)",                        "",             "",             "",                     "*",              "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,     "motor_eff",                        "Motor Efficiency",                                         "",             "",             "",                     "*",              "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,     "gen_eff",                          "Generator Efficiency",                                     "",             "",             "",                     "*",              "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,     "T0",                               "Ambient Temperature",                                      "K",            "",             "",                     "*",              "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,     "P0",                               "Ambient Pressure",                                         "Pa",           "",             "",                     "*",              "",              ""},
-                                                                                                                                                                                                              
-    { SSC_INPUT,    SSC_NUMBER,     "P1",                               "Lowest Pressure in cycle",                                 "Pa",           "",             "",                     "*",              "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,     "T_compressor_inlet",               "Charging compressor inlet temperature",                    "K",            "",             "",                     "*",              "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,     "T_compressor_outlet",              "Charging compressor outlet temperature",                   "K",            "",             "",                     "*",              "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,     "power_output",                     "Power Output",                                             "W",            "",             "",                     "*",              "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,     "charge_time_hr",                   "charging time",                                            "hr",           "",             "",                     "*",              "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,     "discharge_time_hr",                "discharge time",                                           "hr",           "",             "",                     "*",              "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,     "alpha",                            "Ratio of mdot cp     AIR/WF",                              "",             "",             "",                     "*",              "",              ""},
-                                                                                                                                                                                                              
-    { SSC_INPUT,    SSC_STRING,     "working_fluid_type",               "Working Fluid Fluid",                                      "",             "",             "",                     "",              "",              ""},
-    { SSC_INPUT,    SSC_STRING,     "hot_fluid_type",                   "Hot Resevoir Fluid",                                       "",             "",             "",                     "",              "",              ""},
-    { SSC_INPUT,    SSC_STRING,     "cold_fluid_type",                  "Cold Resevoir Fluid",                                      "",             "",             "",                     "",              "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,     "hx_eff",                           "hx effectiveness",                                         "",             "",             "",                     "*",            "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,     "eta",                              "polytropic efficiency of compressors and expanders",       "",             "",             "",                     "*",            "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,     "eta_pump",                         "polytropic efficiency of air pump",                        "",             "",             "",                     "*",            "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,     "ploss_working",                    "Fractional pressure loss in each heat exchanger",          "",             "",             "",                     "*",            "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,     "ploss_air",                        "Fractional pressure loss (air)",                           "",             "",             "",                     "*",            "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,     "ploss_liquid",                     "Fractional pressure loss (liquid)",                        "",             "",             "",                     "*",            "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,     "motor_eff",                        "Motor Efficiency",                                         "",             "",             "",                     "*",            "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,     "gen_eff",                          "Generator Efficiency",                                     "",             "",             "",                     "*",            "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,     "T0",                               "Ambient Temperature",                                      "K",            "",             "",                     "*",            "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,     "P0",                               "Ambient Pressure",                                         "Pa",           "",             "",                     "*",            "",              ""},
+                                                                                                                                                                                                            
+    { SSC_INPUT,    SSC_NUMBER,     "P1",                               "Lowest Pressure in cycle",                                 "Pa",           "",             "",                     "*",            "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,     "T_compressor_inlet",               "Charging compressor inlet temperature",                    "K",            "",             "",                     "*",            "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,     "T_compressor_outlet",              "Charging compressor outlet temperature",                   "K",            "",             "",                     "*",            "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,     "power_output",                     "Power Output",                                             "W",            "",             "",                     "*",            "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,     "charge_time_hr",                   "charging time",                                            "hr",           "",             "",                     "*",            "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,     "discharge_time_hr",                "discharge time",                                           "hr",           "",             "",                     "*",            "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,     "alpha",                            "Ratio of mdot cp     AIR/WF",                              "",             "",             "",                     "*",            "",              ""},
 
-    { SSC_INPUT,    SSC_STRING,     "hot_cp",                           "Hot Resevoir Specific Heat",                               "J/kg K",       "",             "",                     "",              "",              ""},
-    { SSC_INPUT,    SSC_STRING,     "hot_rho",                          "Hot Resevoir Density",                                     "kg/m3",        "",             "",                     "",              "",              ""},
-    { SSC_INPUT,    SSC_STRING,     "cold_cp",                          "Cold Resevoir Specific Heat",                              "J/kg K",       "",             "",                     "",              "",              ""},
-    { SSC_INPUT,    SSC_STRING,     "cold_rho",                         "Cold Resevoir Density",                                    "kg/m3",        "",             "",                     "",              "",              ""},
 
+    // Fluids
+    { SSC_INPUT,    SSC_STRING,     "working_fluid_type",               "Working Fluid Type",                                       "",             "",             "",                     "",             "",              ""},
+
+    { SSC_INPUT,    SSC_NUMBER,     "hot_fluid_id",                     "Hot Resevoir Fluid ID",                                    "",             "",             "",                     "",             "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,     "cold_fluid_id",                    "Cold Resevoir Fluid ID",                                   "",             "",             "",                     "",             "",              ""},
+    { SSC_INPUT,    SSC_MATRIX,     "hot_ud_fluid_props",               "User Defined Hot Resevior Fluid Properties",               "",             "",             "",                     "",             "",              ""},
+    { SSC_INPUT,    SSC_MATRIX,     "cold_ud_fluid_props",              "User Defined Cold Resevior Fluid Properties",              "",             "",             "",                     "",             "",              ""},
 
 
     // ----------------------------------------- Output
 
     // Results
-    { SSC_OUTPUT, SSC_NUMBER,       "hp_COP",                           "Heat Pump COP",                                            "",             "",             "SAM",                     "",               "",              ""},
-    { SSC_OUTPUT, SSC_NUMBER,       "cycle_eff",                        "Cycle Efficiency",                                         "",             "",             "SAM",                     "",               "",              ""},
-    { SSC_OUTPUT, SSC_NUMBER,       "Th_hot",                           "Hot Storage Hot Temp",                                     "C",            "",             "SAM",                     "",               "",              ""},
-    { SSC_OUTPUT, SSC_NUMBER,       "Tc_hot",                           "Cold Storage Hot Temp",                                    "C",            "",             "SAM",                     "",               "",              ""},
-    { SSC_OUTPUT, SSC_NUMBER,       "Tc_cold",                          "Cold Storage Cold Temp",                                   "C",            "",             "SAM",                     "",               "",              ""},
-    
-    { SSC_OUTPUT, SSC_NUMBER,       "hp_parasitic_fraction",            "Heat Pump Parasitics Fraction",                            "",             "",             "SAM",                     "",               "",              ""},
-    { SSC_OUTPUT, SSC_NUMBER,       "hp_hot_pump_power",                "Heat Pump Hot HX Pump Power",                              "kW/kg/s",      "",             "SAM",                     "",               "",              ""},
-    { SSC_OUTPUT, SSC_NUMBER,       "hp_cold_pump_power",               "Heat Pump Cold HX Pump Power",                             "kW/kg/s",      "",             "SAM",                     "",               "",              ""},
-    { SSC_OUTPUT, SSC_NUMBER,       "pc_parasitic_fraction",            "Power Cycle Parasitics Fraction",                          "",            "",             "SAM",                     "",               "",              ""},
-    { SSC_OUTPUT, SSC_NUMBER,       "pc_hot_pump_power",                "Power Cycle Hot HX Pump Power",                            "kW/kg/s",      "",             "SAM",                     "",               "",              ""},
-    { SSC_OUTPUT, SSC_NUMBER,       "pc_cold_pump_power",               "Power Cycle Cold HX Pump Power",                           "kW/kg/s",      "",             "SAM",                     "",               "",              ""},
+    { SSC_OUTPUT, SSC_NUMBER,       "hp_COP",                           "Heat Pump COP",                                            "",             "",             "SAM",                  "",             "",              ""},
+    { SSC_OUTPUT, SSC_NUMBER,       "cycle_eff",                        "Cycle Efficiency",                                         "",             "",             "SAM",                  "",             "",              ""},
+    { SSC_OUTPUT, SSC_NUMBER,       "Th_hot",                           "Hot Storage Hot Temp",                                     "C",            "",             "SAM",                  "",             "",              ""},
+    { SSC_OUTPUT, SSC_NUMBER,       "Tc_hot",                           "Cold Storage Hot Temp",                                    "C",            "",             "SAM",                  "",             "",              ""},
+    { SSC_OUTPUT, SSC_NUMBER,       "Tc_cold",                          "Cold Storage Cold Temp",                                   "C",            "",             "SAM",                  "",             "",              ""},
+
+    { SSC_OUTPUT, SSC_NUMBER,       "hp_parasitic_fraction",            "Heat Pump Parasitics Fraction",                            "",             "",             "SAM",                  "",             "",              ""},
+    { SSC_OUTPUT, SSC_NUMBER,       "hp_hot_pump_power",                "Heat Pump Hot HX Pump Power",                              "kW/kg/s",      "",             "SAM",                  "",             "",              ""},
+    { SSC_OUTPUT, SSC_NUMBER,       "hp_cold_pump_power",               "Heat Pump Cold HX Pump Power",                             "kW/kg/s",      "",             "SAM",                  "",             "",              ""},
+    { SSC_OUTPUT, SSC_NUMBER,       "pc_parasitic_fraction",            "Power Cycle Parasitics Fraction",                          "",             "",             "SAM",                  "",             "",              ""},
+    { SSC_OUTPUT, SSC_NUMBER,       "pc_hot_pump_power",                "Power Cycle Hot HX Pump Power",                            "kW/kg/s",      "",             "SAM",                  "",             "",              ""},
+    { SSC_OUTPUT, SSC_NUMBER,       "pc_cold_pump_power",               "Power Cycle Cold HX Pump Power",                           "kW/kg/s",      "",             "SAM",                  "",             "",              ""},
 
      // Plots
-    { SSC_OUTPUT, SSC_NUMBER,       "N_pts_charge",                     "Number data points on plot",                               "",             "",             "",                     "",               "",              ""},
-    { SSC_OUTPUT, SSC_ARRAY,        "temp_series_charge",               "Temperature Values",                                       "C",            "",             "",                     "",               "",              ""},
-    { SSC_OUTPUT, SSC_ARRAY,        "s_series_charge",                  "Entropy Values",                                           "kJ/kg K",      "",             "",                     "",               "",              ""},
-    { SSC_OUTPUT, SSC_NUMBER,       "N_pts_discharge",                  "Number data points on plot",                               "",             "",             "",                     "",               "",              ""},
-    { SSC_OUTPUT, SSC_ARRAY,        "temp_series_discharge",            "Temperature Values",                                       "C",            "",             "",                     "",               "",              ""},
-    { SSC_OUTPUT, SSC_ARRAY,        "s_series_discharge",               "Entropy Values",                                           "kJ/kg K",      "",             "",                     "",               "",              ""},
+    { SSC_OUTPUT, SSC_NUMBER,       "N_pts_charge",                     "Number data points on plot",                               "",             "",             "",                     "",             "",              ""},
+    { SSC_OUTPUT, SSC_ARRAY,        "temp_series_charge",               "Temperature Values",                                       "C",            "",             "",                     "",             "",              ""},
+    { SSC_OUTPUT, SSC_ARRAY,        "s_series_charge",                  "Entropy Values",                                           "kJ/kg K",      "",             "",                     "",             "",              ""},
+    { SSC_OUTPUT, SSC_NUMBER,       "N_pts_discharge",                  "Number data points on plot",                               "",             "",             "",                     "",             "",              ""},
+    { SSC_OUTPUT, SSC_ARRAY,        "temp_series_discharge",            "Temperature Values",                                       "C",            "",             "",                     "",             "",              ""},
+    { SSC_OUTPUT, SSC_ARRAY,        "s_series_discharge",               "Entropy Values",                                           "kJ/kg K",      "",             "",                     "",             "",              ""},
 
     var_info_invalid };
 
@@ -112,8 +112,7 @@ public:
     void exec() override
     {
         // Collect Inputs
-        PTESSystemParam params;
-        
+        PTESSystemParam params;      
         try
         {
             params.hx_eff = compute_module::as_double("hx_eff");
@@ -141,10 +140,8 @@ public:
             throw e;
         }
 
-        // Collect Fluid Inputs
+        // Collect Working Fluid
         FluidMaterialProp working_fluid(FluidType::kAir); // Placeholder Working Fluid
-        FluidMaterialProp hot_fluid(FluidType::kAir);
-        FluidMaterialProp cold_fluid(FluidType::kAir);
         try
         {
             // Assign Working Fluid
@@ -152,48 +149,39 @@ public:
             bool wf_flag;
             FluidType wf_type = PTESDesignPoint::GetFluidTypeFromString(wf_string, wf_flag);
             working_fluid = FluidMaterialProp(wf_type);
-
-            // Check if HF and CF have Types or are custom
-
-            // Hot Fluid
-            bool hf_flag = compute_module::is_assigned("hot_fluid_type");
-            if (hf_flag == false)
-            {
-                double hf_cp = compute_module::as_number("hot_cp");
-                double hf_rho = compute_module::as_number("hot_rho");
-                hot_fluid = FluidMaterialProp(hf_cp, hf_rho, params.T0, params.P0);
-            }
-            else
-            {
-                string hf_string = compute_module::as_string("hot_fluid_type");
-                FluidType hf_type = PTESDesignPoint::GetFluidTypeFromString(hf_string, hf_flag);
-                if (hf_flag == false)
-                {
-                    // Error
-                    throw new std::exception("Error Reading Hot Fluid Type");
-                }
-                hot_fluid = FluidMaterialProp(hf_type);
-            }
-
-            // Cold Fluid
-            bool cf_flag = compute_module::is_assigned("cold_fluid_type");
-            if (cf_flag == false)
-            {
-                double cf_cp = compute_module::as_number("cold_cp");
-                double cf_rho = compute_module::as_number("cold_rho");
-                cold_fluid = FluidMaterialProp(cf_cp, cf_rho, params.T0, params.P0);
-            }
-            else
-            {
-                string cf_string = compute_module::as_string("cold_fluid_type");
-                FluidType cf_type = PTESDesignPoint::GetFluidTypeFromString(cf_string, cf_flag);
-                if (cf_flag == false)
-                    throw new std::exception("Error Reading Cold Fluid Type");
-                cold_fluid = FluidMaterialProp(cf_type);
-            }
-
         }
         catch (std::exception e)
+        {
+            throw e;
+        }
+
+        // Collect Hot and Cold Fluid Properties
+        FluidMaterialProp hot_fluid(FluidType::kAir); // Placeholder
+        FluidMaterialProp cold_fluid(FluidType::kAir); // Placeholder
+        try
+        {
+            int hot_id = compute_module::as_integer("hot_fluid_id");
+            int cold_id = compute_module::as_integer("cold_fluid_id");
+            util::matrix_t<double> hot_ud_props = compute_module::as_matrix("hot_ud_fluid_props");
+            util::matrix_t<double> cold_ud_props = compute_module::as_matrix("cold_ud_fluid_props");
+
+            // Make Hot Properties Class
+            double hot_temp = (params.T_compressor_outlet + params.T_compressor_inlet) / 2;
+            HTFProperties hot_htf_props;
+            hot_htf_props.Initialize(hot_id, hot_ud_props);
+            double hot_cp = hot_htf_props.Cp(hot_temp) * 1000.0;
+            double hot_rho = hot_htf_props.dens(hot_temp, params.P0);
+            hot_fluid = FluidMaterialProp(hot_cp, hot_rho, params.T0, params.P0);
+
+            // Make Cold Properties Class
+            double cold_temp = params.T0;
+            HTFProperties cold_htf_props;
+            cold_htf_props.Initialize(cold_id, cold_ud_props);
+            double cold_cp = cold_htf_props.Cp(cold_temp) * 1000.0;
+            double cold_rho = cold_htf_props.dens(cold_temp, params.P0);
+            cold_fluid = FluidMaterialProp(cold_cp, cold_rho, params.T0, params.P0);
+        }
+        catch (std::exception& e)
         {
             throw e;
         }

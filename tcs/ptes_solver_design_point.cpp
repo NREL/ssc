@@ -220,7 +220,7 @@ FluidMaterialProp::map FluidMaterialProp::map_ = {
 };
 
 /// <summary>
-/// Constructor for State Information
+/// Constructor for State Information, using Fluid Type
 /// </summary>
 /// <param name="num_states_charge"></param>
 /// <param name="num_states_discharge"></param>
@@ -231,6 +231,12 @@ FluidState::FluidState(int num_states_charge, int num_states_discharge, FluidTyp
 {
 }
 
+/// <summary>
+/// Constructor for State Information, using FluidMaterialProp
+/// </summary>
+/// <param name="num_states_charge"></param>
+/// <param name="num_states_discharge"></param>
+/// <param name="fluid"></param>
 FluidState::FluidState(int num_states_charge, int num_states_discharge, FluidMaterialProp fluid)
     :
     num_states_charge_(num_states_charge),
@@ -267,12 +273,6 @@ PTESDesignPoint::PTESDesignPoint(const PTESSystemParam params,
     :
     PTESDesignPoint(params, FluidMaterialProp(working_fluid_type), FluidMaterialProp(hot_fluid_type), FluidMaterialProp(cold_fluid_type))
 {
-    //// Add references to fluid states
-    //fluid_collection_.push_back(working_fluid_state_);
-    //fluid_collection_.push_back(hot_fluid_state_);
-    //fluid_collection_.push_back(cold_fluid_state_);
-    //fluid_collection_.push_back(rejection_air1_state_);
-    //fluid_collection_.push_back(rejection_air2_state_);
 }
 
 PTESDesignPoint::PTESDesignPoint(PTESSystemParam params, FluidMaterialProp working_fluid, FluidMaterialProp hot_fluid, FluidMaterialProp cold_fluid)
@@ -284,12 +284,6 @@ PTESDesignPoint::PTESDesignPoint(PTESSystemParam params, FluidMaterialProp worki
     rejection_air1_state_(2, 2, FluidType::kRejectionAir),
     rejection_air2_state_(2, 2, FluidType::kRejectionAir)
 {
-    // Add references to fluid states
-    fluid_collection_.push_back(working_fluid_state_);
-    fluid_collection_.push_back(hot_fluid_state_);
-    fluid_collection_.push_back(cold_fluid_state_);
-    fluid_collection_.push_back(rejection_air1_state_);
-    fluid_collection_.push_back(rejection_air2_state_);
 }
 
 /// <summary>
@@ -418,15 +412,15 @@ void PTESDesignPoint::Charge()
     P8 = P7 * (1.0 - ploss_working);
 
     // Calculate Enthalpy and Entropys
-    for (auto ref_fluid : fluid_collection_)
+    
+    for (auto state : { working_fluid_state_, hot_fluid_state_, cold_fluid_state_, rejection_air1_state_, rejection_air2_state_ })
     {
-        FluidState& state = ref_fluid.get();
         state.h_charge_ = CalculateEnthalpy(state.temp_charge_, state.fluid_material_);
         state.s_charge_ = CalculateEntropy(state.temp_charge_, state.pressure_charge_, state.fluid_material_);
         state.rho_charge_ = CalculateDensity(state.temp_charge_, state.pressure_charge_, state.fluid_material_);
         state.mu_charge_ = CalculateViscosity(state.temp_charge_, state.fluid_material_);
     }
-
+    
     has_charged_ = true;
     
 }
@@ -570,9 +564,8 @@ void PTESDesignPoint::Discharge()
     T9_D = T1_D;
 
     // Calculate Enthalpy and Entropys
-    for (auto ref_fluid : fluid_collection_)
+    for (auto state : { working_fluid_state_, hot_fluid_state_, cold_fluid_state_, rejection_air1_state_, rejection_air2_state_ })
     {
-        FluidState& state = ref_fluid.get();
         state.h_discharge_ = CalculateEnthalpy(state.temp_discharge_, state.fluid_material_);
         state.s_discharge_ = CalculateEntropy(state.temp_discharge_, state.pressure_discharge_, state.fluid_material_);
         state.rho_discharge_ = CalculateDensity(state.temp_discharge_, state.pressure_discharge_, state.fluid_material_);

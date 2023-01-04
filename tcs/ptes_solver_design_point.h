@@ -215,7 +215,6 @@ private:
     bool has_discharged_ = false;
     bool has_performed_ = false;
     const PTESSystemParam kSystemParams; // constant system parameters
-    vector<std::reference_wrapper<FluidState>> fluid_collection_; // collection of fluid state references
 
     // Private Functions
     void GenerateTSData(vector<double>& temp_vec, vector<double>& entropy_vec, bool is_charge);
