@@ -55,10 +55,7 @@ static var_info _cm_vtab_pvwattsv1[] = {
         { SSC_INPUT,        SSC_NUMBER,      "tilt_eq_lat",                    "Tilt=latitude override",                      "0/1",    "",                        "PVWatts",      "na:tilt",                 "BOOLEAN",                                  "" },
 
         /* shading inputs */
-        { SSC_INPUT,        SSC_MATRIX,      "shading:timestep",               "Time step beam shading factors",                 "",       "",                        "PVWatts",      "?",                        "",                              "" },
-        { SSC_INPUT,        SSC_MATRIX,      "shading:mxh",                    "Month x Hour beam shading factors",           "",       "",                        "PVWatts",      "?",                        "",                              "" },
-        { SSC_INPUT,        SSC_MATRIX,      "shading:azal",                   "Azimuth x altitude beam shading factors",     "",       "",                        "PVWatts",      "?",                        "",                              "" },
-        { SSC_INPUT,        SSC_NUMBER,      "shading:diff",                   "Diffuse shading factor",                      "",       "",                        "PVWatts",      "?",                        "",                              "" },
+        { SSC_INPUT,        SSC_TABLE,      "shading",               "Shading loss table",                 "",         "",                                             "PVWatts",      "?",                        "",                             "" },
 
         /* advanced parameters */
         { SSC_INPUT,        SSC_NUMBER,      "enable_user_poa",                "Enable user-defined POA irradiance input",    "0/1",    "",                        "PVWatts",      "?=0",                     "BOOLEAN",                                  "" },

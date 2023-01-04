@@ -1173,19 +1173,26 @@ bool shading_factor_calculator::setup( compute_module *cm, const std::string &pr
 
 	m_steps_per_hour = 1;
 
-	if (cm->is_assigned(prefix + "shading:string_option"))
-			m_string_option = cm->as_integer(prefix + "shading:string_option");
+    auto& table = cm->get_var_table()->lookup(prefix+"shading")->table;
+
+    if (table.is_assigned("en_string_option") && table.as_boolean("en_string_option"))
+        m_string_option = table.as_integer("string_option");
+
+//	if (cm->is_assigned(prefix + "shading:string_option"))
+//			m_string_option = cm->as_integer(prefix + "shading:string_option");
 
 	// initialize to 8760x1 for mxh and change based on shading:timestep
 	size_t nrecs = 8760;
 	m_beamFactors.resize_fill(nrecs, 1, 1.0);
 
 	m_enTimestep = false;
-	if (cm->is_assigned(prefix + "shading:timestep"))
-	{
+    if (table.is_assigned("en_timestep") && table.as_boolean("en_timestep"))
+//    if (cm->is_assigned(prefix + "shading:timestep"))
+    {
 		size_t nrows, ncols;
-		ssc_number_t *mat = cm->as_matrix(prefix + "shading:timestep", &nrows, &ncols);
-		if (nrows % 8760 == 0)
+//        ssc_number_t* mat = cm->as_matrix(prefix + "shading:timestep", &nrows, &ncols);
+        ssc_number_t* mat = table.as_matrix("timestep", &nrows, &ncols);
+        if (nrows % 8760 == 0)
 		{
 			nrecs = nrows;
 			m_beamFactors.resize_fill(nrows, ncols, 1.0);
@@ -1262,12 +1269,14 @@ bool shading_factor_calculator::setup( compute_module *cm, const std::string &pr
 
  // initialize other shading inputs
 	m_enMxH = false;
-	if (cm->is_assigned(prefix + "shading:mxh"))
+    if (table.is_assigned("en_mxh") && table.as_boolean("en_mxh"))
+ //	if (cm->is_assigned(prefix + "shading:mxh"))
 	{
 		m_mxhFactors.resize_fill(nrecs, 1, 1.0);
 		size_t nrows, ncols;
-		ssc_number_t *mat = cm->as_matrix(prefix + "shading:mxh", &nrows, &ncols);
-		if (nrows != 12 || ncols != 24)
+//        ssc_number_t* mat = cm->as_matrix(prefix + "shading:mxh", &nrows, &ncols);
+        ssc_number_t* mat = table.as_matrix("mxh", &nrows, &ncols);
+        if (nrows != 12 || ncols != 24)
 		{
 			ok = false;
 			m_errors.push_back("month x hour shading losses must have 12 rows and 24 columns");
@@ -1286,11 +1295,13 @@ bool shading_factor_calculator::setup( compute_module *cm, const std::string &pr
 	}
 
 	m_enAzAlt = false;
-	if (cm->is_assigned(prefix + "shading:azal"))
+    if (table.is_assigned("en_azal") && table.as_boolean("en_azal"))
+        //	if (cm->is_assigned(prefix + "shading:azal"))
 	{
 		size_t nrows, ncols;
-		ssc_number_t *mat = cm->as_matrix(prefix + "shading:azal", &nrows, &ncols);
-		if (nrows < 3 || ncols < 3)
+//        ssc_number_t* mat = cm->as_matrix(prefix + "shading:azal", &nrows, &ncols);
+        ssc_number_t* mat = table.as_matrix("azal", &nrows, &ncols);
+        if (nrows < 3 || ncols < 3)
 		{
 			ok = false;
 			m_errors.push_back("azimuth x altitude shading losses must have at least 3 rows and 3 columns");
@@ -1311,8 +1322,10 @@ bool shading_factor_calculator::setup( compute_module *cm, const std::string &pr
 	}
 
 
-	if (cm->is_assigned(prefix + "shading:diff"))
-		m_diffFactor = 1 - cm->as_double(prefix + "shading:diff") / 100;
+    if (table.is_assigned("en_diff") && table.as_boolean("en_diff"))
+        m_diffFactor = 1 - table.as_double("diff") / 100;
+//    if (cm->is_assigned(prefix + "shading:diff"))
+//        m_diffFactor = 1 - cm->as_double(prefix + "shading:diff") / 100;
 
 	return ok;
 }

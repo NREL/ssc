@@ -157,13 +157,11 @@ static var_info _cm_vtab_pvwattsv8[] = {
         { SSC_INPUT,        SSC_NUMBER,      "xfmr_nll",                       "GSU transformer no load loss (iron core)",    "%(ac)",     "",                                             "System Design",      "?=0.0",                   "",                              "" },
         { SSC_INPUT,        SSC_NUMBER,      "xfmr_ll",                        "GSU transformer load loss (resistive)",       "%(ac)",     "",                                             "System Design",      "?=0.0",                   "",                              "" },
 
-        { SSC_INPUT,        SSC_MATRIX,      "shading:timestep",               "Time step beam shading loss",                 "%",         "",                                             "System Design",      "?",                        "",                             "" },
-        { SSC_INPUT,        SSC_MATRIX,      "shading:mxh",                    "Month x Hour beam shading loss",              "%",         "",                                             "System Design",      "?",                        "",                             "" },
-        { SSC_INPUT,        SSC_MATRIX,      "shading:azal",                   "Azimuth x altitude beam shading loss",        "%",         "",                                             "System Design",      "?",                        "",                             "" },
-        { SSC_INPUT,        SSC_NUMBER,      "shading:diff",                   "Diffuse shading loss",                        "%",         "",                                             "System Design",      "?",                        "",                             "" },
+         { SSC_INPUT,        SSC_TABLE,      "shading",               "Shading loss table",                 "",         "",                                             "System Design",      "?",                        "",                             "" },
+
 
         { SSC_INPUT,        SSC_NUMBER,      "batt_simple_enable",             "Enable Battery",                              "0/1",       "",                                             "System Design",     "?=0",                     "BOOLEAN",                        "" },
-
+       
         /* outputs */
         { SSC_OUTPUT,       SSC_ARRAY,       "gh",                             "Weather file global horizontal irradiance",                "W/m2",      "",                                             "Time Series",      "*",                       "",                          "" },
         { SSC_OUTPUT,       SSC_ARRAY,       "dn",                             "Weather file beam irradiance",                             "W/m2",      "",											   "Time Series",      "*",                       "",                          "" },
@@ -658,7 +656,10 @@ public:
 
         // read all the shading input data and calculate the hourly factors for use subsequently
         // timeseries beam shading factors cannot be used with non-annual data
-        if (is_assigned("shading:timestep") && !wdprov->annualSimulation())
+
+        auto& table = get_var_table()->lookup("shading")->table;
+        if (table.is_assigned("en_timestep") && table.as_boolean("en_timestep") && !wdprov->annualSimulation())
+//        if (is_assigned("shading:timestep") && !wdprov->annualSimulation())
             throw exec_error("pvwattsv8", "Timeseries beam shading inputs cannot be used for a simulation period that is not continuous over one or more years.");
         shading_factor_calculator shad;
         if (!shad.setup(this, ""))

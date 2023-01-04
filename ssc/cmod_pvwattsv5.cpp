@@ -73,10 +73,7 @@ static var_info _cm_vtab_pvwattsv5_common[] = {
 
 static var_info _cm_vtab_pvwattsv5_part2[] = {
 
-        { SSC_INPUT,        SSC_MATRIX,      "shading:timestep",               "Time step beam shading loss",                 "%",         "",                        "System Design",      "?",                        "",                              "" },
-        { SSC_INPUT,        SSC_MATRIX,      "shading:mxh",                    "Month x Hour beam shading loss",              "%",         "",                        "System Design",      "?",                        "",                              "" },
-        { SSC_INPUT,        SSC_MATRIX,      "shading:azal",                   "Azimuth x altitude beam shading loss",        "%",         "",                        "System Design",      "?",                        "",                              "" },
-        { SSC_INPUT,        SSC_NUMBER,      "shading:diff",                   "Diffuse shading loss",                        "%",         "",                        "System Design",      "?",                        "",                              "" },
+         { SSC_INPUT,        SSC_TABLE,      "shading",               "Shading loss table",                 "",         "",                                             "System Design",      "?",                        "",                             "" },
 
         /* battery */
         { SSC_INPUT,        SSC_NUMBER,      "batt_simple_enable",             "Enable Battery",                              "0/1",        "",                      "System Design",     "?=0",                     "BOOLEAN",                        "" },
