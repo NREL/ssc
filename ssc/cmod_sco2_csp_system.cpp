@@ -1306,7 +1306,7 @@ public:
 
 				p_mc_cooler_in_isen_deltah_to_P_mc_out_od[n_run] = (ssc_number_t)-deltah_isen_od;		//[kJ/kg]
 
-                // Columns(11) : 0) HTF Temp[C], 1) HTF ND mass flow[-], 2) Ambient Temp[C], 3) ND Power, 4) ND Heat, 5) ND Fan Power, 6) ND Water
+                // Columns(14) : 0) HTF Temp[C], 1) HTF ND mass flow[-], 2) Ambient Temp[C], 3) ND Power, 4) ND Heat, 5) ND Fan Power, 6) ND Water
                 //               ...... 7) ND PHX deltaT, 8) ND P_co2_PHX_in, 9) ND m_dot_co2_PHX, 10) ND P_co2_turb_in
                 //               ...... 11) ND W_dot_net 12) ND eta_net, 13) T_htf_cold_diff / deltaT_des
                 // 5/12/2022 generate udpc table for all off-design simulations
