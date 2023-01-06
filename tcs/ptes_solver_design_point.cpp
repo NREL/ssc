@@ -55,7 +55,8 @@ FluidMaterialProp::FluidMaterialProp(FluidType fluid_type)
 /// <param name="P0"></param>
 FluidMaterialProp::FluidMaterialProp(double cp, double rho, double T0, double P0)
     :
-    cp_(cp), rho_(rho), T0_(T0), P0_(P0), is_compressible_(false)
+    cp_(cp), rho_(rho), T0_(T0), P0_(P0), is_compressible_(false),
+    cv_(0), gam_(0), R_(0), mu_(0), mu0_(0), Smu_(0)
 {
 }
 

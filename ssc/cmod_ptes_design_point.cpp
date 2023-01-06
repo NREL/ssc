@@ -138,7 +138,7 @@ public:
         }
         catch (std::exception& e)
         {
-            throw e;
+            throw exec_error("ptes_design_pt", "Error reading system parameters.");
         }
 
         // Collect Working Fluid
@@ -149,11 +149,13 @@ public:
             string wf_string = compute_module::as_string("working_fluid_type");
             bool wf_flag;
             FluidType wf_type = PTESDesignPoint::GetFluidTypeFromString(wf_string, wf_flag);
+            if (wf_flag == false)
+                throw std::exception();
             working_fluid = FluidMaterialProp(wf_type);
         }
         catch (std::exception e)
         {
-            throw e;
+            throw exec_error("ptes_design_pt", "Error reading working fluid type, be sure the string matches the name of a FluidType");
         }
 
         // Collect Hot and Cold Fluid Properties
@@ -184,7 +186,8 @@ public:
         }
         catch (std::exception& e)
         {
-            throw e;
+            throw exec_error("ptes_design_pt", "Error processing htf fluids id and user properties. " 
+                "Provide matrix of user properties if id > 36");
         }
 
         // Build and Run System
@@ -239,7 +242,7 @@ public:
         }
         catch (std::exception& e)
         {
-            throw e;
+            throw exec_error("ptes_design_pt", "Error assigning result values.");
         }
 
     }
