@@ -180,12 +180,13 @@ public:
         std::vector<double> v_T_amb_unique = std::vector<double>{ std::numeric_limits<double>::quiet_NaN() };
 
         double T_htf_des_in = as_double("T_htf_des_in");
+        double m_dot_ND_sys_max = 1.0;      // probably used m_dot_ND_max > 1 for cycle curves, but may want to limit to 1 for system context
 
         try
         {
             std::vector<double> Y_at_T_htf_ref, Y_at_T_amb_ref, Y_at_m_dot_htf_ND_ref, Y_avg_at_refs;
 
-            c_udpc.init(cmbd_ind,
+            c_udpc.init(false, cmbd_ind,
                 n_T_htf_pars, n_T_amb_pars, n_m_dot_pars,
                 T_htf_des, T_htf_low, T_htf_high,
                 T_amb_des, T_amb_low, T_amb_high,
@@ -193,10 +194,10 @@ public:
                 Y_at_T_htf_ref, Y_at_T_amb_ref, Y_at_m_dot_htf_ND_ref, Y_avg_at_refs);
 
 
-            W_dot_gross_ND_des = c_udpc.get_W_dot_gross_ND(T_htf_des_in, T_amb_des, 1.0);
-            Q_dot_HTF_ND_des = c_udpc.get_Q_dot_HTF_ND(T_htf_des_in, T_amb_des, 1.0);
-            W_dot_cooling_ND_des = c_udpc.get_W_dot_cooling_ND(T_htf_des_in, T_amb_des, 1.0);
-            m_dot_water_ND_des = c_udpc.get_m_dot_water_ND(T_htf_des_in, T_amb_des, 1.0);
+            W_dot_gross_ND_des = c_udpc.get_W_dot_gross_nd(T_htf_des_in, T_amb_des, 1.0, m_dot_ND_sys_max);
+            Q_dot_HTF_ND_des = c_udpc.get_Q_dot_HTF_nd(T_htf_des_in, T_amb_des, 1.0, m_dot_ND_sys_max);
+            W_dot_cooling_ND_des = c_udpc.get_W_dot_cooling_nd(T_htf_des_in, T_amb_des, 1.0, m_dot_ND_sys_max);
+            m_dot_water_ND_des = c_udpc.get_m_dot_water_nd(T_htf_des_in, T_amb_des, 1.0, m_dot_ND_sys_max);
         }
         catch (C_csp_exception &csp_exception)
         {
@@ -244,27 +245,25 @@ public:
 
             int i_m = 0;
             for (std::vector<double>::iterator i_it = v_m_dot_unique.begin(); i_it < v_m_dot_unique.end(); i_it++, i_m++) {
-                p_q_dot_ND_vs_m_dot__T_amb_LT[i_m] = c_udpc.get_Q_dot_HTF_ND(T_htf_des_in, LT, *i_it);
-                p_W_dot_ND_vs_m_dot__T_amb_LT[i_m] = (c_udpc.get_W_dot_gross_ND(T_htf_des_in, LT, *i_it) * W_dot_gross_des - c_udpc.get_W_dot_cooling_ND(T_htf_des_in, LT, *i_it) * W_dot_parasitic_des) / W_dot_net_des;
+                p_q_dot_ND_vs_m_dot__T_amb_LT[i_m] = c_udpc.get_Q_dot_HTF_nd(T_htf_des_in, LT, *i_it, m_dot_ND_sys_max);
+                p_W_dot_ND_vs_m_dot__T_amb_LT[i_m] = (c_udpc.get_W_dot_gross_nd(T_htf_des_in, LT, *i_it, m_dot_ND_sys_max) * W_dot_gross_des - c_udpc.get_W_dot_cooling_nd(T_htf_des_in, LT, *i_it, m_dot_ND_sys_max) * W_dot_parasitic_des) / W_dot_net_des;
                 p_eta_ND_vs_m_dot__T_amb_LT[i_m] = p_W_dot_ND_vs_m_dot__T_amb_LT[i_m] / p_q_dot_ND_vs_m_dot__T_amb_LT[i_m];
-                p_q_dot_ND_vs_m_dot__T_amb_HT[i_m] = c_udpc.get_Q_dot_HTF_ND(T_htf_des_in, HT, *i_it);
-                p_W_dot_ND_vs_m_dot__T_amb_HT[i_m] = (c_udpc.get_W_dot_gross_ND(T_htf_des_in, HT, *i_it) * W_dot_gross_des - c_udpc.get_W_dot_cooling_ND(T_htf_des_in, HT, *i_it) * W_dot_parasitic_des) / W_dot_net_des;
+                p_q_dot_ND_vs_m_dot__T_amb_HT[i_m] = c_udpc.get_Q_dot_HTF_nd(T_htf_des_in, HT, *i_it, m_dot_ND_sys_max);
+                p_W_dot_ND_vs_m_dot__T_amb_HT[i_m] = (c_udpc.get_W_dot_gross_nd(T_htf_des_in, HT, *i_it, m_dot_ND_sys_max) * W_dot_gross_des - c_udpc.get_W_dot_cooling_nd(T_htf_des_in, HT, *i_it, m_dot_ND_sys_max) * W_dot_parasitic_des) / W_dot_net_des;
                 p_eta_ND_vs_m_dot__T_amb_HT[i_m] = p_W_dot_ND_vs_m_dot__T_amb_HT[i_m] / p_q_dot_ND_vs_m_dot__T_amb_HT[i_m];
             }
 
-            double m_dot_ND_sys_max = 1.0;      // probably used m_dot_ND_max > 1 for cycle curves, but may want to limit to 1 for system context
             std::vector<double> v_T_amb_OD = std::vector<double>{ LT, HT, T_amb_low, T_amb_des, T_amb_high };
 
             int i_t = 0;
             double i_m_dot_htf_ND_max0, i_W_dot_gross_ND_max0;
-            int max_control_code = 2;
             for (std::vector<double>::iterator i_it = v_T_amb_OD.begin(); i_it < v_T_amb_OD.end(); i_it++, i_t++) {
 
-                c_udpc.get_max_m_dot_and_W_dot_ND(max_control_code, T_htf_des_in, *i_it, m_dot_ND_sys_max, m_dot_low,
+                c_udpc.get_max_m_dot_and_W_dot_ND(T_htf_des_in, *i_it, m_dot_ND_sys_max, m_dot_low,
                     i_m_dot_htf_ND_max0, i_W_dot_gross_ND_max0);
-                double i_q_dot_htf_ND_max0 = c_udpc.get_Q_dot_HTF_ND(T_htf_des_in, *i_it, i_m_dot_htf_ND_max0);
-                double i_W_dot_net_ND_max0 = (c_udpc.get_W_dot_gross_ND(T_htf_des_in, *i_it, i_m_dot_htf_ND_max0)*W_dot_gross_des -
-                                                c_udpc.get_W_dot_cooling_ND(T_htf_des_in, *i_it, i_m_dot_htf_ND_max0)*W_dot_parasitic_des) / W_dot_net_des;
+                double i_q_dot_htf_ND_max0 = c_udpc.get_Q_dot_HTF_nd(T_htf_des_in, *i_it, i_m_dot_htf_ND_max0, m_dot_ND_sys_max);
+                double i_W_dot_net_ND_max0 = (c_udpc.get_W_dot_gross_nd(T_htf_des_in, *i_it, i_m_dot_htf_ND_max0, m_dot_ND_sys_max)*W_dot_gross_des -
+                                                c_udpc.get_W_dot_cooling_nd(T_htf_des_in, *i_it, i_m_dot_htf_ND_max0, m_dot_ND_sys_max)*W_dot_parasitic_des) / W_dot_net_des;
 
                 std::string i_cmod_var_name;
                 if (*i_it == LT) {
@@ -302,7 +301,7 @@ public:
             for (size_t i = 0; i < n_amb_steps; i++) {
                 double i_W_dot_gross_ND_max;
                 p_T_amb_sweep[i] = T_amb_low + delta_t_amb * i;
-                c_udpc.get_max_m_dot_and_W_dot_ND(0, T_htf_des_in, p_T_amb_sweep[i], m_dot_ND_sys_max, m_dot_low,
+                c_udpc.get_max_m_dot_and_W_dot_ND(T_htf_des_in, p_T_amb_sweep[i], m_dot_ND_sys_max, m_dot_low,
                     p_m_dot_htf_ND_max0[i], i_W_dot_gross_ND_max);
             }
 
@@ -381,14 +380,13 @@ public:
                 }
 
                 // Get performance at max m dot at i_T_amb
-                    // 1) calculate performance at m_dot_ND = 1
-                double W_dot_gross_ND_regr_max, q_dot_ND_regr_max, W_dot_ND_parasitics_regr_max, m_dot_water_ND_max;
-                W_dot_gross_ND_regr_max = q_dot_ND_regr_max = W_dot_ND_parasitics_regr_max = m_dot_water_ND_max = std::numeric_limits<double>::quiet_NaN();
-                c_udpc.udpc_sco2_regr_off_design(T_htf_des_in, *i_it, 1.0, 1.0,
-                    W_dot_gross_ND_regr_max, q_dot_ND_regr_max, W_dot_ND_parasitics_regr_max, m_dot_water_ND_max);
+                    // 1) Get max HTF mass flow
+                double m_dot_ND_calc_max, W_dot_gross_ND_regr_max, q_dot_ND_regr_max, W_dot_ND_parasitics_regr_max, m_dot_water_ND_max;
+                m_dot_ND_calc_max = W_dot_gross_ND_regr_max = q_dot_ND_regr_max = W_dot_ND_parasitics_regr_max = m_dot_water_ND_max = std::numeric_limits<double>::quiet_NaN();
+                c_udpc.get_max_m_dot_and_W_dot_ND(T_htf_des_in, *i_it, 1.0, m_dot_low,
+                    m_dot_ND_calc_max, W_dot_gross_ND_regr_max);
 
-                    // 2) use calculated q_dot_ND as m_dot_ND to get max performance
-                double m_dot_ND_calc_max = std::min(1.0, q_dot_ND_regr_max);
+                    // 2) Get performance at max HTF mass flow
                 c_udpc.udpc_sco2_regr_off_design(T_htf_des_in, *i_it, m_dot_ND_calc_max, 1.0,
                     W_dot_gross_ND_regr_max, q_dot_ND_regr_max, W_dot_ND_parasitics_regr_max, m_dot_water_ND_max);
 

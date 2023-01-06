@@ -152,7 +152,7 @@ public:
         double T_amb_ref_udpc_calc, T_amb_low_udpc_calc, T_amb_high_udpc_calc;
         double m_dot_htf_ref_udpc_calc, m_dot_htf_low_udpc_calc, m_dot_htf_high_udpc_calc;
         std::vector<double> Y_at_T_htf_ref, Y_at_T_amb_ref, Y_at_m_dot_htf_ND_ref, Y_avg_at_refs;
-        c_udpc.init(udpc_data_full,
+        c_udpc.init(false, udpc_data_full,
             n_T_htf_udpc_calc, n_T_amb_udpc_calc, n_m_dot_udpc_calc,
             T_htf_ref_udpc_calc, T_htf_low_udpc_calc, T_htf_high_udpc_calc,
             T_amb_ref_udpc_calc, T_amb_low_udpc_calc, T_amb_high_udpc_calc,
@@ -162,12 +162,12 @@ public:
 
         // Sample UPDC model
             // at *table* design point
-        double W_dot_ND_calc = c_udpc.get_W_dot_gross_ND(T_htf_des_table, T_amb_des_table, 1.0);
-        double m_dot_ND_calc = c_udpc.get_m_dot_water_ND(T_htf_des_table, T_amb_des_table, 1.0);
+        double W_dot_ND_calc = c_udpc.get_W_dot_gross_nd(T_htf_des_table, T_amb_des_table, 1.0, m_dot_htf_ND_high);
+        double m_dot_ND_calc = c_udpc.get_m_dot_water_nd(T_htf_des_table, T_amb_des_table, 1.0, m_dot_htf_ND_high);
 
             // at *cycle* design point
-        W_dot_ND_calc = c_udpc.get_W_dot_gross_ND(T_htf_des_cycle, T_amb_des_cycle, 1.0);
-        m_dot_ND_calc = c_udpc.get_m_dot_water_ND(T_htf_des_cycle, T_amb_des_cycle, 1.0);
+        W_dot_ND_calc = c_udpc.get_W_dot_gross_nd(T_htf_des_cycle, T_amb_des_cycle, 1.0, m_dot_htf_ND_high);
+        m_dot_ND_calc = c_udpc.get_m_dot_water_nd(T_htf_des_cycle, T_amb_des_cycle, 1.0, m_dot_htf_ND_high);
 	}
 
     class C_endo_rev_cycle
