@@ -138,7 +138,7 @@ void FluidMaterialProp::SetFluid(FluidType fluid_type)
             this->name_ = "Nitrate Salt";
             this->cp_ = 2000;
             this->cv_ = this->cp_; // assume incompressible
-            this->rho_ = 800;
+            this->rho_ = 1700;
             this->gam_ = 0;
             this->R_ = 0;
             this->mu_ = 1e-4;
@@ -653,11 +653,12 @@ void PTESDesignPoint::Performance()
     // Calculate Energy
     E_out_ = kSystemParams.power_output * kSystemParams.discharge_time_hr * 3600.0; // convert hrs to seconds
     E_in_ = E_out_ / rt_eff_;
-    W_in_ = E_in_ / (kSystemParams.charge_time_hr * 3600.0); // ? This doesn't take into account parasitics or generator eff
+    W_in_ = E_in_ / (kSystemParams.charge_time_hr * 3600.0); // Generator efficiency is considered in E_in_ (via rt_eff_)
 
     // Mass Flow Rate
     double MDot_D = kSystemParams.power_output / w_out_net;
     double MDot_C = W_in_ / w_in_net;
+    double unit_factor = MDot_D / wf.mdot_discharge_;    // Fraction of Real mass flow to unit
 
     // Thermodynamic Power Output
     W_WF_D_ = w_WF_D * MDot_D;
@@ -683,45 +684,45 @@ void PTESDesignPoint::Performance()
     // Heat Pump Performance
     {
         // Parasitic Work Charge
-        double t_chg = this->kSystemParams.charge_time_hr * 3600;
-        double MDot_A1_C = (this->kSystemParams.alpha * MDot_C * wf.fluid_material_.GetCp()) / a1.fluid_material_.GetCp();
-        double W_A1_C = t_chg * w_A1_C * MDot_A1_C;
-        double W_in_chg = t_chg * w_WF_C * MDot_C; // J
-        hp_parasitic_fraction_ = (E_in_ - W_in_chg + W_A1_C) / E_in_;
+        double MDot_A1_C = a1.mdot_charge_ * unit_factor;                   // kg/s
+        double power_in = kSystemParams.power_output / rt_eff_;             // W
+
+        double W_A1_C = w_A1_C * unit_factor;                               // W
+        double W_in_chg = w_WF_C * unit_factor;                             // W
+        hp_parasitic_fraction_ = (power_in - W_in_chg + W_A1_C) / power_in; // - (W/W)
 
         // Pumping Power through Hot HX
-        double MDot_HF = MDot_C * wf.fluid_material_.GetCp() / hf.fluid_material_.GetCp();
-        double W_HF_C = w_HF_C * MDot_HF * t_chg;
-        hp_hot_pump_power_ = W_HF_C / t_chg / 1e3 / MDot_HF; // kW/kg/s
+        double MDot_HF = hf.mdot_discharge_ * unit_factor;                  // kg/s
+        double W_HF_C = w_HF_C * unit_factor;                               // W
+        hp_hot_pump_power_ = W_HF_C / 1e3 / MDot_HF;                        // kW/kg/s
 
         // Pumping Power through Cold HX
-        double MDot_CF = MDot_C * cf.fluid_material_.GetCp() / cf.fluid_material_.GetCp();
-        double W_CF_C = w_CF_C * MDot_CF * t_chg;
-        hp_cold_pump_power_ = W_CF_C / (t_chg * 1e3 * MDot_CF); // kW/kg/s
+        double MDot_CF = cf.mdot_discharge_ * unit_factor;                  // kg/s
+        double W_CF_C = w_CF_C * unit_factor;                               // W
+        hp_cold_pump_power_ = W_CF_C / (1e3 * MDot_CF);                     // kW/kg/s
     }
 
     // Power Cycle Performance
     {
         // Parasitic Work Discharge
-        double t_dis = this->kSystemParams.discharge_time_hr * 3600;
-        double W_out_D = W_out_ * t_dis; // (J)
+        double W_out_D = W_out_;                                            // W
 
-        double MDot_A1_D = (this->kSystemParams.alpha * MDot_D * wf.fluid_material_.GetCp()) / a1.fluid_material_.GetCp();
-        double W_A1_D = t_dis * w_A1_D * MDot_A1_D; // (J)
-        double MDot_A2_D = (this->kSystemParams.alpha * MDot_D * wf.fluid_material_.GetCp()) / a2.fluid_material_.GetCp();
-        double W_A2_D = t_dis * w_A2_D * MDot_A2_D; // (J)
+        double MDot_A1_D = a1.mdot_discharge_ * unit_factor;                // kg/s
+        double W_A1_D = w_A1_D * unit_factor;                               // W
+        double MDot_A2_D = a1.mdot_discharge_ * unit_factor;                // kg/s
+        double W_A2_D = w_A2_D * unit_factor;                               // W
 
-        pc_parasitic_fraction_ = (W_out_D - E_out_ + W_A1_D + W_A2_D) / W_out_D;
+        pc_parasitic_fraction_ = (W_out_D - kSystemParams.power_output + W_A1_D + W_A2_D) / W_out_D;    // - (W/W)
 
         // Pumping Power through Hot HX
-        double MDot_HF_D = (MDot_D * wf.fluid_material_.GetCp()) / hf.fluid_material_.GetCp();
-        double W_HF_D = t_dis * w_HF_D * MDot_HF_D; // (J)
-        pc_hot_pump_power_ = W_HF_D / (t_dis * 1e3 * MDot_HF_D); // kW/kg/s
+        double MDot_HF_D = hf.mdot_discharge_ * unit_factor;                // kg/s
+        double W_HF_D = w_HF_D * unit_factor;                               // W
+        pc_hot_pump_power_ = W_HF_D / (1e3 * MDot_HF_D);                    // kW/kg/s
 
         // Pumping Power Through Cold HX
-        double MDot_CF_D = (MDot_D * wf.fluid_material_.GetCp()) / cf.fluid_material_.GetCp();
-        double W_CF_D = t_dis * w_CF_D * MDot_CF_D; // (J)
-        pc_cold_pump_power_ = W_CF_D / (t_dis * 1e3 * MDot_CF_D); // kW/kg/s
+        double MDot_CF_D = cf.mdot_discharge_ * unit_factor;                // kg/s
+        double W_CF_D = w_CF_D * unit_factor;                               // W
+        pc_cold_pump_power_ = W_CF_D / (1e3 * MDot_CF_D);                   // kW/kg/s
     }
 
     has_performed_ = true;

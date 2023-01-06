@@ -117,8 +117,8 @@ public:
     vector<double> mu_charge_;          // Viscosity in charge cycle
     vector<double> mu_discharge_;       // Viscosity in discharge cycle
 
-    double mdot_charge_;                // Mass Flow Rate in charge cycle
-    double mdot_discharge_;             // Mass Flow Rate in discharge cycle
+    double mdot_charge_;                // Mass Flow Rate in charge cycle       *unit mass flow rate (relative to WF=1)
+    double mdot_discharge_;             // Mass Flow Rate in discharge cycle    *unit mass flow rate (relative to WF=1)
 
     FluidMaterialProp fluid_material_;  // Fluid Material Properties
 
