@@ -423,13 +423,11 @@ void C_ud_power_cycle::udpc_sco2_regr_off_design(double T_htf_hot /*C*/, double 
     // --- a) eta_gross_ND = 'original' udpc model = w_dot_gross(udpc) / q_dot(udpc)
     // --- b) if m_dot_ND > q_dot_ND_max
     // --------- q_dot_ND = q_dot_ND_max
-    // --------- W_dot_parasitics = 1.0
-    // --------- this is at mass flow rate greater than "system" max, so should not be used in system model...
     // -------else
     // --------- q_dot_ND = m_dot_ND
-    // --------- W_dot_parasitics = interpolate
     //     c) W_dot_ND = q_dot_ND * eta_ND
-    //     d) m_dot_water_ND = interpolate
+    //     d) W_dot_parasitics = 1.0
+    //     e) m_dot_water_ND = interpolate
 
     // ----------------------------------------------------------------------------
 
@@ -444,20 +442,21 @@ void C_ud_power_cycle::udpc_sco2_regr_off_design(double T_htf_hot /*C*/, double 
     double eta_gross_ND_udpc = w_dot_gross_ND_udpc / q_dot_ND_udpc;
 
     // 3.b)
-    q_dot_ND = W_dot_cooling_ND = std::numeric_limits<double>::quiet_NaN();
+    q_dot_ND = std::numeric_limits<double>::quiet_NaN();
     if (m_dot_htf_ND > m_dot_htf_ND_max_regr) {
         q_dot_ND = q_dot_htf_ND_max_regr;
-        W_dot_cooling_ND = 1.0;
     }
     else {
         q_dot_ND = m_dot_htf_ND;      //[-]
-        W_dot_cooling_ND = get_W_dot_cooling_ND_interp(T_htf_hot, T_amb, m_dot_htf_ND);
     }
 
     // 3.c)
     W_dot_gross_ND = q_dot_ND * eta_gross_ND_udpc;
 
     // 3.d)
+    W_dot_cooling_ND = get_W_dot_cooling_ND_interp(T_htf_hot, T_amb, m_dot_htf_ND);
+
+    // 3.e)
     m_dot_water_ND = get_m_dot_water_ND_interp(T_htf_hot, T_amb, m_dot_htf_ND);
 }
 
