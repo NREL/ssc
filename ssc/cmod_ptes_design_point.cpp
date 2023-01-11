@@ -253,7 +253,7 @@ public:
             for (double val : {ptes.hp_COP_, ptes.cycle_eff_, ptes.Th_hot_, ptes.Th_cold_, ptes.Tc_hot_, ptes.Tc_cold_, ptes.hp_parasitic_fraction_,
                 ptes.hp_hot_pump_power_, ptes.hp_cold_pump_power_, ptes.pc_parasitic_fraction_, ptes.pc_hot_pump_power_, ptes.pc_cold_pump_power_})
             {
-                if (isnan(val) == true)
+                if (std::isnan(val) == true)
                 {
                     real_flag = false;
                     throw exec_error("ptes_design_pt", "Some results are not real numbers");
