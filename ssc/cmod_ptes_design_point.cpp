@@ -53,12 +53,12 @@ static var_info _cm_vtab_ptes_design_point[] = {
     { SSC_INPUT,    SSC_NUMBER,     "ploss_liquid",                     "Fractional pressure loss (liquid)",                        "",             "",             "",                     "*",            "",              ""},
     { SSC_INPUT,    SSC_NUMBER,     "motor_eff",                        "Motor Efficiency",                                         "",             "",             "",                     "*",            "",              ""},
     { SSC_INPUT,    SSC_NUMBER,     "gen_eff",                          "Generator Efficiency",                                     "",             "",             "",                     "*",            "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,     "T0",                               "Ambient Temperature",                                      "K",            "",             "",                     "*",            "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,     "T0",                               "Ambient Temperature",                                      "C",            "",             "",                     "*",            "",              ""},
     { SSC_INPUT,    SSC_NUMBER,     "P0",                               "Ambient Pressure",                                         "Pa",           "",             "",                     "*",            "",              ""},
                                                                                                                                                                                                             
     { SSC_INPUT,    SSC_NUMBER,     "P1",                               "Lowest Pressure in cycle",                                 "Pa",           "",             "",                     "*",            "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,     "T_compressor_inlet",               "Charging compressor inlet temperature",                    "K",            "",             "",                     "*",            "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,     "T_compressor_outlet",              "Charging compressor outlet temperature",                   "K",            "",             "",                     "*",            "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,     "T_compressor_inlet",               "Charging compressor inlet temperature",                    "C",            "",             "",                     "*",            "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,     "T_compressor_outlet",              "Charging compressor outlet temperature",                   "C",            "",             "",                     "*",            "",              ""},
     { SSC_INPUT,    SSC_NUMBER,     "power_output",                     "Power Output",                                             "MW",            "",             "",                     "*",            "",              ""},
     { SSC_INPUT,    SSC_NUMBER,     "charge_time_hr",                   "charging time",                                            "hr",           "",             "",                     "*",            "",              ""},
     { SSC_INPUT,    SSC_NUMBER,     "discharge_time_hr",                "discharge time",                                           "hr",           "",             "",                     "*",            "",              ""},
@@ -126,11 +126,11 @@ public:
             params.motor_eff = compute_module::as_double("motor_eff");
             params.gen_eff = compute_module::as_double("gen_eff");
 
-            params.T0 = compute_module::as_double("T0");
+            params.T0 = compute_module::as_double("T0") + 273.15;   // convert to K
             params.P0 = compute_module::as_double("P0");
             params.P1 = compute_module::as_double("P1");
-            params.T_compressor_inlet = compute_module::as_double("T_compressor_inlet");
-            params.T_compressor_outlet = compute_module::as_double("T_compressor_outlet");
+            params.T_compressor_inlet = compute_module::as_double("T_compressor_inlet") + 273.15;       // convert to K
+            params.T_compressor_outlet = compute_module::as_double("T_compressor_outlet") + 273.15;     // convert to K
             params.power_output = compute_module::as_double("power_output") * 1e6;          // convert to W
             params.charge_time_hr = compute_module::as_double("charge_time_hr");
             params.discharge_time_hr = compute_module::as_double("discharge_time_hr");
