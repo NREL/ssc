@@ -761,6 +761,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_OUTPUT,    SSC_NUMBER, "annual_total_water_use",             "Total annual water usage, cycle + mirror washing",                                                                                        "m3",           "",                                  "",                                         "sim_type=1",                                                       "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "capacity_factor_highest_1000_ppas",  "Capacity factor at 1000 highest ppa timesteps",                                                                                           "-",            "",                                  "",                                         "sim_type=1",                                                       "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "capacity_factor_highest_2000_ppas",  "Capacity factor at 2000 highest ppa timesteps",                                                                                           "-",            "",                                  "",                                         "sim_type=1",                                                       "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "capacity_factor_warmest_100_Tambs",  "Capacity factor at 100 warmest ambient temperatures",                                                                                     "-",            "",                                  "",                                         "sim_type=1",                                                       "",              "" },
 
     { SSC_OUTPUT,    SSC_NUMBER, "disp_objective_ann",                 "Annual sum of dispatch objective function value",                                                                                         "",             "",                                  "",                                         "sim_type=1",                                                       "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "disp_iter_ann",                      "Annual sum of dispatch solver iterations",                                                                                                "",             "",                                  "",                                         "sim_type=1",                                                       "",              ""},
@@ -775,7 +776,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     var_info_invalid };
 
 
-bool SortByPPAPrice(const pair<int, double>& lhs,
+bool SortByDouble(const pair<int, double>& lhs,
     const pair<int, double>& rhs);
 
 class cm_tcsmolten_salt : public compute_module
@@ -2956,49 +2957,83 @@ public:
             }
         }
 
+        // Capacity factors based on highest pricing hours
         ssc_number_t* p_pricing_mult = as_array("pricing_mult", &count);
-
+        
         std::vector<pair<int, double>> ppa_pairs;
         ppa_pairs.resize(count);
         for (size_t i = 0; i < count; i++) {
             ppa_pairs[i].first = i;
             ppa_pairs[i].second = p_pricing_mult[i];
         }
-
-        std::sort(ppa_pairs.begin(), ppa_pairs.end(), SortByPPAPrice);
+        
+        std::sort(ppa_pairs.begin(), ppa_pairs.end(), SortByDouble);
         int n_ppa_steps = 1000;
-
+        
         double total_energy_in_sub_period = 0.0;
         for (size_t i = 0; i < n_ppa_steps; i++) {
             size_t j = ppa_pairs[i].first;
             total_energy_in_sub_period += p_gen[j] * sim_setup.m_report_step / 3600.0;     //[kWe-hr]
         }
-
+        
         double total_energy_nameplate = nameplate * n_ppa_steps * sim_setup.m_report_step / 3600.0;     //[kWe-hr]
-
+        
         double cap_fac_highest_1000_ppas = 0.0;
         if (nameplate > 0.0) {
             cap_fac_highest_1000_ppas = total_energy_in_sub_period / total_energy_nameplate * 100.0;    //[%]        
         }
-
+        
         assign("capacity_factor_highest_1000_ppas", cap_fac_highest_1000_ppas);
-
+        
         n_ppa_steps = 2000;
-
+        
         total_energy_in_sub_period = 0.0;
         for (size_t i = 0; i < n_ppa_steps; i++) {
             size_t j = ppa_pairs[i].first;
             total_energy_in_sub_period += p_gen[j] * sim_setup.m_report_step / 3600.0;     //[kWe-hr]
         }
-
+        
         total_energy_nameplate = nameplate * n_ppa_steps * sim_setup.m_report_step / 3600.0;     //[kWe-hr]
-
+        
         double cap_fac_highest_2000_ppas = 0.0;
         if (nameplate > 0.0) {
             cap_fac_highest_2000_ppas = total_energy_in_sub_period / total_energy_nameplate * 100.0;    //[%]
         }
-
+        
         assign("capacity_factor_highest_2000_ppas", cap_fac_highest_2000_ppas);
+        
+        // **********************************************************
+        // **********************************************************
+
+        // Capacity factors based on warmest ambient temperatures
+        ssc_number_t* p_tdry = as_array("tdry", &count);
+
+        std::vector<pair<int, double>> tdry_pairs;
+        tdry_pairs.resize(count);
+        for (size_t i = 0; i < count; i++) {
+            tdry_pairs[i].first = i;
+            tdry_pairs[i].second = p_tdry[i];
+        }
+
+        std::sort(tdry_pairs.begin(), tdry_pairs.end(), SortByDouble);
+        int n_tdry_steps = 100;
+
+        double total_energy_in_sub_period_tdry = 0.0;
+        for (size_t i = 0; i < n_tdry_steps; i++) {
+            size_t j = tdry_pairs[i].first;
+            total_energy_in_sub_period_tdry += p_gen[j] * sim_setup.m_report_step / 3600.0;     //[kWe-hr]
+        }
+        
+        double total_energy_nameplate_tdry = nameplate * n_tdry_steps * sim_setup.m_report_step / 3600.0;     //[kWe-hr]
+        
+        double cap_fac_warmest_100_tdrys = 0.0;
+        if (nameplate > 0.0) {
+            cap_fac_warmest_100_tdrys = total_energy_in_sub_period_tdry / total_energy_nameplate_tdry * 100.0;    //[%]        
+        }
+        
+        assign("capacity_factor_warmest_100_Tambs", cap_fac_warmest_100_tdrys);
+        // **********************************************************
+        // **********************************************************
 
         if (p_electric_resistance != NULL) {
             delete p_electric_resistance;
@@ -3011,7 +3046,7 @@ public:
     }
 };
 
-bool SortByPPAPrice(const pair<int, double>& lhs,
+bool SortByDouble(const pair<int, double>& lhs,
     const pair<int, double>& rhs)
 {
     return lhs.second > rhs.second;
