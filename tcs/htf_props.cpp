@@ -333,6 +333,8 @@ double HTFProperties::Cp( double T_K )
 		return 0.0033*T_C + 1.6132;
 	case Pressurized_Water:
 		return 1.E-5*T_C*T_C - 0.0014*T_C + 4.2092;
+    case Methanol:
+        return 3.E-5*T_C*T_C + 0.0047*T_C + 2.3996;
     case N06230:
         return 0.2888*T_C + 397.42; // BPVC II D
     case N07740:
@@ -422,6 +424,8 @@ double HTFProperties::dens(double T_K, double P)
 			return -0.0003*T_C*T_C - 0.6963*T_C + 988.44;
 		case Pressurized_Water:
 			return -0.0023*T_C*T_C - 0.2337*T_C + 1005.6;
+        case Methanol:
+            return -0.9566*T_C + 810.3;
         case N06230:
             return 8970.0; // BPVC II D
         case N07740:
@@ -695,6 +699,9 @@ double HTFProperties::min_temp()
     case Pressurized_Water:
         T_C = 10.;
         break;
+    case Methanol:
+        T_C = -97.0;
+        break;
     case User_defined:
         if (m_userTable.nrows() < 2) {
             T_C = std::numeric_limits<double>::quiet_NaN();
@@ -747,6 +754,9 @@ double HTFProperties::max_temp()
         break;
     case Pressurized_Water:
         T_C = 220.;
+        break;
+    case Methanol:
+        T_C = 64.;
         break;
     case User_defined:
         if (m_userTable.nrows() < 2) {
