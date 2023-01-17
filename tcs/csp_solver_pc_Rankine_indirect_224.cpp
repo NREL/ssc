@@ -619,6 +619,8 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
             m_m_dot_htf_ref_udpc_calc, m_m_dot_htf_low_udpc_calc, m_m_dot_htf_high_udpc_calc,
             Y_at_T_htf_ref, Y_at_T_amb_ref, Y_at_m_dot_htf_ND_ref, Y_avg_at_refs);
 
+        mc_user_defined_pc.set_sco2_design_for_sco2_regr(ms_params.m_T_htf_hot_ref, ms_params.m_T_htf_cold_ref);
+
         // Set design point ambient temperature to value calculated from UDPC table
         ms_params.m_T_amb_des = m_T_amb_ref_udpc_calc;        //[C]
 
@@ -637,7 +639,6 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
         double eta_des_UDPDC = W_dot_gross_des_UDPC / q_dot_des_UDPC;		//[-]
         double T_htf_cold_des_UDPC = ms_params.m_T_htf_hot_ref - q_dot_des_UDPC / (m_m_dot_design / 3600.0 * m_cp_htf_design / 1.E3);		//[MJ/s * hr/kg * s/hr * kg-K/kJ * MJ/kJ] = C/K
 
-        mc_user_defined_pc.set_sco2_design_for_sco2_regr(ms_params.m_T_htf_hot_ref, ms_params.m_T_htf_cold_ref);
 
 #ifdef _MSC_VER
 #define MySnprintf _snprintf
