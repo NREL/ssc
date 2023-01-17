@@ -770,7 +770,7 @@ double HTFProperties::max_temp()
         T_C = 64.;
         break;
     case Salt_45MgCl2_39KCl_16NaCl:
-        T_C = 700.0;
+        T_C = 720.0;
         break;
     case User_defined:
         if (m_userTable.nrows() < 2) {
