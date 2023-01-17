@@ -74,10 +74,10 @@ public:
 		T91_Steel,
 		Therminol_66,
 		Therminol_59,
-		Pressurized_Water,
-        Methanol,
+		Pressurized_Water,        
         N06230,         // Nickel alloy
         N07740,         // Nickel alloy
+        Methanol,
 		End_Library_Fluids,
 		User_defined = 50
 	};
