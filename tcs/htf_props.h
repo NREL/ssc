@@ -78,6 +78,7 @@ public:
         N06230,         // Nickel alloy
         N07740,         // Nickel alloy
         Methanol,
+        Salt_45MgCl2_39KCl_16NaCl, // Zhao 2020 Molten Chloride Thermophysical Properties, Chemical Optimization, and Purification Purification
 		End_Library_Fluids,
 		User_defined = 50
 	};
