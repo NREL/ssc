@@ -43,6 +43,7 @@ static var_info _cm_vtab_ui_udpc_checks[] = {
     { SSC_INPUT,   SSC_NUMBER, "is_calc_m_dot_vs_T_amb", "0 (defalt) no; 1: return array of max m_dot vs T_amb",   "",    "",                "",              "?=0",                       "", "" },
     { SSC_INPUT,   SSC_NUMBER, "W_dot_net_des",          "Design cycle power output (no cooling parasitics)",      "MWe", "",                "System Design", "is_calc_m_dot_vs_T_amb=1",  "", "" },
     { SSC_INPUT,   SSC_NUMBER, "cooler_tot_W_dot_fan",   "Total cooler fan power",                                 "MWe", "Cooler Totals",   "",              "is_calc_m_dot_vs_T_amb=1",  "", "" },
+    { SSC_INPUT,   SSC_NUMBER, "T_htf_cold_des",         "Cold outlet HTF design temperature",                     "C",   "",                "",              "is_calc_m_dot_vs_T_amb=1",  "", "" },
 
 
     { SSC_OUTPUT,  SSC_NUMBER, "n_T_htf_pars",     "Number of HTF parametrics",   "-", "", "", "*", "", "" },
@@ -108,6 +109,10 @@ static var_info _cm_vtab_ui_udpc_checks[] = {
     { SSC_OUTPUT,  SSC_ARRAY,  "q_dot_ND_regr_vs_m_dot__T_amb_HT",       "Regression max ND HTF mass flow at low level ambient temp",    "", "", "", "is_calc_m_dot_vs_T_amb=1", "", "" },
     { SSC_OUTPUT,  SSC_ARRAY,  "W_dot_ND_regr_vs_m_dot__T_amb_HT",       "Regression max ND HTF mass flow at low level ambient temp",    "", "", "", "is_calc_m_dot_vs_T_amb=1", "", "" },
     { SSC_OUTPUT,  SSC_ARRAY,  "eta_ND_regr_vs_m_dot__T_amb_HT",         "Regression max ND HTF mass flow at low level ambient temp",    "", "", "", "is_calc_m_dot_vs_T_amb=1", "", "" },
+
+    { SSC_OUTPUT,  SSC_ARRAY,  "q_dot_ND_regr_vs_T_amb__T_HTF_low_level","Regression max ND HTF mass flow at low level ambient temp",    "", "", "", "is_calc_m_dot_vs_T_amb=1", "", "" },
+    { SSC_OUTPUT,  SSC_ARRAY,  "W_dot_ND_regr_vs_T_amb__T_HTF_low_level","Regression max ND HTF mass flow at low level ambient temp",    "", "", "", "is_calc_m_dot_vs_T_amb=1", "", "" },
+    { SSC_OUTPUT,  SSC_ARRAY,  "eta_ND_regr_vs_T_amb__T_HTF_low_level",  "Regression max ND HTF mass flow at low level ambient temp",    "", "", "", "is_calc_m_dot_vs_T_amb=1", "", "" },
 
     { SSC_OUTPUT,  SSC_NUMBER, "m_dot_htf_ND_max_at_T_amb_low_level_rule0", "Calculated max ND HTF mass flow at low level ambient temp",    "", "", "", "is_calc_m_dot_vs_T_amb=1", "", "" },
     { SSC_OUTPUT,  SSC_NUMBER, "q_dot_htf_ND_max_at_T_amb_low_level_rule0", "Calculated max ND HTF mass flow at low level ambient temp",    "", "", "", "is_calc_m_dot_vs_T_amb=1", "", "" },
@@ -212,6 +217,9 @@ public:
         int is_calc_m_dot_vs_T_amb = as_integer("is_calc_m_dot_vs_T_amb");
         if (is_calc_m_dot_vs_T_amb == 1) {
 
+
+            // UDPC Interpolation Model
+
             // T_amb_des = 45 or T_amb_des = 40
             double LT = 30.0;
             double HT = 35.0;
@@ -304,6 +312,14 @@ public:
                 c_udpc.get_max_m_dot_and_W_dot_ND(T_htf_des_in, p_T_amb_sweep[i], m_dot_ND_sys_max, m_dot_low,
                     p_m_dot_htf_ND_max0[i], i_W_dot_gross_ND_max);
             }
+
+
+
+            // Heuristic / Regression Model
+            double T_htf_des_cold = as_double("T_htf_cold_des");      //[C]
+            c_udpc.set_sco2_design_for_sco2_regr(T_htf_des_in, T_htf_des_cold);
+            c_udpc.set_is_sco2_regr(true);
+
 
             // 1) Get q_dot_ND_max at m_dot_ND = 1
             // 2) m_dot_ND_max = q_dot_ND_max
@@ -423,6 +439,32 @@ public:
                     p_eta_ND_regr[i_m] = eta_net_ND_regr;
                 }
             }
+
+            ssc_number_t* p_q_dot_ND_regr_vs_T_amb__T_HTF_low_level = allocate("q_dot_ND_regr_vs_T_amb__T_HTF_low_level", n_T_amb_pars);
+            ssc_number_t* p_W_dot_ND_regr_vs_T_amb__T_HTF_low_level = allocate("W_dot_ND_regr_vs_T_amb__T_HTF_low_level", n_T_amb_pars);
+            ssc_number_t* p_eta_ND_regr_vs_T_amb__T_HTF_low_level = allocate("eta_ND_regr_vs_T_amb__T_HTF_low_level", n_T_amb_pars);
+
+            // T_amb parametric at T_HTF level
+            int i_T_amb = 0;
+            for (std::vector<double>::iterator i_it_T_amb = v_T_amb_unique.begin(); i_it_T_amb < v_T_amb_unique.end(); i_it_T_amb++, i_T_amb++) {
+
+                // Get sco2 udpc regression model outputs
+                double W_dot_gross_ND_regr, q_dot_ND_regr, W_dot_ND_parasitics_regr, m_dot_water_ND;
+                W_dot_gross_ND_regr = q_dot_ND_regr = W_dot_ND_parasitics_regr = m_dot_water_ND = std::numeric_limits<double>::quiet_NaN();
+                c_udpc.udpc_sco2_regr_off_design(T_htf_low, *i_it_T_amb, 1.0, 1.0,
+                    W_dot_gross_ND_regr, q_dot_ND_regr, W_dot_ND_parasitics_regr, m_dot_water_ND);
+
+                // Calculate net metrics
+                double W_dot_net_ND_regr = (W_dot_gross_ND_regr * W_dot_gross_des - W_dot_ND_parasitics_regr * W_dot_parasitic_des) / W_dot_net_des;
+                double eta_net_ND_regr = W_dot_net_ND_regr / q_dot_ND_regr;
+
+                // Set outputs
+                p_q_dot_ND_regr_vs_T_amb__T_HTF_low_level[i_T_amb] = q_dot_ND_regr;
+                p_W_dot_ND_regr_vs_T_amb__T_HTF_low_level[i_T_amb] = W_dot_net_ND_regr;
+                p_eta_ND_regr_vs_T_amb__T_HTF_low_level[i_T_amb] = eta_net_ND_regr;
+            }
+
+
         }
 
         assign("n_T_htf_pars", (ssc_number_t)n_T_htf_pars);

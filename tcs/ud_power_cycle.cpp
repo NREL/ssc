@@ -43,11 +43,24 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 C_ud_power_cycle::C_ud_power_cycle()
 {
     m_is_sco2_regr = false;
+    m_is_sco2_design_set = false;
+
+    m_T_htf_cold_des_sco2_regr = m_deltaT_HTF_des = std::numeric_limits<double>::quiet_NaN();
 }
 
 void C_ud_power_cycle::set_is_sco2_regr(bool is_sco2_regr)
 {
     m_is_sco2_regr = is_sco2_regr;
+}
+
+void C_ud_power_cycle::set_sco2_design_for_sco2_regr(double T_htf_hot_des /*C*/, double T_htf_cold_des /*C*/)
+{
+    m_T_htf_cold_des_sco2_regr = T_htf_cold_des;        //[C]
+    m_deltaT_HTF_des = T_htf_hot_des - T_htf_cold_des;  //[C]
+
+    if (std::isfinite(m_deltaT_HTF_des)) {
+        m_is_sco2_design_set = true;
+    }
 }
 
 void C_ud_power_cycle::init(bool is_sco2_regr, const util::matrix_t<double>& udpc_table,
@@ -413,12 +426,33 @@ double C_ud_power_cycle::get_m_dot_water_nd(double T_htf_hot /*C*/, double T_amb
     }
 }
 
+void C_ud_power_cycle::get_sco2_regr_max_ND_q_dot(double T_htf_hot /*C*/, double T_amb /*C*/, double m_dot_max_ND /*-*/,
+    double& delta_T_HTF_OD /*C*/, double& m_dot_htf_ND_max /*-*/, double& q_dot_htf_ND_max /*-*/)
+{
+    if (!m_is_sco2_design_set) {
+        throw(C_csp_exception("You must set design information via set_sco2_design_for_sco2_regr method before"
+            " calling udpc_sco2_regr_off_design method."));
+    }
+
+    // 0)
+    delta_T_HTF_OD = T_htf_hot - m_T_htf_cold_des_sco2_regr;    //[C]
+
+    // 1)
+    q_dot_htf_ND_max = get_Q_dot_HTF_ND_interp(T_htf_hot, T_amb, m_dot_max_ND);
+
+    // 2)
+    m_dot_htf_ND_max = q_dot_htf_ND_max / (delta_T_HTF_OD / m_deltaT_HTF_des);
+
+    return;
+}
+
 void C_ud_power_cycle::udpc_sco2_regr_off_design(double T_htf_hot /*C*/, double T_amb /*C*/, double m_dot_htf_ND /*-*/,
     double m_dot_max_ND,
     double& W_dot_gross_ND, double& q_dot_ND, double& W_dot_cooling_ND, double& m_dot_water_ND)
 {
+    // 0) Calculate off-design temperature difference over HTF using OD hot htf temperature
     // 1) Get q_dot_ND_max at m_dot_ND = 1
-    // 2) m_dot_ND_max = q_dot_ND_max
+    // 2) m_dot_ND_max = q_dot_ND_max / (delta_T_HTF_OD/m_deltaT_HTF_des)
     // 3) New performance model as f(m_dot_ND, T_amb, T_htf)
     // --- a) eta_gross_ND = 'original' udpc model = w_dot_gross(udpc) / q_dot(udpc)
     // --- b) if m_dot_ND > q_dot_ND_max
@@ -431,10 +465,25 @@ void C_ud_power_cycle::udpc_sco2_regr_off_design(double T_htf_hot /*C*/, double 
 
     // ----------------------------------------------------------------------------
 
-    // 1)
-    double q_dot_htf_ND_max_regr = get_Q_dot_HTF_ND_interp(T_htf_hot, T_amb, m_dot_max_ND);
-    // 2)
-    double m_dot_htf_ND_max_regr = q_dot_htf_ND_max_regr;
+    if (!m_is_sco2_design_set) {
+        throw(C_csp_exception("You must set design information via set_sco2_design_for_sco2_regr method before"
+            " calling udpc_sco2_regr_off_design method."));
+    }
+
+    // 0, 1, 2)
+    double delta_T_HTF_OD, q_dot_htf_ND_max_regr, m_dot_htf_ND_max_regr;
+    delta_T_HTF_OD = q_dot_htf_ND_max_regr =  m_dot_htf_ND_max_regr = std::numeric_limits<double>::quiet_NaN();
+    get_sco2_regr_max_ND_q_dot(T_htf_hot /*C*/, T_amb /*C*/, m_dot_max_ND /*-*/,
+        delta_T_HTF_OD, m_dot_htf_ND_max_regr, q_dot_htf_ND_max_regr);
+
+    // 0)
+    //delta_T_HTF_OD = T_htf_hot - m_T_htf_cold_des_sco2_regr;    //[C]
+    //
+    //// 1)
+    //double q_dot_htf_ND_max_regr = get_Q_dot_HTF_ND_interp(T_htf_hot, T_amb, m_dot_max_ND);
+    //
+    //// 2)
+    //double m_dot_htf_ND_max_regr = q_dot_htf_ND_max_regr / (delta_T_HTF_OD/m_deltaT_HTF_des);
 
     // 3.a)
     double q_dot_ND_udpc = get_Q_dot_HTF_ND_interp(T_htf_hot, T_amb, m_dot_htf_ND);
@@ -447,7 +496,7 @@ void C_ud_power_cycle::udpc_sco2_regr_off_design(double T_htf_hot /*C*/, double 
         q_dot_ND = q_dot_htf_ND_max_regr;
     }
     else {
-        q_dot_ND = m_dot_htf_ND;      //[-]
+        q_dot_ND = m_dot_htf_ND*(delta_T_HTF_OD / m_deltaT_HTF_des);
     }
 
     // 3.c)
@@ -468,11 +517,17 @@ void C_ud_power_cycle::get_max_m_dot_and_W_dot_ND(double T_htf_hot /*C*/, double
 
     // Heuristic sets max ND mass flow to q_dot_ND at global max ND mass flow rate
 
-    // Calculate non-dimensional mass flow rate relative to design point
-    m_dot_HTF_ND_max = max_frac;		//[-] Use max mass flow rate
+    if (m_is_sco2_regr) {
 
-    // Get ND performance at off-design ambient temperature
-    //if (false) {
+        double delta_T_HTF_OD, q_dot_htf_ND_max;
+        delta_T_HTF_OD = m_dot_HTF_ND_max = q_dot_htf_ND_max = std::numeric_limits<double>::quiet_NaN();
+        get_sco2_regr_max_ND_q_dot(T_htf_hot /*C*/, T_amb /*C*/, max_frac /*-*/,
+            delta_T_HTF_OD, m_dot_HTF_ND_max, q_dot_htf_ND_max);
+
+    }
+    else {
+        // Calculate non-dimensional mass flow rate relative to design point
+        m_dot_HTF_ND_max = max_frac;		//[-] Use max mass flow rate
 
         double q_dot_ND_max = get_Q_dot_HTF_ND_interp(T_htf_hot,
             T_amb,
@@ -485,21 +540,7 @@ void C_ud_power_cycle::get_max_m_dot_and_W_dot_ND(double T_htf_hot /*C*/, double
 
         // set m_dot_ND to q_dot_max
         m_dot_HTF_ND_max = q_dot_ND_max;
-
-    //}
-    //else {
-    //
-    //    double W_dot_ND_max = get_W_dot_gross_ND_interp(T_htf_hot,
-    //        T_amb, m_dot_HTF_ND_max);
-    //
-    //    if (W_dot_ND_max >= m_dot_HTF_ND_max)
-    //    {
-    //        return;
-    //    }
-    //
-    //    // set m_dot_ND to P_cycle_ND
-    //    m_dot_HTF_ND_max = W_dot_ND_max;
-    //}
+    }
 
     W_dot_gross_ND_max = get_W_dot_gross_nd(T_htf_hot,
         T_amb,

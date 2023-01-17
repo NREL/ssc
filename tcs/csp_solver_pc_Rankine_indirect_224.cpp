@@ -637,6 +637,8 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
         double eta_des_UDPDC = W_dot_gross_des_UDPC / q_dot_des_UDPC;		//[-]
         double T_htf_cold_des_UDPC = ms_params.m_T_htf_hot_ref - q_dot_des_UDPC / (m_m_dot_design / 3600.0 * m_cp_htf_design / 1.E3);		//[MJ/s * hr/kg * s/hr * kg-K/kJ * MJ/kJ] = C/K
 
+        mc_user_defined_pc.set_sco2_design_for_sco2_regr(ms_params.m_T_htf_hot_ref, ms_params.m_T_htf_cold_ref);
+
 #ifdef _MSC_VER
 #define MySnprintf _snprintf
 #else

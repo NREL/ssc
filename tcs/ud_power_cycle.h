@@ -91,6 +91,9 @@ private:
 
     // does udpc represent sco2 and require regression model?
     bool m_is_sco2_regr;
+    bool m_is_sco2_design_set;
+    double m_T_htf_cold_des_sco2_regr;
+    double m_deltaT_HTF_des;
 
 	double get_interpolated_ND_output(int i_ME /*M.E. table index*/, double T_htf_hot /*C*/, double T_amb /*C*/, double m_dot_htf_ND /*-*/);
 
@@ -131,6 +134,9 @@ private:
 
     double get_m_dot_water_ND_interp(double T_htf_hot /*C*/, double T_amb /*C*/, double m_dot_htf_ND /*-*/);
 
+    void get_sco2_regr_max_ND_q_dot(double T_htf_hot /*C*/, double T_amb /*C*/, double m_dot_max_ND /*-*/,
+        double& delta_T_HTF_OD /*C*/, double& m_dot_htf_ND_max /*-*/, double& q_dot_htf_ND_max /*-*/);
+
 public:
 
     C_ud_power_cycle();
@@ -146,6 +152,8 @@ public:
         std::vector<double>& Y_at_m_dot_htf_ND_ref, std::vector<double>& Y_avg_at_refs);
 
     void set_is_sco2_regr(bool is_sco2_regr);
+
+    void set_sco2_design_for_sco2_regr(double T_htf_hot_des /*C*/, double T_htf_cold_des /*C*/);
 
     double get_W_dot_gross_nd(double T_htf_hot /*C*/, double T_amb /*C*/, double m_dot_htf_ND /*-*/, double max_frac /*-*/);
 
