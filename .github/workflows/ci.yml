@@ -39,7 +39,7 @@ jobs:
           export 
           mkdir ${GTEST}/build
           cd ${GTEST}/build
-          cmake -DCMAKE_CXX_FLAGS=-std=c++11 ..
+          cmake -DCMAKE_CXX_FLAGS=-std=c++14 ..
           make          
     
     - name: Checkout SSC
@@ -104,7 +104,7 @@ jobs:
           export 
           mkdir ${GTEST}/build
           cd ${GTEST}/build
-          cmake -DCMAKE_CXX_FLAGS=-std=c++11 ..
+          cmake -DCMAKE_CXX_FLAGS=-std=c++14 ..
           make          
     
     - name: Checkout SSC
