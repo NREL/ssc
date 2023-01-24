@@ -47,6 +47,7 @@ set(TCS_SRC
 		interconnect.cpp
 		nlopt_callbacks.cpp
 		numeric_solvers.cpp
+        ptes_solver_design_point.cpp
 		sam_type250_input_generator.cpp
 		sco2_cycle_components.cpp
 		sco2_partialcooling_cycle.cpp
@@ -140,6 +141,7 @@ set(TCS_SRC
 		ngcc_powerblock.h
 		nlopt_callbacks.h
 		numeric_solvers.h
+        ptes_solver_design_point.h
 		sam_csp_util.h
 		sco2_cycle_components.h
 		sco2_cycle_templates.h

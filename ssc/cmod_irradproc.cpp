@@ -42,7 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 static var_info _cm_vtab_irradproc[] = {
     /*   VARTYPE           DATATYPE         NAME                           LABEL                              UNITS     META                      GROUP                      REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 
-        { SSC_INPUT,        SSC_NUMBER,      "irrad_mode",                 "Irradiance input mode",           "0/1/2",   "Beam+Diff,Global+Beam, Global+Diff",  "Irradiance Processor",      "?=0",                     "INTEGER,MIN=0,MAX=2", ""},
+        { SSC_INPUT,        SSC_NUMBER,      "irrad_mode",                 "Irradiance input mode",           "0/1/2/3/4",   "Beam+Diff,Global+Beam, Global+Diff, POA Ref cell, POA Pyranometer ",  "Irradiance Processor",      "?=0",                     "INTEGER,MIN=0,MAX=2", ""},
 
         { SSC_INPUT,        SSC_ARRAY,       "beam",                       "Beam normal irradiance",          "W/m2",   "",                      "Irradiance Processor",      "irrad_mode~2",                        "",                      "" },
         { SSC_INPUT,        SSC_ARRAY,       "diff",                       "Diffuse horizontal irradiance",   "W/m2",   "",                      "Irradiance Processor",      "irrad_mode~1",             "LENGTH_EQUAL=beam",     "" },

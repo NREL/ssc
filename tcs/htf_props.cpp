@@ -333,12 +333,16 @@ double HTFProperties::Cp( double T_K )
 		return 0.0033*T_C + 1.6132;
 	case Pressurized_Water:
 		return 1.E-5*T_C*T_C - 0.0014*T_C + 4.2092;
+    case Methanol:
+        return 3.E-5*T_C*T_C + 0.0047*T_C + 2.3996;
     case N06230:
         return 0.2888*T_C + 397.42; // BPVC II D
     case N07740:
         return -1.E-9*std::pow(T_C, 4) + 3.E-6*std::pow(T_C, 3) -
             0.0022*std::pow(T_C, 2) + 0.6218*T_C + 434.06;  // BPVC_CC_BPV_2017 Case 2702 - 3
-	case User_defined:
+    case Salt_45MgCl2_39KCl_16NaCl:
+        return 1.284E-6*T_C*T_C - 1.843E-3*T_C + 1.661;  // Zhao 2020 Molten Chloride Thermophysical Properties, Chemical Optimization, and Purification Purification
+    case User_defined:
 		{
 			if ( m_userTable.nrows() < 3 ) return std::numeric_limits<double>::quiet_NaN();
 			// Interpolate
@@ -422,11 +426,15 @@ double HTFProperties::dens(double T_K, double P)
 			return -0.0003*T_C*T_C - 0.6963*T_C + 988.44;
 		case Pressurized_Water:
 			return -0.0023*T_C*T_C - 0.2337*T_C + 1005.6;
+        case Methanol:
+            return -0.9566*T_C + 810.3;
         case N06230:
             return 8970.0; // BPVC II D
         case N07740:
             return 8072.0;  // BPVC_CC_BPV_2017 Case 2702 - 3
-		case User_defined:
+        case Salt_45MgCl2_39KCl_16NaCl:
+            return -5.878E-1*T_C + 1974.0;  // Zhao 2020 Molten Chloride Thermophysical Properties, Chemical Optimization, and Purification Purification
+        case User_defined:
 			if ( m_userTable.nrows() < 3 )
 						return std::numeric_limits<double>::quiet_NaN();
 
@@ -519,7 +527,9 @@ double HTFProperties::visc(double T_K)
 		}
 	case Pressurized_Water:
 		return 3.E-8*T_C*T_C - 1.E-5*T_C + 0.0011;
-	case User_defined:
+    case Salt_45MgCl2_39KCl_16NaCl:
+        return 0.689*std::exp(1224.73/T_K)*1.E-3;   // convert from cP; Zhao 2020 Molten Chloride Thermophysical Properties, Chemical Optimization, and Purification Purification
+    case User_defined:
 		if ( m_userTable.nrows() < 3 )
 					return std::numeric_limits<double>::quiet_NaN();
 
@@ -604,7 +614,9 @@ double HTFProperties::cond(double T_K)
         return 0.0197*T_C + 8.5359; // BPVC II D
     case N07740:
         return 0.0155*T_C + 9.7239;  // BPVC_CC_BPV_2017 Case 2702 - 3
-	case User_defined:
+    case Salt_45MgCl2_39KCl_16NaCl:
+        return 7.151E-7*std::pow(T_C,2) - 1.066E-3*T_C + 0.811; //[W/K-m] // Zhao 2020 Molten Chloride Thermophysical Properties, Chemical Optimization, and Purification Purification
+    case User_defined:
 		if ( m_userTable.nrows() < 3 )
 					return std::numeric_limits<double>::quiet_NaN();
 
@@ -695,6 +707,12 @@ double HTFProperties::min_temp()
     case Pressurized_Water:
         T_C = 10.;
         break;
+    case Methanol:
+        T_C = -97.0;
+        break;
+    case Salt_45MgCl2_39KCl_16NaCl:
+        T_C = 450.0;
+        break;
     case User_defined:
         if (m_userTable.nrows() < 2) {
             T_C = std::numeric_limits<double>::quiet_NaN();
@@ -747,6 +765,12 @@ double HTFProperties::max_temp()
         break;
     case Pressurized_Water:
         T_C = 220.;
+        break;
+    case Methanol:
+        T_C = 64.;
+        break;
+    case Salt_45MgCl2_39KCl_16NaCl:
+        T_C = 720.0;
         break;
     case User_defined:
         if (m_userTable.nrows() < 2) {
