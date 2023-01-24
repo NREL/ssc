@@ -4,7 +4,7 @@
 #
 #####################################################################################################################
 
-include_directories(. $ENV{WEXDIR}/include $ENV{LKDIR}/include ../ssc ../shared ../splinter)
+include_directories(. $ENV{WEXDIR}/include $ENV{LKDIR}/include ../ssc ../shared ../splinter $ENV{SSCDIR})
 
 set(SDKTOOL_SRC
 	dataview.cpp
