@@ -53,7 +53,7 @@ void wave_inputs(ssc_data_t &data) {
 	ssc_data_set_number(data, "loss_transmission", 2);
 	ssc_data_set_number(data, "loss_downtime", 5);
 	ssc_data_set_number(data, "loss_additional", 0);
-
+    ssc_data_set_number(data, "me_adjust:constant", 0);
 	ssc_data_set_number(data, "capital_cost", 12105156);
 	ssc_data_set_number(data, "fixed_operating_cost", 1239344.125);
 	ssc_data_set_number(data, "variable_operating_cost", 0);

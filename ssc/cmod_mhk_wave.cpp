@@ -579,11 +579,8 @@ public:
             }
 
             adjustment_factors haf(this, "me_adjust");
-            if (is_assigned("me_adjust")) {
-                
-                if (!haf.setup(number_records * 3, nyears))
-                    throw exec_error("pvwattsv8", "Failed to set up adjustment factors: " + haf.error());
-            }
+            if (!haf.setup(number_records * 3, nyears))
+                throw exec_error("pvwattsv8", "Failed to set up adjustment factors: " + haf.error());
             
             ssc_number_t* energy_hourly_kWh = allocate("energy_hourly_kWh", number_records_gen);
             ssc_number_t* energy_hourly_kW = allocate("energy_hourly_kW", number_records_gen * 3); //8760 of kW values
