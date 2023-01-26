@@ -214,8 +214,8 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
         // System
     { SSC_OUTPUT, SSC_NUMBER, "system_capacity",             "System capacity",                         "kWe",          "",                                  "System Design Calc",                             "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "nameplate",                   "Nameplate capacity",                      "MWe",          "",                                  "System Design Calc",                             "*",                                                                "",              "" },
-    { SSC_OUTPUT, SSC_NUMBER, "cp_system_capacity",          "System capacity for capacity payments",   "MWe",          "",                                  "System Design Calc",                             "*",                                                                "",              "" },
-    { SSC_OUTPUT, SSC_NUMBER, "cp_battery_capacity",         "Battery nameplate",                       "MWe",          "",                                  "System Design Calc",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "cp_system_nameplate",          "System capacity for capacity payments",   "MWe",          "",                                  "System Design Calc",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "cp_battery_nameplate",         "Battery nameplate",                       "MWe",          "",                                  "System Design Calc",                             "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "q_pb_design",                 "Cycle thermal input at design"            "MWt",          "",                                  "System Design Calc",                             "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "q_dot_heater_design",         "Heater thermal output at design",         "MWt",          "",                                  "System Design Calc",                             "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "tshours_heater",              "Hours of TES relative to heater output",  "hr",           "",                                  "System Design Calc",                             "*",                                                                "",              "" },
@@ -654,6 +654,7 @@ public:
         // Still need to define mc_csp_ops blocks and fractions although we're not using them
         tou_params->mc_csp_ops.mc_weekdays.resize_fill(12, 24, 1.0);
         tou_params->mc_csp_ops.mc_weekends.resize_fill(12, 24, 1.0);
+        tou_params->mc_csp_ops.mvv_tou_arrays[C_block_schedule_csp_ops::TURB_FRAC].resize(2, 1.0);
         
         tou.mc_dispatch_params.m_is_tod_pc_target_also_pc_max = true;
         tou.mc_dispatch_params.m_is_block_dispatch = false;
@@ -675,14 +676,6 @@ public:
                 size_t count_ppa_price_input;
                 ssc_number_t* ppa_price_input_array = as_array("ppa_price_input", &count_ppa_price_input);
                 ppa_price_year1 = (double)ppa_price_input_array[0];  // [$/kWh]
-
-                // if no dispatch optimization, then need to define a real turbine fraction
-                //if (is_dispatch) {
-                //    tou_params->mc_csp_ops.mvv_tou_arrays[C_block_schedule_csp_ops::TURB_FRAC].resize(2, std::numeric_limits<double>::quiet_NaN());
-                //}
-                //else {
-                    tou_params->mc_csp_ops.mvv_tou_arrays[C_block_schedule_csp_ops::TURB_FRAC].resize(2, 1.0);
-                //}
 
                 // Time-of-Delivery factors by time step:
                 int ppa_mult_model = as_integer("ppa_multiplier_model");
@@ -1036,8 +1029,8 @@ public:
             // System
         assign("system_capacity", (ssc_number_t)system_capacity);           //[kWe]
         assign("nameplate", (ssc_number_t)(system_capacity * 1.E-3));       //[MWe]
-        assign("cp_system_capacity", system_capacity * 1.E-3);             //[MWe]
-        assign("cp_battery_capacity", system_capacity * 1.E-3);             //[MWe]
+        assign("cp_system_nameplate", system_capacity * 1.E-3);             //[MWe]
+        assign("cp_battery_nameplate", system_capacity * 1.E-3);             //[MWe]
         assign("q_pb_design", (ssc_number_t)q_dot_pc_des);                  //[MWt]
         assign("q_dot_heater_design", (ssc_number_t)q_dot_heater_des);      //[MWt]
         assign("tshours_heater", (ssc_number_t)(tshours / heater_mult));    //[hr]
