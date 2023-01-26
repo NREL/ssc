@@ -84,7 +84,7 @@ static var_info vtab_utility_rate5[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_system_to_load",    "Electricity from system to load (year 1 hourly)",     "kWh", "",                      "",             "*",                         "",                   "" },
 
 // lifetime load (optional for lifetime analysis)
-	{ SSC_OUTPUT, SSC_ARRAY, "lifetime_load", "Lifetime electricity load", "kW", "", "Time Series", "system_use_lifetime_output=1", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "lifetime_load", "Lifetime electricity load", "kW", "", "Time Series", "?", "", "" },
 
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_p_tofromgrid",         "Electricity to/from grid peak (year 1 hourly)", "kW",  "",                      "Time Series",             "*",                         "",                   "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_p_system_to_load",         "Electricity peak from system to load (year 1 hourly)", "kW",  "",                      "Time Series",             "*",                         "",                   "" },
@@ -833,7 +833,9 @@ public:
         util::matrix_t<ssc_number_t> &monthly_tou_demand_charge_wo_sys = allocate_matrix("monthly_tou_demand_charge_wo_sys", 13, tou_periods);
 
 		// lifetime hourly load
-		ssc_number_t *lifetime_load = allocate("lifetime_load", nrec_gen);
+        ssc_number_t* lifetime_load;
+        if (as_integer("system_use_lifetime_output") == 1) 
+		    lifetime_load = allocate("lifetime_load", nrec_gen);
 
 		/*
 		0=Single meter with monthly rollover credits in kWh
