@@ -1825,7 +1825,7 @@ void cm_pvsamv1::exec()
                 ts_accum_poa_rear_direct_diffuse += irr.get_rear_direct_diffuse() * area_subarray;                              // irradiance from sky beam and diffuse to rear
                 ts_accum_poa_rear_self_shaded += irr.get_rear_self_shaded() * area_subarray;                                    // irradiance blocked by self shading
                 ts_accum_poa_rack_shaded += ipoa_rear[nn] * area_subarray * rack_shading_loss_factor;                           // irradiance blocked by racks
-                ts_accum_poa_rear_soiled = ts_accum_poa_rack_shaded * Subarrays[nn]->rearSoilingLossPercent;                    // irradiance blocked by soiling
+                ts_accum_poa_rear_soiled += ipoa_rear[nn] * area_subarray * (1 - rack_shading_loss_factor) * Subarrays[nn]->rearSoilingLossPercent;      // irradiance blocked by soiling
 
                 if (iyear == 0 || save_full_lifetime_variables == 1)
                 {
