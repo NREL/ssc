@@ -1,0 +1,30 @@
+// Inputs
+var( 'N_panels', 20 );
+
+// Run PTES
+run("ptes_design_point");
+
+// Collect Outputs
+num_pts = var('N_pts_charge');
+temp_series_charge = var('temp_series_charge');
+s_series_charge = var('s_series_charge');
+
+num_pts_discharge = var('N_pts_discharge');
+temp_series_discharge = var('temp_series_discharge');
+s_series_discharge = var('s_series_discharge');
+
+// Plot
+newplot();
+plot(s_series_charge, temp_series_charge);
+axis('x1', {'label'='Entropy (kJ/kg K)'});
+axis('y1', {'label'='Temperature (C)'});
+plotopt({'title'='PTES T-s Charge Diagram'});
+
+newplot();
+plot(s_series_discharge, temp_series_discharge);
+axis('x1', {'label'='Entropy (kJ/kg K)'});
+axis('y1', {'label'='Temperature (C)'});
+plotopt({'title'='PTES T-s Disharge Diagram'});
+
+
+outln('Finished');

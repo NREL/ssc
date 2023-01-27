@@ -1201,6 +1201,8 @@ Module_IO::Module_IO(compute_module* cm, std::string cmName, double dcLoss)
         selfShadingFillFactor = sandiaModel.Vmp0 * sandiaModel.Imp0 / sandiaModel.Voc0 / sandiaModel.Isc0;
         voltageMaxPower = sandiaModel.Vmp0;
 
+        groundClearanceHeight = 1.0; //No input as there is no bifacial option for Sandia module model
+
         if (sandiaModel.fd == 0) {
             isConcentratingPV = true;
         }
