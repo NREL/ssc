@@ -1,5 +1,5 @@
 loc_id,city??,AR,USA,year??,lat??,lon??,758,1,8760
-Northwestern AR - flat lands (NREL AWS Truepower representative file),,,,,,,,,
+Northwestern AR - flat lands (NREL AWS Truepower representative file)
 Temperature,Pressure,Speed,Direction
 C,atm,m/s,degrees
 80,80,80,80
