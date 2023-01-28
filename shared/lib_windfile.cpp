@@ -557,7 +557,7 @@ bool windfile::open( const std::string &file )
         }
     }
 
-	// read all lines to determine the nubmer of records in the file
+	// read all lines to determine the number of records in the file
 	while (getline(m_ifs, m_buf))
 		m_nrec++;
 
@@ -612,7 +612,13 @@ bool windfile::read_line( std::vector<double> &values )
     {
         if (std::find(m_colid.begin(), m_colid.end(), i) != m_colid.end())
         {
-            values.push_back(std::stof(cols[i]));
+            // WIND Toolkit API returns "N/A" in data columns for requested heights that are not available
+            // this can happen when requesting data for all available heights by not including any attributes
+            // in the API call
+            if ( util::lower_case(cols[i]) == "n/a")
+                values.push_back(std::numeric_limits<double>::quiet_NaN());
+            else
+                values.push_back(std::stof(cols[i]));
         }
     }
 
