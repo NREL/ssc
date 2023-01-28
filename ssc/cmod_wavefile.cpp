@@ -180,12 +180,12 @@ public:
             else {
                 assign("location_id", var_data(std::stod(values[1])));
                 assign("distance_to_shore_file", var_data(std::stod(values[7])));
-               // assign("water_depth_file", var_data(std::stod(values[18])));
+                assign("water_depth_file", var_data(std::stod(values[18])));
                 assign("lat", var_data(std::stod(values[3])));
                 assign("lon", var_data(std::stod(values[4])));
                 assign("tz", var_data(std::stod(values[6])));
                 assign("data_source", var_data(values[0]));
-                //assign("notes", var_data(values[19]));
+                assign("notes", var_data(values[19]));
 
             }
         }
