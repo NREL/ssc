@@ -357,7 +357,7 @@ static var_info _cm_vtab_tcsmslf[] = {
 //    { SSC_OUTPUT,   SSC_ARRAY,          "hourly_energy",      "Hourly Energy",                                                  "kWh",          "",            "Calculated",     "*",					    "LENGTH=8760",           ""},
 
     // monthly values
-    { SSC_OUTPUT,   SSC_ARRAY,          "monthly_energy",         "Monthly Energy",                                             "kWh",           "",            "mslf",                  "*",        "LENGTH=12",     ""},
+    { SSC_OUTPUT,   SSC_ARRAY,          "monthly_energy",         "Monthly Energy Gross",                                             "kWh",           "",            "mslf",                  "*",        "LENGTH=12",     ""},
 																																					            
     // single values																																            
     { SSC_OUTPUT,   SSC_NUMBER,         "annual_energy",          "Annual Energy",                                              "kWh",           "",            "mslf",                  "*",        "",              ""},

@@ -275,7 +275,7 @@ static var_info _cm_vtab_tcslinear_fresnel[] = {
 //    { SSC_OUTPUT,       SSC_ARRAY,       "hourly_energy",      "Hourly Energy",                                                 "kWh",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
 
 	// monthly values
-	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",              "Monthly Energy",                                                            "kWh",          "",            "Linear Fresnel", "*",                       "LENGTH=12",             "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",              "Monthly Energy Gross",                                                            "kWh",          "",            "Linear Fresnel", "*",                       "LENGTH=12",             "" },
 
 
 	// single values
