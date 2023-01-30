@@ -510,7 +510,7 @@ bool windfile::open( const std::string &file )
         // wind data files provide both site timezone and data timezone in header
         // if the values are different, we can't determine the time zone of the time stamps
         if (tz_data != tz_site)
-            m_errorMsg = util::format("data must be in local time: data time zone %s and site time zone %s are not the same", tz_data, tz_site);
+            m_errorMsg = util::format("data must be in local time: data time zone %s and site time zone %s are not the same", tz_data.c_str(), tz_site.c_str());
 
         // line 2 data column headings
         getline(m_ifs, m_buf);
@@ -518,6 +518,8 @@ bool windfile::open( const std::string &file )
         std::vector<std::string> cols;
         ncols = locate2(m_buf, cols, ',');
 
+        // get data column positions
+        // this approach ignores columns that may contain other data that is not used by wind model
         for (size_t i = 0; (int)i < ncols; i++)
         {
 
@@ -549,11 +551,6 @@ bool windfile::open( const std::string &file )
                 m_heights.push_back(col_or_nan(cols[i]));
                 m_colid.push_back(i);
             }
-            /*else if (hdr_item.length() > 0)
-            {
-                m_errorMsg = util::format("error reading data column type specifier in col %d of %d: '%s' len: %d", i + 1, ncols, hdr_item, hdr_item.length());
-                return false;
-            }*/
         }
     }
 
