@@ -408,7 +408,7 @@ static var_info _cm_vtab_tcstrough_physical[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "Q_par_tes_fp",      "Parasitic thermal TES freeze protection",                        "MWt",          "",            "SumCalc",        "*",                       "",                      "" },
 	
 	// Monthly Outputs
-	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",        "Monthly Energy",                                             "kWh",           "",            "Net_E_Calc",     "*",                      "LENGTH=12",             "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",        "Monthly Energy Gross",                                             "kWh",           "",            "Net_E_Calc",     "*",                      "LENGTH=12",             "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_W_cycle_gross", "Electrical source - Power cycle gross output",               "MWhe",          "",            "Net_E_Calc",     "*",                      "LENGTH=12",             "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_q_inc_sf_tot",  "Total power incident on the field",                          "MWht",          "",            "Type250",        "*",                      "LENGTH=12",             "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_q_abs_tot",     "Total absorbed energy",                                      "MWht",          "",            "Type250",        "*",                      "LENGTH=12",             "" },

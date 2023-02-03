@@ -154,7 +154,8 @@ windPowerCalculator::windPowerUsingResource(double windSpeed, double windDirDeg,
 		wt_id.push_back(i);
 
 	// convert barometric pressure in ATM to air density
-	double fAirDensity = (airPressureAtm * physics::Pa_PER_Atm) / (physics::R_GAS_DRY_AIR * physics::CelciusToKelvin(TdryC));   //!Air Density, kg/m^3
+    if (airPressureAtm > 0.5 && airPressureAtm < 1.1) airPressureAtm = airPressureAtm * physics::Pa_PER_Atm;
+	double fAirDensity = (airPressureAtm ) / (physics::R_GAS_DRY_AIR * physics::CelciusToKelvin(TdryC));   //!Air Density, kg/m^3
 
 	// calculate output power of a turbine
 	double fTurbine_output(0.0), fThrust_coeff(0.0), fTurbine_gross(0.0);

@@ -180,7 +180,7 @@ static var_info _cm_vtab_tcsgeneric_solar[] = {
 //    { SSC_OUTPUT,       SSC_ARRAY,       "hourly_energy",     "Hourly Energy",                                                  "kWh",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
 
 	// monthly outputs
-	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",    "Monthly Energy",                                                 "kWh",          "",            "Generic CSP",    "*",                       "LENGTH=12",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",    "Monthly Energy Gross",                                                 "kWh",          "",            "Generic CSP",    "*",                       "LENGTH=12",           "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "monthly_w_gr",      "Total gross power production",                                   "kWh",          "",            "Generic CSP",    "*",                       "LENGTH=12",           "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "monthly_q_sf",      "Solar field delivered thermal power",                            "MWt",          "",            "Generic CSP",    "*",                       "LENGTH=12",           "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "monthly_q_to_pb",   "Thermal energy to the power conversion system",                  "MWt",          "",            "Generic CSP",    "*",                       "LENGTH=12",           "" },

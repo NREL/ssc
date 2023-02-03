@@ -2060,6 +2060,10 @@ void irrad::setup() {
 
     calculatedDirectNormal = directNormal;
     calculatedDiffuseHorizontal = 0.0;
+    poaRearGroundReflected = 0.;
+    poaRearDirectDiffuse = 0.;
+    poaRearRowReflections = 0.;
+    poaRearSelfShaded = 0.;
 }
 
 irrad::irrad() {
