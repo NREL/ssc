@@ -53,7 +53,7 @@ static var_info _cm_vtab_mhk_costs[] = {
 	{ SSC_INPUT,			SSC_NUMBER,			"export_cable_length",						"Export cable length",									"m",			"",								"MHKCosts",			"*",					"MIN=0",					"" },
 
 	// User input for CapEx dependent costs
-		{ SSC_INPUT,			SSC_NUMBER,			"structural_assembly_cost_method",								"Structural assembly cost method",											"0/1/2",		"0=Enter in $/kW,1=Enter in $,2=Use modeled value,3=Use itemized costs in $",	"MHKCosts",			"*",					"MIN=0,MAX=3",				"" },
+		{ SSC_INPUT,			SSC_NUMBER,			"structural_assembly_cost_method",								"Structural assembly cost method",											"0/1/2",		"0=Enter in $/kW,1=Enter in $,2=Use modeled value,3=Use itemized costs in $",	"MHKCosts",			"*",					"MIN=0,MAX=4",				"" },
 		{ SSC_INPUT,			SSC_NUMBER,			"structural_assembly_cost_input",								"Structural assembly cost",											"$",		"",	"MHKCosts",			"*",					"",				"" },
 		//{ SSC_INPUT,			SSC_NUMBER,			"structural_assembly_cost_total",								"Structural assembly itemized cost total",											"$",		"",	"MHKCosts",			"*",					"",				"" },
 		{ SSC_INPUT,			SSC_NUMBER,			"power_takeoff_system_cost_method",								"Power take-off system cost method",											"0/1/2",		"0=Enter in $/kW,1=Enter in $,2=Use modeled value,3=Use itemized costs in $",	"MHKCosts",			"*",					"MIN=0,MAX=3",				"" },
