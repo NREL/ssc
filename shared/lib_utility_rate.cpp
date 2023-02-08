@@ -173,7 +173,7 @@ UtilityRateForecast::UtilityRateForecast(rate_data* util_rate, size_t stepsPerHo
 	dt_hour = 1.0f / stepsPerHour;
 	last_step = 0;
     last_month_init = -1;
-	rate = std::shared_ptr<rate_data>(new rate_data(*util_rate));
+	rate = std::unique_ptr<rate_data>(new rate_data(*util_rate));
 	m_monthly_load_forecast = monthly_load_forecast;
 	m_monthly_gen_forecast = monthly_gen_forecast;
 	m_monthly_avg_load_forecast = monthly_avg_load_forecast;
@@ -196,7 +196,7 @@ UtilityRateForecast::UtilityRateForecast(UtilityRateForecast& tmp) :
     last_month_init(tmp.last_month_init),
     nyears(tmp.nyears)
 {
-    rate = std::shared_ptr<rate_data>(new rate_data(*tmp.rate));
+    rate = std::unique_ptr<rate_data>(new rate_data(*tmp.rate));
 }
 
 UtilityRateForecast::~UtilityRateForecast() {}

@@ -191,7 +191,7 @@ protected:
 
     double getEnergyChargeNetBillingOrTimeSeries(double energy, size_t year_one_index, int current_month, size_t year, bool use_next_month);
 
-	std::shared_ptr<rate_data> rate;
+	std::unique_ptr<rate_data> rate;
 
 	size_t steps_per_hour;
 	float dt_hour;
