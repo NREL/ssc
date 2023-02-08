@@ -363,6 +363,11 @@ private:
 
     void set_output_value();
 
+    // TEMPORARY
+    int x(const C_csp_weatherreader::S_outputs& weather,
+        double T_htf_cold_in /*K*/, double m_dot_htf_loop /*kg/s*/,
+        const C_csp_solver_sim_info& sim_info);
+
     // This method is designed to pass the timestep integrated HTF temperature to successive energy balance nodes
     int loop_energy_balance_T_t_int(const C_csp_weatherreader::S_outputs& weather,
         double T_htf_cold_in /*K*/, double m_dot_htf_loop /*kg/s*/,
@@ -465,6 +470,8 @@ public:
     double m_rec_htf_vol;		                // Volume of HTF in a single collector unit per unit aperture area
     double m_V_wind_des;                        // Design-point wind velocity
     double m_T_amb_sf_des;                      // Ambient design-point temperature for the solar field
+
+    double m_L_rnr_pb;                            //[m] Length of hot or cold runner pipe around the power block
 
     // Removed
     //double m_Row_Distance;	//[m] Spacing between rows (centerline to centerline)

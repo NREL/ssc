@@ -481,6 +481,9 @@ public:
             c_fresnel.m_rec_htf_vol = as_number("rec_htf_vol");
 
 
+            // Hard Coded (currently no UI)
+            c_fresnel.m_L_rnr_pb = 25;
+
 
             //////////////////////// Questionable
             c_fresnel.m_I_b = as_number("I_b");
