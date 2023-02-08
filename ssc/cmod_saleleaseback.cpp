@@ -2589,9 +2589,10 @@ public:
 		cf.at(CF_tax_investor_aftertax_cash,0) = cf.at(CF_tax_investor_pretax,0);
 // SAM 1038        if (nyears > 0) cf.at(CF_tax_investor_aftertax_itc, 1) = itc_total;
         double itc_total = 0.0;
-        for (size_t k = 0; k < nyears; k++)
+        for (size_t k = 0; k < nyears; k++) {
             itc_total += cf.at(CF_itc_total, k);
-        cf.at(CF_tax_investor_aftertax_itc, 1) = itc_total;
+            cf.at(CF_tax_investor_aftertax_itc, k) = cf.at(CF_itc_total, k);
+        }
         cf.at(CF_tax_investor_aftertax_tax,0) = 0;
 		cf.at(CF_tax_investor_aftertax,0) =
 			cf.at(CF_tax_investor_aftertax_cash,0) +
