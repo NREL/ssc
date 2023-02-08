@@ -537,7 +537,7 @@ var_info vtab_sf_adjustment_factors[] = {
 var_info_invalid };
 */
 var_info vtab_adjustment_factors[] = {
-{ SSC_INPUT,SSC_TABLE  , "adjust"                      , "Loss adjustment"                                       , "%"                                      , ""                                      , "Adjustment Factors"   , "*"              , ""               , ""},
+{ SSC_INPUT,SSC_TABLE  , "adjust"                      , "Loss adjustment"                                       , "%"                                      , "'adjust' updated to a table - Ty to add more details!"                                      , "Adjustment Factors"   , "*"              , ""               , ""},
 var_info_invalid };
 
 
