@@ -591,12 +591,15 @@ public:
             break;
         }
 
-        //throw a warning if tilt is > 0 for a tracking system, since this is a very uncommon configuration but an easy mistake to make
+        // warning if tilt is > 0 for a tracking system becaues this is a very uncommon configuration but an easy mistake to make
         if ((pv.type == ONE_AXIS || pv.type == ONE_AXIS_BACKTRACKING) && pv.tilt > 0)
             log(util::format("The tilt angle is %f degrees with one-axis tracking. Large one-axis tracking arrays typically have a tilt angle of zero.", pv.tilt), SSC_WARNING);
 
         if (!(pv.type == FIXED_RACK || pv.type == FIXED_ROOF) && module.bifaciality > 0.0)
             log("The bifacial model is designed for fixed arrays and may not produce reliable results for tracking arrays.", SSC_WARNING);
+
+        if (pv.type == FIXED_ROOF && module.bifaciality > 0.0)
+            log("The Fixed Roof Mount array type is not appropriate for bifacial modules because it assumes there is no space between the back of the array and the roof surface.", SSC_WARNING);
 
         pv.gcr = as_double("gcr");
         if (pv.gcr < 0.01 || pv.gcr >= 1.0)
