@@ -1028,7 +1028,7 @@ bool adjustment_factors::setup(int nsteps, int analysis_period) //nsteps is set 
 	m_factors.resize( nsteps * analysis_period, f);
 
 //    if (m_cm->is_assigned(m_prefix + ":hourly"))
-    if (table.as_boolean("en_hourly"))
+    if (table.is_assigned("en_hourly") && table.as_boolean("en_hourly"))
     {
 		size_t n;
 //        ssc_number_t* p = m_cm->as_array(m_prefix + ":hourly", &n);
@@ -1044,7 +1044,7 @@ bool adjustment_factors::setup(int nsteps, int analysis_period) //nsteps is set 
 	}
 
 //    if (m_cm->is_assigned(m_prefix + ":timeindex"))
-    if (table.is_assigned("timeindex"))
+    if (table.is_assigned("timeindex") && table.is_assigned("timeindex"))
     {
         size_t n;
         int steps_per_hour = nsteps / 8760;
@@ -1106,7 +1106,7 @@ bool adjustment_factors::setup(int nsteps, int analysis_period) //nsteps is set 
     }
 
 //    if (m_cm->is_assigned(m_prefix + ":periods"))
-    if (table.as_boolean("en_periods"))
+    if (table.is_assigned("en_periods") && table.as_boolean("en_periods"))
     {
 		size_t nr, nc;
 //        ssc_number_t* mat = m_cm->as_matrix(m_prefix + ":periods", &nr, &nc);
