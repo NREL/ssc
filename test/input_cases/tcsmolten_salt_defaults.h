@@ -302,15 +302,8 @@ ssc_data_t tcsmolten_salt_defaults()
     ssc_data_set_matrix(data, "dispatch_sched_weekday", p_dispatch_sched_weekday, 12, 24);
     ssc_number_t p_dispatch_sched_weekend[288] = { 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 };
     ssc_data_set_matrix(data, "dispatch_sched_weekend", p_dispatch_sched_weekend, 12, 24);
-    ssc_data_set_number(data, "dispatch_factor1", 2.0640000000000001);
-    ssc_data_set_number(data, "dispatch_factor2", 1.2);
-    ssc_data_set_number(data, "dispatch_factor3", 1);
-    ssc_data_set_number(data, "dispatch_factor4", 1.1000000000000001);
-    ssc_data_set_number(data, "dispatch_factor5", 0.80000000000000004);
-    ssc_data_set_number(data, "dispatch_factor6", 0.69999999999999996);
-    ssc_data_set_number(data, "dispatch_factor7", 1);
-    ssc_data_set_number(data, "dispatch_factor8", 1);
-    ssc_data_set_number(data, "dispatch_factor9", 1);
+    ssc_number_t p_dispatch_tod_factors[9] = { 2.064, 1.2, 1, 1.1, 0.8, 0.7, 1, 1, 1 };
+    ssc_data_set_array(data, "dispatch_tod_factors", p_dispatch_tod_factors, 9);
     ssc_data_set_number(data, "is_dispatch_series", 0);
     ssc_number_t p_dispatch_series[1] = { 0 };
     ssc_data_set_array(data, "dispatch_series", p_dispatch_series, 1);

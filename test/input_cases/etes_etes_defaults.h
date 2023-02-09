@@ -111,15 +111,8 @@ ssc_data_t etes_etes_defaults()
     ssc_data_set_number(data, "bop_par_1", 0.48299999999999998);
     ssc_data_set_number(data, "bop_par_2", 0);
     ssc_data_set_number(data, "ppa_multiplier_model", 1);
-    ssc_data_set_number(data, "dispatch_factor1", 0.25);
-    ssc_data_set_number(data, "dispatch_factor2", 1.75);
-    ssc_data_set_number(data, "dispatch_factor3", 1);
-    ssc_data_set_number(data, "dispatch_factor4", 1);
-    ssc_data_set_number(data, "dispatch_factor5", 1);
-    ssc_data_set_number(data, "dispatch_factor6", 1);
-    ssc_data_set_number(data, "dispatch_factor7", 1);
-    ssc_data_set_number(data, "dispatch_factor8", 1);
-    ssc_data_set_number(data, "dispatch_factor9", 1);
+    ssc_number_t p_dispatch_tod_factors[9] = { 0.25, 1.75, 1, 1, 1, 1, 1, 1, 1 };
+    ssc_data_set_array(data, "dispatch_tod_factors", p_dispatch_tod_factors, 9);
     ssc_number_t p_ppa[1] = { 0.074999999999999997 };
     ssc_data_set_array(data, "ppa_price_input", p_ppa, 1);
     ssc_data_set_number(data, "cycle_spec_cost", 1040);
