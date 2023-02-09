@@ -785,15 +785,8 @@ void singleowner_defaults(ssc_data_t& data) {
 	ssc_data_set_number(data, "pbi_oth_for_ds", 0);
 	ssc_data_set_number(data, "loan_moratorium", 0);
 	ssc_data_set_number(data, "system_use_recapitalization", 0);
-	ssc_data_set_number(data, "dispatch_factor1", 1);
-	ssc_data_set_number(data, "dispatch_factor2", 1.5);
-	ssc_data_set_number(data, "dispatch_factor3", 1);
-	ssc_data_set_number(data, "dispatch_factor4", 1);
-	ssc_data_set_number(data, "dispatch_factor5", 1);
-	ssc_data_set_number(data, "dispatch_factor6", 1);
-	ssc_data_set_number(data, "dispatch_factor7", 1);
-	ssc_data_set_number(data, "dispatch_factor8", 1);
-	ssc_data_set_number(data, "dispatch_factor9", 1);
+    ssc_number_t p_dispatch_tod_factors[9] = { 1, 1.5, 1, 1, 1, 1, 1, 1, 1 };
+    ssc_data_set_array(data, "dispatch_tod_factors", p_dispatch_tod_factors, 9);
 	ssc_data_set_number(data, "total_installed_cost", 22868070);
 	ssc_data_set_number(data, "salvage_percentage", 0);
 	ssc_data_set_number(data, "construction_financing_cost", 457361.40625);
