@@ -182,21 +182,22 @@ UtilityRateForecast::UtilityRateForecast(rate_data* util_rate, size_t stepsPerHo
 }
 
 UtilityRateForecast::UtilityRateForecast(UtilityRateForecast& tmp) :
-	steps_per_hour(tmp.steps_per_hour),
-	dt_hour(tmp.dt_hour),
-	last_step(tmp.last_step),
-	m_monthly_load_forecast(tmp.m_monthly_load_forecast),
-	m_monthly_gen_forecast(tmp.m_monthly_gen_forecast),
-	m_monthly_avg_load_forecast(tmp.m_monthly_avg_load_forecast),
-    m_peaks_forecast(tmp.m_peaks_forecast),
-    current_composite_buy_rates(tmp.current_composite_buy_rates),
-    current_composite_sell_rates(tmp.current_composite_sell_rates),
-    next_composite_buy_rates(tmp.next_composite_buy_rates),
-    next_composite_sell_rates(tmp.next_composite_sell_rates),
-    last_month_init(tmp.last_month_init),
-    nyears(tmp.nyears)
+current_composite_sell_rates(tmp.current_composite_sell_rates),
+current_composite_buy_rates(tmp.current_composite_buy_rates),
+next_composite_sell_rates(tmp.next_composite_sell_rates),
+next_composite_buy_rates(tmp.next_composite_buy_rates),
+steps_per_hour(tmp.steps_per_hour),
+dt_hour(tmp.dt_hour),
+last_step(tmp.last_step),
+last_month_init(tmp.last_month_init),
+nyears(tmp.nyears),
+m_monthly_load_forecast(tmp.m_monthly_load_forecast),
+m_monthly_gen_forecast(tmp.m_monthly_gen_forecast),
+m_monthly_avg_load_forecast(tmp.m_monthly_avg_load_forecast),
+m_peaks_forecast(tmp.m_peaks_forecast)
 {
-    rate = std::unique_ptr<rate_data>(new rate_data(*tmp.rate));
+//    rate = std::shared_ptr<rate_data>(new rate_data(*tmp.rate));
+    rate = std::make_shared<rate_data>(*tmp.rate);
 }
 
 UtilityRateForecast::~UtilityRateForecast() {}
