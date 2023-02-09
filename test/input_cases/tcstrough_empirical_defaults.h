@@ -185,7 +185,11 @@ ssc_data_t tcstrough_empirical_defaults()
     ssc_data_set_number(data, "HhtfParF1", 0.24199999999999999);
     ssc_data_set_number(data, "HhtfParF2", 0.79400000000000004);
     ssc_data_set_number(data, "PbFixPar", 0.61049997806549072);
-    ssc_data_set_number(data, "adjust:constant", 4);
+    
+    var_table* adjust_vt = new var_table;
+    adjust_vt->assign("constant", var_data(4.0));
+    ssc_data_set_table(data, "adjust", adjust_vt);
+
 
     return data;
 }

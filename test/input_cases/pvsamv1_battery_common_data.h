@@ -401,11 +401,26 @@ void pvsamv1_pv_defaults(ssc_data_t& data) {
 
 void pvsamv1_battery_defaults(ssc_data_t& data) {
 	ssc_data_set_number(data, "en_batt", 1);
-	ssc_data_set_number(data, "adjust:constant", 0);
-	ssc_data_set_number(data, "dc_adjust:constant", 0);
-	set_array(data, "dc_adjust:hourly", dc_adjust_hourly, 8760);
-	ssc_number_t p_dc_adjust_periods[3] = { 0, 0, 0 };
-	ssc_data_set_matrix(data, "dc_adjust:periods", p_dc_adjust_periods, 1, 3);
+	
+    var_table* adjust_vt = new var_table;
+    adjust_vt->assign("constant", var_data(0.0));
+    ssc_data_set_table(data, "adjust", adjust_vt);
+
+    // Setup DC Adjust Inputs
+    set_array(data, "dc_adjust_hourly", dc_adjust_hourly, 8760);
+    int n_len_dc_adjust_hourly = -1;
+    ssc_number_t* p_dc_adjust_hourly = ssc_data_get_array(data, "dc_adjust_hourly", &n_len_dc_adjust_hourly);
+    ssc_number_t p_dc_adjust_periods[3] = { 0, 0, 0 };
+
+    // Setup and assign DC Adjust Var Table
+    var_table* dc_adjust_vt = new var_table;
+    dc_adjust_vt->assign("constant", var_data(0.0));
+    dc_adjust_vt->assign("periods", var_data(p_dc_adjust_periods, 1, 3));
+    dc_adjust_vt->assign("en_periods", var_data(1));
+    dc_adjust_vt->assign("hourly", var_data(p_dc_adjust_hourly, 8760));
+    dc_adjust_vt->assign("en_hourly", var_data(1));
+    ssc_data_set_table(data, "dc_adjust", dc_adjust_vt);
+
 	ssc_data_set_number(data, "batt_chem", 1);
 	ssc_data_set_number(data, "inv_snl_eff_cec", 97.586860656738281);
 	ssc_data_set_number(data, "inv_pd_eff", 95);
@@ -1143,12 +1158,27 @@ void commercial_multiarray_default(ssc_data_t& data) {
 	ssc_data_set_matrix(data, "inv_tdc_plc", p_inv_tdc_plc, 1, 3);
 	ssc_data_set_number(data, "en_batt", 1);
 	set_array(data, "load", load_profile_path, 8760);
-	ssc_data_set_number(data, "adjust:constant", 0);
-	ssc_data_set_number(data, "dc_adjust:constant", 0);
-	set_array(data, "dc_adjust:hourly", dc_adjust_hourly, 8760);
-	ssc_number_t p_dc_adjust_periods[3] = { 0, 0, 0 };
-	ssc_data_set_matrix(data, "dc_adjust:periods", p_dc_adjust_periods, 1, 3);
-	ssc_data_set_number(data, "batt_chem", 1);
+
+    var_table* adjust_vt = new var_table;
+    adjust_vt->assign("constant", var_data(0.0));
+    ssc_data_set_table(data, "adjust", adjust_vt);
+
+    // Setup DC Adjust Inputs
+    set_array(data, "dc_adjust_hourly", dc_adjust_hourly, 8760);
+    int n_len_dc_adjust_hourly = -1;
+    ssc_number_t* p_dc_adjust_hourly = ssc_data_get_array(data, "dc_adjust_hourly", &n_len_dc_adjust_hourly);
+    ssc_number_t p_dc_adjust_periods[3] = { 0, 0, 0 };
+    
+    // Setup and assign DC Adjust Var Table
+    var_table* dc_adjust_vt = new var_table;
+    dc_adjust_vt->assign("constant", var_data(0.0));
+    dc_adjust_vt->assign("periods", var_data(p_dc_adjust_periods, 1, 3));
+    dc_adjust_vt->assign("en_periods", var_data(1));
+    dc_adjust_vt->assign("hourly", var_data(p_dc_adjust_hourly, 8760));
+    dc_adjust_vt->assign("en_hourly", var_data(1));
+    ssc_data_set_table(data, "dc_adjust", dc_adjust_vt);
+
+    ssc_data_set_number(data, "batt_chem", 1);
 	ssc_data_set_number(data, "inv_snl_eff_cec", 98.228355407714844);
 	ssc_data_set_number(data, "inv_pd_eff", 95);
 	ssc_data_set_number(data, "inv_cec_cg_eff_cec", 96.636390686035156);

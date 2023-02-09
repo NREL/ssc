@@ -219,8 +219,14 @@ ssc_data_t tcsdirect_steam_defaults()
     ssc_data_set_number(data, "bop_par_0", 0);
     ssc_data_set_number(data, "bop_par_1", 0.48299999999999998);
     ssc_data_set_number(data, "bop_par_2", 0);
-    ssc_data_set_number(data, "adjust:constant", 4);
-    ssc_data_set_number(data, "sf_adjust:constant", 0);
+    
+    var_table* adjust_vt = new var_table;
+    adjust_vt->assign("constant", var_data(4.0));
+    ssc_data_set_table(data, "adjust", adjust_vt);
+
+    var_table* sf_adjust_vt = new var_table;
+    sf_adjust_vt->assign("constant", var_data(0.0));
+    ssc_data_set_table(data, "sf_adjust", sf_adjust_vt);
 
     return data;
 }

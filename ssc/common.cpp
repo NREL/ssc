@@ -1044,7 +1044,7 @@ bool adjustment_factors::setup(int nsteps, int analysis_period) //nsteps is set 
 	}
 
 //    if (m_cm->is_assigned(m_prefix + ":timeindex"))
-    if (table.is_assigned("timeindex") && table.is_assigned("timeindex"))
+    if (table.is_assigned("timeindex"))
     {
         size_t n;
         int steps_per_hour = nsteps / 8760;

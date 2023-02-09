@@ -377,8 +377,15 @@ void pvsamv_nofinancial_default(ssc_data_t& data)
     ssc_data_set_number(data, "inv_pd_pnt", 0);
     ssc_data_set_number(data, "inv_pd_vdco", 310);
     ssc_data_set_number(data, "inv_pd_vdcmax", 600);
-    ssc_data_set_number(data, "adjust:constant", 0);
-    ssc_data_set_number(data, "dc_adjust:constant", 0);
+
+    var_table* adjust_vt = new var_table;
+    adjust_vt->assign("constant", var_data(0.0));
+    ssc_data_set_table(data, "adjust", adjust_vt);
+
+    var_table* dc_adjust_vt = new var_table;
+    dc_adjust_vt->assign("constant", var_data(0.0));
+    ssc_data_set_table(data, "dc_adjust", dc_adjust_vt);
+
     ssc_data_set_number(data, "inv_snl_eff_cec", 96.636932373046875);
     ssc_data_set_number(data, "inv_pd_eff", 95);
     ssc_data_set_number(data, "inv_cec_cg_eff_cec", 96.636306762695313);
@@ -432,8 +439,15 @@ void belpe_default(ssc_data_t& data)
 void battery_data_default(ssc_data_t& data) {
 	ssc_data_set_number(data, "en_batt", 0);
 	ssc_data_set_number(data, "batt_replacement_option", 0);
-	ssc_data_set_number(data, "adjust:constant", 0);
-	ssc_data_set_number(data, "dc_adjust:constant", 0);
+
+    var_table* adjust_vt = new var_table;
+    adjust_vt->assign("constant", var_data(0.0));
+    ssc_data_set_table(data, "adjust", adjust_vt);
+
+    var_table* dc_adjust_vt = new var_table;
+    dc_adjust_vt->assign("constant", var_data(0.0));
+    ssc_data_set_table(data, "dc_adjust", dc_adjust_vt);
+
 	ssc_data_set_number(data, "batt_chem", 1);
 	ssc_data_set_number(data, "inv_snl_eff_cec", 96.636932373046875);
 	ssc_data_set_number(data, "inv_pd_eff", 95);

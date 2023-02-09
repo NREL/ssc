@@ -85,8 +85,12 @@ int windpower_nofinancial_testfile(ssc_data_t &data)
 	ssc_data_set_array(data, "wind_farm_xCoordinates", xcoord, 32);
 	ssc_data_set_array(data, "wind_farm_yCoordinates", ycoord, 32);
 	ssc_data_set_number(data, "wind_farm_wake_model", 0);
-	ssc_data_set_number(data, "adjust:constant", 0);
 	
+    var_table* adjust_vt = new var_table;
+    adjust_vt->assign("constant", var_data(0.0));
+    ssc_data_set_table(data, "adjust", adjust_vt);
+
+
 	return 0;
 }
 

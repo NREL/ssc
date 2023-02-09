@@ -55,7 +55,9 @@ GTEST_API_ int main(int argc, char **argv) {
     //    filter to include
     //    ::testing::GTEST_FLAG(filter) = "CmodPVWatts*:CMPvwatts*";
     //    ::testing::GTEST_FLAG(filter) = "SAM_as_JSON_test.*";
-    
+
+    // ::testing::GTEST_FLAG(filter) = "csp_tower.PowerTowerCmod.Default_NoFinancial*";
+
     //    filter to exclude
     //    ::testing::GTEST_FLAG(filter) = "-PVSmoothing_lib_battery_dispatch*";
 

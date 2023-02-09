@@ -148,7 +148,11 @@ ssc_data_t etes_etes_defaults()
     ssc_data_set_number(data, "const_per_upfront_rate3", 0);
     ssc_data_set_number(data, "const_per_upfront_rate4", 0);
     ssc_data_set_number(data, "const_per_upfront_rate5", 0);
-    ssc_data_set_number(data, "adjust:constant", 0);
+
+    var_table* adjust_vt = new var_table;
+    adjust_vt->assign("constant", var_data(0.0));
+    ssc_data_set_table(data, "adjust", adjust_vt);
+
     ssc_data_set_number(data, "ppa_soln_mode", 1);
 
     /*
