@@ -213,11 +213,16 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, LossAdjustmentLifetime) {
 
     //ssc_data_set_array(data, "adjust:timeindex", (ssc_number_t*)timeindex, 1);
     // First, get existing adjust var table
-    var_table* adjust_vt = static_cast<var_table*>(ssc_data_get_table(data, "adjust"));
+    ssc_data_unassign(data, "adjust");
+//    var_table* adjust_vt = static_cast<var_table*>(ssc_data_get_table(data, "adjust"));
+    auto adjust_vt = ssc_data_create();
     // Then set timeindex
-    adjust_vt->assign("timeindex", var_data(timeindex, 1));
+//    adjust_vt->assign("constant", var_data(0.0));
+//    adjust_vt->assign("timeindex", var_data(timeindex, 1));
+    ssc_data_set_number(adjust_vt, "constant", 0.0);
+    ssc_data_set_array(adjust_vt, "timeindex", timeindex, 1);
     ssc_data_set_table(data, "adjust", adjust_vt);
-
+//    ssc_data_free(adjust_vt);
     pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
     ssc_number_t annual_energy;
     ssc_data_get_number(data, "annual_energy", &annual_energy);
@@ -229,9 +234,10 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, LossAdjustmentLifetime) {
         timeindex_annual[i] = i*100;
     //ssc_data_set_array(data, "adjust:timeindex", (ssc_number_t*)timeindex_annual, 2);
     // First, get existing adjust var table
-    adjust_vt = static_cast<var_table*>(ssc_data_get_table(data, "adjust"));
+ //   adjust_vt = static_cast<var_table*>(ssc_data_get_table(data, "adjust"));
     // Then set timeindex
-    adjust_vt->assign("timeindex", var_data(timeindex_annual, 2));
+//    adjust_vt->assign("timeindex", var_data(timeindex_annual, 2));
+    ssc_data_set_array(adjust_vt, "timeindex", timeindex_annual, 2);
     ssc_data_set_table(data, "adjust", adjust_vt);
 
     pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
@@ -250,9 +256,10 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, LossAdjustmentLifetime) {
             timeindex_monthly[i] = 0.0;
     //ssc_data_set_array(data, "adjust:timeindex", (ssc_number_t*)timeindex_monthly, 24);
     // First, get existing adjust var table
-    adjust_vt = static_cast<var_table*>(ssc_data_get_table(data, "adjust"));
+//    adjust_vt = static_cast<var_table*>(ssc_data_get_table(data, "adjust"));
     // Then set timeindex
-    adjust_vt->assign("timeindex", var_data(timeindex_monthly, 24));
+ //   adjust_vt->assign("timeindex", var_data(timeindex_monthly, 24));
+    ssc_data_set_array(adjust_vt, "timeindex", timeindex_monthly, 24);
     ssc_data_set_table(data, "adjust", adjust_vt);
 
 
@@ -272,9 +279,10 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, LossAdjustmentLifetime) {
 
     //ssc_data_set_array(data, "adjust:timeindex", (ssc_number_t*)timeindex_weekly, 104); //52 Weeks * 2
     // First, get existing adjust var table
-    adjust_vt = static_cast<var_table*>(ssc_data_get_table(data, "adjust"));
+ //   adjust_vt = static_cast<var_table*>(ssc_data_get_table(data, "adjust"));
     // Then set timeindex
-    adjust_vt->assign("timeindex", var_data(timeindex_weekly, 104));
+//    adjust_vt->assign("timeindex", var_data(timeindex_weekly, 104));
+    ssc_data_set_array(adjust_vt, "timeindex", timeindex_weekly, 104);
     ssc_data_set_table(data, "adjust", adjust_vt);
 
 
@@ -293,9 +301,10 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, LossAdjustmentLifetime) {
             timeindex_daily[i] = 0.0;
     //ssc_data_set_array(data, "adjust:timeindex", (ssc_number_t*)timeindex_daily, 730); //365days * 2
     // First, get existing adjust var table
-    adjust_vt = static_cast<var_table*>(ssc_data_get_table(data, "adjust"));
+ //   adjust_vt = static_cast<var_table*>(ssc_data_get_table(data, "adjust"));
     // Then set timeindex
-    adjust_vt->assign("timeindex", var_data(timeindex_daily, 730));
+//    adjust_vt->assign("timeindex", var_data(timeindex_daily, 730));
+    ssc_data_set_array(adjust_vt, "timeindex", timeindex_daily, 730);
     ssc_data_set_table(data, "adjust", adjust_vt);
 
 
@@ -314,9 +323,10 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, LossAdjustmentLifetime) {
             timeindex_hourly[i] = 0.0;
     //ssc_data_set_array(data, "adjust:timeindex", (ssc_number_t*)timeindex_hourly, 17520); //365days * 2
     // First, get existing adjust var table
-    adjust_vt = static_cast<var_table*>(ssc_data_get_table(data, "adjust"));
+//    adjust_vt = static_cast<var_table*>(ssc_data_get_table(data, "adjust"));
     // Then set timeindex
-    adjust_vt->assign("timeindex", var_data(timeindex_hourly, 17520));
+//    adjust_vt->assign("timeindex", var_data(timeindex_hourly, 17520));
+    ssc_data_set_array(adjust_vt, "timeindex", timeindex_hourly, 17520);
     ssc_data_set_table(data, "adjust", adjust_vt);
 
     pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
@@ -334,9 +344,10 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, LossAdjustmentLifetime) {
             timeindex_subhourly[i] = 0.0;
     //ssc_data_set_array(data, "adjust:timeindex", (ssc_number_t*)timeindex_subhourly, 35040); //365days * 2 steps per hour * 2 yr
     // First, get existing adjust var table
-    adjust_vt = static_cast<var_table*>(ssc_data_get_table(data, "adjust"));
+//    adjust_vt = static_cast<var_table*>(ssc_data_get_table(data, "adjust"));
     // Then set timeindex
-    adjust_vt->assign("timeindex", var_data(timeindex_subhourly, 35040));
+//    adjust_vt->assign("timeindex", var_data(timeindex_subhourly, 35040));
+    ssc_data_set_array(adjust_vt, "timeindex", timeindex_subhourly, 35040);
     ssc_data_set_table(data, "adjust", adjust_vt);
 
     pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
@@ -344,6 +355,9 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, LossAdjustmentLifetime) {
     EXPECT_NEAR(annual_energy, 8833.8, m_error_tolerance_hi);
     ssc_data_get_number(data, "kwh_per_kw", &kwh_per_kw);
     EXPECT_NEAR(kwh_per_kw, 1883, m_error_tolerance_hi) << "Energy yield"; // Same as 1 year because year 2 has 0 production
+
+    ssc_data_free(adjust_vt);
+
 }
 
 TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, LossAdjustmentNonLifetime) {
