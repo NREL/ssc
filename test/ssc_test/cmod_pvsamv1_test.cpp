@@ -211,18 +211,11 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, LossAdjustmentLifetime) {
     for (int i = 0; i < 1; i++)
         timeindex[i] = 100;
 
-    //ssc_data_set_array(data, "adjust:timeindex", (ssc_number_t*)timeindex, 1);
-    // First, get existing adjust var table
     ssc_data_unassign(data, "adjust");
-//    var_table* adjust_vt = static_cast<var_table*>(ssc_data_get_table(data, "adjust"));
     auto adjust_vt = ssc_data_create();
-    // Then set timeindex
-//    adjust_vt->assign("constant", var_data(0.0));
-//    adjust_vt->assign("timeindex", var_data(timeindex, 1));
     ssc_data_set_number(adjust_vt, "constant", 0.0);
     ssc_data_set_array(adjust_vt, "timeindex", timeindex, 1);
     ssc_data_set_table(data, "adjust", adjust_vt);
-//    ssc_data_free(adjust_vt);
     pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
     ssc_number_t annual_energy;
     ssc_data_get_number(data, "annual_energy", &annual_energy);
@@ -232,11 +225,6 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, LossAdjustmentLifetime) {
     double timeindex_annual[2];
     for (int i = 0; i < 2; i++)
         timeindex_annual[i] = i*100;
-    //ssc_data_set_array(data, "adjust:timeindex", (ssc_number_t*)timeindex_annual, 2);
-    // First, get existing adjust var table
- //   adjust_vt = static_cast<var_table*>(ssc_data_get_table(data, "adjust"));
-    // Then set timeindex
-//    adjust_vt->assign("timeindex", var_data(timeindex_annual, 2));
     ssc_data_set_array(adjust_vt, "timeindex", timeindex_annual, 2);
     ssc_data_set_table(data, "adjust", adjust_vt);
 
@@ -254,11 +242,6 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, LossAdjustmentLifetime) {
             timeindex_monthly[i] = 100.0;
         else
             timeindex_monthly[i] = 0.0;
-    //ssc_data_set_array(data, "adjust:timeindex", (ssc_number_t*)timeindex_monthly, 24);
-    // First, get existing adjust var table
-//    adjust_vt = static_cast<var_table*>(ssc_data_get_table(data, "adjust"));
-    // Then set timeindex
- //   adjust_vt->assign("timeindex", var_data(timeindex_monthly, 24));
     ssc_data_set_array(adjust_vt, "timeindex", timeindex_monthly, 24);
     ssc_data_set_table(data, "adjust", adjust_vt);
 
@@ -277,11 +260,6 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, LossAdjustmentLifetime) {
         else
             timeindex_weekly[i] = 0.0;
 
-    //ssc_data_set_array(data, "adjust:timeindex", (ssc_number_t*)timeindex_weekly, 104); //52 Weeks * 2
-    // First, get existing adjust var table
- //   adjust_vt = static_cast<var_table*>(ssc_data_get_table(data, "adjust"));
-    // Then set timeindex
-//    adjust_vt->assign("timeindex", var_data(timeindex_weekly, 104));
     ssc_data_set_array(adjust_vt, "timeindex", timeindex_weekly, 104);
     ssc_data_set_table(data, "adjust", adjust_vt);
 
@@ -299,11 +277,6 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, LossAdjustmentLifetime) {
             timeindex_daily[i] = 100;
         else
             timeindex_daily[i] = 0.0;
-    //ssc_data_set_array(data, "adjust:timeindex", (ssc_number_t*)timeindex_daily, 730); //365days * 2
-    // First, get existing adjust var table
- //   adjust_vt = static_cast<var_table*>(ssc_data_get_table(data, "adjust"));
-    // Then set timeindex
-//    adjust_vt->assign("timeindex", var_data(timeindex_daily, 730));
     ssc_data_set_array(adjust_vt, "timeindex", timeindex_daily, 730);
     ssc_data_set_table(data, "adjust", adjust_vt);
 
@@ -321,11 +294,6 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, LossAdjustmentLifetime) {
             timeindex_hourly[i] = 100;
         else
             timeindex_hourly[i] = 0.0;
-    //ssc_data_set_array(data, "adjust:timeindex", (ssc_number_t*)timeindex_hourly, 17520); //365days * 2
-    // First, get existing adjust var table
-//    adjust_vt = static_cast<var_table*>(ssc_data_get_table(data, "adjust"));
-    // Then set timeindex
-//    adjust_vt->assign("timeindex", var_data(timeindex_hourly, 17520));
     ssc_data_set_array(adjust_vt, "timeindex", timeindex_hourly, 17520);
     ssc_data_set_table(data, "adjust", adjust_vt);
 
@@ -342,11 +310,6 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, LossAdjustmentLifetime) {
             timeindex_subhourly[i] = 100;
         else
             timeindex_subhourly[i] = 0.0;
-    //ssc_data_set_array(data, "adjust:timeindex", (ssc_number_t*)timeindex_subhourly, 35040); //365days * 2 steps per hour * 2 yr
-    // First, get existing adjust var table
-//    adjust_vt = static_cast<var_table*>(ssc_data_get_table(data, "adjust"));
-    // Then set timeindex
-//    adjust_vt->assign("timeindex", var_data(timeindex_subhourly, 35040));
     ssc_data_set_array(adjust_vt, "timeindex", timeindex_subhourly, 35040);
     ssc_data_set_table(data, "adjust", adjust_vt);
 
@@ -368,11 +331,11 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, LossAdjustmentNonLifetime) {
     double timeindex[1];
     for (int i = 0; i < 1; i++)
         timeindex[i] = 100;
-    //ssc_data_set_array(data, "adjust:timeindex", (ssc_number_t*)timeindex, 1);
-    // First, get existing adjust var table
-    var_table* adjust_vt = static_cast<var_table*>(ssc_data_get_table(data, "adjust"));
-    // Then set timeindex
-    adjust_vt->assign("timeindex", var_data(timeindex, 1));
+    
+    ssc_data_unassign(data, "adjust");
+    auto adjust_vt = ssc_data_create();
+    ssc_data_set_number(adjust_vt, "constant", 0.0);
+    ssc_data_set_array(adjust_vt, "timeindex", timeindex, 1);
     ssc_data_set_table(data, "adjust", adjust_vt);
 
     int pvsam_errors = run_module(data, "pvsamv1");
@@ -384,11 +347,7 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, LossAdjustmentNonLifetime) {
     double timeindex_annual[1];
     for (int i = 0; i < 1; i++)
         timeindex_annual[i] = 100;
-    //ssc_data_set_array(data, "adjust:timeindex", (ssc_number_t*)timeindex_annual, 1);
-    // First, get existing adjust var table
-    adjust_vt = static_cast<var_table*>(ssc_data_get_table(data, "adjust"));
-    // Then set timeindex
-    adjust_vt->assign("timeindex", var_data(timeindex_annual, 1));
+    ssc_data_set_array(adjust_vt, "timeindex", timeindex_annual, 1);
     ssc_data_set_table(data, "adjust", adjust_vt);
 
     pvsam_errors = run_module(data, "pvsamv1");
@@ -405,11 +364,7 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, LossAdjustmentNonLifetime) {
             timeindex_monthly[i] = 100.0;
         else
             timeindex_monthly[i] = 0.0;
-    //ssc_data_set_array(data, "adjust:timeindex", (ssc_number_t*)timeindex_monthly, 12);
-    // First, get existing adjust var table
-    adjust_vt = static_cast<var_table*>(ssc_data_get_table(data, "adjust"));
-    // Then set timeindex
-    adjust_vt->assign("timeindex", var_data(timeindex_monthly, 12));
+    ssc_data_set_array(adjust_vt, "timeindex", timeindex_monthly, 12);
     ssc_data_set_table(data, "adjust", adjust_vt);
 
     pvsam_errors = run_module(data, "pvsamv1");
@@ -426,11 +381,7 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, LossAdjustmentNonLifetime) {
         else
             timeindex_weekly[i] = 0.0;
 
-    //ssc_data_set_array(data, "adjust:timeindex", (ssc_number_t*)timeindex_weekly, 52); //52 Weeks * 2
-    // First, get existing adjust var table
-    adjust_vt = static_cast<var_table*>(ssc_data_get_table(data, "adjust"));
-    // Then set timeindex
-    adjust_vt->assign("timeindex", var_data(timeindex_weekly, 52));
+    ssc_data_set_array(adjust_vt, "timeindex", timeindex_weekly, 52);
     ssc_data_set_table(data, "adjust", adjust_vt);
 
     pvsam_errors = run_module(data, "pvsamv1");
@@ -446,11 +397,7 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, LossAdjustmentNonLifetime) {
             timeindex_daily[i] = 100;
         else
             timeindex_daily[i] = 0.0;
-    //ssc_data_set_array(data, "adjust:timeindex", (ssc_number_t*)timeindex_daily, 365); //365days * 2
-    // First, get existing adjust var table
-    adjust_vt = static_cast<var_table*>(ssc_data_get_table(data, "adjust"));
-    // Then set timeindex
-    adjust_vt->assign("timeindex", var_data(timeindex_daily, 365));
+    ssc_data_set_array(adjust_vt, "timeindex", timeindex_daily, 365);
     ssc_data_set_table(data, "adjust", adjust_vt);
 
     pvsam_errors = run_module(data, "pvsamv1");
@@ -466,11 +413,7 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, LossAdjustmentNonLifetime) {
             timeindex_hourly[i] = 100;
         else
             timeindex_hourly[i] = 0.0;
-    //ssc_data_set_array(data, "adjust:timeindex", (ssc_number_t*)timeindex_hourly, 8760); //365days * 2
-    // First, get existing adjust var table
-    adjust_vt = static_cast<var_table*>(ssc_data_get_table(data, "adjust"));
-    // Then set timeindex
-    adjust_vt->assign("timeindex", var_data(timeindex_hourly, 8760));
+    ssc_data_set_array(adjust_vt, "timeindex", timeindex_hourly, 8760);
     ssc_data_set_table(data, "adjust", adjust_vt);
 
     pvsam_errors = run_module(data, "pvsamv1");
@@ -487,10 +430,7 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, LossAdjustmentNonLifetime) {
         else
             timeindex_subhourly[i] = 0.0;
     ssc_data_set_array(data, "adjust:timeindex", (ssc_number_t*)timeindex_subhourly, 17520); //365days * 2 steps per hour * 2 yr
-    // First, get existing adjust var table
-    adjust_vt = static_cast<var_table*>(ssc_data_get_table(data, "adjust"));
-    // Then set timeindex
-    adjust_vt->assign("timeindex", var_data(timeindex_subhourly, 17520));
+    ssc_data_set_array(adjust_vt, "timeindex", timeindex_subhourly, 17520);
     ssc_data_set_table(data, "adjust", adjust_vt);
 
     pvsam_errors = run_module(data, "pvsamv1");
@@ -902,20 +842,18 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelLosses)
 
     // 2. Modify availability losses
     ssc_number_t p_adjust[3] = { 5268, 5436, 50 };
-    //ssc_data_set_matrix(data, "adjust:periods", p_adjust, 1, 3);
-    // First, get existing adjust var table
-    var_table* adjust_vt = static_cast<var_table*>(ssc_data_get_table(data, "adjust"));
-    // Then set timeindex
-    adjust_vt->assign("timeindex", var_data(p_adjust, 1, 3));
+    auto adjust_vt = ssc_data_create();
+    ssc_data_set_number(adjust_vt, "constant", 0.0);
+    ssc_data_set_number(adjust_vt, "en_periods", 1);
+    ssc_data_set_matrix(adjust_vt, "periods", p_adjust, 1, 3);
     ssc_data_set_table(data, "adjust", adjust_vt);
 
     ssc_number_t p_dc_adjust[3] = { 5088, 5256, 100 };
-    //(data, "dc_adjust:periods", p_dc_adjust, 1, 3);
-    // First, get existing adjust var table
-    var_table* dc_adjust_vt = static_cast<var_table*>(ssc_data_get_table(data, "dc_adjust"));
-    // Then set timeindex
-    dc_adjust_vt->assign("timeindex", var_data(p_dc_adjust, 1, 3));
-    ssc_data_set_table(data, "adjust", dc_adjust_vt);
+    auto dc_adjust_vt = ssc_data_create();
+    ssc_data_set_number(dc_adjust_vt, "constant", 0.0);
+    ssc_data_set_number(dc_adjust_vt, "en_periods", 1);
+    ssc_data_set_matrix(dc_adjust_vt, "periods", p_dc_adjust, 1, 3);
+    ssc_data_set_table(data, "dc_adjust", dc_adjust_vt);
 
     pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
     EXPECT_FALSE(pvsam_errors);
