@@ -58,6 +58,8 @@ GTEST_API_ int main(int argc, char **argv) {
 
     // ::testing::GTEST_FLAG(filter) = "csp_tower.PowerTowerCmod.Default_NoFinancial*";
 
+    // ::testing::GTEST_FLAG(filter) = "CmodCashLoanTest*"; // .DiscountedPayback * ";
+
     //    filter to exclude
     //    ::testing::GTEST_FLAG(filter) = "-PVSmoothing_lib_battery_dispatch*";
 
