@@ -18,6 +18,9 @@
     "inv_eff" : 96,
     "batt_simple_enable" : 0,
     "adjust:constant" : 0,
+	"adjust" : {
+    "constant" : 0
+	},
 	"number_compute_modules" : 0,
 	"number_metrics" : 0
 }
