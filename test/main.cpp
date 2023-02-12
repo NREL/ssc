@@ -62,7 +62,7 @@ GTEST_API_ int main(int argc, char **argv) {
     // ::testing::GTEST_FLAG(filter) = "CMPvwattsv8Integration_cmod_pvwattsv8.DefaultNoFinancialModel_cmod_pvwattsv8*"; // "CMPvsamv1PowerIntegration_cmod_pvsamv1*";
     // ::testing::GTEST_FLAG(filter) = "CmodPVWattsv8Test*";
     // ::testing::GTEST_FLAG(filter) = "CmodSaleLeasebackTest*";
-
+    
     //    filter to exclude
     //    ::testing::GTEST_FLAG(filter) = "-PVSmoothing_lib_battery_dispatch*";
 
