@@ -310,7 +310,13 @@
 	"en_batt" : 1,
 	"en_standalone_batt" : 0,
 	"adjust:constant" : 0,
+	"adjust" : {
+    "constant" : 0
+	},
 	"dc_adjust:constant" : 0,
+	"dc_adjust" : {
+    "constant" : 0
+	},
 	"batt_chem" : 1,
 	"inv_snl_eff_cec" : 97.306612139662448,
 	"inv_pd_eff" : 95,
