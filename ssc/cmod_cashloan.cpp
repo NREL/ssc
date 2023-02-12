@@ -902,8 +902,14 @@ public:
 			cf.at(CF_om_fuel_expense,i) *= fuel_use[i];
 
             //Battery Production OM Costs
-            cf.at(CF_om_production1_expense, i) *= battery_discharged[i - 1]; //$/MWh * 0.001 MWh/kWh * kWh = $
-            cf.at(CF_om_production2_expense, i) *= fuelcell_discharged[i];
+            if (battery_discharged.size() == 1)
+                cf.at(CF_om_production1_expense, i) *= battery_discharged[0]; //$/MWh * 0.001 MWh/kWh * kWh = $
+            else
+                cf.at(CF_om_production1_expense, i) *= battery_discharged[i - 1]; //$/MWh * 0.001 MWh/kWh * kWh = $
+            if (fuelcell_discharged.size() == 1)
+                cf.at(CF_om_production2_expense, i) *= fuelcell_discharged[0];
+            else
+                cf.at(CF_om_production2_expense, i) *= fuelcell_discharged[i];
 
 			cf.at(CF_om_opt_fuel_1_expense,i) *= om_opt_fuel_1_usage;
 			cf.at(CF_om_opt_fuel_2_expense,i) *= om_opt_fuel_2_usage;
