@@ -53,8 +53,8 @@ GTEST_API_ int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
 
     //    filter to include
-    //    ::testing::GTEST_FLAG(filter) = "CmodPVWatts*:CMPvwatts*";
-    //    ::testing::GTEST_FLAG(filter) = "CMPvsamv1PowerIntegration_cmod_pvsamv1.LossAdjustmentLifetime";
+    //    ::testing::GTEST_FLAG(filter) = "save_as_JSON_test_run.pt*";
+    //    ::testing::GTEST_FLAG(filter) = "CMPvsamv1PowerIntegration_cmod_pvsamv1.NoFinancialModelShading";
 
     // ::testing::GTEST_FLAG(filter) = "csp_tower.PowerTowerCmod.Default_NoFinancial*";
 

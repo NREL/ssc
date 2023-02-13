@@ -764,10 +764,25 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelShading)
     // 1. Add 3D Shading
     pairs["subarray1_azimuth"] = 90;
     pairs["subarray2_azimuth"] = 270;
+    /*
     set_matrix(data, "subarray1_shading:timestep", subarray1_shading, 8760, 2);
     set_matrix(data, "subarray2_shading:timestep", subarray2_shading, 8760, 2);
     pairs["subarray1_shading:diff"] = 10.010875701904297;
     pairs["subarray2_shading:diff"] = 10.278481483459473;
+    */
+    var_table* vt_shading1 = new var_table;
+    vt_shading1->assign("en_timestep", var_data(1));
+    set_matrix(vt_shading1, "timestep", subarray1_shading, 8760, 2);
+    vt_shading1->assign("en_diff", var_data(1));
+    vt_shading1->assign("diff", var_data(10.010875701904297));
+    ssc_data_set_table(data, "subarray1_shading", vt_shading1);
+
+    var_table* vt_shading2 = new var_table;
+    vt_shading2->assign("en_timestep", var_data(1));
+    set_matrix(vt_shading2, "timestep", subarray2_shading, 8760, 2);
+    vt_shading2->assign("en_diff", var_data(1));
+    vt_shading2->assign("diff", var_data(10.278481483459473));
+    ssc_data_set_table(data, "subarray2_shading", vt_shading2);
 
     pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
     EXPECT_FALSE(pvsam_errors);

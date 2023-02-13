@@ -131,7 +131,7 @@ TEST(save_as_JSON_test_run, pvwatts_mechant_plant_rapidjson_read_file_run_pvwatt
     std::ifstream test(inputs_as_JSON);
     std::string json_str((std::istreambuf_iterator<char>(test)), std::istreambuf_iterator<char>());
     auto data = json_to_ssc_data(json_str.c_str());
-    auto mod = ssc_module_create("pvwattsv7");
+    auto mod = ssc_module_create("pvwattsv8");
     char file_path[256];
     int nfc1 = sprintf(file_path, "%s/test/input_cases/general_data/phoenix_az_33.450495_-111.983688_psmv3_60_tmy.csv", SSCDIR);
     ssc_data_set_string(data, "solar_resource_file", file_path);
@@ -140,7 +140,7 @@ TEST(save_as_JSON_test_run, pvwatts_mechant_plant_rapidjson_read_file_run_pvwatt
     EXPECT_TRUE(success);
     ssc_number_t annual_energy;
     ssc_data_get_number(data, "annual_energy", &annual_energy);
-    EXPECT_NEAR(annual_energy, 88483173, 88483173 / 1e6);
+    EXPECT_NEAR(annual_energy, 211903836, 211903836 / 1e6);
     
     ssc_module_free(mod);
     ssc_data_free(data);
@@ -152,7 +152,7 @@ TEST(save_as_JSON_test_run, pvwatts_mechant_plant_rapidjson) {
     std::string json_str((std::istreambuf_iterator<char>(test)), std::istreambuf_iterator<char>());
     auto data = json_to_ssc_data(json_str.c_str());
     ssc_module_exec_set_print(0);
-    auto mod_pv = ssc_module_create("pvwattsv7");
+    auto mod_pv = ssc_module_create("pvwattsv8");
     char file_path[256];
     int nfc1 = sprintf(file_path, "%s/test/input_cases/general_data/phoenix_az_33.450495_-111.983688_psmv3_60_tmy.csv", SSCDIR);
     ssc_data_set_string(data, "solar_resource_file", file_path);
@@ -163,7 +163,7 @@ TEST(save_as_JSON_test_run, pvwatts_mechant_plant_rapidjson) {
     EXPECT_TRUE(success);
     ssc_number_t npv;
     ssc_data_get_number(data, "project_return_aftertax_npv", &npv);
-    EXPECT_NEAR(npv, -59413096, std::abs(59413096) / 1e6);
+    EXPECT_NEAR(npv, -46594417, std::abs(-46594417) / 1e6);
     
     ssc_module_free(mod_pv);
     ssc_module_free(mod_mp);
@@ -191,7 +191,7 @@ TEST(save_as_JSON_test_run, pv_batt_mechant_plant_rapidjson) {
     EXPECT_TRUE(success);
     ssc_number_t npv;
     ssc_data_get_number(data, "project_return_aftertax_npv", &npv);
-    EXPECT_NEAR(npv, -60972106, std::abs(-60972106) / 1e6);
+    EXPECT_NEAR(npv, -113359560, std::abs(-113359560) / 1e6);
 
     ssc_module_free(mod_pv);
     ssc_module_free(mod_grid);
@@ -219,7 +219,7 @@ TEST(save_as_JSON_test_run, pt_mechant_plant_rapidjson) {
     EXPECT_TRUE(success);
     ssc_number_t npv;
     ssc_data_get_number(data, "project_return_aftertax_npv", &npv);
-    EXPECT_NEAR(npv, -570639509, std::abs(-570639509) / 1e7);
+    EXPECT_NEAR(npv, -332321263, std::abs(-332321263) / 1e7);
     
     ssc_module_free(mod_pv);
     ssc_module_free(mod_grid);
