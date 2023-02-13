@@ -75,16 +75,45 @@ public:
         E_PRESSURE_DROP,	//[bar]
 
         E_W_DOT_SCA_TRACK,	//[MWe]
-        E_W_DOT_PUMP		//[MWe]
+        E_W_DOT_PUMP,		//[MWe]
+
+
+        // From Fresnel
+        E_THETA_L,          //[deg]
+        E_PHI_T,
+        E_ETA_OPTICAL,
+        //E_EQ_OPT_EFF,
+
+        E_SF_DEF,
+        E_Q_INC_SF_TOT,
+        E_Q_ABS_TOT,
+        E_Q_DUMP,
+        E_Q_LOSS_TOT,
+        E_PIPE_HL,
+        E_Q_AVAIL,
+        E_Q_LOSS_SPEC_TOT,
+        E_ETA_THERMAL,
+        E_E_BAL_STARTUP,
+        E_M_DOT_AVAIL,
+        E_M_DOT_HTF2,
+        E_DP_TOT,
+        E_T_SYS_C,
+        E_T_SYS_H,
+        E_T_LOOP_OUTLET
+
+
     };
-    
+
+    enum struct E_loop_energy_balance_exit
+    {
+        SOLVED,
+        NaN
+    };
 
     // Private Fields
 private:
 
     // Fields in Trough
-
-    C_csp_reported_outputs mc_reported_outputs;
 
     std::vector<double> m_D_runner;	              //[m]    Diameters of runner sections
     std::vector<double> m_WallThk_runner;	      //[m]    Pipe wall thicknesses of runner sections
@@ -97,7 +126,7 @@ private:
     std::vector<double> m_P_rnr_dsn;              //[bar]  Gauge pessure in runner sections at design
     std::vector<double> m_T_rnr;                  //[K]    Temperature entering runner sections
     double m_T_field_out;                         //[K]    Temperature exiting last runner, and thus exiting field
-    std::vector<double> m_P_rnr;                  //[Pa ]  Gauge pessure in runner sections
+    //std::vector<double> m_P_rnr;                  //[Pa ]  Gauge pessure in runner sections
 
     std::vector<double> m_D_hdr;	              //[m]    Diameters of header sections
     std::vector<double> m_WallThk_hdr;   	      //[m]    Pipe wall thicknesses of header sections
@@ -109,13 +138,13 @@ private:
     std::vector<double> m_T_hdr_dsn;              //[C]    Temperature entering header sections at design
     std::vector<double> m_P_hdr_dsn;              //[bar]  Gauge pessure in header sections at design
     std::vector<double> m_T_hdr;                  //[K]    Temperature entering header sections
-    std::vector<double> m_P_hdr;                  //[Pa]   Gauge pessure in header sections
+    //std::vector<double> m_P_hdr;                  //[Pa]   Gauge pessure in header sections
 
     std::vector<double> m_DP_loop;                //[bar]  Pressure drop in loop sections
     std::vector<double> m_T_loop_dsn;             //[C]    Temperature entering loop sections at design
     std::vector<double> m_P_loop_dsn;             //[bar]  Gauge pessure in loop sections at design
     std::vector<double> m_T_loop;                 //[K]    Temperature entering loop sections
-    std::vector<double> m_P_loop;                 //[Pa]   Gauge pessure in loop sections
+    //std::vector<double> m_P_loop;                 //[Pa]   Gauge pessure in loop sections
 
     OpticalDataTable optical_table;
     
@@ -192,8 +221,8 @@ private:
     double m_RowShadow_ave;		//[-] Field average row shadowing loss
     double m_EndLoss_ave;		//[-] Field average end loss
 
-    double m_costh;				//[-] Cosine of the incidence angle between sun and trough aperture
-    double m_dni_costh;			//[W/m2] DNI x cos(theta) product
+    //double m_costh;				//[-] Cosine of the incidence angle between sun and trough aperture
+    //double m_dni_costh;			//[W/m2] DNI x cos(theta) product
     double m_W_dot_sca_tracking;	//[MWe] SCA tracking power
     // Collector-receiver equivalent(weighted over variants AND all SCAs) optical efficiency
     // m_ColOptEff * m_Shadowing * m_Dirt_HCE * m_alpha_abs * m_tau_envelope
@@ -315,15 +344,23 @@ private:
     C_csp_collector_receiver::E_csp_cr_modes m_operating_mode_converged;
     C_csp_collector_receiver::E_csp_cr_modes m_operating_mode;
 
+    const double fp_offset = 0; // freeze protection offset
+
     // ***********************
     // ***** T  E  M  P ******
     double m_step_recirc;
+
+    double m_current_hr;
+    double m_current_day;
+
+    
 
     // Fields NOT in Trough
     double N_run_mult;
     bool
         no_fp,	//Freeze protection flag
         is_fieldgeom_init;	//Flag to indicate whether the field geometry has been initialized
+    
 
     double A_loop;
 
@@ -336,10 +373,10 @@ private:
 
     double m_htf_prop_min;
 
-    double eta_optical;		//Collector total optical efficiency
+    double m_eta_optical;		//Collector total optical efficiency
     double eta_opt_fixed;
-    double phi_t;		//Solar incidence angle in the collector transversal plane
-    double theta_L;		//Solar incidence angle in the collector longitudinal plane
+    double m_phi_t = 0;		    //Solar incidence angle in the collector transversal plane
+    double m_theta_L = 0;		//Solar incidence angle in the collector longitudinal plane
 
     emit_table m_epsilon_abs;
 
@@ -348,6 +385,8 @@ private:
     std::vector<double> mv_HCEguessargs;
 
     string m_piping_summary;
+
+    double m_sf_def;
 
     // Private Methods
 private:
@@ -363,13 +402,8 @@ private:
 
     void set_output_value();
 
-    // TEMPORARY
-    int x(const C_csp_weatherreader::S_outputs& weather,
-        double T_htf_cold_in /*K*/, double m_dot_htf_loop /*kg/s*/,
-        const C_csp_solver_sim_info& sim_info);
-
     // This method is designed to pass the timestep integrated HTF temperature to successive energy balance nodes
-    int loop_energy_balance_T_t_int(const C_csp_weatherreader::S_outputs& weather,
+    E_loop_energy_balance_exit loop_energy_balance_T_t_int(const C_csp_weatherreader::S_outputs& weather,
         double T_htf_cold_in /*K*/, double m_dot_htf_loop /*kg/s*/,
         const C_csp_solver_sim_info& sim_info);
 
@@ -378,7 +412,7 @@ private:
     void header_design(int nhsec, int nfsec, int nrunsec, double rho, double V_max, double V_min, double m_dot,
         vector<double>& D_hdr, vector<double>& D_runner, std::string*);
 
-    // Public Input Fields
+    // Public Fields
 public:
 
     int m_nMod;                                 // Number of collector modules in a loop   (m_nSCA)
@@ -473,16 +507,7 @@ public:
 
     double m_L_rnr_pb;                            //[m] Length of hot or cold runner pipe around the power block
 
-    // Removed
-    //double m_Row_Distance;	//[m] Spacing between rows (centerline to centerline)
-    //double m_wind_stow_speed;//[m/s] Wind speed at and above which the collectors will be stowed
-    //bool m_accept_init;		                    //[-] In acceptance testing mode - require steady-state startup
-    //int m_accept_loc;	// Treat as = 1	                    //[-] In acceptance testing mode - temperature sensor location (1=hx,2=loop)
-    //bool m_calc_design_pipe_vals;    // Treat as FALSE           //[-] Should the HTF state be calculated at design conditions
-    //bool m_is_using_input_gen;  // Treat as FALSE
-
-    // Questionable
-    double m_I_b;		//Direct normal incident solar irradiation
+    C_csp_reported_outputs mc_reported_outputs;
 
     // Methods
 public:
