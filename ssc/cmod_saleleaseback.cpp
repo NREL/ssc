@@ -1085,12 +1085,8 @@ public:
         int add_om_num_types = as_integer("add_om_num_types");
         ssc_number_t nameplate1 = 0;
         ssc_number_t nameplate2 = 0;
-        std::vector<double> battery_discharged;
-        std::vector<double> fuelcell_discharged;
-        for (int i = 0; i <= nyears; i++) {
-            battery_discharged.push_back(0);
-            fuelcell_discharged.push_back(0);
-        }
+        std::vector<double> battery_discharged(nyears,0);
+        std::vector<double> fuelcell_discharged(nyears+1,0);
 
         if (add_om_num_types > 0) //PV Battery
         {
@@ -1101,14 +1097,27 @@ public:
             if (as_integer("en_batt") == 1 || as_integer("en_standalone_batt") == 1)
                 battery_discharged = as_vector_double("batt_annual_discharge_energy");
         }
-        if (add_om_num_types > 1) // PV Battery Fuel Cell
+        if (battery_discharged.size() == 1) { // ssc #992
+            double first_val = battery_discharged[0];
+            battery_discharged.resize(nyears, first_val);
+        }
+        if (battery_discharged.size() != nyears)
+            throw exec_error("saleleaseback", util::format("battery_discharged size (%d) incorrect",(int)battery_discharged.size()));
+
+        if (add_om_num_types > 1)
         {
-            escal_or_annual(CF_om_fixed2_expense, nyears, "om_fuelcell_fixed_cost", inflation_rate, 1.0, false, as_double("om_fixed_escal") * 0.01);
-            escal_or_annual(CF_om_production2_expense, nyears, "om_fuelcell_variable_cost", inflation_rate, 0.001, false, as_double("om_production_escal") * 0.01);
-            escal_or_annual(CF_om_capacity2_expense, nyears, "om_fuelcell_capacity_cost", inflation_rate, 1.0, false, as_double("om_capacity_escal") * 0.01);
+            escal_or_annual(CF_om_fixed2_expense, nyears, "om_fuelcell_fixed_cost", inflation_rate, 1.0, false, as_double("om_fixed_escal")*0.01);
+            escal_or_annual(CF_om_production2_expense, nyears, "om_fuelcell_variable_cost", inflation_rate, 0.001, false, as_double("om_production_escal")*0.01);
+            escal_or_annual(CF_om_capacity2_expense, nyears, "om_fuelcell_capacity_cost", inflation_rate, 1.0, false, as_double("om_capacity_escal")*0.01);
             nameplate2 = as_number("om_fuelcell_nameplate");
             fuelcell_discharged = as_vector_double("fuelcell_annual_energy_discharged");
         }
+        if (fuelcell_discharged.size()== 2) { // ssc #992
+            double first_val = fuelcell_discharged[1];
+            fuelcell_discharged.resize(nyears+1, first_val);
+         }
+        if (fuelcell_discharged.size() != nyears+1)
+            throw exec_error("saleleaseback", util::format("fuelcell_discharged size (%d) incorrect",(int)fuelcell_discharged.size()));
 
 
         // battery cost - replacement from lifetime analysis
