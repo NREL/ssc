@@ -122,7 +122,7 @@ static var_info _cm_vtab_fresnel_physical[] = {
     { SSC_INPUT,    SSC_NUMBER,         "T_loop_in_des",          "Design loop inlet temperature",                                                         "C",             "",  "controller",            "*",        "",              ""},
     { SSC_INPUT,    SSC_NUMBER,         "T_loop_out",             "Target loop outlet temperature",                                                        "C",             "",  "controller",            "*",        "",              ""},
     { SSC_INPUT,    SSC_NUMBER,         "Fluid",                  "Field HTF fluid number",                                                                "",              "",  "controller",            "*",        "INTEGER",       ""},
-    { SSC_INPUT,    SSC_NUMBER,         "T_field_ini",            "Initial field temperature",                                                             "C",             "",  "controller",            "*",        "",              ""},
+    //{ SSC_INPUT,    SSC_NUMBER,         "T_field_ini",            "Initial field temperature",                                                             "C",             "",  "controller",            "*",        "",              ""},
     { SSC_INPUT,    SSC_MATRIX,         "field_fl_props",         "Fluid property data",                                                                   "",              "",  "controller",            "*",        "",              ""},
     { SSC_INPUT,    SSC_NUMBER,         "T_fp",                   "Freeze protection temperature (heat trace activation temperature)",                     "C",             "",  "controller",            "*",        "",              ""},
     { SSC_INPUT,    SSC_NUMBER,         "I_bn_des",               "Solar irradiation at design",                                                           "W/m2",          "",  "controller",            "*",        "",              ""},
@@ -377,7 +377,7 @@ static var_info _cm_vtab_fresnel_physical[] = {
                                                                                                                                      
     // Solar Field (from fresnel)                                                                                                    
     { SSC_OUTPUT,       SSC_ARRAY,       "theta_L",                   "Field collector incidence angle - longitudinal",              "deg",          "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "phi_t",                     "Field collector incidence angle - transversal",               "deg",          "",               "solar_field",    " * ",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "phi_t",                     "Field collector incidence angle - transversal",               "deg",          "",               "solar_field",    "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "eta_optical",               "Field collector optical efficiency",                          "",             "",               "solar_field",    "*",                       "",                      "" },
     //{ SSC_OUTPUT,       SSC_ARRAY,       "EqOptEff",          "Field collector and receiver optical efficiency",                                                          "",          "",               "solar_field",    "*",                       "",                      "" },
 
@@ -537,6 +537,26 @@ public:
         // NOT IN TROUGH
         bool is_dispatch = false;
         bool is_dispatch_series = false;
+
+        // TES
+        // No custom TES piping
+        //bool custom_tes_pipe_sizes = false;
+        //util::matrix_t<double> tes_wallthicks(1, 1);
+        //tes_wallthicks.at(0, 0) = -1;
+        //util::matrix_t<double> tes_diams(1, 1);
+        //tes_diams.at(0, 0) = -1;
+        double init_hot_htf_percent = 0.3;
+        double cold_tank_max_heat = 25;
+        double hot_tank_max_heat = 25;
+
+        // TOU
+        // NOT in CMOD inputs
+        bool is_tod_pc_target_also_pc_max = false;
+        vector<double> f_turb_tou_periods{ 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+        size_t n_f_turbine = f_turb_tou_periods.size();
+        int csp_financial_model = 8;
+
+
 
         // Weather reader
         C_csp_weatherreader weather_reader;
@@ -873,12 +893,6 @@ public:
         // TES
         C_csp_two_tank_tes storage;
         {
-            // No custom TES piping
-            bool custom_tes_pipe_sizes = false;
-            util::matrix_t<double> tes_wallthicks(1, 1);
-            tes_wallthicks.at(0, 0) = -1;
-            util::matrix_t<double> tes_diams(1, 1);
-            tes_diams.at(0, 0) = -1;
 
             // Convert array to matrix
             util::matrix_t<double> k_tes_loss_coeffs_mat;
@@ -890,13 +904,6 @@ public:
                 k_tes_loss_coeffs_mat = util::matrix_t<double>(sizeof1, size, &k_tes_loss_coeffs_vec);
                 delete k_tes_loss_coeffs_array;
             }
-
-            // NOT in cmod inputs
-            double init_hot_htf_percent = 0.3;
-            double cold_tank_max_heat = 25;
-            double hot_tank_max_heat = 25;
-
-
 
             util::matrix_t<double> tes_lengths;
             if (is_assigned("tes_lengths")) {
@@ -932,20 +939,22 @@ public:
                 as_double("pb_pump_coef"),
                 as_boolean("tanks_in_parallel"),
                 as_double("V_tes_des"),
-                as_boolean("calc_design_pipe_vals"),
-                as_double("tes_pump_coef"),
-                as_double("eta_pump"),
-                as_boolean("has_hot_tank_bypass"),
-                as_double("T_tank_hot_inlet_min"),
-                as_boolean("custom_tes_p_loss"),
-                custom_tes_pipe_sizes,
-                k_tes_loss_coeffs_mat,
-                tes_diams,
-                tes_wallthicks,
-                tes_lengths,
-                as_double("HDR_rough"),
-                as_double("DP_SGS")
+                false
             );
+                //as_boolean("calc_design_pipe_vals"),
+                //as_double("tes_pump_coef"),
+                //as_double("eta_pump"),
+                //as_boolean("has_hot_tank_bypass"),
+                //as_double("T_tank_hot_inlet_min"),
+                //as_boolean("custom_tes_p_loss"),
+                //custom_tes_pipe_sizes,
+                //k_tes_loss_coeffs_mat,
+                //tes_diams,
+                //tes_wallthicks,
+                //tes_lengths,
+                //as_double("HDR_rough"),
+                //as_double("DP_SGS")
+            //);
 
             // Set storage outputs
             int n_wf_records = (int)weather_reader.m_weather_data_provider->nrecords();
@@ -967,12 +976,7 @@ public:
         C_csp_tou_block_schedules::S_params* tou_params = &tou.ms_params;
         double ppa_price_year1 = std::numeric_limits<double>::quiet_NaN();
         {
-            // NOT in CMOD inputs
-            bool is_tod_pc_target_also_pc_max = false;
-            bool is_dispatch = false;
-            vector<double> f_turb_tou_periods{ 1, 1, 1, 1, 1, 1, 1, 1, 1 };
-            size_t n_f_turbine = f_turb_tou_periods.size();
-            int csp_financial_model = 8;
+            
 
             tou_params->mc_csp_ops.mc_weekdays = as_matrix("weekday_schedule");
             tou_params->mc_csp_ops.mc_weekends = as_matrix("weekend_schedule");
