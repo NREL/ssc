@@ -103,7 +103,6 @@ bool tidal_turbine_calculate_powercurve(ssc_data_t data)
     double pto_efficiency, min_vel;
 
     try {
-        vt_get_number(vt, "turbine_size", &turbine_size);
         vt_get_number(vt, "tidal_turbine_rotor_diameter", &rotor_diameter);     // ssc input
         vt_get_number(vt, "number_rotors", &number_rotors);
         vt_get_number(vt, "tidal_turbine_max_cp", &max_cp);                     // ssc input
@@ -111,8 +110,6 @@ bool tidal_turbine_calculate_powercurve(ssc_data_t data)
         vt_get_number(vt, "cut_out", &cut_out);
         vt_get_matrix(vt, "tidal_resource", tidal_resource);
         vt_get_number(vt, "generator_rated_capacity", &generator_rated_capacity);
-        vt_get_number(vt, "water_depth", &water_depth);
-        vt_get_number(vt, "velocity_power_law_fit", &velocity_power_law_fit);
         vt_get_number(vt, "pto_efficiency", &pto_efficiency);
 
     }
