@@ -211,6 +211,7 @@ Irradiance_IO::Irradiance_IO(compute_module* cm, std::string cmName)
 
 void Irradiance_IO::checkWeatherFile(compute_module* cm, std::string cmName)
 {
+    size_t num_alb_errors = 0;
     for (size_t idx = 0; idx < numberOfWeatherFileRecords; idx++)
     {
         if (!weatherDataProvider->read(&weatherRecord))
@@ -275,11 +276,13 @@ void Irradiance_IO::checkWeatherFile(compute_module* cm, std::string cmName)
         }
         if (useWeatherFileAlbedo && (weatherRecord.alb <= 0 || weatherRecord.alb >= 1))
         {
-            cm->log(util::format("Out of range albedo %lg at time [y:%d m:%d d:%d h:%d minute:%lg], using monthly value",
-                weatherRecord.alb, weatherRecord.year, weatherRecord.month, weatherRecord.day, weatherRecord.hour, weatherRecord.minute), SSC_WARNING, (float)idx);
+            num_alb_errors++;
             weatherRecord.alb = 0;
         }
     }
+    if (num_alb_errors > 0)
+        cm->log(util::format("Weather file albedo has %d invalid values, using monthly value", (int)num_alb_errors), SSC_WARNING);
+
     weatherDataProvider->rewind();
 }
 

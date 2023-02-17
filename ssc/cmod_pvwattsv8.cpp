@@ -842,16 +842,8 @@ public:
                 {
                     if ((std::isfinite(wf.alb) && (wf.alb > 0 && wf.alb < 1)))
                         alb = wf.alb;
-                    else if (n_alb_errs < 5) // display warning up to 5 times
-                    {
-                        log(util::format("Weather file albedo is not valid. "
-                            "Using default albedo value of %f (snow) or %f (no snow). "
-                            "This warning only appears for the first five instances of this error. "
-                            "[year:%d month:%d day:%d hour:%d minute:%lg]. ",
-                            as_double("albedo_default_snow"), as_double("albedo_default"),
-                            wf.year, wf.month, wf.day, wf.hour, wf.minute), SSC_NOTICE);
+                    else
                         n_alb_errs++;
-                    }
                 }
                 else
                 {
@@ -1372,6 +1364,9 @@ public:
 
                 idx_life++;
             }
+
+            if (n_alb_errs > 0)
+                log(util::format("Weather file albedo has %d invalid values, using monthly value", (int)n_alb_errs), SSC_WARNING);
 
             wdprov->rewind();
         }
