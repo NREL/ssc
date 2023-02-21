@@ -44,16 +44,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 static var_info _cm_vtab_pv6parmod[] = {
 
 /*   VARTYPE           DATATYPE         NAME                         LABEL                              UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-	{ SSC_INPUT,        SSC_ARRAY,       "poa_beam",                   "Incident direct normal radiation","W/m2",  "",                      "Weather",      "*",                       "",                        "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "poa_skydiff",                "Incident sky diffuse radiation",  "W/m2",  "",                      "Weather",      "*",                       "LENGTH_EQUAL=poa_beam",                    "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "poa_gnddiff",                "Incident ground diffuse irradiance","W/m2","",                      "Weather",      "*",                       "LENGTH_EQUAL=poa_beam",                    "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "tdry",                       "Dry bulb temperature",           "'C",     "",                      "Weather",      "*",                       "LENGTH_EQUAL=poa_beam",                    "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "wspd",                       "Wind speed",                     "m/s",    "",                      "Weather",      "*",                       "LENGTH_EQUAL=poa_beam",                    "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "wdir",                       "Wind direction",                 "deg",    "",                      "Weather",      "*",                       "LENGTH_EQUAL=poa_beam",                    "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "sun_zen",                    "Sun zenith angle",               "deg",    "",                      "Weather",      "*",                       "LENGTH_EQUAL=poa_beam",                    "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "incidence",                  "Incidence angle to surface",     "deg",    "",                      "Weather",      "*",                       "LENGTH_EQUAL=poa_beam",                    "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "surf_tilt",                  "Surface tilt angle",             "deg",    "",                      "Weather",      "*",                       "LENGTH_EQUAL=poa_beam",                    "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "elev",                       "Site elevation",                 "m",      "",                    "Weather",      "*",                        "",                      "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "poa_beam",                   "Incident direct normal radiation","W/m2",  "",                      "weather",      "*",                       "",                        "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "poa_skydiff",                "Incident sky diffuse radiation",  "W/m2",  "",                      "weather",      "*",                       "LENGTH_EQUAL=poa_beam",                    "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "poa_gnddiff",                "Incident ground diffuse irradiance","W/m2","",                      "weather",      "*",                       "LENGTH_EQUAL=poa_beam",                    "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "tdry",                       "Dry bulb temperature",           "'C",     "",                      "weather",      "*",                       "LENGTH_EQUAL=poa_beam",                    "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "wspd",                       "Wind speed",                     "m/s",    "",                      "weather",      "*",                       "LENGTH_EQUAL=poa_beam",                    "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "wdir",                       "Wind direction",                 "deg",    "",                      "weather",      "*",                       "LENGTH_EQUAL=poa_beam",                    "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "sun_zen",                    "Sun zenith angle",               "deg",    "",                      "weather",      "*",                       "LENGTH_EQUAL=poa_beam",                    "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "incidence",                  "Incidence angle to surface",     "deg",    "",                      "weather",      "*",                       "LENGTH_EQUAL=poa_beam",                    "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "surf_tilt",                  "Surface tilt angle",             "deg",    "",                      "weather",      "*",                       "LENGTH_EQUAL=poa_beam",                    "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "elev",                       "Site elevation",                 "m",      "",                    "weather",      "*",                        "",                      "" },
 	
 
 	{ SSC_INPUT,        SSC_ARRAY,       "opvoltage",               "Module operating voltage",       "Volt",    "",                     "CEC 6 Parameter PV Module Model",      "?"                        "",              "" },

@@ -44,7 +44,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static var_info _cm_vtab_pvwattsv1[] = {
     /*   VARTYPE           DATATYPE         NAME                         LABEL                                               UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-        { SSC_INPUT,        SSC_STRING,      "solar_resource_file",             "local weather file path",                     "",       "",                        "Weather",      "*",                       "LOCAL_FILE",      "" },
+        { SSC_INPUT,        SSC_STRING,      "solar_resource_file",             "local weather file path",                     "",       "",                        "weather",      "*",                       "LOCAL_FILE",      "" },
 
         { SSC_INPUT,        SSC_NUMBER,      "albedo",                         "Albedo (ground reflectance)",                 "frac",   "",                        "PVWatts",      "?",                       "",                                         "" },
         { SSC_INPUT,        SSC_NUMBER,      "system_size",                    "Nameplate capacity",                          "kW",     "",                        "PVWatts",      "*",                       "",                      "" },
