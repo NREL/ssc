@@ -346,6 +346,15 @@ public:
         double& T_amb_ref_calc /*C*/, double& T_amb_low_calc /*C*/, double& T_amb_high_calc /*C*/,
         double& m_dot_htf_ND_ref_calc, double& m_dot_htf_ND_low_calc /*-*/, double& m_dot_htf_ND_high_calc /*-*/,
         double& W_dot_gross_ND_des, double& Q_dot_HTF_ND_des, double& W_dot_cooling_ND_des, double& m_dot_water_ND_des);
+
+    double get_design_input_cooling_power()
+    {
+        // For the UDPC model, the calculated design value can be different
+        // than the input design value due to the UDPC data not = 1 at the design independent variables
+
+        // This will return NaN if not using the UDPC model
+        return ms_params.m_W_dot_cooling_des;   //[MWe]
+    }
 };
 
 

@@ -309,6 +309,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,     SSC_NUMBER, "ud_m_dot_water_cool_des",            "Mass flow rate of water required at user-defined power cycle design point",                                                               "kg/s",         "",                                  "User Defined Power Cycle",                 "pc_config=1",                                                      "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "ud_is_sco2_regr",                    "False: default, base udpc interpolation, True: use sco2 heuristic regression",                                                            "",             "",                                  "User Defined Power Cycle",                 "?=0",                                                              "",              "SIMULATION_PARAMETER"},
     { SSC_INPUT,     SSC_MATRIX, "ud_ind_od",                          "Off design user-defined power cycle performance as function of T_htf, m_dot_htf [ND], and T_amb",                                         "",             "",                                  "User Defined Power Cycle",                 "pc_config=1",                                                      "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "use_net_cycle_output_as_capacity",   "False: default, use net calculation including system parasitics, True: for UDPC only, set as cycle output less cooling power",            "",             "",                                  "User Defined Power Cycle",                 "?=0",                                                              "",              "SIMULATION_PARAMETER" },
 
     // Aux and Balance of Plant
     { SSC_INPUT,     SSC_NUMBER, "pb_fixed_par",                       "Fixed parasitic load - runs at all times",                                                                                                "MWe/MWcap",    "",                                  "System Control",                           "*",                                                                "",              "" },
@@ -2463,9 +2464,16 @@ public:
         double W_dot_bop_design, W_dot_fixed_parasitic_design;    //[MWe]
         csp_solver.get_design_parameters(W_dot_bop_design, W_dot_fixed_parasitic_design);
 
-                // Calculate net system *generation* capacity including HTF pumps and system parasitics
         double plant_net_capacity_calc = W_dot_cycle_des - W_dot_col_tracking_des - W_dot_rec_pump_des -
                                         W_dot_pc_pump_des - W_dot_pc_cooling_des - W_dot_bop_design - W_dot_fixed_parasitic_design;    //[MWe]
+
+        
+        bool use_net_cycle_output_as_capacity = as_boolean("use_net_cycle_output_as_capacity");
+        if (pb_tech_type == 1 && use_net_cycle_output_as_capacity) {
+            // Calculate system capacity using only net cycle output
+            double W_dot_pc_cooling_des_for_cap_calcs = rankine_pc.get_design_input_cooling_power();
+            plant_net_capacity_calc = W_dot_cycle_des - W_dot_pc_cooling_des_for_cap_calcs;
+        }
 
         double plant_net_conv_calc = plant_net_capacity_calc / W_dot_cycle_des; //[-]
 
