@@ -763,6 +763,8 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_OUTPUT,    SSC_NUMBER, "capacity_factor_highest_1000_ppas",  "Capacity factor at 1000 highest ppa timesteps",                                                                                           "-",            "",                                  "",                                         "sim_type=1",                                                       "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "capacity_factor_highest_2000_ppas",  "Capacity factor at 2000 highest ppa timesteps",                                                                                           "-",            "",                                  "",                                         "sim_type=1",                                                       "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "capacity_factor_warmest_100_Tambs",  "Capacity factor at 100 warmest ambient temperatures",                                                                                     "-",            "",                                  "",                                         "sim_type=1",                                                       "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "hot_hours_revenue_fraction",         "Fraction of potential revenue (based on system capacity) earned during hours hotter than 33 C",                                           "-",            "",                                  "",                                         "sim_type=1&csp_financial_model<5",                                 "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "all_hours_revenue_fraction",         "Fraction of potential annual revenue (based on system capacity)",                                                                         "-",            "",                                  "",                                         "sim_type=1&csp_financial_model<5",                                 "",              "" },
 
     { SSC_OUTPUT,    SSC_NUMBER, "disp_objective_ann",                 "Annual sum of dispatch objective function value",                                                                                         "",             "",                                  "",                                         "sim_type=1",                                                       "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "disp_iter_ann",                      "Annual sum of dispatch solver iterations",                                                                                                "",             "",                                  "",                                         "sim_type=1",                                                       "",              ""},
@@ -3042,6 +3044,47 @@ public:
         assign("capacity_factor_warmest_100_Tambs", cap_fac_warmest_100_tdrys);
         // **********************************************************
         // **********************************************************
+
+        if (csp_financial_model > 0 && csp_financial_model < 5) {   // Single Owner financial models
+
+            // Get first year base ppa price
+            size_t count_ppa_price_input;
+            ssc_number_t* ppa_price_input_array = as_array("ppa_price_input", &count_ppa_price_input);
+            ppa_price_year1 = (double)ppa_price_input_array[0];  // [$/kWh]
+
+            bool tod_is_timeseries = true;
+            double T_amb_hot = 33.0;    //[C]
+            double rev_full_cap_T_amb_hot = 0.0;    //[$]
+            double rev_actual_T_amb_hot = 0.0;      //[$]
+
+            for (size_t i = 0; i < count; i++) {
+                if (p_tdry[i] > T_amb_hot) {
+                    double tod = ppa_price_year1;
+                    if (tod_is_timeseries) {
+                        tod = p_pricing_mult[i] * ppa_price_year1;
+                    }
+                    rev_full_cap_T_amb_hot += system_capacity * tod;        //[kWe]*1[hr]*[cents/kWh] = cents
+                    rev_actual_T_amb_hot += p_gen[i] * tod;                 //[cents]
+                }
+            }
+            double hot_hours_revenue_fraction = rev_actual_T_amb_hot / rev_full_cap_T_amb_hot;    //[-]
+            assign("hot_hours_revenue_fraction", hot_hours_revenue_fraction);
+
+            double rev_full_cap = 0.0;
+            double rev_actual = 0.0;
+
+            for (size_t i = 0; i < count; i++) {
+                double tod = ppa_price_year1;
+                if (tod_is_timeseries) {
+                    tod = p_pricing_mult[i] * ppa_price_year1;
+                }
+                rev_full_cap += system_capacity * tod;        //[kWe]*1[hr]*[cents/kWh] = cents
+                rev_actual += p_gen[i] * tod;                 //[cents]
+            }
+
+            double all_hours_revenue_fraction = rev_actual / rev_full_cap;
+            assign("all_hours_revenue_fraction", all_hours_revenue_fraction);
+        }
 
         if (p_electric_resistance != NULL) {
             delete p_electric_resistance;
