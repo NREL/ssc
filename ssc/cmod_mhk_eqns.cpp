@@ -96,21 +96,24 @@ bool tidal_turbine_calculate_powercurve(ssc_data_t data)
         return false;
     }
 
-    double turbine_size, rotor_diameter, elevation, max_cp, max_tip_speed, max_tip_sp_ratio, cut_in,
+    double turbine_size, rotor_diameter, elevation, max_tip_speed, max_tip_sp_ratio, cut_in,
         cut_out, rotor_area, generator_rated_capacity, water_depth, velocity_power_law_fit, number_rotors;
     int drive_train;
     util::matrix_t<double> tidal_resource;
-    double pto_efficiency, min_vel;
+    double min_vel;
+    int max_cp_length, pto_efficiency_length;
+    std::vector<double> pto_efficiency;
+    std::vector<double> max_cp;
 
     try {
         vt_get_number(vt, "tidal_turbine_rotor_diameter", &rotor_diameter);     // ssc input
         vt_get_number(vt, "number_rotors", &number_rotors);
-        vt_get_number(vt, "tidal_turbine_max_cp", &max_cp);                     // ssc input
+        vt_get_array_vec(vt, "tidal_turbine_max_cp", max_cp);                     // ssc input
+        vt_get_array_vec(vt, "pto_efficiency", pto_efficiency);
         vt_get_number(vt, "cut_in", &cut_in);
         vt_get_number(vt, "cut_out", &cut_out);
         vt_get_matrix(vt, "tidal_resource", tidal_resource);
         vt_get_number(vt, "generator_rated_capacity", &generator_rated_capacity);
-        vt_get_number(vt, "pto_efficiency", &pto_efficiency);
 
     }
     catch (std::runtime_error& e) {
@@ -131,11 +134,25 @@ bool tidal_turbine_calculate_powercurve(ssc_data_t data)
     powercurve_powerout.resize(array_size);
     rotor_area = pow((rotor_diameter / 2), 2) * M_PI * number_rotors;
     double tidal_vel, p_fluid, p_rotor, eff, p_electric;
+    double max_cp_value, pto_eff_value;
     for (size_t i = 0; i < array_size; i += 1) {
         tidal_vel = tidal_resource.at(i,0);
         p_fluid = 0.5 * pow(tidal_vel, 3) * 1.025 * rotor_area;
-        p_rotor = p_fluid * max_cp;
-        eff = pto_efficiency/100.0;
+        
+        if (max_cp.size() == 1) {
+            max_cp_value = max_cp[0];
+        }
+        else {
+            max_cp_value = max_cp[i];
+        }
+        p_rotor = p_fluid * max_cp_value;
+        if (pto_efficiency.size() == 1) {
+            pto_eff_value = pto_efficiency[0];
+        }
+        else {
+            pto_eff_value = pto_efficiency[i];
+        }
+        eff = pto_eff_value/100.0;
         if (tidal_vel < cut_in) eff = 0;
         if (tidal_vel > cut_out) eff = 0;
         p_electric = std::min(eff * p_rotor, generator_rated_capacity);
