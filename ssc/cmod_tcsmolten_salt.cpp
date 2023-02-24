@@ -3054,7 +3054,7 @@ public:
             ssc_number_t* ppa_price_input_array = as_array("ppa_price_input", &count_ppa_price_input);
             ppa_price_year1 = (double)ppa_price_input_array[0];  // [$/kWh]
 
-            double T_amb_hot = 33.0;    //[C]
+            double T_amb_hot = 30.0;    //[C]
             double rev_full_cap_T_amb_hot = 0.0;    //[$]
             double rev_actual_T_amb_hot = 0.0;      //[$]
 
