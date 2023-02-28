@@ -99,9 +99,10 @@ public:
         E_DP_TOT,
         E_T_SYS_C,
         E_T_SYS_H,
-        E_T_LOOP_OUTLET
+        E_T_LOOP_OUTLET,
 
 
+        E_Q_I
     };
 
     enum struct E_loop_energy_balance_exit
@@ -132,7 +133,7 @@ private:
     std::vector<double> m_WallThk_hdr;   	      //[m]    Pipe wall thicknesses of header sections
     std::vector<double> m_m_dot_hdr_dsn;          //[kg/s] Design mass flow through header sections
     std::vector<double> m_V_hdr_dsn;              //[m/s]  Design velocity through header sections
-    std::vector<double> m_L_hdr;	              //[m]    Lengths of header sections
+    //std::vector<double> m_L_hdr;	              //[m]    Lengths of header sections
     std::vector<int> m_N_hdr_xpans;               //[-]    Number of expansions in header sections
     std::vector<double> m_DP_hdr;                 //[bar]  Pressure drop in header sections
     std::vector<double> m_T_hdr_dsn;              //[C]    Temperature entering header sections at design
@@ -344,7 +345,7 @@ private:
     C_csp_collector_receiver::E_csp_cr_modes m_operating_mode_converged;
     C_csp_collector_receiver::E_csp_cr_modes m_operating_mode;
 
-    const double fp_offset = 0; // freeze protection offset
+    const double fp_offset = 10; // freeze protection offset
 
     // ***********************
     // ***** T  E  M  P ******
@@ -377,10 +378,10 @@ private:
     double eta_opt_fixed;
     double m_phi_t = 0;		    //Solar incidence angle in the collector transversal plane
     double m_theta_L = 0;		//Solar incidence angle in the collector longitudinal plane
-
+    double m_ftrack = 0;
     emit_table m_epsilon_abs;
 
-    double T_loop_outX;
+
 
     std::vector<double> mv_HCEguessargs;
 
@@ -441,7 +442,7 @@ public:
     int m_fthrok;			                    // [-] Flag to allow partial defocusing of the collectors
     int m_fthrctrl;			                    // [-] Defocusing strategy
     double m_ColAz;			                    // [deg] Collector azimuth angle
-    double m_ColTilt;		                    // [deg] Collector tilt angle (0 is horizontal, 90deg is vertical)
+    //double m_ColTilt;		                    // [deg] Collector tilt angle (0 is horizontal, 90deg is vertical)
 
     double m_solar_mult;		                // [-] Solar multiple 
     double m_mc_bal_hot;		                // [J/K] The heat capacity of the balance of plant on the hot side
@@ -601,7 +602,7 @@ public:
     // From sam_mw_lf_type262_salt
 
     double Pump_SGS(double rho, double m_dotsf, double sm);
-
+    
     void EvacReceiver(double T_1_in, double m_dot, double T_amb, double T_sky, double v_6, double P_6, double q_i,
         int hv /* HCE variant [0..3] */, int sca_num, bool single_point, int ncall, double time,
         //outputs

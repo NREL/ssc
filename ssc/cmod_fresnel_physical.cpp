@@ -47,30 +47,52 @@ static var_info _cm_vtab_fresnel_physical[] = {
     // Weather Reader
     { SSC_INPUT,        SSC_STRING,      "file_name",                 "Local weather file with path",                                                     "none",         "",               "weather",        "*",                       "LOCAL_FILE",            "" },
 
-    // TOU
-    { SSC_INPUT,        SSC_MATRIX,      "weekday_schedule",  "12x24 Time of Use Values for week days",                                              "",             "",             "tou_translator", "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_MATRIX,      "weekend_schedule",  "12x24 Time of Use Values for week end days",                                          "",             "",             "tou_translator", "*",                       "",                      "" },
+    // System Design
+    /*System Design*///{ SSC_INPUT,        SSC_NUMBER,      "gross_net_conversion_factor", "Estimated gross to net conversion factor",                                       "",             "",               "system",         "*",                       "",                      "" },
+    /*System Design*/{ SSC_INPUT,    SSC_NUMBER,         "nLoops",                 "Number of loops in the field",                                                          "",              "",  "controller",            "*",        "",              ""},
+    /*System Design*/{ SSC_INPUT,    SSC_NUMBER,         "T_loop_in_des",          "Design loop inlet temperature",                                                         "C",             "",  "controller",            "*",        "",              ""},
+    /*System Design*/{ SSC_INPUT,    SSC_NUMBER,         "T_loop_out",             "Target loop outlet temperature",                                                        "C",             "",  "controller",            "*",        "",              ""},
+    /*System Design*/{ SSC_INPUT,    SSC_NUMBER,         "I_bn_des",               "Solar irradiation at design",                                                           "W/m2",          "",  "controller",            "*",        "",              ""},
+    /*System Design*/{ SSC_INPUT,    SSC_NUMBER,         "P_ref",             "Label",                                                                     "-",              "",  "powerblock",         "*",        "",              ""},
+    /*System Design*/{ SSC_INPUT,    SSC_NUMBER,         "eta_ref",           "Cycle thermal efficiency at design point",                                  "-",              "",  "powerblock",         "*",        "",              ""},
+    /*System Design*///{ SSC_INPUT,    SSC_NUMBER,         "q_pb_design",            "Label",                                                                                 "",              "",  "controller",            "*",        "",              "" },
+    /*System Design*/{ SSC_INPUT,    SSC_NUMBER,         "tshours",                "Label",                                                                                 "",              "",  "controller",            "*",        "",              "" },
+    /*System Design*/{ SSC_INPUT,    SSC_NUMBER,         "solar_mult",             "Solar multiple",                                                                        "",              "",  "controller",            "*",        "",              ""},
+
+
+    // System Control
+    /*Sys Control*/{ SSC_INPUT,        SSC_MATRIX,      "weekday_schedule",  "12x24 Time of Use Values for week days",                                              "",             "",             "tou_translator", "*",                       "",                      "" },
+    /*Sys Control*/{ SSC_INPUT,        SSC_MATRIX,      "weekend_schedule",  "12x24 Time of Use Values for week end days",                                          "",             "",             "tou_translator", "*",                       "",                      "" },
+
+    /*Sys Control*/{ SSC_INPUT,    SSC_NUMBER,         "pb_fixed_par",           "Label",                                                                                 "",              "",  "controller",            "*",        "",              ""},
+    /*Sys Control*/{ SSC_INPUT,    SSC_ARRAY,          "bop_array",              "Label",                                                                                 "",              "",  "controller",            "*",        "",              "" },
+    /*Sys Control*/{ SSC_INPUT,    SSC_ARRAY,          "aux_array",              "Label",                                                                                 "",              "",  "controller",            "*",        "",              "" },
+
+
+    /*Sys Control*///{ SSC_INPUT,        SSC_NUMBER,      "is_dispatch",               "Allow dispatch optimization?",  /*TRUE=1*/                                         "-",            "",               "tou",            "?=0",                     "",                      "" },
+    /*Sys Control*///{ SSC_INPUT,        SSC_NUMBER,      "disp_frequency",            "Frequency for dispatch optimization calculations",                                 "hour",         "",               "tou",            "is_dispatch=1",           "",                      "" },
+    /*Sys Control*///{ SSC_INPUT,        SSC_NUMBER,      "disp_horizon",              "Time horizon for dispatch optimization",                                           "hour",         "",               "tou",            "is_dispatch=1",           "",                      "" },
+    /*Sys Control*///{ SSC_INPUT,        SSC_NUMBER,      "disp_max_iter",             "Max. no. dispatch optimization iterations",                                        "-",            "",               "tou",            "is_dispatch=1",           "",                      "" },
+    /*Sys Control*///{ SSC_INPUT,        SSC_NUMBER,      "disp_timeout",              "Max. dispatch optimization solve duration",                                        "s",            "",               "tou",            "is_dispatch=1",           "",                      "" },
+    /*Sys Control*///{ SSC_INPUT,        SSC_NUMBER,      "disp_mip_gap",              "Dispatch optimization solution tolerance",                                         "-",            "",               "tou",            "is_dispatch=1",           "",                      "" },
+    /*Sys Control*///{ SSC_INPUT,        SSC_NUMBER,      "disp_time_weighting",       "Dispatch optimization future time discounting factor",                             "-",            "",               "tou",            "?=0.99",                  "",                      "" },
+    /*Sys Control*///{ SSC_INPUT,        SSC_NUMBER,      "disp_rsu_cost_rel",         "Receiver startup cost",                                                            "$/MWt/start",  "",               "tou",            "is_dispatch=1",           "",                      "" },
+    /*Sys Control*///{ SSC_INPUT,        SSC_NUMBER,      "disp_csu_cost_rel",         "Cycle startup cost",                                                               "$/MWe-cycle/start", "",          "tou",            "is_dispatch=1",           "",                      "" },
+    /*Sys Control*///{ SSC_INPUT,        SSC_NUMBER,      "disp_pen_ramping",          "Dispatch cycle production change penalty",                                         "$/MWe-change", "",               "tou",            "is_dispatch=1",           "",                      "" },
+    
     //{ SSC_INPUT,        SSC_NUMBER,      "is_tod_pc_target_also_pc_max", "Is the TOD target cycle heat input also the max cycle heat input?",             "",             "",               "tou",            "?=0",                     "",                      "" },
-    //{ SSC_INPUT,        SSC_NUMBER,      "is_dispatch",               "Allow dispatch optimization?",  /*TRUE=1*/                                         "-",            "",               "tou",            "?=0",                     "",                      "" },
+    
     //{ SSC_INPUT,        SSC_NUMBER,      "can_cycle_use_standby",     "Can the cycle use standby operation?",                                             "",             "",               "tou",            "?=0",                     "",                      "" },
     //{ SSC_INPUT,        SSC_NUMBER,      "is_write_ampl_dat",         "Write AMPL data files for dispatch run",                                           "-",            "",               "tou",            "?=0",                     "",                      "" },
     //{ SSC_INPUT,        SSC_NUMBER,      "is_ampl_engine",            "Run dispatch optimization with external AMPL engine",                              "-",            "",               "tou",            "?=0",                     "",                      "" },
     //{ SSC_INPUT,        SSC_STRING,      "ampl_data_dir",             "AMPL data file directory",                                                         "-",            "",               "tou",            "?=''",                    "",                      "" },
     //{ SSC_INPUT,        SSC_STRING,      "ampl_exec_call",            "System command to run AMPL code",                                                  "-",            "",               "tou",            "?='ampl sdk_solution.run'", "",                    "" },
-    //{ SSC_INPUT,        SSC_NUMBER,      "disp_frequency",            "Frequency for dispatch optimization calculations",                                 "hour",         "",               "tou",            "is_dispatch=1",           "",                      "" },
+    
     //{ SSC_INPUT,        SSC_NUMBER,      "disp_steps_per_hour",       "Time steps per hour for dispatch optimization calculations",                       "-",            "",               "tou",            "?=1",                     "",                      "" },
-    //{ SSC_INPUT,        SSC_NUMBER,      "disp_horizon",              "Time horizon for dispatch optimization",                                           "hour",         "",               "tou",            "is_dispatch=1",           "",                      "" },
-    //{ SSC_INPUT,        SSC_NUMBER,      "disp_max_iter",             "Max. no. dispatch optimization iterations",                                        "-",            "",               "tou",            "is_dispatch=1",           "",                      "" },
-    //{ SSC_INPUT,        SSC_NUMBER,      "disp_timeout",              "Max. dispatch optimization solve duration",                                        "s",            "",               "tou",            "is_dispatch=1",           "",                      "" },
-    //{ SSC_INPUT,        SSC_NUMBER,      "disp_mip_gap",              "Dispatch optimization solution tolerance",                                         "-",            "",               "tou",            "is_dispatch=1",           "",                      "" },
     //{ SSC_INPUT,        SSC_NUMBER,      "disp_spec_presolve",        "Dispatch optimization presolve heuristic",                                         "-",            "",               "tou",            "?=-1",                    "",                      "" },
     //{ SSC_INPUT,        SSC_NUMBER,      "disp_spec_bb",              "Dispatch optimization B&B heuristic",                                              "-",            "",               "tou",            "?=-1",                    "",                      "" },
     //{ SSC_INPUT,        SSC_NUMBER,      "disp_reporting",            "Dispatch optimization reporting level",                                            "-",            "",               "tou",            "?=-1",                    "",                      "" },
     //{ SSC_INPUT,        SSC_NUMBER,      "disp_spec_scaling",         "Dispatch optimization scaling heuristic",                                          "-",            "",               "tou",            "?=-1",                    "",                      "" },
-    //{ SSC_INPUT,        SSC_NUMBER,      "disp_time_weighting",       "Dispatch optimization future time discounting factor",                             "-",            "",               "tou",            "?=0.99",                  "",                      "" },
-    //{ SSC_INPUT,        SSC_NUMBER,      "disp_rsu_cost_rel",         "Receiver startup cost",                                                            "$/MWt/start",  "",               "tou",            "is_dispatch=1",           "",                      "" },
-    //{ SSC_INPUT,        SSC_NUMBER,      "disp_csu_cost_rel",         "Cycle startup cost",                                                               "$/MWe-cycle/start", "",          "tou",            "is_dispatch=1",           "",                      "" },
-    //{ SSC_INPUT,        SSC_NUMBER,      "disp_pen_ramping",          "Dispatch cycle production change penalty",                                         "$/MWe-change", "",               "tou",            "is_dispatch=1",           "",                      "" },
     //{ SSC_INPUT,        SSC_NUMBER,      "disp_inventory_incentive",  "Dispatch storage terminal inventory incentive multiplier",                         "",             "",               "System Control", "?=0.0",                   "",                      "" },
     //{ SSC_INPUT,        SSC_NUMBER,      "q_rec_standby",             "Receiver standby energy consumption",                                              "kWt",          "",               "tou",            "?=9e99",                  "",                      "" },
     //{ SSC_INPUT,        SSC_NUMBER,      "q_rec_heattrace",           "Receiver heat trace energy consumption during startup",                            "kWe-hr",       "",               "tou",            "?=0.0",                   "",                      "" },
@@ -99,103 +121,92 @@ static var_info _cm_vtab_fresnel_physical[] = {
     //{ SSC_INPUT,        SSC_ARRAY,       "ppa_price_input",			  "PPA prices - yearly",			                                                  "$/kWh",	      "",	            "Revenue",			       "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1","",      	    "" },
     //{ SSC_INPUT,        SSC_MATRIX,      "mp_energy_market_revenue",  "Energy market revenue input",                                                      "",             "Lifetime x 2[Cleared Capacity(MW),Price($/MWh)]", "Revenue", "csp_financial_model=6&is_dispatch=1",      "",             "" },
 
-    { SSC_INPUT,    SSC_NUMBER,         "pb_fixed_par",           "Label",                                                                                 "",              "",  "controller",            "*",        "",              "" },
-    { SSC_INPUT,    SSC_ARRAY,          "bop_array",              "Label",                                                                                 "",              "",  "controller",            "*",        "",              "" },
-    { SSC_INPUT,    SSC_ARRAY,          "aux_array",              "Label",                                                                                 "",              "",  "controller",            "*",        "",              "" },
-    //{ SSC_INPUT,        SSC_NUMBER,      "gross_net_conversion_factor", "Estimated gross to net conversion factor",                                       "",             "",               "system",         "*",                       "",                      "" },
     //{ SSC_INPUT,        SSC_NUMBER,      "water_usage_per_wash",      "Water usage per wash",                                                             "L/m2_aper",    "",               "system",         "*",                       "",                      "" },
     //{ SSC_INPUT,        SSC_NUMBER,      "washing_frequency",         "Mirror washing frequency",                                                         "-/year",       "",               "system",         "*",                       "",                      "" },
 
     // Solar Field (from cmod_tcsmslf.cpp)
-    { SSC_INPUT,    SSC_NUMBER,         "nMod",                   "Number of collector modules in a loop",                                                 "",              "",  "controller",            "*",        "INTEGER",       ""},
-    { SSC_INPUT,    SSC_NUMBER,         "nRecVar",                "Number of receiver variantions",                                                        "",              "",  "controller",            "?=4",      "INTEGER",       ""},
-    { SSC_INPUT,    SSC_NUMBER,         "nLoops",                 "Number of loops in the field",                                                          "",              "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "eta_pump",               "HTF pump efficiency",                                                                   "",              "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "HDR_rough",              "Header pipe roughness",                                                                 "m",             "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "theta_stow",             "stow angle",                                                                            "deg",           "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "theta_dep",              "deploy angle",                                                                          "deg",           "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "FieldConfig",            "Number of subfield headers",                                                            "",              "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "T_startup",              "Power block startup temperature",                                                       "C",             "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "pb_rated_cap",           "Rated plant capacity",                                                                  "MWe",           "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "m_dot_htfmin",           "Minimum loop HTF flow rate",                                                            "kg/s",          "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "m_dot_htfmax",           "Maximum loop HTF flow rate",                                                            "kg/s",          "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "T_loop_in_des",          "Design loop inlet temperature",                                                         "C",             "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "T_loop_out",             "Target loop outlet temperature",                                                        "C",             "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "Fluid",                  "Field HTF fluid number",                                                                "",              "",  "controller",            "*",        "INTEGER",       ""},
-    //{ SSC_INPUT,    SSC_NUMBER,         "T_field_ini",            "Initial field temperature",                                                             "C",             "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_MATRIX,         "field_fl_props",         "Fluid property data",                                                                   "",              "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "T_fp",                   "Freeze protection temperature (heat trace activation temperature)",                     "C",             "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "I_bn_des",               "Solar irradiation at design",                                                           "W/m2",          "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "V_hdr_max",              "Maximum HTF velocity in the header at design",                                          "m/s",           "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "V_hdr_min",              "Minimum HTF velocity in the header at design",                                          "m/s",           "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "Pipe_hl_coef",           "Loss coefficient from the header - runner pipe - and non-HCE piping",                   "W/m2-K",        "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "SCA_drives_elec",        "Tracking power in Watts per SCA drive",                                                 "W/module",      "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "fthrok",                 "Flag to allow partial defocusing of the collectors",                                    "",              "",  "controller",            "*",        "INTEGER",       ""},
-    { SSC_INPUT,    SSC_NUMBER,         "fthrctrl",               "Defocusing strategy",                                                                   "",              "",  "controller",            "*",        "INTEGER",       ""},
-    { SSC_INPUT,    SSC_NUMBER,         "ColAz",                  "Collector azimuth angle",                                                               "deg",           "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "solar_mult",             "Solar multiple",                                                                        "",              "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "mc_bal_hot",             "The heat capacity of the balance of plant on the hot side",                             "kWht/K-MWt",    "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "mc_bal_cold",            "The heat capacity of the balance of plant on the cold side",                            "kWht/K-MWt",    "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "mc_bal_sca",             "Non-HTF heat capacity associated with each SCA - per meter basis",                      "Wht/K-m",       "",  "controller",            "*",        "",              ""},
+    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "nMod",                   "Number of collector modules in a loop",                                                 "",              "",  "controller",            "*",        "INTEGER",       ""},
+    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "eta_pump",               "HTF pump efficiency",                                                                   "",              "",  "controller",            "*",        "",              ""},
+    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "HDR_rough",              "Header pipe roughness",                                                                 "m",             "",  "controller",            "*",        "",              ""},
+    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "theta_stow",             "stow angle",                                                                            "deg",           "",  "controller",            "*",        "",              ""},
+    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "theta_dep",              "deploy angle",                                                                          "deg",           "",  "controller",            "*",        "",              ""},
+    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "FieldConfig",            "Number of subfield headers",                                                            "",              "",  "controller",            "*",        "",              ""},
+    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "m_dot_htfmin",           "Minimum loop HTF flow rate",                                                            "kg/s",          "",  "controller",            "*",        "",              ""},
+    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "m_dot_htfmax",           "Maximum loop HTF flow rate",                                                            "kg/s",          "",  "controller",            "*",        "",              ""},
+    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "Fluid",                  "Field HTF fluid number",                                                                "",              "",  "controller",            "*",        "INTEGER",       ""},
+    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "T_fp",                   "Freeze protection temperature (heat trace activation temperature)",                     "C",             "",  "controller",            "*",        "",              ""},
+    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "V_hdr_max",              "Maximum HTF velocity in the header at design",                                          "m/s",           "",  "controller",            "*",        "",              ""},
+    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "V_hdr_min",              "Minimum HTF velocity in the header at design",                                          "m/s",           "",  "controller",            "*",        "",              ""},
+    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "Pipe_hl_coef",           "Loss coefficient from the header - runner pipe - and non-HCE piping",                   "W/m2-K",        "",  "controller",            "*",        "",              ""},
+    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "fthrok",                 "Flag to allow partial defocusing of the collectors",                                    "",              "",  "controller",            "*",        "INTEGER",       ""},
+    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "fthrctrl",               "Defocusing strategy",                                                                   "",              "",  "controller",            "*",        "INTEGER",       ""},
+    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "mc_bal_hot",             "The heat capacity of the balance of plant on the hot side",                             "kWht/K-MWt",    "",  "controller",            "*",        "",              ""},
+    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "mc_bal_cold",            "The heat capacity of the balance of plant on the cold side",                            "kWht/K-MWt",    "",  "controller",            "*",        "",              ""},
+    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "mc_bal_sca",             "Non-HTF heat capacity associated with each SCA - per meter basis",                      "Wht/K-m",       "",  "controller",            "*",        "",              ""},
+    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "water_per_wash",         "Water usage per wash",                                                                  "L/m2_aper",     "",  "solar_field",    "*",                       "",                      "" },
+    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "washes_per_year",        "Mirror washing frequency",                                                              "none",          "",  "solar_field",    "*",                       "",                      "" },
+    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "rec_htf_vol",            "Volume of HTF in a single collector unit per unit aperture area",                       "L/m2-ap",       "",  "controller",            "*",        "",              "" },
+    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "T_amb_sf_des",           "Ambient design-point temperature for the solar field",                                  "C",             "",  "controller",            "*",        "",              "" },
+    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "V_wind_des",             "Design-point wind velocity",                                                            "m/s",           "",  "controller",            "*",        "",              "" },
+    /*Solar Field*/{ SSC_INPUT,    SSC_MATRIX,         "field_fl_props",         "Fluid property data",                                                                   "",              "",  "controller",            "*",        "",              "" },
+    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "SCA_drives_elec",        "Tracking power in Watts per SCA drive",                                                 "W/module",      "",  "controller",            "*",        "",              "" },
 
-    { SSC_INPUT,    SSC_NUMBER,         "water_per_wash",         "Water usage per wash",                                                                  "L/m2_aper",     "",  "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,    SSC_NUMBER,         "washes_per_year",        "Mirror washing frequency",                                                              "none",          "",  "solar_field",    "*",                       "",                      "" },
+    // In old fresnel but not Trough
+    //{ SSC_INPUT,    SSC_NUMBER,         "pb_rated_cap",           "Rated plant capacity",                                                                  "MWe",           "",  "controller",            "*",        "",              ""},
+            
+    // Collector and Receiver
 
-    { SSC_INPUT,    SSC_NUMBER,         "opt_model",              "The optical model",                                                                     "",              "",  "controller",            "*",        "INTEGER",       ""},
-    { SSC_INPUT,    SSC_NUMBER,         "A_aperture",             "Reflective aperture area of the collector",                                             "m2",            "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "reflectivity",           "Solar-weighted mirror reflectivity value",                                              "",              "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "TrackingError",          "Tracking error derate",                                                                 "",              "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "GeomEffects",            "Geometry effects derate",                                                               "",              "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "Dirt_mirror",            "User-defined dirt on mirror derate",                                                    "",              "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "Error",                  "User-defined general optical error derate",                                             "",              "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "L_mod",                  "The length of the collector module",                                                    "m",             "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_ARRAY,          "IAM_T_coefs",            "Incidence angle modifier coefficients - transversal plane",                             "",              "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_ARRAY,          "IAM_L_coefs",            "Incidence angle modifier coefficients - longitudinal plane",                            "",              "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_MATRIX,         "OpticalTable",           "Values of the optical efficiency table",                                                "",              "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "rec_model",              "Receiver model type (1=Polynomial ; 2=Evac tube)",                                      "",              "",  "controller",            "*",        "INTEGER",       ""},
-    { SSC_INPUT,    SSC_ARRAY,          "HCE_FieldFrac",          "The fraction of the field occupied by this HCE type",                                   "",              "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_ARRAY,          "D_abs_in",               "The inner absorber tube diameter",                                                      "m",             "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_ARRAY,          "D_abs_out",              "The outer absorber tube diameter",                                                      "m",             "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_ARRAY,          "D_glass_in",             "The inner glass envelope diameter",                                                     "m",             "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_ARRAY,          "D_glass_out",            "The outer glass envelope diameter",                                                     "m",             "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_ARRAY,          "D_plug",                 "The diameter of the absorber flow plug (optional)",                                     "m",             "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_ARRAY,          "Flow_type",              "The flow type through the absorber",                                                    "",              "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_ARRAY,          "Rough",                  "Roughness of the internal surface",                                                     "m",             "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_ARRAY,          "alpha_env",              "Envelope absorptance",                                                                  "",              "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_MATRIX,         "epsilon_abs_1",          "Absorber emittance - HCE variation 1",                                                  "",              "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_MATRIX,         "epsilon_abs_2",          "Absorber emittance - HCE variation 2",                                                  "",              "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_MATRIX,         "epsilon_abs_3",          "Absorber emittance - HCE variation 3",                                                  "",              "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_MATRIX,         "epsilon_abs_4",          "Absorber emittance - HCE variation 4",                                                  "",              "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_ARRAY,          "alpha_abs",              "Absorber absorptance",                                                                  "",              "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_ARRAY,          "Tau_envelope",           "Envelope transmittance",                                                                "",              "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_ARRAY,          "epsilon_glass",          "Glass envelope emissivity",                                                             "",              "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_ARRAY,          "GlazingIntactIn",        "The glazing intact flag",                                                               "",              "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_ARRAY,          "P_a",                    "Annulus gas pressure",                                                                  "torr",          "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_ARRAY,          "AnnulusGas",             "Annulus gas type (1=air; 26=Ar; 27=H2)",                                                "",              "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_ARRAY,          "AbsorberMaterial",       "Absorber material type",                                                                "",              "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_ARRAY,          "Shadowing",              "Receiver bellows shadowing loss factor",                                                "",              "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_ARRAY,          "dirt_env",               "Loss due to dirt on the receiver envelope",                                             "",              "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_ARRAY,          "Design_loss",            "Receiver heat loss at design",                                                          "W/m",           "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "L_mod_spacing",          "Piping distance between sequential modules in a loop",                                  "m",             "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "L_crossover",            "Length of crossover piping in a loop",                                                  "m",             "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_ARRAY,          "HL_T_coefs",             "HTF temperature-dependent heat loss coefficients",                                      "W/m-K",         "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_ARRAY,          "HL_w_coefs",             "Wind-speed-dependent heat loss coefficients",                                           "W/m-(m/s)",     "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "DP_nominal",             "Pressure drop across a single collector assembly at design",                            "bar",           "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_ARRAY,          "DP_coefs",               "Pressure drop mass flow based part-load curve",                                         "",              "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "rec_htf_vol",            "Volume of HTF in a single collector unit per unit aperture area",                       "L/m2-ap",       "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "T_amb_sf_des",           "Ambient design-point temperature for the solar field",                                  "C",             "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "V_wind_des",             "Design-point wind velocity",                                                            "m/s",           "",  "controller",            "*",        "",              ""},
+    /*Col & Rec*/{ SSC_INPUT,    SSC_NUMBER,         "ColAz",                  "Collector azimuth angle",                                                               "deg",           "",  "controller",            "*",        "",              "" },
+    /*Col & Rec*/{ SSC_INPUT,    SSC_NUMBER,         "opt_model",              "The optical model",                                                                     "",              "",  "controller",            "*",        "INTEGER",       ""},
+    /*Col & Rec*/{ SSC_INPUT,    SSC_NUMBER,         "A_aperture",             "Reflective aperture area of the collector",                                             "m2",            "",  "controller",            "*",        "",              ""},
+    /*Col & Rec*/{ SSC_INPUT,    SSC_NUMBER,         "reflectivity",           "Solar-weighted mirror reflectivity value",                                              "",              "",  "controller",            "*",        "",              ""},
+    /*Col & Rec*/{ SSC_INPUT,    SSC_NUMBER,         "TrackingError",          "Tracking error derate",                                                                 "",              "",  "controller",            "*",        "",              ""},
+    /*Col & Rec*/{ SSC_INPUT,    SSC_NUMBER,         "GeomEffects",            "Geometry effects derate",                                                               "",              "",  "controller",            "*",        "",              ""},
+    /*Col & Rec*/{ SSC_INPUT,    SSC_NUMBER,         "Dirt_mirror",            "User-defined dirt on mirror derate",                                                    "",              "",  "controller",            "*",        "",              ""},
+    /*Col & Rec*/{ SSC_INPUT,    SSC_NUMBER,         "Error",                  "User-defined general optical error derate",                                             "",              "",  "controller",            "*",        "",              ""},
+    /*Col & Rec*/{ SSC_INPUT,    SSC_NUMBER,         "L_mod",                  "The length of the collector module",                                                    "m",             "",  "controller",            "*",        "",              ""},
+    /*Col & Rec*/{ SSC_INPUT,    SSC_ARRAY,          "IAM_T_coefs",            "Incidence angle modifier coefficients - transversal plane",                             "",              "",  "controller",            "*",        "",              ""},
+    /*Col & Rec*/{ SSC_INPUT,    SSC_ARRAY,          "IAM_L_coefs",            "Incidence angle modifier coefficients - longitudinal plane",                            "",              "",  "controller",            "*",        "",              ""},
+    /*Col & Rec*/{ SSC_INPUT,    SSC_MATRIX,         "OpticalTable",           "Values of the optical efficiency table",                                                "",              "",  "controller",            "*",        "",              ""},
 
-    { SSC_INPUT,    SSC_NUMBER,         "T_db",                   "Dry bulb air temperature",                                                              "C",             "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "V_wind",                 "Ambient windspeed",                                                                     "m/s",           "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "P_amb",                  "Ambient pressure",                                                                      "atm",           "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "T_dp",                   "The dewpoint temperature",                                                              "C",             "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "T_cold_in",              "HTF return temperature",                                                                "C",             "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "defocus",                "Defocus control",                                                                       "",              "",  "controller",            "*",        "",              ""},
+    /*Col & Rec*/{ SSC_INPUT,    SSC_NUMBER,         "rec_model",              "Receiver model type (1=Polynomial ; 2=Evac tube)",                                      "",              "",  "controller",            "*",        "INTEGER",       ""},
+    /*Col & Rec*/{ SSC_INPUT,    SSC_ARRAY,          "HCE_FieldFrac",          "The fraction of the field occupied by this HCE type",                                   "",              "",  "controller",            "*",        "",              ""},
+    /*Col & Rec*/{ SSC_INPUT,    SSC_ARRAY,          "D_abs_in",               "The inner absorber tube diameter",                                                      "m",             "",  "controller",            "*",        "",              ""},
+    /*Col & Rec*/{ SSC_INPUT,    SSC_ARRAY,          "D_abs_out",              "The outer absorber tube diameter",                                                      "m",             "",  "controller",            "*",        "",              ""},
+    /*Col & Rec*/{ SSC_INPUT,    SSC_ARRAY,          "D_glass_in",             "The inner glass envelope diameter",                                                     "m",             "",  "controller",            "*",        "",              ""},
+    /*Col & Rec*/{ SSC_INPUT,    SSC_ARRAY,          "D_glass_out",            "The outer glass envelope diameter",                                                     "m",             "",  "controller",            "*",        "",              ""},
+    /*Col & Rec*/{ SSC_INPUT,    SSC_ARRAY,          "D_plug",                 "The diameter of the absorber flow plug (optional)",                                     "m",             "",  "controller",            "*",        "",              ""},
+    /*Col & Rec*/{ SSC_INPUT,    SSC_ARRAY,          "Flow_type",              "The flow type through the absorber",                                                    "",              "",  "controller",            "*",        "",              ""},
+    /*Col & Rec*/{ SSC_INPUT,    SSC_ARRAY,          "Rough",                  "Roughness of the internal surface",                                                     "m",             "",  "controller",            "*",        "",              ""},
+    /*Col & Rec*/{ SSC_INPUT,    SSC_ARRAY,          "alpha_env",              "Envelope absorptance",                                                                  "",              "",  "controller",            "*",        "",              ""},
+    /*Col & Rec*/{ SSC_INPUT,    SSC_MATRIX,         "epsilon_abs_1",          "Absorber emittance - HCE variation 1",                                                  "",              "",  "controller",            "*",        "",              ""},
+    /*Col & Rec*/{ SSC_INPUT,    SSC_MATRIX,         "epsilon_abs_2",          "Absorber emittance - HCE variation 2",                                                  "",              "",  "controller",            "*",        "",              ""},
+    /*Col & Rec*/{ SSC_INPUT,    SSC_MATRIX,         "epsilon_abs_3",          "Absorber emittance - HCE variation 3",                                                  "",              "",  "controller",            "*",        "",              ""},
+    /*Col & Rec*/{ SSC_INPUT,    SSC_MATRIX,         "epsilon_abs_4",          "Absorber emittance - HCE variation 4",                                                  "",              "",  "controller",            "*",        "",              ""},
+    /*Col & Rec*/{ SSC_INPUT,    SSC_ARRAY,          "alpha_abs",              "Absorber absorptance",                                                                  "",              "",  "controller",            "*",        "",              ""},
+    /*Col & Rec*/{ SSC_INPUT,    SSC_ARRAY,          "Tau_envelope",           "Envelope transmittance",                                                                "",              "",  "controller",            "*",        "",              ""},
+    /*Col & Rec*/{ SSC_INPUT,    SSC_ARRAY,          "epsilon_glass",          "Glass envelope emissivity",                                                             "",              "",  "controller",            "*",        "",              ""},
+    /*Col & Rec*/{ SSC_INPUT,    SSC_ARRAY,          "GlazingIntactIn",        "The glazing intact flag",                                                               "",              "",  "controller",            "*",        "",              ""},
+    /*Col & Rec*/{ SSC_INPUT,    SSC_ARRAY,          "P_a",                    "Annulus gas pressure",                                                                  "torr",          "",  "controller",            "*",        "",              ""},
+    /*Col & Rec*/{ SSC_INPUT,    SSC_ARRAY,          "AnnulusGas",             "Annulus gas type (1=air; 26=Ar; 27=H2)",                                                "",              "",  "controller",            "*",        "",              ""},
+    /*Col & Rec*/{ SSC_INPUT,    SSC_ARRAY,          "AbsorberMaterial",       "Absorber material type",                                                                "",              "",  "controller",            "*",        "",              ""},
+    /*Col & Rec*/{ SSC_INPUT,    SSC_ARRAY,          "Shadowing",              "Receiver bellows shadowing loss factor",                                                "",              "",  "controller",            "*",        "",              ""},
+    /*Col & Rec*/{ SSC_INPUT,    SSC_ARRAY,          "dirt_env",               "Loss due to dirt on the receiver envelope",                                             "",              "",  "controller",            "*",        "",              ""},
+    /*Col & Rec*/{ SSC_INPUT,    SSC_ARRAY,          "Design_loss",            "Receiver heat loss at design",                                                          "W/m",           "",  "controller",            "*",        "",              ""},
+    /*Col & Rec*/{ SSC_INPUT,    SSC_NUMBER,         "L_mod_spacing",          "Piping distance between sequential modules in a loop",                                  "m",             "",  "controller",            "*",        "",              ""},
+    /*Col & Rec*/{ SSC_INPUT,    SSC_NUMBER,         "L_crossover",            "Length of crossover piping in a loop",                                                  "m",             "",  "controller",            "*",        "",              ""},
+    /*Col & Rec*/{ SSC_INPUT,    SSC_ARRAY,          "HL_T_coefs",             "HTF temperature-dependent heat loss coefficients",                                      "W/m-K",         "",  "controller",            "*",        "",              ""},
+    /*Col & Rec*/{ SSC_INPUT,    SSC_ARRAY,          "HL_w_coefs",             "Wind-speed-dependent heat loss coefficients",                                           "W/m-(m/s)",     "",  "controller",            "*",        "",              ""},
+    /*Col & Rec*/{ SSC_INPUT,    SSC_NUMBER,         "DP_nominal",             "Pressure drop across a single collector assembly at design",                            "bar",           "",  "controller",            "*",        "",              ""},
+    /*Col & Rec*/{ SSC_INPUT,    SSC_ARRAY,          "DP_coefs",               "Pressure drop mass flow based part-load curve",                                         "",              "",  "controller",            "*",        "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,         "nRecVar",                "Number of receiver variations",                                                        "",              "",  "controller",            "?=4",      "INTEGER",       "" },
 
-    { SSC_INPUT,        SSC_NUMBER,      "tilt",              "Tilt angle of surface/axis",                                                          "",              "",            "Weather",        "*",                       "",                      "" },
 
-    { SSC_INPUT,    SSC_NUMBER,         "calc_design_pipe_vals",  "Calculate temps and pressures at design conditions for runners and headers",           "-",              "",  "controller",            "*",        "",              "" },
+        
+  
+    //{ SSC_INPUT,    SSC_NUMBER,         "tilt",              "Tilt angle of surface/axis",                                                          "",              "",            "Weather",        "*",                       "",                      "" },
+
+    //{ SSC_INPUT,    SSC_NUMBER,         "calc_design_pipe_vals",  "Calculate temps and pressures at design conditions for runners and headers",           "-",              "",  "controller",            "*",        "",              "" },
 
 
     //{ SSC_INPUT,        SSC_NUMBER,      "custom_sf_pipe_sizes",      "Use custom solar field pipe diams, wallthks, and lengths",                         "none",         "",               "solar_field",    "*",                       "",                      "" },
@@ -216,17 +227,13 @@ static var_info _cm_vtab_fresnel_physical[] = {
     //{ SSC_INPUT,    SSC_NUMBER,         "V_tank_hot_ini",         "Label",                                                                                 "",              "",  "controller",            "*",        "",              "" },
     //{ SSC_INPUT,    SSC_NUMBER,         "T_tank_hot_ini",         "Label",                                                                                 "",              "",  "controller",            "*",        "",              "" },
     //{ SSC_INPUT,    SSC_NUMBER,         "T_tank_cold_ini",        "Label",                                                                                 "",              "",  "controller",            "*",        "",              "" },
-    //{ SSC_INPUT,    SSC_NUMBER,         "vol_tank",               "Label",                                                                                 "",              "",  "controller",            "*",        "",              "" },
     //{ SSC_INPUT,    SSC_NUMBER,         "T_field_in_des",         "Label",                                                                                 "",              "",  "controller",            "*",        "",              "" },
     //{ SSC_INPUT,    SSC_NUMBER,         "T_field_out_des",        "Label",                                                                                 "",              "",  "controller",            "*",        "",              "" },
-    //{ SSC_INPUT,    SSC_NUMBER,         "q_pb_design",            "Label",                                                                                 "",              "",  "controller",            "*",        "",              "" },
     //{ SSC_INPUT,    SSC_NUMBER,         "W_pb_design",            "Label",                                                                                 "",              "",  "controller",            "*",        "",              "" },
     //{ SSC_INPUT,    SSC_NUMBER,         "solarm",                 "Label",                                                                                 "",              "",  "controller",            "*",        "",              "" },
-    //{ SSC_INPUT,    SSC_NUMBER,         "tes_temp",               "Label",                                                                                 "",              "",  "controller",           "*",         "",              "" },
     //{ SSC_INPUT,    SSC_NUMBER,         "fossil_mode",            "Label",                                                                                 "",              "",  "controller",            "*",        "INTEGER",       "" },
     //{ SSC_INPUT,    SSC_NUMBER,         "fthr_ok",                "Label",                                                                                 "",              "",  "controller",            "*",        "INTEGER",       "" },
     //{ SSC_INPUT,    SSC_NUMBER,         "fc_on",                  "Label",                                                                                 "",              "",  "controller",            "*",        "",              "" },
-    //{ SSC_INPUT,    SSC_NUMBER,         "t_standby_reset",        "Label",                                                                                 "",              "",  "controller",            "*",        "",              "" },
     //{ SSC_INPUT,    SSC_NUMBER,         "tes_type",               "Label",                                                                                 "",              "",  "controller",            "*",        "",              "" },
     //{ SSC_INPUT,    SSC_ARRAY,          "tslogic_a",              "Label",                                                                                 "",              "",  "controller",            "*",        "",              "" },
     //{ SSC_INPUT,    SSC_ARRAY,          "tslogic_b",              "Label",                                                                                 "",              "",  "controller",            "*",        "",              "" },
@@ -244,63 +251,69 @@ static var_info _cm_vtab_fresnel_physical[] = {
     //{ SSC_INPUT,    SSC_ARRAY,          "sgs_lengths",            "Custom SGS lengths",                                                                   "m",              "",  "controller",            "*",        "",              "" },
     
     // Power Cycle Inputs
-    { SSC_INPUT,    SSC_NUMBER,      "pc_config",         "0: Steam Rankine (224), 1: user defined",                                   "-",              "",  "powerblock",         "?=0",      "INTEGER",       ""},
-    { SSC_INPUT,    SSC_NUMBER,      "P_ref",             "Label",                                                                     "-",              "",  "powerblock",         "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,      "eta_ref",           "Cycle thermal efficiency at design point",                                  "-",              "",  "powerblock",         "*",        "",              ""},
+    /*Power Cycle*/{ SSC_INPUT,    SSC_NUMBER,      "T_startup",              "Power block startup temperature",                                                       "C",             "",  "controller",            "*",        "",              "" },
+    /*Power Cycle*/{ SSC_INPUT,    SSC_NUMBER,      "startup_time",      "Time needed for power block startup",                                       "hr",             "",  "powerblock",         "*",        "",              ""},
+    /*Power Cycle*/{ SSC_INPUT,    SSC_NUMBER,      "startup_frac",      "Fraction of design thermal power needed for startup",                       "none",           "",  "powerblock",         "*",        "",              ""},
+    /*Power Cycle*/{ SSC_INPUT,    SSC_NUMBER,      "q_sby_frac",        "Fraction of thermal power required for standby mode",                       "none",           "",  "powerblock",         "*",        "",              ""},
+    /*Power Cycle*/{ SSC_INPUT,    SSC_NUMBER,      "pb_pump_coef",              "Pumping power to move 1kg of HTF through PB loop",                                 "kW/kg",        "",               "powerblock",     "*",                       "",                      ""},
+    /*Power Cycle*/{ SSC_INPUT,    SSC_NUMBER,      "cycle_max_frac",         "Maximum turbine over design operation fraction",                     "",              "",  "controller",            "*",        "",              "" },
+    /*Power Cycle*/{ SSC_INPUT,    SSC_NUMBER,      "cycle_cutoff_frac",      "Minimum turbine operation fraction before shutdown",                 "",              "",  "controller",            "*",        "",              "" },
+    { SSC_INPUT,    SSC_NUMBER,      "pc_config",         "0: Steam Rankine (224), 1: user defined",                                   "-",              "",  "powerblock",         "?=0",      "INTEGER",       "" },
+
+    /*Power Cycle*///{ SSC_INPUT,    SSC_NUMBER,         "t_standby_reset",        "Label",                                                                                 "",              "",  "controller",            "*",        "",              "" },
     //{ SSC_INPUT,  SSC_NUMBER,      "cycle_max_frac",            "Maximum turbine over design operation fraction",                                   "-",            "",               "powerblock",     "*",                       "",                      ""},
     //{ SSC_INPUT,  SSC_NUMBER,      "cycle_cutoff_frac",         "Minimum turbine operation fraction before shutdown",                               "-",            "",               "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,    SSC_NUMBER,      "startup_time",      "Time needed for power block startup",                                       "hr",             "",  "powerblock",         "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,      "startup_frac",      "Fraction of design thermal power needed for startup",                       "none",           "",  "powerblock",         "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,      "q_sby_frac",        "Fraction of thermal power required for standby mode",                       "none",           "",  "powerblock",         "*",        "",              ""},
-    { SSC_INPUT,  SSC_NUMBER,      "pb_pump_coef",              "Pumping power to move 1kg of HTF through PB loop",                                 "kW/kg",        "",               "powerblock",     "*",                       "",                      "" },
-    // Steam Rankine Cycle																												
-    { SSC_INPUT,    SSC_NUMBER,      "dT_cw_ref",         "Reference condenser cooling water inlet/outlet T diff",                     "C",            "",                             "powerblock",     "pc_config=0",             "",                      "" },
-    { SSC_INPUT,    SSC_NUMBER,      "T_amb_des",         "Reference ambient temperature at design point",                             "C",            "",                             "powerblock",     "pc_config=0",             "",                      "" },
-    //{ SSC_INPUT,    SSC_NUMBER,      "P_boil",            "Boiler operating pressure",                                                 "bar",          "",                             "powerblock",     "pc_config=0",             "",                      "" },
-    { SSC_INPUT,    SSC_NUMBER,      "CT",                "Flag for using dry cooling or wet cooling system",                          "none",         "",                             "powerblock",     "pc_config=0",             "",                      "" },
-    { SSC_INPUT,    SSC_NUMBER,      "T_approach",        "Cooling tower approach temperature",                                        "C",            "",                             "powerblock",     "pc_config=0",             "",                      "" },
-    { SSC_INPUT,    SSC_NUMBER,      "T_ITD_des",         "ITD at design for dry system",                                              "C",            "",                             "powerblock",     "pc_config=0",             "",                      "" },
-    { SSC_INPUT,    SSC_NUMBER,      "P_cond_ratio",      "Condenser pressure ratio",                                                  "none",         "",                             "powerblock",     "pc_config=0",             "",                      "" },
-    { SSC_INPUT,    SSC_NUMBER,      "pb_bd_frac",        "Power block blowdown steam fraction ",                                      "none",         "",                             "powerblock",     "pc_config=0",             "",                      "" },
-    { SSC_INPUT,    SSC_NUMBER,      "P_cond_min",        "Minimum condenser pressure",                                                "inHg",         "",                             "powerblock",     "pc_config=0",             "",                      "" },
-    { SSC_INPUT,    SSC_NUMBER,      "n_pl_inc",          "Number of part-load increments for the heat rejection system",              "none",         "",                             "powerblock",     "pc_config=0",             "",                      "" },
-    { SSC_INPUT,    SSC_ARRAY,       "F_wc",              "Fraction indicating wet cooling use for hybrid system",                     "none",         "constant=[0,0,0,0,0,0,0,0,0]", "powerblock",     "pc_config=0",             "",                      "" },
-    { SSC_INPUT,    SSC_NUMBER,      "tech_type",         "Turbine inlet pressure control flag (sliding=user, fixed=trough)",          "1/2/3",         "tower/trough/user",           "powerblock",     "pc_config=0",             "",                      "" },
 
-    { SSC_INPUT,    SSC_NUMBER,         "DP_SGS",                 "Pressure drop within the steam generator",                                           "bar",              "",  "controller",            "*",        "",              "" },
-    { SSC_INPUT,    SSC_NUMBER,         "cycle_max_frac",         "Maximum turbine over design operation fraction",                     "",              "",  "controller",            "*",        "",              "" },
-    { SSC_INPUT,    SSC_NUMBER,         "cycle_cutoff_frac",      "Minimum turbine operation fraction before shutdown",                 "",              "",  "controller",            "*",        "",              "" },
-   
+
+    // Steam Rankine Cycle																												
+    /*Power Cycle*/{ SSC_INPUT,    SSC_NUMBER,      "dT_cw_ref",         "Reference condenser cooling water inlet/outlet T diff",                     "C",            "",                             "powerblock",     "pc_config=0",             "",                      "" },
+    /*Power Cycle*/{ SSC_INPUT,    SSC_NUMBER,      "T_amb_des",         "Reference ambient temperature at design point",                             "C",            "",                             "powerblock",     "pc_config=0",             "",                      "" },
+    /*Power Cycle*/{ SSC_INPUT,    SSC_NUMBER,      "CT",                "Flag for using dry cooling or wet cooling system",                          "none",         "",                             "powerblock",     "pc_config=0",             "",                      "" },
+    /*Power Cycle*/{ SSC_INPUT,    SSC_NUMBER,      "T_approach",        "Cooling tower approach temperature",                                        "C",            "",                             "powerblock",     "pc_config=0",             "",                      "" },
+    /*Power Cycle*/{ SSC_INPUT,    SSC_NUMBER,      "T_ITD_des",         "ITD at design for dry system",                                              "C",            "",                             "powerblock",     "pc_config=0",             "",                      "" },
+    /*Power Cycle*/{ SSC_INPUT,    SSC_NUMBER,      "P_cond_ratio",      "Condenser pressure ratio",                                                  "none",         "",                             "powerblock",     "pc_config=0",             "",                      "" },
+    /*Power Cycle*/{ SSC_INPUT,    SSC_NUMBER,      "pb_bd_frac",        "Power block blowdown steam fraction ",                                      "none",         "",                             "powerblock",     "pc_config=0",             "",                      "" },
+    /*Power Cycle*/{ SSC_INPUT,    SSC_NUMBER,      "P_cond_min",        "Minimum condenser pressure",                                                "inHg",         "",                             "powerblock",     "pc_config=0",             "",                      "" },
+    /*Power Cycle*/{ SSC_INPUT,    SSC_NUMBER,      "n_pl_inc",          "Number of part-load increments for the heat rejection system",              "none",         "",                             "powerblock",     "pc_config=0",             "",                      "" },
+    /*Power Cycle*/{ SSC_INPUT,    SSC_ARRAY,       "F_wc",              "Fraction indicating wet cooling use for hybrid system",                     "none",         "constant=[0,0,0,0,0,0,0,0,0]", "powerblock",     "pc_config=0",             "",                      "" },
+    /*Power Cycle*/{ SSC_INPUT,    SSC_NUMBER,      "tech_type",         "Turbine inlet pressure control flag (sliding=user, fixed=trough)",          "1/2/3",         "tower/trough/user",           "powerblock",     "pc_config=0",             "",                      "" },
+    //{ SSC_INPUT,    SSC_NUMBER,      "P_boil",            "Boiler operating pressure",                                                 "bar",          "",                             "powerblock",     "pc_config=0",             "",                      "" },
+
+    /*Power Cycle*/{ SSC_INPUT,    SSC_NUMBER,         "DP_SGS",                 "Pressure drop within the steam generator",                                           "bar",              "",  "controller",            "*",        "",              "" },
+    
 
     // User Defined cycle
-    { SSC_INPUT,        SSC_NUMBER,      "ud_f_W_dot_cool_des",  "Percent of user-defined power cycle design gross output consumed by cooling",    "%",	    "",                        "user_defined_PC", "pc_config=1",            "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "ud_m_dot_water_cool_des", "Mass flow rate of water required at user-defined power cycle design point",   "kg/s",  "",                        "user_defined_PC", "pc_config=1",            "",                      "" },
-    { SSC_INPUT,        SSC_MATRIX,      "ud_ind_od",            "Off design user-defined power cycle performance as function of T_htf, m_dot_htf [ND], and T_amb", "", "", "user_defined_PC", "pc_config=1",     "",                      "" },
+    /*Power Cycle*/{ SSC_INPUT,        SSC_NUMBER,      "ud_f_W_dot_cool_des",  "Percent of user-defined power cycle design gross output consumed by cooling",    "%",	    "",                        "user_defined_PC", "pc_config=1",            "",                      "" },
+    /*Power Cycle*/{ SSC_INPUT,        SSC_NUMBER,      "ud_m_dot_water_cool_des", "Mass flow rate of water required at user-defined power cycle design point",   "kg/s",  "",                        "user_defined_PC", "pc_config=1",            "",                      "" },
+    /*Power Cycle*/{ SSC_INPUT,        SSC_MATRIX,      "ud_ind_od",            "Off design user-defined power cycle performance as function of T_htf, m_dot_htf [ND], and T_amb", "", "", "user_defined_PC", "pc_config=1",     "",                      "" },
 
     // TES
-    { SSC_INPUT,    SSC_NUMBER,         "store_fluid",            "Label",                                                                                 "",              "",  "controller",            "*",        "",              "" },
-    { SSC_INPUT,    SSC_MATRIX,         "store_fl_props",         "Label",                                                                                 "",              "",  "controller",            "*",        "",              "" },
-    { SSC_INPUT,    SSC_NUMBER,         "tshours",                "Label",                                                                                 "",              "",  "controller",            "*",        "",              "" },
-    { SSC_INPUT,    SSC_NUMBER,         "h_tank",                 "Label",                                                                                 "",              "",  "controller",            "*",        "",              "" },
-    { SSC_INPUT,    SSC_NUMBER,         "u_tank",                 "Label",                                                                                 "",              "",  "controller",            "*",        "",              "" },
-    { SSC_INPUT,    SSC_NUMBER,         "tank_pairs",             "Label",                                                                                 "",              "",  "controller",            "*",        "INTEGER",       "" },
-    { SSC_INPUT,    SSC_NUMBER,         "hot_tank_Thtr",          "Label",                                                                                 "",              "",  "controller",            "*",        "",              "" },
-    { SSC_INPUT,    SSC_NUMBER,         "tank_max_heat",          "Label",                                                                                 "",              "",  "controller",            "*",        "",              "" },
+    /*Storage*/{ SSC_INPUT,    SSC_NUMBER,         "store_fluid",            "Label",                                                                                 "",              "",  "controller",            "*",        "",              "" },
+    /*Storage*/{ SSC_INPUT,    SSC_MATRIX,         "store_fl_props",         "Label",                                                                                 "",              "",  "controller",            "*",        "",              "" },
+    /*Storage*/{ SSC_INPUT,    SSC_NUMBER,         "h_tank",                 "Label",                                                                                 "",              "",  "controller",            "*",        "",              "" },
+    /*Storage*/{ SSC_INPUT,    SSC_NUMBER,         "u_tank",                 "Label",                                                                                 "",              "",  "controller",            "*",        "",              "" },
+    /*Storage*/{ SSC_INPUT,    SSC_NUMBER,         "tank_pairs",             "Label",                                                                                 "",              "",  "controller",            "*",        "INTEGER",       "" },
+    /*Storage*/{ SSC_INPUT,    SSC_NUMBER,         "hot_tank_Thtr",          "Label",                                                                                 "",              "",  "controller",            "*",        "",              "" },
+    /*Storage*/{ SSC_INPUT,    SSC_NUMBER,         "tank_max_heat",          "Label",                                                                                 "",              "",  "controller",            "*",        "",              "" },
+    /*Storage*/{ SSC_INPUT,    SSC_NUMBER,         "cold_tank_Thtr",         "Label",                                                                                 "",              "",  "controller",            "*",        "",              "" },
+    /*Storage*/{ SSC_INPUT,    SSC_NUMBER,         "dt_hot",                 "Label",                                                                                 "",              "",  "controller",            "*",        "",              "" },
+    /*Storage*/{ SSC_INPUT,    SSC_NUMBER,         "h_tank_min",             "Label",                                                                                 "",              "",  "controller",            "*",        "",              "" },
+    /*Storage*/{ SSC_INPUT,    SSC_NUMBER,         "dt_cold",                "Label",                                                                                 "",              "",  "controller",            "*",        "",              "" },
+    /*Storage*///{ SSC_INPUT,    SSC_NUMBER,         "vol_tank",               "Label",                                                                                 "",              "",  "controller",            "*",        "",              "" },
+    /*Storage*///{ SSC_INPUT,    SSC_NUMBER,         "tes_temp",               "Label",                                                                                 "",              "",  "controller",           "*",         "",              "" },
     //{ SSC_INPUT,        SSC_NUMBER,      "hot_tank_max_heat",         "Rated heater capacity for hot tank heating",                                       "MWe",          "",               "TES",            "*",                       "",                      "" },
     //{ SSC_INPUT,        SSC_NUMBER,      "cold_tank_max_heat",        "Rated heater capacity for cold tank heating",                                      "MWe",          "",               "TES",            "*",                       "",                      "" },
-    { SSC_INPUT,    SSC_NUMBER,         "cold_tank_Thtr",         "Label",                                                                                 "",              "",  "controller",            "*",        "",              "" },
-    { SSC_INPUT,    SSC_NUMBER,         "dt_hot",                 "Label",                                                                                 "",              "",  "controller",            "*",        "",              "" },
-    { SSC_INPUT,    SSC_NUMBER,         "h_tank_min",             "Label",                                                                                 "",              "",  "controller",            "*",        "",              "" },
     //{ SSC_INPUT,        SSC_NUMBER,      "init_hot_htf_percent",      "Initial fraction of avail. vol that is hot",                                       "%",            "",               "TES",            "*",                       "",                      "" },
-    { SSC_INPUT,    SSC_NUMBER,         "dt_cold",                "Label",                                                                                 "",              "",  "controller",            "*",        "",              "" },
 
-    { SSC_INPUT,    SSC_NUMBER,         "tanks_in_parallel",      "Tanks are in parallel, not in series, with solar field",                               "-",              "",  "controller",            "*",        "",              "" },
-    { SSC_INPUT,    SSC_NUMBER,         "has_hot_tank_bypass",    "Bypass valve connects field outlet to cold tank",                                      "-",              "",  "controller",            "*",        "",              "" },
-    { SSC_INPUT,    SSC_NUMBER,         "T_tank_hot_inlet_min",   "Minimum hot tank htf inlet temperature",                                               "C",              "",  "controller",            "*",        "",              "" },
-    { SSC_INPUT,    SSC_NUMBER,         "tes_pump_coef",          "Label",                                                                                 "",              "",  "controller",            "*",        "",              "" },
-    { SSC_INPUT,    SSC_NUMBER,         "V_tes_des",              "Design-point velocity to size the TES pipe diameters",                               "m/s",              "",  "controller",            "*",        "",              "" },
-    { SSC_INPUT,    SSC_NUMBER,         "custom_tes_p_loss",      "TES pipe losses are based on custom lengths and coeffs",                               "-",              "",  "controller",            "*",        "",              "" },
-    { SSC_INPUT,    SSC_ARRAY,          "k_tes_loss_coeffs",      "Minor loss coeffs for the coll, gen, and bypass loops",                                "-",              "",  "controller",            "*",        "",              "" },
+
+    /*Storage*/{ SSC_INPUT,    SSC_NUMBER,         "tanks_in_parallel",      "Tanks are in parallel, not in series, with solar field",                               "-",              "",  "controller",            "*",        "",              "" },
+    /*Storage*/{ SSC_INPUT,    SSC_NUMBER,         "has_hot_tank_bypass",    "Bypass valve connects field outlet to cold tank",                                      "-",              "",  "controller",            "*",        "",              "" },
+    /*Storage*/{ SSC_INPUT,    SSC_NUMBER,         "T_tank_hot_inlet_min",   "Minimum hot tank htf inlet temperature",                                               "C",              "",  "controller",            "*",        "",              "" },
+    //{ SSC_INPUT,    SSC_NUMBER,         "tes_pump_coef",          "Label",                                                                                 "",              "",  "controller",            "*",        "",              "" },
+    /*Storage*/{ SSC_INPUT,    SSC_NUMBER,         "V_tes_des",              "Design-point velocity to size the TES pipe diameters",                               "m/s",              "",  "controller",            "*",        "",              "" },
+
+    //{ SSC_INPUT,    SSC_NUMBER,         "custom_tes_p_loss",      "TES pipe losses are based on custom lengths and coeffs",                               "-",              "",  "controller",            "*",        "",              "" },
+    //{ SSC_INPUT,    SSC_ARRAY,          "k_tes_loss_coeffs",      "Minor loss coeffs for the coll, gen, and bypass loops",                                "-",              "",  "controller",            "*",        "",              "" },
     //{ SSC_INPUT,        SSC_NUMBER,      "custom_tes_pipe_sizes",     "Use custom TES pipe diams, wallthks, and lengths",                                 "-",            "",               "controller",     "*",                       "",                      "" },
     //{ SSC_INPUT,        SSC_MATRIX,      "tes_diams",                 "Custom TES diameters",                                                             "m",            "",               "controller",     "*",                       "",                      "" },
     //{ SSC_INPUT,        SSC_MATRIX,      "tes_wallthicks",            "Custom TES wall thicknesses",                                                      "m",            "",               "controller",     "*",                       "",                      "" },
@@ -317,7 +330,7 @@ static var_info _cm_vtab_fresnel_physical[] = {
     //{ SSC_INPUT,        SSC_NUMBER,      "specified_total_aperture",            "specified_total_aperture",                                               "-",            "",               "controller",     "*",                       "",                      "" },
     //{ SSC_INPUT,        SSC_NUMBER,      "non_solar_field_land_area_multiplier", "non_solar_field_land_area_multiplier",                                  "-",            "",               "controller",     "*",                       "",                      "" },
     //{ SSC_INPUT,        SSC_ARRAY,       "trough_loop_control",                 "trough_loop_control",                                                    "-",            "",               "controller",     "*",                       "",                      "" },
-    //{ SSC_INPUT,        SSC_NUMBER,      "disp_wlim_maxspec",                   "disp_wlim_maxspec",                                                      "-",            "",               "controller",     "*",                       "",                      "" },
+    /*Sys Control*///{ SSC_INPUT,        SSC_NUMBER,      "disp_wlim_maxspec",                   "disp_wlim_maxspec",                                                      "-",            "",               "controller",     "*",                       "",                      "" },
 
 
 
@@ -399,6 +412,8 @@ static var_info _cm_vtab_fresnel_physical[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "T_sys_c",                "Field HTF temperature cold header inlet",                        "C",            "",            "Type250",        "*",                       "LENGTH=8760",           "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "T_sys_h",                "Field HTF temperature hot header outlet",                        "C",            "",            "Type250",        "*",                       "LENGTH=8760",           "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "t_loop_outlet",          "Field HTF temperature loop outlet",                              "C",             "",  "mslf",                  "*",        "LENGTH=8760",   "" },
+
+    { SSC_OUTPUT,       SSC_ARRAY,       "q_I",                    "Incident Radiation",                              "C",             "",  "mslf",                  "*",        "LENGTH=8760",   "" },
 
 
     // power block
@@ -530,21 +545,17 @@ public:
     cm_fresnel_physical()
     {
         add_var_info(_cm_vtab_fresnel_physical);
+        add_var_info(vtab_adjustment_factors);
     }
 
     void exec()
     {
-        // NOT IN TROUGH
+     
         bool is_dispatch = false;
         bool is_dispatch_series = false;
 
         // TES
         // No custom TES piping
-        //bool custom_tes_pipe_sizes = false;
-        //util::matrix_t<double> tes_wallthicks(1, 1);
-        //tes_wallthicks.at(0, 0) = -1;
-        //util::matrix_t<double> tes_diams(1, 1);
-        //tes_diams.at(0, 0) = -1;
         double init_hot_htf_percent = 0.3;
         double cold_tank_max_heat = 25;
         double hot_tank_max_heat = 25;
@@ -621,7 +632,7 @@ public:
                 c_fresnel.m_fthrok = as_integer("fthrok");
                 c_fresnel.m_fthrctrl = as_integer("fthrctrl");
                 c_fresnel.m_ColAz = as_number("ColAz");
-                c_fresnel.m_ColTilt = as_number("tilt");
+                //c_fresnel.m_ColTilt = as_number("tilt");
 
                 c_fresnel.m_solar_mult = as_number("solar_mult");
 
@@ -731,7 +742,7 @@ public:
 
 
                 // Hard Coded (currently no UI)
-                c_fresnel.m_L_rnr_pb = 25;
+                c_fresnel.m_L_rnr_pb = 50;
 
 
                 //////////////////////// Questionable
@@ -796,6 +807,7 @@ public:
                 c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_T_SYS_C, allocate("T_sys_c", n_steps_fixed), n_steps_fixed);
                 c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_T_SYS_H, allocate("T_sys_h", n_steps_fixed), n_steps_fixed);
                 c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_T_LOOP_OUTLET, allocate("t_loop_outlet", n_steps_fixed), n_steps_fixed);
+                c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_Q_I, allocate("q_I", n_steps_fixed), n_steps_fixed);
             }
 
         }
@@ -895,7 +907,7 @@ public:
         {
 
             // Convert array to matrix
-            util::matrix_t<double> k_tes_loss_coeffs_mat;
+            /*util::matrix_t<double> k_tes_loss_coeffs_mat;
             {
                 size_t size;
                 ssc_number_t* k_tes_loss_coeffs_array = as_array("k_tes_loss_coeffs", &size);
@@ -903,7 +915,7 @@ public:
                 size_t sizeof1 = 1;
                 k_tes_loss_coeffs_mat = util::matrix_t<double>(sizeof1, size, &k_tes_loss_coeffs_vec);
                 delete k_tes_loss_coeffs_array;
-            }
+            }*/
 
             util::matrix_t<double> tes_lengths;
             if (is_assigned("tes_lengths")) {
@@ -1362,42 +1374,42 @@ public:
 
 
         // DEBUG
-        if (true)
+        if (false)
         {
             size_t size;
             ssc_number_t* x;
 
             x = as_array("Theta_ave", &size);
             vector<double> Theta_ave_vec(x, x + size);
-            delete x;
+            //delete x;
 
             x = as_array("CosTh_ave", &size);
             vector<double> CosTh_ave_vec(x, x + size);
-            delete x;
+            //delete x;
 
             x = as_array("IAM_ave", &size);
             vector<double> IAM_ave_vec(x, x + size);
-            delete x;
+            //delete x;
 
             x = as_array("RowShadow_ave", &size);
             vector<double> RowShadow_ave_vec(x, x + size);
-            delete x;
+            //delete x;
 
             x = as_array("EndLoss_ave", &size);
             vector<double> EndLoss_ave_vec(x, x + size);
-            delete x;
+            //delete x;
 
             x = as_array("dni_costh", &size);
             vector<double> dni_costh_vec(x, x + size);
-            delete x;
+            //delete x;
 
             x = as_array("EqOpteff", &size);
             vector<double> EqOpteff_vec(x, x + size);
-            delete x;
+            //delete x;
 
             x = as_array("SCAs_def", &size);
             vector<double> SCAs_def_vec(x, x + size);
-            delete x;
+            //delete x;
 
 
             /*x = as_array("q_inc_sf_tot", &size);
@@ -1406,75 +1418,75 @@ public:
 
             x = as_array("qinc_costh", &size);
             vector<double> qinc_costh_vec(x, x + size);
-            delete x;
+            //delete x;
             x = as_array("q_dot_rec_inc", &size);
             vector<double> q_dot_rec_inc_vec(x, x + size);
-            delete x;
+            //delete x;
             x = as_array("q_dot_rec_thermal_loss", &size);
             vector<double> q_dot_rec_thermal_loss_vec(x, x + size);
-            delete x;
+            //delete x;
             x = as_array("q_dot_rec_abs", &size);
             vector<double> q_dot_rec_abs_vec(x, x + size);
-            delete x;
+            //delete x;
             x = as_array("q_dot_piping_loss", &size);
             vector<double> q_dot_piping_loss_vec(x, x + size);
-            delete x;
+            //delete x;
             x = as_array("e_dot_field_int_energy", &size);
             vector<double> e_dot_field_int_energy_vec(x, x + size);
-            delete x;
+            //delete x;
             x = as_array("q_dot_htf_sf_out", &size);
             vector<double> q_dot_htf_sf_out_vec(x, x + size);
-            delete x;
+            //delete x;
             x = as_array("q_dot_freeze_prot", &size);
             vector<double> q_dot_freeze_prot_vec(x, x + size);
-            delete x;
+            //delete x;
             x = as_array("m_dot_loop", &size);
             vector<double> m_dot_loop_vec(x, x + size);
-            delete x;
+            //delete x;
             x = as_array("recirculating", &size);
             vector<double> recirculating_vec(x, x + size);
-            delete x;
+            //delete x;
             x = as_array("m_dot_field_recirc", &size);
             vector<double> m_dot_field_recirc_vec(x, x + size);
-            delete x;
+            //delete x;
             x = as_array("m_dot_field_delivered", &size);
             vector<double> m_dot_field_delivered_vec(x, x + size);
-            delete x;
+            //delete x;
             x = as_array("T_field_cold_in", &size);
             vector<double> T_field_cold_in_vec(x, x + size);
-            delete x;
+            //delete x;
             x = as_array("T_rec_cold_in", &size);
             vector<double> T_rec_cold_in_vec(x, x + size);
-            delete x;
+            //delete x;
             x = as_array("T_rec_hot_out", &size);
             vector<double> T_rec_hot_out_vec(x, x + size);
-            delete x;
+            //delete x;
             x = as_array("T_field_hot_out", &size);
             vector<double> T_field_hot_out_vec(x, x + size);
-            delete x;
+            //delete x;
             x = as_array("deltaP_field", &size);
             vector<double> deltaP_field_vec(x, x + size);
-            delete x;
+            //delete x;
             x = as_array("W_dot_sca_track", &size);
             vector<double> W_dot_sca_track_vec(x, x + size);
-            delete x;
+            //delete x;
             x = as_array("W_dot_field_pump", &size);
             vector<double> W_dot_field_pump_vec(x, x + size);
-            delete x;
+            //delete x;
 
 
             // Fresnel
             x = as_array("theta_L", &size);
             vector<double> theta_L_vec(x, x + size);
-            delete x;
+            //delete x;
 
             x = as_array("phi_t", &size);
             vector<double> phi_t_vec(x, x + size);
-            delete x;
+            //delete x;
 
             x = as_array("eta_optical", &size);
             vector<double> eta_optical_vec(x, x + size);
-            delete x;
+            //delete x;
 
             //x = as_array("EqOptEff", &size);
             //vector<double> EqOptEff_vec(x, x + size);
@@ -1483,53 +1495,53 @@ public:
 
             x = as_array("sf_def", &size);
             vector<double> sf_def_vec(x, x + size);
-            delete x;
+            //delete x;
 
             x = as_array("q_inc_sf_tot", &size);
             vector<double> q_inc_sf_tot_vec(x, x + size);
-            delete x;
+            //delete x;
             x = as_array("q_abs_tot", &size);
             vector<double> q_abs_tot_vec(x, x + size);
-            delete x;
+            //delete x;
             x = as_array("q_dump", &size);
             vector<double> q_dump_vec(x, x + size);
-            delete x;
+            //delete x;
             x = as_array("q_loss_tot", &size);
             vector<double> q_loss_tot_vec(x, x + size);
-            delete x;
+            //delete x;
             x = as_array("Pipe_hl", &size);
             vector<double> Pipe_hl_vec(x, x + size);
-            delete x;
+            //delete x;
             x = as_array("q_avail", &size);
             vector<double> q_avail_vec(x, x + size);
-            delete x;
+            //delete x;
             x = as_array("q_loss_spec_tot", &size);
             vector<double> q_loss_spec_tot_vec(x, x + size);
-            delete x;
+            //delete x;
             x = as_array("eta_thermal", &size);
             vector<double> eta_thermal_vec(x, x + size);
-            delete x;
+            //delete x;
             x = as_array("E_bal_startup", &size);
             vector<double> E_bal_startup_vec(x, x + size);
-            delete x;
+            //delete x;
             x = as_array("m_dot_avail", &size);
             vector<double> m_dot_avail_vec(x, x + size);
-            delete x;
+            //delete x;
             x = as_array("m_dot_htf2", &size);
             vector<double> m_dot_htf2_vec(x, x + size);
-            delete x;
+            //delete x;
             x = as_array("DP_tot", &size);
             vector<double> DP_tot_vec(x, x + size);
-            delete x;
+            //delete x;
             x = as_array("T_sys_c", &size);
             vector<double> T_sys_c_vec(x, x + size);
-            delete x;
+            //delete x;
             x = as_array("T_sys_h", &size);
             vector<double> T_sys_h_vec(x, x + size);
-            delete x;
+            //delete x;
             x = as_array("t_loop_outlet", &size);
             vector<double> t_loop_outlet_vec(x, x + size);
-            delete x;
+            //delete x;
 
             // Actual Outputs
             x = as_array("time_hr", &size);
@@ -1537,6 +1549,9 @@ public:
 
             x = as_array("P_out_net", &size);
             vector<double> P_out_net_vec(x, x + size);
+
+            x = as_array("q_I", &size);
+            vector<double> q_I_vec(x, x + size);
 
             int y = 0;
         }
@@ -1548,7 +1563,6 @@ public:
         assign("solar_multiple_actual", as_double("solar_mult"));   // calculated during verify() using cmod_csp_trough_eqns.cpp
 
         // Convert Units
-        return;
         {
             // Do unit post-processing here
             double* p_q_pc_startup = allocate("q_pc_startup", n_steps_fixed);
@@ -1635,8 +1649,6 @@ public:
 
 
         }
-
-        int x = 0;
        
     }
 
