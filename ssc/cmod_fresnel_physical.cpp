@@ -69,16 +69,16 @@ static var_info _cm_vtab_fresnel_physical[] = {
     /*Sys Control*/{ SSC_INPUT,    SSC_ARRAY,          "aux_array",              "Label",                                                                                 "",              "",  "controller",            "*",        "",              "" },
 
 
-    /*Sys Control*///{ SSC_INPUT,        SSC_NUMBER,      "is_dispatch",               "Allow dispatch optimization?",  /*TRUE=1*/                                         "-",            "",               "tou",            "?=0",                     "",                      "" },
-    /*Sys Control*///{ SSC_INPUT,        SSC_NUMBER,      "disp_frequency",            "Frequency for dispatch optimization calculations",                                 "hour",         "",               "tou",            "is_dispatch=1",           "",                      "" },
-    /*Sys Control*///{ SSC_INPUT,        SSC_NUMBER,      "disp_horizon",              "Time horizon for dispatch optimization",                                           "hour",         "",               "tou",            "is_dispatch=1",           "",                      "" },
-    /*Sys Control*///{ SSC_INPUT,        SSC_NUMBER,      "disp_max_iter",             "Max. no. dispatch optimization iterations",                                        "-",            "",               "tou",            "is_dispatch=1",           "",                      "" },
-    /*Sys Control*///{ SSC_INPUT,        SSC_NUMBER,      "disp_timeout",              "Max. dispatch optimization solve duration",                                        "s",            "",               "tou",            "is_dispatch=1",           "",                      "" },
-    /*Sys Control*///{ SSC_INPUT,        SSC_NUMBER,      "disp_mip_gap",              "Dispatch optimization solution tolerance",                                         "-",            "",               "tou",            "is_dispatch=1",           "",                      "" },
-    /*Sys Control*///{ SSC_INPUT,        SSC_NUMBER,      "disp_time_weighting",       "Dispatch optimization future time discounting factor",                             "-",            "",               "tou",            "?=0.99",                  "",                      "" },
-    /*Sys Control*///{ SSC_INPUT,        SSC_NUMBER,      "disp_rsu_cost_rel",         "Receiver startup cost",                                                            "$/MWt/start",  "",               "tou",            "is_dispatch=1",           "",                      "" },
-    /*Sys Control*///{ SSC_INPUT,        SSC_NUMBER,      "disp_csu_cost_rel",         "Cycle startup cost",                                                               "$/MWe-cycle/start", "",          "tou",            "is_dispatch=1",           "",                      "" },
-    /*Sys Control*///{ SSC_INPUT,        SSC_NUMBER,      "disp_pen_ramping",          "Dispatch cycle production change penalty",                                         "$/MWe-change", "",               "tou",            "is_dispatch=1",           "",                      "" },
+    /*Sys Control*/{ SSC_INPUT,        SSC_NUMBER,      "is_dispatch",               "Allow dispatch optimization?",  /*TRUE=1*/                                         "-",            "",               "tou",            "?=0",                     "",                      "" },
+    /*Sys Control*/{ SSC_INPUT,        SSC_NUMBER,      "disp_frequency",            "Frequency for dispatch optimization calculations",                                 "hour",         "",               "tou",            "is_dispatch=1",           "",                      "" },
+    /*Sys Control*/{ SSC_INPUT,        SSC_NUMBER,      "disp_horizon",              "Time horizon for dispatch optimization",                                           "hour",         "",               "tou",            "is_dispatch=1",           "",                      "" },
+    /*Sys Control*/{ SSC_INPUT,        SSC_NUMBER,      "disp_max_iter",             "Max. no. dispatch optimization iterations",                                        "-",            "",               "tou",            "is_dispatch=1",           "",                      "" },
+    /*Sys Control*/{ SSC_INPUT,        SSC_NUMBER,      "disp_timeout",              "Max. dispatch optimization solve duration",                                        "s",            "",               "tou",            "is_dispatch=1",           "",                      "" },
+    /*Sys Control*/{ SSC_INPUT,        SSC_NUMBER,      "disp_mip_gap",              "Dispatch optimization solution tolerance",                                         "-",            "",               "tou",            "is_dispatch=1",           "",                      "" },
+    /*Sys Control*/{ SSC_INPUT,        SSC_NUMBER,      "disp_time_weighting",       "Dispatch optimization future time discounting factor",                             "-",            "",               "tou",            "?=0.99",                  "",                      "" },
+    /*Sys Control*/{ SSC_INPUT,        SSC_NUMBER,      "disp_rsu_cost_rel",         "Receiver startup cost",                                                            "$/MWt/start",  "",               "tou",            "is_dispatch=1",           "",                      "" },
+    /*Sys Control*/{ SSC_INPUT,        SSC_NUMBER,      "disp_csu_cost_rel",         "Cycle startup cost",                                                               "$/MWe-cycle/start", "",          "tou",            "is_dispatch=1",           "",                      "" },
+    /*Sys Control*/{ SSC_INPUT,        SSC_NUMBER,      "disp_pen_ramping",          "Dispatch cycle production change penalty",                                         "$/MWe-change", "",               "tou",            "is_dispatch=1",           "",                      "" },
     
     //{ SSC_INPUT,        SSC_NUMBER,      "is_tod_pc_target_also_pc_max", "Is the TOD target cycle heat input also the max cycle heat input?",             "",             "",               "tou",            "?=0",                     "",                      "" },
     
@@ -138,8 +138,8 @@ static var_info _cm_vtab_fresnel_physical[] = {
     /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "V_hdr_max",              "Maximum HTF velocity in the header at design",                                          "m/s",           "",  "controller",            "*",        "",              ""},
     /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "V_hdr_min",              "Minimum HTF velocity in the header at design",                                          "m/s",           "",  "controller",            "*",        "",              ""},
     /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "Pipe_hl_coef",           "Loss coefficient from the header - runner pipe - and non-HCE piping",                   "W/m2-K",        "",  "controller",            "*",        "",              ""},
-    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "fthrok",                 "Flag to allow partial defocusing of the collectors",                                    "",              "",  "controller",            "*",        "INTEGER",       ""},
-    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "fthrctrl",               "Defocusing strategy",                                                                   "",              "",  "controller",            "*",        "INTEGER",       ""},
+   // /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "fthrok",                 "Flag to allow partial defocusing of the collectors",                                    "",              "",  "controller",            "*",        "INTEGER",       ""},
+   // /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "fthrctrl",               "Defocusing strategy",                                                                   "",              "",  "controller",            "*",        "INTEGER",       ""},
     /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "mc_bal_hot",             "The heat capacity of the balance of plant on the hot side",                             "kWht/K-MWt",    "",  "controller",            "*",        "",              ""},
     /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "mc_bal_cold",            "The heat capacity of the balance of plant on the cold side",                            "kWht/K-MWt",    "",  "controller",            "*",        "",              ""},
     /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "mc_bal_sca",             "Non-HTF heat capacity associated with each SCA - per meter basis",                      "Wht/K-m",       "",  "controller",            "*",        "",              ""},
@@ -517,8 +517,8 @@ static var_info _cm_vtab_fresnel_physical[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "gen",                       "Total electric power to grid w/ avail. derate",                                    "kWe",          "",               "system",         "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "annual_W_cycle_gross",      "Electrical source - Power cycle gross output",                                     "kWhe",         "",               "system",         "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "conversion_factor",         "Gross to Net Conversion Factor",                                                   "%",            "",               "system",         "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_NUMBER,      "capacity_factor",           "Capacity factor",                                                                  "%",            "",               "system",         "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_NUMBER,      "kwh_per_kw",                "First year kWh/kW",                                                                "kWh/kW",       "",               "system",         "*",                       "",                      "" },
+    //{ SSC_OUTPUT,       SSC_NUMBER,      "capacity_factor",           "Capacity factor",                                                                  "%",            "",               "system",         "*",                       "",                      "" },
+    //{ SSC_OUTPUT,       SSC_NUMBER,      "kwh_per_kw",                "First year kWh/kW",                                                                "kWh/kW",       "",               "system",         "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "sim_duration",              "Computational time of timeseries simulation",                                      "s",            "",               "system",         "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "solar_multiple_actual",     "Actual solar multiple of system",                                                  "-",            "",               "system",         "*",                       "",                      "" },
     //{ SSC_OUTPUT,       SSC_NUMBER,      "W_dot_par_tot_haf",         "Adjusted parasitic power",                                                         "kWe",          "",               "system",         "*",                       "",                      "" },
@@ -629,8 +629,8 @@ public:
                 c_fresnel.m_V_hdr_min = as_number("V_hdr_min");
                 c_fresnel.m_Pipe_hl_coef = as_number("Pipe_hl_coef");
                 c_fresnel.m_SCA_drives_elec = as_number("SCA_drives_elec");
-                c_fresnel.m_fthrok = as_integer("fthrok");
-                c_fresnel.m_fthrctrl = as_integer("fthrctrl");
+                //c_fresnel.m_fthrok = as_integer("fthrok");
+                //c_fresnel.m_fthrctrl = as_integer("fthrctrl");
                 c_fresnel.m_ColAz = as_number("ColAz");
                 //c_fresnel.m_ColTilt = as_number("tilt");
 
@@ -1562,93 +1562,217 @@ public:
         assign("sim_duration", (ssc_number_t)sim_duration);
         assign("solar_multiple_actual", as_double("solar_mult"));   // calculated during verify() using cmod_csp_trough_eqns.cpp
 
-        // Convert Units
+        // Do unit post-processing here
+        double* p_q_pc_startup = allocate("q_pc_startup", n_steps_fixed);
+        size_t count_pc_su = 0;
+        ssc_number_t* p_q_dot_pc_startup = as_array("q_dot_pc_startup", &count_pc_su);
+        if ((int)count_pc_su != n_steps_fixed)
         {
-            // Do unit post-processing here
-            double* p_q_pc_startup = allocate("q_pc_startup", n_steps_fixed);
-            size_t count_pc_su = 0;
-            ssc_number_t* p_q_dot_pc_startup = as_array("q_dot_pc_startup", &count_pc_su);
-            if ((int)count_pc_su != n_steps_fixed)
-            {
-                log("q_dot_pc_startup array is a different length than 'n_steps_fixed'.", SSC_WARNING);
-                return;
-            }
-            for (int i = 0; i < n_steps_fixed; i++)
-            {
-                p_q_pc_startup[i] = (float)(p_q_dot_pc_startup[i] * (sim_setup.m_report_step / 3600.0));    //[MWh]
-            }
+            log("q_dot_pc_startup array is a different length than 'n_steps_fixed'.", SSC_WARNING);
+            return;
+        }
+        for (int i = 0; i < n_steps_fixed; i++)
+        {
+            p_q_pc_startup[i] = (float)(p_q_dot_pc_startup[i] * (sim_setup.m_report_step / 3600.0));    //[MWh]
+        }
 
-            // Convert mass flow rates from [kg/hr] to [kg/s]
-            size_t count_m_dot_pc, count_m_dot_water_pc; //count_m_dot_rec, count_m_dot_tes_dc, count_m_dot_tes_ch;
-            count_m_dot_pc = count_m_dot_water_pc = 0; //count_m_dot_rec = count_m_dot_tes_dc = count_m_dot_tes_ch = 0;
-            ssc_number_t* p_m_dot_pc = as_array("m_dot_pc", &count_m_dot_pc);
-            ssc_number_t* p_m_dot_water_pc = as_array("m_dot_water_pc", &count_m_dot_water_pc);
-            //ssc_number_t *p_m_dot_tes_dc = as_array("m_dot_tes_dc", &count_m_dot_tes_dc);
-            //ssc_number_t *p_m_dot_tes_ch = as_array("m_dot_tes_ch", &count_m_dot_tes_ch);
-            if ((int)count_m_dot_pc != n_steps_fixed || (int)count_m_dot_water_pc != n_steps_fixed)
-                //|| count_m_dot_rec != n_steps_fixed || count_m_dot_tes_dc != n_steps_fixed || count_m_dot_tes_ch != n_steps_fixed)
-            {
-                log("At least one m_dot array is a different length than 'n_steps_fixed'.", SSC_WARNING);
-                return;
-            }
-            for (int i = 0; i < n_steps_fixed; i++)
-            {
-                //p_m_dot_rec[i] = (ssc_number_t)(p_m_dot_rec[i] / 3600.0); //[kg/s] convert from kg/hr
-                p_m_dot_pc[i] = (ssc_number_t)(p_m_dot_pc[i] / 3600.0);     //[kg/s] convert from kg/hr
-                p_m_dot_water_pc[i] = (ssc_number_t)(p_m_dot_water_pc[i] / 3600.0); //[kg/s] convert from kg/hr
-                //p_m_dot_tes_dc[i] = (ssc_number_t)(p_m_dot_tes_dc[i] / 3600.0);     //[kg/s] convert from kg/hr
-                //p_m_dot_tes_ch[i] = (ssc_number_t)(p_m_dot_tes_ch[i] / 3600.0);     //[kg/s] convert from kg/hr
-            }
+        // Convert mass flow rates from [kg/hr] to [kg/s]
+        size_t count_m_dot_pc, count_m_dot_water_pc; //count_m_dot_rec, count_m_dot_tes_dc, count_m_dot_tes_ch;
+        count_m_dot_pc = count_m_dot_water_pc = 0; //count_m_dot_rec = count_m_dot_tes_dc = count_m_dot_tes_ch = 0;
+        ssc_number_t* p_m_dot_pc = as_array("m_dot_pc", &count_m_dot_pc);
+        ssc_number_t* p_m_dot_water_pc = as_array("m_dot_water_pc", &count_m_dot_water_pc);
+        //ssc_number_t *p_m_dot_tes_dc = as_array("m_dot_tes_dc", &count_m_dot_tes_dc);
+        //ssc_number_t *p_m_dot_tes_ch = as_array("m_dot_tes_ch", &count_m_dot_tes_ch);
+        if ((int)count_m_dot_pc != n_steps_fixed || (int)count_m_dot_water_pc != n_steps_fixed)
+            //|| count_m_dot_rec != n_steps_fixed || count_m_dot_tes_dc != n_steps_fixed || count_m_dot_tes_ch != n_steps_fixed)
+        {
+            log("At least one m_dot array is a different length than 'n_steps_fixed'.", SSC_WARNING);
+            return;
+        }
+        for (int i = 0; i < n_steps_fixed; i++)
+        {
+            //p_m_dot_rec[i] = (ssc_number_t)(p_m_dot_rec[i] / 3600.0); //[kg/s] convert from kg/hr
+            p_m_dot_pc[i] = (ssc_number_t)(p_m_dot_pc[i] / 3600.0);     //[kg/s] convert from kg/hr
+            p_m_dot_water_pc[i] = (ssc_number_t)(p_m_dot_water_pc[i] / 3600.0); //[kg/s] convert from kg/hr
+            //p_m_dot_tes_dc[i] = (ssc_number_t)(p_m_dot_tes_dc[i] / 3600.0);     //[kg/s] convert from kg/hr
+            //p_m_dot_tes_ch[i] = (ssc_number_t)(p_m_dot_tes_ch[i] / 3600.0);     //[kg/s] convert from kg/hr
+        }
 
-            size_t count;
-            ssc_number_t* p_W_dot_net = as_array("P_out_net", &count);
-            ssc_number_t* p_time_final_hr = as_array("time_hr", &count);
-            if ((int)count != n_steps_fixed)
-                throw exec_error("trough_physical", "The number of fixed steps does not match the length of output data arrays");
 
-            // 'adjustment_factors' class stores factors in hourly array, so need to index as such
-            adjustment_factors haf(this, "adjust");
-            if (!haf.setup(n_steps_fixed))
-                throw exec_error("trough_physical", "failed to setup adjustment factors: " + haf.error());
+        size_t count;
+        ssc_number_t* p_W_dot_net = as_array("P_out_net", &count);
+        ssc_number_t* p_time_final_hr = as_array("time_hr", &count);
+        if ((int)count != n_steps_fixed)
+            throw exec_error("trough_physical", "The number of fixed steps does not match the length of output data arrays");
 
-            ssc_number_t* p_gen = allocate("gen", n_steps_fixed);
-            //ssc_number_t *p_W_dot_par_tot_haf = allocate("W_dot_par_tot_haf", n_steps_fixed);
-            ssc_number_t* p_q_dot_defocus_est = allocate("q_dot_defocus_est", n_steps_fixed);
+        // 'adjustment_factors' class stores factors in hourly array, so need to index as such
+        adjustment_factors haf(this, "adjust");
+        if (!haf.setup(n_steps_fixed))
+            throw exec_error("trough_physical", "failed to setup adjustment factors: " + haf.error());
 
-            //ssc_number_t *p_W_dot_parasitic_tot = as_array("W_dot_parasitic_tot", &count);
-            //if (count != n_steps_fixed)
-            //    throw exec_error("trough_physical", "The number of fixed steps does not match the length of output data arrays1");
+        ssc_number_t* p_gen = allocate("gen", n_steps_fixed);
+        //ssc_number_t *p_W_dot_par_tot_haf = allocate("W_dot_par_tot_haf", n_steps_fixed);
+        ssc_number_t* p_q_dot_defocus_est = allocate("q_dot_defocus_est", n_steps_fixed);
 
-            ssc_number_t* p_SCAs_def = as_array("SCAs_def", &count);
-            if ((int)count != n_steps_fixed)
-                throw exec_error("trough_physical", "The number of fixed steps does not match the length of output data arrays2");
+        //ssc_number_t *p_W_dot_parasitic_tot = as_array("W_dot_parasitic_tot", &count);
+        //if (count != n_steps_fixed)
+        //    throw exec_error("trough_physical", "The number of fixed steps does not match the length of output data arrays1");
 
-            ssc_number_t* p_q_dot_htf_sf_out = as_array("q_dot_htf_sf_out", &count);
-            if ((int)count != n_steps_fixed)
-                throw exec_error("trough_physical", "The number of fixed steps does not match the length of output data arrays3");
+        ssc_number_t* p_SCAs_def = as_array("SCAs_def", &count);
+        if ((int)count != n_steps_fixed)
+            throw exec_error("trough_physical", "The number of fixed steps does not match the length of output data arrays2");
 
-            //ssc_number_t *p_m_dot_tes_dc = as_array("m_dot_tes_dc", &count);
-            //if ((int)count != n_steps_fixed)
-            //    throw exec_error("trough_physical", "The number of fixed steps for 'm_dot_tes_dc' does not match the length of output data arrays");
-            //
-            //ssc_number_t *p_m_dot_tes_ch = as_array("m_dot_tes_ch", &count);
-            //if ((int)count != n_steps_fixed)
-            //    throw exec_error("trough_physical", "The number of fixed steps for 'm_dot_tes_ch' does not match the length of output data arrays");
-            for (int i = 0; i < n_steps_fixed; i++)
-            {
-                size_t hour = (size_t)ceil(p_time_final_hr[i]);
-                p_gen[i] = (ssc_number_t)(p_W_dot_net[i] * haf(hour) * 1.E3);     //[kWe]
-                //p_W_dot_parasitic_tot[i] *= -1.0;           //[kWe] Label is total parasitics, so change to a positive value
-                //p_W_dot_par_tot_haf[i] = (ssc_number_t)(p_W_dot_parasitic_tot[i] * haf(hour) * 1.E3);       //[kWe]
-                p_q_dot_defocus_est[i] = (ssc_number_t)(1.0 - p_SCAs_def[i]) * p_q_dot_htf_sf_out[i]; //[MWt]
-                //p_m_dot_tes_dc[i] = (ssc_number_t)(p_m_dot_tes_dc[i] / 3600.0);     //[kg/s] convert from kg/hr
-                //p_m_dot_tes_ch[i] = (ssc_number_t)(p_m_dot_tes_ch[i] / 3600.0);     //[kg/s] convert from kg/hr
+        ssc_number_t* p_q_dot_htf_sf_out = as_array("q_dot_htf_sf_out", &count);
+        if ((int)count != n_steps_fixed)
+            throw exec_error("trough_physical", "The number of fixed steps does not match the length of output data arrays3");
 
-            }
-            ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, steps_per_hour);
-
+        //ssc_number_t *p_m_dot_tes_dc = as_array("m_dot_tes_dc", &count);
+        //if ((int)count != n_steps_fixed)
+        //    throw exec_error("trough_physical", "The number of fixed steps for 'm_dot_tes_dc' does not match the length of output data arrays");
+        //
+        //ssc_number_t *p_m_dot_tes_ch = as_array("m_dot_tes_ch", &count);
+        //if ((int)count != n_steps_fixed)
+        //    throw exec_error("trough_physical", "The number of fixed steps for 'm_dot_tes_ch' does not match the length of output data arrays");
+        for (int i = 0; i < n_steps_fixed; i++)
+        {
+            size_t hour = (size_t)ceil(p_time_final_hr[i]);
+            p_gen[i] = (ssc_number_t)(p_W_dot_net[i] * haf(hour) * 1.E3);     //[kWe]
+            //p_W_dot_parasitic_tot[i] *= -1.0;           //[kWe] Label is total parasitics, so change to a positive value
+            //p_W_dot_par_tot_haf[i] = (ssc_number_t)(p_W_dot_parasitic_tot[i] * haf(hour) * 1.E3);       //[kWe]
+            p_q_dot_defocus_est[i] = (ssc_number_t)(1.0 - p_SCAs_def[i]) * p_q_dot_htf_sf_out[i]; //[MWt]
+            //p_m_dot_tes_dc[i] = (ssc_number_t)(p_m_dot_tes_dc[i] / 3600.0);     //[kg/s] convert from kg/hr
+            //p_m_dot_tes_ch[i] = (ssc_number_t)(p_m_dot_tes_ch[i] / 3600.0);     //[kg/s] convert from kg/hr
 
         }
+        ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, steps_per_hour);
+        // Non-timeseries array outputs
+        double P_adj = storage.P_in_des; // slightly adjust all field design pressures to account for pressure drop in TES before hot tank
+        transform(c_fresnel.m_P_rnr_dsn.begin(), c_fresnel.m_P_rnr_dsn.end(), c_fresnel.m_P_rnr_dsn.begin(), [P_adj](double x) {return x + P_adj; });
+        transform(c_fresnel.m_P_hdr_dsn.begin(), c_fresnel.m_P_hdr_dsn.end(), c_fresnel.m_P_hdr_dsn.begin(), [P_adj](double x) {return x + P_adj; });
+        transform(c_fresnel.m_P_loop_dsn.begin(), c_fresnel.m_P_loop_dsn.end(), c_fresnel.m_P_loop_dsn.begin(), [P_adj](double x) {return x + P_adj; });
+
+        ssc_number_t* p_pipe_runner_diams = allocate("pipe_runner_diams", c_fresnel.m_D_runner.size());
+        std::copy(c_fresnel.m_D_runner.begin(), c_fresnel.m_D_runner.end(), p_pipe_runner_diams);
+        ssc_number_t* p_pipe_runner_wallthk = allocate("pipe_runner_wallthk", c_fresnel.m_WallThk_runner.size());
+        std::copy(c_fresnel.m_WallThk_runner.begin(), c_fresnel.m_WallThk_runner.end(), p_pipe_runner_wallthk);
+        ssc_number_t* p_pipe_runner_lengths = allocate("pipe_runner_lengths", c_fresnel.m_L_runner.size());
+        std::copy(c_fresnel.m_L_runner.begin(), c_fresnel.m_L_runner.end(), p_pipe_runner_lengths);
+        ssc_number_t* p_pipe_runner_expansions = allocate("pipe_runner_expansions", c_fresnel.m_N_rnr_xpans.size());
+        std::copy(c_fresnel.m_N_rnr_xpans.begin(), c_fresnel.m_N_rnr_xpans.end(), p_pipe_runner_expansions);
+        ssc_number_t* p_pipe_runner_mdot_dsn = allocate("pipe_runner_mdot_dsn", c_fresnel.m_m_dot_rnr_dsn.size());
+        std::copy(c_fresnel.m_m_dot_rnr_dsn.begin(), c_fresnel.m_m_dot_rnr_dsn.end(), p_pipe_runner_mdot_dsn);
+        ssc_number_t* p_pipe_runner_vel_dsn = allocate("pipe_runner_vel_dsn", c_fresnel.m_V_rnr_dsn.size());
+        std::copy(c_fresnel.m_V_rnr_dsn.begin(), c_fresnel.m_V_rnr_dsn.end(), p_pipe_runner_vel_dsn);
+        ssc_number_t* p_pipe_runner_T_dsn = allocate("pipe_runner_T_dsn", c_fresnel.m_T_rnr_dsn.size());
+        std::copy(c_fresnel.m_T_rnr_dsn.begin(), c_fresnel.m_T_rnr_dsn.end(), p_pipe_runner_T_dsn);
+        ssc_number_t* p_pipe_runner_P_dsn = allocate("pipe_runner_P_dsn", c_fresnel.m_P_rnr_dsn.size());
+        std::copy(c_fresnel.m_P_rnr_dsn.begin(), c_fresnel.m_P_rnr_dsn.end(), p_pipe_runner_P_dsn);
+
+        ssc_number_t* p_pipe_header_diams = allocate("pipe_header_diams", c_fresnel.m_D_hdr.size());
+        std::copy(c_fresnel.m_D_hdr.begin(), c_fresnel.m_D_hdr.end(), p_pipe_header_diams);
+        ssc_number_t* p_pipe_header_wallthk = allocate("pipe_header_wallthk", c_fresnel.m_WallThk_hdr.size());
+        std::copy(c_fresnel.m_WallThk_hdr.begin(), c_fresnel.m_WallThk_hdr.end(), p_pipe_header_wallthk);
+        //ssc_number_t* p_pipe_header_lengths = allocate("pipe_header_lengths", c_fresnel.m_L_hdr.size());
+        //std::copy(c_fresnel.m_L_hdr.begin(), c_fresnel.m_L_hdr.end(), p_pipe_header_lengths);
+        ssc_number_t* p_pipe_header_expansions = allocate("pipe_header_expansions", c_fresnel.m_N_hdr_xpans.size());
+        std::copy(c_fresnel.m_N_hdr_xpans.begin(), c_fresnel.m_N_hdr_xpans.end(), p_pipe_header_expansions);
+        ssc_number_t* p_pipe_header_mdot_dsn = allocate("pipe_header_mdot_dsn", c_fresnel.m_m_dot_hdr_dsn.size());
+        std::copy(c_fresnel.m_m_dot_hdr_dsn.begin(), c_fresnel.m_m_dot_hdr_dsn.end(), p_pipe_header_mdot_dsn);
+        ssc_number_t* p_pipe_header_vel_dsn = allocate("pipe_header_vel_dsn", c_fresnel.m_V_hdr_dsn.size());
+        std::copy(c_fresnel.m_V_hdr_dsn.begin(), c_fresnel.m_V_hdr_dsn.end(), p_pipe_header_vel_dsn);
+        ssc_number_t* p_pipe_header_T_dsn = allocate("pipe_header_T_dsn", c_fresnel.m_T_hdr_dsn.size());
+        std::copy(c_fresnel.m_T_hdr_dsn.begin(), c_fresnel.m_T_hdr_dsn.end(), p_pipe_header_T_dsn);
+        ssc_number_t* p_pipe_header_P_dsn = allocate("pipe_header_P_dsn", c_fresnel.m_P_hdr_dsn.size());
+        std::copy(c_fresnel.m_P_hdr_dsn.begin(), c_fresnel.m_P_hdr_dsn.end(), p_pipe_header_P_dsn);
+
+        ssc_number_t* p_pipe_loop_T_dsn = allocate("pipe_loop_T_dsn", c_fresnel.m_T_loop_dsn.size());
+        std::copy(c_fresnel.m_T_loop_dsn.begin(), c_fresnel.m_T_loop_dsn.end(), p_pipe_loop_T_dsn);
+        ssc_number_t* p_pipe_loop_P_dsn = allocate("pipe_loop_P_dsn", c_fresnel.m_P_loop_dsn.size());
+        std::copy(c_fresnel.m_P_loop_dsn.begin(), c_fresnel.m_P_loop_dsn.end(), p_pipe_loop_P_dsn);
+
+        ssc_number_t* p_pipe_tes_diams = allocate("pipe_tes_diams", storage.pipe_diams.ncells());
+        std::copy(storage.pipe_diams.data(), storage.pipe_diams.data() + storage.pipe_diams.ncells(), p_pipe_tes_diams);
+        ssc_number_t* p_pipe_tes_wallthk = allocate("pipe_tes_wallthk", storage.pipe_wall_thk.ncells());
+        std::copy(storage.pipe_wall_thk.data(), storage.pipe_wall_thk.data() + storage.pipe_wall_thk.ncells(), p_pipe_tes_wallthk);
+        ssc_number_t* p_pipe_tes_lengths = allocate("pipe_tes_lengths", storage.pipe_lengths.ncells());
+        std::copy(storage.pipe_lengths.data(), storage.pipe_lengths.data() + storage.pipe_lengths.ncells(), p_pipe_tes_lengths);
+        ssc_number_t* p_pipe_tes_mdot_dsn = allocate("pipe_tes_mdot_dsn", storage.pipe_m_dot_des.ncells());
+        std::copy(storage.pipe_m_dot_des.data(), storage.pipe_m_dot_des.data() + storage.pipe_m_dot_des.ncells(), p_pipe_tes_mdot_dsn);
+        ssc_number_t* p_pipe_tes_vel_dsn = allocate("pipe_tes_vel_dsn", storage.pipe_vel_des.ncells());
+        std::copy(storage.pipe_vel_des.data(), storage.pipe_vel_des.data() + storage.pipe_vel_des.ncells(), p_pipe_tes_vel_dsn);
+        ssc_number_t* p_pipe_tes_T_dsn = allocate("pipe_tes_T_dsn", storage.pipe_T_des.ncells());
+        std::copy(storage.pipe_T_des.data(), storage.pipe_T_des.data() + storage.pipe_T_des.ncells(), p_pipe_tes_T_dsn);
+        ssc_number_t* p_pipe_tes_P_dsn = allocate("pipe_tes_P_dsn", storage.pipe_P_des.ncells());
+        std::copy(storage.pipe_P_des.data(), storage.pipe_P_des.data() + storage.pipe_P_des.ncells(), p_pipe_tes_P_dsn);
+
+
+        // Monthly outputs
+        accumulate_monthly_for_year("gen", "monthly_energy", sim_setup.m_report_step / 3600.0, steps_per_hour, 1);
+
+
+        // Annual outputs
+        accumulate_annual_for_year("gen", "annual_energy", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour);
+        accumulate_annual_for_year("P_cycle", "annual_W_cycle_gross", 1000.0 * sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour);		//[kWe-hr]
+        //accumulate_annual_for_year("W_dot_par_tot_haf", "annual_electricity_consumption", sim_setup.m_report_step/3600.0, steps_per_hour);  //[kWe-hr]
+        accumulate_annual_for_year("disp_objective", "disp_objective_ann", 1000.0 * sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour);
+        accumulate_annual_for_year("disp_solve_iter", "disp_iter_ann", 1000.0 * sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour);
+        accumulate_annual_for_year("disp_presolve_nconstr", "disp_presolve_nconstr_ann", sim_setup.m_report_step / 3600.0 / as_double("disp_frequency"), steps_per_hour, 1, n_steps_fixed / steps_per_hour);
+        accumulate_annual_for_year("disp_presolve_nvar", "disp_presolve_nvar_ann", sim_setup.m_report_step / 3600.0 / as_double("disp_frequency"), steps_per_hour, 1, n_steps_fixed / steps_per_hour);
+        accumulate_annual_for_year("disp_solve_time", "disp_solve_time_ann", sim_setup.m_report_step / 3600. / as_double("disp_frequency"), steps_per_hour, 1, n_steps_fixed / steps_per_hour);
+        accumulate_annual_for_year("q_dc_tes", "annual_q_dc_tes", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour);
+        accumulate_annual_for_year("q_ch_tes", "annual_q_ch_tes", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour);
+
+        ssc_number_t annual_field_fp = accumulate_annual_for_year("q_dot_freeze_prot", "annual_field_freeze_protection", sim_setup.m_report_step / 3600.0 * 1.E3, steps_per_hour);    //[kWt-hr]
+        ssc_number_t annual_tes_fp = accumulate_annual_for_year("q_tes_heater", "annual_tes_freeze_protection", sim_setup.m_report_step / 3600.0 * 1.E3, steps_per_hour); //[kWt-hr]
+
+        ssc_number_t annual_thermal_consumption = annual_field_fp + annual_tes_fp;  //[kWt-hr]
+        assign("annual_thermal_consumption", annual_thermal_consumption);
+
+        // Reporting dispatch solution counts
+        size_t n_flag, n_gap = 0;
+        ssc_number_t* subopt_flag = as_array("disp_subopt_flag", &n_flag);
+        ssc_number_t* rel_mip_gap = as_array("disp_rel_mip_gap", &n_gap);
+
+        std::vector<int> flag;
+        std::vector<double> gap;
+        flag.resize(n_flag);
+        gap.resize(n_flag);
+        for (size_t i = 0; i < n_flag; i++) {
+            flag[i] = (int)subopt_flag[i];
+            gap[i] = (double)rel_mip_gap[i];
+        }
+
+        double avg_gap = 0;
+        if (as_boolean("is_dispatch")) {
+            std::string disp_sum_msg;
+            dispatch.count_solutions_by_type(flag, (int)as_double("disp_frequency"), disp_sum_msg);
+            log(disp_sum_msg, SSC_NOTICE);
+            avg_gap = dispatch.calc_avg_subopt_gap(gap, flag, (int)as_double("disp_frequency"));
+        }
+        assign("avg_suboptimal_rel_mip_gap", (ssc_number_t)avg_gap);
+
+        // Calculate water use
+        // First, sum power cycle water consumption timeseries outputs
+        accumulate_annual_for_year("m_dot_water_pc", "annual_total_water_use", sim_setup.m_report_step / 1000.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour); //[m^3], convert from kg
+        ssc_number_t V_water_cycle = as_number("annual_total_water_use");
+        // Then, add water usage from mirror cleaning
+        double A_aper_tot = csp_solver.get_cr_aperture_area();  //[m2]
+        double V_water_mirrors = as_double("water_per_wash") / 1000.0 * A_aper_tot * as_double("washes_per_year");
+        assign("annual_total_water_use", (ssc_number_t)(V_water_mirrors + V_water_cycle));        //[m3]
+
+        ssc_number_t ae = as_number("annual_energy");
+        ssc_number_t pg = as_number("annual_W_cycle_gross");
+        ssc_number_t convfactor = (pg != 0) ? 100 * ae / pg : (ssc_number_t)0.0;
+        assign("conversion_factor", convfactor);
+
+        double kWh_per_kW = 0.0;
+        //double system_capacity = as_double("P_ref") * as_double("gross_net_conversion_factor") * 1.E3;       //[kWe]
+        //double nameplate = system_capacity;     //[kWe]
+        //if (nameplate > 0.0)
+        //    kWh_per_kW = ae / nameplate;
+
+        //assign("capacity_factor", (ssc_number_t)(kWh_per_kW / ((double)n_steps_fixed / (double)steps_per_hour) * 100.));
+        //assign("kwh_per_kw", (ssc_number_t)kWh_per_kW);
        
     }
 

@@ -1069,8 +1069,8 @@ C_csp_fresnel_collector_receiver::C_csp_fresnel_collector_receiver()
     m_V_hdr_min = std::numeric_limits<double>::quiet_NaN();
     m_Pipe_hl_coef = std::numeric_limits<double>::quiet_NaN();
     m_SCA_drives_elec = std::numeric_limits<double>::quiet_NaN();
-    m_fthrok = -1;
-    m_fthrctrl = -1;
+    //m_fthrok = -1;
+    //m_fthrctrl = -1;
     //m_ColTilt = std::numeric_limits<double>::quiet_NaN();
     m_ColAz = std::numeric_limits<double>::quiet_NaN();
     //m_wind_stow_speed = std::numeric_limits<double>::quiet_NaN();
@@ -1503,7 +1503,7 @@ void C_csp_fresnel_collector_receiver::init(const C_csp_collector_receiver::S_cs
     if (m_rec_model == 2)
     {
         m_evac_receiver = std::unique_ptr<EvacReceiverModel>(new EvacReceiverModel(m_D_abs_in, m_D_abs_out, m_D_glass_in, m_D_glass_out, m_D_plug, m_L_mod, m_GlazingIntact,
-            m_Shadowing, m_dirt_env, m_P_a, m_alpha_abs, m_epsilon_glass, m_Tau_envelope, m_alpha_env, m_epsilon_abs,
+            m_Shadowing, m_dirt_env, m_P_a, m_alpha_abs, m_epsilon_glass, m_Tau_envelope, m_alpha_env, &m_epsilon_abs,
             m_htfProps, m_airProps, m_AnnulusGasMat, m_AbsorberPropMat, m_Flow_type, m_A_cs, m_D_h));
     }
         
@@ -2955,26 +2955,30 @@ void C_csp_fresnel_collector_receiver::apply_control_defocus(double defocus)
     // Store control defocus
     m_control_defocus = defocus;
 
-    if (m_fthrctrl == 0)
-    {
-        mc_csp_messages.add_message(C_csp_messages::WARNING, "The selected defocusing method of sequentially, fully defocusing SCAs is not available."
-            " The model will instead use Simultaneous Partial Defocusing");
-        m_fthrctrl = 2;
-    }
-    if (m_fthrctrl == 1)
-    {
-        mc_csp_messages.add_message(C_csp_messages::WARNING, "The selected defocusing method of sequentially, partially defocusing SCAs is not available."
-            " The model will instead use Simultaneous Partial Defocusing");
-        m_fthrctrl = 2;
-    }
-    if (m_fthrctrl == 2)
-    {
-        for (int i = 0; i < m_nMod; i++)
-        {
-            m_q_SCA_control_df[i] = defocus * m_q_i;
-        }
-    }
+    //if (m_fthrctrl == 0)
+    //{
+    //    mc_csp_messages.add_message(C_csp_messages::WARNING, "The selected defocusing method of sequentially, fully defocusing SCAs is not available."
+    //        " The model will instead use Simultaneous Partial Defocusing");
+    //    m_fthrctrl = 2;
+    //}
+    //if (m_fthrctrl == 1)
+    //{
+    //    mc_csp_messages.add_message(C_csp_messages::WARNING, "The selected defocusing method of sequentially, partially defocusing SCAs is not available."
+    //        " The model will instead use Simultaneous Partial Defocusing");
+    //    m_fthrctrl = 2;
+    //}
+    //if (m_fthrctrl == 2)
+    //{
+    //    for (int i = 0; i < m_nMod; i++)
+    //    {
+    //        m_q_SCA_control_df[i] = defocus * m_q_i;
+    //    }
+    //}
 
+    for (int i = 0; i < m_nMod; i++)
+    {
+        m_q_SCA_control_df[i] = defocus * m_q_i;
+    }
 
 }
 
@@ -2985,25 +2989,31 @@ void C_csp_fresnel_collector_receiver::apply_component_defocus(double defocus /*
     // Store component defocus
     m_component_defocus = defocus;
 
-    if (m_fthrctrl == 0)
+    //if (m_fthrctrl == 0)
+    //{
+    //    mc_csp_messages.add_message(C_csp_messages::WARNING, "The selected defocusing method of sequentially, fully defocusing SCAs is not available."
+    //        " The model will instead use Simultaneous Partial Defocusing");
+    //    m_fthrctrl = 2;
+    //}
+    ////if (m_fthrctrl == 1)
+    //{
+    //    mc_csp_messages.add_message(C_csp_messages::WARNING, "The selected defocusing method of sequentially, partially defocusing SCAs is not available."
+    //        " The model will instead use Simultaneous Partial Defocusing");
+    //    m_fthrctrl = 2;
+    //}
+    //if (m_fthrctrl == 2)
+    //{
+    //    for (int i = 0; i < m_nMod; i++)
+    //    {
+    //        //int CT = (int)m_SCAInfoArray(i, 1) - 1;    // Collector type
+    //        m_q_SCA[i] = defocus * m_q_SCA_control_df[i];
+    //    }
+    //}
+
+    for (int i = 0; i < m_nMod; i++)
     {
-        mc_csp_messages.add_message(C_csp_messages::WARNING, "The selected defocusing method of sequentially, fully defocusing SCAs is not available."
-            " The model will instead use Simultaneous Partial Defocusing");
-        m_fthrctrl = 2;
-    }
-    if (m_fthrctrl == 1)
-    {
-        mc_csp_messages.add_message(C_csp_messages::WARNING, "The selected defocusing method of sequentially, partially defocusing SCAs is not available."
-            " The model will instead use Simultaneous Partial Defocusing");
-        m_fthrctrl = 2;
-    }
-    if (m_fthrctrl == 2)
-    {
-        for (int i = 0; i < m_nMod; i++)
-        {
-            //int CT = (int)m_SCAInfoArray(i, 1) - 1;    // Collector type
-            m_q_SCA[i] = defocus * m_q_SCA_control_df[i];
-        }
+        //int CT = (int)m_SCAInfoArray(i, 1) - 1;    // Collector type
+        m_q_SCA[i] = defocus * m_q_SCA_control_df[i];
     }
 }
 
@@ -3066,1330 +3076,6 @@ double C_csp_fresnel_collector_receiver::Pump_SGS(double rho, double m_dotsf, do
     return psum;
 
 }
-
-///*
-//    This subroutine contains the trough detailed plant model.  The collector field is modeled
-//    using an iterative solver.
-//    This code was written for the National Renewable Energy Laboratory
-//    Copyright 2009-2010
-//    Author: Mike Wagner
-//
-//    Subroutine Inputs (and parameters)
-//     ----------------------------------------------------------------------------------------------------------------------
-//     Nb | Variable             | Description                                             | Input  Units   | Internal Units
-//     ---|----------------------|---------------------------------------------------------|----------------|----------------
-//     1  | T_1_in               | Receiver inlet temperature                              |                |
-//     2  | m_dot                | Heat transfer fluid mass flow rate                      |                |
-//     3  | T_amb                | Ambient dry-bulb temperature                            |                |
-//     4  | T_sky                | Sky temperature                                         |                |
-//     5  | v_6                  | Ambient wind velocity                                   |                |
-//     6  | P_6                  | Ambient atmospheric pressure                            |                |
-//     7  | q_i                  | Total incident irradiation on the receiver              |                |
-//     8  | A_cs                 | Internal absorber tube cross-sectional area             |                |
-//     9  | m_D_abs_in                  | Internal absorber tube diameter                         |                |
-//     10 | m_D_abs_out                  | External absorber tube diameter                         |                |
-//     11 | m_D_glass_in                  | Internal glass envelope diameter                        |                |
-//     12 | m_D_glass_out                  | External glass envelope diameter                        |                |
-//     13 | m_D_plug                  | (optional) Plug diameter                                |                |
-//     14 | m_D_h                  | Absorber tube hydraulic diameter                        |                |
-//     15 | eps_mode             | Interpolation mode for the emissivity (1=table,2=fixed) |                |
-//     16 | xx                   | Array of temperature values for emissivity table        |                |
-//     17 | yy                   | Array of emissivity values for table                    |                |
-//     18 | nea                  | Number of entries in the emissivity table               |                |
-//     19 | m_L_mod             | Length of the active receiver surface                   |                |
-//     20 | single_point         | Logical flag - is the calculation for a single point?   |                |
-//     21 | Epsilon_32           | Constant value for emissivity if table isn't used       |                |
-//     22 | Epsilon_4            | Envelope inner surface emissivity                       |                |
-//     23 | epsilon_glass            | Envelope outer surface emissivity                       |                |
-//     24 | m_alpha_abs            | Absorber tube absorptance                               |                |
-//     25 | m_alpha_env            | Envelope absorptance                                    |                |
-//     26 | m_ColOptEff            | Collector optical efficiency                            |                |
-//     27 | m_Tau_envelope         | Total envelope transmittance                            |                |
-//     28 | m_P_a                  | Annulus gas pressure                                    | torr           |
-//     29 | Flow_type            | Flag indicating the presence of an internal plug        |                |
-//     30 | AnnulusGas           | Annulus gas type                                        |                |
-//     31 | Fluid                | Heat transfer fluid type                                |                |
-//     32 | AbsorberMaterial     | Absorber material type                                  |                |
-//     33 | time                 | Simulation time                                         |                |
-//
-//    Subroutine outputs
-//     ----------------------------------------------------------------------------------------------------------------------
-//     Nb | Variable             | Description                                             | Input  Units   | Internal Units
-//     ---|----------------------|---------------------------------------------------------|----------------|----------------
-//     1  | q_heatloss           | Total heat loss from the receiver                       | W/m            |
-//     2  | q_12conv             | Total heat absorption into the HTF                      | W/m            |
-//     3  | q_34tot              | Convective and radiative heat loss                      |                |
-//     4  | c_1ave               | Specific heat of the HTF across the receiver            | kJ/kg-K        |
-//     5  | rho_1ave             | Density of the HTF across the receiver                  |                |
-//
-//     ----------------------------------------------------------------------------------------------------------------------
-//    Forristall Temperature distribution diagram
-//    *****************************************************
-//        Fluid (1) ----------->(2)<--Absorber-->(3)<-- Annulus -->(4)<--- Glass  --->(5)<-- Air (6)/Sky (7)
-//
-//
-//        T_1 = Bulk heat transfer fluid (HTF) temperature
-//        T_2 = Absorber Inside surface temperature
-//        T_3 = Absorber outside surface temperature
-//        T_4 = Glass envelope inside surface temperature
-//        T_5 = Glass envelope outside surface temperature
-//        T_6 = Ambient temperature
-//        T_7 = Effective Sky Temperature
-//
-//        q_12conv = Convection heat transfer rate per unit length between the HTF and the inside of the receiver tube
-//        q_23cond = Conduction heat transfer rate per unit length through the absorber
-//        q_34conv = Convection heat transfer rate per unit length between the absorber outer surface and the glazing inner surface
-//        q_34rad = Radiation heat transfer rate per unit length between the absorber outer surface and the glazing inner surface
-//        q_45cond = Conduction heat transfer rate per unit length through the glazing
-//        q_56conv = Convection heat transfer rate per unit length between the glazing outer surface and the ambient air
-//        q_57rad = Radiation heat transfer rate per unit length between the glazing outer surface and the sky
-//    ----------------------------------------------------------------------------------------------------------------------
-//    */
-//void C_csp_fresnel_collector_receiver::EvacReceiver(double T_1_in, double m_dot, double T_amb, double T_sky, double v_6, double P_6, double q_i,
-//    int hv /* HCE variant [0..3] */, int sca_num, bool single_point, int ncall, double time,
-//    //outputs
-//    double& q_heatloss, double& q_12conv, double& q_34tot, double& c_1ave, double& rho_1ave, std::vector<double>& v_reguess_args)
-//{
-//
-//    //cc -- note that collector/hce geometry is part of the parent class. Only the indices specifying the
-//    //		number of the HCE and collector need to be passed here.
-//
-//    //---Variable declarations------
-//    bool reguess;
-//    double T_2, T_3, T_4, T_5, T_6, T_7, v_1, k_23, q_34conv, q_34rad, h_34conv, h_34rad, q_23cond,
-//        k_45, q_45cond, q_56conv, h_56conv, q_57rad, q_3SolAbs, q_5solabs, q_cond_bracket, R_45cond,
-//        T_save[5], T_2g, cp_1, T3_tol, q5_tol, T1_tol, T2_tol, Diff_T3, diff_q5, T_lower, T_upper,
-//        q_5out, T_1_out, diff_T1, T_1_ave, T_1_out1, diff_T2, eps_3, q_in_W, T_upper_max, y_upper,
-//        y_lower, upmult, q5_tol_1, T3_upper, T3_lower, y_T3_upper, y_T3_lower, abs_diffT3;
-//
-//    bool UPFLAG, LOWFLAG, T3upflag, T3lowflag, is_e_table;
-//    int qq, q5_iter, T1_iter, q_conv_iter;
-//
-//    double T_save_tot, colopteff_tot;
-//    //cc--> note that xx and yy have size 'nea'
-//
-//    //---Re-guess criteria:---
-//    if (time <= 2) goto lab_reguess;
-//
-//    if (((int)v_reguess_args[0] == 1) != m_GlazingIntact.at(hv)) goto lab_reguess;	//m_GlazingIntact state has changed
-//
-//    if (m_P_a[hv] != v_reguess_args[1]) goto lab_reguess;                   //Reguess for different annulus pressure
-//
-//    if (std::abs(v_reguess_args[2] - T_1_in) > 50.) goto lab_reguess;
-//
-//    for (int i = 0; i < 5; i++) { if (T_save[i] < T_sky - 1.) goto lab_reguess; }
-//
-//    T_save_tot = 0.;
-//    for (int i = 0; i < 5; i++) { T_save_tot += T_save[i]; }
-//    if (T_save_tot != T_save_tot) goto lab_reguess;	//NaN check.. a value is only not equal to itself if it is NaN
-//
-//    reguess = false;
-//    goto lab_keep_guess;
-//lab_reguess:
-//    reguess = true;
-//lab_keep_guess:
-//
-//
-//    //------------------------
-//
-//    if (reguess) {
-//        if (m_GlazingIntact.at(hv)) {
-//            T_save[0] = T_1_in;
-//            T_save[1] = T_1_in + 2.;
-//            T_save[2] = T_save[1] + 5.;
-//            if (m_P_a[hv] > 1.0) {          //Set guess values for different annulus pressures
-//                T_save[3] = T_save[2] - 0.5 * (T_save[2] - T_amb);       //If higher pressure, guess higher T4   
-//                T_upper_max = T_save[2] - 0.2 * (T_save[2] - T_amb);     //Also, high upper limit for T4
-//            }
-//            else {
-//                T_save[3] = T_save[2] - 0.9 * (T_save[2] - T_amb);       //If lower pressure, guess lower T4
-//                T_upper_max = T_save[2] - 0.5 * (T_save[2] - T_amb);     //Also, low upper limit for T4
-//            }
-//            T_save[4] = T_save[3] - 2.;
-//
-//            v_reguess_args[1] = m_P_a[hv];               //Reset previous pressure
-//            v_reguess_args[0] = m_GlazingIntact.at(hv) ? 1. : 0.;   //Reset previous glazing logic
-//            v_reguess_args[2] = T_1_in;            //Reset previous T_1_in
-//
-//        }
-//        else {
-//            T_save[0] = T_1_in;
-//            T_save[1] = T_1_in + 2.;
-//            T_save[2] = T_save[1] + 5.;
-//            T_save[3] = T_amb;
-//            T_save[4] = T_amb;
-//
-//            v_reguess_args[0] = m_GlazingIntact.at(hv) ? 1. : 0.;   //Reset previous glazing logic
-//            v_reguess_args[1] = T_1_in;            //Reset previous T_1_in
-//
-//        }
-//    }
-//
-//    //Set intial guess values
-//    T_2 = T_save[1];
-//    T_3 = T_save[2];
-//    T_4 = T_save[3];
-//    T_5 = T_save[4];
-//    //Set constant temps
-//    T_6 = T_amb;
-//    T_7 = T_sky;
-//
-//    qq = 0;                  //Set iteration counter for T3 loop
-//
-//    T_2g = T_2;              //Initial guess value for T_2 (only used in property lookup)        
-//    cp_1 = 1950.;            //Initial guess value for cp of WF
-//
-//    //Tolerances for iteration
-//    T3_tol = 1.5e-3;
-//    q5_tol = 1.0e-3;         //Since iterations are nested inside T3, make tolerances a bit tighter        
-//    T1_tol = 1.0e-3;
-//    T2_tol = 1.0e-3;
-//
-//    //Decreasing the tolerance helps get out of repeating defocus iterations
-//    if (ncall > 8) {
-//        T3_tol = 1.5e-4;        //1.0   
-//        q5_tol = 1.0e-4;        //max(1.0, 0.001*q_i)
-//        T1_tol = 1.0e-4;        //1.0
-//        T2_tol = 1.0e-4;        //1.0
-//    }
-//
-//    Diff_T3 = 10.0 + T3_tol;    //Set difference > tolerance
-//
-//    //Constants
-//    k_45 = 1.04;                             //[W/m-K]  Conductivity of glass
-//    R_45cond = log(m_D_glass_out[hv] / m_D_glass_in[hv]) / (2. * pi * k_45);    //[K-m/W]Equation of thermal resistance for conduction through a cylinder
-//
-//    colopteff_tot = m_ColOptEff.at(sca_num) * m_dirt_env[hv] * m_Shadowing[hv];	//The total optical efficiency
-//
-//    if (m_GlazingIntact.at(hv)) {   //These calculations (q_3SolAbs,q_5solAbs) are not dependent on temperature, so only need to be computed once per call to subroutine
-//
-//        q_3SolAbs = q_i * colopteff_tot * m_Tau_envelope[hv] * m_alpha_abs[hv];  //[W/m]  
-//        //We must account for the radiation absorbed as it passes through the envelope
-//        q_5solabs = q_i * colopteff_tot * m_alpha_env[hv];   //[W/m]  
-//    }
-//    else {
-//        //Calculate the absorbed energy 
-//        q_3SolAbs = q_i * colopteff_tot * m_alpha_abs[hv];  //[W/m]  
-//        //No envelope
-//        q_5solabs = 0.0;                            //[W/m]
-//
-//    }
-//
-//    is_e_table = false;
-//    if (m_epsilon_abs.getTableSize(hv) < 2) {
-//        eps_3 = m_epsilon_abs.getSingleValue(hv);
-//    }
-//    else {
-//        eps_3 = m_epsilon_abs.interpolate(hv, T_3 - 273.15);          //Set epsilon value for case that eps_mode = 1.  Will reset inside temp loop if eps_mode > 1.
-//        is_e_table = true;	//The emissivity is in tabular form
-//    }
-//
-//    T3upflag = false;
-//    T3lowflag = false;
-//
-//    double T3_adjust = 0.0;
-//    double T3_prev_qq = 0.0;
-//
-//    while (((std::abs(Diff_T3) > T3_tol) && (qq < 100)) || (qq < 2)) {    //Outer loop: Find T_3 such than energy balance is satisfied
-//        qq = qq + 1; //loop counter
-//
-//        T3_prev_qq = T_3;
-//
-//        if (qq > 1) {
-//            if ((T3upflag) && (T3lowflag)) {
-//                if (Diff_T3 > 0.) {
-//                    T3_upper = T_3;
-//                    y_T3_upper = Diff_T3;
-//                }
-//                else {
-//                    T3_lower = T_3;
-//                    y_T3_lower = Diff_T3;
-//                }
-//                T_3 = (y_T3_upper) / (y_T3_upper - y_T3_lower) * (T3_lower - T3_upper) + T3_upper;
-//
-//            }
-//            else {
-//                if (Diff_T3 > 0.) {
-//                    T3_upper = T_3;
-//                    y_T3_upper = Diff_T3;
-//                    T3upflag = true;
-//                }
-//                else {
-//                    T3_lower = T_3;
-//                    y_T3_lower = Diff_T3;
-//                    T3lowflag = true;
-//                }
-//
-//                if ((T3upflag) && (T3lowflag)) {
-//                    T_3 = (y_T3_upper) / (y_T3_upper - y_T3_lower) * (T3_lower - T3_upper) + T3_upper;
-//                }
-//                else
-//                {
-//                    if (Diff_T3 > 0.)
-//                        T_3 = T_3 - 50.0;
-//                    else
-//                        T_3 = T_3 + 50.0;
-//                    //T_3 = max(T_7, T_3 - abs_diffT3);         //Note that recalculating T_3 using this exact equation, rather than T_3 = T_3 - frac*diff_T3 was found to solve in fewer iterations
-//                }
-//            }
-//        }
-//
-//        T3_adjust = T_3 - T3_prev_qq;
-//
-//        //Calculate temperature sensitive emissivity using T_3, if required
-//        if (is_e_table) eps_3 = m_epsilon_abs.interpolate(hv, (T_3 - 273.15)); //call interp((T_3-273.15),eps_mode,xx,yy,eps3old,eps_3)
-//
-//        //Separate m_GlazingIntact = true and m_GlazingIntact = false  If true, T4 must be solved, if false then T4 is explicitly known (or doesn't exist, depending on how you want to look at it)
-//        //Solving for correct T4 as it relates to current T3 value
-//        if (m_GlazingIntact.at(hv)) {
-//
-//            //**********************************************
-//            //************* SET UP T_4 ITERATION **********************
-//            //**********************************************
-//
-//            // if(qq==1){               //If first iteration, set T_4 bounds to phyiscal limits defined by T_3 and T_sky
-//            // 	T_lower = T_sky;         //Lowest possible temperature of T_4 is sky temp        
-//            // 	T_upper = max(T_upper_max,T_amb);    //Highest possible temperature is the highest temperature on either side of T_4: either T_3 or ambient
-//            // 	q5_tol_1= 0.001;           //Just get T4 in the ball park.  '20' may not be the optimum value.....
-//            // } 
-//            // else {                                            //For additional iterations:
-//            // 	T_lower = T_lower - max(abs_diffT3,0.0);       //If diff_T3 is + then new T3 < old T3 so adjust lower limit
-//            // 	T_upper = T_upper + fabs(min(abs_diffT3,0.0));  //If diff_T3 is (-) then new T3 > old T3 so adjust upper limit
-//            // 	q5_tol_1= q5_tol;        //For remaining T3 iterations, use specified tolerance (note that 2 iterations for T3 are gauranteed)                   
-//            // }
-//            if (qq == 1)
-//            {
-//                T_lower = T_sky;
-//                T_upper = max(T_3, T_amb);
-//            }
-//            else
-//            {
-//                if (T3_adjust > 0.0)	// new T3 > old T3 so adjust upper limit
-//                {
-//                    T_upper = min(T_3, T_upper + 1.25 * T3_adjust);
-//                    T_lower = T_4;
-//                    T_4 = T_4 + 0.5 * T3_adjust;
-//                }
-//                else	// T3_adjust negative
-//                {
-//                    T_lower = max(T_sky, T_lower + 1.25 * T3_adjust);
-//                    T_upper = T_4;
-//                    T_4 = T_4 + 0.5 * T3_adjust;
-//                }
-//            }
-//            q5_tol_1 = q5_tol;
-//
-//            //if( T_4 > T_upper || T_4 < T_lower )
-//            //	T_4 = 0.5*(T_upper + T_lower);
-//
-//            diff_q5 = q5_tol_1 + 1.0;       //Set diff > tolerance
-//            q5_iter = 0;                     //Set iteration counter
-//
-//            UPFLAG = false;           //Set logic to switch from bisection to false position mode
-//            LOWFLAG = false;           //Set logic to switch from bisection to false position mode   
-//            //***********************************************************************************
-//            //************* Begin Bisection/False Position Iteration method *********************
-//            //***********************************************************************************
-//            while ((std::abs(diff_q5) > q5_tol_1) && (q5_iter < 100)) {       //Determine T_4 such that energy balance from T_3 to surroundings is satisfied
-//
-//                q5_iter = q5_iter + 1;                       //Increase iteration counter
-//
-//                //The convective heat exchange between the absorber and the envelope
-//                //      UNITS   ( K , K, torr, Pa , m/s,  K , -, -, W/m, W/m2-K)
-//                FQ_34CONV(T_3, T_4, P_6, v_6, T_6, hv, q_34conv, h_34conv);
-//
-//                //The radiative heat exchange between the absorber and the envelope
-//                //    Units         ( K ,  K ,  m ,  m , K  ,    -     ,    -     ,   logical    ,  W/m   , W/m2-K)
-//                FQ_34RAD(T_3, T_4, T_7, eps_3, hv, q_34rad, h_34rad);
-//                //The total heat exchange between absorber and envelope
-//                q_34tot = q_34conv + q_34rad;            //[W/m]
-//
-//                //**********************************************
-//                //************* Calculate T_5 *************
-//                //**********************************************
-//                //The thermal energy flow across 45 is equal to the energy from the absorber plus
-//                //the thermal energy that is generated by direct heating of the glass envelope
-//                q_45cond = q_34tot + q_5solabs;          //[W/m]
-//
-//                //Knowing heat flow and properties, T_5 can be calculated
-//                T_5 = T_4 - q_45cond * R_45cond;           //[K]
-//
-//                //*************************************************************************
-//                //************* Calculate HT from exterior surface to ambient *************
-//                //*************************************************************************
-//                //With T_5 and T_6 (amb T) calculate convective and radiative loss from the glass envelope
-//                //           units   ( K ,  K ,  torr, m/s, -, -, W/m, W/m2-K)
-//                FQ_56CONV(T_5, T_6, P_6, v_6, hv, q_56conv, h_56conv); //[W/m]
-//                q_57rad = m_epsilon_glass[hv] * 5.67e-8 * (pow(T_5, 4) - pow(T_7, 4));
-//                q_5out = q_57rad + q_56conv;     //[W/m]
-//
-//                //***************************************************************************
-//                //********** Compare q_5out with q_45 cond***********************************
-//                //***************************************************************************
-//                diff_q5 = (q_5out - q_45cond) / q_45cond;     //[W/m]
-//
-//                //Determine next guess for T_4.  Want to use false position method, but it requires that the *results* at both ends of the bracket are known.  We have
-//                //defined a bracket but not the results.  Use the guess T_4 to get the results at one end of a new bracket.  Then calculate a new T_4 that is highly weighted 
-//                //towards the side of the original bracket that the 1st T_4 did not replace.  In most cases, this new T_4 will result in the opposite diff_q5, which 
-//                //defines both sides of the bracket.  If results for both sides are then defined, "LOWFLAG" and "UPFLAG" will be true, and false position method will be applied.
-//
-//                if (LOWFLAG && UPFLAG) {          //False position method     
-//                    if (diff_q5 > 0.0) {
-//                        T_upper = T_4;       //If energy leaving T_5 is greater than energy entering T_5, then T_4 guess is too high
-//                        y_upper = diff_q5;   //so set new upper limit to T_4
-//                    }
-//                    else {                    //If energy leaving T_5 is less than energy entering T_5, then T_4 guess is too low
-//                        T_lower = T_4;       //so set new lower limit to T_4
-//                        y_lower = diff_q5;   //also, set result to go along with lower limit
-//                    }
-//                    T_4 = (y_upper) / (y_upper - y_lower) * (T_lower - T_upper) + T_upper;
-//
-//                }
-//                else {                        //For bisection method...
-//
-//                    if (diff_q5 > 0.0) {    //If energy leaving T_5 is greater than energy entering T_5, then T_4 guess is too high
-//                        T_upper = T_4;       //so set new upper limit to T_4
-//                        y_upper = diff_q5;   //also, set result to go along with upper limit
-//                        UPFLAG = true;    //Upper result is now known
-//                        if (qq == 1) {
-//                            upmult = 0.1;       //Just want to get in ballpark for first iteration of receiver
-//                        }
-//                        else {
-//                            upmult = 0.1;       //Weight such that next calculated T_4 (if using bisection method) results in negative diff_q5
-//                        }
-//
-//                    }
-//                    else {                    //If energy leaving T_5 is less than energy entering T_5, then T_4 guess is too low          
-//                        T_lower = T_4;       //so set new lower limit to T_4
-//                        y_lower = diff_q5;   //also, set result to go along with lower limit
-//                        LOWFLAG = true;    //Lower result is now known
-//                        if (qq == 1) {
-//                            upmult = 0.1;       //Just want to get in ballpark for first iteration of receiver
-//                        }
-//                        else {
-//                            upmult = 0.9;       //Weight such that next calculated T_4 (if using bisection method) results in positive diff_q5
-//                        }
-//
-//                    }
-//
-//                    if (LOWFLAG && UPFLAG) {  //If results of bracket are defined, use false position
-//                        T_4 = (y_upper) / (y_upper - y_lower) * (T_lower - T_upper) + T_upper;
-//                    }
-//                    else {                            //If not, keep bisection
-//                        T_4 = (1. - upmult) * T_lower + upmult * T_upper;
-//                    }
-//
-//                }
-//
-//                //*********************************************************************************************
-//                //********** END Bisection/False Position Iteration Loop on T_4 *******************************
-//                //*********************************************************************************************       
-//            }
-//
-//        }
-//        else {      //Glazing is not intact
-//
-//            //Know convection and radiation forcing temps
-//            //----Having guessed the system temperatures, calculate the thermal losses starting from
-//            //----the absorber surface (3)
-//            //The convective heat exchange between the absorber and the envelope
-//            FQ_34CONV(T_3, T_4, P_6, v_6, T_6, hv, q_34conv, h_34conv);
-//            //The radiative heat exchange between the absorber and the envelope
-//            FQ_34RAD(T_3, T_4, T_7, eps_3, hv, q_34rad, h_34rad);
-//            //The total heat exchange between absorber and envelope
-//            q_34tot = q_34conv + q_34rad;    //[W/m]
-//
-//        }      //Know heat transfer from outer surface of receiver tube to ambient
-//
-//        //Bracket Losses
-//        //Bracket conduction losses apply 
-//        q_cond_bracket = FQ_COND_BRACKET(T_3, T_6, P_6, v_6); //[W/m] 
-//
-//        q_12conv = q_3SolAbs - (q_34tot + q_cond_bracket);         //[W/m] Energy transfer to/from fluid based on energy balance at T_3
-//
-//        q_in_W = q_12conv * m_L_mod;                           //Convert [W/m] to [W] for some calculations
-//
-//        if (!single_point) {
-//            T_1_out = max(T_sky, q_in_W / (m_dot * cp_1) + T_1_in);    //Estimate outlet temperature with previous cp
-//
-//            diff_T1 = T1_tol + 1.0;                                 //Set diff > tolerance
-//            T1_iter = 0;                                             //Set iteration counter    
-//
-//            while ((std::abs(diff_T1) > T1_tol) && (T1_iter < 100)) {       //Find correct cp& rho and solve for T_1_ave
-//
-//                T1_iter++;                   //Increase iteration counter
-//                T_1_ave = (T_1_out + T_1_in) / 2.0;     //Average fluid temperature
-//                cp_1 = m_htfProps.Cp(T_1_ave) * 1000.;
-//                T_1_out1 = max(T_sky, q_in_W / (m_dot * cp_1) + T_1_in);  //Estimate outlet temperature with previous cp 
-//                diff_T1 = (T_1_out - T_1_out1) / T_1_out;  //Difference between T_1_out used to calc T_ave, and T_1_out calculated with new cp
-//                T_1_out = T_1_out1;                      //Calculate new T_1_out
-//
-//            }
-//        }
-//        else {
-//            //If we're only calculating performance for a single point, set the receiver ave/outlet temperature to the inlet.
-//            T_1_out = T_1_in;
-//            T_1_ave = T_1_in;
-//        }
-//
-//        rho_1ave = m_htfProps.dens(T_1_ave, 0.0);       //[kg/m^3] Density
-//        v_1 = m_dot / (rho_1ave * m_A_cs.at(hv));             //HTF bulk velocity
-//
-//        q_conv_iter = 0;                 //Set iteration counter
-//        diff_T2 = 1.0 + T2_tol;         //Set diff > tolerance
-//
-//        bool T2upflag = false;
-//        bool T2lowflag = false;
-//
-//        double y_T2_low = std::numeric_limits<double>::quiet_NaN();
-//        double y_T2_up = std::numeric_limits<double>::quiet_NaN();
-//
-//        double T2_low = min(T_1_ave, T_3);
-//        double T2_up = max(T_1_ave, T_3);
-//
-//        //Ensure convective calculations are correct (converge on T_2)
-//        while ((std::abs(diff_T2) > T2_tol) && (q_conv_iter < 100)) {
-//
-//            q_conv_iter++;       //Increase iteration counter
-//
-//            T_2 = fT_2(q_12conv, T_1_ave, T_2g, v_1, hv);	//Calculate T_2 (with previous T_2 as input)
-//            diff_T2 = (T_2 - T_2g) / T_2;          //T_2 difference
-//
-//            if (diff_T2 > 0.0)		// Calculated > Guessed, set lower limit and increase guessed
-//            {
-//                T2_low = T_2g;
-//                T2lowflag = true;
-//                y_T2_low = diff_T2;
-//                if (T2upflag)
-//                    T_2g = y_T2_up / (y_T2_up - y_T2_low) * (T2_low - T2_up) + T2_up;
-//                else
-//                    T_2g = T2_up;
-//            }
-//            else					// Calculated < Guessed, set upper limit and decrease guessed
-//            {
-//                T2_up = T_2g;
-//                T2upflag = true;
-//                y_T2_up = diff_T2;
-//                if (T2lowflag)
-//                    T_2g = y_T2_up / (y_T2_up - y_T2_low) * (T2_low - T2_up) + T2_up;
-//                else
-//                    T_2g = T2_low;
-//            }
-//
-//            if ((T2_up - T2_low) / T2_low < T2_tol / 10.0)
-//                break;
-//
-//            //T_2g = T_2 - 0.5*(T_2-T_2g);         //Reset T_2
-//
-//            // if(qq<2){        //For first T3 iteration, do not iterate on T_2 (again, this control is based on observation of solve time and may not be optimal for all simulations)
-//            // 	break;
-//            // }
-//
-//        }
-//
-//        //The conductive heat transfer equals the convective heat transfer (energy balance)
-//        q_23cond = q_12conv;         //[W/m]
-//
-//        //Calculate tube conductivity 
-//        k_23 = FK_23(T_2, T_3, hv);       //[W/m-K]  
-//
-//        //Update the absorber surface temperature (T_3) according to new heat transfer rate
-//        abs_diffT3 = T_3 - (T_2 + q_23cond * log(m_D_abs_out[hv] / m_D_abs_in[hv]) / (2. * pi * k_23));
-//        Diff_T3 = abs_diffT3 / T_3;
-//
-//
-//    }
-//
-//    //Warning of convergence failure
-//    //if(qq>99) {                           //End simulation if loop does not converge
-//    //    call messages(-1,"Trough Energy Balance Convergence Error 1",'WARNING',INFO(1),INFO(2))
-//    //    return
-//    //}
-//    //
-//    //if(T1_iter>99) {
-//    //    call messages(-1,"Trough Energy Balance Convergence Error 2",'WARNING',INFO(1),INFO(2))
-//    //    return
-//    //}
-//    //
-//    //if(q_conv_iter>99) {
-//    //    call messages(-1,"Trough Energy Balance Convergence Error 3",'WARNING',INFO(1),INFO(2))
-//    //    return
-//    //}
-//    //
-//    //if(q5_iter>99) {
-//    //    call messages(-1,"Trough Energy Balance Convergence Error 4",'WARNING',INFO(1),INFO(2))
-//    //    return
-//    //}
-//
-//    //Calculate specific heat in kJ/kg
-//    c_1ave = cp_1 / 1000.;
-//
-//    q_heatloss = q_34tot + q_cond_bracket + q_5solabs;   //[W/m]
-//
-//    //Save temperatures
-//    T_save[1] = T_2;
-//    T_save[2] = T_3;
-//    T_save[3] = T_4;
-//    T_save[4] = T_5;
-//
-//};
-//
-///*
-//    #################################################################################################################
-//    #################################################################################################################
-//    #################################################################################################################
-//
-//
-//    "******************************************************************************************************************************
-//        FUNCTION Fq_12conv :  Convective heat transfer rate from the HTF to the inside of the receiver tube
-//    ******************************************************************************************************************************"
-//      Author: R.E. Forristall (2003, EES)
-//      Implemented and revised:  M.J. Wagner (10/2009)
-//                    Copyright:  National Renewable Energy Lab (Golden, CO) 2009
-//                         note:  This function was programmed and tested against the EES original.
-//                                Small variations in output are due to slightly different fluid
-//                                properties used in the two models.
-//
-//        Newton's Law of Cooling.
-//
-//            q' = h * D_i *  PI * (T_m - T_s)
-//
-//            h = Nu_Di * k / D_i
-//
-//        Where
-//
-//            q' = convection heat transfer rate per unit length [W/m]
-//            h = convection heat transfer coefficient [W/m^2-k]
-//            D_i = inside diameter of absorber pipe [m]
-//            T_m = mean (bulk) temperature of HTF [C]
-//            T_s = inside surface temperature of absorber pipe [C]
-//            Nu_Di = Nusselt number based on inside diameter
-//            k = conduction heat transfer coefficient of HTF [W/m-K]
-//
-//        The Nusselt number is estimated with the correlation developed by Gnielinski.
-//
-//            Nu# = (f / 8) * (Re_Di - 1000) * Pr / (1 + 12.7 * (f / 8)^(1/2) * (Pr^(2/3) -1))  * (Pr / Pr_w)^0.11
-//            f = (1.82 * log10(Re_Di) - 1.64)^(-2)
-//            Re_Di = Rho * v_m * Di / u
-//            Pr  = Cp * u / k
-//
-//        Where
-//
-//            Nu# = Nusselt number
-//            Re_Di = Reynolds number for internal pipe flow
-//            Pr = Prandtl number
-//            Pr_w = Prandtl number evaluated at the wall temperature
-//            u = fluid absolute viscosity [kg/m-s]
-//            Di = inside diameter [m]
-//            Cp = fluid specific heat [J/kg-K]
-//            k = fluid thermal conductivity [W/m-K]
-//            Rho = fluid density [kg/m^3]
-//            v_m = mean fluid velocity [m/s]
-//
-//    The above correlation is valid for 0.5 < Pr < 2000 and 2300< Re_Di < 5 * 10^6 and can be used for both uniform heat flux and uniform wall temperature cases. With the exception of Pr_w, all properties are evaluated at the mean fluid temperature.
-//
-//    If Re_D <= 2300 and the choice was made from the diagram window  to use the laminar flow model, one of  the following correlations is used.
-//
-//            for inner tube flow (uniform flux condition)
-//            Nu# = 4.36
-//
-//            for inner annulus flow (uniform flux condition -- estimated from table for Nu# with heat fluxes at both surfaces)
-//            m_D_plug/m_D_abs_in	Nu#
-//            0		4.364
-//            0.05		4.792
-//            0.10		4.834
-//            0.20		4.833
-//            0.40		4.979
-//            0.60		5.099
-//            0.80		5.24
-//            1.00		5.385
-//
-//
-//    For the "SNL test platform" case the inside diameter in the above correlations is replaced with the following hydraulic diameter definition.
-//
-//            m_D_h = 4 * A_c / P = D_ao - D_ai
-//
-//        Where
-//
-//            m_D_h = hydraulic diameter [m]
-//            A_c = flow cross sectional area [m^2]
-//            P = wetted perimeter [m]
-//            D_ai = inner annulus diameter [m]
-//            D_ao = outer annulus diameter [m]
-//
-//    (Sources: Incropera, F., DeWitt, D., Fundamentals of Heat and Mass Transfer, Third Edition; John Wiley and Sons, New York, 1981, pp. 489-491, 502-503. Gnielinski, V., "New Equations for Heat and Mass Transfer in Turbulent Pipe and Channel Flow," International Chemical Engineering, Vol. 16, No. 2, April 1976.)
-//    */
-//double C_csp_fresnel_collector_receiver::fT_2(double q_12conv, double T_1, double T_2g, double v_1, int hv) {
-//    //		convection 1->2,  HTF temp, guess T2,  fluid velocity, HCE #, HCE variant
-//    //     Input units (  K   ,  K ,  real,  m/s, - , -)
-//
-//    double Cp_1, Cp_2, f, h_1, k_1, k_2, mu_1, mu_2, Nu_D2, Pr_1, Pr_2, Re_D2, rho_1, DRatio;
-//    bool includelaminar = true;	//cc -- this is always set to TRUE in TRNSYS
-//
-//    T_2g = max(T_2g, m_T_htf_prop_min);
-//
-//    // Thermophysical properties for HTF 
-//    mu_1 = m_htfProps.visc(T_1);  //[kg/m-s]
-//    mu_2 = m_htfProps.visc(T_2g);  //[kg/m-s]
-//    Cp_1 = m_htfProps.Cp(T_1) * 1000.;  //[J/kg-K]
-//    Cp_2 = m_htfProps.Cp(T_2g) * 1000.;  //[J/kg-K]
-//    k_1 = max(m_htfProps.cond(T_1), 1.e-4);  //[W/m-K]
-//    k_2 = max(m_htfProps.cond(T_2g), 1.e-4);  //[W/m-K]
-//    rho_1 = m_htfProps.dens(T_1, 0.0);  //[kg/m^3]
-//
-//    Pr_2 = (Cp_2 * mu_2) / k_2;
-//    Pr_1 = (Cp_1 * mu_1) / k_1;
-//
-//    if (v_1 > 0.1) {
-//
-//        Re_D2 = (rho_1 * m_D_h.at(hv) * v_1) / (mu_1);
-//
-//        // Nusselt Number for laminar flow case if option to include laminar flow model is chosen 
-//        if ((includelaminar == true) && (Re_D2 <= 2300.)) {
-//            if (m_Flow_type[hv] == 2.0) {
-//                DRatio = m_D_plug[hv] / m_D_abs_in[hv];
-//                //Estimate for uniform heat flux case (poly. regression based on lookup table in Forristall EES model)
-//                //---Note that this regression is based on an 8-point table, and is highly non-practical outside of DRatio bounds
-//                //---0 and 1
-//                if (DRatio > 1.) {
-//                    Nu_D2 = 5.385;
-//                }
-//                else if (DRatio < 0.) {
-//                    Nu_D2 = 4.364;
-//                }
-//                else {
-//                    Nu_D2 = 41.402 * pow(DRatio, 5) - 109.702 * pow(DRatio, 4) + 104.570 * pow(DRatio, 3) - 42.979 * pow(DRatio, 2) + 7.686 * DRatio + 4.411;
-//                }
-//            }
-//            else {
-//                Nu_D2 = 4.36;				//uniform heat flux
-//            }
-//        }
-//        else {
-//            // Warning statements if turbulent/transitional flow Nusselt Number correlation is used out of recommended range 
-//    //		if (Pr_1 <= 0.5) or (2000 <= Pr_1) { CALL WARNING('The result may not be accurate, since 0.5 < Pr_1 < 2000 does not hold. See PROCEDURE Pq_12conv. Pr_1 = XXXA1', Pr_1)
-//    //		if (Pr_2 <= 0.5) or (2000 <= Pr_2) { CALL WARNING('The result may not be accurate, since 0.5 < Pr_2 < 2000 does not hold. See PROCEDURE Pq_12conv. Pr_2 = XXXA1', Pr_2)
-//    //		If ( Re_D2 <= (2300) ) or (5*10**6 <= Re_D2 ) Then CALL WARNING('The result may not be accurate, since 2300 < Re_D2 < (5 * 10**6) does not hold. See PROCEDURE Pq_12conv. Re_D2 = XXXA1', Re_D2)
-//
-//            // Turbulent/transitional flow Nusselt Number correlation (modified Gnielinski correlation) 	
-//            f = pow(1.82 * log10(Re_D2) - 1.64, -2);
-//            Nu_D2 = (f / 8.) * (Re_D2 - 1000.) * Pr_1 / (1. + 12.7 * sqrt(f / 8.) * (pow(Pr_1, 0.6667) - 1.)) * pow(Pr_1 / Pr_2, 0.11);
-//        }
-//
-//        h_1 = Nu_D2 * k_1 / m_D_h.at(hv);  //[W/m**2-K]
-//        return T_1 + q_12conv / (h_1 * m_D_abs_in[hv] * pi);
-//        //q_12conv = h_1 * m_D_abs_in * PI  * (T_2 - T_1ave)  //[W/m]
-//    }
-//    else {
-//        h_1 = 0.0001;
-//        return T_1;
-//    }
-//
-//};
-//
-///******************************************************************************************************************************
-//    FUNCTION fq_34conv :	Convective heat transfer rate between the absorber outer surface and the glazing inner surface
-//******************************************************************************************************************************"
-//  NOTE: Temperatures input in terms of degrees K
-//
-//  Author: R.E. Forristall (2003, EES)
-//  Implemented and revised:  M.J. Wagner (10/2009)
-//                Copyright:  National Renewable Energy Lab (Golden, CO) 2009
-//
-//{ Four cases:
-//
-//    1. Vacuum in annulus: free-molecular heat transfer model for an annulus.
-//    2. Low or lost vacuum: natural convection heat transfer model for an annulus.
-//    3. No glazing, no wind: natural convection heat transfer model for a horizontal cylinder.
-//    4. No glazing, with wind: forced convection heat transfer model for a horizontal cylinder.
-//
-//
-//Case 1:
-//
-//    Free-molecular heat transfer for an annular space between horizontal cylinders.
-//
-//        q' = D_i * PI * h * (T_i - T_o)
-//        h = k_gas / (D_i / 2 * ln(D_o / D_i) + b * Lambda * (D_i / D_o + 1))
-//        b = (2 - a) / a * (9 * Gamma - 5) / (2 * (Gamma + 1))
-//        Lambda = 2.331 * 10^(-20) * T_avg / (P * Delta^2)
-//
-//    Where
-//
-//        q' = convection heat transfer rate per unit length [W/m]
-//        D_i = outer absorber diameter [m]
-//        D_o = inner glazing diameter [m]
-//        h = convection heat transfer coefficient for annulus gas [W/m^2-K]
-//        T_i = outer absorber surface temperature [C]
-//        T_o = inner glazing surface temperature [C]
-//        k_gas = thermal conductivity of the annulus fluid at standard temperature and pressure [W/m^2-K]
-//        b = interaction coefficient [dimensionless]
-//        Lambda = mean-free-path between collisions of a molecule [cm]
-//        a = accommodation coefficient [dimensionless]
-//        Gamma = ratio of specific heats for the annulus fluid [dimensionless]
-//        T_avg = average temperature of the annulus fluid [K]
-//        P = pressure of the annulus gas [mm of Hg]
-//        Delta = molecular diameter of the annulus gas [cm]
-//
-//    The above correlation is valid for Ra_Do < (D_o / (D_o -D_i))^4, but may over estimate q' slightly for large vacuums.
-//
-//(Source: Ratzel, A., Hickox, C., Gartling, D., "Techniques for Reducing Thermal Conduction and Natural Convection Heat Losses
-// in Annular Receiver Geometries," Journal of Heat Transfer, Vol. 101, No. 1, February 1979; pp. 108-113)
-//
-//
-//Case 2:
-//
-//    Modified Raithby and Hollands correlation for natural convection in an annular space between horizontal cylinders.
-//
-//        q' = 2.425 * k * (T_i - T_o) / (1 + (D_i / D_o)^(3/5))^(5/4) * (Pr * Ra_Di / (0.861 + Pr))^(1/4)
-//        Pr = NU / Alpha
-//        Ra_Di = g * Beta * (T_i - T_o) * (D_i)^3 / (Alpha * NU)
-//        Beta = 1 / T_avg		"Ideal Gas"
-//
-//    Where
-//
-//        k = conduction heat transfer coefficient for the annulus gas [W/m-K]
-//        Pr = Prandtl number
-//        NU = kinematic viscosity [m^2/s]
-//        Alpha = thermal diffusivity [m^2/s]
-//        Ra_Di = Rayleigh number based on the annulus inner diameter
-//        g = local acceleration due to gravity [m/s^2]
-//        Beta = volumetric thermal expansion coefficient [1/K]
-//        Rho_o = annulus gas density at the outer surface [kg/m^3]
-//        Rho_i = annulus gas density at the inner surface [kg/m^3]
-//        T_avg = average temperature, (T_i + T_o) / 2 [K]
-//
-//    Above correlation is valid for Ra_Do > (D_o / (D_o -D_i))^4. All physical properties are evaluated at the average temperature, (T_i + T_o)/2.
-//
-//(Source: Bejan, A., Convection Heat Transfer, Second Edition; John Wiley & Son's, New York, 1995, pp. 257-259.)
-//
-//
-//Case 3:
-//
-//    Churchill and Chu correlation for natural convection from a long isothermal horizontal cylinder.
-//
-//        Nu_bar = (0.60 + (0.387 * Ra_D^(1/6)) / (1 + (0.559 / Pr)^(9/16))^(8/27) )^2
-//        Ra_D = g * Beta * (T_s - T_inf) * D^3 / (Alpha * NU)
-//        Beta =  1 / T_f	"Ideal Gas"
-//        Alpha = k / (Cp * Rho)
-//        Pr = NU / Alpha
-//
-//        h = Nu_bar * k / D
-//
-//        q' = h * PI * D * (T_s - T_inf)
-//
-//    Where
-//
-//        Nu_bar = average Nusselt number
-//        Ra_D = Rayleigh number based on diameter
-//        Rho = fluid density  [kg/m^3]
-//        Cp = specific heat at constant pressure [kJ / kg-K]
-//        T_inf = fluid temperature in the free stream [C]
-//        T_s = surface temperature [C]
-//        T_f = film temperature, (T_s + T_inf) / 2 [K]
-//        T_inf = ambient air temperature [C]
-//
-//    Above correlation is valid for  10^(-5) < Ra_D < 10^12. All physical properties are evaluated at the film temperature, (T_s + T_inf) / 2.
-//
-//(Source: Incropera, F., DeWitt, D., Fundamentals of Heat and Mass Transfer, Third Edition; John Wiley and Sons, New York, 1981, pp. 550-552.)
-//
-//
-//Case 4:
-//
-//    Zhukauskas's correlation for external forced convection flow normal to an isothermal cylinder.
-//
-//        Nu_bar = C * Re_D^m * Pr^n * (Pr / Pr_s)^(1/4)
-//
-//        Re_D		C			m
-//        1-40		0.75			0.4
-//        40-1000		0.51			0.5
-//        1e3- 2e5	0.26			0.6
-//        2e5-1e6	0.076			0.7
-//
-//        n = 0.37, Pr <=10
-//        n = 0.36, Pr >10
-//
-//        Re_D =  U_inf * D / NU
-//        Pr  = NU / Alpha
-//        Alpha = k / (Cp * Rho)
-//
-//        Q =  h * D * PI * (T_s - T_inf) * L
-//
-//    Where,
-//
-//        Re_D = Reynolds number evaluated at the diameter
-//        Cp = specific heat at constant pressure of air [W/m-K]
-//        Rho = density of air [kg/m^3]
-//        C, m, n = constants
-//
-//    Above correlation is valid for  0.7 < Pr < 500, and 1 < Re_D < 10^6. All physical properties evaluated
-//   at the free stream temperature, T_inf,  except Pr_s.
-//
-//(Source: Incropera, F., DeWitt, D., Fundamentals of Heat and Mass Transfer, Third Edition; John Wiley and
-// Sons, New York, 1981, p. 413.)
-//}*/
-//void C_csp_fresnel_collector_receiver::FQ_34CONV(double T_3, double T_4, double P_6, double v_6, double T_6, int hv, double& q_34conv, double& h_34)
-//{
-//    //      UNITS   ( K , K ,  Pa , m/s,  K , -, -, W/m, W/m2-K)
-//
-//    double a, Alpha_34, b, Beta_34, C, C1, Cp_34, Cv_34, Delta, Gamma, k_34, Lambda,
-//        m, mu_34, n, nu_34, P, Pr_34, P_A1, Ra_D3, Ra_D4, rho_34, T_34, T_36,
-//        grav, Nu_bar, rho_3, rho_6, mu_36, rho_36, cp_36,
-//        k_36, nu_36, alpha_36, beta_36, Pr_36, h_36, mu_3, mu_6, k_3, k_6, cp_3, Cp_6, nu_6, nu_3,
-//        Alpha_3, alpha_6, Re_D3, Pr_3, Pr_6, Natq_34conv, Kineticq_34conv;
-//
-//    grav = 9.81; //m/s2  gravitation constant
-//
-//    P_A1 = m_P_a[hv] * 133.322368;  //convert("torr", "Pa")  //[Pa]
-//
-//    T_34 = (T_3 + T_4) / 2.;  //[C]
-//    T_36 = (T_3 + T_6) / 2.;  //[C]
-//
-//    if (!m_GlazingIntact.at(hv)) {
-//
-//        // Thermophysical Properties for air 
-//        rho_3 = m_airProps.dens(T_3, P_6);  //[kg/m**3], air is fluid 1.
-//        rho_6 = m_airProps.dens(T_6, P_6);  //[kg/m**3], air is fluid 1.
-//
-//        if (v_6 <= 0.1) {
-//            mu_36 = m_airProps.visc(T_36);  //[N-s/m**2], AIR
-//            rho_36 = m_airProps.dens(T_36, P_6);  //[kg/m**3], AIR
-//            cp_36 = m_airProps.Cp(T_36) * 1000.;  //[J/kg-K], AIR
-//            k_36 = m_airProps.cond(T_36);  //[W/m-K], AIR
-//            nu_36 = mu_36 / rho_36;  //[m**2/s] kinematic viscosity, AIR
-//            alpha_36 = k_36 / (cp_36 * rho_36);  //[m**2/s], thermal diffusivity, AIR
-//            beta_36 = 1.0 / T_36;  //[1/K]
-//            Ra_D3 = grav * beta_36 * std::abs(T_3 - T_6) * pow(m_D_abs_out[hv], 3) / (alpha_36 * nu_36);
-//
-//            // Warning Statement if following Nusselt Number correlation is used out of recommended range //
-//            //If ((Ra_D3 <= 1.e-5) || (Ra_D3 >= 1.e12)) continue
-//                //CALL WARNING('The result may not be accurate, since 10**(-5) < Ra_D3 < 10**12 does not hold. See Function fq_34conv. Ra_D3 = XXXA1', Ra_D3)
-//
-//            // Churchill and Chu correlation for natural convection from a long isothermal horizontal cylinder //
-//            Pr_36 = nu_36 / alpha_36;
-//            Nu_bar = pow(0.60 + (0.387 * pow(Ra_D3, 0.1667)) / pow(1. + pow(0.559 / Pr_36, 0.5625), 0.2963), 2);
-//            h_36 = Nu_bar * k_36 / m_D_abs_out[hv];  //[W/m**2-K]//
-//            q_34conv = h_36 * pi * m_D_abs_out[hv] * (T_3 - T_6);  //[W/m]//
-//            h_34 = h_36;  //Set output coefficient
-//        }
-//        else {
-//
-//            // Thermophysical Properties for air 
-//            mu_3 = m_airProps.visc(T_3);  //[N-s/m**2]
-//            mu_6 = m_airProps.visc(T_6);  //[N-s/m**2]
-//            k_3 = m_airProps.cond(T_3);  //[W/m-K]
-//            k_6 = m_airProps.cond(T_6);  //[W/m-K]
-//            cp_3 = m_airProps.Cp(T_3) * 1000.;  //[J/kg-K]
-//            Cp_6 = m_airProps.Cp(T_6) * 1000.;  //[J/kg-K]
-//            nu_6 = mu_6 / rho_6;  //[m**2/s]
-//            nu_3 = mu_3 / rho_3;  //[m**2/s]
-//            Alpha_3 = k_3 / (cp_3 * rho_3);  //[m**2/s]
-//            alpha_6 = k_6 / (Cp_6 * rho_6);  //[m**2/s]
-//            Re_D3 = v_6 * m_D_abs_out[hv] / nu_6;
-//            Pr_3 = nu_3 / Alpha_3;
-//            Pr_6 = nu_6 / alpha_6;
-//
-//            // Warning Statements if following Nusselt Number correlation is used out of range //
-//            //if (Re_D3 <= 1) or (Re_D3 >= 10**6) { CALL WARNING('The result may not be accurate, since 1 < Re_D3 < 10**6 does not hold. See Function fq_34conv. Re_D3 = XXXA1', Re_D3)
-//            //If (Pr_6 <= 0.7) or (Pr_6 >= 500) Then CALL WARNING('The result may not be accurate, since 0.7 < Pr_6 < 500 does not hold. See Function fq_34conv. Pr_6 = XXXA1', Pr_6)
-//
-//            // Coefficients for external forced convection Nusselt Number correlation (Zhukauskas's correlation) //
-//            if (Pr_6 <= 10) {
-//                n = 0.37;
-//            }
-//            else {
-//                n = 0.36;
-//            }
-//
-//            if (Re_D3 < 40) {
-//                C = 0.75;
-//                m = 0.4;
-//            }
-//            else {
-//
-//                if ((40 <= Re_D3) && (Re_D3 < 1000.)) {
-//                    C = 0.51;
-//                    m = 0.5;
-//                }
-//                else {
-//                    if ((1.e3 <= Re_D3) && (Re_D3 < 2.e5)) {
-//                        C = 0.26;
-//                        m = 0.6;
-//                    }
-//                    else {
-//                        if ((2.e5 <= Re_D3) && (Re_D3 < 1.e6)) {
-//                            C = 0.076;
-//                            m = 0.7;
-//                        }
-//                    }
-//                }
-//            }
-//
-//            // Zhukauskas's correlation for external forced convection flow normal to an isothermal cylinder 
-//            Nu_bar = C * pow(Re_D3, m) * pow(Pr_6, n) * pow(Pr_6 / Pr_3, 0.25);
-//            h_36 = Nu_bar * k_6 / m_D_abs_out[hv];  //[W/m**2-K]
-//            q_34conv = h_36 * m_D_abs_out[hv] * pi * (T_3 - T_6);  //[W/m]	
-//            h_34 = h_36;  //set output coefficient
-//        }
-//    }
-//    else {
-//
-//        // Thermophysical Properties for gas in annulus space 
-//        mu_34 = m_AnnulusGasMat.at(hv)->visc(T_34);  //[kg/m-s] 
-//        Cp_34 = m_AnnulusGasMat.at(hv)->Cp(T_34) * 1000.;  //[J/kg-K]
-//        Cv_34 = m_AnnulusGasMat.at(hv)->Cv(T_34) * 1000.;  //[J/kg-K]
-//        rho_34 = m_AnnulusGasMat.at(hv)->dens(T_34, P_A1);  //[kg/m**3]
-//        k_34 = m_AnnulusGasMat.at(hv)->cond(T_34);  //[W/m-K]
-//
-//        // Modified Raithby and Hollands correlation for natural convection in an annular space between horizontal cylinders 
-//        Alpha_34 = k_34 / (Cp_34 * rho_34);  //[m**2/s]//
-//        nu_34 = mu_34 / rho_34;  //[m**2/s]//
-//        Beta_34 = 1. / max(T_34, 1.0);  //[1/K]//
-//        Ra_D3 = grav * Beta_34 * std::abs(T_3 - T_4) * pow(m_D_abs_out[hv], 3) / (Alpha_34 * nu_34);
-//        Ra_D4 = grav * Beta_34 * std::abs(T_3 - T_4) * pow(m_D_glass_in[hv], 3) / (Alpha_34 * nu_34);
-//        Pr_34 = nu_34 / Alpha_34;
-//        Natq_34conv = 2.425 * k_34 * (T_3 - T_4) / pow(1 + pow(m_D_abs_out[hv] / m_D_glass_in[hv], 0.6), 1.25) * pow(Pr_34 * Ra_D3 / (0.861 + Pr_34), 0.25);  //[W/m]//	
-//        P = m_P_a[hv];  //[mmHg] (note that 1 torr = 1 mmHg by definition)
-//        C1 = 2.331e-20;  //[mmHg-cm**3/K]//
-//
-//        // Free-molecular heat transfer for an annular space between horizontal cylinders 
-//        if (m_AnnulusGasMat.at(hv)->GetFluid() == HTFProperties::Air) { //AIR
-//            Delta = 3.53e-8;  //[cm]
-//        }
-//
-//        if (m_AnnulusGasMat.at(hv)->GetFluid() == HTFProperties::Hydrogen_ideal) { //H2
-//            Delta = 2.4e-8;  //[cm]
-//        }
-//
-//        if (m_AnnulusGasMat.at(hv)->GetFluid() == HTFProperties::Argon_ideal) {  //Argon
-//            Delta = 3.8e-8;  //[cm]
-//        }
-//
-//        Lambda = C1 * T_34 / (P * Delta * Delta);  //[cm]
-//        Gamma = Cp_34 / Cv_34;
-//        a = 1.;
-//        b = (2. - a) / a * (9. * Gamma - 5.) / (2. * (Gamma + 1.));
-//        h_34 = k_34 / (m_D_abs_out[hv] / 2. * log(m_D_glass_in[hv] / m_D_abs_out[hv]) + b * Lambda / 100. * (m_D_abs_out[hv] / m_D_glass_in[hv] + 1.));  //[W/m**2-K]
-//        Kineticq_34conv = m_D_abs_out[hv] * pi * h_34 * (T_3 - T_4);  //[W/m]
-//
-//        // Following compares free-molecular heat transfer with natural convection heat transfer and uses the largest value for heat transfer in annulus 
-//        if (Kineticq_34conv > Natq_34conv) {
-//            q_34conv = Kineticq_34conv;  //[W/m]
-//        }
-//        else {
-//            q_34conv = Natq_34conv;  //[W/m]
-//            h_34 = q_34conv / (m_D_abs_out[hv] * pi * (T_3 - T_4));  //Recalculate the convection coefficient for natural convection
-//        }
-//    }
-//
-//};
-//
-///******************************************************************************************************************************
-//    FUNCTION fq_34rad :	Radiation heat transfer rate between the absorber surface and glazing inner surface
-//******************************************************************************************************************************"
-//  NOTE: Temperatures input in terms of degrees K
-//
-//  Author: R.E. Forristall (2003, EES)
-//  Implemented and revised:  M.J. Wagner (10/2009)
-//                Copyright:  National Renewable Energy Lab (Golden, CO) 2009
-//                   note  :  Tested against original EES version
-//
-//{ 	Radiation heat transfer for a two-surface enclosure.
-//
-//        Two cases, one if the glazing envelope is intact and one if the glazing is missing or damaged.
-//
-//        Case 1: Long (infinite) concentric cylinders.
-//
-//            q' = sigma * PI * D_1 * (T_1^4 - T_2^4) / (1 / EPSILON_1 + (1 - EPSILON_2) / EPSILON_2 * (D_1 / m_D_abs_in))
-//
-//            Where,
-//
-//                q' = radiation heat transfer per unit length [W/m]
-//                sigma = Stephan-Boltzmann constant [W/m^2-K^4]
-//                T_1 = absorber outer surface temperature [K]
-//                T_2 = glazing inner surface temperature [K]
-//                D_1 = outer absorber diameter [m]
-//                m_D_abs_in = inner glazing diameter [m]
-//                EPSILON_1 = emissivity of inner surface
-//                EPSILON_2 = emissivity of outer surface
-//
-//        Case 2: Small convex object in a large cavity.
-//
-//            q' = sigma * PI * D_1 * EPSILON_1 * (T_1^4 - T_2^4)
-//}*/
-//void C_csp_fresnel_collector_receiver::FQ_34RAD(double T_3, double T_4, double T_7, double epsilon_abs_v, int hv, double& q_34rad, double& h_34) {
-//    //units		(K, K, K, -, -, -, W/m, W/m2-K)
-//    double sigma = 5.67e-8, T_ave;
-//    T_ave = (T_3 + T_4) / 2.;
-//    if (!m_GlazingIntact.at(hv)) {
-//        q_34rad = epsilon_abs_v * pi * m_D_abs_out[hv] * sigma * (pow(T_3, 4) - pow(T_7, 4));  //[W/m]
-//        h_34 = q_34rad / (pi * m_D_abs_out[hv] * (T_3 - T_7));
-//    }
-//    else {
-//        h_34 = sigma * (T_3 * T_3 + T_4 * T_4) * (T_3 + T_4) / (1.0 / epsilon_abs_v + m_D_abs_out[hv] / m_D_glass_in[hv] * (1.0 / m_epsilon_glass[hv] - 1.0));
-//        q_34rad = pi * m_D_abs_out[hv] * h_34 * (T_3 - T_4);
-//    }
-//
-//}
-//
-///******************************************************************************************************************************
-//    FUNCTION fq_56conv :	Convective heat transfer rate between the glazing outer surface and the ambient air
-//******************************************************************************************************************************"
-//  Author: R.E. Forristall (2003, EES)
-//  Implemented and revised:  M.J. Wagner (10/2009)
-//                Copyright:  National Renewable Energy Lab (Golden, CO) 2009
-//                   note  :  Tested against original EES version
-//
-//{ 	h6	Heat Transfer Coefficient
-//
-//    If no wind, then the Churchill and Chu correlation is used. If wind, then the Zhukauskas's correlation is used. These correlations are described above for q_34conv.
-//}*/
-//void C_csp_fresnel_collector_receiver::FQ_56CONV(double T_5, double T_6, double P_6, double v_6, int hv, double& q_56conv, double& h_6)
-////           units   ( K ,  K , torr, m/s,  W/m    , W/m2-K)
-//{
-//    double alpha_5, alpha_6, C, Cp_5, Cp_56, Cp_6, k_5, k_56, k_6, m, mu_5, mu_56, mu_6, n, Nus_6,
-//        nu_5, nu_6, Pr_5, Pr_6, Re_D5, rho_5, rho_56, rho_6, T_56, Nu_bar,
-//        nu_56, alpha_56, beta_56, Ra_D5, Pr_56;
-//
-//    T_56 = (T_5 + T_6) / 2.0;  //[K]
-//
-//    // Thermophysical Properties for air 
-//    mu_5 = m_airProps.visc(T_5);  //[kg/m-s]
-//    mu_6 = m_airProps.visc(T_6);  //[kg/m-s]
-//    mu_56 = m_airProps.visc(T_56);  //[kg/m-s]
-//    k_5 = m_airProps.cond(T_5);  //[W/m-K]
-//    k_6 = m_airProps.cond(T_6);  //[W/m-K]
-//    k_56 = m_airProps.cond(T_56);  //[W/m-K]
-//    Cp_5 = m_airProps.Cp(T_5) * 1000.;  //[J/kg-K]
-//    Cp_6 = m_airProps.Cp(T_6) * 1000.;  //[J/kg-K]
-//    Cp_56 = m_airProps.Cp(T_56) * 1000.;  //[J/kg-K]
-//    rho_5 = m_airProps.dens(T_5, P_6);  //[kg/m^3]
-//    rho_6 = m_airProps.dens(T_6, P_6);  //[kg/m^3]
-//    rho_56 = m_airProps.dens(T_56, P_6);  //[kg/m^3]
-//
-//    // if the glass envelope is missing then the convection heat transfer from the glass 
-//    //envelope is forced to zero by T_5 = T_6 
-//    if (!m_GlazingIntact.at(hv)) {
-//        q_56conv = (T_5 - T_6);  //[W/m]
-//    }
-//    else {
-//        if (v_6 <= 0.1) {
-//
-//            // Coefficients for Churchill and Chu natural convection correlation //
-//            nu_56 = mu_56 / rho_56;  //[m^2/s]
-//            alpha_56 = k_56 / (Cp_56 * rho_56);  //[m^2/s]
-//            beta_56 = 1.0 / T_56;  //[1/K]
-//            Ra_D5 = g * beta_56 * std::abs(T_5 - T_6) * pow(m_D_glass_out[hv], 3) / (alpha_56 * nu_56);
-//
-//            // Warning Statement if following Nusselt Number correlation is used out of range //
-//            //If (Ra_D5 <= 10**(-5)) or (Ra_D5 >= 10**12) Then CALL WARNING('The result may not be accurate, 
-//            //since 10**(-5) < Ra_D5 < 10**12 does not hold. See Function fq_56conv. Ra_D5 = XXXA1', Ra_D5)
-//
-//            // Churchill and Chu correlation for natural convection for a horizontal cylinder //
-//            Pr_56 = nu_56 / alpha_56;
-//            Nu_bar = pow(0.60 + (0.387 * pow(Ra_D5, 0.1667)) / pow(1.0 + pow(0.559 / Pr_56, 0.5625), 0.2963), 2);
-//            h_6 = Nu_bar * k_56 / m_D_glass_out[hv];  //[W/m**2-K]
-//            q_56conv = h_6 * pi * m_D_glass_out[hv] * (T_5 - T_6);  //[W/m]
-//        }
-//        else {
-//
-//            // Coefficients for Zhukauskas's correlation //
-//            alpha_5 = k_5 / (Cp_5 * rho_5);  //[m**2/s]
-//            alpha_6 = k_6 / (Cp_6 * rho_6);  //[m**2/s]
-//            nu_5 = mu_5 / rho_5;  //[m**2/s]
-//            nu_6 = mu_6 / rho_6;  //[m**2/s]
-//            Pr_5 = nu_5 / alpha_5;
-//            Pr_6 = nu_6 / alpha_6;
-//            Re_D5 = v_6 * m_D_glass_out[hv] * rho_6 / mu_6;
-//
-//            // Warning Statement if following Nusselt Number correlation is used out of range //
-////			if (Pr_6 <= 0.7) or (Pr_6 >= 500) { CALL WARNING('The result may not be accurate, since 0.7 < Pr_6 < 500 does not hold. See Function fq_56conv. Pr_6 = XXXA1', Pr_6)
-////			If (Re_D5 <= 1) or (Re_D5 >= 10**6) Then CALL WARNING('The result may not be accurate, since 1 < Re_D5 < 10**6 does not hold. See Function fq_56conv. Re_D5 = XXXA1 ', Re_D5)
-//
-//            // Zhukauskas's correlation for forced convection over a long horizontal cylinder //
-//            if (Pr_6 <= 10) {
-//                n = 0.37;
-//            }
-//            else {
-//                n = 0.36;
-//            }
-//
-//            if (Re_D5 < 40.0) {
-//                C = 0.75;
-//                m = 0.4;
-//            }
-//            else {
-//                if ((40.0 <= Re_D5) && (Re_D5 < 1.e3)) {
-//                    C = 0.51;
-//                    m = 0.5;
-//                }
-//                else {
-//                    if ((1.e3 <= Re_D5) && (Re_D5 < 2.e5)) {
-//                        C = 0.26;
-//                        m = 0.6;
-//                    }
-//                    else {
-//                        if ((2.e5 <= Re_D5) && (Re_D5 < 1.e6)) {
-//                            C = 0.076;
-//                            m = 0.7;
-//                        }
-//                    }
-//                }
-//            }
-//
-//            Nus_6 = C * pow(Re_D5, m) * pow(Pr_6, n) * pow(Pr_6 / Pr_5, 0.25);
-//            h_6 = Nus_6 * k_6 / m_D_glass_out[hv];  //[W/m**2-K]
-//            q_56conv = h_6 * pi * m_D_glass_out[hv] * (T_5 - T_6);  //[W/m]
-//        }
-//    }
-//}
-//
-///******************************************************************************************************************************
-//    FUNCTION fq_cond_bracket:	Heat loss estimate through HCE support bracket
-// ******************************************************************************************************************************"
-//  Author: R.E. Forristall (2003, EES)
-//  Implemented and revised:  M.J. Wagner (10/2009)
-//                Copyright:  National Renewable Energy Lab (Golden, CO) 2009
-//                   note  :  Tested against original EES version
-//*/
-//double C_csp_fresnel_collector_receiver::FQ_COND_BRACKET(double T_3, double T_6, double P_6, double v_6) {
-//    //           units                    ( K ,  K , bar, m/s)
-//
-//    double P_brac, D_brac, A_CS_brac, k_brac, T_base, T_brac, T_brac6, mu_brac6, rho_brac6,
-//        Cp_brac6, k_brac6, nu_brac6, Alpha_brac6, Beta_brac6, Ra_Dbrac, Pr_brac6, Nu_bar, h_brac6,
-//        mu_brac, mu_6, rho_6, rho_brac, k_6, Cp_brac, nu_6, Cp_6, Nu_brac, Alpha_brac,
-//        Re_Dbrac, Pr_brac, Pr_6, n, C, m, L_HCE, alpha_6;
-//
-//
-//    // effective bracket perimeter for convection heat transfer
-//    P_brac = 0.2032;  //[m]
-//
-//    // effective bracket diameter (2 x 1in) 
-//    D_brac = 0.0508;  //[m]
-//
-//    // minimum bracket cross-sectional area for conduction heat transfer
-//    A_CS_brac = 0.00016129;  //[m**2]
-//
-//    // conduction coefficient for carbon steel at 600 K
-//    k_brac = 48.0;  //[W/m-K]
-//
-//    // effective bracket base temperature
-//    T_base = T_3 - 10.0;  //[C]
-//
-//    // estimate average bracket temperature 
-//    T_brac = (T_base + T_6) / 2.0;  //[C]  //NOTE: MJW modified from /3 to /2.. believed to be an error
-//
-//    // estimate film temperature for support bracket 
-//    T_brac6 = (T_brac + T_6) / 2.0;  //[C]
-//
-//    // convection coefficient with and without wind
-//    if (v_6 <= 0.1) {
-//
-//        mu_brac6 = m_airProps.visc(T_brac6);  //[N-s/m**2]
-//        rho_brac6 = m_airProps.dens(T_brac6, P_6);  //[kg/m**3]
-//        Cp_brac6 = m_airProps.Cp(T_brac6) * 1000.;  //[J/kg-K]
-//        k_brac6 = m_airProps.cond(T_brac6);  //[W/m-K]
-//        nu_brac6 = mu_brac6 / rho_brac6;  //[m**2/s]
-//        Alpha_brac6 = k_brac6 / (Cp_brac6 * rho_brac6);  //[m**2/s]
-//        Beta_brac6 = 1.0 / T_brac6;  //[1/K]
-//        Ra_Dbrac = g * Beta_brac6 * std::abs(T_brac - T_6) * D_brac * D_brac * D_brac / (Alpha_brac6 * nu_brac6);
-//
-//        // Warning Statement if following Nusselt Number correlation is used out of recommended range 
-//        //If ((Ra_Dbrac <= 1.e-5)) || (Ra_Dbrac >= 1.e12) Then CALL WARNING('The result may not be accurate, 
-//        //since 10**(-5) < Ra_Dbrac < 10**12 does not hold. See Function fq_cond_bracket. Ra_Dbrac = XXXA1', Ra_Dbrac)
-//
-//        // Churchill and Chu correlation for natural convection from a long isothermal horizontal cylinder 
-//        Pr_brac6 = nu_brac6 / Alpha_brac6;
-//        Nu_bar = pow(0.60 + (0.387 * pow(Ra_Dbrac, 0.1667)) / pow(1.0 + pow(0.559 / Pr_brac6, 0.5625), 0.2963), 2);
-//        h_brac6 = Nu_bar * k_brac6 / D_brac;  //[W/m**2-K]
-//    }
-//    else {
-//
-//        // Thermophysical Properties for air 
-//        mu_brac = m_airProps.visc(T_brac);  //[N-s/m**2]
-//        mu_6 = m_airProps.visc(T_6);  //[N-s/m**2]
-//        rho_6 = m_airProps.dens(T_6, P_6);  //[kg/m**3]
-//        rho_brac = m_airProps.dens(T_brac, P_6);  //[kg/m**3]
-//        k_brac = m_airProps.cond(T_brac);  //[W/m-K]
-//        k_6 = m_airProps.cond(T_6);  //[W/m-K]
-//        k_brac6 = m_airProps.cond(T_brac6);  //[W/m-K]
-//        Cp_brac = m_airProps.Cp(T_brac) * 1000.;  //[J/kg-K]
-//        Cp_6 = m_airProps.Cp(T_6) * 1000.;  //[J/kg-K]
-//        nu_6 = mu_6 / rho_6;  //[m**2/s]
-//        Nu_brac = mu_brac / rho_brac;  //[m**2/s]
-//
-//        Alpha_brac = k_brac / (Cp_brac * rho_brac * 1000.0);  //[m**2/s]
-//        alpha_6 = k_6 / (Cp_6 * rho_6 * 1000.0);  //[m**2/s]
-//        Re_Dbrac = v_6 * D_brac / nu_6;
-//        Pr_brac = Nu_brac / Alpha_brac;
-//        Pr_6 = nu_6 / alpha_6;
-//
-//        // Warning Statements if following Nusselt Correlation is used out of range 
-////		if (Re_Dbrac <= 1) or (Re_Dbrac >= 10**6) { CALL WARNING('The result may not be accurate, since 1 < Re_Dbrac < 10**6 does not hold. See Function fq_cond_bracket. Re_Dbrac = XXXA1', Re_Dbrac)
-////		If (Pr_6 <= 0.7) or (Pr_6 >= 500) Then CALL WARNING('The result may not be accurate, since 0.7 < Pr_6 < 500 does not hold. See Function fq_cond_bracket. Pr_6 = XXXA1', Pr_6)
-//
-//        // Coefficients for external forced convection Nusselt Number correlation (Zhukauskas's correlation) 
-//        if (Pr_6 <= 10.) {
-//            n = 0.37;
-//        }
-//        else {
-//            n = 0.36;
-//        }
-//
-//        if (Re_Dbrac < 40.) {
-//            C = 0.75;
-//            m = 0.4;
-//        }
-//        else {
-//
-//            if ((40. <= Re_Dbrac) && (Re_Dbrac < 1.e3)) {
-//                C = 0.51;
-//                m = 0.5;
-//            }
-//            else {
-//                if ((1.e3 <= Re_Dbrac) && (Re_Dbrac < 2.e5)) {
-//                    C = 0.26;
-//                    m = 0.6;
-//                }
-//                else {
-//                    if ((2.e5 <= Re_Dbrac) && (Re_Dbrac < 1.e6)) {
-//                        C = 0.076;
-//                        m = 0.7;
-//                    }
-//                }
-//            }
-//        }
-//
-//        // Zhukauskas's correlation for external forced convection flow normal to an isothermal cylinder 
-//        Nu_bar = C * pow(Re_Dbrac, m) * pow(Pr_6, n) * pow(Pr_6 / Pr_brac, 0.25);
-//        h_brac6 = Nu_bar * k_brac6 / D_brac;  //[W/m**2-K]
-//
-//    }
-//
-//    // estimated conduction heat loss through HCE support brackets / HCE length 
-//    L_HCE = 4.06;  //[m]
-//    return sqrt(h_brac6 * P_brac * k_brac * A_CS_brac) * (T_base - T_6) / L_HCE;  //[W/m]
-//
-//}
-//
-///******************************************************************************************************************************
-//    FUNCTION fk_23:	Absorber conductance
-//******************************************************************************************************************************"
-//{ Based on linear fit of data from "Alloy Digest, Sourcebook, Stainless Steels"; ASM International, 2000.}
-//*/
-//double C_csp_fresnel_collector_receiver::FK_23(double T_2, double T_3, int hv)
-//{
-//    double T_23;
-//
-//    //Absorber materials:
-//    // (1)   304L
-//    // (2)   216L
-//    // (3)   321H
-//    // (4)   B42 Copper Pipe
-//
-//    T_23 = (T_2 + T_3) / 2. - 273.15;  //[C]
-//    return m_AbsorberPropMat.at(hv)->cond(T_23);
-//
-//}
 
 /*
    ***************************************************************************************************
@@ -4656,10 +3342,86 @@ int C_csp_fresnel_collector_receiver::C_mono_eq_freeze_prot_E_bal::operator()(do
 
 // ******************************************************************** Evacuated Receiver Model
 
-
+//    This subroutine contains the trough detailed plant model.  The collector field is modeled
+//    using an iterative solver.
+//    This code was written for the National Renewable Energy Laboratory
+//    Copyright 2009-2010
+//    Author: Mike Wagner
+//
+//    Subroutine Inputs (and parameters)
+//     ----------------------------------------------------------------------------------------------------------------------
+//     Nb | Variable             | Description                                             | Input  Units   | Internal Units
+//     ---|----------------------|---------------------------------------------------------|----------------|----------------
+//     1  | T_1_in               | Receiver inlet temperature                              |                |
+//     2  | m_dot                | Heat transfer fluid mass flow rate                      |                |
+//     3  | T_amb                | Ambient dry-bulb temperature                            |                |
+//     4  | T_sky                | Sky temperature                                         |                |
+//     5  | v_6                  | Ambient wind velocity                                   |                |
+//     6  | P_6                  | Ambient atmospheric pressure                            |                |
+//     7  | q_i                  | Total incident irradiation on the receiver              |                |
+//     8  | A_cs                 | Internal absorber tube cross-sectional area             |                |
+//     9  | m_D_abs_in                  | Internal absorber tube diameter                         |                |
+//     10 | m_D_abs_out                  | External absorber tube diameter                         |                |
+//     11 | m_D_glass_in                  | Internal glass envelope diameter                        |                |
+//     12 | m_D_glass_out                  | External glass envelope diameter                        |                |
+//     13 | m_D_plug                  | (optional) Plug diameter                                |                |
+//     14 | m_D_h                  | Absorber tube hydraulic diameter                        |                |
+//     15 | eps_mode             | Interpolation mode for the emissivity (1=table,2=fixed) |                |
+//     16 | xx                   | Array of temperature values for emissivity table        |                |
+//     17 | yy                   | Array of emissivity values for table                    |                |
+//     18 | nea                  | Number of entries in the emissivity table               |                |
+//     19 | m_L_mod             | Length of the active receiver surface                   |                |
+//     20 | single_point         | Logical flag - is the calculation for a single point?   |                |
+//     21 | Epsilon_32           | Constant value for emissivity if table isn't used       |                |
+//     22 | Epsilon_4            | Envelope inner surface emissivity                       |                |
+//     23 | epsilon_glass            | Envelope outer surface emissivity                       |                |
+//     24 | m_alpha_abs            | Absorber tube absorptance                               |                |
+//     25 | m_alpha_env            | Envelope absorptance                                    |                |
+//     26 | m_ColOptEff            | Collector optical efficiency                            |                |
+//     27 | m_Tau_envelope         | Total envelope transmittance                            |                |
+//     28 | m_P_a                  | Annulus gas pressure                                    | torr           |
+//     29 | Flow_type            | Flag indicating the presence of an internal plug        |                |
+//     30 | AnnulusGas           | Annulus gas type                                        |                |
+//     31 | Fluid                | Heat transfer fluid type                                |                |
+//     32 | AbsorberMaterial     | Absorber material type                                  |                |
+//     33 | time                 | Simulation time                                         |                |
+//
+//    Subroutine outputs
+//     ----------------------------------------------------------------------------------------------------------------------
+//     Nb | Variable             | Description                                             | Input  Units   | Internal Units
+//     ---|----------------------|---------------------------------------------------------|----------------|----------------
+//     1  | q_heatloss           | Total heat loss from the receiver                       | W/m            |
+//     2  | q_12conv             | Total heat absorption into the HTF                      | W/m            |
+//     3  | q_34tot              | Convective and radiative heat loss                      |                |
+//     4  | c_1ave               | Specific heat of the HTF across the receiver            | kJ/kg-K        |
+//     5  | rho_1ave             | Density of the HTF across the receiver                  |                |
+//
+//     ----------------------------------------------------------------------------------------------------------------------
+//    Forristall Temperature distribution diagram
+//    *****************************************************
+//        Fluid (1) ----------->(2)<--Absorber-->(3)<-- Annulus -->(4)<--- Glass  --->(5)<-- Air (6)/Sky (7)
+//
+//
+//        T_1 = Bulk heat transfer fluid (HTF) temperature
+//        T_2 = Absorber Inside surface temperature
+//        T_3 = Absorber outside surface temperature
+//        T_4 = Glass envelope inside surface temperature
+//        T_5 = Glass envelope outside surface temperature
+//        T_6 = Ambient temperature
+//        T_7 = Effective Sky Temperature
+//
+//        q_12conv = Convection heat transfer rate per unit length between the HTF and the inside of the receiver tube
+//        q_23cond = Conduction heat transfer rate per unit length through the absorber
+//        q_34conv = Convection heat transfer rate per unit length between the absorber outer surface and the glazing inner surface
+//        q_34rad = Radiation heat transfer rate per unit length between the absorber outer surface and the glazing inner surface
+//        q_45cond = Conduction heat transfer rate per unit length through the glazing
+//        q_56conv = Convection heat transfer rate per unit length between the glazing outer surface and the ambient air
+//        q_57rad = Radiation heat transfer rate per unit length between the glazing outer surface and the sky
+//    ----------------------------------------------------------------------------------------------------------------------
+//    */
 EvacReceiverModel::EvacReceiverModel(vector<double> D_abs_in, vector<double> D_abs_out, vector<double> D_glass_in, vector<double> D_glass_out, vector<double> D_plug,
     double L_mod, vector<bool> GlazingIntact, vector<double> Shadowing, vector<double> dirt_env, vector<double> P_a, vector<double> alpha_abs,
-    vector<double> epsilon_glass, vector<double> Tau_envelope, vector<double> alpha_env, emit_table &epsilon_abs, HTFProperties htfProps, HTFProperties airProps,
+    vector<double> epsilon_glass, vector<double> Tau_envelope, vector<double> alpha_env, emit_table* epsilon_abs, HTFProperties htfProps, HTFProperties airProps,
     util::matrix_t<HTFProperties*> AnnulusGasMat, util::matrix_t<AbsorberProps*> AbsorberPropMat, vector<double> Flow_type, vector<double> A_cs, vector<double> D_h)
     :
     m_D_abs_in(D_abs_in), m_D_abs_out(D_abs_out), m_D_glass_in(D_glass_in), m_D_glass_out(D_glass_out), m_D_plug(D_plug),
@@ -4797,11 +3559,11 @@ lab_keep_guess:
     }
 
     is_e_table = false;
-    if (m_epsilon_abs.getTableSize(hv) < 2) {
-        eps_3 = m_epsilon_abs.getSingleValue(hv);
+    if (m_epsilon_abs->getTableSize(hv) < 2) {
+        eps_3 = m_epsilon_abs->getSingleValue(hv);
     }
     else {
-        eps_3 = m_epsilon_abs.interpolate(hv, T_3 - 273.15);          //Set epsilon value for case that eps_mode = 1.  Will reset inside temp loop if eps_mode > 1.
+        eps_3 = m_epsilon_abs->interpolate(hv, T_3 - 273.15);          //Set epsilon value for case that eps_mode = 1.  Will reset inside temp loop if eps_mode > 1.
         is_e_table = true;	//The emissivity is in tabular form
     }
 
@@ -4858,7 +3620,7 @@ lab_keep_guess:
         T3_adjust = T_3 - T3_prev_qq;
 
         //Calculate temperature sensitive emissivity using T_3, if required
-        if (is_e_table) eps_3 = m_epsilon_abs.interpolate(hv, (T_3 - 273.15)); //call interp((T_3-273.15),eps_mode,xx,yy,eps3old,eps_3)
+        if (is_e_table) eps_3 = m_epsilon_abs->interpolate(hv, (T_3 - 273.15)); //call interp((T_3-273.15),eps_mode,xx,yy,eps3old,eps_3)
 
         //Separate m_GlazingIntact = true and m_GlazingIntact = false  If true, T4 must be solved, if false then T4 is explicitly known (or doesn't exist, depending on how you want to look at it)
         //Solving for correct T4 as it relates to current T3 value
@@ -5155,6 +3917,90 @@ lab_keep_guess:
 
 };
 
+//    #################################################################################################################
+//    #################################################################################################################
+//    #################################################################################################################
+//
+//
+//    "******************************************************************************************************************************
+//        FUNCTION Fq_12conv :  Convective heat transfer rate from the HTF to the inside of the receiver tube
+//    ******************************************************************************************************************************"
+//      Author: R.E. Forristall (2003, EES)
+//      Implemented and revised:  M.J. Wagner (10/2009)
+//                    Copyright:  National Renewable Energy Lab (Golden, CO) 2009
+//                         note:  This function was programmed and tested against the EES original.
+//                                Small variations in output are due to slightly different fluid
+//                                properties used in the two models.
+//
+//        Newton's Law of Cooling.
+//
+//            q' = h * D_i *  PI * (T_m - T_s)
+//
+//            h = Nu_Di * k / D_i
+//
+//        Where
+//
+//            q' = convection heat transfer rate per unit length [W/m]
+//            h = convection heat transfer coefficient [W/m^2-k]
+//            D_i = inside diameter of absorber pipe [m]
+//            T_m = mean (bulk) temperature of HTF [C]
+//            T_s = inside surface temperature of absorber pipe [C]
+//            Nu_Di = Nusselt number based on inside diameter
+//            k = conduction heat transfer coefficient of HTF [W/m-K]
+//
+//        The Nusselt number is estimated with the correlation developed by Gnielinski.
+//
+//            Nu# = (f / 8) * (Re_Di - 1000) * Pr / (1 + 12.7 * (f / 8)^(1/2) * (Pr^(2/3) -1))  * (Pr / Pr_w)^0.11
+//            f = (1.82 * log10(Re_Di) - 1.64)^(-2)
+//            Re_Di = Rho * v_m * Di / u
+//            Pr  = Cp * u / k
+//
+//        Where
+//
+//            Nu# = Nusselt number
+//            Re_Di = Reynolds number for internal pipe flow
+//            Pr = Prandtl number
+//            Pr_w = Prandtl number evaluated at the wall temperature
+//            u = fluid absolute viscosity [kg/m-s]
+//            Di = inside diameter [m]
+//            Cp = fluid specific heat [J/kg-K]
+//            k = fluid thermal conductivity [W/m-K]
+//            Rho = fluid density [kg/m^3]
+//            v_m = mean fluid velocity [m/s]
+//
+//    The above correlation is valid for 0.5 < Pr < 2000 and 2300< Re_Di < 5 * 10^6 and can be used for both uniform heat flux and uniform wall temperature cases. With the exception of Pr_w, all properties are evaluated at the mean fluid temperature.
+//
+//    If Re_D <= 2300 and the choice was made from the diagram window  to use the laminar flow model, one of  the following correlations is used.
+//
+//            for inner tube flow (uniform flux condition)
+//            Nu# = 4.36
+//
+//            for inner annulus flow (uniform flux condition -- estimated from table for Nu# with heat fluxes at both surfaces)
+//            m_D_plug/m_D_abs_in	Nu#
+//            0		4.364
+//            0.05		4.792
+//            0.10		4.834
+//            0.20		4.833
+//            0.40		4.979
+//            0.60		5.099
+//            0.80		5.24
+//            1.00		5.385
+//
+//
+//    For the "SNL test platform" case the inside diameter in the above correlations is replaced with the following hydraulic diameter definition.
+//
+//            m_D_h = 4 * A_c / P = D_ao - D_ai
+//
+//        Where
+//
+//            m_D_h = hydraulic diameter [m]
+//            A_c = flow cross sectional area [m^2]
+//            P = wetted perimeter [m]
+//            D_ai = inner annulus diameter [m]
+//            D_ao = outer annulus diameter [m]
+//
+//    (Sources: Incropera, F., DeWitt, D., Fundamentals of Heat and Mass Transfer, Third Edition; John Wiley and Sons, New York, 1981, pp. 489-491, 502-503. Gnielinski, V., "New Equations for Heat and Mass Transfer in Turbulent Pipe and Channel Flow," International Chemical Engineering, Vol. 16, No. 2, April 1976.)
+//    */
 double EvacReceiverModel::fT_2_v2(double q_12conv, double T_1, double T_2g, double v_1, int hv)
 {
     //		convection 1->2,  HTF temp, guess T2,  fluid velocity, HCE #, HCE variant
@@ -5231,6 +4077,145 @@ double EvacReceiverModel::fT_2_v2(double q_12conv, double T_1, double T_2g, doub
 
 };
 
+//    FUNCTION fq_34conv :	Convective heat transfer rate between the absorber outer surface and the glazing inner surface
+//******************************************************************************************************************************"
+//  NOTE: Temperatures input in terms of degrees K
+//
+//  Author: R.E. Forristall (2003, EES)
+//  Implemented and revised:  M.J. Wagner (10/2009)
+//                Copyright:  National Renewable Energy Lab (Golden, CO) 2009
+//
+//{ Four cases:
+//
+//    1. Vacuum in annulus: free-molecular heat transfer model for an annulus.
+//    2. Low or lost vacuum: natural convection heat transfer model for an annulus.
+//    3. No glazing, no wind: natural convection heat transfer model for a horizontal cylinder.
+//    4. No glazing, with wind: forced convection heat transfer model for a horizontal cylinder.
+//
+//
+//Case 1:
+//
+//    Free-molecular heat transfer for an annular space between horizontal cylinders.
+//
+//        q' = D_i * PI * h * (T_i - T_o)
+//        h = k_gas / (D_i / 2 * ln(D_o / D_i) + b * Lambda * (D_i / D_o + 1))
+//        b = (2 - a) / a * (9 * Gamma - 5) / (2 * (Gamma + 1))
+//        Lambda = 2.331 * 10^(-20) * T_avg / (P * Delta^2)
+//
+//    Where
+//
+//        q' = convection heat transfer rate per unit length [W/m]
+//        D_i = outer absorber diameter [m]
+//        D_o = inner glazing diameter [m]
+//        h = convection heat transfer coefficient for annulus gas [W/m^2-K]
+//        T_i = outer absorber surface temperature [C]
+//        T_o = inner glazing surface temperature [C]
+//        k_gas = thermal conductivity of the annulus fluid at standard temperature and pressure [W/m^2-K]
+//        b = interaction coefficient [dimensionless]
+//        Lambda = mean-free-path between collisions of a molecule [cm]
+//        a = accommodation coefficient [dimensionless]
+//        Gamma = ratio of specific heats for the annulus fluid [dimensionless]
+//        T_avg = average temperature of the annulus fluid [K]
+//        P = pressure of the annulus gas [mm of Hg]
+//        Delta = molecular diameter of the annulus gas [cm]
+//
+//    The above correlation is valid for Ra_Do < (D_o / (D_o -D_i))^4, but may over estimate q' slightly for large vacuums.
+//
+//(Source: Ratzel, A., Hickox, C., Gartling, D., "Techniques for Reducing Thermal Conduction and Natural Convection Heat Losses
+// in Annular Receiver Geometries," Journal of Heat Transfer, Vol. 101, No. 1, February 1979; pp. 108-113)
+//
+//
+//Case 2:
+//
+//    Modified Raithby and Hollands correlation for natural convection in an annular space between horizontal cylinders.
+//
+//        q' = 2.425 * k * (T_i - T_o) / (1 + (D_i / D_o)^(3/5))^(5/4) * (Pr * Ra_Di / (0.861 + Pr))^(1/4)
+//        Pr = NU / Alpha
+//        Ra_Di = g * Beta * (T_i - T_o) * (D_i)^3 / (Alpha * NU)
+//        Beta = 1 / T_avg		"Ideal Gas"
+//
+//    Where
+//
+//        k = conduction heat transfer coefficient for the annulus gas [W/m-K]
+//        Pr = Prandtl number
+//        NU = kinematic viscosity [m^2/s]
+//        Alpha = thermal diffusivity [m^2/s]
+//        Ra_Di = Rayleigh number based on the annulus inner diameter
+//        g = local acceleration due to gravity [m/s^2]
+//        Beta = volumetric thermal expansion coefficient [1/K]
+//        Rho_o = annulus gas density at the outer surface [kg/m^3]
+//        Rho_i = annulus gas density at the inner surface [kg/m^3]
+//        T_avg = average temperature, (T_i + T_o) / 2 [K]
+//
+//    Above correlation is valid for Ra_Do > (D_o / (D_o -D_i))^4. All physical properties are evaluated at the average temperature, (T_i + T_o)/2.
+//
+//(Source: Bejan, A., Convection Heat Transfer, Second Edition; John Wiley & Son's, New York, 1995, pp. 257-259.)
+//
+//
+//Case 3:
+//
+//    Churchill and Chu correlation for natural convection from a long isothermal horizontal cylinder.
+//
+//        Nu_bar = (0.60 + (0.387 * Ra_D^(1/6)) / (1 + (0.559 / Pr)^(9/16))^(8/27) )^2
+//        Ra_D = g * Beta * (T_s - T_inf) * D^3 / (Alpha * NU)
+//        Beta =  1 / T_f	"Ideal Gas"
+//        Alpha = k / (Cp * Rho)
+//        Pr = NU / Alpha
+//
+//        h = Nu_bar * k / D
+//
+//        q' = h * PI * D * (T_s - T_inf)
+//
+//    Where
+//
+//        Nu_bar = average Nusselt number
+//        Ra_D = Rayleigh number based on diameter
+//        Rho = fluid density  [kg/m^3]
+//        Cp = specific heat at constant pressure [kJ / kg-K]
+//        T_inf = fluid temperature in the free stream [C]
+//        T_s = surface temperature [C]
+//        T_f = film temperature, (T_s + T_inf) / 2 [K]
+//        T_inf = ambient air temperature [C]
+//
+//    Above correlation is valid for  10^(-5) < Ra_D < 10^12. All physical properties are evaluated at the film temperature, (T_s + T_inf) / 2.
+//
+//(Source: Incropera, F., DeWitt, D., Fundamentals of Heat and Mass Transfer, Third Edition; John Wiley and Sons, New York, 1981, pp. 550-552.)
+//
+//
+//Case 4:
+//
+//    Zhukauskas's correlation for external forced convection flow normal to an isothermal cylinder.
+//
+//        Nu_bar = C * Re_D^m * Pr^n * (Pr / Pr_s)^(1/4)
+//
+//        Re_D		C			m
+//        1-40		0.75			0.4
+//        40-1000		0.51			0.5
+//        1e3- 2e5	0.26			0.6
+//        2e5-1e6	0.076			0.7
+//
+//        n = 0.37, Pr <=10
+//        n = 0.36, Pr >10
+//
+//        Re_D =  U_inf * D / NU
+//        Pr  = NU / Alpha
+//        Alpha = k / (Cp * Rho)
+//
+//        Q =  h * D * PI * (T_s - T_inf) * L
+//
+//    Where,
+//
+//        Re_D = Reynolds number evaluated at the diameter
+//        Cp = specific heat at constant pressure of air [W/m-K]
+//        Rho = density of air [kg/m^3]
+//        C, m, n = constants
+//
+//    Above correlation is valid for  0.7 < Pr < 500, and 1 < Re_D < 10^6. All physical properties evaluated
+//   at the free stream temperature, T_inf,  except Pr_s.
+//
+//(Source: Incropera, F., DeWitt, D., Fundamentals of Heat and Mass Transfer, Third Edition; John Wiley and
+// Sons, New York, 1981, p. 413.)
+//}*/
 void EvacReceiverModel::FQ_34CONV_v2(double T_3, double T_4, double P_6, double v_6, double T_6, int hv, double& q_34conv, double& h_34)
 {
     // Missing Variables
@@ -5396,6 +4381,38 @@ void EvacReceiverModel::FQ_34CONV_v2(double T_3, double T_4, double P_6, double 
 
 }
 
+//    FUNCTION fq_34rad :	Radiation heat transfer rate between the absorber surface and glazing inner surface
+//******************************************************************************************************************************"
+//  NOTE: Temperatures input in terms of degrees K
+//
+//  Author: R.E. Forristall (2003, EES)
+//  Implemented and revised:  M.J. Wagner (10/2009)
+//                Copyright:  National Renewable Energy Lab (Golden, CO) 2009
+//                   note  :  Tested against original EES version
+//
+//{ 	Radiation heat transfer for a two-surface enclosure.
+//
+//        Two cases, one if the glazing envelope is intact and one if the glazing is missing or damaged.
+//
+//        Case 1: Long (infinite) concentric cylinders.
+//
+//            q' = sigma * PI * D_1 * (T_1^4 - T_2^4) / (1 / EPSILON_1 + (1 - EPSILON_2) / EPSILON_2 * (D_1 / m_D_abs_in))
+//
+//            Where,
+//
+//                q' = radiation heat transfer per unit length [W/m]
+//                sigma = Stephan-Boltzmann constant [W/m^2-K^4]
+//                T_1 = absorber outer surface temperature [K]
+//                T_2 = glazing inner surface temperature [K]
+//                D_1 = outer absorber diameter [m]
+//                m_D_abs_in = inner glazing diameter [m]
+//                EPSILON_1 = emissivity of inner surface
+//                EPSILON_2 = emissivity of outer surface
+//
+//        Case 2: Small convex object in a large cavity.
+//
+//            q' = sigma * PI * D_1 * EPSILON_1 * (T_1^4 - T_2^4)
+//}*/
 void EvacReceiverModel::FQ_34RAD_v2(double T_3, double T_4, double T_7, double epsilon_abs_v, int hv, double& q_34rad, double& h_34)
 {
     // Missing Variables
@@ -5418,6 +4435,17 @@ void EvacReceiverModel::FQ_34RAD_v2(double T_3, double T_4, double T_7, double e
 
 }
 
+//    FUNCTION fq_56conv :	Convective heat transfer rate between the glazing outer surface and the ambient air
+//******************************************************************************************************************************"
+//  Author: R.E. Forristall (2003, EES)
+//  Implemented and revised:  M.J. Wagner (10/2009)
+//                Copyright:  National Renewable Energy Lab (Golden, CO) 2009
+//                   note  :  Tested against original EES version
+//
+//{ 	h6	Heat Transfer Coefficient
+//
+//    If no wind, then the Churchill and Chu correlation is used. If wind, then the Zhukauskas's correlation is used. These correlations are described above for q_34conv.
+//}*/
 void EvacReceiverModel::FQ_56CONV_v2(double T_5, double T_6, double P_6, double v_6, int hv, double& q_56conv, double& h_6)
 {
     // Missing Variables
@@ -5524,6 +4552,13 @@ void EvacReceiverModel::FQ_56CONV_v2(double T_5, double T_6, double P_6, double 
     }
 }
 
+//    FUNCTION fq_cond_bracket:	Heat loss estimate through HCE support bracket
+// ******************************************************************************************************************************"
+//  Author: R.E. Forristall (2003, EES)
+//  Implemented and revised:  M.J. Wagner (10/2009)
+//                Copyright:  National Renewable Energy Lab (Golden, CO) 2009
+//                   note  :  Tested against original EES version
+//*/
 double EvacReceiverModel::FQ_COND_BRACKET_v2(double T_3, double T_6, double P_6, double v_6)
 {
     // Missing Variables
@@ -5647,6 +4682,10 @@ double EvacReceiverModel::FQ_COND_BRACKET_v2(double T_3, double T_6, double P_6,
 
 }
 
+//    FUNCTION fk_23:	Absorber conductance
+//******************************************************************************************************************************"
+//{ Based on linear fit of data from "Alloy Digest, Sourcebook, Stainless Steels"; ASM International, 2000.}
+//*/
 double EvacReceiverModel::FK_23_v2(double T_2, double T_3, int hv)
 {
     double T_23;

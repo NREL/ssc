@@ -68,7 +68,7 @@ private:
     const vector<double> m_Tau_envelope; 		                // [-] Envelope transmittance
 
     const vector<double> m_alpha_env; 			            // [-] Envelope absorptance
-    emit_table m_epsilon_abs;
+    emit_table* m_epsilon_abs;
 
     HTFProperties m_htfProps, m_airProps;
     const util::matrix_t<HTFProperties*> m_AnnulusGasMat;		// HTF Property class for each variant of each receiver type
@@ -98,7 +98,7 @@ public:
 
     EvacReceiverModel(vector<double> D_abs_in, vector<double> D_abs_out, vector<double> D_glass_in, vector<double> D_glass_out, vector<double> D_plug,
         double L_mod, vector<bool> GlazingIntact, vector<double> Shadowing, vector<double> dirt_env, vector<double> P_a, vector<double> alpha_abs,
-        vector<double> epsilon_glass, vector<double> Tau_envelope, vector<double> alpha_env, emit_table &epsilon_abs, HTFProperties htfProps, HTFProperties airProps,
+        vector<double> epsilon_glass, vector<double> Tau_envelope, vector<double> alpha_env, emit_table* epsilon_abs, HTFProperties htfProps, HTFProperties airProps,
         util::matrix_t<HTFProperties*> AnnulusGasMat, util::matrix_t<AbsorberProps*> AbsorberPropMat, vector<double> Flow_type, vector<double> A_cs, vector<double> D_h);
 
 
@@ -482,8 +482,8 @@ public:
     double m_V_hdr_min;		                    // [m/s] Minimum HTF velocity in the header at design
     double m_Pipe_hl_coef;	                    // [W/m2-K] Loss coefficient from the header, runner pipe, and non-HCE piping
 
-    int m_fthrok;			                    // [-] Flag to allow partial defocusing of the collectors
-    int m_fthrctrl;			                    // [-] Defocusing strategy
+    //int m_fthrok;			                    // [-] Flag to allow partial defocusing of the collectors
+    //int m_fthrctrl;			                    // [-] Defocusing strategy
     double m_ColAz;			                    // [deg] Collector azimuth angle
     //double m_ColTilt;		                    // [deg] Collector tilt angle (0 is horizontal, 90deg is vertical)
 
