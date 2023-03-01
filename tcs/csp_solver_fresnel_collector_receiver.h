@@ -37,6 +37,78 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "htf_props.h"
 #include "sam_csp_util.h"
 
+class EvacReceiverModel
+{
+    // Private Fields
+private:
+
+    // Constants
+    const double m_T_htf_prop_min = 275;
+    const double pi = 3.14159;
+    const double g = 9.81;
+
+    // Fields
+    const vector<double> m_D_abs_in;		                    // [m] The inner absorber tube diameter (m_D_2)
+    const vector<double> m_D_abs_out;		                    // [m] The outer absorber tube diameter (m_D_3)
+
+    const vector<double> m_D_glass_in;		                // [m] The inner glass envelope diameter (m_D_4)
+    const vector<double> m_D_glass_out;		                // [m] The outer glass envelope diameter (m_D_5)
+    const vector<double> m_D_plug;		                    // [m] The diameter of the absorber flow plug (optional)  (m_D_p)
+
+    const double m_L_mod;		                                // The length of the collector module (L_SCA)
+
+    const vector<bool> m_GlazingIntact;		                // [-] Glazing intact (broken glass) flag {1=true, else=false}
+    const vector<double> m_Shadowing; 			            // [-] Receiver bellows shadowing loss factor
+    const vector<double> m_dirt_env;		                    // Loss due to dirt on the receiver envelope (m_Dirt_HCE)
+
+    const vector<double> m_P_a; 					            // [torr] Annulus gas pressure	
+
+    const vector<double> m_alpha_abs;                         // [-] Absorber absorptance
+    const vector<double> m_epsilon_glass;		                // Glass envelope emissivity
+    const vector<double> m_Tau_envelope; 		                // [-] Envelope transmittance
+
+    const vector<double> m_alpha_env; 			            // [-] Envelope absorptance
+    emit_table m_epsilon_abs;
+
+    HTFProperties m_htfProps, m_airProps;
+    const util::matrix_t<HTFProperties*> m_AnnulusGasMat;		// HTF Property class for each variant of each receiver type
+    const util::matrix_t<AbsorberProps*> m_AbsorberPropMat;	    // Absorber Property class for each variant of each receiver type
+    
+    const vector<double> m_Flow_type; 			            // [-] Flow type through the absorber
+
+    const vector<double> m_A_cs;	                            //[m^2] Cross-sectional area for HTF flow for each receiver
+    const vector<double> m_D_h;	                            //[m^2] Hydraulic diameters for HTF flow for each receiver and variant (why variant?)	
+
+    // Private Methods
+private:
+
+    double fT_2_v2(double q_12conv, double T_1, double T_2g, double v_1, int hv);
+
+    void FQ_34CONV_v2(double T_3, double T_4, double P_6, double v_6, double T_6, int hv, double& q_34conv, double& h_34);
+
+    void FQ_34RAD_v2(double T_3, double T_4, double T_7, double epsilon_abs_v, int hv, double& q_34rad, double& h_34);
+
+    void FQ_56CONV_v2(double T_5, double T_6, double P_6, double v_6, int hv, double& q_56conv, double& h_6);
+
+    double FQ_COND_BRACKET_v2(double T_3, double T_6, double P_6, double v_6);
+
+    double FK_23_v2(double T_2, double T_3, int hv);
+
+public:
+
+    EvacReceiverModel(vector<double> D_abs_in, vector<double> D_abs_out, vector<double> D_glass_in, vector<double> D_glass_out, vector<double> D_plug,
+        double L_mod, vector<bool> GlazingIntact, vector<double> Shadowing, vector<double> dirt_env, vector<double> P_a, vector<double> alpha_abs,
+        vector<double> epsilon_glass, vector<double> Tau_envelope, vector<double> alpha_env, emit_table &epsilon_abs, HTFProperties htfProps, HTFProperties airProps,
+        util::matrix_t<HTFProperties*> AnnulusGasMat, util::matrix_t<AbsorberProps*> AbsorberPropMat, vector<double> Flow_type, vector<double> A_cs, vector<double> D_h);
+
+
+    void Calculate_Energy_Balance(double T_1_in, double m_dot, double T_amb, double T_sky, double v_6, double P_6, double q_i,
+        int hv /* HCE variant [0..3] */, int sca_num, bool single_point, int ncall, double time, util::matrix_t<double> ColOptEff,
+        //outputs
+        double& q_heatloss, double& q_12conv, double& q_34tot, double& c_1ave, double& rho_1ave, std::vector<double>& v_reguess_args);
+
+};
+
 
 class C_csp_fresnel_collector_receiver : public C_csp_collector_receiver
 {
@@ -116,36 +188,7 @@ private:
 
     // Fields in Trough
 
-    std::vector<double> m_D_runner;	              //[m]    Diameters of runner sections
-    std::vector<double> m_WallThk_runner;	      //[m]    Pipe wall thicknesses of runner sections
-    std::vector<double> m_m_dot_rnr_dsn;          //[kg/s] Design mass flow through runner sections
-    std::vector<double> m_V_rnr_dsn;              //[m/s]  Design velocity through runner sections
-    std::vector<double> m_L_runner;	              //[m]    Lengths of runner sections
-    std::vector<int> m_N_rnr_xpans;               //[-]    Number of expansions in runner sections
-    std::vector<double> m_DP_rnr;                 //[bar]  Pressure drop in runner sections
-    std::vector<double> m_T_rnr_dsn;              //[C]    Temperature entering runner sections at design
-    std::vector<double> m_P_rnr_dsn;              //[bar]  Gauge pessure in runner sections at design
-    std::vector<double> m_T_rnr;                  //[K]    Temperature entering runner sections
-    double m_T_field_out;                         //[K]    Temperature exiting last runner, and thus exiting field
-    //std::vector<double> m_P_rnr;                  //[Pa ]  Gauge pessure in runner sections
-
-    std::vector<double> m_D_hdr;	              //[m]    Diameters of header sections
-    std::vector<double> m_WallThk_hdr;   	      //[m]    Pipe wall thicknesses of header sections
-    std::vector<double> m_m_dot_hdr_dsn;          //[kg/s] Design mass flow through header sections
-    std::vector<double> m_V_hdr_dsn;              //[m/s]  Design velocity through header sections
-    //std::vector<double> m_L_hdr;	              //[m]    Lengths of header sections
-    std::vector<int> m_N_hdr_xpans;               //[-]    Number of expansions in header sections
-    std::vector<double> m_DP_hdr;                 //[bar]  Pressure drop in header sections
-    std::vector<double> m_T_hdr_dsn;              //[C]    Temperature entering header sections at design
-    std::vector<double> m_P_hdr_dsn;              //[bar]  Gauge pessure in header sections at design
-    std::vector<double> m_T_hdr;                  //[K]    Temperature entering header sections
-    //std::vector<double> m_P_hdr;                  //[Pa]   Gauge pessure in header sections
-
-    std::vector<double> m_DP_loop;                //[bar]  Pressure drop in loop sections
-    std::vector<double> m_T_loop_dsn;             //[C]    Temperature entering loop sections at design
-    std::vector<double> m_P_loop_dsn;             //[bar]  Gauge pessure in loop sections at design
-    std::vector<double> m_T_loop;                 //[K]    Temperature entering loop sections
-    //std::vector<double> m_P_loop;                 //[Pa]   Gauge pessure in loop sections
+    
 
     OpticalDataTable optical_table;
     
@@ -372,8 +415,6 @@ private:
     const double g = 9.81;	//gravitation constant
     const double mtoinch = 39.3700787;	//[m] -> [in]
 
-    double m_htf_prop_min;
-
     double m_eta_optical;		//Collector total optical efficiency
     double eta_opt_fixed;
     double m_phi_t = 0;		    //Solar incidence angle in the collector transversal plane
@@ -388,6 +429,8 @@ private:
     string m_piping_summary;
 
     double m_sf_def;
+
+    std::unique_ptr<EvacReceiverModel> m_evac_receiver;
 
     // Private Methods
 private:
@@ -495,6 +538,37 @@ public:
     vector<double> m_dirt_env;		            // Loss due to dirt on the receiver envelope (m_Dirt_HCE)
     vector<double> m_Design_loss; 			    // [-] Receiver heat loss at design
 
+    std::vector<double> m_D_runner;	              //[m]    Diameters of runner sections
+    std::vector<double> m_WallThk_runner;	      //[m]    Pipe wall thicknesses of runner sections
+    std::vector<double> m_m_dot_rnr_dsn;          //[kg/s] Design mass flow through runner sections
+    std::vector<double> m_V_rnr_dsn;              //[m/s]  Design velocity through runner sections
+    std::vector<double> m_L_runner;	              //[m]    Lengths of runner sections
+    std::vector<int> m_N_rnr_xpans;               //[-]    Number of expansions in runner sections
+    std::vector<double> m_DP_rnr;                 //[bar]  Pressure drop in runner sections
+    std::vector<double> m_T_rnr_dsn;              //[C]    Temperature entering runner sections at design
+    std::vector<double> m_P_rnr_dsn;              //[bar]  Gauge pessure in runner sections at design
+    std::vector<double> m_T_rnr;                  //[K]    Temperature entering runner sections
+    double m_T_field_out;                         //[K]    Temperature exiting last runner, and thus exiting field
+    //std::vector<double> m_P_rnr;                  //[Pa ]  Gauge pessure in runner sections
+
+    std::vector<double> m_D_hdr;	              //[m]    Diameters of header sections
+    std::vector<double> m_WallThk_hdr;   	      //[m]    Pipe wall thicknesses of header sections
+    std::vector<double> m_m_dot_hdr_dsn;          //[kg/s] Design mass flow through header sections
+    std::vector<double> m_V_hdr_dsn;              //[m/s]  Design velocity through header sections
+    //std::vector<double> m_L_hdr;	              //[m]    Lengths of header sections
+    std::vector<int> m_N_hdr_xpans;               //[-]    Number of expansions in header sections
+    std::vector<double> m_DP_hdr;                 //[bar]  Pressure drop in header sections
+    std::vector<double> m_T_hdr_dsn;              //[C]    Temperature entering header sections at design
+    std::vector<double> m_P_hdr_dsn;              //[bar]  Gauge pessure in header sections at design
+    std::vector<double> m_T_hdr;                  //[K]    Temperature entering header sections
+    //std::vector<double> m_P_hdr;                  //[Pa]   Gauge pessure in header sections
+
+    std::vector<double> m_DP_loop;                //[bar]  Pressure drop in loop sections
+    std::vector<double> m_T_loop_dsn;             //[C]    Temperature entering loop sections at design
+    std::vector<double> m_P_loop_dsn;             //[bar]  Gauge pessure in loop sections at design
+    std::vector<double> m_T_loop;                 //[K]    Temperature entering loop sections
+    //std::vector<double> m_P_loop;                 //[Pa]   Gauge pessure in loop sections
+
     // Fresnel Only Inputs
     double m_L_mod_spacing;                     // Piping distance between sequential modules in a loop
     double m_L_crossover;                       // Length of crossover piping in a loop
@@ -509,6 +583,8 @@ public:
     double m_L_rnr_pb;                            //[m] Length of hot or cold runner pipe around the power block
 
     C_csp_reported_outputs mc_reported_outputs;
+
+
 
     // Methods
 public:
@@ -603,23 +679,22 @@ public:
 
     double Pump_SGS(double rho, double m_dotsf, double sm);
     
-    void EvacReceiver(double T_1_in, double m_dot, double T_amb, double T_sky, double v_6, double P_6, double q_i,
-        int hv /* HCE variant [0..3] */, int sca_num, bool single_point, int ncall, double time,
-        //outputs
-        double& q_heatloss, double& q_12conv, double& q_34tot, double& c_1ave, double& rho_1ave, std::vector<double>& v_reguess_args);
+    //void EvacReceiver(double T_1_in, double m_dot, double T_amb, double T_sky, double v_6, double P_6, double q_i,
+    //    int hv /* HCE variant [0..3] */, int sca_num, bool single_point, int ncall, double time,
+    //    //outputs
+    //    double& q_heatloss, double& q_12conv, double& q_34tot, double& c_1ave, double& rho_1ave, std::vector<double>& v_reguess_args);
 
-    double fT_2(double q_12conv, double T_1, double T_2g, double v_1, int hv);
+    //double fT_2(double q_12conv, double T_1, double T_2g, double v_1, int hv);
 
-    void FQ_34CONV(double T_3, double T_4, double P_6, double v_6, double T_6, int hv, double& q_34conv, double& h_34);
+    //void FQ_34CONV(double T_3, double T_4, double P_6, double v_6, double T_6, int hv, double& q_34conv, double& h_34);
 
-    void FQ_34RAD(double T_3, double T_4, double T_7, double epsilon_abs_v, int hv, double& q_34rad, double& h_34);
+    //void FQ_34RAD(double T_3, double T_4, double T_7, double epsilon_abs_v, int hv, double& q_34rad, double& h_34);
 
-    void FQ_56CONV(double T_5, double T_6, double P_6, double v_6, int hv, double& q_56conv, double& h_6);
+    //void FQ_56CONV(double T_5, double T_6, double P_6, double v_6, int hv, double& q_56conv, double& h_6);
 
-    double FQ_COND_BRACKET(double T_3, double T_6, double P_6, double v_6);
+    //double FQ_COND_BRACKET(double T_3, double T_6, double P_6, double v_6);
 
-    double FK_23(double T_2, double T_3, int hv);
-
+    //double FK_23(double T_2, double T_3, int hv);
 
     double PressureDrop(double m_dot, double T, double P, double D, double Rough, double L_pipe,
         double Nexp, double Ncon, double Nels, double Nelm, double Nell, double Ngav, double Nglv,
@@ -710,6 +785,10 @@ public:
         virtual int operator()(double T_htf_cold_in /*K*/, double* E_loss_balance /*-*/);
     };
 
+    
+
 };
+
+
 
 #endif
