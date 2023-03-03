@@ -1,23 +1,33 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "common_financial.h"
@@ -413,7 +423,7 @@ enum {
 	CF_pretax_dscr,
 
 
-    // SAM 1308
+    // SAM 1038
     CF_itc_fed_amount,
     CF_itc_fed_percent_fraction,
     CF_itc_fed_percent_amount,
@@ -744,7 +754,7 @@ public:
 			- (as_boolean("cbi_oth_deprbas_fed") ? cbi_oth_amount : 0);
 
 
-        // SAM 1308
+        // SAM 1038
          // itc fixed
         double itc_fed_amount = 0.0;
         double_vec vitc_fed_amount = as_vector_double("itc_fed_amount");
@@ -807,14 +817,14 @@ public:
 
 
 
-        // SAM 1308
+        // SAM 1038
         itc_sta_per = 0.0;
         for (size_t k = 0; k <= nyears; k++) {
             cf.at(CF_itc_sta_percent_amount, k) = min(cf.at(CF_itc_sta_percent_maxvalue, k), cf.at(CF_itc_sta_percent_fraction, k) * state_itc_basis);
             itc_sta_per += cf.at(CF_itc_sta_percent_amount, k);
         }
 
-        // SAM 1308
+        // SAM 1038
         itc_fed_per = 0.0;
         for (size_t k = 0; k <= nyears; k++) {
             cf.at(CF_itc_fed_percent_amount, k) = min(cf.at(CF_itc_fed_percent_maxvalue, k), cf.at(CF_itc_fed_percent_fraction, k) * federal_itc_basis);
@@ -895,7 +905,7 @@ public:
 
 //        itc_fed_total = itc_fed_amount + itc_fed_per;
 //		itc_sta_total = itc_sta_amount + itc_sta_per;
-               // SAM 1308
+               // SAM 1038
         for (size_t k = 0; k <= nyears; k++) {
             cf.at(CF_itc_fed, k) = cf.at(CF_itc_fed_amount, k) + cf.at(CF_itc_fed_percent_amount, k);
             cf.at(CF_itc_sta, k) = cf.at(CF_itc_sta_amount, k) + cf.at(CF_itc_sta_percent_amount, k);
@@ -1286,7 +1296,7 @@ public:
 		assign("present_value_insandproptax", var_data((ssc_number_t)(pvInsurance + pvPropertyTax)));
 
 
-        // SAM 1308
+        // SAM 1038
         save_cf(this, cf, CF_itc_fed_amount, nyears, "cf_itc_fed_amount");
         save_cf(this, cf, CF_itc_fed_percent_amount, nyears, "cf_itc_fed_percent_amount");
         save_cf(this, cf, CF_itc_fed, nyears, "cf_itc_fed");
@@ -1367,9 +1377,9 @@ public:
 		// scale to max value for better irr convergence
 		if (count < 1) return 1.0;
 		int i = 0;
-		double max = fabs(cf.at(cf_unscaled, 0));
+		double max = std::abs(cf.at(cf_unscaled, 0));
 		for (i = 0; i <= count; i++)
-			if (fabs(cf.at(cf_unscaled, i)) > max) max = fabs(cf.at(cf_unscaled, i));
+			if (std::abs(cf.at(cf_unscaled, i)) > max) max = std::abs(cf.at(cf_unscaled, i));
 		return (max > 0 ? max : 1);
 	}
 
@@ -1377,7 +1387,7 @@ public:
 	{
 		double npv_of_irr = npv(cf_line, count, calculated_irr) + cf.at(cf_line, 0);
 		double npv_of_irr_plus_delta = npv(cf_line, count, calculated_irr + 0.001) + cf.at(cf_line, 0);
-		bool is_valid = ((number_of_iterations < max_iterations) && (fabs(residual) < tolerance) && (npv_of_irr > npv_of_irr_plus_delta) && (fabs(npv_of_irr / scale_factor) < tolerance));
+		bool is_valid = ((number_of_iterations < max_iterations) && (std::abs(residual) < tolerance) && (npv_of_irr > npv_of_irr_plus_delta) && (std::abs(npv_of_irr / scale_factor) < tolerance));
 		//if (!is_valid)
 		//{
 		//std::stringstream outm;
@@ -1468,7 +1478,7 @@ public:
 
 		residual = irr_poly_sum(calculated_irr, cf_line, count) / scale_factor;
 
-		while (!(fabs(residual) <= tolerance) && (number_of_iterations < max_iterations))
+		while (!(std::abs(residual) <= tolerance) && (number_of_iterations < max_iterations))
 		{
 			deriv_sum = irr_derivative_sum(initial_guess, cf_line, count);
 			if (deriv_sum != 0.0)
@@ -1755,7 +1765,7 @@ public:
 		}
 
 
-		while ((itnum < maxIterations) && (fabs(newMin - oldMin) > ppa_soln_tolerance))
+		while ((itnum < maxIterations) && (std::abs(newMin - oldMin) > ppa_soln_tolerance))
 		{
 			// reset values and run
 			oldMin = newMin;
@@ -1899,7 +1909,7 @@ public:
 			cf.at(CF_sta_income_taxes, i) = cf.at(CF_state_tax_frac, i)*cf.at(CF_sta_taxable_income_less_deductions, i);
 
 			cf.at(CF_sta_tax_savings, i) = cf.at(CF_ptc_sta, i) - cf.at(CF_sta_income_taxes, i);
-// SAM 1308            if (i == 1) cf.at(CF_sta_tax_savings, i) += itc_sta_amount + itc_sta_per;
+// SAM 1038            if (i == 1) cf.at(CF_sta_tax_savings, i) += itc_sta_amount + itc_sta_per;
             cf.at(CF_sta_tax_savings, i) += cf.at(CF_itc_sta_amount,i) + cf.at(CF_itc_sta_percent_amount,i);
 
 			// ************************************************
@@ -1923,7 +1933,7 @@ public:
 			cf.at(CF_fed_income_taxes, i) = cf.at(CF_federal_tax_frac, i)*cf.at(CF_fed_taxable_income_less_deductions, i);
 
 			cf.at(CF_fed_tax_savings, i) = cf.at(CF_ptc_fed, i) - cf.at(CF_fed_income_taxes, i);
-// sam 1308			if (i == 1) cf.at(CF_fed_tax_savings, i) += itc_fed_amount + itc_fed_per;
+// SAM 1038			if (i == 1) cf.at(CF_fed_tax_savings, i) += itc_fed_amount + itc_fed_per;
             cf.at(CF_fed_tax_savings, i) += cf.at(CF_itc_fed_amount,i) + cf.at(CF_itc_fed_percent_amount,i);
 
 			// ************************************************
@@ -1980,7 +1990,7 @@ public:
 		{
 			itnpv_target_irr = npv(CF_after_tax_net_equity_cash_flow, nyears, min_irr_target) + cf.at(CF_after_tax_net_equity_cash_flow, 0);
 			itnpv_target_irr_plus_delta = npv(CF_after_tax_net_equity_cash_flow, nyears, min_irr_target + 0.001) + cf.at(CF_after_tax_net_equity_cash_flow, 0);
-			irr_weighting_factor = fabs(itnpv_target_irr);
+			irr_weighting_factor = std::abs(itnpv_target_irr);
 			is_min_irr_minimally_satisfied = (irr_weighting_factor < ppa_soln_tolerance);
 			is_min_irr_satisfied = ((itnpv_target_irr >= 0.0) || is_min_irr_minimally_satisfied);
 			if (is_min_dscr_minimally_satisfied)
@@ -1999,22 +2009,22 @@ public:
 			itnpv_target_irr = npv(CF_after_tax_net_equity_cash_flow, nyears, aftertax_irr) + cf.at(CF_after_tax_net_equity_cash_flow, 0);
 			itnpv_target_irr_plus_delta = npv(CF_after_tax_net_equity_cash_flow, nyears, aftertax_irr + 0.001) + cf.at(CF_after_tax_net_equity_cash_flow, 0);
 			irr_weighting_factor = DBL_MAX;
-			is_min_irr_minimally_satisfied = (fabs(itnpv_target_irr) <= ppa_soln_tolerance) && (itnpv_target_irr > itnpv_target_irr_plus_delta) && (aftertax_irr >= min_irr_target);
+			is_min_irr_minimally_satisfied = (std::abs(itnpv_target_irr) <= ppa_soln_tolerance) && (itnpv_target_irr > itnpv_target_irr_plus_delta) && (aftertax_irr >= min_irr_target);
 			is_min_irr_satisfied = (((itnpv_target_irr <= itnpv_target_irr_plus_delta) && (aftertax_irr >= 0)) || is_min_irr_minimally_satisfied);
 		}
 
 		if (min_dscr_required == 1)
 		{
-			dscr_weighting_factor = fabs(min_dscr - min_dscr_target);
+			dscr_weighting_factor = std::abs(min_dscr - min_dscr_target);
 			is_min_dscr_minimally_satisfied = (dscr_weighting_factor < ppa_soln_tolerance);
 			is_min_dscr_satisfied = ((min_dscr >= min_dscr_target) || is_min_dscr_minimally_satisfied);
-			if (fabs(min_dscr) > ppa_soln_tolerance) dscr_weighting_factor /= fabs(min_dscr);
+			if (std::abs(min_dscr) > ppa_soln_tolerance) dscr_weighting_factor /= std::abs(min_dscr);
 		}
 		if (positive_cashflow_required == 1)
 		{
 			is_positive_cashflow_satisfied = (min_after_tax_cash_flow >= 0.0);
 			//				is_positive_cashflow_minimally_satisfied= ((is_positive_cashflow_satisfied) && ( min_after_tax_cash_flow  < 100.0)); // somewhat arbitrary - consistent with finutility
-			is_positive_cashflow_minimally_satisfied = ((is_positive_cashflow_satisfied) && (fabs(min_after_tax_cash_flow) < ppa_soln_tolerance)); // somewhat arbitrary - consistent with finutility
+			is_positive_cashflow_minimally_satisfied = ((is_positive_cashflow_satisfied) && (std::abs(min_after_tax_cash_flow) < ppa_soln_tolerance)); // somewhat arbitrary - consistent with finutility
 //				positive_cashflow_weighting_factor = fabs(min_after_tax_cash_flow);
 			positive_cashflow_weighting_factor = 1.0; // switch to binary search
 		}
@@ -2066,7 +2076,7 @@ public:
 			{
 
 				check_constraints(use_target_irr, are_all_constraints_satisfied, is_one_constraint_minimally_satisfied);
-				solved = (((are_all_constraints_satisfied) && (is_one_constraint_minimally_satisfied)) || (fabs(x0 - x1) < ppa_soln_tolerance));
+				solved = (((are_all_constraints_satisfied) && (is_one_constraint_minimally_satisfied)) || (std::abs(x0 - x1) < ppa_soln_tolerance));
 
 				if (!solved)
 				{
@@ -2111,7 +2121,7 @@ public:
 
 								compute_cashflow();
 								check_constraints(use_target_irr, are_all_constraints_satisfied, is_one_constraint_minimally_satisfied);
-								solved = (((are_all_constraints_satisfied) && (is_one_constraint_minimally_satisfied)) || (fabs(x0 - x1) < ppa_soln_tolerance));
+								solved = (((are_all_constraints_satisfied) && (is_one_constraint_minimally_satisfied)) || (std::abs(x0 - x1) < ppa_soln_tolerance));
 
 								// set endpoint of weighted interval x0<x1
 								x1 = x0;
@@ -2139,7 +2149,7 @@ public:
 
 								compute_cashflow();
 								check_constraints(use_target_irr, are_all_constraints_satisfied, is_one_constraint_minimally_satisfied);
-								solved = (((are_all_constraints_satisfied) && (is_one_constraint_minimally_satisfied)) || (fabs(x0 - x1) < ppa_soln_tolerance));
+								solved = (((are_all_constraints_satisfied) && (is_one_constraint_minimally_satisfied)) || (std::abs(x0 - x1) < ppa_soln_tolerance));
 								// set endpoint of weighted interval x0<x1
 								x0 = x1;
 								w0 = w1;

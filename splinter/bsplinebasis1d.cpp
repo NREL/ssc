@@ -49,7 +49,7 @@ SparseVector BSplineBasis1D::eval(double x) const
     for (auto it = indexSupported.begin(); it != indexSupported.end(); ++it)
     {
         double val = deBoorCox(x, *it, degree);
-        if (fabs(val) > 1e-12)
+        if (std::abs(val) > 1e-12)
             values.insert(*it) = val;
     }
 

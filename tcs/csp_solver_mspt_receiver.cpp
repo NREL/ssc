@@ -1,24 +1,35 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 
 #include "csp_solver_pt_receiver.h"
 #include "csp_solver_mspt_receiver.h"
@@ -1085,7 +1096,7 @@ void C_mspt_receiver::calc_surface_temperature(double Tf, double qabs, double Rt
 		f = Tsguess - Tf - (qabs - qconv - qrad)*0.5*OD*Rtube;
 		dfdT = 1.0 + 0.5*OD*Rtube* (hext + 4.0 * vf * m_epsilon*CSP::sigma*pow(Tsguess, 3));
 		Tsguessnew = Tsguess - f / dfdT;
-		delT = abs(Tsguessnew - Tsguess);
+		delT = std::abs(Tsguessnew - Tsguess);
 		Tsguess = Tsguessnew;
 		qq++;
 	}
@@ -1103,7 +1114,7 @@ void C_mspt_receiver::calc_header_size(double pdrop, double mdot, double rhof, d
 		id_min = pow(8.0*fh*mdot*mdot*Lh / rhof / pow(CSP::pi, 2) / pdrop, 0.2);		// Minimum Header ID [m] to meet pressure drop requirement
 		Re_h = 4.0*mdot / CSP::pi / muf / id_min;										// Reynolds number for header
 		CSP::PipeFlow(Re_h, 4.0, Lh / id_min, 4.5e-5 / id_min, Nucalc, fh);				// Update header friction factor
-		if (fabs(id_calc - id_min_prev) <= 0.001)
+		if (std::abs(id_calc - id_min_prev) <= 0.001)
 			break;
 		else
 			id_min_prev = id_min;
@@ -1944,9 +1955,9 @@ void C_mspt_receiver::calc_extreme_outlet_values(double tstep, int flowid, const
 							nnew = n - 0.8 * f / df;
 							nnew = fmin(nnew, len);
 							nnew = fmax(nnew, 0.0);
-							ndiff = abs(nnew - n);
+							ndiff = std::abs(nnew - n);
 							n = nnew;
-							if (abs(ndiff / len) < 1.e-3 && abs(f) < 1.e-4)  // Converged
+							if (std::abs(ndiff / len) < 1.e-3 && std::abs(f) < 1.e-4)  // Converged
 							{
 								stop = true;
 								found = true;
@@ -2436,7 +2447,7 @@ void C_mspt_receiver::solve_transient_model(double tstep,
 			{
 				for (size_t j = 0; j < m_n_elem; j++)
 				{
-					maxTdiff = fmax(maxTdiff, fmax(fabs(Tsavg.at(j, i) - pinputs.Tseval.at(j, i)), fabs(Tfavg.at(j, i) - pinputs.Tfeval.at(j, i))));
+					maxTdiff = fmax(maxTdiff, fmax(std::abs(Tsavg.at(j, i) - pinputs.Tseval.at(j, i)), std::abs(Tfavg.at(j, i) - pinputs.Tfeval.at(j, i))));
 				}
 			}
 			pinputs.Tfeval = Tfavg;
@@ -2451,7 +2462,7 @@ void C_mspt_receiver::solve_transient_model(double tstep,
 		for (size_t i = 0; i < m_n_lines; i++)
 		{
 			for (size_t j = 0; j < m_nz_tot; j++)
-				max_Trise = fmax(max_Trise, fabs(toutputs.t_profile.at(j, i) - tinputs.tinit.at(j, i)));		// Difference between final and initial temperature at axial position j
+				max_Trise = fmax(max_Trise, std::abs(toutputs.t_profile.at(j, i) - tinputs.tinit.at(j, i)));		// Difference between final and initial temperature at axial position j
 		}
 		util::matrix_t<double> textreme_d, tpt_d, textreme_r, tpt_r;
 		calc_extreme_outlet_values(transmodel_step, m_n_elem - 1, tinputs, textreme_d, tpt_d);   //Extreme downcomer outlet T
@@ -2743,9 +2754,9 @@ void C_mspt_receiver::solve_transient_startup_model(parameter_eval_inputs &pinpu
 								tsolve = est_time_ss.at((size_t)m_n_elem - 2);
 							else if (fprev != fprev)
 								tsolve = fsolve > 0 ? est_time_ss.at((size_t)m_n_elem - 3) : tsolve + 10;
-							else if (f < 0 && fprev < 0 && fabs(f - fprev) < 0.1)  // Below target, but converging slowly
-								tsolve = fabs(f) < 0.01 ? tsolve + 0.05 : tsolve + 0.5;
-							else if (f > 0 && fprev > 0 && fabs(f - fprev) < 0.2) // Above target, likely near steady state solution
+							else if (f < 0 && fprev < 0 && std::abs(f - fprev) < 0.1)  // Below target, but converging slowly
+								tsolve = std::abs(f) < 0.01 ? tsolve + 0.05 : tsolve + 0.5;
+							else if (f > 0 && fprev > 0 && std::abs(f - fprev) < 0.2) // Above target, likely near steady state solution
 								tsolve = 0.5 * (upperbound + lowerbound);
 							else
 								tsolve = t - f * (t - tprev) / (f - fprev) + 0.001; // Add small increase to end up on high side of target when nearly converged

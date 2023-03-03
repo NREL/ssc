@@ -1,23 +1,33 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #define _TCSTYPEINTERFACE_
@@ -2015,7 +2025,7 @@ public:
                 SolarAlt = asin(sin(Dec)*sin(latitude) + cos(latitude)*cos(Dec)*cos(omega));
                 if ((accept_init  &&  time == start_time) || is_using_input_gen)
                 {  //MJW 1.14.2011 
-                    SolarAz = CSP::sign(omega)*fabs(acos(min(1.0, (cos(pi / 2. - SolarAlt)*sin(latitude) - sin(Dec)) / (sin(pi / 2. - SolarAlt)*cos(latitude)))));
+                    SolarAz = CSP::sign(omega)* std::abs(acos(min(1.0, (cos(pi / 2. - SolarAlt)*sin(latitude) - sin(Dec)) / (sin(pi / 2. - SolarAlt)*cos(latitude)))));
                 }
             }
     
@@ -2058,7 +2068,7 @@ public:
 				//mjw 4.21.11 - rescope this to be for each specific collector j=1,nSCA
 				for(int j=0; j<nSCA; j++)
 				{
-					if(fabs(SolarAz) <= 90.0) 
+					if(std::abs(SolarAz) <= 90.0)
 					{  //mjw 5.1.11 The sun is in the southern sky (towards equator)
 						if(j==0 || j==nSCA-1) 
 						{
@@ -2085,7 +2095,7 @@ public:
                 
 				// Row to Row Shadowing Lossess
 				//PH = pi / 2.0 - TrackAngle[i]
-				RowShadow[i] = fabs(cos(TrackAngle)) * Row_Distance / W_aperture[i];
+				RowShadow[i] = std::abs(cos(TrackAngle)) * Row_Distance / W_aperture[i];
 				if ( RowShadow[i] < 0.5  ||  SolarAlt < 0. ) 
 				{
 					RowShadow[i] = 0.;
@@ -2214,7 +2224,7 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 		// ******************************************************************************************************************************
 		//                   Iterative section
 		// ******************************************************************************************************************************
-        while ((fabs(err) > t_tol) && (qq < 30))
+        while ((std::abs(err) > t_tol) && (qq < 30))
         {
 
             qq++; //Iteration counter
@@ -2465,10 +2475,10 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 			{
 				// Check if solution has reached steady state
 				double ss_diff = 0.0;
-				ss_diff += fabs(T_sys_c - T_sys_c_last) + fabs(T_sys_h_last - T_sys_h);
+				ss_diff += std::abs(T_sys_c - T_sys_c_last) + std::abs(T_sys_h_last - T_sys_h);
 				for( int i = 0; i < nSCA; i++ )
 				{
-					ss_diff += fabs(T_htf_in0[i] - T_htf_in[i]) + fabs(T_htf_out0[i] - T_htf_out[i]) + fabs(T_htf_ave0[i] - (T_htf_in[i] + T_htf_out[i]) / 2.0);
+					ss_diff += std::abs(T_htf_in0[i] - T_htf_in[i]) + std::abs(T_htf_out0[i] - T_htf_out[i]) + std::abs(T_htf_ave0[i] - (T_htf_in[i] + T_htf_out[i]) / 2.0);
 				}
 
 				if( ss_diff / 300.0 > 0.001 )	// If not in steady state, updated previous temperatures and re-run energy balances
@@ -2550,7 +2560,7 @@ freeze_prot_flag: //7   continue
 
 				err = (E_field_loss_tot - E_fp_field) / E_field_loss_tot;
 
-				if( fabs(err) <= t_tol )
+				if(std::abs(err) <= t_tol )
 					goto freeze_prot_ok;
 
 				if( (fp_lowflag) && (fp_upflag) )
@@ -2607,14 +2617,14 @@ freeze_prot_flag: //7   continue
 			{    
 				t_tol = 1.5e-4;		//12.29.2014, twn: decreases oscillation in freeze protection energy because a smaller deltaT governs it
 
-				if( (no_fp) && ((T_loop_outX > T_fp) || fabs(T_fp - T_loop_outX)/T_fp <= t_tol) )
+				if( (no_fp) && ((T_loop_outX > T_fp) || std::abs(T_fp - T_loop_outX)/T_fp <= t_tol) )
 					goto freeze_prot_ok; //goto 9
                 
 				no_fp   = false;
         
 				err = (T_fp - T_loop_outX) / T_fp;
         
-				if(fabs(err) <= t_tol) 
+				if(std::abs(err) <= t_tol)
 					goto freeze_prot_ok; //goto 9
 
 				if((fp_lowflag) && (fp_upflag))
@@ -2792,7 +2802,7 @@ freeze_prot_ok:		//9 continue
 			// Could consider implementing a faster, more robust method than successive substitution to solve for the inlet temperature.
 			if( T_sys_h < T_cold_in )
 			{
-				if( no_fp && fabs(T_cold_in_1 - T_sys_h) / T_sys_h > 0.001 )
+				if( no_fp && std::abs(T_cold_in_1 - T_sys_h) / T_sys_h > 0.001 )
 				{
 					T_cold_in_1 = T_sys_h;
 					goto overtemp_iter_flag;
@@ -3698,7 +3708,7 @@ set_outputs_and_return:
 		
 		if(P_a(hn,hv) != reguess_args[1]) goto lab_reguess;                   //Reguess for different annulus pressure
 		
-		if(fabs(reguess_args[2]-T_1_in) > 50.) goto lab_reguess;
+		if(std::abs(reguess_args[2]-T_1_in) > 50.) goto lab_reguess;
 		
 		for(int i=0; i<5; i++){ if(T_save[i] < T_sky - 1.) goto lab_reguess; } 
 		
@@ -3813,7 +3823,7 @@ lab_keep_guess:
 		double T3_adjust = 0.0;
 		double T3_prev_qq = 0.0;
 
-		while( ( (fabs(Diff_T3)>T3_tol) && (qq<100) ) || (qq<2)){    //Outer loop: Find T_3 such than energy balance is satisfied
+		while( ( (std::abs(Diff_T3)>T3_tol) && (qq<100) ) || (qq<2)){    //Outer loop: Find T_3 such than energy balance is satisfied
 			qq=qq+1; //loop counter
 
 			T3_prev_qq = T_3;
@@ -3912,7 +3922,7 @@ lab_keep_guess:
 				//***********************************************************************************
 				//************* Begin Bisection/False Position Iteration method *********************
 				//***********************************************************************************
-				while( (fabs(diff_q5)>q5_tol_1) && (q5_iter<100) ){       //Determine T_4 such that energy balance from T_3 to surroundings is satisfied
+				while( (std::abs(diff_q5)>q5_tol_1) && (q5_iter<100) ){       //Determine T_4 such that energy balance from T_3 to surroundings is satisfied
             
 					q5_iter = q5_iter + 1;                       //Increase iteration counter
 
@@ -3948,7 +3958,7 @@ lab_keep_guess:
 					//***************************************************************************
 					//********** Compare q_5out with q_45 cond***********************************
 					//***************************************************************************
-					diff_q5 = (q_5out - q_45cond)/fabs(q_45cond);     //[W/m]
+					diff_q5 = (q_5out - q_45cond)/ std::abs(q_45cond);     //[W/m]
             
 					//Determine next guess for T_4.  Want to use false position method, but it requires that the *results* at both ends of the bracket are known.  We have
 					//defined a bracket but not the results.  Use the guess T_4 to get the results at one end of a new bracket.  Then calculate a new T_4 that is highly weighted 
@@ -4037,7 +4047,7 @@ lab_keep_guess:
 				diff_T1 = T1_tol + 1.0;                                 //Set diff > tolerance
 				T1_iter = 0;                                             //Set iteration counter    
         
-				while( (fabs(diff_T1)>T1_tol) && (T1_iter<100)){       //Find correct cp& rho and solve for T_1_ave
+				while( (std::abs(diff_T1)>T1_tol) && (T1_iter<100)){       //Find correct cp& rho and solve for T_1_ave
         
 					T1_iter ++;                   //Increase iteration counter
 					T_1_ave = (T_1_out + T_1_in) / 2.0;     //Average fluid temperature
@@ -4070,7 +4080,7 @@ lab_keep_guess:
 			double T2_up = max(T_1_ave, T_3);
 
 			//Ensure convective calculations are correct (converge on T_2)
-			while( (fabs(diff_T2)>T2_tol) && (q_conv_iter<100)){
+			while( (std::abs(diff_T2)>T2_tol) && (q_conv_iter<100)){
  
 				q_conv_iter ++;       //Increase iteration counter
 
@@ -4480,7 +4490,7 @@ lab_keep_guess:
 				nu_36 = mu_36 / rho_36;  //[m**2/s] kinematic viscosity, AIR
 				alpha_36 = k_36 / (cp_36 * rho_36);  //[m**2/s], thermal diffusivity, AIR
 				beta_36 =  1.0 / T_36;  //[1/K]
-				Ra_D3 = grav * beta_36 * fabs(T_3 - T_6) * pow(D_3(hn,hv),3) / (alpha_36 * nu_36);
+				Ra_D3 = grav * beta_36 * std::abs(T_3 - T_6) * pow(D_3(hn,hv),3) / (alpha_36 * nu_36);
 
 				// Warning Statement if following Nusselt Number correlation is used out of recommended range //
 				//If ((Ra_D3 <= 1.e-5) || (Ra_D3 >= 1.e12)) continue
@@ -4566,8 +4576,8 @@ lab_keep_guess:
 			Alpha_34 = k_34 /(Cp_34 * rho_34);  //[m**2/s]//
 			nu_34 = mu_34 / rho_34;  //[m**2/s]//
 			Beta_34 = 1. / max(T_34,1.0);  //[1/K]//
-			Ra_D3 = grav * Beta_34 * fabs(T_3 - T_4) * pow(D_3(hn,hv),3) / (Alpha_34 * nu_34);
-			Ra_D4 = grav * Beta_34 * fabs(T_3 - T_4) * pow(D_4(hn,hv),3) / (Alpha_34 * nu_34);
+			Ra_D3 = grav * Beta_34 * std::abs(T_3 - T_4) * pow(D_3(hn,hv),3) / (Alpha_34 * nu_34);
+			Ra_D4 = grav * Beta_34 * std::abs(T_3 - T_4) * pow(D_4(hn,hv),3) / (Alpha_34 * nu_34);
 			Pr_34 = nu_34 / Alpha_34;
 			Natq_34conv = 2.425 * k_34 * (T_3 - T_4) / pow(1 + pow(D_3(hn,hv)/ D_4(hn,hv), 0.6), 1.25) * pow(Pr_34 * Ra_D3 / (0.861 + Pr_34),0.25);  //[W/m]//	
 			P = P_a(hn,hv);  //[mmHg] (note that 1 torr = 1 mmHg by definition)
@@ -4706,7 +4716,7 @@ lab_keep_guess:
 				nu_56 = mu_56 / rho_56;  //[m^2/s]
 				alpha_56 = k_56 / (Cp_56 * rho_56 );  //[m^2/s]
 				beta_56 =  1.0 / T_56;  //[1/K]
-				Ra_D5 = g *beta_56 * fabs(T_5 - T_6) * pow(D_5(hn,hv),3) / (alpha_56 * nu_56);
+				Ra_D5 = g *beta_56 * std::abs(T_5 - T_6) * pow(D_5(hn,hv),3) / (alpha_56 * nu_56);
 
 				// Warning Statement if following Nusselt Number correlation is used out of range //
 				//If (Ra_D5 <= 10**(-5)) or (Ra_D5 >= 10**12) Then CALL WARNING('The result may not be accurate, 
@@ -4822,7 +4832,7 @@ lab_keep_guess:
 			nu_brac6 = mu_brac6 / rho_brac6;  //[m**2/s]
 			Alpha_brac6 = k_brac6 / (Cp_brac6 * rho_brac6);  //[m**2/s]
 			Beta_brac6 =  1.0 / T_brac6;  //[1/K]
-			Ra_Dbrac = g * Beta_brac6 * fabs(T_brac - T_6) * D_brac*D_brac*D_brac / (Alpha_brac6 * nu_brac6);
+			Ra_Dbrac = g * Beta_brac6 * std::abs(T_brac - T_6) * D_brac*D_brac*D_brac / (Alpha_brac6 * nu_brac6);
 
 			// Warning Statement if following Nusselt Number correlation is used out of recommended range 
 			//If ((Ra_Dbrac <= 1.e-5)) || (Ra_Dbrac >= 1.e12) Then CALL WARNING('The result may not be accurate, 
@@ -5175,7 +5185,7 @@ lab_keep_guess:
 		while(NumTries < 21){
 			NumTries ++;
 			Test = X + 2 * log10(Rough / 3.7 + 2.51 * X / Reynold);
-			if (fabs(Test - TestOld) <= Acc) {
+			if (std::abs(Test - TestOld) <= Acc) {
 				return 1. / (X * X);
 			}
 

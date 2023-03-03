@@ -1,23 +1,33 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "thermocline_tes.h"
@@ -319,7 +329,7 @@ bool Thermocline_TES::Solve_TC( double T_hot_in_C, double flow_h_kghr, double T_
 	double T_disch_avail = std::numeric_limits<double>::quiet_NaN();
 	double T_charge_avail = std::numeric_limits<double>::quiet_NaN();
 
-	while( (fabs(diff_q_target)>q_tol || TC_limit != 0) && q_iter < 40 )
+	while( (std::abs(diff_q_target)>q_tol || TC_limit != 0) && q_iter < 40 )
 	{
 		q_iter++;		//[-] Increase iteration counter
 		full = true;	//[-] Reset target energy flag
@@ -547,7 +557,7 @@ bool Thermocline_TES::Solve_TC( double T_hot_in_C, double flow_h_kghr, double T_
 					}
 
 					m_T_end[i] = T_final;
-					max_T_diff = max( max_T_diff, fabs( m_T_ave[i] - T_average ) );		//[C] Difference between old average node temp and new average node temp
+					max_T_diff = max( max_T_diff, std::abs( m_T_ave[i] - T_average ) );		//[C] Difference between old average node temp and new average node temp
 					m_T_ave[i] = T_average;											//[C] Update guess on average node temp now that difference is calculated
 					m_T_ts_ave[tcn] += T_average;										//[C] Add average node temps
 					m_Q_losses[tcn] += UA_hl*(T_average - T_env);						//[kJ/hr-K]*[K] -> [kJ/hr] Heat loss
@@ -726,7 +736,7 @@ bool Thermocline_TES::Solve_TC( double T_hot_in_C, double flow_h_kghr, double T_
 		}
 	}	// End of iteration on mass flow rate
 
-	if( q_iter == 40 && ( fabs(diff_q_target) > q_tol || TC_limit != 0 ) )
+	if( q_iter == 40 && (std::abs(diff_q_target) > q_tol || TC_limit != 0 ) )
 		full = false;
 
 	if( full )		// If within tolerance on target energy rate, then set to target => this is beneficial to the solver (Type 251)
@@ -750,7 +760,7 @@ bool Thermocline_TES::Solve_TC( double T_hot_in_C, double flow_h_kghr, double T_
 		q_charge = delt*m_dot*m_cp_a*(T_hot - T_charge_avail);		//[hr]*[kg/hr]*[kJ/kg-K]*[K]->[kJ] 
 		q_stored = m_cap*(m_T_final_ave - m_T_final_ave_prev);		//[kJ/K]*[K]->[kJ]
 		//[-] Relative difference. Scale by m_dot such that the losses don't create huge errors on timesteps with no mass flow rate
-		q_error = (q_charge - q_stored - Q_loss_total)/max(0.01,fabs(q_stored));
+		q_error = (q_charge - q_stored - Q_loss_total)/max(0.01, std::abs(q_stored));
 	}
 	else	// Discharging
 	{
@@ -759,7 +769,7 @@ bool Thermocline_TES::Solve_TC( double T_hot_in_C, double flow_h_kghr, double T_
 		// Energy balance calculations
 		q_discharge = delt*m_dot*m_cp_a*(T_disch_avail - T_cold);		//[hr]*[kg/hr]*[kJ/kg-K]*[K]->[kJ]
 		q_stored = m_cap*(m_T_final_ave - m_T_final_ave_prev);			//[kJ/K]*[K]->[kJ]
-		q_error = (-q_stored - q_discharge - Q_loss_total)/max(0.01,fabs(q_stored));
+		q_error = (-q_stored - q_discharge - Q_loss_total)/max(0.01, std::abs(q_stored));
 	}
 
 	double Q_htr_total = 0.0;

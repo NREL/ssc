@@ -18,7 +18,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
+#include <cmath>
 #include <string.h>
 #include "lsqfit.h"
 
@@ -611,7 +611,7 @@ int mpfit(mp_func funct, int m, int npar,
 	  sum += fjac[ij]*(qtf[i]/fnorm);
 	  ij += 1; /* fjac[i+m*j] */
 	}
-	gnorm = mp_dmax1(gnorm,fabs(sum/wa2[l]));
+	gnorm = mp_dmax1(gnorm, std::abs(sum/wa2[l]));
       }
       jj += m;
     }
@@ -663,7 +663,7 @@ int mpfit(mp_func funct, int m, int npar,
     for (j=0; j<nfree; j++) {
       int lpegged = (qllim[j] && (x[j] <= llim[j]));
       int upegged = (qulim[j] && (x[j] >= ulim[j]));
-      int dwa1 = fabs(wa1[j]) > MP_MACHEP0;
+      int dwa1 = std::abs(wa1[j]) > MP_MACHEP0;
       
       if (lpegged && (wa1[j] < 0)) wa1[j] = 0;
       if (upegged && (wa1[j] > 0)) wa1[j] = 0;
@@ -818,14 +818,14 @@ int mpfit(mp_func funct, int m, int npar,
   /*
    *	    tests for convergence.
    */
-  if ((fabs(actred) <= conf.ftol) && (prered <= conf.ftol) && 
+  if ((std::abs(actred) <= conf.ftol) && (prered <= conf.ftol) &&
       (p5*ratio <= one) ) {
     info = MP_OK_CHI;
   }
   if (delta <= conf.xtol*xnorm) {
     info = MP_OK_PAR;
   }
-  if ((fabs(actred) <= conf.ftol) && (prered <= conf.ftol) && (p5*ratio <= one)
+  if ((std::abs(actred) <= conf.ftol) && (prered <= conf.ftol) && (p5*ratio <= one)
       && ( info == 2) ) {
     info = MP_OK_BOTH;
   }
@@ -844,7 +844,7 @@ int mpfit(mp_func funct, int m, int npar,
     /* Too many iterations */
     info = MP_MAXITER;
   }
-  if ((fabs(actred) <= MP_MACHEP0) && (prered <= MP_MACHEP0) && (p5*ratio <= one) ) {
+  if ((std::abs(actred) <= MP_MACHEP0) && (prered <= MP_MACHEP0) && (p5*ratio <= one) ) {
     info = MP_FTOL;
   }
   if (delta <= MP_MACHEP0*xnorm) {
@@ -1124,9 +1124,9 @@ int mp_fdjac2(mp_func funct,
     if (dside && dsidei == 3) continue;
 
     temp = x[ifree[j]];
-    h = eps * fabs(temp);
+    h = eps * std::abs(temp);
     if (step  &&  step[ifree[j]] > 0) h = step[ifree[j]];
-    if (dstep && dstep[ifree[j]] > 0) h = fabs(dstep[ifree[j]]*temp);
+    if (dstep && dstep[ifree[j]] > 0) h = std::abs(dstep[ifree[j]]*temp);
     if (h == zero)                    h = eps;
 
     /* If negative step requested, or we are against the upper limit */
@@ -1156,7 +1156,7 @@ int mp_fdjac2(mp_func funct,
 	  double fjold = fjac[ij];
 	  fjac[ij] = (wa[i] - fvec[i])/h; /* fjac[i+m*j] */
 	  if ((da == 0 && dr == 0 && (fjold != 0 || fjac[ij] != 0)) ||
-	      ((da != 0 || dr != 0) && (fabs(fjold-fjac[ij]) > da + fabs(fjold)*dr))) {
+	      ((da != 0 || dr != 0) && (std::abs(fjold-fjac[ij]) > da + std::abs(fjold)*dr))) {
 	    printf("   %10d %10.4g %10.4g %10.4g %10.4g %10.4g\n", 
 		   i, fvec[i], fjold, fjac[ij], fjold-fjac[ij], 
 		   (fjold == 0)?(0):((fjold-fjac[ij])/fjold));
@@ -1188,7 +1188,7 @@ int mp_fdjac2(mp_func funct,
 	  double fjold = fjac[ij];
 	  fjac[ij] = (fjac[ij] - wa[i])/(2*h); /* fjac[i+m*j] */
 	  if ((da == 0 && dr == 0 && (fjold != 0 || fjac[ij] != 0)) ||
-	      ((da != 0 || dr != 0) && (fabs(fjold-fjac[ij]) > da + fabs(fjold)*dr))) {
+	      ((da != 0 || dr != 0) && (std::abs(fjold-fjac[ij]) > da + std::abs(fjold)*dr))) {
 	    printf("   %10d %10.4g %10.4g %10.4g %10.4g %10.4g\n", 
 		   i, fvec[i], fjold, fjac[ij], fjold-fjac[ij], 
 		   (fjold == 0)?(0):((fjold-fjac[ij])/fjold));
@@ -1560,7 +1560,7 @@ void mp_qrsolv(int n, double *r, int ldr, int *ipvt, double *diag,
 	if (sdiag[k] == zero)
 	  continue;
 	kk = k + ldr * k;
-	if (fabs(r[kk]) < fabs(sdiag[k]))
+	if (std::abs(r[kk]) < std::abs(sdiag[k]))
 	  {
 	    cotan = r[kk]/sdiag[k];
 	    sinx = p5/sqrt(p25+p25*cotan*cotan);
@@ -1893,7 +1893,7 @@ void mp_lmpar(int n, double *r, int ldr, int *ipvt, int *ifree, double *diag,
    *	 of par. also test for the exceptional cases where parl
    *	 is zero or the number of iterations has reached 10.
    */
-  if ((fabs(fp) <= p1*delta)
+  if ((std::abs(fp) <= p1*delta)
       || ((parl == zero) && (fp <= temp) && (temp < zero))
       || (iter == 10))
     goto L220;
@@ -2011,7 +2011,7 @@ double mp_enorm(int n, double *x)
   agiant = rgiant/floatn;
   
   for (i=0; i<n; i++) {
-    xabs = fabs(x[i]);
+    xabs = std::abs(x[i]);
     if ((xabs > rdwarf) && (xabs < agiant))
       {
 	/*
@@ -2201,11 +2201,11 @@ int mp_covar(int n, double *r, int ldr, int *ipvt, double tol, double *wa)
   }
 #endif
 
-  tolr = tol*fabs(r[0]);
+  tolr = tol* std::abs(r[0]);
   l = -1;
   for (k=0; k<n; k++) {
     kk = k*ldr + k;
-    if (fabs(r[kk]) <= tolr) break;
+    if (std::abs(r[kk]) <= tolr) break;
 
     r[kk] = one/r[kk];
     for (j=0; j<k; j++) {

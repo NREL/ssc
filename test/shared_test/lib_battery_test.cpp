@@ -1,24 +1,35 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 
 #include <cmath>
 #include <gtest/gtest.h>
@@ -449,8 +460,8 @@ TEST_F(lib_battery_test, RoundtripEffModel){
     batteryModel->calculate_max_charge_kw(&max_current);
 
     std::vector<double> eff_vs_current;
-    double current = fabs(max_current) * 0.01;
-    while (current < fabs(max_current)){
+    double current = std::abs(max_current) * 0.01;
+    while (current < std::abs(max_current)){
         capacityModel->updateCapacity(full_current, 1);   //discharge to empty
 
         size_t n_t = 0;
@@ -474,8 +485,8 @@ TEST_F(lib_battery_test, RoundtripEffModel){
             n_t += 1;
 
         }
-        current += fabs(max_current) / 100.;
-        eff_vs_current.emplace_back(fabs(output_power/input_power));
+        current += std::abs(max_current) / 100.;
+        eff_vs_current.emplace_back(std::abs(output_power/input_power));
     }
     std::vector<double> eff_expected = { 0.99, 0.99, 0.99, 0.99, 0.99, 0.99, 0.99, 0.99, 0.99, 0.98, 0.98, 0.98, 0.98, // i = 12
                                         0.98, 0.98, 0.98, 0.98, 0.97, 0.97, 0.97, 0.97, 0.97, 0.97, 0.96, 0.96, 0.96, // i = 25
@@ -504,8 +515,8 @@ TEST_F(lib_battery_test, RoundtripEffTable){
     voltageModel->calculate_max_charge_w(capacityModel->q0(), capacityModel->qmax(), 0, &max_current);
 
     std::vector<double> eff_vs_current;
-    double current = fabs(max_current) * 0.01;
-    while (current < fabs(max_current)){
+    double current = std::abs(max_current) * 0.01;
+    while (current < std::abs(max_current)){
         capacityModel->updateCapacity(full_current, 1);   //discharge to empty
 
         size_t n_t = 0;
@@ -528,8 +539,8 @@ TEST_F(lib_battery_test, RoundtripEffTable){
             output_power += capacityModel->I() * voltageModel->battery_voltage();
             n_t += 1;
         }
-        current += fabs(max_current) / 100.;
-        eff_vs_current.emplace_back(fabs(output_power/input_power));
+        current += std::abs(max_current) / 100.;
+        eff_vs_current.emplace_back(std::abs(output_power/input_power));
     }
 
     std::vector<double> eff_expected = {0.99, 0.99, 0.98, 0.98, 0.97, 0.96, 0.96, 0.95, 0.95, 0.94, 0.93, 0.94, 0.93,
@@ -558,8 +569,8 @@ TEST_F(lib_battery_test, RoundtripEffVanadiumFlow){
     double max_current;
     vol->calculate_max_charge_w(cap->q0(), cap->qmax(), 300, &max_current);
 
-    double current = fabs(max_current) * 0.01;
-    while (current < fabs(max_current)){
+    double current = std::abs(max_current) * 0.01;
+    while (current < std::abs(max_current)){
         cap->updateCapacity(full_current, 1);   //discharge to empty
 
         std::vector<double> inputs, outputs;
@@ -593,7 +604,7 @@ TEST_F(lib_battery_test, RoundtripEffVanadiumFlow){
 //        }
 //        printf("current %f, eff %f, n %zd\n", current, -output_power/input_power, n_t);
 
-        current += fabs(max_current) / 100.;
+        current += std::abs(max_current) / 100.;
     }
     delete vol;
     delete cap;

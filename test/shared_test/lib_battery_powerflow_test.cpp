@@ -1,24 +1,35 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 
 #include <gtest/gtest.h>
 
@@ -2892,7 +2903,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, AC_system_w_ac_losses) {
     m_batteryPower->powerSystem = 0;
     m_batteryPower->powerLoad = 50;
     m_batteryPower->acLossPostBattery = 0;
-    m_batteryPower->acLossPostInverter = 1;
+    m_batteryPower->acLossWiring = 1;
 
     // Try to charge - 100% inverter loss means no available power
     m_batteryPower->powerBatteryDC = -50 * m_batteryPower->singlePointEfficiencyACToDC;
@@ -2916,7 +2927,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, AC_system_w_ac_losses) {
     m_batteryPower->powerSystem = 0;
     m_batteryPower->powerLoad = 50;
     m_batteryPower->acLossPostBattery = 0;
-    m_batteryPower->acLossPostInverter = 1;
+    m_batteryPower->acLossWiring = 1;
     m_batteryPower->canGridCharge = true;
 
     // Try to charge - grid charging provides power even with inverter off
@@ -2941,7 +2952,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, AC_system_w_ac_losses) {
     m_batteryPower->powerSystem = 0;
     m_batteryPower->powerLoad = 50;
     m_batteryPower->acLossPostBattery = 1;
-    m_batteryPower->acLossPostInverter = 0;
+    m_batteryPower->acLossWiring = 0;
     m_batteryPower->canGridCharge = true;
 
     // Try to charge - but 100% system loss
@@ -2964,7 +2975,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, AC_system_w_ac_losses) {
 
     // Try to discharge to load w/ inverter loss
     m_batteryPower->acLossPostBattery = 0;
-    m_batteryPower->acLossPostInverter = 1;
+    m_batteryPower->acLossWiring = 1;
     m_batteryPower->powerBatteryDC = 50;
     m_batteryPowerFlow->calculate();
 
@@ -2984,7 +2995,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, AC_system_w_ac_losses) {
 
     // Cannot discharge to load w/ post batt loss
     m_batteryPower->acLossPostBattery = 1;
-    m_batteryPower->acLossPostInverter = 0;
+    m_batteryPower->acLossWiring = 0;
     m_batteryPower->powerBatteryDC = 50;
     m_batteryPowerFlow->calculate();
 
@@ -3004,7 +3015,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, AC_system_w_ac_losses) {
 
     // Try to discharge to grid w/ inverter loss
     m_batteryPower->acLossPostBattery = 0;
-    m_batteryPower->acLossPostInverter = 1;
+    m_batteryPower->acLossWiring = 1;
     m_batteryPower->powerLoad = 0;
     m_batteryPower->powerBatteryDC = 50;
     m_batteryPowerFlow->calculate();
@@ -3026,7 +3037,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, AC_system_w_ac_losses) {
 
     // Cannot discharge w/ post batt loss
     m_batteryPower->acLossPostBattery = 1;
-    m_batteryPower->acLossPostInverter = 0;
+    m_batteryPower->acLossWiring = 0;
     m_batteryPower->powerBatteryDC = 50;
     m_batteryPowerFlow->calculate();
 
@@ -3076,7 +3087,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, DC_system_w_ac_losses) {
     m_batteryPower->powerSystem = 100;
     m_batteryPower->powerLoad = 50;
     m_batteryPower->acLossPostBattery = 0;
-    m_batteryPower->acLossPostInverter = 1;
+    m_batteryPower->acLossWiring = 1;
 
     m_batteryPower->powerBatteryDC = -50;
     m_batteryPowerFlow->calculate();
@@ -3097,7 +3108,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, DC_system_w_ac_losses) {
     m_batteryPower->powerSystem = 0;
     m_batteryPower->powerLoad = 50;
     m_batteryPower->acLossPostBattery = 0;
-    m_batteryPower->acLossPostInverter = 1;
+    m_batteryPower->acLossWiring = 1;
     m_batteryPower->canGridCharge = true;
 
     // Try to grid charge - not allowed with inverter loss
@@ -3119,7 +3130,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, DC_system_w_ac_losses) {
     m_batteryPower->powerSystem = 0;
     m_batteryPower->powerLoad = 50;
     m_batteryPower->acLossPostBattery = 1;
-    m_batteryPower->acLossPostInverter = 0;
+    m_batteryPower->acLossWiring = 0;
     m_batteryPower->canGridCharge = true;
 
     // Try to charge - but 100% system loss
@@ -3139,7 +3150,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, DC_system_w_ac_losses) {
 
     // Try to discharge to load w/ inverter loss - not allowed
     m_batteryPower->acLossPostBattery = 0;
-    m_batteryPower->acLossPostInverter = 1;
+    m_batteryPower->acLossWiring = 1;
     m_batteryPower->powerBatteryDC = 50;
     m_batteryPowerFlow->calculate();
 
@@ -3156,7 +3167,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, DC_system_w_ac_losses) {
 
     // Cannot discharge to load w/ post batt loss
     m_batteryPower->acLossPostBattery = 1;
-    m_batteryPower->acLossPostInverter = 0;
+    m_batteryPower->acLossWiring = 0;
     m_batteryPower->powerBatteryDC = 50;
     m_batteryPowerFlow->calculate();
 
@@ -3173,7 +3184,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, DC_system_w_ac_losses) {
 
     // Try to discharge to grid w/ inverter loss - not allowed
     m_batteryPower->acLossPostBattery = 0;
-    m_batteryPower->acLossPostInverter = 1;
+    m_batteryPower->acLossWiring = 1;
     m_batteryPower->powerLoad = 0;
     m_batteryPower->powerBatteryDC = 50;
     m_batteryPowerFlow->calculate();
@@ -3192,7 +3203,7 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, DC_system_w_ac_losses) {
 
     // Cannot discharge w/ post batt loss
     m_batteryPower->acLossPostBattery = 1;
-    m_batteryPower->acLossPostInverter = 0;
+    m_batteryPower->acLossWiring = 0;
     m_batteryPower->powerBatteryDC = 50;
     m_batteryPowerFlow->calculate();
 
@@ -3204,6 +3215,47 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, DC_system_w_ac_losses) {
     EXPECT_NEAR(m_batteryPower->powerSystemToGrid, 0, error);
     EXPECT_NEAR(m_batteryPower->powerBatteryToLoad, 0, error);
     EXPECT_NEAR(m_batteryPower->powerBatteryToGrid, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerConversionLoss, 3.738, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemLoss, 0.0, error);
+    EXPECT_NEAR(m_batteryPower->powerLoad, 0, error);
+
+    // Transformer losses applied to battery
+    m_batteryPower->acLossPostBattery = 0;
+    m_batteryPower->acXfmrLoadLoss = 0.5;
+    m_batteryPower->acXfmrRating = 50;
+    m_batteryPower->acLossWiring = 0;
+    m_batteryPower->powerBatteryDC = 50;
+    m_batteryPowerFlow->calculate();
+
+    EXPECT_NEAR(m_batteryPower->powerBatteryAC, 46.26, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToBatteryAC, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToBattery, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToGrid, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerBatteryToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerBatteryToGrid, 24.86, error);
+    EXPECT_NEAR(m_batteryPower->powerConversionLoss, 3.738, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemLoss, 0.0, error);
+    EXPECT_NEAR(m_batteryPower->powerLoad, 0, error);
+
+    // Transformer no load loss is in kw
+    m_batteryPower->acLossPostBattery = 0;
+    m_batteryPower->acXfmrLoadLoss = 0.01;
+    m_batteryPower->acXfmrNoLoadLoss = 10.0;
+    m_batteryPower->acXfmrRating = 50;
+    m_batteryPower->acLossWiring = 0;
+    m_batteryPower->powerBatteryDC = 50;
+    m_batteryPowerFlow->calculate();
+
+    EXPECT_NEAR(m_batteryPower->powerBatteryAC, 46.26, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToBatteryAC, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToBattery, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToGrid, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerBatteryToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerBatteryToGrid, 35.83, error);
     EXPECT_NEAR(m_batteryPower->powerConversionLoss, 3.738, error);
     EXPECT_NEAR(m_batteryPower->powerSystemLoss, 0.0, error);
     EXPECT_NEAR(m_batteryPower->powerLoad, 0, error);

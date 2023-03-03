@@ -1,24 +1,34 @@
 
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #include "Land.h"
 #include "math.h"
@@ -151,7 +161,7 @@ void Land::getExtents(var_map &V, double rval[])
 			//For each polygon in the inclusions
 			for(unsigned int j=0; j<V.land.inclusions.val.at(i).size(); j++){
 				rad = sqrt( pow(V.land.inclusions.val.at(i).at(j).x - V.land.tower_offset_x.val, 2) + pow(V.land.inclusions.val.at(i).at(j).y - V.land.tower_offset_y.val, 2) );
-				if(fabs(rad) > trmax) trmax = rad;
+				if(std::abs(rad) > trmax) trmax = rad;
 			}
 		}
         if( V.land.inclusions.val.size() > 0 )
@@ -191,7 +201,7 @@ void Land::getExtents(var_map &V, double rval[])
 
 				//Find the closest point on the line defined by pt1 and pt0 to 'T'.
 				Toolbox::line_norm_intersect(V.land.inclusions.val.at(i).at(j), pt1, T, N, rad);
-				if(fabs(rad) < trmin) trmin = rad;
+				if(std::abs(rad) < trmin) trmin = rad;
 
 			}
 		}
@@ -216,7 +226,7 @@ void Land::getExtents(var_map &V, double rval[])
 				//Find the closest point on the line defined by ex0 and ex1 to 'T'. This point
 				//is 'N' with a distance 'rad' from T.
 				Toolbox::line_norm_intersect(V.land.exclusions.val.at(i).at(j), ex1, T, N, rad);
-				if(fabs(rad) < excheck) excheck = rad;
+				if(std::abs(rad) < excheck) excheck = rad;
 			}
 		}
 		if(excheck > trmin && excheck < 9.e9) trmin = excheck;		if(trmin > radmax) trmin = 0.001;	//Use a small number larger than zero if nothing is set
@@ -372,7 +382,7 @@ double Land::calcPolyLandArea(var_land &V){
 			j = k;
 		}
 	}
-	area = fabs(area);
+	area = std::abs(area);
 
 	//Now subtract the area of the exclusions
 	double excs = 0.;
@@ -387,7 +397,7 @@ double Land::calcPolyLandArea(var_land &V){
 			j = k;
 		}
 	}	
-	excs = fabs(excs);
+	excs = std::abs(excs);
 
 	return area-excs;
 

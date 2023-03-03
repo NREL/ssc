@@ -1,24 +1,35 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 
 #include <iomanip>
 #include <iostream>
@@ -1079,7 +1090,7 @@ double sun_hour_angle_at_rise_set(double latitude, double delta_zero, double h0_
     double argument = (sin(DTOR * (h0_prime)) - sin(latitude_rad) * sin(delta_zero_rad)) /
                       (cos(latitude_rad) * cos(delta_zero_rad));
 
-    if (fabs(argument) <= 1) {
+    if (std::abs(argument) <= 1) {
         h0 = limit_degrees180(RTOD * (acos(argument)));
     }
     else if (argument < -1) {
@@ -1115,8 +1126,8 @@ double rts_alpha_delta_prime(double n,
     double a = ad[1] - ad[0];
     double b = ad[2] - ad[1];
 
-    if (fabs(a) >= 2.0) a = limit_zero2one(a);
-    if (fabs(b) >= 2.0) b = limit_zero2one(b);
+    if (std::abs(a) >= 2.0) a = limit_zero2one(a);
+    if (std::abs(b) >= 2.0) b = limit_zero2one(b);
 
     return ad[1] + n * (a + b + (b - a) * n) / 2.0;
 }
@@ -1514,7 +1525,7 @@ void incidence(int mode, double tilt, double sazm, double rlim, double zen,
             xsazm = sazm * DTOR;
             rlim = rlim * DTOR;
             /* Find rotation angle of axis for peak tracking */
-            if (fabs(cos(xtilt)) < 0.001745)    /* 89.9 to 90.1 degrees */
+            if (std::abs(cos(xtilt)) < 0.001745)    /* 89.9 to 90.1 degrees */
             {          /* For vertical axis only */
                 if (xsazm <= M_PI) {
                     if (azm <= xsazm + M_PI)
@@ -1712,7 +1723,7 @@ double GTI_DIRINT(const double poa[3], const double inc[3], double zen, double t
     double cz = cos(zen);
     int i = 0;
 
-    while (fabs(diff) > 1.0 && i++ < 30) {
+    while (std::abs(diff) > 1.0 && i++ < 30) {
 
         // Calculate Kt using GTI and Eq. 2
 //		double Kt_inc = GTI[1] / (Io * Max(0.065, cos(inc[1])));
@@ -1732,7 +1743,7 @@ double GTI_DIRINT(const double poa[3], const double inc[3], double zen, double t
         diff = (poa_tmp[0] + poa_tmp[1] + poa_tmp[2]) - poa[1];
 
         //Check for best Difference. If found, save results
-        if (fabs(diff) < fabs(bestDiff)) {
+        if (std::abs(diff) < std::abs(bestDiff)) {
             bestDiff = diff;
             Ktp = Ktp_tmp;
             dnOut = dn_tmp;
@@ -2561,7 +2572,7 @@ int irrad::calc_rear_side(double transmissionFactor, double groundClearanceHeigh
         std::vector<double> rearGroundGHI, frontGroundGHI;
         this->getGroundGHI(transmissionFactor, rearSkyConfigFactors, frontSkyConfigFactors, rearGroundShade,
                            frontGroundShade, rearGroundGHI, frontGroundGHI);
-        groundIrradianceSpatial = condenseAndAlignGroundIrrad(rearGroundGHI, groundIrradOutputRes, trackingMode == 1, horizontalLength, rowToRow);
+        groundIrradianceSpatial = condenseAndAlignGroundIrrad(rearGroundGHI, groundIrradOutputRes, trackingMode == 1, horizontalLength, rowToRow, surfaceAnglesRadians[3]);
 
         // Calculate the irradiance on the front of the PV module (to get front reflected)
         std::vector<double> frontIrradiancePerCellrow, frontReflected;
@@ -2879,7 +2890,7 @@ void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowTo
         std::vector<double> albedoAligned;
         if (trackingMode == 0 || trackingMode == 1 || trackingMode == 4) {          // 0=fixed, 1=one-axis, 4=seasonal tilt
             // subdivide spatial albedos to match ground GHI length and align reference point at front of row
-            albedoAligned = divideAndAlignAlbedos(albedoSpatial, intervals, trackingMode == 1, horizontalLength, rowToRow);
+            albedoAligned = divideAndAlignAlbedos(albedoSpatial, intervals, trackingMode == 1, horizontalLength, rowToRow, surfaceAnglesRadians[3]);
         }
         else {
             double average_albedo = std::accumulate(albedoSpatial.begin(), albedoSpatial.end(), 0.) / albedoSpatial.size();
@@ -2894,7 +2905,7 @@ void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowTo
             double actualGroundGHI = 0.0;
             double reflectedGroundGHI = 0.0;
 
-            if (fabs(projectedX1 - projectedX2) > 0.99 * rowToRow) {
+            if (std::abs(projectedX1 - projectedX2) > 0.99 * rowToRow) {
                 // Use average value if projection approximates the rtr
                 actualGroundGHI = std::accumulate(frontGroundGHI.begin(), frontGroundGHI.end(), 0.) / frontGroundGHI.size();
                 reflectedGroundGHI = actualGroundGHI * std::accumulate(albedoAligned.begin(), albedoAligned.end(), 0.) / albedoAligned.size();
@@ -3109,7 +3120,7 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
         std::vector<double> albedoAligned;
         if (trackingMode == 0 || trackingMode == 1 || trackingMode == 4) {          // 0=fixed, 1=one-axis, 4=seasonal tilt
             // subdivide spatial albedos to match ground GHI length and align reference point at front of row
-            albedoAligned = divideAndAlignAlbedos(albedoSpatial, intervals, trackingMode == 1, horizontalLength, rowToRow);
+            albedoAligned = divideAndAlignAlbedos(albedoSpatial, intervals, trackingMode == 1, horizontalLength, rowToRow, surfaceAnglesRadians[3]);
         }
         else {
             double average_albedo = std::accumulate(albedoSpatial.begin(), albedoSpatial.end(), 0.) / albedoSpatial.size();
@@ -3125,7 +3136,7 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
             double actualGroundGHI = 0.0;
             double reflectedGroundGHI = 0.0;
 
-            if (fabs(projectedX1 - projectedX2) > 0.99 * rowToRow) {
+            if (std::abs(projectedX1 - projectedX2) > 0.99 * rowToRow) {
                 // Use average value if projection approximates the rtr
                 actualGroundGHI = std::accumulate(rearGroundGHI.begin(), rearGroundGHI.end(), 0.) / rearGroundGHI.size();
                 reflectedGroundGHI = actualGroundGHI * std::accumulate(albedoAligned.begin(), albedoAligned.end(), 0.) / albedoAligned.size();
@@ -3234,6 +3245,11 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
         poaRearGroundReflected += rearGroundReflected[i] / cellRows;
         double xy = 1.;
     }
+
+    // Flip the row rear spatial irradiance if tracking after solar noon (because the tilt range = [0, 90] degrees, therefore the tilt convention flips at solar noon)
+    if (trackingMode == 1 && surfaceAnglesRadians[3] > 0.) {
+        std::reverse(rearIrradiance.begin(), rearIrradiance.end());
+    }
 }
 
 double shadeFraction1x(double solar_azimuth, double solar_zenith,
@@ -3256,7 +3272,7 @@ double shadeFraction1x(double solar_azimuth, double solar_zenith,
 }
 
 std::vector<double> divideAndAlignAlbedos(const std::vector<double>& albedo /*-*/, size_t n_divisions /*-*/, bool isOneAxisTracking /*-*/,
-                                          double horizontalLength /*m*/, double rowToRow /*m*/) {
+                                          double horizontalLength /*m*/, double rowToRow /*m*/, double surface_rotation /*rad*/) {
     /*
     Subdivide spatial albedos and if 1-axis tracking change reference from the row midline to the front
     */
@@ -3271,6 +3287,11 @@ std::vector<double> divideAndAlignAlbedos(const std::vector<double>& albedo /*-*
     }
 
     if (isOneAxisTracking) {
+        // Flip the albedo array if tracking after solar noon (because the tilt range = [0, 90] degrees, therefore the tilt convention flips at solar noon)
+        if (surface_rotation > 0.) {
+            std::reverse(albedo_aligned.begin(), albedo_aligned.end());
+        }
+
         // Rotate the albedo vector so the first index is at (or overlapping) the front of the row instead of at center
         double L_division = rowToRow / n_divisions;                     // length of a single albedo division
         double n = 0.5 * horizontalLength / L_division;                 // fractional number of albedo segments between front of row and center of row
@@ -3290,7 +3311,7 @@ std::vector<double> divideAndAlignAlbedos(const std::vector<double>& albedo /*-*
 }
 
 std::vector<double> condenseAndAlignGroundIrrad(const std::vector<double>& ground_irr /*W/m2*/, size_t n_divisions /*-*/, bool isOneAxisTracking /*-*/,
-                                            double horizontalLength /*m*/, double rowToRow /*m*/) {
+                                            double horizontalLength /*m*/, double rowToRow /*m*/, double surface_rotation /*rad*/) {
     /*
     Condense spatial ground irradiances and if 1-axis tracking change reference from the row front to the midline
     */
@@ -3312,6 +3333,11 @@ std::vector<double> condenseAndAlignGroundIrrad(const std::vector<double>& groun
             ground_aligned.at(i) = ground_aligned.at(i) * (1 - frac_div_extending) + ground_aligned.at(i + 1) * frac_div_extending;
         }
         ground_aligned.back() = ground_aligned.back() * (1 - frac_div_extending) + ground_front_orig * frac_div_extending;
+
+        // Flip the ground irradiance if tracking after solar noon (because the tilt range = [0, 90] degrees, therefore the tilt convention flips at solar noon)
+        if (surface_rotation > 0.) {
+            std::reverse(ground_aligned.begin(), ground_aligned.end());
+        }
     }
 
     // Downsample vector to n_divisions
@@ -3376,8 +3402,8 @@ double backtrack(double truetracking_rotation, double gcr, double axis_slope) {
     // check backtracking criterion; if there is no self-shading to avoid, then
     // return the true-tracking angle unmodified:
     double correction_projection =
-            fabs(cosd(truetracking_rotation - cross_axis_slope)) / (gcr * cosd(cross_axis_slope));
-    if (fabs(correction_projection) >= 1) {
+        std::abs(cosd(truetracking_rotation - cross_axis_slope)) / (gcr * cosd(cross_axis_slope));
+    if (std::abs(correction_projection) >= 1) {
         return truetracking_rotation;
     }
     int sign = truetracking_rotation > 0 ? 1 : -1;
@@ -3746,11 +3772,11 @@ ModifiedDISC(const double g[3], const double z[3], double td, double alt, int do
             k = 6;
         else {
             if (kt1[0] < -998.0 || zenith[0] >= 85.0)
-                dkt1 = fabs(kt1[2] - kt1[1]);
+                dkt1 = std::abs(kt1[2] - kt1[1]);
             else if (kt1[2] < -998.0 || zenith[2] >= 85.0)
-                dkt1 = fabs(kt1[1] - kt1[0]);
+                dkt1 = std::abs(kt1[1] - kt1[0]);
             else
-                dkt1 = 0.5 * (fabs(kt1[1] - kt1[0]) + fabs(kt1[2] - kt1[1]));
+                dkt1 = 0.5 * (std::abs(kt1[1] - kt1[0]) + std::abs(kt1[2] - kt1[1]));
 
             k = 0;
             //while (k < 4 && dkt1 >= dktbin[k])
@@ -3829,11 +3855,11 @@ ModifiedDISC(const double kt[3], const double kt1[3], const double g[3], const d
             k = 6;
         else {
             if (kt1[0] < -998.0 || zenith[0] >= 85.0)
-                dkt1 = fabs(kt1[2] - kt1[1]);
+                dkt1 = std::abs(kt1[2] - kt1[1]);
             else if (kt1[2] < -998.0 || zenith[2] >= 85.0)
-                dkt1 = fabs(kt1[1] - kt1[0]);
+                dkt1 = std::abs(kt1[1] - kt1[0]);
             else
-                dkt1 = 0.5 * (fabs(kt1[1] - kt1[0]) + fabs(kt1[2] - kt1[1]));
+                dkt1 = 0.5 * (std::abs(kt1[1] - kt1[0]) + std::abs(kt1[2] - kt1[1]));
 
             k = 0;
             //while (k < 4 && dkt1 >= dktbin[k])

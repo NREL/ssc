@@ -1,23 +1,33 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #define _TCSTYPEINTERFACE_
@@ -1761,7 +1771,7 @@ public:
 			double dvar8 = wp.enth;
 			double dvar9 = (dvar8 - dvar7)/(dvar2 - dvar1)*m_nModBoil;
 
-			if( fabs(dvar6) > 25.0 )
+			if(std::abs(dvar6) > 25.0 )
 			{
 				message( TCS_WARNING, "The field you selected with %d boiler modules and %d superheater modules results in a projected superheater outlet temperature"
 					" of %.1f [C] which is %.1f [C] away from the design-point value of %.1f [C]. Based on the specified collector geometry, the ideal fractional"
@@ -2100,7 +2110,7 @@ public:
 				int iter = 0;
 
 				// Main iteration loop
-				while( fabs(err) > tol && iter < 50 )
+				while(std::abs(err) > tol && iter < 50 )
 				{
 					iter++;
 					m_dot = m_dot_guess;
@@ -2205,7 +2215,7 @@ public:
 							// Update the average temperature for the heat loss calculation
 							water_PH( P_loc*100.0, h_aveg, &wp );
 							m_T_ave.at(i,0) = wp.temp;
-							err_t = fabs( (m_h_ave.at(i,0) - h_aveg)/m_h_ave.at(i,0) );
+							err_t = std::abs( (m_h_ave.at(i,0) - h_aveg)/m_h_ave.at(i,0) );
 							m_h_ave.at(i,0) = h_aveg;
 						}
 						if( i < m_nModTot - 1 )
@@ -2288,7 +2298,7 @@ public:
 				{
 					// Calculate new defocus
 					m_defocus = min( 1.0, m_defocus_prev*pow( 1.0/(m_err_def + 1.0), m_rc ) );
-					if( fabs(m_err_def) > m_tol_def )
+					if(std::abs(m_err_def) > m_tol_def )
 					{
 						m_defocus_prev = m_defocus;
 						iter_def++;
@@ -2347,7 +2357,7 @@ public:
 								
 				double m_dot_b = std::numeric_limits<double>::quiet_NaN();
 
-				while( fabs(err) > tol && iter < 50 )
+				while(std::abs(err) > tol && iter < 50 )
 				{
 					iter++;
 					m_dot_b = m_dot_b_guess;
@@ -2454,7 +2464,7 @@ public:
 							// Update the average temperature for the heat loss calculation
 							water_PH( P_loc*100.0, h_aveg, &wp );
 							m_T_ave.at(i,0) = wp.temp;
-							err_t = fabs( (m_h_ave.at(i,0) - h_aveg)/m_h_ave.at(i,0) );
+							err_t = std::abs( (m_h_ave.at(i,0) - h_aveg)/m_h_ave.at(i,0) );
 							m_h_ave.at(i,0) = h_aveg;
 						}
 
@@ -2540,7 +2550,7 @@ public:
 				{
 					// Calculate new defocus
 					m_defocus = min( 1.0, m_defocus_prev*pow( 1.0/(m_err_def+1.0), m_rc ));
-					if( fabs(m_err_def) > m_tol_def )
+					if(std::abs(m_err_def) > m_tol_def )
 					{
 						m_defocus_prev = m_defocus;
 						iter_def++;
@@ -2586,7 +2596,7 @@ public:
 					double err_sh = 10.0*tol_sh;
 					int iter_sh = 0;
 
-					while( fabs(err_sh) > tol_sh && iter_sh < 5)
+					while(std::abs(err_sh) > tol_sh && iter_sh < 5)
 					{
 						iter_sh++;
 
@@ -2676,7 +2686,7 @@ public:
 								// Update the average temperature for the heat loss calculation
 								water_PH( P_loc*100.0, h_aveg, &wp );
 								m_T_ave.at(i,0) = wp.temp;
-								err_t = fabs( (m_h_ave.at(i,0) - h_aveg)/m_h_ave.at(i,0) );
+								err_t = std::abs( (m_h_ave.at(i,0) - h_aveg)/m_h_ave.at(i,0) );
 								m_h_ave.at(i,0) = h_aveg;
 							}
 

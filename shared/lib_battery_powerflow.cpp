@@ -1,24 +1,35 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 
 #include "lib_battery_dispatch.h"
 #include "lib_battery_powerflow.h"
@@ -38,6 +49,7 @@ BatteryPower::BatteryPower(double dtHour) :
 		powerGeneratedBySystem(0),
 		powerSystemToLoad(0),
 		powerSystemToBatteryAC(0),
+        powerSystemToBatteryDC(0),
 		powerSystemToGrid(0),
 		powerSystemClipped(0),
 		powerClippedToBattery(0),
@@ -64,8 +76,11 @@ BatteryPower::BatteryPower(double dtHour) :
         powerInterconnectionLoss(0),
         powerCurtailmentLimit(1e+38),
         voltageSystem(0),
-        acLossPostInverter(0.0),
+        acLossWiring(0.0),
         acLossPostBattery(0.0),
+        acXfmrLoadLoss(0.0),
+        acXfmrNoLoadLoss(0.0),
+        acXfmrRating(0.0),
         isOutageStep(false),
 		connectionMode(0),
         meterPosition(0),
@@ -103,6 +118,7 @@ BatteryPower::BatteryPower(const BatteryPower& orig) {
     powerGeneratedBySystem = orig.powerGeneratedBySystem;
     powerSystemToLoad = orig.powerSystemToLoad;
     powerSystemToBatteryAC = orig.powerSystemToBatteryAC;
+    powerSystemToBatteryDC = orig.powerSystemToBatteryDC;
     powerSystemToGrid = orig.powerSystemToGrid;
     powerSystemClipped = orig.powerSystemClipped;
     powerClippedToBattery = orig.powerClippedToBattery;
@@ -129,8 +145,11 @@ BatteryPower::BatteryPower(const BatteryPower& orig) {
     powerInterconnectionLoss = orig.powerInterconnectionLoss;
     powerCurtailmentLimit = orig.powerCurtailmentLimit;
     voltageSystem = orig.voltageSystem;
-    acLossPostInverter = orig.acLossPostInverter;
-    acLossPostBattery = orig.acLossPostBattery,
+    acLossWiring = orig.acLossWiring;
+    acLossPostBattery = orig.acLossPostBattery;
+    acXfmrLoadLoss = orig.acXfmrLoadLoss;
+    acXfmrNoLoadLoss = orig.acXfmrNoLoadLoss;
+    acXfmrRating = orig.acXfmrRating;
     isOutageStep = orig.isOutageStep;
     connectionMode = orig.connectionMode;
     meterPosition = orig.meterPosition;
@@ -186,13 +205,16 @@ void BatteryPower::reset()
 	powerSystemClipped = 0;
 	powerPVInverterDraw = 0;
 	powerSystemToBatteryAC = 0;
+    powerSystemToBatteryDC = 0;
 	powerSystemToGrid = 0;
 	powerSystemToLoad = 0;
     powerInterconnectionLoss = 0;
     powerCurtailmentLimit = 1e+38;
 	voltageSystem = 0;
-    acLossPostInverter = 0.0;
+    acLossWiring = 0.0;
     acLossPostBattery = 0.0;
+    acXfmrLoadLoss = 0.0;
+    acXfmrNoLoadLoss = 0.0;
     isOutageStep = false;
 }
 
@@ -323,7 +345,7 @@ void BatteryPowerFlow::calculateACConnected()
     else if (P_battery_dc > 0)
         P_battery_ac = P_battery_dc * m_BatteryPower->singlePointEfficiencyDCToAC;
 
-    if (fabs(P_battery_ac) < tolerance) {
+    if (std::abs(P_battery_ac) < tolerance) {
         P_battery_ac = 0;
     }
 
@@ -352,7 +374,7 @@ void BatteryPowerFlow::calculateACConnected()
 
         // Excess PV can go to battery, if PV can cover charging losses
         if (m_BatteryPower->canSystemCharge) {
-            P_pv_to_batt_ac = fabs(P_battery_ac);
+            P_pv_to_batt_ac = std::abs(P_battery_ac);
             P_available_pv = P_pv_ac - P_pv_to_load_ac - P_system_loss_ac;
             if (P_pv_to_batt_ac > P_available_pv)
             {
@@ -385,16 +407,16 @@ void BatteryPowerFlow::calculateACConnected()
 
         // Fuelcell can also charge battery
         if (m_BatteryPower->canFuelCellCharge) {
-            P_fuelcell_to_batt_ac = std::fmin(std::fmax(0, fabs(P_battery_ac) - P_pv_to_batt_ac), P_fuelcell_ac - P_fuelcell_to_load_ac);
+            P_fuelcell_to_batt_ac = std::fmin(std::fmax(0, std::abs(P_battery_ac) - P_pv_to_batt_ac), P_fuelcell_ac - P_fuelcell_to_load_ac);
         }
         // Grid can also charge battery
         if (m_BatteryPower->canGridCharge) {
-            P_grid_to_batt_ac = std::fmax(0, fabs(P_battery_ac) - P_pv_to_batt_ac - P_fuelcell_to_batt_ac);
+            P_grid_to_batt_ac = std::fmax(0, std::abs(P_battery_ac) - P_pv_to_batt_ac - P_fuelcell_to_batt_ac);
         }
 
         if (m_BatteryPower->isOutageStep && !m_BatteryPower->canFuelCellCharge) {
             // Need to cover idle loss by reducing PV to load
-            if (P_available_pv < 0.0 && fabs(P_battery_ac) < tolerance && P_pv_ac > P_system_loss_ac) {
+            if (P_available_pv < 0.0 && std::abs(P_battery_ac) < tolerance && P_pv_ac > P_system_loss_ac) {
                 P_pv_to_load_ac = P_pv_ac - P_system_loss_ac;
                 pv_handles_losses = true;
             }
@@ -553,7 +575,7 @@ void BatteryPowerFlow::calculateACConnected()
 
     // Error checking trying to charge from grid when not allowed
     if (!m_BatteryPower->canGridCharge && P_battery_ac < -tolerance) {
-        if (((fabs(P_grid_ac - P_grid_to_load_ac) > tolerance) && (-P_grid_ac > P_grid_to_load_ac + tolerance)) || (fabs(P_loss_coverage) > tolerance)) {
+        if (((std::abs(P_grid_ac - P_grid_to_load_ac) > tolerance) && (-P_grid_ac > P_grid_to_load_ac + tolerance)) || (std::abs(P_loss_coverage) > tolerance)) {
             P_battery_ac = P_pv_ac - P_pv_to_grid_ac - P_pv_to_load_ac - P_system_loss_ac;
             P_battery_ac = P_battery_ac > 0 ? P_battery_ac : 0; // Don't swap from charging to discharging
             m_BatteryPower->powerBatteryDC = -P_battery_ac * m_BatteryPower->singlePointEfficiencyACToDC;
@@ -562,13 +584,13 @@ void BatteryPowerFlow::calculateACConnected()
     }
 
     // check tolerances
-    if (fabs(P_grid_to_load_ac) < m_BatteryPower->tolerance)
+    if (std::abs(P_grid_to_load_ac) < m_BatteryPower->tolerance)
         P_grid_to_load_ac = 0;
-    if (fabs(P_grid_to_batt_ac) < m_BatteryPower->tolerance)
+    if (std::abs(P_grid_to_batt_ac) < m_BatteryPower->tolerance)
         P_grid_to_batt_ac = 0;
-    if (fabs(P_grid_ac) < m_BatteryPower->tolerance)
+    if (std::abs(P_grid_ac) < m_BatteryPower->tolerance)
         P_grid_ac = 0;
-    if (fabs(P_crit_load_unmet_ac) < m_BatteryPower->tolerance)
+    if (std::abs(P_crit_load_unmet_ac) < m_BatteryPower->tolerance)
         P_crit_load_unmet_ac = 0;
    
 	// assign outputs
@@ -609,7 +631,14 @@ void BatteryPowerFlow::calculateDCConnected()
         P_interconnection_loss_ac = P_crit_load_unmet_ac = P_unmet_losses =
         P_batt_to_inverter_dc = 0;
 
-    double ac_loss_percent = 1 - (1 - m_BatteryPower->acLossPostInverter) * (1 - m_BatteryPower->acLossPostBattery); // Combine the loss types into one number - they're both on the AC side of the inverter
+    double ac_loss_percent = 1 - (1 - m_BatteryPower->acLossWiring) * (1 - m_BatteryPower->acLossPostBattery); // Combine the loss types into one number - they're all on the AC side of the inverter
+
+    if (m_BatteryPower->isOutageStep) {
+        m_BatteryPower->acXfmrNoLoadLoss = 0;
+    }
+    else {
+        ac_loss_percent *= (1 - m_BatteryPower->acXfmrLoadLoss);
+    }
 
     double P_ac_losses = 0.0; // These are reported by the loss variables in the system model, just record here for powerflow calcs
 
@@ -635,7 +664,7 @@ void BatteryPowerFlow::calculateDCConnected()
     bool pv_handles_loss = P_pv_dc > P_system_loss_dc && P_battery_dc <= tolerance; // Idle losses need to be handled by PV to keep inverter flows consistent, even if PV charging is disallowed
     double P_gen_dc = P_pv_dc + P_battery_dc - P_system_loss_dc;
 
-    if (fabs(P_gen_dc) < tolerance) {
+    if (std::abs(P_gen_dc) < tolerance) {
         P_gen_dc = 0.0;
     }
 
@@ -657,7 +686,7 @@ void BatteryPowerFlow::calculateDCConnected()
         // First check whether battery charging came from PV.
         // Assumes that if battery is charging and can charge from PV, that it will charge from PV before using the grid
         if (m_BatteryPower->canSystemCharge || m_BatteryPower->canClipCharge) {
-            P_pv_to_batt_dc = fabs(P_battery_dc);
+            P_pv_to_batt_dc = std::abs(P_battery_dc);
             if (P_pv_to_batt_dc > P_pv_dc - P_system_loss_dc) {
                 P_pv_to_batt_dc = P_pv_dc - P_system_loss_dc;
                 if (P_pv_to_batt_dc < 0) {
@@ -678,7 +707,7 @@ void BatteryPowerFlow::calculateDCConnected()
                 }
                 else {
                     P_pv_to_inverter_dc = 0.0;
-                    P_unmet_losses = fabs(P_pv_to_inverter_dc);
+                    P_unmet_losses = std::abs(P_pv_to_inverter_dc);
                     pv_handles_loss = false;
                 }
             }
@@ -693,9 +722,9 @@ void BatteryPowerFlow::calculateDCConnected()
         }
 
         // Any remaining charge comes from grid if allowed
-        P_grid_to_batt_dc = fabs(P_battery_dc) - P_pv_to_batt_dc;
+        P_grid_to_batt_dc = std::abs(P_battery_dc) - P_pv_to_batt_dc;
 
-        if (fabs(P_grid_to_batt_dc) < tolerance) {
+        if (std::abs(P_grid_to_batt_dc) < tolerance) {
             P_grid_to_batt_dc = 0.0;
         }
 
@@ -727,7 +756,7 @@ void BatteryPowerFlow::calculateDCConnected()
         m_BatteryPower->sharedInverter->calculateACPower(P_gen_dc_inverter, voltage, m_BatteryPower->sharedInverter->Tdry_C);
 
         // Only update inverter efficiency if the inverter is running. Otherwise use max efficency from above
-        if (m_BatteryPower->sharedInverter->powerAC_kW > 0.0 && P_gen_dc_inverter > 0 || fabs(m_BatteryPower->sharedInverter->powerAC_kW) > m_BatteryPower->sharedInverter->powerNightLoss_kW) {
+        if (m_BatteryPower->sharedInverter->powerAC_kW > 0.0 && P_gen_dc_inverter > 0 || std::abs(m_BatteryPower->sharedInverter->powerAC_kW) > m_BatteryPower->sharedInverter->powerNightLoss_kW) {
             
             efficiencyDCAC = m_BatteryPower->sharedInverter->efficiencyAC * 0.01;
 
@@ -754,6 +783,17 @@ void BatteryPowerFlow::calculateDCConnected()
             P_gen_ac = 0;
             P_grid_to_batt_ac = 0;
         }
+
+        double P_xfmr_ll = m_BatteryPower->acXfmrLoadLoss;
+        double P_transformer_loss = 0;
+        if (!m_BatteryPower->isOutageStep && P_gen_ac > 0) {
+            P_transformer_loss = Transformer::transformerLoss(P_gen_ac * (1 - m_BatteryPower->acLossWiring), m_BatteryPower->acXfmrLoadLoss, m_BatteryPower->acXfmrRating, P_xfmr_ll, m_BatteryPower->acXfmrNoLoadLoss);
+        }
+        P_ac_losses = P_gen_ac - (P_gen_ac * (1 - m_BatteryPower->acLossWiring) - P_transformer_loss) * (1 - m_BatteryPower->acLossPostBattery);
+        if (P_gen_ac > tolerance) {
+            ac_loss_percent = P_ac_losses / P_gen_ac;
+        }
+
         P_pv_ac = P_pv_to_inverter_dc * efficiencyDCAC * (1 - ac_loss_percent);
 
         if (m_BatteryPower->isOutageStep) {
@@ -780,7 +820,7 @@ void BatteryPowerFlow::calculateDCConnected()
             P_battery_ac = -(P_pv_to_batt_dc * maxEfficiencyDCAC + P_grid_to_batt_ac);
         }
 
-        if (fabs(P_battery_ac) < tolerance) {
+        if (std::abs(P_battery_ac) < tolerance) {
             P_battery_ac = 0.0;
         }
 
@@ -793,7 +833,7 @@ void BatteryPowerFlow::calculateDCConnected()
     {
         // Can't draw from the grid during outage
         if (m_BatteryPower->isOutageStep && P_gen_dc < 0.0) {
-            P_unmet_losses = fabs(P_gen_dc);
+            P_unmet_losses = std::abs(P_gen_dc);
             P_gen_dc = 0.0;
         }
 
@@ -820,11 +860,20 @@ void BatteryPowerFlow::calculateDCConnected()
             P_batt_to_inverter_dc = P_battery_dc - P_system_loss_dc;
         }
 
-        if (fabs(P_battery_ac) < tolerance) {
+        if (std::abs(P_battery_ac) < tolerance) {
             P_battery_ac = 0.0;
         }
 
-        P_ac_losses = (P_battery_ac + P_pv_ac) * ac_loss_percent;
+        double P_xfmr_ll = m_BatteryPower->acXfmrLoadLoss;
+        double P_transformer_loss = 0;
+        if (!m_BatteryPower->isOutageStep && P_gen_ac > 0) {
+            P_transformer_loss = Transformer::transformerLoss(P_gen_ac * (1 - m_BatteryPower->acLossWiring), m_BatteryPower->acXfmrLoadLoss, m_BatteryPower->acXfmrRating, P_xfmr_ll, m_BatteryPower->acXfmrNoLoadLoss);
+        }
+        P_ac_losses = P_gen_ac - (P_gen_ac * (1 - m_BatteryPower->acLossWiring) - P_transformer_loss) * (1 - m_BatteryPower->acLossPostBattery);
+        if (P_gen_ac > tolerance) {
+            ac_loss_percent = P_ac_losses / P_gen_ac;
+        }
+
         P_pv_ac *= (1 - ac_loss_percent);  // P_pv_ac isn't reported out directly, so we can use it
         P_battery_ac_post_loss = P_battery_ac * (1 - ac_loss_percent); // P_battery_ac is used to calculate annual charging and discharging. Apply to another variable so post batt AC losses aren't included in that value
 
@@ -872,7 +921,7 @@ void BatteryPowerFlow::calculateDCConnected()
                     P_batt_to_load_ac = std::fmin(P_battery_ac_post_loss, P_load_ac - P_pv_to_load_ac);
                 }
 
-                P_batt_to_grid_ac = P_battery_ac_post_loss - P_batt_to_load_ac;
+                P_batt_to_grid_ac = std::fmax(0, P_battery_ac_post_loss - P_batt_to_load_ac);
             }
             else {
                 P_batt_to_load_ac = std::fmin(P_battery_ac_post_loss, P_load_ac);
@@ -884,8 +933,6 @@ void BatteryPowerFlow::calculateDCConnected()
 
     // compute losses
     P_conversion_loss_ac = P_gen_dc - P_gen_ac + P_battery_dc_pre_bms - P_battery_dc;
-
-    P_ac_losses = P_gen_ac * ac_loss_percent;
     
     double P_loss_coverage = 0;
     if (m_BatteryPower->isOutageStep) {
@@ -917,7 +964,7 @@ void BatteryPowerFlow::calculateDCConnected()
         P_grid_to_load_ac = P_load_ac - P_pv_to_load_ac - P_batt_to_load_ac;
 
         // Grid charging loss accounted for in P_battery_ac
-        P_grid_ac = P_gen_ac - P_load_ac;
+        P_grid_ac = P_gen_ac - P_load_ac - P_ac_losses;
 
         // Error checking for power to load
         if (P_pv_to_load_ac + P_grid_to_load_ac + P_batt_to_load_ac != P_load_ac)
@@ -942,13 +989,13 @@ void BatteryPowerFlow::calculateDCConnected()
     }
 
     // check tolerances
-    if (fabs(P_grid_to_load_ac) < m_BatteryPower->tolerance)
+    if (std::abs(P_grid_to_load_ac) < m_BatteryPower->tolerance)
         P_grid_to_load_ac = 0;
-    if (fabs(P_grid_to_batt_ac) < m_BatteryPower->tolerance)
+    if (std::abs(P_grid_to_batt_ac) < m_BatteryPower->tolerance)
         P_grid_to_batt_ac = 0;
-    if (fabs(P_grid_ac) < m_BatteryPower->tolerance)
+    if (std::abs(P_grid_ac) < m_BatteryPower->tolerance)
         P_grid_ac = 0;
-    if (fabs(P_crit_load_unmet_ac) < m_BatteryPower->tolerance)
+    if (std::abs(P_crit_load_unmet_ac) < m_BatteryPower->tolerance)
         P_crit_load_unmet_ac = 0;
 
 	// assign outputs

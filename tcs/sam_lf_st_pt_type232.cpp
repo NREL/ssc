@@ -1,23 +1,33 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #define _TCSTYPEINTERFACE_
@@ -812,7 +822,7 @@ public:
 							sum		= (1.0 - e_band_array.at( l, k ))*F_view.at( i, l )*F_hat.at( l, j, k );
 						}
 						F_hat_guess.at( i, j, k )	= F_view.at( i, j ) + sum;
-						error_array.at( i, j )		= fabs( F_hat.at( i, j, k) - F_hat_guess.at( i, j, k) );
+						error_array.at( i, j )		= std::abs( F_hat.at( i, j, k) - F_hat_guess.at( i, j, k) );
 						F_hat.at( i, j, k )			= F_hat_guess.at( i, j, k );
 					}
 				}
@@ -1575,7 +1585,7 @@ public:
 
 			cycle_out_loop = false;		// Logic to break out of qq loop and reset gamma. Should default to false unless switch in qq loop
 
-			while( fabs(err_coupled_conv) > 1.E-8 && iter_coupled_conv < 100 )
+			while(std::abs(err_coupled_conv) > 1.E-8 && iter_coupled_conv < 100 )
 			{
 				// 222 continue
 				//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -2139,8 +2149,8 @@ public:
 							else
 							{
 								// Temperature error for each flow path
-								error_temp.at(j,0) = fabs( (T_htf_hot_guess.at(j,0) - T_htf_hot)/T_htf_hot );
-								error_flow.at(j,0) = fabs( (m_htf.at(j,0) - m_htf_guess.at(j,0))/m_htf_guess.at(j,0) );
+								error_temp.at(j,0) = std::abs( (T_htf_hot_guess.at(j,0) - T_htf_hot)/T_htf_hot );
+								error_flow.at(j,0) = std::abs( (m_htf.at(j,0) - m_htf_guess.at(j,0))/m_htf_guess.at(j,0) );
 							}
 							errorsum_temp = max( errorsum_temp, error_temp.at(j,0) );
 							errorsum_flow = max( errorsum_flow, error_flow.at(j,0) );
@@ -2151,8 +2161,8 @@ public:
 
 					case 3:
 					case 4:
-						errorsum_temp = fabs( (T_htf_hot_guess.at(0,0) - T_htf_hot)/T_htf_hot );
-						errorsum_flow = fabs( (m_htf.at(0,0) - m_htf_guess.at(0,0))/m_htf_guess.at(0,0) );
+						errorsum_temp = std::abs( (T_htf_hot_guess.at(0,0) - T_htf_hot)/T_htf_hot );
+						errorsum_flow = std::abs( (m_htf.at(0,0) - m_htf_guess.at(0,0))/m_htf_guess.at(0,0) );
 
 						break;	// flow_pattern = 3 & 4
 
@@ -2162,8 +2172,8 @@ public:
 					case 8:
 						for( int j = 0; j < 2; j++ )
 						{
-							errorsum_temp = max( errorsum_temp, fabs((T_htf_hot_guess.at(j,0) - T_htf_hot)/T_htf_hot) );
-							errorsum_flow = max( errorsum_flow, fabs( fabs(m_htf.at(j,0) - m_htf_guess.at(j,0))/m_htf_guess.at(j,0) ) );
+							errorsum_temp = max( errorsum_temp, std::abs((T_htf_hot_guess.at(j,0) - T_htf_hot)/T_htf_hot) );
+							errorsum_flow = max( errorsum_flow, std::abs(std::abs(m_htf.at(j,0) - m_htf_guess.at(j,0))/m_htf_guess.at(j,0) ) );
 						}
 						break;	// flow_pattern = 6
 					}
@@ -2270,9 +2280,9 @@ public:
 
 				// Calculate the total radiation losses out of the aperature
 				// twn: only Q_radiation_loss is used in this loop, the rest of these calculations could be moved to after loop
-				Q_radiation_loss = fabs(q_rad_semi_gray_net.at(m_n_panels*m_n_nodes+3,0));
-				Q_radiation_loss_solar = fabs(q_rad_solar_net.at(m_n_panels*m_n_nodes+3,0));
-				Q_radiation_loss_therm = fabs(q_rad_therm_net.at(m_n_panels*m_n_nodes+3,0));
+				Q_radiation_loss = std::abs(q_rad_semi_gray_net.at(m_n_panels*m_n_nodes+3,0));
+				Q_radiation_loss_solar = std::abs(q_rad_solar_net.at(m_n_panels*m_n_nodes+3,0));
+				Q_radiation_loss_therm = std::abs(q_rad_therm_net.at(m_n_panels*m_n_nodes+3,0));
 				Q_radiation_loss_semi_sum = Q_radiation_loss_therm + Q_radiation_loss_solar;
 
 				// ST: area averaged surface temperature determined
@@ -2518,7 +2528,7 @@ public:
 		value( O_Q_rad_loss, Q_radiation_loss/1.0E6 );   
 		value( O_Q_thermal, Q_thermal/1.0E6 );    
 		value( O_T_htf_hot, T_htf_hot_out - 273.15 );    
-		value( O_Q_rec_abs, value( O_Q_thermal ) + fabs( value( O_Q_rad_loss ) + value( O_Q_conv_loss ) ) );    
+		value( O_Q_rec_abs, value( O_Q_thermal ) + std::abs( value( O_Q_rad_loss ) + value( O_Q_conv_loss ) ) );
 		value( O_field_eff_adj, field_eff_adj );
 		value( O_Q_solar_total, q_solar_total/1.0E6 );				// 1.10.14, twn: Change to pre-defocus?
 		value( O_Q_startup, q_startup );   

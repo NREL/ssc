@@ -1,23 +1,33 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
-or promote products derived from this software without specific prior written permission.
+/*
+BSD 3-Clause License
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #define _TCSTYPEINTERFACE_
@@ -1428,7 +1438,7 @@ public:
 				bool break_to_rh_iter = false;
 				bool break_rec_calcs = false;
 				// 93
-				while( (fabs(diff_T_rh) > m_tol_T_rh || (high_tol) ) && (iter_T_rh < 20) )
+				while( (std::abs(diff_T_rh) > m_tol_T_rh || (high_tol) ) && (iter_T_rh < 20) )
 				{
 					iter_T_rh++;							//[-] Increase iteration counter
 					break_to_rh_iter = false;				//[-] Flag to restart this loop
@@ -1565,7 +1575,7 @@ public:
 						}
 					}	// End convergence logic
 				
-					if( fabs(diff_frh_b)<0.0051 || iter_T_rh== 20 )
+					if(std::abs(diff_frh_b)<0.0051 || iter_T_rh== 20 )
 					{
 						if( f_rh_upper < 0.01 && rh_br_lower == 0 )		rh_br_lower = 5;
 
@@ -1612,7 +1622,7 @@ public:
 						}
 
 						// Need to continue iterating, may have to slightly adjust limits due to relaxed sh exit tolerance at early f_rh iterations
-						else if( rh_br_lower==4 && rh_br_upper==3 && fabs(diff_frh_b) < 0.0005 )
+						else if( rh_br_lower==4 && rh_br_upper==3 && std::abs(diff_frh_b) < 0.0005 )
 						{
 							if(diff_T_rh < 0.0)
 							{
@@ -1685,7 +1695,7 @@ public:
 					// *********************************************************************************************
 
 					// 184 -> Fortran GOTO loop
-					while( fabs(diff_T_sh)>tol_T_sh && iter_T_sh<20 )
+					while(std::abs(diff_T_sh)>tol_T_sh && iter_T_sh<20 )
 					{
 						iter_T_sh++;							//[-] Add to iteration counter
 						diff_f_bracket = f_upper - f_lower;		//[-] Difference between upper and lower bracket guesses
@@ -1786,7 +1796,7 @@ public:
 						boiler_exit = sh_exit = 0;
 
 						// End of boiler convergence
-						if( fabs(diff_f_bracket)<m_bracket_tol && iter_T_sh<20 )
+						if(std::abs(diff_f_bracket)<m_bracket_tol && iter_T_sh<20 )
 						{
 							if( f_lower>0.99 && br_upper==0 )	br_upper = 4;
 
@@ -1950,7 +1960,7 @@ public:
 
 					}	// End iteration on boiler mass flow rate and superheater outlet temperature
 
-					if( iter_T_sh==20 && fabs(diff_T_sh)>tol_T_sh )
+					if( iter_T_sh==20 && std::abs(diff_T_sh)>tol_T_sh )
 					{
 						m_success = false;
 						// message: "The receiver model did not converge at this timestep (SH)"
@@ -2000,7 +2010,7 @@ public:
 					diff_T_rh = (m_T_rh_out_des - T_rh_out)/m_T_rh_out_des;	//[K]
 
 					// Logic that allows code to solve on first iteration if SH and RH are both winthin final tolerance
-					if( high_tol && fabs(diff_T_sh)<m_tol_T_sh_base && fabs(diff_T_rh)>m_tol_T_rh )
+					if( high_tol && std::abs(diff_T_sh)<m_tol_T_sh_base && std::abs(diff_T_rh)>m_tol_T_rh )
 						high_tol = false;
 
 				}	// end iteration on flux and outlet temperature of reheater
@@ -2008,7 +2018,7 @@ public:
 				if( break_def_calcs )
 					break;
 
-				if( iter_T_rh==20 && fabs(diff_T_rh)>m_tol_T_rh )
+				if( iter_T_rh==20 && std::abs(diff_T_rh)>m_tol_T_rh )
 				{
 					m_success = false;
 					// Message: "The receiver model did not converge at this timestep (RH)"
@@ -2233,7 +2243,7 @@ public:
 		{
 			if( m_diff_m_dot_old_ncall > m_diff_m_dot_out_ncall )
 			{
-				if( fabs(m_diff_m_dot_old_ncall + m_diff_m_dot_out_ncall) < 0.01 )
+				if(std::abs(m_diff_m_dot_old_ncall + m_diff_m_dot_out_ncall) < 0.01 )
 				{
 					m_dot_toPB = 0.5*m_m_dot_prev_ncall + 0.5*m_dot_toPB;
 					m_diff_m_dot_out_ncall = m_dot_toPB - m_m_dot_prev_ncall;
@@ -2241,7 +2251,7 @@ public:
 			}
 			else if( m_diff_m_dot_out_ncall > m_diff_m_dot_old_ncall )
 			{
-				if( fabs(m_diff_m_dot_out_ncall + m_diff_m_dot_old_ncall) < 0.01 )
+				if(std::abs(m_diff_m_dot_out_ncall + m_diff_m_dot_old_ncall) < 0.01 )
 				{
 					m_dot_toPB = 0.5*m_m_dot_prev_ncall + 0.5*m_dot_toPB;
 					m_diff_m_dot_out_ncall = m_dot_toPB - m_m_dot_prev_ncall;
@@ -2249,7 +2259,7 @@ public:
 			}
 		}
 
-		if( ncall > 0 && fabs(m_diff_m_dot_out_ncall/m_dot_toPB) < 0.005 && fabs(diff_dp_b) < 0.005 && fabs(diff_dp_sh) < 0.005 && fabs(diff_dp_rh) < 0.005 )
+		if( ncall > 0 && std::abs(m_diff_m_dot_out_ncall/m_dot_toPB) < 0.005 && std::abs(diff_dp_b) < 0.005 && std::abs(diff_dp_sh) < 0.005 && std::abs(diff_dp_rh) < 0.005 )
 		{
 			m_dot_toPB = m_m_dot_prev_ncall;
 			f_timestep = f_timestep_prev_ncall;
