@@ -874,6 +874,14 @@ void C_csp_two_tank_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inputs
 
     m_is_hx = is_hx_calc;
 
+    // Added by TB 2023-03-03
+    // Need to check if tes_pump_coef is defined for storage with hx
+    if (m_is_hx)
+    {
+        if(std::isnan(this->m_tes_pump_coef))
+            throw(C_csp_exception("TES Pump Coef not provided for system with different field and storage fluids.", "Two Tank TES Initialization"));
+    }
+
     /*
 	if( m_is_hx != is_hx_calc )
 	{
