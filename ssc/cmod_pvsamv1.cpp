@@ -1789,7 +1789,11 @@ void cm_pvsamv1::exec()
                 }
 
                 // Calculate total front irradiation after soiling added to shading
-                ipoa_front[nn] = ibeam + iskydiff + ignddiff;
+                if (radmode == irrad::POA_R || radmode == irrad::POA_P) 
+                    ipoa_front[nn] = ipoa[nn];
+                else
+                    ipoa_front[nn] = ibeam + iskydiff + ignddiff;
+
                 ts_accum_poa_front_shaded_soiled += ipoa_front[nn] * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
 
                 // Calculate rear-side irradiance
