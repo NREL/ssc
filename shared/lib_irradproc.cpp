@@ -1233,6 +1233,8 @@ calculate_spa(double jd, double lat, double lng, double alt, double pressure, do
     double atmos_refract = 0.5667; // atmospheric refraction for check if sun is below horizon
     double del_e = atmospheric_refraction_correction(pressure, temp, atmos_refract,
                                                      e0); // atmospheric refraction correction in degrees, returns 0 if sun is below horizon
+    if (std::isnan(del_e)) del_e = 0;
+
     double e = topocentric_elevation_angle_corrected(e0,
                                                      del_e); // Topocentric elevation angle corrected for refraction (degrees)
     needed_values[6] = e; // Pass topocentric elevation angle as an output of solarpos_spa (degrees)
@@ -1824,8 +1826,10 @@ int poaDecomp(double, double angle[], double sun[], double alb, poaDecompReq *pA
                                      dnTmp, dfTmp, ghTmp, poaTmp);
             }
         }
-
-        avgKtp /= count;
+        // fails when count = 0;
+        //avgKtp /= count;
+        if (count > 0)
+            avgKtp /= count;
 
         //Calculate Kt
         double am = Min(15.25, 1.0 / (cos(sun[1]) + 0.15 * (pow(93.9 - sun[1] * 180 / M_PI, -1.253)))); // air mass
@@ -1855,8 +1859,7 @@ int poaDecomp(double, double angle[], double sun[], double alb, poaDecompReq *pA
         gh = 0;
         errorcode = 42;
     }
-    if (df <
-        0) //check for df before gh because gh is only calculated using dn and df, so is least likely to be the actual culprit
+    if (df < 0) //check for df before gh because gh is only calculated using dn and df, so is least likely to be the actual culprit
     {
         df = 0;
         errorcode = 41;
