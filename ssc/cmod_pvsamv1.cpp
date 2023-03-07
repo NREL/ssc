@@ -1480,7 +1480,6 @@ void cm_pvsamv1::exec()
                 }
                 else if (radmode == irrad::POA_P) {
                     ipoa[nn] = wf.poa;
-                    Subarrays[nn]->poa.usePOAFromWF = true;
                 }
 
                 if (Subarrays[nn]->Module->simpleEfficiencyForceNoPOA && (radmode == irrad::POA_R || radmode == irrad::POA_P)) {  // only will be true if using a poa model AND spe module model AND spe_fp is < 1
@@ -1558,18 +1557,18 @@ void cm_pvsamv1::exec()
                 // record sub-array plane of array output before computing shading and soiling
                 if (iyear == 0 || save_full_lifetime_variables == 1)
                 {
-                    if ((radmode == irrad::POA_R) || (radmode == irrad::POA_P))
-                        PVSystem->p_poaNominalFront[nn][idx] = (ssc_number_t)((ipoa[nn]));
-                    else
+                    if (radmode != irrad::POA_R)
                         PVSystem->p_poaNominalFront[nn][idx] = (ssc_number_t)((ibeam + iskydiff + ignddiff));
+                    else
+                        PVSystem->p_poaNominalFront[nn][idx] = (ssc_number_t)((ipoa[nn]));
                 }
 
 
                 // record sub-array contribution to total POA power for this time step  (W)
-                if ((radmode == irrad::POA_R) || (radmode == irrad::POA_P))
-                    ts_accum_poa_front_nom += (ipoa[nn]) * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
-                else
+                if (radmode != irrad::POA_R)
                     ts_accum_poa_front_nom += (ibeam + iskydiff + ignddiff) * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
+                else
+                    ts_accum_poa_front_nom += (ipoa[nn]) * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
 
                 // record sub-array contribution to total POA beam power for this time step (W)
                 ts_accum_poa_front_beam_nom += ibeam * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
@@ -1767,7 +1766,7 @@ void cm_pvsamv1::exec()
                         throw exec_error("pvsamv1", util::format("Self-shading calculation failed at %d", (int)idx));
                 }
 
-                double poashad = ((radmode == irrad::POA_R) || ((radmode == irrad::POA_P))) ? ipoa[nn] : (ibeam + iskydiff + ignddiff);
+                double poashad = (radmode == irrad::POA_R) ? ipoa[nn] : (ibeam + iskydiff + ignddiff);
 
                 // determine sub-array contribution to total shaded plane of array for this hour
                 ts_accum_poa_front_shaded += poashad * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
@@ -1924,7 +1923,7 @@ void cm_pvsamv1::exec()
                 Subarrays[nn]->poa.poaDiffuseFront = iskydiff;
                 Subarrays[nn]->poa.poaGroundFront = ignddiff;
                 Subarrays[nn]->poa.poaRear = Subarrays[nn]->Module->isBifacial ? ipoa_rear_after_losses[nn] : 0.;       // TODO: why is setting to 0 necessary for some tests to pass?
-                Subarrays[nn]->poa.poaTotal = ((radmode == irrad::POA_R) || (radmode == irrad::POA_P)) ? ipoa[nn] : (ipoa_front[nn] + ipoa_rear_after_losses[nn] * bifaciality);
+                Subarrays[nn]->poa.poaTotal = (radmode == irrad::POA_R) ? ipoa[nn] : (ipoa_front[nn] + ipoa_rear_after_losses[nn] * bifaciality);
                 Subarrays[nn]->poa.angleOfIncidenceDegrees = aoi;
                 Subarrays[nn]->poa.sunUp = sunup;
                 Subarrays[nn]->poa.surfaceTiltDegrees = stilt;
@@ -2210,11 +2209,11 @@ void cm_pvsamv1::exec()
                     if (iyear == 0 || save_full_lifetime_variables == 1)
                     {
                         ipoa_front[nn] *= out[nn].AOIModifier;
-                        PVSystem->p_poaFront[nn][idx] = ((radmode == irrad::POA_R) || (radmode == irrad::POA_P)) ? (ssc_number_t)ipoa[nn] : (ssc_number_t)(ipoa_front[nn]);
-                        PVSystem->p_poaTotal[nn][idx] = ((radmode == irrad::POA_R) || (radmode == irrad::POA_P)) ? (ssc_number_t)ipoa[nn] : (ssc_number_t)(ipoa_front[nn] + ipoa_rear_after_losses[nn] * bifaciality);
+                        PVSystem->p_poaFront[nn][idx] = (radmode == irrad::POA_R) ? (ssc_number_t)ipoa[nn] : (ssc_number_t)(ipoa_front[nn]);
+                        PVSystem->p_poaTotal[nn][idx] = (radmode == irrad::POA_R) ? (ssc_number_t)ipoa[nn] : (ssc_number_t)(ipoa_front[nn] + ipoa_rear_after_losses[nn] * bifaciality);
 
                         ts_accum_poa_front_total += ipoa_front[nn] * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
-                        ts_accum_poa_total_eff += (((radmode == irrad::POA_R) || (radmode == irrad::POA_P))? ipoa[nn] : (ipoa_front[nn] + ipoa_rear_after_losses[nn] * bifaciality)) * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
+                        ts_accum_poa_total_eff += ((radmode == irrad::POA_R) ? ipoa[nn] : (ipoa_front[nn] + ipoa_rear_after_losses[nn] * bifaciality)) * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
 
                         //assign final string voltage output
                         PVSystem->p_dcStringVoltage[nn][idx] = (ssc_number_t)Subarrays[nn]->Module->dcVoltage * Subarrays[nn]->nModulesPerString;
