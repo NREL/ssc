@@ -350,6 +350,16 @@ public:
 
     void get_design_parameters(double& vol_one_temp_avail /*m3*/, double& vol_one_temp_total /*m3*/, double& d_tank /*m*/,
         double& q_dot_loss_des /*MWt*/, double& dens_store_htf_at_T_ave /*kg/m3*/, double& Q_tes /*MWt-hr*/);
+
+
+    double get_max_storage_htf_temp();
+
+    double get_min_storage_htf_temp();
+
+    double get_storage_htf_density();
+
+    double get_storage_htf_cp();
+
 };
 
 class C_hx_cold_tes

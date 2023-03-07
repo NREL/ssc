@@ -2077,6 +2077,30 @@ double /*MWe*/ C_csp_two_tank_tes::pumping_power(double m_dot_sf /*kg/s*/, doubl
     return htf_pump_power;
 }
 
+
+double C_csp_two_tank_tes::get_min_storage_htf_temp()
+{
+    return mc_store_htfProps.min_temp();
+}
+
+double C_csp_two_tank_tes::get_max_storage_htf_temp()
+{
+    return mc_store_htfProps.max_temp();
+}
+
+double C_csp_two_tank_tes::get_storage_htf_density()
+{
+    double avg_temp = (m_T_cold_des + m_T_hot_des) / 2.0;
+    return mc_store_htfProps.dens(avg_temp, 0);
+}
+
+double C_csp_two_tank_tes::get_storage_htf_cp()
+{
+    double avg_temp = (m_T_cold_des + m_T_hot_des) / 2.0;
+    return mc_store_htfProps.Cp(avg_temp);
+}
+
+
 void two_tank_tes_sizing(HTFProperties &tes_htf_props, double Q_tes_des /*MWt-hr*/, double T_tes_hot /*K*/,
 	double T_tes_cold /*K*/, double h_min /*m*/, double h_tank /*m*/, int tank_pairs /*-*/, double u_tank /*W/m^2-K*/,
 	double & vol_one_temp_avail /*m3*/, double & vol_one_temp_total /*m3*/, double & d_tank /*m*/,

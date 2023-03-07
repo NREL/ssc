@@ -71,6 +71,7 @@ private:
     emit_table* m_epsilon_abs;
 
     HTFProperties m_htfProps, m_airProps;
+    
     const util::matrix_t<HTFProperties*> m_AnnulusGasMat;		// HTF Property class for each variant of each receiver type
     const util::matrix_t<AbsorberProps*> m_AbsorberPropMat;	    // Absorber Property class for each variant of each receiver type
     
@@ -192,7 +193,7 @@ private:
 
     OpticalDataTable optical_table;
     
-    HTFProperties m_htfProps, m_airProps;
+    
 
     // Hardcoded constants
     const double m_d2r = CSP::pi / 180.0;
@@ -210,22 +211,20 @@ private:
     //int m_n_r_iam_matrix;	//[-] Number of rows in the IAM matrix
     double m_v_hot;			//[m^3] Hot piping volume
     double m_v_cold;		//[m^3] Cold piping volume
-    double m_Ap_tot;		//[m^2] Total field aperture area
+    
     int	m_nfsec;			//[-] Number of field sections
     int	m_nhdrsec;			//[-] Number of header sections
     int	m_nrunsec;			//[-] Number of unique runner diameters
     double m_L_tot;			//[m] Total length of collectors in a loop
     double m_opteff_des;	//[-] Design-point optical efficieny (theta = 0) from the solar field
-    double m_m_dot_design;	//[kg/s] Total solar field mass flow rate at design
-    double m_m_dot_loop_des;//[kg/s] LOOP design mass flow rate
-    double m_q_design;		//[Wt] Design-point thermal power from the solar field
-    double m_W_dot_sca_tracking_nom;		//[MWe] Tracking parasitics when trough is on sun
+    
+    
 
     emit_table m_epsilon_3;			// Table of emissivity vs temperature for each variant of each receiver type
     util::matrix_t<HTFProperties*> m_AnnulusGasMat;		// HTF Property class for each variant of each receiver type
     util::matrix_t<AbsorberProps*> m_AbsorberPropMat;	// Absorber Property class for each variant of each receiver type
 
-    double m_defocus_old;	//[-] Defocus during previous call (= 1 at first call)
+    //double m_defocus_old;	//[-] Defocus during previous call (= 1 at first call)
     int m_ncall;			//[-] Track number of calls per timestep, reset = -1 in converged() call
 
     // Variables that are passed between methods, but not necessary to carry over timesteps
@@ -250,20 +249,20 @@ private:
     std::vector<double> m_q_SCA;		//[W/m] Total incident irradiation on the receiver (q"*A_aper/L_sca*cos(theta)*all_defocus)
     std::vector<double> m_q_SCA_control_df;	//[W/m] Total incident irradiation less CONTROL defocus (m_q_sca * control_defocus)
 
-    double m_IAM;			//[-] Incidence angle modifiers   NOT a vector becuase only one collector type ?
-    std::vector<double> m_RowShadow;	//[-] Row-to-row shadowing losses
+    //double m_IAM;			//[-] Incidence angle modifiers   NOT a vector becuase only one collector type ?
+    //std::vector<double> m_RowShadow;	//[-] Row-to-row shadowing losses
 
     /*m_nColt, m_nSCA*/
     util::matrix_t<double> m_ColOptEff;	//[-] tracking * geom * rho * dirt * error * IAM * row shadow * end loss * ftrack
-    vector<double> m_EndGain;	//[-] Light from different collector hitting receiver   // NOT a matrix because only one collector type
-    vector<double> m_EndLoss;	//[-] Light missing receiver due to length // NOT a matrix because only one collector type
+    //vector<double> m_EndGain;	//[-] Light from different collector hitting receiver   // NOT a matrix because only one collector type
+    //vector<double> m_EndLoss;	//[-] Light missing receiver due to length // NOT a matrix because only one collector type
 
     double m_Theta_ave;			//[rad] Field average m_theta value (but... nothing in our model allows for this to different over SCAs)
 
-    double m_CosTh_ave;			//[-] Field average costheta value
-    double m_IAM_ave;			//[-] Field average incidence angle modifier
-    double m_RowShadow_ave;		//[-] Field average row shadowing loss
-    double m_EndLoss_ave;		//[-] Field average end loss
+    //double m_CosTh_ave;			//[-] Field average costheta value
+    //double m_IAM_ave;			//[-] Field average incidence angle modifier
+    //double m_RowShadow_ave;		//[-] Field average row shadowing loss
+    //double m_EndLoss_ave;		//[-] Field average end loss
 
     //double m_costh;				//[-] Cosine of the incidence angle between sun and trough aperture
     //double m_dni_costh;			//[W/m2] DNI x cos(theta) product
@@ -376,8 +375,8 @@ private:
     bool m_ss_init_complete;	//[-] For TCS-based model in acceptance testing, has model achieved steady state at first timestep?
 
     // Member variables that are used to store information for the EvacReceiver method
-    double m_T_save[5];			//[K] Saved temperatures from previous call to EvacReceiver single SCA energy balance model
-    std::vector<double> mv_reguess_args;	//[-] Logic to determine whether to use previous guess values or start iteration fresh
+    //double m_T_save[5];			//[K] Saved temperatures from previous call to EvacReceiver single SCA energy balance model
+    //std::vector<double> mv_reguess_args;	//[-] Logic to determine whether to use previous guess values or start iteration fresh
 
     double m_Q_field_losses_total_subts;	//[MJ] SYSTEM scas + xover + hot_HR + cold_HR
     double m_c_htf_ave_ts_ave_temp;			//[J/kg-K] integrated-averaged cp over T_htf_cold_in, m_T_sys_h_t_in
@@ -397,16 +396,13 @@ private:
     double m_current_hr;
     double m_current_day;
 
-    
+    int counter = 0;
 
     // Fields NOT in Trough
     double N_run_mult;
-    bool
-        no_fp,	//Freeze protection flag
-        is_fieldgeom_init;	//Flag to indicate whether the field geometry has been initialized
     
 
-    double A_loop;
+    
 
     const double Pi = acos(-1);
     const double pi = Pi;
@@ -428,7 +424,7 @@ private:
 
     string m_piping_summary;
 
-    double m_sf_def;
+    //double m_sf_def;
 
     std::unique_ptr<EvacReceiverModel> m_evac_receiver;
 
@@ -468,6 +464,8 @@ public:
     double m_theta_dep;		                    // [deg] deploy angle
     int m_FieldConfig;		                    // [-] Number of subfield headers
     double m_T_startup;		                    // [C] The required temperature (converted to K in init) of the system before the power block can be switched on
+
+
 
     double m_m_dot_htfmin;	                    // [kg/s] Minimum loop HTF flow rate
     double m_m_dot_htfmax;	                    // [kg/s] Maximum loop HTF flow rate
@@ -569,6 +567,8 @@ public:
     std::vector<double> m_T_loop;                 //[K]    Temperature entering loop sections
     //std::vector<double> m_P_loop;                 //[Pa]   Gauge pessure in loop sections
 
+    
+
     // Fresnel Only Inputs
     double m_L_mod_spacing;                     // Piping distance between sequential modules in a loop
     double m_L_crossover;                       // Length of crossover piping in a loop
@@ -584,7 +584,22 @@ public:
 
     C_csp_reported_outputs mc_reported_outputs;
 
+    HTFProperties m_htfProps, m_airProps;
 
+    // Public Design Point Outputs
+    double m_q_design;		            //[Wt] Design-point thermal power from the solar field
+    double m_A_loop;                    // Aperture of a loop [m2]
+    double m_dT_des;                    // Average field temp difference at design [delta C (or K)]
+    double m_hl_des;                    // Heat loss at design [W/m]
+    double m_loop_opt_eff;              // Loop optical efficiency
+    double m_loop_therm_eff;            // Loop thermal Efficiency
+    double m_loop_eff;                  // Loop total efficiency
+    double m_W_dot_sca_tracking_nom;	//[MWe] Tracking parasitics when trough is on sun
+    double m_Ap_tot;		            //[m^2] Total field aperture area
+    double m_opt_derate;                // Optical derate
+    double m_opt_normal;                // Collector optical loss at normal incidence
+    double m_m_dot_design;	            //[kg/s] Total solar field mass flow rate at design
+    double m_m_dot_loop_des;            //[kg/s] LOOP design mass flow rate
 
     // Methods
 public:

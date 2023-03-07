@@ -44,12 +44,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static var_info _cm_vtab_fresnel_physical[] = {
 
+    { SSC_INPUT,        SSC_NUMBER,      "sim_type",                    "1 (default): timeseries, 2: design only",                                          "",             "",               "System Control", "?=1",                    "",                       "SIMULATION_PARAMETER"},
+
+    { SSC_INPUT,        SSC_NUMBER,      "solar_mult_in",               "Solar multiple Input",                                          "",             "",               "System Control", "",                    "",                       ""},
+    { SSC_INPUT,        SSC_NUMBER,      "total_Ap_in",                 "Field aperture Input",                                          "m3",             "",               "System Control", "",                    "",                       ""},
+    { SSC_INPUT,        SSC_NUMBER,      "solar_mult_or_Ap",            "Design using specified solar mult or field aperture",                                          "m3",             "",               "System Control", "",                    "",                       ""},
+
     // Weather Reader
     { SSC_INPUT,        SSC_STRING,      "file_name",                 "Local weather file with path",                                                     "none",         "",               "weather",        "*",                       "LOCAL_FILE",            "" },
 
     // System Design
-    /*System Design*///{ SSC_INPUT,        SSC_NUMBER,      "gross_net_conversion_factor", "Estimated gross to net conversion factor",                                       "",             "",               "system",         "*",                       "",                      "" },
-    /*System Design*/{ SSC_INPUT,    SSC_NUMBER,         "nLoops",                 "Number of loops in the field",                                                          "",              "",  "controller",            "*",        "",              ""},
     /*System Design*/{ SSC_INPUT,    SSC_NUMBER,         "T_loop_in_des",          "Design loop inlet temperature",                                                         "C",             "",  "controller",            "*",        "",              ""},
     /*System Design*/{ SSC_INPUT,    SSC_NUMBER,         "T_loop_out",             "Target loop outlet temperature",                                                        "C",             "",  "controller",            "*",        "",              ""},
     /*System Design*/{ SSC_INPUT,    SSC_NUMBER,         "I_bn_des",               "Solar irradiation at design",                                                           "W/m2",          "",  "controller",            "*",        "",              ""},
@@ -57,7 +61,7 @@ static var_info _cm_vtab_fresnel_physical[] = {
     /*System Design*/{ SSC_INPUT,    SSC_NUMBER,         "eta_ref",           "Cycle thermal efficiency at design point",                                  "-",              "",  "powerblock",         "*",        "",              ""},
     /*System Design*///{ SSC_INPUT,    SSC_NUMBER,         "q_pb_design",            "Label",                                                                                 "",              "",  "controller",            "*",        "",              "" },
     /*System Design*/{ SSC_INPUT,    SSC_NUMBER,         "tshours",                "Label",                                                                                 "",              "",  "controller",            "*",        "",              "" },
-    /*System Design*/{ SSC_INPUT,    SSC_NUMBER,         "solar_mult",             "Solar multiple",                                                                        "",              "",  "controller",            "*",        "",              ""},
+    
 
 
     // System Control
@@ -67,7 +71,7 @@ static var_info _cm_vtab_fresnel_physical[] = {
     /*Sys Control*/{ SSC_INPUT,    SSC_NUMBER,         "pb_fixed_par",           "Label",                                                                                 "",              "",  "controller",            "*",        "",              ""},
     /*Sys Control*/{ SSC_INPUT,    SSC_ARRAY,          "bop_array",              "Label",                                                                                 "",              "",  "controller",            "*",        "",              "" },
     /*Sys Control*/{ SSC_INPUT,    SSC_ARRAY,          "aux_array",              "Label",                                                                                 "",              "",  "controller",            "*",        "",              "" },
-
+    { SSC_INPUT,        SSC_NUMBER,      "gross_net_conversion_factor", "Estimated gross to net conversion factor",                                       "",             "",               "system",         "*",                       "",                      "" },
 
     /*Sys Control*/{ SSC_INPUT,        SSC_NUMBER,      "is_dispatch",               "Allow dispatch optimization?",  /*TRUE=1*/                                         "-",            "",               "tou",            "?=0",                     "",                      "" },
     /*Sys Control*/{ SSC_INPUT,        SSC_NUMBER,      "disp_frequency",            "Frequency for dispatch optimization calculations",                                 "hour",         "",               "tou",            "is_dispatch=1",           "",                      "" },
@@ -138,8 +142,6 @@ static var_info _cm_vtab_fresnel_physical[] = {
     /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "V_hdr_max",              "Maximum HTF velocity in the header at design",                                          "m/s",           "",  "controller",            "*",        "",              ""},
     /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "V_hdr_min",              "Minimum HTF velocity in the header at design",                                          "m/s",           "",  "controller",            "*",        "",              ""},
     /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "Pipe_hl_coef",           "Loss coefficient from the header - runner pipe - and non-HCE piping",                   "W/m2-K",        "",  "controller",            "*",        "",              ""},
-   // /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "fthrok",                 "Flag to allow partial defocusing of the collectors",                                    "",              "",  "controller",            "*",        "INTEGER",       ""},
-   // /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "fthrctrl",               "Defocusing strategy",                                                                   "",              "",  "controller",            "*",        "INTEGER",       ""},
     /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "mc_bal_hot",             "The heat capacity of the balance of plant on the hot side",                             "kWht/K-MWt",    "",  "controller",            "*",        "",              ""},
     /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "mc_bal_cold",            "The heat capacity of the balance of plant on the cold side",                            "kWht/K-MWt",    "",  "controller",            "*",        "",              ""},
     /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "mc_bal_sca",             "Non-HTF heat capacity associated with each SCA - per meter basis",                      "Wht/K-m",       "",  "controller",            "*",        "",              ""},
@@ -151,9 +153,11 @@ static var_info _cm_vtab_fresnel_physical[] = {
     /*Solar Field*/{ SSC_INPUT,    SSC_MATRIX,         "field_fl_props",         "Fluid property data",                                                                   "",              "",  "controller",            "*",        "",              "" },
     /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "SCA_drives_elec",        "Tracking power in Watts per SCA drive",                                                 "W/module",      "",  "controller",            "*",        "",              "" },
 
-    // In old fresnel but not Trough
-    //{ SSC_INPUT,    SSC_NUMBER,         "pb_rated_cap",           "Rated plant capacity",                                                                  "MWe",           "",  "controller",            "*",        "",              ""},
-            
+    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "land_mult",              "Non-solar field land area multiplier",                                                  "-",            "",               "controller",     "*",                       "",                      "" },
+
+
+
+
     // Collector and Receiver
 
     /*Col & Rec*/{ SSC_INPUT,    SSC_NUMBER,         "ColAz",                  "Collector azimuth angle",                                                               "deg",           "",  "controller",            "*",        "",              "" },
@@ -335,203 +339,254 @@ static var_info _cm_vtab_fresnel_physical[] = {
 
 
     // OUTPUTS
+        // Design Point Outputs
+
+        // System Design
+    { SSC_OUTPUT,    SSC_NUMBER, "solar_mult",                         "Actual solar multiple",                                                                                                                      "MWe",          "",                                 "System Design Calc",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "total_Ap",                           "Actual field aperture",                                                                                                                      "MWe",          "",                                 "System Design Calc",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "nLoops",                             "Number of loops in the field",                                                                                                               "",              "",                                 "controller",                              "*",        "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "nameplate",                          "Nameplate capacity",                                                                                                                      "MWe",          "",                                 "System Design Calc",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "m_dot_htf_cycle_des",                "Cycle design HTF mass flow rate",                                                                                                                      "kg/s",          "",                                 "System Design Calc",                       "*",                                                                "",              "" },
+
+
+        // Solar Field
+    { SSC_OUTPUT,    SSC_NUMBER, "q_dot_rec_des",                      "Receiver thermal output at design",                                                                                                       "MWt",         "",                                  "Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "A_loop",                             "Aperture of a single loop",                                                                                                               "m2",          "",                                   "Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "loop_opt_eff",                       "Loop optical efficiency",                                                                                                                 "",            "",                                   "Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "loop_therm_eff",                     "Loop thermal efficiency",                                                                                                                 "",            "",                                   "Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "loop_eff",                           "Total loop conversion efficiency",                                                                                                      "",            "",                                   "Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "sm1_aperture",                       "Total required aperture, SM=1",                                                                                                        "m2",            "",                                   "Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "sm1_nLoops",                         "Required number of loops, SM=1",                                                                                                              "",            "",                                   "Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "total_tracking_power",               "Design tracking power",                                                                                                              "MW",            "",                                   "Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "A_field",                            "Total field aperture",                                                                                                              "m2",            "",                                   "Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "q_field_des",                        "Design Field power output",                                                                                                              "MW",            "",                                   "Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "field_area",                         "Solar field area",                                                                                                              "acres",            "",                                   "Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "total_land_area",                    "Total land area",                                                                                                              "acres",            "",                                   "Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "field_htf_min_temp",                 "Minimum field htf temp",                                                                                                              "C",         "",                                  "Power Cycle",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "field_htf_max_temp",                 "Maximum field htf temp",                                                                                                              "C",         "",                                  "Power Cycle",                              "*",                                                                "",              "" },
+
+
+        // Collector and Receiver
+    { SSC_OUTPUT,    SSC_NUMBER, "DP_pressure_loss",                   "Total loop pressure loss at design",                                                                                                              "bar",            "",                                   "Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "avg_dt_des",                         "Average field temp difference at design",                                                                                                              "C",            "",                                   "Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "hl_des",                             "Heat loss at design",                                                                                                              "W/m",            "",                                   "Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "opt_derate",                         "Receiver optical derate",                                                                                                              "",            "",                                   "Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "opt_normal",                         "Collector optical loss at normal incidence",                                                                                        "",            "",                                   "Receiver",                       "*",                                                                "",              "" },
+
+        // Power Cycle
+    { SSC_OUTPUT,    SSC_NUMBER, "q_dot_cycle_des",                    "PC thermal input at design",                                                                                                              "MWt",         "",                                  "Power Cycle",                              "*",                                                                "",              "" },
+
+        // Thermal Storage
+    { SSC_OUTPUT,    SSC_NUMBER, "vol_tank",                    "Total tank volume",                                                                                                              "m3",         "",                                  "Power Cycle",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "Q_tes_des",                    "TES design capacity",                                                                                                              "MWt-hr",         "",                                  "Power Cycle",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "d_tank",                    "Tank diameter",                                                                                                              "m",         "",                                  "Power Cycle",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "vol_min",                    "Minimum Fluid Volume",                                                                                                              "m3",         "",                                  "Power Cycle",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "q_dot_loss_tes_des",                 "Estimated TES Heat Loss",                                                                                                              "MW",         "",                                  "Power Cycle",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "tes_htf_min_temp",                 "Minimum storage htf temp",                                                                                                              "C",         "",                                  "Power Cycle",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "tes_htf_max_temp",                 "Maximum storage htf temp",                                                                                                              "C",         "",                                  "Power Cycle",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "tes_htf_dens",                 "Storage htf density",                                                                                                              "kg/m3",         "",                                  "Power Cycle",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "tes_htf_cp",                 "Storage htf specific heat",                                                                                                              "kJ/kg-K",         "",                                  "Power Cycle",                              "*",                                                                "",              "" },
+
+        // System Control
+    { SSC_OUTPUT,    SSC_NUMBER, "W_dot_bop_design",                 "BOP parasitics at design",                                                                                                              "MWe",         "",                                  "Power Cycle",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "W_dot_fixed",                 "Fixed parasitic at design",                                                                                                              "MWe",         "",                                  "Power Cycle",                              "*",                                                                "",              "" },
 
     // Simulation Kernel
-    { SSC_OUTPUT,       SSC_ARRAY,       "time_hr",                   "Time at end of timestep",                                                          "hr",           "",               "solver",         "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "time_hr",                   "Time at end of timestep",                                                          "hr",           "",               "solver",         "sim_type=1",                       "",                      "" },
 
 
     // Weather Reader
-    { SSC_OUTPUT,       SSC_ARRAY,       "month",                     "Resource Month",                                                                   "",             "",               "weather",        "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "hour_day",                  "Resource Hour of Day",                                                             "",             "",               "weather",        "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "solazi",                    "Resource Solar Azimuth",                                                           "deg",          "",               "weather",        "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "solzen",                    "Resource Solar Zenith",                                                            "deg",          "",               "weather",        "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "beam",                      "Resource Beam normal irradiance",                                                  "W/m2",         "",               "weather",        "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "tdry",                      "Resource Dry bulb temperature",                                                    "C",            "",               "weather",        "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "twet",                      "Resource Wet bulb temperature",                                                    "C",            "",               "weather",        "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "rh",                        "Resource Relative Humidity",                                                       "%",            "",               "weather",        "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "wspd",                      "Resource Wind Speed",                                                              "m/s",          "",               "weather",        "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "pres",                      "Resource Pressure",                                                                "mbar",         "",               "weather",        "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "month",                     "Resource Month",                                                                   "",             "",               "weather",        "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "hour_day",                  "Resource Hour of Day",                                                             "",             "",               "weather",        "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "solazi",                    "Resource Solar Azimuth",                                                           "deg",          "",               "weather",        "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "solzen",                    "Resource Solar Zenith",                                                            "deg",          "",               "weather",        "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "beam",                      "Resource Beam normal irradiance",                                                  "W/m2",         "",               "weather",        "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "tdry",                      "Resource Dry bulb temperature",                                                    "C",            "",               "weather",        "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "twet",                      "Resource Wet bulb temperature",                                                    "C",            "",               "weather",        "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "rh",                        "Resource Relative Humidity",                                                       "%",            "",               "weather",        "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "wspd",                      "Resource Wind Speed",                                                              "m/s",          "",               "weather",        "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "pres",                      "Resource Pressure",                                                                "mbar",         "",               "weather",        "sim_type=1",                       "",                      "" },
 
-    { SSC_OUTPUT,       SSC_ARRAY,       "defocus",                   "Field optical focus fraction",                                                     "",             "",               "weather",        "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "defocus",                   "Field optical focus fraction",                                                     "",             "",               "weather",        "sim_type=1",                       "",                      "" },
 
 
 
     // Solar Field (from Trough)
-    { SSC_OUTPUT,       SSC_ARRAY,       "Theta_ave",                 "Field collector solar incidence angle",                       "deg",          "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "CosTh_ave",                 "Field collector cosine efficiency",                           "",             "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "IAM_ave",                   "Field collector incidence angle modifier",                    "",             "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "RowShadow_ave",             "Field collector row shadowing loss",                          "",             "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "EndLoss_ave",               "Field collector optical end loss",                            "",             "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "dni_costh",                 "Field collector DNI-cosine product",                          "W/m2",         "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "EqOpteff",                  "Field optical efficiency before defocus",                     "",             "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "SCAs_def",                  "Field fraction of focused SCAs",                              "",             "",               "solar_field",    "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "Theta_ave",                 "Field collector solar incidence angle",                       "deg",          "",               "solar_field",    "sim_type=1",                       "",                      "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "CosTh_ave",                 "Field collector cosine efficiency",                           "",             "",               "solar_field",    "*",                       "",                      "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "IAM_ave",                   "Field collector incidence angle modifier",                    "",             "",               "solar_field",    "*",                       "",                      "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "RowShadow_ave",             "Field collector row shadowing loss",                          "",             "",               "solar_field",    "*",                       "",                      "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "EndLoss_ave",               "Field collector optical end loss",                            "",             "",               "solar_field",    "*",                       "",                      "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "dni_costh",                 "Field collector DNI-cosine product",                          "W/m2",         "",               "solar_field",    "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "EqOpteff",                  "Field optical efficiency before defocus",                     "",             "",               "solar_field",    "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "SCAs_def",                  "Field fraction of focused SCAs",                              "",             "",               "solar_field",    "sim_type=1",                       "",                      "" },
                                                                                                                                      
     //{ SSC_OUTPUT,       SSC_ARRAY,       "q_inc_sf_tot",              "Field thermal power incident",                                "MWt",          "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "qinc_costh",                "Field thermal power incident after cosine",                   "MWt",          "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_rec_inc",             "Receiver thermal power incident",                             "MWt",          "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_rec_thermal_loss",    "Receiver thermal losses",                                     "MWt",          "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_rec_abs",             "Receiver thermal power absorbed",                             "MWt",          "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_piping_loss",         "Field piping thermal losses",                                 "MWt",          "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "e_dot_field_int_energy",    "Field change in material/htf internal energy",                "MWt",          "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_htf_sf_out",          "Field thermal power leaving in HTF",                          "MWt",          "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_freeze_prot",         "Field freeze protection required",                            "MWt",          "",               "solar_field",    "*",                       "",                      "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "qinc_costh",                "Field thermal power incident after cosine",                   "MWt",          "",               "solar_field",    "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_rec_inc",             "Receiver thermal power incident",                             "MWt",          "",               "solar_field",    "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_rec_thermal_loss",    "Receiver thermal losses",                                     "MWt",          "",               "solar_field",    "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_rec_abs",             "Receiver thermal power absorbed",                             "MWt",          "",               "solar_field",    "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_piping_loss",         "Field piping thermal losses",                                 "MWt",          "",               "solar_field",    "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "e_dot_field_int_energy",    "Field change in material/htf internal energy",                "MWt",          "",               "solar_field",    "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_htf_sf_out",          "Field thermal power leaving in HTF",                          "MWt",          "",               "solar_field",    "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_freeze_prot",         "Field freeze protection required",                            "MWt",          "",               "solar_field",    "sim_type=1",                       "",                      "" },
                                                                                                                                      
-    { SSC_OUTPUT,       SSC_ARRAY,       "m_dot_loop",                "Receiver mass flow rate",                                     "kg/s",         "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "m_dot_field_recirc",        "Field total mass flow recirculated",                          "kg/s",         "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "m_dot_field_delivered",     "Field total mass flow delivered",                             "kg/s",         "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "T_field_cold_in",           "Field timestep-averaged inlet temperature",                   "C",            "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "T_rec_cold_in",             "Loop timestep-averaged inlet temperature",                    "C",            "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "T_rec_hot_out",             "Loop timestep-averaged outlet temperature",                   "C",            "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "T_field_hot_out",           "Field timestep-averaged outlet temperature",                  "C",            "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "deltaP_field",              "Field pressure drop",                                         "bar",          "",               "solar_field",    "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "m_dot_loop",                "Receiver mass flow rate",                                     "kg/s",         "",               "solar_field",    "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "m_dot_field_recirc",        "Field total mass flow recirculated",                          "kg/s",         "",               "solar_field",    "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "m_dot_field_delivered",     "Field total mass flow delivered",                             "kg/s",         "",               "solar_field",    "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "T_field_cold_in",           "Field timestep-averaged inlet temperature",                   "C",            "",               "solar_field",    "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "T_rec_cold_in",             "Loop timestep-averaged inlet temperature",                    "C",            "",               "solar_field",    "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "T_rec_hot_out",             "Loop timestep-averaged outlet temperature",                   "C",            "",               "solar_field",    "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "T_field_hot_out",           "Field timestep-averaged outlet temperature",                  "C",            "",               "solar_field",    "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "deltaP_field",              "Field pressure drop",                                         "bar",          "",               "solar_field",    "sim_type=1",                       "",                      "" },
                                                                                                                                      
-    { SSC_OUTPUT,       SSC_ARRAY,       "W_dot_sca_track",           "Field collector tracking power",                              "MWe",          "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "W_dot_field_pump",          "Field htf pumping power",                                     "MWe",          "",               "solar_field",    "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "W_dot_sca_track",           "Field collector tracking power",                              "MWe",          "",               "solar_field",    "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "W_dot_field_pump",          "Field htf pumping power",                                     "MWe",          "",               "solar_field",    "sim_type=1",                       "",                      "" },
                                                                                                                                      
-    // Solar Field (from fresnel)                                                                                                    
-    { SSC_OUTPUT,       SSC_ARRAY,       "theta_L",                   "Field collector incidence angle - longitudinal",              "deg",          "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "phi_t",                     "Field collector incidence angle - transversal",               "deg",          "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "eta_optical",               "Field collector optical efficiency",                          "",             "",               "solar_field",    "*",                       "",                      "" },
-    //{ SSC_OUTPUT,       SSC_ARRAY,       "EqOptEff",          "Field collector and receiver optical efficiency",                                                          "",          "",               "solar_field",    "*",                       "",                      "" },
+    //// Solar Field (from fresnel)                                                                                                    
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "theta_L",                   "Field collector incidence angle - longitudinal",              "deg",          "",               "solar_field",    "*",                       "",                      "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "phi_t",                     "Field collector incidence angle - transversal",               "deg",          "",               "solar_field",    "*",                       "",                      "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "eta_optical",               "Field collector optical efficiency",                          "",             "",               "solar_field",    "*",                       "",                      "" },
+    ////{ SSC_OUTPUT,       SSC_ARRAY,       "EqOptEff",          "Field collector and receiver optical efficiency",                                                          "",          "",               "solar_field",    "*",                       "",                      "" },
 
-    { SSC_OUTPUT,       SSC_ARRAY,       "sf_def",                 "Field collector focus fraction",                                 "",          "",  "mslf",                  "*",        "LENGTH=8760",   "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "sf_def",                 "Field collector focus fraction",                                 "",          "",  "mslf",                  "*",        "LENGTH=8760",   "" },
 
-    { SSC_OUTPUT,       SSC_ARRAY,       "q_inc_sf_tot",           "Field thermal power incident",                                   "MWt",          "",            "Type250",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "q_abs_tot",              "Field thermal power absorbed",                                   "MWt",          "",            "Type250",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "q_dump",                 "Field thermal power dumped",                                     "MWt",          "",            "Type250",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "q_loss_tot",             "Field thermal power receiver loss",                              "MWt",          "",            "Type250",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "Pipe_hl",                "Field thermal power header pipe losses",                         "MWt",          "",            "Type250",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "q_avail",                "Field thermal power produced",                                   "MWt",          "",            "Type250",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "q_loss_spec_tot",        "Field thermal power avg. receiver loss",                         "W/m",          "",            "Type250",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "eta_thermal",            "Field thermal efficiency",                                        "",          "",  "mslf",                  "*",        "LENGTH=8760",   "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "q_inc_sf_tot",           "Field thermal power incident",                                   "MWt",          "",            "Type250",        "*",                       "LENGTH=8760",           "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "q_abs_tot",              "Field thermal power absorbed",                                   "MWt",          "",            "Type250",        "*",                       "LENGTH=8760",           "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "q_dump",                 "Field thermal power dumped",                                     "MWt",          "",            "Type250",        "*",                       "LENGTH=8760",           "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "q_loss_tot",             "Field thermal power receiver loss",                              "MWt",          "",            "Type250",        "*",                       "LENGTH=8760",           "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "Pipe_hl",                "Field thermal power header pipe losses",                         "MWt",          "",            "Type250",        "*",                       "LENGTH=8760",           "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "q_avail",                "Field thermal power produced",                                   "MWt",          "",            "Type250",        "*",                       "LENGTH=8760",           "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "q_loss_spec_tot",        "Field thermal power avg. receiver loss",                         "W/m",          "",            "Type250",        "*",                       "LENGTH=8760",           "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "eta_thermal",            "Field thermal efficiency",                                        "",          "",  "mslf",                  "*",        "LENGTH=8760",   "" },
 
-    { SSC_OUTPUT,       SSC_ARRAY,       "E_bal_startup",          "Field HTF energy inertial (consumed)",                           "MWht",          "",            "Type250",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "m_dot_avail",            "Field HTF mass flow rate total",                                 "kg/hr",        "",            "Type250",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "m_dot_htf2",             "Field HTF mass flow rate loop",                                  "kg/s",         "",            "Type250",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "DP_tot",                 "Field HTF pressure drop total",                                  "bar",          "",            "Type250",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "T_sys_c",                "Field HTF temperature cold header inlet",                        "C",            "",            "Type250",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "T_sys_h",                "Field HTF temperature hot header outlet",                        "C",            "",            "Type250",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "t_loop_outlet",          "Field HTF temperature loop outlet",                              "C",             "",  "mslf",                  "*",        "LENGTH=8760",   "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "E_bal_startup",          "Field HTF energy inertial (consumed)",                           "MWht",          "",            "Type250",        "*",                       "LENGTH=8760",           "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "m_dot_avail",            "Field HTF mass flow rate total",                                 "kg/hr",        "",            "Type250",        "*",                       "LENGTH=8760",           "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "m_dot_htf2",             "Field HTF mass flow rate loop",                                  "kg/s",         "",            "Type250",        "*",                       "LENGTH=8760",           "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "DP_tot",                 "Field HTF pressure drop total",                                  "bar",          "",            "Type250",        "*",                       "LENGTH=8760",           "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "T_sys_c",                "Field HTF temperature cold header inlet",                        "C",            "",            "Type250",        "*",                       "LENGTH=8760",           "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "T_sys_h",                "Field HTF temperature hot header outlet",                        "C",            "",            "Type250",        "*",                       "LENGTH=8760",           "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "t_loop_outlet",          "Field HTF temperature loop outlet",                              "C",             "",  "mslf",                  "*",        "LENGTH=8760",   "" },
 
-    { SSC_OUTPUT,       SSC_ARRAY,       "q_I",                    "Incident Radiation",                              "C",             "",  "mslf",                  "*",        "LENGTH=8760",   "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "q_I",                    "Incident Radiation",                              "C",             "",  "mslf",                  "*",        "LENGTH=8760",   "" },
 
 
     // power block
-    { SSC_OUTPUT,       SSC_ARRAY,       "eta",                       "PC efficiency: gross",                                                             "",             "",               "powerblock",     "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "q_pb",                      "PC input energy",                                                                  "MWt",          "",               "powerblock",     "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "m_dot_pc",                  "PC HTF mass flow rate",                                                            "kg/s",         "",               "powerblock",     "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_pc_startup",          "PC startup thermal power",                                                         "MWt",          "",               "powerblock",     "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "P_cycle",                   "PC electrical power output: gross",                                                "MWe",          "",               "powerblock",     "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "T_pc_in",                   "PC HTF inlet temperature",                                                         "C",            "",               "powerblock",     "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "T_pc_out",                  "PC HTF outlet temperature",                                                        "C",            "",               "powerblock",     "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "m_dot_water_pc",            "PC water consumption: makeup + cooling",                                           "kg/s",         "",               "powerblock",     "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "q_pc_startup",              "PC startup thermal energy",                                                        "MWht",         "",               "powerblock",     "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "cycle_htf_pump_power",      "PC HTF pump power",                                                                "MWe",          "",               "powerblock",     "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "P_cooling_tower_tot",       "Parasitic power condenser operation",                                              "MWe",          "",               "powerblock",     "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "eta",                       "PC efficiency: gross",                                                             "",             "",               "powerblock",     "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "q_pb",                      "PC input energy",                                                                  "MWt",          "",               "powerblock",     "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "m_dot_pc",                  "PC HTF mass flow rate",                                                            "kg/s",         "",               "powerblock",     "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_pc_startup",          "PC startup thermal power",                                                         "MWt",          "",               "powerblock",     "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "P_cycle",                   "PC electrical power output: gross",                                                "MWe",          "",               "powerblock",     "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "T_pc_in",                   "PC HTF inlet temperature",                                                         "C",            "",               "powerblock",     "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "T_pc_out",                  "PC HTF outlet temperature",                                                        "C",            "",               "powerblock",     "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "m_dot_water_pc",            "PC water consumption: makeup + cooling",                                           "kg/s",         "",               "powerblock",     "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "q_pc_startup",              "PC startup thermal energy",                                                        "MWht",         "",               "powerblock",     "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "cycle_htf_pump_power",      "PC HTF pump power",                                                                "MWe",          "",               "powerblock",     "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "P_cooling_tower_tot",       "Parasitic power condenser operation",                                              "MWe",          "",               "powerblock",     "sim_type=1",                       "",                      "" },
 
-    { SSC_OUTPUT,       SSC_ARRAY,       "P_out_net",                 "Total electric power to grid",                                                     "MWe",          "",               "system",         "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "P_out_net",                 "Total electric power to grid",                                                     "MWe",          "",               "system",         "sim_type=1",                       "",                      "" },
 
     // TES
-    { SSC_OUTPUT,       SSC_ARRAY,       "tank_losses",               "TES thermal losses",                  "MWt",          "",          "TES",            "*",          "",    "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "q_tes_heater",              "TES freeze protection power",         "MWe",          "",          "TES",            "*",          "",    "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "T_tes_hot",                 "TES hot temperature",                 "C",            "",          "TES",            "*",          "",    "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "T_tes_cold",                "TES cold temperature",                "C",            "",          "TES",            "*",          "",    "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "mass_tes_cold",             "TES cold tank mass (end)",            "kg",           "",          "TES",            "*",          "",    "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "mass_tes_hot",              "TES hot tank mass (end)",             "kg",           "",          "TES",            "*",          "",    "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "q_dc_tes",                  "TES discharge thermal power",         "MWt",          "",          "TES",            "*",          "",    "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "q_ch_tes",                  "TES charge thermal power",            "MWt",          "",          "TES",            "*",          "",    "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "e_ch_tes",                  "TES charge state",                    "MWht",         "",          "TES",            "*",          "",    "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "m_dot_cr_to_tes_hot",       "Mass flow: field to hot TES",         "kg/s",         "",          "TES",            "*",          "",    "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "m_dot_tes_hot_out",         "Mass flow: TES hot out",              "kg/s",         "",          "TES",            "*",          "",    "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "m_dot_pc_to_tes_cold",      "Mass flow: cycle to cold TES",        "kg/s",         "",          "TES",            "*",          "",    "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "m_dot_tes_cold_out",        "Mass flow: TES cold out",             "kg/s",         "",          "TES",            "*",          "",    "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "m_dot_field_to_cycle",      "Mass flow: field to cycle",           "kg/s",         "",          "TES",            "*",          "",    "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "m_dot_cycle_to_field",      "Mass flow: cycle to field",           "kg/s",         "",          "TES",            "*",          "",    "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "m_dot_cold_tank_to_hot_tank", "Mass flow: cold tank to hot tank",  "kg/s",         "",          "TES",            "*",          "",    "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "tes_htf_pump_power",         "TES HTF pump power",                 "MWe",          "",          "TES",            "*",          "",    "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "tank_losses",               "TES thermal losses",                  "MWt",          "",          "TES",            "sim_type=1",          "",    "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "q_tes_heater",              "TES freeze protection power",         "MWe",          "",          "TES",            "sim_type=1",          "",    "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "T_tes_hot",                 "TES hot temperature",                 "C",            "",          "TES",            "sim_type=1",          "",    "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "T_tes_cold",                "TES cold temperature",                "C",            "",          "TES",            "sim_type=1",          "",    "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "mass_tes_cold",             "TES cold tank mass (end)",            "kg",           "",          "TES",            "sim_type=1",          "",    "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "mass_tes_hot",              "TES hot tank mass (end)",             "kg",           "",          "TES",            "sim_type=1",          "",    "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "q_dc_tes",                  "TES discharge thermal power",         "MWt",          "",          "TES",            "sim_type=1",          "",    "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "q_ch_tes",                  "TES charge thermal power",            "MWt",          "",          "TES",            "sim_type=1",          "",    "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "e_ch_tes",                  "TES charge state",                    "MWht",         "",          "TES",            "sim_type=1",          "",    "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "m_dot_cr_to_tes_hot",       "Mass flow: field to hot TES",         "kg/s",         "",          "TES",            "sim_type=1",          "",    "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "m_dot_tes_hot_out",         "Mass flow: TES hot out",              "kg/s",         "",          "TES",            "sim_type=1",          "",    "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "m_dot_pc_to_tes_cold",      "Mass flow: cycle to cold TES",        "kg/s",         "",          "TES",            "sim_type=1",          "",    "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "m_dot_tes_cold_out",        "Mass flow: TES cold out",             "kg/s",         "",          "TES",            "sim_type=1",          "",    "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "m_dot_field_to_cycle",      "Mass flow: field to cycle",           "kg/s",         "",          "TES",            "sim_type=1",          "",    "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "m_dot_cycle_to_field",      "Mass flow: cycle to field",           "kg/s",         "",          "TES",            "sim_type=1",          "",    "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "m_dot_cold_tank_to_hot_tank", "Mass flow: cold tank to hot tank",  "kg/s",         "",          "TES",            "sim_type=1",          "",    "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "tes_htf_pump_power",         "TES HTF pump power",                 "MWe",          "",          "TES",            "sim_type=1",          "",    "" },
 
     // Controller                                                                                                                                                                                           
-    { SSC_OUTPUT,       SSC_ARRAY,       "op_mode_1",                 "1st operating mode",                                                               "",             "",               "solver",         "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "op_mode_2",                 "2nd op. mode, if applicable",                                                      "",             "",               "solver",         "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "op_mode_3",                 "3rd op. mode, if applicable",                                                      "",             "",               "solver",         "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "m_dot_balance",             "Relative mass flow balance error",                                                 "",             "",               "solver",         "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "q_balance",                 "Relative energy balance error",                                                    "",             "",               "solver",         "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "op_mode_1",                 "1st operating mode",                                                               "",             "",               "solver",         "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "op_mode_2",                 "2nd op. mode, if applicable",                                                      "",             "",               "solver",         "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "op_mode_3",                 "3rd op. mode, if applicable",                                                      "",             "",               "solver",         "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "m_dot_balance",             "Relative mass flow balance error",                                                 "",             "",               "solver",         "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "q_balance",                 "Relative energy balance error",                                                    "",             "",               "solver",         "sim_type=1",                       "",                      "" },
 
     // Monthly Outputs
-    { SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",            "Monthly Energy",                                                                   "kWh",          "",               "Post-process",   "*",              "LENGTH=12",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",            "Monthly Energy",                                                                   "kWh",          "",               "Post-process",   "sim_type=1",              "LENGTH=12",                      "" },
 
     // Annual Outputs
-    { SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",                   "Annual Net Electrical Energy Production w/ avail derate",                    "kWe-hr",       "",               "Post-process",   "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",                   "Annual Net Electrical Energy Production w/ avail derate",                    "kWe-hr",       "",               "Post-process",   "sim_type=1",                       "",                      "" },
     //{ SSC_OUTPUT,       SSC_NUMBER,      "annual_gross_energy",             "Annual Gross Electrical Energy Production w/ avail derate",                  "kWe-hr",       "",               "Post-process",   "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_NUMBER,      "annual_thermal_consumption",      "Annual thermal freeze protection required",                                  "kWt-hr",       "",               "Post-process",   "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "annual_thermal_consumption",      "Annual thermal freeze protection required",                                  "kWt-hr",       "",               "Post-process",   "sim_type=1",                       "",                      "" },
     //{ SSC_OUTPUT,       SSC_NUMBER,      "annual_electricity_consumption",  "Annual electricity consumptoin w/ avail derate",                             "kWe-hr",       "",               "Post-process",   "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_NUMBER,      "annual_total_water_use",          "Total Annual Water Usage",                                                   "m^3",          "",               "Post-process",   "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_NUMBER,      "annual_field_freeze_protection",  "Annual thermal power for field freeze protection",                           "kWt-hr",       "",               "Post-process",   "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_NUMBER,      "annual_tes_freeze_protection",    "Annual thermal power for TES freeze protection",                             "kWt-hr",       "",               "Post-process",   "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "annual_total_water_use",          "Total Annual Water Usage",                                                   "m^3",          "",               "Post-process",   "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "annual_field_freeze_protection",  "Annual thermal power for field freeze protection",                           "kWt-hr",       "",               "Post-process",   "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "annual_tes_freeze_protection",    "Annual thermal power for TES freeze protection",                             "kWt-hr",       "",               "Post-process",   "sim_type=1",                       "",                      "" },
 
     // Newly added
-    { SSC_OUTPUT,       SSC_ARRAY,       "n_op_modes",                "Operating modes in reporting timestep",                                            "",             "",               "solver",         "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "tou_value",                 "CSP operating Time-of-use value",                                                  "",             "",               "solver",         "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "pricing_mult",              "PPA price multiplier",                                                             "",             "",               "solver",         "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_pc_sb",               "Thermal power for PC standby",                                                     "MWt",          "",               "solver",         "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_pc_min",              "Thermal power for PC min operation",                                               "MWt",          "",               "solver",         "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_pc_target",           "Target thermal power to PC",                                                       "MWt",          "",               "solver",         "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_pc_max",              "Max thermal power to PC",                                                          "MWt",          "",               "solver",         "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "n_op_modes",                "Operating modes in reporting timestep",                                            "",             "",               "solver",         "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "tou_value",                 "CSP operating Time-of-use value",                                                  "",             "",               "solver",         "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "pricing_mult",              "PPA price multiplier",                                                             "",             "",               "solver",         "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_pc_sb",               "Thermal power for PC standby",                                                     "MWt",          "",               "solver",         "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_pc_min",              "Thermal power for PC min operation",                                               "MWt",          "",               "solver",         "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_pc_target",           "Target thermal power to PC",                                                       "MWt",          "",               "solver",         "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_pc_max",              "Max thermal power to PC",                                                          "MWt",          "",               "solver",         "sim_type=1",                       "",                      "" },
 
-    { SSC_OUTPUT,       SSC_ARRAY,       "is_rec_su_allowed",         "is receiver startup allowed",                                                      "",             "",               "solver",         "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "is_pc_su_allowed",          "is power cycle startup allowed",                                                   "",             "",               "solver",         "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "is_pc_sb_allowed",          "is power cycle standby allowed",                                                   "",             "",               "solver",         "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_est_cr_su",           "Estimate rec. startup thermal power",                                              "MWt",           "",              "solver",         "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_est_cr_on",           "Estimate rec. thermal power TO HTF",                                               "MWt",          "",               "solver",         "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_est_tes_dc",          "Estimate max TES discharge thermal power",                                         "MWt",          "",               "solver",         "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_est_tes_ch",          "Estimate max TES charge thermal power",                                            "MWt",          "",               "solver",         "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "is_rec_su_allowed",         "is receiver startup allowed",                                                      "",             "",               "solver",         "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "is_pc_su_allowed",          "is power cycle startup allowed",                                                   "",             "",               "solver",         "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "is_pc_sb_allowed",          "is power cycle standby allowed",                                                   "",             "",               "solver",         "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_est_cr_su",           "Estimate rec. startup thermal power",                                              "MWt",           "",              "solver",         "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_est_cr_on",           "Estimate rec. thermal power TO HTF",                                               "MWt",          "",               "solver",         "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_est_tes_dc",          "Estimate max TES discharge thermal power",                                         "MWt",          "",               "solver",         "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_est_tes_ch",          "Estimate max TES charge thermal power",                                            "MWt",          "",               "solver",         "sim_type=1",                       "",                      "" },
 
-    { SSC_OUTPUT,       SSC_ARRAY,       "operating_modes_a",         "First 3 operating modes tried",                                                    "",             "",               "solver",         "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "operating_modes_b",         "Next 3 operating modes tried",                                                     "",             "",               "solver",         "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "operating_modes_c",         "Final 3 operating modes tried",                                                    "",             "",               "solver",         "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "operating_modes_a",         "First 3 operating modes tried",                                                    "",             "",               "solver",         "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "operating_modes_b",         "Next 3 operating modes tried",                                                     "",             "",               "solver",         "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "operating_modes_c",         "Final 3 operating modes tried",                                                    "",             "",               "solver",         "sim_type=1",                       "",                      "" },
 
-    { SSC_OUTPUT,       SSC_ARRAY,       "disp_rel_mip_gap",          "Dispatch relative MIP gap",                                                        "",             "",               "tou",            "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "disp_solve_state",          "Dispatch solver state",                                                            "",             "",               "tou",            "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "disp_subopt_flag",          "Dispatch suboptimal solution flag",                                                "",             "",               "tou",            "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "disp_solve_iter",           "Dispatch iterations count",                                                        "",             "",               "tou",            "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "disp_objective",            "Dispatch objective function value",                                                "",             "",               "tou",            "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "disp_obj_relax",            "Dispatch objective function - relaxed max",                                        "",             "",               "tou",            "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "disp_qsf_expected",         "Dispatch expected solar field available energy",                                   "MWt",          "",               "tou",            "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "disp_qsfprod_expected",     "Dispatch expected solar field generation",                                         "MWt",          "",               "tou",            "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "disp_qsfsu_expected",       "Dispatch expected solar field startup enegy",                                      "MWt",          "",               "tou",            "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "disp_tes_expected",         "Dispatch expected TES charge level",                                               "MWht",         "",               "tou",            "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "disp_pceff_expected",       "Dispatch expected power cycle efficiency adj.",                                    "",             "",               "tou",            "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "disp_thermeff_expected",    "Dispatch expected SF thermal efficiency adj.",                                     "",             "",               "tou",            "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "disp_qpbsu_expected",       "Dispatch expected power cycle startup energy",                                     "MWht",         "",               "tou",            "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "disp_wpb_expected",         "Dispatch expected power generation",                                               "MWe",          "",               "tou",            "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "disp_rev_expected",         "Dispatch expected revenue factor",                                                 "",             "",               "tou",            "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "disp_presolve_nconstr",     "Dispatch number of constraints in problem",                                        "",             "",               "tou",            "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "disp_presolve_nvar",        "Dispatch number of variables in problem",                                          "",             "",               "tou",            "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "disp_solve_time",           "Dispatch solver time",                                                             "sec",          "",               "tou",            "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_NUMBER,      "avg_suboptimal_rel_mip_gap","Average suboptimal relative MIP gap",                                              "%",            "",               "tou",            "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "disp_rel_mip_gap",          "Dispatch relative MIP gap",                                                        "",             "",               "tou",            "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "disp_solve_state",          "Dispatch solver state",                                                            "",             "",               "tou",            "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "disp_subopt_flag",          "Dispatch suboptimal solution flag",                                                "",             "",               "tou",            "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "disp_solve_iter",           "Dispatch iterations count",                                                        "",             "",               "tou",            "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "disp_objective",            "Dispatch objective function value",                                                "",             "",               "tou",            "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "disp_obj_relax",            "Dispatch objective function - relaxed max",                                        "",             "",               "tou",            "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "disp_qsf_expected",         "Dispatch expected solar field available energy",                                   "MWt",          "",               "tou",            "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "disp_qsfprod_expected",     "Dispatch expected solar field generation",                                         "MWt",          "",               "tou",            "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "disp_qsfsu_expected",       "Dispatch expected solar field startup enegy",                                      "MWt",          "",               "tou",            "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "disp_tes_expected",         "Dispatch expected TES charge level",                                               "MWht",         "",               "tou",            "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "disp_pceff_expected",       "Dispatch expected power cycle efficiency adj.",                                    "",             "",               "tou",            "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "disp_thermeff_expected",    "Dispatch expected SF thermal efficiency adj.",                                     "",             "",               "tou",            "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "disp_qpbsu_expected",       "Dispatch expected power cycle startup energy",                                     "MWht",         "",               "tou",            "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "disp_wpb_expected",         "Dispatch expected power generation",                                               "MWe",          "",               "tou",            "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "disp_rev_expected",         "Dispatch expected revenue factor",                                                 "",             "",               "tou",            "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "disp_presolve_nconstr",     "Dispatch number of constraints in problem",                                        "",             "",               "tou",            "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "disp_presolve_nvar",        "Dispatch number of variables in problem",                                          "",             "",               "tou",            "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "disp_solve_time",           "Dispatch solver time",                                                             "sec",          "",               "tou",            "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "avg_suboptimal_rel_mip_gap","Average suboptimal relative MIP gap",                                              "%",            "",               "tou",            "sim_type=1",                       "",                      "" },
 
-    { SSC_OUTPUT,       SSC_ARRAY,       "P_fixed",                   "Parasitic power fixed load",                                                       "MWe",          "",               "system",         "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "P_plant_balance_tot",       "Parasitic power generation-dependent load",                                        "MWe",          "",               "system",         "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "P_fixed",                   "Parasitic power fixed load",                                                       "MWe",          "",               "system",         "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "P_plant_balance_tot",       "Parasitic power generation-dependent load",                                        "MWe",          "",               "system",         "sim_type=1",                       "",                      "" },
 
-    { SSC_OUTPUT,       SSC_ARRAY,       "P_out_net",                 "Total electric power to grid",                                                     "MWe",          "",               "system",         "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "gen",                       "Total electric power to grid w/ avail. derate",                                    "kWe",          "",               "system",         "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_NUMBER,      "annual_W_cycle_gross",      "Electrical source - Power cycle gross output",                                     "kWhe",         "",               "system",         "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_NUMBER,      "conversion_factor",         "Gross to Net Conversion Factor",                                                   "%",            "",               "system",         "*",                       "",                      "" },
-    //{ SSC_OUTPUT,       SSC_NUMBER,      "capacity_factor",           "Capacity factor",                                                                  "%",            "",               "system",         "*",                       "",                      "" },
-    //{ SSC_OUTPUT,       SSC_NUMBER,      "kwh_per_kw",                "First year kWh/kW",                                                                "kWh/kW",       "",               "system",         "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_NUMBER,      "sim_duration",              "Computational time of timeseries simulation",                                      "s",            "",               "system",         "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_NUMBER,      "solar_multiple_actual",     "Actual solar multiple of system",                                                  "-",            "",               "system",         "*",                       "",                      "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "P_out_net",                 "Total electric power to grid",                                                     "MWe",          "",               "system",         "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "gen",                       "Total electric power to grid w/ avail. derate",                                    "kWe",          "",               "system",         "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "annual_W_cycle_gross",      "Electrical source - Power cycle gross output",                                     "kWhe",         "",               "system",         "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "conversion_factor",         "Gross to Net Conversion Factor",                                                   "%",            "",               "system",         "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "capacity_factor",           "Capacity factor",                                                                  "%",            "",               "system",         "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "kwh_per_kw",                "First year kWh/kW",                                                                "kWh/kW",       "",               "system",         "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "sim_duration",              "Computational time of timeseries simulation",                                      "s",            "",               "system",         "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "solar_multiple_actual",     "Actual solar multiple of system",                                                  "-",            "",               "system",         "sim_type=1",                       "",                      "" },
     //{ SSC_OUTPUT,       SSC_NUMBER,      "W_dot_par_tot_haf",         "Adjusted parasitic power",                                                         "kWe",          "",               "system",         "*",                       "",                      "" },
     //{ SSC_OUTPUT,       SSC_NUMBER,      "q_dot_defocus_est",         "Thermal energy intentionally lost by defocusing",                                  "MWt",          "",               "system",         "*",                       "",                      "" },
 
-    { SSC_OUTPUT,       SSC_ARRAY,       "recirculating",             "Field recirculating (bypass valve open)",                                          "-",            "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_tes_diams",            "Pipe diameters in TES",                                                            "m",            "",               "TES",            "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_tes_wallthk",          "Pipe wall thickness in TES",                                                       "m",            "",               "TES",            "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_tes_lengths",          "Pipe lengths in TES",                                                              "m",            "",               "TES",            "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_tes_mdot_dsn",         "Mass flow TES pipes at design conditions",                                         "kg/s",         "",               "TES",            "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_tes_vel_dsn",          "Velocity in TES pipes at design conditions",                                       "m/s",          "",               "TES",            "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_tes_T_dsn",            "Temperature in TES pipes at design conditions",                                    "C",            "",               "TES",            "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_tes_P_dsn",            "Pressure in TES pipes at design conditions",                                       "bar",          "",               "TES",            "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "recirculating",             "Field recirculating (bypass valve open)",                                          "-",            "",               "solar_field",    "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_tes_diams",            "Pipe diameters in TES",                                                            "m",            "",               "TES",            "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_tes_wallthk",          "Pipe wall thickness in TES",                                                       "m",            "",               "TES",            "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_tes_lengths",          "Pipe lengths in TES",                                                              "m",            "",               "TES",            "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_tes_mdot_dsn",         "Mass flow TES pipes at design conditions",                                         "kg/s",         "",               "TES",            "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_tes_vel_dsn",          "Velocity in TES pipes at design conditions",                                       "m/s",          "",               "TES",            "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_tes_T_dsn",            "Temperature in TES pipes at design conditions",                                    "C",            "",               "TES",            "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_tes_P_dsn",            "Pressure in TES pipes at design conditions",                                       "bar",          "",               "TES",            "sim_type=1",                       "",                      "" },
 
     //{ SSC_OUTPUT,       SSC_ARRAY,       "defocus",                   "Field optical focus fraction",                                                     "",             "",               "solver",         "*",                       "",                      "" },
 
@@ -550,24 +605,137 @@ public:
 
     void exec()
     {
-     
-        bool is_dispatch = false;
+        // Missing Variables
         bool is_dispatch_series = false;
 
-        // TES
-        // No custom TES piping
-        double init_hot_htf_percent = 0.3;
+            // TES
+            // No custom TES piping
+        double init_hot_htf_percent = 30;
         double cold_tank_max_heat = 25;
         double hot_tank_max_heat = 25;
 
-        // TOU
-        // NOT in CMOD inputs
+            // TOU
+            // NOT in CMOD inputs
         bool is_tod_pc_target_also_pc_max = false;
         vector<double> f_turb_tou_periods{ 1, 1, 1, 1, 1, 1, 1, 1, 1 };
         size_t n_f_turbine = f_turb_tou_periods.size();
         int csp_financial_model = 8;
 
+            // Field
+            // Hard Coded (currently no UI)
+        double L_rnr_pb = 50;
 
+        // Common Parameters
+        bool is_dispatch = as_boolean("is_dispatch");
+        int sim_type = as_number("sim_type");
+
+        // Process Solar Multiple or Aperture Design
+        
+        double solar_mult;
+        double total_Ap;
+        int nLoops;
+        {
+            int nRecVar = as_integer("nRecVar");
+            vector<double> HCE_FieldFrac = as_vector_double("HCE_FieldFrac");
+            vector<double> Shadowing = as_vector_double("Shadowing");
+            vector<double> dirt_env = as_vector_double("dirt_env");
+
+            double opt_derate = 0;                                                                  //
+            for (int i = 0; i < nRecVar; i++)
+                opt_derate += HCE_FieldFrac[i] * Shadowing[i] * dirt_env[i];
+
+            double TrackingError = as_double("TrackingError");
+            double GeomEffects = as_double("GeomEffects");
+            double reflectivity = as_double("reflectivity");
+            double Dirt_mirror = as_double("Dirt_mirror");
+            double Error = as_double("Error");
+
+            double opt_normal = TrackingError * GeomEffects * reflectivity * Dirt_mirror * Error;   //
+
+            double loop_opt_eff = opt_derate * opt_normal;                                          //
+
+            int nMod = as_integer("nMod");
+            double A_aperture = as_double("A_aperture");
+            double A_loop = (float)nMod * A_aperture;
+
+            double T_loop_in_des = as_double("T_loop_in_des");
+            double T_loop_out_des = as_double("T_loop_out");
+            double T_amb_sf_des = as_double("T_amb_sf_des");
+            vector<double> Design_loss = as_vector_double("Design_loss");
+            vector<double> HL_T_coefs = as_vector_double("HL_T_coefs");
+
+            int rec_model = as_integer("rec_model");
+            double hl_des = 0;
+            double dT_des = ((T_loop_in_des + T_loop_out_des) / 2.0) - (T_amb_sf_des + 273.15);
+            switch (rec_model)
+            {
+                // Polynomial
+                case (1):
+                {
+                    hl_des = CSP::poly_eval(dT_des, &HL_T_coefs[0], HL_T_coefs.size());
+                    break;
+                }
+                // Evacuated Receiver
+                case (2):
+                {
+                    for (int i = 0; i < nRecVar; i++)
+                        hl_des += HCE_FieldFrac[i] * Design_loss[i];
+                    break;
+                }
+                default:
+                {
+                    return;
+                }
+
+            }
+
+            double L_mod = as_double("L_mod");
+            double I_bn_des = as_double("I_bn_des");
+
+            double loop_therm_eff = 1.0 - ((hl_des * L_mod * nMod) / (A_loop * I_bn_des * loop_opt_eff));
+
+            double loop_eff = loop_opt_eff * loop_therm_eff;
+
+            double P_ref = as_double("P_ref") * 1e6;
+            double eta_ref = as_double("eta_ref");
+            double q_design = P_ref / eta_ref;
+
+            double Ap_sm1 = q_design / (I_bn_des * loop_eff);
+
+            int use_solar_mult_or_total_Ap = as_integer("solar_mult_or_Ap");
+            double solar_mult_in = as_double("solar_mult_in");
+            double total_Ap_in = as_double("total_Ap_in");
+
+            switch (use_solar_mult_or_total_Ap)
+            {
+                // Use Solar Multiple
+                case 0:
+                {
+                    solar_mult = solar_mult_in;
+                    total_Ap = solar_mult * Ap_sm1;
+                    nLoops = std::ceil(total_Ap / A_loop);
+
+                    break;
+                }
+
+                // Use Total Aperture
+                case 1:
+                {
+                    total_Ap = total_Ap_in;
+                    nLoops = std::ceil(total_Ap / A_loop);
+                    solar_mult = total_Ap / Ap_sm1;
+
+                    break;
+                }
+
+                // Error
+                default:
+                {
+                    throw exec_error("fresnel_physical", "use_solar_mult_or_total_Ap integer should be 0 (solar mult) or 1 (field aperture)");
+                }
+            }
+
+        }
 
         // Weather reader
         C_csp_weatherreader weather_reader;
@@ -600,14 +768,19 @@ public:
             sim_setup.m_report_step = 3600.0 / (double)steps_per_hour;  //[s]
         }
 
-        // Solar field, trough
+        // Solar field
         C_csp_fresnel_collector_receiver c_fresnel;
         {
             // Inputs
             {
+                c_fresnel.m_nLoops = nLoops;
+                c_fresnel.m_solar_mult = solar_mult;
+
+
+
                 c_fresnel.m_nMod = as_integer("nMod");
                 c_fresnel.m_nRecVar = as_integer("nRecVar");
-                c_fresnel.m_nLoops = as_integer("nLoops");
+                
                 c_fresnel.m_eta_pump = as_number("eta_pump");
                 c_fresnel.m_HDR_rough = as_number("HDR_rough");
                 c_fresnel.m_theta_stow = as_number("theta_stow");
@@ -634,7 +807,7 @@ public:
                 c_fresnel.m_ColAz = as_number("ColAz");
                 //c_fresnel.m_ColTilt = as_number("tilt");
 
-                c_fresnel.m_solar_mult = as_number("solar_mult");
+                
 
                 c_fresnel.m_mc_bal_hot = as_number("mc_bal_hot");
                 c_fresnel.m_mc_bal_cold = as_number("mc_bal_cold");
@@ -651,98 +824,82 @@ public:
                 c_fresnel.m_Error = as_number("Error");
                 c_fresnel.m_L_mod = as_number("L_mod");
 
-                size_t size;
-                double* IAM_T_coefs = as_array("IAM_T_coefs", &size);
-                c_fresnel.m_IAM_T_coefs.assign(IAM_T_coefs, IAM_T_coefs + size);
-
-                double* IAM_L_coefs = as_array("IAM_L_coefs", &size);
-                c_fresnel.m_IAM_L_coefs.assign(IAM_L_coefs, IAM_L_coefs + size);
-
+                c_fresnel.m_IAM_T_coefs = as_vector_double("IAM_T_coefs");
+                c_fresnel.m_IAM_L_coefs = as_vector_double("IAM_L_coefs");
                 c_fresnel.m_OpticalTable = as_matrix("OpticalTable");
-
                 c_fresnel.m_rec_model = as_integer("rec_model");
 
-                double* HCE_FieldFrac = as_array("HCE_FieldFrac", &size);
-                c_fresnel.m_HCE_FieldFrac.assign(HCE_FieldFrac, HCE_FieldFrac + size);
+                c_fresnel.m_HCE_FieldFrac = as_vector_double("HCE_FieldFrac");
+                c_fresnel.m_D_abs_in = as_vector_double("D_abs_in");
+                c_fresnel.m_D_abs_out = as_vector_double("D_abs_out");
 
-                double* D_abs_in = as_array("D_abs_in", &size);
-                c_fresnel.m_D_abs_in.assign(D_abs_in, D_abs_in + size);
+                c_fresnel.m_D_glass_in = as_vector_double("D_glass_in");
 
-                double* D_abs_out = as_array("D_abs_out", &size);
-                c_fresnel.m_D_abs_out.assign(D_abs_out, D_abs_out + size);
+                c_fresnel.m_D_glass_out = as_vector_double("D_glass_out");
 
-                double* D_glass_in = as_array("D_glass_in", &size);
-                c_fresnel.m_D_glass_in.assign(D_glass_in, D_glass_in + size);
+                c_fresnel.m_D_plug = as_vector_double("D_plug");
 
-                double* D_glass_out = as_array("D_glass_out", &size);
-                c_fresnel.m_D_glass_out.assign(D_glass_out, D_glass_out + size);
+                c_fresnel.m_Flow_type = as_vector_double("Flow_type");
 
-                double* D_plug = as_array("D_plug", &size);
-                c_fresnel.m_D_plug.assign(D_plug, D_plug + size);
+                c_fresnel.m_Rough = as_vector_double("Rough");
+                
 
-                double* Flow_type = as_array("Flow_type", &size);
-                c_fresnel.m_Flow_type.assign(Flow_type, Flow_type + size);
-
-                double* Rough = as_array("Rough", &size);
-                c_fresnel.m_Rough.assign(Rough, Rough + size);
-
-                double* alpha_env = as_array("alpha_env", &size);
-                c_fresnel.m_alpha_env.assign(alpha_env, alpha_env + size);
+                c_fresnel.m_alpha_env = as_vector_double("alpha_env");
+                
 
                 c_fresnel.m_epsilon_abs_1 = as_matrix_transpose("epsilon_abs_1");
                 c_fresnel.m_epsilon_abs_2 = as_matrix_transpose("epsilon_abs_2");
                 c_fresnel.m_epsilon_abs_3 = as_matrix_transpose("epsilon_abs_3");
                 c_fresnel.m_epsilon_abs_4 = as_matrix_transpose("epsilon_abs_4");
 
-                double* alpha_abs = as_array("alpha_abs", &size);
-                c_fresnel.m_alpha_abs.assign(alpha_abs, alpha_abs + size);
+                c_fresnel.m_alpha_abs = as_vector_double("alpha_abs");
+                
 
-                double* Tau_envelope = as_array("Tau_envelope", &size);
-                c_fresnel.m_Tau_envelope.assign(Tau_envelope, Tau_envelope + size);
+                c_fresnel.m_Tau_envelope = as_vector_double("Tau_envelope");
+                
 
-                double* epsilon_glass = as_array("epsilon_glass", &size);
-                c_fresnel.m_epsilon_glass.assign(epsilon_glass, epsilon_glass + size);
+                c_fresnel.m_epsilon_glass = as_vector_double("epsilon_glass");
+                
 
-                double* GlazingIntact = as_array("GlazingIntactIn", &size);
-                c_fresnel.m_GlazingIntact.assign(GlazingIntact, GlazingIntact + size);
+                c_fresnel.m_GlazingIntact = as_vector_bool("GlazingIntactIn");
+                
 
-                double* P_a = as_array("P_a", &size);
-                c_fresnel.m_P_a.assign(P_a, P_a + size);
+                c_fresnel.m_P_a = as_vector_double("P_a");
+                
 
-                double* AnnulusGas = as_array("AnnulusGas", &size);
-                c_fresnel.m_AnnulusGas.assign(AnnulusGas, AnnulusGas + size);
+                c_fresnel.m_AnnulusGas = as_vector_double("AnnulusGas");
+                
 
-                double* AbsorberMaterial = as_array("AbsorberMaterial", &size);
-                c_fresnel.m_AbsorberMaterial.assign(AbsorberMaterial, AbsorberMaterial + size);
+                c_fresnel.m_AbsorberMaterial = as_vector_double("AbsorberMaterial");
+                
 
-                double* Shadowing = as_array("Shadowing", &size);
-                c_fresnel.m_Shadowing.assign(Shadowing, Shadowing + size);
+                c_fresnel.m_Shadowing = as_vector_double("Shadowing");
+                
 
-                double* dirt_env = as_array("dirt_env", &size);
-                c_fresnel.m_dirt_env.assign(dirt_env, dirt_env + size);
+                c_fresnel.m_dirt_env = as_vector_double("dirt_env");
+                
 
-                double* Design_loss = as_array("Design_loss", &size);
-                c_fresnel.m_Design_loss.assign(Design_loss, Design_loss + size);
+                c_fresnel.m_Design_loss = as_vector_double("Design_loss");
+                
 
                 c_fresnel.m_L_mod_spacing = as_number("L_mod_spacing");
                 c_fresnel.m_L_crossover = as_number("L_crossover");
 
-                double* HL_T_coefs = as_array("HL_T_coefs", &size);
-                c_fresnel.m_HL_T_coefs.assign(HL_T_coefs, HL_T_coefs + size);
+                c_fresnel.m_HL_T_coefs = as_vector_double("HL_T_coefs");
+                
 
-                double* HL_w_coefs = as_array("HL_w_coefs", &size);
-                c_fresnel.m_HL_w_coefs.assign(HL_w_coefs, HL_w_coefs + size);
+                c_fresnel.m_HL_w_coefs = as_vector_double("HL_w_coefs");
+                
 
                 c_fresnel.m_DP_nominal = as_number("DP_nominal");
 
-                double* DP_coefs = as_array("DP_coefs", &size);
-                c_fresnel.m_DP_coefs.assign(DP_coefs, DP_coefs + size);
+                c_fresnel.m_DP_coefs = as_vector_double("DP_coefs");
+                
 
                 c_fresnel.m_rec_htf_vol = as_number("rec_htf_vol");
 
 
-                // Hard Coded (currently no UI)
-                c_fresnel.m_L_rnr_pb = 50;
+                c_fresnel.m_L_rnr_pb = L_rnr_pb;
 
 
                 //////////////////////// Questionable
@@ -758,7 +915,7 @@ public:
                 c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_IAM_AVE, allocate("IAM_ave", n_steps_fixed), n_steps_fixed);
                 c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_ROWSHADOW_AVE, allocate("RowShadow_ave", n_steps_fixed), n_steps_fixed);
                 c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_ENDLOSS_AVE, allocate("EndLoss_ave", n_steps_fixed), n_steps_fixed);
-                c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_DNI_COSTH, allocate("dni_costh", n_steps_fixed), n_steps_fixed);
+                //c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_DNI_COSTH, allocate("dni_costh", n_steps_fixed), n_steps_fixed);
                 c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_EQUIV_OPT_ETA_TOT, allocate("EqOpteff", n_steps_fixed), n_steps_fixed);
                 c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_DEFOCUS, allocate("SCAs_def", n_steps_fixed), n_steps_fixed);
 
@@ -785,29 +942,29 @@ public:
                 c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_W_DOT_SCA_TRACK, allocate("W_dot_sca_track", n_steps_fixed), n_steps_fixed);     //[MWe]
                 c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_W_DOT_PUMP, allocate("W_dot_field_pump", n_steps_fixed), n_steps_fixed);         //[MWe]
 
-                // Fresnel
-                c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_THETA_L, allocate("theta_L", n_steps_fixed), n_steps_fixed);
-                c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_PHI_T, allocate("phi_t", n_steps_fixed), n_steps_fixed);
-                c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_ETA_OPTICAL, allocate("eta_optical", n_steps_fixed), n_steps_fixed);
-                //c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_EQ_OPT_EFF, allocate("EqOptEff", n_steps_fixed), n_steps_fixed);
+                //// Fresnel
+                //c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_THETA_L, allocate("theta_L", n_steps_fixed), n_steps_fixed);
+                //c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_PHI_T, allocate("phi_t", n_steps_fixed), n_steps_fixed);
+                //c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_ETA_OPTICAL, allocate("eta_optical", n_steps_fixed), n_steps_fixed);
+                ////c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_EQ_OPT_EFF, allocate("EqOptEff", n_steps_fixed), n_steps_fixed);
 
-                c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_SF_DEF, allocate("sf_def", n_steps_fixed), n_steps_fixed);
-                c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_Q_INC_SF_TOT, allocate("q_inc_sf_tot", n_steps_fixed), n_steps_fixed);
-                c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_Q_ABS_TOT, allocate("q_abs_tot", n_steps_fixed), n_steps_fixed);
-                c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_Q_DUMP, allocate("q_dump", n_steps_fixed), n_steps_fixed);
-                c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_Q_LOSS_TOT, allocate("q_loss_tot", n_steps_fixed), n_steps_fixed);
-                c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_PIPE_HL, allocate("Pipe_hl", n_steps_fixed), n_steps_fixed);
-                c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_Q_AVAIL, allocate("q_avail", n_steps_fixed), n_steps_fixed);
-                c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_Q_LOSS_SPEC_TOT, allocate("q_loss_spec_tot", n_steps_fixed), n_steps_fixed);
-                c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_ETA_THERMAL, allocate("eta_thermal", n_steps_fixed), n_steps_fixed);
-                c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_E_BAL_STARTUP, allocate("E_bal_startup", n_steps_fixed), n_steps_fixed);
-                c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_M_DOT_AVAIL, allocate("m_dot_avail", n_steps_fixed), n_steps_fixed);
-                c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_M_DOT_HTF2, allocate("m_dot_htf2", n_steps_fixed), n_steps_fixed);
-                c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_DP_TOT, allocate("DP_tot", n_steps_fixed), n_steps_fixed);
-                c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_T_SYS_C, allocate("T_sys_c", n_steps_fixed), n_steps_fixed);
-                c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_T_SYS_H, allocate("T_sys_h", n_steps_fixed), n_steps_fixed);
-                c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_T_LOOP_OUTLET, allocate("t_loop_outlet", n_steps_fixed), n_steps_fixed);
-                c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_Q_I, allocate("q_I", n_steps_fixed), n_steps_fixed);
+                //c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_SF_DEF, allocate("sf_def", n_steps_fixed), n_steps_fixed);
+                //c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_Q_INC_SF_TOT, allocate("q_inc_sf_tot", n_steps_fixed), n_steps_fixed);
+                //c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_Q_ABS_TOT, allocate("q_abs_tot", n_steps_fixed), n_steps_fixed);
+                //c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_Q_DUMP, allocate("q_dump", n_steps_fixed), n_steps_fixed);
+                //c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_Q_LOSS_TOT, allocate("q_loss_tot", n_steps_fixed), n_steps_fixed);
+                //c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_PIPE_HL, allocate("Pipe_hl", n_steps_fixed), n_steps_fixed);
+                //c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_Q_AVAIL, allocate("q_avail", n_steps_fixed), n_steps_fixed);
+                //c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_Q_LOSS_SPEC_TOT, allocate("q_loss_spec_tot", n_steps_fixed), n_steps_fixed);
+                //c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_ETA_THERMAL, allocate("eta_thermal", n_steps_fixed), n_steps_fixed);
+                //c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_E_BAL_STARTUP, allocate("E_bal_startup", n_steps_fixed), n_steps_fixed);
+                //c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_M_DOT_AVAIL, allocate("m_dot_avail", n_steps_fixed), n_steps_fixed);
+                //c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_M_DOT_HTF2, allocate("m_dot_htf2", n_steps_fixed), n_steps_fixed);
+                //c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_DP_TOT, allocate("DP_tot", n_steps_fixed), n_steps_fixed);
+                //c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_T_SYS_C, allocate("T_sys_c", n_steps_fixed), n_steps_fixed);
+                //c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_T_SYS_H, allocate("T_sys_h", n_steps_fixed), n_steps_fixed);
+                //c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_T_LOOP_OUTLET, allocate("t_loop_outlet", n_steps_fixed), n_steps_fixed);
+                //c_fresnel.mc_reported_outputs.assign(C_csp_fresnel_collector_receiver::E_Q_I, allocate("q_I", n_steps_fixed), n_steps_fixed);
             }
 
         }
@@ -917,14 +1074,16 @@ public:
                 delete k_tes_loss_coeffs_array;
             }*/
 
-            util::matrix_t<double> tes_lengths;
-            if (is_assigned("tes_lengths")) {
-                tes_lengths = as_matrix("tes_lengths");               //[m]
-            }
-            if (!is_assigned("tes_lengths") || tes_lengths.ncells() < 11) {
-                double vals1[11] = { 0., 90., 100., 120., 0., 30., 90., 80., 80., 120., 80. };
-                tes_lengths.assign(vals1, 11);
-            }
+            //util::matrix_t<double> tes_lengths;
+            //if (is_assigned("tes_lengths")) {
+            //    tes_lengths = as_matrix("tes_lengths");               //[m]
+            //}
+            //if (!is_assigned("tes_lengths") || tes_lengths.ncells() < 11) {
+            //    double vals1[11] = { 0., 90., 100., 120., 0., 30., 90., 80., 80., 120., 80. };
+            //    tes_lengths.assign(vals1, 11);
+            //}
+
+            double tes_pump_coef = 0.15;
 
             storage = C_csp_two_tank_tes(
                 as_integer("Fluid"),
@@ -932,7 +1091,7 @@ public:
                 as_integer("store_fluid"),
                 as_matrix("store_fl_props"),
                 as_double("P_ref") / as_double("eta_ref"),
-                as_double("solar_mult"),
+                solar_mult,
                 as_double("P_ref") / as_double("eta_ref") * as_double("tshours"),
                 as_double("h_tank"),
                 as_double("u_tank"),
@@ -951,7 +1110,8 @@ public:
                 as_double("pb_pump_coef"),
                 as_boolean("tanks_in_parallel"),
                 as_double("V_tes_des"),
-                false
+                false,
+                tes_pump_coef
             );
                 //as_boolean("calc_design_pipe_vals"),
                 //as_double("tes_pump_coef"),
@@ -1028,134 +1188,143 @@ public:
 
             //int csp_financial_model = as_integer("csp_financial_model");
 
-            
-            if (csp_financial_model > 0 && csp_financial_model < 5) {   // Single Owner financial models
+            if (sim_type == 1)
+            {
+                if (csp_financial_model > 0 && csp_financial_model < 5) {   // Single Owner financial models
 
-                // Get first year base ppa price
-                bool is_ppa_price_input_assigned = is_assigned("ppa_price_input");
-                /*if (is_dispatch && !is_ppa_price_input_assigned) {
-                    throw exec_error("trough_physical", "\n\nYou selected dispatch optimization which requires that the array input ppa_price_input is defined\n");
-                }*/
+                    // Get first year base ppa price
+                    bool is_ppa_price_input_assigned = is_assigned("ppa_price_input");
+                    if (is_dispatch && !is_ppa_price_input_assigned) {
+                        throw exec_error("trough_physical", "\n\nYou selected dispatch optimization which requires that the array input ppa_price_input is defined\n");
+                    }
 
-                if (is_ppa_price_input_assigned) {
-                    size_t count_ppa_price_input;
-                    ssc_number_t* ppa_price_input_array = as_array("ppa_price_input", &count_ppa_price_input);
-                    ppa_price_year1 = (double)ppa_price_input_array[0];  // [$/kWh]
-                }
-                else {
-                    ppa_price_year1 = 1.0;      //[-] don't need ppa multiplier if not optimizing
-                }
-
-                int ppa_soln_mode = as_integer("ppa_soln_mode");    // PPA solution mode (0=Specify IRR target, 1=Specify PPA price)
-                /*if (ppa_soln_mode == 0 && is_dispatch) {
-                    throw exec_error("trough_physical", "\n\nYou selected dispatch optimization and the Specify IRR Target financial solution mode, "
-                        "but dispatch optimization requires known absolute electricity prices. Dispatch optimization requires "
-                        "the Specify PPA Price financial solution mode. You can continue using dispatch optimization and iteratively "
-                        "solve for the PPA that results in a target IRR by running a SAM Parametric analysis or script.\n");
-                }*/
-
-                int en_electricity_rates = as_integer("en_electricity_rates");  // 0 = Use PPA, 1 = Use Retail
-                /*if (en_electricity_rates == 1 && is_dispatch) {
-                    throw exec_error("trough_physical", "\n\nYou selected dispatch optimization and the option to Use Retail Electricity Rates on the Electricity Purchases page, "
-                        "but the dispatch optimization model currently does not accept separate buy and sell prices. Please use the Use PPA or Market Prices option "
-                        "on the Electricity Purchases page.\n");
-                }*/
-
-                // Time-of-Delivery factors by time step:
-                int ppa_mult_model = as_integer("ppa_multiplier_model");
-                if (ppa_mult_model == 1)    // use dispatch_ts input
-                {
-                    tou_params->mc_pricing.mv_is_diurnal = false;
-
-                    if (is_assigned("dispatch_factors_ts")) {
-                        size_t nmultipliers;
-                        ssc_number_t* multipliers = as_array("dispatch_factors_ts", &nmultipliers);
-                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(nmultipliers, 0.0);
-                        for (size_t ii = 0; ii < nmultipliers; ii++)
-                            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][ii] = multipliers[ii];
+                    if (is_ppa_price_input_assigned) {
+                        size_t count_ppa_price_input;
+                        ssc_number_t* ppa_price_input_array = as_array("ppa_price_input", &count_ppa_price_input);
+                        ppa_price_year1 = (double)ppa_price_input_array[0];  // [$/kWh]
                     }
                     else {
+                        ppa_price_year1 = 1.0;      //[-] don't need ppa multiplier if not optimizing
+                    }
+
+                    int ppa_soln_mode = as_integer("ppa_soln_mode");    // PPA solution mode (0=Specify IRR target, 1=Specify PPA price)
+                    if (ppa_soln_mode == 0 && is_dispatch) {
+                        throw exec_error("trough_physical", "\n\nYou selected dispatch optimization and the Specify IRR Target financial solution mode, "
+                            "but dispatch optimization requires known absolute electricity prices. Dispatch optimization requires "
+                            "the Specify PPA Price financial solution mode. You can continue using dispatch optimization and iteratively "
+                            "solve for the PPA that results in a target IRR by running a SAM Parametric analysis or script.\n");
+                    }
+
+                    int en_electricity_rates = as_integer("en_electricity_rates");  // 0 = Use PPA, 1 = Use Retail
+                    if (en_electricity_rates == 1 && is_dispatch) {
+                        throw exec_error("trough_physical", "\n\nYou selected dispatch optimization and the option to Use Retail Electricity Rates on the Electricity Purchases page, "
+                            "but the dispatch optimization model currently does not accept separate buy and sell prices. Please use the Use PPA or Market Prices option "
+                            "on the Electricity Purchases page.\n");
+                    }
+
+                    // Time-of-Delivery factors by time step:
+                    int ppa_mult_model = as_integer("ppa_multiplier_model");
+                    if (ppa_mult_model == 1)    // use dispatch_ts input
+                    {
+                        tou_params->mc_pricing.mv_is_diurnal = false;
+
+                        if (is_assigned("dispatch_factors_ts")) {
+                            size_t nmultipliers;
+                            ssc_number_t* multipliers = as_array("dispatch_factors_ts", &nmultipliers);
+                            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(nmultipliers, 0.0);
+                            for (size_t ii = 0; ii < nmultipliers; ii++)
+                                tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][ii] = multipliers[ii];
+                        }
+                        else {
+                            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed, -1.0);
+                        }
+                    }
+                    else if (ppa_mult_model == 0) // standard diuranal input
+                    {
+                        tou_params->mc_pricing.mv_is_diurnal = true;
+
+                        bool are_all_assigned = is_assigned("dispatch_sched_weekday") || is_assigned("dispatch_sched_weekend")
+                            || is_assigned("dispatch_factor1") || is_assigned("dispatch_factor2") || is_assigned("dispatch_factor3")
+                            || is_assigned("dispatch_factor4") || is_assigned("dispatch_factor5") || is_assigned("dispatch_factor6")
+                            || is_assigned("dispatch_factor7") || is_assigned("dispatch_factor8") || is_assigned("dispatch_factor9");
+
+                        if (are_all_assigned) {
+
+                            tou_params->mc_pricing.mc_weekdays = as_matrix("dispatch_sched_weekday");
+                            tou_params->mc_pricing.mc_weekends = as_matrix("dispatch_sched_weekend");
+
+                            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(9, 0.0);
+                            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][0] = as_double("dispatch_factor1");
+                            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][1] = as_double("dispatch_factor2");
+                            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][2] = as_double("dispatch_factor3");
+                            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][3] = as_double("dispatch_factor4");
+                            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][4] = as_double("dispatch_factor5");
+                            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][5] = as_double("dispatch_factor6");
+                            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][6] = as_double("dispatch_factor7");
+                            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][7] = as_double("dispatch_factor8");
+                            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][8] = as_double("dispatch_factor9");
+                        }
+                        else {
+                            tou_params->mc_pricing.mc_weekdays.resize_fill(12, 24, 1.);
+                            tou_params->mc_pricing.mc_weekends.resize_fill(12, 24, 1.);
+                            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(9, -1.0);
+                        }
+                    }
+                }
+                else if (csp_financial_model == 5) {    // Commercial
+                    if (is_dispatch) {
+                        throw exec_error("trough_physical", "\nDispatch optimization current not enabled for the Commercial financial model\n");
+                        // need to add pricing lookup for Commercial financial model
+                    }
+                    if (false) {}
+                    else {
+                        tou_params->mc_pricing.mv_is_diurnal = false;
+
                         tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed, -1.0);
                     }
                 }
-                else if (ppa_mult_model == 0) // standard diuranal input
-                {
-                    tou_params->mc_pricing.mv_is_diurnal = true;
+                else if (csp_financial_model == 6) {     // use 'mp_energy_market_revenue' -> from Merchant Plant model
 
-                    bool are_all_assigned = is_assigned("dispatch_sched_weekday") || is_assigned("dispatch_sched_weekend")
-                        || is_assigned("dispatch_factor1") || is_assigned("dispatch_factor2") || is_assigned("dispatch_factor3")
-                        || is_assigned("dispatch_factor4") || is_assigned("dispatch_factor5") || is_assigned("dispatch_factor6")
-                        || is_assigned("dispatch_factor7") || is_assigned("dispatch_factor8") || is_assigned("dispatch_factor9");
-
-                    if (are_all_assigned) {
-
-                        tou_params->mc_pricing.mc_weekdays = as_matrix("dispatch_sched_weekday");
-                        tou_params->mc_pricing.mc_weekends = as_matrix("dispatch_sched_weekend");
-
-                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(9, 0.0);
-                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][0] = as_double("dispatch_factor1");
-                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][1] = as_double("dispatch_factor2");
-                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][2] = as_double("dispatch_factor3");
-                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][3] = as_double("dispatch_factor4");
-                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][4] = as_double("dispatch_factor5");
-                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][5] = as_double("dispatch_factor6");
-                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][6] = as_double("dispatch_factor7");
-                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][7] = as_double("dispatch_factor8");
-                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][8] = as_double("dispatch_factor9");
-                    }
-                    else {
-                        tou_params->mc_pricing.mc_weekdays.resize_fill(12, 24, 1.);
-                        tou_params->mc_pricing.mc_weekends.resize_fill(12, 24, 1.);
-                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(9, -1.0);
-                    }
-                }
-            }
-            else if (csp_financial_model == 5) {    // Commercial
-                //if (is_dispatch) {
-                //    throw exec_error("trough_physical", "\nDispatch optimization current not enabled for the Commercial financial model\n");
-                //    // need to add pricing lookup for Commercial financial model
-                //}
-                if (false) {}
-                else {
                     tou_params->mc_pricing.mv_is_diurnal = false;
 
-                    tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed, -1.0);
+                    if (is_dispatch) {
+                        util::matrix_t<double> mp_energy_market_revenue = as_matrix("mp_energy_market_revenue"); // col 0 = cleared capacity, col 1 = $/MWh
+                        size_t n_rows = mp_energy_market_revenue.nrows();
+                        if (n_rows < n_steps_fixed) {
+                            string ppa_msg = util::format("mp_energy_market_revenue input has %d rows but there are %d number of timesteps", n_rows, n_steps_fixed);
+                            throw exec_error("trough_physical", ppa_msg);
+                        }
+
+                        double conv_dolmwh_to_centkwh = 0.1;
+                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed, 0.0);
+                        for (size_t ii = 0; ii < n_steps_fixed; ii++) {
+                            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][ii] = mp_energy_market_revenue(ii, 1) * conv_dolmwh_to_centkwh; //[cents/kWh]
+                        }
+                    }
+                    if (false) {}
+                    else { // if no dispatch optimization, don't need an input pricing schedule
+                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed, -1.0);
+                    }
+                }
+                else if (csp_financial_model == 7 || csp_financial_model == 8) {    // LCOE (7) and None (8)
+
+                    tou_params->mc_pricing.mv_is_diurnal = false;
+
+                    // No hourly electricity pricing in these financial models
+                    // However, may still want to solve with dispatch optimization to avoid rapid startup/shutdown, so set to uniform schedule
+                    tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed, 1.0);
+                }
+                else {
+                    throw exec_error("trough_physical", "csp_financial_model must be 1-8");
                 }
             }
-            else if (csp_financial_model == 6) {     // use 'mp_energy_market_revenue' -> from Merchant Plant model
-
+            else if (sim_type == 2)
+            {
                 tou_params->mc_pricing.mv_is_diurnal = false;
 
-                //if (is_dispatch) {
-                //    util::matrix_t<double> mp_energy_market_revenue = as_matrix("mp_energy_market_revenue"); // col 0 = cleared capacity, col 1 = $/MWh
-                //    size_t n_rows = mp_energy_market_revenue.nrows();
-                //    if (n_rows < n_steps_fixed) {
-                //        string ppa_msg = util::format("mp_energy_market_revenue input has %d rows but there are %d number of timesteps", n_rows, n_steps_fixed);
-                //        throw exec_error("trough_physical", ppa_msg);
-                //    }
-
-                //    double conv_dolmwh_to_centkwh = 0.1;
-                //    tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed, 0.0);
-                //    for (size_t ii = 0; ii < n_steps_fixed; ii++) {
-                //        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][ii] = mp_energy_market_revenue(ii, 1) * conv_dolmwh_to_centkwh; //[cents/kWh]
-                //    }
-                //}
-                if (false) {}
-                else { // if no dispatch optimization, don't need an input pricing schedule
-                    tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed, -1.0);
-                }
+                tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed, -1.0);
             }
-            else if (csp_financial_model == 7 || csp_financial_model == 8) {    // LCOE (7) and None (8)
-
-                tou_params->mc_pricing.mv_is_diurnal = false;
-
-                // No hourly electricity pricing in these financial models
-                // However, may still want to solve with dispatch optimization to avoid rapid startup/shutdown, so set to uniform schedule
-                tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed, 1.0);
-            }
-            else {
-                throw exec_error("trough_physical", "csp_financial_model must be 1-8");
-            }
+            
         }
 
         // System Parameters
@@ -1175,7 +1344,6 @@ public:
         // System Dispatch
         csp_dispatch_opt dispatch;
         {
-            //if (as_boolean("is_dispatch")) {
             if(is_dispatch){
 
                 // System Design Parameters
@@ -1184,7 +1352,7 @@ public:
 
                 // System Design Calcs
                 double q_dot_cycle_des = W_dot_cycle_des / eta_cycle;   //[MWt]
-                double q_dot_rec_des = q_dot_cycle_des * as_double("solar_mult"); //[MWt]
+                double q_dot_rec_des = q_dot_cycle_des * solar_mult; //[MWt]
 
                 dispatch.solver_params.set_user_inputs(as_boolean("is_dispatch"), as_integer("disp_steps_per_hour"), as_integer("disp_frequency"), as_integer("disp_horizon"),
                     as_integer("disp_max_iter"), as_double("disp_mip_gap"), as_double("disp_timeout"),
@@ -1345,8 +1513,157 @@ public:
                 tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][i] = dispatch_series[i];
         }
 
-        update("Begin timeseries simulation...", 0.0);
+        // Design point is complete, assign design outputs
+        {
+            // System Design Calcs
+            double eta_ref = as_double("eta_ref");                          //[-]
+            double W_dot_cycle_des = as_double("P_ref");                    //[MWe]
+            double tshours = as_double("tshours");                          //[-]
+            double solar_mult_des = solar_mult;
 
+            double q_dot_pc_des = W_dot_cycle_des / eta_ref;                //[MWt]
+            double Q_tes = q_dot_pc_des * tshours;                          //[MWt-hr]
+
+            double m_dot_htf_cycle_des = c_fresnel.m_m_dot_design;          // [kg/s]
+
+            double avg_T_des = (c_fresnel.m_T_loop_in_des + c_fresnel.m_T_loop_out_des) / 2.0;
+
+            // Solar Field
+
+            double W_dot_col_tracking_des = c_fresnel.get_tracking_power();                 // [MWe]
+            double q_dot_rec_des = c_fresnel.m_q_design / 1e6;                              // [MWt]
+            double A_loop = c_fresnel.m_A_loop;                                             // [m2]
+            double loop_opt_eff = c_fresnel.m_loop_opt_eff;
+            double loop_therm_eff = c_fresnel.m_loop_therm_eff;
+            double loop_eff = c_fresnel.m_loop_eff;
+            double sm1_aperture = q_dot_pc_des / (c_fresnel.m_I_bn_des * loop_eff) * 1e6;   // [m2]
+            double sm1_nLoops = std::ceil(sm1_aperture / c_fresnel.m_A_loop);
+            double total_tracking_power = c_fresnel.m_W_dot_sca_tracking_nom;               // [MW]
+            double A_field = c_fresnel.m_Ap_tot;                                            // [m2]
+            double q_field_des = c_fresnel.m_q_design / 1e6;                                // [MW]
+
+            double field_area = A_field / 4046.85642;                                       // [acres] (convert m2 to acre)
+            double land_mult = as_double("land_mult");
+            double total_land_area = field_area * land_mult;                                // [acres]
+
+            double field_htf_min_temp = c_fresnel.m_htfProps.min_temp();
+            double field_htf_max_temp = c_fresnel.m_htfProps.max_temp();
+
+            // Assign
+            {
+                assign("q_dot_rec_des", q_dot_rec_des);
+                assign("A_loop", A_loop);
+                assign("loop_opt_eff", loop_opt_eff);
+                assign("loop_therm_eff", loop_therm_eff);
+                assign("loop_eff", loop_eff);
+                assign("sm1_aperture", sm1_aperture);
+                assign("sm1_nLoops", sm1_nLoops);
+                assign("total_tracking_power", total_tracking_power);
+                assign("A_field", A_field);
+                assign("q_field_des", q_field_des);
+                assign("field_area", field_area);
+                assign("total_land_area", total_land_area);
+                assign("field_htf_min_temp", field_htf_min_temp);
+                assign("field_htf_max_temp", field_htf_max_temp);
+            }
+
+            // Collector and Receiver
+            double DP_pressure_loss = c_fresnel.m_nMod * c_fresnel.m_DP_nominal;            // [bar]
+            double avg_dt_des = c_fresnel.m_dT_des;                                         // [C]
+            double hl_des = c_fresnel.m_hl_des;                                             // [W/m]
+            double opt_derate = c_fresnel.m_opt_derate;
+            double opt_normal = c_fresnel.m_opt_normal;
+
+            // Assign
+            {
+                assign("DP_pressure_loss", DP_pressure_loss);
+                assign("avg_dt_des", avg_dt_des);
+                assign("hl_des", hl_des);
+                assign("opt_derate", opt_derate);
+                assign("opt_normal", opt_normal);
+            }
+
+            // Storage
+            double V_tes_htf_avail_calc /*m3*/, V_tes_htf_total_calc /*m3*/,
+                d_tank_calc /*m*/, q_dot_loss_tes_des_calc /*MWt*/, dens_store_htf_at_T_ave_calc /*kg/m3*/,
+                Q_tes_des_calc /*MWt-hr*/;
+
+            storage.get_design_parameters(V_tes_htf_avail_calc, V_tes_htf_total_calc,
+                d_tank_calc, q_dot_loss_tes_des_calc, dens_store_htf_at_T_ave_calc, Q_tes_des_calc);
+
+            double vol_min = V_tes_htf_total_calc * (storage.m_h_tank_min / storage.m_h_tank);
+            double tes_htf_min_temp = storage.get_min_storage_htf_temp() - 273.15;
+            double tes_htf_max_temp = storage.get_max_storage_htf_temp() - 273.15;
+            double tes_htf_dens = storage.get_storage_htf_density();
+            double tes_htf_cp = storage.get_storage_htf_cp();
+
+            // Assign
+            {
+                assign("vol_tank", V_tes_htf_total_calc);
+                assign("Q_tes_des", Q_tes_des_calc);
+                assign("d_tank", d_tank_calc);
+                assign("vol_min", vol_min);
+                assign("q_dot_loss_tes_des", q_dot_loss_tes_des_calc);
+                assign("tes_htf_min_temp", tes_htf_min_temp);
+                assign("tes_htf_max_temp", tes_htf_max_temp);
+                assign("tes_htf_dens", tes_htf_dens);
+                assign("tes_htf_cp", tes_htf_cp);
+            }
+
+            // Power Cycle
+            
+            double m_dot_htf_pc_des;    //[kg/s]
+            double cp_htf_pc_des;       //[kJ/kg-K]
+            double W_dot_pc_pump_des;   //[MWe]
+            double W_dot_pc_cooling_des;   //[MWe]
+            int n_T_htf_pars, n_T_amb_pars, n_m_dot_pars;
+            n_T_htf_pars = n_T_amb_pars = n_m_dot_pars = -1;
+            double T_htf_ref_calc, T_htf_low_calc, T_htf_high_calc, T_amb_ref_calc, T_amb_low_calc, T_amb_high_calc,
+                m_dot_htf_ND_ref_calc, m_dot_htf_ND_low_calc, m_dot_htf_ND_high_calc, W_dot_gross_ND_des, Q_dot_HTF_ND_des,
+                W_dot_cooling_ND_des, m_dot_water_ND_des;
+            T_htf_ref_calc = T_htf_low_calc = T_htf_high_calc =
+                T_amb_ref_calc = T_amb_low_calc = T_amb_high_calc =
+                m_dot_htf_ND_ref_calc = m_dot_htf_ND_low_calc = m_dot_htf_ND_high_calc =
+                W_dot_gross_ND_des = Q_dot_HTF_ND_des = W_dot_cooling_ND_des = m_dot_water_ND_des = std::numeric_limits<double>::quiet_NaN();
+
+            rankine_pc.get_design_parameters(m_dot_htf_pc_des, cp_htf_pc_des, W_dot_pc_pump_des, W_dot_pc_cooling_des,
+                n_T_htf_pars, n_T_amb_pars, n_m_dot_pars,
+                T_htf_ref_calc /*C*/, T_htf_low_calc /*C*/, T_htf_high_calc /*C*/,
+                T_amb_ref_calc /*C*/, T_amb_low_calc /*C*/, T_amb_high_calc /*C*/,
+                m_dot_htf_ND_ref_calc, m_dot_htf_ND_low_calc /*-*/, m_dot_htf_ND_high_calc /*-*/,
+                W_dot_gross_ND_des, Q_dot_HTF_ND_des, W_dot_cooling_ND_des, m_dot_water_ND_des);
+
+            // Assign
+            {
+                assign("q_dot_cycle_des", q_dot_pc_des);
+            }
+
+            // System Design
+            double W_dot_bop_design, W_dot_fixed_parasitic_design;    //[MWe]
+            csp_solver.get_design_parameters(W_dot_bop_design, W_dot_fixed_parasitic_design);
+
+            double gross_net_conversion_des = as_number("gross_net_conversion_factor");
+            double nameplate_des = W_dot_cycle_des * gross_net_conversion_des;
+
+            // Assign
+            {
+                assign("nameplate", nameplate_des);
+                assign("m_dot_htf_cycle_des", m_dot_htf_cycle_des);
+                assign("W_dot_bop_design", W_dot_bop_design);
+                assign("W_dot_fixed", W_dot_fixed_parasitic_design);
+
+                assign("solar_mult", solar_mult);
+                assign("nLoops", nLoops);
+                assign("total_Ap", total_Ap);
+            }
+          
+        }
+
+        // Return if only called for design point
+        if (sim_type != 1)
+            return;
+
+        update("Begin timeseries simulation...", 0.0);
         std::clock_t clock_start = std::clock();
 
         // Run Simulation
@@ -1476,72 +1793,72 @@ public:
 
 
             // Fresnel
-            x = as_array("theta_L", &size);
-            vector<double> theta_L_vec(x, x + size);
-            //delete x;
+            //x = as_array("theta_L", &size);
+            //vector<double> theta_L_vec(x, x + size);
+            ////delete x;
 
-            x = as_array("phi_t", &size);
-            vector<double> phi_t_vec(x, x + size);
-            //delete x;
+            //x = as_array("phi_t", &size);
+            //vector<double> phi_t_vec(x, x + size);
+            ////delete x;
 
-            x = as_array("eta_optical", &size);
-            vector<double> eta_optical_vec(x, x + size);
-            //delete x;
+            //x = as_array("eta_optical", &size);
+            //vector<double> eta_optical_vec(x, x + size);
+            ////delete x;
 
-            //x = as_array("EqOptEff", &size);
-            //vector<double> EqOptEff_vec(x, x + size);
-            //delete x;
-            auto eq = EqOpteff_vec;
+            ////x = as_array("EqOptEff", &size);
+            ////vector<double> EqOptEff_vec(x, x + size);
+            ////delete x;
+            //auto eq = EqOpteff_vec;
 
-            x = as_array("sf_def", &size);
-            vector<double> sf_def_vec(x, x + size);
-            //delete x;
+            //x = as_array("sf_def", &size);
+            //vector<double> sf_def_vec(x, x + size);
+            ////delete x;
 
-            x = as_array("q_inc_sf_tot", &size);
-            vector<double> q_inc_sf_tot_vec(x, x + size);
-            //delete x;
-            x = as_array("q_abs_tot", &size);
-            vector<double> q_abs_tot_vec(x, x + size);
-            //delete x;
-            x = as_array("q_dump", &size);
-            vector<double> q_dump_vec(x, x + size);
-            //delete x;
-            x = as_array("q_loss_tot", &size);
-            vector<double> q_loss_tot_vec(x, x + size);
-            //delete x;
-            x = as_array("Pipe_hl", &size);
-            vector<double> Pipe_hl_vec(x, x + size);
-            //delete x;
-            x = as_array("q_avail", &size);
-            vector<double> q_avail_vec(x, x + size);
-            //delete x;
-            x = as_array("q_loss_spec_tot", &size);
-            vector<double> q_loss_spec_tot_vec(x, x + size);
-            //delete x;
-            x = as_array("eta_thermal", &size);
-            vector<double> eta_thermal_vec(x, x + size);
-            //delete x;
-            x = as_array("E_bal_startup", &size);
-            vector<double> E_bal_startup_vec(x, x + size);
-            //delete x;
-            x = as_array("m_dot_avail", &size);
-            vector<double> m_dot_avail_vec(x, x + size);
-            //delete x;
-            x = as_array("m_dot_htf2", &size);
-            vector<double> m_dot_htf2_vec(x, x + size);
-            //delete x;
-            x = as_array("DP_tot", &size);
-            vector<double> DP_tot_vec(x, x + size);
-            //delete x;
-            x = as_array("T_sys_c", &size);
-            vector<double> T_sys_c_vec(x, x + size);
-            //delete x;
-            x = as_array("T_sys_h", &size);
-            vector<double> T_sys_h_vec(x, x + size);
-            //delete x;
-            x = as_array("t_loop_outlet", &size);
-            vector<double> t_loop_outlet_vec(x, x + size);
-            //delete x;
+            //x = as_array("q_inc_sf_tot", &size);
+            //vector<double> q_inc_sf_tot_vec(x, x + size);
+            ////delete x;
+            //x = as_array("q_abs_tot", &size);
+            //vector<double> q_abs_tot_vec(x, x + size);
+            ////delete x;
+            //x = as_array("q_dump", &size);
+            //vector<double> q_dump_vec(x, x + size);
+            ////delete x;
+            //x = as_array("q_loss_tot", &size);
+            //vector<double> q_loss_tot_vec(x, x + size);
+            ////delete x;
+            //x = as_array("Pipe_hl", &size);
+            //vector<double> Pipe_hl_vec(x, x + size);
+            ////delete x;
+            //x = as_array("q_avail", &size);
+            //vector<double> q_avail_vec(x, x + size);
+            ////delete x;
+            //x = as_array("q_loss_spec_tot", &size);
+            //vector<double> q_loss_spec_tot_vec(x, x + size);
+            ////delete x;
+            //x = as_array("eta_thermal", &size);
+            //vector<double> eta_thermal_vec(x, x + size);
+            ////delete x;
+            //x = as_array("E_bal_startup", &size);
+            //vector<double> E_bal_startup_vec(x, x + size);
+            ////delete x;
+            //x = as_array("m_dot_avail", &size);
+            //vector<double> m_dot_avail_vec(x, x + size);
+            ////delete x;
+            //x = as_array("m_dot_htf2", &size);
+            //vector<double> m_dot_htf2_vec(x, x + size);
+            ////delete x;
+            //x = as_array("DP_tot", &size);
+            //vector<double> DP_tot_vec(x, x + size);
+            ////delete x;
+            //x = as_array("T_sys_c", &size);
+            //vector<double> T_sys_c_vec(x, x + size);
+            ////delete x;
+            //x = as_array("T_sys_h", &size);
+            //vector<double> T_sys_h_vec(x, x + size);
+            ////delete x;
+            //x = as_array("t_loop_outlet", &size);
+            //vector<double> t_loop_outlet_vec(x, x + size);
+            ////delete x;
 
             // Actual Outputs
             x = as_array("time_hr", &size);
@@ -1550,8 +1867,8 @@ public:
             x = as_array("P_out_net", &size);
             vector<double> P_out_net_vec(x, x + size);
 
-            x = as_array("q_I", &size);
-            vector<double> q_I_vec(x, x + size);
+            /*x = as_array("q_I", &size);
+            vector<double> q_I_vec(x, x + size);*/
 
             int y = 0;
         }
@@ -1560,7 +1877,7 @@ public:
         std::clock_t clock_end = std::clock();
         double sim_duration = (clock_end - clock_start) / (double)CLOCKS_PER_SEC;		//[s]
         assign("sim_duration", (ssc_number_t)sim_duration);
-        assign("solar_multiple_actual", as_double("solar_mult"));   // calculated during verify() using cmod_csp_trough_eqns.cpp
+        assign("solar_multiple_actual", solar_mult);   // calculated during verify() using cmod_csp_trough_eqns.cpp
 
         // Do unit post-processing here
         double* p_q_pc_startup = allocate("q_pc_startup", n_steps_fixed);
@@ -1722,6 +2039,7 @@ public:
         accumulate_annual_for_year("q_dc_tes", "annual_q_dc_tes", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour);
         accumulate_annual_for_year("q_ch_tes", "annual_q_ch_tes", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour);
 
+
         ssc_number_t annual_field_fp = accumulate_annual_for_year("q_dot_freeze_prot", "annual_field_freeze_protection", sim_setup.m_report_step / 3600.0 * 1.E3, steps_per_hour);    //[kWt-hr]
         ssc_number_t annual_tes_fp = accumulate_annual_for_year("q_tes_heater", "annual_tes_freeze_protection", sim_setup.m_report_step / 3600.0 * 1.E3, steps_per_hour); //[kWt-hr]
 
@@ -1743,7 +2061,7 @@ public:
         }
 
         double avg_gap = 0;
-        if (as_boolean("is_dispatch")) {
+        if (is_dispatch) {
             std::string disp_sum_msg;
             dispatch.count_solutions_by_type(flag, (int)as_double("disp_frequency"), disp_sum_msg);
             log(disp_sum_msg, SSC_NOTICE);
@@ -1766,13 +2084,13 @@ public:
         assign("conversion_factor", convfactor);
 
         double kWh_per_kW = 0.0;
-        //double system_capacity = as_double("P_ref") * as_double("gross_net_conversion_factor") * 1.E3;       //[kWe]
-        //double nameplate = system_capacity;     //[kWe]
-        //if (nameplate > 0.0)
-        //    kWh_per_kW = ae / nameplate;
+        double system_capacity = as_double("P_ref") * as_double("gross_net_conversion_factor") * 1.E3;       //[kWe]
+        double nameplate = system_capacity;     //[kWe]
+        if (nameplate > 0.0)
+            kWh_per_kW = ae / nameplate;
 
-        //assign("capacity_factor", (ssc_number_t)(kWh_per_kW / ((double)n_steps_fixed / (double)steps_per_hour) * 100.));
-        //assign("kwh_per_kw", (ssc_number_t)kWh_per_kW);
+        assign("capacity_factor", (ssc_number_t)(kWh_per_kW / ((double)n_steps_fixed / (double)steps_per_hour) * 100.));
+        assign("kwh_per_kw", (ssc_number_t)kWh_per_kW);
        
     }
 
