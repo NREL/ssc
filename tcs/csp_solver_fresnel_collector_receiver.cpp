@@ -1511,9 +1511,9 @@ bool C_csp_fresnel_collector_receiver::init_fieldgeom()
         is provided by the weatherreader class and not set until after init() and before the first call().
         */
 
-    //Calculate the total field aperture area
-    m_A_loop = (float)m_nMod * m_A_aperture;
-    m_Ap_tot = (float)m_nLoops * m_A_loop;
+    // If solar multiple is not yet calculated
+    if(m_is_solar_mult_designed == false)
+        this->design_solar_mult();
 
     if (m_rec_model == 2)
     {
@@ -1848,61 +1848,6 @@ bool C_csp_fresnel_collector_receiver::init_fieldgeom()
 
     // Calculate tracking parasitics for when trough is on sun
     m_W_dot_sca_tracking_nom = m_SCA_drives_elec * (double)(m_nMod * m_nLoops) / 1.E6;	//[MWe]
-
-    // Extra Output Design Point Calculations
-    {
-        // Loop Optical Efficiency
-        m_opt_derate = 0;
-        for (int i = 0; i < m_nRecVar; i++)
-            m_opt_derate += m_HCE_FieldFrac[i] * m_Shadowing[i] * m_dirt_env[i];
-        m_opt_normal = m_TrackingError * m_GeomEffects * m_reflectivity * m_Dirt_mirror * m_Error;
-
-        m_loop_opt_eff = m_opt_derate * m_opt_normal;
-
-        // Loop Heat Loss
-        m_hl_des = 0;
-        m_dT_des = ((m_T_loop_in_des + m_T_loop_out_des) / 2.0) - (m_T_amb_sf_des + 273);
-        switch (m_rec_model)
-        {
-            // Polynomial
-            case (1):
-            {
-                m_hl_des = CSP::poly_eval(m_dT_des, &m_HL_T_coefs[0], m_HL_T_coefs.size());
-                break;
-            }
-            // Evacuated Receiver
-            case (2):
-            {
-                for (int i = 0; i < m_nRecVar; i++)
-                    m_hl_des += m_HCE_FieldFrac[i] * m_Design_loss[i];
-                break;
-            }
-            default:
-            {
-                //message(TCS_ERROR, "The selected thermal model (%d) does not exist. Options are 1=Regression model : 2=Evacuated tube receiver model", rec_model);
-                string msg = "The selected thermal model (%d) does not exist. Options are 1=Regression model : 2=Evacuated tube receiver model";
-                m_error_msg = util::format(msg.c_str(), m_rec_model);
-                mc_csp_messages.add_message(C_csp_messages::NOTICE, m_error_msg);
-                return false;
-            }
-                
-        }
-
-        // Loop Thermal Efficiency
-        m_loop_therm_eff = 1.0 - ((m_hl_des * m_L_mod * m_nMod) / (m_A_loop * m_I_bn_des * m_loop_opt_eff));
-
-        // Loop total efficiency
-        m_loop_eff = m_loop_therm_eff * m_loop_opt_eff;
-
-        
-    }
-
-
-
-
-
-
-
 
     return true;
 }
@@ -2774,6 +2719,100 @@ double C_csp_fresnel_collector_receiver::get_collector_area()
 }
 
 // ------------------------------------------------------------------- PUBLIC SUPPLEMENTAL
+
+bool C_csp_fresnel_collector_receiver::design_solar_mult()
+{
+    if (m_is_solar_mult_designed == true)
+        return false;
+
+    // Calculate nLoops, depending on designing for solar mult or total field aperture
+    {
+        // Optical Derate
+        m_opt_derate = 0;
+        for (int i = 0; i < m_nRecVar; i++)
+            m_opt_derate += m_HCE_FieldFrac[i] * m_Shadowing[i] * m_dirt_env[i];
+
+        // Optical Normal
+        m_opt_normal = 0;
+        m_opt_normal = m_TrackingError * m_GeomEffects * m_reflectivity * m_Dirt_mirror * m_Error;
+
+        // Loop Optical Efficiency
+        m_loop_opt_eff = m_opt_derate * m_opt_normal;
+
+        // Loop Aperture
+        m_A_loop = (float)m_nMod * m_A_aperture;
+
+        // Heat Loss at Design
+        m_hl_des = 0;
+        m_dT_des = ((m_T_loop_in_des + m_T_loop_out_des) / 2.0) - (m_T_amb_sf_des + 273.15);            // Average temperature difference at design
+        switch (m_rec_model)
+        {
+            // Polynomial
+            case (1):
+            {
+                m_hl_des = CSP::poly_eval(m_dT_des, &m_HL_T_coefs[0], m_HL_T_coefs.size());
+                break;
+            }
+            // Evacuated Receiver
+            case (2):
+            {
+                for (int i = 0; i < m_nRecVar; i++)
+                    m_hl_des += m_HCE_FieldFrac[i] * m_Design_loss[i];
+                break;
+            }
+            default:
+            {
+                string msg = "The selected thermal model (%d) does not exist. Options are 1=Regression model : 2=Evacuated tube receiver model";
+                m_error_msg = util::format(msg.c_str(), m_rec_model);
+                mc_csp_messages.add_message(C_csp_messages::NOTICE, m_error_msg);
+                return false;
+            }
+        }
+
+        // Loop Thermal Efficiency
+        m_loop_therm_eff = 1.0 - ((m_hl_des * m_L_mod * m_nMod) / (m_A_loop * m_I_bn_des * m_loop_opt_eff));
+
+        // Loop Efficiency
+        m_loop_eff = m_loop_opt_eff * m_loop_therm_eff;
+
+        // Thermal Power at Design
+        m_q_design = m_P_ref / m_eta_ref;
+
+        // Required Aperture for solar multiple = 1
+        m_Ap_sm1 = m_q_design / (m_I_bn_des * m_loop_eff);
+
+        // Calculate actual solar mult, total field aperture, and nLoops
+        switch (m_solar_mult_or_Ap)
+        {
+            // Use Solar Multiple
+            case 0:
+            {
+                m_solar_mult = m_solar_mult_in;
+                m_Ap_tot = m_solar_mult * m_Ap_sm1;
+                m_nLoops = std::ceil(m_Ap_tot / m_A_loop);
+                break;
+            }
+            case 1:
+            {
+                m_Ap_tot = m_total_Ap_in;
+                m_nLoops = std::ceil(m_Ap_tot / m_A_loop);
+                m_solar_mult = m_Ap_tot / m_Ap_sm1;
+                break;
+            }
+            default:
+            {
+                string msg = "use_solar_mult_or_total_Ap integer should be 0 (solar mult) or 1 (field aperture)";
+                mc_csp_messages.add_message(C_csp_messages::NOTICE, msg);
+                return false;
+            }
+        }
+
+        // Number of Loops necessary for solar mult = 1
+        m_nLoops_sm1 = std::ceil(m_Ap_sm1 / m_A_loop);
+
+    }
+
+}
 
 void C_csp_fresnel_collector_receiver::loop_optical_eta(const C_csp_weatherreader::S_outputs& weather,
     const C_csp_solver_sim_info& sim_info)

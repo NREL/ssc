@@ -211,7 +211,8 @@ private:
     //int m_n_r_iam_matrix;	//[-] Number of rows in the IAM matrix
     double m_v_hot;			//[m^3] Hot piping volume
     double m_v_cold;		//[m^3] Cold piping volume
-    
+    bool m_is_solar_mult_designed = false;
+
     int	m_nfsec;			//[-] Number of field sections
     int	m_nhdrsec;			//[-] Number of header sections
     int	m_nrunsec;			//[-] Number of unique runner diameters
@@ -455,17 +456,20 @@ private:
     // Public Fields
 public:
 
+    int m_solar_mult_or_Ap;                       // Design using specified solar mult or field aperture
+    double m_solar_mult_in;                       // Solar multiple input
+    double m_total_Ap_in;                         // Field aperture input
+
     int m_nMod;                                 // Number of collector modules in a loop   (m_nSCA)
     int m_nRecVar;                              // Number of receiver variations (m_nHCEt)
-    int m_nLoops = -1;                          // [-] Number of loops in the field
     double m_eta_pump;		                    // [-] HTF pump efficiency
     double m_HDR_rough;		                    // [m] Header pipe roughness
     double m_theta_stow;	                    // [deg] stow angle
     double m_theta_dep;		                    // [deg] deploy angle
     int m_FieldConfig;		                    // [-] Number of subfield headers
     double m_T_startup;		                    // [C] The required temperature (converted to K in init) of the system before the power block can be switched on
-
-
+    double m_P_ref;                             // Design Turbine Net Output (W)
+    double m_eta_ref;                           // Design cycle thermal efficiency
 
     double m_m_dot_htfmin;	                    // [kg/s] Minimum loop HTF flow rate
     double m_m_dot_htfmax;	                    // [kg/s] Maximum loop HTF flow rate
@@ -485,7 +489,7 @@ public:
     double m_ColAz;			                    // [deg] Collector azimuth angle
     //double m_ColTilt;		                    // [deg] Collector tilt angle (0 is horizontal, 90deg is vertical)
 
-    double m_solar_mult;		                // [-] Solar multiple 
+    
     double m_mc_bal_hot;		                // [J/K] The heat capacity of the balance of plant on the hot side
     double m_mc_bal_cold;		                // [J/K] The heat capacity of the balance of plant on the cold side
     double m_mc_bal_sca;		                // [Wht/K-m] Non-HTF heat capacity associated with each SCA - per meter basis
@@ -587,19 +591,23 @@ public:
     HTFProperties m_htfProps, m_airProps;
 
     // Public Design Point Outputs
-    double m_q_design;		            //[Wt] Design-point thermal power from the solar field
+    int m_nLoops;                       // [-] Number of loops in the field
+    double m_solar_mult;		        // [-] Solar multiple
+    double m_Ap_tot;                    // Total field aperture [m2]
+    double m_q_design;		            // [Wt] Design-point thermal power from the solar field
+    double m_Ap_sm1;                    // Total required aperture, SM=1 [m2]
+    double m_nLoops_sm1;                // Required number of loops, SM=1
     double m_A_loop;                    // Aperture of a loop [m2]
     double m_dT_des;                    // Average field temp difference at design [delta C (or K)]
     double m_hl_des;                    // Heat loss at design [W/m]
     double m_loop_opt_eff;              // Loop optical efficiency
     double m_loop_therm_eff;            // Loop thermal Efficiency
     double m_loop_eff;                  // Loop total efficiency
-    double m_W_dot_sca_tracking_nom;	//[MWe] Tracking parasitics when trough is on sun
-    double m_Ap_tot;		            //[m^2] Total field aperture area
+    double m_W_dot_sca_tracking_nom;	// [MWe] Tracking parasitics when trough is on sun
     double m_opt_derate;                // Optical derate
     double m_opt_normal;                // Collector optical loss at normal incidence
-    double m_m_dot_design;	            //[kg/s] Total solar field mass flow rate at design
-    double m_m_dot_loop_des;            //[kg/s] LOOP design mass flow rate
+    double m_m_dot_design;	            // [kg/s] Total solar field mass flow rate at design
+    double m_m_dot_loop_des;            // [kg/s] LOOP design mass flow rate
 
     // Methods
 public:
@@ -672,6 +680,8 @@ public:
     virtual double get_collector_area();
 
     // ------------------------------------------ supplemental methods -----------------------------------------------------------
+
+    bool design_solar_mult();
 
     // Methods IN trough
 
