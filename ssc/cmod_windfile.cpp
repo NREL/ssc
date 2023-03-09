@@ -80,7 +80,7 @@ public:
 
 		windfile wf( file );
 		if (!wf.ok())
-			throw exec_error("windfile", "failed to read local weather file: " + std::string(file) + " " + wf.error());
+			throw exec_error("windfile", "failed to read weather file: " + std::string(file) + " " + wf.error());
 
 		assign( "city", var_data( std::string( wf.city ) ) );
 		assign( "state", var_data( std::string( wf.state ) ) );
@@ -98,7 +98,7 @@ public:
 		double wind, dir, temp, pres, closest_speed_meas_ht=0, closest_dir_meas_ht=0;
 		if (bHeaderOnly) {
 			if (!wf.read(as_double("requested_ht"), &wind, &dir, &temp, &pres, &closest_speed_meas_ht, &closest_dir_meas_ht))
-				throw exec_error("windpower", util::format("error reading wind resource file at %d: ", 1) + wf.error());
+				throw exec_error("windpower", util::format("error reading weather file headers ") + wf.error());
 
 			assign("closest_speed_meas_ht", var_data((ssc_number_t)closest_speed_meas_ht));
 			assign("closest_dir_meas_ht", var_data((ssc_number_t)closest_dir_meas_ht));
@@ -119,7 +119,7 @@ public:
 		for (int i = 0; i<nsteps; i++)
 		{
 			if (!wf.read(as_double("requested_ht"), &wind, &dir, &temp, &pres, &closest_speed_meas_ht, &closest_dir_meas_ht, as_boolean("interpolate") ) )
-				throw exec_error("windpower", util::format("error reading wind resource file at %d: ", i) + wf.error());
+				throw exec_error("windpower", util::format("error reading weather file at time step %d of %d: ", i, nsteps) + wf.error());
 
 			p_speed[i] = (ssc_number_t)wind;
 			p_dir[i] = (ssc_number_t)dir;
