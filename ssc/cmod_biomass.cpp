@@ -170,7 +170,7 @@ static var_info _cm_vtab_biomass[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "hourly_pbeta",               "Power Block Efficiency",                               "",              "",      "biomass",           "*",               "LENGTH=8760",         "" },
 
 	// monthly
-	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",             "Monthly Energy",                                       "kWh",           "",      "biomass",           "*",               "LENGTH=12",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",             "Monthly Energy Gross",                                       "kWh",           "",      "biomass",           "*",               "LENGTH=12",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_q_to_pb",            "Q To Power Block",                                     "kWh",           "",      "biomass",           "*",               "LENGTH=12",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_pb_eta",             "Power Block Effiency",                                 "%",             "",      "biomass",           "*",               "LENGTH=12",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_boiler_eff",         "Total Boiler Efficiency - HHV (%)",                    "%",             "",      "biomass",           "*",               "LENGTH=12",           "" },

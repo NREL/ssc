@@ -2364,7 +2364,7 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 	m_E_dot_HR_hot_fullts /= time_required_su;					//[MWt]
 	m_q_dot_htf_to_sink_fullts /= time_required_su;				//[MWt]
 
-	m_q_dot_freeze_protection = Q_fp_sum / time_required_su;	//[MWt]
+    time_required_su > 0 ? m_q_dot_freeze_protection = Q_fp_sum / time_required_su : m_q_dot_freeze_protection = 0;     //[MWt]
 
 	double Q_dot_balance_subts = m_q_dot_sca_abs_summed_fullts - m_q_dot_xover_loss_summed_fullts -
 		m_q_dot_HR_cold_loss_fullts - m_q_dot_HR_hot_loss_fullts -
