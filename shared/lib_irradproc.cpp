@@ -1362,9 +1362,12 @@ calculate_eot_and_sun_rise_transit_set(double jme, double tz, double alpha, doub
     }
 }
 
-void
-solarpos_spa(int year, int month, int day, int hour, double minute, double second, double lat, double lng, double tz,
+void solarpos_spa(int year, int month, int day, int hour, double minute, double second, double lat, double lng, double tz,
              double dut1, double alt, double pressure, double temp, double tilt, double azm_rotation, double sunn[9]) {
+
+    solarpos(year, month, day, hour, minute, lat, lng, tz, sunn);
+    return;
+
 
     int t;
     double delta_t;
