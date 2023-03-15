@@ -224,7 +224,7 @@ double julian_ephemeris_millennium(double jce);
 * \param[in] jme juliam ephemeris millennium
 * \param[out] sum summation of the calculations for the given parameter inputs
 */
-double earth_periodic_term_summation(const double terms[][3], int count, double jme);
+double earth_periodic_term_summation(const double terms[][3], int &count, double &jme);
 
 /**
 *   earth_values function calculates the earth heliocentric longitude (L), latitude (B), and radius vector (R)

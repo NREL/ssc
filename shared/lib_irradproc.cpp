@@ -755,11 +755,14 @@ double earth_heliocentric_longitude(double jme) //Earth heliocentric longitude (
 {
     const int L_COUNT = 6;
     const int l_subcount[6] = {64, 34, 20, 7, 3, 1};
-    double sum[6];
+    double sum[6] = { 0, 0, 0, 0, 0, 0 };
     int i;
 
-    for (i = 0; i < L_COUNT; i++)
-        sum[i] = earth_periodic_term_summation(L_TERMS[i], l_subcount[i], jme);
+    for (i = 0; i < L_COUNT; i++) {
+        //sum[i] = earth_periodic_term_summation(L_TERMS[i], l_subcount[i], jme);
+        for (int j = 0; j < l_subcount[i]; j++)
+            sum[i] += L_TERMS[i][j][0] * cos(L_TERMS[i][j][1] + L_TERMS[i][j][2] * jme);
+    }
 
     double earth_helio_longitude = limit_degrees(RTOD * (earth_values(sum, 6, jme)));
     return earth_helio_longitude;
@@ -769,12 +772,15 @@ double earth_heliocentric_longitude(double jme) //Earth heliocentric longitude (
 double earth_heliocentric_latitude(double jme) //Earth heliocentric latitude (degrees)
 {
     const int B_COUNT = 2;
-    int b_subcount[2] = {5, 2};
-    double sum[B_COUNT];
+    const int b_subcount[2] = {5, 2};
+    double sum[2] = { 0,0 };
     int i;
 
-    for (i = 0; i < B_COUNT; i++)
-        sum[i] = earth_periodic_term_summation(B_TERMS[i], b_subcount[i], jme);
+    for (i = 0; i < B_COUNT; i++) {
+       // sum[i] = earth_periodic_term_summation(B_TERMS[i], b_subcount[i], jme);
+        for (int j = 0; j < b_subcount[i]; j++)
+            sum[i] += B_TERMS[i][j][0] * cos(B_TERMS[i][j][1] + B_TERMS[i][j][2] * jme);
+    }
 
     double earth_helio_latitude = RTOD * (earth_values(sum, B_COUNT, jme));
     return earth_helio_latitude;
@@ -784,12 +790,15 @@ double earth_heliocentric_latitude(double jme) //Earth heliocentric latitude (de
 double earth_radius_vector(double jme) //Earth radius vector (Astronomical Units (AU))
 {
     const int R_COUNT = 5;
-    int r_subcount[5] = {40, 10, 6, 2, 1};
-    double sum[R_COUNT];
+    const int r_subcount[5] = {40, 10, 6, 2, 1};
+    double sum[5] = { 0,0,0,0,0 };
     int i;
 
-    for (i = 0; i < R_COUNT; i++)
-        sum[i] = earth_periodic_term_summation(R_TERMS[i], r_subcount[i], jme);
+    for (i = 0; i < R_COUNT; i++) {
+       // sum[i] = earth_periodic_term_summation(R_TERMS[i], r_subcount[i], jme);
+        for (int j = 0; j < r_subcount[i]; j++)
+            sum[i] += R_TERMS[i][j][0] * cos(R_TERMS[i][j][1] + R_TERMS[i][j][2] * jme);
+    }
 
     double earth_rad_vector = earth_values(sum, R_COUNT, jme);
     return earth_rad_vector;
@@ -855,11 +864,16 @@ double xy_term_summation(int i, double x[5]) {
 void nutation_longitude_and_obliquity(double jce, double x[5],
                                       double delta_values[2]) //nutation in longitude and obliquity (both degrees)
 {
-    int i;
+    int i,j;
     double xy_term_sum, sum_psi = 0, sum_epsilon = 0;
 
     for (i = 0; i < 63; i++) {
-        xy_term_sum = DTOR * (xy_term_summation(i, x));
+//        xy_term_sum = DTOR * (xy_term_summation(i, x));
+        double sum = 0;
+        for (j = 0; j < 5; j++)
+            sum += x[j] * Y_TERMS[i][j];
+        xy_term_sum = DTOR * sum;
+
         sum_psi += (PE_TERMS[i][0] + jce * PE_TERMS[i][1]) * sin(xy_term_sum);
         sum_epsilon += (PE_TERMS[i][2] + jce * PE_TERMS[i][3]) * cos(xy_term_sum);
     }
@@ -1273,8 +1287,8 @@ calculate_eot_and_sun_rise_transit_set(double jme, double tz, double alpha, doub
     jd_array[2] = jd_array[1] + 1; //Julian day for the day following the day in question
     for (i = 0; i < 3; i++) { // iterate through day behind (0), day in question (1), and day following (2)
         //Calculate the spa for each day at 0 TT by setting the delta_T difference between UT and TT to 0
-        calculate_spa(jd_array[i], lat, lng, alt, pressure, temp, 0, tilt, azm_rotation, sun_declination_and_ascension,
-                      needed_values2);
+//        calculate_spa(jd_array[i], lat, lng, alt, pressure, temp, 0, tilt, azm_rotation, sun_declination_and_ascension,
+//                      needed_values2);
         alpha_array[i] = sun_declination_and_ascension[0]; //store geocentric right ascension for each iteration (degrees)
         delta_array[i] = sun_declination_and_ascension[1]; //store geocentric declination for each iteration (degrees)
     }
@@ -1365,9 +1379,8 @@ calculate_eot_and_sun_rise_transit_set(double jme, double tz, double alpha, doub
 void solarpos_spa(int year, int month, int day, int hour, double minute, double second, double lat, double lng, double tz,
              double dut1, double alt, double pressure, double temp, double tilt, double azm_rotation, double sunn[9]) {
 
-    solarpos(year, month, day, hour, minute, lat, lng, tz, sunn);
-    return;
-
+//    solarpos(year, month, day, hour, minute, lat, lng, tz, sunn);
+//    return;
 
     int t;
     double delta_t;
@@ -1399,13 +1412,13 @@ void solarpos_spa(int year, int month, int day, int hour, double minute, double 
                                            tilt, delta_t, azm_rotation,
                                            needed_values_eot); //calculate Equation of Time and sunrise/sunset values
 
-    double n_days[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+//    double n_days[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
     if (needed_values_eot[3] <
         needed_values_eot[2]) //sunset is legitimately the next day but we're not in endless days, so recalculate sunset from the previous day
     {
         double sunanglestemp[9];
-        if (day < n_days[month - 1]) //simply decrement day during month
+        if (day < __nday[month - 1]) //simply decrement day during month
             calculate_eot_and_sun_rise_transit_set(needed_values_spa[0], tz, ascension_and_declination[0],
                                                    needed_values_spa[2], needed_values_spa[3], jd, year, month, day + 1,
                                                    lat, lng, alt, pressure, temp, tilt, delta_t, azm_rotation,
@@ -2285,7 +2298,7 @@ int irrad::calc() {
 
     double t_sunrise = sunAnglesRadians[4];
     double t_sunset = sunAnglesRadians[5];
-    double n_days[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+//    double n_days[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
 
     if (t_sunset > 24.0 && t_sunset !=
