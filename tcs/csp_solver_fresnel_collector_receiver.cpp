@@ -5,12 +5,11 @@ using namespace std;
 
 static C_csp_reported_outputs::S_output_info S_output_info[] =
 {
-    {C_csp_fresnel_collector_receiver::E_THETA_AVE, C_csp_reported_outputs::TS_WEIGHTED_AVE},
-    {C_csp_fresnel_collector_receiver::E_COSTH_AVE, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+    /*{C_csp_fresnel_collector_receiver::E_COSTH_AVE, C_csp_reported_outputs::TS_WEIGHTED_AVE},
     {C_csp_fresnel_collector_receiver::E_IAM_AVE, C_csp_reported_outputs::TS_WEIGHTED_AVE},
     {C_csp_fresnel_collector_receiver::E_ROWSHADOW_AVE, C_csp_reported_outputs::TS_WEIGHTED_AVE},
     {C_csp_fresnel_collector_receiver::E_ENDLOSS_AVE, C_csp_reported_outputs::TS_WEIGHTED_AVE},
-    {C_csp_fresnel_collector_receiver::E_DNI_COSTH, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+    {C_csp_fresnel_collector_receiver::E_DNI_COSTH, C_csp_reported_outputs::TS_WEIGHTED_AVE},*/
     {C_csp_fresnel_collector_receiver::E_EQUIV_OPT_ETA_TOT, C_csp_reported_outputs::TS_WEIGHTED_AVE},
     {C_csp_fresnel_collector_receiver::E_DEFOCUS, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 
@@ -37,10 +36,9 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
     {C_csp_fresnel_collector_receiver::E_W_DOT_SCA_TRACK, C_csp_reported_outputs::TS_WEIGHTED_AVE},
     {C_csp_fresnel_collector_receiver::E_W_DOT_PUMP, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 
-    {C_csp_fresnel_collector_receiver::E_THETA_L, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+    /*{C_csp_fresnel_collector_receiver::E_THETA_L, C_csp_reported_outputs::TS_WEIGHTED_AVE},
     {C_csp_fresnel_collector_receiver::E_PHI_T, C_csp_reported_outputs::TS_WEIGHTED_AVE},
     {C_csp_fresnel_collector_receiver::E_ETA_OPTICAL, C_csp_reported_outputs::TS_WEIGHTED_AVE},
-    //{C_csp_fresnel_collector_receiver::E_EQ_OPT_EFF, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 
     {C_csp_fresnel_collector_receiver::E_SF_DEF, C_csp_reported_outputs::TS_WEIGHTED_AVE},
     {C_csp_fresnel_collector_receiver::E_Q_INC_SF_TOT, C_csp_reported_outputs::TS_WEIGHTED_AVE},
@@ -58,7 +56,7 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
     {C_csp_fresnel_collector_receiver::E_T_SYS_C, C_csp_reported_outputs::TS_WEIGHTED_AVE},
     {C_csp_fresnel_collector_receiver::E_T_SYS_H, C_csp_reported_outputs::TS_WEIGHTED_AVE},
     {C_csp_fresnel_collector_receiver::E_T_LOOP_OUTLET, C_csp_reported_outputs::TS_WEIGHTED_AVE},
-    {C_csp_fresnel_collector_receiver::E_Q_I, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+    {C_csp_fresnel_collector_receiver::E_Q_I, C_csp_reported_outputs::TS_WEIGHTED_AVE},*/
 
     csp_info_invalid
 };
@@ -98,12 +96,12 @@ int C_csp_fresnel_collector_receiver::freeze_protection(const C_csp_weatherreade
     }
     catch (C_csp_exception)
     {
-        throw(C_csp_exception("C_csp_trough_collector::off - freeze protection failed"));
+        throw(C_csp_exception("C_csp_fresnel_collector::off - freeze protection failed"));
     }
 
     if (fp_code != C_monotonic_eq_solver::CONVERGED)
     {
-        throw(C_csp_exception("C_csp_trough_collector::off - freeze protection failed to converge"));
+        throw(C_csp_exception("C_csp_fresnel_collector::off - freeze protection failed to converge"));
     }
 
     T_cold_in = T_cold_in_solved;				//[K]
@@ -129,8 +127,6 @@ double C_csp_fresnel_collector_receiver::field_pressure_drop(double T_db, double
     double m_dot_htf = m_dot_field / (double)m_nLoops;
     double T_loop_in = T_in_SCA[0];
     double T_loop_out = T_out_SCA[m_nMod - 1];
-
-    
 
     //handle loop pressure drop based on the heat loss model selection
     switch (m_rec_model)
@@ -282,7 +278,7 @@ double C_csp_fresnel_collector_receiver::field_pressure_drop(double T_db, double
 
 void C_csp_fresnel_collector_receiver::set_output_value()
 {
-    mc_reported_outputs.value(E_THETA_AVE, m_Theta_ave * m_r2d);		//[deg], convert from rad
+    //mc_reported_outputs.value(E_THETA_AVE, m_Theta_ave * m_r2d);		//[deg], convert from rad
     //mc_reported_outputs.value(E_COSTH_AVE, m_CosTh_ave);			//[-]
     //mc_reported_outputs.value(E_IAM_AVE, m_IAM_ave);				//[-]
     //mc_reported_outputs.value(E_ROWSHADOW_AVE, m_RowShadow_ave);	//[-]
@@ -291,7 +287,7 @@ void C_csp_fresnel_collector_receiver::set_output_value()
     mc_reported_outputs.value(E_EQUIV_OPT_ETA_TOT, m_EqOpteff * m_ftrack);		//[-]
     mc_reported_outputs.value(E_DEFOCUS, m_control_defocus * m_component_defocus);	//[-]
 
-    //mc_reported_outputs.value(E_Q_DOT_INC_SF_TOT, m_q_dot_inc_sf_tot);			//[MWt]
+    mc_reported_outputs.value(E_Q_DOT_INC_SF_TOT, m_q_dot_inc_sf_tot);			//[MWt]
     //mc_reported_outputs.value(E_Q_DOT_INC_SF_COSTH, m_dni_costh * m_Ap_tot / 1.E6);	//[MWt]
 
     mc_reported_outputs.value(E_Q_DOT_REC_INC, m_q_dot_sca_abs_summed_fullts + m_q_dot_sca_loss_summed_fullts);	//[MWt]
@@ -369,9 +365,7 @@ C_csp_fresnel_collector_receiver::E_loop_energy_balance_exit C_csp_fresnel_colle
     double T_htf_cold_in /*K*/, double m_dot_htf_loop /*kg/s*/,
     const C_csp_solver_sim_info& sim_info)
 {
-    
-    counter++; // DEBUG
-
+    // Calculate total field mass flow rate
     m_m_dot_htf_tot = m_dot_htf_loop * float(m_nLoops);
 
     // Helpful Variables
@@ -397,19 +391,18 @@ C_csp_fresnel_collector_receiver::E_loop_energy_balance_exit C_csp_fresnel_colle
     double E_HR_cold_bal = 0.0;				//[MJ]
 
     // Header Properties
-    double rho_hdr_cold = m_htfProps.dens(m_T_sys_c_t_end_last, 1.);	//[kg/m^3]
-    double rho_hdr_hot = m_htfProps.dens(m_T_sys_h_t_end_last, 1.);		//[kg/m^3]
+    double rho_hdr_cold = m_htfProps.dens(m_T_sys_c_t_end_last, 1.);	    //[kg/m^3]
+    double rho_hdr_hot = m_htfProps.dens(m_T_sys_h_t_end_last, 1.);		    //[kg/m^3]
     double c_hdr_cold_last = m_htfProps.Cp(m_T_sys_c_t_end_last) * 1000.0;	//[J/kg-K] mjw 1.6.2011 Adding mc_bal to the cold header inertia
 
     // BULK Temperature calculations
     {
         // This values is the Bulk Temperature at the *end* of the timestep (type 262 line 1551; trough line 1187)
-        //T_sys_c = (T_sys_c_last - T_cold_in_1) * exp(-(m_dot_htf * float(nLoops)) / (v_cold * rho_hdr_cold + mc_bal_cold / c_hdr_cold_last) * dt) + T_cold_in_1;
         m_T_sys_c_t_end = (m_T_sys_c_t_end_last - T_htf_cold_in) * exp(-(m_dot_htf_loop * float(m_nLoops))
             / (m_v_cold * rho_hdr_cold + m_mc_bal_cold / c_hdr_cold_last) * dt) + T_htf_cold_in;
 
         // Try calculating a timestep-average Bulk Temperature (and assume it is the outlet)
-        // This is fully from trough (line 1189)
+        // This is from trough (line 1189)
         m_T_sys_c_t_int = T_htf_cold_in + ((m_v_cold * rho_hdr_cold + m_mc_bal_cold / c_hdr_cold_last) / (-m_dot_htf_loop * float(m_nLoops))) *
             (m_T_sys_c_t_end_last - T_htf_cold_in) * (exp(-(m_dot_htf_loop * float(m_nLoops)) / (m_v_cold * rho_hdr_cold + m_mc_bal_cold / c_hdr_cold_last) * sim_info.ms_ts.m_step) - 1.0)
             / sim_info.ms_ts.m_step;
@@ -489,7 +482,6 @@ C_csp_fresnel_collector_receiver::E_loop_energy_balance_exit C_csp_fresnel_colle
         E_xover_abs.resize(m_nMod - 1);
         E_xover_bal.resize(m_nMod - 1);
     }
-    
 
     std::vector<double> q_dot_loss_xover;		//[W]
     q_dot_loss_xover.resize(m_nMod - 1);
@@ -500,15 +492,14 @@ C_csp_fresnel_collector_receiver::E_loop_energy_balance_exit C_csp_fresnel_colle
     std::vector<double> EqOpteffs(m_nMod, 0.);
 
     // MAIN SCA Temperature Solve
-    // Loop through each Module
     for (int i = 0; i < m_nMod; i++)
     {
         m_q_loss.assign(m_q_loss.size(), 0.0);		//[W/m]
         m_q_abs.assign(m_q_abs.size(), 0.0);		//[W/m]
         m_q_1abs.assign(m_q_1abs.size(), 0.0);		//[W/m]
 
-        double c_htf_i = 0.0;		//[J/kg-K]
-        double rho_htf_i = 0.0;		//[kg/m^3]
+        double c_htf_i = 0.0;		                //[J/kg-K]
+        double rho_htf_i = 0.0;		                //[kg/m^3]
 
         double dT_loc, m_node, T_node_ave, errhl;
         switch (m_rec_model)
@@ -522,25 +513,12 @@ C_csp_fresnel_collector_receiver::E_loop_energy_balance_exit C_csp_fresnel_colle
                     //Check to see if the field fraction for this HCE is zero.  if so, don't bother calculating for this variation
                     if (m_HCE_FieldFrac[j] == 0.0) continue;
 
-                    if (weather.m_beam > 300)
-                        int x = 0;
-
                     double c_htf_j, rho_htf_j;
 
-                    //EvacReceiver(m_T_htf_in_t_int[i], m_dot_htf_loop, T_db, T_sky, weather.m_wspd, weather.m_pres * 100.0, m_q_SCA[i], j, i, false, m_ncall, sim_info.ms_ts.m_time / 3600.0,
-                    //    //outputs
-                    //    m_q_loss[j], m_q_abs[j], m_q_1abs[j], c_htf_j, rho_htf_j, mv_HCEguessargs);
-
-
                     m_evac_receiver->Calculate_Energy_Balance(m_T_htf_in_t_int[i], m_dot_htf_loop, T_db, T_sky,
-                        weather.m_wspd, weather.m_pres * 100.0, m_q_SCA[i], j, i, false, m_ncall, sim_info.ms_ts.m_time / 3600.0, m_ColOptEff,
+                        weather.m_wspd, weather.m_pres * 100.0, m_q_SCA[i], j, i, false, sim_info.ms_ts.m_time / 3600.0, m_ColOptEff,
                         //outputs
                         m_q_loss[j], m_q_abs[j], m_q_1abs[j], c_htf_j, rho_htf_j, mv_HCEguessargs);
-
-
-
-
-
 
                     // Check for NaN
                     if (m_q_abs[j] != m_q_abs[j])
@@ -561,8 +539,8 @@ C_csp_fresnel_collector_receiver::E_loop_energy_balance_exit C_csp_fresnel_colle
 
                 }
 
-                q_inc_total += m_q_SCA[i] * m_L_mod;                                   // [W]
-                q_abs_abs_total += m_q_SCA[i] * m_L_mod * EqOpteffs[i];               // [W] absorbed by absorber
+                q_inc_total += m_q_SCA[i] * m_L_mod;                                    // [W]
+                q_abs_abs_total += m_q_SCA[i] * m_L_mod * EqOpteffs[i];                 // [W] absorbed by absorber
                 q_abs_htf_total += m_q_abs_SCAtot[i];
 
                 //Calculate the specific heat for the node
@@ -587,36 +565,19 @@ C_csp_fresnel_collector_receiver::E_loop_energy_balance_exit C_csp_fresnel_colle
 
                 // Original Fresnel Eqn
                 {
-                    //MJW 12.14.2010 The first term should represent the difference between the previous average temperature and the new 
-                    //average temperature. Thus, the heat addition in the first term should be divided by 2 rather than include the whole magnitude
-                    //of the heat addition.
-                    //mjw & tn 5.1.11: There was an error in the assumption about average and outlet temperature      
-                    double T_htf_out = m_q_abs_SCAtot[i] / (m_dot_htf_loop * c_htf_i) + m_T_htf_in_t_int[i] +
-                        2.0 * (m_TCS_T_htf_ave_converged[i] - m_T_htf_in_t_int[i] - m_q_abs_SCAtot[i] / (2.0 * m_dot_htf_loop * c_htf_i)) *
-                        exp(-2. * m_dot_htf_loop * c_htf_i * dt / (m_node * c_htf_i + m_mc_bal_sca * m_L_mod));
-                    //Recalculate the average temperature for the SCA
-                    double T_htf_ave = (m_T_htf_in_t_int[i] + T_htf_out) / 2.0;
+                    ////MJW 12.14.2010 The first term should represent the difference between the previous average temperature and the new 
+                    ////average temperature. Thus, the heat addition in the first term should be divided by 2 rather than include the whole magnitude
+                    ////of the heat addition.
+                    ////mjw & tn 5.1.11: There was an error in the assumption about average and outlet temperature      
+                    //double T_htf_out = m_q_abs_SCAtot[i] / (m_dot_htf_loop * c_htf_i) + m_T_htf_in_t_int[i] +
+                    //    2.0 * (m_TCS_T_htf_ave_converged[i] - m_T_htf_in_t_int[i] - m_q_abs_SCAtot[i] / (2.0 * m_dot_htf_loop * c_htf_i)) *
+                    //    exp(-2. * m_dot_htf_loop * c_htf_i * dt / (m_node * c_htf_i + m_mc_bal_sca * m_L_mod));
+                    ////Recalculate the average temperature for the SCA
+                    //double T_htf_ave = (m_T_htf_in_t_int[i] + T_htf_out) / 2.0;
                 }
 
                 //Calculate the mass of HTF associated with this node
                 m_node = rho_htf_i * m_A_cs[0] * m_L_mod;
-
-                // DEBUG
-
-                //double new_end = m_q_abs_SCAtot[i] / (m_dot_htf_loop * c_htf_i) + m_T_htf_in_t_int[i] +
-                //    (m_T_htf_out_t_end_last[i] - m_T_htf_in_t_int[i] - m_q_abs_SCAtot[i] / (m_dot_htf_loop * c_htf_i)) *
-                //    exp(-m_dot_htf_loop * c_htf_i * sim_info.ms_ts.m_step / (m_node * c_htf_i + m_mc_bal_sca * m_L_mod));
-
-                //double new_int = m_q_abs_SCAtot[i] / (m_dot_htf_loop * c_htf_i) + m_T_htf_in_t_int[i] +
-                //    ((m_node * c_htf_i + m_mc_bal_sca * m_L_mod) / (-m_dot_htf_loop * c_htf_i) *
-                //        (m_T_htf_out_t_end_last[i] - m_T_htf_in_t_int[i] - m_q_abs_SCAtot[i] / (m_dot_htf_loop * c_htf_i)) *
-                //        (exp(-m_dot_htf_loop * c_htf_i * sim_info.ms_ts.m_step / (m_node * c_htf_i + m_mc_bal_sca * m_L_mod)) - 1.0)) / sim_info.ms_ts.m_step;
-
-                /*double old = m_q_abs_SCAtot[i] / (m_dot_htf_loop * c_htf_i) + m_T_htf_in_t_int[i] +
-                    2.0 * (m_TCS_T_htf_ave_converged[i] - m_T_htf_in_t_int[i] - m_q_abs_SCAtot[i] / (2.0 * m_dot_htf_loop * c_htf_i)) *
-                    exp(-2. * m_dot_htf_loop * c_htf_i * dt / (m_node * c_htf_i + m_mc_bal_sca * m_L_mod));*/
-                
-
 
                 break;
             }
@@ -626,7 +587,7 @@ C_csp_fresnel_collector_receiver::E_loop_energy_balance_exit C_csp_fresnel_colle
             {
                 double V_wind = weather.m_wspd;
                 double dt = sim_info.ms_ts.m_step;
-                T_node_ave = m_TCS_T_htf_ave_converged[i];
+                T_node_ave = m_T_htf_out_t_int[i];
 
                 //iterate to improve heat loss estimate
                 double errhl = 999.;
@@ -641,6 +602,7 @@ C_csp_fresnel_collector_receiver::E_loop_energy_balance_exit C_csp_fresnel_colle
                     // 7.8.2016 twn: reformulate the energy balance calculations similar to the runner/headers:
                     //                    the outlet HTF temperature is equal to the bulk temperature
                     // THis is from physical trough (line 1330) NOT type 262 (line 1620)
+
                     m_T_htf_out_t_end[i] = m_q_abs_SCAtot[i] / (m_dot_htf_loop * c_htf_i) + m_T_htf_in_t_int[i] +
                         (m_T_htf_out_t_end_last[i] - m_T_htf_in_t_int[i] - m_q_abs_SCAtot[i] / (m_dot_htf_loop * c_htf_i)) *
                         exp(-m_dot_htf_loop * c_htf_i * sim_info.ms_ts.m_step / (m_node * c_htf_i + m_mc_bal_sca * m_L_mod));
@@ -650,25 +612,17 @@ C_csp_fresnel_collector_receiver::E_loop_energy_balance_exit C_csp_fresnel_colle
                             (m_T_htf_out_t_end_last[i] - m_T_htf_in_t_int[i] - m_q_abs_SCAtot[i] / (m_dot_htf_loop * c_htf_i)) *
                             (exp(-m_dot_htf_loop * c_htf_i * sim_info.ms_ts.m_step / (m_node * c_htf_i + m_mc_bal_sca * m_L_mod)) - 1.0)) / sim_info.ms_ts.m_step;
 
-                    //Recalculate the average temperature for the SCA
-                    m_TCS_T_htf_ave_converged[i] = (m_TCS_T_htf_ave_converged[i] + m_T_htf_out_t_end[i]) / 2.0;
+                    errhl = T_node_ave - m_T_htf_out_t_int[i];	//iterate until the node temperature does not vary significantly
 
-                    errhl = T_node_ave - m_TCS_T_htf_ave_converged[i];	//iterate until the node temperature does not vary significantly
-
-                    T_node_ave = m_TCS_T_htf_ave_converged[i];
+                    T_node_ave = m_T_htf_out_t_int[i];
                 }
 
                 m_q_1abs_tot[i] = m_q_loss_SCAtot[i] / m_L_mod;
                 m_EqOpteff = m_eta_optical;	//Use the optical efficiency as it is for this option
 
-
-
                 break;
-
             }
         }
-
-        
 
         //Calculate the actual amount of energy absorbed by the field that doesn't go into changing the SCA's average temperature
                 //Include the thermal inertia term
@@ -691,8 +645,7 @@ C_csp_fresnel_collector_receiver::E_loop_energy_balance_exit C_csp_fresnel_colle
         //E_sca_abs[i] = m_q_abs_SCAtot[i] * sim_info.ms_ts.m_step / 1.E6;
         //E_sca_bal[i] = E_sca_abs[i] - E_sca_htf[i] - E_sca[i];
 
-        //Set the inlet temperature of the next SCA equal to the outlet temperature of the current SCA
-        //minus the heat losses in intermediate piping
+        //Set the inlet temperature of the next SCA equal to the outlet temperature of the current SCA minus the heat losses in intermediate piping
         if (i < m_nMod - 1)
         {
             //Determine the length between SCA's to use.  if halfway down the loop, use the row distance.
@@ -705,12 +658,12 @@ C_csp_fresnel_collector_receiver::E_loop_energy_balance_exit C_csp_fresnel_colle
             }
 
             //Calculate inlet temperature of the next SCA
-            m_T_htf_in_t_int[i + 1] = m_T_htf_out_t_int[i] - m_Pipe_hl_coef * m_D_abs_out[0] * pi * L_int * (m_T_htf_out_t_int[i] - T_db)
+            m_T_htf_in_t_int[i + 1] = m_T_htf_out_t_int[i] - m_Pipe_hl_coef * m_D_abs_out[0] * CSP::pi * L_int * (m_T_htf_out_t_int[i] - T_db)
                                       / (m_dot_htf_loop * c_htf_i);
             //Add the internal energy of the crossover piping
             //TB Seems to be += (V + m) * dTemp?
             //m_E_int_loop[i] = m_E_int_loop[i] + L_int * (pow(m_D_abs_out[0], 2) / 4. * pi + m_mc_bal_sca / c_htf_i) * (m_T_htf_out_t_int[i] - 298.150); 
-            double V_xover = L_int * pow(m_D_abs_out[0], 2) / 4. * pi;
+            double V_xover = L_int * pow(m_D_abs_out[0], 2) / 4. * CSP::pi;
             double mc_xover_fluid =  V_xover * rho_htf_i * c_htf_i;
             double mc_xover_structure = L_int * m_mc_bal_sca;
             m_E_int_loop[i] += (mc_xover_fluid + mc_xover_structure) * (m_T_htf_out_t_int[i] - 298.150);
@@ -722,47 +675,10 @@ C_csp_fresnel_collector_receiver::E_loop_energy_balance_exit C_csp_fresnel_colle
 
         }
 
-
     }
 
     //Set the loop outlet temperature
     double T_loop_outX = m_T_htf_out_t_end[m_nMod - 1];
-
-    // DEBUGGING
-    if (true)
-    {
-        // Variables to compare
-        vector<double> ColOptEff_ = m_ColOptEff.to_vector();
-        double q_abs_abs_total_ = q_abs_abs_total;              // [W] absorbed by absorber
-
-        vector<double> m_q_SCA_ = m_q_SCA;
-        vector<double> m_q_abs_SCAtot_ = m_q_abs_SCAtot;
-        vector<double> m_q_loss_SCAtot_ = m_q_loss_SCAtot;
-        vector<double> m_q_1abs_tot_ = m_q_1abs_tot;
-
-        double T_htf_cold_in_ = T_htf_cold_in;
-        double m_dot_htf_loop_ = m_dot_htf_loop;
-
-        double current_time = sim_info.ms_ts.m_time;
-
-        int old_day = m_current_day;
-        int old_hr = m_current_hr;
-
-        m_current_day = (int)(sim_info.ms_ts.m_time / 3600.0) / 24;
-        m_current_hr = (int)(sim_info.ms_ts.m_time / 3600.0) % 24;
-
-        if (m_current_day == 51 && m_current_hr == 15)
-            int x = 0;
-
-        // Step by Hour
-        if (old_hr != m_current_hr)
-            int x = 0;
-
-        // Step by Day
-        if (old_day != m_current_day)
-            int x = 0;
-
-    }
 
     // Initialize
     double q_dot_loss_HR_hot = 0.0;		//[W] 
@@ -770,8 +686,6 @@ C_csp_fresnel_collector_receiver::E_loop_energy_balance_exit C_csp_fresnel_colle
     double E_HR_hot_htf = 0.0;			//[MJ]
     double E_HR_hot_losses = 0.0;		//[MJ]
     double E_HR_hot_bal = 0.0;			//[MJ]
-
-
 
     //Calculation for heat losses from hot piping
     //Header
@@ -808,7 +722,6 @@ C_csp_fresnel_collector_receiver::E_loop_energy_balance_exit C_csp_fresnel_colle
             m_Runner_hl_hot_tot += m_Runner_hl_hot;
             D_index++;
         }
-        
     }
 
     m_T_field_out = m_T_rnr[2 * m_nrunsec - 1] - m_Runner_hl_hot / (m_dot_runner(m_m_dot_htf_tot, m_nfsec, 2 * m_nrunsec - 1) * m_c_hdr_hot);
@@ -828,7 +741,7 @@ C_csp_fresnel_collector_receiver::E_loop_energy_balance_exit C_csp_fresnel_colle
             / sim_info.ms_ts.m_step;
     }
 
-    // BONUS trough Calculations
+    // Calculate outputs
     {
         double E_bal_T_h_t_ave = -(m_dot_htf_loop * float(m_nLoops) * m_c_hdr_hot * (m_T_sys_h_t_int - T_sys_h_in) * sim_info.ms_ts.m_step +
             (m_v_hot * rho_hdr_hot * m_c_hdr_hot + m_mc_bal_hot) * (m_T_sys_h_t_end - m_T_sys_h_t_end_last));	//[J]
@@ -866,9 +779,9 @@ C_csp_fresnel_collector_receiver::E_loop_energy_balance_exit C_csp_fresnel_colle
 
         // Header-runner metrics
         m_q_dot_HR_cold_loss_subts = q_dot_loss_HR_cold * 1.E-6;			//[MWt]
-        m_q_dot_HR_hot_loss_subts = q_dot_loss_HR_hot * 1.E-6;			//[MWt]
-        m_E_dot_HR_cold_subts = E_HR_cold / sim_info.ms_ts.m_step;		//[MWt]
-        m_E_dot_HR_hot_subts = E_HR_hot / sim_info.ms_ts.m_step;		//[MWt]
+        m_q_dot_HR_hot_loss_subts = q_dot_loss_HR_hot * 1.E-6;			    //[MWt]
+        m_E_dot_HR_cold_subts = E_HR_cold / sim_info.ms_ts.m_step;		    //[MWt]
+        m_E_dot_HR_hot_subts = E_HR_hot / sim_info.ms_ts.m_step;		    //[MWt]
 
         // HTF out of system
         m_c_htf_ave_ts_ave_temp = m_htfProps.Cp_ave(T_htf_cold_in, m_T_sys_h_t_int, 5) * 1000.0;	//[J/kg-K]
@@ -880,13 +793,13 @@ C_csp_fresnel_collector_receiver::E_loop_energy_balance_exit C_csp_fresnel_colle
             m_E_dot_HR_cold_subts - m_E_dot_HR_hot_subts - m_q_dot_htf_to_sink_subts;	//[MWt]
 
         // Calculate total field energy balance:
-        double Q_abs_scas_summed = 0.0;		//[MJ]
-        double Q_loss_xover = 0.0;			//[MJ]
-        double E_scas_summed = 0.0;			//[MJ]
-        double E_xovers_summed = 0.0;		//[MJ]
+        double Q_abs_scas_summed = 0.0;		                                //[MJ]
+        double Q_loss_xover = 0.0;			                                //[MJ]
+        double E_scas_summed = 0.0;			                                //[MJ]
+        double E_xovers_summed = 0.0;		                                //[MJ]
 
-        double E_scas_htf_summed = 0.0;		//[MJ]
-        double E_xovers_htf_summed = 0.0;	//[MJ]
+        double E_scas_htf_summed = 0.0;		                                //[MJ]
+        double E_xovers_htf_summed = 0.0;	                                //[MJ]
 
         for (int i = 0; i < m_nMod; i++)
         {
@@ -896,24 +809,24 @@ C_csp_fresnel_collector_receiver::E_loop_energy_balance_exit C_csp_fresnel_colle
                 E_xovers_summed += E_xover[i];				//[MJ] -> multiply nLoops below
                 E_xovers_htf_summed += E_xover_htf[i];		//[MJ] -> multiply by nLoops below
             }
-            Q_abs_scas_summed += m_q_abs_SCAtot[i];		//[W] -> convert to MJ and multiply nLoops below
-            E_scas_summed += E_sca[i];					//[MJ] -> multiply nLoops below
-            E_scas_htf_summed += E_sca_htf[i];			//[MJ] -> multiply by nLoops below
+            Q_abs_scas_summed += m_q_abs_SCAtot[i];		                    //[W] -> convert to MJ and multiply nLoops below
+            E_scas_summed += E_sca[i];					                    //[MJ] -> multiply nLoops below
+            E_scas_htf_summed += E_sca_htf[i];			                    //[MJ] -> multiply by nLoops below
         }
-        Q_loss_xover *= sim_info.ms_ts.m_step * 1.E-6 * m_nLoops;		//[MJ] = [W*s*MW/W*#loops]
-        Q_abs_scas_summed *= sim_info.ms_ts.m_step * 1.E-6 * m_nLoops;	//[MJ] = [W*s*MW/W*#loops]
-        E_xovers_summed *= m_nLoops;			//[MJ] multiply nLoops below
-        E_scas_summed *= m_nLoops;				//[MJ] multiply nLoops below
+        Q_loss_xover *= sim_info.ms_ts.m_step * 1.E-6 * m_nLoops;		    //[MJ] = [W*s*MW/W*#loops]
+        Q_abs_scas_summed *= sim_info.ms_ts.m_step * 1.E-6 * m_nLoops;	    //[MJ] = [W*s*MW/W*#loops]
+        E_xovers_summed *= m_nLoops;			                            //[MJ] multiply nLoops below
+        E_scas_summed *= m_nLoops;				                            //[MJ] multiply nLoops below
 
-        E_scas_htf_summed *= m_nLoops;			//[MJ] 
-        E_xovers_htf_summed *= m_nLoops;		//[MJ]
+        E_scas_htf_summed *= m_nLoops;			                            //[MJ] 
+        E_xovers_htf_summed *= m_nLoops;		                            //[MJ]
 
 
         double Q_htf = m_m_dot_htf_tot * m_c_htf_ave_ts_ave_temp * (m_T_sys_h_t_int - T_htf_cold_in) * sim_info.ms_ts.m_step * 1.E-6;		//[MJ]
-        double E_htf_bal = E_HR_cold_htf + E_scas_htf_summed + E_xovers_htf_summed + E_HR_hot_htf - Q_htf;				//[MJ]
+        double E_htf_bal = E_HR_cold_htf + E_scas_htf_summed + E_xovers_htf_summed + E_HR_hot_htf - Q_htf;		//[MJ]
 
-        double Q_loss_HR_cold = q_dot_loss_HR_cold * sim_info.ms_ts.m_step * 1.E-6;		//[MJ]
-        double Q_loss_HR_hot = q_dot_loss_HR_hot * sim_info.ms_ts.m_step * 1.E-6;		//[MJ]
+        double Q_loss_HR_cold = q_dot_loss_HR_cold * sim_info.ms_ts.m_step * 1.E-6;		                        //[MJ]
+        double Q_loss_HR_hot = q_dot_loss_HR_hot * sim_info.ms_ts.m_step * 1.E-6;		                        //[MJ]
 
         m_Q_field_losses_total_subts = Q_loss_xover + Q_loss_HR_cold + Q_loss_HR_hot - Q_abs_scas_summed;		//[MJ]
     }
@@ -960,12 +873,12 @@ void C_csp_fresnel_collector_receiver::header_design(int nhsec, int nfsec, int n
 
     //Runner diameters
     //runner pipe needs some length to go from the power block to the headers
-    D_runner.at(0) = CSP::pipe_sched(sqrt(4. * m_dot_ts / (rho * V_max * pi)));
+    D_runner.at(0) = CSP::pipe_sched(sqrt(4. * m_dot_ts / (rho * V_max * CSP::pi)));
     //other runner diameters
     m_dot_temp = m_dot_ts * (1. - float(nfsec % 4) / float(nfsec));  //mjw 5.4.11 Fix mass flow rate for nfsec/2==odd 
     if (nrunsec > 1) {
         for (int i = 1; i < nrunsec; i++) {
-            D_runner[i] = CSP::pipe_sched(sqrt(4. * m_dot_temp / (rho * V_max * pi)));
+            D_runner[i] = CSP::pipe_sched(sqrt(4. * m_dot_temp / (rho * V_max * CSP::pi)));
             m_dot_temp = max(m_dot_temp - m_dot_hdr * 2, 0.0);
         }
     }
@@ -980,9 +893,9 @@ void C_csp_fresnel_collector_receiver::header_design(int nhsec, int nfsec, int n
 
             nd++; //keep track of the total number of diameter sections
             //Calculate header diameter based on max velocity
-            D_hdr[i] = CSP::pipe_sched(sqrt(4. * m_dot_max / (rho * V_max * pi)));
+            D_hdr[i] = CSP::pipe_sched(sqrt(4. * m_dot_max / (rho * V_max * CSP::pi)));
             //Determine the mass flow corresponding to the minimum velocity at design
-            m_dot_min = rho * V_min * pi * D_hdr[i] * D_hdr[i] / 4.;
+            m_dot_min = rho * V_min * CSP::pi * D_hdr[i] * D_hdr[i] / 4.;
             //Determine the loop after which the current diameter calculation will no longer apply
             nend = (int)floor((m_dot_hdr - m_dot_min) / (m_dot_2loops));  //tn 4.12.11 ceiling->floor
             //The starting loop for the next diameter section starts after the calculated ending loop
@@ -1007,7 +920,7 @@ void C_csp_fresnel_collector_receiver::header_design(int nhsec, int nfsec, int n
         summary->append(tstr);
 
         for (int i = 0; i < nrunsec; i++) {
-            sprintf(tstr, "To section %d header pipe diameter: %.4f m (%.2f in)\n", i + 1, D_runner[i], D_runner[i] * mtoinch);
+            sprintf(tstr, "To section %d header pipe diameter: %.4f m (%.2f in)\n", i + 1, D_runner[i], D_runner[i] * m_mtoinch);
             summary->append(tstr);
         }
         //Write header diams
@@ -1019,7 +932,7 @@ void C_csp_fresnel_collector_receiver::header_design(int nhsec, int nfsec, int n
             if (i > 1) {
                 if (D_hdr[i] != D_hdr.at(i - 1)) nd = nd + 1;
             }
-            sprintf(tstr, "  %4d   |    %6.4f    |    %6.4f     | %3d\n", i + 1, D_hdr[i], D_hdr[i] * mtoinch, nd);
+            sprintf(tstr, "  %4d   |    %6.4f    |    %6.4f     | %3d\n", i + 1, D_hdr[i], D_hdr[i] * m_mtoinch, nd);
             summary->append(tstr);
         }
         //110 format(2X,I4,3X,"|",4X,F6.4,4X,"|",4X,F6.3,5X,"|",1X,I3)
@@ -1027,6 +940,504 @@ void C_csp_fresnel_collector_receiver::header_design(int nhsec, int nfsec, int n
 
 }
 
+void C_csp_fresnel_collector_receiver::loop_optical_eta(const C_csp_weatherreader::S_outputs& weather,
+    const C_csp_solver_sim_info& sim_info)
+{
+    //if (weather.m_wspd >= m_wind_stow_speed)    // no wind stow speed user input
+    if (false)
+    {
+        loop_optical_wind_stow();
+    }
+    else
+    {
+        // First, clear all the values calculated below
+        loop_optical_eta_off();
+
+        //calculate the m_hour of the day
+        double time_hr = sim_info.ms_ts.m_time / 3600.;		//[hr]
+        double dt_hr = sim_info.ms_ts.m_step / 3600.;			//[hr]
+        double hour = fmod(time_hr, 24.);				//[hr]
+
+        //Time calculations
+        int day_of_year = (int)ceil(time_hr / 24.);  //Day of the year
+        // Duffie & Beckman 1.5.3b
+        double B = (day_of_year - 1) * 360.0 / 365.0 * CSP::pi / 180.0;
+        // Eqn of time in minutes
+        double EOT = 229.2 * (0.000075 + 0.001868 * cos(B) - 0.032077 * sin(B) - 0.014615 * cos(B * 2.0) - 0.04089 * sin(B * 2.0));
+        // Declination in radians (Duffie & Beckman 1.6.1)
+        double Dec = 23.45 * sin(360.0 * (284.0 + day_of_year) / 365.0 * CSP::pi / 180.0) * CSP::pi / 180.0;
+        // Solar Noon and time in hours
+        double SolarNoon = 12. - ((m_shift) * 180.0 / CSP::pi) / 15.0 - EOT / 60.0;
+
+        // Deploy & stow times in hours
+        // Calculations modified by MJW 11/13/2009 to correct bug
+        m_theta_dep = max(m_theta_dep, 1.e-6);
+        double DepHr1 = cos(m_latitude) / tan(m_theta_dep);
+        double DepHr2 = -tan(Dec) * sin(m_latitude) / tan(m_theta_dep);
+        double DepHr3 = CSP::sign(tan(CSP::pi - m_theta_dep)) * acos((DepHr1 * DepHr2 + sqrt(DepHr1 * DepHr1 - DepHr2 * DepHr2 + 1.0)) / (DepHr1 * DepHr1 + 1.0)) * 180.0 / CSP::pi / 15.0;
+        double DepTime = SolarNoon + DepHr3;
+
+        m_theta_stow = max(m_theta_stow, 1.e-6);
+        double StwHr1 = cos(m_latitude) / tan(m_theta_stow);
+        double StwHr2 = -tan(Dec) * sin(m_latitude) / tan(m_theta_stow);
+        double StwHr3 = CSP::sign(tan(CSP::pi - m_theta_stow)) * acos((StwHr1 * StwHr2 + sqrt(StwHr1 * StwHr1 - StwHr2 * StwHr2 + 1.0)) / (StwHr1 * StwHr1 + 1.0)) * 180.0 / CSP::pi / 15.0;
+        double StwTime = SolarNoon + StwHr3;
+
+        // m_ftrack is the fraction of the time period that the field is tracking. MidTrack is time at midpoint of operation
+        double HrA = hour - dt_hr;
+        double HrB = hour;
+
+        double  MidTrack;
+        m_ftrack = std::numeric_limits<double>::quiet_NaN();
+        // Solar field operates
+        if ((HrB > DepTime) && (HrA < StwTime))
+        {
+            // solar field deploys during time period
+            if (HrA < DepTime)
+            {
+                m_ftrack = (HrB - DepTime) / dt_hr;
+                MidTrack = HrB - m_ftrack * 0.5 * dt_hr;
+
+                // Solar field stows during time period
+            }
+            else if (HrB > StwTime)
+            {
+                m_ftrack = (StwTime - HrA) / dt_hr;
+                MidTrack = HrA + m_ftrack * 0.5 * dt_hr;
+                // solar field operates during entire period
+            }
+            else
+            {
+                m_ftrack = 1.0;
+                MidTrack = HrA + 0.5 * dt_hr;
+            }
+            // solar field doesn't operate
+        }
+        else
+        {
+            m_ftrack = 0.0;
+            MidTrack = HrA + 0.5 * dt_hr;
+        }
+
+        //// Maximum wind speed value   NO max wind speed
+        //if (V_wind >= m_V_wind_max)
+        //    m_ftrack = 0.0;
+
+        double StdTime = MidTrack;
+        double SolarTime = StdTime + ((m_shift) * 180.0 / CSP::pi) / 15.0 + EOT / 60.0;
+        // m_hour angle (arc of sun) in radians
+        double omega = (SolarTime - 12.0) * 15.0 * CSP::pi / 180.0;
+
+        // Convert other input data as necessary
+        double SolarAz = weather.m_solazi;		//[deg] Solar azimuth angle
+        SolarAz = (SolarAz - 180.0) * m_d2r;	//[rad] convert from [deg]
+        double SolarAlt;
+        // B. Stine equation for Solar Altitude angle in radians
+        SolarAlt = asin(sin(Dec) * sin(m_latitude) + cos(m_latitude) * cos(Dec) * cos(omega));
+
+        double SolarZenRad = weather.m_solzen * m_d2r; // Convert from degree to radian
+
+        if (SolarZenRad < CSP::pi / 2.) {
+            //Convert the solar angles to collector incidence angles
+            CSP::theta_trans(SolarAz, SolarZenRad, m_ColAz, m_phi_t, m_theta_L);
+
+            switch (m_opt_model)
+            {
+                case 1:		//sun position
+                    //user provides an optical table as a function of solar position
+                    m_eta_optical = eta_opt_fixed * max(optical_table.interpolate(SolarAz, min(SolarZenRad, CSP::pi / 2.)), 0.0);
+                    break;
+                case 2:		//incidence angle table
+                    //user provides an optical table as a function of collector incidence angles
+                    m_eta_optical = eta_opt_fixed * max(optical_table.interpolate(m_phi_t, max(m_theta_L, 0.0)), 0.0);
+                    break;
+                case 3:		//incidence angle modifier polys
+                    //Otherwise, calculate the collector incidence angles for the IAM equations
+                    m_eta_optical = eta_opt_fixed *
+                        CSP::poly_eval(m_phi_t, &m_IAM_T_coefs[0], m_IAM_T_coefs.size()) *
+                        CSP::poly_eval(m_theta_L, &m_IAM_L_coefs[0], m_IAM_L_coefs.size());
+                    break;
+                default:
+                    //error
+                    //message(TCS_ERROR, "No corresponding optical model. Error in solar angle calculation.");
+                    string msg = "No corresponding optical model. Error in solar angle calculation.";
+                    m_error_msg = util::format(msg.c_str());
+                    mc_csp_messages.add_message(C_csp_messages::NOTICE, m_error_msg);
+                    return;
+            }
+
+            m_eta_optical *= m_ftrack;
+        }
+        else {
+            m_eta_optical = 0.0;
+            m_phi_t = CSP::pi / 2.;
+            m_theta_L = 0.0;
+        }
+
+        double I_b = weather.m_beam;
+        m_q_i = I_b * m_A_aperture / m_L_mod; //[W/m] The incoming solar irradiation per aperture length
+
+        //Optical efficiency and incident power values for each SCA
+        for (int j = 0; j < m_nMod; j++) {
+            m_ColOptEff.at(j) = m_eta_optical;
+            m_q_SCA[j] = m_q_i;        //[W/m] The flux on the collector
+        }
+
+        // Assume that whenever fresnel is in STARTUP OR ON, we're using the nominal tracking load
+        // This is because it takes power to move into and out of defocus, and we'd probably
+        //    just add complexity without any accuracy by trying to capture that
+        m_W_dot_sca_tracking = m_W_dot_sca_tracking_nom * m_ftrack;	//[MWe]
+
+        m_control_defocus = m_component_defocus = 1.0;	//[-]
+
+        m_q_dot_inc_sf_tot = m_Ap_tot * weather.m_beam / 1.E6;	//[MWt]
+
+    }
+}
+
+void C_csp_fresnel_collector_receiver::loop_optical_eta_off()
+{
+    // If fresnel is not absorbing any sunlight (night or 100% defocus), then set member data as necessary
+
+    m_q_i = 0;		                        //[W/m] DNI * A_aper / L_sca
+    m_ColOptEff.fill(0.0);				    //[-] tracking * geom * rho * dirt * error * IAM * row shadow * end loss * ftrack
+    m_EqOpteff = 0.;
+    m_q_SCA.assign(m_q_SCA.size(), 0.0);	//[W/m] Total incident irradiation on the receiver (q"*A_aper/L_sca*cos(theta))
+
+    m_W_dot_sca_tracking = 0.0;		        //[MWe]
+
+    m_control_defocus = 1.0;
+    m_component_defocus = 1.0;
+
+    m_q_dot_inc_sf_tot = 0.0;		        //[MWt]
+
+    m_eta_optical = 0;
+
+    return;
+}
+
+void C_csp_fresnel_collector_receiver::loop_optical_wind_stow()
+{
+    // Want to completely defocus fresnel because wind speed is faster than stow speed
+    // Can use 'loop_optical_eta_off' but then need to reset:
+    //	* tracking power
+    //  * defocus values
+
+    loop_optical_eta_off();
+
+    m_W_dot_sca_tracking = m_W_dot_sca_tracking_nom;		//[MWe]
+
+    m_component_defocus = 0.0;
+}
+
+void C_csp_fresnel_collector_receiver::update_last_temps()
+{
+    // Update "_last" temperatures
+    m_T_sys_c_t_end_last = m_T_sys_c_t_end;		//[K]
+    m_T_sys_h_t_end_last = m_T_sys_h_t_end;		//[K]
+    for (int i = 0; i < m_nMod; i++)
+    {
+        m_T_htf_out_t_end_last[i] = m_T_htf_out_t_end[i];	//[K]
+    }
+
+    return;
+}
+
+void C_csp_fresnel_collector_receiver::reset_last_temps()
+{
+    // Update "_last" temperatures
+    m_T_sys_c_t_end_last = m_T_sys_c_t_end_converged;		//[K]
+    m_T_sys_h_t_end_last = m_T_sys_h_t_end_converged;		//[K]
+    for (int i = 0; i < m_nMod; i++)
+    {
+        m_T_htf_out_t_end_last[i] = m_T_htf_out_t_end_converged[i];	//[K]
+    }
+}
+
+void C_csp_fresnel_collector_receiver::apply_control_defocus(double defocus)
+{
+    // Uses m_q_i, m_costh, and input defocus to calculate m_q_SCA_control_df
+
+    // Store control defocus
+    m_control_defocus = defocus;
+
+    for (int i = 0; i < m_nMod; i++)
+    {
+        m_q_SCA_control_df[i] = defocus * m_q_i;
+    }
+
+}
+
+void C_csp_fresnel_collector_receiver::apply_component_defocus(double defocus /*-*/)
+{
+    // Uses m_q_SCA_control_df and input defocus to calculate m_q_SCA
+
+    // Store component defocus
+    m_component_defocus = defocus;
+
+    for (int i = 0; i < m_nMod; i++)
+    {
+        //int CT = (int)m_SCAInfoArray(i, 1) - 1;    // Collector type
+        m_q_SCA[i] = defocus * m_q_SCA_control_df[i];
+    }
+}
+
+double C_csp_fresnel_collector_receiver::Pump_SGS(double rho, double m_dotsf, double sm) {
+
+    int nl = 8;
+    double v_dotpb, v_dotsf, m_dotpb, vel_max;
+    double
+        * V_dot = new double[nl],
+        * D = new double[nl],
+        * V = new double[nl];
+
+    //Line no.	
+    //1	Expansion vessel or thermal storage tank to pump suction header
+    //2	Individual pump suction line, from suction header to pump inlet
+    //3	Individual pump discharge line, from pump discharge to discharge header
+    //4	Pump discharge header
+    //5	Collector field outlet header to expansion vessel or thermal storage tank
+    //6	Steam generator supply header
+    //7	Inter steam generator piping
+    //8	Steam generator exit header to expansion vessel or thermal storage
+    //Assume standard lengths for each line [m] (Kelly & Kearney)
+    //Assume 3 pumps at 50% each. #3) 3*30. 
+    double L_line[] = { 0.0, 0.0, 90.0, 100.0, 120.0, 80.0, 120.0, 80.0 };
+
+    //Assume a maximum HTF velocity of 1.85 m/s (based on average from Kelly & Kearney model
+    vel_max = 1.85;
+
+    //design-point vol. flow rate m3/s
+    m_dotpb = m_dotsf / sm;
+    v_dotpb = m_dotpb / rho;
+    v_dotsf = m_dotsf / rho;
+
+    //Set the volumetric flow rate for each line.
+    V_dot[0] = v_dotsf;
+    V_dot[1] = v_dotsf / 2.0;
+    V_dot[2] = V_dot[1];
+    V_dot[3] = v_dotsf;
+    V_dot[4] = V_dot[3];
+    V_dot[5] = v_dotpb;
+    V_dot[6] = V_dot[5];
+    V_dot[7] = V_dot[5];
+
+    //for each line..
+    double psum = 0.;
+    for (int i = 0; i < nl; i++) {
+        //Calculate the pipe diameter
+        D[i] = CSP::pipe_sched(sqrt(4.0 * V_dot[i] / (vel_max * CSP::pi)));
+        //Calculate the total volume
+        V[i] = pow(D[i], 2) / 4. * CSP::pi * L_line[i];
+        psum += V[i];
+    }
+
+    delete[] V_dot;
+    delete[] D;
+    delete[] V;
+
+    return psum;
+
+}
+
+/*
+   ***************************************************************************************************
+    Trough system piping loss model
+   ***************************************************************************************************
+
+    This piping loss model is derived from the pressure drop calculations presented in the
+    following document:
+
+      Parabolic Trough Solar System Piping Model
+
+      B. Kelly
+      Nexant, Inc. San Francisco, California
+
+      D. Kearney
+      Kearney & Associates
+      Vashon, Washington
+
+      Subcontract Report
+      NREL/SR-550-40165
+      July 2006
+
+    ----------------------------
+    Note on use of this function
+    ----------------------------
+    The function returns the pressure drop across a given length of pipe, and also accounts for
+    a variety of possible pressure-loss components. This function should be called multiple times -
+    once for each section under consideration.  For example, separate calls should be made for the
+    HCE pressure drop, the pressure drop in each section of the header in which flow/geometrical
+    conditions vary, the section of pipe leading to the header, and so on.
+
+    ----------------------------
+    Inputs
+    ----------------------------
+    No | Name         | Description                           | Units     |  Type
+   ===================================================================================
+     1 | Fluid        | Number associated with fluid type     | none      | float
+     2 | m_dot        | Mass flow rate of the fluid           | kg/s      | float
+     3 | T            | Fluid temperature                     | K         | float
+     4 | P            | Fluid pressure                        | Pa        | float
+     5 | D            | Diameter of the contact surface       | m         | float
+     6 | Rough        | Pipe roughness                        | m         | float
+     7 | L_pipe       | Length of pipe for pressure drop      | m         | float
+     8 | Nexp         | Number of expansions                  | none      | float
+     9 | Ncon         | Number of contractions                | none      | float
+    10 | Nels         | Number of standard elbows             | none      | float
+    11 | Nelm         | Number of medium elbows               | none      | float
+    12 | Nell         | Number of long elbows                 | none      | float
+    13 | Ngav         | Number of gate valves                 | none      | float
+    14 | Nglv         | Number of globe valves                | none      | float
+    15 | Nchv         | Number of check valves                | none      | float
+    16 | Nlw          | Number of loop weldolets              | none      | float
+    17 | Nlcv         | Number of loop control valves         | none      | float
+    18 | Nbja         | Number of ball joint assemblies       | none      | float
+   ===================================================================================
+    ----------------------------
+    Outputs
+    ----------------------------
+    1. PressureDrop  (Pa)
+   */
+double C_csp_fresnel_collector_receiver::PressureDrop(double m_dot, double T, double P, double D, double Rough, double L_pipe,
+    double Nexp, double Ncon, double Nels, double Nelm, double Nell, double Ngav, double Nglv,
+    double Nchv, double Nlw, double Nlcv, double Nbja) {
+
+    double rho, v_dot, mu, nu, u_fluid, Re, f, DP_pipe, DP_exp, DP_con, DP_els, DP_elm, DP_ell, DP_gav,
+        DP_glv, DP_chv, DP_lw, DP_lcv, DP_bja, HL_pm;
+
+    //Calculate fluid properties and characteristics
+    rho = m_htfProps.dens(T, P);
+    mu = m_htfProps.visc(T);
+    nu = mu / rho;
+    v_dot = m_dot / rho;   //fluid volumetric flow rate
+    u_fluid = v_dot / (CSP::pi * (D / 2.) * (D / 2.));  //Fluid mean velocity
+
+    //Dimensionless numbers
+    Re = u_fluid * D / nu;
+    //if(Re<2300.) then
+    //    f = 64./max(Re,1.0)
+    //else
+    f = FricFactor(Rough / D, Re);
+    if (f == 0) return std::numeric_limits<double>::quiet_NaN();
+    //}
+
+    //Calculation of pressure loss from pipe length
+    HL_pm = f * u_fluid * u_fluid / (2. * D * CSP::grav);
+    DP_pipe = HL_pm * rho * CSP::grav * L_pipe;
+
+    //Calculation of pressure loss from Fittings
+    DP_exp = 0.25 * rho * u_fluid * u_fluid * Nexp;
+    DP_con = 0.25 * rho * u_fluid * u_fluid * Ncon;
+    DP_els = 0.9 * D / f * HL_pm * rho * CSP::grav * Nels;
+    DP_elm = 0.75 * D / f * HL_pm * rho * CSP::grav * Nelm;
+    DP_ell = 0.6 * D / f * HL_pm * rho * CSP::grav * Nell;
+    DP_gav = 0.19 * D / f * HL_pm * rho * CSP::grav * Ngav;
+    DP_glv = 10.0 * D / f * HL_pm * rho * CSP::grav * Nglv;
+    DP_chv = 2.5 * D / f * HL_pm * rho * CSP::grav * Nchv;
+    DP_lw = 1.8 * D / f * HL_pm * rho * CSP::grav * Nlw;
+    DP_lcv = 10.0 * D / f * HL_pm * rho * CSP::grav * Nlcv;
+    DP_bja = 8.69 * D / f * HL_pm * rho * CSP::grav * Nbja;
+
+    return DP_pipe + DP_exp + DP_con + DP_els + DP_elm + DP_ell + DP_gav + DP_glv + DP_chv + DP_lw + DP_lcv + DP_bja;
+
+}
+
+/**************************************************************************************************
+ Friction factor (taken from Piping loss model)
+***************************************************************************************************
+ Uses an iterative method to solve the implicit friction factor function.
+ For more on this method, refer to Fox, et al., 2006 Introduction to Fluid Mechanics.			 */
+double C_csp_fresnel_collector_receiver::FricFactor(double Rough, double Reynold) {
+
+    double Test, TestOld, X, Xold, Slope;
+    double Acc = .01; //0.0001
+    int NumTries;
+
+    if (Reynold < 2750.) {
+        return 64. / max(Reynold, 1.0);
+    }
+
+    X = 33.33333;  //1. / 0.03
+    TestOld = X + 2. * log10(Rough / 3.7 + 2.51 * X / Reynold);
+    Xold = X;
+    X = 28.5714;  //1. / (0.03 + 0.005)
+    NumTries = 0;
+
+    while (NumTries < 21) {
+        NumTries++;
+        Test = X + 2 * log10(Rough / 3.7 + 2.51 * X / Reynold);
+        if (std::abs(Test - TestOld) <= Acc) {
+            return 1. / (X * X);
+        }
+
+        Slope = (Test - TestOld) / (X - Xold);
+        Xold = X;
+        TestOld = Test;
+        X = max((Slope * X - Test) / Slope, 1.e-5);
+    }
+
+    //call Messages(-1," Could not find friction factor solution",'Warning',0,250) 
+    return 0;
+}
+
+// ******************************************************************** Private STATIC Methods
+
+// Returns runner mass flow for a given runner index
+double C_csp_fresnel_collector_receiver::m_dot_runner(double m_dot_field, int nfieldsec, int irnr)
+{
+    int nrnrsec = (int)floor(float(nfieldsec) / 4.0) + 1;
+
+    if (irnr < 0 || irnr > 2 * nrnrsec - 1) { throw std::invalid_argument("Invalid runner index"); }
+
+    int irnr_onedir;
+    double m_dot_rnr;
+    double m_dot_rnr_0;
+    double m_dot_rnr_1;
+
+    // convert index to a mass flow equivalent cold runner index
+    if (irnr > nrnrsec - 1) {
+        irnr_onedir = 2 * nrnrsec - irnr - 1;
+    }
+    else {
+        irnr_onedir = irnr;
+    }
+
+    m_dot_rnr_0 = m_dot_field / 2.;
+    m_dot_rnr_1 = m_dot_rnr_0 * (1. - float(nfieldsec % 4) / float(nfieldsec));
+
+    switch (irnr_onedir) {
+        case 0:
+            m_dot_rnr = m_dot_rnr_0;
+        case 1:
+            m_dot_rnr = m_dot_rnr_1;
+        default:
+            m_dot_rnr = m_dot_rnr_1 - (irnr_onedir - 1) * m_dot_field / float(nfieldsec) * 2;
+    }
+
+    return max(m_dot_rnr, 0.0);
+}
+
+// Returns header mass flow for a given header index
+double C_csp_fresnel_collector_receiver::m_dot_header(double m_dot_field, int nfieldsec, int nLoopsField, int ihdr)
+{
+    int nhdrsec = (int)ceil(float(nLoopsField) / float(nfieldsec * 2));  // in the cold or hot headers
+
+    if (ihdr < 0 || ihdr > 2 * nhdrsec - 1) { throw std::invalid_argument("Invalid header index"); }
+
+    int ihdr_onedir;
+
+    // convert index to a mass flow equivalent cold header index
+    if (ihdr > nhdrsec - 1) {
+        ihdr_onedir = 2 * nhdrsec - ihdr - 1;
+    }
+    else {
+        ihdr_onedir = ihdr;
+    }
+
+    double m_dot_oneloop = m_dot_field / float(nLoopsField);
+    return m_dot_field / float(nfieldsec) - ihdr_onedir * 2 * m_dot_oneloop;
+}
 
 // ------------------------------------------------------------------------------ PUBLIC
 
@@ -1045,13 +1456,10 @@ C_csp_fresnel_collector_receiver::C_csp_fresnel_collector_receiver()
     m_nRecVar = -1;
     m_nLoops = -1;
     m_FieldConfig = -1;
-    //m_include_fixed_power_block_runner = true;
-    //m_L_power_block_piping = std::numeric_limits<double>::quiet_NaN();
     m_eta_pump = std::numeric_limits<double>::quiet_NaN();
     m_HDR_rough = std::numeric_limits<double>::quiet_NaN();
     m_theta_stow = std::numeric_limits<double>::quiet_NaN();
     m_theta_dep = std::numeric_limits<double>::quiet_NaN();
-    //m_Row_Distance = std::numeric_limits<double>::quiet_NaN();
     m_T_startup = std::numeric_limits<double>::quiet_NaN();
     m_m_dot_htfmin = std::numeric_limits<double>::quiet_NaN();
     m_m_dot_htfmax = std::numeric_limits<double>::quiet_NaN();
@@ -1064,42 +1472,19 @@ C_csp_fresnel_collector_receiver::C_csp_fresnel_collector_receiver()
 
     m_T_fp = std::numeric_limits<double>::quiet_NaN();
     m_I_bn_des = std::numeric_limits<double>::quiet_NaN();
-    //m_V_hdr_cold_max = std::numeric_limits<double>::quiet_NaN();
-    //m_V_hdr_cold_min = std::numeric_limits<double>::quiet_NaN();
-    //m_V_hdr_hot_max = std::numeric_limits<double>::quiet_NaN();
-    //m_V_hdr_hot_min = std::numeric_limits<double>::quiet_NaN();
     m_V_hdr_max = std::numeric_limits<double>::quiet_NaN();
     m_V_hdr_min = std::numeric_limits<double>::quiet_NaN();
     m_Pipe_hl_coef = std::numeric_limits<double>::quiet_NaN();
     m_SCA_drives_elec = std::numeric_limits<double>::quiet_NaN();
-    //m_fthrok = -1;
-    //m_fthrctrl = -1;
-    //m_ColTilt = std::numeric_limits<double>::quiet_NaN();
     m_ColAz = std::numeric_limits<double>::quiet_NaN();
-    //m_wind_stow_speed = std::numeric_limits<double>::quiet_NaN();
-
-    //m_accept_init = false;
-    //m_accept_loc = -1;
-    //m_is_using_input_gen = false;
-
-    //m_custom_sf_pipe_sizes = false;
 
     m_solar_mult = std::numeric_limits<double>::quiet_NaN();
     m_mc_bal_hot = std::numeric_limits<double>::quiet_NaN();
     m_mc_bal_cold = std::numeric_limits<double>::quiet_NaN();
-    //m_mc_bal_hot_per_MW = std::numeric_limits<double>::quiet_NaN();
-    //m_mc_bal_cold_per_MW = std::numeric_limits<double>::quiet_NaN();
     m_mc_bal_sca = std::numeric_limits<double>::quiet_NaN();
 
-    //m_defocus = std::numeric_limits<double>::quiet_NaN();
     m_latitude = std::numeric_limits<double>::quiet_NaN();
     m_longitude = std::numeric_limits<double>::quiet_NaN();
-    m_TCS_T_sys_h = std::numeric_limits<double>::quiet_NaN();
-    m_TCS_T_sys_c = std::numeric_limits<double>::quiet_NaN();
-    m_TCS_T_sys_h_converged = std::numeric_limits<double>::quiet_NaN();
-    m_TCS_T_sys_c_converged = std::numeric_limits<double>::quiet_NaN();
-
-
 
     // ************************************************************************
     // CSP Solver Temperature Tracking
@@ -1130,6 +1515,7 @@ C_csp_fresnel_collector_receiver::C_csp_fresnel_collector_receiver()
     m_E_dot_HR_cold_subts = std::numeric_limits<double>::quiet_NaN();		//[MWt]
     m_E_dot_HR_hot_subts = std::numeric_limits<double>::quiet_NaN();		//[MWt]
     m_q_dot_htf_to_sink_subts = std::numeric_limits<double>::quiet_NaN();	//[MWt]
+
     // ************************************************************************
     // ************************************************************************
         // Full Timestep Outputs
@@ -1159,7 +1545,7 @@ C_csp_fresnel_collector_receiver::C_csp_fresnel_collector_receiver()
 
     m_EqOpteff = std::numeric_limits<double>::quiet_NaN();
     m_m_dot_htf_tot = std::numeric_limits<double>::quiet_NaN();
-    m_Theta_ave = std::numeric_limits<double>::quiet_NaN();
+    //m_Theta_ave = std::numeric_limits<double>::quiet_NaN();
     //m_CosTh_ave = std::numeric_limits<double>::quiet_NaN();
     //m_IAM_ave = std::numeric_limits<double>::quiet_NaN();
     //m_RowShadow_ave = std::numeric_limits<double>::quiet_NaN();
@@ -1204,7 +1590,7 @@ void C_csp_fresnel_collector_receiver::init(const C_csp_collector_receiver::S_cs
 
         Do any setup required here.
         Get the values of the inputs and parameters
-        */
+    */
 
     //Initialize air properties -- used in reeiver calcs
     m_airProps.SetFluid(HTFProperties::Air);
@@ -1214,11 +1600,11 @@ void C_csp_fresnel_collector_receiver::init(const C_csp_collector_receiver::S_cs
         m_latitude = init_inputs.m_latitude;	//[deg]
         m_longitude = init_inputs.m_longitude;	//[deg]
         m_shift = init_inputs.m_shift;			//[deg]
-        m_latitude *= m_d2r;		//[rad] convert from [deg]
-        m_longitude *= m_d2r;		//[rad] convert from [deg]
-        m_shift *= m_d2r;			//[rad] convert from [deg]
+        m_latitude *= m_d2r;		            //[rad] convert from [deg]
+        m_longitude *= m_d2r;		            //[rad] convert from [deg]
+        m_shift *= m_d2r;			            //[rad] convert from [deg]
 
-        m_P_field_in = 17 / 1.e-5;                //Assumed inlet htf pressure for property lookups (DP_tot_max = 16 bar + 1 atm) [Pa]
+        m_P_field_in = 17 / 1.e-5;              //Assumed inlet htf pressure for property lookups (DP_tot_max = 16 bar + 1 atm) [Pa]
     }
 
     // Set HTF properties
@@ -1288,11 +1674,11 @@ void C_csp_fresnel_collector_receiver::init(const C_csp_collector_receiver::S_cs
 
         //get the xaxis data values
         for (int i = 1; i < ncol_OpticalTable; i++) {
-            xax[i - 1] = m_OpticalTable.at(0, i) * d2r;
+            xax[i - 1] = m_OpticalTable.at(0, i) * m_d2r;
         }
         //get the yaxis data values
         for (int j = 1; j < nrow_OpticalTable; j++) {
-            yax[j - 1] = m_OpticalTable.at(j, 0) * d2r;
+            yax[j - 1] = m_OpticalTable.at(j, 0) * m_d2r;
         }
         //Get the data values
         for (int j = 1; j < nrow_OpticalTable; j++) {
@@ -1311,63 +1697,10 @@ void C_csp_fresnel_collector_receiver::init(const C_csp_collector_receiver::S_cs
     }
 
     // Adjust parameters
-    //m_ColTilt = m_ColTilt * m_d2r;	//[rad] Collector tilt angle (0 is horizontal, 90deg is vertical), convert from [deg]
     m_ColAz = m_ColAz * m_d2r;		//[rad] Collector azimuth angle, convert from [deg]
-
-    // Check m_IAM matrix against number of collectors: m_nColt
-    // **** Don't need to because only one type of collector
-    //m_n_r_iam_matrix = (int)m_IAM_matrix.nrows();
-    //m_n_c_iam_matrix = (int)m_IAM_matrix.ncols();
-
-    // Check Inputs
-    {
-        /*if (m_n_c_iam_matrix < 3)
-        {
-            throw(C_csp_exception("There must be at least 3 incident angle modifier coefficients", "Trough collector solver"));
-        }*/
-
-        /*if (m_n_r_iam_matrix < m_nColt)
-        {
-            m_error_msg = util::format("The number of groups of m_IAM coefficients (%d) is less than the number of collector types in this simulation (%d)", m_n_r_iam_matrix, m_nColt);
-            throw(C_csp_exception(m_error_msg, "Trough collector solver"));
-        }*/
-
-        //// Check that for each collector, at least 3 coefficients are != 0.0
-        //for (int i = 0; i < m_nColt; i++)
-        //{
-        //    for (int j = 0; j < 3; j++)
-        //    {
-        //        if (m_IAM_matrix(i, j) == 0.0)
-        //        {
-        //            m_error_msg = util::format("For %d collectors and groups of m_IAM coefficients, each group of m_IAM coefficients must begin with at least 3 non-zero values. There are only %d non-zero coefficients for collector %d", m_nColt, j, i + 1);
-        //            throw(C_csp_exception(m_error_msg, "Trough collector solver"));
-        //            //message(TCS_ERROR, "For %d collectors and groups of m_IAM coefficients, each group of m_IAM coefficients must begin with at least 3 non-zero values. There are only %d non-zero coefficients for collector %d", m_nColt, j, i + 1);
-        //            //return -1;
-        //        }
-        //    }
-        //}
-    }
 
     // Organize the emittance tables
     {
-        //m_epsilon_3.init(4, 4);
-        //m_epsilon_3.addTable(&m_epsilon_3_11);	//HCE #1
-        //m_epsilon_3.addTable(&m_epsilon_3_12);
-        //m_epsilon_3.addTable(&m_epsilon_3_13);
-        //m_epsilon_3.addTable(&m_epsilon_3_14);
-        //m_epsilon_3.addTable(&m_epsilon_3_21);	//HCE #2
-        //m_epsilon_3.addTable(&m_epsilon_3_22);
-        //m_epsilon_3.addTable(&m_epsilon_3_23);
-        //m_epsilon_3.addTable(&m_epsilon_3_24);
-        //m_epsilon_3.addTable(&m_epsilon_3_31);	//HCE #3
-        //m_epsilon_3.addTable(&m_epsilon_3_32);
-        //m_epsilon_3.addTable(&m_epsilon_3_33);
-        //m_epsilon_3.addTable(&m_epsilon_3_34);
-        //m_epsilon_3.addTable(&m_epsilon_3_41);	//HCE #4
-        //m_epsilon_3.addTable(&m_epsilon_3_42);
-        //m_epsilon_3.addTable(&m_epsilon_3_43);
-        //m_epsilon_3.addTable(&m_epsilon_3_44);
-
         m_epsilon_abs.init(4);
         m_epsilon_abs.addTable(&m_epsilon_abs_1);	//HCE #1
         m_epsilon_abs.addTable(&m_epsilon_abs_2);
@@ -1393,39 +1726,28 @@ void C_csp_fresnel_collector_receiver::init(const C_csp_collector_receiver::S_cs
     {
 
         // Old Fresnel
-        m_TCS_T_htf_in.resize(m_nMod);
+        /*m_TCS_T_htf_in.resize(m_nMod);
         m_TCS_T_htf_out.resize(m_nMod);
-        m_TCS_T_htf_ave.resize(m_nMod);
+        m_TCS_T_htf_ave.resize(m_nMod);*/
         m_q_loss.resize(m_nRecVar);
         m_q_abs.resize(m_nRecVar);
-        //c_htf.resize(nMod);
-        //rho_htf.resize(nMod);
         m_DP_tube.resize(m_nMod);
-        //E_abs_field.resize(nMod);
         m_E_int_loop.resize(m_nMod);
         m_E_accum.resize(m_nMod);
         m_E_avail.resize(m_nMod);
-        //E_abs_max.resize(nMod);
-        //v_1.resize(nMod);
         m_q_loss_SCAtot.resize(m_nMod);
         m_q_abs_SCAtot.resize(m_nMod);
         m_q_SCA.resize(m_nMod);
-        //E_fp.resize_fill(nMod, 0.);
         m_q_1abs_tot.resize(m_nMod);
         m_q_1abs.resize(m_nRecVar);
         m_ColOptEff.resize(m_nMod);
 
         // Trough
         m_q_SCA_control_df.resize(m_nMod);
-        //m_q_i.resize(m_nColt);  // Not a vector?
-        //m_IAM.resize(m_nColt);  // Not a vector?
-        //m_EndGain.resize(m_nMod);
-        //m_EndLoss.resize(m_nMod);
-       // m_RowShadow.resize(m_nColt); // Not a vector?
-       // 
+
         //Allocate space for transient variables
-        m_TCS_T_htf_ave_last.resize(m_nMod);
-        m_TCS_T_htf_ave_converged.resize(m_nMod);
+        /*m_TCS_T_htf_ave_last.resize(m_nMod);
+        m_TCS_T_htf_ave_converged.resize(m_nMod);*/
     }
     
     // Resize CSP Solver Temp Tracking Vectors
@@ -1439,20 +1761,6 @@ void C_csp_fresnel_collector_receiver::init(const C_csp_collector_receiver::S_cs
     
     //Set up annulus gas and absorber property matrices
     {
-        // Trough Version
-        //m_AnnulusGasMat.resize(m_nRecVar, m_nHCEVar);
-        //m_AbsorberPropMat.resize(m_nRecVar, m_nHCEVar);
-        //for (int i = 0; i < m_nHCEt; i++) {
-        //    for (int j = 0; j < m_nHCEVar; j++) {
-        //        //Set up a matrix of annulus gas properties
-        //        m_AnnulusGasMat.at(i, j) = new HTFProperties();
-        //        m_AnnulusGasMat.at(i, j)->SetFluid((int)m_AnnulusGas.at(i, j));
-        //        //Set up a matrix of absorber prop materials
-        //        m_AbsorberPropMat(i, j) = new AbsorberProps();
-        //        m_AbsorberPropMat(i, j)->setMaterial((int)m_AbsorberMaterial.at(i, j));
-        //    }
-        //}
-
         // Old Fresnel Version
         //Set up annulus gas and absorber property matrices
         m_AnnulusGasMat.resize(m_nRecVar);
@@ -1465,25 +1773,13 @@ void C_csp_fresnel_collector_receiver::init(const C_csp_collector_receiver::S_cs
             m_AbsorberPropMat.at(j) = new AbsorberProps();
             m_AbsorberPropMat.at(j)->setMaterial((int)m_AbsorberMaterial[j]);
         }
-
-
     }
 
     //Initialize values
-    //m_defocus_old = 0.;
-    m_ncall = -1;
-
-    //Set the defocus order to always be last->first in the loop
-    m_SCADefocusArray.resize(m_nMod);
-    for (int i = 0; i < m_nMod; i++) {
-        m_SCADefocusArray[i] = m_nMod - i;
-    }
 
     // for test start
     init_fieldgeom();
     // for test end
-
-    
 
     // Set solved parameters
     solved_params.m_T_htf_cold_des = m_T_loop_in_des;	//[K]
@@ -1530,7 +1826,7 @@ bool C_csp_fresnel_collector_receiver::init_fieldgeom()
                 m_D_h.at(i) = m_D_abs_in[i];
                 m_D_plug[i] = 0.;
             }
-            m_A_cs.at(i) = pi * (m_D_abs_in[i] * m_D_abs_in[i] - m_D_plug[i] * m_D_plug[i]) / 4.;  //[m2] The cross-sectional flow area
+            m_A_cs.at(i) = CSP::pi * (m_D_abs_in[i] * m_D_abs_in[i] - m_D_plug[i] * m_D_plug[i]) / 4.;  //[m2] The cross-sectional flow area
         }
     }
 
@@ -1552,9 +1848,6 @@ bool C_csp_fresnel_collector_receiver::init_fieldgeom()
     */
     m_nhdrsec = (int)ceil(float(m_nLoops) / float(m_nfsec * 2));
 
-    //Allocate space for the D_hdr array
-    //m_D_hdr.resize(m_nhdrsec, 0.);
-
     //We need to determine design information about the field for purposes of header sizing ONLY
     m_c_htf_ave = m_htfProps.Cp((m_T_loop_out_des + m_T_loop_in_des) / 2.0) * 1000.;    //Specific heat
 
@@ -1570,11 +1863,11 @@ bool C_csp_fresnel_collector_receiver::init_fieldgeom()
     double elev_des = asin(sin(0.4092793) * sin(m_latitude) + cos(m_latitude) * cos(0.4092793));
     //translate the solar angles into incidence angles
     double phi_t, theta_L, iam_t, iam_l;
-    CSP::theta_trans(0., pi / 2. - elev_des, m_ColAz, phi_t, theta_L);	//phi_t and theta_L are the translated angles (transverse and longitudinal)
+    CSP::theta_trans(0., CSP::pi / 2. - elev_des, m_ColAz, phi_t, theta_L);	//phi_t and theta_L are the translated angles (transverse and longitudinal)
     switch (m_opt_model)
     {
         case 1:		//Solar position table
-            m_opteff_des = eta_opt_fixed * optical_table.interpolate(0., Pi / 2. - elev_des);
+            m_opteff_des = eta_opt_fixed * optical_table.interpolate(0., CSP::pi / 2. - elev_des);
             break;
         case 2:		//Collector incidence table
             m_opteff_des = eta_opt_fixed * optical_table.interpolate(0., theta_L);
@@ -1686,20 +1979,12 @@ bool C_csp_fresnel_collector_receiver::init_fieldgeom()
     double rho_ave = m_htfProps.dens((m_T_loop_out_des + m_T_loop_in_des) / 2.0, 0.0); //kg/m3
     //Calculate the header design
     m_nrunsec = (int)floor(float(m_nfsec) / 4.0) + 1;  //The number of unique runner diameters
-    /*m_D_runner.resize(m_nrunsec);
-    m_L_runner.resize(m_nrunsec);
-    m_D_hdr.resize(m_nhdrsec);*/
     m_T_loop.resize(2 * m_nMod + 3);
     m_T_rnr.resize(2 * m_nrunsec);
     m_T_hdr.resize(2 * m_nhdrsec);
     m_D_runner.resize(m_nrunsec);
     m_L_runner.resize(m_nrunsec);
     m_D_hdr.resize(m_nhdrsec);
-    //m_L_hdr.resize(2 * m_nhdrsec);
-    //m_P_rnr.resize(2 * m_nrunsec);
-    //m_P_hdr.resize(2 * m_nhdrsec);
-    //m_P_loop.resize(2 * m_nMod + 3);
-
 
     header_design(m_nhdrsec, m_nfsec, m_nrunsec, rho_ave, m_V_hdr_max, m_V_hdr_min, m_m_dot_design, m_D_hdr, m_D_runner, &m_piping_summary);
 
@@ -1740,7 +2025,7 @@ bool C_csp_fresnel_collector_receiver::init_fieldgeom()
     }
     double v_tofrom_sgs = 0.0;
     for (int i = 0; i < m_nrunsec; i++) {
-        v_tofrom_sgs = v_tofrom_sgs + 2. * m_L_runner[i] * pi * pow(m_D_runner[i], 2) / 4.;  //This is the volume of the runner in 1 direction.
+        v_tofrom_sgs = v_tofrom_sgs + 2. * m_L_runner[i] * CSP::pi * pow(m_D_runner[i], 2) / 4.;  //This is the volume of the runner in 1 direction.
     }
 
     //6/14/12, TN: Multiplier for runner heat loss. In main section of code, are only calculating loss for one path.
@@ -1748,7 +2033,6 @@ bool C_csp_fresnel_collector_receiver::init_fieldgeom()
     //that the first 50 meters of runner is assumed shared.
     double lsum = 0.;
     for (int i = 0; i < m_nrunsec; i++) { lsum += m_L_runner[i]; }
-    N_run_mult = 1.0 + (1.0 - 50.0 / lsum);
 
     //Calculate the total HTF volume per loop based on user input. Select method based on heat loss model
     double v_loop_tot = 0.;
@@ -1780,7 +2064,7 @@ bool C_csp_fresnel_collector_receiver::init_fieldgeom()
     double v_header = 0.0;
     for (int i = 0; i < m_nhdrsec; i++) {
         //Also calculate the hot and cold header volume for later use. 4.25 is for header expansion bends
-        v_header += m_D_hdr[i] * m_D_hdr[i] / 4. * pi * (m_L_crossover + 4.275) * float(m_nfsec) * 2.0;  //tn 4.25.11 The header distance should be multiplied by 2 row spacings
+        v_header += m_D_hdr[i] * m_D_hdr[i] / 4. * CSP::pi * (m_L_crossover + 4.275) * float(m_nfsec) * 2.0;  //tn 4.25.11 The header distance should be multiplied by 2 row spacings
     }
     //Add on inlet/outlet from the header to the loop. Assume header to loop inlet ~= 10 [m] (Kelley/Kearney)
     if (m_rec_model == 2) v_header = v_header + 20. * m_A_cs.at(0) * float(m_nLoops);
@@ -1813,22 +2097,18 @@ bool C_csp_fresnel_collector_receiver::init_fieldgeom()
     m_v_hot = m_v_hot + v_sgs / 2.;
     m_v_cold = m_v_cold + v_sgs / 2.;
 
-    //is_fieldgeom_init = true;	//The field geometry has been initialized. Make note.
-
-
-        
 
     // TCS Temperature Tracking
-    m_TCS_T_sys_c_converged = m_TCS_T_sys_c_last = T_field_ini;		//[K]
-    m_TCS_T_sys_h_converged = m_TCS_T_sys_h_last = T_field_ini;		//[K]
-    //cc--> Note that stored(3) -> Iter is no longer used in the TRNSYS code. It is omitted here.
-    for (int i = 0; i < m_nMod; i++)
-    {
-        m_TCS_T_htf_ave_converged[i] = m_TCS_T_htf_ave_last[i] = T_field_ini;	//[K]
-    }
+    //m_TCS_T_sys_c_converged = m_TCS_T_sys_c_last = T_field_ini;		//[K]
+    //m_TCS_T_sys_h_converged = m_TCS_T_sys_h_last = T_field_ini;		//[K]
+    ////cc--> Note that stored(3) -> Iter is no longer used in the TRNSYS code. It is omitted here.
+    //for (int i = 0; i < m_nMod; i++)
+    //{
+    //    m_TCS_T_htf_ave_converged[i] = m_TCS_T_htf_ave_last[i] = T_field_ini;	//[K]
+    //}
 
-    m_TCS_T_sys_c_last = T_field_ini;
-    m_TCS_T_sys_h_last = T_field_ini;
+    /*m_TCS_T_sys_c_last = T_field_ini;
+    m_TCS_T_sys_h_last = T_field_ini;*/
     ////cc--> Note that stored(3) -> Iter is no longer used in the TRNSYS code. It is omitted here.
     //for (int i = 0; i < nMod; i++) {
     //    T_htf_in0[i] = T_field_ini;
@@ -1846,7 +2126,7 @@ bool C_csp_fresnel_collector_receiver::init_fieldgeom()
     }
     // *********************************************
 
-    // Calculate tracking parasitics for when trough is on sun
+    // Calculate tracking parasitics for when fresnel is on sun
     m_W_dot_sca_tracking_nom = m_SCA_drives_elec * (double)(m_nMod * m_nLoops) / 1.E6;	//[MWe]
 
     return true;
@@ -1869,7 +2149,7 @@ double C_csp_fresnel_collector_receiver::get_startup_energy()
 {
     throw(C_csp_exception("C_csp_fresnel_collector_receiver::get_startup_energy() is not complete"));
 
-
+    
     return std::numeric_limits<double>::quiet_NaN();
 }
 
@@ -1963,9 +2243,6 @@ void C_csp_fresnel_collector_receiver::off(const C_csp_weatherreader::S_outputs&
         m_E_dot_HR_cold_fullts = m_E_dot_HR_hot_fullts =
         m_q_dot_htf_to_sink_fullts = 0.0;
 
-    if ((int)(sim_info.ms_ts.m_time / 3600) == 5)
-        int x = 0;
-
     // Simulate through time steps
     for (int i = 0; i < n_steps_recirc; i++)
     {
@@ -2032,10 +2309,6 @@ void C_csp_fresnel_collector_receiver::off(const C_csp_weatherreader::S_outputs&
 
     m_q_dot_freeze_protection = Q_fp_sum / sim_info.ms_ts.m_step;	//[MWt]
 
-
-    if ((int)(sim_info.ms_ts.m_time / 3600) == 5)
-        int x = 0;
-
     // Solve for pressure drop and pumping power
     m_dP_total = field_pressure_drop(weather.m_tdry, this->m_m_dot_htf_tot, this->m_P_field_in, this->m_T_htf_in_t_int, this->m_T_htf_out_t_int);
 
@@ -2043,7 +2316,7 @@ void C_csp_fresnel_collector_receiver::off(const C_csp_weatherreader::S_outputs&
     cr_out_solver.m_q_startup = 0.0;						//[MWt-hr] Receiver thermal output used to warm up the receiver
     cr_out_solver.m_time_required_su = sim_info.ms_ts.m_step;					//[s] Time required for receiver to startup - at least the entire timestep because it's off
 
-    // 5.8.17, twn: Don't report a component *delivered* mass flow rate if trough is recirculating...
+    // 5.8.17, twn: Don't report a component *delivered* mass flow rate if fresnel is recirculating...
     //              .... and not passing HTF to other components
     //cr_out_solver.m_m_dot_salt_tot = m_dot_htf_loop*3600.0*(double)m_nLoops;	//[kg/hr] Total HTF mass flow rate
     cr_out_solver.m_m_dot_salt_tot = 0.0;	//[kg/hr] Total HTF mass flow rate
@@ -2070,9 +2343,6 @@ void C_csp_fresnel_collector_receiver::startup(const C_csp_weatherreader::S_outp
     C_csp_collector_receiver::S_csp_cr_out_solver& cr_out_solver,
     const C_csp_solver_sim_info& sim_info)
 {
-    if (sim_info.ms_ts.m_time / 3600 == 11)
-        int x = 0;
-
 
     // Always reset last temps
     reset_last_temps();
@@ -2087,8 +2357,7 @@ void C_csp_fresnel_collector_receiver::startup(const C_csp_weatherreader::S_outp
     double m_dot_htf_loop = m_m_dot_htfmin;
     if (weather.m_beam > 50.0 && m_T_htf_out_t_end_converged[m_nMod - 1] > (0.5 * m_T_fp + 0.5 * m_T_startup))
     {
-        double m_dot_ss = (weather.m_beam * m_opteff_des) /
-            (m_I_bn_des * m_opteff_des) * m_m_dot_loop_des;		//[kg/s]
+        double m_dot_ss = (weather.m_beam / m_I_bn_des) * m_m_dot_loop_des;		//[kg/s]
         m_dot_htf_loop = min(m_m_dot_htfmax, max(m_m_dot_htfmin, 0.8 * m_dot_ss + 0.2 * m_m_dot_htfmin));		//[kg/s]
     }
 
@@ -2225,7 +2494,7 @@ void C_csp_fresnel_collector_receiver::startup(const C_csp_weatherreader::S_outp
     cr_out_solver.m_time_required_su = time_required_su;	//[s]
     // 	Need to be sure this value is correct..., but controller doesn't use it in CR_SU (confirmed)
 
-    // 5.8.17, twn: Don't report a component *delivered* mass flow rate if trough is recirculating...
+    // 5.8.17, twn: Don't report a component *delivered* mass flow rate if fresnel is recirculating...
     //              .... and not passing HTF to other components
     //cr_out_solver.m_m_dot_salt_tot = m_m_dot_htf_tot*3600.0;	//[kg/hr] Total HTF mass flow rate
     cr_out_solver.m_m_dot_salt_tot = 0.0;	//[kg/hr]
@@ -2283,7 +2552,7 @@ void C_csp_fresnel_collector_receiver::on(const C_csp_weatherreader::S_outputs& 
     }
     else
     {
-        throw(C_csp_exception("C_csp_trough_collector::on(...) received a CONTROL defocus > 1.0, "
+        throw(C_csp_exception("C_csp_fresnel_collector::on(...) received a CONTROL defocus > 1.0, "
             "and that is not ok!"));
     }
 
@@ -2344,13 +2613,13 @@ void C_csp_fresnel_collector_receiver::on(const C_csp_weatherreader::S_outputs& 
             }
             catch (C_csp_exception)
             {
-                throw(C_csp_exception("C_csp_trough_collector::on(...) COMPONENT defocus failed."));
+                throw(C_csp_exception("C_csp_fresnel_collector::on(...) COMPONENT defocus failed."));
                 on_success = false;
             }
 
             if (defocus_code != C_monotonic_eq_solver::CONVERGED)
             {
-                throw(C_csp_exception("C_csp_trough_collector::on(...) COMPONENT defocus failed."));
+                throw(C_csp_exception("C_csp_fresnel_collector::on(...) COMPONENT defocus failed."));
                 on_success = false;
             }
 
@@ -2384,13 +2653,13 @@ void C_csp_fresnel_collector_receiver::on(const C_csp_weatherreader::S_outputs& 
             }
             catch (C_csp_exception)
             {
-                throw(C_csp_exception("C_csp_trough_collector::on(...) HTF mass flow rate iteration failed."));
+                throw(C_csp_exception("C_csp_fresnel_collector::on(...) HTF mass flow rate iteration failed."));
                 on_success = false;
             }
 
             if (m_dot_htf_code != C_monotonic_eq_solver::CONVERGED)
             {
-                throw(C_csp_exception("C_csp_trough_collector::on(...) HTF mass flow rate iteration failed."));
+                throw(C_csp_exception("C_csp_fresnel_collector::on(...) HTF mass flow rate iteration failed."));
                 on_success = false;
             }
         }
@@ -2577,7 +2846,7 @@ void C_csp_fresnel_collector_receiver::estimates(const C_csp_weatherreader::S_ou
     {
         if (weather.m_beam > 1.0)
         {
-            est_out.m_q_startup_avail = 1.0;	//[MWt] Trough is recirculating, so going into startup isn't significantly different than OFF
+            est_out.m_q_startup_avail = 1.0;	//[MWt] fresnel is recirculating, so going into startup isn't significantly different than OFF
         }
         else
         {
@@ -2599,21 +2868,19 @@ void C_csp_fresnel_collector_receiver::converged()
     Update values that should be transferred to the next time step
     */
 
-    m_ss_init_complete = true;
-
-    // Check that, if trough is ON, if outlet temperature at the end of the timestep is colder than the Startup Temperature
+    // Check that, if fresnel is ON, if outlet temperature at the end of the timestep is colder than the Startup Temperature
     if (m_operating_mode == ON && m_T_sys_h_t_end < m_T_startup)
     {
         m_operating_mode = OFF;
     }
 
     // TCS Temperature Tracking
-    m_TCS_T_sys_c_converged = m_TCS_T_sys_c_last = m_TCS_T_sys_c;		//[K]
-    m_TCS_T_sys_h_converged = m_TCS_T_sys_h_last = m_TCS_T_sys_h;		//[K]
-    for (int i = 0; i < m_nMod; i++)
-    {
-        m_TCS_T_htf_ave_converged[i] = m_TCS_T_htf_ave_last[i] = m_TCS_T_htf_ave[i];
-    }
+    //m_TCS_T_sys_c_converged = m_TCS_T_sys_c_last = m_TCS_T_sys_c;		//[K]
+    //m_TCS_T_sys_h_converged = m_TCS_T_sys_h_last = m_TCS_T_sys_h;		//[K]
+    //for (int i = 0; i < m_nMod; i++)
+    //{
+    //    m_TCS_T_htf_ave_converged[i] = m_TCS_T_htf_ave_last[i] = m_TCS_T_htf_ave[i];
+    //}
 
     // CSP Solver Temperature Tracking
     m_T_sys_c_t_end_converged = m_T_sys_c_t_end_last = m_T_sys_c_t_end;		//[K]
@@ -2623,12 +2890,10 @@ void C_csp_fresnel_collector_receiver::converged()
         m_T_htf_out_t_end_converged[i] = m_T_htf_out_t_end_last[i] = m_T_htf_out_t_end[i];	//[K]
     }
 
-    m_ncall = -1;	//[-]
-
     if (m_operating_mode == C_csp_collector_receiver::STEADY_STATE)
     {
         throw(C_csp_exception("Receiver should only be run at STEADY STATE mode for estimating output. It must be run at a different mode before exiting a timestep",
-            "Trough converged method"));
+            "fresnel converged method"));
     }
 
     m_operating_mode_converged = m_operating_mode;	//[-]
@@ -2658,46 +2923,23 @@ void C_csp_fresnel_collector_receiver::write_output_intervals(double report_time
 double C_csp_fresnel_collector_receiver::calculate_optical_efficiency(const C_csp_weatherreader::S_outputs& weather, const C_csp_solver_sim_info& sim)
 {
     // loop_optical_eta() has side-effects. Store affected member variable values for restore after call.
-    //double m_costh_ini(m_costh);
     double m_q_i_ini(m_q_i);
-    //double m_IAM_ini(m_IAM);
     util::matrix_t<double> m_ColOptEff_ini(m_ColOptEff);
     double m_EqOpteff_ini(m_EqOpteff);
-    //vector<double> m_EndGain_ini(m_EndGain); // changed from matrix to vector
-    //vector<double> m_EndLoss_ini(m_EndLoss); // changed from matrix to vector
-    //std::vector<double> m_RowShadow_ini(m_RowShadow);
     std::vector<double> m_q_SCA_ini(m_q_SCA);
-    double m_Theta_ave_ini(m_Theta_ave);
-    //double m_CosTh_ave_ini(m_CosTh_ave);
-    //double m_IAM_ave_ini(m_IAM_ave);
-    //double m_RowShadow_ave_ini(m_RowShadow_ave);
-    //double m_EndLoss_ave_ini(m_EndLoss_ave);
-    //double m_dni_costh_ini(m_dni_costh);
     double m_W_dot_sca_tracking_ini(m_W_dot_sca_tracking);
     double m_control_defocus_ini(m_control_defocus);
     double m_component_defocus_ini(m_component_defocus);
     double m_q_dot_inc_sf_tot_ini(m_q_dot_inc_sf_tot);
 
     loop_optical_eta(weather, sim);
-    //double eta_optical = m_EqOpteff * m_costh;
     double eta_optical = m_EqOpteff;
 
     // Restore member variable values
-    //m_costh = m_costh_ini;
     m_q_i = m_q_i_ini;
-    //m_IAM = m_IAM_ini;
     m_ColOptEff = m_ColOptEff_ini;
     m_EqOpteff = m_EqOpteff_ini;
-    //m_EndGain = m_EndGain_ini;
-    //m_EndLoss = m_EndLoss_ini;
-    //m_RowShadow = m_RowShadow_ini;
     m_q_SCA = m_q_SCA_ini;
-    m_Theta_ave = m_Theta_ave_ini;
-    //m_CosTh_ave = m_CosTh_ave_ini;
-    //m_IAM_ave = m_IAM_ave_ini;
-    //m_RowShadow_ave = m_RowShadow_ave_ini;
-    //m_EndLoss_ave = m_EndLoss_ave_ini;
-    //m_dni_costh = m_dni_costh_ini;
     m_W_dot_sca_tracking = m_W_dot_sca_tracking_ini;
     m_control_defocus = m_control_defocus_ini;
     m_component_defocus = m_component_defocus_ini;
@@ -2811,593 +3053,18 @@ bool C_csp_fresnel_collector_receiver::design_solar_mult()
         m_nLoops_sm1 = std::ceil(m_Ap_sm1 / m_A_loop);
 
     }
-
+    return true;
 }
-
-void C_csp_fresnel_collector_receiver::loop_optical_eta(const C_csp_weatherreader::S_outputs& weather,
-    const C_csp_solver_sim_info& sim_info)
-{
-    //if (weather.m_wspd >= m_wind_stow_speed)    // no wind stow speed user input
-    if(false)
-    {
-        loop_optical_wind_stow();
-    }
-    else
-    {
-        if (weather.m_beam > 300)
-            int x = 0;
-
-        // First, clear all the values calculated below
-        loop_optical_eta_off();
-
-        //calculate the m_hour of the day
-        double time_hr = sim_info.ms_ts.m_time / 3600.;		//[hr]
-        double dt_hr = sim_info.ms_ts.m_step / 3600.;			//[hr]
-        double hour = fmod(time_hr, 24.);				//[hr]
-
-        // DEBUG
-        if (time_hr == 9)
-            int x = 0;
-
-        //Time calculations
-        int day_of_year = (int)ceil(time_hr / 24.);  //Day of the year
-        // Duffie & Beckman 1.5.3b
-        double B = (day_of_year - 1) * 360.0 / 365.0 * CSP::pi / 180.0;
-        // Eqn of time in minutes
-        double EOT = 229.2 * (0.000075 + 0.001868 * cos(B) - 0.032077 * sin(B) - 0.014615 * cos(B * 2.0) - 0.04089 * sin(B * 2.0));
-        // Declination in radians (Duffie & Beckman 1.6.1)
-        double Dec = 23.45 * sin(360.0 * (284.0 + day_of_year) / 365.0 * CSP::pi / 180.0) * CSP::pi / 180.0;
-        // Solar Noon and time in hours
-        double SolarNoon = 12. - ((m_shift) * 180.0 / CSP::pi) / 15.0 - EOT / 60.0;
-
-        // Deploy & stow times in hours
-        // Calculations modified by MJW 11/13/2009 to correct bug
-        m_theta_dep = max(m_theta_dep, 1.e-6);
-        double DepHr1 = cos(m_latitude) / tan(m_theta_dep);
-        double DepHr2 = -tan(Dec) * sin(m_latitude) / tan(m_theta_dep);
-        double DepHr3 = CSP::sign(tan(pi - m_theta_dep)) * acos((DepHr1 * DepHr2 + sqrt(DepHr1 * DepHr1 - DepHr2 * DepHr2 + 1.0)) / (DepHr1 * DepHr1 + 1.0)) * 180.0 / pi / 15.0;
-        double DepTime = SolarNoon + DepHr3;
-
-        m_theta_stow = max(m_theta_stow, 1.e-6);
-        double StwHr1 = cos(m_latitude) / tan(m_theta_stow);
-        double StwHr2 = -tan(Dec) * sin(m_latitude) / tan(m_theta_stow);
-        double StwHr3 = CSP::sign(tan(pi - m_theta_stow)) * acos((StwHr1 * StwHr2 + sqrt(StwHr1 * StwHr1 - StwHr2 * StwHr2 + 1.0)) / (StwHr1 * StwHr1 + 1.0)) * 180.0 / pi / 15.0;
-        double StwTime = SolarNoon + StwHr3;
-
-        // m_ftrack is the fraction of the time period that the field is tracking. MidTrack is time at midpoint of operation
-        double HrA = hour - dt_hr;
-        double HrB = hour;
-
-        double  MidTrack;
-        m_ftrack = std::numeric_limits<double>::quiet_NaN();
-        // Solar field operates
-        if ((HrB > DepTime) && (HrA < StwTime))
-        {
-            // solar field deploys during time period
-            if (HrA < DepTime)
-            {
-                m_ftrack = (HrB - DepTime) / dt_hr;
-                MidTrack = HrB - m_ftrack * 0.5 * dt_hr;
-
-                // Solar field stows during time period
-            }
-            else if (HrB > StwTime)
-            {
-                m_ftrack = (StwTime - HrA) / dt_hr;
-                MidTrack = HrA + m_ftrack * 0.5 * dt_hr;
-                // solar field operates during entire period
-            }
-            else
-            {
-                m_ftrack = 1.0;
-                MidTrack = HrA + 0.5 * dt_hr;
-            }
-            // solar field doesn't operate
-        }
-        else
-        {
-            m_ftrack = 0.0;
-            MidTrack = HrA + 0.5 * dt_hr;
-        }
-
-        //// Maximum wind speed value   NO max wind speed
-        //if (V_wind >= m_V_wind_max)
-        //    m_ftrack = 0.0;
-
-        double StdTime = MidTrack;
-        double SolarTime = StdTime + ((m_shift) * 180.0 / CSP::pi) / 15.0 + EOT / 60.0;
-        // m_hour angle (arc of sun) in radians
-        double omega = (SolarTime - 12.0) * 15.0 * CSP::pi / 180.0;
-
-        // Convert other input data as necessary
-        double SolarAz = weather.m_solazi;		//[deg] Solar azimuth angle
-        SolarAz = (SolarAz - 180.0) * m_d2r;	//[rad] convert from [deg]
-        double SolarAlt;
-        // B. Stine equation for Solar Altitude angle in radians
-        SolarAlt = asin(sin(Dec) * sin(m_latitude) + cos(m_latitude) * cos(Dec) * cos(omega));
-        
-        double SolarZenRad = weather.m_solzen * d2r; // Convert from degree to radian
-
-        if (SolarZenRad < pi / 2.) {
-            //Convert the solar angles to collector incidence angles
-            CSP::theta_trans(SolarAz, SolarZenRad, m_ColAz, m_phi_t, m_theta_L);
-
-            switch (m_opt_model)
-            {
-                case 1:		//sun position
-                    //user provides an optical table as a function of solar position
-                    m_eta_optical = eta_opt_fixed * max(optical_table.interpolate(SolarAz, min(SolarZenRad, pi / 2.)), 0.0);
-                    break;
-                case 2:		//incidence angle table
-                    //user provides an optical table as a function of collector incidence angles
-                    m_eta_optical = eta_opt_fixed * max(optical_table.interpolate(m_phi_t, max(m_theta_L, 0.0)), 0.0);
-                    break;
-                case 3:		//incidence angle modifier polys
-                    //Otherwise, calculate the collector incidence angles for the IAM equations
-                    m_eta_optical = eta_opt_fixed *
-                        CSP::poly_eval(m_phi_t, &m_IAM_T_coefs[0], m_IAM_T_coefs.size()) *
-                        CSP::poly_eval(m_theta_L, &m_IAM_L_coefs[0], m_IAM_L_coefs.size());
-                    break;
-                default:
-                    //error
-                    //message(TCS_ERROR, "No corresponding optical model. Error in solar angle calculation.");
-                    string msg = "No corresponding optical model. Error in solar angle calculation.";
-                    m_error_msg = util::format(msg.c_str());
-                    mc_csp_messages.add_message(C_csp_messages::NOTICE, m_error_msg);
-                    return;
-            }
-
-            m_eta_optical *= m_ftrack;
-        }
-        else {
-            m_eta_optical = 0.0;
-            m_phi_t = pi / 2.;
-            m_theta_L = 0.0;
-        }
-
-        double I_b = weather.m_beam;
-        m_q_i = I_b * m_A_aperture / m_L_mod; //[W/m] The incoming solar irradiation per aperture length
-
-        //Optical efficiency and incident power values for each SCA
-        //m_IAM_ave = 0;
-        //m_RowShadow_ave = 0;
-        for (int j = 0; j < m_nMod; j++) {
-            m_ColOptEff.at(j) = m_eta_optical;
-            m_q_SCA[j] = m_q_i;        //[W/m] The flux on the collector
-
-            //m_RowShadow_ave += m_RowShadow[]
-        }
-
-        //m_dni_costh = weather.m_beam * m_CosTh_ave;		//[W/m2]
-
-        // Assume that whenever trough is in STARTUP OR ON, we're using the nominal tracking load
-        // This is because it takes power to move into and out of defocus, and we'd probably
-        //    just add complexity without any accuracy by trying to capture that
-        m_W_dot_sca_tracking = m_W_dot_sca_tracking_nom * m_ftrack;	//[MWe]
-
-        m_control_defocus = m_component_defocus = 1.0;	//[-]
-
-        m_q_dot_inc_sf_tot = m_Ap_tot * weather.m_beam / 1.E6;	//[MWt]
-
-        // DEBUG
-        if (sim_info.ms_ts.m_time == 302400)
-            int x = 0;
-    }
-}
-
-void C_csp_fresnel_collector_receiver::loop_optical_eta_off()
-{
-    // If trough is not absorbing any sunlight (night or 100% defocus), then set member data as necessary
-    //m_costh = 0.0;		//[-] Cosine of the incident angle between the sun and trough aperture
-
-    m_q_i = 0;		//[W/m] DNI * A_aper / L_sca
-    //m_IAM.assign(m_IAM.size(), 0.0);		//[-] Incidence angle modifiers
-    //m_IAM = 0;		//[-] Incidence angle modifiers  NOT a vector (only one collector type)
-    m_ColOptEff.fill(0.0);				//[-] tracking * geom * rho * dirt * error * IAM * row shadow * end loss * ftrack
-    m_EqOpteff = 0.;
-    //m_EndGain.fill(0.0);				//[-] Light from different collector hitting receiver
-    //m_EndLoss.fill(0.0);				//[-] Light missing receiver due to length + end gain
-    //std::fill(m_EndGain.begin(), m_EndGain.end(), 0); //[-] Light from different collector hitting receiver     NO longer a matrix
-    //std::fill(m_EndLoss.begin(), m_EndLoss.end(), 0); //[-] Light missing receiver due to length + end gain     NO longer a matrix
-    //m_RowShadow.assign(m_RowShadow.size(), 0.0);	//[-] Row-to-row m_Shadowing losses
-    m_q_SCA.assign(m_q_SCA.size(), 0.0);			//[W/m] Total incident irradiation on the receiver (q"*A_aper/L_sca*cos(theta))
-
-    m_Theta_ave = 0.0;
-    //m_CosTh_ave = 0.0;
-    //m_IAM_ave = 0.0;
-    //m_RowShadow_ave = 0.0;
-    //m_EndLoss_ave = 0.0;
-    //m_dni_costh = 0.0;
-    m_W_dot_sca_tracking = 0.0;		//[MWe]
-
-    m_control_defocus = 1.0;
-    m_component_defocus = 1.0;
-
-    m_q_dot_inc_sf_tot = 0.0;		//[MWt]
-
-    m_eta_optical = 0;
-
-    return;
-}
-
-void C_csp_fresnel_collector_receiver::loop_optical_wind_stow()
-{
-    // Want to completely defocus trough because wind speed is faster than stow speed
-    // Can use 'loop_optical_eta_off' but then need to reset:
-    //	* tracking power
-    //  * defocus values
-
-    loop_optical_eta_off();
-
-    m_W_dot_sca_tracking = m_W_dot_sca_tracking_nom;		//[MWe]
-
-    m_component_defocus = 0.0;
-}
-
-void C_csp_fresnel_collector_receiver::update_last_temps()
-{
-    // Update "_last" temperatures
-    m_T_sys_c_t_end_last = m_T_sys_c_t_end;		//[K]
-    m_T_sys_h_t_end_last = m_T_sys_h_t_end;		//[K]
-    for (int i = 0; i < m_nMod; i++)
-    {
-        m_T_htf_out_t_end_last[i] = m_T_htf_out_t_end[i];	//[K]
-    }
-
-    return;
-}
-
-void C_csp_fresnel_collector_receiver::reset_last_temps()
-{
-    // Update "_last" temperatures
-    m_T_sys_c_t_end_last = m_T_sys_c_t_end_converged;		//[K]
-    m_T_sys_h_t_end_last = m_T_sys_h_t_end_converged;		//[K]
-    for (int i = 0; i < m_nMod; i++)
-    {
-        m_T_htf_out_t_end_last[i] = m_T_htf_out_t_end_converged[i];	//[K]
-    }
-}
-
-void C_csp_fresnel_collector_receiver::apply_control_defocus(double defocus)
-{
-    // Uses m_q_i, m_costh, and input defocus to calculate m_q_SCA_control_df
-
-    // Store control defocus
-    m_control_defocus = defocus;
-
-    //if (m_fthrctrl == 0)
-    //{
-    //    mc_csp_messages.add_message(C_csp_messages::WARNING, "The selected defocusing method of sequentially, fully defocusing SCAs is not available."
-    //        " The model will instead use Simultaneous Partial Defocusing");
-    //    m_fthrctrl = 2;
-    //}
-    //if (m_fthrctrl == 1)
-    //{
-    //    mc_csp_messages.add_message(C_csp_messages::WARNING, "The selected defocusing method of sequentially, partially defocusing SCAs is not available."
-    //        " The model will instead use Simultaneous Partial Defocusing");
-    //    m_fthrctrl = 2;
-    //}
-    //if (m_fthrctrl == 2)
-    //{
-    //    for (int i = 0; i < m_nMod; i++)
-    //    {
-    //        m_q_SCA_control_df[i] = defocus * m_q_i;
-    //    }
-    //}
-
-    for (int i = 0; i < m_nMod; i++)
-    {
-        m_q_SCA_control_df[i] = defocus * m_q_i;
-    }
-
-}
-
-void C_csp_fresnel_collector_receiver::apply_component_defocus(double defocus /*-*/)
-{
-    // Uses m_q_SCA_control_df and input defocus to calculate m_q_SCA
-
-    // Store component defocus
-    m_component_defocus = defocus;
-
-    //if (m_fthrctrl == 0)
-    //{
-    //    mc_csp_messages.add_message(C_csp_messages::WARNING, "The selected defocusing method of sequentially, fully defocusing SCAs is not available."
-    //        " The model will instead use Simultaneous Partial Defocusing");
-    //    m_fthrctrl = 2;
-    //}
-    ////if (m_fthrctrl == 1)
-    //{
-    //    mc_csp_messages.add_message(C_csp_messages::WARNING, "The selected defocusing method of sequentially, partially defocusing SCAs is not available."
-    //        " The model will instead use Simultaneous Partial Defocusing");
-    //    m_fthrctrl = 2;
-    //}
-    //if (m_fthrctrl == 2)
-    //{
-    //    for (int i = 0; i < m_nMod; i++)
-    //    {
-    //        //int CT = (int)m_SCAInfoArray(i, 1) - 1;    // Collector type
-    //        m_q_SCA[i] = defocus * m_q_SCA_control_df[i];
-    //    }
-    //}
-
-    for (int i = 0; i < m_nMod; i++)
-    {
-        //int CT = (int)m_SCAInfoArray(i, 1) - 1;    // Collector type
-        m_q_SCA[i] = defocus * m_q_SCA_control_df[i];
-    }
-}
-
-//---------------------------------------------------------------------- PUBLIC SUPPLEMENTAL (from sam_mw_lf_type262_salt)
-
-double C_csp_fresnel_collector_receiver::Pump_SGS(double rho, double m_dotsf, double sm) {
-
-    int nl = 8;
-    double v_dotpb, v_dotsf, m_dotpb, vel_max;
-    double
-        * V_dot = new double[nl],
-        * D = new double[nl],
-        * V = new double[nl];
-
-    //Line no.	
-    //1	Expansion vessel or thermal storage tank to pump suction header
-    //2	Individual pump suction line, from suction header to pump inlet
-    //3	Individual pump discharge line, from pump discharge to discharge header
-    //4	Pump discharge header
-    //5	Collector field outlet header to expansion vessel or thermal storage tank
-    //6	Steam generator supply header
-    //7	Inter steam generator piping
-    //8	Steam generator exit header to expansion vessel or thermal storage
-    //Assume standard lengths for each line [m] (Kelly & Kearney)
-    //Assume 3 pumps at 50% each. #3) 3*30. 
-    double L_line[] = { 0.0, 0.0, 90.0, 100.0, 120.0, 80.0, 120.0, 80.0 };
-
-    //Assume a maximum HTF velocity of 1.85 m/s (based on average from Kelly & Kearney model
-    vel_max = 1.85;
-
-    //design-point vol. flow rate m3/s
-    m_dotpb = m_dotsf / sm;
-    v_dotpb = m_dotpb / rho;
-    v_dotsf = m_dotsf / rho;
-
-    //Set the volumetric flow rate for each line.
-    V_dot[0] = v_dotsf;
-    V_dot[1] = v_dotsf / 2.0;
-    V_dot[2] = V_dot[1];
-    V_dot[3] = v_dotsf;
-    V_dot[4] = V_dot[3];
-    V_dot[5] = v_dotpb;
-    V_dot[6] = V_dot[5];
-    V_dot[7] = V_dot[5];
-
-    //for each line..
-    double psum = 0.;
-    for (int i = 0; i < nl; i++) {
-        //Calculate the pipe diameter
-        D[i] = CSP::pipe_sched(sqrt(4.0 * V_dot[i] / (vel_max * pi)));
-        //Calculate the total volume
-        V[i] = pow(D[i], 2) / 4. * pi * L_line[i];
-        psum += V[i];
-    }
-
-    delete[] V_dot;
-    delete[] D;
-    delete[] V;
-
-    return psum;
-
-}
-
-/*
-   ***************************************************************************************************
-    Trough system piping loss model
-   ***************************************************************************************************
-
-    This piping loss model is derived from the pressure drop calculations presented in the
-    following document:
-
-      Parabolic Trough Solar System Piping Model
-
-      B. Kelly
-      Nexant, Inc. San Francisco, California
-
-      D. Kearney
-      Kearney & Associates
-      Vashon, Washington
-
-      Subcontract Report
-      NREL/SR-550-40165
-      July 2006
-
-    ----------------------------
-    Note on use of this function
-    ----------------------------
-    The function returns the pressure drop across a given length of pipe, and also accounts for
-    a variety of possible pressure-loss components. This function should be called multiple times -
-    once for each section under consideration.  For example, separate calls should be made for the
-    HCE pressure drop, the pressure drop in each section of the header in which flow/geometrical
-    conditions vary, the section of pipe leading to the header, and so on.
-
-    ----------------------------
-    Inputs
-    ----------------------------
-    No | Name         | Description                           | Units     |  Type
-   ===================================================================================
-     1 | Fluid        | Number associated with fluid type     | none      | float
-     2 | m_dot        | Mass flow rate of the fluid           | kg/s      | float
-     3 | T            | Fluid temperature                     | K         | float
-     4 | P            | Fluid pressure                        | Pa        | float
-     5 | D            | Diameter of the contact surface       | m         | float
-     6 | Rough        | Pipe roughness                        | m         | float
-     7 | L_pipe       | Length of pipe for pressure drop      | m         | float
-     8 | Nexp         | Number of expansions                  | none      | float
-     9 | Ncon         | Number of contractions                | none      | float
-    10 | Nels         | Number of standard elbows             | none      | float
-    11 | Nelm         | Number of medium elbows               | none      | float
-    12 | Nell         | Number of long elbows                 | none      | float
-    13 | Ngav         | Number of gate valves                 | none      | float
-    14 | Nglv         | Number of globe valves                | none      | float
-    15 | Nchv         | Number of check valves                | none      | float
-    16 | Nlw          | Number of loop weldolets              | none      | float
-    17 | Nlcv         | Number of loop control valves         | none      | float
-    18 | Nbja         | Number of ball joint assemblies       | none      | float
-   ===================================================================================
-    ----------------------------
-    Outputs
-    ----------------------------
-    1. PressureDrop  (Pa)
-   */
-double C_csp_fresnel_collector_receiver::PressureDrop(double m_dot, double T, double P, double D, double Rough, double L_pipe,
-    double Nexp, double Ncon, double Nels, double Nelm, double Nell, double Ngav, double Nglv,
-    double Nchv, double Nlw, double Nlcv, double Nbja) {
-
-    double rho, v_dot, mu, nu, u_fluid, Re, f, DP_pipe, DP_exp, DP_con, DP_els, DP_elm, DP_ell, DP_gav,
-        DP_glv, DP_chv, DP_lw, DP_lcv, DP_bja, HL_pm;
-
-    //Calculate fluid properties and characteristics
-    rho = m_htfProps.dens(T, P);
-    mu = m_htfProps.visc(T);
-    nu = mu / rho;
-    v_dot = m_dot / rho;   //fluid volumetric flow rate
-    u_fluid = v_dot / (pi * (D / 2.) * (D / 2.));  //Fluid mean velocity
-
-    //Dimensionless numbers
-    Re = u_fluid * D / nu;
-    //if(Re<2300.) then
-    //    f = 64./max(Re,1.0)
-    //else
-    f = FricFactor(Rough / D, Re);
-    if (f == 0) return std::numeric_limits<double>::quiet_NaN();
-    //}
-
-    //Calculation of pressure loss from pipe length
-    HL_pm = f * u_fluid * u_fluid / (2. * D * g);
-    DP_pipe = HL_pm * rho * g * L_pipe;
-
-    //Calculation of pressure loss from Fittings
-    DP_exp = 0.25 * rho * u_fluid * u_fluid * Nexp;
-    DP_con = 0.25 * rho * u_fluid * u_fluid * Ncon;
-    DP_els = 0.9 * D / f * HL_pm * rho * g * Nels;
-    DP_elm = 0.75 * D / f * HL_pm * rho * g * Nelm;
-    DP_ell = 0.6 * D / f * HL_pm * rho * g * Nell;
-    DP_gav = 0.19 * D / f * HL_pm * rho * g * Ngav;
-    DP_glv = 10.0 * D / f * HL_pm * rho * g * Nglv;
-    DP_chv = 2.5 * D / f * HL_pm * rho * g * Nchv;
-    DP_lw = 1.8 * D / f * HL_pm * rho * g * Nlw;
-    DP_lcv = 10.0 * D / f * HL_pm * rho * g * Nlcv;
-    DP_bja = 8.69 * D / f * HL_pm * rho * g * Nbja;
-
-    return DP_pipe + DP_exp + DP_con + DP_els + DP_elm + DP_ell + DP_gav + DP_glv + DP_chv + DP_lw + DP_lcv + DP_bja;
-
-}
-
-/**************************************************************************************************
- Friction factor (taken from Piping loss model)
-***************************************************************************************************
- Uses an iterative method to solve the implicit friction factor function.
- For more on this method, refer to Fox, et al., 2006 Introduction to Fluid Mechanics.			 */
-double C_csp_fresnel_collector_receiver::FricFactor(double Rough, double Reynold) {
-
-    double Test, TestOld, X, Xold, Slope;
-    double Acc = .01; //0.0001
-    int NumTries;
-
-    if (Reynold < 2750.) {
-        return 64. / max(Reynold, 1.0);
-    }
-
-    X = 33.33333;  //1. / 0.03
-    TestOld = X + 2. * log10(Rough / 3.7 + 2.51 * X / Reynold);
-    Xold = X;
-    X = 28.5714;  //1. / (0.03 + 0.005)
-    NumTries = 0;
-
-    while (NumTries < 21) {
-        NumTries++;
-        Test = X + 2 * log10(Rough / 3.7 + 2.51 * X / Reynold);
-        if (std::abs(Test - TestOld) <= Acc) {
-            return 1. / (X * X);
-        }
-
-        Slope = (Test - TestOld) / (X - Xold);
-        Xold = X;
-        TestOld = Test;
-        X = max((Slope * X - Test) / Slope, 1.e-5);
-    }
-
-    //call Messages(-1," Could not find friction factor solution",'Warning',0,250) 
-    return 0;
-}
-
-
-// ******************************************************************** STATIC Methods
-
-
-// Returns runner mass flow for a given runner index
-double C_csp_fresnel_collector_receiver::m_dot_runner(double m_dot_field, int nfieldsec, int irnr)
-{
-    int nrnrsec = (int)floor(float(nfieldsec) / 4.0) + 1;
-
-    if (irnr < 0 || irnr > 2 * nrnrsec - 1) { throw std::invalid_argument("Invalid runner index"); }
-
-    int irnr_onedir;
-    double m_dot_rnr;
-    double m_dot_rnr_0;
-    double m_dot_rnr_1;
-
-    // convert index to a mass flow equivalent cold runner index
-    if (irnr > nrnrsec - 1) {
-        irnr_onedir = 2 * nrnrsec - irnr - 1;
-    }
-    else {
-        irnr_onedir = irnr;
-    }
-
-    m_dot_rnr_0 = m_dot_field / 2.;
-    m_dot_rnr_1 = m_dot_rnr_0 * (1. - float(nfieldsec % 4) / float(nfieldsec));
-
-    switch (irnr_onedir) {
-        case 0:
-            m_dot_rnr = m_dot_rnr_0;
-        case 1:
-            m_dot_rnr = m_dot_rnr_1;
-        default:
-            m_dot_rnr = m_dot_rnr_1 - (irnr_onedir - 1) * m_dot_field / float(nfieldsec) * 2;
-    }
-
-    return max(m_dot_rnr, 0.0);
-}
-
-// Returns header mass flow for a given header index
-double C_csp_fresnel_collector_receiver::m_dot_header(double m_dot_field, int nfieldsec, int nLoopsField, int ihdr)
-{
-    int nhdrsec = (int)ceil(float(nLoopsField) / float(nfieldsec * 2));  // in the cold or hot headers
-
-    if (ihdr < 0 || ihdr > 2 * nhdrsec - 1) { throw std::invalid_argument("Invalid header index"); }
-
-    int ihdr_onedir;
-
-    // convert index to a mass flow equivalent cold header index
-    if (ihdr > nhdrsec - 1) {
-        ihdr_onedir = 2 * nhdrsec - ihdr - 1;
-    }
-    else {
-        ihdr_onedir = ihdr;
-    }
-
-    double m_dot_oneloop = m_dot_field / float(nLoopsField);
-    return m_dot_field / float(nfieldsec) - ihdr_onedir * 2 * m_dot_oneloop;
-}
-
 
 // ******************************************************************** Internal Class Methods
 
 int C_csp_fresnel_collector_receiver::C_mono_eq_defocus::operator()(double defocus /*-*/, double* T_htf_loop_out /*K*/)
 {
     // Apply the defocus to calculate a new m_q_SCA
-    mpc_trough->apply_component_defocus(defocus);
+    mpc_fresnel->apply_component_defocus(defocus);
 
     // Solve the loop energy balance at the input mass flow rate
-    E_loop_energy_balance_exit exit_code = mpc_trough->loop_energy_balance_T_t_int(ms_weather, m_T_cold_in, m_m_dot_loop, ms_sim_info);
+    E_loop_energy_balance_exit exit_code = mpc_fresnel->loop_energy_balance_T_t_int(ms_weather, m_T_cold_in, m_m_dot_loop, ms_sim_info);
 
     if (exit_code != E_loop_energy_balance_exit::SOLVED)
     {
@@ -3406,7 +3073,7 @@ int C_csp_fresnel_collector_receiver::C_mono_eq_defocus::operator()(double defoc
     }
 
     // Set the outlet temperature at end of timestep
-    *T_htf_loop_out = mpc_trough->m_T_htf_out_t_end[mpc_trough->m_nMod - 1];
+    *T_htf_loop_out = mpc_fresnel->m_T_htf_out_t_end[mpc_fresnel->m_nMod - 1];
 
     return 0;
 }
@@ -3414,7 +3081,7 @@ int C_csp_fresnel_collector_receiver::C_mono_eq_defocus::operator()(double defoc
 int C_csp_fresnel_collector_receiver::C_mono_eq_T_htf_loop_out::operator()(double m_dot_htf_loop /*kg/s*/, double* T_htf_loop_out /*K*/)
 {
     // Solve the loop energy balance at the input mass flow rate
-    E_loop_energy_balance_exit exit_code = mpc_trough->loop_energy_balance_T_t_int(ms_weather, m_T_cold_in, m_dot_htf_loop, ms_sim_info);
+    E_loop_energy_balance_exit exit_code = mpc_fresnel->loop_energy_balance_T_t_int(ms_weather, m_T_cold_in, m_dot_htf_loop, ms_sim_info);
 
     if (exit_code != E_loop_energy_balance_exit::SOLVED)
     {
@@ -3423,7 +3090,7 @@ int C_csp_fresnel_collector_receiver::C_mono_eq_T_htf_loop_out::operator()(doubl
     }
 
     // Set the outlet temperature at end of timestep
-    *T_htf_loop_out = mpc_trough->m_T_htf_out_t_end[mpc_trough->m_nMod - 1];
+    *T_htf_loop_out = mpc_fresnel->m_T_htf_out_t_end[mpc_fresnel->m_nMod - 1];
 
     return 0;
 }
@@ -3431,18 +3098,18 @@ int C_csp_fresnel_collector_receiver::C_mono_eq_T_htf_loop_out::operator()(doubl
 int C_csp_fresnel_collector_receiver::C_mono_eq_freeze_prot_E_bal::operator()(double T_htf_cold_in /*K*/, double* E_loss_balance /*-*/)
 {
     // Solve the loop energy balance at the input HTF inlet temperature
-    if (mpc_trough->loop_energy_balance_T_t_int(ms_weather, T_htf_cold_in, m_m_dot_loop, ms_sim_info) != E_loop_energy_balance_exit::SOLVED)
+    if (mpc_fresnel->loop_energy_balance_T_t_int(ms_weather, T_htf_cold_in, m_m_dot_loop, ms_sim_info) != E_loop_energy_balance_exit::SOLVED)
     {
         *E_loss_balance = std::numeric_limits<double>::quiet_NaN();
         return -1;
     }
 
     // Get energy added to the HTF
-    m_Q_htf_fp = mpc_trough->m_m_dot_htf_tot * mpc_trough->m_c_htf_ave_ts_ave_temp *
-        (T_htf_cold_in - mpc_trough->m_T_sys_h_t_end_last) / 1.E6 * (ms_sim_info.ms_ts.m_step);	//[MJ]
+    m_Q_htf_fp = mpc_fresnel->m_m_dot_htf_tot * mpc_fresnel->m_c_htf_ave_ts_ave_temp *
+        (T_htf_cold_in - mpc_fresnel->m_T_sys_h_t_end_last) / 1.E6 * (ms_sim_info.ms_ts.m_step);	//[MJ]
 
     // Set the normalized difference between the Field Energy Loss and Freeze Protection Energy
-    *E_loss_balance = (m_Q_htf_fp - mpc_trough->m_Q_field_losses_total_subts) / mpc_trough->m_Q_field_losses_total_subts;		//[-]
+    *E_loss_balance = (m_Q_htf_fp - mpc_fresnel->m_Q_field_losses_total_subts) / mpc_fresnel->m_Q_field_losses_total_subts;		//[-]
 
     return 0;
 }
@@ -3529,6 +3196,36 @@ int C_csp_fresnel_collector_receiver::C_mono_eq_freeze_prot_E_bal::operator()(do
 //        q_57rad = Radiation heat transfer rate per unit length between the glazing outer surface and the sky
 //    ----------------------------------------------------------------------------------------------------------------------
 //    */
+
+/// <summary>
+///    This subroutine contains the fresnel detailed plant model.  The collector field is modeled
+///    using an iterative solver.
+///    This code was written for the National Renewable Energy Laboratory
+///    Copyright 2009-2010
+///    Author: Mike Wagner
+/// </summary>
+/// <param name="D_abs_in">Internal absorber tube diameter</param>
+/// <param name="D_abs_out">External absorber tube diameter</param>
+/// <param name="D_glass_in">Internal glass envelope diameter</param>
+/// <param name="D_glass_out">External glass envelope diameter</param>
+/// <param name="D_plug">(optional) Plug diameter</param>
+/// <param name="L_mod">Length of the active receiver surface</param>
+/// <param name="GlazingIntact">Is glazing intact</param>
+/// <param name="Shadowing"></param>
+/// <param name="dirt_env"></param>
+/// <param name="P_a">Annulus gas pressure</param>
+/// <param name="alpha_abs">Absorber tube absorptance</param>
+/// <param name="epsilon_glass">Envelope outer surface emissivity</param>
+/// <param name="Tau_envelope">Total envelope transmittance</param>
+/// <param name="alpha_env">Envelope absorptance</param>
+/// <param name="epsilon_abs"></param>
+/// <param name="htfProps">HTF Material Properties</param>
+/// <param name="airProps">Air Material Properties</param>
+/// <param name="AnnulusGasMat">Annulus gas type</param>
+/// <param name="AbsorberPropMat">Annulus gas properties</param>
+/// <param name="Flow_type">Fluid type</param>
+/// <param name="A_cs">Cross sectional area</param>
+/// <param name="D_h">Hydraulic diameter</param>
 EvacReceiverModel::EvacReceiverModel(vector<double> D_abs_in, vector<double> D_abs_out, vector<double> D_glass_in, vector<double> D_glass_out, vector<double> D_plug,
     double L_mod, vector<bool> GlazingIntact, vector<double> Shadowing, vector<double> dirt_env, vector<double> P_a, vector<double> alpha_abs,
     vector<double> epsilon_glass, vector<double> Tau_envelope, vector<double> alpha_env, emit_table* epsilon_abs, HTFProperties htfProps, HTFProperties airProps,
@@ -3541,8 +3238,30 @@ EvacReceiverModel::EvacReceiverModel(vector<double> D_abs_in, vector<double> D_a
 {
 }
 
+/// <summary>
+/// Calculate Energy Balance for evacuated receiver
+/// </summary>
+/// <param name="T_1_in">Receiver inlet temperature</param>
+/// <param name="m_dot">Heat transfer fluid mass flow rate</param>
+/// <param name="T_amb">Ambient dry-bulb temperature</param>
+/// <param name="T_sky">Sky temperature</param>
+/// <param name="v_6">Ambient wind velocity</param>
+/// <param name="P_6">Ambient atmospheric pressure</param>
+/// <param name="q_i">Total incident irradiation on the receiver</param>
+/// <param name="hv">HCE variant [0..3]</param>
+/// <param name="sca_num">Module index</param>
+/// <param name="single_point"></param>
+/// <param name="ncall"></param>
+/// <param name="time"></param>
+/// <param name="ColOptEff">Collector optical efficiency</param>
+/// <param name="q_heatloss">Total heat loss from the receiver</param>
+/// <param name="q_12conv">Total heat absorption into the HTF</param>
+/// <param name="q_34tot">Convective and radiative heat loss</param>
+/// <param name="c_1ave">Specific heat of the HTF across the receiver</param>
+/// <param name="rho_1ave">Density of the HTF across the receiver</param>
+/// <param name="v_reguess_args"></param>
 void EvacReceiverModel::Calculate_Energy_Balance(double T_1_in, double m_dot, double T_amb, double T_sky, double v_6, double P_6, double q_i,
-    int hv /* HCE variant [0..3] */, int sca_num, bool single_point, int ncall, double time, util::matrix_t<double> ColOptEff,
+    int hv /* HCE variant [0..3] */, int sca_num, bool single_point, double time, util::matrix_t<double> ColOptEff,
     //outputs
     double& q_heatloss, double& q_12conv, double& q_34tot, double& c_1ave, double& rho_1ave, std::vector<double>& v_reguess_args)
 {
@@ -3638,13 +3357,13 @@ lab_keep_guess:
     T1_tol = 1.0e-3;
     T2_tol = 1.0e-3;
 
-    //Decreasing the tolerance helps get out of repeating defocus iterations
-    if (ncall > 8) {
-        T3_tol = 1.5e-4;        //1.0   
-        q5_tol = 1.0e-4;        //max(1.0, 0.001*q_i)
-        T1_tol = 1.0e-4;        //1.0
-        T2_tol = 1.0e-4;        //1.0
-    }
+    ////Decreasing the tolerance helps get out of repeating defocus iterations
+    //if (ncall > 8) {
+    //    T3_tol = 1.5e-4;        //1.0   
+    //    q5_tol = 1.0e-4;        //max(1.0, 0.001*q_i)
+    //    T1_tol = 1.0e-4;        //1.0
+    //    T2_tol = 1.0e-4;        //1.0
+    //}
 
     Diff_T3 = 10.0 + T3_tol;    //Set difference > tolerance
 
