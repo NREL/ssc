@@ -551,7 +551,7 @@ SSCEXPORT void ssc_data_set_var(ssc_data_t p_data, const char *name, ssc_var_t p
     if (!vt) return;
     auto vd = static_cast<var_data*>(p_var);
     if (!p_var) return;
-    vt->assign(name, *vd);
+    vt->assign_match_case(name, *vd);
 }
 
 SSCEXPORT void ssc_data_set_string( ssc_data_t p_data, const char *name, const char *value )
