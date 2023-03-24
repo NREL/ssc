@@ -299,8 +299,7 @@ static var_info _cm_vtab_fresnel_physical[] = {
     { SSC_OUTPUT,       SSC_NUMBER,     "total_Ap",                         "Actual field aperture",                                                "m2",          "",         "System Design Calc",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "nLoops",                           "Number of loops in the field",                                         "",             "",         "controller",                              "*",        "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "nameplate",                        "Nameplate capacity",                                                   "MWe",          "",         "System Design Calc",                       "*",                                                                "",              "" },
-    { SSC_OUTPUT,       SSC_NUMBER,     "m_dot_htf_cycle_des",              "Cycle design HTF mass flow rate",                                      "kg/s",         "",         "System Design Calc",                       "*",                                                                "",              "" },
-
+   
 
         // Solar Field
     { SSC_OUTPUT,       SSC_NUMBER,     "q_dot_rec_des",                    "Receiver thermal output at design",                                    "MWt",          "",         "Receiver",                       "*",                                                                "",              "" },
@@ -315,8 +314,9 @@ static var_info _cm_vtab_fresnel_physical[] = {
     { SSC_OUTPUT,       SSC_NUMBER,     "q_field_des",                      "Design Field power output",                                            "MW",           "",         "Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "field_area",                       "Solar field area",                                                     "acres",        "",         "Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "total_land_area",                  "Total land area",                                                      "acres",        "",         "Receiver",                       "*",                                                                "",              "" },
-    { SSC_OUTPUT,       SSC_NUMBER,     "field_htf_min_temp",               "Minimum field htf temp",                                               "C",            "",         "Power Cycle",                              "*",                                                                "",              "" },
-    { SSC_OUTPUT,       SSC_NUMBER,     "field_htf_max_temp",               "Maximum field htf temp",                                               "C",            "",         "Power Cycle",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "field_htf_min_temp",               "Minimum field htf temp",                                               "C",            "",         "Power Cycle",                    "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "field_htf_max_temp",               "Maximum field htf temp",                                               "C",            "",         "Power Cycle",                    "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "mdot_field_des",                   "Field design HTF mass flow rate",                                      "kg/s",         "",         "Receiver",                       "*",                                                                "",              "" },
 
 
         // Collector and Receiver
@@ -328,6 +328,7 @@ static var_info _cm_vtab_fresnel_physical[] = {
 
         // Power Cycle
     { SSC_OUTPUT,       SSC_NUMBER,     "q_dot_cycle_des",                  "PC thermal input at design",                                           "MWt",          "",         "Power Cycle",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "mdot_cycle_des",                  "PC thermal input at design",                                           "MWt",          "",         "Power Cycle",                              "*",                                                                "",              "" },
 
         // Thermal Storage
     { SSC_OUTPUT,       SSC_NUMBER,     "vol_tank",                         "Total tank volume",                                                    "m3",           "",         "Power Cycle",                              "*",                                                                "",              "" },
@@ -343,6 +344,7 @@ static var_info _cm_vtab_fresnel_physical[] = {
         // System Control
     { SSC_OUTPUT,       SSC_NUMBER,     "W_dot_bop_design",                 "BOP parasitics at design",                                             "MWe",          "",         "Power Cycle",                              "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "W_dot_fixed",                      "Fixed parasitic at design",                                            "MWe",          "",         "Power Cycle",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "aux_design",                       "Aux parasitics at design",                                             "MWe",          "",         "System Control",                              "*",                                                                "",              "" },
 
         // Capital Costs
 
@@ -1155,7 +1157,6 @@ public:
             ssc_cmod_update,
             (void*)(this));
 
-
         // Set solver reporting outputs
         {
             // Simulation Kernel
@@ -1297,7 +1298,7 @@ public:
             double q_dot_pc_des = W_dot_cycle_des / eta_ref;                //[MWt]
             Q_tes = q_dot_pc_des * tshours;                          //[MWt-hr]
 
-            double m_dot_htf_cycle_des = c_fresnel.m_m_dot_design;          // [kg/s]
+            double mdot_field_des = c_fresnel.m_m_dot_design;          // [kg/s]
 
             double avg_T_des = (c_fresnel.m_T_loop_in_des + c_fresnel.m_T_loop_out_des) / 2.0;
 
@@ -1338,6 +1339,7 @@ public:
                 assign("total_land_area", total_land_area);
                 assign("field_htf_min_temp", field_htf_min_temp);
                 assign("field_htf_max_temp", field_htf_max_temp);
+                assign("mdot_field_des", mdot_field_des);
             }
 
             // Collector and Receiver
@@ -1385,7 +1387,7 @@ public:
 
             // Power Cycle
 
-            double m_dot_htf_pc_des;    //[kg/s]
+            double m_dot_htf_pc_des_perhr;    //[kg/hr]
             double cp_htf_pc_des;       //[kJ/kg-K]
             double W_dot_pc_pump_des;   //[MWe]
             double W_dot_pc_cooling_des;   //[MWe]
@@ -1399,7 +1401,7 @@ public:
                 m_dot_htf_ND_ref_calc = m_dot_htf_ND_low_calc = m_dot_htf_ND_high_calc =
                 W_dot_gross_ND_des = Q_dot_HTF_ND_des = W_dot_cooling_ND_des = m_dot_water_ND_des = std::numeric_limits<double>::quiet_NaN();
 
-            rankine_pc.get_design_parameters(m_dot_htf_pc_des, cp_htf_pc_des, W_dot_pc_pump_des, W_dot_pc_cooling_des,
+            rankine_pc.get_design_parameters(m_dot_htf_pc_des_perhr, cp_htf_pc_des, W_dot_pc_pump_des, W_dot_pc_cooling_des,
                 n_T_htf_pars, n_T_amb_pars, n_m_dot_pars,
                 T_htf_ref_calc /*C*/, T_htf_low_calc /*C*/, T_htf_high_calc /*C*/,
                 T_amb_ref_calc /*C*/, T_amb_low_calc /*C*/, T_amb_high_calc /*C*/,
@@ -1409,6 +1411,7 @@ public:
             // Assign
             {
                 assign("q_dot_cycle_des", q_dot_pc_des);
+                assign("mdot_cycle_des", m_dot_htf_pc_des_perhr / 3600.0); //   [kg/s]
             }
 
             // System Design
@@ -1421,7 +1424,6 @@ public:
             // Assign
             {
                 assign("nameplate", nameplate_des);
-                assign("m_dot_htf_cycle_des", m_dot_htf_cycle_des);
                 assign("W_dot_bop_design", W_dot_bop_design);
                 assign("W_dot_fixed", W_dot_fixed_parasitic_design);
 
@@ -1430,6 +1432,15 @@ public:
                 assign("total_Ap", c_fresnel.m_Ap_tot);
             }
 
+            // System Control
+            // temporary fix
+            vector<double> aux_vec = as_vector_double("aux_array");
+            double aux_design = aux_vec[0] * aux_vec[1] * (aux_vec[2] + aux_vec[3] + aux_vec[4]) * W_dot_cycle_des;
+
+            // Assign
+            {
+                assign("aux_design", aux_design);
+            }
         }
 
         // Calculate Costs and assign outputs
@@ -1781,7 +1792,7 @@ public:
         double contigency_percent,              // csp.mslf.cost.contingency_percent
 
         double total_land_area,                 // csp.mslf.cost.total_land_area
-        double nameplate,                       // csp.mslf.cost.nameplate
+        double nameplate_MWe,                       // csp.mslf.cost.nameplate
 
         double epc_per_acre,                    // csp.mslf.cost.epc.per_acre
         double epc_percent,                     // csp.mslf.cost.epc.percent
@@ -1850,11 +1861,11 @@ public:
 
         // csp.mslf.cost.epc.total
         double epc_total = calc_epc_total(epc_per_acre, total_land_area, epc_percent, total_direct,
-                                          nameplate, epc_per_watt, epc_fixed);
+                                          nameplate_MWe, epc_per_watt, epc_fixed);
 
         // csp.mslf.cost.plm.total
         double plm_total = calc_plm_total(plm_per_acre, total_land_area, plm_percent, total_direct,
-                                          nameplate, plm_per_watt, plm_fixed);
+                                          nameplate_MWe, plm_per_watt, plm_fixed);
 
         // csp.mslf.cost.total_indirect
         double total_indirect = calc_total_indirect(epc_total, plm_total);
@@ -1866,7 +1877,7 @@ public:
         double total_installed = calc_total_installed(total_direct, total_indirect, sales_tax_total);
 
         // csp.mslf.cost.installed_per_capacity
-        double installed_per_cap = calc_installed_per_cap(total_installed, nameplate);
+        double installed_per_cap = calc_installed_per_cap(total_installed, nameplate_MWe);
 
         // Set Outputs
         {
@@ -1994,7 +2005,7 @@ public:
     // csp.mslf.cost.installed_per_capacity
     static double calc_installed_per_cap(double total_installed, double nameplate)
     {
-        return 0.001 * total_installed * nameplate;
+        return 0.001 * total_installed / nameplate;
     }
 
     

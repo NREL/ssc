@@ -950,6 +950,10 @@ void C_csp_fresnel_collector_receiver::loop_optical_eta(const C_csp_weatherreade
     }
     else
     {
+        int hr = (sim_info.ms_ts.m_time) / 3600;
+        if (hr == 6360)
+            int x = 0;
+
         // First, clear all the values calculated below
         loop_optical_eta_off();
 
@@ -1946,7 +1950,7 @@ bool C_csp_fresnel_collector_receiver::init_fieldgeom()
             return false;
     }
 
-    //the estimated mass flow rate at design
+    //the estimated mass flow rate at design (in solar field)
     m_m_dot_design = (m_Ap_tot * m_I_bn_des * m_opteff_des - loss_tot * float(m_nLoops)) / (m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des));  //tn 4.25.11 using Ap_tot instead of A_loop. Change location of opteff_des
     double m_dot_max = m_m_dot_htfmax * m_nLoops;
     double m_dot_min = m_m_dot_htfmin * m_nLoops;
@@ -1967,8 +1971,11 @@ bool C_csp_fresnel_collector_receiver::init_fieldgeom()
 
 
     m_m_dot_loop_des = m_m_dot_design / (double)m_nLoops; // [kg/s]
-    //mjw 1.16.2011 Design field thermal power 
-    m_q_design = m_m_dot_design * m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des); //[Wt]
+
+    // Already defined in design_solar_mult (TB)
+    //mjw 1.16.2011 Design field thermal power
+    //m_q_design = m_m_dot_design * m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des); //[Wt]
+
     //mjw 1.16.2011 Convert the thermal inertia terms here
     m_mc_bal_hot = m_mc_bal_hot * 3.6 * m_q_design;    //[J/K]
     m_mc_bal_cold = m_mc_bal_cold * 3.6 * m_q_design;  //[J/K]
@@ -2206,6 +2213,12 @@ void C_csp_fresnel_collector_receiver::off(const C_csp_weatherreader::S_outputs&
     C_csp_collector_receiver::S_csp_cr_out_solver& cr_out_solver,
     const C_csp_solver_sim_info& sim_info)
 {
+    // DEBUG
+    int hr = sim_info.ms_ts.m_time / 3600;
+    if (hr == 50)
+        int x = 0;
+
+
     // Always reset last temps
     reset_last_temps();
 
@@ -3032,12 +3045,18 @@ bool C_csp_fresnel_collector_receiver::design_solar_mult()
                 m_solar_mult = m_solar_mult_in;
                 m_Ap_tot = m_solar_mult * m_Ap_sm1;
                 m_nLoops = std::ceil(m_Ap_tot / m_A_loop);
+
+                // Get 'Actual' Ap_tot
+                m_Ap_tot = m_nLoops * m_A_loop;
                 break;
             }
             case 1:
             {
                 m_Ap_tot = m_total_Ap_in;
                 m_nLoops = std::ceil(m_Ap_tot / m_A_loop);
+
+                // Get 'Actual' total aperture
+                m_Ap_tot = m_nLoops * m_A_loop;
                 m_solar_mult = m_Ap_tot / m_Ap_sm1;
                 break;
             }
@@ -3048,6 +3067,9 @@ bool C_csp_fresnel_collector_receiver::design_solar_mult()
                 return false;
             }
         }
+
+        // Update m_q_design with actual aperture
+        m_q_design = m_I_bn_des * m_Ap_tot * m_loop_eff;
 
         // Number of Loops necessary for solar mult = 1
         m_nLoops_sm1 = std::ceil(m_Ap_sm1 / m_A_loop);
