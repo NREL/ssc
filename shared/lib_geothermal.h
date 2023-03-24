@@ -98,7 +98,8 @@ struct SGeothermal_Inputs
 	double md_MaxTempDeclineC;								// degrees C, default = 30
 	double md_TemperatureWetBulbC;							// degrees celcius - used in Flash brine effectiveness
 	double md_PressureAmbientPSI;							// psi, default=14.7, mostly for use in calculating flash brine effectiveness, but also pump work
-	double md_ProductionFlowRateKgPerS;						// 70 kilograms per second in one well (default FlowRate in GETEM)
+    int md_UseWeatherFileConditions;
+    double md_ProductionFlowRateKgPerS;						// 70 kilograms per second in one well (default FlowRate in GETEM)
 	double md_GFPumpEfficiency;								// default=0.6 or 60%
 	double md_PressureChangeAcrossSurfaceEquipmentPSI;		// default 25 psi
 	double md_ExcessPressureBar;							// default 3.5 bar, [2B.Resource&Well Input].D205

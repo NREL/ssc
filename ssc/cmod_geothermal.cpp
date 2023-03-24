@@ -294,6 +294,7 @@ public:
 		// flash inputs
 		geo_inputs.md_TemperatureWetBulbC = as_double("wet_bulb_temp");
 		geo_inputs.md_PressureAmbientPSI = as_double("ambient_pressure" );
+        geo_inputs.md_UseWeatherFileConditions = as_integer("use_weather_file_conditions");
 
 		//pumping parameters
 		geo_inputs.md_ProductionFlowRateKgPerS = as_double("well_flow_rate");

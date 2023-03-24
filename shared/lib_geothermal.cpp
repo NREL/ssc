@@ -576,8 +576,8 @@ double CGeothermalAnalyzer::MaxSecondLawEfficiency()
 double CGeothermalAnalyzer::FractionOfMaxEfficiency()
 {
 	double dTemperatureRatio = 0.0;
-	dTemperatureRatio = physics::CelciusToKelvin(mo_geo_in.md_TemperatureWetBulbC) / physics::CelciusToKelvin(md_WorkingTemperatureC);
-    double carnot_eff_initial = 1 - physics::CelciusToKelvin(mo_geo_in.md_TemperatureWetBulbC) / physics::CelciusToKelvin(GetTemperaturePlantDesignC());
+	dTemperatureRatio = physics::CelciusToKelvin(TemperatureWetBulbF()) / physics::CelciusToKelvin(md_WorkingTemperatureC);
+    double carnot_eff_initial = 1 - physics::CelciusToKelvin(TemperatureWetBulbF()) / physics::CelciusToKelvin(GetTemperaturePlantDesignC());
     double carnot_eff = 1 - dTemperatureRatio;
     double carnot_ratio = carnot_eff / carnot_eff_initial;
 	if (me_makeup == MA_FLASH || me_makeup == MA_EGS_FLASH)
@@ -1149,7 +1149,7 @@ double CGeothermalAnalyzer::GetAmbientTemperatureC(conversionTypes ct)
 {
 	if (ct == NO_CONVERSION_TYPE) ct = mo_geo_in.me_ct;
 	//return (ct == BINARY) ? geothermal::DEFAULT_AMBIENT_TEMPC_BINARY : (1.3842 * geothermal::WET_BULB_TEMPERATURE_FOR_FLASH_CALCS) + 5.1772 ;
-	return (ct == BINARY) ? geothermal::DEFAULT_AMBIENT_TEMPC_BINARY : (mo_geo_in.md_TemperatureWetBulbC);
+	return (ct == BINARY) ? geothermal::DEFAULT_AMBIENT_TEMPC_BINARY : (TemperatureWetBulbF());
 }
 
 double CGeothermalAnalyzer::InjectionTemperatureC() // calculate injection temperature in degrees C
@@ -1638,7 +1638,12 @@ double CGeothermalAnalyzer::calculateDH2(double pressureIn)
     return turbine2EnthalpyG() - h_ex_isent;
 }
 
-double CGeothermalAnalyzer::TemperatureWetBulbF(void) { return physics::CelciusToFarenheit(mo_geo_in.md_TemperatureWetBulbC); }
+double CGeothermalAnalyzer::TemperatureWetBulbF(void) {
+    if (mo_geo_in.md_UseWeatherFileConditions == 0)
+        return physics::CelciusToFarenheit(mo_geo_in.md_TemperatureWetBulbC);
+    else
+        return m_wf.twet;
+}
 double CGeothermalAnalyzer::temperatureCondF(void)
 {	// D71 - deg F
 	return (TemperatureWetBulbF() + geothermal::DELTA_TEMPERATURE_CWF + geothermal::TEMPERATURE_PINCH_PT_CONDENSER_F + geothermal::TEMPERATURE_PINCH_PT_COOLING_TOWER_F);
