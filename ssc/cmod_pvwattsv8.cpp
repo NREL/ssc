@@ -589,12 +589,15 @@ public:
             break;
         }
 
-        //throw a warning if tilt is > 0 for a tracking system, since this is a very uncommon configuration but an easy mistake to make
+        // warning if tilt is > 0 for a tracking system becaues this is a very uncommon configuration but an easy mistake to make
         if ((pv.type == ONE_AXIS || pv.type == ONE_AXIS_BACKTRACKING) && pv.tilt > 0)
             log(util::format("The tilt angle is %f degrees with one-axis tracking. Large one-axis tracking arrays typically have a tilt angle of zero.", pv.tilt), SSC_WARNING);
 
         if (!(pv.type == FIXED_RACK || pv.type == FIXED_ROOF) && module.bifaciality > 0.0)
             log("The bifacial model is designed for fixed arrays and may not produce reliable results for tracking arrays.", SSC_WARNING);
+
+        if (pv.type == FIXED_ROOF && module.bifaciality > 0.0)
+            log("The Fixed Roof Mount array type is not appropriate for bifacial modules because it assumes there is no space between the back of the array and the roof surface.", SSC_WARNING);
 
         pv.gcr = as_double("gcr");
         if (pv.gcr < 0.01 || pv.gcr >= 1.0)
@@ -841,16 +844,8 @@ public:
                 {
                     if ((std::isfinite(wf.alb) && (wf.alb > 0 && wf.alb < 1)))
                         alb = wf.alb;
-                    else if (n_alb_errs < 5) // display warning up to 5 times
-                    {
-                        log(util::format("Weather file albedo is not valid. "
-                            "Using default albedo value of %f (snow) or %f (no snow). "
-                            "This warning only appears for the first five instances of this error. "
-                            "[year:%d month:%d day:%d hour:%d minute:%lg]. ",
-                            as_double("albedo_default_snow"), as_double("albedo_default"),
-                            wf.year, wf.month, wf.day, wf.hour, wf.minute), SSC_NOTICE);
+                    else
                         n_alb_errs++;
-                    }
                 }
                 else
                 {
@@ -1371,6 +1366,9 @@ public:
 
                 idx_life++;
             }
+
+            if (n_alb_errs > 0)
+                log(util::format("Weather file albedo has %d invalid values, using monthly value", (int)n_alb_errs), SSC_WARNING);
 
             wdprov->rewind();
         }

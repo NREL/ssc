@@ -894,6 +894,10 @@ public:
         // 3 = user performance maps vs solar position
         int field_model_type = as_integer("field_model_type");
 
+        if (sim_type == 2 && field_model_type < 2) {
+            field_model_type = 2;
+        }
+
         int rec_type = as_integer("receiver_type");
 
         // Run solarpilot right away to update values as needed

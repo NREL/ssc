@@ -76,7 +76,7 @@ jobs:
             ${{env.SSCDIR}}/build/ssc/ssc.so
       
   build-on-mac:
-    runs-on: macos-11
+    runs-on: macos-latest
 
     steps:
     - name: Setup cmake
