@@ -118,7 +118,7 @@ bool Reopt_size_standalone_battery_params(ssc_data_t data) {
     auto reopt_params = var_data();
     reopt_params.type = SSC_TABLE;
     var_table* reopt_table = &reopt_params.table;
-    var_table reopt_scenario, reopt_site, reopt_electric, reopt_utility, reopt_load, reopt_fin, reopt_pv, reopt_batt,
+    var_table reopt_scenario, reopt_site, reopt_electric, reopt_utility, reopt_load, reopt_fin, reopt_batt,
         reopt_wind;
     reopt_wind.assign("max_kw", 0);
 
@@ -128,48 +128,20 @@ bool Reopt_size_standalone_battery_params(ssc_data_t data) {
     vt_get_number(vt, "system_capacity", &system_cap);
 
     // financial inputs
-    map_optional_input(vt, "itc_fed_percent", &reopt_pv, "federal_itc_pct", 0., true);
-    map_optional_input(vt, "pbi_fed_amount", &reopt_pv, "pbi_us_dollars_per_kwh", 0.);
-    map_optional_input(vt, "pbi_fed_term", &reopt_pv, "pbi_years", 0.);
-    vd = reopt_pv.lookup("pbi_years");
-    if (vd->num[0] < 1) vd->num[0] = 1;    // minimum is 1, set pbi_fed_amount to 0 to disable
-
-    map_optional_input(vt, "ibi_sta_percent", &reopt_pv, "state_ibi_pct", 0., true);
-    map_optional_input(vt, "ibi_sta_percent_maxvalue", &reopt_pv, "state_ibi_max_us_dollars", 10000000000);
-    vd = reopt_pv.lookup("state_ibi_max_us_dollars");
-    if (vd->num[0] > 10000000000) vd->num[0] = 10000000000;
-
-    map_optional_input(vt, "ibi_uti_percent", &reopt_pv, "utility_ibi_pct", 0., true);
-    map_optional_input(vt, "ibi_uti_percent_maxvalue", &reopt_pv, "utility_ibi_max_us_dollars", 10000000000);
-    vd = reopt_pv.lookup("utility_ibi_max_us_dollars");
-    if (vd->num[0] > 10000000000) vd->num[0] = 10000000000;
-
-    vd = vt->lookup("om_fixed");
-    vd2 = vt->lookup("om_production");
-
-    if (vd && !vd2) {
-        reopt_pv.assign("om_cost_us_dollars_per_kw", vd->num[0] / system_cap);
-    }
-    else if (!vd && vd2) {
-        reopt_pv.assign("om_cost_us_dollars_per_kw", vd2->num[0]);
-    }
-    else if (vd && vd2) {
-        reopt_pv.assign("om_cost_us_dollars_per_kw", (vd->num[0] / system_cap) + vd2->num[0]);
-    }
+    map_optional_input(vt, "itc_fed_percent", &reopt_batt, "total_itc_pct", 0., true);
+    // TODO: what about reopt vars total_rebate_us_dollars_per_kw?
 
     vd = vt->lookup("total_installed_cost");
     if (vd) {
-        reopt_pv.assign("installed_cost_us_dollars_per_kw", vd->num[0] / system_cap);
+        reopt_batt.assign("installed_cost_us_dollars_per_kw", vd->num[0] / system_cap);
     }
 
     vd = vt->lookup("depr_bonus_fed");
     if (vd) {
-        reopt_pv.assign("macrs_bonus_pct", vd->num[0] / 100.);
         reopt_batt.assign("macrs_bonus_pct", vd->num[0] / 100.);
     }
     vd = vt->lookup("depr_bonus_fed_macrs_5");
     if (vd && vd->num[0] == 1) {
-        reopt_pv.assign("macrs_option_years", 5);
         reopt_batt.assign("macrs_option_years", 5);
     }
 
@@ -283,7 +255,6 @@ bool Reopt_size_standalone_battery_params(ssc_data_t data) {
     reopt_site.assign_match_case("Financial", reopt_fin);
     reopt_site.assign_match_case("Storage", reopt_batt);
     reopt_site.assign_match_case("Wind", reopt_wind);
-    reopt_site.assign_match_case("PV", reopt_pv);
     reopt_scenario.assign_match_case("Site", reopt_site);
     reopt_scenario.assign_match_case("time_steps_per_hour", var_data((int)(sim_len / 8760)));
     reopt_table->assign_match_case("Scenario", reopt_scenario);
