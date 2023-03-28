@@ -36,44 +36,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "vartab.h"
 
-void map_input(var_table* vt, const std::string& sam_name, var_table* reopt_table, const std::string& reopt_name,
-               bool sum = false, bool to_ratio = false){
-    double sam_input;
-    vt_get_number(vt, sam_name, &sam_input);
-    if (var_data* vd = reopt_table->lookup(reopt_name)){
-        if (sum){
-            if (to_ratio)
-                sam_input /= 100.;
-            vd->num = vd->num + sam_input;
-        }
-        else
-            vt->assign("warning", var_data(reopt_name + " variable already exists in 'reopt_table'."));
-    }
-    else{
-        if (to_ratio)
-            reopt_table->assign(reopt_name, sam_input/100.);
-        else
-            reopt_table->assign(reopt_name, sam_input);
-    }
-}
-
-void map_optional_input(var_table* vt, const std::string& sam_name, var_table* reopt_table, const std::string& reopt_name,
-        double def_val, bool to_ratio = false){
-    double sam_input;
-    try{
-        vt_get_number(vt, sam_name, &sam_input);
-        if (to_ratio) sam_input /= 100.;
-    }
-    catch (std::runtime_error&) {
-        sam_input = def_val;
-    }
-    if (reopt_table->lookup(reopt_name)){
-        vt->assign("warning", var_data(reopt_name + " variable already exists in 'reopt_table'."));
-        return;
-    }
-    reopt_table->assign(reopt_name, sam_input);
-}
-
 SSCEXPORT bool Reopt_size_battery_params(ssc_data_t data) {
     auto vt = static_cast<var_table*>(data);
     if (!vt){
@@ -279,7 +241,7 @@ SSCEXPORT bool Reopt_size_battery_params(ssc_data_t data) {
     //
     // convert required utilityrate5 inputs
     //
-    ElectricityRates_format_as_URDBv7(vt);
+    ElectricityRates_format_as_URDBv8(vt);
     auto urdb_data = vt->lookup("urdb_data");
     reopt_utility = urdb_data->table;
 
