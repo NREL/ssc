@@ -15,6 +15,7 @@ import ssc_inout_v2 as ssc_sim
 
 des_dict = json.load(open('MSPT_F7_from_UI__branch.json', 'r'))
 
+print("current processId:", os.getpid());
 
 # Run MSPT simulation
 mspt_so_solved_dict = ssc_sim.cmod_mspt_from_dict(des_dict)
