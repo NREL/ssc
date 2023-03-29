@@ -138,7 +138,7 @@ private:
 	util::matrix_t<double> m_userTable;	// User table of properties
 
 	std::string uf_err_msg;	//Error message when the user HTF table is invalid
-    int m_integration_points = 1;
+    int m_integration_points = 5;
 };
 
 class AbsorberProps

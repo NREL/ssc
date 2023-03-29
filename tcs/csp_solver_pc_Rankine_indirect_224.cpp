@@ -2284,7 +2284,7 @@ double C_pc_Rankine_indirect_224::Calculate_T_htf_cold_Converge_Cp(double q_dot_
     double T_htf_cold = physics::CelciusToKelvin(ms_params.m_T_htf_cold_ref);
     double c_htf, T_error = 1.0, T_htf_cold_prev;
     while (fabs(T_error) > 1e-4 && iter < 30) {
-        // set up C_monotonic_equation? and C_monotonic_eq_solver?
+        // TODO: set up C_monotonic_equation? and C_monotonic_eq_solver?
         T_htf_cold_prev = T_htf_cold;
         try {
             c_htf = mc_pc_htfProps.Cp_ave(T_htf_cold, T_htf_hot);       //[kJ/kg-K]
