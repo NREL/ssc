@@ -499,6 +499,10 @@ bool windfile::open( const std::string &file )
             {
                 lon = col_or_nan(hdr[i + 1]);
             }
+            else if (hdr_item == "elevation" || hdr_item == "el" || hdr_item == "elev" || hdr_item == "site elevation")
+            {
+                elev = col_or_nan(hdr[i + 1]);
+            }
             else if (hdr_item == "siteid" || hdr_item == "id" || hdr_item == "location" || hdr_item == "location id" || hdr_item == "station" || hdr_item == "station id" || hdr_item == "wban" || hdr_item == "wban#" || hdr_item == "site")
             {
                 locid = hdr[i + 1];
