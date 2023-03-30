@@ -62,14 +62,20 @@ static var_info _cm_vtab_sco2_csp_system[] = {
                                                        "4) f_N_mc (=1 use design, <0, frac_des = abs(input),"
                                                        "5) f_N_pc (=1 use design, <0, frac_des = abs(input),"
                                                        "6) PHX_f_dP (=1 use design, <0 = abs(input)", "", "", "", "",  "", "" },
-    { SSC_INPUT,  SSC_MATRIX,  "od_max_htf_m_dot",     "Columns: T_htf_C, T_amb_C, f_N_rc (=1 use design, <0, frac_des = abs(input), f_N_mc (=1 use design, <0, frac_des = abs(input), PHX_f_dP (=1 use design, <0 = abs(input), Rows: cases", "", "", "", "",  "", "" },
+    { SSC_INPUT,  SSC_MATRIX,  "od_max_htf_m_dot",     "Columns: 0) T_htf_C, 1) T_amb_C,"
+                                                       "2) f_N_rc (=1 use design, <0, frac_des = abs(input),"
+                                                       "3) f_N_mc (=1 use design, <0, frac_des = abs(input),"
+                                                       "4) PHX_f_dP (=1 use design, <0 = abs(input), Rows: cases", "", "", "", "",  "", "" },
 	{ SSC_INPUT,  SSC_MATRIX,  "od_set_control",       "Columns: 0) T_htf_C, 1) m_dot_htf_ND, 2) T_amb_C,"
                                                        " 3) P_LP_in_MPa, 4) T_mc_in_C, 5) T_pc_in_C,"
                                                        " 6) f_N_rc (=1 use design, <0, frac_des = abs(input),"
                                                        " 7) f_N_mc (=1 use design, <0, frac_des = abs(input),"
                                                        " 8) f_N_pc (=1 use design, =0 optimize, <0, frac_des = abs(input)),"
                                                        " 9) PHX_f_dP (=1 use design, <0 = abs(input), Rows: cases", "", "", "", "", "", "" },
-    { SSC_INPUT,  SSC_ARRAY,   "od_generate_udpc",     "True/False, f_N_rc (=1 use design, =0 optimize, <0, frac_des = abs(input), f_N_mc (=1 use design, =0 optimize, <0, frac_des = abs(input), PHX_f_dP (=1 use design, <0 = abs(input)", "", "", "", "",  "", "" },
+    { SSC_INPUT,  SSC_ARRAY,   "od_generate_udpc",     "Columns 0) True/False,"
+                                                       "1) f_N_rc (=1 use design, =0 optimize, <0, frac_des = abs(input),"
+                                                       "2) f_N_mc (=1 use design, =0 optimize, <0, frac_des = abs(input),"
+                                                       "3) PHX_f_dP (=1 use design, <0 = abs(input)", "", "", "", "",  "", "" },
     { SSC_INPUT,  SSC_NUMBER,  "is_gen_od_polynomials","Generate off-design polynomials for Generic CSP models? 1 = Yes, 0 = No", "", "", "",  "?=0",     "",       "" },
 
 	// ** Off-Design Outputs **
