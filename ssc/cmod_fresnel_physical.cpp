@@ -212,6 +212,20 @@ static var_info _cm_vtab_fresnel_physical[] = {
               /*Sys Control*/{ SSC_INPUT,    SSC_NUMBER,         "disp_csu_cost_rel",           "Cycle startup cost",                                                                    "$/MWe-cycle/start",   "",                             "Sys_Control",          "is_dispatch=1",    "",                 "" },
               /*Sys Control*/{ SSC_INPUT,    SSC_NUMBER,         "disp_pen_ramping",            "Dispatch cycle production change penalty",                                              "$/MWe-change",        "",                             "Sys_Control",          "is_dispatch=1",    "",                 "" },
     
+                  /*LK Only*/{ SSC_INPUT,    SSC_NUMBER,         "is_write_ampl_dat",           "Write AMPL data files for dispatch run",                                                "-",                   "",                             "tou",                                      "?=0",                     "",                      "SIMULATION_PARAMETER" },
+                  /*LK Only*/{ SSC_INPUT,    SSC_NUMBER,         "is_ampl_engine",              "Run dispatch optimization with external AMPL engine",                                   "-",                   "",                             "tou",                                      "?=0",                     "",                      "SIMULATION_PARAMETER" },
+                  /*LK Only*/{ SSC_INPUT,    SSC_STRING,         "ampl_data_dir",               "AMPL data file directory",                                                              "-",                   "",                             "tou",                                      "?=''",                    "",                      "SIMULATION_PARAMETER" },
+                  /*LK Only*/{ SSC_INPUT,    SSC_STRING,         "ampl_exec_call",              "System command to run AMPL code",                                                       "-",                   "",                             "tou",                                      "?='ampl sdk_solution.run'", "",                    "SIMULATION_PARAMETER" },
+                  /*LK Only*/{ SSC_INPUT,    SSC_NUMBER,         "can_cycle_use_standby",       "Can the cycle use standby operation?",                                                  "",                    "",                             "tou",                                      "?=0",                     "",                      "SIMULATION_PARAMETER" },
+                  /*LK Only*/{ SSC_INPUT,    SSC_NUMBER,         "disp_steps_per_hour",         "Time steps per hour for dispatch optimization calculations",                            "-",                   "",                             "tou",                                      "?=1",                     "",                      "SIMULATION_PARAMETER" },
+                  /*LK Only*/{ SSC_INPUT,    SSC_NUMBER,         "disp_spec_presolve",          "Dispatch optimization presolve heuristic",                                              "-",                   "",                             "tou",                                      "?=-1",                    "",                      "SIMULATION_PARAMETER" },
+                  /*LK Only*/{ SSC_INPUT,    SSC_NUMBER,         "disp_spec_bb",                "Dispatch optimization B&B heuristic",                                                   "-",                   "",                             "tou",                                      "?=-1",                    "",                      "SIMULATION_PARAMETER" },
+                  /*LK Only*/{ SSC_INPUT,    SSC_NUMBER,         "disp_reporting",              "Dispatch optimization reporting level",                                                 "-",                   "",                             "tou",                                      "?=-1",                    "",                      "SIMULATION_PARAMETER" },
+                  /*LK Only*/{ SSC_INPUT,    SSC_NUMBER,         "disp_spec_scaling",           "Dispatch optimization scaling heuristic",                                               "-",                   "",                             "tou",                                      "?=-1",                    "",                      "SIMULATION_PARAMETER" },
+                  /*LK Only*/{ SSC_INPUT,    SSC_NUMBER,         "disp_inventory_incentive",    "Dispatch storage terminal inventory incentive multiplier",                              "",                    "",                             "System Control",                           "?=0.0",                   "",                      "SIMULATION_PARAMETER" },
+                  /*LK Only*/{ SSC_INPUT,    SSC_NUMBER,         "q_rec_standby",               "Receiver standby energy consumption",                                                   "kWt",                 "",                             "tou",                                      "?=9e99",                  "",                      "SIMULATION_PARAMETER" },
+                  /*LK Only*/{ SSC_INPUT,    SSC_NUMBER,         "q_rec_heattrace",             "Receiver heat trace energy consumption during startup",                                 "kWe-hr",              "",                             "tou",                                      "?=0.0",                   "",                      "SIMULATION_PARAMETER" },
+                  /*LK Only*/{ SSC_INPUT,    SSC_ARRAY,          "timestep_load_fractions",     "Turbine load fraction for each timestep, alternative to block dispatch",                "",                    "",                             "tou",                                      "?",                                                         "",             "SIMULATION_PARAMETER" },
 
 
 
@@ -245,24 +259,6 @@ static var_info _cm_vtab_fresnel_physical[] = {
     /*Fin Sol Mode Sing Own*/{ SSC_INPUT,    SSC_NUMBER,         "ppa_price_input",             "PPA solution mode (0=Specify IRR target, 1=Specify PPA price)",                         "",                    "",                             "Financial Solution Mode","ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1","",              "SIMULATION_PARAMETER" },
 
     /*Fin Merc Plant Energy*/{ SSC_INPUT,    SSC_MATRIX,         "mp_energy_market_revenue",    "Energy market revenue input",                                                           "",                    "Lifetime x 2[Cleared Capacity(MW),Price($ / MWh)]", "Revenue", "csp_financial_model=6&is_dispatch=1",      "",             "SIMULATION_PARAMETER" },
-
-
-           /*??????????????*/{ SSC_INPUT,    SSC_NUMBER,         "can_cycle_use_standby",       "Can the cycle use standby operation?",                                                  "",                    "",                             "tou",                                      "?=0",                     "",                      "SIMULATION_PARAMETER" },
-           /*??????????????*/{ SSC_INPUT,    SSC_NUMBER,         "is_write_ampl_dat",           "Write AMPL data files for dispatch run",                                                "-",                   "",                             "tou",                                      "?=0",                     "",                      "SIMULATION_PARAMETER" },
-           /*??????????????*/{ SSC_INPUT,    SSC_NUMBER,         "is_ampl_engine",              "Run dispatch optimization with external AMPL engine",                                   "-",                   "",                             "tou",                                      "?=0",                     "",                      "SIMULATION_PARAMETER" },
-           /*??????????????*/{ SSC_INPUT,    SSC_STRING,         "ampl_data_dir",               "AMPL data file directory",                                                              "-",                   "",                             "tou",                                      "?=''",                    "",                      "SIMULATION_PARAMETER" },
-           /*??????????????*/{ SSC_INPUT,    SSC_STRING,         "ampl_exec_call",              "System command to run AMPL code",                                                       "-",                   "",                             "tou",                                      "?='ampl sdk_solution.run'", "",                    "SIMULATION_PARAMETER" },
-
-           /*??????????????*/{ SSC_INPUT,    SSC_NUMBER,         "disp_steps_per_hour",         "Time steps per hour for dispatch optimization calculations",                            "-",                   "",                             "tou",                                      "?=1",                     "",                      "SIMULATION_PARAMETER" },
-           /*??????????????*/{ SSC_INPUT,    SSC_NUMBER,         "disp_spec_presolve",          "Dispatch optimization presolve heuristic",                                              "-",                   "",                             "tou",                                      "?=-1",                    "",                      "SIMULATION_PARAMETER" },
-           /*??????????????*/{ SSC_INPUT,    SSC_NUMBER,         "disp_spec_bb",                "Dispatch optimization B&B heuristic",                                                   "-",                   "",                             "tou",                                      "?=-1",                    "",                      "SIMULATION_PARAMETER" },
-           /*??????????????*/{ SSC_INPUT,    SSC_NUMBER,         "disp_reporting",              "Dispatch optimization reporting level",                                                 "-",                   "",                             "tou",                                      "?=-1",                    "",                      "SIMULATION_PARAMETER" },
-           /*??????????????*/{ SSC_INPUT,    SSC_NUMBER,         "disp_spec_scaling",           "Dispatch optimization scaling heuristic",                                               "-",                   "",                             "tou",                                      "?=-1",                    "",                      "SIMULATION_PARAMETER" },
-           /*??????????????*/{ SSC_INPUT,    SSC_NUMBER,         "disp_inventory_incentive",    "Dispatch storage terminal inventory incentive multiplier",                              "",                    "",                             "System Control",                           "?=0.0",                   "",                      "SIMULATION_PARAMETER" },
-           /*??????????????*/{ SSC_INPUT,    SSC_NUMBER,         "q_rec_standby",               "Receiver standby energy consumption",                                                   "kWt",                 "",                             "tou",                                      "?=9e99",                  "",                      "SIMULATION_PARAMETER" },
-           /*??????????????*/{ SSC_INPUT,    SSC_NUMBER,         "q_rec_heattrace",             "Receiver heat trace energy consumption during startup",                                 "kWe-hr",              "",                             "tou",                                      "?=0.0",                   "",                      "SIMULATION_PARAMETER" },
-                                                                                                                                                                                         
-           /*??????????????*/{ SSC_INPUT,    SSC_ARRAY,          "timestep_load_fractions",     "Turbine load fraction for each timestep, alternative to block dispatch",                "",                    "",                             "tou",                                      "?",                                                         "",             "SIMULATION_PARAMETER" },
 
     // Capital Costs
 
@@ -858,6 +854,30 @@ public:
         C_csp_two_tank_tes storage;
         {
             double V_tes_des = as_double("V_tes_des");
+            double eta_pump = 0.85;
+            bool has_hot_tank_bypass = false;
+            double T_tank_hot_inlet_min = 200;
+            bool custom_tes_p_loss = false;
+            bool custom_tes_pipe_sizes = false;
+
+            double k_tes_loss_coeffs_val[11] = { 0,0,0,0,0,0,0,0,0,0,0 };
+            util::matrix_t<double> k_tes_loss_coeffs;
+            k_tes_loss_coeffs.assign(k_tes_loss_coeffs_val, 11);
+
+            double tes_diams_val[1] = { -1 };
+            util::matrix_t<double> tes_diams;
+            tes_diams.assign(tes_diams_val, 1);
+
+            double tes_wallthicks_val[1] = { -1 };
+            util::matrix_t<double> tes_wallthicks;
+            tes_wallthicks.assign(tes_wallthicks_val, 1);
+            
+            double pipe_rough = 4.5700000000000000e-05;
+            double dP_discharge = 0;
+
+            double tes_length_vals[11] = { 0., 90., 100., 120., 0., 30., 90., 80., 80., 120., 80. };
+            util::matrix_t<double> tes_lengths;
+            tes_lengths.assign(tes_length_vals, 11);
 
             storage = C_csp_two_tank_tes(
                 as_integer("Fluid"),
@@ -885,10 +905,21 @@ public:
                 as_boolean("tanks_in_parallel"),
                 V_tes_des,
                 false,
-                as_double("tes_pump_coef")
+                as_double("tes_pump_coef"),
+                eta_pump,
+                has_hot_tank_bypass,
+                T_tank_hot_inlet_min,
+                custom_tes_p_loss,
+                custom_tes_pipe_sizes,
+                k_tes_loss_coeffs,
+                tes_diams,
+                tes_wallthicks,
+                tes_lengths,
+                pipe_rough,
+                dP_discharge
             );
-                //as_boolean("calc_design_pipe_vals"),
-                //as_double("tes_pump_coef"),
+
+
                 //as_double("eta_pump"),
                 //as_boolean("has_hot_tank_bypass"),
                 //as_double("T_tank_hot_inlet_min"),

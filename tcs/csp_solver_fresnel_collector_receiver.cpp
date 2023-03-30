@@ -1160,7 +1160,7 @@ void C_csp_fresnel_collector_receiver::reset_last_temps()
 
 void C_csp_fresnel_collector_receiver::apply_control_defocus(double defocus)
 {
-    // Uses m_q_i, m_costh, and input defocus to calculate m_q_SCA_control_df
+    // Uses m_q_i, and input defocus to calculate m_q_SCA_control_df
 
     // Store control defocus
     m_control_defocus = defocus;
@@ -1181,7 +1181,6 @@ void C_csp_fresnel_collector_receiver::apply_component_defocus(double defocus /*
 
     for (int i = 0; i < m_nMod; i++)
     {
-        //int CT = (int)m_SCAInfoArray(i, 1) - 1;    // Collector type
         m_q_SCA[i] = defocus * m_q_SCA_control_df[i];
     }
 }
@@ -4551,13 +4550,3 @@ double EvacReceiverModel::FK_23_v2(double T_2, double T_3, int hv)
     return m_AbsorberPropMat.at(hv)->cond(T_23);
 
 }
-
-
-
-
-
-
-
-
-
-
