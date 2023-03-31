@@ -40,6 +40,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "csp_dispatch.h"
 #include "csp_system_costs.h"
 
+#include <ctime>
 #include <algorithm>
 #include <iterator>
 
