@@ -44,10 +44,10 @@ static var_info _cm_vtab_tcslinear_fresnel[] = {
 */
 
 //    VARTYPE           DATATYPE          NAME                 LABEL                                                                                   UNITS            META            GROUP            REQUIRED_IF                 CONSTRAINTS             UI_HINTS
-    { SSC_INPUT,        SSC_STRING,      "file_name",         "local weather file path",                                                             "",              "",            "Weather",        "*",                       "LOCAL_FILE",            "" },
-    { SSC_INPUT,        SSC_NUMBER,      "track_mode",        "Tracking mode",                                                                       "",              "",            "Weather",        "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "tilt",              "Tilt angle of surface/axis",                                                          "",              "",            "Weather",        "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "azimuth",           "Azimuth angle of surface/axis",                                                       "",              "",            "Weather",        "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_STRING,      "file_name",         "local weather file path",                                                             "",              "",            "weather",        "*",                       "LOCAL_FILE",            "" },
+    { SSC_INPUT,        SSC_NUMBER,      "track_mode",        "Tracking mode",                                                                       "",              "",            "weather",        "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "tilt",              "Tilt angle of surface/axis",                                                          "",              "",            "weather",        "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "azimuth",           "Azimuth angle of surface/axis",                                                       "",              "",            "weather",        "*",                       "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "system_capacity",   "Nameplate capacity",                                                                 "kW",             "",            "linear fresnelr", "*", "", "" },
 
     // TOU
@@ -275,7 +275,7 @@ static var_info _cm_vtab_tcslinear_fresnel[] = {
 //    { SSC_OUTPUT,       SSC_ARRAY,       "hourly_energy",      "Hourly Energy",                                                 "kWh",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
 
 	// monthly values
-	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",              "Monthly Energy",                                                            "kWh",          "",            "Linear Fresnel", "*",                       "LENGTH=12",             "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",              "Monthly Energy Gross",                                                            "kWh",          "",            "Linear Fresnel", "*",                       "LENGTH=12",             "" },
 
 
 	// single values

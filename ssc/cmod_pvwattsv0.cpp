@@ -955,7 +955,7 @@ static double perez( double dn,double df,double alb,double inc,double tilt,doubl
 
 static var_info _cm_vtab_pvwattsv0[] = {
 /*   VARTYPE           DATATYPE         NAME                         LABEL                                               UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-	{ SSC_INPUT,        SSC_STRING,      "file_name",                      "local weather file path",                     "",       "",                        "Weather",      "*",                       "LOCAL_FILE",      "" },
+	{ SSC_INPUT,        SSC_STRING,      "file_name",                      "local weather file path",                     "",       "",                        "weather",      "*",                       "LOCAL_FILE",      "" },
 	
 	{ SSC_INPUT,        SSC_NUMBER,      "system_size",                    "Nameplate capacity",                          "kW",     "",                        "PVWatts",      "*",                       "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "derate",                         "System derate value",                         "frac",   "",                        "PVWatts",      "*",                       "MIN=0,MAX=1",                              "" },

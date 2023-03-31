@@ -168,6 +168,8 @@ private:
 
 	double Interpolate(int YT, int XT, double X, double Z = std::numeric_limits<double>::quiet_NaN());
 
+    double Calculate_T_htf_cold_Converge_Cp(double q_dot_htf /*kWt*/, double T_htf_hot /*K*/, double m_dot_htf /*kg/s*/);
+
 	// Isopentane
 	double T_sat4(double P/*Bar*/) 
 	{

@@ -585,12 +585,8 @@ public:
         int add_om_num_types = as_integer("add_om_num_types");
         ssc_number_t nameplate1 = 0;
         ssc_number_t nameplate2 = 0;
-        std::vector<double> battery_discharged;
-        std::vector<double> fuelcell_discharged;
-        for (int i = 0; i <= nyears; i++) {
-            battery_discharged.push_back(0);
-            fuelcell_discharged.push_back(0);
-        }
+        std::vector<double> battery_discharged(nyears,0);
+        std::vector<double> fuelcell_discharged(nyears+1,0);
 
         if (add_om_num_types > 0) //PV Battery
         {
@@ -601,6 +597,13 @@ public:
             if (as_integer("en_batt") == 1 || as_integer("en_standalone_batt") == 1)
                 battery_discharged = as_vector_double("batt_annual_discharge_energy");
 		}
+        if (battery_discharged.size() == 1) { // ssc #992
+            double first_val = battery_discharged[0];
+            battery_discharged.resize(nyears, first_val);
+        }
+        if (battery_discharged.size() != nyears)
+            throw exec_error("cashloan", util::format("battery_discharged size (%d) incorrect",(int)battery_discharged.size()));
+
 		if (add_om_num_types > 1)
 		{
 			escal_or_annual(CF_om_fixed2_expense, nyears, "om_fuelcell_fixed_cost", inflation_rate, 1.0, false, as_double("om_fixed_escal")*0.01);
@@ -609,7 +612,14 @@ public:
 			nameplate2 = as_number("om_fuelcell_nameplate");
             fuelcell_discharged = as_vector_double("fuelcell_annual_energy_discharged");
 		}
+        if (fuelcell_discharged.size()== 2) { // ssc #992
+            double first_val = fuelcell_discharged[1];
+            fuelcell_discharged.resize(nyears+1, first_val);
+         }
+        if (fuelcell_discharged.size() != nyears+1)
+            throw exec_error("cashloan", util::format("fuelcell_discharged size (%d) incorrect",(int)fuelcell_discharged.size()));
 
+        
         // battery cost - replacement from lifetime analysis
         if ((as_integer("en_batt") == 1 || as_integer("en_standalone_batt") == 1) && (as_integer("batt_replacement_option") > 0))
         {
@@ -1289,11 +1299,11 @@ public:
 		ssc_number_t *ub_w_sys = 0;
 		ub_w_sys = as_array("elec_cost_with_system", &count);
 		if (count != (size_t)(nyears+1))
-			throw exec_error("third party ownership", util::format("utility bill with system input wrong length (%d) should be (%d)",count, nyears+1));
+			throw exec_error("cashloan", util::format("utility bill with system input wrong length (%d) should be (%d)",count, nyears+1));
 		ssc_number_t *ub_wo_sys = 0;
 		ub_wo_sys = as_array("elec_cost_without_system", &count);
 		if (count != (size_t)(nyears+1))
-			throw exec_error("third party ownership", util::format("utility bill without system input wrong length (%d) should be (%d)",count, nyears+1));
+			throw exec_error("cashloan", util::format("utility bill without system input wrong length (%d) should be (%d)",count, nyears+1));
 
 		for (i = 0; i < (int)count; i++)
 			cf.at(CF_nte, i) = (double) (ub_wo_sys[i] - ub_w_sys[i]) *100.0;// $ to cents
