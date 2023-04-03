@@ -514,28 +514,32 @@ var_info vtab_debt[] = {
 { SSC_INPUT,        SSC_NUMBER,     "pbi_oth_for_ds",                         "Other PBI available for debt service",     "0/1",      "",                      "Payment Incentives",      "?=0",                       "BOOLEAN",                                         "" },
 var_info_invalid
 };
-/*
+
 var_info vtab_adjustment_factors[] = {
-{ SSC_INPUT,SSC_NUMBER  , "adjust:constant"                      , "Constant loss adjustment"                                       , "%"                                      , ""                                      , "Adjustment Factors"   , "*"              , "MAX=100"               , ""},
-{ SSC_INPUT,SSC_ARRAY   , "adjust:hourly"                        , "Hourly Adjustment Factors"                                      , "%"                                      , ""                                      , "Adjustment Factors"   , "?"              , "LENGTH=8760"           , ""},
-{ SSC_INPUT,SSC_ARRAY   , "adjust:timeindex"                        , "Lifetime Adjustment Factors"                                      , "%"                                      , ""                                      , "Adjustment Factors"   , "?"              , "LENGTH=8760"           , ""},
-{ SSC_INPUT,SSC_MATRIX  , "adjust:periods"                       , "Period-based Adjustment Factors"                                , "%"                                      , "n x 3 matrix [ start, end, loss ]"     , "Adjustment Factors"   , "?"              , "COLS=3"                , ""},
+{ SSC_INPUT,SSC_NUMBER  , "adjust_constant"                      , "Constant loss adjustment"                                       , "%"                                      , ""                                      , "Adjustment Factors"   , "*"              , "MAX=100"               , ""},
+{ SSC_INPUT, SSC_NUMBER,     "adjust_en_timeindex"        , "Enable lifetime adjustment factors",     "0/1",      "",                      "Adjustment Factors",      "?=0",                       "BOOLEAN",                                         "" },
+{ SSC_INPUT, SSC_NUMBER,     "adjust_en_periods"        , "Enable period-based adjustment factors",     "0/1",      "",                      "Adjustment Factors",      "?=0",                       "BOOLEAN",                                         "" },
+{ SSC_INPUT,SSC_ARRAY   , "adjust_timeindex"                        , "Lifetime adjustment factors"                                      , "%"                                      , ""                                      , "Adjustment Factors"   , "adjust_en_timeindex=1"              , ""           , ""},
+{ SSC_INPUT,SSC_MATRIX  , "adjust_periods"                       , "Period-based adjustment factors"                                , "%"                                      , "n x 3 matrix [ start, end, loss ]"     , "Adjustment Factors"   , "adjust_en_periods=1"              , "COLS=3"                , ""},
 var_info_invalid };
 
 var_info vtab_dc_adjustment_factors[] = {
-{ SSC_INPUT,SSC_NUMBER  , "dc_adjust:constant"                   , "DC Constant loss adjustment"                                    , "%"                                      , ""                                      , "Adjustment Factors"   , "*"               , "MAX=100"               , ""},
-{ SSC_INPUT,SSC_ARRAY   , "dc_adjust:hourly"                     , "DC Hourly Adjustment Factors"                                   , "%"                                      , ""                                      , "Adjustment Factors"   , "?"               , "LENGTH=8760"           , ""},
-{ SSC_INPUT,SSC_ARRAY   , "dc_adjust:timeindex"                        , "DC Lifetime Adjustment Factors"                                      , "%"                                      , ""                                      , "Adjustment Factors"   , "?"              , "LENGTH=8760"           , ""},
-{ SSC_INPUT,SSC_MATRIX  , "dc_adjust:periods"                    , "DC Period-based Adjustment Factors"                             , "%"                                      , "n x 3 matrix [ start, end, loss ]"     , "Adjustment Factors"   , "?"               , "COLS=3"                , ""},
+{ SSC_INPUT,SSC_NUMBER  , "dc_adjust_constant"                   , "DC Constant loss adjustment"                                    , "%"                                      , ""                                      , "Adjustment Factors"   , "*"               , "MAX=100"               , ""},
+{ SSC_INPUT, SSC_NUMBER,     "dc_adjust_en_timeindex"        , "Enable lifetime adjustment factors",     "0/1",      "",                      "Adjustment Factors",      "?=0",                       "BOOLEAN",                                         "" },
+{ SSC_INPUT, SSC_NUMBER,     "dc_adjust_en_periods"        , "Enable period-based adjustment factors",     "0/1",      "",                      "Adjustment Factors",      "?=0",                       "BOOLEAN",                                         "" },
+{ SSC_INPUT,SSC_ARRAY   , "dc_adjust_timeindex"                        , "DC Lifetime Adjustment Factors"                                      , "%"                                      , ""                                      , "Adjustment Factors"   , "dc_adjust_en_timeindex=1"              , ""           , ""},
+{ SSC_INPUT,SSC_MATRIX  , "dc_adjust_periods"                    , "DC Period-based Adjustment Factors"                             , "%"                                      , "n x 3 matrix [ start, end, loss ]"     , "Adjustment Factors"   , "dc_adjust_en_periods=1"               , "COLS=3"                , ""},
 var_info_invalid };
 
 var_info vtab_sf_adjustment_factors[] = {
-{ SSC_INPUT,SSC_NUMBER  , "sf_adjust:constant"                   , "SF Constant loss adjustment"                                    , "%"                                      , ""                                      , "Adjustment Factors"   , "*"              , "MAX=100"               , ""},
-{ SSC_INPUT,SSC_ARRAY   , "sf_adjust:hourly"                     , "SF Hourly Adjustment Factors"                                   , "%"                                      , ""                                      , "Adjustment Factors"   , "?"              , "LENGTH=8760"           , ""},
-{ SSC_INPUT,SSC_ARRAY   , "sf_adjust:timeindex"                        , "SF Lifetime Adjustment Factors"                                      , "%"                                      , ""                                      , "Adjustment Factors"   , "?"              , "LENGTH=8760"           , ""},
-{ SSC_INPUT,SSC_MATRIX  , "sf_adjust:periods"                    , "SF Period-based Adjustment Factors"                             , "%"                                      , "n x 3 matrix [ start, end, loss ]"     , "Adjustment Factors"   , "?"              , "COLS=3"                , ""},
+{ SSC_INPUT,SSC_NUMBER  , "sf_adjust_constant"                   , "SF Constant loss adjustment"                                    , "%"                                      , ""                                      , "Adjustment Factors"   , "*"              , "MAX=100"               , ""},
+{ SSC_INPUT, SSC_NUMBER,     "sf_adjust_en_timeindex"        , "Enable lifetime adjustment factors",     "0/1",      "",                      "Adjustment Factors",      "?=0",                       "BOOLEAN",                                         "" },
+{ SSC_INPUT, SSC_NUMBER,     "sf_adjust_en_periods"        , "Enable period-based adjustment factors",     "0/1",      "",                      "Adjustment Factors",      "?=0",                       "BOOLEAN",                                         "" },
+{ SSC_INPUT,SSC_ARRAY   , "sf_adjust_timeindex"                        , "SF Lifetime Adjustment Factors"                                      , "%"                                      , ""                                      , "Adjustment Factors"   , "sf_adjust_en_timeindex=1"              , ""           , ""},
+{ SSC_INPUT,SSC_MATRIX  , "sf_adjust_periods"                    , "SF Period-based Adjustment Factors"                             , "%"                                      , "n x 3 matrix [ start, end, loss ]"     , "Adjustment Factors"   , "sf_adjust_en_periods=1"              , "COLS=3"                , ""},
 var_info_invalid };
-*/
+
+/*
 var_info vtab_adjustment_factors[] = {
 { SSC_INPUT,SSC_TABLE  , "adjust"                      , "Loss adjustment"                                       , "%"                                      , "'adjust' updated to a table - Ty to add more details!"                                      , "Adjustment Factors"   , "*"              , ""               , ""},
 var_info_invalid };
@@ -548,7 +552,7 @@ var_info_invalid };
 var_info vtab_sf_adjustment_factors[] = {
 { SSC_INPUT,SSC_TABLE  , "sf_adjust"                   , "SF loss adjustment"                                    , ""                                      , ""                                      , "Adjustment Factors"   , "*"              , ""               , ""},
 var_info_invalid };
-
+*/
 var_info vtab_financial_capacity_payments[] = {
 
 	/*   VARTYPE           DATATYPE         NAME                                    LABEL                                             UNITS        META                               GROUP                    REQUIRED_IF           CONSTRAINTS               UI_HINTS	*/
@@ -1021,13 +1025,13 @@ adjustment_factors::adjustment_factors( compute_module *cm, const std::string &p
 //adjustment factors changed from derates to percentages jmf 1/9/15
 bool adjustment_factors::setup(int nsteps, int analysis_period) //nsteps is set to 8760 in this declaration function in common.h
 {
-    auto& table = m_cm->get_var_table()->lookup(m_prefix)->table;
-//    ssc_number_t f = m_cm->as_number(m_prefix + ":constant");
-    ssc_number_t f = table.lookup("constant")->num[0];
+    ssc_number_t f = m_cm->as_number(m_prefix + "_constant");
     f = 1.0 - f / 100.0; //convert from percentage to factor
 	m_factors.resize( nsteps * analysis_period, f);
 
+/*
 //    if (m_cm->is_assigned(m_prefix + ":hourly"))
+
     if (table.is_assigned("en_hourly") && table.as_boolean("en_hourly"))
     {
 		size_t n;
@@ -1042,17 +1046,18 @@ bool adjustment_factors::setup(int nsteps, int analysis_period) //nsteps is set 
             m_error = util::format("Hourly loss factor array length %d does not equal length of weather file %d", (int)n, nsteps);
         }
 	}
-
+*/
+    if (m_cm->as_boolean(m_prefix +  "_en_timeindex"))
 //    if (m_cm->is_assigned(m_prefix + ":timeindex"))
-    if (table.is_assigned("timeindex"))
+//    if (table.is_assigned("timeindex"))
     {
         size_t n;
         int steps_per_hour = nsteps / 8760;
         int month = 0;
         int day = 0;
         int week = 0;
-//        ssc_number_t* p = m_cm->as_array(m_prefix + ":timeindex", &n);
-        ssc_number_t* p = table.as_array("timeindex", &n);
+        ssc_number_t* p = m_cm->as_array(m_prefix + "_timeindex", &n);
+//        ssc_number_t* p = table.as_array("timeindex", &n);
         if (p != 0) {
             if (n == 1) {
                 for (int a = 0; a < analysis_period; a++) {
@@ -1104,13 +1109,13 @@ bool adjustment_factors::setup(int nsteps, int analysis_period) //nsteps is set 
             }
         }
     }
-
+    if (m_cm->as_boolean(m_prefix + "_en_periods"))
 //    if (m_cm->is_assigned(m_prefix + ":periods"))
-    if (table.is_assigned("en_periods") && table.as_boolean("en_periods"))
+//    if (table.is_assigned("en_periods") && table.as_boolean("en_periods"))
     {
 		size_t nr, nc;
-//        ssc_number_t* mat = m_cm->as_matrix(m_prefix + ":periods", &nr, &nc);
-        ssc_number_t* mat = table.as_matrix("periods", &nr, &nc);
+        ssc_number_t* mat = m_cm->as_matrix(m_prefix + "_periods", &nr, &nc);
+//        ssc_number_t* mat = table.as_matrix("periods", &nr, &nc);
         double ts_mult = nsteps / 8760.0;
 		if ( mat != 0 && nc == 3 )
 		{
