@@ -145,6 +145,7 @@ bool Reopt_size_standalone_battery_params(ssc_data_t data) {
         reopt_batt.assign("macrs_option_years", 5);
     }
 
+    // These exist in the GUI but not in the default PySAM export
     vd = vt->lookup("battery_per_kW");
     if (vd)
         reopt_batt.assign("installed_cost_us_dollars_per_kw", vd->num[0]);
