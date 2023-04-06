@@ -716,8 +716,11 @@ public:
 						V_hot = 0;
                     }
 
+                    double T_hot_drained = std::numeric_limits<double>::quiet_NaN();
 					if (V_hot == 0)	// cold water drawn into the bottom of the tank in previous timesteps has completely flushed hot water from the tank
 					{
+                        double time_to_drain_sec = V_hot_prev * rho_water / mdot_mix;
+                        T_hot_drained = (T_hot_prev * time_to_drain_sec + T_cold * (ts_sec - time_to_drain_sec)) / ts_sec;
 						T_hot = T_hot_prev;
 					}
 					else
@@ -755,7 +758,7 @@ public:
                         T_deliv = T_hot;
                     }
                     else {
-                        T_deliv = T_cold;
+                        T_deliv = T_hot_drained;
                     }
 				}
 
