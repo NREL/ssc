@@ -222,7 +222,7 @@ bool winddata::read_line(std::vector<double> &values)
 cm_windpower::cm_windpower(){
 	add_var_info(_cm_vtab_windpower);
 	// performance adjustment factors
-	add_var_info(vtab_adjustment_factors);
+	//add_var_info(vtab_adjustment_factors); unused and defaults have all set to zero
 	add_var_info(vtab_technology_outputs);
 	// wind PRUF
 	add_var_info(vtab_p50p90);
@@ -310,11 +310,12 @@ void cm_windpower::exec()
     }
 	if (wpc.nTurbines > wpc.GetMaxTurbines())
 		throw exec_error("windpower", util::format("the wind model is only configured to handle up to %d turbines.", wpc.GetMaxTurbines()));
-
+/*Unused in last two release and no input widget
 	// create adjustment factors and losses
 	adjustment_factors haf(this, "adjust");
 	if (!haf.setup())
 		throw exec_error("windpower", "failed to setup adjustment factors: " + haf.error());
+*/
 
     // add up all the percent losses, except for wind_int_loss, which will be applied by the turbine
     double lossMultiplier = get_fixed_losses(this);
@@ -356,7 +357,7 @@ void cm_windpower::exec()
 		for (int i = 0; i < nstep; i++) //nstep is always 8760 for Weibull
 		{
 			farmpwr[i] = farm_kw; // fill "gen"
-			farmpwr[i] *= haf(i); //apply adjustment factor/availability and curtailment losses
+//			farmpwr[i] *= haf(i); //apply adjustment factor/availability and curtailment losses
 		}
 
 		for (size_t i = 0; i < wpc.nTurbines; i++)
@@ -419,7 +420,7 @@ void cm_windpower::exec()
         for (int i = 0; i < nstep; i++)
         {
             farmpwr[i] = farm_kw; // fill "gen"
-            farmpwr[i] *= haf(i); //apply adjustment factor/availability and curtailment losses
+//            farmpwr[i] *= haf(i); //apply adjustment factor/availability and curtailment losses
             farmpwr[i] *= lossMultiplier;
         }
 
@@ -600,7 +601,7 @@ void cm_windpower::exec()
 			annual_after_wake_loss += farmp;
 			farmp *= lossMultiplier;
 			// apply and track cutoff losses
-			withoutCutOffLosses += farmp * haf(hr);
+            withoutCutOffLosses += farmp; // *haf(hr);
 			if (lowTempCutoff){
 				if (temp < lowTempCutoffValue) farmp = 0.0;
 			}
@@ -609,7 +610,7 @@ void cm_windpower::exec()
 					farmp = 0.0;
 			}
 
-			farmpwr[i] = (ssc_number_t)farmp*haf(hr); //adjustment factors are constrained to be hourly, not sub-hourly, so it's correct for this to be indexed on the hour
+            farmpwr[i] = (ssc_number_t)farmp;//  *haf(hr); //adjustment factors are constrained to be hourly, not sub-hourly, so it's correct for this to be indexed on the hour
 			wspd[i] = (ssc_number_t)wind;
 			wdir[i] = (ssc_number_t)dir;
 			air_temp[i] = (ssc_number_t)temp;
