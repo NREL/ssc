@@ -672,7 +672,8 @@ public:
 						V_hot = V_hot_prev + ts_sec*mdot_total/rho_water;
 						V_cold = V_tank - V_hot;
 						T_hot = (T_hot_prev*V_hot_prev + ts_sec*(mdot_total/rho_water)*(T_cold_prev + dT_collector))/V_hot;
-						T_cold = (V_tank/V_cold)*T_tank - (V_hot/V_cold)*T_hot;
+                        T_cold = (V_tank/V_cold)*T_tank - (V_hot/V_cold)*T_hot;                                 // weighted average to enforce T_tank based on T_hot
+                        if (T_cold < std::min(T_mains_use, T_room)) T_cold = std::min(T_mains_use, T_room);     // above relation breaks-down at small V_cold causing unphysical T_cold
 						T_top = T_hot;
 						T_bot = T_cold;
 						T_deliv = T_top;
