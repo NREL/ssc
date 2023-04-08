@@ -272,9 +272,7 @@ ssc_data_t trough_physical_iph_defaults()
     ssc_number_t p_trough_loop_control[13] = { 4, 1, 1, 4, 1, 1, 3, 1, 1, 2, 1, 1, 1 };
     ssc_data_set_array(data, "trough_loop_control", p_trough_loop_control, 13);
 
-    var_table* adjust_vt = new var_table;
-    adjust_vt->assign("constant", var_data(4.0));
-    ssc_data_set_table(data, "adjust", adjust_vt);
+    ssc_data_set_number(data, "adjust_constant", 4.0);
 
     return data;
 }

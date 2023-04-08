@@ -283,9 +283,7 @@ ssc_data_t tcsfresnel_molten_salt_defaults()
     ssc_data_set_number(data, "T_htf_hot_ref", 525);
     ssc_data_set_number(data, "T_htf_cold_ref", 293);
     
-    var_table* adjust_vt = new var_table;
-    adjust_vt->assign("constant", var_data(4.0));
-    ssc_data_set_table(data, "adjust", adjust_vt);
+    ssc_data_set_number(data, "adjust_constant", 0.0);
 
     return data;
 }

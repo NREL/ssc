@@ -333,9 +333,7 @@ ssc_data_t trough_physical_defaults()
     ssc_data_set_array(data, "trough_loop_control", p_trough_loop_control, 25);
     ssc_data_set_number(data, "ppa_soln_mode", 0);
 
-    var_table* adjust_vt = new var_table;
-    adjust_vt->assign("constant", var_data(4.0));
-    ssc_data_set_table(data, "adjust", adjust_vt);
+    ssc_data_set_number(data, "adjust_constant", 4.0);
 
     return data;
 }

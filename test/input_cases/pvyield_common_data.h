@@ -429,13 +429,8 @@ void pvyield_no_financial_meteo(ssc_data_t& data)
     ssc_data_set_number(data, "inv_pd_vdco", 310);
     ssc_data_set_number(data, "inv_pd_vdcmax", 600);
 
-    var_table* adjust_vt = new var_table;
-    adjust_vt->assign("constant", var_data(0.0));
-    ssc_data_set_table(data, "adjust", adjust_vt);
-
-    var_table* dc_adjust_vt = new var_table;
-    dc_adjust_vt->assign("constant", var_data(0.0));
-    ssc_data_set_table(data, "dc_adjust", dc_adjust_vt);
+    ssc_data_set_number(data, "adjust_constant", 0.0);
+    ssc_data_set_number(data, "dc_adjust_constant", 0.0);
 
     ssc_data_set_number(data, "inv_snl_eff_cec", 96.636932373046875);
     ssc_data_set_number(data, "inv_pd_eff", 95);
@@ -877,13 +872,8 @@ void pvyield_bifacial_case(ssc_data_t& data)
     ssc_data_set_number(data, "inv_pd_vdco", 310);
     ssc_data_set_number(data, "inv_pd_vdcmax", 600);
 
-    var_table* adjust_vt = new var_table;
-    adjust_vt->assign("constant", var_data(0.0));
-    ssc_data_set_table(data, "adjust", adjust_vt);
-
-    var_table* dc_adjust_vt = new var_table;
-    dc_adjust_vt->assign("constant", var_data(0.0));
-    ssc_data_set_table(data, "dc_adjust", dc_adjust_vt);
+    ssc_data_set_number(data, "adjust_constant", 0.0);
+    ssc_data_set_number(data, "dc_adjust_constant", 0.0);
 
     ssc_data_set_number(data, "inv_snl_eff_cec", 96.636932373046875);
     ssc_data_set_number(data, "inv_pd_eff", 95);
@@ -1318,13 +1308,8 @@ void pvyield_user_support_80603_meteo(ssc_data_t& data)
     ssc_data_set_number(data, "inv_pd_vdco", 310);
     ssc_data_set_number(data, "inv_pd_vdcmax", 600);
 
-    var_table* adjust_vt = new var_table;
-    adjust_vt->assign("constant", var_data(0.0));
-    ssc_data_set_table(data, "adjust", adjust_vt);
-
-    var_table* dc_adjust_vt = new var_table;
-    dc_adjust_vt->assign("constant", var_data(0.0));
-    ssc_data_set_table(data, "dc_adjust", dc_adjust_vt);
+    ssc_data_set_number(data, "adjust_constant", 0.0);
+    ssc_data_set_number(data, "dc_adjust_constant", 0.0);
 
     ssc_data_set_number(data, "inv_snl_eff_cec", 96.636932373046875);
     ssc_data_set_number(data, "inv_pd_eff", 95);
@@ -1762,13 +1747,8 @@ void pvyield_user_support_80603_AZ(ssc_data_t& data)
     ssc_data_set_number(data, "inv_pd_vdco", 310);
     ssc_data_set_number(data, "inv_pd_vdcmax", 600);
 
-    var_table* adjust_vt = new var_table;
-    adjust_vt->assign("constant", var_data(0.0));
-    ssc_data_set_table(data, "adjust", adjust_vt);
-
-    var_table* dc_adjust_vt = new var_table;
-    dc_adjust_vt->assign("constant", var_data(0.0));
-    ssc_data_set_table(data, "dc_adjust", dc_adjust_vt);
+    ssc_data_set_number(data, "adjust_constant", 0.0);
+    ssc_data_set_number(data, "dc_adjust_constant", 0.0);
 
     ssc_data_set_number(data, "inv_snl_eff_cec", 96.636932373046875);
     ssc_data_set_number(data, "inv_pd_eff", 95);

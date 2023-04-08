@@ -64,10 +64,7 @@ void pvwatts_pv_defaults(ssc_data_t& data) {
 	ssc_data_set_number(data, "inv_eff", 96);
 	ssc_data_set_number(data, "batt_simple_enable", 1);
 
-    var_table* adjust_vt = new var_table;
-    adjust_vt->assign("constant", var_data(0.0));
-    ssc_data_set_table(data, "adjust", adjust_vt);
-
+    ssc_data_set_number(data, "adjust_constant", 0.0);
 }
 
 void simple_battery_data(ssc_data_t& data) {

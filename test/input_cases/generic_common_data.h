@@ -77,9 +77,7 @@ void generic_singleowner_battery_60min(ssc_data_t &data)
 	ssc_number_t p_generic_degradation[1] ={ 0 };
 	ssc_data_set_array( data, "generic_degradation", p_generic_degradation, 1 );
 
-    var_table* adjust_vt = new var_table;
-    adjust_vt->assign("constant", var_data(0.0));
-    ssc_data_set_table(data, "adjust", adjust_vt);
+    ssc_data_set_number(data, "adjust_constant", 0.0);
 
 
 	ssc_data_set_number( data, "en_batt", 1 );
@@ -447,10 +445,7 @@ void generic_commerical_battery_60min(ssc_data_t &data)
 	ssc_number_t p_generic_degradation[1] = { 0 };
 	ssc_data_set_array(data, "generic_degradation", p_generic_degradation, 1);
 
-    var_table* adjust_vt = new var_table;
-    adjust_vt->assign("constant", var_data(0.0));
-    ssc_data_set_table(data, "adjust", adjust_vt);
-
+    ssc_data_set_number(data, "adjust_constant", 0.0);
 
 	ssc_data_set_number(data, "en_batt", 1);
 	set_array(data, "load", generictest::load_profile_path_60min, 8760);

@@ -131,10 +131,7 @@ static void geothermal_singleowner_default(ssc_data_t &data)
 	ssc_data_set_number(data, "hc_ctl9", 0);
 	ssc_data_set_string(data, "hybrid_dispatch_schedule", "111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111");
 
-    var_table* adjust_vt = new var_table;
-    adjust_vt->assign("constant", var_data(0.0));
-    ssc_data_set_table(data, "adjust", adjust_vt);
-
+    ssc_data_set_number(data, "adjust_constant", 0.0);
 
 	ssc_data_set_number(data, "enable_interconnection_limit", 0);
 	set_array(data, "grid_curtailment", geothermal_curtailment_path, 8760);

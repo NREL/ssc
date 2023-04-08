@@ -147,10 +147,7 @@ void biomass_commondata(ssc_data_t &data) {
 	ssc_data_set_string(data, "biopwr.plant.tou_grid", "111111111112222222222222111111111112222222222222111111111112222222222222111111111112222222222222111111111112222222222222111111111112222222222222111111111112222222222222111111111112222222222222111111111112222222222222111111111112222222222222111111111112222222222222111111111112222222222222");
 	ssc_data_set_number(data, "biopwr.plant.boiler.steam_pressure", 900);
 
-    var_table* adjust_vt = new var_table;
-    adjust_vt->assign("constant", var_data(0.0));
-    ssc_data_set_table(data, "adjust", adjust_vt);
-
+    ssc_data_set_number(data, "adjust_constant", 0.0);
 
 	ssc_data_set_number(data, "analysis_period", 25);
 	ssc_number_t p_federal_tax_rate[1] = { 21 };
