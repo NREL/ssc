@@ -104,7 +104,7 @@ static var_info _cm_vtab_windpower[] = {
     { SSC_OUTPUT , SSC_NUMBER  , "elev"                              , "Site elevation"                           , "m"     ,""                                      , "Location"                          , "wind_resource_model_choice=0"                    , ""                                                , "" } ,
     { SSC_OUTPUT , SSC_NUMBER  , "year"                              , "Year"                                     , ""     ,""                                       , "Location"                          , "wind_resource_model_choice=0"                    , ""                                                , "" } ,
 
-	{ SSC_OUTPUT , SSC_ARRAY  , "monthly_energy"                     , "Monthly Energy"                           , "kWh"     ,""                                    , "Monthly"                              , "*"                                               , "LENGTH=12"                                       , "" } ,
+	{ SSC_OUTPUT , SSC_ARRAY  , "monthly_energy"                     , "Monthly Energy Gross"                           , "kWh"     ,""                                    , "Monthly"                              , "*"                                               , "LENGTH=12"                                       , "" } ,
 	{ SSC_OUTPUT , SSC_NUMBER , "annual_energy"                      , "Annual Energy"                            , "kWh"     ,""                                    , "Annual"                               , "*"                                               , ""                                                , "" } ,
 	{ SSC_OUTPUT , SSC_NUMBER , "annual_gross_energy"                , "Annual Gross Energy"                      , "kWh"     ,""                                    , "Annual"                               , "*"                                               , ""                                                , "" } ,
 	{ SSC_OUTPUT , SSC_NUMBER , "capacity_factor"                    , "Capacity factor"                          , "%"       ,""                                    , "Annual"                               , "*"                                               , ""                                                , "" } ,
@@ -463,7 +463,7 @@ void cm_windpower::exec()
 		nstep = wp->nrecords();
 		wdprov = smart_ptr<winddata_provider>::ptr(wp);
 		if (!wp->ok() || (nstep == 0))
-			throw exec_error("windpower", "failed to read local weather file: " + std::string(file) + " " + wp->error());
+			throw exec_error("windpower", "failed to read local weather file: " + wp->error() + ", " + std::string(file));
 	}
 	else if (is_assigned("wind_resource_data"))
 	{
@@ -540,14 +540,14 @@ void cm_windpower::exec()
 					for (size_t j = 0; j < 24 * steps_per_hour; j++) //trash 24 hours' worth of lines in the weather file to skip the entire day of Feb 29
 					{
 						if (!wdprov->read(wt.hubHeight, &wind, &dir, &temp, &pres, &wt.measurementHeight, &closest_dir_meas_ht, true))
-							throw exec_error("windpower", util::format("error reading wind resource file at %d: ", i) + wdprov->error());
+							throw exec_error("windpower", util::format("error reading wind resource file leap day data at %d: ", i) + wdprov->error());
 					}
 			} //now continue with the normal process, none of the counters have been incremented so everything else should be ok
 
 			// if wf.read is set to interpolate (last input), and it's able to do so, then it will set wpc.measurementHeight equal to hub_ht
 			// direction will not be interpolated, pressure and temperature will be if possible
 			if (!wdprov->read(wt.hubHeight, &wind, &dir, &temp, &pres, &wt.measurementHeight, &closest_dir_meas_ht, true))
-				throw exec_error("windpower", util::format("error reading wind resource file at %d: ", i) + wdprov->error());
+				throw exec_error("windpower", util::format("error reading wind resource file for interpolation at time step %d: ", i) + wdprov->error());
 
 			if (std::abs(wt.measurementHeight - wt.hubHeight) > 35.0)
 				throw exec_error("windpower", util::format("the closest wind speed measurement height (%lg m) found is more than 35 m from the hub height specified (%lg m)", wt.measurementHeight, wt.hubHeight));
@@ -581,7 +581,7 @@ void cm_windpower::exec()
                     /* inputs */
                     wind,    /* m/s */
                     dir,    /* degrees */
-                    pres,    /* Atm */
+                    pres,    /* Atm or Pa */
                     temp,    /* deg C */
 
                     /* outputs */
@@ -613,6 +613,7 @@ void cm_windpower::exec()
 			wspd[i] = (ssc_number_t)wind;
 			wdir[i] = (ssc_number_t)dir;
 			air_temp[i] = (ssc_number_t)temp;
+            if (pres > 1.1) pres = pres / physics::Pa_PER_Atm; // assumes that value greater than 1.1 is i Pa
 			air_pres[i] = (ssc_number_t)pres;
 
 			// accumulate monthly and annual energy

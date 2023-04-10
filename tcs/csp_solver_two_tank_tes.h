@@ -71,7 +71,7 @@ private:
 
 	double m_V_total;			//[m^3] Total volume for *one temperature* tank
 	double m_V_active;			//[m^3] active volume of *one temperature* tank (either cold or hot)
-	double m_V_inactive;		//[m^3] INactive volume of *one temperature* tank (either cold or hot)
+	double m_V_inactive;		//[m^3] Inactive volume of *one temperature* tank (either cold or hot)
 	double m_UA;				//[W/K] Tank loss conductance
 
 	double m_T_htr;				//[K] Tank heater set point
@@ -97,10 +97,6 @@ public:
 	C_storage_tank();
 
 	double calc_mass_at_prev();
-
-    double calc_cp_at_prev();
-
-    double calc_enth_at_prev();
 
     double get_m_UA();
 

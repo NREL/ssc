@@ -112,7 +112,7 @@ void C_pc_heat_sink::init(C_csp_power_cycle::S_solved_params &solved_params)
 	}
 
 	// Calculate the design point HTF mass flow rate
-	double cp_htf_des = mc_pc_htfProps.Cp_ave(ms_params.m_T_htf_cold_des+273.15, ms_params.m_T_htf_hot_des+273.15, 5);	//[kJ/kg-K]
+	double cp_htf_des = mc_pc_htfProps.Cp_ave(ms_params.m_T_htf_cold_des+273.15, ms_params.m_T_htf_hot_des+273.15);	//[kJ/kg-K]
 
 	m_m_dot_htf_des = ms_params.m_q_dot_des*1.E3 / (cp_htf_des*(ms_params.m_T_htf_hot_des - ms_params.m_T_htf_cold_des));	//[kg/s]
 
@@ -223,7 +223,7 @@ void C_pc_heat_sink::call(const C_csp_weatherreader::S_outputs &weather,
 	double T_htf_hot = htf_state_in.m_temp;		//[C]
 	double m_dot_htf = inputs.m_m_dot/3600.0;	//[kg/s]
 
-	double cp_htf = mc_pc_htfProps.Cp_ave(ms_params.m_T_htf_cold_des+273.15, T_htf_hot+273.15, 5);	//[kJ/kg-K]
+	double cp_htf = mc_pc_htfProps.Cp_ave(ms_params.m_T_htf_cold_des+273.15, T_htf_hot+273.15);	//[kJ/kg-K]
 
 	// For now, let's assume the Heat Sink can always return the HTF at the design cold temperature
 	double q_dot_htf = m_dot_htf*cp_htf*(T_htf_hot - ms_params.m_T_htf_cold_des)/1.E3;		//[MWt]
