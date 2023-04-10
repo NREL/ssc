@@ -309,14 +309,8 @@
 	"inv_tdc_plc" : [ [ 800,  28,  -0.02,  56,  0 ], [ 600, 52,  -0.037499999999999999,  60,  0 ], [ 390, 38,  -0.012500000000000001,  50,  -0.025000000000000001 ] ],
 	"en_batt" : 1,
 	"en_standalone_batt" : 0,
-	"adjust:constant" : 0,
-	"adjust" : {
-    "constant" : 0
-	},
-	"dc_adjust:constant" : 0,
-	"dc_adjust" : {
-    "constant" : 0
-	},
+	"adjust_constant" : 0,
+	"dc_adjust_constant" : 0,
 	"batt_chem" : 1,
 	"inv_snl_eff_cec" : 97.306612139662448,
 	"inv_pd_eff" : 95,

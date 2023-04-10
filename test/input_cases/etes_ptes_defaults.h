@@ -150,7 +150,7 @@ ssc_data_t etes_ptes_defaults()
     ssc_data_set_number(data, "const_per_upfront_rate4", 0);
     ssc_data_set_number(data, "const_per_upfront_rate5", 0);
 
-    ssc_data_set_number(data, "adjust_constant", 0.0);
+    ssc_data_set_number(data, "adjust_constant", 4.0);
 
     ssc_data_set_number(data, "ppa_soln_mode", 1);
     /*
