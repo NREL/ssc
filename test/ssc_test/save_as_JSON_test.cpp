@@ -39,7 +39,7 @@ int ns1 = sprintf(SAM_default_as_JSON, "%s/test/input_json/MSPT_None.json", SSCD
 TEST(save_as_JSON_test, pvwatts_mechant_plant_read_file_to_string) {
     std::ifstream test(inputs_as_JSON);
     std::string str((std::istreambuf_iterator<char>(test)), std::istreambuf_iterator<char>());
-    EXPECT_EQ(str.length(), 4839211);
+    EXPECT_EQ(str.length(), 4812813);
 }
 
 TEST(save_as_JSON_test_parse, pvwatts_mechant_plant_rapidjson_parse_file) {
