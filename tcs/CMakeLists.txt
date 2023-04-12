@@ -50,6 +50,7 @@ set(TCS_SRC
         ptes_solver_design_point.cpp
 		sam_type250_input_generator.cpp
 		sco2_cycle_components.cpp
+        sco2_htrbypass_cycle.cpp
 		sco2_partialcooling_cycle.cpp
 		sco2_pc_csp_int.cpp
 		sco2_power_cycle.cpp
@@ -145,6 +146,7 @@ set(TCS_SRC
 		sam_csp_util.h
 		sco2_cycle_components.h
 		sco2_cycle_templates.h
+        sco2_htrbypass_cycle.h
 		sco2_partialcooling_cycle.h
 		sco2_pc_csp_int.h
 		sco2_power_cycle.h
