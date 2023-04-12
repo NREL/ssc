@@ -764,8 +764,9 @@ double earth_values(double term_sum[], int count,
     return sum;
 }
 
-double earth_heliocentric_longitude(double jme) //Earth heliocentric longitude (degrees)
+double earth_heliocentric_longitude(double j_star_tt, double jme) //Earth heliocentric longitude (degrees)
 {
+    
     const int L_COUNT = 6;
     const int l_subcount[6] = {64, 34, 20, 7, 3, 1};
     double sum[6];
@@ -775,7 +776,37 @@ double earth_heliocentric_longitude(double jme) //Earth heliocentric longitude (
         sum[i] = earth_periodic_term_summation(L_TERMS[i], l_subcount[i], jme);
 
     double earth_helio_longitude = limit_degrees(RTOD * (earth_values(sum, 6, jme)));
-    return earth_helio_longitude;
+   // return earth_helio_longitude;
+    
+
+    const double LGS_terms[10][3] = { {1.0 / 365.261278, 3.401508e-2 , 1.600780},
+        {1.0 / 182.632412, 3.486440e-4, 1.662976},
+        {1.0 / 29.530634, 3.136227e-5, -1.195905},
+        {1.0 / 399.529850, 3.578979e-5, -1.042052},
+        {1.0 / 291.956812, 2.676185e-5, 2.012613 },
+        {1.0 / 583.598201, 2.333925e-5, -2.867714},
+        {1.0 / 4652.629372, 1.221214e-5, 1.225038},
+        {1.0 / 1450.236684, 1.217941e-5, -0.828601},
+        {1.0 / 199.459709, 1.343914e-5, -3.108253},
+        {1.0 / 365.355291, 8.499475e-4, -2.353709}
+    };
+
+    
+    double rho_L_k = 0;
+    double f_L_k = 0;
+    double phi_L_k = 0;
+    double a_L = 1.0 / 58.130101;
+    double b_L = 1.742145;
+    //double LG2 = a_L * j_star_tt + b_L;
+    double LG2 = 0;
+    for (int i = 0; i < 10; i++) {
+        rho_L_k = LGS_terms[i][1];
+        f_L_k = LGS_terms[i][0];
+        phi_L_k = LGS_terms[i][2];
+        LG2 += rho_L_k * cos(2.0 * M_PI * f_L_k * j_star_tt - phi_L_k) + a_L * j_star_tt + b_L;
+    }
+    double LG2_final = limit_degrees(RTOD * LG2);
+    return LG2;
 
 }
 
@@ -794,8 +825,9 @@ double earth_heliocentric_latitude(double jme) //Earth heliocentric latitude (de
 
 }
 
-double earth_radius_vector(double jme) //Earth radius vector (Astronomical Units (AU))
+double earth_radius_vector(double j_star_tt, double jme) //Earth radius vector (Astronomical Units (AU))
 {
+    
     const int R_COUNT = 5;
     int r_subcount[5] = {40, 10, 6, 2, 1};
     double sum[R_COUNT];
@@ -805,8 +837,17 @@ double earth_radius_vector(double jme) //Earth radius vector (Astronomical Units
         sum[i] = earth_periodic_term_summation(R_TERMS[i], r_subcount[i], jme);
 
     double earth_rad_vector = earth_values(sum, R_COUNT, jme);
-    return earth_rad_vector;
+    //return earth_rad_vector;
+    
 
+    double a_R = 0;
+    double b_R = 1.000140;
+    double f_R = 1.0 / 365.254902;
+    double rho_R = 0.016704;
+    double phi_R = -3.091159;
+
+    double R_SG2 = rho_R * cos(2.0 * M_PI * f_R * j_star_tt - phi_R) + a_R * j_star_tt + b_R;
+    return R_SG2;
 }
 
 double geocentric_longitude(double l) //geocentric longitude (degrees)
@@ -865,9 +906,10 @@ double xy_term_summation(int i, double x[5]) {
     return sum;
 }
 
-void nutation_longitude_and_obliquity(double jce, double x[5],
+void nutation_longitude_and_obliquity(double j_star_tt, double x[5],
                                       double delta_values[2]) //nutation in longitude and obliquity (both degrees)
 {
+    /*
     int i;
     double xy_term_sum, sum_psi = 0, sum_epsilon = 0;
 
@@ -876,9 +918,13 @@ void nutation_longitude_and_obliquity(double jce, double x[5],
         sum_psi += (PE_TERMS[i][0] + jce * PE_TERMS[i][1]) * sin(xy_term_sum);
         sum_epsilon += (PE_TERMS[i][2] + jce * PE_TERMS[i][3]) * cos(xy_term_sum);
     }
-
-    delta_values[0] = sum_psi / 36000000.0; //del_psi
-    delta_values[1] = sum_epsilon / 36000000.0; //del_epsilon
+    */
+    double f_psi = 1.0 / 6791.164405;
+    double rho_psi = 8.329092e-5;
+    double phi_psi = -2.052757;
+    double del_psi = rho_psi * cos(2.0 * M_PI * f_psi * j_star_tt - phi_psi);
+    delta_values[0] = del_psi;
+    //delta_values[1] = sum_epsilon / 36000000.0; //del_epsilon
 }
 
 double ecliptic_mean_obliquity(double jme) //mean obliquity of the ecliptic (arc seconds)
@@ -898,15 +944,22 @@ double ecliptic_mean_obliquity(double jme) //mean obliquity of the ecliptic (arc
     return eclip_mean_obliquity;
 }
 
-double ecliptic_true_obliquity(double delta_epsilon, double epsilon0) //true obliquity of the ecliptic (degrees)
+double ecliptic_true_obliquity(double j_star_tt) //true obliquity of the ecliptic (degrees)
 {
-    double eclip_true_obliquity = delta_epsilon + epsilon0 / 3600.0;
+    //double eclip_true_obliquity = delta_epsilon + epsilon0 / 3600.0;
+    double a_eps = -6.216374e-9;
+    double b_eps = 4.091383e-1;
+    double f_eps = 1.0 / 6791.164405;
+    double rho_eps = 4.456183e-5;
+    double phi_eps = 2.660352;
+    double eclip_true_obliquity = rho_eps * cos(2.0 * M_PI * f_eps * j_star_tt - phi_eps) + a_eps * j_star_tt + b_eps;
     return eclip_true_obliquity;
 }
 
 double aberration_correction(double r) //aberration correction (degrees)
 {
-    double delta_tau = -20.4898 / (3600.0 * r);
+    //double delta_tau = -20.4898 / (3600.0 * r);
+    double delta_tau = -9.933735e-5; //rad
     return delta_tau;
 }
 
@@ -916,10 +969,12 @@ double apparent_sun_longitude(double theta, double delta_psi, double delta_tau) 
     return lambda;
 }
 
-double greenwich_mean_sidereal_time(double jd, double jc) //greenwich mean sidereal time (degrees)
+double greenwich_mean_sidereal_time(double j_star_ut, double jc) //greenwich mean sidereal time (degrees)
 {
-    double nu0 = limit_degrees(280.46061837 + 360.98564736629 * (jd - 2451545.0) +
+    /*double nu0 = limit_degrees(280.46061837 + 360.98564736629 * (jd - 2451545.0) +
                                jc * jc * (0.000387933 - jc / 38710000.0));
+                               */
+    double nu0 = 6.3000388 * j_star_ut + 1.742079;
     return nu0;
 }
 
@@ -956,7 +1011,8 @@ double observer_hour_angle(double nu, double longitude, double alpha_deg) //obse
 
 double sun_equatorial_horizontal_parallax(double r) //sun equatorial horizontal parallax of the sun (degrees)
 {
-    double xi = 8.794 / (3600.0 * r);
+    //double xi = 8.794 / (3600.0 * r);
+    double xi = 4.263521e-5;
     return xi;
 }
 
@@ -972,7 +1028,7 @@ void right_ascension_parallax_and_topocentric_dec(double latitude, double elevat
     double u = atan(0.99664719 * tan(lat_rad));
     double y = 0.99664719 * sin(u) + elevation * sin(lat_rad) / 6378140.0;
     double x = cos(u) + elevation * cos(lat_rad) / 6378140.0;
-
+    /*
     delta_alpha_rad = atan2(-x * sin(xi_rad) * sin(h_rad),
                             cos(delta_rad) - x * sin(xi_rad) * cos(h_rad));
 
@@ -980,6 +1036,9 @@ void right_ascension_parallax_and_topocentric_dec(double latitude, double elevat
                                          cos(delta_rad) - x * sin(xi_rad) * cos(h_rad)));
 
     delta_alpha_prime[1] = RTOD * (delta_alpha_rad);
+    */
+    delta_alpha_prime[1] = RTOD * -x * (sin(h_rad) / cos(delta_rad)) * xi_rad;
+    delta_alpha_prime[0] = RTOD * (delta_rad + (x * cos(h_rad) * sin(delta_rad) - y * cos(delta_rad)) * xi_rad);
 }
 
 double topocentric_right_ascension(double alpha_deg, double delta_alpha) //topocentric sun right ascension (degrees)
@@ -1009,9 +1068,12 @@ double atmospheric_refraction_correction(double pressure, double temperature,
 {
     double del_e = 0;
     double SUN_RADIUS = 0.26667;
-    if (e0 >= -1 * (SUN_RADIUS + atmos_refract))
+    if (e0 >= -1 * (SUN_RADIUS + atmos_refract)) {
         del_e = (pressure / 1010.0) * (283.0 / (273.0 + temperature)) *
-                1.02 / (60.0 * tan(DTOR * (e0 + 10.3 / (e0 + 5.11))));
+            1.02 / (60.0 * tan(DTOR * (e0 + 10.3 / (e0 + 5.11))));
+        //del_e = (pressure / 1010.0) * (283.0 / (273.0 + temperature)) *
+          //  1.005516e-4/tan();
+    }
 
     return del_e;
 }
@@ -1163,9 +1225,11 @@ calculate_spa(double jd, double lat, double lng, double alt, double pressure, do
 
     //Calculate the Earth heliocentric longitude latitude, and radius vector (L, B, and R) (3.2)
     // Heliocentric - Earth position is calculated with respect to the center of the sun
-    double l = earth_heliocentric_longitude(jme); //L0-L5 values listed beginning line ?, L limited to 0-360°
+    double j_star_tt = jde - 2444239.5;
+    double j_star_ut = jd - 2444239.5;
+    double l = earth_heliocentric_longitude(j_star_tt, jme); //L0-L5 values listed beginning line ?, L limited to 0-360°
     double b = earth_heliocentric_latitude(jme); // B0-B1 values listed beginning line ?, B limited to 0-360°
-    double r = earth_radius_vector(jme); // R0-R4 valeus listed beginning line ?,  R in Astronomical Units (AU)
+    double r = earth_radius_vector(j_star_tt, jme); // R0-R4 valeus listed beginning line ?,  R in Astronomical Units (AU)
     needed_values[1] = 1 / (r * r); //
 
     //Calculate the geocentric longitude and latitude (theta and beta) (3.3)
@@ -1182,14 +1246,14 @@ calculate_spa(double jd, double lat, double lng, double alt, double pressure, do
     x[4] = ascending_longitude_moon(jce); // degrees
 
     double delta_values[2]; // allocate storage for nutation in longitude (del_psi) and nutation in obliquity (del_epsilon)
-    nutation_longitude_and_obliquity(jce, x, delta_values);
+    nutation_longitude_and_obliquity(j_star_tt, x, delta_values);
     double del_psi = delta_values[0]; //store value for use in further spa calculations
     needed_values[2] = del_psi; //pass del_psi value to sunrise sunset calculations
     double del_epsilon = delta_values[1]; //store value for use in further spa calculations
 
     //Calculate the true obliquity of the ecliptic, epsilon (3.5)
     double epsilon0 = ecliptic_mean_obliquity(jme); //mean obliquity of the ecliptic (arc seconds)
-    double epsilon = ecliptic_true_obliquity(del_epsilon, epsilon0); //true obliquity of the ecliptic (degrees)
+    double epsilon = ecliptic_true_obliquity(j_star_tt); //true obliquity of the ecliptic (degrees)
     needed_values[3] = epsilon;
 
     //Calculate the aberration correction (3.6)
@@ -1199,7 +1263,7 @@ calculate_spa(double jd, double lat, double lng, double alt, double pressure, do
     double lamda = apparent_sun_longitude(theta, del_psi, del_tau); // degrees
 
     //Calculate the apparent sidereal time at Greenwich at any given time (3.8)
-    double nu0 = greenwich_mean_sidereal_time(jd, jc); //degrees
+    double nu0 = greenwich_mean_sidereal_time(j_star_ut, jc); //degrees
     double nu = greenwich_sidereal_time(nu0, del_psi, epsilon); // degrees
     needed_values[4] = nu;
 
