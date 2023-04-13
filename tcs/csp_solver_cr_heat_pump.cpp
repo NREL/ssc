@@ -169,14 +169,14 @@ void C_csp_cr_heat_pump::init(const C_csp_collector_receiver::S_csp_cr_init_inpu
     double eta_htf_pump = 0.85;     //[-] used to back out pressure drop
 
     m_T_HT_HTF_avg_des = 0.5 * (m_T_HT_HTF_cold_des + m_T_HT_HTF_hot_des);    //[C]
-    m_cp_HT_HTF_des = m_HT_htfProps->Cp(m_T_HT_HTF_avg_des + 273.15);         //[kJ/kg-K]
+    m_cp_HT_HTF_des = m_HT_htfProps->Cp_ave(m_T_HT_HTF_cold_des + 273.15, m_T_HT_HTF_hot_des + 273.15); //[kJ/kg-K]
     double rho_HT_htf_des = m_HT_htfProps->dens(m_T_HT_HTF_avg_des + 273.15,1.0);   //[kg/m3]  
     m_m_dot_HT_des = m_q_dot_hot_out_des * 1.E3 / (m_cp_HT_HTF_des * (m_T_HT_HTF_hot_des - m_T_HT_HTF_cold_des));    //[kg/s]
     m_W_dot_HT_htf_pump_des = m_heat_pump_HT_htf_pump_coef*m_m_dot_HT_des*1.E-3;        //[MWe]
     double HT_htf_deltaP = m_W_dot_HT_htf_pump_des*rho_HT_htf_des/m_m_dot_HT_des*eta_htf_pump;   //[MPa]
 
     m_T_CT_HTF_avg_des = 0.5 * (m_T_CT_HTF_cold_des + m_T_CT_HTF_hot_des);    //[C]
-    m_cp_CT_HTF_des = m_CT_htfProps->Cp(m_T_CT_HTF_avg_des + 273.15);         //[kJ/kg-K]
+    m_cp_CT_HTF_des = m_CT_htfProps->Cp_ave(m_T_CT_HTF_cold_des + 273.15, m_T_CT_HTF_hot_des + 273.15);  //[kJ/kg-K]
     double rho_CT_htf_des = m_CT_htfProps->dens(m_T_CT_HTF_avg_des + 273.15,1.0);   //[kg/m3]
     m_m_dot_CT_des = m_q_dot_cold_in_des*1.E3/(m_cp_CT_HTF_des*(m_T_CT_HTF_hot_des-m_T_CT_HTF_cold_des));  //[kg/s]
     m_W_dot_CT_htf_pump_des = m_heat_pump_CT_htf_pump_coef*m_m_dot_CT_des*1.E-3;        //[MWe]
