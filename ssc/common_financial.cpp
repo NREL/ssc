@@ -368,15 +368,15 @@ bool dispatch_calculations::compute_outputs( std::vector<double>& ppa)
 
 	size_t i;
 
-    double dispatch_factor1 = m_dispatch_tod_factors[0];// m_cm->as_double("dispatch_factor1");
-	double dispatch_factor2 = m_dispatch_tod_factors[1];//m_cm->as_double("dispatch_factor2");
-	double dispatch_factor3 = m_dispatch_tod_factors[2];//m_cm->as_double("dispatch_factor3");
-	double dispatch_factor4 = m_dispatch_tod_factors[3];//m_cm->as_double("dispatch_factor4");
-	double dispatch_factor5 = m_dispatch_tod_factors[4];//m_cm->as_double("dispatch_factor5");
-	double dispatch_factor6 = m_dispatch_tod_factors[5];//m_cm->as_double("dispatch_factor6");
-	double dispatch_factor7 = m_dispatch_tod_factors[6];//m_cm->as_double("dispatch_factor7");
-	double dispatch_factor8 = m_dispatch_tod_factors[7];//m_cm->as_double("dispatch_factor8");
-	double dispatch_factor9 = m_dispatch_tod_factors[8];//m_cm->as_double("dispatch_factor9");
+    double dispatch_factor1 = m_dispatch_tod_factors[0];
+	double dispatch_factor2 = m_dispatch_tod_factors[1];
+	double dispatch_factor3 = m_dispatch_tod_factors[2];
+	double dispatch_factor4 = m_dispatch_tod_factors[3];
+	double dispatch_factor5 = m_dispatch_tod_factors[4];
+	double dispatch_factor6 = m_dispatch_tod_factors[5];
+	double dispatch_factor7 = m_dispatch_tod_factors[6];
+	double dispatch_factor8 = m_dispatch_tod_factors[7];
+	double dispatch_factor9 = m_dispatch_tod_factors[8];
 
 	if (m_cm->as_integer("system_use_lifetime_output"))
 		process_lifetime_dispatch_output();
@@ -1215,48 +1215,13 @@ bool dispatch_calculations::setup()
 	{
 		m_periods[i] = tod[i];
 
-        if ((tod[i] >= 1) && (tod[i] <= 9)) {
-
-        }
-        else {
+        if ((tod[i] < 1) || (tod[i] > 9)) {
             m_error = util::format("invalid tod period %d for hour %d", tod[i], i);
             throw general_error(m_error);
         }
 
         ppa_multipliers[i] = m_dispatch_tod_factors[tod[i] - 1];
-        /*
-		switch (tod[i])
-		{
-		case 1:
-            ppa_multipliers[i] = m_dispatch_tod_factors[0];// m_cm->as_number("dispatch_factor1");
-			break;
-		case 2:
-			ppa_multipliers[i] = m_dispatch_tod_factors[1];//m_cm->as_number("dispatch_factor2");
-			break;
-		case 3:
-			ppa_multipliers[i] = m_dispatch_tod_factors[2];//m_cm->as_number("dispatch_factor3");
-			break;
-		case 4:
-			ppa_multipliers[i] = m_dispatch_tod_factors[3];//m_cm->as_number("dispatch_factor4");
-			break;
-		case 5:
-			ppa_multipliers[i] = m_dispatch_tod_factors[4];//m_cm->as_number("dispatch_factor5");
-			break;
-		case 6:
-			ppa_multipliers[i] = m_cm->as_number("dispatch_factor6");
-			break;
-		case 7:
-			ppa_multipliers[i] = m_cm->as_number("dispatch_factor7");
-			break;
-		case 8:
-			ppa_multipliers[i] = m_cm->as_number("dispatch_factor8");
-			break;
-		case 9:
-			ppa_multipliers[i] = m_cm->as_number("dispatch_factor9");
-			break;
-		}
-        */
-	}
+ 	}
 
 	return m_error.length() == 0;
 }
