@@ -261,8 +261,7 @@ NAMESPACE_TEST(csp_common, TesCspSolver, Default)
     double q_dot_ch_est, m_dot_field_est_chg, T_cold_field_est;
     tes.charge_avail_est(T_htf_hot_in /*K*/, t_step /*s*/, q_dot_ch_est /*MWt*/, m_dot_field_est_chg /*kg/s*/, T_cold_field_est /*K*/);
     EXPECT_NEAR(q_dot_ch_est, 1375., 1.);
-//    EXPECT_NEAR(m_dot_field_est_chg, 6062., 1.);
-    EXPECT_NEAR(m_dot_field_est_chg, 6060., 1.);
+    EXPECT_NEAR(m_dot_field_est_chg, 6060.4, 1.);
     EXPECT_NEAR(T_cold_field_est, 571.7, 0.1);
 
     // Discharge
@@ -396,10 +395,8 @@ NAMESPACE_TEST(csp_common, TesSubcomponentCmod, Default)
     if (!errors) {
         std::vector<ssc_number_t> T_src_in_expected{ 250.00, 250.00, 250.00, 250.00, 250.00, 250.00, 250.00, 250.00, 296.51, 296.48, 296.44, 296.40,
                                                      296.34, 296.27, 296.18, 296.18, 380.00, 360.00, 293.00, 293.00, 293.00, 293.00, 293.00, 293.00 };
-//        std::vector<ssc_number_t> T_sink_in_expected{ 250.00, 250.00, 250.00, 250.00, 250.00, 250.00, 250.00, 250.00, 390.00, 390.00, 390.00, 390.00,
-//                                                      390.00, 390.00, 390.00, 390.00, 380.00, 360.00, 383.58, 383.54, 383.50, 383.46, 383.40, 383.31 };
         std::vector<ssc_number_t> T_sink_in_expected{ 250.00, 250.00, 250.00, 250.00, 250.00, 250.00, 250.00, 250.00, 390.00, 390.00, 390.00, 390.00,
-                                                      390.00, 390.00, 390.00, 390.00, 380.00, 360.00, 383.70, 383.66, 383.63, 383.58, 383.52, 383.43 };
+                                                      390.00, 390.00, 390.00, 390.00, 380.00, 360.00, 383.70, 383.67, 383.63, 383.58, 383.52, 383.43 };
         std::vector<ssc_number_t> T_tank_cold_expected{ 292.97, 292.94, 292.91, 292.88, 292.85, 292.82, 292.79, 292.76, 292.73, 292.69, 292.65, 292.60,
                                                         292.54, 292.45, 292.33, 292.33, 292.17, 292.01, 294.38, 295.19, 295.61, 295.86, 296.02, 296.14 };
         std::vector<ssc_number_t> T_tank_hot_expected{ 390.91, 390.83, 390.75, 390.67, 390.59, 390.51, 390.43, 390.35, 389.48, 388.89, 388.46, 388.14,
