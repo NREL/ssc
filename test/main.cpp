@@ -55,12 +55,6 @@ GTEST_API_ int main(int argc, char **argv) {
     //    filter to include
     //    ::testing::GTEST_FLAG(filter) = "CmodPVWatts*:CMPvwatts*";
 
-    // ::testing::GTEST_FLAG(filter) = "csp_tower.PowerTowerCmod.Default_NoFinancial*";
-
-    // ::testing::GTEST_FLAG(filter) = "CmodCashLoanTest*"; // .DiscountedPayback * ";
-    // ::testing::GTEST_FLAG(filter) = "CMPvwattsv8Integration_cmod_pvwattsv8.DefaultNoFinancialModel_cmod_pvwattsv8*"; // "CMPvsamv1PowerIntegration_cmod_pvsamv1*";
-    // ::testing::GTEST_FLAG(filter) = "csp_trough.PowerTroughCmod*";
-    // ::testing::GTEST_FLAG(filter) = "csp_common.Tes*";
     
     //    filter to exclude
     //    ::testing::GTEST_FLAG(filter) = "-PVSmoothing_lib_battery_dispatch*";

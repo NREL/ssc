@@ -539,20 +539,6 @@ var_info vtab_sf_adjustment_factors[] = {
 { SSC_INPUT,SSC_MATRIX  , "sf_adjust_periods"                    , "SF Period-based Adjustment Factors"                             , "%"                                      , "n x 3 matrix [ start, end, loss ]"     , "Adjustment Factors"   , "sf_adjust_en_periods=1"              , "COLS=3"                , ""},
 var_info_invalid };
 
-/*
-var_info vtab_adjustment_factors[] = {
-{ SSC_INPUT,SSC_TABLE  , "adjust"                      , "Loss adjustment"                                       , "%"                                      , "'adjust' updated to a table - Ty to add more details!"                                      , "Adjustment Factors"   , "*"              , ""               , ""},
-var_info_invalid };
-
-
-var_info vtab_dc_adjustment_factors[] = {
-{ SSC_INPUT,SSC_TABLE  , "dc_adjust"                   , "DC loss adjustment"                                    , "%"                                      , ""                                      , "Adjustment Factors"   , "*"               , ""               , ""},
-var_info_invalid };
-
-var_info vtab_sf_adjustment_factors[] = {
-{ SSC_INPUT,SSC_TABLE  , "sf_adjust"                   , "SF loss adjustment"                                    , ""                                      , ""                                      , "Adjustment Factors"   , "*"              , ""               , ""},
-var_info_invalid };
-*/
 var_info vtab_financial_capacity_payments[] = {
 
 	/*   VARTYPE           DATATYPE         NAME                                    LABEL                                             UNITS        META                               GROUP                    REQUIRED_IF           CONSTRAINTS               UI_HINTS	*/
@@ -1029,27 +1015,7 @@ bool adjustment_factors::setup(int nsteps, int analysis_period) //nsteps is set 
     f = 1.0 - f / 100.0; //convert from percentage to factor
 	m_factors.resize( nsteps * analysis_period, f);
 
-/*
-//    if (m_cm->is_assigned(m_prefix + ":hourly"))
-
-    if (table.is_assigned("en_hourly") && table.as_boolean("en_hourly"))
-    {
-		size_t n;
-//        ssc_number_t* p = m_cm->as_array(m_prefix + ":hourly", &n);
-        ssc_number_t* p = table.as_array("hourly", &n);
-        if ( p != 0 && n == 8760 )
-		{
-			for( int i=0;i<8760;i++ )
-				m_factors[i] *= (1.0 - p[i]/100.0); //convert from percentages to factors
-		}
-        else {
-            m_error = util::format("Hourly loss factor array length %d does not equal length of weather file %d", (int)n, nsteps);
-        }
-	}
-*/
     if (m_cm->as_boolean(m_prefix +  "_en_timeindex"))
-//    if (m_cm->is_assigned(m_prefix + ":timeindex"))
-//    if (table.is_assigned("timeindex"))
     {
         size_t n;
         int steps_per_hour = nsteps / 8760;
@@ -1057,7 +1023,6 @@ bool adjustment_factors::setup(int nsteps, int analysis_period) //nsteps is set 
         int day = 0;
         int week = 0;
         ssc_number_t* p = m_cm->as_array(m_prefix + "_timeindex", &n);
-//        ssc_number_t* p = table.as_array("timeindex", &n);
         if (p != 0) {
             if (n == 1) {
                 for (int a = 0; a < analysis_period; a++) {
@@ -1110,12 +1075,9 @@ bool adjustment_factors::setup(int nsteps, int analysis_period) //nsteps is set 
         }
     }
     if (m_cm->as_boolean(m_prefix + "_en_periods"))
-//    if (m_cm->is_assigned(m_prefix + ":periods"))
-//    if (table.is_assigned("en_periods") && table.as_boolean("en_periods"))
     {
 		size_t nr, nc;
         ssc_number_t* mat = m_cm->as_matrix(m_prefix + "_periods", &nr, &nc);
-//        ssc_number_t* mat = table.as_matrix("periods", &nr, &nc);
         double ts_mult = nsteps / 8760.0;
 		if ( mat != 0 && nc == 3 )
 		{
@@ -1180,25 +1142,14 @@ bool shading_factor_calculator::setup( compute_module *cm, const std::string &pr
     size_t nrecs = 8760;
     m_beamFactors.resize_fill(nrecs, 1, 1.0);
 
-//    auto& table = cm->get_var_table()->lookup(prefix + "shading")->table;
-
-    if (cm->is_assigned(prefix + "_en_string_option") && cm->as_boolean(prefix + "_en_string_option"))
-        m_string_option = cm->as_integer(prefix + "_string_option");
-
-    //	if (cm->is_assigned(prefix + "shading:string_option"))
-    //			m_string_option = cm->as_integer(prefix + "shading:string_option");
-
-        // initialize to 8760x1 for mxh and change based on shading:timestep
-//        size_t nrecs = 8760;
-//        m_beamFactors.resize_fill(nrecs, 1, 1.0);
+    if (cm->is_assigned(prefix + "shading_en_string_option") && cm->as_boolean(prefix + "shading_en_string_option"))
+        m_string_option = cm->as_integer(prefix + "shading_string_option");
 
     m_enTimestep = false;
-    if (cm->is_assigned(prefix + "_en_timestep") && cm->as_boolean(prefix + "_en_timestep"))
-        //    if (cm->is_assigned(prefix + "shading:timestep"))
+    if (cm->is_assigned(prefix + "shading_en_timestep") && cm->as_boolean(prefix + "shading_en_timestep"))
     {
         size_t nrows, ncols;
-        //        ssc_number_t* mat = cm->as_matrix(prefix + "shading:timestep", &nrows, &ncols);
-        ssc_number_t* mat = cm->as_matrix(prefix + "_timestep", &nrows, &ncols);
+        ssc_number_t* mat = cm->as_matrix(prefix + "shading_timestep", &nrows, &ncols);
 
         if (nrows % 8760 == 0)
         {
@@ -1277,13 +1228,11 @@ bool shading_factor_calculator::setup( compute_module *cm, const std::string &pr
 
     // initialize other shading inputs
     m_enMxH = false;
-    if (cm->is_assigned(prefix + "_en_mxh") && cm->as_boolean(prefix + "_en_mxh"))
-        //	if (cm->is_assigned(prefix + "shading:mxh"))
+    if (cm->is_assigned(prefix + "shading_en_mxh") && cm->as_boolean(prefix + "shading_en_mxh"))
     {
         m_mxhFactors.resize_fill(nrecs, 1, 1.0);
         size_t nrows, ncols;
-        //        ssc_number_t* mat = cm->as_matrix(prefix + "shading:mxh", &nrows, &ncols);
-        ssc_number_t* mat = cm->as_matrix(prefix + "_mxh", &nrows, &ncols);
+        ssc_number_t* mat = cm->as_matrix(prefix + "shading_mxh", &nrows, &ncols);
         if (nrows != 12 || ncols != 24)
         {
             ok = false;
@@ -1303,12 +1252,10 @@ bool shading_factor_calculator::setup( compute_module *cm, const std::string &pr
     }
 
     m_enAzAlt = false;
-    if (cm->is_assigned(prefix + "_en_azal") && cm->as_boolean(prefix + "_en_azal"))
-        //	if (cm->is_assigned(prefix + "shading:azal"))
+    if (cm->is_assigned(prefix + "shading_en_azal") && cm->as_boolean(prefix + "shading_en_azal"))
     {
         size_t nrows, ncols;
-        //        ssc_number_t* mat = cm->as_matrix(prefix + "shading:azal", &nrows, &ncols);
-        ssc_number_t* mat = cm->as_matrix(prefix + "_azal", &nrows, &ncols);
+        ssc_number_t* mat = cm->as_matrix(prefix + "shading_azal", &nrows, &ncols);
         if (nrows < 3 || ncols < 3)
         {
             ok = false;
@@ -1330,11 +1277,10 @@ bool shading_factor_calculator::setup( compute_module *cm, const std::string &pr
     }
 
 
-    if (cm->is_assigned(prefix + "_en_diff") && cm->as_boolean(prefix + "_en_diff"))
-        m_diffFactor = 1 - cm->as_double(prefix + "_diff") / 100;
-    //    if (cm->is_assigned(prefix + "shading:diff"))
-    //        m_diffFactor = 1 - cm->as_double(prefix + "shading:diff") / 100;
-	return ok;
+    if (cm->is_assigned(prefix + "shading_en_diff") && cm->as_boolean(prefix + "shading_en_diff"))
+        m_diffFactor = 1 - cm->as_double(prefix + "shading_diff") / 100;
+
+    return ok;
 }
 
 std::string shading_factor_calculator::get_error(size_t i)
